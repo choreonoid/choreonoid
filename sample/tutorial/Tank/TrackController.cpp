@@ -15,9 +15,9 @@ public:
         trackL = io->body()->link("TRACK_L");
         trackR = io->body()->link("TRACK_R");
 
-        io->setLinkOutput(trackL, JOINT_VELOCITY);
-        io->setLinkOutput(trackR, JOINT_VELOCITY);
-
+        trackL->setActuationMode(Link::JOINT_SURFACE_VELOCITY);
+        trackR->setActuationMode(Link::JOINT_SURFACE_VELOCITY);
+        
         return true;
     }
 
@@ -30,7 +30,7 @@ public:
         double pos[2];
         for(int i=0; i < 2; ++i){
             pos[i] = joystick.getPosition(axisID[i]);
-            if(fabs(pos[i]) < 0.25){
+            if(fabs(pos[i]) < 0.2){
                 pos[i] = 0.0;
             }
         }
