@@ -12,11 +12,9 @@ gettext \
 zlib1g-dev \
 libjpeg-dev \
 libpng12-dev \
-libqt4-dev \
-libqt4-opengl-dev \
-qt4-dev-tools \
-qt4-qtconfig \
-qt4-doc-html \
+qt5-default \
+libqt5x11extras5-dev \
+qt5-style-plugins \
 python3-dev \
 python3-numpy \
 python2.7-dev \
@@ -38,7 +36,4 @@ libgstreamer1.0-dev \
 libgstreamer-plugins-base1.0-dev \
 lua5.3 \
 liblua5.3-dev \
-lua-posix \
-qt5-default \
-libqt5x11extras5-dev \
-qt5-style-plugins
+lua-posix
