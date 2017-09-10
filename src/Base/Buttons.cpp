@@ -109,6 +109,13 @@ ToolButton::ToolButton(const QString& text, QWidget* parent)
 }
 
 
+ToggleToolButton::ToggleToolButton(QWidget* parent)
+    : ToolButton(parent)
+{
+    setCheckable(true);
+}
+
+
 void ToolButton::onClicked(bool checked)
 {
     sigClicked_();
@@ -121,8 +128,33 @@ void ToolButton::onToggled(bool checked)
 }
 
 
-ToggleToolButton::ToggleToolButton(QWidget* parent)
-    : ToolButton(parent)
+SignalProxy<void()> ToolButton::sigPressed()
 {
-    setCheckable(true);
+    if(!sigPressed_){
+        sigPressed_.reset(new Signal<void()>());
+        connect(this, SIGNAL(pressed()), this, SLOT(onPressed()));
+    }
+    return *sigPressed_;
+}
+    
+    
+SignalProxy<void()> ToolButton::sigReleased()
+{
+    if(!sigReleased_){
+        sigReleased_.reset(new Signal<void()>());
+        connect(this, SIGNAL(released()), this, SLOT(onReleased()));
+    }
+    return *sigReleased_;
+}
+
+
+void ToolButton::onPressed()
+{
+    (*sigPressed_)();
+}
+        
+
+void ToolButton::onReleased()
+{
+    (*sigReleased_)();
 }

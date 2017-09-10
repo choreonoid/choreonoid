@@ -85,7 +85,9 @@ public:
     VirtualJoystickViewImpl(VirtualJoystickView* self);
     ~VirtualJoystickViewImpl();
     bool onKeyStateChanged(int key, bool on);
-
+    void onButtonPressed(int index);
+    void onButtonReleased(int index);
+    
     virtual int numAxes() const;
     virtual int numButtons() const;
     virtual bool readCurrentState();
@@ -122,7 +124,8 @@ VirtualJoystickViewImpl::VirtualJoystickViewImpl(VirtualJoystickView* self)
     
     for(int i=0; i < NUM_JOYSTICK_ELEMENTS; ++i){
         ButtonInfo& info = buttonInfo[i];
-        buttons[i].setText(info.label);
+        ToolButton& button = buttons[i];
+        button.setText(info.label);
         grid.addWidget(&buttons[i], info.row, info.column);
         keyToButtonMap[info.key] = i;
         if(info.isAxis){
@@ -134,6 +137,9 @@ VirtualJoystickViewImpl::VirtualJoystickViewImpl(VirtualJoystickView* self)
                 buttonStates.resize(info.id + 1, false);
             }
         }
+
+        button.sigPressed().connect([=](){ onButtonPressed(i); });
+        button.sigReleased().connect([=](){ onButtonReleased(i); });
     }
 
     QHBoxLayout* hbox = new QHBoxLayout;
@@ -186,7 +192,7 @@ bool VirtualJoystickViewImpl::onKeyStateChanged(int key, bool on)
     } else {
         int index = p->second;
         ToolButton& button = buttons[index];
-        ButtonInfo& info = buttonInfo[p->second];
+        ButtonInfo& info = buttonInfo[index];
         button.setDown(on);
         {
             std::lock_guard<std::mutex> lock(mutex);
@@ -194,6 +200,22 @@ bool VirtualJoystickViewImpl::onKeyStateChanged(int key, bool on)
         }
     }
     return true;
+}
+
+
+void VirtualJoystickViewImpl::onButtonPressed(int index)
+{
+    ButtonInfo& info = buttonInfo[index];
+    std::lock_guard<std::mutex> lock(mutex);
+    keyValues[index] = info.activeValue;
+}
+
+
+void VirtualJoystickViewImpl::onButtonReleased(int index)
+{
+    ButtonInfo& info = buttonInfo[index];
+    std::lock_guard<std::mutex> lock(mutex);
+    keyValues[index] = 0.0;
 }
 
 
