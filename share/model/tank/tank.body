@@ -6,7 +6,7 @@ name: Tank
 links:
   -
     name: CHASSIS
-    translation: [ 0, 0, 0.1 ]
+    translation: [ 0, 0, 0.085 ]
     jointType: free
     centerOfMass: [ 0, 0, 0 ]
     mass: 8.0
