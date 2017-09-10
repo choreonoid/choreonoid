@@ -291,11 +291,10 @@ ItemTreeViewImpl::ItemTreeViewImpl(ItemTreeView* self, RootItem* rootItem, bool 
 
 #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
     header()->setResizeMode(0, QHeaderView::Stretch);
-    header()->setMinimumSectionSize(0);
 #else
     header()->setSectionResizeMode(0, QHeaderView::Stretch);
-    //header()->setMinimumSectionSize(0);
 #endif
+    header()->setMinimumSectionSize(0);
 
     // default check column
     addCheckColumn();
