@@ -23,7 +23,7 @@ namespace {
 
 enum Model { PS4, PS3, XBOX, F310_XInput, F310_DirectInput, UNSUPPORTED };
 
-// LeftStick, RightStick, DirectionalPad, L2, R2
+// Left-Stick, Right-Stick, DirectionalPad, L2, R2
 const int NUM_STD_AXES = 8;    
 
 const int PS4_Axes[]         = {  0,  1,  2,  5,  6,  7,  3,  4 };
@@ -33,14 +33,14 @@ const int F310X_Axes[]       = {  0,  1,  3,  4,  6,  7,  2,  5 };
 const int F310D_Axes[]       = {  0,  1,  2,  3,  4,  5, -1, -1 };
 const int Unsupported_Axes[] = { -1, -1, -1, -1, -1, -1, -1, -1 };
 
-// square, cross, circle, triangle, L1, R1, L3, R3, START(PS4:option), SELECT(PS4:share), Logo(PS4:PS)
+// A, B, X, Y, L1, R1, SELECT(PS4:share), START(PS4:option), Left-Stick, Right-Stick, Logo(PS4:PS)
 const int NUM_STD_BUTTONS = 11; 
-
-const int PS4_Buttons[]   =       {  0,  1,  2,  3,  4,  5, 10, 11,  9,  8, 12 };
-const int PS3_Buttons[]   =       { 15, 14, 13, 12, 10, 11,  1,  2,  3,  0, 16 };
-const int XBOX_Buttons[]  =       {  2,  0,  1,  3,  4,  5,  9, 10,  7,  6,  8 };
-const int F310X_Buttons[] =       {  2,  0,  1,  3,  4,  5,  9, 10,  7,  6,  8 };
-const int F310D_Buttons[] =       {  0,  1,  2,  3,  4,  5, 10, 11,  9,  8, -1 };
+//const int PS4_Buttons[]   =     {  0,  1,  2,  3,  4,  5, 10, 11,  9,  8, 12 };
+const int PS4_Buttons[]   =       {  1,  2,  0,  3,  4,  5,  8,  9, 10, 11, 12 };
+const int PS3_Buttons[]   =       { 14, 13, 15, 12, 10, 11,  0,  3,  1,  2, 16 };
+const int XBOX_Buttons[]  =       {  0,  1,  2,  3,  4,  5,  6,  7,  9, 10,  8 };
+const int F310X_Buttons[] =       {  0,  1,  2,  3,  4,  5,  6,  7,  9, 10,  8 };
+const int F310D_Buttons[] =       {  1,  2,  0,  3,  4,  5,  8,  9, 10, 11, -1 };
 const int Unsupported_Buttons[] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
 
 

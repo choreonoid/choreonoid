@@ -144,7 +144,7 @@ void SubmersibleSimulatorItem::applyResistanceForce()
     root->tau_ext() += cz.cross(fz);
 
     if(light){
-        bool lightButtonState = joystick->getButtonState(1);
+        bool lightButtonState = joystick->getButtonState(0);
         if(lightButtonState){
             if(!prevLightButtonState){
                 light->on(!light->on());
