@@ -30,9 +30,12 @@ bool readAGXVehicleContinuousTrackDevice(YAMLBodyLoader& loader, Mapping& node)
     packToVectorString(info->extract("sprocketNames"), desc.sprocketNames);
     packToVectorString(info->extract("idlerNames"), desc.idlerNames);
     packToVectorString(info->extract("rollerNames"), desc.rollerNames);
+    Listing& u = *info->extract("upAxis")->toListing();
+    if(!u.size() == 3) return false;
+    desc.upAxis = Vector3(u[0].toDouble(), u[1].toDouble(), u[2].toDouble());
 
-    AGXVehicleContinuousTrackDevicePtr fountain = new AGXVehicleContinuousTrackDevice(desc);
-    return loader.readDevice(fountain, node);
+    AGXVehicleContinuousTrackDevicePtr trackDevice = new AGXVehicleContinuousTrackDevice(desc);
+    return loader.readDevice(trackDevice, node);
 }
 
 SceneDevice* createSceneAGXVehicleContinuousTrackDevice(Device* device)
@@ -65,6 +68,7 @@ struct TypeRegistration
 
 AGXVehicleContinuousTrackDevice::AGXVehicleContinuousTrackDevice(const AGXVehicleContinuousTrackDeviceDesc& desc)
 {
+    upAxis = desc.upAxis;
     numberOfNodes = desc.numberOfNodes;
     nodeThickness = desc.nodeThickness;
     nodeWidth = desc.nodeWidth;
@@ -90,6 +94,7 @@ const char* AGXVehicleContinuousTrackDevice::typeName()
 void AGXVehicleContinuousTrackDevice::copyStateFrom(const AGXVehicleContinuousTrackDevice& other)
 {
     on_ = other.on_;
+    upAxis = other.upAxis;
     numberOfNodes = other.numberOfNodes;
     nodeThickness = other.nodeThickness;
     nodeWidth = other.nodeWidth;
@@ -148,6 +153,12 @@ double* AGXVehicleContinuousTrackDevice::writeState(double* out_buf) const
     return out_buf + 1;
 }
 
+
+Vector3 AGXVehicleContinuousTrackDevice::getUpAxis() const
+{
+    return upAxis;
+}
+
 int AGXVehicleContinuousTrackDevice::getNumberOfNodes() const
 {
     return numberOfNodes;
@@ -200,5 +211,6 @@ const string* AGXVehicleContinuousTrackDevice::getRollerNames() const
     if(rollerNames.empty()) return nullptr;
     return &rollerNames.front();
 }
+
 
 }

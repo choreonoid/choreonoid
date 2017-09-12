@@ -10,6 +10,7 @@ namespace cnoid {
 
 struct AGXVehicleContinuousTrackDeviceDesc{
     AGXVehicleContinuousTrackDeviceDesc() {
+        upAxis = Vector3d(0.0, 0.0, 1.0);
         numberOfNodes = 50;
         nodeThickness = 0.075;
         nodeWidth = 0.6;
@@ -26,7 +27,7 @@ struct AGXVehicleContinuousTrackDeviceDesc{
         //rollerOffset = 1.0 * rollerRadius;
         //numRollers = 6;
     }
-
+    Vector3 upAxis;
     int numberOfNodes;        // Total number of nodes in the track.
     double nodeThickness;        // Thickness of each node in the track.
     double nodeWidth;            // Width of each node in the track.
@@ -63,6 +64,7 @@ public:
 
     bool on() const { return on_; }
     void on(bool on) { on_ = on; }
+    Vector3 getUpAxis() const;
     int getNumberOfNodes() const;
     double getNodeThickness() const;
     double getNodeWidth() const;

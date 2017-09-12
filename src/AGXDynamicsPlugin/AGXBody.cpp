@@ -186,10 +186,13 @@ agx::RigidBodyRef AGXLink::createAGXRigidBody()
 
     AGXRigidBodyDesc desc;
     desc.name = orgLink->name();
-    desc.m = orgLink->m();
-    desc.I.set( I(0,0), I(1,0), I(2,0),
-                I(0,1), I(1,1), I(2,1),
-                I(0,2), I(1,2), I(2,2));
+    if(orgLink->m() > 0.0) desc.m = orgLink->m();
+    if(I.isZero()){
+    }else{
+        desc.I.set( I(0,0), I(1,0), I(2,0),
+                    I(0,1), I(1,1), I(2,1),
+                    I(0,2), I(1,2), I(2,2));
+    }
     desc.c.set(c(0), c(1), c(2));
     desc.v.set(v(0), v(1), v(2));
     desc.w.set(w(0), w(1), w(2));
@@ -328,7 +331,7 @@ void AGXLink::detectPrimitiveShape(MeshExtractor* extractor, AGXTrimeshDesc& td)
                     const SgMesh::Cylinder& cylinder = mesh->primitive<SgMesh::Cylinder>();
                     AGXCylinderDesc cd;
                     cd.radius = cylinder.radius * scale.x();
-                    cd .height =  cylinder.height * scale.y();
+                    cd.height =  cylinder.height * scale.y();
                     shape = AGXObjectFactory::createShape(cd);
                     created = true;
                     break;
