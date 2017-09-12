@@ -1,0 +1,17 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: radian
+name: Cassette
+
+links:
+  -
+    name: WAIST
+    jointType: free
+    translation: [ 0.15, 0.15, 0.3 ]
+    rotation: [ 0, 1, 0, 0.2 ]
+    mass: 0.5
+    inertia: [
+      0.001, 0, 0,
+      0, 0.0018, 0,
+      0, 0, 0.0012 ]
+    elements: { Resource: { uri: "cassette.wrl" } }

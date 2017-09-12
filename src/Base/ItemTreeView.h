@@ -103,7 +103,7 @@ public:
     
     SignalProxy<void(Item* item, bool isChecked)> sigCheckToggled(int id = 0);
 
-    SignalProxy<void(bool isChecked)> sigCheckToggled(Item* targetItem, int id = 0);
+    SignalProxy<void(bool isChecked)> sigCheckToggled(Item* item, int id = 0);
 
     void cutSelectedItems();
 

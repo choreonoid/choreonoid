@@ -23,22 +23,27 @@ links:
         type: Resource
         uri: "house.wrl"
       -
+        #type: DirectionalLight
         type: SpotLight
         ambientIntensity: 0.17
         direction: [ 1, -1, 0 ]
       -
+        #type: DirectionalLight
         type: SpotLight
         ambientIntensity: 0.2
         direction: [ -1, -1, 0 ]
       -
+        #type: DirectionalLight
         type: SpotLight
         ambientIntensity: 0.2
         direction: [ 0, -1, 1 ]
       -
+        #type: DirectionalLight
         type: SpotLight
         ambientIntensity: 0.2
         direction: [ 0, -1, -1 ]
       -
+        #type: DirectionalLight
         type: SpotLight
         ambientIntensity: 0
         direction: [ 0, 1, 0 ]

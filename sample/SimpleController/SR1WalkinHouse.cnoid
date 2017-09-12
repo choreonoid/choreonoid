@@ -58,11 +58,11 @@ items:
                 reloading: true
         - 
           id: 4
-          name: "box2"
+          name: "Cassette"
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/house/box.body"
+            modelFile: "${SHARE}/model/house/cassette.body"
             currentBaseLink: "WAIST"
             rootPosition: [ 2.18, 0.55, 0.895 ]
             rootAttitude: [ 
@@ -218,7 +218,7 @@ items:
       plugin: Base
       class: SceneItem
       data: 
-        file: "${SHARE}/model/house/house.main.wrl"
+        file: "${SHARE}/model/house/house.scen"
         format: VRML-FILE
         translation: [ 0, 0, 0 ]
         rotation: [ 1, 0, 0, 0 ]

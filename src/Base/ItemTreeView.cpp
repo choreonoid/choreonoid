@@ -291,11 +291,10 @@ ItemTreeViewImpl::ItemTreeViewImpl(ItemTreeView* self, RootItem* rootItem, bool 
 
 #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
     header()->setResizeMode(0, QHeaderView::Stretch);
-    header()->setMinimumSectionSize(0);
 #else
     header()->setSectionResizeMode(0, QHeaderView::Stretch);
-    //header()->setMinimumSectionSize(0);
 #endif
+    header()->setMinimumSectionSize(0);
 
     // default check column
     addCheckColumn();
@@ -889,10 +888,10 @@ SignalProxy<void(Item* item, bool isChecked)> ItemTreeView::sigCheckToggled(int 
 }
 
 
-SignalProxy<void(bool isChecked)> ItemTreeView::sigCheckToggled(Item* targetItem, int id)
+SignalProxy<void(bool isChecked)> ItemTreeView::sigCheckToggled(Item* item, int id)
 {
     if(id < impl->checkColumns.size()){
-        return impl->getOrCreateItvItem(targetItem)->getOrCreateSigCheckToggled(id);
+        return impl->getOrCreateItvItem(item)->getOrCreateSigCheckToggled(id);
     }
     return impl->sigCheckToggledForInvalidItem;
 }

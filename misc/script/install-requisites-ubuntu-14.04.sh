@@ -29,14 +29,11 @@ libgstreamer0.10-dev \
 libgstreamer-plugins-base0.10-dev \
 libpulse-dev \
 libsndfile1-dev \
+python3-dev \
+python3-numpy \
 python2.7-dev \
 python-numpy \
 uuid-dev \
 lua5.2 \
 liblua5.2-dev \
 libassimp-dev
-
-# libc++-dev
-# clang-3.8
-
-

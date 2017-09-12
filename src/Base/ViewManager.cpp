@@ -3,6 +3,7 @@
 */
 
 #include "ViewManager.h"
+#include "PluginManager.h"
 #include "MenuManager.h"
 #include "MainWindow.h"
 #include "ViewArea.h"
@@ -19,7 +20,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 
 namespace {
@@ -36,6 +36,8 @@ Signal<void(View* view)> sigViewRemoved_;
 
 class ViewInfo;
 typedef std::shared_ptr<ViewInfo> ViewInfoPtr;
+
+typedef map<ViewInfo*, vector<View*>> ViewInfoToViewsMap;
 
 class InstanceInfo;
 typedef std::shared_ptr<InstanceInfo> InstanceInfoPtr;
@@ -108,8 +110,8 @@ private:
         instance->iterInViewManager = instancesInViewManager.end();
         --instance->iterInViewManager;
 
-        view->sigActivated().connect(std::bind(std::ref(sigViewActivated_), view));
-        view->sigDeactivated().connect(std::bind(std::ref(sigViewDeactivated_), view));
+        view->sigActivated().connect([view](){ sigViewActivated_(view); });
+        view->sigDeactivated().connect([view](){ sigViewDeactivated_(view); });
 
         return view;
     }
@@ -356,7 +358,7 @@ void onViewMenuAboutToShow(Menu* menu)
     if(menu == deleteViewMenu){
         Action* action = new Action(menu);
         action->setText(_("Delete All Invisible Views"));
-        action->sigTriggered().connect(std::bind(deleteAllInvisibleViews));
+        action->sigTriggered().connect([](){ deleteAllInvisibleViews(); });
         menu->addAction(action);
         needSeparator = true;
     }
@@ -383,7 +385,7 @@ void onViewMenuAboutToShow(Menu* menu)
                     Action* action = new Action(menu);
                     action->setText(viewInfo->translatedDefaultInstanceName.c_str());
                     action->setCheckable(true);
-                    action->sigToggled().connect(std::bind(onShowViewToggled, viewInfo, view, _1));
+                    action->sigToggled().connect([=](bool on){ onShowViewToggled(viewInfo, view, on); });
                     menu->addAction(action);
                 } else {
                     for(InstanceInfoList::iterator p = instances.begin(); p != instances.end(); ++p){
@@ -393,7 +395,7 @@ void onViewMenuAboutToShow(Menu* menu)
                         action->setText(view->windowTitle());
                         action->setCheckable(true);
                         action->setChecked(view->viewArea());
-                        action->sigToggled().connect(std::bind(onShowViewToggled, viewInfo, view, _1));
+                        action->sigToggled().connect([=](bool on){ onShowViewToggled(viewInfo, view, on); });
                         menu->addAction(action);
                     }
                 }
@@ -402,7 +404,7 @@ void onViewMenuAboutToShow(Menu* menu)
                    (viewInfo->itype == ViewManager::MULTI_DEFAULT || viewInfo->itype == ViewManager::MULTI_OPTIONAL)){
                     Action* action = new Action(menu);
                     action->setText(viewInfo->translatedDefaultInstanceName.c_str());
-                    action->sigTriggered().connect(std::bind(onCreateViewTriggered, viewInfo));
+                    action->sigTriggered().connect([=](){ onCreateViewTriggered(viewInfo); });
                     menu->addAction(action);
                 }
             } else if(menu == deleteViewMenu){
@@ -414,7 +416,7 @@ void onViewMenuAboutToShow(Menu* menu)
                     InstanceInfoPtr& instance = (*p++);
                     Action* action = new Action(menu);
                     action->setText(instance->view->windowTitle());
-                    action->sigTriggered().connect(std::bind(onDeleteViewTriggered, instance));
+                    action->sigTriggered().connect([=](){ onDeleteViewTriggered(instance); });
                     menu->addAction(action);
                 }
             }
@@ -436,17 +438,17 @@ void ViewManager::initializeClass(ExtensionManager* ext)
 
         QAction* showViewAction = mm.findItem("Show View");
         showViewMenu = new Menu(viewMenu);
-        showViewMenu->sigAboutToShow().connect(std::bind(onViewMenuAboutToShow, showViewMenu));
+        showViewMenu->sigAboutToShow().connect([=](){ onViewMenuAboutToShow(showViewMenu); });
         showViewAction->setMenu(showViewMenu);
 
         QAction* createViewAction = mm.setCurrent(viewMenu).findItem("Create View");
         createViewMenu = new Menu(viewMenu);
-        createViewMenu->sigAboutToShow().connect(std::bind(onViewMenuAboutToShow, createViewMenu));
+        createViewMenu->sigAboutToShow().connect([=](){ onViewMenuAboutToShow(createViewMenu); });
         createViewAction->setMenu(createViewMenu);
 
         QAction* deleteViewAction = mm.setCurrent(viewMenu).findItem("Delete View");
         deleteViewMenu = new Menu(viewMenu);
-        deleteViewMenu->sigAboutToShow().connect(std::bind(onViewMenuAboutToShow, deleteViewMenu));
+        deleteViewMenu->sigAboutToShow().connect([=](){ onViewMenuAboutToShow(deleteViewMenu); });
         deleteViewAction->setMenu(deleteViewMenu);
         
         initialized = true;
@@ -636,6 +638,17 @@ View* ViewManager::findSpecificTypeView(const std::type_info& view_type_info, co
 }    
 
 
+void ViewManager::deleteView(View* view)
+{
+    for(auto&& info : impl->instances){
+        if(info->view == view){
+            info->remove();
+            break;
+        }
+    }
+}
+
+
 bool ViewManager::isPrimalInstance(View* view)
 {
     TypeToViewInfoMap::iterator p = typeToViewInfoMap.find(&typeid(*view));
@@ -726,11 +739,13 @@ bool ViewManager::storeViewStates(ArchivePtr archive, const std::string& key)
 
 
 namespace {
+
 struct ViewState {
     View* view;
     ArchivePtr state;
     ViewState(View* view, ArchivePtr state) : view(view), state(state) { }
 };
+
 }
 
 
@@ -748,23 +763,72 @@ ViewManager::ViewStateInfo::~ViewStateInfo()
 }
 
 
+static View* restoreView(Archive* archive, const string& moduleName, const string& className, ViewInfoToViewsMap& remainingViewsMap)
+{
+    View* view = 0;
+    string instanceName;
+                    
+    if(!archive->read("name", instanceName)){
+        view = ViewManager::getOrCreateView(moduleName, className);
+    } else {
+        // get one of the view instances having the instance name, or create a new instance.
+        // Different instances are assigned even if there are instances with the same name in the archive
+        ViewInfo* info = findViewInfo(moduleName, className);
+        if(info){
+            vector<View*>* remainingViews;
+
+            auto p = remainingViewsMap.find(info);
+            if(p != remainingViewsMap.end()){
+                remainingViews = &p->second;
+            } else {
+                remainingViews = &remainingViewsMap[info];
+                InstanceInfoList& instances = info->instances;
+                remainingViews->reserve(instances.size());
+                InstanceInfoList::iterator q = instances.begin();
+                if(info->hasDefaultInstance() && q != instances.end()){
+                    ++q;
+                }
+                while(q != instances.end()){
+                    remainingViews->push_back((*q++)->view);
+                }
+            }
+            for(vector<View*>::iterator q = remainingViews->begin(); q != remainingViews->end(); ++q){
+                if((*q)->name() == instanceName){
+                    view = *q;
+                    remainingViews->erase(q);
+                    break;
+                }
+            }
+            if(!view){
+                if(!info->isSingleton() || info->instances.empty()){
+                    view = info->createView(instanceName, true);
+                } else {
+                    MessageView::instance()->putln(
+                        MessageView::ERROR,
+                        boost::format(
+                            _("A singleton view \"%1%\" of the %2% type cannot be created because its singleton instance has already been created."))
+                        % instanceName % info->className());
+                }
+            }
+        }
+    }
+
+    return view;
+}
+
+
 void ViewManager::restoreViews(ArchivePtr archive, const std::string& key, ViewManager::ViewStateInfo& out_viewStateInfo)
 {
-    MessageView* mv = MessageView::instance();
-
-    typedef map<ViewInfo*, vector<View*> > ViewsMap;
-    ViewsMap remainingViewsMap;
-        
     Listing* viewList = archive->findListing(key);
     
     if(viewList->isValid() && !viewList->empty()){
 
+        ViewInfoToViewsMap remainingViewsMap;
         vector<ViewState>* viewsToRestoreState = new vector<ViewState>();        
         out_viewStateInfo.data = viewsToRestoreState;
         int id;
         string moduleName;
         string className;
-        string instanceName;
         
         for(int i=0; i < viewList->size(); ++i){
             Archive* viewArchive = dynamic_cast<Archive*>(viewList->at(i)->toMapping());
@@ -775,59 +839,27 @@ void ViewManager::restoreViews(ArchivePtr archive, const std::string& key, ViewM
                     viewArchive->read("class", className);
             
                 if(isHeaderValid){
-                    View* view = 0;
-                    if(!viewArchive->read("name", instanceName)){
-                        view = getOrCreateView(moduleName, className);
-                    } else {
-                        // get one of the view instances having the instance name, or create a new instance.
-                        // Different instances are assigned even if there are instances with the same name in the archive
-                        ViewInfo* info = findViewInfo(moduleName, className);
-                        if(info){
-                            vector<View*>* remainingViews;
-                            ViewsMap::iterator p = remainingViewsMap.find(info);
-                            if(p != remainingViewsMap.end()){
-                                remainingViews = &p->second;
-                            } else {
-                                remainingViews = &remainingViewsMap[info];
-                                InstanceInfoList& instances = info->instances;
-                                remainingViews->reserve(instances.size());
-                                InstanceInfoList::iterator q = instances.begin();
-                                if(info->hasDefaultInstance() && q != instances.end()){
-                                    ++q;
-                                }
-                                while(q != instances.end()){
-                                    remainingViews->push_back((*q++)->view);
-                                }
-                            }
-                            for(vector<View*>::iterator q = remainingViews->begin(); q != remainingViews->end(); ++q){
-                                if((*q)->name() == instanceName){
-                                    view = *q;
-                                    remainingViews->erase(q);
-                                    break;
-                                }
-                            }
-                            if(!view){
-                                if(!info->isSingleton() || info->instances.empty()){
-                                    view = info->createView(instanceName, true);
-                                } else {
-                                    mv->putln(MessageView::ERROR,
-                                              boost::format(_("A singleton view \"%1%\" of the %2% type cannot be created because its singleton instance has already been created."))
-                                              % instanceName % info->className());
-                                }
-                            }
-                        }
-                    }
-                    if(view){
-                        archive->registerViewId(view, id);
+                    const char* actualModuleName = PluginManager::instance()->guessActualPluginName(moduleName);
+                    if(!actualModuleName){
+                        MessageView::instance()->putln(
+                            MessageView::ERROR,
+                            boost::format(_("The \"%1%\" plugin for \"%2%\" is not found. The view cannot be restored."))
+                            % moduleName % className);
                         
-                        ArchivePtr state = viewArchive->findSubArchive("state");
-                        if(state->isValid()){
-                            state->inheritSharedInfoFrom(*archive);
-                            viewsToRestoreState->push_back(ViewState(view, state));
-                        }
+                    } else {
+                        View* view = restoreView(viewArchive, actualModuleName, className, remainingViewsMap);
+                        if(view){
+                            archive->registerViewId(view, id);
+                        
+                            ArchivePtr state = viewArchive->findSubArchive("state");
+                            if(state->isValid()){
+                                state->inheritSharedInfoFrom(*archive);
+                                viewsToRestoreState->push_back(ViewState(view, state));
+                            }
 
-                        if(viewArchive->get("mounted", false)){
-                            mainWindow->viewArea()->addView(view);
+                            if(viewArchive->get("mounted", false)){
+                                mainWindow->viewArea()->addView(view);
+                            }
                         }
                     }
                 }

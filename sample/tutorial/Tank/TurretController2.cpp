@@ -21,7 +21,7 @@ public:
             Link* joint = joints[i];
             q_ref[i] = q_prev[i] = joint->q();
             io->setLinkInput(joint, JOINT_ANGLE);
-            io->setLinkOutput(joint, JOINT_TORQUE);
+            joint->setActuationMode(Link::JOINT_TORQUE);
         }
 
         dt = io->timeStep();
