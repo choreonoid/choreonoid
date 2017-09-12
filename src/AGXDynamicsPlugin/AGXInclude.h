@@ -1,6 +1,9 @@
 #ifndef CNOID_AGXDYNAMICS_PLUGIN_AGX_INCLUDE_H
 #define CNOID_AGXDYNAMICS_PLUGIN_AGX_INCLUDE_H
 
+// Runtime
+#include <agx/Runtime.h>
+
 // Simulation
 #include <agxSDK/Simulation.h>
 
@@ -29,5 +32,9 @@
 #include <agx/LockJoint.h>
 #include <agx/BallJoint.h>
 #include <agx/PlaneJoint.h>
+
+// agxVehicle
+//#include <agxVehicle/TrackWheel.h>
+#include <agxVehicle/Track.h>
 
 #endif

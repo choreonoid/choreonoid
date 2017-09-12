@@ -36,6 +36,9 @@ void AGXScene::add(AGXBodyPtr agxBody) {
         for(int j = 0; j < bp->numAGXConstraints(); ++j){
             add(bp->getAGXConstraint(j));
         }
+        for(int j = 0; j < bp->numAGXAssemblys(); ++j){
+            add(bp->getAGXAssembly(j));
+        }
         if(!bp->hasSelfCollisionGroupName()) continue;
         const std::string& scgname = bp->getSelfCollisionGroupName();
         setCollisionPair(scgname, scgname, false);
@@ -60,6 +63,11 @@ agx::Bool AGXScene::add(agx::RigidBodyRef const rigid)
 agx::Bool AGXScene::add(agx::ConstraintRef const constraint)
 {
     return getSimulation()->add(constraint);
+}
+
+agx::Bool AGXScene::add(agxSDK::AssemblyRef const assembly)
+{
+    return getSimulation()->add(assembly);
 }
 
 agx::MaterialRef AGXScene::getMaterial(const agx::String & materialName)
@@ -114,11 +122,6 @@ bool AGXScene::getEnableAutoSleep() const
 void AGXScene::setEnableAutoSleep(const bool & bOn)
 {
     getSimulation()->getDynamicsSystem()->getAutoSleep()->setEnable(bOn);
-    //agx::RigidBodyRefVector bodies = getSimulation()->getDynamicsSystem()->getRigidBodies();
-    //agx::RigidBodyRefVector::iterator it;
-    //for(it=bodies.begin(); it != bodies.end(); ++it){
-    //   it->get()->getAutoSleepProperties().setEnable(bOn);
-    //}
 }
 
 bool AGXScene::saveSceneToAGXFile()

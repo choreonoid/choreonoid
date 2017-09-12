@@ -6,6 +6,7 @@
 #include <cnoid/MeshExtractor>
 #include <cnoid/BasicSensorSimulationHelper>
 #include "AGXObjectFactory.h"
+#include "AGXBodyPart.h"
 
 namespace cnoid{
 
@@ -70,7 +71,6 @@ public:
     AGXBody(Body& orgBody);
     void initialize();
     void createBody();
-    void createBodyClosedLoop();
     std::string getSelfCollisionGroupName() const;
     void setCollision(const bool& bOn);
     void setAGXMaterial(const int& index, const agx::MaterialRef& mat);
@@ -85,6 +85,7 @@ public:
     int  numAGXLinks() const;
     void addAGXLink(AGXLinkPtr const agxLink);
     AGXLinkPtr getAGXLink(const int& index) const;
+    AGXLinkPtr getAGXLink(const std::string& name) const;
     int numControllableLinks() const;
     void addControllableLink(AGXLinkPtr const agxLink);
     AGXLinkPtr getControllableLink(const int& index) const;
@@ -99,43 +100,44 @@ private:
     AGXLinkPtrs _controllableLinks;
     AGXBodyPartPtrs _agxBodyParts;
     BasicSensorSimulationHelper sensorHelper;
-    bool findAGXLinksFromInfo(const std::string& key, const bool& defaultValue, AGXLinkPtrs& agxLinks) const;
+    bool getAGXLinksFromInfo(const std::string& key, const bool& defaultValue, AGXLinkPtrs& agxLinks) const;
     void createExtraJoint();
     void createContinuousTrack();
+    void createAGXVehicleContinousTrack();
 };
 
-class AGXBodyPart: public Referenced
-{
-public:
-    AGXBodyPart();
-    bool hasSelfCollisionGroupName() const;
-    std::string getSelfCollisionGroupName() const ;
-    int numAGXConstraints() const;
-    agx::ConstraintRef getAGXConstraint(const int& index) const;
-protected:
-    void setSelfCollsionGroupName(const std::string& name);
-    void addAGXConstraint(agx::ConstraintRef const constraint);
-private:
-    bool _hasSelfCollisionGroupName;
-    std::string _selfCollisionGroupName;
-    std::vector<agx::ConstraintRef> _constraints;
-};
-
-class AGXExtraJoint : public AGXBodyPart{
-public:
-    AGXExtraJoint(AGXBodyPtr agxBody);
-    void createJoints(AGXBodyPtr agxBody);
-};
-
-class AGXContinousTrack : public AGXBodyPart{
-public:
-    AGXContinousTrack(AGXLinkPtr footLinkStart, AGXBodyPtr body);
-private:
-    AGXLinkPtr  _chassisLink;
-    AGXLinkPtrs _feet;
-    void addFoot(LinkPtr link, AGXBodyPtr body);
-    void createTrackConstraint();
-};
+//class AGXBodyPart: public Referenced
+//{
+//public:
+//    AGXBodyPart();
+//    bool hasSelfCollisionGroupName() const;
+//    std::string getSelfCollisionGroupName() const ;
+//    int numAGXConstraints() const;
+//    agx::ConstraintRef getAGXConstraint(const int& index) const;
+//protected:
+//    void setSelfCollsionGroupName(const std::string& name);
+//    void addAGXConstraint(agx::ConstraintRef const constraint);
+//private:
+//    bool _hasSelfCollisionGroupName;
+//    std::string _selfCollisionGroupName;
+//    std::vector<agx::ConstraintRef> _constraints;
+//};
+//
+//class AGXExtraJoint : public AGXBodyPart{
+//public:
+//    AGXExtraJoint(AGXBodyPtr agxBody);
+//    void createJoints(AGXBodyPtr agxBody);
+//};
+//
+//class AGXContinousTrack : public AGXBodyPart{
+//public:
+//    AGXContinousTrack(AGXLinkPtr footLinkStart, AGXBodyPtr body);
+//private:
+//    AGXLinkPtr  _chassisLink;
+//    AGXLinkPtrs _feet;
+//    void addFoot(LinkPtr link, AGXBodyPtr body);
+//    void createTrackConstraint();
+//};
 
 }
 

@@ -25,11 +25,20 @@ agx::Vec3f AGXPseudoContinuousTrackGeometry::calculateSurfaceVelocity(const agxC
 ////////////////////////////////////////////////////////////
 // AGXObjectFactory
 
+bool AGXObjectFactory::checkModuleEnalbled(const char* name)
+{
+    return agx::Runtime::instance()->isModuleEnabled(name);
+}
+
 agxSDK::SimulationRef AGXObjectFactory::createSimulation(const AGXSimulationDesc & desc)
 {
     agxSDK::SimulationRef sim = new agxSDK::Simulation();
+    agx::setNumThreads(desc.numThreads);
     sim->setTimeStep(desc.timeStep);
     sim->setUniformGravity(desc.gravity);
+    sim->getSpace()->setEnableContactReduction(desc.enableContactReduction);
+    sim->getSpace()->setContactReductionBinResolution(desc.contactReductionBinResolution);
+    sim->getSpace()->setContactReductionThreshold(desc.contactReductionThreshhold);
     sim->getDynamicsSystem()->getAutoSleep()->setEnable(desc.enableAutoSleep);
     return sim;
 }
@@ -167,6 +176,8 @@ agx::Bool AGXObjectFactory::setContactMaterialParam(agx::ContactMaterialRef cons
     cm->setFrictionCoefficient(desc.friction);
     cm->setAdhesion(desc.adhesionForce, desc.adhesivOverlap);
     cm->setSurfaceViscosity(desc.surfaceViscosity, desc.frictionDirection);
+    cm->setContactReductionMode(desc.contactReductionMode);
+    cm->setContactReductionBinResolution(desc.contactReductionBinResolution);
 
     // Create friction model
     if(desc.frictionModelType != AGXFrictionModelType::DEFAULT){
@@ -221,9 +232,14 @@ agx::HingeRef AGXObjectFactory::createConstraintHinge(const AGXHingeDesc& desc)
     agx::HingeFrame hingeFrame;
     hingeFrame.setAxis(desc.frameAxis);
     hingeFrame.setCenter(desc.frameCenter);
-    agx::HingeRef hinge = new agx::Hinge(hingeFrame, desc.rigidBodyA, desc.rigidBodyB);
-    hinge->getMotor1D()->setEnable(desc.isMotorOn);
-    return hinge;
+    agx::HingeRef joint = new agx::Hinge(hingeFrame, desc.rigidBodyA, desc.rigidBodyB);
+    joint->getMotor1D()->setEnable(desc.motor.enable);
+    joint->getMotor1D()->setLocked(desc.motor.enableLock);
+    joint->getMotor1D()->setLockedAtZeroSpeed(desc.motor.enableLockAtZeroSpeed);
+    joint->getLock1D()->setEnable(desc.lock.enable);
+    joint->getRange1D()->setEnable(desc.range.enable);
+    joint->getRange1D()->setRange(desc.range.range);
+    return joint;
 }
 
 agx::PrismaticRef AGXObjectFactory::createConstraintPrismatic(const AGXPrismaticDesc & desc)
@@ -231,9 +247,14 @@ agx::PrismaticRef AGXObjectFactory::createConstraintPrismatic(const AGXPrismatic
     agx::PrismaticFrame prismaticFrame;
     prismaticFrame.setAxis(desc.frameAxis);
     prismaticFrame.setPoint(desc.framePoint);
-    agx::PrismaticRef prismatic = new agx::Prismatic(prismaticFrame, desc.rigidBodyA, desc.rigidBodyB);
-    prismatic->getMotor1D()->setEnable(desc.isMotorOn);
-    return prismatic;
+    agx::PrismaticRef joint = new agx::Prismatic(prismaticFrame, desc.rigidBodyA, desc.rigidBodyB);
+    joint->getMotor1D()->setEnable(desc.motor.enable);
+    joint->getMotor1D()->setLocked(desc.motor.enableLock);
+    joint->getMotor1D()->setLockedAtZeroSpeed(desc.motor.enableLockAtZeroSpeed);
+    joint->getLock1D()->setEnable(desc.lock.enable);
+    joint->getRange1D()->setEnable(desc.range.enable);
+    joint->getRange1D()->setRange(desc.range.range);
+    return joint;
 }
 
 agx::BallJointRef AGXObjectFactory::createConstraintBallJoint(const AGXBallJointDesc & desc)
@@ -251,6 +272,20 @@ agx::PlaneJointRef AGXObjectFactory::createConstraintPlaneJoint(const AGXPlaneJo
 agx::LockJointRef AGXObjectFactory::createConstraintLockJoint(const AGXLockJointDesc & desc)
 {
     return new agx::LockJoint(desc.rigidBodyA, desc.rigidBodyB);
+}
+
+agxVehicle::TrackWheelRef AGXObjectFactory::createVehicleTrackWheel(const AGXVehicleTrackWheelDesc& desc)
+{
+    return new agxVehicle::TrackWheel(desc.model, desc.radius, desc.rigidbody, desc.rbRelTransform);
+}
+
+agxVehicle::TrackRef AGXObjectFactory::createVehicleTrack(const AGXVehicleTrackDesc& desc)
+{
+    agxVehicle::TrackRef track = new agxVehicle::Track(desc.numberOfNodes, desc.nodeWidth, desc.nodeThickness, desc.nodeDistanceTension);
+    for(int i = 0; i < desc.trackWheelRefs.size(); ++i){
+        track->add(desc.trackWheelRefs[i]);
+    }
+    return track;
 }
 
 }

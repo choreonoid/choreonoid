@@ -2,14 +2,11 @@
 #define CNOID_AGXDYNAMICS_PLUGIN_AGX_SIMULATOR_ITEM_IMPL_H
 
 #include <cnoid/SimulatorItem>
-//#include "AGXInclude.h"
 #include "AGXScene.h"
 #include "AGXBody.h"
 #include <iostream>
 
 namespace cnoid {
-
-const double DEFAULT_GRAVITY_ACCELERATION = 9.80665;
 
 class AGXSimulatorItem;
 typedef ref_ptr<AGXSimulatorItem> AGXSimulatorItemPtr;
@@ -46,7 +43,11 @@ public:
 private:
     AGXSceneRef agxScene = nullptr;
     Vector3 _p_gravity;
-    bool    _p_isAutoSleep;
+    int     _p_numThreads;
+    bool    _p_enableContactReduction;
+    int     _p_contactReductionBinResolution;
+    int     _p_contactReductionThreshhold;
+    bool    _p_enableAutoSleep;
 };
 }
 #endif
