@@ -29,15 +29,24 @@ public:
         JOINT_FORCE = 1 << 3,
         LINK_POSITION = 1 << 4
     };
-    
-    virtual void setJointInput(int stateTypes) = 0;
-    virtual void setLinkInput(Link* link, int stateTypes) = 0;
-    virtual void enableInput(Device* device) = 0;
 
-    //! \deprecated Use Link::setActuationMode for all the links
-    virtual void setJointOutput(int stateTypes) = 0;
+    virtual void enableIO(Link* link) = 0;
+    virtual void enableInput(Link* link) = 0;
+    virtual void enableInput(Link* link, int stateTypes) = 0;
+    virtual void enableOutput(Link* link) = 0;
+
+    virtual void enableInput(Device* device) = 0;
     
-    //! \deprecated Use Link::setActuationMode for a link
+    //! \deprecated Use enableInput for all links
+    virtual void setJointInput(int stateTypes) = 0;
+
+    //! \deprecated Use enableOutput and Link::setActuationMode for all links
+    virtual void setJointOutput(int stateTypes) = 0;
+
+    //! \deprecated Use enableInput for the link
+    virtual void setLinkInput(Link* link, int stateTypes) = 0;
+    
+    //! \deprecated Use enableOutput and Link::setActuationMode for the link
     virtual void setLinkOutput(Link* link, int stateTypes) = 0;
 };
 

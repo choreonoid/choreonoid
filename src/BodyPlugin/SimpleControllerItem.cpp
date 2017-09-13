@@ -60,6 +60,9 @@ public:
     vector<unsigned short> inputLinkIndices;
     vector<char> inputStateTypes;
 
+    vector<bool> outputLinkFlags;
+    vector<unsigned short> outputLinkIndices;
+
     ConnectionSet outputDeviceStateConnections;
     boost::dynamic_bitset<> outputDeviceStateChangeFlag;
 
@@ -106,11 +109,18 @@ public:
     virtual Body* body() override;
     virtual double timeStep() const override;
     virtual std::ostream& os() const override;
-    virtual void setJointOutput(int stateTypes) override;
-    virtual void setLinkOutput(Link* link, int stateTypes) override;
-    virtual void setJointInput(int stateTypes) override;
-    virtual void setLinkInput(Link* link, int stateTypes) override;
+
+    virtual void enableIO(Link* link) override;
+    virtual void enableInput(Link* link) override;
+    virtual void enableInput(Link* link, int stateTypes) override;
     virtual void enableInput(Device* device) override;
+    virtual void enableOutput(Link* link) override;
+
+    // deprecated virtual functions
+    virtual void setLinkInput(Link* link, int stateTypes) override;
+    virtual void setJointInput(int stateTypes) override;
+    virtual void setLinkOutput(Link* link, int stateTypes) override;
+    virtual void setJointOutput(int stateTypes) override;
 
     virtual bool isImmediateMode() const override;
     virtual void setImmediateMode(bool on) override;
@@ -361,12 +371,15 @@ SimpleController* SimpleControllerItemImpl::initialize(ControllerItemIO* io, Sha
 
         inputLinkIndices.clear();
         inputStateTypes.clear();
+        outputLinkFlags.clear();
         
         result = controller->initialize(this);
 
         // try the old API
         if(!result){
-            setJointInput(SimpleControllerIO::JOINT_DISPLACEMENT);
+            for(auto joint : ioBody->joints()){
+                enableIO(joint);
+            }
             result = controller->initialize();
             if(result){
                 for(auto device : ioBody->devices()){
@@ -418,7 +431,6 @@ void SimpleControllerItemImpl::updateIOStateTypes()
     // Input
     inputLinkIndices.clear();
     inputStateTypes.clear();
-
     for(size_t i=0; i < linkIndexToInputStateTypeMap.size(); ++i){
         bitset<5> types(linkIndexToInputStateTypeMap[i]);
         if(types.any()){
@@ -433,10 +445,13 @@ void SimpleControllerItemImpl::updateIOStateTypes()
         }
     }
 
-    // Output (Actuation mode)
-    const int n = simulationBody->numLinks();
-    for(int i=0; i < n; ++i){
-        simulationBody->link(i)->setActuationMode(ioBody->link(i)->actuationMode());
+    // Output
+    outputLinkIndices.clear();
+    for(size_t i=0; i < outputLinkFlags.size(); ++i){
+        if(outputLinkFlags[i]){
+            outputLinkIndices.push_back(i);
+            simulationBody->link(i)->setActuationMode(ioBody->link(i)->actuationMode());
+        }
     }
 }
 
@@ -490,65 +505,100 @@ std::ostream& SimpleControllerItemImpl::os() const
 }
 
 
-void SimpleControllerItemImpl::setJointInput(int stateTypes)
+void SimpleControllerItemImpl::enableIO(Link* link)
 {
-    if(!stateTypes){
-        linkIndexToInputStateTypeMap.clear();
-    } else {
-        linkIndexToInputStateTypeMap.resize(ioBody->numLinks(), 0);
-        const int nj = ioBody->numJoints();
-        for(int i=0; i < nj; ++i){
-            int linkIndex = ioBody->joint(i)->index();
-            if(linkIndex >= 0){
-                linkIndexToInputStateTypeMap[linkIndex] |= stateTypes;
-            }
-        }
-    }
+    enableInput(link);
+    enableOutput(link);
 }
+        
+
+void SimpleControllerItemImpl::enableInput(Link* link)
+{
+    int defaultInputStateTypes = 0;
+
+    switch(link->actuationMode()){
+
+    case Link::JOINT_EFFORT:
+    case Link::JOINT_SURFACE_VELOCITY:
+        defaultInputStateTypes = SimpleControllerIO::JOINT_ANGLE;
+        break;
+
+    case Link::JOINT_DISPLACEMENT:
+    case Link::JOINT_VELOCITY:
+        defaultInputStateTypes = SimpleControllerIO::JOINT_ANGLE | SimpleControllerIO::JOINT_TORQUE;
+        break;
+
+    case Link::LINK_POSITION:
+        defaultInputStateTypes = SimpleControllerIO::LINK_POSITION;
+        break;
+    }
+
+    enableInput(link, defaultInputStateTypes);
+}        
 
 
-void SimpleControllerItemImpl::setLinkInput(Link* link, int stateTypes)
+void SimpleControllerItemImpl::enableInput(Link* link, int stateTypes)
 {
     if(link->index() >= linkIndexToInputStateTypeMap.size()){
         linkIndexToInputStateTypeMap.resize(link->index() + 1, 0);
     }
     linkIndexToInputStateTypeMap[link->index()] |= stateTypes;
+}        
+
+
+void SimpleControllerItemImpl::setLinkInput(Link* link, int stateTypes)
+{
+    enableInput(link, stateTypes);
 }
 
+
+void SimpleControllerItemImpl::setJointInput(int stateTypes)
+{
+    for(Link* joint : ioBody->joints()){
+        setLinkInput(joint, stateTypes);
+    }
+}
+
+
+void SimpleControllerItemImpl::enableOutput(Link* link)
+{
+    int index = link->index();
+    if(outputLinkFlags.size() <= index){
+        outputLinkFlags.resize(index + 1, false);
+    }
+    outputLinkFlags[index] = true;
+}
+
+
+void SimpleControllerItemImpl::setLinkOutput(Link* link, int stateTypes)
+{
+    Link::ActuationMode mode = Link::JOINT_TORQUE;
+    
+    if(stateTypes & SimpleControllerIO::LINK_POSITION){
+        mode = Link::LINK_POSITION;
+    } else if(stateTypes & SimpleControllerIO::JOINT_DISPLACEMENT){
+        mode = Link::JOINT_DISPLACEMENT;
+    } else if(stateTypes & SimpleControllerIO::JOINT_VELOCITY){
+        mode = Link::JOINT_VELOCITY;
+    }
+    
+    link->setActuationMode(mode);
+    enableOutput(link);
+}
+
+
+void SimpleControllerItemImpl::setJointOutput(int stateTypes)
+{
+    const int nj = ioBody->numJoints();
+    for(int i=0; i < nj; ++i){
+        setLinkOutput(ioBody->joint(i), stateTypes);
+    }
+}
+    
 
 void SimpleControllerItemImpl::enableInput(Device* device)
 {
     sharedInfo->inputEnabledDeviceFlag.set(device->index());
-}
-
-
-static Link::ActuationMode getActuationMode(int stateTypes)
-{
-    if(stateTypes & SimpleControllerIO::LINK_POSITION){
-        return Link::LINK_POSITION;
-    } else if(stateTypes & SimpleControllerIO::JOINT_DISPLACEMENT){
-        return Link::JOINT_DISPLACEMENT;
-    } else if(stateTypes & SimpleControllerIO::JOINT_VELOCITY){
-        return Link::JOINT_VELOCITY;
-    } else {
-        return Link::JOINT_TORQUE;
-    }
-}
-    
-
-void SimpleControllerItemImpl::setJointOutput(int stateTypes)
-{
-    const Link::ActuationMode mode = getActuationMode(stateTypes);
-    const int nj = ioBody->numJoints();
-    for(int i=0; i < nj; ++i){
-        ioBody->joint(i)->setActuationMode(mode);
-    }
-}
-    
-
-void SimpleControllerItemImpl::setLinkOutput(Link* link, int stateTypes)
-{
-    link->setActuationMode(getActuationMode(stateTypes));
 }
 
 
@@ -674,10 +724,10 @@ void SimpleControllerItem::output()
 
 void SimpleControllerItemImpl::output()
 {
-    const int n = simulationBody->numLinks();
-    for(int i=0; i < n; ++i){
-        Link* simLink = simulationBody->link(i);
-        const Link* ioLink = ioBody->link(i);
+    for(size_t i=0; i < outputLinkIndices.size(); ++i){
+        const int index = outputLinkIndices[i];
+        const Link* ioLink = ioBody->link(index);
+        Link* simLink = simulationBody->link(index);
         switch(ioLink->actuationMode()){
         case Link::JOINT_EFFORT:
             simLink->u() = ioLink->u();
@@ -697,7 +747,7 @@ void SimpleControllerItemImpl::output()
             break;
         }
     }
-
+        
     if(outputDeviceStateChangeFlag.any()){
         const DeviceList<>& devices = simulationBody->devices();
         const DeviceList<>& ioDevices = ioBody->devices();
