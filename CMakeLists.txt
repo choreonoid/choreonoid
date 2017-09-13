@@ -35,6 +35,12 @@ if(UNIX)
     endif()
   endif()
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${cpp_standard}")
+
+  if(CMAKE_COMPILER_IS_GNUCC)
+    # To allow for reloading a controller shared library
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --no-gnu-unique")
+  endif()
+  
   add_definitions("-pthread")
 endif()
 
