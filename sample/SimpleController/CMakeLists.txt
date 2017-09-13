@@ -2,8 +2,7 @@ if(NOT ENABLE_GUI)
   return()
 endif()
 
-option(BUILD_SIMPLE_CONTROLLER_SAMPLES "Building sample simulation controllers built as simple controllers" ON)
-
+option(BUILD_SIMPLE_CONTROLLER_SAMPLES "Building SimpleController samples" ON)
 if(NOT BUILD_SIMPLE_CONTROLLER_SAMPLES)
   return()
 endif()
@@ -33,8 +32,8 @@ configure_file(SampleCrawlerSlope.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYON
 
 add_cnoid_simple_controller(TankJoystickController TankJoystickController.cpp)
 configure_file(TankJoystick.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
-add_cnoid_simple_controller(TankLightController TankLightController.cpp)
-configure_file(TankJoystickLight.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+add_cnoid_simple_controller(LightBlinkController LightBlinkController.cpp)
+configure_file(TankJoystickLightBlink.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 
 add_cnoid_simple_controller(SR1WalkGraspController SR1WalkGraspController.cpp)
 configure_file(SR1WalkinHouse.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
