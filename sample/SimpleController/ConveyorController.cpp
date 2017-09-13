@@ -14,6 +14,7 @@ public:
     virtual bool initialize(SimpleControllerIO* io)
     {
         conveyorJoint = io->body()->joint(0);
+        io->enableOutput(conveyorJoint);
         return true;
     }
 

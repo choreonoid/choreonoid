@@ -23,18 +23,21 @@ public:
         ostream& os = io->os();
         
         Body* body = io->body();
+
         steering = body->link("STEERING_RIGHT");
         if(!steering){
             os << " The steering_right link is not found." << endl;
             return false;
         }
+        io->enableIO(steering);
+
         drive = body->link("REAR_WHEEL");
         if(!drive){
             os << "The rear_wheel link is not found." << endl;
             return false;
         }
-        
-        io->setJointInput(JOINT_ANGLE | JOINT_VELOCITY);
+        io->enableInput(drive, JOINT_VELOCITY);
+        io->enableOutput(drive);
         
         if(!joystick.isReady()){
             os << "Joystick is not ready: " << joystick.errorMessage() << endl;

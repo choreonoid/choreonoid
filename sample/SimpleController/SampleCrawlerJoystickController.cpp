@@ -29,6 +29,9 @@ public:
             return false;
         }
 
+        io->enableOutput(crawlerL);
+        io->enableOutput(crawlerR);
+
         for(int i=0; i < 2; i++){
             qRef[i] = 0;
         }

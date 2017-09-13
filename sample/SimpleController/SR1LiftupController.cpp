@@ -70,23 +70,23 @@ public:
             }
         }
 
-        for(auto joint : ioBody->joints()){
-            joint->setActuationMode(actuationMode);
-        }
-
+        int inputStateTypes = JOINT_ANGLE;
         if(actuationMode == Link::JOINT_TORQUE){
             os << "SR1LiftupController: torque control mode." << endl;
-            io->setJointInput(JOINT_ANGLE);
 
         } else if(actuationMode == Link::JOINT_VELOCITY){
             os << "SR1LiftupController: velocity control mode";
             if(isTorqueSensorEnabled){
-                io->setJointInput(JOINT_ANGLE | JOINT_TORQUE);
+                inputStateTypes |= JOINT_TORQUE;
                 os << ", torque sensors";
-            } else {
-                io->setJointInput(JOINT_ANGLE);
             }
             os << "." << endl;
+        }
+
+        for(auto joint : ioBody->joints()){
+            joint->setActuationMode(actuationMode);
+            io->enableInput(joint, inputStateTypes);
+            io->enableOutput(joint);
         }
 
         time = 0.0;

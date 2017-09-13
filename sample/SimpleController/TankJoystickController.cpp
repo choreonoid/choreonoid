@@ -43,6 +43,8 @@ public:
             os << "The tracks are not found." << endl;
             return false;
         }
+        io->enableOutput(trackL);
+        io->enableOutput(trackR);
 
         turretJoint[0] = body->link("TURRET_Y");
         turretJoint[1] = body->link("TURRET_P");
@@ -53,7 +55,7 @@ public:
                 return false;
             }
             qref[i] = qprev[i] = joint->q();
-            io->setLinkInput(joint, JOINT_ANGLE);
+            io->enableIO(joint);
         }
 
         dt = io->timeStep();
