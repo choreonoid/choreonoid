@@ -25,29 +25,39 @@ AGXVehicleContinuousTrack::AGXVehicleContinuousTrack(AGXVehicleContinuousTrackDe
             return nullptr;
         }
         // create rotate matrix
-        const Vector3& a = l_agxLink->getOrgLink()->a(); // rotational axis
-        const Vector3& u = device->getUpAxis();          // up axis
+        Link* l_link = l_agxLink->getOrgLink();
+        const Vector3& a = l_link->attitude() * l_link->a();            // rotational axis
+        const Vector3& u = l_link->attitude() * device->getUpAxis();    // up axis
         const agx::Vec3 ny = agx::Vec3(a(0), a(1), a(2)).normal();
         const agx::Vec3 nz = agx::Vec3(u(0), u(1), u(2)).normal();
-        agx::Vec3 nx = ny.cross(nz);
+        const agx::Vec3 nx = ny.cross(nz);
         agx::OrthoMatrix3x3 rotation;
         rotation.setColumn(0, nx);
         rotation.setColumn(1, ny);
         rotation.setColumn(2, nz);
-        std::cout << "rotation " << rotation << std::endl;
-        agx::OrthoMatrix3x3 mat;
-        l_agxLink->getAGXRigidBody()->getRotation().get(mat);
-        std::cout << "rigid " <<  mat << std::endl;
-        std::cout << "geometry " << l_cylinder->getGeometry()->getRotation() << std::endl;
+        agx::Quat q;
+        rotation.get(q);
 
         AGXVehicleTrackWheelDesc l_desc;
         l_desc.rigidbody = l_agxLink->getAGXRigidBody();
         l_desc.model = model;
         l_desc.radius = l_cylinder->getRadius();
-        //l_desc.rbRelTransform.setRotate(rotation);
-        l_desc.rbRelTransform.setRotate(agx::Quat(-agx::PI_2, agx::Vec3::X_AXIS()));
+        l_desc.rbRelTransform.setRotate(l_desc.rigidbody->getRotation());
+        l_desc.rbRelTransform.setRotate(q * l_desc.rigidbody->getRotation());
+        //return AGXObjectFactory::createVehicleTrackWheel(l_desc);
 
-       return AGXObjectFactory::createVehicleTrackWheel(l_desc);
+        agxVehicle::TrackWheelRef wheel = AGXObjectFactory::createVehicleTrackWheel(l_desc);
+        agx::OrthoMatrix3x3 mat;
+        l_agxLink->getAGXRigidBody()->getRotation().get(mat);
+        std::cout << "rigid " <<  mat << std::endl;
+        l_cylinder->getGeometry()->getRotation().get(mat);
+        std::cout << "geometry " <<  mat << std::endl;
+        std::cout << "rotation " << rotation << std::endl;
+        l_desc.rbRelTransform.get(mat);
+        std::cout << "rbRelTrans " << mat << std::endl;
+        wheel->getTransform().get(mat);
+        std::cout << "wheel " << mat << std::endl;
+        return wheel;
     };
 
     auto createWheels = [createWheel, &trackDesc](const int& num, const string* names, const agxVehicle::TrackWheel::Model& model)
@@ -57,18 +67,39 @@ AGXVehicleContinuousTrack::AGXVehicleContinuousTrack(AGXVehicleContinuousTrackDe
         }
     };
 
-    // Create sprocket wheels
+    // Create sprocket, idler and roller wheels
     createWheels(device->numSprocketNames(), device->getSprocketNames(), agxVehicle::TrackWheel::Model::SPROCKET);
-    // Create idler wheels
     createWheels(device->numIdlerNames(), device->getIdlerNames(), agxVehicle::TrackWheel::Model::IDLER);
-    // Create roller wheels
     createWheels(device->numRollerNames(), device->getRollerNames(), agxVehicle::TrackWheel::Model::ROLLER);
 
     // Create track
-    trackDesc.numberOfNodes = device->getNumberOfNodes();
-    trackDesc.nodeThickness = device->getNodeThickness();
-    trackDesc.nodeWidth = device->getNodeWidth();
-    trackDesc.nodeDistanceTension = device->getNodeDistanceTension();
+    AGXVehicleContinuousTrackDeviceDesc desc;
+    device->getDesc(desc);
+    trackDesc.numberOfNodes = desc.numberOfNodes;
+    trackDesc.nodeThickness = desc.nodeThickness;
+    trackDesc.nodeWidth = desc.nodeWidth;
+    trackDesc.nodeDistanceTension = desc.nodeDistanceTension;
+    trackDesc.hingeCompliance = desc.hingeCompliance;
+    trackDesc.stabilizingHingeFrictionParameter = desc.stabilizingHingeFrictionParameter;
+    trackDesc.enableMerge = desc.enableMerge;
+    trackDesc.numNodesPerMergeSegment = desc.numNodesPerMergeSegment;
+    switch(desc.contactReductionLevel)
+    {
+        case 0:
+            trackDesc.contactReduction =  agxVehicle::TrackInternalMergeProperties::ContactReduction::NONE;
+            break;
+        case 1:
+            trackDesc.contactReduction =  agxVehicle::TrackInternalMergeProperties::ContactReduction::MINIMAL;
+            break;
+        case 2:
+            trackDesc.contactReduction =  agxVehicle::TrackInternalMergeProperties::ContactReduction::MODERATE;
+            break;
+        case 3:
+            trackDesc.contactReduction =  agxVehicle::TrackInternalMergeProperties::ContactReduction::AGRESSIVE;
+            break;
+        default:
+            break;
+    }
     _track = AGXObjectFactory::createVehicleTrack(trackDesc);
     addAGXAssembly(_track);
 }

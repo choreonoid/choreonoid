@@ -15,9 +15,15 @@ bool readAGXVehicleContinuousTrackDevice(YAMLBodyLoader& loader, Mapping& node)
     if(!node.read("nodeThickness", desc.nodeThickness)) return false;
     if(!node.read("nodeWidth", desc.nodeWidth)) return false;
     if(!node.read("nodeDistanceTension", desc.nodeDistanceTension)) return false;
+    node.read("hingeCompliance", desc.hingeCompliance);
+    node.read("stabilizingHingeFrictionParameter", desc.stabilizingHingeFrictionParameter);
+    node.read("enableMerge", desc.enableMerge);
+    node.read("numNodesPerMergeSegment", desc.numNodesPerMergeSegment);
+    node.read("lockToReachMergeConditionCompliance", desc.lockToReachMergeConditionCompliance);
+    node.read("contactReductionLevel", desc.contactReductionLevel);
 
     // Get name of wheels from yaml 
-    const auto packToVectorString = [](ValueNodePtr const vnptr, vector<string>& vs) ->bool
+    const auto toVectorString = [](ValueNodePtr const vnptr, vector<string>& vs) ->bool
     {
         if(!vnptr) return false;
         Listing& list = *vnptr->toListing();
@@ -27,14 +33,20 @@ bool readAGXVehicleContinuousTrackDevice(YAMLBodyLoader& loader, Mapping& node)
         return true;
     };
     MappingPtr info = static_cast<Mapping*>(node.clone());
-    packToVectorString(info->extract("sprocketNames"), desc.sprocketNames);
-    packToVectorString(info->extract("idlerNames"), desc.idlerNames);
-    packToVectorString(info->extract("rollerNames"), desc.rollerNames);
-    Listing& u = *info->extract("upAxis")->toListing();
-    if(!u.size() == 3) return false;
-    desc.upAxis = Vector3(u[0].toDouble(), u[1].toDouble(), u[2].toDouble());
-
+    toVectorString(info->extract("sprocketNames"), desc.sprocketNames);
+    toVectorString(info->extract("idlerNames"), desc.idlerNames);
+    toVectorString(info->extract("rollerNames"), desc.rollerNames);
+    ValueNodePtr const upAxis = info->extract("upAxis");
+    if(upAxis){
+        Listing& u = *upAxis->toListing();
+        if(!u.size() == 3) return false;
+        desc.upAxis = Vector3(u[0].toDouble(), u[1].toDouble(), u[2].toDouble());
+    }else{
+        return false;
+    }
+    std::cout << desc.sprocketNames.size() << std::endl;
     AGXVehicleContinuousTrackDevicePtr trackDevice = new AGXVehicleContinuousTrackDevice(desc);
+    std::cout << trackDevice->getSprocketNames()->size() << std::endl;
     return loader.readDevice(trackDevice, node);
 }
 
@@ -67,15 +79,8 @@ struct TypeRegistration
 } registration;
 
 AGXVehicleContinuousTrackDevice::AGXVehicleContinuousTrackDevice(const AGXVehicleContinuousTrackDeviceDesc& desc)
+    : AGXVehicleContinuousTrackDeviceDesc(desc)
 {
-    upAxis = desc.upAxis;
-    numberOfNodes = desc.numberOfNodes;
-    nodeThickness = desc.nodeThickness;
-    nodeWidth = desc.nodeWidth;
-    nodeDistanceTension = desc.nodeDistanceTension;
-    sprocketNames = desc.sprocketNames;
-    idlerNames = desc.idlerNames;
-    rollerNames = desc.rollerNames;
 }
 
 AGXVehicleContinuousTrackDevice::AGXVehicleContinuousTrackDevice(const AGXVehicleContinuousTrackDevice& org, bool copyStateOnly)
@@ -94,14 +99,10 @@ const char* AGXVehicleContinuousTrackDevice::typeName()
 void AGXVehicleContinuousTrackDevice::copyStateFrom(const AGXVehicleContinuousTrackDevice& other)
 {
     on_ = other.on_;
-    upAxis = other.upAxis;
-    numberOfNodes = other.numberOfNodes;
-    nodeThickness = other.nodeThickness;
-    nodeWidth = other.nodeWidth;
-    nodeDistanceTension = other.nodeDistanceTension;
-    sprocketNames = other.sprocketNames;
-    idlerNames = other.idlerNames;
-    rollerNames = other.rollerNames;
+    AGXVehicleContinuousTrackDeviceDesc desc;
+    AGXVehicleContinuousTrackDevice& dev = const_cast<AGXVehicleContinuousTrackDevice&>(other);
+    dev.getDesc(desc);  // Need to get desc. So do const_cast above.
+    setDesc(desc);
 }
 
 
@@ -208,9 +209,17 @@ int AGXVehicleContinuousTrackDevice::numRollerNames() const
 
 const string* AGXVehicleContinuousTrackDevice::getRollerNames() const
 {
-    if(rollerNames.empty()) return nullptr;
+    if (rollerNames.empty()) return nullptr;
     return &rollerNames.front();
 }
 
+void AGXVehicleContinuousTrackDevice::setDesc(const AGXVehicleContinuousTrackDeviceDesc& desc){
+    static_cast<AGXVehicleContinuousTrackDeviceDesc&>(*this) = desc;
+}
+
+void AGXVehicleContinuousTrackDevice::getDesc(AGXVehicleContinuousTrackDeviceDesc& desc)
+{
+    desc = static_cast<AGXVehicleContinuousTrackDeviceDesc&>(*this);
+}
 
 }
