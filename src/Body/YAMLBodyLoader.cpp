@@ -637,19 +637,7 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
         topNode->throwException(_("This version of the Choreonoid body format is not supported"));
     }
 
-    auto angleUnitNode = topNode->extract("angleUnit");
-    if(!angleUnitNode){
-        sceneReader.setAngleUnit(YAMLSceneReader::DEGREE);
-    } else {
-        string unit = angleUnitNode->toString();
-        if(unit == "radian"){
-            sceneReader.setAngleUnit(YAMLSceneReader::RADIAN);
-        } else if(unit == "degree"){
-            sceneReader.setAngleUnit(YAMLSceneReader::DEGREE);
-        } else {
-            angleUnitNode->throwException(_("The \"angleUnit\" value must be either \"radian\" or \"degree\""));
-        }
-    }
+    sceneReader.readHeader(*topNode);
 
     if(extract(topNode, "name", symbol)){
         body->setModelName(symbol);

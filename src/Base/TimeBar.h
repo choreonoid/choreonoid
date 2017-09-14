@@ -19,6 +19,8 @@ public:
     static void initialize(ExtensionManager* ext);
     static TimeBar* instance();
 
+    ~TimeBar();
+
     /**
        \note If any connected slot returns false, the playback is canceled.
        
@@ -82,7 +84,6 @@ protected:
         
 private:
     TimeBar();
-    virtual ~TimeBar();
         
     TimeBarImpl* impl;
     double time_;

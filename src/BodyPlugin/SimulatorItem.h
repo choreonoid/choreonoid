@@ -88,6 +88,7 @@ public:
     virtual ~SimulatorItem();
 
     virtual double worldTimeStep();
+    void setTimeStep(double step);
 
     virtual bool startSimulation(bool doReset = true);
     virtual void stopSimulation();
@@ -158,10 +159,6 @@ public:
     */
     SignalProxy<void(const std::vector<SimulationBodyPtr>& simulationBodies)>
         sigSimulationBodyListUpdated();
-
-    /*
-    virtual void setExternalForce(BodyItem* bodyItem, Link* link, const Vector6& f);
-    */
 
     /**
        @param point link local position to apply the force

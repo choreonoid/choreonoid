@@ -11,6 +11,7 @@ using namespace cnoid;
 namespace program_options = boost::program_options;
 
 namespace {
+
 struct OptionInfo {
     OptionInfo() : options("Options") { }
     program_options::options_description options;
@@ -19,10 +20,13 @@ struct OptionInfo {
 };
 
 OptionInfo* info = 0;
+
+Signal<void(boost::program_options::variables_map& variables)> sigOptionsParsed_[2];
+
 }
 
 
-bool OptionManager::parseCommandLine(int argc, char *argv[])
+bool OptionManager::parseCommandLine1(int argc, char *argv[])
 {
     if(!info){
         info = new OptionInfo;
@@ -48,10 +52,18 @@ bool OptionManager::parseCommandLine(int argc, char *argv[])
         cout << info->options << endl;
         terminated = true;
     } else {
-        sigOptionsParsed_(info->variables);
+        sigOptionsParsed_[0](info->variables);
         terminated = false;
     }
 
+    return !terminated;
+}
+
+
+void OptionManager::parseCommandLine2()
+{
+    sigOptionsParsed_[1](info->variables);
+    
     // The destructors of the OptionInfo members should be executed here
     // because their elements may be driven by the code instantiated in the plug-in dlls.
     // If the destructors are called when the program is finished after the plug-ins are
@@ -59,9 +71,8 @@ bool OptionManager::parseCommandLine(int argc, char *argv[])
     // by calling the non-existent codes.
     delete info;
     info = 0;
-    sigOptionsParsed_.disconnect_all_slots();
-
-    return !terminated;
+    sigOptionsParsed_[0].disconnect_all_slots();
+    sigOptionsParsed_[1].disconnect_all_slots();
 }
 
 
@@ -119,3 +130,16 @@ OptionManager& OptionManager::addPositionalOption(const char* name, int maxCount
     }
     return *this;
 }
+
+
+SignalProxy<void(boost::program_options::variables_map& variables)> OptionManager::sigOptionsParsed(int phase)
+{
+    if(phase < 0){
+        phase = 0;
+    } else if(phase > 1){
+        phase = 1;
+    }
+    return sigOptionsParsed_[phase];
+}
+
+

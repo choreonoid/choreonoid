@@ -41,14 +41,14 @@ Third-part libraries bundled with the Choreonoid source distribution:
     * zlib (http://zlib.net/)
         see thirdparty/zlib123/README
 
-    * GLEW (http://glew.sourceforge.net/)
-        see thirdparty/glew-1.9.0/LICENSE.txt
-
     * OPCODE (http://www.codercorner.com/Opcode.htm)
         see src/AISTCollisionDetector/Opcode/ReadMe.txt
 
     * gettext (http://www.gnu.org/software/gettext/)
         see thirdparty/windows/include/libintl.h
+
+    * pybind11 (https://github.com/pybind/pybind11)
+        see thirdparty/pybind11-2.1.1/LICENSE
 
     * Sol (https://github.com/ThePhD/sol2)
         see thirdparty/sol2/LICENSE

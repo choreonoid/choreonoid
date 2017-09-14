@@ -5,7 +5,7 @@
 #ifndef CNOID_PYTHON_PLUGIN_PYTHON_EXECUTOR_H
 #define CNOID_PYTHON_PLUGIN_PYTHON_EXECUTOR_H
 
-#include "PythonPlugin.h"
+#include <cnoid/PyUtil>
 #include <cnoid/Signal>
 #include "exportdecl.h"
 
@@ -32,15 +32,15 @@ public:
     bool execCode(const std::string& code);
     bool execFile(const std::string& filename);
     bool waitToFinish(double timeout);
-    boost::python::object resultObject();
+    python::object resultObject();
     const std::string resultString() const;
     SignalProxy<void()> sigFinished();
 
     bool hasException() const;
     const std::string exceptionTypeName() const;
     const std::string exceptionText() const;
-    boost::python::object exceptionType() const;
-    boost::python::object exceptionValue() const;
+    python::object exceptionType() const;
+    python::object exceptionValue() const;
 
     bool isTerminated() const;
         

@@ -3,7 +3,6 @@
 */
 
 #include "PythonConsoleView.h"
-#include "PythonPlugin.h"
 #include <cnoid/PyUtil>
 #include <cnoid/MessageView>
 #include <cnoid/ViewManager>
@@ -13,17 +12,17 @@
 #include <QEventLoop>
 #include <QMimeData>
 #include <boost/algorithm/string.hpp>
-#include <boost/assign.hpp>
 #include <QMimeData>
 #include <list>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using namespace boost::assign;
-namespace python = boost::python;
 
 namespace {
+
+PythonConsoleView* pythonConsoleView = nullptr;
+
 const unsigned int HISTORY_SIZE = 100;
 
 class PythonConsoleOut
@@ -42,10 +41,14 @@ public:
     python::object readline();
 };
 
-
 }
 
 namespace cnoid {
+
+// defined in PythonPlugin.cpp
+python::module getMainModule();
+python::module getSysModule();
+python::object getGlobalNamespace();
     
 class PythonConsoleViewImpl : public QPlainTextEdit
 {
@@ -65,6 +68,8 @@ public:
     std::vector<string> keywords;
     Signal<void(const std::string& output)> sigOutput;
 
+    python::module mainModule;
+    python::object globalNamespace;
     python::object consoleOut;
     python::object consoleIn;
     python::object sys;
@@ -78,7 +83,6 @@ public:
     void putln(const QString& message);
     void putPrompt();
     void execCommand();
-    python::object getMemberObject(std::vector<string>& moduleNames);
     python::object getMemberObject(std::vector<string>& moduleNames, python::object& parentObject);
     std::vector<string> getMemberNames(python::object& moduleObject);
     void tabComplete();
@@ -126,8 +130,15 @@ python::object PythonConsoleIn::readline()
 
 void PythonConsoleView::initializeClass(ExtensionManager* ext)
 {
-    ext->viewManager().registerClass<PythonConsoleView>(
-        "PythonConsoleView", N_("Python Console"), ViewManager::SINGLE_DEFAULT);
+    pythonConsoleView =
+        ext->viewManager().registerClass<PythonConsoleView>(
+            "PythonConsoleView", N_("Python Console"), ViewManager::SINGLE_DEFAULT);
+}
+
+
+PythonConsoleView* PythonConsoleView::instance()
+{
+    return pythonConsoleView;
 }
 
 
@@ -144,7 +155,9 @@ PythonConsoleViewImpl::PythonConsoleViewImpl(PythonConsoleView* self)
     isConsoleInMode = false;
     inputColumnOffset = 0;
 
-    splitStringVec += " ","{","}", "(", ")","[","]","<",">",":",";","^","@","\"",",","\\","!","#","'","=","|","*","?","\t";
+    splitStringVec = {
+        " ", "{",  "}", "(",  ")", "[", "]", "<", ">", ":", ";", "^",
+        "@", "\"", ",", "\\", "!", "#", "'", "=", "|", "*", "?", "\t" };
     
     self->setDefaultLayoutArea(View::BOTTOM);
 
@@ -157,37 +170,73 @@ PythonConsoleViewImpl::PythonConsoleViewImpl(PythonConsoleView* self)
     hbox->addWidget(this);
     self->setLayout(hbox);
 
-    PyGILock lock;
+    python::gil_scoped_acquire lock;
+
+    mainModule = getMainModule();
+    globalNamespace = getGlobalNamespace();
     
 #ifdef _WIN32
-    try { interpreter = python::import("code").attr("InteractiveConsole")(pythonMainNamespace());
+    try { interpreter = python::module::import("code").attr("InteractiveConsole")(globalNamespace);
     } catch (...) { /* ignore the exception on windows. this module is loaded already. */} 
 #else
-    interpreter = python::import("code").attr("InteractiveConsole")(pythonMainNamespace());
+    interpreter = python::module::import("code").attr("InteractiveConsole")(globalNamespace);
 #endif
 
+    
+#ifdef CNOID_USE_PYBIND11
+    pybind11::object consoleOutClass =
+        pybind11::class_<PythonConsoleOut>(mainModule, "PythonConsoleOut")
+        .def(pybind11::init<>())
+#else
     python::object consoleOutClass =
-        python::class_<PythonConsoleOut>("PythonConsoleOut", python::init<>())
+        boost::python::class_<PythonConsoleOut>("PythonConsoleOut", python::init<>())
+#endif
         .def("write", &PythonConsoleOut::write);
+    
     consoleOut = consoleOutClass();
-    PythonConsoleOut& consoleOut_ = python::extract<PythonConsoleOut&>(consoleOut);
+
+#ifdef CNOID_USE_PYBIND11
+    PythonConsoleOut& consoleOut_ = consoleOut.cast<PythonConsoleOut&>();
+#else
+    PythonConsoleOut& consoleOut_ = boost::python::extract<PythonConsoleOut&>(consoleOut);
+#endif
     consoleOut_.setConsole(this);
 
     python::object consoleInClass =
+#ifdef CNOID_USE_PYBIND11
+        pybind11::class_<PythonConsoleIn>(mainModule, "PythonConsoleIn")
+        .def(pybind11::init<>())
+#else
         python::class_<PythonConsoleIn>("PythonConsoleIn", python::init<>())
+#endif
         .def("readline", &PythonConsoleIn::readline);
+    
     consoleIn = consoleInClass();
+    
+#ifdef CNOID_USE_PYBIND11
+    PythonConsoleIn& consoleIn_ = consoleIn.cast<PythonConsoleIn&>();
+#else
     PythonConsoleIn& consoleIn_ = python::extract<PythonConsoleIn&>(consoleIn);
+#endif
     consoleIn_.setConsole(this);
     
-    sys = pythonSysModule();
+    sys = getSysModule();
 
-    python::object keyword = python::import("keyword");
+    python::object keyword = python::module::import("keyword");
+#ifdef CNOID_USE_PYBIND11
+    pybind11::list kwlist = pybind11::cast<pybind11::list>(keyword.attr("kwlist"));
+    for(int i = 0; i < pybind11::len(kwlist); ++i){
+        keywords.push_back(pybind11::cast<string>(kwlist[i]));
+    }
+#else
     python::list kwlist = python::extract<python::list>(keyword.attr("kwlist"));
-    for(int i = 0; i < python::len(kwlist); ++i) keywords.push_back(python::extract<string>(kwlist[i]));
+    for(int i = 0; i < python::len(kwlist); ++i){
+        keywords.push_back(python::extract<string>(kwlist[i]));
+    }
+#endif
 
     histIter = history.end();
-
+    
     putln(QString("Python %1").arg(Py_GetVersion()));
     
     prompt = ">>> ";
@@ -197,7 +246,7 @@ PythonConsoleViewImpl::PythonConsoleViewImpl(PythonConsoleView* self)
 
 PythonConsoleView::~PythonConsoleView()
 {
-    PyGILock lock;
+    python::gil_scoped_acquire lock;
     delete impl;
 }
 
@@ -252,7 +301,7 @@ void PythonConsoleViewImpl::putPrompt()
 
 void PythonConsoleViewImpl::execCommand()
 {
-    PyGILock lock;
+    python::gil_scoped_acquire lock;
     
     orgStdout = sys.attr("stdout");
     orgStderr = sys.attr("stderr");
@@ -265,8 +314,12 @@ void PythonConsoleViewImpl::execCommand()
     QString command = getInputString();
     
     put("\n"); // This must be done after getInputString().
-        
+
+#ifdef CNOID_USE_PYBIND11
+    if(interpreter.attr("push")(command.toStdString()).cast<bool>()){
+#else
     if(python::extract<bool>(interpreter.attr("push")(command.toStdString()))){
+#endif
         setPrompt("... ");
     } else {
         setPrompt(">>> ");
@@ -279,17 +332,12 @@ void PythonConsoleViewImpl::execCommand()
     sys.attr("stdout") = orgStdout;
     sys.attr("stderr") = orgStderr;
     sys.attr("stdin") = orgStdin;
-
+    
     addToHistory(command);
-
+    
     putPrompt();
 }
-
-python::object PythonConsoleViewImpl::getMemberObject(std::vector<string>& moduleNames)
-{
-    python::object parentObject = pythonMainModule();
-    return getMemberObject(moduleNames,parentObject);
-}
+    
 
 python::object PythonConsoleViewImpl::getMemberObject(std::vector<string>& moduleNames, python::object& parentObject)
 {
@@ -303,10 +351,11 @@ python::object PythonConsoleViewImpl::getMemberObject(std::vector<string>& modul
             return python::object();
         }else{
             python::object childObject = parentObject.attr(moduleName.c_str());
-            return getMemberObject(moduleNames,childObject);
+            return getMemberObject(moduleNames, childObject);
         }
     }
 }
+
 
 std::vector<string> PythonConsoleViewImpl::getMemberNames(python::object& moduleObject)
 {
@@ -314,18 +363,33 @@ std::vector<string> PythonConsoleViewImpl::getMemberNames(python::object& module
     if(pPyObject == NULL){
         return std::vector<string>();
     }
-    python::handle<> h( PyObject_Dir(pPyObject) );
+#ifdef CNOID_USE_PYBIND11
+    pybind11::handle h( PyObject_Dir(pPyObject) );
+    pybind11::list memberNames = h.cast<pybind11::list>();
+#else
+    python::handle<> h(PyObject_Dir(pPyObject));
     python::list memberNames = python::extract<python::list>(python::object(h));
+#endif
     std::vector<string> retNames;
     for(int i=0; i < python::len(memberNames); ++i){
-        if(!strstr(string(python::extract<string>(memberNames[i])).c_str(), "__" )) retNames.push_back(string(python::extract<string>(memberNames[i])));
+#ifdef CNOID_USE_PYBIND11
+        if(!strstr(string(memberNames[i].cast<string>()).c_str(), "__" )){
+            retNames.push_back(string(memberNames[i].cast<string>()));
+        }
+#else
+        if(!strstr(string(python::extract<string>(memberNames[i])).c_str(), "__" )){
+            retNames.push_back(string(python::extract<string>(memberNames[i])));
+        }
+#endif
     }
     return retNames;
 }
 
+
 void PythonConsoleViewImpl::tabComplete()
 {
-    PyGILock lock;
+    python::gil_scoped_acquire lock;
+
     orgStdout = sys.attr("stdout");
     orgStderr = sys.attr("stderr");
     orgStdin = sys.attr("stdin");
@@ -348,18 +412,18 @@ void PythonConsoleViewImpl::tabComplete()
     beforeCursorString = beforeCursorString.substr(0,maxSplitIdx);
 
     std::vector<string> dottedStrings;
-    boost::split(dottedStrings,lastWord,boost::is_any_of("."));
+    boost::split(dottedStrings, lastWord, boost::is_any_of("."));
     string lastDottedString = dottedStrings.back();// word after last dot
 
     std::vector<string> moduleNames = dottedStrings;// words before last dot
     moduleNames.pop_back();
 
-    python::object targetMemberObject = getMemberObject(moduleNames);//member object before last dot
+    python::object targetMemberObject = getMemberObject(moduleNames, mainModule); //member object before last dot
     std::vector<string> memberNames = getMemberNames(targetMemberObject);
 
     // builtin function and syntax completions
     if(dottedStrings.size() == 1){
-        python::object builtinsObject =  pythonMainModule().attr("__builtins__");
+        python::object builtinsObject =  mainModule.attr("__builtins__");
         std::vector<string> builtinMethods = getMemberNames(builtinsObject);
         memberNames.insert(memberNames.end(), builtinMethods.begin(), builtinMethods.end());
         memberNames.insert(memberNames.end(), keywords.begin(), keywords.end());
@@ -425,7 +489,9 @@ void PythonConsoleViewImpl::tabComplete()
         str.append(maxCommonStr);
         str.append(afterCursorString.toStdString());
         setInputString(QString(str.c_str()));
-        for(int i=0; i < afterCursorString.toStdString().size(); ++i) moveCursor(QTextCursor::Left);
+        for(int i=0; i < afterCursorString.toStdString().size(); ++i){
+            moveCursor(QTextCursor::Left);
+        }
     }
 }
 

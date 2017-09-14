@@ -262,35 +262,35 @@ public:
     void insert(const Mapping* other);
 
     Mapping* openMapping(const std::string& key) {
-        return openMapping(key, false);
+        return openMapping_(key, false);
     }
         
     Mapping* openFlowStyleMapping(const std::string& key) {
-        return openFlowStyleMapping(key, false);
+        return openFlowStyleMapping_(key, false);
     }
 
     Mapping* createMapping(const std::string& key) {
-        return openMapping(key, true);
+        return openMapping_(key, true);
     }
         
     Mapping* createFlowStyleMapping(const std::string& key) {
-        return openFlowStyleMapping(key, true);
+        return openFlowStyleMapping_(key, true);
     }
 
     Listing* openListing(const std::string& key) {
-        return openListing(key, false);
+        return openListing_(key, false);
     }
         
     Listing* openFlowStyleListing(const std::string& key){
-        return openFlowStyleListing(key, false);
+        return openFlowStyleListing_(key, false);
     }
 
     Listing* createListing(const std::string& key){
-        return openListing(key, true);
+        return openListing_(key, true);
     }
         
     Listing* createFlowStyleListing(const std::string& key){
-        return openFlowStyleListing(key, true);
+        return openFlowStyleListing_(key, true);
     }
 
     bool remove(const std::string& key);
@@ -377,10 +377,10 @@ private:
     Mapping(const Mapping& org);
     Mapping& operator=(const Mapping&);
 
-    Mapping* openMapping(const std::string& key, bool doOverwrite);
-    Mapping* openFlowStyleMapping(const std::string& key, bool doOverwrite);
-    Listing* openListing(const std::string& key, bool doOverwrite);
-    Listing* openFlowStyleListing(const std::string& key, bool doOverwrite);
+    Mapping* openMapping_(const std::string& key, bool doOverwrite);
+    Mapping* openFlowStyleMapping_(const std::string& key, bool doOverwrite);
+    Listing* openListing_(const std::string& key, bool doOverwrite);
+    Listing* openFlowStyleListing_(const std::string& key, bool doOverwrite);
 
     inline void insertSub(const std::string& key, ValueNode* node);
 

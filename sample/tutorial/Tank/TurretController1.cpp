@@ -13,10 +13,8 @@ public:
     virtual bool initialize(SimpleControllerIO* io)
     {
         joint = io->body()->link("TURRET_P");
-
-        io->setLinkInput (joint, JOINT_ANGLE);
-        io->setLinkOutput(joint, JOINT_TORQUE);
-
+        io->setLinkInput(joint, JOINT_ANGLE);
+        joint->setActuationMode(Link::JOINT_TORQUE);
         q_ref = q_prev = joint->q();
 
         dt = io->timeStep();
