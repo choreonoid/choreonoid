@@ -26,8 +26,8 @@ AGXVehicleContinuousTrack::AGXVehicleContinuousTrack(AGXVehicleContinuousTrackDe
         }
         // create rotate matrix
         Link* l_link = l_agxLink->getOrgLink();
-        const Vector3& a = l_link->attitude() * l_link->a();            // rotational axis
-        const Vector3& u = l_link->attitude() * device->getUpAxis();    // up axis
+        const Vector3& a = l_link->a();            // rotational axis
+        const Vector3& u = device->getUpAxis();    // up axis
         const agx::Vec3 ny = agx::Vec3(a(0), a(1), a(2)).normal();
         const agx::Vec3 nz = agx::Vec3(u(0), u(1), u(2)).normal();
         const agx::Vec3 nx = ny.cross(nz);
@@ -43,7 +43,8 @@ AGXVehicleContinuousTrack::AGXVehicleContinuousTrack(AGXVehicleContinuousTrackDe
         l_desc.model = model;
         l_desc.radius = l_cylinder->getRadius();
         l_desc.rbRelTransform.setRotate(l_desc.rigidbody->getRotation());
-        l_desc.rbRelTransform.setRotate(q * l_desc.rigidbody->getRotation());
+        l_desc.rbRelTransform.setRotate(rotation);
+        //l_desc.rbRelTransform.setRotate(q * l_desc.rigidbody->getRotation());
         //return AGXObjectFactory::createVehicleTrackWheel(l_desc);
 
         agxVehicle::TrackWheelRef wheel = AGXObjectFactory::createVehicleTrackWheel(l_desc);
