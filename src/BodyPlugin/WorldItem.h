@@ -55,4 +55,3 @@ typedef ref_ptr<WorldItem> WorldItemPtr;
 }
 
 #endif
-
