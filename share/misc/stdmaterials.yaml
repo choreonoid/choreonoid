@@ -1,0 +1,18 @@
+materials:
+  -
+    name: Ground
+    roughness: 0.5
+  -
+    name: Tracks
+    roughness: 0.5
+  -
+    name: OilWetGround
+    roughness: 0.1
+
+contactMaterials:
+  -
+    materials: [ Ground, Tracks ]
+    frictionCoefficient: 0.5
+  -
+    materials: [ OilWetGround, Tracks ]
+    frictionCoefficient: 0.1
