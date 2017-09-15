@@ -1,4 +1,5 @@
 #include "AGXScene.h"
+#include "AGXBody.h"
 
 namespace cnoid{
 
@@ -7,7 +8,7 @@ AGXScene::AGXScene(const AGXSceneDesc& desc)
     _agxSimulation = AGXObjectFactory::createSimulation(desc.simdesc);
 }
 
-AGXSceneRef AGXScene::create(const AGXSceneDesc& desc)
+AGXScene* AGXScene::create(const AGXSceneDesc& desc)
 {
     return new AGXScene(desc);
 }
@@ -23,7 +24,7 @@ void AGXScene::stepSimulation()
     getSimulation()->stepForward();
 }
 
-void AGXScene::add(AGXBodyPtr agxBody) {
+void AGXScene::add(AGXBody* agxBody) {
     // Add AGXRigidbody and constraint to AGX simulation
     for(int i = 0; i < agxBody->numAGXLinks(); ++i){
         add(agxBody->getAGXRigidBody(i));
@@ -44,6 +45,12 @@ void AGXScene::add(AGXBodyPtr agxBody) {
         setCollisionPair(scgname, scgname, false);
     }
 
+    // Add AGXBodyExtensions
+    AGXBodyExtensionPtrs bes =  agxBody->getAGXBodyExtensions();
+    for(auto it = bes.begin(); it !=bes.end(); ++it){
+        add((*it)->getAssembly());
+    }
+
     // Set self collision
     if(!agxBody->bodyItem()->isSelfCollisionDetectionEnabled()){
         const std::string& scgname = agxBody->getSelfCollisionGroupName();
@@ -55,17 +62,17 @@ void AGXScene::add(AGXBodyPtr agxBody) {
     }
 }
 
-agx::Bool AGXScene::add(agx::RigidBodyRef const rigid)
+agx::Bool AGXScene::add(agx::RigidBody* const rigid)
 {
     return getSimulation()->add(rigid);
 }
 
-agx::Bool AGXScene::add(agx::ConstraintRef const constraint)
+agx::Bool AGXScene::add(agx::Constraint* const constraint)
 {
     return getSimulation()->add(constraint);
 }
 
-agx::Bool AGXScene::add(agxSDK::AssemblyRef const assembly)
+agx::Bool AGXScene::add(agxSDK::Assembly* const assembly)
 {
     return getSimulation()->add(assembly);
 }

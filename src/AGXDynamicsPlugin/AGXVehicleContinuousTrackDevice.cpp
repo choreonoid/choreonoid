@@ -39,7 +39,7 @@ bool readAGXVehicleContinuousTrackDevice(YAMLBodyLoader& loader, Mapping& node)
     ValueNodePtr const upAxis = info->extract("upAxis");
     if(upAxis){
         Listing& u = *upAxis->toListing();
-        if(!u.size() == 3) return false;
+        if(u.size() != 3) return false;
         desc.upAxis = Vector3(u[0].toDouble(), u[1].toDouble(), u[2].toDouble());
     }else{
         return false;

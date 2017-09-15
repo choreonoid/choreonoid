@@ -2,9 +2,10 @@
 #define CNOID_AGXDYNAMICS_PLUGIN_AGX_SCENE_H
 
 #include "AGXObjectFactory.h"
-#include "AGXBody.h"
 
 namespace cnoid{
+
+class AGXBody;
 
 struct AGXSceneDesc
 {
@@ -12,19 +13,17 @@ struct AGXSceneDesc
     AGXSimulationDesc simdesc;
 };
 
-class AGXScene;
-typedef agx::ref_ptr<AGXScene> AGXSceneRef;
 class AGXScene : public agx::Referenced
 {
 public:
     AGXScene(const AGXSceneDesc& desc);
-    static AGXSceneRef create(const AGXSceneDesc& desc);
+    static AGXScene* create(const AGXSceneDesc& desc);
     void clear();
     void stepSimulation();
-    void add(AGXBodyPtr agxBody);
-    agx::Bool add(agx::RigidBodyRef const rigid);
-    agx::Bool add(agx::ConstraintRef const constraint);
-    agx::Bool add(agxSDK::AssemblyRef const assembly);
+    void add(AGXBody* agxBody);
+    agx::Bool add(agx::RigidBody* const rigid);
+    agx::Bool add(agx::Constraint* const constraint);
+    agx::Bool add(agxSDK::Assembly* const assembly);
     agx::MaterialRef getMaterial(const agx::String& materialName);
     agx::MaterialRef createMaterial(const AGXMaterialDesc& desc);
     agx::ContactMaterialRef createContactmaterial(agx::MaterialRef const matA, agx::MaterialRef const matB, const AGXContactMaterialDesc& desc);
@@ -41,6 +40,7 @@ private:
     agxSDK::SimulationRef _agxSimulation;
     agxSDK::SimulationRef getSimulation() const;
 };
+typedef agx::ref_ptr<AGXScene> AGXSceneRef;
 
 }
 #endif
