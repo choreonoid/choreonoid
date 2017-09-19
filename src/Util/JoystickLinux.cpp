@@ -351,8 +351,10 @@ double JoystickImpl::readDirectionPadAsAxis(int axis)
         break;
 
     default:
-        return 0.0;
+        break;
     }
+
+    return 0.0;
 }
 
 

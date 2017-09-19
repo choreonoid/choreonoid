@@ -326,6 +326,7 @@ public:
             }
         }
         node.throwException(_("Invalid type value is used as a jointRange value"));
+        return 0.0;
     }
 
     bool readAngle(Mapping& node, const char* key, double& angle){
