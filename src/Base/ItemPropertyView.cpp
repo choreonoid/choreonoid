@@ -28,11 +28,13 @@
 #include <QFileDialog>
 #include <boost/variant.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/filesystem.hpp>
 #include <iostream>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
+namespace filesystem = boost::filesystem;
 
 namespace {
 
@@ -67,7 +69,7 @@ struct Double {
     };
 };
 
-typedef boost::variant<bool, Int, Double, string, Selection, FilePath> ValueVariant;
+typedef boost::variant<bool, Int, Double, string, Selection, FilePathProperty> ValueVariant;
 
 typedef boost::variant<std::function<bool(bool)>,
                        std::function<bool(int)>,
@@ -116,12 +118,14 @@ public:
 
 class FilePathEditor : public QWidget
 {
+    QTableWidget* tableWidget;
     QLineEdit* lineEdit;
-    FilePath currentValue;
+    FilePathProperty currentValue;
     
 public:
-    FilePathEditor(QWidget* parent)
-        : QWidget(parent)
+    FilePathEditor(QTableWidget* tableWidget, QWidget* parent)
+        : QWidget(parent),
+          tableWidget(tableWidget)
     {
         setAutoFillBackground(true);
         auto hbox = new QHBoxLayout;
@@ -137,18 +141,22 @@ public:
         hbox->addWidget(button);
     }
 
-    void setValue(const FilePath& value)
+    void setValue(const FilePathProperty& value)
     {
         currentValue = value;
-        lineEdit->setText(value.filename.c_str());
+        lineEdit->setText(value.filename().c_str());
     }
 
     QString value() const
     {
-        return lineEdit->text();
+        if(currentValue.baseDirectory().empty()){
+            return lineEdit->text();
+        } else {
+            return (filesystem::path(currentValue.baseDirectory()) / lineEdit->text().toStdString()).string().c_str();
+        }
     }
 
-    void openFileDialog(FilePath value)
+    void openFileDialog(FilePathProperty value)
     {
         QFileDialog dialog(MainWindow::instance());
         dialog.setWindowTitle(_("Select File"));
@@ -156,26 +164,44 @@ public:
         dialog.setFileMode(QFileDialog::ExistingFile);
         dialog.setLabelText(QFileDialog::Accept, _("Select"));
         dialog.setLabelText(QFileDialog::Reject, _("Cancel"));
-        if(!value.directory.empty()){
-            dialog.setDirectory(value.directory.c_str());
+
+        filesystem::path directory;
+        if(value.baseDirectory().empty()){
+            filesystem::path filenamePath(value.filename());
+            if(filenamePath.is_absolute()){
+                directory = filenamePath.parent_path();
+            } else {
+                directory = AppConfig::archive()->get("currentFileDialogDirectory", shareDirectory());
+            }
         } else {
-            dialog.setDirectory(AppConfig::archive()->get("currentFileDialogDirectory", shareDirectory()).c_str());
+            directory = value.baseDirectory();
         }
+        dialog.setDirectory(directory.string().c_str());
+        
         QStringList filters;
-        for(auto& filter : value.filters){
+        for(auto& filter : value.filters()){
             filters << filter.c_str();
         }
         filters << _("Any files (*)");
         dialog.setNameFilters(filters);
+        
         if(dialog.exec()){
             QStringList filenames;
             filenames = dialog.selectedFiles();
-            if(value.directory.empty()){
-                AppConfig::archive()->writePath(
-                    "currentFileDialogDirectory", dialog.directory().absolutePath().toStdString());
+            filesystem::path newDirectory(dialog.directory().absolutePath().toStdString());
+            if(newDirectory != directory){
+                AppConfig::archive()->writePath("currentFileDialogDirectory", newDirectory.string());
+                value.setBaseDirectory("");
             }
-            value.filename = filenames.at(0).toStdString();
+            string filename(filenames.at(0).toStdString());
+            if(value.baseDirectory().empty()){
+                value.setFilename(filename);
+            } else {
+                value.setFilename(filesystem::path(filename).filename().string());
+            }
             setValue(value);
+
+            tableWidget->itemDelegate()->commitData(this);
         }
     }
 };
@@ -270,7 +296,7 @@ public:
                 break;
 
             case TYPE_FILEPATH:
-                editor = new FilePathEditor(parent);
+                editor = new FilePathEditor(tableWidget, parent);
                 break;
 
             default:
@@ -286,7 +312,7 @@ public:
         PropertyItem* item = tableWidget->itemFromIndex(index);
         if(item && item->value.which() == TYPE_FILEPATH){
             if(FilePathEditor* fpEditor = dynamic_cast<FilePathEditor*>(editor)){
-                fpEditor->setValue(boost::get<FilePath>(item->value));
+                fpEditor->setValue(boost::get<FilePathProperty>(item->value));
                 return;
             }
         }
@@ -447,16 +473,16 @@ public:
         addProperty(name, new PropertyItem
                     (this, selection,  std::function<bool(int)>(ReturnTrue<int>(func))));
     }
-    void operator()(const std::string& name, const FilePath& filePath){
-        addProperty(name, new PropertyItem(this, filePath) );
+    void operator()(const std::string& name, const FilePathProperty& filepath){
+        addProperty(name, new PropertyItem(this, filepath) );
     }
-    void operator()(const std::string& name, const FilePath& filePath,
+    void operator()(const std::string& name, const FilePathProperty& filepath,
                     const std::function<bool(const std::string&)>& func){
-        addProperty(name, new PropertyItem(this, filePath, func) );
+        addProperty(name, new PropertyItem(this, filepath, func) );
     }
-    void operator()(const std::string& name, const FilePath& filePath,
+    void operator()(const std::string& name, const FilePathProperty& filepath,
                     const std::function<void(const std::string&)>& func, bool forceUpdate){
-        addProperty(name, new PropertyItem(this, filePath, std::function<bool(const std::string&)>(ReturnTrue<const std::string&>(func))));
+        addProperty(name, new PropertyItem(this, filepath, std::function<bool(const std::string&)>(ReturnTrue<const std::string&>(func))));
     }
 
     void clear();
@@ -513,7 +539,7 @@ QVariant PropertyItem::data(int role) const
         }
 
         case TYPE_FILEPATH:
-            return boost::get<FilePath>(value).filename.c_str();
+            return boost::get<FilePathProperty>(value).filename().c_str();
         }
 
     }

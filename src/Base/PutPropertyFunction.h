@@ -11,19 +11,22 @@
 
 namespace cnoid {
 
-struct FilePath
+class FilePathProperty
 {
-    std::string filename;
-    std::vector<std::string> filters;
-    std::string directory;
-    bool isRelative;
+    std::string filename_;
+    std::string baseDirectory_;
+    std::vector<std::string> filters_;
 
-    FilePath() : isRelative(false) { }
-    FilePath(const std::string& filename) : filename(filename), isRelative(false) { }
-    FilePath(const std::string& filename, const std::vector<std::string>& filters)
-        : filename(filename), filters(filters), isRelative(false) { }
-    FilePath(const std::string& filename, const std::vector<std::string>& filters, const std::string& directory, bool isRelative = false)
-        : filename(filename), filters(filters), directory(directory), isRelative(isRelative) { }
+public:
+    FilePathProperty() { }
+    FilePathProperty(const std::string& filename, const std::vector<std::string>& filters)
+        : filename_(filename), filters_(filters) { }
+    void setFilename(const std::string& filename) { filename_ = filename; }
+    void setBaseDirectory(const std::string& dir) { baseDirectory_ = dir; }
+    void setFilters(const std::vector<std::string>& filters) { filters_ = filters; }
+    const std::string& filename() const { return filename_; };
+    const std::string& baseDirectory() const { return baseDirectory_; };
+    const std::vector<std::string>& filters() const { return filters_; }
 };
 
 
@@ -76,10 +79,10 @@ public:
                             const std::function<void(int which)>& changeFunc, bool forceUpdate) = 0;
 
     // FilePath
-    virtual void operator()(const std::string& name, const FilePath& filePath) = 0;
-    virtual void operator()(const std::string& name, const FilePath& filePath,
+    virtual void operator()(const std::string& name, const FilePathProperty& filepath) = 0;
+    virtual void operator()(const std::string& name, const FilePathProperty& filepath,
                             const std::function<bool(const std::string&)>& changeFunc) = 0;
-    virtual void operator()(const std::string& name, const FilePath& filePath,
+    virtual void operator()(const std::string& name, const FilePathProperty& filepath,
                             const std::function<void(const std::string&)>& changeFunc, bool forceUpdate) = 0;
 };
 

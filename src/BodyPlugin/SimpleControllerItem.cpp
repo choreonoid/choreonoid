@@ -81,8 +81,8 @@ public:
     Selection pathBase;
 
     enum PathBase {
-        CONTROLLER_DIRECTORY = 0,
-        PROJECT_DIRECTORY,
+        GENERAL_DIRECTORY = 0,
+        CONTROLLER_DIRECTORY,
         N_PATH_BASE
     };
 
@@ -154,8 +154,8 @@ SimpleControllerItemImpl::SimpleControllerItemImpl(SimpleControllerItem* self)
     io = 0;
     mv = MessageView::instance();
     doReloading = true;
+    pathBase.setSymbol(GENERAL_DIRECTORY, N_("None"));
     pathBase.setSymbol(CONTROLLER_DIRECTORY, N_("Controller directory"));
-    pathBase.setSymbol(PROJECT_DIRECTORY, N_("Project directory"));
     pathBase.select(CONTROLLER_DIRECTORY);
 }
 
@@ -798,15 +798,23 @@ void SimpleControllerItem::doPutProperties(PutPropertyFunction& putProperty)
 
 void SimpleControllerItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
-    FilePath file(controllerModuleName);
-    file.filters = { str(format(_("Dynamic Link Library (*.%1%)")) % DLL_EXTENSION) };
-    if(!controllerModuleName.empty() && checkAbsolute(filesystem::path(controllerModuleName))){
-        file.directory = filesystem::path(controllerModuleName).parent_path().string();
-    } else if(pathBase.is(CONTROLLER_DIRECTORY)){
-        file.directory = (filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "simplecontroller").string();
+    FilePathProperty moduleProperty;
+    moduleProperty.setFilters({ str(format(_("Dynamic Link Library (*.%1%)")) % DLL_EXTENSION) });
+    filesystem::path modulePath(controllerModuleName);
+    filesystem::path controllerDirectory = filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "simplecontroller";
+    if(modulePath.is_absolute()){
+        if(modulePath.parent_path() == controllerDirectory){
+            pathBase.select(CONTROLLER_DIRECTORY);
+            modulePath = modulePath.filename();
+        } else {
+            pathBase.select(GENERAL_DIRECTORY);
+        }
     }
-    putProperty(_("Controller module"), file,
-                [&](const string& name){ self->setController(name); return true; });
+    moduleProperty.setFilename(modulePath.string());
+    if(pathBase.is(CONTROLLER_DIRECTORY)){
+        moduleProperty.setBaseDirectory(controllerDirectory.string());
+    }
+    putProperty(_("Controller module"), moduleProperty, [&](const string& name){ self->setController(name); return true; });
     putProperty(_("Relative Path Base"), pathBase, changeProperty(pathBase));
 
     putProperty(_("Reloading"), doReloading, [&](bool on){ return onReloadingChanged(on); });
@@ -848,8 +856,10 @@ bool SimpleControllerItemImpl::restore(const Archive& archive)
     }
     archive.read("reloading", doReloading);
     string symbol;
-    if (archive.read("RelativePathBase", symbol)){
-        pathBase.select(symbol);
+    if(archive.read("RelativePathBase", symbol)){
+        if(!pathBase.select(symbol)){
+            pathBase.select(GENERAL_DIRECTORY);
+        }
     }
     return true;
 }
