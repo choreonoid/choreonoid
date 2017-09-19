@@ -18,10 +18,13 @@ public:
     virtual bool initialize(SimpleControllerIO* io)
     {
         body = io->body();
-        io->setJointInput(JOINT_ANGLE | JOINT_VELOCITY);
 
         steeringJoint = body->link("STEERING");
+        io->enableIO(steeringJoint);
+        
         frontWheelJoint = body->link("FRONT_WHEEL");
+        io->enableInput(frontWheelJoint, JOINT_VELOCITY);
+        io->enableOutput(frontWheelJoint);
         
         dt = io->timeStep();
         steer_ref = 0.0;

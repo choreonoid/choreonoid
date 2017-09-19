@@ -144,7 +144,7 @@ RTC::ReturnCode_t TankJoystickControllerRTC::onExecute(RTC::UniqueId ec_id)
 
     if(buttonsIn.isNew()){
         buttonsIn.read();
-        bool lightButtonState = buttons.data[1];
+        bool lightButtonState = buttons.data[0];
         if(lightButtonState){
             if(!lastLightButtonState){
                 isLightOn = !isLightOn;

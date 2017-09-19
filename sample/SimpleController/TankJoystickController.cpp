@@ -13,7 +13,7 @@ using namespace cnoid;
 namespace {
 
 const int axisID[] = { 0, 1, 2, 3 };
-const int buttonID[] = { 1, 0, 3 };
+const int buttonID[] = { 0, 2, 3 };
 
 }
 
@@ -43,6 +43,8 @@ public:
             os << "The tracks are not found." << endl;
             return false;
         }
+        io->enableOutput(trackL);
+        io->enableOutput(trackR);
 
         turretJoint[0] = body->link("TURRET_Y");
         turretJoint[1] = body->link("TURRET_P");
@@ -53,7 +55,7 @@ public:
                 return false;
             }
             qref[i] = qprev[i] = joint->q();
-            io->setLinkInput(joint, JOINT_ANGLE);
+            io->enableIO(joint);
         }
 
         dt = io->timeStep();
@@ -125,10 +127,10 @@ public:
 
             if(spotLight){
                 if(joystick.getButtonState(buttonID[1])){
-                    spotLight->setBeamWidth(std::min(0.7854f, spotLight->beamWidth() + 0.001f));
+                    spotLight->setBeamWidth(std::max(0.1f, spotLight->beamWidth() - 0.001f));
                     changed = true;
                 } else if(joystick.getButtonState(buttonID[2])){
-                    spotLight->setBeamWidth(std::max(0.1f, spotLight->beamWidth() - 0.001f));
+                    spotLight->setBeamWidth(std::min(0.7854f, spotLight->beamWidth() + 0.001f));
                     changed = true;
                 }
             }

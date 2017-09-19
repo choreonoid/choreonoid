@@ -20,8 +20,8 @@ public:
 
     virtual bool control()
     {
-        static const int buttonID[] = { 1, 0, 3 };
-
+        static const int buttonID[] = { 0, 2, 3 };
+        
         joystick.readCurrentState();
 
         bool changed = false;
@@ -34,10 +34,10 @@ public:
         prevButtonState = currentState;
 
         if(joystick.getButtonState(buttonID[1])){
-            light->setBeamWidth(std::min(0.7854f, light->beamWidth() + 0.001f));
+            light->setBeamWidth(std::max(0.1f, light->beamWidth() - 0.001f));
             changed = true;
         } else if(joystick.getButtonState(buttonID[2])){
-            light->setBeamWidth(std::max(0.1f, light->beamWidth() - 0.001f));
+            light->setBeamWidth(std::min(0.7854f, light->beamWidth() + 0.001f));
             changed = true;
         }
 

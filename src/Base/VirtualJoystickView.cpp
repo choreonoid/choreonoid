@@ -57,9 +57,9 @@ ButtonInfo buttonInfo[] = {
     { "J", 4, 7, true, -1.0, 2, Qt::Key_J },
     { "L", 4, 9, true,  1.0, 2, Qt::Key_L },
 
-    { "A", 2, 10, false, 1.0, 1, Qt::Key_A },
-    { "B", 1, 11, false, 1.0, 2, Qt::Key_B },
-    { "X", 1,  9, false, 1.0, 0, Qt::Key_X },
+    { "A", 2, 10, false, 1.0, 0, Qt::Key_A },
+    { "B", 1, 11, false, 1.0, 1, Qt::Key_B },
+    { "X", 1,  9, false, 1.0, 2, Qt::Key_X },
     { "Y", 0, 10, false, 1.0, 3, Qt::Key_Y }
 };
     

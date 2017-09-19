@@ -11,6 +11,8 @@ libqt4-opengl-dev \
 qt4-dev-tools \
 qt4-qtconfig \
 qt4-doc-html \
+qt5-default \
+libqt5x11extras5-dev \
 libxfixes-dev \
 libglew-dev \
 libyaml-dev \

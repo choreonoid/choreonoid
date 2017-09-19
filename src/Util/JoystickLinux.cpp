@@ -5,7 +5,6 @@
 #include "Joystick.h"
 #include "ExtJoystick.h"
 #include <boost/format.hpp>
-#include <boost/dynamic_bitset.hpp>
 #include <linux/joystick.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
@@ -14,32 +13,76 @@
 #include <cstring>
 #include <string>
 #include <vector>
-#include <cmath>
+#include <map>
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
+using boost::format;
+
+namespace {
+
+enum Model { PS4, PS3, XBOX, F310_XInput, F310_DirectInput, UNSUPPORTED };
+
+// Left-Stick, Right-Stick, DirectionalPad, L2, R2
+const int NUM_STD_AXES = 8;    
+
+const int PS4_Axes[]         = {  0,  1,  2,  5,  6,  7,  3,  4 };
+const int PS3_Axes[]         = {  0,  1,  2,  3, -1, -1, 12, 13 };
+const int XBOX_Axes[]        = {  0,  1,  3,  4,  6,  7,  2,  5 };
+const int F310X_Axes[]       = {  0,  1,  3,  4,  6,  7,  2,  5 };
+const int F310D_Axes[]       = {  0,  1,  2,  3,  4,  5, -1, -1 };
+const int Unsupported_Axes[] = { -1, -1, -1, -1, -1, -1, -1, -1 };
+
+// A, B, X, Y, L1, R1, SELECT(PS4:share), START(PS4:option), Left-Stick, Right-Stick, Logo(PS4:PS)
+const int NUM_STD_BUTTONS = 11; 
+//const int PS4_Buttons[]   =     {  0,  1,  2,  3,  4,  5, 10, 11,  9,  8, 12 };
+const int PS4_Buttons[]   =       {  1,  2,  0,  3,  4,  5,  8,  9, 10, 11, 12 };
+const int PS3_Buttons[]   =       { 14, 13, 15, 12, 10, 11,  0,  3,  1,  2, 16 };
+const int XBOX_Buttons[]  =       {  0,  1,  2,  3,  4,  5,  6,  7,  9, 10,  8 };
+const int F310X_Buttons[] =       {  0,  1,  2,  3,  4,  5,  6,  7,  9, 10,  8 };
+const int F310D_Buttons[] =       {  1,  2,  0,  3,  4,  5,  8,  9, 10, 11, -1 };
+const int Unsupported_Buttons[] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+
+
+struct ModelInfo {
+    Model id;
+    const int* axisMap;
+    const int* buttonMap;
+};
+
+const map<string, ModelInfo> modelMap = {
+
+    // CUH-ZCT1J or CUH-ZCT2J
+    { "Sony Computer Entertainment Wireless Controller",    { PS4,  PS4_Axes,  PS4_Buttons } },
+    
+    { "Sony Interactive Entertainment Wireless Controller", { PS4,  PS4_Axes,  PS4_Buttons } },
+    { "Sony PLAYSTATION(R)3 Controller",                    { PS3,  PS3_Axes,  PS3_Buttons } },
+    { "Microsoft X-Box 360 pad",                            { XBOX, XBOX_Axes, XBOX_Axes } },
+    { "Microsoft X-Box One pad",                            { XBOX, XBOX_Axes, XBOX_Axes } },
+    { "Logitech Gamepad F310",                              { F310_XInput, F310X_Axes, F310D_Axes } }
+};
+
+ModelInfo unsupportedModel { UNSUPPORTED, Unsupported_Axes, Unsupported_Buttons };
+
+}
 
 namespace cnoid {
 
 class JoystickImpl
 {
 public:
-    enum Model { PS4=0, PS3=1, XBOX=2, F310_XInput=3, F310_DirectInput=4, OTHER=5 };
-    static const int STANDARD_AXIS_NUM = 8;    // LeftStick, RightStick, DirectionalPad, L2, R2
-    static const int STANDARD_BUTTON_NUM = 11; // square,cross,circle,triangle,L1,R1,L3,R3,START(PS4:option),SELECT(PS4:share),Logo(PS4:PS)
     Joystick* self;
     ExtJoystick* extJoystick;
     int fd;
     vector<double> axes;
-    dynamic_bitset<> axisEnabled;
+    vector<bool> axisEnabled;
     vector<bool> buttons;
     string errorMessage;
     Signal<void(int id, bool isPressed)> sigButton;
     Signal<void(int id, double position)> sigAxis;
-    Model model;
-    vector<int> axis_map;
-    vector<int> button_map;
+
+    ModelInfo currentModel;
+    
     vector<bool> record_init_pos;
     vector<double> initial_pos;
     vector<bool> initialized;
@@ -107,55 +150,25 @@ bool JoystickImpl::openDevice(const char* device)
 
     char identifier[1024];
     ioctl(fd, JSIOCGNAME(sizeof(identifier)), identifier);
-    string model_id = identifier;
-    axis_map.resize(STANDARD_AXIS_NUM);
-    static const vector<int> PS4_AM{ 0, 1, 2, 5, 6, 7, 3, 4 };
-    static const vector<int> PS3_AM{ 0, 1, 2, 3, -1, -1, 12, 13 };
-    static const vector<int> XBOX_AM{ 0, 1, 3, 4, 6, 7, 2, 5 };
-    static const vector<int> F310_X_AM{ 0, 1, 3, 4, 6, 7, 2, 5 };
-    static const vector<int> F310_D_AM{ 0, 1, 2, 3, 4, 5, -1, -1 };
-    static const vector<int> OTHER_AM(STANDARD_AXIS_NUM, -1);
-    button_map.resize(STANDARD_BUTTON_NUM);
-    // Mapping square, cross, circle, triangle, L1, R1, L3, R3, START, SELECT, LOGO
-    static const vector<int> PS4_BM{ 0, 1, 2, 3, 4, 5, 10, 11, 9, 8, 12 };
-    static const vector<int> PS3_BM{ 15, 14, 13, 12, 10, 11, 1, 2, 3, 0, 16 };
-    static const vector<int> XBOX_BM{ 2, 0, 1, 3, 4, 5, 9, 10, 7, 6, 8 };
-    static const vector<int> F310_X_BM{ 2, 0, 1, 3, 4, 5, 9, 10, 7, 6, 8 };
-    static const vector<int> F310_D_BM{ 0, 1, 2, 3, 4, 5, 10, 11, 9, 8, -1 };
-    static const vector<int> OTHER_BM(STANDARD_BUTTON_NUM, -1);
-    if(model_id == "Sony Computer Entertainment Wireless Controller" || model_id == "Sony Interactive Entertainment Wireless Controller"){
-      // CUH-ZCT1J or CUH-ZCT2J
-      model = PS4;
-      axis_map = PS4_AM;
-      button_map = PS4_BM;
-      record_init_pos.assign(axisEnabled.size(), false);
-      initial_pos.assign(axisEnabled.size(), 0.0);
-      initialized.assign(axisEnabled.size(), false);
-      vector<double> PS4_analog_input_defaults = { 0.0, 0.0, 0.0, -1.0, -1.0, 0.0 };  // Lstick_H, Lstick_V, Rstick_H, L2, R2, Rstick_V
-      vector<double> PS4_default_positions(axisEnabled.size()-PS4_analog_input_defaults.size(), 0.0);
-      copy(PS4_analog_input_defaults.begin(), PS4_analog_input_defaults.end(), back_inserter(PS4_axes_default_pos));
-      copy(PS4_default_positions.begin(), PS4_default_positions.end(), back_inserter(PS4_axes_default_pos));
-    }else if(model_id == "Sony PLAYSTATION(R)3 Controller"){
-      model = PS3;
-      axis_map = PS3_AM;
-      button_map = PS3_BM;
-    }else if(model_id == "Microsoft X-Box 360 pad" || model_id == "Microsoft X-Box One pad"){
-      model = XBOX;
-      axis_map = XBOX_AM;
-      button_map = XBOX_BM;
-    }else if(model_id == "Logitech Gamepad F310"){
-      model = F310_XInput;
-      axis_map = F310_X_AM;
-      button_map = F310_X_BM;
-    }else if(model_id == "Logicool Logicool Dual Action"){
-      model = F310_DirectInput;
-      axis_map = F310_D_AM;
-      button_map = F310_D_BM;
-    }else{
-      model = OTHER;
-      axis_map = OTHER_AM;
-      button_map = OTHER_BM;
+
+    auto iter = modelMap.find(identifier);
+    if(iter != modelMap.end()){
+        currentModel = iter->second;
+    } else {
+        currentModel = unsupportedModel;
     }
+
+    if(currentModel.id == PS4){
+        record_init_pos.assign(axisEnabled.size(), false);
+        initial_pos.assign(axisEnabled.size(), 0.0);
+        initialized.assign(axisEnabled.size(), false);
+        // Lstick_H, Lstick_V, Rstick_H, L2, R2, Rstick_V
+        vector<double> PS4_analog_input_defaults = { 0.0, 0.0, 0.0, -1.0, -1.0, 0.0 };  
+        vector<double> PS4_default_positions(axisEnabled.size() - PS4_analog_input_defaults.size(), 0.0);
+        copy(PS4_analog_input_defaults.begin(), PS4_analog_input_defaults.end(), back_inserter(PS4_axes_default_pos));
+        copy(PS4_default_positions.begin(), PS4_default_positions.end(), back_inserter(PS4_axes_default_pos));
+    }
+    
     // read initial state
     return readCurrentState();
 }    
@@ -272,23 +285,25 @@ bool JoystickImpl::readEvent()
         if(axisEnabled[id]){
             // normalize value (-1.0〜1.0)
             pos = nearbyint(pos * 10.0) / 10.0;
-            if(model==PS4){
+
+            if(currentModel.id == PS4){
                 // analog stick input of PS4 is -1.0 before first operation.
                 if(!record_init_pos[id]){
                     initial_pos[id] = pos;
-                    pos = PS4_axes_default_pos[id];    // replace input for default value
+                    pos = PS4_axes_default_pos[id]; // replace input for default value
                     record_init_pos[id] = true;
                     initialized[id] = false;
                 } else {
                     if(!initialized[id]){
                         if(pos == initial_pos[id]){
-                            pos = PS4_axes_default_pos[id];    // replace input for default value
+                            pos = PS4_axes_default_pos[id]; // replace input for default value
                         } else {
-                            initialized[id]=true;     // analog stick input changed
+                            initialized[id]=true; // analog stick input changed
                         }
                     }
                 }
             }
+            
             double prevPos = axes[id];
             if(pos != prevPos){
                 axes[id] = pos;
@@ -301,33 +316,45 @@ bool JoystickImpl::readEvent()
 
 double JoystickImpl::readDirectionPadAsAxis(int axis)
 {
-    if(model==PS3 && axis==4){
-      if(buttons[5]){
-        return 1.0;
-      }else if(buttons[7]){
-        return -1.0;
-      }
-    }else if(model==PS3 && axis==5){
-      if(buttons[4]){
-        return -1.0;
-      }else if(buttons[6]){
-        return 1.0;
-      }
-    }else if(model==F310_DirectInput && axis==6){
-      if(buttons[6]){
-        return 1.0;
-      }else{
-        return -1.0;
-      }
-    }else if(model==F310_DirectInput && axis==7){
-      if(buttons[7]){
-        return 1.0;
-      }else{
-        return -1.0;
-      }
+    switch(currentModel.id){
+
+    case PS3:
+        if(axis == 4){
+            if(buttons[5]){
+                return 1.0;
+            } else if(buttons[7]){
+                return -1.0;
+            }
+        } else if(axis==5){
+            if(buttons[4]){
+                return -1.0;
+            } else if(buttons[6]){
+                return 1.0;
+            }
+        }
+        break;
+
+    case F310_DirectInput:
+        if(axis==6){
+            if(buttons[6]){
+                return 1.0;
+            } else {
+                return -1.0;
+            }
+        } else if(axis==7){
+            if(buttons[7]){
+                return 1.0;
+            }else{
+                return -1.0;
+            }
+        }
+        break;
+
+    default:
+        return 0.0;
     }
-    return 0.0;
 }
+
 
 double Joystick::getPosition(int axis) const
 {
@@ -335,15 +362,17 @@ double Joystick::getPosition(int axis) const
         return impl->extJoystick->getPosition(axis);
     }
 
-    if(impl->model == JoystickImpl::OTHER || axis >= JoystickImpl::STANDARD_AXIS_NUM){
-      return getNativePosition(axis);
+    if(impl->currentModel.id == UNSUPPORTED || axis >= NUM_STD_AXES){
+        return getNativePosition(axis);
     }
 
-    if(impl->axis_map[axis]==-1){
+    int axisIndex = impl->currentModel.axisMap[axis];
+    if(axisIndex >= 0){
+      return impl->axes[axisIndex];
+    } else {
       return impl->readDirectionPadAsAxis(axis);
-    }else{
-      return impl->axes[impl->axis_map[axis]];
     }
+
     return 0.0;
 }
 
@@ -354,13 +383,15 @@ bool Joystick::getButtonState(int button) const
         return impl->extJoystick->getButtonState(button);
     }
 
-    if(impl->model == JoystickImpl::OTHER || button >= JoystickImpl::STANDARD_BUTTON_NUM){
-      return getNativeButtonState(button);
+    if(impl->currentModel.id == UNSUPPORTED || button >= NUM_STD_BUTTONS){
+        return getNativeButtonState(button);
     }
 
-    if(impl->button_map[button]!=-1){
-      return impl->buttons[impl->button_map[button]];
+    int buttonIndex = impl->currentModel.buttonMap[button];
+    if(buttonIndex >= 0){
+        return impl->buttons[buttonIndex];
     }
+    
     return false;
 }
 

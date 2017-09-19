@@ -25,6 +25,9 @@ public:
             return false;
         }
 
+        io->enableOutput(crawlerL);
+        io->enableOutput(crawlerR);
+
         time = 0.0;
         dt = io->timeStep();
         

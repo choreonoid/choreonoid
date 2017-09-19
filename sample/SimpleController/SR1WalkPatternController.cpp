@@ -62,7 +62,11 @@ public:
             io->setJointInput(JOINT_ANGLE);
             io->os() << "SR1WalkPatternController: torque control mode." << endl;
         }
-        for(auto link : ioBody->joints()) link->setActuationMode(actuationMode);
+
+        for(auto joint : ioBody->joints()){
+            joint->setActuationMode(actuationMode);
+            io->enableIO(joint);
+        }
 
         string filename = getNativePathString(
             boost::filesystem::path(shareDirectory()) / "motion" / "SR1" / patternFile);
@@ -100,8 +104,8 @@ public:
         return true;
     }
 
-    virtual bool control() {
-
+    virtual bool control()
+    {
         switch(actuationMode){
 
         case Link::JOINT_TORQUE:

@@ -48,16 +48,18 @@ items:
                 controller: "TankJoystickController"
                 reloading: true
                 inputLinkPositions: false
-            - 
-              id: 4
-              name: "LightController"
-              plugin: SimpleController
-              class: SimpleControllerItem
-              data: 
-                isImmediateMode: true
-                controller: "TankLightController"
-                reloading: true
-                inputLinkPositions: false
+              children:
+                - 
+                  id: 4
+                  name: "LightBlinkController"
+                  plugin: Body
+                  class: SimpleControllerItem
+                  data: 
+                    isImmediateMode: true
+                    controllerOptions: ""
+                    controller: "LightBlinkController"
+                    reloading: true
+                    RelativePathBase: "Controller directory"
         - 
           id: 5
           name: "Labo1"

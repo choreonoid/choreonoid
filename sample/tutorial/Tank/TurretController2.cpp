@@ -19,9 +19,8 @@ public:
 
         for(int i=0; i < 2; ++i){
             Link* joint = joints[i];
+            io->enableIO(joint);
             q_ref[i] = q_prev[i] = joint->q();
-            io->setLinkInput(joint, JOINT_ANGLE);
-            joint->setActuationMode(Link::JOINT_TORQUE);
         }
 
         dt = io->timeStep();

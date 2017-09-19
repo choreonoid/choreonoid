@@ -102,7 +102,7 @@ bool TankIoRTC::initializeSimulation(ControllerItemIO* io)
     turretP = ioBody->link("TURRET_P");
     trackL = ioBody->link("TRACK_L");
     trackR = ioBody->link("TRACK_R");
-    light = ioBody->findDevice<Light>("MainLight");
+    light = ioBody->findDevice<Light>("Light");
     return true;
 }
 
