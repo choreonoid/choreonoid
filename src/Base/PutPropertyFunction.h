@@ -11,18 +11,19 @@
 
 namespace cnoid {
 
-typedef std::vector<std::string> FileDialogFilter;
 struct FilePath
 {
     std::string filename;
     std::vector<std::string> filters;
     std::string directory;
-    
-    FilePath(const std::string& filename) : filename(filename) { }
+    bool isRelative;
+
+    FilePath() : isRelative(false) { }
+    FilePath(const std::string& filename) : filename(filename), isRelative(false) { }
     FilePath(const std::string& filename, const std::vector<std::string>& filters)
-        : filename(filename), filters(filters) { }
-    FilePath(const std::string& filename, const std::vector<std::string>& filters, const std::string& directory)
-        : filename(filename), filters(filters), directory(directory) { }
+        : filename(filename), filters(filters), isRelative(false) { }
+    FilePath(const std::string& filename, const std::vector<std::string>& filters, const std::string& directory, bool isRelative = false)
+        : filename(filename), filters(filters), directory(directory), isRelative(isRelative) { }
 };
 
 

@@ -798,20 +798,18 @@ void SimpleControllerItem::doPutProperties(PutPropertyFunction& putProperty)
 
 void SimpleControllerItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
+    FilePath file(controllerModuleName);
+    file.filters = { str(format(_("Dynamic Link Library (*.%1%)")) % DLL_EXTENSION) };
+    if(!controllerModuleName.empty() && checkAbsolute(filesystem::path(controllerModuleName))){
+        file.directory = filesystem::path(controllerModuleName).parent_path().string();
+    } else if(pathBase.is(CONTROLLER_DIRECTORY)){
+        file.directory = (filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "simplecontroller").string();
+    }
+    putProperty(_("Controller module"), file,
+                [&](const string& name){ self->setController(name); return true; });
     putProperty(_("Relative Path Base"), pathBase, changeProperty(pathBase));
 
-    FileDialogFilter filter { str(format(_("Dynamic Link Library (*.%1%)")) % DLL_EXTENSION) };
-    string dir;
-    if(!controllerModuleName.empty() && checkAbsolute(filesystem::path(controllerModuleName)))
-        dir = filesystem::path(controllerModuleName).parent_path().string();
-    else{
-        if(pathBase.is(CONTROLLER_DIRECTORY))
-            dir = (filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "simplecontroller").string();
-    }
-    putProperty(_("Controller module"), FilePath(controllerModuleName, filter, dir),
-                [&](const string& name){ self->setController(name); return true; });
-    putProperty(_("Reloading"), doReloading,
-                [&](bool on){ return onReloadingChanged(on); });
+    putProperty(_("Reloading"), doReloading, [&](bool on){ return onReloadingChanged(on); });
 }
 
 
