@@ -6,7 +6,10 @@ namespace {
 bool createSample(cnoid::AGXBody* agxBody)
 {
     cnoid::AGXBodyExtensionPtr ptr = new cnoid::AGXBodyExtension(agxBody); 
-    if(ptr) return true;
+    if(ptr){
+        agxBody->addAGXBodyExtension(ptr);
+        return true;
+    }
     return false;
 };
 

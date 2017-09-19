@@ -4,8 +4,8 @@ if(NOT ENABLE_GUI)
   return()
 endif()
 
-option(BUILD_AGXBODY_EXTENSION_PLUGIN "Building a AGXBodyExtensionPlugin" OFF)
-if(NOT BUILD_AGXBODY_EXTENSION_PLUGIN)
+option(BUILD_AGX_BODYEXTENSION_PLUGIN "Building a AGXBodyExtensionPlugin" OFF)
+if(NOT BUILD_AGX_BODYEXTENSION_PLUGIN)
   return()
 endif()
 

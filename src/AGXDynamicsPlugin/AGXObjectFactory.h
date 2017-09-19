@@ -343,6 +343,7 @@ public:
     static agxCollide::ShapeRef createShape(const AGXShapeDesc& desc);
     static agx::ConstraintRef createConstraint(const AGXConstraintDesc& desc);
     static agx::FrameRef createFrame();
+    static agxSDK::AssemblyRef createAssembly();
 private:
     AGXObjectFactory();
     static agx::Bool setContactMaterialParam(agx::ContactMaterialRef const cm, const AGXContactMaterialDesc& desc);

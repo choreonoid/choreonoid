@@ -3,7 +3,8 @@
 
 namespace cnoid {
 
-AGXVehicleContinuousTrack::AGXVehicleContinuousTrack(AGXVehicleContinuousTrackDevice* const device, AGXBodyPtr agxBody){
+AGXVehicleContinuousTrack::AGXVehicleContinuousTrack(AGXVehicleContinuousTrackDevice* const device, AGXBody* const agxBody) : AGXBodyExtension(agxBody)
+{
     _device = device;
     AGXVehicleTrackDesc trackDesc;
 
@@ -30,6 +31,7 @@ AGXVehicleContinuousTrack::AGXVehicleContinuousTrack(AGXVehicleContinuousTrackDe
         const Vector3& u = device->getUpAxis();    // up axis
         const agx::Vec3 ny = agx::Vec3(a(0), a(1), a(2)).normal();
         const agx::Vec3 nz = agx::Vec3(u(0), u(1), u(2)).normal();
+        if(ny * nz > 1e-6) return nullptr;   // Vectors maybe not orthogonal to each other
         const agx::Vec3 nx = ny.cross(nz);
         agx::OrthoMatrix3x3 rotation;
         rotation.setColumn(0, nx);
@@ -102,7 +104,7 @@ AGXVehicleContinuousTrack::AGXVehicleContinuousTrack(AGXVehicleContinuousTrackDe
             break;
     }
     _track = AGXObjectFactory::createVehicleTrack(trackDesc);
-    addAGXAssembly(_track);
+    getAssembly()->add(_track);
 }
 
 

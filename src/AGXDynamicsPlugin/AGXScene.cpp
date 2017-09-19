@@ -31,35 +31,21 @@ void AGXScene::add(AGXBody* agxBody) {
         add(agxBody->getAGXConstraint(i));
     }
 
-    // Add bodyparts (extrajoint, continous track)
-    for(int i = 0; i < agxBody->numAGXBodyParts(); ++i){
-        AGXBodyPartPtr bp = agxBody->getAGXBodyPart(i);
-        for(int j = 0; j < bp->numAGXConstraints(); ++j){
-            add(bp->getAGXConstraint(j));
-        }
-        for(int j = 0; j < bp->numAGXAssemblys(); ++j){
-            add(bp->getAGXAssembly(j));
-        }
-        if(!bp->hasSelfCollisionGroupName()) continue;
-        const std::string& scgname = bp->getSelfCollisionGroupName();
-        setCollisionPair(scgname, scgname, false);
-    }
-
     // Add AGXBodyExtensions
     AGXBodyExtensionPtrs bes =  agxBody->getAGXBodyExtensions();
     for(auto it = bes.begin(); it !=bes.end(); ++it){
         add((*it)->getAssembly());
     }
 
+    // Disable collision 
+    const VectorString vs = agxBody->getCollisionGroupNamesToDisableCollision();
+    for(auto it = vs.begin(); it != vs.end(); ++it){
+        setCollision(*it, false);
+    }
     // Set self collision
-    if(!agxBody->bodyItem()->isSelfCollisionDetectionEnabled()){
-        const std::string& scgname = agxBody->getSelfCollisionGroupName();
-        setCollisionPair(scgname, scgname, false);
-    }
+    setCollision(agxBody->getCollisionGroupName(), agxBody->bodyItem()->isSelfCollisionDetectionEnabled());
     // Set external collision
-    if(!agxBody->bodyItem()->isCollisionDetectionEnabled()){
-        agxBody->setCollision(false);
-    }
+    agxBody->enableExternalCollision(agxBody->bodyItem()->isCollisionDetectionEnabled());
 }
 
 agx::Bool AGXScene::add(agx::RigidBody* const rigid)
@@ -99,6 +85,11 @@ agx::ContactMaterialRef AGXScene::createContactmaterial(agx::MaterialRef const m
 agx::ContactMaterialRef AGXScene::createContactMaterial(const AGXContactMaterialDesc &desc)
 {
     return AGXObjectFactory::createContactMaterial(desc, getSimulation()->getMaterialManager());
+}
+
+void AGXScene::setCollision(const agx::Name& name, bool bOn)
+{
+    getSimulation()->getSpace()->setEnablePair(name, name, bOn);
 }
 
 void AGXScene::setCollisionPair(const unsigned & id1, const unsigned & id2, bool bOn)

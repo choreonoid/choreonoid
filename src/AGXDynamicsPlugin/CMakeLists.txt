@@ -31,7 +31,6 @@ set(target CnoidAGXDynamicsPlugin)
 
 set(sources
   AGXBody.cpp
-  AGXBodyPart.cpp
   AGXObjectFactory.cpp
   AGXScene.cpp
   AGXDynamicsPlugin.cpp
@@ -44,7 +43,6 @@ set(sources
 
 set(headers
   AGXBody.h
-  AGXBodyPart.h
   AGXInclude.h
   AGXObjectFactory.h
   AGXScene.h
