@@ -146,6 +146,8 @@ void AGXContinousTrack::createTrackConstraint()
         agx::PlaneJointRef pj = AGXObjectFactory::createConstraintPlaneJoint(pd);
         getAssembly()->add((agx::ConstraintRef)pj);
 
+        // Force enable collision between other links
+        agxLink->getAGXGeometry()->removeGroup(getAGXBody()->getCollisionGroupName());
         // Disable collision between tracks
         agxLink->getAGXGeometry()->addGroup(trackCollsionGroupName.str());
     }
