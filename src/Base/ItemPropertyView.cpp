@@ -217,7 +217,7 @@ public:
         PropertyItem* item = tableWidget->itemFromIndex(index);
         if(item && item->value.which() == TYPE_FILEPATH){
             FilePath& v = boost::get<FilePath>(item->value);
-            QString strText = QString(v.fileName.c_str());
+            QString strText = QString(v.filename.c_str());
             QStyleOptionButton fileButton;
             fileButton.icon = QApplication::style()->standardIcon( QStyle::SP_FileDialogStart );
             QRect r = option.rect;
@@ -252,7 +252,7 @@ public:
                     tableWidget->repaint(rect);
                     FilePath& v = boost::get<FilePath>(item->value);
                     if( openFileDialog(v) ){
-                        item->setData( Qt::EditRole, v.fileName.c_str() );
+                        item->setData( Qt::EditRole, v.filename.c_str() );
                     }
                 }else if( e->type() == QEvent::MouseButtonPress){
                     item->buttonState = true;
@@ -283,7 +283,7 @@ public:
         if(dialog.exec()){
             QStringList fileNames;
             fileNames = dialog.selectedFiles();
-            v.fileName = fileNames.at(0).toStdString();
+            v.filename = fileNames.at(0).toStdString();
             return true;
         }
         return false;
@@ -481,7 +481,7 @@ QVariant PropertyItem::data(int role) const
         }
 
         case TYPE_FILEPATH:
-            return boost::get<FilePath>(value).fileName.c_str();
+            return boost::get<FilePath>(value).filename.c_str();
         }
 
     }

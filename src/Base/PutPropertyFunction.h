@@ -12,25 +12,19 @@
 namespace cnoid {
 
 typedef std::vector<std::string> FileDialogFilter;
-struct FilePath {
-    std::string fileName;
-    FileDialogFilter filters;
+struct FilePath
+{
+    std::string filename;
+    std::vector<std::string> filters;
     std::string directory;
-    FilePath(const std::string& name) {
-        fileName = name;
-    }
-    FilePath(const std::string& name, const FileDialogFilter& filters_, const std::string& dir="") {
-        fileName = name;
-        filters = filters_;
-        directory = dir;
-    }
- };
+    
+    FilePath(const std::string& filename) : filename(filename) { }
+    FilePath(const std::string& filename, const std::vector<std::string>& filters)
+        : filename(filename), filters(filters) { }
+    FilePath(const std::string& filename, const std::vector<std::string>& filters, const std::string& directory)
+        : filename(filename), filters(filters), directory(directory) { }
+};
 
-#ifndef WIN32
-#define DLLSFX string("(*.so)")
-#else
-#define DLLSFX string("(*.dll)")
-#endif
 
 class PutPropertyFunction
 {

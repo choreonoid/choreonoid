@@ -14,11 +14,13 @@
 #include <cnoid/ProjectManager>
 #include <cnoid/ItemManager>
 #include <QLibrary>
+#include <boost/format.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
+using boost::format;
 namespace filesystem = boost::filesystem;
 
 namespace {
@@ -798,8 +800,7 @@ void SimpleControllerItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Relative Path Base"), pathBase, changeProperty(pathBase));
 
-    FileDialogFilter filter;
-    filter.push_back( string(_(" Dynamic Link Library ")) + DLLSFX );
+    FileDialogFilter filter { str(format(_("Dynamic Link Library (*.%1%)")) % DLL_EXTENSION) };
     string dir;
     if(!controllerModuleName.empty() && checkAbsolute(filesystem::path(controllerModuleName)))
         dir = filesystem::path(controllerModuleName).parent_path().string();

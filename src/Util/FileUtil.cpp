@@ -5,32 +5,25 @@
 
 #include "FileUtil.h"
 
-//#ifdef _WIN32
-#if 0
-
-#include <boost/algorithm/string/case_conv.hpp>
-#include <windows.h>
-#include <mbctype.h>
-
-#define CNOID_FILE_UTIL_SUPPORT_WINDOWS_FILESYSTEM
-
-bool comparePathIterator(boost::filesystem::path::const_iterator& iter1, boost::filesystem::path::const_iterator& iter2)
-{
-    return to_lower_copy(iter1->string()) == to_lower_copy(iter2->string());
-}
-
-#else
-bool comparePathIterator(boost::filesystem::path::const_iterator& iter1, boost::filesystem::path::const_iterator& iter2)
-{
-    return *iter1 == *iter2;
-}
-
-#endif
-
 using namespace std;
 using namespace boost;
 
 namespace cnoid {
+
+#ifdef _WIN32
+const char* DLL_PREFIX = "";
+const char* DLL_EXTENSION = "dll";
+const char* PATH_DELIMITER = ";";
+#elif __APPLE__
+const char* DLL_PREFIX = "lib";
+const char* DLL_EXTENSION = "dylib";
+const char* PATH_DELIMITER = ":";
+#else
+const char* DLL_PREFIX = "lib";
+const char* DLL_EXTENSION = "so";
+const char* PATH_DELIMITER = ":";
+#endif
+
 
 void makePathCompact(const filesystem::path& path, filesystem::path& out_compact)
 {
@@ -58,7 +51,7 @@ int findSubDirectory(const filesystem::path& directory, const filesystem::path& 
         filesystem::path::const_iterator q = compactPath.begin();
 
         while(p != directory.end() && q != compactPath.end()){
-            if(!comparePathIterator(p, q)){
+            if(!(*p == *q)){
                 break;
             }
             ++numMatchedDepth;
@@ -90,7 +83,7 @@ bool findRelativePath(const filesystem::path& from_, const filesystem::path& to,
         filesystem::path::const_iterator q = to.begin();
         
         while(p != from.end() && q != to.end()){
-            if(!comparePathIterator(p, q)){
+            if(!(*p == *q)){
                 break;
             }
             ++p;
