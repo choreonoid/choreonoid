@@ -1,7 +1,11 @@
 #include "AGXBody.h"
 #include <cnoid/SceneDrawables>
-#include <boost/optional/optional.hpp>
 #include "AGXVehicleContinuousTrack.h"
+
+namespace {
+std::mutex agxBodyExtensionAdditionalFuncsMutex;
+AGXBodyExtensionFuncMap agxBodyExtensionAdditionalFuncs;
+};
 
 namespace cnoid{
 
@@ -11,13 +15,13 @@ AGXLink::AGXLink(const LinkPtr link) : _orgLink(link){}
 
 AGXLink::AGXLink(const LinkPtr link, const AGXLinkPtr parent, const Vector3& parentOrigin, const AGXBodyPtr agxBody)
 {
+    _agxBody = agxBody;
     _orgLink = link;
     _agxParentLink = parent;
     agxBody->addAGXLink(this);
     _origin = parentOrigin + link->b();
     const Link::ActuationMode& actuationMode = link->actuationMode();
     if(parent && actuationMode != Link::ActuationMode::NO_ACTUATION) agxBody->addControllableLink(this);
-    _selfCollisionGroupName = agxBody->getSelfCollisionGroupName();
     constructAGXLink();
     for(Link* child = link->child(); child; child = child->sibling()){
         new AGXLink(child, this, getOrigin(), agxBody);
@@ -33,7 +37,7 @@ void AGXLink::constructAGXLink()
     _constraint = createAGXConstraint();
 }
 
-void AGXLink::setCollision(const bool& bOn)
+void AGXLink::enableExternalCollision(const bool & bOn)
 {
     getAGXGeometry()->setEnableCollisions(bOn);
 }
@@ -170,9 +174,9 @@ agx::ConstraintRef AGXLink::getAGXConstraint() const
     return _constraint;
 }
 
-std::string AGXLink::getSelfCollisionGroupName() const
+AGXBody * AGXLink::getAGXBody()
 {
-    return _selfCollisionGroupName;
+    return _agxBody;
 }
 
 agx::RigidBodyRef AGXLink::createAGXRigidBody()
@@ -213,7 +217,7 @@ agxCollide::GeometryRef AGXLink::createAGXGeometry()
 {
     LinkPtr const orgLink = getOrgLink();
     AGXGeometryDesc gdesc;
-    gdesc.selfCollsionGroupName = getSelfCollisionGroupName();
+    gdesc.selfCollsionGroupName = getAGXBody()->getCollisionGroupName();
     if(orgLink->jointType() == Link::PSEUDO_CONTINUOUS_TRACK){
         gdesc.isPseudoContinuousTrack = true;
         const Vector3& a = orgLink->a();
@@ -500,12 +504,12 @@ void AGXBody::initialize()
     body->calcForwardKinematics(true, true);
     _agxLinks.clear();
     _controllableLinks.clear();
-    _agxBodyParts.clear();
+	_agxBodyExtensions.clear();
+    _collisionGroupNamesToDisableCollision.clear();
     std::stringstream ss;
     ss.str("");
-    ss << "SelfCollision" << generateUID() << body->name() << std::flush;
-    _selfCollisionGroupName = ss.str();
-
+    ss << generateUID() << body->name() << std::flush;
+    _bodyCollisionGroupName = ss.str();
     return;
 }
 
@@ -515,21 +519,30 @@ void AGXBody::createBody()
     // Create AGXLink following child link.
     new AGXLink(body()->rootLink(), nullptr, Vector3::Zero(), this);
     setLinkStateToAGX();
-    createContinuousTrack();
-    createAGXVehicleContinousTrack();
     createExtraJoint();
+    callExtensionFuncs();
 }
 
-std::string AGXBody::getSelfCollisionGroupName() const
+std::string AGXBody::getCollisionGroupName() const
 {
-    return _selfCollisionGroupName;
+    return _bodyCollisionGroupName;
 }
 
-void AGXBody::setCollision(const bool& bOn)
+void AGXBody::enableExternalCollision(const bool& bOn)
 {
     for(int i = 0; i < numAGXLinks(); ++i){
-        getAGXLink(i)->setCollision(bOn);
+        getAGXLink(i)->enableExternalCollision(bOn);
     }
+}
+
+void AGXBody::addCollisionGroupNameToDisableCollision(const std::string & name)
+{
+    return _collisionGroupNamesToDisableCollision.push_back(name);
+}
+
+const VectorString& AGXBody::getCollisionGroupNamesToDisableCollision() const
+{
+    return _collisionGroupNamesToDisableCollision;
 }
 
 void AGXBody::setAGXMaterial(const int & index, const agx::MaterialRef& mat)
@@ -650,21 +663,46 @@ agx::ConstraintRef AGXBody::getAGXConstraint(const int& index) const
     return getAGXLink(index)->getAGXConstraint();
 }
 
-int AGXBody::numAGXBodyParts() const
+bool AGXBody::addAGXBodyExtension(AGXBodyExtension* const extension)
 {
-    return _agxBodyParts.size();
+    _agxBodyExtensions.push_back(extension);
+    return false;
 }
 
-void AGXBody::addAGXBodyPart(AGXBodyPartPtr const bp)
+const AGXBodyExtensionPtrs& AGXBody::getAGXBodyExtensions() const
 {
-    _agxBodyParts.push_back(bp);
+    return _agxBodyExtensions;
 }
 
-AGXBodyPartPtr AGXBody::getAGXBodyPart(const int & index) const
-{
-    return _agxBodyParts[index];
+void AGXBody::callExtensionFuncs(){
+    // update func list
+    updateAGXBodyExtensionFuncs();
+    //agxBodyExtensionFuncs["hoge"] = [](AGXBody* agxBody){ std::cout << "hoge" << std::endl; return false;};
+    agxBodyExtensionFuncs["ContinousTrack"] = [&](AGXBody* agxBody){ return createContinuousTrack(agxBody); };
+    agxBodyExtensionFuncs["AGXVehicleContinousTrack"] = [&](AGXBody* agxBody){ return createAGXVehicleContinousTrack(this); };
+
+    // call
+    //agxBodyExtensionFuncs["AGXBodyExtensionSample"](this);
+    for(auto it = agxBodyExtensionFuncs.begin(); it !=agxBodyExtensionFuncs.end(); ++it){
+        (*it).second(this);
+    }
 }
 
+void AGXBody::addAGXBodyExtensionAdditionalFunc(const std::string& typeName,
+    std::function<bool(AGXBody* agxBody)> func){
+    std::lock_guard<std::mutex> guard(agxBodyExtensionAdditionalFuncsMutex);
+    agxBodyExtensionAdditionalFuncs[typeName] = func;
+}
+
+void AGXBody::updateAGXBodyExtensionFuncs(){
+    std::lock_guard<std::mutex> guard(agxBodyExtensionAdditionalFuncsMutex);
+    if(agxBodyExtensionAdditionalFuncs.size() > agxBodyExtensionFuncs.size()){
+        for(auto& p : agxBodyExtensionAdditionalFuncs){
+            AGXBodyExtensionFunc& func = p.second;
+            agxBodyExtensionFuncs[p.first] = func;
+        }
+    }
+}
 
 bool AGXBody::getAGXLinksFromInfo(const std::string& key, const bool& defaultValue, AGXLinkPtrs& agxLinks) const
 {
@@ -680,198 +718,29 @@ bool AGXBody::getAGXLinksFromInfo(const std::string& key, const bool& defaultVal
 void AGXBody::createExtraJoint()
 {
     if(this->body()->numExtraJoints() > 0) 
-        addAGXBodyPart(new AGXExtraJoint(this));
+        addAGXBodyExtension(new AGXExtraJoint(this));
 }
 
-void AGXBody::createContinuousTrack()
+bool AGXBody::createContinuousTrack(AGXBody* agxBody)
 {
     AGXLinkPtrs agxLinks;
-    if(!getAGXLinksFromInfo("isContinuousTrack", false, agxLinks)) return;
+    if(!getAGXLinksFromInfo("isContinuousTrack", false, agxLinks)) return false;
     for(int i = 0; i < agxLinks.size(); ++i){
-        addAGXBodyPart(new AGXContinousTrack(agxLinks[i], this));
+        addAGXBodyExtension(new AGXContinousTrack(agxLinks[i], this));
     }
+    return true;
 }
 
-void AGXBody::createAGXVehicleContinousTrack()
+bool AGXBody::createAGXVehicleContinousTrack(AGXBody* agxBody)
 {
     DeviceList<> devices = this->body()->devices();
     DeviceList<AGXVehicleContinuousTrackDevice> conTrackDevices;
     conTrackDevices.extractFrom(devices);
     for(int i = 0; i < conTrackDevices.size(); ++i){
-        addAGXBodyPart(new AGXVehicleContinuousTrack(conTrackDevices[i], this));
+        addAGXBodyExtension(new AGXVehicleContinuousTrack(conTrackDevices[i], this));
     }
+    return true;
 }
-
-//////////////////////////////////////////////////////////////
-//// AGXBodyPart
-//AGXBodyPart::AGXBodyPart()
-//{
-//    _hasSelfCollisionGroupName = false;
-//    _constraints.clear();
-//}
-//
-//bool AGXBodyPart::hasSelfCollisionGroupName() const
-//{
-//    return _hasSelfCollisionGroupName;
-//}
-//
-//std::string AGXBodyPart::getSelfCollisionGroupName() const 
-//{
-//    return _selfCollisionGroupName; 
-//}
-//
-//int AGXBodyPart::numAGXConstraints() const 
-//{ 
-//    return _constraints.size(); 
-//}
-//
-//agx::ConstraintRef AGXBodyPart::getAGXConstraint(const int& index) const 
-//{
-//    return  _constraints[index]; 
-//}
-//
-//void AGXBodyPart::setSelfCollsionGroupName(const std::string & name)
-//{
-//    _selfCollisionGroupName = name;
-//    _hasSelfCollisionGroupName = true;
-//}
-//
-//void AGXBodyPart::addAGXConstraint(agx::ConstraintRef const constraint)
-//{
-//    _constraints.push_back(constraint);
-//}
-//
-//////////////////////////////////////////////////////////////
-//// AGXExtraJoint
-//AGXExtraJoint::AGXExtraJoint(AGXBodyPtr agxBody)
-//{
-//    createJoints(agxBody);
-//}
-//
-//void AGXExtraJoint::createJoints(AGXBodyPtr agxBody)
-//{
-//    BodyPtr const body = agxBody->body();
-//    const int n = body->numExtraJoints();
-//    for(int j=0; j < n; ++j){
-//        ExtraJoint& extraJoint = body->extraJoint(j);
-//
-//        AGXLinkPtr agxLinkPair[2];
-//        agxLinkPair[0] = agxBody->getAGXLink(extraJoint.link[0]->index());
-//        agxLinkPair[1] = agxBody->getAGXLink(extraJoint.link[1]->index());
-//        if(!agxLinkPair[0] || !agxLinkPair[1]) continue;
-//
-//        Link* const link = extraJoint.link[0];
-//        const Vector3 p = link->attitude() * extraJoint.point[0] + link->p();
-//        const Vector3 a = link->attitude() * extraJoint.axis;
-//        agx::ConstraintRef constraint = nullptr;
-//        switch (extraJoint.type){
-//            case ExtraJoint::EJ_PISTON :{
-//                AGXHingeDesc hd;
-//                hd.frameAxis   = agx::Vec3( a(0), a(1), a(2));
-//                hd.frameCenter = agx::Vec3( p(0), p(1), p(2));
-//                hd.rigidBodyA = agxLinkPair[0]->getAGXRigidBody();
-//                hd.rigidBodyB = agxLinkPair[1]->getAGXRigidBody();
-//                constraint = AGXObjectFactory::createConstraint(hd);
-//            }
-//            case  ExtraJoint::EJ_BALL :{
-//                AGXBallJointDesc bd;
-//                bd.framePoint = agx::Vec3( p(0), p(1), p(2));
-//                bd.rigidBodyA = agxLinkPair[0]->getAGXRigidBody();
-//                bd.rigidBodyB = agxLinkPair[1]->getAGXRigidBody(); 
-//                constraint = AGXObjectFactory::createConstraint(bd);
-//            }
-//            default:
-//                break;
-//        }
-//        addAGXConstraint(constraint);
-//    }
-//}
-//
-//
-//////////////////////////////////////////////////////////////
-//// AGXContinousTrack
-//AGXContinousTrack::AGXContinousTrack(AGXLinkPtr footLinkStart, AGXBodyPtr body)
-//{
-//    std::stringstream ss;
-//    ss.str("");
-//    ss << "SelfCollisionContinousTrack" << generateUID() << body->bodyItem()->name() << std::flush;
-//    setSelfCollsionGroupName(ss.str());
-//    _feet.clear();
-//    _chassisLink = footLinkStart->getAGXParentLink();
-//    _feet.push_back(footLinkStart);
-//    addFoot(footLinkStart->getOrgLink(), body);
-//    createTrackConstraint();
-//}
-//
-//void AGXContinousTrack::addFoot(LinkPtr link, AGXBodyPtr body)
-//{
-//    for(Link* child = link->child(); child; child = child->sibling()){
-//        _feet.push_back(body->getAGXLink(child->index()));
-//        addFoot(child, body);
-//    }
-//}
-//
-//void AGXContinousTrack::createTrackConstraint()
-//{
-//        AGXLinkPtr agxFootLinkStart = _feet[0];
-//        AGXLinkPtr agxFootLinkEnd = _feet[_feet.size()-1];
-//
-//        // Connect footLinkStart and footLinkEnd with Hinge
-//        // Create Hinge with world coordination
-//        LinkPtr link = agxFootLinkStart->getOrgLink();
-//        const Vector3& a = link->a();                       // local
-//        const Vector3 aw = link->attitude() * a;            // world
-//        const Vector3& p = link->p();                       // world
-//        AGXHingeDesc hd;
-//        hd.frameAxis   = agx::Vec3(aw(0), aw(1), aw(2));
-//        hd.frameCenter = agx::Vec3(p(0), p(1), p(2));
-//        hd.rigidBodyA = agxFootLinkStart->getAGXRigidBody();
-//        hd.rigidBodyB = agxFootLinkEnd->getAGXRigidBody();
-//        hd.motor.enable = false;
-//        hd.lock.enable = false;
-//        hd.range.enable = false;
-//        agx::ConstraintRef constraint = AGXObjectFactory::createConstraint(hd);
-//        link->setJointType(Link::ROTATIONAL_JOINT);
-//        agxFootLinkStart->setAGXConstraint(constraint);
-//        addAGXConstraint(constraint);
-//
-//        // Create PlaneJoint to prvent the track falling off
-//        // Create joint with parent(example:chasis) coordination 
-//        const Vector3& b = link->b();
-//        const agx::Vec3 a0 = agx::Vec3(a(0), a(1), a(2));   // Rotate axis of track. local
-//        const agx::Vec3& b0 = agx::Vec3(b(0), b(1), b(2));  // Vector from parent to footLinkStart
-//        const agx::Vec3& p0 = ( a0 * b0 ) * a0;             // Middle position of track(projection vector of b0 to a0). local
-//        agx::Vec3 nx = agx::Vec3::Z_AXIS().cross(a0);       // Check a0 is parallel to Z. X-Y consists plane joint.
-//        agx::OrthoMatrix3x3 rotation;
-//        if(nx.normalize() > 1.0e-6){
-//            nx.normal();
-//            rotation.setColumn(0, nx);
-//            agx::Vec3 ny = a0.cross(nx);
-//            ny.normal();
-//            rotation.setColumn(1, ny);
-//            rotation.setColumn(2, a0);
-//        }
-//        agx::AffineMatrix4x4 af( rotation, p0 );
-//        AGXPlaneJointDesc pd;
-//        pd.frameB = AGXObjectFactory::createFrame();
-//        pd.frameB->setMatrix(af);
-//        pd.rigidBodyB = agxFootLinkStart->getAGXParentLink()->getAGXRigidBody();
-//
-//        for(int i = 0;  i < _feet.size(); ++i){
-//            AGXLinkPtr agxLink = _feet[i];
-//            // Add plane joint
-//            pd.frameA = AGXObjectFactory::createFrame();
-//            pd.rigidBodyA = agxLink->getAGXRigidBody();
-//            agx::PlaneJointRef pj = AGXObjectFactory::createConstraintPlaneJoint(pd);
-//            addAGXConstraint((agx::ConstraintRef)pj);
-//
-//            // Enable collision between tracks and the others. Need to contact with wheels.
-//            agxLink->getAGXGeometry()->removeGroup(agxLink->getSelfCollisionGroupName());
-//            agxLink->getAGXGeometry()->addGroup(getSelfCollisionGroupName());
-//        }
-//}
-
-
 
 
 }

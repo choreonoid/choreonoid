@@ -1,82 +1,40 @@
-#include "AGXBodyPart.h"
+#include "AGXBodyExtension.h"
 #include "AGXBody.h"
+#include <iostream>
 
-namespace cnoid {
+namespace cnoid{
 
-////////////////////////////////////////////////////////////
-// AGXBodyPart
-AGXBodyPart::AGXBodyPart()
-{
-    _hasSelfCollisionGroupName = false;
-    _constraints.clear();
+AGXBodyExtension::AGXBodyExtension(AGXBody* agxBody){
+    _agxBody = agxBody;
+    _assembly = AGXObjectFactory::createAssembly();
 }
 
-bool AGXBodyPart::hasSelfCollisionGroupName() const
+AGXBody* AGXBodyExtension::getAGXBody()
 {
-    return _hasSelfCollisionGroupName;
+    return _agxBody;
 }
 
-std::string AGXBodyPart::getSelfCollisionGroupName() const
+agxSDK::Assembly* AGXBodyExtension::getAssembly()
 {
-    return _selfCollisionGroupName;
-}
-
-int AGXBodyPart::numAGXConstraints() const
-{
-    return _constraints.size();
-}
-
-agx::ConstraintRef AGXBodyPart::getAGXConstraint(const int& index) const
-{
-    return  _constraints[index];
-}
-
-int AGXBodyPart::numAGXAssemblys() const
-{
-    return _assemblys.size();
-}
-
-agxSDK::AssemblyRef AGXBodyPart::getAGXAssembly(const int & index)
-{
-    return _assemblys[index];
-}
-
-void AGXBodyPart::setSelfCollsionGroupName(const std::string & name)
-{
-    _selfCollisionGroupName = name;
-    _hasSelfCollisionGroupName = true;
-}
-
-void AGXBodyPart::addAGXConstraint(agx::ConstraintRef const constraint)
-{
-    _constraints.push_back(constraint);
-}
-
-void AGXBodyPart::addAGXAssembly(agxSDK::Assembly* assembly)
-{
-    _assemblys.push_back(assembly);
-}
-
-void AGXBodyPart::addAGXLinkedStructure(agxSDK::LinkedStructureRef const structure)
-{
-    _structures.push_back(structure);
+    return _assembly;
 }
 
 ////////////////////////////////////////////////////////////
 // AGXExtraJoint
-AGXExtraJoint::AGXExtraJoint(AGXBodyPtr agxBody)
+AGXExtraJoint::AGXExtraJoint(AGXBody* agxBody) : AGXBodyExtension(agxBody)
 {
-    createJoints(agxBody);
+    createJoints();
 }
 
-void AGXExtraJoint::createJoints(AGXBodyPtr agxBody)
+void AGXExtraJoint::createJoints()
 {
-    BodyPtr const body = agxBody->body();
+    AGXBody* const agxBody = getAGXBody();
+    Body* const body = agxBody->body();
     const int n = body->numExtraJoints();
     for (int j = 0; j < n; ++j) {
         ExtraJoint& extraJoint = body->extraJoint(j);
 
-        AGXLinkPtr agxLinkPair[2];
+        AGXLink* agxLinkPair[2];
         agxLinkPair[0] = agxBody->getAGXLink(extraJoint.link[0]->index());
         agxLinkPair[1] = agxBody->getAGXLink(extraJoint.link[1]->index());
         if (!agxLinkPair[0] || !agxLinkPair[1]) continue;
@@ -104,19 +62,15 @@ void AGXExtraJoint::createJoints(AGXBodyPtr agxBody)
         default:
             break;
         }
-        addAGXConstraint(constraint);
+        getAssembly()->add(constraint);
     }
 }
 
 
 ////////////////////////////////////////////////////////////
 // AGXContinousTrack
-AGXContinousTrack::AGXContinousTrack(AGXLinkPtr footLinkStart, AGXBodyPtr body)
+AGXContinousTrack::AGXContinousTrack(AGXLink* footLinkStart, AGXBody* body) : AGXBodyExtension(body)
 {
-    std::stringstream ss;
-    ss.str("");
-    ss << "SelfCollisionContinousTrack" << generateUID() << body->bodyItem()->name() << std::flush;
-    setSelfCollsionGroupName(ss.str());
     _feet.clear();
     _chassisLink = footLinkStart->getAGXParentLink();
     _feet.push_back(footLinkStart);
@@ -124,7 +78,7 @@ AGXContinousTrack::AGXContinousTrack(AGXLinkPtr footLinkStart, AGXBodyPtr body)
     createTrackConstraint();
 }
 
-void AGXContinousTrack::addFoot(LinkPtr link, AGXBodyPtr body)
+void AGXContinousTrack::addFoot(Link* link, AGXBody* body)
 {
     for (Link* child = link->child(); child; child = child->sibling()) {
         _feet.push_back(body->getAGXLink(child->index()));
@@ -154,7 +108,7 @@ void AGXContinousTrack::createTrackConstraint()
     agx::ConstraintRef constraint = AGXObjectFactory::createConstraint(hd);
     link->setJointType(Link::ROTATIONAL_JOINT);
     agxFootLinkStart->setAGXConstraint(constraint);
-    addAGXConstraint(constraint);
+    getAssembly()->add(constraint);
 
     // Create PlaneJoint to prvent the track falling off
     // Create joint with parent(example:chasis) coordination 
@@ -178,18 +132,27 @@ void AGXContinousTrack::createTrackConstraint()
     pd.frameB->setMatrix(af);
     pd.rigidBodyB = agxFootLinkStart->getAGXParentLink()->getAGXRigidBody();
 
+    // Generate collision group name to disable collision between tracks
+    std::stringstream trackCollsionGroupName;
+    trackCollsionGroupName.str("");
+    trackCollsionGroupName << "SelfCollisionContinousTrack" << generateUID() << std::flush;
+    getAGXBody()->addCollisionGroupNameToDisableCollision(trackCollsionGroupName.str());
+
     for (int i = 0; i < _feet.size(); ++i) {
         AGXLinkPtr agxLink = _feet[i];
         // Add plane joint
         pd.frameA = AGXObjectFactory::createFrame();
         pd.rigidBodyA = agxLink->getAGXRigidBody();
         agx::PlaneJointRef pj = AGXObjectFactory::createConstraintPlaneJoint(pd);
-        addAGXConstraint((agx::ConstraintRef)pj);
+        getAssembly()->add((agx::ConstraintRef)pj);
 
-        // Enable collision between tracks and the others. Need to contact with wheels.
-        agxLink->getAGXGeometry()->removeGroup(agxLink->getSelfCollisionGroupName());
-        agxLink->getAGXGeometry()->addGroup(getSelfCollisionGroupName());
+        // Force enable collision between other links
+        agxLink->getAGXGeometry()->removeGroup(getAGXBody()->getCollisionGroupName());
+        // Disable collision between tracks
+        agxLink->getAGXGeometry()->addGroup(trackCollsionGroupName.str());
     }
 }
 
+
 }
+

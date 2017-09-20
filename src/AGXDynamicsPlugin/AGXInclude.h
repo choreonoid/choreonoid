@@ -6,6 +6,7 @@
 
 // Simulation
 #include <agxSDK/Simulation.h>
+#include <agxSDK/Assembly.h>
 
 // Threads
 #include <agx/Thread.h>

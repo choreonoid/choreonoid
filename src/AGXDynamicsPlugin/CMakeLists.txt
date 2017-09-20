@@ -31,7 +31,6 @@ set(target CnoidAGXDynamicsPlugin)
 
 set(sources
   AGXBody.cpp
-  AGXBodyPart.cpp
   AGXObjectFactory.cpp
   AGXScene.cpp
   AGXDynamicsPlugin.cpp
@@ -39,11 +38,11 @@ set(sources
   AGXSimulatorItemImpl.cpp
   AGXVehicleContinuousTrack.cpp
   AGXVehicleContinuousTrackDevice.cpp
+  AGXBodyExtension.cpp
   )
 
 set(headers
   AGXBody.h
-  AGXBodyPart.h
   AGXInclude.h
   AGXObjectFactory.h
   AGXScene.h
@@ -51,6 +50,7 @@ set(headers
   AGXSimulatorItemImpl.h
   AGXVehicleContinuousTrack.h
   AGXVehicleContinuousTrackDevice.h
+  AGXBodyExtension.h
   )
 
 make_gettext_mofiles(${target} mofiles)
@@ -65,4 +65,4 @@ set_target_properties(${target} PROPERTIES COMPILE_FLAGS "${compile_flags} -std=
 apply_common_setting_for_plugin(${target} "${headers}")
 
 add_subdirectory(AGXSubSimulator)
-
+add_subdirectory(AGXBodyExtensionPlugin)

@@ -167,6 +167,11 @@ agx::FrameRef AGXObjectFactory::createFrame()
     return new agx::Frame();
 }
 
+agxSDK::AssemblyRef AGXObjectFactory::createAssembly()
+{
+    return new agxSDK::Assembly();
+}
+
 agx::Bool AGXObjectFactory::setContactMaterialParam(agx::ContactMaterialRef const cm, const AGXContactMaterialDesc & desc)
 {
     if(!cm) return false;

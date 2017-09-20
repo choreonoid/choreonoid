@@ -306,6 +306,12 @@ struct AGXVehicleTrackDesc{
         nodeThickness = 0.075;
         nodeWidth = 0.6;
         nodeDistanceTension = 5.0E-3;
+        hingeCompliance = 4.0E-10;
+        stabilizingHingeFrictionParameter = 1.5;
+        enableMerge = false;
+        numNodesPerMergeSegment = 4;
+        lockToReachMergeConditionCompliance = 1.0E-8;
+        contactReduction = agxVehicle::TrackInternalMergeProperties::ContactReduction::AGRESSIVE;
         trackWheelRefs.clear();
     }
 
@@ -315,6 +321,12 @@ struct AGXVehicleTrackDesc{
     agx::Real nodeDistanceTension;     // The calculated node length is close to ideal, meaning close to zero tension
                                     // in the tracks if they were simulated without gravity. This distance is an offset
                                     // how much closer each node will be to each other, resulting in a given initial tension.
+    agx::Real hingeCompliance;
+    agx::Real stabilizingHingeFrictionParameter;
+    agx::Bool enableMerge;
+    agx::UInt numNodesPerMergeSegment;
+    agx::Real lockToReachMergeConditionCompliance;
+    agxVehicle::TrackInternalMergeProperties::ContactReduction contactReduction;
     std::vector<agxVehicle::TrackWheelRef> trackWheelRefs;
 };
 
@@ -331,6 +343,7 @@ public:
     static agxCollide::ShapeRef createShape(const AGXShapeDesc& desc);
     static agx::ConstraintRef createConstraint(const AGXConstraintDesc& desc);
     static agx::FrameRef createFrame();
+    static agxSDK::AssemblyRef createAssembly();
 private:
     AGXObjectFactory();
     static agx::Bool setContactMaterialParam(agx::ContactMaterialRef const cm, const AGXContactMaterialDesc& desc);
