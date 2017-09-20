@@ -563,16 +563,16 @@ links:
             rotation: [ 0, 1, 0, 12 ]
             elements: *OUTER_PLATE3
 # AGXクローラ部分のコメントアウト
-          -
-            type: AGXVehicleContinuousTrackDevice
-            name: FOOT_L
-            numberOfNodes: 40
-            nodeThickness: 0.025
-            nodeWidth:  0.25
-            nodeDistanceTension: 5.0E-3
-            sprocketNames: [ WHEEL_L0 ] 
-            rollerNames: [ WHEEL_L1 ] 
-            idlerNames: [ WHEEL_L2 ]
+#          -
+#            type: AGXVehicleContinuousTrackDevice
+#            name: FOOT_L
+#            numberOfNodes: 40
+#            nodeThickness: 0.025
+#            nodeWidth:  0.25
+#            nodeDistanceTension: 5.0E-3
+#            sprocketNames: [ WHEEL_L0 ] 
+#            rollerNames: [ WHEEL_L1 ] 
+#            idlerNames: [ WHEEL_L2 ]
 
 # 簡易クローラ
 #  -
@@ -771,16 +771,16 @@ links:
             rotation: [ 0, 1, 0, 12 ]
             elements: *OUTER_PLATE3
 # AGXクローラ部分のコメントアウト
-          -
-            type: AGXVehicleContinuousTrackDevice 
-            name: FOOT_R
-            numberOfNodes: 40
-            nodeThickness: 0.025
-            nodeWidth:  0.25
-            nodeDistanceTension: 5.0E-3
-            sprocketNames: [ WHEEL_R0 ] 
-            rollerNames: [ WHEEL_R1 ] 
-            idlerNames: [ WHEEL_R2 ]
+#          -
+#            type: AGXVehicleContinuousTrackDevice 
+#            name: FOOT_R
+#            numberOfNodes: 40
+#            nodeThickness: 0.025
+#            nodeWidth:  0.25
+#            nodeDistanceTension: 5.0E-3
+#            sprocketNames: [ WHEEL_R0 ] 
+#            rollerNames: [ WHEEL_R1 ] 
+#            idlerNames: [ WHEEL_R2 ]
 
 # 簡易クローラ
 #  -
