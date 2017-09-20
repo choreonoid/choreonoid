@@ -13,7 +13,10 @@
 namespace cnoid {
 
 extern CNOID_EXPORT const char* DLL_PREFIX;
+extern CNOID_EXPORT const char* DLL_SUFFIX;
 extern CNOID_EXPORT const char* DLL_EXTENSION;
+extern CNOID_EXPORT const char* EXEC_SUFFIX;
+extern CNOID_EXPORT const char* EXEC_EXTENSION;
 extern CNOID_EXPORT const char* PATH_DELIMITER;
 
 CNOID_EXPORT void makePathCompact(

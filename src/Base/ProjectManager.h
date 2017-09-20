@@ -24,6 +24,7 @@ public:
     void saveProject(const std::string& filename);
     void overwriteCurrentProject();
     std::string currentProjectFile() const;
+    std::string currentProjectDirectory() const;
 
     static void initialize(ExtensionManager* em);
 

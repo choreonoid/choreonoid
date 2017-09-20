@@ -125,7 +125,7 @@ static int loadBodyCustomizers(BodyInterface* bodyInterface, const std::string p
                 numLoaded++;
             }
         } else {
-            static const string pluginNamePattern(string("Customizer.") + DLL_EXTENSION);
+            static const string pluginNamePattern(string("Customizer") + DLL_SUFFIX);
             filesystem::directory_iterator end;
             for(filesystem::directory_iterator it(pluginPath); it != end; ++it){
                 const filesystem::path& filepath = *it;

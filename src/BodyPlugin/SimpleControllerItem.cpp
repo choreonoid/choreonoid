@@ -82,7 +82,7 @@ public:
     Selection baseDirectoryType;
 
     enum BaseDirectoryType {
-        GENERAL_DIRECTORY = 0,
+        NO_BASE_DIRECTORY = 0,
         CONTROLLER_DIRECTORY,
         PROJECT_DIRECTORY,
         N_BASE_DIRECTORY_TYPES
@@ -157,12 +157,13 @@ SimpleControllerItemImpl::SimpleControllerItemImpl(SimpleControllerItem* self)
     io = 0;
     mv = MessageView::instance();
     doReloading = true;
-    baseDirectoryType.setSymbol(GENERAL_DIRECTORY, N_("General"));
+
+    controllerDirectory = filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "simplecontroller";
+
+    baseDirectoryType.setSymbol(NO_BASE_DIRECTORY, N_("None"));
     baseDirectoryType.setSymbol(CONTROLLER_DIRECTORY, N_("Controller directory"));
     baseDirectoryType.setSymbol(PROJECT_DIRECTORY, N_("Project directory"));
     baseDirectoryType.select(CONTROLLER_DIRECTORY);
-
-    controllerDirectory = filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "simplecontroller";
 }
 
 
@@ -226,13 +227,13 @@ void SimpleControllerItemImpl::setController(const std::string& name)
 
     filesystem::path modulePath(name);
     if(modulePath.is_absolute()){
-        baseDirectoryType.select(GENERAL_DIRECTORY);
+        baseDirectoryType.select(NO_BASE_DIRECTORY);
         if(modulePath.parent_path() == controllerDirectory){
             baseDirectoryType.select(CONTROLLER_DIRECTORY);
             modulePath = modulePath.filename();
         } else {
-            filesystem::path projectPath(ProjectManager::instance()->currentProjectFile());
-            if(!projectPath.empty() && modulePath.parent_path() == projectPath.parent_path()){
+            filesystem::path projectDir(ProjectManager::instance()->currentProjectDirectory());
+            if(!projectDir.empty() && (modulePath.parent_path() == projectDir)){
                 baseDirectoryType.select(PROJECT_DIRECTORY);
                 modulePath = modulePath.filename();
             }
@@ -335,21 +336,20 @@ SimpleController* SimpleControllerItemImpl::initialize(ControllerItemIO* io, Sha
     if(!controller){
 
         filesystem::path modulePath(controllerModuleName);
-        if(!checkAbsolute(modulePath)){
-
+        if(!modulePath.is_absolute()){
             if(baseDirectoryType.is(CONTROLLER_DIRECTORY)){
                 modulePath = controllerDirectory / modulePath;
-
             } else if(baseDirectoryType.is(PROJECT_DIRECTORY)){
-                
-                string projectFile = ProjectManager::instance()->currentProjectFile();
-                if(projectFile.empty()){
+                string projectDir = ProjectManager::instance()->currentProjectDirectory();
+                if(!projectDir.empty()){
+                    modulePath = filesystem::path(projectDir) / modulePath;
+                } else {
                     mv->putln(MessageView::ERROR,
-                              format(_("Controller module \"%1%\" of %2% is specified as a relative path from the project directory, but the project directory has not been determined yet."))
+                              format(_("Controller module \"%1%\" of %2% is specified as a relative "
+                                       "path from the project directory, but the project directory "
+                                       "has not been determined yet."))
                               % controllerModuleName % self->name());
                     return 0;
-                } else {
-                    modulePath = filesystem::path(projectFile).parent_path() / modulePath;
                 }
             }
         }
@@ -831,16 +831,16 @@ void SimpleControllerItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
     FilePathProperty moduleProperty(
         controllerModuleName,
-        { str(format(_("Dynamic Link Library (*.%1%)")) % DLL_EXTENSION) });
+        { str(format(_("Simple Controller Module (*.%1%)")) % DLL_EXTENSION) });
 
     if(baseDirectoryType.is(CONTROLLER_DIRECTORY)){
         moduleProperty.setBaseDirectory(controllerDirectory.string());
     } else if(baseDirectoryType.is(PROJECT_DIRECTORY)){
-        filesystem::path projectPath(ProjectManager::instance()->currentProjectFile());
-        moduleProperty.setBaseDirectory(projectPath.parent_path().string());
+        moduleProperty.setBaseDirectory(ProjectManager::instance()->currentProjectDirectory());
     }
 
-    putProperty(_("Controller module"), moduleProperty, [&](const string& name){ self->setController(name); return true; });
+    putProperty(_("Controller module"), moduleProperty,
+                [&](const string& name){ setController(name); return true; });
     putProperty(_("Base directory"), baseDirectoryType, changeProperty(baseDirectoryType));
 
     putProperty(_("Reloading"), doReloading, [&](bool on){ return onReloadingChanged(on); });
