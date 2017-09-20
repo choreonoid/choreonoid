@@ -75,15 +75,17 @@ public:
     MessageView* mv;
 
     std::string controllerModuleName;
-    std::string controllerModuleFileName;
+    std::string controllerModuleFilename;
+    filesystem::path controllerDirectory;
     QLibrary controllerModule;
     bool doReloading;
-    Selection pathBase;
+    Selection baseDirectoryType;
 
-    enum PathBase {
+    enum BaseDirectoryType {
         GENERAL_DIRECTORY = 0,
         CONTROLLER_DIRECTORY,
-        N_PATH_BASE
+        PROJECT_DIRECTORY,
+        N_BASE_DIRECTORY_TYPES
     };
 
     Signal<void()> sigControllerChanged;
@@ -91,6 +93,7 @@ public:
     SimpleControllerItemImpl(SimpleControllerItem* self);
     SimpleControllerItemImpl(SimpleControllerItem* self, const SimpleControllerItemImpl& org);
     ~SimpleControllerItemImpl();
+    void setController(const std::string& name);
     void unloadController(bool doNotify);
     void initializeIoBody();
     void updateInputEnabledDevices();
@@ -148,15 +151,18 @@ SimpleControllerItem::SimpleControllerItem()
 
 SimpleControllerItemImpl::SimpleControllerItemImpl(SimpleControllerItem* self)
     : self(self),
-      pathBase(N_PATH_BASE, CNOID_GETTEXT_DOMAIN_NAME)
+      baseDirectoryType(N_BASE_DIRECTORY_TYPES, CNOID_GETTEXT_DOMAIN_NAME)
 {
     controller = 0;
     io = 0;
     mv = MessageView::instance();
     doReloading = true;
-    pathBase.setSymbol(GENERAL_DIRECTORY, N_("None"));
-    pathBase.setSymbol(CONTROLLER_DIRECTORY, N_("Controller directory"));
-    pathBase.select(CONTROLLER_DIRECTORY);
+    baseDirectoryType.setSymbol(GENERAL_DIRECTORY, N_("General"));
+    baseDirectoryType.setSymbol(CONTROLLER_DIRECTORY, N_("Controller directory"));
+    baseDirectoryType.setSymbol(PROJECT_DIRECTORY, N_("Project directory"));
+    baseDirectoryType.select(CONTROLLER_DIRECTORY);
+
+    controllerDirectory = filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "simplecontroller";
 }
 
 
@@ -169,12 +175,13 @@ SimpleControllerItem::SimpleControllerItem(const SimpleControllerItem& org)
 
 SimpleControllerItemImpl::SimpleControllerItemImpl(SimpleControllerItem* self, const SimpleControllerItemImpl& org)
     : self(self),
-      pathBase(org.pathBase)
+      baseDirectoryType(org.baseDirectoryType),
+      controllerModuleName(org.controllerModuleName),
+      controllerDirectory(org.controllerDirectory)
 {
     controller = 0;
     io = 0;
     mv = MessageView::instance();
-    controllerModuleName = org.controllerModuleName;
     doReloading = org.doReloading;
 }
 
@@ -209,9 +216,30 @@ Item* SimpleControllerItem::doDuplicate() const
 
 void SimpleControllerItem::setController(const std::string& name)
 {
-    impl->unloadController(true);
-    impl->controllerModuleName = name;
-    impl->controllerModuleFileName.clear();
+    impl->setController(name);
+}
+
+
+void SimpleControllerItemImpl::setController(const std::string& name)
+{
+    unloadController(true);
+
+    filesystem::path modulePath(name);
+    if(modulePath.is_absolute()){
+        baseDirectoryType.select(GENERAL_DIRECTORY);
+        if(modulePath.parent_path() == controllerDirectory){
+            baseDirectoryType.select(CONTROLLER_DIRECTORY);
+            modulePath = modulePath.filename();
+        } else {
+            filesystem::path projectPath(ProjectManager::instance()->currentProjectFile());
+            if(!projectPath.empty() && modulePath.parent_path() == projectPath.parent_path()){
+                baseDirectoryType.select(PROJECT_DIRECTORY);
+                modulePath = modulePath.filename();
+            }
+        }
+    }
+    controllerModuleName = modulePath.string();
+    controllerModuleFilename.clear();
 }
 
 
@@ -234,7 +262,7 @@ void SimpleControllerItemImpl::unloadController(bool doNotify)
 
     if(controllerModule.unload()){
         mv->putln(fmt(_("The controller module \"%2%\" of %1% has been unloaded."))
-                  % self->name() % controllerModuleFileName);
+                  % self->name() % controllerModuleFilename);
     }
 }
 
@@ -306,24 +334,27 @@ SimpleController* SimpleControllerItemImpl::initialize(ControllerItemIO* io, Sha
 
     if(!controller){
 
-        filesystem::path dllPath(controllerModuleName);
-        if(!checkAbsolute(dllPath)){
-            if (pathBase.is(CONTROLLER_DIRECTORY))
-            dllPath =
-                filesystem::path(executableTopDirectory()) /
-                CNOID_PLUGIN_SUBDIR / "simplecontroller" / dllPath;
-            else {
+        filesystem::path modulePath(controllerModuleName);
+        if(!checkAbsolute(modulePath)){
+
+            if(baseDirectoryType.is(CONTROLLER_DIRECTORY)){
+                modulePath = controllerDirectory / modulePath;
+
+            } else if(baseDirectoryType.is(PROJECT_DIRECTORY)){
+                
                 string projectFile = ProjectManager::instance()->currentProjectFile();
                 if(projectFile.empty()){
-                    mv->putln(_("Please save the project."));
+                    mv->putln(MessageView::ERROR,
+                              format(_("Controller module \"%1%\" of %2% is specified as a relative path from the project directory, but the project directory has not been determined yet."))
+                              % controllerModuleName % self->name());
                     return 0;
                 } else {
-                    dllPath = boost::filesystem::path(projectFile).parent_path() / dllPath;
+                    modulePath = filesystem::path(projectFile).parent_path() / modulePath;
                 }
             }
         }
-        controllerModuleFileName = getNativePathString(dllPath);
-        controllerModule.setFileName(controllerModuleFileName.c_str());
+        controllerModuleFilename = modulePath.make_preferred().string();
+        controllerModule.setFileName(controllerModuleFilename.c_str());
         
         if(controllerModule.isLoaded()){
             mv->putln(fmt(_("The controller module of %1% has already been loaded.")) % self->name());
@@ -334,10 +365,10 @@ SimpleController* SimpleControllerItemImpl::initialize(ControllerItemIO* io, Sha
             
         } else {
             mv->put(fmt(_("Loading the controller module \"%2%\" of %1% ... "))
-                    % self->name() % controllerModuleFileName);
+                    % self->name() % controllerModuleFilename);
             if(!controllerModule.load()){
                 mv->put(_("Failed.\n"));
-                mv->putln(controllerModule.errorString());
+                mv->putln(MessageView::ERROR, controllerModule.errorString());
             } else {                
                 mv->putln(_("OK!"));
             }
@@ -347,11 +378,12 @@ SimpleController* SimpleControllerItemImpl::initialize(ControllerItemIO* io, Sha
             SimpleController::Factory factory =
                 (SimpleController::Factory)controllerModule.resolve("createSimpleController");
             if(!factory){
-                mv->putln(_("The factory function \"createSimpleController()\" is not found in the controller module."));
+                mv->putln(MessageView::ERROR,
+                          _("The factory function \"createSimpleController()\" is not found in the controller module."));
             } else {
                 controller = factory();
                 if(!controller){
-                    mv->putln(_("The factory failed to create a controller instance."));
+                    mv->putln(MessageView::ERROR, _("The factory failed to create a controller instance."));
                 } else {
                     mv->putln(_("A controller instance has successfully been created."));
                     sigControllerChanged();
@@ -391,7 +423,7 @@ SimpleController* SimpleControllerItemImpl::initialize(ControllerItemIO* io, Sha
         }
         
         if(!result){
-            mv->putln(fmt(_("%1%'s initialize method failed.")) % self->name());
+            mv->putln(MessageView::ERROR, fmt(_("%1%'s initialize method failed.")) % self->name());
             if(doReloading){
                 self->stop();
             }
@@ -405,10 +437,9 @@ SimpleController* SimpleControllerItemImpl::initialize(ControllerItemIO* io, Sha
                     }
                 }
             }
+            updateIOStateTypes();
         }
     }
-
-    updateIOStateTypes();
 
     return controller;
 }
@@ -798,24 +829,19 @@ void SimpleControllerItem::doPutProperties(PutPropertyFunction& putProperty)
 
 void SimpleControllerItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
-    FilePathProperty moduleProperty;
-    moduleProperty.setFilters({ str(format(_("Dynamic Link Library (*.%1%)")) % DLL_EXTENSION) });
-    filesystem::path modulePath(controllerModuleName);
-    filesystem::path controllerDirectory = filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "simplecontroller";
-    if(modulePath.is_absolute()){
-        if(modulePath.parent_path() == controllerDirectory){
-            pathBase.select(CONTROLLER_DIRECTORY);
-            modulePath = modulePath.filename();
-        } else {
-            pathBase.select(GENERAL_DIRECTORY);
-        }
-    }
-    moduleProperty.setFilename(modulePath.string());
-    if(pathBase.is(CONTROLLER_DIRECTORY)){
+    FilePathProperty moduleProperty(
+        controllerModuleName,
+        { str(format(_("Dynamic Link Library (*.%1%)")) % DLL_EXTENSION) });
+
+    if(baseDirectoryType.is(CONTROLLER_DIRECTORY)){
         moduleProperty.setBaseDirectory(controllerDirectory.string());
+    } else if(baseDirectoryType.is(PROJECT_DIRECTORY)){
+        filesystem::path projectPath(ProjectManager::instance()->currentProjectFile());
+        moduleProperty.setBaseDirectory(projectPath.parent_path().string());
     }
+
     putProperty(_("Controller module"), moduleProperty, [&](const string& name){ self->setController(name); return true; });
-    putProperty(_("Relative Path Base"), pathBase, changeProperty(pathBase));
+    putProperty(_("Base directory"), baseDirectoryType, changeProperty(baseDirectoryType));
 
     putProperty(_("Reloading"), doReloading, [&](bool on){ return onReloadingChanged(on); });
 }
@@ -833,8 +859,8 @@ bool SimpleControllerItem::store(Archive& archive)
 bool SimpleControllerItemImpl::store(Archive& archive)
 {
     archive.writeRelocatablePath("controller", controllerModuleName);
+    archive.write("baseDirectory", baseDirectoryType.selectedSymbol(), DOUBLE_QUOTED);
     archive.write("reloading", doReloading);
-    archive.write("RelativePathBase", pathBase.selectedSymbol(), DOUBLE_QUOTED);
     return true;
 }
 
@@ -854,12 +880,14 @@ bool SimpleControllerItemImpl::restore(const Archive& archive)
     if(archive.read("controller", value)){
         controllerModuleName = archive.expandPathVariables(value);
     }
-    archive.read("reloading", doReloading);
-    string symbol;
-    if(archive.read("RelativePathBase", symbol)){
-        if(!pathBase.select(symbol)){
-            pathBase.select(GENERAL_DIRECTORY);
-        }
+    
+    baseDirectoryType.select(CONTROLLER_DIRECTORY);
+    if(archive.read("baseDirectory", value) ||
+       archive.read("RelativePathBase", value) /* for the backward compatibility */){
+        baseDirectoryType.select(value);
     }
+
+    archive.read("reloading", doReloading);
+
     return true;
 }

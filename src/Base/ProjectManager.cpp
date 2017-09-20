@@ -556,7 +556,8 @@ void ProjectManager::resetArchivers(const std::string& moduleName)
     impl->archivers.erase(moduleName);
 }
 
+
 std::string ProjectManager::currentProjectFile() const
 {
-    return impl->lastAccessedProjectFile;
+    return filesystem::absolute(filesystem::path(impl->lastAccessedProjectFile)).string();
 }
