@@ -44,6 +44,8 @@ public:
     SgNode* readNode(Mapping& node);
     SgNode* readNode(Mapping& node, const std::string& type);
     SgNode* readNodeList(ValueNode& node);
+    
+    SgObject* readObject(Mapping& node);
 
     typedef std::function<std::string(const std::string& path, std::ostream& os)> UriSchemeHandler;
     

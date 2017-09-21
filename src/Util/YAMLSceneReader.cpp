@@ -106,6 +106,7 @@ public:
     SgNode* readResource(Mapping& node);
     SgNode* loadResource(const string& uri);
     SgNode* loadResource(const string& uri, const string& nodeName);
+    void decoupleResourceNode(const string& uri, const string& nodeName);
     ResourceInfo* getOrCreateResourceInfo(const string& uri);
     filesystem::path findFileInPackage(const string& file);
     void adjustNodeCoordinate(NodeInfo& info);
@@ -712,6 +713,19 @@ SgNode* YAMLSceneReaderImpl::readResource(Mapping& node)
     if(node.read("uri", uri)){
         SgNodePtr resource;
         string nodeName;
+
+        ValueNode& exclude = *node.find("exclude");
+        if(exclude.isValid()){
+            if(exclude.isListing()){
+                Listing& excludes = *exclude.toListing();
+                for(auto& nodeToExclude : excludes){
+                    decoupleResourceNode(uri, nodeToExclude->toString());
+                }
+            } else if(exclude.isString()){
+                decoupleResourceNode(uri, exclude.toString());
+            }
+        }
+        
         if(node.read("node", nodeName)){
             resource = loadResource(uri, nodeName);
         } else {
@@ -764,6 +778,27 @@ SgNode* YAMLSceneReaderImpl::loadResource(const string& uri, const string& nodeN
         }
     }
     return scene;
+}
+
+
+void YAMLSceneReaderImpl::decoupleResourceNode(const string& uri, const string& nodeName)
+{
+    ResourceInfo* resourceInfo = getOrCreateResourceInfo(uri);
+    if(resourceInfo){
+        unique_ptr<NodeMap>& nodeMap = resourceInfo->nodeMap;
+        if(!nodeMap){
+            makeNodeMap(resourceInfo);
+        }
+        auto iter = nodeMap->find(nodeName);
+        if(iter != nodeMap->end()){
+            NodeInfo& nodeInfo = iter->second;
+            if(nodeInfo.parent){
+                nodeInfo.parent->removeChild(nodeInfo.node);
+                nodeInfo.parent = 0;
+                adjustNodeCoordinate(nodeInfo);
+            }
+        }
+    }
 }
 
 
