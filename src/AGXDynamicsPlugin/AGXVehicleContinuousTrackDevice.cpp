@@ -2,11 +2,45 @@
 #include <cnoid/YAMLBodyLoader>
 #include <cnoid/YAMLReader>
 #include <cnoid/SceneDevice>
+#include <cnoid/SceneDrawables>
+#include <cnoid/MeshGenerator>
 #include "AGXObjectFactory.h"
 
 using namespace std;
 
 namespace cnoid {
+
+class SceneTrackDevice : public SceneDevice
+{
+    AGXVehicleContinuousTrackDevice* trackDevice;
+    
+public:
+    SceneTrackDevice(AGXVehicleContinuousTrackDevice* device)
+        : SceneDevice(device)
+    {
+        MeshGenerator meshGenerator;
+
+        const int numShoes = 1;
+        for(int i=0; i < numShoes; ++i){
+            auto position = new SgPosTransform;
+            auto shape = new SgShape;
+            shape->setMesh(meshGenerator.generateBox(Vector3(0.6, 0.09, 0.3)));
+            position->addChild(shape);
+            addChild(position);
+        }
+
+        setFunctionOnStateChanged([&](){ updateTrack(); });
+    }
+
+    void updateTrack()
+    {
+        for(auto& position : *this){
+            //position->setTranslation(Vector3f(x, y, z));
+            //position->setRotation();
+        }
+    }
+};
+
 
 bool readAGXVehicleContinuousTrackDevice(YAMLBodyLoader& loader, Mapping& node)
 {
@@ -52,23 +86,14 @@ bool readAGXVehicleContinuousTrackDevice(YAMLBodyLoader& loader, Mapping& node)
 
 SceneDevice* createSceneAGXVehicleContinuousTrackDevice(Device* device)
 {
-//    auto sceneSmoke = new SceneSmoke;
-    //auto sceneDevice = new SceneDevice(device, sceneSmoke);
-
-    //sceneDevice->setFunctionOnTimeChanged(
-    //    [sceneSmoke](double time){
-    //        sceneSmoke->setTime(time);
-    //        sceneSmoke->notifyUpdate();
-    //    });
-    //        
-    //return sceneDevice;
-    return nullptr;
+    return new SceneTrackDevice(static_cast<AGXVehicleContinuousTrackDevice*>(device));
 }
-                        
+
+
 struct TypeRegistration
 {
     TypeRegistration() {
-        if(AGXObjectFactory::checkModuleEnalbled("AGX-Vehicle")){
+        if(AGXObjectFactory::checkModuleEnalbled("AgX-Vehicle")){
             YAMLBodyLoader::addNodeType("AGXVehicleContinuousTrackDevice", readAGXVehicleContinuousTrackDevice);
             SceneDevice::registerSceneDeviceFactory<AGXVehicleContinuousTrackDevice>(createSceneAGXVehicleContinuousTrackDevice);
             std::cout << "AGX-Vehicle is enabled." << std::endl;
