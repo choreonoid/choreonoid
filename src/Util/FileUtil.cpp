@@ -12,15 +12,24 @@ namespace cnoid {
 
 #ifdef _WIN32
 const char* DLL_PREFIX = "";
+const char* DLL_SUFFIX = ".dll";
 const char* DLL_EXTENSION = "dll";
+const char* EXEC_SUFFIX = ".exe";
+const char* EXEC_EXTENSION = "exe";
 const char* PATH_DELIMITER = ";";
 #elif __APPLE__
 const char* DLL_PREFIX = "lib";
+const char* DLL_SUFFIX = ".dylib";
 const char* DLL_EXTENSION = "dylib";
+const char* EXEC_SUFFIX = ".app";
+const char* EXEC_EXTENSION = "app";
 const char* PATH_DELIMITER = ":";
 #else
 const char* DLL_PREFIX = "lib";
+const char* DLL_SUFFIX = ".so";
 const char* DLL_EXTENSION = "so";
+const char* EXEC_SUFFIX_ = "";
+const char* EXEC_EXTENSION_ = "";
 const char* PATH_DELIMITER = ":";
 #endif
 

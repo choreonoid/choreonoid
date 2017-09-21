@@ -559,5 +559,20 @@ void ProjectManager::resetArchivers(const std::string& moduleName)
 
 std::string ProjectManager::currentProjectFile() const
 {
-    return filesystem::absolute(filesystem::path(impl->lastAccessedProjectFile)).string();
+    if(impl->lastAccessedProjectFile.empty()){
+        return "";
+    } else {
+        return filesystem::absolute(filesystem::path(impl->lastAccessedProjectFile)).string();
+    }
+}
+
+
+std::string ProjectManager::currentProjectDirectory() const
+{
+    if(impl->lastAccessedProjectFile.empty()){
+        return "";
+    } else {
+        filesystem::path projectFilePath(impl->lastAccessedProjectFile);
+        return filesystem::absolute(projectFilePath.parent_path()).string();
+    }
 }
