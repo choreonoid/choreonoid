@@ -45,6 +45,7 @@ set(sources
   CollisionSeq.cpp
   CollisionSeqItem.cpp
   CollisionSeqEngine.cpp
+  GLVisionSimulatorExItem.cpp
   )
 
 set(headers
@@ -73,6 +74,7 @@ set(headers
   CollisionSeqItem.h
   CollisionSeqEngine.h
   AISTSimulatorItem.h
+  GLVisionSimulatorExItem.h
   )
 
 set(target CnoidBodyPlugin)

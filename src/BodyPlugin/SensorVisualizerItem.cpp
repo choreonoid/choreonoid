@@ -643,20 +643,25 @@ void RangeSensorVisualizerItemImpl::updateRangeSensorState()
         points.reserve(numPoints);
         const double pitchStep = rangeSensor->pitchStep();
         const double yawStep = rangeSensor->yawStep();
+
         for(int pitch=0; pitch < rangeSensor->pitchResolution(); ++pitch){
             const double pitchAngle = pitch * pitchStep - rangeSensor->pitchRange() / 2.0;
+            const double cosPitchAngle = cos(pitchAngle);
             const int srctop = pitch * rangeSensor->yawResolution();
+
             for(int yaw=0; yaw < rangeSensor->yawResolution(); ++yaw){
                 const double distance = src[srctop + yaw];
                 if(distance <= rangeSensor->maxDistance()){
                     double yawAngle = yaw * yawStep - rangeSensor->yawRange() / 2.0;
-                    float x = distance * sin(-yawAngle);
+                    float x = distance *  cosPitchAngle * sin(-yawAngle);
                     float y  = distance * sin(pitchAngle);
-                    float z  = -distance * cos(pitchAngle) * cos(yawAngle);
+                    float z  = -distance * cosPitchAngle * cos(yawAngle);
                     points.push_back(Vector3f(x, y, z));
                 }
             }
+
         }
+
     }
 
     pointSet->notifyUpdate();

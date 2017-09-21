@@ -12,6 +12,7 @@
 #include "SimpleControllerItem.h"
 #include "BodyMotionControllerItem.h"
 #include "GLVisionSimulatorItem.h"
+#include "GLVisionSimulatorExItem.h"
 #include "WorldLogFileItem.h"
 #include "SensorVisualizerItem.h"
 #include "BodyTrackingCameraItem.h"
@@ -66,6 +67,7 @@ public:
         SimpleControllerItem::initializeClass(this);
         BodyMotionControllerItem::initializeClass(this);
         GLVisionSimulatorItem::initializeClass(this);
+        GLVisionSimulatorExItem::initializeClass(this);
         WorldLogFileItem::initializeClass(this);
         SensorVisualizerItem::initializeClass(this);
         BodyTrackingCameraItem::initializeClass(this);

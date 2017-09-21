@@ -1441,8 +1441,14 @@ bool YAMLBodyLoaderImpl::readRangeSensor(Mapping& node)
     
     if(node.read("on", on)) rangeSensor->on(on);
     if(readAngle(node, "scanAngle", value)) rangeSensor->setYawRange(value);
-    rangeSensor->setPitchRange(0.0);
-    if(readAngle(node, "scanStep", value)) rangeSensor->setYawResolution(rangeSensor->yawRange() / value);
+    if(readAngle(node, "scanStep", value)) rangeSensor->setYawResolution(round(rangeSensor->yawRange() / value));
+
+#if 1
+   // rangeSensor->setPitchRange(0.0);
+    if(readAngle(node, "scanPitchAngle", value)) rangeSensor->setPitchRange(value);
+    if(readAngle(node, "scanPitchStep", value)) rangeSensor->setPitchResolution(rangeSensor->pitchRange() / value);
+#endif
+
     if(node.read("minDistance", value)) rangeSensor->setMinDistance(value);
     if(node.read("maxDistance", value)) rangeSensor->setMaxDistance(value);
     if(node.read("scanRate", value)) rangeSensor->setFrameRate(value);
