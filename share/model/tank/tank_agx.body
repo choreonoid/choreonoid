@@ -19,7 +19,8 @@ links:
         type: Visual
         resource:
           uri: "resource/tank.dae"
-          node: CHASSIS 
+          node: CHASSIS
+          exclude: [ CRAWLER_L, CRAWLER_R ]
       -
         type: Collision
         elements:
@@ -463,9 +464,8 @@ links:
   -
     name: TRACK_L
     parent: CHASSIS
-    translation: [ 0, 0.22, -0.026 ]
-    jointType: pseudoContinuousTrack
-    jointAxis: Y
+    translation: [ 0, 0.16, -0.026 ]
+    jointType: fixed
     centerOfMass: [ 0, 0, 0 ]
     mass: 1.0
     inertia: [
@@ -474,98 +474,179 @@ links:
       0,    0,    0.02 ]
     elements:
       -
+        type: AGXVehicleContinuousTrackDevice
+        name: TRACK_L
+        numberOfNodes: 40
+        nodeThickness: 0.01
+        nodeWidth:  0.09
+        nodeDistanceTension: 5.0E-3
+        upAxis: [ 0, 0, 1 ]
+        sprocketNames: [ WHEEL_L0 ]
+        rollerNames: [ WHEEL_L1 ]
+        idlerNames: [ WHEEL_L2 ]
+      -
         type: Visual
         elements:
           -
             type: Resource
             uri: "resource/tank.dae"
-            node: CRAWLER_L
+            node: INNER_PLATE_L
           -
-            type: Transform
-            translation: [ 0.0, -0.06, 0.0 ]
-            elements:
-              Resource:
-                uri: "resource/tank.dae"
-                node: INNER_PLATE_L
-          -
-            type: Transform
-            translation: [ 0.0, 0.045, 0.0 ]
-            elements:
-              Resource:
-                uri: "resource/tank.dae"
-                node: OUTER_PLATE_L
+            type: Resource
+            translation: [ 0, 0.105, 0.0 ]
+            uri: "resource/tank.dae"
+            node: OUTER_PLATE_L
       -
         type: Collision
         elements:
           -
             type: Transform
-            translation: [ 0.0, 0.0, 0.0 ]
-            elements: &Crawler
+            elements: &INNER_PLATE1
               Shape:
-                geometry: { type: Box, size: [ 0.52, 0.1, 0.16 ] }
+                geometry: { type: Box, size: [ 0.42, 0.02, 0.12 ] }
           -
             type: Transform
-            translation: [ 0.26, 0.0, 0.0 ]
-            elements: &Crawler_Baf
+            translation: [ 0.2425, 0.0, 0.0 ]
+            elements: &INNER_PLATE2
               Shape:
-                geometry: { type: Cylinder, radius: 0.08, height: 0.1 }
+                geometry: { type: Box, size: [ 0.065, 0.02, 0.09 ] }
           -
             type: Transform
-            translation: [ -0.26, 0.0, 0.0 ]
-            elements: *Crawler_Baf
-      -
-        type: RigidBody
-        name: WHEEL_L0
-        translation: [ 0.25, 0.0, 0.0 ]
-        centerOfMass: [ 0, 0, 0 ]
-        mass: 2.0
-        inertia: [
-          0.02, 0,    0,
-          0,    0.02, 0,
-          0,    0,    0.02 ]
-        elements:
+            translation: [ 0.24, 0.0, 0.043 ]
+            rotation: [ 0, 1, 0, 12 ]
+            elements: &INNER_PLATE3
+              Shape:
+                geometry: { type: Box, size: [ 0.067, 0.02, 0.02 ] }
           -
-            type: Visual
-            resource:
-              uri: "resource/tank.dae"
-              node: WHEEL_L0
-      -
-        type: RigidBody
-        name: WHEEL_L1
-        centerOfMass: [ 0, 0, 0 ]
-        mass: 2.0
-        inertia: [
-          0.02, 0,    0,
-          0,    0.02, 0,
-          0,    0,    0.02 ]
-        elements:
+            type: Transform
+            translation: [ 0.24, 0.0, -0.043 ]
+            rotation: [ 0, 1, 0, -12 ]
+            elements: *INNER_PLATE3
           -
-            type: Visual
-            resource:
-              uri: "resource/tank.dae"
-              node: WHEEL_L1
-      -
-        type: RigidBody
-        name: WHEEL_L2
-        translation: [ -0.25, 0.0, 0.0 ]
-        centerOfMass: [ 0, 0, 0 ]
-        mass: 2.0
-        inertia: [
-          0.02, 0,    0,
-          0,    0.02, 0,
-          0,    0,    0.02 ]
-        elements:
+            type: Transform
+            translation: [ -0.2425, 0.0, 0.0 ]
+            elements: *INNER_PLATE2
           -
-            type: Visual
-            resource:
-              uri: "resource/tank.dae"
-              node: WHEEL_L2
+            type: Transform
+            translation: [ -0.24, 0.0, 0.043 ]
+            rotation: [ 0, 1, 0, -12 ]
+            elements: *INNER_PLATE3
+          -
+            type: Transform
+            translation: [ -0.24, 0.0, -0.043 ]
+            rotation: [ 0, 1, 0, 12 ]
+            elements: *INNER_PLATE3
+          -
+            type: Transform
+            translation: [ 0, 0.105, 0.0 ]
+            elements: &OUTER_PLATE1
+              Shape:
+                geometry: { type: Box, size: [ 0.42, 0.01, 0.12 ] }
+          -
+            type: Transform
+            translation: [ 0.2425, 0.105, 0.0 ]
+            elements: &OUTER_PLATE2
+              Shape:
+                geometry: { type: Box, size: [ 0.065, 0.01, 0.09 ] }
+          -
+            type: Transform
+            translation: [ 0.24, 0.105, 0.043 ]
+            rotation: [ 0, 1, 0, 12 ]
+            elements: &OUTER_PLATE3
+              Shape:
+                geometry: { type: Box, size: [ 0.067, 0.01, 0.02 ] }
+          -
+            type: Transform
+            translation: [ 0.24, 0.105, -0.043 ]
+            rotation: [ 0, 1, 0, -12 ]
+            elements: *OUTER_PLATE3
+          -
+            type: Transform
+            translation: [ -0.2425, 0.105, 0.0 ]
+            elements: *OUTER_PLATE2
+          -
+            type: Transform
+            translation: [ -0.24, 0.105, 0.043 ]
+            rotation: [ 0, 1, 0, -12 ]
+            elements: *OUTER_PLATE3
+          -
+            type: Transform
+            translation: [ -0.24, 0.105, -0.043 ]
+            rotation: [ 0, 1, 0, 12 ]
+            elements: *OUTER_PLATE3
+  -
+    name: WHEEL_L0
+    parent: CHASSIS
+    translation: [ 0.25, 0.215, -0.026 ]
+    jointType: revolute
+    jointAxis: Y
+    jointId: 2
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 2.0
+    inertia: [
+      0.02, 0,    0,
+      0,    0.02, 0,
+      0,    0,    0.02 ]
+    elements:
+      -
+        type: Visual
+        resource:
+          uri: "resource/tank.dae"
+          node: WHEEL_L0
+      -
+        type: Collision
+        elements: &WHEEL
+          Shape:
+            geometry: { type: Cylinder, radius: 0.075, height: 0.09 }
+  -
+    name: WHEEL_L1
+    parent: CHASSIS
+    translation: [ 0, 0.215, -0.026 ]
+    jointType: revolute
+    jointAxis: Y
+    jointId: 3
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 2.0
+    inertia: [
+      0.02, 0,    0,
+      0,    0.02, 0,
+      0,    0,    0.02 ]
+    elements:
+      -
+        type: Visual
+        resource:
+          uri: "resource/tank.dae"
+          node: WHEEL_L1
+      -
+        type: Collision
+        elements: *WHEEL
+  -
+    name: WHEEL_L2
+    parent: CHASSIS
+    translation: [ -0.25, 0.215, -0.026 ]
+    jointType: revolute
+    jointAxis: Y
+    jointId: 4
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 2.0
+    inertia: [
+      0.02, 0,    0,
+      0,    0.02, 0,
+      0,    0,    0.02 ]
+    elements:
+      -
+        type: Visual
+        resource:
+          uri: "resource/tank.dae"
+          node: WHEEL_L2
+      -
+        type: Collision
+        elements: *WHEEL
   -
     name: TRACK_R
     parent: CHASSIS
-    translation: [ 0, -0.22, -0.026 ]
-    jointType: pseudoContinuousTrack
-    jointAxis: Y
+    translation: [ 0, -0.16, -0.026 ]
+    jointType: fixed
     centerOfMass: [ 0, 0, 0 ]
     mass: 1.0
     inertia: [
@@ -574,85 +655,157 @@ links:
       0,    0,    0.02 ]
     elements:
       -
+        type: AGXVehicleContinuousTrackDevice
+        name: TRACK_R
+        numberOfNodes: 40
+        nodeThickness: 0.01
+        nodeWidth:  0.09
+        nodeDistanceTension: 5.0E-3
+        upAxis: [ 0, 0, 1 ]
+        sprocketNames: [ WHEEL_R0 ]
+        rollerNames: [ WHEEL_R1 ]
+        idlerNames: [ WHEEL_R2 ] 
+      -
         type: Visual
         elements:
           -
             type: Resource
             uri: "resource/tank.dae"
-            node: CRAWLER_R
+            node: INNER_PLATE_R
           -
-            type: Transform
-            translation: [ 0.0, 0.06, 0.0 ]
-            elements:
-              Resource:
-                uri: "resource/tank.dae"
-                node: INNER_PLATE_R
-          -
-            type: Transform
-            translation: [ 0.0, -0.045, 0.0 ]
-            elements:
-              Resource:
-                uri: "resource/tank.dae"
-                node: OUTER_PLATE_R
+            type: Resource
+            translation: [ 0.0, -0.105, 0.0 ]
+            uri: "resource/tank.dae"
+            node: OUTER_PLATE_R
       -
         type: Collision
         elements:
           -
             type: Transform
-            translation: [ 0.0, 0.0, 0.0 ]
-            elements: *Crawler
+            elements: *INNER_PLATE1
           -
             type: Transform
-            translation: [ 0.26, 0.0, 0.0 ]
-            elements: *Crawler_Baf
+            translation: [ 0.2425, 0.0, 0.0 ]
+            elements: *INNER_PLATE2
           -
             type: Transform
-            translation: [ -0.26, 0.0, 0.0 ]
-            elements: *Crawler_Baf       
-      -
-        type: RigidBody
-        name: WHEEL_R0
-        translation: [ 0.25, 0.0, 0.0 ]
-        centerOfMass: [ 0, 0, 0 ]
-        mass: 2.0
-        inertia: [
-          0.02, 0,    0,
-          0,    0.02, 0,
-          0,    0,    0.02 ]
-        elements:
+            translation: [ 0.24, 0.0, 0.043 ]
+            rotation: [ 0, 1, 0, 12 ]
+            elements: *INNER_PLATE3
           -
-            type: Visual
-            resource:
-              uri: "resource/tank.dae"
-              node: WHEEL_R0
-      -
-        type: RigidBody
-        name: WHEEL_R1
-        centerOfMass: [ 0, 0, 0 ]
-        mass: 2.0
-        inertia: [
-          0.02, 0,    0,
-          0,    0.02, 0,
-          0,    0,    0.02 ]
-        elements:
+            type: Transform
+            translation: [ 0.24, 0.0, -0.043 ]
+            rotation: [ 0, 1, 0, -12 ]
+            elements: *INNER_PLATE3
           -
-            type: Visual
-            resource:
-              uri: "resource/tank.dae"
-              node: WHEEL_R1
-      -
-        type: RigidBody
-        name: WHEEL_R2
-        translation: [ -0.25, 0.0, 0.0 ]
-        centerOfMass: [ 0, 0, 0 ]
-        mass: 2.0
-        inertia: [
-          0.02, 0,    0,
-          0,    0.02, 0,
-          0,    0,    0.02 ]
-        elements:
+            type: Transform
+            translation: [ -0.2425, 0.0, 0.0 ]
+            elements: *INNER_PLATE2
           -
-            type: Visual
-            resource:
-              uri: "resource/tank.dae"
-              node: WHEEL_R2
+            type: Transform
+            translation: [ -0.24, 0.0, 0.043 ]
+            rotation: [ 0, 1, 0, -12 ]
+            elements: *INNER_PLATE3
+          -
+            type: Transform
+            translation: [ -0.24, 0.0, -0.043 ]
+            rotation: [ 0, 1, 0, 12 ]
+            elements: *INNER_PLATE3
+          -
+            type: Transform
+            translation: [ 0, -0.105, 0.0 ]
+            elements: *OUTER_PLATE1
+          -
+            type: Transform
+            translation: [ 0.2425, -0.105, 0.0 ]
+            elements: *OUTER_PLATE2
+          -
+            type: Transform
+            translation: [ 0.24, -0.105, 0.043 ]
+            rotation: [ 0, 1, 0, 12 ]
+            elements: *OUTER_PLATE3
+          -
+            type: Transform
+            translation: [ 0.24, -0.105, -0.043 ]
+            rotation: [ 0, 1, 0, -12 ]
+            elements: *OUTER_PLATE3
+          -
+            type: Transform
+            translation: [ -0.2425, -0.105, 0.0 ]
+            elements: *OUTER_PLATE2
+          -
+            type: Transform
+            translation: [ -0.24, -0.105, 0.043 ]
+            rotation: [ 0, 1, 0, -12 ]
+            elements: *OUTER_PLATE3
+          -
+            type: Transform
+            translation: [ -0.24, -0.105, -0.043 ]
+            rotation: [ 0, 1, 0, 12 ]
+            elements: *OUTER_PLATE3
+  -
+    name: WHEEL_R0
+    parent: CHASSIS
+    translation: [ 0.25, -0.215, -0.026 ]
+    jointType: revolute
+    jointAxis: Y
+    jointId: 5
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 2.0
+    inertia: [
+      0.02, 0,    0,
+      0,    0.02, 0,
+      0,    0,    0.02 ]
+    elements:
+      -
+        type: Visual
+        resource:
+          uri: "resource/tank.dae"
+          node: WHEEL_R0
+      -
+        type: Collision
+        elements: *WHEEL
+  -
+    name: WHEEL_R1
+    parent: CHASSIS
+    translation: [ 0, -0.215, -0.026 ]
+    jointType: revolute
+    jointAxis: Y
+    jointId: 6
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 2.0
+    inertia: [
+      0.02, 0,    0,
+      0,    0.02, 0,
+      0,    0,    0.02 ]
+    elements:
+      -
+        type: Visual
+        resource:
+          uri: "resource/tank.dae"
+          node: WHEEL_R1
+      -
+        type: Collision
+        elements: *WHEEL
+  -
+    name: WHEEL_R2
+    parent: CHASSIS
+    translation: [ -0.25, -0.215, -0.026 ]
+    jointType: revolute
+    jointAxis: Y
+    jointId: 7
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 2.0
+    inertia: [
+      0.02, 0,    0,
+      0,    0.02, 0,
+      0,    0,    0.02 ]
+    elements:
+      -
+        type: Visual
+        resource:
+          uri: "resource/tank.dae"
+          node: WHEEL_R2
+      -
+        type: Collision
+        elements: *WHEEL
