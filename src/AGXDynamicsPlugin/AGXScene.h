@@ -20,6 +20,7 @@ public:
     static AGXScene* create(const AGXSceneDesc& desc);
     void clear();
     void stepSimulation();
+    agxSDK::SimulationRef getSimulation() const;
     void add(AGXBody* agxBody);
     agx::Bool add(agx::RigidBody* const rigid);
     agx::Bool add(agx::Constraint* const constraint);
@@ -39,7 +40,6 @@ public:
 
 private:
     agxSDK::SimulationRef _agxSimulation;
-    agxSDK::SimulationRef getSimulation() const;
 };
 typedef agx::ref_ptr<AGXScene> AGXSceneRef;
 

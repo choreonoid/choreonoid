@@ -1,4 +1,5 @@
 #include "AGXBody.h"
+#include "AGXScene.h"
 #include <cnoid/SceneDrawables>
 #include "AGXVehicleContinuousTrack.h"
 
@@ -478,7 +479,7 @@ void AGXLink::setPositionToAGX()
 
 ////////////////////////////////////////////////////////////
 // AGXBody
-AGXBody::AGXBody(Body& orgBody) : SimulationBody(new Body(orgBody)){}
+AGXBody::AGXBody(Body& orgBody) : SimulationBody(new Body(orgBody)) {}
 
 void AGXBody::initialize()
 {
@@ -513,9 +514,10 @@ void AGXBody::initialize()
     return;
 }
 
-void AGXBody::createBody()
+void AGXBody::createBody(AGXScene* agxScene)
 {
     initialize();
+    _agxScene = agxScene;
     // Create AGXLink following child link.
     new AGXLink(body()->rootLink(), nullptr, Vector3::Zero(), this);
     setLinkStateToAGX();
@@ -614,6 +616,11 @@ void AGXBody::updateForceSensors()
 void AGXBody::updateGyroAndAccelerationSensors()
 {
     sensorHelper.updateGyroAndAccelerationSensors();
+}
+
+AGXScene* AGXBody::getAGXScene() const
+{
+    return _agxScene;
 }
 
 int AGXBody::numAGXLinks() const

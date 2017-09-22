@@ -1,7 +1,28 @@
 #include "AGXVehicleContinuousTrack.h"
 #include "AGXBody.h"
+#include "AGXScene.h"
+#include <iostream>
 
 namespace cnoid {
+
+class TrackListener : public agxSDK::StepEventListener
+{
+public:
+    TrackListener( AGXVehicleContinuousTrack* track )
+            : m_track( track )
+    {
+        setMask( POST_STEP );
+    }
+
+    virtual void post( const agx::TimeStamp& /*t*/ )
+    {
+        m_track->updateTrackState();
+    }
+
+private:
+    AGXVehicleContinuousTrack*  m_track;
+};
+
 
 AGXVehicleContinuousTrack::AGXVehicleContinuousTrack(AGXVehicleContinuousTrackDevice* const device, AGXBody* const agxBody) : AGXBodyExtension(agxBody)
 {
@@ -105,6 +126,33 @@ AGXVehicleContinuousTrack::AGXVehicleContinuousTrack(AGXVehicleContinuousTrackDe
     }
     _track = AGXObjectFactory::createVehicleTrack(trackDesc);
     getAssembly()->add(_track);
+    getAGXBody()->getAGXScene()->add(getAssembly());
+    getAGXBody()->getAGXScene()->getSimulation()->add(new TrackListener(this));
+
+    // Retrieve size and transform of node from track for graphic rendering
+    // Limit only one geometry and one shape
+    _device->reserveTrackStateSize(_track->nodes().size());
+    for(auto node : _track->nodes()){
+        if(agxCollide::Shape* const shape = node->getRigidBody()
+                ->getGeometries().front()->getShapes().front()){
+            if(agxCollide::Box* const box = static_cast<agxCollide::Box*>(shape)){
+                const agx::Vec3& e = box->getHalfExtents() * 2.0;
+                Vector3 s(e[0], e[1], e[2]);
+                const Affine3& transform = convertToAffine3(node->getRigidBody()->getTransform());
+                _device->addTrackState(s, transform);
+                std::cout << _device->getTrackStates().back().transform.translation() << std::endl;
+            }
+        }
+    }
+    _device->notifyStateChange();
+}
+
+void AGXVehicleContinuousTrack::updateTrackState() {
+    for(size_t i = 0; i < _track->nodes().size(); ++i){
+        _device->getTrackStates()[i].transform =
+                convertToAffine3(_track->nodes()[i]->getRigidBody()->getTransform());
+    }
+    _device->notifyStateChange();
 }
 
 

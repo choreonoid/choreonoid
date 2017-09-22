@@ -24,11 +24,21 @@ typedef ref_ptr<AGXLink> AGXLinkPtr;
 typedef std::vector<AGXLinkPtr> AGXLinkPtrs;
 typedef std::vector<AGXBodyExtensionPtr> AGXBodyExtensionPtrs;
 typedef std::vector<std::string> VectorString;
+class AGXScene;
 
 static unsigned int generateUID(){
     static unsigned int i = 0;
     i++;
     return i;
+}
+
+static inline const Affine3 convertToAffine3(const agx::AffineMatrix4x4& a){
+    Affine3 b;
+    b.translation() = Vector3(a(3,0), a(3,1), a(3,2));
+    b.linear() <<   a(0,0), a(1,0), a(2,0),
+                    a(0,1), a(1,1), a(2,1),
+                    a(0,2), a(1,2), a(2,2);
+    return b;
 }
 
 class AGXLink : public Referenced
@@ -74,7 +84,7 @@ class CNOID_EXPORT AGXBody :  public SimulationBody
 public:
     AGXBody(Body& orgBody);
     void initialize();
-    void createBody();
+    void createBody(AGXScene* agxScene);
     std::string getCollisionGroupName() const;
     void enableExternalCollision(const bool& bOn);
     void addCollisionGroupNameToDisableCollision(const std::string& name);
@@ -88,6 +98,7 @@ public:
     void setSensor(const double& timeStep, const Vector3& gravity);
     void updateForceSensors();
     void updateGyroAndAccelerationSensors();
+    AGXScene* getAGXScene() const;
     int  numAGXLinks() const;
     void addAGXLink(AGXLinkPtr const agxLink);
     AGXLinkPtr getAGXLink(const int& index) const;
@@ -106,6 +117,7 @@ public:
 private:
     std::string _bodyCollisionGroupName;
     std::vector<std::string> _collisionGroupNamesToDisableCollision;
+    AGXScene* _agxScene;
     AGXLinkPtrs _agxLinks;
     AGXLinkPtrs _controllableLinks;
     AGXBodyExtensionPtrs _agxBodyExtensions;

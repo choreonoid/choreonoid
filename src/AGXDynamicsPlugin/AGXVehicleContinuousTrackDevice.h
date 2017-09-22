@@ -43,9 +43,16 @@ struct AGXVehicleContinuousTrackDeviceDesc{
     vector<string> rollerNames;
 };
 
+struct TrackState{
+        Vector3 boxSize;
+        Affine3 transform;
+};
+typedef std::vector<TrackState> TrackStates;
+
 class AGXVehicleContinuousTrackDevice : private AGXVehicleContinuousTrackDeviceDesc, public Device
 {
 public:
+
     AGXVehicleContinuousTrackDevice(const AGXVehicleContinuousTrackDeviceDesc& desc);
     AGXVehicleContinuousTrackDevice(const AGXVehicleContinuousTrackDevice& org, bool copyStateOnly = false);
     virtual const char* typeName() override;
@@ -61,10 +68,7 @@ public:
     bool on() const { return on_; }
     void on(bool on) { on_ = on; }
     Vector3 getUpAxis() const;
-    int getNumberOfNodes() const;
-    double getNodeThickness() const;
-    double getNodeWidth() const;
-    double getNodeDistanceTension() const;
+    int getNumNodes() const;
     int numSprocketNames() const;
     const string* getSprocketNames() const;
     int numIdlerNames() const;
@@ -73,10 +77,13 @@ public:
     const string* getRollerNames() const;
     void setDesc(const AGXVehicleContinuousTrackDeviceDesc& desc);
     void getDesc(AGXVehicleContinuousTrackDeviceDesc& desc);
+    void reserveTrackStateSize(const unsigned int& num );
+    void addTrackState(const Vector3& boxSize, const Position& transform);
+    TrackStates& getTrackStates();
 
 private:
     bool on_;
-
+    TrackStates _trackStates;
 };
 
 typedef ref_ptr<AGXVehicleContinuousTrackDevice> AGXVehicleContinuousTrackDevicePtr;

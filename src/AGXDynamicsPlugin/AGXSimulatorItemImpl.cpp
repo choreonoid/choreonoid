@@ -96,7 +96,7 @@ bool AGXSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody
     for(size_t i=0; i < simBodies.size(); ++i){
         AGXBody* body = static_cast<AGXBody*>(simBodies[i]);
         // Create rigidbody, geometry, constraints
-        body->createBody();
+        body->createBody(agxScene);
         body->setSensor(self->worldTimeStep(), g);
         agxScene->add(body);
         for(int j = 0; j < body->numAGXLinks(); ++j){
