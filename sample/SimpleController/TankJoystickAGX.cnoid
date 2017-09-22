@@ -48,6 +48,7 @@ items:
               data: 
                 isImmediateMode: true
                 controller: "TankJoystickController"
+                controllerOptions: wheels
                 reloading: true
                 inputLinkPositions: false
         - 

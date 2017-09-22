@@ -18,7 +18,8 @@ const int buttonID[] = { 0, 2, 3 };
 }
 
 class TankJoystickController : public SimpleController
-{ 
+{
+    bool usePseudoContinousTrackMode;
     Link* trackL;
     Link* trackR;
     Link* turretJoint[2];
@@ -37,15 +38,31 @@ public:
         ostream& os = io->os();
         
         Body* body = io->body();
-        trackL = body->link("TRACK_L");
-        trackR = body->link("TRACK_R");
+
+        bool tracksFound = false;
+        string opt = io->optionString();
+        if(opt == "wheels"){
+            usePseudoContinousTrackMode = false;
+            trackL = body->link("WHEEL_L0");
+            trackR = body->link("WHEEL_R0");
+        } else {
+            usePseudoContinousTrackMode = true;
+            trackL = body->link("TRACK_L");
+            trackR = body->link("TRACK_R");
+        }
+
         if(!trackL || !trackR){
             os << "The tracks are not found." << endl;
             return false;
         }
+
+        if(!usePseudoContinousTrackMode){        
+            trackL->setActuationMode(Link::JOINT_VELOCITY);
+            trackR->setActuationMode(Link::JOINT_VELOCITY);
+        }
         io->enableOutput(trackL);
         io->enableOutput(trackR);
-
+        
         turretJoint[0] = body->link("TURRET_Y");
         turretJoint[1] = body->link("TURRET_P");
         for(int i=0; i < 2; ++i){
@@ -92,8 +109,9 @@ public:
             }
         }
         // set the velocity of each tracks
-        trackL->dq() = -2.0 * pos[1] + pos[0];
-        trackR->dq() = -2.0 * pos[1] - pos[0];
+        double k = usePseudoContinousTrackMode ? 1.0 : 0.2;
+        trackL->dq() = k * (-2.0 * pos[1] + pos[0]);
+        trackR->dq() = k * (-2.0 * pos[1] - pos[0]);
         
         static const double P = 200.0;
         static const double D = 50.0;
