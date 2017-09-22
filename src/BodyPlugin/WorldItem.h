@@ -16,6 +16,7 @@
 namespace cnoid {
 
 class WorldItemImpl;
+class ContactMaterialTable;
 
 class CNOID_EXPORT WorldItem : public Item, public SceneProvider
 {
@@ -39,6 +40,9 @@ public:
     SignalProxy<void()> sigCollisionsUpdated();
 
     virtual SgNode* getScene();
+
+    void setContactMaterialFile(const std::string& filename);
+    ContactMaterialTable* contactMaterialTable();
 
 protected:
     virtual Item* doDuplicate() const;

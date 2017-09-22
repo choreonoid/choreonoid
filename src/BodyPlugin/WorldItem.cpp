@@ -12,10 +12,14 @@
 #include <cnoid/LazyCaller>
 #include <cnoid/BodyCollisionDetectorUtil>
 #include <cnoid/SceneCollision>
+#include <cnoid/ContactMaterialTable>
+#include <cnoid/ExecutablePath>
+#include <boost/format.hpp>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
+namespace filesystem = boost::filesystem;
 
 namespace {
 
@@ -64,6 +68,9 @@ public:
     LazyCaller updateCollisionDetectorLater;
 
     SceneCollisionPtr sceneCollision;
+
+    string contactMaterialFile;
+    ContactMaterialTablePtr contactMaterialTable;
 
     void init();
     bool selectCollisionDetector(int index);
@@ -122,11 +129,12 @@ WorldItemImpl::WorldItemImpl(WorldItem* self, const WorldItemImpl& org)
     : self(self),
       os(org.os),
       updateCollisionsLater([&](){ updateCollisions(false); }),
-      updateCollisionDetectorLater([&](){ updateCollisionDetector(false); })
+      updateCollisionDetectorLater([&](){ updateCollisionDetector(false); }),
+      contactMaterialFile(org.contactMaterialFile)
 {
     collisionDetectorType = org.collisionDetectorType;
     isCollisionDetectionEnabled = org.isCollisionDetectionEnabled;
-    
+
     init();
 }
 
@@ -430,6 +438,27 @@ SgNode* WorldItem::getScene()
 }
 
 
+void WorldItem::setContactMaterialFile(const std::string& filename)
+{
+    impl->contactMaterialFile = filename;
+}
+
+
+ContactMaterialTable* WorldItem::contactMaterialTable()
+{
+    if(!impl->contactMaterialTable){
+        string filename = impl->contactMaterialFile;
+        if(filename.empty()){
+            filename = (filesystem::path(shareDirectory()) / "misc" / "stdmaterials.yaml").string();
+        }
+        impl->contactMaterialTable = new ContactMaterialTable;
+        impl->contactMaterialTable->load(filename);
+    }
+
+    return impl->contactMaterialTable;
+}
+
+        
 Item* WorldItem::doDuplicate() const
 {
     return new WorldItem(*this);
@@ -442,6 +471,10 @@ void WorldItem::doPutProperties(PutPropertyFunction& putProperty)
                 [&](bool on){ enableCollisionDetection(on); return true; });
     putProperty(_("Collision detector"), impl->collisionDetectorType,
                 [&](int index){ return impl->selectCollisionDetector(index); });
+
+    FilePathProperty materialFileProperty(impl->contactMaterialFile, { _("Contact material definition file (*.yaml)") });
+    putProperty(_("Contact material"), materialFileProperty,
+                [&](const string& filename){ setContactMaterialFile(filename); return true; });
 }
 
 
