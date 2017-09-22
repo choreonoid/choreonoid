@@ -28,8 +28,8 @@ const char* PATH_DELIMITER = ":";
 const char* DLL_PREFIX = "lib";
 const char* DLL_SUFFIX = ".so";
 const char* DLL_EXTENSION = "so";
-const char* EXEC_SUFFIX_ = "";
-const char* EXEC_EXTENSION_ = "";
+const char* EXEC_SUFFIX = "";
+const char* EXEC_EXTENSION = "";
 const char* PATH_DELIMITER = ":";
 #endif
 

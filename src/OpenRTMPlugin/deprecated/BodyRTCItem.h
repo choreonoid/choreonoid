@@ -49,10 +49,12 @@ public:
         CONF_ALL_MODE,
         N_CONFIG_MODES
     };
-    enum PathBase {
-        RTC_DIRECTORY = 0,
+
+    enum BaseDirectoryType {
+        NO_BASE_DIRECTORY,
+        RTC_DIRECTORY,
         PROJECT_DIRECTORY,
-        N_PATH_BASE
+        N_BASE_DIRECTORY_TYPES
     };
 
     void setControllerModule(const std::string& name);
@@ -60,7 +62,7 @@ public:
     void setConfigMode(int mode);
     void setPeriodicRate(double freq);
     void setAutoConnectionMode(bool on); 
-    void setPathBase(int pathBase);
+    void setBaseDirectoryType(int type);
 
 #ifdef ENABLE_SIMULATION_PROFILING
     virtual void getProfilingNames(std::vector<std::string>& profilingNames);
@@ -100,7 +102,6 @@ private:
     Selection configMode;
     bool autoConnect;
     RTComponent* rtcomp;
-    Selection pathBase;
 
     typedef std::map<std::string, RTC::PortService_var> PortMap;
 
@@ -123,8 +124,8 @@ private:
     std::string moduleFileName;
     std::string confFileName;
     std::string instanceName;
-    int oldMode;
-    int oldPathBase;
+    Selection baseDirectoryType;
+    boost::filesystem::path rtcDirectory;
     MessageView* mv;
 
     void createRTC(BodyPtr body);
