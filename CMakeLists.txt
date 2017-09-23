@@ -295,7 +295,7 @@ else()
   option(ENABLE_PYTHON "Enable Python" ON)
 endif()
 
-option(USE_PYBIND11 "Use the pybind11 library to make python bindings" OFF)
+option(USE_PYBIND11 "Use the pybind11 library to make python bindings" ON)
 set(PYBIND11_DIR ${PROJECT_SOURCE_DIR}/thirdparty/pybind11 CACHE PATH "The directory of the pybind11 library")
 if(USE_PYBIND11)
   set(USE_BOOST_PYTHON OFF)
@@ -305,7 +305,7 @@ endif()
 set(CNOID_USE_PYBIND11 ${USE_PYBIND11})
 set(CNOID_USE_BOOST_PYTHON ${USE_BOOST_PYTHON})
 
-option(USE_PYTHON3 "Use Python version 3 instead of version 2" OFF)
+option(USE_PYTHON3 "Use Python version 3 instead of version 2" ON)
 
 # for Config.h
 if(USE_PYTHON3)
