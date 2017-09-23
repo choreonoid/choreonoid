@@ -248,6 +248,8 @@ public:
     bool doReset;
     bool isWaitingForSimulationToStop;
     Signal<void()> sigSimulationStarted;
+    Signal<void()> sigSimulationPaused;
+    Signal<void()> sigSimulationResumed;
     Signal<void()> sigSimulationFinished;
 
     WorldLogFileItemPtr worldLogFileItem;
@@ -1736,12 +1738,14 @@ void SimulatorItemImpl::run()
                 if(!isOnPause){
                     elapsedTime += timer.elapsed();
                     isOnPause = true;
+                    sigSimulationPaused();
                 }
                 QThread::msleep(50);
             } else {
                 if(isOnPause){
                     timer.start();
                     isOnPause = false;
+                    sigSimulationResumed();
                 }
 #ifdef ENABLE_SIMULATION_PROFILING
                 oneStepTimer.start();
@@ -1793,12 +1797,14 @@ void SimulatorItemImpl::run()
                 if(!isOnPause){
                     elapsedTime += timer.elapsed();
                     isOnPause = true;
+                    sigSimulationPaused();
                 }
                 QThread::msleep(50);
             } else {
                 if(isOnPause){
                     timer.start();
                     isOnPause = false;
+                    sigSimulationResumed();
                 }
 #ifdef ENABLE_SIMULATION_PROFILING
                 oneStepTimer.start();
@@ -2262,6 +2268,18 @@ std::string SimulatorItemImpl::optionString() const
 SignalProxy<void()> SimulatorItem::sigSimulationStarted()
 {
     return impl->sigSimulationStarted;
+}
+
+
+SignalProxy<void()> SimulatorItem::sigSimulationPaused()
+{
+    return impl->sigSimulationPaused;
+}
+
+
+SignalProxy<void()> SimulatorItem::sigSimulationResumed()
+{
+    return impl->sigSimulationResumed;
 }
 
 
