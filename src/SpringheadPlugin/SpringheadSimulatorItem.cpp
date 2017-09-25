@@ -459,7 +459,6 @@ void SpringheadLink::setTorqueToSpringhead()
 	}
 }
 
-
 void SpringheadLink::setVelocityToSpringhead()
 {
 	if(phJoint1D){
