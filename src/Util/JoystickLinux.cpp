@@ -86,7 +86,7 @@ public:
     vector<bool> record_init_pos;
     vector<double> initial_pos;
     vector<bool> initialized;
-    vector<double> PS4_axes_default_pos;
+    vector<double> PS_axes_default_pos;
 
     JoystickImpl(Joystick* self, const char* device);
     ~JoystickImpl();
@@ -158,15 +158,21 @@ bool JoystickImpl::openDevice(const char* device)
         currentModel = unsupportedModel;
     }
 
-    if(currentModel.id == PS4){
+    if(currentModel.id == PS4 || currentModel.id == PS3){
         record_init_pos.assign(axisEnabled.size(), false);
         initial_pos.assign(axisEnabled.size(), 0.0);
         initialized.assign(axisEnabled.size(), false);
-        // Lstick_H, Lstick_V, Rstick_H, L2, R2, Rstick_V
-        vector<double> PS4_analog_input_defaults = { 0.0, 0.0, 0.0, -1.0, -1.0, 0.0 };  
-        vector<double> PS4_default_positions(axisEnabled.size() - PS4_analog_input_defaults.size(), 0.0);
-        copy(PS4_analog_input_defaults.begin(), PS4_analog_input_defaults.end(), back_inserter(PS4_axes_default_pos));
-        copy(PS4_default_positions.begin(), PS4_default_positions.end(), back_inserter(PS4_axes_default_pos));
+        vector<double> PS_analog_input_defaults;
+        if(currentModel.id == PS4){
+            // Lstick_H, Lstick_V, Rstick_H, L2, R2, Rstick_V
+            PS_analog_input_defaults = { 0.0, 0.0, 0.0, -1.0, -1.0, 0.0 };
+        } else if(currentModel.id == PS3){
+            // Lstick_H, Lstick_V, Rstick_H, Rstick_V, empty*4, UP, RIGHT, DOWN, LEFT, L2, R2
+            PS_analog_input_defaults = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0, -1.0 };
+        }
+        vector<double> PS_default_positions(axisEnabled.size() - PS_analog_input_defaults.size(), 0.0);
+        copy(PS_analog_input_defaults.begin(), PS_analog_input_defaults.end(), back_inserter(PS_axes_default_pos));
+        copy(PS_default_positions.begin(), PS_default_positions.end(), back_inserter(PS_axes_default_pos));
     }
     
     // read initial state
@@ -286,17 +292,17 @@ bool JoystickImpl::readEvent()
             // normalize value (-1.0〜1.0)
             pos = nearbyint(pos * 10.0) / 10.0;
 
-            if(currentModel.id == PS4){
+            if(currentModel.id == PS4 || currentModel.id == PS3){
                 // analog stick input of PS4 is -1.0 before first operation.
                 if(!record_init_pos[id]){
                     initial_pos[id] = pos;
-                    pos = PS4_axes_default_pos[id]; // replace input for default value
+                    pos = PS_axes_default_pos[id]; // replace input for default value
                     record_init_pos[id] = true;
                     initialized[id] = false;
                 } else {
                     if(!initialized[id]){
                         if(pos == initial_pos[id]){
-                            pos = PS4_axes_default_pos[id]; // replace input for default value
+                            pos = PS_axes_default_pos[id]; // replace input for default value
                         } else {
                             initialized[id]=true; // analog stick input changed
                         }
