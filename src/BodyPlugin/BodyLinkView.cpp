@@ -24,6 +24,8 @@
 #include <cnoid/Separator>
 #include <cnoid/LazyCaller>
 #include <cnoid/ViewManager>
+#include <cnoid/MenuManager>
+#include <cnoid/AppConfig>
 #include <QScrollArea>
 #include <QGridLayout>
 #include <QGroupBox>
@@ -35,6 +37,14 @@ using namespace cnoid;
 
 namespace {
 static const double sliderResolution = 1000000.0;
+Action* useQuaternionCheck;
+
+void onUseQuaternionToggled(bool on)
+{
+    AppConfig::archive()->openMapping("Body")->openMapping("Link View")->write("useQuaternion", on);
+    BodyLinkView::instance()->switchRpyQuat(on);
+}
+BodyLinkView* bodyLinkView = 0;
 }
 
 namespace cnoid {
@@ -71,7 +81,6 @@ public:
     DoubleSpinBox quatSpin[4];
     QLabel* rpyLabels[3];
     QLabel* quatLabels[4];
-    ToggleToolButton rpyQuatSwitch;
     CheckBox attMatrixCheck;
     QWidget attMatrixBox;
     QLabel attLabels[3][3];
@@ -116,7 +125,7 @@ public:
     void setPosture(Matrix3 R);
     void doInverseKinematics(Vector3 p, Matrix3 R);
     void onZmpXyzChanged();
-    void onRpyQuatSwitchToggled();
+    void switchRpyQuat(bool on);
     bool storeState(Archive& archive);
     bool restoreState(const Archive& archive);
 };
@@ -134,8 +143,20 @@ const int M4 = 16;
 
 void BodyLinkView::initializeClass(ExtensionManager* ext)
 {
-    ext->viewManager().registerClass<BodyLinkView>(
+    bodyLinkView = ext->viewManager().registerClass<BodyLinkView>(
         "BodyLinkView", N_("Body / Link"), ViewManager::SINGLE_DEFAULT);
+    MenuManager& mm = ext->menuManager().setPath("/Options/Body/Link View");
+    MappingPtr config = AppConfig::archive()->openMapping("Body")->openMapping("Link View");
+    useQuaternionCheck = mm.addCheckItem(_("Use Quaternion"));
+    useQuaternionCheck->setChecked(config->get("useQuaternion", false));
+    useQuaternionCheck->sigToggled().connect(onUseQuaternionToggled);
+    BodyLinkView::instance()->switchRpyQuat(config->get("useQuaternion", false));
+}
+
+
+BodyLinkView* BodyLinkView::instance()
+{
+    return bodyLinkView;
 }
 
 
@@ -296,13 +317,6 @@ void BodyLinkViewImpl::setupWidgets()
         quatLabels[i]->hide();
         quatSpin[i].hide();
     }
-
-    rpyQuatSwitch.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-    rpyQuatSwitch.setText(_("Quaternion"));
-    rpyQuatSwitch.setToolTip(_("Switch RPY and Quaternion"));
-    rpyQuatSwitch.setChecked(false);
-    rpyQuatSwitch.sigToggled().connect(std::bind(&BodyLinkViewImpl::onRpyQuatSwitchToggled, this));
-    vbox->addWidget(&rpyQuatSwitch);
 
     attMatrixCheck.setText(_("Matrix"));
     attMatrixCheck.sigToggled().connect(
@@ -938,9 +952,15 @@ void BodyLinkViewImpl::onZmpXyzChanged()
 }
 
 
-void BodyLinkViewImpl::onRpyQuatSwitchToggled()
+void BodyLinkView::switchRpyQuat(bool on)
 {
-    if(rpyQuatSwitch.isChecked()){
+    impl->switchRpyQuat(on);
+}
+
+
+void BodyLinkViewImpl::switchRpyQuat(bool on)
+{
+    if(on){
         Vector3 rpy;
         for(int i=0; i < 3; ++i){
             rpy[i] = radian(rpySpin[i].value());
