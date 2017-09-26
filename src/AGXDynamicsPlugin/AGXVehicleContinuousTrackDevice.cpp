@@ -114,12 +114,12 @@ SceneDevice* createSceneAGXVehicleContinuousTrackDevice(Device* device)
 struct TypeRegistration
 {
     TypeRegistration() {
+        YAMLBodyLoader::addNodeType("AGXVehicleContinuousTrackDevice", readAGXVehicleContinuousTrackDevice);
+        SceneDevice::registerSceneDeviceFactory<AGXVehicleContinuousTrackDevice>(createSceneAGXVehicleContinuousTrackDevice);
         if(AGXObjectFactory::checkModuleEnalbled("AGX-Vehicle") || AGXObjectFactory::checkModuleEnalbled("AgX-Vehicle")){
-            YAMLBodyLoader::addNodeType("AGXVehicleContinuousTrackDevice", readAGXVehicleContinuousTrackDevice);
-            SceneDevice::registerSceneDeviceFactory<AGXVehicleContinuousTrackDevice>(createSceneAGXVehicleContinuousTrackDevice);
-            std::cout << "AGX-Vehicle is enabled." << std::endl;
         }else {
-            std::cout << "Please check you have AGX-Vehicle module license." << std::endl;
+            std::cout << "Please check you have AGX-Vehicle module license."
+                "AGXVehicleContinuousTrackDevice should not work." << std::endl;
         }
     }
 } registration;
