@@ -1059,8 +1059,7 @@ void AgXLink::createGeometry(AgXBody* agxBody)
                 if(link->jointType() == Link::PSEUDO_CONTINUOUS_TRACK || link->jointType() == Link::CRAWLER_JOINT){
                     agx::ref_ptr<CrawlerGeometry> crawlerGeometry = new CrawlerGeometry( link, agxRigidBody.get() );
                     crawlerGeometry->add( triangleMesh );
-                    crawlerGeometry->setSurfaceVelocity( agx::Vec3f(1,0,0) );   //適当に設定しておかないとcalculateSurfaceVelocityが呼び出されない。
-                    agxRigidBody->add( crawlerGeometry );
+                    crawlerGeometry->setSurfaceVelocity( agx::Vec3f(1,0,0) );   //適当に設定しておかなぁE��calculateSurfaceVelocityが呼び出されなぁE��E                    agxRigidBody->add( crawlerGeometry );
                 }else{
                     agxRigidBody->add( new agxCollide::Geometry( triangleMesh ) );
                 }
@@ -1836,7 +1835,7 @@ AgXSimulatorItem::~AgXSimulatorItem()
 
 AgXSimulatorItemImpl::~AgXSimulatorItemImpl()
 {
-    // ここでagxSimulationのメソッドを呼ぶと終了時にエラーが発生する。agx::shutdown()が実行された後のため。
+    // ここでagxSimulationのメソチE��を呼ぶと終亁E��にエラーが発生する。agx::shutdown()が実行された後�Eため、E
 }
 
 
