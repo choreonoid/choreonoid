@@ -131,7 +131,7 @@ public:
     agx::Vec3f getAxis() const;
     virtual agx::Vec3f calculateSurfaceVelocity( const agxCollide::LocalContactPoint& point , size_t index ) const;
 private:
-    agx::Vec3f _axis;
+    agx::Vec3f m_axis;
 };
 
 enum AGXShapeType
@@ -296,7 +296,7 @@ struct AGXVehicleTrackWheelDesc{
     }
     agxVehicle::TrackWheel::Model model;
     agx::Real radius;
-    agx::RigidBody* rigidbody;
+    agx::RigidBodyRef rigidbody;
     agx::AffineMatrix4x4 rbRelTransform;
 };
 
@@ -340,8 +340,8 @@ public:
     static bool checkModuleEnalbled(const char* name);
     static agxSDK::SimulationRef createSimulation(const AGXSimulationDesc& desc);
     static agx::MaterialRef createMaterial(const AGXMaterialDesc& desc);
-    static agx::ContactMaterialRef createContactMaterial(agx::MaterialRef const matA, agx::MaterialRef const matB, const AGXContactMaterialDesc& desc);
-    static agx::ContactMaterialRef createContactMaterial(const AGXContactMaterialDesc& desc, agxSDK::MaterialManagerRef const mgr);
+    static agx::ContactMaterialRef createContactMaterial(agx::Material* const matA, agx::Material* const matB, const AGXContactMaterialDesc& desc);
+    static agx::ContactMaterialRef createContactMaterial(const AGXContactMaterialDesc& desc, agxSDK::MaterialManager* const mgr);
     static agx::RigidBodyRef createRigidBody(const AGXRigidBodyDesc& desc);
     static agxCollide::GeometryRef createGeometry(const AGXGeometryDesc& desc);
     static agxCollide::ShapeRef createShape(const AGXShapeDesc& desc);
@@ -350,7 +350,7 @@ public:
     static agxSDK::AssemblyRef createAssembly();
 private:
     AGXObjectFactory();
-    static agx::Bool setContactMaterialParam(agx::ContactMaterialRef const cm, const AGXContactMaterialDesc& desc);
+    static agx::Bool setContactMaterialParam(agx::ContactMaterial* const cm, const AGXContactMaterialDesc& desc);
     static agxCollide::BoxRef createShapeBox(const AGXBoxDesc& desc);
     static agxCollide::SphereRef createShapeSphere(const AGXSphereDesc& desc);
     static agxCollide::CapsuleRef createShapeCapsule(const AGXCapsuleDesc& desc);

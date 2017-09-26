@@ -2,16 +2,16 @@
 
 namespace cnoid{
 
-    ////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
 // AGXPseudoContinuousTrackGeometry
 void AGXPseudoContinuousTrackGeometry::setAxis(const agx::Vec3f& axis)
 {
-    _axis = axis;
+    m_axis = axis;
 }
 
 agx::Vec3f AGXPseudoContinuousTrackGeometry::getAxis() const
 {
-    return _axis;
+    return m_axis;
 }
 
 agx::Vec3f AGXPseudoContinuousTrackGeometry::calculateSurfaceVelocity(const agxCollide::LocalContactPoint & point, size_t index) const
@@ -59,14 +59,14 @@ agx::MaterialRef AGXObjectFactory::createMaterial(const AGXMaterialDesc & desc)
     return m;
 }
 
-agx::ContactMaterialRef AGXObjectFactory::createContactMaterial(agx::MaterialRef const matA, agx::MaterialRef const matB, const AGXContactMaterialDesc& desc)
+agx::ContactMaterialRef AGXObjectFactory::createContactMaterial(agx::Material* const matA, agx::Material* const matB, const AGXContactMaterialDesc& desc)
 {
     agx::ContactMaterialRef cm = new agx::ContactMaterial(matA, matB);
     setContactMaterialParam(cm, desc);
     return cm;
 }
 
-agx::ContactMaterialRef AGXObjectFactory::createContactMaterial(const AGXContactMaterialDesc& desc, agxSDK::MaterialManagerRef const mgr)
+agx::ContactMaterialRef AGXObjectFactory::createContactMaterial(const AGXContactMaterialDesc& desc, agxSDK::MaterialManager* const mgr)
 {
     if(!mgr) return nullptr;
     agx::MaterialRef mA = mgr->getMaterial(desc.nameA);
@@ -172,7 +172,7 @@ agxSDK::AssemblyRef AGXObjectFactory::createAssembly()
     return new agxSDK::Assembly();
 }
 
-agx::Bool AGXObjectFactory::setContactMaterialParam(agx::ContactMaterialRef const cm, const AGXContactMaterialDesc & desc)
+agx::Bool AGXObjectFactory::setContactMaterialParam(agx::ContactMaterial* const cm, const AGXContactMaterialDesc & desc)
 {
     if(!cm) return false;
     cm->setYoungsModulus(desc.youngsModulus);
