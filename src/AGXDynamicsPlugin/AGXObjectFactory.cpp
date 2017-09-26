@@ -290,6 +290,32 @@ agxVehicle::TrackRef AGXObjectFactory::createVehicleTrack(const AGXVehicleTrackD
     for(int i = 0; i < desc.trackWheelRefs.size(); ++i){
         track->add(desc.trackWheelRefs[i]);
     }
+    track->getProperties()->setHingeCompliance(desc.hingeCompliance);
+    track->getProperties()->setStabilizingHingeFrictionParameter(desc.stabilizingHingeFrictionParameter);
+    track->getInternalMergeProperties()->setEnableMerge(desc.enableMerge);
+    track->getInternalMergeProperties()->setNumNodesPerMergeSegment(desc.numNodesPerMergeSegment);
+    track->getInternalMergeProperties()->setLockToReachMergeConditionCompliance(desc.lockToReachMergeConditionCompliance);
+    track->getInternalMergeProperties()->setContactReduction(desc.contactReduction);
+    if(desc.useThickerNodeEvery <= 0) return track;
+
+    // Add shapes for create bumpy tracks
+    agx::UInt counter = 0;
+    track->initialize(
+        [&]( const agxVehicle::TrackNode& node )
+        {
+        agx::Real heightOffset = 0.0;
+        agx::Real thickness = desc.nodeThickness;
+        // For every useThickerNodeEvery node we add a thicker box.
+        if ( ( counter++ % desc.useThickerNodeEvery ) == 0 ) {
+            thickness = desc.nodeThickerThickness;
+            heightOffset = -0.5 * ( thickness - desc.nodeThickness );
+        }
+        node.getRigidBody()->add( new agxCollide::Geometry( new agxCollide::Box( 0.5 * thickness,
+        0.5 * desc.nodeWidth,
+        0.5 * node.getLength() ) ),
+        agx::AffineMatrix4x4::translate( heightOffset, 0, node.getHalfExtents().z() ) );
+        }
+    );
     return track;
 }
 

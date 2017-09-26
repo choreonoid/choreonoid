@@ -32,13 +32,13 @@ static unsigned int generateUID(){
     return i;
 }
 
-static inline const Affine3 convertToAffine3(const agx::AffineMatrix4x4& a){
-    Affine3 b;
-    b.translation() = Vector3(a(3,0), a(3,1), a(3,2));
-    b.linear() <<   a(0,0), a(1,0), a(2,0),
+static inline const Position convertToPosition(const agx::AffineMatrix4x4& a){
+    Position pos;
+    pos.translation() = Vector3(a(3,0), a(3,1), a(3,2));
+    pos.linear() << a(0,0), a(1,0), a(2,0),
                     a(0,1), a(1,1), a(2,1),
                     a(0,2), a(1,2), a(2,2);
-    return b;
+    return pos;
 }
 
 class AGXLink : public Referenced

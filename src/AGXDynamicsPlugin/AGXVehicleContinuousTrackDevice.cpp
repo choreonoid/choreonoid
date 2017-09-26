@@ -13,42 +13,50 @@ namespace cnoid {
 
 class SceneTrackDevice : public SceneDevice
 {
-    AGXVehicleContinuousTrackDevice* trackDevice;
+    AGXVehicleContinuousTrackDevice* m_trackDevice;
+    std::vector<SgPosTransformPtr> m_sgTracks;
+    bool m_bShapeCreated = false;
 
 public:
     SceneTrackDevice(AGXVehicleContinuousTrackDevice* device)
         : SceneDevice(device)
     {
-        trackDevice = device;
-        MeshGenerator meshGenerator;
-        for (int i = 0; i < trackDevice->getNumNodes(); ++i) {
-            auto position = new SgPosTransform;
-            addChild(position, true);
-        }
-        setFunctionOnStateChanged([&](){ updateTrack(); });
+        m_trackDevice = device;
+        setFunctionOnStateChanged([&](){ update(); });
+        initialize();
     }
 
-    void updateTrack() {
-        MeshGenerator meshGenerator;
-//                const int numShoes = 1;
-//        for(int i=0; i < numShoes; ++i){
-//            auto position = new SgPosTransform;
-//            auto shape = new SgShape;
-//            //shape->setMesh(meshGenerator.generateBox(Vector3(0.6, 0.09, 0.3)));
-//            shape->setMesh(meshGenerator.generateBox(Vector3(5, 5, 5)));
-//            position->addChild(shape);
-//            addChild(position, true);
-//        }
+    void initialize(){
+        m_sgTracks.clear();
+        m_sgTracks.reserve(m_trackDevice->getNumNodes());
+        for (int i = 0; i < m_trackDevice->getNumNodes(); ++i) {
+            SgPosTransformPtr sgTrack = new SgPosTransform;
+            addChild(sgTrack, true);
+            m_sgTracks.push_back(sgTrack);
+        }
+    }
 
-        if (trackDevice->getTrackStates().size() <= 0) return;
-        const Position &linkTransform_inv = trackDevice->link()->T().inverse();
-        for (int i = 0; i < trackDevice->getTrackStates().size(); ++i) {
-            SgPosTransform* t = static_cast<SgPosTransform*>(child(i));
-            t->setTransform(linkTransform_inv * trackDevice->getTrackStates()[i].transform);
-            if(t->numChildren() > 0) continue;
+    void update(){
+        if(m_trackDevice->getTrackStates().size() <= 0) return;
+        if(!m_bShapeCreated) m_bShapeCreated = createTrackShapes();
+        updateTrackPosition();
+    }
+
+    bool createTrackShapes(){
+        MeshGenerator meshGenerator;
+        for (int i = 0; i < m_trackDevice->getTrackStates().size(); ++i) {
+            m_sgTracks[i]->clearChildren();
             auto shape = new SgShape;
-            shape->setMesh(meshGenerator.generateBox(trackDevice->getTrackStates()[i].boxSize));
-            t->addChild(shape, true);
+            shape->setMesh(meshGenerator.generateBox(m_trackDevice->getTrackStates()[i].boxSize));
+            m_sgTracks[i]->addChild(shape, true);
+        }
+        return true;
+    }
+
+    void updateTrackPosition() {
+        const Position &linkPos_inv = m_trackDevice->link()->T().inverse();
+        for (int i = 0; i < m_trackDevice->getTrackStates().size(); ++i) {
+            m_sgTracks[i]->setTransform(linkPos_inv * m_trackDevice->getTrackStates()[i].position);
         }
     }
 };
@@ -60,7 +68,9 @@ bool readAGXVehicleContinuousTrackDevice(YAMLBodyLoader& loader, Mapping& node)
     if(!node.read("numberOfNodes", desc.numberOfNodes)) return false;
     if(!node.read("nodeThickness", desc.nodeThickness)) return false;
     if(!node.read("nodeWidth", desc.nodeWidth)) return false;
-    if(!node.read("nodeDistanceTension", desc.nodeDistanceTension)) return false;
+    node.read("nodeThickerThickness", desc.nodeThickerThickness);
+    node.read("useThickerNodeEvery", desc.useThickerNodeEvery);
+    node.read("nodeDistanceTension", desc.nodeDistanceTension);
     node.read("hingeCompliance", desc.hingeCompliance);
     node.read("stabilizingHingeFrictionParameter", desc.stabilizingHingeFrictionParameter);
     node.read("enableMerge", desc.enableMerge);
@@ -92,7 +102,6 @@ bool readAGXVehicleContinuousTrackDevice(YAMLBodyLoader& loader, Mapping& node)
     }
     std::cout << desc.sprocketNames.size() << std::endl;
     AGXVehicleContinuousTrackDevicePtr trackDevice = new AGXVehicleContinuousTrackDevice(desc);
-    std::cout << trackDevice->getSprocketNames()->size() << std::endl;
     return loader.readDevice(trackDevice, node);
 }
 
@@ -118,6 +127,7 @@ struct TypeRegistration
 AGXVehicleContinuousTrackDevice::AGXVehicleContinuousTrackDevice(const AGXVehicleContinuousTrackDeviceDesc& desc)
     : AGXVehicleContinuousTrackDeviceDesc(desc)
 {
+    initialize();
 }
 
 AGXVehicleContinuousTrackDevice::AGXVehicleContinuousTrackDevice(const AGXVehicleContinuousTrackDevice& org, bool copyStateOnly)
@@ -140,7 +150,7 @@ void AGXVehicleContinuousTrackDevice::copyStateFrom(const AGXVehicleContinuousTr
     AGXVehicleContinuousTrackDevice& dev = const_cast<AGXVehicleContinuousTrackDevice&>(other);
     dev.getDesc(desc);  // Need to get desc. So do const_cast above.
     setDesc(desc);
-    _trackStates = other._trackStates;
+    m_trackStates = other.m_trackStates;
 }
 
 
@@ -192,6 +202,10 @@ double* AGXVehicleContinuousTrackDevice::writeState(double* out_buf) const
     return out_buf + 1;
 }
 
+void AGXVehicleContinuousTrackDevice::initialize()
+{
+    m_trackStates.clear();
+}
 
 Vector3 AGXVehicleContinuousTrackDevice::getUpAxis() const
 {
@@ -203,37 +217,19 @@ int AGXVehicleContinuousTrackDevice::getNumNodes() const
     return numberOfNodes;
 }
 
-int AGXVehicleContinuousTrackDevice::numSprocketNames() const
+const vector<string> AGXVehicleContinuousTrackDevice::getSprocketNames() const
 {
-    return sprocketNames.size();
+    return sprocketNames;
 }
 
-const string* AGXVehicleContinuousTrackDevice::getSprocketNames() const
+const vector<string> AGXVehicleContinuousTrackDevice::getIdlerNames() const
 {
-    if(sprocketNames.empty()) return nullptr;
-    return &sprocketNames.front();
+    return idlerNames;
 }
 
-int AGXVehicleContinuousTrackDevice::numIdlerNames() const
+const vector<string> AGXVehicleContinuousTrackDevice::getRollerNames() const
 {
-    return idlerNames.size();
-}
-
-const string* AGXVehicleContinuousTrackDevice::getIdlerNames() const
-{
-    if(idlerNames.empty()) return nullptr;
-    return &idlerNames.front();
-}
-
-int AGXVehicleContinuousTrackDevice::numRollerNames() const
-{
-    return rollerNames.size();;
-}
-
-const string* AGXVehicleContinuousTrackDevice::getRollerNames() const
-{
-    if (rollerNames.empty()) return nullptr;
-    return &rollerNames.front();
+    return rollerNames;
 }
 
 void AGXVehicleContinuousTrackDevice::setDesc(const AGXVehicleContinuousTrackDeviceDesc& desc){
@@ -246,19 +242,21 @@ void AGXVehicleContinuousTrackDevice::getDesc(AGXVehicleContinuousTrackDeviceDes
 }
 
 void AGXVehicleContinuousTrackDevice::reserveTrackStateSize(const unsigned int& num) {
-    _trackStates.reserve(num);
+    m_trackStates.reserve(num);
 }
 
-void AGXVehicleContinuousTrackDevice::addTrackState(const Vector3& boxSize, const Position& transform) {
+void AGXVehicleContinuousTrackDevice::addTrackState(const Vector3& boxSize, const Position& pos) {
     TrackState s;
     s.boxSize = boxSize;
-    s.transform = transform;
-    _trackStates.push_back(s);
+    s.position = pos;
+    m_trackStates.push_back(s);
 }
 
 TrackStates& AGXVehicleContinuousTrackDevice::getTrackStates() {
-    return _trackStates;
+    return m_trackStates;
 }
+
+
 
 
 }

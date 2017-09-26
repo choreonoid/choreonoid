@@ -305,6 +305,8 @@ struct AGXVehicleTrackDesc{
         numberOfNodes = 50;
         nodeThickness = 0.075;
         nodeWidth = 0.6;
+        nodeThickerThickness = 0.09;
+        useThickerNodeEvery = 0;
         nodeDistanceTension = 5.0E-3;
         hingeCompliance = 4.0E-10;
         stabilizingHingeFrictionParameter = 1.5;
@@ -315,12 +317,14 @@ struct AGXVehicleTrackDesc{
         trackWheelRefs.clear();
     }
 
-    agx::UInt numberOfNodes;              // Total number of nodes in the track.
+    agx::UInt numberOfNodes;           // Total number of nodes in the track.
     agx::Real nodeThickness;           // Thickness of each node in the track.
     agx::Real nodeWidth;               // Width of each node in the track.
-    agx::Real nodeDistanceTension;     // The calculated node length is close to ideal, meaning close to zero tension
-                                    // in the tracks if they were simulated without gravity. This distance is an offset
-                                    // how much closer each node will be to each other, resulting in a given initial tension.
+    agx::Real nodeThickerThickness;
+    agx::UInt useThickerNodeEvery;
+    agx::Real nodeDistanceTension;      // The calculated node length is close to ideal, meaning close to zero tension
+                                        // in the tracks if they were simulated without gravity. This distance is an offset
+                                        // how much closer each node will be to each other, resulting in a given initial tension.
     agx::Real hingeCompliance;
     agx::Real stabilizingHingeFrictionParameter;
     agx::Bool enableMerge;

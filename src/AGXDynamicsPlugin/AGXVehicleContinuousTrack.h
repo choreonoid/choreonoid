@@ -12,8 +12,8 @@ public:
     AGXVehicleContinuousTrack(AGXVehicleContinuousTrackDevice* const device, AGXBody* const agxBody);
     void updateTrackState();
 private:
-    AGXVehicleContinuousTrackDevicePtr _device = nullptr;
-    agxVehicle::TrackRef _track;
+    AGXVehicleContinuousTrackDevicePtr m_device = nullptr;
+    agxVehicle::TrackRef m_track;
 };
 
 

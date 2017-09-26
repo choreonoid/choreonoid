@@ -1,7 +1,6 @@
 #include "AGXVehicleContinuousTrack.h"
 #include "AGXBody.h"
 #include "AGXScene.h"
-#include <iostream>
 
 namespace cnoid {
 
@@ -26,7 +25,7 @@ private:
 
 AGXVehicleContinuousTrack::AGXVehicleContinuousTrack(AGXVehicleContinuousTrackDevice* const device, AGXBody* const agxBody) : AGXBodyExtension(agxBody)
 {
-    _device = device;
+    m_device = device;
     AGXVehicleTrackDesc trackDesc;
 
     auto createWheel = [device, agxBody](const string& name,
@@ -67,46 +66,34 @@ AGXVehicleContinuousTrack::AGXVehicleContinuousTrack(AGXVehicleContinuousTrackDe
         l_desc.radius = l_cylinder->getRadius();
         l_desc.rbRelTransform.setRotate(l_desc.rigidbody->getRotation());
         l_desc.rbRelTransform.setRotate(rotation);
-        //l_desc.rbRelTransform.setRotate(q * l_desc.rigidbody->getRotation());
-        //return AGXObjectFactory::createVehicleTrackWheel(l_desc);
-
-        agxVehicle::TrackWheelRef wheel = AGXObjectFactory::createVehicleTrackWheel(l_desc);
-        agx::OrthoMatrix3x3 mat;
-        l_agxLink->getAGXRigidBody()->getRotation().get(mat);
-        std::cout << "rigid " <<  mat << std::endl;
-        l_cylinder->getGeometry()->getRotation().get(mat);
-        std::cout << "geometry " <<  mat << std::endl;
-        std::cout << "rotation " << rotation << std::endl;
-        l_desc.rbRelTransform.get(mat);
-        std::cout << "rbRelTrans " << mat << std::endl;
-        wheel->getTransform().get(mat);
-        std::cout << "wheel " << mat << std::endl;
-        return wheel;
+        return AGXObjectFactory::createVehicleTrackWheel(l_desc);
     };
 
-    auto createWheels = [createWheel, &trackDesc](const int& num, const string* names, const agxVehicle::TrackWheel::Model& model)
+    auto createWheels = [createWheel, &trackDesc](const vector<string>& names, const agxVehicle::TrackWheel::Model& model)
     {
-        for(int i = 0; i < num; ++i){
-            trackDesc.trackWheelRefs.push_back(createWheel(names[i], model));
+        for(auto it : names){
+            trackDesc.trackWheelRefs.push_back(createWheel(it, model));
         }
     };
 
     // Create sprocket, idler and roller wheels
-    createWheels(device->numSprocketNames(), device->getSprocketNames(), agxVehicle::TrackWheel::Model::SPROCKET);
-    createWheels(device->numIdlerNames(), device->getIdlerNames(), agxVehicle::TrackWheel::Model::IDLER);
-    createWheels(device->numRollerNames(), device->getRollerNames(), agxVehicle::TrackWheel::Model::ROLLER);
+    createWheels(device->getSprocketNames(), agxVehicle::TrackWheel::Model::SPROCKET);
+    createWheels(device->getIdlerNames(), agxVehicle::TrackWheel::Model::IDLER);
+    createWheels(device->getRollerNames(), agxVehicle::TrackWheel::Model::ROLLER);
 
     // Create track
     AGXVehicleContinuousTrackDeviceDesc desc;
     device->getDesc(desc);
-    trackDesc.numberOfNodes = desc.numberOfNodes;
+    trackDesc.numberOfNodes = (agx::UInt)desc.numberOfNodes;
     trackDesc.nodeThickness = desc.nodeThickness;
     trackDesc.nodeWidth = desc.nodeWidth;
+    trackDesc.nodeThickerThickness = desc.nodeThickerThickness;
+    trackDesc.useThickerNodeEvery = desc.useThickerNodeEvery;
     trackDesc.nodeDistanceTension = desc.nodeDistanceTension;
     trackDesc.hingeCompliance = desc.hingeCompliance;
     trackDesc.stabilizingHingeFrictionParameter = desc.stabilizingHingeFrictionParameter;
     trackDesc.enableMerge = desc.enableMerge;
-    trackDesc.numNodesPerMergeSegment = desc.numNodesPerMergeSegment;
+    trackDesc.numNodesPerMergeSegment = (agx::UInt)desc.numNodesPerMergeSegment;
     switch(desc.contactReductionLevel)
     {
         case 0:
@@ -124,35 +111,38 @@ AGXVehicleContinuousTrack::AGXVehicleContinuousTrack(AGXVehicleContinuousTrackDe
         default:
             break;
     }
-    _track = AGXObjectFactory::createVehicleTrack(trackDesc);
-    getAssembly()->add(_track);
+    m_track = AGXObjectFactory::createVehicleTrack(trackDesc);
+
+
+    // Add to simulation
+    getAssembly()->add(m_track);
     getAGXBody()->getAGXScene()->add(getAssembly());
     getAGXBody()->getAGXScene()->getSimulation()->add(new TrackListener(this));
 
     // Retrieve size and transform of node from track for graphic rendering
     // Limit only one geometry and one shape
-    _device->reserveTrackStateSize(_track->nodes().size());
-    for(auto node : _track->nodes()){
+    m_device->initialize();
+    m_device->reserveTrackStateSize((unsigned int)m_track->nodes().size());
+    for(auto node : m_track->nodes()){
         if(agxCollide::Shape* const shape = node->getRigidBody()
                 ->getGeometries().front()->getShapes().front()){
             if(agxCollide::Box* const box = static_cast<agxCollide::Box*>(shape)){
                 const agx::Vec3& e = box->getHalfExtents() * 2.0;
-                Vector3 s(e[0], e[1], e[2]);
-                const Affine3& transform = convertToAffine3(node->getRigidBody()->getTransform());
-                _device->addTrackState(s, transform);
-                std::cout << _device->getTrackStates().back().transform.translation() << std::endl;
+                Vector3 size(e[0], e[1], e[2]);
+                const Position& pos = convertToPosition(node->getRigidBody()->getTransform());
+                m_device->addTrackState(size, pos);
             }
         }
     }
-    _device->notifyStateChange();
+    m_device->notifyStateChange();
 }
 
 void AGXVehicleContinuousTrack::updateTrackState() {
-    for(size_t i = 0; i < _track->nodes().size(); ++i){
-        _device->getTrackStates()[i].transform =
-                convertToAffine3(_track->nodes()[i]->getRigidBody()->getTransform());
+    for(size_t i = 0; i < m_track->nodes().size(); ++i){
+        m_device->getTrackStates()[i].position =
+            convertToPosition(m_track->nodes()[i]->getRigidBody()->getGeometries().front()->getTransform());
     }
-    _device->notifyStateChange();
+    m_device->notifyStateChange();
 }
 
 
