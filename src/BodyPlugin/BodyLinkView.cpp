@@ -150,7 +150,9 @@ void BodyLinkView::initializeClass(ExtensionManager* ext)
     useQuaternionCheck = mm.addCheckItem(_("Use Quaternion"));
     useQuaternionCheck->setChecked(config->get("useQuaternion", false));
     useQuaternionCheck->sigToggled().connect(onUseQuaternionToggled);
-    BodyLinkView::instance()->switchRpyQuat(config->get("useQuaternion", false));
+    if(config->get("useQuaternion", false)){
+        BodyLinkView::instance()->switchRpyQuat(config->get("useQuaternion", false));
+    }
 }
 
 
