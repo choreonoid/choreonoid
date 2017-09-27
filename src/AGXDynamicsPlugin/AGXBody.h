@@ -32,7 +32,7 @@ static unsigned int generateUID(){
     return i;
 }
 
-static inline const Position convertToPosition(const agx::AffineMatrix4x4& a){
+inline const Position convertToPosition(const agx::AffineMatrix4x4& a){
     Position pos;
     pos.translation() = Vector3(a(3,0), a(3,1), a(3,2));
     pos.linear() << a(0,0), a(1,0), a(2,0),
@@ -41,12 +41,30 @@ static inline const Position convertToPosition(const agx::AffineMatrix4x4& a){
     return pos;
 }
 
+//struct AGXLinkPrivate
+//{
+//    AGXBody*    m_agxBody;
+//    //LinkPtr     _orgLink;
+//    //AGXLinkPtr  _agxParentLink;
+//    //Vector3     _origin;
+//    //agx::RigidBodyRef       _rigid;
+//    //agxCollide::GeometryRef _geometry;
+//    //agx::ConstraintRef      _constraint;
+//    AGXBody*                getAGXBody();
+//};
+
 class AGXLink : public Referenced
 {
 public:
     AGXLink(const LinkPtr link);
     AGXLink(const LinkPtr link, const AGXLinkPtr parent, const Vector3& parentOrigin, const AGXBodyPtr agxBody);
     void constructAGXLink();
+    void setAGXMaterial();
+    bool setAGXMaterialFromName(const std::string& materialName);
+    bool setAGXMaterialFromLinkInfo();
+    bool setCenterOfMassFromLinkInfo();
+    bool setMassFromLinkInfo();
+    bool setInertiaFromLinkInfo();
     void enableExternalCollision(const bool& bOn);
     void setControlInputToAGX();
     void setLinkStateToAGX();
@@ -59,6 +77,7 @@ public:
     agxCollide::GeometryRef getAGXGeometry() const;
     void                    setAGXConstraint(agx::ConstraintRef const constraint);
     agx::ConstraintRef      getAGXConstraint() const;
+    void printDebugInfo();
 
 private:
     AGXBody*    _agxBody;

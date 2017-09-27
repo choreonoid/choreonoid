@@ -9,11 +9,9 @@ AGXBodyExtensionFuncMap agxBodyExtensionAdditionalFuncs;
 };
 
 namespace cnoid{
-
 ////////////////////////////////////////////////////////////
 // AGXLink
 AGXLink::AGXLink(const LinkPtr link) : _orgLink(link){}
-
 AGXLink::AGXLink(const LinkPtr link, const AGXLinkPtr parent, const Vector3& parentOrigin, const AGXBodyPtr agxBody)
 {
     _agxBody = agxBody;
@@ -35,7 +33,92 @@ void AGXLink::constructAGXLink()
     _geometry = createAGXGeometry();
     _rigid->add(_geometry);
     createAGXShape();
+    setAGXMaterial();
     _constraint = createAGXConstraint();
+    //printDebugInfo();
+}
+
+void AGXLink::setAGXMaterial(){
+    string matName = "";
+    auto matNameNode = getOrgLink()->info()->find("materialName");
+    if(matNameNode->isValid()) matName = matNameNode->toString();
+    if(setAGXMaterialFromName(matName)){
+        /* success to set material from material name */
+    }else if(setAGXMaterialFromLinkInfo()){
+        /* success to set material from yaml */
+    }
+
+    // set center of mass, mass, inertia
+    double density = 0.0;
+    if(getOrgLink()->info()->read("density", density)){
+        /* if density is set, we use density for center of mass, mass, inertia */
+    }else{
+        setCenterOfMassFromLinkInfo();
+        setMassFromLinkInfo();
+        setInertiaFromLinkInfo();
+    }
+}
+
+bool AGXLink::setAGXMaterialFromName(const std::string& materialName)
+{
+    agxSDK::SimulationRef simulation = getAGXBody()->getAGXScene()->getSimulation();
+    if(!simulation) return false;
+    agx::MaterialRef mat = simulation->getMaterial(materialName);
+    if(!mat) return false;
+    getAGXGeometry()->setMaterial(mat);
+    getAGXRigidBody()->updateMassProperties(agx::MassProperties::AUTO_GENERATE_ALL);
+    return true;
+}
+
+#define SET_AGXMATERIAL_FIELD(field) desc.field = getOrgLink()->info<double>(#field, desc.field)
+bool AGXLink::setAGXMaterialFromLinkInfo()
+{
+    AGXMaterialDesc desc;
+    std::stringstream ss;
+    ss << "AGXMaterial" << generateUID() << std::endl;
+    desc.name = ss.str();
+    SET_AGXMATERIAL_FIELD(density);
+    SET_AGXMATERIAL_FIELD(youngsModulus);
+    SET_AGXMATERIAL_FIELD(poissonRatio);
+    SET_AGXMATERIAL_FIELD(viscosity);
+    SET_AGXMATERIAL_FIELD(damping);
+    SET_AGXMATERIAL_FIELD(surfaceViscosity);
+    SET_AGXMATERIAL_FIELD(adhesionForce);
+    SET_AGXMATERIAL_FIELD(adhesivOverlap);
+    desc.roughness = getOrgLink()->info<double>("friction", desc.roughness);
+    agx::MaterialRef mat = AGXObjectFactory::createMaterial(desc);
+    getAGXGeometry()->setMaterial(mat);
+    getAGXRigidBody()->updateMassProperties(agx::MassProperties::AUTO_GENERATE_ALL);
+    return true;
+}
+#undef SET_AGXMATERIAL_FIELD
+
+bool AGXLink::setCenterOfMassFromLinkInfo()
+{
+    const Vector3& c(getOrgLink()->c());
+    const agx::Vec3 ca(c(0), c(1), c(2));
+    getAGXRigidBody()->setCmLocalTranslate(ca);
+    return true;
+}
+
+bool AGXLink::setMassFromLinkInfo()
+{
+    const double& m = getOrgLink()->m();
+    if(m <= 0.0) return false;
+    getAGXRigidBody()->getMassProperties()->setMass(m, false);
+    return true;
+}
+
+bool AGXLink::setInertiaFromLinkInfo()
+{
+    const Matrix3& I = getOrgLink()->I();
+    if(I.isZero()) return false;
+    agx::SPDMatrix3x3 Ia;
+    Ia.set( I(0,0), I(1,0), I(2,0),
+            I(0,1), I(1,1), I(2,1),
+            I(0,2), I(1,2), I(2,2));
+    getAGXRigidBody()->getMassProperties()->setInertiaTensor(Ia, false);
+    return true;
 }
 
 void AGXLink::enableExternalCollision(const bool & bOn)
@@ -183,22 +266,12 @@ AGXBody * AGXLink::getAGXBody()
 agx::RigidBodyRef AGXLink::createAGXRigidBody()
 {
     LinkPtr orgLink = getOrgLink();
-    const Matrix3& I = orgLink->I();
-    const Vector3& c = orgLink->c();
     const Vector3& v = orgLink->v(); 
     const Vector3& w = orgLink->w(); 
     const Vector3& p = getOrigin();
 
     AGXRigidBodyDesc desc;
     desc.name = orgLink->name();
-    if(orgLink->m() > 0.0) desc.m = orgLink->m();
-    if(I.isZero()){
-    }else{
-        desc.I.set( I(0,0), I(1,0), I(2,0),
-                    I(0,1), I(1,1), I(2,1),
-                    I(0,2), I(1,2), I(2,2));
-    }
-    desc.c.set(c(0), c(1), c(2));
     desc.v.set(v(0), v(1), v(2));
     desc.w.set(w(0), w(1), w(2));
     desc.p.set(p(0), p(1), p(2));
@@ -476,6 +549,19 @@ void AGXLink::setPositionToAGX()
             break;
     }
 }
+
+#define PRINT_DEBUGINFO(FIELD1, FIELD2) std::cout << #FIELD1 << " " << FIELD2 << std::endl;
+void AGXLink::printDebugInfo()
+{
+    PRINT_DEBUGINFO("name", getOrgLink()->name());
+    PRINT_DEBUGINFO("agxcenterofmass", getAGXRigidBody()->getCmLocalTranslate());
+    PRINT_DEBUGINFO("agxmass", getAGXRigidBody()->getMassProperties()->getMass());
+    PRINT_DEBUGINFO("agxinertia", getAGXRigidBody()->getMassProperties()->getInertiaTensor());
+    PRINT_DEBUGINFO("cnoidcenterofmass", getOrgLink()->c());
+    PRINT_DEBUGINFO("cnoidmass", getOrgLink()->m());
+    PRINT_DEBUGINFO("cnoidinertia", getOrgLink()->I());
+}
+#undef  PRINT_DEBUGINFO
 
 ////////////////////////////////////////////////////////////
 // AGXBody

@@ -85,11 +85,6 @@ agx::RigidBodyRef AGXObjectFactory::createRigidBody(const AGXRigidBodyDesc& desc
     rigid->setAngularVelocity(desc.w);
     rigid->setPosition(desc.p);
     rigid->setRotation(desc.R);
-    rigid->getMassProperties()->setAutoGenerateMask(0);
-    //r->getMassProperties()->setAutoGenerateMask(desc.genflags);
-    rigid->getMassProperties()->setMass(desc.m, false);
-    rigid->getMassProperties()->setInertiaTensor(desc.I, false);
-    rigid->setCmLocalTranslate(desc.c);
     rigid->setName(desc.name);
     rigid->getAutoSleepProperties().setEnable(desc.enableAutoSleep);
     return rigid;

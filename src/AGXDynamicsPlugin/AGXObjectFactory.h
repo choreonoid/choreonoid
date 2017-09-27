@@ -30,7 +30,7 @@ struct AGXSimulationDesc
 struct AGXMaterialDesc
 {
     AGXMaterialDesc(){
-        name = "default";
+        name = default_name();
         density = 1000;
         youngsModulus = 4.0E8;
         poissonRatio = 0.3;
@@ -40,6 +40,10 @@ struct AGXMaterialDesc
         surfaceViscosity = 5E-09;
         adhesionForce = 0.0;
         adhesivOverlap = 0.0;
+    }
+    static agx::String default_name()
+    {
+        return "default";
     }
     agx::String name;
     agx::Real density;              // [kg/m^3]
@@ -105,10 +109,11 @@ struct AGXRigidBodyDesc
     agx::Vec3 w = agx::Vec3();            // angular velocity
     agx::Vec3 p = agx::Vec3();            // position(world)
     agx::OrthoMatrix3x3 R = agx::OrthoMatrix3x3(); // rotation(world);
-    agx::Real m = 1.0;                    // mass
-    agx::SPDMatrix3x3 I = agx::SPDMatrix3x3(agx::Vec3(1.0, 1.0, 1.0));    // inertia
-    agx::Vec3 c = agx::Vec3();            // center of mass(local)
-    agx::MassProperties::AutoGenerateFlags genflags = agx::MassProperties::AutoGenerateFlags::AUTO_GENERATE_ALL;        //
+    //agx::Real m = 1.0;                    // mass
+    //agx::SPDMatrix3x3 I = agx::SPDMatrix3x3(agx::Vec3(1.0, 1.0, 1.0));    // inertia
+    //agx::Real density = -1.0;
+    //agx::Vec3 c = agx::Vec3();            // center of mass(local)
+    //agx::MassProperties::AutoGenerateFlags genflags = agx::MassProperties::AutoGenerateFlags::AUTO_GENERATE_ALL;        //
     agx::String name;                    // name
     agx::Bool   enableAutoSleep = true;
 };

@@ -80,18 +80,7 @@ bool AGXSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody
     sd.simdesc.enableAutoSleep = _p_enableAutoSleep;
     agxScene = AGXScene::create(sd);
 
-    /* temporary code. will read material from choreonoid */
-    // Create AGX material
-    AGXMaterialDesc m_def;
-    agxScene->createMaterial(m_def);
-
-    // Create AGX contact material
-    AGXContactMaterialDesc cm_def;
-    cm_def.friction = 1.0;
-    cm_def.frictionModelType = AGXFrictionModelType::DEFAULT;
-    cm_def.solveType = agx::FrictionModel::SolveType::DIRECT_AND_ITERATIVE;
-    agxScene->createContactMaterial(cm_def);
-    /* end temporary */
+    createMaterialTable();
 
     for(size_t i=0; i < simBodies.size(); ++i){
         AGXBody* body = static_cast<AGXBody*>(simBodies[i]);
@@ -99,14 +88,22 @@ bool AGXSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody
         body->createBody(agxScene);
         body->setSensor(self->worldTimeStep(), g);
         agxScene->add(body);
-        for(int j = 0; j < body->numAGXLinks(); ++j){
-            body->setAGXMaterial(j, agxScene->getMaterial(m_def.name));   // will replace m_def.name to choreonoid material name
-        }
     }
 
     saveSimulationToAGXFile();
 
     return true;
+}
+
+void AGXSimulatorItemImpl::createMaterialTable()
+{
+    // Create default AGX material and contact material
+    AGXMaterialDesc matDesc;
+    agxScene->createMaterial(matDesc);
+    AGXContactMaterialDesc cmatDesc;
+    agxScene->createContactMaterial(cmatDesc);
+
+    // Create AGX material and contact material from yaml file
 }
 
 bool AGXSimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& activeSimBodies)
