@@ -633,6 +633,13 @@ const VectorString& AGXBody::getCollisionGroupNamesToDisableCollision() const
     return _collisionGroupNamesToDisableCollision;
 }
 
+void AGXBody::addCollisionGroupNameToAllLink(const std::string& name)
+{
+    for(auto agxLink : getAGXLinks()){
+        agxLink->getAGXGeometry()->addGroup(name);
+    }
+}
+
 void AGXBody::setAGXMaterial(const int & index, const agx::MaterialRef& mat)
 {
     getAGXLink(index)->getAGXGeometry()->setMaterial(mat);
@@ -729,6 +736,11 @@ AGXLinkPtr AGXBody::getAGXLink(const std::string & name) const
     Link* link = body()->link(name);
     if(!link) return nullptr;
     return getAGXLink(link->index());
+}
+
+const AGXLinkPtrs& AGXBody::getAGXLinks() const
+{
+    return _agxLinks;
 }
 
 int AGXBody::numControllableLinks() const

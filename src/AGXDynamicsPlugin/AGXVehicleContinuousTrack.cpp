@@ -119,6 +119,24 @@ AGXVehicleContinuousTrack::AGXVehicleContinuousTrack(AGXVehicleContinuousTrackDe
     getAGXBody()->getAGXScene()->add(getAssembly());
     getAGXBody()->getAGXScene()->getSimulation()->add(new TrackListener(this));
 
+    /* Set collision Group*/
+    // 1. All links are member of body's collision group
+    // 2. Collision b/w tracks and wheels must need -> remove wheels from body's collision
+    // 3. Collision b/w wheels and body(except tracks) are not need -> create new group and join
+    m_track->addGroup(getAGXBody()->getCollisionGroupName());
+    std::stringstream bodyWheelCollision;
+    bodyWheelCollision << "BodyWheelCollision" << generateUID() << std::endl;
+    getAGXBody()->addCollisionGroupNameToDisableCollision(bodyWheelCollision.str());
+    getAGXBody()->addCollisionGroupNameToAllLink(bodyWheelCollision.str());
+    m_track->removeGroup(bodyWheelCollision.str());
+
+    for(auto wheels : trackDesc.trackWheelRefs){
+        agxCollide::GeometryRef geometry = wheels->getRigidBody()->getGeometries().front();
+        geometry->removeGroup(getAGXBody()->getCollisionGroupName());
+        geometry->addGroup(bodyWheelCollision.str());
+    }
+
+    /* Rendering */
     // Retrieve size and transform of node from track for graphic rendering
     // Limit only one geometry and one shape
     m_device->initialize();

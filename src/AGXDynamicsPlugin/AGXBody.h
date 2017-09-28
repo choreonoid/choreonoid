@@ -108,6 +108,7 @@ public:
     void enableExternalCollision(const bool& bOn);
     void addCollisionGroupNameToDisableCollision(const std::string& name);
     const VectorString& getCollisionGroupNamesToDisableCollision() const;
+    void addCollisionGroupNameToAllLink(const std::string& name);
     void setAGXMaterial(const int& index, const agx::MaterialRef& mat);
     void setControlInputToAGX();
     void setLinkStateToAGX();
@@ -122,6 +123,7 @@ public:
     void addAGXLink(AGXLinkPtr const agxLink);
     AGXLinkPtr getAGXLink(const int& index) const;
     AGXLinkPtr getAGXLink(const std::string& name) const;
+    const AGXLinkPtrs& getAGXLinks() const;
     int numControllableLinks() const;
     void addControllableLink(AGXLinkPtr const agxLink);
     AGXLinkPtr getControllableLink(const int& index) const;
