@@ -515,7 +515,7 @@ void SpringheadBody::setExtraJoints()
 
     for(int j=0; j < n; ++j){
 
-        Body::ExtraJoint& extraJoint = body->extraJoint(j);
+        ExtraJoint& extraJoint = body->extraJoint(j);
 
         SpringheadLinkPtr sprLinkPair[2];
         for(int i=0; i < 2; ++i){
@@ -538,9 +538,9 @@ void SpringheadBody::setExtraJoints()
             Vector3 a = link->attitude() * extraJoint.axis;
             
             // \todo do the destroy management for these joints
-            if(extraJoint.type == Body::EJ_PISTON){
+            if(extraJoint.type == ExtraJoint::EJ_PISTON){
 
-            } else if(extraJoint.type == Body::EJ_BALL){
+            } else if(extraJoint.type == ExtraJoint::EJ_BALL){
 
 			}
         }
@@ -929,7 +929,7 @@ void SpringheadSimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
 
 void SpringheadSimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
-    putProperty                     (_("Gravity"                           ), str(param.gravity)     , std::bind(toVector3, _1, std::ref(param.gravity)));
+    putProperty                     (_("Gravity"                           ), str(param.gravity)     , [&](const string& v){ return toVector3(v, param.gravity); });
 	putProperty.decimals(2).min(0.0)(_("Static friction"                   ), param.staticFriction   , changeProperty(param.staticFriction   ));
 	putProperty.decimals(2).min(0.0)(_("Dynamic friction"                  ), param.dynamicFriction  , changeProperty(param.dynamicFriction  ));
 	putProperty.decimals(2).min(0.0)(_("Elasticity"                        ), param.elasticity       , changeProperty(param.elasticity       ));
