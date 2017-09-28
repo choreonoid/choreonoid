@@ -19,7 +19,7 @@
 using namespace cnoid;
 using namespace std;
 using namespace std::placeholders;
-
+using namespace RTC;
 
 namespace cnoid 
 { 

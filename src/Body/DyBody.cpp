@@ -23,6 +23,12 @@ DyLink::DyLink(const Link& link)
 }
 
 
+Link* DyLink::clone() const
+{
+    return new DyLink(*this);
+}
+
+
 void DyLink::prependChild(Link* link)
 {
     if(DyLink* dyLink = dynamic_cast<DyLink*>(link)){

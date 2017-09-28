@@ -41,16 +41,15 @@ class PA10PickupController : public cnoid::SimpleController
 
 public:
 
-    Vector3 toRadianVector3(double x, double y, double z){
+    Vector3 toRadianVector3(double x, double y, double z)
+    {
         return Vector3(radian(x), radian(y), radian(z));
     }
     
-    virtual bool initialize(SimpleControllerIO* io) {
-
-        io->setJointOutput(JOINT_TORQUE);
-        io->setJointInput(JOINT_ANGLE);
-
+    virtual bool initialize(SimpleControllerIO* io)
+    {
         ioBody = io->body();
+
         ioLeftHand  = ioBody->link("HAND_L");
         ioRightHand = ioBody->link("HAND_R");
 
@@ -64,10 +63,13 @@ public:
         const int nj = ioBody->numJoints();
         qold.resize(nj);
         for(int i=0; i < nj; ++i){
-            double q = ioBody->joint(i)->q();
+            Link* joint = ioBody->joint(i);
+            io->enableIO(joint);
+            double q = joint->q();
             ikBody->joint(i)->q() = q;
             qold[i] = q;
         }
+        
         baseToWrist->calcForwardKinematics();
         qref = qold;
         qref_old = qold;
@@ -95,8 +97,8 @@ public:
         return true;
     }
 
-    virtual bool control() {
-
+    virtual bool control()
+    {
         bool isActive = true;
 
         VectorXd p(6);

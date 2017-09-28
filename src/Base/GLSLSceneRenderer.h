@@ -12,6 +12,8 @@
 namespace cnoid {
 
 class GLSLSceneRendererImpl;
+class ShaderProgram;
+class LightingProgram;
     
 class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
 {
@@ -20,53 +22,60 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
     GLSLSceneRenderer(SgGroup* root);
     virtual ~GLSLSceneRenderer();
 
-    virtual void setOutputStream(std::ostream& os);
+    static void addExtension(std::function<void(GLSLSceneRenderer* renderer)> func);
+    virtual void applyExtensions() override;
+    virtual bool applyNewExtensions() override;
 
-    virtual const Affine3& currentModelTransform() const;
-    virtual const Matrix4& projectionMatrix() const;
+    virtual void setOutputStream(std::ostream& os) override;
+
+    virtual NodeFunctionSet* renderingFunctions() override;
+    virtual void renderCustomGroup(SgGroup* transform, std::function<void()> traverseFunction) override;
+    virtual void renderCustomTransform(SgTransform* transform, std::function<void()> traverseFunction) override;
+
+    virtual void renderNode(SgNode* node) override;
+
+    virtual const Affine3& currentModelTransform() const override;
+    virtual const Matrix4& projectionMatrix() const override;
+    Matrix4 modelViewMatrix() const;
+    Matrix4 modelViewProjectionMatrix() const;
+    const Matrix4& viewProjectionMatrix() const;
+
+    void pushShaderProgram(ShaderProgram& program, bool isLightingProgram);
+    void popShaderProgram();
+
+    void renderLights(LightingProgram* program);
+    void renderFog(LightingProgram* program);
+
+    void dispatchToTransparentPhase(std::function<void()> renderingFunction);
         
-    virtual bool initializeGL();
-    virtual void flush();
+    virtual bool initializeGL() override;
+    virtual void flush() override;
 
-    // The following functions cannot be called bofore calling the initializeGL() function.
-    bool setSwapInterval(int interval);
-    int getSwapInterval() const;
+    virtual void setViewport(int x, int y, int width, int height) override;
 
-    virtual void render();
-    virtual bool pick(int x, int y);
-    virtual const Vector3& pickedPoint() const;
-    virtual const SgNodePath& pickedNodePath() const;
+    virtual const Vector3& pickedPoint() const override;
+    virtual const SgNodePath& pickedNodePath() const override;
+    virtual bool isPicking() const override;
 
-    virtual void setDefaultLighting(bool on);
+    virtual void setDefaultLighting(bool on) override;
     void setHeadLightLightingFromBackEnabled(bool on);
-    virtual void clearShadows();
-    virtual void enableShadowOfLight(int index, bool on);
-    virtual void enableShadowAntiAliasing(bool on);
-    virtual void setDefaultSmoothShading(bool on);
-    virtual SgMaterial* defaultMaterial();
-    virtual void enableTexture(bool on);
-    virtual void setDefaultPointSize(double size);
-    virtual void setDefaultLineWidth(double width);
+    virtual void clearShadows() override;
+    virtual void enableShadowOfLight(int index, bool on) override;
+    virtual void enableShadowAntiAliasing(bool on) override;
+    virtual void setDefaultSmoothShading(bool on) override;
+    virtual SgMaterial* defaultMaterial() override;
+    virtual void enableTexture(bool on) override;
+    virtual void setDefaultPointSize(double size) override;
+    virtual void setDefaultLineWidth(double width) override;
 
-    virtual void showNormalVectors(double length);
+    virtual void showNormalVectors(double length) override;
 
-    virtual void requestToClearCache();
-    virtual void enableUnusedCacheCheck(bool on);
+    virtual void requestToClearResources() override;
+    virtual void enableUnusedResourceCheck(bool on) override;
 
-    virtual void visitGroup(SgGroup* group);
-    virtual void visitInvariantGroup(SgInvariantGroup* group);
-    virtual void visitTransform(SgTransform* transform);
-    virtual void visitUnpickableGroup(SgUnpickableGroup* group);
-    virtual void visitShape(SgShape* shape);
-    virtual void visitPointSet(SgPointSet* pointSet);        
-    virtual void visitLineSet(SgLineSet* lineSet);        
-    virtual void visitPreprocessed(SgPreprocessed* preprocessed);
-    virtual void visitLight(SgLight* light);
-    virtual void visitOverlay(SgOverlay* overlay);
-    virtual void visitOutlineGroup(SgOutlineGroup* outline);
+    virtual void setColor(const Vector3f& color) override;
 
-    bool isPicking();
-    virtual void setColor(const Vector3f& color);
+    virtual void setUpsideDown(bool on) override;
 
     void setDiffuseColor(const Vector3f& color);
     void setAmbientColor(const Vector3f& color);
@@ -78,8 +87,10 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
     void setLineWidth(float width);
 
   protected:
-    virtual void onImageUpdated(SgImage* image);    
-        
+    virtual void doRender() override;
+    virtual bool doPick(int x, int y) override;
+    virtual void onImageUpdated(SgImage* image) override;
+    
   private:
     GLSLSceneRendererImpl* impl;
     friend class GLSLSceneRendererImpl;

@@ -42,20 +42,20 @@ struct ButtonInfo {
 
 ButtonInfo buttonInfo[] = {
 
-    { "^", 0, 1, true, -1.0, 7, Qt::Key_Up },
-    { "v", 2, 1, true,  1.0, 7, Qt::Key_Down },
-    { "<", 1, 0, true, -1.0, 6, Qt::Key_Left },
-    { ">", 1, 2, true,  1.0, 6, Qt::Key_Right },
+    { "^", 0, 1, true, -1.0, 5, Qt::Key_Up },
+    { "v", 2, 1, true,  1.0, 5, Qt::Key_Down },
+    { "<", 1, 0, true, -1.0, 4, Qt::Key_Left },
+    { ">", 1, 2, true,  1.0, 4, Qt::Key_Right },
 
     { "E", 3, 3, true, -1.0, 1, Qt::Key_E },
     { "D", 5, 3, true,  1.0, 1, Qt::Key_D },
     { "S", 4, 2, true, -1.0, 0, Qt::Key_S },
     { "F", 4, 4, true,  1.0, 0, Qt::Key_F },
 
-    { "I", 3, 8, true, -1.0, 4, Qt::Key_I },
-    { "K", 5, 8, true,  1.0, 4, Qt::Key_K },
-    { "J", 4, 7, true, -1.0, 3, Qt::Key_J },
-    { "L", 4, 9, true,  1.0, 3, Qt::Key_L },
+    { "I", 3, 8, true, -1.0, 3, Qt::Key_I },
+    { "K", 5, 8, true,  1.0, 3, Qt::Key_K },
+    { "J", 4, 7, true, -1.0, 2, Qt::Key_J },
+    { "L", 4, 9, true,  1.0, 2, Qt::Key_L },
 
     { "A", 2, 10, false, 1.0, 0, Qt::Key_A },
     { "B", 1, 11, false, 1.0, 1, Qt::Key_B },
@@ -85,7 +85,9 @@ public:
     VirtualJoystickViewImpl(VirtualJoystickView* self);
     ~VirtualJoystickViewImpl();
     bool onKeyStateChanged(int key, bool on);
-
+    void onButtonPressed(int index);
+    void onButtonReleased(int index);
+    
     virtual int numAxes() const;
     virtual int numButtons() const;
     virtual bool readCurrentState();
@@ -122,7 +124,8 @@ VirtualJoystickViewImpl::VirtualJoystickViewImpl(VirtualJoystickView* self)
     
     for(int i=0; i < NUM_JOYSTICK_ELEMENTS; ++i){
         ButtonInfo& info = buttonInfo[i];
-        buttons[i].setText(info.label);
+        ToolButton& button = buttons[i];
+        button.setText(info.label);
         grid.addWidget(&buttons[i], info.row, info.column);
         keyToButtonMap[info.key] = i;
         if(info.isAxis){
@@ -134,6 +137,9 @@ VirtualJoystickViewImpl::VirtualJoystickViewImpl(VirtualJoystickView* self)
                 buttonStates.resize(info.id + 1, false);
             }
         }
+
+        button.sigPressed().connect([=](){ onButtonPressed(i); });
+        button.sigReleased().connect([=](){ onButtonReleased(i); });
     }
 
     QHBoxLayout* hbox = new QHBoxLayout;
@@ -186,7 +192,7 @@ bool VirtualJoystickViewImpl::onKeyStateChanged(int key, bool on)
     } else {
         int index = p->second;
         ToolButton& button = buttons[index];
-        ButtonInfo& info = buttonInfo[p->second];
+        ButtonInfo& info = buttonInfo[index];
         button.setDown(on);
         {
             std::lock_guard<std::mutex> lock(mutex);
@@ -194,6 +200,22 @@ bool VirtualJoystickViewImpl::onKeyStateChanged(int key, bool on)
         }
     }
     return true;
+}
+
+
+void VirtualJoystickViewImpl::onButtonPressed(int index)
+{
+    ButtonInfo& info = buttonInfo[index];
+    std::lock_guard<std::mutex> lock(mutex);
+    keyValues[index] = info.activeValue;
+}
+
+
+void VirtualJoystickViewImpl::onButtonReleased(int index)
+{
+    ButtonInfo& info = buttonInfo[index];
+    std::lock_guard<std::mutex> lock(mutex);
+    keyValues[index] = 0.0;
 }
 
 

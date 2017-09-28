@@ -4,7 +4,7 @@
 */
 
 #include <cnoid/SimpleController>
-#include <cnoid/Light>
+#include <cnoid/SpotLight>
 #include <cnoid/Joystick>
 
 using namespace std;
@@ -12,20 +12,22 @@ using namespace cnoid;
 
 namespace {
 
-const int cannonAxis[] = { 3, 4 };
-const double cannonAxisRatio[] = { -1.0, 1.0 };
-const int buttonIds[] = { 0, 1, 2, 3, 4, 5 };
+const int axisID[] = { 0, 1, 2, 3 };
+const int buttonID[] = { 0, 2, 3 };
 
 }
 
-class TankJoystickController : public cnoid::SimpleController
-{ 
-    Link* crawlerL;
-    Link* crawlerR;
-    Link* cannonJoint[2];
+class TankJoystickController : public SimpleController
+{
+    bool usePseudoContinousTrackMode;
+    Link* trackL;
+    Link* trackR;
+    Link* turretJoint[2];
     double qref[2];
     double qprev[2];
+    double dt;
     LightPtr light;
+    SpotLightPtr spotLight;
     bool prevLightButtonState;
     Joystick joystick;
 
@@ -36,31 +38,49 @@ public:
         ostream& os = io->os();
         
         Body* body = io->body();
-        crawlerL = body->link("CRAWLER_TRACK_L");
-        crawlerR = body->link("CRAWLER_TRACK_R");
-        if(!crawlerL || !crawlerR){
-            os << "The crawlers are not found." << endl;
+
+        bool tracksFound = false;
+        string opt = io->optionString();
+        if(opt == "wheels"){
+            usePseudoContinousTrackMode = false;
+            trackL = body->link("WHEEL_L0");
+            trackR = body->link("WHEEL_R0");
+        } else {
+            usePseudoContinousTrackMode = true;
+            trackL = body->link("TRACK_L");
+            trackR = body->link("TRACK_R");
+        }
+
+        if(!trackL || !trackR){
+            os << "The tracks are not found." << endl;
             return false;
         }
-        io->setLinkOutput(crawlerL, JOINT_VELOCITY);
-        io->setLinkOutput(crawlerR, JOINT_VELOCITY);
+
+        if(!usePseudoContinousTrackMode){        
+            trackL->setActuationMode(Link::JOINT_VELOCITY);
+            trackR->setActuationMode(Link::JOINT_VELOCITY);
+        }
+        io->enableOutput(trackL);
+        io->enableOutput(trackR);
         
-        cannonJoint[0] = body->link("CANNON_Y");
-        cannonJoint[1] = body->link("CANNON_P");
+        turretJoint[0] = body->link("TURRET_Y");
+        turretJoint[1] = body->link("TURRET_P");
         for(int i=0; i < 2; ++i){
-            Link* joint = cannonJoint[i];
+            Link* joint = turretJoint[i];
             if(!joint){
-                os << "Cannon joint " << i << " is not found." << endl;
+                os << "Turret joint " << i << " is not found." << endl;
                 return false;
             }
             qref[i] = qprev[i] = joint->q();
-            io->setLinkOutput(joint, JOINT_TORQUE);
-            io->setLinkInput(joint, JOINT_ANGLE);
+            io->enableIO(joint);
         }
+
+        dt = io->timeStep();
         
         DeviceList<Light> lights(body->devices());
         if(!lights.empty()){
             light = lights.front();
+            spotLight = dynamic_pointer_cast<SpotLight>(light);
         }
         prevLightButtonState = false;
 
@@ -81,44 +101,61 @@ public:
     {
         joystick.readCurrentState();
         
+        double pos[2];
+        for(int i=0; i < 2; ++i){
+            pos[i] = joystick.getPosition(axisID[i]);
+            if(fabs(pos[i]) < 0.2){
+                pos[i] = 0.0;
+            }
+        }
+        // set the velocity of each tracks
+        double k = usePseudoContinousTrackMode ? 1.0 : 0.2;
+        trackL->dq() = k * (-2.0 * pos[1] + pos[0]);
+        trackR->dq() = k * (-2.0 * pos[1] - pos[0]);
+        
         static const double P = 200.0;
         static const double D = 50.0;
 
         for(int i=0; i < 2; ++i){
-            Link* joint = cannonJoint[i];
+            Link* joint = turretJoint[i];
             double q = joint->q();
-            double dq = (q - qprev[i]) / timeStep();
+            double dq = (q - qprev[i]) / dt;
             double dqref = 0.0;
-            double command = cannonAxisRatio[i] * joystick.getPosition(cannonAxis[i]);
-            if(fabs(command) > 0.2){
-                double deltaq = command * 0.002;
+            double pos = joystick.getPosition(axisID[i + 2]);
+            if(fabs(pos) > 0.25){
+                double deltaq = 0.002 * pos;
                 qref[i] += deltaq;
-                dqref = deltaq / timeStep();
+                dqref = deltaq / dt;
             }
             joint->u() = P * (qref[i] - q) + D * (dqref - dq);
             qprev[i] = q;
         }
 
-        double pos[2];
-        for(int i=0; i < 2; ++i){
-            pos[i] = joystick.getPosition(i);
-            if(fabs(pos[i]) < 0.2){
-                pos[i] = 0.0;
-            }
-        }
-        // set the velocity of each crawlers
-        crawlerL->dq() = -2.0 * pos[1] + pos[0];
-        crawlerR->dq() = -2.0 * pos[1] - pos[0];
-        
         if(light){
-            bool lightButtonState = joystick.getButtonState(buttonIds[0]);
+            bool changed = false;
+            
+            bool lightButtonState = joystick.getButtonState(buttonID[0]);
             if(lightButtonState){
                 if(!prevLightButtonState){
                     light->on(!light->on());
-                    light->notifyStateChange();
+                    changed = true;
                 }
             }
             prevLightButtonState = lightButtonState;
+
+            if(spotLight){
+                if(joystick.getButtonState(buttonID[1])){
+                    spotLight->setBeamWidth(std::max(0.1f, spotLight->beamWidth() - 0.001f));
+                    changed = true;
+                } else if(joystick.getButtonState(buttonID[2])){
+                    spotLight->setBeamWidth(std::min(0.7854f, spotLight->beamWidth() + 0.001f));
+                    changed = true;
+                }
+            }
+
+            if(changed){
+                light->notifyStateChange();
+            }
         }
 
         return true;

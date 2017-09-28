@@ -21,7 +21,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/misc/floor.wrl"
+            modelFile: "${SHARE}/model/misc/floor.body"
             currentBaseLink: "BASE"
             rootPosition: [  0.000000,  0.000000, -0.100000 ]
             rootAttitude: [ 
@@ -101,13 +101,17 @@ items:
             Friction: 1
             ERP2: 0
             SplitImpulsePenetrationThreshold: -0.0001
+            useHACD: false
+            CollisionMargin: 0.0001
+            velocityMode: false
+            usefeatherstoneAlgorithm: false
         - 
           id: 6
           name: "Conveyor"
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/misc/conveyor.wrl"
+            modelFile: "${SHARE}/model/misc/conveyor.body"
             currentBaseLink: "BASE"
             rootPosition: [  0.000000,  0.000000,  0.050000 ]
             rootAttitude: [ 
@@ -139,7 +143,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/misc/ellipsoid1.wrl"
+            modelFile: "${SHARE}/model/misc/ellipsoid1.body"
             currentBaseLink: "BASE"
             rootPosition: [  2.000000,  0.000000,  0.390000 ]
             rootAttitude: [ 

@@ -35,11 +35,9 @@ public:
         ioBody = io->body();
         dt = io->timeStep();
 
-        io->setJointInput(JOINT_ANGLE);
-        io->setJointOutput(JOINT_TORQUE);
-
-        for(int i=0; i < ioBody->numJoints(); ++i){
-            qref.push_back(ioBody->joint(i)->q());
+        for(auto joint : ioBody->joints()){
+            io->enableIO(joint);
+            qref.push_back(joint->q());
         }
         qold = qref;
 

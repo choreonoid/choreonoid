@@ -15,6 +15,7 @@ const char* axisNames[3] = { "x", "y", "z" };
 
 }
 
+
 SceneDragger::SceneDragger()
 {
     isContainerMode_ = false;

@@ -7,7 +7,12 @@
 NVIDIAのアカウント必要
 https://developer.nvidia.com/content/apply-access-nvidia-physx-source-code
 ここからGitHubのアカウント入力
-メールが届くのでそこからアクセス
+メールが届くのでそこからアクセスしてソースを取得
 
+PhysXSDK/Source/compiler/linux64に移動して
+make release
+すると、Lib以下にライブラリが作成される。
 
+/home/hattori/physX/PhysX-3.3/PhysXSDK/Source/SimulationController/src
+のScScene.cpp３４２２行でエラーが出るので、　&を&&に書き換える。
 

@@ -4,6 +4,7 @@
 */
 
 #include "ODECollisionDetector.h"
+#include <map>
 #include <cnoid/MeshExtractor>
 #include <cnoid/SceneDrawables>
 #include <cnoid/EigenUtil>
@@ -244,7 +245,8 @@ void ODECollisionDetectorImpl::addMesh(GeometryEx* model)
                     if(scale.x() == scale.y() && scale.x() == scale.z()){
                         doAddPrimitive = true;
                     }
-                } else if(mesh->primitiveType() == SgMesh::CYLINDER){
+                } else if(mesh->primitiveType() == SgMesh::CYLINDER ||
+                        mesh->primitiveType() == SgMesh::CAPSULE ){
                     // check if the bottom circle face is uniformly scaled
                     if(scale.x() == scale.z()){
                         doAddPrimitive = true;
@@ -271,6 +273,11 @@ void ODECollisionDetectorImpl::addMesh(GeometryEx* model)
                 geomId = dCreateCylinder(model->spaceID, cylinder.radius * scale.x(), cylinder.height * scale.y());
                 created = true;
                 break; }
+            case SgMesh::CAPSULE : {
+                SgMesh::Capsule capsule = mesh->primitive<SgMesh::Capsule>();
+                geomId = dCreateCapsule(model->spaceID, capsule.radius * scale.x(), capsule.height * scale.y());
+                created = true;
+                break; }
             default :
                 break;
             }
@@ -280,7 +287,8 @@ void ODECollisionDetectorImpl::addMesh(GeometryEx* model)
                 if(translation){
                     T_ *= Translation3(*translation);
                 }
-                if(mesh->primitiveType()==SgMesh::CYLINDER)
+                if(mesh->primitiveType()==SgMesh::CYLINDER ||
+                        mesh->primitiveType()==SgMesh::CAPSULE )
                     T_ *= AngleAxis(radian(90), Vector3::UnitX());
                 offsetMap.insert(OffsetMap::value_type(geomId, T_));
                 meshAdded = true;

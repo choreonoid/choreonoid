@@ -13,7 +13,6 @@
 #endif
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 
 namespace cnoid {
@@ -58,7 +57,7 @@ GLSceneRendererImpl::GLSceneRendererImpl(GLSceneRenderer* self, SgGroup* sceneRo
     : self(self),
       sceneRoot(sceneRoot)
 {
-    sceneRoot->sigUpdated().connect(std::bind(&GLSceneRenderer::onSceneGraphUpdated, self, _1));
+    sceneRoot->sigUpdated().connect([self](const SgUpdate& update){ self->onSceneGraphUpdated(update); });
 
     scene = new SgGroup();
     sceneRoot->addChild(scene);
@@ -145,6 +144,7 @@ void GLSceneRenderer::setViewport(int x, int y, int width, int height)
         impl->aspectRatio = (double)width / height;
     }
     impl->viewport << x, y, width, height;
+    //glViewport(x, y, width, height);
     glViewport(x, y, width, height);
 }
 
@@ -236,6 +236,12 @@ void GLSceneRenderer::enableShadowOfLight(int index, bool on)
 
 
 void GLSceneRenderer::enableShadowAntiAliasing(bool on)
+{
+
+}
+
+
+void GLSceneRenderer::setUpsideDown(bool on)
 {
 
 }

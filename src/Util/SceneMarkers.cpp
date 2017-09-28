@@ -5,6 +5,7 @@
 
 #include "SceneMarkers.h"
 #include "MeshGenerator.h"
+#include "EigenUtil.h"
 
 using namespace std;
 using namespace cnoid;

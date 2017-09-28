@@ -29,7 +29,6 @@
 #ifdef _WIN32
 #include <Windows.h>
 #endif
-#include <GL/glew.h>
 
 using namespace std;
 using namespace std::placeholders;
@@ -150,7 +149,7 @@ public :
         return RTC_OK;
     }
 
-    ReturnCode_t onActivateted(UniqueId ec_id)
+    ReturnCode_t onActivated(UniqueId ec_id)
     {
         timedTbuf.clear();
         timedTbuf.resize(BUF_SIZE);

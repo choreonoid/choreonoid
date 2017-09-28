@@ -153,6 +153,7 @@ public:
     void doPutProperties(PutPropertyFunction& putProperty);
     bool store(Archive& archive);
     bool restore(const Archive& archive);
+    void setBody(Body* body);
 };
 
 }
@@ -322,14 +323,10 @@ bool BodyItem::loadModelFile(const std::string& filename)
 
 bool BodyItemImpl::loadModelFile(const std::string& filename)
 {
-    MessageView* mv = MessageView::instance();
-    mv->beginStdioRedirect();
-    bodyLoader.setMessageSink(mv->cout(true));
+    bodyLoader.setMessageSink(mvout(true));
 
     BodyPtr newBody = bodyLoader.load(filename);
 
-    mv->endStdioRedirect();
-    
     if(newBody){
         body = newBody;
         body->setName(self->name());
@@ -339,6 +336,21 @@ bool BodyItemImpl::loadModelFile(const std::string& filename)
     initBody(false);
 
     return (newBody);
+}
+
+
+void BodyItem::setBody(Body* body)
+{
+    impl->setBody(body);
+}
+
+
+void BodyItemImpl::setBody(Body* body_)
+{
+    body = body_;
+    body->initializeState();
+
+    initBody(false);
 }
 
 
@@ -712,9 +724,10 @@ void BodyItemImpl::setPresetPose(BodyItem::PresetPoseID id)
         }
     }
 
-    const int n = body->numJoints();
+    const int n = body->numAllJoints();
     while(jointIndex < n){
-        body->joint(jointIndex++)->q() = 0.0;
+        Link* joint = body->joint(jointIndex++);
+        joint->q() = joint->q_initial();
     }
 
     fkTraverse.calcForwardKinematics();

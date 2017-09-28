@@ -8,11 +8,7 @@
 
 using namespace cnoid;
 
-namespace {
-const int axisIds[] = { 1, 0 };
-}
-
-class SampleCrawlerJoystickController : public cnoid::SimpleController
+class SampleCrawlerJoystickController : public SimpleController
 { 
     Link* crawlerL;
     Link* crawlerR;
@@ -33,8 +29,8 @@ public:
             return false;
         }
 
-        io->setLinkOutput(crawlerL, JOINT_VELOCITY);
-        io->setLinkOutput(crawlerR, JOINT_VELOCITY);
+        io->enableOutput(crawlerL);
+        io->enableOutput(crawlerR);
 
         for(int i=0; i < 2; i++){
             qRef[i] = 0;

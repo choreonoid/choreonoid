@@ -1,0 +1,188 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: FourWheelCar
+
+links:
+  -
+    name: BODY
+    jointType: free
+    translation: [ 0, 0, 0.1 ]
+    mass: 10.0
+    inertia: [
+      0.083, 0, 0,
+      0, 0.217, 0,
+      0, 0, 0.283 ]
+    elements:
+      -
+        type: Shape
+        geometry:
+          type: Box
+          size: [ 0.5, 0.3, 0.1 ]
+        appearance: &green
+          material:
+            diffuseColor: [ 0.0, 0.6, 0.0 ]
+            ambientIntensity: 0.3
+            specularColor: [ 0.7, 0.7, 0.7 ]
+            shininess: 0.25
+      -
+        type: Shape
+        translation: [ -0.09, 0.0, 0.07 ]
+        geometry:
+          type: Box
+          size: [ 0.3, 0.2, 0.1 ]
+        appearance: *green
+      -
+        type: Camera
+        name: Camera
+        format: COLOR_DEPTH
+        fieldOfView: 65
+        width: 320
+        height: 240
+        frameRate: 30
+
+  -
+    name: STEERING_RIGHT
+    parent: BODY
+    translation: [ 0.2, -0.15, 0 ]
+    jointType: revolute
+    jointAxis: Z
+    jointId: 0
+    mass: 0.5
+    inertia: [
+      0.00003, 0, 0,
+      0, 0.0001, 0,
+      0, 0, 0.0001 ]
+    elements:
+      type: Shape
+      rotation: [ 0, 0, 1, 90 ]
+      geometry:
+        type: Cylinder
+        radius: 0.01
+        height: 0.05
+      appearance: &black
+        material:
+          diffuseColor: [ 0.01, 0.01, 0.01 ]
+          ambientIntensity: 0.01
+          specularColor: [ 0.3, 0.3, 0.3 ]
+          shininess: 0.01
+  -
+    name: STEERING
+    parent: STEERING_RIGHT
+    translation: [ -0.05, 0, 0 ]
+    jointType: revolute
+    jointAxis: Z
+    centerOfMass: [ 0, 0.15, 0 ]
+    mass: 1.0
+    inertia: [
+      0.0086, 0, 0,
+      0, 0.00006, 0,
+      0, 0, 0.0086 ]
+    elements:
+      type: Shape
+      translation: [ 0, 0.15, 0 ]
+      geometry:
+        type: Cylinder
+        radius: 0.01
+        height: 0.32
+      appearance: *black
+  -
+    name: FRONTRIGHT_WHEEL
+    parent: STEERING_RIGHT
+    jointType: revolute
+    jointAxis: Y
+    translation: [ 0, -0.025, 0 ]
+    mass: 2
+    inertia: [
+      0.0053, 0, 0,
+      0, 0.01, 0,
+      0, 0, 0.0053 ]
+    elements:
+      type: Shape
+      geometry:
+        type: Cylinder
+        radius: 0.1
+        height: 0.04
+      appearance: *black
+  -
+    name: STEERING_LEFT
+    parent: BODY
+    translation: [ 0.2, 0.15, 0 ]
+    jointType: revolute
+    jointAxis: Z
+    mass: 0.5
+    inertia: [
+      0.00003, 0, 0,
+      0, 0.0001, 0,
+      0, 0, 0.0001 ]
+    elements:
+      type: Shape
+      rotation: [ 0, 0, 1, 90 ]
+      geometry:
+        type: Cylinder
+        radius: 0.01
+        height: 0.05
+      appearance: *black
+  -
+    name: FRONTLEFT_WHEEL
+    parent: STEERING_LEFT
+    jointType: revolute
+    jointAxis: Y
+    translation: [ 0, 0.025, 0 ]
+    mass: 2
+    inertia: [
+      0.0053, 0, 0,
+      0, 0.01, 0,
+      0, 0, 0.0053 ]
+    elements:
+      type: Shape
+      geometry:
+        type: Cylinder
+        radius: 0.1
+        height: 0.04
+      appearance: *black
+  -
+    name: REAR_WHEEL
+    parent: BODY
+    translation: [ -0.2, 0, 0 ]
+    jointType: revolute
+    jointAxis: Y
+    jointId: 1
+    mass: 5
+    inertia: [
+      0.079, 0, 0,
+      0, 0.025, 0,
+      0, 0, 0.079 ]
+    elements:
+      -
+        type: Shape
+        geometry:
+          type: Cylinder
+          radius: 0.01
+          height: 0.31
+        appearance: *black
+      -
+        type: Shape
+        translation: [ 0, -0.175, 0 ]
+        geometry:
+          type: Cylinder
+          radius: 0.1
+          height: 0.04
+        appearance: *black
+      -
+        type: Shape
+        translation: [ 0, 0.175, 0 ]
+        geometry:
+          type: Cylinder
+          radius: 0.1
+          height: 0.04
+        appearance: *black
+
+extraJoints:
+  -
+    link1Name: STEERING
+    link2Name: STEERING_LEFT
+    jointType: piston
+    jointAxis: [ 0, 0, 1 ]
+    link1LocalPos: [ 0, 0.3, 0 ]
+    link2LocalPos: [ -0.05, 0, 0 ]

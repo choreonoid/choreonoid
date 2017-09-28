@@ -20,7 +20,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/SR1/SR1.yaml"
+            modelFile: "${SHARE}/model/SR1/SR1.body"
             currentBaseLink: "WAIST"
             rootPosition: [  0.000000,  0.000000,  0.713500 ]
             rootAttitude: [ 
@@ -69,7 +69,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/misc/floor.wrl"
+            modelFile: "${SHARE}/model/misc/floor.body"
             currentBaseLink: "BASE"
             rootPosition: [  0.000000,  0.000000, -0.100000 ]
             rootAttitude: [ 

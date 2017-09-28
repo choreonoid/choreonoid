@@ -3,7 +3,9 @@
 #define MAX_NUM_SHADOWS 3
 
 in vec3 position;
-in vec3 normal;
+in vec3 normal; // interpolated normal
+in vec2 texCoord;
+in vec3 colorV;
 in vec4 shadowCoords[MAX_NUM_SHADOWS];
 
 /*
@@ -43,6 +45,11 @@ uniform LightInfo lights[10];
 
 vec3 reflectionElements[10];
 
+uniform bool isTextureEnabled;
+uniform sampler2D tex1;
+
+uniform bool isVertexColorEnabled;
+
 uniform int numShadows;
 
 struct ShadowInfo {
@@ -57,9 +64,9 @@ uniform float maxFogDist;
 uniform float minFogDist;
 uniform bool isFogEnabled = false;
 
-layout(location = 0) out vec4 color;
+layout(location = 0) out vec4 color4;
 
-vec3 calcDiffuseAndSpecularElements(LightInfo light)
+vec3 calcDiffuseAndSpecularElements(LightInfo light, vec3 diffuseColor)
 {
     if(light.position.w == 0.0){
         // directional light
@@ -95,9 +102,8 @@ vec3 calcDiffuseAndSpecularElements(LightInfo light)
         
         vec3 v = normalize(vec3(-position));
         vec3 n = normalize(normal);
-        vec3 r = reflect(-s, normal);
-        //float distance = l.length();
-        float distance = sqrt(dot(l, l));
+        vec3 r = reflect(-s, n);
+        float distance = sqrt(dot(l, l)); // l.length()
         ki *= 1.0 / max(1.0,
                         light.constantAttenuation +
                         distance * light.linearAttenuation +
@@ -111,9 +117,33 @@ vec3 calcDiffuseAndSpecularElements(LightInfo light)
 
 void main()
 {
-    for(int i=0; i < numLights; ++i){
-        reflectionElements[i] = calcDiffuseAndSpecularElements(lights[i]);
+    vec3 color;
+    float alpha2;
+
+    if(isTextureEnabled){
+        vec4 texColor4 = texture(tex1, texCoord);
+        vec3 texColor = vec3(texColor4);
+        alpha2 = alpha * texColor4.a;
+        color = emissionColor * texColor;
+        for(int i=0; i < numLights; ++i){
+            reflectionElements[i] = calcDiffuseAndSpecularElements(lights[i], texColor);
+            color += lights[i].ambientIntensity * ambientColor * texColor;
+        }
+    } else {
+        vec3 baseColor;
+        if(isVertexColorEnabled){
+            baseColor = colorV;
+        } else {
+            baseColor = diffuseColor;
+        }
+        alpha2 = alpha;
+        color = emissionColor;
+        for(int i=0; i < numLights; ++i){
+            reflectionElements[i] = calcDiffuseAndSpecularElements(lights[i], baseColor);
+            color += lights[i].ambientIntensity * ambientColor;
+        }
     }
+        
     for(int i=0; i < numShadows; ++i){
         float shadow;
         if(isShadowAntiAliasingEnabled){
@@ -128,17 +158,17 @@ void main()
         }
         reflectionElements[shadows[i].lightIndex] *= shadow;
     }
-    vec3 c = emissionColor;
+
     for(int i=0; i < numLights; ++i){
-        c += reflectionElements[i] + lights[i].ambientIntensity * ambientColor;
+        color += reflectionElements[i];
     }
 
     if(isFogEnabled){
         float dist = abs(position.z);
         float f = (maxFogDist - dist) / (maxFogDist - minFogDist);
         f = clamp(f, 0.0, 1.0);
-        c = mix(fogColor, c, f);
+        color = mix(fogColor, color, f);
     }
     
-    color = vec4(c, alpha);
+    color4 = vec4(color, alpha2);
 }

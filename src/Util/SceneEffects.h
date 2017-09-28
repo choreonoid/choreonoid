@@ -13,11 +13,13 @@ namespace cnoid {
 
 class CNOID_EXPORT SgFog : public SgPreprocessed
 {
+protected:
+    SgFog(int polymorhicId);
+    
 public:
     SgFog();
     SgFog(const SgFog& org);
     virtual SgObject* clone(SgCloneMap& cloneMap) const;
-    virtual void accept(SceneVisitor& visitor);
 
     const Vector3f& color() const { return color_; }
     template<typename Derived> void setColor(const Eigen::MatrixBase<Derived>& c) {
@@ -35,12 +37,14 @@ typedef ref_ptr<SgFog> SgFogPtr;
 
 class CNOID_EXPORT SgOutlineGroup : public SgGroup
 {
+protected:
+    SgOutlineGroup(int polymorhicId);
+    
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
     SgOutlineGroup();
 
-    virtual void accept(SceneVisitor& visitor);
     const Vector3f& color() const { return color_; }
     void setColor(const Vector3f& color) { color_ = color; }
     void setLineWidth(float width) { lineWidth_ = width; }

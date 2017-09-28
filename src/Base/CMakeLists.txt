@@ -203,10 +203,9 @@ set(headers
   TextEditView.h
   ImageView.h
   JoystickCapture.h
-  exportdecl.h
-  gettext.h
   TextEdit.h
   TaskView.h
+  exportdecl.h
   )
 
 set(target CnoidBase)
@@ -295,7 +294,12 @@ endif()
 
 apply_common_setting_for_library(${target} "${headers}")
 
-
 if(ENABLE_PYTHON)
-  add_subdirectory(python)
+  if(USE_PYBIND11)
+    add_subdirectory(pybind11)
+  elseif(USE_BOOST_PYTHON)
+    add_subdirectory(boostpython)
+  endif()
 endif()
+
+add_subdirectory(lua)

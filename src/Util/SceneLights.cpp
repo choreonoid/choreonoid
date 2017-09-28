@@ -4,13 +4,13 @@
 */
 
 #include "SceneLights.h"
-#include "SceneVisitor.h"
 
 using namespace std;
 using namespace cnoid;
 
 
-SgLight::SgLight()
+SgLight::SgLight(int polymorhicId)
+    : SgPreprocessed(polymorhicId)
 {
     on_ = true;
     color_.setOnes();
@@ -35,15 +35,17 @@ SgObject* SgLight::clone(SgCloneMap& cloneMap) const
 }
 
 
-void SgLight::accept(SceneVisitor& visitor)
+SgDirectionalLight::SgDirectionalLight(int polymorhicId)
+    : SgLight(polymorhicId)
 {
-    visitor.visitLight(this);
+    direction_ << 0.0, 0.0, -1.0;
 }
 
 
 SgDirectionalLight::SgDirectionalLight()
+    : SgDirectionalLight(findPolymorphicId<SgDirectionalLight>())
 {
-    direction_ << 0.0, 0.0, -1.0;
+
 }
 
 
@@ -60,17 +62,19 @@ SgObject* SgDirectionalLight::clone(SgCloneMap& cloneMap) const
 }
 
 
-void SgDirectionalLight::accept(SceneVisitor& visitor)
-{
-    visitor.visitLight(this);
-}
-
-
-SgPointLight::SgPointLight()
+SgPointLight::SgPointLight(int polymorhicId)
+    : SgLight(polymorhicId)
 {
     constantAttenuation_ = 1.0f;
     linearAttenuation_ = 0.0f;
     quadraticAttenuation_ = 0.0f;
+}
+
+
+SgPointLight::SgPointLight()
+    : SgPointLight(findPolymorphicId<SgPointLight>())
+{
+
 }
 
 
@@ -89,18 +93,20 @@ SgObject* SgPointLight::clone(SgCloneMap& cloneMap) const
 }
 
 
-void SgPointLight::accept(SceneVisitor& visitor)
-{
-    visitor.visitLight(this);
-}
-
-
-SgSpotLight::SgSpotLight()
+SgSpotLight::SgSpotLight(int polymorhicId)
+    : SgPointLight(polymorhicId)
 {
     direction_ << 0.0, 0.0, -1.0;
     beamWidth_ = 1.570796f;
     cutOffAngle_ = 0.785398f;
     cutOffExponent_ = 1.0f;
+}
+
+
+SgSpotLight::SgSpotLight()
+    : SgSpotLight(findPolymorphicId<SgSpotLight>())
+{
+
 }
 
 
@@ -120,7 +126,15 @@ SgObject* SgSpotLight::clone(SgCloneMap& cloneMap) const
 }
 
 
-void SgSpotLight::accept(SceneVisitor& visitor)
-{
-    visitor.visitLight(this);
+namespace {
+
+struct NodeTypeRegistration {
+    NodeTypeRegistration() {
+        SgNode::registerType<SgLight, SgPreprocessed>();
+        SgNode::registerType<SgDirectionalLight, SgLight>();
+        SgNode::registerType<SgPointLight, SgLight>();
+        SgNode::registerType<SgSpotLight, SgPointLight>();
+    }
+} registration;
+
 }

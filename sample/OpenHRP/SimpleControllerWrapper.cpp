@@ -101,6 +101,7 @@ public:
     virtual void setLinkOutput(Link* link, int stateTypes) { }
     virtual void setJointInput(int stateTypes) { }
     virtual void setLinkInput(Link* link, int stateTypes) { }
+    virtual void enableInput(Device* device) { }
 };
 
 

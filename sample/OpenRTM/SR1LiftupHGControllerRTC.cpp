@@ -80,7 +80,7 @@ RTC::ReturnCode_t SR1LiftupHGControllerRTC::onInitialize()
     addOutPort("vel_out", m_velOut);
 
     string modelfile = getNativePathString(
-        boost::filesystem::path(shareDirectory()) / "model/SR1/SR1.wrl");
+        boost::filesystem::path(shareDirectory()) / "model/SR1/SR1.body");
             
     BodyLoader loader;
     loader.setMessageSink(cout);

@@ -9,6 +9,7 @@
 #include <cnoid/ExecutablePath>
 #include <cnoid/Referenced>
 #include <cnoid/FileUtil>
+#include <cnoid/UTF8>
 #include <QRegExp>
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>

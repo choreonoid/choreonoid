@@ -1,4 +1,3 @@
-
 # @author Shin'ichiro Nakaoka
 
 option(BUILD_GRXUI_PLUGIN "Building the GrxUI plugin" OFF)

@@ -274,6 +274,79 @@ SgMesh* MeshGenerator::generateCone(double radius, double height, bool bottom, b
 }
 
 
+SgMesh* MeshGenerator::generateCapsule(double radius, double height)
+{
+    if(height < 0.0 || radius < 0.0){
+        return 0;
+    }
+
+    SgMesh* mesh = new SgMesh();
+
+    int vdn = divisionNumber_ / 2;  // latitudinal division number
+    if(vdn%2)
+        vdn +=1;
+
+    const int hdn = divisionNumber_;      // longitudinal division number
+
+    SgVertexArray& vertices = *mesh->setVertices(new SgVertexArray());
+    vertices.reserve( vdn * hdn + 2);
+
+    for(int i=1; i < vdn+1; i++){ // latitudinal direction
+        double y;
+        double tv;
+        if(i <= vdn / 2){
+            y = height / 2.0;
+            tv = i * PI / vdn;
+        }else{
+            y = - height / 2.0;
+            tv = (i-1) * PI / vdn;
+        }
+
+        for(int j=0; j < hdn; j++){ // longitudinal direction
+            const double th = j * 2.0 * PI / hdn;
+            vertices.push_back(Vector3f(radius * sin(tv) * cos(th), radius * cos(tv) + y, radius * sin(tv) * sin(th)));
+        }
+    }
+
+    const int topIndex  = vertices.size();
+    vertices.push_back(Vector3f(0.0f,  radius + height /2.0, 0.0f));
+    const int bottomIndex = vertices.size();
+    vertices.push_back(Vector3f(0.0f, -radius - height / 2.0, 0.0f));
+
+    mesh->reserveNumTriangles(vdn * hdn * 2);
+
+    // top faces
+    for(int i=0; i < hdn; ++i){
+        mesh->addTriangle(topIndex, (i+1) % hdn, i);
+    }
+
+    // side faces
+    for(int i=0; i < vdn - 1; ++i){
+        const int upper = i * hdn;
+        const int lower = (i + 1) * hdn;
+        for(int j=0; j < hdn; ++j) {
+            // upward convex triangle
+            mesh->addTriangle(j + upper, ((j + 1) % hdn) + lower, j + lower);
+            // downward convex triangle
+            mesh->addTriangle(j + upper, ((j + 1) % hdn) + upper, ((j + 1) % hdn) + lower);
+        }
+    }
+
+    // bottom faces
+    const int offset = (vdn - 1) * hdn;
+    for(int i=0; i < hdn; ++i){
+        mesh->addTriangle(bottomIndex, (i % hdn) + offset, ((i+1) % hdn) + offset);
+    }
+
+    mesh->setPrimitive(SgMesh::Capsule(radius, height));
+    mesh->updateBoundingBox();
+
+    generateNormals(mesh, PI / 2.0);
+
+    return mesh;
+}
+
+
 SgMesh* MeshGenerator::generateDisc(double radius, double innerRadius)
 {
     if(innerRadius <= 0.0 || radius <= innerRadius){
@@ -315,29 +388,22 @@ SgMesh* MeshGenerator::generateDisc(double radius, double innerRadius)
 }
 
 
-SgMesh* MeshGenerator::generateArrow(double length, double width, double coneLengthRatio, double coneWidthRatio)
+SgMesh* MeshGenerator::generateArrow(double cylinderRadius, double cylinderHeight, double coneRadius, double coneHeight)
 {
-    double r = width / 2.0;
-    double h = length * coneLengthRatio;
     SgShapePtr cone = new SgShape;
     //setDivisionNumber(20);
-    cone->setMesh(generateCone(r * coneWidthRatio, h));
+    cone->setMesh(generateCone(coneRadius, coneHeight));
     SgPosTransform* conePos = new SgPosTransform;
-    conePos->setTranslation(Vector3(0.0, length / 2.0 + h / 2.0, 0.0));
+    conePos->setTranslation(Vector3(0.0, cylinderHeight / 2.0 + coneHeight / 2.0, 0.0));
     conePos->addChild(cone);
 
     SgShapePtr cylinder = new SgShape;
     //setDivisionNumber(12);
-    cylinder->setMesh(generateCylinder(r, length, true, false));
-    //cylinder->setMesh(generateCylinder(r, length - h, true, false));
-    //SgPosTransform* cylinderPos = new SgPosTransform;
-    //cylinderPos->setTranslation(Vector3(0.0, -h, 0.0));
-    //cylinderPos->addChild(cylinder);
+    cylinder->setMesh(generateCylinder(cylinderRadius, cylinderHeight, true, false));
         
     MeshExtractor meshExtractor;
     SgGroupPtr group = new SgGroup;
     group->addChild(conePos);
-    //group->addChild(cylinderPos);
     group->addChild(cylinder);
     return meshExtractor.integrate(group);
 }
@@ -383,19 +449,26 @@ SgMesh* MeshGenerator::generateTorus(double radius, double crossSectionRadius)
     return mesh;
 }
 
-
 SgMesh* MeshGenerator::generateExtrusion(const Extrusion& extrusion)
 {
-    const int numSpines = extrusion.spine.size();
-    const int numCrosses = extrusion.crossSection.size();
-    
-    bool isClosed = false;
-    if(extrusion.spine[0][0] == extrusion.spine[numSpines - 1][0] &&
-       extrusion.spine[0][1] == extrusion.spine[numSpines - 1][1] &&
-       extrusion.spine[0][2] == extrusion.spine[numSpines - 1][2] ){
-        isClosed = true;
+    int numSpines = extrusion.spine.size();
+    int numCrosses = extrusion.crossSection.size();
+
+    if(numSpines < 2 || numCrosses < 2){
+        return 0;
     }
+    
+    bool isClosed = (extrusion.spine[0] == extrusion.spine[numSpines - 1]);
+    if(isClosed)
+        numSpines--;
+
     bool isCrossSectionClosed = (extrusion.crossSection[0] == extrusion.crossSection[numCrosses - 1]);
+    if(isCrossSectionClosed)
+        numCrosses --;
+
+    if(numSpines < 2 || numCrosses < 2){
+        return 0;
+    }
 
     SgMesh* mesh = new SgMesh;
     SgVertexArray& vertices = *mesh->setVertices(new SgVertexArray());
@@ -410,7 +483,7 @@ SgMesh* MeshGenerator::generateExtrusion(const Extrusion& extrusion)
             Vector3 Yaxis, Zaxis;
             if(i == 0){
                 if(isClosed){
-                    const Vector3& spine1 = extrusion.spine[numSpines - 2];
+                    const Vector3& spine1 = extrusion.spine[numSpines - 1];
                     const Vector3& spine2 = extrusion.spine[0];
                     const Vector3& spine3 = extrusion.spine[1];
                     Yaxis = spine3 - spine1;
@@ -425,8 +498,8 @@ SgMesh* MeshGenerator::generateExtrusion(const Extrusion& extrusion)
             } else if(i == numSpines - 1){
                 if(isClosed){
                     const Vector3& spine1 = extrusion.spine[numSpines - 2];
-                    const Vector3& spine2 = extrusion.spine[0];
-                    const Vector3& spine3 = extrusion.spine[1];
+                    const Vector3& spine2 = extrusion.spine[numSpines - 1];
+                    const Vector3& spine3 = extrusion.spine[0];
                     Yaxis = spine3 - spine1;
                     Zaxis = (spine3 - spine2).cross(spine1 - spine2);
                 } else {
@@ -505,18 +578,24 @@ SgMesh* MeshGenerator::generateExtrusion(const Extrusion& extrusion)
         }
     }
 
-    for(int i=0; i < numSpines - 1 ; ++i){
-        const int upper = i * numCrosses;
-        const int lower = (i + 1) * numCrosses;
-        for(int j=0; j < numCrosses - 1; ++j) {
-            mesh->addTriangle(j + upper, j + lower, (j + 1) + lower);
-            mesh->addTriangle(j + upper, (j + 1) + lower, j + 1 + upper);
-        }
-    }
+    int numSpinePoints = numSpines;
+    int numCrossPoints = numCrosses;
 
-    int j = 0;
-    if(isCrossSectionClosed){
-        j = 1;
+    if(isClosed)
+        numSpinePoints++;
+    if(isCrossSectionClosed)
+        numCrossPoints++;
+
+    for(int i=0; i < numSpinePoints - 1 ; ++i){
+        int ii = (i + 1) % numSpines;
+        int upper = i * numCrosses;
+        int lower = ii * numCrosses;
+
+        for(int j=0; j < numCrossPoints - 1; ++j) {
+            int jj = (j + 1) % numCrosses;
+            mesh->addTriangle(j + upper, j + lower, jj + lower);
+            mesh->addTriangle(j + upper, jj + lower, jj + upper);
+        }
     }
 
     Triangulator<SgVertexArray> triangulator;
@@ -525,7 +604,7 @@ SgMesh* MeshGenerator::generateExtrusion(const Extrusion& extrusion)
     if(extrusion.beginCap && !isClosed){
         triangulator.setVertices(vertices);
         polygon.clear();
-        for(int i=0; i < numCrosses - j; ++i){
+        for(int i=0; i < numCrosses; ++i){
             polygon.push_back(i);
         }
         triangulator.apply(polygon);
@@ -538,7 +617,7 @@ SgMesh* MeshGenerator::generateExtrusion(const Extrusion& extrusion)
     if(extrusion.endCap && !isClosed){
         triangulator.setVertices(vertices);
         polygon.clear();
-        for(int i=0; i < numCrosses - j; ++i){
+        for(int i=0; i < numCrosses; ++i){
             polygon.push_back(numCrosses * (numSpines - 1) + i);
         }
         triangulator.apply(polygon);
@@ -568,19 +647,23 @@ SgLineSet* MeshGenerator::generateExtrusionLineSet(const Extrusion& extrusion, S
 
     const int n = ns - 1;
 
+    bool isSpineClosed = (extrusion.spine[0] == extrusion.spine[ns - 1]);
     bool isCrossSectionClosed = (extrusion.crossSection[0] == extrusion.crossSection[nc - 1]);
     const int m = isCrossSectionClosed ? nc - 1 : nc;
     
+
     int o = 0;
     for(int i=0; i < n; ++i){
         for(int j=0; j < m; ++j){
-            lineSet->addLine(o + j, o + (j + 1) % nc);
-            lineSet->addLine(o + j, o + j + nc);
+            lineSet->addLine(o + j, o + (j + 1) % m);
+            lineSet->addLine(o + j, o + j + m);
         }
-        o += nc;
+        o += m;
     }
-    for(int j=0; j < m; ++j){
-        lineSet->addLine(o + j, o + (j + 1) % nc);
+    if(!isSpineClosed){
+        for(int j=0; j < m; ++j){
+            lineSet->addLine(o + j, o + (j + 1) % m);
+        }
     }
 
     return lineSet;

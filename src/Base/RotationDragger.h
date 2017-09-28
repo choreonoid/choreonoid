@@ -50,7 +50,7 @@ public:
     virtual bool onButtonReleaseEvent(const SceneWidgetEvent& event);
     virtual bool onPointerMoveEvent(const SceneWidgetEvent& event);
     virtual void onPointerLeaveEvent(const SceneWidgetEvent& event);
-        
+
 private:
     int draggableAxes_;
     SgScaleTransformPtr scale;

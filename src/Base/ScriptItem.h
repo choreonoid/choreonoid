@@ -22,7 +22,7 @@ public:
 
     virtual std::string identityName() const;
 
-    virtual bool setBackgroundMode(bool on);
+    virtual void setBackgroundMode(bool on) = 0;
     virtual bool isBackgroundMode() const;
     virtual bool isRunning() const;
         

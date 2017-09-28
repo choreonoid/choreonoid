@@ -8,6 +8,7 @@
 #include <cnoid/SceneGraph>
 #include <cnoid/EigenUtil>
 #include <cnoid/ValueTree>
+#include <iostream>
 
 using namespace std;
 using namespace cnoid;
@@ -118,6 +119,7 @@ void Body::copy(const Body& org)
         for(int j=0; j < 2; ++j){
             extraJoint.link[j] = link(orgExtraJoint.link[j]->index());
         }
+        extraJoint.body[0] = extraJoint.body[1] = this;
         extraJoints_.push_back(extraJoint);
     }
 
@@ -523,14 +525,12 @@ void Body::setVirtualJointForces()
 */
 bool Body::installCustomizer()
 {
-    if(!pluginsInDefaultDirectoriesLoaded){
-        loadBodyCustomizers(bodyInterface());
-        pluginsInDefaultDirectoriesLoaded = true;
-    }
-		
+    loadDefaultBodyCustomizers(std::cerr);
     BodyCustomizerInterface* interface = findBodyCustomizer(impl->modelName);
-
-    return interface ? installCustomizer(interface) : false;
+    if(interface){
+        return installCustomizer(interface);
+    }
+    return false;
 }
 
 

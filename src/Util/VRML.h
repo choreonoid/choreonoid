@@ -235,14 +235,13 @@ public:
 typedef ref_ptr<VRMLInline> VRMLInlinePtr;
 
 
-class CNOID_EXPORT  VRMLAnotherFormatFile : public VRMLNode
+class CNOID_EXPORT  VRMLNonVrmlInline : public VRMLNode
 {
 public:
-    VRMLAnotherFormatFile();
-    SFString url;
-    //SFString extension;
+    VRMLNonVrmlInline();
+    SFString url; // An absolute path should be specified
 };
-typedef ref_ptr<VRMLAnotherFormatFile> VRMLAnotherFormatFilePtr;
+typedef ref_ptr<VRMLNonVrmlInline> VRMLNonVrmlInlinePtr;
 
 
 class VRMLAppearance;

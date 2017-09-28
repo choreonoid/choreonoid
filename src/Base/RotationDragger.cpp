@@ -8,7 +8,6 @@
 #include <cnoid/SceneRenderer>
 #include <cnoid/SceneUtil>
 #include <cnoid/MeshGenerator>
-#include <cnoid/MeshExtractor>
 #include <cnoid/EigenUtil>
 
 using namespace std;
@@ -21,25 +20,26 @@ const char* axisNames[3] = { "x", "y", "z" };
 /**
    \note This node is not inserted the node path obtained by SceneWidgetEvent::nodePath()
 */
-class ViewpointDependentRenderingSelector : public SgGroup
+class SgViewpointDependentSelector : public SgGroup
 {
     Vector3 axis;
     double thresh;
     
 public:
-    ViewpointDependentRenderingSelector(){
+    SgViewpointDependentSelector()
+        : SgGroup(findPolymorphicId<SgViewpointDependentSelector>()) {
         axis = Vector3::UnitX();
         thresh = cos(radian(45.0));
     }
 
-    ViewpointDependentRenderingSelector(const ViewpointDependentRenderingSelector& org, SgCloneMap& cloneMap)
+    SgViewpointDependentSelector(const SgViewpointDependentSelector& org, SgCloneMap& cloneMap)
         : SgGroup(org, cloneMap) {
         axis = org.axis;
         thresh = org.thresh;
     }
 
     virtual SgObject* clone(SgCloneMap& cloneMap) const {
-        return new ViewpointDependentRenderingSelector(*this, cloneMap);
+        return new SgViewpointDependentSelector(*this, cloneMap);
     }
 
     void setAxis(const Vector3& axis){
@@ -50,26 +50,37 @@ public:
         thresh = cos(rad);
     }
 
-    virtual void accept(SceneVisitor& visitor) {
-        SceneRenderer* renderer = dynamic_cast<SceneRenderer*>(&visitor);
-        if(!renderer){
-            visitor.visitGroup(this);
+    void render(SceneRenderer* renderer) {
+        const Affine3& C = renderer->currentCameraPosition();
+        const Affine3& M = renderer->currentModelTransform();
+        double d = fabs((C.translation() - M.translation()).normalized().dot((M.linear() * axis).normalized()));
+        if(d > thresh){
+            if(numChildren() > 0){
+                renderer->renderNode(child(0));
+            }
         } else {
-            const Affine3& C = renderer->currentCameraPosition();
-            const Affine3& M = renderer->currentModelTransform();
-            double d = fabs((C.translation() - M.translation()).normalized().dot((M.linear() * axis).normalized()));
-            if(d > thresh){
-                if(numChildren() > 0){
-                    child(0)->accept(visitor);
-                }
-            } else {
-                if(numChildren() > 1){
-                    child(1)->accept(visitor);
-                }
+            if(numChildren() > 1){
+                renderer->renderNode(child(1));
             }
         }
     }
 };
+
+
+struct NodeTypeRegistration {
+    NodeTypeRegistration() {
+        SgNode::registerType<SgViewpointDependentSelector, SgGroup>();
+
+        SceneRenderer::addExtension(
+            [](SceneRenderer* renderer){
+                auto functions = renderer->renderingFunctions();
+                functions->setFunction<SgViewpointDependentSelector>(
+                    [=](SgNode* node){
+                        static_cast<SgViewpointDependentSelector*>(node)->render(renderer);
+                    });
+            });
+    }
+} registration;
 
 }
 
@@ -105,7 +116,7 @@ RotationDragger::RotationDragger()
         beltShape2->setMesh(beltMesh2);
         beltShape2->setMaterial(material);
         
-        ViewpointDependentRenderingSelector* selector = new ViewpointDependentRenderingSelector;
+        SgViewpointDependentSelector* selector = new SgViewpointDependentSelector;
         
         SgPosTransform* transform1 = new SgPosTransform;
         if(i == 0){ // x-axis

@@ -5,81 +5,146 @@
 
 #include "MeshExtractor.h"
 #include "SceneDrawables.h"
-#include <functional>
+#include "PolymorphicFunctionSet.h"
 
 using namespace cnoid;
 
+namespace cnoid {
 
-void MeshExtractor::visitPosTransform(SgPosTransform* transform)
+class MeshExtractorImpl
 {
-    const Affine3 T0(currentTransform_);
-    const Affine3 P0(currentTransformWithoutScaling_);
-    currentTransform_ = T0 * transform->T();
-    currentTransformWithoutScaling_ = P0 * transform->T();
-    visitGroup(transform);
-    currentTransform_ = T0;
-    currentTransformWithoutScaling_ = P0;
+public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+
+    PolymorphicFunctionSet<SgNode> functions;
+    std::function<void()> callback;
+    SgMesh* currentMesh;
+    Affine3 currentTransform;
+    Affine3 currentTransformWithoutScaling;
+    bool isCurrentScaled;
+    bool meshFound;
+    
+    MeshExtractorImpl();
+    void visitGroup(SgGroup* group);
+    void visitSwitch(SgSwitch* switchNode);    
+    void visitTransform(SgTransform* transform);
+    void visitPosTransform(SgPosTransform* transform);
+    void visitShape(SgShape* shape);
+};
+
 }
 
 
-void MeshExtractor::visitScaleTransform(SgScaleTransform* transform)
+MeshExtractor::MeshExtractor()
 {
-    bool isParentScaled = isCurrentScaled_;
-    isCurrentScaled_ = true;
-    Affine3 T0 = currentTransform_;
-    currentTransform_ = T0 * transform->T();
-    visitGroup(transform);
-    currentTransform_ = T0;
-    isCurrentScaled_ = isParentScaled;
+    impl = new MeshExtractorImpl;
 }
 
 
-void MeshExtractor::visitShape(SgShape* shape)
+MeshExtractorImpl::MeshExtractorImpl()
 {
-    SgMesh* mesh = shape->mesh();
-    if(mesh && mesh->vertices() && !mesh->vertices()->empty() && !mesh->triangleVertices().empty()){
-        meshFound = true;
-        currentMesh_ = mesh;
-        callback();
-        currentMesh_ = 0;
+    functions.setFunction<SgGroup>(
+        [&](SgGroup* node){ visitGroup(node); });
+    functions.setFunction<SgSwitch>(
+        [&](SgSwitch* node){ visitSwitch(node); });
+    functions.setFunction<SgTransform>(
+        [&](SgTransform* node){ visitTransform(node); });
+    functions.setFunction<SgPosTransform>(
+        [&](SgPosTransform* node){ visitPosTransform(node); });
+    functions.setFunction<SgShape>(
+        [&](SgShape* node){ visitShape(node); });
+    functions.updateDispatchTable();
+}
+    
+    
+void MeshExtractorImpl::visitGroup(SgGroup* group)
+{
+    for(SgGroup::const_iterator p = group->begin(); p != group->end(); ++p){
+        functions.dispatch(*p);
     }
 }
 
 
-void MeshExtractor::visitPointSet(SgPointSet* pointSet)
+void MeshExtractorImpl::visitSwitch(SgSwitch* switchNode)
 {
+    if(switchNode->isTurnedOn()){
+        visitGroup(switchNode);
+    }
+}
+    
 
+void MeshExtractorImpl::visitTransform(SgTransform* transform)
+{
+    bool isParentScaled = isCurrentScaled;
+    isCurrentScaled = true;
+    Affine3 T0 = currentTransform;
+    Affine3 T;
+    transform->getTransform(T);
+    currentTransform = T0 * T;
+    visitGroup(transform);
+    currentTransform = T0;
+    isCurrentScaled = isParentScaled;
 }
 
 
-void MeshExtractor::visitLineSet(SgLineSet* lineSet)
+void MeshExtractorImpl::visitPosTransform(SgPosTransform* transform)
 {
-
+    const Affine3 T0(currentTransform);
+    const Affine3 P0(currentTransformWithoutScaling);
+    currentTransform = T0 * transform->T();
+    currentTransformWithoutScaling = P0 * transform->T();
+    visitGroup(transform);
+    currentTransform = T0;
+    currentTransformWithoutScaling = P0;
 }
 
 
-void MeshExtractor::visitLight(SgLight* light)
+void MeshExtractorImpl::visitShape(SgShape* shape)
 {
-
+    SgMesh* mesh = shape->mesh();
+    if(mesh && mesh->vertices() && !mesh->vertices()->empty() && !mesh->triangleVertices().empty()){
+        meshFound = true;
+        currentMesh = mesh;
+        callback();
+        currentMesh = 0;
+    }
 }
 
 
-void MeshExtractor::visitCamera(SgCamera* camera)
+SgMesh* MeshExtractor::currentMesh() const
 {
+    return impl->currentMesh;
+}
 
+
+const Affine3& MeshExtractor::currentTransform() const
+{
+    return impl->currentTransform;
+}
+
+
+const Affine3& MeshExtractor::currentTransformWithoutScaling() const
+{
+    return impl->currentTransformWithoutScaling;
+}
+
+
+bool MeshExtractor::isCurrentScaled() const
+{
+    return impl->isCurrentScaled;
 }
 
 
 bool MeshExtractor::extract(SgNode* node, std::function<void()> callback)
 {
-    this->callback = callback;
-    currentMesh_ = 0;
-    currentTransform_.setIdentity();
-    currentTransformWithoutScaling_.setIdentity();
-    isCurrentScaled_ = false;
-    meshFound = false;
-    node->accept(*this);
-    return meshFound;
+    impl->callback = callback;
+    impl->currentMesh = 0;
+    impl->currentTransform.setIdentity();
+    impl->currentTransformWithoutScaling.setIdentity();
+    impl->isCurrentScaled = false;
+    impl->meshFound = false;
+    impl->functions.dispatch(node);
+    return impl->meshFound;
 }
 
 

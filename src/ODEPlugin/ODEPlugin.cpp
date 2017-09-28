@@ -44,7 +44,7 @@ public:
         
     virtual bool finalize()
         {
-            dCloseODE();
+            // dCloseODE();   TODO ODESimulatorItemが全部deleteされた後に実行しないといけない。
             return true;
         }
 };

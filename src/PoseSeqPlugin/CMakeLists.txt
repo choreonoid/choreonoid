@@ -1,4 +1,3 @@
-
 # @author Shin'ichiro Nakaoka
 
 # set(CMAKE_BUILD_TYPE Debug)
@@ -53,5 +52,9 @@ if(QT5)
 endif()
 
 if(ENABLE_PYTHON)
-  add_subdirectory(python)
+  if(USE_PYBIND11)
+    add_subdirectory(pybind11)
+  elseif(USE_BOOST_PYTHON)
+    add_subdirectory(boostpython)
+  endif()
 endif()

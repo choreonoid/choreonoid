@@ -120,14 +120,13 @@ bool NamingContextHelper::checkOrUpdateNamingContext()
     }
 
     try {
-#ifdef WIN32
-        omniORB::setClientCallTimeout(250);
-#endif
+        omniORB::setClientCallTimeout(1000);
+
         CORBA::Object_var obj = getORB()->string_to_object(namingContextLocation.c_str());
         namingContext = CosNaming::NamingContext::_narrow(obj);
-#ifndef WIN32
+
         omniORB::setClientCallTimeout(namingContext, 250);
-#endif
+
         if(CORBA::is_nil(namingContext)){
             errorMessage_ = str(format("The object at %1% is not a NamingContext object.") % namingContextLocation);
         }
@@ -135,9 +134,9 @@ bool NamingContextHelper::checkOrUpdateNamingContext()
         errorMessage_ = str(format("A NameService doesn't exist at \"%1%\".") % namingContextLocation);
         namingContext = CosNaming::NamingContext::_nil();
     }
-#ifdef WIN32
+
     omniORB::setClientCallTimeout(0); // reset the global timeout setting?
-#endif
+
     return (!CORBA::is_nil(namingContext));
 }
 

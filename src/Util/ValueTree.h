@@ -6,7 +6,6 @@
 #define CNOID_UTIL_VALUE_TREE_H
 
 #include "Referenced.h"
-#include "UTF8.h"
 #include <map>
 #include <vector>
 #include "exportdecl.h"
@@ -61,14 +60,12 @@ public:
 
 #ifdef _WIN32
     const std::string toString() const;
-    const std::string toUTF8String() const;
 
     operator const std::string () const {
         return toString();
     }
 #else
     const std::string& toString() const;
-    const std::string& toUTF8String() const;
 
     operator const std::string& () const {
         return toString();
@@ -96,7 +93,6 @@ public:
     bool read(double &out_value) const;
     bool read(bool &out_value) const;
     bool read(std::string &out_value) const;
-    bool readUTF8String(std::string& out_value) const;
 
     bool hasLineInfo() const { return (line_ >= 0); }
     int line() const { return line_ + 1; }
@@ -235,6 +231,7 @@ public:
     virtual ~Mapping();
 
     virtual ValueNode* clone() const;
+    virtual Mapping* cloneMapping() const;
     
     bool empty() const { return values.empty(); }
     int size() const { return values.size(); }
@@ -265,41 +262,40 @@ public:
     void insert(const Mapping* other);
 
     Mapping* openMapping(const std::string& key) {
-        return openMapping(key, false);
+        return openMapping_(key, false);
     }
         
     Mapping* openFlowStyleMapping(const std::string& key) {
-        return openFlowStyleMapping(key, false);
+        return openFlowStyleMapping_(key, false);
     }
 
     Mapping* createMapping(const std::string& key) {
-        return openMapping(key, true);
+        return openMapping_(key, true);
     }
         
     Mapping* createFlowStyleMapping(const std::string& key) {
-        return openFlowStyleMapping(key, true);
+        return openFlowStyleMapping_(key, true);
     }
 
     Listing* openListing(const std::string& key) {
-        return openListing(key, false);
+        return openListing_(key, false);
     }
         
     Listing* openFlowStyleListing(const std::string& key){
-        return openFlowStyleListing(key, false);
+        return openFlowStyleListing_(key, false);
     }
 
     Listing* createListing(const std::string& key){
-        return openListing(key, true);
+        return openListing_(key, true);
     }
         
     Listing* createFlowStyleListing(const std::string& key){
-        return openFlowStyleListing(key, true);
+        return openFlowStyleListing_(key, true);
     }
 
     bool remove(const std::string& key);
 
     bool read(const std::string &key, std::string &out_value) const;
-    bool readUTF8(const std::string &key, std::string &out_value) const;
     bool read(const std::string &key, bool &out_value) const;
     bool read(const std::string &key, int &out_value) const;
     bool read(const std::string &key, double &out_value) const;
@@ -333,16 +329,7 @@ public:
         }
     }
 
-    void writeUTF8(const std::string &key, const std::string& value, StringStyle stringStyle = PLAIN_STRING);
-
-    void write(const std::string &key, const std::string& value, StringStyle stringStyle = PLAIN_STRING) {
-        writeUTF8(key, toUTF8(value), stringStyle);
-    }
-
-    void writeUTF8(const std::string &key, const char* value, StringStyle stringStyle = PLAIN_STRING){
-        writeUTF8(key, std::string(value), stringStyle);
-    }
-        
+    void write(const std::string &key, const std::string& value, StringStyle stringStyle = PLAIN_STRING);
     void write(const std::string &key, const char* value, StringStyle stringStyle = PLAIN_STRING){
         write(key, std::string(value), stringStyle);
     }
@@ -369,7 +356,7 @@ public:
             break;
         }
     }
-        
+
     iterator begin() { return values.begin(); }
     iterator end() { return values.end(); }
     const_iterator begin() const { return values.begin(); }
@@ -390,10 +377,10 @@ private:
     Mapping(const Mapping& org);
     Mapping& operator=(const Mapping&);
 
-    Mapping* openMapping(const std::string& key, bool doOverwrite);
-    Mapping* openFlowStyleMapping(const std::string& key, bool doOverwrite);
-    Listing* openListing(const std::string& key, bool doOverwrite);
-    Listing* openFlowStyleListing(const std::string& key, bool doOverwrite);
+    Mapping* openMapping_(const std::string& key, bool doOverwrite);
+    Mapping* openFlowStyleMapping_(const std::string& key, bool doOverwrite);
+    Listing* openListing_(const std::string& key, bool doOverwrite);
+    Listing* openFlowStyleListing_(const std::string& key, bool doOverwrite);
 
     inline void insertSub(const std::string& key, ValueNode* node);
 
@@ -538,7 +525,7 @@ public:
     }
 
     void appendLF();
-        
+
     iterator begin() { return values.begin(); }
     iterator end() { return values.end(); }
     const_iterator begin() const { return values.begin(); }

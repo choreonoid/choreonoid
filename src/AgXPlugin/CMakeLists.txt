@@ -1,4 +1,3 @@
-
 # @author Shizuko Hattori
 
 option(BUILD_AGX_PLUGIN "Building AgXPlugin" OFF)
@@ -15,10 +14,16 @@ ENDIF()
 
 SET(AGX_DIR $ENV{AGX_DIR} CACHE PATH "set the top directory of the AgX Dynamics library")
 
-if(UNIX)
 set(AgX_INCLUDE_DIRS ${AGX_DIR}/include)
-set(AgX_LIBRARY_DIRS ${AGX_DIR}/lib/)
-set(AgX_LIBRARIES agxSabre agxCore agxPhysics agxModel ) 
+set(AgX_LIBRARY_DIRS ${AGX_DIR}/lib)
+if(CMAKE_CL_64)
+  set(AgX_LIBRARY_DIRS ${AGX_DIR}/lib/x64)
+endif()
+
+if(WIN32)
+  set(AgX_LIBRARIES debug agxSabred agxCored agxPhysicsd agxModeld) 
+else()
+  set(AgX_LIBRARIES agxSabre agxCore agxPhysics agxModel) 
 endif()
 
 #add_definitions(${AgX_CFLAGS})
@@ -33,6 +38,7 @@ set(sources
   )
 
 set(headers
+  AgXSimulatorItem.h
   )
 
 make_gettext_mofiles(${target} mofiles)
@@ -47,5 +53,9 @@ set_target_properties(${target} PROPERTIES COMPILE_FLAGS "${compile_flags} -std=
 apply_common_setting_for_plugin(${target} "${headers}")
 
 if(ENABLE_PYTHON)
-  add_subdirectory(python)
+  if(USE_PYBIND11)
+    add_subdirectory(pybind11)
+  elseif(USE_BOOST_PYTHON)
+    add_subdirectory(boostpython)
+  endif()
 endif()

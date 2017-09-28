@@ -9,6 +9,7 @@
 #include "ZMPSeqItem.h"
 #include "SimulatorItem.h"
 #include "AISTSimulatorItem.h"
+#include "SimpleControllerItem.h"
 #include "BodyMotionControllerItem.h"
 #include "GLVisionSimulatorItem.h"
 #include "WorldLogFileItem.h"
@@ -33,9 +34,11 @@
 #include "HrpsysFileIO.h"
 #include "CollisionSeqEngine.h"
 #include "CollisionSeqItem.h"
+#include <cnoid/BodyCustomizerInterface>
 #include <cnoid/ExecutablePath>
 #include <cnoid/Plugin>
 #include <cnoid/ItemManager>
+#include <cnoid/MessageView>
 #include "gettext.h"
 
 using namespace cnoid;
@@ -46,6 +49,7 @@ class BodyPlugin : public Plugin
 {
 public:
     BodyPlugin() : Plugin("Body") {
+        addOldName("SimpleController");
         setActivationPriority(0);
     }
 
@@ -59,6 +63,7 @@ public:
         BodyMotionItem::initializeClass(this);
         SimulatorItem::initializeClass(this);
         AISTSimulatorItem::initializeClass(this);
+        SimpleControllerItem::initializeClass(this);
         BodyMotionControllerItem::initializeClass(this);
         GLVisionSimulatorItem::initializeClass(this);
         WorldLogFileItem::initializeClass(this);
@@ -93,6 +98,8 @@ public:
         CollisionSeqItem::initislizeClass(this);
 
         initializeHrpsysFileIO(this);
+
+        loadDefaultBodyCustomizers(mvout());
 
         return true;
     }

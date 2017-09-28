@@ -21,6 +21,7 @@ class FloatingNumberString
 {
     double v;
     std::string s;
+
 public:
     FloatingNumberString() {
         v = 0.0;

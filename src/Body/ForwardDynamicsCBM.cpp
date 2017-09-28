@@ -45,7 +45,7 @@ static void putVector(TVector& M, char* name)
 ForwardDynamicsCBM::ForwardDynamicsCBM(DyBody* body) :
     ForwardDynamics(body)
 {
-    highGainModeLinkFlag.resize(body->numLinks(), false);
+
 }
 
 
@@ -57,32 +57,36 @@ ForwardDynamicsCBM::~ForwardDynamicsCBM()
 
 void ForwardDynamicsCBM::setHighGainModeForAllJoints()
 {
-    highGainModeLinkFlag.set();
-    highGainModeLinkFlag.reset(0);
+    for(auto link : body->joints()) link->setActuationMode(Link::JOINT_DISPLACEMENT);
 }
 
 
 void ForwardDynamicsCBM::setHighGainMode(int linkIndex, bool on)
 {
-    highGainModeLinkFlag[linkIndex] = on;
+    if(linkIndex == 0){
+        body->rootLink()->setActuationMode(on ? Link::LINK_POSITION : Link::NO_ACTUATION);
+    } else {
+        body->link(linkIndex)->setActuationMode(on ? Link::JOINT_DISPLACEMENT : Link::JOINT_EFFORT);
+    }
 }
 
 
 void ForwardDynamicsCBM::initialize()
 {
     DyLink* root = body->rootLink();
-    unknown_rootDof = (root->isFreeJoint() && !highGainModeLinkFlag[0]) ? 6 : 0;
-    given_rootDof = (root->isFreeJoint() && highGainModeLinkFlag[0]) ? 6 : 0;
+    bool isRootActuated = root->actuationMode() == Link::LINK_POSITION;
+    unknown_rootDof = (root->isFreeJoint() && !isRootActuated) ? 6 : 0;
+    given_rootDof = (root->isFreeJoint() && isRootActuated) ? 6 : 0;
 
+    const int numLinks = body->numLinks();
     torqueModeJoints.clear();
     highGainModeJoints.clear();
 
-    const int numLinks = body->numLinks();
-
     for(int i=1; i < numLinks; ++i){
         DyLink* link = body->link(i);
-        if(link->isRotationalJoint() || link->isSlideJoint()){
-            if(highGainModeLinkFlag[i]){
+        if(link->isRevoluteJoint() || link->isPrismaticJoint()){
+            if(link->actuationMode() == Link::JOINT_DISPLACEMENT ||
+               link->actuationMode() == Link::JOINT_VELOCITY){
                 highGainModeJoints.push_back(link);
             } else {
                 torqueModeJoints.push_back(link);
@@ -122,13 +126,27 @@ void ForwardDynamicsCBM::initialize()
     initializeSensors();
 
     if(integrationMode == RUNGEKUTTA_METHOD){
-
         q0. resize(numLinks);
         dq0.resize(numLinks);
         dq. resize(numLinks);
         ddq.resize(numLinks);
+    }
 
-        preserveHighGainModeJointState();
+    preserveHighGainModeJointState();
+}
+
+
+void ForwardDynamicsCBM::complementHighGainModeCommandValues()
+{
+    for(size_t i=0; i < highGainModeJoints.size(); ++i){
+        Link* joint = highGainModeJoints[i];
+        if(joint->actuationMode() == Link::JOINT_DISPLACEMENT){
+            joint->dq() = (joint->q() - qGivenPrev[i]) / timeStep;
+            joint->ddq() = (joint->dq() - dqGivenPrev[i]) / timeStep;
+        } else {
+            joint->q() = joint->q() + joint->dq() * timeStep;
+            joint->ddq() = (joint->dq() - dqGivenPrev[i]) / timeStep;
+        }
     }
 }
 
@@ -171,6 +189,8 @@ void ForwardDynamicsCBM::calcNextState()
         if(ROOT_ATT_NORMALIZATION_ENABLED && unknown_rootDof){
             normalizeRotation(body->rootLink()->T());
         }
+
+        preserveHighGainModeJointState();
     }
 		
     if(sensorHelper.isActive()){
@@ -303,8 +323,6 @@ void ForwardDynamicsCBM::calcMotionWithRungeKuttaMethod()
 
     calcPositionAndVelocityFK();
     calcMassMatrix();
-
-    preserveHighGainModeJointState();
 }
 
 
@@ -753,7 +771,7 @@ void ForwardDynamicsCBM::calcAccelFKandForceSensorValues(DyLink* link, Vector3& 
         out_f  .noalias() += link->m()   * link->dvo() + link->Iwv().transpose() * link->dw();
         out_tau.noalias() += link->Iwv() * link->dvo() + link->Iww()             * link->dw();
 
-        if(CALC_ALL_JOINT_TORQUES && highGainModeLinkFlag[link->index()]){
+        if(CALC_ALL_JOINT_TORQUES && link->actuationMode() == Link::JOINT_DISPLACEMENT){
             link->u() = link->sv().dot(out_f) + link->sw().dot(out_tau);
         }
 

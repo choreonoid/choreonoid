@@ -6,41 +6,116 @@
 #define CNOID_UTIL_POLYMORPHIC_FUNCTION_SET_H
 
 #include <functional>
+#include <vector>
 
 namespace cnoid {
 
-template <class Object, class Parameter> class PolymorphicFunctionSet
+template<class ObjectBase>
+class PolymorphicFunctionSet
 {
-    typedef std::function<void(Parameter p)> Function;
-    struct compare {
-        bool operator ()(const std::type_info* a, const std::type_info* b) const {
-            return a->before(*b);
-        }
-    };
-    typedef std::map<const std::type_info*, Function, compare> FunctionMap;
-    FunctionMap functions;
-
-    bool callFuntions(const std::type_info& type, Object* object, Parameter& param){
-        FunctionMap::iterator p = functions.find(&type);
-        if(p != functions.end()){
-            return p->second(param);
-        }
-        return true;
-    }
-                    
 public:
-    template <class Type> void setFunction(FunctionType f) {
-        functions[&typeid(Type)] = f;
-    }
-        
-    bool operator()(Object* object, Paramter& param) {
-        object->forEachActualType(
-            std::bind(&callFunctions, this, std::placeholders::_1, object, std::ref(param)));
+    typedef std::function<void(ObjectBase* obj)> Function;
+    
+private:
+    std::vector<Function> dispatchTable;
+    std::vector<bool> isFixed;
+    bool isDirty;
+
+public:
+    PolymorphicFunctionSet() {
+        const int n = ObjectBase::numPolymorphicTypes();
+        dispatchTable.resize(n);
+        isFixed.resize(n, false);
+        isDirty = true;
     }
 
+    template <class Object>
+    void setFunction(Function func){
+        int id = ObjectBase::template findPolymorphicId<Object>();
+        if(id >= 0){
+            if(id >= dispatchTable.size()){
+                dispatchTable.resize(id + 1);
+                isFixed.resize(id + 1, false);
+            }
+            dispatchTable[id] = func;
+            isFixed[id] = true;
+            isDirty = true;
+        }
+    }
+
+    template <class Object>
+    void setFunction(std::function<void(Object* obj)> func){
+        setFunction<Object>([func](ObjectBase* obj){ func(static_cast<Object*>(obj)); });
+    }
+
+    template <class Object>
+    void resetFunction(bool doUpdate = false){
+        int id = ObjectBase::template findPolymorphicId<Object>();
+        if(id >= 0 && id < dispatchTable.size()){
+            dispatchTable[id] = nullptr;
+            isFixed[id] = false;
+            if(doUpdate){
+                updateDispatchTable();
+            }
+        }
+    }
+
+    void updateDispatchTable() {
+
+        const int numTypes = ObjectBase::numPolymorphicTypes();
+        if(dispatchTable.size() == numTypes && !isDirty){
+            return;
+        }
+        
+        if(dispatchTable.size() < numTypes){
+            dispatchTable.resize(numTypes);
+            isFixed.resize(numTypes, false);
+        }
+    
+        const int n = dispatchTable.size();
+        for(int i=0; i < n; ++i){
+            if(!isFixed[i]){
+                dispatchTable[i] = nullptr;
+            }
+        }
+        for(int i=0; i < n; ++i){
+            if(!dispatchTable[i]){
+                int id = i;
+                while(true){
+                    int superTypeId = ObjectBase::findSuperTypePolymorphicId(id);
+                    if(superTypeId < 0){
+                        break;
+                    }
+                    if(dispatchTable[superTypeId]){
+                        dispatchTable[i] = dispatchTable[superTypeId];
+                        break;
+                    }
+                    id = superTypeId;
+                }
+            }
+        }
+    }
+
+    inline void dispatch(ObjectBase* obj){
+        const int id = obj->polymorhicId();
+        if(id >= dispatchTable.size()){
+            updateDispatchTable();
+        }
+        const Function& func = dispatchTable[id];
+        if(func){
+            func(obj);
+        } 
+    }
+
+    template <class Object>
+    inline void dispatchAs(Object* obj){
+        const Function& func = dispatchTable[ObjectBase::template findPolymorphicId<Object>()];
+        if(func){
+            func(obj);
+        }
+    }
 };
 
 }
 
 #endif
-

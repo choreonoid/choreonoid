@@ -1,4 +1,3 @@
-
 # @author Shin'ichiro Nakaoka
 
 if(WIN32)
@@ -9,8 +8,10 @@ endif()
 
 if(NOT BUILD_PYTHON_SIM_SCRIPT_PLUGIN)
   return()
-elseif(NOT BUILD_PYTHON_PLUGIN)
-  message(FATAL_ERROR "The PythonSimScript plugin requires the Python plugin")
+else()
+  if(NOT BUILD_PYTHON_PLUGIN)
+    message(FATAL_ERROR "The PythonSimScript plugin requires the Python plugin")
+  endif()
 endif()
 
 set(target CnoidPythonSimScriptPlugin)
@@ -25,6 +26,4 @@ add_cnoid_plugin(${target} SHARED ${sources} ${mofiles})
 target_link_libraries(${target} CnoidBodyPlugin CnoidPythonPlugin)
 apply_common_setting_for_plugin(${target} "${headers}")
 
-if(ENABLE_PYTHON)
-  add_subdirectory(python)
-endif()
+add_subdirectory(python)

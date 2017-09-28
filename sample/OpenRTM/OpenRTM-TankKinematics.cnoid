@@ -21,7 +21,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/misc/tank.wrl"
+            modelFile: "${SHARE}/model/tank/tank.body"
             currentBaseLink: ""
             rootPosition: [ -0.800000,  2.400000,  0.100000 ]
             rootAttitude: [ 
@@ -57,7 +57,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/Labo1/Labo1.wrl"
+            modelFile: "${SHARE}/model/Labo1/Labo1.body"
             currentBaseLink: "Base"
             rootPosition: [  0.000000,  0.000000,  0.000000 ]
             rootAttitude: [ 

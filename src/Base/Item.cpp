@@ -7,13 +7,12 @@
 #include "RootItem.h"
 #include "ItemPath.h"
 #include "ItemManager.h"
-#include "MessageView.h"
 #include <boost/filesystem.hpp>
 #include <typeinfo>
+#include <unordered_set>
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 namespace filesystem = boost::filesystem;
 using namespace cnoid;
 
@@ -23,7 +22,11 @@ using namespace cnoid;
 namespace {
 const bool TRACE_FUNCTIONS = false;
 
-list<Item*> itemsToEmitSigSubTreeChanged;
+unordered_set<Item*> itemsToEmitSigSubTreeChanged;
+
+int recursiveTreeChangeCounter = 0;
+unordered_set<Item*> itemsBeingAddedOrRemoved;
+
 }
 
 namespace cnoid {
@@ -54,10 +57,8 @@ Item::Item(const Item& org) :
 void Item::init()
 {
     parent_ = 0;
-    firstChild_ = 0;
     lastChild_ = 0;
     prevItem_ = 0;
-    nextItem_ = 0;
 
     numChildren_ = 0;
 
@@ -93,13 +94,6 @@ Item::~Item()
 }
 
 
-/**
-   @if jp
-   アイテムの名前を設定／変更する。   
-
-   名前が変わると、sigNameChanged シグナルが発行される。   
-   @endif
-*/
 void Item::setName(const std::string& name)
 {
     if(name != name_){
@@ -110,13 +104,6 @@ void Item::setName(const std::string& name)
 }
 
 
-/**
-   @if jp
-   本アイテム以下のツリーに新たにアイテムを追加する。   
-   
-   @param item 追加するアイテム
-   @endif
-*/
 bool Item::addChildItem(Item* item, bool isManualOperation)
 {
     return doInsertChildItem(item, 0, isManualOperation);
@@ -124,12 +111,9 @@ bool Item::addChildItem(Item* item, bool isManualOperation)
 
 
 /**
-   @if jp
-   アイテムがその不可欠な構成要素として小アイテムを持つ場合、   
-   addChildItemではなく本関数を用いて小アイテムを追加しておくことで、   
-   システムはその状況を把握可能となる。   
-   この関数によって追加されたアイテムは isSubItem() が true となる。   
-   @endif
+   This function adds a sub item to the item.
+   The sub item is an item that is a required element of the main item,
+   and the sub item cannot be removed from the main item.
 */
 bool Item::addSubItem(Item* item)
 {
@@ -151,12 +135,15 @@ bool Item::insertSubItem(Item* item, Item* nextItem)
 }
 
 
-bool Item::doInsertChildItem(Item* item, Item* nextItem, bool isManualOperation)
+bool Item::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManualOperation)
 {
     if(!this->onChildItemAboutToBeAdded(item, isManualOperation)){
         return false; // rejected
     }
 
+    ++recursiveTreeChangeCounter;
+    itemsBeingAddedOrRemoved.insert(item);
+    
     if(!item->attributes[SUB_ITEM]){
         attributes.reset(TEMPORAL);
     }
@@ -175,8 +162,9 @@ bool Item::doInsertChildItem(Item* item, Item* nextItem, bool isManualOperation)
         
     item->parent_ = this;
 
-    if(nextItem && (nextItem->parent_ == this)){
-        Item* prevItem = nextItem->prevItem_;
+    if(newNextItem && (newNextItem->parent_ == this)){
+        item->nextItem_ = newNextItem;
+        Item* prevItem = newNextItem->prevItem_;
         if(prevItem){
             prevItem->nextItem_ = item;
             item->prevItem_ = prevItem;
@@ -184,8 +172,7 @@ bool Item::doInsertChildItem(Item* item, Item* nextItem, bool isManualOperation)
             firstChild_ = item;
             item->prevItem_ = 0;
         }
-        nextItem->prevItem_ = item;
-        item->nextItem_ = nextItem;
+        newNextItem->prevItem_ = item;
 
     } else if(lastChild_){
         lastChild_->nextItem_ = item;
@@ -198,23 +185,30 @@ bool Item::doInsertChildItem(Item* item, Item* nextItem, bool isManualOperation)
     }
 
     ++numChildren_;
-    item->addRef();
 
     if(rootItem){
         if(!isMoving){
             item->callFuncOnConnectedToRoot();
+        }
+        if(itemsBeingAddedOrRemoved.find(this) == itemsBeingAddedOrRemoved.end()){
             // This must be before rootItem->notifyEventOnSubTreeAdded().
             item->callSlotsOnPositionChanged();
-            rootItem->notifyEventOnSubTreeAdded(item);
-        } else {
-            // This must be before rootItem->notifyEventOnSubTreeAdded().
-            item->callSlotsOnPositionChanged();
+        }
+        if(isMoving){
             rootItem->notifyEventOnSubTreeMoved(item);
+        } else {
+            rootItem->notifyEventOnSubTreeAdded(item);
         }
     }
 
     addToItemsToEmitSigSubTreeChanged();
-    emitSigSubTreeChanged();
+
+    --recursiveTreeChangeCounter;
+
+    if(recursiveTreeChangeCounter == 0){
+        emitSigSubTreeChanged();
+        itemsBeingAddedOrRemoved.clear();
+    }
 
     return true;
 }
@@ -235,7 +229,8 @@ void Item::callSlotsOnPositionChanged()
 {
     onPositionChanged();
     sigPositionChanged_();
-    for(ItemPtr child = childItem(); child; child = child->nextItem()){
+
+    for(Item* child = childItem(); child; child = child->nextItem()){
         child->callSlotsOnPositionChanged();
     }
 }
@@ -244,7 +239,7 @@ void Item::callSlotsOnPositionChanged()
 void Item::callFuncOnConnectedToRoot()
 {
     onConnectedToRoot();
-    for(ItemPtr child = childItem(); child; child = child->nextItem()){
+    for(Item* child = childItem(); child; child = child->nextItem()){
         child->callFuncOnConnectedToRoot();
     }
 }
@@ -252,27 +247,24 @@ void Item::callFuncOnConnectedToRoot()
 
 void Item::addToItemsToEmitSigSubTreeChanged()
 {
-    list<Item*>::iterator pos = itemsToEmitSigSubTreeChanged.begin();
-    addToItemsToEmitSigSubTreeChangedSub(pos);
-}
-
-
-void Item::addToItemsToEmitSigSubTreeChangedSub(list<Item*>::iterator& pos)
-{
-    if(parent_){
-        parent_->addToItemsToEmitSigSubTreeChangedSub(pos);
-    }
-    pos = std::find(pos, itemsToEmitSigSubTreeChanged.end(), this);
-    itemsToEmitSigSubTreeChanged.insert(pos, this);
+    Item* item = this;
+    do {
+        itemsToEmitSigSubTreeChanged.insert(item);
+        item = item->parentItem();
+    } while(item);
 }
 
 
 void Item::emitSigSubTreeChanged()
 {
-    list<Item*>::reverse_iterator p;
-    for(p = itemsToEmitSigSubTreeChanged.rbegin(); p != itemsToEmitSigSubTreeChanged.rend(); ++p){
-        (*p)->sigSubTreeChanged_();
+    vector<Item*> items(itemsToEmitSigSubTreeChanged.size());
+    std::copy(itemsToEmitSigSubTreeChanged.begin(), itemsToEmitSigSubTreeChanged.end(), items.begin());
+    std::sort(items.begin(), items.end(), [](Item* lhs, Item* rhs){ return !rhs->isOwnedBy(lhs); });
+    
+    for(auto item : items){
+        item->sigSubTreeChanged_();
     }
+    
     itemsToEmitSigSubTreeChanged.clear();
 }
 
@@ -282,40 +274,6 @@ bool Item::isSubItem() const
     return attributes[SUB_ITEM];
 }
 
-
-/*
-int Item::subItemIndex() const
-{
-    if(isSubItem() && parentItem()){
-        int index = 0;
-        for(Item* sibling = parent->childItem(); sibling = sibling->nextItem(); sibling){
-            if(sibling == this){
-                return index;
-            }
-            if(sibling->isSubItem()){
-                ++index;
-            }
-        }
-    }
-    return -1;
-}
-
-
-Item* Item::subItem(int subItemIndex)
-{
-    int index = 0;
-    for(Item* child = parent->childItem(); child = sibling->nextItem(); child){
-        if(child->isSubItem()){
-            if(index == subItemIndex){
-                return child;
-            }
-            ++index;
-        }
-    }
-    return 0;
-}
-*/
-            
 
 /**
    If this is true, the item is not automatically saved or overwritten
@@ -337,12 +295,6 @@ void Item::setTemporal(bool on)
 }
 
 
-/**
-   @if jp
-   アイテムを親アイテムから切り離す。
-   @return ルートアイテムのツリー内から切り離される場合は、そのルートアイテムを返す。
-   @endif
-*/
 void Item::detachFromParentItem()
 {
     ItemPtr self = this;
@@ -352,51 +304,62 @@ void Item::detachFromParentItem()
 
 void Item::detachFromParentItemSub(bool isMoving)
 {
+    if(!parent_){
+        return;
+    }
+
+    ++recursiveTreeChangeCounter;
+    itemsBeingAddedOrRemoved.insert(this);
+    
     RootItem* rootItem = findRootItem();
   
     if(rootItem){
         rootItem->notifyEventOnSubTreeRemoving(this, isMoving);
     }
 
-
-    if(parent_){
-        parent_->addToItemsToEmitSigSubTreeChanged();
-        if(prevItem_){
-            prevItem_->nextItem_ = nextItem_;
-        } else {
-            parent_->firstChild_ = nextItem_;
-        }
-        if(nextItem_){
-            nextItem_->prevItem_ = prevItem_;
-        } else {
-            parent_->lastChild_ = prevItem_;
-        }
-    
-        prevItem_ = 0;
-        nextItem_ = 0;
-
-        --parent_->numChildren_;
-        this->releaseRef();
-        parent_ = 0;
+    parent_->addToItemsToEmitSigSubTreeChanged();
+    if(prevItem_){
+        prevItem_->nextItem_ = nextItem_;
+    } else {
+        parent_->firstChild_ = nextItem_;
     }
+    if(nextItem_){
+        nextItem_->prevItem_ = prevItem_;
+    } else {
+        parent_->lastChild_ = prevItem_;
+    }
+    
+    --parent_->numChildren_;
+    parent_ = 0;
+    prevItem_ = 0;
+    nextItem_ = 0;
+
     attributes.reset(SUB_ITEM);
 
     if(rootItem){
         rootItem->notifyEventOnSubTreeRemoved(this, isMoving);
         if(!isMoving){
-            callSlotsOnPositionChanged(); // sigPositionChanged is also emitted
+            if(itemsBeingAddedOrRemoved.find(parent_) == itemsBeingAddedOrRemoved.end()){
+                callSlotsOnPositionChanged(); // sigPositionChanged is also emitted
+            }
             emitSigDetachedFromRootForSubTree();
         }
     }
-    if(!isMoving){
-        emitSigSubTreeChanged();
+
+    --recursiveTreeChangeCounter;
+
+    if(recursiveTreeChangeCounter == 0){
+        if(!isMoving){
+            emitSigSubTreeChanged();
+        }
+        itemsBeingAddedOrRemoved.clear();
     }
 }
 
 
 void Item::emitSigDetachedFromRootForSubTree()
 {
-    for(ItemPtr child = childItem(); child; child = child->nextItem()){
+    for(Item* child = childItem(); child; child = child->nextItem()){
         child->emitSigDetachedFromRootForSubTree();
     }
     sigDetachedFromRoot_();
@@ -582,13 +545,6 @@ void Item::notifyUpdate()
 }
 
 
-/**
-   @if jp
-   アイテムのコピーを生成する。   
-   小アイテムについては isFixedToParentItem() が true のときはコピーされるが、   
-   false のときはコピーされない。   
-   @endif
-*/
 Item* Item::duplicate() const
 {
     Item* duplicated = doDuplicate();
@@ -601,9 +557,7 @@ Item* Item::duplicate() const
 
 
 /**
-   @if jp
-   小アイテム（サブツリー）も含めたアイテムのコピーを生成する。   
-   @endif
+   This function creates a copy of the item including its sub tree items.
 */
 Item* Item::duplicateAll() const
 {
@@ -745,55 +699,16 @@ void Item::clearFileInformation()
 }
 
 
-const Referenced* Item::customData(int id) const
-{
-    if(id >= (int)extraData.size()){
-        return 0;
-    }
-    return extraData[id].get();
-}
-
-
-Referenced* Item::customData(int id)
-{
-    if(id >= (int)extraData.size()){
-        return 0;
-    }
-    return extraData[id].get();
-}
-
-
-void Item::setCustomData(int id, ReferencedPtr data)
-{
-    if(id >= (int)extraData.size()){
-        extraData.resize(id + 1, 0);
-    }
-    extraData[id] = data;
-}
-
-
-void Item::clearCustomData(int id)
-{
-    if(customData(id)){
-        extraData[id] = 0;
-    }
-}
-
-
-namespace {
-bool onNamePropertyChanged(Item* item, const string& name)
-{
-    if(!name.empty()){
-        item->setName(name);
-    }
-    return !name.empty();
-}
-}
-
-
 void Item::putProperties(PutPropertyFunction& putProperty)
 {
-    putProperty(_("Name"), name_, std::bind(onNamePropertyChanged, this, _1));
+    putProperty(_("Name"), name_,
+                [&](const string& name){
+                    if(!name.empty()){
+                        setName(name);
+                        return true;
+                    }
+                    return false;
+                });
 
     std::string moduleName, className;
     ItemManager::getClassIdentifier(this, moduleName, className);

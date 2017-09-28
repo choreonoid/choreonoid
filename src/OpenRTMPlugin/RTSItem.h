@@ -3,8 +3,8 @@
  * @author Hisashi Ikari
  * @file
  */
-#ifndef CNOID_OPENRTM_PLUGIN_RTS_ITEM_H_INCLUDED
-#define CNOID_OPENRTM_PLUGIN_RTS_ITEM_H_INCLUDED
+#ifndef CNOID_OPENRTM_PLUGIN_RTS_ITEM_H
+#define CNOID_OPENRTM_PLUGIN_RTS_ITEM_H
 
 #include <cnoid/Item>
 #include <cnoid/EigenUtil>
@@ -13,10 +13,8 @@
 #include <rtm/NVUtil.h>
 #include <rtm/CORBA_SeqUtil.h>
 #include <QPoint>
+#include <list>
 #include "exportdecl.h"
-
-using namespace std;
-using namespace RTC;
 
 namespace cnoid {
 
@@ -24,10 +22,10 @@ class RTSComp;
 class RTSPort : public Referenced
 {
 public :
-    RTSPort(const string& name, PortService_var port, RTSComp* parent);
+    RTSPort(const std::string& name, RTC::PortService_var port, RTSComp* parent);
     RTSComp* rtsComp;
-    string name;
-    PortService_var port;
+    std::string name;
+    RTC::PortService_var port;
     bool isServicePort;
     bool isInPort;
 
@@ -41,19 +39,19 @@ typedef ref_ptr<RTSPort> RTSPortPtr;
 class RTSConnection : public Referenced
 {
 public :
-    RTSConnection(const string& id, const string& name, const string& sourceRtcName,
-            const string& sourcePortName, const string& targetRtcName, const string& targetPortName);
-    string id;
-    string name;
-    string sourceRtcName;
-    string sourcePortName;
-    string targetRtcName;
-    string targetPortName;
-    string dataflow;
-    string sinterface;
-    string subscription;
+    RTSConnection(const std::string& id, const std::string& name, const std::string& sourceRtcName,
+            const std::string& sourcePortName, const std::string& targetRtcName, const std::string& targetPortName);
+    std::string id;
+    std::string name;
+    std::string sourceRtcName;
+    std::string sourcePortName;
+    std::string targetRtcName;
+    std::string targetPortName;
+    std::string dataflow;
+    std::string sinterface;
+    std::string subscription;
     float  pushRate;
-    string pushPolicy;
+    std::string pushPolicy;
     bool isAlive_;
 
     RTSComp* srcRTC;
@@ -81,23 +79,23 @@ class RTSystemItemImpl;
 class RTSComp : public Referenced
 {
 public :
-    RTSComp(const string& name, RTC::RTObject_ptr rtc, RTSystemItemImpl* impl, const QPointF& pos);
+    RTSComp(const std::string& name, RTC::RTObject_ptr rtc, RTSystemItemImpl* impl, const QPointF& pos);
 
     RTSystemItemImpl* impl;
-    RTObject_ptr rtc_;
-    string name;
-    ExecutionContextList_var ownedExeContList;
-    ExecutionContextList_var participatingExeContList;
-    map<string, RTSPortPtr> inPorts;
-    map<string, RTSPortPtr> outPorts;
+    RTC::RTObject_ptr rtc_;
+    std::string name;
+    RTC::ExecutionContextList_var ownedExeContList;
+    RTC::ExecutionContextList_var participatingExeContList;
+    std::map<std::string, RTSPortPtr> inPorts;
+    std::map<std::string, RTSPortPtr> outPorts;
     QPointF pos;
 
     bool isActive();
     bool connectionCheckSub(RTSPort* rtsPort);
     bool connectionCheck();
-    void setRtc(RTObject_ptr rtc);
+    void setRtc(RTC::RTObject_ptr rtc);
 
-    RTSPort* nameToRTSPort(const string& name);
+    RTSPort* nameToRTSPort(const std::string& name);
 
 };
 typedef ref_ptr<RTSComp> RTSCompPtr;
@@ -109,25 +107,25 @@ class CNOID_EXPORT RTSystemItem : public Item
 {
 public:
     typedef cnoid::IdPair<RTSPort*> RTSPortPair;
-    typedef map<RTSPortPair, RTSConnectionPtr> RTSConnectionMap;
+    typedef std::map<RTSPortPair, RTSConnectionPtr> RTSConnectionMap;
     RTSystemItem();
     RTSystemItem(const RTSystemItem& org);
     virtual ~RTSystemItem();
     static void initialize(ExtensionManager* ext);
 
-    RTSComp* addRTSComp(const string& name, const QPointF& pos);
-    void deleteRTSComp(const string& name);
+    RTSComp* addRTSComp(const std::string& name, const QPointF& pos);
+    void deleteRTSComp(const std::string& name);
     bool compIsAlive(RTSComp* rtsComp);
-    RTSComp* nameToRTSComp(const string& name);
-    RTSConnection* addRTSConnection(const string& id, const string& name,
-            RTSPort* sourcePort, RTSPort* targetPort, const string& dataflow, const string& subscription);
+    RTSComp* nameToRTSComp(const std::string& name);
+    RTSConnection* addRTSConnection(const std::string& id, const std::string& name,
+            RTSPort* sourcePort, RTSPort* targetPort, const std::string& dataflow, const std::string& subscription);
     bool connectionCheck();
     void RTSCompToConnectionList(const RTSComp* rtsComp,
-            list<RTSConnection*>& rtsConnectionList, int mode=0);
+                                 std::list<RTSConnection*>& rtsConnectionList, int mode=0);
     RTSConnectionMap& rtsConnections();
-   // map<string, RTSConnectionPtr>& deletedRtsConnections();
+   // std::map<std::string, RTSConnectionPtr>& deletedRtsConnections();
     void deleteRtsConnection(const RTSConnection* connection);
-    map<string, RTSCompPtr>& rtsComps();
+    std::map<std::string, RTSCompPtr>& rtsComps();
 
     bool autoConnection;
 

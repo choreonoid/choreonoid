@@ -1,7 +1,5 @@
 #VRML V2.0 utf8
 
-#VRML V2.0 utf8
-#Cosmo Worlds V2.0
 Transform 
   {
   children 
@@ -18,9 +16,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  }
 		Transform 
 		  {
 		  children 
@@ -79,9 +74,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  }
 		Transform 
 		  {
 		  children 
@@ -218,62 +210,7 @@ Transform
 	    ]
 	  translation 0.915566 0.759064 -2.624998e-2
 	  }
-	Transform 
-	  {
-	  children 
-	    [
-	    DEF Wall3 Shape 
-	      {
-	      appearance 	      Appearance 
-		{
-		material 		Material 
-		  {
-		  diffuseColor 0.600000 0.500000 0.300000
-		  specularColor 0.209997 0.209997 0.209997
-		  }
-		}
-	      }
-	    ]
-	  translation 3.582190 1.749698 1.299998
-	  }
-	Transform 
-	  {
-	  children 
-	    [
-	    Shape 
-	      {
-	      appearance 	      Appearance 
-		{
-		material 		Material 
-		  {
-		  ambientIntensity 0
-		  diffuseColor 0.750000 0.750000 0.750000
-		  specularColor 0.500000 0.500000 0.500000
-		  }
-		}
-	      }
-	    ]
-	  translation 3.558439 1.853700 1.175050
-	  }
 	]
-      }
-    Transform 
-      {
-      children 
-	[
-	DEF wall1 Shape 
-	  {
-	  appearance 	  Appearance 
-	    {
-	    material 	    Material 
-	      {
-	      diffuseColor 0.600000 0.500000 0.300000
-	      specularColor 0.209997 0.209997 0.209997
-	      }
-	    }
-	  }
-	]
-      translation 0.914690 1.195000 1.447499
       }
     ]
   }

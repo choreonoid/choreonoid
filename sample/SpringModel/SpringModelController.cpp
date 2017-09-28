@@ -28,8 +28,8 @@ public:
             return false;
         }
         
-        io->setLinkInput(spring, JOINT_DISPLACEMENT | JOINT_VELOCITY);
-        io->setLinkOutput(spring, JOINT_FORCE);
+        io->enableInput(spring, JOINT_DISPLACEMENT | JOINT_VELOCITY);
+        io->enableOutput(spring);
 
         sio->setImmediateMode(true);
         

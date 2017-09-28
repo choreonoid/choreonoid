@@ -33,8 +33,6 @@ using namespace cnoid;
 namespace {
 
 Action* linkVisibilityCheck;
-Action* showVisualShapeCheck;
-Action* showCollisionShapeCheck;
 Action* enableStaticModelEditCheck;
 
 }
@@ -45,14 +43,12 @@ class EditableSceneLinkImpl
 {
 public:
     EditableSceneLink* self;
-    SgLineSetPtr bbLineSet;
     SgOutlineGroupPtr outlineGroup;
     BoundingBoxMarkerPtr bbMarker;
     bool isPointed;
     bool isColliding;
 
     EditableSceneLinkImpl(EditableSceneLink* self);
-    void createBoundingBoxLineSet();
 };
 
 }
@@ -79,69 +75,25 @@ EditableSceneLink::~EditableSceneLink()
 }
 
 
-void EditableSceneLink::showBoundingBox(bool on)
+void EditableSceneLink::showOutline(bool on)
 {
     if(!visualShape()){
         return;
     }
-#if 0
+    SgOutlineGroupPtr& outline = impl->outlineGroup;
     if(on){
-        if(!impl->bbLineSet){
-            impl->createBoundingBoxLineSet();
+        if(!outline){
+            outline = new SgOutlineGroup;
+            outline->setColor(Vector3f(1.0f, 1.0f, 0.0f));
         }
-        addChildOnce(impl->bbLineSet, true);
-    } else if(impl->bbLineSet){
-        removeChild(impl->bbLineSet, true);
-    }
-#else
-    if(on){
-        if(!impl->outlineGroup){
-            impl->outlineGroup = new SgOutlineGroup();
+        if(!outline->hasParents()){
+            insertEffectGroup(outline);
         }
-        setShapeGroup(impl->outlineGroup);
-    } else if(impl->outlineGroup){
-        resetShapeGroup();
+    } else {
+        if(outline && outline->hasParents()){
+            removeEffectGroup(outline);
+        }
     }
-#endif
-}
-
-
-void EditableSceneLinkImpl::createBoundingBoxLineSet()
-{
-    bbLineSet = new SgLineSet;
-    bbLineSet->setName("BoundingBox");
-
-    SgVertexArray& vertices = *bbLineSet->setVertices(new SgVertexArray);
-    vertices.resize(8);
-    const BoundingBoxf bb(self->visualShape()->boundingBox());
-    const Vector3f& min = bb.min();
-    const Vector3f& max = bb.max();
-    vertices[0] << min.x(), min.y(), min.z();
-    vertices[1] << max.x(), min.y(), min.z();
-    vertices[2] << max.x(), max.y(), min.z();
-    vertices[3] << min.x(), max.y(), min.z();
-    vertices[4] << min.x(), min.y(), max.z();
-    vertices[5] << max.x(), min.y(), max.z();
-    vertices[6] << max.x(), max.y(), max.z();
-    vertices[7] << min.x(), max.y(), max.z();
-
-    bbLineSet->reserveNumLines(12);
-    bbLineSet->addLine(0, 1);
-    bbLineSet->addLine(1, 2);
-    bbLineSet->addLine(2, 3);
-    bbLineSet->addLine(3, 0);
-    bbLineSet->addLine(4, 5);
-    bbLineSet->addLine(5, 6);
-    bbLineSet->addLine(6, 7);
-    bbLineSet->addLine(7, 4);
-    bbLineSet->addLine(0, 4);
-    bbLineSet->addLine(1, 5);
-    bbLineSet->addLine(2, 6);
-    bbLineSet->addLine(3, 7);
-
-    bbLineSet->setColors(new SgColorArray)->push_back(Vector3f(1.0f, 0.0f, 0.0f));
-    SgIndexArray& iColors = bbLineSet->colorIndices();
-    iColors.resize(24, 0);
 }
 
 
@@ -150,8 +102,10 @@ void EditableSceneLink::showMarker(const Vector3f& color, float transparency)
     if(impl->bbMarker){
         removeChild(impl->bbMarker);
     }
-    impl->bbMarker = new BoundingBoxMarker(visualShape()->boundingBox(), color, transparency);
-    addChildOnce(impl->bbMarker, true);
+    if(visualShape()){
+        impl->bbMarker = new BoundingBoxMarker(visualShape()->boundingBox(), color, transparency);
+        addChildOnce(impl->bbMarker, true);
+    }
 }
 
 
@@ -265,7 +219,6 @@ public:
     void onCollisionLinkHighlightModeChanged();
     void changeCollisionLinkHighlightMode(bool on);
     void onLinkVisibilityCheckToggled();
-    void onVisibleShapeTypesChanged();
     void onLinkSelectionChanged();
 
     void showCenterOfMass(bool on);
@@ -404,10 +357,14 @@ EditableSceneBodyImpl::EditableSceneBodyImpl(EditableSceneBody* self, BodyItemPt
 
 double EditableSceneBodyImpl::calcLinkMarkerRadius(SceneLink* sceneLink) const
 {
-    const BoundingBox& bb = sceneLink->visualShape()->boundingBox();
-    if (bb.empty()) return 1.0; // Is this OK?
-    double V = ((bb.max().x() - bb.min().x()) * (bb.max().y() - bb.min().y()) * (bb.max().z() - bb.min().z()));
-    return pow(V, 1.0 / 3.0) * 0.6;
+    SgNode* shape = sceneLink->visualShape();
+    if(shape){
+        const BoundingBox& bb = shape->boundingBox();
+        if (bb.empty()) return 1.0; // Is this OK?
+        double V = ((bb.max().x() - bb.min().x()) * (bb.max().y() - bb.min().y()) * (bb.max().z() - bb.min().z()));
+        return pow(V, 1.0 / 3.0) * 0.6;
+    }
+    return 1.0;
 }
 
 
@@ -436,14 +393,6 @@ void EditableSceneBodyImpl::onSceneGraphConnection(bool on)
             linkVisibilityCheck->sigToggled().connect(
                 std::bind(&EditableSceneBodyImpl::onLinkVisibilityCheckToggled, this)));
         onLinkVisibilityCheckToggled();
-
-        connections.add(
-            showVisualShapeCheck->sigToggled().connect(
-                std::bind(&EditableSceneBodyImpl::onVisibleShapeTypesChanged, this)));
-        connections.add(
-            showCollisionShapeCheck->sigToggled().connect(
-                std::bind(&EditableSceneBodyImpl::onVisibleShapeTypesChanged, this)));
-        onVisibleShapeTypesChanged();
     }
 }
 
@@ -459,7 +408,7 @@ void EditableSceneBodyImpl::updateModel()
     pointedSceneLink = 0;
     targetLink = 0;
     if(outlinedLink){
-        outlinedLink->showBoundingBox(false);
+        outlinedLink->showOutline(false);
         outlinedLink = 0;
     }
     isDragging = false;
@@ -598,13 +547,6 @@ void EditableSceneBodyImpl::onLinkSelectionChanged()
     if(linkVisibilityCheck->isChecked()){
         self->setLinkVisibilities(LinkSelectionView::mainInstance()->linkSelection(bodyItem));
     }
-}
-
-
-void EditableSceneBodyImpl::onVisibleShapeTypesChanged()
-{
-    self->setVisibleShapeTypes(
-        showVisualShapeCheck->isChecked(), showCollisionShapeCheck->isChecked());
 }
 
 
@@ -859,14 +801,14 @@ bool EditableSceneBodyImpl::onButtonPressEvent(const SceneWidgetEvent& event)
     }
     
     if(outlinedLink){
-        outlinedLink->showBoundingBox(false);
+        outlinedLink->showOutline(false);
         outlinedLink = 0;
     }
 
     PointedType pointedType = findPointedObject(event.nodePath());
     
     if(pointedSceneLink){
-        pointedSceneLink->showBoundingBox(true);
+        pointedSceneLink->showOutline(true);
         outlinedLink = pointedSceneLink;
     }
     
@@ -928,7 +870,7 @@ bool EditableSceneBodyImpl::onButtonPressEvent(const SceneWidgetEvent& event)
     }
 
     if(dragMode != DRAG_NONE && outlinedLink){
-        outlinedLink->showBoundingBox(false);
+        outlinedLink->showOutline(false);
         self->notifyUpdate(modified);
     }
 
@@ -947,7 +889,7 @@ bool EditableSceneBodyImpl::onButtonReleaseEvent(const SceneWidgetEvent& event)
     bool handled = finishEditing();
 
     if(outlinedLink){
-        outlinedLink->showBoundingBox(true);
+        outlinedLink->showOutline(true);
         self->notifyUpdate(modified);
     }
 
@@ -992,9 +934,9 @@ bool EditableSceneBodyImpl::onPointerMoveEvent(const SceneWidgetEvent& event)
         if(pointedSceneLink){
             if(pointedSceneLink != outlinedLink){
                 if(outlinedLink){
-                    outlinedLink->showBoundingBox(false);
+                    outlinedLink->showOutline(false);
                 }
-                pointedSceneLink->showBoundingBox(true);
+                pointedSceneLink->showOutline(true);
                 outlinedLink = pointedSceneLink;
             }
         }
@@ -1060,7 +1002,7 @@ void EditableSceneBodyImpl::onPointerLeaveEvent(const SceneWidgetEvent& event)
         return;
     }
     if(outlinedLink){
-        outlinedLink->showBoundingBox(false);
+        outlinedLink->showOutline(false);
         outlinedLink = 0;
     }
 }
@@ -1165,12 +1107,12 @@ void EditableSceneBodyImpl::onSceneModeChanged(const SceneWidgetEvent& event)
 
     if(isEditMode){
         if(outlinedLink){
-            outlinedLink->showBoundingBox(true);
+            outlinedLink->showOutline(true);
         }
     } else {
         finishEditing();
         if(outlinedLink){
-            outlinedLink->showBoundingBox(false);
+            outlinedLink->showOutline(false);
             outlinedLink = 0;
         }
         updateMarkersAndManipulators();
@@ -1249,7 +1191,9 @@ void EditableSceneBodyImpl::onDraggerDragged()
     if(activeSimulatorItem){
         setForcedPosition(positionDragger->draggedPosition());
     } else {
-        doIK(positionDragger->draggedPosition());
+        Affine3 T = positionDragger->draggedPosition();
+        T.linear() = targetLink->calcRfromAttitude(T.linear());
+        doIK(T);
     }
 }
 
@@ -1260,7 +1204,9 @@ void EditableSceneBodyImpl::onDraggerDragFinished()
     if(activeSimulatorItem){
         finishForcedPosition();
     } else {
-        doIK(positionDragger->draggedPosition());
+        Affine3 T = positionDragger->draggedPosition();
+        T.linear() = targetLink->calcRfromAttitude(T.linear());
+        doIK(T);
     }
 }
 
@@ -1567,9 +1513,6 @@ void EditableSceneBody::initializeClass(ExtensionManager* ext)
 {
     MenuManager& mm = ext->menuManager().setPath("/Options/Scene View");
     linkVisibilityCheck = mm.addCheckItem(_("Show selected links only"));
-    showVisualShapeCheck = mm.addCheckItem(_("Show visual shapes"));
-    showVisualShapeCheck->setChecked(true);
-    showCollisionShapeCheck = mm.addCheckItem(_("Show collision shapes"));
     enableStaticModelEditCheck = mm.addCheckItem(_("Enable editing static models"));
     enableStaticModelEditCheck->setChecked(true);
 

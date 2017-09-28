@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-07-05 00:36+0900\n"
+"POT-Creation-Date: 2017-08-05 20:26+0900\n"
 "PO-Revision-Date: 2012-07-16 14:30+0100\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -17,38 +17,69 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
+#: STLSceneLoader.cpp:61
+msgid "Unable to open file \"%1%\"."
+msgstr "ファイル\"%1%\"を開けません。"
+
+#: SceneLoader.cpp:157
+msgid ""
+"The file format of \"%1%\" is unknown because it lacks a file name extension."
+msgstr "\"%1%\"は拡張子が無いためファイル形式が不明です。"
+
+#: SceneLoader.cpp:165
+msgid "The file format of \"%1%\" is not supported by the scene loader."
+msgstr "\"%1%\"のファイル形式はシーンローダでサポートされていません。"
+
+#: VRMLSceneLoader.cpp:102
+msgid "VRML file \"%1%\" does not have any valid entity."
+msgstr "VRMLファイル\"%1%\"には有効なエントリが有りません。"
+
 #: ValueTree.cpp:84
 msgid "%1% at line %2%, column %3%."
-msgstr ""
-
-#: ValueTree.cpp:86
-msgid "%1%."
-msgstr ""
+msgstr "%2%行%3%列にて%1%。"
 
 #: ValueTree.cpp:90
-msgid "Error at line %2%, column %3%."
+msgid "Error at line %1%, column %2%."
 msgstr ""
 
 #: ValueTree.cpp:178
 msgid "The value \"%1%\" must be an integer value"
-msgstr ""
+msgstr "値\"%1%\"は整数値でなければなりません"
 
 #: ValueTree.cpp:215
 msgid "The value \"%1%\" must be a double value"
-msgstr ""
+msgstr "値\"%1%\"はdouble型の値でなければなりません"
 
 #: ValueTree.cpp:251
 msgid "The value \"%1%\" must be a boolean value"
-msgstr ""
+msgstr "値\"%1%\"はboolean値でなければなりません"
 
-#: ValueTree.cpp:425
+#: ValueTree.cpp:401
 msgid "A %1% value must be a scalar value"
-msgstr ""
+msgstr "値%1%はスカラ値でなければなりません。"
 
-#: ValueTree.cpp:434
+#: ValueTree.cpp:410
 msgid "The value is not a mapping"
-msgstr ""
+msgstr "値がマッピングでありません"
 
-#: ValueTree.cpp:595
+#: ValueTree.cpp:577
 msgid "Key \"%1%\" is not found in the mapping"
-msgstr ""
+msgstr "マッピング内でキー\"%1%\"がみつかりません"
+
+#: YAMLSceneReader.cpp:266
+msgid "The node type \"%1%\" is not defined."
+msgstr "ノードタイプ\"%1%\"は定義されていません。"
+
+#: YAMLSceneReader.cpp:313
+msgid ""
+"The node type \"%1%\" is different from the type \"%2%\" specified in the "
+"parent node"
+msgstr "ノードタイプ\"%1%\"は親ノードで指定されているタイプ\"%2%\"と異なります"
+
+#: YAMLSceneReader.cpp:420
+msgid "Unknown geometry \"%1%\""
+msgstr "不明なジオメトリ\"%1%\""
+
+#: YAMLSceneReader.cpp:564
+msgid "A resouce specified as a geometry must be a single mesh"
+msgstr "ジオメトリと指定するリソースは単一のメッシュでなければなりません"

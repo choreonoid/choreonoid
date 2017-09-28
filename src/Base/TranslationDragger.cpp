@@ -39,7 +39,7 @@ TranslationDragger::TranslationDragger(bool setDefaultAxes)
 
     if(setDefaultAxes){
         MeshGenerator meshGenerator;
-        SgMeshPtr mesh = meshGenerator.generateArrow(1.8, 0.08, 0.1, 2.5);
+        SgMeshPtr mesh = meshGenerator.generateArrow(0.04, 1.8, 0.1, 0.18);
         for(int i=0; i < 3; ++i){
             SgShape* shape = new SgShape;
             shape->setMesh(mesh);

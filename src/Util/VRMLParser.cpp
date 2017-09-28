@@ -8,12 +8,13 @@
 #include "VRMLParser.h"
 #include "EasyScanner.h"
 #include "UTF8.h"
+#include "NullOut.h"
 #include "FileUtil.h"
 #include <boost/algorithm/string/predicate.hpp>
 #include <list>
 #include <cmath>
 #include <vector>
-#include <iostream>
+#include <mutex>
 
 using namespace std;
 using namespace cnoid;
@@ -23,83 +24,42 @@ using boost::dynamic_pointer_cast;
 
 namespace {
 
-/*!  
-  @if jp
-  @brief URLスキーム(file:)文字列を削除  
-  @param[in]    url 検索・置換対象となるURL  
-  @return string URLスキーム文字列を取り除いた文字列  
-  @endif
-*/
-string deleteURLScheme(string url)
+string removeURLScheme(string url)
 {
     static const string fileProtocolHeader1("file://");
     static const string fileProtocolHeader2("file:");
 
-    size_t pos = url.find( fileProtocolHeader1 );
-    if( 0 == pos ) {
-        url.erase( 0, fileProtocolHeader1.size() );
+    size_t pos = url.find(fileProtocolHeader1);
+    if(0 == pos){
+        url.erase(0, fileProtocolHeader1.size());
     } else {
-        size_t pos = url.find( fileProtocolHeader2 );
-        if( 0 == pos ) {
-            url.erase( 0, fileProtocolHeader2.size() );
+        size_t pos = url.find(fileProtocolHeader2);
+        if(0 == pos) {
+            url.erase(0, fileProtocolHeader2.size());
         }
     }
 
-    // Windows ドライブ文字列の時はディレクトリ区切り文字分をさらに削除//
-    if ( url.find(":") == 2 && url.find("/") ==0 )
-        url.erase ( 0, 1 );
+    // Remove the first slash if the successive part is a Windows drive letter
+    if(url.find(":") == 2 && url.find("/") ==0){
+        url.erase(0, 1);
+    }
 
     return url;
 }
 
-/*!  
-  @if jp
-  @brief URLがファイルかどうかの判定  
-  @param[in]    ref  判定対象のURL  
-  @return boolean true:ローカルファイルである  
-  @endif
-*/
+
 bool isFileProtocol(const string& ref)
 {
     bool ret = false;
     string::size_type pos = ref.find(":");
-    if ( pos == string::npos || pos == 1 )
-        {
-            // Directly local path || Windows drive letter separator
-            ret = true;
-        } else {
-        if( ref.find("file:") == 0 )
-            ret = true;
+    if(pos == string::npos || pos == 1){
+        // Directly local path || Windows drive letter separator
+        ret = true;
+    } else if(ref.find("file:") == 0){
+        ret = true;
     }
     return ret;
 }
-
-/*!  
-  @if jp
-  @brief URLスキーム文字列を取り除いた文字列を生成する  
-  @param[out]   refUrl  URLスキーム文字列を取り除いた文字列を格納  
-  @param[in]    rootDir 親ディレクトリ     
-  @param[in]    srcPath 元となるURL  
-  @return URLスキーム文字列を取り除いた文字列  
-  @endif
-*/
-void getPathFromUrl(string& refUrl, const string& rootDir, string srcUrl)
-{
-    if ( isFileProtocol(srcUrl) ){   // ローカルファイル //
-        filesystem::path filepath(deleteURLScheme(srcUrl));
-        if(filesystem::exists(filepath)){    // 元が絶対パス //
-            refUrl = filesystem::system_complete(filepath).string();
-        }else{               // 元が相対パス //
-            filesystem::path filepath(rootDir + deleteURLScheme(srcUrl));
-            if(filesystem::exists(filepath)){
-                refUrl = filesystem::system_complete(filepath).string();
-            }
-        }
-    } else {
-        // ファイルスキーム以外の処理 //
-    }
-}
-    
 
 /**
    The definition of the reserved word IDs
@@ -360,10 +320,9 @@ enum {
     // unsupported keywords
     U_SCRIPT,
     U_EXTERNPROTO
-
 };
-}
 
+}
 
 namespace cnoid {
 
@@ -371,8 +330,10 @@ class VRMLParserImpl
 {
 public:
     VRMLParserImpl(VRMLParser* self);
-    VRMLParser* self;
 
+    VRMLParser* self;
+    ostream* os_;
+    ostream& os() { return *os_; }
     std::shared_ptr<EasyScanner> topScanner;
     EasyScanner* scanner; // current one
     VRMLProtoInstancePtr currentProtoInstance;
@@ -393,7 +354,6 @@ public:
     void load(const string& filename);
     VRMLNodePtr readSpecificNode(VRMLNodeCategory nodeCategory, int symbol, const std::string& symbolString);
     VRMLNodePtr readInlineNode(VRMLNodeCategory nodeCategory);
-    VRMLAnotherFormatFilePtr createAnotherFormatFileNode(std::string& io_filename);
     VRMLNodePtr newInlineSource(string& io_filename);
     VRMLProtoPtr defineProto();
 
@@ -476,13 +436,13 @@ public:
     void readMFNode(MFNode& out_nodes, VRMLNodeCategory nodeCategory);
     void readSFImage( SFImage& out_image );
 private:
-    VRMLParserImpl(const VRMLParserImpl& self, const list< string >& ref);
-    const list< string >* getAncestorPathsList() const {return &ancestorPathsList;}
+    VRMLParserImpl(const VRMLParserImpl& self, const list<string>& ref);
+    const list<string>* getAncestorPathsList() const {return &ancestorPathsList;}
     void setSymbols();
     void init();
     void convertUrl(MFString& url);
     list<string> ancestorPathsList;
-    string getRealPath(string);
+    string getRealPath(string url);
 };
 }
 
@@ -514,7 +474,7 @@ VRMLParserImpl::VRMLParserImpl(VRMLParser* self)
     init();
 }
 
-VRMLParserImpl::VRMLParserImpl(const VRMLParserImpl& refThis, const list< string >& refSet)
+VRMLParserImpl::VRMLParserImpl(const VRMLParserImpl& refThis, const list<string>& refSet)
     : self(refThis.self), ancestorPathsList(refSet)
 {
     init();
@@ -527,11 +487,16 @@ VRMLParser::~VRMLParser()
 }
 
 
+void VRMLParser::setMessageSink(std::ostream& os)
+{
+    impl->os_ = &os;
+}
+
+
 void VRMLParser::setProtoInstanceActualNodeExtractionMode(bool isOn)
 {
     impl->protoInstanceActualNodeExtractionMode = isOn;
 }
-
 
 
 /**
@@ -652,19 +617,19 @@ VRMLNodePtr VRMLParserImpl::readNode(VRMLNodeCategory nodeCategory)
             }
             scanner->readString();	// eventIn or exposedField
             // recursive call to continue reading without node construction
-            return readNode( nodeCategory );
+            return readNode(nodeCategory);
         }
 
         // unsupported keywords
         if(symbol == U_SCRIPT){
-            cerr << "Script is not supported. " << endl;
+            os() << "Script is not supported. " << endl;
             skipScriptNode();
-            return readNode( nodeCategory );
+            return readNode(nodeCategory);
         }
         if(symbol == U_EXTERNPROTO){
-            cerr << "ExternProto is not supported." << endl;
+            os() << "ExternProto is not supported." << endl;
             skipExternProto();
-            return readNode( nodeCategory );
+            return readNode(nodeCategory);
         }
 
         if(symbol == D_DEF){
@@ -847,7 +812,7 @@ VRMLNodePtr VRMLParserImpl::readInlineNode(VRMLNodeCategory nodeCategory)
     scanner->readChar('{');
 
     if(scanner->readSymbol() && scanner->symbolValue == F_URL){
-        MFString    inlineUrls;
+        MFString inlineUrls;
         readMFString(inlineUrls);
         scanner->readCharEx('}', "syntax error 2");
 
@@ -857,9 +822,11 @@ VRMLNodePtr VRMLParserImpl::readInlineNode(VRMLNodeCategory nodeCategory)
             if(boost::algorithm::iends_with(url, "wrl")){
                 inlineNode->children.push_back(newInlineSource(url));
             } else {
-                inlineNode->children.push_back(createAnotherFormatFileNode(url));
+                auto nonVrmlInline = new VRMLNonVrmlInline;
+                nonVrmlInline->url = getRealPath(url);
+                inlineNode->children.push_back(nonVrmlInline);
             }
-            inlineNode->urls.push_back(url);
+            inlineNode->urls.push_back(inlineUrls[i]);
         }
         return inlineNode;
     }
@@ -867,33 +834,20 @@ VRMLNodePtr VRMLParserImpl::readInlineNode(VRMLNodeCategory nodeCategory)
 }
 
 
-VRMLAnotherFormatFilePtr VRMLParserImpl::createAnotherFormatFileNode(string& io_filename)
-{
-    // If the file extension is not wrl, It will read the corresponding file in VRMLToSGConverter.
-    VRMLAnotherFormatFilePtr fileNode = new VRMLAnotherFormatFile();
-    fileNode->url = getRealPath(io_filename);
-    return fileNode;
-}
-
-
-string VRMLParserImpl::getRealPath(string io_filename)
+string VRMLParserImpl::getRealPath(string url)
 { 
-    filesystem::path path;
-    string chkFile("");
-    if(isFileProtocol(io_filename)){
-        path = filesystem::path(deleteURLScheme(io_filename));
+    if(!isFileProtocol(url)){
+        return url;
+    } else {
+        filesystem::path path(removeURLScheme(url));
         path.normalize();
         if(!checkAbsolute(path)){
             filesystem::path parentPath(scanner->filename);
             path = parentPath.parent_path() / path;
             path.normalize();
-            chkFile = getAbsolutePathString(path);
         }
-    } else {
-        // Not file protocol implements   
-        chkFile = io_filename;
+        return getAbsolutePathString(path);
     }
-    return chkFile;
 }
 
 
@@ -1816,24 +1770,24 @@ void VRMLParserImpl::checkIndexedFaceSet(VRMLIndexedFaceSetPtr node)
         const int numVertices = polygon.size();
 
         if(numVertices < 3){
-            cerr << "Number of vertices is less than 3 !" << endl;
+            os() << "Number of vertices is less than 3 !" << endl;
         }
         if(numVertices > 3){
-            cerr << "Polygon is not a triangle in ";
-            cerr << scanner->filename << endl;
+            os() << "Polygon is not a triangle in ";
+            os() << scanner->filename << endl;
             for(int j=0; j < numVertices; j++){
-                cerr << polygon[j] << ",";
+                os() << polygon[j] << ",";
             }
-            cerr << endl;
+            os() << endl;
         }
         if(!isSeparated){
-            cerr << "Vertex index is not correctly separated by '-1'" << endl;
+            os() << "Vertex index is not correctly separated by '-1'" << endl;
         }
 
         int n = coord.size();
         for(int j=0; j < numVertices; j++){
             if(polygon[j] >= n){
-                cerr << "index " << polygon[j] << " is over the number of vertices" << endl;
+                os() << "index " << polygon[j] << " is over the number of vertices" << endl;
             }
         }
 
@@ -1852,29 +1806,29 @@ void VRMLParserImpl::checkIndexedFaceSet(VRMLIndexedFaceSetPtr node)
             }
         }
         if(isIndexOverlapped){
-            cerr << "overlapped vertex index in one polygon: ";
+            os() << "overlapped vertex index in one polygon: ";
             for(int l = 0; l < numVertices; l++){
-                cerr << polygon[l] << ",";
+                os() << polygon[l] << ",";
             }
-            cerr << endl;
+            os() << endl;
         }
 
         if(isVertexOverlapped){
-            cerr << "In " << scanner->filename << ":";
-            cerr << "two vertices in one polygon have the same position\n";
+            os() << "In " << scanner->filename << ":";
+            os() << "two vertices in one polygon have the same position\n";
 
             for(int l = 0; l < numVertices; l++){
                 SFVec3s& v = coord[polygon[l]];
-                cerr << polygon[l] << " = (" << v[0] << "," << v[1] << "," << v[2] << ") ";
+                os() << polygon[l] << " = (" << v[0] << "," << v[1] << "," << v[2] << ") ";
             }
-            cerr << endl;
+            os() << endl;
         }
     }
 
     if(numUsedVertices < static_cast<int>(coord.size())){
-        cerr << "There are vertices which are not used in" << scanner->filename << ".\n";
-        cerr << "Number of vertices is " << coord.size();
-        cerr << ", Number of used ones is " << numUsedVertices << endl;
+        os() << "There are vertices which are not used in" << scanner->filename << ".\n";
+        os() << "Number of vertices is " << coord.size();
+        os() << ", Number of used ones is " << numUsedVertices << endl;
     }
 }
 
@@ -2498,6 +2452,7 @@ void VRMLParserImpl::readMFNode(MFNode& out_nodes, VRMLNodeCategory nodeCategory
 
 void VRMLParserImpl::init()
 {
+    os_ = &nullout();
     currentProtoInstance = 0;
     protoInstanceActualNodeExtractionMode = true;
 
@@ -2508,263 +2463,256 @@ void VRMLParserImpl::init()
 
 void VRMLParserImpl::setSymbols()
 {
-    struct TSymbol {
-        int id;
-        const char* symbol;
-    };
-
-    static TSymbol symbols[] = {
-
+    static mutex symbolMutex;
+    lock_guard<mutex> lock(symbolMutex);
+    static shared_ptr<unordered_map<string, int>> symbols(new unordered_map<string, int>{
         // values
-        { V_TRUE, "TRUE"  },
-        { V_FALSE, "FALSE" },
-        { V_NULL, "NULL" },
+        { "TRUE", V_TRUE },
+        { "FALSE", V_FALSE },
+        { "NULL", V_NULL },
 
         // types
-        { T_SFINT32, "SFInt32" },
-        { T_MFINT32, "MFInt32" },
-        { T_SFFLOAT, "SFFloat" },
-        { T_MFFLOAT, "MFFloat" },
-        { T_SFVEC2F, "SFVec2f" },
-        { T_MFVEC2F, "MFVec2f" },
-        { T_SFVEC3F, "SFVec3f" },
-        { T_MFVEC3F, "MFVec3f" },
-        { T_SFROTATION, "SFRotation" },
-        { T_MFROTATION, "MFRotation" },
-        { T_SFTIME, "SFTime" },
-        { T_MFTIME, "MFTime" },
-        { T_SFCOLOR, "SFColor" },
-        { T_MFCOLOR, "MFColor" },
-        { T_SFSTRING, "SFString" },
-        { T_MFSTRING, "MFString" },
-        { T_SFNODE, "SFNode" },
-        { T_MFNODE, "MFNode" },
-        { T_SFBOOL, "SFBool" },
-        { T_SFIMAGE, "SFImage" },
+        { "SFInt32", T_SFINT32 },
+        { "MFInt32", T_MFINT32 },
+        { "SFFloat", T_SFFLOAT },
+        { "MFFloat", T_MFFLOAT },
+
+        { "SFVec2f", T_SFVEC2F },
+        { "MFVec2f", T_MFVEC2F },
+        { "SFVec3f", T_SFVEC3F },
+        { "MFVec3f", T_MFVEC3F },
+        { "SFRotation", T_SFROTATION },
+        { "MFRotation", T_MFROTATION },
+        { "SFTime", T_SFTIME },
+        { "MFTime", T_MFTIME },
+        { "SFColor", T_SFCOLOR },
+        { "MFColor", T_MFCOLOR },
+        { "SFString", T_SFSTRING },
+        { "MFString", T_MFSTRING },
+        { "SFNode", T_SFNODE },
+        { "MFNode", T_MFNODE },
+        { "SFBool", T_SFBOOL },
+        { "SFImage", T_SFIMAGE },
 
         // Nodes
-        { N_PROTO, "PROTO" },
-        { N_INLINE, "Inline" },
-        { N_BACKGROUND, "Background" },
-        { N_NAVIGATION_INFO, "NavigationInfo" },
-        { N_VIEWPOINT, "Viewpoint" },
-        { N_GROUP, "Group" },
-        { N_TRANSFORM, "Transform" },
-        { N_SHAPE, "Shape" },
-        { N_APPEARANCE, "Appearance" },
-        { N_MATERIAL, "Material" },
-        { N_IMAGE_TEXTURE, "ImageTexture" },
-        { N_TEXTURE_TRANSFORM, "TextureTransform" },
-        { N_BOX, "Box" },
-        { N_CONE, "Cone" },
-        { N_CYLINDER, "Cylinder" },
-        { N_SPHERE, "Sphere" },
-        { N_TEXT, "Text" },
-        { N_FONT_STYLE, "FontStyle" },
-        { N_INDEXED_LINE_SET, "IndexedLineSet" },
-        { N_INDEXED_FACE_SET, "IndexedFaceSet" },
-        { N_COLOR, "Color" },
-        { N_COORDINATE, "Coordinate" },
-        { N_TEXTURE_COORDINATE, "TextureCoordinate" },
-        { N_NORMAL, "Normal" },
-        { N_CYLINDER_SENSOR, "CylinderSensor" },
+        { "PROTO", N_PROTO },
+        { "Inline", N_INLINE },
+        { "Background", N_BACKGROUND },
+        { "NavigationInfo", N_NAVIGATION_INFO },
+        { "Viewpoint", N_VIEWPOINT },
+        { "Group", N_GROUP },
+        { "Transform", N_TRANSFORM },
+        { "Shape", N_SHAPE },
+        { "Appearance", N_APPEARANCE },
+        { "Material", N_MATERIAL },
+        { "ImageTexture", N_IMAGE_TEXTURE },
+        { "TextureTransform", N_TEXTURE_TRANSFORM },
+        { "Box", N_BOX },
+        { "Cone", N_CONE },
+        { "Cylinder", N_CYLINDER },
+        { "Sphere", N_SPHERE },
+        { "Text", N_TEXT },
+        { "FontStyle", N_FONT_STYLE },
+        { "IndexedLineSet", N_INDEXED_LINE_SET },
+        { "IndexedFaceSet", N_INDEXED_FACE_SET },
+        { "Color", N_COLOR },
+        { "Coordinate", N_COORDINATE },
+        { "TextureCoordinate", N_TEXTURE_COORDINATE },
+        { "Normal", N_NORMAL },
+        { "CylinderSensor", N_CYLINDER_SENSOR },
 
-        { N_POINTSET, "PointSet" },
-        { N_PIXEL_TEXTURE,"PixelTexture" },
-        { N_MOVIE_TEXTURE, "MovieTexture" },
-        { N_ELEVATION_GRID, "ElevationGrid" },
-        { N_EXTRUSION, "Extrusion" },
-        { N_SWITCH, "Switch" },
-        { N_LOD,"LOD" },
-        { N_COLLISION,			"Collision" },
-        { N_ANCHOR,				"Anchor" },
-        { N_FOG,					"Fog" },
-        { N_BILLBOARD,			"Billboard" },
-        { N_WORLD_INFO,			"WorldInfo" },
-        { N_POINT_LIGHT,			"PointLight" },
-        { N_DIRECTIONAL_LIGHT,	"DirectionalLight" },
-        { N_SPOT_LIGHT,			"SpotLight" },
+        { "PointSet", N_POINTSET },
+        { "PixelTexture", N_PIXEL_TEXTURE },
+        { "MovieTexture", N_MOVIE_TEXTURE },
+        { "ElevationGrid", N_ELEVATION_GRID },
+        { "Extrusion", N_EXTRUSION },
+        { "Switch", N_SWITCH },
+        { "LOD", N_LOD },
+        { "Collision", N_COLLISION },
+        { "Anchor", N_ANCHOR },
+        { "Fog", N_FOG },
+        { "Billboard", N_BILLBOARD },
+        { "WorldInfo", N_WORLD_INFO },
+        { "PointLight", N_POINT_LIGHT },
+        { "DirectionalLight", N_DIRECTIONAL_LIGHT },
+        { "SpotLight", N_SPOT_LIGHT },
 
         // unsupported nodes
-        { N_AUDIO_CLIP,				"AudioClip" },
-        { N_SOUND,					"Sound" },
-        { N_COLOR_INTERPOLATOR,		"ColorInterpolator" },
-        { N_COORDINATE_INTERPOLATOR,	"CoordinateInterpolator" },
-        { N_ORIENTATION_INTERPOLATOR,	"OrientationInterpolator" },
-        { N_NORMAL_INTERPOLATOR,		"NormalInterpolator" },
-        { N_POSITION_INTERPOLATOR,	"PositionInterpolator" },
-        { N_SCALAR_INTERPOLATOR,		"ScalarInterpolator" },
-        { N_PLANE_SENSOR,				"PlaneSensor" },
-        { N_PROXIMITY_SENSOR,			"ProximitySensor" },
-        { N_SPHERE_SENSOR,			"SphereSensor" },
-        { N_TIME_SENSOR,				"TimeSensor" },
-        { N_TOUCH_SENSOR,				"TouchSensor" },
-        { N_VISIBILITY_SENSOR,		"VisibilitySensor" },
+        { "AudioClip", N_AUDIO_CLIP },
+        { "Sound", N_SOUND },
+        { "ColorInterpolator", N_COLOR_INTERPOLATOR },
+        { "CoordinateInterpolator", N_COORDINATE_INTERPOLATOR },
+        { "OrientationInterpolator", N_ORIENTATION_INTERPOLATOR },
+        { "NormalInterpolator", N_NORMAL_INTERPOLATOR },
+        { "PositionInterpolator", N_POSITION_INTERPOLATOR },
+        { "ScalarInterpolator", N_SCALAR_INTERPOLATOR },
+        { "PlaneSensor", N_PLANE_SENSOR },
+        { "ProximitySensor", N_PROXIMITY_SENSOR },
+        { "SphereSensor", N_SPHERE_SENSOR },
+        { "TimeSensor", N_TIME_SENSOR },
+        { "TouchSensor", N_TOUCH_SENSOR },
+        { "VisibilitySensor", N_VISIBILITY_SENSOR },
 
         // Fields
-        { F_IS, "IS" },
+        { "IS", F_IS },
 
-        { F_URL, "url" },
+        { "url", F_URL },
 
-        { F_GROUND_ANGLE, "groundAngle" },
-        { F_GROUND_COLOR, "groundColor" },
-        { F_SKY_ANGLE, "skyAngle" },
-        { F_SKY_COLOR, "skyColor" },
-        { F_BACK_URL, "backUrl" },
-        { F_BOTTOM_URL, "bottomUrl" },
-        { F_FRONT_URL, "frontUrl" },
-        { F_LEFT_URL, "leftUrl" },
-        { F_RIGHT_URL, "rightUrl" },
-        { F_TOP_URL, "topUrl" },
+        { "groundAngle", F_GROUND_ANGLE },
+        { "groundColor", F_GROUND_COLOR },
+        { "skyAngle", F_SKY_ANGLE },
+        { "skyColor", F_SKY_COLOR },
+        { "backUrl", F_BACK_URL },
+        { "bottomUrl", F_BOTTOM_URL },
+        { "frontUrl", F_FRONT_URL },
+        { "leftUrl", F_LEFT_URL },
+        { "rightUrl", F_RIGHT_URL },
+        { "topUrl", F_TOP_URL },
 
-        { F_AVATAR_SIZE, "avatarSize" },
-        { F_HEADLIGHT, "headlight" },
-        { F_SPEED, "speed" },
-        { F_TYPE, "type" },
-        { F_VISIBILITY_LIMIT, "visibilityLimit" },
+        { "avatarSize", F_AVATAR_SIZE },
+        { "headlight", F_HEADLIGHT },
+        { "speed", F_SPEED },
+        { "type", F_TYPE },
+        { "visibilityLimit", F_VISIBILITY_LIMIT },
 
-        { F_FIELD_OF_VIEW, "fieldOfView" },
-        { F_JUMP, "jump" },
-        { F_ORIENTATION, "orientation" },
-        { F_POSITION, "position" },
-        { F_DESCRIPTION, "description" },
+        { "fieldOfView", F_FIELD_OF_VIEW },
+        { "jump", F_JUMP },
+        { "orientation", F_ORIENTATION },
+        { "position", F_POSITION },
+        { "description", F_DESCRIPTION },
 
-        { F_CHILDREN, "children" },
-        { F_ADD_CHILDREN, "addChildren" },
-        { F_REMOVE_CHILDREN, "removeChildren" },
-        { F_BBOX_CENTER, "bboxCenter" },
-        { F_BBOX_SIZE, "bboxSize" },
+        { "children", F_CHILDREN },
+        { "addChildren", F_ADD_CHILDREN },
+        { "removeChildren", F_REMOVE_CHILDREN },
+        { "bboxCenter", F_BBOX_CENTER },
+        { "bboxSize", F_BBOX_SIZE },
 
-        { F_CENTER, "center" },
-        { F_ROTATION, "rotation" },
-        { F_SCALE, "scale" },
-        { F_SCALE_ORIENTATION, "scaleOrientation" },
-        { F_TRANSLATION, "translation" },
+        { "center", F_CENTER },
+        { "rotation", F_ROTATION },
+        { "scale", F_SCALE },
+        { "scaleOrientation", F_SCALE_ORIENTATION },
+        { "translation", F_TRANSLATION },
 
-        { F_APPEARANCE, "appearance" },
-        { F_GEOMETRY, "geometry" },
+        { "appearance", F_APPEARANCE },
+        { "geometry", F_GEOMETRY },
 
-        { F_MATERIAL, "material" },
-        { F_TEXTURE, "texture" },
-        { F_TEXTURE_TRANSFORM, "textureTransform" },
+        { "material", F_MATERIAL },
+        { "texture", F_TEXTURE },
+        { "textureTransform", F_TEXTURE_TRANSFORM },
 
-        { F_AMBIENT_INTENSITY, "ambientIntensity" },
-        { F_DIFFUSE_COLOR, "diffuseColor" },
-        { F_EMISSIVE_COLOR, "emissiveColor" },
-        { F_SHININESS, "shininess" },
-        { F_SPECULAR_COLOR, "specularColor" },
-        { F_TRANSPARANCY, "transparency" },
-        { F_DIRECTION, "direction" },
+        { "ambientIntensity", F_AMBIENT_INTENSITY },
+        { "diffuseColor", F_DIFFUSE_COLOR },
+        { "emissiveColor", F_EMISSIVE_COLOR },
+        { "shininess", F_SHININESS },
+        { "specularColor", F_SPECULAR_COLOR },
+        { "transparency", F_TRANSPARANCY },
+        { "direction", F_DIRECTION },
 
-        { F_REPEAT_S, "repeatS" },
-        { F_REPEAT_T, "repeatT" },
+        { "repeatS", F_REPEAT_S },
+        { "repeatT", F_REPEAT_T },
 
-        { F_SIZE, "size" },
+        { "size", F_SIZE },
 
-        { F_BOTTOM, "bottom" },
-        { F_BOTTOM_RADIUS, "bottomRadius" },
-        { F_HEIGHT, "height" },
-        { F_SIDE, "side" },
+        { "bottom", F_BOTTOM },
+        { "bottomRadius", F_BOTTOM_RADIUS },
+        { "height", F_HEIGHT },
+        { "side", F_SIDE },
 
-        { F_RADIUS, "radius" },
-        { F_TOP, "top" },
+        { "radius", F_RADIUS },
+        { "top", F_TOP },
 
-        { F_STRING, "string" },
-        { F_FONT_STYLE, "fontStyle" },
-        { F_LENGTH, "length" },
-        { F_MAX_EXTENT, "maxExtent" },
+        { "string", F_STRING },
+        { "fontStyle", F_FONT_STYLE },
+        { "length", F_LENGTH },
+        { "maxExtent", F_MAX_EXTENT },
 
-        { F_FAMILY, "family" },
-        { F_HORIZONTAL, "horizontal" },
-        { F_JUSTIFY, "justify" },
-        { F_LANGUAGE, "language" },
-        { F_LEFT_TO_RIGHT, "leftToRight" },
-        { F_SPACING, "spacing" },
-        { F_STYLE, "style" },
-        { F_TOP_TO_BOTTOM, "topToBottom" },
+        { "family", F_FAMILY },
+        { "horizontal", F_HORIZONTAL },
+        { "justify", F_JUSTIFY },
+        { "language", F_LANGUAGE },
+        { "leftToRight", F_LEFT_TO_RIGHT },
+        { "spacing", F_SPACING },
+        { "style", F_STYLE },
+        { "topToBottom", F_TOP_TO_BOTTOM },
 
-        { F_COLOR, "color" },
-        { F_COORD, "coord" },
-        { F_COLOR_INDEX, "colorIndex" },
-        { F_COLOR_PER_VERTEX, "colorPerVertex" },
-        { F_COORD_INDEX, "coordIndex" },
+        { "color", F_COLOR },
+        { "coord", F_COORD },
+        { "colorIndex", F_COLOR_INDEX },
+        { "colorPerVertex", F_COLOR_PER_VERTEX },
+        { "coordIndex", F_COORD_INDEX },
 
-        { F_CCW, "ccw" },
-        { F_CONVEX, "convex" },
-        { F_SOLID, "solid" },
-        { F_CREASE_ANGLE, "creaseAngle" },
-        { F_NORMAL_INDEX, "normalIndex" },
-        { F_NORMAL, "normal" },
-        { F_NORMAL_PER_VERTEX, "normalPerVertex" },
-        { F_TEX_COORD_INDEX, "texCoordIndex" },
-        { F_TEX_COORD, "texCoord" },
+        { "ccw", F_CCW },
+        { "convex", F_CONVEX },
+        { "solid", F_SOLID },
+        { "creaseAngle", F_CREASE_ANGLE },
+        { "normalIndex", F_NORMAL_INDEX },
+        { "normal", F_NORMAL },
+        { "normalPerVertex", F_NORMAL_PER_VERTEX },
+        { "texCoordIndex", F_TEX_COORD_INDEX },
+        { "texCoord", F_TEX_COORD },
 
-        { F_POINT, "point" },
-        { F_VECTOR, "vector" },
+        { "point", F_POINT },
+        { "vector", F_VECTOR },
 
-        { F_AUTO_OFFSET, "autoOffset" },
-        { F_DISK_ANGLE, "diskAngle" },
-        { F_ENABLED, "enabled" },
-        { F_MAX_ANGLE, "maxAngle" },
-        { F_MIN_ANGLE, "minAngle" },
-        { F_OFFSET, "offset" },
+        { "autoOffset", F_AUTO_OFFSET },
+        { "diskAngle", F_DISK_ANGLE },
+        { "enabled", F_ENABLED },
+        { "maxAngle", F_MAX_ANGLE },
+        { "minAngle", F_MIN_ANGLE },
+        { "offset", F_OFFSET },
 
-        { F_IMAGE, "image" },
+        { "image", F_IMAGE },
 
-        { F_X_DIMENSION, "xDimension" },
-        { F_Z_DIMENSION, "zDimension" },
-        { F_X_SPACING, "xSpacing" },
-        { F_Z_SPACING, "zSpacing" },
+        { "xDimension", F_X_DIMENSION },
+        { "zDimension", F_Z_DIMENSION },
+        { "xSpacing", F_X_SPACING },
+        { "zSpacing", F_Z_SPACING },
 
-        { F_CROSS_SECTION, "crossSection" },
-        { F_SPINE, "spine" },
-        { F_BEGIN_CAP, "beginCap" },
-        { F_END_CAP, "endCap" },
+        { "crossSection", F_CROSS_SECTION },
+        { "spine", F_SPINE },
+        { "beginCap", F_BEGIN_CAP },
+        { "endCap", F_END_CAP },
 
-        { F_CHOICE, "choice" },
-        { F_WHICH_CHOICE, "whichChoice" },
+        { "choice", F_CHOICE },
+        { "whichChoice", F_WHICH_CHOICE },
 
-        { F_COLLIDE, "collide" },
-        { F_PROXY, "proxy" },
+        { "collide", F_COLLIDE },
+        { "proxy", F_PROXY },
 
-        { F_PARAMETER, "parameter" },
+        { "parameter", F_PARAMETER },
 
-        { F_VISIBILITY_RANGE, "visibilityRange" },
-        { F_FOG_TYPE, "fogType" },
+        { "visibilityRange", F_VISIBILITY_RANGE },
+        { "fogType", F_FOG_TYPE },
 
-        { F_AXIS_OF_ROTATION, "axisOfRotation" },
+        { "axisOfRotation", F_AXIS_OF_ROTATION },
 
-        { F_TITLE, "title" },
-        { F_INFO, "info" },
+        { "title", F_TITLE },
+        { "info", F_INFO },
 
-        { F_LOCATION, "location" },
-        { F_ON, "on" },
-        { F_INTENSITY, "intensity" },
-        { F_ATTENUATION, "attenuation" },
-        { F_BEAM_WIDTH, "beamWidth" },
-        { F_CUT_OFF_ANGLE, "cutOffAngle" },
+        { "location", F_LOCATION },
+        { "on", F_ON },
+        { "intensity", F_INTENSITY },
+        { "attenuation", F_ATTENUATION },
+        { "beamWidth", F_BEAM_WIDTH },
+        { "cutOffAngle", F_CUT_OFF_ANGLE },
 
         // event type
-        { E_FIELD, "field" },
-        { E_EXPOSED_FIELD, "exposedField" },
-        { E_EVENTIN, "eventIn" },
-        { E_EVENTOUT, "eventOut" },
+        { "field", E_FIELD },
+        { "exposedField", E_EXPOSED_FIELD },
+        { "eventIn", E_EVENTIN },
+        { "eventOut", E_EVENTOUT },
 
         // def & route
-        { D_DEF, "DEF" },
-        { D_USE, "USE" },
-        { D_ROUTE, "ROUTE" },
+        { "DEF", D_DEF },
+        { "USE", D_USE },
+        { "ROUTE", D_ROUTE },
 
         // unsupported keywords
-        { U_SCRIPT, "Script" },
-        { U_EXTERNPROTO, "EXTERNPROTO" },
+        { "Script", U_SCRIPT },
+        { "EXTERNPROTO", U_EXTERNPROTO }
+    });
 
-        { 0, "" }
-    };
-
-    for(int i=0; symbols[i].id != 0; i++){
-        scanner->registerSymbol(symbols[i].id, symbols[i].symbol);
-    }
+    scanner->setSymbols(symbols);
 }
 
 
@@ -2774,7 +2722,7 @@ void VRMLParserImpl::convertUrl(MFString& urls)
         filesystem::path path;
         string chkFile("");
         if(isFileProtocol(*it)){
-            path = filesystem::path(deleteURLScheme(*it));
+            path = filesystem::path(removeURLScheme(*it));
             path.normalize();
 
             // Relative path check & translate to absolute path 

@@ -34,7 +34,13 @@ public:
     ViewClass* viewClass() const;
 
     void setName(const std::string& name);
-    std::string name() const { return objectName().toStdString(); }
+    std::string name() const {
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
+        return objectName().toUtf8().data();
+#else
+        return objectName().toStdString();
+#endif
+     }
 
     ViewArea* viewArea() const;
         

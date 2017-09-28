@@ -157,7 +157,7 @@ typedef std::shared_ptr<const BodyMotion> ConstBodyMotionPtr;
 class Body;
 
 CNOID_EXPORT BodyMotion::Frame operator<<(BodyMotion::Frame frame, const Body& body);
-CNOID_EXPORT BodyMotion::Frame operator>>(BodyMotion::Frame frame, Body& body);
+CNOID_EXPORT BodyMotion::Frame operator>>(BodyMotion::Frame frame, const Body& body);
 CNOID_EXPORT BodyMotion::ConstFrame operator>>(BodyMotion::ConstFrame frame, Body& body);
 CNOID_EXPORT Body& operator<<(Body& body, BodyMotion::Frame frame);
 CNOID_EXPORT Body& operator<<(Body& body, BodyMotion::ConstFrame frame);

@@ -40,6 +40,8 @@ public:
        You have to use the copy constructor of the Body class to copy the link tree
     */
     Link(const Link& link);
+
+    virtual Link* clone() const;
         
     virtual ~Link();
 
@@ -98,7 +100,6 @@ public:
     }
     
     // To, Ro?
-    Position& Tb() { return Tb_; }
     const Position& Tb() const { return Tb_; }
         
     Position::ConstTranslationPart b() const { return Tb_.translation(); }
@@ -115,7 +116,9 @@ public:
         REVOLUTE_JOINT = 0,
         ROTATIONAL_JOINT = REVOLUTE_JOINT,
         /// translational joint (1 dof)
-        SLIDE_JOINT = 1,
+        PRISMATIC_JOINT = 1,
+        /// deprecated
+        SLIDE_JOINT = PRISMATIC_JOINT,
         /// 6-DOF root link
         FREE_JOINT = 2,
         /*
@@ -127,9 +130,7 @@ public:
         /// special joint for simplified simulation of a continuous track
         PSEUDO_CONTINUOUS_TRACK = 4,
         // deprecated
-        CRAWLER_JOINT = 5,
-        
-        AGX_CRAWLER_JOINT = 6
+        CRAWLER_JOINT = 5
     };
 
     int jointId() const { return jointId_; }
@@ -137,7 +138,12 @@ public:
     JointType jointType() const { return jointType_; }
     bool isFixedJoint() const { return (jointType_ >= FIXED_JOINT); }
     bool isFreeJoint() const { return jointType_ == FREE_JOINT; }
+    bool isRevoluteJoint() const { return jointType_ == REVOLUTE_JOINT; }
+    bool isPrismaticJoint() const { return jointType_ == PRISMATIC_JOINT; }
+
+    /// deprecated
     bool isRotationalJoint() const { return jointType_ == ROTATIONAL_JOINT; }
+    /// deprecated
     bool isSlideJoint() const { return jointType_ == SLIDE_JOINT; }
 
     std::string jointTypeString() const;
@@ -145,7 +151,23 @@ public:
     const Vector3& a() const { return a_; }    
     const Vector3& jointAxis() const { return a_; }
     const Vector3& d() const { return a_; } // joint axis alias for a slide joint
-        
+
+    enum ActuationMode {
+        NO_ACTUATION = 0,
+        JOINT_TORQUE = 1,
+        JOINT_FORCE = 1,
+        JOINT_EFFORT = 1,
+        JOINT_ANGLE = 2,
+        JOINT_DISPLACEMENT = 2,
+        JOINT_VELOCITY = 3,
+        JOINT_SURFACE_VELOCITY = 4, // For pseudo continous tracks
+        LINK_POSITION = 5,
+    };
+
+    ActuationMode actuationMode() const { return actuationMode_; }
+
+    void setActuationMode(ActuationMode mode) { actuationMode_ = mode; }
+    
     double q() const { return q_; }
     double& q() { return q_; }
     double dq() const { return dq_; }
@@ -236,6 +258,7 @@ public:
     void setJointAxis(const Vector3& axis) { a_ = axis; }
 
     void setInitialJointDisplacement(double q) { q_initial_ = q; }
+    void setInitialJointAngle(double q) { q_initial_ = q; }
     void setJointRange(double lower, double upper) { q_lower_ = lower; q_upper_ = upper; }
     void setJointVelocityRange(double lower, double upper) { dq_lower_ = lower; dq_upper_ = upper; }
 
@@ -287,6 +310,7 @@ private:
     Matrix3 Rs_; // temporary variable for porting. This should be removed later.
     Vector3 a_;
     JointType jointType_;
+    ActuationMode actuationMode_;
     double q_;
     double dq_;
     double ddq_;
@@ -319,7 +343,9 @@ private:
 
 template<> CNOID_EXPORT double Link::info(const std::string& key) const;
 template<> CNOID_EXPORT double Link::info(const std::string& key, const double& defaultValue) const;
+template<> CNOID_EXPORT bool Link::info(const std::string& key, const bool& defaultValue) const;
 template<> CNOID_EXPORT void Link::setInfo(const std::string& key, const double& value);
+template<> CNOID_EXPORT void Link::setInfo(const std::string& key, const bool& value);
 
 }
 	

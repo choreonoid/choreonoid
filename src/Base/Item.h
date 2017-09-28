@@ -12,7 +12,6 @@
 #include <ctime>
 #include <bitset>
 #include <string>
-#include <list>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -21,20 +20,10 @@ class Item;
 typedef ref_ptr<Item> ItemPtr;
     
 class RootItem;
-class ItemTreeArchiver;
-class ExtensionManager;
-class PutPropertyFunction;
 class Archive;
+class ExtensionManager;
 
-/**
-   @if not jp
-   @endif
 
-   @if jp
-   フレームワーク上で共有されるオブジェクトを表すクラス、E  
-   モチE��・ビュー・コントローラフレームワークにおけるモチE��部刁E�E核となる、E  
-   @endif
-*/
 class CNOID_EXPORT Item : public Referenced
 {
     template<class ItemType>
@@ -80,8 +69,6 @@ public:
     bool addChildItem(Item* item, bool isManualOperation = false);
     bool addSubItem(Item* item);
     bool isSubItem() const;
-    //int subItemIndex() const;
-    //Item* subItem(int subItemIndex);
     void detachFromParentItem();
     void emitSigDetachedFromRootForSubTree();
     bool insertChildItem(Item* item, Item* nextItem, bool isManualOperation = false);
@@ -206,7 +193,7 @@ public:
     }
 
     /**
-       @note obsolete.
+       @note deprecated
     */
     SignalProxy<void()> sigDetachedFromRoot() {
         return sigDetachedFromRoot_;
@@ -224,11 +211,6 @@ public:
 
     virtual bool store(Archive& archive);
     virtual bool restore(const Archive& archive);
-
-    Referenced* customData(int id);
-    const Referenced* customData(int id) const;
-    void setCustomData(int id, ReferencedPtr data);
-    void clearCustomData(int id);
 
     static SignalProxy<void(const char* type_info_name)> sigClassUnregistered() {
         return sigClassUnregistered_;
@@ -251,19 +233,16 @@ protected:
 private:
 
     Item* parent_;
-    Item* firstChild_;
-    Item* lastChild_;
+    ItemPtr firstChild_;
+    ItemPtr nextItem_;
     Item* prevItem_;
-    Item* nextItem_;
+    Item* lastChild_;
 
     int numChildren_;
 
     std::string name_;
 
     std::bitset<NUM_ATTRIBUTES> attributes;
-
-    std::vector<int> extraStates;
-    std::vector<ReferencedPtr> extraData;
 
     Signal<void(const std::string& oldName)> sigNameChanged_;
     Signal<void()> sigDetachedFromRoot_;
@@ -283,12 +262,11 @@ private:
     Item& operator=(const Item& rhs);
 
     void init();
-    bool doInsertChildItem(Item* item, Item* nextItem, bool isManualOperation);
+    bool doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManualOperation);
     void callSlotsOnPositionChanged();
     void callFuncOnConnectedToRoot();
     void addToItemsToEmitSigSubTreeChanged();
-    void addToItemsToEmitSigSubTreeChangedSub(std::list<Item*>::iterator& pos);
-    void emitSigSubTreeChanged();
+    static void emitSigSubTreeChanged();
 
     void detachFromParentItemSub(bool isMoving);
     bool traverse(Item* item, const std::function<bool(Item*)>& function);
@@ -296,8 +274,6 @@ private:
         
     void updateFileInformation(const std::string& filename, const std::string& format);
         
-    friend class RootItem;
-    friend class ItemTreeArchiver;
     friend class ItemManagerImpl;
 };
 
