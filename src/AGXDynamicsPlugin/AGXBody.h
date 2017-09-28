@@ -17,13 +17,7 @@ typedef std::map<std::string, AGXBodyExtensionFunc> AGXBodyExtensionFuncMap;
 namespace cnoid{
 
 typedef Eigen::Matrix<float, 3, 1> Vertex;
-class AGXBody;
-typedef ref_ptr<AGXBody> AGXBodyPtr;
-class AGXLink;
-typedef ref_ptr<AGXLink> AGXLinkPtr;
-typedef std::vector<AGXLinkPtr> AGXLinkPtrs;
-typedef std::vector<AGXBodyExtensionPtr> AGXBodyExtensionPtrs;
-typedef std::vector<std::string> VectorString;
+//typedef std::vector<std::string> VectorString;
 class AGXScene;
 
 static unsigned int generateUID(){
@@ -53,11 +47,12 @@ inline const Position convertToPosition(const agx::AffineMatrix4x4& a){
 //    AGXBody*                getAGXBody();
 //};
 
+class AGXBody;
 class AGXLink : public Referenced
 {
 public:
-    AGXLink(const LinkPtr link);
-    AGXLink(const LinkPtr link, const AGXLinkPtr parent, const Vector3& parentOrigin, const AGXBodyPtr agxBody);
+    AGXLink(Link* const link);
+    AGXLink(Link* const link, AGXLink* const parent, const Vector3& parentOrigin, AGXBody* const agxBody);
     void constructAGXLink();
     void setAGXMaterial();
     bool setAGXMaterialFromName(const std::string& materialName);
@@ -71,18 +66,18 @@ public:
     void setLinkStateToCnoid();
     int getIndex() const;
     Vector3    getOrigin() const;
-    LinkPtr    getOrgLink() const;
-    AGXLinkPtr getAGXParentLink() const;
-    agx::RigidBodyRef       getAGXRigidBody() const;
-    agxCollide::GeometryRef getAGXGeometry() const;
-    void                    setAGXConstraint(agx::ConstraintRef const constraint);
-    agx::ConstraintRef      getAGXConstraint() const;
+    Link*      getOrgLink() const;
+    AGXLink*   getAGXParentLink() const;
+    agx::RigidBody*         getAGXRigidBody() const;
+    agxCollide::Geometry*   getAGXGeometry() const;
+    void                    setAGXConstraint(agx::Constraint* const constraint);
+    agx::Constraint*        getAGXConstraint() const;
     void printDebugInfo();
 
 private:
-    AGXBody*    _agxBody;
-    LinkPtr     _orgLink;
-    AGXLinkPtr  _agxParentLink;
+    AGXBody* _agxBody;
+    Link*    _orgLink;
+    AGXLink* _agxParentLink;
     Vector3     _origin;
     agx::RigidBodyRef       _rigid;
     agxCollide::GeometryRef _geometry;
@@ -97,6 +92,8 @@ private:
     void setVelocityToAGX();
     void setPositionToAGX();
 };
+typedef ref_ptr<AGXLink> AGXLinkPtr;
+typedef std::vector<AGXLinkPtr> AGXLinkPtrs;
 
 class CNOID_EXPORT AGXBody :  public SimulationBody
 {
@@ -107,9 +104,9 @@ public:
     std::string getCollisionGroupName() const;
     void enableExternalCollision(const bool& bOn);
     void addCollisionGroupNameToDisableCollision(const std::string& name);
-    const VectorString& getCollisionGroupNamesToDisableCollision() const;
+    const std::vector<std::string>& getCollisionGroupNamesToDisableCollision() const;
     void addCollisionGroupNameToAllLink(const std::string& name);
-    void setAGXMaterial(const int& index, const agx::MaterialRef& mat);
+    void setAGXMaterial(const int& index, agx::Material* const mat);
     void setControlInputToAGX();
     void setLinkStateToAGX();
     void setLinkStateToCnoid();
@@ -120,13 +117,14 @@ public:
     void updateGyroAndAccelerationSensors();
     AGXScene* getAGXScene() const;
     int  numAGXLinks() const;
-    void addAGXLink(AGXLinkPtr const agxLink);
-    AGXLinkPtr getAGXLink(const int& index) const;
-    AGXLinkPtr getAGXLink(const std::string& name) const;
+    void addAGXLink(AGXLink* const agxLink);
+    AGXLink* getAGXLink(const int& index) const;
+    AGXLink* getAGXLink(const std::string& name) const;
     const AGXLinkPtrs& getAGXLinks() const;
     int numControllableLinks() const;
-    void addControllableLink(AGXLinkPtr const agxLink);
-    AGXLinkPtr getControllableLink(const int& index) const;
+    void addControllableLink(AGXLink* const agxLink);
+    AGXLink* getControllableLink(const int& index) const;
+    const AGXLinkPtrs& getControllableLinks() const;
     agx::RigidBodyRef  getAGXRigidBody(const int& index) const;
     agx::ConstraintRef getAGXConstraint(const int& index) const;
     bool addAGXBodyExtension(AGXBodyExtension* const extension);
@@ -149,6 +147,7 @@ private:
     bool createContinuousTrack(AGXBody* agxBody);
     bool createAGXVehicleContinousTrack(AGXBody* agxBody);
 };
+typedef ref_ptr<AGXBody> AGXBodyPtr;
 
 }
 

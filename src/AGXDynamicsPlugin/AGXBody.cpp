@@ -11,12 +11,12 @@ AGXBodyExtensionFuncMap agxBodyExtensionAdditionalFuncs;
 namespace cnoid{
 ////////////////////////////////////////////////////////////
 // AGXLink
-AGXLink::AGXLink(const LinkPtr link) : _orgLink(link){}
-AGXLink::AGXLink(const LinkPtr link, const AGXLinkPtr parent, const Vector3& parentOrigin, const AGXBodyPtr agxBody)
+AGXLink::AGXLink(Link* const link) : _orgLink(link){}
+AGXLink::AGXLink(Link* const link, AGXLink* const parent, const Vector3& parentOrigin, AGXBody* const agxBody) :
+    _agxBody(agxBody),
+    _orgLink(link),
+    _agxParentLink(parent)
 {
-    _agxBody = agxBody;
-    _orgLink = link;
-    _agxParentLink = parent;
     agxBody->addAGXLink(this);
     _origin = parentOrigin + link->b();
     const Link::ActuationMode& actuationMode = link->actuationMode();
@@ -228,32 +228,32 @@ Vector3 AGXLink::getOrigin() const
     return _origin;
 }
 
-LinkPtr AGXLink::getOrgLink() const
+Link* AGXLink::getOrgLink() const
 {
     return _orgLink;
 }
 
-AGXLinkPtr AGXLink::getAGXParentLink() const
+AGXLink* AGXLink::getAGXParentLink() const
 {
     return _agxParentLink;
 }
 
-agx::RigidBodyRef AGXLink::getAGXRigidBody() const
+agx::RigidBody* AGXLink::getAGXRigidBody() const
 {
     return _rigid;
 }
 
-agxCollide::GeometryRef AGXLink::getAGXGeometry() const
+agxCollide::Geometry* AGXLink::getAGXGeometry() const
 {
     return _geometry;
 }
 
-void AGXLink::setAGXConstraint(agx::ConstraintRef const constraint)
+void AGXLink::setAGXConstraint(agx::Constraint* const constraint)
 {
     _constraint = constraint;
 }
 
-agx::ConstraintRef AGXLink::getAGXConstraint() const
+agx::Constraint* AGXLink::getAGXConstraint() const
 {
     return _constraint;
 }
@@ -591,7 +591,7 @@ void AGXBody::initialize()
     body->calcForwardKinematics(true, true);
     _agxLinks.clear();
     _controllableLinks.clear();
-	_agxBodyExtensions.clear();
+    _agxBodyExtensions.clear();
     _collisionGroupNamesToDisableCollision.clear();
     std::stringstream ss;
     ss.str("");
@@ -618,8 +618,8 @@ std::string AGXBody::getCollisionGroupName() const
 
 void AGXBody::enableExternalCollision(const bool& bOn)
 {
-    for(int i = 0; i < numAGXLinks(); ++i){
-        getAGXLink(i)->enableExternalCollision(bOn);
+    for(const auto& agxLink : getAGXLinks()){
+        agxLink->enableExternalCollision(bOn);
     }
 }
 
@@ -628,41 +628,41 @@ void AGXBody::addCollisionGroupNameToDisableCollision(const std::string & name)
     return _collisionGroupNamesToDisableCollision.push_back(name);
 }
 
-const VectorString& AGXBody::getCollisionGroupNamesToDisableCollision() const
+const std::vector<std::string>& AGXBody::getCollisionGroupNamesToDisableCollision() const
 {
     return _collisionGroupNamesToDisableCollision;
 }
 
 void AGXBody::addCollisionGroupNameToAllLink(const std::string& name)
 {
-    for(auto agxLink : getAGXLinks()){
+    for(const auto& agxLink : getAGXLinks()){
         agxLink->getAGXGeometry()->addGroup(name);
     }
 }
 
-void AGXBody::setAGXMaterial(const int & index, const agx::MaterialRef& mat)
+void AGXBody::setAGXMaterial(const int & index, agx::Material* const mat)
 {
     getAGXLink(index)->getAGXGeometry()->setMaterial(mat);
 }
 
 void AGXBody::setControlInputToAGX()
 {
-    for(int i = 0; i < numControllableLinks(); ++i){
-        getControllableLink(i)->setControlInputToAGX();
+    for(const auto& clink : getControllableLinks()){
+        clink->setControlInputToAGX();
     }
 }
 
 void AGXBody::setLinkStateToAGX()
 {
-    for(int i = 0; i < numAGXLinks(); ++i){
-        getAGXLink(i)->setLinkStateToAGX();
+    for(const auto& agxLink : getAGXLinks()){
+        agxLink->setLinkStateToAGX();
     }
 }
 
 void AGXBody::setLinkStateToCnoid()
 {
-    for(int i = 0; i < numAGXLinks(); ++i){
-        getAGXLink(i)->setLinkStateToCnoid();
+    for(const auto& agxLink : getAGXLinks()){
+        agxLink->setLinkStateToCnoid();
     }
 }
 
@@ -680,8 +680,8 @@ void AGXBody::setSensor(const double& timeStep, const Vector3 &gravity)
 {
     sensorHelper.initialize(body(), timeStep, gravity);
     const DeviceList<ForceSensor> &forceSensors = sensorHelper.forceSensors();
-    for (size_t i = 0; i < forceSensors.size(); ++i) {
-        AGXLinkPtr agxLink = getAGXLink(forceSensors[i]->link()->index());
+    for(const auto& fs : forceSensors){
+        AGXLink* agxLink = getAGXLink(fs->link()->index());
         agxLink->getAGXConstraint()->setEnableComputeForces(true);
     }
 }
@@ -689,19 +689,18 @@ void AGXBody::setSensor(const double& timeStep, const Vector3 &gravity)
 void AGXBody::updateForceSensors()
 {
     const DeviceList<ForceSensor>& forceSensors = sensorHelper.forceSensors();
-    for(size_t i=0; i < forceSensors.size(); ++i) {
-        ForceSensor *sensor = forceSensors[i];
-        AGXLinkPtr agxLink = getAGXLink(sensor->link()->index());
+    for(const auto& fs : forceSensors){
+        AGXLink* agxLink = getAGXLink(fs->link()->index());
         if (agxLink && agxLink->getAGXParentLink() && agxLink->getAGXConstraint()) {
             agx::Vec3 force, torque;
             agxLink->getAGXConstraint()->getLastForce(agxLink->getAGXParentLink()->getAGXRigidBody(), force, torque, false);
             Vector3 f(force[0], force[1], force[2]);
             Vector3 tau(torque[0], torque[1], torque[2]);
-            const Matrix3 R = sensor->link()->R() * sensor->R_local();
-            const Vector3 p = sensor->link()->R() * sensor->p_local();
-            sensor->f() = R.transpose() * f;
-            sensor->tau() = R.transpose() * (tau - p.cross(f));
-            sensor->notifyStateChange();
+            const Matrix3 R = fs->link()->R() * fs->R_local();
+            const Vector3 p = fs->link()->R() * fs->p_local();
+            fs->f() = R.transpose() * f;
+            fs->tau() = R.transpose() * (tau - p.cross(f));
+            fs->notifyStateChange();
         }
     }
 }
@@ -721,17 +720,17 @@ int AGXBody::numAGXLinks() const
     return _agxLinks.size();
 }
 
-void AGXBody::addAGXLink(AGXLinkPtr const agxLink)
+void AGXBody::addAGXLink(AGXLink* const agxLink)
 {
     _agxLinks.push_back(agxLink);
 }
 
-AGXLinkPtr AGXBody::getAGXLink(const int& index) const
+AGXLink* AGXBody::getAGXLink(const int& index) const
 {
     return _agxLinks[index];
 }
 
-AGXLinkPtr AGXBody::getAGXLink(const std::string & name) const
+AGXLink* AGXBody::getAGXLink(const std::string & name) const
 {
     Link* link = body()->link(name);
     if(!link) return nullptr;
@@ -748,14 +747,19 @@ int AGXBody::numControllableLinks() const
     return _controllableLinks.size();
 }
 
-void AGXBody::addControllableLink(AGXLinkPtr const agxLink)
+void AGXBody::addControllableLink(AGXLink* const agxLink)
 {
     _controllableLinks.push_back(agxLink);
 }
 
-AGXLinkPtr AGXBody::getControllableLink(const int & index) const
+AGXLink* AGXBody::getControllableLink(const int & index) const
 {
     return _controllableLinks[index];
+}
+
+const AGXLinkPtrs& AGXBody::getControllableLinks() const
+{
+    return _controllableLinks;
 }
 
 agx::RigidBodyRef AGXBody::getAGXRigidBody(const int& index) const
@@ -788,8 +792,8 @@ void AGXBody::callExtensionFuncs(){
 
     // call
     //agxBodyExtensionFuncs["AGXBodyExtensionSample"](this);
-    for(auto it = agxBodyExtensionFuncs.begin(); it !=agxBodyExtensionFuncs.end(); ++it){
-        (*it).second(this);
+    for(const auto& func : agxBodyExtensionFuncs){
+        func.second(this);
     }
 }
 
@@ -812,12 +816,11 @@ void AGXBody::updateAGXBodyExtensionFuncs(){
 bool AGXBody::getAGXLinksFromInfo(const std::string& key, const bool& defaultValue, AGXLinkPtrs& agxLinks) const
 {
     agxLinks.clear();
-    for(int i = 0; i < numAGXLinks(); ++i){
-        AGXLinkPtr agxLink =  getAGXLink(i);
+    for(const auto& agxLink : getAGXLinks()){
         if(agxLink->getOrgLink()->info(key, defaultValue)) agxLinks.push_back(agxLink);
     }
-    if(agxLinks.size() > 0) return true;
-    return false;
+    if(agxLinks.empty()) return false;
+    return true;
 }
 
 void AGXBody::createExtraJoint()
@@ -828,10 +831,10 @@ void AGXBody::createExtraJoint()
 
 bool AGXBody::createContinuousTrack(AGXBody* agxBody)
 {
-    AGXLinkPtrs agxLinks;
-    if(!getAGXLinksFromInfo("isContinuousTrack", false, agxLinks)) return false;
-    for(int i = 0; i < agxLinks.size(); ++i){
-        addAGXBodyExtension(new AGXContinousTrack(agxLinks[i], this));
+    AGXLinkPtrs myAgxLinks;
+    if(!getAGXLinksFromInfo("isContinuousTrack", false, myAgxLinks)) return false;
+    for(const auto& agxLink : myAgxLinks){
+        addAGXBodyExtension(new AGXContinousTrack(agxLink, this));
     }
     return true;
 }
@@ -841,8 +844,8 @@ bool AGXBody::createAGXVehicleContinousTrack(AGXBody* agxBody)
     DeviceList<> devices = this->body()->devices();
     DeviceList<AGXVehicleContinuousTrackDevice> conTrackDevices;
     conTrackDevices.extractFrom(devices);
-    for(int i = 0; i < conTrackDevices.size(); ++i){
-        addAGXBodyExtension(new AGXVehicleContinuousTrack(conTrackDevices[i], this));
+    for(const auto& ctd : conTrackDevices){
+        addAGXBodyExtension(new AGXVehicleContinuousTrack(ctd, this));
     }
     return true;
 }

@@ -26,21 +26,19 @@ void AGXScene::stepSimulation()
 
 void AGXScene::add(AGXBody* agxBody) {
     // Add AGXRigidbody and constraint to AGX simulation
-    for(int i = 0; i < agxBody->numAGXLinks(); ++i){
-        add(agxBody->getAGXRigidBody(i));
-        add(agxBody->getAGXConstraint(i));
+    for(const auto& agxLink : agxBody->getAGXLinks()){
+        add(agxLink->getAGXRigidBody());
+        add(agxLink->getAGXConstraint());
     }
 
     // Add AGXBodyExtensions
-    AGXBodyExtensionPtrs bes =  agxBody->getAGXBodyExtensions();
-    for(auto it = bes.begin(); it !=bes.end(); ++it){
-        add((*it)->getAssembly());
+    for(const auto& ext : agxBody->getAGXBodyExtensions()){
+        add(ext->getAssembly());
     }
 
-    // Disable collision 
-    const VectorString vs = agxBody->getCollisionGroupNamesToDisableCollision();
-    for(auto it = vs.begin(); it != vs.end(); ++it){
-        setCollision(*it, false);
+    // Disable collision
+    for(const auto& name : agxBody->getCollisionGroupNamesToDisableCollision()){
+        setCollision(name, false);
     }
     // Set self collision
     setCollision(agxBody->getCollisionGroupName(), agxBody->bodyItem()->isSelfCollisionDetectionEnabled());
