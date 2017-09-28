@@ -258,7 +258,7 @@ agx::Constraint* AGXLink::getAGXConstraint() const
     return _constraint;
 }
 
-AGXBody * AGXLink::getAGXBody()
+AGXBody* AGXLink::getAGXBody()
 {
     return _agxBody;
 }
@@ -445,9 +445,9 @@ void AGXLink::detectPrimitiveShape(MeshExtractor* extractor, AGXTrimeshDesc& td)
 
 agx::ConstraintRef AGXLink::createAGXConstraint()
 {
-    AGXLinkPtr const agxParentLink = getAGXParentLink();
+    AGXLink* const agxParentLink = getAGXParentLink();
     if(!agxParentLink) return nullptr;
-    LinkPtr const orgLink = getOrgLink();
+    Link* const orgLink = getOrgLink();
     agx::ConstraintRef constraint = nullptr;
     switch(orgLink->jointType()){
         case Link::REVOLUTE_JOINT :{
@@ -458,8 +458,13 @@ agx::ConstraintRef AGXLink::createAGXConstraint()
             desc.frameCenter.set(p(0),p(1),p(2));
             desc.rigidBodyA = getAGXRigidBody();
             desc.rigidBodyB = agxParentLink->getAGXRigidBody();
+            // motor
             if(orgLink->actuationMode() != Link::ActuationMode::NO_ACTUATION) desc.motor.enable = true;
+            // lock
             if(orgLink->actuationMode() == Link::ActuationMode::JOINT_ANGLE) desc.lock.enable = true;
+            // range
+            desc.range.enable = true;
+            desc.range.range = agx::RangeReal(orgLink->q_lower(), orgLink->q_upper());
             constraint = AGXObjectFactory::createConstraint(desc);
             break;
         }
@@ -473,6 +478,9 @@ agx::ConstraintRef AGXLink::createAGXConstraint()
             desc.rigidBodyB = agxParentLink->getAGXRigidBody();
             if(orgLink->actuationMode() != Link::ActuationMode::NO_ACTUATION) desc.motor.enable = true;
             if(orgLink->actuationMode() == Link::ActuationMode::JOINT_ANGLE) desc.lock.enable = true;
+            // range
+            desc.range.enable = true;
+            desc.range.range = agx::RangeReal(orgLink->q_lower(), orgLink->q_upper());
             constraint = AGXObjectFactory::createConstraint(desc);
             break;
         }
