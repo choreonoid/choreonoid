@@ -23,7 +23,8 @@ private:
 };
 
 
-AGXVehicleContinuousTrack::AGXVehicleContinuousTrack(AGXVehicleContinuousTrackDevice* const device, AGXBody* const agxBody) : AGXBodyExtension(agxBody)
+AGXVehicleContinuousTrack::AGXVehicleContinuousTrack(AGXVehicleContinuousTrackDevice* const device, AGXBody* const agxBody) :
+    AGXBodyExtension(agxBody)
 {
     m_device = device;
     AGXVehicleTrackDesc trackDesc;

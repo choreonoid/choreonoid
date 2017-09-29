@@ -3,6 +3,8 @@
 #include <cnoid/SceneDrawables>
 #include "AGXVehicleContinuousTrack.h"
 
+using namespace std;
+
 namespace {
 std::mutex agxBodyExtensionAdditionalFuncsMutex;
 AGXBodyExtensionFuncMap agxBodyExtensionAdditionalFuncs;
@@ -20,7 +22,13 @@ AGXLink::AGXLink(Link* const link, AGXLink* const parent, const Vector3& parentO
     agxBody->addAGXLink(this);
     _origin = parentOrigin + link->b();
     const Link::ActuationMode& actuationMode = link->actuationMode();
-    if(parent && actuationMode != Link::ActuationMode::NO_ACTUATION) agxBody->addControllableLink(this);
+    if(actuationMode == Link::ActuationMode::NO_ACTUATION){
+    }else if(actuationMode == Link::ActuationMode::LINK_POSITION){
+        agxBody->addControllableLink(this);
+    }else if(parent){
+        agxBody->addControllableLink(this);
+    }
+
     constructAGXLink();
     for(Link* child = link->child(); child; child = child->sibling()){
         new AGXLink(child, this, getOrigin(), agxBody);
@@ -140,6 +148,10 @@ void AGXLink::setControlInputToAGX()
         }
         case Link::ActuationMode::JOINT_ANGLE :{
             setPositionToAGX();
+            break;
+        }
+        case Link::ActuationMode::LINK_POSITION :{
+            setLinkPositionToAGX();
             break;
         }
         case Link::ActuationMode::NO_ACTUATION :
@@ -280,8 +292,15 @@ agx::RigidBodyRef AGXLink::createAGXRigidBody()
     desc.R.set(agx::Quat(0,0,0,1));
 
     Link::JointType jt = orgLink->jointType();
-    if(!orgLink->parent() && jt == Link::FIXED_JOINT ){
+    if(orgLink->isRoot() && jt == Link::FIXED_JOINT){
         desc.control = agx::RigidBody::MotionControl::STATIC;
+    }
+
+    string agxMotion = "";
+    auto agxMotionNode = getOrgLink()->info()->find("AGXMotion");
+    if(agxMotionNode->isValid()){
+        agxMotion = agxMotionNode->toString();
+        if(agxMotion == "kinematics") desc.control = agx::RigidBody::MotionControl::KINEMATICS;
     }
 
     return AGXObjectFactory::createRigidBody(desc);
@@ -558,6 +577,13 @@ void AGXLink::setPositionToAGX()
     }
 }
 
+void AGXLink::setLinkPositionToAGX()
+{
+    LinkPtr orgLink = getOrgLink();
+    const Vector3& p = orgLink->p();
+    getAGXRigidBody()->setPosition(p(0), p(1), p(2));
+}
+
 #define PRINT_DEBUGINFO(FIELD1, FIELD2) std::cout << #FIELD1 << " " << FIELD2 << std::endl;
 void AGXLink::printDebugInfo()
 {
@@ -773,6 +799,11 @@ const AGXLinkPtrs& AGXBody::getControllableLinks() const
 agx::RigidBodyRef AGXBody::getAGXRigidBody(const int& index) const
 {
     return getAGXLink(index)->getAGXRigidBody();
+}
+
+agx::RigidBody* AGXBody::getAGXRigidBody(const std::string& linkName) const
+{
+    return getAGXLink(linkName)->getAGXRigidBody();
 }
 
 agx::ConstraintRef AGXBody::getAGXConstraint(const int& index) const

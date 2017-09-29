@@ -78,7 +78,7 @@ bool readAGXVehicleContinuousTrackDevice(YAMLBodyLoader& loader, Mapping& node)
     node.read("lockToReachMergeConditionCompliance", desc.lockToReachMergeConditionCompliance);
     node.read("contactReductionLevel", desc.contactReductionLevel);
 
-    // Get name of wheels from yaml 
+    // Get name of wheels from yaml
     const auto toVectorString = [](ValueNodePtr const vnptr, vector<string>& vs) ->bool
     {
         if(!vnptr) return false;
@@ -135,7 +135,6 @@ AGXVehicleContinuousTrackDevice::AGXVehicleContinuousTrackDevice(const AGXVehicl
 {
     copyStateFrom(org);
 }
-
 
 const char* AGXVehicleContinuousTrackDevice::typeName()
 {

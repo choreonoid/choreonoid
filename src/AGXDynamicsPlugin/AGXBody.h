@@ -14,7 +14,7 @@ typedef std::function<bool(cnoid::AGXBody* agxBody)> AGXBodyExtensionFunc;
 typedef std::map<std::string, AGXBodyExtensionFunc> AGXBodyExtensionFuncMap;
 };
 
-namespace cnoid{
+namespace cnoid {
 
 typedef Eigen::Matrix<float, 3, 1> Vertex;
 //typedef std::vector<std::string> VectorString;
@@ -48,7 +48,7 @@ inline const Position convertToPosition(const agx::AffineMatrix4x4& a){
 //};
 
 class AGXBody;
-class AGXLink : public Referenced
+class CNOID_EXPORT AGXLink : public Referenced
 {
 public:
     AGXLink(Link* const link);
@@ -91,6 +91,7 @@ private:
     void setTorqueToAGX();
     void setVelocityToAGX();
     void setPositionToAGX();
+    void setLinkPositionToAGX();
 };
 typedef ref_ptr<AGXLink> AGXLinkPtr;
 typedef std::vector<AGXLinkPtr> AGXLinkPtrs;
@@ -126,6 +127,7 @@ public:
     AGXLink* getControllableLink(const int& index) const;
     const AGXLinkPtrs& getControllableLinks() const;
     agx::RigidBodyRef  getAGXRigidBody(const int& index) const;
+    agx::RigidBody*    getAGXRigidBody(const std::string& linkName) const;
     agx::ConstraintRef getAGXConstraint(const int& index) const;
     bool addAGXBodyExtension(AGXBodyExtension* const extension);
     const AGXBodyExtensionPtrs& getAGXBodyExtensions() const;

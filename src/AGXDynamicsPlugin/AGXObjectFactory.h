@@ -2,6 +2,7 @@
 #define CNOID_AGXDYNAMICS_PLUGIN_AGX_OBJECT_FACTORY_H
 
 #include "AGXInclude.h"
+#include "exportdecl.h"
 
 namespace cnoid{
 
@@ -339,7 +340,7 @@ struct AGXVehicleTrackDesc{
     std::vector<agxVehicle::TrackWheelRef> trackWheelRefs;
 };
 
-class AGXObjectFactory
+class CNOID_EXPORT AGXObjectFactory
 {
 public:
     static bool checkModuleEnalbled(const char* name);
