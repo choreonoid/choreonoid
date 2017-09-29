@@ -28,8 +28,9 @@
 #include <mutex>
 #include <condition_variable>
 #include <queue>
-
 #include <iostream>
+
+static const bool DEBUG_MESSAGE = false;
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 #define USE_QT5_OPENGL 1
@@ -138,6 +139,7 @@ public:
     std::mutex renderingMutex;
 
     double depthError;
+    bool endPoint;
 
 #if USE_QT5_OPENGL
     QOpenGLContext* glContext;
@@ -154,7 +156,7 @@ public:
     std::shared_ptr<RangeCamera::PointData> tmpPoints;
     std::shared_ptr<RangeSensor::RangeData> tmpRangeData;
 
-    VisionRenderer(GLVisionSimulatorExItemImpl* simImpl, Device* device, Device* deviceForRenferer, DevicePtr newDevice);
+    VisionRenderer(GLVisionSimulatorExItemImpl* simImpl, Device* device, Device* deviceForRenferer, DevicePtr newDevice, bool endPoint=false);
     ~VisionRenderer();
     bool initialize(SgGroup* sceneGroup, SceneBody* sceneBody);
     SgCamera* initializeCamera(SceneBody* sceneBody);
@@ -584,7 +586,7 @@ VisionDeviceRenderer::VisionDeviceRenderer(GLVisionSimulatorExItemImpl* simImpl,
         double yawRange;
         int n;
         double orgYawRange = rangeSensor->yawRange();
-        double yawStep = orgYawRange / rangeSensor->yawResolution();
+        double yawStep = rangeSensor->yawStep();
 
         if( orgYawRange <= thresh120){
             yawRange = orgYawRange;
@@ -605,18 +607,22 @@ VisionDeviceRenderer::VisionDeviceRenderer(GLVisionSimulatorExItemImpl* simImpl,
 
             RangeSensorPtr newRangeSensor = new RangeSensor(*rangeSensor, false);
             newRangeSensor->setPitchRange(pitchRange);
-            newRangeSensor->setPitchResolution((int)round(pitchRange/pitchStep));
+            newRangeSensor->setPitchResolution((int)(pitchRange/pitchStep+1e-10)+1);
             newRangeSensor->setYawRange(newYawRange);
-            newRangeSensor->setYawResolution((int)(resolution));
+            newRangeSensor->setYawResolution((int)(resolution)+1);
 
             double centerAngle = preMaxYawAngle + newYawRange/2.0;
             newRangeSensor->setLocalRotation(rangeSensor->localRotaion() * AngleAxis(centerAngle, Vector3::UnitY()));
             preMaxYawAngle += newYawRange;
 
-            visionRenderers.push_back(new VisionRenderer(simImpl, device, deviceForRendering, newRangeSensor));
-        }
+            if(i!=n-1)
+                visionRenderers.push_back(new VisionRenderer(simImpl, device, deviceForRendering, newRangeSensor, false));
+            else
+                visionRenderers.push_back(new VisionRenderer(simImpl, device, deviceForRendering, newRangeSensor, true));
 
-        cout << "number of renderer= " << n << endl;
+        }
+        if(DEBUG_MESSAGE)
+            cout << "number of renderer= " << n << endl;
     }
 }
 
@@ -695,10 +701,11 @@ void VisionDeviceRenderer::initializeScene(const vector<SimulationBody*>& simBod
 
 
 VisionRenderer::VisionRenderer(GLVisionSimulatorExItemImpl* simImpl, Device* device,
-        Device* deviceForRendering_, DevicePtr newDevice)
+        Device* deviceForRendering_, DevicePtr newDevice, bool endPoint)
     : simImpl(simImpl),
       device(device),
-      deviceForRendering(deviceForRendering_)
+      deviceForRendering(deviceForRendering_),
+      endPoint(endPoint)
 {
     camera = dynamic_cast<Camera*>(device);
     rangeCamera = dynamic_cast<RangeCamera*>(camera);
@@ -858,9 +865,10 @@ SgCamera* VisionRenderer::initializeCamera(SceneBody* sceneBody)
 
             depthError = simImpl->depthError;
 
-            cout << "FieldOfView= " << degree(persCamera->fieldOfView()) << endl;
-            cout << "Height= "  << pixelHeight << "  Width= "  << pixelWidth << endl;
-
+            if(DEBUG_MESSAGE){
+                cout << "FieldOfView= " << degree(persCamera->fieldOfView()) << endl;
+                cout << "Height= "  << pixelHeight << "  Width= "  << pixelWidth << endl;
+            }
         }
     }
 
@@ -1208,11 +1216,14 @@ void VisionDeviceRenderer::copyVisionData()
                 int pitchResolution = visionRenderers[0]->rangeSensorForRendering->pitchResolution();
                 int yawResolution[4] = {0,0,0,0};
                 vector<double>::iterator src[4];
-                int n;
+                int n = 0;
                 for(size_t i=0; i<visionRenderers.size(); i++){
                     vector<double>& tmpRangeData_ = *visionRenderers[i]->tmpRangeData;
                     n += tmpRangeData_.size();
-                    yawResolution[i] = visionRenderers[i]->rangeSensorForRendering->yawResolution();
+                    if(i==visionRenderers.size()-1)
+                        yawResolution[i] = visionRenderers[i]->rangeSensorForRendering->yawResolution();
+                    else
+                        yawResolution[i] = visionRenderers[i]->rangeSensorForRendering->yawResolution() - 1;
                     src[i] = tmpRangeData_.begin();
                 }
                 (*rangeData).resize(n);
@@ -1365,7 +1376,11 @@ bool VisionRenderer::getRangeCameraData(Image& image, vector<Vector3f>& points)
 bool VisionRenderer::getRangeSensorData(vector<double>& rangeData)
 {
     const double yawRange = rangeSensorForRendering->yawRange();
-    const int yawResolution = rangeSensorForRendering->yawResolution();
+    int yawResolution;
+    if(endPoint)
+        yawResolution = rangeSensorForRendering->yawResolution();
+    else
+        yawResolution = rangeSensorForRendering->yawResolution() - 1;
     const double yawStep = rangeSensorForRendering->yawStep();
     const double maxTanYawAngle = tan(yawRange / 2.0);
 
@@ -1427,42 +1442,40 @@ bool VisionRenderer::getRangeSensorData(vector<double>& rangeData)
                 const double z = -1.0 / w + depthError;
                 rangeData.push_back(fabs((z / cosPitchAngle) / cos(yawAngle)));
 
-           //     cout << "pixelX= " << px << "  pixelY= " << py << endl;
+                if(DEBUG_MESSAGE){
+                    const Matrix4 Pinv = renderer->projectionMatrix().inverse();
+                    const float fw = pixelWidth;
+                    const float fh = pixelHeight;
+                    const int cx = pixelWidth / 2;
+                    const int cy = pixelHeight / 2;
+                    Vector4 n;
+                    n[3] = 1.0f;
+                    n.x() = 2.0 * px / fw - 1.0;
+                    n.y() = 2.0 * py / fh - 1.0;
+                    n.z() = 2.0 * depth - 1.0f;
+                    const Vector4 o = Pinv * n;
+                    const double& ww = o[3];
+                    double x_ = o[0] / ww;
+                    double y_ = o[1] / ww;
+                    double z_ = o[2] / ww;
+                    double distance_ = sqrt(x_*x_ + y_*y_ + z_*z_);
+                    double pitchAngle_ = asin( y_ / distance_);
+                    double yawAngle_ = -asin( x_ / sqrt(x_*x_ + z_*z_) );
 
-#if 0
-                const Matrix4 Pinv = renderer->projectionMatrix().inverse();
-                const float fw = pixelWidth;
-                const float fh = pixelHeight;
-                const int cx = pixelWidth / 2;
-                const int cy = pixelHeight / 2;
-                Vector4 n;
-                n[3] = 1.0f;
-                n.x() = 2.0 * px / fw - 1.0;
-                n.y() = 2.0 * py / fh - 1.0;
-                n.z() = 2.0 * depth - 1.0f;
-                const Vector4 o = Pinv * n;
-                const double& ww = o[3];
-                double x_ = o[0] / ww;
-                double y_ = o[1] / ww;
-                double z_ = o[2] / ww;
-                double distance_ = sqrt(x_*x_ + y_*y_ + z_*z_);
-                double pitchAngle_ = asin( y_ / distance_);
-                double yawAngle_ = -asin( x_ / sqrt(x_*x_ + z_*z_) );
-
-                cout << "pixelX= " << px << "  pixelY= " << py << endl;
-                cout << "pitch= " << degree(pitchAngle_)  << " yaw= " << degree(yawAngle_) << endl;
-                cout << "pitch= " << degree(pitchAngle)  << " yaw= " << degree(yawAngle) << endl;
-                cout << "x= " << x_ << " "
-                     << "y= " << y_ << " "
-                     << "z= " << z_ << endl;
-                double distance = fabs((z / cosPitchAngle) / cos(yawAngle));
-                double x = distance *  cosPitchAngle * sin(-yawAngle);
-                double y  = distance * sin(pitchAngle);
-                cout << "x= " << x << " "
-                     << "y= " << y << " "
-                     << "z= " << z  << endl;
-                cout << endl;
-#endif
+                    cout << "pixelX= " << px << "  pixelY= " << py << endl;
+                    cout << "pitch= " << degree(pitchAngle_)  << " yaw= " << degree(yawAngle_) << endl;
+                    cout << "pitch= " << degree(pitchAngle)  << " yaw= " << degree(yawAngle) << endl;
+                    cout << "x= " << x_ << " "
+                         << "y= " << y_ << " "
+                         << "z= " << z_ << endl;
+                    double distance = fabs((z / cosPitchAngle) / cos(yawAngle));
+                    double x = distance *  cosPitchAngle * sin(-yawAngle);
+                    double y  = distance * sin(pitchAngle);
+                    cout << "x= " << x << " "
+                         << "y= " << y << " "
+                         << "z= " << z  << endl;
+                    cout << endl;
+                }
             } else {
                 rangeData.push_back(std::numeric_limits<double>::infinity());
             }

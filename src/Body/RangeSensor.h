@@ -42,7 +42,7 @@ public:
     double pitchRange() const { return pitchRange_; }
     void setPitchRange(double angle);
     int pitchResolution() const { return (pitchRange_ == 0.0) ? 1 : pitchResolution_; }
-    void setPitchResolution(double n);
+    void setPitchResolution(int n);
     double pitchStep() const;
 
     double maxDistance() const { return maxDistance_; }
