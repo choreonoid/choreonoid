@@ -315,6 +315,8 @@ struct AGXVehicleTrackDesc{
         useThickerNodeEvery = 0;
         nodeDistanceTension = 5.0E-3;
         hingeCompliance = 4.0E-10;
+        hingeDamping = 2.0;
+        minStabilizingHingeNormalForce = 100;
         stabilizingHingeFrictionParameter = 1.5;
         enableMerge = false;
         numNodesPerMergeSegment = 4;
@@ -332,6 +334,8 @@ struct AGXVehicleTrackDesc{
                                         // in the tracks if they were simulated without gravity. This distance is an offset
                                         // how much closer each node will be to each other, resulting in a given initial tension.
     agx::Real hingeCompliance;
+    agx::Real hingeDamping;
+    agx::Real minStabilizingHingeNormalForce;
     agx::Real stabilizingHingeFrictionParameter;
     agx::Bool enableMerge;
     agx::UInt numNodesPerMergeSegment;

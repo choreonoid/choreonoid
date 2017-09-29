@@ -286,6 +286,8 @@ agxVehicle::TrackRef AGXObjectFactory::createVehicleTrack(const AGXVehicleTrackD
         track->add(desc.trackWheelRefs[i]);
     }
     track->getProperties()->setHingeCompliance(desc.hingeCompliance);
+    track->getProperties()->setHingeDamping(desc.hingeDamping);
+    track->getProperties()->setMinStabilizingHingeNormalForce(desc.minStabilizingHingeNormalForce);
     track->getProperties()->setStabilizingHingeFrictionParameter(desc.stabilizingHingeFrictionParameter);
     track->getInternalMergeProperties()->setEnableMerge(desc.enableMerge);
     track->getInternalMergeProperties()->setNumNodesPerMergeSegment(desc.numNodesPerMergeSegment);

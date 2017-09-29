@@ -72,6 +72,8 @@ bool readAGXVehicleContinuousTrackDevice(YAMLBodyLoader& loader, Mapping& node)
     node.read("useThickerNodeEvery", desc.useThickerNodeEvery);
     node.read("nodeDistanceTension", desc.nodeDistanceTension);
     node.read("hingeCompliance", desc.hingeCompliance);
+    node.read("hingeDamping", desc.hingeDamping);
+    node.read("minStabilizingHingeNormalForce", desc.minStabilizingHingeNormalForce);
     node.read("stabilizingHingeFrictionParameter", desc.stabilizingHingeFrictionParameter);
     node.read("enableMerge", desc.enableMerge);
     node.read("numNodesPerMergeSegment", desc.numNodesPerMergeSegment);
@@ -144,7 +146,6 @@ const char* AGXVehicleContinuousTrackDevice::typeName()
 
 void AGXVehicleContinuousTrackDevice::copyStateFrom(const AGXVehicleContinuousTrackDevice& other)
 {
-    on_ = other.on_;
     AGXVehicleContinuousTrackDeviceDesc desc;
     AGXVehicleContinuousTrackDevice& dev = const_cast<AGXVehicleContinuousTrackDevice&>(other);
     dev.getDesc(desc);  // Need to get desc. So do const_cast above.
@@ -190,14 +191,11 @@ int AGXVehicleContinuousTrackDevice::stateSize() const
 
 const double* AGXVehicleContinuousTrackDevice::readState(const double* buf)
 {
-    on_ = buf[0];
     return buf + 1;
 }
 
-
 double* AGXVehicleContinuousTrackDevice::writeState(double* out_buf) const
 {
-    out_buf[0] = on_ ? 1.0 : 0.0;
     return out_buf + 1;
 }
 
@@ -254,8 +252,6 @@ void AGXVehicleContinuousTrackDevice::addTrackState(const Vector3& boxSize, cons
 TrackStates& AGXVehicleContinuousTrackDevice::getTrackStates() {
     return m_trackStates;
 }
-
-
 
 
 }
