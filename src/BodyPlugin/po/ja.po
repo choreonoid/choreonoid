@@ -137,8 +137,8 @@ msgid "BodyItem"
 msgstr "ボディアイテム"
 
 #: BodyItem.cpp:170
-msgid "OpenHRP Model File"
-msgstr "OpenHRP モデルファイル"
+msgid "Body"
+msgstr "ボディ"
 
 #: BodyItem.cpp:1118
 msgid "Model name"
