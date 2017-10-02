@@ -172,14 +172,12 @@ public:
     {
         agx::Vec3 force;
         agx::Vec3 torque;
-        m_joint->getLastForce(nullptr, force, torque);
-        force.set(0.0, 2);
+        m_joint->getLastForce((agx::UInt)0, force, torque);
+        //force.set(0.0, 2);
 
         if(force.length() >= m_breakLimitForce){
             m_joint->setEnable(false);
         }
-        //cout << force.length() << endl;
-        if(t > 60) m_joint->setEnable(false);
     }
 };
 
@@ -198,6 +196,11 @@ AGXBreakableJoint::AGXBreakableJoint(AGXBreakableJointDevice* device, AGXBody* a
     hd.frameAxis = agx::Vec3(a(0), a(1), a(2));
     hd.frameCenter = agx::Vec3(p(0), p(1), p(2));
     agx::ConstraintRef joint = AGXObjectFactory::createConstraint(hd);
+    double c = 1e-3;
+    joint->setCompliance(c, agx::Hinge::TRANSLATIONAL_1);
+    joint->setCompliance(c, agx::Hinge::TRANSLATIONAL_2);
+    joint->setCompliance(c, agx::Hinge::ROTATIONAL_1);
+    joint->setCompliance(c, agx::Hinge::ROTATIONAL_2);
     getAGXBody()->getAGXScene()->getSimulation()->add(joint);
 
     agx::Constraint1DOF* const joint1DOF = agx::Constraint1DOF::safeCast(joint);
