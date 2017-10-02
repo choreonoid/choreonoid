@@ -539,3 +539,11 @@ void YAMLWriter::putListingNode(const Listing* listing)
 
     endListing();
 }
+
+bool YAMLWriter::isOpen()
+{
+    if (ofs.is_open())
+        return true;
+    else
+        return false;
+}
