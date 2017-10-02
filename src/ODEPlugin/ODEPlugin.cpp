@@ -23,31 +23,36 @@ class ODEPlugin : public Plugin
 {
 public:
     ODEPlugin() : Plugin(PLUGIN_NAME)
-        { 
-            require("Body");
-        }
+    { 
+        require("Body");
+    }
         
     virtual ~ODEPlugin()
-        {
+    {
 
-        }
+    }
 
     virtual bool initialize()
-        {
-            dInitODE2(0);
-            dAllocateODEDataForThread(dAllocateMaskAll);
-
-            ODESimulatorItem::initializeClass(this);
-            
-            return true;
-        }
+    {
+        dInitODE2(0);
+        dAllocateODEDataForThread(dAllocateMaskAll);
+        
+        ODESimulatorItem::initializeClass(this);
+        
+        return true;
+    }
         
     virtual bool finalize()
-        {
-            // dCloseODE();   TODO ODESimulatorItemが全部deleteされた後に実行しないといけない。
-            return true;
-        }
+    {
+        /**
+           \todo It is necessary to execute the following code
+           after deleting all ODESimulatorItem.
+        */
+        // dCloseODE();   
+        return true;
+    }
 };
+
 }
 
 CNOID_IMPLEMENT_PLUGIN_ENTRY(ODEPlugin);

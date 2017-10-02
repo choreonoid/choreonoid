@@ -214,8 +214,8 @@ void BridgeConf::setPortInfos(const char* optionLabel, PortInfoMap& portInfos)
         int j;
         for(j=1; j<3; j++){
             LabelToDataTypeIdMap::iterator it = labelToDataTypeIdMap.find(parameters[j]);
-            if(it == labelToDataTypeIdMap.end() ){     // プロパティ名でないので識別名　 //
-                if(j==2)    // 3番目までにプロパティ名がないのでエラー　//
+            if(it == labelToDataTypeIdMap.end() ){ // Handle as identification name because it is not a property name
+                if(j==2)    // Error because there is no property name by the third
                     throw invalid_argument(string("invalid data type"));
                 string st=parameters[j];
                 vector<string> owners;
@@ -228,30 +228,32 @@ void BridgeConf::setPortInfos(const char* optionLabel, PortInfoMap& portInfos)
                             break;
                         }
                     }
-                    if(digit){  //識別名が数字なので画像データ　２つ以上指定するとエラー　//
+                    if(digit){
+                        // Since the identification name is numeric, it becomes image data.
+                        // If two or more are specified, an error occurs.
                         info.dataOwnerId = atoi(owners[i].c_str());
                         info.dataOwnerNames.clear();
                         if(owners.size() > 1){
                             throw invalid_argument(string("invalid VisionSensor setting"));
                         }
-                    }else{      //識別名が名前  //
+                    }else{  // Identification name is name
                         info.dataOwnerId = -1;
                         info.dataOwnerNames.push_back(owners[i]);
                     }
                 }
-            }else{  // プロパティ名 //
+            }else{  // Property name
                 info.dataTypeId = it->second;
                 j++;
                 break;
             }
         }
-        if(j<n){    // まだパラメターがあるならサンプリング時間　//
+        if(j<n){ // If there is still a parameter, handle it as the sampling time
             info.stepTime = atof(parameters[j].c_str());
         }else{
             info.stepTime = 0;
         }
 
-        // プロパティがCONSTRAINT_FORCEのとき　識別名が２つ以上あってはいけない　   //
+        // When the property is CONSTRAINT_FORCE, there must not be two or more identification names
         if(info.dataTypeId==CONSTRAINT_FORCE && info.dataOwnerNames.size() > 1 )
             throw invalid_argument(string("invalid in port setting"));
         portInfos.insert(make_pair(info.portName, info));

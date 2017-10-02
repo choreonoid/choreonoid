@@ -453,7 +453,7 @@ void LinkInfo::ConvertForceSensorFrame(SensorInfo* sensorInfo, Affine3& pose)
     if(it!=param.end()){
         string& frame = boost::get<string>(it->second);
         if(frame=="parent"){
-            pose.linear() = parent->pose.linear();   //TODO 未デバッグ
+            pose.linear() = parent->pose.linear(); //! \todo do debug
         }else if(frame=="child"){
             pose.linear() = pose.linear();
         }else if(frame=="sensor"){
@@ -563,7 +563,7 @@ SgNode* LinkInfo::convertCollisionShape(Matrix3& Rs)
 
 void ModelInfo::nestModel(string parentName, ModelInfo* orgModel)
 {
-    // 未デバッグ
+    //! \todo do debug
     string modelName;
     if(parentName=="")
         modelName = name;
@@ -595,7 +595,7 @@ LinkInfo* ModelInfo::findRootLinks()
     if(root)
         return root;
 
-    // parentが二人以上いてはいけない
+    // There must not be more than two parents
     for(vector<JointInfoPtr>::iterator it = jointInfos.begin();
                 it != jointInfos.end(); it++){
         LinkInfo* parent = linkInfos[(*it)->parentName].get();
@@ -606,11 +606,11 @@ LinkInfo* ModelInfo::findRootLinks()
             child->jointInfo = (*it).get();
             parent->addChild(child);
         }else{
-               // TODO  エラー表示
+               //! \todo Error indication
         }
     }
 
-    // base指定されているLinkがあればそれがroot
+    // If there is a Link specified as base, it becomes root.
     for(map<string, LinkInfoPtr>::iterator it = linkInfos.begin();
             it != linkInfos.end(); it++){
         LinkInfo* link = it->second;
@@ -619,13 +619,13 @@ LinkInfo* ModelInfo::findRootLinks()
         }
     }
 
-    //rootがない場合、parentがいないLinkがroot
+    // If there is no root, Link without parent is root
     for(map<string, LinkInfoPtr>::iterator it = linkInfos.begin();
                 it != linkInfos.end(); it++){
         LinkInfo* link = it->second;
         if(!link->parent){
             if(root){
-                ; //parentのいないリンクが他にもある。
+                ; // There are other links with no parent.
             }else{
                 root = link;
             }
@@ -762,7 +762,7 @@ bool SDFBodyLoaderImpl::load(BodyItem* item, const std::string& filename)
     }
 
     if(worldItem)
-        return false;          // メッセージが失敗になる。
+        return false; // The message fails.
     else
         return true;
 }
@@ -1261,7 +1261,7 @@ void SDFBodyLoaderImpl::readSensor(sdf::ElementPtr sensor, vector<SensorInfoPtr>
         readRay(sensor, sensorInfo.get());
 
     } else {
-        // エラーメッセージ
+        // Error message
     }
 
     sensors.push_back(sensorInfo);
@@ -1533,14 +1533,14 @@ bool SDFBodyLoaderImpl::createBody(Body* body, ModelInfo* model)
 
     body->setRootLink(rootLink);
 
-    //sdfにはJointIDがないので、順番にNoをつける。
+    // Since there is no Joint ID in sdf, attach joint ID in order.
     for(int i=0, j=0; i<body->numLinks(); i++){
         Link::JointType type = body->link(i)->jointType();
         if( type != Link::FIXED_JOINT && type != Link::FREE_JOINT )
             body->link(i)->setJointId(j++);
     }
 
-    //DeviceIDも
+    // DeviceID
     map<std::string, uint32_t> ids;
     for(int i=0; i<body->numDevices(); i++){
         const string& type = body->device(i)->typeName();
@@ -1552,7 +1552,7 @@ bool SDFBodyLoaderImpl::createBody(Body* body, ModelInfo* model)
         }
     }
 
-    body->setRootLink(rootLink);  //jointIDを認識させるためもう一度
+    body->setRootLink(rootLink); // Call this again to make jointID recognized
 
     return true;
 }
@@ -1608,7 +1608,7 @@ SgTexture* SDFBodyLoaderImpl::convertTexture(MaterialInfo* material, const strin
                     Ogre::Pass *pass = technique->getPass(0);
                     if(pass){
                         int n = pass->getNumTextureUnitStates();
-                        //  一枚のみサポート
+                        // Support only one
                         if(n)
                             textureName = pass->getTextureUnitState(0)->getTextureName();
                     }

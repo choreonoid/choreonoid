@@ -16,9 +16,7 @@ class Item;
 class RootItemImpl;
 
 /**
-   @if jp
-   アイテムの木構造のルートとなるクラス。
-   @endif
+   The class of the item that is the root of the item tree structure
 */
 class CNOID_EXPORT RootItem : public Item
 {

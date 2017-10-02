@@ -72,23 +72,19 @@ public:
     }
 
     /**
-       @if jp
-       起動時にオブジェクトの初期生成が全て終わった時や、  
-       新たにプラグインの読み込み・解放があったときなど、  
-       システムで利用可能なオブジェクトの状態に更新があったときに  
-       発行される 'SystemUpdated' シグナルと接続する。  
-       @endif
+       This signal is emitted when the states of the objects available in the system are updated,
+       such as when the initial generation of the object is completed at startup,
+       when a new plug-in is read or released.
     */
     SignalProxy<void()> sigSystemUpdated();
         
     /**
-       @if jp
-       'SystemUpdated' シグナルを発行する。  
-	   
-       シグナルの発行は本メソッド呼び出し時ではなく、後ほどイベントループ内にて行われる。  
-       これにより、スロットの処理は現在処理中の他のイベントが処理された後になる。  
-       また、本メソッドが同時期に複数回呼ばれた場合でも、シグナルの発行はひとつにまとめられる。  
-       @endif
+       This function emits the SystemUpdated signal.
+
+       @note Emitting a signal is not done at the time of calling this function, but later
+       in the event loop. As a result, the processing of the callback function becomes
+       after the other events under processing are processed. Also, even if this function
+       is called more than once at the same time, emission of signals will be brought together.
     */
     static void notifySystemUpdate();
 
@@ -104,7 +100,7 @@ public:
         std::function<void(const Archive&)> restoreFunction);
         
 private:
-    ExtensionManager(const ExtensionManager& org); // disable the copy constructor
+    ExtensionManager(const ExtensionManager& org);
         
     ExtensionManagerImpl* impl;
 

@@ -137,45 +137,6 @@ views:
       eye: [ -0.243298, 1.55507, 0.094242 ]
       center: [ -0.0825026, 0.576457, 0.222547 ]
       up: [ -0.0208027, 0.126607, 0.991735 ]
-  "Multi Value Seq": 
-    mode: view
-    editMode: freeLine
-    original: true
-    velocity: false
-    acceleration: false
-    limits: true
-    grid: true
-    gridWidth: 0.2
-    gridHeight: 0.2
-    lineWidth: 1
-    rulers: false
-    sync: true
-    controlPointStep: 1
-    controlPointOffset: 0
-    controlPointHeighlight: false
-    scrollMode: continuous
-    lower: -10
-    upper: 10
-  "Multi SE3 Seq": 
-    mode: view
-    editMode: freeLine
-    original: true
-    velocity: false
-    acceleration: false
-    limits: true
-    grid: true
-    gridWidth: 0.2
-    gridHeight: 0.2
-    lineWidth: 1
-    rulers: false
-    sync: true
-    controlPointStep: 1
-    controlPointOffset: 0
-    controlPointHeighlight: false
-    scrollMode: continuous
-    lower: -10
-    upper: 10
-    visibleElements: [ 0, 1, 2 ]
   "Links": 
     listingMode: "link list"
     currentBodyItem: 2
@@ -194,54 +155,6 @@ views:
     slider: true
     labelOnLeft: true
     currentBodyItem: 2
-  "Joint Trajectories": 
-    mode: view
-    editMode: freeLine
-    original: true
-    velocity: false
-    acceleration: false
-    limits: true
-    grid: true
-    gridWidth: 0.2
-    gridHeight: 0.2
-    lineWidth: 1
-    rulers: false
-    sync: true
-    controlPointStep: 1
-    controlPointOffset: 0
-    controlPointHeighlight: false
-    scrollMode: continuous
-    lower: -10
-    upper: 10
-  "Multi Affine3 Seq": 
-    mode: view
-    editMode: freeLine
-    original: true
-    velocity: false
-    acceleration: false
-    limits: true
-    grid: true
-    gridWidth: 0.2
-    gridHeight: 0.2
-    lineWidth: 1
-    rulers: false
-    sync: true
-    controlPointStep: 1
-    controlPointOffset: 0
-    controlPointHeighlight: false
-    scrollMode: continuous
-    lower: -10
-    upper: 10
-    visibleElements: [ 0, 1, 2 ]
-  "Pose Roll": 
-    defaultTransitionTime: 0
-    updateAll: true
-    autoUpdate: false
-    timeSync: true
-    listingMode: "part tree"
-    timeLength: 10
-    showLipSync: false
-    gridInterval: 1
 toolbars: 
   "TimeBar": 
     minTime: 0
@@ -250,75 +163,3 @@ toolbars:
     playbackFrameRate: 100
     currentTime: 0
     speedScale: 1
-  "BodyBar": 
-    current: 2
-    stanceWidth: 0.15
-  "KinematicsBar": 
-    mode: FK
-    attitude: false
-    penetrationBlock: true
-    collisionLinkHighlight: false
-    snapDistance: 0.025
-    penetrationBlockDepth: 0.0005
-    lazyCollisionDetectionMode: true
-  "BodyMotionGenerationBar": 
-    balancer: false
-    autoGeneration: false
-    timeScaleRatio: 1
-    preInitialDuration: 1
-    postFinalDuration: 1
-    onlyTimeBarRange: false
-    makeNewBodyItem: true
-    stealthyStepMode: true
-    stealthyHeightRatioThresh: 2
-    flatLiftingHeight: 0.005
-    flatLandingHeight: 0.005
-    impactReductionHeight: 0.005
-    impactReductionTime: 0.04
-    autoZmp: true
-    minZmpTransitionTime: 0.1
-    zmpCenteringTimeThresh: 0.03
-    zmpTimeMarginBeforeLiftingSpin: 0
-    allLinkPositions: false
-    lipSyncMix: false
-    timeToStartBalancer: 0
-    balancerIterations: 2
-    plainBalancerMode: false
-    boundaryConditionType: 位置を保存
-    boundarySmootherType: オフ
-    boundarySmootherTime: 0.5
-    boundaryCmAdjustment: false
-    boundaryCmAdjustmentTime: 1
-    waistHeightRelaxation: false
-    gravity: 9.8
-    dynamicsTimeRatio: 1
-Base: 
-  "MovieGenerator": 
-    directory: 
-    basename: scene
-    begin: 0
-    fps: 30
-    width: 640
-    heiht: 480
-Body: 
-  "KinematicFaultChecker": 
-    checkJointPositions: true
-    angleMargin: 0
-    translationMargin: 0
-    checkJointVelocities: true
-    velocityLimitRatio: 100
-    targetJoints: all
-    checkSelfCollisions: true
-    onlyTimeBarRange: false
-  "SceneBodyManager": 
-    sceneBodies: 
-      - 
-        bodyItem: 2
-        editable: true
-        centerOfMass: false
-        zmp: false
-      - 
-        bodyItem: 3
-        editable: false
-        centerOfMass: false
-        zmp: false

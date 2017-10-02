@@ -258,8 +258,8 @@ private :
 };
 
 
-//  HRP2の足首関節に対して適用できるかともと作成したもの。
-//  質量のない関節がある場合に適用されるが、HRP2では別で処理しているので使用しない。
+// Test code for the ankle joint of HRP-2.
+// It is applied when there is a massless joint, but it is used separately in HRP 2, so it is not used.
 bool createFunc( agx::HighLevelConstraintImplementation* implementation );
 class CustomConstraintImplementation : public agx::HighLevelConstraintImplementation
 {
@@ -670,7 +670,7 @@ public:
         }
     }
     void setContactMaterialParam(ContactMaterialParam& cm){
-        //   プロパティの設定を使用する場合。AgXのdefaultを使用するなら、以下削除。
+        // The following is the case when using property setting. If using AgX default, delete below.
         cm.frictionCoefficient = friction;
         cm.restitution = restitution;
         cm.frictionModel = (AgXSimulatorItem::FrictionModelType)frictionModelType.selectedIndex();
@@ -1093,7 +1093,8 @@ void AgXLink::createGeometry(AgXBody* agxBody)
                 if(link->jointType() == Link::PSEUDO_CONTINUOUS_TRACK){
                     agx::ref_ptr<CrawlerGeometry> crawlerGeometry = new CrawlerGeometry( link, agxRigidBody.get() );
                     crawlerGeometry->add( triangleMesh );
-                    crawlerGeometry->setSurfaceVelocity( agx::Vec3f(1,0,0) );   //適当に設定しておかないとcalculateSurfaceVelocityが呼び出されない。
+                    // CalculateSurfaceVelocity will not be called unless it is set appropriately.
+                    crawlerGeometry->setSurfaceVelocity( agx::Vec3f(1,0,0) );
                     agxRigidBody->add( crawlerGeometry );
                 }else{
                     agxRigidBody->add( new agxCollide::Geometry( triangleMesh ) );
@@ -1453,7 +1454,7 @@ AgXBody::AgXBody(Body& orgBody, AgXSimulatorItemImpl* simImpl)
     setLinkGroup(linkGroup);
     linkGroups.erase("Whole Body");
 
-    // モデルファイルに書かれている　ContactMaterialを読みだす。
+    // Read ContactMaterial written in the model file.
     contactMaterialParams.clear();
     const Listing& cmParams = *body->info()->findListing("agxContactMaterialParameters");
     if(cmParams.isValid()){
@@ -1886,7 +1887,10 @@ AgXSimulatorItem::~AgXSimulatorItem()
 
 AgXSimulatorItemImpl::~AgXSimulatorItemImpl()
 {
-    // ここでagxSimulationのメソッドを呼ぶと終了時にエラーが発生する。agx::shutdown()が実行された後のため。
+    /*
+       Here, when calling the method of agxSimulation, an error occurs at the end.
+       This is because after agx :: shutdown () has been executed.
+    */
 }
 
 
@@ -2022,7 +2026,7 @@ bool AgXSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody
         addBody(static_cast<AgXBody*>(simBodies[i]),i);
     }
 
-    // defaultMaterialを含めた全てのmaterialの組み合わせに対して、設定
+    // Set for all material combinations including defaultMaterial.
     for(Materials::iterator it0 = materials.begin(); it0!= materials.end(); it0++){
         for(Materials::iterator it1 = it0; it1!= materials.end(); it1++){
             agx::ContactMaterial* contactMaterial = agxSimulation->getMaterialManager()->
@@ -2049,7 +2053,7 @@ bool AgXSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody
                 if(cmp->youngsModulus!=std::numeric_limits<double>::max())
                     contactMaterial->setYoungsModulus(cmp->youngsModulus);
             }else{
-                // 設定がないものはプロパティの設定
+                // For those without settings, use property setting.
                 setFrictionModelsolveType(contactMaterial, (AgXSimulatorItem::FrictionModelType)frictionModelType.selectedIndex(),
                         (AgXSimulatorItem::FrictionSolveType)frictionSolveType.selectedIndex());
                 contactMaterial->setFrictionCoefficient(friction);

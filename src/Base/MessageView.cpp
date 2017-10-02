@@ -653,52 +653,52 @@ int MessageViewImpl::setdefault0(const vector<int>& n)
 void MessageViewImpl::inttoColor(int n, QColor& col)
 {
     switch(n){
-    case 0:  //黒  //
+    case 0:
         col = QColor("black");
         return;
-    case 1:  //赤  //
+    case 1:
         col = QColor("red");
         return;
-    case 2:  //緑  //
+    case 2:
         col = QColor("green");
         return;
-    case 3:  //黄  //
+    case 3:
         col = QColor("yellow");
         return;
-    case 4:  //青  //
+    case 4:
         col = QColor("blue");
         return;
-    case 5:  //赤紫  //
+    case 5:
         col = QColor("magenta");
         return;
-    case 6:  //水色  //
+    case 6:
         col = QColor("cyan");
         return;
-    case 7:  //白  //
+    case 7:
         col = QColor("white");
         return;
-    case 8:  //灰色 //
+    case 8:
         col = QColor("gray");
         return;
     case 9:
         col = QColor("darkRed");
         return;
-    case 10:  //緑  //
+    case 10:
         col = QColor("darkGreen");
         return;
-    case 11:  //黄  //
+    case 11:
         col = QColor("darkYellow");
         return;
-    case 12:  //青  //
+    case 12:
         col = QColor("darkBlue");
         return;
-    case 13:  //赤紫  //
+    case 13:
         col = QColor("darkMagenta");
         return;
-    case 14:  //水色  //
+    case 14:
         col = QColor("darkCyan");
         return;
-    case 15:  //白  //
+    case 15:
         col = QColor("darkGray");
         return;
     }
@@ -710,19 +710,19 @@ void MessageViewImpl::textProperties(const vector<int>& n)
     QColor col;
     for(int i=0; i<n.size(); i++){
         switch(n[i]){
-        case 0:  //全て解除 //
+        case 0:  // Reset all
             currentCharFormat = orgCharFormat;
             break;
-        case 1:  //太字 //
+        case 1:  // Bold text
             currentCharFormat.setFontWeight(QFont::Bold);
             break;
-        case 4:  //下線 //
+        case 4:  // Underline
             currentCharFormat.setFontUnderline(true);
             break;
-        case 5:  //点滅 //
+        case 5:  // Blinking
             break;
-        case 7:  //反転 //
-        case 27:  //反転解除 //
+        case 7:  // Flipping
+        case 27: // Clear flipping
         {
             QColor fore = currentCharFormat.foreground().color();
             QColor back = currentCharFormat.background().color();
@@ -730,22 +730,22 @@ void MessageViewImpl::textProperties(const vector<int>& n)
             currentCharFormat.setBackground(fore);
             break;
         }
-        case 22:  //太字解除 //
+        case 22:  // Clear bold
             currentCharFormat.setFontWeight(QFont::Normal);
             break;
-        case 24:  //下線解除 //
+        case 24:  // Clear underline
             currentCharFormat.setFontUnderline(false);
             break;
-        case 25:  //点滅解除 //
+        case 25:  // Clear blinking
             break;
-        case 30:  //文字を黒  //
-        case 31:  //文字を赤  //
-        case 32:  //文字を緑  //
-        case 33:  //文字を黄  //
-        case 34:  //文字を青  //
-        case 35:  //文字を赤紫  //
-        case 36:  //文字を水色  //
-        case 37:  //文字を白  //
+        case 30:  // Black
+        case 31:  // Red
+        case 32:  // Green
+        case 33:  // Yellow
+        case 34:  // Blue
+        case 35:  // Magenda
+        case 36:  // Cyan
+        case 37:  // White
             inttoColor(n[i]-30, col);
             currentCharFormat.setForeground(col);
             break;
@@ -753,13 +753,13 @@ void MessageViewImpl::textProperties(const vector<int>& n)
         {
             int j=i+1;
             if(j<n.size()){
-                if(n[j]==2){  //文字をRGB指定 //
+                if(n[j]==2){  // RGB color specification
                     if(j+3<n.size()){
                         col = QColor(n[j+1], n[j+2], n[j+3]);
                         currentCharFormat.setForeground(col);
                         i += 4;
                     }
-                }else if(n[j]==5){  //文字を番号指定 //
+                }else if(n[j]==5){  // Color id specification
                     if(j+1<n.size()){
                         inttoColor(n[j+1], col);
                         currentCharFormat.setForeground(col);
@@ -769,17 +769,17 @@ void MessageViewImpl::textProperties(const vector<int>& n)
             }
             break;
         }
-        case 39:  //文字を標準色  //
+        case 39:  // Normal color
             currentCharFormat.setForeground(orgForeColor);
             break;
-        case 40:  //背景を黒  //
-        case 41:  //背景を赤  //
-        case 42:  //背景を緑  //
-        case 43:  //背景を黄  //
-        case 44:  //背景を青  //
-        case 45:  //背景を赤紫  //
-        case 46:  //背景を水色  //
-        case 47:  //背景を白  //
+        case 40:  // Black background
+        case 41:  // Red background
+        case 42:  // Green background
+        case 43:  // Yellow background
+        case 44:  // Blue background
+        case 45:  // Magenda background
+        case 46:  // Cyan background
+        case 47:  // White background
             inttoColor(n[i]-40, col);
             currentCharFormat.setBackground(col);
             break;
@@ -787,13 +787,13 @@ void MessageViewImpl::textProperties(const vector<int>& n)
         {
             int j=i+1;
             if(j<n.size()){
-                if(n[j]==2){  //背景をRGB指定 //
+                if(n[j]==2){  // Background color specified by RGB
                     if(j+3<n.size()){
                         col = QColor(n[j+1], n[j+2], n[j+3]);
                         currentCharFormat.setBackground(col);
                         i += 4;
                     }
-                }else if(n[j]==5){  //背景を番号指定 //
+                }else if(n[j]==5){  // Background color specified by id
                     if(j+1<n.size()){
                         inttoColor(n[j+1], col);
                         currentCharFormat.setBackground(col);
@@ -803,7 +803,7 @@ void MessageViewImpl::textProperties(const vector<int>& n)
             }
             break;
         }
-        case 49:  //背景を標準色  //
+        case 49:  // Normal background color
             currentCharFormat.setBackground(orgBackColor);
             break;
         case 90:
@@ -853,42 +853,42 @@ void MessageViewImpl::escapeSequence(QString& txt)
         }
     }
     
-    if(c=='@'){  // 空白を挿入 //
+    if(c=='@'){  // Space insertion
         int nn=setdefault1(n);
         QString sp(nn,' ');
         insertPlainText(sp, false);
-    }else if(c=='A' || c=='k'){  //カーソル上 //
+    }else if(c=='A' || c=='k'){  // Cursor up
         int nn=setdefault1(n);
         cursor.movePosition(QTextCursor::Up, QTextCursor::MoveAnchor, nn);
         textEdit.setTextCursor(cursor);
-    }else if(c=='B' || c=='e'){  //カーソル下 //
+    }else if(c=='B' || c=='e'){  // Cursor down
         int nn=setdefault1(n);
         cursor.movePosition(QTextCursor::Down, QTextCursor::MoveAnchor, nn);
         textEdit.setTextCursor(cursor);
-    }else if(c=='C' || c=='a'){  //カーソル右 //
+    }else if(c=='C' || c=='a'){  // Cursor right
         int nn=setdefault1(n);
         cursor.movePosition(QTextCursor::Right, QTextCursor::MoveAnchor, nn);
         textEdit.setTextCursor(cursor);
-    }else if(c=='D'  || c=='j'){  //カーソル左 //
+    }else if(c=='D'  || c=='j'){  // Cursor left
         int nn=setdefault1(n);
         cursor.movePosition(QTextCursor::Left, QTextCursor::MoveAnchor, nn);
         textEdit.setTextCursor(cursor);
-    }else if(c=='E'){  //カーソル下１桁目 //
+    }else if(c=='E'){  // Move the cursor to the first column of the next line
         int nn=setdefault1(n);
         cursor.movePosition(QTextCursor::Down, QTextCursor::MoveAnchor, nn);
         cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::MoveAnchor);
         textEdit.setTextCursor(cursor);
-    }else if(c=='F'){  //カーソル上１桁目 //
+    }else if(c=='F'){  // Move the cursor the the first column of the previous line
         int nn=setdefault1(n);
         cursor.movePosition(QTextCursor::Up, QTextCursor::MoveAnchor, nn);
         cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::MoveAnchor);
         textEdit.setTextCursor(cursor);
-    }else if(c=='G'){  //カーソルnn桁目 //
+    }else if(c=='G'){  // Cursor right by nn
         int nn=setdefault1(n);
         cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::MoveAnchor);
         cursor.movePosition(QTextCursor::Right, QTextCursor::MoveAnchor, nn-1);
         textEdit.setTextCursor(cursor);
-    }else if(c=='H' || c=='f'){  //カーソルnn0行nn1桁目 //
+    }else if(c=='H' || c=='f'){  // Cursor down by nn0 and right by nn1
         int nn0, nn1;
         switch(n.size()){
         case 0:
@@ -911,17 +911,17 @@ void MessageViewImpl::escapeSequence(QString& txt)
     }else if(c=='J'){
         int nn=setdefault0(n);
         switch(nn){
-        case 0:  //カーソル位置から末尾までを消去  //
+        case 0:  // Erase from the cursor position to the end
             cursor.clearSelection();
             cursor.movePosition(QTextCursor::End, QTextCursor::KeepAnchor);
             cursor.removeSelectedText();
             break;
-        case 1:  //先頭からカーソル位置までを消去  //
+        case 1:  // Erase from the beginning to the cursor position
             cursor.clearSelection();
             cursor.movePosition(QTextCursor::Start, QTextCursor::KeepAnchor);
             cursor.removeSelectedText();
             break;
-        case 2:  //全消去 //
+        case 2:  // Erase all
             textEdit.clear();
             break;
         default:
@@ -930,17 +930,17 @@ void MessageViewImpl::escapeSequence(QString& txt)
     }else if(c=='K'){
         int nn=setdefault0(n);
         switch(nn){
-        case 0:  //カーソル位置から行末までを消去  //
+        case 0:  // Erase from the cursor position to the end of the line
             cursor.clearSelection();
             cursor.movePosition(QTextCursor::EndOfLine, QTextCursor::KeepAnchor);
             cursor.removeSelectedText();
             break;
-        case 1:  //行頭からカーソル位置までを消去  //
+        case 1:  // Erase from the start of the line to the cursor position
             cursor.clearSelection();
             cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::KeepAnchor);
             cursor.removeSelectedText();
             break;
-        case 2:  //行消去 //
+        case 2:  // Erase a line
             cursor.clearSelection();
             cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::MoveAnchor);
             cursor.movePosition(QTextCursor::EndOfLine, QTextCursor::KeepAnchor);
@@ -949,60 +949,60 @@ void MessageViewImpl::escapeSequence(QString& txt)
         default:
             break;
         }
-    }else if(c=='L'){  //前に空行を挿入 //
+    }else if(c=='L'){  // Insert empty line
         int nn=setdefault1(n);
         cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::MoveAnchor);
         for(int i=0; i<nn; i++)
             textEdit.insertPlainText("\n");
-    }else if(c=='M'){  //Ps 行を削除  //
+    }else if(c=='M'){  // Erase nn lines
         int nn=setdefault1(n);
         cursor.clearSelection();
         cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::MoveAnchor);
         cursor.movePosition(QTextCursor::Down, QTextCursor::KeepAnchor, nn);
         cursor.removeSelectedText();
-    }else if(c=='P'){  //文字削除  //
+    }else if(c=='P'){  // Delete nn characters
         int nn=setdefault1(n);
         cursor.clearSelection();
         cursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor, nn);
         cursor.removeSelectedText();
-        //}else if(c=='S'){  //nn行上にスクロール //
+        //}else if(c=='S'){  // Scroll up nn lines
         //	int nn=setdefault1(n);
-        //}else if(c=='T'){  //nn行下にスクロール //
+        //}else if(c=='T'){  // Scroll down nn lines
         //	int nn=setdefault1(n);
-    }else if(c=='X'){  //nn文字を空白にする  //
+    }else if(c=='X'){  // Make nn characters blank
         int nn=setdefault1(n);
         cursor.clearSelection();
         cursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor, nn);
         QString sp(nn,' ');
         cursor.insertText(sp);
-        //}else if(c=='Z'){  //カーソルをnn個前のタブストップに移動  //
+        //}else if(c=='Z'){  // Move the cursor to nn previous tab stop
         //	int nn=setdefault1(n);
-        //}else if(c=='a'){   // 'C'と同じ
-        //}else if(c=='c'){  //端末特性  //
+        //}else if(c=='a'){   // Same as 'C'
+        //}else if(c=='c'){  // Terminal characteristics
         //	int nn=setdefault0(n);
-    }else if(c=='d'){  //カーソルを桁位置を変えずにnn行目に移動  //
+    }else if(c=='d'){  // Move the cursor to the nn line without changing the current column
         int nn=setdefault1(n);
         int i = cursor.columnNumber();
         cursor.movePosition(QTextCursor::Start, QTextCursor::MoveAnchor);
         cursor.movePosition(QTextCursor::Down, QTextCursor::MoveAnchor, nn-1);
         cursor.movePosition(QTextCursor::Right, QTextCursor::MoveAnchor, i);
         textEdit.setTextCursor(cursor);
-        //}else if(c=='e'){  // 'B'と同じ  //
-        //}else if(c=='f'){  // 'H'と同じ  //
-        //}else if(c=='g'){  //タブストップの削除  //
+        //}else if(c=='e'){  // Same as 'B'
+        //}else if(c=='f'){  // Same as 'H'
+        //}else if(c=='g'){  // Delete tab stop
         //	int nn=setdefault1(0);
         //	switch(nn){
-        //	case 0:  //一つ削除  //
+        //	case 0:  // Delete one
         //		break;
-        //	case 3:  // 全て削除  //
+        //	case 3:  // Delete all
         //		break;
         //	}
-        //}else if(c=='h'){  //モードを設定//
-        //}else if(c=='i'){  // 印刷モード //
-        //}else if(c=='j'){  //'D'と同じ  //
-        //}else if(c=='k'){  //'A'と同じ  //
-        //}else if(c=='l'){  //モード解除 //
-    }else if(c=='m'){  //文字属性を設定  //
+        //}else if(c=='h'){  // Set mode
+        //}else if(c=='i'){  // Print mode
+        //}else if(c=='j'){  // Same as 'D'
+        //}else if(c=='k'){  // Same as 'A'
+        //}else if(c=='l'){  // Mode release
+    }else if(c=='m'){  // Set character attribute
         if(!n.size()){
             currentCharFormat = orgCharFormat;
             cout << "!n.size()" << endl;
@@ -1011,11 +1011,11 @@ void MessageViewImpl::escapeSequence(QString& txt)
         }else{
             textProperties(n);
         }
-        //}else if(c=='n'){   //端末の状態  //
-        //}else if(c=='r'){  //上下マージンを設定  //
-        //}else if(c=='s'){  // カーソル位置を保存  //
-        //}else if(c=='t'){  //ウィンドウ操作  //
-        //}else if(c=='u'){  //保存したカーソル位置を復元  //
+        //}else if(c=='n'){  // State of the terminal
+        //}else if(c=='r'){  // Set up and down margin
+        //}else if(c=='s'){  // Save cursor position
+        //}else if(c=='t'){  // Window operation
+        //}else if(c=='u'){  // Restore saved cursor position
     }
     txt = txt.mid(++i);
 }
