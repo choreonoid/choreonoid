@@ -2,6 +2,8 @@
 #include "AGXBody.h"
 #include "AGXScene.h"
 
+
+using namespace std;
 namespace cnoid {
 
 class TrackListener : public agxSDK::StepEventListener
@@ -88,16 +90,16 @@ AGXVehicleContinuousTrack::AGXVehicleContinuousTrack(AGXVehicleContinuousTrackDe
     trackDesc.numberOfNodes = (agx::UInt)desc.numberOfNodes;
     trackDesc.nodeThickness = desc.nodeThickness;
     trackDesc.nodeWidth = desc.nodeWidth;
+    trackDesc.nodeDistanceTension = desc.nodeDistanceTension;
     trackDesc.nodeThickerThickness = desc.nodeThickerThickness;
     trackDesc.useThickerNodeEvery = desc.useThickerNodeEvery;
-    trackDesc.nodeDistanceTension = desc.nodeDistanceTension;
     trackDesc.hingeCompliance = desc.hingeCompliance;
     trackDesc.hingeDamping= desc.hingeDamping;
     trackDesc.minStabilizingHingeNormalForce = desc.minStabilizingHingeNormalForce;
     trackDesc.stabilizingHingeFrictionParameter = desc.stabilizingHingeFrictionParameter;
     trackDesc.enableMerge = desc.enableMerge;
     trackDesc.numNodesPerMergeSegment = (agx::UInt)desc.numNodesPerMergeSegment;
-    switch(desc.contactReductionLevel)
+    switch(desc.contactReduction)
     {
         case 0:
             trackDesc.contactReduction =  agxVehicle::TrackInternalMergeProperties::ContactReduction::NONE;
@@ -114,6 +116,10 @@ AGXVehicleContinuousTrack::AGXVehicleContinuousTrack(AGXVehicleContinuousTrackDe
         default:
             break;
     }
+    trackDesc.enableLockToReachMergeCondition = desc.enableLockToReachMergeCondition;
+    trackDesc.lockToReachMergeConditionCompliance = desc.lockToReachMergeConditionCompliance;
+    trackDesc.lockToReachMergeConditionDamping = desc.lockToReachMergeConditionDamping;
+    trackDesc.maxAngleMergeCondition = desc.maxAngleMergeCondition;
     m_track = AGXObjectFactory::createVehicleTrack(trackDesc);
     if(!m_track) return;
 
@@ -153,6 +159,7 @@ AGXVehicleContinuousTrack::AGXVehicleContinuousTrack(AGXVehicleContinuousTrackDe
         }
     }
     m_device->notifyStateChange();
+    printParameters(trackDesc);
 }
 
 void AGXVehicleContinuousTrack::updateTrackState() {
@@ -162,6 +169,32 @@ void AGXVehicleContinuousTrack::updateTrackState() {
     }
     m_device->notifyStateChange();
 }
+
+#define PRINT_PARAMETER(FIELD1)  std::cout << #FIELD1 << " " << FIELD1 << std::endl
+void AGXVehicleContinuousTrack::printParameters(const AGXVehicleTrackDesc& desc){
+    cout << m_device->link()->name() << endl;
+    PRINT_PARAMETER(desc.numberOfNodes);
+    PRINT_PARAMETER(desc.nodeThickness);
+    PRINT_PARAMETER(desc.nodeWidth);
+    PRINT_PARAMETER(desc.nodeThickerThickness);
+    PRINT_PARAMETER(desc.useThickerNodeEvery);
+    PRINT_PARAMETER(desc.hingeCompliance);
+    PRINT_PARAMETER(desc.hingeDamping);
+    PRINT_PARAMETER(desc.minStabilizingHingeNormalForce);
+    PRINT_PARAMETER(desc.stabilizingHingeFrictionParameter);
+    PRINT_PARAMETER(desc.enableMerge);
+    PRINT_PARAMETER(desc.numNodesPerMergeSegment);
+    PRINT_PARAMETER(desc.contactReduction);
+    PRINT_PARAMETER(desc.enableLockToReachMergeCondition);
+    PRINT_PARAMETER(desc.lockToReachMergeConditionCompliance);
+    PRINT_PARAMETER(desc.lockToReachMergeConditionDamping);
+    PRINT_PARAMETER(desc.maxAngleMergeCondition);
+    cout << m_track->getInternalMergeProperties()->getEnableMerge() << endl;
+    cout << m_track->getInternalMergeProperties()->getEnableLockToReachMergeCondition() << endl;
+
+}
+#undef PRINT_PARAMETER
+
 
 
 }

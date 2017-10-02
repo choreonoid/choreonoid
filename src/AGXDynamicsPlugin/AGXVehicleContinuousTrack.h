@@ -8,12 +8,15 @@
 namespace cnoid {
 
 class AGXVehicleContinuousTrack : public AGXBodyExtension{
+private:
+    AGXVehicleContinuousTrackDevicePtr m_device = nullptr;
+    agxVehicle::TrackRef m_track;
 public:
     AGXVehicleContinuousTrack(AGXVehicleContinuousTrackDevice* const device, AGXBody* const agxBody);
     void updateTrackState();
 private:
-    AGXVehicleContinuousTrackDevicePtr m_device = nullptr;
-    agxVehicle::TrackRef m_track;
+    void printParameters(const AGXVehicleTrackDesc& desc);
+
 };
 
 

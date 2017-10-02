@@ -61,24 +61,27 @@ public:
     }
 };
 
-
+#define NODE_READ(FIELD1) node.read(#FIELD1, desc.FIELD1)
 bool readAGXVehicleContinuousTrackDevice(YAMLBodyLoader& loader, Mapping& node)
 {
     AGXVehicleContinuousTrackDeviceDesc desc;
-    if(!node.read("numberOfNodes", desc.numberOfNodes)) return false;
-    if(!node.read("nodeThickness", desc.nodeThickness)) return false;
-    if(!node.read("nodeWidth", desc.nodeWidth)) return false;
-    node.read("nodeThickerThickness", desc.nodeThickerThickness);
-    node.read("useThickerNodeEvery", desc.useThickerNodeEvery);
-    node.read("nodeDistanceTension", desc.nodeDistanceTension);
-    node.read("hingeCompliance", desc.hingeCompliance);
-    node.read("hingeDamping", desc.hingeDamping);
-    node.read("minStabilizingHingeNormalForce", desc.minStabilizingHingeNormalForce);
-    node.read("stabilizingHingeFrictionParameter", desc.stabilizingHingeFrictionParameter);
-    node.read("enableMerge", desc.enableMerge);
-    node.read("numNodesPerMergeSegment", desc.numNodesPerMergeSegment);
-    node.read("lockToReachMergeConditionCompliance", desc.lockToReachMergeConditionCompliance);
-    node.read("contactReductionLevel", desc.contactReductionLevel);
+    if(!NODE_READ(numberOfNodes)) return false;
+    if(!NODE_READ(nodeThickness)) return false;
+    if(!NODE_READ(nodeWidth)) return false;
+    NODE_READ(nodeDistanceTension);
+    NODE_READ(nodeThickerThickness);
+    NODE_READ(useThickerNodeEvery);
+    NODE_READ(hingeCompliance);
+    NODE_READ(hingeDamping);
+    NODE_READ(minStabilizingHingeNormalForce);
+    NODE_READ(stabilizingHingeFrictionParameter);
+    NODE_READ(enableMerge);
+    NODE_READ(numNodesPerMergeSegment);
+    NODE_READ(contactReduction);
+    NODE_READ(enableLockToReachMergeCondition);
+    NODE_READ(lockToReachMergeConditionCompliance);
+    NODE_READ(lockToReachMergeConditionDamping);
+    NODE_READ(maxAngleMergeCondition);
 
     // Get name of wheels from yaml
     const auto toVectorString = [](ValueNodePtr const vnptr, vector<string>& vs) ->bool
@@ -102,7 +105,6 @@ bool readAGXVehicleContinuousTrackDevice(YAMLBodyLoader& loader, Mapping& node)
     }else{
         return false;
     }
-    std::cout << desc.sprocketNames.size() << std::endl;
     AGXVehicleContinuousTrackDevicePtr trackDevice = new AGXVehicleContinuousTrackDevice(desc);
     return loader.readDevice(trackDevice, node);
 }

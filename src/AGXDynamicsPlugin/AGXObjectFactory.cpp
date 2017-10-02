@@ -291,10 +291,14 @@ agxVehicle::TrackRef AGXObjectFactory::createVehicleTrack(const AGXVehicleTrackD
     track->getProperties()->setStabilizingHingeFrictionParameter(desc.stabilizingHingeFrictionParameter);
     track->getInternalMergeProperties()->setEnableMerge(desc.enableMerge);
     track->getInternalMergeProperties()->setNumNodesPerMergeSegment(desc.numNodesPerMergeSegment);
+    track->getInternalMergeProperties()->setEnableLockToReachMergeCondition(desc.enableLockToReachMergeCondition);
     track->getInternalMergeProperties()->setLockToReachMergeConditionCompliance(desc.lockToReachMergeConditionCompliance);
+    track->getInternalMergeProperties()->setLockToReachMergeConditionDamping(desc.lockToReachMergeConditionDamping);
+    track->getInternalMergeProperties()->setMaxAngleMergeCondition(desc.maxAngleMergeCondition);
     track->getInternalMergeProperties()->setContactReduction(desc.contactReduction);
-    if(desc.useThickerNodeEvery <= 0) return track;
 
+
+    if(desc.useThickerNodeEvery <= 0) return track;
     // Add shapes for create bumpy tracks
     agx::UInt counter = 0;
     track->initialize(

@@ -8,23 +8,27 @@
 using namespace std;
 namespace cnoid {
 
-struct AGXVehicleContinuousTrackDeviceDesc{
+struct AGXVehicleContinuousTrackDeviceDesc
+{
     AGXVehicleContinuousTrackDeviceDesc() {
         upAxis = Vector3d(0.0, 0.0, 1.0);
         numberOfNodes = 50;
         nodeThickness = 0.075;
         nodeWidth = 0.6;
-        nodeThickerThickness = 0.090;
-        useThickerNodeEvery = 0;
         nodeDistanceTension = 5.0E-3;
-        hingeCompliance = 4.0E-10;
-        hingeDamping = 2.0;
+        nodeThickerThickness = 0.09;
+        useThickerNodeEvery = 0;
+        hingeCompliance = 1.0E-10;
+        hingeDamping = 0.0333;
         minStabilizingHingeNormalForce = 100;
         stabilizingHingeFrictionParameter = 1.5;
         enableMerge = false;
-        numNodesPerMergeSegment = 4;
-        lockToReachMergeConditionCompliance = 1.0E-8;
-        contactReductionLevel = 3;
+        numNodesPerMergeSegment = 3;
+        contactReduction = 1;
+        enableLockToReachMergeCondition = true;
+        lockToReachMergeConditionCompliance = 1.0E-11;
+        lockToReachMergeConditionDamping = 3/ 60;
+        maxAngleMergeCondition = 1.0E-5;
         sprocketNames.clear();
         idlerNames.clear();
         rollerNames.clear();
@@ -33,19 +37,23 @@ struct AGXVehicleContinuousTrackDeviceDesc{
     int numberOfNodes;           // Total number of nodes in the track.
     double nodeThickness;        // Thickness of each node in the track.
     double nodeWidth;            // Width of each node in the track.
-    double nodeThickerThickness;
-    int useThickerNodeEvery;
     double nodeDistanceTension;  // The calculated node length is close to ideal, meaning close to zero tension
                                  // in the tracks if they were simulated without gravity. This distance is an offset
                                  // how much closer each node will be to each other, resulting in a given initial tension.
+
+    double nodeThickerThickness;
+    int useThickerNodeEvery;
     double hingeCompliance;
     double hingeDamping;
     double minStabilizingHingeNormalForce;
     double stabilizingHingeFrictionParameter;
     bool enableMerge;
     int numNodesPerMergeSegment;
+    int contactReduction;
+    bool enableLockToReachMergeCondition;
     double lockToReachMergeConditionCompliance;
-    int contactReductionLevel;
+    double lockToReachMergeConditionDamping;
+    double maxAngleMergeCondition;
     vector<string> sprocketNames;
     vector<string> idlerNames;
     vector<string> rollerNames;
@@ -60,7 +68,6 @@ typedef std::vector<TrackState> TrackStates;
 class AGXVehicleContinuousTrackDevice : private AGXVehicleContinuousTrackDeviceDesc, public Device
 {
 public:
-
     AGXVehicleContinuousTrackDevice(const AGXVehicleContinuousTrackDeviceDesc& desc);
     AGXVehicleContinuousTrackDevice(const AGXVehicleContinuousTrackDevice& org, bool copyStateOnly = false);
     virtual const char* typeName() override;
