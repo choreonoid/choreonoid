@@ -289,7 +289,7 @@ bool JoystickImpl::readEvent()
         sigButton(id, isPressed);
     } else if(event.type & JS_EVENT_AXIS){
         if(axisEnabled[id]){
-            // normalize value (-1.0〜1.0)
+            // normalize value (-1.0 to 1.0)
             pos = nearbyint(pos * 10.0) / 10.0;
 
             if(currentModel.id == PS4 || currentModel.id == PS3){

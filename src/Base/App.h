@@ -19,12 +19,6 @@ class CNOID_EXPORT App : public QObject
     Q_OBJECT
         
 public:
-    /**
-       @if jp
-       @param appName アプリケーション名
-       @param vendorName ベンダ名
-       @endif
-    */
     App(int& argc, char**& argv);
     ~App();
         

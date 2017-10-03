@@ -518,7 +518,7 @@ bool PinDragIKImpl::calcInverseKinematics(const Position& T)
 
 PinDragIKImpl::IKStepResult PinDragIKImpl::calcOneStep(const Vector3& v, const Vector3& omega)
 {
-    //　make Jacobian matrix for the target link
+    // make Jacobian matrix for the target link
     int axes = InverseKinematics::TRANSLATION_3D;
     if(isTargetAttitudeEnabled){
         axes |= InverseKinematics::ROTATION_3D;
@@ -984,4 +984,5 @@ bool makeSRInverseMatrix
     
     return false;
 }
+
 }

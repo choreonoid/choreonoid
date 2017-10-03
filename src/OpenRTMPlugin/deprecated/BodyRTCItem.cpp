@@ -590,7 +590,7 @@ bool BodyRTCItem::restore(const Archive& archive)
 }
 
 
-// configファイルで指定されたRTC,Robotに既に接続されているRTCを検出する。   //
+// Detects the RTC specified in the config file and the RTC already connected to the robot.
 void BodyRTCItem::detectRtcs()
 {
     RTC::Manager& rtcManager = RTC::Manager::instance();
@@ -697,7 +697,7 @@ void BodyRTCItem::makePortMap(RtcInfoPtr& rtcInfo)
     }
 }
 
-/// new_rtcRefのポートマップ作成し、rtcInfoVectorに登録する。  //
+/// Create a port map of new_rtcRef and register it in rtcInfoVector.
 BodyRTCItem::RtcInfoPtr BodyRTCItem::addRtcVectorWithConnection(RTC::RTObject_var new_rtcRef)
 {
     RtcInfoVector::iterator it = rtcInfoVector.begin();
