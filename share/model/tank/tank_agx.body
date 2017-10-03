@@ -479,7 +479,20 @@ links:
         numberOfNodes: 40
         nodeThickness: 0.01
         nodeWidth:  0.09
-        nodeDistanceTension: 5.0E-3
+        nodeDistanceTension: 2e-4
+        nodeThickerThickness: 0.02
+        useThickerNodeEvery: 0
+        hingeCompliance: 1e-8
+        hingeDamping: 0.0333
+        minStabilizingHingeNormalForce: 1.0
+        stabilizingHingeFrictionParameter: 1e-6
+        enableMerge: false
+        numNodesPerMergeSegment: 0
+        contactReduction: 3
+        enableLockToReachMergeCondition: false
+        lockToReachMergeConditionCompliance: 1.0E-11
+        lockToReachMergeConditionDamping: 0.001
+        maxAngleMergeCondition: 1.0E-5
         upAxis: [ 0, 0, 1 ]
         sprocketNames: [ WHEEL_L0 ]
         rollerNames: [ WHEEL_L1 ]
@@ -660,11 +673,24 @@ links:
         numberOfNodes: 40
         nodeThickness: 0.01
         nodeWidth:  0.09
-        nodeDistanceTension: 5.0E-3
+        nodeDistanceTension: 2e-4
+        nodeThickerThickness: 0.02
+        useThickerNodeEvery: 0
+        hingeCompliance: 1e-8
+        hingeDamping: 0.0333
+        minStabilizingHingeNormalForce: 1.0
+        stabilizingHingeFrictionParameter: 1e-6
+        enableMerge: false
+        numNodesPerMergeSegment: 0
+        contactReduction: 3
+        enableLockToReachMergeCondition: false
+        lockToReachMergeConditionCompliance: 1.0E-11
+        lockToReachMergeConditionDamping: 0.001
+        maxAngleMergeCondition: 1.0E-5
         upAxis: [ 0, 0, 1 ]
         sprocketNames: [ WHEEL_R0 ]
         rollerNames: [ WHEEL_R1 ]
-        idlerNames: [ WHEEL_R2 ] 
+        idlerNames: [ WHEEL_R2 ]
       -
         type: Visual
         elements:
