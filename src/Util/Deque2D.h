@@ -91,6 +91,9 @@ public:
         bool operator!=(const const_iterator& rhs) const {
             return (current != rhs.current);
         }
+        bool operator<(const const_iterator& rhs) const{
+            return current < rhs.current;
+        }
     };
 
     class iterator : public const_iterator {
