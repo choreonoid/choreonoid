@@ -15,11 +15,6 @@ namespace cnoid {
 class Menu;
 class MenuManagerImpl;
 
-/**
-   @if jp
-   メニューを簡単に管理するためのクラス。   
-   @endif
-*/
 class CNOID_EXPORT MenuManager
 {
 public:

@@ -253,7 +253,7 @@ float SSVTreeCollider::PrimDist(udword id0, udword id1, Point& point0, Point& po
     
     // Modified by S-cubed, Inc.
     // Transform from space 0 (old : 1) to space 1 (old : 0)
-    // CD では変換が逆なのであわせる。  
+    // In CD, the conversion is opposite, so it is adjusted accordingly.
     Point u0,u1,u2;
     TransformPoint(u0, *VP0.Vertex[0], mR0to1, mT0to1);
     TransformPoint(u1, *VP0.Vertex[1], mR0to1, mT0to1);
@@ -264,5 +264,5 @@ float SSVTreeCollider::PrimDist(udword id0, udword id1, Point& point0, Point& po
                       *VP1.Vertex[0], *VP1.Vertex[1], *VP1.Vertex[2],
                       point0, point1);
 }
-}
 
+}

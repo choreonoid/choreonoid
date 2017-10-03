@@ -352,7 +352,7 @@ SgMaterial* AssimpSceneLoaderImpl::convertAiMaterial(unsigned int index)
 
     float o;
     if (AI_SUCCESS == srcMaterial->Get(AI_MATKEY_OPACITY, o)){
-        if(!o){    //設定値が逆のものがある？暫定処理 TODO
+        if(!o){ // This is temporary processing. Is there anything with the opposite setting value?
             material->setTransparency(o);
         } else {
             material->setTransparency(1.0f - o);

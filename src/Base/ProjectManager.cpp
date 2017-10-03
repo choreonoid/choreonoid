@@ -369,7 +369,7 @@ void ProjectManagerImpl::saveProject(const string& filename)
 {
     YAMLWriter writer(filename);
     if(!writer.isOpen()){
-        messageView->notify(str(fmt(_("Can't open file \"%1%\" for writing.\n")) % filename));
+        messageView->put(MessageView::ERROR, str(fmt(_("Can't open file \"%1%\" for writing.\n")) % filename));
         return;
     }
 
