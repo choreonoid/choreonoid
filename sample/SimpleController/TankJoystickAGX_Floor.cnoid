@@ -45,7 +45,7 @@ items:
               class: SimpleControllerItem
               data: 
                 isImmediateMode: true
-                controllerOptions: "wheels"
+                controllerOptions: "wheels velocity"
                 controller: "TankJoystickController"
                 reloading: true
                 RelativePathBase: "Controller directory"
@@ -124,7 +124,7 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      selected: [ 1 ]
+      selected: [ 3 ]
       checked: [ 1, 2, 4 ]
       expanded: [ 1, 2, 3, 5, 7 ]
   - 
