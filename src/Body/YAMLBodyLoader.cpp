@@ -25,6 +25,8 @@
 #include <mutex>
 #include <cstdlib>
 #include "gettext.h"
+//#include <map>
+#include <iostream>
 
 using namespace std;
 using namespace cnoid;
@@ -118,6 +120,7 @@ public:
     YAMLBodyLoader* self;
     YAMLReader reader;
     YAMLSceneReader sceneReader;
+    string mainfilename;
 
     typedef function<bool(Mapping& node)> NodeFunction;
 
@@ -135,6 +138,7 @@ public:
     int numCustomNodeFunctions;
     
     Body* body;
+    //map<string, Body*> subBodyMap;
     Link* rootLink;
 
     struct LinkInfo : public Referenced
@@ -273,6 +277,7 @@ public:
     void readLinkNode(Mapping* linkNode);
     LinkPtr readLinkContents(Mapping* linkNode);
     boost::optional<Vector3> readAxis(Mapping* node, const char* key);
+    void setJointParameters(Link* link, string jointType, ValueNode* node);
     void setMassParameters(Link* link);
 
     /*
@@ -297,6 +302,8 @@ public:
     bool readSpotLight(Mapping& node);
     void readContinuousTrackNode(Mapping* linkNode);
     void addTrackLink(int index, LinkPtr link, Mapping* node, string& io_parent, double initialAngle);
+    void readSubBodyNode(Mapping* linkNode);
+    void addSubBodyLinks(Body* subbody, Mapping* node);
     void readExtraJoints(Mapping* topNode);
     void readExtraJoint(Mapping* node);
 
@@ -457,6 +464,7 @@ YAMLBodyLoaderImpl::YAMLBodyLoaderImpl(YAMLBodyLoader* self)
     numCustomNodeFunctions = 0;
 
     body = 0;
+    //subBodyMap.clear();
     os_ = &nullout();
 }
 
@@ -547,6 +555,7 @@ bool YAMLBodyLoader::load(Body* body, const std::string& filename)
 
 bool YAMLBodyLoaderImpl::load(Body* body, const std::string& filename)
 {
+    mainfilename = filename;
     boost::filesystem::path filepath(filename);
     sceneReader.setBaseDirectory(filepath.parent_path().string());
 
@@ -748,6 +757,8 @@ void YAMLBodyLoaderImpl::readNodeInLinks(Mapping* node, const string& nodeType)
         readLinkNode(node);
     } else if(type == "ContinuousTrack"){
         readContinuousTrackNode(node);
+    } else if(type == "SubBody"){
+        readSubBodyNode(node);
     } else {
         node->throwException(
             str(format(_("A %1% node cannot be specified in links")) % type));
@@ -811,25 +822,7 @@ LinkPtr YAMLBodyLoaderImpl::readLinkContents(Mapping* linkNode)
     auto jointTypeNode = info->find("jointType");
     if(jointTypeNode->isValid()){
         string jointType = jointTypeNode->toString();
-        if(jointType == "revolute"){
-            link->setJointType(Link::REVOLUTE_JOINT);
-            link->setActuationMode(Link::JOINT_TORQUE);
-        } else if(jointType == "prismatic"){
-            link->setJointType(Link::PRISMATIC_JOINT);
-            link->setActuationMode(Link::JOINT_FORCE);
-        } else if(jointType == "slide"){
-            link->setJointType(Link::PRISMATIC_JOINT);
-            link->setActuationMode(Link::JOINT_FORCE);
-        } else if(jointType == "free"){
-            link->setJointType(Link::FREE_JOINT);
-        } else if(jointType == "fixed"){
-            link->setJointType(Link::FIXED_JOINT);
-        } else if(jointType == "pseudoContinuousTrack"){
-            link->setJointType(Link::PSEUDO_CONTINUOUS_TRACK);
-            link->setActuationMode(Link::JOINT_SURFACE_VELOCITY);
-        } else {
-            jointTypeNode->throwException("Illegal jointType value");
-        }
+        setJointParameters(link, jointType, jointTypeNode);
     }
 
     boost::optional<Vector3> axis = readAxis(info, "jointAxis");
@@ -992,6 +985,30 @@ boost::optional<Vector3> YAMLBodyLoaderImpl::readAxis(Mapping* node, const char*
     }
 
     return axis;
+}
+
+
+void YAMLBodyLoaderImpl::setJointParameters(Link* link, string jointType, ValueNode* node)
+{
+    if(jointType == "revolute"){
+        link->setJointType(Link::REVOLUTE_JOINT);
+        link->setActuationMode(Link::JOINT_TORQUE);
+    } else if(jointType == "prismatic"){
+        link->setJointType(Link::PRISMATIC_JOINT);
+        link->setActuationMode(Link::JOINT_FORCE);
+    } else if(jointType == "slide"){
+        link->setJointType(Link::PRISMATIC_JOINT);
+        link->setActuationMode(Link::JOINT_FORCE);
+    } else if(jointType == "free"){
+        link->setJointType(Link::FREE_JOINT);
+    } else if(jointType == "fixed"){
+        link->setJointType(Link::FIXED_JOINT);
+    } else if(jointType == "pseudoContinuousTrack"){
+        link->setJointType(Link::PSEUDO_CONTINUOUS_TRACK);
+        link->setActuationMode(Link::JOINT_SURFACE_VELOCITY);
+    } else {
+        node->throwException("Illegal jointType value");
+    }
 }
 
 
@@ -1528,6 +1545,107 @@ void YAMLBodyLoaderImpl::addTrackLink(int index, LinkPtr link, Mapping* node, st
     linkInfos.push_back(info);
     
     io_parent = link->name();
+}
+
+
+void YAMLBodyLoaderImpl::readSubBodyNode(Mapping* node)
+{
+    MappingPtr info = static_cast<Mapping*>(node->clone());
+
+    string uri;
+    if(!extract(info, "uri", uri)){
+        info->throwException("uri must be specified.");
+    }
+
+    boost::filesystem::path subFilepath(uri);
+    if(subFilepath.is_relative()){
+        uri = sceneReader.baseDirectory()+"/"+uri;
+    }
+    boost::filesystem::path mainfile_path(mainfilename);
+    boost::filesystem::path subfile_path(uri);
+    if(boost::filesystem::equivalent(mainfile_path, subfile_path)){
+        info->throwException("recursive subbody is prohibited.");
+    }
+
+    Body* subbody = new Body();
+//    bool loaded(false);
+//    for(auto itr = subBodyMap.begin(); itr != subBodyMap.end(); ++itr){
+//        boost::filesystem::path loadedfile_path(itr->first);
+//        if(boost::filesystem::equivalent(loadedfile_path, subfile_path)){
+//            subbody = itr->second->clone();
+//            loaded = true;
+//        }
+//    }
+//    if(!loaded){
+        MappingPtr data;
+        try {
+            YAMLBodyLoader loader;
+            loader.load(subbody, uri);
+        } catch(const ValueNode::Exception& ex){
+            os() << ex.message();
+        }
+//        subBodyMap.insert(make_pair(uri, subbody->clone()));
+//    }
+    addSubBodyLinks(subbody->clone(), node);
+}
+
+
+void YAMLBodyLoaderImpl::addSubBodyLinks(Body* subbody, Mapping* node)
+{
+    MappingPtr nodeInfo = static_cast<Mapping*>(node->clone());
+
+    string parent;
+    if(!extract(nodeInfo, "parent", parent)){
+        nodeInfo->throwException("parent must be specified.");
+    }
+
+    string prefix;
+    if(!extract(nodeInfo, "prefix", prefix)){
+        nodeInfo->throwException("prefix must be specified.");
+    }
+
+    Vector3 translation;
+    if(!extractEigen(nodeInfo, "translation", translation)){
+        translation.setZero();
+    }
+
+    Matrix3 R;
+    if(!readRotation(*nodeInfo, R, true)){
+        R.setIdentity();
+    }
+
+    string jointType;
+    if(!extract(nodeInfo, "jointType", jointType)){
+        jointType = "fixed";
+    }
+
+    int jointIdOffset;
+    if(!extract(nodeInfo, "jointIdOffset", jointIdOffset)){
+        nodeInfo->throwException("jointIdOffset must be specified.");
+    }
+
+    for(int i=0; i<subbody->numLinks(); ++i){
+        LinkPtr link = subbody->link(i);
+        link->setName(prefix + link->name());
+        if(link->jointId()>=0){
+            link->setJointId(link->jointId()+jointIdOffset);
+        }
+        LinkInfoPtr linkInfo = new LinkInfo;
+        linkInfo->link = link;
+        linkInfo->node = node;
+        if(link->isRoot()){
+            linkInfo->parent = parent;
+            setJointParameters(link, jointType, nodeInfo);
+            link->setOffsetTranslation(translation);
+            link->setOffsetRotation(R);
+        } else {
+            linkInfo->parent = link->parent()->name();
+        }
+        if(!linkMap.insert(make_pair(link->name(), link)).second){
+            node->throwException(str(format(_("Duplicated link name \"%1%\"")) % link->name()));
+        }
+        linkInfos.push_back(linkInfo);
+    }
 }
 
 

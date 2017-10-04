@@ -145,7 +145,7 @@ void BodyLinkView::initializeClass(ExtensionManager* ext)
 {
     bodyLinkView = ext->viewManager().registerClass<BodyLinkView>(
         "BodyLinkView", N_("Body / Link"), ViewManager::SINGLE_DEFAULT);
-    MenuManager& mm = ext->menuManager().setPath("/Options/Body/Link View");
+    MenuManager& mm = ext->menuManager().setPath("/Options").setPath(N_("BodyLink View"));
     MappingPtr config = AppConfig::archive()->openMapping("Body")->openMapping("Link View");
     useQuaternionCheck = mm.addCheckItem(_("Use Quaternion"));
     useQuaternionCheck->setChecked(config->get("useQuaternion", false));
