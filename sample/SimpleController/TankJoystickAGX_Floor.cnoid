@@ -112,6 +112,40 @@ items:
                 controllerThreads: true
                 recordCollisionData: false
                 controllerOptions: ""
+            - 
+              id: 8
+              name: "AGXSimulator100Hz"
+              plugin: AGXDynamics
+              class: AGXSimulatorItem
+              data: 
+                timestep: 0.01
+                realtimeSync: true
+                recording: "full"
+                timeRangeMode: "Unlimited"
+                timeLength: 180
+                allLinkPositionOutputMode: true
+                deviceStateOutput: true
+                selfCollision: false
+                controllerThreads: true
+                recordCollisionData: false
+                controllerOptions: ""
+            - 
+              id: 9
+              name: "AGXSimulator500Hz"
+              plugin: AGXDynamics
+              class: AGXSimulatorItem
+              data: 
+                timestep: 0.002
+                realtimeSync: true
+                recording: "full"
+                timeRangeMode: "Unlimited"
+                timeLength: 180
+                allLinkPositionOutputMode: true
+                deviceStateOutput: true
+                selfCollision: false
+                controllerThreads: true
+                recordCollisionData: false
+                controllerOptions: ""
 views: 
   - 
     id: 0
@@ -124,7 +158,7 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      selected: [ 3 ]
+      selected: [ 9 ]
       checked: [ 1, 2, 4 ]
       expanded: [ 1, 2, 3, 5, 7 ]
   - 
@@ -317,8 +351,6 @@ toolbars:
     snapDistance: 0.025
     penetrationBlockDepth: 0.0005
     lazyCollisionDetectionMode: true
-  "BodyBar": 
-    current: 4
   "LeggedBodyBar": 
     stanceWidth: 0.15
   "BodyMotionGenerationBar": 
@@ -386,12 +418,12 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 340, 1449 ]
+      sizes: [ 333, 1421 ]
       children: 
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 455, 454 ]
+          sizes: [ 447, 447 ]
           children: 
             - 
               type: pane
@@ -404,12 +436,12 @@ viewAreas:
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 650, 259 ]
+          sizes: [ 639, 255 ]
           children: 
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 166, 1277 ]
+              sizes: [ 163, 1252 ]
               children: 
                 - 
                   type: pane
@@ -422,7 +454,7 @@ viewAreas:
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 869, 574 ]
+              sizes: [ 852, 563 ]
               children: 
                 - 
                   type: pane
