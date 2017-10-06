@@ -6,8 +6,6 @@
 
 namespace cnoid{
 
-class AGXBody;
-
 struct AGXSceneDesc
 {
     AGXSceneDesc(){}
@@ -22,7 +20,6 @@ public:
     void clear();
     void stepSimulation();
     agxSDK::SimulationRef getSimulation() const;
-    void add(AGXBody* agxBody);
     agx::Bool add(agx::RigidBody* const rigid);
     agx::Bool add(agx::Constraint* const constraint);
     agx::Bool add(agxSDK::Assembly* const assembly);

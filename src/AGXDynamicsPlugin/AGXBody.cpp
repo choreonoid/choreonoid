@@ -17,10 +17,10 @@ AGXLink::AGXLink(Link* const link) : _orgLink(link){}
 AGXLink::AGXLink(Link* const link, AGXLink* const parent, const Vector3& parentOrigin, AGXBody* const agxBody) :
     _agxBody(agxBody),
     _orgLink(link),
-    _agxParentLink(parent)
+    _agxParentLink(parent),
+    _origin(parentOrigin + link->b())
 {
     agxBody->addAGXLink(this);
-    _origin = parentOrigin + link->b();
     const Link::ActuationMode& actuationMode = link->actuationMode();
     if(actuationMode == Link::ActuationMode::NO_ACTUATION){
     }else if(actuationMode == Link::ActuationMode::LINK_POSITION){
@@ -43,6 +43,10 @@ void AGXLink::constructAGXLink()
     createAGXShape();
     setAGXMaterial();
     _constraint = createAGXConstraint();
+
+    agxSDK::SimulationRef sim =  getAGXBody()->getAGXScene()->getSimulation();
+    sim->add(_rigid);
+    sim->add(_constraint);
     //printDebugInfo();
 }
 
@@ -643,6 +647,20 @@ void AGXBody::createBody(AGXScene* agxScene)
     setLinkStateToAGX();
     createExtraJoint();
     callExtensionFuncs();
+    setCollision();
+}
+
+void AGXBody::setCollision()
+{
+    AGXSceneRef agxScene = getAGXScene();
+    // Disable collision
+    for(const auto& name : getCollisionGroupNamesToDisableCollision()){
+        agxScene->setCollision(name, false);
+    }
+    // Set self collision
+    agxScene->setCollision(getCollisionGroupName(), bodyItem()->isSelfCollisionDetectionEnabled());
+    // Set external collision
+    enableExternalCollision(bodyItem()->isCollisionDetectionEnabled());
 }
 
 std::string AGXBody::getCollisionGroupName() const

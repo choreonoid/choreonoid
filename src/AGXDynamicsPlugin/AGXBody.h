@@ -17,7 +17,6 @@ typedef std::map<std::string, AGXBodyExtensionFunc> AGXBodyExtensionFuncMap;
 namespace cnoid {
 
 typedef Eigen::Matrix<float, 3, 1> Vertex;
-//typedef std::vector<std::string> VectorString;
 class AGXScene;
 
 static unsigned int generateUID(){
@@ -34,18 +33,6 @@ inline const Position convertToPosition(const agx::AffineMatrix4x4& a){
                     a(0,2), a(1,2), a(2,2);
     return pos;
 }
-
-//struct AGXLinkPrivate
-//{
-//    AGXBody*    m_agxBody;
-//    //LinkPtr     _orgLink;
-//    //AGXLinkPtr  _agxParentLink;
-//    //Vector3     _origin;
-//    //agx::RigidBodyRef       _rigid;
-//    //agxCollide::GeometryRef _geometry;
-//    //agx::ConstraintRef      _constraint;
-//    AGXBody*                getAGXBody();
-//};
 
 class AGXBody;
 class CNOID_EXPORT AGXLink : public Referenced
@@ -102,6 +89,7 @@ public:
     AGXBody(Body& orgBody);
     void initialize();
     void createBody(AGXScene* agxScene);
+    void setCollision();
     std::string getCollisionGroupName() const;
     void enableExternalCollision(const bool& bOn);
     void addCollisionGroupNameToDisableCollision(const std::string& name);
