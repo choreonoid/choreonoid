@@ -65,7 +65,7 @@ public:
         return linkPosSeq_;
     }
 
-    class Frame {
+    class CNOID_EXPORT Frame {
         BodyMotion& motion_;
         int frame_;
         Frame(BodyMotion& motion, int frame) : motion_(motion), frame_(frame) { }

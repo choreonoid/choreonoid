@@ -14,6 +14,7 @@ using namespace cnoid;
 
 // for MSVC++2015 Update3
 CNOID_PYTHON_DEFINE_GET_POINTER(MainWindow)
+CNOID_PYTHON_DEFINE_GET_POINTER(ViewArea)
 
 namespace cnoid {
 

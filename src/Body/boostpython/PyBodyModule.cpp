@@ -358,8 +358,8 @@ BOOST_PYTHON_MODULE(Body)
     }
 
 #ifdef _MSC_VER
-    register_ptr_to_python<BodyPtr>();
-    register_ptr_to_python<LinkPtr>();
+    py::register_ptr_to_python<BodyPtr>();
+    py::register_ptr_to_python<LinkPtr>();
 #endif
 
 }
