@@ -21,12 +21,12 @@ items:
           data: 
             modelFile: "${SHARE}/model/tank/tank_agx.body"
             currentBaseLink: ""
-            rootPosition: [ -1.91765313, -0.513891859, 0.112089651 ]
+            rootPosition: [ -2, -0.5, 0.1 ]
             rootAttitude: [ 
-              0.982010123, 0.188821133, -0.00164252611, 
-              -0.188825301, 0.98200633, -0.00292812931, 
-              0.00106007834, 0.00318560311, 0.999994364 ]
-            jointPositions: [ -0.206806, -0.174533,  1.843969,  2.765485,  4.148557,  0.939983,  0.547986,  0.960377 ]
+              1, 0, 0, 
+              0, 1, 0, 
+              0, 0, 1 ]
+            jointPositions: [  0.000000,  0.000000,  0.000000,  0.000000, -2.134810,  0.939983,  0.546190,  0.960524 ]
             initialRootPosition: [ -2, -0.5, 0.1 ]
             initialRootAttitude: [ 
               1, 0, 0, 
@@ -80,40 +80,6 @@ items:
           children: 
             - 
               id: 6
-              name: "AGXSimulator1kHz"
-              plugin: AGXDynamics
-              class: AGXSimulatorItem
-              data: 
-                timestep: 0.001
-                realtimeSync: true
-                recording: "full"
-                timeRangeMode: "Unlimited"
-                timeLength: 180
-                allLinkPositionOutputMode: true
-                deviceStateOutput: true
-                selfCollision: false
-                controllerThreads: true
-                recordCollisionData: false
-                controllerOptions: ""
-            - 
-              id: 7
-              name: "AGXSimulator60Hz"
-              plugin: AGXDynamics
-              class: AGXSimulatorItem
-              data: 
-                timestep: 0.017
-                realtimeSync: true
-                recording: "full"
-                timeRangeMode: "Unlimited"
-                timeLength: 180
-                allLinkPositionOutputMode: true
-                deviceStateOutput: true
-                selfCollision: false
-                controllerThreads: true
-                recordCollisionData: false
-                controllerOptions: ""
-            - 
-              id: 8
               name: "AGXSimulator100Hz"
               plugin: AGXDynamics
               class: AGXSimulatorItem
@@ -130,12 +96,12 @@ items:
                 recordCollisionData: false
                 controllerOptions: ""
             - 
-              id: 9
-              name: "AGXSimulator500Hz"
+              id: 7
+              name: "AGXSimulator200Hz"
               plugin: AGXDynamics
               class: AGXSimulatorItem
               data: 
-                timestep: 0.002
+                timestep: 0.005
                 realtimeSync: true
                 recording: "full"
                 timeRangeMode: "Unlimited"
@@ -158,9 +124,9 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      selected: [ 9 ]
+      selected: [ 7 ]
       checked: [ 1, 2, 4 ]
-      expanded: [ 1, 2, 3, 5, 7 ]
+      expanded: [ 1, 2, 3, 5 ]
   - 
     id: 2
     plugin: Base
@@ -213,9 +179,9 @@ views:
           fieldOfView: 0.6978
           near: 0.01
           far: 10000
-          eye: [ -3.32787575, -2.64960694, 1.2163211 ]
-          direction: [ 0.571320814, 0.753501806, -0.325311474 ]
-          up: [ 0.196548072, 0.259222705, 0.945606919 ]
+          eye: [ -2.93716454, -2.8653206, 0.457947384 ]
+          direction: [ 0.51107714, 0.835946618, -0.199983522 ]
+          up: [ 0.104314231, 0.170622244, 0.979799261 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
@@ -418,12 +384,12 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 333, 1421 ]
+      sizes: [ 340, 1449 ]
       children: 
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 447, 447 ]
+          sizes: [ 455, 454 ]
           children: 
             - 
               type: pane
@@ -436,12 +402,12 @@ viewAreas:
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 639, 255 ]
+          sizes: [ 650, 259 ]
           children: 
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 163, 1252 ]
+              sizes: [ 166, 1277 ]
               children: 
                 - 
                   type: pane
@@ -454,7 +420,7 @@ viewAreas:
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 852, 563 ]
+              sizes: [ 869, 574 ]
               children: 
                 - 
                   type: pane
