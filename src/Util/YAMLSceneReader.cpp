@@ -194,6 +194,12 @@ void YAMLSceneReader::setBaseDirectory(const std::string& directory)
 }
 
 
+std::string YAMLSceneReader::baseDirectory()
+{
+    return impl->baseDirectory.string();
+}
+
+
 void YAMLSceneReader::clear()
 {
     isDegreeMode_ = true;
