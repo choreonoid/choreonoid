@@ -130,7 +130,7 @@ void AGXContinousTrack::createTrackConstraint()
     // Generate collision group name to disable collision between tracks
     std::stringstream trackCollsionGroupName;
     trackCollsionGroupName.str("");
-    trackCollsionGroupName << "SelfCollisionContinousTrack" << generateUID() << std::flush;
+    trackCollsionGroupName << "SelfCollisionContinousTrack" << agx::UuidGenerator().generate().str() << std::flush;
     getAGXBody()->addCollisionGroupNameToDisableCollision(trackCollsionGroupName.str());
 
     for (int i = 0; i < _feet.size(); ++i) {

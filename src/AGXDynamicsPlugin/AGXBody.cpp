@@ -89,7 +89,7 @@ void AGXLink::setAGXMaterialFromLinkInfo()
 {
     AGXMaterialDesc desc;
     std::stringstream ss;
-    ss << "AGXMaterial" << generateUID() << std::endl;
+    ss << "AGXMaterial" << agx::UuidGenerator().generate().str() << std::endl;
     desc.name = ss.str();
     SET_AGXMATERIAL_FIELD(density);
     SET_AGXMATERIAL_FIELD(youngsModulus);
@@ -635,7 +635,7 @@ void AGXBody::initialize()
     _collisionGroupNamesToDisableCollision.clear();
     std::stringstream ss;
     ss.str("");
-    ss << generateUID() << body->name() << std::flush;
+    ss << agx::UuidGenerator().generate().str() << body->name() << std::flush;
     _bodyCollisionGroupName = ss.str();
     return;
 }
