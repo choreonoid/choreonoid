@@ -277,7 +277,8 @@ std::string ControllerRTCItemImpl::getModuleFilename()
 
     string ext = path.extension().string();
     if(ext.empty()){
-        path.concat(".").concat(DLL_EXTENSION);
+        path += ".";
+        path += DLL_EXTENSION;
     }
         
     if(filesystem::exists(path)){
