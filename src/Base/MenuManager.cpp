@@ -180,16 +180,14 @@ void MenuManager::addItem(QWidget* menu, QAction* item)
 
 /**
    @if jp
-   アイテム操作の対象となるメニューを指定する。
+
+   This function specifies a menu to be subjected to item operation.
+   The function must be called before adding a menu item.
    
-   メニューアイテムを追加する前にあらかじめ呼んでおく必要がある。
-   
-   @param menuPath 対象となるメニューへのパスを指定する。
-   '/' から始まる場合ルートからの位置になり、そうでない場合は
-   現在指定されているメニューからの相対パスになる。
-   もしパスに指定されたメニューが存在しない場合はメニューが新たに作成される。
-   
-   @endif
+   @param menuPath The path to the target menu
+   If the path begins with '/', it will be the path from the root.
+   Otherwise, it will be a relative path from the currently specifed menu.
+   A menu is newly created if the menu specified in the path does not exist.
 */
 MenuManager& MenuManager::setPath(const QString& path)
 {

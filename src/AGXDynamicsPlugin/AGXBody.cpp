@@ -1,6 +1,9 @@
 #include "AGXBody.h"
+#include "AGXScene.h"
 #include <cnoid/SceneDrawables>
 #include "AGXVehicleContinuousTrack.h"
+
+using namespace std;
 
 namespace {
 std::mutex agxBodyExtensionAdditionalFuncsMutex;
@@ -8,20 +11,24 @@ AGXBodyExtensionFuncMap agxBodyExtensionAdditionalFuncs;
 };
 
 namespace cnoid{
-
 ////////////////////////////////////////////////////////////
 // AGXLink
-AGXLink::AGXLink(const LinkPtr link) : _orgLink(link){}
-
-AGXLink::AGXLink(const LinkPtr link, const AGXLinkPtr parent, const Vector3& parentOrigin, const AGXBodyPtr agxBody)
+AGXLink::AGXLink(Link* const link) : _orgLink(link){}
+AGXLink::AGXLink(Link* const link, AGXLink* const parent, const Vector3& parentOrigin, AGXBody* const agxBody) :
+    _agxBody(agxBody),
+    _orgLink(link),
+    _agxParentLink(parent),
+    _origin(parentOrigin + link->b())
 {
-    _agxBody = agxBody;
-    _orgLink = link;
-    _agxParentLink = parent;
     agxBody->addAGXLink(this);
-    _origin = parentOrigin + link->b();
     const Link::ActuationMode& actuationMode = link->actuationMode();
-    if(parent && actuationMode != Link::ActuationMode::NO_ACTUATION) agxBody->addControllableLink(this);
+    if(actuationMode == Link::ActuationMode::NO_ACTUATION){
+    }else if(actuationMode == Link::ActuationMode::LINK_POSITION){
+        agxBody->addControllableLink(this);
+    }else if(parent){
+        agxBody->addControllableLink(this);
+    }
+
     constructAGXLink();
     for(Link* child = link->child(); child; child = child->sibling()){
         new AGXLink(child, this, getOrigin(), agxBody);
@@ -34,7 +41,97 @@ void AGXLink::constructAGXLink()
     _geometry = createAGXGeometry();
     _rigid->add(_geometry);
     createAGXShape();
+    setAGXMaterial();
     _constraint = createAGXConstraint();
+
+    agxSDK::SimulationRef sim =  getAGXBody()->getAGXScene()->getSimulation();
+    sim->add(_rigid);
+    sim->add(_constraint);
+    //printDebugInfo();
+}
+
+void AGXLink::setAGXMaterial(){
+    // Check density is written in body file
+    double density = 0.0;
+    bool bDensity = getOrgLink()->info()->read("density", density);
+
+    // Set material
+    string matName = "";
+    auto matNameNode = getOrgLink()->info()->find("materialName");
+    if(matNameNode->isValid()) matName = matNameNode->toString();
+    if(setAGXMaterialFromName(matName)){
+    }else{
+        setAGXMaterialFromLinkInfo();
+        if(!bDensity){
+            setCenterOfMassFromLinkInfo();
+            setMassFromLinkInfo();
+            setInertiaFromLinkInfo();
+        }
+    }
+
+    // if density is written in body file, we use this density
+    if(bDensity) getAGXGeometry()->getMaterial()->getBulkMaterial()->setDensity(density);
+}
+
+bool AGXLink::setAGXMaterialFromName(const std::string& materialName)
+{
+    agxSDK::SimulationRef simulation = getAGXBody()->getAGXScene()->getSimulation();
+    if(!simulation) return false;
+    agx::MaterialRef mat = simulation->getMaterial(materialName);
+    if(!mat) return false;
+    getAGXGeometry()->setMaterial(mat);
+    getAGXRigidBody()->updateMassProperties(agx::MassProperties::AUTO_GENERATE_ALL);
+    return true;
+}
+
+#define SET_AGXMATERIAL_FIELD(field) desc.field = getOrgLink()->info<double>(#field, desc.field)
+void AGXLink::setAGXMaterialFromLinkInfo()
+{
+    AGXMaterialDesc desc;
+    std::stringstream ss;
+    ss << "AGXMaterial" << generateUID() << std::endl;
+    desc.name = ss.str();
+    SET_AGXMATERIAL_FIELD(density);
+    SET_AGXMATERIAL_FIELD(youngsModulus);
+    SET_AGXMATERIAL_FIELD(poissonRatio);
+    SET_AGXMATERIAL_FIELD(viscosity);
+    SET_AGXMATERIAL_FIELD(damping);
+    SET_AGXMATERIAL_FIELD(surfaceViscosity);
+    SET_AGXMATERIAL_FIELD(adhesionForce);
+    SET_AGXMATERIAL_FIELD(adhesivOverlap);
+    desc.roughness = getOrgLink()->info<double>("friction", desc.roughness);
+    agx::MaterialRef mat = AGXObjectFactory::createMaterial(desc);
+    getAGXGeometry()->setMaterial(mat);
+    getAGXRigidBody()->updateMassProperties(agx::MassProperties::AUTO_GENERATE_ALL);
+}
+#undef SET_AGXMATERIAL_FIELD
+
+bool AGXLink::setCenterOfMassFromLinkInfo()
+{
+    const Vector3& c(getOrgLink()->c());
+    const agx::Vec3 ca(c(0), c(1), c(2));
+    getAGXRigidBody()->setCmLocalTranslate(ca);
+    return true;
+}
+
+bool AGXLink::setMassFromLinkInfo()
+{
+    const double& m = getOrgLink()->m();
+    if(m <= 0.0) return false;
+    getAGXRigidBody()->getMassProperties()->setMass(m, false);
+    return true;
+}
+
+bool AGXLink::setInertiaFromLinkInfo()
+{
+    const Matrix3& I = getOrgLink()->I();
+    if(I.isZero()) return false;
+    agx::SPDMatrix3x3 Ia;
+    Ia.set( I(0,0), I(1,0), I(2,0),
+            I(0,1), I(1,1), I(2,1),
+            I(0,2), I(1,2), I(2,2));
+    getAGXRigidBody()->getMassProperties()->setInertiaTensor(Ia, false);
+    return true;
 }
 
 void AGXLink::enableExternalCollision(const bool & bOn)
@@ -56,6 +153,10 @@ void AGXLink::setControlInputToAGX()
         }
         case Link::ActuationMode::JOINT_ANGLE :{
             setPositionToAGX();
+            break;
+        }
+        case Link::ActuationMode::LINK_POSITION :{
+            setLinkPositionToAGX();
             break;
         }
         case Link::ActuationMode::NO_ACTUATION :
@@ -144,37 +245,37 @@ Vector3 AGXLink::getOrigin() const
     return _origin;
 }
 
-LinkPtr AGXLink::getOrgLink() const
+Link* AGXLink::getOrgLink() const
 {
     return _orgLink;
 }
 
-AGXLinkPtr AGXLink::getAGXParentLink() const
+AGXLink* AGXLink::getAGXParentLink() const
 {
     return _agxParentLink;
 }
 
-agx::RigidBodyRef AGXLink::getAGXRigidBody() const
+agx::RigidBody* AGXLink::getAGXRigidBody() const
 {
     return _rigid;
 }
 
-agxCollide::GeometryRef AGXLink::getAGXGeometry() const
+agxCollide::Geometry* AGXLink::getAGXGeometry() const
 {
     return _geometry;
 }
 
-void AGXLink::setAGXConstraint(agx::ConstraintRef const constraint)
+void AGXLink::setAGXConstraint(agx::Constraint* const constraint)
 {
     _constraint = constraint;
 }
 
-agx::ConstraintRef AGXLink::getAGXConstraint() const
+agx::Constraint* AGXLink::getAGXConstraint() const
 {
     return _constraint;
 }
 
-AGXBody * AGXLink::getAGXBody()
+AGXBody* AGXLink::getAGXBody()
 {
     return _agxBody;
 }
@@ -182,22 +283,12 @@ AGXBody * AGXLink::getAGXBody()
 agx::RigidBodyRef AGXLink::createAGXRigidBody()
 {
     LinkPtr orgLink = getOrgLink();
-    const Matrix3& I = orgLink->I();
-    const Vector3& c = orgLink->c();
     const Vector3& v = orgLink->v(); 
     const Vector3& w = orgLink->w(); 
     const Vector3& p = getOrigin();
 
     AGXRigidBodyDesc desc;
     desc.name = orgLink->name();
-    if(orgLink->m() > 0.0) desc.m = orgLink->m();
-    if(I.isZero()){
-    }else{
-        desc.I.set( I(0,0), I(1,0), I(2,0),
-                    I(0,1), I(1,1), I(2,1),
-                    I(0,2), I(1,2), I(2,2));
-    }
-    desc.c.set(c(0), c(1), c(2));
     desc.v.set(v(0), v(1), v(2));
     desc.w.set(w(0), w(1), w(2));
     desc.p.set(p(0), p(1), p(2));
@@ -206,8 +297,15 @@ agx::RigidBodyRef AGXLink::createAGXRigidBody()
     desc.R.set(agx::Quat(0,0,0,1));
 
     Link::JointType jt = orgLink->jointType();
-    if(!orgLink->parent() && jt == Link::FIXED_JOINT ){
+    if(orgLink->isRoot() && jt == Link::FIXED_JOINT){
         desc.control = agx::RigidBody::MotionControl::STATIC;
+    }
+
+    string agxMotion = "";
+    auto agxMotionNode = getOrgLink()->info()->find("AGXMotion");
+    if(agxMotionNode->isValid()){
+        agxMotion = agxMotionNode->toString();
+        if(agxMotion == "kinematics") desc.control = agx::RigidBody::MotionControl::KINEMATICS;
     }
 
     return AGXObjectFactory::createRigidBody(desc);
@@ -371,9 +469,9 @@ void AGXLink::detectPrimitiveShape(MeshExtractor* extractor, AGXTrimeshDesc& td)
 
 agx::ConstraintRef AGXLink::createAGXConstraint()
 {
-    AGXLinkPtr const agxParentLink = getAGXParentLink();
+    AGXLink* const agxParentLink = getAGXParentLink();
     if(!agxParentLink) return nullptr;
-    LinkPtr const orgLink = getOrgLink();
+    Link* const orgLink = getOrgLink();
     agx::ConstraintRef constraint = nullptr;
     switch(orgLink->jointType()){
         case Link::REVOLUTE_JOINT :{
@@ -384,8 +482,13 @@ agx::ConstraintRef AGXLink::createAGXConstraint()
             desc.frameCenter.set(p(0),p(1),p(2));
             desc.rigidBodyA = getAGXRigidBody();
             desc.rigidBodyB = agxParentLink->getAGXRigidBody();
+            // motor
             if(orgLink->actuationMode() != Link::ActuationMode::NO_ACTUATION) desc.motor.enable = true;
+            // lock
             if(orgLink->actuationMode() == Link::ActuationMode::JOINT_ANGLE) desc.lock.enable = true;
+            // range
+            desc.range.enable = true;
+            desc.range.range = agx::RangeReal(orgLink->q_lower(), orgLink->q_upper());
             constraint = AGXObjectFactory::createConstraint(desc);
             break;
         }
@@ -399,6 +502,9 @@ agx::ConstraintRef AGXLink::createAGXConstraint()
             desc.rigidBodyB = agxParentLink->getAGXRigidBody();
             if(orgLink->actuationMode() != Link::ActuationMode::NO_ACTUATION) desc.motor.enable = true;
             if(orgLink->actuationMode() == Link::ActuationMode::JOINT_ANGLE) desc.lock.enable = true;
+            // range
+            desc.range.enable = true;
+            desc.range.range = agx::RangeReal(orgLink->q_lower(), orgLink->q_upper());
             constraint = AGXObjectFactory::createConstraint(desc);
             break;
         }
@@ -476,9 +582,30 @@ void AGXLink::setPositionToAGX()
     }
 }
 
+void AGXLink::setLinkPositionToAGX()
+{
+    LinkPtr orgLink = getOrgLink();
+    const Vector3& p = orgLink->p();
+    getAGXRigidBody()->setPosition(p(0), p(1), p(2));
+}
+
+#define PRINT_DEBUGINFO(FIELD1, FIELD2) std::cout << #FIELD1 << " " << FIELD2 << std::endl;
+void AGXLink::printDebugInfo()
+{
+    PRINT_DEBUGINFO("DEBUG", "---------------------------")
+    PRINT_DEBUGINFO("name", getOrgLink()->name());
+    PRINT_DEBUGINFO("agxcenterofmass", getAGXRigidBody()->getCmLocalTranslate());
+    PRINT_DEBUGINFO("agxmass", getAGXRigidBody()->getMassProperties()->getMass());
+    PRINT_DEBUGINFO("agxinertia", getAGXRigidBody()->getMassProperties()->getInertiaTensor());
+    PRINT_DEBUGINFO("cnoidcenterofmass", getOrgLink()->c());
+    PRINT_DEBUGINFO("cnoidmass", getOrgLink()->m());
+    PRINT_DEBUGINFO("cnoidinertia", getOrgLink()->I());
+}
+#undef  PRINT_DEBUGINFO
+
 ////////////////////////////////////////////////////////////
 // AGXBody
-AGXBody::AGXBody(Body& orgBody) : SimulationBody(new Body(orgBody)){}
+AGXBody::AGXBody(Body& orgBody) : SimulationBody(new Body(orgBody)) {}
 
 void AGXBody::initialize()
 {
@@ -504,7 +631,7 @@ void AGXBody::initialize()
     body->calcForwardKinematics(true, true);
     _agxLinks.clear();
     _controllableLinks.clear();
-	_agxBodyExtensions.clear();
+    _agxBodyExtensions.clear();
     _collisionGroupNamesToDisableCollision.clear();
     std::stringstream ss;
     ss.str("");
@@ -513,14 +640,29 @@ void AGXBody::initialize()
     return;
 }
 
-void AGXBody::createBody()
+void AGXBody::createBody(AGXScene* agxScene)
 {
     initialize();
+    _agxScene = agxScene;
     // Create AGXLink following child link.
     new AGXLink(body()->rootLink(), nullptr, Vector3::Zero(), this);
     setLinkStateToAGX();
     createExtraJoint();
     callExtensionFuncs();
+    setCollision();
+}
+
+void AGXBody::setCollision()
+{
+    AGXSceneRef agxScene = getAGXScene();
+    // Disable collision
+    for(const auto& name : getCollisionGroupNamesToDisableCollision()){
+        agxScene->setCollision(name, false);
+    }
+    // Set self collision
+    agxScene->setCollision(getCollisionGroupName(), bodyItem()->isSelfCollisionDetectionEnabled());
+    // Set external collision
+    enableExternalCollision(bodyItem()->isCollisionDetectionEnabled());
 }
 
 std::string AGXBody::getCollisionGroupName() const
@@ -530,8 +672,8 @@ std::string AGXBody::getCollisionGroupName() const
 
 void AGXBody::enableExternalCollision(const bool& bOn)
 {
-    for(int i = 0; i < numAGXLinks(); ++i){
-        getAGXLink(i)->enableExternalCollision(bOn);
+    for(const auto& agxLink : getAGXLinks()){
+        agxLink->enableExternalCollision(bOn);
     }
 }
 
@@ -540,34 +682,41 @@ void AGXBody::addCollisionGroupNameToDisableCollision(const std::string & name)
     return _collisionGroupNamesToDisableCollision.push_back(name);
 }
 
-const VectorString& AGXBody::getCollisionGroupNamesToDisableCollision() const
+const std::vector<std::string>& AGXBody::getCollisionGroupNamesToDisableCollision() const
 {
     return _collisionGroupNamesToDisableCollision;
 }
 
-void AGXBody::setAGXMaterial(const int & index, const agx::MaterialRef& mat)
+void AGXBody::addCollisionGroupNameToAllLink(const std::string& name)
+{
+    for(const auto& agxLink : getAGXLinks()){
+        agxLink->getAGXGeometry()->addGroup(name);
+    }
+}
+
+void AGXBody::setAGXMaterial(const int & index, agx::Material* const mat)
 {
     getAGXLink(index)->getAGXGeometry()->setMaterial(mat);
 }
 
 void AGXBody::setControlInputToAGX()
 {
-    for(int i = 0; i < numControllableLinks(); ++i){
-        getControllableLink(i)->setControlInputToAGX();
+    for(const auto& clink : getControllableLinks()){
+        clink->setControlInputToAGX();
     }
 }
 
 void AGXBody::setLinkStateToAGX()
 {
-    for(int i = 0; i < numAGXLinks(); ++i){
-        getAGXLink(i)->setLinkStateToAGX();
+    for(const auto& agxLink : getAGXLinks()){
+        agxLink->setLinkStateToAGX();
     }
 }
 
 void AGXBody::setLinkStateToCnoid()
 {
-    for(int i = 0; i < numAGXLinks(); ++i){
-        getAGXLink(i)->setLinkStateToCnoid();
+    for(const auto& agxLink : getAGXLinks()){
+        agxLink->setLinkStateToCnoid();
     }
 }
 
@@ -585,8 +734,8 @@ void AGXBody::setSensor(const double& timeStep, const Vector3 &gravity)
 {
     sensorHelper.initialize(body(), timeStep, gravity);
     const DeviceList<ForceSensor> &forceSensors = sensorHelper.forceSensors();
-    for (size_t i = 0; i < forceSensors.size(); ++i) {
-        AGXLinkPtr agxLink = getAGXLink(forceSensors[i]->link()->index());
+    for(const auto& fs : forceSensors){
+        AGXLink* agxLink = getAGXLink(fs->link()->index());
         agxLink->getAGXConstraint()->setEnableComputeForces(true);
     }
 }
@@ -594,19 +743,18 @@ void AGXBody::setSensor(const double& timeStep, const Vector3 &gravity)
 void AGXBody::updateForceSensors()
 {
     const DeviceList<ForceSensor>& forceSensors = sensorHelper.forceSensors();
-    for(size_t i=0; i < forceSensors.size(); ++i) {
-        ForceSensor *sensor = forceSensors[i];
-        AGXLinkPtr agxLink = getAGXLink(sensor->link()->index());
+    for(const auto& fs : forceSensors){
+        AGXLink* agxLink = getAGXLink(fs->link()->index());
         if (agxLink && agxLink->getAGXParentLink() && agxLink->getAGXConstraint()) {
             agx::Vec3 force, torque;
             agxLink->getAGXConstraint()->getLastForce(agxLink->getAGXParentLink()->getAGXRigidBody(), force, torque, false);
             Vector3 f(force[0], force[1], force[2]);
             Vector3 tau(torque[0], torque[1], torque[2]);
-            const Matrix3 R = sensor->link()->R() * sensor->R_local();
-            const Vector3 p = sensor->link()->R() * sensor->p_local();
-            sensor->f() = R.transpose() * f;
-            sensor->tau() = R.transpose() * (tau - p.cross(f));
-            sensor->notifyStateChange();
+            const Matrix3 R = fs->link()->R() * fs->R_local();
+            const Vector3 p = fs->link()->R() * fs->p_local();
+            fs->f() = R.transpose() * f;
+            fs->tau() = R.transpose() * (tau - p.cross(f));
+            fs->notifyStateChange();
         }
     }
 }
@@ -616,26 +764,36 @@ void AGXBody::updateGyroAndAccelerationSensors()
     sensorHelper.updateGyroAndAccelerationSensors();
 }
 
+AGXScene* AGXBody::getAGXScene() const
+{
+    return _agxScene;
+}
+
 int AGXBody::numAGXLinks() const
 {
     return _agxLinks.size();
 }
 
-void AGXBody::addAGXLink(AGXLinkPtr const agxLink)
+void AGXBody::addAGXLink(AGXLink* const agxLink)
 {
     _agxLinks.push_back(agxLink);
 }
 
-AGXLinkPtr AGXBody::getAGXLink(const int& index) const
+AGXLink* AGXBody::getAGXLink(const int& index) const
 {
     return _agxLinks[index];
 }
 
-AGXLinkPtr AGXBody::getAGXLink(const std::string & name) const
+AGXLink* AGXBody::getAGXLink(const std::string & name) const
 {
     Link* link = body()->link(name);
     if(!link) return nullptr;
     return getAGXLink(link->index());
+}
+
+const AGXLinkPtrs& AGXBody::getAGXLinks() const
+{
+    return _agxLinks;
 }
 
 int AGXBody::numControllableLinks() const
@@ -643,19 +801,29 @@ int AGXBody::numControllableLinks() const
     return _controllableLinks.size();
 }
 
-void AGXBody::addControllableLink(AGXLinkPtr const agxLink)
+void AGXBody::addControllableLink(AGXLink* const agxLink)
 {
     _controllableLinks.push_back(agxLink);
 }
 
-AGXLinkPtr AGXBody::getControllableLink(const int & index) const
+AGXLink* AGXBody::getControllableLink(const int & index) const
 {
     return _controllableLinks[index];
+}
+
+const AGXLinkPtrs& AGXBody::getControllableLinks() const
+{
+    return _controllableLinks;
 }
 
 agx::RigidBodyRef AGXBody::getAGXRigidBody(const int& index) const
 {
     return getAGXLink(index)->getAGXRigidBody();
+}
+
+agx::RigidBody* AGXBody::getAGXRigidBody(const std::string& linkName) const
+{
+    return getAGXLink(linkName)->getAGXRigidBody();
 }
 
 agx::ConstraintRef AGXBody::getAGXConstraint(const int& index) const
@@ -683,8 +851,8 @@ void AGXBody::callExtensionFuncs(){
 
     // call
     //agxBodyExtensionFuncs["AGXBodyExtensionSample"](this);
-    for(auto it = agxBodyExtensionFuncs.begin(); it !=agxBodyExtensionFuncs.end(); ++it){
-        (*it).second(this);
+    for(const auto& func : agxBodyExtensionFuncs){
+        func.second(this);
     }
 }
 
@@ -707,12 +875,11 @@ void AGXBody::updateAGXBodyExtensionFuncs(){
 bool AGXBody::getAGXLinksFromInfo(const std::string& key, const bool& defaultValue, AGXLinkPtrs& agxLinks) const
 {
     agxLinks.clear();
-    for(int i = 0; i < numAGXLinks(); ++i){
-        AGXLinkPtr agxLink =  getAGXLink(i);
+    for(const auto& agxLink : getAGXLinks()){
         if(agxLink->getOrgLink()->info(key, defaultValue)) agxLinks.push_back(agxLink);
     }
-    if(agxLinks.size() > 0) return true;
-    return false;
+    if(agxLinks.empty()) return false;
+    return true;
 }
 
 void AGXBody::createExtraJoint()
@@ -723,10 +890,10 @@ void AGXBody::createExtraJoint()
 
 bool AGXBody::createContinuousTrack(AGXBody* agxBody)
 {
-    AGXLinkPtrs agxLinks;
-    if(!getAGXLinksFromInfo("isContinuousTrack", false, agxLinks)) return false;
-    for(int i = 0; i < agxLinks.size(); ++i){
-        addAGXBodyExtension(new AGXContinousTrack(agxLinks[i], this));
+    AGXLinkPtrs myAgxLinks;
+    if(!getAGXLinksFromInfo("isContinuousTrack", false, myAgxLinks)) return false;
+    for(const auto& agxLink : myAgxLinks){
+        addAGXBodyExtension(new AGXContinousTrack(agxLink, this));
     }
     return true;
 }
@@ -736,8 +903,8 @@ bool AGXBody::createAGXVehicleContinousTrack(AGXBody* agxBody)
     DeviceList<> devices = this->body()->devices();
     DeviceList<AGXVehicleContinuousTrackDevice> conTrackDevices;
     conTrackDevices.extractFrom(devices);
-    for(int i = 0; i < conTrackDevices.size(); ++i){
-        addAGXBodyExtension(new AGXVehicleContinuousTrack(conTrackDevices[i], this));
+    for(const auto& ctd : conTrackDevices){
+        addAGXBodyExtension(new AGXVehicleContinuousTrack(ctd, this));
     }
     return true;
 }

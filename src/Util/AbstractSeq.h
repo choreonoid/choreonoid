@@ -72,11 +72,9 @@ public:
     }
 
     /**
-       @if jp
-       シーケンスの時間長を返す。
-       @note この時間 *未満* の時間については有効なデータが存在する。
-       この時間のデータは存在しないので、そのようなアクセスしてはいけない。
-       @endif
+       This function returns the duration of the sequence.
+       @note Valid data exists for time less than this time.
+       Sine there is no data of this time, you must not access to it.
     */
     inline double getTimeLength() const {
         return getNumFrames() / getFrameRate();

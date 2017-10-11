@@ -2,6 +2,7 @@
 #define CNOID_AGXDYNAMICS_PLUGIN_AGX_OBJECT_FACTORY_H
 
 #include "AGXInclude.h"
+#include "exportdecl.h"
 
 namespace cnoid{
 
@@ -30,7 +31,7 @@ struct AGXSimulationDesc
 struct AGXMaterialDesc
 {
     AGXMaterialDesc(){
-        name = "default";
+        name = default_name();
         density = 1000;
         youngsModulus = 4.0E8;
         poissonRatio = 0.3;
@@ -40,6 +41,10 @@ struct AGXMaterialDesc
         surfaceViscosity = 5E-09;
         adhesionForce = 0.0;
         adhesivOverlap = 0.0;
+    }
+    static agx::String default_name()
+    {
+        return "default";
     }
     agx::String name;
     agx::Real density;              // [kg/m^3]
@@ -105,10 +110,11 @@ struct AGXRigidBodyDesc
     agx::Vec3 w = agx::Vec3();            // angular velocity
     agx::Vec3 p = agx::Vec3();            // position(world)
     agx::OrthoMatrix3x3 R = agx::OrthoMatrix3x3(); // rotation(world);
-    agx::Real m = 1.0;                    // mass
-    agx::SPDMatrix3x3 I = agx::SPDMatrix3x3(agx::Vec3(1.0, 1.0, 1.0));    // inertia
-    agx::Vec3 c = agx::Vec3();            // center of mass(local)
-    agx::MassProperties::AutoGenerateFlags genflags = agx::MassProperties::AutoGenerateFlags::AUTO_GENERATE_ALL;        //
+    //agx::Real m = 1.0;                    // mass
+    //agx::SPDMatrix3x3 I = agx::SPDMatrix3x3(agx::Vec3(1.0, 1.0, 1.0));    // inertia
+    //agx::Real density = -1.0;
+    //agx::Vec3 c = agx::Vec3();            // center of mass(local)
+    //agx::MassProperties::AutoGenerateFlags genflags = agx::MassProperties::AutoGenerateFlags::AUTO_GENERATE_ALL;        //
     agx::String name;                    // name
     agx::Bool   enableAutoSleep = true;
 };
@@ -131,7 +137,7 @@ public:
     agx::Vec3f getAxis() const;
     virtual agx::Vec3f calculateSurfaceVelocity( const agxCollide::LocalContactPoint& point , size_t index ) const;
 private:
-    agx::Vec3f _axis;
+    agx::Vec3f m_axis;
 };
 
 enum AGXShapeType
@@ -296,7 +302,7 @@ struct AGXVehicleTrackWheelDesc{
     }
     agxVehicle::TrackWheel::Model model;
     agx::Real radius;
-    agx::RigidBody* rigidbody;
+    agx::RigidBodyRef rigidbody;
     agx::AffineMatrix4x4 rbRelTransform;
 };
 
@@ -306,38 +312,52 @@ struct AGXVehicleTrackDesc{
         nodeThickness = 0.075;
         nodeWidth = 0.6;
         nodeDistanceTension = 5.0E-3;
-        hingeCompliance = 4.0E-10;
+        nodeThickerThickness = 0.09;
+        useThickerNodeEvery = 0;
+        hingeCompliance = 1.0E-10;
+        hingeDamping = 0.0333;
+        minStabilizingHingeNormalForce = 100;
         stabilizingHingeFrictionParameter = 1.5;
         enableMerge = false;
-        numNodesPerMergeSegment = 4;
-        lockToReachMergeConditionCompliance = 1.0E-8;
-        contactReduction = agxVehicle::TrackInternalMergeProperties::ContactReduction::AGRESSIVE;
+        numNodesPerMergeSegment = 3;
+        contactReduction = agxVehicle::TrackInternalMergeProperties::ContactReduction::MINIMAL;
+        enableLockToReachMergeCondition = true;
+        lockToReachMergeConditionCompliance = 1.0E-11;
+        lockToReachMergeConditionDamping = 3/ 60;
+        maxAngleMergeCondition = 1.0E-5;
         trackWheelRefs.clear();
     }
 
-    agx::UInt numberOfNodes;              // Total number of nodes in the track.
+    agx::UInt numberOfNodes;           // Total number of nodes in the track.
     agx::Real nodeThickness;           // Thickness of each node in the track.
     agx::Real nodeWidth;               // Width of each node in the track.
-    agx::Real nodeDistanceTension;     // The calculated node length is close to ideal, meaning close to zero tension
-                                    // in the tracks if they were simulated without gravity. This distance is an offset
-                                    // how much closer each node will be to each other, resulting in a given initial tension.
+    agx::Real nodeDistanceTension;      // The calculated node length is close to ideal, meaning close to zero tension
+                                        // in the tracks if they were simulated without gravity. This distance is an offset
+                                        // how much closer each node will be to each other, resulting in a given initial tension.
+    agx::Real nodeThickerThickness;
+    agx::UInt useThickerNodeEvery;
     agx::Real hingeCompliance;
+    agx::Real hingeDamping;
+    agx::Real minStabilizingHingeNormalForce;
     agx::Real stabilizingHingeFrictionParameter;
     agx::Bool enableMerge;
     agx::UInt numNodesPerMergeSegment;
-    agx::Real lockToReachMergeConditionCompliance;
     agxVehicle::TrackInternalMergeProperties::ContactReduction contactReduction;
+    agx::Bool enableLockToReachMergeCondition;
+    agx::Real lockToReachMergeConditionCompliance;
+    agx::Real lockToReachMergeConditionDamping;
+    agx::Real maxAngleMergeCondition;
     std::vector<agxVehicle::TrackWheelRef> trackWheelRefs;
 };
 
-class AGXObjectFactory
+class CNOID_EXPORT AGXObjectFactory
 {
 public:
     static bool checkModuleEnalbled(const char* name);
     static agxSDK::SimulationRef createSimulation(const AGXSimulationDesc& desc);
     static agx::MaterialRef createMaterial(const AGXMaterialDesc& desc);
-    static agx::ContactMaterialRef createContactMaterial(agx::MaterialRef const matA, agx::MaterialRef const matB, const AGXContactMaterialDesc& desc);
-    static agx::ContactMaterialRef createContactMaterial(const AGXContactMaterialDesc& desc, agxSDK::MaterialManagerRef const mgr);
+    static agx::ContactMaterialRef createContactMaterial(agx::Material* const matA, agx::Material* const matB, const AGXContactMaterialDesc& desc);
+    static agx::ContactMaterialRef createContactMaterial(const AGXContactMaterialDesc& desc, agxSDK::MaterialManager* const mgr);
     static agx::RigidBodyRef createRigidBody(const AGXRigidBodyDesc& desc);
     static agxCollide::GeometryRef createGeometry(const AGXGeometryDesc& desc);
     static agxCollide::ShapeRef createShape(const AGXShapeDesc& desc);
@@ -346,7 +366,7 @@ public:
     static agxSDK::AssemblyRef createAssembly();
 private:
     AGXObjectFactory();
-    static agx::Bool setContactMaterialParam(agx::ContactMaterialRef const cm, const AGXContactMaterialDesc& desc);
+    static agx::Bool setContactMaterialParam(agx::ContactMaterial* const cm, const AGXContactMaterialDesc& desc);
     static agxCollide::BoxRef createShapeBox(const AGXBoxDesc& desc);
     static agxCollide::SphereRef createShapeSphere(const AGXSphereDesc& desc);
     static agxCollide::CapsuleRef createShapeCapsule(const AGXCapsuleDesc& desc);

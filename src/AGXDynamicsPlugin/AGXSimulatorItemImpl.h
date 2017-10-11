@@ -31,6 +31,7 @@ public:
     // Function of create, step simulation
     SimulationBody* createSimulationBody(Body* orgBody);
     bool initializeSimulation(const std::vector<SimulationBody*>& simBodies);
+    void createMaterialTable();
     bool stepSimulation(const std::vector<SimulationBody*>& activeSimBodies);
     void stopSimulation();
     void pauseSimulation();

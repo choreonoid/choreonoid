@@ -2344,6 +2344,11 @@ void SceneWidget::setBackgroundColor(const Vector3& color)
 }
 
 
+Vector3 SceneWidget::backgroundColor()
+{
+	return impl	->renderer->backgroundColor().cast<double>();
+}
+
 void SceneWidget::setColor(const Vector4& color)
 {
     impl->renderer->setColor(color.head<3>().cast<float>());

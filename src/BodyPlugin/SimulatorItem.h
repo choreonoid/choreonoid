@@ -111,6 +111,8 @@ public:
     double simulationTime() const;
     
     SignalProxy<void()> sigSimulationStarted();
+    SignalProxy<void()> sigSimulationPaused();
+    SignalProxy<void()> sigSimulationResumed();
     SignalProxy<void()> sigSimulationFinished();
 
     enum RecordingMode { REC_FULL, REC_TAIL, REC_NONE, N_RECORDING_MODES };

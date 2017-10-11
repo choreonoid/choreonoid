@@ -159,7 +159,7 @@ public:
     double erp2;
     double splitImpulsePenetrationThreshold;
     bool useWorldCollision;
-    bool useHACD;                           //  Hierarchical Approximate Convex Decomposition
+    bool useHACD;                           // Hierarchical Approximate Convex Decomposition
     double collisionMargin;
     bool usefeatherstoneAlgorithm;
     CollisionDetectorPtr collisionDetector;
@@ -687,7 +687,7 @@ void BulletLink::createLinkBody(BulletSimulatorItemImpl* simImpl, BulletLink* pa
             if(link->q_upper() < numeric_limits<double>::max() && link->q_lower() > -numeric_limits<double>::max()){
                 ((btHingeConstraint*)joint)->setLimit(link->q_lower(), link->q_upper());
             } else {
-                //Lowerlimit ＞ Upperlimit → axis is free
+                //Lowerlimit > Upperlimit -> axis is free
                 ((btHingeConstraint*)joint)->setLimit(1.0, -1.0);
             }
             simImpl->dynamicsWorld->addConstraint(joint, true);
@@ -754,7 +754,7 @@ void BulletLink::createLinkBody(BulletSimulatorItemImpl* simImpl, BulletLink* pa
                 ((btGeneric6DofConstraint*)joint)->setAngularLowerLimit(btVector3(0.0, 0.0, 0.0));
                 ((btGeneric6DofConstraint*)joint)->setAngularUpperLimit(btVector3(0.0, 0.0, 0.0));
             } else {
-                //Lowerlimit ＞ Upperlimit → axis is free
+                //Lowerlimit > Upperlimit -> axis is free
                 ((btGeneric6DofConstraint*)joint)->setLinearLowerLimit(btVector3(0.0, 0.0, 1.0));
                 ((btGeneric6DofConstraint*)joint)->setLinearUpperLimit(btVector3(0.0, 0.0, -1.0));
                 ((btGeneric6DofConstraint*)joint)->setAngularLowerLimit(btVector3(0.0, 0.0, 0.0));
@@ -1186,7 +1186,7 @@ void BulletBody::setExtraJoints()
 
                 btGeneric6DofConstraint* joint = new btGeneric6DofConstraint(*(bulletLinkPair[1]->body), *(bulletLinkPair[0]->body),
                                                                              bulletLinkPair[1]->invShift*frameA, bulletLinkPair[0]->invShift*frameB, false);
-                //joint->setLinearLowerLimit(btVector3(0,0,1));  //Lowerlimit ＞ Upperlimit → axis is free
+                //joint->setLinearLowerLimit(btVector3(0,0,1));  //Lowerlimit > Upperlimit -> axis is free
                 //joint->setLinearUpperLimit(btVector3(0,0,-1));
                 joint->setAngularLowerLimit(btVector3(0,0,1));  
                 joint->setAngularUpperLimit(btVector3(0,0,-1));    

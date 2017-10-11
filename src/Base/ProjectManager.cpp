@@ -367,6 +367,12 @@ void ProjectManager::saveProject(const string& filename)
 
 void ProjectManagerImpl::saveProject(const string& filename)
 {
+    YAMLWriter writer(filename);
+    if(!writer.isOpen()){
+        messageView->put(MessageView::ERROR, str(fmt(_("Can't open file \"%1%\" for writing.\n")) % filename));
+        return;
+    }
+
     messageView->putln();
     messageView->notify(str(fmt(_("Saving a project to \"%1%\" ...\n")) % filename));
     messageView->flush();
@@ -431,7 +437,6 @@ void ProjectManagerImpl::saveProject(const string& filename)
     */
 
     if(stored){
-        YAMLWriter writer(filename);
         writer.setKeyOrderPreservationMode(true);
         writer.putNode(archive);
         messageView->notify(_("Saving a project file has been finished.\n"));
