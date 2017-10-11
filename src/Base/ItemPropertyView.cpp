@@ -115,95 +115,17 @@ public:
     bool hasValidFunction;
 };
 
+class CustomizedItemDelegate;
 
 class FilePathEditor : public QWidget
 {
-    QTableWidget* tableWidget;
+    CustomizedItemDelegate* itemDelegate;
     QLineEdit* lineEdit;
     FilePathProperty currentValue;
-    
 public:
-    FilePathEditor(QTableWidget* tableWidget, QWidget* parent)
-        : QWidget(parent),
-          tableWidget(tableWidget)
-    {
-        setAutoFillBackground(true);
-        auto hbox = new QHBoxLayout;
-        setLayout(hbox);
-        hbox->setContentsMargins(0, 0, 0, 0);
-        hbox->setSpacing(0);
-        lineEdit = new QLineEdit(this);
-        lineEdit->setFrame(false);
-        hbox->addWidget(lineEdit);
-        setFocusProxy(lineEdit);
-        auto button = new PushButton(QApplication::style()->standardIcon(QStyle::SP_FileDialogStart), "", this);
-        button->sigClicked().connect([&](){ openFileDialog(currentValue); });
-        hbox->addWidget(button);
-    }
-
-    void setValue(const FilePathProperty& value)
-    {
-        currentValue = value;
-        lineEdit->setText(value.filename().c_str());
-    }
-
-    QString value() const
-    {
-        if(currentValue.baseDirectory().empty()){
-            return lineEdit->text();
-        } else {
-            return (filesystem::path(currentValue.baseDirectory()) / lineEdit->text().toStdString()).string().c_str();
-        }
-    }
-
-    void openFileDialog(FilePathProperty value)
-    {
-        QFileDialog dialog(MainWindow::instance());
-        dialog.setWindowTitle(_("Select File"));
-        dialog.setViewMode(QFileDialog::List);
-        dialog.setFileMode(QFileDialog::ExistingFile);
-        dialog.setLabelText(QFileDialog::Accept, _("Select"));
-        dialog.setLabelText(QFileDialog::Reject, _("Cancel"));
-
-        filesystem::path directory;
-        if(value.baseDirectory().empty()){
-            filesystem::path filenamePath(value.filename());
-            if(filenamePath.is_absolute()){
-                directory = filenamePath.parent_path();
-            } else {
-                directory = AppConfig::archive()->get("currentFileDialogDirectory", shareDirectory());
-            }
-        } else {
-            directory = value.baseDirectory();
-        }
-        dialog.setDirectory(directory.string().c_str());
-        
-        QStringList filters;
-        for(auto& filter : value.filters()){
-            filters << filter.c_str();
-        }
-        filters << _("Any files (*)");
-        dialog.setNameFilters(filters);
-        
-        if(dialog.exec()){
-            QStringList filenames;
-            filenames = dialog.selectedFiles();
-            filesystem::path newDirectory(dialog.directory().absolutePath().toStdString());
-            if(newDirectory != directory){
-                AppConfig::archive()->writePath("currentFileDialogDirectory", newDirectory.string());
-                value.setBaseDirectory("");
-            }
-            string filename(filenames.at(0).toStdString());
-            if(value.baseDirectory().empty()){
-                value.setFilename(filename);
-            } else {
-                value.setFilename(filesystem::path(filename).filename().string());
-            }
-            setValue(value);
-
-            tableWidget->itemDelegate()->commitData(this);
-        }
-    }
+    FilePathEditor(CustomizedItemDelegate* delegate, QWidget* parent);
+    void setValue(const FilePathProperty& value);
+    QString value() const;
 };
 
 
@@ -296,7 +218,7 @@ public:
                 break;
 
             case TYPE_FILEPATH:
-                editor = new FilePathEditor(tableWidget, parent);
+                editor = new FilePathEditor(const_cast<CustomizedItemDelegate*>(this), parent);
                 break;
 
             default:
@@ -348,7 +270,90 @@ public:
         }
         QStyledItemDelegate::paint(painter, option, index);
     }
+
+    void openFileDialog(FilePathProperty value, FilePathEditor* editor)
+    {
+        QFileDialog dialog(MainWindow::instance());
+        dialog.setWindowTitle(_("Select File"));
+        dialog.setViewMode(QFileDialog::List);
+        dialog.setFileMode(QFileDialog::ExistingFile);
+        dialog.setLabelText(QFileDialog::Accept, _("Select"));
+        dialog.setLabelText(QFileDialog::Reject, _("Cancel"));
+
+        filesystem::path directory;
+        if(value.baseDirectory().empty()){
+            filesystem::path filenamePath(value.filename());
+            if(filenamePath.is_absolute()){
+                directory = filenamePath.parent_path();
+            } else {
+                directory = AppConfig::archive()->get("currentFileDialogDirectory", shareDirectory());
+            }
+        } else {
+            directory = value.baseDirectory();
+        }
+        dialog.setDirectory(directory.string().c_str());
+        
+        QStringList filters;
+        for(auto& filter : value.filters()){
+            filters << filter.c_str();
+        }
+        filters << _("Any files (*)");
+        dialog.setNameFilters(filters);
+        
+        if(dialog.exec()){
+            QStringList filenames;
+            filenames = dialog.selectedFiles();
+            filesystem::path newDirectory(dialog.directory().absolutePath().toStdString());
+            if(newDirectory != directory){
+                AppConfig::archive()->writePath("currentFileDialogDirectory", newDirectory.string());
+                value.setBaseDirectory("");
+            }
+            string filename(filenames.at(0).toStdString());
+            if(value.baseDirectory().empty()){
+                value.setFilename(filename);
+            } else {
+                value.setFilename(filesystem::path(filename).filename().string());
+            }
+            editor->setValue(value);
+
+            commitData(editor);
+        }
+    }
 };
+
+
+FilePathEditor::FilePathEditor(CustomizedItemDelegate* delegate, QWidget* parent)
+    : QWidget(parent),
+      itemDelegate(delegate)
+{
+    setAutoFillBackground(true);
+    auto hbox = new QHBoxLayout;
+    setLayout(hbox);
+    hbox->setContentsMargins(0, 0, 0, 0);
+    hbox->setSpacing(0);
+    lineEdit = new QLineEdit(this);
+    lineEdit->setFrame(false);
+    hbox->addWidget(lineEdit);
+    setFocusProxy(lineEdit);
+    auto button = new PushButton(QApplication::style()->standardIcon(QStyle::SP_FileDialogStart), "", this);
+    button->sigClicked().connect([=](){ itemDelegate->openFileDialog(currentValue, this); });
+    hbox->addWidget(button);
+}
+
+void FilePathEditor::setValue(const FilePathProperty& value)
+{
+    currentValue = value;
+    lineEdit->setText(value.filename().c_str());
+}
+
+QString FilePathEditor::value() const
+{
+    if(currentValue.baseDirectory().empty()){
+        return lineEdit->text();
+    } else {
+        return (filesystem::path(currentValue.baseDirectory()) / lineEdit->text().toStdString()).string().c_str();
+    }
+}
 
 }
 
