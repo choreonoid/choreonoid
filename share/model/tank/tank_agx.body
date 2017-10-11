@@ -483,20 +483,20 @@ links:
         numberOfNodes: 42
         nodeThickness: 0.01
         nodeWidth:  0.09
-        nodeDistanceTension: 2e-4
+        nodeDistanceTension: 2.0E-4
         nodeThickerThickness: 0.02
-        useThickerNodeEvery: 3
-        hingeCompliance: 1e-7
-        hingeDamping: 0.0333
-        minStabilizingHingeNormalForce: 300.0
+        useThickerNodeEvery: 0
+        hingeCompliance: 9.0E-10
+        hingeDamping: 0.01
+        minStabilizingHingeNormalForce: 100
         stabilizingHingeFrictionParameter: 1e-6
         enableMerge: false
-        numNodesPerMergeSegment: 0
+        numNodesPerMergeSegment: 3
         contactReduction: 3
-        enableLockToReachMergeCondition: false
-        lockToReachMergeConditionCompliance: 1.0E-11
-        lockToReachMergeConditionDamping: 0.001
-        maxAngleMergeCondition: 1.0E-5
+        enableLockToReachMergeCondition: true
+        lockToReachMergeConditionCompliance: 0.1
+        lockToReachMergeConditionDamping: 0.01
+        #maxAngleMergeCondition: 1.0E-5
       -
         type: Visual
         elements:
@@ -677,20 +677,20 @@ links:
         numberOfNodes: 42
         nodeThickness: 0.01
         nodeWidth:  0.09
-        nodeDistanceTension: 2e-4
+        nodeDistanceTension: 2.0E-4
         nodeThickerThickness: 0.02
-        useThickerNodeEvery: 3
-        hingeCompliance: 1e-7
-        hingeDamping: 0.0333
-        minStabilizingHingeNormalForce: 300.0
+        useThickerNodeEvery: 0
+        hingeCompliance: 9.0E-10
+        hingeDamping: 0.01
+        minStabilizingHingeNormalForce: 100
         stabilizingHingeFrictionParameter: 1e-6
         enableMerge: false
-        numNodesPerMergeSegment: 0
+        numNodesPerMergeSegment: 3
         contactReduction: 3
-        enableLockToReachMergeCondition: false
-        lockToReachMergeConditionCompliance: 1.0E-11
-        lockToReachMergeConditionDamping: 0.001
-        maxAngleMergeCondition: 1.0E-5
+        enableLockToReachMergeCondition: true
+        lockToReachMergeConditionCompliance: 1.0E-10
+        lockToReachMergeConditionDamping: 0.01
+        #maxAngleMergeCondition: 1.0E-5
       -
         type: Visual
         elements:
