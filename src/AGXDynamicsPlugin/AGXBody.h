@@ -43,7 +43,7 @@ public:
     void constructAGXLink();
     void setAGXMaterial();
     bool setAGXMaterialFromName(const std::string& materialName);
-    bool setAGXMaterialFromLinkInfo();
+    void setAGXMaterialFromLinkInfo();
     bool setCenterOfMassFromLinkInfo();
     bool setMassFromLinkInfo();
     bool setInertiaFromLinkInfo();
