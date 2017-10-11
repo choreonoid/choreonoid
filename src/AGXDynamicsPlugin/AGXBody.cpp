@@ -846,12 +846,11 @@ const AGXBodyExtensionPtrs& AGXBody::getAGXBodyExtensions() const
 void AGXBody::callExtensionFuncs(){
     // update func list
     updateAGXBodyExtensionFuncs();
-    //agxBodyExtensionFuncs["hoge"] = [](AGXBody* agxBody){ std::cout << "hoge" << std::endl; return false;};
-    agxBodyExtensionFuncs["ContinousTrack"] = [&](AGXBody* agxBody){ return createContinuousTrack(agxBody); };
+    //agxBodyExtensionFuncs["test"] = [](AGXBody* agxBody){ std::cout << "test" << std::endl; return false;};
+    agxBodyExtensionFuncs["ContinuousTrack"] = [&](AGXBody* agxBody){ return createContinuousTrack(agxBody); };
     agxBodyExtensionFuncs["AGXVehicleContinousTrack"] = [&](AGXBody* agxBody){ return createAGXVehicleContinousTrack(this); };
 
     // call
-    //agxBodyExtensionFuncs["AGXBodyExtensionSample"](this);
     for(const auto& func : agxBodyExtensionFuncs){
         func.second(this);
     }
@@ -894,7 +893,7 @@ bool AGXBody::createContinuousTrack(AGXBody* agxBody)
     AGXLinkPtrs myAgxLinks;
     if(!getAGXLinksFromInfo("isContinuousTrack", false, myAgxLinks)) return false;
     for(const auto& agxLink : myAgxLinks){
-        addAGXBodyExtension(new AGXContinousTrack(agxLink, this));
+        addAGXBodyExtension(new AGXContinuousTrack(agxLink, this));
     }
     return true;
 }
