@@ -1,5 +1,6 @@
 #include "AGXBody.h"
 #include "AGXScene.h"
+#include <cnoid/MeshExtractor>
 #include <cnoid/SceneDrawables>
 #include "AGXVehicleContinuousTrack.h"
 

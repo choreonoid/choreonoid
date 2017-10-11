@@ -3,7 +3,6 @@
 
 #include <cnoid/SimulatorItem>
 #include <cnoid/BodyItem>
-#include <cnoid/MeshExtractor>
 #include <cnoid/BasicSensorSimulationHelper>
 #include "AGXObjectFactory.h"
 #include "AGXBodyExtension.h"
@@ -25,6 +24,7 @@ inline const Position convertToPosition(const agx::AffineMatrix4x4& a){
     return pos;
 }
 
+class MeshExtractor;
 class AGXScene;
 class AGXBody;
 class CNOID_EXPORT AGXLink : public Referenced
