@@ -148,6 +148,7 @@ set(headers
   Selection.h
   DataMap.h
   Joystick.h
+  JoystickGamepad.h
   ExtJoystick.h
   Task.h
   AbstractTaskSequencer.h
