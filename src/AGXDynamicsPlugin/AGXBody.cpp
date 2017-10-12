@@ -170,15 +170,8 @@ void AGXLink::setLinkStateToAGX()
 {
     agx::RigidBodyRef const agxRigidBody = getAGXRigidBody();
     if(!agxRigidBody) return;
+    setLinkPositionToAGX();
     LinkPtr const orgLink = getOrgLink();
-    const Vector3& p = orgLink->p();
-    const Matrix3& R = orgLink->R();
-    agx::Vec3 translation(p(0), p(1), p(2));
-    agx::OrthoMatrix3x3 rotation(R(0,0), R(1,0), R(2,0),
-                                 R(0,1), R(1,1), R(2,1),
-                                 R(0,2), R(1,2), R(2,2));
-    agxRigidBody->setTransform( agx::AffineMatrix4x4( rotation, translation) );
-
     const Vector3 lc = orgLink->R() * orgLink->c();
     const Vector3& w = orgLink->w();
     const Vector3 v = orgLink->v() + w.cross(lc);
@@ -302,11 +295,8 @@ agx::RigidBodyRef AGXLink::createAGXRigidBody()
         desc.control = agx::RigidBody::MotionControl::STATIC;
     }
 
-    string agxMotion = "";
-    auto agxMotionNode = getOrgLink()->info()->find("AGXMotion");
-    if(agxMotionNode->isValid()){
-        agxMotion = agxMotionNode->toString();
-        if(agxMotion == "kinematics") desc.control = agx::RigidBody::MotionControl::KINEMATICS;
+    if(orgLink->actuationMode() == Link::LINK_POSITION){
+        desc.control = agx::RigidBody::MotionControl::KINEMATICS;
     }
 
     return AGXObjectFactory::createRigidBody(desc);
@@ -587,7 +577,12 @@ void AGXLink::setLinkPositionToAGX()
 {
     LinkPtr orgLink = getOrgLink();
     const Vector3& p = orgLink->p();
-    getAGXRigidBody()->setPosition(p(0), p(1), p(2));
+    const Matrix3& R = orgLink->R();
+    agx::Vec3 translation(p(0), p(1), p(2));
+    agx::OrthoMatrix3x3 rotation(R(0,0), R(1,0), R(2,0),
+    R(0,1), R(1,1), R(2,1),
+    R(0,2), R(1,2), R(2,2));
+    getAGXRigidBody()->setTransform( agx::AffineMatrix4x4( rotation, translation) );
 }
 
 #define PRINT_DEBUGINFO(FIELD1, FIELD2) std::cout << #FIELD1 << " " << FIELD2 << std::endl;

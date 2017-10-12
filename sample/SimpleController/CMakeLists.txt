@@ -50,3 +50,6 @@ configure_file(ThreeWheeler.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 
 add_cnoid_simple_controller(FourWheelCarJoystickController FourWheelCarJoystickController.cpp)
 configure_file(FourWheelCarJoystick.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+
+add_cnoid_simple_controller(LinkPositionController LinkPositionController.cpp)
+configure_file(LinkPositionControl.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
