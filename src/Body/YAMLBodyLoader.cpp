@@ -25,7 +25,6 @@
 #include <mutex>
 #include <cstdlib>
 #include "gettext.h"
-//#include <map>
 #include <iostream>
 
 using namespace std;
@@ -138,7 +137,6 @@ public:
     int numCustomNodeFunctions;
     
     Body* body;
-    //map<string, Body*> subBodyMap;
     Link* rootLink;
 
     struct LinkInfo : public Referenced
@@ -266,6 +264,9 @@ public:
     vector<bool> validJointIdSet;
     int numValidJointIds;
 
+    map<string, BodyPtr> subBodyMap;
+    bool doExpandLinkOffsetRotations;
+
     YAMLBodyLoaderImpl(YAMLBodyLoader* self);
     ~YAMLBodyLoaderImpl();
     void updateCustomNodeFunctions();
@@ -305,7 +306,7 @@ public:
     void readContinuousTrackNode(Mapping* linkNode);
     void addTrackLink(int index, LinkPtr link, Mapping* node, string& io_parent, double initialAngle);
     void readSubBodyNode(Mapping* linkNode);
-    void addSubBodyLinks(Body* subbody, Mapping* node);
+    void addSubBodyLinks(BodyPtr subBody, Mapping* node);
     void readExtraJoints(Mapping* topNode);
     void readExtraJoint(Mapping* node);
 
@@ -468,8 +469,9 @@ YAMLBodyLoaderImpl::YAMLBodyLoaderImpl(YAMLBodyLoader* self)
     numCustomNodeFunctions = 0;
 
     body = 0;
-    //subBodyMap.clear();
+    subBodyMap.clear();
     os_ = &nullout();
+    doExpandLinkOffsetRotations = true;
 }
 
 
@@ -559,7 +561,8 @@ bool YAMLBodyLoader::load(Body* body, const std::string& filename)
 
 bool YAMLBodyLoaderImpl::load(Body* body, const std::string& filename)
 {
-    mainFilePath = filename;
+    mainFilePath = filesystem::absolute(filename);
+    
     sceneReader.setBaseDirectory(mainFilePath.parent_path().string());
 
     bool result = false;
@@ -722,7 +725,10 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
     }
 
     body->setRootLink(rootLink);
-    body->expandLinkOffsetRotations();
+
+    if(doExpandLinkOffsetRotations){
+        body->expandLinkOffsetRotations();
+    }
 
     // Warn empty joint ids
     if(numValidJointIds < validJointIdSet.size()){
@@ -1356,8 +1362,8 @@ bool YAMLBodyLoaderImpl::readDevice(Device* device, Mapping& node)
     if(node.read("id", id)) device->setId(id);
 
     const Affine3& T = transformStack.back();
-    device->setLocalTranslation(currentLink->Rs() * T.translation());
-    device->setLocalRotation(currentLink->Rs() * T.linear());
+    device->setLocalTranslation(T.translation());
+    device->setLocalRotation(T.linear());
     device->setLink(currentLink);
     body->addDevice(device);
 
@@ -1562,33 +1568,37 @@ void YAMLBodyLoaderImpl::readSubBodyNode(Mapping* node)
     if(filesystem::equivalent(mainFilePath, filepath)){
         node->throwException("recursive sub-body is prohibited.");
     }
-    
-//    bool loaded(false);
-//    for(auto itr = subBodyMap.begin(); itr != subBodyMap.end(); ++itr){
-//        boost::filesystem::path loadedfile_path(itr->first);
-//        if(boost::filesystem::equivalent(loadedfile_path, subfile_path)){
-//            subbody = itr->second->clone();
-//            loaded = true;
-//        }
-//    }
-//    if(!loaded){
-    try {
-        YAMLBodyLoader loader;
-        loader.setMessageSink(*os_);
-        loader.setDefaultDivisionNumber(sceneReader.defaultDivisionNumber());
-        BodyPtr subBody = new Body;
-        if(!loader.load(subBody, filepath.string())){
-            os() << (format(_("SubBody specified by uri \"%1%\" cannot be loaded.")) % uri) << endl;
-        } else {
-            addSubBodyLinks(subBody, node);
+
+    BodyPtr subBody;
+    string filename = filepath.string();
+    auto iter = subBodyMap.find(filename);
+    if(iter != subBodyMap.end()){
+        subBody = iter->second;
+    } else {
+        try {
+            YAMLBodyLoader loader;
+            loader.setMessageSink(*os_);
+            loader.setDefaultDivisionNumber(sceneReader.defaultDivisionNumber());
+            loader.impl->doExpandLinkOffsetRotations = false;
+            subBody = new Body;
+            if(loader.load(subBody, filename)){
+                subBodyMap[filename] = subBody;
+            } else {
+                os() << (format(_("SubBody specified by uri \"%1%\" cannot be loaded.")) % uri) << endl;
+                subBody.reset();
+            }
+        } catch(const ValueNode::Exception& ex){
+            os() << ex.message();
         }
-    } catch(const ValueNode::Exception& ex){
-        os() << ex.message();
+    }
+
+    if(subBody){
+        addSubBodyLinks(subBody->clone(), node);
     }
 }
 
 
-void YAMLBodyLoaderImpl::addSubBodyLinks(Body* subBody, Mapping* node)
+void YAMLBodyLoaderImpl::addSubBodyLinks(BodyPtr subBody, Mapping* node)
 {
     string prefix;
     if(!node->read("prefix", prefix)){
