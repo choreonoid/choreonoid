@@ -75,6 +75,12 @@ void YAMLSceneLoader::setDefaultDivisionNumber(int n)
 }
 
 
+int YAMLSceneLoader::defaultDivisionNumber() const
+{
+    return impl->sceneReader.defaultDivisionNumber();
+}
+
+
 SgNode* YAMLSceneLoader::load(const std::string& filename)
 {
     return impl->load(filename);

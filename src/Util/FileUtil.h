@@ -19,9 +19,9 @@ extern CNOID_EXPORT const char* EXEC_SUFFIX;
 extern CNOID_EXPORT const char* EXEC_EXTENSION;
 extern CNOID_EXPORT const char* PATH_DELIMITER;
 
-CNOID_EXPORT void makePathCompact(
-    const boost::filesystem::path& path,
-    boost::filesystem::path& out_compact);
+CNOID_EXPORT boost::filesystem::path getCompactPath(const boost::filesystem::path& path);
+CNOID_EXPORT void makePathCompact(boost::filesystem::path& io_path);
+
 
 CNOID_EXPORT int findSubDirectory(
     const boost::filesystem::path& directory,
