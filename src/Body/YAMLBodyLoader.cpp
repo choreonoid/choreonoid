@@ -264,6 +264,7 @@ public:
     vector<bool> validJointIdSet;
     int numValidJointIds;
 
+    unique_ptr<YAMLBodyLoader> subLoader;
     map<string, BodyPtr> subBodyMap;
     bool doExpandLinkOffsetRotations;
 
@@ -1576,12 +1577,15 @@ void YAMLBodyLoaderImpl::readSubBodyNode(Mapping* node)
         subBody = iter->second;
     } else {
         try {
-            YAMLBodyLoader loader;
-            loader.setMessageSink(*os_);
-            loader.setDefaultDivisionNumber(sceneReader.defaultDivisionNumber());
-            loader.impl->doExpandLinkOffsetRotations = false;
+            if(!subLoader){
+                subLoader.reset(new YAMLBodyLoader);
+                subLoader->setMessageSink(*os_);
+                subLoader->impl->doExpandLinkOffsetRotations = false;
+            }
+            subLoader->setDefaultDivisionNumber(sceneReader.defaultDivisionNumber());
+                
             subBody = new Body;
-            if(loader.load(subBody, filename)){
+            if(subLoader->load(subBody, filename)){
                 subBodyMap[filename] = subBody;
             } else {
                 os() << (format(_("SubBody specified by uri \"%1%\" cannot be loaded.")) % uri) << endl;
