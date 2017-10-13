@@ -31,7 +31,7 @@ typedef ref_ptr<Mapping> MappingPtr;
 class CNOID_EXPORT Link : public Referenced
 {
 public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     Link();
 

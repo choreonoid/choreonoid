@@ -23,7 +23,7 @@ class CNOID_EXPORT ForceSensor : public Device
     std::unique_ptr<Spec> spec;
         
 public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     ForceSensor();
     ForceSensor(const ForceSensor& org, bool copyStateOnly = false);
@@ -54,6 +54,6 @@ public:
 
 typedef ref_ptr<ForceSensor> ForceSensorPtr;
     
-};
+}
 
 #endif

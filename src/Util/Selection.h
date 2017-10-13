@@ -19,7 +19,7 @@ public:
     explicit Selection(size_t size, const char* domainname = 0);
         
     int size() const {
-        return  symbols_.size();
+        return  static_cast<int>(symbols_.size());
     }
 
     operator bool() const {
