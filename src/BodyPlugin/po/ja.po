@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-10-03 11:09+0900\n"
+"POT-Creation-Date: 2017-10-12 14:22+0900\n"
 "PO-Revision-Date: 2011-11-12 14:46+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Language =\n"
@@ -39,7 +39,7 @@ msgstr "ルンゲクッタ"
 #: AISTSimulatorItem.cpp:450
 msgid ""
 "%1% uses the ForwardDynamicsCBM module to perform the high-gain control."
-msgstr ""
+msgstr "%1%はハイゲイン制御を行うためForwardDynamicsCBMモジュールを使います。"
 
 #: AISTSimulatorItem.cpp:711
 msgid "Dynamics mode"
@@ -177,7 +177,7 @@ msgstr "静的モデル"
 msgid "Model file"
 msgstr "モデルファイル"
 
-#: BodyItem.cpp:1134 WorldItem.cpp:446
+#: BodyItem.cpp:1134 WorldItem.cpp:470
 msgid "Collision detection"
 msgstr "干渉検出"
 
@@ -199,7 +199,7 @@ msgstr "ボディ／リンクビュー"
 
 #: BodyLinkView.cpp:150
 msgid "Use Quaternion"
-msgstr "姿勢のクォータニオン表示"
+msgstr "クオタニオンを使用"
 
 #: BodyLinkView.cpp:241
 msgid "Index:"
@@ -986,69 +986,71 @@ msgstr ""
 
 #: SensorVisualizerItem.cpp:147
 msgid "SensorVisualizer"
-msgstr "センサ可視化"
+msgstr "センサビジュアライザ"
 
 #: SensorVisualizerItem.cpp:325
-#, fuzzy
 msgid "ForceSensorVisualizer"
-msgstr "センサ可視化"
+msgstr "力センサビジュアライザ"
 
 #: SensorVisualizerItem.cpp:442
 msgid "Visual ratio"
 msgstr "表示比率"
 
 #: SensorVisualizerItem.cpp:477
-#, fuzzy
 msgid "PointCloudVisualizer"
-msgstr "センサ可視化"
+msgstr "ポイントクラウドビジュアライザ"
 
 #: SensorVisualizerItem.cpp:573
-#, fuzzy
 msgid "RangeSensorVisualizer"
-msgstr "センサ可視化"
+msgstr "レンジセンサビジュアライザ"
 
 #: SensorVisualizerItem.cpp:668
-#, fuzzy
 msgid "CameraImageVisualizer"
-msgstr "センサ可視化"
+msgstr "カメラ画像ビジュアライザ"
 
-#: SimpleControllerItem.cpp:135
+#: SimpleControllerItem.cpp:140
 msgid "SimpleControllerItem"
 msgstr "シンプルコントローラアイテム"
 
-#: SimpleControllerItem.cpp:155
+#: SimpleControllerItem.cpp:163
+msgid "None"
+msgstr "なし"
+
+#: SimpleControllerItem.cpp:164
 msgid "Controller directory"
 msgstr "コントローラディレクトリ"
 
-#: SimpleControllerItem.cpp:156
+#: SimpleControllerItem.cpp:165
 msgid "Project directory"
 msgstr "プロジェクトディレクトリ"
 
-#: SimpleControllerItem.cpp:234
+#: SimpleControllerItem.cpp:265
 msgid "The controller module \"%2%\" of %1% has been unloaded."
 msgstr "%1%のコントローラモジュール\"%2%\"をアンロードしました。"
 
-#: SimpleControllerItem.cpp:316
-msgid "Please save the project."
-msgstr "プロジェクトを保存してください。"
+#: SimpleControllerItem.cpp:348
+msgid ""
+"Controller module \"%1%\" of %2% is specified as a relative path from the "
+"project directory, but the project directory has not been determined yet."
+msgstr ""
 
-#: SimpleControllerItem.cpp:327
+#: SimpleControllerItem.cpp:360
 msgid "The controller module of %1% has already been loaded."
 msgstr "%1%のコントローラモジュールは既にロードされています。"
 
-#: SimpleControllerItem.cpp:334
+#: SimpleControllerItem.cpp:367
 msgid "Loading the controller module \"%2%\" of %1% ... "
 msgstr "%1%のコントローラモジュール\"%2%\"をロード中･･･"
 
-#: SimpleControllerItem.cpp:337
+#: SimpleControllerItem.cpp:370
 msgid "Failed.\n"
 msgstr "失敗。\n"
 
-#: SimpleControllerItem.cpp:340
+#: SimpleControllerItem.cpp:373
 msgid "OK!"
 msgstr ""
 
-#: SimpleControllerItem.cpp:348
+#: SimpleControllerItem.cpp:382
 msgid ""
 "The factory function \"createSimpleController()\" is not found in the "
 "controller module."
@@ -1056,31 +1058,31 @@ msgstr ""
 "ファクトリ関数\"createSimpleController()\"がコントローラモジュール内に見つか"
 "りません。"
 
-#: SimpleControllerItem.cpp:352
+#: SimpleControllerItem.cpp:386
 msgid "The factory failed to create a controller instance."
 msgstr "ファクトリはコントローラインスタンスの生成に失敗しました。"
 
-#: SimpleControllerItem.cpp:354
+#: SimpleControllerItem.cpp:388
 msgid "A controller instance has successfully been created."
 msgstr "コントローラインスタンスを生成しました。"
 
-#: SimpleControllerItem.cpp:392
+#: SimpleControllerItem.cpp:426
 msgid "%1%'s initialize method failed."
 msgstr "%1%のinitializeメソッドが失敗しました。"
 
-#: SimpleControllerItem.cpp:799
-msgid "Relative Path Base"
-msgstr "相対パスベース"
+#: SimpleControllerItem.cpp:834
+msgid "Simple Controller Module (*.%1%)"
+msgstr "シンプルコントローラモジュール (*.%1%)"
 
-#: SimpleControllerItem.cpp:802
-msgid " Dynamic Link Library "
-msgstr " 共有ライブラリ "
-
-#: SimpleControllerItem.cpp:810
+#: SimpleControllerItem.cpp:842
 msgid "Controller module"
 msgstr "コントローラモジュール"
 
-#: SimpleControllerItem.cpp:812
+#: SimpleControllerItem.cpp:844
+msgid "Base directory"
+msgstr "ベースディレクトリ"
+
+#: SimpleControllerItem.cpp:846
 msgid "Reloading"
 msgstr "再読込"
 
@@ -1295,13 +1297,21 @@ msgstr "干渉データの記録"
 msgid "Enabled"
 msgstr "有効"
 
-#: WorldItem.cpp:89
+#: WorldItem.cpp:91
 msgid "WorldItem"
 msgstr "ワールドアイテム"
 
-#: WorldItem.cpp:448
+#: WorldItem.cpp:472
 msgid "Collision detector"
 msgstr "干渉検出器"
+
+#: WorldItem.cpp:475
+msgid "Contact material definition file (*.yaml)"
+msgstr "接触マテリアル定義ファイル (*.yaml)"
+
+#: WorldItem.cpp:476
+msgid "Contact material"
+msgstr "接触マテリアル"
 
 #: WorldLogFileItem.cpp:462
 msgid "WorldLogFileItem"
@@ -1355,11 +1365,3 @@ msgstr ""
 msgid "Root relative"
 msgstr "ルート相対"
 
-#~ msgid "High-gain dynamics"
-#~ msgstr "ハイゲイン動力学"
-
-#~ msgid "Show visual shapes"
-#~ msgstr "視覚形状の表示"
-
-#~ msgid "Show collision shapes"
-#~ msgstr "干渉形状の表示"

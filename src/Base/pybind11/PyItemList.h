@@ -16,7 +16,7 @@ namespace pybind11 { namespace detail {
 
         //Conversion part 1 (Python->C++)
         bool load(handle src, bool) {
-
+            return false;
         }
 
         //Conversion part 2 (C++ -> Python)

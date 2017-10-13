@@ -13,6 +13,7 @@ set(sources
   LinkPath.cpp
   JointPath.cpp
   Jacobian.cpp
+  ContactMaterialTable.cpp
   Device.cpp
   ForceSensor.cpp
   RateGyroSensor.cpp
@@ -73,6 +74,7 @@ set(headers
   LinkPath.h
   JointPath.h
   LinkGroup.h
+  ContactMaterialTable.h
   BodyCollisionDetectorUtil.h
   MultiDeviceStateSeq.h
   Device.h

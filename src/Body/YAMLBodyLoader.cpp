@@ -25,7 +25,6 @@
 #include <mutex>
 #include <cstdlib>
 #include "gettext.h"
-//#include <map>
 #include <iostream>
 
 using namespace std;
@@ -120,7 +119,7 @@ public:
     YAMLBodyLoader* self;
     YAMLReader reader;
     YAMLSceneReader sceneReader;
-    string mainfilename;
+    filesystem::path mainFilePath;
 
     typedef function<bool(Mapping& node)> NodeFunction;
 
@@ -138,7 +137,6 @@ public:
     int numCustomNodeFunctions;
     
     Body* body;
-    //map<string, Body*> subBodyMap;
     Link* rootLink;
 
     struct LinkInfo : public Referenced
@@ -266,6 +264,10 @@ public:
     vector<bool> validJointIdSet;
     int numValidJointIds;
 
+    unique_ptr<YAMLBodyLoader> subLoader;
+    map<string, BodyPtr> subBodyMap;
+    bool doExpandLinkOffsetRotations;
+
     YAMLBodyLoaderImpl(YAMLBodyLoader* self);
     ~YAMLBodyLoaderImpl();
     void updateCustomNodeFunctions();
@@ -276,6 +278,8 @@ public:
     void readNodeInLinks(Mapping* linkNode, const string& nodeType);
     void readLinkNode(Mapping* linkNode);
     LinkPtr readLinkContents(Mapping* linkNode);
+    void setJointId(Link* link, int id);
+    void readJointContents(Link* link, Mapping* node);
     boost::optional<Vector3> readAxis(Mapping* node, const char* key);
     void setJointParameters(Link* link, string jointType, ValueNode* node);
     void setMassParameters(Link* link);
@@ -303,7 +307,7 @@ public:
     void readContinuousTrackNode(Mapping* linkNode);
     void addTrackLink(int index, LinkPtr link, Mapping* node, string& io_parent, double initialAngle);
     void readSubBodyNode(Mapping* linkNode);
-    void addSubBodyLinks(Body* subbody, Mapping* node);
+    void addSubBodyLinks(BodyPtr subBody, Mapping* node);
     void readExtraJoints(Mapping* topNode);
     void readExtraJoint(Mapping* node);
 
@@ -333,6 +337,7 @@ public:
             }
         }
         node.throwException(_("Invalid type value is used as a jointRange value"));
+        return 0.0;
     }
 
     bool readAngle(Mapping& node, const char* key, double& angle){
@@ -394,6 +399,7 @@ void readInertia(Listing& inertia, Matrix3& I)
         inertia.throwException(_("The number of elements specified as an inertia value must be six or nine."));
     }
 }
+
     
 bool extractInertia(Mapping* mapping, const char* key, Matrix3& I)
 {
@@ -464,8 +470,9 @@ YAMLBodyLoaderImpl::YAMLBodyLoaderImpl(YAMLBodyLoader* self)
     numCustomNodeFunctions = 0;
 
     body = 0;
-    //subBodyMap.clear();
+    subBodyMap.clear();
     os_ = &nullout();
+    doExpandLinkOffsetRotations = true;
 }
 
 
@@ -536,13 +543,13 @@ bool YAMLBodyLoaderImpl::clear()
     rootLink = nullptr;
     linkInfos.clear();
     linkMap.clear();
-    validJointIdSet.clear();
-    numValidJointIds = 0;
     nameStack.clear();
     transformStack.clear();
     rigidBodies.clear();
     sceneGroupSetStack.clear();
     sceneReader.clear();
+    validJointIdSet.clear();
+    numValidJointIds = 0;
     return true;
 }    
 
@@ -555,9 +562,9 @@ bool YAMLBodyLoader::load(Body* body, const std::string& filename)
 
 bool YAMLBodyLoaderImpl::load(Body* body, const std::string& filename)
 {
-    mainfilename = filename;
-    boost::filesystem::path filepath(filename);
-    sceneReader.setBaseDirectory(filepath.parent_path().string());
+    mainFilePath = filesystem::absolute(filename);
+    
+    sceneReader.setBaseDirectory(mainFilePath.parent_path().string());
 
     bool result = false;
 
@@ -719,7 +726,10 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
     }
 
     body->setRootLink(rootLink);
-    body->expandLinkOffsetRotations();
+
+    if(doExpandLinkOffsetRotations){
+        body->expandLinkOffsetRotations();
+    }
 
     // Warn empty joint ids
     if(numValidJointIds < validJointIdSet.size()){
@@ -780,123 +790,32 @@ void YAMLBodyLoaderImpl::readLinkNode(Mapping* linkNode)
 }
 
 
-LinkPtr YAMLBodyLoaderImpl::readLinkContents(Mapping* linkNode)
+LinkPtr YAMLBodyLoaderImpl::readLinkContents(Mapping* node)
 {
-    MappingPtr info = static_cast<Mapping*>(linkNode->clone());
-    
     LinkPtr link = body->createLink();
 
-    auto nameNode = info->extract("name");
+    auto nameNode = node->extract("name");
     if(nameNode){
         link->setName(nameNode->toString());
         if(!linkMap.insert(make_pair(link->name(), link)).second){
-            nameNode->throwException(
-                str(format(_("Duplicated link name \"%1%\"")) % link->name()));
+            nameNode->throwException(str(format(_("Duplicated link name \"%1%\"")) % link->name()));
         }
     }
 
-    if(extractEigen(info, "translation", v)){
+    if(extractEigen(node, "translation", v)){
         link->setOffsetTranslation(v);
     }
     Matrix3 R;
-    if(readRotation(*info, R, true)){
+    if(readRotation(*node, R, true)){
         link->setOffsetRotation(R);
     }
-    
-    if(extract(info, "jointId", id)){
-        link->setJointId(id);
-        if(id >= 0){
-            if(id >= validJointIdSet.size()){
-                validJointIdSet.resize(id + 1);
-            }
-            if(!validJointIdSet[id]){
-                ++numValidJointIds;
-                validJointIdSet[id] = true;
-            } else {
-                os() << str(format("Warning: Joint ID %1% of %2% is duplicated.")
-                            % id % link->name()) << endl;
-            }
-        }
-    }
 
-    auto jointTypeNode = info->find("jointType");
-    if(jointTypeNode->isValid()){
-        string jointType = jointTypeNode->toString();
-        setJointParameters(link, jointType, jointTypeNode);
-    }
-
-    boost::optional<Vector3> axis = readAxis(info, "jointAxis");
-    if(axis){
-        link->setJointAxis(*axis);
-    }
-    
-    auto jointAngleNode = info->extract("jointAngle");
-    if(jointAngleNode){
-        link->setInitialJointDisplacement(toRadian(jointAngleNode->toDouble()));
-    }
-    auto jointDisplacementNode = info->extract("jointDisplacement");
-    if(jointDisplacementNode){
-        link->setInitialJointDisplacement(jointDisplacementNode->toDouble());
-    }
-
-    double lower = -std::numeric_limits<double>::max();
-    double upper =  std::numeric_limits<double>::max();
-    
-    auto jointRangeNode = info->find("jointRange");
-    if(jointRangeNode->isValid()){
-        if(jointRangeNode->isScalar()){
-            upper = readLimitValue(*jointRangeNode, true);
-            lower = -upper;
-        } else if(jointRangeNode->isListing()){
-            Listing& jointRange = *jointRangeNode->toListing();
-            if(jointRange.size() != 2){
-                jointRangeNode->throwException(_("jointRange must have two elements"));
-            }
-            lower = readLimitValue(jointRange[0], false);
-            upper = readLimitValue(jointRange[1], true);
-        } else {
-            jointRangeNode->throwException(_("Invalid type value is specefied as a jointRange"));
-        }
-    }
-    if(link->jointType() == Link::REVOLUTE_JOINT && isDegreeMode()){
-        link->setJointRange(
-            lower == -std::numeric_limits<double>::max() ? lower : radian(lower),
-            upper ==  std::numeric_limits<double>::max() ? upper : radian(upper));
-    } else {
-        link->setJointRange(lower, upper);
-    }
-
-    auto maxVelocityNode = info->find("maxJointVelocity");
-    if(maxVelocityNode->isValid()){
-        double maxVelocity = maxVelocityNode->toDouble();
-        if(link->jointType() == Link::REVOLUTE_JOINT){
-            link->setJointVelocityRange(toRadian(-maxVelocity), toRadian(maxVelocity));
-        } else {
-            link->setJointVelocityRange(-maxVelocity, maxVelocity);
-        }
-    }
-
-    auto velocityRangeNode = info->find("jointVelocityRange");
-    if(velocityRangeNode->isValid()){
-        Listing& velocityRange = *velocityRangeNode->toListing();
-        if(velocityRange.size() != 2){
-            velocityRangeNode->throwException(_("jointVelocityRange must have two elements"));
-        }
-        if(link->jointType() == Link::REVOLUTE_JOINT){
-            link->setJointVelocityRange(toRadian(velocityRange[0].toDouble()), toRadian(velocityRange[1].toDouble()));
-        } else {
-            link->setJointVelocityRange(velocityRange[0].toDouble(), velocityRange[1].toDouble());
-        }
-    }
-
-    double Ir = info->get("rotorInertia", 0.0);
-    double r = info->get("gearRatio", 1.0);
-    link->setEquivalentRotorInertia(r * r * Ir);
+    readJointContents(link, node);
     
     currentLink = link;
     rigidBodies.clear();
 
-    ValueNodePtr elements = linkNode->extract("elements");
+    ValueNodePtr elements = node->extract("elements");
     if(elements){
         currentModelType = VISUAL_AND_COLLISION;
         hasVisualOrCollisionNodes = false;
@@ -919,34 +838,152 @@ LinkPtr YAMLBodyLoaderImpl::readLinkContents(Mapping* linkNode)
     }
 
     RigidBody rbody;
-    if(!extractEigen(info, "centerOfMass", rbody.c)){
+    if(!extractEigen(node, "centerOfMass", rbody.c)){
         rbody.c.setZero();
     }
-    if(!extract(info, "mass", rbody.m)){
+    if(!extract(node, "mass", rbody.m)){
         rbody.m = 0.0;
     }
-    if(!extractInertia(info, "inertia", rbody.I)){
+    if(!extractInertia(node, "inertia", rbody.I)){
         rbody.I.setZero();
     }
     rigidBodies.push_back(rbody);
     setMassParameters(link);
 
-    ValueNode* import = linkNode->find("import");
+    ValueNode* import = node->find("import");
     if(import->isValid()){
         if(import->isMapping()){
-            info->insert(import->toMapping());
+            node->insert(import->toMapping());
         } else if(import->isListing()){
             Listing& importList = *import->toListing();
             for(int i=importList.size() - 1; i >= 0; --i){
-                info->insert(importList[i].toMapping());
+                node->insert(importList[i].toMapping());
             }
         }
     }
-    link->resetInfo(info);
+    link->resetInfo(node);
 
     currentLink = 0;
 
     return link;
+}
+
+
+void YAMLBodyLoaderImpl::setJointId(Link* link, int id)
+{
+    link->setJointId(id);
+    if(id >= 0){
+        if(id >= validJointIdSet.size()){
+            validJointIdSet.resize(id + 1);
+        }
+        if(!validJointIdSet[id]){
+            ++numValidJointIds;
+            validJointIdSet[id] = true;
+        } else {
+            os() << str(format("Warning: Joint ID %1% of %2% is duplicated.")
+                        % id % link->name()) << endl;
+        }
+    }
+}
+
+
+void YAMLBodyLoaderImpl::readJointContents(Link* link, Mapping* node)
+{
+    if(extract(node, "jointId", id)){
+        setJointId(link, id);
+    }
+
+    auto jointTypeNode = node->find("jointType");
+    if(jointTypeNode->isValid()){
+        string jointType = jointTypeNode->toString();
+        if(jointType == "revolute"){
+            link->setJointType(Link::REVOLUTE_JOINT);
+            link->setActuationMode(Link::JOINT_TORQUE);
+        } else if(jointType == "prismatic"){
+            link->setJointType(Link::PRISMATIC_JOINT);
+            link->setActuationMode(Link::JOINT_FORCE);
+        } else if(jointType == "slide"){
+            link->setJointType(Link::PRISMATIC_JOINT);
+            link->setActuationMode(Link::JOINT_FORCE);
+        } else if(jointType == "free"){
+            link->setJointType(Link::FREE_JOINT);
+        } else if(jointType == "fixed"){
+            link->setJointType(Link::FIXED_JOINT);
+        } else if(jointType == "pseudoContinuousTrack"){
+            link->setJointType(Link::PSEUDO_CONTINUOUS_TRACK);
+            link->setActuationMode(Link::JOINT_SURFACE_VELOCITY);
+        } else {
+            node->throwException("Illegal jointType value");
+        }
+    }
+
+    boost::optional<Vector3> axis = readAxis(node, "jointAxis");
+    if(axis){
+        link->setJointAxis(*axis);
+    }
+
+    auto jointAngleNode = node->extract("jointAngle");
+    if(jointAngleNode){
+        link->setInitialJointDisplacement(toRadian(jointAngleNode->toDouble()));
+    }
+    auto jointDisplacementNode = node->extract("jointDisplacement");
+    if(jointDisplacementNode){
+        link->setInitialJointDisplacement(jointDisplacementNode->toDouble());
+    }
+
+    double lower = -std::numeric_limits<double>::max();
+    double upper =  std::numeric_limits<double>::max();
+    
+    auto jointRangeNode = node->find("jointRange");
+    if(jointRangeNode->isValid()){
+        if(jointRangeNode->isScalar()){
+            upper = readLimitValue(*jointRangeNode, true);
+            lower = -upper;
+        } else if(jointRangeNode->isListing()){
+            Listing& jointRange = *jointRangeNode->toListing();
+            if(jointRange.size() != 2){
+                jointRangeNode->throwException(_("jointRange must have two elements"));
+            }
+            lower = readLimitValue(jointRange[0], false);
+            upper = readLimitValue(jointRange[1], true);
+        } else {
+            jointRangeNode->throwException(_("Invalid type value is specefied as a jointRange"));
+        }
+    }
+    if(link->jointType() == Link::REVOLUTE_JOINT && isDegreeMode()){
+        link->setJointRange(
+            lower == -std::numeric_limits<double>::max() ? lower : radian(lower),
+            upper ==  std::numeric_limits<double>::max() ? upper : radian(upper));
+    } else {
+        link->setJointRange(lower, upper);
+    }
+    
+    auto maxVelocityNode = node->find("maxJointVelocity");
+    if(maxVelocityNode->isValid()){
+        double maxVelocity = maxVelocityNode->toDouble();
+        if(link->jointType() == Link::REVOLUTE_JOINT){
+            link->setJointVelocityRange(toRadian(-maxVelocity), toRadian(maxVelocity));
+        } else {
+            link->setJointVelocityRange(-maxVelocity, maxVelocity);
+        }
+    }
+
+    auto velocityRangeNode = node->find("jointVelocityRange");
+    if(velocityRangeNode->isValid()){
+        Listing& velocityRange = *velocityRangeNode->toListing();
+        if(velocityRange.size() != 2){
+            velocityRangeNode->throwException(_("jointVelocityRange must have two elements"));
+        }
+        if(link->jointType() == Link::REVOLUTE_JOINT){
+            link->setJointVelocityRange(toRadian(velocityRange[0].toDouble()), toRadian(velocityRange[1].toDouble()));
+        } else {
+            link->setJointVelocityRange(velocityRange[0].toDouble(), velocityRange[1].toDouble());
+        }
+    }
+
+    double Ir = node->get("rotorInertia", 0.0);
+    double r = node->get("gearRatio", 1.0);
+    link->setEquivalentRotorInertia(r * r * Ir);
 }
 
 
@@ -985,30 +1022,6 @@ boost::optional<Vector3> YAMLBodyLoaderImpl::readAxis(Mapping* node, const char*
     }
 
     return axis;
-}
-
-
-void YAMLBodyLoaderImpl::setJointParameters(Link* link, string jointType, ValueNode* node)
-{
-    if(jointType == "revolute"){
-        link->setJointType(Link::REVOLUTE_JOINT);
-        link->setActuationMode(Link::JOINT_TORQUE);
-    } else if(jointType == "prismatic"){
-        link->setJointType(Link::PRISMATIC_JOINT);
-        link->setActuationMode(Link::JOINT_FORCE);
-    } else if(jointType == "slide"){
-        link->setJointType(Link::PRISMATIC_JOINT);
-        link->setActuationMode(Link::JOINT_FORCE);
-    } else if(jointType == "free"){
-        link->setJointType(Link::FREE_JOINT);
-    } else if(jointType == "fixed"){
-        link->setJointType(Link::FIXED_JOINT);
-    } else if(jointType == "pseudoContinuousTrack"){
-        link->setJointType(Link::PSEUDO_CONTINUOUS_TRACK);
-        link->setActuationMode(Link::JOINT_SURFACE_VELOCITY);
-    } else {
-        node->throwException("Illegal jointType value");
-    }
 }
 
 
@@ -1350,8 +1363,8 @@ bool YAMLBodyLoaderImpl::readDevice(Device* device, Mapping& node)
     if(node.read("id", id)) device->setId(id);
 
     const Affine3& T = transformStack.back();
-    device->setLocalTranslation(currentLink->Rs() * T.translation());
-    device->setLocalRotation(currentLink->Rs() * T.linear());
+    device->setLocalTranslation(T.translation());
+    device->setLocalRotation(T.linear());
     device->setLink(currentLink);
     body->addDevice(device);
 
@@ -1479,33 +1492,27 @@ bool YAMLBodyLoaderImpl::readSpotLight(Mapping& node)
 
 void YAMLBodyLoaderImpl::readContinuousTrackNode(Mapping* node)
 {
-    MappingPtr info = static_cast<Mapping*>(node->clone());
     string parent;
-    if(!extract(info, "parent", parent)){
-        info->throwException("parent must be specified.");
-    }
-
-    string crawlername;
-    if(!extract(info, "name", crawlername)){
-        info->throwException("name must be specified.");
+    if(!extract(node, "parent", parent)){
+        node->throwException("parent must be specified.");
     }
 
     int numJoints = 0;
-    if(!extract(info, "numJoints", numJoints)){
-        info->throwException("numJoints must be specified.");
+    if(!extract(node, "numJoints", numJoints)){
+        node->throwException("numJoints must be specified.");
     }
     if(numJoints < 3){
-        info->throwException("numJoints must be more than 2.");
+        node->throwException("numJoints must be more than 2.");
     }
 
     Vector3 jointOffset;
-    if(!extractEigen(info, "jointOffset", jointOffset)){
-        info->throwException("jointOffset must be specified.");
+    if(!extractEigen(node, "jointOffset", jointOffset)){
+        node->throwException("jointOffset must be specified.");
     }
 
     const int numOpenJoints = numJoints - 1;
     vector<double> initialAngles(numOpenJoints, 0.0);
-    ValueNodePtr initAnglesNode = info->extract("initialJointAngles");
+    ValueNodePtr initAnglesNode = node->extract("initialJointAngles");
     if(initAnglesNode){
         Listing& initAngles = *initAnglesNode->toListing();
         const int n = std::min(initAngles.size(), numOpenJoints);
@@ -1550,102 +1557,95 @@ void YAMLBodyLoaderImpl::addTrackLink(int index, LinkPtr link, Mapping* node, st
 
 void YAMLBodyLoaderImpl::readSubBodyNode(Mapping* node)
 {
-    MappingPtr info = static_cast<Mapping*>(node->clone());
-
     string uri;
-    if(!extract(info, "uri", uri)){
-        info->throwException("uri must be specified.");
+    if(!node->read("uri", uri)){
+        node->throwException("uri must be specified.");
+    }
+    
+    filesystem::path filepath(uri);
+    if(filepath.is_relative()){
+        filepath = getCompactPath(filesystem::path(sceneReader.baseDirectory()) / filepath);
+    }
+    if(filesystem::equivalent(mainFilePath, filepath)){
+        node->throwException("recursive sub-body is prohibited.");
     }
 
-    boost::filesystem::path subFilepath(uri);
-    if(subFilepath.is_relative()){
-        uri = sceneReader.baseDirectory()+"/"+uri;
-    }
-    boost::filesystem::path mainfile_path(mainfilename);
-    boost::filesystem::path subfile_path(uri);
-    if(boost::filesystem::equivalent(mainfile_path, subfile_path)){
-        info->throwException("recursive subbody is prohibited.");
-    }
-
-    Body* subbody = new Body();
-//    bool loaded(false);
-//    for(auto itr = subBodyMap.begin(); itr != subBodyMap.end(); ++itr){
-//        boost::filesystem::path loadedfile_path(itr->first);
-//        if(boost::filesystem::equivalent(loadedfile_path, subfile_path)){
-//            subbody = itr->second->clone();
-//            loaded = true;
-//        }
-//    }
-//    if(!loaded){
-        MappingPtr data;
+    BodyPtr subBody;
+    string filename = filepath.string();
+    auto iter = subBodyMap.find(filename);
+    if(iter != subBodyMap.end()){
+        subBody = iter->second;
+    } else {
         try {
-            YAMLBodyLoader loader;
-            loader.load(subbody, uri);
+            if(!subLoader){
+                subLoader.reset(new YAMLBodyLoader);
+                subLoader->setMessageSink(*os_);
+                subLoader->impl->doExpandLinkOffsetRotations = false;
+            }
+            subLoader->setDefaultDivisionNumber(sceneReader.defaultDivisionNumber());
+                
+            subBody = new Body;
+            if(subLoader->load(subBody, filename)){
+                subBodyMap[filename] = subBody;
+            } else {
+                os() << (format(_("SubBody specified by uri \"%1%\" cannot be loaded.")) % uri) << endl;
+                subBody.reset();
+            }
         } catch(const ValueNode::Exception& ex){
             os() << ex.message();
         }
-//        subBodyMap.insert(make_pair(uri, subbody->clone()));
-//    }
-    addSubBodyLinks(subbody->clone(), node);
+    }
+
+    if(subBody){
+        addSubBodyLinks(subBody->clone(), node);
+    }
 }
 
 
-void YAMLBodyLoaderImpl::addSubBodyLinks(Body* subbody, Mapping* node)
+void YAMLBodyLoaderImpl::addSubBodyLinks(BodyPtr subBody, Mapping* node)
 {
-    MappingPtr nodeInfo = static_cast<Mapping*>(node->clone());
-
-    string parent;
-    if(!extract(nodeInfo, "parent", parent)){
-        nodeInfo->throwException("parent must be specified.");
-    }
-
     string prefix;
-    if(!extract(nodeInfo, "prefix", prefix)){
-        nodeInfo->throwException("prefix must be specified.");
-    }
-
-    Vector3 translation;
-    if(!extractEigen(nodeInfo, "translation", translation)){
-        translation.setZero();
-    }
-
-    Matrix3 R;
-    if(!readRotation(*nodeInfo, R, true)){
-        R.setIdentity();
-    }
-
-    string jointType;
-    if(!extract(nodeInfo, "jointType", jointType)){
-        jointType = "fixed";
+    if(!node->read("prefix", prefix)){
+        node->throwException("prefix must be specified.");
     }
 
     int jointIdOffset;
-    if(!extract(nodeInfo, "jointIdOffset", jointIdOffset)){
-        nodeInfo->throwException("jointIdOffset must be specified.");
+    if(!node->read("jointIdOffset", jointIdOffset)){
+        node->throwException("jointIdOffset must be specified.");
     }
 
-    for(int i=0; i<subbody->numLinks(); ++i){
-        LinkPtr link = subbody->link(i);
+    for(int i=0; i < subBody->numLinks(); ++i){
+        Link* link = subBody->link(i);
         link->setName(prefix + link->name());
-        if(link->jointId()>=0){
-            link->setJointId(link->jointId()+jointIdOffset);
-        }
-        LinkInfoPtr linkInfo = new LinkInfo;
-        linkInfo->link = link;
-        linkInfo->node = node;
-        if(link->isRoot()){
-            linkInfo->parent = parent;
-            setJointParameters(link, jointType, nodeInfo);
-            link->setOffsetTranslation(translation);
-            link->setOffsetRotation(R);
-        } else {
-            linkInfo->parent = link->parent()->name();
-        }
         if(!linkMap.insert(make_pair(link->name(), link)).second){
             node->throwException(str(format(_("Duplicated link name \"%1%\"")) % link->name()));
         }
-        linkInfos.push_back(linkInfo);
+        if(link->jointId() >= 0){
+            setJointId(link, link->jointId() + jointIdOffset);
+        }
     }
+    
+    Link* rootLink = subBody->rootLink();
+
+    readJointContents(rootLink, node);
+
+    if(read(*node, "translation", v)){
+        rootLink->setOffsetTranslation(v);
+    }
+    Matrix3 R;
+    if(readRotation(*node, R, true)){
+        rootLink->setOffsetRotation(R);
+    }
+
+    LinkInfoPtr linkInfo = new LinkInfo;
+    linkInfo->link = rootLink;
+    linkInfo->node = node;
+
+    if(!node->read("parent", linkInfo->parent)){
+        node->throwException("parent must be specified.");
+    }
+
+    linkInfos.push_back(linkInfo);
 }
 
 
