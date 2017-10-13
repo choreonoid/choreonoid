@@ -7,10 +7,12 @@
 #define CNOID_BODY_CONTACT_MATERIAL_TABLE_H
 
 #include <cnoid/Referenced>
+#include <string>
+#include "exportdecl.h"
 
 namespace cnoid {
 
-class ContactMaterialTable : public Referenced
+class CNOID_EXPORT ContactMaterialTable : public Referenced
 {
 public:
     ContactMaterialTable();
