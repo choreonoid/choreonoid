@@ -25,7 +25,7 @@ struct AGXVehicleContinuousTrackDeviceDesc
         enableMerge = false;
         numNodesPerMergeSegment = 3;
         contactReduction = 1;
-        enableLockToReachMergeCondition = true;
+        enableLockToReachMergeCondition = false;
         lockToReachMergeConditionCompliance = 1.0E-11;
         lockToReachMergeConditionDamping = 3/ 60;
         maxAngleMergeCondition = 1.0E-5;

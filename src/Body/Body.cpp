@@ -654,11 +654,11 @@ void BodyImpl::expandLinkOffsetRotations(Body* body, Link* link, const Matrix3& 
         if(visualShape && visualShape == collisionShape){
             setRsToShape(Rs, visualShape, [&](SgNode* node) { link->setShape(node); });
         } else {
-            if(link->visualShape()){
-                setRsToShape(Rs, link->visualShape(), [&](SgNode* node) { link->setVisualShape(node); });
+            if(visualShape){
+                setRsToShape(Rs, visualShape, [&](SgNode* node) { link->setVisualShape(node); });
             }
-            if(link->collisionShape()){
-                setRsToShape(Rs, link->collisionShape(), [&](SgNode* node) { link->setCollisionShape(node); });
+            if(collisionShape){
+                setRsToShape(Rs, collisionShape, [&](SgNode* node) { link->setCollisionShape(node); });
             }
         }
     }
@@ -673,17 +673,8 @@ void BodyImpl::setRsToShape(const Matrix3& Rs, SgNode* shape, std::function<void
 {
     SgPosTransform* transformRs = new SgPosTransform;
     transformRs->setRotation(Rs);
-    if(SgGroup* group = dynamic_cast<SgGroup*>(shape)){
-        group->moveChildrenTo(transformRs);
-        if(SgInvariantGroup* invariant = dynamic_cast<SgInvariantGroup*>(group)){
-            invariant->addChild(transformRs);
-        } else {
-            setShape(transformRs);
-        }
-    } else {
-        transformRs->addChild(shape);
-        setShape(transformRs);
-    }
+    transformRs->addChild(shape);
+    setShape(transformRs);
 }
 
 

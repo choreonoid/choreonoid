@@ -22,7 +22,6 @@ public:
     ControllerRTCItem(const ControllerRTCItem& org);
     virtual ~ControllerRTCItem();
 
-    void setRelativePathBaseType(int which);
     void setRTCModule(const std::string& name);
     void setRTCInstanceName(const std::string& name);
     void setExecContextType(int which);

@@ -805,9 +805,12 @@ if(UNIX)
   
   option(PUT_ALL_WARNINGS "put all warnings in compile" OFF)
   if(PUT_ALL_WARNINGS)
-    list(APPEND CMAKE_C_FLAGS "-Wall")
-    list(APPEND CMAKE_CXX_FLAGS "-Wall")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
   endif()
+
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wreturn-type")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wreturn-type")
 
   option(CHECK_UNRESOLVED_SYMBOLS "check unresolved symbols in the object files when creating shared libraries" OFF)
   #mark_as_advanced(CHECK_UNRESOLVED_SYMBOLS)

@@ -42,6 +42,7 @@ public:
 
 private:
     YAMLBodyLoaderImpl* impl;
+    friend class YAMLBodyLoaderImpl;
 };
 
 }

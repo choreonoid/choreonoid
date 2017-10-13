@@ -87,7 +87,6 @@ bool AGXSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody
         // Create rigidbody, geometry, constraints
         body->createBody(agxScene);
         body->setSensor(self->worldTimeStep(), g);
-        agxScene->add(body);
     }
 
     saveSimulationToAGXFile();

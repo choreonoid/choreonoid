@@ -124,8 +124,7 @@ AGXVehicleContinuousTrack::AGXVehicleContinuousTrack(AGXVehicleContinuousTrackDe
     if(!m_track) return;
 
     // Add to simulation
-    getAssembly()->add(m_track);
-    getAGXBody()->getAGXScene()->add(getAssembly());
+    getAGXBody()->getAGXScene()->getSimulation()->add((agxSDK::Assembly*)m_track);
     getAGXBody()->getAGXScene()->getSimulation()->add(new TrackListener(this));
 
     /* Set collision Group*/

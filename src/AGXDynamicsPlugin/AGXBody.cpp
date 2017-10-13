@@ -17,10 +17,10 @@ AGXLink::AGXLink(Link* const link) : _orgLink(link){}
 AGXLink::AGXLink(Link* const link, AGXLink* const parent, const Vector3& parentOrigin, AGXBody* const agxBody) :
     _agxBody(agxBody),
     _orgLink(link),
-    _agxParentLink(parent)
+    _agxParentLink(parent),
+    _origin(parentOrigin + link->b())
 {
     agxBody->addAGXLink(this);
-    _origin = parentOrigin + link->b();
     const Link::ActuationMode& actuationMode = link->actuationMode();
     if(actuationMode == Link::ActuationMode::NO_ACTUATION){
     }else if(actuationMode == Link::ActuationMode::LINK_POSITION){
@@ -43,28 +43,34 @@ void AGXLink::constructAGXLink()
     createAGXShape();
     setAGXMaterial();
     _constraint = createAGXConstraint();
+
+    agxSDK::SimulationRef sim =  getAGXBody()->getAGXScene()->getSimulation();
+    sim->add(_rigid);
+    sim->add(_constraint);
     //printDebugInfo();
 }
 
 void AGXLink::setAGXMaterial(){
+    // Check density is written in body file
+    double density = 0.0;
+    bool bDensity = getOrgLink()->info()->read("density", density);
+
+    // Set material
     string matName = "";
     auto matNameNode = getOrgLink()->info()->find("materialName");
     if(matNameNode->isValid()) matName = matNameNode->toString();
     if(setAGXMaterialFromName(matName)){
-        /* success to set material from material name */
-    }else if(setAGXMaterialFromLinkInfo()){
-        /* success to set material from yaml */
+    }else{
+        setAGXMaterialFromLinkInfo();
+        if(!bDensity){
+            setCenterOfMassFromLinkInfo();
+            setMassFromLinkInfo();
+            setInertiaFromLinkInfo();
+        }
     }
 
-    // set center of mass, mass, inertia
-    double density = 0.0;
-    if(getOrgLink()->info()->read("density", density)){
-        /* if density is set, we use density for center of mass, mass, inertia */
-    }else{
-        setCenterOfMassFromLinkInfo();
-        setMassFromLinkInfo();
-        setInertiaFromLinkInfo();
-    }
+    // if density is written in body file, we use this density
+    if(bDensity) getAGXGeometry()->getMaterial()->getBulkMaterial()->setDensity(density);
 }
 
 bool AGXLink::setAGXMaterialFromName(const std::string& materialName)
@@ -79,7 +85,7 @@ bool AGXLink::setAGXMaterialFromName(const std::string& materialName)
 }
 
 #define SET_AGXMATERIAL_FIELD(field) desc.field = getOrgLink()->info<double>(#field, desc.field)
-bool AGXLink::setAGXMaterialFromLinkInfo()
+void AGXLink::setAGXMaterialFromLinkInfo()
 {
     AGXMaterialDesc desc;
     std::stringstream ss;
@@ -97,7 +103,6 @@ bool AGXLink::setAGXMaterialFromLinkInfo()
     agx::MaterialRef mat = AGXObjectFactory::createMaterial(desc);
     getAGXGeometry()->setMaterial(mat);
     getAGXRigidBody()->updateMassProperties(agx::MassProperties::AUTO_GENERATE_ALL);
-    return true;
 }
 #undef SET_AGXMATERIAL_FIELD
 
@@ -587,6 +592,7 @@ void AGXLink::setLinkPositionToAGX()
 #define PRINT_DEBUGINFO(FIELD1, FIELD2) std::cout << #FIELD1 << " " << FIELD2 << std::endl;
 void AGXLink::printDebugInfo()
 {
+    PRINT_DEBUGINFO("DEBUG", "---------------------------")
     PRINT_DEBUGINFO("name", getOrgLink()->name());
     PRINT_DEBUGINFO("agxcenterofmass", getAGXRigidBody()->getCmLocalTranslate());
     PRINT_DEBUGINFO("agxmass", getAGXRigidBody()->getMassProperties()->getMass());
@@ -643,6 +649,20 @@ void AGXBody::createBody(AGXScene* agxScene)
     setLinkStateToAGX();
     createExtraJoint();
     callExtensionFuncs();
+    setCollision();
+}
+
+void AGXBody::setCollision()
+{
+    AGXSceneRef agxScene = getAGXScene();
+    // Disable collision
+    for(const auto& name : getCollisionGroupNamesToDisableCollision()){
+        agxScene->setCollision(name, false);
+    }
+    // Set self collision
+    agxScene->setCollision(getCollisionGroupName(), bodyItem()->isSelfCollisionDetectionEnabled());
+    // Set external collision
+    enableExternalCollision(bodyItem()->isCollisionDetectionEnabled());
 }
 
 std::string AGXBody::getCollisionGroupName() const
