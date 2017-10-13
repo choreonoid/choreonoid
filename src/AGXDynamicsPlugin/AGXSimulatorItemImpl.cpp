@@ -38,12 +38,6 @@ void AGXSimulatorItemImpl::doPutProperties(PutPropertyFunction & putProperty)
     putProperty(_("ContactReductionBinResolution"), _p_contactReductionBinResolution, changeProperty(_p_contactReductionBinResolution));
     putProperty(_("ContactReductionThreshhold"), _p_contactReductionThreshhold, changeProperty(_p_contactReductionThreshhold));
     putProperty(_("AutoSleep(experimental)"), _p_enableAutoSleep, changeProperty(_p_enableAutoSleep));
-    //putProperty(_("All link positions"), isAllLinkPositionOutputMode,
-    //        [&](bool on){ return onAllLinkPositionOutputModeChanged(on); });
-
-//     putProperty("Friction Model Type", frictionModelType, changeProperty(frictionModelType));
-//    putProperty(("Step mode"), stepMode, changeProperty(stepMode));
-//    putProperty(("Step mode"), "hoge");
 }
 
 bool AGXSimulatorItemImpl::store(Archive & archive)
@@ -65,10 +59,8 @@ SimulationBody * AGXSimulatorItemImpl::createSimulationBody(Body * orgBody)
     return new AGXBody(*orgBody);
 }
 
-#define AGX_SCENE
 bool AGXSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody*>& simBodies)
 {
-    cout << "initializeSimulation" << endl;
     const Vector3& g = _p_gravity;
     AGXSceneDesc sd;
     sd.simdesc.timeStep = self->worldTimeStep();
@@ -82,8 +74,8 @@ bool AGXSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody
 
     createMaterialTable();
 
-    for(size_t i=0; i < simBodies.size(); ++i){
-        AGXBody* body = static_cast<AGXBody*>(simBodies[i]);
+    for(auto simBody : simBodies){
+        AGXBody* body = static_cast<AGXBody*>(simBody);
         // Create rigidbody, geometry, constraints
         body->createBody(agxScene);
         body->setSensor(self->worldTimeStep(), g);
@@ -107,24 +99,19 @@ void AGXSimulatorItemImpl::createMaterialTable()
 
 bool AGXSimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& activeSimBodies)
 {
-//    cout << "step" << std::endl;
-    for(size_t i=0; i < activeSimBodies.size(); ++i){
-        AGXBody* agxBody = static_cast<AGXBody*>(activeSimBodies[i]);
-        agxBody->setControlInputToAGX();
+    for(auto simBody : activeSimBodies){
+        static_cast<AGXBody*>(simBody)->setControlInputToAGX();
     }
 
     agxScene->stepSimulation();
 
-    for(size_t i=0; i < activeSimBodies.size(); ++i){
-        AGXBody* agxBody = static_cast<AGXBody*>(activeSimBodies[i]);
+    for(auto simBody : activeSimBodies){
+        AGXBody* agxBody = static_cast<AGXBody*>(simBody);
         agxBody->setLinkStateToCnoid();
 
-        if(agxBody->hasForceSensors()){
-            agxBody->updateForceSensors();
-        }
-        if(agxBody->hasGyroOrAccelerationSensors()){
-            agxBody->updateGyroAndAccelerationSensors();
-        }
+        // Update sensors
+        if(agxBody->hasForceSensors())              agxBody->updateForceSensors();
+        if(agxBody->hasGyroOrAccelerationSensors()) agxBody->updateGyroAndAccelerationSensors();
     }
     return true;
 }

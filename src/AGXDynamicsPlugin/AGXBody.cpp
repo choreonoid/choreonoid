@@ -1,5 +1,6 @@
 #include "AGXBody.h"
 #include "AGXScene.h"
+#include <cnoid/MeshExtractor>
 #include <cnoid/SceneDrawables>
 #include "AGXVehicleContinuousTrack.h"
 
@@ -89,7 +90,7 @@ void AGXLink::setAGXMaterialFromLinkInfo()
 {
     AGXMaterialDesc desc;
     std::stringstream ss;
-    ss << "AGXMaterial" << generateUID() << std::endl;
+    ss << "AGXMaterial" << agx::UuidGenerator().generate().str() << std::endl;
     desc.name = ss.str();
     SET_AGXMATERIAL_FIELD(density);
     SET_AGXMATERIAL_FIELD(youngsModulus);
@@ -169,15 +170,8 @@ void AGXLink::setLinkStateToAGX()
 {
     agx::RigidBodyRef const agxRigidBody = getAGXRigidBody();
     if(!agxRigidBody) return;
+    setLinkPositionToAGX();
     LinkPtr const orgLink = getOrgLink();
-    const Vector3& p = orgLink->p();
-    const Matrix3& R = orgLink->R();
-    agx::Vec3 translation(p(0), p(1), p(2));
-    agx::OrthoMatrix3x3 rotation(R(0,0), R(1,0), R(2,0),
-                                 R(0,1), R(1,1), R(2,1),
-                                 R(0,2), R(1,2), R(2,2));
-    agxRigidBody->setTransform( agx::AffineMatrix4x4( rotation, translation) );
-
     const Vector3 lc = orgLink->R() * orgLink->c();
     const Vector3& w = orgLink->w();
     const Vector3 v = orgLink->v() + w.cross(lc);
@@ -301,11 +295,8 @@ agx::RigidBodyRef AGXLink::createAGXRigidBody()
         desc.control = agx::RigidBody::MotionControl::STATIC;
     }
 
-    string agxMotion = "";
-    auto agxMotionNode = getOrgLink()->info()->find("AGXMotion");
-    if(agxMotionNode->isValid()){
-        agxMotion = agxMotionNode->toString();
-        if(agxMotion == "kinematics") desc.control = agx::RigidBody::MotionControl::KINEMATICS;
+    if(orgLink->actuationMode() == Link::LINK_POSITION){
+        desc.control = agx::RigidBody::MotionControl::KINEMATICS;
     }
 
     return AGXObjectFactory::createRigidBody(desc);
@@ -586,7 +577,12 @@ void AGXLink::setLinkPositionToAGX()
 {
     LinkPtr orgLink = getOrgLink();
     const Vector3& p = orgLink->p();
-    getAGXRigidBody()->setPosition(p(0), p(1), p(2));
+    const Matrix3& R = orgLink->R();
+    agx::Vec3 translation(p(0), p(1), p(2));
+    agx::OrthoMatrix3x3 rotation(R(0,0), R(1,0), R(2,0),
+    R(0,1), R(1,1), R(2,1),
+    R(0,2), R(1,2), R(2,2));
+    getAGXRigidBody()->setTransform( agx::AffineMatrix4x4( rotation, translation) );
 }
 
 #define PRINT_DEBUGINFO(FIELD1, FIELD2) std::cout << #FIELD1 << " " << FIELD2 << std::endl;
@@ -635,7 +631,7 @@ void AGXBody::initialize()
     _collisionGroupNamesToDisableCollision.clear();
     std::stringstream ss;
     ss.str("");
-    ss << generateUID() << body->name() << std::flush;
+    ss << agx::UuidGenerator().generate().str() << body->name() << std::flush;
     _bodyCollisionGroupName = ss.str();
     return;
 }
@@ -845,12 +841,11 @@ const AGXBodyExtensionPtrs& AGXBody::getAGXBodyExtensions() const
 void AGXBody::callExtensionFuncs(){
     // update func list
     updateAGXBodyExtensionFuncs();
-    //agxBodyExtensionFuncs["hoge"] = [](AGXBody* agxBody){ std::cout << "hoge" << std::endl; return false;};
-    agxBodyExtensionFuncs["ContinousTrack"] = [&](AGXBody* agxBody){ return createContinuousTrack(agxBody); };
+    //agxBodyExtensionFuncs["test"] = [](AGXBody* agxBody){ std::cout << "test" << std::endl; return false;};
+    agxBodyExtensionFuncs["ContinuousTrack"] = [&](AGXBody* agxBody){ return createContinuousTrack(agxBody); };
     agxBodyExtensionFuncs["AGXVehicleContinousTrack"] = [&](AGXBody* agxBody){ return createAGXVehicleContinousTrack(this); };
 
     // call
-    //agxBodyExtensionFuncs["AGXBodyExtensionSample"](this);
     for(const auto& func : agxBodyExtensionFuncs){
         func.second(this);
     }
@@ -893,7 +888,7 @@ bool AGXBody::createContinuousTrack(AGXBody* agxBody)
     AGXLinkPtrs myAgxLinks;
     if(!getAGXLinksFromInfo("isContinuousTrack", false, myAgxLinks)) return false;
     for(const auto& agxLink : myAgxLinks){
-        addAGXBodyExtension(new AGXContinousTrack(agxLink, this));
+        addAGXBodyExtension(new AGXContinuousTrack(agxLink, this));
     }
     return true;
 }

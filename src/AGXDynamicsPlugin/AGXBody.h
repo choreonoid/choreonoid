@@ -3,7 +3,6 @@
 
 #include <cnoid/SimulatorItem>
 #include <cnoid/BodyItem>
-#include <cnoid/MeshExtractor>
 #include <cnoid/BasicSensorSimulationHelper>
 #include "AGXObjectFactory.h"
 #include "AGXBodyExtension.h"
@@ -16,15 +15,6 @@ typedef std::map<std::string, AGXBodyExtensionFunc> AGXBodyExtensionFuncMap;
 
 namespace cnoid {
 
-typedef Eigen::Matrix<float, 3, 1> Vertex;
-class AGXScene;
-
-static unsigned int generateUID(){
-    static unsigned int i = 0;
-    i++;
-    return i;
-}
-
 inline const Position convertToPosition(const agx::AffineMatrix4x4& a){
     Position pos;
     pos.translation() = Vector3(a(3,0), a(3,1), a(3,2));
@@ -34,6 +24,8 @@ inline const Position convertToPosition(const agx::AffineMatrix4x4& a){
     return pos;
 }
 
+class MeshExtractor;
+class AGXScene;
 class AGXBody;
 class CNOID_EXPORT AGXLink : public Referenced
 {

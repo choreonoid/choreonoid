@@ -132,7 +132,7 @@ AGXVehicleContinuousTrack::AGXVehicleContinuousTrack(AGXVehicleContinuousTrackDe
     // 2. Collision b/w tracks and links(except wheels) are not need -> create new group trackCollision
     // 3. Collision b/w wheels and tracks needs collision -> remove wheels from trackCollision
     std::stringstream trackCollision;
-    trackCollision << "trackCollision" << generateUID() << std::endl;
+    trackCollision << "trackCollision" << agx::UuidGenerator().generate().str() << std::endl;
     m_track->addGroup(trackCollision.str());
     getAGXBody()->addCollisionGroupNameToAllLink(trackCollision.str());
     getAGXBody()->addCollisionGroupNameToDisableCollision(trackCollision.str());
