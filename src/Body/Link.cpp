@@ -42,6 +42,7 @@ Link::Link()
     q_lower_ = -std::numeric_limits<double>::max();
     dq_upper_ = std::numeric_limits<double>::max();
     dq_lower_ = -std::numeric_limits<double>::max();
+    materialId_ = 0;
     info_ = new Mapping;
 }
 
@@ -86,6 +87,8 @@ Link::Link(const Link& org)
     q_lower_ = org.q_lower_;
     dq_upper_ = org.dq_upper_;
     dq_lower_ = org.dq_lower_;
+
+    materialId_ = org.materialId_;
 
     //! \todo add the mode for doing deep copy of the following objects
     visualShape_ = org.visualShape_;

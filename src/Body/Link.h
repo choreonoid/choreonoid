@@ -152,6 +152,9 @@ public:
     const Vector3& jointAxis() const { return a_; }
     const Vector3& d() const { return a_; } // joint axis alias for a slide joint
 
+    /// Equivalent rotor inertia: n^2*Jm [kg.m^2]
+    double Jm2() const { return Jm2_; }
+
     enum ActuationMode {
         NO_ACTUATION = 0,
         JOINT_TORQUE = 1,
@@ -208,15 +211,14 @@ public:
     ///< inertia tensor (self local, around c)
     const Matrix3& I() const { return I_; }    
 
-    /// Equivalent rotor inertia: n^2*Jm [kg.m^2]
-    double Jm2() const { return Jm2_; }
-
     const Vector6& F_ext() const { return F_ext_; }
     Vector6& F_ext() { return F_ext_; }
     Vector6::ConstFixedSegmentReturnType<3>::Type f_ext() const { return F_ext_.head<3>(); }
     Vector6::FixedSegmentReturnType<3>::Type f_ext() { return F_ext_.head<3>(); }
     Vector6::ConstFixedSegmentReturnType<3>::Type tau_ext() const { return F_ext_.tail<3>(); }
     Vector6::FixedSegmentReturnType<3>::Type tau_ext() { return F_ext_.tail<3>(); }
+
+    int materialId() const { return materialId_; }
 
     const std::string& name() const { return name_; }
 
@@ -266,7 +268,9 @@ public:
     void setMass(double m) { m_ = m; }
     void setInertia(const Matrix3& I) { I_ = I; }
     void setEquivalentRotorInertia(double Jm2) { Jm2_ = Jm2; }
-        
+
+    void setMaterialId(int id) { materialId_ = id; }
+    
     void setName(const std::string& name);
 
     void setShape(SgNode* shape);
@@ -330,6 +334,7 @@ private:
     double q_lower_;
     double dq_upper_;
     double dq_lower_;
+    int materialId_;
     std::string name_;
     SgNodePtr visualShape_;
     SgNodePtr collisionShape_;

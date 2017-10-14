@@ -555,6 +555,16 @@ ValueNodePtr Mapping::extract(const std::string& key)
 }
 
 
+bool Mapping::extract(const std::string& key, double& out_value)
+{
+    ValueNodePtr node = extract(key);
+    if(node){
+        out_value = node->toDouble();
+        return true;
+    }
+    return false;
+}
+
 
 ValueNode& Mapping::get(const std::string& key) const
 {
