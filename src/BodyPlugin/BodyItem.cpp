@@ -1130,7 +1130,6 @@ void BodyItemImpl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty.decimals(3)(_("Mass"), body->mass());
     putProperty(_("Static model"), body->isStaticModel(),
                 (std::bind(&BodyItemImpl::onStaticModelPropertyChanged, this, _1)));
-    putProperty(_("Model file"), getFilename(boost::filesystem::path(self->filePath())));
     putProperty(_("Collision detection"), isCollisionDetectionEnabled,
                 (std::bind(&BodyItemImpl::enableCollisionDetection, this, _1)));
     putProperty(_("Self-collision detection"), isSelfCollisionDetectionEnabled,

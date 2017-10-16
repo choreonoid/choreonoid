@@ -103,16 +103,15 @@ typedef std::shared_ptr<Property> PropertyPtr;
 class PropertyItem : public QTableWidgetItem
 {
 public:
-    PropertyItem(ItemPropertyViewImpl* viewImpl, ValueVariant value);
-    PropertyItem(ItemPropertyViewImpl* viewImpl, ValueVariant value, FunctionVariant func);
-
-    virtual QVariant data(int role) const;
-    virtual void setData(int role, const QVariant& qvalue);
-
     ItemPropertyViewImpl* itemPropertyViewImpl;
     ValueVariant value;
     FunctionVariant func;
     bool hasValidFunction;
+
+    PropertyItem(ItemPropertyViewImpl* viewImpl, ValueVariant value);
+    PropertyItem(ItemPropertyViewImpl* viewImpl, ValueVariant value, FunctionVariant func);
+    virtual QVariant data(int role) const;
+    virtual void setData(int role, const QVariant& qvalue);
 };
 
 class CustomizedItemDelegate;
@@ -496,8 +495,8 @@ public:
     void onItemSelectionChanged(const ItemList<>& items);
     void zoomFontSize(int pointSizeDiff);
 };
-}
 
+}
 
 
 PropertyItem::PropertyItem(ItemPropertyViewImpl* viewImpl, ValueVariant value)
@@ -529,25 +528,43 @@ QVariant PropertyItem::data(int role) const
         case TYPE_STRING:    return boost::get<string>(value).c_str();
 
         case TYPE_SELECTION:
-        {
-            const Selection& s = boost::get<Selection>(value);
-            if(role == Qt::DisplayRole){
-                return s.selectedLabel();
-            } else if(role == Qt::EditRole){
-                QStringList labels;
-                labels << QString::number(s.selectedIndex());
-                for(int i=0; i < s.size(); ++i){
-                    labels << s.label(i);
+            {
+                const Selection& s = boost::get<Selection>(value);
+                if(role == Qt::DisplayRole){
+                    return s.selectedLabel();
+                } else if(role == Qt::EditRole){
+                    QStringList labels;
+                    labels << QString::number(s.selectedIndex());
+                    for(int i=0; i < s.size(); ++i){
+                        labels << s.label(i);
+                    }
+                    return labels;
                 }
-                return labels;
             }
-        }
 
         case TYPE_FILEPATH:
-            return boost::get<FilePathProperty>(value).filename().c_str();
+            {
+                const FilePathProperty& f = boost::get<FilePathProperty>(value);
+                string filename = f.filename();
+                if(!f.isFullpathDisplayMode()){
+                    filename = filesystem::path(filename).filename().string();
+                }
+                return filename.c_str();
+            }
         }
-
+    } else if(role == Qt::ToolTipRole){
+        if(value.which() == TYPE_FILEPATH){
+            const FilePathProperty& f = boost::get<FilePathProperty>(value);
+            if(!f.isFullpathDisplayMode()){
+                string fullpath = f.filename();
+                string filename = filesystem::path(fullpath).filename().string();
+                if(filename != fullpath){
+                    return fullpath.c_str();
+                }
+            }
+        }
     }
+
     return QTableWidgetItem::data(role);
 }
 
