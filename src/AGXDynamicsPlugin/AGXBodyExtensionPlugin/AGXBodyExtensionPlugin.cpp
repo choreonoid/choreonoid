@@ -1,3 +1,8 @@
+/**
+   \file
+   \author Ikumi Susa
+*/
+
 #include <cnoid/Plugin>
 
 namespace cnoid{

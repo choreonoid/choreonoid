@@ -1,8 +1,13 @@
+/**
+   \file
+   \author Ikumi Susa
+*/
+
 #include "AGXBreakableJoint.h"
 #include <cnoid/YAMLBodyLoader>
 #include <cnoid/YAMLReader>
-#include "../AGXBody.h"
-#include "../AGXScene.h"
+#include <cnoid/AGXBody>
+#include <cnoid/AGXScene>
 
 using namespace std;
 namespace cnoid{

@@ -15,29 +15,6 @@ items:
       children: 
         - 
           id: 2
-          name: "HoseBox"
-          plugin: Body
-          class: BodyItem
-          data: 
-            modelFile: "${PROJECT_DIR}/HoseBox.body"
-            currentBaseLink: "MainBox"
-            rootPosition: [ 0, 0, 1 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            jointPositions: [  1.169972, -2.599939 ]
-            initialRootPosition: [ 0, 0, 0.2 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            zmp: [ 0, 0, 0 ]
-            collisionDetection: true
-            selfCollisionDetection: false
-            isEditable: true
-        - 
-          id: 3
           name: "Floor"
           plugin: Body
           class: BodyItem
@@ -60,7 +37,7 @@ items:
             selfCollisionDetection: false
             isEditable: false
         - 
-          id: 4
+          id: 3
           name: "AGXSimulator"
           plugin: AGXDynamics
           class: AGXSimulatorItem
@@ -76,6 +53,30 @@ items:
             controllerThreads: true
             recordCollisionData: false
             controllerOptions: ""
+        - 
+          id: 4
+          name: "FireHose"
+          plugin: Body
+          class: BodyItem
+          data: 
+            modelFile: "${PROJECT_DIR}/FireHose.body"
+            currentBaseLink: "HoseBox"
+            rootPosition: [ 0, 0, 1 ]
+            rootAttitude: [ 
+              1, 0, 0, 
+              0, 1, 0, 
+              0, 0, 1 ]
+            jointPositions: [  2.107034,  0.545265 ]
+            initialRootPosition: [ 0, 0, 1 ]
+            initialRootAttitude: [ 
+              1, 0, 0, 
+              0, 1, 0, 
+              0, 0, 1 ]
+            initialJointPositions: [  0.000000,  0.000000 ]
+            zmp: [ 0, 0, 0 ]
+            collisionDetection: true
+            selfCollisionDetection: false
+            isEditable: true
 views: 
   - 
     id: 0
@@ -88,9 +89,9 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      selected: [ 4 ]
+      selected: [ 3 ]
       checked: [ 2, 3, 4 ]
-      expanded: [ 1, 2 ]
+      expanded: [ 1 ]
   - 
     id: 2
     plugin: Base
@@ -140,9 +141,9 @@ views:
           fieldOfView: 0.698132
           near: 0.01
           far: 100
-          eye: [ 5.55568774, -2.24355388, 4.24764908 ]
-          direction: [ -0.757641723, 0.400574144, -0.515285721 ]
-          up: [ -0.455535072, 0.240846783, 0.857018451 ]
+          eye: [ 5.4995863, -2.17277611, 4.11304518 ]
+          direction: [ -0.750799465, 0.413256324, -0.515285721 ]
+          up: [ -0.451421137, 0.248471994, 0.857018451 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
@@ -173,7 +174,7 @@ views:
       spinBox: true
       slider: true
       labelOnLeft: true
-      currentBodyItem: 2
+      currentBodyItem: 4
   - 
     id: 6
     plugin: Body
@@ -181,11 +182,11 @@ views:
     mounted: true
     state: 
       listingMode: "Link List"
-      currentBodyItem: 2
+      currentBodyItem: 4
       bodyItems: 
         - 
-          id: 2
-          selectedLinks: [ 2 ]
+          id: 4
+          selectedLinks: [ 1 ]
   - 
     id: 7
     plugin: Python
@@ -211,7 +212,7 @@ toolbars:
     penetrationBlockDepth: 0.0005
     lazyCollisionDetectionMode: true
   "BodyBar": 
-    current: 2
+    current: 4
   "LeggedBodyBar": 
     stanceWidth: 0.15
   "BodyMotionGenerationBar": 
@@ -258,7 +259,7 @@ Body:
         showPpcom: false
         showZmp: false
       - 
-        bodyItem: 3
+        bodyItem: 4
         showCenterOfMass: false
         showPpcom: false
         showZmp: false
@@ -293,7 +294,7 @@ viewAreas:
             - 
               type: pane
               views: [ 0, 6 ]
-              current: 0
+              current: 6
         - 
           type: splitter
           orientation: vertical

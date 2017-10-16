@@ -15,32 +15,38 @@ links:
         type: Shape
         translation: [ 0.0, 0.0, 0.0 ]
         geometry: &boxBack { type: Box, size: [ 0.01, 1.1, 1.0 ] }
+        appearance: &red { material: { diffuseColor: [ 1.0, 0, 0 ] }}
       -
         name: BoxLeft
         type: Shape
         translation: [ 0.15, -0.55, 0.0 ]
         geometry: &boxSide { type: Box, size: [ 0.3, 0.01, 1.0 ] }
+        appearance: *red
       -
         name: BoxRight
         type: Shape
         translation: [ 0.15, 0.55, 0.0 ]
         geometry: *boxSide
+        appearance: *red
       -
         name: BoxTop
         type: Shape
         translation: [ 0.15, 0.0, 0.5 ]
         geometry: &boxTop { type: Box, size: [ 0.3, 1.1, 0.01 ] }
+        appearance: *red
       -
         name: BoxBottom
         type: Shape
         translation: [ 0.15, 0.0, -0.5 ]
         geometry: *boxTop
+        appearance: *red
   -
     name: HoseBoxDoor
     parent: HoseBox
     translation: [ 0.3, 0.55, 0.0 ]
     jointType: revolute
     joitAxis: Z
+    jointRange: [ 0, 180 ]
     density: 1.0
     elements:
       -
@@ -50,12 +56,15 @@ links:
           name: HoseBoxDoor
           type: Shape
           geometry: *boxBack
+          appearance: *red
   -
     name: HoseDrum
-    parent: MainBox
+    parent: HoseBox
     translation: [ 0.2, 0.25, 0.0 ]
+    rotation: [ 0, 0, 1, -180 ]
     jointType: revolute
     jointAxis: Z
+    jointRange: [ 0, 120 ]
     density: 1.0
     elements:
       -
