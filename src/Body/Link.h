@@ -270,6 +270,7 @@ public:
     void setEquivalentRotorInertia(double Jm2) { Jm2_ = Jm2; }
 
     void setMaterialId(int id) { materialId_ = id; }
+    void setMaterialId(const std::string& name);
     
     void setName(const std::string& name);
 

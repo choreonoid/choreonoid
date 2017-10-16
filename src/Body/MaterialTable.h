@@ -25,7 +25,7 @@ class CNOID_EXPORT MaterialTable : public Referenced
     ContactMaterial* contactMaterial(int id1, int id2) const;
 
     bool load(const std::string& filename, std::ostream& os = nullout());
-    void addMaterial(Material* material);
+    int addMaterial(Material* material);
 
   private:
     MaterialTableImpl* impl;

@@ -41,7 +41,7 @@ public:
 
     virtual SgNode* getScene();
 
-    void setContactMaterialFile(const std::string& filename);
+    void setMaterialTableFile(const std::string& filename);
     MaterialTable* materialTable();
 
 protected:

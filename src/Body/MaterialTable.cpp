@@ -28,7 +28,8 @@ public:
     ContactMaterialMap contactMaterialMap;
     
     MaterialTableImpl();
-    void addMaterial(Material* material);
+    MaterialTableImpl(const MaterialTableImpl& org);
+    int addMaterial(Material* material);
     void loadMaterials(Mapping* topNode, std::ostream& os);
     void loadContactMaterials(Mapping* topNode, std::ostream& os);
     void setContactMaterialPairs(ContactMaterial* contactMaterial, const vector<int>& materialIndices, int index1);
@@ -45,13 +46,27 @@ MaterialTable::MaterialTable()
 
 MaterialTableImpl::MaterialTableImpl()
 {
-    numMaterials = 0;
+    Material* defaultMaterial = new Material;
+    defaultMaterial->setName("default");
+    defaultMaterial->setRoughness(0.5);
+    defaultMaterial->setViscosity(0.0);
+    materials.push_back(defaultMaterial);
+    numMaterials = 1;
 }
 
 
 MaterialTable::MaterialTable(const MaterialTable& org)
 {
-    
+    impl = new MaterialTableImpl(*org.impl);
+}
+
+
+MaterialTableImpl::MaterialTableImpl(const MaterialTableImpl& org)
+    : numMaterials(org.numMaterials),
+      materials(org.materials),
+      contactMaterialMap(org.contactMaterialMap)
+{
+
 }
 
 
@@ -90,16 +105,21 @@ ContactMaterial* MaterialTable::contactMaterial(int id1, int id2) const
 }
 
 
-void MaterialTable::addMaterial(Material* material)
+/**
+   \return Material ID
+*/
+int MaterialTable::addMaterial(Material* material)
 {
-    impl->addMaterial(material);
+    return impl->addMaterial(material);
 }
 
 
-void MaterialTableImpl::addMaterial(Material* material)
+int MaterialTableImpl::addMaterial(Material* material)
 {
+    int id = -1;
+    
     if(material){
-        const int id = Material::id(material->name());
+        id = Material::id(material->name());
         if(id >= materials.size()){
             materials.resize(id + 1);
             ++numMaterials;
@@ -108,6 +128,8 @@ void MaterialTableImpl::addMaterial(Material* material)
         }
         materials[id] = material;
     }
+
+    return id;
 }
 
 
@@ -153,17 +175,6 @@ void MaterialTableImpl::loadMaterials(Mapping* topNode, std::ostream& os)
                 addMaterial(material);
             }
         }
-    }
-
-    if(materials.empty()){
-        materials.resize(1);
-    }
-    if(!materials[0]){
-        Material* defaultMaterial = new Material;
-        defaultMaterial->setName("default");
-        defaultMaterial->setRoughness(0.5);
-        defaultMaterial->setViscosity(0.0);
-        materials[0] = defaultMaterial;
     }
 }
 

@@ -4,6 +4,7 @@
 */
 
 #include "Link.h"
+#include "Material.h"
 #include <cnoid/SceneGraph>
 #include <cnoid/ValueTree>
 
@@ -217,6 +218,12 @@ std::string Link::jointTypeString() const
     case CRAWLER_JOINT:     return "crawler";
     default: return "unknown";
     }
+}
+
+
+void Link::setMaterialId(const std::string& name)
+{
+    setMaterialId(Material::id(name));
 }
 
 
