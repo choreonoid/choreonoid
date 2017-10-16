@@ -1,8 +1,13 @@
+/**
+   \file
+   \author Ikumi Susa
+*/
+
 #ifndef AGX_BREAKABLE_JOINT_H
 #define AGX_BREAKABLE_JOINT_H
 
 #include <cnoid/Device>
-#include "../AGXBodyExtension.h"
+#include <cnoid/AGXBodyExtension>
 
 namespace cnoid{
 

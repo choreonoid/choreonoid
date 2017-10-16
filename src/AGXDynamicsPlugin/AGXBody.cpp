@@ -3,6 +3,7 @@
 #include <cnoid/MeshExtractor>
 #include <cnoid/SceneDrawables>
 #include "AGXVehicleContinuousTrack.h"
+#include "AGXConvexDecomposition.h"
 
 using namespace std;
 
@@ -322,21 +323,30 @@ void AGXLink::createAGXShape()
     MeshExtractor* extractor = new MeshExtractor;
     AGXTrimeshDesc td;
     if(extractor->extract(orgLink->collisionShape(), std::bind(&AGXLink::detectPrimitiveShape, this, extractor, std::ref(td)))){
-        // if vertices have values, it will be trimesh 
-        if(!td.vertices.empty()){
-            //td.name = extractor->currentMesh()->name().c_str();
+        if(td.vertices.empty()) goto EXIT;
+        // if vertices have values, it will be trimesh
+        size_t numConvex = 0;
+        auto bConvexDecomposition = getOrgLink()->info()->find("convexDecomposition");
+        if(bConvexDecomposition->isValid()){
+            AGXConvexDecompositionPtr conDec = new AGXConvexDecomposition();
+            numConvex = conDec->getConvexBuilder()->build(td.vertices, td.indices, td.triangles);
+            if(numConvex > 0){
+                std::cout << orgLink->name() << " convex decomposition succeed." << std::endl;
+                std::cout << "Divided to " << numConvex << std::endl;
+                for(auto shape : conDec->getConvexBuilder()->getConvexShapes()){
+                    getAGXGeometry()->add(shape, agx::AffineMatrix4x4());
+                }
+            }else{
+                std::cout << orgLink->name() << " convex decomposition failed." << std::endl;
+            }
+        }
+
+        if(numConvex == 0){
             agxCollide::ShapeRef trimesh = AGXObjectFactory::createShape(td);
             getAGXGeometry()->add(trimesh, agx::AffineMatrix4x4());
-        //    std::cout << orgLink->name() << std::endl;
-        //    std::cout << td.vertices.size() << std::endl;
-        //    for(int i = 0; i < td.vertices.size(); ++i){
-        //        std::cout << "vertices " << td.vertices[i] << std::endl;
-        //    } 
-        //    for(int i = 0; i < td.indices.size(); ++i){
-        //        std::cout << "vertices " << td.indices[i] << std::endl;
-        //    } 
         }
     }
+EXIT:
     delete extractor;
 }
 
@@ -448,7 +458,8 @@ void AGXLink::detectPrimitiveShape(MeshExtractor* extractor, AGXTrimeshDesc& td)
             td.vertices.push_back(agx::Vec3(v.x(), v.y(), v.z()));
         }
 
-        const int numTriangles = mesh->numTriangles();
+        const unsigned int numTriangles = mesh->numTriangles();
+        td.triangles = numTriangles;
         for(int i=0; i < numTriangles; ++i){
             SgMesh::TriangleRef src = mesh->triangle(i);
             td.indices.push_back(vertexIndexTop + src[0]);

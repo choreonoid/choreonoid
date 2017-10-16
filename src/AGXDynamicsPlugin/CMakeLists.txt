@@ -39,6 +39,7 @@ set(sources
   AGXVehicleContinuousTrack.cpp
   AGXVehicleContinuousTrackDevice.cpp
   AGXBodyExtension.cpp
+  AGXConvexDecomposition.cpp
   )
 
 set(headers
@@ -51,6 +52,7 @@ set(headers
   AGXVehicleContinuousTrack.h
   AGXVehicleContinuousTrackDevice.h
   AGXBodyExtension.h
+  AGXConvexDecomposition.h
   )
 
 make_gettext_mofiles(${target} mofiles)
