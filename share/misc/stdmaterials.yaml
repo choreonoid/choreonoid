@@ -16,16 +16,16 @@ materials:
     roughness: 0.1
     viscosity: 0.0
 
-
-
 contactMaterials:
   -
     materials: [ Default, Default ]
     friction: 0.5
+    restitution: 0.0
   -
     materials: [ Ground, Tracks ]
     friction: 0.5
+    restitution: 0.0
   -
     materials: [ OilWetGround, Tracks ]
     friction: 0.1
-
+    restitution: 0.0

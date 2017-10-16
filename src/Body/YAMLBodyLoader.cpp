@@ -568,11 +568,9 @@ bool YAMLBodyLoaderImpl::load(Body* body, const std::string& filename)
 
     bool result = false;
 
-    MappingPtr data;
-    
     try {
         YAMLReader reader;
-        data = reader.loadDocument(filename)->toMapping();
+        MappingPtr data = reader.loadDocument(filename)->toMapping();
         if(data){
             result = readTopNode(body, data);
             if(result){

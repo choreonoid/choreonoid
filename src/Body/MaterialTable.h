@@ -7,6 +7,7 @@
 #define CNOID_BODY_MATERIAL_TABLE_H
 
 #include "ContactMaterial.h"
+#include <cnoid/NullOut>
 
 namespace cnoid {
 
@@ -16,12 +17,15 @@ class CNOID_EXPORT MaterialTable : public Referenced
 {
   public:
     MaterialTable();
+    MaterialTable(const MaterialTable& org);
     ~MaterialTable();
 
-    bool load(const std::string& filename);
+    int numMaterials() const;
+    Material* material(int id) const;
+    ContactMaterial* contactMaterial(int id1, int id2) const;
 
-    Material* findMaterial(int id) const;
-    ContactMaterial* findContactMaterial(const Material* m1, const Material* m2) const;
+    bool load(const std::string& filename, std::ostream& os = nullout());
+    void addMaterial(Material* material);
 
   private:
     MaterialTableImpl* impl;

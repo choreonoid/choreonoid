@@ -14,23 +14,23 @@ ContactMaterial::ContactMaterial()
 }
 
 
-ContactMaterial::ContactMaterial(Mapping* info)
-{
-    info_ = info->cloneMapping();
-
-    if(info->extract("friction"), staticFriction_){
-        dynamicFriction_ = staticFriction_;
-    }
-    info->extract("staticFriction", staticFriction_);
-    info->extract("dynamicFriction", dynamicFriction_);
-
-    info->extract("restitution", restitution_);
-}
-
-
 ContactMaterial::ContactMaterial(const ContactMaterial& org)
 {
     info_ = org.info_->cloneMapping();
+}
+
+
+ContactMaterial::ContactMaterial(const Mapping* info)
+{
+    info_ = info->cloneMapping();
+
+    if(info_->extract("friction"), staticFriction_){
+        dynamicFriction_ = staticFriction_;
+    }
+    info_->extract("staticFriction", staticFriction_);
+    info_->extract("dynamicFriction", dynamicFriction_);
+
+    info_->extract("restitution", restitution_);
 }
 
 

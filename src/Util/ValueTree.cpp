@@ -566,6 +566,17 @@ bool Mapping::extract(const std::string& key, double& out_value)
 }
 
 
+bool Mapping::extract(const std::string& key, std::string& out_value)
+{
+    ValueNodePtr node = extract(key);
+    if(node){
+        out_value = node->toString();
+        return true;
+    }
+    return false;
+}
+
+
 ValueNode& Mapping::get(const std::string& key) const
 {
     if(!isValid()){

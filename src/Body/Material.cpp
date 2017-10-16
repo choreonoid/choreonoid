@@ -17,14 +17,38 @@ std::unordered_map<std::string, int> idMap;
 int idCounter = 0;
 
 // register "default" material as id = 0
-struct IdMapInitialization {
-    IdMapInitialization(){
-        Material::id("default");
+struct DefaultIdIntialization {
+    DefaultIdIntialization(){
+        idMap["default"] = 0;
+        idMap["Default"] = 0;
+        idCounter = 1;
     }
-} idMapInitialization;
+};
 
 }
 
+
+int Material::id(const std::string name)
+{
+    std::lock_guard<std::mutex> guard(idMutex);
+
+    static DefaultIdIntialization defaultIdInitialization;
+
+    if(name.empty()){
+        return 0;
+    }
+
+    int id;
+    auto iter = idMap.find(name);
+    if(iter != idMap.end()){
+        id = iter->second;
+    } else {
+        id = idCounter++;
+        idMap.insert(make_pair(name, idCounter));
+    }
+    return id;
+}
+        
 
 Material::Material()
 {
@@ -42,27 +66,20 @@ Material::Material(const Material& org)
 }
 
 
+Material::Material(const Mapping* info)
+{
+    info_ = info->cloneMapping();
+    info_->extract("name", name_);
+    info_->extract("roughness", roughness_);
+    info_->extract("viscosity", viscosity_);
+}
+
+
 Material::~Material()
 {
 
 }
 
-
-int Material::id(const std::string name)
-{
-    std::lock_guard<std::mutex> guard(idMutex);
-
-    int id;
-    auto iter = idMap.find(name);
-    if(iter != idMap.end()){
-        id = iter->second;
-    } else {
-        id = idCounter++;
-        idMap.insert(make_pair(name, idCounter));
-    }
-    return id;
-}
-        
 
 template<> double Material::info(const std::string& key, const double& defaultValue) const
 {

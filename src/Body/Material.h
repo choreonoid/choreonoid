@@ -16,6 +16,7 @@ class CNOID_EXPORT Material : public Referenced
 {
 public:
     Material();
+    Material(const Mapping* info);
     Material(const Material& org);
     ~Material();
 

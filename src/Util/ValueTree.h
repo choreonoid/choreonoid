@@ -252,6 +252,7 @@ public:
     ValueNodePtr extract(const std::string& key);
 
     bool extract(const std::string& key, double& out_value);
+    bool extract(const std::string& key, std::string& out_value);
 
     ValueNode& get(const std::string& key) const;
 
