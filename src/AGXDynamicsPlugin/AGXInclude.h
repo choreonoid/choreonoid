@@ -38,4 +38,6 @@
 //#include <agxVehicle/TrackWheel.h>
 #include <agxVehicle/Track.h>
 
+#include <agxCollide/ConvexBuilder.h>
+
 #endif

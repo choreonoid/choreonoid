@@ -196,6 +196,7 @@ struct AGXTrimeshDesc : public AGXShapeDesc
         optionsMask = 0;
         bottomMargin = 0;
     }
+    unsigned int triangles;
     agx::Vec3Vector vertices;
     agx::UInt32Vector indices;
     const char* name;
@@ -380,6 +381,7 @@ public:
     static agx::PlaneJointRef createConstraintPlaneJoint(const AGXPlaneJointDesc& desc);
     static agxVehicle::TrackWheelRef createVehicleTrackWheel(const AGXVehicleTrackWheelDesc& desc);
     static agxVehicle::TrackRef createVehicleTrack(const AGXVehicleTrackDesc& desc);
+    static agxCollide::ConvexBuilderRef createConvexBuilder();
 };
 
 }

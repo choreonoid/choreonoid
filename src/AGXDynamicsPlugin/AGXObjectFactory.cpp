@@ -320,4 +320,8 @@ agxVehicle::TrackRef AGXObjectFactory::createVehicleTrack(const AGXVehicleTrackD
     return track;
 }
 
+agxCollide::ConvexBuilderRef AGXObjectFactory::createConvexBuilder(){
+    return new agxCollide::ConvexBuilder();
+}
+
 }
