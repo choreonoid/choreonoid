@@ -45,6 +45,6 @@ public:
 
 typedef ref_ptr<AccelerationSensor> AccelerationSensorPtr;
 
-};
+}
 
 #endif

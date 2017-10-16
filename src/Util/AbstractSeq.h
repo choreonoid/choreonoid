@@ -61,7 +61,7 @@ public:
     }
 
     bool setOffsetTime(double offset) {
-        return setOffsetTimeFrame(offset * getFrameRate());
+        return setOffsetTimeFrame(static_cast<int>(offset * getFrameRate()));
     }
     
     virtual int getNumFrames() const = 0;

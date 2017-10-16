@@ -21,11 +21,11 @@ materials:
 contactMaterials:
   -
     materials: [ Default, Default ]
-    frictionCoefficient: 0.5
+    friction: 0.5
   -
     materials: [ Ground, Tracks ]
-    frictionCoefficient: 0.5
+    friction: 0.5
   -
     materials: [ OilWetGround, Tracks ]
-    frictionCoefficient: 0.1
+    friction: 0.1
 

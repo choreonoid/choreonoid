@@ -234,7 +234,7 @@ public:
     virtual Mapping* cloneMapping() const;
     
     bool empty() const { return values.empty(); }
-    int size() const { return values.size(); }
+    int size() const { return static_cast<int>(values.size()); }
     void clear();
 
     void setFlowStyle(bool isFlowStyle = true) { isFlowStyle_ = isFlowStyle; }
@@ -250,6 +250,8 @@ public:
     Listing* findListing(const std::string& key) const;
 
     ValueNodePtr extract(const std::string& key);
+
+    bool extract(const std::string& key, double& out_value);
 
     ValueNode& get(const std::string& key) const;
 
@@ -424,7 +426,7 @@ public:
     typedef Container::const_iterator const_iterator;
 
     bool empty() const { return values.empty(); }
-    int size() const { return values.size(); }
+    int size() const { return static_cast<int>(values.size()); }
     void clear();
     void reserve(int size);
 

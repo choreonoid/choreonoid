@@ -34,7 +34,7 @@ template<class F, class... Ts, class... Us>
 typename std::enable_if<
     sizeof...(Us) == sizeof...(Ts),
     typename F::result_type>::type
-apply_impl(F& func, std::tuple<Ts...>& args, Us*... us) 
+apply_impl(F& func, std::tuple<Ts...>&, Us*... us) 
 {
     return func(*us...);
 }

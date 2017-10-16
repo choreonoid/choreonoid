@@ -12,7 +12,7 @@
 #include <cnoid/LazyCaller>
 #include <cnoid/BodyCollisionDetectorUtil>
 #include <cnoid/SceneCollision>
-#include <cnoid/ContactMaterialTable>
+#include <cnoid/MaterialTable>
 #include <cnoid/ExecutablePath>
 #include <boost/format.hpp>
 #include "gettext.h"
@@ -70,7 +70,7 @@ public:
     SceneCollisionPtr sceneCollision;
 
     string contactMaterialFile;
-    ContactMaterialTablePtr contactMaterialTable;
+    MaterialTablePtr materialTable;
 
     void init();
     bool selectCollisionDetector(int index);
@@ -444,18 +444,18 @@ void WorldItem::setContactMaterialFile(const std::string& filename)
 }
 
 
-ContactMaterialTable* WorldItem::contactMaterialTable()
+MaterialTable* WorldItem::materialTable()
 {
-    if(!impl->contactMaterialTable){
+    if(!impl->materialTable){
         string filename = impl->contactMaterialFile;
         if(filename.empty()){
             filename = (filesystem::path(shareDirectory()) / "misc" / "stdmaterials.yaml").string();
         }
-        impl->contactMaterialTable = new ContactMaterialTable;
-        impl->contactMaterialTable->load(filename);
+        impl->materialTable = new MaterialTable;
+        impl->materialTable->load(filename);
     }
 
-    return impl->contactMaterialTable;
+    return impl->materialTable;
 }
 
         
