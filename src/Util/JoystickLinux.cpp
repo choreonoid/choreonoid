@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <cerrno>
 #include <cstring>
+#include <cmath>
 #include <string>
 #include <vector>
 #include <map>
