@@ -107,16 +107,6 @@ public:
     typedef std::map<Link*, Link*> LinkMap;
     LinkMap orgLinkToInternalLinkMap;
 
-    struct ContactAttribute
-    {
-        boost::optional<double> staticFriction;
-        boost::optional<double> dynamicFriction;
-        boost::optional<int> collisionHandlerId;
-    };
-
-    typedef std::map<IdPair<Link*>, ContactAttribute> ContactAttributeMap;
-    ContactAttributeMap contactAttributeMap;
-
     boost::optional<int> forcedBodyPositionFunctionId;
     std::mutex forcedBodyPositionMutex;
     DyBody* forcedPositionBody;
@@ -124,7 +114,6 @@ public:
 
     AISTSimulatorItemImpl(AISTSimulatorItem* self);
     AISTSimulatorItemImpl(AISTSimulatorItem* self, const AISTSimulatorItemImpl& org);
-    ContactAttribute& getOrCreateContactAttribute(Link* link1, Link* link2);
     bool initializeSimulation(const std::vector<SimulationBody*>& simBodies);
     void addBody(AISTSimBody* simBody);
     void clearExternalForces();
@@ -248,13 +237,6 @@ const Vector3& AISTSimulatorItem::gravity() const
 }
 
 
-AISTSimulatorItemImpl::ContactAttribute&
-AISTSimulatorItemImpl::getOrCreateContactAttribute(Link* link1, Link* link2)
-{
-    return contactAttributeMap[IdPair<Link*>(link1, link2)];
-}
-        
-
 void AISTSimulatorItem::setFriction(double staticFriction, double dynamicFriction)
 {
     impl->staticFriction = staticFriction;
@@ -276,9 +258,11 @@ double AISTSimulatorItem::dynamicFriction() const
 
 void AISTSimulatorItem::setFriction(Link* link1, Link* link2, double staticFriction, double dynamicFriction)
 {
-    AISTSimulatorItemImpl::ContactAttribute& attr = impl->getOrCreateContactAttribute(link1, link2);
-    attr.staticFriction = staticFriction;
-    attr.dynamicFriction = dynamicFriction;
+    MessageView::instance()->putln(
+        MessageView::WARNING,
+        _("AISTSimulatorItem::setFriction(Link* link1, Link* link2, double staticFriction, double dynamicFriction) "
+          "is not supported in this version.\n"
+          "Please use the material table instead of it."));
 }
 
 
@@ -302,8 +286,12 @@ int AISTSimulatorItem::collisionHandlerId(const std::string& name) const
 
 void AISTSimulatorItem::setCollisionHandler(Link* link1, Link* link2, int handlerId)
 {
-    AISTSimulatorItemImpl::ContactAttribute& attr = impl->getOrCreateContactAttribute(link1, link2);
-    attr.collisionHandlerId = handlerId;
+    MessageView::instance()->putln(
+        MessageView::WARNING,
+        _("AISTSimulatorItem::setCollisionHandler(Link* link1, Link* link2, int handlerId) "
+          "is not supported in this version.\n"
+          "Please use AISTSimulatorItem::setCollisionHandler"
+          "(int materialId1, int materialId2, int handlerId) instead of it."));
 }
 
 
@@ -463,40 +451,6 @@ bool AISTSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBod
 
     world.initialize();
 
-    ContactAttributeMap::iterator iter = contactAttributeMap.begin();
-    while(iter != contactAttributeMap.end()){
-        bool actualLinksFound = false;
-        const IdPair<Link*>& linkPair = iter->first;
-        LinkMap::iterator p0 = orgLinkToInternalLinkMap.find(linkPair(0));
-        if(p0 != orgLinkToInternalLinkMap.end()){
-            LinkMap::iterator p1 = orgLinkToInternalLinkMap.find(linkPair(1));
-            if(p1 != orgLinkToInternalLinkMap.end()){
-
-                Link* iLink0 = p0->second;
-                Link* iLink1 = p1->second;
-                actualLinksFound = true;
-
-                const ContactAttribute& attr = iter->second;
-                if(attr.staticFriction || attr.dynamicFriction){
-                    cfs.setFriction(
-                        iLink0, iLink1,
-                        attr.staticFriction ? *attr.staticFriction : staticFriction,
-                        attr.dynamicFriction ? *attr.dynamicFriction : dynamicFriction);
-                }
-                if(attr.collisionHandlerId){
-                    cfs.setCollisionHandler(iLink0, iLink1, *attr.collisionHandlerId);
-                }
-            }
-        }
-        if(actualLinksFound){
-            ++iter;
-        } else {
-            // remove the attribute for a non-existent link
-            ContactAttributeMap::iterator current = iter++;
-            contactAttributeMap.erase(current); 
-        }
-    }
-    
     return true;
 }
 

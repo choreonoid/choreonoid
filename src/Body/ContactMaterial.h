@@ -25,7 +25,7 @@ class CNOID_EXPORT ContactMaterial : public Referenced
     void setStaticFriction(double mu) { staticFriction_ = mu; }
     
     double dynamicFriction() const { return dynamicFriction_; }
-    void setDynamicsFriction(double mu) { dynamicFriction_ = mu; }
+    void setDynamicFriction(double mu) { dynamicFriction_ = mu; }
     
     double restitution() const { return restitution_; }
     void setRestitution(double r) { restitution_ = r; }

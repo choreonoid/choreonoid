@@ -12,8 +12,8 @@
 
 namespace cnoid {
 
-class ContactAttribute;
 class AISTSimulatorItemImpl;
+class ContactMaterial;
         
 class CNOID_EXPORT AISTSimulatorItem : public SimulatorItem
 {
@@ -54,7 +54,7 @@ public:
     // experimental functions
     void setFriction(Link* link1, Link* link2, double staticFriction, double dynamicFriction);
 
-    typedef std::function<bool(Link* link1, Link* link2, const CollisionArray& collisions, const ContactAttribute& attribute)>
+    typedef std::function<bool(Link* link1, Link* link2, const CollisionArray& collisions, ContactMaterial* contactMaterial)>
         CollisionHandler;
     int registerCollisionHandler(const std::string& name, CollisionHandler handler);
     void unregisterCollisionHandler(int handlerId);
