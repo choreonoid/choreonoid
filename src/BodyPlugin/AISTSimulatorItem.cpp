@@ -10,6 +10,7 @@
 #endif
 
 #include "AISTSimulatorItem.h"
+#include "WorldItem.h"
 #include "BodyItem.h"
 #include "ControllerItem.h"
 #include <cnoid/ItemManager>
@@ -418,12 +419,11 @@ bool AISTSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBod
     world.setCurrentTime(0.0);
 
     ConstraintForceSolver& cfs = world.constraintForceSolver;
-
+    cfs.setMaterialTable(self->worldItem()->materialTable());
     cfs.setGaussSeidelErrorCriterion(errorCriterion.value());
     cfs.setGaussSeidelMaxNumIterations(maxNumIterations);
-    cfs.setContactDepthCorrection(
-        contactCorrectionDepth.value(), contactCorrectionVelocityRatio.value());
-
+    cfs.setContactDepthCorrection(contactCorrectionDepth.value(), contactCorrectionVelocityRatio.value());
+    
     self->addPreDynamicsFunction([&](){ clearExternalForces(); });
 
     world.clearBodies();

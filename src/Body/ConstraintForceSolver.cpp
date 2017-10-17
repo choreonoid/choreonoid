@@ -15,6 +15,7 @@
 #include "ForwardDynamicsCBM.h"
 #include "ConstraintForceSolver.h"
 #include "BodyCollisionDetectorUtil.h"
+#include "MaterialTable.h"
 #include <cnoid/IdPair>
 #include <cnoid/EigenUtil>
 #include <cnoid/AISTCollisionDetector>
@@ -22,7 +23,7 @@
 #include <boost/format.hpp>
 #include <boost/random.hpp>
 #include <limits>
-
+#include <unordered_map>
 #include <fstream>
 #include <iomanip>
 #include <boost/lexical_cast.hpp>
@@ -117,14 +118,6 @@ namespace cnoid
 class ConstraintForceSolverImpl
 {
 public:
-
-    ConstraintForceSolverImpl(WorldBase& world);
-    ~ConstraintForceSolverImpl();
-
-    void initialize(void);
-    void solve();
-    inline void clearExternalForces();
-
     WorldBase& world;
 
     bool isConstraintForceOutputMode;
@@ -184,30 +177,35 @@ public:
 
     std::vector<BodyData> bodiesData;
 
+    //! \note The following table is accessed only when simulation is initalized.
+    MaterialTablePtr materialTable;
+
     typedef ConstraintForceSolver::CollisionHandler CollisionHandler;
 
-    class ContactMaterialEx : public ContactMaterial
+    class MyContactMaterial : public Referenced
     {
     public:
-        double contactCullingDistance;
-        double contactCullingDepth;
+        double staticFriction;
+        double dynamicFriction;
+        double restitution;
+        double cullingDistance;
+        double cullingDepth;
         CollisionHandler collisionHandler;
         Connection collisionHandlerConnection;
+        ContactMaterialPtr orgContactMaterial;
 
         void onCollisionHandlerUnregistered(){
             collisionHandler = CollisionHandler();
             collisionHandlerConnection.disconnect();
         }
-        virtual ~ContactMaterialEx(){
+        ~MyContactMaterial(){
             collisionHandlerConnection.disconnect();
         }
     };
-    typedef ref_ptr<ContactMaterialEx> ContactMaterialExPtr;
+    typedef ref_ptr<MyContactMaterial> MyContactMaterialPtr;
     
-    typedef std::map<IdPair<Link*>, ContactMaterialExPtr> ContactMaterialMap;
+    typedef std::unordered_map<IdPair<>, MyContactMaterialPtr> ContactMaterialMap;
     ContactMaterialMap contactMaterialMap;
-
-    ContactMaterialExPtr defaultContactMaterial;
 
     typedef std::map<string, int> CollisionHandlerIndexMap;
     CollisionHandlerIndexMap collisionHandlerIndexMap;
@@ -233,7 +231,7 @@ public:
         LinkData* linkData[2];
         ConstraintPointArray constraintPoints;
         bool isNonContactConstraint;
-        ContactMaterialExPtr contactMaterial;
+        MyContactMaterialPtr contactMaterial;
     };
 
     CollisionDetectorPtr collisionDetector;
@@ -317,13 +315,20 @@ public:
     int numGaussSeidelTotalCalls;
     int numGaussSeidelTotalLoopsMax;
 
+
+    ConstraintForceSolverImpl(WorldBase& world);
+    ~ConstraintForceSolverImpl();
     void initBody(const DyBodyPtr& body, BodyData& bodyData);
-    void initBodyExtraJoints(int bodyIndex);
     void initWorldExtraJoints();
+    void initBodyExtraJoints(int bodyIndex);
     void initExtraJointSub(ExtraJoint& extrajoint, int bodyIndex0, int bodyIndex1);
     void init2Dconstraint(int bodyIndex);
+    void initialize(void);
+    void initializeContactMaterials();
+    MyContactMaterial* setupNewContactMaterial(const IdPair<>& materialPair);
+    void clearExternalForces();
+    void solve();
     void setConstraintPoints();
-    void setDefaultContactMaterialValues(ContactMaterialEx* contact);
     void extractConstraintPoints(const CollisionPair& collisionPair);
     bool setContactConstraintPoint(LinkPair& linkPair, const Collision& collision);
     void setFrictionVectors(ConstraintPoint& constraintPoint);
@@ -336,36 +341,31 @@ public:
     void setDefaultAccelerationVector();
     void setAccelerationMatrix();
     void initABMForceElementsWithNoExtForce(BodyData& bodyData);
-    void calcABMForceElementsWithTestForce(BodyData& bodyData, DyLink* linkToApplyForce, const Vector3& f, const Vector3& tau);
+    void calcABMForceElementsWithTestForce(
+        BodyData& bodyData, DyLink* linkToApplyForce, const Vector3& f, const Vector3& tau);
     void calcAccelsABM(BodyData& bodyData, int constraintIndex);
     void calcAccelsMM(BodyData& bodyData, int constraintIndex);
-
-    void extractRelAccelsOfConstraintPoints
-    (Eigen::Block<MatrixX>& Kxn, Eigen::Block<MatrixX>& Kxt, int testForceIndex, int constraintIndex);
-
-    void extractRelAccelsFromLinkPairCase1
-    (Eigen::Block<MatrixX>& Kxn, Eigen::Block<MatrixX>& Kxt, LinkPair& linkPair, int testForceIndex, int constraintIndex);
-    void extractRelAccelsFromLinkPairCase2
-    (Eigen::Block<MatrixX>& Kxn, Eigen::Block<MatrixX>& Kxt, LinkPair& linkPair, int iTestForce, int iDefault, int testForceIndex, int constraintIndex);
-    void extractRelAccelsFromLinkPairCase3
-    (Eigen::Block<MatrixX>& Kxn, Eigen::Block<MatrixX>& Kxt, LinkPair& linkPair, int testForceIndex, int constraintIndex);
-
-    void copySymmetricElementsOfAccelerationMatrix
-    (Eigen::Block<MatrixX>& Knn, Eigen::Block<MatrixX>& Ktn, Eigen::Block<MatrixX>& Knt, Eigen::Block<MatrixX>& Ktt);
-
+    void extractRelAccelsOfConstraintPoints(
+        Eigen::Block<MatrixX>& Kxn, Eigen::Block<MatrixX>& Kxt, int testForceIndex, int constraintIndex);
+    void extractRelAccelsFromLinkPairCase1(
+        Eigen::Block<MatrixX>& Kxn, Eigen::Block<MatrixX>& Kxt,
+        LinkPair& linkPair, int testForceIndex, int constraintIndex);
+    void extractRelAccelsFromLinkPairCase2(
+        Eigen::Block<MatrixX>& Kxn, Eigen::Block<MatrixX>& Kxt,
+        LinkPair& linkPair, int iTestForce, int iDefault, int testForceIndex, int constraintIndex);
+    void extractRelAccelsFromLinkPairCase3(
+        Eigen::Block<MatrixX>& Kxn, Eigen::Block<MatrixX>& Kxt,
+        LinkPair& linkPair, int testForceIndex, int constraintIndex);
+    void copySymmetricElementsOfAccelerationMatrix(
+        Eigen::Block<MatrixX>& Knn, Eigen::Block<MatrixX>& Ktn, Eigen::Block<MatrixX>& Knt, Eigen::Block<MatrixX>& Ktt);
     void clearSingularPointConstraintsOfClosedLoopConnections();
-		
     void setConstantVectorAndMuBlock();
     void addConstraintForceToLinks();
     void addConstraintForceToLink(LinkPair* linkPair, int ipair);
-
-    void solveMCPByProjectedGaussSeidel
-    (const MatrixX& M, const VectorX& b, VectorX& x);
-    void solveMCPByProjectedGaussSeidelMainStep
-    (const MatrixX& M, const VectorX& b, VectorX& x);
-    void solveMCPByProjectedGaussSeidelInitial
-    (const MatrixX& M, const VectorX& b, VectorX& x, const int numIteration);
-
+    void solveMCPByProjectedGaussSeidel(const MatrixX& M, const VectorX& b, VectorX& x);
+    void solveMCPByProjectedGaussSeidelMainStep(const MatrixX& M, const VectorX& b, VectorX& x);
+    void solveMCPByProjectedGaussSeidelInitial(
+        const MatrixX& M, const VectorX& b, VectorX& x, const int numIteration);
     void checkLCPResult(MatrixX& M, VectorX& b, VectorX& x);
     void checkMCPResult(MatrixX& M, VectorX& b, VectorX& x);
 
@@ -382,7 +382,6 @@ public:
 
     ofstream os;
 
-    ContactMaterialEx* getOrCreateContactMaterial(Link* link1, Link* link2);
     int registerCollisionHandler(const std::string& name, CollisionHandler& handler);
 
     template<class TMatrix>
@@ -443,7 +442,6 @@ CFSImpl::ConstraintForceSolverImpl(WorldBase& world) :
     world(world),
     randomAngle(boost::mt19937(), boost::uniform_real<>(0.0, 2.0 * PI))
 {
-    defaultContactMaterial = new ContactMaterialEx;
     defaultStaticFriction = 1.0;
     defaultSlipFriction = 1.0;
     defaultContactCullingDistance = DEFAULT_CONTACT_CULLING_DISTANCE;
@@ -643,8 +641,8 @@ void CFSImpl::initialize(void)
     geometryIdToBodyIndexMap.clear();
     geometryPairToLinkPairMap.clear();
 
-    contactMaterialMap.clear();
-
+    initializeContactMaterials();
+    
     extraJointLinkPairs.clear();
     constrain2dLinkPairs.clear();
 
@@ -679,8 +677,6 @@ void CFSImpl::initialize(void)
 
     initWorldExtraJoints();
 
-    setDefaultContactMaterialValues(defaultContactMaterial);
-
     collisionDetector->makeReady();
 
     prevGlobalNumConstraintVectors = 0;
@@ -688,7 +684,53 @@ void CFSImpl::initialize(void)
     numUnconverged = 0;
 
     randomAngle.engine().seed();
+}
 
+
+void CFSImpl::initializeContactMaterials()
+{
+    contactMaterialMap.clear();
+
+    if(!materialTable){
+        materialTable = new MaterialTable;
+    }
+    unordered_map<ContactMaterial*, MyContactMaterial*> conversionMap;
+
+    materialTable->forEachMaterialPair(
+        [&](int id1, int id2, ContactMaterial* cm){
+            MyContactMaterial* mycm;
+            auto iter = conversionMap.find(cm);
+            if(iter != conversionMap.end()){
+                mycm = iter->second;
+            } else {
+                mycm = new MyContactMaterial;
+                mycm->staticFriction = cm->staticFriction();
+                mycm->dynamicFriction = cm->dynamicFriction();
+                mycm->restitution = cm->restitution();
+                mycm->cullingDistance = cm->info("cullingDistance", defaultContactCullingDistance);
+                mycm->cullingDepth = cm->info("cullingDepth", defaultContactCullingDepth);
+                mycm->orgContactMaterial = cm;
+                conversionMap.insert(make_pair(cm, mycm));
+            }
+            contactMaterialMap.insert(ContactMaterialMap::value_type(IdPair<>(id1, id2), mycm));
+        });
+}
+
+
+CFSImpl::MyContactMaterial* CFSImpl::setupNewContactMaterial(const IdPair<>& materialPair)
+{
+    Material* m1 = materialTable->material(materialPair[0]);
+    Material* m2 = materialTable->material(materialPair[1]);
+
+    auto cm = new MyContactMaterial;
+    cm->staticFriction = std::min(m1->roughness(), m2->roughness());
+    cm->dynamicFriction = cm->staticFriction;
+    cm->restitution = std::max(m1->viscosity(), m2->viscosity());
+    cm->cullingDistance = defaultContactCullingDistance;
+    cm->cullingDepth = defaultContactCullingDepth;
+    contactMaterialMap.insert(ContactMaterialMap::value_type(materialPair, cm));
+
+    return cm;
 }
 
 
@@ -823,17 +865,6 @@ void CFSImpl::setConstraintPoints()
 }
 
 
-void CFSImpl::setDefaultContactMaterialValues(ContactMaterialEx* contact)
-{
-    contact->setStaticFriction(defaultStaticFriction);
-    contact->setDynamicFriction(defaultSlipFriction);
-    contact->setRestitution(defaultCoefficientOfRestitution);
-    
-    contact->contactCullingDistance = defaultContactCullingDistance;
-    contact->contactCullingDepth = defaultContactCullingDepth;
-}
-
-
 void CFSImpl::extractConstraintPoints(const CollisionPair& collisionPair)
 {
     LinkPair* pLinkPair;
@@ -847,6 +878,7 @@ void CFSImpl::extractConstraintPoints(const CollisionPair& collisionPair)
     } else {
         
         LinkPair& linkPair = geometryPairToLinkPairMap.insert(make_pair(idPair, LinkPair())).first->second;
+        IdPair<> materialPair;
         
         for(int i=0; i < 2; ++i){
             const int id = collisionPair.geometryId[i];
@@ -855,17 +887,19 @@ void CFSImpl::extractConstraintPoints(const CollisionPair& collisionPair)
             BodyData& bodyData = bodiesData[bodyIndex];
             linkPair.bodyData[i] = &bodyData;
             const int linkIndex = id - bodyData.geometryId;
-            linkPair.link[i] = bodyData.body->link(linkIndex);
+            DyLink* link = bodyData.body->link(linkIndex);
+            linkPair.link[i] = link;
             linkPair.linkData[i] = &bodyData.linksData[linkIndex];
+            materialPair[i] = link->materialId();
         }
         linkPair.isSameBodyPair = (linkPair.bodyIndex[0] == linkPair.bodyIndex[1]);
         linkPair.isNonContactConstraint = false;
 
-        auto q = contactMaterialMap.find(IdPair<Link*>(linkPair.link[0], linkPair.link[1]));
+        auto q = contactMaterialMap.find(materialPair);
         if(q != contactMaterialMap.end()){
             linkPair.contactMaterial = q->second;
         } else {
-            linkPair.contactMaterial = defaultContactMaterial;
+            linkPair.contactMaterial = setupNewContactMaterial(materialPair);
         }
         pLinkPair = &linkPair;
     }
@@ -874,7 +908,8 @@ void CFSImpl::extractConstraintPoints(const CollisionPair& collisionPair)
 
     CollisionHandler& collisionHandler = pLinkPair->contactMaterial->collisionHandler;
     if(collisionHandler){
-        if(collisionHandler(pLinkPair->link[0], pLinkPair->link[1], collisions, pLinkPair->contactMaterial)){
+        if(collisionHandler(
+               pLinkPair->link[0], pLinkPair->link[1], collisions, pLinkPair->contactMaterial->orgContactMaterial)){
             return; // skip the contact force calculation
         }
     }
@@ -892,40 +927,13 @@ void CFSImpl::extractConstraintPoints(const CollisionPair& collisionPair)
 }
 
 
-CollisionLinkPairListPtr CFSImpl::getCollisions()
-{
-    CollisionLinkPairListPtr collisionPairs = std::make_shared<CollisionLinkPairList>();
-    for(int i=0; i<constrainedLinkPairs.size(); i++){
-        LinkPair& source = *constrainedLinkPairs[i];
-        CollisionLinkPairPtr dest = std::make_shared<CollisionLinkPair>();
-        int numConstraintsInPair = source.constraintPoints.size();
-
-        for(int j=0; j < numConstraintsInPair; ++j){
-            ConstraintPoint& constraint = source.constraintPoints[j];
-            dest->collisions.push_back(Collision());
-            Collision& col = dest->collisions.back();
-            col.point = constraint.point;
-            col.normal = constraint.normalTowardInside[1];
-            col.depth = constraint.depth;
-        }
-        for(int j=0; j<2; j++){
-            dest->body[j] = source.bodyData[j]->body;
-            dest->link[j] = source.link[j];
-        }
-        collisionPairs->push_back(dest);
-    }
-
-    return collisionPairs;
-}
-
-
 /**
    @retuen true if the point is actually added to the constraints
 */
 bool CFSImpl::setContactConstraintPoint(LinkPair& linkPair, const Collision& collision)
 {
     // skip the contact which has too much depth
-    if(collision.depth > linkPair.contactMaterial->contactCullingDepth){
+    if(collision.depth > linkPair.contactMaterial->cullingDepth){
         return false;
     }
     
@@ -938,7 +946,7 @@ bool CFSImpl::setContactConstraintPoint(LinkPair& linkPair, const Collision& col
     // dense contact points are eliminated
     int nPrevPoints = constraintPoints.size() - 1;
     for(int i=0; i < nPrevPoints; ++i){
-        if((constraintPoints[i].point - contact.point).norm() < linkPair.contactMaterial->contactCullingDistance){
+        if((constraintPoints[i].point - contact.point).norm() < linkPair.contactMaterial->cullingDistance){
             constraintPoints.pop_back();
             return false;
         }
@@ -1000,7 +1008,7 @@ bool CFSImpl::setContactConstraintPoint(LinkPair& linkPair, const Collision& col
     double vt_square = v_tangent.squaredNorm();
     static const double vsqrthresh = VEL_THRESH_OF_DYNAMIC_FRICTION * VEL_THRESH_OF_DYNAMIC_FRICTION;
     bool isSlipping = (vt_square > vsqrthresh);
-    contact.mu = isSlipping ? linkPair.contactMaterial->dynamicFriction() : linkPair.contactMaterial->staticFriction();
+    contact.mu = isSlipping ? linkPair.contactMaterial->dynamicFriction : linkPair.contactMaterial->staticFriction;
     
     if( !ONLY_STATIC_FRICTION_FORMULATION && isSlipping){
         contact.numFrictionVectors = 1;
@@ -1162,7 +1170,7 @@ void CFSImpl::putContactPoints()
             os << "<-->";
             os << " " << linkPair->link[1]->name() << " of " << linkPair->bodyData[1]->body->modelName();
             os << "\n";
-            os << " culling thresh: " << linkPair->contactMaterial->contactCullingDistance << "\n";
+            os << " culling thresh: " << linkPair->contactMaterial->cullingDistance << "\n";
 
             ConstraintPointArray& constraintPoints = linkPair->constraintPoints;
             for(size_t j=0; j < constraintPoints.size(); ++j){
@@ -2322,6 +2330,12 @@ CollisionDetectorPtr ConstraintForceSolver::collisionDetector()
 }
 
 
+void ConstraintForceSolver::setMaterialTable(MaterialTable* table)
+{
+    impl->materialTable = table;
+}
+
+
 void ConstraintForceSolver::setFriction(double staticFriction, double slipFliction)
 {
     impl->defaultStaticFriction = staticFriction;
@@ -2338,30 +2352,6 @@ double ConstraintForceSolver::staticFriction() const
 double ConstraintForceSolver::slipFriction() const
 {
     return impl->defaultSlipFriction;
-}
-
-
-CFSImpl::ContactMaterialEx* CFSImpl::getOrCreateContactMaterial(Link* link1, Link* link2)
-{
-    ContactMaterialEx* contactMaterial;
-    IdPair<Link*> linkPair(link1, link2);
-    auto iter = contactMaterialMap.find(linkPair);
-    if(iter != contactMaterialMap.end()){
-        contactMaterial = iter->second;
-    } else {
-        contactMaterial = new ContactMaterialEx;
-        setDefaultContactMaterialValues(contactMaterial);
-        contactMaterialMap.insert(ContactMaterialMap::value_type(linkPair, contactMaterial));
-    }
-    return contactMaterial;
-}
-
-
-void ConstraintForceSolver::setFriction(Link* link1, Link* link2, double staticFriction, double slipFliction)
-{
-    auto contact = impl->getOrCreateContactMaterial(link1, link2);
-    contact->setStaticFriction(staticFriction);
-    contact->setDynamicFriction(slipFliction);
 }
 
 
@@ -2418,9 +2408,10 @@ int ConstraintForceSolver::collisionHandlerId(const std::string& name) const
 }
 
 
-void ConstraintForceSolver::setCollisionHandler(Link* link1, Link* link2, int handlerId)
+void ConstraintForceSolver::setCollisionHandler(int material1, int material2, int handlerId)
 {
-    auto contact = impl->getOrCreateContactMaterial(link1, link2);
+    /*
+    auto contact = impl->getOrCreateContactMaterial(material1, material2);
     contact->collisionHandlerConnection.disconnect();
 
     if(handlerId < 0 || handlerId >= impl->collisionHandlers.size()){
@@ -2431,6 +2422,7 @@ void ConstraintForceSolver::setCollisionHandler(Link* link1, Link* link2, int ha
         contact->collisionHandlerConnection = 
             info->sigHandlerUnregisterd.connect([contact](){ contact->onCollisionHandlerUnregistered(); });
     }
+    */
 }
 
 
@@ -2559,6 +2551,34 @@ CollisionLinkPairListPtr ConstraintForceSolver::getCollisions()
 {
     return impl->getCollisions();
 }
+
+
+CollisionLinkPairListPtr CFSImpl::getCollisions()
+{
+    CollisionLinkPairListPtr collisionPairs = std::make_shared<CollisionLinkPairList>();
+    for(int i=0; i<constrainedLinkPairs.size(); i++){
+        LinkPair& source = *constrainedLinkPairs[i];
+        CollisionLinkPairPtr dest = std::make_shared<CollisionLinkPair>();
+        int numConstraintsInPair = source.constraintPoints.size();
+
+        for(int j=0; j < numConstraintsInPair; ++j){
+            ConstraintPoint& constraint = source.constraintPoints[j];
+            dest->collisions.push_back(Collision());
+            Collision& col = dest->collisions.back();
+            col.point = constraint.point;
+            col.normal = constraint.normalTowardInside[1];
+            col.depth = constraint.depth;
+        }
+        for(int j=0; j<2; j++){
+            dest->body[j] = source.bodyData[j]->body;
+            dest->link[j] = source.link[j];
+        }
+        collisionPairs->push_back(dest);
+    }
+
+    return collisionPairs;
+}
+
 
 #ifdef ENABLE_SIMULATION_PROFILING
 double ConstraintForceSolver::getCollisionTime()

@@ -24,7 +24,7 @@ ContactMaterial::ContactMaterial(const Mapping* info)
 {
     info_ = info->cloneMapping();
 
-    if(info_->extract("friction"), staticFriction_){
+    if(info_->extract("friction", staticFriction_)){
         dynamicFriction_ = staticFriction_;
     }
     info_->extract("staticFriction", staticFriction_);
