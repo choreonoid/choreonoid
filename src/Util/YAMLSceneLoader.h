@@ -18,8 +18,10 @@ public:
     YAMLSceneLoader();
     virtual ~YAMLSceneLoader();
     virtual void setMessageSink(std::ostream& os) override;
-    virtual void setDefaultDivisionNumber(int n);
+    virtual void setDefaultDivisionNumber(int n) override;
     virtual SgNode* load(const std::string& filename) override;
+
+    int defaultDivisionNumber() const;
 
 private:
     YAMLSceneLoaderImpl* impl;

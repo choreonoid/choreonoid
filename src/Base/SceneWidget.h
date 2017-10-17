@@ -90,6 +90,7 @@ public:
     void setUseBufferForPicking(bool on);
        
     void setBackgroundColor(const Vector3& color);
+    Vector3 backgroundColor();
     void setColor(const Vector4& color);
 
     void setCameraPosition(const Vector3& eye, const Vector3& direction, const Vector3& up);

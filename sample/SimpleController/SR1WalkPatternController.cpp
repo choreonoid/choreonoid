@@ -117,8 +117,7 @@ public:
                 double q = joint->q();
                 double dq_ref = (q_ref - qref0[i]) / dt;
                 double dq = (q - q0[i]) / dt;
-                joint->u() = 1.0 * ((q_ref - q) * pgain[i] + (dq_ref - dq) * dgain[i]);
-				//joint->u() = 0.0;
+                joint->u() = (q_ref - q) * pgain[i] + (dq_ref - dq) * dgain[i];
                 q0[i] = q;
             }
             break;

@@ -460,7 +460,7 @@ views:
           selectedLinks: [ 0 ]
   - 
     id: 10
-    name: "RTCダイアグラム"
+    name: "RTC Diagram"
     plugin: OpenRTM
     class: RTSDiagramView
     mounted: true

@@ -25,7 +25,9 @@ public:
 
     void setMessageSink(std::ostream& os);
     void setDefaultDivisionNumber(int n);
+    int defaultDivisionNumber() const;
     void setBaseDirectory(const std::string& directory);
+    std::string baseDirectory();
 
     void clear();
 

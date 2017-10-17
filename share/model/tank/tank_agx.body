@@ -6,7 +6,7 @@ name: Tank
 links:
   -
     name: CHASSIS
-    translation: [ 0, 0, 0.11 ]
+    translation: [ 0, 0, 0.2 ]
     jointType: free
     centerOfMass: [ 0, 0, 0 ]
     mass: 8.0
@@ -476,14 +476,27 @@ links:
       -
         type: AGXVehicleContinuousTrackDevice
         name: TRACK_L
-        numberOfNodes: 40
-        nodeThickness: 0.01
-        nodeWidth:  0.09
-        nodeDistanceTension: 5.0E-3
-        upAxis: [ 0, 0, 1 ]
         sprocketNames: [ WHEEL_L0 ]
         rollerNames: [ WHEEL_L1 ]
         idlerNames: [ WHEEL_L2 ]
+        upAxis: [ 0, 0, 1 ]
+        numberOfNodes: 42
+        nodeThickness: 0.01
+        nodeWidth:  0.09
+        nodeDistanceTension: 2.0E-4
+        nodeThickerThickness: 0.02
+        useThickerNodeEvery: 0
+        hingeCompliance: 9.0E-10
+        hingeDamping: 0.01
+        minStabilizingHingeNormalForce: 100
+        stabilizingHingeFrictionParameter: 1e-6
+        enableMerge: false
+        numNodesPerMergeSegment: 3
+        contactReduction: 3
+        enableLockToReachMergeCondition: true
+        lockToReachMergeConditionCompliance: 0.1
+        lockToReachMergeConditionDamping: 0.01
+        #maxAngleMergeCondition: 1.0E-5
       -
         type: Visual
         elements:
@@ -657,14 +670,27 @@ links:
       -
         type: AGXVehicleContinuousTrackDevice
         name: TRACK_R
-        numberOfNodes: 40
-        nodeThickness: 0.01
-        nodeWidth:  0.09
-        nodeDistanceTension: 5.0E-3
-        upAxis: [ 0, 0, 1 ]
         sprocketNames: [ WHEEL_R0 ]
         rollerNames: [ WHEEL_R1 ]
-        idlerNames: [ WHEEL_R2 ] 
+        idlerNames: [ WHEEL_R2 ]
+        upAxis: [ 0, 0, 1 ]
+        numberOfNodes: 42
+        nodeThickness: 0.01
+        nodeWidth:  0.09
+        nodeDistanceTension: 2.0E-4
+        nodeThickerThickness: 0.02
+        useThickerNodeEvery: 0
+        hingeCompliance: 9.0E-10
+        hingeDamping: 0.01
+        minStabilizingHingeNormalForce: 100
+        stabilizingHingeFrictionParameter: 1e-6
+        enableMerge: false
+        numNodesPerMergeSegment: 3
+        contactReduction: 3
+        enableLockToReachMergeCondition: true
+        lockToReachMergeConditionCompliance: 1.0E-10
+        lockToReachMergeConditionDamping: 0.01
+        #maxAngleMergeCondition: 1.0E-5
       -
         type: Visual
         elements:

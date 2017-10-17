@@ -17,24 +17,14 @@
 #include <cnoid/ProjectManager>
 #include <rtm/RTObject.h>
 #include <rtm/CorbaNaming.h>
+#include <boost/format.hpp>
 #include <boost/regex.hpp>
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
+using boost::format;
 namespace filesystem = boost::filesystem;
-
-#if ( defined ( WIN32 ) || defined ( _WIN32 ) || defined(__WIN32__) || defined(__NT__) )
-#define SUFFIX_SHARED_EXT   ".dll"
-#define SUFFIX_EXE_EXT      ".exe"
-#elif defined(__APPLE__)
-#define SUFFIX_SHARED_EXT   ".dylib"
-#define SUFFIX_EXE_EXT      ".app"
-#else
-#define SUFFIX_SHARED_EXT   ".so"
-#define SUFFIX_EXE_EXT      ""
-#endif
 
 namespace {
 const bool TRACE_FUNCTIONS = false;
@@ -55,7 +45,7 @@ void RTCItem::initialize(ExtensionManager* ext)
 RTCItem::RTCItem()
     : os(MessageView::instance()->cout()),
       periodicType(N_PERIODIC_TYPE, CNOID_GETTEXT_DOMAIN_NAME),
-      pathBase(N_PATH_BASE, CNOID_GETTEXT_DOMAIN_NAME)
+      baseDirectoryType(N_BASE_DIRECTORY_TYPES, CNOID_GETTEXT_DOMAIN_NAME)
 {
     rtcomp = 0;
     moduleName.clear();
@@ -67,16 +57,20 @@ RTCItem::RTCItem()
     periodicType.setSymbol(EXT_TRIG_EXECUTION_CONTEXT,  N_("ExtTrigExecutionContext"));
     periodicType.setSymbol(CHOREONOID_EXECUTION_CONTEXT,  N_("ChoreonoidExecutionContext"));
     periodicType.select(PERIODIC_EXECUTION_CONTEXT);
-    oldType = PERIODIC_EXECUTION_CONTEXT;
+    oldPeriodicType = periodicType.which();
+    
     properties.clear();
     properties.insert(make_pair(string("exec_cxt.periodic.type"), periodicType.selectedSymbol()));
     stringstream ss;
     ss << periodicRate;
     properties.insert(make_pair(string("exec_cxt.periodic.rate"), ss.str()));
-    pathBase.setSymbol(RTC_DIRECTORY, N_("RTC directory"));
-    pathBase.setSymbol(PROJECT_DIRECTORY, N_("Project directory"));
-    pathBase.select(RTC_DIRECTORY);
-    oldPathBase = RTC_DIRECTORY;
+    
+    baseDirectoryType.setSymbol(RTC_DIRECTORY, N_("RTC directory"));
+    baseDirectoryType.setSymbol(PROJECT_DIRECTORY, N_("Project directory"));
+    baseDirectoryType.select(RTC_DIRECTORY);
+    oldBaseDirectoryType = baseDirectoryType.which();
+
+    rtcDirectory = filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "rtc";
 }
 
 
@@ -84,15 +78,16 @@ RTCItem::RTCItem(const RTCItem& org)
     : Item(org),
       os(MessageView::instance()->cout()),
       periodicType(org.periodicType),
-      pathBase(org.pathBase)
+      baseDirectoryType(org.baseDirectoryType),
+      rtcDirectory(org.rtcDirectory)
 {
     rtcomp = org.rtcomp;
     moduleName = org.moduleName;
     mv = MessageView::instance();
     periodicRate = org.periodicRate;
-    oldType = org.oldType;
+    oldPeriodicType = org.oldPeriodicType;
     properties = org.properties;
-    oldPathBase = org.oldPathBase;
+    oldBaseDirectoryType = org.oldBaseDirectoryType;
 }
 
 RTCItem::~RTCItem()
@@ -141,8 +136,8 @@ void RTCItem::setModuleName(const std::string& name)
 
 void RTCItem::setPeriodicType(int type)
 {
-    if(oldType != type){
-        oldType = type;
+    if(oldPeriodicType != type){
+        oldPeriodicType = type;
         properties["exec_cxt.periodic.type"] = periodicType.symbol(type);
         if(rtcomp){
             delete rtcomp;
@@ -169,11 +164,11 @@ void RTCItem::setPeriodicRate(int rate)
 }
 
 
-void RTCItem::setPathBase(int base)
+void RTCItem::setBaseDirectoryType(int base)
 {
-    pathBase.select(base);
-    if (oldPathBase != base){
-        oldPathBase = base;
+    baseDirectoryType.select(base);
+    if (oldBaseDirectoryType != base){
+        oldBaseDirectoryType = base;
         if (rtcomp){
             delete rtcomp;
         }
@@ -186,26 +181,27 @@ void RTCItem::setPathBase(int base)
 void RTCItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     Item::doPutProperties(putProperty);
-    putProperty(_("Relative path base"), pathBase,
-        std::bind(&RTCItem::setPathBase, this, _1), true);
 
-    FileDialogFilter filter;
-    filter.push_back( string(_(" Dynamic Link Library ")) + DLLSFX );
-    string dir;
-    if(!moduleName.empty() && checkAbsolute(filesystem::path(moduleName)))
-        dir = filesystem::path(moduleName).parent_path().string();
-    else{
-        if(pathBase.is(RTC_DIRECTORY))
-            dir = (filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "rtc").string();
+    FilePathProperty moduleProperty(
+        moduleName,
+        { str(format(_("RT-Component module (*%1%)")) % DLL_SUFFIX) });
+
+    if(baseDirectoryType.is(RTC_DIRECTORY)){
+        moduleProperty.setBaseDirectory(rtcDirectory.string());
+    } else if(baseDirectoryType.is(PROJECT_DIRECTORY)){
+        moduleProperty.setBaseDirectory(ProjectManager::instance()->currentProjectDirectory());
     }
-    putProperty(_("RTC module name"), FilePath(moduleName, filter, dir),
-                std::bind(&RTCItem::setModuleName, this, _1), true);
+    
+    putProperty(_("RTC module"), moduleProperty,
+                [&](const string& name){ setModuleName(name); return true; });
+    putProperty(_("Base directory"), baseDirectoryType,
+                [&](int which){ setBaseDirectoryType(which); return true; });
 
     putProperty(_("Execution context"), periodicType,
-                std::bind((bool(Selection::*)(int))&Selection::select, &periodicType, _1));
+                [&](int which){ return periodicType.select(which); });
     setPeriodicType(periodicType.selectedIndex());
     putProperty(_("Periodic rate"), periodicRate,
-                std::bind(&RTCItem::setPeriodicRate, this, _1), true);
+                [&](int rate){ setPeriodicRate(rate); return true; });
 }
 
 
@@ -214,10 +210,10 @@ bool RTCItem::store(Archive& archive)
     if(!Item::store(archive)){
         return false;
     }
-    archive.writeRelocatablePath("moduleName", moduleName);
+    archive.writeRelocatablePath("module", moduleName);
+    archive.write("baseDirectory", baseDirectoryType.selectedSymbol(), DOUBLE_QUOTED);
     archive.write("periodicType", periodicType.selectedSymbol());
     archive.write("periodicRate", periodicRate);
-    archive.write("relativePathBase", pathBase.selectedSymbol(), DOUBLE_QUOTED);
     return true;
 }
 
@@ -228,25 +224,26 @@ bool RTCItem::restore(const Archive& archive)
         return false;
     }
     string value;
-    if(archive.read("moduleName", value)){
+    if(archive.read("module", value) || archive.read("moduleName", value)){
         filesystem::path path(archive.expandPathVariables(value));
-        moduleName = getNativePathString(path);
+        moduleName = path.make_preferred().string();
     }
-    string symbol;
-    if(archive.read("periodicType", symbol)){
-        periodicType.select(symbol);
-        oldType = periodicType.selectedIndex();
-        properties["exec_cxt.periodic.type"] = symbol;
+    if(archive.read("baseDirectory", value) || archive.read("RelativePathBase", value)){
+        baseDirectoryType.select(value);
+        oldBaseDirectoryType = baseDirectoryType.selectedIndex();
+    }
+    
+    if(archive.read("periodicType", value)){
+        periodicType.select(value);
+        oldPeriodicType = periodicType.selectedIndex();
+        properties["exec_cxt.periodic.type"] = value;
     }
     if(archive.read("periodicRate", periodicRate)){
         stringstream ss;
         ss << periodicRate;
         properties["exec_cxt.periodic.rate"] = ss.str();
     }
-    if(archive.read("relativePathBase", symbol) || archive.read("RelativePathBase", symbol)){
-        pathBase.select(symbol);
-        oldPathBase = pathBase.selectedIndex();
-    }
+
     return true;
 }
 
@@ -254,16 +251,16 @@ bool RTCItem::restore(const Archive& archive)
 bool RTCItem::convertAbsolutePath()
 {
     modulePath = moduleName;
-    if (!checkAbsolute(modulePath)){
-        if (pathBase.is(RTC_DIRECTORY)){
-            modulePath = filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "rtc" / modulePath;
-        } else {
-            string projectFile = ProjectManager::instance()->currentProjectFile();
-            if (projectFile.empty()){
+    if(!modulePath.is_absolute()){
+        if(baseDirectoryType.is(RTC_DIRECTORY)){
+            modulePath = rtcDirectory / modulePath;
+        } else if(baseDirectoryType.is(PROJECT_DIRECTORY)){
+            string projectDir = ProjectManager::instance()->currentProjectDirectory();
+            if(projectDir.empty()){
                 mv->putln(_("Please save the project."));
                 return false;
             } else {
-                modulePath = boost::filesystem::path(projectFile).parent_path() / modulePath;
+                modulePath = filesystem::path(projectDir) / modulePath;
             }
         }
     }
@@ -310,19 +307,19 @@ bool  RTComponent::createRTC(PropertyMap& prop)
 
     if(filesystem::exists(modulePath)){
         actualFilename = getNativePathString(modulePath);
-        if(modulePath.extension() == SUFFIX_SHARED_EXT){
+        if(modulePath.extension() == DLL_SUFFIX){
             string initFunc(componentName + "Init");
             setupModules(actualFilename, initFunc, componentName, prop);          
         } else {
             createProcess(actualFilename, prop);
         }   
     } else {
-        filesystem::path exePath(modulePath.string() + SUFFIX_EXE_EXT);
+        filesystem::path exePath(modulePath.string() + EXEC_SUFFIX);
         if(filesystem::exists(exePath)){
             actualFilename = getNativePathString(exePath);
             createProcess(actualFilename, prop);
         } else {
-            filesystem::path dllPath(modulePath.string() + SUFFIX_SHARED_EXT);
+            filesystem::path dllPath(modulePath.string() + DLL_SUFFIX);
             if(filesystem::exists(dllPath)){
                 actualFilename = getNativePathString(dllPath);
                 string initFunc(componentName + "Init");

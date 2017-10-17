@@ -20,6 +20,7 @@ const int buttonID[] = { 0, 2, 3 };
 class TankJoystickController : public SimpleController
 {
     bool usePseudoContinousTrackMode;
+    Link::ActuationMode turretAcutuationMode;
     Link* trackL;
     Link* trackR;
     Link* turretJoint[2];
@@ -39,16 +40,20 @@ public:
         
         Body* body = io->body();
 
-        bool tracksFound = false;
-        string opt = io->optionString();
-        if(opt == "wheels"){
-            usePseudoContinousTrackMode = false;
-            trackL = body->link("WHEEL_L0");
-            trackR = body->link("WHEEL_R0");
-        } else {
-            usePseudoContinousTrackMode = true;
+        usePseudoContinousTrackMode = true;
+        turretAcutuationMode = Link::ActuationMode::JOINT_TORQUE;
+        for(auto opt : io->options()){
+            if(opt == "wheels")     usePseudoContinousTrackMode = false;
+            if(opt == "velocity")   turretAcutuationMode = Link::ActuationMode::JOINT_VELOCITY;
+        }
+
+        if(usePseudoContinousTrackMode){
             trackL = body->link("TRACK_L");
             trackR = body->link("TRACK_R");
+
+        } else {
+            trackL = body->link("WHEEL_L0");
+            trackR = body->link("WHEEL_R0");
         }
 
         if(!trackL || !trackR){
@@ -72,6 +77,7 @@ public:
                 return false;
             }
             qref[i] = qprev[i] = joint->q();
+            joint->setActuationMode(turretAcutuationMode);
             io->enableIO(joint);
         }
 
@@ -109,10 +115,17 @@ public:
             }
         }
         // set the velocity of each tracks
-        double k = usePseudoContinousTrackMode ? 1.0 : 0.2;
-        trackL->dq() = k * (-2.0 * pos[1] + pos[0]);
-        trackR->dq() = k * (-2.0 * pos[1] - pos[0]);
-        
+        if(usePseudoContinousTrackMode){
+            double k = 1.0;
+            trackL->dq() = k * (-2.0 * pos[1] + pos[0]);
+            trackR->dq() = k * (-2.0 * pos[1] - pos[0]);
+
+        }else{
+            double k = 4.0;
+            trackL->dq() = k * (-pos[1] + pos[0]);
+            trackR->dq() = k * (-pos[1] - pos[0]);
+        }
+
         static const double P = 200.0;
         static const double D = 50.0;
 

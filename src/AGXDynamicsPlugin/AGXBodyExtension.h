@@ -6,20 +6,19 @@
 #include "exportdecl.h"
 
 namespace cnoid{
+class Link;
 class AGXBody;
 class AGXLink;
-class Link;
 class CNOID_EXPORT AGXBodyExtension : public Referenced
 {
 public:
     AGXBodyExtension(AGXBody* agxBody);
     AGXBody* getAGXBody();
-    agxSDK::Assembly* getAssembly();
 private:
     AGXBody* _agxBody;
-    agxSDK::AssemblyRef _assembly;
 };
 typedef ref_ptr<AGXBodyExtension> AGXBodyExtensionPtr;
+typedef std::vector<AGXBodyExtensionPtr> AGXBodyExtensionPtrs;
 
 class AGXExtraJoint : public AGXBodyExtension {
 public:

@@ -512,7 +512,7 @@ void PythonConsoleViewImpl::setInputString(const QString& command)
 
     QTextCursor cursor = textCursor();
     cursor.movePosition(QTextCursor::End);
-    cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::KeepAnchor);
+    cursor.movePosition(QTextCursor::StartOfBlock, QTextCursor::KeepAnchor);
     cursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor, inputColumnOffset);
     cursor.removeSelectedText();
     cursor.insertText(command);
@@ -615,7 +615,8 @@ void PythonConsoleViewImpl::keyPressEvent(QKeyEvent* event)
         
     case Qt::Key_B:
         if(event->modifiers() == Qt::ControlModifier){
-            if(textCursor().columnNumber() > inputColumnOffset){
+            QTextCursor cursor = textCursor();
+            if(cursor.position() > cursor.block().position() + inputColumnOffset ){
                 moveCursor(QTextCursor::Left);
             }
             done = true;
@@ -624,8 +625,8 @@ void PythonConsoleViewImpl::keyPressEvent(QKeyEvent* event)
         
     case Qt::Key_H:
         if(event->modifiers() == Qt::ControlModifier){
-            if(textCursor().columnNumber() > inputColumnOffset){
-                QTextCursor cursor = textCursor();
+            QTextCursor cursor = textCursor();
+            if(cursor.position() > cursor.block().position() + inputColumnOffset ){
                 cursor.movePosition(QTextCursor::Left, QTextCursor::KeepAnchor, 1);
                 cursor.removeSelectedText();
              }
@@ -634,12 +635,13 @@ void PythonConsoleViewImpl::keyPressEvent(QKeyEvent* event)
         break;
         
     case Qt::Key_Left:
-    case Qt::Key_Backspace:
-        if(textCursor().columnNumber() <= inputColumnOffset){
+    case Qt::Key_Backspace:{
+        QTextCursor cursor = textCursor();
+        if(cursor.position() <= cursor.block().position() + inputColumnOffset ){
             done = true;
         }
         break;
-        
+    }
     case Qt::Key_P:
         if(event->modifiers() != Qt::ControlModifier){
             break;
@@ -660,7 +662,7 @@ void PythonConsoleViewImpl::keyPressEvent(QKeyEvent* event)
         
     case Qt::Key_A:
         if(event->modifiers() == Qt::ControlModifier){
-            moveCursor(QTextCursor::StartOfLine);
+            moveCursor(QTextCursor::StartOfBlock);
             for(int i=0; i < inputColumnOffset; ++i) moveCursor(QTextCursor::Right);
             done = true;
         }

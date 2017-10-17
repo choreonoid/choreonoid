@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <memory>
 
+
 namespace cnoid {
 
 template <typename ElementType, typename Allocator = std::allocator<ElementType> >

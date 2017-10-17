@@ -31,8 +31,6 @@ using boost::format;
 namespace {
 
 #ifdef _WIN32
-const char* DLLSFX = ".dll";
-const char* PATH_DELIMITER = ";";
 const char* CNOID_BODY_SHARE_DIR="";
 typedef HINSTANCE DllHandle;
 inline DllHandle loadDll(const char* filename) { return LoadLibrary(filename); }
@@ -40,12 +38,6 @@ inline void* resolveDllSymbol(DllHandle handle, const char* symbol) { return Get
 inline void unloadDll(DllHandle handle) { FreeLibrary(handle); }
 #else
 # include <dlfcn.h>
-#ifdef __darwin__
-const char* DLLSFX = ".dylib";
-#else
-const char* DLLSFX = ".so";
-#endif
-const char* PATH_DELIMITER = ":";
 typedef void* DllHandle;
 inline DllHandle loadDll(const char* filename) { return dlopen(filename, RTLD_LAZY); }
 inline void* resolveDllSymbol(DllHandle handle, const char* symbol) { return dlsym(handle, symbol); }
@@ -133,7 +125,7 @@ static int loadBodyCustomizers(BodyInterface* bodyInterface, const std::string p
                 numLoaded++;
             }
         } else {
-            static const string pluginNamePattern(string("Customizer") + DLLSFX);
+            static const string pluginNamePattern(string("Customizer") + DLL_SUFFIX);
             filesystem::directory_iterator end;
             for(filesystem::directory_iterator it(pluginPath); it != end; ++it){
                 const filesystem::path& filepath = *it;

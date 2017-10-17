@@ -177,7 +177,7 @@ bool JoystickImpl::readCurrentState()
             }
             info.dwButtons >>= 1;
         }
-        // axes. normalize value (-1.0〜1.0)
+        // axes. normalize value (-1.0 to 1.0)
         if (axisEnabled[0])
             axes[0] = ((double)info.dwXpos - 32767.0) / 32768.0;
         if (axisEnabled[1])

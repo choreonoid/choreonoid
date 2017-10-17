@@ -3,7 +3,6 @@
   @author Shin'ichiro Nakaoka
 */
 
-#include <GL/glew.h>
 #include "GLSceneRenderer.h"
 #include "MessageView.h"
 #include <cnoid/SceneDrawables>
@@ -11,6 +10,7 @@
 #ifdef _WIN32
 #include <windows.h>
 #endif
+#include <GL/gl.h>
 
 using namespace std;
 using namespace cnoid;
@@ -190,7 +190,6 @@ bool GLSceneRenderer::setSwapInterval(int interval)
 {
 #if 0
 #ifdef _WIN32
-	/*
     DISPLAY_DEVICE device;
     device.cb = sizeof(DISPLAY_DEVICE);
     for (unsigned int i = 0; EnumDisplayDevices(NULL, i, &device, NULL); i++) {
@@ -205,7 +204,6 @@ bool GLSceneRenderer::setSwapInterval(int interval)
         return false;
 
     return wglSwapIntervalEXT(interval);
-	*/
 #endif
 #endif
     return false;
@@ -216,7 +214,7 @@ int GLSceneRenderer::getSwapInterval() const
 {
 #if 0
 #ifdef _WIN32
-    //return wglGetSwapIntervalEXT();
+    return wglGetSwapIntervalEXT();
 #endif
 #endif
     return -1;

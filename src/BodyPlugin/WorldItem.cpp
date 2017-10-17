@@ -5,23 +5,21 @@
 
 #include "WorldItem.h"
 #include "KinematicsBar.h"
-#include <cnoid/MessageView>
 #include <cnoid/ItemManager>
 #include <cnoid/RootItem>
-#include <cnoid/PutPropertyFunction>
-#include <cnoid/YAMLReader>
 #include <cnoid/Archive>
 #include <cnoid/ConnectionSet>
 #include <cnoid/LazyCaller>
 #include <cnoid/BodyCollisionDetectorUtil>
 #include <cnoid/SceneCollision>
-#include <boost/dynamic_bitset.hpp>
-#include <algorithm>
+#include <cnoid/ContactMaterialTable>
+#include <cnoid/ExecutablePath>
+#include <boost/format.hpp>
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
+namespace filesystem = boost::filesystem;
 
 namespace {
 
@@ -51,7 +49,7 @@ public:
     ostream& os;
 
     ItemList<BodyItem> collisionBodyItems;
-    boost::dynamic_bitset<> collisionBodyItemsSelfCollisionFlags;
+    vector<bool> collisionBodyItemsSelfCollisionFlags;
 
     Connection sigItemTreeChangedConnection;
     ConnectionSet sigKinematicStateChangedConnections;
@@ -71,6 +69,9 @@ public:
 
     SceneCollisionPtr sceneCollision;
 
+    string contactMaterialFile;
+    ContactMaterialTablePtr contactMaterialTable;
+
     void init();
     bool selectCollisionDetector(int index);
     void enableCollisionDetection(bool on);
@@ -81,6 +82,7 @@ public:
     void updateCollisions(bool forceUpdate);
     void extractCollisions(const CollisionPair& collisionPair);
 };
+
 }
 
 
@@ -100,9 +102,9 @@ WorldItem::WorldItem()
 
 WorldItemImpl::WorldItemImpl(WorldItem* self)
     : self(self),
-      os(MessageView::mainInstance()->cout()),
-      updateCollisionsLater(std::bind(&WorldItemImpl::updateCollisions, this, false)),
-      updateCollisionDetectorLater(std::bind(&WorldItemImpl::updateCollisionDetector, this, false))
+      os(mvout()),
+      updateCollisionsLater([&](){ updateCollisions(false); }),
+      updateCollisionDetectorLater([&](){ updateCollisionDetector(false); })
 {
     const int n = CollisionDetector::numFactories();
     collisionDetectorType.resize(n);
@@ -126,12 +128,13 @@ WorldItem::WorldItem(const WorldItem& org)
 WorldItemImpl::WorldItemImpl(WorldItem* self, const WorldItemImpl& org)
     : self(self),
       os(org.os),
-      updateCollisionsLater(std::bind(&WorldItemImpl::updateCollisions, this, false)),
-      updateCollisionDetectorLater(std::bind(&WorldItemImpl::updateCollisionDetector, this, false))
+      updateCollisionsLater([&](){ updateCollisions(false); }),
+      updateCollisionDetectorLater([&](){ updateCollisionDetector(false); }),
+      contactMaterialFile(org.contactMaterialFile)
 {
     collisionDetectorType = org.collisionDetectorType;
     isCollisionDetectionEnabled = org.isCollisionDetectionEnabled;
-    
+
     init();
 }
 
@@ -229,7 +232,7 @@ void WorldItemImpl::enableCollisionDetection(bool on)
         updateCollisionDetector(true);
         sigItemTreeChangedConnection =
             RootItem::mainInstance()->sigTreeChanged().connect(
-                std::bind(&WorldItem::updateCollisionDetectorLater, self));
+                [&](){ self->updateCollisionDetector(); });
         changed = true;
     }
 
@@ -290,10 +293,10 @@ void WorldItemImpl::updateCollisionDetector(bool forceUpdate)
 
     if(!forceUpdate){
         ItemList<BodyItem> prevBodyItems = collisionBodyItems;
-        boost::dynamic_bitset<> prevSelfCollisionFlags = collisionBodyItemsSelfCollisionFlags;
+        vector<bool> prevSelfCollisionFlags = collisionBodyItemsSelfCollisionFlags;
         updateCollisionBodyItems();
         if(collisionBodyItems == prevBodyItems &&
-            collisionBodyItemsSelfCollisionFlags == prevSelfCollisionFlags){
+           collisionBodyItemsSelfCollisionFlags == prevSelfCollisionFlags){
             return;
         }
     } else {
@@ -317,7 +320,7 @@ void WorldItemImpl::updateCollisionDetector(bool forceUpdate)
         
         sigKinematicStateChangedConnections.add(
             bodyItem->sigKinematicStateChanged().connect(
-                std::bind(&WorldItemImpl::onBodyKinematicStateChanged, this, bodyItem)));
+                [=](){ onBodyKinematicStateChanged(bodyItem); }));
     }
 
     collisionDetector->makeReady();
@@ -385,7 +388,7 @@ void WorldItemImpl::updateCollisions(bool forceUpdate)
 
     collisions->clear();
 
-    collisionDetector->detectCollisions(std::bind(&WorldItemImpl::extractCollisions, this, _1));
+    collisionDetector->detectCollisions([&](const CollisionPair& pair){ extractCollisions(pair); });
 
     sceneCollision->setDirty();
 
@@ -435,6 +438,27 @@ SgNode* WorldItem::getScene()
 }
 
 
+void WorldItem::setContactMaterialFile(const std::string& filename)
+{
+    impl->contactMaterialFile = filename;
+}
+
+
+ContactMaterialTable* WorldItem::contactMaterialTable()
+{
+    if(!impl->contactMaterialTable){
+        string filename = impl->contactMaterialFile;
+        if(filename.empty()){
+            filename = (filesystem::path(shareDirectory()) / "misc" / "stdmaterials.yaml").string();
+        }
+        impl->contactMaterialTable = new ContactMaterialTable;
+        impl->contactMaterialTable->load(filename);
+    }
+
+    return impl->contactMaterialTable;
+}
+
+        
 Item* WorldItem::doDuplicate() const
 {
     return new WorldItem(*this);
@@ -444,9 +468,13 @@ Item* WorldItem::doDuplicate() const
 void WorldItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Collision detection"), isCollisionDetectionEnabled(),
-                std::bind(&WorldItem::enableCollisionDetection, this, _1), true);
+                [&](bool on){ enableCollisionDetection(on); return true; });
     putProperty(_("Collision detector"), impl->collisionDetectorType,
-                std::bind(&WorldItemImpl::selectCollisionDetector, impl, _1));
+                [&](int index){ return impl->selectCollisionDetector(index); });
+
+    FilePathProperty materialFileProperty(impl->contactMaterialFile, { _("Contact material definition file (*.yaml)") });
+    putProperty(_("Contact material"), materialFileProperty,
+                [&](const string& filename){ setContactMaterialFile(filename); return true; });
 }
 
 
@@ -465,7 +493,7 @@ bool WorldItem::restore(const Archive& archive)
         selectCollisionDetector(symbol);
     }
     if(archive.get("collisionDetection", false)){
-        archive.addPostProcess(std::bind(&WorldItemImpl::enableCollisionDetection, impl, true));
+        archive.addPostProcess([&](){ impl->enableCollisionDetection(true); });
     }
     return true;
 }

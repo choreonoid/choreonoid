@@ -1,7 +1,7 @@
 
 # @author Shin'ichiro Nakaoka
 
-option(BUILD_SPRINGHEAD_PLUGIN "Building ODEPlugin" OFF)
+option(BUILD_SPRINGHEAD_PLUGIN "Building SpringheadPlugin" OFF)
 
 if(NOT BUILD_SPRINGHEAD_PLUGIN)
   return()

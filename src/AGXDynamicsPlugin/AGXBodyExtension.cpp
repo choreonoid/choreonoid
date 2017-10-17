@@ -1,22 +1,17 @@
 #include "AGXBodyExtension.h"
 #include "AGXBody.h"
+#include "AGXScene.h"
 #include <iostream>
 
 namespace cnoid{
 
 AGXBodyExtension::AGXBodyExtension(AGXBody* agxBody){
     _agxBody = agxBody;
-    _assembly = AGXObjectFactory::createAssembly();
 }
 
 AGXBody* AGXBodyExtension::getAGXBody()
 {
     return _agxBody;
-}
-
-agxSDK::Assembly* AGXBodyExtension::getAssembly()
-{
-    return _assembly;
 }
 
 ////////////////////////////////////////////////////////////
@@ -62,7 +57,7 @@ void AGXExtraJoint::createJoints()
         default:
             break;
         }
-        getAssembly()->add(constraint);
+        getAGXBody()->getAGXScene()->getSimulation()->add(constraint);
     }
 }
 
@@ -108,7 +103,7 @@ void AGXContinousTrack::createTrackConstraint()
     agx::ConstraintRef constraint = AGXObjectFactory::createConstraint(hd);
     link->setJointType(Link::ROTATIONAL_JOINT);
     agxFootLinkStart->setAGXConstraint(constraint);
-    getAssembly()->add(constraint);
+    getAGXBody()->getAGXScene()->getSimulation()->add(constraint);
 
     // Create PlaneJoint to prvent the track falling off
     // Create joint with parent(example:chasis) coordination 
@@ -144,7 +139,7 @@ void AGXContinousTrack::createTrackConstraint()
         pd.frameA = AGXObjectFactory::createFrame();
         pd.rigidBodyA = agxLink->getAGXRigidBody();
         agx::PlaneJointRef pj = AGXObjectFactory::createConstraintPlaneJoint(pd);
-        getAssembly()->add((agx::ConstraintRef)pj);
+        getAGXBody()->getAGXScene()->getSimulation()->add((agx::ConstraintRef)pj);
 
         // Force enable collision between other links
         agxLink->getAGXGeometry()->removeGroup(getAGXBody()->getCollisionGroupName());

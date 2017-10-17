@@ -18,14 +18,6 @@ using namespace cnoid;
 using boost::format;
 namespace filesystem = boost::filesystem;
 
-#if ( defined ( WIN32 ) || defined ( _WIN32 ) || defined(__WIN32__) || defined(__NT__) )
-#define DLL_EXTENSION ".dll"
-#elif defined(__APPLE__)
-#define DLL_EXTENSION ".dylib"
-#else
-#define DLL_EXTENSION ".so"
-#endif
-
 namespace cnoid {
 
 class ControllerRTCItemImpl
@@ -47,12 +39,15 @@ public:
     std::string rtcInstanceNameProperty;
     std::string rtcInstanceName;
 
-    enum RelativePathBaseType {
+    enum BaseDirectoryType {
+        NO_BASE_DIRECTORY,
         RTC_DIRECTORY,
         PROJECT_DIRECTORY,
-        N_RELATIVE_PATH_BASE_TYPES
+        N_BASE_DIRECTORY_TYPES
     };
-    Selection relativePathBaseType;
+    Selection baseDirectoryType;
+
+    filesystem::path rtcDirectory;
 
     enum ExecContextType {
         PERIODIC_EXECUTION_CONTEXT,
@@ -66,6 +61,8 @@ public:
     
     ControllerRTCItemImpl(ControllerRTCItem* self);
     ControllerRTCItemImpl(ControllerRTCItem* self, const ControllerRTCItemImpl& org);
+    void setBaseDirectoryType(int type);
+    void setRTCModule(const std::string& name);
     std::string getModuleFilename();
     bool createRTCmain();
     void deleteRTC(bool waitToBeDeleted);
@@ -99,12 +96,15 @@ ControllerRTCItem::ControllerRTCItem()
 ControllerRTCItemImpl::ControllerRTCItemImpl(ControllerRTCItem* self)
     : self(self),
       mv(MessageView::instance()),
-      relativePathBaseType(N_RELATIVE_PATH_BASE_TYPES, CNOID_GETTEXT_DOMAIN_NAME),
+      baseDirectoryType(N_BASE_DIRECTORY_TYPES, CNOID_GETTEXT_DOMAIN_NAME),
       execContextType(N_EXEC_CONTEXT_TYPES, CNOID_GETTEXT_DOMAIN_NAME)
 {
-    relativePathBaseType.setSymbol(RTC_DIRECTORY, N_("RTC directory"));
-    relativePathBaseType.setSymbol(PROJECT_DIRECTORY, N_("Project directory"));
-    relativePathBaseType.select(RTC_DIRECTORY);
+    baseDirectoryType.setSymbol(NO_BASE_DIRECTORY, N_("None"));
+    baseDirectoryType.setSymbol(RTC_DIRECTORY, N_("RTC directory"));
+    baseDirectoryType.setSymbol(PROJECT_DIRECTORY, N_("Project directory"));
+    baseDirectoryType.select(RTC_DIRECTORY);
+
+    rtcDirectory = filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "rtc";
 
     execContextType.setSymbol(PERIODIC_EXECUTION_CONTEXT,  N_("PeriodicExecutionContext"));
     execContextType.setSymbol(CHOREONOID_EXECUTION_CONTEXT,  N_("ChoreonoidExecutionContext"));
@@ -124,7 +124,8 @@ ControllerRTCItem::ControllerRTCItem(const ControllerRTCItem& org)
 ControllerRTCItemImpl::ControllerRTCItemImpl(ControllerRTCItem* self, const ControllerRTCItemImpl& org)
     : ControllerRTCItemImpl(self)
 {
-    relativePathBaseType = org.relativePathBaseType;
+    baseDirectoryType = org.baseDirectoryType;
+    rtcDirectory = org.rtcDirectory;
     moduleNameProperty = org.moduleNameProperty;
     rtcInstanceNameProperty = org.rtcInstanceNameProperty;
     periodicRateProperty = org.periodicRateProperty;
@@ -157,20 +158,40 @@ void ControllerRTCItem::onDisconnectedFromRoot()
 }
 
 
-void ControllerRTCItem::setRelativePathBaseType(int which)
+void ControllerRTCItemImpl::setBaseDirectoryType(int type)
 {
-    if(which != impl->relativePathBaseType.which()){
-        impl->relativePathBaseType.select(which);
-        createRTC();
+    if(type != baseDirectoryType.which()){
+        baseDirectoryType.select(type);
+        self->createRTC();
     }
 }
 
 
 void ControllerRTCItem::setRTCModule(const std::string& name)
 {
-    if(name != impl->moduleNameProperty){
-        impl->moduleNameProperty = name;
-        createRTC();
+    impl->setRTCModule(name);
+}
+
+
+void ControllerRTCItemImpl::setRTCModule(const std::string& name)
+{
+    if(name != moduleNameProperty){
+        filesystem::path modulePath(name);
+        if(modulePath.is_absolute()){
+            baseDirectoryType.select(NO_BASE_DIRECTORY);
+            if(modulePath.parent_path() == rtcDirectory){
+                baseDirectoryType.select(RTC_DIRECTORY);
+                modulePath = modulePath.filename();
+            } else {
+                filesystem::path projectDir(ProjectManager::instance()->currentProjectDirectory());
+                if(!projectDir.empty() && (modulePath.parent_path() == projectDir)){
+                    baseDirectoryType.select(PROJECT_DIRECTORY);
+                    modulePath = modulePath.filename();
+                }
+            }
+        }
+        moduleNameProperty = modulePath.string();
+        self->createRTC();
     }
 }
 
@@ -237,17 +258,17 @@ std::string ControllerRTCItemImpl::getModuleFilename()
 
     moduleName = path.stem().string();
     
-    if(!checkAbsolute(path)){
-        if(relativePathBaseType.is(RTC_DIRECTORY)){
-            path = filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "rtc" / path;
-        } else {
-            string projectFile = ProjectManager::instance()->currentProjectFile();
-            if(!projectFile.empty()){
-                path = filesystem::path(projectFile).parent_path() / path;
+    if(!path.is_absolute()){
+        if(baseDirectoryType.is(RTC_DIRECTORY)){
+            path = rtcDirectory / path;
+        } else if(baseDirectoryType.is(PROJECT_DIRECTORY)){
+            string projectDir = ProjectManager::instance()->currentProjectDirectory();
+            if(!projectDir.empty()){
+                path = filesystem::path(projectDir) / path;
             } else {
                 mv->putln(MessageView::ERROR,
-                          format(_("The rtc of %1% cannot be generated because the project directory is not determined."
-                                   " Please save the project as a project file."))
+                          format(_("The rtc of %1% cannot be generated because the project directory "
+                                   "is not determined. Please save the project as a project file."))
                           % self->name());
                 return string();
             }
@@ -256,6 +277,7 @@ std::string ControllerRTCItemImpl::getModuleFilename()
 
     string ext = path.extension().string();
     if(ext.empty()){
+        path += ".";
         path += DLL_EXTENSION;
     }
         
@@ -498,22 +520,23 @@ void ControllerRTCItem::doPutProperties(PutPropertyFunction& putProperty)
 
 void ControllerRTCItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
-    FileDialogFilter filter;
-    filter.push_back(string(_("RT-Component module file")) + DLLSFX);
-    string dir;
-    if(!moduleNameProperty.empty() && checkAbsolute(filesystem::path(moduleNameProperty))){
-        dir = filesystem::path(moduleNameProperty).parent_path().generic_string();
-    } else if(relativePathBaseType.is(RTC_DIRECTORY)) {
-        dir = (filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "rtc").generic_string();
-    }
-    putProperty(_("RTC module"), FilePath(moduleNameProperty, filter, dir),
-                [&](const std::string& name){ self->setRTCModule(name); return true; });
+    FilePathProperty moduleProperty(
+        moduleNameProperty,
+        { str(format(_("RT-Component module (*%1%)")) % DLL_SUFFIX) });
 
-    putProperty(_("Relative path base"), relativePathBaseType,
-                [&](int which){ self->setRelativePathBaseType(which); return true; });
+    if(baseDirectoryType.is(RTC_DIRECTORY)){
+        moduleProperty.setBaseDirectory(rtcDirectory.string());
+    } else if(baseDirectoryType.is(PROJECT_DIRECTORY)){
+        moduleProperty.setBaseDirectory(ProjectManager::instance()->currentProjectDirectory());
+    }
+
+    putProperty(_("RTC module"), moduleProperty,
+                [&](const string& name){ setRTCModule(name); return true; });
+    putProperty(_("Base directory"), baseDirectoryType,
+                [&](int which){ setBaseDirectoryType(which); return true; });
     
     putProperty(_("RTC Instance name"), rtcInstanceNameProperty,
-                [&](const std::string& name) { self->setRTCInstanceName(name); return true; });
+                [&](const string& name) { self->setRTCInstanceName(name); return true; });
 
     if(!useOnlyChoreonoidExecutionContext){
         putProperty(_("Execution context"), execContextType,
@@ -533,8 +556,8 @@ bool ControllerRTCItem::store(Archive& archive)
 
 bool ControllerRTCItemImpl::store(Archive& archive)
 {
-    archive.writeRelocatablePath("moduleName", moduleNameProperty);
-    archive.write("pathBaseType", relativePathBaseType.selectedSymbol(), DOUBLE_QUOTED);
+    archive.writeRelocatablePath("module", moduleNameProperty);
+    archive.write("baseDirectory", baseDirectoryType.selectedSymbol(), DOUBLE_QUOTED);
     archive.write("instanceName", rtcInstanceNameProperty, DOUBLE_QUOTED);
     if(!useOnlyChoreonoidExecutionContext){
         archive.write("executionContext", execContextType.selectedSymbol(), DOUBLE_QUOTED);
@@ -553,21 +576,21 @@ bool ControllerRTCItem::restore(const Archive& archive)
 bool ControllerRTCItemImpl::restore(const Archive& archive)
 {
     string value;
-    if(archive.read("moduleName", value)){
+    if(archive.read("module", value) || archive.read("moduleName", value)){
         filesystem::path path(archive.expandPathVariables(value));
-        moduleNameProperty = getNativePathString(path);
+        moduleNameProperty = path.make_preferred().string();
     }
-    string symbol;
-    if(archive.read("pathBaseType", symbol)){
-        relativePathBaseType.select(symbol);
+    if(archive.read("baseDirectory", value) || archive.read("pathBaseType", value)){
+        baseDirectoryType.select(value);
     }
     archive.read("instanceName", rtcInstanceNameProperty);
 
     if(!useOnlyChoreonoidExecutionContext){
-        if(archive.read("executionContext", symbol)){
-            execContextType.select(symbol);
+        if(archive.read("executionContext", value)){
+            execContextType.select(value);
         }
     }
     archive.read("periodicRate", periodicRateProperty);
+    
     return true;
 }

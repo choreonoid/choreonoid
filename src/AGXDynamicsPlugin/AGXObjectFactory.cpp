@@ -2,16 +2,16 @@
 
 namespace cnoid{
 
-    ////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
 // AGXPseudoContinuousTrackGeometry
 void AGXPseudoContinuousTrackGeometry::setAxis(const agx::Vec3f& axis)
 {
-    _axis = axis;
+    m_axis = axis;
 }
 
 agx::Vec3f AGXPseudoContinuousTrackGeometry::getAxis() const
 {
-    return _axis;
+    return m_axis;
 }
 
 agx::Vec3f AGXPseudoContinuousTrackGeometry::calculateSurfaceVelocity(const agxCollide::LocalContactPoint & point, size_t index) const
@@ -59,14 +59,14 @@ agx::MaterialRef AGXObjectFactory::createMaterial(const AGXMaterialDesc & desc)
     return m;
 }
 
-agx::ContactMaterialRef AGXObjectFactory::createContactMaterial(agx::MaterialRef const matA, agx::MaterialRef const matB, const AGXContactMaterialDesc& desc)
+agx::ContactMaterialRef AGXObjectFactory::createContactMaterial(agx::Material* const matA, agx::Material* const matB, const AGXContactMaterialDesc& desc)
 {
     agx::ContactMaterialRef cm = new agx::ContactMaterial(matA, matB);
     setContactMaterialParam(cm, desc);
     return cm;
 }
 
-agx::ContactMaterialRef AGXObjectFactory::createContactMaterial(const AGXContactMaterialDesc& desc, agxSDK::MaterialManagerRef const mgr)
+agx::ContactMaterialRef AGXObjectFactory::createContactMaterial(const AGXContactMaterialDesc& desc, agxSDK::MaterialManager* const mgr)
 {
     if(!mgr) return nullptr;
     agx::MaterialRef mA = mgr->getMaterial(desc.nameA);
@@ -85,11 +85,6 @@ agx::RigidBodyRef AGXObjectFactory::createRigidBody(const AGXRigidBodyDesc& desc
     rigid->setAngularVelocity(desc.w);
     rigid->setPosition(desc.p);
     rigid->setRotation(desc.R);
-    rigid->getMassProperties()->setAutoGenerateMask(0);
-    //r->getMassProperties()->setAutoGenerateMask(desc.genflags);
-    rigid->getMassProperties()->setMass(desc.m, false);
-    rigid->getMassProperties()->setInertiaTensor(desc.I, false);
-    rigid->setCmLocalTranslate(desc.c);
     rigid->setName(desc.name);
     rigid->getAutoSleepProperties().setEnable(desc.enableAutoSleep);
     return rigid;
@@ -172,7 +167,7 @@ agxSDK::AssemblyRef AGXObjectFactory::createAssembly()
     return new agxSDK::Assembly();
 }
 
-agx::Bool AGXObjectFactory::setContactMaterialParam(agx::ContactMaterialRef const cm, const AGXContactMaterialDesc & desc)
+agx::Bool AGXObjectFactory::setContactMaterialParam(agx::ContactMaterial* const cm, const AGXContactMaterialDesc & desc)
 {
     if(!cm) return false;
     cm->setYoungsModulus(desc.youngsModulus);
@@ -290,6 +285,38 @@ agxVehicle::TrackRef AGXObjectFactory::createVehicleTrack(const AGXVehicleTrackD
     for(int i = 0; i < desc.trackWheelRefs.size(); ++i){
         track->add(desc.trackWheelRefs[i]);
     }
+    track->getProperties()->setHingeCompliance(desc.hingeCompliance);
+    track->getProperties()->setHingeDamping(desc.hingeDamping);
+    track->getProperties()->setMinStabilizingHingeNormalForce(desc.minStabilizingHingeNormalForce);
+    track->getProperties()->setStabilizingHingeFrictionParameter(desc.stabilizingHingeFrictionParameter);
+    track->getInternalMergeProperties()->setEnableMerge(desc.enableMerge);
+    track->getInternalMergeProperties()->setNumNodesPerMergeSegment(desc.numNodesPerMergeSegment);
+    track->getInternalMergeProperties()->setEnableLockToReachMergeCondition(desc.enableLockToReachMergeCondition);
+    track->getInternalMergeProperties()->setLockToReachMergeConditionCompliance(desc.lockToReachMergeConditionCompliance);
+    track->getInternalMergeProperties()->setLockToReachMergeConditionDamping(desc.lockToReachMergeConditionDamping);
+    track->getInternalMergeProperties()->setMaxAngleMergeCondition(desc.maxAngleMergeCondition);
+    track->getInternalMergeProperties()->setContactReduction(desc.contactReduction);
+
+
+    if(desc.useThickerNodeEvery <= 0) return track;
+    // Add shapes for create bumpy tracks
+    agx::UInt counter = 0;
+    track->initialize(
+        [&]( const agxVehicle::TrackNode& node )
+        {
+        agx::Real heightOffset = 0.0;
+        agx::Real thickness = desc.nodeThickness;
+        // For every useThickerNodeEvery node we add a thicker box.
+        if ( ( counter++ % desc.useThickerNodeEvery ) == 0 ) {
+            thickness = desc.nodeThickerThickness;
+            heightOffset = -0.5 * ( thickness - desc.nodeThickness );
+        }
+        node.getRigidBody()->add( new agxCollide::Geometry( new agxCollide::Box( 0.5 * thickness,
+        0.5 * desc.nodeWidth,
+        0.5 * node.getLength() ) ),
+        agx::AffineMatrix4x4::translate( heightOffset, 0, node.getHalfExtents().z() ) );
+        }
+    );
     return track;
 }
 

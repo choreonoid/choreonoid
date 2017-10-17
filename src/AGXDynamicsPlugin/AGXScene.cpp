@@ -1,5 +1,4 @@
 #include "AGXScene.h"
-#include "AGXBody.h"
 
 namespace cnoid{
 
@@ -22,30 +21,6 @@ void AGXScene::stepSimulation()
 {
     agx::Thread::makeCurrentThreadMainThread();
     getSimulation()->stepForward();
-}
-
-void AGXScene::add(AGXBody* agxBody) {
-    // Add AGXRigidbody and constraint to AGX simulation
-    for(int i = 0; i < agxBody->numAGXLinks(); ++i){
-        add(agxBody->getAGXRigidBody(i));
-        add(agxBody->getAGXConstraint(i));
-    }
-
-    // Add AGXBodyExtensions
-    AGXBodyExtensionPtrs bes =  agxBody->getAGXBodyExtensions();
-    for(auto it = bes.begin(); it !=bes.end(); ++it){
-        add((*it)->getAssembly());
-    }
-
-    // Disable collision 
-    const VectorString vs = agxBody->getCollisionGroupNamesToDisableCollision();
-    for(auto it = vs.begin(); it != vs.end(); ++it){
-        setCollision(*it, false);
-    }
-    // Set self collision
-    setCollision(agxBody->getCollisionGroupName(), agxBody->bodyItem()->isSelfCollisionDetectionEnabled());
-    // Set external collision
-    agxBody->enableExternalCollision(agxBody->bodyItem()->isCollisionDetectionEnabled());
 }
 
 agx::Bool AGXScene::add(agx::RigidBody* const rigid)

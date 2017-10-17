@@ -188,9 +188,21 @@ void YAMLSceneReader::setDefaultDivisionNumber(int n)
 }
 
 
+int YAMLSceneReader::defaultDivisionNumber() const
+{
+    return impl->meshGenerator.divisionNumber();
+}
+
+
 void YAMLSceneReader::setBaseDirectory(const std::string& directory)
 {
     impl->baseDirectory = directory;
+}
+
+
+std::string YAMLSceneReader::baseDirectory()
+{
+    return impl->baseDirectory.string();
 }
 
 

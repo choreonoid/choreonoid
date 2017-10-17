@@ -1,11 +1,10 @@
 #ifndef CNOID_AGXDYNAMICS_PLUGIN_AGX_SCENE_H
 #define CNOID_AGXDYNAMICS_PLUGIN_AGX_SCENE_H
 
+#include "exportdecl.h"
 #include "AGXObjectFactory.h"
 
 namespace cnoid{
-
-class AGXBody;
 
 struct AGXSceneDesc
 {
@@ -13,7 +12,7 @@ struct AGXSceneDesc
     AGXSimulationDesc simdesc;
 };
 
-class AGXScene : public agx::Referenced
+class CNOID_EXPORT AGXScene : public agx::Referenced
 {
 public:
     AGXScene(const AGXSceneDesc& desc);
@@ -21,7 +20,6 @@ public:
     void clear();
     void stepSimulation();
     agxSDK::SimulationRef getSimulation() const;
-    void add(AGXBody* agxBody);
     agx::Bool add(agx::RigidBody* const rigid);
     agx::Bool add(agx::Constraint* const constraint);
     agx::Bool add(agxSDK::Assembly* const assembly);

@@ -12,10 +12,12 @@ endif()
 set(sources
   AGXBodyExtensionPlugin.cpp
   AGXBodyExtensionSample.cpp
+  AGXBreakableJoint.cpp
 )
 
 set(headers
   AGXBodyExtensionSample.h
+  AGXBreakableJoint.h
 )
 
 set(target CnoidAGXBodyExtensionPlugin)

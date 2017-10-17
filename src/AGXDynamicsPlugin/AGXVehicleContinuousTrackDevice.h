@@ -8,19 +8,27 @@
 using namespace std;
 namespace cnoid {
 
-struct AGXVehicleContinuousTrackDeviceDesc{
+struct AGXVehicleContinuousTrackDeviceDesc
+{
     AGXVehicleContinuousTrackDeviceDesc() {
         upAxis = Vector3d(0.0, 0.0, 1.0);
         numberOfNodes = 50;
         nodeThickness = 0.075;
         nodeWidth = 0.6;
         nodeDistanceTension = 5.0E-3;
-        hingeCompliance = 4.0E-10;
+        nodeThickerThickness = 0.09;
+        useThickerNodeEvery = 0;
+        hingeCompliance = 1.0E-10;
+        hingeDamping = 0.0333;
+        minStabilizingHingeNormalForce = 100;
         stabilizingHingeFrictionParameter = 1.5;
         enableMerge = false;
-        numNodesPerMergeSegment = 4;
-        lockToReachMergeConditionCompliance = 1.0E-8;
-        contactReductionLevel = 3;
+        numNodesPerMergeSegment = 3;
+        contactReduction = 1;
+        enableLockToReachMergeCondition = false;
+        lockToReachMergeConditionCompliance = 1.0E-11;
+        lockToReachMergeConditionDamping = 3/ 60;
+        maxAngleMergeCondition = 1.0E-5;
         sprocketNames.clear();
         idlerNames.clear();
         rollerNames.clear();
@@ -30,14 +38,22 @@ struct AGXVehicleContinuousTrackDeviceDesc{
     double nodeThickness;        // Thickness of each node in the track.
     double nodeWidth;            // Width of each node in the track.
     double nodeDistanceTension;  // The calculated node length is close to ideal, meaning close to zero tension
-                                              // in the tracks if they were simulated without gravity. This distance is an offset
-                                              // how much closer each node will be to each other, resulting in a given initial tension.
+                                 // in the tracks if they were simulated without gravity. This distance is an offset
+                                 // how much closer each node will be to each other, resulting in a given initial tension.
+
+    double nodeThickerThickness;
+    int useThickerNodeEvery;
     double hingeCompliance;
+    double hingeDamping;
+    double minStabilizingHingeNormalForce;
     double stabilizingHingeFrictionParameter;
     bool enableMerge;
     int numNodesPerMergeSegment;
+    int contactReduction;
+    bool enableLockToReachMergeCondition;
     double lockToReachMergeConditionCompliance;
-    int contactReductionLevel;
+    double lockToReachMergeConditionDamping;
+    double maxAngleMergeCondition;
     vector<string> sprocketNames;
     vector<string> idlerNames;
     vector<string> rollerNames;
@@ -45,14 +61,13 @@ struct AGXVehicleContinuousTrackDeviceDesc{
 
 struct TrackState{
         Vector3 boxSize;
-        Affine3 transform;
+        Position position;
 };
 typedef std::vector<TrackState> TrackStates;
 
 class AGXVehicleContinuousTrackDevice : private AGXVehicleContinuousTrackDeviceDesc, public Device
 {
 public:
-
     AGXVehicleContinuousTrackDevice(const AGXVehicleContinuousTrackDeviceDesc& desc);
     AGXVehicleContinuousTrackDevice(const AGXVehicleContinuousTrackDevice& org, bool copyStateOnly = false);
     virtual const char* typeName() override;
@@ -65,25 +80,20 @@ public:
     virtual const double* readState(const double* buf) override;
     virtual double* writeState(double* out_buf) const override;
 
-    bool on() const { return on_; }
-    void on(bool on) { on_ = on; }
+    void initialize();
     Vector3 getUpAxis() const;
     int getNumNodes() const;
-    int numSprocketNames() const;
-    const string* getSprocketNames() const;
-    int numIdlerNames() const;
-    const string* getIdlerNames() const;
-    int numRollerNames() const;
-    const string* getRollerNames() const;
+    const vector<string> getSprocketNames() const;
+    const vector<string> getIdlerNames() const;
+    const vector<string> getRollerNames() const;
     void setDesc(const AGXVehicleContinuousTrackDeviceDesc& desc);
     void getDesc(AGXVehicleContinuousTrackDeviceDesc& desc);
     void reserveTrackStateSize(const unsigned int& num );
-    void addTrackState(const Vector3& boxSize, const Position& transform);
+    void addTrackState(const Vector3& boxSize, const Position& pos);
     TrackStates& getTrackStates();
 
 private:
-    bool on_;
-    TrackStates _trackStates;
+    TrackStates m_trackStates;
 };
 
 typedef ref_ptr<AGXVehicleContinuousTrackDevice> AGXVehicleContinuousTrackDevicePtr;
