@@ -1627,6 +1627,12 @@ void YAMLBodyLoaderImpl::addSubBodyLinks(BodyPtr subBody, Mapping* node)
         }
     }
     
+    for(int i=0; i < subBody->numDevices(); ++i){
+        Device* device = subBody->device(i);
+        device->setName(prefix + device->name());
+        body->addDevice(device);
+    }
+
     Link* rootLink = subBody->rootLink();
 
     readJointContents(rootLink, node);
