@@ -58,10 +58,8 @@ void AGXLink::setAGXMaterial(){
     bool bDensity = getOrgLink()->info()->read("density", density);
 
     // Set material
-    string matName = "";
-    auto matNameNode = getOrgLink()->info()->find("materialName");
-    if(matNameNode->isValid()) matName = matNameNode->toString();
-    if(setAGXMaterialFromName(matName)){
+    const int& materialID = getOrgLink()->materialId();
+    if(setAGXMaterialFromID(materialID)){
     }else{
         setAGXMaterialFromLinkInfo();
         if(!bDensity){
@@ -75,11 +73,11 @@ void AGXLink::setAGXMaterial(){
     if(bDensity) getAGXGeometry()->getMaterial()->getBulkMaterial()->setDensity(density);
 }
 
-bool AGXLink::setAGXMaterialFromName(const std::string& materialName)
+bool AGXLink::setAGXMaterialFromID(const int& materialID)
 {
     agxSDK::SimulationRef simulation = getAGXBody()->getAGXScene()->getSimulation();
     if(!simulation) return false;
-    agx::MaterialRef mat = simulation->getMaterial(materialName);
+    agx::MaterialRef mat = simulation->getMaterial(std::to_string(materialID));
     if(!mat) return false;
     getAGXGeometry()->setMaterial(mat);
     getAGXRigidBody()->updateMassProperties(agx::MassProperties::AUTO_GENERATE_ALL);
@@ -98,10 +96,10 @@ void AGXLink::setAGXMaterialFromLinkInfo()
     SET_AGXMATERIAL_FIELD(poissonRatio);
     SET_AGXMATERIAL_FIELD(viscosity);
     SET_AGXMATERIAL_FIELD(damping);
+    SET_AGXMATERIAL_FIELD(roughness);
     SET_AGXMATERIAL_FIELD(surfaceViscosity);
     SET_AGXMATERIAL_FIELD(adhesionForce);
     SET_AGXMATERIAL_FIELD(adhesivOverlap);
-    desc.roughness = getOrgLink()->info<double>("friction", desc.roughness);
     agx::MaterialRef mat = AGXObjectFactory::createMaterial(desc);
     getAGXGeometry()->setMaterial(mat);
     getAGXRigidBody()->updateMassProperties(agx::MassProperties::AUTO_GENERATE_ALL);

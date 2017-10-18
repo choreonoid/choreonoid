@@ -1,14 +1,16 @@
 #include "AGXSimulatorItemImpl.h"
 #include "AGXSimulatorItem.h"
-#include <assert.h>
 #include <cnoid/EigenUtil>
+#include <cnoid/WorldItem>
+#include <cnoid/MaterialTable>
 #include "gettext.h"
 
 using namespace std;
 
 namespace cnoid {
 
-AGXSimulatorItemImpl::AGXSimulatorItemImpl(AGXSimulatorItemPtr self) : self(self)
+AGXSimulatorItemImpl::AGXSimulatorItemImpl(AGXSimulatorItem* self)
+    : self(self)
 {
     initialize();
     AGXSimulationDesc simDesc;
@@ -21,7 +23,7 @@ AGXSimulatorItemImpl::AGXSimulatorItemImpl(AGXSimulatorItemPtr self) : self(self
     _p_enableAutoSleep = simDesc.enableAutoSleep;
 }
 
-AGXSimulatorItemImpl::AGXSimulatorItemImpl(AGXSimulatorItemPtr self, const AGXSimulatorItemImpl& org) 
+AGXSimulatorItemImpl::AGXSimulatorItemImpl(AGXSimulatorItem* self, const AGXSimulatorItemImpl& org)
     : AGXSimulatorItemImpl(self) 
 {
     initialize();    
@@ -72,7 +74,7 @@ bool AGXSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody
     sd.simdesc.enableAutoSleep = _p_enableAutoSleep;
     agxScene = AGXScene::create(sd);
 
-    createMaterialTable();
+    createAGXMaterialTable();
 
     for(auto simBody : simBodies){
         AGXBody* body = static_cast<AGXBody*>(simBody);
@@ -86,16 +88,59 @@ bool AGXSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody
     return true;
 }
 
-void AGXSimulatorItemImpl::createMaterialTable()
+#define SET_AGXMATERIAL_FIELD(field) desc.field = mat->info<double>(#field, desc.field)
+void AGXSimulatorItemImpl::createAGXMaterialTable()
 {
-    // Create default AGX material and contact material
-    AGXMaterialDesc matDesc;
-    agxScene->createMaterial(matDesc);
-    AGXContactMaterialDesc cmatDesc;
-    agxScene->createContactMaterial(cmatDesc);
+    WorldItem* const worldItem = self->findOwnerItem<WorldItem>();
+    if(!worldItem) return;
+    MaterialTable* const matTable = worldItem->materialTable();
+    const int& numMaterials = matTable->numMaterials();
 
-    // Create AGX material and contact material from yaml file
+    // Create AGX material
+    for(int i = 0; i < numMaterials; ++i){
+        Material* mat = matTable->material(i);
+        AGXMaterialDesc desc;
+        desc.name = std::to_string(i);
+        SET_AGXMATERIAL_FIELD(density);
+        SET_AGXMATERIAL_FIELD(youngsModulus);
+        SET_AGXMATERIAL_FIELD(poissonRatio);
+        desc.viscosity = mat->viscosity();
+        SET_AGXMATERIAL_FIELD(damping);
+        desc.roughness = mat->roughness();
+        SET_AGXMATERIAL_FIELD(surfaceViscosity);
+        SET_AGXMATERIAL_FIELD(adhesionForce);
+        SET_AGXMATERIAL_FIELD(adhesivOverlap);
+        getAGXScene()->createMaterial(desc);
+    }
+
+    // Create AGX contact material
+    for(int i = 0; i < numMaterials; ++i){
+        for(int j = 0; j < numMaterials; ++j){
+            ContactMaterial* mat = matTable->contactMaterial(i, j);
+            if(!mat) continue;
+            AGXContactMaterialDesc desc;
+            desc.nameA = std::to_string(i);
+            desc.nameB = std::to_string(j);
+            SET_AGXMATERIAL_FIELD(youngsModulus);
+            desc.restitution = mat->restitution();
+            SET_AGXMATERIAL_FIELD(damping);
+            desc.friction = mat->dynamicFriction();
+            SET_AGXMATERIAL_FIELD(surfaceViscosity);
+            SET_AGXMATERIAL_FIELD(adhesionForce);
+            SET_AGXMATERIAL_FIELD(adhesivOverlap);
+            getAGXScene()->createContactMaterial(desc);
+
+            //agx::ContactMaterial::FrictionDirection frictionDirection;
+            //AGXFrictionModelType frictionModelType;
+            //agx::FrictionModel::SolveType solveType;
+            //agx::ContactMaterial::ContactReductionMode contactReductionMode;
+            //agx::UInt8 contactReductionBinResolution;
+        }
+    }
+
+    //getAGXScene()->printContactMaterialTable();
 }
+#undef SET_AGXMATERIAL_FIELD
 
 bool AGXSimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& activeSimBodies)
 {
@@ -142,9 +187,13 @@ Vector3 AGXSimulatorItemImpl::getGravity() const
     return Vector3(g.x(), g.y(), g.z());
 };
 
-    bool AGXSimulatorItemImpl::saveSimulationToAGXFile()
+bool AGXSimulatorItemImpl::saveSimulationToAGXFile()
 {
     return agxScene->saveSceneToAGXFile();
+}
+
+AGXScene* AGXSimulatorItemImpl::getAGXScene(){
+    return agxScene;
 }
 
 }

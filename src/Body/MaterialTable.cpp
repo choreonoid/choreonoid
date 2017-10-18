@@ -21,7 +21,6 @@ namespace cnoid {
 class MaterialTableImpl
 {
 public:
-    int numMaterials;
     vector<MaterialPtr> materials;
 
     typedef unordered_map<IdPair<>, ContactMaterialPtr> ContactMaterialMap;
@@ -51,7 +50,6 @@ MaterialTableImpl::MaterialTableImpl()
     defaultMaterial->setRoughness(0.5);
     defaultMaterial->setViscosity(0.0);
     materials.push_back(defaultMaterial);
-    numMaterials = 1;
 }
 
 
@@ -62,8 +60,7 @@ MaterialTable::MaterialTable(const MaterialTable& org)
 
 
 MaterialTableImpl::MaterialTableImpl(const MaterialTableImpl& org)
-    : numMaterials(org.numMaterials),
-      materials(org.materials),
+    : materials(org.materials),
       contactMaterialMap(org.contactMaterialMap)
 {
 
@@ -78,13 +75,13 @@ MaterialTable::~MaterialTable()
 
 int MaterialTable::numMaterials() const
 {
-    return impl->numMaterials;
+    return impl->materials.size();
 }
 
 
 Material* MaterialTable::material(int id) const
 {
-    if(id < impl->materials.size()){
+    if(impl->materials.size() <= id){
         id = 0; // default material
     }
     Material* material = impl->materials[id];
@@ -120,11 +117,8 @@ int MaterialTableImpl::addMaterial(Material* material)
     
     if(material){
         id = Material::id(material->name());
-        if(id >= materials.size()){
+        if(materials.size() <= id){
             materials.resize(id + 1);
-            ++numMaterials;
-        } else if(!materials[id]){
-            ++numMaterials;
         }
         materials[id] = material;
     }

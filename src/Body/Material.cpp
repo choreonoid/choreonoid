@@ -44,7 +44,7 @@ int Material::id(const std::string name)
         id = iter->second;
     } else {
         id = idCounter++;
-        idMap.insert(make_pair(name, idCounter));
+        idMap.insert(make_pair(name, id));
     }
     return id;
 }

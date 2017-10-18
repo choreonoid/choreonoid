@@ -12,7 +12,7 @@ items:
       data: 
         collisionDetection: false
         collisionDetector: AISTCollisionDetector
-        materialTableFile: "${SHARE}/default/materials.yaml"
+        materialTableFile: "${PROJECT_DIR}/agxSampleMaterials.yaml"
       children: 
         - 
           id: 2
@@ -67,7 +67,7 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      selected: [ 2 ]
+      selected: [ 3 ]
       checked: [ 2 ]
       expanded: [ 1, 2 ]
   - 
@@ -119,9 +119,9 @@ views:
           fieldOfView: 0.698132
           near: 0.01
           far: 100
-          eye: [ 21.625156, 3.34144897, 6.3417245 ]
-          direction: [ -0.969094795, -0.0910196512, -0.229283016 ]
-          up: [ -0.228278359, -0.0214404377, 0.973359799 ]
+          eye: [ 20.5409078, 5.07915268, 7.79793588 ]
+          direction: [ -0.938881188, -0.174388212, -0.296801056 ]
+          up: [ -0.291810084, -0.0542009355, 0.954939335 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
@@ -169,7 +169,7 @@ views:
 toolbars: 
   "TimeBar": 
     minTime: 0
-    maxTime: 30
+    maxTime: 236.56
     frameRate: 100
     playbackFrameRate: 50
     idleLoopDrivenMode: false

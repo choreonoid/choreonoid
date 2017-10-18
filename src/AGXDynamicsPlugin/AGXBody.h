@@ -34,7 +34,7 @@ public:
     AGXLink(Link* const link, AGXLink* const parent, const Vector3& parentOrigin, AGXBody* const agxBody);
     void constructAGXLink();
     void setAGXMaterial();
-    bool setAGXMaterialFromName(const std::string& materialName);
+    bool setAGXMaterialFromID(const int& materialID);
     void setAGXMaterialFromLinkInfo();
     bool setCenterOfMassFromLinkInfo();
     bool setMassFromLinkInfo();
