@@ -84,8 +84,6 @@ void exportSimulationClasses(py::module m)
         .def("setIntegrationMode", &AISTSimulatorItem::setIntegrationMode)
         .def("setGravity", &AISTSimulatorItem::setGravity)
         .def("setFriction", (void (AISTSimulatorItem::*)(double, double)) &AISTSimulatorItem::setFriction)
-        .def("collisionHandlerId", &AISTSimulatorItem::collisionHandlerId)
-        .def("setCollisionHandler", (void(AISTSimulatorItem::*)(int,int,int))&AISTSimulatorItem::setCollisionHandler)
         .def("setContactCullingDistance", &AISTSimulatorItem::setContactCullingDistance)
         .def("setContactCullingDepth", &AISTSimulatorItem::setContactCullingDepth)
         .def("setErrorCriterion", &AISTSimulatorItem::setErrorCriterion)
@@ -101,7 +99,6 @@ void exportSimulationClasses(py::module m)
 
         // deprecated
         .def("setFriction", (void (AISTSimulatorItem::*)(Link*, Link*, double, double)) &AISTSimulatorItem::setFriction)
-        .def("setCollisionHandler", (void(AISTSimulatorItem::*)(Link*, Link*,int))&AISTSimulatorItem::setCollisionHandler)
         ;
 
     py::enum_<AISTSimulatorItem::DynamicsMode>(aistSimulatorItemClass, "DynamicsMode")

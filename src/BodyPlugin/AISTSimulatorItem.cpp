@@ -267,38 +267,15 @@ void AISTSimulatorItem::setFriction(Link* link1, Link* link2, double staticFrict
 }
 
 
-int AISTSimulatorItem::registerCollisionHandler(const std::string& name, CollisionHandler handler)
+void AISTSimulatorItem::registerCollisionHandler(const std::string& name, CollisionHandler handler)
 {
-    return impl->world.constraintForceSolver.registerCollisionHandler(name, handler);
+    impl->world.constraintForceSolver.registerCollisionHandler(name, handler);
 }
 
 
-void AISTSimulatorItem::unregisterCollisionHandler(int handlerId)
+bool AISTSimulatorItem::unregisterCollisionHandler(const std::string& name)
 {
-    return impl->world.constraintForceSolver.unregisterCollisionHandler(handlerId);
-}
-
-
-int AISTSimulatorItem::collisionHandlerId(const std::string& name) const
-{
-    return impl->world.constraintForceSolver.collisionHandlerId(name);
-}
-
-
-void AISTSimulatorItem::setCollisionHandler(int material1, int material2, int handlerId)
-{
-    impl->world.constraintForceSolver.setCollisionHandler(material1, material2, handlerId);
-}
-
-
-void AISTSimulatorItem::setCollisionHandler(Link* link1, Link* link2, int handlerId)
-{
-    MessageView::instance()->putln(
-        MessageView::WARNING,
-        _("AISTSimulatorItem::setCollisionHandler(Link* link1, Link* link2, int handlerId) "
-          "is not supported in this version.\n"
-          "Please use AISTSimulatorItem::setCollisionHandler"
-          "(int materialId1, int materialId2, int handlerId) instead of it."));
+    return impl->world.constraintForceSolver.unregisterCollisionHandler(name);
 }
 
 

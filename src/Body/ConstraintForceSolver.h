@@ -74,10 +74,8 @@ public:
                                const CollisionArray& collisions,
                                ContactMaterial* contactMaterial)>  CollisionHandler;
     
-    int registerCollisionHandler(const std::string& name, CollisionHandler handler);
-    void unregisterCollisionHandler(int handlerId);
-    int collisionHandlerId(const std::string& name) const;
-    void setCollisionHandler(int material1, int material2, int handlerId);
+    void registerCollisionHandler(const std::string& name, CollisionHandler handler);
+    bool unregisterCollisionHandler(const std::string& name);
 };
 
 };

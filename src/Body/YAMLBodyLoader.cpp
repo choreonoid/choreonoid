@@ -811,7 +811,7 @@ LinkPtr YAMLBodyLoaderImpl::readLinkContents(Mapping* node)
     readJointContents(link, node);
 
     if(node->extract("material", symbol)){
-        link->setMaterialId(symbol);
+        link->setMaterial(symbol);
     }
     
     currentLink = link;

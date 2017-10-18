@@ -21,13 +21,13 @@
 #include <cnoid/TimeMeasure>
 #include <boost/format.hpp>
 #include <boost/random.hpp>
+#include <unordered_map>
 #include <limits>
 #include <fstream>
 #include <iomanip>
 #include <boost/lexical_cast.hpp>
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 
 // Is LCP solved by Iterative or Pivoting method ?
@@ -199,9 +199,6 @@ public:
     };
     typedef ref_ptr<ContactMaterialEx> ContactMaterialExPtr;
     
-    typedef std::map<string, int> CollisionHandlerIndexMap;
-    CollisionHandlerIndexMap collisionHandlerIndexMap;
-
     struct CollisionHandlerInfo : public Referenced {
         CollisionHandler handler;
         Signal<void()> sigHandlerUnregisterd;
@@ -210,7 +207,8 @@ public:
         }
     };
     typedef ref_ptr<CollisionHandlerInfo> CollisionHandlerInfoPtr;
-    vector<CollisionHandlerInfoPtr> collisionHandlers;
+
+    unordered_map<string, CollisionHandlerInfoPtr> collisionHandlerMap;
 
     class LinkPair
     {
@@ -228,7 +226,7 @@ public:
 
     CollisionDetectorPtr collisionDetector;
     vector<int> geometryIdToBodyIndexMap;
-    typedef std::map<IdPair<>, LinkPair> GeometryPairToLinkPairMap;
+    typedef unordered_map<IdPair<>, LinkPair> GeometryPairToLinkPairMap;
     GeometryPairToLinkPairMap geometryPairToLinkPairMap;
         
     double defaultStaticFriction;
@@ -373,8 +371,6 @@ public:
 #endif
 
     ofstream os;
-
-    int registerCollisionHandler(const std::string& name, CollisionHandler& handler);
 
     template<class TMatrix>
     void putMatrix(TMatrix& M, const char *name) {
@@ -683,7 +679,8 @@ void CFSImpl::initializeContactMaterials()
 {
     if(!orgMaterialTable){
         materialTable = new MaterialTable;
-    } else {        
+    } else {
+        string collisionHandlerName;
         materialTable =
             new MaterialTable(
                 *orgMaterialTable,
@@ -691,6 +688,18 @@ void CFSImpl::initializeContactMaterials()
                     auto cm = new ContactMaterialEx(*org);
                     cm->cullingDistance = cm->info("cullingDistance", defaultContactCullingDistance);
                     cm->cullingDepth = cm->info("cullingDepth", defaultContactCullingDepth);
+
+                    if(cm->info()->read("collisionHandler", collisionHandlerName)){
+                        auto iter = collisionHandlerMap.find(collisionHandlerName);
+                        if(iter != collisionHandlerMap.end()){
+                            auto& info = iter->second;
+                            cm->collisionHandler = info->handler;
+                            cm->collisionHandlerConnection = 
+                                info->sigHandlerUnregisterd.connect(
+                                    [cm](){ cm->onCollisionHandlerUnregistered(); });
+                        }
+                    }
+
                     return cm;
                 });
     }
@@ -826,7 +835,9 @@ void CFSImpl::setConstraintPoints()
     timer.begin();
 #endif
 
-    collisionDetector->detectCollisions(std::bind(&CFSImpl::extractConstraintPoints, this, _1));
+    collisionDetector->detectCollisions(
+        [&](const CollisionPair& collisionPair){
+            extractConstraintPoints(collisionPair); });
 
 #ifdef ENABLE_SIMULATION_PROFILING
         collisionTime = timer.measure();
@@ -884,7 +895,7 @@ void CFSImpl::extractConstraintPoints(const CollisionPair& collisionPair)
 
     const vector<Collision>& collisions = collisionPair.collisions;
 
-    CollisionHandler& collisionHandler = pLinkPair->contactMaterial->collisionHandler;
+    auto& collisionHandler = pLinkPair->contactMaterial->collisionHandler;
     if(collisionHandler){
         if(collisionHandler(
                pLinkPair->link[0], pLinkPair->link[1], collisions, pLinkPair->contactMaterial)){
@@ -2333,74 +2344,17 @@ double ConstraintForceSolver::slipFriction() const
 }
 
 
-int ConstraintForceSolver::registerCollisionHandler(const std::string& name, CollisionHandler handler)
+void ConstraintForceSolver::registerCollisionHandler(const std::string& name, CollisionHandler handler)
 {
-    return impl->registerCollisionHandler(name, handler);
-}
-
-
-int CFSImpl::registerCollisionHandler(const std::string& name, CollisionHandler& handler)
-{
-    int index = -1;
-    CollisionHandlerInfoPtr info = new CollisionHandlerInfo();
+    CFSImpl::CollisionHandlerInfoPtr info = new CFSImpl::CollisionHandlerInfo;;
     info->handler = handler;
-    
-    CollisionHandlerIndexMap::iterator p = collisionHandlerIndexMap.find(name);
-    if(p != collisionHandlerIndexMap.end()){
-        index = p->second;
-        collisionHandlers[index] = info;
-    } else {
-        for(size_t i=0; i < collisionHandlers.size(); ++i){
-            if(!collisionHandlers[i]){
-                collisionHandlers[i] = info;
-                index = i;
-                break;
-            }
-        }
-        if(index < 0){
-            index = collisionHandlers.size();
-            collisionHandlers.push_back(info);
-        }
-        collisionHandlerIndexMap[name] = index;
-    }
-    
-    return index;
+    impl->collisionHandlerMap[name] = info;
 }
 
 
-void ConstraintForceSolver::unregisterCollisionHandler(int handlerId)
+bool ConstraintForceSolver::unregisterCollisionHandler(const std::string& name)
 {
-    if(handlerId >= 0 && handlerId < impl->collisionHandlers.size()){
-        impl->collisionHandlers[handlerId] = 0;
-    }
-}
-
-
-int ConstraintForceSolver::collisionHandlerId(const std::string& name) const
-{
-    CFSImpl::CollisionHandlerIndexMap::iterator p = impl->collisionHandlerIndexMap.find(name);
-    if(p != impl->collisionHandlerIndexMap.end()){
-        return p->second;
-    }
-    return -1;
-}
-
-
-void ConstraintForceSolver::setCollisionHandler(int material1, int material2, int handlerId)
-{
-    /*
-    auto contact = impl->getOrCreateContactMaterial(material1, material2);
-    contact->collisionHandlerConnection.disconnect();
-
-    if(handlerId < 0 || handlerId >= impl->collisionHandlers.size()){
-        contact->collisionHandler = CollisionHandler(); // set null handler
-    } else {
-        auto& info = impl->collisionHandlers[handlerId];
-        contact->collisionHandler = info->handler;
-        contact->collisionHandlerConnection = 
-            info->sigHandlerUnregisterd.connect([contact](){ contact->onCollisionHandlerUnregistered(); });
-    }
-    */
+    return (impl->collisionHandlerMap.erase(name) > 0);
 }
 
 
