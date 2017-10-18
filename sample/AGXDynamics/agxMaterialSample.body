@@ -1,0 +1,49 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: agxMaterialSample
+
+links:
+  -
+    name: floor
+    translation: [ 0, 0, -0.1 ]
+    rotation: [1, 0, 0, -30 ]
+    jointType: fixed
+    material: Ground
+    elements:
+      -
+        type: Shape
+        geometry: { type: Box, size: [ 10.0, 10.0, 0.2 ] }
+        appearance: { material: { diffuseColor: [ 0, 0, 1 ] }}
+  -
+    name: box1
+    parent: floor
+    translation: [ -4.0, -5.0, 1.5 ]
+    jointType: free
+    material: Tracks
+    elements: &boxShape
+      -
+        type: Shape
+        geometry: &box { type: Box, size: [ 0.5, 0.5, 0.5 ] }
+        appearance: &boxColor { material: { diffuseColor: [ 0, 1, 0 ] }}
+  -
+    name: box2
+    parent: floor
+    translation: [ -3.0, -5.0, 1.5 ]
+    jointType: free
+    material: OilWetGround
+    elements: *boxShape
+  -
+    name: box3
+    parent: floor
+    translation: [ -2.0, -5.0, 1.5 ]
+    jointType: free
+    material: OilWetGround
+    elements: *boxShape
+  -
+    name: box4
+    parent: floor
+    translation: [ -1.0, -5.0, 1.5 ]
+    jointType: free
+    material: OilWetGround
+    elements: *boxShape
