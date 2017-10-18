@@ -47,21 +47,26 @@ public:
     void setKinematicWalkingEnabled(bool on);
     void setConstraintForceOutputEnabled(bool on);
 
+    void addExtraJoint(ExtraJoint& extrajoint);
+    void clearExtraJoint();
+
     virtual void setForcedPosition(BodyItem* bodyItem, const Position& T);
     virtual bool isForcedPositionActiveFor(BodyItem* bodyItem) const;
     virtual void clearForcedPositions();
 
-    // experimental functions
-    void setFriction(Link* link1, Link* link2, double staticFriction, double dynamicFriction);
-
-    typedef std::function<bool(Link* link1, Link* link2, const CollisionArray& collisions, ContactMaterial* contactMaterial)>
-        CollisionHandler;
+    typedef std::function<bool(Link* link1, Link* link2,
+                               const CollisionArray& collisions,
+                               ContactMaterial* contactMaterial)> CollisionHandler;
+    
     int registerCollisionHandler(const std::string& name, CollisionHandler handler);
     void unregisterCollisionHandler(int handlerId);
     int collisionHandlerId(const std::string& name) const;
-    void setCollisionHandler(Link* link1, Link* link2, int handlerId);
-    void addExtraJoint(ExtraJoint& extrajoint);
-    void clearExtraJoint();
+    void setCollisionHandler(int material1, int material2, int handlerId);
+
+    //! \deprecated
+    void setFriction(Link* link1, Link* link2, double staticFriction, double dynamicFriction);
+    //! \deprecated
+    void setCollisionHandler(Link* link1, Link* link2, int handlerId); 
 
 protected:
     virtual SimulationBody* createSimulationBody(Body* orgBody);

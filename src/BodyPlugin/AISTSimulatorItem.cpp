@@ -285,6 +285,12 @@ int AISTSimulatorItem::collisionHandlerId(const std::string& name) const
 }
 
 
+void AISTSimulatorItem::setCollisionHandler(int material1, int material2, int handlerId)
+{
+    impl->world.constraintForceSolver.setCollisionHandler(material1, material2, handlerId);
+}
+
+
 void AISTSimulatorItem::setCollisionHandler(Link* link1, Link* link2, int handlerId)
 {
     MessageView::instance()->putln(

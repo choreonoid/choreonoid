@@ -21,11 +21,15 @@ class CNOID_EXPORT ContactMaterial : public Referenced
 
     int materialId(int which) const;
 
+    double friction() const { return staticFriction_; }
+    void setFriction(double mu){ staticFriction_ = dynamicFriction_ = mu; }
+        
     double staticFriction() const { return staticFriction_; }
     void setStaticFriction(double mu) { staticFriction_ = mu; }
     
     double dynamicFriction() const { return dynamicFriction_; }
     void setDynamicFriction(double mu) { dynamicFriction_ = mu; }
+
     
     double restitution() const { return restitution_; }
     void setRestitution(double r) { restitution_ = r; }

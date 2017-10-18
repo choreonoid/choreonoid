@@ -59,6 +59,7 @@ Material::Material()
 
 
 Material::Material(const Material& org)
+    : name_(org.name_)
 {
     roughness_ = org.roughness_;
     viscosity_ = org.viscosity_;

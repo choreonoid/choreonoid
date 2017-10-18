@@ -77,7 +77,6 @@ public:
     int registerCollisionHandler(const std::string& name, CollisionHandler handler);
     void unregisterCollisionHandler(int handlerId);
     int collisionHandlerId(const std::string& name) const;
-    //void setCollisionHandler(Link* link1, Link* link2, int handlerId);
     void setCollisionHandler(int material1, int material2, int handlerId);
 };
 

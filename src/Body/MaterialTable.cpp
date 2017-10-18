@@ -28,6 +28,7 @@ public:
     
     MaterialTableImpl();
     MaterialTableImpl(const MaterialTableImpl& org);
+    MaterialTableImpl(const MaterialTableImpl& org, MaterialTable::ContactMaterialCopyFactory factory);
     int addMaterial(Material* material);
     void loadMaterials(Mapping* topNode, std::ostream& os);
     void loadContactMaterials(Mapping* topNode, std::ostream& os);
@@ -60,10 +61,44 @@ MaterialTable::MaterialTable(const MaterialTable& org)
 
 
 MaterialTableImpl::MaterialTableImpl(const MaterialTableImpl& org)
-    : materials(org.materials),
-      contactMaterialMap(org.contactMaterialMap)
+    : MaterialTableImpl(org, [](const ContactMaterial* org){ return new ContactMaterial(*org); })
 {
 
+}
+
+    
+MaterialTable::MaterialTable(const MaterialTable& org, ContactMaterialCopyFactory factory)
+{
+    impl = new MaterialTableImpl(*org.impl, factory);
+}
+
+
+MaterialTableImpl::MaterialTableImpl(const MaterialTableImpl& org, MaterialTable::ContactMaterialCopyFactory factory)
+{
+    materials.reserve(org.materials.size());
+    for(auto& m : org.materials){
+        if(m){
+            materials.push_back(new Material(*m));
+        } else {
+            materials.push_back(nullptr);
+        }
+    }
+
+    unordered_map<ContactMaterial*, ContactMaterial*> copyMap;
+
+    for(auto& kv : org.contactMaterialMap){
+        auto idPair = kv.first;
+        ContactMaterial* src = kv.second;
+        ContactMaterial* copy = nullptr;
+        auto iter = copyMap.find(src);
+        if(iter != copyMap.end()){
+            copy = iter->second;
+        } else {
+            copy = factory(src);
+            copyMap.insert(make_pair(src, copy));
+        }
+        contactMaterialMap.insert(ContactMaterialMap::value_type(idPair, copy));
+    }
 }
 
 
@@ -130,6 +165,12 @@ int MaterialTableImpl::addMaterial(Material* material)
     }
 
     return id;
+}
+
+
+void MaterialTable::setContactMaterial(int id1, int id2, ContactMaterial* cm)
+{
+    impl->contactMaterialMap[IdPair<>(id1, id2)] = cm;
 }
 
 
