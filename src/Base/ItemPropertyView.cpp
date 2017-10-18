@@ -173,6 +173,11 @@ public:
         isResizing = false;
         QTableWidget::mouseReleaseEvent(event);
     }
+
+    virtual void resizeEvent(QResizeEvent* event){
+        QTableWidget::resizeEvent(event);
+        horizontalHeader()->resizeSections(QHeaderView::Stretch);
+    }
 };
 
     
@@ -660,10 +665,10 @@ ItemPropertyViewImpl::ItemPropertyViewImpl(ItemPropertyView* self)
     hh->hide();
     vh->hide();
 #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-    hh->setResizeMode(QHeaderView::Fixed);
+    hh->setResizeMode(QHeaderView::Interactive);
     vh->setResizeMode(QHeaderView::ResizeToContents);    
 #else
-    hh->setSectionResizeMode(QHeaderView::Stretch);
+    hh->setSectionResizeMode(QHeaderView::Interactive);
     vh->setSectionResizeMode(QHeaderView::ResizeToContents);
 #endif
     hh->setStretchLastSection(true);
