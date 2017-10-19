@@ -175,6 +175,7 @@ public:
     ~SimulatorItemImpl();
             
     SimulatorItem* self;
+    WorldItem* worldItem;
 
     vector<SimulationBodyPtr> allSimBodies;
     vector<SimulationBody*> simBodiesWithBody;
@@ -1055,6 +1056,8 @@ SimulatorItemImpl::SimulatorItemImpl(SimulatorItem* self)
       os(mv->cout()),
       itemTreeView(ItemTreeView::instance())
 {
+    worldItem = 0;
+
     temporalResolutionType.setSymbol(RESOLUTION_TIMESTEP, N_("Timestep"));
     temporalResolutionType.setSymbol(RESOLUTION_FRAMERATE, N_("Framerate"));
     temporalResolutionType.setSymbol(RESOLUTION_TIMEBAR, N_("Time bar"));
@@ -1100,6 +1103,7 @@ SimulatorItem::SimulatorItem(const SimulatorItem& org)
 SimulatorItemImpl::SimulatorItemImpl(SimulatorItem* self, const SimulatorItemImpl& org)
     : SimulatorItemImpl(self)
 {
+    worldItem = 0;
     temporalResolutionType = org.temporalResolutionType;
     timeStepProperty = org.timeStepProperty;
     frameRateProperty = org.frameRateProperty;
@@ -1127,9 +1131,22 @@ SimulatorItemImpl::~SimulatorItemImpl()
 }
 
 
+void SimulatorItem::onPositionChanged()
+{
+    impl->worldItem = findOwnerItem<WorldItem>();
+}
+
+
 void SimulatorItem::onDisconnectedFromRoot()
 {
     impl->stopSimulation(true);
+    impl->worldItem = 0;
+}
+
+
+WorldItem* SimulatorItem::worldItem()
+{
+    return impl->worldItem;
 }
 
 
@@ -1221,9 +1238,8 @@ CollisionDetectorPtr SimulatorItem::collisionDetector()
     if(impl->collisionDetector){
         return impl->collisionDetector;
     }
-    WorldItem* worldItem = findOwnerItem<WorldItem>();
-    if(worldItem){
-        return worldItem->collisionDetector()->clone();
+    if(impl->worldItem){
+        return impl->worldItem->collisionDetector()->clone();
     }
     return CollisionDetector::create(0); // the null collision detector
 }
@@ -1395,7 +1411,6 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
     
     stopSimulation(true);
 
-    WorldItem* worldItem = self->findOwnerItem<WorldItem>();
     if(!worldItem){
         os << (fmt(_("%1% must be in a WorldItem to do simulation.")) % self->name()) << endl;
         return false;
@@ -2627,7 +2642,6 @@ void SimulatorItemImpl::addBodyMotionEngine(BodyMotionItem* motionItem)
 
 void SimulatorItemImpl::addCollisionSeqEngine(CollisionSeqItem* collisionSeqItem)
 {
-    WorldItem* worldItem = collisionSeqItem->findOwnerItem<WorldItem>();
     if(worldItem){
         collisionSeqEngine = new CollisionSeqEngine(worldItem, collisionSeqItem);
     }

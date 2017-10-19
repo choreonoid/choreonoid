@@ -6,6 +6,7 @@
 #include "Material.h"
 #include <mutex>
 #include <unordered_map>
+#include <vector>
 
 using namespace std;
 using namespace cnoid;
@@ -13,15 +14,15 @@ using namespace cnoid;
 namespace {
 
 std::mutex idMutex;
-std::unordered_map<std::string, int> idMap;
-int idCounter = 0;
+std::unordered_map<std::string, int> nameToIdMap;
+std::vector<std::string> idToNameMap;
 
 // register "default" material as id = 0
 struct DefaultIdIntialization {
     DefaultIdIntialization(){
-        idMap["default"] = 0;
-        idMap["Default"] = 0;
-        idCounter = 1;
+        nameToIdMap["default"] = 0;
+        nameToIdMap["Default"] = 0;
+        idToNameMap.push_back("default");
     }
 };
 
@@ -39,16 +40,27 @@ int Material::id(const std::string name)
     }
 
     int id;
-    auto iter = idMap.find(name);
-    if(iter != idMap.end()){
+    auto iter = nameToIdMap.find(name);
+    if(iter != nameToIdMap.end()){
         id = iter->second;
     } else {
-        id = idCounter++;
-        idMap.insert(make_pair(name, id));
+        id = idToNameMap.size();
+        nameToIdMap.insert(make_pair(name, id));
+        idToNameMap.push_back(name);
     }
     return id;
 }
-        
+
+
+std::string Material::name(int id)
+{
+    std::lock_guard<std::mutex> guard(idMutex);
+    if(id < idToNameMap.size()){
+        return idToNameMap[id];
+    }
+    return std::string();
+}
+
 
 Material::Material()
 {
@@ -59,6 +71,7 @@ Material::Material()
 
 
 Material::Material(const Material& org)
+    : name_(org.name_)
 {
     roughness_ = org.roughness_;
     viscosity_ = org.viscosity_;

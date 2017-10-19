@@ -221,9 +221,15 @@ std::string Link::jointTypeString() const
 }
 
 
-void Link::setMaterialId(const std::string& name)
+std::string Link::materialName() const
 {
-    setMaterialId(Material::id(name));
+    return Material::name(materialId_);
+}
+
+
+void Link::setMaterial(const std::string& name)
+{
+    setMaterial(Material::id(name));
 }
 
 

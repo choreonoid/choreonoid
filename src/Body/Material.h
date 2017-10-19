@@ -21,6 +21,7 @@ public:
     ~Material();
 
     static int id(const std::string name);
+    static std::string name(int id);
     
     const std::string& name() const { return name_; }
     void setName(const std::string& name) { name_ = name; }

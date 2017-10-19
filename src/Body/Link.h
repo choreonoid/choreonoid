@@ -45,6 +45,8 @@ public:
         
     virtual ~Link();
 
+    const std::string& name() const { return name_; }
+
     int index() const { return index_; }
     bool isValid() const { return (index_ >= 0); }
 
@@ -219,12 +221,13 @@ public:
     Vector6::FixedSegmentReturnType<3>::Type tau_ext() { return F_ext_.tail<3>(); }
 
     int materialId() const { return materialId_; }
-
-    const std::string& name() const { return name_; }
-
+    std::string materialName() const;
+    
     SgNode* shape() const { return visualShape_; }
     SgNode* visualShape() const { return visualShape_; }
     SgNode* collisionShape() const { return collisionShape_; }
+
+    void setName(const std::string& name);
 
     // functions for constructing a link
     void setIndex(int index) { index_ = index; }
@@ -269,11 +272,9 @@ public:
     void setInertia(const Matrix3& I) { I_ = I; }
     void setEquivalentRotorInertia(double Jm2) { Jm2_ = Jm2; }
 
-    void setMaterialId(int id) { materialId_ = id; }
-    void setMaterialId(const std::string& name);
+    void setMaterial(int id) { materialId_ = id; }
+    void setMaterial(const std::string& name);
     
-    void setName(const std::string& name);
-
     void setShape(SgNode* shape);
     void setVisualShape(SgNode* shape);
     void setCollisionShape(SgNode* shape);

@@ -16,6 +16,7 @@ template<class T = int> class IdPair
     T id[2];
 
 public:
+    IdPair(){ }
 
     IdPair(T id0, T id1){
         if(id0 <= id1){
@@ -38,6 +39,9 @@ public:
     }
 
     T operator()(int which) const { return id[which]; }
+
+    T operator[](int which) const { return id[which]; }
+    T& operator[](int which) { return id[which]; }
 
     bool operator==(const IdPair& pair2) const {
         return (id[0] == pair2.id[0] && id[1] == pair2.id[1]);

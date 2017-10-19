@@ -16,6 +16,10 @@ ContactMaterial::ContactMaterial()
 
 ContactMaterial::ContactMaterial(const ContactMaterial& org)
 {
+    staticFriction_ = org.staticFriction_;
+    dynamicFriction_ = org.dynamicFriction_;
+    restitution_ = org.restitution_;
+
     info_ = org.info_->cloneMapping();
 }
 
@@ -24,8 +28,9 @@ ContactMaterial::ContactMaterial(const Mapping* info)
 {
     info_ = info->cloneMapping();
 
-    if(info_->extract("friction", staticFriction_)){
-        dynamicFriction_ = staticFriction_;
+    double mu;
+    if(info_->extract("friction", mu)){
+        setFriction(mu);
     }
     info_->extract("staticFriction", staticFriction_);
     info_->extract("dynamicFriction", dynamicFriction_);

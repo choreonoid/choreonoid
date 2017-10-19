@@ -14,7 +14,8 @@ namespace cnoid {
 class Link;
 class ConstraintForceSolverImpl;
 class WorldBase;
-class ContactAttribute;
+class ContactMaterial;
+class MaterialTable;
 	
 class CNOID_EXPORT ConstraintForceSolver
 {
@@ -26,6 +27,8 @@ public:
 		
     void setCollisionDetector(CollisionDetectorPtr detector);
     CollisionDetectorPtr collisionDetector();
+
+    void setMaterialTable(MaterialTable* table);
 
     void setFriction(double staticFriction, double slipFliction);
     double staticFriction() const;
@@ -67,13 +70,12 @@ public:
 #endif
 
     // experimental functions
-    void setFriction(Link* link1, Link* link2, double staticFriction, double slipFriction);
-    typedef std::function<bool(Link* link1, Link* link2, const CollisionArray& collisions, const ContactAttribute& attribute)>
-        CollisionHandler;
-    int registerCollisionHandler(const std::string& name, CollisionHandler handler);
-    void unregisterCollisionHandler(int handlerId);
-    int collisionHandlerId(const std::string& name) const;
-    void setCollisionHandler(Link* link1, Link* link2, int handlerId);
+    typedef std::function<bool(Link* link1, Link* link2,
+                               const CollisionArray& collisions,
+                               ContactMaterial* contactMaterial)>  CollisionHandler;
+    
+    void registerCollisionHandler(const std::string& name, CollisionHandler handler);
+    bool unregisterCollisionHandler(const std::string& name);
 };
 
 };
