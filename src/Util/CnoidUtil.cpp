@@ -5,6 +5,13 @@
 */
 
 #include "GettextUtil.h"
+#include "CnoidUtil.h"
 #include "gettext.h"
+
+void cnoid::setCnoidUtilTextDomainCodeset()
+{
+    bind_textdomain_codeset(CNOID_GETTEXT_DOMAIN_NAME, "utf-8");
+}
+
 
 CNOID_BIND_GETTEXT_DOMAN()
