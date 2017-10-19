@@ -48,6 +48,7 @@
 #include "DescriptionDialog.h"
 #include <cnoid/Config>
 #include <cnoid/ValueTree>
+#include <cnoid/CnoidUtil>
 #include <QApplication>
 #include <QTextCodec>
 #include <QGLFormat>
@@ -179,6 +180,9 @@ void AppImpl::initialize( const char* appName, const char* vendorName, const QIc
         AppConfig::archive()->openMapping("pathVariables"));
 
     ext = new ExtensionManager("Base", false);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0) && CNOID_ENABLE_GETTEXT
+    setCnoidUtilTextDomainCodeset();
+#endif
 
     // OpenGL settings
     Mapping* glConfig = AppConfig::archive()->openMapping("OpenGL");

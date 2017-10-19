@@ -155,6 +155,7 @@ set(headers
   Exception.h
   exportdecl.h
   Config.h
+  CnoidUtil.h
   )
 
 set(target CnoidUtil)
