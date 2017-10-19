@@ -270,8 +270,6 @@ void View::keyPressEvent(QKeyEvent* event)
                 zoomFontSize(-1);
                 processed = true;
                 break;
-            defaut:
-                break;
             }
         }
     }

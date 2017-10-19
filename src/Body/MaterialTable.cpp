@@ -116,7 +116,7 @@ int MaterialTable::maxMaterialId() const
 
 Material* MaterialTable::material(int id) const
 {
-    if(impl->materials.size() <= id){
+    if(static_cast<int>(impl->materials.size()) <= id){
         id = 0; // default material
     }
     Material* material = impl->materials[id];
@@ -176,7 +176,7 @@ int MaterialTableImpl::addMaterial(Material* material)
     
     if(material){
         id = Material::id(material->name());
-        if(materials.size() <= id){
+        if(static_cast<int>(materials.size()) <= id){
             materials.resize(id + 1);
         }
         materials[id] = material;

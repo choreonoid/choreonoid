@@ -440,15 +440,15 @@ SgNode* VRMLToSGConverterImpl::convertShapeNode(VRMLShape* vshape)
                     shape->setTexture(texture);
 
                     if(!mesh->texCoords()){
-                        if(VRMLIndexedFaceSet* faceSet = dynamic_cast<VRMLIndexedFaceSet*>(vrmlGeometry)){
+                        if(dynamic_cast<VRMLIndexedFaceSet*>(vrmlGeometry)){
                             setDefaultTextureCoordinateForIndexedFaceSet(mesh);
-                        } else if(VRMLBox* box = dynamic_cast<VRMLBox*>(vrmlGeometry)){
+                        } else if(dynamic_cast<VRMLBox*>(vrmlGeometry)){
                             setDefaultTextureCoordinateForBox(mesh);
-                        } else if(VRMLSphere* sphere = dynamic_cast<VRMLSphere*>(vrmlGeometry)){
+                        } else if(dynamic_cast<VRMLSphere*>(vrmlGeometry)){
                             setDefaultTextureCoordinateForSphere(mesh);
-                        } else if(VRMLCylinder* cylinder = dynamic_cast<VRMLCylinder*>(vrmlGeometry)){
+                        } else if(dynamic_cast<VRMLCylinder*>(vrmlGeometry)){
                             setDefaultTextureCoordinateForCylinder(mesh);
-                        } else if(VRMLCone* cone = dynamic_cast<VRMLCone*>(vrmlGeometry)){
+                        } else if(dynamic_cast<VRMLCone*>(vrmlGeometry)){
                             setDefaultTextureCoordinateForCone(mesh);
                         } else if(VRMLElevationGrid* elevationGrid = dynamic_cast<VRMLElevationGrid*>(vrmlGeometry)){
                             setDefaultTextureCoordinateForElevationGrid(mesh, elevationGrid);
@@ -577,7 +577,6 @@ bool VRMLToSGConverterImpl::setIndicesForPerTriangleData(SgIndexArray& indices, 
     }
     int indexToSkip = removedFaceIndices.empty() ? std::numeric_limits<int>::min() : removedFaceIndices.front();
     size_t nextIndexToSkipIndex = 1;
-    size_t indexInOrgCoordIndices = 0;
     for(int i=0; i < dataSize; ++i){
         if(i == indexToSkip){
             if(nextIndexToSkipIndex < removedFaceIndices.size()){
@@ -611,7 +610,8 @@ bool VRMLToSGConverterImpl::convertIndicesForTriangles
         size_t nextIndexToSkipIndex = 1;
         int numFaceVertices = 0;
         int firstVertexIndex = 0;
-        for(int i=0; i < orgIndices.size(); ++i){
+        const int numOrgIndices = orgIndices.size();
+        for(int i=0; i < numOrgIndices; ++i){
             if(i == indexToSkip){
                 if(nextIndexToSkipIndex < indicesToSkip->size()){
                     indexToSkip = (*indicesToSkip)[nextIndexToSkipIndex++];
@@ -1005,7 +1005,6 @@ void VRMLToSGConverterImpl::setDefaultTextureCoordinateForSphere(const SgMeshPtr
 {
     const SgMesh::Sphere& sphere = mesh->primitive<SgMesh::Sphere>();
     const SgVertexArray& vertices = *mesh->vertices();
-    const SgIndexArray& triangles = mesh->triangleVertices();
 
     mesh->setTexCoords(new SgTexCoordArray());
     SgTexCoordArray& texCoords = *mesh->texCoords();
@@ -1015,7 +1014,7 @@ void VRMLToSGConverterImpl::setDefaultTextureCoordinateForSphere(const SgMeshPtr
     Vector2f texPoint;
     int texIndex = 0;
     const int numTriangles = mesh->numTriangles();
-    for(size_t i=0; i < numTriangles; ++i){
+    for(int i=0; i < numTriangles; ++i){
         const Vector3f* point[3];
         bool over = false;
         double s[3] = { 0.0, 0.0, 0.0 };
@@ -1048,7 +1047,6 @@ void VRMLToSGConverterImpl::setDefaultTextureCoordinateForSphere(const SgMeshPtr
 void VRMLToSGConverterImpl::setDefaultTextureCoordinateForCylinder(const SgMeshPtr& mesh)
 {
     const SgVertexArray& vertices = *mesh->vertices();
-    const SgIndexArray& triangles = mesh->triangleVertices();
     mesh->setTexCoords(new SgTexCoordArray());
     SgTexCoordArray& texCoords = *mesh->texCoords();
     SgIndexArray& texCoordIndices = mesh->texCoordIndices();
@@ -1142,7 +1140,7 @@ void VRMLToSGConverterImpl::setDefaultTextureCoordinateForCone(const SgMeshPtr& 
     
     int texIndex = 1;
     const int numTriangles = mesh->numTriangles();
-    for(size_t i=0; i < numTriangles; ++i){
+    for(int i=0; i < numTriangles; ++i){
         Vector3f point[3];
         int top = -1;
         int center = -1;
@@ -1289,7 +1287,6 @@ void VRMLToSGConverterImpl::setDefaultTextureCoordinateForElevationGrid(const Sg
     mesh->setTexCoords(new SgTexCoordArray());
     SgTexCoordArray& texCoords = *mesh->texCoords();
     const SgVertexArray& vertices = *mesh->vertices();
-    const int numTriangles = mesh->numTriangles();
     
     for(size_t i=0; i < vertices.size(); ++i){
         const Vector3f& v = vertices[i];

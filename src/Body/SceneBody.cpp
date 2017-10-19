@@ -223,7 +223,8 @@ bool SceneLinkImpl::removeEffectGroup(SgGroup* parent, SgGroupPtr effectGroup)
     if(parent->removeChild(effectGroup)){
         SgGroup* childGroup = 0;
         for(auto child : *effectGroup){
-            if(childGroup = dynamic_cast<SgGroup*>(child.get())){
+            childGroup = dynamic_cast<SgGroup*>(child.get());
+            if(childGroup){
                 parent->addChild(childGroup);
                 break;
             }
@@ -412,7 +413,7 @@ void SceneBody::updateLinkPositions(SgUpdate& update)
 SceneDevice* SceneBody::getSceneDevice(Device* device)
 {
     const int linkIndex = device->link()->index();
-    if(linkIndex < sceneLinks_.size()){
+    if(linkIndex >= 0 && linkIndex < static_cast<int>(sceneLinks_.size())){
         return sceneLinks_[linkIndex]->getSceneDevice(device);
     }
     return 0;

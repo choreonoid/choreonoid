@@ -645,7 +645,7 @@ void GL1SceneRendererImpl::renderLights(const Affine3& cameraPosition)
     
     const int numLights = std::min(self->numLights(), (int)(maxLights - numSystemLights));
 
-    for(size_t i=0; i < numLights; ++i){
+    for(int i=0; i < numLights; ++i){
         SgLight* light;
         Affine3 T;
         self->getLightInfo(i, light, T);
@@ -653,7 +653,7 @@ void GL1SceneRendererImpl::renderLights(const Affine3& cameraPosition)
         renderLight(light, id, T);
     }
 
-    for(size_t i = numLights; i < prevNumLights; ++i){
+    for(int i = numLights; i < prevNumLights; ++i){
         const GLint lightID = GL_LIGHT0 + numSystemLights + i;
         glDisable(lightID);
     }
@@ -1492,7 +1492,6 @@ void GL1SceneRendererImpl::writeVertexBuffers(SgMesh* mesh, ShapeResource* resou
     }
     
     int faceVertexIndex = 0;
-    int numFaceVertices = 0;
     
     for(size_t i=0; i < numTriangles; ++i){
         for(size_t j=0; j < 3; ++j){
@@ -1657,7 +1656,7 @@ void GL1SceneRendererImpl::renderPlot(SgPlot* plot, SgVertexArray& expandedVerti
         } else {
             normals.clear();
             normals.reserve(normalIndices.size());
-            for(int i=0; i < normalIndices.size(); ++i){
+            for(size_t i=0; i < normalIndices.size(); ++i){
                 normals.push_back(orgNormals[normalIndices[i]]);
             }
         }
@@ -1674,11 +1673,11 @@ void GL1SceneRendererImpl::renderPlot(SgPlot* plot, SgVertexArray& expandedVerti
         colors.reserve(expandedVertices.size());
         const SgIndexArray& colorIndices = plot->colorIndices();
         if(colorIndices.empty()){
-            for(int i=0; i < orgColors.size(); ++i){
+            for(size_t i=0; i < orgColors.size(); ++i){
                 colors.push_back(createColorWithAlpha(orgColors[i]));
             }
         } else {
-            for(int i=0; i < colorIndices.size(); ++i){
+            for(size_t i=0; i < colorIndices.size(); ++i){
                 colors.push_back(createColorWithAlpha(orgColors[colorIndices[i]]));
             }
         }

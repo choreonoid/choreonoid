@@ -66,9 +66,6 @@ void onItemSelectionOrTreeChanged(const ItemList<>& selectedItems)
     setTime(currentTime);
 }
 
-void reset() {
-    onItemSelectionOrTreeChanged(ItemTreeView::mainInstance()->selectedItems());
-}
 }
 
 

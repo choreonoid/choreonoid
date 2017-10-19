@@ -156,7 +156,7 @@ int SgNode::registerNodeType(const std::type_info& nodeType, const std::type_inf
     } else {
         id = polymorphicIdMap.size();
         polymorphicIdMap[nodeType] = id;
-        if(id >= superTypePolymorphicIdMap.size()){
+        if(id >= static_cast<int>(superTypePolymorphicIdMap.size())){
             superTypePolymorphicIdMap.resize(id + 1, -1);
         }
         superTypePolymorphicIdMap[id] = superTypeId;
@@ -369,7 +369,7 @@ bool SgGroup::addChildOnce(SgNode* node, bool doNotify)
 void SgGroup::insertChild(SgNode* node, int index, bool doNotify)
 {
     if(node){
-        if(index > children.size()){
+        if(index > static_cast<int>(children.size())){
             index = children.size();
         }
         children.insert(children.begin() + index, node);
@@ -430,7 +430,7 @@ void SgGroup::clearChildren(bool doNotify)
 
 void SgGroup::copyChildrenTo(SgGroup* group, bool doNotify)
 {
-    for(int i=0; i < children.size(); ++i){
+    for(size_t i=0; i < children.size(); ++i){
         group->addChild(child(i), doNotify);
     }
 }
@@ -440,7 +440,7 @@ void SgGroup::moveChildrenTo(SgGroup* group, bool doNotify)
 {
     const int destTop = group->children.size();
     
-    for(int i=0; i < children.size(); ++i){
+    for(size_t i=0; i < children.size(); ++i){
         group->addChild(child(i));
     }
     clearChildren(doNotify);

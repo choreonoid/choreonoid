@@ -55,7 +55,7 @@ int Material::id(const std::string name)
 std::string Material::name(int id)
 {
     std::lock_guard<std::mutex> guard(idMutex);
-    if(id < idToNameMap.size()){
+    if(id < static_cast<int>(idToNameMap.size())){
         return idToNameMap[id];
     }
     return std::string();

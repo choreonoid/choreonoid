@@ -464,7 +464,7 @@ SgNode* YAMLSceneReaderImpl::readShape(Mapping& node)
 
 SgMesh* YAMLSceneReaderImpl::readGeometry(Mapping& node)
 {
-    SgMesh* mesh;
+    SgMesh* mesh = 0;
     ValueNode& typeNode = node["type"];
     string type = typeNode.toString();
     if(type == "Box"){

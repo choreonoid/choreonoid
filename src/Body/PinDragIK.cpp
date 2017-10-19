@@ -585,7 +585,7 @@ PinDragIKImpl::IKStepResult PinDragIKImpl::calcOneStep(const Vector3& v, const V
         double errsqr = 0.0;
         if(property.axes & InverseKinematics::TRANSLATION_3D){
             const Vector3 dp = property.prevStep_p - link->p();
-            errsqr += dq.squaredNorm();
+            errsqr += dp.squaredNorm();
             property.prevStep_p = link->p();
         }
         if(property.axes & InverseKinematics::ROTATION_3D){
@@ -818,17 +818,17 @@ double calcLU(int n, MatrixXd& a, std::vector<int>& pivots)
     
         // get the next pivot row
         max = -1;
-        int maxrow;
+        int maxrow = 0;
         for(int i = k; i < n; i++) {  
             int ix = pivots[i];           
             v = fabs(a(ix,k)) * weight[ix];
-            if (v > max){
+            if(v > max){
                 max = v; 
                 maxrow = i;
             }
         }
         int ik = pivots[maxrow];
-        if (maxrow != k) {
+        if(maxrow != k) {
             pivots[maxrow] = pivots[k];
             pivots[k] = ik;  
             det = -det;

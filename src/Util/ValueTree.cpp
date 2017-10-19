@@ -1010,7 +1010,7 @@ void Listing::append(const std::string& value, StringStyle stringStyle)
 void Listing::insert(int index, ValueNode* node)
 {
     if(index >= 0){
-        if(index > values.size()){
+        if(index > static_cast<int>(values.size())){
             index = values.size();
         }
         values.insert(values.begin() + index, node);

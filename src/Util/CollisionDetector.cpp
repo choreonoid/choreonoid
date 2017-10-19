@@ -87,7 +87,7 @@ int CollisionDetector::numFactories()
 
 std::string CollisionDetector::factoryName(int factoryIndex)
 {
-    if(factoryIndex >= 0 && factoryIndex < factories.size()){
+    if(factoryIndex >= 0 && factoryIndex < static_cast<int>(factories.size())){
         return factories[factoryIndex].name;
     }
     return string();
@@ -106,7 +106,7 @@ int CollisionDetector::factoryIndex(const std::string& name)
 
 CollisionDetectorPtr CollisionDetector::create(int factoryIndex)
 {
-    if(factoryIndex >= 0 && factoryIndex < factories.size()){
+    if(factoryIndex >= 0 && factoryIndex < static_cast<int>(factories.size())){
         return factories[factoryIndex].factory();
     }
     return CollisionDetectorPtr();

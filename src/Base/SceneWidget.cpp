@@ -72,7 +72,7 @@ public:
         setFunction<SgGroup>(
             [&](SgNode* node){
                 auto group = static_cast<SgGroup*>(node);
-                if(SceneWidgetEditable* editable = dynamic_cast<SceneWidgetEditable*>(group)){
+                if(dynamic_cast<SceneWidgetEditable*>(group)){
                     editables.push_back(group);
                 }
                 for(auto child : *group){
@@ -1641,7 +1641,7 @@ void SceneWidgetImpl::startViewTranslation()
         int x, y, width, height;
         renderer->getViewport(x, y, width, height);
         const double aspect = (double)width / height;
-        double r, cw, ch;
+        double r{}, cw{}, ch{};
         SgCamera* camera = renderer->currentCamera();
         if(SgPerspectiveCamera* pers = dynamic_cast<SgPerspectiveCamera*>(camera)){
             const double fovy = pers->fovy(aspect);
@@ -1722,7 +1722,7 @@ void SceneWidgetImpl::dragViewZoom()
     const double dy = latestEvent.y() - orgMouseY;
     const double ratio = expf(dy * 0.01);
 
-    if(SgPerspectiveCamera* pers = dynamic_cast<SgPerspectiveCamera*>(camera)){
+    if(dynamic_cast<SgPerspectiveCamera*>(camera)){
         const Affine3& C = orgCameraPosition;
         const Vector3 v = SgCamera::direction(C);
 
@@ -1752,7 +1752,7 @@ void SceneWidgetImpl::zoomView(double ratio)
     }
 
     SgCamera* camera = renderer->currentCamera();
-    if(SgPerspectiveCamera* pers = dynamic_cast<SgPerspectiveCamera*>(camera)){
+    if(dynamic_cast<SgPerspectiveCamera*>(camera)){
         const Affine3& C = interactiveCameraTransform->T();
         const Vector3 v = SgCamera::direction(C);
         

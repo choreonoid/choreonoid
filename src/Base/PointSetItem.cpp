@@ -438,7 +438,7 @@ void PointSetItemImpl::removePoints(const PolyhedralRegion& region)
         int nextIndexToRemove = indicesToRemove[j++];
         for(int i=0; i < numOrgPoints; ++i){
             if(i == nextIndexToRemove){
-                if(j < indicesToRemove.size()){
+                if(j < static_cast<int>(indicesToRemove.size())){
                     nextIndexToRemove = indicesToRemove[j++];
                 }
             } else {
@@ -472,7 +472,7 @@ void PointSetItemImpl::removeSubElements(ElementContainer& elements, SgIndexArra
         int nextIndexToRemove = indicesToRemove[j++];
         for(int i=0; i < numOrgElements; ++i){
             if(i == nextIndexToRemove){
-                if(j < indicesToRemove.size()){
+                if(j < static_cast<int>(indicesToRemove.size())){
                     nextIndexToRemove = indicesToRemove[j++];
                 }
             } else {
@@ -488,7 +488,7 @@ void PointSetItemImpl::removeSubElements(ElementContainer& elements, SgIndexArra
         int nextIndexToRemove = indicesToRemove[j++];
         for(int i=0; i < numOrgIndices; ++i){
             if(i == nextIndexToRemove){
-                if(j < indicesToRemove.size()){
+                if(j < static_cast<int>(indicesToRemove.size())){
                     nextIndexToRemove = indicesToRemove[j++];
                 }
             } else {

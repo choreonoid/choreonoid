@@ -134,7 +134,7 @@ public:
     typedef unordered_map<string, NodeFunctionInfo> NodeFunctionMap;
     
     NodeFunctionMap nodeFunctions;
-    int numCustomNodeFunctions;
+    size_t numCustomNodeFunctions;
     
     Body* body;
     Link* rootLink;
@@ -262,7 +262,7 @@ public:
     ostream& os() { return *os_; }
 
     vector<bool> validJointIdSet;
-    int numValidJointIds;
+    size_t numValidJointIds;
 
     unique_ptr<YAMLBodyLoader> subLoader;
     map<string, BodyPtr> subBodyMap;
@@ -875,7 +875,7 @@ void YAMLBodyLoaderImpl::setJointId(Link* link, int id)
 {
     link->setJointId(id);
     if(id >= 0){
-        if(id >= validJointIdSet.size()){
+        if(id >= static_cast<int>(validJointIdSet.size())){
             validJointIdSet.resize(id + 1);
         }
         if(!validJointIdSet[id]){

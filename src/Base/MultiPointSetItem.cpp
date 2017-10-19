@@ -387,7 +387,7 @@ void MultiPointSetItem::selectSinglePointSetItem(int index)
 
 void MultiPointSetItemImpl::selectSinglePointSetItem(int index)
 {
-    if(index < 0 || index >= pointSetItems.size()){
+    if(index < 0 || index >= static_cast<int>(pointSetItems.size())){
         return;
     }
     
@@ -893,8 +893,6 @@ bool MultiPointSetItemImpl::startAutomaticSave(const std::string& filename)
 
 void MultiPointSetItemImpl::saveAdditionalPointSet(int index)
 {
-    bool result = false;
-
     if(!outputArchive){
         try {
             if(filesystem::create_directories(autoSaveFilePath.parent_path())){

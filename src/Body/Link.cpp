@@ -178,8 +178,6 @@ void Link::appendChild(Link* link)
 */
 bool Link::removeChild(Link* childToRemove)
 {
-    bool removed = false;
-
     Link* link = child_;
     Link* prevSibling = 0;
     while(link){

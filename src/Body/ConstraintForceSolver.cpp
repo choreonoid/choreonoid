@@ -477,10 +477,10 @@ void CFSImpl::initBody(const DyBodyPtr& body, BodyData& bodyData)
 
 void CFSImpl::initWorldExtraJoints()
 {
-    for(int i=0; i<world.extrajoints.size(); i++){
+    for(size_t i=0; i < world.extrajoints.size(); i++){
         ExtraJoint& extrajoint = world.extrajoints[i];
         int bodyIndex[2];
-        for(int k=0; k<2; k++){
+        for(int k=0; k < 2; k++){
             if(!extrajoint.body[k]){
                 bodyIndex[k] = world.bodyIndex(extrajoint.bodyName[k]);
                 Body* body = world.body(bodyIndex[k]);
@@ -1129,7 +1129,6 @@ void CFSImpl::set2dConstraintPoints(const Constrain2dLinkPairPtr& linkPair)
     for(int i=0; i < n; ++i){
         DyLink* link1 = linkPair->link[1];
         Vector3 point1 = link1->p() + link1->R() * local2dConstraintPoints[i];
-        Vector3 relVelocityOn0 = link1->vo() + link1->w().cross(point1);
         ConstraintPoint& constraint = constraintPoints[i];
         constraint.point = point1;
         constraint.normalTowardInside[0] =  yAxis;
@@ -2488,7 +2487,7 @@ CollisionLinkPairListPtr ConstraintForceSolver::getCollisions()
 CollisionLinkPairListPtr CFSImpl::getCollisions()
 {
     CollisionLinkPairListPtr collisionPairs = std::make_shared<CollisionLinkPairList>();
-    for(int i=0; i<constrainedLinkPairs.size(); i++){
+    for(size_t i=0; i < constrainedLinkPairs.size(); ++i){
         LinkPair& source = *constrainedLinkPairs[i];
         CollisionLinkPairPtr dest = std::make_shared<CollisionLinkPair>();
         int numConstraintsInPair = source.constraintPoints.size();

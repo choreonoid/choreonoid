@@ -453,8 +453,7 @@ void MessageViewImpl::doPut(const QString& message, bool doLF, bool doNotify, bo
     }
 
     QString txt(message);
-    int i=0;
-    while(1){
+    while(true){
         int i = txt.indexOf("\x1b");
         if(i < 0){
             break;
@@ -708,7 +707,7 @@ void MessageViewImpl::inttoColor(int n, QColor& col)
 void MessageViewImpl::textProperties(const vector<int>& n)
 {
     QColor col;
-    for(int i=0; i<n.size(); i++){
+    for(size_t i=0; i < n.size(); i++){
         switch(n[i]){
         case 0:  // Reset all
             currentCharFormat = orgCharFormat;
@@ -751,16 +750,16 @@ void MessageViewImpl::textProperties(const vector<int>& n)
             break;
         case 38:
         {
-            int j=i+1;
-            if(j<n.size()){
-                if(n[j]==2){  // RGB color specification
-                    if(j+3<n.size()){
+            size_t j = i + 1;
+            if(j < n.size()){
+                if(n[j] == 2){  // RGB color specification
+                    if(j + 3 < n.size()){
                         col = QColor(n[j+1], n[j+2], n[j+3]);
                         currentCharFormat.setForeground(col);
                         i += 4;
                     }
-                }else if(n[j]==5){  // Color id specification
-                    if(j+1<n.size()){
+                }else if(n[j] == 5){  // Color id specification
+                    if(j + 1 < n.size()){
                         inttoColor(n[j+1], col);
                         currentCharFormat.setForeground(col);
                         i += 2;
@@ -785,16 +784,16 @@ void MessageViewImpl::textProperties(const vector<int>& n)
             break;
         case 48:
         {
-            int j=i+1;
-            if(j<n.size()){
-                if(n[j]==2){  // Background color specified by RGB
-                    if(j+3<n.size()){
+            size_t j = i + 1;
+            if(j < n.size()){
+                if(n[j] == 2){  // Background color specified by RGB
+                    if(j + 3 <n.size()){
                         col = QColor(n[j+1], n[j+2], n[j+3]);
                         currentCharFormat.setBackground(col);
                         i += 4;
                     }
-                }else if(n[j]==5){  // Background color specified by id
-                    if(j+1<n.size()){
+                }else if(n[j] == 5){  // Background color specified by id
+                    if(j + 1 <n.size()){
                         inttoColor(n[j+1], col);
                         currentCharFormat.setBackground(col);
                         i += 2;

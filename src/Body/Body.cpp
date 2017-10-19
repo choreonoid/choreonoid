@@ -17,8 +17,6 @@ namespace {
 
 const bool PUT_DEBUG_MESSAGE = true;
 
-bool pluginsInDefaultDirectoriesLoaded = false;
-
 #ifndef uint
 typedef unsigned int uint;
 #endif
@@ -226,7 +224,7 @@ void Body::updateLinkTree()
 
         const int id = link->jointId();
         if(id >= 0){
-            if(id >= jointIdToLinkArray.size()){
+            if(id >= static_cast<int>(jointIdToLinkArray.size())){
                 jointIdToLinkArray.resize(id + 1, 0);
             }
             if(!jointIdToLinkArray[id]){
