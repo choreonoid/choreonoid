@@ -62,9 +62,9 @@ struct AGXMaterialDesc
 
 enum AGXFrictionModelType
 {
-    DEFAULT,
+    DEFAULT = 0,
     BOX,
-    SCALE_BOX,
+    SCALED_BOX,
     ITERATIVE_PROJECTED_CONE
 };
 
@@ -80,7 +80,6 @@ struct AGXContactMaterialDesc
         surfaceViscosity = 1.0E-8;
         adhesionForce = 0.0;
         adhesivOverlap = 0.0;
-        frictionDirection = agx::ContactMaterial::FrictionDirection::BOTH_PRIMARY_AND_SECONDARY;
         frictionModelType = AGXFrictionModelType::DEFAULT;
         solveType =  agx::FrictionModel::SolveType::SPLIT;
         contactReductionMode = agx::ContactMaterial::ContactReductionMode::REDUCE_GEOMETRY;
@@ -94,8 +93,7 @@ struct AGXContactMaterialDesc
     agx::Real friction;             // sqrt(m1.rough * m2.rough)
     agx::Real surfaceViscosity;     // m1.svisco + m2.svisco
     agx::Real adhesionForce;        // attracive force[N], m1.ad + m2.ad
-    agx::Real adhesivOverlap;       // 
-    agx::ContactMaterial::FrictionDirection frictionDirection;
+    agx::Real adhesivOverlap;       //
     AGXFrictionModelType frictionModelType;
     agx::FrictionModel::SolveType solveType;
     agx::ContactMaterial::ContactReductionMode contactReductionMode;

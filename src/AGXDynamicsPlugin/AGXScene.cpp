@@ -65,7 +65,9 @@ agx::ContactMaterialRef AGXScene::createContactMaterial(const AGXContactMaterial
 #define PRINT_MATERIAL(field, field2) std::cout << #field << " " << field2 << std::endl
 void AGXScene::printMaterials()
 {
-
+    for(auto it : getSimulation()->getMaterialManager()->getMaterials()){
+        agx::Material* const mat = it.second;
+    }
 }
 
 void AGXScene::printContactMaterialTable()
@@ -84,7 +86,6 @@ void AGXScene::printContactMaterialTable()
         PRINT_MATERIAL(contactReductionMode, mat->getContactReductionMode());
         PRINT_MATERIAL(contactReductionBinResolution, mat->getContactReductionBinResolution());
         if(!mat->getFrictionModel()) continue;
-        //PRINT_MATERIAL(frictionDirection, mat->getFrictionModel()->getSolveType());
         PRINT_MATERIAL(frictionModel, mat->getFrictionModel()->getClassName());
         PRINT_MATERIAL(solveType, mat->getFrictionModel()->getSolveType());
 

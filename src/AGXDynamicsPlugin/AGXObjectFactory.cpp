@@ -175,7 +175,7 @@ agx::Bool AGXObjectFactory::setContactMaterialParam(agx::ContactMaterial* const 
     cm->setDamping(desc.damping);
     cm->setFrictionCoefficient(desc.friction);
     cm->setAdhesion(desc.adhesionForce, desc.adhesivOverlap);
-    cm->setSurfaceViscosity(desc.surfaceViscosity, desc.frictionDirection);
+    cm->setSurfaceViscosity(desc.surfaceViscosity);
     cm->setContactReductionMode(desc.contactReductionMode);
     cm->setContactReductionBinResolution(desc.contactReductionBinResolution);
 
@@ -186,7 +186,7 @@ agx::Bool AGXObjectFactory::setContactMaterialParam(agx::ContactMaterial* const 
             case AGXFrictionModelType::BOX :
                 fm = new agx::BoxFrictionModel();
                 break;
-            case AGXFrictionModelType::SCALE_BOX :
+            case AGXFrictionModelType::SCALED_BOX :
                 fm = new agx::ScaleBoxFrictionModel();
                 break;
             case AGXFrictionModelType::ITERATIVE_PROJECTED_CONE :

@@ -53,6 +53,7 @@ set(headers
   AGXVehicleContinuousTrackDevice.h
   AGXBodyExtension.h
   AGXConvexDecomposition.h
+  AGXConvert.h
   )
 
 make_gettext_mofiles(${target} mofiles)

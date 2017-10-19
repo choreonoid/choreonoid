@@ -11,7 +11,7 @@
 namespace{
 typedef std::function<bool(cnoid::AGXBody* agxBody)> AGXBodyExtensionFunc;
 typedef std::map<std::string, AGXBodyExtensionFunc> AGXBodyExtensionFuncMap;
-};
+}
 
 namespace cnoid {
 

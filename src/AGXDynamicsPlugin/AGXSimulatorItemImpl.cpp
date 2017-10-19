@@ -3,11 +3,38 @@
 #include <cnoid/EigenUtil>
 #include <cnoid/WorldItem>
 #include <cnoid/MaterialTable>
+#include "AGXConvert.h"
+#include <unordered_map>
 #include "gettext.h"
 
 using namespace std;
 
 namespace cnoid {
+
+const std::unordered_map<std::string, agx::ContactMaterial::ContactReductionMode> agxContactReductionModeMap{
+    {"", agx::ContactMaterial::ContactReductionMode::REDUCE_GEOMETRY},
+    {"default", agx::ContactMaterial::ContactReductionMode::REDUCE_GEOMETRY},
+    {"reduceGeometry", agx::ContactMaterial::ContactReductionMode::REDUCE_GEOMETRY},
+    {"reduceALL", agx::ContactMaterial::ContactReductionMode::REDUCE_ALL},
+    {"reduceNone", agx::ContactMaterial::ContactReductionMode::REDUCE_NONE}
+};
+
+const std::unordered_map<std::string, AGXFrictionModelType> agxFrictionModelTypeMap{
+    {"", AGXFrictionModelType::DEFAULT},
+    {"default", AGXFrictionModelType::DEFAULT},
+    {"box", AGXFrictionModelType::BOX},
+    {"scaledBox", AGXFrictionModelType::SCALED_BOX},
+    {"cone", AGXFrictionModelType::ITERATIVE_PROJECTED_CONE}
+};
+
+const std::unordered_map<std::string, agx::FrictionModel::SolveType> agxSolveTypeMap{
+    {"", agx::FrictionModel::SolveType::SPLIT},
+    {"default", agx::FrictionModel::SolveType::SPLIT},
+    {"split", agx::FrictionModel::SolveType::SPLIT},
+    {"direct", agx::FrictionModel::SolveType::DIRECT},
+    {"iterative", agx::FrictionModel::SolveType::ITERATIVE},
+    {"directAndIterative", agx::FrictionModel::SolveType::DIRECT_AND_ITERATIVE}
+};
 
 AGXSimulatorItemImpl::AGXSimulatorItemImpl(AGXSimulatorItem* self)
     : self(self)
@@ -118,6 +145,7 @@ void AGXSimulatorItemImpl::createAGXMaterialTable()
         for(int j = 0; j < numMaterials; ++j){
             ContactMaterial* mat = matTable->contactMaterial(i, j);
             if(!mat) continue;
+            Mapping* info = mat->info();
             AGXContactMaterialDesc desc;
             desc.nameA = std::to_string(i);
             desc.nameB = std::to_string(j);
@@ -128,13 +156,25 @@ void AGXSimulatorItemImpl::createAGXMaterialTable()
             SET_AGXMATERIAL_FIELD(surfaceViscosity);
             SET_AGXMATERIAL_FIELD(adhesionForce);
             SET_AGXMATERIAL_FIELD(adhesivOverlap);
-            getAGXScene()->createContactMaterial(desc);
+            SET_AGXMATERIAL_FIELD(contactReductionBinResolution);
 
-            //agx::ContactMaterial::FrictionDirection frictionDirection;
-            //AGXFrictionModelType frictionModelType;
-            //agx::FrictionModel::SolveType solveType;
-            //agx::ContactMaterial::ContactReductionMode contactReductionMode;
-            //agx::UInt8 contactReductionBinResolution;
+            auto crmNode = info->find("contactReductionMode");
+            agxConvert::setValue(crmNode, agxContactReductionModeMap, "", desc.contactReductionMode,
+                "Illegal contactReductionMode value. Use default.");
+
+            auto frictionModelNode = info->find("frictionModel");
+            if(frictionModelNode->isValid()){
+                vector<string> fmVec;
+                if(agxConvert::setVector(frictionModelNode, 2, fmVec)){
+                    if(!agxConvert::setValue(fmVec[0], agxFrictionModelTypeMap, "", desc.frictionModelType))
+                        info->throwException("Illegal frictionModelType value. Use default.");
+                    if(!agxConvert::setValue(fmVec[1], agxSolveTypeMap, "", desc.solveType))
+                        info->throwException("Illegal solveType value. Use default.");
+                }else{
+                    info->throwException("Illegal frictionModel value. Use default.");
+                }
+            }
+            getAGXScene()->createContactMaterial(desc);
         }
     }
 
@@ -185,7 +225,7 @@ Vector3 AGXSimulatorItemImpl::getGravity() const
 {
     const agx::Vec3& g = agxScene->getGravity();
     return Vector3(g.x(), g.y(), g.z());
-};
+}
 
 bool AGXSimulatorItemImpl::saveSimulationToAGXFile()
 {

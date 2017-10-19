@@ -38,15 +38,13 @@ contactMaterials:
     restitution: 1.0
   -
     materials: [ Ground, agxMat5 ]
-    youngsModulus: 2.0E3
+    youngsModulus: 1.0E5
     restitution: 0.1
     damping: 0.08
     friction: 0.416667
     surfaceViscosity: 1.0E-8
     adhesionForce: 100
-    adhesivOverlap: 0.1
-#    frictionDirection:
-#    frictionModelType:
-#    solveType:
-#    contactReductionMode:
-#    contactReductionBinResolution:
+    adhesivOverlap: 0.2
+    frictionModel: [ cone, direct ]
+    contactReductionMode: reduceGeometry
+    contactReductionBinResolution: 3
