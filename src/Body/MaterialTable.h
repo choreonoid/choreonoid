@@ -8,6 +8,7 @@
 
 #include "ContactMaterial.h"
 #include <cnoid/NullOut>
+#include "exportdecl.h"
 
 namespace cnoid {
 
