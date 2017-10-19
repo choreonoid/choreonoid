@@ -27,13 +27,13 @@ items:
               1, -0, 0, 
               0, 0.866025404, 0.5, 
               -0, -0.5, 0.866025404 ]
-            jointPositions: [  0.000000,  0.000000,  0.000000,  0.000000 ]
+            jointPositions: [  0.000000,  0.000000,  0.000000,  0.000000,  0.000000 ]
             initialRootPosition: [ 0, 0, -0.1 ]
             initialRootAttitude: [ 
               1, -0, 0, 
               0, 0.866025404, 0.5, 
               -0, -0.5, 0.866025404 ]
-            initialJointPositions: [  0.000000,  0.000000,  0.000000,  0.000000 ]
+            initialJointPositions: [  0.000000,  0.000000,  0.000000,  0.000000,  0.000000 ]
             zmp: [ 0, 0, 0 ]
             collisionDetection: true
             selfCollisionDetection: true
@@ -67,7 +67,7 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      selected: [ 3 ]
+      selected: [ 2 ]
       checked: [ 2 ]
       expanded: [ 1, 2 ]
   - 
@@ -121,7 +121,7 @@ views:
           far: 100
           eye: [ 20.5409078, 5.07915268, 7.79793588 ]
           direction: [ -0.938881188, -0.174388212, -0.296801056 ]
-          up: [ -0.291810084, -0.0542009355, 0.954939335 ]
+          up: [ -0.291810084, -0.0542009359, 0.954939335 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
