@@ -121,6 +121,7 @@ set(headers
   ExtraJoint.h
   SimpleController.h
   exportdecl.h
+  CnoidBody.h
   )
 
 make_gettext_mofiles(${target} mofiles)
