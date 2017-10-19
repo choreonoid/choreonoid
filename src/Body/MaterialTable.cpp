@@ -108,6 +108,12 @@ MaterialTable::~MaterialTable()
 }
 
 
+int MaterialTable::maxMaterialId() const
+{
+    return impl->materials.size() - 1;
+}
+
+
 Material* MaterialTable::material(int id) const
 {
     if(impl->materials.size() <= id){
@@ -131,13 +137,25 @@ ContactMaterial* MaterialTable::contactMaterial(int id1, int id2) const
 }
 
 
-void MaterialTable::forEachMaterialPair(std::function<void(int id1, int id2, ContactMaterial* cm)> callback)
+void MaterialTable::forEachMaterial(std::function<void(int id, Material* material)> func)
+{
+    auto& materials = impl->materials;
+    for(size_t i=0; i < materials.size(); ++i){
+        Material* material = materials[i];
+        if(material){
+            func(i, material);
+        }
+    }
+}
+
+
+void MaterialTable::forEachMaterialPair(std::function<void(int id1, int id2, ContactMaterial* cm)> func)
 {
     auto iter = impl->contactMaterialMap.begin();
     while(iter != impl->contactMaterialMap.end()){
         const IdPair<>& idPair = iter->first;
         ContactMaterialPtr& cm = iter->second;
-        callback(idPair(0), idPair(1), cm);
+        func(idPair(0), idPair(1), cm);
         ++iter;
     }
 }

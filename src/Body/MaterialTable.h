@@ -26,12 +26,16 @@ class CNOID_EXPORT MaterialTable : public Referenced
     virtual ~MaterialTable();
 
     bool load(const std::string& filename, std::ostream& os = nullout());
-    int addMaterial(Material* material);
 
+    int maxMaterialId() const;
     Material* material(int id) const;
     ContactMaterial* contactMaterial(int id1, int id2) const;
+
+    void forEachMaterial(std::function<void(int id, Material* material)> func);
+    void forEachMaterialPair(std::function<void(int id1, int id2, ContactMaterial* cm)> func);
+
+    int addMaterial(Material* material);
     void setContactMaterial(int id1, int id2, ContactMaterial* cm);
-    void forEachMaterialPair(std::function<void(int id1, int id2, ContactMaterial* cm)> callback);
 
   private:
     MaterialTableImpl* impl;
