@@ -121,34 +121,31 @@ void AGXSimulatorItemImpl::createAGXMaterialTable()
     WorldItem* const worldItem = self->findOwnerItem<WorldItem>();
     if(!worldItem) return;
     MaterialTable* const matTable = worldItem->materialTable();
-    const int& numMaterials = matTable->numMaterials();
 
     // Create AGX material
-    for(int i = 0; i < numMaterials; ++i){
-        Material* mat = matTable->material(i);
-        AGXMaterialDesc desc;
-        desc.name = std::to_string(i);
-        SET_AGXMATERIAL_FIELD(density);
-        SET_AGXMATERIAL_FIELD(youngsModulus);
-        SET_AGXMATERIAL_FIELD(poissonRatio);
-        desc.viscosity = mat->viscosity();
-        SET_AGXMATERIAL_FIELD(damping);
-        desc.roughness = mat->roughness();
-        SET_AGXMATERIAL_FIELD(surfaceViscosity);
-        SET_AGXMATERIAL_FIELD(adhesionForce);
-        SET_AGXMATERIAL_FIELD(adhesivOverlap);
-        getAGXScene()->createMaterial(desc);
-    }
+    matTable->forEachMaterial(
+        [&](int id, Material* mat){
+            AGXMaterialDesc desc;
+            desc.name = std::to_string(id);
+            SET_AGXMATERIAL_FIELD(density);
+            SET_AGXMATERIAL_FIELD(youngsModulus);
+            SET_AGXMATERIAL_FIELD(poissonRatio);
+            desc.viscosity = mat->viscosity();
+            SET_AGXMATERIAL_FIELD(damping);
+            desc.roughness = mat->roughness();
+            SET_AGXMATERIAL_FIELD(surfaceViscosity);
+            SET_AGXMATERIAL_FIELD(adhesionForce);
+            SET_AGXMATERIAL_FIELD(adhesivOverlap);
+            getAGXScene()->createMaterial(desc);
+        });
 
     // Create AGX contact material
-    for(int i = 0; i < numMaterials; ++i){
-        for(int j = 0; j < numMaterials; ++j){
-            ContactMaterial* mat = matTable->contactMaterial(i, j);
-            if(!mat) continue;
+    matTable->forEachMaterialPair(
+        [&](int id1, int id2, ContactMaterial* mat){
             Mapping* info = mat->info();
             AGXContactMaterialDesc desc;
-            desc.nameA = std::to_string(i);
-            desc.nameB = std::to_string(j);
+            desc.nameA = std::to_string(id1);
+            desc.nameB = std::to_string(id2);
             SET_AGXMATERIAL_FIELD(youngsModulus);
             desc.restitution = mat->restitution();
             SET_AGXMATERIAL_FIELD(damping);
@@ -175,8 +172,7 @@ void AGXSimulatorItemImpl::createAGXMaterialTable()
                 }
             }
             getAGXScene()->createContactMaterial(desc);
-        }
-    }
+        });
 
     //getAGXScene()->printContactMaterialTable();
 }
