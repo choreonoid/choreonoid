@@ -580,7 +580,7 @@ VisionDeviceRenderer::VisionDeviceRenderer(GLVisionSimulatorExItemImpl* simImpl,
         const double thresh91  = radian(91);
 
         double pitchRange = rangeSensor->pitchRange();
-        double pitchStep = pitchRange / rangeSensor->pitchResolution();
+        double pitchStep = rangeSensor->pitchStep();
         if( pitchRange > thresh170)  pitchRange = thresh170;
 
         double yawRange;
