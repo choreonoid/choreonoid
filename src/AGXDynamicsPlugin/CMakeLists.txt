@@ -13,6 +13,8 @@ set(AGX_DIR $ENV{AGX_DIR} CACHE PATH "set the top directory of the AGX Dynamics 
 set( CMAKE_MODULE_PATH "${AGX_DIR}/CMakeModules;${CMAKE_MODULE_PATH}")
 include(AGXUtils)
 include(AGX${CMAKE_SYSTEM_NAME}Specific)
+
+OPTION(AGX_USE_AGGRESSIVE_WARNINGS "Enable to activate aggressive warnings" OFF)
 include(AGXCompilerFlags )
 
 # Now locate AgX
