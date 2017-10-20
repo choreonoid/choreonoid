@@ -671,6 +671,7 @@ void AGXBody::setCollisionExclude(){
     const Mapping& cdMapping = *body()->info()->findMapping("collisionDetection");
     if(!cdMapping.isValid()) return;
     setCollisionExcludeLinks(cdMapping);
+    setCollisionExcludeTreeDepth(cdMapping);
     setCollisionExcludeLinkGroup(cdMapping);
 }
 
@@ -678,6 +679,39 @@ void AGXBody::setCollisionExcludeLinks(const Mapping& cdMapping){
     const Listing& excludeLinks = *cdMapping.findListing("excludeLinks");
     for(auto linkName : excludeLinks){
         getAGXLink(linkName->toString())->enableExternalCollision(false);
+    }
+}
+
+void AGXBody::setCollisionExcludeTreeDepth(const Mapping& cdMapping){
+    const ValueNodePtr& excludeTreeDepthNode = cdMapping.find("excludeTreeDepth");
+    if(!excludeTreeDepthNode->isValid()) return;
+    if(!excludeTreeDepthNode->isScalar()) return;
+    const int& excludeTreeDepth = excludeTreeDepthNode->toInt();
+    for(int i = 0; i < numAGXLinks(); ++i){
+        AGXLink* agxLink1 = getAGXLink(i);
+        for(int j = i+1; j < numAGXLinks(); ++j){
+            AGXLink* agxLink2 = getAGXLink(j);
+            AGXLink* parent1 = agxLink1;
+            AGXLink* parent2 = agxLink2;
+            for(int k = 0; k < excludeTreeDepth; ++k){
+                stringstream ss;
+                ss << "AGXExcludeTreeDepth_" << agx::UuidGenerator().generate().str() << std::endl;
+                addCollisionGroupNameToDisableCollision(ss.str());
+                if(parent1){
+                    parent1 = parent1->getAGXParentLink();
+                }
+                if(parent2){
+                    parent2 = parent2->getAGXParentLink();
+                }
+                if(!parent1 && !parent2){
+                    break;
+                }
+                if(parent1 == agxLink2 || parent2 == agxLink1){
+                    agxLink1->getAGXGeometry()->addGroup(ss.str());
+                    agxLink2->getAGXGeometry()->addGroup(ss.str());
+                }
+            }
+        }
     }
 }
 
@@ -698,11 +732,11 @@ void AGXBody::setCollisionExcludeLinkGroup(const Mapping& cdMapping){
         }
         addCollisionGroupNameToDisableCollision(ss.str());
         // get link name and set group name to agx geometry
-        vector<string> links;
+        vector<string> excludeLinkNames;
         if(const ValueNodePtr& linkNode = groupInfo.find("links")){
             if(!linkNode->isListing()) continue;
-            if(agxConvert::setVector(linkNode->toListing(), links)){
-                for(auto linkName : links){
+            if(agxConvert::setVector(linkNode->toListing(), excludeLinkNames)){
+                for(auto linkName : excludeLinkNames){
                     getAGXRigidBody(linkName)->getGeometries().front()->addGroup(ss.str());
                 }
             }
