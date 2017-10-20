@@ -145,7 +145,7 @@ bool createAGXBreakableJoint(cnoid::AGXBody* agxBody)
         agxBody->addAGXBodyExtension(new cnoid::AGXBreakableJoint(device, agxBody));
     }
     return true;
-};
+}
 
 struct AGXBreakableJointRegistration
 {
@@ -172,8 +172,7 @@ public:
         m_joint->setEnableComputeForces(true);
     }
 
-//    virtual void post( const agx::TimeStamp& /*t*/ )
-    virtual void post( const agx::TimeStamp& t )
+   virtual void post( const agx::TimeStamp& /*t*/ )
     {
         agx::Vec3 force;
         agx::Vec3 torque;

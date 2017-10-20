@@ -20,6 +20,6 @@ public:
     }
 };
 
-CNOID_IMPLEMENT_PLUGIN_ENTRY(AGXBodyExtensionPlugin);
+CNOID_IMPLEMENT_PLUGIN_ENTRY(AGXBodyExtensionPlugin)
 
 }

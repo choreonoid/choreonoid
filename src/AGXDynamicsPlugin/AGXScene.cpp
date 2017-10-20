@@ -62,7 +62,7 @@ agx::ContactMaterialRef AGXScene::createContactMaterial(const AGXContactMaterial
     return AGXObjectFactory::createContactMaterial(desc, getSimulation()->getMaterialManager());
 }
 
-#define PRINT_MATERIAL(field, field2) std::cout << #field << " " << field2 << std::endl
+#define PRINT_MATERIAL(field, field2) std::cout << "  " << #field << " " << field2 << std::endl
 void AGXScene::printMaterials()
 {
     for(auto it : getSimulation()->getMaterialManager()->getMaterials()){
@@ -74,7 +74,7 @@ void AGXScene::printContactMaterialTable()
 {
     for(auto it : getSimulation()->getMaterialManager()->getContactMaterials()){
         agx::ContactMaterial* const mat = it.second;
-        std::cout << mat->getMaterial1()->getName() << " " << mat->getMaterial2()->getName() << std::endl;
+        std::cout << "[" << mat->getMaterial1()->getName() << " " << mat->getMaterial2()->getName() << "]" << std::endl;
         PRINT_MATERIAL(youngsModulus, mat->getYoungsModulus());
         PRINT_MATERIAL(restitution, mat->getRestitution());
         PRINT_MATERIAL(damping, mat->getDamping());

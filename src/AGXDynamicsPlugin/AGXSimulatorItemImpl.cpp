@@ -43,16 +43,17 @@ AGXSimulatorItemImpl::AGXSimulatorItemImpl(AGXSimulatorItem* self)
     AGXSimulationDesc simDesc;
     const agx::Vec3& g = simDesc.gravity;
     _p_gravity = Vector3(g.x(), g.y(), g.z());
-    _p_numThreads = simDesc.numThreads;
+    _p_numThreads = (int)simDesc.numThreads;
     _p_enableContactReduction = simDesc.enableContactReduction;
     _p_contactReductionBinResolution = simDesc.contactReductionBinResolution;
-    _p_contactReductionThreshhold = simDesc.contactReductionThreshhold;
+    _p_contactReductionThreshhold = (int)simDesc.contactReductionThreshhold;
     _p_enableAutoSleep = simDesc.enableAutoSleep;
 }
 
 AGXSimulatorItemImpl::AGXSimulatorItemImpl(AGXSimulatorItem* self, const AGXSimulatorItemImpl& org)
     : AGXSimulatorItemImpl(self) 
 {
+    (void) org;
     initialize();    
 }
 AGXSimulatorItemImpl::~AGXSimulatorItemImpl(){}
@@ -71,6 +72,7 @@ void AGXSimulatorItemImpl::doPutProperties(PutPropertyFunction & putProperty)
 
 bool AGXSimulatorItemImpl::store(Archive & archive)
 {
+    (void) archive;
     // Write agx parameter to save
     //archive.write("friction", friction);
     return false;
@@ -78,6 +80,7 @@ bool AGXSimulatorItemImpl::store(Archive & archive)
 
 bool AGXSimulatorItemImpl::restore(const Archive & archive)
 {
+    (void) archive;
     // Write agx parameter to restore
     return false;
 }
@@ -96,8 +99,8 @@ bool AGXSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody
     sd.simdesc.gravity = agx::Vec3(g(0), g(1), g(2));
     sd.simdesc.numThreads = _p_numThreads;
     sd.simdesc.enableContactReduction = _p_enableContactReduction;
-    sd.simdesc.contactReductionBinResolution = _p_contactReductionBinResolution;
-    sd.simdesc.contactReductionThreshhold = _p_contactReductionThreshhold;
+    sd.simdesc.contactReductionBinResolution = (agx::UInt8)_p_contactReductionBinResolution;
+    sd.simdesc.contactReductionThreshhold = (agx::UInt8)_p_contactReductionThreshhold;
     sd.simdesc.enableAutoSleep = _p_enableAutoSleep;
     agxScene = AGXScene::create(sd);
 
@@ -109,8 +112,6 @@ bool AGXSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody
         body->createBody(agxScene);
         body->setSensor(self->worldTimeStep(), g);
     }
-
-    saveSimulationToAGXFile();
 
     return true;
 }
@@ -126,7 +127,7 @@ void AGXSimulatorItemImpl::createAGXMaterialTable()
     matTable->forEachMaterial(
         [&](int id, Material* mat){
             AGXMaterialDesc desc;
-            desc.name = std::to_string(id);
+            desc.name = Material::name(id);
             SET_AGXMATERIAL_FIELD(density);
             SET_AGXMATERIAL_FIELD(youngsModulus);
             SET_AGXMATERIAL_FIELD(poissonRatio);
@@ -144,8 +145,8 @@ void AGXSimulatorItemImpl::createAGXMaterialTable()
         [&](int id1, int id2, ContactMaterial* mat){
             Mapping* info = mat->info();
             AGXContactMaterialDesc desc;
-            desc.nameA = std::to_string(id1);
-            desc.nameB = std::to_string(id2);
+            desc.nameA = Material::name(id1);
+            desc.nameB = Material::name(id2);
             SET_AGXMATERIAL_FIELD(youngsModulus);
             desc.restitution = mat->restitution();
             SET_AGXMATERIAL_FIELD(damping);
@@ -153,7 +154,8 @@ void AGXSimulatorItemImpl::createAGXMaterialTable()
             SET_AGXMATERIAL_FIELD(surfaceViscosity);
             SET_AGXMATERIAL_FIELD(adhesionForce);
             SET_AGXMATERIAL_FIELD(adhesivOverlap);
-            SET_AGXMATERIAL_FIELD(contactReductionBinResolution);
+            auto binNode = info->find("contactReductionBinResolution");
+            if(binNode->isValid()) desc.contactReductionBinResolution = (agx::UInt8)binNode->toInt();
 
             auto crmNode = info->find("contactReductionMode");
             agxConvert::setValue(crmNode, agxContactReductionModeMap, "", desc.contactReductionMode,

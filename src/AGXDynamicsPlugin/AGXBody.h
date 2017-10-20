@@ -34,7 +34,7 @@ public:
     AGXLink(Link* const link, AGXLink* const parent, const Vector3& parentOrigin, AGXBody* const agxBody);
     void constructAGXLink();
     void setAGXMaterial();
-    bool setAGXMaterialFromID(const int& materialID);
+    bool setAGXMaterialFromName(const std::string& materialName);
     void setAGXMaterialFromLinkInfo();
     bool setCenterOfMassFromLinkInfo();
     bool setMassFromLinkInfo();
@@ -82,6 +82,10 @@ public:
     void initialize();
     void createBody(AGXScene* agxScene);
     void setCollision();
+    void setCollisionExclude();
+    void setCollisionExcludeLinks(const Mapping& cdMapping);
+    void setCollisionExcludeTreeDepth(const Mapping& cdMapping);
+    void setCollisionExcludeLinkGroup(const Mapping& cdMapping);
     std::string getCollisionGroupName() const;
     void enableExternalCollision(const bool& bOn);
     void addCollisionGroupNameToDisableCollision(const std::string& name);
