@@ -11,7 +11,7 @@ using namespace std;
 namespace {
 std::mutex agxBodyExtensionAdditionalFuncsMutex;
 AGXBodyExtensionFuncMap agxBodyExtensionAdditionalFuncs;
-};
+}
 
 namespace cnoid{
 ////////////////////////////////////////////////////////////
@@ -309,7 +309,7 @@ agxCollide::GeometryRef AGXLink::createAGXGeometry()
     if(orgLink->jointType() == Link::PSEUDO_CONTINUOUS_TRACK){
         gdesc.isPseudoContinuousTrack = true;
         const Vector3& a = orgLink->a();
-        gdesc.axis = agx::Vec3f(a(0), a(1), a(2));
+        gdesc.axis = agx::Vec3f((float)a(0), (float)a(1), (float)a(2));
     }
     return AGXObjectFactory::createGeometry(gdesc);
 }
@@ -400,7 +400,6 @@ void AGXLink::detectPrimitiveShape(MeshExtractor* extractor, AGXTrimeshDesc& td)
                     T_(0,2), T_(1,2), T_(2,2), 0.0,
                     T_(0,3), T_(1,3), T_(2,3), 1.0);
 
-            bool created = false;
             agxCollide::ShapeRef shape = nullptr;
             switch(mesh->primitiveType()){
                 case SgMesh::BOX : {
@@ -408,15 +407,13 @@ void AGXLink::detectPrimitiveShape(MeshExtractor* extractor, AGXTrimeshDesc& td)
                     AGXBoxDesc bd;
                     bd.halfExtents = agx::Vec3( s.x()*scale.x(), s.y()*scale.y(), s.z()*scale.z());
                     shape = AGXObjectFactory::createShape(bd);
-                    created = true;
                     break;
                 }
                 case SgMesh::SPHERE : {
                     const SgMesh::Sphere& sphere = mesh->primitive<SgMesh::Sphere>();
                     AGXSphereDesc sd;
-                    sd.radius = mesh->primitive<SgMesh::Sphere>().radius * scale.x();
+                    sd.radius = sphere.radius * scale.x();
                     shape = AGXObjectFactory::createShape(sd);
-                    created = true;
                     break;
                 }
                 case SgMesh::CAPSULE : {
@@ -425,7 +422,6 @@ void AGXLink::detectPrimitiveShape(MeshExtractor* extractor, AGXTrimeshDesc& td)
                     cd.radius = capsule.radius * scale.x();
                     cd .height =  capsule.height * scale.y();
                     shape = AGXObjectFactory::createShape(cd);
-                    created = true;
                     break;
                 }
                 case SgMesh::CYLINDER : {
@@ -434,7 +430,6 @@ void AGXLink::detectPrimitiveShape(MeshExtractor* extractor, AGXTrimeshDesc& td)
                     cd.radius = cylinder.radius * scale.x();
                     cd.height =  cylinder.height * scale.y();
                     shape = AGXObjectFactory::createShape(cd);
-                    created = true;
                     break;
                 }
                 default :
@@ -450,19 +445,18 @@ void AGXLink::detectPrimitiveShape(MeshExtractor* extractor, AGXTrimeshDesc& td)
     if(!meshAdded){
         const size_t vertexIndexTop = td.vertices.size();
         const SgVertexArray& vertices_ = *mesh->vertices();
-        const int numVertices = vertices_.size();
-        for(int i=0; i < numVertices; ++i){
+        for(unsigned int i=0; i < vertices_.size(); ++i){
             const Vector3 v = T * vertices_[i].cast<Position::Scalar>();
             td.vertices.push_back(agx::Vec3(v.x(), v.y(), v.z()));
         }
 
-        const unsigned int numTriangles = mesh->numTriangles();
+        const unsigned int numTriangles = (unsigned int)mesh->numTriangles();
         td.triangles = numTriangles;
-        for(int i=0; i < numTriangles; ++i){
+        for(unsigned int i=0; i < numTriangles; ++i){
             SgMesh::TriangleRef src = mesh->triangle(i);
-            td.indices.push_back(vertexIndexTop + src[0]);
-            td.indices.push_back(vertexIndexTop + src[1]);
-            td.indices.push_back(vertexIndexTop + src[2]);
+            td.indices.push_back((agx::UInt32)vertexIndexTop + src[0]);
+            td.indices.push_back((agx::UInt32)vertexIndexTop + src[1]);
+            td.indices.push_back((agx::UInt32)vertexIndexTop + src[2]);
         }
     }
 }

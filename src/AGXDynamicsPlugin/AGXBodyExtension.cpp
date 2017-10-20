@@ -133,7 +133,7 @@ void AGXContinuousTrack::createTrackConstraint()
     trackCollsionGroupName << "SelfCollisionContinuousTrack" << agx::UuidGenerator().generate().str() << std::flush;
     getAGXBody()->addCollisionGroupNameToDisableCollision(trackCollsionGroupName.str());
 
-    for (int i = 0; i < _feet.size(); ++i) {
+    for (int i = 0; i < (int)_feet.size(); ++i) {
         AGXLinkPtr agxLink = _feet[i];
         // Add plane joint
         pd.frameA = AGXObjectFactory::createFrame();

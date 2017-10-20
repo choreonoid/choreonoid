@@ -12,7 +12,7 @@ namespace{
 bool createAGXBodyExtensionSample(cnoid::AGXBody* agxBody){
     agxBody->addAGXBodyExtension(new cnoid::AGXBodyExtensionSample(agxBody));
     return true;
-};
+}
 
 struct AGXBodyExtensionSampleRegistration{
     AGXBodyExtensionSampleRegistration(){

@@ -16,4 +16,4 @@ agxCollide::ConvexBuilder* AGXConvexDecomposition::getConvexBuilder(){
     return m_builder;
 }
 
-};
+}

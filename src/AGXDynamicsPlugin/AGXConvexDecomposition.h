@@ -21,6 +21,6 @@ private:
 };
 typedef ref_ptr<AGXConvexDecomposition> AGXConvexDecompositionPtr;
 
-};
+}
 
 #endif
