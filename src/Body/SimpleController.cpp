@@ -7,6 +7,12 @@
 using namespace std;
 using namespace cnoid;
 
+SimpleControllerIO::~SimpleControllerIO()
+{
+
+}
+
+
 SimpleController::SimpleController()
 {
     io = 0;

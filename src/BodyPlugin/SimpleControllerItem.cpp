@@ -608,18 +608,22 @@ void SimpleControllerItemImpl::enableOutput(Link* link)
 
 void SimpleControllerItemImpl::setLinkOutput(Link* link, int stateTypes)
 {
-    Link::ActuationMode mode = Link::JOINT_TORQUE;
-    
+    Link::ActuationMode mode = Link::NO_ACTUATION;
+
     if(stateTypes & SimpleControllerIO::LINK_POSITION){
         mode = Link::LINK_POSITION;
     } else if(stateTypes & SimpleControllerIO::JOINT_DISPLACEMENT){
         mode = Link::JOINT_DISPLACEMENT;
     } else if(stateTypes & SimpleControllerIO::JOINT_VELOCITY){
         mode = Link::JOINT_VELOCITY;
+    } else if(stateTypes & SimpleControllerIO::JOINT_EFFORT){
+        mode = Link::JOINT_EFFORT;
     }
-    
-    link->setActuationMode(mode);
-    enableOutput(link);
+
+    if(mode != Link::NO_ACTUATION){
+        link->setActuationMode(mode);
+        enableOutput(link);
+    }
 }
 
 

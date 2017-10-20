@@ -900,18 +900,15 @@ void YAMLBodyLoaderImpl::readJointContents(Link* link, Mapping* node)
         string jointType = jointTypeNode->toString();
         if(jointType == "revolute"){
             link->setJointType(Link::REVOLUTE_JOINT);
-            link->setActuationMode(Link::JOINT_TORQUE);
         } else if(jointType == "prismatic"){
             link->setJointType(Link::PRISMATIC_JOINT);
-            link->setActuationMode(Link::JOINT_FORCE);
         } else if(jointType == "slide"){
             link->setJointType(Link::PRISMATIC_JOINT);
-            link->setActuationMode(Link::JOINT_FORCE);
         } else if(jointType == "free"){
             link->setJointType(Link::FREE_JOINT);
         } else if(jointType == "fixed"){
             link->setJointType(Link::FIXED_JOINT);
-        } else if(jointType == "pseudoContinuousTrack"){
+        } else if(jointType == "pseudoContinuousTrack"){ // deprecated
             link->setJointType(Link::PSEUDO_CONTINUOUS_TRACK);
             link->setActuationMode(Link::JOINT_SURFACE_VELOCITY);
         } else {

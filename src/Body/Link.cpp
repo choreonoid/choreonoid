@@ -213,7 +213,6 @@ std::string Link::jointTypeString() const
     case FREE_JOINT:        return "free";
     case FIXED_JOINT:       return "fixed";
     case PSEUDO_CONTINUOUS_TRACK: return "pseudo continuous track";
-    case CRAWLER_JOINT:     return "crawler";
     default: return "unknown";
     }
 }

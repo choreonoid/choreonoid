@@ -500,9 +500,6 @@ void RokiLink::createLink(RokiSimulatorItemImpl* simImpl, RokiBody* body, const 
             ((rkMotorPrpTRQ *)rkMotor->prp)->min = -std::numeric_limits<double>::max();
         }
         break;
-    case Link::CRAWLER_JOINT:
-    case Link::PSEUDO_CONTINUOUS_TRACK:
-        isCrawler = true;
     case Link::FIXED_JOINT:
     default :
         rkJointCreate( joint, RK_JOINT_FIXED );
@@ -510,6 +507,10 @@ void RokiLink::createLink(RokiSimulatorItemImpl* simImpl, RokiBody* body, const 
     case Link::FREE_JOINT:
         rkJointCreate( joint, RK_JOINT_FLOAT );
         break;
+    }
+
+    if(link->actuationMode() == Link::JOINT_SURFACE_VELOCITY){
+        isCrawler = true;
     }
 
     if(parent)
@@ -781,11 +782,8 @@ void RokiLink::setTorqueToRoki()
 {
     if(isCrawler){
         for(int i=0; i<cd_cells.size(); i++)
-            if(link->jointType() == Link::PSEUDO_CONTINUOUS_TRACK)
-                rkFDCDCellSetSlideVel( cd_cells[i], link->dq() );
-            else
-                rkFDCDCellSetSlideVel( cd_cells[i], link->u() );
-    }else{
+            rkFDCDCellSetSlideVel( cd_cells[i], link->dq() );
+    } else {
         rkJointMotorSetInput( rkLinkJoint(rklink), &link->u() );
     }
 }

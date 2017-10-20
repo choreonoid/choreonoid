@@ -10,10 +10,10 @@
 
 namespace cnoid {
 
-class SimpleControllerIO
+class CNOID_EXPORT SimpleControllerIO
 {
 public:
-    virtual ~SimpleControllerIO() = 0;
+    virtual ~SimpleControllerIO();
     virtual std::string optionString() const = 0;
     virtual std::vector<std::string> options() const = 0;
     virtual std::ostream& os() const = 0;
@@ -28,6 +28,7 @@ public:
         JOINT_ACCELERATION = 1 << 2,
         JOINT_TORQUE = 1 << 3,
         JOINT_FORCE = 1 << 3,
+        JOINT_EFFORT = 1 << 3,
         LINK_POSITION = 1 << 4
     };
 

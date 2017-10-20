@@ -36,6 +36,7 @@ public:
         dt = io->timeStep();
 
         for(auto joint : ioBody->joints()){
+            joint->setActuationMode(Link::JOINT_TORQUE);
             io->enableIO(joint);
             qref.push_back(joint->q());
         }

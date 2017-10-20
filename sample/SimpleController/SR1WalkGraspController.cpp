@@ -88,6 +88,8 @@ public:
             os() << "The number of joints must be " << qseq->numParts() << endl;
             return false;
         }
+
+        setJointOutput(true);
         
         qold.resize(numJoints);
         VectorXd q0(numJoints);

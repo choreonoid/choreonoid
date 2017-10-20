@@ -64,6 +64,7 @@ public:
         qold.resize(nj);
         for(int i=0; i < nj; ++i){
             Link* joint = ioBody->joint(i);
+            joint->setActuationMode(Link::JOINT_TORQUE);
             io->enableIO(joint);
             double q = joint->q();
             ikBody->joint(i)->q() = q;
