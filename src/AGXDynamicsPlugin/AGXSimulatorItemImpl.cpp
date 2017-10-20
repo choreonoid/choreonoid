@@ -113,8 +113,6 @@ bool AGXSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody
         body->setSensor(self->worldTimeStep(), g);
     }
 
-    saveSimulationToAGXFile();
-
     return true;
 }
 
