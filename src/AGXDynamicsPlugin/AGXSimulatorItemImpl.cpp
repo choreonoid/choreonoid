@@ -126,7 +126,7 @@ void AGXSimulatorItemImpl::createAGXMaterialTable()
     matTable->forEachMaterial(
         [&](int id, Material* mat){
             AGXMaterialDesc desc;
-            desc.name = std::to_string(id);
+            desc.name = Material::name(id);
             SET_AGXMATERIAL_FIELD(density);
             SET_AGXMATERIAL_FIELD(youngsModulus);
             SET_AGXMATERIAL_FIELD(poissonRatio);
@@ -144,8 +144,8 @@ void AGXSimulatorItemImpl::createAGXMaterialTable()
         [&](int id1, int id2, ContactMaterial* mat){
             Mapping* info = mat->info();
             AGXContactMaterialDesc desc;
-            desc.nameA = std::to_string(id1);
-            desc.nameB = std::to_string(id2);
+            desc.nameA = Material::name(id1);
+            desc.nameB = Material::name(id2);
             SET_AGXMATERIAL_FIELD(youngsModulus);
             desc.restitution = mat->restitution();
             SET_AGXMATERIAL_FIELD(damping);

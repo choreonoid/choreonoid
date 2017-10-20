@@ -4,6 +4,7 @@
 #include <cnoid/SceneDrawables>
 #include "AGXVehicleContinuousTrack.h"
 #include "AGXConvexDecomposition.h"
+#include "AGXConvert.h"
 
 using namespace std;
 
@@ -58,8 +59,7 @@ void AGXLink::setAGXMaterial(){
     bool bDensity = getOrgLink()->info()->read("density", density);
 
     // Set material
-    const int& materialID = getOrgLink()->materialId();
-    if(setAGXMaterialFromID(materialID)){
+    if(setAGXMaterialFromName(getOrgLink()->materialName())){
     }else{
         setAGXMaterialFromLinkInfo();
         if(!bDensity){
@@ -73,11 +73,11 @@ void AGXLink::setAGXMaterial(){
     if(bDensity) getAGXGeometry()->getMaterial()->getBulkMaterial()->setDensity(density);
 }
 
-bool AGXLink::setAGXMaterialFromID(const int& materialID)
+bool AGXLink::setAGXMaterialFromName(const std::string& materialName)
 {
     agxSDK::SimulationRef simulation = getAGXBody()->getAGXScene()->getSimulation();
     if(!simulation) return false;
-    agx::MaterialRef mat = simulation->getMaterial(std::to_string(materialID));
+    agx::MaterialRef mat = simulation->getMaterial(materialName);
     if(!mat) return false;
     getAGXGeometry()->setMaterial(mat);
     getAGXRigidBody()->updateMassProperties(agx::MassProperties::AUTO_GENERATE_ALL);
@@ -558,7 +558,8 @@ void AGXLink::setVelocityToAGX()
         }
         case Link::PSEUDO_CONTINUOUS_TRACK:{
             // Set speed(scalar) to x value. Direction is automatically calculated at AGXPseudoContinuousTrackGeometry::calculateSurfaceVelocity
-            getAGXGeometry()->setSurfaceVelocity(agx::Vec3f(orgLink->dq(), 0.0, 0.0));
+            agx::Vec3f vel((float)orgLink->dq(), 0.0, 0.0);
+            getAGXGeometry()->setSurfaceVelocity(vel);
             break;
         }
         default :
@@ -660,14 +661,59 @@ void AGXBody::createBody(AGXScene* agxScene)
 void AGXBody::setCollision()
 {
     AGXSceneRef agxScene = getAGXScene();
-    // Disable collision
-    for(const auto& name : getCollisionGroupNamesToDisableCollision()){
-        agxScene->setCollision(name, false);
-    }
     // Set self collision
     agxScene->setCollision(getCollisionGroupName(), bodyItem()->isSelfCollisionDetectionEnabled());
     // Set external collision
     enableExternalCollision(bodyItem()->isCollisionDetectionEnabled());
+    // set collision from body file
+    setCollisionExclude();
+    // Disable collision
+    for(const auto& name : getCollisionGroupNamesToDisableCollision()){
+        agxScene->setCollision(name, false);
+    }
+}
+
+void AGXBody::setCollisionExclude(){
+    const Mapping& cdMapping = *body()->info()->findMapping("collisionDetection");
+    if(!cdMapping.isValid()) return;
+    setCollisionExcludeLinks(cdMapping);
+    setCollisionExcludeLinkGroup(cdMapping);
+}
+
+void AGXBody::setCollisionExcludeLinks(const Mapping& cdMapping){
+    const Listing& excludeLinks = *cdMapping.findListing("excludeLinks");
+    for(auto linkName : excludeLinks){
+        getAGXLink(linkName->toString())->enableExternalCollision(false);
+    }
+}
+
+void AGXBody::setCollisionExcludeLinkGroup(const Mapping& cdMapping){
+    const ValueNodePtr& excludeLinkGroupNode = cdMapping.find("excludeLinkGroup");
+    if(!excludeLinkGroupNode->isValid())   return;
+    if(!excludeLinkGroupNode->isListing()) return;
+    const Listing& list = *excludeLinkGroupNode->toListing();
+    for(auto it : list){
+        if(!it->isMapping()) continue;
+        const Mapping&  groupInfo = *it->toMapping();
+        // get group name and add name to agx to disable collision
+        stringstream ss;
+        if(const ValueNodePtr& nameNode = groupInfo.find("name")){
+            ss << "AGXExcludeLinkGroup_" << nameNode->toString() << agx::UuidGenerator().generate().str() << std::endl;
+        }else{
+            ss << "AGXExcludeLinkGroup_" << agx::UuidGenerator().generate().str() << std::endl;
+        }
+        addCollisionGroupNameToDisableCollision(ss.str());
+        // get link name and set group name to agx geometry
+        vector<string> links;
+        if(const ValueNodePtr& linkNode = groupInfo.find("links")){
+            if(!linkNode->isListing()) continue;
+            if(agxConvert::setVector(linkNode->toListing(), links)){
+                for(auto linkName : links){
+                    getAGXRigidBody(linkName)->getGeometries().front()->addGroup(ss.str());
+                }
+            }
+        }
+    }
 }
 
 std::string AGXBody::getCollisionGroupName() const
@@ -776,7 +822,7 @@ AGXScene* AGXBody::getAGXScene() const
 
 int AGXBody::numAGXLinks() const
 {
-    return _agxLinks.size();
+    return (int)_agxLinks.size();
 }
 
 void AGXBody::addAGXLink(AGXLink* const agxLink)
@@ -803,7 +849,7 @@ const AGXLinkPtrs& AGXBody::getAGXLinks() const
 
 int AGXBody::numControllableLinks() const
 {
-    return _controllableLinks.size();
+    return (int)_controllableLinks.size();
 }
 
 void AGXBody::addControllableLink(AGXLink* const agxLink)
@@ -851,8 +897,8 @@ void AGXBody::callExtensionFuncs(){
     // update func list
     updateAGXBodyExtensionFuncs();
     //agxBodyExtensionFuncs["test"] = [](AGXBody* agxBody){ std::cout << "test" << std::endl; return false;};
-    agxBodyExtensionFuncs["ContinuousTrack"] = [&](AGXBody* agxBody){ return createContinuousTrack(agxBody); };
-    agxBodyExtensionFuncs["AGXVehicleContinousTrack"] = [&](AGXBody* agxBody){ return createAGXVehicleContinousTrack(this); };
+    agxBodyExtensionFuncs["ContinuousTrack"] = [&](AGXBody* agxBody){ (void)agxBody; return createContinuousTrack(agxBody); };
+    agxBodyExtensionFuncs["AGXVehicleContinousTrack"] = [&](AGXBody* agxBody){ (void)agxBody; return createAGXVehicleContinousTrack(this); };
 
     // call
     for(const auto& func : agxBodyExtensionFuncs){
@@ -894,6 +940,7 @@ void AGXBody::createExtraJoint()
 
 bool AGXBody::createContinuousTrack(AGXBody* agxBody)
 {
+    (void) agxBody;
     AGXLinkPtrs myAgxLinks;
     if(!getAGXLinksFromInfo("isContinuousTrack", false, myAgxLinks)) return false;
     for(const auto& agxLink : myAgxLinks){
@@ -904,6 +951,7 @@ bool AGXBody::createContinuousTrack(AGXBody* agxBody)
 
 bool AGXBody::createAGXVehicleContinousTrack(AGXBody* agxBody)
 {
+    (void) agxBody;
     DeviceList<> devices = this->body()->devices();
     DeviceList<AGXVehicleContinuousTrackDevice> conTrackDevices;
     conTrackDevices.extractFrom(devices);

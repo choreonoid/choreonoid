@@ -54,3 +54,24 @@ links:
     jointType: free
     material: agxMat5
     elements: *boxShape
+  -
+    name: box6
+    parent: floor
+    translation: [ 1.0, -5.0, 1.5 ]
+    jointType: free
+    material: agxMat1
+    elements: *boxShape
+  -
+    name: box7
+    parent: floor
+    translation: [ 2.0, -5.0, 1.5 ]
+    jointType: free
+    material: agxMat1
+    elements: *boxShape
+
+collisionDetection:
+    excludeLinks: [ box6 ]
+    excludeLinkGroup:
+    -
+      name: excludeGroup1
+      links: [ floor, box7 ]
