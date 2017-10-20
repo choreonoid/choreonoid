@@ -803,10 +803,12 @@ set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS_DEBUG CNOID_DEBUG)
 
 if(UNIX)
   
-  option(PUT_ALL_WARNINGS "put all warnings in compile" OFF)
+  option(PUT_ALL_WARNINGS "Put all warnings in compile" OFF)
   if(PUT_ALL_WARNINGS)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+    set(extra_warning_options "")
+    #set(extra_warning_options "-Wparentheses -Wformat=2 -Wformat-nonliteral -Wreturn-type -Wunknown-pragmas -Wunused -Wsign-compare -Wunused-parameter -Wuninitialized -Winit-self -pedantic -Wconversion -Woverloaded-virtual -Wno-variadic-macros -Wno-long-long -Wno-import -Wno-missing-braces")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall ${extra_warning_options}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall ${extra_warning_options}")
   endif()
 
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wreturn-type")

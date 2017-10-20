@@ -799,7 +799,7 @@ void MovieRecorderImpl::setupOnlineModeRecording()
 }
 
 
-void MovieRecorderImpl::onPlaybackStarted(double time)
+void MovieRecorderImpl::onPlaybackStarted(double /* time */)
 {
     startOnlineModeRecording();
 }
@@ -1166,7 +1166,7 @@ void ViewMarker::setTargetView(View* view)
 }
 
 
-void ViewMarker::paintEvent(QPaintEvent* event)
+void ViewMarker::paintEvent(QPaintEvent*)
 {
     QPainter painter(this);
     painter.setPen(pen);

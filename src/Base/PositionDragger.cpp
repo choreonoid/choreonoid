@@ -354,7 +354,7 @@ bool PositionDragger::onButtonPressEvent(const SceneWidgetEvent& event)
 }
 
 
-bool PositionDragger::onButtonReleaseEvent(const SceneWidgetEvent& event)
+bool PositionDragger::onButtonReleaseEvent(const SceneWidgetEvent&)
 {
     if(isContainerMode() && impl->isContentsDragEnabled){
         if(impl->dragProjector.isDragging()){
@@ -381,7 +381,7 @@ bool PositionDragger::onPointerMoveEvent(const SceneWidgetEvent& event)
 }
 
 
-void PositionDragger::onPointerLeaveEvent(const SceneWidgetEvent& event)
+void PositionDragger::onPointerLeaveEvent(const SceneWidgetEvent&)
 {
     if(isContainerMode() && impl->isContentsDragEnabled){
         impl->dragProjector.resetDragMode();
@@ -389,7 +389,7 @@ void PositionDragger::onPointerLeaveEvent(const SceneWidgetEvent& event)
 }
 
 
-void PositionDragger::onFocusChanged(const SceneWidgetEvent& event, bool on)
+void PositionDragger::onFocusChanged(const SceneWidgetEvent&, bool on)
 {
     if(isContainerMode()){
         impl->showDragMarkers(on || impl->isDraggerAlwaysShown);

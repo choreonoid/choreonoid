@@ -788,7 +788,7 @@ double TimeBar::realPlaybackTime() const
 }
 
 
-void TimeBarImpl::timerEvent(QTimerEvent* event)
+void TimeBarImpl::timerEvent(QTimerEvent*)
 {
     double time = animationTimeOffset + playbackSpeedScale * (timer.elapsed() / 1000.0);
 

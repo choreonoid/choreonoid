@@ -23,7 +23,7 @@ typedef ref_ptr<DyBody> DyBodyPtr;
 class CNOID_EXPORT ForwardDynamics {
 
 public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         
     ForwardDynamics(DyBody* body);
     virtual ~ForwardDynamics();
@@ -65,6 +65,6 @@ protected:
 
 typedef std::shared_ptr<ForwardDynamics> ForwardDynamicsPtr;
 
-};
+}
 
 #endif

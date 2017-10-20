@@ -32,7 +32,7 @@ class ScenePointSet;
 class ScenePointSet : public SgPosTransform, public SceneWidgetEditable
 {
 public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     weak_ref_ptr<PointSetItem> weakPointSetItem;
     SgPointSetPtr orgPointSet;
@@ -907,7 +907,7 @@ void ScenePointSet::onContextMenuRequest(const SceneWidgetEvent& event, MenuMana
 }
 
 
-void ScenePointSet::onContextMenuRequestInEraserMode(const SceneWidgetEvent& event, MenuManager& menuManager)
+void ScenePointSet::onContextMenuRequestInEraserMode(const SceneWidgetEvent&, MenuManager& menuManager)
 {
     eraserModeMenuItemConnection.reset(
         menuManager.addItem(_("PointSet: Exit Eraser Mode"))->sigTriggered().connect(

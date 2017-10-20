@@ -313,14 +313,16 @@ ImageViewBarImpl::~ImageViewBarImpl()
 void ImageViewBarImpl::onItemAdded(Item* item)
 {
     ImageProvider* imageProvider = dynamic_cast<ImageProvider*>(item);
-    if(imageProvider &&
-            imageCombo->findData(QVariant::fromValue(imageProvider))==-1){
+
+    if(imageProvider && imageCombo->findData(QVariant::fromValue(imageProvider))==-1){
 
         ConnectionSet& connections = imageProviderConnections[imageProvider];
-        connections.add( item->sigDisconnectedFromRoot().connect(
-            [&, item](){ onItemDetachedFromRoot(item); }) );
-        connections.add( item->sigNameChanged().connect(
-            [&, item](const string& oldName) { onItemNameChange(item); }) );
+        connections.add(
+            item->sigDisconnectedFromRoot().connect(
+                [&, item](){ onItemDetachedFromRoot(item); }) );
+        connections.add(
+            item->sigNameChanged().connect(
+                [&, item](const string& /* oldName */) { onItemNameChange(item); }) );
 
         imageCombo->addItem(item->name().c_str(), QVariant::fromValue(imageProvider));
 

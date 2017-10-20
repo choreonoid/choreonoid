@@ -100,6 +100,6 @@ private:
 
 typedef ref_ptr<RangeSensor> RangeSensorPtr;
 
-};
+}
 
 #endif

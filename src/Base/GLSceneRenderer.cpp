@@ -227,19 +227,19 @@ void GLSceneRenderer::clearShadows()
 }
 
 
-void GLSceneRenderer::enableShadowOfLight(int index, bool on)
+void GLSceneRenderer::enableShadowOfLight(int /* index */, bool /* on */)
 {
 
 }
 
 
-void GLSceneRenderer::enableShadowAntiAliasing(bool on)
+void GLSceneRenderer::enableShadowAntiAliasing(bool /* on */)
 {
 
 }
 
 
-void GLSceneRenderer::setUpsideDown(bool on)
+void GLSceneRenderer::setUpsideDown(bool /* on */)
 {
 
 }

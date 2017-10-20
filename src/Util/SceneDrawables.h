@@ -172,7 +172,7 @@ public:
         
     SgVectorArray(const SgVectorArray& org) : SgObject(org), values(org.values) { }
 
-    virtual SgObject* clone(SgCloneMap& cloneMap) const { return new SgVectorArray(*this); }
+    virtual SgObject* clone(SgCloneMap&) const { return new SgVectorArray(*this); }
         
     SgVectorArray<T>& operator=(const SgVectorArray<T>& rhs) {
         values = rhs.values;

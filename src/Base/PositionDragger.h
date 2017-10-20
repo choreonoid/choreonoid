@@ -22,7 +22,7 @@ class PositionDraggerImpl;
 class CNOID_EXPORT PositionDragger : public SceneDragger
 {
 public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     PositionDragger();
     PositionDragger(const PositionDragger& org);

@@ -1504,13 +1504,13 @@ SignalProxy<void(bool isFocused)> SceneWidget::sigWidgetFocusChanged()
 }
 
 
-void SceneWidgetImpl::focusInEvent(QFocusEvent* event)
+void SceneWidgetImpl::focusInEvent(QFocusEvent*)
 {
     sigWidgetFocusChanged(true);
 }
 
 
-void SceneWidgetImpl::focusOutEvent(QFocusEvent* event)
+void SceneWidgetImpl::focusOutEvent(QFocusEvent*)
 {
     sigWidgetFocusChanged(false);
 }
@@ -2846,7 +2846,7 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
 
     builtinCameraConnections.add(
         impl->builtinPersCamera->sigUpdated().connect(
-            [&](const SgUpdate& update){ updateBuiltinCameraConfig(); }));
+            [&](const SgUpdate&){ updateBuiltinCameraConfig(); }));
     
     vbox->addLayout(new HSeparatorBox(new QLabel(_("Default Camera"))));
     hbox = new QHBoxLayout();
@@ -2866,13 +2866,13 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     zNearSpin.setDecimals(4);
     zNearSpin.setRange(0.0001, 9.9999);
     zNearSpin.setSingleStep(0.0001);
-    zNearSpin.sigValueChanged().connect([=](double v){ impl->onClippingDepthChanged(); });
+    zNearSpin.sigValueChanged().connect([=](double){ impl->onClippingDepthChanged(); });
     hbox->addWidget(&zNearSpin);
     hbox->addWidget(new QLabel(_("Far")));
     zFarSpin.setDecimals(1);
     zFarSpin.setRange(0.1, 9999999.9);
     zFarSpin.setSingleStep(0.1);
-    zFarSpin.sigValueChanged().connect([=](double v){ impl->onClippingDepthChanged(); });
+    zFarSpin.sigValueChanged().connect([=](double){ impl->onClippingDepthChanged(); });
     hbox->addWidget(&zFarSpin);
     hbox->addStretch();
     vbox->addLayout(hbox);

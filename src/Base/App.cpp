@@ -73,7 +73,7 @@ Signal<void(View*)> sigFocusViewChanged;
 
 Signal<void()> sigAboutToQuit_;
 
-void onCtrl_C_Input(int p)
+void onCtrl_C_Input(int)
 {
     callLater(std::bind(&MainWindow::close, MainWindow::instance()));
 }
@@ -404,7 +404,7 @@ void AppImpl::onOpenGLVSyncToggled(bool on)
 }
 
 
-void App::onFocusChanged(QWidget* old, QWidget* now)
+void App::onFocusChanged(QWidget* /* old */, QWidget* now)
 {
     while(now){
         View* view = dynamic_cast<View*>(now);

@@ -16,6 +16,6 @@ public:
     virtual SgNode* load(const std::string& filename) override;
 };
 
-};
+}
 
 #endif

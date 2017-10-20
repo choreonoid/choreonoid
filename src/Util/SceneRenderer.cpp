@@ -258,7 +258,7 @@ bool SceneRenderer::pick(int x, int y)
 }
 
 
-bool SceneRenderer::doPick(int x, int y)
+bool SceneRenderer::doPick(int /* x */, int /* y */)
 {
     return false;
 }

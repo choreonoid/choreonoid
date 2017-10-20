@@ -30,7 +30,7 @@ namespace {
 class SceneMultiPointSet : public SgPosTransform, public SceneWidgetEditable
 {
   public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     weak_ref_ptr<MultiPointSetItem> weakMultiPointSetItem;
     bool isEditable;
@@ -714,7 +714,7 @@ bool SceneMultiPointSet::onButtonPressEvent(const SceneWidgetEvent& event)
 }
 
 
-bool SceneMultiPointSet::onPointerMoveEvent(const SceneWidgetEvent& event)
+bool SceneMultiPointSet::onPointerMoveEvent(const SceneWidgetEvent&)
 {
     return false;
 }
@@ -733,7 +733,7 @@ void SceneMultiPointSet::onContextMenuRequest(const SceneWidgetEvent& event, Men
 }
 
 
-void SceneMultiPointSet::onContextMenuRequestInEraserMode(const SceneWidgetEvent& event, MenuManager& menuManager)
+void SceneMultiPointSet::onContextMenuRequestInEraserMode(const SceneWidgetEvent&, MenuManager& menuManager)
 {
     eraserModeMenuItemConnection.reset(
         menuManager.addItem(_("PointSet: Exit Eraser Mode"))->sigTriggered().connect(

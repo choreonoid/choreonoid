@@ -178,7 +178,7 @@ bool TranslationDragger::onButtonPressEvent(const SceneWidgetEvent& event)
 }
 
 
-bool TranslationDragger::onButtonReleaseEvent(const SceneWidgetEvent& event)
+bool TranslationDragger::onButtonReleaseEvent(const SceneWidgetEvent&)
 {
     if(dragProjector.isDragging()){
         sigTranslationFinished_();
@@ -203,7 +203,7 @@ bool TranslationDragger::onPointerMoveEvent(const SceneWidgetEvent& event)
 }
 
 
-void TranslationDragger::onPointerLeaveEvent(const SceneWidgetEvent& event)
+void TranslationDragger::onPointerLeaveEvent(const SceneWidgetEvent&)
 {
     if(dragProjector.isDragging()){
         sigTranslationFinished_();

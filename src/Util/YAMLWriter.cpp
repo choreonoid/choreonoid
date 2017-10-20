@@ -61,7 +61,7 @@ void YAMLWriter::setIndentWidth(int n)
 
 void YAMLWriter::setKeyOrderPreservationMode(bool on)
 {
-    isKeyOrderPreservationMode = true;
+    isKeyOrderPreservationMode = on;
 }
 
 

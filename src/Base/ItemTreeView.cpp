@@ -91,7 +91,7 @@ public:
     bool isDropping;
     int fontPointSizeDiff;
 
-    ItemTreeViewImpl(ItemTreeView* self, RootItem* rootItem, bool showRoot);
+    ItemTreeViewImpl(ItemTreeView* self, RootItem* rootItem);
     ~ItemTreeViewImpl();
 
     int addCheckColumn();
@@ -256,22 +256,22 @@ ItemTreeView* ItemTreeView::mainInstance()
 
 ItemTreeView::ItemTreeView()
 {
-    construct(RootItem::instance(), false);
+    construct(RootItem::instance());
 }
 
 
-ItemTreeView::ItemTreeView(RootItem* rootItem, bool showRoot)
+ItemTreeView::ItemTreeView(RootItem* rootItem)
 {
-    construct(rootItem, showRoot);
+    construct(rootItem);
 }
 
 
-void ItemTreeView::construct(RootItem* rootItem, bool showRoot)
+void ItemTreeView::construct(RootItem* rootItem)
 {
     setDefaultLayoutArea(View::LEFT);
     setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
     
-    impl = new ItemTreeViewImpl(this, rootItem, showRoot);
+    impl = new ItemTreeViewImpl(this, rootItem);
 
     QVBoxLayout* layout = new QVBoxLayout();
     layout->addWidget(impl);
@@ -279,7 +279,7 @@ void ItemTreeView::construct(RootItem* rootItem, bool showRoot)
 }
 
 
-ItemTreeViewImpl::ItemTreeViewImpl(ItemTreeView* self, RootItem* rootItem, bool showRoot)
+ItemTreeViewImpl::ItemTreeViewImpl(ItemTreeView* self, RootItem* rootItem)
     : self(self),
       rootItem(rootItem)
 {
@@ -480,12 +480,6 @@ void ItemTreeViewImpl::releaseCheckColumn(int id)
 RootItem* ItemTreeView::rootItem()
 {
     return impl->rootItem;
-}
-
-
-void ItemTreeView::showRoot(bool show)
-{
-
 }
 
 

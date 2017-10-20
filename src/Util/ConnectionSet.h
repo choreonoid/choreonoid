@@ -54,8 +54,8 @@ public:
     void disconnect() { ConnectionSet::disconnect(); }
 
 private:
-    ScopedConnectionSet(const ScopedConnection& org) { }
-    ScopedConnectionSet& operator=(const ScopedConnection& rhs) { return *this; }
+    ScopedConnectionSet(const ScopedConnection&) { }
+    ScopedConnectionSet& operator=(const ScopedConnection&) { return *this; }
 };
 
 }

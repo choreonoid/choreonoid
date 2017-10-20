@@ -295,13 +295,13 @@ SignalProxy<void(int id, double position)> VirtualJoystickViewImpl::sigAxis()
 }
 
 
-bool VirtualJoystickView::storeState(Archive& archive)
+bool VirtualJoystickView::storeState(Archive&)
 {
     return true;
 }
 
 
-bool VirtualJoystickView::restoreState(const Archive& archive)
+bool VirtualJoystickView::restoreState(const Archive&)
 {
     return true;
 }

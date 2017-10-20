@@ -37,7 +37,7 @@ public:
 
     void setVersion(const std::string& version, bool isPlugin);
 
-    void deleteManagedObjects();;
+    void deleteManagedObjects();
 
     ExtensionManager* self;
     string moduleName;

@@ -79,7 +79,7 @@ SgObject::SgObject(const SgObject& org)
 }
 
 
-SgObject* SgObject::clone(SgCloneMap& cloneMap) const
+SgObject* SgObject::clone(SgCloneMap&) const
 {
     return new SgObject(*this);
 }
@@ -91,7 +91,7 @@ int SgObject::numChildObjects() const
 }
 
 
-SgObject* SgObject::childObject(int index)
+SgObject* SgObject::childObject(int /* index */)
 {
     return 0;
 }
@@ -218,7 +218,7 @@ SgNode::~SgNode()
 }
 
 
-SgObject* SgNode::clone(SgCloneMap& cloneMap) const
+SgObject* SgNode::clone(SgCloneMap&) const
 {
     return new SgNode(*this);
 }
@@ -781,7 +781,7 @@ SgPreprocessed::SgPreprocessed(const SgPreprocessed& org)
 }
 
 
-SgObject* SgPreprocessed::clone(SgCloneMap& cloneMap) const
+SgObject* SgPreprocessed::clone(SgCloneMap&) const
 {
     return new SgPreprocessed(*this);
 }

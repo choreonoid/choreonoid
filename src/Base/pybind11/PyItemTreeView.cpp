@@ -22,7 +22,6 @@ void exportPyItemTreeView(py::module m)
     py::class_<ItemTreeView, View>(m, "ItemTreeView")
         .def_static("instance", &ItemTreeView::instance, py::return_value_policy::reference)
         .def("rootItem", &ItemTreeView::rootItem)
-        .def("showRoot", &ItemTreeView::showRoot)
         .def("selectedItems", &ItemTreeView::selectedItems<Item>)
         .def("selectedItems", [](ItemTreeView& self, py::object itemClass){
                 return getPyNarrowedItemList(self.selectedItems(), itemClass); })

@@ -128,7 +128,7 @@ typedef ref_ptr<VRMLUnsupportedNode> VRMLUnsupportedNodePtr;
 class CNOID_EXPORT  VRMLViewpoint : public VRMLNode
 {
 public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         
     VRMLViewpoint();
 
@@ -323,7 +323,7 @@ typedef ref_ptr<VRMLImageTexture> VRMLImageTexturePtr;
 class CNOID_EXPORT VRMLTextureTransform : public VRMLNode
 {
 public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         
     VRMLTextureTransform();
 
@@ -928,6 +928,6 @@ typedef VRMLProtoInstancePtr VrmlProtoInstancePtr;
 typedef VRMLVariantField VrmlVariantField;
 #endif
 
-};
+}
 
 #endif

@@ -156,6 +156,6 @@ private:
 
 typedef std::shared_ptr<ForwardDynamicsCBM> ForwardDynamicsCBMPtr;
 	
-};
+}
 
 #endif

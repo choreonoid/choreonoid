@@ -64,7 +64,7 @@ SgPerspectiveCamera::SgPerspectiveCamera(const SgPerspectiveCamera& org)
 }
 
 
-SgObject* SgPerspectiveCamera::clone(SgCloneMap& cloneMap) const
+SgObject* SgPerspectiveCamera::clone(SgCloneMap&) const
 {
     return new SgPerspectiveCamera(*this);
 }
@@ -104,7 +104,7 @@ SgOrthographicCamera::SgOrthographicCamera(const SgOrthographicCamera& org)
 }
 
 
-SgObject* SgOrthographicCamera::clone(SgCloneMap& cloneMap) const
+SgObject* SgOrthographicCamera::clone(SgCloneMap&) const
 {
     return new SgOrthographicCamera(*this);
 }

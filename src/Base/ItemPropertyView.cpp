@@ -431,7 +431,7 @@ public:
         addProperty(name, new PropertyItem(this, value, func));
     }
     virtual void operator()(const std::string& name, bool value,
-                            const std::function<void(bool)>& func, bool forceUpdate) {
+                            const std::function<void(bool)>& func, bool /* forceUpdate */) {
         addProperty(name, new PropertyItem
                     (this, value, std::function<bool(bool)>(ReturnTrue<bool>(func))));
     }
@@ -442,7 +442,7 @@ public:
         addProperty(name, new PropertyItem(this, Int(value, imin, imax), func));
     }
     virtual void operator()(const std::string& name, int value,
-                            const std::function<void(int)>& func, bool forceUpdate){
+                            const std::function<void(int)>& func, bool /* forceUpdate */){
         addProperty(name, new PropertyItem(this, Int(value, imin, imax),
                                            std::function<bool(int)>(ReturnTrue<int>(func))));
     }
@@ -454,7 +454,7 @@ public:
         addProperty(name, new PropertyItem(this, Double(value, decimals_, dmin, dmax), func));
     }
     virtual void operator()(const std::string& name, double value,
-                            const std::function<void(double)>& func, bool forceUpdate){
+                            const std::function<void(double)>& func, bool /* forceUpdate */){
         addProperty(name, new PropertyItem(this, Double(value, decimals_, dmin, dmax),
                                            std::function<bool(double)>(ReturnTrue<double>(func))));
     }
@@ -466,7 +466,7 @@ public:
         addProperty(name, new PropertyItem(this, value, func));
     }
     virtual void operator()(const std::string& name, const std::string& value,
-                            const std::function<void(const std::string&)>& func, bool forceUpdate){
+                            const std::function<void(const std::string&)>& func, bool /* forceUpdate */){
         addProperty(name, new PropertyItem
                     (this, value, std::function<bool(const std::string&)>(ReturnTrue<const std::string&>(func))));
     }
@@ -478,7 +478,7 @@ public:
         addProperty(name, new PropertyItem(this, selection, func));
     }
     void operator()(const std::string& name, const Selection& selection,
-                    const std::function<void(int which)>& func, bool forceUpdate){
+                    const std::function<void(int which)>& func, bool /* forceUpdate */){
         addProperty(name, new PropertyItem
                     (this, selection,  std::function<bool(int)>(ReturnTrue<int>(func))));
     }
@@ -490,7 +490,7 @@ public:
         addProperty(name, new PropertyItem(this, filepath, func) );
     }
     void operator()(const std::string& name, const FilePathProperty& filepath,
-                    const std::function<void(const std::string&)>& func, bool forceUpdate){
+                    const std::function<void(const std::string&)>& func, bool /* forceUpdate */){
         addProperty(name, new PropertyItem(this, filepath, std::function<bool(const std::string&)>(ReturnTrue<const std::string&>(func))));
     }
 
@@ -787,7 +787,7 @@ void ItemPropertyViewImpl::onItemSelectionChanged(const ItemList<>& items)
                     [&](){ updateProperties(); }));
             itemConnections.add(
                 item->sigNameChanged().connect(
-                    [&](const std::string& oldName){ updateProperties(); }));
+                    [&](const std::string& /* oldName */){ updateProperties(); }));
             itemConnections.add(
                 item->sigDetachedFromRoot().connect(
                     [&](){ clear(); }));

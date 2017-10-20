@@ -20,6 +20,6 @@ public:
     virtual SgNode* load(const std::string& filename) = 0;
 };
 
-};
+}
 
 #endif

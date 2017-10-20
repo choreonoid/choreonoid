@@ -41,7 +41,7 @@ typedef PushButton CommandButton;
 class TaskComboBox : public ComboBox
 {
 public:
-    virtual void wheelEvent(QWheelEvent* e){
+    virtual void wheelEvent(QWheelEvent*){
 
     }
 };

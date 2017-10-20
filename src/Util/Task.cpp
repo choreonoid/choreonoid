@@ -74,7 +74,7 @@ TaskCommand::~TaskCommand()
 }
 
 
-TaskCommand* TaskCommand::setCheckable(bool on)
+TaskCommand* TaskCommand::setCheckable(bool /* on */)
 {
     toggleState();
     return this;
@@ -484,19 +484,19 @@ TaskFunc Task::funcToSetCommandLink(int commandIndex) const
 }
 
 
-void Task::onMenuRequest(TaskMenu& menu)
+void Task::onMenuRequest(TaskMenu& /* menu */)
 {
 
 }
 
 
-void Task::onActivated(AbstractTaskSequencer* sequencer)
+void Task::onActivated(AbstractTaskSequencer* /* sequencer */)
 {
 
 }
 
 
-void Task::onDeactivated(AbstractTaskSequencer* sequencer)
+void Task::onDeactivated(AbstractTaskSequencer* /* sequencer */)
 {
 
 }

@@ -15,7 +15,7 @@ namespace cnoid {
 class Mapping;
 class YAMLWriter;
 
-class CNOID_EXPORT MultiVector3Seq : public MultiSeq<Vector3, Eigen::aligned_allocator<Vector3> >
+class CNOID_EXPORT MultiVector3Seq : public MultiSeq<Vector3, Eigen::aligned_allocator<Vector3>>
 {
     typedef MultiSeq<Vector3, Eigen::aligned_allocator<Vector3> > BaseSeqType;
 
