@@ -13,6 +13,7 @@ namespace cnoid {
 class SimpleControllerIO
 {
 public:
+    virtual ~SimpleControllerIO() = 0;
     virtual std::string optionString() const = 0;
     virtual std::vector<std::string> options() const = 0;
     virtual std::ostream& os() const = 0;

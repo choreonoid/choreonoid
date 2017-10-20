@@ -494,12 +494,10 @@ void CameraRangeOutPortHandler::initialize(Body* simBody)
         }
         value.type = CORBA::string_dup(format.c_str());
 
-        bool colored = false;
         if (format == "xyz"){
             value.fields.length(3);
         }else if (format == "xyzrgb"){
             value.fields.length(6);
-            colored = true;
         }
         value.fields[0].name = "x";
         value.fields[0].offset = 0;
@@ -564,7 +562,7 @@ void CameraRangeOutPortHandler::onCameraStateChanged()
             const unsigned char* pixels = 0;
             if(!image.empty())
                 pixels = image.pixels();
-            for(int i=0; i<points.size(); i++, dis+=value.point_step){
+            for(size_t i=0; i < points.size(); i++, dis += value.point_step){
                 memcpy(&dis[0], &points[i].x(), 4);
                 memcpy(&dis[4], &points[i].y(), 4);
                 memcpy(&dis[8], &points[i].z(), 4);
@@ -650,7 +648,7 @@ void RangeSensorOutPortHandler::onRangeSensorStateChanged()
     if(rangeSensor->sharedRangeData() != prevRangeData){
         const RangeSensor::RangeData& src = rangeSensor->constRangeData();
         value.ranges.length(src.size());
-        for(int i=0; i<src.size(); i++)
+        for(size_t i=0; i < src.size(); i++)
             value.ranges[i] = src[i];
 
         prevRangeData = rangeSensor->sharedRangeData();

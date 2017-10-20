@@ -249,10 +249,10 @@ public:
     void moveChildrenTo(SgGroup* group, bool doNotify = false);
 
     template<class NodeType> NodeType* findNodeOfType() {
-        for(size_t i=0; i < numChildren(); ++i){
+        for(int i=0; i < numChildren(); ++i){
             if(NodeType* node = dynamic_cast<NodeType*>(child(i))) return node;
         }
-        for(size_t i=0; i < numChildren(); ++i){
+        for(int i=0; i < numChildren(); ++i){
             if(child(i)->isGroup()){
                 if(NodeType* node = static_cast<SgGroup*>(child(i))->findNodeOfType<NodeType>()) return node;
             }

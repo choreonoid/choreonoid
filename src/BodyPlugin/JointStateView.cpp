@@ -190,7 +190,7 @@ void JointStateViewImpl::setCurrentBodyItem(BodyItem* bodyItem)
         vector<string> names;
         currentBody->getCaches(accessors, names);
         vector<int> columnMap;
-        for(int i=0; i < accessors.size(); ++i){
+        for(size_t i=0; i < accessors.size(); ++i){
             ExtraBodyStateAccessor& accessor = *accessors[i];
             const int n = accessor.getNumJointStateItems();
             if(n > 0){
@@ -232,7 +232,7 @@ void JointStateViewImpl::setCurrentBodyItem(BodyItem* bodyItem)
                 std::bind(&JointStateViewImpl::onKinematicStateChanged, this)));
     }
 
-    for(int i=0; i < accessors.size(); ++i){
+    for(size_t i=0; i < accessors.size(); ++i){
         connectionsToBody.add(
             accessors[i]->sigStateChanged().connect(
                 std::bind(&JointStateViewImpl::onExtraJointStateChanged, this)));
@@ -265,7 +265,7 @@ void JointStateViewImpl::updateJointList()
             }
         }
 
-        for(int i=0; i < accessors.size(); ++i){
+        for(size_t i=0; i < accessors.size(); ++i){
             ExtraBodyStateAccessor& accessor = *accessors[i];
             const vector<int>& columnMap = jointStateColumnMap[i];
             jointState.clear();
@@ -341,7 +341,7 @@ void JointStateViewImpl::updateView()
     }
 
     if(isExtraJointStateChanged){
-        for(int i=0; i < accessors.size(); ++i){
+        for(size_t i=0; i < accessors.size(); ++i){
             ExtraBodyStateAccessor& accessor = *accessors[i];
             const vector<int>& columnMap = jointStateColumnMap[i];
             jointState.clear();

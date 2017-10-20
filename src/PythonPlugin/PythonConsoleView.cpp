@@ -403,10 +403,10 @@ void PythonConsoleViewImpl::tabComplete()
     beforeCursorString = beforeCursorString.substr(0,cursor.columnNumber()-inputColumnOffset);
     QString afterCursorString = getInputString();
     afterCursorString.remove(0, cursor.columnNumber()-inputColumnOffset);
-    int maxSplitIdx = 0;
+    size_t maxSplitIdx = 0;
     for(std::vector<string>::iterator it = splitStringVec.begin(); it != splitStringVec.end();  ++it){
-        int splitIdx = beforeCursorString.find_last_of(*it);
-        maxSplitIdx = std::max(splitIdx == string::npos ? 0 : splitIdx+1,maxSplitIdx);
+        size_t splitIdx = beforeCursorString.find_last_of(*it);
+        maxSplitIdx = std::max(splitIdx == string::npos ? 0 : splitIdx + 1, maxSplitIdx);
     }
     string lastWord = beforeCursorString.substr(maxSplitIdx);
     beforeCursorString = beforeCursorString.substr(0,maxSplitIdx);
@@ -449,9 +449,9 @@ void PythonConsoleViewImpl::tabComplete()
     if(completions.size() != 0){
         // max common string among completions
         std::string maxCommonStr = lastDottedString;
-        for(int i=maxCommonStr.size(); i < maxLength; ++i){
+        for(size_t i=maxCommonStr.size(); i < maxLength; ++i){
             bool commomFlg = true;
-            for(int j=1; j < completions.size(); ++j){
+            for(size_t j=1; j < completions.size(); ++j){
                 if(completions[0].at(i) != completions[j].at(i)){
                     commomFlg = false;
                     break;
@@ -459,7 +459,7 @@ void PythonConsoleViewImpl::tabComplete()
             }
             if( commomFlg ){
                 maxCommonStr.push_back(completions[0].at(i));
-            }else{
+            } else {
                 break;
             }
         }
@@ -474,7 +474,7 @@ void PythonConsoleViewImpl::tabComplete()
             put("\n"); // This must be done after getInputString().
 
             string str = "";
-            for(int i=0; i < completions.size(); ++i){
+            for(size_t i=0; i < completions.size(); ++i){
                 str.append(beforeLastDotStr);
                 str.append(completions[i]);
                 str.append("     ");
@@ -489,7 +489,7 @@ void PythonConsoleViewImpl::tabComplete()
         str.append(maxCommonStr);
         str.append(afterCursorString.toStdString());
         setInputString(QString(str.c_str()));
-        for(int i=0; i < afterCursorString.toStdString().size(); ++i){
+        for(size_t i=0; i < afterCursorString.toStdString().size(); ++i){
             moveCursor(QTextCursor::Left);
         }
     }

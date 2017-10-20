@@ -459,7 +459,7 @@ bool GLVisionSimulatorItemImpl::initializeSimulation(SimulatorItem* simulatorIte
         SimulationBody* simBody = simBodies[i];
         Body* body = simBody->body();
         if(bodyNameSet.empty() || bodyNameSet.find(body->name()) != bodyNameSet.end()){
-            for(size_t j=0; j < body->numDevices(); ++j){
+            for(int j=0; j < body->numDevices(); ++j){
                 Device* device = body->device(j);
                 if(dynamic_cast<Camera*>(device) || dynamic_cast<RangeSensor*>(device)){
                     if(sensorNameSet.empty() || sensorNameSet.find(device->name()) != sensorNameSet.end()){

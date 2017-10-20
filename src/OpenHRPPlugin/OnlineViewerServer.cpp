@@ -155,7 +155,7 @@ void OnlineViewerServerImpl::load(string name, string url)
     RootItem* rootItem = RootItem::instance();
     ItemList<BodyItem> bodyItems;
     bodyItems.extractChildItems(rootItem);
-    for(int i=0; i < bodyItems.size(); ++i){
+    for(size_t i=0; i < bodyItems.size(); ++i){
         BodyItemPtr bodyItem = bodyItems[i];
         if(bodyItem->name() == name && bodyItem->filePath() == filepath){
             registerBodyItem(bodyItem);

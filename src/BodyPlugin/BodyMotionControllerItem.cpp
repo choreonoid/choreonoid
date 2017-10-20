@@ -84,7 +84,7 @@ bool BodyMotionControllerItemImpl::initialize(ControllerItemIO* io)
     motionItem = motionItems.front();
     // find the first checked item
     ItemTreeView* itv = ItemTreeView::instance();
-    for(int i=0; i < motionItems.size(); ++i){
+    for(size_t i=0; i < motionItems.size(); ++i){
         if(itv->isItemChecked(motionItems[i])){
             motionItem = motionItems[i];
             break;

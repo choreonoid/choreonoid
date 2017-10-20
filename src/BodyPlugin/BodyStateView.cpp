@@ -184,7 +184,7 @@ void BodyStateViewImpl::updateStateList(BodyItem* bodyItem)
         targetDevices << devices.extract<AccelerationSensor>();
         std::stable_sort(targetDevices.begin(), targetDevices.end(), DeviceTypeOrder());
             
-        for(int i=0; i < targetDevices.size(); ++i){
+        for(size_t i=0; i < targetDevices.size(); ++i){
             Device* device = targetDevices[i];
             StateItem* deviceItem = new StateItem();
         
@@ -203,12 +203,12 @@ void BodyStateViewImpl::updateStateList(BodyItem* bodyItem)
         extraStateItemMap.clear();
         vector<string> names;
         currentBody->getCaches(accessors, names);
-        for(int i=0; i < accessors.size(); ++i){
+        for(size_t i=0; i < accessors.size(); ++i){
             ExtraBodyStateAccessor& accessor = *accessors[i];
             vector<int> itemMap;
             accessor.getState(extraState);
             if(!extraState.empty()){
-                for(int j=0; j < extraState.size(); ++j){
+                for(size_t j=0; j < extraState.size(); ++j){
                     QTreeWidgetItem* stateItem = new StateItem();
                     stateItem->setText(0, QString(" %1 ").arg(accessor.getStateItemLabel(j)));
                     itemMap.push_back(stateTreeWidget.topLevelItemCount());
@@ -276,11 +276,11 @@ void BodyStateViewImpl::updateExtraStates()
     }
     const int prec = 3;
     
-    for(int i=0 ;i < accessors.size(); ++i){
+    for(size_t i=0 ;i < accessors.size(); ++i){
         const ExtraBodyStateAccessor& accessor = *accessors[i];
         const vector<int>& itemMap = extraStateItemMap[i];
         accessor.getState(extraState);
-        for(int j=0; j < extraState.size(); ++j){
+        for(size_t j=0; j < extraState.size(); ++j){
             const ExtraBodyStateAccessor::Value& s = extraState[j];
             StateItem* item = static_cast<StateItem*>(stateTreeWidget.topLevelItem(itemMap[j]));
             int column = 1;

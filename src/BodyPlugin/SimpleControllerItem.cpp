@@ -176,9 +176,9 @@ SimpleControllerItem::SimpleControllerItem(const SimpleControllerItem& org)
 
 SimpleControllerItemImpl::SimpleControllerItemImpl(SimpleControllerItem* self, const SimpleControllerItemImpl& org)
     : self(self),
-      baseDirectoryType(org.baseDirectoryType),
       controllerModuleName(org.controllerModuleName),
-      controllerDirectory(org.controllerDirectory)
+      controllerDirectory(org.controllerDirectory),
+      baseDirectoryType(org.baseDirectoryType)
 {
     controller = 0;
     io = 0;
@@ -564,6 +564,9 @@ void SimpleControllerItemImpl::enableInput(Link* link)
     case Link::LINK_POSITION:
         defaultInputStateTypes = SimpleControllerIO::LINK_POSITION;
         break;
+
+    default:
+        break;
     }
 
     enableInput(link, defaultInputStateTypes);
@@ -572,7 +575,7 @@ void SimpleControllerItemImpl::enableInput(Link* link)
 
 void SimpleControllerItemImpl::enableInput(Link* link, int stateTypes)
 {
-    if(link->index() >= linkIndexToInputStateTypeMap.size()){
+    if(link->index() >= static_cast<int>(linkIndexToInputStateTypeMap.size())){
         linkIndexToInputStateTypeMap.resize(link->index() + 1, 0);
     }
     linkIndexToInputStateTypeMap[link->index()] |= stateTypes;
@@ -596,7 +599,7 @@ void SimpleControllerItemImpl::setJointInput(int stateTypes)
 void SimpleControllerItemImpl::enableOutput(Link* link)
 {
     int index = link->index();
-    if(outputLinkFlags.size() <= index){
+    if(static_cast<int>(outputLinkFlags.size()) <= index){
         outputLinkFlags.resize(index + 1, false);
     }
     outputLinkFlags[index] = true;

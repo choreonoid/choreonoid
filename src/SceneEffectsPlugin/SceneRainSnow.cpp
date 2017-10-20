@@ -132,7 +132,7 @@ bool RainSnowProgram::initializeRendering(SceneParticles* particles)
     vector<GLfloat> data(numParticles * 3);
     const float r = snow->radius();
     const float r2 = r * 4;
-    for(int i = 0; i < numParticles; ++i) {
+    for(GLuint i = 0; i < numParticles; ++i) {
         float x, y;
         while(true){
             x = 2.0 * r * random() - r;
@@ -154,7 +154,7 @@ bool RainSnowProgram::initializeRendering(SceneParticles* particles)
     lifeTime = fabsf((snow->top() - snow->bottom()) / snow->velocity().z());
     float rate = lifeTime / numParticles;
     float time = 0.0f;
-    for(int i = 0; i < numParticles; ++i) {
+    for(GLuint i = 0; i < numParticles; ++i) {
         data[i] = time;
         time += rate;
     }

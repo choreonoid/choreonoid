@@ -12,6 +12,11 @@ using namespace std;
 using namespace cnoid;
 
 
+ControllerItemIO::~ControllerItemIO()
+{
+
+}
+
 double ControllerItemIO::worldTimeStep() const
 {
     return timeStep();

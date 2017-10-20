@@ -74,14 +74,14 @@ RTC::ReturnCode_t ConstraintLogRTC::onExecute(RTC::UniqueId ec_id)
         outFile << m_larmCF.tm.sec + m_larmCF.tm.nsec / 1e9 << " :" << std::endl;
 
         outFile << "LARM_WRIST :" << std::endl;
-        for(int i=0; i<m_larmCF.data.length(); i++){
+        for(size_t i=0; i < m_larmCF.data.length(); i++){
             outFile << m_larmCF.data[i] << " ";
             if((i+1)%6==0)
                 outFile << std::endl;
         }
 
         outFile << "RARM_WRIST :" << std::endl;
-        for(int i=0; i<m_rarmCF.data.length(); i++){
+        for(size_t i=0; i < m_rarmCF.data.length(); i++){
             outFile << m_rarmCF.data[i] << " ";
             if((i+1)%6==0)
                 outFile << std::endl;

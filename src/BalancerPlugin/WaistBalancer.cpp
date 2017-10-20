@@ -541,9 +541,6 @@ bool WaistBalancer::updateBodyKinematics1(int frame)
                 fkTraverse.find(baseLink);
             }
         
-            Vector3 p_next = baseLink->p();
-            Matrix3 R_next = baseLink->R();
-
             Position T_next;
             if(!provider->getBaseLinkPosition(T_next)){
                 T_next = baseLink->T();
@@ -731,7 +728,6 @@ void WaistBalancer::relaxWaistHeightTrajectory()
             footLink->R() = p.R_Foot[j];
         }
 
-        bool solvedOnce = false;
         Vector3 dp = totalCmTranslations[i + frameToStartBalancer];
         double& dz = dp.z();
         double hi = std::numeric_limits<double>::max();
@@ -845,7 +841,6 @@ bool WaistBalancer::applyCmTranslations(BodyMotion& motion, bool putAllLinkPosit
     
     bool completed = true;
 
-    const Link* rootLink = body_->rootLink();
     const int numJoints = body_->numJoints();
     const int numLinksToPut = (putAllLinkPositions ? body_->numLinks() : 1);
     

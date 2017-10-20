@@ -466,7 +466,6 @@ static bool checkActive(SimulatorItem* item, SimulatorItem*& activeItem)
 
 SimulatorItem* SimulatorItem::findActiveSimulatorItemFor(Item* item)
 {
-    bool result = false;
     SimulatorItem* activeSimulatorItem = 0;
     if(item){
         WorldItem* worldItem = item->findOwnerItem<WorldItem>();
@@ -521,7 +520,7 @@ int SimulationBody::numControllers() const
 
 ControllerItem* SimulationBody::controller(int index) const
 {
-    if(index < impl->controllers.size()){
+    if(index < static_cast<int>(impl->controllers.size())){
         return impl->controllers[index];
     }
     return 0;
@@ -955,7 +954,7 @@ void SimulationBodyImpl::flushResultsToBody()
         const DeviceList<>& devices = orgBody->devices();
         Deque2D<DeviceStatePtr>::Row ds = deviceStateBuf.last();
         const int ndevices = devices.size();
-        for(size_t i=0; i < ndevices; ++i){
+        for(int i=0; i < ndevices; ++i){
             const DeviceStatePtr& s = ds[i];
             if(s != prevFlushedDeviceStateInDirectMode[i]){
                 Device* device = devices[i];
@@ -986,7 +985,7 @@ void SimulationBodyImpl::flushResultsToWorldLogFile(int bufferFrame)
             // Skip the first element because it is used for sharing an unchanged state
             Deque2D<DeviceStatePtr>::Row states = deviceStateBuf.row(bufferFrame + 1);
             log->beginDeviceStateOutput();
-            for(size_t i=0; i < states.size(); ++i){
+            for(int i=0; i < states.size(); ++i){
                 log->outputDeviceState(states[i]);
             }
             log->endDeviceStateOutput();
@@ -1046,10 +1045,10 @@ SimulatorItem::SimulatorItem()
 
 SimulatorItemImpl::SimulatorItemImpl(SimulatorItem* self)
     : self(self),
+      temporalResolutionType(N_TEMPORARL_RESOLUTION_TYPES, CNOID_GETTEXT_DOMAIN_NAME),
       preDynamicsFunctions(this),
       midDynamicsFunctions(this),
       postDynamicsFunctions(this),
-      temporalResolutionType(N_TEMPORARL_RESOLUTION_TYPES, CNOID_GETTEXT_DOMAIN_NAME),
       recordingMode(SimulatorItem::N_RECORDING_MODES, CNOID_GETTEXT_DOMAIN_NAME),
       timeRangeMode(SimulatorItem::N_TIME_RANGE_MODES, CNOID_GETTEXT_DOMAIN_NAME),
       mv(MessageView::mainInstance()),
@@ -2083,7 +2082,7 @@ void SimulatorItemImpl::flushResults()
         activeSimBodies[i]->flushResults();
     }
     if(isRecordingEnabled && recordCollisionData){
-        for(int i=0 ; i < collisionPairsBuf.size(); ++i){
+        for(size_t i=0 ; i < collisionPairsBuf.size(); ++i){
             if(collisionSeq->numFrames() >= ringBufferSize){
                 collisionSeq->popFrontFrame();
             }

@@ -36,7 +36,7 @@ class PoseSeqViewBase
 {
 public:
     PoseSeqViewBase(View* view);
-    ~PoseSeqViewBase();
+    virtual ~PoseSeqViewBase();
 
     View* view;
     std::ostream& os;

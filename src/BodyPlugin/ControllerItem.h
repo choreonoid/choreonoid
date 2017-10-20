@@ -13,9 +13,10 @@ namespace cnoid {
 
 class Body;
 
-class ControllerItemIO
+class CNOID_EXPORT ControllerItemIO
 {
 public:
+    virtual ~ControllerItemIO();
     virtual Body* body() = 0;
     virtual double timeStep() const = 0;
     virtual double currentTime() const = 0;

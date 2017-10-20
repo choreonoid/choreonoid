@@ -444,8 +444,6 @@ void BodyItem::storeKinematicState(BodyState& state)
 */
 bool BodyItem::restoreKinematicState(const BodyState& state)
 {
-    bool modified = false;
-
     BodyState currentState;
     storeKinematicState(currentState);
 
@@ -687,7 +685,7 @@ void BodyItemImpl::createPenetrationBlocker(Link* link, bool excludeSelfCollisio
     if(worldItem){
         blocker = std::make_shared<PenetrationBlocker>(worldItem->collisionDetector()->clone(), link);
         const ItemList<BodyItem>& bodyItems = worldItem->collisionBodyItems();
-        for(int i=0; i < bodyItems.size(); ++i){
+        for(size_t i=0; i < bodyItems.size(); ++i){
             BodyItem* bodyItem = bodyItems.get(i);
             if(bodyItem != self && bodyItem->body()->isStaticModel()){
                 blocker->addOpponentLink(bodyItem->body()->rootLink());
@@ -1169,7 +1167,7 @@ bool BodyItemImpl::store(Archive& archive)
     BodyState::Data& initialJointPositions = initialState.data(BodyState::JOINT_POSITIONS);
     if(!initialJointPositions.empty()){
         qs = archive.createFlowStyleListing("initialJointPositions");
-        for(int i=0; i < initialJointPositions.size(); ++i){
+        for(size_t i=0; i < initialJointPositions.size(); ++i){
             qs->append(initialJointPositions[i], 10, n);
         }
     }

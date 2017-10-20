@@ -40,7 +40,7 @@ protected:
 
 private:
     cnoid::BodyPtr body;
-    unsigned int n;
+    unsigned int numJoints;
     unsigned int rightHand_id;
     unsigned int leftHand_id;
     int phase;

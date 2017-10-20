@@ -358,7 +358,7 @@ SimulationBody* AISTSimulatorItem::createSimulationBody(Body* orgBody)
     DyBody* body = new DyBody(*orgBody);
 
     const int n = orgBody->numLinks();
-    for(size_t i=0; i < n; ++i){
+    for(int i=0; i < n; ++i){
         impl->orgLinkToInternalLinkMap[orgBody->link(i)] = body->link(i);
     }
     

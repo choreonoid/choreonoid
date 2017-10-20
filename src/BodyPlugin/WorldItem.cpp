@@ -310,7 +310,6 @@ void WorldItemImpl::updateCollisionDetector(bool forceUpdate)
     for(size_t i=0; i < collisionBodyItems.size(); ++i){
         BodyItem* bodyItem = collisionBodyItems.get(i);
         const BodyPtr& body = bodyItem->body();
-        const int numLinks = body->numLinks();
             
         pair<BodyItemInfoMap::iterator, bool> inserted =
             bodyItemInfoMap.insert(make_pair(bodyItem, BodyItemInfo()));
@@ -396,7 +395,6 @@ void WorldItemImpl::updateCollisions(bool forceUpdate)
 
     for(BodyItemInfoMap::iterator p = bodyItemInfoMap.begin(); p != bodyItemInfoMap.end(); ++p){
         BodyItem* bodyItem = p->first;
-        BodyItemInfo& info = p->second;
         bodyItem->notifyCollisionUpdate();
     }
     

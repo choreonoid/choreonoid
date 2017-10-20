@@ -40,7 +40,7 @@ protected:
   
 private:
     cnoid::BodyPtr body;
-    unsigned int n;
+    unsigned int numJoints;
     unsigned int rightWrist_id;
     unsigned int leftWrist_id;
     cnoid::Interpolator<cnoid::VectorXd> interpolator;
