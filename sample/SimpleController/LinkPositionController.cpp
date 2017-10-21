@@ -17,7 +17,7 @@ class LinkPositionController : public SimpleController
 
 public:
 
-    virtual bool initialize(SimpleControllerIO* io)
+    virtual bool initialize(SimpleControllerIO* io) override
     {
         ostream& os = io->os();
         const string& linkName = io->optionString();
@@ -39,7 +39,7 @@ public:
         return true;
     }
 
-    virtual bool control()
+    virtual bool control() override
     {
         gamepad.readCurrentState();
         link->p().x() += gamepad.getStickLX() * dt;

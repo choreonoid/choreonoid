@@ -15,7 +15,7 @@ class SampleCrawlerController : public SimpleController
     double dt;
 
 public:
-    virtual bool initialize(SimpleControllerIO* io)
+    virtual bool initialize(SimpleControllerIO* io) override
     {
         crawlerL = io->body()->link("CRAWLER_TRACK_L");
         crawlerR = io->body()->link("CRAWLER_TRACK_R");
@@ -25,6 +25,8 @@ public:
             return false;
         }
 
+        crawlerL->setActuationMode(Link::JOINT_SURFACE_VELOCITY);
+        crawlerR->setActuationMode(Link::JOINT_SURFACE_VELOCITY);
         io->enableOutput(crawlerL);
         io->enableOutput(crawlerR);
 
@@ -34,7 +36,7 @@ public:
         return true;
     }
 
-    virtual bool control()
+    virtual bool control() override
     {
         if(time < 2.0){
             crawlerL->dq() = 1.5;

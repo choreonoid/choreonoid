@@ -3,6 +3,7 @@
 */
 
 #include "SimpleController.h"
+#include <stdexcept>
 
 using namespace std;
 using namespace cnoid;
@@ -13,9 +14,37 @@ SimpleControllerIO::~SimpleControllerIO()
 }
 
 
+void SimpleControllerIO::setJointInput(int /* stateTypes */)
+{
+    throw std::logic_error(
+        "SimpleControllerIO::setJointInput is deprecated and is not supported in the control system.");
+}
+    
+        
+void SimpleControllerIO::setJointOutput(int /* stateTypes */)
+{
+    throw std::logic_error(
+        "SimpleControllerIO::setJointOutput is deprecated and is not supported in the control system.");
+}
+
+    
+void SimpleControllerIO::setLinkInput(Link*, int /* stateTypes */)
+{
+    throw std::logic_error(
+        "SimpleControllerIO::setLinkInput is deprecated and is not supported in the control system.");
+}
+
+
+void SimpleControllerIO::setLinkOutput(Link*, int /* stateTypes */)
+{
+    throw std::logic_error(
+        "SimpleControllerIO::setLinkOutput is deprecated and is not supported in the control system.");
+}
+
+
 SimpleController::SimpleController()
 {
-    io = 0;
+
 }
 
 
@@ -25,63 +54,7 @@ SimpleController::~SimpleController()
 }
 
 
-bool SimpleController::initialize(SimpleControllerIO* io)
-{
-    return false;
-}
-
-
-bool SimpleController::initialize()
-{
-    return false;
-}
-
-
 bool SimpleController::start()
 {
     return true;
-}
-    
-
-void SimpleController::setIO(SimpleControllerIO* io)
-{
-    this->io = io;
-}
-
-
-void SimpleController::setJointOutput(bool on)
-{
-    if(on){
-        io->setJointOutput(JOINT_TORQUE);
-    } else {
-        io->setJointOutput(0);
-    }
-}
-    
-
-void SimpleController::setJointOutput(int jointId, bool on)
-{
-    if(on){
-        io->setLinkOutput(io->body()->joint(jointId), JOINT_TORQUE);
-    } else {
-        io->setLinkOutput(io->body()->joint(jointId), 0);
-    }
-}
-
-
-Body* SimpleController::ioBody()
-{
-    return io->body();
-}
-
-
-double SimpleController::timeStep() const
-{
-    return io->timeStep();
-}
-
-
-std::ostream& SimpleController::os() const
-{
-    return io->os();
 }

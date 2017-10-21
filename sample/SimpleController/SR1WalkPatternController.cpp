@@ -42,7 +42,7 @@ class SR1WalkPatternController : public cnoid::SimpleController
     
 public:
 
-    virtual bool initialize(SimpleControllerIO* io)
+    virtual bool initialize(SimpleControllerIO* io) override
     {
         ioBody = io->body();
         string patternFile;
@@ -104,7 +104,7 @@ public:
         return true;
     }
 
-    virtual bool control()
+    virtual bool control() override
     {
         switch(actuationMode){
 
@@ -148,7 +148,6 @@ public:
             return false;
         }
     }
-        
 };
 
 CNOID_IMPLEMENT_SIMPLE_CONTROLLER_FACTORY(SR1WalkPatternController)

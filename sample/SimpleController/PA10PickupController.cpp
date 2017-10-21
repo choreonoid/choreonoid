@@ -23,7 +23,7 @@ const double dgain[] = {
 
 }
 
-class PA10PickupController : public cnoid::SimpleController
+class PA10PickupController : public SimpleController
 {
     Body* ioBody;
     Link* ioLeftHand;
@@ -46,7 +46,7 @@ public:
         return Vector3(radian(x), radian(y), radian(z));
     }
     
-    virtual bool initialize(SimpleControllerIO* io)
+    virtual bool initialize(SimpleControllerIO* io) override
     {
         ioBody = io->body();
 
@@ -98,7 +98,7 @@ public:
         return true;
     }
 
-    virtual bool control()
+    virtual bool control() override
     {
         bool isActive = true;
 

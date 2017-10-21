@@ -34,17 +34,20 @@ class TankJoystickController : public SimpleController
 
 public:
     
-    virtual bool initialize(SimpleControllerIO* io)
+    virtual bool initialize(SimpleControllerIO* io) override
     {
         ostream& os = io->os();
-        
         Body* body = io->body();
 
         usePseudoContinousTrackMode = true;
         turretAcutuationMode = Link::ActuationMode::JOINT_TORQUE;
         for(auto opt : io->options()){
-            if(opt == "wheels")     usePseudoContinousTrackMode = false;
-            if(opt == "velocity")   turretAcutuationMode = Link::ActuationMode::JOINT_VELOCITY;
+            if(opt == "wheels"){
+                usePseudoContinousTrackMode = false;
+            }
+            if(opt == "velocity"){
+                turretAcutuationMode = Link::ActuationMode::JOINT_VELOCITY;
+            }
         }
 
         if(usePseudoContinousTrackMode){
@@ -61,7 +64,10 @@ public:
             return false;
         }
 
-        if(!usePseudoContinousTrackMode){        
+        if(usePseudoContinousTrackMode){
+            trackL->setActuationMode(Link::JOINT_SURFACE_VELOCITY);
+            trackR->setActuationMode(Link::JOINT_SURFACE_VELOCITY);
+        } else {
             trackL->setActuationMode(Link::JOINT_VELOCITY);
             trackR->setActuationMode(Link::JOINT_VELOCITY);
         }
@@ -103,7 +109,7 @@ public:
         return true;
     }
 
-    virtual bool control()
+    virtual bool control() override
     {
         joystick.readCurrentState();
         

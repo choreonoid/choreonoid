@@ -12,7 +12,7 @@ namespace cnoid {
 
 class CNOID_EXPORT SimpleControllerIO
 {
-public:
+  public:
     virtual ~SimpleControllerIO();
     virtual std::string optionString() const = 0;
     virtual std::vector<std::string> options() const = 0;
@@ -53,7 +53,7 @@ public:
 };
 
 
-class SimulationSimpleControllerIO : public SimpleControllerIO
+class CNOID_EXPORT SimulationSimpleControllerIO : public SimpleControllerIO
 {
 public:
     virtual bool isImmediateMode() const = 0;
@@ -63,23 +63,14 @@ public:
 
 class CNOID_EXPORT SimpleController
 {
-public:
+  public:
     typedef SimpleController* (*Factory)();
 
     virtual ~SimpleController();
 
-    virtual bool initialize(SimpleControllerIO* io);
-
-    virtual bool initialize(); ///< \deprecated
-
+    virtual bool initialize(SimpleControllerIO* io) = 0;
     virtual bool start();
     virtual bool control() = 0;
-
-    /*
-      The following function is defined for the deprecated functions,
-      and is called from SimpleControllerItem.
-    */
-    void setIO(SimpleControllerIO* io);
 
     enum StateType {
         JOINT_ANGLE = SimpleControllerIO::JOINT_ANGLE,
@@ -94,19 +85,8 @@ public:
   protected:
     SimpleController();
 
-    Body* ioBody(); ///< \deprecated
-    double timeStep() const; ///< \deprecated
-    std::ostream& os() const; ///< \deprecated
-    void setJointOutput(bool on); ///< \deprecated
-    void setJointOutput(int jointId, bool on); ///< \deprecated
-
-private:
-    SimpleController(const SimpleController& org) { }
-    
-    /**
-       This variable will be removed when the deprecated functions are removed.
-    */
-    SimpleControllerIO* io;
+  private:
+    SimpleController(const SimpleController&) { }
 };
 
 }

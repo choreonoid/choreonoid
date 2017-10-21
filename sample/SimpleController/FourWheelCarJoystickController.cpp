@@ -18,7 +18,7 @@ class FourWheelCarJoystickController : public SimpleController
     double eold;
 
 public:
-    virtual bool initialize(SimpleControllerIO* io)
+    virtual bool initialize(SimpleControllerIO* io) override
     {
         ostream& os = io->os();
         
@@ -51,7 +51,7 @@ public:
         return true;
     }
 
-    virtual bool control()
+    virtual bool control() override
     {
         joystick.readCurrentState();
         

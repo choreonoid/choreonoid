@@ -464,7 +464,7 @@ links:
     name: TRACK_L
     parent: CHASSIS
     translation: [ 0, 0.22, -0.026 ]
-    jointType: pseudoContinuousTrack
+    jointType: fixed
     jointAxis: Y
     centerOfMass: [ 0, 0, 0 ]
     mass: 1.0
@@ -564,7 +564,7 @@ links:
     name: TRACK_R
     parent: CHASSIS
     translation: [ 0, -0.22, -0.026 ]
-    jointType: pseudoContinuousTrack
+    jointType: fixed
     jointAxis: Y
     centerOfMass: [ 0, 0, 0 ]
     mass: 1.0

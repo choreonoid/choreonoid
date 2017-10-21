@@ -13,31 +13,30 @@ class SpringModelController : public cnoid::SimpleController
     
 public:
 
-    virtual bool initialize(SimpleControllerIO* io) {
-
+    virtual bool initialize(SimpleControllerIO* io) override
+    {
         SimulationSimpleControllerIO* sio = dynamic_cast<SimulationSimpleControllerIO*>(io);
-
         if(!sio){
             return false;
         }
+        sio->setImmediateMode(true);
 
         spring = io->body()->link("UPPER");
 
         if(!spring){
-            os() << "Spring-damper joint \"UPPER\" cannot be detected." << std::endl;
+            io->os() << "Spring-damper joint \"UPPER\" cannot be detected." << std::endl;
             return false;
         }
-        
-        io->enableInput(spring, JOINT_DISPLACEMENT | JOINT_VELOCITY);
-        io->enableOutput(spring);
 
-        sio->setImmediateMode(true);
-        
+        spring->setActuationMode(Link::JOINT_TORQUE);
+        io->enableOutput(spring);
+        io->enableInput(spring, JOINT_DISPLACEMENT | JOINT_VELOCITY);
+
         return true;
     }
 
-    virtual bool control() {
-
+    virtual bool control() override
+    {
         const double KP = 2000.0;
         const double KD = 5.0;
 
@@ -45,8 +44,6 @@ public:
 
         return true;
     }
-
 };
-
 
 CNOID_IMPLEMENT_SIMPLE_CONTROLLER_FACTORY(SpringModelController)

@@ -401,27 +401,12 @@ SimpleController* SimpleControllerItemImpl::initialize(ControllerItemIO* io, Sha
             ioBody = sharedInfo->ioBody;
         }
         
-        controller->setIO(this);
-
         inputLinkIndices.clear();
         inputStateTypes.clear();
         outputLinkFlags.clear();
         
         result = controller->initialize(this);
 
-        // try the old API
-        if(!result){
-            for(auto joint : ioBody->joints()){
-                enableIO(joint);
-            }
-            result = controller->initialize();
-            if(result){
-                for(auto device : ioBody->devices()){
-                    enableInput(device);
-                }
-            }
-        }
-        
         if(!result){
             mv->putln(MessageView::ERROR, fmt(_("%1%'s initialize method failed.")) % self->name());
             if(doReloading){
