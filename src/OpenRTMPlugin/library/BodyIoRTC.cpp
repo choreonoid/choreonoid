@@ -23,7 +23,13 @@ BodyIoRTC::~BodyIoRTC()
 
 RTC::ReturnCode_t  BodyIoRTC::onInitialize(Body* body)
 {
-    return RTC::RTC_OK;
+    return RTC::UNSUPPORTED;
+}
+
+
+bool BodyIoRTC::initializeIO(Body* body)
+{
+    return true;
 }
 
 
@@ -55,4 +61,3 @@ void BodyIoRTC::stopSimulation()
 {
 
 }
-

@@ -3,8 +3,8 @@
    \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_OPENRTM_BODY_IO_VRC_H
-#define CNOID_OPENRTM_BODY_IO_VRC_H
+#ifndef CNOID_OPENRTM_BODY_IO_RTC_H
+#define CNOID_OPENRTM_BODY_IO_RTC_H
 
 #include <cnoid/Body>
 #include <cnoid/ControllerItem>
@@ -22,14 +22,19 @@ public:
     BodyIoRTC(RTC::Manager* manager);
     ~BodyIoRTC();
 
-    using RTC::DataFlowComponentBase::onInitialize;
-    virtual RTC::ReturnCode_t onInitialize(Body* body);
-    
+    virtual bool initializeIO(Body* body);
     virtual bool initializeSimulation(ControllerItemIO* io);
     virtual bool startSimulation();
     virtual void inputFromSimulator();
     virtual void outputToSimulator();
     virtual void stopSimulation();
+
+    /**
+       \deprecated
+       Use the initializeIO function.
+    */
+    virtual RTC::ReturnCode_t onInitialize(Body* body);
+    using RTC::DataFlowComponentBase::onInitialize;
 };
 
 }

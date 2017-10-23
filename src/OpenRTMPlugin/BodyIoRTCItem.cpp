@@ -129,7 +129,14 @@ bool BodyIoRTCItemImpl::createBodyIoRTC()
             self->deleteRTC(false);
             return false;
         }
-        if(bodyIoRTC->onInitialize(bodyItem->body()) != RTC::RTC_OK){
+        bool initialized = false;
+        if(bodyIoRTC->onInitialize(bodyItem->body()) == RTC::RTC_OK){ // old API
+            initialized = true;
+        } else {
+            initialized = bodyIoRTC->initializeIO(bodyItem->body());
+        }
+
+        if(!initialized){
             mv->putln(MessageView::ERROR,
                       format(_("RTC \"%1%\" of %2% failed to initialize."))
                       % self->rtcModuleName() % self->name());

@@ -19,7 +19,7 @@ public:
     TankIoRTC(RTC::Manager* manager);
     ~TankIoRTC();
 
-    virtual RTC::ReturnCode_t onInitialize(Body* body) override;
+    virtual bool initializeIO(Body* body) override;
     virtual bool initializeSimulation(ControllerItemIO* io) override;
     virtual void inputFromSimulator() override;
     virtual void outputToSimulator() override;
@@ -80,7 +80,7 @@ TankIoRTC::~TankIoRTC()
 }
 
 
-RTC::ReturnCode_t TankIoRTC::onInitialize(Body* body)
+bool TankIoRTC::initializeIO(Body* body)
 {
     // Set InPort buffers
     addInPort("u", torquesIn);
@@ -91,7 +91,7 @@ RTC::ReturnCode_t TankIoRTC::onInitialize(Body* body)
     addOutPort("q", anglesOut);
     angles.data.length(2);
 
-    return RTC::RTC_OK;
+    return true;
 }
 
 
