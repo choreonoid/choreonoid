@@ -82,12 +82,6 @@ bool ControllerItem::start()
 }
 
 
-bool ControllerItem::start(ControllerItemIO* io)
-{
-    return true;
-}
-
-
 void ControllerItem::stop()
 {
 

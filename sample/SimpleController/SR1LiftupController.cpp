@@ -140,8 +140,6 @@ public:
 
     virtual bool control() override
     {
-        bool isActive = true;
-
         if(phase == 0){
             qref = interpolator.interpolate(time);
             if(time > interpolator.domainUpper()){

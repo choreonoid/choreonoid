@@ -160,10 +160,10 @@ public:
     void notifyResults(double time);
 
     // Functions defined in the ControllerItemIO class
-    virtual Body* body();
-    virtual double timeStep() const;
-    virtual double currentTime() const;
-    virtual std::string optionString() const;
+    virtual Body* body() override;
+    virtual double timeStep() const override;
+    virtual double currentTime() const override;
+    virtual std::string optionString() const override;
 };
 
 
@@ -327,10 +327,10 @@ public:
     void addCollisionSeqEngine(CollisionSeqItem* collisionSeqItem);
 
     // Functions defined in the ControllerItemIO class
-    virtual Body* body();
-    virtual double timeStep() const;
-    virtual double currentTime() const;
-    virtual std::string optionString() const;
+    virtual Body* body() override;
+    virtual double timeStep() const override;
+    virtual double currentTime() const override;
+    virtual std::string optionString() const override;
 };
 
 
@@ -393,19 +393,26 @@ namespace {
 */
 class ScriptControllerItem : public ControllerItem
 {
-    bool doExecAfterInit;
+    ControllerItemIO* io;
     double time;
     double timeStep_;
     double delay;
     SimulationScriptItemPtr scriptItem;
     LazyCaller executeLater;
+    bool doExecAfterInit;
 
 public:
     ScriptControllerItem(SimulationScriptItem* scriptItem){
         this->scriptItem = scriptItem;
         doExecAfterInit = false;
     }
-    virtual bool start(ControllerItemIO* io) {
+
+    virtual bool initialize(ControllerItemIO* io) override {
+        this->io = io;
+        return true;
+    }
+    
+    virtual bool start() override {
         timeStep_ = io->timeStep();
         if(scriptItem->executionTiming() == SimulationScriptItem::DURING_INITIALIZATION){
             scriptItem->executeAsSimulationScript();
@@ -417,12 +424,15 @@ public:
         }
         return true;
     }
-    virtual double timeStep() const{
+    
+    virtual double timeStep() const override {
         return timeStep_;
     }
-    virtual void input() {
+    
+    virtual void input() override {
     }
-    virtual bool control() {
+    
+    virtual bool control() override {
         if(doExecAfterInit){
             if(time >= delay){
                 executeLater();
@@ -433,12 +443,15 @@ public:
         }
         return false;
     }
+    
     void execute(){
         scriptItem->executeAsSimulationScript();
     }
-    virtual void output() {
+    
+    virtual void output() override {
     }
-    virtual void stop() {
+    
+    virtual void stop() override {
         if(scriptItem->executionTiming() == SimulationScriptItem::DURING_FINALIZATION){
             scriptItem->executeAsSimulationScript();
         }
@@ -1552,15 +1565,13 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
                 bool ready = false;
                 controller->setSimulatorItem(self);
                 if(body){
-                    ready = (controller->start() &&           // new API
-                             controller->start(simBodyImpl)); // old API
+                    ready = controller->start();
                     if(!ready){
                         os << (fmt(_("%1% for %2% failed to initialize."))
                                % controller->name() % simBodyImpl->bodyItem->name()) << endl;
                     }
                 } else {
-                    ready = (controller->start() &&    // new API
-                             controller->start(this)); // old API
+                    ready = controller->start();
                     if(!ready){
                         os << (fmt(_("%1% failed to initialize."))
                                % controller->name()) << endl;

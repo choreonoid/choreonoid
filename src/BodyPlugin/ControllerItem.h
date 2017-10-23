@@ -58,9 +58,6 @@ public:
     */
     virtual bool start();
 
-    //! \deprecated
-    virtual bool start(ControllerItemIO* io);
-
     virtual double timeStep() const = 0;
 
     /**

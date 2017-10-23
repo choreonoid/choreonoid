@@ -49,12 +49,14 @@ namespace {
 class BodyPlugin : public Plugin
 {
 public:
-    BodyPlugin() : Plugin("Body") {
+    BodyPlugin() : Plugin("Body")
+    {
         addOldName("SimpleController");
         setActivationPriority(0);
     }
 
-    virtual bool initialize(){
+    virtual bool initialize()
+    {
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0) && CNOID_ENABLE_GETTEXT
         setCnoidBodyTextDomainCodeset();
@@ -109,8 +111,8 @@ public:
         return true;
     }
 
-    virtual const char* description() {
-
+    virtual const char* description() const override
+    {
         static std::string text =
             str(fmt(_("Body Plugin Version %1%\n")) % CNOID_FULL_VERSION_STRING) +
             "\n" +
@@ -126,6 +128,7 @@ public:
         
     }
 };
+
 }
 
 CNOID_IMPLEMENT_PLUGIN_ENTRY(BodyPlugin);

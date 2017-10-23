@@ -21,7 +21,8 @@ class CNOID_EXPORT BodyMotion : public AbstractMultiSeq
 public:
     BodyMotion();
     BodyMotion(const BodyMotion& org);
-            
+
+    using AbstractMultiSeq::operator=;
     BodyMotion& operator=(const BodyMotion& rhs);
     virtual AbstractSeqPtr cloneSeq() const;        
 

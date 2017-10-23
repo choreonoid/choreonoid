@@ -37,7 +37,7 @@ public:
         return true;
     }
 
-    virtual const char* description() {
+    virtual const char* description() const override {
         static std::string text =
             str(fmt(_("PoseSeq Plugin Version %1%\n")) % CNOID_FULL_VERSION_STRING) +
             "\n" +
