@@ -59,7 +59,6 @@ public:
         } else {
             actuationMode = Link::JOINT_TORQUE;
             patternFile = "SR1WalkPattern.yaml";
-            io->setJointInput(JOINT_ANGLE);
             io->os() << "SR1WalkPatternController: torque control mode." << endl;
         }
 
