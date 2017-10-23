@@ -14,12 +14,11 @@ class CNOID_EXPORT SimpleControllerIO
 {
   public:
     virtual ~SimpleControllerIO();
-    virtual std::string optionString() const = 0;
-    virtual std::vector<std::string> options() const = 0;
-    virtual std::ostream& os() const = 0;
-
     virtual Body* body() = 0;
     virtual double timeStep() const = 0;
+    virtual std::string optionString() const;
+    virtual std::vector<std::string> options() const;
+    virtual std::ostream& os() const;
 
     enum StateType {
         JOINT_ANGLE = 1 << 0,
@@ -36,20 +35,19 @@ class CNOID_EXPORT SimpleControllerIO
     virtual void enableInput(Link* link) = 0;
     virtual void enableInput(Link* link, int stateTypes) = 0;
     virtual void enableOutput(Link* link) = 0;
-
     virtual void enableInput(Device* device) = 0;
     
     //! \deprecated Use enableInput for all links
-    virtual void setJointInput(int stateTypes) = 0;
+    virtual void setJointInput(int stateTypes);
 
     //! \deprecated Use enableOutput and Link::setActuationMode for all links
-    virtual void setJointOutput(int stateTypes) = 0;
+    virtual void setJointOutput(int stateTypes);
 
     //! \deprecated Use enableInput for the link
-    virtual void setLinkInput(Link* link, int stateTypes) = 0;
+    virtual void setLinkInput(Link* link, int stateTypes);
     
     //! \deprecated Use enableOutput and Link::setActuationMode for the link
-    virtual void setLinkOutput(Link* link, int stateTypes) = 0;
+    virtual void setLinkOutput(Link* link, int stateTypes);
 };
 
 

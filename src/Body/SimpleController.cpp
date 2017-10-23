@@ -3,6 +3,7 @@
 */
 
 #include "SimpleController.h"
+#include <iostream>
 #include <stdexcept>
 
 using namespace std;
@@ -11,6 +12,24 @@ using namespace cnoid;
 SimpleControllerIO::~SimpleControllerIO()
 {
 
+}
+
+
+std::string SimpleControllerIO::optionString() const
+{
+    return std::string();
+}
+
+
+std::vector<std::string> SimpleControllerIO::options() const
+{
+    return std::vector<std::string>();
+}
+
+
+std::ostream& SimpleControllerIO::os() const
+{
+    return std::cout;
 }
 
 
