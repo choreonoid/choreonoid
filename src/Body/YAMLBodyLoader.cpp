@@ -280,7 +280,9 @@ public:
     LinkPtr readLinkContents(Mapping* linkNode);
     void setJointId(Link* link, int id);
     void readJointContents(Link* link, Mapping* node);
-    boost::optional<Vector3> readAxis(Mapping* node, const char* key);
+    bool extractAxis(Mapping* node, const char* key, Vector3& out_axis);
+    bool readAxis(Mapping* node, const char* key, Vector3& out_axis);
+    void readAxis(ValueNode* node, Vector3& out_axis);
     void setJointParameters(Link* link, string jointType, ValueNode* node);
     void setMassParameters(Link* link);
 
@@ -895,7 +897,7 @@ void YAMLBodyLoaderImpl::readJointContents(Link* link, Mapping* node)
         setJointId(link, id);
     }
 
-    auto jointTypeNode = node->find("jointType");
+    auto jointTypeNode = node->extract("jointType");
     if(jointTypeNode->isValid()){
         string jointType = jointTypeNode->toString();
         if(jointType == "revolute"){
@@ -912,13 +914,30 @@ void YAMLBodyLoaderImpl::readJointContents(Link* link, Mapping* node)
             link->setJointType(Link::PSEUDO_CONTINUOUS_TRACK);
             link->setActuationMode(Link::JOINT_SURFACE_VELOCITY);
         } else {
-            node->throwException("Illegal jointType value");
+            jointTypeNode->throwException("Illegal jointType value");
         }
     }
 
-    boost::optional<Vector3> axis = readAxis(node, "jointAxis");
-    if(axis){
-        link->setJointAxis(*axis);
+    if(extractAxis(node, "jointAxis", v)){
+       link->setJointAxis(v);
+    }
+
+    auto actuationModeNode = node->extract("actuationMode");
+    if(actuationModeNode){
+        string mode = actuationModeNode->toString();
+        if(mode == "jointEffort" || mode == "jointTorque" || mode == "jointForce"){
+            link->setActuationMode(Link::JOINT_EFFORT);
+        } else if(mode == "jointDisplacement" || mode == "jointAngle"){
+            link->setActuationMode(Link::JOINT_DISPLACEMENT);
+        } else if(mode == "jointVelocity"){
+            link->setActuationMode(Link::JOINT_VELOCITY);
+        } else if(mode == "jointSurfaceVelocity"){
+            link->setActuationMode(Link::JOINT_SURFACE_VELOCITY);
+        } else if(mode == "linkPosition"){
+            link->setActuationMode(Link::LINK_POSITION);
+        } else {
+            actuationModeNode->throwException("Illegal actuationMode value");
+        }
     }
 
     auto jointAngleNode = node->extract("jointAngle");
@@ -933,8 +952,8 @@ void YAMLBodyLoaderImpl::readJointContents(Link* link, Mapping* node)
     double lower = -std::numeric_limits<double>::max();
     double upper =  std::numeric_limits<double>::max();
     
-    auto jointRangeNode = node->find("jointRange");
-    if(jointRangeNode->isValid()){
+    auto jointRangeNode = node->extract("jointRange");
+    if(jointRangeNode){
         if(jointRangeNode->isScalar()){
             upper = readLimitValue(*jointRangeNode, true);
             lower = -upper;
@@ -957,8 +976,8 @@ void YAMLBodyLoaderImpl::readJointContents(Link* link, Mapping* node)
         link->setJointRange(lower, upper);
     }
     
-    auto maxVelocityNode = node->find("maxJointVelocity");
-    if(maxVelocityNode->isValid()){
+    auto maxVelocityNode = node->extract("maxJointVelocity");
+    if(maxVelocityNode){
         double maxVelocity = maxVelocityNode->toDouble();
         if(link->jointType() == Link::REVOLUTE_JOINT){
             link->setJointVelocityRange(toRadian(-maxVelocity), toRadian(maxVelocity));
@@ -967,8 +986,8 @@ void YAMLBodyLoaderImpl::readJointContents(Link* link, Mapping* node)
         }
     }
 
-    auto velocityRangeNode = node->find("jointVelocityRange");
-    if(velocityRangeNode->isValid()){
+    auto velocityRangeNode = node->extract("jointVelocityRange");
+    if(velocityRangeNode){
         Listing& velocityRange = *velocityRangeNode->toListing();
         if(velocityRange.size() != 2){
             velocityRangeNode->throwException(_("jointVelocityRange must have two elements"));
@@ -986,41 +1005,52 @@ void YAMLBodyLoaderImpl::readJointContents(Link* link, Mapping* node)
 }
 
 
-boost::optional<Vector3> YAMLBodyLoaderImpl::readAxis(Mapping* node, const char* key)
+bool YAMLBodyLoaderImpl::extractAxis(Mapping* node, const char* key, Vector3& out_axis)
 {
-    boost::optional<Vector3> axis;
+    auto axisNode = node->extract(key);
+    if(axisNode){
+        readAxis(axisNode, out_axis);
+        return true;
+    }
+    return false;
+}
 
+
+bool YAMLBodyLoaderImpl::readAxis(Mapping* node, const char* key, Vector3& out_axis)
+{
     auto axisNode = node->find(key);
-
     if(axisNode->isValid()){
-        if(axisNode->isListing()){
-            Vector3 a;
-            read(*axisNode->toListing(), a);
-            axis = a;
-            
-        } else if(axisNode->isString()){
-            string symbol = axisNode->toString();
-            std::transform(symbol.cbegin(), symbol.cend(), symbol.begin(), ::toupper);
-            if(symbol == "X"){
-                axis = Vector3::UnitX();
-            } else if(symbol == "-X"){
-                axis = -Vector3::UnitX();
-            } else if(symbol == "Y"){
-                axis = Vector3::UnitY();
-            } else if(symbol == "-Y"){
-                axis = -Vector3::UnitY();
-            } else if(symbol == "Z"){
-                axis = Vector3::UnitZ();
-            } else if(symbol == "-Z"){
-                axis = -Vector3::UnitZ();
-            }
-        }
-        if(!axis){
-            axisNode->throwException("Illegal axis value");
+        readAxis(axisNode, out_axis);
+        return true;
+    }
+    return false;
+}
+
+
+void YAMLBodyLoaderImpl::readAxis(ValueNode* node, Vector3& out_axis)
+{
+    if(node->isListing()){
+        read(*node->toListing(), out_axis);
+
+    } else if(node->isString()){
+        string symbol = node->toString();
+        std::transform(symbol.cbegin(), symbol.cend(), symbol.begin(), ::toupper);
+        if(symbol == "X"){
+            out_axis = Vector3::UnitX();
+        } else if(symbol == "-X"){
+            out_axis = -Vector3::UnitX();
+        } else if(symbol == "Y"){
+            out_axis = Vector3::UnitY();
+        } else if(symbol == "-Y"){
+            out_axis = -Vector3::UnitY();
+        } else if(symbol == "Z"){
+            out_axis = Vector3::UnitZ();
+        } else if(symbol == "-Z"){
+            out_axis = -Vector3::UnitZ();
+        } else {
+            node->throwException("Illegal axis value");
         }
     }
-
-    return axis;
 }
 
 
@@ -1687,10 +1717,7 @@ void YAMLBodyLoaderImpl::readExtraJoint(Mapping* node)
     string jointType = node->get("jointType").toString();
     if(jointType == "piston"){
         joint.type = ExtraJoint::EJ_PISTON;
-        boost::optional<Vector3> axis = readAxis(node, "jointAxis");
-        if(axis){
-            joint.axis = *axis;
-        } else {
+        if(!readAxis(node, "jointAxis", joint.axis)){
             node->throwException(_("The jointAxis value must be specified for the pistion type."));
         }
     } else if(jointType == "ball"){

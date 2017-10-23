@@ -54,6 +54,7 @@ links:
     jointType: fixed
     jointAxis: [ 0, 1, 0 ]
     jointId: 0
+    actuationMode: jointSurfaceVelocity
     elements:
       -
         type: RigidBody
@@ -93,6 +94,7 @@ links:
     jointType: fixed
     jointAxis: [ 0, 1, 0 ]
     jointId: 1
+    actuationMode: jointSurfaceVelocity
     elements:
       -
         type: RigidBody
