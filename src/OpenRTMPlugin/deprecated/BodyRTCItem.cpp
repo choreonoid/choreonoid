@@ -298,6 +298,12 @@ bool BodyRTCItem::initialize(ControllerItemIO* io)
     timeStep_ = io->timeStep();
     controlTime_ = io->currentTime();
 
+    for(auto joint : simulationBody->joints()){
+        if(joint->isRevoluteJoint() || joint->isPrismaticJoint()){
+            joint->setActuationMode(Link::JOINT_EFFORT);
+        }
+    }
+
     forceSensors_ = simulationBody->devices<ForceSensor>().getSortedById();
     gyroSensors_ = simulationBody->devices<RateGyroSensor>().getSortedById();
     accelSensors_ = simulationBody->devices<AccelerationSensor>().getSortedById();
