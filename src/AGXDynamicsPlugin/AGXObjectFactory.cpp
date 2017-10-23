@@ -18,7 +18,7 @@ agx::Vec3f AGXPseudoContinuousTrackGeometry::calculateSurfaceVelocity(const agxC
 {
     agx::Vec3f dir = getAxis() ^ point.normal();
     dir.normalize();
-    const agx::Vec3f ret = dir * -1.0 * getSurfaceVelocity().x();
+    const agx::Vec3f ret = dir * getSurfaceVelocity().x();
     return ret;
 }
 
