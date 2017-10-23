@@ -202,7 +202,7 @@ bool BodyLoaderImpl::load(Body* body, const std::string& filename)
     MappingPtr yamlDoc;
 
     try {
-        if(ext != "yaml"){
+        if(ext != "yaml" && ext != "yml"){
             modelFilename = filename;
         } else {
             YAMLReader parser;
