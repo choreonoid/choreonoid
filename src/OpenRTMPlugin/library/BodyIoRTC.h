@@ -22,6 +22,7 @@ public:
     BodyIoRTC(RTC::Manager* manager);
     ~BodyIoRTC();
 
+    using RTC::DataFlowComponentBase::onInitialize;
     virtual RTC::ReturnCode_t onInitialize(Body* body);
     
     virtual bool initializeSimulation(ControllerItemIO* io);

@@ -291,7 +291,7 @@ Item* BodyRTCItem::doDuplicate() const
 }
 
 
-bool BodyRTCItem::start(ControllerItemIO* io)
+bool BodyRTCItem::initialize(ControllerItemIO* io)
 {
     this->io = io;
     simulationBody = io->body();
@@ -305,6 +305,12 @@ bool BodyRTCItem::start(ControllerItemIO* io)
     executionCycle = (executionCycleProperty > 0.0) ? executionCycleProperty : timeStep_;
     executionCycleCounter = executionCycle;
 
+    return true;
+}
+
+
+bool BodyRTCItem::start()
+{
     bool isReady = true;
     
     if(rtcomp && !rtcomp->isValid()){

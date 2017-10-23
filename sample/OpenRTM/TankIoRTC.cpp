@@ -98,11 +98,19 @@ RTC::ReturnCode_t TankIoRTC::onInitialize(Body* body)
 bool TankIoRTC::initializeSimulation(ControllerItemIO* io)
 {
     ioBody = io->body();
+
     turretY = ioBody->link("TURRET_Y");
     turretP = ioBody->link("TURRET_P");
+    turretY->setActuationMode(Link::JOINT_TORQUE);
+    turretP->setActuationMode(Link::JOINT_TORQUE);
+
     trackL = ioBody->link("TRACK_L");
     trackR = ioBody->link("TRACK_R");
+    trackL->setActuationMode(Link::JOINT_SURFACE_VELOCITY);
+    trackR->setActuationMode(Link::JOINT_SURFACE_VELOCITY);
+    
     light = ioBody->findDevice<Light>("Light");
+    
     return true;
 }
 
