@@ -68,7 +68,7 @@ void OpenHRPControllerItem::setControllerServerCommand(const std::string& comman
 }
 
 
-bool OpenHRPControllerItem::start(ControllerItemIO* io)
+bool OpenHRPControllerItem::initialize(ControllerItemIO* io)
 {
     ncHelper = getDefaultNamingContextHelper();
     
@@ -169,8 +169,14 @@ bool OpenHRPControllerItem::start(ControllerItemIO* io)
     
     controller->setDynamicsSimulator(dynamicsSimulator->_this());
     controller->setTimeStep(timeStep_);
-    controller->start();
+    
+    return true;
+}
 
+    
+bool OpenHRPControllerItem::start()
+{
+    controller->start();
     return true;
 }
 

@@ -26,8 +26,8 @@ class SimpleControllerWrapper : public SimpleControllerIO, public OpenHRPControl
 public:
     
     SimpleControllerWrapper(const char* charname)
-        : OpenHRPControllerBase(charname) {
-        
+        : OpenHRPControllerBase(charname)
+    {
         ready = false;
 
         controller = createSimpleController();
@@ -48,13 +48,15 @@ public:
         }
     }
 
-    ~SimpleControllerWrapper(){
+    ~SimpleControllerWrapper()
+    {
         if(controller){
             delete controller;
         }
     }
     
-    virtual void start(){
+    virtual void start() override
+    {
         if(ready){
             input();
             if(!controller->initialize(this) || !controller->start()){
@@ -64,7 +66,8 @@ public:
         }
     }
 
-    virtual void input(){
+    virtual void input() override
+    {
         if(ready){
             dynamicsSimulator->getCharacterAllLinkData(
                 characterName.c_str(), DynamicsSimulator::JOINT_VALUE, q);
@@ -75,13 +78,15 @@ public:
         }
     }
 
-    virtual void control(){
+    virtual void control() override
+    {
         if(ready){
             controller->control();
         }
     }
 
-    virtual void output() {
+    virtual void output() override
+    {
         if(ready){
             u.length(ioBody->numJoints());
             for(int i=0; i < ioBody->numJoints(); ++i){
@@ -92,16 +97,13 @@ public:
         }
     }
 
-    virtual std::string optionString() const { return ""; }
-    virtual std::vector<std::string> options() const { return std::vector<std::string>(); }
     virtual Body* body() { return ioBody; }
     virtual double timeStep() const { return OpenHRPControllerBase::timeStep; }
-    virtual std::ostream& os() const { return std::cout; }
-    virtual void setJointOutput(int stateTypes) { }
-    virtual void setLinkOutput(Link* link, int stateTypes) { }
-    virtual void setJointInput(int stateTypes) { }
-    virtual void setLinkInput(Link* link, int stateTypes) { }
-    virtual void enableInput(Device* device) { }
+    virtual void enableIO(Link* link) override { }
+    virtual void enableInput(Link* link) override { }
+    virtual void enableInput(Link* link, int stateTypes) override { }
+    virtual void enableOutput(Link* link) override { }
+    virtual void enableInput(Device* device) override { }
 };
 
 
