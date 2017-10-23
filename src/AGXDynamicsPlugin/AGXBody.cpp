@@ -15,6 +15,29 @@ AGXBodyExtensionFuncMap agxBodyExtensionAdditionalFuncs;
 
 namespace cnoid{
 ////////////////////////////////////////////////////////////
+// AGXBodyExtension
+bool createContinuousTrack(AGXBody* agxBody)
+{
+    AGXLinkPtrs myAgxLinks;
+    if(!agxBody->getAGXLinksFromInfo("isContinuousTrack", false, myAgxLinks)) return false;
+    for(const auto& agxLink : myAgxLinks){
+        agxBody->addAGXBodyExtension(new AGXContinuousTrack(agxLink, agxBody));
+    }
+    return true;
+}
+
+bool createAGXVehicleContinousTrack(AGXBody* agxBody)
+{
+    DeviceList<> devices = agxBody->body()->devices();
+    DeviceList<AGXVehicleContinuousTrackDevice> conTrackDevices;
+    conTrackDevices.extractFrom(devices);
+    for(const auto& ctd : conTrackDevices){
+        agxBody->addAGXBodyExtension(new AGXVehicleContinuousTrack(ctd, agxBody));
+    }
+    return true;
+}
+
+////////////////////////////////////////////////////////////
 // AGXLink
 AGXLink::AGXLink(Link* const link) : _orgLink(link){}
 AGXLink::AGXLink(Link* const link, AGXLink* const parent, const Vector3& parentOrigin, AGXBody* const agxBody) :
@@ -801,8 +824,7 @@ void AGXBody::setLinkStateToCnoid()
 
 bool AGXBody::hasForceSensors() const
 {
-    if(sensorHelper.forceSensors().empty()) return false;
-    return true;
+    return !sensorHelper.forceSensors().empty();
 }
 
 bool AGXBody::hasGyroOrAccelerationSensors() const {
@@ -875,6 +897,16 @@ const AGXLinkPtrs& AGXBody::getAGXLinks() const
     return _agxLinks;
 }
 
+bool AGXBody::getAGXLinksFromInfo(const std::string& key, const bool& defaultValue, AGXLinkPtrs& agxLinks) const
+{
+    agxLinks.clear();
+    for(const auto& agxLink : getAGXLinks()){
+        if(agxLink->getOrgLink()->info(key, defaultValue)) agxLinks.push_back(agxLink);
+    }
+    if(agxLinks.empty()) return false;
+    return true;
+}
+
 int AGXBody::numControllableLinks() const
 {
     return (int)_controllableLinks.size();
@@ -925,8 +957,8 @@ void AGXBody::callExtensionFuncs(){
     // update func list
     updateAGXBodyExtensionFuncs();
     //agxBodyExtensionFuncs["test"] = [](AGXBody* agxBody){ std::cout << "test" << std::endl; return false;};
-    agxBodyExtensionFuncs["ContinuousTrack"] = [&](AGXBody* agxBody){ (void)agxBody; return createContinuousTrack(agxBody); };
-    agxBodyExtensionFuncs["AGXVehicleContinousTrack"] = [&](AGXBody* agxBody){ (void)agxBody; return createAGXVehicleContinousTrack(this); };
+    agxBodyExtensionFuncs["ContinuousTrack"] = [&](AGXBody* agxBody){ return createContinuousTrack(agxBody); };
+    agxBodyExtensionFuncs["AGXVehicleContinousTrack"] = [&](AGXBody* agxBody){ return createAGXVehicleContinousTrack(this); };
 
     // call
     for(const auto& func : agxBodyExtensionFuncs){
@@ -950,43 +982,10 @@ void AGXBody::updateAGXBodyExtensionFuncs(){
     }
 }
 
-bool AGXBody::getAGXLinksFromInfo(const std::string& key, const bool& defaultValue, AGXLinkPtrs& agxLinks) const
-{
-    agxLinks.clear();
-    for(const auto& agxLink : getAGXLinks()){
-        if(agxLink->getOrgLink()->info(key, defaultValue)) agxLinks.push_back(agxLink);
-    }
-    if(agxLinks.empty()) return false;
-    return true;
-}
-
 void AGXBody::createExtraJoint()
 {
     if(this->body()->numExtraJoints() > 0) 
         addAGXBodyExtension(new AGXExtraJoint(this));
-}
-
-bool AGXBody::createContinuousTrack(AGXBody* agxBody)
-{
-    (void) agxBody;
-    AGXLinkPtrs myAgxLinks;
-    if(!getAGXLinksFromInfo("isContinuousTrack", false, myAgxLinks)) return false;
-    for(const auto& agxLink : myAgxLinks){
-        addAGXBodyExtension(new AGXContinuousTrack(agxLink, this));
-    }
-    return true;
-}
-
-bool AGXBody::createAGXVehicleContinousTrack(AGXBody* agxBody)
-{
-    (void) agxBody;
-    DeviceList<> devices = this->body()->devices();
-    DeviceList<AGXVehicleContinuousTrackDevice> conTrackDevices;
-    conTrackDevices.extractFrom(devices);
-    for(const auto& ctd : conTrackDevices){
-        addAGXBodyExtension(new AGXVehicleContinuousTrack(ctd, this));
-    }
-    return true;
 }
 
 
