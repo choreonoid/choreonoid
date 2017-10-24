@@ -49,7 +49,7 @@ items:
               data: 
                 isNoDelayMode: true
                 controllerOptions: ""
-                module: "RobotIoRTC.so"
+                module: "RobotIoRTC"
                 baseDirectory: "RTC directory"
                 instanceName: ""
                 periodicRate: 0
@@ -61,7 +61,7 @@ items:
               data: 
                 isNoDelayMode: true
                 controllerOptions: ""
-                module: "PA10PickupControllerRTC.so"
+                module: "PA10PickupControllerRTC"
                 baseDirectory: "RTC directory"
                 instanceName: ""
                 executionContext: "ChoreonoidExecutionContext"

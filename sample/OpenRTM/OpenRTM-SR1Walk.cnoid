@@ -55,7 +55,7 @@ items:
               data: 
                 isNoDelayMode: true
                 controllerOptions: ""
-                module: "RobotIoRTC.so"
+                module: "RobotIoRTC"
                 baseDirectory: "RTC directory"
                 instanceName: ""
                 periodicRate: 0
@@ -67,7 +67,7 @@ items:
               data: 
                 isNoDelayMode: true
                 controllerOptions: ""
-                module: "SR1WalkControllerRTC.so"
+                module: "SR1WalkControllerRTC"
                 baseDirectory: "RTC directory"
                 instanceName: ""
                 executionContext: "ChoreonoidExecutionContext"
