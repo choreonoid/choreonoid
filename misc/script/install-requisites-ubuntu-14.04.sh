@@ -11,8 +11,6 @@ libqt4-opengl-dev \
 qt4-dev-tools \
 qt4-qtconfig \
 qt4-doc-html \
-qt5-default \
-libqt5x11extras5-dev \
 libxfixes-dev \
 libglew-dev \
 libyaml-dev \
@@ -39,3 +37,5 @@ uuid-dev \
 lua5.2 \
 liblua5.2-dev \
 libassimp-dev
+
+sudo apt-get -y install --ignore-missing qt5-default libqt5x11extras5-dev
