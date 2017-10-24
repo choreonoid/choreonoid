@@ -1,4 +1,5 @@
 option(BUILD_AGX_DYNAMICS_PLUGIN "Building AGXDynamicsPlugin" OFF)
+option(AGX_USE_AGGRESSIVE_WARNINGS "Enable to activate aggressive warnings" OFF)
 
 if(NOT BUILD_AGX_DYNAMICS_PLUGIN)
   return()
@@ -8,13 +9,14 @@ if("$ENV{AGX_DIR}"  STREQUAL "")
   MESSAGE(WARNING "\n*** The environment initialization file setup_env.bat/bash has not been executed\n*** Errors might occur during runtime!")
 endif()
 
-set(AGX_DIR $ENV{AGX_DIR} CACHE PATH "set the top directory of the AGX Dynamics library")
+if(NOT EXISTS ${AGX_DIR})
+  set(AGX_DIR $ENV{AGX_DIR} CACHE PATH "set the top directory of the AGX Dynamics library" FORCE)
+endif()
 
-set( CMAKE_MODULE_PATH "${AGX_DIR}/CMakeModules;${CMAKE_MODULE_PATH}")
+set(CMAKE_MODULE_PATH "${AGX_DIR}/CMakeModules;${CMAKE_MODULE_PATH}")
 include(AGXUtils)
 include(AGX${CMAKE_SYSTEM_NAME}Specific)
 
-OPTION(AGX_USE_AGGRESSIVE_WARNINGS "Enable to activate aggressive warnings" OFF)
 include(AGXCompilerFlags )
 
 # Now locate AgX
