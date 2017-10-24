@@ -3,6 +3,7 @@ add_subdirectory(Util)
 add_subdirectory(AISTCollisionDetector)
 add_subdirectory(Body)
 add_subdirectory(Corba)
+add_subdirectory(OpenRTM)
 
 if(ENABLE_GUI)
   add_subdirectory(Base)

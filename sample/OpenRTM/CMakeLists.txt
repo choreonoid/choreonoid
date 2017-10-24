@@ -17,8 +17,7 @@ function(add_cnoid_sample_rtc)
   list(REMOVE_AT ARGV 0)
 
   add_library(${target} SHARED ${ARGV})
-
-  target_link_libraries(${target} CnoidCorba CnoidBody ${OPENRTM_LIBRARIES})
+  target_link_libraries(${target} CnoidBodyIoRTC)
 
   set_target_properties(${target} PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}/rtc

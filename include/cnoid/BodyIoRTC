@@ -1,1 +1,1 @@
-#include "src/OpenRTMPlugin/library/BodyIoRTC.h"
+#include "src/OpenRTM/BodyIoRTC.h"

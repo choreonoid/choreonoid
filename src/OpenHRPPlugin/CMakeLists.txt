@@ -42,7 +42,7 @@ foreach(version ${versions})
     ViewSimulator
     Controller
     OnlineViewer
-)
+    )
 
   if(version EQUAL 3.0)
     set(defver "OPENHRP_3_0")
