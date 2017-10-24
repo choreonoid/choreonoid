@@ -695,7 +695,7 @@ void AGXBody::setCollisionExclude(){
     if(!cdMapping.isValid()) return;
     setCollisionExcludeLinks(cdMapping);
     setCollisionExcludeTreeDepth(cdMapping);
-    setCollisionExcludeLinkGroup(cdMapping);
+    setCollisionExcludeLinkGroups(cdMapping);
 }
 
 void AGXBody::setCollisionExcludeLinks(const Mapping& cdMapping){
@@ -738,31 +738,32 @@ void AGXBody::setCollisionExcludeTreeDepth(const Mapping& cdMapping){
     }
 }
 
-void AGXBody::setCollisionExcludeLinkGroup(const Mapping& cdMapping){
-    const ValueNodePtr& excludeLinkGroupNode = cdMapping.find("excludeLinkGroup");
-    if(!excludeLinkGroupNode->isValid())   return;
-    if(!excludeLinkGroupNode->isListing()) return;
-    const Listing& list = *excludeLinkGroupNode->toListing();
-    for(auto it : list){
-        if(!it->isMapping()) continue;
-        const Mapping&  groupInfo = *it->toMapping();
+void AGXBody::setCollisionExcludeLinkGroups(const Mapping& cdMapping){
+    const ValueNodePtr& excludeLinkGroupsNode = cdMapping.find("excludeLinkGroups");
+    if(!excludeLinkGroupsNode->isValid())   return;
+    if(!excludeLinkGroupsNode->isListing()) return;
+    const Listing& groupList = *excludeLinkGroupsNode->toListing();
+    for(auto group : groupList){
+        if(!group->isMapping()) continue;
+        const Mapping&  groupInfo = *group->toMapping();
         // get group name and add name to agx to disable collision
         stringstream ss;
         if(const ValueNodePtr& nameNode = groupInfo.find("name")){
-            ss << "AGXExcludeLinkGroup_" << nameNode->toString() << agx::UuidGenerator().generate().str() << std::endl;
+            ss << "AGXExcludeLinkGroups_" << nameNode->toString() << agx::UuidGenerator().generate().str() << std::endl;
         }else{
-            ss << "AGXExcludeLinkGroup_" << agx::UuidGenerator().generate().str() << std::endl;
+            ss << "AGXExcludeLinkGroups_" << agx::UuidGenerator().generate().str() << std::endl;
         }
         addCollisionGroupNameToDisableCollision(ss.str());
+
         // get link name and set group name to agx geometry
+        const ValueNodePtr& linkNode = groupInfo.find("links");
+        if(!linkNode->isValid())   continue;
+        if(!linkNode->isListing()) continue;
         vector<string> excludeLinkNames;
-        if(const ValueNodePtr& linkNode = groupInfo.find("links")){
-            if(!linkNode->isListing()) continue;
-            if(agxConvert::setVector(linkNode->toListing(), excludeLinkNames)){
-                for(auto linkName : excludeLinkNames){
-                    getAGXRigidBody(linkName)->getGeometries().front()->addGroup(ss.str());
-                }
-            }
+        if(!agxConvert::setVector(linkNode->toListing(), excludeLinkNames)) continue;
+        for(auto linkName : excludeLinkNames){
+            if(agxCollide::Geometry* geometry = getAGXLink(linkName)->getAGXGeometry())
+                geometry->addGroup(ss.str());
         }
     }
 }
@@ -929,17 +930,20 @@ const AGXLinkPtrs& AGXBody::getControllableLinks() const
 
 agx::RigidBodyRef AGXBody::getAGXRigidBody(const int& index) const
 {
-    return getAGXLink(index)->getAGXRigidBody();
+    if(AGXLink* agxLink = getAGXLink(index)) return agxLink->getAGXRigidBody();
+    return nullptr;
 }
 
 agx::RigidBody* AGXBody::getAGXRigidBody(const std::string& linkName) const
 {
-    return getAGXLink(linkName)->getAGXRigidBody();
+    if(AGXLink* agxLink = getAGXLink(linkName)) return agxLink->getAGXRigidBody();
+    return nullptr;
 }
 
 agx::ConstraintRef AGXBody::getAGXConstraint(const int& index) const
 {
-    return getAGXLink(index)->getAGXConstraint();
+    if(AGXLink* agxLink = getAGXLink(index)) return agxLink->getAGXConstraint();
+    return nullptr;
 }
 
 bool AGXBody::addAGXBodyExtension(AGXBodyExtension* const extension)
