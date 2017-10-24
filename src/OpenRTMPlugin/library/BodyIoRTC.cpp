@@ -8,6 +8,7 @@
 using namespace std;
 using namespace cnoid;
 
+
 BodyIoRTC::BodyIoRTC(RTC::Manager* manager)
     : RTC::DataFlowComponentBase(manager)
 {
@@ -21,19 +22,19 @@ BodyIoRTC::~BodyIoRTC()
 }
 
 
+bool BodyIoRTC::initializeIO(ControllerIO* io)
+{
+    return true;
+}
+
+
 RTC::ReturnCode_t  BodyIoRTC::onInitialize(Body* body)
 {
     return RTC::UNSUPPORTED;
 }
 
 
-bool BodyIoRTC::initializeIO(Body* body)
-{
-    return true;
-}
-
-
-bool BodyIoRTC::initializeSimulation(ControllerItemIO* io)
+bool BodyIoRTC::initializeSimulation(ControllerIO* io)
 {
     return true;
 }

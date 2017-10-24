@@ -156,8 +156,6 @@ set(IDL_INCLUDE_DIRS
   )
 
 idl_compile_cpp(idl_cpp_files idl_h_files corba CameraImage PointCloud)
-idl_compile_cpp(OpenHRP_idl_cpp_files OpenHRP_idl_h_files corba/OpenHRP ClockGenerator)
-
 
 set(library_sources
   )
@@ -165,9 +163,7 @@ set(library_sources
 include_directories(${IDL_INCLUDE_DIRS})
 
 add_cnoid_library(${library} STATIC 
-  ${library_sources} 
-  ${idl_cpp_files} ${idl_h_files}
-  ${OpenHRP_idl_cpp_files} ${OpenHRP_idl_h_files})
+  ${library_sources} ${idl_cpp_files} ${idl_h_files})
 
 target_link_libraries(${library} CnoidCorba)
 apply_common_setting_for_library(${library} "")
@@ -196,7 +192,6 @@ set(plugin_sources
   deprecated/VirtualRobotRTC.cpp
   deprecated/VirtualRobotPortHandler.cpp
   deprecated/BridgeConf.cpp
-  deprecated/OpenHRPClockGeneratorItem.cpp
   )
 
 set(plugin_headers
@@ -244,7 +239,6 @@ else()
                                 RTCItem.cpp
 				ControllerRTCItem.cpp
 				BodyIoRTCItem.cpp
-                                OpenHRPClockGeneratorItem.cpp
                                 ChoreonoidExecutionContext.cpp 
                                 PROPERTIES COMPILE_FLAGS "-fvisibility=hidden")
   endif()

@@ -15,12 +15,6 @@ public:
 
     virtual bool initialize(SimpleControllerIO* io) override
     {
-        SimulationSimpleControllerIO* sio = dynamic_cast<SimulationSimpleControllerIO*>(io);
-        if(!sio){
-            return false;
-        }
-        sio->setImmediateMode(true);
-
         spring = io->body()->link("UPPER");
 
         if(!spring){
@@ -31,6 +25,7 @@ public:
         spring->setActuationMode(Link::JOINT_TORQUE);
         io->enableOutput(spring);
         io->enableInput(spring, JOINT_DISPLACEMENT | JOINT_VELOCITY);
+        io->setNoDelayMode(true);
 
         return true;
     }

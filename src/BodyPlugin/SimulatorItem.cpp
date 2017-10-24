@@ -14,6 +14,7 @@
 #include "CollisionSeq.h"
 #include "CollisionSeqItem.h"
 #include "CollisionSeqEngine.h"
+#include <cnoid/ControllerIO>
 #include <cnoid/BodyState>
 #include <cnoid/AppUtil>
 #include <cnoid/ExtensionManager>
@@ -109,7 +110,7 @@ struct FunctionSet
 
 namespace cnoid {
 
-class SimulationBodyImpl : public ControllerItemIO
+class SimulationBodyImpl : public ControllerIO
 {
 public:
     SimulationBody* self;
@@ -159,7 +160,7 @@ public:
     void flushResultsToWorldLogFile(int bufferFrame);
     void notifyResults(double time);
 
-    // Functions defined in the ControllerItemIO class
+    // Following functions are defined in the ControllerIO class
     virtual Body* body() override;
     virtual double timeStep() const override;
     virtual double currentTime() const override;
@@ -167,7 +168,7 @@ public:
 };
 
 
-class SimulatorItemImpl : public QThread, public ControllerItemIO
+class SimulatorItemImpl : public QThread, public ControllerIO
 {
 public:
     SimulatorItemImpl(SimulatorItem* self);
@@ -326,7 +327,7 @@ public:
     bool setPlaybackTime(double time);
     void addCollisionSeqEngine(CollisionSeqItem* collisionSeqItem);
 
-    // Functions defined in the ControllerItemIO class
+    // Functions defined in the ControllerIO class
     virtual Body* body() override;
     virtual double timeStep() const override;
     virtual double currentTime() const override;
@@ -393,7 +394,7 @@ namespace {
 */
 class ScriptControllerItem : public ControllerItem
 {
-    ControllerItemIO* io;
+    ControllerIO* io;
     double time;
     double timeStep_;
     double delay;
@@ -407,7 +408,7 @@ public:
         doExecAfterInit = false;
     }
 
-    virtual bool initialize(ControllerItemIO* io) override {
+    virtual bool initialize(ControllerIO* io) override {
         this->io = io;
         return true;
     }

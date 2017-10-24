@@ -5,20 +5,14 @@
 #ifndef CNOID_BODY_SIMPLE_CONTROLLER_H
 #define CNOID_BODY_SIMPLE_CONTROLLER_H
 
-#include <cnoid/Body>
+#include "ControllerIO.h"
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class CNOID_EXPORT SimpleControllerIO
+class CNOID_EXPORT SimpleControllerIO : public ControllerIO
 {
   public:
-    virtual ~SimpleControllerIO();
-    virtual Body* body() = 0;
-    virtual double timeStep() const = 0;
-    virtual std::string optionString() const;
-    virtual std::vector<std::string> options() const;
-    virtual std::ostream& os() const;
 
     enum StateType {
         JOINT_ANGLE = 1 << 0,
@@ -51,6 +45,10 @@ class CNOID_EXPORT SimpleControllerIO
 };
 
 
+/**
+   \deprecated.
+   Use ControllerIO::isNoDelayMode() and ControllerIO::setNoDelayMode()
+*/
 class CNOID_EXPORT SimulationSimpleControllerIO : public SimpleControllerIO
 {
 public:

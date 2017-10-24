@@ -30,7 +30,7 @@ public:
     BodyRTCItem(const BodyRTCItem& org);
     virtual ~BodyRTCItem();
 
-    virtual bool initialize(ControllerItemIO* io) override;
+    virtual bool initialize(ControllerIO* io) override;
     virtual bool start() override;
     virtual double timeStep() const override;
     virtual void input() override;
@@ -90,7 +90,7 @@ private:
     double executionCycle;
     double executionCycleCounter;
         
-    const ControllerItemIO* io;
+    const ControllerIO* io;
     double controlTime_;
     std::ostream& os;
 

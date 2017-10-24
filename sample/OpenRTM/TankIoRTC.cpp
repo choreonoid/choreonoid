@@ -19,8 +19,8 @@ public:
     TankIoRTC(RTC::Manager* manager);
     ~TankIoRTC();
 
-    virtual bool initializeIO(Body* body) override;
-    virtual bool initializeSimulation(ControllerItemIO* io) override;
+    virtual bool initializeIO(ControllerIO* io) override;
+    virtual bool initializeSimulation(ControllerIO* io) override;
     virtual void inputFromSimulator() override;
     virtual void outputToSimulator() override;
 
@@ -80,7 +80,7 @@ TankIoRTC::~TankIoRTC()
 }
 
 
-bool TankIoRTC::initializeIO(Body* body)
+bool TankIoRTC::initializeIO(ControllerIO* io)
 {
     // Set InPort buffers
     addInPort("u", torquesIn);
@@ -95,7 +95,7 @@ bool TankIoRTC::initializeIO(Body* body)
 }
 
 
-bool TankIoRTC::initializeSimulation(ControllerItemIO* io)
+bool TankIoRTC::initializeSimulation(ControllerIO* io)
 {
     ioBody = io->body();
 

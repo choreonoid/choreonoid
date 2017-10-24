@@ -27,7 +27,7 @@ public:
     SimpleController* controller();
     SignalProxy<void()> sigControllerChanged();
 
-    virtual bool initialize(ControllerItemIO* io) override;
+    virtual bool initialize(ControllerIO* io) override;
     virtual bool start() override;
     virtual double timeStep() const override;
     virtual void input() override;

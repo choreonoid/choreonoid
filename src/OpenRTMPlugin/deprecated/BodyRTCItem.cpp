@@ -9,6 +9,7 @@
 #include <cnoid/BodyItem>
 #include <cnoid/Link>
 #include <cnoid/BasicSensors>
+#include <cnoid/ControllerIO>
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
 #include <cnoid/FileUtil>
@@ -291,7 +292,7 @@ Item* BodyRTCItem::doDuplicate() const
 }
 
 
-bool BodyRTCItem::initialize(ControllerItemIO* io)
+bool BodyRTCItem::initialize(ControllerIO* io)
 {
     this->io = io;
     simulationBody = io->body();

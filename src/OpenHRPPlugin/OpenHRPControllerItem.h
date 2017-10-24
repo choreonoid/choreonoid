@@ -34,7 +34,7 @@ public:
     void setControllerServerName(const std::string& name);
     void setControllerServerCommand(const std::string& command);
 
-    virtual bool initialize(ControllerItemIO* io) override;
+    virtual bool initialize(ControllerIO* io) override;
     virtual bool start() override;
     virtual double timeStep() const override;
     virtual void input() override;

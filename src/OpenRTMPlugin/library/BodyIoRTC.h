@@ -7,7 +7,7 @@
 #define CNOID_OPENRTM_BODY_IO_RTC_H
 
 #include <cnoid/Body>
-#include <cnoid/ControllerItem>
+#include <cnoid/ControllerIO>
 #include <rtm/Manager.h>
 #include <rtm/DataFlowComponentBase.h>
 #include "exportdecl.h"
@@ -22,8 +22,19 @@ public:
     BodyIoRTC(RTC::Manager* manager);
     ~BodyIoRTC();
 
-    virtual bool initializeIO(Body* body);
-    virtual bool initializeSimulation(ControllerItemIO* io);
+    /**
+       \note The io object is dedicated to this function and must not be sotred and used
+       in other virtual functions called by the system.
+    */
+    virtual bool initializeIO(ControllerIO* io);
+
+    /**
+       \note The io object given to this function is the object managed by a simulator item.
+       It is different from the object given to the initializeIO function, which is not
+       managed by the simulator item.
+    */
+    virtual bool initializeSimulation(ControllerIO* io);
+    
     virtual bool startSimulation();
     virtual void inputFromSimulator();
     virtual void outputToSimulator();
