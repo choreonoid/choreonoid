@@ -637,6 +637,10 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
     double version = 1.0;
     
     auto formatNode = topNode->extract("format");
+    if(!formatNode){
+        topNode->throwException(
+            _("Choreonoid body model needs format specification"));
+    }
     if(formatNode->isValid()){
         if(formatNode->toString() != "ChoreonoidBody"){
             formatNode->throwException(
