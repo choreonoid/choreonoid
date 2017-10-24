@@ -128,7 +128,6 @@ void exportSimulationClasses()
 
         enum_<AISTSimulatorItem::DynamicsMode>("DynamicsMode")
             .value("FORWARD_DYNAMICS", AISTSimulatorItem::FORWARD_DYNAMICS) 
-            .value("HG_DYNAMICS", AISTSimulatorItem::HG_DYNAMICS) 
             .value("KINEMATICS", AISTSimulatorItem::KINEMATICS)
             .value("N_DYNAMICS_MODES", AISTSimulatorItem::N_DYNAMICS_MODES);
 

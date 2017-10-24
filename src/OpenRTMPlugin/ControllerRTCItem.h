@@ -30,7 +30,8 @@ public:
     RTC::RtcBase* rtc();
     std::string rtcModuleName() const;
     std::string rtcInstanceName() const;
-        
+
+    using ControllerItem::initialize;
     virtual bool start() override;
     virtual double timeStep() const override;
     virtual void input() override;

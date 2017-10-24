@@ -17,7 +17,7 @@ class SampleCrawlerJoystickController : public SimpleController
 
 public:
     
-    virtual bool initialize(SimpleControllerIO* io)
+    virtual bool initialize(SimpleControllerIO* io) override
     {
         std::ostream& os = io->os();
 
@@ -29,6 +29,8 @@ public:
             return false;
         }
 
+        crawlerL->setActuationMode(Link::JOINT_SURFACE_VELOCITY);
+        crawlerR->setActuationMode(Link::JOINT_SURFACE_VELOCITY);
         io->enableOutput(crawlerL);
         io->enableOutput(crawlerR);
 
@@ -46,7 +48,7 @@ public:
         return true;
     }
 
-    virtual bool control()
+    virtual bool control() override
     {
         joystick.readCurrentState();
 

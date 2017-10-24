@@ -14,6 +14,7 @@
 #include "CollisionSeq.h"
 #include "CollisionSeqItem.h"
 #include "CollisionSeqEngine.h"
+#include <cnoid/ControllerIO>
 #include <cnoid/BodyState>
 #include <cnoid/AppUtil>
 #include <cnoid/ExtensionManager>
@@ -109,7 +110,7 @@ struct FunctionSet
 
 namespace cnoid {
 
-class SimulationBodyImpl : public ControllerItemIO
+class SimulationBodyImpl : public ControllerIO
 {
 public:
     SimulationBody* self;
@@ -159,15 +160,15 @@ public:
     void flushResultsToWorldLogFile(int bufferFrame);
     void notifyResults(double time);
 
-    // Functions defined in the ControllerItemIO class
-    virtual Body* body();
-    virtual double timeStep() const;
-    virtual double currentTime() const;
-    virtual std::string optionString() const;
+    // Following functions are defined in the ControllerIO class
+    virtual Body* body() override;
+    virtual double timeStep() const override;
+    virtual double currentTime() const override;
+    virtual std::string optionString() const override;
 };
 
 
-class SimulatorItemImpl : public QThread, public ControllerItemIO
+class SimulatorItemImpl : public QThread, public ControllerIO
 {
 public:
     SimulatorItemImpl(SimulatorItem* self);
@@ -326,11 +327,11 @@ public:
     bool setPlaybackTime(double time);
     void addCollisionSeqEngine(CollisionSeqItem* collisionSeqItem);
 
-    // Functions defined in the ControllerItemIO class
-    virtual Body* body();
-    virtual double timeStep() const;
-    virtual double currentTime() const;
-    virtual std::string optionString() const;
+    // Functions defined in the ControllerIO class
+    virtual Body* body() override;
+    virtual double timeStep() const override;
+    virtual double currentTime() const override;
+    virtual std::string optionString() const override;
 };
 
 
@@ -393,19 +394,26 @@ namespace {
 */
 class ScriptControllerItem : public ControllerItem
 {
-    bool doExecAfterInit;
+    ControllerIO* io;
     double time;
     double timeStep_;
     double delay;
     SimulationScriptItemPtr scriptItem;
     LazyCaller executeLater;
+    bool doExecAfterInit;
 
 public:
     ScriptControllerItem(SimulationScriptItem* scriptItem){
         this->scriptItem = scriptItem;
         doExecAfterInit = false;
     }
-    virtual bool start(ControllerItemIO* io) {
+
+    virtual bool initialize(ControllerIO* io) override {
+        this->io = io;
+        return true;
+    }
+    
+    virtual bool start() override {
         timeStep_ = io->timeStep();
         if(scriptItem->executionTiming() == SimulationScriptItem::DURING_INITIALIZATION){
             scriptItem->executeAsSimulationScript();
@@ -417,12 +425,15 @@ public:
         }
         return true;
     }
-    virtual double timeStep() const{
+    
+    virtual double timeStep() const override {
         return timeStep_;
     }
-    virtual void input() {
+    
+    virtual void input() override {
     }
-    virtual bool control() {
+    
+    virtual bool control() override {
         if(doExecAfterInit){
             if(time >= delay){
                 executeLater();
@@ -433,12 +444,15 @@ public:
         }
         return false;
     }
+    
     void execute(){
         scriptItem->executeAsSimulationScript();
     }
-    virtual void output() {
+    
+    virtual void output() override {
     }
-    virtual void stop() {
+    
+    virtual void stop() override {
         if(scriptItem->executionTiming() == SimulationScriptItem::DURING_FINALIZATION){
             scriptItem->executeAsSimulationScript();
         }
@@ -582,9 +596,15 @@ bool SimulationBodyImpl::initialize(SimulatorItemImpl* simImpl, BodyItem* bodyIt
 bool SimulationBodyImpl::initialize(SimulatorItemImpl* simImpl, ControllerItem* controllerItem)
 {
     this->simImpl = simImpl;
-    this->controllers.push_back(controllerItem);
     frameRate = simImpl->worldFrameRate;
+
+    if(!controllerItem->initialize(this)){
+        return false;
+    }
+    controllers.push_back(controllerItem);
+
     linkPosBuf.resizeColumn(0);
+
     return true;
 }
 
@@ -601,7 +621,7 @@ void SimulationBodyImpl::extractAssociatedItems(bool doReset)
             if(controllerItem->initialize(this)){
                 controllers.push_back(controllerItem);
             } else {
-                controllerItem = 0;
+                controllerItem = nullptr;
             }
         }
         if(controllerItem){
@@ -1460,13 +1480,14 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
             
         } else if(ControllerItem* controller = dynamic_cast<ControllerItem*>(targetItems.get(i))){
             // ControllerItem which is not associated with a body
-            SimulationBodyPtr simBody = new SimulationBody(BodyPtr());
+            SimulationBodyPtr simBody = new SimulationBody(nullptr);
             if(simBody->impl->initialize(this, controller)){
                 allSimBodies.push_back(simBody);
             }
         } else if(SimulationScriptItem* script = dynamic_cast<SimulationScriptItem*>(targetItems.get(i))){
-            SimulationBodyPtr simBody = new SimulationBody(BodyPtr());
-            if(simBody->impl->initialize(this, new ScriptControllerItem(script))){
+            SimulationBodyPtr simBody = new SimulationBody(nullptr);
+            ControllerItemPtr scriptControllerItem = new ScriptControllerItem(script);
+            if(simBody->impl->initialize(this, scriptControllerItem)){
                 allSimBodies.push_back(simBody);
             }
         }
@@ -1552,15 +1573,13 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
                 bool ready = false;
                 controller->setSimulatorItem(self);
                 if(body){
-                    ready = (controller->start() &&           // new API
-                             controller->start(simBodyImpl)); // old API
+                    ready = controller->start();
                     if(!ready){
                         os << (fmt(_("%1% for %2% failed to initialize."))
                                % controller->name() % simBodyImpl->bodyItem->name()) << endl;
                     }
                 } else {
-                    ready = (controller->start() &&    // new API
-                             controller->start(this)); // old API
+                    ready = controller->start();
                     if(!ready){
                         os << (fmt(_("%1% failed to initialize."))
                                % controller->name()) << endl;

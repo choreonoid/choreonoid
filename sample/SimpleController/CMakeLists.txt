@@ -45,9 +45,6 @@ configure_file(ConveyorSample.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 
 add_cnoid_simple_controller(CameraSampleController CameraSampleController.cpp)
 
-add_cnoid_simple_controller(ThreeWheelerController ThreeWheelerController.cpp)
-configure_file(ThreeWheeler.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
-
 add_cnoid_simple_controller(FourWheelCarJoystickController FourWheelCarJoystickController.cpp)
 configure_file(FourWheelCarJoystick.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 

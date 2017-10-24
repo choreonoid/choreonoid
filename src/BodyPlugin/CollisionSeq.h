@@ -27,6 +27,8 @@ public:
     CollisionSeqItem* collisionSeqItem_;
     CollisionSeq(CollisionSeqItem* collisionSeqItem);
 
+    using BaseSeqType::operator=;
+
     virtual bool doWriteSeq(YAMLWriter& writer);
     virtual bool doReadSeq(const Mapping& archive);
 

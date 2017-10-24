@@ -540,8 +540,8 @@ RTSConnection* RTSystemItemImpl::addRTSConnectionName(const string& id, const st
         const string& dataflow, const string& subscription,
         const bool setPos, const Vector2 pos[] )
 {
-    RTSPort* sourcePort;
-    RTSPort* targetPort;
+    RTSPort* sourcePort{};
+    RTSPort* targetPort{};
     RTSComp* sourceRtc = nameToRTSComp(sourceCompName);
     if(sourceRtc){
         sourcePort = sourceRtc->nameToRTSPort(sourcePortName);

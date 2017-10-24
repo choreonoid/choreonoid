@@ -11,14 +11,14 @@ class LightController : public SimpleController
     bool prevButtonState;
 
 public:
-    virtual bool initialize(SimpleControllerIO* io)
+    virtual bool initialize(SimpleControllerIO* io) override
     {
         light = io->body()->findDevice<SpotLight>("Light");
         prevButtonState = false;
         return true;
     }
 
-    virtual bool control()
+    virtual bool control() override
     {
         static const int buttonID[] = { 0, 2, 3 };
         

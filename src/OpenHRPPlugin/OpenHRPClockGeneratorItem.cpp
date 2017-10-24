@@ -3,11 +3,12 @@
 */
 
 #include "OpenHRPClockGeneratorItem.h"
-#include "../corba/OpenHRP/ClockGenerator.hh"
+#include "corba/OpenHRP/3.1/ClockGenerator.hh"
+#include <cnoid/ControllerIO>
 #include <cnoid/CorbaUtil>
 #include <cnoid/ItemManager>
 #include <cnoid/MessageView>
-#include "../gettext.h"
+#include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
@@ -162,11 +163,11 @@ void OpenHRPClockGeneratorItem::onDisconnectedFromRoot()
 }
 
 
-bool OpenHRPClockGeneratorItem::start(ControllerItemIO* io)
+bool OpenHRPClockGeneratorItem::initialize(ControllerIO* io)
 {
     timeStep_ = io->timeStep();
     clockGenerator->reset();
-    mv->putln(_("OpenHRP ClockGenerator is used for this simulation."));
+    io->os() << _("OpenHRP ClockGenerator is used for this simulation.") << endl;
     return true;
 }
 

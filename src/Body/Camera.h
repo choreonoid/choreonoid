@@ -19,16 +19,16 @@ public:
     Camera();
     Camera(const Camera& org, bool copyStateOnly = false);
 
-    virtual const char* typeName();
+    virtual const char* typeName() override;
     void copyStateFrom(const Camera& other);
-    virtual void copyStateFrom(const DeviceState& other);
-    virtual DeviceState* cloneState() const;
-    virtual Device* clone() const;
-    virtual void forEachActualType(std::function<bool(const std::type_info& type)> func);
-    virtual void clearState();
-    virtual int stateSize() const;
-    virtual const double* readState(const double* buf);
-    virtual double* writeState(double* out_buf) const;
+    virtual void copyStateFrom(const DeviceState& other) override;
+    virtual DeviceState* cloneState() const override;
+    virtual Device* clone() const override;
+    virtual void forEachActualType(std::function<bool(const std::type_info& type)> func) override;
+    virtual void clearState() override;
+    virtual int stateSize() const override;
+    virtual const double* readState(const double* buf) override;
+    virtual double* writeState(double* out_buf) const override;
 
     void setImageStateClonable(bool on) { isImageStateClonable_ = on; }
     bool isImageStateClonable() const { return isImageStateClonable_; }

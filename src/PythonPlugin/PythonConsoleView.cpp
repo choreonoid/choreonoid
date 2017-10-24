@@ -225,7 +225,7 @@ PythonConsoleViewImpl::PythonConsoleViewImpl(PythonConsoleView* self)
     python::object keyword = python::module::import("keyword");
 #ifdef CNOID_USE_PYBIND11
     pybind11::list kwlist = pybind11::cast<pybind11::list>(keyword.attr("kwlist"));
-    for(int i = 0; i < pybind11::len(kwlist); ++i){
+    for(size_t i = 0; i < pybind11::len(kwlist); ++i){
         keywords.push_back(pybind11::cast<string>(kwlist[i]));
     }
 #else
@@ -371,7 +371,7 @@ std::vector<string> PythonConsoleViewImpl::getMemberNames(python::object& module
     python::list memberNames = python::extract<python::list>(python::object(h));
 #endif
     std::vector<string> retNames;
-    for(int i=0; i < python::len(memberNames); ++i){
+    for(size_t i=0; i < python::len(memberNames); ++i){
 #ifdef CNOID_USE_PYBIND11
         if(!strstr(string(memberNames[i].cast<string>()).c_str(), "__" )){
             retNames.push_back(string(memberNames[i].cast<string>()));
@@ -431,7 +431,7 @@ void PythonConsoleViewImpl::tabComplete()
 
     std::vector<string> completions;
     unsigned long int maxLength = std::numeric_limits<long>::max();
-    for(int i=0; i < memberNames.size(); ++i){
+    for(size_t i=0; i < memberNames.size(); ++i){
         if(memberNames[i].substr(0,lastDottedString.size()) == lastDottedString){
             completions.push_back(memberNames[i]);
             maxLength = std::min((unsigned long int)memberNames[i].size(),maxLength);

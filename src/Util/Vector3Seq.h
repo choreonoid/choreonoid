@@ -20,6 +20,8 @@ public:
     Vector3Seq(int nFrames = 0);
     Vector3Seq(const Vector3Seq& org);
     virtual ~Vector3Seq();
+
+    using BaseSeqType::operator=;
     virtual AbstractSeqPtr cloneSeq() const;
         
     virtual bool loadPlainFormat(const std::string& filename);

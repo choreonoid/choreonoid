@@ -34,19 +34,20 @@ public:
     void setControllerServerName(const std::string& name);
     void setControllerServerCommand(const std::string& command);
 
-    virtual bool start(ControllerItemIO* io);
-    virtual double timeStep() const;
-    virtual void input();
-    virtual bool control();
-    virtual void output();
-    virtual void stop();
+    virtual bool initialize(ControllerIO* io) override;
+    virtual bool start() override;
+    virtual double timeStep() const override;
+    virtual void input() override;
+    virtual bool control() override;
+    virtual void output() override;
+    virtual void stop() override;
 
 protected:
-    virtual void onDisconnectedFromRoot();
-    virtual Item* doDuplicate() const;
-    virtual void doPutProperties(PutPropertyFunction& putProperty);
-    virtual bool store(Archive& archive);
-    virtual bool restore(const Archive& archive);
+    virtual void onDisconnectedFromRoot() override;
+    virtual Item* doDuplicate() const override;
+    virtual void doPutProperties(PutPropertyFunction& putProperty) override;
+    virtual bool store(Archive& archive) override;
+    virtual bool restore(const Archive& archive) override;
 
 private:
     void onReadyReadServerProcessOutput();
