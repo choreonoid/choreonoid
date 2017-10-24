@@ -596,9 +596,15 @@ bool SimulationBodyImpl::initialize(SimulatorItemImpl* simImpl, BodyItem* bodyIt
 bool SimulationBodyImpl::initialize(SimulatorItemImpl* simImpl, ControllerItem* controllerItem)
 {
     this->simImpl = simImpl;
-    this->controllers.push_back(controllerItem);
     frameRate = simImpl->worldFrameRate;
+
+    if(!controllerItem->initialize(this)){
+        return false;
+    }
+    controllers.push_back(controllerItem);
+
     linkPosBuf.resizeColumn(0);
+
     return true;
 }
 
@@ -615,7 +621,7 @@ void SimulationBodyImpl::extractAssociatedItems(bool doReset)
             if(controllerItem->initialize(this)){
                 controllers.push_back(controllerItem);
             } else {
-                controllerItem = 0;
+                controllerItem = nullptr;
             }
         }
         if(controllerItem){
@@ -1474,13 +1480,14 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
             
         } else if(ControllerItem* controller = dynamic_cast<ControllerItem*>(targetItems.get(i))){
             // ControllerItem which is not associated with a body
-            SimulationBodyPtr simBody = new SimulationBody(BodyPtr());
+            SimulationBodyPtr simBody = new SimulationBody(nullptr);
             if(simBody->impl->initialize(this, controller)){
                 allSimBodies.push_back(simBody);
             }
         } else if(SimulationScriptItem* script = dynamic_cast<SimulationScriptItem*>(targetItems.get(i))){
-            SimulationBodyPtr simBody = new SimulationBody(BodyPtr());
-            if(simBody->impl->initialize(this, new ScriptControllerItem(script))){
+            SimulationBodyPtr simBody = new SimulationBody(nullptr);
+            ControllerItemPtr scriptControllerItem = new ScriptControllerItem(script);
+            if(simBody->impl->initialize(this, scriptControllerItem)){
                 allSimBodies.push_back(simBody);
             }
         }
