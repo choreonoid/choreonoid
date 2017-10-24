@@ -82,6 +82,7 @@ bool readAGXVehicleContinuousTrackDevice(YAMLBodyLoader& loader, Mapping& node)
     NODE_READ(lockToReachMergeConditionCompliance);
     NODE_READ(lockToReachMergeConditionDamping);
     NODE_READ(maxAngleMergeCondition);
+    node.read("material", desc.materialName);
 
     // Get name of wheels from yaml
     const auto toVectorString = [](ValueNodePtr const vnptr, vector<string>& vs) ->bool
