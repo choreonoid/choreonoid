@@ -123,19 +123,18 @@ struct AGXGeometryDesc
         isPseudoContinuousTrack = false;
     };
     bool isPseudoContinuousTrack;
-    agx::Vec3f axis;
-    agx::Vec3f surfacevel;
+    agx::Vec3 axis;
     agx::Name selfCollsionGroupName;
 };
 
 class AGXPseudoContinuousTrackGeometry : public agxCollide::Geometry
 {
 public:
-    void setAxis(const agx::Vec3f& axis);
-    agx::Vec3f getAxis() const;
+    void setAxis(const agx::Vec3& axis);
+    agx::Vec3 getAxis() const;
     virtual agx::Vec3f calculateSurfaceVelocity( const agxCollide::LocalContactPoint& point , size_t index ) const;
 private:
-    agx::Vec3f m_axis;
+    agx::Vec3 m_axis;
 };
 
 enum AGXShapeType

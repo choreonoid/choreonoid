@@ -4,22 +4,22 @@ namespace cnoid{
 
 ////////////////////////////////////////////////////////////
 // AGXPseudoContinuousTrackGeometry
-void AGXPseudoContinuousTrackGeometry::setAxis(const agx::Vec3f& axis)
+void AGXPseudoContinuousTrackGeometry::setAxis(const agx::Vec3& axis)
 {
     m_axis = axis;
 }
 
-agx::Vec3f AGXPseudoContinuousTrackGeometry::getAxis() const
+agx::Vec3 AGXPseudoContinuousTrackGeometry::getAxis() const
 {
     return m_axis;
 }
 
 agx::Vec3f AGXPseudoContinuousTrackGeometry::calculateSurfaceVelocity(const agxCollide::LocalContactPoint & point, size_t index) const
 {
-    agx::Vec3f dir = getAxis() ^ point.normal();
+    agx::Vec3 dir = getAxis() ^ agx::Vec3(point.normal());
     dir.normalize();
-    const agx::Vec3f ret = dir * getSurfaceVelocity().x();
-    return ret;
+    dir *= -1.0 * getSurfaceVelocity().x();
+    return agx::Vec3f(dir);
 }
 
 ////////////////////////////////////////////////////////////
