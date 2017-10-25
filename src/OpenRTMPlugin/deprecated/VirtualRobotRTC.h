@@ -24,6 +24,8 @@ public:
     VirtualRobotRTC(RTC::Manager* manager);
     ~VirtualRobotRTC();
 
+    using RTC::DataFlowComponentBase::initialize;
+
     RTC::ReturnCode_t onInitialize();
     void createPorts(BridgeConf* bridgeConf);
 

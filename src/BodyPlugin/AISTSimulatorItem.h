@@ -26,7 +26,7 @@ public:
 
     virtual bool startSimulation(bool doReset = true);
 
-    enum DynamicsMode { FORWARD_DYNAMICS = 0, HG_DYNAMICS, KINEMATICS, N_DYNAMICS_MODES };
+    enum DynamicsMode { FORWARD_DYNAMICS = 0, KINEMATICS, N_DYNAMICS_MODES };
     enum IntegrationMode { EULER_INTEGRATION = 0, RUNGE_KUTTA_INTEGRATION, N_INTEGRATION_MODES };
 
     void setDynamicsMode(int mode);

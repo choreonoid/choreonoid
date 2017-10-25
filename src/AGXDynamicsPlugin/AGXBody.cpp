@@ -329,9 +329,7 @@ agxCollide::GeometryRef AGXLink::createAGXGeometry()
     LinkPtr const orgLink = getOrgLink();
     AGXGeometryDesc gdesc;
     gdesc.selfCollsionGroupName = getAGXBody()->getCollisionGroupName();
-    if(orgLink->actuationMode() == Link::ActuationMode::JOINT_SURFACE_VELOCITY
-        || orgLink->jointType() == Link::PSEUDO_CONTINUOUS_TRACK){
-        // Link::PSEUDO_CONTINUOUS_TRACK is deprecated
+    if(orgLink->actuationMode() == Link::JOINT_SURFACE_VELOCITY){
         gdesc.isPseudoContinuousTrack = true;
         const Vector3& a = orgLink->a();
         gdesc.axis = agx::Vec3(a(0), a(1), a(2));
@@ -581,9 +579,7 @@ void AGXLink::setVelocityToAGX()
             break;
     }
 
-    if(orgLink->actuationMode() == Link::ActuationMode::JOINT_SURFACE_VELOCITY
-        || orgLink->jointType() == Link::PSEUDO_CONTINUOUS_TRACK){
-        // Link::PSEUDO_CONTINUOUS_TRACK is deprecated
+    if(orgLink->actuationMode() == Link::JOINT_SURFACE_VELOCITY){
         // Set speed(scalar) to x value. Direction is automatically calculated at AGXPseudoContinuousTrackGeometry::calculateSurfaceVelocity
         agx::Vec3f vel((float)orgLink->dq(), 0.0, 0.0);
         getAGXGeometry()->setSurfaceVelocity(vel);

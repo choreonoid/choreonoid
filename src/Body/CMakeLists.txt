@@ -58,6 +58,7 @@ set(sources
   VRMLBodyWriter.cpp
   PoseProviderToBodyMotionConverter.cpp
   BodyMotionUtil.cpp
+  ControllerIO.cpp
   SimpleController.cpp
   CnoidBody.cpp # This file must be placed at the last position
   )
@@ -118,6 +119,7 @@ set(headers
   BodyState.h
   CollisionLinkPair.h
   ExtraJoint.h
+  ControllerIO.h
   SimpleController.h
   exportdecl.h
   CnoidBody.h

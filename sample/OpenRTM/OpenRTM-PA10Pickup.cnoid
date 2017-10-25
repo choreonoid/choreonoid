@@ -13,6 +13,8 @@ items:
       class: WorldItem
       data: 
         collisionDetection: false
+        collisionDetector: AISTCollisionDetector
+        materialTableFile: "${SHARE}/default/materials.yaml"
       children: 
         - 
           id: 2
@@ -22,136 +24,165 @@ items:
           data: 
             modelFile: "${SHARE}/model/PA10/PA10.body"
             currentBaseLink: "BASE"
-            rootPosition: [  0.000000,  0.000000,  0.000000 ]
+            rootPosition: [ 0, 0, 0 ]
             rootAttitude: [ 
-               1.000000,  0.000000,  0.000000, 
-               0.000000,  1.000000,  0.000000, 
-               0.000000,  0.000000,  1.000000 ]
+              1, 0, 0, 
+              0, 1, 0, 
+              0, 0, 1 ]
             jointPositions: [  0.000000, -0.523599,  0.000000,  1.047198,  0.000000, -0.523599,  0.000000, -0.025000,  0.025000 ]
-            initialRootPosition: [  0.000000,  0.000000,  0.000000 ]
+            initialRootPosition: [ 0, 0, 0 ]
             initialRootAttitude: [ 
-               1.000000,  0.000000,  0.000000, 
-               0.000000,  1.000000,  0.000000, 
-               0.000000,  0.000000,  1.000000 ]
+              1, 0, 0, 
+              0, 1, 0, 
+              0, 0, 1 ]
             initialJointPositions: [  0.000000, -0.523599,  0.000000,  1.047198,  0.000000, -0.523599,  0.000000, -0.025000,  0.025000 ]
-            zmp: [  0.000000,  0.000000,  0.000000 ]
+            zmp: [ 0, 0, 0 ]
+            collisionDetection: true
             selfCollisionDetection: false
+            isEditable: true
           children: 
             - 
               id: 3
-              name: "BodyRTC"
+              name: "BodyIoRTC"
               plugin: OpenRTM
-              class: BodyRTCItem
+              class: BodyIoRTCItem
               data: 
-                isImmediateMode: true
-                moduleName: "PA10PickupControllerRTC"
-                confFileName: "PA10Pickup.conf"
-                configurationMode: Use Configuration File
-                AutoConnect: false
-                InstanceName: PA10
-                bodyPeriodicRate: 0
+                isNoDelayMode: true
+                controllerOptions: ""
+                module: "RobotIoRTC"
+                baseDirectory: "RTC directory"
+                instanceName: ""
+                periodicRate: 0
+            - 
+              id: 4
+              name: "PA10PickupControllerRTC"
+              plugin: OpenRTM
+              class: ControllerRTCItem
+              data: 
+                isNoDelayMode: true
+                controllerOptions: ""
+                module: "PA10PickupControllerRTC"
+                baseDirectory: "RTC directory"
+                instanceName: ""
+                executionContext: "ChoreonoidExecutionContext"
+                periodicRate: 0
         - 
-          id: 4
+          id: 5
           name: "box3"
           plugin: Body
           class: BodyItem
           data: 
             modelFile: "${SHARE}/model/misc/box3.body"
             currentBaseLink: "WAIST"
-            rootPosition: [  0.900000,  0.000000,  0.035000 ]
+            rootPosition: [ 0.9, 0, 0.035 ]
             rootAttitude: [ 
-               0.000000, -1.000000,  0.000000, 
-               1.000000,  0.000000,  0.000000, 
-               0.000000,  0.000000,  1.000000 ]
+              0, -1, 0, 
+              1, 0, 0, 
+              0, 0, 1 ]
             jointPositions: [  ]
-            initialRootPosition: [  0.900000,  0.000000,  0.035000 ]
+            initialRootPosition: [ 0.9, 0, 0.035 ]
             initialRootAttitude: [ 
-               0.000000, -1.000000,  0.000000, 
-               1.000000,  0.000000,  0.000000, 
-               0.000000,  0.000000,  1.000000 ]
-            zmp: [  0.000000,  0.000000,  0.000000 ]
+              2.22044605e-16, -1, 0, 
+              1, 2.22044605e-16, 0, 
+              0, 0, 1 ]
+            zmp: [ 0, 0, 0 ]
+            collisionDetection: true
             selfCollisionDetection: false
+            isEditable: true
         - 
-          id: 5
+          id: 6
           name: "box2"
           plugin: Body
           class: BodyItem
           data: 
             modelFile: "${SHARE}/model/misc/box2.body"
             currentBaseLink: "WAIST"
-            rootPosition: [ -0.000000,  0.700000,  0.149900 ]
+            rootPosition: [ -0, 0.7, 0.1499 ]
             rootAttitude: [ 
-               1.000000,  0.000000, -0.000000, 
-              -0.000000,  1.000000,  0.000000, 
-               0.000000,  0.000000,  1.000000 ]
+              1, 0, -0, 
+              -0, 1, 0, 
+              0, 0, 1 ]
             jointPositions: [  ]
-            initialRootPosition: [ -0.000000,  0.700000,  0.149900 ]
+            initialRootPosition: [ -0, 0.7, 0.1499 ]
             initialRootAttitude: [ 
-               1.000000,  0.000000, -0.000000, 
-              -0.000000,  1.000000,  0.000000, 
-               0.000000,  0.000000,  1.000000 ]
-            zmp: [  0.000000,  0.000000,  0.000000 ]
+              1, 0, -0, 
+              -0, 1, 0, 
+              0, 0, 1 ]
+            zmp: [ 0, 0, 0 ]
             staticModel: true
+            collisionDetection: true
             selfCollisionDetection: false
+            isEditable: true
         - 
-          id: 6
+          id: 7
           name: "Floor"
           plugin: Body
           class: BodyItem
           data: 
             modelFile: "${SHARE}/model/misc/floor.body"
-            currentBaseLink: "BASE"
-            rootPosition: [  0.000000,  0.000000, -0.100000 ]
+            currentBaseLink: ""
+            rootPosition: [ 0, 0, -0.1 ]
             rootAttitude: [ 
-               1.000000,  0.000000,  0.000000, 
-               0.000000,  1.000000,  0.000000, 
-               0.000000,  0.000000,  1.000000 ]
+              1, 0, 0, 
+              0, 1, 0, 
+              0, 0, 1 ]
             jointPositions: [  ]
-            initialRootPosition: [  0.000000,  0.000000, -0.100000 ]
+            initialRootPosition: [ 0, 0, -0.1 ]
             initialRootAttitude: [ 
-               1.000000,  0.000000,  0.000000, 
-               0.000000,  1.000000,  0.000000, 
-               0.000000,  0.000000,  1.000000 ]
-            zmp: [  0.000000,  0.000000,  0.000000 ]
+              1, 0, 0, 
+              0, 1, 0, 
+              0, 0, 1 ]
+            zmp: [ 0, 0, 0 ]
+            collisionDetection: true
             selfCollisionDetection: false
+            isEditable: false
         - 
-          id: 7
+          id: 8
           name: "AISTSimulator"
           plugin: Body
           class: AISTSimulatorItem
           data: 
+            timestep: 0.001
             realtimeSync: true
             recording: "full"
             timeRangeMode: "Specified time"
             timeLength: 8
             allLinkPositionOutputMode: false
-            deviceStateRecording: false
-            dynamicsMode: Forward dynamics
-            integrationMode: Runge Kutta
+            deviceStateOutput: true
+            selfCollision: false
+            controllerThreads: true
+            recordCollisionData: false
+            controllerOptions: ""
+            dynamicsMode: "Forward dynamics"
+            integrationMode: "Runge Kutta"
             gravity: [ 0, 0, -9.80665 ]
             staticFriction: 0.5
-            slipFriction: 0.5
+            dynamicFriction: 0.5
             cullingThresh: 0.02
+            contactCullingDepth: 0.05
             errorCriterion: 0.001
             maxNumIterations: 1000
             contactCorrectionDepth: 0.0001
             contactCorrectionVelocityRatio: 30
+            kinematicWalking: false
             2Dmode: false
+            oldAccelSensorMode: false
         - 
-          id: 8
+          id: 9
           name: "ODESimulator"
           plugin: ODE
           class: ODESimulatorItem
           data: 
+            timestep: 0.001
             realtimeSync: true
             recording: "full"
             timeRangeMode: "Specified time"
-            timeLength: 8
+            timeLength: 13.4
             allLinkPositionOutputMode: true
-            deviceStateRecording: false
+            deviceStateRecording: true
             stepMode: Iterative (quick step)
-            gravity: [ 0, 0, -9.80665 ]
-            friction: 1
+            gravity: [ 0, 0, -9.8 ]
+            friction: 0.5
             jointLimitMode: false
             globalERP: 0.4
             globalCFM: 1e-10
@@ -161,228 +192,263 @@ items:
             maxCorrectingVel: 1.0e-3
             2Dmode: false
         - 
-          id: 9
+          id: 10
           name: "BulletSimulator"
           plugin: Bullet
           class: BulletSimulatorItem
-          data: 
+          data:
+            timestep: 0.001
             realtimeSync: true
             recording: "full"
             timeRangeMode: "Specified time"
-            timeLength: 8
+            timeLength: 13.4
             allLinkPositionOutputMode: true
-            deviceStateRecording: false
-            ErrorReductionParameter: 0.2
+            deviceStateRecording: true
+            ErrorReductionParameter: 0.5
             NumIterations: 10
             Restitution: 0
             Friction: 0.7
             ERP2: 0
             SplitImpulsePenetrationThreshold: -0.0001
+        - 
+          id: 11
+          name: "RTSystem"
+          plugin: OpenRTM
+          class: RTSystemItem
+          data: 
+            AutoConnection: true
+            RTSComps: 
+              - 
+                name: PA10-RobotIoRTC
+                pos: [ -97, -37 ]
+                InPorts: 
+                  - 
+                    name: PA10-RobotIoRTC.u
+                    isServicePort: false
+                OutPorts: 
+                  - 
+                    name: PA10-RobotIoRTC.q
+                    isServicePort: false
+              - 
+                name: PA10PickupControllerRTC
+                pos: [ -120, 78 ]
+                InPorts: 
+                  - 
+                    name: PA10PickupControllerRTC.q
+                    isServicePort: false
+                OutPorts: 
+                  - 
+                    name: PA10PickupControllerRTC.u_out
+                    isServicePort: false
+            RTSConnections: 
+              - 
+                name: PA10-RobotIoRTC.q_PA10PickupControllerRTC.q
+                sourceRtcName: PA10-RobotIoRTC
+                sourcePortName: PA10-RobotIoRTC.q
+                targetRtcName: PA10PickupControllerRTC
+                targetPortName: PA10PickupControllerRTC.q
+                dataflow: push
+                subscription: flush
+                position: [ 12, -18, 74, -18, 74, 49, -99, 49, -99, 97, -39, 97 ]
+              - 
+                name: PA10-RobotIoRTC.u_PA10PickupControllerRTC.u_out
+                sourceRtcName: PA10-RobotIoRTC
+                sourcePortName: PA10-RobotIoRTC.u
+                targetRtcName: PA10PickupControllerRTC
+                targetPortName: PA10PickupControllerRTC.u_out
+                dataflow: push
+                subscription: flush
+                position: [ -48, -18, -126, -18, -126, 27, 106, 27, 106, 97, 21, 97 ]
 views: 
-  "Items": 
-    selected: [ 7 ]
-    checked: [ 2, 4, 5, 6 ]
-    expanded: [ 1, 2, 3, 4, 5 ]
-  "Scene": 
-    walkthrough: false
-    showCollisions: true
-    wireframe: false
-    defaultHeadLight: true
-    defaultHeadLightIntensity: 0.75
-    worldLight: true
-    worldLightIntensity: 0.5
-    worldLightAmbient: 0.3
-    additionalLights: true
-    floorGrid: false
-    floorGridSpan: 10
-    floorGridInterval: 0.5
-    normalVisualization: false
-    normalLength: 0.01
-    coordinateAxes: true
-    showFPS: false
-    camera: 
-      current: Perspective
-      eye: [ 2.98726, 1.61043, 1.04286 ]
-      direction: [ -0.888889, -0.444444, -0.111111 ]
-      up: [ -0.0993807, -0.0496904, 0.993808 ]
-      fieldOfView: 0.6978
-      near: 0.01
-      far: 10000
-      orthoHeight: 20
-    backgroundColor: [ 0.1, 0.1, 0.3 ]
-    gridColor: [ 0.9, 0.9, 0.9, 1 ]
-  "Multi Value Seq": 
-    mode: view
-    editMode: freeLine
-    original: true
-    velocity: false
-    acceleration: false
-    limits: true
-    grid: true
-    gridWidth: 0.2
-    gridHeight: 0.2
-    lineWidth: 1
-    rulers: false
-    sync: true
-    controlPointStep: 1
-    controlPointOffset: 0
-    controlPointHeighlight: false
-    scrollMode: continuous
-    lower: -10
-    upper: 10
-  "Multi SE3 Seq": 
-    mode: view
-    editMode: freeLine
-    original: true
-    velocity: false
-    acceleration: false
-    limits: true
-    grid: true
-    gridWidth: 0.2
-    gridHeight: 0.2
-    lineWidth: 1
-    rulers: false
-    sync: true
-    controlPointStep: 1
-    controlPointOffset: 0
-    controlPointHeighlight: false
-    scrollMode: continuous
-    lower: -10
-    upper: 10
-    visibleElements: [ 0, 1, 2 ]
-  "Links": 
-    listingMode: "Link List"
-    currentBodyItem: 4
-    bodyItems: 
-      - 
-        id: 2
-        selectedLinks: [ 7 ]
-      - 
-        id: 4
-        selectedLinks: [ 0 ]
-      - 
-        id: 5
-        selectedLinks: [ 0 ]
-  "Body / Link": 
-    showRotationMatrix: false
-  "Joint Sliders": 
-    showAllJoints: true
-    jointId: true
-    name: true
-    numColumns: 1
-    spinBox: true
-    slider: true
-    labelOnLeft: true
-    currentBodyItem: 4
-  "Joint Trajectories": 
-    mode: view
-    editMode: freeLine
-    original: true
-    velocity: false
-    acceleration: false
-    limits: true
-    grid: true
-    gridWidth: 0.2
-    gridHeight: 0.2
-    lineWidth: 1
-    rulers: false
-    sync: true
-    controlPointStep: 1
-    controlPointOffset: 0
-    controlPointHeighlight: false
-    scrollMode: continuous
-    lower: -10
-    upper: 10
-  "Multi Affine3 Seq": 
-    mode: view
-    editMode: freeLine
-    original: true
-    velocity: false
-    acceleration: false
-    limits: true
-    grid: true
-    gridWidth: 0.2
-    gridHeight: 0.2
-    lineWidth: 1
-    rulers: false
-    sync: true
-    controlPointStep: 1
-    controlPointOffset: 0
-    controlPointHeighlight: false
-    scrollMode: continuous
-    lower: -10
-    upper: 10
-    visibleElements: [ 0, 1, 2 ]
-  "Pose Roll": 
-    defaultTransitionTime: 0
-    updateAll: true
-    autoUpdate: false
-    timeSync: true
-    listingMode: "Part Tree"
-    timeLength: 10
-    showLipSync: false
-    gridInterval: 1
-toolbars: 
-  "TimeBar": 
-    minTime: 0
-    maxTime: 10
-    frameRate: 1000
-    playbackFrameRate: 100
-    currentTime: 0
-    speedScale: 1
-    syncToOngoingUpdates: true
-  "BodyBar": 
-    current: 4
-    stanceWidth: 0.15
-  "KinematicsBar": 
-    mode: IK
-    attitude: true
-    penetrationBlock: true
-    collisionLinkHighlight: false
-    snapDistance: 0.025
-    penetrationBlockDepth: 0.0005
-    lazyCollisionDetectionMode: true
-  "BodyMotionGenerationBar": 
-    balancer: false
-    autoGeneration: false
-    timeScaleRatio: 1
-    preInitialDuration: 1
-    postFinalDuration: 1
-    onlyTimeBarRange: false
-    makeNewBodyItem: true
-    stealthyStepMode: true
-    stealthyHeightRatioThresh: 2
-    flatLiftingHeight: 0.005
-    flatLandingHeight: 0.005
-    impactReductionHeight: 0.005
-    impactReductionTime: 0.04
-    autoZmp: true
-    minZmpTransitionTime: 0.1
-    zmpCenteringTimeThresh: 0.03
-    zmpTimeMarginBeforeLiftingSpin: 0
-    zmpMaxDistanceFromCenter: 0.02
-    allLinkPositions: false
-    lipSyncMix: false
-    timeToStartBalancer: 0
-    balancerIterations: 2
-    plainBalancerMode: false
-    boundaryConditionType: position
-    boundarySmootherType: off
-    boundarySmootherTime: 0.5
-    boundaryCmAdjustment: false
-    boundaryCmAdjustmentTime: 1
-    waistHeightRelaxation: false
-    gravity: 9.8
-    dynamicsTimeRatio: 1
-Body: 
-  "BodyMotionEngine": 
-    updateJointVelocities: false
-  "KinematicFaultChecker": 
-    checkJointPositions: true
-    angleMargin: 0
-    translationMargin: 0
-    checkJointVelocities: true
-    velocityLimitRatio: 100
-    targetJoints: all
-    checkSelfCollisions: true
-    onlyTimeBarRange: false
+  - 
+    id: 0
+    plugin: Base
+    class: ItemPropertyView
+    mounted: true
+  - 
+    id: 1
+    plugin: Base
+    class: ItemTreeView
+    mounted: true
+    state: 
+      selected: [ 8 ]
+      checked: [ 2, 5, 6, 7 ]
+      expanded: [ 1, 2, 5, 6 ]
+  - 
+    id: 2
+    plugin: Base
+    class: MessageView
+    mounted: true
+  - 
+    id: 3
+    plugin: Base
+    class: SceneView
+    mounted: true
+    state: 
+      editMode: false
+      viewpointControlMode: thirdPerson
+      collisionLines: false
+      polygonMode: fill
+      defaultHeadLight: true
+      defaultHeadLightIntensity: 0.75
+      headLightLightingFromBack: false
+      worldLight: true
+      worldLightIntensity: 0.5
+      worldLightAmbient: 0.3
+      additionalLights: true
+      fog: true
+      floorGrid: false
+      floorGridSpan: 10
+      floorGridInterval: 0.5
+      xzGridSpan: 10
+      xzGridInterval: 0.5
+      xzGrid: false
+      yzGridSpan: 10
+      yzGridInterval: 0.5
+      texture: true
+      lineWidth: 1
+      pointSize: 1
+      normalVisualization: false
+      normalLength: 0.01
+      coordinateAxes: true
+      fpsTestIteration: 1
+      showFPS: false
+      enableNewDisplayListDoubleRendering: false
+      useBufferForPicking: true
+      upsideDown: false
+      cameras: 
+        - 
+          camera: [ System, Perspective ]
+          isCurrent: true
+          fieldOfView: 0.6978
+          near: 0.01
+          far: 10000
+          eye: [ 2.98726, 1.61043, 1.04286 ]
+          direction: [ -0.888889099, -0.444444049, -0.111111012 ]
+          up: [ -0.0993806907, -0.0496903953, 0.993808001 ]
+        - 
+          camera: [ System, Orthographic ]
+          orthoHeight: 20
+          near: 0.01
+          far: 10000
+      backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
+      gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
+      xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
+      yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
+      dedicatedItemTreeViewChecks: false
+  - 
+    id: 4
+    plugin: Body
+    class: BodyLinkView
+    mounted: true
+    state: 
+      showRotationMatrix: false
+  - 
+    id: 5
+    plugin: Body
+    class: JointSliderView
+    mounted: true
+    state: 
+      showAllJoints: true
+      jointId: true
+      name: true
+      numColumns: 1
+      spinBox: true
+      slider: true
+      labelOnLeft: true
+      currentBodyItem: 2
+  - 
+    id: 6
+    plugin: Body
+    class: LinkSelectionView
+    mounted: true
+    state: 
+      listingMode: "Link List"
+      currentBodyItem: 2
+      bodyItems: 
+        - 
+          id: 2
+          selectedLinks: [ 7 ]
+        - 
+          id: 5
+          selectedLinks: [ 0 ]
+        - 
+          id: 6
+          selectedLinks: [ 0 ]
+  - 
+    id: 7
+    name: "RTC Diagram"
+    plugin: OpenRTM
+    class: RTSDiagramView
+    mounted: true
+    state: 
+      currentRTSItem: 9
+  - 
+    id: 8
+    plugin: OpenRTM
+    class: RTSNameServerView
+    mounted: true
+  - 
+    id: 9
+    name: "RTC Properties"
+    plugin: OpenRTM
+    class: RTSPropertiesView
+    mounted: true
+  - 
+    id: 10
+    plugin: Python
+    class: PythonConsoleView
+    mounted: true
+viewAreas: 
+  - 
+    type: embedded
+    tabs: true
+    contents: 
+      type: splitter
+      orientation: horizontal
+      sizes: [ 380, 1618 ]
+      children: 
+        - 
+          type: splitter
+          orientation: vertical
+          sizes: [ 566, 565 ]
+          children: 
+            - 
+              type: pane
+              views: [ 1 ]
+              current: 1
+            - 
+              type: pane
+              views: [ 0, 6, 8 ]
+              current: 0
+        - 
+          type: splitter
+          orientation: vertical
+          sizes: [ 808, 323 ]
+          children: 
+            - 
+              type: splitter
+              orientation: horizontal
+              sizes: [ 755, 857 ]
+              children: 
+                - 
+                  type: splitter
+                  orientation: vertical
+                  sizes: [ 401, 401 ]
+                  children: 
+                    - 
+                      type: pane
+                      views: [ 7, 4, 5 ]
+                      current: 7
+                    - 
+                      type: pane
+                      views: [ 9 ]
+                      current: 9
+                - 
+                  type: pane
+                  views: [ 3 ]
+                  current: 3
+            - 
+              type: pane
+              views: [ 2, 10 ]
+              current: 2

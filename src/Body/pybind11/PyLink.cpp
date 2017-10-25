@@ -131,7 +131,6 @@ void exportPyLink(py::module& m)
         .value("SLIDE_JOINT", Link::JointType::SLIDE_JOINT)
         .value("FREE_JOINT", Link::JointType::FREE_JOINT)
         .value("FIXED_JOINT", Link::JointType::FIXED_JOINT)
-        .value("CRAWLER_JOINT", Link::JointType::CRAWLER_JOINT)
         .export_values();
 }
 

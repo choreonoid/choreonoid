@@ -28,7 +28,7 @@ const double dgain[] = {
     100.0, 100.0, 100.0 };
 }
 
-class SR1LiftupController : public cnoid::SimpleController
+class SR1LiftupController : public SimpleController
 {
     Link::ActuationMode actuationMode;
     bool isTorqueSensorEnabled;
@@ -54,7 +54,7 @@ public:
         return q;
     }
     
-    virtual bool initialize(SimpleControllerIO* io)
+    virtual bool initialize(SimpleControllerIO* io) override
     {
         ioBody = io->body();
         ostream& os = io->os();
@@ -138,10 +138,8 @@ public:
         return true;
     }
 
-    virtual bool control()
+    virtual bool control() override
     {
-        bool isActive = true;
-
         if(phase == 0){
             qref = interpolator.interpolate(time);
             if(time > interpolator.domainUpper()){

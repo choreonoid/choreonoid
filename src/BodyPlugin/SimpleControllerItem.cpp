@@ -56,7 +56,7 @@ public:
     SimpleController* controller;
     Body* simulationBody;
     Body* ioBody;
-    ControllerItemIO* io;
+    ControllerIO* io;
     SharedInfoPtr sharedInfo;
 
     vector<unsigned short> inputLinkIndices;
@@ -97,7 +97,7 @@ public:
     void unloadController(bool doNotify);
     void initializeIoBody();
     void updateInputEnabledDevices();
-    SimpleController* initialize(ControllerItemIO* io, SharedInfo* info);
+    SimpleController* initialize(ControllerIO* io, SharedInfo* info);
     void updateIOStateTypes();
     void input();
     void onInputDeviceStateChanged(int deviceIndex);
@@ -108,13 +108,16 @@ public:
     bool store(Archive& archive);
     bool restore(const Archive& archive);
 
-    // virtual functions of SimpleControllerIO
+    // virtual functions of ControllerIO
     virtual std::string optionString() const override;
-    virtual std::vector<std::string> options() const override;
     virtual Body* body() override;
-    virtual double timeStep() const override;
     virtual std::ostream& os() const override;
+    virtual double timeStep() const override;
+    virtual double currentTime() const override;
+    virtual bool isNoDelayMode() const;
+    virtual bool setNoDelayMode(bool on);
 
+    // virtual functions of SimpleControllerIO
     virtual void enableIO(Link* link) override;
     virtual void enableInput(Link* link) override;
     virtual void enableInput(Link* link, int stateTypes) override;
@@ -126,7 +129,6 @@ public:
     virtual void setJointInput(int stateTypes) override;
     virtual void setLinkOutput(Link* link, int stateTypes) override;
     virtual void setJointOutput(int stateTypes) override;
-
     virtual bool isImmediateMode() const override;
     virtual void setImmediateMode(bool on) override;
 };
@@ -315,7 +317,7 @@ void SimpleControllerItemImpl::updateInputEnabledDevices()
 }
 
 
-bool SimpleControllerItem::initialize(ControllerItemIO* io)
+bool SimpleControllerItem::initialize(ControllerIO* io)
 {
     if(impl->initialize(io, new SharedInfo)){
         impl->updateInputEnabledDevices();
@@ -325,7 +327,7 @@ bool SimpleControllerItem::initialize(ControllerItemIO* io)
 }
 
 
-SimpleController* SimpleControllerItemImpl::initialize(ControllerItemIO* io, SharedInfo* info)
+SimpleController* SimpleControllerItemImpl::initialize(ControllerIO* io, SharedInfo* info)
 {
     this->io = io;
     simulationBody = io->body();
@@ -401,27 +403,12 @@ SimpleController* SimpleControllerItemImpl::initialize(ControllerItemIO* io, Sha
             ioBody = sharedInfo->ioBody;
         }
         
-        controller->setIO(this);
-
         inputLinkIndices.clear();
         inputStateTypes.clear();
         outputLinkFlags.clear();
         
         result = controller->initialize(this);
 
-        // try the old API
-        if(!result){
-            for(auto joint : ioBody->joints()){
-                enableIO(joint);
-            }
-            result = controller->initialize();
-            if(result){
-                for(auto device : ioBody->devices()){
-                    enableInput(device);
-                }
-            }
-        }
-        
         if(!result){
             mv->putln(MessageView::ERROR, fmt(_("%1%'s initialize method failed.")) % self->name());
             if(doReloading){
@@ -506,14 +493,6 @@ std::string SimpleControllerItemImpl::optionString() const
 }
 
 
-std::vector<std::string> SimpleControllerItemImpl::options() const
-{
-    vector<string> options;
-    self->splitOptionString(optionString(), options);
-    return options;
-}
-
-
 Body* SimpleControllerItemImpl::body()
 {
     return ioBody;
@@ -529,6 +508,12 @@ double SimpleControllerItem::timeStep() const
 double SimpleControllerItemImpl::timeStep() const
 {
     return io->timeStep();
+}
+
+
+double SimpleControllerItemImpl::currentTime() const
+{
+    return io->currentTime();
 }
 
 
@@ -608,18 +593,22 @@ void SimpleControllerItemImpl::enableOutput(Link* link)
 
 void SimpleControllerItemImpl::setLinkOutput(Link* link, int stateTypes)
 {
-    Link::ActuationMode mode = Link::JOINT_TORQUE;
-    
+    Link::ActuationMode mode = Link::NO_ACTUATION;
+
     if(stateTypes & SimpleControllerIO::LINK_POSITION){
         mode = Link::LINK_POSITION;
     } else if(stateTypes & SimpleControllerIO::JOINT_DISPLACEMENT){
         mode = Link::JOINT_DISPLACEMENT;
     } else if(stateTypes & SimpleControllerIO::JOINT_VELOCITY){
         mode = Link::JOINT_VELOCITY;
+    } else if(stateTypes & SimpleControllerIO::JOINT_EFFORT){
+        mode = Link::JOINT_EFFORT;
     }
-    
-    link->setActuationMode(mode);
-    enableOutput(link);
+
+    if(mode != Link::NO_ACTUATION){
+        link->setActuationMode(mode);
+        enableOutput(link);
+    }
 }
 
 
@@ -638,15 +627,28 @@ void SimpleControllerItemImpl::enableInput(Device* device)
 }
 
 
+bool SimpleControllerItemImpl::isNoDelayMode() const
+{
+    return self->isNoDelayMode();
+}
+
+
 bool SimpleControllerItemImpl::isImmediateMode() const
 {
-    return self->isImmediateMode();
+    return isNoDelayMode();
+}
+
+
+bool SimpleControllerItemImpl::setNoDelayMode(bool on)
+{
+    self->setNoDelayMode(on);
+    return on;
 }
 
 
 void SimpleControllerItemImpl::setImmediateMode(bool on)
 {
-    self->setImmediateMode(on);
+    setNoDelayMode(on);
 }
 
 

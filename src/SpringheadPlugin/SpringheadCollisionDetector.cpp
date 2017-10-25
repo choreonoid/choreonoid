@@ -1,6 +1,6 @@
 /**
    \file
-   \author Shizuko Hattori
+   \author Yuichi Tazaki
 */
 
 #include "SpringheadCollisionDetector.h"

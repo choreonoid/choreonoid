@@ -13,7 +13,7 @@ class TankLightController : public SimpleController
     int blinkCounter;
 
 public:
-    virtual bool initialize(SimpleControllerIO* io)
+    virtual bool initialize(SimpleControllerIO* io) override
     {
         DeviceList<Light> lights(io->body()->devices());
         if(!lights.empty()){
@@ -23,7 +23,7 @@ public:
         return (light != 0);
     }
 
-    virtual bool control()
+    virtual bool control() override
     {
         if(++blinkCounter == 250){
             light->on(!light->on());
