@@ -46,7 +46,7 @@ struct Triangle {
 };
 
 Spr::Matrix3d identity(
-	1.0, 0.0, 0.0, 
+    1.0, 0.0, 0.0, 
     0.0, 1.0, 0.0, 
     0.0, 0.0, 1.0
 );
@@ -59,14 +59,14 @@ class SpringheadLink : public Referenced
 {
 public:
     Link*                        link;
-	SpringheadBody*              body;
-	SpringheadSimulatorItemImpl* impl;
+    SpringheadBody*              body;
+    SpringheadSimulatorItemImpl* impl;
 	
-	Spr::PHSolidIf*         phSolid;
-	Spr::PHJointIf*         phJoint;
-	Spr::PH1DJointIf*       phJoint1D;
-	Spr::PH1DJointLimitIf*  phJointLimit1D;
-	Spr::PHTreeNodeIf*      phTreeNode;
+    Spr::PHSolidIf*         phSolid;
+    Spr::PHJointIf*         phJoint;
+    Spr::PH1DJointIf*       phJoint1D;
+    Spr::PH1DJointLimitIf*  phJointLimit1D;
+    Spr::PHTreeNodeIf*      phTreeNode;
 
     vector<Spr::CDShapeIf*> cdShapes;
 
@@ -89,9 +89,9 @@ public:
     BasicSensorSimulationHelper sensorHelper;
     int                         geometryId;
 
-	Spr::PHRootNodeIf*          rootNode;
+    Spr::PHRootNodeIf*          rootNode;
 
-	 SpringheadBody(const Body& orgBody);
+     SpringheadBody(const Body& orgBody);
     ~SpringheadBody();
     void createBody(SpringheadSimulatorItemImpl* simImpl);
     void setExtraJoints();
@@ -108,15 +108,15 @@ class SpringheadSimulatorItemImpl
 public:
     SpringheadSimulatorItem* self;
 
-   	Spr::PHSdkIf*           phSdk;
-	Spr::PHSceneIf*         phScene;
+    Spr::PHSdkIf*           phSdk;
+    Spr::PHSceneIf*         phScene;
 
-	struct Param{
-		double  timeStep;
-		Vector3 gravity;
-		double  staticFriction;
-		double  dynamicFriction;
-		double  elasticity   ;
+    struct Param{
+        double  timeStep;
+        Vector3 gravity;
+        double  staticFriction;
+        double  dynamicFriction;
+        double  elasticity   ;
 		double  contactSpring;
 		double  contactDamper;
 		int     numIterations;
@@ -650,7 +650,7 @@ SpringheadSimulatorItemImpl::Param::Param()
     gravity << 0.0, 0.0, -DEFAULT_GRAVITY_ACCELERATION;
     numIterations          = 50;
 
-	// Spr::PHMaterialのデフォルト値
+	// default values are taken from Spr::PHMaterial
     staticFriction         = 0.4;
 	dynamicFriction        = 0.4;
 	elasticity             = 0.4;
@@ -777,7 +777,7 @@ bool SpringheadSimulatorItemImpl::initializeSimulation(const std::vector<Simulat
 {
     clear();
 
-	// パラメータを反映
+	// apply parameters
 	param.timeStep = self->worldTimeStep();
 
     phSdk   = Spr::PHSdkIf::CreateSdk();
@@ -872,7 +872,7 @@ bool SpringheadSimulatorItemImpl::stepSimulation(const std::vector<SimulationBod
 		if(MEASURE_PHYSICS_CALCULATION_TIME)
 			collisionTimer.start();
 
-		// 同じbodyに属するPHSolidの衝突判定を無効化
+		// disable collisions between solids that belong to the same choreonoid body
 		std::vector<Spr::PHSolidIf*> solids;
 		for(int i = 0; i < (int)activeSimBodies.size(); i++){
 			SpringheadBody* sprBody = static_cast<SpringheadBody*>(activeSimBodies[i]);
