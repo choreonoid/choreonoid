@@ -1,0 +1,134 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: DoubleArmV7
+rootLink: TFRAME
+
+links:
+  -
+    name: TFRAME
+    jointType: free
+    translation: [ 0, 0, 0.520 ]
+    rotation: [ 1, 0, 0, 90 ]
+    mass: 445
+    centerOfMass: [ 2.61167950E-02, -2.48536360E-01, 7.38255770E-05 ]
+    inertia: [
+      1.17125210E+02,  9.30859190E-01,  7.71323470E-03,
+      9.30859190E-01,  2.13308730E+02,  -4.07759970E-03,
+      7.71323470E-03,  -4.07759970E-03, 1.08880120E+02 ]
+    elements:
+      - { type: Resource, uri: "prt/frame1.wrl" }
+      - { type: RateGyroSensor, name: FRAME_GYRO, id: 0 }
+      -
+        type: Camera
+        name: FRAME_FRONT_CAMERA
+        translation: [ 0.25, 1.8, 0 ]
+        rotation: [ -0.211541, 0.954201, 0.211541, 92.69 ]
+        format: COLOR
+        width: 1280
+        height: 720
+        fieldOfView: 41.08
+        farClipDistance: 5
+  -
+    name: CRAWLER_LH
+    parent: TFRAME
+    translation: [ 0.7, -0.295, 0.600 ]
+    jointType: pseudoContinuousTrack
+    jointAxis: Z
+    jointId: 0
+    maxJointVelocity: 573
+    mass: 73.0
+    centerOfMass: [ -7.20905670E-01, -6.74188380E-03, -1.13870140E-05 ]
+    inertia: [
+      2.68492180E+00,  -1.21522830E-01, 5.01141340E-04,
+      -1.21522830E-01, 2.45512090E+01,  -1.72173060E-04,
+      5.01141340E-04,  -1.72173060E-04, 2.65997250E+01 ]
+    elements: { type: Resource, uri: "prt/tframe.wrl" }
+  -
+    name: CRAWLER_RH
+    parent: TFRAME
+    translation: [ 0.7, -0.295, -0.600 ]
+    jointType: pseudoContinuousTrack
+    jointAxis: Z
+    jointId: 1
+    maxJointVelocity: 573
+    mass: 73.0
+    centerOfMass: [ -7.20905670E-01, -6.74188380E-03, -1.13870140E-05 ]
+    momentsOfInertia: [
+      2.68492180E+00, -1.21522830E-01, 5.01141340E-04,
+      -1.21522830E-01, 2.45512090E+01, -1.72173060E-04,
+      5.01141340E-04, -1.72173060E-04, 2.65997250E+01 ]
+    elements: { type: Resource, uri: "prt/tframe.wrl" }
+  -
+    type: SubBody
+    uri: DoubleArmV7-Upper.body
+    parent: TFRAME
+    jointType: revolute
+    jointAxis: Y
+  
+
+standardPose: [
+  0, 0,
+  0, 0, -70, 150, 0, -90, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]
+
+linkGroup:
+  - TFRAME
+  - name: Undercarriage
+    links: 
+      - CRAWLER_LH
+      - CRAWLER_RH
+  - name: Middleframe
+    links: 
+      - MFRAME
+      - BLOCK
+      - BOOM
+      - ARM
+      - name: HAND
+        links: 
+          - TOHKU_PITCH
+          - TOHKU_TIP_01
+          - TOHKU_TIP_02
+          - name: IK_TARGET0
+            links: 
+              - IK_DUMMY_X0
+              - IK_DUMMY_Y0
+  - name: Upperframe
+    links: 
+      - UFRAME
+      - name: Manipulator
+        links:
+          - MNP_SWING
+          - MANIBOOM
+          - MANIARM
+          - MANIELBOW
+          - name: IK_TARGET0
+            links: 
+              - IK_DUMMY_X0
+              - IK_DUMMY_Y0
+          - YAWJOINT
+          - HANDBASE
+          - name: Mani_hand
+            links:
+              - PUSHROD
+              - HANDSLNK_I
+              - HANDSLNK_O
+              - MANIFNG_U
+              - HANDTIP_U
+              - HANDLNK_I
+              - MANIFNG_L
+              - HANDTIP_L
+              - HANDLNK_O
+
+defaultIKsetup:
+  TOHKU_PITCH: [ MFRAME ]
+  HANDBASE : [ UFRAME ]
+  MANIELBOW : [ UFRAME ]
+  YAWJOINT : [ UFRAME ]
+  IK_DUMMY_X0: [ MFRAME ]
+  IK_DUMMY_Y0: [ MFRAME ]
+  IK_DUMMY_X1: [ UFRAME ]
+  IK_DUMMY_Y1: [ UFRAME ]
+
+collisionDetection:
+  excludeTreeDepth: 3
+  excludeLinks: [ ]

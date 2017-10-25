@@ -27,31 +27,35 @@ THE SOFTWARE
 
 ---------------------------------------------------------------------------
 
-Third-part libraries bundled with the Choreonoid source distribution:
+Choreonoid soruce distribution also includes the following programs and data
+copyrighted by other developers.
 
-    * IJG JPEG Library (http://www.ijg.org/)
-        see thirdparty/Jpeg-6b/README
+ * Double Arm Construction Robot Model
+   see share/model/DoubleArmV7/LICENSE
 
-    * libpng (http://www.libpng.org/pub/png/libpng.html)
-        see thirdparty/lpng1232/LICENSE
+ * IJG JPEG Library (http://www.ijg.org/)
+   see thirdparty/Jpeg-6b/README
 
-    * LibYAML (http://pyyaml.org/wiki/LibYAML)
-        MIT license (see thirdparty/yaml-0.1.3/LICENSE)
+ * libpng (http://www.libpng.org/pub/png/libpng.html)
+   see thirdparty/lpng1232/LICENSE
 
-    * zlib (http://zlib.net/)
-        see thirdparty/zlib123/README
+ * LibYAML (http://pyyaml.org/wiki/LibYAML)
+   MIT license (see thirdparty/yaml-0.1.3/LICENSE)
 
-    * OPCODE (http://www.codercorner.com/Opcode.htm)
-        see src/AISTCollisionDetector/Opcode/ReadMe.txt
+ * zlib (http://zlib.net/)
+   see thirdparty/zlib123/README
 
-    * gettext (http://www.gnu.org/software/gettext/)
-        see thirdparty/windows/include/libintl.h
+ * OPCODE (http://www.codercorner.com/Opcode.htm)
+   see src/AISTCollisionDetector/Opcode/ReadMe.txt
 
-    * pybind11 (https://github.com/pybind/pybind11)
-        see thirdparty/pybind11-2.1.1/LICENSE
+ * gettext (http://www.gnu.org/software/gettext/)
+   see thirdparty/windows/include/libintl.h
 
-    * Sol (https://github.com/ThePhD/sol2)
-        see thirdparty/sol2/LICENSE
+ * pybind11 (https://github.com/pybind/pybind11)
+   see thirdparty/pybind11-2.1.1/LICENSE
+
+ * Sol (https://github.com/ThePhD/sol2)
+   see thirdparty/sol2/LICENSE
 
 ---------------------------------------------------------------------------
 
