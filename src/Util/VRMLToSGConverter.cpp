@@ -110,6 +110,7 @@ public:
     SgMaterial* createMaterial(VRMLMaterial* vm);
     SgTexture* createTexture(VRMLTexture* vt);
     SgNode* convertLineSet(VRMLIndexedLineSet* vLineSet);
+    SgNode* convertPointSet(VRMLPointSet* vPointSet);
     SgTextureTransform* createTextureTransform(VRMLTextureTransform* tt);
     SgNode* convertLightNode(VRMLLight* vnode);
     void setLightCommonProperties(SgLight* light, VRMLLight* vlight);
@@ -325,7 +326,7 @@ pair<SgNode*, SgGroup*> VRMLToSGConverterImpl::createTransformNodeSet(VRMLTransf
 
 SgNode* VRMLToSGConverterImpl::convertShapeNode(VRMLShape* vshape)
 {
-    SgNode* converted = 0;
+    SgNode* converted = nullptr;
 
     VRMLGeometry* vrmlGeometry = dynamic_node_cast<VRMLGeometry>(vshape->geometry).get();
     if(vrmlGeometry){
@@ -380,9 +381,12 @@ SgNode* VRMLToSGConverterImpl::convertShapeNode(VRMLShape* vshape)
                 
             } else if(VRMLIndexedLineSet* lineSet = dynamic_cast<VRMLIndexedLineSet*>(vrmlGeometry)){
                 converted = convertLineSet(lineSet);
+
+            } else if(VRMLPointSet* pointSet = dynamic_cast<VRMLPointSet*>(vrmlGeometry)){
+                converted = convertPointSet(pointSet);
                 
             } else {
-                putMessage("Unsupported VRML node type is used.");
+                putMessage(str(format("VRML %1% node is not supported as a geometry.") % vrmlGeometry->typeName()));
             }
             
             if(mesh){
@@ -1758,6 +1762,31 @@ SgNode* VRMLToSGConverterImpl::convertLineSet(VRMLIndexedLineSet* vLineSet)
     
     vrmlGeometryToSgPlotMap[vLineSet] = lineSet;
     return lineSet;
+}
+
+
+SgNode* VRMLToSGConverterImpl::convertPointSet(VRMLPointSet* vPointSet)
+{
+    VRMLGeometryToSgPlotMap::iterator p = vrmlGeometryToSgPlotMap.find(vPointSet);
+    if(p != vrmlGeometryToSgPlotMap.end()){
+        return p->second;
+    }
+
+    if(!vPointSet->coord || vPointSet->coord->point.empty()){
+        return nullptr;
+    }
+
+    SgPointSet* pointSet = new SgPointSet;
+    pointSet->setVertices(new SgVertexArray(vPointSet->coord->point));
+    pointSet->updateBoundingBox();
+
+    if(vPointSet->color && !vPointSet->color->color.empty()){
+        pointSet->setColors(new SgColorArray(vPointSet->color->color));
+    }
+
+    vrmlGeometryToSgPlotMap[vPointSet] = pointSet;
+
+    return pointSet;
 }
 
 
