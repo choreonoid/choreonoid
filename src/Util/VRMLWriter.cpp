@@ -67,6 +67,7 @@ void VRMLWriter::registerNodeMethodMap()
 {
     registerNodeMethod(typeid(VRMLGroup),          &VRMLWriter::writeGroupNode);
     registerNodeMethod(typeid(VRMLTransform),      &VRMLWriter::writeTransformNode);
+    registerNodeMethod(typeid(VRMLSwitch),         &VRMLWriter::writeSwitchNode);
     registerNodeMethod(typeid(VRMLInline),         &VRMLWriter::writeInlineNode);
     registerNodeMethod(typeid(VRMLShape),          &VRMLWriter::writeShapeNode);
     registerNodeMethod(typeid(VRMLIndexedFaceSet), &VRMLWriter::writeIndexedFaceSetNode);
@@ -176,6 +177,27 @@ void VRMLWriter::writeTransformNode(VRMLNodePtr node)
 }
 
 
+void VRMLWriter::writeSwitchNode(VRMLNodePtr node)
+{
+    VRMLSwitchPtr switc = static_pointer_cast<VRMLSwitch>(node);
+
+    beginNode("Switch", switc);
+
+    out << indent << "whichChoice " << switc->whichChoice << "\n";
+
+    if(!switc->choice.empty()){
+        out << indent << "choice [\n";
+        ++indent;
+        for(size_t i=0; i < switc->choice.size(); ++i){
+            writeNodeIter(switc->choice[i]);
+        }
+        out << --indent << "]\n";
+    }
+
+    endNode();
+}
+
+
 /**
  * create relative path from absolute path
  * http://stackoverflow.com/questions/10167382/boostfilesystem-get-relative-path
@@ -241,9 +263,9 @@ void VRMLWriter::writeShapeNode(VRMLNodePtr node)
         --indent;
     }
     if(shape->geometry){
-        out << indent << "geometry\n";
         VRMLWriterNodeMethod method = getNodeMethod(shape->geometry);
         if(method){
+            out << indent << "geometry\n";
             ++indent;
             (this->*method)(shape->geometry);
             --indent;

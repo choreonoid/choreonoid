@@ -112,6 +112,7 @@ protected:
     void writeGroupNode(VRMLNodePtr node);
     void writeGroupFields(VRMLGroupPtr group);
     void writeTransformNode(VRMLNodePtr node);
+    void writeSwitchNode(VRMLNodePtr node);
 
 private:
     std::string abstorel(std::string& fname);
