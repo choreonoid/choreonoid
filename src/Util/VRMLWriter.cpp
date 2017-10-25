@@ -394,9 +394,25 @@ void VRMLWriter::writeIndexedFaceSetNode(VRMLNodePtr node)
         writeMFInt32SeparatedByMinusValue(faceset->coordIndex);
     }
 
+    bool hasNormals = false;
+    if(faceset->normal){
+        out << indent << "normal\n";
+        writeNormalNode(faceset->normal);
+
+        if(!faceset->normalIndex.empty()){
+            out << indent << "normalIndex\n";
+            writeMFInt32SeparatedByMinusValue(faceset->coordIndex);
+        }
+        hasNormals = true;
+    }
+
+
     out << indent << "ccw " << boolstr(faceset->ccw) << "\n";
     out << indent << "convex " << boolstr(faceset->convex) << "\n";
     out << indent << "creaseAngle " << faceset->creaseAngle << "\n";
+    if(hasNormals){
+        out << indent << "normalPerVertex " << boolstr(faceset->normalPerVertex) << "\n";
+    }
     out << indent << "solid " << boolstr(faceset->solid) << "\n";
 
     endNode();
@@ -410,6 +426,19 @@ void VRMLWriter::writeCoordinateNode(VRMLCoordinatePtr coord)
     if(!coord->point.empty()){
         out << indent << "point\n";
         writeMFValues(coord->point, 1);
+    }
+
+    endNode();
+}
+
+
+void VRMLWriter::writeNormalNode(VRMLNormalPtr normal)
+{
+    beginNode("Normal", normal);
+
+    if(!normal->vector.empty()){
+        out << indent << "normal\n";
+        writeMFValues(normal->vector, 1);
     }
 
     endNode();

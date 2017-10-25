@@ -126,6 +126,7 @@ private:
     void writeSphereNode(VRMLNodePtr node);
     void writeIndexedFaceSetNode(VRMLNodePtr node);
     void writeCoordinateNode(VRMLCoordinatePtr coord);
+    void writeNormalNode(VRMLNormalPtr normal);
 };
 
 };

@@ -203,10 +203,10 @@ public:
     VRMLGroup();
     virtual const char* typeName() const override;
 
-    virtual MFNode& getChildren();
-    virtual int countChildren();
-    virtual VRMLNode* getChild(int index);
-    virtual void replaceChild(int childIndex, VRMLNode* childNode);
+    virtual MFNode& getChildren() override;
+    virtual int countChildren() override;
+    virtual VRMLNode* getChild(int index) override;
+    virtual void replaceChild(int childIndex, VRMLNode* childNode) override;
 
     SFVec3f bboxCenter;    
     SFVec3f bboxSize;  
@@ -658,10 +658,10 @@ public:
     VRMLSwitch();
     virtual const char* typeName() const override;
 
-    virtual MFNode& getChildren();
-    virtual int countChildren();
-    virtual VRMLNode* getChild(int index);
-    virtual void replaceChild(int childIndex, VRMLNode* childNode);
+    virtual MFNode& getChildren() override;
+    virtual int countChildren() override;
+    virtual VRMLNode* getChild(int index) override;
+    virtual void replaceChild(int childIndex, VRMLNode* childNode) override;
 
     MFNode choice;
     SFInt32 whichChoice;
@@ -676,10 +676,10 @@ public:
     VRMLLOD();
     virtual const char* typeName() const override;
 
-    virtual MFNode& getChildren();
-    virtual int countChildren();
-    virtual VRMLNode* getChild(int index);
-    virtual void replaceChild(int childIndex, VRMLNode* childNode);
+    virtual MFNode& getChildren() override;
+    virtual int countChildren() override;
+    virtual VRMLNode* getChild(int index) override;
+    virtual void replaceChild(int childIndex, VRMLNode* childNode) override;
 
     MFFloat range;
     SFVec3f center;
