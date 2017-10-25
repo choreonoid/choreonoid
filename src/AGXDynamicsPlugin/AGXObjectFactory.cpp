@@ -233,12 +233,9 @@ agx::HingeRef AGXObjectFactory::createConstraintHinge(const AGXHingeDesc& desc)
     hingeFrame.setAxis(desc.frameAxis);
     hingeFrame.setCenter(desc.frameCenter);
     agx::HingeRef joint = new agx::Hinge(hingeFrame, desc.rigidBodyA, desc.rigidBodyB);
-    joint->getMotor1D()->setEnable(desc.motor.enable);
-    joint->getMotor1D()->setLocked(desc.motor.enableLock);
-    joint->getMotor1D()->setLockedAtZeroSpeed(desc.motor.enableLockAtZeroSpeed);
-    joint->getLock1D()->setEnable(desc.lock.enable);
-    joint->getRange1D()->setEnable(desc.range.enable);
-    joint->getRange1D()->setRange(desc.range.range);
+    setMotor1DParam(joint->getMotor1D(), desc.motor);
+    setLock1DParam(joint->getLock1D(), desc.lock);
+    setRange1DParam(joint->getRange1D(), desc.range);
     return joint;
 }
 
@@ -248,12 +245,9 @@ agx::PrismaticRef AGXObjectFactory::createConstraintPrismatic(const AGXPrismatic
     prismaticFrame.setAxis(desc.frameAxis);
     prismaticFrame.setPoint(desc.framePoint);
     agx::PrismaticRef joint = new agx::Prismatic(prismaticFrame, desc.rigidBodyA, desc.rigidBodyB);
-    joint->getMotor1D()->setEnable(desc.motor.enable);
-    joint->getMotor1D()->setLocked(desc.motor.enableLock);
-    joint->getMotor1D()->setLockedAtZeroSpeed(desc.motor.enableLockAtZeroSpeed);
-    joint->getLock1D()->setEnable(desc.lock.enable);
-    joint->getRange1D()->setEnable(desc.range.enable);
-    joint->getRange1D()->setRange(desc.range.range);
+    setMotor1DParam(joint->getMotor1D(), desc.motor);
+    setLock1DParam(joint->getLock1D(), desc.lock);
+    setRange1DParam(joint->getRange1D(), desc.range);
     return joint;
 }
 
@@ -267,6 +261,30 @@ agx::BallJointRef AGXObjectFactory::createConstraintBallJoint(const AGXBallJoint
 agx::PlaneJointRef AGXObjectFactory::createConstraintPlaneJoint(const AGXPlaneJointDesc & desc)
 {
     return new agx::PlaneJoint(desc.rigidBodyA, desc.frameA, desc.rigidBodyB, desc.frameB);
+}
+
+void AGXObjectFactory::setMotor1DParam(agx::Motor1D* controller, const AGXMotor1DDesc& desc)
+{
+    controller->setEnable(desc.enable);
+    controller->setLocked(desc.enableLock);
+    controller->setLockedAtZeroSpeed(desc.enableLockAtZeroSpeed);
+    controller->setCompliance(desc.compliance);
+    controller->setDamping(desc.damping);
+}
+
+void AGXObjectFactory::setLock1DParam(agx::Lock1D* controller, const AGXLock1DDesc& desc)
+{
+    controller->setEnable(desc.enable);
+    controller->setCompliance(desc.compliance);
+    controller->setDamping(desc.damping);
+}
+
+void AGXObjectFactory::setRange1DParam(agx::Range1D* controller, const AGXRange1DDesc& desc)
+{
+    controller->setEnable(desc.enable);
+    controller->setRange(desc.range);
+    controller->setCompliance(desc.compliance);
+    controller->setDamping(desc.damping);
 }
 
 agx::LockJointRef AGXObjectFactory::createConstraintLockJoint(const AGXLockJointDesc & desc)

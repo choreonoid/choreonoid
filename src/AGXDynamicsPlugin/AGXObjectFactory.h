@@ -376,6 +376,11 @@ public:
     static agx::PrismaticRef createConstraintPrismatic(const AGXPrismaticDesc& desc);
     static agx::BallJointRef createConstraintBallJoint(const AGXBallJointDesc& desc);
     static agx::PlaneJointRef createConstraintPlaneJoint(const AGXPlaneJointDesc& desc);
+private:
+    static void setMotor1DParam(agx::Motor1D* motor, const AGXMotor1DDesc& desc);
+    static void setLock1DParam(agx::Lock1D* controller, const AGXLock1DDesc& desc);
+    static void setRange1DParam(agx::Range1D* controller, const AGXRange1DDesc& desc);
+public:
     static agxVehicle::TrackWheelRef createVehicleTrackWheel(const AGXVehicleTrackWheelDesc& desc);
     static agxVehicle::TrackRef createVehicleTrack(const AGXVehicleTrackDesc& desc);
     static agxCollide::ConvexBuilderRef createConvexBuilder();
