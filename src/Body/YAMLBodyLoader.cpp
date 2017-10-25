@@ -472,7 +472,6 @@ YAMLBodyLoaderImpl::YAMLBodyLoaderImpl(YAMLBodyLoader* self)
     numCustomNodeFunctions = 0;
 
     body = 0;
-    subBodyMap.clear();
     os_ = &nullout();
     doExpandLinkOffsetRotations = true;
 }
@@ -552,6 +551,7 @@ bool YAMLBodyLoaderImpl::clear()
     sceneReader.clear();
     validJointIdSet.clear();
     numValidJointIds = 0;
+    subBodyMap.clear();
     return true;
 }    
 
@@ -1638,14 +1638,9 @@ void YAMLBodyLoaderImpl::readSubBodyNode(Mapping* node)
 void YAMLBodyLoaderImpl::addSubBodyLinks(BodyPtr subBody, Mapping* node)
 {
     string prefix;
-    if(!node->read("prefix", prefix)){
-        node->throwException("prefix must be specified.");
-    }
+    node->read("prefix", prefix);
 
-    int jointIdOffset;
-    if(!node->read("jointIdOffset", jointIdOffset)){
-        node->throwException("jointIdOffset must be specified.");
-    }
+    int jointIdOffset = node->get("jointIdOffset", 0);
 
     for(int i=0; i < subBody->numLinks(); ++i){
         Link* link = subBody->link(i);
