@@ -172,8 +172,8 @@ public:
     };
 
     ActuationMode actuationMode() const { return actuationMode_; }
-
     void setActuationMode(ActuationMode mode) { actuationMode_ = mode; }
+    std::string actuationModeString() const;
     
     double q() const { return q_; }
     double& q() { return q_; }

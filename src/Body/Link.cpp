@@ -218,6 +218,44 @@ std::string Link::jointTypeString() const
 }
 
 
+std::string Link::actuationModeString() const
+{
+    switch(actuationMode_){
+
+    case NO_ACTUATION:
+        return "no actuation";
+
+    case JOINT_EFFORT:
+        if(isRevoluteJoint()){
+            return "joint torque";
+        } else if(isPrismaticJoint()){
+            return "joint force";
+        } else {
+            return "joint effort";
+        }
+
+    case JOINT_DISPLACEMENT:
+        if(isRevoluteJoint()){
+            return "joint angle";
+        } else {
+            return "joint displacement";
+        }
+
+    case JOINT_VELOCITY:
+        return "joint velocity";
+
+    case JOINT_SURFACE_VELOCITY:
+        return "joint surface velocity";
+
+    case LINK_POSITION:
+        return "link position";
+
+    default:
+        return "unknown";
+    }
+}
+
+
 std::string Link::materialName() const
 {
     return Material::name(materialId_);
