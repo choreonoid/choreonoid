@@ -137,6 +137,7 @@ void EasyScanner::init()
     textBuf = 0;
     size = 0;
     textBufEnd = 0;
+    lineNumber = 0;
     lineNumberOffset = 1;
     
     commentChar = '#';
@@ -283,6 +284,7 @@ void EasyScanner::setQuoteChar(char qs)
 */
 void EasyScanner::loadFile(const string& filename)
 {
+    lineNumber = 0;
     this->filename.clear();
     
     FILE* file = fopen(filename.c_str(), "rb");
