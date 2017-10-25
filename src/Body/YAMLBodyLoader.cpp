@@ -266,7 +266,7 @@ public:
 
     unique_ptr<YAMLBodyLoader> subLoader;
     map<string, BodyPtr> subBodyMap;
-    bool doExpandLinkOffsetRotations;
+    bool isSubLoader;
 
     YAMLBodyLoaderImpl(YAMLBodyLoader* self);
     ~YAMLBodyLoaderImpl();
@@ -473,7 +473,7 @@ YAMLBodyLoaderImpl::YAMLBodyLoaderImpl(YAMLBodyLoader* self)
 
     body = 0;
     os_ = &nullout();
-    doExpandLinkOffsetRotations = true;
+    isSubLoader = false;
 }
 
 
@@ -731,15 +731,17 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
 
     body->setRootLink(rootLink);
 
-    if(doExpandLinkOffsetRotations){
+    if(!isSubLoader){
         body->expandLinkOffsetRotations();
     }
 
-    // Warn empty joint ids
-    if(numValidJointIds < validJointIdSet.size()){
-        for(size_t i=0; i < validJointIdSet.size(); ++i){
-            if(!validJointIdSet[i]){
-                os() << str(format("Warning: Joint ID %1% is not specified.") % i) << endl;
+    if(!isSubLoader){
+        // Warn empty joint ids
+        if(numValidJointIds < validJointIdSet.size()){
+            for(size_t i=0; i < validJointIdSet.size(); ++i){
+                if(!validJointIdSet[i]){
+                    os() << str(format("Warning: Joint ID %1% is not specified.") % i) << endl;
+                }
             }
         }
     }
@@ -1613,7 +1615,7 @@ void YAMLBodyLoaderImpl::readSubBodyNode(Mapping* node)
             if(!subLoader){
                 subLoader.reset(new YAMLBodyLoader);
                 subLoader->setMessageSink(*os_);
-                subLoader->impl->doExpandLinkOffsetRotations = false;
+                subLoader->impl->isSubLoader = true;
             }
             subLoader->setDefaultDivisionNumber(sceneReader.defaultDivisionNumber());
                 
