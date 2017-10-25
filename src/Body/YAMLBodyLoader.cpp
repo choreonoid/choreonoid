@@ -902,7 +902,7 @@ void YAMLBodyLoaderImpl::readJointContents(Link* link, Mapping* node)
     }
 
     auto jointTypeNode = node->extract("jointType");
-    if(jointTypeNode->isValid()){
+    if(jointTypeNode){
         string jointType = jointTypeNode->toString();
         if(jointType == "revolute"){
             link->setJointType(Link::REVOLUTE_JOINT);
