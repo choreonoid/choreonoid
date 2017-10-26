@@ -12,13 +12,14 @@ class TurretController2 : public SimpleController
     Joystick joystick;
 
 public:
-    virtual bool initialize(SimpleControllerIO* io)
+    virtual bool initialize(SimpleControllerIO* io) override
     {
         joints[0] = io->body()->link("TURRET_Y");
         joints[1] = io->body()->link("TURRET_P");
 
         for(int i=0; i < 2; ++i){
             Link* joint = joints[i];
+            joint->setActuationMode(Link::JOINT_TORQUE);
             io->enableIO(joint);
             q_ref[i] = q_prev[i] = joint->q();
         }
@@ -28,7 +29,7 @@ public:
         return true;
     }
 
-    virtual bool control()
+    virtual bool control() override
     {
         static const double P = 200.0;
         static const double D = 50.0;

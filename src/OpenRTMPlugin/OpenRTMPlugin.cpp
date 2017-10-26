@@ -14,7 +14,6 @@
 #include "RTSDiagramView.h"
 #include "RTSItem.h"
 #include "deprecated/BodyRTCItem.h"
-#include "deprecated/OpenHRPClockGeneratorItem.h"
 #include <cnoid/Plugin>
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
@@ -156,7 +155,6 @@ public:
         ControllerRTCItem::initialize(this);
         RTCItem::initialize(this);
         BodyRTCItem::initialize(this);
-        OpenHRPClockGeneratorItem::initialize(this);
         
         VirtualRobotRTC::registerFactory(manager, "VirtualRobot");
         

@@ -14,6 +14,11 @@ using namespace OpenHRP;
 DynamicsSimulator_impl::DynamicsSimulator_impl(const BodyPtr& body)
 {
     this->body = body;
+
+    for(auto joint : body->joints()){
+        joint->setActuationMode(Link::JOINT_EFFORT);
+    }
+    
     forceSensorIdMap = body->devices<ForceSensor>().getSortedById();
     gyroIdMap = body->devices<RateGyroSensor>().getSortedById();
     accelSensorIdMap = body->devices<AccelerationSensor>().getSortedById();
@@ -125,7 +130,11 @@ void DynamicsSimulator_impl::setCharacterLinkData(
         switch(type) {
             
         case OpenHRP::DynamicsSimulator::POSITION_GIVEN:
-            // set property to inform that this joint should be handled as the high-gain mode
+            if(link->isRoot()){
+                link->setActuationMode(Link::LINK_POSITION);
+            } else {
+                link->setActuationMode(Link::JOINT_DISPLACEMENT);
+            }
             break;
             
         case OpenHRP::DynamicsSimulator::JOINT_VALUE:
@@ -135,7 +144,9 @@ void DynamicsSimulator_impl::setCharacterLinkData(
             break;
             
         case OpenHRP::DynamicsSimulator::JOINT_VELOCITY:
-            if(!link->isFixedJoint() || link->jointType() == Link::PSEUDO_CONTINUOUS_TRACK){
+            if(!link->isFixedJoint() ||
+               link->jointType() == Link::PSEUDO_CONTINUOUS_TRACK ||
+               link->actuationMode() == Link::JOINT_SURFACE_VELOCITY){
                 link->dq() = data[0];
             }
             break;
@@ -147,7 +158,7 @@ void DynamicsSimulator_impl::setCharacterLinkData(
             break;
             
         case OpenHRP::DynamicsSimulator::JOINT_TORQUE:
-            if(!link->isFixedJoint() || link->jointType() == Link::CRAWLER_JOINT){
+            if(!link->isFixedJoint()){
                 link->u() = data[0];
             }
             break;
@@ -352,7 +363,13 @@ void DynamicsSimulator_impl::getGVector(DblSequence3_out wdata)
 
 void DynamicsSimulator_impl::setCharacterAllJointModes(const char* characterName, OpenHRP::DynamicsSimulator::JointDriveMode jointMode)
 {
-
+    Link::ActuationMode actuationMode = Link::JOINT_EFFORT;
+    if(jointMode == OpenHRP::DynamicsSimulator::HIGH_GAIN_MODE){
+        actuationMode = Link::JOINT_DISPLACEMENT;
+    }
+    for(auto joint : body->joints()){
+        joint->setActuationMode(actuationMode);
+    }
 }
 
 

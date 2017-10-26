@@ -15,6 +15,29 @@ AGXBodyExtensionFuncMap agxBodyExtensionAdditionalFuncs;
 
 namespace cnoid{
 ////////////////////////////////////////////////////////////
+// AGXBodyExtension
+bool createContinuousTrack(AGXBody* agxBody)
+{
+    AGXLinkPtrs myAgxLinks;
+    if(!agxBody->getAGXLinksFromInfo("isContinuousTrack", false, myAgxLinks)) return false;
+    for(const auto& agxLink : myAgxLinks){
+        agxBody->addAGXBodyExtension(new AGXContinuousTrack(agxLink, agxBody));
+    }
+    return true;
+}
+
+bool createAGXVehicleContinousTrack(AGXBody* agxBody)
+{
+    DeviceList<> devices = agxBody->body()->devices();
+    DeviceList<AGXVehicleContinuousTrackDevice> conTrackDevices;
+    conTrackDevices.extractFrom(devices);
+    for(const auto& ctd : conTrackDevices){
+        agxBody->addAGXBodyExtension(new AGXVehicleContinuousTrack(ctd, agxBody));
+    }
+    return true;
+}
+
+////////////////////////////////////////////////////////////
 // AGXLink
 AGXLink::AGXLink(Link* const link) : _orgLink(link){}
 AGXLink::AGXLink(Link* const link, AGXLink* const parent, const Vector3& parentOrigin, AGXBody* const agxBody) :
@@ -306,10 +329,10 @@ agxCollide::GeometryRef AGXLink::createAGXGeometry()
     LinkPtr const orgLink = getOrgLink();
     AGXGeometryDesc gdesc;
     gdesc.selfCollsionGroupName = getAGXBody()->getCollisionGroupName();
-    if(orgLink->jointType() == Link::PSEUDO_CONTINUOUS_TRACK){
+    if(orgLink->actuationMode() == Link::JOINT_SURFACE_VELOCITY){
         gdesc.isPseudoContinuousTrack = true;
         const Vector3& a = orgLink->a();
-        gdesc.axis = agx::Vec3f((float)a(0), (float)a(1), (float)a(2));
+        gdesc.axis = agx::Vec3(a(0), a(1), a(2));
     }
     return AGXObjectFactory::createGeometry(gdesc);
 }
@@ -503,7 +526,8 @@ agx::ConstraintRef AGXLink::createAGXConstraint()
             break;
         }
         case Link::FIXED_JOINT :
-        case Link::PSEUDO_CONTINUOUS_TRACK :{
+        case Link::PSEUDO_CONTINUOUS_TRACK :    // deprecated
+        {
             AGXLockJointDesc desc;
             desc.rigidBodyA = getAGXRigidBody();
             desc.rigidBodyB = agxParentLink->getAGXRigidBody();
@@ -548,16 +572,17 @@ void AGXLink::setVelocityToAGX()
             agx::Constraint1DOF* const joint1DOF = agx::Constraint1DOF::safeCast(getAGXConstraint());
             if(!joint1DOF) break;
             joint1DOF->getMotor1D()->setSpeed(orgLink->dq());
-            break;
-        }
-        case Link::PSEUDO_CONTINUOUS_TRACK:{
-            // Set speed(scalar) to x value. Direction is automatically calculated at AGXPseudoContinuousTrackGeometry::calculateSurfaceVelocity
-            agx::Vec3f vel((float)orgLink->dq(), 0.0, 0.0);
-            getAGXGeometry()->setSurfaceVelocity(vel);
+            return;
             break;
         }
         default :
             break;
+    }
+
+    if(orgLink->actuationMode() == Link::JOINT_SURFACE_VELOCITY){
+        // Set speed(scalar) to x value. Direction is automatically calculated at AGXPseudoContinuousTrackGeometry::calculateSurfaceVelocity
+        agx::Vec3f vel((float)orgLink->dq(), 0.0, 0.0);
+        getAGXGeometry()->setSurfaceVelocity(vel);
     }
 }
 
@@ -672,7 +697,7 @@ void AGXBody::setCollisionExclude(){
     if(!cdMapping.isValid()) return;
     setCollisionExcludeLinks(cdMapping);
     setCollisionExcludeTreeDepth(cdMapping);
-    setCollisionExcludeLinkGroup(cdMapping);
+    setCollisionExcludeLinkGroups(cdMapping);
 }
 
 void AGXBody::setCollisionExcludeLinks(const Mapping& cdMapping){
@@ -715,31 +740,32 @@ void AGXBody::setCollisionExcludeTreeDepth(const Mapping& cdMapping){
     }
 }
 
-void AGXBody::setCollisionExcludeLinkGroup(const Mapping& cdMapping){
-    const ValueNodePtr& excludeLinkGroupNode = cdMapping.find("excludeLinkGroup");
-    if(!excludeLinkGroupNode->isValid())   return;
-    if(!excludeLinkGroupNode->isListing()) return;
-    const Listing& list = *excludeLinkGroupNode->toListing();
-    for(auto it : list){
-        if(!it->isMapping()) continue;
-        const Mapping&  groupInfo = *it->toMapping();
+void AGXBody::setCollisionExcludeLinkGroups(const Mapping& cdMapping){
+    const ValueNodePtr& excludeLinkGroupsNode = cdMapping.find("excludeLinkGroups");
+    if(!excludeLinkGroupsNode->isValid())   return;
+    if(!excludeLinkGroupsNode->isListing()) return;
+    const Listing& groupList = *excludeLinkGroupsNode->toListing();
+    for(auto group : groupList){
+        if(!group->isMapping()) continue;
+        const Mapping&  groupInfo = *group->toMapping();
         // get group name and add name to agx to disable collision
         stringstream ss;
         if(const ValueNodePtr& nameNode = groupInfo.find("name")){
-            ss << "AGXExcludeLinkGroup_" << nameNode->toString() << agx::UuidGenerator().generate().str() << std::endl;
+            ss << "AGXExcludeLinkGroups_" << nameNode->toString() << agx::UuidGenerator().generate().str() << std::endl;
         }else{
-            ss << "AGXExcludeLinkGroup_" << agx::UuidGenerator().generate().str() << std::endl;
+            ss << "AGXExcludeLinkGroups_" << agx::UuidGenerator().generate().str() << std::endl;
         }
         addCollisionGroupNameToDisableCollision(ss.str());
+
         // get link name and set group name to agx geometry
+        const ValueNodePtr& linkNode = groupInfo.find("links");
+        if(!linkNode->isValid())   continue;
+        if(!linkNode->isListing()) continue;
         vector<string> excludeLinkNames;
-        if(const ValueNodePtr& linkNode = groupInfo.find("links")){
-            if(!linkNode->isListing()) continue;
-            if(agxConvert::setVector(linkNode->toListing(), excludeLinkNames)){
-                for(auto linkName : excludeLinkNames){
-                    getAGXRigidBody(linkName)->getGeometries().front()->addGroup(ss.str());
-                }
-            }
+        if(!agxConvert::setVector(linkNode->toListing(), excludeLinkNames)) continue;
+        for(auto linkName : excludeLinkNames){
+            if(agxCollide::Geometry* geometry = getAGXLink(linkName)->getAGXGeometry())
+                geometry->addGroup(ss.str());
         }
     }
 }
@@ -801,8 +827,7 @@ void AGXBody::setLinkStateToCnoid()
 
 bool AGXBody::hasForceSensors() const
 {
-    if(sensorHelper.forceSensors().empty()) return false;
-    return true;
+    return !sensorHelper.forceSensors().empty();
 }
 
 bool AGXBody::hasGyroOrAccelerationSensors() const {
@@ -875,6 +900,16 @@ const AGXLinkPtrs& AGXBody::getAGXLinks() const
     return _agxLinks;
 }
 
+bool AGXBody::getAGXLinksFromInfo(const std::string& key, const bool& defaultValue, AGXLinkPtrs& agxLinks) const
+{
+    agxLinks.clear();
+    for(const auto& agxLink : getAGXLinks()){
+        if(agxLink->getOrgLink()->info(key, defaultValue)) agxLinks.push_back(agxLink);
+    }
+    if(agxLinks.empty()) return false;
+    return true;
+}
+
 int AGXBody::numControllableLinks() const
 {
     return (int)_controllableLinks.size();
@@ -897,17 +932,20 @@ const AGXLinkPtrs& AGXBody::getControllableLinks() const
 
 agx::RigidBodyRef AGXBody::getAGXRigidBody(const int& index) const
 {
-    return getAGXLink(index)->getAGXRigidBody();
+    if(AGXLink* agxLink = getAGXLink(index)) return agxLink->getAGXRigidBody();
+    return nullptr;
 }
 
 agx::RigidBody* AGXBody::getAGXRigidBody(const std::string& linkName) const
 {
-    return getAGXLink(linkName)->getAGXRigidBody();
+    if(AGXLink* agxLink = getAGXLink(linkName)) return agxLink->getAGXRigidBody();
+    return nullptr;
 }
 
 agx::ConstraintRef AGXBody::getAGXConstraint(const int& index) const
 {
-    return getAGXLink(index)->getAGXConstraint();
+    if(AGXLink* agxLink = getAGXLink(index)) return agxLink->getAGXConstraint();
+    return nullptr;
 }
 
 bool AGXBody::addAGXBodyExtension(AGXBodyExtension* const extension)
@@ -925,8 +963,8 @@ void AGXBody::callExtensionFuncs(){
     // update func list
     updateAGXBodyExtensionFuncs();
     //agxBodyExtensionFuncs["test"] = [](AGXBody* agxBody){ std::cout << "test" << std::endl; return false;};
-    agxBodyExtensionFuncs["ContinuousTrack"] = [&](AGXBody* agxBody){ (void)agxBody; return createContinuousTrack(agxBody); };
-    agxBodyExtensionFuncs["AGXVehicleContinousTrack"] = [&](AGXBody* agxBody){ (void)agxBody; return createAGXVehicleContinousTrack(this); };
+    agxBodyExtensionFuncs["ContinuousTrack"] = [&](AGXBody* agxBody){ return createContinuousTrack(agxBody); };
+    agxBodyExtensionFuncs["AGXVehicleContinousTrack"] = [&](AGXBody* agxBody){ return createAGXVehicleContinousTrack(this); };
 
     // call
     for(const auto& func : agxBodyExtensionFuncs){
@@ -950,43 +988,10 @@ void AGXBody::updateAGXBodyExtensionFuncs(){
     }
 }
 
-bool AGXBody::getAGXLinksFromInfo(const std::string& key, const bool& defaultValue, AGXLinkPtrs& agxLinks) const
-{
-    agxLinks.clear();
-    for(const auto& agxLink : getAGXLinks()){
-        if(agxLink->getOrgLink()->info(key, defaultValue)) agxLinks.push_back(agxLink);
-    }
-    if(agxLinks.empty()) return false;
-    return true;
-}
-
 void AGXBody::createExtraJoint()
 {
     if(this->body()->numExtraJoints() > 0) 
         addAGXBodyExtension(new AGXExtraJoint(this));
-}
-
-bool AGXBody::createContinuousTrack(AGXBody* agxBody)
-{
-    (void) agxBody;
-    AGXLinkPtrs myAgxLinks;
-    if(!getAGXLinksFromInfo("isContinuousTrack", false, myAgxLinks)) return false;
-    for(const auto& agxLink : myAgxLinks){
-        addAGXBodyExtension(new AGXContinuousTrack(agxLink, this));
-    }
-    return true;
-}
-
-bool AGXBody::createAGXVehicleContinousTrack(AGXBody* agxBody)
-{
-    (void) agxBody;
-    DeviceList<> devices = this->body()->devices();
-    DeviceList<AGXVehicleContinuousTrackDevice> conTrackDevices;
-    conTrackDevices.extractFrom(devices);
-    for(const auto& ctd : conTrackDevices){
-        addAGXBodyExtension(new AGXVehicleContinuousTrack(ctd, this));
-    }
-    return true;
 }
 
 

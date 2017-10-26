@@ -57,6 +57,7 @@ struct AGXVehicleContinuousTrackDeviceDesc
     vector<string> sprocketNames;
     vector<string> idlerNames;
     vector<string> rollerNames;
+    string materialName;
 };
 
 struct TrackState{

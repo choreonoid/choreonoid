@@ -29,9 +29,9 @@ protected:
 public:
     virtual ~AbstractSeq();
 
-    virtual AbstractSeqPtr cloneSeq() const = 0;
-
     virtual AbstractSeq& operator=(const AbstractSeq& rhs);
+
+    virtual AbstractSeqPtr cloneSeq() const = 0;
 
     void copySeqProperties(const AbstractSeq& source);
 
@@ -124,9 +124,11 @@ public:
     AbstractMultiSeq(const AbstractMultiSeq& org);
     virtual ~AbstractMultiSeq();
 
+    using AbstractSeq::operator=;
+    AbstractMultiSeq& operator=(const AbstractMultiSeq& rhs);
+
     virtual AbstractSeqPtr cloneSeq() const = 0;
 
-    AbstractMultiSeq& operator=(const AbstractMultiSeq& rhs);
     void copySeqProperties(const AbstractMultiSeq& source);
 
     virtual void setDimension(int numFrames, int numParts, bool clearNewElements = false) = 0;

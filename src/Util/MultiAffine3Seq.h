@@ -28,6 +28,8 @@ public:
     MultiAffine3Seq(const MultiAffine3Seq& org);
     virtual ~MultiAffine3Seq();
 
+    using BaseSeqType::operator=;
+
     virtual AbstractSeqPtr cloneSeq() const;
         
     virtual bool loadPlainFormat(const std::string& filename);

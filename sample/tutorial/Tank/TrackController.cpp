@@ -10,18 +10,21 @@ class TrackController : public SimpleController
     Joystick joystick;
 
 public:
-    virtual bool initialize(SimpleControllerIO* io)
+    virtual bool initialize(SimpleControllerIO* io) override
     {
         trackL = io->body()->link("TRACK_L");
         trackR = io->body()->link("TRACK_R");
 
+        trackL->setActuationMode(Link::JOINT_SURFACE_VELOCITY);
+        trackR->setActuationMode(Link::JOINT_SURFACE_VELOCITY);
+        
         io->enableOutput(trackL);
         io->enableOutput(trackR);
         
         return true;
     }
 
-    virtual bool control()
+    virtual bool control() override
     {
         static const int axisID[] = { 0, 1 };
         

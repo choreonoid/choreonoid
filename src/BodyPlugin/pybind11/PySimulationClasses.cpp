@@ -103,7 +103,6 @@ void exportSimulationClasses(py::module m)
 
     py::enum_<AISTSimulatorItem::DynamicsMode>(aistSimulatorItemClass, "DynamicsMode")
         .value("FORWARD_DYNAMICS", AISTSimulatorItem::DynamicsMode::FORWARD_DYNAMICS)
-        .value("HG_DYNAMICS", AISTSimulatorItem::DynamicsMode::HG_DYNAMICS)
         .value("KINEMATICS", AISTSimulatorItem::DynamicsMode::KINEMATICS)
         .value("N_DYNAMICS_MODES", AISTSimulatorItem::DynamicsMode::N_DYNAMICS_MODES)
         .export_values();

@@ -129,10 +129,12 @@ public:
         */
         /// fixed joint(0 dof)
         FIXED_JOINT = 3,
-        /// special joint for simplified simulation of a continuous track
+
+        /**
+           special joint for simplified simulation of a continuous track
+           \deprecated
+        */
         PSEUDO_CONTINUOUS_TRACK = 4,
-        // deprecated
-        CRAWLER_JOINT = 5
     };
 
     int jointId() const { return jointId_; }
@@ -170,8 +172,8 @@ public:
     };
 
     ActuationMode actuationMode() const { return actuationMode_; }
-
     void setActuationMode(ActuationMode mode) { actuationMode_ = mode; }
+    std::string actuationModeString() const;
     
     double q() const { return q_; }
     double& q() { return q_; }

@@ -58,7 +58,6 @@ const char* samplepd_spec[] =
 SR1LiftupControllerRTC::SR1LiftupControllerRTC(RTC::Manager* manager)
     : RTC::DataFlowComponentBase(manager),
       m_angleIn("q", m_angle),
-      m_torqueIn("u_in", m_torque_in),
       m_torqueOut("u_out", m_torque_out)
 {
 
@@ -75,7 +74,6 @@ RTC::ReturnCode_t SR1LiftupControllerRTC::onInitialize()
 {
     // Set InPort buffers
     addInPort("q", m_angleIn);
-    addInPort("u_in", m_torqueIn);
   
     // Set OutPort buffer
     addOutPort("u_out", m_torqueOut);
@@ -94,8 +92,8 @@ RTC::ReturnCode_t SR1LiftupControllerRTC::onInitialize()
     }
 
     numJoints = body->numJoints();
-    rightWrist_id =  body->link("RARM_WRIST_R")->jointId();
-    leftWrist_id =  body->link("LARM_WRIST_R")->jointId();
+    rightWrist_id = body->link("RARM_WRIST_R")->jointId();
+    leftWrist_id = body->link("LARM_WRIST_R")->jointId();
 
     return RTC::RTC_OK;
 }
@@ -147,6 +145,9 @@ RTC::ReturnCode_t SR1LiftupControllerRTC::onActivated(RTC::UniqueId ec_id)
     dq_wrist = 0.0;
 
     m_torque_out.data.length(numJoints);
+    for(size_t i=0; i < numJoints; ++i){
+        m_torque_out.data[i] = 0.0;
+    }
 
     return RTC::RTC_OK;
 }
@@ -163,9 +164,6 @@ RTC::ReturnCode_t SR1LiftupControllerRTC::onExecute(RTC::UniqueId ec_id)
     if(m_angleIn.isNew()){
         m_angleIn.read();
     }
-    if(m_torqueIn.isNew()){
-        m_torqueIn.read();
-    }
 
     if(phase == 0){
         qref = interpolator.interpolate(time);
@@ -177,7 +175,7 @@ RTC::ReturnCode_t SR1LiftupControllerRTC::onExecute(RTC::UniqueId ec_id)
         // holding phase
         qref = qref_old;
 
-        if(fabs(m_torque_in.data[rightWrist_id]) < 50.0 || fabs(m_torque_in.data[leftWrist_id]) < 50.0){ // not holded ?
+        if(fabs(m_torque_out.data[rightWrist_id]) < 50.0 || fabs(m_torque_out.data[leftWrist_id]) < 50.0){ // not holded ?
             dq_wrist = std::min(dq_wrist + 0.001, 0.1);
             qref[rightWrist_id] += radian(dq_wrist);
             qref[leftWrist_id]  -= radian(dq_wrist);
@@ -281,7 +279,6 @@ RTC::ReturnCode_t SR1LiftupControllerRTC::onExecute(RTC::UniqueId ec_id)
 
 extern "C"
 {
-
     DLL_EXPORT void SR1LiftupControllerRTCInit(RTC::Manager* manager)
     {
         coil::Properties profile(samplepd_spec);
@@ -289,5 +286,4 @@ extern "C"
                                  RTC::Create<SR1LiftupControllerRTC>,
                                  RTC::Delete<SR1LiftupControllerRTC>);
     }
-
 };

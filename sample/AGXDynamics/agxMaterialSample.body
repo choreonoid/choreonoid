@@ -71,7 +71,7 @@ links:
 
 collisionDetection:
     excludeLinks: [ box6 ]
-    excludeLinkGroup:
+    excludeLinkGroups:
     -
       name: excludeGroup1
       links: [ floor, box7 ]

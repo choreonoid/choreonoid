@@ -42,7 +42,7 @@ class SR1WalkPatternController : public cnoid::SimpleController
     
 public:
 
-    virtual bool initialize(SimpleControllerIO* io)
+    virtual bool initialize(SimpleControllerIO* io) override
     {
         ioBody = io->body();
         string patternFile;
@@ -59,7 +59,6 @@ public:
         } else {
             actuationMode = Link::JOINT_TORQUE;
             patternFile = "SR1WalkPattern.yaml";
-            io->setJointInput(JOINT_ANGLE);
             io->os() << "SR1WalkPatternController: torque control mode." << endl;
         }
 
@@ -104,7 +103,7 @@ public:
         return true;
     }
 
-    virtual bool control()
+    virtual bool control() override
     {
         switch(actuationMode){
 
@@ -148,7 +147,6 @@ public:
             return false;
         }
     }
-        
 };
 
 CNOID_IMPLEMENT_SIMPLE_CONTROLLER_FACTORY(SR1WalkPatternController)

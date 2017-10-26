@@ -20,17 +20,16 @@ public:
     ZMPSeq(const ZMPSeq& org);
     ZMPSeq(const Vector3Seq& org);
 
+    virtual AbstractSeq& operator=(const AbstractSeq& rhs) override;
     ZMPSeq& operator=(const ZMPSeq& rhs);
-
-    virtual AbstractSeq& operator=(const AbstractSeq& rhs);
-    virtual AbstractSeqPtr cloneSeq() const;
+    virtual AbstractSeqPtr cloneSeq() const override;
 
     bool isRootRelative() const { return isRootRelative_; }
     void setRootRelative(bool on);
 
 protected:
-    virtual bool doWriteSeq(YAMLWriter& writer);
-    virtual bool doReadSeq(const Mapping& archive);
+    virtual bool doWriteSeq(YAMLWriter& writer) override;
+    virtual bool doReadSeq(const Mapping& archive) override;
 
 private:
     bool isRootRelative_;

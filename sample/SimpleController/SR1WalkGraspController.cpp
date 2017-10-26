@@ -43,14 +43,16 @@ class SR1WalkGraspController : public cnoid::SimpleController
     MultiValueSeqPtr qseq;
     VectorXd qref, qold, qref_old;
     int currentFrame;
-    double timeStep_;
+    double timeStep;
     int numJoints;
     int phase;
     double time;
     
 public:
 
-    virtual bool initialize() {
+    virtual bool initialize(SimpleControllerIO* io) override
+    {
+        ostream& os = io->os();
 
         if(!qseq){
             string filename = getNativePathString(
@@ -59,63 +61,63 @@ public:
 
             BodyMotion motion;
             if(!motion.loadStandardYAMLformat(filename)){
-                os() << motion.seqMessage() << endl;
+                os << motion.seqMessage() << endl;
                 return false;
             }
             qseq = motion.jointPosSeq();
             if(qseq->numFrames() == 0){
-                os() << "Empty motion data." << endl;
+                os << "Empty motion data." << endl;
                 return false;
             }
-            timeStep_ = qseq->getTimeStep();
+            timeStep = qseq->getTimeStep();
         }
 
-        if(fabs(timeStep() - timeStep_) > 1.0e-6){
-            os() << "Time step must be " << timeStep_ << "." << endl;;
+        if(fabs(io->timeStep() - timeStep) > 1.0e-6){
+            os << "Time step must be " << timeStep << "." << endl;;
             return false;
         }
 
-        body = ioBody();
+        body = io->body();
+        numJoints = body->numJoints();
+        if(numJoints != qseq->numParts()){
+            os << "The number of joints must be " << qseq->numParts() << endl;
+            return false;
+        }
+
+        qold.resize(numJoints);
+        VectorXd q0(numJoints);
+        VectorXd q1(numJoints);
+        MultiValueSeq::Frame frame = qseq->frame(0);
+        for(int i=0; i < numJoints; ++i){
+            auto joint = body->joint(i);
+            qold[i] = q0[i] = joint->q();
+            q1[i] = frame[i];
+            joint->setActuationMode(Link::JOINT_TORQUE);
+            io->enableIO(joint);
+        }
+
         rarm_shoulder_p = body->link("RARM_SHOULDER_P")->jointId();
         rarm_shoulder_r = body->link("RARM_SHOULDER_R")->jointId();
         rarm_elbow = body->link("RARM_ELBOW")->jointId();
         rarm_wrist_y = body->link("RARM_WRIST_Y")->jointId();
         rarm_wrist_r = body->link("RARM_WRIST_R")->jointId();
         rhsensor = body->findDevice<ForceSensor>("rhsensor");
-        
-        numJoints = body->numJoints();
-        if(numJoints != qseq->numParts()){
-            os() << "The number of joints must be " << qseq->numParts() << endl;
-            return false;
-        }
-        
-        qold.resize(numJoints);
-        VectorXd q0(numJoints);
-        VectorXd q1(numJoints);
-        for(int i=0; i < numJoints; ++i){
-            qold[i] = q0[i] = body->joint(i)->q();
-        }
-        MultiValueSeq::Frame frame = qseq->frame(0);
-        for(int i=0; i < numJoints; ++i){
-            q1[i] = frame[i];
-        }
+
         interpolator.clear();
         interpolator.appendSample(0.0, q0);
         interpolator.appendSample(2.0, q1);
         interpolator.update();
-
         qref_old = interpolator.interpolate(0.0);
 
         currentFrame = 0;
-        
         phase = 0;
         time = 0.0;
 
         return true;
     }
 
-    virtual bool control() {
-
+    virtual bool control()  override
+    {
         switch(phase){
         case 0 :
             qref = interpolator.interpolate(time);
@@ -190,19 +192,17 @@ public:
         for(int i=0; i < body->numJoints(); ++i){
             Link* joint = body->joint(i);
             double q = joint->q();
-            double dq_ref = (qref[i] - qref_old[i]) / timeStep_;
-            double dq = (q - qold[i]) / timeStep_;
+            double dq_ref = (qref[i] - qref_old[i]) / timeStep;
+            double dq = (q - qold[i]) / timeStep;
             joint->u() = (qref[i] - q) * pgain[i] + (dq_ref - dq) * dgain[i];
             qold[i] = q;
         }
         qref_old = qref;
 
-        time += timeStep_;
+        time += timeStep;
 
         return true;
     }
-        
 };
-
 
 CNOID_IMPLEMENT_SIMPLE_CONTROLLER_FACTORY(SR1WalkGraspController)

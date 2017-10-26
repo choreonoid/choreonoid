@@ -27,7 +27,7 @@ items:
               1, -0, 0, 
               0, 0.866025404, 0.5, 
               -0, -0.5, 0.866025404 ]
-            jointPositions: [  0.000000,  0.000000,  0.000000,  0.000000,  0.000000 ]
+            jointPositions: [  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000 ]
             initialRootPosition: [ 0, 0, -0.1 ]
             initialRootAttitude: [ 
               1, -0, 0, 
@@ -67,7 +67,7 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      selected: [ 2 ]
+      selected: [ 3 ]
       checked: [ 2 ]
       expanded: [ 1, 2 ]
   - 
@@ -119,9 +119,9 @@ views:
           fieldOfView: 0.698132
           near: 0.01
           far: 100
-          eye: [ 20.5409078, 5.07915268, 7.79793588 ]
-          direction: [ -0.938881188, -0.174388212, -0.296801056 ]
-          up: [ -0.291810084, -0.0542009359, 0.954939335 ]
+          eye: [ 18.1701263, 11.3604882, 6.49267153 ]
+          direction: [ -0.870599471, -0.435299736, -0.229283016 ]
+          up: [ -0.205076964, -0.102538482, 0.973359799 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
@@ -249,12 +249,12 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 304, 1485 ]
+      sizes: [ 315, 1536 ]
       children: 
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 437, 437 ]
+          sizes: [ 466, 465 ]
           children: 
             - 
               type: pane
@@ -267,12 +267,12 @@ viewAreas:
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 624, 250 ]
+          sizes: [ 665, 266 ]
           children: 
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 643, 836 ]
+              sizes: [ 665, 865 ]
               children: 
                 - 
                   type: pane

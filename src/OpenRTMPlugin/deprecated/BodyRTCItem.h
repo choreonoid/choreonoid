@@ -29,13 +29,14 @@ public:
     BodyRTCItem();
     BodyRTCItem(const BodyRTCItem& org);
     virtual ~BodyRTCItem();
-        
-    virtual bool start(ControllerItemIO* io);
-    virtual double timeStep() const;
-    virtual void input();
-    virtual bool control();
-    virtual void output();
-    virtual void stop();
+
+    virtual bool initialize(ControllerIO* io) override;
+    virtual bool start() override;
+    virtual double timeStep() const override;
+    virtual void input() override;
+    virtual bool control() override;
+    virtual void output() override;
+    virtual void stop() override;
 
     const BodyPtr& body() const { return simulationBody; };
     const DeviceList<ForceSensor>& forceSensors() const { return forceSensors_; }
@@ -70,12 +71,12 @@ public:
 #endif
 
 protected:
-    virtual void onPositionChanged();
-    virtual void onDisconnectedFromRoot();
-    virtual Item* doDuplicate() const;
-    virtual void doPutProperties(PutPropertyFunction& putProperty);
-    virtual bool store(Archive& archive);
-    virtual bool restore(const Archive& archive);
+    virtual void onPositionChanged() override;
+    virtual void onDisconnectedFromRoot() override;
+    virtual Item* doDuplicate() const override;
+    virtual void doPutProperties(PutPropertyFunction& putProperty) override;
+    virtual bool store(Archive& archive) override;
+    virtual bool restore(const Archive& archive) override;
         
 private:
     BodyPtr simulationBody;
@@ -89,7 +90,7 @@ private:
     double executionCycle;
     double executionCycleCounter;
         
-    const ControllerItemIO* io;
+    const ControllerIO* io;
     double controlTime_;
     std::ostream& os;
 
