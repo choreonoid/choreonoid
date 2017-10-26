@@ -24,12 +24,13 @@ std::string ControllerIO::optionString() const
 
 std::vector<std::string> ControllerIO::options() const
 {
-    std::vector<std::string> options;
-
     typedef boost::escaped_list_separator<char> separator;
     separator sep('\\', ' ');
-    boost::tokenizer<separator> tok(optionString(), sep);
-    
+
+    std::string s = optionString();
+    boost::tokenizer<separator> tok(s, sep);
+
+    std::vector<std::string> options;
     for(boost::tokenizer<separator>::iterator p = tok.begin(); p != tok.end(); ++p){
         const string& token = *p;
         if(!token.empty()){
