@@ -131,6 +131,7 @@ links:
     jointType: revolute
     jointAxis: Z
     jointId: 4
+    jointAngle: -70
     jointRange: [ -75.1, 53.2 ]
     maxJointVelocity: 1146
     mass: 88.2695650987443
@@ -149,6 +150,7 @@ links:
     jointType: revolute
     jointAxis: Z
     jointId: 5
+    jointAngle: 150
     jointRange: [ 30.7, 152.1 ]
     maxJointVelocity: 1146
     mass: 53.7797060658233
