@@ -7,6 +7,7 @@ if(NOT BUILD_SIMPLE_CONTROLLER_SAMPLES)
   return()
 endif()
 
+# SR1 samples
 add_cnoid_simple_controller(SR1MinimumController SR1MinimumController.cpp)
 configure_file(SR1Minimum.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 
@@ -20,9 +21,14 @@ add_cnoid_simple_controller(SR1LiftupController SR1LiftupController.cpp)
 configure_file(SR1Liftup.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 configure_file(../python/AgXsetContactMaterial.py ${CNOID_SOURCE_SHARE_DIR}/script COPYONLY)
 
+add_cnoid_simple_controller(SR1WalkGraspController SR1WalkGraspController.cpp)
+configure_file(SR1WalkinHouse.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+
+# PA10 sample
 add_cnoid_simple_controller(PA10PickupController PA10PickupController.cpp)
 configure_file(PA10Pickup.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 
+# Crawler samples
 add_cnoid_simple_controller(SampleCrawlerController SampleCrawlerController.cpp)
 configure_file(SampleCrawler.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 
@@ -30,6 +36,7 @@ add_cnoid_simple_controller(SampleCrawlerJoystickController SampleCrawlerJoystic
 configure_file(SampleCrawlerJoystick.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 configure_file(SampleCrawlerSlope.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 
+# Tank samples
 add_cnoid_simple_controller(TankJoystickController TankJoystickController.cpp)
 configure_file(TankJoystick.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 configure_file(TankJoystickAGX.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
@@ -37,9 +44,11 @@ configure_file(TankJoystickAGX_Floor.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COP
 add_cnoid_simple_controller(LightBlinkController LightBlinkController.cpp)
 configure_file(TankJoystickLightBlink.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 
-add_cnoid_simple_controller(SR1WalkGraspController SR1WalkGraspController.cpp)
-configure_file(SR1WalkinHouse.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+# DoubleArmV7 sample
+add_cnoid_simple_controller(DoubleArmV7Controller DoubleArmV7Controller.cpp)
+configure_file(DoubleArmV7SJoystick.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 
+# Other samples
 add_cnoid_simple_controller(ConveyorController ConveyorController.cpp)
 configure_file(ConveyorSample.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 

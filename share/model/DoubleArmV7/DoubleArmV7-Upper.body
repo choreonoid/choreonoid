@@ -235,52 +235,6 @@ links:
         fieldOfView: 115.97
         farClipDistance: 5
   -
-    name: IK_DUMMY_X0
-    parent: TOHKU_PITCH
-    jointId: 10
-    jointType: revolute
-    jointAxis: X
-    jointRange: [ -573, 573 ]
-    maxJointVelocity: 5730
-    centerOfMass: [ 0, 0, 0 ]
-    mass: 0.001
-    inertia: [ 1, 0, 0, 0, 1, 0, 0, 0, 1 ]
-    elements:
-      Shape:
-        geometry:
-          type: Box
-          size: [ 0.1, 0.04, 0.04 ]
-        appearance:
-          material:
-            diffuseColor: [ 0.2, 0.1, 0.8 ]
-            ambientIntensity: 0.3
-            specularColor: [ 0.7, 0.7, 0.7 ]
-            shininess: 0.25
-            transparency: 0.2
-  -
-    name: IK_DUMMY_Y0
-    parent: IK_DUMMY_X0
-    jointId: 11
-    jointType: revolute
-    jointAxis: Y
-    jointRange: [ -573, 573 ]
-    maxJointVelocity: 5730
-    centerOfMass: [ 0, 0, 0 ]
-    mass: 0.001
-    inertia: [ 1, 0, 0, 0, 1, 0, 0, 0, 1 ]
-    elements:
-      Shape:
-        geometry:
-          type: Box
-          size: [ 0.04, 0.1, 0.04 ]
-        appearance:
-          material:
-            diffuseColor: [ 0.8, 0.1, 0.2 ]
-            ambientIntensity: 0.3
-            specularColor: [ 0.7, 0.7, 0.7 ]
-            shininess: 0.25
-            transparency: 0.2
-  -
     name: TOHKU_ROLL
     parent: TOHKU_PITCH
     translation: [ -0.227, 0.0, 0.0 ]
@@ -562,7 +516,7 @@ links:
     translation: [ 0.0, 0.3, 0.0 ]
     jointType: revolute
     jointAxis: Y
-    jointId: 12
+    jointId: 10
     jointRange: [ -687.5, 687.5 ]
     maxJointVelocity: 573
     mass: 535.84647
@@ -608,7 +562,7 @@ links:
     rotation: [ 0, 1, 0, 180 ]
     jointType: revolute
     jointAxis: Y
-    jointId: 13
+    jointId: 11
     jointRange: [ -60, 60 ]
     maxJointVelocity: 1146
     mass: 1.3380749e+01
@@ -625,7 +579,7 @@ links:
     parent: MNP_SWING
     translation: [ -0.07, 0.14, 0 ]
     rotation: [ 0, 0, -1, 90 ]
-    jointId: 14
+    jointId: 12
     jointType: revolute
     jointAxis: Z
     jointRange: [ 0, 115 ]
@@ -644,7 +598,7 @@ links:
     parent: MANIBOOM
     translation: [ -1.48, 0.08, 0 ]
     rotation: [ 0, 0, 1, 180 ]
-    jointId: 15
+    jointId: 13
     jointType: revolute
     jointAxis: Z
     jointRange: [ -110, 0 ]
@@ -662,7 +616,7 @@ links:
     name: MANIELBOW
     parent: MANIARM
     translation: [ -0.55, 0.27, 0 ]
-    jointId: 16
+    jointId: 14
     jointType: revolute
     jointAxis: Z
     jointRange: [ -90, 20 ]
@@ -680,7 +634,7 @@ links:
     name: YAWJOINT
     parent: MANIELBOW
     translation: [ -0.23, 0.00, 0 ]
-    jointId: 17
+    jointId: 15
     jointType: revolute
     jointAxis: Y
     jointRange: [ -50.48, 50.48 ]
@@ -709,7 +663,7 @@ links:
     parent: YAWJOINT
     translation: [ -0.4053, 0, 0 ]
     rotation: [ 0, 1, 0, 180 ]
-    jointId: 18
+    jointId: 16
     jointType: revolute
     jointAxis: X
     jointRange: [ -270, 270 ]
@@ -790,7 +744,7 @@ links:
     name: PUSHROD
     parent: HANDBASE
     translation: [ 0.0917, 0, 0 ]
-    jointId: 19
+    jointId: 17
     jointType: prismatic
     jointAxis: X
     jointRange: [ -0.0507, 0 ]
@@ -809,10 +763,10 @@ links:
     parent: PUSHROD
     rotation: [ 0, 0, -1, 61.2291 ]
     jointType: revolute
-    jointId: 20
     jointAxis: Z
     jointRange: [ -171.9, 171.9 ]
     maxJointVelocity: 573
+    rotorInertia: 0.01
     mass: 0.408083
     centerOfMass: [ 0.0530198, 0, 0 ]
     inertia: [
@@ -841,10 +795,10 @@ links:
     parent: PUSHROD
     rotation: [ 0, 0, 1, 61.2314 ]
     jointType: revolute
-    jointId: 21
     jointAxis: Z
     jointRange: [ -171.9, 171.9 ]
     maxJointVelocity: 573
+    rotorInertia: 0.01
     mass: 0.408083
     centerOfMass: [ 5.3019776e-2, 0, 0 ]
     inertia: [
@@ -874,9 +828,9 @@ links:
     translation: [ 0.14, 0.03, 0 ]
     rotation: [ 0, 0, 1, 6.7682 ]
     jointType: revolute
-    jointId: 22
     jointAxis: Z
     jointRange: [ -171.9, 171.9 ]
+    rotorInertia: 0.01
     maxJointVelocity: 573
     mass: 1.32092
     centerOfMass: [ 0.0778883, 0.0150494, 0 ]
@@ -944,10 +898,10 @@ links:
     parent: MANIFNG_U
     translation: [ 0.171, 0, 0 ]
     rotation: [ 0, 0, -1, 6.7682 ]
-    jointId: 23
     jointType: revolute
     jointAxis: Z
     jointRange: [ -171.9, 171.9 ]
+    rotorInertia: 0.01
     maxJointVelocity: 573
     mass: 1.62187
     centerOfMass: [ 0.0581795, -0.0268036, 0 ]
@@ -1022,10 +976,10 @@ links:
     translation: [ 0.155, 0, -0.0065 ]
     rotation: [ 0, 0, 1, 6.7682 ]
     jointType: revolute
-    jointId: 24
     jointAxis: Z
     jointRange: [ -171.9, 171.9 ]
     maxJointVelocity: 573
+    rotorInertia: 0.01
     mass: 0.732866
     centerOfMass: [ 0.0921655, -0.00204929, 0 ]
     inertia: [
@@ -1063,9 +1017,9 @@ links:
     translation: [ 0.14, -0.03, 0 ]
     rotation: [ 0.998256, -0.0590292, 0, 180 ]
     jointType: revolute
-    jointId: 25
     jointRange: [ -171.9, 171.9 ]
     maxJointVelocity: 573
+    rotorInertia: 0.01
     mass: 1.32092
     centerOfMass: [ 0.0778883, 0.0150494, 0 ]
     inertia: [
@@ -1081,9 +1035,9 @@ links:
     translation: [ 0.171, 0, 0 ]
     rotation: [ 0, 0, -1, 6.7682 ]
     jointType: revolute
-    jointId: 26
     jointRange: [ -171.9, 171.9 ]
     maxJointVelocity: 573
+    rotorInertia: 0.01
     mass: 1.62187
     centerOfMass: [ 0.0581795, -0.0268036, 0 ]
     inertia: [
@@ -1099,9 +1053,9 @@ links:
     translation: [ 0.155, 0, 0.0065 ]
     rotation: [ 0.998256, -0.0590292, 0, 180 ]
     jointType: revolute
-    jointId: 27
     jointRange: [ -171.9, 171.9 ]
     maxJointVelocity: 573
+    rotorInertia: 0.01
     mass: 0.871915
     centerOfMass: [ 0.0928285, -0.00312308, 1.58819e-22 ]
     inertia: [
@@ -1111,80 +1065,36 @@ links:
     elements:
       Visual: { elements: { Resource: { uri: "prt/handlink_inner_v7.wrl" } } }
       Collision: *HANDLNK_COLLISION_MODEL
-  -
-    name: IK_DUMMY_X1
-    parent: MANIELBOW
-    jointType: revolute
-    jointId: 28
-    jointAxis: X
-    jointRange: [ -573, 573 ]
-    maxJointVelocity: 5730
-    mass: 0.001
-    inertia: [ 1, 0, 0, 0, 1, 0, 0, 0, 1 ]
-    elements:
-      Shape:
-        geometry:
-          type: Box
-          size: [ 0.1, 0.04, 0.04 ]
-        appearance:
-          material:
-            diffuseColor: [ 0.2, 0.1, 0.8 ]
-            ambientIntensity: 0.3
-            specularColor: [ 0.7, 0.7, 0.7 ]
-            shininess: 0.25
-            transparency: 0.2
-  -
-    name: IK_DUMMY_Y1 #IK Target
-    parent: IK_DUMMY_X1
-    jointType: revolute
-    jointId: 29
-    jointAxis: Y
-    jointRange: [ -573, 573 ]
-    maxJointVelocity: 5730
-    mass: 0.001
-    inertia: [ 1, 0, 0, 0, 1, 0, 0, 0, 1 ]
-    elements:
-      Shape:
-        geometry:
-          type: Box
-          size: [ 0.04, 0.1, 0.04 ]
-        appearance:
-          material:
-            diffuseColor: [ 0.8, 0.1, 0.2 ]
-            ambientIntensity: 0.3
-            specularColor: [ 0.7, 0.7, 0.7 ]
-            shininess: 0.25
-            transparency: 0.2
 
-extraJoints:
-  -
-    name: SLINK_U
-    link1Name: HANDSLNK_O
-    link2Name: MANIFNG_U
-    link1LocalPos: [ 0.080, 0, 0 ]
-    link2LocalPos: [ -0.005, 0.041, 0 ]
-    jointType: ball
-  -
-    name: SLINK_L
-    link1Name: HANDSLNK_I
-    link2Name: MANIFNG_L
-    link1LocalPos: [ 0.080, 0, 0 ]
-    link2LocalPos: [ -0.005, 0.041, 0 ]
-    jointType: ball
-  -
-    name: LINK_TIP_U
-    link1Name: HANDLNK_I
-    link2Name: HANDTIP_U
-    link1LocalPos: [ 0.171, 0, 0 ]
-    link2LocalPos: [ 0.015, -0.030, 0 ]
-    jointType: ball
-  -
-    name: LINK_TIP_L
-    link1Name: HANDLNK_O
-    link2Name: HANDTIP_L
-    link1LocalPos: [ 0.171, 0, 0 ]
-    link2LocalPos: [ 0.015, -0.030, 0 ]
-    jointType: ball
+# extraJoints:
+#   -
+#     name: SLINK_U
+#     link1Name: HANDSLNK_O
+#     link2Name: MANIFNG_U
+#     link1LocalPos: [ 0.080, 0, 0 ]
+#     link2LocalPos: [ -0.005, 0.041, 0 ]
+#     jointType: ball
+#   -
+#     name: SLINK_L
+#     link1Name: HANDSLNK_I
+#     link2Name: MANIFNG_L
+#     link1LocalPos: [ 0.080, 0, 0 ]
+#     link2LocalPos: [ -0.005, 0.041, 0 ]
+#     jointType: ball
+#   -
+#     name: LINK_TIP_U
+#     link1Name: HANDLNK_I
+#     link2Name: HANDTIP_U
+#     link1LocalPos: [ 0.171, 0, 0 ]
+#     link2LocalPos: [ 0.015, -0.030, 0 ]
+#     jointType: ball
+#   -
+#     name: LINK_TIP_L
+#     link1Name: HANDLNK_O
+#     link2Name: HANDTIP_L
+#     link1LocalPos: [ 0.171, 0, 0 ]
+#     link2LocalPos: [ 0.015, -0.030, 0 ]
+#     jointType: ball
 
 linkGroup:
   - name: Middleframe
@@ -1198,10 +1108,6 @@ linkGroup:
           - TOHKU_PITCH
           - TOHKU_TIP_01
           - TOHKU_TIP_02
-          - name: IK_TARGET0
-            links: 
-              - IK_DUMMY_X0
-              - IK_DUMMY_Y0
   - name: Upperframe
     links: 
       - UFRAME
@@ -1211,10 +1117,6 @@ linkGroup:
           - MANIBOOM
           - MANIARM
           - MANIELBOW
-          - name: IK_TARGET0
-            links: 
-              - IK_DUMMY_X0
-              - IK_DUMMY_Y0
           - YAWJOINT
           - HANDBASE
           - name: Mani_hand
@@ -1234,10 +1136,6 @@ defaultIKsetup:
   HANDBASE : [ UFRAME ]
   MANIELBOW : [ UFRAME ]
   YAWJOINT : [ UFRAME ]
-  IK_DUMMY_X0: [ MFRAME ]
-  IK_DUMMY_Y0: [ MFRAME ]
-  IK_DUMMY_X1: [ UFRAME ]
-  IK_DUMMY_Y1: [ UFRAME ]
 
 collisionDetection:
   excludeTreeDepth: 3

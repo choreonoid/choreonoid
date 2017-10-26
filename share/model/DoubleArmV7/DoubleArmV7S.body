@@ -18,12 +18,12 @@ links:
       7.71323470E-03,  -4.07759970E-03, 1.08880120E+02 ]
     elements: { Resource: { uri: "prt/frame1.wrl" } }
   -
-    name: CRAWLER_LH
+    name: TRACK_L
     parent: TFRAME
     translation: [ 0.7, -0.295, 0.600 ]
-    jointType: pseudoContinuousTrack
     jointAxis: Z
     jointId: 0
+    actuationMode: jointSurfaceVelocity
     maxJointVelocity: 573
     mass: 73.0
     centerOfMass: [ -7.20905670E-01, -6.74188380E-03, -1.13870140E-05 ]
@@ -33,12 +33,12 @@ links:
       5.01141340E-04,  -1.72173060E-04, 2.65997250E+01 ]
     elements: { type: Resource, uri: "prt/tframe.wrl" }
   -
-    name: CRAWLER_RH
+    name: TRACK_R
     parent: TFRAME
     translation: [ 0.7, -0.295, -0.600 ]
-    jointType: pseudoContinuousTrack
     jointAxis: Z
     jointId: 1
+    actuationMode: jointSurfaceVelocity
     maxJointVelocity: 573
     mass: 73.0
     centerOfMass: [ -7.20905670E-01, -6.74188380E-03, -1.13870140E-05 ]
@@ -51,3 +51,34 @@ links:
     type: SubBody
     uri: DoubleArmV7-Upper.body
     parent: TFRAME
+
+
+extraJoints:
+  -
+    name: SLINK_U
+    link1Name: HANDSLNK_O
+    link2Name: MANIFNG_U
+    link1LocalPos: [ 0.080, 0, 0 ]
+    link2LocalPos: [ -0.005, 0.041, 0 ]
+    jointType: ball
+  -
+    name: SLINK_L
+    link1Name: HANDSLNK_I
+    link2Name: MANIFNG_L
+    link1LocalPos: [ 0.080, 0, 0 ]
+    link2LocalPos: [ -0.005, 0.041, 0 ]
+    jointType: ball
+  -
+    name: LINK_TIP_U
+    link1Name: HANDLNK_I
+    link2Name: HANDTIP_U
+    link1LocalPos: [ 0.171, 0, 0 ]
+    link2LocalPos: [ 0.015, -0.030, 0 ]
+    jointType: ball
+  -
+    name: LINK_TIP_L
+    link1Name: HANDLNK_O
+    link2Name: HANDTIP_L
+    link1LocalPos: [ 0.171, 0, 0 ]
+    link2LocalPos: [ 0.015, -0.030, 0 ]
+    jointType: ball
