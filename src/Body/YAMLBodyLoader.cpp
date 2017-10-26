@@ -1654,6 +1654,11 @@ void YAMLBodyLoaderImpl::addSubBodyLinks(BodyPtr subBody, Mapping* node)
             setJointId(link, link->jointId() + jointIdOffset);
         }
     }
+
+    const int numExtraJoints = subBody->numExtraJoints();
+    for(int i=0; i < numExtraJoints; ++i){
+        body->addExtraJoint(subBody->extraJoint(i));
+    }
     
     for(int i=0; i < subBody->numDevices(); ++i){
         Device* device = subBody->device(i);
