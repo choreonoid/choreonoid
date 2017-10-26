@@ -426,7 +426,6 @@ bool AISTSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBod
     cfs.setContactCullingDepth(contactCullingDepth.value());
     cfs.setCoefficientOfRestitution(epsilon);
     cfs.setCollisionDetector(self->collisionDetector());
-    cfs.setSelfCollisionEnabled(self->isSelfCollisionEnabled());
 
     if(is2Dmode){
         cfs.set2Dmode(true);
@@ -477,6 +476,8 @@ void AISTSimulatorItemImpl::addBody(AISTSimBody* simBody)
         bodyIndex = world.addBody(body);
     }
     bodyIndexMap[body] = bodyIndex;
+
+    world.constraintForceSolver.setSelfCollisionEnabled( bodyIndex, simBody->bodyItem()->isSelfCollisionDetectionEnabled() );
 }
 
 

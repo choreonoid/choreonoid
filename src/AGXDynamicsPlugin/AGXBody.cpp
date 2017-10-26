@@ -77,23 +77,23 @@ void AGXLink::constructAGXLink()
 }
 
 void AGXLink::setAGXMaterial(){
-    // Check density is written in body file
+    // Check material and density are written in body file
+    string cMaterial = "";
+    bool bMaterial = getOrgLink()->info()->read("material", cMaterial);
     double density = 0.0;
     bool bDensity = getOrgLink()->info()->read("density", density);
 
     // Set material
-    if(setAGXMaterialFromName(getOrgLink()->materialName())){
-    }else{
-        setAGXMaterialFromLinkInfo();
-        if(!bDensity){
-            setCenterOfMassFromLinkInfo();
-            setMassFromLinkInfo();
-            setInertiaFromLinkInfo();
-        }
-    }
+    if(bMaterial) setAGXMaterialFromName(getOrgLink()->materialName());
+    else          setAGXMaterialFromLinkInfo();
 
-    // if density is written in body file, we use this density
-    if(bDensity) getAGXGeometry()->getMaterial()->getBulkMaterial()->setDensity(density);
+    if(bDensity){
+        getAGXGeometry()->getMaterial()->getBulkMaterial()->setDensity(density);
+    }else{
+        setCenterOfMassFromLinkInfo();
+        setMassFromLinkInfo();
+        setInertiaFromLinkInfo();
+    }
 }
 
 bool AGXLink::setAGXMaterialFromName(const std::string& materialName)
@@ -332,7 +332,7 @@ agxCollide::GeometryRef AGXLink::createAGXGeometry()
     if(orgLink->actuationMode() == Link::JOINT_SURFACE_VELOCITY){
         gdesc.isPseudoContinuousTrack = true;
         const Vector3& a = orgLink->a();
-        gdesc.axis = agx::Vec3f((float)a(0), (float)a(1), (float)a(2));
+        gdesc.axis = agx::Vec3(a(0), a(1), a(2));
     }
     return AGXObjectFactory::createGeometry(gdesc);
 }
@@ -526,7 +526,8 @@ agx::ConstraintRef AGXLink::createAGXConstraint()
             break;
         }
         case Link::FIXED_JOINT :
-        case Link::PSEUDO_CONTINUOUS_TRACK :{
+        case Link::PSEUDO_CONTINUOUS_TRACK :    // deprecated
+        {
             AGXLockJointDesc desc;
             desc.rigidBodyA = getAGXRigidBody();
             desc.rigidBodyB = agxParentLink->getAGXRigidBody();
@@ -571,15 +572,17 @@ void AGXLink::setVelocityToAGX()
             agx::Constraint1DOF* const joint1DOF = agx::Constraint1DOF::safeCast(getAGXConstraint());
             if(!joint1DOF) break;
             joint1DOF->getMotor1D()->setSpeed(orgLink->dq());
+            return;
             break;
         }
         default :
-            if(orgLink->actuationMode() == Link::JOINT_SURFACE_VELOCITY){
-                // Set speed(scalar) to x value. Direction is automatically calculated at AGXPseudoContinuousTrackGeometry::calculateSurfaceVelocity
-                agx::Vec3f vel((float)orgLink->dq(), 0.0, 0.0);
-                getAGXGeometry()->setSurfaceVelocity(vel);
-            }
             break;
+    }
+
+    if(orgLink->actuationMode() == Link::JOINT_SURFACE_VELOCITY){
+        // Set speed(scalar) to x value. Direction is automatically calculated at AGXPseudoContinuousTrackGeometry::calculateSurfaceVelocity
+        agx::Vec3f vel((float)orgLink->dq(), 0.0, 0.0);
+        getAGXGeometry()->setSurfaceVelocity(vel);
     }
 }
 

@@ -162,7 +162,7 @@ AGXVehicleContinuousTrack::AGXVehicleContinuousTrack(AGXVehicleContinuousTrackDe
         }
     }
     m_device->notifyStateChange();
-    printParameters(trackDesc);
+    //printParameters(trackDesc);
 }
 
 void AGXVehicleContinuousTrack::updateTrackState() {
