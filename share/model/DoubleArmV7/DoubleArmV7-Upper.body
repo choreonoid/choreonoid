@@ -14,12 +14,26 @@ links:
        0, 10,  0,
        0,  0, 10 ]
     elements:
-      Shape:
+      -
+        type: Shape
         translation: [ 0, -0.03, 0 ]
         geometry: { type: Cylinder, radius: 0.27, height: 0.06 }
         appearance: 
           material:
             diffuseColor: [ 0.53, 0.56, 0.27 ]
+      - 
+        type: RateGyroSensor
+        name: FRAME_GYRO
+        id: 0
+      -
+        type: Camera
+        name: FRAME_FRONT_CAMERA
+        translation: [ 0.25, 1.8, 0 ]
+        rotation: [ -0.211541, 0.954201, 0.211541, 92.69 ]
+        format: COLOR
+        width: 1280
+        height: 720
+        fieldOfView: 41.08
   -
     name: MFRAME
     parent: UPPER_TFRAME
@@ -1171,3 +1185,60 @@ extraJoints:
     link1LocalPos: [ 0.171, 0, 0 ]
     link2LocalPos: [ 0.015, -0.030, 0 ]
     jointType: ball
+
+linkGroup:
+  - name: Middleframe
+    links: 
+      - MFRAME
+      - BLOCK
+      - BOOM
+      - ARM
+      - name: HAND
+        links: 
+          - TOHKU_PITCH
+          - TOHKU_TIP_01
+          - TOHKU_TIP_02
+          - name: IK_TARGET0
+            links: 
+              - IK_DUMMY_X0
+              - IK_DUMMY_Y0
+  - name: Upperframe
+    links: 
+      - UFRAME
+      - name: Manipulator
+        links:
+          - MNP_SWING
+          - MANIBOOM
+          - MANIARM
+          - MANIELBOW
+          - name: IK_TARGET0
+            links: 
+              - IK_DUMMY_X0
+              - IK_DUMMY_Y0
+          - YAWJOINT
+          - HANDBASE
+          - name: Mani_hand
+            links:
+              - PUSHROD
+              - HANDSLNK_I
+              - HANDSLNK_O
+              - MANIFNG_U
+              - HANDTIP_U
+              - HANDLNK_I
+              - MANIFNG_L
+              - HANDTIP_L
+              - HANDLNK_O
+
+defaultIKsetup:
+  TOHKU_PITCH: [ MFRAME ]
+  HANDBASE : [ UFRAME ]
+  MANIELBOW : [ UFRAME ]
+  YAWJOINT : [ UFRAME ]
+  IK_DUMMY_X0: [ MFRAME ]
+  IK_DUMMY_Y0: [ MFRAME ]
+  IK_DUMMY_X1: [ UFRAME ]
+  IK_DUMMY_Y1: [ UFRAME ]
+
+collisionDetection:
+  excludeTreeDepth: 3
+  excludeLinks: [ ]
