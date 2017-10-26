@@ -119,7 +119,7 @@ public:
     WorldBase& world;
 
     bool isConstraintForceOutputMode;
-    bool isSelfCollisionEnabled;
+    vector<bool> isSelfCollisionEnabled;
         
     struct ConstraintPoint {
         int globalIndex;
@@ -443,7 +443,7 @@ CFSImpl::ConstraintForceSolverImpl(WorldBase& world) :
     contactCorrectionVelocityRatio = DEFAULT_CONTACT_CORRECTION_VELOCITY_RATIO;
 
     isConstraintForceOutputMode = false;
-    isSelfCollisionEnabled = false;
+    isSelfCollisionEnabled.clear();
     is2Dmode = false;
 }
 
@@ -653,7 +653,7 @@ void CFSImpl::initialize(void)
             }
         }
 
-        bodyData.geometryId = addBodyToCollisionDetector(*body, *collisionDetector, isSelfCollisionEnabled);
+        bodyData.geometryId = addBodyToCollisionDetector(*body, *collisionDetector, isSelfCollisionEnabled[bodyIndex]);
         geometryIdToBodyIndexMap.resize(collisionDetector->numGeometries(), bodyIndex);
 
         initBodyExtraJoints(bodyIndex);
@@ -2351,15 +2351,24 @@ bool ConstraintForceSolver::unregisterCollisionHandler(const std::string& name)
 }
 
 
-void ConstraintForceSolver::setSelfCollisionEnabled(bool on)
+void ConstraintForceSolver::setSelfCollisionEnabled(int bodyIndex, bool on)
 {
-    impl->isSelfCollisionEnabled = on;
+    vector<bool>& isSCE = impl->isSelfCollisionEnabled;
+    if(bodyIndex >= isSCE.size()){
+        isSCE.resize(bodyIndex+1);
+    }
+    isSCE[bodyIndex] = on;
 }
 
 
-bool ConstraintForceSolver::isSelfCollisionEnabled() const
+bool ConstraintForceSolver::isSelfCollisionEnabled(int bodyIndex) const
 {
-    return impl->isSelfCollisionEnabled;
+    vector<bool>& isSCE = impl->isSelfCollisionEnabled;
+    if(bodyIndex < isSCE.size()){
+        return impl->isSelfCollisionEnabled[bodyIndex];
+    }else{
+        return false;
+    }
 }
     
 
