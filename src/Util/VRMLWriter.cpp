@@ -22,6 +22,34 @@ TNodeMethodMap nodeMethodMap;
 }
 
 
+void VRMLWriter::writeMFInt32(MFInt32& values, int maxColumns)
+{
+    out << ++indent << "[\n";
+    ++indent;
+
+    out << indent;
+    int col = 0;
+    int n = values.size();
+    for(int i=0; i < n; i++){
+        out << values[i] << " ";
+        ++col;
+        if(col == maxColumns){
+            col = 0;
+            out << "\n";
+            if(i < n-1){
+                out << indent;
+            }
+        }
+    }
+    if(col < maxColumns){
+        cout << "\n";
+    }
+  
+    out << --indent << "]\n";
+    --indent;
+}
+
+
 void VRMLWriter::writeMFInt32SeparatedByMinusValue(MFInt32& values)
 {
     out << ++indent << "[\n";
@@ -401,19 +429,35 @@ void VRMLWriter::writeIndexedFaceSetNode(VRMLNodePtr node)
 
         if(!faceset->normalIndex.empty()){
             out << indent << "normalIndex\n";
-            writeMFInt32SeparatedByMinusValue(faceset->coordIndex);
+            writeMFInt32(faceset->normalIndex);
         }
         hasNormals = true;
     }
 
+    bool hasColors = false;
+    if(faceset->color){
+        out << indent << "color\n";
+        writeColorNode(faceset->color);
 
+        if(!faceset->colorIndex.empty()){
+            out << indent << "colorIndex\n";
+            writeMFInt32(faceset->colorIndex);
+        }
+        hasColors = true;
+    }
+        
     out << indent << "ccw " << boolstr(faceset->ccw) << "\n";
     out << indent << "convex " << boolstr(faceset->convex) << "\n";
-    out << indent << "creaseAngle " << faceset->creaseAngle << "\n";
+    out << indent << "solid " << boolstr(faceset->solid) << "\n";
+    if(faceset->creaseAngle > 0.0){
+        out << indent << "creaseAngle " << faceset->creaseAngle << "\n";
+    }
     if(hasNormals){
         out << indent << "normalPerVertex " << boolstr(faceset->normalPerVertex) << "\n";
     }
-    out << indent << "solid " << boolstr(faceset->solid) << "\n";
+    if(hasColors){
+        out << indent << "colorPerVertex " << boolstr(faceset->colorPerVertex) << "\n";
+    }
 
     endNode();
 }
@@ -439,6 +483,19 @@ void VRMLWriter::writeNormalNode(VRMLNormalPtr normal)
     if(!normal->vector.empty()){
         out << indent << "normal\n";
         writeMFValues(normal->vector, 1);
+    }
+
+    endNode();
+}
+
+
+void VRMLWriter::writeColorNode(VRMLColorPtr color)
+{
+    beginNode("Color", color);
+
+    if(!color->color.empty()){
+        out << indent << "color\n";
+        writeMFValues(color->color, 1);
     }
 
     endNode();

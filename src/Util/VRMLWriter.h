@@ -105,6 +105,7 @@ protected:
         out << --indent << "]\n";
         --indent;
     };
+    void writeMFInt32(MFInt32& values, int maxColumns = 10);
     void writeMFInt32SeparatedByMinusValue(MFInt32& values);
     void writeNodeIter(VRMLNodePtr node);
     void beginNode(const char* nodename, VRMLNodePtr node);
@@ -127,6 +128,7 @@ private:
     void writeIndexedFaceSetNode(VRMLNodePtr node);
     void writeCoordinateNode(VRMLCoordinatePtr coord);
     void writeNormalNode(VRMLNormalPtr normal);
+    void writeColorNode(VRMLColorPtr color);
 };
 
 };
