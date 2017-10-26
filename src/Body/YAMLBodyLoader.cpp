@@ -1247,7 +1247,13 @@ bool YAMLBodyLoaderImpl::readTransformContents(Mapping& node, NodeFunction nodeF
             currentSceneGroupSet().newGroup<SgGroup>();
         }
     } else {
-        currentSceneGroupSet().newGroup<SgPosTransform>(T);
+        if(hasScale){
+            currentSceneGroupSet().newGroup<SgPosTransform>(T);
+            sceneGroupSetStack.push_back(SceneGroupSet());
+            currentSceneGroupSet().newGroup<SgScaleTransform>(scale);
+        } else {
+            currentSceneGroupSet().newGroup<SgPosTransform>(T);
+        }
     }
     if(hasElements){
         isSceneNodeAdded = readContainerNode(node, nodeFunction);
@@ -1257,6 +1263,13 @@ bool YAMLBodyLoaderImpl::readTransformContents(Mapping& node, NodeFunction nodeF
 
     if(isSceneNodeAdded){
         addCurrentSceneGroupToParentSceneGroup();
+    }
+
+    if(!isIdentity && hasScale){
+        sceneGroupSetStack.pop_back();
+        if(isSceneNodeAdded){
+            addCurrentSceneGroupToParentSceneGroup();
+        }
     }
     sceneGroupSetStack.pop_back();
 

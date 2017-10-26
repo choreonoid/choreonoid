@@ -410,6 +410,15 @@ SgNode* YAMLSceneReaderImpl::readTransform(Mapping& node)
     if(self->readRotation(node, R, false)){
         transform->setRotation(R);
     }
+    Vector3 scale;
+    bool hasScale = read(node, "scale", scale);
+
+    if(hasScale){
+        SgScaleTransformPtr scaleT = new SgScaleTransform;
+        scaleT->setScale(scale);
+        transform->addChild(scaleT);
+    }
+
     return transform.retn();
 }
 
