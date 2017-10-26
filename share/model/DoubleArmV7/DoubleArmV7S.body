@@ -9,7 +9,7 @@ links:
     name: TFRAME
     jointType: free
     translation: [ 0, 0, 0.520 ]
-    rotation: [ 1, 0, 0, 90 ]
+    rotation: [ [ 0, 0, 1, 180 ], [ 1, 0, 0, 90 ] ]
     mass: 445
     centerOfMass: [ 2.61167950E-02, -2.48536360E-01, 7.38255770E-05 ]
     inertia: [

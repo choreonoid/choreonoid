@@ -24,8 +24,8 @@ items:
             currentBaseLink: "TFRAME"
             rootPosition: [ 0, 0, 0.52 ]
             rootAttitude: [ 
-              1, 0, 0, 
-              0, 6.123234e-17, -1, 
+              -1, -7.49879891e-33, 1.2246468e-16, 
+              1.2246468e-16, -6.123234e-17, 1, 
               0, 1, 6.123234e-17 ]
             jointPositions: [ 
                0.000000,  0.000000,  0.000000,  0.000000, -1.221730,  2.617994,  0.000000,  0.000000,  0.000000,  0.000000, 
@@ -33,9 +33,9 @@ items:
                0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000 ]
             initialRootPosition: [ 0, 0, 0.52 ]
             initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 2.22044605e-16, -1, 
-              0, 1, 2.22044605e-16 ]
+              -1, -1.23259516e-32, 1.2246468e-16, 
+              1.2246468e-16, -2.22044605e-16, 1, 
+              1.23259516e-32, 1, 2.22044605e-16 ]
             initialJointPositions: [ 
                0.000000,  0.000000,  0.000000,  0.000000, -1.221730,  2.617994,  0.000000,  0.000000,  0.000000,  0.000000, 
                0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000, 
@@ -122,6 +122,7 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
+      selected: [ 5 ]
       checked: [ 2, 4 ]
       expanded: [ 1, 2 ]
   - 
@@ -173,9 +174,9 @@ views:
           fieldOfView: 0.698132
           near: 0.01
           far: 100
-          eye: [ 4.29971991, 5.07158214, 1.91307662 ]
-          direction: [ -0.696093411, -0.707673966, -0.12104347 ]
-          up: [ -0.0848816793, -0.0862938129, 0.992647207 ]
+          eye: [ 5.16671576, 3.56681014, 2.50562146 ]
+          direction: [ -0.780397377, -0.585476686, -0.219538117 ]
+          up: [ -0.175611195, -0.131748598, 0.975603923 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
@@ -197,127 +198,21 @@ views:
     plugin: Body
     class: BodyLinkView
     mounted: true
-    state: 
-      showRotationMatrix: false
   - 
     id: 6
     plugin: Body
     class: JointSliderView
     mounted: true
-    state: 
-      showAllJoints: true
-      jointId: false
-      name: true
-      numColumns: 1
-      spinBox: true
-      slider: true
-      labelOnLeft: true
-      currentBodyItem: 2
   - 
     id: 7
     plugin: Body
     class: LinkSelectionView
-    mounted: true
-    state: 
-      listingMode: "Link List"
-      currentBodyItem: 2
-      bodyItems: 
-        - 
-          id: 4
-          selectedLinks: [ 0 ]
-  - 
-    id: 8
-    plugin: OpenRTM
-    class: RTSNameServerView
     mounted: true
   - 
     id: 9
     plugin: Python
     class: PythonConsoleView
     mounted: true
-toolbars: 
-  "TimeBar": 
-    minTime: 0
-    maxTime: 30
-    frameRate: 100
-    playbackFrameRate: 50
-    idleLoopDrivenMode: false
-    currentTime: 0
-    speedScale: 1
-    syncToOngoingUpdates: true
-    autoExpansion: true
-  "KinematicsBar": 
-    mode: AUTO
-    enablePositionDragger: true
-    penetrationBlock: false
-    collisionLinkHighlight: false
-    snapDistance: 0.025
-    penetrationBlockDepth: 0.0005
-    lazyCollisionDetectionMode: true
-  "BodyBar": 
-    current: 2
-  "LeggedBodyBar": 
-    stanceWidth: 0.15
-  "BodyMotionGenerationBar": 
-    autoGenerationForNewBody: true
-    balancer: false
-    autoGeneration: false
-    timeScaleRatio: 1
-    preInitialDuration: 1
-    postFinalDuration: 1
-    onlyTimeBarRange: false
-    makeNewBodyItem: true
-    stealthyStepMode: true
-    stealthyHeightRatioThresh: 2
-    flatLiftingHeight: 0.005
-    flatLandingHeight: 0.005
-    impactReductionHeight: 0.005
-    impactReductionTime: 0.04
-    autoZmp: true
-    minZmpTransitionTime: 0.1
-    zmpCenteringTimeThresh: 0.03
-    zmpTimeMarginBeforeLiftingSpin: 0
-    zmpMaxDistanceFromCenter: 0.02
-    allLinkPositions: false
-    lipSyncMix: false
-    timeToStartBalancer: 0
-    balancerIterations: 2
-    plainBalancerMode: false
-    boundaryConditionType: position
-    boundarySmootherType: quintic
-    boundarySmootherTime: 0.5
-    boundaryCmAdjustment: false
-    boundaryCmAdjustmentTime: 1
-    waistHeightRelaxation: false
-    gravity: 9.8
-    dynamicsTimeRatio: 1
-Body: 
-  "BodyMotionEngine": 
-    updateJointVelocities: false
-  "EditableSceneBody": 
-    editableSceneBodies: 
-      - 
-        bodyItem: 2
-        showCenterOfMass: false
-        showPpcom: false
-        showZmp: false
-      - 
-        bodyItem: 4
-        showCenterOfMass: false
-        showPpcom: false
-        showZmp: false
-    staticModelEditing: true
-  "KinematicFaultChecker": 
-    checkJointPositions: true
-    angleMargin: 0
-    translationMargin: 0
-    checkJointVelocities: true
-    velocityLimitRatio: 100
-    targetJoints: all
-    checkSelfCollisions: true
-    onlyTimeBarRange: false
-OpenRTM: 
-  "deleteUnmanagedRTCsOnStartingSimulation": false
 viewAreas: 
   - 
     type: embedded
@@ -338,7 +233,7 @@ viewAreas:
               current: 1
             - 
               type: pane
-              views: [ 0, 7, 8 ]
+              views: [ 0, 7 ]
               current: 0
         - 
           type: splitter
@@ -371,16 +266,3 @@ viewAreas:
                   type: pane
                   views: [ 4 ]
                   current: 4
-layoutOfToolBars: 
-  rows: 
-    - 
-      - { name: "FileBar", x: 0, priority: 0 }
-      - { name: "ScriptBar", x: 48, priority: 0 }
-      - { name: "TimeBar", x: 96, priority: 0 }
-      - { name: "SceneBar", x: 1044, priority: 0 }
-      - { name: "GraphBar", x: 1450, priority: 0 }
-      - { name: "SimulationBar", x: 1560, priority: 0 }
-      - { name: "KinematicsBar", x: 1763, priority: 0 }
-    - 
-      - { name: "BodyBar", x: 0, priority: 0 }
-      - { name: "BodyMotionGenerationBar", x: 268, priority: 0 }
