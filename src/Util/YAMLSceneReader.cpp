@@ -402,7 +402,7 @@ void YAMLSceneReaderImpl::readNodeList(ValueNode& elements, SgGroup* group)
 SgNode* YAMLSceneReaderImpl::readTransform(Mapping& node)
 {
     SgPosTransformPtr transform = new SgPosTransform;
-    readElements(node, transform);
+
     if(read(node, "translation", v)){
         transform->setTranslation(v);
     }
@@ -417,6 +417,9 @@ SgNode* YAMLSceneReaderImpl::readTransform(Mapping& node)
         SgScaleTransformPtr scaleT = new SgScaleTransform;
         scaleT->setScale(scale);
         transform->addChild(scaleT);
+        readElements(node, scaleT);
+    }else{
+        readElements(node, transform);
     }
 
     return transform.retn();
