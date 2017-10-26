@@ -32,7 +32,7 @@ struct AGXMaterialDesc
 {
     AGXMaterialDesc(){
         name = default_name();
-        density = 1000;
+        density = 1000.0;
         youngsModulus = 4.0E8;
         poissonRatio = 0.3;
         viscosity = 0.5;

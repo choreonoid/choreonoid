@@ -77,23 +77,23 @@ void AGXLink::constructAGXLink()
 }
 
 void AGXLink::setAGXMaterial(){
-    // Check density is written in body file
+    // Check material and density are written in body file
+    string cMaterial = "";
+    bool bMaterial = getOrgLink()->info()->read("material", cMaterial);
     double density = 0.0;
     bool bDensity = getOrgLink()->info()->read("density", density);
 
     // Set material
-    if(setAGXMaterialFromName(getOrgLink()->materialName())){
-    }else{
-        setAGXMaterialFromLinkInfo();
-        if(!bDensity){
-            setCenterOfMassFromLinkInfo();
-            setMassFromLinkInfo();
-            setInertiaFromLinkInfo();
-        }
-    }
+    if(bMaterial) setAGXMaterialFromName(getOrgLink()->materialName());
+    else          setAGXMaterialFromLinkInfo();
 
-    // if density is written in body file, we use this density
-    if(bDensity) getAGXGeometry()->getMaterial()->getBulkMaterial()->setDensity(density);
+    if(bDensity){
+        getAGXGeometry()->getMaterial()->getBulkMaterial()->setDensity(density);
+    }else{
+        setCenterOfMassFromLinkInfo();
+        setMassFromLinkInfo();
+        setInertiaFromLinkInfo();
+    }
 }
 
 bool AGXLink::setAGXMaterialFromName(const std::string& materialName)
