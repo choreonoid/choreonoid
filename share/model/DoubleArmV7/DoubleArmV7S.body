@@ -51,34 +51,3 @@ links:
     type: SubBody
     uri: DoubleArmV7-Upper.body
     parent: TFRAME
-
-
-extraJoints:
-  -
-    name: SLINK_U
-    link1Name: HANDSLNK_O
-    link2Name: MANIFNG_U
-    link1LocalPos: [ 0.080, 0, 0 ]
-    link2LocalPos: [ -0.005, 0.041, 0 ]
-    jointType: ball
-  -
-    name: SLINK_L
-    link1Name: HANDSLNK_I
-    link2Name: MANIFNG_L
-    link1LocalPos: [ 0.080, 0, 0 ]
-    link2LocalPos: [ -0.005, 0.041, 0 ]
-    jointType: ball
-  -
-    name: LINK_TIP_U
-    link1Name: HANDLNK_I
-    link2Name: HANDTIP_U
-    link1LocalPos: [ 0.171, 0, 0 ]
-    link2LocalPos: [ 0.015, -0.030, 0 ]
-    jointType: ball
-  -
-    name: LINK_TIP_L
-    link1Name: HANDLNK_O
-    link2Name: HANDTIP_L
-    link1LocalPos: [ 0.171, 0, 0 ]
-    link2LocalPos: [ 0.015, -0.030, 0 ]
-    jointType: ball
