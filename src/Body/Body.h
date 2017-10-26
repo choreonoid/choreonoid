@@ -106,6 +106,7 @@ public:
     };
 
     JointAccessor joints() { return JointAccessor(jointIdToLinkArray, numActualJoints); }
+    JointAccessor allJoints() { return JointAccessor(jointIdToLinkArray, jointIdToLinkArray.size()); }
 
     /**
        The number of all the links the body has.
