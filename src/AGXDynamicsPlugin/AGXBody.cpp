@@ -77,24 +77,22 @@ void AGXLink::constructAGXLink()
 }
 
 void AGXLink::setAGXMaterial(){
-    // Check material and density are written in body file
-    string cMaterial = "";
-    bool bMaterial = getOrgLink()->info()->read("material", cMaterial);
-    string massType = "mass";
-    getOrgLink()->info()->read("massType", massType);
-    double density;
-    bool bDensity = getOrgLink()->info()->read("density", density);
-
+    Mapping* mapping = getOrgLink()->info();
     // Set material
-    if(bMaterial) setAGXMaterialFromName(getOrgLink()->materialName());
-    else          setAGXMaterialFromLinkInfo();
-
-    // Set density or mass
-    if(massType == "density" && bDensity){
-        getAGXGeometry()->getMaterial()->getBulkMaterial()->setDensity(density);
+    if(mapping->find("material")->isValid()){
+        setAGXMaterialFromName(getOrgLink()->materialName());
+    }else{
+        setAGXMaterialFromLinkInfo();
     }
 
-    if(massType == "mass"){
+    // Set density or mass
+    string massType = mapping->get("massType", "mass");
+    if(massType == "density"){
+        double density;
+        if(mapping->read("density", density)){
+            getAGXGeometry()->getMaterial()->getBulkMaterial()->setDensity(density);
+        }
+    }else{
         setCenterOfMassFromLinkInfo();
         setMassFromLinkInfo();
         setInertiaFromLinkInfo();
@@ -119,28 +117,29 @@ void AGXLink::setAGXMaterialFromLinkInfo()
     ss << "AGXMaterial" << agx::UuidGenerator().generate().str() << std::endl;
     agx::Material* dmat = sim->getMaterial(getOrgLink()->materialName());
     agx::MaterialRef mat = new agx::Material(ss.str(), dmat);
+    Mapping* mapping = getOrgLink()->info();
     double density;
-    if(agxConvert::setValue(getOrgLink()->info(), "density", density))
+    if(mapping->read("density", density))
         mat->getBulkMaterial()->setDensity(density);
     double youngsModulus;
-    if(agxConvert::setValue(getOrgLink()->info(), "youngsModulus", youngsModulus))
+    if(mapping->read("youngsModulus", youngsModulus))
         mat->getBulkMaterial()->setYoungsModulus(youngsModulus);
     double poissonRatio;
-    if(agxConvert::setValue(getOrgLink()->info(), "poissonRatio", poissonRatio))
+    if(mapping->read("poissonRatio", poissonRatio))
         mat->getBulkMaterial()->setPoissonsRatio(poissonRatio);
     double viscosity;
-    if(agxConvert::setValue(getOrgLink()->info(), "viscosity", viscosity))
+    if(mapping->read("viscosity", viscosity))
         mat->getBulkMaterial()->setViscosity(viscosity);
     double roughness;
-    if(agxConvert::setValue(getOrgLink()->info(), "roughness", roughness))
+    if(mapping->read("roughness", roughness))
         mat->getSurfaceMaterial()->setRoughness(roughness);
     double surfaceViscosity;
-    if(agxConvert::setValue(getOrgLink()->info(), "surfaceViscosity", surfaceViscosity))
+    if(mapping->read("surfaceViscosity", surfaceViscosity))
         mat->getSurfaceMaterial()->setViscosity(surfaceViscosity);
     double adhesionForce;
-    if(agxConvert::setValue(getOrgLink()->info(), "adhesionForce", adhesionForce)){
+    if(mapping->read("adhesionForce", adhesionForce)){
         double adhesivOverlap = mat->getSurfaceMaterial()->getAdhesiveOverlap();
-        agxConvert::setValue(getOrgLink()->info(), "adhesivOverlap", adhesivOverlap);
+        mapping->read("adhesivOverlap", adhesivOverlap);
         mat->getSurfaceMaterial()->setAdhesion(adhesionForce, adhesivOverlap);
     }
     sim->getMaterialManager()->add(mat);
