@@ -16,10 +16,12 @@ agx::Vec3 AGXPseudoContinuousTrackGeometry::getAxis() const
 
 agx::Vec3f AGXPseudoContinuousTrackGeometry::calculateSurfaceVelocity(const agxCollide::LocalContactPoint & point, size_t index) const
 {
-    agx::Vec3 dir = getAxis() ^ agx::Vec3(point.normal());
+    agx::Vec3 axis0 = getFrame()->transformVectorToWorld( getAxis() );
+    agx::Vec3 dir = axis0 ^ agx::Vec3(point.normal());
     dir.normalize();
     dir *= -1.0 * getSurfaceVelocity().x();
-    return agx::Vec3f(dir);
+    agx::Vec3 ret = getFrame()->transformVectorToLocal(dir);
+    return agx::Vec3f(ret);
 }
 
 ////////////////////////////////////////////////////////////
