@@ -293,7 +293,7 @@ public:
     bool readElements(Mapping& node);
     bool readElementContents(ValueNode& elements);
     bool readNode(Mapping& node, const string& type);
-    bool readDisabled(Mapping& node);
+    bool readSkipNode(Mapping& node);
     bool readContainerNode(Mapping& node, NodeFunction nodeFunction);
     bool readTransformContents(Mapping& node, NodeFunction nodeFunction, bool hasElements);
     bool readGroup(Mapping& node);
@@ -457,7 +457,7 @@ YAMLBodyLoader::YAMLBodyLoader()
 YAMLBodyLoaderImpl::YAMLBodyLoaderImpl(YAMLBodyLoader* self)
     : self(self)
 {
-    nodeFunctions["Disabled"].set([&](Mapping& node){ return readDisabled(node); });
+    nodeFunctions["Skip"].set([&](Mapping& node){ return readSkipNode(node); });
     nodeFunctions["Group"].set([&](Mapping& node){ return readGroup(node); });
     nodeFunctions["Transform"].set([&](Mapping& node){ return readTransform(node); });
     nodeFunctions["RigidBody"].setTE([&](Mapping& node){ return readRigidBody(node); });
@@ -777,7 +777,7 @@ void YAMLBodyLoaderImpl::readNodeInLinks(Mapping* node, const string& nodeType)
         readContinuousTrackNode(node);
     } else if(type == "SubBody"){
         readSubBodyNode(node);
-    } else if(type == "Disabled"){
+    } else if(type == "Skip"){
 
     } else {
         node->throwException(
@@ -1225,7 +1225,7 @@ bool YAMLBodyLoaderImpl::readNode(Mapping& node, const string& type)
 }
 
 
-bool YAMLBodyLoaderImpl::readDisabled(Mapping& node)
+bool YAMLBodyLoaderImpl::readSkipNode(Mapping& node)
 {
     return false;
 }

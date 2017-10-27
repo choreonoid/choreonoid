@@ -215,7 +215,7 @@ links:
         translation: [ 0, 0, 0.2729 ]
         elements:
   -
-    type: Disabled
+    type: Skip
     name: UPPER_FRAME
     parent: BASE
     translation: [ 0, 0, 0.2729 ]
@@ -361,7 +361,7 @@ links:
                         geometry: { type: Box, size: [ 0.022, 0.2, 0.022 ] }
           -
             #type: RigidBody
-            type: Disabled
+            type: Skip
             name: sensor_attachment_link
             translation: [ 0.0, 0.0, 0.14 ]
             mass: 0.0000001
@@ -435,7 +435,7 @@ links:
                     geometry: { type: Box, size: [ 0.0321, 0.083, 0.0838 ] }
           -
             #type: RigidBody
-            type: Disabled
+            type: Skip
             name: sensor_base_link
             translation: [ 0.01, 0.0, 0.06 ]
             mass: 0.0000001
@@ -523,7 +523,7 @@ links:
                 geometry: { type: Box, size: [ 0.001, 0.001, 0.001 ] }
           -
             #type: RigidBody
-            type: Disabled
+            type: Skip
             name: velodyne_base_link
             translation: [ -0.0006, 0.0, 0.058 ]
             mass: 0.1
@@ -559,7 +559,7 @@ links:
                     translation: [ 0.0, 0.0, -0.0377 ]
                     uri: "package://velodyne_description/meshes/VLP16_scan.dae"
   -
-    type: Disabled
+    type: Skip
     name: HEAD
     parent: UPPER_FRAME
     translation: [ -0.35, 0.0, 0.41 ]
@@ -693,7 +693,7 @@ links:
               AccelerationSensor:
                 name: head_imu_sensor_acc
   -
-    type: Disabled
+    type: Skip
     name: HOKUYO
     parent: HEAD
     translation: [ -0.0446, 0, 0.0880 ]
