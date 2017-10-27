@@ -23,7 +23,7 @@ definitions:
 
 links:
   -
-    name: BASE #base_link
+    name: BASE
     rotation: [ 0, 1, 0, 90 ]
     jointType: free
     centerOfMass: [ 0.02263, -0.00136, 0.27279 ]
@@ -216,7 +216,7 @@ links:
         elements:
   -
     type: Disabled
-    name: UPPER_FRAME #base_upper_link
+    name: UPPER_FRAME
     parent: BASE
     translation: [ 0, 0, 0.2729 ]
     jointType: fixed
