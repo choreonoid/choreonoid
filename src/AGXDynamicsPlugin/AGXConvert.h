@@ -29,6 +29,17 @@ inline bool setVector(ValueNodePtr const vnptr, const unsigned int checkSize, st
 }
 
 template<typename T>
+inline bool setValue(MappingPtr const mapping, const std::string key, T& scalarValue)
+{
+    if(!mapping) return false;
+    ValueNodePtr vnptr = mapping->find(key);
+    if(!vnptr->isValid()) return false;
+    if(vnptr->isListing()) return false;
+    scalarValue = vnptr->to<T>();
+    return true;
+}
+
+template<typename T>
 inline bool setValue(const std::string& key, const std::unordered_map<std::string, T>& map,
     const std::string& defaultValue, T& value)
 {

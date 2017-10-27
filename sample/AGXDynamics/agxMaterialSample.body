@@ -20,6 +20,8 @@ links:
     parent: floor
     translation: [ -4.0, -5.0, 1.5 ]
     jointType: free
+    massType: density
+    density: 1.0
     material: agxMat1
     elements: &boxShape
       -
@@ -31,6 +33,7 @@ links:
     parent: floor
     translation: [ -3.0, -5.0, 1.5 ]
     jointType: free
+    massType: density
     material: agxMat2
     elements: *boxShape
   -
@@ -38,6 +41,7 @@ links:
     parent: floor
     translation: [ -2.0, -5.0, 1.5 ]
     jointType: free
+    massType: density
     material: agxMat3
     elements: *boxShape
   -
@@ -45,6 +49,7 @@ links:
     parent: floor
     translation: [ -1.0, -5.0, 1.5 ]
     jointType: free
+    massType: density
     material: agxMat4
     elements: *boxShape
   -
@@ -52,6 +57,7 @@ links:
     parent: floor
     translation: [ 0.0, -5.0, 1.5 ]
     jointType: free
+    massType: density
     material: agxMat5
     elements: *boxShape
   -
@@ -59,19 +65,36 @@ links:
     parent: floor
     translation: [ 1.0, -5.0, 1.5 ]
     jointType: free
-    material: agxMat1
+    massType: density
     elements: *boxShape
+    density: 100
+    youngsModulus: 1.0E5
+    poissonRatio: 1.0
+    viscosity: 0.1
+    roughness: 1.0
+    surfaceViscosity: 1.0E-8
+    adhesionForce: 1000
+    adhesivOverlap: 0.2
   -
-    name: box7
+    name: box98
     parent: floor
     translation: [ 2.0, -5.0, 1.5 ]
     jointType: free
+    massType: density
+    material: agxMat1
+    elements: *boxShape
+  -
+    name: box99
+    parent: floor
+    translation: [ 3.0, -5.0, 1.5 ]
+    jointType: free
+    massType: density
     material: agxMat1
     elements: *boxShape
 
 collisionDetection:
-    excludeLinks: [ box6 ]
+    excludeLinks: [ box98 ]
     excludeLinkGroups:
     -
       name: excludeGroup1
-      links: [ floor, box7 ]
+      links: [ floor, box99 ]
