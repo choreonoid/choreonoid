@@ -2,7 +2,7 @@ format: ChoreonoidBody
 formatVersion: 1.0
 angleUnit: degree
 name: warec
-rootLink: base_link
+rootLink: BASE
 
 definitions:
   - &BlackAppearance
@@ -23,7 +23,7 @@ definitions:
 
 links:
   -
-    name: base_link
+    name: BASE #base_link
     rotation: [ 0, 1, 0, 90 ]
     jointType: free
     centerOfMass: [ 0.02263, -0.00136, 0.27279 ]
@@ -216,8 +216,8 @@ links:
         elements:
   -
     type: Disabled
-    name: base_upper_link
-    parent: base_link
+    name: UPPER_FRAME #base_upper_link
+    parent: BASE
     translation: [ 0, 0, 0.2729 ]
     jointType: fixed
     elements:
@@ -560,8 +560,8 @@ links:
                     uri: "package://velodyne_description/meshes/VLP16_scan.dae"
   -
     type: Disabled
-    name: head
-    parent: base_upper_link
+    name: HEAD
+    parent: UPPER_FRAME
     translation: [ -0.35, 0.0, 0.41 ]
     rotation: [ 0, 1, 0, -75 ]
     jointType: fixed # revolute?
@@ -694,8 +694,8 @@ links:
                 name: head_imu_sensor_acc
   -
     type: Disabled
-    name: hokuyo_link
-    parent: head
+    name: HOKUYO
+    parent: HEAD
     translation: [ -0.0446, 0, 0.0880 ]
     jointType: revolute
     jointAxis: X
@@ -749,8 +749,8 @@ links:
             # noiseMean: 0.0
             # noiseStddev: 0.01
   -
-    name: back_left_hip_R
-    parent: base_link
+    name: RL_HIP_R
+    parent: BASE
     translation: [ 0.0, 0.164905, -0.000005 ]
     jointType: revolute
     jointAxis: X
@@ -912,8 +912,8 @@ links:
             rotation: [ 0, 1, 0, 90 ]
             geometry: { type: Box, size: [ 0.117, 0.02, 0.063 ] }
   -
-    name: back_left_hip_P
-    parent: back_left_hip_R
+    name: RL_HIP_P
+    parent: RL_HIP_R
     translation: [ 0.0, 0.0, -0.169 ]
     jointType: revolute
     jointAxis: Y
@@ -981,8 +981,8 @@ links:
             elements: &HIP_P_CYLI5
               Shape: { geometry: { type: Cylinder, radius: 0.045, height: 0.05} }
   -
-    name: back_left_hip_Y
-    parent: back_left_hip_P
+    name: RL_HIP_Y
+    parent: RL_HIP_P
     translation: [ 0.0, 0.0, -0.241 ]
     jointType: revolute
     jointAxis: Z
@@ -1060,8 +1060,8 @@ links:
             elements: &HIP_Y_CYLI3
               Shape: { geometry: { type: Cylinder, radius: 0.041, height: 0.012} }
   -
-    name: back_left_kn_P
-    parent: back_left_hip_Y
+    name: RL_KNEE_P
+    parent: RL_HIP_Y
     translation: [ 0.046, 0.0, -0.07804 ]
     jointType: revolute
     jointAxis: Y
@@ -1149,8 +1149,8 @@ links:
             elements: &KN_P_CYLI8
               Shape: { geometry: { type: Cylinder, radius: 0.05, height: 0.027} }
   -
-    name: back_left_ak_Y
-    parent: back_left_kn_P
+    name: RL_ANKLE_Y
+    parent: RL_KNEE_P
     translation: [ -0.046, 0.0, -0.213 ]
     jointType: revolute
     jointAxis: Z
@@ -1240,8 +1240,8 @@ links:
             rotation: [ 0, 1, 0, 90 ]
             geometry: { type: Box, size: [ 0.026, 0.0155, 0.058 ] }
   -
-    name: back_left_ak_P
-    parent: back_left_ak_Y
+    name: RL_ANKLE_P
+    parent: RL_ANKLE_Y
     translation: [ 0.0, 0.0, -0.08 ]
     jointType: revolute
     jointAxis: Y
@@ -1330,8 +1330,8 @@ links:
             elements: &AK_Y_CILI6
               Shape: { geometry: { type: Cylinder, radius: 0.061, height: 0.0454 } }
   -
-    name: back_left_ak_R
-    parent: back_left_ak_P
+    name: RL_ANKLE_R
+    parent: RL_ANKLE_P
     translation: [ 0.0, 0.0, -0.154 ]
     jointType: revolute
     jointAxis: X
@@ -1400,14 +1400,14 @@ links:
             elements: &AK_R_CILI2
               Shape: { geometry: { type: Cylinder, radius: 0.028, height: 0.006 } }
   - 
-    name: back_left_hook
-    parent: back_left_ak_R
+    name: RL_HOOK
+    parent: RL_ANKLE_R
     jointType: fixed
     translation: [ 0.0, 0.0, -0.0955 ]
     elements:
       -
         type: RigidBody
-        name: back_left_fsens
+        name: RL_fsens
         mass: 0.78
         centerOfMass: [ 0.0, 0.0, -0.0225 ]
         inertia: [
@@ -1420,7 +1420,7 @@ links:
             geometry: { type: Cylinder, height: 0.045, radius: 0.05 }
             appearance: *DarkGrayAppearance
           ForceSensor:
-            name: back_left_wrench
+            name: RL_wrench
       -
         type: RigidBody
         translation: [ 0.0, 0.0, -0.0225 ]
@@ -1529,8 +1529,8 @@ links:
                 translation: [ 0.0897, 0.0, -0.025 ]
                 geometry: { type: Box, size: [ 0.01, 0.1, 0.01 ] }
   -
-    name: back_right_hip_R
-    parent: base_link
+    name: RR_HIP_R
+    parent: BASE
     translation: [ 0.0, -0.164905, -0.000005 ]
     jointType: revolute
     jointAxis: X
@@ -1688,8 +1688,8 @@ links:
             rotation: [ 0, 1, 0, 90 ]
             geometry: { type: Box, size: [ 0.117, 0.02, 0.063 ] }
   -
-    name: back_right_hip_P
-    parent: back_right_hip_R
+    name: RR_HIP_P
+    parent: RR_HIP_R
     translation: [ 0.0, 0.0, -0.169 ]
     jointType: revolute
     jointAxis: Y
@@ -1751,8 +1751,8 @@ links:
             rotation: [ 1, 0, 0, 90 ]	
             elements: *HIP_P_CYLI5
   -
-    name: back_right_hip_Y
-    parent: back_right_hip_P
+    name: RR_HIP_Y
+    parent: RR_HIP_P
     translation: [ 0.0, 0.0, -0.241 ]
     jointType: revolute
     jointAxis: Z
@@ -1826,8 +1826,8 @@ links:
             translation: [ 0.043, -0.07125, -0.075 ]
             elements: *HIP_Y_CYLI2
   -
-    name: back_right_kn_P
-    parent: back_right_hip_Y
+    name: RR_KNEE_P
+    parent: RR_HIP_Y
     translation: [ 0.046, 0.0, -0.07804 ]
     jointType: revolute
     jointAxis: Y
@@ -1906,8 +1906,8 @@ links:
             rotation: [ 1, 0, 0, 90 ]
             elements: *KN_P_CYLI8
   -
-    name: back_right_ak_Y
-    parent: back_right_kn_P
+    name: RR_ANKLE_Y
+    parent: RR_KNEE_P
     translation: [ -0.046, 0.0, -0.213 ]
     jointType: revolute
     jointAxis: Z
@@ -1994,8 +1994,8 @@ links:
             rotation: [ 0, 1, 0, 90 ]
             geometry: { type: Box, size: [ 0.026, 0.0155, 0.058 ] }
   -
-    name: back_right_ak_P
-    parent: back_right_ak_Y
+    name: RR_ANKLE_P
+    parent: RR_ANKLE_Y
     translation: [ 0.0, 0.0, -0.08 ]
     jointType: revolute
     jointAxis: Y
@@ -2078,8 +2078,8 @@ links:
             rotation: [ 0, 0, 1, 90 ]
             elements: *AK_Y_CILI6
   -
-    name: back_right_ak_R
-    parent: back_right_ak_P
+    name: RR_ANKLE_R
+    parent: RR_ANKLE_P
     translation: [ 0.0, 0.0,  -0.154 ]
     jointType: revolute
     jointAxis: X
@@ -2100,14 +2100,14 @@ links:
           appearance: *RedAppearance
       - *AK_ROLL_COLLISION_SHAPE
   - 
-    name: back_right_hook
-    parent: back_right_ak_R
+    name: RR_HOOK
+    parent: RR_ANKLE_R
     jointType: fixed
     translation: [ 0.0, 0.0, -0.0955 ]
     elements:
       -
         type: RigidBody
-        name: back_right_fsens
+        name: RR_fsens
         mass: 0.78
         centerOfMass: [ 0.0, 0.0, -0.0225 ]
         inertia: [
@@ -2117,7 +2117,7 @@ links:
         elements:
           Shape: *FORCE_SENSOR_SHAPE_DESCRIPTION
           ForceSensor:
-            name: back_right_wrench
+            name: RR_wrench
       -
         type: RigidBody
         translation: [ 0.0, 0.0, -0.0225 ]
@@ -2226,8 +2226,8 @@ links:
                 translation: [ 0.0897, 0.0, -0.025 ]
                 geometry: { type: Box, size: [ 0.01, 0.1, 0.01 ] }
   -
-    name: front_left_hip_R
-    parent: base_link
+    name: FL_HIP_R
+    parent: BASE
     translation: [ 0.0, 0.164905, 0.545805]
     jointType: revolute
     jointAxis: X
@@ -2245,8 +2245,8 @@ links:
         rotation: [ 1, 0, 0, 180 ]
         elements: *RHIP_ROLL_SHAPE
   -
-    name: front_left_hip_P
-    parent: front_left_hip_R
+    name: FL_HIP_P
+    parent: FL_HIP_R
     translation: [ 0.0, 0.0, 0.169 ]
     jointType: revolute
     jointAxis: Y
@@ -2264,8 +2264,8 @@ links:
         rotation: [ 1, 0, 0, 180 ]
         elements: *RHIP_PITCH_SHAPE
   -
-    name: front_left_hip_Y
-    parent: front_left_hip_P
+    name: FL_HIP_Y
+    parent: FL_HIP_P
     translation: [ 0.0, 0.0, 0.241 ]
     jointType: revolute
     jointAxis: Z
@@ -2283,8 +2283,8 @@ links:
         rotation: [ 1, 0, 0, 180 ]
         elements: *RHIP_YAW_SHAPE
   -
-    name: front_left_kn_P
-    parent: front_left_hip_Y
+    name: FL_KNEE_P
+    parent: FL_HIP_Y
     translation: [ 0.046, 0.0, 0.07804 ]
     jointType: revolute
     jointAxis: Y
@@ -2302,8 +2302,8 @@ links:
         rotation: [ 1, 0, 0, 180 ]
         elements: *RKN_PITCH_SHAPE
   -
-    name: front_left_ak_Y
-    parent: front_left_kn_P
+    name: FL_ANKLE_Y
+    parent: FL_KNEE_P
     translation: [ -0.046, 0.0, 0.213 ]
     jointType: revolute
     jointAxis: Z
@@ -2321,8 +2321,8 @@ links:
         rotation: [ 1, 0, 0, 180 ]
         elements: *RAK_YAW_SHAPE
   -
-    name: front_left_ak_P
-    parent: front_left_ak_Y
+    name: FL_ANKLE_P
+    parent: FL_ANKLE_Y
     translation: [ 0.0, 0.0, 0.08 ]
     jointType: revolute
     jointAxis: Y
@@ -2340,8 +2340,8 @@ links:
         rotation: [ 1, 0, 0, 180 ]
         elements: *RAK_PITCH_SHAPE
   -
-    name: front_left_ak_R
-    parent: front_left_ak_P
+    name: FL_ANKLE_R
+    parent: FL_ANKLE_P
     translation: [ 0.0, 0.0, 0.154 ]
     jointType: revolute
     jointAxis: X
@@ -2359,14 +2359,14 @@ links:
         rotation: [ 1, 0, 0, 180 ]
         elements: *RAK_ROLL_SHAPE
   -
-    name: front_left_hook
-    parent: front_left_ak_R
+    name: FL_HOOK
+    parent: FL_ANKLE_R
     jointType: fixed
     translation: [ 0.0, 0.0, 0.0955 ]
     elements:
       -
         type: RigidBody
-        name: front_left_fsens
+        name: FL_fsens
         mass: 0.78
         centerOfMass: [ 0.0, 0.0, 0.0225 ]
         inertia: [
@@ -2376,10 +2376,10 @@ links:
         elements:
           Shape: *FORCE_SENSOR_SHAPE_DESCRIPTION
           ForceSensor:
-            name: front_left_wrench
+            name: FL_wrench
       -
         type: RigidBody
-        name: front_left_hook
+        name: FL_HOOK
         translation: [ 0.0, 0.0, 0.0225 ]
         mass: 0.72
         centerOfMass: [ -0.02026, 0.0, 0.00803 ]
@@ -2392,8 +2392,8 @@ links:
             rotation: [ 1, 0, 0, 180 ]
             elements: *REE_SHAPE
   -
-    name: front_right_hip_R
-    parent: base_link
+    name: FR_HIP_R
+    parent: BASE
     translation: [ 0.0, -0.164905, 0.545805 ]
     jointType: revolute
     jointAxis: X
@@ -2411,8 +2411,8 @@ links:
         rotation: [ 1, 0, 0, 180 ]
         elements: *LHIP_ROLL_SHAPE
   -
-    name: front_right_hip_P
-    parent: front_right_hip_R
+    name: FR_HIP_P
+    parent: FR_HIP_R
     translation: [ 0.0, 0.0, 0.169 ]
     jointType: revolute
     jointAxis: Y
@@ -2430,8 +2430,8 @@ links:
         rotation: [ 1, 0, 0, 180 ]
         elements: *LHIP_PITCH_SHAPE
   -
-    name: front_right_hip_Y
-    parent: front_right_hip_P
+    name: FR_HIP_Y
+    parent: FR_HIP_P
     translation: [ 0.0, 0.0, 0.241 ]
     jointType: revolute
     jointAxis: Z
@@ -2449,8 +2449,8 @@ links:
         rotation: [ 1, 0, 0, 180 ]
         elements: *LHIP_YAW_SHAPE
   -
-    name: front_right_kn_P
-    parent: front_right_hip_Y
+    name: FR_KNEE_P
+    parent: FR_HIP_Y
     translation: [ 0.046, 0.0, 0.07804 ]
     jointType: revolute
     jointAxis: Y
@@ -2468,8 +2468,8 @@ links:
         rotation: [ 1, 0, 0, 180 ]
         elements: *LKN_PITCH_SHAPE
   -
-    name: front_right_ak_Y
-    parent: front_right_kn_P
+    name: FR_ANKLE_Y
+    parent: FR_KNEE_P
     translation: [ -0.046, 0.0, 0.213 ]
     jointType: revolute
     jointAxis: Z
@@ -2487,8 +2487,8 @@ links:
         rotation: [ 1, 0, 0, 180 ]
         elements: *LAK_YAW_SHAPE
   -
-    name: front_right_ak_P
-    parent: front_right_ak_Y
+    name: FR_ANKLE_P
+    parent: FR_ANKLE_Y
     translation: [ 0.0, 0.0, 0.08 ]
     jointType: revolute
     jointAxis: Y
@@ -2506,8 +2506,8 @@ links:
         rotation: [ 1, 0, 0, 180 ]
         elements: *LAK_PITCH_SHAPE
   -
-    name: front_right_ak_R
-    parent: front_right_ak_P
+    name: FR_ANKLE_R
+    parent: FR_ANKLE_P
     translation: [ 0.0, 0.0,  0.154 ]
     jointType: revolute
     jointAxis: X
@@ -2526,14 +2526,14 @@ links:
         rotation: [ 1, 0, 0, 180 ]
         elements: *LAK_ROLL_SHAPE
   - 
-    name: front_right_hook
-    parent: front_right_ak_R
+    name: FR_HOOK
+    parent: FR_ANKLE_R
     jointType: fixed
     translation: [ 0.0, 0.0, 0.0955 ]
     elements:
       -
         type: RigidBody
-        name: front_right_fsens
+        name: FR_fsens
         mass: 0.78
         centerOfMass: [ 0.0, 0.0, 0.0225 ]
         inertia: [
@@ -2543,7 +2543,7 @@ links:
         elements:
           Shape: *FORCE_SENSOR_SHAPE_DESCRIPTION
           ForceSensor:
-            name: front_right_wrench
+            name: FR_wrench
       -
         type: RigidBody
         translation: [ 0.0, 0.0, 0.0225 ]
