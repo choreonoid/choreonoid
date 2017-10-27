@@ -293,6 +293,7 @@ public:
     bool readElements(Mapping& node);
     bool readElementContents(ValueNode& elements);
     bool readNode(Mapping& node, const string& type);
+    bool readDisabled(Mapping& node);
     bool readContainerNode(Mapping& node, NodeFunction nodeFunction);
     bool readTransformContents(Mapping& node, NodeFunction nodeFunction, bool hasElements);
     bool readGroup(Mapping& node);
@@ -456,6 +457,7 @@ YAMLBodyLoader::YAMLBodyLoader()
 YAMLBodyLoaderImpl::YAMLBodyLoaderImpl(YAMLBodyLoader* self)
     : self(self)
 {
+    nodeFunctions["Disabled"].set([&](Mapping& node){ return readDisabled(node); });
     nodeFunctions["Group"].set([&](Mapping& node){ return readGroup(node); });
     nodeFunctions["Transform"].set([&](Mapping& node){ return readTransform(node); });
     nodeFunctions["RigidBody"].setTE([&](Mapping& node){ return readRigidBody(node); });
@@ -775,6 +777,8 @@ void YAMLBodyLoaderImpl::readNodeInLinks(Mapping* node, const string& nodeType)
         readContinuousTrackNode(node);
     } else if(type == "SubBody"){
         readSubBodyNode(node);
+    } else if(type == "Disabled"){
+
     } else {
         node->throwException(
             str(format(_("A %1% node cannot be specified in links")) % type));
@@ -1218,6 +1222,12 @@ bool YAMLBodyLoaderImpl::readNode(Mapping& node, const string& type)
     }
 
     return isSceneNodeAdded;
+}
+
+
+bool YAMLBodyLoaderImpl::readDisabled(Mapping& node)
+{
+    return false;
 }
 
 
