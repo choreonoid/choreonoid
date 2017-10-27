@@ -7,12 +7,11 @@
 #define CNOID_UTIL_JOYSTICK_GAMEPAD_H
 
 #include <cnoid/Joystick>
-#include "exportdecl.h"
 #include <iostream>
 
 namespace cnoid{
 
-class CNOID_EXPORT Gamepad : public Joystick{
+class Gamepad : public Joystick{
 public:
     inline double getStickLX(){ return getPosition(0); }
     inline double getStickLY(){ return -getPosition(1); }

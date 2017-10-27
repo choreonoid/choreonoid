@@ -822,7 +822,7 @@ LinkPtr YAMLBodyLoaderImpl::readLinkContents(Mapping* node)
 
     readJointContents(link, node);
 
-    if(node->extract("material", symbol)){
+    if(node->read("material", symbol)){
         link->setMaterial(symbol);
     }
     

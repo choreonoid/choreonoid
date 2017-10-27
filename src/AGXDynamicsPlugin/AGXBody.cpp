@@ -77,18 +77,21 @@ void AGXLink::constructAGXLink()
 }
 
 void AGXLink::setAGXMaterial(){
-    // Check material and density are written in body file
-    string cMaterial = "";
-    bool bMaterial = getOrgLink()->info()->read("material", cMaterial);
-    double density = 0.0;
-    bool bDensity = getOrgLink()->info()->read("density", density);
-
+    Mapping* mapping = getOrgLink()->info();
     // Set material
-    if(bMaterial) setAGXMaterialFromName(getOrgLink()->materialName());
-    else          setAGXMaterialFromLinkInfo();
+    if(mapping->find("material")->isValid()){
+        setAGXMaterialFromName(getOrgLink()->materialName());
+    }else{
+        setAGXMaterialFromLinkInfo();
+    }
 
-    if(bDensity){
-        getAGXGeometry()->getMaterial()->getBulkMaterial()->setDensity(density);
+    // Set density or mass
+    string massType = mapping->get("massType", "mass");
+    if(massType == "density"){
+        double density;
+        if(mapping->read("density", density)){
+            getAGXGeometry()->getMaterial()->getBulkMaterial()->setDensity(density);
+        }
     }else{
         setCenterOfMassFromLinkInfo();
         setMassFromLinkInfo();
@@ -107,27 +110,42 @@ bool AGXLink::setAGXMaterialFromName(const std::string& materialName)
     return true;
 }
 
-#define SET_AGXMATERIAL_FIELD(field) desc.field = getOrgLink()->info<double>(#field, desc.field)
 void AGXLink::setAGXMaterialFromLinkInfo()
 {
-    AGXMaterialDesc desc;
+    agxSDK::Simulation* sim = getAGXBody()->getAGXScene()->getSimulation();
     std::stringstream ss;
     ss << "AGXMaterial" << agx::UuidGenerator().generate().str() << std::endl;
-    desc.name = ss.str();
-    SET_AGXMATERIAL_FIELD(density);
-    SET_AGXMATERIAL_FIELD(youngsModulus);
-    SET_AGXMATERIAL_FIELD(poissonRatio);
-    SET_AGXMATERIAL_FIELD(viscosity);
-    SET_AGXMATERIAL_FIELD(damping);
-    SET_AGXMATERIAL_FIELD(roughness);
-    SET_AGXMATERIAL_FIELD(surfaceViscosity);
-    SET_AGXMATERIAL_FIELD(adhesionForce);
-    SET_AGXMATERIAL_FIELD(adhesivOverlap);
-    agx::MaterialRef mat = AGXObjectFactory::createMaterial(desc);
+    agx::Material* dmat = sim->getMaterial(getOrgLink()->materialName());
+    agx::MaterialRef mat = new agx::Material(ss.str(), dmat);
+    Mapping* mapping = getOrgLink()->info();
+    double density;
+    if(mapping->read("density", density))
+        mat->getBulkMaterial()->setDensity(density);
+    double youngsModulus;
+    if(mapping->read("youngsModulus", youngsModulus))
+        mat->getBulkMaterial()->setYoungsModulus(youngsModulus);
+    double poissonRatio;
+    if(mapping->read("poissonRatio", poissonRatio))
+        mat->getBulkMaterial()->setPoissonsRatio(poissonRatio);
+    double viscosity;
+    if(mapping->read("viscosity", viscosity))
+        mat->getBulkMaterial()->setViscosity(viscosity);
+    double roughness;
+    if(mapping->read("roughness", roughness))
+        mat->getSurfaceMaterial()->setRoughness(roughness);
+    double surfaceViscosity;
+    if(mapping->read("surfaceViscosity", surfaceViscosity))
+        mat->getSurfaceMaterial()->setViscosity(surfaceViscosity);
+    double adhesionForce;
+    if(mapping->read("adhesionForce", adhesionForce)){
+        double adhesivOverlap = mat->getSurfaceMaterial()->getAdhesiveOverlap();
+        mapping->read("adhesivOverlap", adhesivOverlap);
+        mat->getSurfaceMaterial()->setAdhesion(adhesionForce, adhesivOverlap);
+    }
+    sim->getMaterialManager()->add(mat);
     getAGXGeometry()->setMaterial(mat);
     getAGXRigidBody()->updateMassProperties(agx::MassProperties::AUTO_GENERATE_ALL);
 }
-#undef SET_AGXMATERIAL_FIELD
 
 bool AGXLink::setCenterOfMassFromLinkInfo()
 {
