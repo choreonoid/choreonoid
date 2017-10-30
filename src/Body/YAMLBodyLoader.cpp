@@ -1273,7 +1273,9 @@ bool YAMLBodyLoaderImpl::readTransformContents(Mapping& node, NodeFunction nodeF
     Vector3 scale;
     bool hasScale = read(node, "scale", scale);
     Affine3 Ts(T);
-    Ts.linear() *= scale.asDiagonal();
+    if(hasScale){
+        Ts.linear() *= scale.asDiagonal();
+    }
     
     if(!isIdentity){
         transformStack.push_back(transformStack.back() * Ts);
