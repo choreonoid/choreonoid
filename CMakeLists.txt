@@ -566,6 +566,9 @@ if(ENABLE_GUI)
 
   if(USE_QT5)
     setup_qt5()
+    if(POLICY CMP0043)
+      cmake_policy(SET CMP0043 OLD)
+    endif()
   else()
     setup_qt4()
   endif()
@@ -799,7 +802,7 @@ endif(ENABLE_CORBA)
 # doxygen
 # find_package(Doxygen)
 
-set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS_DEBUG CNOID_DEBUG)
+set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS $<$<CONFIG:Debug>:CNOID_DEBUG)
 
 if(UNIX)
   
