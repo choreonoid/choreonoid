@@ -689,7 +689,7 @@ void VisionDeviceRenderer::initializeScene(const vector<SimulationBody*>& simBod
                 Item* item = items.get(i);
                 SceneProvider* sceneProvider = dynamic_cast<SceneProvider*>(item);
                 if(sceneProvider && !dynamic_cast<BodyItem*>(item)){
-                    SgNode* scene = sceneProvider->getScene(simImpl->cloneMap);
+                    SgNode* scene = sceneProvider->cloneScene(simImpl->cloneMap);
                     if(scene){
                         sceneGroup->addChild(scene);
                     }
