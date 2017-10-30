@@ -1,0 +1,2559 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: warec
+rootLink: BASE
+
+definitions:
+  - &BlackAppearance
+    material:
+      diffuseColor: [ 0.5, 0.5, 0.5 ]
+      specularColor: [ 0.7, 0.7, 0.7 ]
+      shininess: 0.1
+  - &DarkGrayAppearance
+    material:
+      diffuseColor: [ 0.4, 0.4, 0.4 ]
+      specularColor: [ 0.6, 0.6, 0.6 ]
+      shininess: 0.1
+  - &RedAppearance
+    material:
+      diffuseColor: [ 1, 0, 0 ]
+      specularColor: [ 1, 0.5, 0.5 ]
+      shininess: 0.1
+
+links:
+  -
+    name: BASE
+    rotation: [ 0, 1, 0, 90 ]
+    jointType: free
+    centerOfMass: [ 0.02263, -0.00136, 0.27279 ]
+    mass: 47.12
+    inertia: [
+      02.27861715, 0.0127815,     0.00094062,
+      0.0127815,   1.9299188,     -0.00016286,
+      0.00094062,  -0.00016286,   0.87692246 ]
+    elements:
+      - 
+        type: Visual
+        elements: 
+          Shape:
+            geometry: { type: Resource, uri: "meshes/0_body.stl" }
+            appearance: *BlackAppearance
+      -
+        type: Collision
+        elements:
+          - 
+            type: Shape
+            translation: [ 0.0, 0.0, 0.275 ]
+            geometry: { type: Box, size: [ 0.22, 0.283, 0.465 ] }
+          - 
+            type: Transform
+            translation: [ 0.042, -0.164497, 0.548172 ]
+            rotation: [ 0, 0, 1, 90 ]
+            elements: &CYLINDER_BOTTOM
+              Shape: { geometry: { type: Cylinder, radius: 0.056, height: 0.042} }
+          - 
+            type: Transform
+            translation: [ 0.0, -0.164497, 0.548172 ]
+            rotation: [ 0, 0, 1, 90 ]
+            elements: &CYLINDER_MID
+              Shape: { geometry: { type: Cylinder, radius: 0.04493, height: 0.05} }
+          - 
+            type: Transform
+            translation: [ -0.045, -0.164497, 0.548172 ]
+            rotation: [ 0, 0, 1, 90 ]
+            elements: &CYLINDER_TOP
+              Shape: { geometry: { type: Cylinder, radius: 0.057, height: 0.036} }
+          - 
+            type: Transform
+            translation: [ 0.042, -0.164497, 0.0 ]
+            rotation: [ 0, 0, 1, 90 ]
+            elements: *CYLINDER_BOTTOM
+          - 
+            type: Transform
+            translation: [ 0.0, -0.164497, 0.0 ]
+            rotation: [ 0, 0, 1, 90 ]
+            elements: *CYLINDER_MID
+          - 
+            type: Transform
+            translation: [ -0.045, -0.164497, 0.0 ]
+            rotation: [ 0, 0, 1, 90 ]
+            elements: *CYLINDER_TOP
+          - 
+            type: Transform
+            translation: [ 0.042, 0.164497, 0.548172 ]
+            rotation: [ 0, 0, 1, 90 ]
+            elements: *CYLINDER_BOTTOM
+          - 
+            type: Transform
+            translation: [ 0.0, 0.164497, 0.548172 ]
+            rotation: [ 0, 0, 1, 90 ]
+            elements: *CYLINDER_MID
+          - 
+            type: Transform
+            translation: [ -0.045, 0.164497, 0.548172 ]
+            rotation: [ 0, 0, 1, 90 ]
+            elements: *CYLINDER_TOP
+          - 
+            type: Transform
+            translation: [ 0.042, 0.164497, 0.0 ]
+            rotation: [ 0, 0, 1, 90 ]
+            elements: *CYLINDER_BOTTOM
+          - 
+            type: Transform
+            translation: [ 0.0, 0.164497, 0.0 ]
+            rotation: [ 0, 0, 1, 90 ]
+            elements: *CYLINDER_MID
+          - 
+            type: Transform
+            translation: [ -0.045, 0.164497, 0.0 ]
+            rotation: [ 0, 0, 1, 90 ]
+            elements: *CYLINDER_TOP
+          -
+            type: Transform
+            translation: [ 0.094, -0.05, 0.177 ]
+            rotation: [ 0, 1, 0, -74 ]
+            elements: &SKID_TRIANGLE1
+              Shape:
+                geometry:
+                  type: Extrusion
+                  crossSection: [ 0.136, 0.075,
+                                  0.482, 0.075,
+                                  0.546, -0.171,
+                                  0.136, 0.075,
+                                  0.546, -0.171    ]
+                  spine: [ 0, 0, 0.003, 0, 0, 0 ]
+                  scale: [ 0.7, 0.7 ]
+          -
+            type: Transform
+            translation: [ 0.094, -0.05, 0.177 ]
+            rotation: [ 0, 1, 0, -74 ]
+            elements: &SKID_TRIANGLE2
+              Shape:
+                geometry:
+                  type: Extrusion
+                  crossSection: [ 0.136, 0.075,
+                                  0.482, 0.075,
+                                  0.546, 0.321,
+                                  0.136, 0.075,
+                                  0.546, 0.321    ]
+                  spine: [ 0, 0, 0.003, 0, 0, 0 ]
+                  scale: [ 0.7, 0.7 ]
+          -
+            type: Transform
+            translation: [ 0.09, -0.0515, 0.369 ]
+            rotation: [ 0, 1, 0, -286 ]
+            elements: *SKID_TRIANGLE1
+          -
+            type: Transform
+            translation: [ 0.09, -0.0515, 0.369 ]
+            rotation: [ 0, 1, 0, -286 ]
+            elements: *SKID_TRIANGLE2
+          -
+            type: Transform
+            translation: [ 0.12, 0.002, 0.0 ]
+            rotation: [ [ 0, 0, 1, 188], [ 1, 0, 0, 90 ], [ 0, 1, 0, 17 ] ]
+            elements: &SKID_TRIANGLE3
+              Shape:
+                geometry:
+                  type: Extrusion
+                  crossSection: [   0.27, 0.0,
+                                   0.27, -0.143,
+                                     0.0, -0.188,
+                                    0.27, 0.0,
+                                   0.27, -0.143    ]
+                  spine: [ 0.003, 0, 0, 0, 0, 0 ]
+                  scale: [ 1.0, 1.0 ]
+          -
+            type: Transform
+            translation: [ 0.119, 0.002, 0.0 ]
+            rotation: [ [ 0, 0, 1, 188], [ 1, 0, 0, 90 ], [ 0, 1, 0, 17 ] ]
+            elements: &SKID_TRIANGLE4
+              Shape:
+                geometry:
+                  type: Extrusion
+                  crossSection: [  0.27, 0.0,
+                                   0.27, -0.143,
+                                  0.542, -0.188,
+                                   0.27, 0.0,
+                                   0.27, -0.143    ]
+                  spine: [ 0.003, 0, 0, 0, 0, 0 ]
+                  scale: [ 1.0, 1.0 ]
+          -
+            type: Transform
+            translation: [ 0.1175, 0.002, 0.005 ]
+            rotation: [ [ 1, 0, 0, 90],  [ 0, 1, 0, -25 ] ]
+            elements: &SKID_TRIANGLE5
+              Shape:
+                geometry:
+                  type: Extrusion
+                  crossSection: [   0.27, 0.004,
+                                   0.27, -0.143,
+                                  -0.005, -0.188,
+                                    0.27, 0.004,
+                                   0.27, -0.143    ]
+                  spine: [ 0.003, 0, 0, 0, 0, 0 ]
+                  scale: [ 1.0, 1.0 ]
+          -
+            type: Transform
+            translation: [ 0.1175, 0.002, 0.004 ]
+            rotation: [ [ 1, 0, 0, 90], [ 0, 1, 0, -25 ] ]
+            elements: &SKID_TRIANGLE6
+              Shape:
+                geometry:
+                  type: Extrusion
+                  crossSection: [   0.27, 0.0,
+                                   0.27, -0.143,
+                                  0.5355, -0.188,
+                                    0.27, 0.0,
+                                   0.27, -0.143    ]
+                  spine: [ 0.003, 0, 0, 0, 0, 0 ]
+                  scale: [ 1.0, 1.0 ]
+      -
+        type: Transform
+        name: base_upper_link
+        translation: [ 0, 0, 0.2729 ]
+        elements:
+  -
+    type: Skip
+    name: UPPER_FRAME
+    parent: BASE
+    translation: [ 0, 0, 0.2729 ]
+    jointType: fixed
+    elements:
+      -
+        type: RigidBody
+        name: base_upper_link_quadruped
+        rotation: [ 0, 1, 0, -90 ]
+        mass: 0.0000001
+        inertia: [
+          0.0000001,   0.0,         0.0,
+          0.0,         0.0000001,   0.0,
+          0.0,         0.0,         0.0000001 ]
+        elements:
+          -
+            type: Shape
+            geometry: { type: Box, size: [ 0.001, 0.001, 0.001 ] }
+          -
+            type: RigidBody
+            name: multisense_frame_link
+            translation: [ 0.0, 0.0, 0.14 ]
+            mass: 0.0000001
+            inertia: [
+              0.0000001,   0.0,         0.0,
+              0.0,         0.0000001,   0.0,
+              0.0,         0.0,         0.0000001 ]
+            elements:
+              Transform:
+                translation: [ -0.25, 0.0, 0.0 ]
+                elements:
+                  -
+                    type: Visual
+                    shape:
+                      geometry: { type: Resource, uri: "meshes/multisense_sl_frame.stl" }
+                      appearance: *DarkGrayAppearance
+                  -
+                    type: Collision
+                    elements:
+                      -
+                        type: Shape
+                        translation: [ 0.333, 0.128, -0.014 ]
+                        geometry: { type: Box, size: [ 0.665, 0.028, 0.028 ] }
+                      -
+                        type: Shape
+                        translation: [ 0.333, -0.128, -0.014 ]
+                        geometry: { type: Box, size: [ 0.665, 0.028, 0.028 ] }
+                      -
+                        type: Shape
+                        translation: [ 0.39, 0.128, 0.02 ]
+                        geometry: { type: Box, size: [ 0.028, 0.028, 0.038 ] }
+                      -
+                        type: Shape
+                        translation: [ 0.39, -0.128, 0.02 ]
+                        geometry: { type: Box, size: [ 0.028, 0.028, 0.038 ] }
+                      -
+                        type: Shape
+                        translation: [ 0.46, 0.128, 0.038 ]
+                        rotation: [ 0, 1, 0, 171 ]
+                        geometry: { type: Box, size: [ 0.15, 0.028, 0.028 ] }
+                      -
+                        type: Shape
+                        translation: [ 0.46, -0.128, 0.038 ]
+                        rotation: [ 0, 1, 0, 171 ]
+                        geometry: { type: Box, size: [ 0.15, 0.028, 0.028 ] }
+                      -
+                        type: Shape
+                        translation: [ 0.536, 0.128, 0.059 ]
+                        rotation: [ 0, 1, 0, 15 ]
+                        geometry: { type: Box, size: [ 0.028, 0.028, 0.044 ] }
+                      -
+                        type: Shape
+                        translation: [ 0.536, -0.128, 0.059 ]
+                        rotation: [ 0, 1, 0, 15 ]
+                        geometry: { type: Box, size: [ 0.028, 0.028, 0.044 ] }
+                      -
+                        type: Shape
+                        translation: [ 0.576, 0.128, 0.0865 ]
+                        rotation: [ 0, 1, 0, 15 ]
+                        geometry: { type: Box, size: [ 0.19, 0.028, 0.028 ] }
+                      -
+                        type: Shape
+                        translation: [ 0.576, -0.128, 0.0865 ]
+                        rotation: [ 0, 1, 0, 15 ]
+                        geometry: { type: Box, size: [ 0.19, 0.028, 0.028 ] }
+                      -
+                        type: Shape
+                        translation: [ 0.625, 0.128, 0.03 ]
+                        geometry: { type: Box, size: [ 0.028, 0.028, 0.07 ] }
+                      -
+                        type: Shape
+                        translation: [ 0.625, -0.128, 0.03 ]
+                        geometry: { type: Box, size: [ 0.028, 0.028, 0.07 ] }
+                      -
+                        type: Shape
+                        translation: [ 0.65, 0.1, 0.0375 ]
+                        rotation: [ 0, 1, 0, 15 ]
+                        geometry: { type: Box, size: [ 0.022, 0.022, 0.2 ] }
+                      -
+                        type: Shape
+                        translation: [ 0.65, -0.1, 0.0375 ]
+                        rotation: [ 0, 1, 0, 15 ]
+                        geometry: { type: Box, size: [ 0.022, 0.022, 0.2 ] }
+                      -
+                        type: Shape
+                        translation: [ 0.55, 0.108, 0.33 ]
+                        rotation: [ 0, 1, 0, 15 ]
+                        geometry: { type: Box, size: [ 0.022, 0.022, 0.55 ] }
+                      -
+                        type: Shape
+                        translation: [ 0.55, -0.108, 0.33 ]
+                        rotation: [ 0, 1, 0, 15 ]
+                        geometry: { type: Box, size: [ 0.022, 0.022, 0.55 ] }
+                      -
+                        type: Shape
+                        translation: [ 0.595, 0.0, 0.155 ]
+                        rotation: [ 0, 1, 0, 15 ]
+                        geometry: { type: Box, size: [ 0.2, 0.23, 0.008 ] }
+                      -
+                        type: Shape
+                        translation: [ 0.597, -0.002, 0.162 ]
+                        rotation: [ 0, 1, 0, 15 ]
+                        geometry: { type: Box, size: [ 0.2, 0.067, 0.01 ] }
+                      -
+                        type: Shape
+                        translation: [ 0.663, 0.108, 0.41 ]
+                        rotation: [ 0, 1, 0, 15 ]
+                        geometry: { type: Box, size: [ 0.2, 0.022, 0.022 ] }
+                      -
+                        type: Shape
+                        translation: [ 0.663, -0.108, 0.41 ]
+                        rotation: [ 0, 1, 0, 15 ]
+                        geometry: { type: Box, size: [ 0.2, 0.022, 0.022 ] }
+                      -
+                        type: Shape
+                        translation: [ 0.58, 0.0, 0.44 ]
+                        rotation: [ 0, 1, 0, 15 ]
+                        geometry: { type: Box, size: [ 0.022, 0.2, 0.022 ] }
+                      -
+                        type: Shape
+                        translation: [ 0.748, 0.0, 0.388 ]
+                        rotation: [ 0, 1, 0, 15 ]
+                        geometry: { type: Box, size: [ 0.022, 0.2, 0.022 ] }
+          -
+            #type: RigidBody
+            type: Skip
+            name: sensor_attachment_link
+            translation: [ 0.0, 0.0, 0.14 ]
+            mass: 0.0000001
+            inertia: [
+              0.0000001,   0.0,         0.0,
+              0.0,         0.0000001,   0.0,
+              0.0,         0.0,         0.0000001 ]
+            elements: 
+              -
+                type: Visual
+                resource: { uri: "meshes/localization_sensor_unit_attachment.dae" }
+              -
+                type: Collision
+                type: Group
+                elements:
+                  -
+                    type: Shape
+                    translation: [ 0.1, 0.0, 0.01 ]
+                    geometry: { type: Box, size: [ 0.02, 0.283, 0.02 ] }
+                  -
+                    type: Shape
+                    translation: [ -0.08, 0.0, 0.01 ]
+                    geometry: { type: Box, size: [ 0.02, 0.283, 0.02 ] }
+                  -
+                    type: Shape
+                    translation: [ 0.1, 0.0, 0.04 ]
+                    geometry: { type: Box, size: [ 0.02, 0.21, 0.04 ] }
+                  -
+                    type: Shape
+                    translation: [ -0.08, 0.0, 0.04 ]
+                    geometry: { type: Box, size: [ 0.02, 0.21, 0.04 ] }
+                  -
+                    type: Shape
+                    translation: [ -0.0922, 0.0495, 0.031 ]
+                    geometry: { type: Box, size: [ 0.006, 0.019, 0.056 ] }
+                  -
+                    type: Shape
+                    translation: [ -0.0922, -0.0508, 0.031 ]
+                    geometry: { type: Box, size: [ 0.006, 0.019, 0.056 ] }
+                  -
+                    type: Shape
+                    translation: [ -0.0972, 0.049, 0.031 ]
+                    geometry: { type: Box, size: [ 0.004, 0.017, 0.053 ] }
+                  -
+                    type: Shape
+                    translation: [ -0.0972, 0.0313, 0.046 ]
+                    rotation: [ 1, 0, 0, 135 ]
+                    geometry: { type: Box, size: [ 0.004, 0.0215, 0.053 ] }
+                  -
+                    type: Shape
+                    translation: [ -0.0972, 0.031, 0.0156 ]
+                    rotation: [ 1, 0, 0, 45 ]
+                    geometry: { type: Box, size: [ 0.004, 0.022, 0.053 ] }
+                  -
+                    type: Shape
+                    translation: [ -0.0972, -0.049, 0.031 ]
+                    geometry: { type: Box, size: [ 0.004, 0.017, 0.053 ] }
+                  -
+                    type: Shape
+                    translation: [ -0.0972, -0.0313, 0.046 ]
+                    rotation: [ 1, 0, 0, 45 ]
+                    geometry: { type: Box, size: [ 0.004, 0.0215, 0.053 ] }
+                  -
+                    type: Shape
+                    translation: [ -0.0972, -0.031, 0.0156 ]
+                    rotation: [ 1, 0, 0, 135 ]
+                    geometry: { type: Box, size: [ 0.004, 0.022, 0.053 ] }
+                  -
+                    type: Shape
+                    translation: [ -0.1113, -0.0005, 0.0308 ]
+                    geometry: { type: Box, size: [ 0.0321, 0.083, 0.0838 ] }
+          -
+            #type: RigidBody
+            type: Skip
+            name: sensor_base_link
+            translation: [ 0.01, 0.0, 0.06 ]
+            mass: 0.0000001
+            centerOfMass: [ 0.0, 0.0, 0.0 ]
+            inertia: [
+              0.0000001,   0.0,         0.0,
+              0.0,         0.0000001,   0.0,
+              0.0,         0.0,         0.0000001 ]
+            elements: 
+              -
+                type: Visual
+                resource: { uri: "meshes/localization_sensor_unit_no_mic.dae" }
+              -
+                type: Collision
+                elements:
+                  -
+                    type: Shape
+                    translation: [ 0.001, 0.0008, 0.005 ]
+                    geometry: { type: Box, size: [ 0.2, 0.2, 0.01 ] }
+                  -
+                    type: Shape
+                    translation: [ 0.001, 0.0008, 0.055 ]
+                    geometry: { type: Box, size: [ 0.11, 0.11, 0.01 ] }
+                  -
+                    type: Shape
+                    translation: [ 0.0013, 0.001, 0.0128 ]
+                    geometry: { type: Box, size: [ 0.0564, 0.04, 0.01 ] }
+                  -
+                    type: Shape
+                    translation: [ 0.0018, 0.001, 0.0228 ]
+                    geometry: { type: Box, size: [ 0.041, 0.036, 0.021 ] }
+                  -
+                    type: Shape
+                    translation: [ -0.021, 0.0076, 0.0249 ]
+                    rotation: [ 0, 0, 1, 90 ]
+                    geometry: { type: Cylinder, radius: 0.005, height: 0.0066 }
+                  -
+                    type: Shape
+                    translation: [ -0.0235, -0.0064, 0.0249 ]
+                    rotation: [ 0, 0, 1, 90 ]
+                    geometry: { type: Cylinder, radius: 0.0033, height: 0.01 }
+                  -
+                    type: Transform
+                    translation: [ -0.0463, 0.0482, 0.03 ]
+                    rotation: [ 1, 0, 0, 90 ]
+                    elements: &SENSOR_BASE_LINK_CYLI1
+                      Shape: { geometry: { type: Cylinder, radius: 0.004, height: 0.06 } }
+                  -
+                    type: Transform
+                    translation: [ -0.04614, -0.04678, 0.03 ]
+                    rotation: [ 1, 0, 0, 90 ]
+                    elements: *SENSOR_BASE_LINK_CYLI1
+                  -
+                    type: Transform
+                    translation: [ 0.04885, -0.04662, 0.03 ]
+                    rotation: [ 1, 0, 0, 90 ]
+                    elements: *SENSOR_BASE_LINK_CYLI1
+                  -
+                    type: Transform
+                    translation: [ 0.04871, 0.048369, 0.03 ]
+                    rotation: [ 1, 0, 0, 90 ]
+                    elements: *SENSOR_BASE_LINK_CYLI1
+                  -
+                    type: Shape
+                    translation: [ 0.001, 0.0, 0.0956 ]
+                    rotation: [ 1, 0, 0, 90 ]
+                    geometry: { type: Cylinder, radius: 0.0515, height: 0.074 }
+                  -
+                    type: Shape
+                    translation: [ -0.0835, 0.0006, 0.067 ]
+                    rotation: [ 0, 0, 1, 90 ]
+                    geometry: { type: Cylinder, radius: 0.005, height: 0.073 }
+          -
+            type: RigidBody
+            name: imu_link
+            translation: [ 0.0, 0.0, 0.02 ]
+            mass: 1e-5
+            centerOfMass: [ 0.0, 0.0, 0.0 ]
+            inertia: [
+              1e-6,   0.0,    0.0,
+              0.0,    1e-6,   0.0,
+              0.0,    0.0,    1e-6 ]
+            elements:
+              Shape:
+                geometry: { type: Box, size: [ 0.001, 0.001, 0.001 ] }
+          -
+            #type: RigidBody
+            type: Skip
+            name: velodyne_base_link
+            translation: [ -0.0006, 0.0, 0.058 ]
+            mass: 0.1
+            centerOfMass: [ 0.0, 0.0, 0.0 ]
+            inertia: [
+              0.1,   0.0,   0.0,
+              0.0,   0.1,   0.0,
+              0.0,   0.0,   0.1 ]
+            elements:
+              -
+                type: Visual
+                elements:
+                  - { type: Resource, uri: "package://velodyne_description/meshes/VLP16_base_1.dae" }
+                  - { type: Resource, uri: "package://velodyne_description/meshes/VLP16_base_2.dae" }
+              -
+                type: Collision
+                shape: 
+                  translation: [ 0, 0, 0.03585 ]
+                  rotation: [ 1, 0, 0, 90 ]
+                  geometry: { type: Cylinder, height: 0.0713, radius: 0.0516 }
+              -
+                type: RigidBody
+                name: velodyne
+                translation: [ 0.0, 0.0, 0.0377 ]
+                mass: 0.1
+                centerOfMass: [ 0.0, 0.0, 0.0 ]
+                inertia: [
+                  0.1,   0.0,   0.0,
+                  0.0,   0.1,   0.0,
+                  0.0,   0.0,   0.1 ]        
+                elements:
+                  Resource:
+                    translation: [ 0.0, 0.0, -0.0377 ]
+                    uri: "package://velodyne_description/meshes/VLP16_scan.dae"
+  -
+    type: Skip
+    name: HEAD
+    parent: UPPER_FRAME
+    translation: [ -0.35, 0.0, 0.41 ]
+    rotation: [ 0, 1, 0, -75 ]
+    jointType: fixed # revolute?
+    jointAxis: -X
+    mass: 1.41984
+    centerOfMass: [ -0.075493, 3.3383E-05, 0.02774 ]
+    inertia: [
+      0.0036053766,   -1.5797E-06,   -0.00089293,
+      -1.5797E-06,    0.002080106,   -6.8415E-07,
+      -0.00089293,    -6.8415E-07,   0.001782985 ]
+    elements: 
+      -
+        type: Resource
+        uri: "package://yamabiko_description/meshes/multisense_sl/head.dae"
+      -
+        type: RigidBody
+        name: left_camera_frame
+        translation: [ 0.0, 0.035, -0.002 ]
+        mass: 1e-5
+        centerOfMass: [ -0.075493, 0.035033383, 0.02574 ]
+        inertia: [
+          1e-6,   0.0,    0.0,
+          0.0,    1e-6,   0.0,
+          0.0,    0.0,    1e-6 ]
+        elements:
+          Transform:
+            name: left_camera_optical_frame
+            rotation: [ [ 0, 0, 1, -90 ], [ 1, 0, 0, -90 ] ]
+            elements:
+              -
+                type: Camera
+                name: left
+                rotation: [ [ 0, 1, 0, 180 ], [ 0, 0, 1, 180 ] ]
+                format: COLOR
+                frameRate: 30
+                width: 800
+                height: 800
+                fieldOfView: 80
+                nearClipDistance: 0.02
+                farClipDistance: 300
+              -
+                type: Camera
+                name: right
+                rotation: [ [ 0, 1, 0, 180 ], [ 0, 0, 1, 180 ] ]
+                translation: [ 0, -0.07, 0 ]
+                frameRate: 30
+                format: COLOR
+                width: 800
+                height: 800
+                fieldOfView: 80
+                nearClipDistance: 0.02
+                farClipDistance: 300
+      -
+        type: RigidBody
+        name: right_camera_frame
+        translation: [ 0.0, -0.035, -0.002 ]
+        mass: 1e-5
+        centerOfMass: [ -0.075493, -0.034966617, 0.02574 ]
+        inertia: [
+          1e-6,   0.0,    0.0,
+          0.0,    1e-6,   0.0,
+          0.0,    0.0,    1e-6 ]
+        elements:
+          Transform:
+            name: right_camera_optical_frame
+            rotation: [ [ 0, 0, 1, -90 ], [ 1, 0, 0, -90 ] ]
+      -
+        type: RigidBody
+        name: center_top_led_frame
+        translation: [ 0.01125, 0.0, 0.0105 ]
+        mass: 1e-5
+        centerOfMass: [ -0.064243, 0.000033383, 0.03824 ]
+        inertia: [
+          1e-6,   0.0,    0.0,
+          0.0,    1e-6,   0.0,
+          0.0,    0.0,    1e-6 ]
+      -
+        type: RigidBody
+        name: center_bottom_led_frame
+        translation: [ 0.01125, 0.0, -0.0155 ]
+        mass: 1e-5
+        centerOfMass: [ -0.064243, 0.000033383, 0.01224 ]
+        inertia: [
+          1e-6,   0.0,    0.0,
+          0.0,    1e-6,   0.0,
+          0.0,    0.0,    1e-6 ]
+      -
+        type: RigidBody
+        name: left_led_frame
+        translation: [ -0.01443, 0.07452, 0.050346 ]
+        rotation: [ [ 0, 0, 1, -30.3668 ], [ 0, 1, 0, -8.594 ] ]
+        mass: 1e-5
+        centerOfMass: [ -0.089923, 0.074553383, 0.078086 ]
+        inertia: [
+          1e-6,   0.0,    0.0,
+          0.0,    1e-6,   0.0,
+          0.0,    0.0,    1e-6 ]
+      -
+        type: RigidBody
+        name: right_led_frame
+        translation: [ -0.01443, -0.07452, 0.050346 ]
+        rotation: [ [ 0, 0, 1, -30.3668 ], [ 0, 1, 0, -8.594 ] ]
+        mass: 1e-5
+        centerOfMass: [ -0.089923, -0.074486617, 0.07908 ]
+        inertia: [
+          1e-6,   0.0,    0.0,
+          0.0,    1e-6,   0.0,
+          0.0,    0.0,    1e-6 ]
+      -
+        type: RigidBody
+        name: head_imu_link
+        translation: [ -0.0475, 0.035, 0.0 ]
+        mass: 1e-5
+        centerOfMass: [ -0.122993, 0.035033383, 0.02774 ]
+        inertia: [
+          1e-6,   0.0,    0.0,
+          0.0,    1e-6,   0.0,
+          0.0,    0.0,    1e-6 ]
+        elements:
+          Shape:
+            geometry:
+              type: Box
+              size: [ 0.001, 0.001, 0.001 ]  
+          Group:
+            name: head_imu_sensor
+            elements:
+              RateGyroSensor:
+                name: head_imu_sensor_gyro
+              AccelerationSensor:
+                name: head_imu_sensor_acc
+  -
+    type: Skip
+    name: HOKUYO
+    parent: HEAD
+    translation: [ -0.0446, 0, 0.0880 ]
+    jointType: revolute
+    jointAxis: X
+    jointId: 28
+    jointRange: unlimited
+    mass: 0.057654
+    centerOfMass: [ 0.032428, 0.0004084, -0.0041835 ]
+    inertia: [
+      3.7174E-05,   4.9927E-08,     1.1015E-05,
+      4.9927E-08,   4.2412E-05,     -9.8165E-09,
+      1.1015E-05,   -9.8165E-09,    4.167E-05 ]
+    elements:
+      -
+        type: Visual
+        resource:
+          rotation: [ 1, 0, 0, -18 ]
+          translation: [ 0.045, -0.0261018277, -0.08342369 ]
+          uri: "package://yamabiko_description/meshes/multisense_sl/head_camera.dae"
+      -
+        type: Collision
+        elements:
+          -
+            type: Shape
+            translation: [ 0.01885, 0, -0.02119 ]
+            geometry: { type: Box, size: [ 0.08, 0.06, 0.04238 ] }
+          -
+            type: Shape
+            translation: [ 0.03, 0, 0.0235 ]
+            rotation: [ 1, 0, 0, 90 ]
+            geometry: { type: Cylinder, height: 0.047, radius: 0.024425 }
+      -
+        type: RigidBody
+        name: head_hokuyo_frame
+        translation: [ 0.03, 0.0, 0.015 ]
+        mass: 1e-5
+        centerOfMass: [ 0.042428, 0.0004084, 0.0108165 ]
+        inertia: [
+          1e-6,   0.0,    0.0,
+          0.0,    1e-6,   0.0,
+          0.0,    0.0,    1e-6 ]
+        elements:
+          RangeSensor:
+            name: head_hokuyo_sensor
+            scanAngle: 180
+            scanStep:  0.25
+            scanRate:  40
+            minDistance: 0.10
+            maxDistance: 30.0
+            # distanceResolution: 0.01
+            # noiseType: gaussian
+            # noiseMean: 0.0
+            # noiseStddev: 0.01
+  -
+    name: RL_HIP_R
+    parent: BASE
+    translation: [ 0.0, 0.164905, -0.000005 ]
+    jointType: revolute
+    jointAxis: X
+    jointId: 0
+    jointRange: [ -51, 148 ]
+    maxJointVelocity: 1E6
+    mass: 2.4001
+    centerOfMass: [ -0.00771, -0.01238, -0.09652 ]
+    inertia: [
+      0.01764829, -0.00022958, -0.00178949,
+      -0.00022958, 0.01677372, 0.00202659,
+      -0.00178949, 0.00202659, 0.00834906 ]
+    elements: &LHIP_ROLL_SHAPE
+      -
+        type: Visual
+        shape:
+          geometry: { type: Resource, uri: "meshes/01_LHIP_Roll.stl" }
+          appearance: *RedAppearance
+      -
+        type: Collision
+        elements:
+          -
+            type: Transform
+            translation: [ -0.0705, 0.0, 0.0 ]
+            rotation: [ 0, 0, 1, 90 ]
+            elements: &hip_R_CYLI1
+              Shape: { geometry: { type: Cylinder, radius: 0.04, height: 0.008 } }
+          -
+            type: Shape
+            translation: [ -0.0705, -0.021, -0.044 ]
+            rotation: [ 1, 0, 0, 71 ]
+            geometry: { type: Box, size: [ 0.008, 0.06, 0.06 ] }
+          -
+            type: Shape
+            translation: [ -0.0705, 0.021, -0.044 ]
+            rotation: [ 1, 0, 0, 109 ]
+            geometry: { type: Box, size: [ 0.008, 0.06, 0.06 ] }
+          -
+            type: Shape
+            translation: [ -0.0705, 0.0, -0.071 ]
+            rotation: [ 1, 0, 0, 90 ]
+            geometry: { type: Box, size: [ 0.008, 0.022, 0.12 ] }
+          -
+            type: Shape
+            translation: [ 0.00, 0.0, -0.077 ]
+            rotation: [ 0, 1, 0, 90 ]
+            geometry: { type: Box, size: [ 0.01, 0.125, 0.14 ] }
+          -
+            type: Transform
+            translation: [ 0.0705, 0.0, 0.0 ]
+            rotation: [ 0, 0, 1, 90 ]
+            elements: &hip_R_CYLI2
+              Shape: { geometry: { type: Cylinder, radius: 0.025, height: 0.008 } }
+          -
+            type: Shape
+            translation: [ 0.0705, -0.026, -0.048 ]
+            rotation: [ 1, 0, 0, 62 ]
+            geometry: { type: Box, size: [ 0.008, 0.05, 0.05 ] }
+          -
+            type: Shape
+            translation: [ 0.0705, -0.012, -0.022 ]
+            rotation: [ 1, 0, 0, 62 ]
+            geometry: { type: Box, size: [ 0.008, 0.05, 0.05 ] }
+          -
+            type: Shape
+            translation: [ 0.0705, 0.026, -0.048 ]
+            rotation: [ 1, 0, 0, 118 ]
+            geometry: { type: Box, size: [ 0.008, 0.05, 0.05 ] }
+          -
+            type: Shape
+            translation: [ 0.0705, 0.012, -0.022 ]
+            rotation: [ 1, 0, 0, 118 ]
+            geometry: { type: Box, size: [ 0.008, 0.05, 0.05 ] }
+          -
+            type: Shape
+            translation: [ 0.0705, 0.0, -0.071 ]
+            rotation: [ 1, 0, 0, 90 ]
+            geometry: { type: Box, size: [ 0.008, 0.024, 0.123 ] }
+          -
+            type: Shape
+            translation: [ 0.0705, 0.0, -0.05 ]
+            rotation: [ 1, 0, 0, 90 ]
+            geometry: { type: Box, size: [ 0.008, 0.024, 0.02 ] }
+          -
+            type: Transform
+            translation: [ 0.0, 0.0705, -0.17 ]
+            rotation: [ 0, 1, 0, 90 ]
+            elements: &hip_R_CYLI3
+              Shape: { geometry: { type: Cylinder, radius: 0.03, height: 0.008 } }
+          -
+            type: Shape
+            translation: [ -0.026, 0.0705, -0.11 ]
+            rotation: [ 0, 1, 0, 70 ]
+            geometry: { type: Box, size: [ 0.05, 0.008, 0.05 ] }
+          -
+            type: Shape
+            translation: [ -0.0163, 0.0705, -0.136 ]
+            rotation: [ 0, 1, 0, 70 ]
+            geometry: { type: Box, size: [ 0.05, 0.008, 0.05 ] }
+          -
+            type: Shape
+            translation: [ 0.026, 0.0705, -0.11 ]
+            rotation: [ 0, 1, 0, 110 ]
+            geometry: { type: Box, size: [ 0.05, 0.008, 0.05 ] }
+          -
+            type: Shape
+            translation: [ 0.0163, 0.0705, -0.136 ]
+            rotation: [ 0, 1, 0, 110 ]
+            geometry: { type: Box, size: [ 0.05, 0.008, 0.05 ] }
+          -
+            type: Shape
+            translation: [ 0.0, 0.0685, -0.085 ]
+            rotation: [ 0, 1, 0, 90 ]
+            geometry: { type: Box, size: [ 0.02, 0.013, 0.118 ] }
+          -
+            type: Shape
+            translation: [ 0.0, 0.0705, -0.099 ]
+            rotation: [ 0, 1, 0, 90 ]
+            geometry: { type: Box, size: [ 0.024, 0.008, 0.02 ] }
+          -
+            type: Transform
+            translation: [ 0.0, -0.0705, -0.17 ]
+            rotation: [ 0, 1, 0, 90 ]
+            elements: &hip_R_CYLI4
+              Shape: { geometry: { type: Cylinder, radius: 0.046, height: 0.008 } }
+          -
+            type: Shape
+            translation: [ -0.03, -0.0705, -0.11 ]
+            rotation: [ 0, 1, 0, 81 ]
+            geometry: { type: Box, size: [ 0.05, 0.008, 0.05 ] }
+          -
+            type: Shape
+            translation: [ -0.0263, -0.0705, -0.136 ]
+            rotation: [ 0, 1, 0, 81 ]
+            geometry: { type: Box, size: [ 0.06, 0.008, 0.05 ] }
+          -
+            type: Shape
+            translation: [ 0.03, -0.0705, -0.11 ]
+            rotation: [ 0, 1, 0, 99 ]
+            geometry: { type: Box, size: [ 0.05, 0.008, 0.05 ] }
+          -
+            type: Shape
+            translation: [ 0.0263, -0.0705, -0.136 ]
+            rotation: [ 0, 1, 0, 99 ]
+            geometry: { type: Box, size: [ 0.06, 0.008, 0.05 ] }
+          -
+            type: Shape
+            translation: [ 0.0, -0.0685, -0.085 ]
+            rotation: [ 0, 1, 0, 90 ]
+            geometry: { type: Box, size: [ 0.02, 0.013, 0.118 ] }
+          -
+            type: Shape
+            translation: [ 0.0, -0.0705, -0.11 ]
+            rotation: [ 0, 1, 0, 90 ]
+            geometry: { type: Box, size: [ 0.04, 0.008, 0.02 ] }
+          -
+            type: Shape
+            translation: [ 0.0, -0.085, -0.14 ]
+            rotation: [ 0, 1, 0, 90 ]
+            geometry: { type: Box, size: [ 0.117, 0.02, 0.063 ] }
+  -
+    name: RL_HIP_P
+    parent: RL_HIP_R
+    translation: [ 0.0, 0.0, -0.169 ]
+    jointType: revolute
+    jointAxis: Y
+    jointId: 1
+    jointRange: [ -107, 107 ]
+    maxJointVelocity: 1E6
+    mass: 8.64
+    centerOfMass: [ -1e-05, 0.00091, -0.07045 ]
+    inertia: [
+      0.08705723, -5.01e-06, -6.22e-06,
+      -5.01e-06, 0.08623435, 0.00027574,
+      -6.22e-06, 0.00027574, 0.02298262 ]
+    elements: &LHIP_PITCH_SHAPE
+      - 
+        type: Visual
+        elements:
+          Shape:
+            geometry: { type: Resource, uri: "meshes/02_LHIP_Pitch.stl" }
+            appearance: *BlackAppearance
+      -
+        type: Collision
+        elements:
+          - 
+            type: Shape
+            translation: [ 0.0, 0.0, -0.092 ]
+            geometry: { type: Box, size: [ 0.12, 0.13, 0.06 ] }
+          - 
+            type: Shape
+            translation: [ 0.0, 0.0815, -0.065 ]
+            rotation: [ 0, 1, 0, 90 ]
+            geometry: { type: Box, size: [ 0.19, 0.029, 0.058 ] }
+          - 
+            type: Transform
+            translation: [ 0.0, 0.0, 0.0 ]
+            rotation: [ 0, 1, 0, 90 ]
+            elements: &HIP_P_CYLI1
+              Shape: { geometry: { type: Cylinder, radius: 0.061, height: 0.045} }
+          - 
+            type: Transform
+            translation: [ 0.0, -0.038, 0.0 ]
+            rotation: [ 0, 1, 0, 90 ]
+            elements: &HIP_P_CYLI2
+              Shape: { geometry: { type: Cylinder, radius: 0.078, height: 0.052} }
+          - 
+            type: Transform
+            translation: [ 0.0, 0.045, 0.0 ]
+            rotation: [ 0, 1, 0, 90 ]
+            elements: &HIP_P_CYLI3
+              Shape: { geometry: { type: Cylinder, radius: 0.078, height: 0.038} }
+          - 
+            type: Transform
+            translation: [ 0.0, 0.0, -0.138 ]
+            rotation: [ 1, 0, 0, 90 ]	
+            elements: &HIP_P_CYLI4
+              Shape: { geometry: { type: Cylinder, radius: 0.061, height: 0.042} }
+          - 
+            type: Transform
+            translation: [ 0.0, 0.0, -0.222 ]
+            rotation: [ 1, 0, 0, 90 ]	
+            elements: *HIP_P_CYLI4
+          - 
+            type: Transform
+            translation: [ 0.0, 0.0, -0.178 ]
+            rotation: [ 1, 0, 0, 90 ]	
+            elements: &HIP_P_CYLI5
+              Shape: { geometry: { type: Cylinder, radius: 0.045, height: 0.05} }
+  -
+    name: RL_HIP_Y
+    parent: RL_HIP_P
+    translation: [ 0.0, 0.0, -0.241 ]
+    jointType: revolute
+    jointAxis: Z
+    jointId: 2
+    jointRange: unlimited
+    maxJointVelocity: 1E6
+    mass: 1.72
+    centerOfMass: [ 0.0199, -0.01113, -0.02905 ]
+    inertia: [
+      0.00864071, -0.00039465, -0.00167025,
+      -0.00039465, 0.00651989, 0.00083342,
+      -0.00167025, 0.00083342, 0.00534558 ]
+    elements: &LHIP_YAW_SHAPE
+      - 
+        type: Visual
+        elements:
+          Shape:
+            geometry: { type: Resource, uri: "meshes/03_LHIP_Yaw.stl" }
+            appearance: *DarkGrayAppearance
+      -
+        type: Collision
+        elements:
+          -
+            type: Shape
+            translation: [ 0.0, 0.0, -0.008 ]
+            rotation: [ 1, 0, 0, 90 ]
+            geometry: { type: Box, size: [ 0.086, 0.01, 0.145 ] }
+          -
+            type: Shape
+            translation: [ 0.0, 0.07125, -0.024 ]
+            geometry: { type: Box, size: [ 0.08, 0.006, 0.04 ] }
+          -
+            type: Shape
+            translation: [ 0.001, 0.07125, -0.056 ]
+            rotation: [ 0, 1, 0, 50 ]
+            geometry: { type: Box, size: [ 0.08, 0.006, 0.04 ] }
+          -
+            type: Shape
+            translation: [ 0.0458, 0.07125, -0.051 ]
+            rotation: [ 0, 1, 0, 45 ]
+            geometry: { type: Box, size: [ 0.057, 0.006, 0.04 ] }
+          -
+            type: Transform
+            translation: [ 0.0, 0.0, -0.005 ]
+            rotation: [ 1, 0, 0, 90 ]
+            elements: &HIP_Y_CYLI1
+              Shape: { geometry: { type: Cylinder, radius: 0.04, height: 0.01} }
+          -
+            type: Transform
+            translation: [ 0.043, 0.07125, -0.075 ]
+            elements: &HIP_Y_CYLI2
+              Shape: { geometry: { type: Cylinder, radius: 0.041, height: 0.006} }
+          -
+            type: Shape
+            translation: [ 0.0, -0.07125, -0.024 ]
+            geometry: { type: Box, size: [ 0.08, 0.006, 0.04 ] }
+          -
+            type: Shape
+            translation: [ 0.001, -0.07125, -0.056 ]
+            rotation: [ 0, 1, 0, 50 ]
+            geometry: { type: Box, size: [ 0.08, 0.006, 0.04 ] }
+          -
+            type: Shape
+            translation: [ 0.0458, -0.07125, -0.051 ]
+            rotation: [ 0, 1, 0, 45 ]
+            geometry: { type: Box, size: [ 0.057, 0.006, 0.04 ] }
+          -
+            type: Shape
+            translation: [ 0.018, -0.08035, -0.058 ]
+            rotation: [ 0, 1, 0, 44 ]
+            geometry: { type: Box, size: [ 0.12, 0.024, 0.038 ] }
+          -
+            type: Transform
+            translation: [ 0.043, -0.06825, -0.075 ]
+            elements: &HIP_Y_CYLI3
+              Shape: { geometry: { type: Cylinder, radius: 0.041, height: 0.012} }
+  -
+    name: RL_KNEE_P
+    parent: RL_HIP_Y
+    translation: [ 0.046, 0.0, -0.07804 ]
+    jointType: revolute
+    jointAxis: Y
+    jointId: 3
+    jointRange: [ -163, 38 ]
+    maxJointVelocity: 1E6
+    mass: 5.72
+    centerOfMass: [ -0.02134, -0.00027, -0.06496 ]
+    inertia: [
+      0.04513699, -9.396e-05, 0.00925777,
+      -9.396e-05, 0.04550396, -0.00017902,
+      0.00925777, -0.00017902, 0.01607654 ]
+    elements: &LKN_PITCH_SHAPE
+      -
+        type: Visual
+        elements: 
+          Shape:
+            geometry: { type: Resource, uri: "meshes/04_LKN_Pitch.stl" }
+            appearance: *DarkGrayAppearance
+      -
+        type: Collision
+        elements:
+          -
+            type: Shape
+            translation: [ -0.045, 0.0, -0.09 ]
+            rotation: [ 0, 1, 0, 90 ]
+            geometry: { type: Box, size: [ 0.04, 0.13, 0.1 ] }
+          -
+            type: Shape
+            translation: [ -0.03, 0.0, -0.04 ]
+            rotation: [ 0, 1, 0, 105 ]
+            geometry: { type: Box, size: [ 0.068, 0.13, 0.081 ] }
+          -
+            type: Shape
+            translation: [ -0.023, 0.078, -0.036 ]
+            rotation: [ 0, 1, 0, 33 ]
+            geometry: { type: Box, size: [ 0.065, 0.024, 0.142 ] }
+          -
+            type: Shape
+            translation: [ -0.047, 0.071, -0.118 ]
+            rotation: [ 1, 0, 0, -11 ]
+            geometry: { type: Box, size: [ 0.03, 0.016, 0.058 ] }
+          -  
+            type: Transform
+            translation: [ 0.0, -0.05025, 0.0 ]
+            elements: &KN_P_CYLI1
+              Shape: { geometry: { type: Cylinder, radius: 0.061, height: 0.03} }
+          -  
+            type: Transform
+            translation: [ 0.0, -0.02925, 0.0 ]
+            elements: &KN_P_CYLI2
+              Shape: { geometry: { type: Cylinder, radius: 0.057, height: 0.013} }
+          -  
+            type: Transform
+            translation: [ 0.0, -0.004, 0.0 ]
+            elements: &KN_P_CYLI3
+              Shape: { geometry: { type: Cylinder, radius: 0.045, height: 0.068} }
+          -  
+            type: Transform
+            translation: [ 0.0, 0.048, 0.0 ]
+            elements: &KN_P_CYLI4
+              Shape: { geometry: { type: Cylinder, radius: 0.061, height: 0.036} }
+          -  
+            type: Transform
+            translation: [ -0.044, 0.0, -0.1284 ]
+            rotation: [ 1, 0, 0, 90 ]
+            elements: &KN_P_CYLI5
+              Shape: { geometry: { type: Cylinder, radius: 0.061, height: 0.036} }
+          -  
+            type: Transform
+            translation: [ -0.046, 0.0, -0.16184 ]
+            rotation: [ 1, 0, 0, 90 ]
+            elements: &KN_P_CYLI6
+              Shape: { geometry: { type: Cylinder, radius: 0.039, height: 0.033} }
+          -  
+            type: Transform
+            translation: [ -0.046, 0.0, -0.1844 ]
+            rotation: [ 1, 0, 0, 90 ]
+            elements: &KN_P_CYLI7
+              Shape: { geometry: { type: Cylinder, radius: 0.046, height: 0.013} }
+          -  
+            type: Transform
+            translation: [ -0.046, 0.0, -0.2024 ]
+            rotation: [ 1, 0, 0, 90 ]
+            elements: &KN_P_CYLI8
+              Shape: { geometry: { type: Cylinder, radius: 0.05, height: 0.027} }
+  -
+    name: RL_ANKLE_Y
+    parent: RL_KNEE_P
+    translation: [ -0.046, 0.0, -0.213 ]
+    jointType: revolute
+    jointAxis: Z
+    jointId: 4
+    jointRange: unlimited
+    maxJointVelocity: 1E6
+    mass: 1.16
+    centerOfMass: [ 0.0, -0.00909, -0.02873 ]
+    inertia: [
+      0.00482359, 3e-08,       0.0,
+      3e-08,      0.0033678,   0.00044654,
+      0.0,        0.00044654,  0.00216019 ]
+    elements: &LAK_YAW_SHAPE
+      -
+        type: Visual
+        shape:
+          geometry: { type: Resource, uri: "meshes/05_LAK_Yaw.stl" }
+          appearance: *RedAppearance
+      -
+        type: Collision
+        elements:
+          -
+            type: Shape
+            translation: [ 0.0, 0.0, -0.009 ]
+            geometry: { type: Box, size: [ 0.09, 0.13, 0.007 ] }
+          -
+            type: Transform
+            translation: [ 0.0, 0.0618, -0.08 ]
+            rotation: [ 0, 1, 0, 90 ]
+            elements: &ak_Y_CYLI1
+              Shape: { geometry: { type: Cylinder, radius: 0.03, height: 0.008 } }
+          -
+            type: Shape
+            translation: [ -0.0097, 0.0618, -0.057 ]
+            rotation: [ 0, 1, 0, 77 ]
+            geometry: { type: Box, size: [ 0.05, 0.008, 0.05 ] }
+          -
+            type: Shape
+            translation: [ 0.0097, 0.0618, -0.057 ]
+            rotation: [ 0, 1, 0, 103 ]
+            geometry: { type: Box, size: [ 0.05, 0.008, 0.05 ] }
+          -
+            type: Shape
+            translation: [ 0.0, 0.0618, -0.025 ]
+            rotation: [ 0, 1, 0, 90 ]
+            geometry: { type: Box, size: [ 0.035, 0.008, 0.0797 ] }
+          -
+            type: Transform
+            translation: [ 0.0, -0.0618, -0.08 ]
+            rotation: [ 0, 1, 0, 90 ]
+            elements: &ak_Y_CYLI2
+              Shape: { geometry: { type: Cylinder, radius: 0.03, height: 0.008 } }
+          -
+            type: Shape
+            translation: [ -0.0097, -0.0618, -0.057 ]
+            rotation: [ 0, 1, 0, 77 ]
+            geometry: { type: Box, size: [ 0.05, 0.008, 0.05 ] }
+          -
+            type: Shape
+            translation: [ 0.0097, -0.0618, -0.057 ]
+            rotation: [ 0, 1, 0, 103 ]
+            geometry: { type: Box, size: [ 0.05, 0.008, 0.05 ] }
+          -
+            type: Shape
+            translation: [ 0.0, -0.0618, -0.025 ]
+            rotation: [ 0, 1, 0, 90 ]
+            geometry: { type: Box, size: [ 0.035, 0.008, 0.0797 ] }
+          -
+            type: Transform
+            translation: [ 0.0, -0.0705, -0.08 ]
+            rotation: [ 0, 1, 0, 90 ]
+            elements: &ak_Y_CYLI3
+              Shape: { geometry: { type: Cylinder, radius: 0.02, height: 0.0155 } }
+          -
+            type: Shape
+            translation: [ -0.0097, -0.0705, -0.057 ]
+            rotation: [ 0, 1, 0, 77 ]
+            geometry: { type: Box, size: [ 0.04, 0.0155, 0.03 ] }
+          -
+            type: Shape
+            translation: [ 0.0097, -0.0705, -0.057 ]
+            rotation: [ 0, 1, 0, 103 ]
+            geometry: { type: Box, size: [ 0.04, 0.0155, 0.03 ] }
+          -
+            type: Shape
+            translation: [ 0.0, -0.0705, -0.029 ]
+            rotation: [ 0, 1, 0, 90 ]
+            geometry: { type: Box, size: [ 0.026, 0.0155, 0.058 ] }
+  -
+    name: RL_ANKLE_P
+    parent: RL_ANKLE_Y
+    translation: [ 0.0, 0.0, -0.08 ]
+    jointType: revolute
+    jointAxis: Y
+    jointId: 5
+    jointRange: [ -93, 93 ]
+    maxJointVelocity: 1E6
+    mass: 5.06
+    centerOfMass: [ 0.00215, 0.0017, -0.07672 ]
+    inertia: [
+      0.03534068,   -2.587e-05,  -0.00070201,
+      -2.587e-05,   0.0355447,   0.00069448,
+      -0.00070201,  0.00069448,  0.01095592 ]
+    elements: &LAK_PITCH_SHAPE
+      -
+        type: Visual
+        shape:
+          geometry: { type: Resource, uri: "meshes/06_LAK_Pitch.stl" }
+          appearance: *BlackAppearance
+      -
+        type: Collision
+        elements:
+          -
+            type: Shape
+            translation: [ 0.0, 0.0, -0.055 ]
+            rotation: [ 0, 1, 0, 90 ]
+            geometry: { type: Box, size: [ 0.04, 0.117, 0.11 ] }
+          -
+            type: Shape
+            translation: [ 0.0, -0.0557, -0.02 ]
+            rotation: [ 0, 1, 0, 90 ]
+            geometry: { type: Box, size: [ 0.04, 0.006, 0.1 ] }
+          -
+            type: Shape
+            translation: [ 0.0, 0.068, -0.027 ]
+            rotation: [ 0, 1, 0, 90 ]
+            geometry: { type: Box, size: [ 0.1, 0.03, 0.06 ] }
+          -
+            type: Shape
+            translation: [ -0.0545, 0.0, -0.097 ]
+            rotation: [ 0, 1, 0, 90 ]
+            geometry: { type: Box, size: [ 0.045, 0.084, 0.0058	 ] }
+          -
+            type: Shape
+            translation: [ 0.0545, 0.0, -0.097 ]
+            rotation: [ 0, 1, 0, 90 ]
+            geometry: { type: Box, size: [ 0.045, 0.084, 0.0058	 ] }
+          -
+            type: Shape
+            translation: [ 0.07, 0.0, -0.121 ]
+            rotation: [ 0, 1, 0, 90 ]
+            geometry: { type: Box, size: [ 0.124, 0.058, 0.024 ] }
+          -
+            type: Transform
+            translation: [ 0.0, -0.0402, 0.0 ]
+            rotation: [ 0, 1, 0, 90 ]
+            elements: &AK_Y_CILI1
+              Shape: { geometry: { type: Cylinder, radius: 0.05, height: 0.037 } }
+          -
+            type: Transform
+            translation: [ 0.0, -0.0025, 0.0 ]
+            rotation: [ 0, 1, 0, 90 ]
+            elements: &AK_Y_CILI2
+              Shape: { geometry: { type: Cylinder, radius: 0.038, height: 0.037 } }
+          -
+            type: Transform
+            translation: [ 0.0, 0.035, 0.0 ]
+            rotation: [ 0, 1, 0, 90 ]
+            elements: &AK_Y_CILI3
+              Shape: { geometry: { type: Cylinder, radius: 0.061, height: 0.046 } }
+          -
+            type: Transform
+            translation: [ -0.0395, 0.0, -0.154 ]
+            rotation: [ 0, 0, 1, 90 ]
+            elements: &AK_Y_CILI4
+              Shape: { geometry: { type: Cylinder, radius: 0.05, height: 0.036 } }
+          -
+            type: Transform
+            translation: [ -0.0035, 0.0, -0.154 ]
+            rotation: [ 0, 0, 1, 90 ]
+            elements: &AK_Y_CILI5
+              Shape: { geometry: { type: Cylinder, radius: 0.038, height: 0.036 } }
+          -
+            type: Transform
+            translation: [ 0.035, 0.0, -0.154 ]
+            rotation: [ 0, 0, 1, 90 ]
+            elements: &AK_Y_CILI6
+              Shape: { geometry: { type: Cylinder, radius: 0.061, height: 0.0454 } }
+  -
+    name: RL_ANKLE_R
+    parent: RL_ANKLE_P
+    translation: [ 0.0, 0.0, -0.154 ]
+    jointType: revolute
+    jointAxis: X
+    jointId: 6
+    jointRange: [ -106, 106 ]
+    maxJointVelocity: 1E6
+    mass: 0.82
+    centerOfMass: [ -0.01007, 0.0, -0.02816 ]
+    inertia: [
+      0.00132859,   -2.8e-07,     -0.00019601,
+      -2.8e-07,     0.00261108,   -1.2e-07,
+      -0.00019601,  -1.2e-07,     0.00200116 ]
+    elements: &LAK_ROLL_SHAPE
+      -
+        type: Visual
+        shape:
+          geometry: { type: Resource, uri: "meshes/07_LAK_Roll.stl" }
+          appearance: *RedAppearance
+      - &AK_ROLL_COLLISION_SHAPE
+        type: Collision
+        elements:
+          -
+            type: Shape
+            translation: [ 0.0, 0.0, -0.07 ]
+            geometry: { type: Box, size: [ 0.12, 0.077, 0.006 ] }
+          -
+            type: Shape
+            translation: [ -0.063, 0.0, -0.06 ]
+            rotation: [ 0, 1, 0, 90 ]
+            geometry: { type: Box, size: [ 0.024, 0.08, 0.0057 ] }
+          -
+            type: Shape
+            translation: [ -0.063, -0.0139, -0.035 ]
+            rotation: [ 1, 0, 0, 75 ]
+            geometry: { type: Box, size: [ 0.0057, 0.04, 0.044 ] }
+          -
+            type: Shape
+            translation: [ -0.063, 0.0155, -0.035 ]
+            rotation: [ 1, 0, 0, 15 ]
+            geometry: { type: Box, size: [ 0.0057, 0.04, 0.044 ] }
+          -
+            type: Transform
+            translation: [ -0.06, 0.0, 0.0 ]
+            rotation: [ 0, 0, 1, 90 ]
+            elements: &AK_R_CILI1
+              Shape: { geometry: { type: Cylinder, radius: 0.028, height: 0.012 } }
+          -
+            type: Shape
+            translation: [ 0.063, 0.0, -0.06 ]
+            rotation: [ 0, 1, 0, 90 ]
+            geometry: { type: Box, size: [ 0.024, 0.08, 0.0057 ] }
+          -
+            type: Shape
+            translation: [ 0.063, -0.0139, -0.035 ]
+            rotation: [ 1, 0, 0, 75 ]
+            geometry: { type: Box, size: [ 0.0057, 0.04, 0.044 ] }
+          -
+            type: Shape
+            translation: [ 0.063, 0.0155, -0.035 ]
+            rotation: [ 1, 0, 0, 15 ]
+            geometry: { type: Box, size: [ 0.0057, 0.04, 0.044 ] }
+          -
+            type: Transform
+            translation: [ 0.063, 0.0, 0.0 ]
+            rotation: [ 0, 0, 1, 90 ]
+            elements: &AK_R_CILI2
+              Shape: { geometry: { type: Cylinder, radius: 0.028, height: 0.006 } }
+  - 
+    name: RL_HOOK
+    parent: RL_ANKLE_R
+    jointType: fixed
+    translation: [ 0.0, 0.0, -0.0955 ]
+    elements:
+      -
+        type: RigidBody
+        name: RL_fsens
+        mass: 0.78
+        centerOfMass: [ 0.0, 0.0, -0.0225 ]
+        inertia: [
+          0.00061038183,  5.3644e-07,     -5.7444e-07,
+          5.3644e-07,     0.00061365229,  3.3166e-07,
+          -5.7444e-07,    3.3166e-07,     0.00096931031 ]
+        elements:
+          Shape: &FORCE_SENSOR_SHAPE_DESCRIPTION
+            rotation: [ 1, 0, 0, 90 ]
+            geometry: { type: Cylinder, height: 0.045, radius: 0.05 }
+            appearance: *DarkGrayAppearance
+          ForceSensor:
+            name: RL_wrench
+      -
+        type: RigidBody
+        translation: [ 0.0, 0.0, -0.0225 ]
+        mass: 0.72
+        centerOfMass: [ -0.02026, 0.0, -0.00803 ]
+        inertia: [
+          0.00091134,  0.0,         -0.00011702,
+          0.0,         0.00344857,  0.0,
+          -0.00011702, 0.0,         0.0039655 ]
+        elements: &LEE_SHAPE
+          -
+            type: Visual
+            shape:
+              geometry: { type: Resource, uri: "package://warec_description/meshes//warec_01/08_LEE.stl" }
+              appearance: *RedAppearance
+          -
+            type: Collision
+            elements:
+              -
+                type: Shape
+                translation: [ -0.0772, 0.0, -0.0234 ]
+                geometry: { type: Box, size: [ 0.1057, 0.1, 0.0126 ] }
+              -
+                type: Shape
+                translation: [ -0.1, 0.0, -0.0166 ]
+                rotation: [ 0, 1, 0, 15 ]
+                geometry: { type: Box, size: [ 0.059, 0.1, 0.011 ] }
+              -
+                type: Shape
+                translation: [ -0.118, 0.0, -0.0066 ]
+                rotation: [ 0, 1, 0, 45 ]
+                geometry: { type: Box, size: [ 0.02, 0.1, 0.011 ] }
+              -
+                type: Shape
+                translation: [ -0.1251, 0.0, -0.013 ]
+                rotation: [ 0, 1, 0, 90 ]
+                geometry: { type: Box, size: [ 0.034, 0.1, 0.01 ] }
+              -
+                type: Shape
+                translation: [ 0.0033, 0.0, -0.004 ]
+                geometry: { type: Box, size: [ 0.143, 0.1, 0.0078 ] }
+              -
+                type: Shape
+                translation: [ -0.0414, 0.0, -0.0128 ]
+                geometry: { type: Box, size: [ 0.054, 0.1, 0.01 ] }
+              -
+                type: Shape
+                translation: [ -0.068, 0.0, 0.0191 ]
+                rotation: [ 0, 1, 0, 90 ]
+                geometry: { type: Box, size: [ 0.042, 0.1, 0.0038 ] }
+              -
+                type: Shape
+                translation: [ -0.0705, 0.0, 0.014 ]
+                rotation: [ 0, 1, 0, 75 ]
+                geometry: { type: Box, size: [ 0.042, 0.1, 0.007 ] }
+              -
+                type: Shape
+                translation: [ -0.0725, 0.0, 0.0333 ]
+                rotation: [ 0, 1, 0, 90 ]
+                geometry: { type: Box, size: [ 0.0135, 0.1, 0.013 ] }
+              -
+                type: Shape
+                translation: [ -0.0787, 0.0, 0.036 ]
+                rotation: [ 0, 1, 0, 90 ]
+                geometry: { type: Box, size: [ 0.008, 0.1, 0.013 ] }
+              -
+                type: Shape
+                translation: [ -0.0772, 0.0, 0.0305 ]
+                rotation: [ 0, 1, 0, 45 ]
+                geometry: { type: Box, size: [ 0.013, 0.1, 0.01 ] }
+              -
+                type: Shape
+                translation: [ -0.0164, 0.0, -0.0148 ]
+                rotation: [ 0, 1, 0, 135 ]
+                geometry: { type: Box, size: [ 0.032, 0.1, 0.01 ] }
+              -
+                type: Shape
+                translation: [ 0.01675, 0.0, -0.0148 ]
+                rotation: [ 0, 1, 0, 45 ]
+                geometry: { type: Box, size: [ 0.032, 0.1, 0.01 ] }
+              -
+                type: Shape
+                translation: [ 0.04275, 0.0, -0.0148 ]
+                rotation: [ 0, 1, 0, 135 ]
+                geometry: { type: Box, size: [ 0.032, 0.1, 0.01 ] }
+              -
+                type: Shape
+                translation: [ 0.0297, 0.0, -0.0123 ]
+                geometry: { type: Box, size: [ 0.027, 0.1, 0.017 ] }
+              -
+                type: Shape
+                translation: [ 0.0297, 0.0, -0.0261 ]
+                geometry: { type: Box, size: [ 0.011, 0.1, 0.007 ] }
+              -
+                type: Shape
+                translation: [ 0.0801, 0.0, -0.0153 ]
+                rotation: [ 0, 1, 0, 45 ]
+                geometry: { type: Box, size: [ 0.028, 0.1, 0.014 ] }
+              -
+                type: Shape
+                translation: [ 0.067, 0.0, -0.0065 ]
+                rotation: [ 0, 1, 0, 20 ]
+                geometry: { type: Box, size: [ 0.013, 0.1, 0.008 ] }
+              -
+                type: Shape
+                translation: [ 0.0897, 0.0, -0.025 ]
+                geometry: { type: Box, size: [ 0.01, 0.1, 0.01 ] }
+  -
+    name: RR_HIP_R
+    parent: BASE
+    translation: [ 0.0, -0.164905, -0.000005 ]
+    jointType: revolute
+    jointAxis: X
+    jointId: 7
+    jointRange: [ -148, 51 ]
+    maxJointVelocity: 1E6
+    mass: 2.4001
+    centerOfMass: [ -0.00771, 0.01238, -0.09652 ]
+    inertia: [
+      0.01764809, 0.00022896, -0.00178956,
+      0.00022896, 0.01677341, -0.00202747,
+      -0.00178956, -0.00202747, 0.00834914 ]
+    elements: &RHIP_ROLL_SHAPE
+      -
+        type: Visual
+        shape:
+          geometry: { type: Resource, uri: "meshes/01_RHIP_Roll.stl" }
+          appearance: *RedAppearance
+      -
+        type: Collision
+        elements:
+          -
+            type: Transform
+            translation: [ -0.0705, 0.0, 0.0 ]
+            rotation: [ 0, 0, 1, 90 ]
+            elements: *hip_R_CYLI1
+          -
+            type: Shape
+            translation: [ -0.0705, -0.021, -0.044 ]
+            rotation: [ 1, 0, 0, 71 ]
+            geometry: { type: Box, size: [ 0.008, 0.06, 0.06 ] }
+          -
+            type: Shape
+            translation: [ -0.0705, 0.021, -0.044 ]
+            rotation: [ 1, 0, 0, 109 ]
+            geometry: { type: Box, size: [ 0.008, 0.06, 0.06 ] }
+          -
+            type: Shape
+            translation: [ -0.0705, 0.0, -0.071 ]
+            rotation: [ 1, 0, 0, 90 ]
+            geometry: { type: Box, size: [ 0.008, 0.022, 0.12 ] }
+          -
+            type: Shape
+            translation: [ 0.00, 0.0, -0.077 ]
+            rotation: [ 0, 1, 0, 90 ]
+            geometry: { type: Box, size: [ 0.01, 0.125, 0.14 ] }
+          -
+            type: Transform
+            translation: [ 0.0705, 0.0, 0.0 ]
+            rotation: [ 0, 0, 1, 90 ]
+            elements: *hip_R_CYLI2
+          -
+            type: Shape
+            translation: [ 0.0705, -0.026, -0.048 ]
+            rotation: [ 1, 0, 0, 62 ]
+            geometry: { type: Box, size: [ 0.008, 0.05, 0.05 ] }
+          -
+            type: Shape
+            translation: [ 0.0705, -0.012, -0.022 ]
+            rotation: [ 1, 0, 0, 62 ]
+            geometry: { type: Box, size: [ 0.008, 0.05, 0.05 ] }
+          -
+            type: Shape
+            translation: [ 0.0705, 0.026, -0.048 ]
+            rotation: [ 1, 0, 0, 118 ]
+            geometry: { type: Box, size: [ 0.008, 0.05, 0.05 ] }
+          -
+            type: Shape
+            translation: [ 0.0705, 0.012, -0.022 ]
+            rotation: [ 1, 0, 0, 118 ]
+            geometry: { type: Box, size: [ 0.008, 0.05, 0.05 ] }
+          -
+            type: Shape
+            translation: [ 0.0705, 0.0, -0.071 ]
+            rotation: [ 1, 0, 0, 90 ]
+            geometry: { type: Box, size: [ 0.008, 0.024, 0.123 ] }
+          -
+            type: Shape
+            translation: [ 0.0705, 0.0, -0.05 ]
+            rotation: [ 1, 0, 0, 90 ]
+            geometry: { type: Box, size: [ 0.008, 0.024, 0.02 ] }
+          -
+            type: Transform
+            translation: [ 0.0, 0.0705, -0.17 ]
+            rotation: [ 0, 1, 0, 90 ]
+            elements: *hip_R_CYLI4
+          -
+            type: Shape
+            translation: [ -0.03, 0.0705, -0.11 ]
+            rotation: [ 0, 1, 0, 81 ]
+            geometry: { type: Box, size: [ 0.05, 0.008, 0.05 ] }
+          -
+            type: Shape
+            translation: [ -0.0263, 0.0705, -0.136 ]
+            rotation: [ 0, 1, 0, 81 ]
+            geometry: { type: Box, size: [ 0.05, 0.008, 0.05 ] }
+          -
+            type: Shape
+            translation: [ 0.03, 0.0705, -0.11 ]
+            rotation: [ 0, 1, 0, 99 ]
+            geometry: { type: Box, size: [ 0.05, 0.008, 0.05 ] }
+          -
+            type: Shape
+            translation: [ 0.0263, 0.0705, -0.136 ]
+            rotation: [ 0, 1, 0, 99 ]
+            geometry: { type: Box, size: [ 0.05, 0.008, 0.05 ] }
+          -
+            type: Shape
+            translation: [ 0.0, 0.0685, -0.085 ]
+            rotation: [ 0, 1, 0, 90 ]
+            geometry: { type: Box, size: [ 0.02, 0.013, 0.118 ] }
+          -
+            type: Shape
+            translation: [ 0.0, 0.0705, -0.099 ]
+            rotation: [ 0, 1, 0, 90 ]
+            geometry: { type: Box, size: [ 0.024, 0.008, 0.02 ] }
+          -
+            type: Transform
+            translation: [ 0.0, -0.0705, -0.17 ]
+            rotation: [ 0, 1, 0, 90 ]
+            elements: *hip_R_CYLI3
+          -
+            type: Shape
+            translation: [ -0.026, -0.0705, -0.11 ]
+            rotation: [ 0, 1, 0, 70 ]
+            geometry: { type: Box, size: [ 0.05, 0.008, 0.05 ] }
+          -
+            type: Shape
+            translation: [ -0.0163, -0.0705, -0.136 ]
+            rotation: [ 0, 1, 0, 70 ]
+            geometry: { type: Box, size: [ 0.06, 0.008, 0.05 ] }
+          -
+            type: Shape
+            translation: [ 0.026, -0.0705, -0.11 ]
+            rotation: [ 0, 1, 0, 110 ]
+            geometry: { type: Box, size: [ 0.05, 0.008, 0.05 ] }
+          -
+            type: Shape
+            translation: [ 0.0163, -0.0705, -0.136 ]
+            rotation: [ 0, 1, 0, 110 ]
+            geometry: { type: Box, size: [ 0.06, 0.008, 0.05 ] }
+          -
+            type: Shape
+            translation: [ 0.0, -0.0685, -0.085 ]
+            rotation: [ 0, 1, 0, 90 ]
+            geometry: { type: Box, size: [ 0.02, 0.013, 0.118 ] }
+          -
+            type: Shape
+            translation: [ 0.0, -0.0705, -0.11 ]
+            rotation: [ 0, 1, 0, 90 ]
+            geometry: { type: Box, size: [ 0.04, 0.008, 0.02 ] }
+          -
+            type: Shape
+            translation: [ 0.0, 0.085, -0.14 ]
+            rotation: [ 0, 1, 0, 90 ]
+            geometry: { type: Box, size: [ 0.117, 0.02, 0.063 ] }
+  -
+    name: RR_HIP_P
+    parent: RR_HIP_R
+    translation: [ 0.0, 0.0, -0.169 ]
+    jointType: revolute
+    jointAxis: Y
+    jointId: 8
+    jointRange: [ -107, 107 ]
+    maxJointVelocity: 1E6
+    mass: 8.64
+    centerOfMass: [ 1e-05, -0.00091, -0.07045 ]
+    inertia: [
+      0.08705723, -5.01e-06, 6.22e-06,
+      -5.01e-06, 0.08623435, -0.00027574,
+      -6.22e-06, -0.00027574, 0.02298262 ]
+    elements: &RHIP_PITCH_SHAPE
+      - 
+        type: Visual
+        shape:
+          geometry: { type: Resource, uri: "meshes/02_RHIP_Pitch.stl" }
+          appearance: *BlackAppearance
+      -
+        type: Collision
+        elements:
+          -
+            type: Shape
+            translation: [ 0.0, 0.0, -0.092 ]
+            geometry: { type: Box, size: [ 0.12, 0.13, 0.06 ] }
+          - 
+            type: Shape
+            translation: [ 0.0, 0.0815, -0.065 ]
+            rotation: [ 0, 1, 0, 90 ]
+            geometry: { type: Box, size: [ 0.19, 0.029, 0.058 ] }
+          - 
+            type: Transform
+            translation: [ 0.0, 0.0, 0.0 ]
+            rotation: [ 0, 1, 0, 90 ]
+            elements: *HIP_P_CYLI1
+          - 
+            type: Transform
+            translation: [ 0.0, -0.038, 0.0 ]
+            rotation: [ 0, 1, 0, 90 ]
+            elements: *HIP_P_CYLI2
+          - 
+            type: Transform
+            translation: [ 0.0, 0.045, 0.0 ]
+            rotation: [ 0, 1, 0, 90 ]
+            elements: *HIP_P_CYLI3
+          - 
+            type: Transform
+            translation: [ 0.0, 0.0, -0.138 ]
+            rotation: [ 1, 0, 0, 90 ]	
+            elements: *HIP_P_CYLI4
+          - 
+            type: Transform
+            translation: [ 0.0, 0.0, -0.222 ]
+            rotation: [ 1, 0, 0, 90 ]	
+            elements: *HIP_P_CYLI4
+          - 
+            type: Transform
+            translation: [ 0.0, 0.0, -0.178 ]
+            rotation: [ 1, 0, 0, 90 ]	
+            elements: *HIP_P_CYLI5
+  -
+    name: RR_HIP_Y
+    parent: RR_HIP_P
+    translation: [ 0.0, 0.0, -0.241 ]
+    jointType: revolute
+    jointAxis: Z
+    jointId: 9
+    jointRange: unlimited
+    maxJointVelocity: 1E6
+    mass: 1.72
+    centerOfMass: [ 0.01991, 0.01113, -0.02905 ]
+    inertia: [
+      0.00864067, 0.00039402, -0.00167061,
+      0.00039402, 0.00652026, -0.00083341,
+      -0.00167061, -0.00083341, 0.00534599 ]
+    elements: &RHIP_YAW_SHAPE
+      - 
+        type: Visual
+        shape:
+          geometry: { type: Resource, uri: "meshes/03_RHIP_Yaw.stl" }
+          appearance: *DarkGrayAppearance
+      -
+        type: Collision
+        elements:
+          -
+            type: Shape
+            translation: [ 0.0, 0.0, -0.008 ]
+            rotation: [ 1, 0, 0, 90 ]
+            geometry: { type: Box, size: [ 0.086, 0.01, 0.145 ] }
+          -
+            type: Shape
+            translation: [ 0.0, 0.07125, -0.024 ]
+            geometry: { type: Box, size: [ 0.08, 0.006, 0.04 ] }
+          -
+            type: Shape
+            translation: [ 0.001, 0.07125, -0.056 ]
+            rotation: [ 0, 1, 0, 50 ]
+            geometry: { type: Box, size: [ 0.08, 0.006, 0.04 ] }
+          -
+            type: Shape
+            translation: [ 0.0458, 0.07125, -0.051 ]
+            rotation: [ 0, 1, 0, 45 ]
+            geometry: { type: Box, size: [ 0.057, 0.006, 0.04 ] }
+          -
+            type: Transform
+            translation: [ 0.0, 0.0, -0.005 ]
+            rotation: [ 1, 0, 0, 90 ]
+            elements: *HIP_Y_CYLI1
+          -
+            type: Transform
+            translation: [ 0.043, 0.06825, -0.075 ]
+            elements: *HIP_Y_CYLI3
+          -
+            type: Shape
+            translation: [ 0.0, -0.07125, -0.024 ]
+            geometry: { type: Box, size: [ 0.08, 0.006, 0.04 ] }
+          -
+            type: Shape
+            translation: [ 0.001, -0.07125, -0.056 ]
+            rotation: [ 0, 1, 0, 50 ]
+            geometry: { type: Box, size: [ 0.08, 0.006, 0.04 ] }
+          -
+            type: Shape
+            translation: [ 0.0458, -0.07125, -0.051 ]
+            rotation: [ 0, 1, 0, 45 ]
+            geometry: { type: Box, size: [ 0.057, 0.006, 0.04 ] }
+          -
+            type: Shape
+            translation: [ 0.018, 0.08035, -0.058 ]
+            rotation: [ 0, 1, 0, 44 ]
+            geometry: { type: Box, size: [ 0.12, 0.024, 0.038 ] }
+          -
+            type: Transform
+            translation: [ 0.043, -0.07125, -0.075 ]
+            elements: *HIP_Y_CYLI2
+  -
+    name: RR_KNEE_P
+    parent: RR_HIP_Y
+    translation: [ 0.046, 0.0, -0.07804 ]
+    jointType: revolute
+    jointAxis: Y
+    jointId: 10
+    jointRange: [ -163, 38 ]
+    maxJointVelocity: 1E6
+    mass: 5.72
+    centerOfMass: [ -0.02128, 0.00026, -0.06497 ]
+    inertia: [
+      0.04510836, 8.919e-05,  0.00925738,
+      8.919e-05,  0.04548141, 0.00018274,
+      0.00925738, 0.00018274, 0.01605364 ]
+    elements: &RKN_PITCH_SHAPE
+      -
+        type: Visual
+        shape:
+          geometry: { type: Resource, uri: "meshes/04_RKN_Pitch.stl" }
+          appearance: *DarkGrayAppearance
+      -
+        type: Collision
+        elements:
+          -
+            type: Shape
+            translation: [ -0.045, 0.0, -0.09 ]
+            rotation: [ 0, 1, 0, 90 ]
+            geometry: { type: Box, size: [ 0.04, 0.13, 0.1 ] }
+          -
+            type: Shape
+            translation: [ -0.03, 0.0, -0.04 ]
+            rotation: [ 0, 1, 0, 105 ]
+            geometry: { type: Box, size: [ 0.068, 0.13, 0.081 ] }
+          -
+            type: Shape
+            translation: [ -0.023, -0.078, -0.036 ]
+            rotation: [ 0, 1, 0, 33 ]
+            geometry: { type: Box, size: [ 0.065, 0.024, 0.142 ] }
+          -
+            type: Shape
+            translation: [ -0.047, -0.071, -0.118 ]
+            rotation: [ 1, 0, 0, 11 ]
+            geometry: { type: Box, size: [ 0.03, 0.016, 0.058 ] }
+          -  
+            type: Transform
+            translation: [ 0.0, 0.05, 0.0 ]
+            elements: *KN_P_CYLI1
+          -  
+            type: Transform
+            translation: [ 0.0, 0.0285, 0.0 ]
+            elements: *KN_P_CYLI2
+          -  
+            type: Transform
+            translation: [ 0.0, -0.01225, 0.0 ]
+            elements: *KN_P_CYLI3
+          -  
+            type: Transform
+            translation: [ 0.0, -0.04725, 0.0 ]
+            elements: *KN_P_CYLI4
+          -  
+            type: Transform
+            translation: [ -0.044, 0.0, -0.1284 ]
+            rotation: [ 1, 0, 0, 90 ]
+            elements: *KN_P_CYLI5
+          -  
+            type: Transform
+            translation: [ -0.046, 0.0, -0.16184 ]
+            rotation: [ 1, 0, 0, 90 ]
+            elements: *KN_P_CYLI6
+          -  
+            type: Transform
+            translation: [ -0.046, 0.0, -0.1844 ]
+            rotation: [ 1, 0, 0, 90 ]
+            elements: *KN_P_CYLI7
+          -  
+            type: Transform
+            translation: [ -0.046, 0.0, -0.2024 ]
+            rotation: [ 1, 0, 0, 90 ]
+            elements: *KN_P_CYLI8
+  -
+    name: RR_ANKLE_Y
+    parent: RR_KNEE_P
+    translation: [ -0.046, 0.0, -0.213 ]
+    jointType: revolute
+    jointAxis: Z
+    jointId: 11
+    jointRange: unlimited
+    maxJointVelocity: 1E6
+    mass: 1.16
+    centerOfMass: [ 0.0, 0.00909, -0.02873 ]
+    inertia: [
+      0.00482359, 3e-08,       0.0,
+      3e-08,      0.0033678,   -0.00044654,
+      0.0,        -0.00044654,  0.00216019 ]
+    elements: &RAK_YAW_SHAPE
+      -
+        type: Visual
+        shape:
+          geometry: { type: Resource, uri: "meshes/05_RAK_Yaw.stl" }
+          appearance: *RedAppearance
+      -
+        type: Collision
+        elements:
+          -
+            type: Shape
+            translation: [ 0.0, 0.0, -0.009 ]
+            geometry: { type: Box, size: [ 0.09, 0.13, 0.007 ] }
+          -
+            type: Transform
+            translation: [ 0.0, 0.0618, -0.08 ]
+            rotation: [ 0, 1, 0, 90 ]
+            elements: *ak_Y_CYLI1
+          -
+            type: Shape
+            translation: [ -0.0097, 0.0618, -0.057 ]
+            rotation: [ 0, 1, 0, 77 ]
+            geometry: { type: Box, size: [ 0.05, 0.008, 0.05 ] }
+          -
+            type: Shape
+            translation: [ 0.0097, 0.0618, -0.057 ]
+            rotation: [ 0, 1, 0, 103 ]
+            geometry: { type: Box, size: [ 0.05, 0.008, 0.05 ] }
+          -
+            type: Shape
+            translation: [ 0.0, 0.0618, -0.025 ]
+            rotation: [ 0, 1, 0, 90 ]
+            geometry: { type: Box, size: [ 0.035, 0.008, 0.0797 ] }
+          -
+            type: Transform
+            translation: [ 0.0, -0.0618, -0.08 ]
+            rotation: [ 0, 1, 0, 90 ]
+            elements: *ak_Y_CYLI2
+          -
+            type: Shape
+            translation: [ -0.0097, -0.0618, -0.057 ]
+            rotation: [ 0, 1, 0, 77 ]
+            geometry: { type: Box, size: [ 0.05, 0.008, 0.05 ] }
+          -
+            type: Shape
+            translation: [ 0.0097, -0.0618, -0.057 ]
+            rotation: [ 0, 1, 0, 103 ]
+            geometry: { type: Box, size: [ 0.05, 0.008, 0.05 ] }
+          -
+            type: Shape
+            translation: [ 0.0, -0.0618, -0.025 ]
+            rotation: [ 0, 1, 0, 90 ]
+            geometry: { type: Box, size: [ 0.035, 0.008, 0.0797 ] }
+          -
+            type: Transform
+            translation: [ 0.0, -0.0705, -0.08 ]
+            rotation: [ 0, 1, 0, 90 ]
+            elements: *ak_Y_CYLI3
+          -
+            type: Shape
+            translation: [ -0.0097, -0.0705, -0.057 ]
+            rotation: [ 0, 1, 0, 77 ]
+            geometry: { type: Box, size: [ 0.04, 0.0155, 0.03 ] }
+          -
+            type: Shape
+            translation: [ 0.0097, -0.0705, -0.057 ]
+            rotation: [ 0, 1, 0, 103 ]
+            geometry: { type: Box, size: [ 0.04, 0.0155, 0.03 ] }
+          -
+            type: Shape
+            translation: [ 0.0, -0.0705, -0.029 ]
+            rotation: [ 0, 1, 0, 90 ]
+            geometry: { type: Box, size: [ 0.026, 0.0155, 0.058 ] }
+  -
+    name: RR_ANKLE_P
+    parent: RR_ANKLE_Y
+    translation: [ 0.0, 0.0, -0.08 ]
+    jointType: revolute
+    jointAxis: Y
+    jointId: 12
+    jointRange: [ -93, 93 ]
+    maxJointVelocity: 1E6
+    mass: 5.06
+    centerOfMass: [ 0.00215, -0.00173, -0.07672 ]
+    inertia: [
+      0.03534024,   1.143e-05,    -0.00069161,
+      1.143e-05,    0.03554489,   -0.00068223,
+      -0.00069161,  -0.00068223,  0.01095641 ]
+    elements: &RAK_PITCH_SHAPE
+      -
+        type: Visual
+        shape:
+          geometry: { type: Resource, uri: "meshes/06_RAK_Pitch.stl" }
+          appearance: *BlackAppearance
+      -
+        type: Collision
+        elements:
+          -
+            type: Shape
+            translation: [ 0.0, 0.0, -0.055 ]
+            rotation: [ 0, 1, 0, 90 ]
+            geometry: { type: Box, size: [ 0.04, 0.117, 0.11 ] }
+          -
+            type: Shape
+            translation: [ 0.0, -0.0557, -0.02 ]
+            rotation: [ 0, 1, 0, 90 ]
+            geometry: { type: Box, size: [ 0.04, 0.006, 0.1 ] }
+          -
+            type: Shape
+            translation: [ 0.0, -0.068, -0.023 ]
+            rotation: [ 0, 1, 0, 90 ]
+            geometry: { type: Box, size: [ 0.106, 0.03, 0.06 ] }
+          -
+            type: Shape
+            translation: [ -0.0545, 0.0, -0.097 ]
+            rotation: [ 0, 1, 0, 90 ]
+            geometry: { type: Box, size: [ 0.045, 0.084, 0.0058	 ] }
+          -
+            type: Shape
+            translation: [ 0.0545, 0.0, -0.097 ]
+            rotation: [ 0, 1, 0, 90 ]
+            geometry: { type: Box, size: [ 0.045, 0.084, 0.0058	 ] }
+          -
+            type: Shape
+            translation: [ 0.07, 0.0, -0.121 ]
+            rotation: [ 0, 1, 0, 90 ]
+            geometry: { type: Box, size: [ 0.124, 0.058, 0.024 ] }
+          -
+            type: Transform
+            translation: [ 0.0, 0.039, 0.0 ]
+            rotation: [ 0, 1, 0, 90 ]
+            elements: *AK_Y_CILI1
+          -
+            type: Transform
+            translation: [ 0.0, 0.005, 0.0 ]
+            rotation: [ 0, 1, 0, 90 ]
+            elements: *AK_Y_CILI2
+          -
+            type: Transform
+            translation: [ 0.0, -0.036, 0.0 ]
+            rotation: [ 0, 1, 0, 90 ]
+            elements: *AK_Y_CILI3
+          -
+            type: Transform
+            translation: [ -0.0395, 0.0, -0.154 ]
+            rotation: [ 0, 0, 1, 90 ]
+            elements: *AK_Y_CILI4
+          -
+            type: Transform
+            translation: [ -0.0035, 0.0, -0.154 ]
+            rotation: [ 0, 0, 1, 90 ]
+            elements: *AK_Y_CILI5
+          -
+            type: Transform
+            translation: [ 0.035, 0.0, -0.154 ]
+            rotation: [ 0, 0, 1, 90 ]
+            elements: *AK_Y_CILI6
+  -
+    name: RR_ANKLE_R
+    parent: RR_ANKLE_P
+    translation: [ 0.0, 0.0,  -0.154 ]
+    jointType: revolute
+    jointAxis: X
+    jointId: 13
+    jointRange: [ -1.850049005, 1.850049005 ]
+    maxJointVelocity: 1E6
+    mass: 0.82
+    centerOfMass: [ -0.01007, 0.0, -0.02816 ]
+    inertia: [
+      0.00132859,   -2.8e-07,     -0.00019601,
+      -2.8e-07,     0.00261108,   -1.2e-07,
+      -0.00019601,  -1.2e-07,     0.00200116 ]
+    elements: &RAK_ROLL_SHAPE
+      - 
+        type: Visual
+        shape:
+          geometry: { type: Resource, uri: "meshes/07_RAK_Roll.stl" }
+          appearance: *RedAppearance
+      - *AK_ROLL_COLLISION_SHAPE
+  - 
+    name: RR_HOOK
+    parent: RR_ANKLE_R
+    jointType: fixed
+    translation: [ 0.0, 0.0, -0.0955 ]
+    elements:
+      -
+        type: RigidBody
+        name: RR_fsens
+        mass: 0.78
+        centerOfMass: [ 0.0, 0.0, -0.0225 ]
+        inertia: [
+          0.00061038183,  5.3644e-07,     -5.7444e-07,
+          5.3644e-07,     0.00061365229,  3.3166e-07,
+          -5.7444e-07,    3.3166e-07,     0.00096931031 ]
+        elements:
+          Shape: *FORCE_SENSOR_SHAPE_DESCRIPTION
+          ForceSensor:
+            name: RR_wrench
+      -
+        type: RigidBody
+        translation: [ 0.0, 0.0, -0.0225 ]
+        mass: 0.72
+        centerOfMass: [ -0.02026, 0.0, -0.00803 ]
+        inertia: [
+          0.00091134,  0.0,         -0.00011702,
+          0.0,         0.00344857,  0.0,
+          -0.00011702, 0.0,         0.0039655 ]
+        elements: &REE_SHAPE
+          -
+            type: Visual
+            shape:
+              geometry: { type: Resource, uri: "package://warec_description/meshes//warec_01/08_REE.stl" }
+              appearance: *RedAppearance
+          -
+            type: Collision
+            elements:
+              -
+                type: Shape
+                translation: [ -0.0772, 0.0, -0.0234 ]
+                geometry: { type: Box, size: [ 0.1057, 0.1, 0.0126 ] }
+              -
+                type: Shape
+                translation: [ -0.1, 0.0, -0.0166 ]
+                rotation: [ 0, 1, 0, 15 ]
+                geometry: { type: Box, size: [ 0.059, 0.1, 0.011 ] }
+              -
+                type: Shape
+                translation: [ -0.118, 0.0, -0.0066 ]
+                rotation: [ 0, 1, 0, 45 ]
+                geometry: { type: Box, size: [ 0.02, 0.1, 0.011 ] }
+              -
+                type: Shape
+                translation: [ -0.1251, 0.0, -0.013 ]
+                rotation: [ 0, 1, 0, 90 ]
+                geometry: { type: Box, size: [ 0.034, 0.1, 0.01 ] }
+              -
+                type: Shape
+                translation: [ 0.0033, 0.0, -0.004 ]
+                geometry: { type: Box, size: [ 0.143, 0.1, 0.0078 ] }
+              -
+                type: Shape
+                translation: [ -0.0414, 0.0, -0.0128 ]
+                geometry: { type: Box, size: [ 0.054, 0.1, 0.01 ] }
+              -
+                type: Shape
+                translation: [ -0.068, 0.0, 0.0191 ]
+                rotation: [ 0, 1, 0, 90 ]
+                geometry: { type: Box, size: [ 0.042, 0.1, 0.0038 ] }
+              -
+                type: Shape
+                translation: [ -0.0705, 0.0, 0.014 ]
+                rotation: [ 0, 1, 0, 75 ]
+                geometry: { type: Box, size: [ 0.042, 0.1, 0.007 ] }
+              -
+                type: Shape
+                translation: [ -0.0725, 0.0, 0.0333 ]
+                rotation: [ 0, 1, 0, 90 ]
+                geometry: { type: Box, size: [ 0.0135, 0.1, 0.013 ] }
+              -
+                type: Shape
+                translation: [ -0.0787, 0.0, 0.036 ]
+                rotation: [ 0, 1, 0, 90 ]
+                geometry: { type: Box, size: [ 0.008, 0.1, 0.013 ] }
+              -
+                type: Shape
+                translation: [ -0.0772, 0.0, 0.0305 ]
+                rotation: [ 0, 1, 0, 45 ]
+                geometry: { type: Box, size: [ 0.013, 0.1, 0.01 ] }
+              -
+                type: Shape
+                translation: [ -0.0164, 0.0, -0.0148 ]
+                rotation: [ 0, 1, 0, 135 ]
+                geometry: { type: Box, size: [ 0.032, 0.1, 0.01 ] }
+              -
+                type: Shape
+                translation: [ 0.01675, 0.0, -0.0148 ]
+                rotation: [ 0, 1, 0, 45 ]
+                geometry: { type: Box, size: [ 0.032, 0.1, 0.01 ] }
+              -
+                type: Shape
+                translation: [ 0.04275, 0.0, -0.0148 ]
+                rotation: [ 0, 1, 0, 135 ]
+                geometry: { type: Box, size: [ 0.032, 0.1, 0.01 ] }
+              -
+                type: Shape
+                translation: [ 0.0297, 0.0, -0.0123 ]
+                geometry: { type: Box, size: [ 0.027, 0.1, 0.017 ] }
+              -
+                type: Shape
+                translation: [ 0.0297, 0.0, -0.0261 ]
+                geometry: { type: Box, size: [ 0.011, 0.1, 0.007 ] }
+              -
+                type: Shape
+                translation: [ 0.0801, 0.0, -0.0153 ]
+                rotation: [ 0, 1, 0, 45 ]
+                geometry: { type: Box, size: [ 0.028, 0.1, 0.014 ] }
+              -
+                type: Shape
+                translation: [ 0.067, 0.0, -0.0065 ]
+                rotation: [ 0, 1, 0, 20 ]
+                geometry: { type: Box, size: [ 0.013, 0.1, 0.008 ] }
+              -
+                type: Shape
+                translation: [ 0.0897, 0.0, -0.025 ]
+                geometry: { type: Box, size: [ 0.01, 0.1, 0.01 ] }
+  -
+    name: FL_HIP_R
+    parent: BASE
+    translation: [ 0.0, 0.164905, 0.545805]
+    jointType: revolute
+    jointAxis: X
+    jointId: 14
+    jointRange: [ -148, 51 ]
+    maxJointVelocity: 1E6
+    mass: 2.4001
+    centerOfMass: [ -0.00771, -0.01238, 0.09652 ]
+    inertia: [
+      0.01764809,  -0.00022896, 0.00178956,
+      -0.00022896, 0.01677341, -0.00202747,
+      0.00178956,  -0.00202747, 0.00834914 ]
+    elements:
+      Transform:
+        rotation: [ 1, 0, 0, 180 ]
+        elements: *RHIP_ROLL_SHAPE
+  -
+    name: FL_HIP_P
+    parent: FL_HIP_R
+    translation: [ 0.0, 0.0, 0.169 ]
+    jointType: revolute
+    jointAxis: Y
+    jointId: 15
+    jointRange: [ -107, 107 ]
+    maxJointVelocity: 1E6
+    mass: 8.64
+    centerOfMass: [ 1e-05, 0.00091, 0.07045 ]
+    inertia: [
+      0.08705723, 5.01e-06, -6.22e-06,
+      5.01e-06, 0.08623435, -0.00027574,
+      -6.22e-06, -0.00027574, 0.02298262 ]
+    elements:
+      Transform:
+        rotation: [ 1, 0, 0, 180 ]
+        elements: *RHIP_PITCH_SHAPE
+  -
+    name: FL_HIP_Y
+    parent: FL_HIP_P
+    translation: [ 0.0, 0.0, 0.241 ]
+    jointType: revolute
+    jointAxis: Z
+    jointId: 16
+    jointRange: unlimited
+    maxJointVelocity: 1E6
+    mass: 1.72
+    centerOfMass: [ 0.01991, -0.01113, 0.02905 ]
+    inertia: [
+      0.00864067, -0.00039402, 0.00167061,
+      -0.00039402, 0.00652026, -0.00083341,
+      0.00167061, -0.00083341, 0.00534599 ]
+    elements:
+      Transform:
+        rotation: [ 1, 0, 0, 180 ]
+        elements: *RHIP_YAW_SHAPE
+  -
+    name: FL_KNEE_P
+    parent: FL_HIP_Y
+    translation: [ 0.046, 0.0, 0.07804 ]
+    jointType: revolute
+    jointAxis: Y
+    jointId: 17
+    jointRange: [ -28, 163 ]
+    maxJointVelocity: 1E6
+    mass: 5.72
+    centerOfMass: [ -0.02128, -0.00026, 0.06497 ]
+    inertia: [
+      0.04510836,  -8.919e-05,  -0.00925738,
+      -8.919e-05,  0.04548141,  0.00018274,
+      -0.00925738, 0.00018274, 0.01605364 ]
+    elements:
+      Transform:
+        rotation: [ 1, 0, 0, 180 ]
+        elements: *RKN_PITCH_SHAPE
+  -
+    name: FL_ANKLE_Y
+    parent: FL_KNEE_P
+    translation: [ -0.046, 0.0, 0.213 ]
+    jointType: revolute
+    jointAxis: Z
+    jointId: 18
+    jointRange: unlimited
+    maxJointVelocity: 1E6
+    mass: 1.16
+    centerOfMass: [ 0.0, -0.00909, 0.02873 ]
+    inertia: [
+      0.00482359, -3e-08,       0.0,
+      -3e-08,      0.0033678,   -0.00044654,
+      0.0,        -0.00044654,  0.00216019 ]
+    elements:
+      Transform:
+        rotation: [ 1, 0, 0, 180 ]
+        elements: *RAK_YAW_SHAPE
+  -
+    name: FL_ANKLE_P
+    parent: FL_ANKLE_Y
+    translation: [ 0.0, 0.0, 0.08 ]
+    jointType: revolute
+    jointAxis: Y
+    jointId: 19
+    jointRange: [ -93, 93 ]
+    maxJointVelocity: 1E6
+    mass: 5.06
+    centerOfMass: [ 0.00215, 0.00173, 0.07672 ]
+    inertia: [
+      0.03534024,   -1.143e-05,   0.00069161,
+      -1.143e-05,   0.03554489,   -0.00068223,
+      0.00069161,   -0.00068223,  0.01095641 ]
+    elements:
+      Transform:
+        rotation: [ 1, 0, 0, 180 ]
+        elements: *RAK_PITCH_SHAPE
+  -
+    name: FL_ANKLE_R
+    parent: FL_ANKLE_P
+    translation: [ 0.0, 0.0, 0.154 ]
+    jointType: revolute
+    jointAxis: X
+    jointId: 20
+    jointRange: [ -106, 106 ]
+    maxJointVelocity: 1E6
+    mass: 0.82
+    centerOfMass: [ -0.01007, 0.0, 0.02816 ]
+    inertia: [
+      0.00132859,   2.8e-07,     0.00019601,
+      2.8e-07,     0.00261108,   -1.2e-07,
+      0.00019601,  -1.2e-07,     0.00200116 ]
+    elements:
+      Transform:
+        rotation: [ 1, 0, 0, 180 ]
+        elements: *RAK_ROLL_SHAPE
+  -
+    name: FL_HOOK
+    parent: FL_ANKLE_R
+    jointType: fixed
+    translation: [ 0.0, 0.0, 0.0955 ]
+    elements:
+      -
+        type: RigidBody
+        name: FL_fsens
+        mass: 0.78
+        centerOfMass: [ 0.0, 0.0, 0.0225 ]
+        inertia: [
+          0.00061038183,   -5.3644e-07,     5.7444e-07,
+          -5.3644e-07,     0.00061365229,  3.3166e-07,
+          5.7444e-07,      3.3166e-07,     0.00096931031 ]
+        elements:
+          Shape: *FORCE_SENSOR_SHAPE_DESCRIPTION
+          ForceSensor:
+            name: FL_wrench
+      -
+        type: RigidBody
+        name: FL_HOOK
+        translation: [ 0.0, 0.0, 0.0225 ]
+        mass: 0.72
+        centerOfMass: [ -0.02026, 0.0, 0.00803 ]
+        inertia: [
+          0.00091134,  0.0,         0.00011702,
+          0.0,         0.00344857,  0.0,
+          0.00011702,  0.0,         0.0039655 ]
+        elements:
+          Transform:
+            rotation: [ 1, 0, 0, 180 ]
+            elements: *REE_SHAPE
+  -
+    name: FR_HIP_R
+    parent: BASE
+    translation: [ 0.0, -0.164905, 0.545805 ]
+    jointType: revolute
+    jointAxis: X
+    jointId: 21
+    jointRange: [ -51, 148 ]
+    maxJointVelocity: 1E6
+    mass: 2.4001
+    centerOfMass: [ -0.00771, 0.01238, 0.09652 ]
+    inertia: [
+      0.01764829, 0.00022958, 0.00178949,
+      0.00022958, 0.01677372, 0.00202659,
+      0.00178949, 0.00202659, 0.00834906 ]
+    elements:
+      Transform:
+        rotation: [ 1, 0, 0, 180 ]
+        elements: *LHIP_ROLL_SHAPE
+  -
+    name: FR_HIP_P
+    parent: FR_HIP_R
+    translation: [ 0.0, 0.0, 0.169 ]
+    jointType: revolute
+    jointAxis: Y
+    jointId: 22
+    jointRange: [ -107, 107 ]
+    maxJointVelocity: 1E6
+    mass: 8.64
+    centerOfMass: [ -1e-05, -0.00091, 0.07045 ]
+    inertia: [
+      0.08705723, 5.01e-06, 6.22e-06,
+      5.01e-06, 0.08623435, 0.00027574,
+      6.22e-06, 0.00027574, 0.02298262 ]
+    elements:
+      Transform:
+        rotation: [ 1, 0, 0, 180 ]
+        elements: *LHIP_PITCH_SHAPE
+  -
+    name: FR_HIP_Y
+    parent: FR_HIP_P
+    translation: [ 0.0, 0.0, 0.241 ]
+    jointType: revolute
+    jointAxis: Z
+    jointId: 23
+    jointRange: unlimited
+    maxJointVelocity: 1E6
+    mass: 1.72
+    centerOfMass: [ 0.0199, 0.01113, 0.02905 ]
+    inertia: [
+      0.00864071, 0.00039465, 0.00167025,
+      0.00039465, 0.00651989, 0.00083342,
+      0.00167025, 0.00083342, 0.00534558 ]
+    elements:
+      Transform:
+        rotation: [ 1, 0, 0, 180 ]
+        elements: *LHIP_YAW_SHAPE
+  -
+    name: FR_KNEE_P
+    parent: FR_HIP_Y
+    translation: [ 0.046, 0.0, 0.07804 ]
+    jointType: revolute
+    jointAxis: Y
+    jointId: 24
+    jointRange: [ -38, 163 ]
+    maxJointVelocity: 1E6
+    mass: 5.72
+    centerOfMass: [ -0.02134, 0.00027, 0.06496 ]
+    inertia: [
+      0.04513699, 9.396e-05, -0.00925777,
+      9.396e-05, 0.04550396, -0.00017902,
+      -0.00925777, -0.00017902, 0.01607654 ]
+    elements:
+      Transform:
+        rotation: [ 1, 0, 0, 180 ]
+        elements: *LKN_PITCH_SHAPE
+  -
+    name: FR_ANKLE_Y
+    parent: FR_KNEE_P
+    translation: [ -0.046, 0.0, 0.213 ]
+    jointType: revolute
+    jointAxis: Z
+    jointId: 25
+    jointRange: unlimited
+    maxJointVelocity: 1E6
+    mass: 1.16
+    centerOfMass: [ 0.0, 0.00909, 0.02873 ]
+    inertia: [
+      0.00482359, -3e-08,       0.0,
+      -3e-08,      0.0033678,   0.00044654,
+      0.0,        0.00044654,   0.00216019 ]
+    elements:
+      Transform:
+        rotation: [ 1, 0, 0, 180 ]
+        elements: *LAK_YAW_SHAPE
+  -
+    name: FR_ANKLE_P
+    parent: FR_ANKLE_Y
+    translation: [ 0.0, 0.0, 0.08 ]
+    jointType: revolute
+    jointAxis: Y
+    jointId: 26
+    jointRange: [ -93, 93 ]
+    maxJointVelocity: 1E6
+    mass: 5.06
+    centerOfMass: [ 0.00215, -0.0017, 0.07672 ]
+    inertia: [
+      0.03534068,   2.587e-05,  0.00070201,
+      2.587e-05,   0.0355447,   0.00069448,
+      0.00070201,  0.00069448,  0.01095592 ]
+    elements:
+      Transform:
+        rotation: [ 1, 0, 0, 180 ]
+        elements: *LAK_PITCH_SHAPE
+  -
+    name: FR_ANKLE_R
+    parent: FR_ANKLE_P
+    translation: [ 0.0, 0.0,  0.154 ]
+    jointType: revolute
+    jointAxis: X
+    jointId: 27
+    jointRange: [ -106, 106 ]
+    maxJointVelocity: 1E6
+    mass: 0.82
+    centerOfMass: [ -0.01007, 0.0, 0.02816 ]
+    inertia: [
+      0.00132859,   2.8e-07,     0.00019601,
+      2.8e-07,     0.00261108,   -1.2e-07,
+      0.00019601,  -1.2e-07,     0.00200116 ]
+    elements:
+      -              
+        type: Transform
+        rotation: [ 1, 0, 0, 180 ]
+        elements: *LAK_ROLL_SHAPE
+  - 
+    name: FR_HOOK
+    parent: FR_ANKLE_R
+    jointType: fixed
+    translation: [ 0.0, 0.0, 0.0955 ]
+    elements:
+      -
+        type: RigidBody
+        name: FR_fsens
+        mass: 0.78
+        centerOfMass: [ 0.0, 0.0, 0.0225 ]
+        inertia: [
+          0.00061038183,  -5.3644e-07,     5.7444e-07,
+          -5.3644e-07,    0.00061365229,  3.3166e-07,
+          5.7444e-07,     3.3166e-07,     0.00096931031 ]
+        elements:
+          Shape: *FORCE_SENSOR_SHAPE_DESCRIPTION
+          ForceSensor:
+            name: FR_wrench
+      -
+        type: RigidBody
+        translation: [ 0.0, 0.0, 0.0225 ]
+        mass: 0.72
+        centerOfMass: [ -0.02026, 0.0, 0.00803 ]
+        inertia: [
+          0.00091134,  0.0,         0.00011702,
+          0.0,         0.00344857,  0.0,
+          0.00011702,  0.0,         0.0039655 ]
+        elements:
+          Transform:
+            rotation: [ 1, 0, 0, 180 ]
+            elements: *LEE_SHAPE

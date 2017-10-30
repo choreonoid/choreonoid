@@ -11,36 +11,36 @@
 
 namespace cnoid {
 
+class ControllerIO;
+
 class Body;
 
-class ControllerItemIO
+/*
+class CNOID_EXPORT ControllerItemIO
 {
 public:
+    virtual ~ControllerItemIO();
     virtual Body* body() = 0;
     virtual double timeStep() const = 0;
-    virtual double currentTime() const = 0;
     virtual std::string optionString() const = 0;
 
     //! \deprecated Use timeStep().
     virtual double worldTimeStep() const;
 };
+*/
     
 class CNOID_EXPORT ControllerItem : public Item
 {
 public:
-    // for the backward compatibility
-    typedef ControllerItemIO Target;
-        
     ControllerItem();
     ControllerItem(const ControllerItem& org);
     virtual ~ControllerItem();
 
     bool isActive() const;
-    bool isImmediateMode() const { return isImmediateMode_; }
-    void setImmediateMode(bool on);
-
+    bool isNoDelayMode() const { return isNoDelayMode_; }
+    bool setNoDelayMode(bool on);
+    
     const std::string& optionString() const { return optionString_; }
-    bool splitOptionString(const std::string& optionString, std::vector<std::string>& out_options) const;
 
     /**
        This function is called before the simulation world is initialized.
@@ -50,15 +50,12 @@ public:
            
        @note This function is called from the main thread.
     */
-    virtual bool initialize(ControllerItemIO* io);
+    virtual bool initialize(ControllerIO* io);
     
     /**
        This function is called after the simulation world is initialized.
     */
     virtual bool start();
-
-    //! \deprecated
-    virtual bool start(ControllerItemIO* io);
 
     virtual double timeStep() const = 0;
 
@@ -93,6 +90,11 @@ public:
     virtual void getProfilingTimes(std::vector<double>& profilingTimes);
 #endif
 
+    //! \deprecated Use isNoDelayMode.
+    bool isImmediateMode() const { return isNoDelayMode(); }
+    //! \deprecated Use setsNoDelayMode.
+    void setImmediateMode(bool on) { setNoDelayMode(on); }
+
 protected:
     void putMessage(const std::string& message);
 
@@ -102,7 +104,7 @@ protected:
 
 private:
     SimulatorItemPtr simulatorItem_;
-    bool isImmediateMode_;
+    bool isNoDelayMode_;
     std::string message_;
     Signal<void(const std::string& message)> sigMessage_;
     std::string optionString_;

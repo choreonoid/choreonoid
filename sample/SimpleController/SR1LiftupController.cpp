@@ -28,7 +28,7 @@ const double dgain[] = {
     100.0, 100.0, 100.0 };
 }
 
-class SR1LiftupController : public cnoid::SimpleController
+class SR1LiftupController : public SimpleController
 {
     Link::ActuationMode actuationMode;
     bool isTorqueSensorEnabled;
@@ -48,13 +48,13 @@ public:
 
     VectorXd& convertToRadian(VectorXd& q)
     {
-        for(size_t i=0; i < q.size(); ++i){
+        for(int i=0; i < q.size(); ++i){
             q[i] = radian(q[i]);
         }
         return q;
     }
     
-    virtual bool initialize(SimpleControllerIO* io)
+    virtual bool initialize(SimpleControllerIO* io) override
     {
         ioBody = io->body();
         ostream& os = io->os();
@@ -70,23 +70,23 @@ public:
             }
         }
 
-        for(auto joint : ioBody->joints()){
-            joint->setActuationMode(actuationMode);
-        }
-
+        int inputStateTypes = JOINT_ANGLE;
         if(actuationMode == Link::JOINT_TORQUE){
             os << "SR1LiftupController: torque control mode." << endl;
-            io->setJointInput(JOINT_ANGLE);
 
         } else if(actuationMode == Link::JOINT_VELOCITY){
             os << "SR1LiftupController: velocity control mode";
             if(isTorqueSensorEnabled){
-                io->setJointInput(JOINT_ANGLE | JOINT_TORQUE);
+                inputStateTypes |= JOINT_TORQUE;
                 os << ", torque sensors";
-            } else {
-                io->setJointInput(JOINT_ANGLE);
             }
             os << "." << endl;
+        }
+
+        for(auto joint : ioBody->joints()){
+            joint->setActuationMode(actuationMode);
+            io->enableInput(joint, inputStateTypes);
+            io->enableOutput(joint);
         }
 
         time = 0.0;
@@ -138,10 +138,8 @@ public:
         return true;
     }
 
-    virtual bool control()
+    virtual bool control() override
     {
-        bool isActive = true;
-
         if(phase == 0){
             qref = interpolator.interpolate(time);
             if(time > interpolator.domainUpper()){

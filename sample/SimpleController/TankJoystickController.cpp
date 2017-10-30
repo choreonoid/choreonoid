@@ -13,12 +13,14 @@ using namespace cnoid;
 namespace {
 
 const int axisID[] = { 0, 1, 2, 3 };
-const int buttonID[] = { 1, 0, 3 };
+const int buttonID[] = { 0, 2, 3 };
 
 }
 
 class TankJoystickController : public SimpleController
-{ 
+{
+    bool usePseudoContinousTrackMode;
+    Link::ActuationMode turretAcutuationMode;
     Link* trackL;
     Link* trackR;
     Link* turretJoint[2];
@@ -32,18 +34,46 @@ class TankJoystickController : public SimpleController
 
 public:
     
-    virtual bool initialize(SimpleControllerIO* io)
+    virtual bool initialize(SimpleControllerIO* io) override
     {
         ostream& os = io->os();
-        
         Body* body = io->body();
-        trackL = body->link("TRACK_L");
-        trackR = body->link("TRACK_R");
+
+        usePseudoContinousTrackMode = true;
+        turretAcutuationMode = Link::ActuationMode::JOINT_TORQUE;
+        for(auto opt : io->options()){
+            if(opt == "wheels"){
+                usePseudoContinousTrackMode = false;
+            }
+            if(opt == "velocity"){
+                turretAcutuationMode = Link::ActuationMode::JOINT_VELOCITY;
+            }
+        }
+
+        if(usePseudoContinousTrackMode){
+            trackL = body->link("TRACK_L");
+            trackR = body->link("TRACK_R");
+
+        } else {
+            trackL = body->link("WHEEL_L0");
+            trackR = body->link("WHEEL_R0");
+        }
+
         if(!trackL || !trackR){
             os << "The tracks are not found." << endl;
             return false;
         }
 
+        if(usePseudoContinousTrackMode){
+            trackL->setActuationMode(Link::JOINT_SURFACE_VELOCITY);
+            trackR->setActuationMode(Link::JOINT_SURFACE_VELOCITY);
+        } else {
+            trackL->setActuationMode(Link::JOINT_VELOCITY);
+            trackR->setActuationMode(Link::JOINT_VELOCITY);
+        }
+        io->enableOutput(trackL);
+        io->enableOutput(trackR);
+        
         turretJoint[0] = body->link("TURRET_Y");
         turretJoint[1] = body->link("TURRET_P");
         for(int i=0; i < 2; ++i){
@@ -53,7 +83,8 @@ public:
                 return false;
             }
             qref[i] = qprev[i] = joint->q();
-            io->setLinkInput(joint, JOINT_ANGLE);
+            joint->setActuationMode(turretAcutuationMode);
+            io->enableIO(joint);
         }
 
         dt = io->timeStep();
@@ -78,7 +109,7 @@ public:
         return true;
     }
 
-    virtual bool control()
+    virtual bool control() override
     {
         joystick.readCurrentState();
         
@@ -90,9 +121,17 @@ public:
             }
         }
         // set the velocity of each tracks
-        trackL->dq() = -2.0 * pos[1] + pos[0];
-        trackR->dq() = -2.0 * pos[1] - pos[0];
-        
+        if(usePseudoContinousTrackMode){
+            double k = 1.0;
+            trackL->dq() = k * (-2.0 * pos[1] + pos[0]);
+            trackR->dq() = k * (-2.0 * pos[1] - pos[0]);
+
+        }else{
+            double k = 4.0;
+            trackL->dq() = k * (-pos[1] + pos[0]);
+            trackR->dq() = k * (-pos[1] - pos[0]);
+        }
+
         static const double P = 200.0;
         static const double D = 50.0;
 
@@ -125,10 +164,10 @@ public:
 
             if(spotLight){
                 if(joystick.getButtonState(buttonID[1])){
-                    spotLight->setBeamWidth(std::min(0.7854f, spotLight->beamWidth() + 0.001f));
+                    spotLight->setBeamWidth(std::max(0.1f, spotLight->beamWidth() - 0.001f));
                     changed = true;
                 } else if(joystick.getButtonState(buttonID[2])){
-                    spotLight->setBeamWidth(std::max(0.1f, spotLight->beamWidth() - 0.001f));
+                    spotLight->setBeamWidth(std::min(0.7854f, spotLight->beamWidth() + 0.001f));
                     changed = true;
                 }
             }

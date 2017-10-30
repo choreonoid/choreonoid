@@ -1,18 +1,19 @@
 #include "AGXSimulatorItem.h"
-#include <agxSDK/Simulation.h>
 #include <cnoid/Plugin>
 #include <cnoid/MenuManager>
 #include <cnoid/MessageView>
 #include <cnoid/ItemTreeView>
+#include <agxSDK/Simulation.h>
 #include <iostream>
 
 using namespace std;
 
 namespace cnoid {
-agx::AutoInit agxInit;
+
 class AGXDynamicsPlugin : public Plugin
 {
 public:
+    agx::AutoInit agxInit;
     AGXDynamicsPlugin() : Plugin("AGXDynamics"){ require("Body"); }
     virtual ~AGXDynamicsPlugin(){}
     virtual bool initialize(){
@@ -55,5 +56,5 @@ private:
     }
 };
 
-CNOID_IMPLEMENT_PLUGIN_ENTRY(AGXDynamicsPlugin);
+CNOID_IMPLEMENT_PLUGIN_ENTRY(AGXDynamicsPlugin)
 }

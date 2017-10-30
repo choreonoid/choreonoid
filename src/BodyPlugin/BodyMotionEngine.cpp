@@ -94,7 +94,7 @@ public:
         connections.disconnect();
     }
         
-    virtual bool onTimeChanged(double time){
+    bool onTimeChanged(double time){
 
         bool isActive = false;
         bool fkDone = false;

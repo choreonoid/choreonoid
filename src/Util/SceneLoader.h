@@ -33,6 +33,6 @@ private:
     SceneLoaderImpl* impl;
 };
 
-};
+}
 
 #endif

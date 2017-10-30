@@ -90,7 +90,7 @@ bool FountainProgram::initializeRendering(SceneParticles* particles)
     Vector3f v;
     float velocity, theta, phi;
     vector<GLfloat> data(nParticles * 3);
-    for(int i = 0; i < nParticles; ++i) {
+    for(GLuint i = 0; i < nParticles; ++i) {
         
         theta = PI / 12.0f * random();
         phi = 2.0 * PI * random();
@@ -114,7 +114,7 @@ bool FountainProgram::initializeRendering(SceneParticles* particles)
     data.resize(nParticles);
     float rate = fountain->lifeTime() / nParticles;
     float time = 0.0f;
-    for(int i = 0; i < nParticles; ++i) {
+    for(GLuint i = 0; i < nParticles; ++i) {
         data[i] = time;
         time += rate;
     }

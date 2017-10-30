@@ -31,16 +31,13 @@ protected:
     RTC::TimedDoubleSeq m_angle;
     RTC::InPort<RTC::TimedDoubleSeq> m_angleIn;
   
-    RTC::TimedDoubleSeq m_torque_in;
-    RTC::InPort<RTC::TimedDoubleSeq> m_torqueIn;
-
     // DataOutPort declaration
     RTC::TimedDoubleSeq m_torque_out;
     RTC::OutPort<RTC::TimedDoubleSeq> m_torqueOut;
   
 private:
     cnoid::BodyPtr body;
-    unsigned int n;
+    unsigned int numJoints;
     unsigned int rightWrist_id;
     unsigned int leftWrist_id;
     cnoid::Interpolator<cnoid::VectorXd> interpolator;

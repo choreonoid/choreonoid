@@ -3,8 +3,8 @@
    \author Shizuko Hattori
 */
 
-#ifndef CNOID_BODY_EXTRAJOINT_H
-#define CNOID_BODY_EXTRAJOINT_H
+#ifndef CNOID_BODY_EXTRA_JOINT_H
+#define CNOID_BODY_EXTRA_JOINT_H
         
 namespace cnoid {
 
@@ -36,4 +36,5 @@ struct ExtraJoint {
 };
 
 }
+
 #endif

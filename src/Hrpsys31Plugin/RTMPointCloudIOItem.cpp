@@ -37,9 +37,9 @@ public:
     CameraPtr camera;
 
     CameraInPort(Camera* camera, const string& name)
-        : camera(camera),
+        : inPort(name.c_str(), timedCameraImage),
           portName(name),
-          inPort(name.c_str(), timedCameraImage){ };
+          camera(camera) { }
 };
 typedef std::shared_ptr<CameraInPort> CameraInPortPtr;
 
@@ -52,10 +52,9 @@ public:
     RangeCameraPtr rangeCamera;
 
     PointCloudInPort(RangeCamera* rangeCamera, const string& name)
-        : rangeCamera(rangeCamera),
+        : inPort(name.c_str(), timedPointCloud),
           portName(name),
-          inPort(name.c_str(), timedPointCloud){ };
-
+          rangeCamera(rangeCamera) { }
 };
 typedef std::shared_ptr<PointCloudInPort> PointCloudInPortPtr;
 
@@ -68,9 +67,9 @@ public:
     RangeSensorPtr rangeSensor;
 
     RangeDataInPort(RangeSensor* rangeSensor, const string& name)
-        : rangeSensor(rangeSensor),
+        : inPort(name.c_str(), timedRangeData),
           portName(name),
-          inPort(name.c_str(), timedRangeData){ };
+          rangeSensor(rangeSensor) { }
 };
 typedef std::shared_ptr<RangeDataInPort> RangeDataInPortPtr;
 
@@ -167,7 +166,7 @@ bool PointCloudIORTC::createPort(DeviceList<RangeCamera> rangeCameras, vector<st
 {
     bool ret = true;
 
-    for(int i=0; i<rangeCameras.size(); i++){
+    for(size_t i=0; i < rangeCameras.size(); i++){
         PointCloudInPort* pointCloudInPort = new PointCloudInPort(rangeCameras[i], pointCloudPortNames[i]);
         if(!addInPort(pointCloudInPort->portName.c_str(), pointCloudInPort->inPort))
             ret = false;
@@ -175,7 +174,7 @@ bool PointCloudIORTC::createPort(DeviceList<RangeCamera> rangeCameras, vector<st
             pointCloudInPorts.insert(make_pair(pointCloudInPort->portName, PointCloudInPortPtr(pointCloudInPort)));
     }
 
-    for(int i=0; i<rangeSensors.size(); i++){
+    for(size_t i=0; i<rangeSensors.size(); i++){
         RangeDataInPort* rangeDataInPort = new RangeDataInPort(rangeSensors[i], rangeSensorPortNames[i]);
         if(!addInPort(rangeDataInPort->portName.c_str(), rangeDataInPort->inPort))
             ret = false;
@@ -183,7 +182,7 @@ bool PointCloudIORTC::createPort(DeviceList<RangeCamera> rangeCameras, vector<st
             rangeDataInPorts.insert(make_pair(rangeDataInPort->portName, RangeDataInPortPtr(rangeDataInPort)));
     }
 
-    for(int i=0; i<cameras.size(); i++){
+    for(size_t i=0; i < cameras.size(); i++){
         CameraInPort* cameraInPort = new CameraInPort(cameras[i], cameraPortNames[i]);
         if(!addInPort(cameraInPort->portName.c_str(), cameraInPort->inPort))
             ret = false;
@@ -217,7 +216,7 @@ float PointCloudIORTC::readFloatPointCloudData(unsigned char* src, PointCloudFie
     unsigned char* src_;
     unsigned char buf[8];
     if(is_bigendian){
-        for(int i=0; i<fe.count; i++)
+        for(size_t i=0; i < fe.count; i++)
             buf[i] = src[fe.count-1-i];
         src_ = buf;
     }else
@@ -229,6 +228,9 @@ float PointCloudIORTC::readFloatPointCloudData(unsigned char* src, PointCloudFie
 
     case PointCloudTypes::FLOAT64 :
         return *((double *)src_);
+
+    default:
+        break;
     }
     return 0;
 
@@ -250,7 +252,7 @@ ReturnCode_t PointCloudIORTC::onExecute(UniqueId ec_id)
 
             int numPoints = timedPointCloud.height * timedPointCloud.width;
             bool rgb = false;
-            for(int i=0; i<timedPointCloud.fields.length(); i++){
+            for(size_t i=0; i < timedPointCloud.fields.length(); i++){
                 string name = string(timedPointCloud.fields[i].name);
                 pointCloudField[name].offset = timedPointCloud.fields[i].offset;
                 pointCloudField[name].type = timedPointCloud.fields[i].data_type;
@@ -278,7 +280,7 @@ ReturnCode_t PointCloudIORTC::onExecute(UniqueId ec_id)
             PointCloudField& feg = pointCloudField["g"];
             PointCloudField& feb = pointCloudField["b"];
 
-            for(size_t i=0; i<numPoints; i++, src+=timedPointCloud.point_step){
+            for(int i=0; i < numPoints; i++, src+=timedPointCloud.point_step){
                 Vector3f point;
                 point.x() = readFloatPointCloudData(&src[fex.offset], fex, timedPointCloud.is_bigendian );
                 point.y() = readFloatPointCloudData(&src[fey.offset], fey, timedPointCloud.is_bigendian );
@@ -571,15 +573,15 @@ void RTMPointCloudIOItemImpl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("ComponentName"), componentName,
             [this](const string& name){ return onComponentNamePropertyChanged(name); });
 
-    for(int i=0; i<cameraPortNames.size(); i++){
+    for(size_t i=0; i < cameraPortNames.size(); i++){
         putProperty(_("CameraPortName")+to_string(i), cameraPortNames[i],
             [this, i](const string& name){ return onCameraPortNamePropertyChanged(i, name); });
         }
-    for(int i=0; i<pointCloudPortNames.size(); i++){
+    for(size_t i=0; i < pointCloudPortNames.size(); i++){
         putProperty(_("PointCloudPortName")+to_string(i), pointCloudPortNames[i],
             [this, i](const string& name){ return onPointCloudPortNamePropertyChanged(i, name); });
     }
-    for(int i=0; i<rangeSensorPortNames.size(); i++){
+    for(size_t i=0; i < rangeSensorPortNames.size(); i++){
         putProperty(_("rangeSensorPortName")+to_string(i), rangeSensorPortNames[i],
             [this, i](const string& name){ return onRangeSensorPortNamePropertyChanged(i, name); });
     }
@@ -665,21 +667,21 @@ void RTMPointCloudIOItemImpl::restore(const Archive& archive)
     const Listing& list0 = *archive.findListing("pointCloudPortNames");
     if(list0.isValid()){
         pointCloudPortNames.clear();
-        for(size_t i=0; i<list0.size(); i++)
+        for(int i=0; i < list0.size(); i++)
             pointCloudPortNames.push_back(list0[i]);
     }
 
     const Listing& list1 = *archive.findListing("rangeSensorPortNames");
     if(list1.isValid()){
         rangeSensorPortNames.clear();
-        for(size_t i=0; i<list1.size(); i++)
+        for(int i=0; i < list1.size(); i++)
             rangeSensorPortNames.push_back(list1[i]);
     }
 
     const Listing& list2 = *archive.findListing("cameraPortNames");
     if(list2.isValid()){
         cameraPortNames.clear();
-        for(size_t i=0; i<list2.size(); i++)
+        for(int i=0; i < list2.size(); i++)
             cameraPortNames.push_back(list2[i]);
     }
 

@@ -13,6 +13,9 @@ set(sources
   LinkPath.cpp
   JointPath.cpp
   Jacobian.cpp
+  Material.cpp
+  ContactMaterial.cpp
+  MaterialTable.cpp
   Device.cpp
   ForceSensor.cpp
   RateGyroSensor.cpp
@@ -55,6 +58,7 @@ set(sources
   VRMLBodyWriter.cpp
   PoseProviderToBodyMotionConverter.cpp
   BodyMotionUtil.cpp
+  ControllerIO.cpp
   SimpleController.cpp
   CnoidBody.cpp # This file must be placed at the last position
   )
@@ -73,6 +77,9 @@ set(headers
   LinkPath.h
   JointPath.h
   LinkGroup.h
+  Material.h
+  ContactMaterial.h
+  MaterialTable.h
   BodyCollisionDetectorUtil.h
   MultiDeviceStateSeq.h
   Device.h
@@ -103,7 +110,6 @@ set(headers
   InverseDynamics.h
   Jacobian.h
   MassMatrix.h
-  ContactAttribute.h
   ConstraintForceSolver.h
   PoseProvider.h
   BodyMotion.h
@@ -113,8 +119,10 @@ set(headers
   BodyState.h
   CollisionLinkPair.h
   ExtraJoint.h
+  ControllerIO.h
   SimpleController.h
   exportdecl.h
+  CnoidBody.h
   )
 
 make_gettext_mofiles(${target} mofiles)
@@ -194,14 +202,14 @@ install(
   DESTINATION ${CNOID_PLUGIN_SUBDIR}/simplecontroller
   FILES_MATCHING PATTERN "*" EXCLUDE)
 
-
 install_external_libraries(${Boost_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS})
 
 if(ENABLE_PYTHON)
-  if(USE_PYTHON3)
-    add_subdirectory(python3)
-  else()
-    add_subdirectory(python)
+  if(USE_PYBIND11)
+    add_subdirectory(pybind11)
+  elseif(USE_BOOST_PYTHON)
+    add_subdirectory(boostpython)
   endif()
 endif()
+
 add_subdirectory(lua)

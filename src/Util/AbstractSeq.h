@@ -29,9 +29,9 @@ protected:
 public:
     virtual ~AbstractSeq();
 
-    virtual AbstractSeqPtr cloneSeq() const = 0;
-
     virtual AbstractSeq& operator=(const AbstractSeq& rhs);
+
+    virtual AbstractSeqPtr cloneSeq() const = 0;
 
     void copySeqProperties(const AbstractSeq& source);
 
@@ -61,7 +61,7 @@ public:
     }
 
     bool setOffsetTime(double offset) {
-        return setOffsetTimeFrame(offset * getFrameRate());
+        return setOffsetTimeFrame(static_cast<int>(offset * getFrameRate()));
     }
     
     virtual int getNumFrames() const = 0;
@@ -72,11 +72,9 @@ public:
     }
 
     /**
-       @if jp
-       シーケンスの時間長を返す。
-       @note この時間 *未満* の時間については有効なデータが存在する。
-       この時間のデータは存在しないので、そのようなアクセスしてはいけない。
-       @endif
+       This function returns the duration of the sequence.
+       @note Valid data exists for time less than this time.
+       Sine there is no data of this time, you must not access to it.
     */
     inline double getTimeLength() const {
         return getNumFrames() / getFrameRate();
@@ -126,9 +124,11 @@ public:
     AbstractMultiSeq(const AbstractMultiSeq& org);
     virtual ~AbstractMultiSeq();
 
+    using AbstractSeq::operator=;
+    AbstractMultiSeq& operator=(const AbstractMultiSeq& rhs);
+
     virtual AbstractSeqPtr cloneSeq() const = 0;
 
-    AbstractMultiSeq& operator=(const AbstractMultiSeq& rhs);
     void copySeqProperties(const AbstractMultiSeq& source);
 
     virtual void setDimension(int numFrames, int numParts, bool clearNewElements = false) = 0;

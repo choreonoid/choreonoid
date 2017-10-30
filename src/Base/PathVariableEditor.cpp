@@ -39,7 +39,6 @@ public:
     }
 
     virtual void setData(int role, const QVariant& value) {
-        bool accepted = false;
         if(role == Qt::EditRole && value.type() == QVariant::String){
             path = value.toString();
         } else {

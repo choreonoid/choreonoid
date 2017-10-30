@@ -94,7 +94,7 @@ SgNode* VRMLSceneLoaderImpl::load(const std::string& filename)
         parser.checkEOF();
 
     } catch(EasyScanner::Exception& ex){
-        os() << ex.getFullMessage();
+        os() << ex.getFullMessage() << endl;
         return 0;
     }
 

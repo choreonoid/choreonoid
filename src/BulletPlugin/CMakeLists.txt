@@ -1,4 +1,3 @@
-
 option(BUILD_BULLET_PLUGIN "Building BulletPlugin" OFF)
 
 if(NOT BUILD_BULLET_PLUGIN)
@@ -76,9 +75,9 @@ apply_common_setting_for_plugin(${target} "${headers}")
 install_external_libraries(${BULLET_DIR}/bin ${BULLET_DIR}/lib ${bullet_LIBRARIES})
 
 if(ENABLE_PYTHON)
-  if(USE_PYTHON3)
-   add_subdirectory(python3)
-  else()
-    add_subdirectory(python)
+  if(USE_PYBIND11)
+    add_subdirectory(pybind11)
+  elseif(USE_BOOST_PYTHON)
+    add_subdirectory(boostpython)
   endif()
 endif()

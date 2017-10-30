@@ -69,7 +69,7 @@ public:
     VRMLProtoInstancePtr rootJointNode;
     std::vector<VRMLProtoInstancePtr> extraJointNodes;
     boost::dynamic_bitset<> validJointIdSet;
-    int numValidJointIds;
+    size_t numValidJointIds;
     VRMLToSGConverter sgConverter;
     int divisionNumber;
     ostream* os_;
@@ -122,11 +122,9 @@ public:
     void setExtraJoints();
 };
 
-}
-
-
 VRMLBodyLoaderImpl::DeviceFactoryMap VRMLBodyLoaderImpl::deviceFactories;
 
+}
 
 namespace {
 
@@ -194,7 +192,7 @@ template<class ValueType> ValueType getValue(VRMLProtoInstance* node, const char
     }
     return boost::get<ValueType>(p->second);
 }
-        
+       
 void readVRMLfield(VRMLVariantField& field, string& out_s)
 {
     switch(field.which()){
@@ -225,11 +223,6 @@ bool checkAndReadVRMLfield(VRMLProtoInstance* node, const char* key, bool& out_v
     return false;
 }
 
-void readVRMLfield(VRMLVariantField& field, int& out_value)
-{
-    out_value = get<SFInt32>(field);
-}
-
 bool checkAndReadVRMLfield(VRMLProtoInstance* node, const char* key, int& out_value)
 {
     VRMLVariantField* field = node->findField(key);
@@ -239,7 +232,6 @@ bool checkAndReadVRMLfield(VRMLProtoInstance* node, const char* key, int& out_va
     }
     return false;
 }
-
 
 void readVRMLfield(VRMLVariantField& field, double& out_value)
 {
@@ -255,7 +247,7 @@ bool checkAndReadVRMLfield(VRMLProtoInstance* node, const char* key, SFVec3f& ou
     }
     return false;
 }
-    
+   
 void readVRMLfield(VRMLVariantField& field, Vector3& out_v)
 {
     out_v = get<SFVec3f>(field);
@@ -769,7 +761,7 @@ Link* VRMLBodyLoaderImpl::createLink(VRMLProtoInstance* jointNode, const Matrix3
     
     link->setJointId(get<SFInt32>(jf["jointId"]));
     if(link->jointId() >= 0){
-        if(link->jointId() >= validJointIdSet.size()){
+        if(link->jointId() >= static_cast<int>(validJointIdSet.size())){
             validJointIdSet.resize(link->jointId() + 1);
         }
         if(!validJointIdSet[link->jointId()]){
@@ -798,16 +790,12 @@ Link* VRMLBodyLoaderImpl::createLink(VRMLProtoInstance* jointNode, const Matrix3
         link->setJointType(Link::FREE_JOINT);
     } else if(jointType == "rotate" ){
         link->setJointType(Link::ROTATIONAL_JOINT);
-        link->setActuationMode(Link::JOINT_TORQUE);
     } else if(jointType == "slide" ){
         link->setJointType(Link::SLIDE_JOINT);
-        link->setActuationMode(Link::JOINT_FORCE);
     } else if(jointType == "pseudoContinuousTrack"){
         link->setJointType(Link::PSEUDO_CONTINUOUS_TRACK);
         link->setActuationMode(Link::JOINT_SURFACE_VELOCITY);
-    } else if(jointType == "crawler"){
-        link->setJointType(Link::CRAWLER_JOINT);
-        os() << str(format(_("Warning: A deprecated joint type 'crawler'is specified for %1%. Use 'pseudoContinuousTrack' instead."))
+        os() << str(format(_("Warning: A deprecated joint type 'pseudoContinousTrack'is specified for %1%."))
                     % link->name()) << endl;
     } else {
         throw invalid_argument(str(format(_("JointType \"%1%\" is not supported.")) % jointType));
@@ -999,7 +987,6 @@ void VRMLBodyLoaderImpl::readSegmentNode(LinkInfo& iLink, VRMLProtoInstance* seg
 
 void VRMLBodyLoaderImpl::readSurfaceNode(LinkInfo& iLink, VRMLProtoInstance* segmentShapeNode, const Affine3& T)
 {
-    const string& typeName = segmentShapeNode->proto->protoName;
     if(isVerbose) putMessage(string("Surface node ") + segmentShapeNode->defName);
     
     iLink.isSurfaceNodeUsed = true;

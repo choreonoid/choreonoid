@@ -16,6 +16,7 @@
 namespace cnoid {
 
 class WorldItemImpl;
+class MaterialTable;
 
 class CNOID_EXPORT WorldItem : public Item, public SceneProvider
 {
@@ -40,6 +41,9 @@ public:
 
     virtual SgNode* getScene();
 
+    void setMaterialTableFile(const std::string& filename);
+    MaterialTable* materialTable();
+
 protected:
     virtual Item* doDuplicate() const;
     virtual void doPutProperties(PutPropertyFunction& putProperty);
@@ -55,4 +59,3 @@ typedef ref_ptr<WorldItem> WorldItemPtr;
 }
 
 #endif
-

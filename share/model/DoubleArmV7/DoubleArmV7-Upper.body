@@ -1,0 +1,1142 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: DoubleArmV7-Upper
+rootLink: UPPER_TFRAME
+
+links:
+  -
+    name: UPPER_TFRAME
+    jointType: fixed
+    mass: 40
+    inertia: [
+      10,  0,  0,
+       0, 10,  0,
+       0,  0, 10 ]
+    elements:
+      -
+        type: Shape
+        translation: [ 0, -0.03, 0 ]
+        geometry: { type: Cylinder, radius: 0.27, height: 0.06 }
+        appearance: 
+          material:
+            diffuseColor: [ 0.53, 0.56, 0.27 ]
+      - 
+        type: RateGyroSensor
+        name: FRAME_GYRO
+        id: 0
+      -
+        type: Camera
+        name: FRAME_FRONT_CAMERA
+        translation: [ 0.25, 1.8, 0 ]
+        rotation: [ -0.211541, 0.954201, 0.211541, 92.69 ]
+        format: COLOR
+        width: 1280
+        height: 720
+        fieldOfView: 41.08
+  -
+    name: MFRAME
+    parent: UPPER_TFRAME
+    jointType: revolute
+    jointAxis: Y
+    jointId: 2
+    jointRange: [ -687.5, 687.5 ]
+    maxJointVelocity: 180
+    rotorInertia: 3.0E-4
+    mass: 455.45935
+    centerOfMass: [ 7.35035370E-02, 1.06590700E-01, 1.61371410E-02 ]
+    inertia: [
+      4.19870890E+01, 1.70520040E+00, -6.24433200E+00,
+      1.70520040E+00, 9.66620960E+01, -6.61440150E-01,
+      -6.24433200E+00, -6.61440150E-01, 6.14020130E+01 ]
+    elements:
+      - { type: Resource, uri: "prt/middleframe.wrl" }
+      -
+        type: Camera
+        name: WORK_RIGHT_VIEW
+        rotation: [ -0.00190454, 0.999046, 0.0436175, 175 ]
+        translation: [ -1.5, 0.165993, -2 ]
+        format: COLOR
+        width: 640
+        height: 360
+        fieldOfView: 96
+      -
+        type: Camera
+        name: WORK_LEFT_VIEW
+        rotation: [ -0.706786, 0.706754, 0.0308563, 7.07007 ]
+        translation: [ -1.5, 0.166007, 2 ]
+        format: COLOR
+        width: 640
+        height: 360
+        fieldOfView: 96
+      -
+        type: Camera
+        name: mid_RIGHT_CAMERA
+        rotation: [ -0.706785, 0.706755, 0.0308563, 7.07007 ]
+        translation: [ -0.5, 1.216, 0.0999955 ]
+        format: COLOR
+        width: 640
+        height: 360
+        fieldOfView: 96
+        farClipDistance: 5
+      -
+        type: Camera
+        name: mid_LEFT_CAMERA
+        rotation: [ -0.00190454, 0.999046, 0.0436175, 175.00480 ]
+        translation: [ -0.5, 1.216, 0.499996 ]
+        format: COLOR
+        width: 640
+        height: 360
+        fieldOfView: 96
+        farClipDistance: 5
+      -
+        type: Camera
+        name: Mid_TOP_CAMERA
+        rotation: [ 0.250563, 0.935113, -0.250563, 93.84075 ]
+        translation: [ -0.8, 0.3, 0.25 ]
+        format: COLOR
+        width: 640
+        height: 360
+        fieldOfView: 96
+        farClipDistance: 5
+      -
+        type: Camera
+        name: Mid_BOTTOM_CAMERA
+        rotation: [ -0.287968, 0.913318, 0.287968, 95.18770 ]
+        translation: [ -0.7, 0.3, 0.299995 ]
+        format: COLOR
+        width: 640
+        height: 360
+        fieldOfView: 96
+        farClipDistance: 5
+      -
+        type: Camera
+        name: Mid_FRONT_CAMERA
+        rotation: [ -0.0868266, 0.992433, 0.0868266, 90.43508 ]
+        translation: [ -0.8, 0.3, 0.2 ]
+        format: COLOR
+        width: 1280
+        height: 720
+        fieldOfView: 40
+        farClipDistance: 5
+  -
+    name: BLOCK
+    parent: MFRAME
+    translation: [ -0.845, 0.192, -0.110 ]
+    jointType: revolute
+    jointAxis: Y
+    jointId: 3
+    jointRange: [ -48, 69.5 ]
+    maxJointVelocity: 1146
+    rotorInertia: 3.0E-04
+    mass: 27.099865985502
+    centerOfMass: [ -6.78385281318872e-002, 1.77765761382185e-002, -6.67318029447292e-003 ]
+    momentsOfInertia: [
+      0.328996567191697, 5.52858323486756e-003, 5.74693929208142e-003,
+      5.52858323486756e-003, 0.160727640206049, -1.33419251009407e-002,
+      5.74693929208142e-003, -1.33419251009407e-002, 0.319147626929996 ]
+    elements:
+      - { type: Resource, uri: "prt/swingbrkt.wrl" }
+      - { type: ForceSensor, name: SWING_TORQUE, id: 0 }
+  -
+    name: BOOM
+    parent: BLOCK
+    translation: [ -0.070, 0.200, 0 ]
+    jointType: revolute
+    jointAxis: Z
+    jointId: 4
+    jointAngle: -70
+    jointRange: [ -75.1, 53.2 ]
+    maxJointVelocity: 1146
+    mass: 88.2695650987443
+    centerOfMass: [ -0.831227871921433, 0.142962825496583, 0 ]
+    inertia: [
+      1.48138597730672, 0.1902362002908, 1.05546586084014e-015,
+      0.1902362002908, 31.4435403431583,  -2.05305944696362e-017,
+      1.05546586084014e-015, -2.05305944696362e-017, 32.5752155940256 ]
+    elements:
+      - { type: Resource, uri: "prt/cp_boom.wrl" }
+      - { type: ForceSensor, name: BOOM_TORQUE, id: 1 }
+  -
+    name: ARM
+    parent: BOOM
+    translation: [ -1.760, 0, 0 ]
+    jointType: revolute
+    jointAxis: Z
+    jointId: 5
+    jointAngle: 150
+    jointRange: [ 30.7, 152.1 ]
+    maxJointVelocity: 1146
+    mass: 53.7797060658233
+    centerOfMass: [ -0.133362844584537, 8.13367709948192e-002, 0 ]
+    inertia: [
+      0.35420506763418, -0.59676584437886, 1.78134245842626e-016,
+      -0.59676584437886, 5.16579159038522, 6.97110293472855e-017,
+      1.78134245842626e-016, 6.97110293472855e-017, 5.39850890239257 ]
+    elements:
+      - { type: Resource, uri: "prt/cp_arm.wrl" }
+      - { type: ForceSensor, name: ARM_TORQUE, id: 2 }
+  -
+    name: TOHKU_PITCH
+    parent: ARM
+    translation: [ -0.965, 0, 0 ]
+    jointType: revolute
+    jointAxis: Z
+    jointId: 6
+    jointRange: [ -33.7, 90 ]
+    maxJointVelocity: 5730
+    mass: 2.1377092e+01
+    centerOfMass: [ -1.2434069e-1, -6.6741207e-3, 0.0000000e+00 ]
+    inertia: [
+      2.4528689e-1,  7.1716531e-3,  0.0000000e+00,
+      7.1716531e-3,  1.8144181e-1,  0.0000000e+00,
+      0.0000000e+00, 0.0000000e+00, 2.1758796e-1 ]
+    elements:
+      - { type: Visual, elements: { Resource: { uri: "prt/tohku_hand_pitch.wrl" } } }
+      -
+        type: Collision
+        elements:
+          -
+            type: Shape
+            translation: [ -0.157, 0.065, 0.0 ]
+            geometry: { type: Box, size: [ 0.140, 0.130, 0.180 ] }
+          -
+            type: Shape
+            translation: [ -0.147, -0.065, 0.0 ]
+            geometry: { type: Box, size: [ 0.160, 0.130, 0.180 ] }
+          -
+            type: Shape
+            translation: [ -0.047334, -0.013398, 0.0 ]
+            rotation: [ 0, 0, 1, -62.50 ]
+            geometry: { type: Box, size: [ 0.100, 0.096387, 0.180 ] }
+          -
+            type: Shape
+            translation: [ -0.068926, 0.040674, 0.0 ]
+            rotation: [ 0, 0, 1, 45.00 ]
+            geometry: { type: Box, size: [ 0.120, 0.154998, 0.180 ] }
+          -
+            type: Shape
+            rotation: [ 1, 0, 0, 90 ]
+            geometry: { type: Cylinder, radius: 0.040, height: 0.180 }
+          -
+            type: Shape
+            translation: [ -0.109602, 0.109602, 0.0 ]
+            rotation: [ 1, 0, 0, 90 ]
+            geometry: { type: Cylinder, radius: 0.040, height: 0.180 }
+      - { type: ForceSensor, name: HAND_P_TORQUE, id: 3 }
+      - 
+        type: Camera
+        name: Lower_Hand_Camera
+        rotation: [ -0.171088,  0.970288,  0.171088, 91.73 ]
+        translation: [ -0.2, 0.20, 0 ]
+        format: COLOR
+        width: 1280
+        height: 720
+        fieldOfView: 115.97
+        farClipDistance: 5
+  -
+    name: TOHKU_ROLL
+    parent: TOHKU_PITCH
+    translation: [ -0.227, 0.0, 0.0 ]
+    jointId: 7
+    jointType: revolute
+    jointAxis: X
+    jointRange: [ -180, 180 ]
+    maxJointVelocity: 573
+    mass: 5.6820888e+01
+    centerOfMass: [ -1.0832237e-1,  0.0000000e+00,  0.0000000e+00 ]
+    inertia: [
+      7.8278692e-1,  0.0000000e+00,  0.0000000e+00,
+      0.0000000e+00, 7.0832807e-1,   0.0000000e+00,
+      0.0000000e+00,  0.0000000e+00, 1.1161951e-1 ]
+    elements:
+      Visual: { elements: { Resource: { uri: "prt/tohku_hand_roll.wrl" } } }
+      Collision:
+        elements:
+          -
+            type: Shape
+            translation: [ -0.015, 0.0, 0.0 ]
+            rotation: [ 0, 0, 1, 90 ]
+            geometry: { type: Cylinder, radius: 0.170, height: 0.030 }
+          -
+            type: Shape
+            translation: [ -0.055, 0.0, 0.0 ]
+            geometry: { type: Box, size: [ 0.05, 0.31, 0.100 ] }
+          -
+            type: Shape
+            translation: [ -0.075878, 0.098085, 0.0 ]
+            rotation: [ 0, 0, 1, -33.69 ]
+            geometry: { type: Box, size: [ 0.070, 0.090139, 0.100 ] }
+          -
+            type: Shape
+            translation: [ -0.075878, -0.098085, 0.0 ]
+            rotation: [ 0, 0, 1, 33.69 ]
+            geometry: { type: Box, size: [ 0.070, 0.090139, 0.100 ] }
+          -
+            type: Shape
+            translation: [ -0.090, 0.0, 0.0 ]
+            geometry: { type: Box, size: [ 0.080, 0.160, 0.100 ] }
+          -
+            type: Shape
+            translation: [ -0.170, 0.0, 0.0 ]
+            geometry: { type: Box, size: [ 0.320, 0.070, 0.100 ] }
+          -
+            type: Shape
+            translation: [ -0.224512, 0.033110, 0.0 ]
+            rotation: [ 0, 0, 1, -77.32 ]
+            geometry: { type: Box, size: [ 0.050, 0.2050, 0.100 ] }
+          -
+            type: Shape
+            translation: [ -0.224512, -0.033110, 0.0 ]
+            rotation: [ 0, 0, 1, 77.32 ]
+            geometry: { type: Box, size: [ 0.050, 0.2050, 0.100 ] }
+          -
+            type: Shape
+            translation: [ -0.20, -0.12625, 0.0 ]
+            rotation: [ 0, 0, 1, 93 ]
+            geometry: { type: Cylinder, radius: 0.050, height: 0.180 }
+          -
+            type: Shape
+            translation: [ -0.20, 0.12625, 0.0 ]
+            rotation: [ 0, 0, 1, 87 ]
+            geometry: { type: Cylinder, radius: 0.050, height: 0.180 }
+  -
+    name: TOHKU_TIP_01
+    parent: TOHKU_ROLL
+    translation: [ -0.309, 0.0, 0.0 ]
+    jointId: 8
+    jointType: revolute
+    jointAxis: Z
+    jointRange: [ -20.0, 0 ]
+    maxJointVelocity: 573
+    mass: 9.3058947e+00
+    centerOfMass: [ -1.9052236e-1,  1.1160593e-1, -7.5632562e-04 ]
+    inertia: [
+      3.0276157e-2,  1.1688229e-2,  1.2268932e-3,
+      1.1688229e-2,  1.5080350e-2,  -7.1011455e-4,
+      1.2268932e-3, -7.1011455e-4,  1.8011625e-1 ]
+    elements:
+      Visual: { elements: { Resource: { uri: "prt/tohku_hand_tip.wrl" } } }
+      Collision: &TOHKU_TIP_COLLISION_MODEL
+        elements:
+          -
+            type: Shape
+            rotation: [ 1, 0, 0, 90 ]
+            geometry: { type: Cylinder, radius: 0.05, height: 0.025 }
+          -
+            type: Shape
+            translation: [ -0.067982, 0.067942, 0.0 ]
+            rotation: [ 0, 0, 1, 45.0 ]
+            geometry: { type: Box, size: [ 0.10, 0.192262, 0.025 ] }
+          -
+            type: Shape
+            translation: [ -0.075, 0.140, 0.0 ]
+            geometry: { type: Box, size: [ 0.060, 0.080, 0.025 ] }
+          -
+            type: Shape
+            translation: [ -0.062071, 0.182929, 0.0 ]
+            rotation: [ 0, 0, 1, 45.0 ]
+            geometry: { type: Box, size: [ 0.020, 0.028284, 0.025 ] }
+          -
+            type: Shape
+            translation: [ -0.151, 0.157, 0.0 ]
+            geometry: { type: Box, size: [ 0.172, 0.086, 0.025 ] }
+          -
+            type: Shape
+            translation: [ -0.196060, 0.125975, 0.0 ]
+            rotation: [ 0, 0, 1, 78.64 ]
+            geometry: { type: Box, size: [ 0.0400, 0.081599, 0.025 ] }
+          -
+            type: Shape
+            translation: [ -0.246106, 0.143324, 0.0 ]
+            rotation: [ 0, 0, 1, -87.60 ]
+            geometry: { type: Box, size: [ 0.0600, 0.016715, 0.025 ] }
+          -
+            type: Shape
+            translation: [ -0.243883, 0.169629, 0.0 ]
+            rotation: [ 0, 0, 1, 92.52 ]
+            geometry: { type: Box, size: [ 0.0600, 0.018218, 0.025 ] }
+          -
+            type: Shape
+            translation: [ -0.266990, 0.151471, 0.0 ]
+            rotation: [ 0, 0, 1, -82.11 ]
+            geometry: { type: Box, size: [ 0.0800, 0.016759, 0.025 ] }
+          -
+            type: Shape
+            translation: [ -0.257877, 0.158326, 0.0 ]
+            rotation: [ 0, 0, 1, 97.86 ]
+            geometry: { type: Box, size: [ 0.0800, 0.018272, 0.025 ] }
+          -
+            type: Shape
+            translation: [ -0.287032, 0.147755, 0.0 ]
+            rotation: [ 0, 0, 1, -76.88 ]
+            geometry: { type: Box, size: [ 0.0800, 0.016737, 0.025 ] }
+          -
+            type: Shape
+            translation: [ -0.272322, 0.155671, 0.0 ]
+            rotation: [ 0, 0, 1, 102.97 ]
+            geometry: { type: Box, size: [ 0.0800, 0.018266, 0.025 ] }
+          -
+            type: Shape
+            translation: [ -0.306936, 0.142050, 0.0 ]
+            rotation: [ 0, 0, 1, -71.13 ]
+            geometry: { type: Box, size: [ 0.0800, 0.016697, 0.025 ] }
+          -
+            type: Shape
+            translation: [ -0.286135, 0.151775, 0.0 ]
+            rotation: [ 0, 0, 1, 108.53 ]
+            geometry: { type: Box, size: [ 0.0800, 0.018246, 0.025 ] }
+          -
+            type: Shape
+            translation: [ -0.300014, 0.146468, 0.0 ]
+            rotation: [ 0, 0, 1, 113.32 ]
+            geometry: { type: Box, size: [ 0.0800, 0.018186, 0.025 ] }
+          -
+            type: Shape
+            translation: [ -0.323939, 0.129956, 0.0 ]
+            rotation: [ 0, 0, 1, -65.73 ]
+            geometry: { type: Box, size: [ 0.0700, 0.016784, 0.025 ] }
+          -
+            type: Shape
+            translation: [ -0.315333, 0.144532, 0.0 ]
+            rotation: [ 0, 0, 1, 118.81 ]
+            geometry: { type: Box, size: [ 0.0700, 0.018260, 0.025 ] }
+          -
+            type: Shape
+            translation: [ -0.328159, 0.136697, 0.0 ]
+            rotation: [ 0, 0, 1, 124.04 ]
+            geometry: { type: Box, size: [ 0.0700, 0.018222, 0.025 ] }
+          -
+            type: Shape
+            translation: [ -0.341837, 0.120826, 0.0 ]
+            rotation: [ 0, 0, 1, -60.21 ]
+            geometry: { type: Box, size: [ 0.0700, 0.016707, 0.025 ] }
+          -
+            type: Shape
+            translation: [ -0.340229, 0.127727, 0.0 ]
+            rotation: [ 0, 0, 1, 129.20 ]
+            geometry: { type: Box, size: [ 0.0700, 0.018195, 0.025 ] }
+          -
+            type: Shape
+            translation: [ -0.355766, 0.106069, 0.0 ]
+            rotation: [ 0, 0, 1, -54.98 ]
+            geometry: { type: Box, size: [ 0.0600, 0.016729, 0.025 ] }
+          -
+            type: Shape
+            translation: [ -0.354984, 0.121243, 0.0 ]
+            rotation: [ 0, 0, 1, -45.66 ]
+            geometry: { type: Box, size: [ 0.0600, 0.018315, 0.025 ] }
+          -
+            type: Shape
+            translation: [ -0.365530, 0.109935, 0.0 ]
+            rotation: [ 0, 0, 1, 139.67 ]
+            geometry: { type: Box, size: [ 0.0600, 0.018233, 0.025 ] }
+          -
+            type: Shape
+            translation: [ -0.371288, 0.094015, 0.0 ]
+            rotation: [ 0, 0, 1, -49.36 ]
+            geometry: { type: Box, size: [ 0.0600, 0.016736, 0.025 ] }
+          -
+            type: Shape
+            translation: [ -0.375027, 0.097669, 0.0 ]
+            rotation: [ 0, 0, 1, 144.83 ]
+            geometry: { type: Box, size: [ 0.0600, 0.018228, 0.025 ] }
+          -
+            type: Shape
+            translation: [ -0.381947, 0.077051, 0.0 ]
+            rotation: [ 0, 0, 1, -43.79 ]
+            geometry: { type: Box, size: [ 0.0500, 0.016762, 0.025 ] }
+          -
+            type: Shape
+            translation: [ -0.387686, 0.087123, 0.0 ]
+            rotation: [ 0, 0, 1, 150.06 ]
+            geometry: { type: Box, size: [ 0.0500, 0.018233, 0.025 ] }
+          -
+            type: Shape
+            translation: [ -0.394969, 0.072993, 0.0 ]
+            rotation: [ 0, 0, 1, 155.40 ]
+            geometry: { type: Box, size: [ 0.0500, 0.018257, 0.025 ] }
+          -
+            type: Shape
+            translation: [ -0.394503, 0.062602, 0.0 ]
+            rotation: [ 0, 0, 1, -38.18 ]
+            geometry: { type: Box, size: [ 0.0500, 0.016664, 0.025 ] }
+          -
+            type: Shape
+            translation: [ -0.400895, 0.058266, 0.0 ]
+            rotation: [ 0, 0, 1, -19.23 ]
+            geometry: { type: Box, size: [ 0.0500, 0.018216, 0.025 ] }
+          -
+            type: Shape
+            translation: [ -0.401354, 0.044395, 0.0 ]
+            rotation: [ 0, 0, 1, -32.84 ]
+            geometry: { type: Box, size: [ 0.0400, 0.016782, 0.025 ] }
+          -
+            type: Shape
+            translation: [ -0.410367, 0.044122, 0.0 ]
+            rotation: [ 0, 0, 1, -14.26 ]
+            geometry: { type: Box, size: [ 0.0400, 0.018263, 0.025 ] }
+          -
+            type: Shape
+            translation: [ -0.410692, 0.028331, 0.0 ]
+            rotation: [ 0, 0, 1, 152.51 ]
+            geometry: { type: Box, size: [ 0.0400, 0.016683, 0.025 ] }
+          -
+            type: Shape
+            translation: [ -0.413705, 0.028019, 0.0 ]
+            rotation: [ 0, 0, 1, -9.15 ]
+            geometry: { type: Box, size: [ 0.0400, 0.018232, 0.025 ] }
+          -
+            type: Shape
+            translation: [ -0.415, 0.020, 0.0 ]
+            rotation: [ 1, 0, 0, 90 ]
+            geometry: { type: Cylinder, radius: 0.020, height: 0.025 }
+  -
+    name: TOHKU_TIP_02
+    parent: TOHKU_ROLL
+    translation: [ -0.309, 0.0, 0.0 ]
+    rotation: [ 1, 0, 0, 180 ]
+    jointId: 9
+    jointType: revolute
+    jointAxis: Z
+    jointRange: [ -20.0, 0 ]
+    maxJointVelocity: 573
+    mass: 9.3058947e+00
+    centerOfMass: [ -1.9052236e-1,  1.1160593e-1, -7.5632562e-04 ]
+    inertia: [
+      3.0276157e-2,  1.1688229e-2,  1.2268932e-3,
+      1.1688229e-2,  1.5080350e-2,  -7.1011455e-4,
+      1.2268932e-3,  -7.1011455e-4, 1.8011625e-1 ]
+    elements:
+      Visual: { elements: { Resource: { uri: "prt/tohku_hand_tip.wrl" } } }
+      Collision: *TOHKU_TIP_COLLISION_MODEL
+  -
+    name: UFRAME
+    parent: UPPER_TFRAME
+    translation: [ 0.0, 0.3, 0.0 ]
+    jointType: revolute
+    jointAxis: Y
+    jointId: 10
+    jointRange: [ -687.5, 687.5 ]
+    maxJointVelocity: 573
+    mass: 535.84647
+    centerOfMass: [ 8.14422630E-02, 1.99598060E-01, 2.71745980E-02 ]
+    inertia: [
+      7.97084620E+01, -8.47185310E+00, 1.11603580E+00,
+      -8.47185310E+00, 1.00038320E+02,  5.51320690E+00,
+      1.11603580E+00, 5.51320690E+00, 6.17888570E+01 ]
+    elements: 
+      - { type: Resource, uri: "prt/frame_marge.wrl" }
+      -
+        type: Camera
+        name: UF_BOTTOM_CAMERA
+        translation: [ 0.5, 0.8, -0.2 ]
+        rotation: [ -0.323616, -0.889126, -0.323616, 96.72 ]
+        format: COLOR
+        width: 640
+        height: 360
+        fieldOfView: 95.91
+      -
+        type: Camera
+        name: UF_TOP_CAMERA
+        translation: [ 0.5, 0.4, -0.2 ]
+        rotation: [ 0, -1, 0, 90 ]
+        format: COLOR
+        width: 640
+        height: 360
+        fieldOfView: 95.91
+      -
+        type: Camera
+        name: UF_FRONT_CAMERA
+        translation: [ 0.5, 0.6, -0.2 ]
+        rotation: [ -0.171088, -0.970288, -0.171088, 91.73 ]
+        format: COLOR
+        width: 1280
+        height: 720
+        fieldOfView: 41.08
+        farClipDistance: 5
+  -
+    name: MNP_SWING
+    parent: UFRAME
+    translation: [ 0.5595, 0.118, 0.130 ]
+    rotation: [ 0, 1, 0, 180 ]
+    jointType: revolute
+    jointAxis: Y
+    jointId: 11
+    jointRange: [ -60, 60 ]
+    maxJointVelocity: 1146
+    mass: 1.3380749e+01
+    centerOfMass: [ -6.7856551e-2, 9.6877149e-3, 0.0000000e+00 ]
+    inertia: [
+      5.9129940e-02, -3.7243340e-03, 0.0000000e+00,
+      -3.7243340e-03, 3.5238822e-02, 0.0000000e+00,
+      0.0000000e+00, 0.0000000e+00, 7.3441120e-02 ]
+    elements:
+      - { type: Resource, uri: "prt/mani_swgbrkt_v7.wrl" }
+      - { type: ForceSensor, name: MNP_SWING_TORQUE, id: 4 }
+  -
+    name: MANIBOOM
+    parent: MNP_SWING
+    translation: [ -0.07, 0.14, 0 ]
+    rotation: [ 0, 0, -1, 90 ]
+    jointId: 12
+    jointType: revolute
+    jointAxis: Z
+    jointRange: [ 0, 115 ]
+    maxJointVelocity: 573
+    mass: 3.6291074e+01
+    centerOfMass: [ -7.5995740e-01, 1.6703571e-02, 0.0000000e+00 ]
+    inertia: [
+      1.1028539e-01, 4.3989080e-02, 0.0000000e+00,
+      4.3989080e-02, 7.0046174e+00, 0.0000000e+00,
+      0.0000000e+00, 0.0000000e+00, 6.9737013e+00 ]
+    elements:
+      - { type: Resource, uri: "prt/mani_boom_v7_2.wrl" }
+      - { type: ForceSensor, name: MNP_BOOM_TORQUE, id: 5 }
+  -
+    name: MANIARM
+    parent: MANIBOOM
+    translation: [ -1.48, 0.08, 0 ]
+    rotation: [ 0, 0, 1, 180 ]
+    jointId: 13
+    jointType: revolute
+    jointAxis: Z
+    jointRange: [ -110, 0 ]
+    maxJointVelocity: 573
+    mass: 2.8673428e+01
+    centerOfMass: [ -1.8264981e-01, 1.7411666e-01, 0.0000000e+00 ]
+    inertia: [
+      1.9152986e-01, 1.1443044e-01, 0.0000000e+00,
+      1.1443044e-01, 7.9632756e-01, 0.0000000e+00,
+      0.0000000e+00, 0.0000000e+00, 8.1910511e-01 ]
+    elements:
+      - { type: Resource, uri: "prt/mani_arm_v7_2.wrl" }
+      - { type: ForceSensor, name: MNP_ARM_TORQUE, id: 6 }
+  -
+    name: MANIELBOW
+    parent: MANIARM
+    translation: [ -0.55, 0.27, 0 ]
+    jointId: 14
+    jointType: revolute
+    jointAxis: Z
+    jointRange: [ -90, 20 ]
+    maxJointVelocity: 573
+    mass: 2.3976610e+01
+    centerOfMass: [ -4.7393726e-2, -3.4379664e-2, 0.0000000e+00 ]
+    inertia: [
+      1.5009182e-1, 6.9121654e-2, 0.0000000e+00,
+      6.9121654e-2, 1.8822635e-1, 0.0000000e+00,
+      0.0000000e+00, 0.0000000e+00,  2.3426912e-1 ]
+    elements:
+      - { type: Resource, uri: "prt/mani_elbow_v7_marge.wrl" }
+      - { type: ForceSensor, name: MNP_ELBOW_TORQUE, id: 7 }
+  -
+    name: YAWJOINT
+    parent: MANIELBOW
+    translation: [ -0.23, 0.00, 0 ]
+    jointId: 15
+    jointType: revolute
+    jointAxis: Y
+    jointRange: [ -50.48, 50.48 ]
+    maxJointVelocity: 573
+    mass: 22.9404
+    centerOfMass: [ -0.169575, 0, 0.000436442 ]
+    inertia: [
+      0.0917743, 0, -0.000933033,
+      0, 0.193104, 0,
+      -0.000933033, 0, 0.221433 ]
+    elements:
+      - { type: Resource, uri: "prt/mani_plan2_roll_v7.wrl" }
+      - { type: ForceSensor, name: MNP_YAW_TORQUE, id: 8 }
+      -
+        type: Camera
+        name: Upper_Hand_Camera
+        translation: [ -0.2, 0.15, 0.0 ]
+        rotation: [ 0, 1, 0, 90.0 ]
+        format: COLOR
+        width: 1280
+        height: 720
+        fieldOfView: 115.97
+        farClipDistance: 5
+  -
+    name: HANDBASE
+    parent: YAWJOINT
+    translation: [ -0.4053, 0, 0 ]
+    rotation: [ 0, 1, 0, 180 ]
+    jointId: 16
+    jointType: revolute
+    jointAxis: X
+    jointRange: [ -270, 270 ]
+    maxJointVelocity: 573
+    mass: 4.08874
+    centerOfMass: [ -0.106437, 0, 0 ]
+    inertia: [
+      0.00678026, 0, 0,
+      0, 0.0266742, 0,
+      0, 0, 0.0241877 ]
+    elements:
+      - { type: Visual, elements: { Resource: { uri: "prt/handbase_marge_v7.wrl" } } }
+      -
+        type: Collision
+        elements:
+          -
+            type: Shape
+            translation: [ 0.085, 0.0, 0.0 ]
+            geometry: { type: Box, size: [ 0.142, 0.070, 0.07 ] }
+          -
+            type: Shape
+            translation: [ 0.129571, -0.035429, 0.0 ]
+            rotation: [ 0, 0, 1, 45.00 ]
+            geometry: { type: Box, size: [ 0.020000, 0.021213, 0.07 ] }
+          -
+            type: Shape
+            translation: [ 0.129571, 0.035429, 0.0 ]
+            rotation: [ 0, 0, 1, 135.00 ]
+            geometry: { type: Box, size: [ 0.020000, 0.021213, 0.07 ] }
+          -
+            type: Shape
+            translation: [ 0.140, 0.0, 0.0 ]
+            geometry: { type: Box, size: [ 0.020, 0.100, 0.07 ] }
+          -
+            type: Shape
+            translation: [ 0.151318, 0.027539, 0.0 ]
+            rotation: [ 0, 0, 1, 29.74 ]
+            geometry: { type: Box, size: [ 0.020, 0.040311, 0.07 ] }
+          -
+            type: Shape
+            translation: [ 0.151318, -0.027539, 0.0 ]
+            rotation: [ 0, 0, 1, -29.74 ]
+            geometry: { type: Box, size: [ 0.020, 0.040311, 0.07 ] }
+          -
+            type: Shape
+            translation: [ 0.160, 0.0, 0.0 ]
+            geometry: { type: Box, size: [ 0.020, 0.030, 0.07 ] }
+          -
+            type: Shape
+            translation: [ 0.007, 0.0, 0.0 ]
+            geometry: { type: Box, size: [ 0.014, 0.120, 0.080 ] }
+          -
+            type: Shape
+            translation: [ -0.010, 0.0, 0.0 ]
+            geometry: { type: Box, size: [ 0.020, 0.120, 0.090 ] }
+          -
+            type: Shape
+            translation: [ -0.0265, 0.0, 0.0 ]
+            rotation: [ 0, 0, 1, 90 ]
+            geometry: { type: Cylinder, radius: 0.045, height: 0.013 }
+          -
+            type: Shape
+            translation: [ -0.093, 0.0, 0.0 ]
+            rotation: [ 0, 0, 1, 90 ]
+            geometry: { type: Cylinder, radius: 0.028, height: 0.120 }
+          -
+            type: Shape
+            translation: [ -0.233, 0.0, 0.0 ]
+            rotation: [ 0, 0, 1, 90 ]
+            geometry: { type: Cylinder, radius: 0.025, height: 0.160 }
+          -
+            type: Shape
+            translation: [ -0.233, 0.0, 0.0 ]
+            rotation: [ 0, 0, 1, 90 ]
+            geometry: { type: Cylinder, radius: 0.040, height: 0.080 }
+      - { type: ForceSensor, name: MNP_ROLL_TORQUE, id: 9 }
+  -
+    name: PUSHROD
+    parent: HANDBASE
+    translation: [ 0.0917, 0, 0 ]
+    jointId: 17
+    jointType: prismatic
+    jointAxis: X
+    jointRange: [ -0.0507, 0 ]
+    maxJointVelocity: 573
+    mass: 0.887605
+    centerOfMass: [ 0.0512686, 0, 0 ]
+    inertia: [
+      0.000237569, 0, 0,
+      0, 0.00159781, 0,
+      0, 0, 0.00159822 ]
+    elements:
+      - { type: Resource, uri: "prt/hand_rod_v7.wrl" }
+      - { type: ForceSensor, name: MNP_PUSH_FORCE, id: 10 }
+  -
+    name: HANDSLNK_I
+    parent: PUSHROD
+    rotation: [ 0, 0, -1, 61.2291 ]
+    jointType: revolute
+    jointAxis: Z
+    jointRange: [ -171.9, 171.9 ]
+    maxJointVelocity: 573
+    rotorInertia: 0.01
+    mass: 0.408083
+    centerOfMass: [ 0.0530198, 0, 0 ]
+    inertia: [
+      0.000186599, 0, 0,
+      0, 0.000536909, 0,
+      0, 0, 0.000414755 ]
+    elements:
+      Visual: { elements: { Resource: { uri: "prt/hand_slink_inner_v7.wrl" } } }
+      Collision:
+        elements:
+          -
+            type: Shape
+            translation: [ 0.040, 0.0, 0.0 ]
+            geometry: { type: Box, size: [ 0.080, 0.028, 0.028 ] }
+          -
+            type: Shape
+            rotation: [ 1, 0, 0, 90 ]
+            geometry: { type: Cylinder, radius: 0.014, height: 0.028 }
+          -
+            type: Shape
+            translation: [ 0.080, 0.0, 0.0 ]
+            rotation: [ 1, 0, 0, 90 ]
+            geometry: { type: Cylinder, radius: 0.014, height: 0.028 }
+  -
+    name: HANDSLNK_O
+    parent: PUSHROD
+    rotation: [ 0, 0, 1, 61.2314 ]
+    jointType: revolute
+    jointAxis: Z
+    jointRange: [ -171.9, 171.9 ]
+    maxJointVelocity: 573
+    rotorInertia: 0.01
+    mass: 0.408083
+    centerOfMass: [ 5.3019776e-2, 0, 0 ]
+    inertia: [
+      0.000267073, 6.95893e-10, 0,
+      6.95893e-10, 0.000617382, 0,
+      0, 0, 0.000414755 ]
+    elements:
+      Visual: { elements: { Resource: { uri: "prt/hand_slink_outer_v7.wrl" } } }
+      Collision:
+        elements:
+          -
+            type: Shape
+            translation: [ 0.040, 0.0, 0.0 ]
+            geometry: { type: Box, size: [ 0.080, 0.028, 0.042 ] }
+          -
+            type: Shape
+            rotation: [ 1, 0, 0, 90 ]
+            geometry: { type: Cylinder, radius: 0.014, height: 0.042 }
+          -
+            type: Shape
+            translation: [ 0.080, 0.0, 0.0 ]
+            rotation: [ 1, 0, 0, 90 ]
+            geometry: { type: Cylinder, radius: 0.014, height: 0.042 }
+  -
+    name: MANIFNG_U
+    parent: HANDBASE
+    translation: [ 0.14, 0.03, 0 ]
+    rotation: [ 0, 0, 1, 6.7682 ]
+    jointType: revolute
+    jointAxis: Z
+    jointRange: [ -171.9, 171.9 ]
+    rotorInertia: 0.01
+    maxJointVelocity: 573
+    mass: 1.32092
+    centerOfMass: [ 0.0778883, 0.0150494, 0 ]
+    inertia: [
+      0.00159768, 0.000329267, 3.30872e-24,
+      0.000329267, 0.00595697, 1.03398e-25,
+      1.65436e-24, -4.00666e-25, 0.00524922 ]
+    elements:
+      Visual: { elements: { Resource: { uri: "prt/finger_base_v7.wrl" } } }
+      Collision: &MANIFNG_COLLISION_MODEL
+        elements:
+          -
+            type: Shape
+            translation: [ 0.0874, 0.00205, 0.0 ]
+            geometry: { type: Box, size: [ 0.1352, 0.0321, 0.014 ] }
+          -
+            type: Shape
+            translation: [ 0.080050, 0.020140, 0.0 ]
+            rotation: [ 0, 0, 1, -103.10 ]
+            geometry: { type: Box, size: [ 0.030, 0.146923, 0.014 ] }
+          -
+            type: Shape
+            translation: [ 0.021864, 0.010607, 0.0 ]
+            rotation: [ 0, 0, 1, 6.89 ]
+            geometry: { type: Box, size: [ 0.010000, 0.048364, 0.014 ] }
+          -
+            type: Shape
+            translation: [ 0.010, -0.004, 0.0 ]
+            geometry: { type: Box, size: [ 0.020, 0.020, 0.010 ] }
+          -
+            type: Shape
+            translation: [ 0.002775, 0.043262, 0.0 ]
+            rotation: [ 0, 0, 1, 76.85 ]
+            geometry: { type: Box, size: [ 0.020000, 0.014069, 0.010 ] }
+          -
+            type: Shape
+            translation: [ 0.000971, 0.020918, 0.0 ]
+            rotation: [ 0, 0, 1, 6.95 ]
+            geometry: { type: Box, size: [ 0.035000, 0.041304, 0.010 ] }
+          -
+            type: Shape
+            rotation: [ 1, 0, 0, 90 ]
+            geometry: { type: Cylinder, radius: 0.014000, height: 0.010 }
+          -
+            type: Shape
+            translation: [ -0.0050, 0.0410, 0.0 ]
+            rotation: [ 1, 0, 0, 90 ]
+            geometry: { type: Cylinder, radius: 0.014000, height: 0.010 }
+          -
+            type: Shape
+            translation: [ 0.1710, 0.0, 0.0 ]
+            rotation: [ 1, 0, 0, 90 ]
+            geometry: { type: Cylinder, radius: 0.014000, height: 0.010 }
+          -
+            type: Shape
+            translation: [ 0.163, -0.004, 0.0 ]
+            geometry: { type: Box, size: [ 0.016, 0.020, 0.010 ] }
+          -
+            type: Shape
+            translation: [ 0.162318, 0.006114, 0.0 ]
+            rotation: [ 0, 0, 1, 76.81 ]
+            geometry: { type: Box, size: [ 0.019720, 0.020, 0.010 ] }
+  -
+    name: HANDTIP_U
+    parent: MANIFNG_U
+    translation: [ 0.171, 0, 0 ]
+    rotation: [ 0, 0, -1, 6.7682 ]
+    jointType: revolute
+    jointAxis: Z
+    jointRange: [ -171.9, 171.9 ]
+    rotorInertia: 0.01
+    maxJointVelocity: 573
+    mass: 1.62187
+    centerOfMass: [ 0.0581795, -0.0268036, 0 ]
+    inertia: [
+      0.00272616, 0.000478886, -4.96308e-24,
+      0.000478886, 0.00389972, 1.03398e-24,
+      -4.96308e-24, 0, 0.00225372 ]
+    elements:
+      Visual: { elements: { Resource: { uri: "prt/hand_tip_asm_v7_marge.wrl" } } }
+      Collision: &HANDTIP_COLLISION_MODEL
+        elements:
+          -
+            type: Shape
+            translation: [ 0.055, -0.044, 0 ]
+            geometry: { type: Box, size: [ 0.030, 0.012, 0.050 ] }
+          -
+            type: Shape
+            translation: [ 0.075, -0.044, 0 ]
+            geometry: { type: Box, size: [ 0.070, 0.012, 0.026 ] }
+          -
+            type: Shape
+            translation: [ 0.107458, -0.044, -0.013040 ]
+            rotation: [ 0, 1, 0, 37.23 ]
+            geometry: { type: Box, size: [ 0.004, 0.012, 0.003140 ] }
+          -
+            type: Shape
+            translation: [ 0.107458, -0.044, 0.013040 ]
+            rotation: [ 0, 1, 0, -37.23 ]
+            geometry: { type: Box, size: [ 0.004, 0.012, 0.003140 ] }
+          -
+            type: Shape
+            translation: [ 0.086631, -0.044, 0.010547 ]
+            rotation: [ 0, 1, 0, -76.00 ]
+            geometry: { type: Box, size: [ 0.02, 0.012, 0.039267 ] }
+          -
+            type: Shape
+            translation: [ 0.086631, -0.044, -0.010547 ]
+            rotation: [ 0, 1, 0, 76.00 ]
+            geometry: { type: Box, size: [ 0.02, 0.012, 0.039267 ] }
+          -
+            type: Shape
+            translation: [ 0.071500, -0.030500, 0 ]
+            geometry: { type: Box, size: [ 0.077, 0.015, 0.024 ] }
+          -
+            type: Shape
+            translation: [ 0.052836, -0.017650, 0.0 ]
+            rotation: [ 0, 0, 1, 70.54 ]
+            geometry: { type: Box, size: [ 0.028, 0.111362, 0.024 ] }
+          -
+            type: Shape
+            translation: [ 0.024299, -0.027011, 0.0 ]
+            rotation: [ 0, 0, 1, -54.39 ]
+            geometry: { type: Box, size: [ 0.028, 0.018572, 0.024 ] }
+          -
+            type: Shape
+            translation: [ 0.001991, -0.017361, 0.0 ]
+            rotation: [ 0, 0, 1, 23.20 ]
+            geometry: { type: Box, size: [ 0.020, 0.033509, 0.024 ] }
+          -
+            type: Shape
+            translation: [ 0.015, -0.030, 0.0 ]
+            rotation: [ 1, 0, 0, 90 ]
+            geometry: { type: Cylinder, radius: 0.0170, height: 0.024 }
+          -
+            type: Shape
+            translation: [ 0.0, 0.0, 0.0 ]
+            rotation: [ 1, 0, 0, 90 ]
+            geometry: { type: Cylinder, radius: 0.0150, height: 0.024 }
+  -
+    name: HANDLNK_I
+    parent: HANDBASE
+    translation: [ 0.155, 0, -0.0065 ]
+    rotation: [ 0, 0, 1, 6.7682 ]
+    jointType: revolute
+    jointAxis: Z
+    jointRange: [ -171.9, 171.9 ]
+    maxJointVelocity: 573
+    rotorInertia: 0.01
+    mass: 0.732866
+    centerOfMass: [ 0.0921655, -0.00204929, 0 ]
+    inertia: [
+      0.000257575, 5.00832e-06, 0,
+      5.00832e-06, 0.00268959, 0,
+      0, 0, 0.00253442 ]
+    elements:
+      Visual: { elements: { Resource: { uri: "prt/handlink_inner_v7.wrl" } } }
+      Collision: &HANDLNK_COLLISION_MODEL
+        elements:
+          -
+            type: Shape
+            translation: [ 0.0855, 0, 0 ]
+            geometry: { type: Box, size: [ 0.131, 0.028, 0.014 ] }
+          -
+            type: Shape
+            rotation: [ 1, 0, 0, 90 ]
+            geometry: { type: Cylinder, radius: 0.014, height: 0.010 }
+          -
+            type: Shape
+            translation: [ 0.171, 0, 0 ]
+            rotation: [ 1, 0, 0, 90 ]
+            geometry: { type: Cylinder, radius: 0.014, height: 0.010 }
+          -
+            type: Shape
+            translation: [ 0.01, 0, 0 ]
+            geometry: { type: Box, size: [ 0.020, 0.028, 0.010 ] }
+          -
+            type: Shape
+            translation: [ 0.161, 0, 0 ]
+            geometry: { type: Box, size: [ 0.020, 0.028, 0.010 ] }
+  -
+    name: MANIFNG_L
+    parent: HANDBASE
+    translation: [ 0.14, -0.03, 0 ]
+    rotation: [ 0.998256, -0.0590292, 0, 180 ]
+    jointType: revolute
+    jointRange: [ -171.9, 171.9 ]
+    maxJointVelocity: 573
+    rotorInertia: 0.01
+    mass: 1.32092
+    centerOfMass: [ 0.0778883, 0.0150494, 0 ]
+    inertia: [
+      0.00159768, 0.000329267, 0,
+      0.000329267, 0.00595697, 0,
+      0, 0, 0.00524922 ]
+    elements:
+      Visual: { elements: { Resource: { uri: "prt/finger_base_v7.wrl" } } }
+      Collision: *MANIFNG_COLLISION_MODEL
+  -
+    name: HANDTIP_L
+    parent: MANIFNG_L
+    translation: [ 0.171, 0, 0 ]
+    rotation: [ 0, 0, -1, 6.7682 ]
+    jointType: revolute
+    jointRange: [ -171.9, 171.9 ]
+    maxJointVelocity: 573
+    rotorInertia: 0.01
+    mass: 1.62187
+    centerOfMass: [ 0.0581795, -0.0268036, 0 ]
+    inertia: [
+      0.00272616, 0.000478886, 0,
+      0.000478886, 0.00389972, 0,
+      0, 0, 0.00225372 ]
+    elements:
+      Visual: { elements: { Resource: { uri: "prt/hand_tip_asm_v7_marge.wrl" } } }
+      Collision: *HANDTIP_COLLISION_MODEL
+  -
+    name: HANDLNK_O
+    parent: HANDBASE
+    translation: [ 0.155, 0, 0.0065 ]
+    rotation: [ 0.998256, -0.0590292, 0, 180 ]
+    jointType: revolute
+    jointRange: [ -171.9, 171.9 ]
+    maxJointVelocity: 573
+    rotorInertia: 0.01
+    mass: 0.871915
+    centerOfMass: [ 0.0928285, -0.00312308, 1.58819e-22 ]
+    inertia: [
+      0.000559832, -1.99551e-05, -1.65436e-24,
+      -1.99551e-05, 0.00316998, 3.61892e-25,
+      -1.44757e-24, 2.58494e-25, 0.00272764 ]
+    elements:
+      Visual: { elements: { Resource: { uri: "prt/handlink_inner_v7.wrl" } } }
+      Collision: *HANDLNK_COLLISION_MODEL
+
+extraJoints:
+  -
+    name: SLINK_U
+    link1Name: HANDSLNK_O
+    link2Name: MANIFNG_U
+    link1LocalPos: [ 0.080, 0, 0 ]
+    link2LocalPos: [ -0.005, 0.041, 0 ]
+    jointType: ball
+  -
+    name: SLINK_L
+    link1Name: HANDSLNK_I
+    link2Name: MANIFNG_L
+    link1LocalPos: [ 0.080, 0, 0 ]
+    link2LocalPos: [ -0.005, 0.041, 0 ]
+    jointType: ball
+  -
+    name: LINK_TIP_U
+    link1Name: HANDLNK_I
+    link2Name: HANDTIP_U
+    link1LocalPos: [ 0.171, 0, 0 ]
+    link2LocalPos: [ 0.015, -0.030, 0 ]
+    jointType: ball
+  -
+    name: LINK_TIP_L
+    link1Name: HANDLNK_O
+    link2Name: HANDTIP_L
+    link1LocalPos: [ 0.171, 0, 0 ]
+    link2LocalPos: [ 0.015, -0.030, 0 ]
+    jointType: ball
+
+linkGroup:
+  - name: Middleframe
+    links: 
+      - MFRAME
+      - BLOCK
+      - BOOM
+      - ARM
+      - name: HAND
+        links: 
+          - TOHKU_PITCH
+          - TOHKU_TIP_01
+          - TOHKU_TIP_02
+  - name: Upperframe
+    links: 
+      - UFRAME
+      - name: Manipulator
+        links:
+          - MNP_SWING
+          - MANIBOOM
+          - MANIARM
+          - MANIELBOW
+          - YAWJOINT
+          - HANDBASE
+          - name: Mani_hand
+            links:
+              - PUSHROD
+              - HANDSLNK_I
+              - HANDSLNK_O
+              - MANIFNG_U
+              - HANDTIP_U
+              - HANDLNK_I
+              - MANIFNG_L
+              - HANDTIP_L
+              - HANDLNK_O
+
+defaultIKsetup:
+  TOHKU_PITCH: [ MFRAME ]
+  HANDBASE : [ UFRAME ]
+  MANIELBOW : [ UFRAME ]
+  YAWJOINT : [ UFRAME ]
+
+collisionDetection:
+  excludeTreeDepth: 3
+  excludeLinks: [ ]

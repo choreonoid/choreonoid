@@ -555,6 +555,27 @@ ValueNodePtr Mapping::extract(const std::string& key)
 }
 
 
+bool Mapping::extract(const std::string& key, double& out_value)
+{
+    ValueNodePtr node = extract(key);
+    if(node){
+        out_value = node->toDouble();
+        return true;
+    }
+    return false;
+}
+
+
+bool Mapping::extract(const std::string& key, std::string& out_value)
+{
+    ValueNodePtr node = extract(key);
+    if(node){
+        out_value = node->toString();
+        return true;
+    }
+    return false;
+}
+
 
 ValueNode& Mapping::get(const std::string& key) const
 {
@@ -610,7 +631,7 @@ void Mapping::insert(const Mapping* other)
 }
 
 
-Mapping* Mapping::openMapping(const std::string& key, bool doOverwrite)
+Mapping* Mapping::openMapping_(const std::string& key, bool doOverwrite)
 {
     if(!isValid()){
         throwNotMappingException();
@@ -642,15 +663,15 @@ Mapping* Mapping::openMapping(const std::string& key, bool doOverwrite)
 }
 
 
-Mapping* Mapping::openFlowStyleMapping(const std::string& key, bool doOverwrite)
+Mapping* Mapping::openFlowStyleMapping_(const std::string& key, bool doOverwrite)
 {
-    Mapping* m = openMapping(key, doOverwrite);
+    Mapping* m = openMapping_(key, doOverwrite);
     m->setFlowStyle(true);
     return m;
 }
 
 
-Listing* Mapping::openListing(const std::string& key, bool doOverwrite)
+Listing* Mapping::openListing_(const std::string& key, bool doOverwrite)
 {
     if(!isValid()){
         throwNotMappingException();
@@ -682,9 +703,9 @@ Listing* Mapping::openListing(const std::string& key, bool doOverwrite)
 }
 
 
-Listing* Mapping::openFlowStyleListing(const std::string& key, bool doOverwrite)
+Listing* Mapping::openFlowStyleListing_(const std::string& key, bool doOverwrite)
 {
-    Listing* s = openListing(key, doOverwrite);
+    Listing* s = openListing_(key, doOverwrite);
     s->setFlowStyle(true);
     return s;
 }
@@ -989,7 +1010,7 @@ void Listing::append(const std::string& value, StringStyle stringStyle)
 void Listing::insert(int index, ValueNode* node)
 {
     if(index >= 0){
-        if(index > values.size()){
+        if(index > static_cast<int>(values.size())){
             index = values.size();
         }
         values.insert(values.begin() + index, node);

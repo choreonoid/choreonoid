@@ -7,7 +7,7 @@ AGXScene::AGXScene(const AGXSceneDesc& desc)
     _agxSimulation = AGXObjectFactory::createSimulation(desc.simdesc);
 }
 
-AGXSceneRef AGXScene::create(const AGXSceneDesc& desc)
+AGXScene* AGXScene::create(const AGXSceneDesc& desc)
 {
     return new AGXScene(desc);
 }
@@ -23,43 +23,19 @@ void AGXScene::stepSimulation()
     getSimulation()->stepForward();
 }
 
-void AGXScene::add(AGXBodyPtr agxBody) {
-    // Add AGXRigidbody and constraint to AGX simulation
-    for(int i = 0; i < agxBody->numAGXLinks(); ++i){
-        add(agxBody->getAGXRigidBody(i));
-        add(agxBody->getAGXConstraint(i));
-    }
-
-    // Add bodyparts (extrajoint, continous track)
-    for(int i = 0; i < agxBody->numAGXBodyParts(); ++i){
-        AGXBodyPartPtr bp = agxBody->getAGXBodyPart(i);
-        for(int j = 0; j < bp->numAGXConstraints(); ++j){
-            add(bp->getAGXConstraint(j));
-        }
-        if(!bp->hasSelfCollisionGroupName()) continue;
-        const std::string& scgname = bp->getSelfCollisionGroupName();
-        setCollisionPair(scgname, scgname, false);
-    }
-
-    // Set self collision
-    if(!agxBody->bodyItem()->isSelfCollisionDetectionEnabled()){
-        const std::string& scgname = agxBody->getSelfCollisionGroupName();
-        setCollisionPair(scgname, scgname, false);
-    }
-    // Set external collision
-    if(!agxBody->bodyItem()->isCollisionDetectionEnabled()){
-        agxBody->setCollision(false);
-    }
-}
-
-agx::Bool AGXScene::add(agx::RigidBodyRef const rigid)
+agx::Bool AGXScene::add(agx::RigidBody* const rigid)
 {
     return getSimulation()->add(rigid);
 }
 
-agx::Bool AGXScene::add(agx::ConstraintRef const constraint)
+agx::Bool AGXScene::add(agx::Constraint* const constraint)
 {
     return getSimulation()->add(constraint);
+}
+
+agx::Bool AGXScene::add(agxSDK::Assembly* const assembly)
+{
+    return getSimulation()->add(assembly);
 }
 
 agx::MaterialRef AGXScene::getMaterial(const agx::String & materialName)
@@ -84,6 +60,42 @@ agx::ContactMaterialRef AGXScene::createContactmaterial(agx::MaterialRef const m
 agx::ContactMaterialRef AGXScene::createContactMaterial(const AGXContactMaterialDesc &desc)
 {
     return AGXObjectFactory::createContactMaterial(desc, getSimulation()->getMaterialManager());
+}
+
+#define PRINT_MATERIAL(field, field2) std::cout << "  " << #field << " " << field2 << std::endl
+void AGXScene::printMaterials()
+{
+    for(auto it : getSimulation()->getMaterialManager()->getMaterials()){
+        agx::Material* const mat = it.second;
+    }
+}
+
+void AGXScene::printContactMaterialTable()
+{
+    for(auto it : getSimulation()->getMaterialManager()->getContactMaterials()){
+        agx::ContactMaterial* const mat = it.second;
+        std::cout << "[" << mat->getMaterial1()->getName() << " " << mat->getMaterial2()->getName() << "]" << std::endl;
+        PRINT_MATERIAL(youngsModulus, mat->getYoungsModulus());
+        PRINT_MATERIAL(restitution, mat->getRestitution());
+        PRINT_MATERIAL(damping, mat->getDamping());
+        PRINT_MATERIAL(friction, mat->getFrictionCoefficient());
+        PRINT_MATERIAL(surfaceViscosity, mat->getSurfaceViscosity());
+        PRINT_MATERIAL(enableSurfaceFriction, mat->getSurfaceFrictionEnabled());
+        PRINT_MATERIAL(adhesionForce, mat->getAdhesion());
+        PRINT_MATERIAL(adhesivOverLap, mat->getAdhesiveOverlap());
+        PRINT_MATERIAL(contactReductionMode, mat->getContactReductionMode());
+        PRINT_MATERIAL(contactReductionBinResolution, mat->getContactReductionBinResolution());
+        if(!mat->getFrictionModel()) continue;
+        PRINT_MATERIAL(frictionModel, mat->getFrictionModel()->getClassName());
+        PRINT_MATERIAL(solveType, mat->getFrictionModel()->getSolveType());
+
+    }
+}
+#undef PRINT_MATERIAL
+
+void AGXScene::setCollision(const agx::Name& name, bool bOn)
+{
+    getSimulation()->getSpace()->setEnablePair(name, name, bOn);
 }
 
 void AGXScene::setCollisionPair(const unsigned & id1, const unsigned & id2, bool bOn)
@@ -114,11 +126,6 @@ bool AGXScene::getEnableAutoSleep() const
 void AGXScene::setEnableAutoSleep(const bool & bOn)
 {
     getSimulation()->getDynamicsSystem()->getAutoSleep()->setEnable(bOn);
-    //agx::RigidBodyRefVector bodies = getSimulation()->getDynamicsSystem()->getRigidBodies();
-    //agx::RigidBodyRefVector::iterator it;
-    //for(it=bodies.begin(); it != bodies.end(); ++it){
-    //   it->get()->getAutoSleepProperties().setEnable(bOn);
-    //}
 }
 
 bool AGXScene::saveSceneToAGXFile()

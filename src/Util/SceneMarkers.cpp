@@ -49,7 +49,7 @@ void CrossMarker::setSize(double size)
         size_ = size;
         vertices->notifyUpdate();
     }
-};
+}
 
 
 SphereMarker::SphereMarker()

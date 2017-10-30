@@ -86,11 +86,9 @@ public:
     void notifyModelUpdate();
         
     /**
-       @if jp
-       ロボットの関節角、関節角速度、root位置・姿勢などの「運動学的」状態に変更が生じたときに
-       発行されるシグナル。
-       Item::sigUpdated() はモデル自体が変わった場合とし、そちらとは区別して使う。
-       @endif
+       Signal emitted when there is a change in "kinematic" state such as joint angle of robot,
+       joint angular velocity, root position / posture. Item :: sigUpdated () is assumed to be
+       a case where the model itself is changed, and it is used distinguished from it.
     */
     SignalProxy<void()> sigKinematicStateChanged();
 

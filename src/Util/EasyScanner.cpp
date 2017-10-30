@@ -137,6 +137,7 @@ void EasyScanner::init()
     textBuf = 0;
     size = 0;
     textBufEnd = 0;
+    lineNumber = 0;
     lineNumberOffset = 1;
     
     commentChar = '#';
@@ -172,7 +173,7 @@ EasyScanner::EasyScanner(const EasyScanner& org, bool copyText) :
     if(copyText && org.textBuf){
         size = org.size;
         textBuf = new char[size+1];
-        memcpy(textBuf, org.textBuf, size+1);
+        memcpy(textBuf, org.textBuf, size + 1);
         text = textBuf;
         textBufEnd = textBuf + size;
     } else {
@@ -184,12 +185,12 @@ EasyScanner::EasyScanner(const EasyScanner& org, bool copyText) :
 
 
 /*! This function directly sets a text in the main memory */
-void EasyScanner::setText(const char* text, int len)
+void EasyScanner::setText(const char* text, size_t len)
 {
     if(textBuf) delete[] textBuf;
 
     size = len;
-    textBuf = new char[size+1];
+    textBuf = new char[size + 1];
     memcpy(textBuf, text, len);
     textBuf[size] = 0;
     this->text = textBuf;
@@ -283,6 +284,7 @@ void EasyScanner::setQuoteChar(char qs)
 */
 void EasyScanner::loadFile(const string& filename)
 {
+    lineNumber = 0;
     this->filename.clear();
     
     FILE* file = fopen(filename.c_str(), "rb");
@@ -306,7 +308,7 @@ void EasyScanner::loadFile(const string& filename)
     size = ftell(file);
     rewind(file);
     if(textBuf) delete[] textBuf;
-    textBuf = new char[size+1];
+    textBuf = new char[size + 1];
     size = fread(textBuf, sizeof(char), size, file);
     textBuf[size] = 0;
     fclose(file);
@@ -809,7 +811,7 @@ EasyScanner& cnoid::operator>>(EasyScanner& scanner, string& str)
 }
 
 
-EasyScanner& cnoid::operator>>(EasyScanner& scanner, EasyScanner::Endl endl)
+EasyScanner& cnoid::operator>>(EasyScanner& scanner, EasyScanner::Endl)
 {
     if(!scanner.readLF()){
         scanner.throwException("scan error: end of line unmatched");

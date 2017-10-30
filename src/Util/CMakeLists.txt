@@ -47,16 +47,17 @@ set(sources
   ImageIO.cpp
   ImageConverter.cpp
   ImageProvider.cpp
+  PointSetUtil.cpp
   AbstractSceneLoader.cpp
   SceneLoader.cpp
+  YAMLSceneLoader.cpp
   YAMLSceneReader.cpp
-  PointSetUtil.cpp
+  STLSceneLoader.cpp
   VRML.cpp
   VRMLParser.cpp
   VRMLWriter.cpp
   VRMLToSGConverter.cpp
   VRMLSceneLoader.cpp
-  STLSceneLoader.cpp
   GettextWrapper.cpp
   GettextUtil.cpp
   ExtJoystick.cpp
@@ -126,6 +127,8 @@ set(headers
   ImageConverter.h
   ImageProvider.h
   PointSetUtil.h
+  YAMLSceneLoader.h
+  YAMLSceneReader.h
   VRML.h
   VRMLParser.h
   VRMLWriter.h
@@ -145,12 +148,14 @@ set(headers
   Selection.h
   DataMap.h
   Joystick.h
+  JoystickGamepad.h
   ExtJoystick.h
   Task.h
   AbstractTaskSequencer.h
   Exception.h
   exportdecl.h
   Config.h
+  CnoidUtil.h
   )
 
 set(target CnoidUtil)
@@ -199,10 +204,11 @@ if(CNOID_ENABLE_BACKWARD_COMPATIBILITY)
 endif()
 
 if(ENABLE_PYTHON)
-  if(USE_PYTHON3)
-    add_subdirectory(python3)
-  else()
-    add_subdirectory(python)
+  if(USE_PYBIND11)
+    add_subdirectory(pybind11)
+  elseif(USE_BOOST_PYTHON)
+    add_subdirectory(boostpython)
   endif()
 endif()
+
 add_subdirectory(lua)

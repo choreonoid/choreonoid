@@ -41,7 +41,7 @@ public:
         setCursor(Qt::OpenHandCursor);
     }
 
-    virtual void paintEvent(QPaintEvent* event) {
+    virtual void paintEvent(QPaintEvent*) {
 
         QStylePainter painter(this);
 
@@ -70,7 +70,7 @@ public:
         }
     }
 
-    virtual void mouseReleaseEvent(QMouseEvent* event) {
+    virtual void mouseReleaseEvent(QMouseEvent*) {
         setCursor(Qt::OpenHandCursor);
         isDragging = false;
     }
@@ -361,13 +361,13 @@ void ToolBar::changeIconSizeSub(QLayout* layout, const QSize& iconSize)
 }
 
 
-bool ToolBar::storeState(Archive& archive)
+bool ToolBar::storeState(Archive& /* archive */)
 {
     return true;
 }
 
 
-bool ToolBar::restoreState(const Archive& archive)
+bool ToolBar::restoreState(const Archive& /* archive */)
 {
     return true;
 }

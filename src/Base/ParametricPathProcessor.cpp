@@ -202,8 +202,7 @@ boost::optional<std::string> ParametricPathProcessor::expand(const std::string& 
     } else {
         filesystem::path fullPath = impl->baseDirPath / path;
         if(!path.empty() && (*path.begin() == "..")){
-            filesystem::path compact;
-            makePathCompact(fullPath, compact);
+            filesystem::path compact(getCompactPath(fullPath));
             return getNativePathString(compact);
         } else {
             return getNativePathString(fullPath);

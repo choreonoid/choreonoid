@@ -30,15 +30,25 @@ std::mutex loaderFactoryMapMutex;
 class SceneLoaderAdapter : public AbstractBodyLoader
 {
     AbstractSceneLoader* loader;
+    ostream* os;
+
 public:
-    SceneLoaderAdapter(AbstractSceneLoader* loader) : loader(loader) { }
+    SceneLoaderAdapter(AbstractSceneLoader* loader) : loader(loader) {
+        os = &nullout();
+    }
     ~SceneLoaderAdapter() { delete loader; }
+
+    virtual void setMessageSink(std::ostream& os_)
+    {
+        os = &os_;
+    }
 
     virtual bool load(Body* body, const std::string& filename) {
 
         body->clearDevices();
         body->clearExtraJoints();
 
+        loader->setMessageSink(*os);
         SgNode* scene = loader->load(filename);
         if(scene){
             Link* link = body->createLink();
@@ -192,7 +202,7 @@ bool BodyLoaderImpl::load(Body* body, const std::string& filename)
     MappingPtr yamlDoc;
 
     try {
-        if(ext != "yaml"){
+        if(ext != "yaml" && ext != "yml"){
             modelFilename = filename;
         } else {
             YAMLReader parser;

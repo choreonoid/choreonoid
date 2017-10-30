@@ -187,6 +187,7 @@ private:
 };
 
 template<> inline double ValueNode::to<double>() const { return toDouble(); }
+template<> inline float ValueNode::to<float>() const { return static_cast<float>(toDouble()); }
 template<> inline int ValueNode::to<int>() const { return toInt(); }
 template<> inline std::string ValueNode::to<std::string>() const { return toString(); }
     
@@ -234,7 +235,7 @@ public:
     virtual Mapping* cloneMapping() const;
     
     bool empty() const { return values.empty(); }
-    int size() const { return values.size(); }
+    int size() const { return static_cast<int>(values.size()); }
     void clear();
 
     void setFlowStyle(bool isFlowStyle = true) { isFlowStyle_ = isFlowStyle; }
@@ -251,6 +252,9 @@ public:
 
     ValueNodePtr extract(const std::string& key);
 
+    bool extract(const std::string& key, double& out_value);
+    bool extract(const std::string& key, std::string& out_value);
+
     ValueNode& get(const std::string& key) const;
 
     ValueNode& operator[](const std::string& key) const {
@@ -262,35 +266,35 @@ public:
     void insert(const Mapping* other);
 
     Mapping* openMapping(const std::string& key) {
-        return openMapping(key, false);
+        return openMapping_(key, false);
     }
         
     Mapping* openFlowStyleMapping(const std::string& key) {
-        return openFlowStyleMapping(key, false);
+        return openFlowStyleMapping_(key, false);
     }
 
     Mapping* createMapping(const std::string& key) {
-        return openMapping(key, true);
+        return openMapping_(key, true);
     }
         
     Mapping* createFlowStyleMapping(const std::string& key) {
-        return openFlowStyleMapping(key, true);
+        return openFlowStyleMapping_(key, true);
     }
 
     Listing* openListing(const std::string& key) {
-        return openListing(key, false);
+        return openListing_(key, false);
     }
         
     Listing* openFlowStyleListing(const std::string& key){
-        return openFlowStyleListing(key, false);
+        return openFlowStyleListing_(key, false);
     }
 
     Listing* createListing(const std::string& key){
-        return openListing(key, true);
+        return openListing_(key, true);
     }
         
     Listing* createFlowStyleListing(const std::string& key){
-        return openFlowStyleListing(key, true);
+        return openFlowStyleListing_(key, true);
     }
 
     bool remove(const std::string& key);
@@ -377,10 +381,10 @@ private:
     Mapping(const Mapping& org);
     Mapping& operator=(const Mapping&);
 
-    Mapping* openMapping(const std::string& key, bool doOverwrite);
-    Mapping* openFlowStyleMapping(const std::string& key, bool doOverwrite);
-    Listing* openListing(const std::string& key, bool doOverwrite);
-    Listing* openFlowStyleListing(const std::string& key, bool doOverwrite);
+    Mapping* openMapping_(const std::string& key, bool doOverwrite);
+    Mapping* openFlowStyleMapping_(const std::string& key, bool doOverwrite);
+    Listing* openListing_(const std::string& key, bool doOverwrite);
+    Listing* openFlowStyleListing_(const std::string& key, bool doOverwrite);
 
     inline void insertSub(const std::string& key, ValueNode* node);
 
@@ -424,7 +428,7 @@ public:
     typedef Container::const_iterator const_iterator;
 
     bool empty() const { return values.empty(); }
-    int size() const { return values.size(); }
+    int size() const { return static_cast<int>(values.size()); }
     void clear();
     void reserve(int size);
 

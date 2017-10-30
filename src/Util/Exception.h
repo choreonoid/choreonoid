@@ -23,7 +23,8 @@ struct type_mismatch_error : virtual exception_base { };
 struct file_read_error : virtual exception_base { };
 
 struct empty_data_error : virtual exception_base { };
-};
+
+}
 
 #endif
 

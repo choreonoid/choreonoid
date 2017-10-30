@@ -97,7 +97,7 @@ bool View::isActive() const
 }
 
 
-void View::showEvent(QShowEvent* event)
+void View::showEvent(QShowEvent*)
 {
     if(!impl->isActive){
         impl->isActive = true;
@@ -107,7 +107,7 @@ void View::showEvent(QShowEvent* event)
 }
     
     
-void View::hideEvent(QHideEvent* event)
+void View::hideEvent(QHideEvent*)
 {
     if(impl->isActive){
         impl->isActive = false;
@@ -270,8 +270,6 @@ void View::keyPressEvent(QKeyEvent* event)
                 zoomFontSize(-1);
                 processed = true;
                 break;
-            defaut:
-                break;
             }
         }
     }
@@ -305,19 +303,19 @@ void ViewImpl::zoomFontSize(int zoom, const QList<QWidget*>& widgets)
 }
 
 
-void View::onAttachedMenuRequest(MenuManager& menuManager)
+void View::onAttachedMenuRequest(MenuManager& /* menuManager */)
 {
 
 }
 
 
-bool View::storeState(Archive& archive)
+bool View::storeState(Archive& /* archive */)
 {
     return true;
 }
 
 
-bool View::restoreState(const Archive& archive)
+bool View::restoreState(const Archive& /* archive */)
 {
     return true;
 }

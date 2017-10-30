@@ -30,7 +30,7 @@ public:
             DeviceType* device = (*this)[i];
             const int id = device->id();
             if(id >= 0){
-                if(sorted.size() <= id){
+                if(static_cast<int>(sorted.size()) <= id){
                     sorted.resize(id + 1);
                 }
                 sorted[id] = device;
@@ -40,6 +40,6 @@ public:
     }
 };
 
-};
+}
 
 #endif

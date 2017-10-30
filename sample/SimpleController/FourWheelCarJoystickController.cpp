@@ -18,23 +18,28 @@ class FourWheelCarJoystickController : public SimpleController
     double eold;
 
 public:
-    virtual bool initialize(SimpleControllerIO* io)
+    virtual bool initialize(SimpleControllerIO* io) override
     {
         ostream& os = io->os();
         
         Body* body = io->body();
+
         steering = body->link("STEERING_RIGHT");
         if(!steering){
             os << " The steering_right link is not found." << endl;
             return false;
         }
+        steering->setActuationMode(Link::JOINT_TORQUE);
+        io->enableIO(steering);
+
         drive = body->link("REAR_WHEEL");
         if(!drive){
             os << "The rear_wheel link is not found." << endl;
             return false;
         }
-        
-        io->setJointInput(JOINT_ANGLE | JOINT_VELOCITY);
+        drive->setActuationMode(Link::JOINT_TORQUE);
+        io->enableInput(drive, JOINT_VELOCITY);
+        io->enableOutput(drive);
         
         if(!joystick.isReady()){
             os << "Joystick is not ready: " << joystick.errorMessage() << endl;
@@ -46,7 +51,7 @@ public:
         return true;
     }
 
-    virtual bool control()
+    virtual bool control() override
     {
         joystick.readCurrentState();
         

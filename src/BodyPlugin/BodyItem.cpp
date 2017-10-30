@@ -74,6 +74,15 @@ void onSigOptionsParsed(boost::program_options::variables_map& variables)
             }
         }
     }
+    else if(variables.count("body")){
+    	vector<string> bodyFileNames = variables["body"].as<vector<string>>();
+    	for(size_t i=0; i < bodyFileNames.size(); ++i){
+    		BodyItemPtr item(new BodyItem());
+    		if(item->load(bodyFileNames[i], "OpenHRP-VRML-MODEL")){
+    			RootItem::mainInstance()->addChildItem(item);
+    		}
+    	}
+    }
 }
 
 }
@@ -167,10 +176,11 @@ void BodyItem::initializeClass(ExtensionManager* ext)
         ItemManager& im = ext->itemManager();
         im.registerClass<BodyItem>(N_("BodyItem"));
         im.addLoader<BodyItem>(
-            _("OpenHRP Model File"), "OpenHRP-VRML-MODEL", "body;wrl;yaml;yml;dae;stl", std::bind(loadBodyItem, _1, _2));
+            _("Body"), "OpenHRP-VRML-MODEL", "body;wrl;yaml;yml;dae;stl", std::bind(loadBodyItem, _1, _2));
 
         OptionManager& om = ext->optionManager();
         om.addOption("hrpmodel", boost::program_options::value< vector<string> >(), "load an OpenHRP model file");
+        om.addOption("body", boost::program_options::value< vector<string> >(), "load a body file");
         om.sigOptionsParsed().connect(onSigOptionsParsed);
 
         initialized = true;
@@ -434,8 +444,6 @@ void BodyItem::storeKinematicState(BodyState& state)
 */
 bool BodyItem::restoreKinematicState(const BodyState& state)
 {
-    bool modified = false;
-
     BodyState currentState;
     storeKinematicState(currentState);
 
@@ -677,7 +685,7 @@ void BodyItemImpl::createPenetrationBlocker(Link* link, bool excludeSelfCollisio
     if(worldItem){
         blocker = std::make_shared<PenetrationBlocker>(worldItem->collisionDetector()->clone(), link);
         const ItemList<BodyItem>& bodyItems = worldItem->collisionBodyItems();
-        for(int i=0; i < bodyItems.size(); ++i){
+        for(size_t i=0; i < bodyItems.size(); ++i){
             BodyItem* bodyItem = bodyItems.get(i);
             if(bodyItem != self && bodyItem->body()->isStaticModel()){
                 blocker->addOpponentLink(bodyItem->body()->rootLink());
@@ -1120,7 +1128,6 @@ void BodyItemImpl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty.decimals(3)(_("Mass"), body->mass());
     putProperty(_("Static model"), body->isStaticModel(),
                 (std::bind(&BodyItemImpl::onStaticModelPropertyChanged, this, _1)));
-    putProperty(_("Model file"), getFilename(boost::filesystem::path(self->filePath())));
     putProperty(_("Collision detection"), isCollisionDetectionEnabled,
                 (std::bind(&BodyItemImpl::enableCollisionDetection, this, _1)));
     putProperty(_("Self-collision detection"), isSelfCollisionDetectionEnabled,
@@ -1160,7 +1167,7 @@ bool BodyItemImpl::store(Archive& archive)
     BodyState::Data& initialJointPositions = initialState.data(BodyState::JOINT_POSITIONS);
     if(!initialJointPositions.empty()){
         qs = archive.createFlowStyleListing("initialJointPositions");
-        for(int i=0; i < initialJointPositions.size(); ++i){
+        for(size_t i=0; i < initialJointPositions.size(); ++i){
             qs->append(initialJointPositions[i], 10, n);
         }
     }

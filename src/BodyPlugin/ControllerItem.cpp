@@ -5,29 +5,22 @@
 
 #include "ControllerItem.h"
 #include <cnoid/Archive>
-#include <boost/tokenizer.hpp>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
 
 
-double ControllerItemIO::worldTimeStep() const
-{
-    return timeStep();
-}
-
-
 ControllerItem::ControllerItem()
 {
-    isImmediateMode_ = true;
+    isNoDelayMode_ = true;
 }
 
 
 ControllerItem::ControllerItem(const ControllerItem& org)
     : Item(org)
 {
-    isImmediateMode_ = org.isImmediateMode_;
+    isNoDelayMode_ = org.isNoDelayMode_;
 }
 
 
@@ -37,25 +30,10 @@ ControllerItem::~ControllerItem()
 }
 
 
-bool ControllerItem::splitOptionString(const std::string& optionString, std::vector<std::string>& out_options) const
+bool ControllerItem::setNoDelayMode(bool on)
 {
-    out_options.clear();
-    typedef boost::escaped_list_separator<char> separator;
-    separator sep('\\', ' ');
-    boost::tokenizer<separator> tok(optionString, sep);
-    for(boost::tokenizer<separator>::iterator p = tok.begin(); p != tok.end(); ++p){
-        const string& token = *p;
-        if(!token.empty()){
-            out_options.push_back(token);
-        }
-    }
-    return !out_options.empty();
-}
-
-
-void ControllerItem::setImmediateMode(bool on)
-{
-    isImmediateMode_ = on;
+    isNoDelayMode_ = on;
+    return on;
 }
 
 
@@ -65,19 +43,13 @@ bool ControllerItem::isActive() const
 }
 
 
-bool ControllerItem::initialize(ControllerItemIO* io)
+bool ControllerItem::initialize(ControllerIO* io)
 {
     return true;
 }
 
 
 bool ControllerItem::start()
-{
-    return true;
-}
-
-
-bool ControllerItem::start(ControllerItemIO* io)
 {
     return true;
 }
@@ -115,14 +87,14 @@ SignalProxy<void(const std::string& message)> ControllerItem::sigMessage()
 
 void ControllerItem::doPutProperties(PutPropertyFunction& putProperty)
 {
-    putProperty(_("Immediate mode"), isImmediateMode_, changeProperty(isImmediateMode_));
+    putProperty(_("No delay mode"), isNoDelayMode_, changeProperty(isNoDelayMode_));
     putProperty(_("Controller options"), optionString_, changeProperty(optionString_));
 }
 
 
 bool ControllerItem::store(Archive& archive)
 {
-    archive.write("isImmediateMode", isImmediateMode_);
+    archive.write("isNoDelayMode", isNoDelayMode_);
     archive.write("controllerOptions", optionString_, DOUBLE_QUOTED);
     return true;
 }
@@ -130,7 +102,10 @@ bool ControllerItem::store(Archive& archive)
 
 bool ControllerItem::restore(const Archive& archive)
 {
-    archive.read("isImmediateMode", isImmediateMode_);
+    if(!archive.read("isNoDelayMode", isNoDelayMode_)){
+        // For the backward compatibility
+        archive.read("isImmediateMode", isNoDelayMode_); 
+    }
     archive.read("controllerOptions", optionString_);
     return true;
 }

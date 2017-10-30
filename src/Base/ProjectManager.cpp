@@ -367,6 +367,12 @@ void ProjectManager::saveProject(const string& filename)
 
 void ProjectManagerImpl::saveProject(const string& filename)
 {
+    YAMLWriter writer(filename);
+    if(!writer.isOpen()){
+        messageView->put(MessageView::ERROR, str(fmt(_("Can't open file \"%1%\" for writing.\n")) % filename));
+        return;
+    }
+
     messageView->putln();
     messageView->notify(str(fmt(_("Saving a project to \"%1%\" ...\n")) % filename));
     messageView->flush();
@@ -431,7 +437,6 @@ void ProjectManagerImpl::saveProject(const string& filename)
     */
 
     if(stored){
-        YAMLWriter writer(filename);
         writer.setKeyOrderPreservationMode(true);
         writer.putNode(archive);
         messageView->notify(_("Saving a project file has been finished.\n"));
@@ -556,7 +561,23 @@ void ProjectManager::resetArchivers(const std::string& moduleName)
     impl->archivers.erase(moduleName);
 }
 
+
 std::string ProjectManager::currentProjectFile() const
 {
-    return impl->lastAccessedProjectFile;
+    if(impl->lastAccessedProjectFile.empty()){
+        return "";
+    } else {
+        return filesystem::absolute(filesystem::path(impl->lastAccessedProjectFile)).string();
+    }
+}
+
+
+std::string ProjectManager::currentProjectDirectory() const
+{
+    if(impl->lastAccessedProjectFile.empty()){
+        return "";
+    } else {
+        filesystem::path projectFilePath(impl->lastAccessedProjectFile);
+        return filesystem::absolute(projectFilePath.parent_path()).string();
+    }
 }

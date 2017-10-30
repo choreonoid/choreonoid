@@ -673,7 +673,7 @@ SgLineSet* MeshGenerator::generateExtrusionLineSet(const Extrusion& extrusion, S
 SgMesh* MeshGenerator::generateElevationGrid(const ElevationGrid& grid)
 {
     SgMesh* mesh = new SgMesh;
-    if(grid.xDimension * grid.zDimension != grid.height.size()){
+    if(grid.xDimension * grid.zDimension != static_cast<int>(grid.height.size())){
         return mesh;
     }
 

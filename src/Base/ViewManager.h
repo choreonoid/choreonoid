@@ -85,6 +85,8 @@ public:
         return static_cast<ViewType*>(findSpecificTypeView(typeid(ViewType), instanceName));
     }
 
+    void deleteView(View* view);
+
     static bool isPrimalInstance(View* view);
 
     static bool storeViewStates(ArchivePtr archive, const std::string& key);
@@ -108,7 +110,7 @@ public:
     static SignalProxy<void(View* view)> sigViewRemoved();
 
 private:
-    ViewManager(const ViewManager& org) { }
+    ViewManager(const ViewManager&) { }
     
     View* registerClassSub(
         const std::type_info& view_type_info, const std::string& className, const std::string& defaultInstanceName,

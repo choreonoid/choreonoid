@@ -1,8 +1,8 @@
 #ifndef CNOID_AGXDYNAMICS_PLUGIN_AGX_SCENE_H
 #define CNOID_AGXDYNAMICS_PLUGIN_AGX_SCENE_H
 
+#include "exportdecl.h"
 #include "AGXObjectFactory.h"
-#include "AGXBody.h"
 
 namespace cnoid{
 
@@ -12,22 +12,24 @@ struct AGXSceneDesc
     AGXSimulationDesc simdesc;
 };
 
-class AGXScene;
-typedef agx::ref_ptr<AGXScene> AGXSceneRef;
-class AGXScene : public agx::Referenced
+class CNOID_EXPORT AGXScene : public agx::Referenced
 {
 public:
     AGXScene(const AGXSceneDesc& desc);
-    static AGXSceneRef create(const AGXSceneDesc& desc);
+    static AGXScene* create(const AGXSceneDesc& desc);
     void clear();
     void stepSimulation();
-    void add(AGXBodyPtr agxBody);
-    agx::Bool add(agx::RigidBodyRef const rigid);
-    agx::Bool add(agx::ConstraintRef const constraint);
+    agxSDK::SimulationRef getSimulation() const;
+    agx::Bool add(agx::RigidBody* const rigid);
+    agx::Bool add(agx::Constraint* const constraint);
+    agx::Bool add(agxSDK::Assembly* const assembly);
     agx::MaterialRef getMaterial(const agx::String& materialName);
     agx::MaterialRef createMaterial(const AGXMaterialDesc& desc);
     agx::ContactMaterialRef createContactmaterial(agx::MaterialRef const matA, agx::MaterialRef const matB, const AGXContactMaterialDesc& desc);
     agx::ContactMaterialRef createContactMaterial(const AGXContactMaterialDesc& desc);
+    void printMaterials();
+    void printContactMaterialTable();
+    void setCollision(const agx::Name& name, bool bOn);
     void setCollisionPair(const unsigned& id1, const unsigned& id2, bool bOn);
     void setCollisionPair(const agx::Name& name1, const agx::Name& name2, bool bOn);
     agx::Vec3 getGravity() const;
@@ -38,8 +40,8 @@ public:
 
 private:
     agxSDK::SimulationRef _agxSimulation;
-    agxSDK::SimulationRef getSimulation() const;
 };
+typedef agx::ref_ptr<AGXScene> AGXSceneRef;
 
 }
 #endif

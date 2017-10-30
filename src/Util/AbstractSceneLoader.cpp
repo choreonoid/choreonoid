@@ -13,19 +13,19 @@ AbstractSceneLoader::~AbstractSceneLoader()
 }
 
 
-void AbstractSceneLoader::setMessageSink(std::ostream& os)
+void AbstractSceneLoader::setMessageSink(std::ostream& /* os */)
 {
 
 }
 
 
-void AbstractSceneLoader::setDefaultDivisionNumber(int n)
+void AbstractSceneLoader::setDefaultDivisionNumber(int /* n */)
 {
 
 }
 
 
-void AbstractSceneLoader::setDefaultCreaseAngle(double theta)
+void AbstractSceneLoader::setDefaultCreaseAngle(double /* theta */)
 {
 
 }

@@ -71,7 +71,10 @@ AssimpSceneLoader::AssimpSceneLoader()
 
 AssimpSceneLoaderImpl::AssimpSceneLoaderImpl()
 {
+#ifdef AI_CONFIG_IMPORT_COLLADA_IGNORE_UP_DIRECTION
     importer.SetPropertyBool(AI_CONFIG_IMPORT_COLLADA_IGNORE_UP_DIRECTION, true);
+#endif
+
     imageIO.setUpsideDown(true);
     os_ = &nullout();
 }
@@ -324,7 +327,7 @@ SgMaterial* AssimpSceneLoaderImpl::convertAiMaterial(unsigned int index)
     }
     
     aiColor3D color(0.f, 0.f, 0.f);
-    float diffuse;
+    float diffuse{};
     if(AI_SUCCESS == srcMaterial->Get(AI_MATKEY_COLOR_DIFFUSE, color)){
         material->setDiffuseColor(Vector3(color.r, color.g, color.b));
         diffuse = color.r+color.g+color.b;
@@ -341,7 +344,7 @@ SgMaterial* AssimpSceneLoaderImpl::convertAiMaterial(unsigned int index)
         material->setShininess(s / 128.0f);
     }
     if(AI_SUCCESS == srcMaterial->Get(AI_MATKEY_COLOR_AMBIENT, color)){
-        float c = diffuse==0? 0 : (color.r+color.g+color.b)/diffuse;
+        float c = diffuse ==0 ? 0 : (color.r + color.g + color.b) / diffuse;
         if(c>1)
             c=1;
         material->setAmbientIntensity(c);
@@ -349,7 +352,7 @@ SgMaterial* AssimpSceneLoaderImpl::convertAiMaterial(unsigned int index)
 
     float o;
     if (AI_SUCCESS == srcMaterial->Get(AI_MATKEY_OPACITY, o)){
-        if(!o){    //設定値が逆のものがある？暫定処理 TODO
+        if(!o){ // This is temporary processing. Is there anything with the opposite setting value?
             material->setTransparency(o);
         } else {
             material->setTransparency(1.0f - o);

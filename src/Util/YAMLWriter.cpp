@@ -61,7 +61,7 @@ void YAMLWriter::setIndentWidth(int n)
 
 void YAMLWriter::setKeyOrderPreservationMode(bool on)
 {
-    isKeyOrderPreservationMode = true;
+    isKeyOrderPreservationMode = on;
 }
 
 
@@ -538,4 +538,12 @@ void YAMLWriter::putListingNode(const Listing* listing)
     }
 
     endListing();
+}
+
+bool YAMLWriter::isOpen()
+{
+    if (ofs.is_open())
+        return true;
+    else
+        return false;
 }

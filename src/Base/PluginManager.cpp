@@ -31,9 +31,6 @@ namespace filesystem = boost::filesystem;
 
 
 #ifdef Q_OS_WIN32
-static const char* DLL_PREFIX = "";
-static const char* DLL_SUFFIX = "dll";
-static const char* PATH_DELIMITER = ";";
 # ifdef CNOID_DEBUG
 static const char* DEBUG_SUFFIX = "d";
 # else
@@ -41,14 +38,8 @@ static const char* DEBUG_SUFFIX = "";
 # endif
 #else
 # ifdef Q_OS_MAC
-static const char* DLL_PREFIX = "lib";
-static const char* DLL_SUFFIX = "dylib";
-static const char* PATH_DELIMITER = ":";
 static const char* DEBUG_SUFFIX = "";
 # else
-static const char* DLL_PREFIX = "lib";
-static const char* DLL_SUFFIX = "so";
-static const char* PATH_DELIMITER = ":";
 static const char* DEBUG_SUFFIX = "";
 # endif
 #endif
@@ -191,7 +182,8 @@ PluginManagerImpl::PluginManagerImpl(ExtensionManager* ext)
       unloadPluginsLater(std::bind(&PluginManagerImpl::unloadPluginsActually, this), LazyCaller::PRIORITY_LOW),
       reloadPluginsLater(std::bind(&PluginManagerImpl::loadPlugins, this), LazyCaller::PRIORITY_LOW)
 {
-    pluginNamePattern.setPattern(QString(DLL_PREFIX) + "Cnoid.+Plugin" + DEBUG_SUFFIX + "\\." + DLL_SUFFIX);
+    pluginNamePattern.setPattern(
+        QString(DLL_PREFIX) + "Cnoid.+Plugin" + DEBUG_SUFFIX + "\\." + DLL_EXTENSION);
 
     MappingPtr config = AppConfig::archive()->openMapping("PluginManager");
 
@@ -660,7 +652,7 @@ void PluginManagerImpl::onLoadPluginTriggered()
     dialog.setLabelText(QFileDialog::Reject, _("Cancel"));
 
     QStringList filters;
-    filters << QString(_("Plugin files (*.%1)")).arg(DLL_SUFFIX);
+    filters << QString(_("Plugin files (*.%1)")).arg(DLL_EXTENSION);
     filters << _("Any files (*)");
     dialog.setNameFilters(filters);
 

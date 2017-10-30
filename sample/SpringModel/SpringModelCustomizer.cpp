@@ -23,7 +23,7 @@ const char** getTargetModelNames()
     return names;
 }
 
-BodyCustomizerHandle create(BodyHandle bodyHandle, const char* modelName)
+BodyCustomizerHandle create(BodyHandle bodyHandle, const char* /* modelName */)
 {
     Customizer* customizer = new Customizer();
     int upperJointIndex = bodyInterface->getLinkIndexFromName(bodyHandle, "UPPER");

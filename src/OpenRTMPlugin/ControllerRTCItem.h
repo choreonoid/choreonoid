@@ -22,7 +22,6 @@ public:
     ControllerRTCItem(const ControllerRTCItem& org);
     virtual ~ControllerRTCItem();
 
-    void setRelativePathBaseType(int which);
     void setRTCModule(const std::string& name);
     void setRTCInstanceName(const std::string& name);
     void setExecContextType(int which);
@@ -31,7 +30,8 @@ public:
     RTC::RtcBase* rtc();
     std::string rtcModuleName() const;
     std::string rtcInstanceName() const;
-        
+
+    using ControllerItem::initialize;
     virtual bool start() override;
     virtual double timeStep() const override;
     virtual void input() override;

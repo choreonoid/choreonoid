@@ -1,0 +1,193 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: DoubleArmV7
+rootLink: TFRAME
+
+links:
+  -
+    name: TFRAME
+    jointType: free
+    translation: [ 0, 0, 0.520 ]
+    rotation: [ 1, 0, 0, 90 ]
+    mass: 445
+    centerOfMass: [ 2.61167950E-02, -2.48536360E-01, 7.38255770E-05 ]
+    inertia: [
+      1.17125210E+02,  9.30859190E-01,  7.71323470E-03,
+      9.30859190E-01,  2.13308730E+02,  -4.07759970E-03,
+      7.71323470E-03,  -4.07759970E-03, 1.08880120E+02 ]
+    elements:
+      - type: Resource
+        uri: "prt/frame1.wrl"
+      -
+        type: AGXVehicleContinuousTrackDevice
+        name: TRACK_L
+        sprocketNames: [ WHEEL_L0 ]
+        rollerNames: [ WHEEL_L1, WHEEL_L2 ]
+        idlerNames: [ WHEEL_L3 ]
+        upAxis: [ 0, 1, 0 ]
+        numberOfNodes: 42
+        nodeThickness: 0.01
+        nodeWidth:  0.25
+        nodeDistanceTension: 2.0E-4
+        nodeThickerThickness: 0.02
+        useThickerNodeEvery: 0
+        hingeCompliance: 9.0E-10
+        hingeDamping: 0.01
+        minStabilizingHingeNormalForce: 100
+        stabilizingHingeFrictionParameter: 1e-6
+        enableMerge: false
+        numNodesPerMergeSegment: 3
+        contactReduction: 3
+        enableLockToReachMergeCondition: true
+        lockToReachMergeConditionCompliance: 0.1
+        lockToReachMergeConditionDamping: 0.01
+      -
+        type: AGXVehicleContinuousTrackDevice
+        name: TRACK_R
+        sprocketNames: [ WHEEL_R0 ]
+        rollerNames: [ WHEEL_R1, WHEEL_R2 ]
+        idlerNames: [ WHEEL_R3 ]
+        upAxis: [ 0, 1, 0 ]
+        numberOfNodes: 42
+        nodeThickness: 0.01
+        nodeWidth:  0.25
+        nodeDistanceTension: 2.0E-4
+        nodeThickerThickness: 0.02
+        useThickerNodeEvery: 0
+        hingeCompliance: 9.0E-10
+        hingeDamping: 0.01
+        minStabilizingHingeNormalForce: 100
+        stabilizingHingeFrictionParameter: 1e-6
+        enableMerge: false
+        numNodesPerMergeSegment: 3
+        contactReduction: 3
+        enableLockToReachMergeCondition: true
+        lockToReachMergeConditionCompliance: 0.1
+        lockToReachMergeConditionDamping: 0.01
+  -
+    name: WHEEL_L0
+    parent: TFRAME
+    jointType: revolute
+    jointAxis: [ 0, 0, 1 ]
+    jointId: 0
+    translation: [ -0.74, -0.295, 0.600 ]
+    centerOfMass: [ 0, 0, 0 ]
+    maxJointVelocity: 573
+    mass: 13.25
+    inertia: [
+      0.2015, 0, 0,
+      0, 0.2015, 0,
+      0, 0, 0.265 ]
+    elements: &WeelShape
+      Shape:
+        rotation: [ 1, 0, 0, 90 ]
+        appearance: &black
+          material:
+            diffuseColor: [ 0.3, 0.3, 0.3 ]
+            ambientIntensity: 0.2
+            specularColor: [ 0.8, 0.8, 0.8 ]
+        geometry: { type: Cylinder, radius: 0.2, height: 0.25 }
+  -
+    name: WHEEL_L1
+    parent: TFRAME
+    jointType: revolute
+    jointAxis: [ 0, 0, 1 ]
+    translation: [ -0.26, -0.295, 0.600 ]
+    centerOfMass: [ 0, 0, 0 ]
+    maxJointVelocity: 573
+    mass: 13.25
+    inertia: [
+      0.2015, 0, 0,
+      0, 0.2015, 0,
+      0, 0, 0.265 ]
+    elements: *WeelShape
+  -
+    name: WHEEL_L2
+    parent: TFRAME
+    jointType: revolute
+    jointAxis: [ 0, 0, 1 ]
+    translation: [ 0.22, -0.295, 0.600 ]
+    centerOfMass: [ 0, 0, 0 ]
+    maxJointVelocity: 573
+    mass: 13.25
+    inertia: [
+      0.2015, 0, 0,
+      0, 0.2015, 0,
+      0, 0, 0.265 ]
+    elements: *WeelShape
+  -
+    name: WHEEL_L3
+    parent: TFRAME
+    jointType: revolute
+    jointAxis: [ 0, 0, 1 ]
+    translation: [ 0.70, -0.295, 0.600 ]
+    centerOfMass: [ 0, 0, 0 ]
+    maxJointVelocity: 573
+    mass: 13.25
+    inertia: [
+      0.2015, 0, 0,
+      0, 0.2015, 0,
+      0, 0, 0.265 ]
+    elements: *WeelShape
+  -
+    name: WHEEL_R0
+    parent: TFRAME
+    jointType: revolute
+    jointAxis: [ 0, 0, 1 ]
+    jointId: 1
+    translation: [ -0.74, -0.295, -0.600 ]
+    centerOfMass: [ 0, 0, 0 ]
+    maxJointVelocity: 573
+    mass: 13.25
+    inertia: [
+      0.2015, 0, 0,
+      0, 0.2015, 0,
+      0, 0, 0.265 ]
+    elements: *WeelShape
+  -
+    name: WHEEL_R1
+    parent: TFRAME
+    jointType: revolute
+    jointAxis: [ 0, 0, 1 ]
+    translation: [ -0.26, -0.295, -0.600 ]
+    centerOfMass: [ 0, 0, 0 ]
+    maxJointVelocity: 573
+    mass: 13.25
+    inertia: [
+      0.2015, 0, 0,
+      0, 0.2015, 0,
+      0, 0, 0.265 ]
+    elements: *WeelShape
+  -
+    name: WHEEL_R2
+    parent: TFRAME
+    jointType: revolute
+    jointAxis: [ 0, 0, 1 ]
+    translation: [ 0.22, -0.295, -0.600 ]
+    centerOfMass: [ 0, 0, 0 ]
+    maxJointVelocity: 573
+    mass: 13.25
+    inertia: [
+      0.2015, 0, 0,
+      0, 0.2015, 0,
+      0, 0, 0.265 ]
+    elements: *WeelShape
+  -
+    name: WHEEL_R3
+    parent: TFRAME
+    jointType: revolute
+    jointAxis: [ 0, 0, 1 ]
+    translation: [ 0.70, -0.295, -0.600 ]
+    centerOfMass: [ 0, 0, 0 ]
+    maxJointVelocity: 573
+    mass: 13.25
+    inertia: [
+      0.2015, 0, 0,
+      0, 0.2015, 0,
+      0, 0, 0.265 ]
+    elements: *WeelShape
+  -
+    type: SubBody
+    uri: DoubleArmV7-Upper.body
+    parent: TFRAME

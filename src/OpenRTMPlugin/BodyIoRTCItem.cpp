@@ -15,7 +15,7 @@ using boost::format;
 
 namespace cnoid {
 
-class BodyIoRTCItemImpl
+class BodyIoRTCItemImpl : public ControllerIO
 {
 public:
     BodyIoRTCItem* self;
@@ -27,6 +27,11 @@ public:
     BodyIoRTCItemImpl(BodyIoRTCItem* self, const BodyIoRTCItemImpl& org);
     void setBodyItem(BodyItem* newBodyItem, bool forceReset);
     bool createBodyIoRTC();
+
+    // Virtual functions of ControllerIO
+    virtual Body* body();
+    virtual std::string optionString() const;
+    virtual std::ostream& os() const;
 };
 
 }
@@ -106,6 +111,27 @@ std::string BodyIoRTCItem::getDefaultRTCInstanceName() const
 }
 
 
+Body* BodyIoRTCItemImpl::body()
+{
+    if(bodyItem){
+        return bodyItem->body();
+    }
+    return nullptr;
+}
+
+
+std::string BodyIoRTCItemImpl::optionString() const
+{
+    return self->optionString();
+}
+
+
+std::ostream& BodyIoRTCItemImpl::os() const
+{
+    return mv->cout();
+}
+
+
 bool BodyIoRTCItem::createRTC()
 {
     return impl->createBodyIoRTC();
@@ -129,7 +155,14 @@ bool BodyIoRTCItemImpl::createBodyIoRTC()
             self->deleteRTC(false);
             return false;
         }
-        if(bodyIoRTC->onInitialize(bodyItem->body()) != RTC::RTC_OK){
+        bool initialized = false;
+        if(bodyIoRTC->onInitialize(bodyItem->body()) == RTC::RTC_OK){ // old API
+            initialized = true;
+        } else {
+            initialized = bodyIoRTC->initializeIO(this);
+        }
+
+        if(!initialized){
             mv->putln(MessageView::ERROR,
                       format(_("RTC \"%1%\" of %2% failed to initialize."))
                       % self->rtcModuleName() % self->name());
@@ -153,7 +186,7 @@ void BodyIoRTCItem::deleteRTC(bool waitToBeDeleted)
 }
 
 
-bool BodyIoRTCItem::initialize(ControllerItemIO* io)
+bool BodyIoRTCItem::initialize(ControllerIO* io)
 {
     if(impl->bodyIoRTC){
         return impl->bodyIoRTC->initializeSimulation(io);

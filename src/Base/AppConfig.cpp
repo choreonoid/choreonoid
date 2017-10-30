@@ -18,6 +18,7 @@ using namespace cnoid;
 using boost::filesystem::path;
 
 namespace {
+
 string application;
 string organization;
 
@@ -26,7 +27,8 @@ path filePath;
 path fullPath;
 
 std::shared_ptr<YAMLReader> pYAMLReader;
-};
+
+}
 
 bool AppConfig::initialize(const std::string& application_, const std::string& organization_)
 {

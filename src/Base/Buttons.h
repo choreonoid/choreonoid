@@ -10,6 +10,7 @@
 #include <QRadioButton>
 #include <QButtonGroup>
 #include <QToolButton>
+#include <memory>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -85,13 +86,20 @@ public:
         return sigToggled_;
     }
 
+    SignalProxy<void()> sigPressed();
+    SignalProxy<void()> sigReleased();
+
 private Q_SLOTS:
     void onClicked(bool checked);
     void onToggled(bool checked);
+    void onPressed();
+    void onReleased();
 
 private:
     Signal<void()> sigClicked_;
     Signal<void(bool)> sigToggled_;
+    std::unique_ptr<Signal<void()>> sigPressed_;
+    std::unique_ptr<Signal<void()>> sigReleased_;
 };
 
 

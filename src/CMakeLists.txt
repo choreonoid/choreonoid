@@ -1,9 +1,9 @@
 
 add_subdirectory(Util)
-add_subdirectory(Python)
 add_subdirectory(AISTCollisionDetector)
 add_subdirectory(Body)
 add_subdirectory(Corba)
+add_subdirectory(OpenRTM)
 
 if(ENABLE_GUI)
   add_subdirectory(Base)
@@ -21,10 +21,10 @@ if(ENABLE_GUI)
   add_subdirectory(ScenarioPlugin)
   
   add_subdirectory(ODEPlugin)
+  add_subdirectory(SpringheadPlugin)
   add_subdirectory(BulletPlugin)
   add_subdirectory(PhysXPlugin)
   add_subdirectory(RokiPlugin)
-  add_subdirectory(AgXPlugin)
   add_subdirectory(AGXDynamicsPlugin)
   add_subdirectory(FCLPlugin)
   add_subdirectory(SDFPlugin)
@@ -35,15 +35,9 @@ if(ENABLE_GUI)
   add_subdirectory(OpenHRPPlugin)
   add_subdirectory(Hrpsys31Plugin)
   
-  if(USE_PYTHON3)
-    add_subdirectory(Python3Plugin)
-    add_subdirectory(GrxUIPython3Plugin)
-  else()
-    add_subdirectory(PythonPlugin)
-    add_subdirectory(GrxUIPlugin)
-  endif()
-  
+  add_subdirectory(PythonPlugin)
   add_subdirectory(PythonSimScriptPlugin)
-  
+  add_subdirectory(GrxUIPlugin)
+
   add_subdirectory(Choreonoid)
 endif()

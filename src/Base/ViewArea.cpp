@@ -165,7 +165,7 @@ public:
     
     bool viewTabMousePressEvent(ViewPane* pane, QMouseEvent* event);
     bool viewTabMouseMoveEvent(ViewPane* pane, QMouseEvent* event);
-    bool viewTabMouseReleaseEvent(ViewPane* pane, QMouseEvent *event);
+    bool viewTabMouseReleaseEvent(QMouseEvent *event);
 
     void showRectangle(QRect r);
     void dragView(QMouseEvent* event);
@@ -416,7 +416,7 @@ bool ViewPane::eventFilter(QObject* object, QEvent* event)
         case QEvent::MouseButtonDblClick:
             break;
         case QEvent::MouseButtonRelease:
-            return viewAreaImpl->viewTabMouseReleaseEvent(this, static_cast<QMouseEvent*>(event));
+            return viewAreaImpl->viewTabMouseReleaseEvent(static_cast<QMouseEvent*>(event));
         case QEvent::MouseMove:
             return viewAreaImpl->viewTabMouseMoveEvent(this, static_cast<QMouseEvent*>(event));
         default:
@@ -1501,7 +1501,7 @@ bool ViewAreaImpl::viewTabMouseMoveEvent(ViewPane* pane, QMouseEvent* event)
 }
 
 
-bool ViewAreaImpl::viewTabMouseReleaseEvent(ViewPane* pane, QMouseEvent *event)
+bool ViewAreaImpl::viewTabMouseReleaseEvent(QMouseEvent *event)
 {
     if(isViewDragging){
         bool isMovingInViewArea = (self == dragDestViewArea);

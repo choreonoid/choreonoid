@@ -33,7 +33,7 @@ public:
     void setFunction(Function func){
         int id = ObjectBase::template findPolymorphicId<Object>();
         if(id >= 0){
-            if(id >= dispatchTable.size()){
+            if(id >= static_cast<int>(dispatchTable.size())){
                 dispatchTable.resize(id + 1);
                 isFixed.resize(id + 1, false);
             }
@@ -62,7 +62,7 @@ public:
 
     void updateDispatchTable() {
 
-        const int numTypes = ObjectBase::numPolymorphicTypes();
+        const size_t numTypes = ObjectBase::numPolymorphicTypes();
         if(dispatchTable.size() == numTypes && !isDirty){
             return;
         }
@@ -98,7 +98,7 @@ public:
 
     inline void dispatch(ObjectBase* obj){
         const int id = obj->polymorhicId();
-        if(id >= dispatchTable.size()){
+        if(id >= static_cast<int>(dispatchTable.size())){
             updateDispatchTable();
         }
         const Function& func = dispatchTable[id];

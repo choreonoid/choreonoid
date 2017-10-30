@@ -72,8 +72,8 @@ private:
     GLuint programHandle;
     bool isLinked_;
 
-    GLSLProgram(const GLSLProgram& other) { }
-    GLSLProgram& operator=(const GLSLProgram& other) { return *this; }
+    GLSLProgram(const GLSLProgram&) { }
+    GLSLProgram& operator=(const GLSLProgram&) { return *this; }
 };
 
 

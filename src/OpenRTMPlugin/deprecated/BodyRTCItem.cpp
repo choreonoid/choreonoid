@@ -9,6 +9,7 @@
 #include <cnoid/BodyItem>
 #include <cnoid/Link>
 #include <cnoid/BasicSensors>
+#include <cnoid/ControllerIO>
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
 #include <cnoid/FileUtil>
@@ -21,7 +22,6 @@
 #include "../gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 using namespace RTC;
 using boost::format;
@@ -45,7 +45,7 @@ void BodyRTCItem::initialize(ExtensionManager* ext)
 BodyRTCItem::BodyRTCItem()
     : os(MessageView::instance()->cout()),
       configMode(N_CONFIG_MODES, CNOID_GETTEXT_DOMAIN_NAME),
-      pathBase(N_PATH_BASE, CNOID_GETTEXT_DOMAIN_NAME)
+      baseDirectoryType(N_BASE_DIRECTORY_TYPES, CNOID_GETTEXT_DOMAIN_NAME)
 {
     setName("BodyRTC");
     
@@ -61,16 +61,14 @@ BodyRTCItem::BodyRTCItem()
     configMode.setSymbol(CONF_FILE_MODE,  N_("Use Configuration File"));
     configMode.setSymbol(CONF_ALL_MODE,  N_("Create Default Port"));
     configMode.select(CONF_ALL_MODE);
-    oldMode = CONF_ALL_MODE;
     autoConnect = false;
 
-    pathBase.setSymbol(RTC_DIRECTORY, N_("RTC directory"));
-    pathBase.setSymbol(PROJECT_DIRECTORY, N_("Project directory"));
-    pathBase.select(RTC_DIRECTORY);
-    oldPathBase = RTC_DIRECTORY;
+    baseDirectoryType.setSymbol(RTC_DIRECTORY, N_("RTC directory"));
+    baseDirectoryType.setSymbol(PROJECT_DIRECTORY, N_("Project directory"));
+    baseDirectoryType.select(RTC_DIRECTORY);
+    rtcDirectory = filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "rtc";
 
     executionCycleProperty = 0.0;
-
 }
 
 
@@ -78,7 +76,7 @@ BodyRTCItem::BodyRTCItem(const BodyRTCItem& org)
     : ControllerItem(org),
       os(MessageView::instance()->cout()),
       configMode(org.configMode),
-      pathBase(org.pathBase)
+      baseDirectoryType(org.baseDirectoryType)
 {
     io = 0;
     virtualRobotRTC = org.virtualRobotRTC;
@@ -87,11 +85,10 @@ BodyRTCItem::BodyRTCItem(const BodyRTCItem& org)
     moduleName = org.moduleName;
     instanceName = org.instanceName;
     bodyName = org.bodyName;
-    oldMode = org.oldMode;
     autoConnect = org.autoConnect;
     mv = MessageView::instance();
     executionCycleProperty = org.executionCycleProperty;
-    oldPathBase = org.oldPathBase;
+    rtcDirectory = org.rtcDirectory;
 }
 
 
@@ -105,7 +102,11 @@ void BodyRTCItem::createRTC(BodyPtr body)
 {
     bridgeConf = new BridgeConf();
 
-    if(configMode.is(CONF_FILE_MODE)){
+    filesystem::path projectDir(ProjectManager::instance()->currentProjectDirectory());
+
+    if(configMode.is(CONF_ALL_MODE)){
+        setdefaultPort(body);
+    } else if(configMode.is(CONF_FILE_MODE)){
         filesystem::path confPath;
         if(!confFileName.empty()){
             confPath = confFileName;
@@ -114,17 +115,15 @@ void BodyRTCItem::createRTC(BodyPtr body)
         }
 
         if(!confPath.empty()){
-            if(!checkAbsolute(confPath)){
-                if (pathBase.is(RTC_DIRECTORY))
-                    confPath = filesystem::path(executableTopDirectory()) /
-                        CNOID_PLUGIN_SUBDIR / "rtc" / confPath;
-                else {
-                    string projectFile = ProjectManager::instance()->currentProjectFile();
-                    if (projectFile.empty()){
+            if(!confPath.is_absolute()){
+                if(baseDirectoryType.is(RTC_DIRECTORY)){
+                    confPath = rtcDirectory / confPath;
+                } else if(baseDirectoryType.is(PROJECT_DIRECTORY)){
+                    if(projectDir.empty()){
                         mv->putln(_("Please save the project."));
                         return;
                     } else {
-                        confPath = filesystem::path(projectFile).parent_path() / confPath;
+                        confPath = projectDir / confPath;
                    }
                 }
             }
@@ -135,8 +134,6 @@ void BodyRTCItem::createRTC(BodyPtr body)
                 mv->putln(fmt(_("Cannot find or open \"%1%\".")) % confFileName0);
             }
         }
-    }else{
-        setdefaultPort(body);
     }
 
     ModuleInfoList& moduleInfoList = bridgeConf->moduleInfoList;
@@ -160,17 +157,15 @@ void BodyRTCItem::createRTC(BodyPtr body)
             prop["exec_cxt.periodic.rate"] = "1000000";
 
             filesystem::path modulePath(moduleName);
-            if (!checkAbsolute(modulePath)){
-                if (pathBase.is(RTC_DIRECTORY))
-                    modulePath = filesystem::path(executableTopDirectory()) /
-                    CNOID_PLUGIN_SUBDIR / "rtc" / modulePath;
-                else {
-                    string projectFile = ProjectManager::instance()->currentProjectFile();
-                    if(projectFile.empty()){
+            if(!modulePath.is_absolute()){
+                if(baseDirectoryType.is(RTC_DIRECTORY)){
+                    modulePath = rtcDirectory / modulePath;
+                } else if(baseDirectoryType.is(PROJECT_DIRECTORY)){
+                    if(projectDir.empty()){
                         mv->putln(_("Please save the project."));
                         return;
                     } else {
-                        modulePath = filesystem::path(projectFile).parent_path() / modulePath;
+                        modulePath = projectDir / modulePath;
                     }
                 }
             }
@@ -297,12 +292,18 @@ Item* BodyRTCItem::doDuplicate() const
 }
 
 
-bool BodyRTCItem::start(ControllerItemIO* io)
+bool BodyRTCItem::initialize(ControllerIO* io)
 {
     this->io = io;
     simulationBody = io->body();
     timeStep_ = io->timeStep();
     controlTime_ = io->currentTime();
+
+    for(auto joint : simulationBody->joints()){
+        if(joint->isRevoluteJoint() || joint->isPrismaticJoint()){
+            joint->setActuationMode(Link::JOINT_EFFORT);
+        }
+    }
 
     forceSensors_ = simulationBody->devices<ForceSensor>().getSortedById();
     gyroSensors_ = simulationBody->devices<RateGyroSensor>().getSortedById();
@@ -311,6 +312,12 @@ bool BodyRTCItem::start(ControllerItemIO* io)
     executionCycle = (executionCycleProperty > 0.0) ? executionCycleProperty : timeStep_;
     executionCycleCounter = executionCycle;
 
+    return true;
+}
+
+
+bool BodyRTCItem::start()
+{
     bool isReady = true;
     
     if(rtcomp && !rtcomp->isValid()){
@@ -420,8 +427,24 @@ void BodyRTCItem::stop()
 
 void BodyRTCItem::setControllerModule(const std::string& name)
 {
-    if(moduleName!=name){
-        moduleName = name;
+    if(name != moduleName){
+
+        filesystem::path modulePath(name);
+        if(modulePath.is_absolute()){
+            baseDirectoryType.select(NO_BASE_DIRECTORY);
+            if(modulePath.parent_path() == rtcDirectory){
+                baseDirectoryType.select(RTC_DIRECTORY);
+                modulePath = modulePath.filename();
+            } else {
+                filesystem::path projectDir(ProjectManager::instance()->currentProjectDirectory());
+                if(!projectDir.empty() && (modulePath.parent_path() == projectDir)){
+                    baseDirectoryType.select(PROJECT_DIRECTORY);
+                    modulePath = modulePath.filename();
+                }
+            }
+        }
+        moduleName = modulePath.string();
+
         BodyItem* ownerBodyItem = findOwnerItem<BodyItem>();
         if(ownerBodyItem){
             BodyPtr body = ownerBodyItem->body();
@@ -440,7 +463,7 @@ void BodyRTCItem::setAutoConnectionMode(bool on)
 
 void BodyRTCItem::setConfigFile(const std::string& name)
 {
-    if(confFileName!=name){
+    if(name != confFileName){
         confFileName = name;
         if(configMode.is(CONF_ALL_MODE))
             return;
@@ -456,9 +479,8 @@ void BodyRTCItem::setConfigFile(const std::string& name)
 
 void BodyRTCItem::setConfigMode(int mode)
 {
-    configMode.select(mode);
-    if(oldMode != mode){
-        oldMode = mode;
+    if(mode != configMode.which()){
+        configMode.select(mode);
         BodyItem* ownerBodyItem = findOwnerItem<BodyItem>();
         if(ownerBodyItem){
             BodyPtr body = ownerBodyItem->body();
@@ -488,13 +510,13 @@ void BodyRTCItem::setInstanceName(const std::string& name)
     }
 }
 
-void BodyRTCItem::setPathBase(int base)
+
+void BodyRTCItem::setBaseDirectoryType(int type)
 {
-    pathBase.select(base);
-    if (oldPathBase != base){
-        oldPathBase = base;
+    if(type != baseDirectoryType.which()){
+        baseDirectoryType.select(type);
         BodyItem* ownerBodyItem = findOwnerItem<BodyItem>();
-        if (ownerBodyItem){
+        if(ownerBodyItem){
             BodyPtr body = ownerBodyItem->body();
             deleteModule(true);
             createRTC(body);
@@ -507,38 +529,36 @@ void BodyRTCItem::doPutProperties(PutPropertyFunction& putProperty)
     ControllerItem::doPutProperties(putProperty);
     putProperty(_("Auto Connect"), autoConnect, changeProperty(autoConnect));
     putProperty(_("RTC Instance name"), instanceName,
-                std::bind(&BodyRTCItem::setInstanceName, this, _1), true);
+                [&](const string& name){ setInstanceName(name); return true; });
     putProperty.decimals(3)(_("Periodic rate"), executionCycleProperty,
                             changeProperty(executionCycleProperty));
-    putProperty(_("Relative Path Base"), pathBase, 
-                std::bind(&BodyRTCItem::setPathBase, this, _1), true);
 
-    FileDialogFilter filter;
-    filter.push_back( string(_(" Dynamic Link Library ")) + DLLSFX );
-    string dir;
-    if(!moduleName.empty() && checkAbsolute(filesystem::path(moduleName)))
-        dir = filesystem::path(moduleName).parent_path().string();
-    else{
-        if(pathBase.is(RTC_DIRECTORY))
-            dir = (filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "rtc").string();
+    FilePathProperty moduleProperty(
+        moduleName,
+        { str(format(_("RT-Component module (*%1%)")) % DLL_SUFFIX) });
+
+    FilePathProperty confFileProperty(
+        confFileName,
+        { _("RTC cconfiguration file (*.conf)") });
+
+    if(baseDirectoryType.is(RTC_DIRECTORY)){
+        moduleProperty.setBaseDirectory(rtcDirectory.string());
+        confFileProperty.setBaseDirectory(moduleProperty.baseDirectory());
+    } else if(baseDirectoryType.is(PROJECT_DIRECTORY)){
+        moduleProperty.setBaseDirectory(ProjectManager::instance()->currentProjectDirectory());
+        confFileProperty.setBaseDirectory(moduleProperty.baseDirectory());
     }
-    putProperty(_("Controller module name"), FilePath(moduleName, filter, dir),
-                std::bind(&BodyRTCItem::setControllerModule, this, _1), true);
+    putProperty(_("Base directory"), baseDirectoryType,
+                [&](int which){ setBaseDirectoryType(which); return true; });
+
+    putProperty(_("Controller module"), moduleProperty,
+                [&](const string& name){ setControllerModule(name); return true; });
 
     putProperty(_("Configuration mode"), configMode,
-                std::bind(&BodyRTCItem::setConfigMode, this, _1), true);
+                [&](int which){ setConfigMode(which); return true; });
 
-    filter.clear();
-    filter.push_back(_(" RTC Configuration File (*.conf)") );
-    dir.clear();
-    if(!confFileName.empty() && checkAbsolute(filesystem::path(confFileName)))
-        dir = filesystem::path(confFileName).parent_path().string();
-    else{
-        if(pathBase.is(RTC_DIRECTORY))
-            dir = (filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "rtc").string();
-    }
-    putProperty(_("Configuration file name"), FilePath(confFileName, filter, dir),
-                std::bind(&BodyRTCItem::setConfigFile, this, _1), true);
+    putProperty(_("Configuration file"), confFileProperty,
+                [&](const string& name){ setConfigFile(name); return true; });
 }
 
 
@@ -553,7 +573,7 @@ bool BodyRTCItem::store(Archive& archive)
     archive.write("AutoConnect", autoConnect);
     archive.write("InstanceName", instanceName, DOUBLE_QUOTED);
     archive.write("bodyPeriodicRate", executionCycleProperty);
-    archive.write("RelativePathBase", pathBase.selectedSymbol(), DOUBLE_QUOTED);
+    archive.write("baseDirectory", baseDirectoryType.selectedSymbol(), DOUBLE_QUOTED);
 
     return true;
 }
@@ -573,14 +593,11 @@ bool BodyRTCItem::restore(const Archive& archive)
         filesystem::path path(archive.expandPathVariables(value));
         confFileName = getNativePathString(path);
     }
-    string symbol;
-    if(archive.read("configurationMode", symbol)){
-        configMode.select(symbol);
-        oldMode = configMode.selectedIndex();
+    if(archive.read("configurationMode", value)){
+        configMode.select(value);
     }
-    if (archive.read("RelativePathBase", symbol)){
-        pathBase.select(symbol);
-        oldPathBase = pathBase.selectedIndex();
+    if(archive.read("baseDirectory", value) || archive.read("RelativePathBase", value)){
+        baseDirectoryType.select(value);
     }
     archive.read("AutoConnect", autoConnect);
     archive.read("InstanceName", instanceName);
@@ -590,7 +607,7 @@ bool BodyRTCItem::restore(const Archive& archive)
 }
 
 
-// configファイルで指定されたRTC,Robotに既に接続されているRTCを検出する。   //
+// Detects the RTC specified in the config file and the RTC already connected to the robot.
 void BodyRTCItem::detectRtcs()
 {
     RTC::Manager& rtcManager = RTC::Manager::instance();
@@ -697,7 +714,7 @@ void BodyRTCItem::makePortMap(RtcInfoPtr& rtcInfo)
     }
 }
 
-/// new_rtcRefのポートマップ作成し、rtcInfoVectorに登録する。  //
+/// Create a port map of new_rtcRef and register it in rtcInfoVector.
 BodyRTCItem::RtcInfoPtr BodyRTCItem::addRtcVectorWithConnection(RTC::RTObject_var new_rtcRef)
 {
     RtcInfoVector::iterator it = rtcInfoVector.begin();

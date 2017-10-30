@@ -40,7 +40,7 @@ ScriptBar::~ScriptBar()
 void ScriptBar::executeCheckedScriptItems()
 {
     ItemList<ScriptItem> scripts = ItemTreeView::mainInstance()->checkedItems<ScriptItem>();
-    for(int i=0; i < scripts.size(); ++i){
+    for(size_t i=0; i < scripts.size(); ++i){
         scripts[i]->execute();
     }
 }

@@ -1,0 +1,24 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: vmark
+
+links:
+  -
+    name: vmark
+    translation: [ 0, 0, 0.5 ]
+    jointType: free
+    density: 1.0
+    convexDecomposition: true
+    elements:
+      Shape:
+        geometry:
+          type: Extrusion
+          crossSection: [
+             0.0, -0.3,
+            -0.3,  0.3,
+             0.0,  0.0,
+             0.3,  0.3,
+             0.0, -0.3
+            ]
+          spine: [ 0, -0.05, 0, 0, 0.05, 0 ]

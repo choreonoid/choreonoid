@@ -22,6 +22,7 @@ class Body;
 class Device;
 class CollisionDetector;
 typedef std::shared_ptr<CollisionDetector> CollisionDetectorPtr;
+class WorldItem;
 class BodyItem;
 class ControllerItem;
 class SimulationBodyImpl;
@@ -87,7 +88,9 @@ public:
     SimulatorItem();
     virtual ~SimulatorItem();
 
+    WorldItem* worldItem();
     virtual double worldTimeStep();
+    void setTimeStep(double step);
 
     virtual bool startSimulation(bool doReset = true);
     virtual void stopSimulation();
@@ -110,6 +113,8 @@ public:
     double simulationTime() const;
     
     SignalProxy<void()> sigSimulationStarted();
+    SignalProxy<void()> sigSimulationPaused();
+    SignalProxy<void()> sigSimulationResumed();
     SignalProxy<void()> sigSimulationFinished();
 
     enum RecordingMode { REC_FULL, REC_TAIL, REC_NONE, N_RECORDING_MODES };
@@ -159,10 +164,6 @@ public:
     SignalProxy<void(const std::vector<SimulationBodyPtr>& simulationBodies)>
         sigSimulationBodyListUpdated();
 
-    /*
-    virtual void setExternalForce(BodyItem* bodyItem, Link* link, const Vector6& f);
-    */
-
     /**
        @param point link local position to apply the force
        @param f linear force to apply in global coordinate
@@ -185,6 +186,7 @@ public:
 protected:
     SimulatorItem(const SimulatorItem& org);
 
+    virtual void onPositionChanged();
     virtual void onDisconnectedFromRoot();
 
     /**

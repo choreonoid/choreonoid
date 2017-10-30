@@ -32,7 +32,7 @@ SgFog::SgFog(const SgFog& org)
 }
 
 
-SgObject* SgFog::clone(SgCloneMap& cloneMap) const
+SgObject* SgFog::clone(SgCloneMap&) const
 {
     return new SgFog(*this);
 }

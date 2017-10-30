@@ -2,34 +2,43 @@
 
 namespace cnoid{
 
-    ////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
 // AGXPseudoContinuousTrackGeometry
-void AGXPseudoContinuousTrackGeometry::setAxis(const agx::Vec3f& axis)
+void AGXPseudoContinuousTrackGeometry::setAxis(const agx::Vec3& axis)
 {
-    _axis = axis;
+    m_axis = axis;
 }
 
-agx::Vec3f AGXPseudoContinuousTrackGeometry::getAxis() const
+agx::Vec3 AGXPseudoContinuousTrackGeometry::getAxis() const
 {
-    return _axis;
+    return m_axis;
 }
 
 agx::Vec3f AGXPseudoContinuousTrackGeometry::calculateSurfaceVelocity(const agxCollide::LocalContactPoint & point, size_t index) const
 {
-    agx::Vec3f dir = getAxis() ^ point.normal();
+    agx::Vec3 dir = getAxis() ^ agx::Vec3(point.normal());
     dir.normalize();
-    const agx::Vec3f ret = dir * -1.0 * getSurfaceVelocity().x();
-    return ret;
+    dir *= -1.0 * getSurfaceVelocity().x();
+    return agx::Vec3f(dir);
 }
 
 ////////////////////////////////////////////////////////////
 // AGXObjectFactory
 
+bool AGXObjectFactory::checkModuleEnalbled(const char* name)
+{
+    return agx::Runtime::instance()->isModuleEnabled(name);
+}
+
 agxSDK::SimulationRef AGXObjectFactory::createSimulation(const AGXSimulationDesc & desc)
 {
     agxSDK::SimulationRef sim = new agxSDK::Simulation();
+    agx::setNumThreads(desc.numThreads);
     sim->setTimeStep(desc.timeStep);
     sim->setUniformGravity(desc.gravity);
+    sim->getSpace()->setEnableContactReduction(desc.enableContactReduction);
+    sim->getSpace()->setContactReductionBinResolution(desc.contactReductionBinResolution);
+    sim->getSpace()->setContactReductionThreshold(desc.contactReductionThreshhold);
     sim->getDynamicsSystem()->getAutoSleep()->setEnable(desc.enableAutoSleep);
     return sim;
 }
@@ -50,14 +59,14 @@ agx::MaterialRef AGXObjectFactory::createMaterial(const AGXMaterialDesc & desc)
     return m;
 }
 
-agx::ContactMaterialRef AGXObjectFactory::createContactMaterial(agx::MaterialRef const matA, agx::MaterialRef const matB, const AGXContactMaterialDesc& desc)
+agx::ContactMaterialRef AGXObjectFactory::createContactMaterial(agx::Material* const matA, agx::Material* const matB, const AGXContactMaterialDesc& desc)
 {
     agx::ContactMaterialRef cm = new agx::ContactMaterial(matA, matB);
     setContactMaterialParam(cm, desc);
     return cm;
 }
 
-agx::ContactMaterialRef AGXObjectFactory::createContactMaterial(const AGXContactMaterialDesc& desc, agxSDK::MaterialManagerRef const mgr)
+agx::ContactMaterialRef AGXObjectFactory::createContactMaterial(const AGXContactMaterialDesc& desc, agxSDK::MaterialManager* const mgr)
 {
     if(!mgr) return nullptr;
     agx::MaterialRef mA = mgr->getMaterial(desc.nameA);
@@ -76,11 +85,6 @@ agx::RigidBodyRef AGXObjectFactory::createRigidBody(const AGXRigidBodyDesc& desc
     rigid->setAngularVelocity(desc.w);
     rigid->setPosition(desc.p);
     rigid->setRotation(desc.R);
-    rigid->getMassProperties()->setAutoGenerateMask(0);
-    //r->getMassProperties()->setAutoGenerateMask(desc.genflags);
-    rigid->getMassProperties()->setMass(desc.m, false);
-    rigid->getMassProperties()->setInertiaTensor(desc.I, false);
-    rigid->setCmLocalTranslate(desc.c);
     rigid->setName(desc.name);
     rigid->getAutoSleepProperties().setEnable(desc.enableAutoSleep);
     return rigid;
@@ -158,7 +162,12 @@ agx::FrameRef AGXObjectFactory::createFrame()
     return new agx::Frame();
 }
 
-agx::Bool AGXObjectFactory::setContactMaterialParam(agx::ContactMaterialRef const cm, const AGXContactMaterialDesc & desc)
+agxSDK::AssemblyRef AGXObjectFactory::createAssembly()
+{
+    return new agxSDK::Assembly();
+}
+
+agx::Bool AGXObjectFactory::setContactMaterialParam(agx::ContactMaterial* const cm, const AGXContactMaterialDesc & desc)
 {
     if(!cm) return false;
     cm->setYoungsModulus(desc.youngsModulus);
@@ -166,7 +175,9 @@ agx::Bool AGXObjectFactory::setContactMaterialParam(agx::ContactMaterialRef cons
     cm->setDamping(desc.damping);
     cm->setFrictionCoefficient(desc.friction);
     cm->setAdhesion(desc.adhesionForce, desc.adhesivOverlap);
-    cm->setSurfaceViscosity(desc.surfaceViscosity, desc.frictionDirection);
+    cm->setSurfaceViscosity(desc.surfaceViscosity);
+    cm->setContactReductionMode(desc.contactReductionMode);
+    cm->setContactReductionBinResolution(desc.contactReductionBinResolution);
 
     // Create friction model
     if(desc.frictionModelType != AGXFrictionModelType::DEFAULT){
@@ -175,7 +186,7 @@ agx::Bool AGXObjectFactory::setContactMaterialParam(agx::ContactMaterialRef cons
             case AGXFrictionModelType::BOX :
                 fm = new agx::BoxFrictionModel();
                 break;
-            case AGXFrictionModelType::SCALE_BOX :
+            case AGXFrictionModelType::SCALED_BOX :
                 fm = new agx::ScaleBoxFrictionModel();
                 break;
             case AGXFrictionModelType::ITERATIVE_PROJECTED_CONE :
@@ -221,9 +232,11 @@ agx::HingeRef AGXObjectFactory::createConstraintHinge(const AGXHingeDesc& desc)
     agx::HingeFrame hingeFrame;
     hingeFrame.setAxis(desc.frameAxis);
     hingeFrame.setCenter(desc.frameCenter);
-    agx::HingeRef hinge = new agx::Hinge(hingeFrame, desc.rigidBodyA, desc.rigidBodyB);
-    hinge->getMotor1D()->setEnable(desc.isMotorOn);
-    return hinge;
+    agx::HingeRef joint = new agx::Hinge(hingeFrame, desc.rigidBodyA, desc.rigidBodyB);
+    setMotor1DParam(joint->getMotor1D(), desc.motor);
+    setLock1DParam(joint->getLock1D(), desc.lock);
+    setRange1DParam(joint->getRange1D(), desc.range);
+    return joint;
 }
 
 agx::PrismaticRef AGXObjectFactory::createConstraintPrismatic(const AGXPrismaticDesc & desc)
@@ -231,9 +244,11 @@ agx::PrismaticRef AGXObjectFactory::createConstraintPrismatic(const AGXPrismatic
     agx::PrismaticFrame prismaticFrame;
     prismaticFrame.setAxis(desc.frameAxis);
     prismaticFrame.setPoint(desc.framePoint);
-    agx::PrismaticRef prismatic = new agx::Prismatic(prismaticFrame, desc.rigidBodyA, desc.rigidBodyB);
-    prismatic->getMotor1D()->setEnable(desc.isMotorOn);
-    return prismatic;
+    agx::PrismaticRef joint = new agx::Prismatic(prismaticFrame, desc.rigidBodyA, desc.rigidBodyB);
+    setMotor1DParam(joint->getMotor1D(), desc.motor);
+    setLock1DParam(joint->getLock1D(), desc.lock);
+    setRange1DParam(joint->getRange1D(), desc.range);
+    return joint;
 }
 
 agx::BallJointRef AGXObjectFactory::createConstraintBallJoint(const AGXBallJointDesc & desc)
@@ -248,9 +263,83 @@ agx::PlaneJointRef AGXObjectFactory::createConstraintPlaneJoint(const AGXPlaneJo
     return new agx::PlaneJoint(desc.rigidBodyA, desc.frameA, desc.rigidBodyB, desc.frameB);
 }
 
+void AGXObjectFactory::setMotor1DParam(agx::Motor1D* controller, const AGXMotor1DDesc& desc)
+{
+    controller->setEnable(desc.enable);
+    controller->setLocked(desc.enableLock);
+    controller->setLockedAtZeroSpeed(desc.enableLockAtZeroSpeed);
+    controller->setCompliance(desc.compliance);
+    controller->setDamping(desc.damping);
+}
+
+void AGXObjectFactory::setLock1DParam(agx::Lock1D* controller, const AGXLock1DDesc& desc)
+{
+    controller->setEnable(desc.enable);
+    controller->setCompliance(desc.compliance);
+    controller->setDamping(desc.damping);
+}
+
+void AGXObjectFactory::setRange1DParam(agx::Range1D* controller, const AGXRange1DDesc& desc)
+{
+    controller->setEnable(desc.enable);
+    controller->setRange(desc.range);
+    controller->setCompliance(desc.compliance);
+    controller->setDamping(desc.damping);
+}
+
 agx::LockJointRef AGXObjectFactory::createConstraintLockJoint(const AGXLockJointDesc & desc)
 {
     return new agx::LockJoint(desc.rigidBodyA, desc.rigidBodyB);
+}
+
+agxVehicle::TrackWheelRef AGXObjectFactory::createVehicleTrackWheel(const AGXVehicleTrackWheelDesc& desc)
+{
+    return new agxVehicle::TrackWheel(desc.model, desc.radius, desc.rigidbody, desc.rbRelTransform);
+}
+
+agxVehicle::TrackRef AGXObjectFactory::createVehicleTrack(const AGXVehicleTrackDesc& desc)
+{
+    agxVehicle::TrackRef track = new agxVehicle::Track(desc.numberOfNodes, desc.nodeWidth, desc.nodeThickness, desc.nodeDistanceTension);
+    for(int i = 0; i < desc.trackWheelRefs.size(); ++i){
+        track->add(desc.trackWheelRefs[i]);
+    }
+    track->getProperties()->setHingeCompliance(desc.hingeCompliance);
+    track->getProperties()->setHingeDamping(desc.hingeDamping);
+    track->getProperties()->setMinStabilizingHingeNormalForce(desc.minStabilizingHingeNormalForce);
+    track->getProperties()->setStabilizingHingeFrictionParameter(desc.stabilizingHingeFrictionParameter);
+    track->getInternalMergeProperties()->setEnableMerge(desc.enableMerge);
+    track->getInternalMergeProperties()->setNumNodesPerMergeSegment(desc.numNodesPerMergeSegment);
+    track->getInternalMergeProperties()->setEnableLockToReachMergeCondition(desc.enableLockToReachMergeCondition);
+    track->getInternalMergeProperties()->setLockToReachMergeConditionCompliance(desc.lockToReachMergeConditionCompliance);
+    track->getInternalMergeProperties()->setLockToReachMergeConditionDamping(desc.lockToReachMergeConditionDamping);
+    track->getInternalMergeProperties()->setMaxAngleMergeCondition(desc.maxAngleMergeCondition);
+    track->getInternalMergeProperties()->setContactReduction(desc.contactReduction);
+
+
+    if(desc.useThickerNodeEvery <= 0) return track;
+    // Add shapes for create bumpy tracks
+    agx::UInt counter = 0;
+    track->initialize(
+        [&]( const agxVehicle::TrackNode& node )
+        {
+        agx::Real heightOffset = 0.0;
+        agx::Real thickness = desc.nodeThickness;
+        // For every useThickerNodeEvery node we add a thicker box.
+        if ( ( counter++ % desc.useThickerNodeEvery ) == 0 ) {
+            thickness = desc.nodeThickerThickness;
+            heightOffset = -0.5 * ( thickness - desc.nodeThickness );
+        }
+        node.getRigidBody()->add( new agxCollide::Geometry( new agxCollide::Box( 0.5 * thickness,
+        0.5 * desc.nodeWidth,
+        0.5 * node.getLength() ) ),
+        agx::AffineMatrix4x4::translate( heightOffset, 0, node.getHalfExtents().z() ) );
+        }
+    );
+    return track;
+}
+
+agxCollide::ConvexBuilderRef AGXObjectFactory::createConvexBuilder(){
+    return new agxCollide::ConvexBuilder();
 }
 
 }

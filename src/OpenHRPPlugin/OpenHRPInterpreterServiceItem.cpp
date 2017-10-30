@@ -305,11 +305,6 @@ RTC::ReturnCode_t InterpreterRTC::onInitialize()
 
 char* InterpreterService_impl::interpret(const char* expr)
 {
-    static int counter = 0;
-
-    ostream& os = MessageView::instance()->cout();
-    int no = counter++;
-    
     result.clear();
 
     if(!itemImpl->isScriptItemBackgroundMode || itemImpl->forceMainThreadExecution){

@@ -91,7 +91,7 @@ class Referenced
 
 protected:
     Referenced() : refCount_(0), weakCounter_(0) { }
-    Referenced(const Referenced& org) : refCount_(0), weakCounter_(0) { }
+    Referenced(const Referenced&) : refCount_(0), weakCounter_(0) { }
 
     int refCount() const { return refCount_.load(std::memory_order_relaxed); }
     

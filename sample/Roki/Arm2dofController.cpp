@@ -15,14 +15,22 @@ class Arm2dofController : public cnoid::SimpleController
 {
 
 public:
+    Body* ioBody;
     Interpolator<VectorXd> interpolator;
     VectorXd qref;
     double time;
 
-    virtual bool initialize() {
-        const BodyPtr& io = ioBody();
-        for(int i=0; i<DOF; i++)
-            io->joint(i)->u() = 0.0;
+    virtual bool initialize(SimpleControllerIO* io) override
+    {
+        ioBody = io->body();
+
+        for(int i=0; i<DOF; i++){
+            Link* joint = ioBody->joint(i);
+            joint->setActuationMode(Link::JOINT_TORQUE);
+            io->enableIO(joint);
+            joint->u() = 0.0;
+        }
+
 #ifdef ROKISAMPLE
         qref.resize(DOF);
 #else
@@ -53,11 +61,10 @@ public:
         qref = interpolator.interpolate(time);
 #endif
 
-        const BodyPtr& io = ioBody();
         for(int i=0; i<DOF; i++){
-            double q = io->joint(i)->q();
-            double dq = io->joint(i)->dq();
-            io->joint(i)->u() = -K*(q-qref[i]) - C*dq;
+            double q = ioBody->joint(i)->q();
+            double dq = ioBody->joint(i)->dq();
+            ioBody->joint(i)->u() = -K*(q-qref[i]) - C*dq;
         }
 
 #ifndef ROKISAMPLE

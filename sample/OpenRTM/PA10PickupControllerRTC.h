@@ -32,17 +32,15 @@ protected:
     RTC::TimedDoubleSeq m_angle;
     RTC::InPort<RTC::TimedDoubleSeq> m_angleIn;
   
-    RTC::TimedDoubleSeq m_torque_in;
-    RTC::InPort<RTC::TimedDoubleSeq> m_torqueIn;
-
+    // DataOutPort declaration
     RTC::TimedDoubleSeq m_torque_out;
     RTC::OutPort<RTC::TimedDoubleSeq> m_torqueOut;
 
 private:
     cnoid::BodyPtr body;
-    unsigned int n;
-    unsigned int rightHand_id;
-    unsigned int leftHand_id;
+    int numJoints;
+    int rightHand_id;
+    int leftHand_id;
     int phase;
     cnoid::Interpolator<cnoid::VectorXd> wristInterpolator;
     cnoid::Interpolator<cnoid::VectorXd> jointInterpolator;

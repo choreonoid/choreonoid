@@ -22,13 +22,13 @@ using namespace cnoid;
 ImageConverter::ImageConverter(void)
 {
     image = new SFImage;
-};
+}
 
 
 ImageConverter::~ImageConverter(void)
 {
     delete image;
-};
+}
 
  
 /**

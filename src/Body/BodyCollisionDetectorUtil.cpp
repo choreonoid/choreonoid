@@ -36,6 +36,7 @@ int cnoid::addBodyToCollisionDetector(Body& body, CollisionDetector& detector, b
     int excludeTreeDepth = 1;
     boost::dynamic_bitset<> exclusions(numLinks);
     boost::dynamic_bitset<> staticFlags(numLinks);
+    vector< vector<int> > excludeLinkGroups;
     
     const Mapping& cdInfo = *body.info()->findMapping("collisionDetection");
     if(cdInfo.isValid()){
@@ -45,6 +46,23 @@ int cnoid::addBodyToCollisionDetector(Body& body, CollisionDetector& detector, b
             Link* link = body.link(excludeLinks[i].toString());
             if(link){
                 exclusions[link->index()] = true;
+            }
+        }
+
+        const Listing& excludeLinkGroupList = *cdInfo.findListing("excludeLinkGroups");
+        excludeLinkGroups.resize(excludeLinkGroupList.size());
+        for(int i=0; i < excludeLinkGroupList.size(); ++i){
+            const Mapping&  groupInfo = *excludeLinkGroupList[i].toMapping();
+            if(groupInfo.isValid()){
+                string groupName = groupInfo.get("name");
+                const Listing& excludeLinks = *groupInfo.findListing("links");
+                vector<int>& excludeLinkGroup = excludeLinkGroups[i];
+                for(int j=0; j < excludeLinks.size(); ++j){
+                    Link* link = body.link(excludeLinks[j].toString());
+                    if(link){
+                        excludeLinkGroup.push_back(link->index());
+                    }
+                }
             }
         }
     }
@@ -98,6 +116,19 @@ int cnoid::addBodyToCollisionDetector(Body& body, CollisionDetector& detector, b
                                 detector.setNonInterfarenceGeometyrPair(i + idTop, j + idTop);
                             }
                         }
+                    }
+                }
+            }
+        }
+
+        for(int i=0; i<excludeLinkGroups.size(); i++ ){
+            vector<int>& excludeLinkGroup = excludeLinkGroups[i];
+            for(int j=0; j<excludeLinkGroup.size(); j++){
+                int index1=excludeLinkGroup[j];
+                for(int k=j+1; k<excludeLinkGroup.size(); k++){
+                    int index2=excludeLinkGroup[k];
+                    if(!exclusions[index1] && !exclusions[index2]){
+                        detector.setNonInterfarenceGeometyrPair(index1 + idTop, index2 + idTop);
                     }
                 }
             }

@@ -150,13 +150,13 @@ SignalProxy<void(Item* item)> RootItem::sigItemMoved()
 
 /**
    @if jp
-   本シグナルを所有するルートアイテムからのパスに所属する子アイテムがパスから
-   取り除かれる直前に発行されるシグナル。
+   The signal that is emitted just before an item belonging to the path from
+   the root item is being removed.
    
-   @param isMoving アイテムが移動中であって、再び本ルートアイテムからのパスに
-   所属する場合、true となる。
+   @param isMoving It is true if the item is moving and again belongs to the
+   path from the root item.
    
-   @todo できれば本シグナルは itemRemoved() シグナルで置き換えてdeprecatedとしたい。
+   @todo This signal should be replaced with the itemRemoved signal and deprecated.
 */
 SignalProxy<void(Item* item, bool isMoving)> RootItem::sigSubTreeRemoving()
 {
@@ -166,11 +166,11 @@ SignalProxy<void(Item* item, bool isMoving)> RootItem::sigSubTreeRemoving()
 
 /**
    @if jp
-   本シグナルを所有するルートアイテムからのパスに所属する子アイテムがパスから
-   取り除かれた後に呼ばれるスロットを接続する。
+   The signal that is emitted when an item belonging to the item tree from the
+   root item is removed.
    
-   @param isMoving アイテムが移動中であって、再び本ルートアイテムからのパスに
-   所属する場合、true となる。
+   @param isMoving It is true if the item is moving and again belongs to the
+   path from the root item.
 */
 SignalProxy<void(Item* item, bool isMoving)> RootItem::sigSubTreeRemoved()
 {
@@ -180,15 +180,15 @@ SignalProxy<void(Item* item, bool isMoving)> RootItem::sigSubTreeRemoved()
 
 /**
    @if jp
-   アイテムの追加・削除など、アイテムツリーの構造が変化したときに呼ばれるスロットを接続する。
+   The signal that is emitted when the structure of the item tree changes,
+   such as adding and deleting items.
+
+   Unlike sigItemAdded or sigItemRemoving, it is emitted only once for a series of
+   operations performed at once. To be precise, it is emitted after the events in
+   the queue are processed in the event loop of the framework.   
    
-   sigItemAdded や sigItemRemoving とは異なり、一度に行われる一連の操作に対して
-   １回だけまとめて発行される。正確には、フレームワークのイベントループでキューにあるイベント
-   が処理されてから実行される。
-   
-   @todo 「1回だけまとめて」は恐らくプロジェクト読み込み時などには守られていないので，
-   この点改善しておく．
-   @endif
+   @todo "Once all at once" is probably not being protected at the time of project
+   loading etc, so improve this point.
 */
 SignalProxy<void()> RootItem::sigTreeChanged()
 {

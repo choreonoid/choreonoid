@@ -30,23 +30,22 @@ class SR1MinimumController : public SimpleController
 
 public:
 
-    virtual bool initialize(SimpleControllerIO* io)
+    virtual bool initialize(SimpleControllerIO* io) override
     {
         ioBody = io->body();
         dt = io->timeStep();
 
-        io->setJointInput(JOINT_ANGLE);
-        io->setJointOutput(JOINT_TORQUE);
-
-        for(int i=0; i < ioBody->numJoints(); ++i){
-            qref.push_back(ioBody->joint(i)->q());
+        for(auto joint : ioBody->joints()){
+            joint->setActuationMode(Link::JOINT_TORQUE);
+            io->enableIO(joint);
+            qref.push_back(joint->q());
         }
         qold = qref;
 
         return true;
     }
 
-    virtual bool control()
+    virtual bool control() override
     {
         for(int i=0; i < ioBody->numJoints(); ++i){
             Link* joint = ioBody->joint(i);

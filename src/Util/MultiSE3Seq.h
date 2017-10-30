@@ -29,6 +29,8 @@ public:
     MultiSE3Seq(const MultiSE3Seq& org);
     virtual ~MultiSE3Seq();
 
+    using BaseSeqType::operator=;
+
     virtual AbstractSeqPtr cloneSeq() const;
         
     //virtual bool loadPlainFormat(const std::string& filename);

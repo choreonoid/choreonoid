@@ -49,7 +49,6 @@ Vector3 toRadianVector3(double x, double y, double z){
 PA10PickupControllerRTC::PA10PickupControllerRTC(RTC::Manager* manager)
     : RTC::DataFlowComponentBase(manager),
       m_angleIn("q", m_angle),
-      m_torqueIn("u_in", m_torque_in),
       m_torqueOut("u_out", m_torque_out)
 {
 
@@ -66,7 +65,6 @@ RTC::ReturnCode_t PA10PickupControllerRTC::onInitialize()
 {
     // Set InPort buffers
     addInPort("q", m_angleIn);
-    addInPort("u_in", m_torqueIn);
   
     // Set OutPort buffer
     addOutPort("u_out", m_torqueOut);
@@ -84,7 +82,7 @@ RTC::ReturnCode_t PA10PickupControllerRTC::onInitialize()
         return RTC::RTC_ERROR;
     }
 
-    n = body->numJoints();
+    numJoints = body->numJoints();
     leftHand_id  = body->link("HAND_L")->jointId();
     rightHand_id = body->link("HAND_R")->jointId();
 
@@ -95,9 +93,9 @@ RTC::ReturnCode_t PA10PickupControllerRTC::onInitialize()
 RTC::ReturnCode_t PA10PickupControllerRTC::onActivated(RTC::UniqueId ec_id)
 {
     time = 0.0;
-    qref.resize(n);
-    qref_old.resize(n);
-    qold.resize(n);
+    qref.resize(numJoints);
+    qref_old.resize(numJoints);
+    qold.resize(numJoints);
 
     wrist = body->link("J7");
     Link* base = body->rootLink();
@@ -108,7 +106,7 @@ RTC::ReturnCode_t PA10PickupControllerRTC::onActivated(RTC::UniqueId ec_id)
     if(m_angleIn.isNew()){
         m_angleIn.read();
     }
-    for(int i=0; i < n; ++i){
+    for(int i=0; i < numJoints; ++i){
         double q = m_angle.data[i];
         qold[i] = q;
         body->joint(i)->q() = q;
@@ -135,7 +133,10 @@ RTC::ReturnCode_t PA10PickupControllerRTC::onActivated(RTC::UniqueId ec_id)
     phase = 0;
     dq_hand = 0.0;
 	
-    m_torque_out.data.length(n);
+    m_torque_out.data.length(numJoints);
+    for(int i=0; i < numJoints; ++i){
+        m_torque_out.data[i] = 0.0;
+    }
 
     return RTC::RTC_OK;
 }
@@ -151,9 +152,6 @@ RTC::ReturnCode_t PA10PickupControllerRTC::onExecute(RTC::UniqueId ec_id)
 {
     if(m_angleIn.isNew()){
         m_angleIn.read();
-    }
-    if(m_torqueIn.isNew()){
-        m_torqueIn.read();
     }
 
     VectorXd p(6);
@@ -174,7 +172,8 @@ RTC::ReturnCode_t PA10PickupControllerRTC::onExecute(RTC::UniqueId ec_id)
         }
 
     } else if(phase == 1){
-        if(fabs(m_torque_in.data[0]) < 40.0 || fabs(m_torque_in.data[1]) < 40.0){ // not holded ?
+        if(fabs(m_torque_out.data[leftHand_id]) < 40.0 ||
+           fabs(m_torque_out.data[rightHand_id]) < 40.0){ // not holded ?
             dq_hand = std::min(dq_hand + 0.00001, 0.0005);
             qref[rightHand_id] -= radian(dq_hand);
             qref[leftHand_id]  += radian(dq_hand);
@@ -220,7 +219,7 @@ RTC::ReturnCode_t PA10PickupControllerRTC::onExecute(RTC::UniqueId ec_id)
         qref = jointInterpolator.interpolate(time);
     }
 
-    for(int i=0; i < n; ++i){
+    for(int i=0; i < numJoints; ++i){
         double q = m_angle.data[i];
         double dq = (q - qold[i]) / TIMESTEP;
         double dq_ref = (qref[i] - qref_old[i]) / TIMESTEP;

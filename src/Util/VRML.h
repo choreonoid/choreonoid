@@ -100,6 +100,7 @@ public:
 
     VRMLNode();
     virtual ~VRMLNode();
+    virtual const char* typeName() const = 0;
 
     std::string defName;
 
@@ -119,6 +120,7 @@ class CNOID_EXPORT  VRMLUnsupportedNode : public VRMLNode
 {
 public:
     VRMLUnsupportedNode(const std::string& nodeTypeName);
+    virtual const char* typeName() const override;
     std::string nodeTypeName;
 };
 typedef ref_ptr<VRMLUnsupportedNode> VRMLUnsupportedNodePtr;
@@ -128,9 +130,10 @@ typedef ref_ptr<VRMLUnsupportedNode> VRMLUnsupportedNodePtr;
 class CNOID_EXPORT  VRMLViewpoint : public VRMLNode
 {
 public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         
     VRMLViewpoint();
+    virtual const char* typeName() const override;
 
     SFRotation orientation;
     SFFloat fieldOfView;
@@ -146,6 +149,7 @@ class CNOID_EXPORT  VRMLNavigationInfo : public VRMLNode
 {
 public:
     VRMLNavigationInfo();
+    virtual const char* typeName() const override;
 
     MFFloat avatarSize;
     SFBool headlight;
@@ -161,6 +165,7 @@ class CNOID_EXPORT  VRMLBackground : public VRMLNode
 {
 public:
     VRMLBackground();
+    virtual const char* typeName() const override;
       
     MFFloat groundAngle;
     MFColor groundColor;
@@ -196,11 +201,12 @@ class CNOID_EXPORT VRMLGroup : public AbstractVRMLGroup
 {
 public:
     VRMLGroup();
+    virtual const char* typeName() const override;
 
-    virtual MFNode& getChildren();
-    virtual int countChildren();
-    virtual VRMLNode* getChild(int index);
-    virtual void replaceChild(int childIndex, VRMLNode* childNode);
+    virtual MFNode& getChildren() override;
+    virtual int countChildren() override;
+    virtual VRMLNode* getChild(int index) override;
+    virtual void replaceChild(int childIndex, VRMLNode* childNode) override;
 
     SFVec3f bboxCenter;    
     SFVec3f bboxSize;  
@@ -214,6 +220,7 @@ class CNOID_EXPORT  VRMLTransform : public VRMLGroup
 {
 public:
     VRMLTransform();
+    virtual const char* typeName() const override;
 
     Eigen::Affine3d toAffine3d();
 
@@ -230,6 +237,8 @@ class CNOID_EXPORT  VRMLInline : public VRMLGroup
 {
 public:
     VRMLInline();
+    virtual const char* typeName() const override;
+
     MFString urls;
 };
 typedef ref_ptr<VRMLInline> VRMLInlinePtr;
@@ -239,6 +248,8 @@ class CNOID_EXPORT  VRMLNonVrmlInline : public VRMLNode
 {
 public:
     VRMLNonVrmlInline();
+    virtual const char* typeName() const override;
+
     SFString url; // An absolute path should be specified
 };
 typedef ref_ptr<VRMLNonVrmlInline> VRMLNonVrmlInlinePtr;
@@ -256,6 +267,8 @@ class CNOID_EXPORT  VRMLShape : public VRMLNode
 {
 public:
     VRMLShape();
+    virtual const char* typeName() const override;
+
     VRMLAppearancePtr appearance;
     SFNode geometry;
 };
@@ -276,6 +289,7 @@ class CNOID_EXPORT VRMLAppearance : public VRMLNode
 {
 public:
     VRMLAppearance();
+    virtual const char* typeName() const override;
       
     VRMLMaterialPtr material;
     VRMLTexturePtr texture;
@@ -288,6 +302,7 @@ class CNOID_EXPORT VRMLMaterial : public VRMLNode
 {
 public:
     VRMLMaterial();
+    virtual const char* typeName() const override;
 
     SFFloat ambientIntensity;
     SFColor diffuseColor;
@@ -311,10 +326,11 @@ class CNOID_EXPORT VRMLImageTexture : public VRMLTexture
 {
 public:
     VRMLImageTexture();
+    virtual const char* typeName() const override;
 
     MFString url;
-    SFBool   repeatS;
-    SFBool   repeatT;
+    SFBool repeatS;
+    SFBool repeatT;
 };
 typedef ref_ptr<VRMLImageTexture> VRMLImageTexturePtr;
 
@@ -323,9 +339,10 @@ typedef ref_ptr<VRMLImageTexture> VRMLImageTexturePtr;
 class CNOID_EXPORT VRMLTextureTransform : public VRMLNode
 {
 public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         
     VRMLTextureTransform();
+    virtual const char* typeName() const override;
 
     SFVec2f center;
     SFFloat rotation;
@@ -345,6 +362,8 @@ class CNOID_EXPORT VRMLBox : public VRMLGeometry
 {
 public:
     VRMLBox();
+    virtual const char* typeName() const override;
+
     SFVec3f size;
 };
 typedef ref_ptr<VRMLBox> VRMLBoxPtr;
@@ -355,6 +374,7 @@ class CNOID_EXPORT VRMLCone : public VRMLGeometry
 {
 public:
     VRMLCone();
+    virtual const char* typeName() const override;
 
     SFBool bottom;
     SFFloat bottomRadius;
@@ -369,6 +389,7 @@ class CNOID_EXPORT VRMLCylinder : public VRMLGeometry
 {
 public:
     VRMLCylinder();
+    virtual const char* typeName() const override;
 
     SFBool bottom;
     SFFloat height;
@@ -384,6 +405,8 @@ class CNOID_EXPORT VRMLSphere : public VRMLGeometry
 {
 public:
     VRMLSphere();
+    virtual const char* typeName() const override;
+
     SFFloat radius;
 };
 typedef ref_ptr<VRMLSphere> VRMLSpherePtr;
@@ -394,16 +417,17 @@ class CNOID_EXPORT VRMLFontStyle : public VRMLNode
 {
 public:
     VRMLFontStyle();
+    virtual const char* typeName() const override;
 
     MFString family;       
-    SFBool   horizontal;
+    SFBool horizontal;
     MFString justify;
     SFString language;
-    SFBool   leftToRight;
-    SFFloat  size;
-    SFFloat  spacing;
+    SFBool leftToRight;
+    SFFloat size;
+    SFFloat spacing;
     SFString style;
-    SFBool   topToBottom;
+    SFBool topToBottom;
 };
 typedef ref_ptr<VRMLFontStyle> VRMLFontStylePtr;
 
@@ -413,6 +437,7 @@ class CNOID_EXPORT VRMLText : public VRMLGeometry
 {
 public:
     VRMLText();
+    virtual const char* typeName() const override;
 
     MFString fstring;
     VRMLFontStylePtr fontStyle;
@@ -433,6 +458,7 @@ class CNOID_EXPORT VRMLIndexedLineSet : public VRMLGeometry
 {
 public: 
     VRMLIndexedLineSet();
+    virtual const char* typeName() const override;
 
     VRMLColorPtr color;
     VRMLCoordinatePtr coord;
@@ -455,6 +481,7 @@ class CNOID_EXPORT VRMLIndexedFaceSet : public VRMLIndexedLineSet
 {
 public:
     VRMLIndexedFaceSet();
+    virtual const char* typeName() const override;
 
     VRMLNormalPtr normal;
     VRMLTextureCoordinatePtr texCoord;
@@ -474,6 +501,7 @@ class CNOID_EXPORT VRMLColor : public VRMLNode
 {
 public:
     VRMLColor();
+    virtual const char* typeName() const override;
       
     MFColor color;
 };
@@ -484,6 +512,8 @@ class CNOID_EXPORT VRMLCoordinate : public VRMLNode
 {
 public:
     VRMLCoordinate();
+    virtual const char* typeName() const override;
+
     MFVec3s point;
 };
 
@@ -493,6 +523,8 @@ class CNOID_EXPORT VRMLTextureCoordinate : public VRMLNode
 {
 public:
     VRMLTextureCoordinate();
+    virtual const char* typeName() const override;
+
     MFVec2s point;
 };
 
@@ -502,6 +534,8 @@ class CNOID_EXPORT VRMLNormal : public VRMLNode
 {
 public:
     VRMLNormal();
+    virtual const char* typeName() const override;
+
     MFVec3s vector;
 };
 
@@ -511,10 +545,11 @@ class CNOID_EXPORT VRMLCylinderSensor : public VRMLNode
 {
 public:
     VRMLCylinderSensor();
+    virtual const char* typeName() const override;
 
-    SFBool  autoOffset;
+    SFBool autoOffset;
     SFFloat diskAngle;
-    SFBool  enabled;
+    SFBool enabled;
     SFFloat maxAngle;
     SFFloat minAngle;
     SFFloat offset;
@@ -527,9 +562,10 @@ class CNOID_EXPORT VRMLPointSet : public VRMLGeometry
 {
 public:
     VRMLPointSet();
+    virtual const char* typeName() const override;
 
-    VRMLCoordinatePtr	coord;
-    VRMLColorPtr		color;
+    VRMLCoordinatePtr coord;
+    VRMLColorPtr color;
 };
 
 typedef ref_ptr<VRMLPointSet> VRMLPointSetPtr;
@@ -540,10 +576,11 @@ class CNOID_EXPORT VRMLPixelTexture : public VRMLTexture
 {
 public:
     VRMLPixelTexture();
+    virtual const char* typeName() const override;
 
-    SFImage			image;
-    SFBool			repeatS;
-    SFBool			repeatT;
+    SFImage image;
+    SFBool repeatS;
+    SFBool repeatT;
 };
 
 typedef ref_ptr<VRMLPixelTexture> VRMLPixelTexturePtr;
@@ -554,14 +591,15 @@ class CNOID_EXPORT VRMLMovieTexture : public VRMLTexture
 {
 public:
     VRMLMovieTexture();
+    virtual const char* typeName() const override;
 
-    MFString		url;
-    SFBool			loop;
-    SFFloat			speed;
-    SFTime			startTime;
-    SFTime			stopTime;
-    SFBool			repeatS;
-    SFBool			repeatT;
+    MFString url;
+    SFBool loop;
+    SFFloat speed;
+    SFTime startTime;
+    SFTime stopTime;
+    SFBool repeatS;
+    SFBool repeatT;
 };
 
 typedef ref_ptr<VRMLMovieTexture> VRMLMovieTexturePtr;
@@ -572,20 +610,21 @@ class CNOID_EXPORT VRMLElevationGrid : public VRMLGeometry
 {
 public:
     VRMLElevationGrid();
+    virtual const char* typeName() const override;
 
-    SFInt32			xDimension;
-    SFInt32			zDimension;
-    SFFloat			xSpacing;
-    SFFloat			zSpacing;
-    MFFloat			height;
-    SFBool			ccw;
-    SFBool			colorPerVertex;
-    SFFloat			creaseAngle;
-    SFBool			normalPerVertex;
-    SFBool			solid;
-    VRMLColorPtr	color;
-    VRMLNormalPtr	normal;
-    VRMLTextureCoordinatePtr	texCoord;
+    SFInt32 xDimension;
+    SFInt32 zDimension;
+    SFFloat xSpacing;
+    SFFloat zSpacing;
+    MFFloat height;
+    SFBool ccw;
+    SFBool colorPerVertex;
+    SFFloat creaseAngle;
+    SFBool normalPerVertex;
+    SFBool solid;
+    VRMLColorPtr color;
+    VRMLNormalPtr normal;
+    VRMLTextureCoordinatePtr texCoord;
 };
 
 typedef ref_ptr<VRMLElevationGrid> VRMLElevationGridPtr;
@@ -596,17 +635,18 @@ class CNOID_EXPORT VRMLExtrusion : public VRMLGeometry
 {
 public:
     VRMLExtrusion();
+    virtual const char* typeName() const override;
 
-    MFVec2f			crossSection;
-    MFVec3f			spine;
-    MFVec2f			scale;
-    MFRotation		orientation;
-    SFBool			beginCap;
-    SFBool			endCap;
-    SFBool			solid;
-    SFBool			ccw;
-    SFBool			convex;
-    SFFloat			creaseAngle;
+    MFVec2f crossSection;
+    MFVec3f spine;
+    MFVec2f scale;
+    MFRotation orientation;
+    SFBool beginCap;
+    SFBool endCap;
+    SFBool solid;
+    SFBool ccw;
+    SFBool convex;
+    SFFloat creaseAngle;
 };
 
 typedef ref_ptr<VRMLExtrusion> VRMLExtrusionPtr;
@@ -616,14 +656,15 @@ class CNOID_EXPORT VRMLSwitch : public AbstractVRMLGroup
 {
 public:
     VRMLSwitch();
+    virtual const char* typeName() const override;
 
-    virtual MFNode& getChildren();
-    virtual int countChildren();
-    virtual VRMLNode* getChild(int index);
-    virtual void replaceChild(int childIndex, VRMLNode* childNode);
+    virtual MFNode& getChildren() override;
+    virtual int countChildren() override;
+    virtual VRMLNode* getChild(int index) override;
+    virtual void replaceChild(int childIndex, VRMLNode* childNode) override;
 
-    MFNode	choice;
-    SFInt32	whichChoice;
+    MFNode choice;
+    SFInt32 whichChoice;
 };
 
 typedef ref_ptr<VRMLSwitch> VRMLSwitchPtr;
@@ -633,15 +674,16 @@ class CNOID_EXPORT VRMLLOD : public AbstractVRMLGroup
 {
 public:
     VRMLLOD();
+    virtual const char* typeName() const override;
 
-    virtual MFNode& getChildren();
-    virtual int countChildren();
-    virtual VRMLNode* getChild(int index);
-    virtual void replaceChild(int childIndex, VRMLNode* childNode);
+    virtual MFNode& getChildren() override;
+    virtual int countChildren() override;
+    virtual VRMLNode* getChild(int index) override;
+    virtual void replaceChild(int childIndex, VRMLNode* childNode) override;
 
     MFFloat range;
     SFVec3f center;
-    MFNode  level;
+    MFNode level;
 };
 
 typedef ref_ptr<VRMLLOD> VRMLLODPtr;
@@ -651,6 +693,8 @@ class CNOID_EXPORT VRMLCollision : public VRMLGroup
 {
 public:
     VRMLCollision();
+    virtual const char* typeName() const override;
+
     SFBool collide;
     SFNode proxy;
 };
@@ -662,6 +706,8 @@ class CNOID_EXPORT VRMLAnchor : public VRMLGroup
 {
 public:
     VRMLAnchor();
+    virtual const char* typeName() const override;
+
     SFString description;
     MFString parameter;
     MFString url;
@@ -674,6 +720,8 @@ class CNOID_EXPORT VRMLBillboard : public VRMLGroup
 {
 public:
     VRMLBillboard();
+    virtual const char* typeName() const override;
+
     SFVec3f axisOfRotation;
 };
 
@@ -684,8 +732,10 @@ class CNOID_EXPORT VRMLFog : public VRMLNode
 {
 public:
     VRMLFog();
-    SFColor  color;
-    SFFloat  visibilityRange;
+    virtual const char* typeName() const override;
+
+    SFColor color;
+    SFFloat visibilityRange;
     SFString fogType;
 };
 
@@ -696,6 +746,8 @@ class CNOID_EXPORT  VRMLWorldInfo : public VRMLNode
 {
 public:
     VRMLWorldInfo();
+    virtual const char* typeName() const override;
+
     SFString title;
     MFString info;
 };
@@ -707,7 +759,8 @@ class CNOID_EXPORT VRMLLight : public VRMLNode
 {
 public:
     VRMLLight();
-    SFBool  on;
+
+    SFBool on;
     SFColor color;
     SFFloat intensity;
     SFFloat ambientIntensity;
@@ -720,6 +773,8 @@ class CNOID_EXPORT VRMLPointLight : public VRMLLight
 {
 public:
     VRMLPointLight();
+    virtual const char* typeName() const override;
+
     SFVec3f location;
     SFFloat radius;
     SFVec3f attenuation;
@@ -732,6 +787,8 @@ class CNOID_EXPORT VRMLDirectionalLight : public VRMLLight
 {
 public:
     VRMLDirectionalLight();
+    virtual const char* typeName() const override;
+
     SFVec3f direction;
 };
 
@@ -742,6 +799,8 @@ class CNOID_EXPORT VRMLSpotLight : public VRMLPointLight
 {
 public:
     VRMLSpotLight();
+    virtual const char* typeName() const override;
+
     SFVec3f direction;
     SFFloat beamWidth;
     SFFloat cutOffAngle;
@@ -777,6 +836,7 @@ public:
     VRMLProtoFieldMap fields;
 
     VRMLProto(const std::string& n);
+    virtual const char* typeName() const override;
 
     inline VRMLVariantField* findField(const std::string& fieldName) {
         VRMLProtoFieldMap::iterator p = fields.find(fieldName);
@@ -808,6 +868,7 @@ public:
     VRMLNodePtr actualNode;
 
     VRMLProtoInstance(VRMLProtoPtr proto0);
+    virtual const char* typeName() const override;
 
     inline VRMLVariantField* findField(const std::string& fieldName) {
         VRMLProtoFieldMap::iterator p = fields.find(fieldName);
@@ -928,6 +989,6 @@ typedef VRMLProtoInstancePtr VrmlProtoInstancePtr;
 typedef VRMLVariantField VrmlVariantField;
 #endif
 
-};
+}
 
 #endif

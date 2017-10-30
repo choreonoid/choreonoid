@@ -20,7 +20,7 @@ class SpotLight;
 class CNOID_EXPORT SceneDevice : public SgPosTransform
 {
 public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         
     // for integrating new device types
     typedef std::function<SceneDevice*(Device* device)> SceneDeviceFactory;

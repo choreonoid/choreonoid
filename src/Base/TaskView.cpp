@@ -41,7 +41,7 @@ typedef PushButton CommandButton;
 class TaskComboBox : public ComboBox
 {
 public:
-    virtual void wheelEvent(QWheelEvent* e){
+    virtual void wheelEvent(QWheelEvent*){
 
     }
 };
@@ -371,7 +371,7 @@ void TaskViewImpl::doLayout(bool isVertical)
         commandButtonBoxBaseLayout = new QHBoxLayout();
         commandButtonBoxBaseLayout->setContentsMargins(0, 0, 0, 0);
 
-        for(int i=0; i < commandButtonBoxLayouts.size(); ++i){
+        for(size_t i=0; i < commandButtonBoxLayouts.size(); ++i){
             commandButtonBoxLayouts[i] = new QVBoxLayout();
             QMargins m = commandButtonBoxLayouts[i]->contentsMargins();
             m.setTop(m.top() + 8);
@@ -397,7 +397,7 @@ void TaskViewImpl::doLayout(bool isVertical)
         commandButtonBoxBaseLayout = new QVBoxLayout();
         commandButtonBoxBaseLayout->setContentsMargins(0, 0, 0, 0);
 
-        for(int i=0; i < commandButtonBoxLayouts.size(); ++i){
+        for(size_t i=0; i < commandButtonBoxLayouts.size(); ++i){
             commandButtonBoxLayouts[i] = new QHBoxLayout();
             commandButtonBoxLayouts[i]->setContentsMargins(0, 0, 0, 0);
             commandButtonBoxBaseLayout->addLayout(commandButtonBoxLayouts[i]);
@@ -492,7 +492,7 @@ bool TaskViewImpl::updateTask(Task* task)
     
     int index = taskCombo.findText(task->name().c_str());
 
-    if(index < 0 || index >= tasks.size()){
+    if(index < 0 || index >= static_cast<int>(tasks.size())){
         addTask(task);
     } else {
         if(isWaiting()){
@@ -584,7 +584,7 @@ int TaskView::numTasks() const
 
 Task* TaskView::task(int index)
 {
-    if(index >=0 && index < impl->tasks.size()){
+    if(index >=0 && index < static_cast<int>(impl->tasks.size())){
         return impl->tasks[index].task;
     }
     return 0;
@@ -733,7 +733,7 @@ void TaskView::setCurrentCommand(int commandIndex, bool doExecution)
 
 bool TaskViewImpl::setCurrentTask(int index, bool forceUpdate)
 {
-    if(index < 0 || index >= tasks.size()){
+    if(index < 0 || index >= static_cast<int>(tasks.size())){
         return false;
     }
 
@@ -798,7 +798,7 @@ void TaskViewImpl::setCurrentTaskByName(const std::string& name)
 CommandButton* TaskViewImpl::getOrCreateCommandButton(int commandIndex)
 {
     CommandButton* button;
-    if(commandIndex < commandButtons.size()){
+    if(commandIndex < static_cast<int>(commandButtons.size())){
         button = commandButtons[commandIndex];
     } else {
         button = new CommandButton(&commandButtonBox);
@@ -817,7 +817,7 @@ void TaskViewImpl::layoutCommandButtons()
 {
     int numVisibleButtons = 0;
 
-    for(int i=0; i < commandButtonBoxLayouts.size(); ++i){
+    for(size_t i=0; i < commandButtonBoxLayouts.size(); ++i){
         QBoxLayout* layout = commandButtonBoxLayouts[i];
         QLayoutItem* child;
         while((child = layout->takeAt(0)) != 0) {
@@ -858,7 +858,7 @@ void TaskViewImpl::layoutCommandButtons()
         }
     }
 
-    for(int i=1; i < commandButtonBoxLayouts.size(); ++i){
+    for(size_t i=1; i < commandButtonBoxLayouts.size(); ++i){
         commandButtonBoxLayouts[i]->insertStretch(0);
         commandButtonBoxLayouts[i]->addStretch();
     }
@@ -874,7 +874,7 @@ bool TaskViewImpl::setCurrentCommandIndex(int index)
     for(size_t i=0; i < commandButtons.size(); ++i){
         commandButtons[i]->setDown(false);
     }
-    if(isBusy && index >= 0 && index < commandButtons.size()){
+    if(isBusy && index >= 0 && index < static_cast<int>(commandButtons.size())){
         commandButtons[index]->setDown(true);
     }
     bool changed = (index != currentCommandIndex);
@@ -905,7 +905,7 @@ void TaskViewImpl::setBusyState(bool on)
             commandButtons[i]->setDown(false);
             commandButtons[i]->setEnabled(!isBusy);
         }
-        if(isBusy && currentCommandIndex >= 0 && currentCommandIndex < commandButtons.size()){
+        if(isBusy && currentCommandIndex >= 0 && currentCommandIndex < static_cast<int>(commandButtons.size())){
             commandButtons[currentCommandIndex]->setDown(true);
         }
         cancelButton.setEnabled(isBusy);
@@ -918,7 +918,7 @@ void TaskViewImpl::setBusyState(bool on)
 
 void TaskViewImpl::setFocusToCommandButton(int commandIndex)
 {
-    if(commandIndex >= 0 && commandIndex < commandButtons.size()){
+    if(commandIndex >= 0 && commandIndex < static_cast<int>(commandButtons.size())){
         QWidget* widget = QApplication::focusWidget();
         while(widget){
             if(widget == self){
@@ -1125,7 +1125,6 @@ void TaskViewImpl::executeCommandSuccessively(int commandIndex)
         }
 
         setFocusToCommandButton(commandIndex < 0 ? 0 : commandIndex);
-        bool doEmit = commandIndex != currentCommandIndex;
         
         if(setCurrentCommandIndex(commandIndex)){
             sigCurrentCommandChanged();
@@ -1514,7 +1513,7 @@ void TaskViewImpl::applyMenuItem(int index, bool on)
 {
     if(isExecutionEnabled()){
         updateMenuItems(false);
-        if(index >= 0 && index < menuItems.size()){
+        if(index >= 0 && index < static_cast<int>(menuItems.size())){
             MenuItem& item = menuItems[index];
             if(item.func){
                 item.func();

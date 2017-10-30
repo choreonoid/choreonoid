@@ -12,6 +12,7 @@
 
 namespace cnoid {
 
+class ValueNode;
 class Mapping;
 class Listing;
 class YAMLSceneReaderImpl;
@@ -24,9 +25,13 @@ public:
 
     void setMessageSink(std::ostream& os);
     void setDefaultDivisionNumber(int n);
+    int defaultDivisionNumber() const;
     void setBaseDirectory(const std::string& directory);
+    std::string baseDirectory();
 
     void clear();
+
+    void readHeader(Mapping& node);
 
     enum AngleUnit { DEGREE, RADIAN };
     void setAngleUnit(AngleUnit unit);
@@ -40,6 +45,9 @@ public:
     bool readRotation(Mapping& node, Matrix3& out_R, bool doExtract);
     SgNode* readNode(Mapping& node);
     SgNode* readNode(Mapping& node, const std::string& type);
+    SgNode* readNodeList(ValueNode& node);
+    
+    SgObject* readObject(Mapping& node);
 
     typedef std::function<std::string(const std::string& path, std::ostream& os)> UriSchemeHandler;
     

@@ -83,7 +83,7 @@ typedef ref_ptr<SgImage> SgImagePtr;
 class CNOID_EXPORT SgTextureTransform : public SgObject
 {
 public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     SgTextureTransform();
     SgTextureTransform(const SgTextureTransform& org);
@@ -172,7 +172,7 @@ public:
         
     SgVectorArray(const SgVectorArray& org) : SgObject(org), values(org.values) { }
 
-    virtual SgObject* clone(SgCloneMap& cloneMap) const { return new SgVectorArray(*this); }
+    virtual SgObject* clone(SgCloneMap&) const { return new SgVectorArray(*this); }
         
     SgVectorArray<T>& operator=(const SgVectorArray<T>& rhs) {
         values = rhs.values;
@@ -303,7 +303,7 @@ public:
     const SgIndexArray& triangleVertices() const { return triangleVertices_; }
     SgIndexArray& triangleVertices() { return triangleVertices_; }
 
-    int numTriangles() const { return triangleVertices_.size() / 3; }
+    int numTriangles() const { return static_cast<int>(triangleVertices_.size()) / 3; }
     void setNumTriangles(int n) { triangleVertices_.resize(n * 3); }
     void reserveNumTriangles(int n) { triangleVertices_.reserve(n * 3); }
 
@@ -325,7 +325,7 @@ public:
     }
 
     TriangleRef addTriangle(){
-        const int s = triangleVertices_.size();
+        const size_t s = triangleVertices_.size();
         triangleVertices_.resize(s + 3);
         return TriangleRef(&triangleVertices_[s]);
     }
@@ -552,7 +552,7 @@ public:
     const SgIndexArray& lineVertices() const { return lineVertices_; }
     SgIndexArray& lineVertices() { return lineVertices_; }
 
-    int numLines() const { return lineVertices_.size() / 2; }
+    int numLines() const { return static_cast<int>(lineVertices_.size()) / 2; }
     void setNumLines(int n) { lineVertices_.resize(n * 2); }
     void reserveNumLines(int n) { lineVertices_.reserve(n * 2); }
     void clearLines() { lineVertices_.clear(); }
@@ -574,7 +574,7 @@ public:
     }
 
     LineRef addLine(){
-        const int s = lineVertices_.size();
+        const size_t s = lineVertices_.size();
         lineVertices_.resize(s + 2);
         return LineRef(&lineVertices_[s]);
     }

@@ -240,7 +240,7 @@ void AISTCollisionDetector::setGeometryStatic(int geometryId, bool isStatic)
 }
 
 
-bool AISTCollisionDetector::enableGeometryCache(bool on)
+bool AISTCollisionDetector::enableGeometryCache(bool)
 {
     return false;
 }

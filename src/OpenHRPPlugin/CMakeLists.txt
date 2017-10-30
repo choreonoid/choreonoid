@@ -1,4 +1,3 @@
-
 # @author Shin'ichiro Nakaoka
 
 option(BUILD_OPENHRP_PLUGIN "Building OpenHRPPlugin" OFF)
@@ -24,6 +23,12 @@ if(UNIX AND NOT APPLE)
 endif()
 
 include_directories(${OPENRTM_INCLUDE_DIRS})
+
+set(IDL_INCLUDE_DIRS 
+  ${OPENRTM_PREFIX}/include/openrtm-1.1/rtm/idl
+  ${OPENRTM_PREFIX}/rtm/idl # for the Windows installer version
+  )
+
 link_directories(${OPENRTM_LIBRARY_DIRS})
 
 foreach(version ${versions})
@@ -36,7 +41,8 @@ foreach(version ${versions})
     CollisionDetector
     ViewSimulator
     Controller
-    OnlineViewer)
+    OnlineViewer
+    )
 
   if(version EQUAL 3.0)
     set(defver "OPENHRP_3_0")
@@ -44,7 +50,8 @@ foreach(version ${versions})
     set(defver "OPENHRP_3_1")
     set(idls ${idls}
       World
-      InterpreterService)
+      InterpreterService
+      ClockGenerator)
   endif()
 
   set(sources
@@ -79,7 +86,9 @@ foreach(version ${versions})
 
   if(version EQUAL 3.1)
     set(sources ${sources}
-      OpenHRPInterpreterServiceItem.cpp)
+      OpenHRPInterpreterServiceItem.cpp
+      OpenHRPClockGeneratorItem.cpp
+      )
   endif()
   
   set(headers
@@ -105,9 +114,9 @@ foreach(version ${versions})
 endforeach()
 
 if(ENABLE_PYTHON)
-  if(USE_PYTHON3)
-    add_subdirectory(python3)
-  else()
-    add_subdirectory(python)
+  if(USE_PYBIND11)
+    add_subdirectory(pybind11)
+  elseif(USE_BOOST_PYTHON)
+    add_subdirectory(boostpython)
   endif()
 endif()

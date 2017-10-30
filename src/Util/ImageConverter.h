@@ -4,14 +4,14 @@
   @author K.FUKUDA
 */
 
-#ifndef CNOID_UTIL_IMAGECONVERTER_H_INCLUDED
-#define CNOID_UTIL_IMAGECONVERTER_H_INCLUDED
+#ifndef CNOID_UTIL_IMAGECONVERTER_H
+#define CNOID_UTIL_IMAGECONVERTER_H
 
 #include "VRML.h"
 #include "exportdecl.h"
 
-namespace cnoid
-{
+namespace cnoid {
+
 class ImageConverter
 {
 private:
@@ -27,7 +27,7 @@ public:
 
     CNOID_EXPORT SFImage* convert(const std::string& url);
 };
-};
+
+}
 
 #endif
-

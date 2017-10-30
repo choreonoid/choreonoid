@@ -74,14 +74,14 @@ public:
        You can get the joints by giving the index after the last joint id to the joint() function.
     */
     int numVirtualJoints() const {
-        return jointIdToLinkArray.size() - numActualJoints;
+        return static_cast<int>(jointIdToLinkArray.size()) - numActualJoints;
     }
 
     /**
        The number of all the joints including both the actual and virtual joints.
     */
     int numAllJoints() const {
-        return jointIdToLinkArray.size();
+        return static_cast<int>(jointIdToLinkArray.size());
     }
 
     /**
@@ -106,6 +106,7 @@ public:
     };
 
     JointAccessor joints() { return JointAccessor(jointIdToLinkArray, numActualJoints); }
+    JointAccessor allJoints() { return JointAccessor(jointIdToLinkArray, jointIdToLinkArray.size()); }
 
     /**
        The number of all the links the body has.
@@ -145,7 +146,7 @@ public:
     }
 
     int numDevices() const {
-        return devices_.size();
+        return static_cast<int>(devices_.size());
     }
 
     Device* device(int index) const { return devices_[index]; }
@@ -202,7 +203,7 @@ public:
         
     void clearExternalForces();
 
-    int numExtraJoints() const { return extraJoints_.size(); }
+    int numExtraJoints() const { return static_cast<int>(extraJoints_.size()); }
     ExtraJoint& extraJoint(int index) { return extraJoints_[index]; }
     const ExtraJoint& extraJoint(int index) const {  return extraJoints_[index]; }
     void addExtraJoint(const ExtraJoint& extraJoint) { extraJoints_.push_back(extraJoint); }

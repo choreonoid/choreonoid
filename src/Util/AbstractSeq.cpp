@@ -92,7 +92,7 @@ bool AbstractSeq::readSeq(const Mapping& archive)
 }
 
 
-bool AbstractSeq::doReadSeq(const Mapping& archive)
+bool AbstractSeq::doReadSeq(const Mapping&)
 {
     return true;
 }
@@ -152,7 +152,7 @@ bool AbstractSeq::writeSeq(YAMLWriter& writer)
 }
 
 
-bool AbstractSeq::doWriteSeq(YAMLWriter& writer)
+bool AbstractSeq::doWriteSeq(YAMLWriter& /* writer */)
 {
     return true;
 }
@@ -191,13 +191,13 @@ AbstractMultiSeq::~AbstractMultiSeq()
 }
 
 
-int AbstractMultiSeq::partIndex(const std::string& partLabel) const
+int AbstractMultiSeq::partIndex(const std::string& /* partLabel*/) const
 {
     return -1;
 }
 
 
-const std::string& AbstractMultiSeq::partLabel(int partIndex) const
+const std::string& AbstractMultiSeq::partLabel(int /* partIndex */) const
 {
     static const std::string nolabel;
     return nolabel;

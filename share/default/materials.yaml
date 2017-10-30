@@ -1,0 +1,31 @@
+materials:
+  -
+    name: Default
+    roughness: 1.0
+    viscosity: 0.0
+  -
+    name: Ground
+    roughness: 0.5
+    viscosity: 0.0
+  -
+    name: Tracks
+    roughness: 0.5
+    viscosity: 0.0
+  -
+    name: OilWetGround
+    roughness: 0.1
+    viscosity: 0.0
+
+contactMaterials:
+  -
+    materials: [ Default, Default ]
+    friction: 0.5
+    restitution: 0.0
+  -
+    materials: [ Ground, Tracks ]
+    friction: 0.5
+    restitution: 0.0
+  -
+    materials: [ OilWetGround, Tracks ]
+    friction: 0.1
+    restitution: 0.0

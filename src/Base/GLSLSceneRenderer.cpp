@@ -500,7 +500,7 @@ void GLSLSceneRenderer::applyExtensions()
     SceneRenderer::applyExtensions();
     
     std::lock_guard<std::mutex> guard(extensionMutex);
-    for(int i=0; i < extendFunctions.size(); ++i){
+    for(size_t i=0; i < extendFunctions.size(); ++i){
         extendFunctions[i](this);
     }
 }
@@ -519,7 +519,7 @@ bool GLSLSceneRenderer::applyNewExtensions()
     
     std::lock_guard<std::mutex> guard(impl->newExtensionMutex);
     if(!impl->newExtendFunctions.empty()){
-        for(int i=0; i < impl->newExtendFunctions.size(); ++i){
+        for(size_t i=0; i < impl->newExtendFunctions.size(); ++i){
             impl->newExtendFunctions[i](this);
         }
         impl->newExtendFunctions.clear();
@@ -1466,8 +1466,8 @@ void GLSLSceneRendererImpl::writeMeshVertices(SgMesh* mesh, VertexResource* reso
     const int numTriangles = mesh->numTriangles();
     int faceVertexIndex = 0;
     
-    for(size_t i=0; i < numTriangles; ++i){
-        for(size_t j=0; j < 3; ++j){
+    for(int i=0; i < numTriangles; ++i){
+        for(int j=0; j < 3; ++j){
             const int orgVertexIndex = triangleVertices[faceVertexIndex++];
             vertices.push_back(orgVertices[orgVertexIndex]);
         }
@@ -1517,15 +1517,15 @@ void GLSLSceneRendererImpl::writeMeshNormals(SgMesh* mesh, GLuint buffer, SgNorm
         const auto& normalIndices = mesh->normalIndices();
         int faceVertexIndex = 0;
         if(normalIndices.empty()){
-            for(size_t i=0; i < numTriangles; ++i){
-                for(size_t j=0; j < 3; ++j){
+            for(int i=0; i < numTriangles; ++i){
+                for(int j=0; j < 3; ++j){
                     const int orgVertexIndex = triangleVertices[faceVertexIndex++];
                     normals.push_back(orgNormals[orgVertexIndex]);
                 }
             }
         } else {
-            for(size_t i=0; i < numTriangles; ++i){
-                for(size_t j=0; j < 3; ++j){
+            for(int i=0; i < numTriangles; ++i){
+                for(int j=0; j < 3; ++j){
                     const int normalIndex = normalIndices[faceVertexIndex++];
                     normals.push_back(orgNormals[normalIndex]);
                 }
@@ -1534,12 +1534,12 @@ void GLSLSceneRendererImpl::writeMeshNormals(SgMesh* mesh, GLuint buffer, SgNorm
     } else {
         // flat shading
         const auto& orgVertices = *mesh->vertices();
-        for(size_t i=0; i < numTriangles; ++i){
+        for(int i=0; i < numTriangles; ++i){
             SgMesh::TriangleRef triangle = mesh->triangle(i);
             const Vector3f e1 = orgVertices[triangle[1]] - orgVertices[triangle[0]];
             const Vector3f e2 = orgVertices[triangle[2]] - orgVertices[triangle[0]];
             const Vector3f normal = e1.cross(e2).normalized();
-            for(size_t j=0; j < 3; ++j){
+            for(int j=0; j < 3; ++j){
                 normals.push_back(normal);
             }
         }
@@ -1576,15 +1576,15 @@ void GLSLSceneRendererImpl::writeMeshTexCoords(SgMesh* mesh, GLuint buffer)
     int faceVertexIndex = 0;
     
     if(texCoordIndices.empty()){
-        for(size_t i=0; i < numTriangles; ++i){
-            for(size_t j=0; j < 3; ++j){
+        for(int i=0; i < numTriangles; ++i){
+            for(int j=0; j < 3; ++j){
                 const int orgVertexIndex = triangleVertices[faceVertexIndex++];
                 texCoords.push_back((*pOrgTexCoords)[orgVertexIndex]);
             }
         }
     } else {
-        for(size_t i=0; i < numTriangles; ++i){
-            for(size_t j=0; j < 3; ++j){
+        for(int i=0; i < numTriangles; ++i){
+            for(int j=0; j < 3; ++j){
                 const int texCoordIndex = texCoordIndices[faceVertexIndex++];
                 texCoords.push_back((*pOrgTexCoords)[texCoordIndex]);
             }
@@ -1610,15 +1610,15 @@ void GLSLSceneRendererImpl::writeMeshColors(SgMesh* mesh, GLuint buffer)
     int faceVertexIndex = 0;
 
     if(colorIndices.empty()){
-        for(size_t i=0; i < numTriangles; ++i){
-            for(size_t j=0; j < 3; ++j){
+        for(int i=0; i < numTriangles; ++i){
+            for(int j=0; j < 3; ++j){
                 const int orgVertexIndex = triangleVertices[faceVertexIndex++];
                 colors.push_back(orgColors[orgVertexIndex]);
             }
         }
     } else {
-        for(size_t i=0; i < numTriangles; ++i){
-            for(size_t j=0; j < 3; ++j){
+        for(int i=0; i < numTriangles; ++i){
+            for(int j=0; j < 3; ++j){
                 const int colorIndex = colorIndices[faceVertexIndex++];
                 colors.push_back(orgColors[colorIndex]);
             }
@@ -1679,7 +1679,7 @@ void GLSLSceneRendererImpl::renderPlot
     if(!resource->isValid()){
         glBindVertexArray(resource->vao);
         SgVertexArrayPtr vertices = getVertices();
-        const int n = vertices->size();
+        const size_t n = vertices->size();
         resource->numVertices = n;
 
         glBindBuffer(GL_ARRAY_BUFFER, resource->newBuffer());
@@ -1702,7 +1702,7 @@ void GLSLSceneRendererImpl::renderPlot
             } else {
                 const int m = colorIndices.size();
                 colors = new SgColorArray(m);
-                for(size_t i=0; i < m; ++i){
+                for(int i=0; i < m; ++i){
                     (*colors)[i] = orgColors[colorIndices[i]];
                 }
             }

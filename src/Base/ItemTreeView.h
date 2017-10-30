@@ -26,12 +26,10 @@ public:
     static ItemTreeView* mainInstance(); // deprecated
 
     ItemTreeView();
-    ItemTreeView(RootItem* rootItem, bool showRoot = false);
+    ItemTreeView(RootItem* rootItem);
     ~ItemTreeView();
 
     RootItem* rootItem();
-
-    void showRoot(bool show);
 
     /**
        This function returns the specific type items that are selected in the ItemTreeView
@@ -103,7 +101,7 @@ public:
     
     SignalProxy<void(Item* item, bool isChecked)> sigCheckToggled(int id = 0);
 
-    SignalProxy<void(bool isChecked)> sigCheckToggled(Item* targetItem, int id = 0);
+    SignalProxy<void(bool isChecked)> sigCheckToggled(Item* item, int id = 0);
 
     void cutSelectedItems();
 
@@ -114,7 +112,7 @@ protected:
 private:
     ItemTreeViewImpl* impl;
 
-    void construct(RootItem* rootItem, bool showRoot);
+    void construct(RootItem* rootItem);
     ItemList<>& allSelectedItems();
     ItemList<>& allCheckedItems(int id);
     void extractSelectedItemsOfSubTree(Item* topItem, ItemList<>& items);

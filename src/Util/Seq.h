@@ -41,7 +41,7 @@ public:
         return *this;
     }
 
-    virtual AbstractSeq& operator=(const AbstractSeq& rhs) {
+    virtual AbstractSeq& operator=(const AbstractSeq& rhs) override {
         const SeqType* rhsSeq = dynamic_cast<const SeqType*>(&rhs);
         if(rhsSeq){
             return operator=(*rhsSeq);
@@ -132,6 +132,7 @@ protected:
 
     virtual ElementType defaultValue() const { return ElementType(); }
 };
+
 }
 
 #endif

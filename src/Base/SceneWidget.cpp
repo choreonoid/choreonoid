@@ -72,7 +72,7 @@ public:
         setFunction<SgGroup>(
             [&](SgNode* node){
                 auto group = static_cast<SgGroup*>(node);
-                if(SceneWidgetEditable* editable = dynamic_cast<SceneWidgetEditable*>(group)){
+                if(dynamic_cast<SceneWidgetEditable*>(group)){
                     editables.push_back(group);
                 }
                 for(auto child : *group){
@@ -1504,13 +1504,13 @@ SignalProxy<void(bool isFocused)> SceneWidget::sigWidgetFocusChanged()
 }
 
 
-void SceneWidgetImpl::focusInEvent(QFocusEvent* event)
+void SceneWidgetImpl::focusInEvent(QFocusEvent*)
 {
     sigWidgetFocusChanged(true);
 }
 
 
-void SceneWidgetImpl::focusOutEvent(QFocusEvent* event)
+void SceneWidgetImpl::focusOutEvent(QFocusEvent*)
 {
     sigWidgetFocusChanged(false);
 }
@@ -1641,7 +1641,7 @@ void SceneWidgetImpl::startViewTranslation()
         int x, y, width, height;
         renderer->getViewport(x, y, width, height);
         const double aspect = (double)width / height;
-        double r, cw, ch;
+        double r{}, cw{}, ch{};
         SgCamera* camera = renderer->currentCamera();
         if(SgPerspectiveCamera* pers = dynamic_cast<SgPerspectiveCamera*>(camera)){
             const double fovy = pers->fovy(aspect);
@@ -1722,7 +1722,7 @@ void SceneWidgetImpl::dragViewZoom()
     const double dy = latestEvent.y() - orgMouseY;
     const double ratio = expf(dy * 0.01);
 
-    if(SgPerspectiveCamera* pers = dynamic_cast<SgPerspectiveCamera*>(camera)){
+    if(dynamic_cast<SgPerspectiveCamera*>(camera)){
         const Affine3& C = orgCameraPosition;
         const Vector3 v = SgCamera::direction(C);
 
@@ -1752,7 +1752,7 @@ void SceneWidgetImpl::zoomView(double ratio)
     }
 
     SgCamera* camera = renderer->currentCamera();
-    if(SgPerspectiveCamera* pers = dynamic_cast<SgPerspectiveCamera*>(camera)){
+    if(dynamic_cast<SgPerspectiveCamera*>(camera)){
         const Affine3& C = interactiveCameraTransform->T();
         const Vector3 v = SgCamera::direction(C);
         
@@ -2344,6 +2344,11 @@ void SceneWidget::setBackgroundColor(const Vector3& color)
 }
 
 
+Vector3 SceneWidget::backgroundColor()
+{
+	return impl	->renderer->backgroundColor().cast<double>();
+}
+
 void SceneWidget::setColor(const Vector4& color)
 {
     impl->renderer->setColor(color.head<3>().cast<float>());
@@ -2841,7 +2846,7 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
 
     builtinCameraConnections.add(
         impl->builtinPersCamera->sigUpdated().connect(
-            [&](const SgUpdate& update){ updateBuiltinCameraConfig(); }));
+            [&](const SgUpdate&){ updateBuiltinCameraConfig(); }));
     
     vbox->addLayout(new HSeparatorBox(new QLabel(_("Default Camera"))));
     hbox = new QHBoxLayout();
@@ -2861,13 +2866,13 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     zNearSpin.setDecimals(4);
     zNearSpin.setRange(0.0001, 9.9999);
     zNearSpin.setSingleStep(0.0001);
-    zNearSpin.sigValueChanged().connect([=](double v){ impl->onClippingDepthChanged(); });
+    zNearSpin.sigValueChanged().connect([=](double){ impl->onClippingDepthChanged(); });
     hbox->addWidget(&zNearSpin);
     hbox->addWidget(new QLabel(_("Far")));
     zFarSpin.setDecimals(1);
     zFarSpin.setRange(0.1, 9999999.9);
     zFarSpin.setSingleStep(0.1);
-    zFarSpin.sigValueChanged().connect([=](double v){ impl->onClippingDepthChanged(); });
+    zFarSpin.sigValueChanged().connect([=](double){ impl->onClippingDepthChanged(); });
     hbox->addWidget(&zFarSpin);
     hbox->addStretch();
     vbox->addLayout(hbox);

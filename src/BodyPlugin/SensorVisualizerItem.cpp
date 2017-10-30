@@ -196,7 +196,7 @@ void SensorVisualizerItemImpl::onPositionChanged()
     BodyItem* newBodyItem = self->findOwnerItem<BodyItem>();
     if(newBodyItem != bodyItem){
         bodyItem = newBodyItem;
-        for(int i=0; i<subItems.size(); i++){
+        for(size_t i=0; i < subItems.size(); i++){
             subItems[i]->detachFromParentItem();
         }
         subItems.clear();
@@ -265,7 +265,7 @@ void SensorVisualizerItemImpl::onPositionChanged()
 
 void SensorVisualizerItem::onDisconnectedFromRoot()
 {
-    for(int i=0; i<impl->subItems.size(); i++){
+    for(size_t i=0; i < impl->subItems.size(); i++){
         impl->subItems[i]->detachFromParentItem();
     }
     impl->subItems.clear();
@@ -276,7 +276,7 @@ bool SensorVisualizerItem::store(Archive& archive)
 {
     ListingPtr subItems = new Listing();
 
-    for(int i=0; i<impl->subItems.size(); i++){
+    for(size_t i=0; i < impl->subItems.size(); i++){
         Item* item = impl->subItems[i];
         string pluginName, className;
         ItemManager::getClassIdentifier(item, pluginName, className);
@@ -428,7 +428,7 @@ void ForceSensorVisualizerItemImpl::updateSensorState()
     
 void ForceSensorVisualizerItemImpl::updateForceSensorState(int index)
 {
-    if(index < forceSensors.size()){
+    if(index < static_cast<int>(forceSensors.size())){
         ForceSensor* sensor = forceSensors[index];
         Vector3 v = sensor->link()->T() * sensor->T_local() * sensor->f();
         forceSensorArrows[index]->setVector(v * visualRatio);

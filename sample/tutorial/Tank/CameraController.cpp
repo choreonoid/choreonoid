@@ -12,7 +12,7 @@ class CameraController : public SimpleController
     std::ostream* os;
     
 public:
-    virtual bool initialize(SimpleControllerIO* io)
+    virtual bool initialize(SimpleControllerIO* io) override
     {
         camera = io->body()->findDevice<Camera>("Camera");
         io->enableInput(camera);
@@ -21,19 +21,19 @@ public:
         return true;
     }
 
-    virtual bool control()
+    virtual bool control() override
     {
-        static const int button[] = { 2 };
-        
         joystick.readCurrentState();
 
-        bool currentState = joystick.getButtonState(button[0]);
+        bool currentState = joystick.getButtonState(1);
         if(currentState && !prevButtonState){
             const Image& image = camera->constImage();
             if(!image.empty()){
                 std::string filename = camera->name() + ".png";
                 camera->constImage().save(filename);
-                (*os) << "The image of " << camera->name() << " has been saved to \"" << filename << "\"." << std::endl;
+                (*os) << "The image of " << camera->name()
+                      << " has been saved to \"" << filename << "\"."
+                      << std::endl;
             }
         }
         prevButtonState = currentState;

@@ -57,9 +57,9 @@ ButtonInfo buttonInfo[] = {
     { "J", 4, 7, true, -1.0, 2, Qt::Key_J },
     { "L", 4, 9, true,  1.0, 2, Qt::Key_L },
 
-    { "A", 2, 10, false, 1.0, 1, Qt::Key_A },
-    { "B", 1, 11, false, 1.0, 2, Qt::Key_B },
-    { "X", 1,  9, false, 1.0, 0, Qt::Key_X },
+    { "A", 2, 10, false, 1.0, 0, Qt::Key_A },
+    { "B", 1, 11, false, 1.0, 1, Qt::Key_B },
+    { "X", 1,  9, false, 1.0, 2, Qt::Key_X },
     { "Y", 0, 10, false, 1.0, 3, Qt::Key_Y }
 };
     
@@ -85,7 +85,9 @@ public:
     VirtualJoystickViewImpl(VirtualJoystickView* self);
     ~VirtualJoystickViewImpl();
     bool onKeyStateChanged(int key, bool on);
-
+    void onButtonPressed(int index);
+    void onButtonReleased(int index);
+    
     virtual int numAxes() const;
     virtual int numButtons() const;
     virtual bool readCurrentState();
@@ -122,18 +124,22 @@ VirtualJoystickViewImpl::VirtualJoystickViewImpl(VirtualJoystickView* self)
     
     for(int i=0; i < NUM_JOYSTICK_ELEMENTS; ++i){
         ButtonInfo& info = buttonInfo[i];
-        buttons[i].setText(info.label);
+        ToolButton& button = buttons[i];
+        button.setText(info.label);
         grid.addWidget(&buttons[i], info.row, info.column);
         keyToButtonMap[info.key] = i;
         if(info.isAxis){
-            if(info.id >= axisPositions.size()){
+            if(info.id >= static_cast<int>(axisPositions.size())){
                 axisPositions.resize(info.id + 1, 0.0);
             }
         } else {
-            if(info.id >= buttonStates.size()){
+            if(info.id >= static_cast<int>(buttonStates.size())){
                 buttonStates.resize(info.id + 1, false);
             }
         }
+
+        button.sigPressed().connect([=](){ onButtonPressed(i); });
+        button.sigReleased().connect([=](){ onButtonReleased(i); });
     }
 
     QHBoxLayout* hbox = new QHBoxLayout;
@@ -186,7 +192,7 @@ bool VirtualJoystickViewImpl::onKeyStateChanged(int key, bool on)
     } else {
         int index = p->second;
         ToolButton& button = buttons[index];
-        ButtonInfo& info = buttonInfo[p->second];
+        ButtonInfo& info = buttonInfo[index];
         button.setDown(on);
         {
             std::lock_guard<std::mutex> lock(mutex);
@@ -194,6 +200,21 @@ bool VirtualJoystickViewImpl::onKeyStateChanged(int key, bool on)
         }
     }
     return true;
+}
+
+
+void VirtualJoystickViewImpl::onButtonPressed(int index)
+{
+    ButtonInfo& info = buttonInfo[index];
+    std::lock_guard<std::mutex> lock(mutex);
+    keyValues[index] = info.activeValue;
+}
+
+
+void VirtualJoystickViewImpl::onButtonReleased(int index)
+{
+    std::lock_guard<std::mutex> lock(mutex);
+    keyValues[index] = 0.0;
 }
 
 
@@ -230,7 +251,7 @@ bool VirtualJoystickViewImpl::readCurrentState()
 
 double VirtualJoystickViewImpl::getPosition(int axis) const
 {
-    if(axis >=0 && axis < axisPositions.size()){
+    if(axis >=0 && axis < static_cast<int>(axisPositions.size())){
         return axisPositions[axis];
     }
     return 0.0;
@@ -239,7 +260,7 @@ double VirtualJoystickViewImpl::getPosition(int axis) const
 
 bool VirtualJoystickViewImpl::getButtonState(int button) const
 {
-    if(button >= 0 && button < buttonStates.size()){
+    if(button >= 0 && button < static_cast<int>(buttonStates.size())){
         return buttonStates[button];
     }
     return false;
@@ -274,13 +295,13 @@ SignalProxy<void(int id, double position)> VirtualJoystickViewImpl::sigAxis()
 }
 
 
-bool VirtualJoystickView::storeState(Archive& archive)
+bool VirtualJoystickView::storeState(Archive&)
 {
     return true;
 }
 
 
-bool VirtualJoystickView::restoreState(const Archive& archive)
+bool VirtualJoystickView::restoreState(const Archive&)
 {
     return true;
 }

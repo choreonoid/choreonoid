@@ -18,7 +18,7 @@ namespace {
 const double TIMESTEP = 0.002;
 
 VectorXd& convertToRadian(VectorXd& q){
-    for(size_t i=0; i < q.size(); ++i){
+    for(int i=0; i < q.size(); ++i){
         q[i] = radian(q[i]);
     }
     return q;
@@ -58,7 +58,6 @@ const char* samplepd_spec[] =
 SR1LiftupControllerRTC::SR1LiftupControllerRTC(RTC::Manager* manager)
     : RTC::DataFlowComponentBase(manager),
       m_angleIn("q", m_angle),
-      m_torqueIn("u_in", m_torque_in),
       m_torqueOut("u_out", m_torque_out)
 {
 
@@ -75,7 +74,6 @@ RTC::ReturnCode_t SR1LiftupControllerRTC::onInitialize()
 {
     // Set InPort buffers
     addInPort("q", m_angleIn);
-    addInPort("u_in", m_torqueIn);
   
     // Set OutPort buffer
     addOutPort("u_out", m_torqueOut);
@@ -93,9 +91,9 @@ RTC::ReturnCode_t SR1LiftupControllerRTC::onInitialize()
         return RTC::RTC_ERROR;
     }
 
-    n = body->numJoints();
-    rightWrist_id =  body->link("RARM_WRIST_R")->jointId();
-    leftWrist_id =  body->link("LARM_WRIST_R")->jointId();
+    numJoints = body->numJoints();
+    rightWrist_id = body->link("RARM_WRIST_R")->jointId();
+    leftWrist_id = body->link("LARM_WRIST_R")->jointId();
 
     return RTC::RTC_OK;
 }
@@ -106,20 +104,20 @@ RTC::ReturnCode_t SR1LiftupControllerRTC::onActivated(RTC::UniqueId ec_id)
     time = 0.0;
     throwTime = std::numeric_limits<double>::max();
 
-    qref_old.resize(n);
-    qold.resize(n);
+    qref_old.resize(numJoints);
+    qold.resize(numJoints);
 
     if(m_angleIn.isNew()){
         m_angleIn.read();
     }
 
-    VectorXd q0(n);
-    for(int i=0; i < n; ++i){
+    VectorXd q0(numJoints);
+    for(size_t i=0; i < numJoints; ++i){
         qold[i] = m_angle.data[i];
         q0[i] = m_angle.data[i];
     }
 
-    VectorXd q1(n);
+    VectorXd q1(numJoints);
     q1 <<
         0.0, -15.0, 0.0,  45.0, -30.0, 0.0,
         10.0,   0.0, 0.0, -90.0,   0.0, 0.0, 0.0,
@@ -127,7 +125,7 @@ RTC::ReturnCode_t SR1LiftupControllerRTC::onActivated(RTC::UniqueId ec_id)
         10.0,   0.0, 0.0, -90.0,   0.0, 0.0, 0.0,
         0.0,   0.0, 0.0;
 
-    VectorXd q2(n);
+    VectorXd q2(numJoints);
     q2 <<
         0.0, -80.0, 0.0, 148.0, -70.0, 0.0,
         -47.0,   0.0, 0.0, -60.0,   0.0, 0.0, 0.0,
@@ -146,7 +144,10 @@ RTC::ReturnCode_t SR1LiftupControllerRTC::onActivated(RTC::UniqueId ec_id)
     phase = 0;
     dq_wrist = 0.0;
 
-    m_torque_out.data.length(n);
+    m_torque_out.data.length(numJoints);
+    for(size_t i=0; i < numJoints; ++i){
+        m_torque_out.data[i] = 0.0;
+    }
 
     return RTC::RTC_OK;
 }
@@ -163,9 +164,6 @@ RTC::ReturnCode_t SR1LiftupControllerRTC::onExecute(RTC::UniqueId ec_id)
     if(m_angleIn.isNew()){
         m_angleIn.read();
     }
-    if(m_torqueIn.isNew()){
-        m_torqueIn.read();
-    }
 
     if(phase == 0){
         qref = interpolator.interpolate(time);
@@ -177,14 +175,14 @@ RTC::ReturnCode_t SR1LiftupControllerRTC::onExecute(RTC::UniqueId ec_id)
         // holding phase
         qref = qref_old;
 
-        if(fabs(m_torque_in.data[rightWrist_id]) < 50.0 || fabs(m_torque_in.data[leftWrist_id]) < 50.0){ // not holded ?
+        if(fabs(m_torque_out.data[rightWrist_id]) < 50.0 || fabs(m_torque_out.data[leftWrist_id]) < 50.0){ // not holded ?
             dq_wrist = std::min(dq_wrist + 0.001, 0.1);
             qref[rightWrist_id] += radian(dq_wrist);
             qref[leftWrist_id]  -= radian(dq_wrist);
             
         } else {
             // transit to getting up phase
-            VectorXd q3(n);
+            VectorXd q3(numJoints);
             q3 <<
                 0.0, -15.0, 0.0,  45.0, -30.0, 0.0,
                 -50.0,   0.0, 0.0, -60.0,   0.0, 0.0, 0.0,
@@ -209,7 +207,7 @@ RTC::ReturnCode_t SR1LiftupControllerRTC::onExecute(RTC::UniqueId ec_id)
         
         if(time > interpolator.domainUpper()){
             // transit to throwing phase
-            VectorXd q4(n);
+            VectorXd q4(numJoints);
             q4 <<
                 0.0, -40.0, 0.0,  80.0, -40.0, 0.0,
                 -50.0,   0.0, 0.0, -60.0,   0.0, 0.0, 0.0,
@@ -220,7 +218,7 @@ RTC::ReturnCode_t SR1LiftupControllerRTC::onExecute(RTC::UniqueId ec_id)
             q4[rightWrist_id] = qref[rightWrist_id];
             q4[leftWrist_id]  = qref[leftWrist_id];
 
-            VectorXd q5(n);
+            VectorXd q5(numJoints);
             q5 <<
                 0.0, -15.0, 0.0,  45.0, -30.0, 0.0,
                 -60.0,   0.0, 0.0, -50.0,   0.0, 0.0, 0.0,
@@ -250,7 +248,7 @@ RTC::ReturnCode_t SR1LiftupControllerRTC::onExecute(RTC::UniqueId ec_id)
         qref[leftWrist_id]  = 0.0; 
     }
 
-    for(int i=0; i < n; ++i){
+    for(size_t i=0; i < numJoints; ++i){
         double q = m_angle.data[i];
         double dq = (q - qold[i]) / TIMESTEP;
         double dq_ref = (qref[i] - qref_old[i]) / TIMESTEP;
@@ -281,7 +279,6 @@ RTC::ReturnCode_t SR1LiftupControllerRTC::onExecute(RTC::UniqueId ec_id)
 
 extern "C"
 {
-
     DLL_EXPORT void SR1LiftupControllerRTCInit(RTC::Manager* manager)
     {
         coil::Properties profile(samplepd_spec);
@@ -289,5 +286,4 @@ extern "C"
                                  RTC::Create<SR1LiftupControllerRTC>,
                                  RTC::Delete<SR1LiftupControllerRTC>);
     }
-
 };

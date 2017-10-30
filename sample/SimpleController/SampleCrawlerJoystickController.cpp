@@ -17,7 +17,7 @@ class SampleCrawlerJoystickController : public SimpleController
 
 public:
     
-    virtual bool initialize(SimpleControllerIO* io)
+    virtual bool initialize(SimpleControllerIO* io) override
     {
         std::ostream& os = io->os();
 
@@ -28,6 +28,11 @@ public:
             os << "Crawlers are not found" << std::endl;
             return false;
         }
+
+        crawlerL->setActuationMode(Link::JOINT_SURFACE_VELOCITY);
+        crawlerR->setActuationMode(Link::JOINT_SURFACE_VELOCITY);
+        io->enableOutput(crawlerL);
+        io->enableOutput(crawlerR);
 
         for(int i=0; i < 2; i++){
             qRef[i] = 0;
@@ -43,7 +48,7 @@ public:
         return true;
     }
 
-    virtual bool control()
+    virtual bool control() override
     {
         joystick.readCurrentState();
 

@@ -48,6 +48,7 @@
 #include "DescriptionDialog.h"
 #include <cnoid/Config>
 #include <cnoid/ValueTree>
+#include <cnoid/CnoidUtil>
 #include <QApplication>
 #include <QTextCodec>
 #include <QGLFormat>
@@ -72,7 +73,7 @@ Signal<void(View*)> sigFocusViewChanged;
 
 Signal<void()> sigAboutToQuit_;
 
-void onCtrl_C_Input(int p)
+void onCtrl_C_Input(int)
 {
     callLater(std::bind(&MainWindow::close, MainWindow::instance()));
 }
@@ -109,7 +110,6 @@ class AppImpl
     int exec();
     void onMainWindowCloseEvent();
     void onSigOptionsParsed(boost::program_options::variables_map& v);
-    bool processCommandLineOptions();
     void showInformationDialog();
     void onOpenGLVSyncToggled(bool on);
 
@@ -180,6 +180,9 @@ void AppImpl::initialize( const char* appName, const char* vendorName, const QIc
         AppConfig::archive()->openMapping("pathVariables"));
 
     ext = new ExtensionManager("Base", false);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0) && CNOID_ENABLE_GETTEXT
+    setCnoidUtilTextDomainCodeset();
+#endif
 
     // OpenGL settings
     Mapping* glConfig = AppConfig::archive()->openMapping("OpenGL");
@@ -304,11 +307,15 @@ int App::exec()
 
 int AppImpl::exec()
 {
-    processCommandLineOptions();
+    if(!ext->optionManager().parseCommandLine1(argc, argv)){
+        //exit
+    }
 
     if(!mainWindow->isVisible()){
         mainWindow->show();
     }
+
+    ext->optionManager().parseCommandLine2();
 
     int result = 0;
     
@@ -367,16 +374,6 @@ void AppImpl::onSigOptionsParsed(boost::program_options::variables_map& v)
 }
     
 
-bool AppImpl::processCommandLineOptions()
-{
-    if(!ext->optionManager().parseCommandLine(argc, argv)){
-        //put error messages
-    }
-
-    return false;
-}
-
-
 void AppImpl::showInformationDialog()
 {
     if(!descriptionDialog){
@@ -407,7 +404,7 @@ void AppImpl::onOpenGLVSyncToggled(bool on)
 }
 
 
-void App::onFocusChanged(QWidget* old, QWidget* now)
+void App::onFocusChanged(QWidget* /* old */, QWidget* now)
 {
     while(now){
         View* view = dynamic_cast<View*>(now);

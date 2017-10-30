@@ -73,7 +73,7 @@ public:
 
     void loadFile(const std::string& filename);
 
-    void setText(const char* text, int len);
+    void setText(const char* text, size_t len);
 
     void setLineNumberOffset(int offset);
 
@@ -260,7 +260,7 @@ private:
     bool readString0(const int delimiterChar);
     
     char* textBuf;
-    int size;
+    size_t size;
     char* textBufEnd;
     int lineNumberOffset;
     int commentChar;

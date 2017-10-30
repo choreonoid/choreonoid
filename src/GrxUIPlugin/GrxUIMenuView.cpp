@@ -25,7 +25,6 @@
 using namespace std;
 namespace stdph = std::placeholders;
 using namespace cnoid;
-namespace python = boost::python;
 
 namespace {
 
@@ -40,11 +39,12 @@ public:
     FuncParamEntry(int typeChar, const std::string& marker)
         : typeChar(typeChar),
           marker(marker)
-        {
+    {
 
-        }
+    }
         
-    virtual QSize sizeHint() const {
+    virtual QSize sizeHint() const
+    {
         QString sizeText;
         if(typeChar == 'D'){
             sizeText = "123.56";
@@ -69,37 +69,37 @@ public:
     vector<FuncParamEntry*> entries;
         
     FuncButtonBox(const string& label, const string& funcString)
-        {
-            QHBoxLayout* hbox = new QHBoxLayout();
-            setLayout(hbox);
+    {
+        QHBoxLayout* hbox = new QHBoxLayout();
+        setLayout(hbox);
 
-            button.setText(label.c_str());
-            hbox->addWidget(&button);
-
-            int pos = 0;
-            while(true){
-                pos = funcString.find('#', pos);
-                if(pos == std::string::npos){
-                    break;
-                }
-                if((pos + 1) == funcString.size()){
-                    break;
-                }
-                string marker = funcString.substr(pos, 2);
-                ++pos;
-                int typeChar = toupper(funcString[pos]);
-                
-                if(typeChar == 'D' || typeChar == 'T'){
-                    FuncParamEntry* entry = new FuncParamEntry(typeChar, marker);
-                    hbox->addWidget(entry);
-                    entries.push_back(entry);
-                } else {
-                    break;
-                }
+        button.setText(label.c_str());
+        hbox->addWidget(&button);
+        
+        size_t pos = 0;
+        while(true){
+            pos = funcString.find('#', pos);
+            if(pos == std::string::npos){
+                break;
             }
+            if((pos + 1) == funcString.size()){
+                break;
+            }
+            string marker = funcString.substr(pos, 2);
+            ++pos;
+            int typeChar = toupper(funcString[pos]);
             
-            this->funcString = funcString;
+            if(typeChar == 'D' || typeChar == 'T'){
+                FuncParamEntry* entry = new FuncParamEntry(typeChar, marker);
+                hbox->addWidget(entry);
+                entries.push_back(entry);
+            } else {
+                break;
+            }
         }
+        
+        this->funcString = funcString;
+    }
 
     string label() const {
         return button.text().toStdString();
@@ -202,7 +202,7 @@ GrxUIMenuView* GrxUIMenuView::instance()
 }
 
 
-void GrxUIMenuView::setCancelExceptionType(boost::python::object exceptionType)
+void GrxUIMenuView::setCancelExceptionType(python::object exceptionType)
 {
     cancelExceptionType = exceptionType;
 }
@@ -470,7 +470,7 @@ MenuWidget::MenuWidget
 
     bool hasSequencePages = false;
     if(buttonList.size() >= 2){
-        for(int i=1; i < buttonList.size(); ++i){
+        for(size_t i=1; i < buttonList.size(); ++i){
             if(!buttonList[i].empty()){
                 hasSequencePages = true;
                 break;
@@ -489,7 +489,12 @@ void MenuWidget::createPages(const python::list& menu)
 {
     int numSections = python::len(menu);
     for(int i=0; i < numSections; ++i){
-        const python::list section = python::extract<python::list>(menu[i]);
+        const python::list section =
+#ifdef CNOID_USE_PYBIND11
+            menu[i].cast<pybind11::list>();
+#else
+            python::extract<python::list>(menu[i]);
+#endif
         addSection(section);
     }
 
@@ -513,8 +518,13 @@ void MenuWidget::addSection(const python::list& section)
 
     for(int j=0; j < numItems; ++j){
         // extract a pair of elements
+#ifdef CNOID_USE_PYBIND11
+        const string label = section[j*2].cast<string>();
+        const string function = section[j*2+1].cast<string>();
+#else
         const string label = python::extract<string>(section[j*2]);
         const string function = python::extract<string>(section[j*2+1]);
+#endif
 
         if(function == "#label"){
             vbox->addWidget(new QLabel(label.c_str()), 0, Qt::AlignCenter);
@@ -545,8 +555,8 @@ void MenuWidget::onButtonClicked(int indexInPage, FuncButtonBox* box)
 {
     string code = box->funcString;
 
-    int pos = 0;
-    for(int i=0; i < box->entries.size(); ++i){
+    size_t pos = 0;
+    for(size_t i=0; i < box->entries.size(); ++i){
         const FuncParamEntry* entry = box->entries[i];
         pos = code.find(entry->marker, pos);
         if(pos != string::npos){
@@ -591,8 +601,13 @@ void MenuWidget::onScriptFinished()
         MessageView::instance()->putln(_("The script has been terminated."));
         
     } else if(pythonExecutor.hasException()){
-        PyGILock lock;
-        if(pythonExecutor.exceptionType() == cancelExceptionType){
+        python::gil_scoped_acquire lock;
+#ifdef CNOID_USE_PYBIND11
+        bool isCancelException = pythonExecutor.exceptionType().is(cancelExceptionType);
+#else
+        bool isCancelException = (pythonExecutor.exceptionType() == cancelExceptionType);
+#endif
+        if(isCancelException){
             showWarningDialog(_("The script has been cancelled."));
         } else {
             MessageView::instance()->putln(pythonExecutor.exceptionText());
@@ -613,7 +628,7 @@ void MenuWidget::moveNext()
         if(isLocalSequentialMode){
             moveToNextButton();
         } else if(lastIndexInPage == 0){
-            if(currentSequencePageIndex + 1 < buttonList.size() - 1){
+            if(currentSequencePageIndex + 1 < static_cast<int>(buttonList.size()) - 1){
                 setCurrentSequentialPage(currentSequencePageIndex + 1);
             }
         }
@@ -624,10 +639,10 @@ void MenuWidget::moveNext()
 void MenuWidget::moveToNextButton()
 {
     vector<QWidget*> buttons = buttonList[currentSequencePageIndex+1];
-    if(currentButton < buttons.size() - 1){
+    if(currentButton < static_cast<int>(buttons.size()) - 1){
         ++currentButton;
         setCurrentSequentialPage(currentSequencePageIndex);
-    } else if(currentSequencePageIndex < buttonList.size() - 1){
+    } else if(currentSequencePageIndex < static_cast<int>(buttonList.size()) - 1){
         currentButton = 0;
         ++currentButtonPage; 
         setCurrentSequentialPage(currentSequencePageIndex + 1);
@@ -669,7 +684,7 @@ void MenuWidget::setCurrentSequentialPage(int index)
     if(isLocalSequentialMode){
         const bool hasCurrentButton = (index == currentButtonPage);
         vector<QWidget*>& buttons = buttonList[index + 1];
-        for(int i=0; i < buttons.size(); ++i){
+        for(int i=0; i < static_cast<int>(buttons.size()); ++i){
             buttons[i]->setEnabled(
                 !sequentialCheck.isChecked() ||(hasCurrentButton && (i == currentButton)));
         }

@@ -33,22 +33,22 @@ class NullCollisionDetector : public CollisionDetector
     int numGeometries_;
 public:
     NullCollisionDetector() { numGeometries_ = 0; }
-    virtual const char* name() const { return "NullCollisionDetector"; }
-    virtual CollisionDetectorPtr clone() const { return std::make_shared<NullCollisionDetector>(); }
-    virtual bool enableGeometryCache(bool on) { return true; }
-    virtual void clearGeometryCache(SgNodePtr geometry) { }
-    virtual void clearAllGeometryCaches() { }
-    virtual void clearGeometries() { numGeometries_ = 0; }
-    virtual int numGeometries() const { return numGeometries_; }
-    virtual int addGeometry(SgNodePtr geometry) {
+    virtual const char* name() const override { return "NullCollisionDetector"; }
+    virtual CollisionDetectorPtr clone() const override { return std::make_shared<NullCollisionDetector>(); }
+    virtual bool enableGeometryCache(bool) override { return true; }
+    virtual void clearGeometryCache(SgNodePtr) override { }
+    virtual void clearAllGeometryCaches() override { }
+    virtual void clearGeometries() override { numGeometries_ = 0; }
+    virtual int numGeometries() const override { return numGeometries_; }
+    virtual int addGeometry(SgNodePtr) override {
         const int id = numGeometries_++;
         return id;
     }
-    virtual void setGeometryStatic(int geometryId, bool isStatic = true) { }
-    virtual void setNonInterfarenceGeometyrPair(int geometryId1, int geometryId2) { }
-    virtual bool makeReady() { return true; }
-    virtual void updatePosition(int geometryId, const Position& position) { }
-    virtual void detectCollisions(std::function<void(const CollisionPair&)> callback) { }
+    virtual void setGeometryStatic(int /* geometryId */, bool isStatic = true) override { }
+    virtual void setNonInterfarenceGeometyrPair(int /* geometryId1 */, int /* geometryId2 */) override { }
+    virtual bool makeReady() override { return true; }
+    virtual void updatePosition(int /* geometryId */, const Position& /* position */) override { }
+    virtual void detectCollisions(std::function<void(const CollisionPair&)> /* callback */) override { }
 };
 
 CollisionDetectorPtr factory()
@@ -87,7 +87,7 @@ int CollisionDetector::numFactories()
 
 std::string CollisionDetector::factoryName(int factoryIndex)
 {
-    if(factoryIndex >= 0 && factoryIndex < factories.size()){
+    if(factoryIndex >= 0 && factoryIndex < static_cast<int>(factories.size())){
         return factories[factoryIndex].name;
     }
     return string();
@@ -106,7 +106,7 @@ int CollisionDetector::factoryIndex(const std::string& name)
 
 CollisionDetectorPtr CollisionDetector::create(int factoryIndex)
 {
-    if(factoryIndex >= 0 && factoryIndex < factories.size()){
+    if(factoryIndex >= 0 && factoryIndex < static_cast<int>(factories.size())){
         return factories[factoryIndex].factory();
     }
     return CollisionDetectorPtr();

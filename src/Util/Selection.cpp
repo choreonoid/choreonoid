@@ -46,7 +46,7 @@ void Selection::clear()
 
 void Selection::setSymbol(int index, const std::string& symbol)
 {
-    if(index >= symbols_.size()){
+    if(index >= static_cast<int>(symbols_.size())){
         symbols_.resize(index + 1);
     }
     symbols_[index] = symbol;
@@ -69,7 +69,7 @@ Selection& Selection::operator<<(const std::string& symbol)
 
 int Selection::index(const std::string& symbol) const
 {
-    for(int i=0; i < symbols_.size(); ++i){
+    for(size_t i=0; i < symbols_.size(); ++i){
         if(symbols_[i] == symbol){
             return i;
         }
@@ -86,7 +86,7 @@ const char* Selection::label(int index) const
 
 bool Selection::select(int index)
 {
-    if(index >= 0 && index < symbols_.size()){
+    if(index >= 0 && index < static_cast<int>(symbols_.size())){
         selectedIndex_ = index;
         return true;
     }
@@ -102,7 +102,7 @@ bool Selection::selectIndex(int index)
 
 bool Selection::select(const std::string& symbol)
 {
-    for(int i=0; i < symbols_.size(); ++i){
+    for(size_t i=0; i < symbols_.size(); ++i){
         if(symbols_[i] == symbol){
             selectedIndex_ = i;
             return true;

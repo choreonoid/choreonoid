@@ -65,6 +65,8 @@ public:
     void startFlowStyleListing();
     void endListing();
 
+    bool isOpen();
+
 #ifdef CNOID_BACKWARD_COMPATIBILITY
     void startSequence() { startListing(); }
     void startFlowStyleSequence() { startFlowStyleListing(); }

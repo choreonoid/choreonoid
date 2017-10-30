@@ -5,6 +5,7 @@
 
 #include "OpenHRPControllerItem.h"
 #include "DynamicsSimulator_impl.h"
+#include <cnoid/ControllerIO>
 #include <cnoid/MessageView>
 #include <cnoid/Archive>
 #include <cnoid/Sleep>
@@ -68,7 +69,7 @@ void OpenHRPControllerItem::setControllerServerCommand(const std::string& comman
 }
 
 
-bool OpenHRPControllerItem::start(ControllerItemIO* io)
+bool OpenHRPControllerItem::initialize(ControllerIO* io)
 {
     ncHelper = getDefaultNamingContextHelper();
     
@@ -169,8 +170,14 @@ bool OpenHRPControllerItem::start(ControllerItemIO* io)
     
     controller->setDynamicsSimulator(dynamicsSimulator->_this());
     controller->setTimeStep(timeStep_);
-    controller->start();
+    
+    return true;
+}
 
+    
+bool OpenHRPControllerItem::start()
+{
+    controller->start();
     return true;
 }
 
