@@ -566,6 +566,9 @@ if(ENABLE_GUI)
 
   if(USE_QT5)
     setup_qt5()
+    if(POLICY CMP0043)
+      cmake_policy(SET CMP0043 OLD)
+    endif()
   else()
     setup_qt4()
   endif()
@@ -1317,7 +1320,7 @@ endif()
 # This must be written not in share directory but in this top CMakeLists.txt
 # to prevent the share directory from being created in the binary directory
 
-set(subdirs model project motion script)
+set(subdirs model project motion script default)
 foreach(subdir ${subdirs})
   get_filename_component(path share/${subdir} ABSOLUTE)
   if((EXISTS ${path}) AND (IS_DIRECTORY ${path}))

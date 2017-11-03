@@ -27,11 +27,14 @@ THE SOFTWARE
 
 ---------------------------------------------------------------------------
 
-Choreonoid soruce distribution also includes the following programs and data
+This software also includes the following software components which are
 copyrighted by other developers.
 
  * Double Arm Construction Robot Model
    see share/model/DoubleArmV7/LICENSE
+
+ * WAREC1 Model
+   see share/model/WAREC1/LICENSE
 
  * IJG JPEG Library (http://www.ijg.org/)
    see thirdparty/Jpeg-6b/README
