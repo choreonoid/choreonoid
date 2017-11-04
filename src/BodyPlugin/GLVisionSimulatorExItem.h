@@ -11,16 +11,16 @@
 
 namespace cnoid {
 
-class GLVisionSimulatorExItemImpl;
+class GLVisionSimulatorItemImpl;
 
-class CNOID_EXPORT GLVisionSimulatorExItem : public SubSimulatorItem
+class CNOID_EXPORT GLVisionSimulatorItem : public SubSimulatorItem
 {
 public:
     static void initializeClass(ExtensionManager* ext);
         
-    GLVisionSimulatorExItem();
-    GLVisionSimulatorExItem(const GLVisionSimulatorExItem& org);
-    ~GLVisionSimulatorExItem();
+    GLVisionSimulatorItem();
+    GLVisionSimulatorItem(const GLVisionSimulatorItem& org);
+    ~GLVisionSimulatorItem();
         
     void setTargetBodies(const std::string& bodyNames);
     void setTargetSensors(const std::string& sensorNames);
@@ -44,10 +44,10 @@ protected:
     virtual bool restore(const Archive& archive);
 
 private:
-    GLVisionSimulatorExItemImpl* impl;
+    GLVisionSimulatorItemImpl* impl;
 };
 
-typedef ref_ptr<GLVisionSimulatorExItem> GLVisionSimulatorExItemPtr;
+typedef ref_ptr<GLVisionSimulatorItem> GLVisionSimulatorItemPtr;
 
 }
 

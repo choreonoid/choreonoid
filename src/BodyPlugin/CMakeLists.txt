@@ -20,7 +20,8 @@ set(sources
   BodyMotionControllerItem.cpp
   SimulationScriptItem.cpp
   AISTSimulatorItem.cpp
-  GLVisionSimulatorItem.cpp
+  #GLVisionSimulatorItem.cpp
+  GLVisionSimulatorExItem.cpp
   SensorVisualizerItem.cpp
   BodyTrackingCameraItem.cpp
   BodyMotionEngine.cpp
@@ -44,7 +45,6 @@ set(sources
   CollisionSeq.cpp
   CollisionSeqItem.cpp
   CollisionSeqEngine.cpp
-  GLVisionSimulatorExItem.cpp
   )
 
 set(headers
@@ -73,7 +73,6 @@ set(headers
   CollisionSeqItem.h
   CollisionSeqEngine.h
   AISTSimulatorItem.h
-  GLVisionSimulatorExItem.h
   )
 
 set(target CnoidBodyPlugin)

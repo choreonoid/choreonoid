@@ -136,9 +136,9 @@ items:
           children: 
             - 
               id: 7
-              name: "GLVisionSimulatorEx"
+              name: "GLVisionSimulator"
               plugin: Body
-              class: GLVisionSimulatorExItem
+              class: GLVisionSimulatorItem
               data: 
                 enabled: true
                 maxFrameRate: 1000
