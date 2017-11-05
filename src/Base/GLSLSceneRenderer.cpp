@@ -53,10 +53,12 @@ public:
     GLuint vbos[MAX_NUM_BUFFERS];
     GLsizei numVertices;
     int numBuffers;
+    SgObjectPtr sceneObject;
     ScopedConnection connection;
     SgLineSetPtr normalVisualization;
 
     VertexResource(GLSLSceneRendererImpl* renderer, SgObject* obj)
+        : sceneObject(obj)
     {
         connection.reset(obj->sigUpdated().connect(std::bind(&VertexResource::onUpdated, this)));
         clearHandles();
