@@ -13,16 +13,12 @@
 #include <cnoid/NullOut>
 #include <Eigen/StdVector>
 #include <GL/glu.h>
-#include <boost/dynamic_bitset.hpp>
-#include <boost/optional.hpp>
 #include <unordered_map>
 #include <mutex>
 #include <iostream>
 
 using namespace std;
 using namespace cnoid;
-
-using namespace std::placeholders;
 
 namespace {
 
@@ -60,7 +56,10 @@ public:
     VertexResource(GLSLSceneRendererImpl* renderer, SgObject* obj)
         : sceneObject(obj)
     {
-        connection.reset(obj->sigUpdated().connect(std::bind(&VertexResource::onUpdated, this)));
+        connection.reset(
+            obj->sigUpdated().connect(
+                [&](const SgUpdate&){ numVertices = 0; }));
+
         clearHandles();
         glGenVertexArrays(1, &vao);
     }
@@ -75,10 +74,6 @@ public:
     }
 
     virtual void discard() override { clearHandles(); }
-
-    void onUpdated(){
-        numVertices = 0;
-    }
 
     bool isValid(){
         if(numVertices > 0){
@@ -246,7 +241,8 @@ public:
     GLResourceMap* nextResourceMap;
 
     vector<char> scaledImageBuf;
-    boost::optional<Eigen::Affine2f> textureTransform;
+    Eigen::Affine2f textureTransform;
+    bool hasValidTextureTransform;
 
     bool isCurrentFogUpdated;
     SgFogPtr prevFog;
@@ -282,7 +278,7 @@ public:
         NUM_STATE_FLAGS
     };
 
-    boost::dynamic_bitset<> stateFlag;
+    vector<bool> stateFlag;
 
     float pointSize;
     float lineWidth;
@@ -311,7 +307,6 @@ public:
     void renderCamera(SgCamera* camera, const Affine3& cameraPosition);
     void renderLights(LightingProgram* program);
     void renderFog(LightingProgram* program);
-    void onCurrentFogNodeUdpated();
     void endRendering();
     void renderSceneGraphNodes();
     void pushProgram(ShaderProgram& program, bool isLightingProgram);
@@ -420,6 +415,8 @@ void GLSLSceneRendererImpl::initialize()
     defaultMaterial->setDiffuseColor(Vector3f(0.8, 0.8, 0.8));
     defaultPointSize = 1.0f;
     defaultLineWidth = 1.0f;
+
+    hasValidTextureTransform = false;
 
     prevFog = 0;
 
@@ -968,7 +965,12 @@ void GLSLSceneRendererImpl::renderFog(LightingProgram* program)
         } else {
             currentFogConnection.reset(
                 fog->sigUpdated().connect(
-                    std::bind(&GLSLSceneRendererImpl::onCurrentFogNodeUdpated, this)));
+                    [&](const SgUpdate&){
+                        if(!self->isFogEnabled()){
+                            currentFogConnection.disconnect();
+                        }
+                        isCurrentFogUpdated = true;
+                    }));
         }
     }
 
@@ -983,15 +985,6 @@ void GLSLSceneRendererImpl::renderFog(LightingProgram* program)
     }
     isCurrentFogUpdated = false;
     prevFog = fog;
-}
-
-
-void GLSLSceneRendererImpl::onCurrentFogNodeUdpated()
-{
-    if(!self->isFogEnabled()){
-        currentFogConnection.disconnect();
-    }
-    isCurrentFogUpdated = true;
 }
 
 
@@ -1374,8 +1367,11 @@ bool GLSLSceneRendererImpl::renderTexture(SgTexture* texture)
     if(isCheckingUnusedResources){
         nextResourceMap->insert(GLResourceMap::value_type(sgImage, resource)); 
     }
-    
-    if(SgTextureTransform* tt = texture->textureTransform()){
+
+    auto tt = texture->textureTransform();
+    if(!tt){
+        hasValidTextureTransform = false;
+    } else {
         Eigen::Rotation2Df R(tt->rotation());
         const auto& c = tt->center();
         Eigen::Translation<float, 2> C(c.x(), c.y());
@@ -1383,8 +1379,7 @@ bool GLSLSceneRendererImpl::renderTexture(SgTexture* texture)
         Eigen::Translation<float, 2> T(t.x(), t.y());
         const auto s = tt->scale().cast<float>();
         textureTransform = Eigen::Affine2f(C.inverse() * Eigen::Scaling(s.x(), s.y()) * R * C * T);
-    } else {
-        textureTransform = boost::none;
+        hasValidTextureTransform = true;
     }
 
     return resource->isLoaded;
@@ -1562,15 +1557,14 @@ void GLSLSceneRendererImpl::writeMeshTexCoords(SgMesh* mesh, GLuint buffer)
     const auto& texCoordIndices = mesh->texCoordIndices();
     SgTexCoordArray texCoords;
     texCoords.reserve(totalNumVertices);
-    if(!textureTransform){
+    if(!hasValidTextureTransform){
         pOrgTexCoords = mesh->texCoords();
     } else {
         const auto& orgTexCoords = *mesh->texCoords();
         const size_t n = orgTexCoords.size();
         pOrgTexCoords = new SgTexCoordArray(n);
-        const Eigen::Affine2f& T = *textureTransform;
         for(size_t i=0; i < n; ++i){
-            (*pOrgTexCoords)[i] = T * orgTexCoords[i];
+            (*pOrgTexCoords)[i] = textureTransform * orgTexCoords[i];
         }
     }
 
@@ -1634,12 +1628,6 @@ void GLSLSceneRendererImpl::writeMeshColors(SgMesh* mesh, GLuint buffer)
 }
     
 
-static SgVertexArrayPtr getPointSetVertices(SgPointSet* pointSet)
-{
-    return pointSet->vertices();
-}
-
-
 void GLSLSceneRendererImpl::renderPointSet(SgPointSet* pointSet)
 {
     if(!pointSet->hasVertices()){
@@ -1655,7 +1643,8 @@ void GLSLSceneRendererImpl::renderPointSet(SgPointSet* pointSet)
         setPointSize(defaultPointSize);
     }
     
-    renderPlot(pointSet, GL_POINTS, std::bind(getPointSetVertices, pointSet));
+    renderPlot(pointSet, GL_POINTS,
+               [pointSet]() -> SgVertexArrayPtr { return pointSet->vertices(); });
 
     popProgram();
 }
@@ -1755,7 +1744,8 @@ void GLSLSceneRendererImpl::renderLineSet(SgLineSet* lineSet)
         setLineWidth(defaultLineWidth);
     }
 
-    renderPlot(lineSet, GL_LINES, std::bind(getLineSetVertices, lineSet));
+    renderPlot(lineSet, GL_LINES,
+               [lineSet](){ return getLineSetVertices(lineSet); });
 
     popProgram();
 }
@@ -1837,7 +1827,7 @@ void GLSLSceneRendererImpl::renderOutlineGroupMain(SgOutlineGroup* outline, cons
 
 void GLSLSceneRendererImpl::clearGLState()
 {
-    stateFlag.reset();
+    std::fill(stateFlag.begin(), stateFlag.end(), false);
     
     diffuseColor << 0.0f, 0.0f, 0.0f, 0.0f;
     ambientColor << 0.0f, 0.0f, 0.0f, 0.0f;
@@ -1862,7 +1852,7 @@ void GLSLSceneRendererImpl::setDiffuseColor(const Vector3f& color)
     if(!stateFlag[DIFFUSE_COLOR] || diffuseColor != color){
         materialProgram->setDiffuseColor(color);
         diffuseColor = color;
-        stateFlag.set(DIFFUSE_COLOR);
+        stateFlag[DIFFUSE_COLOR] = true;
     }
 }
 
@@ -1878,7 +1868,7 @@ void GLSLSceneRendererImpl::setAmbientColor(const Vector3f& color)
     if(!stateFlag[AMBIENT_COLOR] || ambientColor != color){
         materialProgram->setAmbientColor(color);
         ambientColor = color;
-        stateFlag.set(AMBIENT_COLOR);
+        stateFlag[AMBIENT_COLOR] = true;
     }
 }
 
@@ -1894,7 +1884,7 @@ void GLSLSceneRendererImpl::setEmissionColor(const Vector3f& color)
     if(!stateFlag[EMISSION_COLOR] || emissionColor != color){
         materialProgram->setEmissionColor(color);
         emissionColor = color;
-        stateFlag.set(EMISSION_COLOR);
+        stateFlag[EMISSION_COLOR] = true;
     }
 }
 
@@ -1910,7 +1900,7 @@ void GLSLSceneRendererImpl::setSpecularColor(const Vector3f& color)
     if(!stateFlag[SPECULAR_COLOR] || specularColor != color){
         materialProgram->setSpecularColor(color);
         specularColor = color;
-        stateFlag.set(SPECULAR_COLOR);
+        stateFlag[SPECULAR_COLOR] = true;
     }
 }
 
@@ -1926,7 +1916,7 @@ void GLSLSceneRendererImpl::setShininess(float s)
     if(!stateFlag[SHININESS] || shininess != s){
         materialProgram->setShininess(s);
         shininess = s;
-        stateFlag.set(SHININESS);
+        stateFlag[SHININESS] = true;
     }
 }
 
@@ -1942,7 +1932,7 @@ void GLSLSceneRendererImpl::setAlpha(float a)
     if(!stateFlag[ALPHA] || alpha != a){
         materialProgram->setAlpha(a);
         alpha = a;
-        stateFlag.set(ALPHA);
+        stateFlag[ALPHA] = true;
     }
 }
 
@@ -1981,7 +1971,7 @@ void GLSLSceneRendererImpl::setPointSize(float size)
         float s = isPicking ? std::max(size, MinLineWidthForPicking) : size;
         solidColorProgram.setPointSize(s);
         pointSize = s;
-        stateFlag.set(POINT_SIZE);
+        stateFlag[POINT_SIZE] = true;
     }
 }
 
@@ -2001,7 +1991,7 @@ void GLSLSceneRendererImpl::setLineWidth(float width)
             glLineWidth(width);
         }
         lineWidth = width;
-        stateFlag.set(LINE_WIDTH);
+        stateFlag[LINE_WIDTH] = true;
     }
 }
 
