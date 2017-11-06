@@ -25,10 +25,6 @@ add_cnoid_plugin(${target} SHARED ${sources} ${headers} ${mofiles})
 
 add_dependencies(${target} CnoidPoseSeqPlugin)
 
-if(QT5)
-  qt5_use_modules(${target} Widgets)
-endif()
-
 if(WIN32)
   set_target_properties(${target} PROPERTIES COMPILE_DEFINITIONS "CNOID_USE_GETTEXT_WRAPPER")
   target_link_libraries(${target} 
@@ -62,7 +58,7 @@ elseif(APPLE)
     target_link_libraries(${target} CnoidPoseSeqPlugin)
   endif()
 else()
-  target_link_libraries(${target} ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}/libCnoidPoseSeqPlugin.so)
+  target_link_libraries(${target} CnoidBase CnoidPoseSeqPlugin)
 endif()
 
 apply_common_setting_for_plugin(${target} "${headers}")

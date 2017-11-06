@@ -60,29 +60,13 @@ set(plugin_sources
 set(plugin_headers
   )
 
-if(NOT QT5)
-  QT4_ADD_RESOURCES(RC_SRCS OpenRTMPlugin.qrc)
-else()
-  QT5_ADD_RESOURCES(RC_SRCS OpenRTMPlugin.qrc)
-endif()
-
-if(NOT QT5)
-  QT4_ADD_RESOURCES(RC_SRCS OpenRTMPlugin.qrc)
-  QT4_WRAP_CPP(
-    plugin_sources
-    RTSNameServerView.h
-    RTSDiagramView.h
-    OPTIONS "-DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED"
+QTX_ADD_RESOURCES(RC_SRCS OpenRTMPlugin.qrc)
+QTX_WRAP_CPP(
+  qtsources
+  RTSNameServerView.h
+  RTSDiagramView.h
   )
-else()
-  QT5_ADD_RESOURCES(RC_SRCS OpenRTMPlugin.qrc)
-  QT5_WRAP_CPP(
-    plugin_sources
-    RTSDiagramView.h
-    RTSNameServerView.h
-    OPTIONS "-DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED"
-  )
-endif()
+set(plugin_sources ${plugin_sources} ${qtsources})
 
 if(MSVC)
 add_definitions(-D__WIN32__ -D__x86__ -D__NT__ -D__OSVERSION__=4 -D_CRT_SECURE_NO_DEPRECATE -D_WIN32_WINNT=0x0500 -DRTC_CORBA_CXXMAPPING11)
@@ -131,6 +115,3 @@ file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}/rtc)
 install(DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}/rtc DESTINATION ${CNOID_PLUGIN_SUBDIR}/rtc
   FILES_MATCHING PATTERN "*" EXCLUDE)
 
-if(QT5)
-  qt5_use_modules(${plugin} Core OpenGL Network)
-endif()
