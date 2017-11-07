@@ -78,7 +78,7 @@ if(MSVC AND CMAKE_CL_64)
 endif()
 
 if(MSVC)
-  set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS_DEBUG _ITERATOR_DEBUG_LEVEL=1)
+  set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS $<$<CONFIG:Debug>:CNOID_DEBUG _ITERATOR_DEBUG_LEVEL=1>)
 endif()
 
 function(install_external_libraries dll_dir lib_dir)
@@ -578,6 +578,7 @@ if(ENABLE_GUI)
     if(MSVC_VERSION LESS 1700)
       set(DEFAULT_USE_QT5 FALSE)
     endif()
+    cmake_policy(SET CMP0020 OLD)
   else()
     find_package(Qt4 4.7.0 QUIET)
     if(Qt4_FOUND)
@@ -826,7 +827,7 @@ endif(ENABLE_CORBA)
 # doxygen
 # find_package(Doxygen)
 
-set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS_DEBUG CNOID_DEBUG)
+set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS $<$<CONFIG:Debug>:CNOID_DEBUG>)
 
 if(UNIX)
   
