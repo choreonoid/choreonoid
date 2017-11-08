@@ -8,6 +8,7 @@
 
 namespace cnoid {
 
+class ContactMaterial;
 class AGXSimulatorItem;
 class AGXSimulatorItemImpl : public Referenced
 {
@@ -25,6 +26,8 @@ public:
     SimulationBody* createSimulationBody(Body* orgBody);
     bool initializeSimulation(const std::vector<SimulationBody*>& simBodies);
     void createAGXMaterialTable();
+    void createAGXContactMaterial(int id1, int id2, ContactMaterial* mat);
+    void setAdditionalAGXMaterialParam();
     bool stepSimulation(const std::vector<SimulationBody*>& activeSimBodies);
     void stopSimulation();
     void pauseSimulation();

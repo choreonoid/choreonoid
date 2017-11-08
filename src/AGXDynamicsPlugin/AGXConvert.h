@@ -11,11 +11,21 @@
 namespace cnoid{
 namespace agxConvert{
 
+inline bool setVector(ValueNodePtr const vnptr, Vector3& vec)
+{
+    if(!vnptr) return false;
+    if(!vnptr->isListing())  return false;
+    const Listing& l  = *vnptr->toListing();
+    if(l.size() != 3) return false;
+    vec = Vector3(l[0].toDouble(), l[1].toDouble(), l[2].toDouble());
+    return true;
+}
+
 inline bool setVector(ValueNodePtr const vnptr, std::vector<std::string>&vs)
 {
     if(!vnptr) return false;
     if(!vnptr->isListing()) return false;
-    Listing&list = *vnptr->toListing();
+    Listing& list = *vnptr->toListing();
     for(auto it : list){
         vs.push_back(it->toString());
     }
@@ -52,13 +62,18 @@ inline bool setValue(ValueNodePtr const vnptr, const std::unordered_map<std::str
 }
 
 template<typename T>
-void setValue(ValueNodePtr const vnptr, const std::unordered_map<std::string, T>& map,
+inline void setValue(ValueNodePtr const vnptr, const std::unordered_map<std::string, T>& map,
 const std::string& defaultValue, T&value, const std::string& errMessage)
 {
     if(vnptr->isValid()){
         if(!setValue(vnptr, map, defaultValue, value))
             vnptr->throwException(errMessage);
     }
+}
+
+inline agx::Vec3 toAGX(const Vector3& v)
+{
+    return agx::Vec3(v.x(), v.y(), v.z());
 }
 
 }

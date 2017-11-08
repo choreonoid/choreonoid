@@ -6,6 +6,7 @@
 #include "AGXConvert.h"
 #include <unordered_map>
 #include "gettext.h"
+#include <agx/Logger.h>
 
 using namespace std;
 
@@ -24,6 +25,7 @@ const std::unordered_map<std::string, AGXFrictionModelType> agxFrictionModelType
     {"default", AGXFrictionModelType::DEFAULT},
     {"box", AGXFrictionModelType::BOX},
     {"scaledBox", AGXFrictionModelType::SCALED_BOX},
+    {"orientedBox", AGXFrictionModelType::CONSTANT_NORMAL_FORCE_ORIENTED_BOX_FRICTIONMODEL},
     {"cone", AGXFrictionModelType::ITERATIVE_PROJECTED_CONE}
 };
 
@@ -51,10 +53,10 @@ AGXSimulatorItemImpl::AGXSimulatorItemImpl(AGXSimulatorItem* self)
 }
 
 AGXSimulatorItemImpl::AGXSimulatorItemImpl(AGXSimulatorItem* self, const AGXSimulatorItemImpl& org)
-    : AGXSimulatorItemImpl(self) 
+    : AGXSimulatorItemImpl(self)
 {
     (void) org;
-    initialize();    
+    initialize();
 }
 AGXSimulatorItemImpl::~AGXSimulatorItemImpl(){}
 
@@ -113,6 +115,8 @@ bool AGXSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody
         body->setSensor(self->worldTimeStep(), g);
     }
 
+    setAdditionalAGXMaterialParam();
+
     return true;
 }
 
@@ -143,40 +147,91 @@ void AGXSimulatorItemImpl::createAGXMaterialTable()
     // Create AGX contact material
     matTable->forEachMaterialPair(
         [&](int id1, int id2, ContactMaterial* mat){
-            Mapping* info = mat->info();
-            AGXContactMaterialDesc desc;
-            desc.nameA = Material::name(id1);
-            desc.nameB = Material::name(id2);
-            SET_AGXMATERIAL_FIELD(youngsModulus);
-            desc.restitution = mat->restitution();
-            SET_AGXMATERIAL_FIELD(damping);
-            desc.friction = mat->dynamicFriction();
-            SET_AGXMATERIAL_FIELD(surfaceViscosity);
-            SET_AGXMATERIAL_FIELD(adhesionForce);
-            SET_AGXMATERIAL_FIELD(adhesivOverlap);
-            auto binNode = info->find("contactReductionBinResolution");
-            if(binNode->isValid()) desc.contactReductionBinResolution = (agx::UInt8)binNode->toInt();
-
-            auto crmNode = info->find("contactReductionMode");
-            agxConvert::setValue(crmNode, agxContactReductionModeMap, "", desc.contactReductionMode,
-                "Illegal contactReductionMode value. Use default.");
-
-            auto frictionModelNode = info->find("frictionModel");
-            if(frictionModelNode->isValid()){
-                vector<string> fmVec;
-                if(agxConvert::setVector(frictionModelNode, 2, fmVec)){
-                    if(!agxConvert::setValue(fmVec[0], agxFrictionModelTypeMap, "", desc.frictionModelType))
-                        info->throwException("Illegal frictionModelType value. Use default.");
-                    if(!agxConvert::setValue(fmVec[1], agxSolveTypeMap, "", desc.solveType))
-                        info->throwException("Illegal solveType value. Use default.");
-                }else{
-                    info->throwException("Illegal frictionModel value. Use default.");
-                }
-            }
-            getAGXScene()->createContactMaterial(desc);
+            createAGXContactMaterial(id1, id2, mat);
         });
 
     //getAGXScene()->printContactMaterialTable();
+}
+
+void AGXSimulatorItemImpl::createAGXContactMaterial(int id1, int id2, ContactMaterial* mat)
+{
+    Mapping* info = mat->info();
+    AGXContactMaterialDesc desc;
+    desc.nameA = Material::name(id1);
+    desc.nameB = Material::name(id2);
+    SET_AGXMATERIAL_FIELD(youngsModulus);
+    desc.restitution = mat->restitution();
+    SET_AGXMATERIAL_FIELD(damping);
+    desc.friction = mat->dynamicFriction();
+    SET_AGXMATERIAL_FIELD(surfaceViscosity);
+    SET_AGXMATERIAL_FIELD(secondrySurfaceViscosity);
+    SET_AGXMATERIAL_FIELD(adhesionForce);
+    SET_AGXMATERIAL_FIELD(adhesivOverlap);
+    auto binNode = info->find("contactReductionBinResolution");
+    if(binNode->isValid()) desc.contactReductionBinResolution = (agx::UInt8)binNode->toInt();
+
+    auto crmNode = info->find("contactReductionMode");
+    agxConvert::setValue(crmNode, agxContactReductionModeMap, "", desc.contactReductionMode,
+    "Illegal contactReductionMode value. Use default.");
+
+    auto frictionModelNode = info->find("frictionModel");
+    if(frictionModelNode->isValid()){
+        vector<string> fmVec;
+        if(agxConvert::setVector(frictionModelNode, 2, fmVec)){
+            if(!agxConvert::setValue(fmVec[0], agxFrictionModelTypeMap, "", desc.frictionModelType))
+                info->throwException("Illegal frictionModelType value. Use default.");
+            if(!agxConvert::setValue(fmVec[1], agxSolveTypeMap, "", desc.solveType))
+                info->throwException("Illegal solveType value. Use default.");
+        }else{
+            info->throwException("Illegal frictionModel value. Use default.");
+        }
+    }
+
+    getAGXScene()->createContactMaterial(desc);
+}
+
+void AGXSimulatorItemImpl::setAdditionalAGXMaterialParam()
+{
+    WorldItem* const worldItem = self->findOwnerItem<WorldItem>();
+    if(!worldItem) return;
+    MaterialTable* const matTable = worldItem->materialTable();
+    agxSDK::MaterialManager* mgr = agxScene->getSimulation()->getMaterialManager();
+
+    // Set params of ConstantNormalForceOrientedBoxFrictionModel
+    matTable->forEachMaterialPair(
+        [&](int id1, int id2, ContactMaterial* mat){
+            string referenceBodyName, referenceLinkName;
+            if(mat->info()->read("referenceBodyName", referenceBodyName)){}else{
+                LOGGER_ERROR() << "AGXDynamicsPlugin:ERROR " << "referenceBodyName is not set or correct" << std::endl;
+                return;
+            }
+            if(mat->info()->read("referenceLinkName", referenceLinkName)){}else{
+                LOGGER_ERROR() << "AGXDynamicsPlugin:ERROR " << "referenceLinkName is not set or correct" << std::endl;
+                return;
+            }
+
+            auto simBody = self->findSimulationBody(referenceBodyName);
+            AGXBody* body = static_cast<AGXBody*>(simBody);
+            if(!body) return;
+            agx::RigidBody* rigid = body->getAGXRigidBody(referenceLinkName);
+            if(!rigid) return;
+
+            agx::Material* mat1 = mgr->getMaterial(Material::name(id1));
+            agx::Material* mat2 = mgr->getMaterial(Material::name(id2));
+            agx::ContactMaterial* cmat = mgr->getOrCreateContactMaterial(mat1, mat2);
+            auto cnfobfm = dynamic_cast<agx::ConstantNormalForceOrientedBoxFrictionModel*>(cmat->getFrictionModel());
+            if(!cnfobfm) return;
+
+            cnfobfm->setNormalForceMagnitude(agx::Real(10.0) * rigid->getMassProperties()->getMass());
+            cnfobfm->setReferenceFrame(rigid->getFrame());
+            Vector3 primaryDirection;
+            if(agxConvert::setVector(&mat->info()->get("primaryDirection"), primaryDirection)){
+                cnfobfm->setPrimaryDirection(agxConvert::toAGX(primaryDirection));
+            }else{
+                LOGGER_WARNING() << "AGXDynamicsPlugin:WARNING " << "primaryDirection is not set or correct" << std::endl;
+            }
+        }
+    );
 }
 #undef SET_AGXMATERIAL_FIELD
 
