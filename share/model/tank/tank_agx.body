@@ -490,6 +490,8 @@ links:
         hingeDamping: 0.01
         minStabilizingHingeNormalForce: 100
         stabilizingHingeFrictionParameter: 1e-6
+        nodesToWheelsMergeThreshold: -0.01
+        nodesToWheelsSplitThreshold: -0.009
         enableMerge: false
         numNodesPerMergeSegment: 3
         contactReduction: 3
@@ -497,6 +499,7 @@ links:
         lockToReachMergeConditionCompliance: 0.1
         lockToReachMergeConditionDamping: 0.01
         #maxAngleMergeCondition: 1.0E-5
+        material: TankTracks
       -
         type: Visual
         elements:
@@ -600,6 +603,7 @@ links:
       0.02, 0,    0,
       0,    0.02, 0,
       0,    0,    0.02 ]
+    material: TankWheel
     elements:
       -
         type: Visual
@@ -624,6 +628,7 @@ links:
       0.02, 0,    0,
       0,    0.02, 0,
       0,    0,    0.02 ]
+    material: TankWheel
     elements:
       -
         type: Visual
@@ -646,6 +651,7 @@ links:
       0.02, 0,    0,
       0,    0.02, 0,
       0,    0,    0.02 ]
+    material: TankWheel
     elements:
       -
         type: Visual
@@ -684,6 +690,8 @@ links:
         hingeDamping: 0.01
         minStabilizingHingeNormalForce: 100
         stabilizingHingeFrictionParameter: 1e-6
+        nodesToWheelsMergeThreshold: -0.01
+        nodesToWheelsSplitThreshold: -0.009
         enableMerge: false
         numNodesPerMergeSegment: 3
         contactReduction: 3
@@ -691,6 +699,7 @@ links:
         lockToReachMergeConditionCompliance: 1.0E-10
         lockToReachMergeConditionDamping: 0.01
         #maxAngleMergeCondition: 1.0E-5
+        material: TankTracks
       -
         type: Visual
         elements:
@@ -782,6 +791,7 @@ links:
       0.02, 0,    0,
       0,    0.02, 0,
       0,    0,    0.02 ]
+    material: TankWheel
     elements:
       -
         type: Visual
@@ -804,6 +814,7 @@ links:
       0.02, 0,    0,
       0,    0.02, 0,
       0,    0,    0.02 ]
+    material: TankWheel
     elements:
       -
         type: Visual
@@ -826,6 +837,7 @@ links:
       0.02, 0,    0,
       0,    0.02, 0,
       0,    0,    0.02 ]
+    material: TankWheel
     elements:
       -
         type: Visual
