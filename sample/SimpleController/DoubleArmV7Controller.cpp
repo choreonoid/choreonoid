@@ -149,9 +149,9 @@ void DoubleArmV7Controller::initPDGain()
     if(hasPseudoContinuousTracks) trackgain = 1.0;
     if(hasContinuousTracks){
         if(actuationMode == Link::ActuationMode::JOINT_TORQUE){
-            trackgain = 200.0;
+            trackgain = 2000.0;
         }else{
-            trackgain = 10.0;
+            trackgain = 5.0;
         }
     }
 

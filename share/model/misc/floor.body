@@ -6,6 +6,7 @@ links:
     name: Floor
     translation: [ 0, 0, -0.1 ]
     jointType: fixed
+    material: Ground
     elements:
       Shape:
         geometry: { type: Box, size: [ 10.0, 10.0, 0.2 ] }
