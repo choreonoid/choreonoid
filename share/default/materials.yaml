@@ -35,6 +35,16 @@ materials:
     youngsModulus: 1e10
     roughness: 0.0
     viscosity: 0.0
+  -
+    name: DoubleArmV7ATracks
+    youngsModulus: 1e10
+    roughness: 1.0
+    viscosity: 0.3
+  -
+    name: DoubleArmV7AWheel
+    youngsModulus: 1e10
+    roughness: 0.0
+    viscosity: 0.0
 
 contactMaterials:
   -
@@ -78,6 +88,22 @@ contactMaterials:
     referenceLinkName: B0001
   -
     materials: [ SpiderWheel, SpiderTracks ]
+    youngsModulus: 1e10
+    friction: 0.0
+    restitution: 0.0
+  -
+    materials: [ Ground, DoubleArmV7ATracks ]
+    youngsModulus: 1e10
+    friction: 0.5
+    restitution: 0.0
+    surfaceViscosity: 1e-2
+    secondarySurfaceViscosity: 4e-2
+    primaryDirection: [ 1, 0, 0 ]
+    frictionModel: [ orientedBox, direct ]
+    referenceBodyName: DoubleArmV7
+    referenceLinkName: TFRAME
+  -
+    materials: [ DoubleArmV7AWheel, DoubleArmV7ATracks ]
     youngsModulus: 1e10
     friction: 0.0
     restitution: 0.0

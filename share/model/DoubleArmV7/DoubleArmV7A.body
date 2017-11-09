@@ -70,7 +70,6 @@ links:
     parent: TFRAME
     jointType: revolute
     jointAxis: [ 0, 0, 1 ]
-    jointId: 0
     translation: [ -0.74, -0.295, 0.600 ]
     centerOfMass: [ 0, 0, 0 ]
     maxJointVelocity: 573
@@ -135,7 +134,6 @@ links:
     parent: TFRAME
     jointType: revolute
     jointAxis: [ 0, 0, 1 ]
-    jointId: 1
     translation: [ -0.74, -0.295, -0.600 ]
     centerOfMass: [ 0, 0, 0 ]
     maxJointVelocity: 573
