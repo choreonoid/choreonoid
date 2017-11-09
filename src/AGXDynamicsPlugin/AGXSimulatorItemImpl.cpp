@@ -6,7 +6,6 @@
 #include "AGXConvert.h"
 #include <unordered_map>
 #include "gettext.h"
-#include <agx/Logger.h>
 
 using namespace std;
 
@@ -200,27 +199,36 @@ void AGXSimulatorItemImpl::setAdditionalAGXMaterialParam()
     // Set params of ConstantNormalForceOrientedBoxFrictionModel
     matTable->forEachMaterialPair(
         [&](int id1, int id2, ContactMaterial* mat){
+            agx::Material* mat1 = mgr->getMaterial(Material::name(id1));
+            agx::Material* mat2 = mgr->getMaterial(Material::name(id2));
+            agx::ContactMaterial* cmat = mgr->getOrCreateContactMaterial(mat1, mat2);
+            string cmatName = "[" + mat1->getName() + " " + mat2->getName() + "]";
+            std::cout << "AGXDynamicsPlugin:INFO " << "contact material " << cmatName  << std::endl;
+            auto cnfobfm = dynamic_cast<agx::ConstantNormalForceOrientedBoxFrictionModel*>(cmat->getFrictionModel());
+            if(!cnfobfm) return;
+            std::cout << "AGXDynamicsPlugin:INFO " << "cnfobfm found at " << cmatName << std::endl;
+
             string referenceBodyName, referenceLinkName;
             if(mat->info()->read("referenceBodyName", referenceBodyName)){}else{
-                LOGGER_ERROR() << "AGXDynamicsPlugin:ERROR " << "referenceBodyName is not set or correct" << std::endl;
+                std::cout << "AGXDynamicsPlugin:WARNING " << "referenceBodyName is not set or correct at " << cmatName << std::endl;
                 return;
             }
             if(mat->info()->read("referenceLinkName", referenceLinkName)){}else{
-                LOGGER_ERROR() << "AGXDynamicsPlugin:ERROR " << "referenceLinkName is not set or correct" << std::endl;
+                std::cout << "AGXDynamicsPlugin:WARNING " << "referenceLinkName is not set or correct at " << cmatName << std::endl;
                 return;
             }
 
             auto simBody = self->findSimulationBody(referenceBodyName);
             AGXBody* body = static_cast<AGXBody*>(simBody);
-            if(!body) return;
+            if(!body){
+                std::cout << "AGXDynamicsPlugin:WARNING " << "reference body " << referenceBodyName << " is not found at" << cmatName << std::endl;
+                return;
+            }
             agx::RigidBody* rigid = body->getAGXRigidBody(referenceLinkName);
-            if(!rigid) return;
-
-            agx::Material* mat1 = mgr->getMaterial(Material::name(id1));
-            agx::Material* mat2 = mgr->getMaterial(Material::name(id2));
-            agx::ContactMaterial* cmat = mgr->getOrCreateContactMaterial(mat1, mat2);
-            auto cnfobfm = dynamic_cast<agx::ConstantNormalForceOrientedBoxFrictionModel*>(cmat->getFrictionModel());
-            if(!cnfobfm) return;
+            if(!rigid){
+                std::cout << "AGXDynamicsPlugin:WARNING " << "reference rigidbody " << referenceLinkName << " is not found at " << cmatName << std::endl;
+                return;
+            }
 
             cnfobfm->setNormalForceMagnitude(agx::Real(10.0) * rigid->getMassProperties()->getMass());
             cnfobfm->setReferenceFrame(rigid->getFrame());
@@ -228,8 +236,9 @@ void AGXSimulatorItemImpl::setAdditionalAGXMaterialParam()
             if(agxConvert::setVector(&mat->info()->get("primaryDirection"), primaryDirection)){
                 cnfobfm->setPrimaryDirection(agxConvert::toAGX(primaryDirection));
             }else{
-                LOGGER_WARNING() << "AGXDynamicsPlugin:WARNING " << "primaryDirection is not set or correct" << std::endl;
+                std::cout << "AGXDynamicsPlugin:WARNING " << "primaryDirection is not set or correct" << std::endl;
             }
+            std::cout << "AGXDynamicsPlugin:INFO " << "cnfobfm modified at " << cmatName << std::endl;
         }
     );
 }

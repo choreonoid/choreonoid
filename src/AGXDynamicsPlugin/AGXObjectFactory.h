@@ -319,6 +319,8 @@ struct AGXVehicleTrackDesc{
         hingeDamping = 0.0333;
         minStabilizingHingeNormalForce = 100;
         stabilizingHingeFrictionParameter = 1.5;
+        nodesToWheelsMergeThreshold = -0.1;
+        nodesToWheelsSplitThreshold = -0.05;
         enableMerge = false;
         numNodesPerMergeSegment = 3;
         contactReduction = agxVehicle::TrackInternalMergeProperties::ContactReduction::MINIMAL;
@@ -341,6 +343,8 @@ struct AGXVehicleTrackDesc{
     agx::Real hingeDamping;
     agx::Real minStabilizingHingeNormalForce;
     agx::Real stabilizingHingeFrictionParameter;
+    agx::Real nodesToWheelsMergeThreshold;
+    agx::Real nodesToWheelsSplitThreshold;
     agx::Bool enableMerge;
     agx::UInt numNodesPerMergeSegment;
     agxVehicle::TrackInternalMergeProperties::ContactReduction contactReduction;

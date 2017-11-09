@@ -97,6 +97,8 @@ AGXVehicleContinuousTrack::AGXVehicleContinuousTrack(AGXVehicleContinuousTrackDe
     trackDesc.hingeDamping= desc.hingeDamping;
     trackDesc.minStabilizingHingeNormalForce = desc.minStabilizingHingeNormalForce;
     trackDesc.stabilizingHingeFrictionParameter = desc.stabilizingHingeFrictionParameter;
+    trackDesc.nodesToWheelsMergeThreshold = desc.nodesToWheelsMergeThreshold;
+    trackDesc.nodesToWheelsSplitThreshold = desc.nodesToWheelsSplitThreshold;
     trackDesc.enableMerge = desc.enableMerge;
     trackDesc.numNodesPerMergeSegment = (agx::UInt)desc.numNodesPerMergeSegment;
     switch(desc.contactReduction)

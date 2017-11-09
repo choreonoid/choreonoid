@@ -75,6 +75,8 @@ bool readAGXVehicleContinuousTrackDevice(YAMLBodyLoader& loader, Mapping& node)
     NODE_READ(hingeDamping);
     NODE_READ(minStabilizingHingeNormalForce);
     NODE_READ(stabilizingHingeFrictionParameter);
+    NODE_READ(nodesToWheelsMergeThreshold);
+    NODE_READ(nodesToWheelsSplitThreshold);
     NODE_READ(enableMerge);
     NODE_READ(numNodesPerMergeSegment);
     NODE_READ(contactReduction);
