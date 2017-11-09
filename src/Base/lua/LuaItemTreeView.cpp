@@ -18,7 +18,6 @@ void exportLuaItemTreeView(sol::table& module)
         "new", sol::no_constructor,
         "instance", &ItemTreeView::instance,
         "rootItem", [](ItemTreeView* self) -> RootItemPtr { return self->rootItem(); },
-        "showRoot", &ItemTreeView::showRoot,
         "selectedItems", &ItemTreeView::selectedItems<Item>,
         "isItemSelected", &ItemTreeView::isItemSelected,
         "selectItem", sol::overload(

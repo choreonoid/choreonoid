@@ -1,3 +1,23 @@
+Choreonoid 1.6.0 released on October 31, 2016
+=============================================
+
+Changes since 1.5.0:
+
+* New model file format replacing the OpenHRP model file format
+* Mesh files of various formats including STL and Collada can be read as a part of body models
+* Introduced the concept of contact material for specifying a parameter set relating to the contact of an object pair
+* New controller API that enables a controller to specify which state variables to input and output
+* Introduced BodyIoRTCItem for directly creating an RTC for the model input / output
+* New rendering engine written in new OpenGL APIs and the GLSL shading language
+* New implementation of the Python bindings using the pybind11 library
+* Supported Python3
+* A beta version of the Lua language bindings using the Sol2 library
+* A beta version of AGXDynamicsPlugin to enable AGX Dynamics to be used as a physics engine for simulation
+* A beta version of SpringheadPlugin to enable the Springhead library to be used as a physics engine for simulation
+* A beta version of RokiPlugin to enable the Roki library to be used as a physics engine for simulation
+* Added sample models and projects
+* Other minor improvements and bug fixes
+
 Choreonoid 1.5.0 released on July 13, 2016
 ==========================================
 
@@ -7,7 +27,7 @@ Changes since 1.4.0:
 * Added GLVisionSimulatorItem, which simulates vision sensors such as cameras, RGBD cameras, and laser range sensors
 * Added A function to interactively apply force to an object being simulated using mouse dragging
 * Improved the stabilty the simulation performed by AISTSimulatorItem
-* Added PhysXPlugin, which enable nVidia PhysX to be used as a physics engine in simulation
+* Added PhysXPlugin, which enables nVidia PhysX to be used as a physics engine in simulation
 * Added WorldLogFileItem, which stores all the log data of a virtual world being simulated online
 * Generalization of collision detectors
 * Added BodyTrackingCameraItem, which provides a camera that automatically tracks a particular object in a virtual world

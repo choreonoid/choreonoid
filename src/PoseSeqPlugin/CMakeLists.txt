@@ -37,19 +37,12 @@ set(headers
   gettext.h
   )
 
-if(NOT QT5)
-  QT4_ADD_RESOURCES(RC_SRCS PoseSeqPlugin.qrc)
-else()
-  QT5_ADD_RESOURCES(RC_SRCS PoseSeqPlugin.qrc)
-endif()
+QTX_ADD_RESOURCES(RC_SRCS PoseSeqPlugin.qrc)
+
 make_gettext_mofiles(${target} mofiles)
 add_cnoid_plugin(${target} SHARED ${sources} ${headers} ${mofiles} ${RC_SRCS})
 target_link_libraries(${target} CnoidUtil CnoidBody CnoidBodyPlugin)
 apply_common_setting_for_plugin(${target} "${headers}")
-
-if(QT5)
-  qt5_use_modules(${target} Widgets)
-endif()
 
 if(ENABLE_PYTHON)
   if(USE_PYBIND11)

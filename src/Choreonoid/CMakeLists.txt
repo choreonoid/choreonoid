@@ -4,12 +4,7 @@ set(target choreonoid)
 
 set(sources main.cpp)
 
-if(NOT QT5)
-  QT4_ADD_RESOURCES(RC_SRCS choreonoid.qrc)
-else()
-  QT5_ADD_RESOURCES(RC_SRCS choreonoid.qrc)
-endif()
-
+QTX_ADD_RESOURCES(RC_SRCS choreonoid.qrc)
 
 if(WIN32)
   set(sources ${sources} choreonoid.rc)
@@ -18,10 +13,6 @@ endif()
 add_cnoid_executable(${target} ${sources} ${RC_SRCS})
 target_link_libraries(${target} CnoidUtil CnoidBase)
 set_target_properties(${target} PROPERTIES PROJECT_LABEL Application)
-
-if(QT5)
-  qt5_use_modules(${target} Gui Widgets)
-endif()
 
 if(MSVC)
   option(USE_SUBSYSTEM_CONSOLE "Attaching a console of Windows for debugging" OFF)
