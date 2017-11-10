@@ -79,27 +79,13 @@ set(target CnoidBodyPlugin)
 
 make_gettext_mofiles(${target} mofiles)
 
-if(NOT QT5)
-  QT4_WRAP_CPP(sources
-    LinkTreeWidget.h
-    OPTIONS "-DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED"
-    )
-  QT4_ADD_RESOURCES(RC_SRCS BodyPlugin.qrc)
-else()
-  QT5_WRAP_CPP(sources
-    LinkTreeWidget.h
-    OPTIONS "-DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED"
-    )
-  QT5_ADD_RESOURCES(RC_SRCS BodyPlugin.qrc)
-endif()
+QTX_ADD_RESOURCES(RC_SRCS BodyPlugin.qrc)
+QTX_WRAP_CPP(qtsources LinkTreeWidget.h)
+set(sources ${sources} ${qtsources})
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 add_cnoid_plugin(${target} SHARED ${sources} ${headers} ${mofiles} ${RC_SRCS})
-
-if(QT5)
-  qt5_use_modules(${target} Gui OpenGL Network)
-endif()
 
 set(boost_libraries ${Boost_REGEX_LIBRARY} ${Boost_IOSTREAMS_LIBRARY})
 if(MSVC)

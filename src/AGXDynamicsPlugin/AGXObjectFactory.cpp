@@ -16,10 +16,12 @@ agx::Vec3 AGXPseudoContinuousTrackGeometry::getAxis() const
 
 agx::Vec3f AGXPseudoContinuousTrackGeometry::calculateSurfaceVelocity(const agxCollide::LocalContactPoint & point, size_t index) const
 {
-    agx::Vec3 dir = getAxis() ^ agx::Vec3(point.normal());
+    agx::Vec3 axis0 = getFrame()->transformVectorToWorld( getAxis() );
+    agx::Vec3 dir = axis0 ^ agx::Vec3(point.normal());
     dir.normalize();
     dir *= -1.0 * getSurfaceVelocity().x();
-    return agx::Vec3f(dir);
+    agx::Vec3 ret = getFrame()->transformVectorToLocal(dir);
+    return agx::Vec3f(ret);
 }
 
 ////////////////////////////////////////////////////////////
@@ -175,7 +177,12 @@ agx::Bool AGXObjectFactory::setContactMaterialParam(agx::ContactMaterial* const 
     cm->setDamping(desc.damping);
     cm->setFrictionCoefficient(desc.friction);
     cm->setAdhesion(desc.adhesionForce, desc.adhesivOverlap);
-    cm->setSurfaceViscosity(desc.surfaceViscosity);
+    if(desc.secondrySurfaceViscosity > 0){
+        cm->setSurfaceViscosity(desc.surfaceViscosity, agx::ContactMaterial::FrictionDirection::PRIMARY_DIRECTION);
+        cm->setSurfaceViscosity(desc.secondrySurfaceViscosity, agx::ContactMaterial::FrictionDirection::SECONDARY_DIRECTION);
+    }else{
+        cm->setSurfaceViscosity(desc.surfaceViscosity);
+    }
     cm->setContactReductionMode(desc.contactReductionMode);
     cm->setContactReductionBinResolution(desc.contactReductionBinResolution);
 
@@ -188,6 +195,9 @@ agx::Bool AGXObjectFactory::setContactMaterialParam(agx::ContactMaterial* const 
                 break;
             case AGXFrictionModelType::SCALED_BOX :
                 fm = new agx::ScaleBoxFrictionModel();
+                break;
+            case AGXFrictionModelType::CONSTANT_NORMAL_FORCE_ORIENTED_BOX_FRICTIONMODEL :
+                fm = new agx::ConstantNormalForceOrientedBoxFrictionModel(agx::Real(0.0), nullptr, agx::Vec3(), desc.solveType);
                 break;
             case AGXFrictionModelType::ITERATIVE_PROJECTED_CONE :
                 fm = new agx::IterativeProjectedConeFriction();
@@ -307,6 +317,8 @@ agxVehicle::TrackRef AGXObjectFactory::createVehicleTrack(const AGXVehicleTrackD
     track->getProperties()->setHingeDamping(desc.hingeDamping);
     track->getProperties()->setMinStabilizingHingeNormalForce(desc.minStabilizingHingeNormalForce);
     track->getProperties()->setStabilizingHingeFrictionParameter(desc.stabilizingHingeFrictionParameter);
+    track->getProperties()->setNodesToWheelsMergeThreshold(desc.nodesToWheelsMergeThreshold);
+    track->getProperties()->setNodesToWheelsSplitThreshold(desc.nodesToWheelsSplitThreshold);
     track->getInternalMergeProperties()->setEnableMerge(desc.enableMerge);
     track->getInternalMergeProperties()->setNumNodesPerMergeSegment(desc.numNodesPerMergeSegment);
     track->getInternalMergeProperties()->setEnableLockToReachMergeCondition(desc.enableLockToReachMergeCondition);

@@ -22,6 +22,8 @@ struct AGXVehicleContinuousTrackDeviceDesc
         hingeDamping = 0.0333;
         minStabilizingHingeNormalForce = 100;
         stabilizingHingeFrictionParameter = 1.5;
+        nodesToWheelsMergeThreshold = -0.1;
+        nodesToWheelsSplitThreshold = -0.05;
         enableMerge = false;
         numNodesPerMergeSegment = 3;
         contactReduction = 1;
@@ -47,6 +49,8 @@ struct AGXVehicleContinuousTrackDeviceDesc
     double hingeDamping;
     double minStabilizingHingeNormalForce;
     double stabilizingHingeFrictionParameter;
+    double nodesToWheelsMergeThreshold;
+    double nodesToWheelsSplitThreshold;
     bool enableMerge;
     int numNodesPerMergeSegment;
     int contactReduction;

@@ -27,21 +27,22 @@ links:
         idlerNames: [ WHEEL_L3 ]
         upAxis: [ 0, 1, 0 ]
         numberOfNodes: 42
-        nodeThickness: 0.01
+        nodeThickness: 0.05
         nodeWidth:  0.25
-        nodeDistanceTension: 2.0E-4
         nodeThickerThickness: 0.02
         useThickerNodeEvery: 0
-        hingeCompliance: 9.0E-10
+        nodeDistanceTension: 1.0E-3
+        hingeCompliance: 1.0E-10
         hingeDamping: 0.01
         minStabilizingHingeNormalForce: 100
-        stabilizingHingeFrictionParameter: 1e-6
+        stabilizingHingeFrictionParameter: 1e-4
         enableMerge: false
         numNodesPerMergeSegment: 3
         contactReduction: 3
-        enableLockToReachMergeCondition: true
+        enableLockToReachMergeCondition: false
         lockToReachMergeConditionCompliance: 0.1
         lockToReachMergeConditionDamping: 0.01
+        material: DoubleArmV7ATracks
       -
         type: AGXVehicleContinuousTrackDevice
         name: TRACK_R
@@ -50,27 +51,27 @@ links:
         idlerNames: [ WHEEL_R3 ]
         upAxis: [ 0, 1, 0 ]
         numberOfNodes: 42
-        nodeThickness: 0.01
+        nodeThickness: 0.05
         nodeWidth:  0.25
-        nodeDistanceTension: 2.0E-4
         nodeThickerThickness: 0.02
         useThickerNodeEvery: 0
-        hingeCompliance: 9.0E-10
+        nodeDistanceTension: 1.0E-3
+        hingeCompliance: 1.0E-10
         hingeDamping: 0.01
         minStabilizingHingeNormalForce: 100
-        stabilizingHingeFrictionParameter: 1e-6
+        stabilizingHingeFrictionParameter: 1e-4
         enableMerge: false
         numNodesPerMergeSegment: 3
         contactReduction: 3
-        enableLockToReachMergeCondition: true
+        enableLockToReachMergeCondition: false
         lockToReachMergeConditionCompliance: 0.1
         lockToReachMergeConditionDamping: 0.01
+        material: DoubleArmV7ATracks
   -
     name: WHEEL_L0
     parent: TFRAME
     jointType: revolute
     jointAxis: [ 0, 0, 1 ]
-    jointId: 0
     translation: [ -0.74, -0.295, 0.600 ]
     centerOfMass: [ 0, 0, 0 ]
     maxJointVelocity: 573
@@ -79,6 +80,7 @@ links:
       0.2015, 0, 0,
       0, 0.2015, 0,
       0, 0, 0.265 ]
+    material: DoubleArmV7AWheel
     elements: &WeelShape
       Shape:
         rotation: [ 1, 0, 0, 90 ]
@@ -101,6 +103,7 @@ links:
       0.2015, 0, 0,
       0, 0.2015, 0,
       0, 0, 0.265 ]
+    material: DoubleArmV7AWheel
     elements: *WeelShape
   -
     name: WHEEL_L2
@@ -115,6 +118,7 @@ links:
       0.2015, 0, 0,
       0, 0.2015, 0,
       0, 0, 0.265 ]
+    material: DoubleArmV7AWheel
     elements: *WeelShape
   -
     name: WHEEL_L3
@@ -129,13 +133,13 @@ links:
       0.2015, 0, 0,
       0, 0.2015, 0,
       0, 0, 0.265 ]
+    material: DoubleArmV7AWheel
     elements: *WeelShape
   -
     name: WHEEL_R0
     parent: TFRAME
     jointType: revolute
     jointAxis: [ 0, 0, 1 ]
-    jointId: 1
     translation: [ -0.74, -0.295, -0.600 ]
     centerOfMass: [ 0, 0, 0 ]
     maxJointVelocity: 573
@@ -144,6 +148,7 @@ links:
       0.2015, 0, 0,
       0, 0.2015, 0,
       0, 0, 0.265 ]
+    material: DoubleArmV7AWheel
     elements: *WeelShape
   -
     name: WHEEL_R1
@@ -158,6 +163,7 @@ links:
       0.2015, 0, 0,
       0, 0.2015, 0,
       0, 0, 0.265 ]
+    material: DoubleArmV7AWheel
     elements: *WeelShape
   -
     name: WHEEL_R2
@@ -172,6 +178,7 @@ links:
       0.2015, 0, 0,
       0, 0.2015, 0,
       0, 0, 0.265 ]
+    material: DoubleArmV7AWheel
     elements: *WeelShape
   -
     name: WHEEL_R3
@@ -186,6 +193,7 @@ links:
       0.2015, 0, 0,
       0, 0.2015, 0,
       0, 0, 0.265 ]
+    material: DoubleArmV7AWheel
     elements: *WeelShape
   -
     type: SubBody
