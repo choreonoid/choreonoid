@@ -49,7 +49,6 @@ static const bool DEBUG_MESSAGE = false;
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 using boost::format;
 
@@ -154,7 +153,7 @@ public:
     std::shared_ptr<RangeCamera::PointData> tmpPoints;
     std::shared_ptr<RangeSensor::RangeData> tmpRangeData;
 
-    VisionRendererScreen(GLVisionSimulatorItemImpl* simImpl, Device* device, Device* deviceForRenferer, bool isEndPoint);
+    VisionRendererScreen(GLVisionSimulatorItemImpl* simImpl, Device* device, Device* deviceForRendering, bool isEndPoint);
     ~VisionRendererScreen();
     bool initialize(SgGroup* sceneGroup, SceneBody* sceneBody);
     SgCamera* initializeCamera(SceneBody* sceneBody);
@@ -197,6 +196,7 @@ public:
     ~VisionRenderer();
     bool initialize(const vector<SimulationBody*>& simBodies);
     void initializeScene(const vector<SimulationBody*>& simBodies);
+    void moveRenderingBufferToMainThread();
     void startConcurrentRendering();
     void updateScene(bool updateSensorForRenderingThread);
     bool waitForRenderingToFinish();
@@ -525,15 +525,15 @@ bool GLVisionSimulatorItemImpl::initializeSimulation(SimulatorItem* simulatorIte
     }
 
     if(!visionRenderers.empty()){
-        simulatorItem->addPreDynamicsFunction(std::bind(&GLVisionSimulatorItemImpl::onPreDynamics, this));
-        simulatorItem->addPostDynamicsFunction(std::bind(&GLVisionSimulatorItemImpl::onPostDynamics, this));
+        simulatorItem->addPreDynamicsFunction([&](){ onPreDynamics(); });
+        simulatorItem->addPostDynamicsFunction([&](){ onPostDynamics(); });
 
         if(useQueueThreadForAllSensors){
             while(!screenQueue.empty()){
                 screenQueue.pop();
             }
             isQueueRenderingTerminationRequested = false;
-            queueThread.start(std::bind(&GLVisionSimulatorItemImpl::queueRenderingLoop, this));
+            queueThread.start([&](){ queueRenderingLoop(); });
             for(size_t i=0; i < visionRenderers.size(); ++i){
                 for(auto& screen : visionRenderers[i]->screens){
                     screen->moveRenderingBufferToThread(queueThread);
@@ -572,50 +572,39 @@ VisionRenderer::VisionRenderer(GLVisionSimulatorItemImpl* simImpl, Device* devic
         screens.push_back(new VisionRendererScreen(simImpl, device, deviceForRendering, false));
         
     } else if(rangeSensor){
-        const double thresh270 = radian(270);
-        const double thresh170 = radian(170);
-        const double thresh120 = radian(120);
-        const double thresh91  = radian(91);
 
-        double pitchRange = rangeSensor->pitchRange();
-        double pitchStep = rangeSensor->pitchStep();
-        if(pitchRange > thresh170){
-            pitchRange = thresh170;
+        const double pitchRange = std::min(rangeSensor->pitchRange(), radian(170.0));
+        const int pitchResolution = static_cast<int>(pitchRange / rangeSensor->pitchStep() + 1e-10) + 1;
+        
+        int numScreens = 1;
+        double yawRangePerScreen = rangeSensor->yawRange();
+        if(yawRangePerScreen > radian(120.0)){
+            numScreens = static_cast<int>(yawRangePerScreen / radian(91.0)) + 1;
+            yawRangePerScreen = yawRangePerScreen / numScreens;
         }
 
-        double yawRange;
-        int numScreens;
-        double orgYawRange = rangeSensor->yawRange();
-        double yawStep = rangeSensor->yawStep();
-
-        if(orgYawRange <= thresh120){
-            yawRange = orgYawRange;
-            numScreens = 1;
-        } else {
-            numScreens = (int)(orgYawRange / thresh91) + 1;
-            yawRange = orgYawRange / numScreens;
-        }
-
-        double preAdjustedRange = 0;
-        double preMaxYawAngle = -orgYawRange/2.0;
+        double yawRangeOffset = 0;
+        double yawOffset = -rangeSensor->yawRange() / 2.0;
         for(int i=0; i < numScreens; ++i){
+
+            auto rangeSensorForRendering = new RangeSensor(*rangeSensor);
+            rangeSensorForRendering->setPitchRange(pitchRange);
+            rangeSensorForRendering->setPitchResolution(pitchResolution);
+
             // Adjust to be a multiple of yawStep
-            double resolution = round( (yawRange+preAdjustedRange) / yawStep);
-            double newYawRange = yawStep * resolution;
-            preAdjustedRange = yawRange - newYawRange;
+            double resolution = round((yawRangePerScreen + yawRangeOffset) / rangeSensor->yawStep());
+            double adjustedYawRange = rangeSensor->yawStep() * resolution;
+            rangeSensorForRendering->setYawRange(adjustedYawRange);
+            rangeSensorForRendering->setYawResolution(static_cast<int>(resolution) + 1);
+            yawRangeOffset = yawRangePerScreen - adjustedYawRange;
 
-            RangeSensorPtr newRangeSensor = new RangeSensor(*rangeSensor, false);
-            newRangeSensor->setPitchRange(pitchRange);
-            newRangeSensor->setPitchResolution((int)(pitchRange/pitchStep+1e-10)+1);
-            newRangeSensor->setYawRange(newYawRange);
-            newRangeSensor->setYawResolution((int)(resolution)+1);
-
-            double centerAngle = preMaxYawAngle + newYawRange/2.0;
-            newRangeSensor->setLocalRotation(rangeSensor->localRotaion() * AngleAxis(centerAngle, Vector3::UnitY()));
-            preMaxYawAngle += newYawRange;
+            double centerAngle = yawOffset + adjustedYawRange / 2.0;
+            Matrix3 R = rangeSensor->localRotaion() * AngleAxis(centerAngle, Vector3::UnitY());
+            rangeSensorForRendering->setLocalRotation(R);
+            yawOffset += adjustedYawRange;
 
             bool isEndPoint = (i == numScreens - 1);
-            screens.push_back(new VisionRendererScreen(simImpl, device, newRangeSensor, isEndPoint));
+            screens.push_back(new VisionRendererScreen(simImpl, device, rangeSensorForRendering, isEndPoint));
         }
         if(DEBUG_MESSAGE){
             cout << "Number of screens = " << numScreens << endl;
@@ -627,6 +616,7 @@ VisionRenderer::VisionRenderer(GLVisionSimulatorItemImpl* simImpl, Device* devic
 bool VisionRenderer::initialize(const vector<SimulationBody*>& simBodies)
 {
     initializeScene(simBodies);
+
     SceneBody* sceneBody = sceneBodies[bodyIndex];
 
     for(auto& screen : screens){
@@ -699,7 +689,7 @@ void VisionRenderer::initializeScene(const vector<SimulationBody*>& simBodies)
 
 
 VisionRendererScreen::VisionRendererScreen
-(GLVisionSimulatorItemImpl* simImpl, Device* device, Device* deviceForRendering, bool isEndPoint)
+(GLVisionSimulatorItemImpl* simImpl, Device* device, Device* screenDevice, bool isEndPoint)
     : simImpl(simImpl),
       isEndPoint(isEndPoint)
 {
@@ -707,9 +697,9 @@ VisionRendererScreen::VisionRendererScreen
     rangeCamera = dynamic_cast<RangeCamera*>(camera);
     rangeSensor = dynamic_cast<RangeSensor*>(device);
 
-    cameraForRendering = dynamic_cast<Camera*>(deviceForRendering);
-    rangeCameraForRendering = dynamic_cast<RangeCamera*>(deviceForRendering);
-    rangeSensorForRendering = dynamic_cast<RangeSensor*>(deviceForRendering);
+    cameraForRendering = dynamic_cast<Camera*>(screenDevice);
+    rangeCameraForRendering = dynamic_cast<RangeCamera*>(screenDevice);
+    rangeSensorForRendering = dynamic_cast<RangeSensor*>(screenDevice);
 
 #if USE_QT5_OPENGL
     glContext = 0;
@@ -786,7 +776,7 @@ bool VisionRendererScreen::initialize(SgGroup* sceneGroup, SceneBody* sceneBody)
     hasUpdatedData = false;
 
     if(simImpl->useThreadsForSensors){
-        renderingThread.start(std::bind(&VisionRendererScreen::concurrentRenderingLoop, this));
+        renderingThread.start([&](){ concurrentRenderingLoop(); });
         moveRenderingBufferToThread(renderingThread);
     }
 
@@ -796,32 +786,32 @@ bool VisionRendererScreen::initialize(SgGroup* sceneGroup, SceneBody* sceneBody)
 
 SgCamera* VisionRendererScreen::initializeCamera(SceneBody* sceneBody)
 {
-    SgCamera* sceneCamera = 0;
+    SgCamera* sceneCamera = nullptr;
 
     if(camera){
-        SceneDevice* sceneDevice = sceneBody->getSceneDevice(camera);
+        auto sceneDevice = sceneBody->getSceneDevice(camera);
         if(sceneDevice){
             sceneCamera = sceneDevice->findNodeOfType<SgCamera>();
             pixelWidth = camera->resolutionX();
             pixelHeight = camera->resolutionY();
          }
     } else if(rangeSensor){
-        SceneLink* sceneLink = sceneBody->sceneLink(rangeSensor->link()->index());
+        auto sceneLink = sceneBody->sceneLink(rangeSensor->link()->index());
         if(sceneLink){
-            SgPerspectiveCamera* persCamera = new SgPerspectiveCamera;
+            auto persCamera = new SgPerspectiveCamera;
             sceneCamera = persCamera;
             persCamera->setNearClipDistance(rangeSensorForRendering->minDistance());
             persCamera->setFarClipDistance(rangeSensorForRendering->maxDistance());
-            SgPosTransform* cameraPos = new SgPosTransform();
+            auto cameraPos = new SgPosTransform();
             cameraPos->setTransform(rangeSensor->link()->Rs().transpose() * rangeSensorForRendering->T_local());
             cameraPos->addChild(persCamera);
             sceneLink->addChild(cameraPos);
 
-            const double yawRange2 = rangeSensorForRendering->yawRange() / 2.0;
-            const double pitchRange2 = rangeSensorForRendering->pitchRange() / 2.0;
-            const double maxTanPitch = tan(pitchRange2) / cos(yawRange2);
-            const double maxTanYaw = tan(yawRange2);
-            const double maxPitchRange2 = atan ( maxTanPitch );
+            const double halfYawRange = rangeSensorForRendering->yawRange() / 2.0;
+            const double halfPitchRange = rangeSensorForRendering->pitchRange() / 2.0;
+            const double maxTanPitch = tan(halfPitchRange) / cos(halfYawRange);
+            const double maxTanYaw = tan(halfYawRange);
+            const double maxPitchRange2 = atan(maxTanPitch);
 
             if(rangeSensorForRendering->yawResolution() > rangeSensorForRendering->pitchResolution()){
                 pixelWidth = rangeSensorForRendering->yawResolution() * simImpl->rangeSensorPrecisionRatio;
@@ -829,27 +819,28 @@ SgCamera* VisionRendererScreen::initializeCamera(SceneBody* sceneBody)
             } else {
                 pixelHeight = rangeSensorForRendering->pitchResolution() * simImpl->rangeSensorPrecisionRatio;
                 pixelWidth = pixelHeight * maxTanYaw / maxTanPitch;
-                if(yawRange2 != 0.0 && pixelWidth < rangeSensorForRendering->yawResolution() * simImpl->rangeSensorPrecisionRatio){
-                    pixelWidth = rangeSensorForRendering->yawResolution() * simImpl->rangeSensorPrecisionRatio;
+                double r = rangeSensorForRendering->yawResolution() * simImpl->rangeSensorPrecisionRatio;
+                if(halfYawRange != 0.0 && pixelWidth < r){
+                    pixelWidth = r;
                     pixelHeight = pixelWidth * maxTanPitch / maxTanYaw;
                 }
             }
 
             if(maxTanYaw > maxTanPitch){
-                if(pitchRange2 == 0.0){
+                if(halfPitchRange == 0.0){
                     pixelHeight = 1;
-                    double r = tan(yawRange2) * 2.0 / pixelWidth;
+                    double r = tan(halfYawRange) * 2.0 / pixelWidth;
                     persCamera->setFieldOfView(atan2(r / 2.0, 1.0) * 2.0);
                 } else {
                     persCamera->setFieldOfView(maxPitchRange2 * 2.0);
                 }
-            }else{
-                if(yawRange2 == 0.0){
+            } else {
+                if(halfYawRange == 0.0){
                     pixelWidth = 1;
-                    double r = tan(pitchRange2) * 2.0 / pixelHeight;
+                    double r = tan(halfPitchRange) * 2.0 / pixelHeight;
                     persCamera->setFieldOfView(atan2(r / 2.0, 1.0) * 2.0);
-                }else {
-                    persCamera->setFieldOfView(yawRange2 * 2.0);
+                } else {
+                    persCamera->setFieldOfView(halfYawRange * 2.0);
                 }
             }
 
@@ -883,6 +874,14 @@ void VisionRendererScreen::moveRenderingBufferToMainThread()
 }
 
 
+void VisionRenderer::moveRenderingBufferToMainThread()
+{
+    for(auto& screen : screens){
+        screen->moveRenderingBufferToMainThread();
+    }
+}
+
+
 void VisionRendererScreen::makeGLContextCurrent()
 {
 #if USE_QT5_OPENGL
@@ -907,10 +906,10 @@ void GLVisionSimulatorItemImpl::onPreDynamics()
 {
     currentTime = simulatorItem->currentTime();
 
-    std::mutex* pQueueMutex = 0;
+    std::mutex* pQueueMutex = nullptr;
     
     for(size_t i=0; i < visionRenderers.size(); ++i){
-        VisionRenderer* renderer = visionRenderers[i];
+        auto& renderer = visionRenderers[i];
         if(renderer->elapsedTime >= renderer->cycleTime){
             if(!renderer->isRendering){
                 renderer->onsetTime = currentTime;
@@ -943,7 +942,7 @@ void GLVisionSimulatorItemImpl::onPreDynamics()
 
 void GLVisionSimulatorItemImpl::queueRenderingLoop()
 {
-    VisionRendererScreen* screen = 0;
+    VisionRendererScreen* screen = nullptr;
     
     while(true){
         {
@@ -972,9 +971,7 @@ void GLVisionSimulatorItemImpl::queueRenderingLoop()
 exitRenderingQueueLoop:
 
     for(size_t i=0; i < visionRenderers.size(); ++i){
-        for(auto& screen : visionRenderers[i]->screens){
-            screen->moveRenderingBufferToMainThread();
-        }
+        visionRenderers[i]->moveRenderingBufferToMainThread();
     }
 }
 
@@ -1065,13 +1062,13 @@ void VisionRendererScreen::storeResultToTmpDataBuffer()
             tmpImage = std::make_shared<Image>();
         }
         if(rangeCameraForRendering){
-            tmpPoints = std::make_shared< vector<Vector3f> >();
+            tmpPoints = std::make_shared<vector<Vector3f>>();
             hasUpdatedData = getRangeCameraData(*tmpImage, *tmpPoints);
         } else {
             hasUpdatedData = getCameraImage(*tmpImage);
         }
     } else if(rangeSensorForRendering){
-        tmpRangeData =  std::make_shared< vector<double> >();
+        tmpRangeData =  std::make_shared<vector<double>>();
         hasUpdatedData = getRangeSensorData(*tmpRangeData);
     }
 }
@@ -1089,9 +1086,9 @@ void GLVisionSimulatorItemImpl::onPostDynamics()
 
 void GLVisionSimulatorItemImpl::getVisionDataInThreadsForSensors()
 {
-    vector<VisionRenderer*>::iterator p = renderersInRendering.begin();
-    while(p != renderersInRendering.end()){
-        VisionRenderer* renderer = *p;
+    auto iter = renderersInRendering.begin();
+    while(iter != renderersInRendering.end()){
+        auto renderer = *iter;
         if(renderer->elapsedTime >= renderer->latency){
             if(renderer->waitForRenderingToFinish()){
                 renderer->copyVisionData();
@@ -1099,9 +1096,9 @@ void GLVisionSimulatorItemImpl::getVisionDataInThreadsForSensors()
             }
         }
         if(renderer->isRendering){
-            ++p;
+            ++iter;
         } else {
-            p = renderersInRendering.erase(p);
+            iter = renderersInRendering.erase(iter);
         }
     }
 }
@@ -1549,9 +1546,9 @@ void GLVisionSimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
 void GLVisionSimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Target bodies"), bodyNameListString,
-                std::bind(updateNames, _1, std::ref(bodyNameListString), std::ref(bodyNames)));
+                [&](const string& names){ return updateNames(names, bodyNameListString, bodyNames); });
     putProperty(_("Target sensors"), sensorNameListString,
-                std::bind(updateNames, _1, std::ref(sensorNameListString), std::ref(sensorNames)));
+                [&](const string& names){ return updateNames(names, sensorNameListString, sensorNames); });
     putProperty(_("Max frame rate"), maxFrameRate, changeProperty(maxFrameRate));
     putProperty(_("Max latency [s]"), maxLatency, changeProperty(maxLatency));
     putProperty(_("Record vision data"), isVisionDataRecordingEnabled, changeProperty(isVisionDataRecordingEnabled));
