@@ -119,6 +119,9 @@ class VisionRendererScreen : public Referenced
 public:
     GLVisionSimulatorItemImpl* simImpl;
 
+    SgGroupPtr sceneGroup;
+    vector<SceneBodyPtr> sceneBodies;
+
     Camera* camera;
     RangeCamera* rangeCamera;
     RangeSensor* rangeSensor;
@@ -155,12 +158,15 @@ public:
 
     VisionRendererScreen(GLVisionSimulatorItemImpl* simImpl, Device* device, Device* deviceForRendering, bool isEndPoint);
     ~VisionRendererScreen();
-    bool initialize(SgGroup* sceneGroup, SceneBody* sceneBody);
-    SgCamera* initializeCamera(SceneBody* sceneBody);
+    bool initialize(const vector<SimulationBody*>& simBodies, int bodyIndex);
+    void initializeScene(const vector<SimulationBody*>& simBodies, int bodyIndex);
+    SgCamera* initializeCamera(int bodyIndex);
+    void initializeGL(SgCamera* sceneCamera);
     void moveRenderingBufferToThread(QThread& thread);
     void moveRenderingBufferToMainThread();
     void makeGLContextCurrent();
     void doneGLContextCurrent();
+    void updateScene();
     void renderInCurrentThread(bool doStoreResultToTmpDataBuffer);
     void concurrentRenderingLoop();
     void storeResultToTmpDataBuffer();
@@ -187,15 +193,12 @@ public:
     double onsetTime;
     vector<VisionRendererScreenPtr> screens;
     bool isRendering;  // only updated and referred to in the simulation thread
-    SgGroupPtr sceneGroup;
-    vector<SceneBodyPtr> sceneBodies;
     std::shared_ptr<RangeSensor::RangeData> rangeData;
 
     VisionRenderer(GLVisionSimulatorItemImpl* simImpl, Device* sensor,
             SimulationBody* simBody, int bodyIndex);
     ~VisionRenderer();
     bool initialize(const vector<SimulationBody*>& simBodies);
-    void initializeScene(const vector<SimulationBody*>& simBodies);
     void moveRenderingBufferToMainThread();
     void startConcurrentRendering();
     void updateScene(bool updateSensorForRenderingThread);
@@ -253,7 +256,6 @@ public:
     GLVisionSimulatorItemImpl(GLVisionSimulatorItem* self, const GLVisionSimulatorItemImpl& org);
     ~GLVisionSimulatorItemImpl();
     bool initializeSimulation(SimulatorItem* simulatorItem);
-    void addTargetSensor(SimulationBody* simBody, int bodyIndex, Device* sensor);
     void onPreDynamics();
     void queueRenderingLoop();
     void onPostDynamics();
@@ -485,7 +487,9 @@ bool GLVisionSimulatorItemImpl::initializeSimulation(SimulatorItem* simulatorIte
                 Device* device = body->device(j);
                 if(dynamic_cast<Camera*>(device) || dynamic_cast<RangeSensor*>(device)){
                     if(sensorNameSet.empty() || sensorNameSet.find(device->name()) != sensorNameSet.end()){
-                        addTargetSensor(simBody, i, device);
+                        os << (format(_("%1% detected vision sensor \"%2%\" of %3% as a target."))
+                               % self->name() % device->name() % simBody->body()->name()) << endl;
+                        visionRenderers.push_back(new VisionRenderer(this, device, simBody, i));
                     }
                 }
             }
@@ -548,15 +552,6 @@ bool GLVisionSimulatorItemImpl::initializeSimulation(SimulatorItem* simulatorIte
 }
 
 
-void GLVisionSimulatorItemImpl::addTargetSensor(SimulationBody* simBody, int bodyIndex, Device* device)
-{
-    os << (format(_("%1% detected vision sensor \"%2%\" of %3% as a target."))
-           % self->name() % device->name() % simBody->body()->name()) << endl;
-    
-    visionRenderers.push_back(new VisionRenderer(this, device, simBody, bodyIndex));
-}
-
-
 VisionRenderer::VisionRenderer(GLVisionSimulatorItemImpl* simImpl, Device* device, SimulationBody* simBody, int bodyIndex)
     : simImpl(simImpl),
       device(device),
@@ -615,12 +610,8 @@ VisionRenderer::VisionRenderer(GLVisionSimulatorItemImpl* simImpl, Device* devic
 
 bool VisionRenderer::initialize(const vector<SimulationBody*>& simBodies)
 {
-    initializeScene(simBodies);
-
-    SceneBody* sceneBody = sceneBodies[bodyIndex];
-
     for(auto& screen : screens){
-        if(!screen->initialize(sceneGroup, sceneBody)){
+        if(!screen->initialize(simBodies, bodyIndex)){
             return false;
         }
     }
@@ -649,45 +640,6 @@ bool VisionRenderer::initialize(const vector<SimulationBody*>& simBodies)
 }
 
 
-/**
-   \todo use cache of the cloned scene graph nodes
-*/
-void VisionRenderer::initializeScene(const vector<SimulationBody*>& simBodies)
-{
-    sceneGroup = new SgGroup;
-
-    //simImpl->cloneMap.clear();
-
-    // create scene bodies
-    for(size_t i=0; i < simBodies.size(); ++i){
-        SceneBody* sceneBody = new SceneBody(simBodies[i]->body());
-
-        //sceneBody->cloneShapes(simImpl->cloneMap);
-
-        sceneBodies.push_back(sceneBody);
-        sceneGroup->addChild(sceneBody);
-    }
-
-    if(simImpl->shootAllSceneObjects){
-        WorldItem* worldItem = simImpl->self->findOwnerItem<WorldItem>();
-        if(worldItem){
-            ItemList<> items;
-            items.extractChildItems(worldItem);
-            for(size_t i=0; i < items.size(); ++i){
-                Item* item = items.get(i);
-                SceneProvider* sceneProvider = dynamic_cast<SceneProvider*>(item);
-                if(sceneProvider && !dynamic_cast<BodyItem*>(item)){
-                    SgNode* scene = sceneProvider->cloneScene(simImpl->cloneMap);
-                    if(scene){
-                        sceneGroup->addChild(scene);
-                    }
-                }
-            }
-        }
-    }
-}
-
-
 VisionRendererScreen::VisionRendererScreen
 (GLVisionSimulatorItemImpl* simImpl, Device* device, Device* screenDevice, bool isEndPoint)
     : simImpl(simImpl),
@@ -713,79 +665,56 @@ VisionRendererScreen::VisionRendererScreen
 }
 
 
-bool VisionRendererScreen::initialize(SgGroup* sceneGroup, SceneBody* sceneBody)
+bool VisionRendererScreen::initialize(const vector<SimulationBody*>& simBodies, int bodyIndex)
 {
-    SgCamera* sceneCamera = initializeCamera(sceneBody);
+    initializeScene(simBodies, bodyIndex);
+
+    auto sceneCamera = initializeCamera(bodyIndex);
     if(!sceneCamera){
         return false;
     }
 
-#if USE_QT5_OPENGL
-    glContext = new QOpenGLContext;
-    QSurfaceFormat format;
-    format.setSwapBehavior(QSurfaceFormat::SingleBuffer);
-    if(simImpl->useGLSL){
-        format.setProfile(QSurfaceFormat::CoreProfile);
-        format.setVersion(3, 3);
-    }
-    glContext->setFormat(format);
-    glContext->create();
-    offscreenSurface = new QOffscreenSurface;
-    offscreenSurface->setFormat(format);
-    offscreenSurface->create();
-    glContext->makeCurrent(offscreenSurface);
-    frameBuffer = new QOpenGLFramebufferObject(pixelWidth, pixelHeight, QOpenGLFramebufferObject::CombinedDepthStencil);
-    frameBuffer->bind();
-#else
-    QGLFormat format;
-    format.setDoubleBuffer(false);
-    if(simImpl->useGLSL){
-        format.setProfile(QGLFormat::CoreProfile);
-        format.setVersion(3, 3);
-    }
-    renderingBuffer = new QGLPixelBuffer(pixelWidth, pixelHeight, format);
-    renderingBuffer->makeCurrent();
-#endif
-
-    if(!renderer){
-        if(simImpl->useGLSL){
-            renderer = new GLSLSceneRenderer;
-        } else {
-            renderer = new GL1SceneRenderer;
-        }
-    }
-
-    renderer->initializeGL();
-    renderer->setViewport(0, 0, pixelWidth, pixelHeight);
-    renderer->sceneRoot()->addChild(sceneGroup);
-    renderer->extractPreprocessedNodes();
-    renderer->setCurrentCamera(sceneCamera);
-
-    if(rangeSensorForRendering){
-        renderer->setDefaultLighting(false);
-    } else {
-        renderer->headLight()->on(simImpl->isHeadLightEnabled);
-        renderer->enableAdditionalLights(simImpl->areAdditionalLightsEnabled);
-    }
-
-    doneGLContextCurrent();
-
-    isRenderingRequested = false;
-    isRenderingFinished = false;
-    isTerminationRequested = false;
-    hasUpdatedData = false;
-
-    if(simImpl->useThreadsForSensors){
-        renderingThread.start([&](){ concurrentRenderingLoop(); });
-        moveRenderingBufferToThread(renderingThread);
-    }
+    initializeGL(sceneCamera);
 
     return true;
 }
 
 
-SgCamera* VisionRendererScreen::initializeCamera(SceneBody* sceneBody)
+void VisionRendererScreen::initializeScene(const vector<SimulationBody*>& simBodies, int bodyIndex)
 {
+    sceneGroup = new SgGroup;
+    simImpl->cloneMap.clear();
+
+    for(size_t i=0; i < simBodies.size(); ++i){
+        SceneBody* sceneBody = new SceneBody(simBodies[i]->body());
+        sceneBody->cloneShapes(simImpl->cloneMap);
+        sceneBodies.push_back(sceneBody);
+        sceneGroup->addChild(sceneBody);
+    }
+
+    if(simImpl->shootAllSceneObjects){
+        WorldItem* worldItem = simImpl->self->findOwnerItem<WorldItem>();
+        if(worldItem){
+            ItemList<> items;
+            items.extractChildItems(worldItem);
+            for(size_t i=0; i < items.size(); ++i){
+                Item* item = items.get(i);
+                SceneProvider* sceneProvider = dynamic_cast<SceneProvider*>(item);
+                if(sceneProvider && !dynamic_cast<BodyItem*>(item)){
+                    SgNode* scene = sceneProvider->cloneScene(simImpl->cloneMap);
+                    if(scene){
+                        sceneGroup->addChild(scene);
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+SgCamera* VisionRendererScreen::initializeCamera(int bodyIndex)
+{
+    auto& sceneBody = sceneBodies[bodyIndex];
     SgCamera* sceneCamera = nullptr;
 
     if(camera){
@@ -854,6 +783,70 @@ SgCamera* VisionRendererScreen::initializeCamera(SceneBody* sceneBody)
     }
 
     return sceneCamera;
+}
+
+
+void VisionRendererScreen::initializeGL(SgCamera* sceneCamera)
+{
+#if USE_QT5_OPENGL
+    glContext = new QOpenGLContext;
+    QSurfaceFormat format;
+    format.setSwapBehavior(QSurfaceFormat::SingleBuffer);
+    if(simImpl->useGLSL){
+        format.setProfile(QSurfaceFormat::CoreProfile);
+        format.setVersion(3, 3);
+    }
+    glContext->setFormat(format);
+    glContext->create();
+    offscreenSurface = new QOffscreenSurface;
+    offscreenSurface->setFormat(format);
+    offscreenSurface->create();
+    glContext->makeCurrent(offscreenSurface);
+    frameBuffer = new QOpenGLFramebufferObject(pixelWidth, pixelHeight, QOpenGLFramebufferObject::CombinedDepthStencil);
+    frameBuffer->bind();
+#else
+    QGLFormat format;
+    format.setDoubleBuffer(false);
+    if(simImpl->useGLSL){
+        format.setProfile(QGLFormat::CoreProfile);
+        format.setVersion(3, 3);
+    }
+    renderingBuffer = new QGLPixelBuffer(pixelWidth, pixelHeight, format);
+    renderingBuffer->makeCurrent();
+#endif
+
+    if(!renderer){
+        if(simImpl->useGLSL){
+            renderer = new GLSLSceneRenderer;
+        } else {
+            renderer = new GL1SceneRenderer;
+        }
+    }
+
+    renderer->initializeGL();
+    renderer->setViewport(0, 0, pixelWidth, pixelHeight);
+    renderer->sceneRoot()->addChild(sceneGroup);
+    renderer->extractPreprocessedNodes();
+    renderer->setCurrentCamera(sceneCamera);
+
+    if(rangeSensorForRendering){
+        renderer->setDefaultLighting(false);
+    } else {
+        renderer->headLight()->on(simImpl->isHeadLightEnabled);
+        renderer->enableAdditionalLights(simImpl->areAdditionalLightsEnabled);
+    }
+
+    doneGLContextCurrent();
+
+    isRenderingRequested = false;
+    isRenderingFinished = false;
+    isTerminationRequested = false;
+    hasUpdatedData = false;
+
+    if(simImpl->useThreadsForSensors){
+        renderingThread.start([&](){ concurrentRenderingLoop(); });
+        moveRenderingBufferToThread(renderingThread);
+    }
 }
 
 
@@ -978,13 +971,21 @@ exitRenderingQueueLoop:
 
 void VisionRenderer::updateScene(bool updateSensorForRenderingThread)
 {
+    for(auto& screen : screens){
+        screen->updateScene();
+    }
+    if(updateSensorForRenderingThread){
+        deviceForRendering->copyStateFrom(*device);
+    }
+}
+    
+
+void VisionRendererScreen::updateScene()
+{
     for(size_t i=0; i < sceneBodies.size(); ++i){
         SceneBody* sceneBody = sceneBodies[i];
         sceneBody->updateLinkPositions();
         sceneBody->updateSceneDevices(simImpl->currentTime);
-    }
-    if(updateSensorForRenderingThread){
-        deviceForRendering->copyStateFrom(*device);
     }
 }
 
