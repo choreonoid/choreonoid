@@ -12,6 +12,7 @@ items:
       data: 
         collisionDetection: false
         collisionDetector: AISTCollisionDetector
+        materialTableFile: "${SHARE}/default/materials.yaml"
       children: 
         - 
           id: 2
@@ -26,13 +27,13 @@ items:
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            jointPositions: [  0.000000,  0.000000,  0.000000,  0.000000 ]
+            jointPositions: [  0.000000,  0.000000 ]
             initialRootPosition: [ -2, -0.5, 0.1 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            initialJointPositions: [  0.000000,  0.000000,  0.000000,  0.000000 ]
+            initialJointPositions: [  0.000000,  0.000000 ]
             zmp: [ 0, 0, 0 ]
             collisionDetection: true
             selfCollisionDetection: false
@@ -44,11 +45,11 @@ items:
               plugin: Body
               class: SimpleControllerItem
               data: 
-                isImmediateMode: true
+                isNoDelayMode: true
                 controllerOptions: ""
                 controller: "TankJoystickController"
+                baseDirectory: "Controller directory"
                 reloading: true
-                RelativePathBase: "Controller directory"
             - 
               id: 4
               name: "SensorVisualizer"
@@ -66,6 +67,13 @@ items:
                   - 
                     class: RangeSensorVisualizer
                     name: RangeSensor
+                    renderingMode: Point
+                    pointSize: 0
+                    voxelSize: 0.01
+                    isEditable: false
+                  - 
+                    class: RangeSensorVisualizer
+                    name: VelodyneVLP-16
                     renderingMode: Point
                     pointSize: 0
                     voxelSize: 0.01
@@ -108,7 +116,6 @@ items:
             timeLength: 60
             allLinkPositionOutputMode: false
             deviceStateOutput: true
-            selfCollision: false
             controllerThreads: true
             recordCollisionData: false
             controllerOptions: ""
@@ -140,7 +147,7 @@ items:
                 useThreadsForSensors: true
                 bestEffort: false
                 allSceneObjects: false
-                rangeSensorPrecisionRatio: 4
+                rangeSensorPrecisionRatio: 2
                 depthError: 0
                 enableHeadLight: true
                 enableAdditionalLights: true
@@ -179,8 +186,8 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      selected: [ 2 ]
-      checked: [ 1, 2, [ 4, "RangeSensor" ] ]
+      selected: [ [ 4, "VelodyneVLP-16" ] ]
+      checked: [ 1, 2, [ 4, "VelodyneVLP-16" ] ]
       expanded: [ 1, 2, 3, 4, 6 ]
   - 
     id: 6
@@ -409,18 +416,14 @@ views:
           selectedLinks: [ 0 ]
   - 
     id: 15
+    plugin: OpenRTM
+    class: RTSNameServerView
+  - 
+    id: 16
     plugin: Python
     class: PythonConsoleView
     mounted: true
 toolbars: 
-  "KinematicsBar": 
-    mode: FK
-    enablePositionDragger: true
-    penetrationBlock: true
-    collisionLinkHighlight: false
-    snapDistance: 0.025
-    penetrationBlockDepth: 0.0005
-    lazyCollisionDetectionMode: true
   "TimeBar": 
     minTime: 0
     maxTime: 5
@@ -431,8 +434,14 @@ toolbars:
     speedScale: 1
     syncToOngoingUpdates: true
     autoExpansion: true
-  "BodyBar": 
-    current: 2
+  "KinematicsBar": 
+    mode: FK
+    enablePositionDragger: true
+    penetrationBlock: true
+    collisionLinkHighlight: false
+    snapDistance: 0.025
+    penetrationBlockDepth: 0.0005
+    lazyCollisionDetectionMode: true
   "LeggedBodyBar": 
     stanceWidth: 0.15
   "BodyMotionGenerationBar": 
@@ -493,6 +502,8 @@ Body:
     targetJoints: all
     checkSelfCollisions: true
     onlyTimeBarRange: false
+OpenRTM: 
+  "deleteUnmanagedRTCsOnStartingSimulation": false
 viewAreas: 
   - 
     type: embedded
@@ -540,7 +551,7 @@ viewAreas:
               children: 
                 - 
                   type: pane
-                  views: [ 6, 15 ]
+                  views: [ 6, 16 ]
                   current: 6
                 - 
                   type: pane
