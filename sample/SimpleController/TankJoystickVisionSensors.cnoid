@@ -415,10 +415,6 @@ views:
           id: 2
           selectedLinks: [ 0 ]
   - 
-    id: 15
-    plugin: OpenRTM
-    class: RTSNameServerView
-  - 
     id: 16
     plugin: Python
     class: PythonConsoleView
