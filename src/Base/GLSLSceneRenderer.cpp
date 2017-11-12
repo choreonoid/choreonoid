@@ -27,7 +27,7 @@ const bool SHOW_IMAGE_FOR_PICKING = false;
 
 const float MinLineWidthForPicking = 5.0f;
 
-typedef vector<Affine3, Eigen::aligned_allocator<Affine3> > Affine3Array;
+typedef vector<Affine3, Eigen::aligned_allocator<Affine3>> Affine3Array;
 
 std::mutex extensionMutex;
 set<GLSLSceneRenderer*> renderers;
@@ -52,6 +52,9 @@ public:
     SgObjectPtr sceneObject;
     ScopedConnection connection;
     SgLineSetPtr normalVisualization;
+
+    VertexResource(const VertexResource&) = delete;
+    VertexResource& operator=(const VertexResource&) = delete;
 
     VertexResource(GLSLSceneRendererImpl* renderer, SgObject* obj)
         : sceneObject(obj)
@@ -78,7 +81,7 @@ public:
     bool isValid(){
         if(numVertices > 0){
             return true;
-        } else if(numBuffers){
+        } else if(numBuffers > 0){
             deleteBuffers();
         }
         return false;
@@ -92,11 +95,13 @@ public:
     }
 
     void deleteBuffers(){
-        glDeleteBuffers(numBuffers, vbos);
-        for(int i=0; i < numBuffers; ++i){
-            vbos[i] = 0;
+        if(numBuffers > 0){
+            glDeleteBuffers(numBuffers, vbos);
+            for(int i=0; i < numBuffers; ++i){
+                vbos[i] = 0;
+            }
+            numBuffers = 0;
         }
-        numBuffers = 0;
     }
 
     GLuint vbo(int index) {
@@ -1474,8 +1479,8 @@ void GLSLSceneRendererImpl::writeMeshVertices(SgMesh* mesh, VertexResource* reso
     
     glBindBuffer(GL_ARRAY_BUFFER, resource->newBuffer());
     glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vector3f), vertices.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
     glEnableVertexAttribArray(0);
+    glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
 
     SgNormalArray normals;
     writeMeshNormals(mesh, resource->newBuffer(), normals);
@@ -1544,8 +1549,8 @@ void GLSLSceneRendererImpl::writeMeshNormals(SgMesh* mesh, GLuint buffer, SgNorm
 
     glBindBuffer(GL_ARRAY_BUFFER, buffer);
     glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(Vector3f), normals.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer((GLuint)1, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
     glEnableVertexAttribArray(1);
+    glVertexAttribPointer((GLuint)1, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
 }
 
 
@@ -1589,8 +1594,8 @@ void GLSLSceneRendererImpl::writeMeshTexCoords(SgMesh* mesh, GLuint buffer)
 
     glBindBuffer(GL_ARRAY_BUFFER, buffer);
     glBufferData(GL_ARRAY_BUFFER, texCoords.size() * sizeof(Vector2f), texCoords.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer((GLuint)2, 2, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
     glEnableVertexAttribArray(2);
+    glVertexAttribPointer((GLuint)2, 2, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
 }
 
 
@@ -1623,8 +1628,8 @@ void GLSLSceneRendererImpl::writeMeshColors(SgMesh* mesh, GLuint buffer)
 
     glBindBuffer(GL_ARRAY_BUFFER, buffer);
     glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(Vector3f), colors.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer((GLuint)3, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
     glEnableVertexAttribArray(3);
+    glVertexAttribPointer((GLuint)3, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
 }
     
 
@@ -1675,8 +1680,8 @@ void GLSLSceneRendererImpl::renderPlot
 
         glBindBuffer(GL_ARRAY_BUFFER, resource->newBuffer());
         glBufferData(GL_ARRAY_BUFFER, vertices->size() * sizeof(Vector3f), vertices->data(), GL_STATIC_DRAW);
-        glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte *)NULL + (0)));
         glEnableVertexAttribArray(0);
+        glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte *)NULL + (0)));
 
         if(hasColors){
             SgColorArrayPtr colors;
@@ -1699,8 +1704,8 @@ void GLSLSceneRendererImpl::renderPlot
             }
             glBindBuffer(GL_ARRAY_BUFFER, resource->newBuffer());
             glBufferData(GL_ARRAY_BUFFER, n * sizeof(Vector3f), colors->data(), GL_STATIC_DRAW);
-            glVertexAttribPointer((GLuint)1, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL +(0)));
             glEnableVertexAttribArray(1);
+            glVertexAttribPointer((GLuint)1, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL +(0)));
         }
     }        
 

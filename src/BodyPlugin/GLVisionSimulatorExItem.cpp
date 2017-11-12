@@ -844,6 +844,10 @@ void VisionRendererScreen::initializeGL(SgCamera* sceneCamera)
     hasUpdatedData = false;
 
     if(simImpl->useThreadsForSensors){
+
+        // This may be unnecessary
+        std::unique_lock<std::mutex> lock(renderingMutex);
+        
         renderingThread.start([&](){ concurrentRenderingLoop(); });
         moveRenderingBufferToThread(renderingThread);
     }
