@@ -27,7 +27,8 @@
   <file>icons/accgraph.png</file>
 
   <file>icons/eraser-cursor.png</file>
-
+  <file>icons/adjustSize.png</file>
+  
   <file>shader/phongshadow.vert</file>
   <file>shader/phongshadow.frag</file>
   <file>shader/shadowmap.frag</file>
