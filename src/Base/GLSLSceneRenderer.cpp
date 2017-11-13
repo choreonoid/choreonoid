@@ -33,6 +33,24 @@ std::mutex extensionMutex;
 set<GLSLSceneRenderer*> renderers;
 vector<std::function<void(GLSLSceneRenderer* renderer)>> extendFunctions;
 
+const bool LOCK_VERTEX_ARRAY_API_TO_AVOID_CRASH_ON_NVIDIA_LINUX_OPENGL_DRIVER = true;
+
+std::mutex vertexArrayMutex;
+
+struct LockVertexArrayAPI
+{
+    LockVertexArrayAPI(){
+        if(LOCK_VERTEX_ARRAY_API_TO_AVOID_CRASH_ON_NVIDIA_LINUX_OPENGL_DRIVER){
+            vertexArrayMutex.lock();
+        }
+    }
+    ~LockVertexArrayAPI(){
+        if(LOCK_VERTEX_ARRAY_API_TO_AVOID_CRASH_ON_NVIDIA_LINUX_OPENGL_DRIVER){
+            vertexArrayMutex.unlock();
+        }
+    }
+};
+        
 class GLResource : public Referenced
 {
 public:
@@ -1475,12 +1493,14 @@ void GLSLSceneRendererImpl::writeMeshVertices(SgMesh* mesh, VertexResource* reso
         }
     }
 
-    glBindVertexArray(resource->vao);
-    
-    glBindBuffer(GL_ARRAY_BUFFER, resource->newBuffer());
+    {
+        LockVertexArrayAPI lock;
+        glBindVertexArray(resource->vao);
+        glBindBuffer(GL_ARRAY_BUFFER, resource->newBuffer());
+        glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
+    }
     glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vector3f), vertices.data(), GL_STATIC_DRAW);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
 
     SgNormalArray normals;
     writeMeshNormals(mesh, resource->newBuffer(), normals);
@@ -1547,10 +1567,13 @@ void GLSLSceneRendererImpl::writeMeshNormals(SgMesh* mesh, GLuint buffer, SgNorm
         }
     }
 
-    glBindBuffer(GL_ARRAY_BUFFER, buffer);
+    {
+        LockVertexArrayAPI lock;
+        glBindBuffer(GL_ARRAY_BUFFER, buffer);
+        glVertexAttribPointer((GLuint)1, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
+    }
     glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(Vector3f), normals.data(), GL_STATIC_DRAW);
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer((GLuint)1, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
 }
 
 
@@ -1592,10 +1615,13 @@ void GLSLSceneRendererImpl::writeMeshTexCoords(SgMesh* mesh, GLuint buffer)
         }
     }
 
-    glBindBuffer(GL_ARRAY_BUFFER, buffer);
+    {
+        LockVertexArrayAPI lock;
+        glBindBuffer(GL_ARRAY_BUFFER, buffer);
+        glVertexAttribPointer((GLuint)2, 2, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
+    }
     glBufferData(GL_ARRAY_BUFFER, texCoords.size() * sizeof(Vector2f), texCoords.data(), GL_STATIC_DRAW);
     glEnableVertexAttribArray(2);
-    glVertexAttribPointer((GLuint)2, 2, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
 }
 
 
@@ -1626,10 +1652,13 @@ void GLSLSceneRendererImpl::writeMeshColors(SgMesh* mesh, GLuint buffer)
         }
     }
 
-    glBindBuffer(GL_ARRAY_BUFFER, buffer);
+    {
+        LockVertexArrayAPI lock;
+        glBindBuffer(GL_ARRAY_BUFFER, buffer);
+        glVertexAttribPointer((GLuint)3, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
+    }
     glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(Vector3f), colors.data(), GL_STATIC_DRAW);
     glEnableVertexAttribArray(3);
-    glVertexAttribPointer((GLuint)3, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
 }
     
 
@@ -1678,10 +1707,13 @@ void GLSLSceneRendererImpl::renderPlot
         const size_t n = vertices->size();
         resource->numVertices = n;
 
-        glBindBuffer(GL_ARRAY_BUFFER, resource->newBuffer());
+        {
+            LockVertexArrayAPI lock;
+            glBindBuffer(GL_ARRAY_BUFFER, resource->newBuffer());
+            glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte *)NULL + (0)));
+        }
         glBufferData(GL_ARRAY_BUFFER, vertices->size() * sizeof(Vector3f), vertices->data(), GL_STATIC_DRAW);
         glEnableVertexAttribArray(0);
-        glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte *)NULL + (0)));
 
         if(hasColors){
             SgColorArrayPtr colors;
@@ -1702,10 +1734,14 @@ void GLSLSceneRendererImpl::renderPlot
                     (*colors)[i] = orgColors[colorIndices[i]];
                 }
             }
-            glBindBuffer(GL_ARRAY_BUFFER, resource->newBuffer());
+
+            {
+                LockVertexArrayAPI lock;
+                glBindBuffer(GL_ARRAY_BUFFER, resource->newBuffer());
+                glVertexAttribPointer((GLuint)1, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL +(0)));
+            }
             glBufferData(GL_ARRAY_BUFFER, n * sizeof(Vector3f), colors->data(), GL_STATIC_DRAW);
             glEnableVertexAttribArray(1);
-            glVertexAttribPointer((GLuint)1, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL +(0)));
         }
     }        
 
