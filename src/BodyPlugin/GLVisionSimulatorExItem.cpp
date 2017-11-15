@@ -115,20 +115,38 @@ public:
 };
 
 
-struct Scene : public Referenced
+class VisionScene : public Referenced
 {
+public:
     SgGroupPtr root;
     vector<SceneBodyPtr> sceneBodies;
+    QThreadEx renderingThread;
+    std::condition_variable renderingCondition;
+    std::mutex renderingMutex;
+    bool isRenderingRequested;
+    bool isRenderingFinished;
+    bool isTerminationRequested;
+
+    VisionScene() {
+        isRenderingRequested = false;
+        isRenderingFinished = false;
+        isTerminationRequested = false;
+    }
+
+    void updateScene(double currentTime);
+    void startConcurrentRendering();
+    void concurrentRenderingLoop(std::function<void()> render, std::function<void()> finalizeRendering);
+    void terminate();
 };
 
-typedef ref_ptr<Scene> ScenePtr;
+typedef ref_ptr<VisionScene> VisionScenePtr;
 
 class VisionRendererScreen : public Referenced
 {
 public:
     GLVisionSimulatorItemImpl* simImpl;
 
-    ScenePtr scene;
+    VisionScenePtr scene;
 
     Camera* camera;
     RangeCamera* rangeCamera;
@@ -138,17 +156,10 @@ public:
     RangeCameraPtr rangeCameraForRendering;
     RangeSensorPtr rangeSensorForRendering;
 
-    bool isRenderingRequested;
-    bool isRenderingFinished;
-    bool isTerminationRequested;
     bool hasUpdatedData;
     bool isEndPoint;
     double depthError;
     
-    QThreadEx renderingThread;
-    std::condition_variable renderingCondition;
-    std::mutex renderingMutex;
-
 #if USE_QT5_OPENGL
     QOpenGLContext* glContext;
     QOffscreenSurface* offscreenSurface;
@@ -166,16 +177,17 @@ public:
 
     VisionRendererScreen(GLVisionSimulatorItemImpl* simImpl, Device* device, Device* deviceForRendering, bool isEndPoint);
     ~VisionRendererScreen();
-    bool initialize(Scene* scene, int bodyIndex);
+    bool initialize(VisionScenePtr scene, int bodyIndex);
     SgCamera* initializeCamera(int bodyIndex);
     void initializeGL(SgCamera* sceneCamera);
+    void startRenderingThread();
     void moveRenderingBufferToThread(QThread& thread);
     void moveRenderingBufferToMainThread();
     void makeGLContextCurrent();
     void doneGLContextCurrent();
-    void updateScene();
-    void renderInCurrentThread(bool doStoreResultToTmpDataBuffer);
-    void concurrentRenderingLoop();
+    void updateVisionScene();
+    void render();
+    void finalizeRendering();
     void storeResultToTmpDataBuffer();
     bool getCameraImage(Image& image);
     bool getRangeCameraData(Image& image, vector<Vector3f>& points);
@@ -198,6 +210,8 @@ public:
     double cycleTime;
     double latency;
     double onsetTime;
+    VisionScenePtr sharedScene;
+    vector<VisionScenePtr> scenes;
     vector<VisionRendererScreenPtr> screens;
     bool isRendering;  // only updated and referred to in the simulation thread
     std::shared_ptr<RangeSensor::RangeData> rangeData;
@@ -206,10 +220,13 @@ public:
             SimulationBody* simBody, int bodyIndex);
     ~VisionRenderer();
     bool initialize(const vector<SimulationBody*>& simBodies);
-    Scene* createScene(const vector<SimulationBody*>& simBodies);
+    VisionScenePtr createVisionScene(const vector<SimulationBody*>& simBodies);
+    void startSharedRenderingThread();
     void moveRenderingBufferToMainThread();
     void startConcurrentRendering();
-    void updateScene(bool updateSensorForRenderingThread);
+    void updateVisionScene(bool updateSensorForRenderingThread);
+    void render();
+    void finalizeRendering();
     bool waitForRenderingToFinish();
     void copyVisionData();
     bool waitForRenderingToFinish(std::unique_lock<std::mutex>& lock);
@@ -243,7 +260,7 @@ public:
     QThreadEx queueThread;
     std::condition_variable queueCondition;
     std::mutex queueMutex;
-    queue<VisionRendererScreen*> renderingScreenQueue;
+    queue<VisionRenderer*> sensorQueue;
     
     double rangeSensorPrecisionRatio;
     double depthError;
@@ -565,8 +582,8 @@ bool GLVisionSimulatorItemImpl::initializeSimulation(SimulatorItem* simulatorIte
         simulatorItem->addPostDynamicsFunction([&](){ onPostDynamics(); });
 
         if(useQueueThreadForAllSensors){
-            while(!renderingScreenQueue.empty()){
-                renderingScreenQueue.pop();
+            while(!sensorQueue.empty()){
+                sensorQueue.pop();
             }
             isQueueRenderingTerminationRequested = false;
             queueThread.start([&](){ queueRenderingLoop(); });
@@ -642,19 +659,24 @@ VisionRenderer::VisionRenderer(GLVisionSimulatorItemImpl* simImpl, Device* devic
 
 bool VisionRenderer::initialize(const vector<SimulationBody*>& simBodies)
 {
-    ScenePtr scene;
-    for(auto& screen : screens){
-        if(!scene){
-            scene = createScene(simBodies);
+    if(simImpl->useThreadsForScreens){
+        for(auto& screen : screens){
+            auto scene = createVisionScene(simBodies);
+            if(!screen->initialize(scene, bodyIndex)){
+                return false;
+            }
+            scenes.push_back(scene);
         }
-        if(!screen->initialize(scene, bodyIndex)){
-            return false;
+    } else {
+        sharedScene = createVisionScene(simBodies);
+        for(auto& screen : screens){
+            if(!screen->initialize(sharedScene, bodyIndex)){
+                return false;
+            }
         }
-        if(simImpl->useThreadsForSensors){
-            scene = nullptr;
-        }
+        scenes.push_back(sharedScene);
     }
-
+        
     if(camera){
         double frameRate = std::max(0.1, std::min(camera->frameRate(), simImpl->maxFrameRate));
         cycleTime = 1.0 / frameRate;
@@ -675,13 +697,23 @@ bool VisionRenderer::initialize(const vector<SimulationBody*>& simBodies)
     
     isRendering = false;
 
+    if(simImpl->useThreadsForSensors){
+        if(sharedScene){
+            startSharedRenderingThread();
+        } else {
+            for(auto& screen : screens){
+                screen->startRenderingThread();
+            }
+        }
+    }
+
     return true;
 }
 
 
-Scene* VisionRenderer::createScene(const vector<SimulationBody*>& simBodies)
+VisionScenePtr VisionRenderer::createVisionScene(const vector<SimulationBody*>& simBodies)
 {
-    auto scene = new Scene;
+    VisionScenePtr scene = new VisionScene;
     scene->root = new SgGroup;
     simImpl->cloneMap.clear();
 
@@ -739,7 +771,7 @@ VisionRendererScreen::VisionRendererScreen
 }
 
 
-bool VisionRendererScreen::initialize(Scene* scene, int bodyIndex)
+bool VisionRendererScreen::initialize(VisionScenePtr scene, int bodyIndex)
 {
     this->scene = scene;
 
@@ -749,6 +781,8 @@ bool VisionRendererScreen::initialize(Scene* scene, int bodyIndex)
     }
 
     initializeGL(sceneCamera);
+
+    hasUpdatedData = false;
 
     return true;
 }
@@ -879,22 +913,42 @@ void VisionRendererScreen::initializeGL(SgCamera* sceneCamera)
     }
 
     doneGLContextCurrent();
+}
 
-    isRenderingRequested = false;
-    isRenderingFinished = false;
-    isTerminationRequested = false;
-    hasUpdatedData = false;
 
-    if(simImpl->useThreadsForSensors){
+// For SENSOR_THREAD_MODE
+void VisionRenderer::startSharedRenderingThread()
+{
+    // This may be unnecessary
+    std::unique_lock<std::mutex> lock(sharedScene->renderingMutex);
+    
+    sharedScene->renderingThread.start([&](){
+            sharedScene->concurrentRenderingLoop(
+                [&](){ render(); },
+                [&](){ finalizeRendering(); });
+        });
 
-        // This may be unnecessary
-        std::unique_lock<std::mutex> lock(renderingMutex);
-        
-        renderingThread.start([&](){ concurrentRenderingLoop(); });
-        moveRenderingBufferToThread(renderingThread);
+    for(auto& screen : screens){
+        screen->moveRenderingBufferToThread(sharedScene->renderingThread);
     }
 }
 
+
+// For SCREEN_THREAD_MODE
+void VisionRendererScreen::startRenderingThread()
+{
+    // This may be unnecessary
+    std::unique_lock<std::mutex> lock(scene->renderingMutex);
+        
+    scene->renderingThread.start([&](){
+            scene->concurrentRenderingLoop(
+                [&](){ render(); },
+                [&](){ finalizeRendering(); });
+        });
+
+    moveRenderingBufferToThread(scene->renderingThread);
+}
+    
 
 void VisionRendererScreen::moveRenderingBufferToThread(QThread& thread)
 {
@@ -904,20 +958,20 @@ void VisionRendererScreen::moveRenderingBufferToThread(QThread& thread)
 }
 
 
+void VisionRenderer::moveRenderingBufferToMainThread()
+{
+    for(auto& screen : screens){
+        screen->moveRenderingBufferToMainThread();
+    }
+}
+
+
 void VisionRendererScreen::moveRenderingBufferToMainThread()
 {
 #if USE_QT5_OPENGL
     QThread* mainThread = QApplication::instance()->thread();
     glContext->moveToThread(mainThread);
 #endif
-}
-
-
-void VisionRenderer::moveRenderingBufferToMainThread()
-{
-    for(auto& screen : screens){
-        screen->moveRenderingBufferToMainThread();
-    }
 }
 
 
@@ -960,10 +1014,8 @@ void GLVisionSimulatorItemImpl::onPreDynamics()
                         pQueueMutex = &queueMutex;
                         pQueueMutex->lock();
                     }
-                    renderer->updateScene(true);
-                    for(auto& screen : renderer->screens){
-                        renderingScreenQueue.push(screen);
-                    }
+                    renderer->updateVisionScene(true);
+                    sensorQueue.push(renderer);
                 }
                 renderer->elapsedTime -= renderer->cycleTime;
                 renderersInRendering.push_back(renderer);
@@ -981,7 +1033,7 @@ void GLVisionSimulatorItemImpl::onPreDynamics()
 
 void GLVisionSimulatorItemImpl::queueRenderingLoop()
 {
-    VisionRendererScreen* screen = nullptr;
+    VisionRenderer* renderer = nullptr;
     
     while(true){
         {
@@ -990,19 +1042,19 @@ void GLVisionSimulatorItemImpl::queueRenderingLoop()
                 if(isQueueRenderingTerminationRequested){
                     goto exitRenderingQueueLoop;
                 }
-                if(!renderingScreenQueue.empty()){
-                    screen = renderingScreenQueue.front();
-                    renderingScreenQueue.pop();
+                if(!sensorQueue.empty()){
+                    renderer = sensorQueue.front();
+                    sensorQueue.pop();
                     break;
                 }
                 queueCondition.wait(lock);
             }
         }
-        screen->renderInCurrentThread(true);
+        renderer->render();
         
         {
             std::lock_guard<std::mutex> lock(queueMutex);
-            screen->isRenderingFinished = true;
+            renderer->sharedScene->isRenderingFinished = true;
         }
         queueCondition.notify_all();
     }
@@ -1015,14 +1067,10 @@ exitRenderingQueueLoop:
 }
 
 
-void VisionRenderer::updateScene(bool updateSensorForRenderingThread)
+void VisionRenderer::updateVisionScene(bool updateSensorForRenderingThread)
 {
-    if(!simImpl->useThreadsForSensors){
-        screens[0]->updateScene();
-    } else {
-        for(auto& screen : screens){
-            screen->updateScene();
-        }
+    for(auto& scene : scenes){
+        scene->updateScene(simImpl->currentTime);
     }
     if(updateSensorForRenderingThread){
         deviceForRendering->copyStateFrom(*device);
@@ -1030,48 +1078,38 @@ void VisionRenderer::updateScene(bool updateSensorForRenderingThread)
 }
     
 
-void VisionRendererScreen::updateScene()
+void VisionScene::updateScene(double currentTime)
 {
-    auto& sceneBodies = scene->sceneBodies;
-    for(size_t i=0; i < sceneBodies.size(); ++i){
-        SceneBody* sceneBody = sceneBodies[i];
+    for(auto& sceneBody : sceneBodies){
         sceneBody->updateLinkPositions();
-        sceneBody->updateSceneDevices(simImpl->currentTime);
+        sceneBody->updateSceneDevices(currentTime);
     }
-}
-
-
-void VisionRendererScreen::renderInCurrentThread(bool doStoreResultToTmpDataBuffer)
-{
-    makeGLContextCurrent();
-    renderer->render();
-    renderer->flush();
-    if(doStoreResultToTmpDataBuffer){
-        storeResultToTmpDataBuffer();
-    }
-    doneGLContextCurrent();
 }
 
 
 void VisionRenderer::startConcurrentRendering()
 {
     isRendering = true;
-    updateScene(true);
+    updateVisionScene(true);
 
-    for(auto& screen : screens){
-        {
-            std::lock_guard<std::mutex> lock(screen->renderingMutex);
-            screen->isRenderingRequested = true;
-        }
-        screen->renderingCondition.notify_all();
+    for(auto& scene : scenes){
+        scene->startConcurrentRendering();
     }
 }
 
 
-void VisionRendererScreen::concurrentRenderingLoop()
+void VisionScene::startConcurrentRendering()
 {
-    bool isGLContextCurrent = false;
-    
+    {
+        std::lock_guard<std::mutex> lock(renderingMutex);
+        isRenderingRequested = true;
+    }
+    renderingCondition.notify_all();
+}
+
+
+void VisionScene::concurrentRenderingLoop(std::function<void()> render, std::function<void()> finalizeRendering)
+{
     while(true){
         {
             std::unique_lock<std::mutex> lock(renderingMutex);
@@ -1086,14 +1124,9 @@ void VisionRendererScreen::concurrentRenderingLoop()
                 renderingCondition.wait(lock);
             }
         }
-        if(!isGLContextCurrent){
-            makeGLContextCurrent();
-            isGLContextCurrent = true;
-        }
-        renderer->render();
-        renderer->flush();
-        storeResultToTmpDataBuffer();
-    
+
+        render();
+        
         {
             std::lock_guard<std::mutex> lock(renderingMutex);
             isRenderingFinished = true;
@@ -1102,6 +1135,38 @@ void VisionRendererScreen::concurrentRenderingLoop()
     }
     
 exitConcurrentRenderingLoop:
+    finalizeRendering();
+}
+
+
+void VisionRenderer::render()
+{
+    for(auto& screen : screens){
+        screen->render();
+    }
+}
+
+
+void VisionRendererScreen::render()
+{
+    makeGLContextCurrent();
+    renderer->render();
+    renderer->flush();
+    storeResultToTmpDataBuffer();
+    doneGLContextCurrent();
+}
+
+
+void VisionRenderer::finalizeRendering()
+{
+    for(auto& screen : screens){
+        screen->finalizeRendering();
+    }
+}
+
+
+void VisionRendererScreen::finalizeRendering()
+{
     doneGLContextCurrent();
     moveRenderingBufferToMainThread();
 }
@@ -1158,25 +1223,24 @@ void GLVisionSimulatorItemImpl::getVisionDataInThreadsForSensors()
 
 bool VisionRenderer::waitForRenderingToFinish()
 {
-    for(auto& screen : screens){
-        std::unique_lock<std::mutex> lock(screen->renderingMutex);
-
-        if(!screen->isRenderingFinished){
+    for(auto& scene : scenes){
+        std::unique_lock<std::mutex> lock(scene->renderingMutex);
+        if(!scene->isRenderingFinished){
             if(simImpl->isBestEffortMode){
                 if(elapsedTime > cycleTime){
                     elapsedTime = cycleTime;
                 }
                 return false;
             } else {
-                while(!screen->isRenderingFinished){
-                    screen->renderingCondition.wait(lock);
+                while(!scene->isRenderingFinished){
+                    scene->renderingCondition.wait(lock);
                 }
             }
         }
     }
 
-    for(auto& screen : screens){
-        screen->isRenderingFinished = false;
+    for(auto& scene : scenes){
+        scene->isRenderingFinished = false;
     }
 
     return true;
@@ -1207,24 +1271,19 @@ void GLVisionSimulatorItemImpl::getVisionDataInQueueThread()
 
 bool VisionRenderer::waitForRenderingToFinish(std::unique_lock<std::mutex>& lock)
 {
-    for(auto& screen : screens){
-        if(!screen->isRenderingFinished){
-            if(simImpl->isBestEffortMode){
-                if(elapsedTime > cycleTime){
-                    elapsedTime = cycleTime;
-                }
-                return false;
-            } else {
-                while(!screen->isRenderingFinished){
-                    simImpl->queueCondition.wait(lock);
-                }
+    if(!sharedScene->isRenderingFinished){
+        if(simImpl->isBestEffortMode){
+            if(elapsedTime > cycleTime){
+                elapsedTime = cycleTime;
+            }
+            return false;
+        } else {
+            while(!sharedScene->isRenderingFinished){
+                simImpl->queueCondition.wait(lock);
             }
         }
     }
-
-    for(auto& screen : screens){
-        screen->isRenderingFinished = false;
-    }
+    sharedScene->isRenderingFinished = false;
 
     return true;
 }
@@ -1548,8 +1607,8 @@ void GLVisionSimulatorItemImpl::finalizeSimulation()
         }
         queueCondition.notify_all();
         queueThread.wait();
-        while(!renderingScreenQueue.empty()){
-            renderingScreenQueue.pop();
+        while(!sensorQueue.empty()){
+            sensorQueue.pop();
         }
     }
         
@@ -1559,21 +1618,28 @@ void GLVisionSimulatorItemImpl::finalizeSimulation()
 
 VisionRenderer::~VisionRenderer()
 {
+    if(simImpl->useThreadsForSensors){
+        for(auto& scene : scenes){
+            scene->terminate();
+        }
+    }
     screens.clear();
+}
+
+
+void VisionScene::terminate()
+{
+    {
+        std::lock_guard<std::mutex> lock(renderingMutex);
+        isTerminationRequested = true;
+    }
+    renderingCondition.notify_all();
+    renderingThread.wait();
 }
 
 
 VisionRendererScreen::~VisionRendererScreen()
 {
-    if(simImpl->useThreadsForSensors){
-        {
-            std::lock_guard<std::mutex> lock(renderingMutex);
-            isTerminationRequested = true;
-        }
-        renderingCondition.notify_all();
-        renderingThread.wait();
-    }
-
 #if USE_QT5_OPENGL
     if(glContext){
         makeGLContextCurrent();
