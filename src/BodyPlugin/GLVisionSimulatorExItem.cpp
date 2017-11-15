@@ -114,13 +114,21 @@ public:
     }
 };
 
+
+struct Scene : public Referenced
+{
+    SgGroupPtr root;
+    vector<SceneBodyPtr> sceneBodies;
+};
+
+typedef ref_ptr<Scene> ScenePtr;
+
 class VisionRendererScreen : public Referenced
 {
 public:
     GLVisionSimulatorItemImpl* simImpl;
 
-    SgGroupPtr sceneGroup;
-    vector<SceneBodyPtr> sceneBodies;
+    ScenePtr scene;
 
     Camera* camera;
     RangeCamera* rangeCamera;
@@ -158,8 +166,7 @@ public:
 
     VisionRendererScreen(GLVisionSimulatorItemImpl* simImpl, Device* device, Device* deviceForRendering, bool isEndPoint);
     ~VisionRendererScreen();
-    bool initialize(const vector<SimulationBody*>& simBodies, int bodyIndex);
-    void initializeScene(const vector<SimulationBody*>& simBodies, int bodyIndex);
+    bool initialize(Scene* scene, int bodyIndex);
     SgCamera* initializeCamera(int bodyIndex);
     void initializeGL(SgCamera* sceneCamera);
     void moveRenderingBufferToThread(QThread& thread);
@@ -199,6 +206,7 @@ public:
             SimulationBody* simBody, int bodyIndex);
     ~VisionRenderer();
     bool initialize(const vector<SimulationBody*>& simBodies);
+    Scene* createScene(const vector<SimulationBody*>& simBodies);
     void moveRenderingBufferToMainThread();
     void startConcurrentRendering();
     void updateScene(bool updateSensorForRenderingThread);
@@ -610,9 +618,16 @@ VisionRenderer::VisionRenderer(GLVisionSimulatorItemImpl* simImpl, Device* devic
 
 bool VisionRenderer::initialize(const vector<SimulationBody*>& simBodies)
 {
+    ScenePtr scene;
     for(auto& screen : screens){
-        if(!screen->initialize(simBodies, bodyIndex)){
+        if(!scene){
+            scene = createScene(simBodies);
+        }
+        if(!screen->initialize(scene, bodyIndex)){
             return false;
+        }
+        if(simImpl->useThreadsForSensors){
+            scene = nullptr;
         }
     }
 
@@ -637,6 +652,41 @@ bool VisionRenderer::initialize(const vector<SimulationBody*>& simBodies)
     isRendering = false;
 
     return true;
+}
+
+
+Scene* VisionRenderer::createScene(const vector<SimulationBody*>& simBodies)
+{
+    auto scene = new Scene;
+    scene->root = new SgGroup;
+    simImpl->cloneMap.clear();
+
+    for(size_t i=0; i < simBodies.size(); ++i){
+        auto sceneBody = new SceneBody(simBodies[i]->body());
+        sceneBody->cloneShapes(simImpl->cloneMap);
+        scene->sceneBodies.push_back(sceneBody);
+        scene->root->addChild(sceneBody);
+    }
+
+    if(simImpl->shootAllSceneObjects){
+        WorldItem* worldItem = simImpl->self->findOwnerItem<WorldItem>();
+        if(worldItem){
+            ItemList<> items;
+            items.extractChildItems(worldItem);
+            for(size_t i=0; i < items.size(); ++i){
+                Item* item = items.get(i);
+                SceneProvider* sceneProvider = dynamic_cast<SceneProvider*>(item);
+                if(sceneProvider && !dynamic_cast<BodyItem*>(item)){
+                    auto node = sceneProvider->cloneScene(simImpl->cloneMap);
+                    if(node){
+                        scene->root->addChild(node);
+                    }
+                }
+            }
+        }
+    }
+
+    return scene;
 }
 
 
@@ -665,9 +715,9 @@ VisionRendererScreen::VisionRendererScreen
 }
 
 
-bool VisionRendererScreen::initialize(const vector<SimulationBody*>& simBodies, int bodyIndex)
+bool VisionRendererScreen::initialize(Scene* scene, int bodyIndex)
 {
-    initializeScene(simBodies, bodyIndex);
+    this->scene = scene;
 
     auto sceneCamera = initializeCamera(bodyIndex);
     if(!sceneCamera){
@@ -680,41 +730,9 @@ bool VisionRendererScreen::initialize(const vector<SimulationBody*>& simBodies, 
 }
 
 
-void VisionRendererScreen::initializeScene(const vector<SimulationBody*>& simBodies, int bodyIndex)
-{
-    sceneGroup = new SgGroup;
-    simImpl->cloneMap.clear();
-
-    for(size_t i=0; i < simBodies.size(); ++i){
-        SceneBody* sceneBody = new SceneBody(simBodies[i]->body());
-        sceneBody->cloneShapes(simImpl->cloneMap);
-        sceneBodies.push_back(sceneBody);
-        sceneGroup->addChild(sceneBody);
-    }
-
-    if(simImpl->shootAllSceneObjects){
-        WorldItem* worldItem = simImpl->self->findOwnerItem<WorldItem>();
-        if(worldItem){
-            ItemList<> items;
-            items.extractChildItems(worldItem);
-            for(size_t i=0; i < items.size(); ++i){
-                Item* item = items.get(i);
-                SceneProvider* sceneProvider = dynamic_cast<SceneProvider*>(item);
-                if(sceneProvider && !dynamic_cast<BodyItem*>(item)){
-                    SgNode* scene = sceneProvider->cloneScene(simImpl->cloneMap);
-                    if(scene){
-                        sceneGroup->addChild(scene);
-                    }
-                }
-            }
-        }
-    }
-}
-
-
 SgCamera* VisionRendererScreen::initializeCamera(int bodyIndex)
 {
-    auto& sceneBody = sceneBodies[bodyIndex];
+    auto& sceneBody = scene->sceneBodies[bodyIndex];
     SgCamera* sceneCamera = nullptr;
 
     if(camera){
@@ -825,7 +843,7 @@ void VisionRendererScreen::initializeGL(SgCamera* sceneCamera)
 
     renderer->initializeGL();
     renderer->setViewport(0, 0, pixelWidth, pixelHeight);
-    renderer->sceneRoot()->addChild(sceneGroup);
+    renderer->sceneRoot()->addChild(scene->root);
     renderer->extractPreprocessedNodes();
     renderer->setCurrentCamera(sceneCamera);
 
@@ -975,8 +993,12 @@ exitRenderingQueueLoop:
 
 void VisionRenderer::updateScene(bool updateSensorForRenderingThread)
 {
-    for(auto& screen : screens){
-        screen->updateScene();
+    if(!simImpl->useThreadsForSensors){
+        screens[0]->updateScene();
+    } else {
+        for(auto& screen : screens){
+            screen->updateScene();
+        }
     }
     if(updateSensorForRenderingThread){
         deviceForRendering->copyStateFrom(*device);
@@ -986,6 +1008,7 @@ void VisionRenderer::updateScene(bool updateSensorForRenderingThread)
 
 void VisionRendererScreen::updateScene()
 {
+    auto& sceneBodies = scene->sceneBodies;
     for(size_t i=0; i < sceneBodies.size(); ++i){
         SceneBody* sceneBody = sceneBodies[i];
         sceneBody->updateLinkPositions();
