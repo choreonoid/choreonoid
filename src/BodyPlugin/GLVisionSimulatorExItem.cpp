@@ -1149,6 +1149,9 @@ bool VisionRenderer::waitForRenderingToFinish()
                 }
             }
         }
+    }
+
+    for(auto& screen : screens){
         screen->isRenderingFinished = false;
     }
 
@@ -1193,6 +1196,9 @@ bool VisionRenderer::waitForRenderingToFinish(std::unique_lock<std::mutex>& lock
                 }
             }
         }
+    }
+
+    for(auto& screen : screens){
         screen->isRenderingFinished = false;
     }
 
