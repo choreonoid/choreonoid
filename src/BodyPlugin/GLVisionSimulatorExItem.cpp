@@ -234,6 +234,7 @@ public:
     bool useGLSL;
     bool useQueueThreadForAllSensors;
     bool useThreadsForSensors;
+    bool useThreadsForScreens;
     bool isVisionDataRecordingEnabled;
     bool isBestEffortMode;
     bool isQueueRenderingTerminationRequested;
@@ -242,7 +243,7 @@ public:
     QThreadEx queueThread;
     std::condition_variable queueCondition;
     std::mutex queueMutex;
-    queue<VisionRendererScreen*> screenQueue;
+    queue<VisionRendererScreen*> renderingScreenQueue;
     
     double rangeSensorPrecisionRatio;
     double depthError;
@@ -251,7 +252,7 @@ public:
     string bodyNameListString;
     vector<string> sensorNames;
     string sensorNameListString;
-    bool useThreadsForSensorsProperty;
+    Selection threadMode;
     bool isBestEffortModeProperty;
     bool shootAllSceneObjects;
     bool isHeadLightEnabled;
@@ -301,7 +302,8 @@ GLVisionSimulatorItem::GLVisionSimulatorItem()
 
 GLVisionSimulatorItemImpl::GLVisionSimulatorItemImpl(GLVisionSimulatorItem* self)
     : self(self),
-      os(MessageView::instance()->cout())
+      os(MessageView::instance()->cout()),
+      threadMode(GLVisionSimulatorItem::N_THREAD_MODES, CNOID_GETTEXT_DOMAIN_NAME)
 {
     simulatorItem = 0;
     maxFrameRate = 1000.0;
@@ -311,11 +313,14 @@ GLVisionSimulatorItemImpl::GLVisionSimulatorItemImpl(GLVisionSimulatorItem* self
 
     useGLSL = (getenv("CNOID_USE_GLSL") != 0);
     isVisionDataRecordingEnabled = false;
-    useThreadsForSensorsProperty = true;
     isBestEffortModeProperty = false;
     isHeadLightEnabled = true;
     areAdditionalLightsEnabled = true;
     shootAllSceneObjects = false;
+
+    threadMode.setSymbol(GLVisionSimulatorItem::SINGLE_THREAD_MODE, N_("Single thread"));
+    threadMode.setSymbol(GLVisionSimulatorItem::SENSOR_THREAD_MODE, N_("Sensor thread"));
+    threadMode.setSymbol(GLVisionSimulatorItem::SCREEN_THREAD_MODE, N_("Screen thread"));
 }
 
 
@@ -340,7 +345,7 @@ GLVisionSimulatorItemImpl::GLVisionSimulatorItemImpl(GLVisionSimulatorItem* self
     depthError = org.depthError;
     bodyNameListString = getNameListString(bodyNames);
     sensorNameListString = getNameListString(sensorNames);
-    useThreadsForSensorsProperty = org.useThreadsForSensorsProperty;
+    threadMode = org.threadMode;
     isBestEffortModeProperty = org.isBestEffortModeProperty;
     shootAllSceneObjects = org.shootAllSceneObjects;
     isHeadLightEnabled = org.isHeadLightEnabled;
@@ -400,9 +405,18 @@ void GLVisionSimulatorItem::setVisionDataRecordingEnabled(bool on)
 }
 
 
+void GLVisionSimulatorItem::setThreadMode(int mode)
+{
+    if(mode != impl->threadMode.which()){
+        impl->threadMode.select(mode);
+        notifyUpdate();
+    }
+}
+
+
 void GLVisionSimulatorItem::setDedicatedSensorThreadsEnabled(bool on)
 {
-    impl->setProperty(impl->useThreadsForSensorsProperty, on);
+    setThreadMode(on ? SCREEN_THREAD_MODE : SINGLE_THREAD_MODE);
 }
 
 
@@ -457,12 +471,22 @@ bool GLVisionSimulatorItemImpl::initializeSimulation(SimulatorItem* simulatorIte
     currentTime = 0;
     visionRenderers.clear();
 
-    if(useThreadsForSensorsProperty){
-        useQueueThreadForAllSensors = false;
-        useThreadsForSensors = true;
-    } else {
+    switch(threadMode.which()){
+    case GLVisionSimulatorItem::SINGLE_THREAD_MODE:
         useQueueThreadForAllSensors = true;
         useThreadsForSensors = false;
+        useThreadsForScreens = false;
+        break;
+    case GLVisionSimulatorItem::SENSOR_THREAD_MODE:
+        useQueueThreadForAllSensors = false;
+        useThreadsForSensors = true;
+        useThreadsForScreens = false;
+        break;
+    case GLVisionSimulatorItem::SCREEN_THREAD_MODE:
+        useQueueThreadForAllSensors = false;
+        useThreadsForSensors = true;
+        useThreadsForScreens = true;
+        break;
     }
     
     isBestEffortMode = isBestEffortModeProperty;
@@ -541,8 +565,8 @@ bool GLVisionSimulatorItemImpl::initializeSimulation(SimulatorItem* simulatorIte
         simulatorItem->addPostDynamicsFunction([&](){ onPostDynamics(); });
 
         if(useQueueThreadForAllSensors){
-            while(!screenQueue.empty()){
-                screenQueue.pop();
+            while(!renderingScreenQueue.empty()){
+                renderingScreenQueue.pop();
             }
             isQueueRenderingTerminationRequested = false;
             queueThread.start([&](){ queueRenderingLoop(); });
@@ -938,7 +962,7 @@ void GLVisionSimulatorItemImpl::onPreDynamics()
                     }
                     renderer->updateScene(true);
                     for(auto& screen : renderer->screens){
-                        screenQueue.push(screen);
+                        renderingScreenQueue.push(screen);
                     }
                 }
                 renderer->elapsedTime -= renderer->cycleTime;
@@ -966,9 +990,9 @@ void GLVisionSimulatorItemImpl::queueRenderingLoop()
                 if(isQueueRenderingTerminationRequested){
                     goto exitRenderingQueueLoop;
                 }
-                if(!screenQueue.empty()){
-                    screen = screenQueue.front();
-                    screenQueue.pop();
+                if(!renderingScreenQueue.empty()){
+                    screen = renderingScreenQueue.front();
+                    renderingScreenQueue.pop();
                     break;
                 }
                 queueCondition.wait(lock);
@@ -1524,8 +1548,8 @@ void GLVisionSimulatorItemImpl::finalizeSimulation()
         }
         queueCondition.notify_all();
         queueThread.wait();
-        while(!screenQueue.empty()){
-            screenQueue.pop();
+        while(!renderingScreenQueue.empty()){
+            renderingScreenQueue.pop();
         }
     }
         
@@ -1586,7 +1610,7 @@ void GLVisionSimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty
     putProperty(_("Max frame rate"), maxFrameRate, changeProperty(maxFrameRate));
     putProperty(_("Max latency [s]"), maxLatency, changeProperty(maxLatency));
     putProperty(_("Record vision data"), isVisionDataRecordingEnabled, changeProperty(isVisionDataRecordingEnabled));
-    putProperty(_("Threads for sensors"), useThreadsForSensorsProperty, changeProperty(useThreadsForSensorsProperty));
+    putProperty(_("Thread mode"), threadMode, [&](int index){ return threadMode.select(index); });
     putProperty(_("Best effort"), isBestEffortModeProperty, changeProperty(isBestEffortModeProperty));
     putProperty(_("All scene objects"), shootAllSceneObjects, changeProperty(shootAllSceneObjects));
     putProperty.min(1.0)(_("Precision ratio of range sensors"),
@@ -1611,7 +1635,7 @@ bool GLVisionSimulatorItemImpl::store(Archive& archive)
     archive.write("maxFrameRate", maxFrameRate);
     archive.write("maxLatency", maxLatency);
     archive.write("recordVisionData", isVisionDataRecordingEnabled);
-    archive.write("useThreadsForSensors", useThreadsForSensorsProperty);
+    archive.write("threadMode", threadMode.selectedSymbol(), DOUBLE_QUOTED);
     archive.write("bestEffort", isBestEffortModeProperty);
     archive.write("allSceneObjects", shootAllSceneObjects);
     archive.write("rangeSensorPrecisionRatio", rangeSensorPrecisionRatio);
@@ -1639,13 +1663,23 @@ bool GLVisionSimulatorItemImpl::restore(const Archive& archive)
     archive.read("maxFrameRate", maxFrameRate);
     archive.read("maxLatency", maxLatency);
     archive.read("recordVisionData", isVisionDataRecordingEnabled);
-    archive.read("useThreadsForSensors", useThreadsForSensorsProperty);
     archive.read("bestEffort", isBestEffortModeProperty);
     archive.read("allSceneObjects", shootAllSceneObjects);
     archive.read("rangeSensorPrecisionRatio", rangeSensorPrecisionRatio);
     archive.read("depthError", depthError);
     archive.read("enableHeadLight", isHeadLightEnabled);
     archive.read("enableAdditionalLights", areAdditionalLightsEnabled);
+
+    string symbol;
+    if(archive.read("threadMode", symbol)){
+        threadMode.select(symbol);
+    } else {
+        // For the backward compatibility
+        bool on;
+        if(archive.read("useThreadsForSensors", on)){
+            threadMode.select(on ?  GLVisionSimulatorItem::SCREEN_THREAD_MODE : GLVisionSimulatorItem::SINGLE_THREAD_MODE);
+        }
+    }
     
     return true;
 }
