@@ -151,7 +151,7 @@ void DoubleArmV7Controller::initPDGain()
         if(mainActuationMode == Link::ActuationMode::JOINT_TORQUE){
             trackgain = 2000.0;
         }else{
-            trackgain = 5.0;
+            trackgain = 2.0;
         }
     }
 

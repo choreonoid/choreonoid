@@ -95,9 +95,10 @@ contactMaterials:
     materials: [ Ground, DoubleArmV7ATracks ]
     youngsModulus: 1e10
     friction: 0.7
+    secondaryFriction: 0.5
     restitution: 0.0
     surfaceViscosity: 1e-7
-    secondarySurfaceViscosity: 1e-1
+    secondarySurfaceViscosity: 1e-7
     primaryDirection: [ 1, 0, 0 ]
     frictionModel: [ orientedBox, direct ]
     referenceBodyName: DoubleArmV7
