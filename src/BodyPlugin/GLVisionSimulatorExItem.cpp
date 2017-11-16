@@ -114,6 +114,7 @@ public:
     }
 };
 
+class VisionRendererScreen;
 
 class VisionScene : public Referenced
 {
@@ -135,7 +136,7 @@ public:
 
     void updateScene(double currentTime);
     void startConcurrentRendering();
-    void concurrentRenderingLoop(std::function<void()> render, std::function<void()> finalizeRendering);
+    void concurrentRenderingLoop(std::function<void(VisionRendererScreen*&)> render, std::function<void()> finalizeRendering);
     void terminate();
 };
 
@@ -186,7 +187,7 @@ public:
     void makeGLContextCurrent();
     void doneGLContextCurrent();
     void updateVisionScene();
-    void render();
+    void render(VisionRendererScreen*& currentGLContextScreen);
     void finalizeRendering();
     void storeResultToTmpDataBuffer();
     bool getCameraImage(Image& image);
@@ -225,7 +226,7 @@ public:
     void moveRenderingBufferToMainThread();
     void startConcurrentRendering();
     void updateVisionScene(bool updateSensorForRenderingThread);
-    void render();
+    void render(VisionRendererScreen*& currentGLContextScreen, bool doDoneGLContextCurrent);
     void finalizeRendering();
     bool waitForRenderingToFinish();
     void copyVisionData();
@@ -922,10 +923,13 @@ void VisionRenderer::startSharedRenderingThread()
 {
     // This may be unnecessary
     std::unique_lock<std::mutex> lock(sharedScene->renderingMutex);
+
+    bool doDoneGLContextCurrent = (screens.size() >= 2);
     
-    sharedScene->renderingThread.start([&](){
+    sharedScene->renderingThread.start([=](){
             sharedScene->concurrentRenderingLoop(
-                [&](){ render(); },
+                [&](VisionRendererScreen*& currentGLContextScreen){
+                    render(currentGLContextScreen, doDoneGLContextCurrent); },
                 [&](){ finalizeRendering(); });
         });
 
@@ -943,7 +947,8 @@ void VisionRendererScreen::startRenderingThread()
         
     scene->renderingThread.start([&](){
             scene->concurrentRenderingLoop(
-                [&](){ render(); },
+                [&](VisionRendererScreen*& currentGLContextScreen){
+                    render(currentGLContextScreen); },
                 [&](){ finalizeRendering(); });
         });
 
@@ -1035,6 +1040,7 @@ void GLVisionSimulatorItemImpl::onPreDynamics()
 void GLVisionSimulatorItemImpl::queueRenderingLoop()
 {
     VisionRenderer* renderer = nullptr;
+    VisionRendererScreen* currentGLContextScreen = nullptr;
     
     while(true){
         {
@@ -1051,7 +1057,7 @@ void GLVisionSimulatorItemImpl::queueRenderingLoop()
                 queueCondition.wait(lock);
             }
         }
-        renderer->render();
+        renderer->render(currentGLContextScreen, true);
         
         {
             std::lock_guard<std::mutex> lock(queueMutex);
@@ -1109,8 +1115,10 @@ void VisionScene::startConcurrentRendering()
 }
 
 
-void VisionScene::concurrentRenderingLoop(std::function<void()> render, std::function<void()> finalizeRendering)
+void VisionScene::concurrentRenderingLoop(std::function<void(VisionRendererScreen*&)> render, std::function<void()> finalizeRendering)
 {
+    VisionRendererScreen* currentGLContextScreen = nullptr;
+    
     while(true){
         {
             std::unique_lock<std::mutex> lock(renderingMutex);
@@ -1126,7 +1134,7 @@ void VisionScene::concurrentRenderingLoop(std::function<void()> render, std::fun
             }
         }
 
-        render();
+        render(currentGLContextScreen);
         
         {
             std::lock_guard<std::mutex> lock(renderingMutex);
@@ -1140,21 +1148,27 @@ exitConcurrentRenderingLoop:
 }
 
 
-void VisionRenderer::render()
+void VisionRenderer::render(VisionRendererScreen*& currentGLContextScreen, bool doDoneGLContextCurrent)
 {
     for(auto& screen : screens){
-        screen->render();
+        screen->render(currentGLContextScreen);
+        if(doDoneGLContextCurrent){
+            screen->doneGLContextCurrent();
+            currentGLContextScreen = nullptr;
+        }
     }
 }
 
 
-void VisionRendererScreen::render()
+void VisionRendererScreen::render(VisionRendererScreen*& currentGLContextScreen)
 {
-    makeGLContextCurrent();
+    if(this != currentGLContextScreen){
+        makeGLContextCurrent();
+        currentGLContextScreen = this;
+    }
     renderer->render();
     renderer->flush();
     storeResultToTmpDataBuffer();
-    doneGLContextCurrent();
 }
 
 
