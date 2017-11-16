@@ -34,6 +34,7 @@ struct AGXVehicleContinuousTrackDeviceDesc
         sprocketNames.clear();
         idlerNames.clear();
         rollerNames.clear();
+        guideNames.clear();
     }
     Vector3 upAxis;
     int numberOfNodes;           // Total number of nodes in the track.
@@ -61,6 +62,7 @@ struct AGXVehicleContinuousTrackDeviceDesc
     vector<string> sprocketNames;
     vector<string> idlerNames;
     vector<string> rollerNames;
+    vector<string> guideNames;
     string materialName;
 };
 

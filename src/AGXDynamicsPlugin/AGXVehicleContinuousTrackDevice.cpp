@@ -100,6 +100,7 @@ bool readAGXVehicleContinuousTrackDevice(YAMLBodyLoader& loader, Mapping& node)
     toVectorString(info->extract("sprocketNames"), desc.sprocketNames);
     toVectorString(info->extract("idlerNames"), desc.idlerNames);
     toVectorString(info->extract("rollerNames"), desc.rollerNames);
+    toVectorString(info->extract("guideNames"), desc.guideNames);
     ValueNodePtr const upAxis = info->extract("upAxis");
     if(upAxis){
         Listing& u = *upAxis->toListing();

@@ -2,6 +2,7 @@
 #include "AGXScene.h"
 #include <cnoid/MeshExtractor>
 #include <cnoid/SceneDrawables>
+#include <mutex>
 #include "AGXVehicleContinuousTrack.h"
 #include "AGXConvexDecomposition.h"
 #include "AGXConvert.h"

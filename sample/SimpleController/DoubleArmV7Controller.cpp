@@ -17,7 +17,7 @@ class DoubleArmV7Controller : public cnoid::SimpleController
     vector<double> dgain;
     double trackgain;
 
-    Link::ActuationMode actuationMode;
+    Link::ActuationMode mainActuationMode;
 
     enum AxisType { STICK, BUTTON };
 
@@ -65,7 +65,7 @@ public:
 
 DoubleArmV7Controller::DoubleArmV7Controller()
 {
-    actuationMode = Link::ActuationMode::JOINT_TORQUE;
+    mainActuationMode = Link::ActuationMode::JOINT_TORQUE;
     hasPseudoContinuousTracks = false;
     hasContinuousTracks = false;
 }
@@ -76,9 +76,9 @@ bool DoubleArmV7Controller::initialize(SimpleControllerIO* io)
     dt = io->timeStep();
 
     string option = io->optionString();
-    if(option == "velocity")        actuationMode = Link::ActuationMode::JOINT_VELOCITY;
-    else if(option  == "position")  actuationMode = Link::ActuationMode::JOINT_ANGLE;
-    else                            actuationMode = Link::ActuationMode::JOINT_TORQUE;
+    if(option == "velocity")        mainActuationMode = Link::ActuationMode::JOINT_VELOCITY;
+    else if(option  == "position")  mainActuationMode = Link::ActuationMode::JOINT_ANGLE;
+    else                            mainActuationMode = Link::ActuationMode::JOINT_TORQUE;
 
 
     if(!initPseudoContinuousTracks(io))
@@ -113,7 +113,7 @@ bool DoubleArmV7Controller::initContinuousTracks(SimpleControllerIO* io)
     if(!trackL) return false;
     if(!trackR) return false;
 
-    if(actuationMode == Link::ActuationMode::JOINT_TORQUE){
+    if(mainActuationMode == Link::ActuationMode::JOINT_TORQUE){
         trackL->setActuationMode(Link::ActuationMode::JOINT_TORQUE);
         trackR->setActuationMode(Link::ActuationMode::JOINT_TORQUE);
     }else{
@@ -131,7 +131,7 @@ void DoubleArmV7Controller::initArms(SimpleControllerIO* io)
 {
     for(auto joint : body->joints()){
         if(joint->jointId() >= 0 && (joint->isRevoluteJoint() || joint->isPrismaticJoint())){
-            joint->setActuationMode(actuationMode);
+            joint->setActuationMode(mainActuationMode);
             io->enableIO(joint);
             armJointIdMap.push_back(armJoints.size());
             armJoints.push_back(joint);
@@ -148,15 +148,15 @@ void DoubleArmV7Controller::initPDGain()
     // Tracks
     if(hasPseudoContinuousTracks) trackgain = 1.0;
     if(hasContinuousTracks){
-        if(actuationMode == Link::ActuationMode::JOINT_TORQUE){
+        if(mainActuationMode == Link::ActuationMode::JOINT_TORQUE){
             trackgain = 2000.0;
         }else{
-            trackgain = 5.0;
+            trackgain = 2.0;
         }
     }
 
     // Arm
-    if(actuationMode == Link::ActuationMode::JOINT_TORQUE){
+    if(mainActuationMode == Link::ActuationMode::JOINT_TORQUE){
         pgain = {
         /* MFRAME */ 200000, /* BLOCK */ 150000, /* BOOM */ 150000, /* ARM  */ 100000,
         /* PITCH  */  30000, /* ROLL  */  20000, /* TIP1 */    500, /* TIP2 */    500,
@@ -168,14 +168,14 @@ void DoubleArmV7Controller::initPDGain()
         /* UFRAME */ 15000, /* SWING */  2000, /* BOOM */  3000, /* ARM  */ 2000,
         /* ELBOW */    500, /* YAW   */   500, /* HAND */    20, /* ROD  */ 5000};
     }
-    if(actuationMode == Link::ActuationMode::JOINT_VELOCITY){
+    if(mainActuationMode == Link::ActuationMode::JOINT_VELOCITY){
         pgain = {
         /* MFRAME */ 200, /* BLOCK */ 150, /* BOOM */ 150, /* ARM  */ 100,
         /* PITCH  */  30, /* ROLL  */  20, /* TIP1 */   1, /* TIP2 */   1,
         /* UFRAME */ 150, /* SWING */ 100, /* BOOM */ 100, /* ARM  */  80,
         /* ELBOW */   30, /* YAW   */  20, /* HAND */   1, /* ROD  */  50};
     }
-    if(actuationMode == Link::ActuationMode::JOINT_ANGLE){
+    if(mainActuationMode == Link::ActuationMode::JOINT_ANGLE){
     }
 }
 
@@ -244,12 +244,13 @@ void DoubleArmV7Controller::controlTracks()
         }
     }
     // set the velocity of each track
-    if(actuationMode == Link::ActuationMode::JOINT_TORQUE){
-        trackL->u() = trackgain * (-2.0 * pos[1] + pos[0]);
-        trackR->u() = trackgain * (-2.0 * pos[1] - pos[0]);
-    }else{
+    if(hasPseudoContinuousTracks || mainActuationMode == Link::ActuationMode::JOINT_VELOCITY
+        || mainActuationMode == Link::ActuationMode::JOINT_ANGLE){
         trackL->dq() = trackgain * (-2.0 * pos[1] + pos[0]);
         trackR->dq() = trackgain * (-2.0 * pos[1] - pos[0]);
+    }else if(mainActuationMode == Link::ActuationMode::JOINT_TORQUE){
+        trackL->u() = trackgain * (-2.0 * pos[1] + pos[0]);
+        trackR->u() = trackgain * (-2.0 * pos[1] - pos[0]);
     }
 }
 
@@ -279,9 +280,9 @@ void DoubleArmV7Controller::setTargetArmPositions()
 
 void DoubleArmV7Controller::controlArms()
 {
-    if(actuationMode == Link::ActuationMode::JOINT_VELOCITY){
+    if(mainActuationMode == Link::ActuationMode::JOINT_VELOCITY){
         controlArmsWithVelocity();
-    }else if(actuationMode == Link::ActuationMode::JOINT_ANGLE){
+    }else if(mainActuationMode == Link::ActuationMode::JOINT_ANGLE){
         controlArmsWithPosition();
     }else{
         controlArmsWithTorque();

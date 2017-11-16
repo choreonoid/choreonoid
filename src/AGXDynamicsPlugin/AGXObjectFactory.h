@@ -78,8 +78,9 @@ struct AGXContactMaterialDesc
         restitution = 0.5;
         damping = 0.075;
         friction = 0.416667;
+        secondaryFriction = -1.0;
         surfaceViscosity = 1.0E-8;
-        secondrySurfaceViscosity = 0.0;
+        secondarySurfaceViscosity = -1.0;
         adhesionForce = 0.0;
         adhesivOverlap = 0.0;
         frictionModelType = AGXFrictionModelType::DEFAULT;
@@ -93,8 +94,9 @@ struct AGXContactMaterialDesc
     agx::Real restitution;          // 0:perfectly inelastic collision, 1:perfectly elastic collision, sqrt((1-m1.visco) * (1-m2.vico))
     agx::Real damping;              // relax time of penetration(loop count?)
     agx::Real friction;             // sqrt(m1.rough * m2.rough)
+    agx::Real secondaryFriction;    // value < 0 : disable
     agx::Real surfaceViscosity;     // m1.svisco + m2.svisco
-    agx::Real secondrySurfaceViscosity; // 0: not used
+    agx::Real secondarySurfaceViscosity; // value < 0 : disable
     agx::Real adhesionForce;        // attracive force[N], m1.ad + m2.ad
     agx::Real adhesivOverlap;       //
     AGXFrictionModelType frictionModelType;

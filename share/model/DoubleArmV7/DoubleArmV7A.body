@@ -26,16 +26,18 @@ links:
         rollerNames: [ WHEEL_L1, WHEEL_L2 ]
         idlerNames: [ WHEEL_L3 ]
         upAxis: [ 0, 1, 0 ]
-        numberOfNodes: 42
-        nodeThickness: 0.05
+        numberOfNodes: 50
+        nodeThickness: 0.03
         nodeWidth:  0.25
-        nodeThickerThickness: 0.02
-        useThickerNodeEvery: 0
-        nodeDistanceTension: 1.0E-3
-        hingeCompliance: 1.0E-10
+        nodeThickerThickness: 0.04
+        useThickerNodeEvery: 2
+        nodeDistanceTension: 1.0E-4
+        hingeCompliance: 1.0E-8
         hingeDamping: 0.01
-        minStabilizingHingeNormalForce: 100
-        stabilizingHingeFrictionParameter: 1e-4
+        minStabilizingHingeNormalForce: 1000
+        stabilizingHingeFrictionParameter: 1e-2
+        #nodesToWheelsMergeThreshold: -0.01
+        #nodesToWheelsSplitThreshold: -0.009
         enableMerge: false
         numNodesPerMergeSegment: 3
         contactReduction: 3
@@ -50,16 +52,18 @@ links:
         rollerNames: [ WHEEL_R1, WHEEL_R2 ]
         idlerNames: [ WHEEL_R3 ]
         upAxis: [ 0, 1, 0 ]
-        numberOfNodes: 42
-        nodeThickness: 0.05
+        numberOfNodes: 50
+        nodeThickness: 0.03
         nodeWidth:  0.25
-        nodeThickerThickness: 0.02
-        useThickerNodeEvery: 0
-        nodeDistanceTension: 1.0E-3
-        hingeCompliance: 1.0E-10
+        nodeThickerThickness: 0.04
+        useThickerNodeEvery: 2
+        nodeDistanceTension: 1.0E-4
+        hingeCompliance: 1.0E-8
         hingeDamping: 0.01
-        minStabilizingHingeNormalForce: 100
-        stabilizingHingeFrictionParameter: 1e-4
+        minStabilizingHingeNormalForce: 1000
+        stabilizingHingeFrictionParameter: 1e-2
+        #nodesToWheelsMergeThreshold: -0.01
+        #nodesToWheelsSplitThreshold: -0.009
         enableMerge: false
         numNodesPerMergeSegment: 3
         contactReduction: 3

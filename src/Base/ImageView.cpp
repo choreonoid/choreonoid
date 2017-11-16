@@ -64,6 +64,7 @@ public:
 
     ImageViewBarImpl(ImageViewBar* self);
     ~ImageViewBarImpl();
+    ToolButton* adjustSizeToggle;
     void onItemAdded(Item* item);
     void onImageComboCurrentIndexChanged(int index);
     void onItemDetachedFromRoot(Item* item);
@@ -71,6 +72,7 @@ public:
     void onViewActivated(View* view);
     void onForcusViewChanged(View* view);
     void onViewDeactivated(ImageView* imageView);
+    void onAdjustSizeClicked(bool on);
     ImageProvider* getSelectedImageProvider();
     ImageProvider* getImageProvider(int index);
 };
@@ -87,6 +89,7 @@ ImageViewImpl::ImageViewImpl(ImageView* self)
     vbox->setSpacing(0);
     imageWidget = new ImageWidget;
     imageWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    imageWidget->setScalingEnabled(true);
     vbox->addWidget(imageWidget, 1);
     self-> setLayout(vbox);
     self->setFocusPolicy( Qt::StrongFocus );
@@ -103,6 +106,8 @@ ImageViewImpl::ImageViewImpl(ImageView* self)
 
 ImageViewImpl::~ImageViewImpl()
 {
+    instances.erase(std::find(instances.begin(), instances.end(), self));
+
     sigUpdatedConnection.disconnect();
 }
 
@@ -110,7 +115,7 @@ ImageViewImpl::~ImageViewImpl()
 void ImageViewImpl::updateImage()
 {
     if(imageProvider)
-        self->setImage( *imageProvider->getImage() );
+        imageWidget->setImage( *imageProvider->getImage() );
 }
 
 
@@ -141,6 +146,7 @@ ImageView* ImageView::instance()
 ImageView::ImageView()
 {
     impl = new ImageViewImpl(this);
+    instances.push_back(this);
 
     impl->updateImage();
 }
@@ -295,6 +301,10 @@ ImageViewBarImpl::ImageViewBarImpl(ImageViewBar* self)
     imageCombo->setCurrentIndex(0);
     self->addWidget(imageCombo);
 
+    adjustSizeToggle = self->addToggleButton(QIcon(":/Base/icons/adjustSize.png"), _("Adjust image size according to view"));
+    adjustSizeToggle->sigToggled().connect( [&](bool on){ onAdjustSizeClicked( on ); } );
+    adjustSizeToggle->setChecked(true);
+
     RootItem* rootItem = RootItem::instance();
     sigItemAddedConnection =
         rootItem->sigItemAdded().connect( [&](Item* item){ onItemAdded(item); } );
@@ -424,6 +434,12 @@ void ImageViewBarImpl::onForcusViewChanged(View* view)
         }else{
             imageCombo->setCurrentIndex(0);
         }
+
+        if( targetView->isScalingEnabled() ){
+            adjustSizeToggle->setChecked(true);
+        }else{
+            adjustSizeToggle->setChecked(false);
+        }
     }
 
 }
@@ -439,5 +455,13 @@ void ImageViewBarImpl::onViewDeactivated(ImageView* imageView)
     connections.disconnect();
 
     viewConnections.erase(imageView);
+}
+
+
+void ImageViewBarImpl::onAdjustSizeClicked(bool on)
+{
+    if(targetView){
+        targetView->setScalingEnabled(on);
+    }
 }
 
