@@ -7,12 +7,12 @@ rootLink: BASE
 definitions:
   - &BlackAppearance
     material:
-      diffuseColor: [ 0.5, 0.5, 0.5 ]
-      specularColor: [ 0.7, 0.7, 0.7 ]
-      shininess: 0.1
+      diffuseColor: [ 0.9, 0.9, 0.9 ]
+      specularColor: [ 1.0, 1.0, 1.0 ]
+      shininess: 0.2
   - &DarkGrayAppearance
     material:
-      diffuseColor: [ 0.4, 0.4, 0.4 ]
+      diffuseColor: [ 0.3, 0.3, 0.3 ]
       specularColor: [ 0.6, 0.6, 0.6 ]
       shininess: 0.1
   - &RedAppearance
@@ -37,7 +37,7 @@ links:
         type: Visual
         elements: 
           Shape:
-            geometry: { type: Resource, uri: "meshes/0_body.stl" }
+            geometry: { type: Resource, uri: "meshes/0_body_main.stl" }
             appearance: *BlackAppearance
       -
         type: Collision
@@ -109,106 +109,115 @@ links:
             translation: [ -0.045, 0.164497, 0.0 ]
             rotation: [ 0, 0, 1, 90 ]
             elements: *CYLINDER_TOP
-          -
-            type: Transform
-            translation: [ 0.094, -0.05, 0.177 ]
-            rotation: [ 0, 1, 0, -74 ]
-            elements: &SKID_TRIANGLE1
-              Shape:
-                geometry:
-                  type: Extrusion
-                  crossSection: [ 0.136, 0.075,
-                                  0.482, 0.075,
-                                  0.546, -0.171,
-                                  0.136, 0.075,
-                                  0.546, -0.171    ]
-                  spine: [ 0, 0, 0.003, 0, 0, 0 ]
-                  scale: [ 0.7, 0.7 ]
-          -
-            type: Transform
-            translation: [ 0.094, -0.05, 0.177 ]
-            rotation: [ 0, 1, 0, -74 ]
-            elements: &SKID_TRIANGLE2
-              Shape:
-                geometry:
-                  type: Extrusion
-                  crossSection: [ 0.136, 0.075,
-                                  0.482, 0.075,
-                                  0.546, 0.321,
-                                  0.136, 0.075,
-                                  0.546, 0.321    ]
-                  spine: [ 0, 0, 0.003, 0, 0, 0 ]
-                  scale: [ 0.7, 0.7 ]
-          -
-            type: Transform
-            translation: [ 0.09, -0.0515, 0.369 ]
-            rotation: [ 0, 1, 0, -286 ]
-            elements: *SKID_TRIANGLE1
-          -
-            type: Transform
-            translation: [ 0.09, -0.0515, 0.369 ]
-            rotation: [ 0, 1, 0, -286 ]
-            elements: *SKID_TRIANGLE2
-          -
-            type: Transform
-            translation: [ 0.12, 0.002, 0.0 ]
-            rotation: [ [ 0, 0, 1, 188], [ 1, 0, 0, 90 ], [ 0, 1, 0, 17 ] ]
-            elements: &SKID_TRIANGLE3
-              Shape:
-                geometry:
-                  type: Extrusion
-                  crossSection: [   0.27, 0.0,
-                                   0.27, -0.143,
-                                     0.0, -0.188,
-                                    0.27, 0.0,
-                                   0.27, -0.143    ]
-                  spine: [ 0.003, 0, 0, 0, 0, 0 ]
-                  scale: [ 1.0, 1.0 ]
-          -
-            type: Transform
-            translation: [ 0.119, 0.002, 0.0 ]
-            rotation: [ [ 0, 0, 1, 188], [ 1, 0, 0, 90 ], [ 0, 1, 0, 17 ] ]
-            elements: &SKID_TRIANGLE4
-              Shape:
-                geometry:
-                  type: Extrusion
-                  crossSection: [  0.27, 0.0,
-                                   0.27, -0.143,
-                                  0.542, -0.188,
-                                   0.27, 0.0,
-                                   0.27, -0.143    ]
-                  spine: [ 0.003, 0, 0, 0, 0, 0 ]
-                  scale: [ 1.0, 1.0 ]
-          -
-            type: Transform
-            translation: [ 0.1175, 0.002, 0.005 ]
-            rotation: [ [ 1, 0, 0, 90],  [ 0, 1, 0, -25 ] ]
-            elements: &SKID_TRIANGLE5
-              Shape:
-                geometry:
-                  type: Extrusion
-                  crossSection: [   0.27, 0.004,
-                                   0.27, -0.143,
-                                  -0.005, -0.188,
-                                    0.27, 0.004,
-                                   0.27, -0.143    ]
-                  spine: [ 0.003, 0, 0, 0, 0, 0 ]
-                  scale: [ 1.0, 1.0 ]
-          -
-            type: Transform
-            translation: [ 0.1175, 0.002, 0.004 ]
-            rotation: [ [ 1, 0, 0, 90], [ 0, 1, 0, -25 ] ]
-            elements: &SKID_TRIANGLE6
-              Shape:
-                geometry:
-                  type: Extrusion
-                  crossSection: [   0.27, 0.0,
-                                   0.27, -0.143,
-                                  0.5355, -0.188,
-                                    0.27, 0.0,
-                                   0.27, -0.143    ]
-                  spine: [ 0.003, 0, 0, 0, 0, 0 ]
-                  scale: [ 1.0, 1.0 ]
+#      -
+#        type: Visual
+#        elements:
+#          Shape:
+#            geometry: { type: Resource, uri: "meshes/0_body_support_plate.stl" }
+#            appearance: *BlackAppearance
+#      -
+#        type: Collision
+#        elements:
+#          -
+#            type: Transform
+#            translation: [ 0.094, -0.05, 0.177 ]
+#            rotation: [ 0, 1, 0, -74 ]
+#            elements: &SKID_TRIANGLE1
+#              Shape:
+#                geometry:
+#                  type: Extrusion
+#                  crossSection: [ 0.136, 0.075,
+#                                  0.482, 0.075,
+#                                  0.546, -0.171,
+#                                  0.136, 0.075,
+#                                  0.546, -0.171    ]
+#                  spine: [ 0, 0, 0.003, 0, 0, 0 ]
+#                  scale: [ 0.7, 0.7 ]
+#          -
+#            type: Transform
+#            translation: [ 0.094, -0.05, 0.177 ]
+#            rotation: [ 0, 1, 0, -74 ]
+#            elements: &SKID_TRIANGLE2
+#              Shape:
+#                geometry:
+#                  type: Extrusion
+#                  crossSection: [ 0.136, 0.075,
+#                                  0.482, 0.075,
+#                                  0.546, 0.321,
+#                                  0.136, 0.075,
+#                                  0.546, 0.321    ]
+#                  spine: [ 0, 0, 0.003, 0, 0, 0 ]
+#                  scale: [ 0.7, 0.7 ]
+#          -
+#            type: Transform
+#            translation: [ 0.09, -0.0515, 0.369 ]
+#            rotation: [ 0, 1, 0, -286 ]
+#            elements: *SKID_TRIANGLE1
+#          -
+#            type: Transform
+#            translation: [ 0.09, -0.0515, 0.369 ]
+#            rotation: [ 0, 1, 0, -286 ]
+#            elements: *SKID_TRIANGLE2
+#          -
+#            type: Transform
+#            translation: [ 0.12, 0.002, 0.0 ]
+#            rotation: [ [ 0, 0, 1, 188], [ 1, 0, 0, 90 ], [ 0, 1, 0, 17 ] ]
+#            elements: &SKID_TRIANGLE3
+#              Shape:
+#                geometry:
+#                  type: Extrusion
+#                  crossSection: [   0.27, 0.0,
+#                                   0.27, -0.143,
+#                                     0.0, -0.188,
+#                                    0.27, 0.0,
+#                                   0.27, -0.143    ]
+#                  spine: [ 0.003, 0, 0, 0, 0, 0 ]
+#                  scale: [ 1.0, 1.0 ]
+#          -
+#            type: Transform
+#            translation: [ 0.119, 0.002, 0.0 ]
+#            rotation: [ [ 0, 0, 1, 188], [ 1, 0, 0, 90 ], [ 0, 1, 0, 17 ] ]
+#            elements: &SKID_TRIANGLE4
+#              Shape:
+#                geometry:
+#                  type: Extrusion
+#                  crossSection: [  0.27, 0.0,
+#                                   0.27, -0.143,
+#                                  0.542, -0.188,
+#                                   0.27, 0.0,
+#                                   0.27, -0.143    ]
+#                  spine: [ 0.003, 0, 0, 0, 0, 0 ]
+#                  scale: [ 1.0, 1.0 ]
+#          -
+#            type: Transform
+#            translation: [ 0.1175, 0.002, 0.005 ]
+#            rotation: [ [ 1, 0, 0, 90],  [ 0, 1, 0, -25 ] ]
+#            elements: &SKID_TRIANGLE5
+#              Shape:
+#                geometry:
+#                  type: Extrusion
+#                  crossSection: [   0.27, 0.004,
+#                                   0.27, -0.143,
+#                                  -0.005, -0.188,
+#                                    0.27, 0.004,
+#                                   0.27, -0.143    ]
+#                  spine: [ 0.003, 0, 0, 0, 0, 0 ]
+#                  scale: [ 1.0, 1.0 ]
+#          -
+#            type: Transform
+#            translation: [ 0.1175, 0.002, 0.004 ]
+#            rotation: [ [ 1, 0, 0, 90], [ 0, 1, 0, -25 ] ]
+#            elements: &SKID_TRIANGLE6
+#              Shape:
+#                geometry:
+#                  type: Extrusion
+#                  crossSection: [   0.27, 0.0,
+#                                   0.27, -0.143,
+#                                  0.5355, -0.188,
+#                                    0.27, 0.0,
+#                                   0.27, -0.143    ]
+#                  spine: [ 0.003, 0, 0, 0, 0, 0 ]
+#                  scale: [ 1.0, 1.0 ]
       -
         type: Transform
         name: base_upper_link
@@ -1001,7 +1010,7 @@ links:
         elements:
           Shape:
             geometry: { type: Resource, uri: "meshes/03_LHIP_Yaw.stl" }
-            appearance: *DarkGrayAppearance
+            appearance: *RedAppearance
       -
         type: Collision
         elements:
@@ -1770,7 +1779,7 @@ links:
         type: Visual
         shape:
           geometry: { type: Resource, uri: "meshes/03_RHIP_Yaw.stl" }
-          appearance: *DarkGrayAppearance
+          appearance: *RedAppearance
       -
         type: Collision
         elements:

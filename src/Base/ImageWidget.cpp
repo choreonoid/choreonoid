@@ -25,6 +25,8 @@ ImageWidget::ImageWidget(QWidget* parent) :
     isScalingEnabled_ = false;
     fitted = false;
     settedT = false;
+    initialTransform_.reset();
+    transform_.reset();
 }
 
 
@@ -32,7 +34,10 @@ void ImageWidget::setScalingEnabled(bool on)
 {
     if(on != isScalingEnabled_){
         isScalingEnabled_ = on;
-        update();
+
+        if(pixmap_.isNull())
+            return;
+        reset();
     }
 }
 
@@ -212,11 +217,11 @@ void ImageWidget::resizeEvent(QResizeEvent *event)
 
 void ImageWidget::resize(const QSize& size)
 {
-    if(isScalingEnabled_ ){
-        if(size.width() <= 0 || size.height() <= 0){
-            return;
-        }
+    if(size.width() <= 0 || size.height() <= 0){
+        return;
+    }
 
+    if(isScalingEnabled_ ){
         QSize s = pixmap_.size();
         s.scale(size, Qt::KeepAspectRatio);
         double newScale = (double)s.width() / (double)pixmap_.size().width();
@@ -231,16 +236,17 @@ void ImageWidget::resize(const QSize& size)
         transform_.translate(x,y);
         transform_.scale(scale, scale);
         transform_.translate(-x,-y);
-
-        QTransform T(transform_.m11(), transform_.m12(),transform_.m21(), transform_.m22(), 0,0);
-        invT = T.inverted();
-        double dx = ((double)size.width()-(double)oldSize.width())/2.0;
-        double dy = ((double)size.height()-(double)oldSize.height())/2.0;
-        invT.map(dx, dy,&x,&y);
-        transform_.translate(x, y);
-
-        oldSize = size;
     }
+
+    QTransform T(transform_.m11(), transform_.m12(),transform_.m21(), transform_.m22(), 0,0);
+    QTransform invT = T.inverted();
+    double dx = ((double)size.width()-(double)oldSize.width())/2.0;
+    double dy = ((double)size.height()-(double)oldSize.height())/2.0;
+    double x,y;
+    invT.map(dx, dy,&x,&y);
+    transform_.translate(x, y);
+
+    oldSize = size;
 }
 
 

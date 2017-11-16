@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-10-02 14:01+0900\n"
+"POT-Creation-Date: 2017-11-13 11:29+0900\n"
 "PO-Revision-Date: 2011-11-12 11:42+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -42,11 +42,11 @@ msgstr "タイムステップ"
 msgid "Num parts"
 msgstr "パート数"
 
-#: App.cpp:231 App.cpp:379
+#: App.cpp:235 App.cpp:383
 msgid "About Choreonoid"
 msgstr "Choreonoid について"
 
-#: App.cpp:235
+#: App.cpp:239
 msgid "Vertical Sync"
 msgstr "垂直同期"
 
@@ -64,13 +64,13 @@ msgid "Save"
 msgstr "保存"
 
 #: CaptureBar.cpp:97 ItemManager.cpp:950 ItemManager.cpp:1158
-#: ItemPropertyView.cpp:273 PluginManager.cpp:660 ProjectManager.cpp:486
+#: ItemPropertyView.cpp:285 PluginManager.cpp:652 ProjectManager.cpp:486
 #: ProjectManager.cpp:511 TaskView.cpp:270
 msgid "Cancel"
 msgstr "キャンセル"
 
-#: CaptureBar.cpp:100 ItemManager.cpp:248 ItemPropertyView.cpp:281
-#: PluginManager.cpp:664 ProjectManager.cpp:490 ProjectManager.cpp:515
+#: CaptureBar.cpp:100 ItemManager.cpp:248 ItemPropertyView.cpp:304
+#: PluginManager.cpp:656 ProjectManager.cpp:490 ProjectManager.cpp:515
 msgid "Any files (*)"
 msgstr "全てのファイル (*)"
 
@@ -283,18 +283,22 @@ msgstr "ページ"
 msgid "Graph: Position = (%1$.5f, %2$.5f)"
 msgstr "グラフ位置 = (%1$.5f, %2$.5f)"
 
-#: ImageView.cpp:127
+#: ImageView.cpp:133
 msgid "Image"
 msgstr "画像"
 
-#: ImageView.cpp:270
+#: ImageView.cpp:277
 #, fuzzy
 msgid "ImageViewBar"
 msgstr "画像サイズ"
 
-#: ImageView.cpp:289
+#: ImageView.cpp:296
 msgid "Select a ImageProvider Item"
-msgstr ""
+msgstr "画像アイテムの選択"
+
+#: ImageView.cpp:305
+msgid "Adjust image size according to view"
+msgstr "画像サイスをビューに合わせる"
 
 #: Item.cpp:704 MultiSeqItemCreationPanel.cpp:27
 msgid "Name"
@@ -304,7 +308,7 @@ msgstr "名前"
 msgid "Class"
 msgstr "クラス"
 
-#: Item.cpp:720 MainWindow.cpp:242 PointSetItem.cpp:519 SceneItem.cpp:106
+#: Item.cpp:720 MainWindow.cpp:246 PointSetItem.cpp:519 SceneItem.cpp:106
 msgid "File"
 msgstr "ファイル"
 
@@ -376,7 +380,7 @@ msgstr "新しい%1の生成"
 msgid "&Create"
 msgstr "生成(&C)"
 
-#: ItemManager.cpp:638 PathVariableEditor.cpp:103 ViewManager.cpp:279
+#: ItemManager.cpp:638 PathVariableEditor.cpp:102 ViewManager.cpp:279
 msgid "&Cancel"
 msgstr "キャンセル(&C)"
 
@@ -412,7 +416,7 @@ msgstr "%1%のシングルトンインスタンスは既に読み込まれてい
 msgid "Load %1%"
 msgstr "%1% の読み込み"
 
-#: ItemManager.cpp:949 PluginManager.cpp:659 ProjectManager.cpp:485
+#: ItemManager.cpp:949 PluginManager.cpp:651 ProjectManager.cpp:485
 msgid "Open"
 msgstr "読み込み"
 
@@ -448,23 +452,23 @@ msgstr "%1% はフォーマット%2%としてエクスポートできません�
 msgid "Save %1% as"
 msgstr "名前を付けて%1%を保存"
 
-#: ItemPropertyView.cpp:269
+#: ItemPropertyView.cpp:281
 msgid "Select File"
 msgstr "ファイルを選択"
 
-#: ItemPropertyView.cpp:272 MovieRecorder.cpp:367
+#: ItemPropertyView.cpp:284 MovieRecorder.cpp:367
 msgid "Select"
 msgstr "選択"
 
-#: ItemPropertyView.cpp:554
+#: ItemPropertyView.cpp:639
 msgid "Property"
 msgstr "プロパティ"
 
-#: ItemPropertyView.cpp:746
+#: ItemPropertyView.cpp:831
 msgid "Update"
 msgstr "更新"
 
-#: ItemPropertyView.cpp:748
+#: ItemPropertyView.cpp:834
 msgid "Reset Column Sizes"
 msgstr "コラムサイズのリセット"
 
@@ -513,47 +517,47 @@ msgstr "'data'キーがマッピング型のデータを有していません。
 msgid "\"%1%\" cannot be restored."
 msgstr "\"%1%\" を読み込むことができません。"
 
-#: ItemTreeView.cpp:242
+#: ItemTreeView.cpp:241
 msgid "Items"
 msgstr "アイテム"
 
-#: ItemTreeView.cpp:330
+#: ItemTreeView.cpp:329
 msgid "Cut"
 msgstr "カット"
 
-#: ItemTreeView.cpp:332
+#: ItemTreeView.cpp:331
 msgid "Copy (single)"
 msgstr "コピー（単独）"
 
-#: ItemTreeView.cpp:334
+#: ItemTreeView.cpp:333
 msgid "Copy (sub tree)"
 msgstr "コピー（サブツリー）"
 
-#: ItemTreeView.cpp:336
+#: ItemTreeView.cpp:335
 msgid "Paste"
 msgstr "ペースト"
 
-#: ItemTreeView.cpp:340
+#: ItemTreeView.cpp:339
 msgid "Check"
 msgstr "チェック"
 
-#: ItemTreeView.cpp:342
+#: ItemTreeView.cpp:341
 msgid "Uncheck"
 msgstr "アンチェック"
 
-#: ItemTreeView.cpp:344
+#: ItemTreeView.cpp:343
 msgid "Toggle checks"
 msgstr "チェックの反転"
 
-#: ItemTreeView.cpp:348
+#: ItemTreeView.cpp:347
 msgid "Reload"
 msgstr "再読み込み"
 
-#: ItemTreeView.cpp:352
+#: ItemTreeView.cpp:351
 msgid "Select all"
 msgstr "全て選択"
 
-#: ItemTreeView.cpp:354
+#: ItemTreeView.cpp:353
 msgid "Clear selection"
 msgstr "選択解除"
 
@@ -570,79 +574,79 @@ msgid ""
 "for more details.\n"
 msgstr ""
 
-#: MainWindow.cpp:242
+#: MainWindow.cpp:246
 msgid "Exit"
 msgstr "終了"
 
-#: MainWindow.cpp:245
+#: MainWindow.cpp:249
 msgid "Edit"
 msgstr "編集"
 
-#: MainWindow.cpp:247
+#: MainWindow.cpp:251
 msgid "View"
 msgstr "表示"
 
-#: MainWindow.cpp:249
+#: MainWindow.cpp:253
 msgid "Show Toolbar"
 msgstr "ツールバーの表示"
 
-#: MainWindow.cpp:253
+#: MainWindow.cpp:257
 msgid "Show View"
 msgstr "ビューの表示"
 
-#: MainWindow.cpp:254
+#: MainWindow.cpp:258
 msgid "Create View"
 msgstr "ビューの生成"
 
-#: MainWindow.cpp:255
+#: MainWindow.cpp:259
 msgid "Delete View"
 msgstr "ビューの消去"
 
-#: MainWindow.cpp:257
+#: MainWindow.cpp:261
 msgid "Show View Tabs"
 msgstr "ビュータブの表示"
 
-#: MainWindow.cpp:263
+#: MainWindow.cpp:267
 msgid "Show Status Bar"
 msgstr "ステータスバーの表示"
 
-#: MainWindow.cpp:269
+#: MainWindow.cpp:273
 msgid "Full Screen"
 msgstr "フルスクリーン"
 
-#: MainWindow.cpp:273
+#: MainWindow.cpp:277
 msgid "Layout"
 msgstr "レイアウト"
 
-#: MainWindow.cpp:275
+#: MainWindow.cpp:279
 msgid "Store Last Toolbar Layout"
 msgstr "終了時のレイアウトを保存"
 
-#: MainWindow.cpp:278
+#: MainWindow.cpp:282
 msgid "Reset Layout"
 msgstr "レイアウトのリセット"
 
-#: MainWindow.cpp:280
+#: MainWindow.cpp:284
 msgid "Tools"
 msgstr "ツール"
 
-#: MainWindow.cpp:281
+#: MainWindow.cpp:285
 msgid "Filters"
 msgstr "フィルタ"
 
-#: MainWindow.cpp:282
+#: MainWindow.cpp:286
 msgid "Options"
 msgstr "オプション"
 
-#: MainWindow.cpp:283
+#: MainWindow.cpp:287
 msgid "Help"
 msgstr "ヘルプ"
 
-#: MessageView.cpp:182 MessageView.cpp:1032
+#: MessageView.cpp:182 MessageView.cpp:1031
 msgid "Message"
 msgstr "メッセージ"
 
-#: MessageView.cpp:1055 TextEditView.cpp:208 TextEditView.cpp:264
+#: MessageView.cpp:1054 TextEditView.cpp:208 TextEditView.cpp:264
 msgid "Warning"
 msgstr "警告"
 
@@ -866,70 +870,70 @@ msgstr "フレームあたり要素数"
 msgid "Plain Format of a Multi Value Sequence"
 msgstr "複数数値列のプレインフォーマット"
 
-#: ParametricPathProcessor.cpp:232
+#: ParametricPathProcessor.cpp:231
 msgid "%1% of \"%2%\" cannot be expanded !"
 msgstr "\"%2\"の%1は展開できません！"
 
-#: PathVariableEditor.cpp:59 ProjectManager.cpp:126
+#: PathVariableEditor.cpp:58 ProjectManager.cpp:126
 msgid "Project File Options"
 msgstr "プロジェクトファイルオプション"
 
-#: PathVariableEditor.cpp:60
+#: PathVariableEditor.cpp:59
 msgid "Edit Path Variables"
 msgstr "パス変数の設定"
 
-#: PathVariableEditor.cpp:70
+#: PathVariableEditor.cpp:69
 msgid "Path Variables"
 msgstr "パス変数"
 
-#: PathVariableEditor.cpp:78 PathVariableEditor.cpp:92
+#: PathVariableEditor.cpp:77 PathVariableEditor.cpp:91
 msgid "Variable"
 msgstr "変数"
 
-#: PathVariableEditor.cpp:79
+#: PathVariableEditor.cpp:78
 msgid "Path"
 msgstr "パス"
 
-#: PathVariableEditor.cpp:96
+#: PathVariableEditor.cpp:95
 msgid "Append"
 msgstr "追加"
 
-#: PathVariableEditor.cpp:101
+#: PathVariableEditor.cpp:100
 msgid "&Apply"
 msgstr "適用(&A)"
 
-#: PluginManager.cpp:205
+#: PluginManager.cpp:197
 msgid "Load Plugin"
 msgstr "プラグインの読み込み"
 
-#: PluginManager.cpp:208
+#: PluginManager.cpp:200
 msgid "Startup Plugin Loading"
 msgstr "起動時のプラグイン読み込み"
 
-#: PluginManager.cpp:441
+#: PluginManager.cpp:433
 msgid ""
 "%1%-plugin cannot be initialized because required plugin(s) %2% are not "
 "found."
 msgstr ""
 "必要なプラグイン%2%が見つからないため、%1%プラグインの初期化ができません。"
 
-#: PluginManager.cpp:466 PluginManager.cpp:561
+#: PluginManager.cpp:458 PluginManager.cpp:553
 msgid "Plugin file \"%1%\" has already been activated."
 msgstr "プラグインファイル\"%1%\"は既に読み込まれています。"
 
-#: PluginManager.cpp:469
+#: PluginManager.cpp:461
 msgid "Detecting plugin file \"%1%\""
 msgstr "プラグインファイル\"%1%\"を検出しました。"
 
-#: PluginManager.cpp:488
+#: PluginManager.cpp:480
 msgid "The plugin entry function \"getChoreonoidPlugin\" is not found."
 msgstr "プラグインエントリ関数 \"getChoreonoidPlugin\" が見つかりません。"
 
-#: PluginManager.cpp:498
+#: PluginManager.cpp:490
 msgid "The plugin object cannot be created."
 msgstr "プラグインオブジェクトが生成できません。"
 
-#: PluginManager.cpp:507
+#: PluginManager.cpp:499
 msgid ""
 "The internal version of the %1% plugin is different from the system internal "
 "version.\n"
@@ -938,43 +942,43 @@ msgstr ""
 "%1%プラグインの内部バージョンがシステムの内部バージョンと一致しません。\n"
 "問題を避けるため、プラグインファイル \"%2%\" は削除か更新を行なってください。"
 
-#: PluginManager.cpp:537
+#: PluginManager.cpp:529
 msgid "Plugin file \"%1%\" conflicts with \"%2%\"."
 msgstr "このプラグインは\"%1%\"と競合しています。"
 
-#: PluginManager.cpp:546 PluginManager.cpp:644
+#: PluginManager.cpp:538 PluginManager.cpp:636
 msgid "Loading the plugin failed."
 msgstr "プラグインの読み込みができませんでした。"
 
-#: PluginManager.cpp:601
+#: PluginManager.cpp:593
 msgid "The plugin object cannot be intialized."
 msgstr "プラグインオブジェクトの初期化ができません。"
 
-#: PluginManager.cpp:624
+#: PluginManager.cpp:616
 msgid "About Plugins"
 msgstr "プラグインについて"
 
-#: PluginManager.cpp:625 PluginManager.cpp:697
+#: PluginManager.cpp:617 PluginManager.cpp:689
 msgid "About %1% Plugin"
 msgstr "%1%プラグインについて"
 
-#: PluginManager.cpp:636
+#: PluginManager.cpp:628
 msgid "%1%-plugin has been activated."
 msgstr "%1%プラグインが読み込まれました。"
 
-#: PluginManager.cpp:656
+#: PluginManager.cpp:648
 msgid "Load plugins"
 msgstr "プラグインの読み込み"
 
-#: PluginManager.cpp:663
+#: PluginManager.cpp:655
 msgid "Plugin files (*.%1)"
 msgstr "プラグインファイル (*.%1)"
 
-#: PluginManager.cpp:798
+#: PluginManager.cpp:790
 msgid "Plugin %1% cannot be finalized."
 msgstr "プラグイン %1% を終了できません。"
 
-#: PluginManager.cpp:837
+#: PluginManager.cpp:829
 msgid "Plugin dll %1% has been unloaded."
 msgstr "プラグイン %1% のDLLが解放されました。"
 
@@ -1455,11 +1459,11 @@ msgstr ""
 msgid "Task \"%1%\" has been updated with the new one."
 msgstr "タスク \"%1%\" が更新されました。"
 
-#: TaskView.cpp:1426
+#: TaskView.cpp:1425
 msgid "Retry"
 msgstr "リトライ"
 
-#: TaskView.cpp:1428
+#: TaskView.cpp:1427
 msgid "Vertical Layout"
 msgstr "縦配置"
 
@@ -1557,7 +1561,7 @@ msgstr "作成するビューの名前を指定してください。"
 msgid "Delete All Invisible Views"
 msgstr "全ての非表示ビューを消去"
 
-#: ViewManager.cpp:809
+#: ViewManager.cpp:808
 msgid ""
 "A singleton view \"%1%\" of the %2% type cannot be created because its "
 "singleton instance has already been created."
@@ -1565,7 +1569,7 @@ msgstr ""
 "\"%2%\"タイプのシングルトンビュー\"%1%\"は既にそのシングルトンインスタンスが"
 "生成されています。"
 
-#: ViewManager.cpp:846
+#: ViewManager.cpp:845
 #, fuzzy
 msgid ""
 "The \"%1%\" plugin for \"%2%\" is not found. The view cannot be restored."
