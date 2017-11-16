@@ -244,7 +244,8 @@ void DoubleArmV7Controller::controlTracks()
         }
     }
     // set the velocity of each track
-    if(hasPseudoContinuousTracks || mainActuationMode == Link::ActuationMode::JOINT_VELOCITY){
+    if(hasPseudoContinuousTracks || mainActuationMode == Link::ActuationMode::JOINT_VELOCITY
+        || mainActuationMode == Link::ActuationMode::JOINT_ANGLE){
         trackL->dq() = trackgain * (-2.0 * pos[1] + pos[0]);
         trackR->dq() = trackgain * (-2.0 * pos[1] - pos[0]);
     }else if(mainActuationMode == Link::ActuationMode::JOINT_TORQUE){
