@@ -335,9 +335,10 @@ GLVisionSimulatorItemImpl::GLVisionSimulatorItemImpl(GLVisionSimulatorItem* self
     areAdditionalLightsEnabled = true;
     shootAllSceneObjects = false;
 
-    threadMode.setSymbol(GLVisionSimulatorItem::SINGLE_THREAD_MODE, N_("Single thread"));
-    threadMode.setSymbol(GLVisionSimulatorItem::SENSOR_THREAD_MODE, N_("Sensor thread"));
-    threadMode.setSymbol(GLVisionSimulatorItem::SCREEN_THREAD_MODE, N_("Screen thread"));
+    threadMode.setSymbol(GLVisionSimulatorItem::SINGLE_THREAD_MODE, N_("Single"));
+    threadMode.setSymbol(GLVisionSimulatorItem::SENSOR_THREAD_MODE, N_("Sensor"));
+    threadMode.setSymbol(GLVisionSimulatorItem::SCREEN_THREAD_MODE, N_("Screen"));
+    threadMode.select(GLVisionSimulatorItem::SENSOR_THREAD_MODE);
 }
 
 
