@@ -1716,7 +1716,7 @@ bool GLVisionSimulatorItemImpl::store(Archive& archive)
     archive.write("maxFrameRate", maxFrameRate);
     archive.write("maxLatency", maxLatency);
     archive.write("recordVisionData", isVisionDataRecordingEnabled);
-    archive.write("threadMode", threadMode.selectedSymbol(), DOUBLE_QUOTED);
+    archive.write("threadMode", threadMode.selectedSymbol());
     archive.write("bestEffort", isBestEffortModeProperty);
     archive.write("allSceneObjects", shootAllSceneObjects);
     archive.write("rangeSensorPrecisionRatio", rangeSensorPrecisionRatio);

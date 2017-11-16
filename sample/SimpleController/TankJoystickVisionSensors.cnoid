@@ -144,7 +144,7 @@ items:
                 maxFrameRate: 1000
                 maxLatency: 1
                 recordVisionData: true
-                useThreadsForSensors: true
+                threadMode: Sensor
                 bestEffort: false
                 allSceneObjects: false
                 rangeSensorPrecisionRatio: 2
