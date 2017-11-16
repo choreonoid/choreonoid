@@ -175,11 +175,16 @@ agx::Bool AGXObjectFactory::setContactMaterialParam(agx::ContactMaterial* const 
     cm->setYoungsModulus(desc.youngsModulus);
     cm->setRestitution(desc.restitution);
     cm->setDamping(desc.damping);
-    cm->setFrictionCoefficient(desc.friction);
+    if(desc.secondaryFriction >= 0.0){
+        cm->setFrictionCoefficient(desc.friction, agx::ContactMaterial::PRIMARY_DIRECTION);
+        cm->setFrictionCoefficient(desc.secondaryFriction, agx::ContactMaterial::SECONDARY_DIRECTION);
+    }else{
+        cm->setFrictionCoefficient(desc.friction);
+    }
     cm->setAdhesion(desc.adhesionForce, desc.adhesivOverlap);
-    if(desc.secondrySurfaceViscosity > 0){
-        cm->setSurfaceViscosity(desc.surfaceViscosity, agx::ContactMaterial::FrictionDirection::PRIMARY_DIRECTION);
-        cm->setSurfaceViscosity(desc.secondrySurfaceViscosity, agx::ContactMaterial::FrictionDirection::SECONDARY_DIRECTION);
+    if(desc.secondarySurfaceViscosity >= 0.0){
+        cm->setSurfaceViscosity(desc.surfaceViscosity, agx::ContactMaterial::PRIMARY_DIRECTION);
+        cm->setSurfaceViscosity(desc.secondarySurfaceViscosity, agx::ContactMaterial::SECONDARY_DIRECTION);
     }else{
         cm->setSurfaceViscosity(desc.surfaceViscosity);
     }

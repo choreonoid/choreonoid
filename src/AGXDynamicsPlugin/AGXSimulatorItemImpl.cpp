@@ -162,8 +162,9 @@ void AGXSimulatorItemImpl::createAGXContactMaterial(int id1, int id2, ContactMat
     desc.restitution = mat->restitution();
     SET_AGXMATERIAL_FIELD(damping);
     desc.friction = mat->dynamicFriction();
+    SET_AGXMATERIAL_FIELD(secondaryFriction);
     SET_AGXMATERIAL_FIELD(surfaceViscosity);
-    SET_AGXMATERIAL_FIELD(secondrySurfaceViscosity);
+    SET_AGXMATERIAL_FIELD(secondarySurfaceViscosity);
     SET_AGXMATERIAL_FIELD(adhesionForce);
     SET_AGXMATERIAL_FIELD(adhesivOverlap);
     auto binNode = info->find("contactReductionBinResolution");
