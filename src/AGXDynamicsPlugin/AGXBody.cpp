@@ -786,8 +786,10 @@ void AGXBody::setCollisionExcludeLinkGroups(const Mapping& cdMapping){
         vector<string> excludeLinkNames;
         if(!agxConvert::setVector(linkNode->toListing(), excludeLinkNames)) continue;
         for(auto linkName : excludeLinkNames){
-            if(agxCollide::Geometry* geometry = getAGXLink(linkName)->getAGXGeometry())
-                geometry->addGroup(ss.str());
+            if(AGXLink*agxLink = getAGXLink(linkName)){
+                if(agxCollide::Geometry*geometry = agxLink->getAGXGeometry())
+                    geometry->addGroup(ss.str());
+            }
         }
     }
 }
