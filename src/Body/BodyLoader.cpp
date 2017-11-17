@@ -9,8 +9,9 @@
 #include "Body.h"
 #include <cnoid/SceneLoader>
 #include <cnoid/STLSceneLoader>
-#include <cnoid/Exception>
+#include <cnoid/YAMLSceneLoader>
 #include <cnoid/YAMLReader>
+#include <cnoid/Exception>
 #include <cnoid/FileUtil>
 #include <cnoid/NullOut>
 #include <mutex>
@@ -75,6 +76,8 @@ struct FactoryRegistration
             "yml", [](){ return std::make_shared<YAMLBodyLoader>(); });
         BodyLoader::registerLoader(
             "wrl", [](){ return std::make_shared<VRMLBodyLoader>(); });
+        BodyLoader::registerLoader(
+            "scen", [](){ return std::make_shared<SceneLoaderAdapter>(new YAMLSceneLoader); });
         BodyLoader::registerLoader(
             "stl", [](){ return std::make_shared<SceneLoaderAdapter>(new STLSceneLoader); });
         BodyLoader::registerLoader(
