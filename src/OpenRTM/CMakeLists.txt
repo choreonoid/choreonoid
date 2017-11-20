@@ -119,7 +119,7 @@ set(IDL_INCLUDE_DIRS
   ${OPENRTM_PREFIX}/include/openrtm-1.1/rtm/idl
   ${OPENRTM_PREFIX}/rtm/idl # for the Windows installer version
   )
-idl_compile_cpp(idl_cpp_files idl_h_files corba CameraImage PointCloud)
+idl_compile_cpp(idl_cpp_files idl_h_files corba CameraCommonInterface PointCloud)
 add_cnoid_library(${target1} STATIC ${idl_cpp_files} ${idl_h_files})
 apply_common_setting_for_library(${target1} "")
 

@@ -1,0 +1,190 @@
+/* version 2.0 */
+
+#ifndef CAMERACOMMONINTERFACE_IDL
+#define CAMERACOMMONINTERFACE_IDL
+
+#include "BasicDataType.idl"
+
+module Img {
+  //============================================================
+  // Definition of basic matrix for image.
+  //============================================================
+  typedef double Vec3[3];
+  typedef double Mat44[4][4];
+
+  //============================================================
+  //Image Data Structure
+  //============================================================
+
+  //------------------------------------------------------------
+  // Color Formats Definition
+  // The parameters of CF_XXX are defined by this idl.
+  // The other parameters are cited from FourCC definition.
+  // To obtain the detail information about FourCC formats, please visit
+  // following website:
+  // http://www.fourcc.org/
+  //------------------------------------------------------------
+  enum ColorFormat
+  {
+    CF_UNKNOWN,   //Unknown Color Format
+    CF_RGB,       //RGB raw data format
+    CF_GRAY,      //8bit gray image data format
+    CF_JPEG,      //JPEG image format
+    CF_PNG,       //PNG image format
+
+    //Paramter definitions based on FourCC
+    RGB,    //Basic Windows bitmap format
+    RLE8,   //Run length encoded 8bpp RGB image
+    RLE,    //Run length encoded 4bpp RGB image
+    RAW,    //Uncompressed RGB bitmaps
+    RGBA,   //Raw RGB with alpha
+    RGBT,   //Raw RGB with a transparency field
+    AYUV,   //Combined YUV and alpha
+    CLJR,   //Cirrus Logic format with 4 pixels packed into a u_int32
+    CYUV,   //Essentially a copy of UYUV except that the sense of the height is reserved
+    GREY,   //Apparently a duplicate of Y800 and Y8
+    IRAW,   //Intel uncompressed YUV
+    IUYV,   //Interlaced version of UYUV
+    IY41,   //Interlaced version of Y41P
+    IYU1,   //12bit format used in mode 2 of the IEEE 1394 Digital Camera 1.04 spec.
+    IYU2,   //24 bit format used in mode 0 of the IEEE 1394 Digital Camera 1.04 spec.
+    HDYC,   //YUV 4:2:2 (Y sample at every pixel, U and V sampled at every second 
+            //pixel horizontally on each line)
+    UYNV,   //A direct copy of UYVY registered by NVidia to work around problems in 
+            //some old codecs which did not like hardware which offered more than 2 
+            //UYVY surfaces.
+    UYVP,   //YCbCr 4:2:2 extended precision 10-bits per component in U0Y0V0Y1 order
+    V210,   //10-bit 4:2:2 YCrCb equivalent to the Quicktime format of the same name
+    V422,   //This is an upside down version of UYVY
+    V655,   //16 bit YUV 4:2:2 format registered by Vitec Multimedia
+    VYUV,   //Duplicate of YUV2
+    YUNV,   //A direct copy of YUY2 registered by NVidia to work around problems in
+            //some old codecs which did not like hardware which offered more than 2
+            //YUY2 surfaces
+    YVYU,   //YUV 4:2:2 as for UYVY but with different component ordering within the
+            //u_int32 macropixel
+    Y41P,   //YUV 4:1:1 with a packed, 6 byte/4 pixel macroblock structure
+    Y211,   //Packed YUV format with Y sampled at every second pixel across each line
+            //and U and V sampled at every fourth pixel
+    Y41T,   //Format as for Y41P but the lsb of each Y component is used to signal pixel
+            //transparency
+    Y42T,   //Format as for UYVY but the lsb of each Y component is used to signal
+            //pixel transparency
+    YUVP,   //YCbCr 4:2:2 extended precision 10-bits per component in Y0U0Y1V0
+            //order
+    Y800,   //Simple, single Y plane for monochrome images
+    Y8,     //Duplicate of Y800
+    Y16     //16-bit uncompressed grayscale image
+  };
+
+  //============================================================
+  // Camera Image Data Structure
+  //============================================================
+
+  //------------------------------------------------------------
+  // Image Data Structure for still image
+  //------------------------------------------------------------
+  struct ImageData
+  {
+    long width;
+    long height;
+    ColorFormat format;
+    sequence<octet> raw_data;
+  };
+
+  //------------------------------------------------------------
+  // Camera Intrinsic Parameter Structure
+  //------------------------------------------------------------
+  struct CameraIntrinsicParameter
+  {
+    double matrix_element[5];
+    sequence<double> distortion_coefficient;
+  };
+
+  //------------------------------------------------------------
+  // Camera Image Structure
+  //------------------------------------------------------------
+  struct CameraImage
+  {
+    RTC::Time captured_time;
+    ImageData image;
+    CameraIntrinsicParameter intrinsic;
+    Mat44 extrinsic;
+  };
+
+  //------------------------------------------------------------
+  // Timed Camera Image Structure
+  // This structure includes time stump.
+  //------------------------------------------------------------
+  struct TimedCameraImage
+  {
+    RTC::Time tm;
+    CameraImage data;
+    long error_code;
+  };
+
+  //============================================================
+  // Multi Camera Image Data Structure
+  //============================================================
+
+  //------------------------------------------------------------
+  // Multi Camera Image Structure
+  //------------------------------------------------------------
+  struct MultiCameraImage
+  {
+    sequence<CameraImage> image_seq;
+    long camera_set_id;
+  };
+
+  //------------------------------------------------------------
+  // Time Multi Camera Image Structure
+  // This structure includes time stump.
+  //------------------------------------------------------------
+  struct TimedMultiCameraImage
+  {
+    RTC::Time tm;
+    MultiCameraImage data;
+    long error_code;
+  };
+
+  //============================================================
+  // Camera Device Profile Structure
+  //============================================================
+  struct NamedValue
+  {
+    string name;
+    string value;
+  };
+
+  typedef sequence<NamedValue> NVList;
+
+  struct CameraDeviceProfile
+  {
+    string devtypeid;
+    string guid;
+    short unit;
+    string vendor_name;
+    string model_name;
+    CameraIntrinsicParameter intrinsic;
+    NVList properties;
+  };
+
+  //============================================================
+  // Camera Control Service Interface
+  //============================================================
+
+  //------------------------------------------------------------
+  // Camera Control Service Interface for image capture
+  //------------------------------------------------------------
+  interface CameraCaptureService
+  {
+    oneway void take_one_frame();
+    oneway void take_multi_frames(in long num);
+    oneway void start_continuous();
+    oneway void stop_continuous();
+    void getProfile(out CameraDeviceProfile profile);
+  };
+}; /* module */
+
+#endif /* CAMERACOMMONINTERFACE_IDL */
+
