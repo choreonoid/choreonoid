@@ -370,6 +370,8 @@ class RTMPointCloudIOItemImpl
 public:
     RTMPointCloudIOItem* self;
     MessageView* mv;
+    OpenRTM::ExtTrigExecutionContextService_var execContext;
+    bool isChoreonoidExecutionContext;
 
     Body* body;
     DeviceList<RangeCamera> rangeCameras;
@@ -397,6 +399,8 @@ public:
     void doPutProperties(PutPropertyFunction& putProperty);
     void store(Archive& archive);
     void restore(const Archive& archive);
+    bool start();
+    void stop();
 };
 
 
@@ -424,7 +428,7 @@ RTMPointCloudIOItemImpl::RTMPointCloudIOItemImpl(RTMPointCloudIOItem* self)
 
 
 RTMPointCloudIOItem::RTMPointCloudIOItem(const RTMPointCloudIOItem& org)
-    : Item(org)
+    : ControllerItem(org)
 {
     impl = new RTMPointCloudIOItemImpl(this, *org.impl);
     bodyItem = 0;
@@ -530,6 +534,16 @@ bool RTMPointCloudIOItemImpl::createRTC()
     pointCloudIORTC = dynamic_cast<PointCloudIORTC*>(rtc);
     pointCloudIORTC->createPort( rangeCameras, pointCloudPortNames,
             rangeSensors, rangeSensorPortNames, cameras, cameraPortNames );
+
+    execContext = OpenRTM::ExtTrigExecutionContextService::_nil();
+    isChoreonoidExecutionContext = true;
+    RTC::ExecutionContextList_var eclist = rtc->get_owned_contexts();
+    for(CORBA::ULong i=0; i < eclist->length(); ++i){
+        if(!CORBA::is_nil(eclist[i])){
+            execContext = OpenRTM::ExtTrigExecutionContextService::_narrow(eclist[i]);
+            break;
+        }
+    }
 
     return true;
 }
@@ -685,6 +699,86 @@ void RTMPointCloudIOItemImpl::restore(const Archive& archive)
             cameraPortNames.push_back(list2[i]);
     }
 
+}
+
+
+bool RTMPointCloudIOItem::start()
+{
+    return impl->start();
+}
+
+
+bool RTMPointCloudIOItemImpl::start()
+{
+    bool isReady = false;
+
+    if(pointCloudIORTC){
+        if(!CORBA::is_nil(execContext)){
+            RTC::ReturnCode_t result = RTC::RTC_OK;
+            RTC::LifeCycleState state = execContext->get_component_state(pointCloudIORTC->getObjRef());
+            if(state == RTC::ERROR_STATE){
+                result = execContext->reset_component(pointCloudIORTC->getObjRef());
+                execContext->tick();
+            } else if(state == RTC::ACTIVE_STATE){
+                result = execContext->deactivate_component(pointCloudIORTC->getObjRef());
+                execContext->tick();
+            }
+            if(result == RTC::RTC_OK){
+                result = execContext->activate_component(pointCloudIORTC->getObjRef());
+                execContext->tick();
+            }
+            if(result == RTC::RTC_OK){
+                isReady = true;
+            }
+        }
+    }
+
+    return isReady;
+}
+
+
+double RTMPointCloudIOItem::timeStep() const
+{
+    return 0.0;
+}
+
+
+void RTMPointCloudIOItem::input()
+{
+
+}
+
+
+bool RTMPointCloudIOItem::control()
+{
+    if(impl->isChoreonoidExecutionContext){
+        impl->execContext->tick();
+    }
+    return true;
+}
+
+
+void RTMPointCloudIOItem::output()
+{
+
+}
+
+
+void RTMPointCloudIOItem::stop()
+{
+    impl->stop();
+}
+
+
+void RTMPointCloudIOItemImpl::stop()
+{
+    RTC::LifeCycleState state = execContext->get_component_state(pointCloudIORTC->getObjRef());
+    if(state == RTC::ERROR_STATE){
+        execContext->reset_component(pointCloudIORTC->getObjRef());
+    } else {
+        execContext->deactivate_component(pointCloudIORTC->getObjRef());
+    }
+    execContext->tick();
 }
 
 

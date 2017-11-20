@@ -127,13 +127,6 @@ links:
             height: 240
             frameRate: 30
           -
-            type: RangeSensor
-            name: RangeSensor
-            scanAngle: 90
-            scanStep:  0.5
-            scanRate:  10
-            maxDistance: 10
-          -
             type: Shape
             geometry:
               type: Box

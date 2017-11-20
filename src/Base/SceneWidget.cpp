@@ -2985,7 +2985,7 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     hbox->addStretch();
     vbox->addLayout(hbox);
 
-    for(int i=0; i<3; i++){
+    for(int i=0; i < 3; ++i){
     	hbox = new QHBoxLayout();
     	gridCheck[i].setChecked(false);
     	gridCheck[i].sigToggled().connect([=](bool){ impl->updateGridsLater(); });

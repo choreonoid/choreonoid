@@ -430,13 +430,18 @@ links:
                 frameRate: 30
                 rotation: [ [ 1, 0, 0, 90 ], [ 0, 1, 0, -90 ] ]
               -
-                type: RangeSensor
-                name: RangeSensor
-                scanAngle: 90
-                scanStep:  0.5
-                scanRate:  10
-                maxDistance: 10
-                rotation: [ [ 1, 0, 0, 90 ], [ 0, 1, 0, -90 ] ]
+                type: Transform
+                translation: [ 0, 0, 0.1 ]
+                elements:
+                  RangeSensor:
+                    name: VelodyneVLP-16
+                    scanYawAngle: 360
+                    scanYawStep:  0.4
+                    scanPitchAngle: 30
+                    scanPitchStep:  2
+                    scanRate:  10
+                    maxDistance: 10
+                    rotation: [ [ 1, 0, 0, 90 ], [ 0, 1, 0, -90 ] ]
               -
                 type: Transform
                 translation: [ -0.01, 0, 0.045 ]

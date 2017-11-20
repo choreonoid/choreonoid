@@ -12,6 +12,7 @@ items:
       data: 
         collisionDetection: false
         collisionDetector: AISTCollisionDetector
+        materialTableFile: "${SHARE}/default/materials.yaml"
       children: 
         - 
           id: 2
@@ -23,16 +24,16 @@ items:
             currentBaseLink: ""
             rootPosition: [ -2, -0.5, 0.1 ]
             rootAttitude: [ 
-              1, 0, 0,
-              0, 1, 0,
+              1, 0, 0, 
+              0, 1, 0, 
               0, 0, 1 ]
-            jointPositions: [  0.000000,  0.000000,  0.000000,  0.000000 ]
+            jointPositions: [  0.000000,  0.000000 ]
             initialRootPosition: [ -2, -0.5, 0.1 ]
             initialRootAttitude: [ 
-              1, 0, 0,
-              0, 1, 0,
+              1, 0, 0, 
+              0, 1, 0, 
               0, 0, 1 ]
-            initialJointPositions: [  0.000000,  0.000000,  0.000000, 0.000000 ]
+            initialJointPositions: [  0.000000,  0.000000 ]
             zmp: [ 0, 0, 0 ]
             collisionDetection: true
             selfCollisionDetection: false
@@ -41,41 +42,46 @@ items:
             - 
               id: 3
               name: "JoystickController"
-              plugin: SimpleController
+              plugin: Body
               class: SimpleControllerItem
               data: 
-                isImmediateMode: true
+                isNoDelayMode: true
+                controllerOptions: ""
                 controller: "TankJoystickController"
+                baseDirectory: "Controller directory"
                 reloading: true
-                inputLinkPositions: false
             - 
               id: 4
-              name: "RangeCameraPoints"
-              plugin: Base
-              class: PointSetItem
+              name: "SensorVisualizer"
+              plugin: Body
+              class: SensorVisualizer
               data: 
-                renderingMode: Point
-                pointSize: 0
-                voxelSize: 0.01
-                isEditable: false
-            - 
-              id: 5
-              name: "RangeSensorPoints"
-              plugin: Base
-              class: PointSetItem
-              data: 
-                renderingMode: Point
-                pointSize: 0
-                voxelSize: 0.01
-                isEditable: false
+                subItems: 
+                  - 
+                    class: PointCloudVisualizer
+                    name: Camera
+                    renderingMode: Point
+                    pointSize: 0
+                    voxelSize: 0.01
+                    isEditable: false
+                  - 
+                    class: RangeSensorVisualizer
+                    name: VelodyneVLP-16
+                    renderingMode: Point
+                    pointSize: 0
+                    voxelSize: 0.01
+                    isEditable: false
+                  - 
+                    class: CameraImageVisualizer
+                    name: Camera_Image
         - 
-          id: 6
+          id: 5
           name: "Labo1"
           plugin: Body
           class: BodyItem
           data: 
             modelFile: "${SHARE}/model/Labo1/Labo1.body"
-            currentBaseLink: "Base"
+            currentBaseLink: ""
             rootPosition: [ 0, 0, 0 ]
             rootAttitude: [ 
               1, 0, 0, 
@@ -92,24 +98,25 @@ items:
             selfCollisionDetection: false
             isEditable: false
         - 
-          id: 7
+          id: 6
           name: "AISTSimulator"
           plugin: Body
           class: AISTSimulatorItem
           data: 
             realtimeSync: true
-            recording: tail
-            timeRangeMode: Active control period
+            recording: "tail"
+            timeRangeMode: "Active control period"
             timeLength: 60
             allLinkPositionOutputMode: false
             deviceStateOutput: true
             controllerThreads: true
             recordCollisionData: false
-            dynamicsMode: Forward dynamics
-            integrationMode: Runge Kutta
+            controllerOptions: ""
+            dynamicsMode: "Forward dynamics"
+            integrationMode: "Runge Kutta"
             gravity: [ 0, 0, -9.80665 ]
             staticFriction: 0.5
-            slipFriction: 0.5
+            dynamicFriction: 0.5
             cullingThresh: 0.01
             contactCullingDepth: 0.05
             errorCriterion: 0.001
@@ -118,9 +125,10 @@ items:
             contactCorrectionVelocityRatio: 30
             kinematicWalking: false
             2Dmode: false
+            oldAccelSensorMode: false
           children: 
             - 
-              id: 8
+              id: 7
               name: "GLVisionSimulator"
               plugin: Body
               class: GLVisionSimulatorItem
@@ -129,11 +137,10 @@ items:
                 maxFrameRate: 1000
                 maxLatency: 1
                 recordVisionData: true
-                useThread: true
-                useThreadsForSensors: true
+                threadMode: Sensor
                 bestEffort: false
                 allSceneObjects: false
-                rangeSensorPrecisionRatio: 4
+                rangeSensorPrecisionRatio: 2
                 depthError: 0
                 enableHeadLight: true
                 enableAdditionalLights: true
@@ -144,27 +151,33 @@ views:
     plugin: Base
     class: ImageView
     mounted: true
+    state: 
+      ImageProviderItem: [ 4, "Camera_Image" ]
   - 
     id: 1
+    name: "Camera"
+    plugin: Base
+    class: ImageView
+  - 
+    id: 4
     plugin: Base
     class: ItemPropertyView
     mounted: true
   - 
-    id: 2
+    id: 5
     plugin: Base
     class: ItemTreeView
     mounted: true
     state: 
-      selected: [ 7 ]
-      checked: [ 1, 2, 4, 5 ]
-      expanded: [ 1, 2, 3, 7 ]
+      checked: [ 1, 2, [ 4, "VelodyneVLP-16" ] ]
+      expanded: [ 1, 2, 3, 4, 6 ]
   - 
-    id: 3
+    id: 6
     plugin: Base
     class: MessageView
     mounted: true
   - 
-    id: 4
+    id: 7
     plugin: Base
     class: SceneView
     mounted: true
@@ -195,9 +208,11 @@ views:
       normalVisualization: false
       normalLength: 0.01
       coordinateAxes: true
+      fpsTestIteration: 1
       showFPS: true
       enableNewDisplayListDoubleRendering: false
       useBufferForPicking: true
+      upsideDown: false
       cameras: 
         - 
           camera: [ System, Perspective ]
@@ -219,29 +234,20 @@ views:
       yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       dedicatedItemTreeViewChecks: false
   - 
-    id: 5
-    name: "Task"
-    plugin: Base
-    class: TaskView
-    state: 
-      layoutMode: horizontal
-      isAutoMode: false
-      currentTask: Wall
-  - 
-    id: 6
+    id: 11
     name: "Joystick"
     plugin: Base
     class: VirtualJoystickView
     mounted: true
   - 
-    id: 7
+    id: 12
     plugin: Body
     class: BodyLinkView
     mounted: true
     state: 
       showRotationMatrix: false
   - 
-    id: 8
+    id: 13
     plugin: Body
     class: JointSliderView
     mounted: true
@@ -255,7 +261,7 @@ views:
       labelOnLeft: true
       currentBodyItem: 2
   - 
-    id: 9
+    id: 14
     plugin: Body
     class: LinkSelectionView
     mounted: true
@@ -267,7 +273,7 @@ views:
           id: 2
           selectedLinks: [ 0 ]
   - 
-    id: 10
+    id: 16
     plugin: Python
     class: PythonConsoleView
     mounted: true
@@ -282,31 +288,6 @@ toolbars:
     speedScale: 1
     syncToOngoingUpdates: true
     autoExpansion: true
-Body: 
-  "BodyMotionEngine": 
-    updateJointVelocities: false
-  "EditableSceneBody": 
-    editableSceneBodies: 
-      - 
-        bodyItem: 2
-        showCenterOfMass: false
-        showPpcom: false
-        showZmp: false
-      - 
-        bodyItem: 6
-        showCenterOfMass: false
-        showPpcom: false
-        showZmp: false
-    staticModelEditing: false
-  "KinematicFaultChecker": 
-    checkJointPositions: true
-    angleMargin: 0
-    translationMargin: 0
-    checkJointVelocities: true
-    velocityLimitRatio: 100
-    targetJoints: all
-    checkSelfCollisions: true
-    onlyTimeBarRange: false
 viewAreas: 
   - 
     type: embedded
@@ -314,56 +295,49 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 303, 1291 ]
+      sizes: [ 351, 1498 ]
       children: 
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 381, 381 ]
+          sizes: [ 557, 556 ]
           children: 
             - 
               type: pane
-              views: [ 2 ]
-              current: 2
+              views: [ 5 ]
+              current: 5
             - 
               type: pane
-              views: [ 1, 9 ]
-              current: 1
+              views: [ 4, 14 ]
+              current: 4
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 544, 218 ]
+          sizes: [ 795, 318 ]
           children: 
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 602, 683 ]
+              sizes: [ 699, 793 ]
               children: 
                 - 
                   type: pane
-                  views: [ 7, 8, 0 ]
+                  views: [ 12, 13, 0 ]
                   current: 0
                 - 
                   type: pane
-                  views: [ 4 ]
-                  current: 4
+                  views: [ 7 ]
+                  current: 7
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 740, 545 ]
+              sizes: [ 859, 633 ]
               children: 
                 - 
                   type: pane
-                  views: [ 3, 10 ]
-                  current: 3
+                  views: [ 6, 16 ]
+                  current: 6
                 - 
                   type: pane
-                  views: [ 6 ]
-                  current: 6
-layoutOfToolBars: 
-  rows: 
-    - 
-      - { name: "FileBar", x: 0, priority: 0 }
-      - { name: "SimulationBar", x: 48, priority: 1 }
-      - { name: "TimeBar", x: 96, priority: 0 }
-      - { name: "SceneBar", x: 1336, priority: 2 }
+                  views: [ 11 ]
+                  current: 11

@@ -129,7 +129,7 @@ void RangeSensor::setYawResolution(int n)
 double RangeSensor::yawStep() const
 {
     if(yawResolution_ >= 2){
-        return yawRange_ / (yawResolution_ - 1);
+        return yawRange_ / (yawResolution_-1);
     } else {
         return 0.0;
     }
@@ -144,7 +144,7 @@ void RangeSensor::setPitchRange(double angle)
 }
 
 
-void RangeSensor::setPitchResolution(double n)
+void RangeSensor::setPitchResolution(int n)
 {
     if(n >= 1){
         pitchResolution_ = n;

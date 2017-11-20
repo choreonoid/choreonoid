@@ -3,7 +3,6 @@
 #set(CMAKE_BUILD_TYPE Debug)
 #set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -g")
 #set_source_files_properties(SimulatorItem.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
-#set_source_files_properties(WorldLogFileItem.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
 
 set(sources
   BodyPlugin.cpp
@@ -50,6 +49,7 @@ set(headers
   BodyItem.h
   WorldItem.h
   BodyMotionItem.h
+  ZMPSeqItem.cpp
   MultiDeviceStateSeqItem.h
   WorldLogFileItem.h
   SimulatorItem.h
@@ -57,6 +57,8 @@ set(headers
   ControllerItem.h
   SimpleControllerItem.h
   SimulationScriptItem.h
+  AISTSimulatorItem.h
+  GLVisionSimulatorItem.h
   SensorVisualizerItem.h
   BodyTrackingCameraItem.h
   KinematicFaultChecker.h
@@ -66,12 +68,11 @@ set(headers
   LinkTreeWidget.h
   LinkSelectionView.h
   EditableSceneBody.h
-  exportdecl.h
-  gettext.h
   CollisionSeq.h
   CollisionSeqItem.h
   CollisionSeqEngine.h
   AISTSimulatorItem.h
+  exportdecl.h
   )
 
 set(target CnoidBodyPlugin)
