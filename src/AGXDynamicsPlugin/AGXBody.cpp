@@ -720,6 +720,7 @@ void AGXBody::setCollisionExclude(){
     setCollisionExcludeLinks(cdMapping);
     setCollisionExcludeTreeDepth(cdMapping);
     setCollisionExcludeLinkGroups(cdMapping);
+    setCollisionExcludeSelfCollisionLinks(cdMapping);
 }
 
 void AGXBody::setCollisionExcludeLinks(const Mapping& cdMapping){
@@ -790,6 +791,26 @@ void AGXBody::setCollisionExcludeLinkGroups(const Mapping& cdMapping){
                 if(agxCollide::Geometry*geometry = agxLink->getAGXGeometry())
                     geometry->addGroup(ss.str());
             }
+        }
+    }
+}
+
+void AGXBody::setCollisionExcludeSelfCollisionLinks(const Mapping& cdMapping)
+{
+    const ValueNodePtr& excludeSCLinksNode = cdMapping.find("excludeSelfCollisionLinks");
+    if(!excludeSCLinksNode->isValid())   return;
+    if(!excludeSCLinksNode->isListing()) return;
+    stringstream ss;
+    ss << "AGXExcludeSelfCollisionLinks_" << agx::UuidGenerator().generate().str() << std::endl;
+    addCollisionGroupNameToDisableCollision(ss.str());
+    getAGXScene()->setCollisionPair(ss.str(), getCollisionGroupName(), false);
+
+    vector<string> linkNames;
+    if(!agxConvert::setVector(excludeSCLinksNode->toListing(), linkNames)) return;
+    for(auto linkName : linkNames){
+        if(AGXLink* agxLink = getAGXLink(linkName)){
+            if(agxCollide::Geometry* geometry = agxLink->getAGXGeometry())
+                geometry->addGroup(ss.str());
         }
     }
 }
