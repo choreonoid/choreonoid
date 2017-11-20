@@ -41,13 +41,19 @@ AGXVehicleContinuousTrack::AGXVehicleContinuousTrack(AGXVehicleContinuousTrackDe
             return nullptr;
         }
         // get raduis of wheel
+        double radius = 0.0;
         if(l_agxLink->getAGXGeometry()->getShapes().size() <= 0 ) return nullptr;
         agxCollide::Shape* shape = l_agxLink->getAGXGeometry()->getShapes()[0];
-        agxCollide::Cylinder* l_cylinder = dynamic_cast<agxCollide::Cylinder*>(shape);
-        if(!l_cylinder){
-            std::cout << "failed to cast agxCollide::Cylinder." << std::endl;
+        if(auto l_cylinder = dynamic_cast<agxCollide::Cylinder*>(shape)){
+            radius = l_cylinder->getRadius();
+        }else if(auto l_capsule = dynamic_cast<agxCollide::Capsule*>(shape)){
+            radius = l_capsule->getRadius();
+                std::cout << name << std::endl;
+        }else{
+            std::cout << "failed to cast agxCollide::Cylinder or agxCollide::Capsule." << std::endl;
             return nullptr;
         }
+
         // create rotate matrix
         Link* l_link = l_agxLink->getOrgLink();
         const Vector3& a = l_link->a();            // rotational axis
@@ -66,7 +72,7 @@ AGXVehicleContinuousTrack::AGXVehicleContinuousTrack(AGXVehicleContinuousTrackDe
         AGXVehicleTrackWheelDesc l_desc;
         l_desc.rigidbody = l_agxLink->getAGXRigidBody();
         l_desc.model = model;
-        l_desc.radius = l_cylinder->getRadius();
+        l_desc.radius = radius;
         l_desc.rbRelTransform.setRotate(l_desc.rigidbody->getRotation());
         l_desc.rbRelTransform.setRotate(rotation);
         return AGXObjectFactory::createVehicleTrackWheel(l_desc);
@@ -75,7 +81,9 @@ AGXVehicleContinuousTrack::AGXVehicleContinuousTrack(AGXVehicleContinuousTrackDe
     auto createWheels = [createWheel, &trackDesc](const vector<string>& names, const agxVehicle::TrackWheel::Model& model)
     {
         for(auto it : names){
-            trackDesc.trackWheelRefs.push_back(createWheel(it, model));
+            if(auto wheel = createWheel(it, model)){
+                trackDesc.trackWheelRefs.push_back(wheel);
+            }
         }
     };
 
@@ -147,8 +155,11 @@ AGXVehicleContinuousTrack::AGXVehicleContinuousTrack(AGXVehicleContinuousTrackDe
         geometry->removeGroup(trackCollision.str());
     }
     for(auto guide : desc.guideNames){
-        agxCollide::GeometryRef geometry = getAGXBody()->getAGXRigidBody(guide)->getGeometries().front();
-        geometry->removeGroup(trackCollision.str());
+        if(agx::RigidBody* rigid = getAGXBody()->getAGXRigidBody(guide)){
+            if(agxCollide::GeometryRef geometry = rigid->getGeometries().front()){
+                geometry->removeGroup(trackCollision.str());
+            }
+        }
     }
 
     /* Rendering */
