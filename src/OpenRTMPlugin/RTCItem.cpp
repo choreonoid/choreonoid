@@ -21,6 +21,8 @@
 #include <boost/regex.hpp>
 #include "gettext.h"
 
+#include "LoggerUtil.h"
+
 using namespace std;
 using namespace cnoid;
 using boost::format;
@@ -45,49 +47,49 @@ void RTCItem::initialize(ExtensionManager* ext)
 RTCItem::RTCItem()
     : os(MessageView::instance()->cout()),
       periodicType(N_PERIODIC_TYPE, CNOID_GETTEXT_DOMAIN_NAME),
-      baseDirectoryType(N_BASE_DIRECTORY_TYPES, CNOID_GETTEXT_DOMAIN_NAME)
+			baseDirectoryType(N_BASE_DIRECTORY_TYPES, CNOID_GETTEXT_DOMAIN_NAME)
 {
     rtcomp = 0;
     moduleName.clear();
     mv = MessageView::instance();
 
-    periodicRate = 1000;
-    periodicType.setSymbol(PERIODIC_EXECUTION_CONTEXT,  N_("PeriodicExecutionContext"));
-    periodicType.setSymbol(SYNCH_EXT_TRIGGER,  N_("SynchExtTriggerEC"));
-    periodicType.setSymbol(EXT_TRIG_EXECUTION_CONTEXT,  N_("ExtTrigExecutionContext"));
-    periodicType.setSymbol(CHOREONOID_EXECUTION_CONTEXT,  N_("ChoreonoidExecutionContext"));
-    periodicType.select(PERIODIC_EXECUTION_CONTEXT);
-    oldPeriodicType = periodicType.which();
-    
-    properties.clear();
-    properties.insert(make_pair(string("exec_cxt.periodic.type"), periodicType.selectedSymbol()));
-    stringstream ss;
-    ss << periodicRate;
-    properties.insert(make_pair(string("exec_cxt.periodic.rate"), ss.str()));
-    
-    baseDirectoryType.setSymbol(RTC_DIRECTORY, N_("RTC directory"));
-    baseDirectoryType.setSymbol(PROJECT_DIRECTORY, N_("Project directory"));
-    baseDirectoryType.select(RTC_DIRECTORY);
-    oldBaseDirectoryType = baseDirectoryType.which();
+		periodicRate = 1000;
+		periodicType.setSymbol(PERIODIC_EXECUTION_CONTEXT, N_("PeriodicExecutionContext"));
+		periodicType.setSymbol(SYNCH_EXT_TRIGGER, N_("SynchExtTriggerEC"));
+		periodicType.setSymbol(EXT_TRIG_EXECUTION_CONTEXT, N_("ExtTrigExecutionContext"));
+		periodicType.setSymbol(CHOREONOID_EXECUTION_CONTEXT, N_("ChoreonoidExecutionContext"));
+		periodicType.select(PERIODIC_EXECUTION_CONTEXT);
+		oldPeriodicType = periodicType.which();
 
-    rtcDirectory = filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "rtc";
+		properties.clear();
+		properties.insert(make_pair(string("exec_cxt.periodic.type"), periodicType.selectedSymbol()));
+		stringstream ss;
+		ss << periodicRate;
+		properties.insert(make_pair(string("exec_cxt.periodic.rate"), ss.str()));
+
+		baseDirectoryType.setSymbol(RTC_DIRECTORY, N_("RTC directory"));
+		baseDirectoryType.setSymbol(PROJECT_DIRECTORY, N_("Project directory"));
+		baseDirectoryType.select(RTC_DIRECTORY);
+		oldBaseDirectoryType = baseDirectoryType.which();
+
+		rtcDirectory = filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "rtc";
 }
 
 
 RTCItem::RTCItem(const RTCItem& org)
     : Item(org),
-      os(MessageView::instance()->cout()),
-      periodicType(org.periodicType),
-      baseDirectoryType(org.baseDirectoryType),
-      rtcDirectory(org.rtcDirectory)
+			os(MessageView::instance()->cout()),
+			periodicType(org.periodicType),
+			baseDirectoryType(org.baseDirectoryType),
+			rtcDirectory(org.rtcDirectory) 
 {
-    rtcomp = org.rtcomp;
-    moduleName = org.moduleName;
-    mv = MessageView::instance();
-    periodicRate = org.periodicRate;
-    oldPeriodicType = org.oldPeriodicType;
-    properties = org.properties;
-    oldBaseDirectoryType = org.oldBaseDirectoryType;
+	rtcomp = org.rtcomp;
+	moduleName = org.moduleName;
+	mv = MessageView::instance();
+	periodicRate = org.periodicRate;
+	oldPeriodicType = org.oldPeriodicType;
+	properties = org.properties;
+	oldBaseDirectoryType = org.oldBaseDirectoryType;
 }
 
 RTCItem::~RTCItem()
@@ -136,15 +138,15 @@ void RTCItem::setModuleName(const std::string& name)
 
 void RTCItem::setPeriodicType(int type)
 {
-    if(oldPeriodicType != type){
-        oldPeriodicType = type;
-        properties["exec_cxt.periodic.type"] = periodicType.symbol(type);
-        if(rtcomp){
-            delete rtcomp;
-        }
-        if (convertAbsolutePath())
-            rtcomp = new RTComponent(modulePath, properties);
+	if (oldPeriodicType != type) {
+		oldPeriodicType = type;
+		properties["exec_cxt.periodic.type"] = periodicType.symbol(type);
+    if(rtcomp){
+      delete rtcomp;
     }
+    if (convertAbsolutePath())
+      rtcomp = new RTComponent(modulePath, properties);
+  }
 }
 
 
@@ -164,44 +166,43 @@ void RTCItem::setPeriodicRate(int rate)
 }
 
 
-void RTCItem::setBaseDirectoryType(int base)
-{
-    baseDirectoryType.select(base);
-    if (oldBaseDirectoryType != base){
-        oldBaseDirectoryType = base;
-        if (rtcomp){
-            delete rtcomp;
-        }
-        if (convertAbsolutePath())
-            rtcomp = new RTComponent(modulePath, properties);
-    }
+void RTCItem::setBaseDirectoryType(int base) {
+	baseDirectoryType.select(base);
+	if (oldBaseDirectoryType != base) {
+		oldBaseDirectoryType = base;
+		if (rtcomp) {
+			delete rtcomp;
+		}
+		if (convertAbsolutePath())
+			rtcomp = new RTComponent(modulePath, properties);
+	}
 }
 
 
 void RTCItem::doPutProperties(PutPropertyFunction& putProperty)
 {
-    Item::doPutProperties(putProperty);
+	Item::doPutProperties(putProperty);
 
-    FilePathProperty moduleProperty(
-        moduleName,
-        { str(format(_("RT-Component module (*%1%)")) % DLL_SUFFIX) });
+	FilePathProperty moduleProperty(
+		moduleName,
+		{ str(format(_("RT-Component module (*%1%)")) % DLL_SUFFIX) });
 
-    if(baseDirectoryType.is(RTC_DIRECTORY)){
-        moduleProperty.setBaseDirectory(rtcDirectory.string());
-    } else if(baseDirectoryType.is(PROJECT_DIRECTORY)){
-        moduleProperty.setBaseDirectory(ProjectManager::instance()->currentProjectDirectory());
-    }
-    
-    putProperty(_("RTC module"), moduleProperty,
-                [&](const string& name){ setModuleName(name); return true; });
-    putProperty(_("Base directory"), baseDirectoryType,
-                [&](int which){ setBaseDirectoryType(which); return true; });
+	if (baseDirectoryType.is(RTC_DIRECTORY)) {
+		moduleProperty.setBaseDirectory(rtcDirectory.string());
+	} else if (baseDirectoryType.is(PROJECT_DIRECTORY)) {
+		moduleProperty.setBaseDirectory(ProjectManager::instance()->currentProjectDirectory());
+	}
 
-    putProperty(_("Execution context"), periodicType,
-                [&](int which){ return periodicType.select(which); });
-    setPeriodicType(periodicType.selectedIndex());
-    putProperty(_("Periodic rate"), periodicRate,
-                [&](int rate){ setPeriodicRate(rate); return true; });
+	putProperty(_("RTC module"), moduleProperty,
+		[&](const string& name) { setModuleName(name); return true; });
+	putProperty(_("Base directory"), baseDirectoryType,
+		[&](int which) { setBaseDirectoryType(which); return true; });
+
+	putProperty(_("Execution context"), periodicType,
+		[&](int which) { return periodicType.select(which); });
+	setPeriodicType(periodicType.selectedIndex());
+	putProperty(_("Periodic rate"), periodicRate,
+		[&](int rate) { setPeriodicRate(rate); return true; });
 }
 
 
@@ -210,61 +211,62 @@ bool RTCItem::store(Archive& archive)
     if(!Item::store(archive)){
         return false;
     }
-    archive.writeRelocatablePath("module", moduleName);
-    archive.write("baseDirectory", baseDirectoryType.selectedSymbol(), DOUBLE_QUOTED);
-    archive.write("periodicType", periodicType.selectedSymbol());
-    archive.write("periodicRate", periodicRate);
-    return true;
+		archive.writeRelocatablePath("module", moduleName);
+		archive.write("baseDirectory", baseDirectoryType.selectedSymbol(), DOUBLE_QUOTED);
+		archive.write("periodicType", periodicType.selectedSymbol());
+		archive.write("periodicRate", periodicRate);
+		return true;
 }
 
 
-bool RTCItem::restore(const Archive& archive)
-{
-    if(!Item::restore(archive)){
-        return false;
-    }
-    string value;
-    if(archive.read("module", value) || archive.read("moduleName", value)){
-        filesystem::path path(archive.expandPathVariables(value));
-        moduleName = path.make_preferred().string();
-    }
-    if(archive.read("baseDirectory", value) || archive.read("RelativePathBase", value)){
-        baseDirectoryType.select(value);
-        oldBaseDirectoryType = baseDirectoryType.selectedIndex();
-    }
-    
-    if(archive.read("periodicType", value)){
-        periodicType.select(value);
-        oldPeriodicType = periodicType.selectedIndex();
-        properties["exec_cxt.periodic.type"] = value;
-    }
-    if(archive.read("periodicRate", periodicRate)){
-        stringstream ss;
-        ss << periodicRate;
-        properties["exec_cxt.periodic.rate"] = ss.str();
-    }
+bool RTCItem::restore(const Archive& archive) {
+	DDEBUG("RTCItem::restore");
 
-    return true;
+	if (!Item::restore(archive)) {
+		return false;
+	}
+	string value;
+	if (archive.read("module", value) || archive.read("moduleName", value)) {
+		filesystem::path path(archive.expandPathVariables(value));
+		moduleName = path.make_preferred().string();
+	}
+	if (archive.read("baseDirectory", value) || archive.read("RelativePathBase", value)) {
+		baseDirectoryType.select(value);
+		oldBaseDirectoryType = baseDirectoryType.selectedIndex();
+	}
+
+	if (archive.read("periodicType", value)) {
+		periodicType.select(value);
+		oldPeriodicType = periodicType.selectedIndex();
+		properties["exec_cxt.periodic.type"] = value;
+	}
+	if (archive.read("periodicRate", periodicRate)) {
+		stringstream ss;
+		ss << periodicRate;
+		properties["exec_cxt.periodic.rate"] = ss.str();
+	}
+
+	return true;
 }
 
 
 bool RTCItem::convertAbsolutePath()
 {
-    modulePath = moduleName;
-    if(!modulePath.is_absolute()){
-        if(baseDirectoryType.is(RTC_DIRECTORY)){
-            modulePath = rtcDirectory / modulePath;
-        } else if(baseDirectoryType.is(PROJECT_DIRECTORY)){
-            string projectDir = ProjectManager::instance()->currentProjectDirectory();
-            if(projectDir.empty()){
-                mv->putln(_("Please save the project."));
-                return false;
-            } else {
-                modulePath = filesystem::path(projectDir) / modulePath;
-            }
-        }
-    }
-    return true;
+	modulePath = moduleName;
+	if (!modulePath.is_absolute()) {
+		if (baseDirectoryType.is(RTC_DIRECTORY)) {
+			modulePath = rtcDirectory / modulePath;
+		} else if (baseDirectoryType.is(PROJECT_DIRECTORY)) {
+			string projectDir = ProjectManager::instance()->currentProjectDirectory();
+			if (projectDir.empty()) {
+				mv->putln(_("Please save the project."));
+				return false;
+			} else {
+				modulePath = filesystem::path(projectDir) / modulePath;
+			}
+		}
+	}
+	return true;
 }
 
 
@@ -285,16 +287,18 @@ RTComponent::~RTComponent()
 }
 
 
-void RTComponent::init(const filesystem::path& modulePath_, PropertyMap& prop)
-{
-    mv = MessageView::instance();
-    modulePath = modulePath_;
-    createRTC(prop);
+void RTComponent::init(const filesystem::path& modulePath_, PropertyMap& prop) {
+	DDEBUG("RTComponent::init");
+
+	mv = MessageView::instance();
+  modulePath = modulePath_;
+  createRTC(prop);
 }
 
 
-bool  RTComponent::createRTC(PropertyMap& prop)
-{   
+bool  RTComponent::createRTC(PropertyMap& prop) {   
+	DDEBUG("RTComponent::createRTC");
+
     string moduleNameLeaf = modulePath.leaf().string();
     size_t i = moduleNameLeaf.rfind('.');
     if(i != string::npos){
@@ -342,9 +346,10 @@ bool  RTComponent::createRTC(PropertyMap& prop)
 }
 
 
-void RTComponent::setupModules(string& fileName, string& initFuncName, string& componentName, PropertyMap& prop)
-{
-    RTC::Manager& rtcManager = RTC::Manager::instance();
+void RTComponent::setupModules(string& fileName, string& initFuncName, string& componentName, PropertyMap& prop) {
+	DDEBUG("RTComponent::setupModules");
+
+	RTC::Manager& rtcManager = RTC::Manager::instance();
 
     rtcManager.load(fileName.c_str(), initFuncName.c_str());
 
@@ -379,8 +384,9 @@ bool RTComponent::isValid() const
 }
 
 
-void RTComponent::createProcess(string& command, PropertyMap& prop)
-{
+void RTComponent::createProcess(string& command, PropertyMap& prop) {
+	DDEBUG("RTComponent::createProcess");
+
     QStringList argv;
     argv.push_back(QString("-o"));
     argv.push_back(QString("naming.formats: %n.rtc"));

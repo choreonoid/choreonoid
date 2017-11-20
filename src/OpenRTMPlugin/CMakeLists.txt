@@ -40,8 +40,10 @@ set(plugin CnoidOpenRTMPlugin)
 
 set(plugin_sources
   OpenRTMPlugin.cpp
+  ConnectorCreaterDialog.cpp
   ControllerRTCItem.cpp
   BodyIoRTCItem.cpp
+  OpenRTMItem.cpp
   RTCItem.cpp
   ChoreonoidExecutionContext.cpp
   ChoreonoidPeriodicExecutionContext.cpp
@@ -50,23 +52,46 @@ set(plugin_sources
   RTSItem.cpp
   RTSDiagramView.cpp
   RTSCommonUtil.cpp
+  RTSConfigurationView.cpp
 
   deprecated/BodyRTCItem.cpp
   deprecated/VirtualRobotRTC.cpp
   deprecated/VirtualRobotPortHandler.cpp
   deprecated/BridgeConf.cpp
+
+  LoggerUtil.cpp
   )
 
 set(plugin_headers
   )
 
-QTX_ADD_RESOURCES(RC_SRCS OpenRTMPlugin.qrc)
-QTX_WRAP_CPP(
-  qtsources
-  RTSNameServerView.h
-  RTSDiagramView.h
+if(NOT QT5)
+  QT4_ADD_RESOURCES(RC_SRCS OpenRTMPlugin.qrc)
+else()
+  QT5_ADD_RESOURCES(RC_SRCS OpenRTMPlugin.qrc)
+endif()
+
+if(NOT QT5)
+  QT4_ADD_RESOURCES(RC_SRCS OpenRTMPlugin.qrc)
+  QT4_WRAP_CPP(
+    plugin_sources
+    ConnectorCreaterDialog.h
+    RTSNameServerView.h
+    RTSDiagramView.h
+    RTSConfigurationView.h
+    OPTIONS "-DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED"
   )
-set(plugin_sources ${plugin_sources} ${qtsources})
+else()
+  QT5_ADD_RESOURCES(RC_SRCS OpenRTMPlugin.qrc)
+  QT5_WRAP_CPP(
+    plugin_sources
+    ConnectorCreaterDialog.h
+    RTSDiagramView.h
+    RTSNameServerView.h
+    RTSConfigurationView.h
+    OPTIONS "-DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED"
+  )
+endif()
 
 if(MSVC)
 add_definitions(-D__WIN32__ -D__x86__ -D__NT__ -D__OSVERSION__=4 -D_CRT_SECURE_NO_DEPRECATE -D_WIN32_WINNT=0x0500 -DRTC_CORBA_CXXMAPPING11)
@@ -115,3 +140,6 @@ file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}/rtc)
 install(DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}/rtc DESTINATION ${CNOID_PLUGIN_SUBDIR}/rtc
   FILES_MATCHING PATTERN "*" EXCLUDE)
 
+if(QT5)
+  qt5_use_modules(${plugin} Core OpenGL Network)
+endif()

@@ -14,6 +14,10 @@
 #include <cnoid/EigenArchive>
 #include <boost/algorithm/string.hpp>
 
+#include <rtm/idl/SDOPackage.hh>
+//#include "corba/Observer/ComponentObserver.hh"
+#include "LoggerUtil.h"
+
 #include "gettext.h"
 
 using namespace cnoid;
@@ -21,11 +25,172 @@ using namespace std;
 using namespace std::placeholders;
 using namespace RTC;
 
-namespace cnoid 
-{ 
+namespace cnoid { 
 
-class RTSystemItemImpl
-{
+RTSPort::RTSPort(const string& name_, PortService_var port_, RTSComp* parent)
+	: rtsComp(parent) {
+
+	isInPort = true;
+	name = name_;
+	port = port_;
+	//
+	RTC::PortProfile* profile = port->get_port_profile();
+	if (profile) {
+		RTC::PortInterfaceProfileList interfaceList = profile->interfaces;
+		for (CORBA::ULong index = 0; index < interfaceList.length(); index++) {
+			RTC::PortInterfaceProfile ifProfile = interfaceList[index];
+			PortInterfacePtr portIf(new PortInterface());
+			if (parent) {
+				portIf->rtc_name = parent->name;
+			}
+			const char* port_name;
+			port_name = (const char*)profile->name;
+			portIf->port_name = port_name;
+			if (ifProfile.polarity == PortInterfacePolarity::REQUIRED) {
+				portIf->if_polarity = "required";
+			} else {
+				portIf->if_polarity = "provided";
+			}
+			const char* if_iname;
+			const char* if_tname;
+			if_iname = (const char*)ifProfile.instance_name;
+			if_tname = (const char*)ifProfile.type_name;
+			DDEBUG_V("name: %s, IF name: %s, instance_name: %s, type_name: %s", name_.c_str(), portIf->port_name.c_str(), if_iname, if_tname);
+			portIf->if_tname = if_tname;
+			portIf->if_iname = if_iname;
+			interList.push_back(portIf);
+		}
+	}
+}
+
+bool RTSPort::connected() {
+	if (!port || !NamingContextHelper::isObjectAlive(port))
+		return false;
+
+	ConnectorProfileList_var connectorProfiles = port->get_connector_profiles();
+	return connectorProfiles->length() != 0;
+}
+
+
+bool RTSPort::connectedWith(RTSPort* target) {
+	if (!port || !target->port ||
+		CORBA::is_nil(port) || port->_non_existent() ||
+		CORBA::is_nil(target->port) || target->port->_non_existent())
+		return false;
+
+	ConnectorProfileList_var connectorProfiles = port->get_connector_profiles();
+	for (CORBA::ULong i = 0; i < connectorProfiles->length(); ++i) {
+		ConnectorProfile& connectorProfile = connectorProfiles[i];
+		PortServiceList& connectedPorts = connectorProfile.ports;
+
+		for (CORBA::ULong j = 0; j < connectedPorts.length(); ++j) {
+			PortService_ptr connectedPortRef = connectedPorts[j];
+			if (connectedPortRef->_is_equivalent(target->port)) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+
+bool RTSPort::checkConnectablePort(RTSPort* target) {
+	if (rtsComp == target->rtsComp) return false;
+	if (!port || !target->port) return false;
+
+	if ((isInPort && target->isInPort) ||
+		(isInPort && target->isServicePort) ||
+		(!isInPort && !isServicePort && !target->isInPort) ||
+		(isServicePort && !target->isServicePort))
+		return false;
+
+	//In case of connection between data ports
+	if (!isServicePort && !target->isServicePort) {
+		vector<string> dataTypes = RTCCommonUtil::getAllowDataTypes(this, target);
+		vector<string> ifTypes = RTCCommonUtil::getAllowInterfaceTypes(this, target);
+		vector<string> subTypes = RTCCommonUtil::getAllowSubscriptionTypes(this, target);
+		if (dataTypes.size() == 0 || ifTypes.size() == 0 || subTypes.size() == 0) return false;
+	}
+	return true;
+}
+
+
+RTSPort* RTSComp::nameToRTSPort(const string& name) {
+	vector<RTSPortPtr>::iterator it = find_if( inPorts.begin(), inPorts.end(), RTSPortComparator(name));
+	if (it != inPorts.end())
+		return (*it);
+	it = find_if(outPorts.begin(), outPorts.end(), RTSPortComparator(name));
+	if (it != outPorts.end())
+		return (*it);
+	return 0;
+}
+
+vector<string> RTSPort::getDataTypes() {
+	return getProperty("dataport.data_type");
+}
+
+vector<string> RTSPort::getInterfaceTypes() {
+	return getProperty("dataport.interface_type");
+}
+
+vector<string> RTSPort::getDataflowTypes() {
+	return getProperty("dataport.dataflow_type");
+}
+
+vector<string> RTSPort::getSubscriptionTypes() {
+	return getProperty("dataport.subscription_type");
+}
+
+vector<string> RTSPort::getProperty(const string& key) {
+	vector<string> result;
+
+	NVList properties = port->get_port_profile()->properties;
+	for (int index = 0; index < properties.length(); index++) {
+		DDEBUG_V("Name: %s", properties[index].name._ptr);
+		string strName(properties[index].name._ptr);
+		if (strName == key) {
+			const char* nvValue;
+			properties[index].value >>= nvValue;
+			DDEBUG_V("Value: %s", nvValue);
+			string strValue(nvValue);
+			result = RTCCommonUtil::split(strValue, ',');
+			break;
+		}
+	}
+	return result;
+}
+//////////
+//class ComponentObserverImpl : OpenRTM::ComponentObserver {
+//public:
+//	bool attachComponent(RTC::RTObject_ptr component);
+//	void update_status(::OpenRTM::StatusKind status_kind, const char* hint);
+//
+//private:
+//	RTC::RTObject_ptr rtc;
+//};
+//
+//void ComponentObserverImpl::update_status(::OpenRTM::StatusKind status_kind, const char* hint) {
+//	DDEBUG("ComponentObserverImpl::update_status");
+//
+//}
+//
+//bool ComponentObserverImpl::attachComponent(RTC::RTObject_ptr component) {
+//	DDEBUG("ComponentObserverImpl::attachComponent");
+//
+//	this->rtc = component;
+//
+//	SDOPackage::ServiceProfile profile;
+//	profile.id = "1";
+//	profile.interface_type = "IDL:OpenRTM/ComponentObserver:1.0";
+//	CORBA_SeqUtil::push_back(profile.properties, NVUtil::newNV("observed_status", "ALL"));
+//
+//	SDOPackage::Configuration_ptr conf = component->get_configuration();
+//	conf->add_service_profile(profile);
+//
+//	return true;
+//}
+/////
+class RTSystemItemImpl {
 public:
     RTSystemItem* self;
     NamingContextHelper ncHelper;
@@ -48,7 +213,10 @@ public:
     RTSConnection* addRTSConnection(const string& id, const string& name,
             RTSPort* sourcePort, RTSPort* targetPort, const string& dataflow, const string& subscription,
             const bool setPos, const Vector2 pos[]);
-    RTSConnection* addRTSConnectionName(const string& id, const string& name,
+		RTSConnection* addRTSConnection(const string& id, const string& name,
+						RTSPort* sourcePort, RTSPort* targetPort, const std::vector<NamedValuePtr>& propList,
+						const bool setPos, const Vector2 pos[]);
+		RTSConnection* addRTSConnectionName(const string& id, const string& name,
             const string& sourceComp, const string& sourcePort,
             const string& targetComp, const string& targetPort,
             const string& dataflow, const string& subscription,
@@ -62,124 +230,51 @@ public:
     void restoreRTSComp(const string& name, const Vector2& pos,
             const vector<pair<string, bool>>& inPorts, const vector<pair<string, bool>>& outPorts);
     string getConnectionNumber();
+private:
+//	ComponentObserverImpl* observer_;
 };
 
 }
-
-RTSPort::RTSPort(const string& name_, PortService_var port_, RTSComp* parent)
-    : rtsComp(parent)
-{
-    isInPort = true;
-    name = name_;
-    port = port_;
-}
-
-
-bool RTSPort::connected()
-{
-    if(!port || !NamingContextHelper::isObjectAlive(port))
-        return false;
-
-    ConnectorProfileList_var connectorProfiles = port->get_connector_profiles();
-    return connectorProfiles->length()!=0;
-}
-
-
-bool RTSPort::connectedWith(RTSPort* target)
-{
-    if( !port || !target->port ||
-        CORBA::is_nil(port) || port->_non_existent() ||
-        CORBA::is_nil(target->port) || target->port->_non_existent())
-            return false;
-
-    ConnectorProfileList_var connectorProfiles = port->get_connector_profiles();
-    for(CORBA::ULong i=0; i < connectorProfiles->length(); ++i){
-        ConnectorProfile& connectorProfile = connectorProfiles[i];
-        PortServiceList& connectedPorts = connectorProfile.ports;
-
-        for(CORBA::ULong j=0; j < connectedPorts.length(); ++j){
-            PortService_ptr connectedPortRef = connectedPorts[j];
-            if(connectedPortRef->_is_equivalent(target->port)){
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
-
-bool RTSPort::checkConnectablePort(RTSPort* target)
-{
-    if(rtsComp == target->rtsComp)
-        return false;
-    if( !port || !target->port )
-        return false;
-    if((isInPort && target->isInPort) ||
-       (isInPort && target->isServicePort) ||
-       (!isInPort && !isServicePort && !target->isInPort) ||
-       (isServicePort && !target->isServicePort))
-        return false;
-
-    return true;
-}
-
-
-RTSPort* RTSComp::nameToRTSPort(const string& name)
-{
-    map<string, RTSPortPtr>::iterator it = inPorts.find(name);
-    if(it!=inPorts.end())
-        return it->second.get();
-    it = outPorts.find(name);
-    if(it!=outPorts.end())
-        return it->second.get();
-    return 0;
-}
-
+//////////
 RTSConnection::RTSConnection(const string& id, const string& name,
         const string& sourceRtcName,const string& sourcePortName,
         const string& targetRtcName, const string& targetPortName)
     : id(id), name(name), sourceRtcName(sourceRtcName), sourcePortName(sourcePortName),
       targetRtcName(targetRtcName), targetPortName(targetPortName), setPos(false)
 {
-    pushPolicy = "all";
-    pushRate = 1000.0;
-    sinterface = "corba_cdr";
-    isAlive_ = false;
+  isAlive_ = false;
 }
 
 
-bool RTSConnection::connect()
-{
+bool RTSConnection::connect() {
+	DDEBUG("RTSConnection::connect");
+
     if(!sourcePort || !targetPort )
         return false;
 
-    if( !sourcePort->port || !targetPort->port ||
+		if( !sourcePort->port || !targetPort->port ||
         CORBA::is_nil(sourcePort->port) || sourcePort->port->_non_existent() ||
         CORBA::is_nil(targetPort->port) || targetPort->port->_non_existent())
             return false;
 
-    if( sourcePort->connectedWith(targetPort) )
+		if( sourcePort->connectedWith(targetPort) )
         return true;
 
-    ConnectorProfile cprof;
+		ConnectorProfile cprof;
     cprof.connector_id = CORBA::string_dup(id.c_str());
     cprof.name = CORBA::string_dup(name.c_str());
     cprof.ports.length(2);
     cprof.ports[0] = PortService::_duplicate(sourcePort->port);
     cprof.ports[1] = PortService::_duplicate(targetPort->port);
 
-    CORBA_SeqUtil::push_back(cprof.properties,
-            NVUtil::newNV("dataport.dataflow_type",
-                    dataflow.c_str()));
-    CORBA_SeqUtil::push_back(cprof.properties,
-            NVUtil::newNV("dataport.interface_type",
-                    sinterface.c_str()));
-    CORBA_SeqUtil::push_back(cprof.properties,
-            NVUtil::newNV("dataport.subscription_type",
-                    subscription.c_str()));
+		for (int index = 0; index < propList.size(); index++) {
+			NamedValuePtr param = propList[index];
+			CORBA_SeqUtil::push_back(cprof.properties,
+			          NVUtil::newNV(param->name_.c_str(), param->value_.c_str()));
+		}
 
     RTC::ReturnCode_t result = sourcePort->port->connect(cprof);
-    if(result == RTC::RTC_OK){
+		if(result == RTC::RTC_OK){
         PortProfile_var portprofile = sourcePort->port->get_port_profile();
         ConnectorProfileList connections = portprofile->connector_profiles;
         for(CORBA::ULong i = 0; i < connections.length(); i++){
@@ -190,11 +285,11 @@ bool RTSConnection::connect()
                 if(connectedPortRef->_is_equivalent(targetPort->port)){
                     id = string(connector.connector_id);
                     isAlive_ = true;
-                    return true;
+										return true;
                 }
             }
         }
-        return false;
+				return false;
     }else{
         return false;
     }
@@ -217,9 +312,7 @@ bool RTSConnection::disConnect()
 
 
 RTSComp::RTSComp(const string& name, RTC::RTObject_ptr rtc, RTSystemItemImpl* impl, const QPointF& pos) :
-        impl(impl),
-        name(name),
-        pos(pos)
+        impl(impl), pos(pos), name(name)
 {
     setRtc(rtc);
 }
@@ -258,8 +351,12 @@ bool RTSComp::connectionCheckSub(RTSPort* rtsPort)
                         name, string(portprofile->name),
                         target[0], portName);
                     coil::Properties properties = NVUtil::toProperties(connectorProfile.properties);
-                    rtsConnection->dataflow = properties["dataport.dataflow_type"];
-                    rtsConnection->subscription = properties["dataport.subscription_type"];
+										vector<NamedValuePtr> propList;
+										NamedValuePtr dataType(new NamedValue("dataport.dataflow_type", properties["dataport.dataflow_type"]));
+										propList.push_back(dataType);
+										NamedValuePtr subscription(new NamedValue("dataport.subscription_type", properties["dataport.subscription_type"]));
+										rtsConnection->propList = propList;
+
                     rtsConnection->srcRTC = this;
                     rtsConnection->sourcePort = nameToRTSPort(rtsConnection->sourcePortName);
                     rtsConnection->targetRTC = targetRTC;
@@ -279,10 +376,10 @@ bool RTSComp::connectionCheckSub(RTSPort* rtsPort)
 bool RTSComp::connectionCheck()
 {
     bool modified = false;
-    for(map<string, RTSPortPtr>::iterator it = inPorts.begin(); it != inPorts.end(); it++)
-        modified |= connectionCheckSub(it->second.get());
-    for(map<string, RTSPortPtr>::iterator it = outPorts.begin(); it != outPorts.end(); it++)
-        modified |= connectionCheckSub(it->second.get());
+    for(vector<RTSPortPtr>::iterator it = inPorts.begin(); it != inPorts.end(); it++)
+        modified |= connectionCheckSub(*it);
+    for(vector<RTSPortPtr>::iterator it = outPorts.begin(); it != outPorts.end(); it++)
+        modified |= connectionCheckSub(*it);
 
     return modified;
 }
@@ -293,8 +390,8 @@ bool RTSComp::isActive()
     if(CORBA::is_nil(rtc_) || rtc_->_non_existent())
         return false;
 
-    for(CORBA::ULong i=0; i<ownedExeContList->length(); i++){
-        if(ownedExeContList[i]->get_component_state(rtc_) == RTC::ACTIVE_STATE)
+    for(CORBA::ULong i=0; i<ownedExeContList_->length(); i++){
+        if(ownedExeContList_[i]->get_component_state(rtc_) == RTC::ACTIVE_STATE)
             return true;
     }
     for(CORBA::ULong i=0; i<participatingExeContList->length(); i++){
@@ -304,30 +401,23 @@ bool RTSComp::isActive()
     return false;
 }
 
-void RTSComp::setRtc(RTObject_ptr rtc)
-{
-    rtc_ = 0;
+void RTSComp::setRtc(RTObject_ptr rtc) {
+	setRTObject(rtc);
 
-    if(!NamingContextHelper::isObjectAlive(rtc)){
-        ownedExeContList = 0;
-        participatingExeContList = 0;
-        for(map<string, RTSPortPtr>::iterator it = inPorts.begin();
-                it != inPorts.end(); it++){
-            RTSPort* port = it->second.get();
-            port->port = 0;
-        }
-        for(map<string, RTSPortPtr>::iterator it = outPorts.begin();
-                it != outPorts.end(); it++){
-            RTSPort* port = it->second.get();
-            port->port = 0;
-        }
-        return;
+  if(!NamingContextHelper::isObjectAlive(rtc)){
+    participatingExeContList = 0;
+    for(vector<RTSPortPtr>::iterator it = inPorts.begin(); it != inPorts.end(); it++){
+      RTSPort* port = *it;
+      port->port = 0;
     }
+    for(vector<RTSPortPtr>::iterator it = outPorts.begin(); it != outPorts.end(); it++){
+      RTSPort* port = *it;
+      port->port = 0;
+    }
+    return;
+  }
 
-    rtc_ = rtc;
     ComponentProfile_var cprofile = rtc_->get_component_profile();
-
-    ownedExeContList = rtc_->get_owned_contexts();
     participatingExeContList = rtc_->get_participating_contexts();
 
     inPorts.clear();
@@ -342,14 +432,14 @@ void RTSComp::setRtc(RTObject_ptr rtc)
         if (boost::iequals(portType, "CorbaPort")){
             rtsPort->isServicePort = true;
             rtsPort->isInPort = false;
-            outPorts.insert(pair<string, RTSPortPtr>(rtsPort->name, rtsPort));
+            outPorts.push_back(rtsPort);
         }else{
             rtsPort->isServicePort = false;
             if(boost::iequals(portType, "DataInPort"))
-                inPorts.insert(pair<string, RTSPortPtr>(rtsPort->name, rtsPort));
+                inPorts.push_back(rtsPort);
             else{
                 rtsPort->isInPort = false;
-                outPorts.insert(pair<string, RTSPortPtr>(rtsPort->name, rtsPort));
+                outPorts.push_back(rtsPort);
             }
         }
     }
@@ -371,8 +461,6 @@ void RTSComp::setRtc(RTObject_ptr rtc)
 
     connectionCheck();
 }
-
-
 /////////////////////////////////////////////////////////////////
 void RTSystemItem::initialize(ExtensionManager* ext)
 {
@@ -464,21 +552,27 @@ RTSComp* RTSystemItemImpl::nameToRTSComp(const string& name)
 }
 
 
-RTSComp* RTSystemItem::addRTSComp(const string& name, const QPointF& pos)
-{
-    return impl->addRTSComp(name, pos);
+RTSComp* RTSystemItem::addRTSComp(const string& name, const QPointF& pos) {
+	DDEBUG("RTSystemItem::addRTSComp");
+	return impl->addRTSComp(name, pos);
 }
 
 
-RTSComp* RTSystemItemImpl::addRTSComp(const string& name, const QPointF& pos)
-{
-    if(!nameToRTSComp(name)){
-        RTC::RTObject_ptr rtc = ncHelper.findObject<RTC::RTObject>(name, "rtc");
-        RTSCompPtr rtsComp = new RTSComp(name, rtc, this, pos);
-        rtsComps[name] = rtsComp;
-        return rtsComp.get();
-    }
-    return 0;
+RTSComp* RTSystemItemImpl::addRTSComp(const string& name, const QPointF& pos) {
+	DDEBUG("RTSystemItemImpl::addRTSComp");
+
+  if(!nameToRTSComp(name)){
+    RTC::RTObject_ptr rtc = ncHelper.findObject<RTC::RTObject>(name, "rtc");
+
+    RTSCompPtr rtsComp = new RTSComp(name, rtc, this, pos);
+    rtsComps[name] = rtsComp;
+
+		//observer_ = new ComponentObserverImpl();
+		//observer_->attachComponent(rtc);
+	
+		return rtsComp.get();
+  }
+  return 0;
 }
 
 
@@ -533,6 +627,10 @@ RTSConnection* RTSystemItem::addRTSConnection(const string& id, const string& na
     return impl->addRTSConnection(id, name, sourcePort, targetPort, dataflow, subscription, false, 0 );
 }
 
+RTSConnection* RTSystemItem::addRTSConnection(const std::string& id, const std::string& name,
+						RTSPort* sourcePort, RTSPort* targetPort, const std::vector<NamedValuePtr>& propList) {
+	return impl->addRTSConnection(id, name, sourcePort, targetPort, propList, false, 0);
+}
 
 RTSConnection* RTSystemItemImpl::addRTSConnectionName(const string& id, const string& name,
         const string& sourceCompName, const string& sourcePortName,
@@ -540,8 +638,8 @@ RTSConnection* RTSystemItemImpl::addRTSConnectionName(const string& id, const st
         const string& dataflow, const string& subscription,
         const bool setPos, const Vector2 pos[] )
 {
-    RTSPort* sourcePort{};
-    RTSPort* targetPort{};
+    RTSPort* sourcePort;
+    RTSPort* targetPort;
     RTSComp* sourceRtc = nameToRTSComp(sourceCompName);
     if(sourceRtc){
         sourcePort = sourceRtc->nameToRTSPort(sourcePortName);
@@ -582,8 +680,14 @@ RTSConnection* RTSystemItemImpl::addRTSConnection(const string& id, const string
         rtsConnection->sourcePort = sourcePort;
         rtsConnection->targetRTC = targetPort->rtsComp;
         rtsConnection->targetPort = targetPort;
-        rtsConnection->dataflow = dataflow;
-        rtsConnection->subscription = subscription;
+				vector<NamedValuePtr> propList;
+				NamedValuePtr dataTypeProp(new NamedValue("dataport.dataflow_type", dataflow));
+				propList.push_back(dataTypeProp);
+				NamedValuePtr subscriptionProp(new NamedValue("dataport.subscription_type", subscription));
+				propList.push_back(subscriptionProp);
+				NamedValuePtr sinterfaceProp(new NamedValue("dataport.interface_type", "corba_cdr"));
+				propList.push_back(sinterfaceProp);
+				rtsConnection->propList = propList;
         if(setPos){
             rtsConnection->setPosition(pos);
         }
@@ -604,6 +708,47 @@ RTSConnection* RTSystemItemImpl::addRTSConnection(const string& id, const string
     }
 
     return rtsConnection_;
+}
+
+RTSConnection* RTSystemItemImpl::addRTSConnection(const string& id, const string& name,
+			RTSPort* sourcePort, RTSPort* targetPort, const std::vector<NamedValuePtr>& propList,
+			const bool setPos, const Vector2 pos[]) {
+	DDEBUG("RTSystemItemImpl::addRTSConnection");
+
+	RTSConnection* rtsConnection_;
+	RTSystemItem::RTSConnectionMap::iterator it = rtsConnections.find(
+		RTSystemItem::RTSPortPair(sourcePort, targetPort));
+
+	if (it == rtsConnections.end()) {
+		RTSConnectionPtr rtsConnection = new RTSConnection(
+			id, name,
+			sourcePort->rtsComp->name, sourcePort->name,
+			targetPort->rtsComp->name, targetPort->name);
+		rtsConnection->srcRTC = sourcePort->rtsComp;
+		rtsConnection->sourcePort = sourcePort;
+		rtsConnection->targetRTC = targetPort->rtsComp;
+		rtsConnection->targetPort = targetPort;
+		rtsConnection->propList = propList;
+		if (setPos) {
+			rtsConnection->setPosition(pos);
+		}
+		rtsConnections[RTSystemItem::RTSPortPair(sourcePort, targetPort)] =
+			rtsConnection;
+		rtsConnection_ = rtsConnection.get();
+	} else {
+		rtsConnection_ = it->second;;
+	}
+
+	if (!CORBA::is_nil(sourcePort->port) && !sourcePort->port->_non_existent() &&
+		!CORBA::is_nil(targetPort->port) && !targetPort->port->_non_existent()) {
+		rtsConnection_->connect();
+	}
+
+	if (rtsConnection_->id == "") {
+		rtsConnection_->id = "NoConnection_" + getConnectionNumber();
+	}
+
+	return rtsConnection_;
 }
 
 
@@ -702,183 +847,198 @@ void RTSystemItem::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("Auto Connection"), autoConnection, changeProperty(autoConnection));
 }
 
+struct ConnectorPropComparator {
+	string target_;
 
-bool RTSystemItem::store(Archive& archive)
-{
-    archive.write("AutoConnection", autoConnection);
+	ConnectorPropComparator(string value) {
+		target_ = value;
+	}
+	bool operator()(const NamedValuePtr elem) const {
+		return (target_ == elem->name_);
+	}
+};
 
-    map<string, RTSCompPtr>& comps = impl->rtsComps;
+bool RTSystemItem::store(Archive& archive) {
+  archive.write("AutoConnection", autoConnection);
 
-    ListingPtr compListing = new Listing();
-    for(map<string, RTSCompPtr>::iterator it = comps.begin();
-                it != comps.end(); it++){
-        RTSComp* comp = it->second.get();
-        Mapping* compMap = compListing->newMapping();
-        compMap->write("name", comp->name);
-        write( *compMap, "pos", Vector2(comp->pos.x(), comp->pos.y()) );
+  map<string, RTSCompPtr>& comps = impl->rtsComps;
 
-        ListingPtr inportListing = new Listing();
-        for(map<string, RTSPortPtr>::iterator p0 = comp->inPorts.begin();
-                p0 != comp->inPorts.end(); p0++){
-            RTSPort* in = p0->second.get();
-            Mapping* inMap = inportListing->newMapping();
-            inMap->write("name", in->name);
-            inMap->write("isServicePort", in->isServicePort);
+  ListingPtr compListing = new Listing();
+  for(map<string, RTSCompPtr>::iterator it = comps.begin();
+              it != comps.end(); it++){
+      RTSComp* comp = it->second.get();
+      Mapping* compMap = compListing->newMapping();
+      compMap->write("name", comp->name);
+      write( *compMap, "pos", Vector2(comp->pos.x(), comp->pos.y()) );
+
+      ListingPtr inportListing = new Listing();
+      for(vector<RTSPortPtr>::iterator p0 = comp->inPorts.begin(); p0 != comp->inPorts.end(); p0++){
+          RTSPort* in = *p0;
+          Mapping* inMap = inportListing->newMapping();
+          inMap->write("name", in->name);
+          inMap->write("isServicePort", in->isServicePort);
+      }
+      if(!inportListing->empty()){
+          compMap->insert("InPorts", inportListing);
+      }
+
+      ListingPtr outportListing = new Listing();
+      for(vector<RTSPortPtr>::iterator p0 = comp->outPorts.begin(); p0 != comp->outPorts.end(); p0++){
+          RTSPort* out = *p0;
+          Mapping* outMap = outportListing->newMapping();
+          outMap->write("name", out->name);
+          outMap->write("isServicePort", out->isServicePort);
+      }
+      if(!outportListing->empty()){
+          compMap->insert("OutPorts", outportListing);
+      }
+
+  }
+  if(!compListing->empty()){
+      archive.insert("RTSComps", compListing);
+  }
+
+  RTSConnectionMap& connections = impl->rtsConnections;
+
+  ListingPtr connectionListing = new Listing();
+  for(RTSConnectionMap::iterator it = connections.begin();
+              it != connections.end(); it++){
+      RTSConnection* connect = it->second.get();
+      Mapping* connectMap = connectionListing->newMapping();
+      connectMap->write("name", connect->name);
+      connectMap->write("sourceRtcName", connect->sourceRtcName);
+      connectMap->write("sourcePortName", connect->sourcePortName);
+      connectMap->write("targetRtcName", connect->targetRtcName);
+      connectMap->write("targetPortName", connect->targetPortName);
+
+			vector<NamedValuePtr>::iterator dataflowProp = find_if(connect->propList.begin(), connect->propList.end(), ConnectorPropComparator("dataport.dataflow_type"));
+			if (dataflowProp != connect->propList.end()) {
+				connectMap->write("dataflow", (*dataflowProp)->value_);
+			}
+			vector<NamedValuePtr>::iterator subscriptionProp = find_if(connect->propList.begin(), connect->propList.end(), ConnectorPropComparator("dataport.subscription_type"));
+			if (subscriptionProp != connect->propList.end()) {
+				connectMap->write("subscription", (*subscriptionProp)->value_);
+			}
+      if(connect->setPos){
+          VectorXd p(12);
+          for(int i=0; i<6; i++){
+              p(2*i) = connect->position[i](0);
+              p(2*i+1) = connect->position[i](1);
+          }
+          write( *connectMap, "position", p );
+      }
+  }
+  if(!connectionListing->empty()){
+      archive.insert("RTSConnections", connectionListing);
+  }
+
+  return true;
+}
+
+
+bool RTSystemItem::restore(const Archive& archive) {
+	DDEBUG("RTSystemItemImpl::restore");
+
+	archive.read("AutoConnection", autoConnection);
+  archive.addPostProcess(
+          std::bind(&RTSystemItemImpl::restoreRTSystem, impl, std::ref(archive)));
+
+  return true;
+}
+
+void RTSystemItemImpl::restoreRTSystem(const Archive& archive) {
+	DDEBUG("RTSystemItemImpl::restoreRTSystem");
+
+  const Listing& compListing = *archive.findListing("RTSComps");
+  if(compListing.isValid()){
+    for(int i=0; i < compListing.size(); i++){
+      const Mapping& compMap = *compListing[i].toMapping();
+      string name;
+      Vector2 pos;
+      compMap.read("name", name);
+      read( compMap, "pos", pos);
+
+      vector<pair<string, bool>> inPorts;
+      vector<pair<string, bool>> outPorts;
+      const Listing& inportListing = *compMap.findListing("InPorts");
+      if(inportListing.isValid()){
+        for(int i=0; i < inportListing.size(); i++){
+          const Mapping& inMap = *inportListing[i].toMapping();
+          string portName;
+          bool isServicePort;
+          inMap.read("name", portName);
+          inMap.read("isServicePort", isServicePort);
+          inPorts.push_back(make_pair(portName, isServicePort));
         }
-        if(!inportListing->empty()){
-            compMap->insert("InPorts", inportListing);
+      }
+      const Listing& outportListing = *compMap.findListing("OutPorts");
+      if(outportListing.isValid()){
+        for(int i=0; i < outportListing.size(); i++){
+          const Mapping& outMap = *outportListing[i].toMapping();
+          string portName;
+          bool isServicePort;
+          outMap.read("name", portName);
+          outMap.read("isServicePort", isServicePort);
+          outPorts.push_back(make_pair(portName, isServicePort));
         }
-
-        ListingPtr outportListing = new Listing();
-        for(map<string, RTSPortPtr>::iterator p0 = comp->outPorts.begin();
-                p0 != comp->outPorts.end(); p0++){
-            RTSPort* out = p0->second.get();
-            Mapping* outMap = outportListing->newMapping();
-            outMap->write("name", out->name);
-            outMap->write("isServicePort", out->isServicePort);
-        }
-        if(!outportListing->empty()){
-            compMap->insert("OutPorts", outportListing);
-        }
-
+      }
+      restoreRTSComp( name, pos, inPorts, outPorts );
     }
-    if(!compListing->empty()){
-        archive.insert("RTSComps", compListing);
-    }
+  }
 
-    RTSConnectionMap& connections = impl->rtsConnections;
-
-    ListingPtr connectionListing = new Listing();
-    for(RTSConnectionMap::iterator it = connections.begin();
-                it != connections.end(); it++){
-        RTSConnection* connect = it->second.get();
-        Mapping* connectMap = connectionListing->newMapping();
-        connectMap->write("name", connect->name);
-        connectMap->write("sourceRtcName", connect->sourceRtcName);
-        connectMap->write("sourcePortName", connect->sourcePortName);
-        connectMap->write("targetRtcName", connect->targetRtcName);
-        connectMap->write("targetPortName", connect->targetPortName);
-        connectMap->write("dataflow", connect->dataflow);
-        connectMap->write("subscription", connect->subscription);
-        if(connect->setPos){
-            VectorXd p(12);
+  if(self->autoConnection){
+    const Listing& connectionListing = *archive.findListing("RTSConnections");
+    if(connectionListing.isValid()){
+      for(int i=0; i<connectionListing.size(); i++){
+        const Mapping& connectMap = *connectionListing[i].toMapping();
+        string name, sR, sP, tR, tP, dataflow, subscription;
+        connectMap.read("name", name);
+        connectMap.read("sourceRtcName", sR);
+        connectMap.read("sourcePortName", sP);
+        connectMap.read("targetRtcName", tR);
+        connectMap.read("targetPortName", tP);
+        connectMap.read("dataflow", dataflow);
+        connectMap.read("subscription", subscription);
+        VectorXd p(12);
+        bool readPos=false;
+        Vector2 pos[6];
+        if( read( connectMap, "position", p) ){
+            readPos=true;
             for(int i=0; i<6; i++){
-                p(2*i) = connect->position[i](0);
-                p(2*i+1) = connect->position[i](1);
-            }
-            write( *connectMap, "position", p );
-        }
-    }
-    if(!connectionListing->empty()){
-        archive.insert("RTSConnections", connectionListing);
-    }
-
-    return true;
-
-}
-
-
-bool RTSystemItem::restore(const Archive& archive)
-{
-    archive.read("AutoConnection", autoConnection);
-    archive.addPostProcess(
-            std::bind(&RTSystemItemImpl::restoreRTSystem, impl, std::ref(archive)));
-
-    return true;
-}
-
-void RTSystemItemImpl::restoreRTSystem(const Archive& archive)
-{
-    const Listing& compListing = *archive.findListing("RTSComps");
-    if(compListing.isValid()){
-        for(int i=0; i < compListing.size(); i++){
-            const Mapping& compMap = *compListing[i].toMapping();
-            string name;
-            Vector2 pos;
-            compMap.read("name", name);
-            read( compMap, "pos", pos);
-
-            vector<pair<string, bool>> inPorts;
-            vector<pair<string, bool>> outPorts;
-            const Listing& inportListing = *compMap.findListing("InPorts");
-            if(inportListing.isValid()){
-                for(int i=0; i < inportListing.size(); i++){
-                    const Mapping& inMap = *inportListing[i].toMapping();
-                    string portName;
-                    bool isServicePort;
-                    inMap.read("name", portName);
-                    inMap.read("isServicePort", isServicePort);
-                    inPorts.push_back(make_pair(portName, isServicePort));
-                }
-            }
-            const Listing& outportListing = *compMap.findListing("OutPorts");
-            if(outportListing.isValid()){
-                for(int i=0; i < outportListing.size(); i++){
-                    const Mapping& outMap = *outportListing[i].toMapping();
-                    string portName;
-                    bool isServicePort;
-                    outMap.read("name", portName);
-                    outMap.read("isServicePort", isServicePort);
-                    outPorts.push_back(make_pair(portName, isServicePort));
-                }
-            }
-            restoreRTSComp( name, pos, inPorts, outPorts );
-        }
-    }
-
-    if(self->autoConnection){
-        const Listing& connectionListing = *archive.findListing("RTSConnections");
-        if(connectionListing.isValid()){
-            for(int i=0; i<connectionListing.size(); i++){
-                const Mapping& connectMap = *connectionListing[i].toMapping();
-                string name, sR, sP, tR, tP, dataflow, subscription;
-                connectMap.read("name", name);
-                connectMap.read("sourceRtcName", sR);
-                connectMap.read("sourcePortName", sP);
-                connectMap.read("targetRtcName", tR);
-                connectMap.read("targetPortName", tP);
-                connectMap.read("dataflow", dataflow);
-                connectMap.read("subscription", subscription);
-                VectorXd p(12);
-                bool readPos=false;
-                Vector2 pos[6];
-                if( read( connectMap, "position", p) ){
-                    readPos=true;
-                    for(int i=0; i<6; i++){
-                        pos[i] << p(2*i) , p(2*i+1);
-                    }
-                }
-                addRTSConnectionName( "", name,
-                        sR, sP, tR, tP, dataflow, subscription, readPos, pos);
+                pos[i] << p(2*i) , p(2*i+1);
             }
         }
+        addRTSConnectionName( "", name,
+                sR, sP, tR, tP, dataflow, subscription, readPos, pos);
+      }
     }
+  }
 
-    diagramViewUpdate();
-
+  diagramViewUpdate();
 }
 
 
 void RTSystemItemImpl::restoreRTSComp(const string& name, const Vector2& pos,
-        const vector<pair<string, bool>>& inPorts, const vector<pair<string, bool>>& outPorts)
-{
-    RTSComp* comp = addRTSComp(name, QPointF(pos(0), pos(1)) );
-    if(!comp->rtc_){
-        comp->inPorts.clear();
-        comp->outPorts.clear();
-        for(size_t i=0; i < inPorts.size(); i++){
-            RTSPortPtr rtsPort = new RTSPort(inPorts[i].first, 0, comp);
-            rtsPort->isInPort = true;
-            rtsPort->isServicePort = inPorts[i].second;
-            comp->inPorts.insert(pair<string, RTSPortPtr>(rtsPort->name, rtsPort));
-        }
-        for(size_t i=0; i < outPorts.size(); i++){
-            RTSPortPtr rtsPort = new RTSPort(outPorts[i].first, 0, comp);
-            rtsPort->isInPort = false;
-            rtsPort->isServicePort = outPorts[i].second;
-            comp->outPorts.insert(pair<string, RTSPortPtr>(rtsPort->name, rtsPort));
-        }
+        const vector<pair<string, bool>>& inPorts, const vector<pair<string, bool>>& outPorts) {
+	DDEBUG("RTSystemItemImpl::restoreRTSComp");
+
+	RTSComp* comp = addRTSComp(name, QPointF(pos(0), pos(1)) );
+  if(!comp->rtc_){
+    comp->inPorts.clear();
+    comp->outPorts.clear();
+    for(int i=0; i<inPorts.size(); i++){
+      RTSPortPtr rtsPort = new RTSPort(inPorts[i].first, 0, comp);
+      rtsPort->isInPort = true;
+      rtsPort->isServicePort = inPorts[i].second;
+      comp->inPorts.push_back(rtsPort);
     }
+    for(int i=0; i<outPorts.size(); i++){
+      RTSPortPtr rtsPort = new RTSPort(outPorts[i].first, 0, comp);
+      rtsPort->isInPort = false;
+      rtsPort->isServicePort = outPorts[i].second;
+      comp->outPorts.push_back(rtsPort);
+    }
+  }
 }
 
 

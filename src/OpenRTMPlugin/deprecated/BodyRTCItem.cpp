@@ -128,12 +128,16 @@ void BodyRTCItem::createRTC(BodyPtr body)
                 }
             }
             std::string confFileName0 = getNativePathString(confPath);
-            if(bridgeConf->loadConfigFile(confFileName0.c_str())){
-                mv->putln(fmt(_("Config File \"%1%\" has been loaded.")) % confFileName0);
-            } else {
-                mv->putln(fmt(_("Cannot find or open \"%1%\".")) % confFileName0);
-            }
-        }
+						try {
+							if(bridgeConf->loadConfigFile(confFileName0.c_str())){
+									mv->putln(fmt(_("Config File \"%1%\" has been loaded.")) % confFileName0);
+							} else {
+									mv->putln(fmt(_("Cannot find or open \"%1%\".")) % confFileName0);
+							}
+						} catch (...) {
+							mv->putln(MessageView::ERROR, fmt(_("Cannot find or open \"%1%\".")) % confFileName0);
+						}
+				}
     }
 
     ModuleInfoList& moduleInfoList = bridgeConf->moduleInfoList;

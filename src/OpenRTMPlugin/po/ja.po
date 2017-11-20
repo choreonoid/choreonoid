@@ -546,3 +546,14 @@ msgstr "本シミュレーションではOpenHRPクロックジェネレータ�
 msgid "detected RTC: %1%  Port connection: %2% <--> %3%"
 msgstr "RTCを検出： %1%　ポート接続：　%2% <--> %3%"
 
+#: RTSConfigurationView.cpp:149
+msgid "Apply"
+msgstr "適用"
+
+#: RTSConfigurationView.cpp:150
+msgid "Cancel"
+msgstr "キャンセル"
+
+#: RTSConfigurationView.cpp:472
+msgid "Configuration"
+msgstr "RTCコンフィギュレーション"

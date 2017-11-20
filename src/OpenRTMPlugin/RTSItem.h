@@ -14,13 +14,50 @@
 #include <rtm/CORBA_SeqUtil.h>
 #include <QPoint>
 #include <list>
+
+#include <string>
+#include "OpenRTMItem.h"
+
 #include "exportdecl.h"
 
 namespace cnoid {
 
 class RTSComp;
-class RTSPort : public Referenced
-{
+
+class NamedValue {
+public:
+	std::string name_;
+	std::string value_;
+
+	NamedValue(std::string name, std::string value) {
+		name_ = name;
+		value_ = value;
+	};
+};
+typedef std::shared_ptr<NamedValue> NamedValuePtr;
+
+class PortInterface {
+public:
+	std::string rtc_name;
+	std::string port_name;
+	std::string if_polarity;
+	std::string if_tname;
+	std::string if_iname;
+
+	bool isRequiredPolarity() {
+		return if_polarity == "required";
+	};
+
+	std::string toDispStr() {
+		return rtc_name + ":" + if_tname + ":" + if_iname;
+	};
+	std::string toStr() {
+		return rtc_name + ".port." + port_name + "." + if_polarity + "." + if_tname + "." + if_iname;
+	};
+};
+typedef std::shared_ptr<PortInterface> PortInterfacePtr;
+
+class RTSPort : public Referenced {
 public :
     RTSPort(const std::string& name, RTC::PortService_var port, RTSComp* parent);
     RTSComp* rtsComp;
@@ -28,16 +65,37 @@ public :
     RTC::PortService_var port;
     bool isServicePort;
     bool isInPort;
+		std::vector<PortInterfacePtr>  interList;
 
     bool connected();
     void stateCheck();
     bool checkConnectablePort(RTSPort* target);
     bool connectedWith(RTSPort* target);
+
+		std::vector<std::string> getDataTypes();
+		std::vector<std::string> getInterfaceTypes();
+		std::vector<std::string> getDataflowTypes();
+		std::vector<std::string> getSubscriptionTypes();
+
+private:
+		std::vector<std::string> getProperty(const std::string& key);
+
 };
 typedef ref_ptr<RTSPort> RTSPortPtr;
 
-class RTSConnection : public Referenced
-{
+struct RTSPortComparator {
+	std::string name_;
+
+	RTSPortComparator(std::string value) {
+		name_ = value;
+	}
+	bool operator()(const RTSPortPtr elem) const {
+		return (name_ == elem->name);
+	}
+};
+
+
+class RTSConnection : public Referenced {
 public :
     RTSConnection(const std::string& id, const std::string& name, const std::string& sourceRtcName,
             const std::string& sourcePortName, const std::string& targetRtcName, const std::string& targetPortName);
@@ -47,11 +105,9 @@ public :
     std::string sourcePortName;
     std::string targetRtcName;
     std::string targetPortName;
-    std::string dataflow;
-    std::string sinterface;
-    std::string subscription;
-    float  pushRate;
-    std::string pushPolicy;
+
+		std::vector<NamedValuePtr> propList;
+
     bool isAlive_;
 
     RTSComp* srcRTC;
@@ -76,18 +132,16 @@ public :
 typedef ref_ptr<RTSConnection> RTSConnectionPtr;
 
 class RTSystemItemImpl;
-class RTSComp : public Referenced
-{
+class RTSComp : public Referenced, public RTCWrapper {
 public :
     RTSComp(const std::string& name, RTC::RTObject_ptr rtc, RTSystemItemImpl* impl, const QPointF& pos);
 
     RTSystemItemImpl* impl;
-    RTC::RTObject_ptr rtc_;
     std::string name;
-    RTC::ExecutionContextList_var ownedExeContList;
     RTC::ExecutionContextList_var participatingExeContList;
-    std::map<std::string, RTSPortPtr> inPorts;
-    std::map<std::string, RTSPortPtr> outPorts;
+		std::vector<RTSPortPtr> inPorts;
+		std::vector<RTSPortPtr> outPorts;
+
     QPointF pos;
 
     bool isActive();
@@ -96,15 +150,13 @@ public :
     void setRtc(RTC::RTObject_ptr rtc);
 
     RTSPort* nameToRTSPort(const std::string& name);
-
 };
 typedef ref_ptr<RTSComp> RTSCompPtr;
 
 /*!
  * @brief This is the RTSystem item.
  */
-class CNOID_EXPORT RTSystemItem : public Item
-{
+class CNOID_EXPORT RTSystemItem : public Item {
 public:
     typedef cnoid::IdPair<RTSPort*> RTSPortPair;
     typedef std::map<RTSPortPair, RTSConnectionPtr> RTSConnectionMap;
@@ -119,7 +171,9 @@ public:
     RTSComp* nameToRTSComp(const std::string& name);
     RTSConnection* addRTSConnection(const std::string& id, const std::string& name,
             RTSPort* sourcePort, RTSPort* targetPort, const std::string& dataflow, const std::string& subscription);
-    bool connectionCheck();
+		RTSConnection* addRTSConnection(const std::string& id, const std::string& name,
+						RTSPort* sourcePort, RTSPort* targetPort, const std::vector<NamedValuePtr>& propList);
+		bool connectionCheck();
     void RTSCompToConnectionList(const RTSComp* rtsComp,
                                  std::list<RTSConnection*>& rtsConnectionList, int mode=0);
     RTSConnectionMap& rtsConnections();

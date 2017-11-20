@@ -44,6 +44,44 @@ int ChoreonoidExecutionContext::svc(void)
     return 0;
 }
 
+RTC::ReturnCode_t ChoreonoidExecutionContext::activate_component(RTC::LightweightRTObject_ptr comp) throw (CORBA::SystemException) {
+#ifdef OPENRTM_VERSION110
+	CompItr it = std::find_if(m_comps.begin(), m_comps.end(),
+		find_comp(comp));
+	if (it == m_comps.end())
+		return RTC::BAD_PARAMETER;
+
+	if (!(it->_sm.m_sm.isIn(INACTIVE_STATE)))
+		return RTC::PRECONDITION_NOT_MET;
+
+	it->_sm.m_sm.goTo(ACTIVE_STATE);
+
+	it->_sm.worker();
+
+	if ((it->_sm.m_sm.isIn(ACTIVE_STATE)))
+		return RTC::RTC_OK;
+
+	return RTC::RTC_ERROR;
+#else
+	RTC_impl::RTObjectStateMachine* rtobj = m_worker.findComponent(comp);
+
+	if (rtobj == NULL) {
+		return RTC::BAD_PARAMETER;
+}
+	if (!(rtobj->isCurrentState(RTC::INACTIVE_STATE))) {
+		return RTC::PRECONDITION_NOT_MET;
+	}
+	m_syncActivation = false;
+
+	RTC::ReturnCode_t ret = ExecutionContextBase::activateComponent(comp);
+	invokeWorkerPreDo();
+	if ((rtobj->isCurrentState(RTC::ACTIVE_STATE))) {
+		return RTC::RTC_OK;
+	}
+	return RTC::RTC_ERROR;
+#endif
+	}
+
 
 RTC::ReturnCode_t ChoreonoidExecutionContext::deactivate_component(RTC::LightweightRTObject_ptr comp) throw (CORBA::SystemException)
 {
@@ -60,8 +98,9 @@ RTC::ReturnCode_t ChoreonoidExecutionContext::deactivate_component(RTC::Lightwei
     
     it->_sm.m_sm.goTo(RTC::INACTIVE_STATE);
 
-    tick();
-    
+    //tick();
+		it->_sm.worker();
+
     if(it->_sm.m_sm.isIn(RTC::INACTIVE_STATE)){
         RTC_TRACE(("The component has been properly deactivated."));
         return RTC::RTC_OK;
@@ -72,23 +111,62 @@ RTC::ReturnCode_t ChoreonoidExecutionContext::deactivate_component(RTC::Lightwei
 #else
     RTC_impl::RTObjectStateMachine* rtobj = m_worker.findComponent(comp);
 
-    if (rtobj == NULL)
-    {
+    if (rtobj == NULL) {
         return RTC::BAD_PARAMETER;
     }
-    if (!(rtobj->isCurrentState(RTC::ACTIVE_STATE)))
-    {
+    if (!(rtobj->isCurrentState(RTC::ACTIVE_STATE))) {
         return RTC::PRECONDITION_NOT_MET;
     }
-    rtobj->goTo(RTC::INACTIVE_STATE);
 
-    tick();
+		m_syncDeactivation = false;
+		RTC::ReturnCode_t ret = ExecutionContextBase::deactivateComponent(comp);
+		invokeWorkerPreDo();
 
-    if (!(rtobj->isCurrentState(RTC::INACTIVE_STATE)))
-    {
+		//rtobj->goTo(RTC::INACTIVE_STATE);
+  //  tick();
+
+    if (!(rtobj->isCurrentState(RTC::INACTIVE_STATE))) {
         return RTC::RTC_OK;
     }
 
     return RTC::RTC_ERROR;
 #endif
 }    
+
+RTC::ReturnCode_t ChoreonoidExecutionContext::reset_component(RTC::LightweightRTObject_ptr comp) throw (CORBA::SystemException) {
+#ifdef OPENRTM_VERSION110
+	CompItr it = std::find_if(m_comps.begin(), m_comps.end(), find_comp(comp));
+	if (it == m_comps.end())
+		return RTC::BAD_PARAMETER;
+
+	if (!(it->_sm.m_sm.isIn(ERROR_STATE)))
+		return RTC::PRECONDITION_NOT_MET;
+
+	it->_sm.m_sm.goTo(INACTIVE_STATE);
+
+	it->_sm.worker();
+
+	if ((it->_sm.m_sm.isIn(INACTIVE_STATE)))
+		return RTC::RTC_OK;
+
+	return RTC::RTC_ERROR;
+#else
+	RTC_impl::RTObjectStateMachine* rtobj = m_worker.findComponent(comp);
+
+	if (rtobj == NULL) {
+		return RTC::BAD_PARAMETER;
+	}
+	if (!(rtobj->isCurrentState(RTC::ERROR_STATE))) {
+		return RTC::PRECONDITION_NOT_MET;
+	}
+	m_syncReset = false;
+	RTC::ReturnCode_t ret = ExecutionContextBase::resetComponent(comp);
+	invokeWorkerPreDo();
+
+	if ((rtobj->isCurrentState(RTC::INACTIVE_STATE))) {
+		return RTC::RTC_OK;
+	}
+	return RTC::RTC_ERROR;
+#endif
+
+}

@@ -23,6 +23,7 @@ CNOID_EXPORT RTC::RTObject_impl* createManagedRTC(const char* comp_args);
 CNOID_EXPORT int numUnmanagedRTCs();
 CNOID_EXPORT int deleteUnmanagedRTCs();
     
+bool isManagedRTC(RTC::RTObject_ptr rtc);
 
 template<class ServiceType>
 typename ServiceType::_ptr_type findRTCService(RTC::RTObject_ptr rtc, const std::string& name)

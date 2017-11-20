@@ -3,8 +3,8 @@
   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_OPENRTM_PLUGIN_CHOREONOID_EXECUTION_CONTEXT_H
-#define CNOID_OPENRTM_PLUGIN_CHOREONOID_EXECUTION_CONTEXT_H
+#ifndef CNOID_OPENRTM_PLUGIN_CHOREONOID_EXECUTION_CONTEXT_H_INCLUDED
+#define CNOID_OPENRTM_PLUGIN_CHOREONOID_EXECUTION_CONTEXT_H_INCLUDED
 
 #include <rtm/RTC.h>
 #include <coil/Task.h>
@@ -37,7 +37,10 @@ public:
     virtual ~ChoreonoidExecutionContext(void);
     virtual void tick(void) throw (CORBA::SystemException);
     virtual int svc(void);
+		virtual RTC::ReturnCode_t activate_component(RTC::LightweightRTObject_ptr comp) throw (CORBA::SystemException);
     virtual RTC::ReturnCode_t deactivate_component(RTC::LightweightRTObject_ptr comp) throw (CORBA::SystemException);
+		virtual RTC::ReturnCode_t	reset_component(RTC::LightweightRTObject_ptr comp) throw (CORBA::SystemException);
+
 };
 };
 

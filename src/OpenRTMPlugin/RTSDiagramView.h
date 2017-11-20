@@ -10,34 +10,32 @@
 
 using namespace cnoid;
 
-namespace cnoid 
-{
+namespace cnoid {
 class RTSDiagramViewImpl;
 
-class RTSDiagramView : public View
-{
-    Q_OBJECT
+class RTSDiagramView : public View {
+Q_OBJECT
 
 public:
-    static void initializeClass(ExtensionManager* ext);
-    static RTSDiagramView* instance();
+	static void initializeClass(ExtensionManager* ext);
+	static RTSDiagramView* instance();
 
-    RTSDiagramView();
-    virtual ~RTSDiagramView();
+	RTSDiagramView();
+  virtual ~RTSDiagramView();
 
-    void updateView();
+  void updateView();
 
 public Q_SLOTS:
-    void onRTSCompSelectionChange();
+  void onRTSCompSelectionChange();
 
 protected:
-    virtual void onActivated() override;
-    virtual void onDeactivated() override;
-    virtual bool storeState(Archive& archive) override;
-    virtual bool restoreState(const Archive& archive) override;
+  virtual void onActivated() override;
+  virtual void onDeactivated() override;
+  virtual bool storeState(Archive& archive) override;
+  virtual bool restoreState(const Archive& archive) override;
     
 private :
-    RTSDiagramViewImpl* impl;
+	RTSDiagramViewImpl* impl;
 
 };
 

@@ -10,7 +10,10 @@
 #include <boost/filesystem.hpp>
 #include <iostream>
 
+#include "../LoggerUtil.h"
+
 using namespace std;
+using namespace cnoid;
 namespace program_options = boost::program_options;
 namespace filesystem = boost::filesystem;
 using boost::format;
@@ -27,9 +30,9 @@ BridgeConf::~BridgeConf()
 
 }
 
-bool BridgeConf::loadConfigFile(const char* confFileName) 
-{
-    isReady_ = false;
+bool BridgeConf::loadConfigFile(const char* confFileName) {
+	DDEBUG("BridgeConf::loadConfigFile");
+	isReady_ = false;
     initOptionsDescription();
     initLabelToDataTypeMap();
 
@@ -151,7 +154,8 @@ void BridgeConf::parseCommandLineOptions(int argc, char* argv[])
 
 void BridgeConf::parseOptions()
 {
-    if(vmap.count("module")){
+	DDEBUG("BridgeConf::parseOptions");
+	if(vmap.count("module")){
         vector<string> values = vmap["module"].as<vector<string> >();
         for(size_t i=0; i < values.size(); ++i){
             string modulePath( values[i] );
@@ -198,14 +202,14 @@ void BridgeConf::parseOptions()
 }
 
 
-void BridgeConf::setPortInfos(const char* optionLabel, PortInfoMap& portInfos)
-{
-    vector<string> ports = vmap[optionLabel].as<vector<string> >();
+void BridgeConf::setPortInfos(const char* optionLabel, PortInfoMap& portInfos) {
+	DDEBUG("BridgeConf::setPortInfos");
+	vector<string> ports = vmap[optionLabel].as<vector<string> >();
     for(size_t i=0; i < ports.size(); ++i){
-        vector<string> parameters;
+			vector<string> parameters;
         extractParameters(ports[i], parameters);
         int n = parameters.size();
-        if(n < 2 || n > 4){
+				if (n < 2 || n > 4) {
             throw invalid_argument(string("invalid in port setting"));
         }
         PortInfo info;
@@ -213,11 +217,16 @@ void BridgeConf::setPortInfos(const char* optionLabel, PortInfoMap& portInfos)
         info.portName = parameters[0];
         int j;
         for(j=1; j<3; j++){
-            LabelToDataTypeIdMap::iterator it = labelToDataTypeIdMap.find(parameters[j]);
-            if(it == labelToDataTypeIdMap.end() ){ // Handle as identification name because it is not a property name
-                if(j==2)    // Error because there is no property name by the third
-                    throw invalid_argument(string("invalid data type"));
-                string st=parameters[j];
+					if (parameters.size() <= j) {
+						throw invalid_argument(string("invalid in port setting"));
+					}
+					LabelToDataTypeIdMap::iterator it = labelToDataTypeIdMap.find(parameters[j]);
+            if(it == labelToDataTypeIdMap.end() ){     // プロパティ名でないので識別名　 //
+							// 3番目までにプロパティ名がないのでエラー　//
+							if (j == 2) {
+								throw invalid_argument(string("invalid data type"));
+							}
+							string st=parameters[j];
                 vector<string> owners;
                 extractParameters(st, owners, ',');
                 for(size_t i=0; i<owners.size(); i++){
@@ -228,32 +237,30 @@ void BridgeConf::setPortInfos(const char* optionLabel, PortInfoMap& portInfos)
                             break;
                         }
                     }
-                    if(digit){
-                        // Since the identification name is numeric, it becomes image data.
-                        // If two or more are specified, an error occurs.
-                        info.dataOwnerId = atoi(owners[i].c_str());
+                    if(digit){  //識別名が数字なので画像データ　２つ以上指定するとエラー　//
+											info.dataOwnerId = atoi(owners[i].c_str());
                         info.dataOwnerNames.clear();
                         if(owners.size() > 1){
                             throw invalid_argument(string("invalid VisionSensor setting"));
                         }
-                    }else{  // Identification name is name
-                        info.dataOwnerId = -1;
+                    }else{      //識別名が名前  //
+											info.dataOwnerId = -1;
                         info.dataOwnerNames.push_back(owners[i]);
                     }
                 }
-            }else{  // Property name
-                info.dataTypeId = it->second;
+            }else{  // プロパティ名 //
+							info.dataTypeId = it->second;
                 j++;
                 break;
             }
         }
-        if(j<n){ // If there is still a parameter, handle it as the sampling time
+				if(j<n){    // まだパラメターがあるならサンプリング時間　//
             info.stepTime = atof(parameters[j].c_str());
         }else{
             info.stepTime = 0;
         }
 
-        // When the property is CONSTRAINT_FORCE, there must not be two or more identification names
+				// プロパティがCONSTRAINT_FORCEのとき　識別名が２つ以上あってはいけない　   //
         if(info.dataTypeId==CONSTRAINT_FORCE && info.dataOwnerNames.size() > 1 )
             throw invalid_argument(string("invalid in port setting"));
         portInfos.insert(make_pair(info.portName, info));
@@ -336,8 +343,9 @@ void BridgeConf::addTimeRateInfo(const std::string& value)
     }
 }
 
-void BridgeConf::setupModules()
-{
+void BridgeConf::setupModules() {
+	DDEBUG("BridgeConf::setupModules");
+
     RTC::Manager& rtcManager = RTC::Manager::instance();
     ModuleInfoList::iterator moduleInfo = moduleInfoList.begin();
     format param("%1%?exec_cxt.periodic.type=ChoreonoidExecutionContext&exec_cxt.periodic.rate=1000000");

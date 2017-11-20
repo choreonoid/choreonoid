@@ -13,38 +13,114 @@
 #include <QIcon>
 #include <QMimeData>
 #include <QDrag>
+#include <QMouseEvent>
 #include <boost/algorithm/string.hpp>
+
+#include <QMessageBox>
+#include <rtm/idl/RTC.hh>
+
+#include "OpenRTMUtil.h"
+#include "LoggerUtil.h"
+
 #include "gettext.h"
 
 #undef _HOST_CXT_VERSION
 
 namespace cnoid {
 
-class RTSVItem : public QTreeWidgetItem
-{
-public :
-    RTSVItem(const NamingContextHelper::ObjectInfo& info){
-        info_ = info;
-        QString name = info_.id.c_str();
-        setText(0, name);
-        setIcon(0, info_.isAlive ? QIcon(":/Corba/icons/NSRTC.png") :
-                QIcon(":/Corba/icons/NSZombi.png"));
-    }
-    NamingContextHelper::ObjectInfo info_;
-};
-
-void RTSNameTreeWidget::mouseMoveEvent(QMouseEvent *event)
-{
-    QByteArray itemData;
-    QMimeData *mimeData = new QMimeData;
-    mimeData->setData("application/RTSNameServerItem", itemData);
-    QDrag *drag = new QDrag(this);
-    drag->setPixmap(QPixmap(":/Corba/icons/NSRTC.png"));
-    drag->setMimeData(mimeData);
-    drag->start(Qt::MoveAction);
+RTSVItem::RTSVItem(const NamingContextHelper::ObjectInfo& info, RTC::RTObject_ptr rtc) {
+  info_ = info;
+  QString name = info_.id.c_str();
+  setText(0, name);
+  setIcon(0, info_.isAlive ? QIcon(":/Corba/icons/NSRTC.png") :
+          QIcon(":/Corba/icons/NSZombi.png"));
+	//
+	if (rtc) {
+		setRTObject(rtc);
+	}
+	//setText(1, "Active");
+}
+//////////
+void RTSNameTreeWidget::mouseMoveEvent(QMouseEvent *event) {
+	QByteArray itemData;
+	QMimeData *mimeData = new QMimeData;
+	mimeData->setData("application/RTSNameServerItem", itemData);
+	QDrag *drag = new QDrag(this);
+	drag->setPixmap(QPixmap(":/Corba/icons/NSRTC.png"));
+	drag->setMimeData(mimeData);
+	drag->start(Qt::MoveAction);
 }
 
+void RTSNameTreeWidget::mousePressEvent(QMouseEvent* event) {
+	DDEBUG("RTSNameTreeWidget::mousePressEvent");
+	if (event->button() == Qt::RightButton) {
+		if (this->currentItem()) {
+			menuManager.setNewPopupMenu(this);
+			menuManager.addItem("Activate")
+				->sigTriggered().connect(std::bind(&RTSNameTreeWidget::activateComponent, this));
+			menuManager.addItem("Deactivate")
+				->sigTriggered().connect(std::bind(&RTSNameTreeWidget::deactivateComponent, this));
+			menuManager.addItem("Reset")
+				->sigTriggered().connect(std::bind(&RTSNameTreeWidget::resetComponent, this));
+			if (isManagedRTC(((RTSVItem*)this->currentItem())->rtc_) == false ) {
+				menuManager.addItem("Exit")
+					->sigTriggered().connect(std::bind(&RTSNameTreeWidget::finalizeComponent, this));
+			}
+			menuManager.addSeparator();
+			menuManager.addItem("Start")
+				->sigTriggered().connect(std::bind(&RTSNameTreeWidget::startExecutionContext, this));
+			menuManager.addItem("Stop")
+				->sigTriggered().connect(std::bind(&RTSNameTreeWidget::stopExecutionContext, this));
+			menuManager.popupMenu()->popup(event->globalPos());
+		}
+	}
 
+	TreeWidget::mousePressEvent(event);
+}
+
+void RTSNameTreeWidget::activateComponent() {
+	RTSVItem* item = (RTSVItem*)this->currentItem();
+	if(item->activateComponent()==false) {
+		QMessageBox::information(this, _("Activate"), _("Activation of target component FAILED."));
+	}
+}
+
+void RTSNameTreeWidget::deactivateComponent() {
+	RTSVItem* item = (RTSVItem*)this->currentItem();
+	if (item->deactivateComponent() == false) {
+		QMessageBox::information(this, _("Deactivate"), _("Deactivation of target component FAILED."));
+	}
+}
+
+void RTSNameTreeWidget::resetComponent() {
+	RTSVItem* item = (RTSVItem*)this->currentItem();
+	if (item->resetComponent() == false) {
+		QMessageBox::information(this, _("Reset"), _("FAILED to reset target component."));
+	}
+}
+
+void RTSNameTreeWidget::finalizeComponent() {
+	RTSVItem* item = (RTSVItem*)this->currentItem();
+	if (item->finalizeComponent() == false) {
+		QMessageBox::information(this, _("Exit"), _("FAILED to exit target component."));
+	}
+	item->setHidden(true);
+}
+
+void RTSNameTreeWidget::startExecutionContext() {
+	RTSVItem* item = (RTSVItem*)this->currentItem();
+	if (item->startExecutionContext() == false) {
+		QMessageBox::information(this, _("Start"), _("FAILED to start ExecutionContext."));
+	}
+}
+
+void RTSNameTreeWidget::stopExecutionContext() {
+	RTSVItem* item = (RTSVItem*)this->currentItem();
+	if (item->stopExecutionContext() == false) {
+		QMessageBox::information(this, _("Start"), _("FAILED to stop ExecutionContext."));
+	}
+}
+//////////
 class RTSNameServerViewImpl
 {
 public:
@@ -72,8 +148,7 @@ public:
 };
 
 }
-
-
+/////
 void RTSNameServerView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<RTSNameServerView>(
@@ -148,6 +223,10 @@ RTSNameServerViewImpl::RTSNameServerViewImpl(RTSNameServerView* self)
     treeWidget.sigItemSelectionChanged().connect(std::bind(&RTSNameServerViewImpl::onSelectionChanged, this));
     treeWidget.setSelectionMode(QAbstractItemView::ExtendedSelection);
     treeWidget.header()->close();
+
+		treeWidget.setColumnCount(2);
+		treeWidget.setColumnWidth(0, 200);
+		treeWidget.setColumnWidth(1, 50);
 
     vbox->addWidget(&treeWidget, 1);
     self->setLayout(vbox);
@@ -228,9 +307,14 @@ void RTSNameServerViewImpl::updateObjectList(const NamingContextHelper::ObjectIn
             #else
             } else if (boost::iequals(info.kind, "rtc")){
             #endif
-                RTSVItem* item = new RTSVItem(info);
-                if (parent == NULL) treeWidget.addTopLevelItem(item);
-                else parent->addChild(item);
+
+							RTC::RTObject_ptr rtc;
+							if (boost::iequals(info.kind, "rtc")) {
+								rtc = ncHelper.findObject<RTC::RTObject>(info.id, "rtc");
+							}
+              RTSVItem* item = new RTSVItem(info, rtc);
+              if (parent == NULL) treeWidget.addTopLevelItem(item);
+              else parent->addChild(item);
             }
         }
     }
