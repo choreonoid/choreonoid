@@ -619,8 +619,11 @@ SensorRenderer::SensorRenderer(GLVisionSimulatorItemImpl* simImpl, Device* devic
         
     } else if(rangeSensor){
 
+        int pitchResolution = 1;
         const double pitchRange = std::min(rangeSensor->pitchRange(), radian(170.0));
-        const int pitchResolution = static_cast<int>(pitchRange / rangeSensor->pitchStep() + 1e-10) + 1;
+        if(rangeSensor->pitchStep() > 0.0){
+            pitchResolution = static_cast<int>(pitchRange / rangeSensor->pitchStep() + 1e-10) + 1;
+        }
         
         int numScreens = 1;
         double yawRangePerScreen = rangeSensor->yawRange();
@@ -638,7 +641,10 @@ SensorRenderer::SensorRenderer(GLVisionSimulatorItemImpl* simImpl, Device* devic
             rangeSensorForRendering->setPitchResolution(pitchResolution);
 
             // Adjust to be a multiple of yawStep
-            double resolution = round((yawRangePerScreen + yawRangeOffset) / rangeSensor->yawStep());
+            double resolution = 1.0;
+            if(rangeSensor->yawStep() > 0.0){
+                resolution = round((yawRangePerScreen + yawRangeOffset) / rangeSensor->yawStep());
+            }
             double adjustedYawRange = rangeSensor->yawStep() * resolution;
             rangeSensorForRendering->setYawRange(adjustedYawRange);
             rangeSensorForRendering->setYawResolution(static_cast<int>(resolution) + 1);
