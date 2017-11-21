@@ -315,6 +315,7 @@ links:
       3.0276157e-2,  1.1688229e-2,  1.2268932e-3,
       1.1688229e-2,  1.5080350e-2,  -7.1011455e-4,
       1.2268932e-3, -7.1011455e-4,  1.8011625e-1 ]
+    material: Hand
     elements:
       Visual: { elements: { Resource: { uri: "prt/tohku_hand_tip.wrl" } } }
       Collision: &TOHKU_TIP_COLLISION_MODEL
@@ -507,6 +508,7 @@ links:
       3.0276157e-2,  1.1688229e-2,  1.2268932e-3,
       1.1688229e-2,  1.5080350e-2,  -7.1011455e-4,
       1.2268932e-3,  -7.1011455e-4, 1.8011625e-1 ]
+    material: Hand
     elements:
       Visual: { elements: { Resource: { uri: "prt/tohku_hand_tip.wrl" } } }
       Collision: *TOHKU_TIP_COLLISION_MODEL
@@ -909,6 +911,7 @@ links:
       0.00272616, 0.000478886, -4.96308e-24,
       0.000478886, 0.00389972, 1.03398e-24,
       -4.96308e-24, 0, 0.00225372 ]
+    material: Hand
     elements:
       Visual: { elements: { Resource: { uri: "prt/hand_tip_asm_v7_marge.wrl" } } }
       Collision: &HANDTIP_COLLISION_MODEL
@@ -1044,6 +1047,7 @@ links:
       0.00272616, 0.000478886, 0,
       0.000478886, 0.00389972, 0,
       0, 0, 0.00225372 ]
+    material: Hand
     elements:
       Visual: { elements: { Resource: { uri: "prt/hand_tip_asm_v7_marge.wrl" } } }
       Collision: *HANDTIP_COLLISION_MODEL

@@ -16,6 +16,10 @@ materials:
     roughness: 0.1
     viscosity: 0.0
   -
+    name: Hand
+    roughness: 0.5
+    viscosity: 0.0
+  -
     name: TankTracks
     youngsModulus: 1e10
     roughness: 1.0
@@ -52,6 +56,10 @@ contactMaterials:
     friction: 0.5
     restitution: 0.0
   -
+    materials: [ Ground, Default ]
+    friction: 0.5
+    restitution: 0.4
+  -
     materials: [ Ground, Tracks ]
     friction: 0.5
     restitution: 0.0
@@ -59,6 +67,12 @@ contactMaterials:
     materials: [ OilWetGround, Tracks ]
     friction: 0.1
     restitution: 0.0
+  -
+    materials: [ Default, Hand ]
+    friction: 1.0
+    restitution: 0.0
+    viscosity: 0.1
+    frictionModel: [ cone, direct ]
   -
     materials: [ Ground, TankTracks]
     youngsModulus: 1e10

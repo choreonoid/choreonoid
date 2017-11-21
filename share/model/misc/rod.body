@@ -1,0 +1,20 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: Rod
+
+links:
+  -
+      name: rod
+      translation: [ 0.0, 0.0, 0.5 ]
+      jointType: free
+      density: 1.0
+      material: Default
+      elements: &box
+        Shape:
+          geometry: { type: Box, size: [ 1.5, 0.15, 0.15 ] }
+          appearance:
+            material:
+              diffuseColor: [ 0.1, 1.0, 0.0 ]
+
+
