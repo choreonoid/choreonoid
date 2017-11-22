@@ -85,46 +85,14 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/house/table.body"
-            currentBaseLink: "WAIST"
-            rootPosition: [ 0, 2.5, 0 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 0.000796, -1, 
-              0, 1, 0.000796 ]
-            jointPositions: [  ]
-            initialRootPosition: [ 0, 2.5, 0 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 0.000791744293, -1, 
-              0, 1, 0.000791744293 ]
-            zmp: [ 0, 0, 0 ]
-            collisionDetection: true
-            selfCollisionDetection: false
-            isEditable: true
+            modelFile: "${SHARE}/model/house/table.wrl"
         - 
           id: 6
-          name: "longfloor"
+          name: "floor"
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/house/floor.body"
-            currentBaseLink: "WAIST"
-            rootPosition: [ 0, 2.5, 0 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 0.000796, -1, 
-              0, 1, 0.000796 ]
-            jointPositions: [  ]
-            initialRootPosition: [ 0, 2.5, 0 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 0.000791744293, -1, 
-              0, 1, 0.000791744293 ]
-            zmp: [ 0, 0, 0 ]
-            collisionDetection: true
-            selfCollisionDetection: false
-            isEditable: true
+            modelFile: "${SHARE}/model/house/floor.wrl"
         - 
           id: 7
           name: "Simulators"
