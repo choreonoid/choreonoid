@@ -4,6 +4,7 @@
 */
 
 #include "YAMLBodyLoader.h"
+#include "BodyLoader.h"
 #include "Body.h"
 #include "ForceSensor.h"
 #include "RateGyroSensor.h"
@@ -117,6 +118,9 @@ class YAMLBodyLoaderImpl
 {
 public:
     YAMLBodyLoader* self;
+
+    unique_ptr<BodyLoader> bodyLoader;
+    
     YAMLReader reader;
     YAMLSceneReader sceneReader;
     filesystem::path mainFilePath;
@@ -258,9 +262,6 @@ public:
     Vector3 v;
     Matrix3 M;
 
-    ostream* os_;
-    ostream& os() { return *os_; }
-
     vector<bool> validJointIdSet;
     size_t numValidJointIds;
 
@@ -268,12 +269,21 @@ public:
     map<string, BodyPtr> subBodyMap;
     bool isSubLoader;
 
+    ostream* os_;
+    ostream& os() { return *os_; }
+    int defaultDivisionNumber;
+    double defaultCreaseAngle;
+    bool isVerbose;
+    bool isShapeLoadingEnabled;
+
     YAMLBodyLoaderImpl(YAMLBodyLoader* self);
     ~YAMLBodyLoaderImpl();
     void updateCustomNodeFunctions();
     bool clear();
     bool load(Body* body, const std::string& filename);
     bool readTopNode(Body* body, Mapping* topNode);
+    bool checkFormat(Mapping* topNode);
+    bool loadAnotherFormatBodyFile(Mapping* topNode);
     bool readBody(Mapping* topNode);
     void readNodeInLinks(Mapping* linkNode, const string& nodeType);
     void readLinkNode(Mapping* linkNode);
@@ -450,7 +460,6 @@ void putLinkInfoValues(Body* body, ostream& os)
 YAMLBodyLoader::YAMLBodyLoader()
 {
     impl = new YAMLBodyLoaderImpl(this);
-    setDefaultDivisionNumber(20);
 }
 
 
@@ -474,8 +483,12 @@ YAMLBodyLoaderImpl::YAMLBodyLoaderImpl(YAMLBodyLoader* self)
     numCustomNodeFunctions = 0;
 
     body = 0;
-    os_ = &nullout();
     isSubLoader = false;
+    os_ = &nullout();
+    isVerbose = false;
+    isShapeLoadingEnabled = true;
+    defaultDivisionNumber = -1;
+    defaultCreaseAngle = -1.0;
 }
 
 
@@ -498,9 +511,27 @@ void YAMLBodyLoader::setMessageSink(std::ostream& os)
 }
 
 
+void YAMLBodyLoader::setVerbose(bool on)
+{
+    impl->isVerbose = on;
+}
+
+
+void YAMLBodyLoader::setShapeLoadingEnabled(bool on)
+{
+    impl->isShapeLoadingEnabled = on;
+}
+
+
 void YAMLBodyLoader::setDefaultDivisionNumber(int n)
 {
-    impl->sceneReader.setDefaultDivisionNumber(n);
+    impl->defaultDivisionNumber = n;
+}
+
+
+void YAMLBodyLoader::setDefaultCreaseAngle(double theta)
+{
+    impl->defaultCreaseAngle = theta;
 }
 
 
@@ -568,8 +599,6 @@ bool YAMLBodyLoaderImpl::load(Body* body, const std::string& filename)
 {
     mainFilePath = filesystem::absolute(filename);
     
-    sceneReader.setBaseDirectory(mainFilePath.parent_path().string());
-
     bool result = false;
 
     try {
@@ -611,7 +640,14 @@ bool YAMLBodyLoaderImpl::readTopNode(Body* body, Mapping* topNode)
     body->clearExtraJoints();
 
     try {
-        result = readBody(topNode);
+        if(checkFormat(topNode)){
+            result = readBody(topNode);
+        } else {
+            result = loadAnotherFormatBodyFile(topNode);
+        }
+        if(result){
+            body->resetInfo(topNode);
+        }
         
     } catch(const ValueNode::Exception& ex){
         os() << ex.message();
@@ -636,29 +672,86 @@ bool YAMLBodyLoaderImpl::readTopNode(Body* body, Mapping* topNode)
 }
 
 
+bool YAMLBodyLoaderImpl::checkFormat(Mapping* topNode)
+{
+    auto formatNode = topNode->extract("format");
+    if(formatNode){
+        if(formatNode->toString() == "ChoreonoidBody"){
+            return true;
+        }
+        formatNode->throwException(
+            _("The file format cannot be loaded as a Choreonoid body model"));
+    }
+
+    return false;
+}
+
+
+bool YAMLBodyLoaderImpl::loadAnotherFormatBodyFile(Mapping* topNode)
+{
+    auto modelFileNode = topNode->extract("modelFile");
+    if(!modelFileNode){
+        topNode->throwException(_("Neither format nor modelFile are specified"));
+    }
+
+    filesystem::path path(modelFileNode->toString());
+    if(!path.has_root_path()){
+        path = mainFilePath.parent_path() / path;
+    }
+    if(!bodyLoader){
+        bodyLoader.reset(new BodyLoader);
+    }
+
+    bodyLoader->setMessageSink(os());
+    bodyLoader->setVerbose(isVerbose);
+    bodyLoader->setShapeLoadingEnabled(isShapeLoadingEnabled);
+    bodyLoader->setDefaultCreaseAngle(defaultCreaseAngle);
+
+    int dn = defaultDivisionNumber;
+    auto geometryNode = topNode->extract("geometry");
+    if(geometryNode){
+        geometryNode->toMapping()->read("divisionNumber", dn);
+    }
+    bodyLoader->setDefaultDivisionNumber(dn);
+
+    bool loaded = bodyLoader->load(body, path.string());
+
+    if(loaded){
+        auto linkInfo = topNode->findMapping("linkInfo");
+        if(linkInfo->isValid()){
+            auto p = linkInfo->begin();
+            while(p != linkInfo->end()){
+                auto& linkName = p->first;
+                auto node = p->second;
+                if(node->isMapping()){
+                    auto link = body->link(linkName);
+                    if(link){
+                        link->info()->insert(node->toMapping());
+                    }
+                }
+                ++p;
+            }
+        }
+    }
+    
+    return loaded;
+}
+            
+
 bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
 {
     double version = 1.0;
     
-    auto formatNode = topNode->extract("format");
-    if(!formatNode){
-        topNode->throwException(
-            _("Choreonoid body model needs format specification"));
-    }
-    if(formatNode->isValid()){
-        if(formatNode->toString() != "ChoreonoidBody"){
-            formatNode->throwException(
-                _("The file format cannot be loaded as a Choreonoid body model"));
-        }
-        ValueNode* versionNode = topNode->find("formatVersion");
-        if(versionNode->isValid()){
-            version = versionNode->toDouble();
-        }
+    auto versionNode = topNode->extract("formatVersion");
+    if(versionNode){
+        version = versionNode->toDouble();
     }
     if(version >= 2.0){
         topNode->throwException(_("This version of the Choreonoid body format is not supported"));
     }
 
+    sceneReader.setBaseDirectory(mainFilePath.parent_path().string());
+    sceneReader.setDefaultDivisionNumber(defaultDivisionNumber);
     sceneReader.readHeader(*topNode);
 
     if(extract(topNode, "name", symbol)){
@@ -749,8 +842,6 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
     }
 
     readExtraJoints(topNode);
-
-    body->resetInfo(topNode);
 
     body->installCustomizer();
 

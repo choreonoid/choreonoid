@@ -23,7 +23,10 @@ public:
     YAMLBodyLoader();
     ~YAMLBodyLoader();
     virtual void setMessageSink(std::ostream& os) override;
+    virtual void setVerbose(bool on) override;
+    virtual void setShapeLoadingEnabled(bool on) override;
     virtual void setDefaultDivisionNumber(int n) override;
+    virtual void setDefaultCreaseAngle(double theta) override;
     virtual bool load(Body* body, const std::string& filename) override;
 
     bool read(Body* body, Mapping* data);
