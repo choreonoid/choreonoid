@@ -1304,7 +1304,7 @@ bool YAMLBodyLoaderImpl::readNode(Mapping& node, const string& type)
 
         nameStack.pop_back();
         
-    } else {
+    } else if(isShapeLoadingEnabled){
         SgNode* scene = sceneReader.readNode(node, type);
         if(scene){
             addScene(scene);
@@ -1478,18 +1478,20 @@ bool YAMLBodyLoaderImpl::readVisualOrCollision(Mapping& node, bool isVisual)
 
     bool isSceneNodeAdded = readElements(node);
 
-    auto resource = node.findMapping("resource");
-    if(resource->isValid()){
-        if(auto scene = sceneReader.readNode(*resource, "Resource")){
-            addScene(scene);
-            isSceneNodeAdded = true;
+    if(isShapeLoadingEnabled){
+        auto resource = node.findMapping("resource");
+        if(resource->isValid()){
+            if(auto scene = sceneReader.readNode(*resource, "Resource")){
+                addScene(scene);
+                isSceneNodeAdded = true;
+            }
         }
-    }
-    auto shape = node.findMapping("shape");
-    if(shape->isValid()){
-        if(auto scene = sceneReader.readNode(*shape, "Shape")){
-            addScene(scene);
-            isSceneNodeAdded = true;
+        auto shape = node.findMapping("shape");
+        if(shape->isValid()){
+            if(auto scene = sceneReader.readNode(*shape, "Shape")){
+                addScene(scene);
+                isSceneNodeAdded = true;
+            }
         }
     }
  
