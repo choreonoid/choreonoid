@@ -460,6 +460,7 @@ void SgGroup::throwTypeMismatchError()
 
 
 SgInvariantGroup::SgInvariantGroup()
+    : SgGroup(findPolymorphicId<SgInvariantGroup>())
 {
 
 }
@@ -716,6 +717,7 @@ void SgScaleTransform::getTransform(Affine3& out_T) const
 
 
 SgSwitch::SgSwitch()
+    : SgGroup(findPolymorphicId<SgSwitch>())
 {
     isTurnedOn_ = true;
 }
@@ -742,6 +744,7 @@ SgObject* SgSwitch::clone(SgCloneMap& cloneMap) const
 
 
 SgUnpickableGroup::SgUnpickableGroup()
+    : SgGroup(findPolymorphicId<SgUnpickableGroup>())
 {
 
 }
