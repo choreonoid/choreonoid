@@ -1,0 +1,16 @@
+FROM ubuntu:xenial
+
+RUN apt-get update && \
+    apt-get install -y sudo clang && \
+    apt-get clean
+
+ENV CC /usr/bin/clang
+ENV CXX /usr/bin/clang++
+
+ADD . /choreonoid
+
+RUN cd choreonoid && \
+    echo "y" | ./misc/script/install-requisites-ubuntu-16.04.sh && \
+    cmake . && \
+    make && \
+    make install
