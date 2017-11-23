@@ -1326,8 +1326,6 @@ bool YAMLBodyLoaderImpl::readContainerNode(Mapping& node, NodeFunction nodeFunct
 {
     bool isSceneNodeAdded = false;
 
-    currentSceneGroupSet().setName(nameStack.back());
-
     if(nodeFunction){
         if(nodeFunction(node)){
             isSceneNodeAdded = true;
@@ -1347,48 +1345,47 @@ bool YAMLBodyLoaderImpl::readContainerNode(Mapping& node, NodeFunction nodeFunct
 
 bool YAMLBodyLoaderImpl::readTransformContents(Mapping& node, NodeFunction nodeFunction, bool hasElements)
 {
-    bool isSceneNodeAdded = false;
-
     Affine3 T = Affine3::Identity();
-    bool isIdentity = true;
+    bool hasPosTransform = false;
+    bool hasScale = false;
+    bool isSceneNodeAdded = false;
     
     if(read(node, "translation", v)){
         T.translation() = v;
-        isIdentity = false;
+        hasPosTransform = true;
     }
-    Matrix3 R;
-    if(readRotation(node, R, false)){
-        T.linear() = R;
-        isIdentity = false;
+    if(readRotation(node, M, false)){
+        T.linear() = M;
+        hasPosTransform = true;
     }
-    Vector3 scale;
-    bool hasScale = read(node, "scale", scale);
+
     Affine3 Ts(T);
-    if(hasScale){
+    Vector3 scale;
+    if(read(node, "scale", scale)){
         Ts.linear() *= scale.asDiagonal();
+        hasScale = true;
     }
     
-    if(!isIdentity){
+    if(hasPosTransform || hasScale){
         transformStack.push_back(transformStack.back() * Ts);
     }
 
     sceneGroupSetStack.push_back(SceneGroupSet());
-    
-    if(isIdentity){
-        if(hasScale){
-            currentSceneGroupSet().newGroup<SgScaleTransform>(scale);
-        } else {
-            currentSceneGroupSet().newGroup<SgGroup>();
-        }
+    if(hasPosTransform){
+        currentSceneGroupSet().newGroup<SgPosTransform>(T);
+    } else if(hasScale){
+        currentSceneGroupSet().newGroup<SgScaleTransform>(scale);
     } else {
-        if(hasScale){
-            currentSceneGroupSet().newGroup<SgPosTransform>(T);
-            sceneGroupSetStack.push_back(SceneGroupSet());
-            currentSceneGroupSet().newGroup<SgScaleTransform>(scale);
-        } else {
-            currentSceneGroupSet().newGroup<SgPosTransform>(T);
-        }
+        currentSceneGroupSet().newGroup<SgGroup>();
     }
+    currentSceneGroupSet().setName(nameStack.back());
+    
+    if(hasPosTransform && hasScale){
+        sceneGroupSetStack.push_back(SceneGroupSet());
+        currentSceneGroupSet().newGroup<SgScaleTransform>(scale);
+        currentSceneGroupSet().setName(nameStack.back());
+    }
+    
     if(hasElements){
         isSceneNodeAdded = readContainerNode(node, nodeFunction);
     } else {
@@ -1399,7 +1396,7 @@ bool YAMLBodyLoaderImpl::readTransformContents(Mapping& node, NodeFunction nodeF
         addCurrentSceneGroupToParentSceneGroup();
     }
 
-    if(!isIdentity && hasScale){
+    if(hasPosTransform && hasScale){
         sceneGroupSetStack.pop_back();
         if(isSceneNodeAdded){
             addCurrentSceneGroupToParentSceneGroup();
@@ -1407,7 +1404,7 @@ bool YAMLBodyLoaderImpl::readTransformContents(Mapping& node, NodeFunction nodeF
     }
     sceneGroupSetStack.pop_back();
 
-    if(!isIdentity){
+    if(hasPosTransform || hasScale){
         transformStack.pop_back();
     }
 
@@ -1419,6 +1416,8 @@ bool YAMLBodyLoaderImpl::readGroup(Mapping& node)
 {
     sceneGroupSetStack.push_back(SceneGroupSet());
     currentSceneGroupSet().newGroup<SgGroup>();
+    currentSceneGroupSet().setName(nameStack.back());
+
     bool isSceneNodeAdded = readContainerNode(node, 0);
     if(isSceneNodeAdded){
         addCurrentSceneGroupToParentSceneGroup();
