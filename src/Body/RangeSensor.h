@@ -38,21 +38,26 @@ public:
     int yawResolution() const { return (yawRange_ == 0.0) ? 1 : yawResolution_; }
     void setYawResolution(int n);
     double yawStep() const;
+    void setYawStep(double s);
 
     double pitchRange() const { return pitchRange_; }
     void setPitchRange(double angle);
     int pitchResolution() const { return (pitchRange_ == 0.0) ? 1 : pitchResolution_; }
     void setPitchResolution(int n);
     double pitchStep() const;
+    void setPitchStep(double s);
 
     double maxDistance() const { return maxDistance_; }
     void setMaxDistance(double d);
     double minDistance() const { return minDistance_; }
     void setMinDistance(double d);
 
-    double frameRate() const { return frameRate_; }
-    void setFrameRate(double r);
+    double scanRate() const { return scanRate_; }
+    void setScanRate(double r);
 
+    double frameRate() const { return scanRate_; }
+    void setFrameRate(double r) { setScanRate(r); }
+    
     typedef std::vector<double> RangeData;
 
     void setRangeDataStateClonable(bool on) { isRangeDataStateClonable_ = on; }
@@ -90,7 +95,7 @@ private:
     double pitchRange_;
     double minDistance_;
     double maxDistance_;
-    double frameRate_;
+    double scanRate_;
     double delay_;
     std::shared_ptr<RangeData> rangeData_;
 

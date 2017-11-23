@@ -1612,22 +1612,23 @@ bool YAMLBodyLoaderImpl::readRangeSensor(Mapping& node)
     RangeSensorPtr rangeSensor = new RangeSensor;
     
     if(node.read("on", on)) rangeSensor->on(on);
-    if(readAngle(node, "scanAngle", value)) rangeSensor->setYawRange(value);
-    if(readAngle(node, "scanStep", value))
-        rangeSensor->setYawResolution((int)(rangeSensor->yawRange() / value + 1e-10) + 1);
-    if(readAngle(node, "scanYawAngle", value)) rangeSensor->setYawRange(value);
-    if(readAngle(node, "scanYawStep", value))
-        rangeSensor->setYawResolution((int)(rangeSensor->yawRange() / value + 1e-10) + 1);
-    if(readAngle(node, "scanPitchAngle", value))
-        rangeSensor->setPitchRange(value);
-    else
-        rangeSensor->setPitchRange(0.0);
-    if(readAngle(node, "scanPitchStep", value))
-        rangeSensor->setPitchResolution((int)(rangeSensor->pitchRange() / value + 1e-10) + 1);
 
+    if(readAngle(node, "yawRange", value)){
+        rangeSensor->setYawRange(value);
+    } else if(readAngle(node, "scanAngle", value)){ // backward compatibility
+        rangeSensor->setYawRange(value);
+    }
+    if(readAngle(node, "yawStep", value)){
+        rangeSensor->setYawStep(value);
+    } else if(readAngle(node, "scanStep", value)){ // backward compatibility
+        rangeSensor->setYawStep(value);
+    }
+
+    if(readAngle(node, "pitchRange", value)) rangeSensor->setPitchRange(value);
+    if(readAngle(node, "pitchStep", value)) rangeSensor->setPitchStep(value);
     if(node.read("minDistance", value)) rangeSensor->setMinDistance(value);
     if(node.read("maxDistance", value)) rangeSensor->setMaxDistance(value);
-    if(node.read("scanRate", value)) rangeSensor->setFrameRate(value);
+    if(node.read("scanRate", value)) rangeSensor->setScanRate(value);
     
     return readDevice(rangeSensor, node);
 }

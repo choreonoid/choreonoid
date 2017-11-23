@@ -4,13 +4,10 @@
 */
 
 #include "RangeSensor.h"
+#include <cnoid/EigenUtil>
 
 using namespace std;
 using namespace cnoid;
-
-namespace {
-const double PI = 3.14159265358979323846;
-}
 
 
 const char* RangeSensor::typeName()
@@ -23,13 +20,13 @@ RangeSensor::RangeSensor()
 {
     on_ = true;
     isRangeDataStateClonable_ = false;
-    yawRange_ = PI / 2.0;
+    yawRange_ = radian(120.0);
     yawResolution_ = 100;
     pitchRange_ = 0.0;
     pitchResolution_ = 1;
     minDistance_ = 0.01;
     maxDistance_ = 10.0;
-    frameRate_ = 10.0;
+    scanRate_ = 10.0;
     delay_ = 0.0;
     rangeData_ = std::make_shared<RangeData>();
 }
@@ -61,7 +58,7 @@ void RangeSensor::copyRangeSensorStateFrom(const RangeSensor& other)
     pitchRange_ = other.pitchRange_;
     minDistance_ = other.minDistance_;
     maxDistance_ = other.maxDistance_;
-    frameRate_ = other.frameRate_;
+    scanRate_ = other.scanRate_;
     delay_ = other.delay_;
 }
 
@@ -136,6 +133,12 @@ double RangeSensor::yawStep() const
 }
 
 
+void RangeSensor::setYawStep(double s)
+{
+    setYawResolution((int)(yawRange() / s + 1e-10) + 1);
+}
+
+
 void RangeSensor::setPitchRange(double angle)
 {
     if(angle >= 0.0){
@@ -159,6 +162,12 @@ double RangeSensor::pitchStep() const
     } else {
         return 0.0;
     }
+}
+
+
+void RangeSensor::setPitchStep(double s)
+{
+    setPitchResolution((int)(pitchRange() / s + 1e-10) + 1);    
 }
 
 
@@ -186,10 +195,10 @@ void RangeSensor::setMinDistance(double d)
 }
 
 
-void RangeSensor::setFrameRate(double r)
+void RangeSensor::setScanRate(double r)
 {
     if(r > 0.0){
-        frameRate_ = r;
+        scanRate_ = r;
     }
 }
 
@@ -246,7 +255,7 @@ const double* RangeSensor::readState(const double* buf)
     pitchResolution_ = buf[4];
     minDistance_ = buf[5];
     maxDistance_ = buf[6];
-    frameRate_ = buf[7];
+    scanRate_ = buf[7];
     delay_ = buf[8];
     return buf + 9;
 }
@@ -261,7 +270,7 @@ double* RangeSensor::writeState(double* out_buf) const
     out_buf[4] = pitchResolution_;
     out_buf[5] = minDistance_;
     out_buf[6] = maxDistance_;
-    out_buf[7] = frameRate_;
+    out_buf[7] = scanRate_;
     out_buf[8] = delay_;
     return out_buf + 9;
 }

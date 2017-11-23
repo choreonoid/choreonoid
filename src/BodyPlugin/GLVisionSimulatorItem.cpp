@@ -692,7 +692,7 @@ bool SensorRenderer::initialize(const vector<SimulationBody*>& simBodies)
             camera->setImageStateClonable(true);
         }
     } else if(rangeSensor){
-        double frameRate = std::max(0.1, std::min(rangeSensor->frameRate(), simImpl->maxFrameRate));
+        double frameRate = std::max(0.1, std::min(rangeSensor->scanRate(), simImpl->maxFrameRate));
         cycleTime = 1.0 / frameRate;
         if(simImpl->isVisionDataRecordingEnabled){
             rangeSensor->setRangeDataStateClonable(true);
