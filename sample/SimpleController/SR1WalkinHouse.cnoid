@@ -182,6 +182,16 @@ items:
                 contactReductionThreshold: 4
     - 
       id: 11
+      name: "vase"
+      plugin: Base
+      class: SceneItem
+      data: 
+        file: "${SHARE}/model/house/vase.wrl"
+        format: AVAILABLE-SCENE-FILE
+        translation: [ 1.9, 1.4, 0.84 ]
+        rotation: [ 1, 0, 0, 0 ]
+    - 
+      id: 12
       name: "house"
       plugin: Base
       class: SceneItem
@@ -190,6 +200,7 @@ items:
         format: VRML-FILE
         translation: [ 0, 0, 0 ]
         rotation: [ 1, 0, 0, 0 ]
+
 views: 
   - 
     id: 0
@@ -203,7 +214,7 @@ views:
     mounted: true
     state: 
       selected: [ 8 ]
-      checked: [ 1, 2, 6, 5, 4, 11 ]
+      checked: [ 1, 2, 6, 5, 4, 11, 12 ]
       expanded: [ 1, 2, 3, 7 ]
   - 
     id: 2
