@@ -632,24 +632,28 @@ void RangeSensorVisualizerItemImpl::onSensorPositionsChanged()
 
 void RangeSensorVisualizerItemImpl::updateRangeSensorState()
 {
-    if(!ItemTreeView::instance()->isItemChecked(self))
+    if(!ItemTreeView::instance()->isItemChecked(self)){
         return;
+    }
 
     const RangeSensor::RangeData& src = rangeSensor->constRangeData();
     SgVertexArray& points = *pointSet->getOrCreateVertices();
     const int numPoints = src.size();
     points.clear();
+
     if(!src.empty()){
         points.reserve(numPoints);
+        const int numPitchSamples = rangeSensor->numPitchSamples();
         const double pitchStep = rangeSensor->pitchStep();
+        const int numYawSamples = rangeSensor->numYawSamples();
         const double yawStep = rangeSensor->yawStep();
-
-        for(int pitch=0; pitch < rangeSensor->pitchResolution(); ++pitch){
+        
+        for(int pitch=0; pitch < numPitchSamples; ++pitch){
             const double pitchAngle = pitch * pitchStep - rangeSensor->pitchRange() / 2.0;
             const double cosPitchAngle = cos(pitchAngle);
-            const int srctop = pitch * rangeSensor->yawResolution();
+            const int srctop = pitch * numYawSamples;
 
-            for(int yaw=0; yaw < rangeSensor->yawResolution(); ++yaw){
+            for(int yaw=0; yaw < numYawSamples; ++yaw){
                 const double distance = src[srctop + yaw];
                 if(distance <= rangeSensor->maxDistance()){
                     double yawAngle = yaw * yawStep - rangeSensor->yawRange() / 2.0;
@@ -659,9 +663,7 @@ void RangeSensorVisualizerItemImpl::updateRangeSensorState()
                     points.push_back(Vector3f(x, y, z));
                 }
             }
-
         }
-
     }
 
     pointSet->notifyUpdate();

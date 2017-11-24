@@ -34,29 +34,27 @@ public:
     void on(bool on) { on_ = on; }
 
     double yawRange() const { return yawRange_; }
-    void setYawRange(double angle);
-    int yawResolution() const { return (yawRange_ == 0.0) ? 1 : yawResolution_; }
-    void setYawResolution(int n);
-    double yawStep() const;
-    void setYawStep(double s);
+    void setYawRange(double theta) { yawRange_ = theta; }
+    double yawStep() const { return yawStep_; }
+    void setYawStep(double s) { yawStep_ = s; }
+    int numYawSamples() const;
 
     double pitchRange() const { return pitchRange_; }
-    void setPitchRange(double angle);
-    int pitchResolution() const { return (pitchRange_ == 0.0) ? 1 : pitchResolution_; }
-    void setPitchResolution(int n);
-    double pitchStep() const;
-    void setPitchStep(double s);
+    void setPitchRange(double theta) { pitchRange_ = theta; }
+    double pitchStep() const { return pitchStep_; }
+    void setPitchStep(double s) { pitchStep_ = s; }
+    int numPitchSamples() const;
 
     double maxDistance() const { return maxDistance_; }
-    void setMaxDistance(double d);
+    void setMaxDistance(double d) { maxDistance_ = d; }
     double minDistance() const { return minDistance_; }
-    void setMinDistance(double d);
+    void setMinDistance(double d) { minDistance_ = d; }
 
     double scanRate() const { return scanRate_; }
-    void setScanRate(double r);
+    void setScanRate(double r) { scanRate_ = r; }
 
     double frameRate() const { return scanRate_; }
-    void setFrameRate(double r) { setScanRate(r); }
+    void setFrameRate(double r) { scanRate_ = r; }
     
     typedef std::vector<double> RangeData;
 
@@ -89,10 +87,10 @@ public:
 private:
     bool on_;
     bool isRangeDataStateClonable_;
-    int yawResolution_;
-    int pitchResolution_;
     double yawRange_;
+    double yawStep_;
     double pitchRange_;
+    double pitchStep_;
     double minDistance_;
     double maxDistance_;
     double scanRate_;

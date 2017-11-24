@@ -21,9 +21,9 @@ RangeSensor::RangeSensor()
     on_ = true;
     isRangeDataStateClonable_ = false;
     yawRange_ = radian(120.0);
-    yawResolution_ = 100;
+    yawStep_ = 1.0;
     pitchRange_ = 0.0;
-    pitchResolution_ = 1;
+    pitchStep_ = 0.0;
     minDistance_ = 0.01;
     maxDistance_ = 10.0;
     scanRate_ = 10.0;
@@ -52,10 +52,10 @@ void RangeSensor::copyRangeSensorStateFrom(const RangeSensor& other)
 {
     on_ = other.on_;
     isRangeDataStateClonable_ = other.isRangeDataStateClonable_;
-    yawResolution_ = other.yawResolution_;
-    pitchResolution_ = other.pitchResolution_;
     yawRange_ = other.yawRange_;
+    yawStep_ = other.yawStep_;
     pitchRange_ = other.pitchRange_;
+    pitchStep_ = other.pitchStep_;
     minDistance_ = other.minDistance_;
     maxDistance_ = other.maxDistance_;
     scanRate_ = other.scanRate_;
@@ -107,98 +107,22 @@ void RangeSensor::forEachActualType(std::function<bool(const std::type_info& typ
 }
 
 
-void RangeSensor::setYawRange(double angle)
+int RangeSensor::numYawSamples() const
 {
-    if(angle > 0.0){
-        yawRange_ = angle;
-    }
-}
-
-
-void RangeSensor::setYawResolution(int n)
-{
-    if(n >= 1 ){
-        yawResolution_ = n;
-    }
-}
-
-
-double RangeSensor::yawStep() const
-{
-    if(yawResolution_ >= 2){
-        return yawRange_ / (yawResolution_-1);
+    if(yawStep_ > 0.0){
+        return static_cast<int>(yawRange_ / yawStep_ + 1.0e-7) + 1;
     } else {
-        return 0.0;
+        return 1;
     }
 }
 
 
-void RangeSensor::setYawStep(double s)
+int RangeSensor::numPitchSamples() const
 {
-    setYawResolution((int)(yawRange() / s + 1e-10) + 1);
-}
-
-
-void RangeSensor::setPitchRange(double angle)
-{
-    if(angle >= 0.0){
-        pitchRange_ = angle;
-    }
-}
-
-
-void RangeSensor::setPitchResolution(int n)
-{
-    if(n >= 1){
-        pitchResolution_ = n;
-    }
-}
-
-
-double RangeSensor::pitchStep() const
-{
-    if(pitchResolution_ >= 2){
-        return pitchRange_ / (pitchResolution_ - 1);
+    if(pitchStep_ > 0.0){
+        return static_cast<int>(pitchRange_ / pitchStep_ + 1.0e-7) + 1;
     } else {
-        return 0.0;
-    }
-}
-
-
-void RangeSensor::setPitchStep(double s)
-{
-    setPitchResolution((int)(pitchRange() / s + 1e-10) + 1);    
-}
-
-
-void RangeSensor::setMaxDistance(double d)
-{
-    if(d > 0.0){
-        if(d > minDistance_){
-            maxDistance_ = d;
-        } else {
-            minDistance_ = d;
-        }
-    }
-}
-
-
-void RangeSensor::setMinDistance(double d)
-{
-    if(d > 0.0){
-        if(d < maxDistance_){
-            minDistance_ = d;
-        } else {
-            maxDistance_ = d;
-        }
-    }
-}
-
-
-void RangeSensor::setScanRate(double r)
-{
-    if(r > 0.0){
-        scanRate_ = r;
+        return 1;
     }
 }
 
@@ -250,9 +174,9 @@ const double* RangeSensor::readState(const double* buf)
 {
     on_ = buf[0];
     yawRange_ = buf[1];
-    yawResolution_ = buf[2];
+    yawStep_ = buf[2];
     pitchRange_ = buf[3];
-    pitchResolution_ = buf[4];
+    pitchStep_ = buf[4];
     minDistance_ = buf[5];
     maxDistance_ = buf[6];
     scanRate_ = buf[7];
@@ -265,9 +189,9 @@ double* RangeSensor::writeState(double* out_buf) const
 {
     out_buf[0] = on_ ? 1.0 : 0.0;
     out_buf[1] = yawRange_;
-    out_buf[2] = yawResolution_;
+    out_buf[2] = yawStep_;
     out_buf[3] = pitchRange_;
-    out_buf[4] = pitchResolution_;
+    out_buf[4] = pitchStep_;
     out_buf[5] = minDistance_;
     out_buf[6] = maxDistance_;
     out_buf[7] = scanRate_;
