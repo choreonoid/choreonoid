@@ -25,6 +25,9 @@ class CNOID_EXPORT ControllerIO
     // The following functions are only available in simulation
     virtual bool isNoDelayMode() const;
     virtual bool setNoDelayMode(bool on);
+
+    //! \deprecated Use timeStep().
+    double worldTimeStep() const { return timeStep(); };
 };
 
 }
