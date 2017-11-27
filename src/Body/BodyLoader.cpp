@@ -10,7 +10,7 @@
 #include <cnoid/SceneLoader>
 #include <cnoid/STLSceneLoader>
 #include <cnoid/YAMLSceneLoader>
-#include <cnoid/YAMLReader>
+#include <cnoid/ValueTree>
 #include <cnoid/Exception>
 #include <cnoid/FileUtil>
 #include <cnoid/NullOut>
@@ -19,6 +19,7 @@
 
 using namespace std;
 using namespace cnoid;
+using boost::format;
 namespace filesystem = boost::filesystem;
 
 namespace {
@@ -58,7 +59,7 @@ public:
             link->setMass(1.0);
             link->setInertia(Matrix3::Identity());
             body->setRootLink(link);
-            body->setModelName(getBasename(filename));
+            body->setModelName(filesystem::path(filename).stem().string());
         }
 
         return (scene != 0);
@@ -101,14 +102,14 @@ class BodyLoaderImpl
 {
 public:
     ostream* os;
-    AbstractBodyLoaderPtr loader;
+    AbstractBodyLoaderPtr actualLoader;
     bool isVerbose;
     bool isShapeLoadingEnabled;
     int defaultDivisionNumber;
     double defaultCreaseAngle;
 
-    typedef map<string, AbstractBodyLoaderPtr> LoaderMap;
-    LoaderMap loaderMap;
+    typedef map<string, AbstractBodyLoaderPtr> BodyLoaderMap;
+    BodyLoaderMap bodyLoaderMap;
         
     BodyLoaderImpl();
     ~BodyLoaderImpl();
@@ -179,6 +180,7 @@ void BodyLoader::setDefaultCreaseAngle(double theta)
 
 bool BodyLoader::load(Body* body, const std::string& filename)
 {
+    body->info()->clear();    
     return impl->load(body, filename);
 }
 
@@ -199,83 +201,34 @@ bool BodyLoaderImpl::load(Body* body, const std::string& filename)
 {
     bool result = false;
 
-    filesystem::path orgpath(filename);
-    string ext = getExtension(orgpath);
-    string modelFilename;
-    MappingPtr yamlDoc;
+    filesystem::path path(filename);
+    string ext = getExtension(path);
 
     try {
-        if(ext != "yaml" && ext != "yml"){
-            modelFilename = filename;
-        } else {
-            YAMLReader parser;
-            yamlDoc = parser.loadDocument(filename)->toMapping();
-
-            ValueNode* modelFileNode = yamlDoc->find("modelFile");
-            if(modelFileNode->isValid()){
-                filesystem::path mpath(modelFileNode->toString());
-                if(mpath.has_root_path()){
-                    modelFilename = getNativePathString(mpath);
-                } else {
-                    modelFilename = getNativePathString(orgpath.parent_path() / mpath);
-                }
-                ext = getExtension(mpath);
-            }
-        }
-
-        LoaderMap::iterator p = loaderMap.find(ext);
-        if(p != loaderMap.end()){
-            loader = p->second;
+        auto p = bodyLoaderMap.find(ext);
+        if(p != bodyLoaderMap.end()){
+            actualLoader = p->second;
         } else {
             std::lock_guard<std::mutex> lock(loaderFactoryMapMutex);
-            LoaderFactoryMap::iterator q = loaderFactoryMap.find(ext);
+            auto q = loaderFactoryMap.find(ext);
             if(q != loaderFactoryMap.end()){
                 LoaderFactory factory = q->second;
-                loader = factory();
-                loaderMap[ext] = loader;
+                actualLoader = factory();
+                bodyLoaderMap[ext] = actualLoader;
             }
         }
 
-        if(!loader){
-            (*os) << str(boost::format(_("The file format of \"%1%\" is not supported by the body loader.\n"))
-                         % getFilename(filesystem::path(modelFilename)));
-
+        if(!actualLoader){
+            (*os) << str(format(_("The file format of \"%1%\" is not supported by the body loader.\n"))
+                         % path.filename().string());
         } else {
-            loader->setMessageSink(*os);
-            loader->setVerbose(isVerbose);
-            loader->setShapeLoadingEnabled(isShapeLoadingEnabled);
+            actualLoader->setMessageSink(*os);
+            actualLoader->setVerbose(isVerbose);
+            actualLoader->setShapeLoadingEnabled(isShapeLoadingEnabled);
+            actualLoader->setDefaultDivisionNumber(defaultDivisionNumber);
+            actualLoader->setDefaultCreaseAngle(defaultCreaseAngle);
 
-            int dn = defaultDivisionNumber;
-            if(yamlDoc){
-                Mapping& geometryInfo = *yamlDoc->findMapping("geometry");
-                if(geometryInfo.isValid()){
-                    geometryInfo.read("divisionNumber", dn);
-                }
-            }
-            if(dn > 0){
-                loader->setDefaultDivisionNumber(dn);
-            }
-            if(defaultCreaseAngle >= 0.0){
-                loader->setDefaultCreaseAngle(defaultCreaseAngle);
-            }
-
-            YAMLBodyLoader* yamlBodyLoader = 0;
-            if(yamlDoc){
-                body->resetInfo(yamlDoc);
-                yamlBodyLoader = dynamic_cast<YAMLBodyLoader*>(loader.get());
-            } else {
-                body->info()->clear();
-            }
-
-            if(yamlBodyLoader){
-                result = yamlBodyLoader->read(body, yamlDoc);
-            } else {
-                result = loader->load(body, modelFilename);
-            }
-
-            if(result && yamlDoc){
-                mergeExtraLinkInfos(body, yamlDoc);
-            }
+            result = actualLoader->load(body, filename);
         }
         
     } catch(const ValueNode::Exception& ex){
@@ -293,27 +246,7 @@ bool BodyLoaderImpl::load(Body* body, const std::string& filename)
 }
 
 
-void BodyLoaderImpl::mergeExtraLinkInfos(Body* body, Mapping* info)
-{
-    Mapping* linkInfo = info->findMapping("linkInfo");
-    if(linkInfo->isValid()){
-        auto p = linkInfo->begin();
-        while(p != linkInfo->end()){
-            const string& linkName = p->first;
-            ValueNode* node = p->second;
-            if(node->isMapping()){
-                auto link = body->link(linkName);
-                if(link){
-                    link->info()->insert(node->toMapping());
-                }
-            }
-            ++p;
-        }
-    }
-}
-
-
 AbstractBodyLoaderPtr BodyLoader::lastActualBodyLoader() const
 {
-    return impl->loader;
+    return impl->actualLoader;
 }

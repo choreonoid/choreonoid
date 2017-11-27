@@ -423,25 +423,23 @@ links:
               -
                 type: Camera
                 name: Camera
+                rotation: [ [ 1, 0, 0, 90 ], [ 0, 1, 0, -90 ] ]
                 format: COLOR_DEPTH
                 fieldOfView: 65
                 width: 320
                 height: 240
                 frameRate: 30
-                rotation: [ [ 1, 0, 0, 90 ], [ 0, 1, 0, -90 ] ]
               -
-                type: Transform
+                type: RangeSensor
+                name: VelodyneVLP-16
                 translation: [ 0, 0, 0.1 ]
-                elements:
-                  RangeSensor:
-                    name: VelodyneVLP-16
-                    scanYawAngle: 360
-                    scanYawStep:  0.4
-                    scanPitchAngle: 30
-                    scanPitchStep:  2
-                    scanRate:  10
-                    maxDistance: 10
-                    rotation: [ [ 1, 0, 0, 90 ], [ 0, 1, 0, -90 ] ]
+                rotation: [ [ 1, 0, 0, 90 ], [ 0, 1, 0, -90 ] ]
+                yawRange: 360.0
+                yawStep:  0.4
+                pitchRange: 30.0
+                pitchStep: 2.0
+                scanRate:  5
+                maxDistance: 100.0
               -
                 type: Transform
                 translation: [ -0.01, 0, 0.045 ]

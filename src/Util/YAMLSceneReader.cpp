@@ -401,28 +401,42 @@ void YAMLSceneReaderImpl::readNodeList(ValueNode& elements, SgGroup* group)
 
 SgNode* YAMLSceneReaderImpl::readTransform(Mapping& node)
 {
-    SgPosTransformPtr transform = new SgPosTransform;
+    SgGroupPtr group;
 
+    SgPosTransformPtr posTransform = new SgPosTransform;
     if(read(node, "translation", v)){
-        transform->setTranslation(v);
+        posTransform->setTranslation(v);
+        group = posTransform;
     }
     Matrix3 R;
     if(self->readRotation(node, R, false)){
-        transform->setRotation(R);
-    }
-    Vector3 scale;
-    bool hasScale = read(node, "scale", scale);
-
-    if(hasScale){
-        SgScaleTransformPtr scaleT = new SgScaleTransform;
-        scaleT->setScale(scale);
-        transform->addChild(scaleT);
-        readElements(node, scaleT);
-    }else{
-        readElements(node, transform);
+        posTransform->setRotation(R);
+        if(!group){
+            group = posTransform;
+        }
     }
 
-    return transform.retn();
+    if(!read(node, "scale", v)){
+        if(!group){
+            group = new SgGroup;
+        }
+        readElements(node, group);
+
+    } else {
+        SgScaleTransformPtr scale = new SgScaleTransform;
+        scale->setScale(v);
+        if(group){
+            group->addChild(scale);
+        } else {
+            group = scale;
+        }
+        readElements(node, scale);
+    }
+
+    // Necessary to prevent group from being deleted when exiting the function
+    posTransform.reset();
+    
+    return group.retn();
 }
 
 

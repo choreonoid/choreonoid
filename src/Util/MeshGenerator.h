@@ -25,6 +25,7 @@ public:
 
     void setDivisionNumber(int n);
     int divisionNumber() const;
+    static int defaultDivisionNumber();
 
     void enableNormalGeneration(bool on);
     bool isNormalGenerationEnabled() const;

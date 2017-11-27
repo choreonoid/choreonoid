@@ -339,6 +339,7 @@ public:
     void popPickId();
     void renderGroup(SgGroup* group);
     void renderTransform(SgTransform* transform);
+    void renderSwitch(SgSwitch* node);
     void renderUnpickableGroup(SgUnpickableGroup* group);
     void renderShape(SgShape* shape);
     void renderShapeMain(SgShape* shape, VertexResource* resource, const Affine3& position, unsigned int pickId);
@@ -459,6 +460,8 @@ void GLSLSceneRendererImpl::initialize()
         [&](SgGroup* node){ renderGroup(node); });
     renderingFunctions.setFunction<SgTransform>(
         [&](SgTransform* node){ renderTransform(node); });
+    renderingFunctions.setFunction<SgSwitch>(
+        [&](SgSwitch* node){ renderSwitch(node); });
     renderingFunctions.setFunction<SgUnpickableGroup>(
         [&](SgUnpickableGroup* node){ renderUnpickableGroup(node); });
     renderingFunctions.setFunction<SgShape>(
@@ -1174,6 +1177,14 @@ void GLSLSceneRenderer::renderCustomGroup(SgGroup* group, std::function<void()> 
     impl->pushPickId(group);
     traverseFunction();
     impl->popPickId();
+}
+
+
+void GLSLSceneRendererImpl::renderSwitch(SgSwitch* node)
+{
+    if(node->isTurnedOn()){
+        renderGroup(node);
+    }
 }
 
 

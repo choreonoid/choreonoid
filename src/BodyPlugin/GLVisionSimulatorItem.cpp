@@ -158,7 +158,6 @@ public:
     RangeSensorPtr rangeSensorForRendering;
 
     bool hasUpdatedData;
-    bool isEndPoint;
     double depthError;
     
 #if USE_QT5_OPENGL
@@ -170,13 +169,15 @@ public:
 #endif
 
     GLSceneRenderer* renderer;
+    int numYawSamples;
+    int numUniqueYawSamples;
     int pixelWidth;
     int pixelHeight;
     std::shared_ptr<Image> tmpImage;
     std::shared_ptr<RangeCamera::PointData> tmpPoints;
     std::shared_ptr<RangeSensor::RangeData> tmpRangeData;
 
-    SensorScreenRenderer(GLVisionSimulatorItemImpl* simImpl, Device* device, Device* deviceForRendering, bool isEndPoint);
+    SensorScreenRenderer(GLVisionSimulatorItemImpl* simImpl, Device* device, Device* deviceForRendering);
     ~SensorScreenRenderer();
     bool initialize(SensorScenePtr scene, int bodyIndex);
     SgCamera* initializeCamera(int bodyIndex);
@@ -217,8 +218,7 @@ public:
     bool isRendering;  // only updated and referred to in the simulation thread
     std::shared_ptr<RangeSensor::RangeData> rangeData;
 
-    SensorRenderer(GLVisionSimulatorItemImpl* simImpl, Device* sensor,
-            SimulationBody* simBody, int bodyIndex);
+    SensorRenderer(GLVisionSimulatorItemImpl* simImpl, Device* sensor, SimulationBody* simBody, int bodyIndex);
     ~SensorRenderer();
     bool initialize(const vector<SimulationBody*>& simBodies);
     SensorScenePtr createSensorScene(const vector<SimulationBody*>& simBodies);
@@ -615,48 +615,50 @@ SensorRenderer::SensorRenderer(GLVisionSimulatorItemImpl* simImpl, Device* devic
     rangeSensor = dynamic_cast<RangeSensor*>(device);
     
     if(camera){
-        screens.push_back(new SensorScreenRenderer(simImpl, device, deviceForRendering, false));
+        screens.push_back(new SensorScreenRenderer(simImpl, device, deviceForRendering));
         
     } else if(rangeSensor){
 
-        int pitchResolution = 1;
-        const double pitchRange = std::min(rangeSensor->pitchRange(), radian(170.0));
-        if(rangeSensor->pitchStep() > 0.0){
-            pitchResolution = static_cast<int>(pitchRange / rangeSensor->pitchStep() + 1e-10) + 1;
-        }
-        
         int numScreens = 1;
         double yawRangePerScreen = rangeSensor->yawRange();
         if(yawRangePerScreen > radian(120.0)){
             numScreens = static_cast<int>(yawRangePerScreen / radian(91.0)) + 1;
             yawRangePerScreen = yawRangePerScreen / numScreens;
         }
-
         double yawRangeOffset = 0;
         double yawOffset = -rangeSensor->yawRange() / 2.0;
+
+        const double pitchRange = std::min(rangeSensor->pitchRange(), radian(170.0));
+        
         for(int i=0; i < numScreens; ++i){
 
             auto rangeSensorForRendering = new RangeSensor(*rangeSensor);
+            auto screen = new SensorScreenRenderer(simImpl, device, rangeSensorForRendering);
+
             rangeSensorForRendering->setPitchRange(pitchRange);
-            rangeSensorForRendering->setPitchResolution(pitchResolution);
 
             // Adjust to be a multiple of yawStep
-            double resolution = 1.0;
-            if(rangeSensor->yawStep() > 0.0){
-                resolution = round((yawRangePerScreen + yawRangeOffset) / rangeSensor->yawStep());
+            int n = 1;
+            const double yawStep = rangeSensor->yawStep();
+            if(yawStep > 0.0){
+                n = static_cast<int>(round((yawRangePerScreen + yawRangeOffset) / yawStep)) + 1;
             }
-            double adjustedYawRange = rangeSensor->yawStep() * resolution;
+            double adjustedYawRange = (n - 1) * yawStep;
             rangeSensorForRendering->setYawRange(adjustedYawRange);
-            rangeSensorForRendering->setYawResolution(static_cast<int>(resolution) + 1);
             yawRangeOffset = yawRangePerScreen - adjustedYawRange;
+            screen->numYawSamples = n;
+            if(i < numScreens - 1){
+                screen->numUniqueYawSamples = n - 1;
+            } else {
+                screen->numUniqueYawSamples = n;
+            }
 
             double centerAngle = yawOffset + adjustedYawRange / 2.0;
             Matrix3 R = rangeSensor->localRotaion() * AngleAxis(centerAngle, Vector3::UnitY());
             rangeSensorForRendering->setLocalRotation(R);
             yawOffset += adjustedYawRange;
 
-            bool isEndPoint = (i == numScreens - 1);
-            screens.push_back(new SensorScreenRenderer(simImpl, device, rangeSensorForRendering, isEndPoint));
+            screens.push_back(screen);
         }
         if(DEBUG_MESSAGE){
             cout << "Number of screens = " << numScreens << endl;
@@ -692,7 +694,7 @@ bool SensorRenderer::initialize(const vector<SimulationBody*>& simBodies)
             camera->setImageStateClonable(true);
         }
     } else if(rangeSensor){
-        double frameRate = std::max(0.1, std::min(rangeSensor->frameRate(), simImpl->maxFrameRate));
+        double frameRate = std::max(0.1, std::min(rangeSensor->scanRate(), simImpl->maxFrameRate));
         cycleTime = 1.0 / frameRate;
         if(simImpl->isVisionDataRecordingEnabled){
             rangeSensor->setRangeDataStateClonable(true);
@@ -754,10 +756,8 @@ SensorScenePtr SensorRenderer::createSensorScene(const vector<SimulationBody*>& 
 }
 
 
-SensorScreenRenderer::SensorScreenRenderer
-(GLVisionSimulatorItemImpl* simImpl, Device* device, Device* screenDevice, bool isEndPoint)
-    : simImpl(simImpl),
-      isEndPoint(isEndPoint)
+SensorScreenRenderer::SensorScreenRenderer(GLVisionSimulatorItemImpl* simImpl, Device* device, Device* screenDevice)
+    : simImpl(simImpl)
 {
     camera = dynamic_cast<Camera*>(device);
     rangeCamera = dynamic_cast<RangeCamera*>(camera);
@@ -826,13 +826,13 @@ SgCamera* SensorScreenRenderer::initializeCamera(int bodyIndex)
             const double maxTanYaw = tan(halfYawRange);
             const double maxPitchRange2 = atan(maxTanPitch);
 
-            if(rangeSensorForRendering->yawResolution() > rangeSensorForRendering->pitchResolution()){
-                pixelWidth = rangeSensorForRendering->yawResolution() * simImpl->rangeSensorPrecisionRatio;
+            if(numYawSamples >= rangeSensorForRendering->numPitchSamples()){
+                pixelWidth = numYawSamples * simImpl->rangeSensorPrecisionRatio;
                 pixelHeight = pixelWidth * maxTanPitch / maxTanYaw;
             } else {
-                pixelHeight = rangeSensorForRendering->pitchResolution() * simImpl->rangeSensorPrecisionRatio;
+                pixelHeight = rangeSensorForRendering->numPitchSamples() * simImpl->rangeSensorPrecisionRatio;
                 pixelWidth = pixelHeight * maxTanYaw / maxTanPitch;
-                double r = rangeSensorForRendering->yawResolution() * simImpl->rangeSensorPrecisionRatio;
+                double r = numYawSamples * simImpl->rangeSensorPrecisionRatio;
                 if(halfYawRange != 0.0 && pixelWidth < r){
                     pixelWidth = r;
                     pixelHeight = pixelWidth * maxTanPitch / maxTanYaw;
@@ -1336,29 +1336,25 @@ void SensorRenderer::copyVisionData()
                 rangeData = screens[0]->tmpRangeData;
             } else {
                 rangeData = std::make_shared<vector<double>>();
-                int pitchResolution = screens[0]->rangeSensorForRendering->pitchResolution();
-                int yawResolution[4] = {0,0,0,0};
                 vector<double>::iterator src[4];
-                int n = 0;
+                int size = 0;
                 for(size_t i=0; i < screens.size(); ++i){
                     auto& screen = screens[i];
                     vector<double>& tmpRangeData_ = *screen->tmpRangeData;
-                    n += tmpRangeData_.size();
-                    yawResolution[i] = screen->rangeSensorForRendering->yawResolution();
-                    if(!screen->isEndPoint){
-                        yawResolution[i] -= 1;
-                    }
+                    size += tmpRangeData_.size();
                     src[i] = tmpRangeData_.begin();
                 }
-                (*rangeData).resize(n);
+                (*rangeData).resize(size);
 
                 vector<double>::iterator dest = (*rangeData).begin();
-                for(int i=0; i < pitchResolution; ++i){
+                const int numPitchSamples = screens[0]->rangeSensorForRendering->numPitchSamples();
+                for(int i=0; i < numPitchSamples; ++i){
                     for(size_t j=0; j < screens.size(); ++j){
-                        double r = yawResolution[j];
-                        copy(src[j], src[j] + r, dest);
-                        advance(src[j], r);
-                        advance(dest, r);
+                        auto screen = screens[j];
+                        int n = screen->numUniqueYawSamples;
+                        copy(src[j], src[j] + n, dest);
+                        advance(src[j], n);
+                        advance(dest, n);
                     }
                 }
             }
@@ -1501,15 +1497,11 @@ bool SensorScreenRenderer::getRangeCameraData(Image& image, vector<Vector3f>& po
 bool SensorScreenRenderer::getRangeSensorData(vector<double>& rangeData)
 {
     const double yawRange = rangeSensorForRendering->yawRange();
-    int yawResolution = rangeSensorForRendering->yawResolution();
-    if(!isEndPoint){
-        yawResolution -= 1;
-    }
     const double yawStep = rangeSensorForRendering->yawStep();
     const double maxTanYawAngle = tan(yawRange / 2.0);
 
     const double pitchRange = rangeSensorForRendering->pitchRange();
-    const int pitchResolution = rangeSensorForRendering->pitchResolution();
+    const int numPitchSamples = rangeSensorForRendering->numPitchSamples();
     const double pitchStep = rangeSensorForRendering->pitchStep();
     const double maxTanPitchAngle = tan(pitchRange / 2.0) / cos(yawRange / 2.0);
 
@@ -1533,13 +1525,13 @@ bool SensorScreenRenderer::getRangeSensorData(vector<double>& rangeData)
     glReadPixels(0, 0, pixelWidth, pixelHeight, GL_DEPTH_COMPONENT, GL_FLOAT, &depthBuf[0]);
 #endif
 
-    rangeData.reserve(yawResolution * pitchResolution);
+    rangeData.reserve(numUniqueYawSamples * numPitchSamples);
 
-    for(int pitch=0; pitch < pitchResolution; ++pitch){
+    for(int pitch=0; pitch < numPitchSamples; ++pitch){
         const double pitchAngle = pitch * pitchStep - pitchRange / 2.0;
         const double cosPitchAngle = cos(pitchAngle);
 
-        for(int yaw=0; yaw < yawResolution; ++yaw){
+        for(int yaw=0; yaw < numUniqueYawSamples; ++yaw){
             const double yawAngle = yaw * yawStep - yawRange / 2.0;
 
             int py;
