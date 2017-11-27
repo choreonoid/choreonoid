@@ -12,6 +12,7 @@ ode \
 omniORB \
 glew \
 libsndfile \
+python36 \
 # gstreamer1 \
 # gstreamer1-gst-plugins-good \
 # bullet
