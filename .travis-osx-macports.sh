@@ -1,4 +1,5 @@
-#!/bin/sh
+#!/bin/bash
+set -ev
 
 export COLUMNS=80
 curl -LO https://raw.githubusercontent.com/GiovanniBussi/macports-ci/master/macports-ci
