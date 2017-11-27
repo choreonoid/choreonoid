@@ -8,7 +8,13 @@ links:
       name: rod
       translation: [ 0.0, 0.0, 0.5 ]
       jointType: free
-      density: 1.0
+      massType: density
+      density: 8000
+      mass: 270
+      inertia: [
+        13.5,  0,     0,
+        0,     74.25, 0,
+        0,     0    , 74.25 ]
       material: Default
       elements: &box
         Shape:
