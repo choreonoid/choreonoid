@@ -1,8 +1,13 @@
+/**
+   \file
+   \author Ikumi Susa
+*/
+
 #include "AGXBreakableJoint.h"
 #include <cnoid/YAMLBodyLoader>
 #include <cnoid/YAMLReader>
-#include "../AGXBody.h"
-#include "../AGXScene.h"
+#include <cnoid/AGXBody>
+#include <cnoid/AGXScene>
 
 using namespace std;
 namespace cnoid{
@@ -140,7 +145,7 @@ bool createAGXBreakableJoint(cnoid::AGXBody* agxBody)
         agxBody->addAGXBodyExtension(new cnoid::AGXBreakableJoint(device, agxBody));
     }
     return true;
-};
+}
 
 struct AGXBreakableJointRegistration
 {
@@ -167,8 +172,7 @@ public:
         m_joint->setEnableComputeForces(true);
     }
 
-//    virtual void post( const agx::TimeStamp& /*t*/ )
-    virtual void post( const agx::TimeStamp& t )
+   virtual void post( const agx::TimeStamp& /*t*/ )
     {
         agx::Vec3 force;
         agx::Vec3 torque;

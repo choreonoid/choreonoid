@@ -925,7 +925,7 @@ void BodyLinkViewImpl::doInverseKinematics(Vector3 p, Matrix3 R)
                 Position Tinv = currentLink->T().inverse();
                 Position Trel = T0.inverse() * currentLink->T();
                 const ItemList<BodyItem>& bodyItems = BodyBar::instance()->selectedBodyItems();
-                for(int i=0; i < bodyItems.size(); ++i){
+                for(size_t i=0; i < bodyItems.size(); ++i){
                     BodyItem* bodyItem = bodyItems[i];
                     if(bodyItem != currentBodyItem){
                         Link* rootLink = bodyItem->body()->rootLink();

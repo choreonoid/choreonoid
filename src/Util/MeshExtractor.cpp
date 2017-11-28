@@ -14,7 +14,7 @@ namespace cnoid {
 class MeshExtractorImpl
 {
 public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     PolymorphicFunctionSet<SgNode> functions;
     std::function<void()> callback;

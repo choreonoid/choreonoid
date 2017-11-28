@@ -19,7 +19,7 @@ class CNOID_EXPORT DeviceState : public Referenced
 {
 protected:
     DeviceState() { }
-    DeviceState(const DeviceState& org) { }
+    DeviceState(const DeviceState&) { }
         
 public:
     virtual ~DeviceState() { }
@@ -134,6 +134,6 @@ public:
 
 typedef ref_ptr<Device> DevicePtr;
 
-};
+}
 
 #endif

@@ -32,16 +32,6 @@ SimulatorItemPtr SimulatorItem_findActiveSimulatorItemFor(Item* item)
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(SimulatorItem_startSimulation_overloads, startSimulation, 0, 1)
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(SimulatorItem_setExternalForce_overloads, setExternalForce, 4, 5)
 
-void AISTSimulatorItem_setFriction1(AISTSimulatorItem& self, double staticFriction, double slipFriction)
-{
-    self.setFriction(staticFriction, slipFriction);
-}
-
-void AISTSimulatorItem_setFriction2(AISTSimulatorItem& self, Link* link1, Link* link2, double staticFriction, double slipFriction)
-{
-    self.setFriction(link1, link2, staticFriction, slipFriction);
-}
-
 }
 
 void exportSimulationClasses()
@@ -114,14 +104,11 @@ void exportSimulationClasses()
 
     {
         scope aistSimulatorItemScope = 
-            class_< AISTSimulatorItem, AISTSimulatorItemPtr, bases<SimulatorItem> >("AISTSimulatorItem")
+            class_<AISTSimulatorItem, AISTSimulatorItemPtr, bases<SimulatorItem>>("AISTSimulatorItem")
             .def("setDynamicsMode", &AISTSimulatorItem::setDynamicsMode)
             .def("setIntegrationMode", &AISTSimulatorItem::setIntegrationMode)
             .def("setGravity", &AISTSimulatorItem::setGravity)
-            .def("setFriction", AISTSimulatorItem_setFriction1)
-            .def("setFriction", AISTSimulatorItem_setFriction2)
-            .def("collisionHandlerId", &AISTSimulatorItem::collisionHandlerId)
-            .def("setCollisionHandler", &AISTSimulatorItem::setCollisionHandler)
+            .def("setFriction", (void(AISTSimulatorItem::*)(double,double)) &AISTSimulatorItem::setFriction)
             .def("setContactCullingDistance", &AISTSimulatorItem::setContactCullingDistance)
             .def("setContactCullingDepth", &AISTSimulatorItem::setContactCullingDepth)
             .def("setErrorCriterion", &AISTSimulatorItem::setErrorCriterion)
@@ -134,11 +121,13 @@ void exportSimulationClasses()
             .def("setConstraintForceOutputEnabled", &AISTSimulatorItem::setConstraintForceOutputEnabled)
             .def("clearExtraJoint", &AISTSimulatorItem::clearExtraJoint)
             .def("addExtraJoint", &AISTSimulatorItem::addExtraJoint)
+
+            // deprecated
+            .def("setFriction", (void(AISTSimulatorItem::*)(Link*,Link*,double,double)) &AISTSimulatorItem::setFriction)
             ;
 
         enum_<AISTSimulatorItem::DynamicsMode>("DynamicsMode")
             .value("FORWARD_DYNAMICS", AISTSimulatorItem::FORWARD_DYNAMICS) 
-            .value("HG_DYNAMICS", AISTSimulatorItem::HG_DYNAMICS) 
             .value("KINEMATICS", AISTSimulatorItem::KINEMATICS)
             .value("N_DYNAMICS_MODES", AISTSimulatorItem::N_DYNAMICS_MODES);
 

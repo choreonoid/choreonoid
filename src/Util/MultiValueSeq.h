@@ -24,6 +24,7 @@ public:
     MultiValueSeq(const MultiValueSeq& org);
     virtual ~MultiValueSeq();
 
+    using BaseSeqType::operator=;
     virtual AbstractSeqPtr cloneSeq() const;
         
     virtual bool loadPlainFormat(const std::string& filename);

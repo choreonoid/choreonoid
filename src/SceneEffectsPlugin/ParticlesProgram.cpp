@@ -112,7 +112,7 @@ void ParticlesProgramBase::render
         glUniform1f(angle2pixelsLocation, height / persCamera->fovy((double)width / height));
         glUniform1f(pointSizeLocation, particles->particleSize());
     } else if(SgOrthographicCamera* orthoCamera = dynamic_cast<SgOrthographicCamera*>(camera)){
-        float size = 0.08f * height / orthoCamera->height();
+        //float size = 0.08f * height / orthoCamera->height();
         glUniform1f(pointSizeLocation, -particles->particleSize());
     }
 

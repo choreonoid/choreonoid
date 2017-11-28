@@ -22,6 +22,7 @@ class Body;
 class Device;
 class CollisionDetector;
 typedef std::shared_ptr<CollisionDetector> CollisionDetectorPtr;
+class WorldItem;
 class BodyItem;
 class ControllerItem;
 class SimulationBodyImpl;
@@ -87,6 +88,7 @@ public:
     SimulatorItem();
     virtual ~SimulatorItem();
 
+    WorldItem* worldItem();
     virtual double worldTimeStep();
     void setTimeStep(double step);
 
@@ -184,6 +186,7 @@ public:
 protected:
     SimulatorItem(const SimulatorItem& org);
 
+    virtual void onPositionChanged();
     virtual void onDisconnectedFromRoot();
 
     /**

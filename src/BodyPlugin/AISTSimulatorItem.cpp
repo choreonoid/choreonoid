@@ -10,6 +10,7 @@
 #endif
 
 #include "AISTSimulatorItem.h"
+#include "WorldItem.h"
 #include "BodyItem.h"
 #include "ControllerItem.h"
 #include <cnoid/ItemManager>
@@ -107,16 +108,6 @@ public:
     typedef std::map<Link*, Link*> LinkMap;
     LinkMap orgLinkToInternalLinkMap;
 
-    struct ContactAttribute
-    {
-        boost::optional<double> staticFriction;
-        boost::optional<double> dynamicFriction;
-        boost::optional<int> collisionHandlerId;
-    };
-
-    typedef std::map<IdPair<Link*>, ContactAttribute> ContactAttributeMap;
-    ContactAttributeMap contactAttributeMap;
-
     boost::optional<int> forcedBodyPositionFunctionId;
     std::mutex forcedBodyPositionMutex;
     DyBody* forcedPositionBody;
@@ -124,7 +115,6 @@ public:
 
     AISTSimulatorItemImpl(AISTSimulatorItem* self);
     AISTSimulatorItemImpl(AISTSimulatorItem* self, const AISTSimulatorItemImpl& org);
-    ContactAttribute& getOrCreateContactAttribute(Link* link1, Link* link2);
     bool initializeSimulation(const std::vector<SimulationBody*>& simBodies);
     void addBody(AISTSimBody* simBody);
     void clearExternalForces();
@@ -248,13 +238,6 @@ const Vector3& AISTSimulatorItem::gravity() const
 }
 
 
-AISTSimulatorItemImpl::ContactAttribute&
-AISTSimulatorItemImpl::getOrCreateContactAttribute(Link* link1, Link* link2)
-{
-    return contactAttributeMap[IdPair<Link*>(link1, link2)];
-}
-        
-
 void AISTSimulatorItem::setFriction(double staticFriction, double dynamicFriction)
 {
     impl->staticFriction = staticFriction;
@@ -276,34 +259,23 @@ double AISTSimulatorItem::dynamicFriction() const
 
 void AISTSimulatorItem::setFriction(Link* link1, Link* link2, double staticFriction, double dynamicFriction)
 {
-    AISTSimulatorItemImpl::ContactAttribute& attr = impl->getOrCreateContactAttribute(link1, link2);
-    attr.staticFriction = staticFriction;
-    attr.dynamicFriction = dynamicFriction;
+    MessageView::instance()->putln(
+        MessageView::WARNING,
+        _("AISTSimulatorItem::setFriction(Link* link1, Link* link2, double staticFriction, double dynamicFriction) "
+          "is not supported in this version.\n"
+          "Please use the material table instead of it."));
 }
 
 
-int AISTSimulatorItem::registerCollisionHandler(const std::string& name, CollisionHandler handler)
+void AISTSimulatorItem::registerCollisionHandler(const std::string& name, CollisionHandler handler)
 {
-    return impl->world.constraintForceSolver.registerCollisionHandler(name, handler);
+    impl->world.constraintForceSolver.registerCollisionHandler(name, handler);
 }
 
 
-void AISTSimulatorItem::unregisterCollisionHandler(int handlerId)
+bool AISTSimulatorItem::unregisterCollisionHandler(const std::string& name)
 {
-    return impl->world.constraintForceSolver.unregisterCollisionHandler(handlerId);
-}
-
-
-int AISTSimulatorItem::collisionHandlerId(const std::string& name) const
-{
-    return impl->world.constraintForceSolver.collisionHandlerId(name);
-}
-
-
-void AISTSimulatorItem::setCollisionHandler(Link* link1, Link* link2, int handlerId)
-{
-    AISTSimulatorItemImpl::ContactAttribute& attr = impl->getOrCreateContactAttribute(link1, link2);
-    attr.collisionHandlerId = handlerId;
+    return impl->world.constraintForceSolver.unregisterCollisionHandler(name);
 }
 
 
@@ -386,7 +358,7 @@ SimulationBody* AISTSimulatorItem::createSimulationBody(Body* orgBody)
     DyBody* body = new DyBody(*orgBody);
 
     const int n = orgBody->numLinks();
-    for(size_t i=0; i < n; ++i){
+    for(int i=0; i < n; ++i){
         impl->orgLinkToInternalLinkMap[orgBody->link(i)] = body->link(i);
     }
     
@@ -430,12 +402,11 @@ bool AISTSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBod
     world.setCurrentTime(0.0);
 
     ConstraintForceSolver& cfs = world.constraintForceSolver;
-
+    cfs.setMaterialTable(self->worldItem()->materialTable());
     cfs.setGaussSeidelErrorCriterion(errorCriterion.value());
     cfs.setGaussSeidelMaxNumIterations(maxNumIterations);
-    cfs.setContactDepthCorrection(
-        contactCorrectionDepth.value(), contactCorrectionVelocityRatio.value());
-
+    cfs.setContactDepthCorrection(contactCorrectionDepth.value(), contactCorrectionVelocityRatio.value());
+    
     self->addPreDynamicsFunction([&](){ clearExternalForces(); });
 
     world.clearBodies();
@@ -455,7 +426,6 @@ bool AISTSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBod
     cfs.setContactCullingDepth(contactCullingDepth.value());
     cfs.setCoefficientOfRestitution(epsilon);
     cfs.setCollisionDetector(self->collisionDetector());
-    cfs.setSelfCollisionEnabled(self->isSelfCollisionEnabled());
 
     if(is2Dmode){
         cfs.set2Dmode(true);
@@ -463,40 +433,6 @@ bool AISTSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBod
 
     world.initialize();
 
-    ContactAttributeMap::iterator iter = contactAttributeMap.begin();
-    while(iter != contactAttributeMap.end()){
-        bool actualLinksFound = false;
-        const IdPair<Link*>& linkPair = iter->first;
-        LinkMap::iterator p0 = orgLinkToInternalLinkMap.find(linkPair(0));
-        if(p0 != orgLinkToInternalLinkMap.end()){
-            LinkMap::iterator p1 = orgLinkToInternalLinkMap.find(linkPair(1));
-            if(p1 != orgLinkToInternalLinkMap.end()){
-
-                Link* iLink0 = p0->second;
-                Link* iLink1 = p1->second;
-                actualLinksFound = true;
-
-                const ContactAttribute& attr = iter->second;
-                if(attr.staticFriction || attr.dynamicFriction){
-                    cfs.setFriction(
-                        iLink0, iLink1,
-                        attr.staticFriction ? *attr.staticFriction : staticFriction,
-                        attr.dynamicFriction ? *attr.dynamicFriction : dynamicFriction);
-                }
-                if(attr.collisionHandlerId){
-                    cfs.setCollisionHandler(iLink0, iLink1, *attr.collisionHandlerId);
-                }
-            }
-        }
-        if(actualLinksFound){
-            ++iter;
-        } else {
-            // remove the attribute for a non-existent link
-            ContactAttributeMap::iterator current = iter++;
-            contactAttributeMap.erase(current); 
-        }
-    }
-    
     return true;
 }
 
@@ -540,6 +476,8 @@ void AISTSimulatorItemImpl::addBody(AISTSimBody* simBody)
         bodyIndex = world.addBody(body);
     }
     bodyIndexMap[body] = bodyIndex;
+
+    world.constraintForceSolver.setSelfCollisionEnabled( bodyIndex, simBody->bodyItem()->isSelfCollisionDetectionEnabled() );
 }
 
 

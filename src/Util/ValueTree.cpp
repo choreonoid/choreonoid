@@ -555,6 +555,27 @@ ValueNodePtr Mapping::extract(const std::string& key)
 }
 
 
+bool Mapping::extract(const std::string& key, double& out_value)
+{
+    ValueNodePtr node = extract(key);
+    if(node){
+        out_value = node->toDouble();
+        return true;
+    }
+    return false;
+}
+
+
+bool Mapping::extract(const std::string& key, std::string& out_value)
+{
+    ValueNodePtr node = extract(key);
+    if(node){
+        out_value = node->toString();
+        return true;
+    }
+    return false;
+}
+
 
 ValueNode& Mapping::get(const std::string& key) const
 {
@@ -989,7 +1010,7 @@ void Listing::append(const std::string& value, StringStyle stringStyle)
 void Listing::insert(int index, ValueNode* node)
 {
     if(index >= 0){
-        if(index > values.size()){
+        if(index > static_cast<int>(values.size())){
             index = values.size();
         }
         values.insert(values.begin() + index, node);

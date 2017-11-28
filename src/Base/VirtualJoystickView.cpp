@@ -129,11 +129,11 @@ VirtualJoystickViewImpl::VirtualJoystickViewImpl(VirtualJoystickView* self)
         grid.addWidget(&buttons[i], info.row, info.column);
         keyToButtonMap[info.key] = i;
         if(info.isAxis){
-            if(info.id >= axisPositions.size()){
+            if(info.id >= static_cast<int>(axisPositions.size())){
                 axisPositions.resize(info.id + 1, 0.0);
             }
         } else {
-            if(info.id >= buttonStates.size()){
+            if(info.id >= static_cast<int>(buttonStates.size())){
                 buttonStates.resize(info.id + 1, false);
             }
         }
@@ -213,7 +213,6 @@ void VirtualJoystickViewImpl::onButtonPressed(int index)
 
 void VirtualJoystickViewImpl::onButtonReleased(int index)
 {
-    ButtonInfo& info = buttonInfo[index];
     std::lock_guard<std::mutex> lock(mutex);
     keyValues[index] = 0.0;
 }
@@ -252,7 +251,7 @@ bool VirtualJoystickViewImpl::readCurrentState()
 
 double VirtualJoystickViewImpl::getPosition(int axis) const
 {
-    if(axis >=0 && axis < axisPositions.size()){
+    if(axis >=0 && axis < static_cast<int>(axisPositions.size())){
         return axisPositions[axis];
     }
     return 0.0;
@@ -261,7 +260,7 @@ double VirtualJoystickViewImpl::getPosition(int axis) const
 
 bool VirtualJoystickViewImpl::getButtonState(int button) const
 {
-    if(button >= 0 && button < buttonStates.size()){
+    if(button >= 0 && button < static_cast<int>(buttonStates.size())){
         return buttonStates[button];
     }
     return false;
@@ -296,13 +295,13 @@ SignalProxy<void(int id, double position)> VirtualJoystickViewImpl::sigAxis()
 }
 
 
-bool VirtualJoystickView::storeState(Archive& archive)
+bool VirtualJoystickView::storeState(Archive&)
 {
     return true;
 }
 
 
-bool VirtualJoystickView::restoreState(const Archive& archive)
+bool VirtualJoystickView::restoreState(const Archive&)
 {
     return true;
 }

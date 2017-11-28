@@ -74,7 +74,7 @@ TaskCommand::~TaskCommand()
 }
 
 
-TaskCommand* TaskCommand::setCheckable(bool on)
+TaskCommand* TaskCommand::setCheckable(bool /* on */)
 {
     toggleState();
     return this;
@@ -233,7 +233,7 @@ TaskCommand* TaskPhase::addToggleCommand(const std::string& caption)
 TaskCommand* TaskPhase::command(int index) const
 {
     TaskCommand* command = 0;
-    if(index >= 0 && index < commands.size()){
+    if(index >= 0 && index < static_cast<int>(commands.size())){
         command = commands[index];
     }
     return command;
@@ -357,7 +357,7 @@ void Task::setCaption(const std::string& str)
         
 TaskPhase* Task::phase(int index)
 {
-    if(index >= 0 && index < phases_.size()){
+    if(index >= 0 && index < static_cast<int>(phases_.size())){
         return phases_[index];
     }
     return 0;
@@ -484,19 +484,19 @@ TaskFunc Task::funcToSetCommandLink(int commandIndex) const
 }
 
 
-void Task::onMenuRequest(TaskMenu& menu)
+void Task::onMenuRequest(TaskMenu& /* menu */)
 {
 
 }
 
 
-void Task::onActivated(AbstractTaskSequencer* sequencer)
+void Task::onActivated(AbstractTaskSequencer* /* sequencer */)
 {
 
 }
 
 
-void Task::onDeactivated(AbstractTaskSequencer* sequencer)
+void Task::onDeactivated(AbstractTaskSequencer* /* sequencer */)
 {
 
 }

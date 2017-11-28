@@ -237,7 +237,7 @@ bool RotationDragger::onButtonPressEvent(const SceneWidgetEvent& event)
 }
 
 
-bool RotationDragger::onButtonReleaseEvent(const SceneWidgetEvent& event)
+bool RotationDragger::onButtonReleaseEvent(const SceneWidgetEvent&)
 {
     if(dragProjector.isDragging()){
         sigRotationFinished_();
@@ -262,7 +262,7 @@ bool RotationDragger::onPointerMoveEvent(const SceneWidgetEvent& event)
 }
 
 
-void RotationDragger::onPointerLeaveEvent(const SceneWidgetEvent& event)
+void RotationDragger::onPointerLeaveEvent(const SceneWidgetEvent&)
 {
     if(dragProjector.isDragging()){
         sigRotationFinished_();

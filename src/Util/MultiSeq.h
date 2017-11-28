@@ -51,7 +51,7 @@ public:
     
     virtual ~MultiSeq() { }
 
-    MultiSeqType& operator=(const MultiSeqType& rhs) {
+    MultiSeqType& operator=(const MultiSeqType& rhs){
         if(this != &rhs){
             AbstractMultiSeq::operator=(rhs);
             Container::operator=(rhs);
@@ -60,7 +60,7 @@ public:
         return *this;
     }
 
-    virtual AbstractSeq& operator=(const AbstractSeq& rhs) {
+    virtual AbstractSeq& operator=(const AbstractSeq& rhs) override {
         const MultiSeqType* rhsSeq = dynamic_cast<const MultiSeqType*>(&rhs);
         if(rhsSeq){
             return operator=(*rhsSeq);

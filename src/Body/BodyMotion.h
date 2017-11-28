@@ -21,7 +21,8 @@ class CNOID_EXPORT BodyMotion : public AbstractMultiSeq
 public:
     BodyMotion();
     BodyMotion(const BodyMotion& org);
-            
+
+    using AbstractMultiSeq::operator=;
     BodyMotion& operator=(const BodyMotion& rhs);
     virtual AbstractSeqPtr cloneSeq() const;        
 
@@ -69,7 +70,7 @@ public:
         BodyMotion& motion_;
         int frame_;
         Frame(BodyMotion& motion, int frame) : motion_(motion), frame_(frame) { }
-        Frame& operator=(const Frame& rhs) { return *this; }
+        Frame& operator=(const Frame&) { return *this; }
     public:
         Frame();
         Frame(const Frame& org) : motion_(org.motion_), frame_(org.frame_) { }
@@ -83,8 +84,8 @@ public:
         const BodyMotion& motion_;
         int frame_;
         ConstFrame(const BodyMotion& motion, int frame) : motion_(motion), frame_(frame) { }
-        ConstFrame& operator=(const ConstFrame& rhs) { return *this; }
-        ConstFrame& operator=(const Frame& rhs) { return *this; }
+        ConstFrame& operator=(const ConstFrame&) { return *this; }
+        ConstFrame& operator=(const Frame&) { return *this; }
     public:
         ConstFrame();
         ConstFrame(const ConstFrame& org) : motion_(org.motion_), frame_(org.frame_) { }

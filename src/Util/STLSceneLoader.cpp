@@ -135,7 +135,7 @@ SgNode* STLSceneLoader::load(const std::string& filename)
             mesh->setNormals(normals);
             SgIndexArray& indices = mesh->normalIndices();
             indices.reserve(normals->size() * 3);
-            for(int i = 0; i < normals->size(); ++i) {
+            for(size_t i = 0; i < normals->size(); ++i) {
                 indices.push_back(i);
                 indices.push_back(i);
                 indices.push_back(i);

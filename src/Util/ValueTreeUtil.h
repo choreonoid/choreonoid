@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_UTIL_VALUE_TREE_UTIL_H_INCLUDED
-#define CNOID_UTIL_VALUE_TREE_UTIL_H_INCLUDED
+#ifndef CNOID_UTIL_VALUE_TREE_UTIL_H
+#define CNOID_UTIL_VALUE_TREE_UTIL_H
 
 #include "ValueTree.h"
 
@@ -29,7 +29,6 @@ bool writeElements(Mapping& mapping, const std::string& key, const Container& el
 template<class Container>
 bool readElements(const Mapping& mapping, const std::string& key, Container& elements)
 {
-    bool completed = false;
     const Listing& listing = *mapping.findListing(key);
     if(listing.isValid()){
         for(int i=0; i < listing.size(); ++i){
@@ -38,6 +37,7 @@ bool readElements(const Mapping& mapping, const std::string& key, Container& ele
     }
     return !elements.empty();
 }
+
 }
 
 #endif

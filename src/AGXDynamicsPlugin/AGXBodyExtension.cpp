@@ -63,8 +63,8 @@ void AGXExtraJoint::createJoints()
 
 
 ////////////////////////////////////////////////////////////
-// AGXContinousTrack
-AGXContinousTrack::AGXContinousTrack(AGXLink* footLinkStart, AGXBody* body) : AGXBodyExtension(body)
+// AGXContinuousTrack
+AGXContinuousTrack::AGXContinuousTrack(AGXLink* footLinkStart, AGXBody* body) : AGXBodyExtension(body)
 {
     _feet.clear();
     _chassisLink = footLinkStart->getAGXParentLink();
@@ -73,7 +73,7 @@ AGXContinousTrack::AGXContinousTrack(AGXLink* footLinkStart, AGXBody* body) : AG
     createTrackConstraint();
 }
 
-void AGXContinousTrack::addFoot(Link* link, AGXBody* body)
+void AGXContinuousTrack::addFoot(Link* link, AGXBody* body)
 {
     for (Link* child = link->child(); child; child = child->sibling()) {
         _feet.push_back(body->getAGXLink(child->index()));
@@ -81,7 +81,7 @@ void AGXContinousTrack::addFoot(Link* link, AGXBody* body)
     }
 }
 
-void AGXContinousTrack::createTrackConstraint()
+void AGXContinuousTrack::createTrackConstraint()
 {
     AGXLinkPtr agxFootLinkStart = _feet[0];
     AGXLinkPtr agxFootLinkEnd = _feet[_feet.size() - 1];
@@ -130,10 +130,10 @@ void AGXContinousTrack::createTrackConstraint()
     // Generate collision group name to disable collision between tracks
     std::stringstream trackCollsionGroupName;
     trackCollsionGroupName.str("");
-    trackCollsionGroupName << "SelfCollisionContinousTrack" << generateUID() << std::flush;
+    trackCollsionGroupName << "SelfCollisionContinuousTrack" << agx::UuidGenerator().generate().str() << std::flush;
     getAGXBody()->addCollisionGroupNameToDisableCollision(trackCollsionGroupName.str());
 
-    for (int i = 0; i < _feet.size(); ++i) {
+    for (int i = 0; i < (int)_feet.size(); ++i) {
         AGXLinkPtr agxLink = _feet[i];
         // Add plane joint
         pd.frameA = AGXObjectFactory::createFrame();

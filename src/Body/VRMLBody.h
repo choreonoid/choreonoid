@@ -131,6 +131,6 @@ public:
 
 typedef ref_ptr<VRMLRangeSensor> VRMLRangeSensorPtr;
 
-};
+}
 
 #endif

@@ -31,7 +31,6 @@ namespace filesystem = boost::filesystem;
 
 
 #ifdef Q_OS_WIN32
-static const char* PATH_DELIMITER = ";";
 # ifdef CNOID_DEBUG
 static const char* DEBUG_SUFFIX = "d";
 # else
@@ -39,10 +38,8 @@ static const char* DEBUG_SUFFIX = "";
 # endif
 #else
 # ifdef Q_OS_MAC
-static const char* PATH_DELIMITER = ":";
 static const char* DEBUG_SUFFIX = "";
 # else
-static const char* PATH_DELIMITER = ":";
 static const char* DEBUG_SUFFIX = "";
 # endif
 #endif

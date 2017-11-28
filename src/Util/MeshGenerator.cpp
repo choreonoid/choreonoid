@@ -13,14 +13,17 @@ using namespace std;
 using namespace cnoid;
 
 namespace {
+
 const double PI = 3.14159265358979323846;
+const int defaultDivisionNumber = 20;
+
 }
 
 MeshGenerator::MeshGenerator()
 {
     isNormalGenerationEnabled_ = true;
     normalGenerator = 0;
-    divisionNumber_ = 20;
+    divisionNumber_ = ::defaultDivisionNumber;
 }
 
 
@@ -34,13 +37,23 @@ MeshGenerator::~MeshGenerator()
 
 void MeshGenerator::setDivisionNumber(int n)
 {
-    divisionNumber_ = n;
+    if(n < 0){
+        divisionNumber_ = ::defaultDivisionNumber;
+    } else {
+        divisionNumber_ = n;
+    }
 }
 
 
 int MeshGenerator::divisionNumber() const
 {
     return divisionNumber_;
+}
+
+
+int MeshGenerator::defaultDivisionNumber()
+{
+    return ::defaultDivisionNumber;
 }
 
 
@@ -673,7 +686,7 @@ SgLineSet* MeshGenerator::generateExtrusionLineSet(const Extrusion& extrusion, S
 SgMesh* MeshGenerator::generateElevationGrid(const ElevationGrid& grid)
 {
     SgMesh* mesh = new SgMesh;
-    if(grid.xDimension * grid.zDimension != grid.height.size()){
+    if(grid.xDimension * grid.zDimension != static_cast<int>(grid.height.size())){
         return mesh;
     }
 

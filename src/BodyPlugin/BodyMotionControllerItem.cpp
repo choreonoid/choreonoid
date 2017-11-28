@@ -8,6 +8,7 @@
 #include <cnoid/ItemManager>
 #include <cnoid/ItemList>
 #include <cnoid/ItemTreeView>
+#include <cnoid/ControllerIO>
 #include "gettext.h"
 
 using namespace std;
@@ -26,7 +27,7 @@ public:
     int numJoints;
 
     BodyMotionControllerItemImpl(BodyMotionControllerItem* self);
-    bool initialize(ControllerItemIO* io);
+    bool initialize(ControllerIO* io);
 };
 
 }
@@ -66,13 +67,13 @@ BodyMotionControllerItem::~BodyMotionControllerItem()
 }
 
 
-bool BodyMotionControllerItem::initialize(ControllerItemIO* io)
+bool BodyMotionControllerItem::initialize(ControllerIO* io)
 {
     return impl->initialize(io);
 }
 
 
-bool BodyMotionControllerItemImpl::initialize(ControllerItemIO* io)
+bool BodyMotionControllerItemImpl::initialize(ControllerIO* io)
 {
     ItemList<BodyMotionItem> motionItems;
     if(!motionItems.extractChildItems(self)){
@@ -84,7 +85,7 @@ bool BodyMotionControllerItemImpl::initialize(ControllerItemIO* io)
     motionItem = motionItems.front();
     // find the first checked item
     ItemTreeView* itv = ItemTreeView::instance();
-    for(int i=0; i < motionItems.size(); ++i){
+    for(size_t i=0; i < motionItems.size(); ++i){
         if(itv->isItemChecked(motionItems[i])){
             motionItem = motionItems[i];
             break;

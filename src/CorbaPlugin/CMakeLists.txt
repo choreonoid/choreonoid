@@ -30,10 +30,6 @@ add_cnoid_plugin(${target} SHARED ${sources} ${headers} ${mofiles} ${idl_cpp_fil
 target_link_libraries(${target} CnoidUtil CnoidCorba CnoidBase)
 apply_common_setting_for_plugin(${target} "${headers}")
 
-if(QT5)
-  qt5_use_modules(${target} OpenGL Network)
-endif()
-
 # test program
 # add_cnoid_executable(corba-test test.cpp ${idl_cpp_files})
 # target_link_libraries(corba-test CnoidCorba ${OMNIORB_LIBRARIES})

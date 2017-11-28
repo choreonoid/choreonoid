@@ -32,7 +32,7 @@ class ScenePointSet;
 class ScenePointSet : public SgPosTransform, public SceneWidgetEditable
 {
 public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     weak_ref_ptr<PointSetItem> weakPointSetItem;
     SgPointSetPtr orgPointSet;
@@ -438,7 +438,7 @@ void PointSetItemImpl::removePoints(const PolyhedralRegion& region)
         int nextIndexToRemove = indicesToRemove[j++];
         for(int i=0; i < numOrgPoints; ++i){
             if(i == nextIndexToRemove){
-                if(j < indicesToRemove.size()){
+                if(j < static_cast<int>(indicesToRemove.size())){
                     nextIndexToRemove = indicesToRemove[j++];
                 }
             } else {
@@ -472,7 +472,7 @@ void PointSetItemImpl::removeSubElements(ElementContainer& elements, SgIndexArra
         int nextIndexToRemove = indicesToRemove[j++];
         for(int i=0; i < numOrgElements; ++i){
             if(i == nextIndexToRemove){
-                if(j < indicesToRemove.size()){
+                if(j < static_cast<int>(indicesToRemove.size())){
                     nextIndexToRemove = indicesToRemove[j++];
                 }
             } else {
@@ -488,7 +488,7 @@ void PointSetItemImpl::removeSubElements(ElementContainer& elements, SgIndexArra
         int nextIndexToRemove = indicesToRemove[j++];
         for(int i=0; i < numOrgIndices; ++i){
             if(i == nextIndexToRemove){
-                if(j < indicesToRemove.size()){
+                if(j < static_cast<int>(indicesToRemove.size())){
                     nextIndexToRemove = indicesToRemove[j++];
                 }
             } else {
@@ -907,7 +907,7 @@ void ScenePointSet::onContextMenuRequest(const SceneWidgetEvent& event, MenuMana
 }
 
 
-void ScenePointSet::onContextMenuRequestInEraserMode(const SceneWidgetEvent& event, MenuManager& menuManager)
+void ScenePointSet::onContextMenuRequestInEraserMode(const SceneWidgetEvent&, MenuManager& menuManager)
 {
     eraserModeMenuItemConnection.reset(
         menuManager.addItem(_("PointSet: Exit Eraser Mode"))->sigTriggered().connect(

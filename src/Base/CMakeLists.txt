@@ -2,8 +2,7 @@
 # @author Shin'ichiro Nakaoka
 
 #set(CMAKE_BUILD_TYPE Debug)
-
-#set_source_files_properties(SceneWidget.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
+#set_source_files_properties(GLSLSceneRenderer.cpp PROPERTIES COMPILE_FLAGS "-O3 -g")
 
 set(sources
   App.cpp
@@ -240,30 +239,13 @@ set(qtheaders
   TextEdit.h
   )
 
-if(NOT QT5)
-  QT4_ADD_RESOURCES(RC_SRCS Base.qrc)
-  QT4_WRAP_CPP(sources
-    ${qtheaders}
-    OPTIONS "-DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED"
-    )
-else()
-  QT5_ADD_RESOURCES(RC_SRCS Base.qrc)
-  QT5_WRAP_CPP(sources
-    ${qtheaders}
-    OPTIONS "-DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED"
-    )
-endif()
+QTX_ADD_RESOURCES(RC_SRCS Base.qrc)
+QTX_WRAP_CPP(qtsources ${qtheaders})
+set(sources ${sources} ${qtsources})
 
 make_gettext_mofiles(${target} mofiles)
 
 add_cnoid_library(${target} SHARED ${sources} ${headers} ${mofiles} ${RC_SRCS})
-
-if(QT5)
-  qt5_use_modules(${target} Gui OpenGL Network Widgets)
-  if(UNIX)
-    qt5_use_modules(${target} X11Extras)
-  endif()
-endif()
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 

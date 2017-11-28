@@ -28,7 +28,7 @@ boost::python::list getPyNarrowedItemList(const ItemList<>& orgItemList, boost::
     checkIfItemSubclass(itemClass.ptr());
 
     python::list narrowedItemList;
-    for(int i=0; i < orgItemList.size(); ++i){
+    for(size_t i=0; i < orgItemList.size(); ++i){
         python::object item(orgItemList[i]);
         if(PyObject_IsInstance(item.ptr(), itemClass.ptr()) > 0){
             narrowedItemList.append(item);
@@ -56,7 +56,7 @@ boost::python::object getPyNarrowedFirstItem(const ItemList<>& orgItemList, boos
 {
     checkIfItemSubclass(itemClass.ptr());
 
-    for(int i=0; i < orgItemList.size(); ++i){
+    for(size_t i=0; i < orgItemList.size(); ++i){
         python::object item(orgItemList[i]);
         if(PyObject_IsInstance(item.ptr(), itemClass.ptr()) > 0){
             return item;

@@ -27,12 +27,13 @@ public:
     virtual SgNode* getScene() = 0;
 
     /**
-       Whether the getScene function returns the shared instance or a cloned instance,
-       this function must always returns a cloned instance.
-       If the getScene function returns a clone instance, this function should be overridden
-       to avoid redundant cloning.
+       This function returns a cloned scene instance.
+       This function is implemented to return a clone of the scene instance returned by
+       the getScene function. If the getScene function is implemented to return a cloned
+       scene, it is necessary to override the clonseScene function so that it does not
+       return any further clone of the cloned scene.
     */
-    virtual SgNode* getScene(SgCloneMap& cloneMap);
+    virtual SgNode* cloneScene(SgCloneMap& cloneMap);
 };
     
 }

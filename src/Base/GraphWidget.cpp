@@ -318,13 +318,13 @@ void GraphDataHandler::setVelocityLimits(double lower, double upper)
 }
 
 
-void GraphDataHandler::addVerticalLine(double x, const std::string& label)
+void GraphDataHandler::addVerticalLine(double /* x */, const std::string& /* label */)
 {
 
 }
 
 
-void GraphDataHandler::addHorizontalLine(double y, const std::string& label)
+void GraphDataHandler::addHorizontalLine(double /* y */, const std::string& /* label */)
 {
 
 }
@@ -1048,7 +1048,7 @@ bool GraphWidget::eventFilter(QObject* obj, QEvent* event)
 }
 
 
-bool GraphWidgetImpl::onFocusInEvent(QFocusEvent* event)
+bool GraphWidgetImpl::onFocusInEvent(QFocusEvent*)
 {
     GraphBar::instance()->focus(self);
     return false;
@@ -1101,7 +1101,7 @@ bool GraphWidgetImpl::onScreenMouseButtonPressEvent(QMouseEvent* event)
 }
 
 
-bool GraphWidgetImpl::onScreenMouseButtonReleaseEvent(QMouseEvent* event)
+bool GraphWidgetImpl::onScreenMouseButtonReleaseEvent(QMouseEvent*)
 {
     if(dragState == DRAG_EDIT){
         finishTrajectoryEdit();

@@ -106,7 +106,7 @@ public:
     }
 
     bool isEnd() {
-        return (pos >= data.size());
+        return (pos >= static_cast<int>(data.size()));
     }
 
     void seek(int pos = 0) { this->pos = pos; }
@@ -330,7 +330,7 @@ public:
     }
     
     DeviceInfo& deviceInfo(int deviceIndex){
-        if(deviceIndex >= deviceInfos.size()){
+        if(deviceIndex >= static_cast<int>(deviceInfos.size())){
             deviceInfos.resize(deviceIndex + 1);
         }
         return deviceInfos[deviceIndex];
@@ -779,7 +779,7 @@ bool WorldLogFileItemImpl::recallStateAtTime(double time)
         case BODY_STATE:
         {
             BodyInfo* bodyInfo = 0;
-            if(bodyIndex < bodyInfos.size()){
+            if(bodyIndex < static_cast<int>(bodyInfos.size())){
                 bodyInfo = bodyInfos[bodyIndex];
             }
             if(bodyInfo){
@@ -1118,7 +1118,7 @@ void WorldLogFileItemImpl::outputDeviceState(DeviceState* state)
         writeBuf.writeOctet(size);
         doubleWriteBuf.resize(size);
         state->writeState(&doubleWriteBuf.front());
-        for(size_t i=0; i < size; ++i){
+        for(int i=0; i < size; ++i){
             writeBuf.writeFloat(doubleWriteBuf[i]);
         }
     }

@@ -187,6 +187,7 @@ private:
 };
 
 template<> inline double ValueNode::to<double>() const { return toDouble(); }
+template<> inline float ValueNode::to<float>() const { return static_cast<float>(toDouble()); }
 template<> inline int ValueNode::to<int>() const { return toInt(); }
 template<> inline std::string ValueNode::to<std::string>() const { return toString(); }
     
@@ -234,7 +235,7 @@ public:
     virtual Mapping* cloneMapping() const;
     
     bool empty() const { return values.empty(); }
-    int size() const { return values.size(); }
+    int size() const { return static_cast<int>(values.size()); }
     void clear();
 
     void setFlowStyle(bool isFlowStyle = true) { isFlowStyle_ = isFlowStyle; }
@@ -250,6 +251,9 @@ public:
     Listing* findListing(const std::string& key) const;
 
     ValueNodePtr extract(const std::string& key);
+
+    bool extract(const std::string& key, double& out_value);
+    bool extract(const std::string& key, std::string& out_value);
 
     ValueNode& get(const std::string& key) const;
 
@@ -424,7 +428,7 @@ public:
     typedef Container::const_iterator const_iterator;
 
     bool empty() const { return values.empty(); }
-    int size() const { return values.size(); }
+    int size() const { return static_cast<int>(values.size()); }
     void clear();
     void reserve(int size);
 

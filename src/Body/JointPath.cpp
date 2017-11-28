@@ -11,7 +11,6 @@
 #include <cnoid/TruncatedSVD>
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 
 
@@ -357,7 +356,7 @@ bool JointPath::calcInverseKinematics(const Position& T)
         nuIK = new JointPathIkImpl();
     }
     if(!nuIK->jacobianFunc){
-        nuIK->jacobianFunc = std::bind(setJacobian<0x3f, 0, 0>, std::ref(*this), endLink(), _1);
+        nuIK->jacobianFunc = [&](MatrixXd& out_Jacobian){ setJacobian<0x3f, 0, 0>(*this, endLink(), out_Jacobian); };
     }
     nuIK->resize(n);
     
@@ -576,16 +575,7 @@ bool CustomJointPath::calcInverseKinematics(const Position& T)
         return JointPath::calcInverseKinematics(T);
     }
         
-#if 0
-    std::vector<double> qorg(numJoints());
-    for(int i=0; i < numJoints(); ++i){
-        qorg[i] = joint(i)->q();
-    }
-#endif
-
-    const Link* targetLink = endLink();
     const Link* baseLink_ = baseLink();
-
     Vector3 p;
     Matrix3 R;
     
@@ -601,21 +591,6 @@ bool CustomJointPath::calcInverseKinematics(const Position& T)
 
     if(solved){
         calcForwardKinematics();
-#if 0
-        double errsqr =
-            (end_p - targetLink->p()).squaredNorm() +
-            omegaFromRot(targetLink->R().transpose() * end_R).squaredNorm();
-
-        if(errsqr < maxIKerrorSqr()){
-            solved = true;
-        } else {
-            solved = false;
-            for(int i=0; i < numJoints(); ++i){
-                joint(i)->q() = qorg[i];
-            }
-            calcForwardKinematics();
-        }
-#endif
     }
 
     return solved;

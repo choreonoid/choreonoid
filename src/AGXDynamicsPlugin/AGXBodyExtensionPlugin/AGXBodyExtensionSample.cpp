@@ -1,24 +1,35 @@
+/**
+   \file
+   \author Ikumi Susa
+*/
+
 #include "AGXBodyExtensionSample.h"
-#include "../AGXBody.h"
+#include <cnoid/AGXBody>
 
-namespace {
+namespace{
+/////////////////////////////////////////////////////////////////////////
+// Register AGXBodyExtensionSample
+bool createAGXBodyExtensionSample(cnoid::AGXBody* agxBody){
+    agxBody->addAGXBodyExtension(new cnoid::AGXBodyExtensionSample(agxBody));
+    return true;
+}
 
-bool createSample(cnoid::AGXBody* agxBody)
-{
-    cnoid::AGXBodyExtensionPtr ptr = new cnoid::AGXBodyExtension(agxBody); 
-    if(ptr){
-        agxBody->addAGXBodyExtension(ptr);
-        return true;
-    }
-    return false;
-};
-
-struct TypeRegistration
-{
-    TypeRegistration() {
-        cnoid::AGXBody::addAGXBodyExtensionAdditionalFunc("AGXBodyExtensionSample", createSample);
+struct AGXBodyExtensionSampleRegistration{
+    AGXBodyExtensionSampleRegistration(){
+        cnoid::AGXBody::addAGXBodyExtensionAdditionalFunc("AGXBodyExtensionSample", createAGXBodyExtensionSample);
     }
 };
-TypeRegistration registration;
+AGXBodyExtensionSampleRegistration registrationAGXBodyExtensionSample;
+
+}
+
+namespace cnoid{
+/////////////////////////////////////////////////////////////////////////
+// AGXBodyExtensionSample
+AGXBodyExtensionSample::AGXBodyExtensionSample(AGXBody* agxBody) :
+AGXBodyExtension(agxBody)
+{
+
+}
 
 }

@@ -29,19 +29,19 @@ foreach(version ${versions})
   # SR1 walk
   set(target openhrp${version}-sr1-walk-controller)
   add_cnoid_executable(${target} SimpleControllerWrapper.cpp ../SimpleController/SR1WalkPatternController.cpp)
-  set_target_properties(${target} PROPERTIES COMPILE_DEFINITIONS "${defver};MODELFILE=\"SR1/SR1.wrl\"")
+  set_target_properties(${target} PROPERTIES COMPILE_DEFINITIONS "${defver};MODELFILE=\"SR1/SR1.body\"")
   target_link_libraries(${target} CnoidOpenHRP${version} CnoidBody)
   
   # SR1 lifting up
   set(target openhrp${version}-sr1-liftup-controller)
   add_cnoid_executable(${target} SimpleControllerWrapper.cpp ../SimpleController/SR1LiftupController.cpp)
-  set_target_properties(${target} PROPERTIES COMPILE_DEFINITIONS "${defver};MODELFILE=\"SR1/SR1.wrl\"")
+  set_target_properties(${target} PROPERTIES COMPILE_DEFINITIONS "${defver};MODELFILE=\"SR1/SR1.body\"")
   target_link_libraries(${target} CnoidOpenHRP${version} CnoidBody)
   
   # PA10 Pickup
   set(target openhrp${version}-pa10-pickup-controller)
   add_cnoid_executable(${target} SimpleControllerWrapper.cpp ../SimpleController/PA10PickupController.cpp)
-  set_target_properties(${target} PROPERTIES COMPILE_DEFINITIONS "${defver};MODELFILE=\"PA10/PA10.wrl\"")
+  set_target_properties(${target} PROPERTIES COMPILE_DEFINITIONS "${defver};MODELFILE=\"PA10/PA10.body\"")
   target_link_libraries(${target} CnoidOpenHRP${version} CnoidBody)
   
   # test program

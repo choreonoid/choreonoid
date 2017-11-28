@@ -717,7 +717,7 @@ void Item::putProperties(PutPropertyFunction& putProperty)
     doPutProperties(putProperty);
 
     if(!filePath_.empty()){
-        putProperty(_("File"), filePath_);
+        putProperty(_("File"), FilePathProperty(filePath_));
     }
 
     putProperty(_("Num children"), numChildren_);

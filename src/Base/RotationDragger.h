@@ -14,7 +14,7 @@ namespace cnoid {
 class CNOID_EXPORT RotationDragger : public SceneDragger
 {
 public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     RotationDragger();
     RotationDragger(const RotationDragger& org);

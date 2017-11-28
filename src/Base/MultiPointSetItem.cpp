@@ -30,7 +30,7 @@ namespace {
 class SceneMultiPointSet : public SgPosTransform, public SceneWidgetEditable
 {
   public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     weak_ref_ptr<MultiPointSetItem> weakMultiPointSetItem;
     bool isEditable;
@@ -387,7 +387,7 @@ void MultiPointSetItem::selectSinglePointSetItem(int index)
 
 void MultiPointSetItemImpl::selectSinglePointSetItem(int index)
 {
-    if(index < 0 || index >= pointSetItems.size()){
+    if(index < 0 || index >= static_cast<int>(pointSetItems.size())){
         return;
     }
     
@@ -714,7 +714,7 @@ bool SceneMultiPointSet::onButtonPressEvent(const SceneWidgetEvent& event)
 }
 
 
-bool SceneMultiPointSet::onPointerMoveEvent(const SceneWidgetEvent& event)
+bool SceneMultiPointSet::onPointerMoveEvent(const SceneWidgetEvent&)
 {
     return false;
 }
@@ -733,7 +733,7 @@ void SceneMultiPointSet::onContextMenuRequest(const SceneWidgetEvent& event, Men
 }
 
 
-void SceneMultiPointSet::onContextMenuRequestInEraserMode(const SceneWidgetEvent& event, MenuManager& menuManager)
+void SceneMultiPointSet::onContextMenuRequestInEraserMode(const SceneWidgetEvent&, MenuManager& menuManager)
 {
     eraserModeMenuItemConnection.reset(
         menuManager.addItem(_("PointSet: Exit Eraser Mode"))->sigTriggered().connect(
@@ -893,8 +893,6 @@ bool MultiPointSetItemImpl::startAutomaticSave(const std::string& filename)
 
 void MultiPointSetItemImpl::saveAdditionalPointSet(int index)
 {
-    bool result = false;
-
     if(!outputArchive){
         try {
             if(filesystem::create_directories(autoSaveFilePath.parent_path())){

@@ -22,7 +22,7 @@ namespace pybind11 { namespace detail {
         //Conversion part 2 (C++ -> Python)
         static handle cast(cnoid::ItemList<ItemType> src, return_value_policy, handle ) {
             pybind11::list retval;
-            for(int i=0; i < src.size(); i++){
+            for(size_t i=0; i < src.size(); i++){
                 retval.append(src[i]);
             }
             return  retval.inc_ref();

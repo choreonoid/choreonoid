@@ -39,7 +39,7 @@ SceneCollision::SceneCollision(std::shared_ptr< std::vector<CollisionLinkPairPtr
 }
 
 
-SceneCollision::SceneCollision(const SceneCollision& org)
+SceneCollision::SceneCollision(const SceneCollision&)
 {
 
 }

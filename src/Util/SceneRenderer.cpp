@@ -160,7 +160,7 @@ public:
 
     template<class ValueType> void setProperty(SceneRenderer::PropertyKey key, ValueType value){
         const int id = key.id;
-        if(id >= properties.size()){
+        if(id >= static_cast<int>(properties.size())){
             properties.resize(id + 1);
         }
         properties[id] = value;
@@ -168,7 +168,7 @@ public:
 
     template<class ValueType> ValueType property(SceneRenderer::PropertyKey key, int which, ValueType defaultValue){
         const int id = key.id;
-        if(id >= properties.size()){
+        if(id >= static_cast<int>(properties.size())){
             properties.resize(id + 1);
             return defaultValue;
         }
@@ -232,8 +232,6 @@ Signal<void()>& SceneRenderer::sigRenderingRequest()
 
 void SceneRenderer::onSceneGraphUpdated(const SgUpdate& update)
 {
-    static int counter = 0;
-    
     if(update.action() & (SgUpdate::ADDED | SgUpdate::REMOVED)){
         impl->doPreprocessedNodeTreeExtraction = true;
     }
@@ -260,7 +258,7 @@ bool SceneRenderer::pick(int x, int y)
 }
 
 
-bool SceneRenderer::doPick(int x, int y)
+bool SceneRenderer::doPick(int /* x */, int /* y */)
 {
     return false;
 }
@@ -563,7 +561,7 @@ void SceneRenderer::setCurrentCamera(int index)
 void SceneRendererImpl::setCurrentCamera(int index, bool doRenderingRequest)
 {
     SgCamera* newCamera = 0;
-    if(index >= 0 && index < cameras->size()){
+    if(index >= 0 && index < static_cast<int>(cameras->size())){
         newCamera = (*cameras)[index].camera;
     }
     if(newCamera && newCamera != currentCamera){
@@ -661,7 +659,7 @@ int SceneRenderer::findCameraPath(const std::vector<std::string>& simplifiedPath
         vector<int> candidates;
         const string& name = simplifiedPathStrings.back();
         const int n = numCameras();
-        for(size_t i=0; i < n; ++i){
+        for(int i=0; i < n; ++i){
             const vector<SgNode*>& path = cameraPath(i);
             if(path.back()->name() == name){
                 candidates.push_back(i);
@@ -705,7 +703,7 @@ int SceneRenderer::numLights() const
 
 void SceneRenderer::getLightInfo(int index, SgLight*& out_light, Affine3& out_position) const
 {
-    if(index < impl->lights.size()){
+    if(index < static_cast<int>(impl->lights.size())){
         const SceneRendererImpl::LightInfo& info = impl->lights[index];
         out_light = info.light;
         out_position = info.M;
@@ -783,7 +781,7 @@ void SceneRenderer::addExtension(std::function<void(SceneRenderer* renderer)> fu
 void SceneRenderer::applyExtensions()
 {
     std::lock_guard<std::mutex> guard(extensionMutex);
-    for(int i=0; i < extendFunctions.size(); ++i){
+    for(size_t i=0; i < extendFunctions.size(); ++i){
         extendFunctions[i](this);
     }
 }
@@ -800,7 +798,7 @@ bool SceneRenderer::applyNewExtensions()
 {
     std::lock_guard<std::mutex> guard(impl->newExtensionMutex);
     if(!impl->newExtendFunctions.empty()){
-        for(int i=0; i < impl->newExtendFunctions.size(); ++i){
+        for(size_t i=0; i < impl->newExtendFunctions.size(); ++i){
             impl->newExtendFunctions[i](this);
         }
         impl->newExtendFunctions.clear();

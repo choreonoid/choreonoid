@@ -1,0 +1,100 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: agxMaterialSample
+
+links:
+  -
+    name: floor
+    translation: [ 0, 0, -0.1 ]
+    rotation: [1, 0, 0, -30 ]
+    jointType: fixed
+    material: Ground
+    elements:
+      -
+        type: Shape
+        geometry: { type: Box, size: [ 10.0, 10.0, 0.2 ] }
+        appearance: { material: { diffuseColor: [ 0, 0, 1 ] }}
+  -
+    name: box1
+    parent: floor
+    translation: [ -4.0, -5.0, 1.5 ]
+    jointType: free
+    massType: density
+    density: 1.0
+    material: agxMat1
+    elements: &boxShape
+      -
+        type: Shape
+        geometry: &box { type: Box, size: [ 0.5, 0.5, 0.5 ] }
+        appearance: &boxColor { material: { diffuseColor: [ 0, 1, 0 ] }}
+  -
+    name: box2
+    parent: floor
+    translation: [ -3.0, -5.0, 1.5 ]
+    jointType: free
+    massType: density
+    material: agxMat2
+    elements: *boxShape
+  -
+    name: box3
+    parent: floor
+    translation: [ -2.0, -5.0, 1.5 ]
+    jointType: free
+    massType: density
+    material: agxMat3
+    elements: *boxShape
+  -
+    name: box4
+    parent: floor
+    translation: [ -1.0, -5.0, 1.5 ]
+    jointType: free
+    massType: density
+    material: agxMat4
+    elements: *boxShape
+  -
+    name: box5
+    parent: floor
+    translation: [ 0.0, -5.0, 1.5 ]
+    jointType: free
+    massType: density
+    material: agxMat5
+    elements: *boxShape
+  -
+    name: box6
+    parent: floor
+    translation: [ 1.0, -5.0, 1.5 ]
+    jointType: free
+    massType: density
+    elements: *boxShape
+    density: 100
+    youngsModulus: 1.0E5
+    poissonRatio: 1.0
+    viscosity: 0.1
+    roughness: 1.0
+    surfaceViscosity: 1.0E-8
+    adhesionForce: 1000
+    adhesivOverlap: 0.2
+  -
+    name: box98
+    parent: floor
+    translation: [ 2.0, -5.0, 1.5 ]
+    jointType: free
+    massType: density
+    material: agxMat1
+    elements: *boxShape
+  -
+    name: box99
+    parent: floor
+    translation: [ 3.0, -5.0, 1.5 ]
+    jointType: free
+    massType: density
+    material: agxMat1
+    elements: *boxShape
+
+collisionDetection:
+    excludeLinks: [ box98 ]
+    excludeLinkGroups:
+    -
+      name: excludeGroup1
+      links: [ floor, box99 ]

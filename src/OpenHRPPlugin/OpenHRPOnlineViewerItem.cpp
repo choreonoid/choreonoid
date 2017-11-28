@@ -321,7 +321,7 @@ void OpenHRPOnlineViewerItemImpl::loadsub(string name, string url)
     RootItem* rootItem = RootItem::instance();
     ItemList<BodyItem> bodyItems;
     bodyItems.extractChildItems(rootItem);
-    for(int i=0; i < bodyItems.size(); ++i){
+    for(size_t i=0; i < bodyItems.size(); ++i){
         BodyItemPtr bodyItem = bodyItems[i];
         if(bodyItem->name() == name && bodyItem->filePath() == filepath){
             registerBodyItem(bodyItem);
@@ -423,12 +423,12 @@ void OpenHRPOnlineViewerItemImpl::drawScenesub(const WorldState& state)
 void OpenHRPOnlineViewerItemImpl::updateCollision(const WorldState& state, CollisionLinkPairList* collisions)
 {
     collisions->clear();
-    unsigned int n = state.collisions.length();
-    for(int i=0; i<n; i++){
+    int n = state.collisions.length();
+    for(int i=0; i < n; i++){
         const OpenHRP::Collision& source = state.collisions[i];
         CollisionLinkPairPtr dest = std::make_shared<CollisionLinkPair>();
-        unsigned int numPoints = source.points.length();
-        for(int j=0; j<numPoints; j++){
+        int numPoints = source.points.length();
+        for(int j=0; j < numPoints; j++){
            // std::cout << source.points[j].position[0] << " " << source.points[j].position[1] << " " << source.points[j].position[2] << std::endl;
            // std::cout << source.points[j].normal[0] << " " << source.points[j].normal[1] << " " << source.points[j].normal[2] << std::endl;
             const CollisionPoint& point = source.points[j];
@@ -439,13 +439,12 @@ void OpenHRPOnlineViewerItemImpl::updateCollision(const WorldState& state, Colli
             col.depth = point.idepth;
         }
         //std::cout <<std::endl;
-        for(int j=0; j<2; j++){
+        for(int j=0; j < 2; j++){
             BodyItemInfo* info = findInfo(i? source.pair.charName2.in() : source.pair.charName1.in());
             if(info){
                 const BodyPtr& body = info->bodyItem->body();
                 dest->body[j] = body;
                 dest->link[j] = body->link(i? source.pair.linkName2.in() : source.pair.linkName1.in());
-                int linkIndex = dest->link[j]->index();
             }
         }
         collisions->push_back(dest);

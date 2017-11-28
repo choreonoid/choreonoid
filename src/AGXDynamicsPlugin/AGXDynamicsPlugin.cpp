@@ -56,5 +56,5 @@ private:
     }
 };
 
-CNOID_IMPLEMENT_PLUGIN_ENTRY(AGXDynamicsPlugin);
+CNOID_IMPLEMENT_PLUGIN_ENTRY(AGXDynamicsPlugin)
 }

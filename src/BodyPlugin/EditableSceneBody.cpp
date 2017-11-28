@@ -930,7 +930,7 @@ bool EditableSceneBodyImpl::onPointerMoveEvent(const SceneWidgetEvent& event)
         return false;
     }
     if(dragMode == DRAG_NONE){
-        PointedType pointedType = findPointedObject(event.nodePath());
+        findPointedObject(event.nodePath());
         if(pointedSceneLink){
             if(pointedSceneLink != outlinedLink){
                 if(outlinedLink){

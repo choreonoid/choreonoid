@@ -13,7 +13,7 @@ namespace cnoid {
 class CNOID_EXPORT InteractiveCameraTransform : public SgPosTransform
 {
 public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     InteractiveCameraTransform();
     InteractiveCameraTransform(const InteractiveCameraTransform& org);

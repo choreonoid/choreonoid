@@ -372,7 +372,6 @@ void onViewMenuAboutToShow(Menu* menu)
             needSeparator = false;
         }
             
-        const std::string& moduleName = p->first;
         ClassNameToViewInfoMap& viewInfoMap = *p->second;
         ClassNameToViewInfoMap::iterator q;
         for(q = viewInfoMap.begin(); q != viewInfoMap.end(); ++q){

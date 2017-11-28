@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.10)
+cmake_minimum_required(VERSION 2.8.12)
 cmake_policy(SET CMP0003 NEW)
 set(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS true)
 
@@ -11,7 +11,7 @@ project(Choreonoid)
 
 set(CNOID_MAJOR_VERSION 1) 
 set(CNOID_MINOR_VERSION 6)
-set(CNOID_PATCH_VERSION 0)
+set(CNOID_PATCH_VERSION 1)
 set(CNOID_VERSION ${CNOID_MAJOR_VERSION}.${CNOID_MINOR_VERSION})
 set(CNOID_FULL_VERSION ${CNOID_MAJOR_VERSION}.${CNOID_MINOR_VERSION}.${CNOID_PATCH_VERSION})
 
@@ -78,7 +78,7 @@ if(MSVC AND CMAKE_CL_64)
 endif()
 
 if(MSVC)
-  set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS_DEBUG _ITERATOR_DEBUG_LEVEL=1)
+  set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS $<$<CONFIG:Debug>:CNOID_DEBUG _ITERATOR_DEBUG_LEVEL=1>)
 endif()
 
 function(install_external_libraries dll_dir lib_dir)
@@ -507,6 +507,12 @@ macro(setup_qt5)
   find_package(Qt5Widgets)
   find_package(Qt5OpenGL)
   find_package(Qt5Network)
+  if(UNIX)
+    find_package(Qt5X11Extras)
+    set(QT_LIBRARIES Qt5::Core Qt5::Widgets Qt5::OpenGL Qt5::Network Qt5::X11Extras)
+  else()
+    set(QT_LIBRARIES Qt5::Core Qt5::Widgets Qt5::OpenGL Qt5::Network)
+  endif()
   set(QT5 TRUE)
 
   add_definitions(-DQT_NO_KEYWORDS -DQT_NO_OPENGL_ES_2)
@@ -545,6 +551,26 @@ macro(setup_qt5)
   endif()
 endmacro()
 
+function(QTX_ADD_RESOURCES out_files)
+  set(in_files ${ARGN})
+  if(NOT QT5)
+    QT4_ADD_RESOURCES(out ${in_files})
+  else()
+    QT5_ADD_RESOURCES(out ${in_files})
+  endif()
+  set(${out_files} ${out} PARENT_SCOPE)
+endfunction()
+
+function(QTX_WRAP_CPP out_files)
+  set(in_files ${ARGN})
+  if(NOT QT5)
+    QT4_WRAP_CPP(out ${in_files} OPTIONS "-DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED")
+  else()
+    QT5_WRAP_CPP(out ${in_files} OPTIONS "-DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED")
+  endif()
+  set(${out_files} ${out} PARENT_SCOPE)  
+endfunction()
+
 # qt
 if(ENABLE_GUI)
   set(DEFAULT_USE_QT5 TRUE)
@@ -552,6 +578,7 @@ if(ENABLE_GUI)
     if(MSVC_VERSION LESS 1700)
       set(DEFAULT_USE_QT5 FALSE)
     endif()
+    cmake_policy(SET CMP0020 OLD)
   else()
     find_package(Qt4 4.7.0 QUIET)
     if(Qt4_FOUND)
@@ -569,6 +596,7 @@ if(ENABLE_GUI)
   else()
     setup_qt4()
   endif()
+
 endif()
 
 
@@ -799,14 +827,16 @@ endif(ENABLE_CORBA)
 # doxygen
 # find_package(Doxygen)
 
-set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS_DEBUG CNOID_DEBUG)
+set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS $<$<CONFIG:Debug>:CNOID_DEBUG>)
 
 if(UNIX)
   
-  option(PUT_ALL_WARNINGS "put all warnings in compile" OFF)
-  if(PUT_ALL_WARNINGS)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+  option(PUT_EXTRA_WARNINGS "Put extra warnings in compile" OFF)
+  if(PUT_EXTRA_WARNINGS)
+    set(extra_warning_options "-Wunused -Woverloaded-virtual -Wsign-compare")
+    #set(extra_warning_options "-Wparentheses -Wformat=2 -Wformat-nonliteral -Wunknown-pragmas -Wunused-parameter -Wuninitialized -Winit-self -pedantic -Wconversion -Wno-variadic-macros -Wno-long-long -Wno-import -Wno-missing-braces")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall ${extra_warning_options}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall ${extra_warning_options}")
   endif()
 
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wreturn-type")
@@ -1315,7 +1345,7 @@ endif()
 # This must be written not in share directory but in this top CMakeLists.txt
 # to prevent the share directory from being created in the binary directory
 
-set(subdirs model project motion script)
+set(subdirs model project motion script default)
 foreach(subdir ${subdirs})
   get_filename_component(path share/${subdir} ABSOLUTE)
   if((EXISTS ${path}) AND (IS_DIRECTORY ${path}))

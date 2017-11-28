@@ -141,4 +141,3 @@ bool cnoid::makeRootRelative(ZMPSeq& zmpseq, BodyMotion& motion, bool on)
     }
     return true;
 }
-

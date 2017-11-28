@@ -326,7 +326,7 @@ void YAMLReaderImpl::setAnchor(ValueNode* node, yaml_char_t* anchor, const yaml_
 }
 
     
-void YAMLReaderImpl::onDocumentStart(yaml_event_t& event)
+void YAMLReaderImpl::onDocumentStart(yaml_event_t&)
 {
     if(debugTrace){
         cout << "YAMLReaderImpl::onDocumentStart()" << endl;
@@ -334,7 +334,7 @@ void YAMLReaderImpl::onDocumentStart(yaml_event_t& event)
 }
 
 
-void YAMLReaderImpl::onDocumentEnd(yaml_event_t& event)
+void YAMLReaderImpl::onDocumentEnd(yaml_event_t&)
 {
     if(debugTrace){
         cout << "YAMLReaderImpl::onDocumentEnd()" << endl;
@@ -362,7 +362,7 @@ void YAMLReaderImpl::onMappingStart(yaml_event_t& event)
 }
 
 
-void YAMLReaderImpl::onMappingEnd(yaml_event_t& event)
+void YAMLReaderImpl::onMappingEnd(yaml_event_t&)
 {
     if(debugTrace){
         cout << "YAMLReaderImpl::onMappingEnd()" << endl;
@@ -404,7 +404,7 @@ void YAMLReaderImpl::onListingStart(yaml_event_t& event)
 }
 
 
-void YAMLReaderImpl::onListingEnd(yaml_event_t& event)
+void YAMLReaderImpl::onListingEnd(yaml_event_t&)
 {
     if(debugTrace){
         cout << "YAMLReaderImpl::onListingEnd()" << endl;

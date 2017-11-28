@@ -68,12 +68,6 @@ add_cnoid_plugin(${target} SHARED ${sources} ${headers} ${mofiles})
 target_link_libraries(${target} ${libraries})
 apply_common_setting_for_plugin(${target} "${headers}")
 
-if(QT5)
-if(UNIX)
-  qt5_use_modules(${target} X11Extras)
-endif()
-endif()
-
 message(STATUS "libraries = ${libraries}")
 
 if(ENABLE_PYTHON)

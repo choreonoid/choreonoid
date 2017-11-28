@@ -27,6 +27,8 @@ public:
     agx::MaterialRef createMaterial(const AGXMaterialDesc& desc);
     agx::ContactMaterialRef createContactmaterial(agx::MaterialRef const matA, agx::MaterialRef const matB, const AGXContactMaterialDesc& desc);
     agx::ContactMaterialRef createContactMaterial(const AGXContactMaterialDesc& desc);
+    void printMaterials();
+    void printContactMaterialTable();
     void setCollision(const agx::Name& name, bool bOn);
     void setCollisionPair(const unsigned& id1, const unsigned& id2, bool bOn);
     void setCollisionPair(const agx::Name& name1, const agx::Name& name2, bool bOn);

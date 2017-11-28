@@ -34,8 +34,12 @@
 #include <agx/BallJoint.h>
 #include <agx/PlaneJoint.h>
 
+// Friction models
+#include <agx/OrientedFrictionModels.h>
+
 // agxVehicle
-//#include <agxVehicle/TrackWheel.h>
 #include <agxVehicle/Track.h>
+
+#include <agxCollide/ConvexBuilder.h>
 
 #endif

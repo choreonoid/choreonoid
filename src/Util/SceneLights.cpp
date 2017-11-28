@@ -29,7 +29,7 @@ SgLight::SgLight(const SgLight& org)
 }
 
 
-SgObject* SgLight::clone(SgCloneMap& cloneMap) const
+SgObject* SgLight::clone(SgCloneMap&) const
 {
     return new SgLight(*this);
 }
@@ -56,7 +56,7 @@ SgDirectionalLight::SgDirectionalLight(const SgDirectionalLight& org)
 }
 
 
-SgObject* SgDirectionalLight::clone(SgCloneMap& cloneMap) const
+SgObject* SgDirectionalLight::clone(SgCloneMap&) const
 {
     return new SgDirectionalLight(*this);
 }
@@ -87,7 +87,7 @@ SgPointLight::SgPointLight(const SgPointLight& org)
 }
 
 
-SgObject* SgPointLight::clone(SgCloneMap& cloneMap) const
+SgObject* SgPointLight::clone(SgCloneMap&) const
 {
     return new SgPointLight(*this);
 }
@@ -120,7 +120,7 @@ SgSpotLight::SgSpotLight(const SgSpotLight& org)
 }
 
 
-SgObject* SgSpotLight::clone(SgCloneMap& cloneMap) const
+SgObject* SgSpotLight::clone(SgCloneMap&) const
 {
     return new SgSpotLight(*this);
 }

@@ -203,7 +203,7 @@ CaptureBar::~CaptureBar()
 }
 
 
-void CaptureBar::mouseMoveEvent(QMouseEvent* event)
+void CaptureBar::mouseMoveEvent(QMouseEvent*)
 {
     
 

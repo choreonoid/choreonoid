@@ -3,7 +3,6 @@
 
 #include <cnoid/SimulatorItem>
 #include <cnoid/BodyItem>
-#include <cnoid/MeshExtractor>
 #include <cnoid/BasicSensorSimulationHelper>
 #include "AGXObjectFactory.h"
 #include "AGXBodyExtension.h"
@@ -12,18 +11,9 @@
 namespace{
 typedef std::function<bool(cnoid::AGXBody* agxBody)> AGXBodyExtensionFunc;
 typedef std::map<std::string, AGXBodyExtensionFunc> AGXBodyExtensionFuncMap;
-};
+}
 
 namespace cnoid {
-
-typedef Eigen::Matrix<float, 3, 1> Vertex;
-class AGXScene;
-
-static unsigned int generateUID(){
-    static unsigned int i = 0;
-    i++;
-    return i;
-}
 
 inline const Position convertToPosition(const agx::AffineMatrix4x4& a){
     Position pos;
@@ -34,6 +24,8 @@ inline const Position convertToPosition(const agx::AffineMatrix4x4& a){
     return pos;
 }
 
+class MeshExtractor;
+class AGXScene;
 class AGXBody;
 class CNOID_EXPORT AGXLink : public Referenced
 {
@@ -90,6 +82,11 @@ public:
     void initialize();
     void createBody(AGXScene* agxScene);
     void setCollision();
+    void setCollisionExclude();
+    void setCollisionExcludeLinks(const Mapping& cdMapping);
+    void setCollisionExcludeTreeDepth(const Mapping& cdMapping);
+    void setCollisionExcludeLinkGroups(const Mapping& cdMapping);
+    void setCollisionExcludeSelfCollisionLinks(const Mapping& cdMapping);
     std::string getCollisionGroupName() const;
     void enableExternalCollision(const bool& bOn);
     void addCollisionGroupNameToDisableCollision(const std::string& name);
@@ -110,6 +107,7 @@ public:
     AGXLink* getAGXLink(const int& index) const;
     AGXLink* getAGXLink(const std::string& name) const;
     const AGXLinkPtrs& getAGXLinks() const;
+    bool getAGXLinksFromInfo(const std::string& key, const bool& defaultValue, AGXLinkPtrs& agxLinks) const;
     int numControllableLinks() const;
     void addControllableLink(AGXLink* const agxLink);
     AGXLink* getControllableLink(const int& index) const;
@@ -132,10 +130,7 @@ private:
     AGXBodyExtensionPtrs _agxBodyExtensions;
     BasicSensorSimulationHelper sensorHelper;
     AGXBodyExtensionFuncMap agxBodyExtensionFuncs;
-    bool getAGXLinksFromInfo(const std::string& key, const bool& defaultValue, AGXLinkPtrs& agxLinks) const;
     void createExtraJoint();
-    bool createContinuousTrack(AGXBody* agxBody);
-    bool createAGXVehicleContinousTrack(AGXBody* agxBody);
 };
 typedef ref_ptr<AGXBody> AGXBodyPtr;
 

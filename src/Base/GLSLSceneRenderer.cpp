@@ -13,16 +13,12 @@
 #include <cnoid/NullOut>
 #include <Eigen/StdVector>
 #include <GL/glu.h>
-#include <boost/dynamic_bitset.hpp>
-#include <boost/optional.hpp>
 #include <unordered_map>
 #include <mutex>
 #include <iostream>
 
 using namespace std;
 using namespace cnoid;
-
-using namespace std::placeholders;
 
 namespace {
 
@@ -31,12 +27,30 @@ const bool SHOW_IMAGE_FOR_PICKING = false;
 
 const float MinLineWidthForPicking = 5.0f;
 
-typedef vector<Affine3, Eigen::aligned_allocator<Affine3> > Affine3Array;
+typedef vector<Affine3, Eigen::aligned_allocator<Affine3>> Affine3Array;
 
 std::mutex extensionMutex;
 set<GLSLSceneRenderer*> renderers;
 vector<std::function<void(GLSLSceneRenderer* renderer)>> extendFunctions;
 
+const bool LOCK_VERTEX_ARRAY_API_TO_AVOID_CRASH_ON_NVIDIA_LINUX_OPENGL_DRIVER = true;
+
+std::mutex vertexArrayMutex;
+
+struct LockVertexArrayAPI
+{
+    LockVertexArrayAPI(){
+        if(LOCK_VERTEX_ARRAY_API_TO_AVOID_CRASH_ON_NVIDIA_LINUX_OPENGL_DRIVER){
+            vertexArrayMutex.lock();
+        }
+    }
+    ~LockVertexArrayAPI(){
+        if(LOCK_VERTEX_ARRAY_API_TO_AVOID_CRASH_ON_NVIDIA_LINUX_OPENGL_DRIVER){
+            vertexArrayMutex.unlock();
+        }
+    }
+};
+        
 class GLResource : public Referenced
 {
 public:
@@ -53,12 +67,20 @@ public:
     GLuint vbos[MAX_NUM_BUFFERS];
     GLsizei numVertices;
     int numBuffers;
+    SgObjectPtr sceneObject;
     ScopedConnection connection;
     SgLineSetPtr normalVisualization;
 
+    VertexResource(const VertexResource&) = delete;
+    VertexResource& operator=(const VertexResource&) = delete;
+
     VertexResource(GLSLSceneRendererImpl* renderer, SgObject* obj)
+        : sceneObject(obj)
     {
-        connection.reset(obj->sigUpdated().connect(std::bind(&VertexResource::onUpdated, this)));
+        connection.reset(
+            obj->sigUpdated().connect(
+                [&](const SgUpdate&){ numVertices = 0; }));
+
         clearHandles();
         glGenVertexArrays(1, &vao);
     }
@@ -74,14 +96,10 @@ public:
 
     virtual void discard() override { clearHandles(); }
 
-    void onUpdated(){
-        numVertices = 0;
-    }
-
     bool isValid(){
         if(numVertices > 0){
             return true;
-        } else if(numBuffers){
+        } else if(numBuffers > 0){
             deleteBuffers();
         }
         return false;
@@ -95,11 +113,13 @@ public:
     }
 
     void deleteBuffers(){
-        glDeleteBuffers(numBuffers, vbos);
-        for(int i=0; i < numBuffers; ++i){
-            vbos[i] = 0;
+        if(numBuffers > 0){
+            glDeleteBuffers(numBuffers, vbos);
+            for(int i=0; i < numBuffers; ++i){
+                vbos[i] = 0;
+            }
+            numBuffers = 0;
         }
-        numBuffers = 0;
     }
 
     GLuint vbo(int index) {
@@ -244,7 +264,8 @@ public:
     GLResourceMap* nextResourceMap;
 
     vector<char> scaledImageBuf;
-    boost::optional<Eigen::Affine2f> textureTransform;
+    Eigen::Affine2f textureTransform;
+    bool hasValidTextureTransform;
 
     bool isCurrentFogUpdated;
     SgFogPtr prevFog;
@@ -280,7 +301,7 @@ public:
         NUM_STATE_FLAGS
     };
 
-    boost::dynamic_bitset<> stateFlag;
+    vector<bool> stateFlag;
 
     float pointSize;
     float lineWidth;
@@ -309,7 +330,6 @@ public:
     void renderCamera(SgCamera* camera, const Affine3& cameraPosition);
     void renderLights(LightingProgram* program);
     void renderFog(LightingProgram* program);
-    void onCurrentFogNodeUdpated();
     void endRendering();
     void renderSceneGraphNodes();
     void pushProgram(ShaderProgram& program, bool isLightingProgram);
@@ -319,6 +339,7 @@ public:
     void popPickId();
     void renderGroup(SgGroup* group);
     void renderTransform(SgTransform* transform);
+    void renderSwitch(SgSwitch* node);
     void renderUnpickableGroup(SgUnpickableGroup* group);
     void renderShape(SgShape* shape);
     void renderShapeMain(SgShape* shape, VertexResource* resource, const Affine3& position, unsigned int pickId);
@@ -419,6 +440,8 @@ void GLSLSceneRendererImpl::initialize()
     defaultPointSize = 1.0f;
     defaultLineWidth = 1.0f;
 
+    hasValidTextureTransform = false;
+
     prevFog = 0;
 
     isNormalVisualizationEnabled = false;
@@ -437,6 +460,8 @@ void GLSLSceneRendererImpl::initialize()
         [&](SgGroup* node){ renderGroup(node); });
     renderingFunctions.setFunction<SgTransform>(
         [&](SgTransform* node){ renderTransform(node); });
+    renderingFunctions.setFunction<SgSwitch>(
+        [&](SgSwitch* node){ renderSwitch(node); });
     renderingFunctions.setFunction<SgUnpickableGroup>(
         [&](SgUnpickableGroup* node){ renderUnpickableGroup(node); });
     renderingFunctions.setFunction<SgShape>(
@@ -500,7 +525,7 @@ void GLSLSceneRenderer::applyExtensions()
     SceneRenderer::applyExtensions();
     
     std::lock_guard<std::mutex> guard(extensionMutex);
-    for(int i=0; i < extendFunctions.size(); ++i){
+    for(size_t i=0; i < extendFunctions.size(); ++i){
         extendFunctions[i](this);
     }
 }
@@ -519,7 +544,7 @@ bool GLSLSceneRenderer::applyNewExtensions()
     
     std::lock_guard<std::mutex> guard(impl->newExtensionMutex);
     if(!impl->newExtendFunctions.empty()){
-        for(int i=0; i < impl->newExtendFunctions.size(); ++i){
+        for(size_t i=0; i < impl->newExtendFunctions.size(); ++i){
             impl->newExtendFunctions[i](this);
         }
         impl->newExtendFunctions.clear();
@@ -966,7 +991,12 @@ void GLSLSceneRendererImpl::renderFog(LightingProgram* program)
         } else {
             currentFogConnection.reset(
                 fog->sigUpdated().connect(
-                    std::bind(&GLSLSceneRendererImpl::onCurrentFogNodeUdpated, this)));
+                    [&](const SgUpdate&){
+                        if(!self->isFogEnabled()){
+                            currentFogConnection.disconnect();
+                        }
+                        isCurrentFogUpdated = true;
+                    }));
         }
     }
 
@@ -981,15 +1011,6 @@ void GLSLSceneRendererImpl::renderFog(LightingProgram* program)
     }
     isCurrentFogUpdated = false;
     prevFog = fog;
-}
-
-
-void GLSLSceneRendererImpl::onCurrentFogNodeUdpated()
-{
-    if(!self->isFogEnabled()){
-        currentFogConnection.disconnect();
-    }
-    isCurrentFogUpdated = true;
 }
 
 
@@ -1156,6 +1177,14 @@ void GLSLSceneRenderer::renderCustomGroup(SgGroup* group, std::function<void()> 
     impl->pushPickId(group);
     traverseFunction();
     impl->popPickId();
+}
+
+
+void GLSLSceneRendererImpl::renderSwitch(SgSwitch* node)
+{
+    if(node->isTurnedOn()){
+        renderGroup(node);
+    }
 }
 
 
@@ -1372,8 +1401,11 @@ bool GLSLSceneRendererImpl::renderTexture(SgTexture* texture)
     if(isCheckingUnusedResources){
         nextResourceMap->insert(GLResourceMap::value_type(sgImage, resource)); 
     }
-    
-    if(SgTextureTransform* tt = texture->textureTransform()){
+
+    auto tt = texture->textureTransform();
+    if(!tt){
+        hasValidTextureTransform = false;
+    } else {
         Eigen::Rotation2Df R(tt->rotation());
         const auto& c = tt->center();
         Eigen::Translation<float, 2> C(c.x(), c.y());
@@ -1381,8 +1413,7 @@ bool GLSLSceneRendererImpl::renderTexture(SgTexture* texture)
         Eigen::Translation<float, 2> T(t.x(), t.y());
         const auto s = tt->scale().cast<float>();
         textureTransform = Eigen::Affine2f(C.inverse() * Eigen::Scaling(s.x(), s.y()) * R * C * T);
-    } else {
-        textureTransform = boost::none;
+        hasValidTextureTransform = true;
     }
 
     return resource->isLoaded;
@@ -1466,18 +1497,20 @@ void GLSLSceneRendererImpl::writeMeshVertices(SgMesh* mesh, VertexResource* reso
     const int numTriangles = mesh->numTriangles();
     int faceVertexIndex = 0;
     
-    for(size_t i=0; i < numTriangles; ++i){
-        for(size_t j=0; j < 3; ++j){
+    for(int i=0; i < numTriangles; ++i){
+        for(int j=0; j < 3; ++j){
             const int orgVertexIndex = triangleVertices[faceVertexIndex++];
             vertices.push_back(orgVertices[orgVertexIndex]);
         }
     }
 
-    glBindVertexArray(resource->vao);
-    
-    glBindBuffer(GL_ARRAY_BUFFER, resource->newBuffer());
+    {
+        LockVertexArrayAPI lock;
+        glBindVertexArray(resource->vao);
+        glBindBuffer(GL_ARRAY_BUFFER, resource->newBuffer());
+        glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
+    }
     glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vector3f), vertices.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
     glEnableVertexAttribArray(0);
 
     SgNormalArray normals;
@@ -1517,15 +1550,15 @@ void GLSLSceneRendererImpl::writeMeshNormals(SgMesh* mesh, GLuint buffer, SgNorm
         const auto& normalIndices = mesh->normalIndices();
         int faceVertexIndex = 0;
         if(normalIndices.empty()){
-            for(size_t i=0; i < numTriangles; ++i){
-                for(size_t j=0; j < 3; ++j){
+            for(int i=0; i < numTriangles; ++i){
+                for(int j=0; j < 3; ++j){
                     const int orgVertexIndex = triangleVertices[faceVertexIndex++];
                     normals.push_back(orgNormals[orgVertexIndex]);
                 }
             }
         } else {
-            for(size_t i=0; i < numTriangles; ++i){
-                for(size_t j=0; j < 3; ++j){
+            for(int i=0; i < numTriangles; ++i){
+                for(int j=0; j < 3; ++j){
                     const int normalIndex = normalIndices[faceVertexIndex++];
                     normals.push_back(orgNormals[normalIndex]);
                 }
@@ -1534,20 +1567,23 @@ void GLSLSceneRendererImpl::writeMeshNormals(SgMesh* mesh, GLuint buffer, SgNorm
     } else {
         // flat shading
         const auto& orgVertices = *mesh->vertices();
-        for(size_t i=0; i < numTriangles; ++i){
+        for(int i=0; i < numTriangles; ++i){
             SgMesh::TriangleRef triangle = mesh->triangle(i);
             const Vector3f e1 = orgVertices[triangle[1]] - orgVertices[triangle[0]];
             const Vector3f e2 = orgVertices[triangle[2]] - orgVertices[triangle[0]];
             const Vector3f normal = e1.cross(e2).normalized();
-            for(size_t j=0; j < 3; ++j){
+            for(int j=0; j < 3; ++j){
                 normals.push_back(normal);
             }
         }
     }
 
-    glBindBuffer(GL_ARRAY_BUFFER, buffer);
+    {
+        LockVertexArrayAPI lock;
+        glBindBuffer(GL_ARRAY_BUFFER, buffer);
+        glVertexAttribPointer((GLuint)1, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
+    }
     glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(Vector3f), normals.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer((GLuint)1, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
     glEnableVertexAttribArray(1);
 }
 
@@ -1560,15 +1596,14 @@ void GLSLSceneRendererImpl::writeMeshTexCoords(SgMesh* mesh, GLuint buffer)
     const auto& texCoordIndices = mesh->texCoordIndices();
     SgTexCoordArray texCoords;
     texCoords.reserve(totalNumVertices);
-    if(!textureTransform){
+    if(!hasValidTextureTransform){
         pOrgTexCoords = mesh->texCoords();
     } else {
         const auto& orgTexCoords = *mesh->texCoords();
         const size_t n = orgTexCoords.size();
         pOrgTexCoords = new SgTexCoordArray(n);
-        const Eigen::Affine2f& T = *textureTransform;
         for(size_t i=0; i < n; ++i){
-            (*pOrgTexCoords)[i] = T * orgTexCoords[i];
+            (*pOrgTexCoords)[i] = textureTransform * orgTexCoords[i];
         }
     }
 
@@ -1576,24 +1611,27 @@ void GLSLSceneRendererImpl::writeMeshTexCoords(SgMesh* mesh, GLuint buffer)
     int faceVertexIndex = 0;
     
     if(texCoordIndices.empty()){
-        for(size_t i=0; i < numTriangles; ++i){
-            for(size_t j=0; j < 3; ++j){
+        for(int i=0; i < numTriangles; ++i){
+            for(int j=0; j < 3; ++j){
                 const int orgVertexIndex = triangleVertices[faceVertexIndex++];
                 texCoords.push_back((*pOrgTexCoords)[orgVertexIndex]);
             }
         }
     } else {
-        for(size_t i=0; i < numTriangles; ++i){
-            for(size_t j=0; j < 3; ++j){
+        for(int i=0; i < numTriangles; ++i){
+            for(int j=0; j < 3; ++j){
                 const int texCoordIndex = texCoordIndices[faceVertexIndex++];
                 texCoords.push_back((*pOrgTexCoords)[texCoordIndex]);
             }
         }
     }
 
-    glBindBuffer(GL_ARRAY_BUFFER, buffer);
+    {
+        LockVertexArrayAPI lock;
+        glBindBuffer(GL_ARRAY_BUFFER, buffer);
+        glVertexAttribPointer((GLuint)2, 2, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
+    }
     glBufferData(GL_ARRAY_BUFFER, texCoords.size() * sizeof(Vector2f), texCoords.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer((GLuint)2, 2, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
     glEnableVertexAttribArray(2);
 }
 
@@ -1610,33 +1648,30 @@ void GLSLSceneRendererImpl::writeMeshColors(SgMesh* mesh, GLuint buffer)
     int faceVertexIndex = 0;
 
     if(colorIndices.empty()){
-        for(size_t i=0; i < numTriangles; ++i){
-            for(size_t j=0; j < 3; ++j){
+        for(int i=0; i < numTriangles; ++i){
+            for(int j=0; j < 3; ++j){
                 const int orgVertexIndex = triangleVertices[faceVertexIndex++];
                 colors.push_back(orgColors[orgVertexIndex]);
             }
         }
     } else {
-        for(size_t i=0; i < numTriangles; ++i){
-            for(size_t j=0; j < 3; ++j){
+        for(int i=0; i < numTriangles; ++i){
+            for(int j=0; j < 3; ++j){
                 const int colorIndex = colorIndices[faceVertexIndex++];
                 colors.push_back(orgColors[colorIndex]);
             }
         }
     }
 
-    glBindBuffer(GL_ARRAY_BUFFER, buffer);
+    {
+        LockVertexArrayAPI lock;
+        glBindBuffer(GL_ARRAY_BUFFER, buffer);
+        glVertexAttribPointer((GLuint)3, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
+    }
     glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(Vector3f), colors.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer((GLuint)3, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
     glEnableVertexAttribArray(3);
 }
     
-
-static SgVertexArrayPtr getPointSetVertices(SgPointSet* pointSet)
-{
-    return pointSet->vertices();
-}
-
 
 void GLSLSceneRendererImpl::renderPointSet(SgPointSet* pointSet)
 {
@@ -1653,7 +1688,8 @@ void GLSLSceneRendererImpl::renderPointSet(SgPointSet* pointSet)
         setPointSize(defaultPointSize);
     }
     
-    renderPlot(pointSet, GL_POINTS, std::bind(getPointSetVertices, pointSet));
+    renderPlot(pointSet, GL_POINTS,
+               [pointSet]() -> SgVertexArrayPtr { return pointSet->vertices(); });
 
     popProgram();
 }
@@ -1679,12 +1715,15 @@ void GLSLSceneRendererImpl::renderPlot
     if(!resource->isValid()){
         glBindVertexArray(resource->vao);
         SgVertexArrayPtr vertices = getVertices();
-        const int n = vertices->size();
+        const size_t n = vertices->size();
         resource->numVertices = n;
 
-        glBindBuffer(GL_ARRAY_BUFFER, resource->newBuffer());
+        {
+            LockVertexArrayAPI lock;
+            glBindBuffer(GL_ARRAY_BUFFER, resource->newBuffer());
+            glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte *)NULL + (0)));
+        }
         glBufferData(GL_ARRAY_BUFFER, vertices->size() * sizeof(Vector3f), vertices->data(), GL_STATIC_DRAW);
-        glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte *)NULL + (0)));
         glEnableVertexAttribArray(0);
 
         if(hasColors){
@@ -1702,13 +1741,17 @@ void GLSLSceneRendererImpl::renderPlot
             } else {
                 const int m = colorIndices.size();
                 colors = new SgColorArray(m);
-                for(size_t i=0; i < m; ++i){
+                for(int i=0; i < m; ++i){
                     (*colors)[i] = orgColors[colorIndices[i]];
                 }
             }
-            glBindBuffer(GL_ARRAY_BUFFER, resource->newBuffer());
+
+            {
+                LockVertexArrayAPI lock;
+                glBindBuffer(GL_ARRAY_BUFFER, resource->newBuffer());
+                glVertexAttribPointer((GLuint)1, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL +(0)));
+            }
             glBufferData(GL_ARRAY_BUFFER, n * sizeof(Vector3f), colors->data(), GL_STATIC_DRAW);
-            glVertexAttribPointer((GLuint)1, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL +(0)));
             glEnableVertexAttribArray(1);
         }
     }        
@@ -1753,7 +1796,8 @@ void GLSLSceneRendererImpl::renderLineSet(SgLineSet* lineSet)
         setLineWidth(defaultLineWidth);
     }
 
-    renderPlot(lineSet, GL_LINES, std::bind(getLineSetVertices, lineSet));
+    renderPlot(lineSet, GL_LINES,
+               [lineSet](){ return getLineSetVertices(lineSet); });
 
     popProgram();
 }
@@ -1835,7 +1879,7 @@ void GLSLSceneRendererImpl::renderOutlineGroupMain(SgOutlineGroup* outline, cons
 
 void GLSLSceneRendererImpl::clearGLState()
 {
-    stateFlag.reset();
+    std::fill(stateFlag.begin(), stateFlag.end(), false);
     
     diffuseColor << 0.0f, 0.0f, 0.0f, 0.0f;
     ambientColor << 0.0f, 0.0f, 0.0f, 0.0f;
@@ -1860,7 +1904,7 @@ void GLSLSceneRendererImpl::setDiffuseColor(const Vector3f& color)
     if(!stateFlag[DIFFUSE_COLOR] || diffuseColor != color){
         materialProgram->setDiffuseColor(color);
         diffuseColor = color;
-        stateFlag.set(DIFFUSE_COLOR);
+        stateFlag[DIFFUSE_COLOR] = true;
     }
 }
 
@@ -1876,7 +1920,7 @@ void GLSLSceneRendererImpl::setAmbientColor(const Vector3f& color)
     if(!stateFlag[AMBIENT_COLOR] || ambientColor != color){
         materialProgram->setAmbientColor(color);
         ambientColor = color;
-        stateFlag.set(AMBIENT_COLOR);
+        stateFlag[AMBIENT_COLOR] = true;
     }
 }
 
@@ -1892,7 +1936,7 @@ void GLSLSceneRendererImpl::setEmissionColor(const Vector3f& color)
     if(!stateFlag[EMISSION_COLOR] || emissionColor != color){
         materialProgram->setEmissionColor(color);
         emissionColor = color;
-        stateFlag.set(EMISSION_COLOR);
+        stateFlag[EMISSION_COLOR] = true;
     }
 }
 
@@ -1908,7 +1952,7 @@ void GLSLSceneRendererImpl::setSpecularColor(const Vector3f& color)
     if(!stateFlag[SPECULAR_COLOR] || specularColor != color){
         materialProgram->setSpecularColor(color);
         specularColor = color;
-        stateFlag.set(SPECULAR_COLOR);
+        stateFlag[SPECULAR_COLOR] = true;
     }
 }
 
@@ -1924,7 +1968,7 @@ void GLSLSceneRendererImpl::setShininess(float s)
     if(!stateFlag[SHININESS] || shininess != s){
         materialProgram->setShininess(s);
         shininess = s;
-        stateFlag.set(SHININESS);
+        stateFlag[SHININESS] = true;
     }
 }
 
@@ -1940,7 +1984,7 @@ void GLSLSceneRendererImpl::setAlpha(float a)
     if(!stateFlag[ALPHA] || alpha != a){
         materialProgram->setAlpha(a);
         alpha = a;
-        stateFlag.set(ALPHA);
+        stateFlag[ALPHA] = true;
     }
 }
 
@@ -1979,7 +2023,7 @@ void GLSLSceneRendererImpl::setPointSize(float size)
         float s = isPicking ? std::max(size, MinLineWidthForPicking) : size;
         solidColorProgram.setPointSize(s);
         pointSize = s;
-        stateFlag.set(POINT_SIZE);
+        stateFlag[POINT_SIZE] = true;
     }
 }
 
@@ -1999,7 +2043,7 @@ void GLSLSceneRendererImpl::setLineWidth(float width)
             glLineWidth(width);
         }
         lineWidth = width;
-        stateFlag.set(LINE_WIDTH);
+        stateFlag[LINE_WIDTH] = true;
     }
 }
 

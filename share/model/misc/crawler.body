@@ -51,9 +51,10 @@ links:
     name: CRAWLER_TRACK_L
     parent: BODY
     translation: [ 0.0, 0.15, 0 ]
-    jointType: pseudoContinuousTrack
+    jointType: fixed
     jointAxis: [ 0, 1, 0 ]
     jointId: 0
+    actuationMode: jointSurfaceVelocity
     elements:
       -
         type: RigidBody
@@ -90,9 +91,10 @@ links:
     name: CRAWLER_TRACK_R
     parent: BODY
     translation: [ 0.0, -0.15, 0 ]
-    jointType: pseudoContinuousTrack
+    jointType: fixed
     jointAxis: [ 0, 1, 0 ]
     jointId: 1
+    actuationMode: jointSurfaceVelocity
     elements:
       -
         type: RigidBody

@@ -8,30 +8,26 @@
 
 namespace cnoid {
 
+class ContactMaterial;
 class AGXSimulatorItem;
-typedef ref_ptr<AGXSimulatorItem> AGXSimulatorItemPtr;
-
 class AGXSimulatorItemImpl : public Referenced
 {
 public:
-    AGXSimulatorItemPtr self;
-
-    AGXSimulatorItemImpl(AGXSimulatorItemPtr self);
-    AGXSimulatorItemImpl(AGXSimulatorItemPtr self, const AGXSimulatorItemImpl& org);
+    AGXSimulatorItemImpl(AGXSimulatorItem* self);
+    AGXSimulatorItemImpl(AGXSimulatorItem* self, const AGXSimulatorItemImpl& org);
     ~AGXSimulatorItemImpl();
-    // call from defualt constructer
-    void initialize();
-    // add parameters to property panel
-    void doPutProperties(PutPropertyFunction& putProperty);
-    // save simulation parameter to cnoid file
-    bool store(Archive& archive);
-    // store simulation parameter from cnoid file
-    bool restore(const Archive& archive);
+
+    void initialize();                          // call from defualt constructor
+    void doPutProperties(PutPropertyFunction& putProperty);     // add parameters to property panel
+    bool store(Archive& archive);               // save simulation parameter to cnoid file
+    bool restore(const Archive& archive);       // store simulation parameter from cnoid file
 
     // Function of create, step simulation
     SimulationBody* createSimulationBody(Body* orgBody);
     bool initializeSimulation(const std::vector<SimulationBody*>& simBodies);
-    void createMaterialTable();
+    void createAGXMaterialTable();
+    void createAGXContactMaterial(int id1, int id2, ContactMaterial* mat);
+    void setAdditionalAGXMaterialParam();
     bool stepSimulation(const std::vector<SimulationBody*>& activeSimBodies);
     void stopSimulation();
     void pauseSimulation();
@@ -42,6 +38,7 @@ public:
     bool saveSimulationToAGXFile();
 
 private:
+    ref_ptr<AGXSimulatorItem> self;
     AGXSceneRef agxScene = nullptr;
     Vector3 _p_gravity;
     int     _p_numThreads;
@@ -49,6 +46,7 @@ private:
     int     _p_contactReductionBinResolution;
     int     _p_contactReductionThreshhold;
     bool    _p_enableAutoSleep;
+    AGXScene* getAGXScene();
 };
 }
 #endif

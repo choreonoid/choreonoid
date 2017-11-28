@@ -16,17 +16,21 @@ class FilePathProperty
     std::string filename_;
     std::string baseDirectory_;
     std::vector<std::string> filters_;
+    bool isFullpathDisplayMode_ = false;
 
 public:
     FilePathProperty() { }
+    FilePathProperty(const std::string& filename) : filename_(filename) { }
     FilePathProperty(const std::string& filename, const std::vector<std::string>& filters)
         : filename_(filename), filters_(filters) { }
     void setFilename(const std::string& filename) { filename_ = filename; }
     void setBaseDirectory(const std::string& dir) { baseDirectory_ = dir; }
     void setFilters(const std::vector<std::string>& filters) { filters_ = filters; }
+    void setFullpathDisplayMode(bool on);
     const std::string& filename() const { return filename_; };
     const std::string& baseDirectory() const { return baseDirectory_; };
     const std::vector<std::string>& filters() const { return filters_; }
+    bool isFullpathDisplayMode() const { return isFullpathDisplayMode_; }
 };
 
 

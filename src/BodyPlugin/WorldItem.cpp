@@ -12,7 +12,7 @@
 #include <cnoid/LazyCaller>
 #include <cnoid/BodyCollisionDetectorUtil>
 #include <cnoid/SceneCollision>
-#include <cnoid/ContactMaterialTable>
+#include <cnoid/MaterialTable>
 #include <cnoid/ExecutablePath>
 #include <boost/format.hpp>
 #include "gettext.h"
@@ -41,10 +41,6 @@ namespace cnoid {
 class WorldItemImpl
 {
 public:
-    WorldItemImpl(WorldItem* self);
-    WorldItemImpl(WorldItem* self, const WorldItemImpl& org);
-    ~WorldItemImpl();
-            
     WorldItem* self;
     ostream& os;
 
@@ -69,9 +65,12 @@ public:
 
     SceneCollisionPtr sceneCollision;
 
-    string contactMaterialFile;
-    ContactMaterialTablePtr contactMaterialTable;
+    string materialTableFile;
+    MaterialTablePtr materialTable;
 
+    WorldItemImpl(WorldItem* self);
+    WorldItemImpl(WorldItem* self, const WorldItemImpl& org);
+    ~WorldItemImpl();
     void init();
     bool selectCollisionDetector(int index);
     void enableCollisionDetection(bool on);
@@ -81,6 +80,7 @@ public:
     void onBodyKinematicStateChanged(BodyItem* bodyItem);
     void updateCollisions(bool forceUpdate);
     void extractCollisions(const CollisionPair& collisionPair);
+    void createMaterialTable();
 };
 
 }
@@ -115,6 +115,8 @@ WorldItemImpl::WorldItemImpl(WorldItem* self)
     isCollisionDetectionEnabled = false;
 
     init();
+
+    materialTableFile = (filesystem::path(shareDirectory()) / "default" / "materials.yaml").string();
 }
 
 
@@ -130,7 +132,7 @@ WorldItemImpl::WorldItemImpl(WorldItem* self, const WorldItemImpl& org)
       os(org.os),
       updateCollisionsLater([&](){ updateCollisions(false); }),
       updateCollisionDetectorLater([&](){ updateCollisionDetector(false); }),
-      contactMaterialFile(org.contactMaterialFile)
+      materialTableFile(org.materialTableFile)
 {
     collisionDetectorType = org.collisionDetectorType;
     isCollisionDetectionEnabled = org.isCollisionDetectionEnabled;
@@ -308,7 +310,6 @@ void WorldItemImpl::updateCollisionDetector(bool forceUpdate)
     for(size_t i=0; i < collisionBodyItems.size(); ++i){
         BodyItem* bodyItem = collisionBodyItems.get(i);
         const BodyPtr& body = bodyItem->body();
-        const int numLinks = body->numLinks();
             
         pair<BodyItemInfoMap::iterator, bool> inserted =
             bodyItemInfoMap.insert(make_pair(bodyItem, BodyItemInfo()));
@@ -394,7 +395,6 @@ void WorldItemImpl::updateCollisions(bool forceUpdate)
 
     for(BodyItemInfoMap::iterator p = bodyItemInfoMap.begin(); p != bodyItemInfoMap.end(); ++p){
         BodyItem* bodyItem = p->first;
-        BodyItemInfo& info = p->second;
         bodyItem->notifyCollisionUpdate();
     }
     
@@ -438,24 +438,31 @@ SgNode* WorldItem::getScene()
 }
 
 
-void WorldItem::setContactMaterialFile(const std::string& filename)
+void WorldItem::setMaterialTableFile(const std::string& filename)
 {
-    impl->contactMaterialFile = filename;
+    if(filename != impl->materialTableFile){
+        impl->materialTable = nullptr;
+        impl->materialTableFile = filename;
+    }
 }
 
 
-ContactMaterialTable* WorldItem::contactMaterialTable()
+MaterialTable* WorldItem::materialTable()
 {
-    if(!impl->contactMaterialTable){
-        string filename = impl->contactMaterialFile;
-        if(filename.empty()){
-            filename = (filesystem::path(shareDirectory()) / "misc" / "stdmaterials.yaml").string();
-        }
-        impl->contactMaterialTable = new ContactMaterialTable;
-        impl->contactMaterialTable->load(filename);
+    if(!impl->materialTable){
+        impl->createMaterialTable();
     }
+    return impl->materialTable;
+}
 
-    return impl->contactMaterialTable;
+
+void WorldItemImpl::createMaterialTable()
+{
+    materialTable = new MaterialTable;
+    
+    if(!materialTableFile.empty()){
+        materialTable->load(materialTableFile, os);
+    }
 }
 
         
@@ -472,9 +479,9 @@ void WorldItem::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("Collision detector"), impl->collisionDetectorType,
                 [&](int index){ return impl->selectCollisionDetector(index); });
 
-    FilePathProperty materialFileProperty(impl->contactMaterialFile, { _("Contact material definition file (*.yaml)") });
-    putProperty(_("Contact material"), materialFileProperty,
-                [&](const string& filename){ setContactMaterialFile(filename); return true; });
+    FilePathProperty materialFileProperty(impl->materialTableFile, { _("Contact material definition file (*.yaml)") });
+    putProperty(_("Material table"), materialFileProperty,
+                [&](const string& filename){ setMaterialTableFile(filename); return true; });
 }
 
 
@@ -482,6 +489,7 @@ bool WorldItem::store(Archive& archive)
 {
     archive.write("collisionDetection", isCollisionDetectionEnabled());
     archive.write("collisionDetector", impl->collisionDetectorType.selectedSymbol());
+    archive.writeRelocatablePath("materialTableFile", impl->materialTableFile);
     return true;
 }
 
@@ -494,6 +502,9 @@ bool WorldItem::restore(const Archive& archive)
     }
     if(archive.get("collisionDetection", false)){
         archive.addPostProcess([&](){ impl->enableCollisionDetection(true); });
+    }
+    if(archive.readRelocatablePath("materialTableFile", symbol)){
+        setMaterialTableFile(symbol);
     }
     return true;
 }

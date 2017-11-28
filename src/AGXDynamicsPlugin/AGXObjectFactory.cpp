@@ -4,22 +4,24 @@ namespace cnoid{
 
 ////////////////////////////////////////////////////////////
 // AGXPseudoContinuousTrackGeometry
-void AGXPseudoContinuousTrackGeometry::setAxis(const agx::Vec3f& axis)
+void AGXPseudoContinuousTrackGeometry::setAxis(const agx::Vec3& axis)
 {
     m_axis = axis;
 }
 
-agx::Vec3f AGXPseudoContinuousTrackGeometry::getAxis() const
+agx::Vec3 AGXPseudoContinuousTrackGeometry::getAxis() const
 {
     return m_axis;
 }
 
 agx::Vec3f AGXPseudoContinuousTrackGeometry::calculateSurfaceVelocity(const agxCollide::LocalContactPoint & point, size_t index) const
 {
-    agx::Vec3f dir = getAxis() ^ point.normal();
+    agx::Vec3 axis0 = getFrame()->transformVectorToWorld( getAxis() );
+    agx::Vec3 dir = axis0 ^ agx::Vec3(point.normal());
     dir.normalize();
-    const agx::Vec3f ret = dir * -1.0 * getSurfaceVelocity().x();
-    return ret;
+    dir *= -1.0 * getSurfaceVelocity().x();
+    agx::Vec3 ret = getFrame()->transformVectorToLocal(dir);
+    return agx::Vec3f(ret);
 }
 
 ////////////////////////////////////////////////////////////
@@ -173,9 +175,19 @@ agx::Bool AGXObjectFactory::setContactMaterialParam(agx::ContactMaterial* const 
     cm->setYoungsModulus(desc.youngsModulus);
     cm->setRestitution(desc.restitution);
     cm->setDamping(desc.damping);
-    cm->setFrictionCoefficient(desc.friction);
+    if(desc.secondaryFriction >= 0.0){
+        cm->setFrictionCoefficient(desc.friction, agx::ContactMaterial::PRIMARY_DIRECTION);
+        cm->setFrictionCoefficient(desc.secondaryFriction, agx::ContactMaterial::SECONDARY_DIRECTION);
+    }else{
+        cm->setFrictionCoefficient(desc.friction);
+    }
     cm->setAdhesion(desc.adhesionForce, desc.adhesivOverlap);
-    cm->setSurfaceViscosity(desc.surfaceViscosity, desc.frictionDirection);
+    if(desc.secondarySurfaceViscosity >= 0.0){
+        cm->setSurfaceViscosity(desc.surfaceViscosity, agx::ContactMaterial::PRIMARY_DIRECTION);
+        cm->setSurfaceViscosity(desc.secondarySurfaceViscosity, agx::ContactMaterial::SECONDARY_DIRECTION);
+    }else{
+        cm->setSurfaceViscosity(desc.surfaceViscosity);
+    }
     cm->setContactReductionMode(desc.contactReductionMode);
     cm->setContactReductionBinResolution(desc.contactReductionBinResolution);
 
@@ -186,8 +198,11 @@ agx::Bool AGXObjectFactory::setContactMaterialParam(agx::ContactMaterial* const 
             case AGXFrictionModelType::BOX :
                 fm = new agx::BoxFrictionModel();
                 break;
-            case AGXFrictionModelType::SCALE_BOX :
+            case AGXFrictionModelType::SCALED_BOX :
                 fm = new agx::ScaleBoxFrictionModel();
+                break;
+            case AGXFrictionModelType::CONSTANT_NORMAL_FORCE_ORIENTED_BOX_FRICTIONMODEL :
+                fm = new agx::ConstantNormalForceOrientedBoxFrictionModel(agx::Real(0.0), nullptr, agx::Vec3(), desc.solveType);
                 break;
             case AGXFrictionModelType::ITERATIVE_PROJECTED_CONE :
                 fm = new agx::IterativeProjectedConeFriction();
@@ -233,12 +248,9 @@ agx::HingeRef AGXObjectFactory::createConstraintHinge(const AGXHingeDesc& desc)
     hingeFrame.setAxis(desc.frameAxis);
     hingeFrame.setCenter(desc.frameCenter);
     agx::HingeRef joint = new agx::Hinge(hingeFrame, desc.rigidBodyA, desc.rigidBodyB);
-    joint->getMotor1D()->setEnable(desc.motor.enable);
-    joint->getMotor1D()->setLocked(desc.motor.enableLock);
-    joint->getMotor1D()->setLockedAtZeroSpeed(desc.motor.enableLockAtZeroSpeed);
-    joint->getLock1D()->setEnable(desc.lock.enable);
-    joint->getRange1D()->setEnable(desc.range.enable);
-    joint->getRange1D()->setRange(desc.range.range);
+    setMotor1DParam(joint->getMotor1D(), desc.motor);
+    setLock1DParam(joint->getLock1D(), desc.lock);
+    setRange1DParam(joint->getRange1D(), desc.range);
     return joint;
 }
 
@@ -248,12 +260,9 @@ agx::PrismaticRef AGXObjectFactory::createConstraintPrismatic(const AGXPrismatic
     prismaticFrame.setAxis(desc.frameAxis);
     prismaticFrame.setPoint(desc.framePoint);
     agx::PrismaticRef joint = new agx::Prismatic(prismaticFrame, desc.rigidBodyA, desc.rigidBodyB);
-    joint->getMotor1D()->setEnable(desc.motor.enable);
-    joint->getMotor1D()->setLocked(desc.motor.enableLock);
-    joint->getMotor1D()->setLockedAtZeroSpeed(desc.motor.enableLockAtZeroSpeed);
-    joint->getLock1D()->setEnable(desc.lock.enable);
-    joint->getRange1D()->setEnable(desc.range.enable);
-    joint->getRange1D()->setRange(desc.range.range);
+    setMotor1DParam(joint->getMotor1D(), desc.motor);
+    setLock1DParam(joint->getLock1D(), desc.lock);
+    setRange1DParam(joint->getRange1D(), desc.range);
     return joint;
 }
 
@@ -267,6 +276,30 @@ agx::BallJointRef AGXObjectFactory::createConstraintBallJoint(const AGXBallJoint
 agx::PlaneJointRef AGXObjectFactory::createConstraintPlaneJoint(const AGXPlaneJointDesc & desc)
 {
     return new agx::PlaneJoint(desc.rigidBodyA, desc.frameA, desc.rigidBodyB, desc.frameB);
+}
+
+void AGXObjectFactory::setMotor1DParam(agx::Motor1D* controller, const AGXMotor1DDesc& desc)
+{
+    controller->setEnable(desc.enable);
+    controller->setLocked(desc.enableLock);
+    controller->setLockedAtZeroSpeed(desc.enableLockAtZeroSpeed);
+    controller->setCompliance(desc.compliance);
+    controller->setDamping(desc.damping);
+}
+
+void AGXObjectFactory::setLock1DParam(agx::Lock1D* controller, const AGXLock1DDesc& desc)
+{
+    controller->setEnable(desc.enable);
+    controller->setCompliance(desc.compliance);
+    controller->setDamping(desc.damping);
+}
+
+void AGXObjectFactory::setRange1DParam(agx::Range1D* controller, const AGXRange1DDesc& desc)
+{
+    controller->setEnable(desc.enable);
+    controller->setRange(desc.range);
+    controller->setCompliance(desc.compliance);
+    controller->setDamping(desc.damping);
 }
 
 agx::LockJointRef AGXObjectFactory::createConstraintLockJoint(const AGXLockJointDesc & desc)
@@ -289,6 +322,8 @@ agxVehicle::TrackRef AGXObjectFactory::createVehicleTrack(const AGXVehicleTrackD
     track->getProperties()->setHingeDamping(desc.hingeDamping);
     track->getProperties()->setMinStabilizingHingeNormalForce(desc.minStabilizingHingeNormalForce);
     track->getProperties()->setStabilizingHingeFrictionParameter(desc.stabilizingHingeFrictionParameter);
+    track->getProperties()->setNodesToWheelsMergeThreshold(desc.nodesToWheelsMergeThreshold);
+    track->getProperties()->setNodesToWheelsSplitThreshold(desc.nodesToWheelsSplitThreshold);
     track->getInternalMergeProperties()->setEnableMerge(desc.enableMerge);
     track->getInternalMergeProperties()->setNumNodesPerMergeSegment(desc.numNodesPerMergeSegment);
     track->getInternalMergeProperties()->setEnableLockToReachMergeCondition(desc.enableLockToReachMergeCondition);
@@ -318,6 +353,10 @@ agxVehicle::TrackRef AGXObjectFactory::createVehicleTrack(const AGXVehicleTrackD
         }
     );
     return track;
+}
+
+agxCollide::ConvexBuilderRef AGXObjectFactory::createConvexBuilder(){
+    return new agxCollide::ConvexBuilder();
 }
 
 }

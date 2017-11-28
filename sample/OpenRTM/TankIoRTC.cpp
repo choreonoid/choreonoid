@@ -19,8 +19,8 @@ public:
     TankIoRTC(RTC::Manager* manager);
     ~TankIoRTC();
 
-    virtual RTC::ReturnCode_t onInitialize(Body* body) override;
-    virtual bool initializeSimulation(ControllerItemIO* io) override;
+    virtual bool initializeIO(ControllerIO* io) override;
+    virtual bool initializeSimulation(ControllerIO* io) override;
     virtual void inputFromSimulator() override;
     virtual void outputToSimulator() override;
 
@@ -80,7 +80,7 @@ TankIoRTC::~TankIoRTC()
 }
 
 
-RTC::ReturnCode_t TankIoRTC::onInitialize(Body* body)
+bool TankIoRTC::initializeIO(ControllerIO* io)
 {
     // Set InPort buffers
     addInPort("u", torquesIn);
@@ -91,18 +91,26 @@ RTC::ReturnCode_t TankIoRTC::onInitialize(Body* body)
     addOutPort("q", anglesOut);
     angles.data.length(2);
 
-    return RTC::RTC_OK;
+    return true;
 }
 
 
-bool TankIoRTC::initializeSimulation(ControllerItemIO* io)
+bool TankIoRTC::initializeSimulation(ControllerIO* io)
 {
     ioBody = io->body();
+
     turretY = ioBody->link("TURRET_Y");
     turretP = ioBody->link("TURRET_P");
+    turretY->setActuationMode(Link::JOINT_TORQUE);
+    turretP->setActuationMode(Link::JOINT_TORQUE);
+
     trackL = ioBody->link("TRACK_L");
     trackR = ioBody->link("TRACK_R");
+    trackL->setActuationMode(Link::JOINT_SURFACE_VELOCITY);
+    trackR->setActuationMode(Link::JOINT_SURFACE_VELOCITY);
+    
     light = ioBody->findDevice<Light>("Light");
+    
     return true;
 }
 

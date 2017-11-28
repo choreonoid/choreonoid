@@ -27,6 +27,6 @@ private:
     YAMLSceneLoaderImpl* impl;
 };
 
-};
+}
 
 #endif

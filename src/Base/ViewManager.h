@@ -110,7 +110,7 @@ public:
     static SignalProxy<void(View* view)> sigViewRemoved();
 
 private:
-    ViewManager(const ViewManager& org) { }
+    ViewManager(const ViewManager&) { }
     
     View* registerClassSub(
         const std::type_info& view_type_info, const std::string& className, const std::string& defaultInstanceName,

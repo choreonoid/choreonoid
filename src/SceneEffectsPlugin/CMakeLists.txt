@@ -26,11 +26,7 @@ set(headers
 
   )
 
-if(NOT QT5)
-  QT4_ADD_RESOURCES(RC_SRCS SceneEffectsPlugin.qrc)
-else()
-  QT5_ADD_RESOURCES(RC_SRCS SceneEffectsPlugin.qrc)
-endif()
+QTX_ADD_RESOURCES(RC_SRCS SceneEffectsPlugin.qrc)
 
 set(target CnoidSceneEffectsPlugin)
 

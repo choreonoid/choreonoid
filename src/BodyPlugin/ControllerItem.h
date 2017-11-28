@@ -7,58 +7,45 @@
 #define CNOID_BODY_PLUGIN_CONTROLLER_ITEM_H
 
 #include "SimulatorItem.h"
+#include <cnoid/ControllerIO>
 #include "exportdecl.h"
 
 namespace cnoid {
 
+class ControllerIO;
+
 class Body;
 
-class ControllerItemIO
-{
-public:
-    virtual Body* body() = 0;
-    virtual double timeStep() const = 0;
-    virtual double currentTime() const = 0;
-    virtual std::string optionString() const = 0;
-
-    //! \deprecated Use timeStep().
-    virtual double worldTimeStep() const;
-};
-    
 class CNOID_EXPORT ControllerItem : public Item
 {
 public:
     // for the backward compatibility
-    typedef ControllerItemIO Target;
-        
+    typedef ControllerIO Target;
+
     ControllerItem();
     ControllerItem(const ControllerItem& org);
     virtual ~ControllerItem();
 
     bool isActive() const;
-    bool isImmediateMode() const { return isImmediateMode_; }
-    void setImmediateMode(bool on);
-
+    bool isNoDelayMode() const { return isNoDelayMode_; }
+    bool setNoDelayMode(bool on);
+    
     const std::string& optionString() const { return optionString_; }
-    bool splitOptionString(const std::string& optionString, std::vector<std::string>& out_options) const;
 
     /**
        This function is called before the simulation world is initialized.
 
-       @note If the body() of the target returns a null pointer, a controller is not associated with a particular body.
+       @note If the io->body() returns a null pointer, a controller is not associated with a particular body.
        This is for a controller which does some general operations.
            
        @note This function is called from the main thread.
     */
-    virtual bool initialize(ControllerItemIO* io);
+    virtual bool initialize(ControllerIO* io);
     
     /**
        This function is called after the simulation world is initialized.
     */
     virtual bool start();
-
-    //! \deprecated
-    virtual bool start(ControllerItemIO* io);
 
     virtual double timeStep() const = 0;
 
@@ -93,6 +80,11 @@ public:
     virtual void getProfilingTimes(std::vector<double>& profilingTimes);
 #endif
 
+    //! \deprecated Use isNoDelayMode.
+    bool isImmediateMode() const { return isNoDelayMode(); }
+    //! \deprecated Use setsNoDelayMode.
+    void setImmediateMode(bool on) { setNoDelayMode(on); }
+
 protected:
     void putMessage(const std::string& message);
 
@@ -102,7 +94,7 @@ protected:
 
 private:
     SimulatorItemPtr simulatorItem_;
-    bool isImmediateMode_;
+    bool isNoDelayMode_;
     std::string message_;
     Signal<void(const std::string& message)> sigMessage_;
     std::string optionString_;

@@ -134,6 +134,7 @@ public:
     bool haveExtraJoints();
     bool haveCrawlerJoint();
 };
+
 }
 
 
@@ -178,6 +179,7 @@ public:
     void addBody(BulletBody* bulletBody, short group);
     void setSolverParameter();
 };
+
 }
 
 
@@ -195,10 +197,10 @@ static bool CustomMaterialCombinerCallback(btManifoldPoint& cp, const btCollisio
     Link* crawlerlink;
     double sign = 1;
     double friction;
-    if(link0 && ((link0->jointType() == Link::CRAWLER_JOINT) || (link0->jointType() == Link::PSEUDO_CONTINUOUS_TRACK))){
+    if(link0 && link0->actuationMode() == Link::JOINT_SURFACE_VELOCITY){
         crawlerlink = link0;
         friction = bulletLink0->simImpl->friction;
-    } else if(link1 && ((link1->jointType() == Link::CRAWLER_JOINT) || (link1->jointType() == Link::PSEUDO_CONTINUOUS_TRACK))) {
+    } else if(link1 && link1->actuationMode() == Link::JOINT_SURFACE_VELOCITY){
         crawlerlink = link1;
         sign = -1;
         friction = bulletLink1->simImpl->friction;
@@ -226,10 +228,7 @@ static bool CustomMaterialCombinerCallback(btManifoldPoint& cp, const btCollisio
 
     cp.m_lateralFrictionDir1.setValue(frictionDir1.x(), frictionDir1.y(), frictionDir1.z());
     cp.m_lateralFrictionDir2.setValue(frictionDir2.x(), frictionDir2.y(), frictionDir2.z());
-    if(crawlerlink->jointType() == Link::PSEUDO_CONTINUOUS_TRACK)
-        cp.m_contactMotion1 = crawlerlink->dq();
-    else
-        cp.m_contactMotion1 = crawlerlink->u();
+    cp.m_contactMotion1 = crawlerlink->dq();
 
 #if 0
     std::cout << frictionDir1.x() << " " << frictionDir1.y() << " " << frictionDir1.z() << std::endl;
@@ -797,7 +796,7 @@ void BulletLink::createLinkBody(BulletSimulatorItemImpl* simImpl, BulletLink* pa
                 ((btGeneric6DofConstraint*)joint)->setLinearUpperLimit(btVector3(0.0, 0.0, 0.0));
                 ((btGeneric6DofConstraint*)joint)->setAngularLowerLimit(btVector3(0.0, 0.0, 0.0));
                 ((btGeneric6DofConstraint*)joint)->setAngularUpperLimit(btVector3(0.0, 0.0, 0.0));
-                if(link->jointType() == Link::CRAWLER_JOINT || link->jointType() == Link::PSEUDO_CONTINUOUS_TRACK){
+                if(link->actuationMode() == Link::JOINT_SURFACE_VELOCITY){
                     body->setCollisionFlags(body->getCollisionFlags()  | btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK);
                     body->setUserPointer(this);
                     if(!gContactAddedCallback)
@@ -817,7 +816,7 @@ void BulletLink::createLinkBody(BulletSimulatorItemImpl* simImpl, BulletLink* pa
         col->setFriction(simImpl->friction);
         col->setCollisionShape(collisionShape);
 /*
-        if(link->jointType() == Link::CRAWLER_JOINT || link->jointType() == Link::PSEUDO_CONTINUOUS_TRACK){
+        if(link->actuationMode() == Link::JOINT_SURFACE_VELOCITY){
             col->setCollisionFlags( col->getCollisionFlags() | btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK);
             col->setUserPointer(this);
             if(!gContactAddedCallback)
@@ -1114,12 +1113,11 @@ void BulletBody::createBody(BulletSimulatorItemImpl* simImpl_, short group)
 
 bool BulletBody::haveCrawlerJoint()
 {
-    for(int i=0; i<body->numLinks(); i++){
-        Link::JointType type = body->link(i)->jointType();
-        if( type == Link::CRAWLER_JOINT || type ==  Link::PSEUDO_CONTINUOUS_TRACK )
+    for(int i=0; i < body->numLinks(); i++){
+        if(body->link(i)->actuationMode() == Link::JOINT_SURFACE_VELOCITY){
             return true;
+        }
     }
-
     return false;
 }
 

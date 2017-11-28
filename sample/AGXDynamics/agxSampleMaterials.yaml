@@ -1,0 +1,50 @@
+materials:
+  -
+    name: Ground
+    roughness: 0.5
+    viscosity: 0.0
+  -
+    name: agxMat1
+    density: 1.0
+  -
+    name: agxMat2
+    density: 1.0
+  -
+    name: agxMat3
+    density: 1.0
+  -
+    name: agxMat4
+    density: 1.0
+  -
+    name: agxMat5
+    density: 1.0
+
+contactMaterials:
+  -
+    materials: [ Ground, agxMat1 ]
+    friction: 1.0
+    restitution: 0.0
+  -
+    materials: [ Ground, agxMat2 ]
+    friction: 0.5
+    restitution: 0.0
+  -
+    materials: [ Ground, agxMat3 ]
+    friction: 0.3
+    restitution: 0.0
+  -
+    materials: [ Ground, agxMat4 ]
+    friction: 0.5
+    restitution: 1.0
+  -
+    materials: [ Ground, agxMat5 ]
+    youngsModulus: 1.0E5
+    restitution: 0.1
+    damping: 0.08
+    friction: 0.416667
+    surfaceViscosity: 1.0E-8
+    adhesionForce: 100
+    adhesivOverlap: 0.2
+    frictionModel: [ cone, direct ]
+    contactReductionMode: reduceGeometry
+    contactReductionBinResolution: 3

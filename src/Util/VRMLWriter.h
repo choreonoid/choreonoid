@@ -105,6 +105,7 @@ protected:
         out << --indent << "]\n";
         --indent;
     };
+    void writeMFInt32(MFInt32& values, int maxColumns = 10);
     void writeMFInt32SeparatedByMinusValue(MFInt32& values);
     void writeNodeIter(VRMLNodePtr node);
     void beginNode(const char* nodename, VRMLNodePtr node);
@@ -112,6 +113,7 @@ protected:
     void writeGroupNode(VRMLNodePtr node);
     void writeGroupFields(VRMLGroupPtr group);
     void writeTransformNode(VRMLNodePtr node);
+    void writeSwitchNode(VRMLNodePtr node);
 
 private:
     std::string abstorel(std::string& fname);
@@ -125,6 +127,8 @@ private:
     void writeSphereNode(VRMLNodePtr node);
     void writeIndexedFaceSetNode(VRMLNodePtr node);
     void writeCoordinateNode(VRMLCoordinatePtr coord);
+    void writeNormalNode(VRMLNormalPtr normal);
+    void writeColorNode(VRMLColorPtr color);
 };
 
 };

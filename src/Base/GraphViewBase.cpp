@@ -278,14 +278,14 @@ void GraphViewBaseImpl::updateSelections()
     for(list<ItemInfo>::iterator it = itemInfos.begin(); it != itemInfos.end(); ++it){
         Item* item = it->item.get();
         QList<QTreeWidgetItem*> selected = treeWidget.selectedItems();
-        for(size_t i=0; i < selected.size(); ++i){
+        for(int i=0; i < selected.size(); ++i){
             PartItem* part = static_cast<PartItem*>(selected[i]);
             tmpHandlers.clear();
             self->addGraphDataHandlers(item, part->index, tmpHandlers);
             if(!tmpHandlers.empty()){
-                for(int i=0; i < tmpHandlers.size(); ++i){
-                    graph.addDataHandler(tmpHandlers[i]);
-                    it->handlers.push_back(tmpHandlers[i]);
+                for(size_t j=0; j < tmpHandlers.size(); ++j){
+                    graph.addDataHandler(tmpHandlers[j]);
+                    it->handlers.push_back(tmpHandlers[j]);
                 }
             }
         }
