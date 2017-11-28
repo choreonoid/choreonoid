@@ -16,9 +16,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  }
 		Transform 
 		  {
 		  children 
@@ -77,9 +74,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  }
 		Transform 
 		  {
 		  children 
@@ -5530,141 +5524,6 @@ Transform
       {
       children 
 	[
-	Group 
-	  {
-	  children 
-	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      }
-	    Transform 
-	      {
-	      rotation 0 0 1 1.570798
-	      }
-	    ]
-	  }
-	]
-      rotation -0.606143 0.606144 0.514956 4.092669
-      translation 1.555698 1.694000 0.538084
-      }
-    Transform 
-      {
-      children 
-	[
-	Group 
-	  {
-	  children 
-	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      }
-	    Transform 
-	      {
-	      rotation 0 0 1 1.570798
-	      }
-	    ]
-	  }
-	]
-      rotation 0 1 0 2.187050
-      translation 1.621899 1.947499 0.824751
-      }
-    Transform 
-      {
-      children 
-	[
-	Group 
-	  {
-	  children 
-	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    ]
-	  }
-	]
-      rotation 0.911889 0.290230 -0.290215 1.662909
-      translation 1.998939 2.106488 1.357089
-      }
-    Transform 
-      {
-      children 
-	[
-	Group 
-	  {
-	  children 
-	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    ]
-	  }
-	]
-      translation 1.529999 1.820749 0.694994
-      }
-    Transform 
-      {
-      children 
-	[
-	Group 
-	  {
-	  children 
-	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    ]
-	  }
-	]
-      rotation 0.993448 -8.080607e-2 8.080587e-2 1.577370
-      translation 1.604179 1.534999 0.242027
-      }
-    ]
-  }
-
-Transform 
-  {
-  children 
-    [
-    Transform 
-      {
-      children 
-	[
 	Transform 
 	  {
 	  children 
@@ -8797,4 +8656,3 @@ Transform
       }
     ]
   }
-

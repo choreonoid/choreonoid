@@ -1,20 +1,30 @@
 
 #include "STLSceneLoader.h"
 #include "SceneDrawables.h"
+#include "SceneLoader.h"
+#include "NullOut.h"
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/format.hpp>
 #include <fstream>
+#include "gettext.h"
 
 using namespace std;
 using namespace boost::algorithm;
+using boost::format;
 using namespace cnoid;
 
+namespace {
 
-const char* STLSceneLoader::format() const
-{
-    return "STL";
+struct Registration {
+    Registration(){
+        SceneLoader::registerLoader(
+            "stl",
+            []() -> shared_ptr<AbstractSceneLoader> { return make_shared<STLSceneLoader>(); });
+    }
+} registration;
+
 }
-
 
 static void readVector3(string text, SgVectorArray<Vector3f>* array)
 {
@@ -32,20 +42,47 @@ static void readVector3(string text, SgVectorArray<Vector3f>* array)
 }
 
 
-SgNode* STLSceneLoader::load(const std::string& fileName)
+STLSceneLoader::STLSceneLoader()
 {
-    std::ifstream ifs(fileName.c_str(), std::ios::in | std::ios::binary);
+    os_ = &nullout();
+}
+
+
+void STLSceneLoader::setMessageSink(std::ostream& os)
+{
+    os_ = &os;
+}
+
+
+SgNode* STLSceneLoader::load(const std::string& filename)
+{
+    std::ifstream ifs(filename.c_str(), std::ios::in | std::ios::binary);
+    if(!ifs.is_open()){
+        os() << str(format(_("Unable to open file \"%1%\".")) % filename) << endl;
+        return 0;
+    }
+    
+    ifs.seekg(0, fstream::end);
+    unsigned int fileSize = ifs.tellg();
+    ifs.seekg(0, fstream::beg);
 
     SgVertexArrayPtr vertices = new SgVertexArray;
     SgNormalArrayPtr normals = new SgNormalArray;
 
-    uint8_t header[80];
-    ifs.read((char *)header, 80);
-    if(strncmp((char *)header, "solid", 5) != 0){
-        // stl file is in binary format
-        uint32_t ntriangle;
-        ifs.read((char *)&ntriangle, 4);
-        for(size_t i = 0; i < ntriangle; i++){
+    bool isBinary = false;
+    unsigned int numFaces = 0;
+    uint8_t buf[84];
+    ifs.read((char*)buf, 84);
+    if(ifs.gcount() == 84){
+        numFaces = buf[80] + (buf[81] << 8) + (buf[82] << 16) + (buf[83] << 24);
+        unsigned int expectedSize = numFaces * 50 + 84;
+        if(expectedSize == fileSize){
+            isBinary = true;
+        }
+    }
+
+    if(isBinary){
+        for(size_t i = 0; i < numFaces; i++){
             Vector3f value;
             for(size_t j = 0; j < 3; j++){
                 float v;
@@ -66,8 +103,8 @@ SgNode* STLSceneLoader::load(const std::string& fileName)
             ifs.read((char *)&attrib, 2);
         }
     } else {
-        // stl file is in text format
-        std::ifstream ifs(fileName.c_str(), std::ios::in);
+        // text format
+        std::ifstream ifs(filename.c_str(), std::ios::in);
         std::string line;
         while(!ifs.eof() && getline(ifs, line)){
             trim(line);
@@ -78,9 +115,13 @@ SgNode* STLSceneLoader::load(const std::string& fileName)
             }
         }
     }
+    
     SgShape* shape = 0;
     
-    if(!vertices->empty()){
+    if(vertices->empty()){
+        os() << "Empty vertices." << endl;
+            
+    } else {
         shape = new SgShape;
         SgMesh* mesh = shape->getOrCreateMesh();
         mesh->setVertices(vertices);
@@ -100,6 +141,7 @@ SgNode* STLSceneLoader::load(const std::string& fileName)
                 indices.push_back(i);
             }
         }
+        mesh->updateBoundingBox();
     }
     
     return shape; 

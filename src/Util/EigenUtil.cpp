@@ -91,8 +91,16 @@ std::string str(const Vector3& v)
 {
     return str(format("%1%  %2%  %3%") % v[0] % v[1] % v[2]);
 }
-    
-bool toVector3(const std::string& s, Vector3& out_v)
+
+
+std::string str(const Vector3f& v)
+{
+    return str(format("%1%  %2%  %3%") % v[0] % v[1] % v[2]);
+}
+
+
+template<class VectorType>
+static bool toVector3_(const std::string& s, VectorType& out_v)
 {
     const char* nptr = s.c_str();
     char* endptr;
@@ -110,6 +118,18 @@ bool toVector3(const std::string& s, Vector3& out_v)
         }
     }
     return true;
+}    
+
+
+bool toVector3(const std::string& s, Vector3& out_v)
+{
+    return toVector3_(s, out_v);
+}
+
+
+bool toVector3(const std::string& s, Vector3f& out_v)
+{
+    return toVector3_(s, out_v);
 }
 
 

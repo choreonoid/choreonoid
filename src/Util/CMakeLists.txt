@@ -1,6 +1,4 @@
-
 #set(CMAKE_BUILD_TYPE Debug)
-#set_source_files_properties(ImageIO.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
 #set_source_files_properties(Image.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
 
 configure_file(Config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/Config.h)
@@ -10,6 +8,7 @@ set(sources
   Selection.cpp
   DataMap.cpp
   EigenUtil.cpp
+  EigenArchive.cpp
   ValueTree.cpp
   YAMLReader.cpp
   YAMLWriter.cpp
@@ -35,7 +34,6 @@ set(sources
   SceneCameras.cpp
   SceneLights.cpp
   SceneEffects.cpp
-  SceneVisitor.cpp
   SceneRenderer.cpp
   SceneProvider.cpp
   SceneUtil.cpp
@@ -43,21 +41,27 @@ set(sources
   MeshNormalGenerator.cpp
   MeshExtractor.cpp
   SceneMarkers.cpp
+  CoordinateAxesOverlay.cpp
   PolygonMeshTriangulator.cpp
   Image.cpp
   ImageIO.cpp
   ImageConverter.cpp
+  ImageProvider.cpp
   PointSetUtil.cpp
+  AbstractSceneLoader.cpp
+  SceneLoader.cpp
+  YAMLSceneLoader.cpp
+  YAMLSceneReader.cpp
+  STLSceneLoader.cpp
   VRML.cpp
   VRMLParser.cpp
   VRMLWriter.cpp
   VRMLToSGConverter.cpp
-  DaeParser.cpp
-  STLSceneLoader.cpp
+  VRMLSceneLoader.cpp
   GettextWrapper.cpp
   GettextUtil.cpp
-  CnoidUtil.cpp # This file must be placed at the last position
   ExtJoystick.cpp
+  CnoidUtil.cpp # This file must be placed at the last position
   )
 
 
@@ -78,6 +82,7 @@ set(headers
   Deque2D.h
   PolymorphicReferencedArray.h
   PolymorphicPointerArray.h
+  PolymorphicFunctionSet.h
   MultiSE3Seq.h
   MultiAffine3Seq.h
   MultiSeq.h
@@ -102,13 +107,15 @@ set(headers
   SceneCameras.h
   SceneLights.h
   SceneEffects.h
-  SceneVisitor.h
   SceneRenderer.h
   SceneUtil.h
+  AbstractSceneLoader.h
+  SceneLoader.h
   MeshGenerator.h
   MeshNormalGenerator.h
   MeshExtractor.h
   SceneMarkers.h
+  CoordinateAxesOverlay.h
   SceneProvider.h
   Collision.h
   CollisionDetector.h
@@ -118,15 +125,15 @@ set(headers
   Image.h
   ImageIO.h
   ImageConverter.h
+  ImageProvider.h
   PointSetUtil.h
+  YAMLSceneLoader.h
+  YAMLSceneReader.h
   VRML.h
   VRMLParser.h
   VRMLWriter.h
   VRMLToSGConverter.h
   Parser.h
-  DaeNode.h
-  DaeParser.h
-  AbstractSceneLoader.h
   STLSceneLoader.h
   ValueTree.h
   ValueTreeUtil.h
@@ -149,15 +156,13 @@ set(headers
   Config.h
   )
 
-include_directories(${IRRXML_INCLUDE_DIRS})
-
 set(target CnoidUtil)
 make_gettext_mofiles(${target} mofiles)
 add_cnoid_library(${target} SHARED ${sources} ${headers} ${mofiles})
 
 if(UNIX)
   set(libraries 
-    yaml irrXML ${PNG_LIBRARY} ${JPEG_LIBRARY}
+    yaml ${PNG_LIBRARY} ${JPEG_LIBRARY}
     ${CMAKE_THREAD_LIBS_INIT}
     ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_THREAD_LIBRARY}
     ${GETTEXT_LIBRARIES}
@@ -171,7 +176,7 @@ if(UNIX)
   
 elseif(MSVC)
   set_target_properties(${target} PROPERTIES COMPILE_DEFINITIONS "YAML_DECLARE_STATIC")
-  set(libraries libpng jpeg zlib irrXML winmm ${GETTEXT_LIBRARIES} ${IRRXML_LIBRARY})
+  set(libraries libpng jpeg zlib winmm ${GETTEXT_LIBRARIES})
   if(USE_EXTERNAL_YAML)
     set(libraries ${libraries} optimized yaml debug yamld)
   else()
@@ -180,9 +185,7 @@ elseif(MSVC)
   target_link_libraries(${target} ${libraries})
 endif()
 
-
 apply_common_setting_for_library(${target} "${headers}")
-
 
 # Adding some headers with old filenames for the backward compatibility
 if(CNOID_ENABLE_BACKWARD_COMPATIBILITY)
@@ -198,7 +201,12 @@ if(CNOID_ENABLE_BACKWARD_COMPATIBILITY)
   make_header_public(EigenArchive.h EigenYaml)
 endif()
 
-
 if(ENABLE_PYTHON)
-  add_subdirectory(python)
+  if(USE_PYBIND11)
+    add_subdirectory(pybind11)
+  elseif(USE_BOOST_PYTHON)
+    add_subdirectory(boostpython)
+  endif()
 endif()
+
+add_subdirectory(lua)

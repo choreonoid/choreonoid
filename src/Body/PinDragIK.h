@@ -45,7 +45,7 @@ public:
     */
     bool initialize();
 
-    virtual bool calcInverseKinematics(const Vector3& end_p, const Matrix3& end_R);
+    virtual bool calcInverseKinematics(const Position& T) override;
 
 private:
     PinDragIKImpl* impl;

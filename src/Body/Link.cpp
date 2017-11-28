@@ -22,6 +22,7 @@ Link::Link()
     Rs_.setIdentity();
     a_ = Vector3::UnitZ();
     jointType_ = FIXED_JOINT;
+    actuationMode_ = NO_ACTUATION;
     q_ = 0.0;
     dq_ = 0.0;
     ddq_ = 0.0;
@@ -60,6 +61,7 @@ Link::Link(const Link& org)
     
     a_ = org.a_;
     jointType_ = org.jointType_;
+    actuationMode_ = org.actuationMode_;
 
     q_ = org.q_;
     dq_ = org.dq_;
@@ -89,6 +91,12 @@ Link::Link(const Link& org)
     visualShape_ = org.visualShape_;
     collisionShape_ = org.collisionShape_;
     info_ = org.info_;
+}
+
+
+Link* Link::clone() const
+{
+    return new Link(*this);
 }
 
 
@@ -199,12 +207,11 @@ std::string Link::jointTypeString() const
 {
     switch(jointType_){
     case REVOLUTE_JOINT:    return "revolute";
-    case SLIDE_JOINT:       return "prismatic";
+    case PRISMATIC_JOINT:   return "prismatic";
     case FREE_JOINT:        return "free";
     case FIXED_JOINT:       return "fixed";
     case PSEUDO_CONTINUOUS_TRACK: return "pseudo continuous track";
     case CRAWLER_JOINT:     return "crawler";
-    case AGX_CRAWLER_JOINT: return "AgX crawler";
     default: return "unknown";
     }
 }
@@ -250,7 +257,23 @@ template<> double Link::info(const std::string& key, const double& defaultValue)
 }
 
 
+template<> bool Link::info(const std::string& key, const bool& defaultValue) const
+{
+    bool value;
+    if(info_->read(key, value)){
+        return value;
+    }
+    return defaultValue;
+}
+
+
 template<> void Link::setInfo(const std::string& key, const double& value)
+{
+    info_->write(key, value);
+}
+
+
+template<> void Link::setInfo(const std::string& key, const bool& value)
 {
     info_->write(key, value);
 }

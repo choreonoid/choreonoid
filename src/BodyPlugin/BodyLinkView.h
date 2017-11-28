@@ -15,9 +15,12 @@ class BodyLinkView : public cnoid::View
 {
 public:
     static void initializeClass(ExtensionManager* ext);
+    static BodyLinkView* instance();
 
     BodyLinkView();
     virtual ~BodyLinkView();
+
+    void switchRpyQuat(bool on);
 
 private:
     BodyLinkViewImpl* impl;

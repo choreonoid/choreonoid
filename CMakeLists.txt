@@ -1,5 +1,4 @@
-
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 2.8.10)
 cmake_policy(SET CMP0003 NEW)
 set(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS true)
 
@@ -16,6 +15,8 @@ set(CNOID_PATCH_VERSION 0)
 set(CNOID_VERSION ${CNOID_MAJOR_VERSION}.${CNOID_MINOR_VERSION})
 set(CNOID_FULL_VERSION ${CNOID_MAJOR_VERSION}.${CNOID_MINOR_VERSION}.${CNOID_PATCH_VERSION})
 
+set(CNOID_INTERNAL_VERSION 1)
+
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
@@ -25,7 +26,21 @@ set(CNOID_SUBDIR choreonoid-${CNOID_VERSION})
 set(CNOID_PLUGIN_SUBDIR lib/${CNOID_SUBDIR})
 
 if(UNIX)
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+  set(cpp_standard "-std=c++11")
+  include(CheckCXXCompilerFlag OPTIONAL RESULT_VARIABLE included)
+  if(included)
+    check_cxx_compiler_flag("-std=c++14" has_cpp14)
+    if(has_cpp14)
+      set(cpp_standard "-std=c++14")
+    endif()
+  endif()
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${cpp_standard}")
+
+  if(CMAKE_COMPILER_IS_GNUCC)
+    # To allow for reloading a controller shared library
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --no-gnu-unique")
+  endif()
+  
   add_definitions("-pthread")
 endif()
 
@@ -62,9 +77,9 @@ if(MSVC AND CMAKE_CL_64)
    add_definitions(-D_WIN64)
 endif()
 
-#if(MSVC)
-#  set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS_DEBUG _ITERATOR_DEBUG_LEVEL=1)
-#endif()
+if(MSVC)
+  set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS_DEBUG _ITERATOR_DEBUG_LEVEL=1)
+endif()
 
 function(install_external_libraries dll_dir lib_dir)
 
@@ -170,7 +185,7 @@ endif()
 find_package(Threads)
 
 if(ENABLE_GUI)
-  FIND_PACKAGE(OpenGL)
+  find_package(OpenGL)
   include_directories(${OPENGL_INCLUDE_DIR})
 endif()
 
@@ -275,19 +290,73 @@ endif()
 
 # Python
 if(WIN32)
-  option(ENABLE_PYTHON "Enable Python functions" OFF)
+  option(ENABLE_PYTHON "Enable Python" OFF)
 else()
-  option(ENABLE_PYTHON "Enable Python functions" ON)
+  option(ENABLE_PYTHON "Enable Python" ON)
+endif()
+
+option(USE_PYBIND11 "Use the pybind11 library to make python bindings" ON)
+set(PYBIND11_DIR ${PROJECT_SOURCE_DIR}/thirdparty/pybind11 CACHE PATH "The directory of the pybind11 library")
+if(USE_PYBIND11)
+  set(USE_BOOST_PYTHON OFF)
+else()
+  set(USE_BOOST_PYTHON ON)
+endif()
+set(CNOID_USE_PYBIND11 ${USE_PYBIND11})
+set(CNOID_USE_BOOST_PYTHON ${USE_BOOST_PYTHON})
+
+option(USE_PYTHON3 "Use Python version 3 instead of version 2" ON)
+
+# for Config.h
+if(USE_PYTHON3)
+  set(CNOID_USE_PYTHON2 OFF)
+else()
+  set(CNOID_USE_PYTHON2 ON)
 endif()
 
 if(ENABLE_PYTHON)
-  find_package(PythonLibs 2.7 REQUIRED)
+  if(USE_PYBIND11)
+    include_directories(${PYBIND11_DIR}/include)
+  else()
+    if(NOT USE_PYBIND11 AND USE_PYTHON3)
+      message(FATAL_ERROR "USE_PYTHON3 requires to enable USE_PYBIND11.")
+    endif()
+  endif()
+  # The following cache variables must be cleared to update the python version
+  unset(PYTHON_INCLUDE_DIR CACHE)
+  unset(PYTHON_LIBRARY CACHE)
+  unset(PYTHON_LIBRARY_DEBUG CACHE)
+  if(USE_PYTHON3)
+    set(Python_ADDITIONAL_VERSIONS 3.7 3.6 3.5 3.4)
+    find_package(PythonLibs 3 REQUIRED)
+  else()
+    find_package(PythonLibs 2 REQUIRED)
+  endif()
   include_directories(${PYTHON_INCLUDE_PATH})
   set(CNOID_PYTHON_SUBDIR ${CNOID_PLUGIN_SUBDIR}/python)
   set(init_py "${PROJECT_BINARY_DIR}/${CNOID_PYTHON_SUBDIR}/cnoid/__init__.py")
   file(WRITE ${init_py} "")
   install(FILES ${init_py} DESTINATION ${CNOID_PYTHON_SUBDIR}/cnoid
     CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
+endif()
+
+# Lua
+if(UNIX)
+  option(ENABLE_LUA "Enable Lua" OFF)
+endif()
+
+if(ENABLE_LUA)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+  set(LUA_SOL2_DIR ${PROJECT_SOURCE_DIR}/thirdparty/sol2 CACHE PATH "set the directory of the Sol2 library")
+  pkg_check_modules(LUA lua5.3)
+  if(NOT LUA_FOUND)
+    pkg_check_modules(LUA lua5.2)
+  endif()
+  if(LUA_FOUND)
+    include_directories(${LUA_INCLUDE_DIRS})
+    include_directories(${LUA_SOL2_DIR})
+  endif()
+  set(CNOID_LUA_SUBDIR ${CNOID_PLUGIN_SUBDIR}/lua)
 endif()
 
 # boost
@@ -304,7 +373,7 @@ endif()
 
 set(boost_packages system filesystem program_options regex thread iostreams date_time)
 
-if(ENABLE_PYTHON)
+if(ENABLE_PYTHON AND USE_BOOST_PYTHON)
   set(boost_packages ${boost_packages} python)
 endif()
 
@@ -323,7 +392,7 @@ endif()
 include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
 
-set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS_RELEASE BOOST_DISABLE_ASSERTS)
+set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS $<$<CONFIG:Release>:BOOST_DISABLE_ASSERTS>)
 
 install_external_libraries(${Boost_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS}
   ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_THREAD_LIBRARY} 
@@ -354,9 +423,13 @@ endif()
 # eigen
 if(NOT EIGEN_DIR)
   if(UNIX)
-    pkg_check_modules(EIGEN eigen3)
+    pkg_check_modules(EIGEN eigen3>=3.2.7) # pybind11 requries Eigen version 3.2.7 or higher
     if(EIGEN_FOUND)
       set(EIGEN_DIR ${EIGEN_INCLUDE_DIRS})
+    else()
+      message(STATUS "Set Eigen 3.3.4 included in the thirdparty directory to EIGEN_DIR")
+      set(EIGEN_DIR ${PROJECT_SOURCE_DIR}/thirdparty/eigen)
+      set(EIGEN_INCLUDE_DIRS ${EIGEN_DIR})
     endif()
   endif()
 else()
@@ -474,10 +547,19 @@ endmacro()
 
 # qt
 if(ENABLE_GUI)
-  if(NOT MSVC OR MSVC_VERSION LESS 1700)
-    set(DEFAULT_USE_QT5 FALSE)
+  set(DEFAULT_USE_QT5 TRUE)
+  if(MSVC)
+    if(MSVC_VERSION LESS 1700)
+      set(DEFAULT_USE_QT5 FALSE)
+    endif()
   else()
-    set(DEFAULT_USE_QT5 TRUE)
+    find_package(Qt4 4.7.0 QUIET)
+    if(Qt4_FOUND)
+      find_package(Qt5Core 5.5.0 QUIET)
+      if(NOT Qt5Core_FOUND)
+	set(DEFAULT_USE_QT5 FALSE)
+      endif()
+    endif()
   endif()
 
   option(USE_QT5 "Use Qt5" ${DEFAULT_USE_QT5})
@@ -723,9 +805,12 @@ if(UNIX)
   
   option(PUT_ALL_WARNINGS "put all warnings in compile" OFF)
   if(PUT_ALL_WARNINGS)
-    list(APPEND CMAKE_C_FLAGS "-Wall")
-    list(APPEND CMAKE_CXX_FLAGS "-Wall")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
   endif()
+
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wreturn-type")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wreturn-type")
 
   option(CHECK_UNRESOLVED_SYMBOLS "check unresolved symbols in the object files when creating shared libraries" OFF)
   #mark_as_advanced(CHECK_UNRESOLVED_SYMBOLS)
@@ -992,11 +1077,40 @@ if(ENABLE_PYTHON)
 
     add_library(${target} SHARED ${sources})
     
-    if(NOT WIN32)
-      set_target_properties(${target}  PROPERTIES
-      COMPILE_DEFINITIONS "BOOST_PYTHON_USE_GCC_SYMBOL_VISIBILITY" )
+    if(MSVC)
+      set_target_properties(${target} PROPERTIES SUFFIX .pyd)
     else()
-      set_target_properties(${target}  PROPERTIES SUFFIX .pyd)
+      if(USE_BOOST_PYTHON)
+	set_target_properties(${target}  PROPERTIES
+	  COMPILE_DEFINITIONS "BOOST_PYTHON_USE_GCC_SYMBOL_VISIBILITY" )
+      endif()
+      if(USE_PYBIND11)
+	if(ENABLE_GCC_FVISIBILITY_HIDDEN)
+	  get_target_property(compile_flags ${target} COMPILE_FLAGS)
+	  if(compile_flags)
+	    set_target_properties(${target} PROPERTIES COMPILE_FLAGS "${compile_flags} -fvisibility=hidden")
+	  else()
+	    set_target_properties(${target} PROPERTIES COMPILE_FLAGS "-fvisibility=hidden")
+	  endif()
+	endif()
+	if(NOT ${CMAKE_BUILD_TYPE} MATCHES Debug)
+	  if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+	    target_compile_options(${target} PRIVATE "-flto;-fno-fat-lto-objects")
+	    set(link_lto_flags "-flto")
+	  elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+	    target_compile_options(${target} PRIVATE "-flto=thin")
+	    set(link_lto_flags "-flto=thin")
+	    target_link_libraries(${target} PRIVATE "-flto=thin")
+	  endif()
+	  get_target_property(existing_link_flags ${target} LINK_FLAGS)
+	  if(existing_link_flags STREQUAL existing_link_flags-NOTFOUND)
+	    set(existing_link_flags "")
+	  endif()
+	  set_target_properties(${target} PROPERTIES LINK_FLAGS "${existing_link_flags} ${link_lto_flags}")
+
+          #add_custom_command(TARGET ${target} POST_BUILD COMMAND strip $<TARGET_FILE:${target}>)
+	endif()
+      endif()
     endif()
 
     set_target_properties(${target}  PROPERTIES
@@ -1006,13 +1120,72 @@ if(ENABLE_PYTHON)
       LIBRARY_OUTPUT_NAME ${module}
       PREFIX "")
 
+    if(ENABLE_INSTALL_RPATH)
+      if(APPLE)
+	set_target_properties(${target} PROPERTIES INSTALL_NAME_DIR "@rpath")
+	set_target_properties(${target} PROPERTIES LINK_FLAGS "-Wl,-rpath,@loader_path")
+      else()
+	set_target_properties(${target} PROPERTIES INSTALL_RPATH "$ORIGIN:$ORIGIN/../..:$ORIGIN/../../..")
+      endif()
+    else()
+      if(APPLE)
+	set_target_properties(${target} PROPERTIES INSTALL_NAME_DIR "")
+      endif()
+    endif()
+
     install(TARGETS ${target}
       RUNTIME DESTINATION ${CNOID_PYTHON_SUBDIR}/cnoid CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
       LIBRARY DESTINATION ${CNOID_PYTHON_SUBDIR}/cnoid CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
-
   endfunction()
 
   function(apply_common_setting_for_python_module target)
+    set(headers ${ARGV1})
+    apply_common_setting_for_target(${target} "${headers}")
+    if(INSTALL_SDK)
+      if(MSVC)
+	install(TARGETS ${target}
+	  ARCHIVE DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
+      endif()
+      if(headers)
+	file(RELATIVE_PATH rel_src_dir ${PROJECT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+	install(FILES ${headers} DESTINATION ${CNOID_HEADER_SUBDIR}/cnoid/${rel_src_dir})
+      endif()
+    endif()
+  endfunction()
+endif()
+
+
+if(ENABLE_LUA)
+  function(add_cnoid_lua_module)
+    set(target ${ARGV0})
+    string(REGEX REPLACE "^Lua(.+)$" "\\1" module ${target})
+    set(sources ${ARGV})
+    list(REMOVE_AT sources 0)
+
+    add_library(${target} SHARED ${sources})
+
+    if(ENABLE_GCC_FVISIBILITY_HIDDEN)
+      get_target_property(compile_flags ${ARGV0} COMPILE_FLAGS)
+      if(compile_flags)
+	set_target_properties(${ARGV0} PROPERTIES COMPILE_FLAGS "${compile_flags} -fvisibility=hidden")
+      else()
+	set_target_properties(${ARGV0} PROPERTIES COMPILE_FLAGS "-fvisibility=hidden")
+      endif()
+    endif()
+    
+    set_target_properties(${target}  PROPERTIES
+      RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_LUA_SUBDIR}/cnoid
+      LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_LUA_SUBDIR}/cnoid
+      RUNTIME_OUTPUT_NAME ${module}
+      LIBRARY_OUTPUT_NAME ${module}
+      PREFIX "")
+
+    install(TARGETS ${target}
+      RUNTIME DESTINATION ${CNOID_LUA_SUBDIR}/cnoid CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
+      LIBRARY DESTINATION ${CNOID_LUA_SUBDIR}/cnoid CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
+  endfunction()
+
+  function(apply_common_setting_for_lua_module target)
     set(headers ${ARGV1})
     set_target_properties(${target} PROPERTIES VERSION ${CNOID_VERSION})
     apply_common_setting_for_target(${target} "${headers}")
@@ -1028,8 +1201,10 @@ if(ENABLE_PYTHON)
       endif()
     endif()
   endfunction()
+    
 
 endif()
+
 
 
 #function(make_gettext_mofiles out_mofiles)
@@ -1081,13 +1256,8 @@ if(USE_EXTERNAL_YAML)
   endif()
 else()
   add_subdirectory(thirdparty/yaml-0.1.7)
-  include_directories(${Choreonoid_SOURCE_DIR}/thirdparty/yaml-0.1.7/include)
+  include_directories(${PROJECT_SOURCE_DIR}/thirdparty/yaml-0.1.7/include)
 endif()
-
-# irrxml
-add_subdirectory(thirdparty/irrxml-1.2)
-set(IRRXML_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/thirdparty/irrxml-1.2/src)
-include_directories(${IRRXML_INCLUDE_DIRS})
 
 if(UNIX)
   # png
@@ -1100,9 +1270,9 @@ if(UNIX)
 elseif(MSVC)
   set(PNG_LIBRARY libpng)
   set(JPEG_LIBRARY jpeg)
-  include_directories(${Choreonoid_SOURCE_DIR}/thirdparty/lpng1232)
-  include_directories(${Choreonoid_SOURCE_DIR}/thirdparty/Jpeg-6b)
-  include_directories(${Choreonoid_SOURCE_DIR}/thirdparty/zlib123)
+  include_directories(${PROJECT_SOURCE_DIR}/thirdparty/lpng1232)
+  include_directories(${PROJECT_SOURCE_DIR}/thirdparty/Jpeg-6b)
+  include_directories(${PROJECT_SOURCE_DIR}/thirdparty/zlib123)
   add_subdirectory(thirdparty/lpng1232)
   add_subdirectory(thirdparty/Jpeg-6b)
   add_subdirectory(thirdparty/zlib123)

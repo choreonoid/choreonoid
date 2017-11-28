@@ -45,13 +45,14 @@ public:
             const int n = std::min((int)devices.size(), states.size());
             prevStates.resize(n);
             for(int i=0; i < n; ++i){
-                const DeviceStatePtr& state = states[i];
+                DeviceState* state = states[i];
+                Device* device = devices[i];
                 if(state != prevStates[i]){
-                    const DevicePtr& device = devices[i];
                     device->copyStateFrom(*state);
                     device->notifyStateChange();
                     prevStates[i] = state;
                 }
+                device->notifyTimeChange(time);
             }
         }
         return isValidTime;

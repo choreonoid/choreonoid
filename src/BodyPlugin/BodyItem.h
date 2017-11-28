@@ -38,6 +38,8 @@ public:
     virtual ~BodyItem();
 
     bool loadModelFile(const std::string& filename);
+
+    void setBody(Body* body);
             
     virtual void setName(const std::string& name);
 
@@ -84,11 +86,9 @@ public:
     void notifyModelUpdate();
         
     /**
-       @if jp
-       繝ｭ繝懊ャ繝医・髢｢遽隗偵・未遽隗帝溷ｺｦ縲〉oot菴咲ｽｮ繝ｻ蟋ｿ蜍｢縺ｪ縺ｩ縺ｮ縲碁°蜍募ｭｦ逧・咲憾諷九↓螟画峩縺檎函縺倥◆縺ｨ縺阪↓
-       逋ｺ陦後＆繧後ｋ繧ｷ繧ｰ繝翫Ν縲・
-       Item::sigUpdated() 縺ｯ繝｢繝・Ν閾ｪ菴薙′螟峨ｏ縺｣縺溷ｴ蜷医→縺励√◎縺｡繧峨→縺ｯ蛹ｺ蛻･縺励※菴ｿ縺・・
-       @endif
+       Signal emitted when there is a change in "kinematic" state such as joint angle of robot,
+       joint angular velocity, root position / posture. Item :: sigUpdated () is assumed to be
+       a case where the model itself is changed, and it is used distinguished from it.
     */
     SignalProxy<void()> sigKinematicStateChanged();
 

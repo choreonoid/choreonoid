@@ -438,8 +438,12 @@ bool GLVisionSimulatorItemImpl::initializeSimulation(SimulatorItem* simulatorIte
 
     cloneMap.clear();
 
-    cloneMap.setNonNodeCloning(false);
-    //cloneMap.setNonNodeCloning(true);
+    /*
+      If this is set to false, rendering may crach in multi-thread rendering
+      even if the non node objects in the scene are not modified because
+      the signal connection / disconnection operations may collide.
+    */
+    cloneMap.setNonNodeCloning(true);
 
     std::set<string> bodyNameSet;
     for(size_t i=0; i < bodyNames.size(); ++i){
@@ -703,7 +707,7 @@ SgCamera* VisionRenderer::initializeCamera()
                 persCamera->setNearClipDistance(rangeSensor->minDistance());
                 persCamera->setFarClipDistance(rangeSensor->maxDistance());
                 SgPosTransform* cameraPos = new SgPosTransform();
-                cameraPos->setTransform(rangeSensor->T_local());
+                cameraPos->setTransform(rangeSensor->link()->Rs().transpose() * rangeSensor->T_local());
                 cameraPos->addChild(persCamera);
                 sceneLink->addChild(cameraPos);
 
@@ -857,7 +861,7 @@ void VisionRenderer::updateScene(bool updateSensorForRenderingThread)
     for(size_t i=0; i < sceneBodies.size(); ++i){
         SceneBody* sceneBody = sceneBodies[i];
         sceneBody->updateLinkPositions();
-        sceneBody->updateSceneDevices();
+        sceneBody->updateSceneDevices(simImpl->currentTime);
     }
     if(updateSensorForRenderingThread){
         deviceForRendering->copyStateFrom(*device);
@@ -1079,13 +1083,23 @@ bool VisionRenderer::getCameraImage(Image& image)
 
 bool VisionRenderer::getRangeCameraData(Image& image, vector<Vector3f>& points)
 {
+#ifndef _WIN32
     unsigned char* colorBuf = 0;
+#else
+    vector<unsigned char> colorBuf;
+#endif
+
     unsigned char* pixels = 0;
 
     const bool extractColors = (cameraForRendering->imageType() == Camera::COLOR_IMAGE);
     if(extractColors){
+#ifndef _WIN32
         colorBuf = (unsigned char*)alloca(pixelWidth * pixelHeight * 3 * sizeof(unsigned char));
         glReadPixels(0, 0, pixelWidth, pixelHeight, GL_RGB, GL_UNSIGNED_BYTE, colorBuf);
+#else
+        colorBuf.resize(pixelWidth * pixelHeight * 3 * sizeof(unsigned char));
+        glReadPixels(0, 0, pixelWidth, pixelHeight, GL_RGB, GL_UNSIGNED_BYTE, &colorBuf[0]);
+#endif
         if(rangeCameraForRendering->isOrganized()){
             image.setSize(pixelWidth, pixelHeight, 3);
         } else {
@@ -1094,8 +1108,13 @@ bool VisionRenderer::getRangeCameraData(Image& image, vector<Vector3f>& points)
         pixels = image.pixels();
     }
 
+#ifndef _WIN32
     float* depthBuf = (float*)alloca(pixelWidth * pixelHeight * sizeof(float));
     glReadPixels(0, 0, pixelWidth, pixelHeight, GL_DEPTH_COMPONENT, GL_FLOAT, depthBuf);
+#else
+    vector<float> depthBuf(pixelWidth * pixelHeight * sizeof(float));
+    glReadPixels(0, 0, pixelWidth, pixelHeight, GL_DEPTH_COMPONENT, GL_FLOAT, &depthBuf[0]);
+#endif
     const Matrix4f Pinv = renderer->projectionMatrix().inverse().cast<float>();
     const float fw = pixelWidth;
     const float fh = pixelHeight;
@@ -1111,7 +1130,11 @@ bool VisionRenderer::getRangeCameraData(Image& image, vector<Vector3f>& points)
     for(int y = pixelHeight - 1; y >= 0; --y){
         int srcpos = y * pixelWidth;
         if(extractColors){
+#ifndef _WIN32
             colorSrc = colorBuf + y * pixelWidth * 3;
+#else
+            colorSrc = &colorBuf[0] + y *pixelWidth * 3;
+#endif
         }
         for(int x=0; x < pixelWidth; ++x){
             const float z = depthBuf[srcpos + x];
@@ -1183,8 +1206,13 @@ bool VisionRenderer::getRangeSensorData(vector<double>& rangeData)
     const double fw = pixelWidth;
     const double fh = pixelHeight;
 
+#ifndef _WIN32
     float* depthBuf = (float*)alloca(pixelWidth * pixelHeight * sizeof(float));
     glReadPixels(0, 0, pixelWidth, pixelHeight, GL_DEPTH_COMPONENT, GL_FLOAT, depthBuf);
+#else
+    vector<float> depthBuf(pixelWidth * pixelHeight * sizeof(float));
+    glReadPixels(0, 0, pixelWidth, pixelHeight, GL_DEPTH_COMPONENT, GL_FLOAT, &depthBuf[0]);
+#endif
 
     rangeData.reserve(yawResolution * pitchResolution);
 

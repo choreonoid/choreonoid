@@ -34,8 +34,8 @@ public:
                         neighbors[j-1] = neighbors[j];
                     }
                     neighbors[2] = -1;
+                    break;
                 }
-                break;
             }
         }
         int operator[](int index) const { return neighbors[index]; }

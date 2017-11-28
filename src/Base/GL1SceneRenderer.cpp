@@ -12,7 +12,6 @@
 #include <cnoid/NullOut>
 #include <Eigen/StdVector>
 #include <boost/dynamic_bitset.hpp>
-#include <functional>
 #include <unordered_map>
 #include <iostream>
 
@@ -31,7 +30,6 @@ namespace {
 
 const bool USE_DISPLAY_LISTS = true;
 const bool USE_VBO = false;
-const bool USE_INDEXING = false;
 const bool SHOW_IMAGE_FOR_PICKING = false;
 
 const float MinLineWidthForPicking = 5.0f;
@@ -45,7 +43,7 @@ struct SgObjectPtrHash {
     }
 };
 
-typedef std::unordered_map<SgObjectPtr, ReferencedPtr, SgObjectPtrHash> CacheMap;
+typedef std::unordered_map<SgObjectPtr, ReferencedPtr, SgObjectPtrHash> ResourceMap;
 
 
 struct TransparentShapeInfo
@@ -58,21 +56,21 @@ struct TransparentShapeInfo
 typedef std::shared_ptr<TransparentShapeInfo> TransparentShapeInfoPtr;
 
 
-class DisplayListCache : public Referenced
+class DisplayListResource : public Referenced
 {
 public:
     GLuint listID;
     GLuint listIDforPicking;
     bool useIDforPicking;
     vector<TransparentShapeInfoPtr> transparentShapes;
-    CacheMap cacheMap;
+    ResourceMap resourceMap;
 
-    DisplayListCache(){
+    DisplayListResource(){
         listID = 0;
         useIDforPicking = false;
         listIDforPicking = 0;
     }
-    ~DisplayListCache() {
+    ~DisplayListResource() {
         if(listID){
             glDeleteLists(listID, 1);
         }
@@ -86,18 +84,18 @@ public:
 /*
   A set of variables associated with a scene node
 */
-class ShapeCache : public Referenced
+class ShapeResource : public Referenced
 {
 public:
     GLuint bufferNames[4];
     GLuint size;
 
-    ShapeCache() {
+    ShapeResource() {
         for(int i=0; i < 4; ++i){
             bufferNames[i] = GL_INVALID_VALUE;
         }
     }
-    ~ShapeCache() {
+    ~ShapeResource() {
         for(int i=0; i < 4; ++i){
             if(bufferNames[i] != GL_INVALID_VALUE){
                 glDeleteBuffers(1, &bufferNames[i]);
@@ -109,10 +107,10 @@ public:
     GLuint& indexBufferName() { return bufferNames[2]; }
     GLuint& texCoordBufferName() { return bufferNames[3]; }
 };
-typedef ref_ptr<ShapeCache> ShapeCachePtr;
+typedef ref_ptr<ShapeResource> ShapeResourcePtr;
 
 
-class TextureCache : public Referenced
+class TextureResource : public Referenced
 {
 public:
     bool isBound;
@@ -122,7 +120,7 @@ public:
     int height;
     int numComponents;
         
-    TextureCache(){
+    TextureResource(){
         isBound = false;
         isImageUpdateNeeded = true;
         width = 0;
@@ -133,13 +131,13 @@ public:
         return (width == image.width() && height == image.height() && numComponents == image.numComponents());
     }
             
-    ~TextureCache(){
+    ~TextureResource(){
         if(isBound){
             glDeleteTextures(1, &textureName);
         }
     }
 };
-typedef ref_ptr<TextureCache> TextureCachePtr;
+typedef ref_ptr<TextureResource> TextureResourcePtr;
 
 }
 
@@ -151,6 +149,8 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         
     GL1SceneRenderer* self;
+
+    SceneRenderer::NodeFunctionSet renderingFunctions;
 
     Affine3Array Vstack; // stack of the model/view matrices
 
@@ -166,22 +166,22 @@ public:
         vector<char> scaledImageBuf;
     };
     std::unique_ptr<Buf> buf;
-        
-    CacheMap cacheMaps[2];
-    bool doUnusedCacheCheck;
-    bool isCheckingUnusedCaches;
-    bool hasValidNextCacheMap;
-    bool isCacheClearRequested;
-    int currentCacheMapIndex;
-    CacheMap* currentCacheMap;
-    CacheMap* nextCacheMap;
-    DisplayListCache* currentDisplayListCache;
 
-    int currentDisplayListCacheTopViewMatrixIndex;
+    int currentDisplayListResourceTopViewMatrixIndex;
 
     Affine3 lastViewMatrix;
     Matrix4 lastProjectionMatrix;
     Affine3 currentModelTransform;
+
+    bool doUnusedResourceCheck;
+    bool isCheckingUnusedResources;
+    bool hasValidNextResourceMap;
+    bool isResourceClearRequested;
+    ResourceMap resourceMaps[2];
+    ResourceMap* currentResourceMap;
+    ResourceMap* nextResourceMap;
+    int currentResourceMapIndex;
+    DisplayListResource* currentDisplayListResource;
 
     int numSystemLights;
     int prevNumLights;
@@ -260,8 +260,22 @@ public:
     ostream* os_;
     ostream& os() { return *os_; }
 
+    void renderChildNodes(SgGroup* group){
+        for(SgGroup::const_iterator p = group->begin(); p != group->end(); ++p){
+            renderingFunctions.dispatch(*p);
+        }
+    }
+    
+    Vector4f createColorWithAlpha(const Vector3f& c3){
+        Vector4f c4;
+        c4.head<3>() = c3;
+        c4[3] = lastAlpha;
+        return c4;
+    }
+
     GL1SceneRendererImpl(GL1SceneRenderer* self);
     ~GL1SceneRendererImpl();
+    void initialize();
     bool initializeGL();
     void beginRendering(bool doRenderingCommands);
     void beginActualRendering(SgCamera* camera);
@@ -271,25 +285,29 @@ public:
     void renderFog();
     void onCurrentFogNodeUdpated();
     void endRendering();
-    void render();
-    bool pick(int x, int y);
+    void doRender();
+    bool doPick(int x, int y);
     inline void setPickColor(unsigned int id);
     inline unsigned int pushPickName(SgNode* node, bool doSetColor = true);
     void popPickName();
-    void visitInvariantGroup(SgInvariantGroup* group);
-    void visitDisplayListSubTree(SgInvariantGroup* group, DisplayListCache* cache, GLuint& listID);
-    void visitShape(SgShape* shape);
-    void visitPointSet(SgPointSet* pointSet);
-    void renderPlot(SgPlot* plot, SgVertexArray& expandedVertices, GLenum primitiveMode);
-    void visitLineSet(SgLineSet* lineSet);
+
+    void renderGroup(SgGroup* group);
+    void renderInvariantGroup(SgInvariantGroup* group);
+    void renderDisplayListSubTree(SgInvariantGroup* group, DisplayListResource* resource, GLuint& listID);
+    void renderTransform(SgTransform* transform);
+    void renderShape(SgShape* shape);
+    void renderUnpickableGroup(SgUnpickableGroup* group);
     void renderMaterial(const SgMaterial* material);
     bool renderTexture(SgTexture* texture, bool withMaterial);
+    void renderTransparentShapes();
     void putMeshData(SgMesh* mesh);
     void renderMesh(SgMesh* mesh, bool hasTexture);
-    void renderTransparentShapes();
-    void writeVertexBuffers(SgMesh* mesh, ShapeCache* cache, bool hasTexture);
-    void visitOutlineGroup(SgOutlineGroup* outline);
-
+    void writeVertexBuffers(SgMesh* mesh, ShapeResource* resource, bool hasTexture);
+    void renderPointSet(SgPointSet* pointSet);
+    void renderPlot(SgPlot* plot, SgVertexArray& expandedVertices, GLenum primitiveMode);
+    void renderLineSet(SgLineSet* lineSet);        
+    void renderOverlay(SgOverlay* overlay);
+    void renderOutlineGroup(SgOutlineGroup* outline);
     void clearGLState();
     void setColor(const Vector3f& color);
     void enableColorMaterial(bool on);
@@ -307,13 +325,6 @@ public:
     void setPointSize(float size);
     void setLineWidth(float width);
     void getCurrentCameraTransform(Affine3& T);
-
-    Vector4f createColorWithAlpha(const Vector3f& c3){
-        Vector4f c4;
-        c4.head<3>() = c3;
-        c4[3] = lastAlpha;
-        return c4;
-    }
 };
 
 }
@@ -322,6 +333,7 @@ public:
 GL1SceneRenderer::GL1SceneRenderer()
 {
     impl = new GL1SceneRendererImpl(this);
+    impl->initialize();
 }
 
 
@@ -329,22 +341,29 @@ GL1SceneRenderer::GL1SceneRenderer(SgGroup* sceneRoot)
     : GLSceneRenderer(sceneRoot)
 {
     impl = new GL1SceneRendererImpl(this);
+    impl->initialize();
 }
 
 
 GL1SceneRendererImpl::GL1SceneRendererImpl(GL1SceneRenderer* self)
     : self(self)
 {
+
+}
+
+
+void GL1SceneRendererImpl::initialize()
+{
     Vstack.reserve(16);
     
     buf.reset(new Buf);
 
-    doUnusedCacheCheck = true;
-    currentCacheMapIndex = 0;
-    hasValidNextCacheMap = false;
-    isCacheClearRequested = false;
-    currentCacheMap = &cacheMaps[0];
-    nextCacheMap = &cacheMaps[1];
+    doUnusedResourceCheck = true;
+    currentResourceMapIndex = 0;
+    hasValidNextResourceMap = false;
+    isResourceClearRequested = false;
+    currentResourceMap = &resourceMaps[0];
+    nextResourceMap = &resourceMaps[1];
 
     lastViewMatrix.setIdentity();
     lastProjectionMatrix.setIdentity();
@@ -376,6 +395,28 @@ GL1SceneRendererImpl::GL1SceneRendererImpl(GL1SceneRenderer* self)
     clearGLState();
 
     os_ = &nullout();
+
+    renderingFunctions.setFunction<SgGroup>(
+        [&](SgGroup* node){ renderGroup(node); });
+    renderingFunctions.setFunction<SgInvariantGroup>(
+        [&](SgInvariantGroup* node){ renderInvariantGroup(node); });
+    renderingFunctions.setFunction<SgTransform>(
+        [&](SgTransform* node){ renderTransform(node); });
+    renderingFunctions.setFunction<SgUnpickableGroup>(
+        [&](SgUnpickableGroup* node){ renderUnpickableGroup(node); });
+    renderingFunctions.setFunction<SgShape>(
+        [&](SgShape* node){ renderShape(node); });
+    renderingFunctions.setFunction<SgPointSet>(
+        [&](SgPointSet* node){ renderPointSet(node); });
+    renderingFunctions.setFunction<SgLineSet>(
+        [&](SgLineSet* node){ renderLineSet(node); });
+    renderingFunctions.setFunction<SgOverlay>(
+        [&](SgOverlay* node){ renderOverlay(node); });
+    renderingFunctions.setFunction<SgOutlineGroup>(
+        [&](SgOutlineGroup* node){ renderOutlineGroup(node); });
+
+    self->applyExtensions();
+    renderingFunctions.updateDispatchTable();
 }
 
 
@@ -388,6 +429,12 @@ GL1SceneRenderer::~GL1SceneRenderer()
 GL1SceneRendererImpl::~GL1SceneRendererImpl()
 {
 
+}
+
+
+SceneRenderer::NodeFunctionSet* GL1SceneRenderer::renderingFunctions()
+{
+    return &impl->renderingFunctions;
 }
 
 
@@ -444,30 +491,30 @@ void GL1SceneRenderer::flush()
 }
 
 
-void GL1SceneRenderer::requestToClearCache()
+void GL1SceneRenderer::requestToClearResources()
 {
-    impl->isCacheClearRequested = true;
+    impl->isResourceClearRequested = true;
 }
 
 
 void GL1SceneRendererImpl::beginRendering(bool doRenderingCommands)
 {
-    isCheckingUnusedCaches = isPicking ? false : doUnusedCacheCheck;
+    isCheckingUnusedResources = isPicking ? false : doUnusedResourceCheck;
 
-    if(isCacheClearRequested){
-        cacheMaps[0].clear();
-        cacheMaps[1].clear();
-        hasValidNextCacheMap = false;
-        isCheckingUnusedCaches = false;
-        isCacheClearRequested = false;
+    if(isResourceClearRequested){
+        resourceMaps[0].clear();
+        resourceMaps[1].clear();
+        hasValidNextResourceMap = false;
+        isCheckingUnusedResources = false;
+        isResourceClearRequested = false;
     }
-    if(hasValidNextCacheMap){
-        currentCacheMapIndex = 1 - currentCacheMapIndex;
-        currentCacheMap = &cacheMaps[currentCacheMapIndex];
-        nextCacheMap = &cacheMaps[1 - currentCacheMapIndex];
-        hasValidNextCacheMap = false;
+    if(hasValidNextResourceMap){
+        currentResourceMapIndex = 1 - currentResourceMapIndex;
+        currentResourceMap = &resourceMaps[currentResourceMapIndex];
+        nextResourceMap = &resourceMaps[1 - currentResourceMapIndex];
+        hasValidNextResourceMap = false;
     }
-    currentDisplayListCache = 0;
+    currentDisplayListResource = 0;
 
     if(doRenderingCommands){
         if(isPicking){
@@ -651,7 +698,10 @@ void GL1SceneRendererImpl::renderLight(const SgLight* light, GLint id, const Aff
                 Vector3f direction = (T.linear() * spotLight->direction()).cast<GLfloat>();
                 glLightfv(id, GL_SPOT_DIRECTION, direction.data());
                 glLightf(id, GL_SPOT_CUTOFF, degree(spotLight->cutOffAngle()));
-                glLightf(id, GL_SPOT_EXPONENT, 0.5f);
+                float r = spotLight->cutOffAngle() - spotLight->beamWidth();
+                r = std::max(0.0f, std::min((float)PI, r));
+                r = (r * 128.0) / PI;
+                glLightf(id, GL_SPOT_EXPONENT, r);
                 
             } else {
                 glLightf(id, GL_SPOT_CUTOFF, 180.0f);
@@ -728,9 +778,9 @@ void GL1SceneRendererImpl::onCurrentFogNodeUdpated()
 
 void GL1SceneRendererImpl::endRendering()
 {
-    if(isCheckingUnusedCaches){
-        currentCacheMap->clear();
-        hasValidNextCacheMap = true;
+    if(isCheckingUnusedResources){
+        currentResourceMap->clear();
+        hasValidNextResourceMap = true;
     }
 
     if(isNewDisplayListDoubleRenderingEnabled && isNewDisplayListCreated){
@@ -739,17 +789,21 @@ void GL1SceneRendererImpl::endRendering()
 }
 
 
-void GL1SceneRenderer::render()
+void GL1SceneRenderer::doRender()
 {
-    impl->render();
+    impl->doRender();
 }
 
 
-void GL1SceneRendererImpl::render()
+void GL1SceneRendererImpl::doRender()
 {
+    if(self->applyNewExtensions()){
+        renderingFunctions.updateDispatchTable();
+    }
+    
     beginRendering(true);
 
-    self->sceneRoot()->accept(*self);
+    renderingFunctions.dispatch(self->sceneRoot());
 
     if(!transparentShapeInfos.empty()){
         renderTransparentShapes();
@@ -759,9 +813,9 @@ void GL1SceneRendererImpl::render()
 }
 
 
-bool GL1SceneRenderer::pick(int x, int y)
+bool GL1SceneRenderer::doPick(int x, int y)
 {
-    return impl->pick(x, y);
+    return impl->doPick(x, y);
 }
 
 
@@ -772,7 +826,7 @@ bool GL1SceneRenderer::pick(int x, int y)
   http://www.codeproject.com/Articles/35139/Interactive-Techniques-in-Three-dimensional-Scenes#_OpenGL_Picking_by
   http://en.wikibooks.org/wiki/OpenGL_Programming/Object_selection
 */
-bool GL1SceneRendererImpl::pick(int x, int y)
+bool GL1SceneRendererImpl::doPick(int x, int y)
 {
     glPushAttrib(GL_ENABLE_BIT);
 
@@ -788,7 +842,7 @@ bool GL1SceneRendererImpl::pick(int x, int y)
     }
     
     isPicking = true;
-    render();
+    doRender();
     isPicking = false;
 
     glPopAttrib();
@@ -869,63 +923,71 @@ inline void GL1SceneRendererImpl::popPickName()
 }
 
 
-void GL1SceneRenderer::visitGroup(SgGroup* group)
+void GL1SceneRenderer::renderNode(SgNode* node)
+{
+    impl->renderingFunctions.dispatch(node);
+}
+
+
+void GL1SceneRendererImpl::renderGroup(SgGroup* group)
+{
+    pushPickName(group);
+    renderChildNodes(group);
+    popPickName();
+}
+
+
+void GL1SceneRenderer::renderCustomGroup(SgGroup* group, std::function<void()> traverseFunction)
 {
     impl->pushPickName(group);
-    SceneVisitor::visitGroup(group);
+    traverseFunction();
     impl->popPickName();
 }
 
 
-void GL1SceneRenderer::visitInvariantGroup(SgInvariantGroup* group)
-{
-    impl->visitInvariantGroup(group);
-}
-
-
-void GL1SceneRendererImpl::visitInvariantGroup(SgInvariantGroup* group)
+void GL1SceneRendererImpl::renderInvariantGroup(SgInvariantGroup* group)
 {
     if(!USE_DISPLAY_LISTS || isCompiling){
-        self->visitGroup(group);
+        renderGroup(group);
 
     } else {
-        DisplayListCache* cache;
-        CacheMap::iterator p = currentCacheMap->find(group);
-        if(p == currentCacheMap->end()){
-            cache = new DisplayListCache();
-            currentCacheMap->insert(CacheMap::value_type(group, cache));
+        DisplayListResource* resource;
+        auto p = currentResourceMap->find(group);
+        if(p == currentResourceMap->end()){
+            resource = new DisplayListResource();
+            currentResourceMap->insert(ResourceMap::value_type(group, resource));
         } else {
-            cache = static_cast<DisplayListCache*>(p->second.get());
+            resource = static_cast<DisplayListResource*>(p->second.get());
         }
 
-        if(!cache->listID && !isPicking){
-            currentDisplayListCache = cache;
-            currentDisplayListCacheTopViewMatrixIndex = Vstack.size() - 1;
+        if(!resource->listID && !isPicking){
+            currentDisplayListResource = resource;
+            currentDisplayListResourceTopViewMatrixIndex = Vstack.size() - 1;
 
-            cache->listID = glGenLists(1);
-            if(cache->listID){
-                visitDisplayListSubTree(group, cache, cache->listID);
+            resource->listID = glGenLists(1);
+            if(resource->listID){
+                renderDisplayListSubTree(group, resource, resource->listID);
 
                 if(stateFlag[LIGHTING] || stateFlag[CURRENT_COLOR]){
-                    cache->useIDforPicking = true;
+                    resource->useIDforPicking = true;
                 }
                 isNewDisplayListCreated = true;
             }
         }
 
-        GLuint listID = cache->listID;
+        GLuint listID = resource->listID;
 
         if(listID){
-            if(isPicking && cache->useIDforPicking){
-                if(!cache->listIDforPicking){
-                    currentDisplayListCache = cache;
-                    currentDisplayListCacheTopViewMatrixIndex = Vstack.size() - 1;
-                    cache->listIDforPicking = glGenLists(1);
-                    if(cache->listIDforPicking){
-                        visitDisplayListSubTree(group, cache, cache->listIDforPicking);
+            if(isPicking && resource->useIDforPicking){
+                if(!resource->listIDforPicking){
+                    currentDisplayListResource = resource;
+                    currentDisplayListResourceTopViewMatrixIndex = Vstack.size() - 1;
+                    resource->listIDforPicking = glGenLists(1);
+                    if(resource->listIDforPicking){
+                        renderDisplayListSubTree(group, resource, resource->listIDforPicking);
                     }
                 }
-                listID = cache->listIDforPicking;
+                listID = resource->listIDforPicking;
             }
             if(listID){
                 const unsigned int pickId = pushPickName(group);
@@ -935,7 +997,7 @@ void GL1SceneRendererImpl::visitInvariantGroup(SgInvariantGroup* group)
                 clearGLState();
                 popPickName();
 
-                const vector<TransparentShapeInfoPtr>& transparentShapes = cache->transparentShapes;
+                const vector<TransparentShapeInfoPtr>& transparentShapes = resource->transparentShapes;
                 if(!transparentShapes.empty()){
                     const Affine3& V = Vstack.back();
                     for(size_t i=0; i < transparentShapes.size(); ++i){
@@ -949,37 +1011,36 @@ void GL1SceneRendererImpl::visitInvariantGroup(SgInvariantGroup* group)
                 }
             }
 
-            if(isCheckingUnusedCaches){
-                nextCacheMap->insert(CacheMap::value_type(group, cache));
-                nextCacheMap->insert(cache->cacheMap.begin(), cache->cacheMap.end());
+            if(isCheckingUnusedResources){
+                nextResourceMap->insert(ResourceMap::value_type(group, resource));
+                nextResourceMap->insert(resource->resourceMap.begin(), resource->resourceMap.end());
             }
         }
     }
-    currentDisplayListCache = 0;
+    currentDisplayListResource = 0;
 }
 
 
-void GL1SceneRendererImpl::visitDisplayListSubTree(SgInvariantGroup* group, DisplayListCache* cache, GLuint& listID)
+void GL1SceneRendererImpl::renderDisplayListSubTree(SgInvariantGroup* group, DisplayListResource* resource, GLuint& listID)
 {
     glNewList(listID, GL_COMPILE);
 
     isCompiling = true;
-    auto orgNextCacheMap = nextCacheMap;
-    nextCacheMap = &cache->cacheMap;
+    auto orgNextResourceMap = nextResourceMap;
+    nextResourceMap = &resource->resourceMap;
     clearGLState();
-    self->visitGroup(group);
-    nextCacheMap = orgNextCacheMap;
+    renderGroup(group);
+    nextResourceMap = orgNextResourceMap;
     isCompiling = false;
     glEndList();
 }    
 
 
-void GL1SceneRenderer::visitTransform(SgTransform* transform)
+void GL1SceneRendererImpl::renderTransform(SgTransform* transform)
 {
     Affine3 T;
     transform->getTransform(T);
 
-    Affine3Array& Vstack = impl->Vstack;
     Vstack.push_back(Vstack.back() * T);
 
     glPushMatrix();
@@ -991,8 +1052,11 @@ void GL1SceneRenderer::visitTransform(SgTransform* transform)
       glEnable(GL_NORMALIZE);
       }
     */
-    
-    visitGroup(transform);
+
+    // renderGroup(transform);
+    pushPickName(transform);
+    renderChildNodes(transform);
+    popPickName();
     
     /*
       if(isNotRotationMatrix){
@@ -1005,7 +1069,24 @@ void GL1SceneRenderer::visitTransform(SgTransform* transform)
 }
 
 
-void GL1SceneRendererImpl::visitShape(SgShape* shape)
+void GL1SceneRenderer::renderCustomTransform(SgTransform* transform, std::function<void()> traverseFunction)
+{
+    Affine3 T;
+    transform->getTransform(T);
+    impl->Vstack.push_back(impl->Vstack.back() * T);
+    glPushMatrix();
+    glMultMatrixd(T.data());
+    impl->pushPickName(transform);
+
+    traverseFunction();
+
+    impl->popPickName();
+    glPopMatrix();
+    impl->Vstack.pop_back();
+}    
+
+
+void GL1SceneRendererImpl::renderShape(SgShape* shape)
 {
     SgMesh* mesh = shape->mesh();
     if(mesh){
@@ -1024,8 +1105,8 @@ void GL1SceneRendererImpl::visitShape(SgShape* shape)
                     TransparentShapeInfoPtr info = make_shared_aligned<TransparentShapeInfo>();
                     info->shape = shape;
                     if(isCompiling){
-                        info->V = Vstack[currentDisplayListCacheTopViewMatrixIndex].inverse() * Vstack.back();
-                        currentDisplayListCache->transparentShapes.push_back(info);
+                        info->V = Vstack[currentDisplayListResourceTopViewMatrixIndex].inverse() * Vstack.back();
+                        currentDisplayListResource->transparentShapes.push_back(info);
                     } else {
                         info->V = Vstack.back();
                         info->pickId = pushPickName(shape, false);
@@ -1050,22 +1131,23 @@ void GL1SceneRendererImpl::visitShape(SgShape* shape)
 }
 
 
-void GL1SceneRenderer::visitUnpickableGroup(SgUnpickableGroup* group)
+void GL1SceneRendererImpl::renderUnpickableGroup(SgUnpickableGroup* group)
 {
-    if(!impl->isPicking){
-        visitGroup(group);
+    if(!isPicking){
+        renderGroup(group);
     }
-}
-
-
-void GL1SceneRenderer::visitShape(SgShape* shape)
-{
-    impl->visitShape(shape);
 }
 
 
 void GL1SceneRendererImpl::renderMaterial(const SgMaterial* material)
 {
+    if(!isLightingEnabled){
+        if(material){
+            setColor(material->diffuseColor());
+        }
+        return;
+    }
+    
     if(!material){
         material = defaultMaterial;
     }
@@ -1105,33 +1187,33 @@ bool GL1SceneRendererImpl::renderTexture(SgTexture* texture, bool withMaterial)
     bool doLoadTexImage = false;
     bool doReloadTexImage = false;
 
-    CacheMap::iterator p = currentCacheMap->find(sgImage);
-    TextureCache* cache;
-    if(p != currentCacheMap->end()){
-        cache = static_cast<TextureCache*>(p->second.get());
+    auto p = currentResourceMap->find(sgImage);
+    TextureResource* resource;
+    if(p != currentResourceMap->end()){
+        resource = static_cast<TextureResource*>(p->second.get());
     } else {
-        cache = new TextureCache;
-        currentCacheMap->insert(CacheMap::value_type(sgImage, cache));
+        resource = new TextureResource;
+        currentResourceMap->insert(ResourceMap::value_type(sgImage, resource));
     }
-    if(cache->isBound){
-        glBindTexture(GL_TEXTURE_2D, cache->textureName);
-        if(cache->isImageUpdateNeeded){
+    if(resource->isBound){
+        glBindTexture(GL_TEXTURE_2D, resource->textureName);
+        if(resource->isImageUpdateNeeded){
             doLoadTexImage = true;
-            doReloadTexImage = cache->isSameSizeAs(image);
+            doReloadTexImage = resource->isSameSizeAs(image);
         }
     } else {
-        glGenTextures(1, &cache->textureName);
-        glBindTexture(GL_TEXTURE_2D, cache->textureName);
-        cache->isBound = true;
+        glGenTextures(1, &resource->textureName);
+        glBindTexture(GL_TEXTURE_2D, resource->textureName);
+        resource->isBound = true;
         doLoadTexImage = true;
     }
-    if(isCheckingUnusedCaches){
-        nextCacheMap->insert(CacheMap::value_type(sgImage, cache));
+    if(isCheckingUnusedResources){
+        nextResourceMap->insert(ResourceMap::value_type(sgImage, resource));
     }
-    cache->width = width;
-    cache->height = height;
-    cache->numComponents = image.numComponents();
-    cache->isImageUpdateNeeded = false;
+    resource->width = width;
+    resource->height = height;
+    resource->numComponents = image.numComponents();
+    resource->isImageUpdateNeeded = false;
     
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, texture->repeatS() ? GL_REPEAT : GL_CLAMP);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, texture->repeatT() ? GL_REPEAT : GL_CLAMP);
@@ -1187,7 +1269,7 @@ bool GL1SceneRendererImpl::renderTexture(SgTexture* texture, bool withMaterial)
         glLoadIdentity();
         glTranslated(-tt->center()[0], -tt->center()[1], 0.0 );
         glScaled(tt->scale()[0], tt->scale()[1], 0.0 );
-        glRotated(tt->rotation(), 0.0, 0.0, 1.0 );
+        glRotated(degree(tt->rotation()), 0.0, 0.0, 1.0 );
         glTranslated(tt->center()[0], tt->center()[1], 0.0 );
         glTranslated(tt->translation()[0], tt->translation()[1], 0.0 );
         glMatrixMode(GL_MODELVIEW);
@@ -1203,11 +1285,11 @@ bool GL1SceneRendererImpl::renderTexture(SgTexture* texture, bool withMaterial)
 
 void GL1SceneRenderer::onImageUpdated(SgImage* image)
 {
-    CacheMap* cacheMap = impl->hasValidNextCacheMap ? impl->nextCacheMap : impl->currentCacheMap;
-    CacheMap::iterator p = cacheMap->find(image);
-    if(p != cacheMap->end()){
-        TextureCache* cache = static_cast<TextureCache*>(p->second.get());
-        cache->isImageUpdateNeeded = true;
+    ResourceMap* resourceMap = impl->hasValidNextResourceMap ? impl->nextResourceMap : impl->currentResourceMap;
+    auto p = resourceMap->find(image);
+    if(p != resourceMap->end()){
+        TextureResource* resource = static_cast<TextureResource*>(p->second.get());
+        resource->isImageUpdateNeeded = true;
     }
 }
 
@@ -1336,43 +1418,36 @@ void GL1SceneRendererImpl::renderMesh(SgMesh* mesh, bool hasTexture)
         writeVertexBuffers(mesh, 0, hasTexture);
 
     } else {
-        ShapeCache* cache;
-        CacheMap::iterator it = currentCacheMap->find(mesh);
-        if(it != currentCacheMap->end()){
-            cache = static_cast<ShapeCache*>(it->second.get());
+        ShapeResource* resource;
+        auto it = currentResourceMap->find(mesh);
+        if(it != currentResourceMap->end()){
+            resource = static_cast<ShapeResource*>(it->second.get());
         } else {
-            it = currentCacheMap->insert(CacheMap::value_type(mesh, new ShapeCache)).first;
-            cache = static_cast<ShapeCache*>(it->second.get());
-            writeVertexBuffers(mesh, cache, hasTexture);
+            it = currentResourceMap->insert(ResourceMap::value_type(mesh, new ShapeResource)).first;
+            resource = static_cast<ShapeResource*>(it->second.get());
+            writeVertexBuffers(mesh, resource, hasTexture);
         }
-        if(isCheckingUnusedCaches){
-            nextCacheMap->insert(*it);
+        if(isCheckingUnusedResources){
+            nextResourceMap->insert(*it);
         }
-        if(cache->vertexBufferName() != GL_INVALID_VALUE){
+        if(resource->vertexBufferName() != GL_INVALID_VALUE){
             glEnableClientState(GL_VERTEX_ARRAY);
-            glBindBuffer(GL_ARRAY_BUFFER, cache->vertexBufferName());
+            glBindBuffer(GL_ARRAY_BUFFER, resource->vertexBufferName());
             glVertexPointer(3, GL_FLOAT, 0, 0);
                         
-            if(cache->normalBufferName() != GL_INVALID_VALUE){
+            if(resource->normalBufferName() != GL_INVALID_VALUE){
                 glEnableClientState(GL_NORMAL_ARRAY);
-                glBindBuffer(GL_ARRAY_BUFFER, cache->normalBufferName());
+                glBindBuffer(GL_ARRAY_BUFFER, resource->normalBufferName());
                 glNormalPointer(GL_FLOAT, 0, 0);
             }
-            if(cache->texCoordBufferName() != GL_INVALID_VALUE){
+            if(resource->texCoordBufferName() != GL_INVALID_VALUE){
                 glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-                glBindBuffer(GL_ARRAY_BUFFER, cache->texCoordBufferName());
+                glBindBuffer(GL_ARRAY_BUFFER, resource->texCoordBufferName());
                 glTexCoordPointer(2, GL_FLOAT, 0, 0);
                 glEnable(GL_TEXTURE_2D);
             }
-            if(USE_INDEXING){
-                if(cache->indexBufferName() != GL_INVALID_VALUE){
-                    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cache->indexBufferName());
-                    glDrawElements(GL_TRIANGLES, cache->size, GL_UNSIGNED_INT, 0);
-                }
-            } else {
-                glDrawArrays(GL_TRIANGLES, 0, cache->size);
-            }
-            if(cache->texCoordBufferName() != GL_INVALID_VALUE){
+            glDrawArrays(GL_TRIANGLES, 0, resource->size);
+            if(resource->texCoordBufferName() != GL_INVALID_VALUE){
                 glDisable(GL_TEXTURE_2D);
             }
         }
@@ -1382,7 +1457,7 @@ void GL1SceneRendererImpl::renderMesh(SgMesh* mesh, bool hasTexture)
 }
 
 
-void GL1SceneRendererImpl::writeVertexBuffers(SgMesh* mesh, ShapeCache* cache, bool hasTexture)
+void GL1SceneRendererImpl::writeVertexBuffers(SgMesh* mesh, ShapeResource* resource, bool hasTexture)
 {
     SgVertexArray& orgVertices = *mesh->vertices();
     SgIndexArray& orgTriangleVertices = mesh->triangleVertices();
@@ -1397,44 +1472,23 @@ void GL1SceneRendererImpl::writeVertexBuffers(SgMesh* mesh, ShapeCache* cache, b
     ColorArray* colors = 0;
     SgTexCoordArray* texCoords = 0;
 
-    if(USE_INDEXING){
-        vertices = &orgVertices;
-        triangleVertices = &orgTriangleVertices;
-        if(hasNormals){
-            if(mesh->normalIndices().empty() && mesh->normals()->size() == orgVertices.size()){
-                normals = mesh->normals();
-            } else {
-                normals = &buf->normals;
-                normals->resize(orgVertices.size());
-            }
-        }
-        if(hasTexture){
-            if(mesh->texCoordIndices().empty() && mesh->texCoords()->size() == orgVertices.size()){
-                texCoords = mesh->texCoords();
-            } else {
-                texCoords = &buf->texCoords;
-                texCoords->resize(orgVertices.size());
-            }
-        }
-    } else {
-        vertices = &buf->vertices;
-        vertices->clear();
-        vertices->reserve(totalNumVertices);
-        if(hasNormals){
-            normals = &buf->normals;
-            normals->clear();
-            normals->reserve(totalNumVertices);
-        }
-        if(hasColors){
-            colors = &buf->colors;
-            colors->clear();
-            colors->reserve(totalNumVertices);
-        }
-        if(hasTexture){
-            texCoords = &buf->texCoords;
-            texCoords->clear();
-            texCoords->reserve(totalNumVertices);
-        }
+    vertices = &buf->vertices;
+    vertices->clear();
+    vertices->reserve(totalNumVertices);
+    if(hasNormals){
+        normals = &buf->normals;
+        normals->clear();
+        normals->reserve(totalNumVertices);
+    }
+    if(hasColors){
+        colors = &buf->colors;
+        colors->clear();
+        colors->reserve(totalNumVertices);
+    }
+    if(hasTexture){
+        texCoords = &buf->texCoords;
+        texCoords->clear();
+        texCoords->reserve(totalNumVertices);
     }
     
     int faceVertexIndex = 0;
@@ -1443,49 +1497,29 @@ void GL1SceneRendererImpl::writeVertexBuffers(SgMesh* mesh, ShapeCache* cache, b
     for(size_t i=0; i < numTriangles; ++i){
         for(size_t j=0; j < 3; ++j){
             const int orgVertexIndex = orgTriangleVertices[faceVertexIndex];
-            if(!USE_INDEXING){
-                vertices->push_back(orgVertices[orgVertexIndex]);
-            }
+            vertices->push_back(orgVertices[orgVertexIndex]);
             if(hasNormals){
                 if(mesh->normalIndices().empty()){
-                    if(!USE_INDEXING){
-                        normals->push_back(mesh->normals()->at(orgVertexIndex));
-                    }
+                    normals->push_back(mesh->normals()->at(orgVertexIndex));
                 } else {
                     const int normalIndex = mesh->normalIndices()[faceVertexIndex];
-                    if(USE_INDEXING){
-                        normals->at(orgVertexIndex) = mesh->normals()->at(normalIndex);
-                    } else {
-                        normals->push_back(mesh->normals()->at(normalIndex));
-                    }
+                    normals->push_back(mesh->normals()->at(normalIndex));
                 }
             }
             if(hasColors){
                 if(mesh->colorIndices().empty()){
-                    if(!USE_INDEXING){
-                        colors->push_back(createColorWithAlpha(mesh->colors()->at(faceVertexIndex)));
-                    }
+                    colors->push_back(createColorWithAlpha(mesh->colors()->at(faceVertexIndex)));
                 } else {
                     const int colorIndex = mesh->colorIndices()[faceVertexIndex];
-                    if(USE_INDEXING){
-                        colors->at(orgVertexIndex) = createColorWithAlpha(mesh->colors()->at(colorIndex));
-                    } else {
-                        colors->push_back(createColorWithAlpha(mesh->colors()->at(colorIndex)));
-                    }
+                    colors->push_back(createColorWithAlpha(mesh->colors()->at(colorIndex)));
                 }
             }
             if(hasTexture){
                 if(mesh->texCoordIndices().empty()){
-                    if(!USE_INDEXING){
-                        texCoords->push_back(mesh->texCoords()->at(orgVertexIndex));
-                    }
+                    texCoords->push_back(mesh->texCoords()->at(orgVertexIndex));
                 }else{
                     const int texCoordIndex = mesh->texCoordIndices()[faceVertexIndex];
-                    if(USE_INDEXING){
-                        texCoords->at(orgVertexIndex) = mesh->texCoords()->at(texCoordIndex);
-                    } else {
-                        texCoords->push_back(mesh->texCoords()->at(texCoordIndex));
-                    }
+                    texCoords->push_back(mesh->texCoords()->at(texCoordIndex));
                 }
             }
             ++faceVertexIndex;
@@ -1493,9 +1527,9 @@ void GL1SceneRendererImpl::writeVertexBuffers(SgMesh* mesh, ShapeCache* cache, b
     }
 
     if(USE_VBO){
-        if(cache->vertexBufferName() == GL_INVALID_VALUE){
-            glGenBuffers(1, &cache->vertexBufferName());
-            glBindBuffer(GL_ARRAY_BUFFER, cache->vertexBufferName());
+        if(resource->vertexBufferName() == GL_INVALID_VALUE){
+            glGenBuffers(1, &resource->vertexBufferName());
+            glBindBuffer(GL_ARRAY_BUFFER, resource->vertexBufferName());
             glBufferData(GL_ARRAY_BUFFER, vertices->size() * sizeof(Vector3f), vertices->data(), GL_STATIC_DRAW);
         }
     } else {
@@ -1504,9 +1538,9 @@ void GL1SceneRendererImpl::writeVertexBuffers(SgMesh* mesh, ShapeCache* cache, b
     }
     if(normals){
         if(USE_VBO){
-            if(cache->normalBufferName() == GL_INVALID_VALUE){
-                glGenBuffers(1, &cache->normalBufferName());
-                glBindBuffer(GL_ARRAY_BUFFER, cache->normalBufferName());
+            if(resource->normalBufferName() == GL_INVALID_VALUE){
+                glGenBuffers(1, &resource->normalBufferName());
+                glBindBuffer(GL_ARRAY_BUFFER, resource->normalBufferName());
                 glBufferData(GL_ARRAY_BUFFER, normals->size() * sizeof(Vector3f), normals->data(), GL_STATIC_DRAW);
             }
         } else {
@@ -1526,9 +1560,9 @@ void GL1SceneRendererImpl::writeVertexBuffers(SgMesh* mesh, ShapeCache* cache, b
     }
     if(hasTexture){
         if(USE_VBO){
-            if(cache->texCoordBufferName() == GL_INVALID_VALUE){
-                glGenBuffers(1, &cache->texCoordBufferName());
-                glBindBuffer(GL_ARRAY_BUFFER, cache->texCoordBufferName());
+            if(resource->texCoordBufferName() == GL_INVALID_VALUE){
+                glGenBuffers(1, &resource->texCoordBufferName());
+                glBindBuffer(GL_ARRAY_BUFFER, resource->texCoordBufferName());
                 glBufferData(GL_ARRAY_BUFFER, texCoords->size() * sizeof(Vector2f), texCoords->data(), GL_STATIC_DRAW);
             }
         } else {
@@ -1540,21 +1574,17 @@ void GL1SceneRendererImpl::writeVertexBuffers(SgMesh* mesh, ShapeCache* cache, b
 
     if(USE_VBO){
         if(!triangleVertices){
-            cache->size = vertices->size();
+            resource->size = vertices->size();
 
-        } else if(cache->indexBufferName() == GL_INVALID_VALUE){
-            glGenBuffers(1, &cache->indexBufferName());
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cache->indexBufferName());
+        } else if(resource->indexBufferName() == GL_INVALID_VALUE){
+            glGenBuffers(1, &resource->indexBufferName());
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, resource->indexBufferName());
             glBufferData(GL_ELEMENT_ARRAY_BUFFER, triangleVertices->size(), &triangleVertices->front(), GL_STATIC_DRAW);
-            cache->size = triangleVertices->size();
+            resource->size = triangleVertices->size();
         }
             
     } else {
-        if(USE_INDEXING){
-            glDrawElements(GL_TRIANGLES, triangleVertices->size(), GL_UNSIGNED_INT, &triangleVertices->front());
-        } else {
-            glDrawArrays(GL_TRIANGLES, 0, vertices->size());
-        }
+        glDrawArrays(GL_TRIANGLES, 0, vertices->size());
     }
 
     if(useColorArray){
@@ -1567,30 +1597,22 @@ void GL1SceneRendererImpl::writeVertexBuffers(SgMesh* mesh, ShapeCache* cache, b
 
     if(doNormalVisualization && !isPicking){
         enableLighting(false);
-        if(!USE_INDEXING){
-            vector<Vector3f> lines;
-            for(size_t i=0; i < vertices->size(); ++i){
-                const Vector3f& v = (*vertices)[i];
-                lines.push_back(v);
-                lines.push_back(v + (*normals)[i] * normalLength);
-            }
-            glDisableClientState(GL_NORMAL_ARRAY);
-            glVertexPointer(3, GL_FLOAT, 0, lines.front().data());
-            setColor(Vector3f(0.0f, 1.0f, 0.0f));
-            glDrawArrays(GL_LINES, 0, lines.size());
+        vector<Vector3f> lines;
+        for(size_t i=0; i < vertices->size(); ++i){
+            const Vector3f& v = (*vertices)[i];
+            lines.push_back(v);
+            lines.push_back(v + (*normals)[i] * normalLength);
         }
+        glDisableClientState(GL_NORMAL_ARRAY);
+        glVertexPointer(3, GL_FLOAT, 0, lines.front().data());
+        setColor(Vector3f(0.0f, 1.0f, 0.0f));
+        glDrawArrays(GL_LINES, 0, lines.size());
         enableLighting(true);
     }
 }
 
 
-void GL1SceneRenderer::visitPointSet(SgPointSet* pointSet)
-{
-    impl->visitPointSet(pointSet);
-}
-
-
-void GL1SceneRendererImpl::visitPointSet(SgPointSet* pointSet)
+void GL1SceneRendererImpl::renderPointSet(SgPointSet* pointSet)
 {
     if(!pointSet->hasVertices()){
         return;
@@ -1687,13 +1709,7 @@ void GL1SceneRendererImpl::renderPlot(SgPlot* plot, SgVertexArray& expandedVerti
 }
 
 
-void GL1SceneRenderer::visitLineSet(SgLineSet* lineSet)
-{
-    impl->visitLineSet(lineSet);
-}
-
-
-void GL1SceneRendererImpl::visitLineSet(SgLineSet* lineSet)
+void GL1SceneRendererImpl::renderLineSet(SgLineSet* lineSet)
 {
     const int n = lineSet->numLines();
     if(!lineSet->hasVertices() || (n <= 0)){
@@ -1721,40 +1737,21 @@ void GL1SceneRendererImpl::visitLineSet(SgLineSet* lineSet)
 }
 
 
-void GL1SceneRenderer::visitPreprocessed(SgPreprocessed* preprocessed)
+void GL1SceneRendererImpl::renderOverlay(SgOverlay* overlay)
 {
-
-}
-
-
-void GL1SceneRenderer::visitLight(SgLight* light)
-{
-
-}
-
-
-void GL1SceneRenderer::visitOverlay(SgOverlay* overlay)
-{
-    if(isPicking()){
+    if(isPicking){
         return;
     }
-    
-    glPushAttrib(GL_LIGHTING_BIT);
-    glDisable(GL_LIGHTING);
+
+    const bool wasLightingEnabled = isLightingEnabled;
+    enableLighting(false);
             
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glLoadIdentity();
 
     SgOverlay::ViewVolume v;
-    v.left = -1.0;
-    v.right = 1.0;
-    v.bottom = -1.0;
-    v.top = 1.0;
-    v.zNear = 1.0;
-    v.zFar = -1.0;
-
-    const Array4i vp = viewport();
+    const Array4i vp = self->viewport();
     overlay->calcViewVolume(vp[2], vp[3], v);
 
     glMatrixMode(GL_PROJECTION);
@@ -1762,18 +1759,53 @@ void GL1SceneRenderer::visitOverlay(SgOverlay* overlay)
     glLoadIdentity();
     glOrtho(v.left, v.right, v.bottom, v.top, v.zNear, v.zFar);
 
-    visitGroup(overlay);
+    renderGroup(overlay);
     
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
-    
-    glPopAttrib();
+
+    if(wasLightingEnabled){
+        enableLighting(true);
+    }
 }
 
 
-bool GL1SceneRenderer::isPicking()
+void GL1SceneRendererImpl::renderOutlineGroup(SgOutlineGroup* outline)
+{
+    glClearStencil(0);
+    glClear(GL_STENCIL_BUFFER_BIT);
+
+    glEnable(GL_STENCIL_TEST);
+
+    glStencilFunc(GL_ALWAYS, 1, -1);
+    glStencilOp(GL_KEEP, GL_REPLACE, GL_REPLACE);
+
+    renderChildNodes(outline);
+
+    glStencilFunc(GL_NOTEQUAL, 1, -1);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+
+    glPushAttrib(GL_POLYGON_BIT);
+    glLineWidth(outline->lineWidth()*2+1);
+    glPolygonMode(GL_FRONT, GL_LINE);
+    setColor(outline->color());
+    enableColorMaterial(true);
+
+    renderChildNodes(outline);
+
+    enableColorMaterial(false);
+    setLineWidth(lineWidth);
+    glPopAttrib();
+
+    glDisable(GL_STENCIL_TEST);
+
+    clearGLState();
+}
+
+
+bool GL1SceneRenderer::isPicking() const
 {
     return impl->isPicking;
 }
@@ -2095,46 +2127,11 @@ void GL1SceneRenderer::setLineWidth(float width)
 }
 
 
-
-SgObject* SgCustomGLNode::clone(SgCloneMap& cloneMap) const
-{
-    return new SgCustomGLNode(*this, cloneMap);
-}
-
-
-void SgCustomGLNode::accept(SceneVisitor& visitor)
-{
-    GL1SceneRenderer* renderer = dynamic_cast<GL1SceneRenderer*>(&visitor);
-    if(renderer){
-        renderer->impl->pushPickName(this);
-        render(*renderer);
-        renderer->impl->popPickName();
-        renderer->impl->clearGLState();
-    } else {
-        visitor.visitGroup(this);
-    }
-}
-    
-
-void SgCustomGLNode::render(GL1SceneRenderer& renderer)
-{
-    if(renderingFunction){
-        renderingFunction(renderer);
-    }
-}
-
-
-void SgCustomGLNode::setRenderingFunction(RenderingFunction f)
-{
-    renderingFunction = f;
-}
-
-
 void GL1SceneRenderer::setDefaultLighting(bool on)
 {
     if(on != impl->defaultLighting){
         impl->defaultLighting = on;
-        requestToClearCache();
+        requestToClearResources();
     }
 }
 
@@ -2155,7 +2152,7 @@ void GL1SceneRenderer::enableTexture(bool on)
 {
     if(on != impl->isTextureEnabled){
         impl->isTextureEnabled = on;
-        requestToClearCache();
+        requestToClearResources();
     }
 }
 
@@ -2164,7 +2161,7 @@ void GL1SceneRenderer::setDefaultPointSize(double size)
 {
     if(size != impl->defaultPointSize){
         impl->defaultPointSize = size;
-        requestToClearCache();
+        requestToClearResources();
     }
 }
 
@@ -2173,7 +2170,7 @@ void GL1SceneRenderer::setDefaultLineWidth(double width)
 {
     if(width != impl->defaultLineWidth){
         impl->defaultLineWidth = width;
-        requestToClearCache();
+        requestToClearResources();
     }
 }
 
@@ -2184,7 +2181,7 @@ void GL1SceneRenderer::showNormalVectors(double length)
     if(doNormalVisualization != impl->doNormalVisualization || length != impl->normalLength){
         impl->doNormalVisualization = doNormalVisualization;
         impl->normalLength = length;
-        requestToClearCache();
+        requestToClearResources();
     }
 }
 
@@ -2195,12 +2192,12 @@ void GL1SceneRenderer::setNewDisplayListDoubleRenderingEnabled(bool on)
 }
 
 
-void GL1SceneRenderer::enableUnusedCacheCheck(bool on)
+void GL1SceneRenderer::enableUnusedResourceCheck(bool on)
 {
     if(!on){
-        impl->nextCacheMap->clear();
+        impl->nextResourceMap->clear();
     }
-    impl->doUnusedCacheCheck = on;
+    impl->doUnusedResourceCheck = on;
 }
 
 
@@ -2214,45 +2211,4 @@ const Affine3& GL1SceneRenderer::currentModelTransform() const
 const Matrix4& GL1SceneRenderer::projectionMatrix() const
 {
     return impl->lastProjectionMatrix;
-}
-
-
-void GL1SceneRenderer::visitOutlineGroup(SgOutlineGroup* outline)
-{
-    impl->visitOutlineGroup(outline);
-}
-
-
-void GL1SceneRendererImpl::visitOutlineGroup(SgOutlineGroup* outlineGroup)
-{
-    glClearStencil(0);
-    glClear(GL_STENCIL_BUFFER_BIT);
-
-    glEnable(GL_STENCIL_TEST);
-
-    glStencilFunc(GL_ALWAYS, 1, -1);
-    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-
-    for(SgGroup::const_iterator p = outlineGroup->begin(); p != outlineGroup->end(); ++p){
-        (*p)->accept(*self);
-    }
-
-    glStencilFunc(GL_NOTEQUAL, 1, -1);
-    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-
-    glPushAttrib(GL_POLYGON_BIT);
-    glLineWidth(outlineGroup->lineWidth()*2+1);
-    glPolygonMode(GL_FRONT, GL_LINE);
-    setColor(outlineGroup->color());
-    enableColorMaterial(true);
-    for(SgGroup::const_iterator p = outlineGroup->begin(); p != outlineGroup->end(); ++p){
-        (*p)->accept(*self);
-    }
-    enableColorMaterial(false);
-    setLineWidth(lineWidth);
-    glPopAttrib();
-
-    glDisable(GL_STENCIL_TEST);
-
-    clearGLState();
 }

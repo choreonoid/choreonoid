@@ -80,10 +80,9 @@ public:
     void createBody(PhysXSimulatorItemImpl* simImpl);
     void setKinematicStateToPhysX();
     void getKinematicStateFromPhysX();
-    void setTorqueToPhysX();
     void updateForceSensors();
     void setExtraJoints();
-    void setVelocityToPhysX();
+    void setControlValToPhysX();
 };
     
 }
@@ -116,7 +115,6 @@ public:
     double dynamicFriction;
     double restitution;
     bool isJointLimitMode;
-    bool velocityMode;
 
     PhysXSimulatorItemImpl(PhysXSimulatorItem* self);
     PhysXSimulatorItemImpl(PhysXSimulatorItem* self, const PhysXSimulatorItemImpl& org);
@@ -258,7 +256,7 @@ void PhysXLink::createLinkBody(bool isStatic, PhysXLink* parent, const Vector3& 
                 joint->setRevoluteJointFlag(PxRevoluteJointFlag::eLIMIT_ENABLED, true);
             }
         }
-        if(simImpl->velocityMode){
+        if(link->actuationMode() == Link::JOINT_VELOCITY){
         	joint->setDriveForceLimit(numeric_limits<double>::max());
         	joint->setRevoluteJointFlag(PxRevoluteJointFlag::eDRIVE_ENABLED, true);
         }
@@ -297,7 +295,7 @@ void PhysXLink::createLinkBody(bool isStatic, PhysXLink* parent, const Vector3& 
                 joint->setPrismaticJointFlag(PxPrismaticJointFlag::eLIMIT_ENABLED, true);
             }
         }
-        if(simImpl->velocityMode){
+        if(link->actuationMode() == Link::JOINT_VELOCITY){
 
         }
         q_offset = joint->getPosition();
@@ -688,7 +686,7 @@ void PhysXBody::createBody(PhysXSimulatorItemImpl* _simImpl)
 
     setExtraJoints();
 
-    setTorqueToPhysX();
+    setControlValToPhysX();
 
     sensorHelper.initialize(body(), simImpl->timeStep, simImpl->gravity);
     const DeviceList<ForceSensor>& forceSensors = sensorHelper.forceSensors();
@@ -703,7 +701,7 @@ void PhysXBody::setExtraJoints()
     const int n = body()->numExtraJoints();
 
     for(int j=0; j < n; ++j){
-        Body::ExtraJoint& extraJoint = body()->extraJoint(j);
+        ExtraJoint& extraJoint = body()->extraJoint(j);
 
         PhysXLinkPtr physXLinkPair[2];
         for(int i=0; i < 2; ++i){
@@ -727,7 +725,7 @@ void PhysXBody::setExtraJoints()
             Vector3 a = link0->Rs() * extraJoint.axis;        // link0 local axis
             Vector3 p1 = link1->Rs() * extraJoint.point[1];  // link1 local position
 
-            if(extraJoint.type == Body::EJ_PISTON){
+            if(extraJoint.type == ExtraJoint::EJ_PISTON){
                 Vector3 u(1,0,0);
                 Vector3 ty = a.cross(u);
                 PxMat33 R0;
@@ -745,7 +743,7 @@ void PhysXBody::setExtraJoints()
                 PxRevoluteJoint* joint = PxRevoluteJointCreate(*simImpl->pxPhysics, 
                                                                physXLinkPair[0]->pxRigidActor, T0, physXLinkPair[1]->pxRigidActor, T1);
                 extraJoints.push_back(joint);
-            } else if(extraJoint.type == Body::EJ_BALL){
+            } else if(extraJoint.type == ExtraJoint::EJ_BALL){
                 PxTransform T0(PxVec3(p0(0), p0(1), p0(2)));
                 PxTransform T1(PxVec3(p1(0), p1(1), p1(2)));
                 PxSphericalJoint* joint = PxSphericalJointCreate(*simImpl->pxPhysics, 
@@ -765,22 +763,23 @@ void PhysXBody::setKinematicStateToPhysX()
 }
 
 
-void PhysXBody::setTorqueToPhysX()
+void PhysXBody::setControlValToPhysX()
 {
-    for(size_t i=0; i < physXLinks.size(); ++i){
-        physXLinks[i]->setTorqueToPhysX();
-    }
-}
-
-
-void PhysXBody::setVelocityToPhysX()
-{
-    // Skip the root link
     for(size_t i=1; i < physXLinks.size(); ++i){
-        physXLinks[i]->setVelocityToPhysX();
+        switch(physXLinks[i]->link->actuationMode()){
+        case Link::NO_ACTUATION :
+            break;
+        case Link::JOINT_TORQUE :
+            physXLinks[i]->setTorqueToPhysX();
+            break;
+        case Link::JOINT_VELOCITY :
+            physXLinks[i]->setVelocityToPhysX();
+            break;
+        default :
+            break;
+        }
     }
 }
-
 
 
 void PhysXBody::getKinematicStateFromPhysX()
@@ -837,7 +836,6 @@ PhysXSimulatorItemImpl::PhysXSimulatorItemImpl(PhysXSimulatorItem* self)
     staticFriction = 0.5;
     dynamicFriction = 0.5;
     restitution = 0.1;
-    velocityMode = false;
 
 }
 
@@ -861,7 +859,6 @@ PhysXSimulatorItemImpl::PhysXSimulatorItemImpl(PhysXSimulatorItem* self, const P
     dynamicFriction = org.dynamicFriction;
     restitution = org.restitution;
     isJointLimitMode = org.isJointLimitMode;
-    velocityMode = org.velocityMode;
 
 }
 
@@ -1099,10 +1096,7 @@ bool PhysXSimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& 
     for(size_t i=0; i < activeSimBodies.size(); ++i){
         PhysXBody* physXBody = static_cast<PhysXBody*>(activeSimBodies[i]);
         physXBody->body()->setVirtualJointForces();
-        if(velocityMode)
-        	physXBody->setVelocityToPhysX();
-        else
-        	physXBody->setTorqueToPhysX();
+        physXBody->setControlValToPhysX();
     }
 
     pxScene->simulate(timeStep);
@@ -1146,7 +1140,6 @@ void PhysXSimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 
     putProperty(_("Limit joint range"), isJointLimitMode, changeProperty(isJointLimitMode));
 
-    putProperty(_("Velocity Control Mode"), velocityMode, changeProperty(velocityMode));
 }
 
 
@@ -1164,7 +1157,6 @@ void PhysXSimulatorItemImpl::store(Archive& archive)
     archive.write("dynamicFriction", dynamicFriction);
     archive.write("Restitution", restitution);
     archive.write("jointLimitMode", isJointLimitMode);
-    archive.write("velocityMode", velocityMode);
 }
 
 
@@ -1184,5 +1176,4 @@ void PhysXSimulatorItemImpl::restore(const Archive& archive)
     archive.read("dynamicFriction", dynamicFriction);
     archive.read("Restitution", restitution);
     archive.read("jointLimitMode", isJointLimitMode);
-    archive.read("velocityMode", velocityMode);
 }

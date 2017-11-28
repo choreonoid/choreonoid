@@ -1,4 +1,3 @@
-
 # @author Shin'ichiro Nakaoka
 
 #set(CMAKE_BUILD_TYPE Debug)
@@ -17,6 +16,7 @@ set(sources
   SimulatorItem.cpp
   SubSimulatorItem.cpp
   ControllerItem.cpp
+  SimpleControllerItem.cpp
   BodyMotionControllerItem.cpp
   SimulationScriptItem.cpp
   AISTSimulatorItem.cpp
@@ -55,6 +55,7 @@ set(headers
   SimulatorItem.h
   SubSimulatorItem.h
   ControllerItem.h
+  SimpleControllerItem.h
   SimulationScriptItem.h
   SensorVisualizerItem.h
   BodyTrackingCameraItem.h
@@ -70,6 +71,7 @@ set(headers
   CollisionSeq.h
   CollisionSeqItem.h
   CollisionSeqEngine.h
+  AISTSimulatorItem.h
   )
 
 set(target CnoidBodyPlugin)
@@ -107,5 +109,11 @@ target_link_libraries(${target} CnoidBase CnoidBody ${boost_libraries})
 apply_common_setting_for_plugin(${target} "${headers}")
 
 if(ENABLE_PYTHON)
-  add_subdirectory(python)
+  if(USE_PYBIND11)
+    add_subdirectory(pybind11)
+  elseif(USE_BOOST_PYTHON)
+    add_subdirectory(boostpython)
+  endif()
 endif()
+
+add_subdirectory(lua)

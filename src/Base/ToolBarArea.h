@@ -38,6 +38,8 @@ public:
 
     void setVisibilityMenuItems(Menu* menu);
 
+    void layoutToolBars();
+    
     // called from ToolBar
     void dragToolBar(ToolBar* toolBar, const QPoint& globalPos);
 

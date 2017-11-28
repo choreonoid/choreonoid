@@ -13,11 +13,11 @@
 #include <cnoid/SceneDrawables>
 #include <cnoid/SceneProvider>
 #include <cnoid/SceneRenderer>
+#include <cnoid/AppConfig>
 #include <boost/format.hpp>
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 using boost::format;
 
@@ -58,10 +58,19 @@ public:
     ToolButton* editModeToggle;
     ToolButton* firstPersonModeToggle;
     ComboBox* cameraCombo;
-    ToolButton* collisionLineToggle;
     ToolButton* wireframeToggle;
+    ToolButton* visualModelToggle;
+    ToolButton* modelTypeFlipButton;
+    ToolButton* collisionModelToggle;
+    ToolButton* collisionLineToggle;
+
+    bool isCollisionVisualizationButtonSetVisible;
+
+    MappingPtr config;
 
     SceneBarImpl(SceneBar* self);
+    ~SceneBarImpl();
+    void initialize();
     void onSceneWidgetCreated(SceneWidget* sceneWidget);
     void onSceneWidgetFocusChanged(SceneWidget* sceneWidget, bool isFocused);
     void onSceneWidgetAboutToBeDestroyed(SceneWidget* sceneWidget);
@@ -72,8 +81,10 @@ public:
     void onSceneRendererCamerasChanged();
     void onSceneRendererCurrentCameraChanged();
     void onCameraComboCurrentIndexChanged(int index);
-    void onCollisionLineButtonToggled(bool on);
     void onWireframeButtonToggled(bool on);
+    void flipVisibleModels();
+    void updateCollisionModelVisibility();
+    void onCollisionLineButtonToggled(bool on);
 };
 
 }
@@ -101,53 +112,91 @@ SceneBar::SceneBar()
     : ToolBar(N_("SceneBar"))
 {
     impl = new SceneBarImpl(this);
+    impl->initialize();
 }
 
 
 SceneBarImpl::SceneBarImpl(SceneBar* self)
     : self(self)
 {
+
+}
+
+
+void SceneBarImpl::initialize()
+{
     self->setVisibleByDefault(true);
-    
     self->setEnabled(false);
+    
     targetSceneWidget = 0;
     targetRenderer = 0;
+    
+    config = AppConfig::archive()->openMapping("SceneBar");
     
     editModeToggle = self->addToggleButton(
         QIcon(":/Base/icons/sceneedit.png"), _("Switch to the edit mode"));
     editModeToggle->sigToggled().connect(
-        std::bind(&SceneBarImpl::onEditModeButtonToggled, this, _1));
+        [&](bool on){ onEditModeButtonToggled(on); });
 
     firstPersonModeToggle = self->addToggleButton(
         QIcon(":/Base/icons/walkthrough.png"), _("First-person viewpoint control mode"));
     firstPersonModeToggle->sigToggled().connect(
-        std::bind(&SceneBarImpl::onFirstPersonModeButtonToggled, this, _1));
+        [&](bool on){ onFirstPersonModeButtonToggled(on); });
 
     cameraCombo = new ComboBox();
     cameraCombo->setToolTip(_("Select a camera"));
     cameraCombo->setMinimumContentsLength(6);
     cameraCombo->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
     cameraCombo->sigCurrentIndexChanged().connect(
-        std::bind(&SceneBarImpl::onCameraComboCurrentIndexChanged, this, _1));
+        [&](int index){ onCameraComboCurrentIndexChanged(index); });
     self->addWidget(cameraCombo);
 
     self->addButton(QIcon(":/Base/icons/viewfitting.png"), _("Move the camera to look at the objects"))
-        ->sigClicked().connect(std::bind(&SceneWidget::viewAll, std::ref(targetSceneWidget)));
+        ->sigClicked().connect([&](){ targetSceneWidget->viewAll(); });
 
-    collisionLineToggle = self->addToggleButton(
-        QIcon(":/Base/icons/collisionlines.png"), _("Toggle the collision line visibility"));
-    collisionLineToggle->sigToggled().connect(
-        std::bind(&SceneBarImpl::onCollisionLineButtonToggled, this, _1));
-    
     wireframeToggle = self->addToggleButton(
         QIcon(":/Base/icons/wireframe.png"), _("Toggle the wireframe mode"));
     wireframeToggle->sigToggled().connect(
-        std::bind(&SceneBarImpl::onWireframeButtonToggled, this, _1));
+        [&](bool on){ onWireframeButtonToggled(on); });
 
+    visualModelToggle = self->addToggleButton("V", _("Show visual models"));
+    visualModelToggle->setChecked(true);
+    visualModelToggle->sigToggled().connect(
+        [&](bool on){ updateCollisionModelVisibility(); });
+
+    modelTypeFlipButton = self->addButton("F", _("Flip active model types"));
+    modelTypeFlipButton->sigClicked().connect(
+        [&](){ flipVisibleModels(); });
+
+    collisionModelToggle = self->addToggleButton("C", _("Show the collision detection models"));
+    collisionModelToggle->sigToggled().connect(
+        [&](bool on){ updateCollisionModelVisibility(); });
+    
+    collisionLineToggle = self->addToggleButton(
+        QIcon(":/Base/icons/collisionlines.png"), _("Toggle the collision line visibility"));
+    collisionLineToggle->sigToggled().connect(
+        [&](bool on){ onCollisionLineButtonToggled(on); });
+
+    isCollisionVisualizationButtonSetVisible = config->get("collisionButtonSet", false);
+    self->setCollisionVisualizationButtonSetVisible(isCollisionVisualizationButtonSetVisible);
+    
     self->addButton(QIcon(":/Base/icons/setup.png"), _("Show the config dialog"))
-        ->sigClicked().connect(std::bind(&SceneWidget::showConfigDialog, std::ref(targetSceneWidget)));
+        ->sigClicked().connect([&](){ targetSceneWidget->showConfigDialog(); });
 
-    SceneWidget::sigSceneWidgetCreated().connect(std::bind(&SceneBarImpl::onSceneWidgetCreated, this, _1));
+    SceneWidget::sigSceneWidgetCreated().connect(
+        [&](SceneWidget* widget){ onSceneWidgetCreated(widget); });
+}
+
+
+SceneBar::~SceneBar()
+{
+    delete impl;
+}
+
+
+SceneBarImpl::~SceneBarImpl()
+{
+    config->write("collisionButtonSet", isCollisionVisualizationButtonSetVisible);
 }
 
 
@@ -157,11 +206,11 @@ void SceneBarImpl::onSceneWidgetCreated(SceneWidget* sceneWidget)
 
     info.connectionToSigFocusChanged =
         sceneWidget->sigWidgetFocusChanged().connect(
-            std::bind(&SceneBarImpl::onSceneWidgetFocusChanged, this, sceneWidget, _1));
+            [=](bool isFocused){ onSceneWidgetFocusChanged(sceneWidget, isFocused); });
 
     info.connectionToSigAboutToBeDestroyed =
         sceneWidget->sigAboutToBeDestroyed().connect(
-            std::bind(&SceneBarImpl::onSceneWidgetAboutToBeDestroyed, this, sceneWidget));
+            [=](){ onSceneWidgetAboutToBeDestroyed(sceneWidget); });
 
     if(!targetSceneWidget){
         setTargetSceneWidget(sceneWidget);
@@ -212,17 +261,17 @@ void SceneBarImpl::setTargetSceneWidget(SceneWidget* sceneWidget)
 
         sceneWidgetStateConnection =
             sceneWidget->sigStateChanged().connect(
-                std::bind(&SceneBarImpl::onSceneWidgetStateChanged, this));
+                [&](){ onSceneWidgetStateChanged(); });
 
         onSceneRendererCamerasChanged();
         
         rendererStateConnections.add(
             targetRenderer->sigCamerasChanged().connect(
-                std::bind(&SceneBarImpl::onSceneRendererCamerasChanged, this)));
+                [&](){ onSceneRendererCamerasChanged(); }));
         
         rendererStateConnections.add(
             targetRenderer->sigCurrentCameraChanged().connect(
-                std::bind(&SceneBarImpl::onSceneRendererCurrentCameraChanged, this)));
+                [&](){ onSceneRendererCurrentCameraChanged(); }));
 
         self->setEnabled(true);
     }
@@ -239,13 +288,13 @@ void SceneBarImpl::onSceneWidgetStateChanged()
     firstPersonModeToggle->setChecked(targetSceneWidget->viewpointControlMode() != SceneWidget::THIRD_PERSON_MODE);
     firstPersonModeToggle->blockSignals(false);
 
-    collisionLineToggle->blockSignals(true);
-    collisionLineToggle->setChecked(targetSceneWidget->collisionLinesVisible());
-    collisionLineToggle->blockSignals(false);
-    
     wireframeToggle->blockSignals(true);
     wireframeToggle->setChecked(targetSceneWidget->polygonMode() != SceneWidget::FILL_MODE);
     wireframeToggle->blockSignals(false);
+
+    collisionLineToggle->blockSignals(true);
+    collisionLineToggle->setChecked(targetSceneWidget->collisionLinesVisible());
+    collisionLineToggle->blockSignals(false);
 }
 
 
@@ -265,18 +314,59 @@ void SceneBarImpl::onFirstPersonModeButtonToggled(bool on)
 }
 
 
-void SceneBarImpl::onCollisionLineButtonToggled(bool on)
-{
-    sceneWidgetStateConnection.block();
-    targetSceneWidget->setCollisionLinesVisible(on);
-    sceneWidgetStateConnection.unblock();
-}
-
-
 void SceneBarImpl::onWireframeButtonToggled(bool on)
 {
     sceneWidgetStateConnection.block();
     targetSceneWidget->setPolygonMode(on ? SceneWidget::LINE_MODE : SceneWidget::FILL_MODE);
+    sceneWidgetStateConnection.unblock();
+}
+
+
+bool SceneBar::isCollisionVisualizationButtonSetVisible() const
+{
+    return impl->isCollisionVisualizationButtonSetVisible;
+}
+
+
+void SceneBar::setCollisionVisualizationButtonSetVisible(bool on)
+{
+    impl->visualModelToggle->setVisible(on);
+    impl->modelTypeFlipButton->setVisible(on);
+    impl->collisionModelToggle->setVisible(on);
+    impl->collisionLineToggle->setVisible(on);
+    impl->isCollisionVisualizationButtonSetVisible = on;
+}
+
+
+void SceneBarImpl::flipVisibleModels()
+{
+    sceneWidgetStateConnection.block();
+    visualModelToggle->toggle();
+    collisionModelToggle->toggle();
+    sceneWidgetStateConnection.unblock();
+    updateCollisionModelVisibility();
+}
+
+
+void SceneBarImpl::updateCollisionModelVisibility()
+{
+    int mode = 0;
+    if(visualModelToggle->isChecked()){
+        mode = 1;
+    }
+    if(collisionModelToggle->isChecked()){
+        mode += 2;
+    }
+    SceneRenderer* renderer = targetSceneWidget->renderer();
+    renderer->setProperty(SceneRenderer::PropertyKey("collisionDetectionModelVisibility"), mode);
+    renderer->sigRenderingRequest()();
+}
+
+
+void SceneBarImpl::onCollisionLineButtonToggled(bool on)
+{
+    sceneWidgetStateConnection.block();
+    targetSceneWidget->setCollisionLinesVisible(on);
     sceneWidgetStateConnection.unblock();
 }
 
@@ -324,32 +414,45 @@ void SceneBarImpl::onCameraComboCurrentIndexChanged(int index)
 
 namespace {
 
-class SceneCounter : public SceneVisitor
+class SceneCounter : public PolymorphicFunctionSet<SgNode>
 {
 public:
     int numVertices;
     int numTriangles;
+
+    SceneCounter() {
+        setFunction<SgGroup>(
+            [&](SgGroup* group){
+                for(auto child : *group){
+                    dispatch(child);
+                }
+            });
+
+        setFunction<SgShape>(
+            [&](SgShape* shape){
+                SgMesh* mesh = shape->mesh();
+                if(mesh){
+                    if(mesh->hasVertices()){
+                        numVertices += mesh->vertices()->size();
+                    }
+                    numTriangles += mesh->numTriangles();
+                }
+            });
+
+        setFunction<SgPointSet>(
+            [&](SgPointSet* pointSet){
+                if(pointSet->hasVertices()){
+                    numVertices += pointSet->vertices()->size();
+                }
+            });
+
+        updateDispatchTable();
+    }
     
     void count(SgNode* node) {
         numVertices = 0;
         numTriangles = 0;
-        node->accept(*this);
-    }
-
-    virtual void visitShape(SgShape* shape) {
-        SgMesh* mesh = shape->mesh();
-        if(mesh){
-            if(mesh->hasVertices()){
-                numVertices += mesh->vertices()->size();
-            }
-            numTriangles += mesh->numTriangles();
-        }
-    }
-            
-    virtual void visitPointSet(SgPointSet* pointSet){
-        if(pointSet->hasVertices()){
-            numVertices += pointSet->vertices()->size();
-        }
+        dispatch(node);
     }
 };
 

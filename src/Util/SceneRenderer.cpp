@@ -4,66 +4,94 @@
 */
 
 #include "SceneRenderer.h"
-#include <cnoid/SceneDrawables>
-#include <cnoid/SceneCameras>
-#include <cnoid/SceneLights>
-#include <cnoid/SceneEffects>
+#include "SceneDrawables.h"
+#include "SceneCameras.h"
+#include "SceneLights.h"
+#include "SceneEffects.h"
+#include "PolymorphicFunctionSet.h"
 #include <Eigen/StdVector>
 #include <boost/variant.hpp>
+#include <set>
+#include <unordered_map>
+#include <mutex>
 
 using namespace std;
 using namespace cnoid;
 
 namespace {
 
+std::mutex extensionMutex;
+set<SceneRenderer*> renderers;
+vector<std::function<void(SceneRenderer* renderer)>> extendFunctions;
+
+std::mutex propertyKeyMutex;
+int propertyKeyCount = 0;
+std::unordered_map<string, int> propertyKeyMap;
+
 struct PreproNode
 {
-    PreproNode() : parent(0), child(0), next(0) { }
-    ~PreproNode() {
-        if(child) delete child;
-        if(next) delete next;
-    }
     enum { GROUP, TRANSFORM, PREPROCESSED, LIGHT, FOG, CAMERA };
     boost::variant<SgGroup*, SgTransform*, SgPreprocessed*, SgLight*, SgFog*, SgCamera*> node;
     SgNode* base;
     PreproNode* parent;
     PreproNode* child;
     PreproNode* next;
+
+    template<class T>
+    PreproNode(T* n) : parent(0), child(0), next(0) {
+        setNode(n);
+    }
+    
     template<class T> void setNode(T* n){
         node = n;
         base = n;
     }
-};
-    
 
-class PreproTreeExtractor : public SceneVisitor
+    ~PreproNode() {
+        if(child) delete child;
+        if(next) delete next;
+    }
+};
+
+
+class PreproTreeExtractor
 {
+    PolymorphicFunctionSet<SgNode> functions;
     PreproNode* node;
     bool found;
+
 public:
+    PreproTreeExtractor();
     PreproNode* apply(SgNode* node);
-    virtual void visitGroup(SgGroup* group);
-    virtual void visitTransform(SgTransform* transform);
-    virtual void visitShape(SgShape* shape);
-    virtual void visitPointSet(SgPointSet* pointSet);        
-    virtual void visitLineSet(SgLineSet* lineSet);        
-    virtual void visitPreprocessed(SgPreprocessed* preprocessed);
-    virtual void visitLight(SgLight* light);
-    virtual void visitFog(SgFog* fog);
-    virtual void visitCamera(SgCamera* camera);
+    void visitGroup(SgGroup* group);
 };
 
 }
 
 namespace cnoid {
 
+SceneRenderer::PropertyKey::PropertyKey(const std::string& key)
+{
+    std::lock_guard<std::mutex> guard(propertyKeyMutex);
+
+    auto iter = propertyKeyMap.find(key);
+    if(iter != propertyKeyMap.end()){
+        id = iter->second;
+    } else {
+        id = propertyKeyCount;
+        propertyKeyMap.insert(make_pair(key, id));
+        propertyKeyCount++;
+    }
+}
+
 class SceneRendererImpl
 {
 public:
     SceneRenderer* self;
-    std::unique_ptr<PreproNode> preproTree;
-    Signal<void()> sigRenderingRequest;
+    bool isRendering;
     bool doPreprocessedNodeTreeExtraction;
+    Signal<void()> sigRenderingRequest;
+    std::unique_ptr<PreproNode> preproTree;
 
     struct CameraInfo
     {
@@ -115,6 +143,12 @@ public:
     vector<SgFogPtr> fogs;
     bool isFogEnabled;
 
+    std::mutex newExtensionMutex;
+    vector<std::function<void(SceneRenderer* renderer)>> newExtendFunctions;
+
+    typedef boost::variant<bool, int, double> PropertyValue;
+    vector<PropertyValue> properties;
+    
     SceneRendererImpl(SceneRenderer* self);
 
     void extractPreproNodes();
@@ -122,6 +156,28 @@ public:
     void updateCameraPaths();
     void setCurrentCamera(int index, bool doRenderingRequest);
     bool setCurrentCamera(SgCamera* camera);
+    void onExtensionAdded(std::function<void(SceneRenderer* renderer)> func);
+
+    template<class ValueType> void setProperty(SceneRenderer::PropertyKey key, ValueType value){
+        const int id = key.id;
+        if(id >= properties.size()){
+            properties.resize(id + 1);
+        }
+        properties[id] = value;
+    }
+
+    template<class ValueType> ValueType property(SceneRenderer::PropertyKey key, int which, ValueType defaultValue){
+        const int id = key.id;
+        if(id >= properties.size()){
+            properties.resize(id + 1);
+            return defaultValue;
+        }
+        const PropertyValue& value = properties[id];
+        if(value.which() == which){
+            return get<ValueType>(value);
+        }
+        return defaultValue;
+    }    
 };
 
 }
@@ -130,12 +186,15 @@ public:
 SceneRenderer::SceneRenderer()
 {
     impl = new SceneRendererImpl(this);
+    std::lock_guard<std::mutex> guard(extensionMutex);
+    renderers.insert(this);
 }
 
 
 SceneRendererImpl::SceneRendererImpl(SceneRenderer* self)
     : self(self)
 {
+    isRendering = false;
     doPreprocessedNodeTreeExtraction = true;
 
     cameras = &cameras1;
@@ -153,6 +212,8 @@ SceneRendererImpl::SceneRendererImpl(SceneRenderer* self)
 
 SceneRenderer::~SceneRenderer()
 {
+    std::lock_guard<std::mutex> guard(extensionMutex);
+    renderers.erase(this);
     delete impl;
 }
 
@@ -171,10 +232,73 @@ Signal<void()>& SceneRenderer::sigRenderingRequest()
 
 void SceneRenderer::onSceneGraphUpdated(const SgUpdate& update)
 {
+    static int counter = 0;
+    
     if(update.action() & (SgUpdate::ADDED | SgUpdate::REMOVED)){
         impl->doPreprocessedNodeTreeExtraction = true;
     }
-    impl->sigRenderingRequest();
+    if(!impl->isRendering){
+        impl->sigRenderingRequest();
+    }
+}
+
+
+void SceneRenderer::render()
+{
+    impl->isRendering = true;
+    doRender();
+    impl->isRendering = false;
+}
+
+
+bool SceneRenderer::pick(int x, int y)
+{
+    impl->isRendering = true;
+    bool result = doPick(x, y);
+    impl->isRendering = false;
+    return result;
+}
+
+
+bool SceneRenderer::doPick(int x, int y)
+{
+    return false;
+}
+
+
+void SceneRenderer::setProperty(PropertyKey key, bool value)
+{
+    impl->setProperty(key, value);
+}
+
+
+void SceneRenderer::setProperty(PropertyKey key, int value)
+{
+    impl->setProperty(key, value);
+}
+
+
+void SceneRenderer::setProperty(PropertyKey key, double value)
+{
+    impl->setProperty(key, value);
+}
+
+
+bool SceneRenderer::property(PropertyKey key, bool defaultValue) const
+{
+    return impl->property(key, 0, defaultValue);
+}
+
+
+int SceneRenderer::property(PropertyKey key, int defaultValue) const
+{
+    return impl->property(key, 1, defaultValue);
+}
+
+
+double SceneRenderer::property(PropertyKey key, double defaultValue) const
+{
+    return impl->property(key, 2, defaultValue);
 }
 
 
@@ -286,11 +410,59 @@ void SceneRendererImpl::extractPreproNodeIter(PreproNode* node, const Affine3& T
 }
 
 
+PreproTreeExtractor::PreproTreeExtractor()
+{
+    functions.setFunction<SgGroup>(
+        [&](SgNode* node){ visitGroup(static_cast<SgGroup*>(node)); });
+
+    functions.setFunction<SgSwitch>(
+        [&](SgSwitch* node){
+            if(node->isTurnedOn()){
+                functions.dispatchAs<SgGroup>(node);
+            }
+        });
+
+    functions.setFunction<SgTransform>(
+        [&](SgTransform* transform){
+            visitGroup(transform);
+            if(node){
+                node->setNode(transform);
+            }
+        });
+
+    functions.setFunction<SgPreprocessed>(
+        [&](SgPreprocessed* preprocessed){
+            node = new PreproNode(preprocessed);
+            found = true;
+        });
+
+    functions.setFunction<SgLight>(
+        [&](SgLight* light){
+            node = new PreproNode(light);
+            found = true;
+        });
+
+    functions.setFunction<SgFog>(
+        [&](SgFog* fog){
+            node = new PreproNode(fog);
+            found = true;
+        });
+
+    functions.setFunction<SgCamera>(
+        [&](SgCamera* camera){
+            node = new PreproNode(camera);
+            found = true;
+        });
+    
+    functions.updateDispatchTable();
+}
+
+
 PreproNode* PreproTreeExtractor::apply(SgNode* snode)
 {
     node = 0;
     found = false;
-    snode->accept(*this);
+    functions.dispatch(snode);
     return node;
 }
 
@@ -299,15 +471,14 @@ void PreproTreeExtractor::visitGroup(SgGroup* group)
 {
     bool foundInSubTree = false;
 
-    PreproNode* self = new PreproNode();
-    self->setNode(group);
+    PreproNode* self = new PreproNode(group);
 
     for(SgGroup::const_reverse_iterator p = group->rbegin(); p != group->rend(); ++p){
         
         node = 0;
         found = false;
-        
-        (*p)->accept(*this);
+
+        functions.dispatch(*p);
         
         if(node){
             if(found){
@@ -329,65 +500,6 @@ void PreproTreeExtractor::visitGroup(SgGroup* group)
         delete self;
         node = 0;
     }
-}
-
-
-void PreproTreeExtractor::visitTransform(SgTransform* transform)
-{
-    visitGroup(transform);
-    if(node){
-        node->setNode(transform);
-    }
-}
-
-
-void PreproTreeExtractor::visitShape(SgShape* shape)
-{
-
-}
-
-
-void PreproTreeExtractor::visitPointSet(SgPointSet* shape)
-{
-
-}
-
-
-void PreproTreeExtractor::visitLineSet(SgLineSet* shape)
-{
-
-}
-
-
-void PreproTreeExtractor::visitPreprocessed(SgPreprocessed* preprocessed)
-{
-    node = new PreproNode();
-    node->setNode(preprocessed);
-    found = true;
-}
-
-
-void PreproTreeExtractor::visitLight(SgLight* light)
-{
-    node = new PreproNode();
-    node->setNode(light);
-    found = true;
-}
-
-
-void PreproTreeExtractor::visitFog(SgFog* fog)
-{
-    node = new PreproNode();
-    node->setNode(fog);
-    found = true;
-}
-    
-
-void PreproTreeExtractor::visitCamera(SgCamera* camera)
-{
-    node = new PreproNode();
-    node->setNode(camera);
-    found = true;
 }
 
 
@@ -653,4 +765,46 @@ int SceneRenderer::numFogs() const
 SgFog* SceneRenderer::fog(int index) const
 {
     return impl->fogs[index];
+}
+
+
+void SceneRenderer::addExtension(std::function<void(SceneRenderer* renderer)> func)
+{
+    {
+        std::lock_guard<std::mutex> guard(extensionMutex);
+        extendFunctions.push_back(func);
+    }
+    for(SceneRenderer* renderer : renderers){
+        renderer->impl->onExtensionAdded(func);
+    }
+}
+
+
+void SceneRenderer::applyExtensions()
+{
+    std::lock_guard<std::mutex> guard(extensionMutex);
+    for(int i=0; i < extendFunctions.size(); ++i){
+        extendFunctions[i](this);
+    }
+}
+
+
+void SceneRendererImpl::onExtensionAdded(std::function<void(SceneRenderer* renderer)> func)
+{
+    std::lock_guard<std::mutex> guard(newExtensionMutex);
+    newExtendFunctions.push_back(func);
+}
+
+
+bool SceneRenderer::applyNewExtensions()
+{
+    std::lock_guard<std::mutex> guard(impl->newExtensionMutex);
+    if(!impl->newExtendFunctions.empty()){
+        for(int i=0; i < impl->newExtendFunctions.size(); ++i){
+            impl->newExtendFunctions[i](this);
+        }
+        impl->newExtendFunctions.clear();
+        return true;
+    }
+    return false;
 }

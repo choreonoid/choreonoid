@@ -7,7 +7,7 @@
 
 using namespace cnoid;
 
-class SampleCrawlerController : public cnoid::SimpleController
+class SampleCrawlerController : public SimpleController
 {
     Link* crawlerL;
     Link* crawlerR;
@@ -25,8 +25,8 @@ public:
             return false;
         }
 
-        io->setLinkOutput(crawlerL, JOINT_VELOCITY);
-        io->setLinkOutput(crawlerR, JOINT_VELOCITY);
+        io->enableOutput(crawlerL);
+        io->enableOutput(crawlerR);
 
         time = 0.0;
         dt = io->timeStep();

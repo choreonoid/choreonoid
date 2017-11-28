@@ -33,7 +33,9 @@ public:
     void setIntegrationMode(int mode);
     void setGravity(const Vector3& gravity);
     const Vector3& gravity() const;
-    void setFriction(double staticFriction, double slipFriction);
+    void setFriction(double staticFriction, double dynamicFriction);
+    double staticFriction() const;
+    double dynamicFriction() const;
     void setContactCullingDistance(double value);        
     void setContactCullingDepth(double value);        
     void setErrorCriterion(double value);        
@@ -50,7 +52,7 @@ public:
     virtual void clearForcedPositions();
 
     // experimental functions
-    void setFriction(Link* link1, Link* link2, double staticFriction, double slipFriction);
+    void setFriction(Link* link1, Link* link2, double staticFriction, double dynamicFriction);
 
     typedef std::function<bool(Link* link1, Link* link2, const CollisionArray& collisions, const ContactAttribute& attribute)>
         CollisionHandler;
@@ -58,6 +60,8 @@ public:
     void unregisterCollisionHandler(int handlerId);
     int collisionHandlerId(const std::string& name) const;
     void setCollisionHandler(Link* link1, Link* link2, int handlerId);
+    void addExtraJoint(ExtraJoint& extrajoint);
+    void clearExtraJoint();
 
 protected:
     virtual SimulationBody* createSimulationBody(Body* orgBody);

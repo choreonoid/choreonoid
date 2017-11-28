@@ -1,0 +1,25 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: radian
+name: Ellipsoid
+
+links:
+  -
+    name: BASE
+    jointType: free
+    mass: 2.0
+    inertia: [
+      0.1, 0, 0,
+      0, 0.004, 0,
+      0, 0, 0.015 ]
+    elements:
+      Transform:
+        scale: [ 1, 0.4, 0.15 ]
+        elements:
+          Shape:
+            geometry:
+              type: Sphere
+              radius: 0.5
+            appearance:
+              material:
+                diffuseColor: [ 0.6, 0.6, 0.8 ]

@@ -21,7 +21,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/SR1/SR1Hand.wrl"
+            modelFile: "${SHARE}/model/SR1/SR1Hand.body"
             currentBaseLink: "WAIST"
             rootPosition: [ 1.9, -0.798, 0.7235 ]
             rootAttitude: [ 
@@ -58,11 +58,11 @@ items:
                 reloading: true
         - 
           id: 4
-          name: "box2"
+          name: "Cassette"
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/house/box.wrl"
+            modelFile: "${SHARE}/model/house/cassette.body"
             currentBaseLink: "WAIST"
             rootPosition: [ 2.18, 0.55, 0.895 ]
             rootAttitude: [ 
@@ -85,7 +85,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/house/table.main.wrl"
+            modelFile: "${SHARE}/model/house/table.body"
             currentBaseLink: "WAIST"
             rootPosition: [ 0, 2.5, 0 ]
             rootAttitude: [ 
@@ -108,7 +108,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/house/floor.main.wrl"
+            modelFile: "${SHARE}/model/house/floor.body"
             currentBaseLink: "WAIST"
             rootPosition: [ 0, 2.5, 0 ]
             rootAttitude: [ 
@@ -218,7 +218,7 @@ items:
       plugin: Base
       class: SceneItem
       data: 
-        file: "${SHARE}/model/house/house.main.wrl"
+        file: "${SHARE}/model/house/house.scen"
         format: VRML-FILE
         translation: [ 0, 0, 0 ]
         rotation: [ 1, 0, 0, 0 ]

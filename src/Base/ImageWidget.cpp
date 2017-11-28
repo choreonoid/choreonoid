@@ -63,6 +63,9 @@ void ImageWidget::setImage(const QImage& image)
 
 void ImageWidget::setImage(const Image& image)
 {
+    if(image.width() * image.height()==0)
+        return;
+
     std::lock_guard<std::mutex> lock(mtx);
     static QImage::Format componentSizeToFormat[] = {
         QImage::Format_Invalid,
@@ -343,3 +346,11 @@ Image& ImageWidget::getImage()
 
     return transformedImage;
 }
+
+void ImageWidget::clear()
+{
+    std::lock_guard<std::mutex> lock(mtx);
+    pixmap_.fill(Qt::black);
+    update();
+}
+

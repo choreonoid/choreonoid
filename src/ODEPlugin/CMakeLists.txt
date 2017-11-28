@@ -1,4 +1,3 @@
-
 # @author Shin'ichiro Nakaoka
 
 option(BUILD_ODE_PLUGIN "Building ODEPlugin" OFF)
@@ -86,6 +85,22 @@ if(BUILD_GAZEBO_ODE_PLUGIN)
       else()
         set(GAZEBO_ODE_LIBRARIES gazebo_ode)
       endif()
+    else()
+      include(${GAZEBO_ODE_DIR}/lib/cmake/gazebo/gazebo-config-version.cmake)
+      if(PACKAGE_VERSION MATCHES "^([0-9]+)\\.")
+        set(GAZEBO_VERSION_MAJOR "${CMAKE_MATCH_1}")
+      endif()
+      include_directories(${GAZEBO_ODE_DIR}/include/gazebo-${GAZEBO_VERSION_MAJOR})
+      link_directories(${GAZEBO_ODE_DIR}/lib)
+      if(USE_ODE_STATIC_LIB)
+        set(GAZEBO_ODE_LIBRARIES gazebo_ode.a
+                        gazebo_opcode.a
+                        gazebo_gimpact.a
+                        gazebo_opende_ou.a
+                        gazebo_ccd.a)
+      else()
+        set(GAZEBO_ODE_LIBRARIES gazebo_ode)
+      endif()
     endif()
   elseif(MSVC)
   endif()
@@ -123,9 +138,9 @@ foreach(version ${versions})
 endforeach()
 
 if(ENABLE_PYTHON)
-  add_subdirectory(python)
+  if(USE_PYBIND11)
+    add_subdirectory(pybind11)
+  elseif(USE_BOOST_PYTHON)
+    add_subdirectory(boostpython)
+  endif()
 endif()
-  
-
-  
-  

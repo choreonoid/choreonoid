@@ -534,7 +534,7 @@ void ToolBarAreaImpl::dragToolBar(ToolBar* toolBar, const QPoint& globalPos)
 
 void ToolBarAreaImpl::setNewToolBars()
 {
-    vector<int> numStrechablesOfRow;
+    vector<int> numStrechablesOfRow(toolBarRows.size(), 0);
 
     for(size_t i=0; i < newToolBarsToShow.size(); ++i){
         setNewToolBar(newToolBarsToShow[i], numStrechablesOfRow);
@@ -619,6 +619,12 @@ void ToolBarAreaImpl::setNewToolBar(ToolBar* toolBar, vector<int>& numStrechable
         toolBar->setGeometry(toolBar->desiredX, 0, width, toolBar->minimumSizeHint().height());
         toolBar->show();
     }
+}
+
+
+void ToolBarArea::layoutToolBars()
+{
+    impl->layoutToolBars();
 }
 
 

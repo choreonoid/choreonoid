@@ -1,7 +1,3 @@
-/**
-   @author 
-*/
-
 #ifndef CNOID_OPENRTM_PLUGIN_RTC_ITEM_H
 #define CNOID_OPENRTM_PLUGIN_RTC_ITEM_H
 
@@ -59,16 +55,17 @@ public:
         N_PERIODIC_TYPE
     };
     
-    enum PathBase {
-        RTC_DIRECTORY = 0,
+    enum BaseDirectoryType {
+        NO_BASE_DIRECTORY,
+        RTC_DIRECTORY,
         PROJECT_DIRECTORY,
-        N_PATH_BASE
+        N_BASE_DIRECTORY_TYPES
     };
 
     void setModuleName(const std::string& name);
     void setPeriodicType(int type);
     void setPeriodicRate(int rate);
-    void setPathBase(int base);
+    void setBaseDirectoryType(int base);
 
 protected:
     virtual void onPositionChanged();
@@ -84,11 +81,12 @@ private:
     std::string moduleName;
     RTComponent* rtcomp;
     Selection periodicType;
+    int oldPeriodicType;
     int periodicRate;
-    int oldType;
     PropertyMap properties;
-    Selection pathBase;
-    int oldPathBase;
+    Selection baseDirectoryType;
+    int oldBaseDirectoryType;
+    boost::filesystem::path rtcDirectory;
     boost::filesystem::path modulePath;
 
     bool convertAbsolutePath();

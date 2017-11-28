@@ -1,0 +1,11 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: Rain
+
+links:
+  -
+    name: Base
+    jointType: fixed
+    elements:
+      RainDevice: { }

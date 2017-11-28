@@ -3,7 +3,6 @@
   @author Shin'ichiro Nakaoka
 */
 
-#include <GL/glew.h>
 #include "GLSceneRenderer.h"
 #include "MessageView.h"
 #include <cnoid/SceneDrawables>
@@ -11,9 +10,9 @@
 #ifdef _WIN32
 #include <windows.h>
 #endif
+#include <GL/gl.h>
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 
 namespace cnoid {
@@ -58,7 +57,7 @@ GLSceneRendererImpl::GLSceneRendererImpl(GLSceneRenderer* self, SgGroup* sceneRo
     : self(self),
       sceneRoot(sceneRoot)
 {
-    sceneRoot->sigUpdated().connect(std::bind(&GLSceneRenderer::onSceneGraphUpdated, self, _1));
+    sceneRoot->sigUpdated().connect([self](const SgUpdate& update){ self->onSceneGraphUpdated(update); });
 
     scene = new SgGroup();
     sceneRoot->addChild(scene);
@@ -145,6 +144,7 @@ void GLSceneRenderer::setViewport(int x, int y, int width, int height)
         impl->aspectRatio = (double)width / height;
     }
     impl->viewport << x, y, width, height;
+    //glViewport(x, y, width, height);
     glViewport(x, y, width, height);
 }
 
@@ -190,7 +190,6 @@ bool GLSceneRenderer::setSwapInterval(int interval)
 {
 #if 0
 #ifdef _WIN32
-	/*
     DISPLAY_DEVICE device;
     device.cb = sizeof(DISPLAY_DEVICE);
     for (unsigned int i = 0; EnumDisplayDevices(NULL, i, &device, NULL); i++) {
@@ -205,7 +204,6 @@ bool GLSceneRenderer::setSwapInterval(int interval)
         return false;
 
     return wglSwapIntervalEXT(interval);
-	*/
 #endif
 #endif
     return false;
@@ -216,7 +214,7 @@ int GLSceneRenderer::getSwapInterval() const
 {
 #if 0
 #ifdef _WIN32
-    //return wglGetSwapIntervalEXT();
+    return wglGetSwapIntervalEXT();
 #endif
 #endif
     return -1;
@@ -236,6 +234,12 @@ void GLSceneRenderer::enableShadowOfLight(int index, bool on)
 
 
 void GLSceneRenderer::enableShadowAntiAliasing(bool on)
+{
+
+}
+
+
+void GLSceneRenderer::setUpsideDown(bool on)
 {
 
 }

@@ -21,7 +21,6 @@ public:
         
     BodyLoader();
     ~BodyLoader();
-    virtual const char* format() const;
     virtual void setMessageSink(std::ostream& os);
     virtual void setVerbose(bool on);
     virtual void setShapeLoadingEnabled(bool on);

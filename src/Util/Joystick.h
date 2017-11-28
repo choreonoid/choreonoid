@@ -31,6 +31,8 @@ public:
     bool readCurrentState();
     double getPosition(int axis) const;
     bool getButtonState(int button) const;
+    double getNativePosition(int axis) const;
+    bool getNativeButtonState(int button) const;
     bool isActive() const;
     SignalProxy<void(int id, bool isPressed)> sigButton();
     SignalProxy<void(int id, double position)> sigAxis();

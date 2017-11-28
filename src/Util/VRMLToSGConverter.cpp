@@ -11,9 +11,8 @@
 #include "MeshNormalGenerator.h"
 #include "MeshGenerator.h"
 #include "ImageIO.h"
+#include "SceneLoader.h"
 #include "Exception.h"
-#include "DaeParser.h"
-#include "STLSceneLoader.h"
 #include "NullOut.h"
 #include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
@@ -80,6 +79,8 @@ public:
     ImagePathToSgImageMap imagePathToSgImageMap;
         
     enum BoxFaceID { NO_FACE, LEFT_FACE, TOP_FACE, FRONT_FACE, BOTTOM_FACE, RIGHT_FACE, BACK_FACE };
+
+    unique_ptr<SceneLoader> sceneLoader;
         
     VRMLToSGConverterImpl(VRMLToSGConverter* self);
     void putMessage(const std::string& message);
@@ -116,7 +117,7 @@ public:
     SgSpotLight* createSpotLight(VRMLSpotLight* vlight);
     SgDirectionalLight* createDirectionalLight(VRMLDirectionalLight* vlight);
     SgNode* convertFogNode(VRMLFog* vfog);
-    SgNode* readAnotherFormatFile(VRMLAnotherFormatFile* anotherFormat);
+    SgNode* readNonVrmlInline(VRMLNonVrmlInline* nonVrmlInline);
 };
 
 }
@@ -148,6 +149,9 @@ VRMLToSGConverter::~VRMLToSGConverter()
 void VRMLToSGConverter::setMessageSink(std::ostream& os)
 {
     impl->os_ = &os;
+    if(impl->sceneLoader){
+        impl->sceneLoader->setMessageSink(os);
+    }
 }
 
 
@@ -243,8 +247,8 @@ SgNode* VRMLToSGConverterImpl::convertNode(VRMLNode* vnode)
                 node = convertLightNode(light);
             } else if(VRMLFog* fog = dynamic_cast<VRMLFog*>(vnode)){
                 node = convertFogNode(fog);
-            } else if(VRMLAnotherFormatFile* anotherFormat = dynamic_cast<VRMLAnotherFormatFile*>(vnode)){
-                node = readAnotherFormatFile(anotherFormat);
+            } else if(VRMLNonVrmlInline* nonVrmlInline = dynamic_cast<VRMLNonVrmlInline*>(vnode)){
+                node = readNonVrmlInline(nonVrmlInline);
             }
             if(node){
                 node->setName(vnode->defName);
@@ -1599,7 +1603,7 @@ SgTextureTransform* VRMLToSGConverterImpl::createTextureTransform(VRMLTextureTra
 {
     SgTextureTransform* textureTransform = new SgTextureTransform;
     textureTransform->setCenter(tt->center);
-    textureTransform->setRotation(tt->rotation * 180.0 / PI);
+    textureTransform->setRotation(tt->rotation);
     textureTransform->setScale(tt->scale);
     textureTransform->setTranslation(tt->translation);
     return textureTransform;
@@ -1752,6 +1756,8 @@ SgNode* VRMLToSGConverterImpl::convertLineSet(VRMLIndexedLineSet* vLineSet)
             putMessage("Warning: The colorIndex elements do not correspond to the colors or the coordIndex elements in an IndexedLineSet node.");
         }
     }
+
+    lineSet->updateBoundingBox();
     
     vrmlGeometryToSgPlotMap[vLineSet] = lineSet;
     return lineSet;
@@ -1833,22 +1839,14 @@ SgNode* VRMLToSGConverterImpl::convertFogNode(VRMLFog* vfog)
 }
 
 
-SgNode* VRMLToSGConverterImpl::readAnotherFormatFile(VRMLAnotherFormatFile* anotherFormat)
+SgNode* VRMLToSGConverterImpl::readNonVrmlInline(VRMLNonVrmlInline* nonVrmlInline)
 {
-    BOOST_ASSERT(!anotherFormat->url.empty());
-    if (boost::algorithm::iends_with(anotherFormat->url, "dae")) {
-        // In the case of dae, we have to create a Sg-object directly from dae-file by using the dae-parser.
-        DaeParser parser(&os());
-        return parser.createScene(anotherFormat->url);
-
-    } else if (boost::algorithm::iends_with(anotherFormat->url, "stl")) {
-        // In the case of stl, we have to create a Sg-object directly from stl-file by using the stl-parser.
-        STLSceneLoader loader;
-        return loader.load(anotherFormat->url);
-
-    } else {
-        // File format of the other is an error.
-        BOOST_ASSERT(0);
-        return 0;
+    if(!nonVrmlInline->url.empty()){
+        if(!sceneLoader){
+            sceneLoader.reset(new SceneLoader);
+            sceneLoader->setMessageSink(os());
+        }
+        return sceneLoader->load(nonVrmlInline->url);
     }
+    return 0;
 }

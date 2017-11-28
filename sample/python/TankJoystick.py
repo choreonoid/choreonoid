@@ -1,17 +1,8 @@
-
 from cnoid.Util import *
 from cnoid.Base import *
 from cnoid.Body import *
 from cnoid.BodyPlugin import *
-from cnoid.SimpleControllerPlugin import *
 import math;
-
-worldItem = WorldItem()
-RootItem.instance().addChildItem(worldItem)
-
-timeBar = TimeBar.instance()
-timeBar.setFrameRate(1000)
-timeBar.setFillLevelSync(False)
 
 sceneWidget = SceneView.instance().sceneWidget()
 sceneWidget.setHeadLightEnabled(False)
@@ -24,13 +15,20 @@ sceneWidget.setCameraPosition(
     [  0.412288, -0.847325, -0.334751 ],
     [  0.146464, -0.301009,  0.942307 ])
 
+joystickView = ViewManager.getOrCreateView("Base", "VirtualJoystickView")
+MainWindow.instance().viewArea().addView(joystickView)
+joystickView.bringToFront()
+
+worldItem = WorldItem()
+RootItem.instance().addChildItem(worldItem)
+
 laboItem = BodyItem()
-laboItem.load(shareDirectory() + "/model/Labo1/Labo1.wrl")
+laboItem.load(shareDirectory() + "/model/Labo1/Labo1.body")
 worldItem.addChildItem(laboItem)
 ItemTreeView.instance().checkItem(laboItem)
 
 tankItem = BodyItem()
-tankItem.load(shareDirectory() + "/model/misc/tank.wrl")
+tankItem.load(shareDirectory() + "/model/tank/tank.body")
 tank = tankItem.body()
 tank.rootLink().setTranslation([-0.8, 2.4, 0.1])
 tank.rootLink().setRotation(rotFromRpy([0, 0, math.radians(-90.0)]))
@@ -44,8 +42,9 @@ controllerItem.setController("TankJoystickController")
 tankItem.addChildItem(controllerItem)
 
 simulatorItem = AISTSimulatorItem()
+simulatorItem.setTimeStep(0.001)
 simulatorItem.setRealtimeSyncMode(True)
-simulatorItem.setTimeRangeMode(SimulatorItem.TimeRangeMode.UNLIMITED)
+simulatorItem.setTimeRangeMode(SimulatorItem.TimeRangeMode.TR_UNLIMITED)
 worldItem.addChildItem(simulatorItem)
 ItemTreeView.instance().selectItem(simulatorItem)
 

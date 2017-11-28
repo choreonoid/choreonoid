@@ -1,0 +1,281 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: TrackedVehicle
+rootLink: ROOT
+
+agxJointParameters: &wheelHingeParam
+  hingeCompliance:
+    - dof: TRANSLATIONAL_3
+      compliance: 2E-6
+      damping: 0.1
+  hingeMotor:
+    compliance: 3E-5
+
+agxJointParameters: &trackJointParam   
+  hingeCompliance:
+    - dof: TRANSLATIONAL_1
+      compliance: 2E-8
+      damping: 0.1
+    - dof: TRANSLATIONAL_2
+      compliance: 2E-8
+      damping: 0.1
+    - dof: TRANSLATIONAL_3
+      compliance: 2E-8
+      damping: 0.1
+    - dof: ROTATIONAL_1
+      compliance: 8E-8
+      damping: 0.1
+    - dof: ROTATIONAL_2
+      compliance: 8E-8
+      damping: 0.1
+  hingeMotor:
+    compliance: 0.0005
+  planeCompliance: 3E-9
+  planeDamping: 0.003
+
+links:
+  -
+    name: ROOT
+    type: Link
+    jointType: free
+    translation: [ 0, 0, 0 ]
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 750
+    inertia: [
+      233.125, 0, 0,
+      0, 593.125, 0,
+      0, 0, 765 ]
+    elements:
+      -
+        type: Transform
+        translation: [ 0, 0, 0.25 ]
+        elements:
+          Shape:
+            geometry: { type: Box, size: [ 3, 1.8, 0.7 ] }
+            appearance: &green
+              material:
+                diffuseColor: [ 0.0, 0.6, 0.0 ]
+                ambientIntensity: 0.3
+                specularColor: [ 0.7, 0.7, 0.7 ]
+                emissiveColor: [ 0, 0, 0 ]
+                shininess: 0.25
+                transparency: 0
+      -
+        type: Transform
+        translation: [ -3.4, 0, 3.2 ]
+        rotation: [ 0, 1, 0, -60.0 ]
+        elements:
+          Camera:
+            name: Camera
+            rotation: [ 0, 0, 1, -90 ]
+            id: 0
+            format: COLOR
+            nearClipDistance: 0.1
+            farClipDistance: 100.0
+            frameRate: 30
+            width: 640
+            height: 480
+  -
+    name: WHEEL_L0
+    parent: ROOT
+    jointType: revolute
+    jointAxis: [ 0, 1, 0 ]
+    jointId: 0
+    translation: [ 1.2, 1.1, -0.15 ]
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 100
+    inertia: [
+      1.3125, 0, 0,
+      0, 1.125, 0,
+      0, 0, 1.3125 ]
+    import: *wheelHingeParam 
+    elements: &WeelShape
+      Shape:
+        appearance: *green
+        geometry: { type: Cylinder, radius: 0.3, height: 0.3 }
+  -
+    name: WHEEL_L1
+    parent: ROOT
+    jointType: revolute
+    jointAxis: [ 0, 1, 0 ]
+    jointId: 1
+    translation: [ 0.45, 1.1, -0.25 ]
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 100
+    inertia: [
+      1.3125, 0, 0,
+      0, 1.125, 0,
+      0, 0, 1.3125 ]
+    import: *wheelHingeParam 
+    elements: *WeelShape
+  -
+    name: WHEEL_L2
+    parent: ROOT
+    jointType: revolute
+    jointAxis: [ 0, 1, 0 ]
+    jointId: 2
+    translation: [ -0.45, 1.1, -0.25 ]
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 100
+    inertia: [
+      1.3125, 0, 0,
+      0, 1.125, 0,
+      0, 0, 1.3125 ] 
+    import: *wheelHingeParam
+    elements: *WeelShape  
+  -
+    name: WHEEL_L3
+    parent: ROOT
+    jointType: revolute
+    jointAxis: [ 0, 1, 0 ]
+    jointId: 3
+    translation: [ -1.2, 1.1, -0.15 ]
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 100
+    inertia: [
+      1.3125, 0, 0,
+      0, 1.125, 0,
+      0, 0, 1.3125 ] 
+    import: *wheelHingeParam
+    elements: *WeelShape
+  -
+    name: WHEEL_R0
+    parent: ROOT
+    jointType: revolute
+    jointAxis: [ 0, 1, 0 ]
+    jointId: 4
+    translation: [ 1.2, -1.1, -0.15 ]
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 100
+    inertia: [
+      1.3125, 0, 0,
+      0, 1.125, 0,
+      0, 0, 1.3125 ] 
+    import: *wheelHingeParam
+    elements: *WeelShape  
+  -
+    name: WHEEL_R1
+    parent: ROOT
+    jointType: revolute
+    jointAxis: [ 0, 1, 0 ]
+    jointId: 5
+    translation: [ 0.45, -1.1, -0.25 ]
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 100
+    inertia: [
+      1.3125, 0, 0,
+      0, 1.125, 0,
+      0, 0, 1.3125 ] 
+    import: *wheelHingeParam
+    elements: *WeelShape
+  -
+    name: WHEEL_R2
+    parent: ROOT
+    jointType: revolute
+    jointAxis: [ 0, 1, 0 ]
+    jointId: 6
+    translation: [ -0.45, -1.1, -0.25 ]
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 100
+    inertia: [
+      1.3125, 0, 0,
+      0, 1.125, 0,
+      0, 0, 1.3125 ] 
+    import: *wheelHingeParam
+    elements: *WeelShape
+  -
+    name: WHEEL_R3
+    parent: ROOT
+    jointType: revolute
+    jointAxis: [ 0, 1, 0 ]
+    jointId: 7
+    translation: [ -1.2, -1.1, -0.15 ]
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 100
+    inertia: [
+      1.3125, 0, 0,
+      0, 1.125, 0,
+      0, 0, 1.3125 ] 
+    import: *wheelHingeParam
+    elements: *WeelShape
+  -
+    type: ContinuousTrack
+    parent: ROOT
+    name: FOOT_L
+    translation: [ 1.1184, 1.1, 0.15 ]
+    numJoints: 40
+    jointAxis: Y
+    jointOffset: [ 0.1670, 0, 0 ]
+    initialJointAngles: [ 
+      30, 30, 30, 30, 30, 30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      30, 30, 30, 30, 30, 30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0  ]
+    import: *trackJointParam
+    elements: &TrackFoot
+      RigidBody:
+        translation: [ 0.0854, 0, 0.025 ]
+        mass: 5.142
+        inertia: [
+          0.03963625, 0, 0,
+          0, 0.013659706, 0,
+          0, 0, 0.051153456 ] 
+        elements:
+          Shape:
+            geometry: { type: Box, size: [ 0.167, 0.3, 0.05 ] }
+            appearance:
+              material:
+                diffuseColor: [ 0.6, 0.0, 0.0 ]
+                ambientIntensity: 0.3
+                specularColor: [ 0.7, 0.7, 0.7 ]
+                emissiveColor: [ 0, 0, 0 ]
+                shininess: 0.25
+                transparency: 0
+  -
+    type: ContinuousTrack
+    parent: ROOT
+    name: FOOT_R
+    translation: [ 1.1184, -1.1, 0.15 ]
+    numJoints: 40
+    jointAxis: Y
+    jointOffset: [ 0.1670, 0, 0 ]
+    initialJointAngles: [ 
+      30, 30, 30, 30, 30, 30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      30, 30, 30, 30, 30, 30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0  ]
+    import: *trackJointParam
+    elements: *TrackFoot
+
+linkGroup:
+  - ROOT
+  - name: VEHICLE
+    links:
+      - name: WHEEL_L
+        links: [ WHEEL_L0, WHEEL_L1, WHEEL_L2, WHEEL_L3 ]
+      - name: WHEEL_R
+        links: [ WHEEL_R0, WHEEL_R1, WHEEL_R2, WHEEL_R3 ]
+      - name: TRACK_L
+        links: [ FOOT_L0, FOOT_L1, FOOT_L2, FOOT_L3, FOOT_L4, FOOT_L5, FOOT_L6, FOOT_L7, FOOT_L8, FOOT_L9, 
+                 FOOT_L10, FOOT_L11, FOOT_L12, FOOT_L13, FOOT_L14, FOOT_L15, FOOT_L16, FOOT_L17, FOOT_L18, FOOT_L19,
+                 FOOT_L20, FOOT_L21, FOOT_L22, FOOT_L23, FOOT_L24, FOOT_L25, FOOT_L26, FOOT_L27, FOOT_L28, FOOT_L29,
+                 FOOT_L30, FOOT_L31, FOOT_L32, FOOT_L33, FOOT_L34, FOOT_L35, FOOT_L36, FOOT_L37, FOOT_L38, FOOT_L39 ]
+      - name: TRACK_R
+        links: [ FOOT_R0, FOOT_R1, FOOT_R2, FOOT_R3, FOOT_R4, FOOT_R5, FOOT_R6, FOOT_R7, FOOT_R8, FOOT_R9, 
+                 FOOT_R10, FOOT_R11, FOOT_R12, FOOT_R13, FOOT_R14, FOOT_R15, FOOT_R16, FOOT_R17, FOOT_R18, FOOT_R19,
+                 FOOT_R20, FOOT_R21, FOOT_R22, FOOT_R23, FOOT_R24, FOOT_R25, FOOT_R26, FOOT_R27, FOOT_R28, FOOT_R29,
+                 FOOT_R30, FOOT_R31, FOOT_R32, FOOT_R33, FOOT_R34, FOOT_R35, FOOT_R36, FOOT_R37, FOOT_R38, FOOT_R39 ]    
+    
+agxContactMaterialParameters:
+  - linkGroupPairs: [ [ WHEEL_L, TRACK_L ], [WHEEL_R, TRACK_R ] ]
+    frictionModel: BOX
+    solveType: DIRECT
+    frictionCoefficient: 1.0e100
+    surfaceViscosityParameters:
+      - direction: PRIMARY_DIRECTION
+        viscosity: 8E-5
+      - direction: SECONDARY_DIRECTION
+        viscosity: 8E-5
+    restitution: 0
+    adhesion: [ 0, 0.001 ]
+    damping: 0.01
+
+agxSelfCollisionDetection:
+    linkGroupPairs: [ [ WHEEL_L, TRACK_L ], [WHEEL_R, TRACK_R ] ]

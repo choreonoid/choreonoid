@@ -18,6 +18,22 @@ TaskProc::~TaskProc()
 }
 
 
+bool TaskProc::waitForSignal(SignalProxy<void()> signalProxy, double timeout)
+{
+    return waitForCommandToFinish(
+        signalProxy.connect([this](){ notifyCommandFinish(true); }),
+        timeout);
+}
+
+
+bool TaskProc::waitForBooleanSignal(SignalProxy<void(bool)> signalProxy, double timeout)
+{
+    return waitForCommandToFinish(
+        signalProxy.connect([this](bool isCompleted){ notifyCommandFinish(isCompleted); }),
+        timeout);
+}
+
+
 void TaskToggleState::setChecked(bool on)
 {
     if(on != isChecked_){

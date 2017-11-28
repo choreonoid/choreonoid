@@ -27,7 +27,7 @@ public:
     EditableSceneLink(Link* link);
     ~EditableSceneLink();
 
-    void showBoundingBox(bool on);
+    void showOutline(bool on);
     void showMarker(const Vector3f& color, float transparency);
     void hideMarker();
     void setColliding(bool on);

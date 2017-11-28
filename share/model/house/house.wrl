@@ -2681,6 +2681,7 @@
 				    223, 208, 224, -1, 223, 224, 239, -1 ]
 			  solid	FALSE
 			  creaseAngle	3.14159
+			  ccw FALSE
 			}
 
 		    }
@@ -18323,5 +18324,3 @@
       scale	0.2 0.3 0.35
       scaleOrientation	0 0 1  0
     }
-   
-

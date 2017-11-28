@@ -4,8 +4,8 @@
    \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODY_CUSTOMIZER_INTERFACE_H_INCLUDED
-#define CNOID_BODY_CUSTOMIZER_INTERFACE_H_INCLUDED
+#ifndef CNOID_BODY_BODY_CUSTOMIZER_INTERFACE_H
+#define CNOID_BODY_BODY_CUSTOMIZER_INTERFACE_H
 
 #include <string>
 #include <cnoid/EigenTypes>
@@ -64,24 +64,17 @@ struct BodyCustomizerInterface
 
 typedef BodyCustomizerInterface* (*GetBodyCustomizerInterfaceFunc)(BodyInterface* bodyInterface);
 
-CNOID_EXPORT int loadBodyCustomizers(const std::string pathString, BodyInterface* bodyInterface);
-CNOID_EXPORT int loadBodyCustomizers(const std::string pathString);
-CNOID_EXPORT int loadBodyCustomizers(BodyInterface* bodyInterface);
-CNOID_EXPORT int loadBodyCustomizers();
+CNOID_EXPORT int loadDefaultBodyCustomizers(std::ostream& os);
+CNOID_EXPORT int loadBodyCustomizers(const std::string pathString, std::ostream& os);
     
 CNOID_EXPORT BodyCustomizerInterface* findBodyCustomizer(std::string modelName);
 }
 
 
-
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
 #define CNOID_BODY_CUSTOMIZER_EXPORT extern "C" __declspec(dllexport)
-//extern "C" __declspec(dllexport) cnoid::BodyCustomizerInterface*
-//getHrpBodyCustomizerInterface(cnoid::Bodyinterface* bodyinterface);
 #else
 #define CNOID_BODY_CUSTOMIZER_EXPORT extern "C"
-//extern "C" cnoid::BodyCustomizerInterface*
-//getHrpBodyCustomizerInterface(cnoid::Bodyinterface* bodyinterface);
 #endif
 
 #endif

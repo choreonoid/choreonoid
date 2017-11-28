@@ -45,3 +45,4 @@ configure_file(OpenRTM-TankJoystickVisionSensors-RTSystem.cnoid ${CNOID_SOURCE_S
 configure_file(TankVisionSensors_Noconnection.conf
   ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}/rtc/TankVisionSensors_Noconnection.conf COPYONLY)
 install(FILES TankVisionSensors_Noconnection.conf DESTINATION ${CNOID_PLUGIN_SUBDIR}/rtc)
+configure_file(TankJoystickPointCloudIO.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)

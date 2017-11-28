@@ -66,6 +66,8 @@ public:
 
     int indexOf(const Link* link) const;
 
+    bool isNumericalIkEnabled() const { return nuIK != 0; }
+
     bool isBestEffortIKmode() const;
     void setBestEffortIKmode(bool on);
 
@@ -84,34 +86,48 @@ public:
         std::function<double(VectorXd& out_error)> errorFunc,
         std::function<void(MatrixXd& out_Jacobian)> jacobianFunc);
 
+    // For the path customized by the customizeTarget function
+    bool calcInverseKinematics();
+
     // InverseKinematics Interface
     virtual bool hasAnalyticalIK() const;
 
     JointPath& storeCurrentPosition();
 
+    JointPath& setBaseLinkGoal(const Position& T);
+
+
+    virtual bool calcInverseKinematics(const Position& T) override;
+
+    /*
+    bool calcNumericalIK() {
+        return JointPath::calcInverseKinematics();
+    }
+    */
+
+    int numIterations() const;
+
+    /*
     JointPath& setGoal(const Vector3& end_p, const Matrix3& end_R) {
         targetTranslationGoal = end_p;
         targetRotationGoal = end_R;
         return *this;
     }
+    */
 
-    JointPath& setGoal(const Vector3& base_p, const Matrix3& base_R, const Vector3& end_p, const Matrix3& end_R);
-        
-    virtual bool calcInverseKinematics();
+    //! deprecated
+    //JointPath& setGoal(const Vector3& base_p, const Matrix3& base_R, const Vector3& end_p, const Matrix3& end_R);
 
-    bool calcNumericalIK() {
-        return JointPath::calcInverseKinematics();
+    //! deprecated
+    bool calcInverseKinematics(const Vector3& p, const Matrix3& R) {
+        return InverseKinematics::calcInverseKinematics(p, R);
     }
-
-    int numIterations() const;
-
-    //! deprecated
-    void calcJacobian(Eigen::MatrixXd& out_J) const;
-    //! deprecated
-    virtual bool calcInverseKinematics(const Vector3& end_p, const Matrix3& end_R);
+    
     //! deprecated
     bool calcInverseKinematics(
         const Vector3& base_p, const Matrix3& base_R, const Vector3& end_p, const Matrix3& end_R);
+    //! deprecated
+    void calcJacobian(Eigen::MatrixXd& out_J) const;
     //! deprecated
     void setNumericalIKtruncateRatio(double r);
     //! deprecated
@@ -127,15 +143,13 @@ private:
 		
     void initialize();
     void extractJoints();
-    JointPathIkImpl* getOrCreateIK();
+    JointPathIkImpl* getOrCreateNumericalIK();
 
     LinkPath linkPath;
     std::vector<Link*> joints;
     int numUpwardJointConnections;
-    Vector3 targetTranslationGoal;
-    Matrix3 targetRotationGoal;
     bool needForwardKinematicsBeforeIK;
-    JointPathIkImpl* ik;
+    JointPathIkImpl* nuIK; // numerical IK
 };
 
 typedef std::shared_ptr<JointPath> JointPathPtr;

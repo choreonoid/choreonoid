@@ -4,13 +4,13 @@
 */
 
 #include "SceneCameras.h"
-#include "SceneVisitor.h"
 
 using namespace std;
 using namespace cnoid;
 
 
-SgCamera::SgCamera()
+SgCamera::SgCamera(int polymorhicId)
+    : SgPreprocessed(polymorhicId)
 {
     nearClipDistance_ = 0.01;
     farClipDistance_ = 100.0;
@@ -22,12 +22,6 @@ SgCamera::SgCamera(const SgCamera& org)
 {
     nearClipDistance_ = org.nearClipDistance_;
     farClipDistance_ = org.farClipDistance_;
-}
-
-
-void SgCamera::accept(SceneVisitor& visitor)
-{
-    visitor.visitCamera(this);
 }
 
 
@@ -49,9 +43,17 @@ Affine3 SgCamera::positionLookingAt(const Vector3& eye, const Vector3& center, c
 }
 
 
-SgPerspectiveCamera::SgPerspectiveCamera()
+SgPerspectiveCamera::SgPerspectiveCamera(int polymorhicId)
+    : SgCamera(polymorhicId)
 {
     fieldOfView_ = 0.785398;
+}
+
+
+SgPerspectiveCamera::SgPerspectiveCamera()
+    : SgPerspectiveCamera(findPolymorphicId<SgPerspectiveCamera>())
+{
+
 }
 
 
@@ -68,12 +70,6 @@ SgObject* SgPerspectiveCamera::clone(SgCloneMap& cloneMap) const
 }
 
 
-void SgPerspectiveCamera::accept(SceneVisitor& visitor)
-{
-    visitor.visitCamera(this);
-}
-
-
 /**
    @param aspectRatio width / height
 */
@@ -87,9 +83,17 @@ double SgPerspectiveCamera::fovy(double aspectRatio, double fieldOfView)
 }
 
 
-SgOrthographicCamera::SgOrthographicCamera()
+SgOrthographicCamera::SgOrthographicCamera(int polymorhicId)
+    : SgCamera(polymorhicId)
 {
     height_ = 2.0;
+}
+
+
+SgOrthographicCamera::SgOrthographicCamera()
+    : SgOrthographicCamera(findPolymorphicId<SgOrthographicCamera>())
+{
+
 }
 
 
@@ -106,7 +110,14 @@ SgObject* SgOrthographicCamera::clone(SgCloneMap& cloneMap) const
 }
 
 
-void SgOrthographicCamera::accept(SceneVisitor& visitor)
-{
-    visitor.visitCamera(this);
+namespace {
+
+struct NodeTypeRegistration {
+    NodeTypeRegistration() {
+        SgNode::registerType<SgCamera, SgPreprocessed>();
+        SgNode::registerType<SgPerspectiveCamera, SgCamera>();
+        SgNode::registerType<SgOrthographicCamera, SgCamera>();
+    }
+} registration;
+
 }

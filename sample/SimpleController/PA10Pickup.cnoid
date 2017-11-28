@@ -21,7 +21,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/PA10/PA10.wrl"
+            modelFile: "${SHARE}/model/PA10/PA10.body"
             currentBaseLink: "BASE"
             rootPosition: [ 0, 0, 0 ]
             rootAttitude: [ 
@@ -55,7 +55,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/misc/box3.wrl"
+            modelFile: "${SHARE}/model/misc/box3.body"
             currentBaseLink: "WAIST"
             rootPosition: [ 0.9, 0, 0.035 ]
             rootAttitude: [ 
@@ -77,7 +77,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/misc/box2.wrl"
+            modelFile: "${SHARE}/model/misc/box2.body"
             currentBaseLink: "WAIST"
             rootPosition: [ -0, 0.7, 0.1499 ]
             rootAttitude: [ 
@@ -100,7 +100,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/misc/floor.wrl"
+            modelFile: "${SHARE}/model/misc/floor.body"
             currentBaseLink: "BASE"
             rootPosition: [ 0, 0, -0.1 ]
             rootAttitude: [ 
@@ -186,7 +186,7 @@ items:
             controllerThreads: true
             recordCollisionData: false
             ErrorReductionParameter: 0.2
-            NumIterations: 10
+            NumIterations: 30
             Restitution: 0
             Friction: 0.7
             ERP2: 0

@@ -74,6 +74,15 @@ void onSigOptionsParsed(boost::program_options::variables_map& variables)
             }
         }
     }
+    else if(variables.count("body")){
+    	vector<string> bodyFileNames = variables["body"].as<vector<string>>();
+    	for(size_t i=0; i < bodyFileNames.size(); ++i){
+    		BodyItemPtr item(new BodyItem());
+    		if(item->load(bodyFileNames[i], "OpenHRP-VRML-MODEL")){
+    			RootItem::mainInstance()->addChildItem(item);
+    		}
+    	}
+    }
 }
 
 }
@@ -153,6 +162,7 @@ public:
     void doPutProperties(PutPropertyFunction& putProperty);
     bool store(Archive& archive);
     bool restore(const Archive& archive);
+    void setBody(Body* body);
 };
 
 }
@@ -166,10 +176,11 @@ void BodyItem::initializeClass(ExtensionManager* ext)
         ItemManager& im = ext->itemManager();
         im.registerClass<BodyItem>(N_("BodyItem"));
         im.addLoader<BodyItem>(
-            _("OpenHRP Model File"), "OpenHRP-VRML-MODEL", "body;wrl;yaml;yml;dae;stl", std::bind(loadBodyItem, _1, _2));
+            _("Body"), "OpenHRP-VRML-MODEL", "body;wrl;yaml;yml;dae;stl", std::bind(loadBodyItem, _1, _2));
 
         OptionManager& om = ext->optionManager();
         om.addOption("hrpmodel", boost::program_options::value< vector<string> >(), "load an OpenHRP model file");
+        om.addOption("body", boost::program_options::value< vector<string> >(), "load a body file");
         om.sigOptionsParsed().connect(onSigOptionsParsed);
 
         initialized = true;
@@ -322,14 +333,10 @@ bool BodyItem::loadModelFile(const std::string& filename)
 
 bool BodyItemImpl::loadModelFile(const std::string& filename)
 {
-    MessageView* mv = MessageView::instance();
-    mv->beginStdioRedirect();
-    bodyLoader.setMessageSink(mv->cout(true));
+    bodyLoader.setMessageSink(mvout(true));
 
     BodyPtr newBody = bodyLoader.load(filename);
 
-    mv->endStdioRedirect();
-    
     if(newBody){
         body = newBody;
         body->setName(self->name());
@@ -339,6 +346,21 @@ bool BodyItemImpl::loadModelFile(const std::string& filename)
     initBody(false);
 
     return (newBody);
+}
+
+
+void BodyItem::setBody(Body* body)
+{
+    impl->setBody(body);
+}
+
+
+void BodyItemImpl::setBody(Body* body_)
+{
+    body = body_;
+    body->initializeState();
+
+    initBody(false);
 }
 
 
@@ -712,9 +734,10 @@ void BodyItemImpl::setPresetPose(BodyItem::PresetPoseID id)
         }
     }
 
-    const int n = body->numJoints();
+    const int n = body->numAllJoints();
     while(jointIndex < n){
-        body->joint(jointIndex++)->q() = 0.0;
+        Link* joint = body->joint(jointIndex++);
+        joint->q() = joint->q_initial();
     }
 
     fkTraverse.calcForwardKinematics();
@@ -933,7 +956,8 @@ bool BodyItemImpl::enableCollisionDetection(bool on)
 
 void BodyItem::enableSelfCollisionDetection(bool on)
 {
-    impl->enableSelfCollisionDetection(on);}
+    impl->enableSelfCollisionDetection(on);
+}
 
 
 bool BodyItemImpl::enableSelfCollisionDetection(bool on)

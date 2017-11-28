@@ -1,0 +1,64 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: SpringModel
+rootLink: LOWER
+
+links:
+  -
+    name: LOWER
+    jointType: free
+    mass: 10.0
+    centerOfMass: [ 0, 0, 0.15 ]
+    inertia: [ 0.5, 0, 0,
+               0, 0.5, 0,
+               0, 0, 0.1 ]
+    elements:
+      -
+        type: Transform
+        translation: [ 0, 0, 0.2 ]
+        rotation: [ 1, 0, 0, 90 ]
+        elements:
+          -
+            type: Shape
+            geometry: { type: Cylinder, height: 0.39, radius: 0.048 }
+            appearance: &lower_app
+              material: { diffuseColor: [ 1.0, 0.0, 0.0 ] }
+          -
+            type: Transform
+            translation: [ 0, -0.19, 0 ]
+            elements:
+              Shape:
+                geometry: { type: Box, size: [ 0.2, 0.02, 0.2 ] }
+                appearance: *lower_app
+  -
+    name: UPPER
+    parent: LOWER
+    jointType: prismatic
+    translation: [ 0, 0, 0.25 ]
+    jointId: 0
+    jointAxis: [ 0, 0, 1 ]
+    jointRange: 4
+    mass: 10.0
+    centerOfMass: [ 0, 0, 0.15 ]
+    inertia: [ 0.5, 0, 0,
+               0, 0.5, 0,
+               0, 0, 0.1 ]
+    elements:
+      Transform:
+        translation: [ 0, 0, 0.2 ]
+        rotation: [ 1, 0, 0, 90 ]
+        elements:
+          -
+            type: Shape
+            geometry: { type: Cylinder, height: 0.39, radius: 0.05 }
+            appearance: &upper_app
+              material: { diffuseColor: [ 0.0, 1.0, 0.0 ] }
+          -
+            type: Transform
+            translation: [ 0, 0.19, 0 ]
+            elements:
+              Shape:
+                geometry: { type: Box, size: [ 0.2, 0.02, 0.2 ] }
+                appearance: *upper_app
+

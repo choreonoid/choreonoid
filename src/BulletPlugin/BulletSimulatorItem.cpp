@@ -21,6 +21,15 @@
 #include <HACD/hacdHACD.h>
 #include <BulletCollision/Gimpact/btGImpactShape.h>
 #include <BulletCollision/Gimpact/btGImpactCollisionAlgorithm.h>
+#include <BulletDynamics/Featherstone/btMultiBody.h>
+#include <BulletDynamics/Featherstone/btMultiBodyConstraintSolver.h>
+#include <BulletDynamics/Featherstone/btMultiBodyDynamicsWorld.h>
+#include <BulletDynamics/Featherstone/btMultiBodyLinkCollider.h>
+#include <BulletDynamics/Featherstone/btMultiBodyLink.h>
+#include <BulletDynamics/Featherstone/btMultiBodyJointLimitConstraint.h>
+#include <BulletDynamics/Featherstone/btMultiBodyJointMotor.h>
+#include <BulletDynamics/Featherstone/btMultiBodyPoint2Point.h>
+#include <BulletDynamics/Featherstone/btMultiBodyJointFeedback.h>
 #include "gettext.h"
 
 using namespace std;
@@ -41,11 +50,28 @@ const btScalar DEFAULT_COLLISION_MARGIN = 0.0001;
 const bool meshOnly = false;             // not use primitive Shape
 const bool mixedPrimitiveMesh = true;   // mixed of Primitive and Mesh on one link
 
+void diagonalizeInertia(const Vector3& c, const Matrix3& I, btVector3& localInertia, btTransform& shift)
+{
+    shift.setIdentity();
+    shift.setOrigin(btVector3(c.x(), c.y(), c.z()));
+
+    if(!I.isDiagonal()){
+        btMatrix3x3 tensor(I(0,0), I(0,1), I(0,2),
+                I(1,0), I(1,1), I(1,2),
+                I(2,0), I(2,1), I(2,2));
+        tensor.diagonalize(shift.getBasis(), btScalar(0.00001), 20);
+        localInertia.setValue(tensor[0][0], tensor[1][1], tensor[2][2]);
+    }else{
+        localInertia.setValue(I(0,0), I(1,1), I(2,2));
+    }
+}
+
 class BulletBody;
 
 class BulletLink : public Referenced
 {
 public:
+    BulletBody* bulletBody;
     BulletLink* parent;
     Link* link;
     btTransform shift;
@@ -64,6 +90,8 @@ public:
     double q_offset;
     BulletSimulatorItemImpl* simImpl;
     bool isStatic;
+    btMultiBodyJointMotor* motor;
+    double qold;
         
     BulletLink(BulletSimulatorItemImpl* simImpl, BulletBody* bulletBody, BulletLink* parent,
                const Vector3& parentOrigin, Link* link, short group, bool isSelfCollisionDetectionEnabled);
@@ -82,23 +110,29 @@ typedef ref_ptr<BulletLink> BulletLinkPtr;
 class BulletBody : public SimulationBody
 {
 public:
+    BulletSimulatorItemImpl* simImpl;
     vector<BulletLinkPtr> bulletLinks;
     vector<btTypedConstraint*> extraJoints;
     btDynamicsWorld* dynamicsWorld;
     vector<btJointFeedback*> forceSensorFeedbacks;
+    vector<btMultiBodyJointFeedback*> multiBodyforceSensorFeedbacks;
     BasicSensorSimulationHelper sensorHelper;
     int geometryId;
 
     BodyPtr body;
+
+    btMultiBody* multiBody;
+
     BulletBody(const Body& orgBody);
     ~BulletBody();
     void createBody(BulletSimulatorItemImpl* simImpl, short group);
     void getKinematicStateFromBullet();
     void setKinematicStateToBullet();
-    void setTorqueToBullet();
+    void setControlValToBullet();
     void setExtraJoints();
     void updateForceSensors();
-    void setVelocityToBullet();
+    bool haveExtraJoints();
+    bool haveCrawlerJoint();
 };
 }
 
@@ -109,7 +143,7 @@ class BulletSimulatorItemImpl
 {
 public:
     BulletSimulatorItem* self;
-        
+
     btDefaultCollisionConfiguration* collisionConfiguration;
     btCollisionDispatcher* dispatcher;
     btBroadphaseInterface* broadphase;
@@ -125,11 +159,11 @@ public:
     double erp2;
     double splitImpulsePenetrationThreshold;
     bool useWorldCollision;
-    bool useHACD;                           //  Hierarchical Approximate Convex Decomposition
+    bool useHACD;                           // Hierarchical Approximate Convex Decomposition
     double collisionMargin;
+    bool usefeatherstoneAlgorithm;
     CollisionDetectorPtr collisionDetector;
     vector<BulletLink*> geometryIdToLink;
-    bool velocityMode;
 
     BulletSimulatorItemImpl(BulletSimulatorItem* self);
     BulletSimulatorItemImpl(BulletSimulatorItem* self, const BulletSimulatorItemImpl& org);
@@ -149,8 +183,6 @@ public:
 
 static bool CustomMaterialCombinerCallback(btManifoldPoint& cp, const btCollisionObjectWrapper* colObj0,int partId0,int index0,const btCollisionObjectWrapper* colObj1,int partId1,int index1)
 {
-    if(cp.m_distance1 < -0.001)
-        return true;
     BulletLink* bulletLink0 = (BulletLink*)colObj0->getCollisionObject()->getUserPointer();
     Link* link0 = 0;
     if(bulletLink0)
@@ -184,9 +216,14 @@ static bool CustomMaterialCombinerCallback(btManifoldPoint& cp, const btCollisio
     dir *= sign;
     dir.normalize();
     Vector3 frictionDir1 = friction * dir;
-    Vector3 frictionDir2 = 0.1 * axis;
-    
+    Vector3 frictionDir2 = friction * axis;
+
+#ifndef BT_VER_GT_284
     cp.m_lateralFrictionInitialized = true;
+#else
+    cp.m_contactPointFlags |= BT_CONTACT_FLAG_LATERAL_FRICTION_INITIALIZED;
+#endif
+
     cp.m_lateralFrictionDir1.setValue(frictionDir1.x(), frictionDir1.y(), frictionDir1.z());
     cp.m_lateralFrictionDir2.setValue(frictionDir2.x(), frictionDir2.y(), frictionDir2.z());
     if(crawlerlink->jointType() == Link::PSEUDO_CONTINUOUS_TRACK)
@@ -194,19 +231,27 @@ static bool CustomMaterialCombinerCallback(btManifoldPoint& cp, const btCollisio
     else
         cp.m_contactMotion1 = crawlerlink->u();
 
+#if 0
+    std::cout << frictionDir1.x() << " " << frictionDir1.y() << " " << frictionDir1.z() << std::endl;
+    std::cout << frictionDir2.x() << " " << frictionDir2.y() << " " << frictionDir2.z() << std::endl;
+    std::cout << cp.m_contactMotion1 << std::endl;
+#endif
+
     return true;
 }
 
 
 ///////////////////////////////////Link////////////////////////////////////////////////////
-BulletLink::BulletLink(BulletSimulatorItemImpl* _simImpl, BulletBody* bulletBody, BulletLink* parent,
-                       const Vector3& parentOrigin, Link* link, short group, bool isSelfCollisionDetectionEnabled)
+BulletLink::BulletLink(BulletSimulatorItemImpl* _simImpl, BulletBody* _bulletBody, BulletLink* parent,
+                       const Vector3& parentOrigin, Link* _link, short group, bool isSelfCollisionDetectionEnabled)
 {
-    bulletBody->bulletLinks.push_back(this);
+    this->bulletBody = _bulletBody;
+    this->link = _link;
+
+    bulletBody->bulletLinks[link->index()] = this;
     dynamicsWorld = _simImpl->dynamicsWorld;
     this->simImpl = _simImpl;
 
-    this->link = link;
     vertices.clear();
     triangles.clear();
     pMeshData = 0;
@@ -216,12 +261,13 @@ BulletLink::BulletLink(BulletSimulatorItemImpl* _simImpl, BulletBody* bulletBody
     body = 0;
     joint=0;
     q_offset = 0;
+    motor = 0;
     isStatic = false;
+    qold = 0;
     
     Vector3 o = parentOrigin + link->b();
     
     createLinkBody(simImpl, parent, o, group, isSelfCollisionDetectionEnabled);
-    body->setActivationState(DISABLE_DEACTIVATION);
 
     for(Link* child = link->child(); child; child = child->sibling()){
         new BulletLink(simImpl, bulletBody, this, o, child, group, isSelfCollisionDetectionEnabled);
@@ -233,7 +279,7 @@ void BulletLink::createGeometry()
     if(link->collisionShape()){
         MeshExtractor* extractor = new MeshExtractor;
         if(extractor->extract(link->collisionShape(), std::bind(&BulletLink::addMesh, this, extractor, meshOnly))){
-            if(!simImpl->useHACD){
+            if(!simImpl->useHACD && !isStatic){
                 if(!mixedPrimitiveMesh){
                     if(!vertices.empty()){
                         btCompoundShape* compoundShape = dynamic_cast<btCompoundShape*>(collisionShape);
@@ -325,7 +371,8 @@ void BulletLink::addMesh(MeshExtractor* extractor, bool meshOnly)
                         if(scale.x() == scale.y() && scale.x() == scale.z()){
                             doAddPrimitive = true;
                         }
-                    } else if(mesh->primitiveType() == SgMesh::CYLINDER){
+                    } else if(mesh->primitiveType() == SgMesh::CYLINDER ||
+                            mesh->primitiveType() == SgMesh::CAPSULE ){
                         // check if the bottom circle face is uniformly scaled
                         if(scale.x() == scale.z()){
                             doAddPrimitive = true;
@@ -360,6 +407,11 @@ void BulletLink::addMesh(MeshExtractor* extractor, bool meshOnly)
                 case SgMesh::CONE : {
                     SgMesh::Cone cone = mesh->primitive<SgMesh::Cone>();
                     primitiveShape = new btConeShape(cone.radius * scale.x(), cone.height * scale.y());
+                    created = true;
+                    break; }
+                case SgMesh::CAPSULE : {
+                    SgMesh::Capsule capsule = mesh->primitive<SgMesh::Capsule>();
+                    primitiveShape = new btCapsuleShape(capsule.radius * scale.x(), capsule.height * scale.y());
                     created = true;
                     break; }
                 default :
@@ -537,27 +589,10 @@ void BulletLink::createLinkBody(BulletSimulatorItemImpl* simImpl, BulletLink* pa
     transform.setOrigin(btVector3(origin(0), origin(1), origin(2)));
 
     btScalar mass(link->mass());
-    if(link->isRoot() && link->isFixedJoint()){
-        isStatic = true;
-        mass = 0.0;
-    }
     const Matrix3& I = link->I();
 
     btVector3 localInertia(0,0,0);
-    shift.setIdentity();
-    shift.setOrigin(btVector3(c.x(), c.y(), c.z()));
-    if (mass != 0.0){
-        if(!I.isDiagonal()){
-            btMatrix3x3 tensor(I(0,0), I(0,1), I(0,2),
-                               I(1,0), I(1,1), I(1,2),
-                               I(2,0), I(2,1), I(2,2));
-            tensor.diagonalize(shift.getBasis(), btScalar(0.00001), 20);
-            localInertia.setValue(tensor[0][0], tensor[1][1], tensor[2][2]);
-
-        }else{
-            localInertia.setValue(I(0,0), I(1,1), I(2,2));
-        }
-    }
+    diagonalizeInertia(c, I, localInertia, shift);
     invShift = shift.inverse();
 
 #if DEBUG_OUT
@@ -566,22 +601,44 @@ void BulletLink::createLinkBody(BulletSimulatorItemImpl* simImpl, BulletLink* pa
     std::cout <<  shift.getBasis()[2][0] << " " << shift.getBasis()[2][1]<< " " << shift.getBasis()[2][2] << " " << shift.getOrigin()[2] <<std::endl;
 #endif
 
-    if(!simImpl->useWorldCollision)
-        createGeometry();
-    motionState = new btDefaultMotionState(transform * shift);
-    btRigidBody::btRigidBodyConstructionInfo rbInfo(mass,motionState,collisionShape,localInertia);
-    body = new btRigidBody(rbInfo);
-    //body->setDamping(0.1,0.1);
-    body->setRestitution(simImpl->restitution);
-    body->setFriction(simImpl->friction);
-    body->setContactProcessingThreshold(BT_LARGE_FLOAT);
-    body->forceActivationState(DISABLE_DEACTIVATION);
-    
     short mask = 0xFFFF;
-    if(!isSelfCollisionDetectionEnabled)
+    if(!isSelfCollisionDetectionEnabled  && group!=1)
         mask ^= group;
-    simImpl->dynamicsWorld->addRigidBody(body, group, mask); 
 
+    btMultiBody* multiBody = 0;
+    if(bulletBody->multiBody){
+
+        if(!simImpl->useWorldCollision)
+            createGeometry();
+
+        multiBody = bulletBody->multiBody;
+        if(link->isRoot()){
+            multiBody->setBaseMass(mass);
+            multiBody->setBaseInertia(localInertia);
+            multiBody->setBaseWorldTransform(transform * shift);
+        }
+    }else{
+        if(link->isRoot() && link->isFixedJoint()){
+            isStatic = true;
+            mass = 0.0;
+        }
+
+        if(!simImpl->useWorldCollision)
+            createGeometry();
+
+        motionState = new btDefaultMotionState(transform * shift);
+        btRigidBody::btRigidBodyConstructionInfo rbInfo(mass,motionState,collisionShape,localInertia);
+        body = new btRigidBody(rbInfo);
+
+        //body->setDamping(0.1,0.1);
+        body->setRestitution(simImpl->restitution);
+        body->setFriction(simImpl->friction);
+        body->setContactProcessingThreshold(BT_LARGE_FLOAT);
+        body->forceActivationState(DISABLE_DEACTIVATION);
+
+        simImpl->dynamicsWorld->addRigidBody(body, group, mask);
+    }
+    
     const Vector3& a = link->a();
     const Vector3& b = link->b();
     const Vector3& d = link->d();
@@ -590,72 +647,125 @@ void BulletLink::createLinkBody(BulletSimulatorItemImpl* simImpl, BulletLink* pa
         
     case Link::ROTATIONAL_JOINT: {
         btVector3 axisA(a(0), a(1), a(2));
-        btVector3 axisB(a(0), a(1), a(2)); 
         btVector3 pivotA(b(0), b(1), b(2));
-        btVector3 pivotB(0,0,0);
-        joint = new btHingeConstraint(*body, *(parent->body), invShift*pivotB, parent->invShift*pivotA,
-                                      invShift.getBasis()*axisB, parent->invShift.getBasis()*axisA );
+        if(multiBody){
+           // btMatrix3x3 rot = parent->invShift.getBasis() * shift.getBasis();
+            btMatrix3x3 rot = invShift.getBasis() * parent->shift.getBasis();
+            btQuaternion qua;
+            rot.getRotation(qua);
+            btVector3 jointAxis = invShift.getBasis() * axisA;
+            btVector3 parentComToCurrentPivot = parent->invShift * pivotA;
+            btVector3 currentPivotToCurrentCom = invShift.getBasis() * shift.getOrigin();
+            multiBody->setupRevolute(link->index()-1, mass, localInertia, link->parent()->index()-1,
+                    qua,   // rotate points in parent frame to this frame, when q = 0
+                    jointAxis, // in my frame
+                    parentComToCurrentPivot, // vector from parent COM to joint axis, in PARENT frame
+                    currentPivotToCurrentCom,  // vector from joint axis to my COM, in MY frame
+                    isSelfCollisionDetectionEnabled);         // disableParentCollision
+#if DEBUG_OUT
+            std::cout << "rot= " << std::endl;
+            std::cout << rot[0][0] << " " << rot[0][1] << " " << rot[0][2] << std::endl;
+            std::cout << rot[1][0] << " " << rot[1][1] << " " << rot[1][2] << std::endl;
+            std::cout << rot[2][0] << " " << rot[2][1] << " " << rot[2][2] << std::endl;
+            std::cout << "jointAxis= " << std::endl;
+            std::cout << jointAxis[0] << " " << jointAxis[1] << " " << jointAxis[2] << std::endl;
+            std::cout << "parentComToCurrentPivot= " << std::endl;
+            std::cout << parentComToCurrentPivot[0] << " " << parentComToCurrentPivot[1] << " " << parentComToCurrentPivot[2] << std::endl;
+            std::cout << "currentPivotToCurrentCom= " << std::endl;
+            std::cout << currentPivotToCurrentCom[0] << " " << currentPivotToCurrentCom[1] << " " << currentPivotToCurrentCom[2] << std::endl;
+#endif
+            if(link->actuationMode() == Link::JOINT_VELOCITY){
+                motor = new btMultiBodyJointMotor(multiBody, link->index()-1, 0, numeric_limits<double>::max());
+                dynamic_cast<btMultiBodyDynamicsWorld*>(dynamicsWorld)->addMultiBodyConstraint(motor);
+            }
+        }else{
+            btVector3 axisB(a(0), a(1), a(2));
+            btVector3 pivotB(0,0,0);
+            joint = new btHingeConstraint(*body, *(parent->body), invShift*pivotB, parent->invShift*pivotA,
+                    invShift.getBasis()*axisB, parent->invShift.getBasis()*axisA );
 
-        if(link->q_upper() < numeric_limits<double>::max() && link->q_lower() > -numeric_limits<double>::max()){
-            ((btHingeConstraint*)joint)->setLimit(link->q_lower(), link->q_upper());
-        } else {
-            //Lowerlimit ・・Upperlimit 竊・axis is free
-            ((btHingeConstraint*)joint)->setLimit(1.0, -1.0); 
-        }
-        simImpl->dynamicsWorld->addConstraint(joint, true);
-        q_offset = ((btHingeConstraint*)joint)->getHingeAngle();
+            if(link->q_upper() < numeric_limits<double>::max() && link->q_lower() > -numeric_limits<double>::max()){
+                ((btHingeConstraint*)joint)->setLimit(link->q_lower(), link->q_upper());
+            } else {
+                //Lowerlimit > Upperlimit -> axis is free
+                ((btHingeConstraint*)joint)->setLimit(1.0, -1.0);
+            }
+            simImpl->dynamicsWorld->addConstraint(joint, true);
+            q_offset = ((btHingeConstraint*)joint)->getHingeAngle();
 
 #if DEBUG_OUT
-        std::cout << "offset= " << q_offset << std::endl;
+            std::cout << "offset= " << q_offset << std::endl;
 #endif
+        }
         break;
     }
         
     case Link::SLIDE_JOINT: {
-        Vector3 u(0,0,1);
-        Vector3 ty = d.cross(u);
-        btMatrix3x3 btR;
-        Matrix3 R0;
-        if(ty.norm() == 0){
-            btR.setIdentity();
-            R0.setIdentity();
-        } else {
-            ty.normalized();
-            Vector3 tx = ty.cross(d).normalized();
-            R0.col(0) = tx;
-            R0.col(1) = ty;
-            R0.col(2) = d;
-            btR.setValue(R0(0,0), R0(0,1), R0(0,2),
-                         R0(1,0), R0(1,1), R0(1,2),
-                         R0(2,0), R0(2,1), R0(2,2));
-        }
-        btTransform frameA,frameB;
-        frameB.setBasis(btR);
-        frameB.setOrigin(btVector3(0,0,0));
-        frameA.setBasis(btR);
-        frameA.setOrigin(btVector3(b(0), b(1), b(2)));
-        joint = new btGeneric6DofConstraint(*(parent->body), *body, parent->invShift*frameA, invShift*frameB, false);
+        if(multiBody){
+            //btMatrix3x3 rot = parent->invShift.getBasis() * shift.getBasis();
+            btMatrix3x3 rot = invShift.getBasis() * parent->shift.getBasis();
+            btQuaternion qua;
+            rot.getRotation(qua);
+            btVector3 axisA(d(0), d(1), d(2));
+            btVector3 jointAxis = invShift.getBasis() * axisA;
+            btVector3 pivotA(b(0), b(1), b(2));
+            btVector3 parentComToCurrentPivot = parent->invShift * pivotA;
+            btVector3 currentPivotToCurrentCom = invShift.getBasis() * shift.getOrigin();
+            multiBody->setupPrismatic(link->index()-1, mass, localInertia, link->parent()->index()-1,
+                    qua,   // rotate points in parent frame to this frame, when q = 0
+                    jointAxis, // in my frame
+                    parentComToCurrentPivot, // vector from parent COM to joint axis, in PARENT frame
+                    currentPivotToCurrentCom,  // vector from joint axis to my COM, in MY frame
+                    isSelfCollisionDetectionEnabled);         // disableParentCollision
+            if(link->actuationMode()==Link::JOINT_VELOCITY){
+                motor = new btMultiBodyJointMotor(multiBody, link->index()-1, 0, numeric_limits<double>::max());
+                dynamic_cast<btMultiBodyDynamicsWorld*>(dynamicsWorld)->addMultiBodyConstraint(motor);
+            }
+        }else{
+            Vector3 u(0,0,1);
+            Vector3 ty = d.cross(u);
+            btMatrix3x3 btR;
+            Matrix3 R0;
+            if(ty.norm() == 0){
+                btR.setIdentity();
+                R0.setIdentity();
+            } else {
+                ty.normalized();
+                Vector3 tx = ty.cross(d).normalized();
+                R0.col(0) = tx;
+                R0.col(1) = ty;
+                R0.col(2) = d;
+                btR.setValue(R0(0,0), R0(0,1), R0(0,2),
+                        R0(1,0), R0(1,1), R0(1,2),
+                        R0(2,0), R0(2,1), R0(2,2));
+            }
+            btTransform frameA,frameB;
+            frameB.setBasis(btR);
+            frameB.setOrigin(btVector3(0,0,0));
+            frameA.setBasis(btR);
+            frameA.setOrigin(btVector3(b(0), b(1), b(2)));
+            joint = new btGeneric6DofConstraint(*(parent->body), *body, parent->invShift*frameA, invShift*frameB, false);
 
-        if(link->q_upper() < numeric_limits<double>::max() &&
-           link->q_lower() > -numeric_limits<double>::max() &&
-           link->q_lower() < link->q_upper()){
-            ((btGeneric6DofConstraint*)joint)->setLinearLowerLimit(btVector3(0.0, 0.0, link->q_lower()));
-            ((btGeneric6DofConstraint*)joint)->setLinearUpperLimit(btVector3(0.0, 0.0, link->q_upper()));
-            ((btGeneric6DofConstraint*)joint)->setAngularLowerLimit(btVector3(0.0, 0.0, 0.0));
-            ((btGeneric6DofConstraint*)joint)->setAngularUpperLimit(btVector3(0.0, 0.0, 0.0));
-        } else {
-            //Lowerlimit ・・Upperlimit 竊・axis is free
-            ((btGeneric6DofConstraint*)joint)->setLinearLowerLimit(btVector3(0.0, 0.0, 1.0)); 
-            ((btGeneric6DofConstraint*)joint)->setLinearUpperLimit(btVector3(0.0, 0.0, -1.0));
-            ((btGeneric6DofConstraint*)joint)->setAngularLowerLimit(btVector3(0.0, 0.0, 0.0));
-            ((btGeneric6DofConstraint*)joint)->setAngularUpperLimit(btVector3(0.0, 0.0, 0.0));
+            if(link->q_upper() < numeric_limits<double>::max() &&
+                    link->q_lower() > -numeric_limits<double>::max() &&
+                    link->q_lower() < link->q_upper()){
+                ((btGeneric6DofConstraint*)joint)->setLinearLowerLimit(btVector3(0.0, 0.0, link->q_lower()));
+                ((btGeneric6DofConstraint*)joint)->setLinearUpperLimit(btVector3(0.0, 0.0, link->q_upper()));
+                ((btGeneric6DofConstraint*)joint)->setAngularLowerLimit(btVector3(0.0, 0.0, 0.0));
+                ((btGeneric6DofConstraint*)joint)->setAngularUpperLimit(btVector3(0.0, 0.0, 0.0));
+            } else {
+                //Lowerlimit > Upperlimit -> axis is free
+                ((btGeneric6DofConstraint*)joint)->setLinearLowerLimit(btVector3(0.0, 0.0, 1.0));
+                ((btGeneric6DofConstraint*)joint)->setLinearUpperLimit(btVector3(0.0, 0.0, -1.0));
+                ((btGeneric6DofConstraint*)joint)->setAngularLowerLimit(btVector3(0.0, 0.0, 0.0));
+                ((btGeneric6DofConstraint*)joint)->setAngularUpperLimit(btVector3(0.0, 0.0, 0.0));
+            }
+            ((btGeneric6DofConstraint*)joint)->calculateTransforms();
+            simImpl->dynamicsWorld->addConstraint(joint, true);
+            q_offset = ((btGeneric6DofConstraint*)joint)->getRelativePivotPosition(2);
         }
-        ((btGeneric6DofConstraint*)joint)->calculateTransforms();
-        simImpl->dynamicsWorld->addConstraint(joint, true);
-        q_offset = ((btGeneric6DofConstraint*)joint)->getRelativePivotPosition(2);
-
         break;
-    }
+        }
 
     case Link::FREE_JOINT:
         break;
@@ -663,25 +773,67 @@ void BulletLink::createLinkBody(BulletSimulatorItemImpl* simImpl, BulletLink* pa
     case Link::FIXED_JOINT:
     default:
         if(!link->isRoot()){
-            btTransform frameA,frameB;
-            frameA.setIdentity();
-            frameA.setOrigin(btVector3(b(0), b(1), b(2)));
-            frameB.setIdentity();
-            joint = new btGeneric6DofConstraint(*(parent->body), *body, parent->invShift*frameA, invShift*frameB, false);
-            ((btGeneric6DofConstraint*)joint)->calculateTransforms();
-            simImpl->dynamicsWorld->addConstraint(joint, true);
-            ((btGeneric6DofConstraint*)joint)->setLinearLowerLimit(btVector3(0.0, 0.0, 0.0));
-            ((btGeneric6DofConstraint*)joint)->setLinearUpperLimit(btVector3(0.0, 0.0, 0.0));
-            ((btGeneric6DofConstraint*)joint)->setAngularLowerLimit(btVector3(0.0, 0.0, 0.0));
-            ((btGeneric6DofConstraint*)joint)->setAngularUpperLimit(btVector3(0.0, 0.0, 0.0));
-            if(link->jointType() == Link::CRAWLER_JOINT || link->jointType() == Link::PSEUDO_CONTINUOUS_TRACK){
-                body->setCollisionFlags(body->getCollisionFlags()  | btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK);
-                body->setUserPointer(this);
-                if(!gContactAddedCallback)
-                    gContactAddedCallback = CustomMaterialCombinerCallback;
+            if(multiBody){
+                //btMatrix3x3 rot = parent->invShift.getBasis() * shift.getBasis();
+                btMatrix3x3 rot = invShift.getBasis() * parent->shift.getBasis();
+                btQuaternion qua;
+                rot.getRotation(qua);
+                btVector3 pivotA(b(0), b(1), b(2));
+                btVector3 parentComToCurrentPivot = parent->invShift * pivotA;
+                btVector3 currentPivotToCurrentCom = invShift.getBasis() * shift.getOrigin();
+                multiBody->setupFixed(link->index()-1, mass, localInertia, link->parent()->index()-1,
+                        qua,   // rotate points in parent frame to this frame, when q = 0
+                        parentComToCurrentPivot, // vector from parent COM to joint axis, in PARENT frame
+                        currentPivotToCurrentCom); // vector from joint axis to my COM, in MY frame
+            }else{
+                btTransform frameA,frameB;
+                frameA.setIdentity();
+                frameA.setOrigin(btVector3(b(0), b(1), b(2)));
+                frameB.setIdentity();
+                joint = new btGeneric6DofConstraint(*(parent->body), *body, parent->invShift*frameA, invShift*frameB, false);
+                ((btGeneric6DofConstraint*)joint)->calculateTransforms();
+                simImpl->dynamicsWorld->addConstraint(joint, true);
+                ((btGeneric6DofConstraint*)joint)->setLinearLowerLimit(btVector3(0.0, 0.0, 0.0));
+                ((btGeneric6DofConstraint*)joint)->setLinearUpperLimit(btVector3(0.0, 0.0, 0.0));
+                ((btGeneric6DofConstraint*)joint)->setAngularLowerLimit(btVector3(0.0, 0.0, 0.0));
+                ((btGeneric6DofConstraint*)joint)->setAngularUpperLimit(btVector3(0.0, 0.0, 0.0));
+                if(link->jointType() == Link::CRAWLER_JOINT || link->jointType() == Link::PSEUDO_CONTINUOUS_TRACK){
+                    body->setCollisionFlags(body->getCollisionFlags()  | btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK);
+                    body->setUserPointer(this);
+                    if(!gContactAddedCallback)
+                        gContactAddedCallback = CustomMaterialCombinerCallback;
+                }
             }
         }
         break;
+    }
+
+    if(multiBody){
+        if(!collisionShape)
+            return;
+
+        btMultiBodyLinkCollider* col = new btMultiBodyLinkCollider(multiBody, link->index()-1);
+        col->setRestitution(simImpl->restitution);
+        col->setFriction(simImpl->friction);
+        col->setCollisionShape(collisionShape);
+/*
+        if(link->jointType() == Link::CRAWLER_JOINT || link->jointType() == Link::PSEUDO_CONTINUOUS_TRACK){
+            col->setCollisionFlags( col->getCollisionFlags() | btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK);
+            col->setUserPointer(this);
+            if(!gContactAddedCallback)
+                gContactAddedCallback = CustomMaterialCombinerCallback;
+        }
+*/
+        simImpl->dynamicsWorld->addCollisionObject(col, group, mask);
+
+        if(link->isRoot()){
+            multiBody->setBaseCollider(col);
+        }else{
+            multiBody->getLink(link->index()-1).m_collider=col;
+        }
+        col->setActivationState(DISABLE_DEACTIVATION);
+    }else{
+        body->setActivationState(DISABLE_DEACTIVATION);
     }
 }
 
@@ -709,6 +861,8 @@ BulletLink::~BulletLink()
     if(body){
         delete body;
     }
+    if(motor)
+        delete motor;
 }
 
 void BulletLink::setKinematicStateToBullet()
@@ -716,19 +870,36 @@ void BulletLink::setKinematicStateToBullet()
     const Matrix3& R = link->R();
     btTransform transform;
     btMatrix3x3 btR(R(0,0), R(0,1), R(0,2),
-                    R(1,0), R(1,1), R(1,2),
-                    R(2,0), R(2,1), R(2,2));
+            R(1,0), R(1,1), R(1,2),
+            R(2,0), R(2,1), R(2,2));
     transform.setBasis(btR);
     const Vector3& p = link->p();
     transform.setOrigin(btVector3(p(0), p(1), p(2)));
-    body->setWorldTransform(transform*shift);
-
     const Vector3 lc = R * link->c();
     const Vector3 v = link->v() + link->w().cross(lc);
-    body->setLinearVelocity(btVector3(v(0), v(1), v(2)));
     const Vector3& w = link->w();
-    body->setAngularVelocity(btVector3(w(0), w(1), w(2)));
-    body->activate(true);
+
+    if(bulletBody->multiBody){
+        btMultiBody* multiBody = bulletBody->multiBody;
+        if(link->isRoot()){
+            multiBody->setBaseWorldTransform(transform*shift);
+            multiBody->setBaseVel(btVector3(v(0), v(1), v(2)));
+            multiBody->setBaseOmega(btVector3(w(0), w(1), w(2)));
+            if(collisionShape)
+                multiBody->getBaseCollider()->activate(true);
+        }else{
+            multiBody->setJointPos(link->index()-1, link->q());
+            multiBody->setJointVel(link->index()-1, link->dq());
+            if(collisionShape)
+                multiBody->getLink(link->index()-1).m_collider->activate(true);
+        }
+    }else{
+        body->setWorldTransform(transform*shift);
+        body->setLinearVelocity(btVector3(v(0), v(1), v(2)));
+        body->setAngularVelocity(btVector3(w(0), w(1), w(2)));
+        body->activate(true);
+        qold = link->q();
+    }
 }
 
 void BulletLink::getKinematicStateFromBullet()
@@ -736,16 +907,55 @@ void BulletLink::getKinematicStateFromBullet()
     if(link->isRoot() && link->isFixedJoint()){
         return;
     }
+
     btTransform trans;
-    motionState->getWorldTransform(trans);
-    btTransform strans =  trans * invShift;
-    Matrix3 R;
-    btMatrix3x3& btR = strans.getBasis();
-    link->R() << btR[0][0], btR[0][1], btR[0][2],
-        btR[1][0], btR[1][1], btR[1][2],
-        btR[2][0], btR[2][1], btR[2][2];
-    btVector3& p = strans.getOrigin();
-    link->p() << p[0], p[1], p[2];
+    if(bulletBody->multiBody){
+        if(simImpl->self->isAllLinkPositionOutputMode() || link->isRoot()){
+            if(link->isRoot()){
+                trans = bulletBody->multiBody->getBaseWorldTransform();
+            }else{
+                trans = bulletBody->multiBody->getLink(link->index()-1).m_cachedWorldTransform;
+            }
+            btTransform strans =  trans * invShift;
+            Matrix3 R;
+            btMatrix3x3& btR = strans.getBasis();
+            link->R() << btR[0][0], btR[0][1], btR[0][2],
+                    btR[1][0], btR[1][1], btR[1][2],
+                    btR[2][0], btR[2][1], btR[2][2];
+            btVector3& p = strans.getOrigin();
+            link->p() << p[0], p[1], p[2];
+        }
+        if(!link->isRoot()){
+            link->q() = bulletBody->multiBody->getJointPos(link->index()-1);
+            link->dq() = bulletBody->multiBody->getJointVel(link->index()-1);
+        }
+    }else{
+        if(simImpl->self->isAllLinkPositionOutputMode() || link->isRoot()){
+            motionState->getWorldTransform(trans);
+            btTransform strans =  trans * invShift;
+            Matrix3 R;
+            btMatrix3x3& btR = strans.getBasis();
+            link->R() << btR[0][0], btR[0][1], btR[0][2],
+                    btR[1][0], btR[1][1], btR[1][2],
+                    btR[2][0], btR[2][1], btR[2][2];
+            btVector3& p = strans.getOrigin();
+            link->p() << p[0], p[1], p[2];
+        }
+        double q = 0;
+        if(link->isRotationalJoint()){
+            q = ((btHingeConstraint*)joint)->getHingeAngle() - q_offset;
+        } else if(link->isSlideJoint()){
+            q = ((btGeneric6DofConstraint*)joint)->getRelativePivotPosition(2) - q_offset;
+        }
+        double dq = q - qold;
+        qold = q;
+        if(dq > PI)
+            dq = -2*PI + dq;
+        else if(dq < -PI)
+            dq = 2*PI + dq;
+        link->q() += dq;
+        link->dq() = dq / simImpl->timeStep;
+    }
 
 #if DEBUG_OUT
     std::cout << link->q() << std::endl;
@@ -756,45 +966,49 @@ void BulletLink::getKinematicStateFromBullet()
     std::cout << std::endl;
 #endif
 
-    if(link->isRotationalJoint()){
-        link->q() = ((btHingeConstraint*)joint)->getHingeAngle() - q_offset;
-    } else if(link->isSlideJoint()){
-        link->q() = ((btGeneric6DofConstraint*)joint)->getRelativePivotPosition(2) - q_offset;      
-    }
 }
 
 void BulletLink::setTorqueToBullet()
 {
-    if(link->isRotationalJoint()){
-        const Vector3 u = link->u() * link->a();
-        const Vector3 uu = link->R() * u;
-        btVector3 torque(uu(0), uu(1), uu(2));
-        body->applyTorque(torque);
-        parent->body->applyTorque(-torque);
+    if(bulletBody->multiBody){
+        bulletBody->multiBody->addJointTorque(link->index()-1, link->u());
+    }else{
+        if(link->isRotationalJoint()){
+            const Vector3 u = link->u() * link->a();
+            const Vector3 uu = link->R() * u;
+            btVector3 torque(uu(0), uu(1), uu(2));
+            body->applyTorque(torque);
+            parent->body->applyTorque(-torque);
 
-    } else if(link->isSlideJoint()){
-        const Vector3 u = link->u() * link->d();
-        const Vector3 uu = link->R() * u;
-        btVector3 torque(uu(0), uu(1), uu(2));
-        btVector3 pos(0,0,0);
-        body->applyForce(torque, invShift*pos);
-        const Vector3& b = link->b();
-        btVector3 pos1(b(0), b(1), b(2));
-        parent->body->applyForce(-torque, parent->invShift*pos1);
+        } else if(link->isSlideJoint()){
+            const Vector3 u = link->u() * link->d();
+            const Vector3 uu = link->R() * u;
+            btVector3 torque(uu(0), uu(1), uu(2));
+            btVector3 pos(0,0,0);
+            body->applyForce(torque, invShift*pos);
+            const Vector3& b = link->b();
+            btVector3 pos1(b(0), b(1), b(2));
+            parent->body->applyForce(-torque, parent->invShift*pos1);
+        }
     }
 }
 
 void BulletLink::setVelocityToBullet()
 {
-    if(link->isRotationalJoint()){
-    	double v = link->dq();
-    	((btHingeConstraint*)joint)->enableAngularMotor(true, v, numeric_limits<double>::max());
+    if(bulletBody->multiBody){
+        if(motor)
+            motor->setVelocityTarget(link->dq());
+    }else{
+        if(link->isRotationalJoint()){
+            double v = link->dq();
+            ((btHingeConstraint*)joint)->enableAngularMotor(true, v, numeric_limits<double>::max());
 
-    } else if(link->isSlideJoint()){
-    	double v = link->dq();
-    	((btGeneric6DofConstraint*)joint)->getTranslationalLimitMotor()->m_enableMotor[2] = true;
-		((btGeneric6DofConstraint*)joint)->getTranslationalLimitMotor()->m_targetVelocity[2] = v;
-		((btGeneric6DofConstraint*)joint)->getTranslationalLimitMotor()->m_maxMotorForce[2] =  numeric_limits<double>::max();
+        } else if(link->isSlideJoint()){
+            double v = link->dq();
+            ((btGeneric6DofConstraint*)joint)->getTranslationalLimitMotor()->m_enableMotor[2] = true;
+            ((btGeneric6DofConstraint*)joint)->getTranslationalLimitMotor()->m_targetVelocity[2] = v;
+            ((btGeneric6DofConstraint*)joint)->getTranslationalLimitMotor()->m_maxMotorForce[2] =  numeric_limits<double>::max();
+        }
     }
 }
 
@@ -804,6 +1018,7 @@ BulletBody::BulletBody(const Body& orgBody)
     : SimulationBody(new Body(orgBody))
 {
     body = SimulationBody::body();
+    multiBody = 0;
 }
 
 
@@ -824,14 +1039,35 @@ BulletBody::~BulletBody()
             delete forceSensorFeedbacks[i];
         }
     }
+    for(size_t i=0; i < multiBodyforceSensorFeedbacks.size(); ++i){
+        if(multiBodyforceSensorFeedbacks[i]){
+            delete multiBodyforceSensorFeedbacks[i];
+        }
+    }
+
+    if(multiBody)
+        delete multiBody;
 }
 
-void BulletBody::createBody(BulletSimulatorItemImpl* simImpl, short group)
+void BulletBody::createBody(BulletSimulatorItemImpl* simImpl_, short group)
 {
+    simImpl = simImpl_;
+
     dynamicsWorld = simImpl->dynamicsWorld;
 
-    BulletLink* rootLink = new BulletLink(simImpl, this, 0, Vector3::Zero(), body->rootLink(), 
-                                          group, bodyItem()->isSelfCollisionDetectionEnabled());
+    bulletLinks.resize(body->numLinks());
+
+    if(simImpl->usefeatherstoneAlgorithm && body->numLinks()-1 && !haveExtraJoints()){
+        multiBody = new btMultiBody(body->numLinks()-1, 0, btVector3(0,0,0), body->rootLink()->isFixedJoint(), false);
+    }
+
+    BulletLink* rootLink = new BulletLink(simImpl, this, 0, Vector3::Zero(), body->rootLink(),
+            group, bodyItem()->isSelfCollisionDetectionEnabled());
+
+    if(multiBody){
+        multiBody->finalizeMultiDof();
+        dynamic_cast<btMultiBodyDynamicsWorld*>(simImpl->dynamicsWorld)->addMultiBody(multiBody);
+    }
 
     if(simImpl->useWorldCollision){
         geometryId = addBodyToCollisionDetector(*body, *simImpl->collisionDetector, 
@@ -853,17 +1089,44 @@ void BulletBody::createBody(BulletSimulatorItemImpl* simImpl, short group)
     }
 
     setExtraJoints();
-    setTorqueToBullet();
+    setControlValToBullet();
 
     sensorHelper.initialize(body, simImpl->timeStep, simImpl->gravity);
 
-    // set joint feedbacks for force sensors
-    const DeviceList<ForceSensor>& forceSensors = sensorHelper.forceSensors();
-    forceSensorFeedbacks.resize(forceSensors.size());
-    for(size_t i=0; i < forceSensors.size(); ++i){
-        forceSensorFeedbacks[i] = new btJointFeedback;
-        bulletLinks[forceSensors[i]->link()->index()]->joint->setJointFeedback(forceSensorFeedbacks[i]);
+    if(!multiBody){
+        // set joint feedbacks for force sensors
+        const DeviceList<ForceSensor>& forceSensors = sensorHelper.forceSensors();
+        forceSensorFeedbacks.resize(forceSensors.size());
+        for(size_t i=0; i < forceSensors.size(); ++i){
+            forceSensorFeedbacks[i] = new btJointFeedback;
+            bulletLinks[forceSensors[i]->link()->index()]->joint->setJointFeedback(forceSensorFeedbacks[i]);
+        }
+    }else{
+        const DeviceList<ForceSensor>& forceSensors = sensorHelper.forceSensors();
+        multiBodyforceSensorFeedbacks.resize(forceSensors.size());
+        for(size_t i=0; i < forceSensors.size(); ++i){
+            multiBodyforceSensorFeedbacks[i] = new btMultiBodyJointFeedback;
+            multiBody->getLink(forceSensors[i]->link()->index()-1).m_jointFeedback = multiBodyforceSensorFeedbacks[i];
+        }
     }
+}
+
+
+bool BulletBody::haveCrawlerJoint()
+{
+    for(int i=0; i<body->numLinks(); i++){
+        Link::JointType type = body->link(i)->jointType();
+        if( type == Link::CRAWLER_JOINT || type ==  Link::PSEUDO_CONTINUOUS_TRACK )
+            return true;
+    }
+
+    return false;
+}
+
+
+bool BulletBody::haveExtraJoints()
+{
+    return (bool)body->numExtraJoints();
 }
 
 
@@ -873,7 +1136,7 @@ void BulletBody::setExtraJoints()
     int n = body->numExtraJoints();
 
     for(int j=0; j < n; ++j){
-        Body::ExtraJoint& extraJoint = body->extraJoint(j);
+        ExtraJoint& extraJoint = body->extraJoint(j);
         
         BulletLinkPtr bulletLinkPair[2];
         for(int i=0; i < 2; ++i){
@@ -897,7 +1160,7 @@ void BulletBody::setExtraJoints()
             Vector3 a = link0->Rs() * extraJoint.axis;        // link0 local axis
             Vector3 p1 = link1->Rs() * extraJoint.point[1];  // link1 local position
 
-            if(extraJoint.type == Body::EJ_PISTON){
+            if(extraJoint.type == ExtraJoint::EJ_PISTON){
                 Vector3 u(0,0,1);
                 Vector3 ty = a.cross(u);
                 btMatrix3x3 btR;
@@ -923,14 +1186,14 @@ void BulletBody::setExtraJoints()
 
                 btGeneric6DofConstraint* joint = new btGeneric6DofConstraint(*(bulletLinkPair[1]->body), *(bulletLinkPair[0]->body),
                                                                              bulletLinkPair[1]->invShift*frameA, bulletLinkPair[0]->invShift*frameB, false);
-                joint->setLinearLowerLimit(btVector3(0,0,1));  //Lowerlimit ・・Upperlimit 竊・axis is free
-                joint->setLinearUpperLimit(btVector3(0,0,-1));
+                //joint->setLinearLowerLimit(btVector3(0,0,1));  //Lowerlimit > Upperlimit -> axis is free
+                //joint->setLinearUpperLimit(btVector3(0,0,-1));
                 joint->setAngularLowerLimit(btVector3(0,0,1));  
                 joint->setAngularUpperLimit(btVector3(0,0,-1));    
                 joint->calculateTransforms();
                 dynamicsWorld->addConstraint(joint, true);
                 extraJoints.push_back(joint);
-            }else if(extraJoint.type == Body::EJ_BALL){
+            }else if(extraJoint.type == ExtraJoint::EJ_BALL){
                 btVector3 pivotInA(p0(0), p0(1), p0(2));
                 btVector3 pivotInB(p1(0), p1(1), p1(2));
                 btPoint2PointConstraint* joint = new btPoint2PointConstraint(*(bulletLinkPair[0]->body), *(bulletLinkPair[1]->body),
@@ -947,19 +1210,57 @@ void BulletBody::setKinematicStateToBullet()
     for(size_t i=0; i < bulletLinks.size(); ++i){
         bulletLinks[i]->setKinematicStateToBullet();
     }
+
+    if(multiBody){
+        btAlignedObjectArray<btQuaternion> scratch_q;
+        btAlignedObjectArray<btVector3> scratch_m;
+        multiBody->forwardKinematics(scratch_q,scratch_m);
+        btAlignedObjectArray<btQuaternion> world_to_local;
+        btAlignedObjectArray<btVector3> local_origin;
+        multiBody->updateCollisionObjectWorldTransforms(world_to_local,local_origin);
+#if DEBUG_OUT
+        btTransform bt = multiBody->getBaseWorldTransform();
+        std::cout << bt.getBasis()[0][0] << " " <<  bt.getBasis()[0][1] << " " << bt.getBasis()[0][2] << " " << bt.getOrigin()[0] <<std::endl;
+        std::cout << bt.getBasis()[1][0] << " " <<  bt.getBasis()[1][1] << " " << bt.getBasis()[1][2] << " " << bt.getOrigin()[1] <<std::endl;
+        std::cout << bt.getBasis()[2][0] << " " <<  bt.getBasis()[2][1] << " " << bt.getBasis()[2][2] << " " << bt.getOrigin()[2] <<std::endl;
+        for(size_t i=1; i < bulletLinks.size(); ++i){
+            btTransform t = multiBody->getLink(i-1).m_cachedWorldTransform;
+            std::cout << t.getBasis()[0][0] << " " <<  t.getBasis()[0][1] << " " << t.getBasis()[0][2] << " " << t.getOrigin()[0] <<std::endl;
+            std::cout << t.getBasis()[1][0] << " " <<  t.getBasis()[1][1] << " " << t.getBasis()[1][2] << " " << t.getOrigin()[1] <<std::endl;
+            std::cout << t.getBasis()[2][0] << " " <<  t.getBasis()[2][1] << " " << t.getBasis()[2][2] << " " << t.getOrigin()[2] <<std::endl;
+        }
+#endif
+    }
 }
 
 void BulletBody::getKinematicStateFromBullet()
 {
+    if(simImpl->self->isAllLinkPositionOutputMode() && multiBody){
+        btAlignedObjectArray<btQuaternion> scratch_q;
+        btAlignedObjectArray<btVector3> scratch_m;
+        multiBody->forwardKinematics(scratch_q,scratch_m);
+    }
+
     for(size_t i=0; i < bulletLinks.size(); ++i){
         bulletLinks[i]->getKinematicStateFromBullet();
     }
 }
 
-void BulletBody::setTorqueToBullet()
+void BulletBody::setControlValToBullet()
 {
     for(size_t i=1; i < bulletLinks.size(); ++i){
-        bulletLinks[i]->setTorqueToBullet();
+        switch(bulletLinks[i]->link->actuationMode()){
+        case Link::NO_ACTUATION :
+            break;
+        case Link::JOINT_TORQUE :
+            bulletLinks[i]->setTorqueToBullet();
+            break;
+        case Link::JOINT_VELOCITY :
+            bulletLinks[i]->setVelocityToBullet();
+            break;
+        default :
+            break;
+        }
     }
 }
 
@@ -969,32 +1270,37 @@ void BulletBody::updateForceSensors()
     for(size_t i=0; i < forceSensors.size(); ++i){
         ForceSensor* sensor = forceSensors[i];
         const Link* link = sensor->link();
-        btTypedConstraint* joint = bulletLinks[link->index()]->joint;
-        btJointFeedback* fb = joint->getJointFeedback();
         Vector3 f, tau;
-        if(link->isRotationalJoint()){
-            f   << fb->m_appliedForceBodyB.x(), fb->m_appliedForceBodyB.y(), fb->m_appliedForceBodyB.z();
-            tau << fb->m_appliedTorqueBodyB.x(),  fb->m_appliedTorqueBodyB.y(),  fb->m_appliedTorqueBodyB.z();
+        if(multiBody){
+            const btVector3& force = -multiBodyforceSensorFeedbacks[i]->m_reactionForces.m_topVec;//multiBody->getLinkForce(link->index()-1);
+            const btVector3& torque = -multiBodyforceSensorFeedbacks[i]->m_reactionForces.m_bottomVec;//multiBody->getLinkTorque(link->index()-1);
+            btMatrix3x3& shift_ = bulletLinks[link->index()]->shift.getBasis();
+            btVector3 f0 = shift_ * force;
+            btVector3 t0 = shift_ * torque;
+            f << f0.x(), f0.y(), f0.z();
+            tau << t0.x(), t0.y(), t0.z();
+            Vector3 tau0 = tau + link->c().cross(f);    //link base
+            const Matrix3 R =  sensor->R_local();
+            const Vector3 p =  sensor->p_local();
+            sensor->f()   = R.transpose() *  f;
+            sensor->tau() = R.transpose() * (tau0 - p.cross(f));    //sensor base
         }else{
-            f   << fb->m_appliedForceBodyA.x(), fb->m_appliedForceBodyA.y(), fb->m_appliedForceBodyA.z();
-            tau << fb->m_appliedTorqueBodyA.x(),  fb->m_appliedTorqueBodyA.y(),  fb->m_appliedTorqueBodyA.z();
+            btTypedConstraint* joint = bulletLinks[link->index()]->joint;
+            btJointFeedback* fb = joint->getJointFeedback();
+            if(link->isRotationalJoint()){
+                f   << fb->m_appliedForceBodyB.x(), fb->m_appliedForceBodyB.y(), fb->m_appliedForceBodyB.z();
+                tau << fb->m_appliedTorqueBodyB.x(),  fb->m_appliedTorqueBodyB.y(),  fb->m_appliedTorqueBodyB.z();
+            }else{
+                f   << fb->m_appliedForceBodyA.x(), fb->m_appliedForceBodyA.y(), fb->m_appliedForceBodyA.z();
+                tau << fb->m_appliedTorqueBodyA.x(),  fb->m_appliedTorqueBodyA.y(),  fb->m_appliedTorqueBodyA.z();
+            }
+            const Matrix3 R =  link->R() * sensor->R_local();
+            const Vector3 p = link->R() * sensor->p_local();
+            sensor->f()   = R.transpose() * f;
+            sensor->tau() = R.transpose() * (tau - p.cross(f));
         }
-       
-        const Matrix3 R = link->R() * sensor->R_local();
-        //const Vector3 p = link->p() + link->R() * sensor->p_local();
-        const Vector3 p = link->R() * sensor->p_local();
-        sensor->f()   = R.transpose() * f;
-        sensor->tau() = R.transpose() * (tau - p.cross(f));
+
         sensor->notifyStateChange();
-    }
-}
-
-
-void BulletBody::setVelocityToBullet()
-{
-    // Skip the root link
-    for(size_t i=1; i < bulletLinks.size(); ++i){
-        bulletLinks[i]->setVelocityToBullet();
     }
 }
 
@@ -1025,11 +1331,11 @@ BulletSimulatorItemImpl::BulletSimulatorItemImpl(BulletSimulatorItem* self)
     friction = DEFAULT_FRICTION;
     erp2 = DEFAULT_ERP2;
     splitImpulsePenetrationThreshold = DEFAULT_SPLITIMPULSEPENETRATIONTHRESHOLD;
-    useHACD = true;
+    useHACD = false;
     collisionMargin = DEFAULT_COLLISION_MARGIN;
+    usefeatherstoneAlgorithm = true;
 
     useWorldCollision = false;
-    velocityMode = false;
 }
 
 
@@ -1053,9 +1359,9 @@ BulletSimulatorItemImpl::BulletSimulatorItemImpl(BulletSimulatorItem* self, cons
     splitImpulsePenetrationThreshold = org.splitImpulsePenetrationThreshold;
     useHACD = org.useHACD;
     collisionMargin = org.collisionMargin;
+    usefeatherstoneAlgorithm = org.usefeatherstoneAlgorithm;
 
     useWorldCollision = org.useWorldCollision;
-    velocityMode = org.velocityMode;
 }
 
 void BulletSimulatorItemImpl::initialize()
@@ -1065,7 +1371,11 @@ void BulletSimulatorItemImpl::initialize()
     broadphase = 0;
     solver =0;
     dynamicsWorld = 0;
-    self->SimulatorItem::setAllLinkPositionOutputMode(true);
+
+    gContactAddedCallback = 0;
+
+    //self->SimulatorItem::setAllLinkPositionOutputMode(true);
+    geometryIdToLink.clear();
 }
 
 BulletSimulatorItem::~BulletSimulatorItem()
@@ -1079,14 +1389,14 @@ BulletSimulatorItemImpl::~BulletSimulatorItemImpl()
     clear();
 }
 
-
+/*
 void BulletSimulatorItem::setAllLinkPositionOutputMode(bool on)
 {
     // The mode is not changed.
     // This simulator only supports the all link position output
     // because joint positions may be slightly changed
 }
-
+*/
 
 Item* BulletSimulatorItem::doDuplicate() const
 {
@@ -1096,7 +1406,11 @@ Item* BulletSimulatorItem::doDuplicate() const
 
 SimulationBody* BulletSimulatorItem::createSimulationBody(Body* orgBody)
 {
-    return new BulletBody(*orgBody);
+    BulletBody* bulletBody = new BulletBody(*orgBody);
+//    if(bulletBody->haveCrawlerJoint())
+//        usefeatherstoneAlgorithm = false;
+
+    return bulletBody;
 }
 
 
@@ -1113,8 +1427,16 @@ bool BulletSimulatorItemImpl::initializeSimulation(const std::vector<SimulationB
     collisionConfiguration = new btDefaultCollisionConfiguration();
     dispatcher = new btCollisionDispatcher(collisionConfiguration);
     broadphase = new btDbvtBroadphase();
-    solver = new btSequentialImpulseConstraintSolver();
-    dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher,broadphase,solver,collisionConfiguration);
+
+    if(usefeatherstoneAlgorithm){
+        btMultiBodyConstraintSolver* solver_ = new btMultiBodyConstraintSolver;
+        solver = solver_;
+        dynamicsWorld = new btMultiBodyDynamicsWorld(dispatcher,broadphase,solver_,collisionConfiguration);
+    }else{
+        solver = new btSequentialImpulseConstraintSolver();
+        dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher,broadphase,solver,collisionConfiguration);
+        self->setAllLinkPositionOutputMode(true);
+    }
     if(useWorldCollision){
         collisionDetector = self->collisionDetector();
         collisionDetector->clearGeometries();
@@ -1123,11 +1445,17 @@ bool BulletSimulatorItemImpl::initializeSimulation(const std::vector<SimulationB
     btVector3 g(gravity.x(), gravity.y(), gravity.z());
     dynamicsWorld->setGravity(g);
     timeStep = self->worldTimeStep();
+
     setSolverParameter();
 
-    short group = 1;
+    short group,group0;
+    group = group0 = 1;
     for(size_t i=0; i < simBodies.size(); ++i){
-        addBody(static_cast<BulletBody*>(simBodies[i]), group<<i);
+        if(!simBodies[i]->bodyItem()->isSelfCollisionDetectionEnabled() && simBodies[i]->body()->numLinks() > 1)
+            group = group0<<1;
+        else
+            group = 1;
+        addBody(static_cast<BulletBody*>(simBodies[i]), group);
     }
 
     if(useWorldCollision)
@@ -1192,13 +1520,11 @@ bool BulletSimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>&
     for(size_t i=0; i < activeSimBodies.size(); ++i){
         BulletBody* bulletBody = static_cast<BulletBody*>(activeSimBodies[i]);
         bulletBody->body->setVirtualJointForces();
-        if(velocityMode)
-        	bulletBody->setVelocityToBullet();
-        else
-        	bulletBody->setTorqueToBullet();
+        bulletBody->setControlValToBullet();
     }
 
-    dynamicsWorld->stepSimulation(timeStep,2,timeStep/2.);
+    //dynamicsWorld->stepSimulation(timeStep,2,timeStep/2.);
+    dynamicsWorld->stepSimulation(timeStep,1,timeStep);
 
 #if DEBUG_OUT
     int numManifolds = dispatcher->getNumManifolds();
@@ -1223,10 +1549,13 @@ bool BulletSimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>&
 
     for(size_t i=0; i < activeSimBodies.size(); ++i){
         BulletBody* bulletBody = static_cast<BulletBody*>(activeSimBodies[i]);
+
+        bulletBody->getKinematicStateFromBullet();
+
         if(!bulletBody->sensorHelper.forceSensors().empty()){
             bulletBody->updateForceSensors();
         }
-        bulletBody->getKinematicStateFromBullet();
+
         if(bulletBody->sensorHelper.hasGyroOrAccelerationSensors()){
             bulletBody->sensorHelper.updateGyroAndAccelerationSensors();
         }
@@ -1255,7 +1584,7 @@ void BulletSimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("SplitImpulsePenetrationThreshold"), splitImpulsePenetrationThreshold, changeProperty(splitImpulsePenetrationThreshold));
     putProperty(_("use HACD"), useHACD, changeProperty(useHACD));
     putProperty(_("Collision Margin"), collisionMargin, changeProperty(collisionMargin));
-    putProperty(_("Velocity Control Mode"), velocityMode, changeProperty(velocityMode));
+    putProperty(_("use Featherstone Algorithm"), usefeatherstoneAlgorithm, changeProperty(usefeatherstoneAlgorithm));
 }
 
 
@@ -1277,7 +1606,7 @@ void BulletSimulatorItemImpl::store(Archive& archive)
     archive.write("SplitImpulsePenetrationThreshold", splitImpulsePenetrationThreshold);
     archive.write("useHACD", useHACD);
     archive.write("CollisionMargin", collisionMargin);
-    archive.write("velocityMode", velocityMode);
+    archive.write("usefeatherstoneAlgorithm", usefeatherstoneAlgorithm);
 }
 
 
@@ -1299,7 +1628,7 @@ void BulletSimulatorItemImpl::restore(const Archive& archive)
     archive.read("SplitImpulsePenetrationThreshold", splitImpulsePenetrationThreshold);
     archive.read("useHACD", useHACD);
     archive.read("CollisionMargin", collisionMargin);
-    archive.read("velocityMode", velocityMode);
+    archive.read("usefeatherstoneAlgorithm", usefeatherstoneAlgorithm);
 }
 
 void BulletSimulatorItemImpl::setSolverParameter()
@@ -1311,7 +1640,7 @@ void BulletSimulatorItemImpl::setSolverParameter()
         slvInfo.m_erp2 = erp2;
         slvInfo.m_splitImpulsePenetrationThreshold = splitImpulsePenetrationThreshold;
         
-        slvInfo.m_solverMode |= SOLVER_DISABLE_VELOCITY_DEPENDENT_FRICTION_DIRECTION+SOLVER_USE_2_FRICTION_DIRECTIONS;
+        slvInfo.m_solverMode |= SOLVER_DISABLE_VELOCITY_DEPENDENT_FRICTION_DIRECTION + SOLVER_USE_2_FRICTION_DIRECTIONS;
         slvInfo.m_solverMode |= SOLVER_ENABLE_FRICTION_DIRECTION_CACHING;
     }
 }

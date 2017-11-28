@@ -1,4 +1,3 @@
-
 # @author Shin'ichiro Nakaoka
 
 #set(CMAKE_BUILD_TYPE Debug)
@@ -257,9 +256,12 @@ if(UNIX)
 endif()
 apply_common_setting_for_plugin(${plugin} "${plugin_headers}")
 
-
 if(ENABLE_PYTHON)
-  add_subdirectory(python)
+  if(USE_PYBIND11)
+    add_subdirectory(pybind11)
+  elseif(USE_BOOST_PYTHON)
+    add_subdirectory(boostpython)
+  endif()
 endif()
 
 file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}/rtc)

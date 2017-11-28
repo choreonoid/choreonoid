@@ -114,4 +114,13 @@ void calcMassMatrix(const BodyPtr& body, MatrixXd& out_M)
     const Vector3 g(0, 0, 9.8);
     calcMassMatrix(body, g, out_M);
 }
+
+
+void calcMassMatrix(Body* body, MatrixXd& out_M)
+{
+    const Vector3 g(0, 0, 9.8);
+    calcMassMatrix(body, g, out_M);
 }
+
+}
+

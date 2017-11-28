@@ -1,4 +1,3 @@
-
 # @author Shin'ichiro Nakaoka
 
 if(APPLE)
@@ -78,5 +77,9 @@ endif()
 message(STATUS "libraries = ${libraries}")
 
 if(ENABLE_PYTHON)
-  add_subdirectory(python)
+  if(USE_PYBIND11)
+    add_subdirectory(pybind11)
+  elseif(USE_BOOST_PYTHON)
+    add_subdirectory(boostpython)
+  endif()
 endif()

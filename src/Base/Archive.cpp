@@ -9,6 +9,7 @@
 #include <cnoid/ExecutablePath>
 #include <cnoid/Referenced>
 #include <cnoid/FileUtil>
+#include <cnoid/UTF8>
 #include <QRegExp>
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
@@ -296,9 +297,7 @@ std::string Archive::resolveRelocatablePath(const std::string& relocatable) cons
     } else {
         filesystem::path fullPath = shared->projectDirPath / path;
         if(!path.empty() && (*path.begin() == "..")){
-            filesystem::path compact;
-            makePathCompact(fullPath, compact);
-            return getNativePathString(compact);
+            return getNativePathString(getCompactPath(fullPath));
         } else {
             return getNativePathString(fullPath);
         }

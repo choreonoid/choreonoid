@@ -5,13 +5,15 @@
 #include "GrxUIPlugin.h"
 #include "GrxUIMenuView.h"
 #include <cnoid/PyUtil>
-#include <cnoid/PythonPlugin>
 #include <cnoid/MenuManager>
 #include <cnoid/AppConfig>
+
+#ifdef CNOID_USE_PYBIND11
+#include <pybind11/eval.h>
+#endif
+
 #include "gettext.h"
 
-namespace stdph = std::placeholders;
-namespace python = boost::python;
 using namespace cnoid;
 
 namespace {
@@ -51,8 +53,7 @@ bool GrxUIPlugin::initialize()
         importGrxUICheck->setChecked(on);
         onImportGrxUICheckToggled(on, false);
     }
-    importGrxUICheck->sigToggled().connect(
-        std::bind(&GrxUIPlugin::onImportGrxUICheckToggled, this, stdph::_1, true));
+    importGrxUICheck->sigToggled().connect([&](bool on){ onImportGrxUICheckToggled(on, true); });
 
     return true;
 }
@@ -61,10 +62,10 @@ bool GrxUIPlugin::initialize()
 void GrxUIPlugin::onImportGrxUICheckToggled(bool on, bool doWriteConfig)
 {
     if(on){
-        PyGILock lock;
-        python::object grxuiModule = python::import("cnoid.grxui");
+        python::gil_scoped_acquire lock;
+        python::object grxuiModule = python::module::import("cnoid.grxui");
         if(!grxuiModule.is_none()){
-            python::exec("from cnoid.grxui import *", cnoid::pythonMainNamespace());
+            python::exec("from cnoid.grxui import *", python::module::import("__main__").attr("__dict__"));
         }
     }
     if(doWriteConfig){
@@ -79,6 +80,5 @@ bool GrxUIPlugin::finalize()
     isActive_ = false;
     return true;
 }
-
 
 CNOID_IMPLEMENT_PLUGIN_ENTRY(GrxUIPlugin);

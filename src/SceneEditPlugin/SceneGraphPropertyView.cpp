@@ -1,7 +1,7 @@
 /**
    @author Shizuko Hattori
-   //ItemPropertyView.cppを元に編集 //
-   */
+   This is implemented based on ItemPropertyView.cpp
+*/
 
 #include "SceneGraphPropertyView.h"
 #include "SceneGraphView.h"
@@ -121,7 +121,7 @@ public:
         return editor;
     }
 
-    virtual QString	displayText(const QVariant& value, const QLocale& locale) const {
+    virtual QString displayText(const QVariant& value, const QLocale& locale) const {
         if(value.type() == QVariant::Double){
             return QString::number(value.toDouble(), 'f', decimals);
         }
@@ -483,6 +483,12 @@ void SceneGraphPropertyViewImpl::setProperty(SgMesh* mesh)
             addProperty(_("height"), new PropertyItem(this,Double(cone.height,3)));
             addProperty(_("bottom"), new PropertyItem(this,cone.bottom));
             addProperty(_("side"), new PropertyItem(this,cone.side));
+            break; }
+        case SgMesh::CAPSULE :{
+            addProperty(_("primitive type"), new PropertyItem(this, string("Capsule")));
+            SgMesh::Capsule capsule = mesh->primitive<SgMesh::Capsule>();
+            addProperty(_("radius"), new PropertyItem(this,Double(capsule.radius,3)));
+            addProperty(_("height"), new PropertyItem(this,Double(capsule.height,3)));
             break; }
         }
 }

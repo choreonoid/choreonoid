@@ -19,20 +19,18 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/misc/submersible.wrl"
+            modelFile: "${SHARE}/model/misc/submersible.body"
             currentBaseLink: "CHASSIS"
-            rootPosition: [ -1.01277568, 3.21535077, 0.683205539 ]
+            rootPosition: [ -2, -0.8, 0.6 ]
             rootAttitude: [ 
-              6.123234e-17, 1, 0, 
-              -1, 6.123234e-17, 0, 
+              1, 0, 0, 
+              0, 1, 0, 
               0, 0, 1 ]
-            jointPositions: [  ]
-            initialRootPosition: [ -1.01277568, 3.21535077, 0.683205539 ]
+            initialRootPosition: [ -2, -0.8, 0.6 ]
             initialRootAttitude: [ 
-              2.22044605e-16, 1, 0, 
-              -1, 2.22044605e-16, -0, 
-              -0, 0, 1 ]
-            initialJointPositions: [  0.000000 ]
+              1, 0, 0, 
+              0, 1, 0, 
+              0, 0, 1 ]
             zmp: [ 0, 0, 0 ]
             collisionDetection: true
             selfCollisionDetection: false
@@ -51,7 +49,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/Labo1/Labo1.wrl"
+            modelFile: "${SHARE}/model/Labo1/Labo1.body"
             currentBaseLink: "Base"
             rootPosition: [ 0, 0, 0 ]
             rootAttitude: [ 
@@ -84,6 +82,7 @@ items:
           plugin: Body
           class: AISTSimulatorItem
           data: 
+            timestep: 0.005
             realtimeSync: true
             recording: tail
             timeRangeMode: Active control period
@@ -144,16 +143,16 @@ views:
     class: SceneView
     mounted: true
     state: 
-      editMode: true
+      editMode: false
       viewpointControlMode: thirdPerson
       collisionLines: false
       polygonMode: fill
       defaultHeadLight: false
       defaultHeadLightIntensity: 0.75
       headLightLightingFromBack: false
-      worldLight: false
-      worldLightIntensity: 0.5
-      worldLightAmbient: 0.3
+      worldLight: true
+      worldLightIntensity: 0.3
+      worldLightAmbient: 0.1
       additionalLights: true
       fog: true
       floorGrid: false
@@ -179,23 +178,23 @@ views:
           isCurrent: true
           fieldOfView: 0.6978
           near: 0.01
-          far: 100
-          eye: [ -3.35748269, 4.67762711, 1.54808392 ]
-          direction: [ 0.681461578, -0.727329593, -0.0812513479 ]
-          up: [ 0.0555533509, -0.0592925521, 0.996693643 ]
+          far: 1000
+          eye: [ -3.35237326, -1.76568689, 1.5591039 ]
+          direction: [ 0.815202718, 0.513427567, -0.268023623 ]
+          up: [ 0.226791351, 0.14283678, 0.96341234 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
           near: 0.01
-          far: 100
+          far: 1000
         - 
           camera: BodyTrackingCamera (Perspective)
           fieldOfView: 0.785398
           near: 0.01
-          far: 100
-          eye: [ -0.999327867, 4.93834463, 1.34142138 ]
-          direction: [ -0.00975881164, -0.975848656, -0.218229618 ]
-          up: [ -0.00218225976, -0.218218707, 0.97589745 ]
+          far: 1000
+          eye: [ -3.72299386, -0.786552187, 1.45821584 ]
+          direction: [ 0.975848656, -0.00975881164, -0.218229618 ]
+          up: [ 0.218218707, -0.00218225976, 0.97589745 ]
         - 
           camera: BodyTrackingCamera (Orthographic)
           orthoHeight: 2
@@ -220,9 +219,9 @@ views:
       defaultHeadLight: false
       defaultHeadLightIntensity: 0.75
       headLightLightingFromBack: false
-      worldLight: false
-      worldLightIntensity: 0.5
-      worldLightAmbient: 0.3
+      worldLight: true
+      worldLightIntensity: 0.3
+      worldLightAmbient: 0.1
       additionalLights: true
       fog: true
       floorGrid: false
@@ -247,7 +246,7 @@ views:
           camera: [ System, Perspective ]
           fieldOfView: 0.6978
           near: 0.01
-          far: 100
+          far: 1000
           eye: [ 3.74000443, 2.54011419, 1.8281897 ]
           direction: [ -0.752805236, -0.613319567, -0.239004988 ]
           up: [ -0.185294344, -0.150961552, 0.97101834 ]
@@ -255,21 +254,21 @@ views:
           camera: [ System, Orthographic ]
           orthoHeight: 20
           near: 0.01
-          far: 100
+          far: 1000
         - 
           camera: BodyTrackingCamera (Perspective)
           isCurrent: true
           fieldOfView: 0.785398
           near: 0.01
-          far: 100
-          eye: [ -0.999327867, 4.93834463, 1.34142138 ]
-          direction: [ -0.00975881164, -0.975848656, -0.218229618 ]
-          up: [ -0.00218225976, -0.218218707, 0.97589745 ]
+          far: 1000
+          eye: [ -3.72299386, -0.786552187, 1.45821584 ]
+          direction: [ 0.975848656, -0.00975881164, -0.218229618 ]
+          up: [ 0.218218707, -0.00218225976, 0.97589745 ]
         - 
           camera: BodyTrackingCamera (Orthographic)
           orthoHeight: 2
           near: 0.01
-          far: 100
+          far: 1000
       backgroundColor: [ 0.41568628, 0.447058827, 1 ]
       gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]

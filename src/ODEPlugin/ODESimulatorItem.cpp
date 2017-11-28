@@ -116,8 +116,7 @@ public:
     void createBody(ODESimulatorItemImpl* simImpl);
     void setExtraJoints(bool flipYZ);
     void setKinematicStateToODE(bool flipYZ);
-    void setTorqueToODE();
-    void setVelocityToODE();
+    void setControlValToODE();
     void getKinematicStateFromODE(bool flipYZ);
     void updateForceSensors(bool flipYZ);
     void alignToZAxisIn2Dmode();
@@ -156,7 +155,6 @@ public:
     double surfaceLayerDepth;
     bool useWorldCollision;
     CollisionDetectorPtr collisionDetector;
-    bool velocityMode;
 
     double physicsTime;
     QElapsedTimer physicsTimer;
@@ -271,7 +269,7 @@ void ODELink::createLinkBody(ODESimulatorItemImpl* simImpl, dWorldID worldID, OD
                 dJointSetHingeParam(jointID, dParamLoStop, link->q_lower());
             }
         }
-        if(simImpl->velocityMode){
+        if(link->actuationMode() == Link::JOINT_VELOCITY){
         	if(!USE_AMOTOR){
 #ifdef GAZEBO_ODE
 				dJointSetHingeParam(jointID, dParamFMax, 100);   //???
@@ -308,7 +306,7 @@ void ODELink::createLinkBody(ODESimulatorItemImpl* simImpl, dWorldID worldID, OD
                 dJointSetSliderParam(jointID, dParamLoStop, link->q_lower());
             }
         }
-        if(simImpl->velocityMode){
+        if(link->actuationMode() == Link::JOINT_VELOCITY){
         	dJointSetSliderParam(jointID, dParamFMax, numeric_limits<dReal>::max() );
   			dJointSetSliderParam(jointID, dParamFudgeFactor, 1 );
         }
@@ -394,7 +392,8 @@ void ODELink::addMesh(MeshExtractor* extractor, ODEBody* odeBody)
                     if(scale.x() == scale.y() && scale.x() == scale.z()){
                         doAddPrimitive = true;
                     }
-                } else if(mesh->primitiveType() == SgMesh::CYLINDER){
+                } else if(mesh->primitiveType() == SgMesh::CYLINDER ||
+                          mesh->primitiveType() == SgMesh::CAPSULE ){
                     // check if the bottom circle face is uniformly scaled
                     if(scale.x() == scale.z()){
                         doAddPrimitive = true;
@@ -421,6 +420,11 @@ void ODELink::addMesh(MeshExtractor* extractor, ODEBody* odeBody)
                 geomId = dCreateCylinder(odeBody->spaceID, cylinder.radius * scale.x(), cylinder.height * scale.y());
                 created = true;
                 break; }
+            case SgMesh::CAPSULE : {
+                SgMesh::Capsule capsule = mesh->primitive<SgMesh::Capsule>();
+                geomId = dCreateCapsule(odeBody->spaceID, capsule.radius * scale.x(), capsule.height * scale.y());
+                created = true;
+                break; }
             default :
                 break;
             }
@@ -431,7 +435,8 @@ void ODELink::addMesh(MeshExtractor* extractor, ODEBody* odeBody)
                 if(translation){
                     T_ *= Translation3(*translation);
                 }
-                if(mesh->primitiveType()==SgMesh::CYLINDER)
+                if(mesh->primitiveType()==SgMesh::CYLINDER ||
+                        mesh->primitiveType()==SgMesh::CAPSULE )
                     T_ *= AngleAxis(radian(90), Vector3::UnitX());
                 Vector3 p = T_.translation()-link->c();
                 dMatrix3 R = { T_(0,0), T_(0,1), T_(0,2), 0.0,
@@ -688,7 +693,7 @@ void ODEBody::createBody(ODESimulatorItemImpl* simImpl)
         dJointAttach(planeJointID, rootLink->bodyID, 0);
     }
     
-    setTorqueToODE();
+    setControlValToODE();
 
     sensorHelper.initialize(body, simImpl->timeStep, simImpl->gravity);
 
@@ -708,7 +713,7 @@ void ODEBody::setExtraJoints(bool flipYZ)
 
     for(int j=0; j < n; ++j){
 
-        Body::ExtraJoint& extraJoint = body->extraJoint(j);
+        ExtraJoint& extraJoint = body->extraJoint(j);
 
         ODELinkPtr odeLinkPair[2];
         for(int i=0; i < 2; ++i){
@@ -737,13 +742,13 @@ void ODEBody::setExtraJoints(bool flipYZ)
             }
 
             // \todo do the destroy management for these joints
-            if(extraJoint.type == Body::EJ_PISTON){
+            if(extraJoint.type == ExtraJoint::EJ_PISTON){
                 jointID = dJointCreatePiston(worldID, 0);
                 dJointAttach(jointID, odeLinkPair[0]->bodyID, odeLinkPair[1]->bodyID);
                 dJointSetPistonAnchor(jointID, p.x(), p.y(), p.z());
                 dJointSetPistonAxis(jointID, a.x(), a.y(), a.z());
 
-            } else if(extraJoint.type == Body::EJ_BALL){
+            } else if(extraJoint.type == ExtraJoint::EJ_BALL){
                 jointID = dJointCreateBall(worldID, 0);
                 dJointAttach(jointID, odeLinkPair[0]->bodyID, odeLinkPair[1]->bodyID);
                 dJointSetBallAnchor(jointID, p.x(), p.y(), p.z());
@@ -767,21 +772,23 @@ void ODEBody::setKinematicStateToODE(bool flipYZ)
 }
 
 
-void ODEBody::setTorqueToODE()
+void ODEBody::setControlValToODE()
 {
     // Skip the root link
     for(size_t i=1; i < odeLinks.size(); ++i){
-        odeLinks[i]->setTorqueToODE();
-    }
-}
-
-
-void ODEBody::setVelocityToODE()
-{
-    // Skip the root link
-    for(size_t i=1; i < odeLinks.size(); ++i){
-        odeLinks[i]->setVelocityToODE();
-    }
+        switch(odeLinks[i]->link->actuationMode()){
+        case Link::NO_ACTUATION :
+            break;
+        case Link::JOINT_TORQUE :
+            odeLinks[i]->setTorqueToODE();
+            break;
+        case Link::JOINT_VELOCITY :
+            odeLinks[i]->setVelocityToODE();
+            break;
+        default :
+            break;
+        }
+     }
 }
 
 
@@ -886,7 +893,6 @@ ODESimulatorItemImpl::ODESimulatorItemImpl(ODESimulatorItem* self)
     is2Dmode = false;
     flipYZ = false;
     useWorldCollision = false;
-    velocityMode = false;
 }
 
 
@@ -916,7 +922,6 @@ ODESimulatorItemImpl::ODESimulatorItemImpl(ODESimulatorItem* self, const ODESimu
     is2Dmode = org.is2Dmode;
     flipYZ = org.flipYZ;
     useWorldCollision = org.useWorldCollision;
-    velocityMode = org.velocityMode;
 }
 
 
@@ -1236,10 +1241,9 @@ bool ODESimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& ac
 	for(size_t i=0; i < activeSimBodies.size(); ++i){
         ODEBody* odeBody = static_cast<ODEBody*>(activeSimBodies[i]);
         odeBody->body()->setVirtualJointForces();
-        if(velocityMode)
-        	odeBody->setVelocityToODE();
-        else
-        	odeBody->setTorqueToODE();
+        if(odeBody->worldID){
+            odeBody->setControlValToODE();
+        }
     }
 
 	if(MEASURE_PHYSICS_CALCULATION_TIME){
@@ -1280,17 +1284,18 @@ bool ODESimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& ac
     for(size_t i=0; i < activeSimBodies.size(); ++i){
         ODEBody* odeBody = static_cast<ODEBody*>(activeSimBodies[i]);
 
-
-        // Move the following code to the ODEBody class
-        if(is2Dmode){
-            odeBody->alignToZAxisIn2Dmode();
-        }
-        if(!odeBody->sensorHelper.forceSensors().empty()){
-            odeBody->updateForceSensors(flipYZ);
-        }
-        odeBody->getKinematicStateFromODE(flipYZ);
-        if(odeBody->sensorHelper.hasGyroOrAccelerationSensors()){
-            odeBody->sensorHelper.updateGyroAndAccelerationSensors();
+        if(odeBody->worldID){
+			// Move the following code to the ODEBody class
+			if(is2Dmode){
+				odeBody->alignToZAxisIn2Dmode();
+			}
+			if(!odeBody->sensorHelper.forceSensors().empty()){
+				odeBody->updateForceSensors(flipYZ);
+			}
+			odeBody->getKinematicStateFromODE(flipYZ);
+			if(odeBody->sensorHelper.hasGyroOrAccelerationSensors()){
+				odeBody->sensorHelper.updateGyroAndAccelerationSensors();
+			}
         }
     }
 
@@ -1383,7 +1388,7 @@ void ODESimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Step mode"), stepMode, changeProperty(stepMode));
 
-    putProperty(_("Gravity"), str(gravity), std::bind(toVector3, _1, std::ref(gravity)));
+    putProperty(_("Gravity"), str(gravity), [&](const string& v){ return toVector3(v, gravity); });
 
     putProperty.decimals(2).min(0.0)
         (_("Friction"), friction, changeProperty(friction));
@@ -1411,8 +1416,6 @@ void ODESimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 
     putProperty(_("Use WorldItem's Collision Detector"), useWorldCollision, changeProperty(useWorldCollision));
 
-    putProperty(_("Velocity Control Mode"), velocityMode, changeProperty(velocityMode));
-
 }
 
 
@@ -1438,7 +1441,6 @@ void ODESimulatorItemImpl::store(Archive& archive)
     archive.write("maxCorrectingVel", maxCorrectingVel);
     archive.write("2Dmode", is2Dmode);
     archive.write("UseWorldItem'sCollisionDetector", useWorldCollision);
-    archive.write("velocityMode", velocityMode);
 }
 
 
@@ -1467,5 +1469,4 @@ void ODESimulatorItemImpl::restore(const Archive& archive)
     maxCorrectingVel = archive.get("maxCorrectingVel", maxCorrectingVel.string());
     archive.read("2Dmode", is2Dmode);
     archive.read("UseWorldItem'sCollisionDetector", useWorldCollision);
-    archive.read("velocityMode", velocityMode);
 }

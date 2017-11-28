@@ -20,10 +20,12 @@ set(target CnoidHrpsys31Plugin)
 set(sources
   Hrpsys31Plugin.cpp
   Hrpsys31Item.cpp
+  RTMPointCloudIOItem.cpp
   )
 
 set(headers
   Hrpsys31Item.h
+  RTMPointCloudIOItem.h
   )
 
 idl_compile_cpp(idl_cpp_files idl_h_files corba/hrpsys

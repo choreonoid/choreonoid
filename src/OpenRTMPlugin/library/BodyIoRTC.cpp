@@ -3,7 +3,7 @@
    \author Shin'ichiro Nakaoka
 */
 
-#include"BodyIoRTC.h"
+#include "BodyIoRTC.h"
 
 using namespace std;
 using namespace cnoid;

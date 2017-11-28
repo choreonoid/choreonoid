@@ -6,8 +6,8 @@
 #define CNOID_BASE_ITEM_TREE_VIEW_H
 
 #include "ItemList.h"
-#include <cnoid/View>
-#include <QAbstractItemModel>
+#include "View.h"
+#include <QModelIndex>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -15,11 +15,7 @@ namespace cnoid {
 class RootItem;
 class ItemTreeViewImpl;
 
-/**
-   @if jp
-   アイテムツリーを表示するウィンドウ
-   @endif
-*/
+
 class CNOID_EXPORT ItemTreeView : public View
 {
     Q_OBJECT
@@ -27,7 +23,7 @@ class CNOID_EXPORT ItemTreeView : public View
 public:
     static void initializeClass(ExtensionManager* ext);
     static ItemTreeView* instance();
-    static ItemTreeView* mainInstance(); // obsolete
+    static ItemTreeView* mainInstance(); // deprecated
 
     ItemTreeView();
     ItemTreeView(RootItem* rootItem, bool showRoot = false);
@@ -38,9 +34,7 @@ public:
     void showRoot(bool show);
 
     /**
-       @if jp
-       選択状態になっているアイテムのうち、指定した型に適合するものを取得する。
-       @endif
+       This function returns the specific type items that are selected in the ItemTreeView
     */
     template <class ItemType> inline ItemList<ItemType> selectedItems() {
         return allSelectedItems();
@@ -56,18 +50,16 @@ public:
     }
 
     /**
-       @if jp
-       topItem 以下のサブツリーにおける選択状態アイテムのリストを得る。
-       topItem は選択されていてもリストには含まれない。
-       @endif
+       This functions returns the specific type items that are selected in the sub tree of the topItem.
+       The topItem itself is not included in the return value list.
     */
-    template <class ItemType> inline ItemList<ItemType> selectedSubItems(ItemPtr topItem) {
+    template <class ItemType> inline ItemList<ItemType> selectedSubItems(Item* topItem) {
         ItemList<> items;
         extractSelectedItemsOfSubTree(topItem, items);
         return items;
     }
 
-    template <class ItemType> inline ItemType* selectedSubItem(ItemPtr topItem, bool fromMultiItems = false) {
+    template <class ItemType> inline ItemType* selectedSubItem(Item* topItem, bool fromMultiItems = false) {
         return selectedSubItems<ItemType>(topItem).toSingle(fromMultiItems);
     }
         
@@ -90,51 +82,42 @@ public:
     void releaseCheckColumn(int id);
 
     /**
-       @if jp
-       チェック状態になっているアイテムのうち、指定した型に適合するものを取得する。
-       @endif
+       This functions returns the specific type items that are checked in the ItemTreeView
     */
     template <class ItemType> inline ItemList<ItemType> checkedItems(int id = 0) {
         return allCheckedItems(id);
     }
 
-    bool isItemChecked(ItemPtr item, int id = 0);
-    bool checkItem(ItemPtr item, bool check = true, int id = 0);
+    bool isItemChecked(Item* item, int id = 0);
+    bool checkItem(Item* item, bool check = true, int id = 0);
 
     /**
-       @if jp
-       アイテムの選択状態が変化したときに発行されるシグナル。
-       @endif
+       The signal that is emitted when the item selection state is changed.
     */
     SignalProxy<void(const ItemList<>&)> sigSelectionChanged();
 
     /**
-       @if jp
-       アイテムの選択状態が変化したか、ツリーの構造が変化したときに発行されるシグナル。
-       アイテム間の親子関係もみるようなハンドラはこのシグナルと接続するとよい。
-       @endif
+       The signal that is emitted when the item selection state or the tree structure is changed.
     */
     SignalProxy<void(const ItemList<>&)> sigSelectionOrTreeChanged();
     
     SignalProxy<void(Item* item, bool isChecked)> sigCheckToggled(int id = 0);
 
-    SignalProxy<void(bool isChecked)> sigCheckToggled(Item* targetItem, int id = 0);
+    SignalProxy<void(bool isChecked)> sigCheckToggled(Item* item, int id = 0);
 
     void cutSelectedItems();
 
 protected:
-
     virtual bool storeState(Archive& archive) override;
     virtual bool restoreState(const Archive& archive) override;
 
 private:
-
     ItemTreeViewImpl* impl;
 
     void construct(RootItem* rootItem, bool showRoot);
     ItemList<>& allSelectedItems();
     ItemList<>& allCheckedItems(int id);
-    void extractSelectedItemsOfSubTree(ItemPtr topItem, ItemList<>& items);
+    void extractSelectedItemsOfSubTree(Item* topItem, ItemList<>& items);
 
 private Q_SLOTS:
     void onRowsAboutToBeRemoved(const QModelIndex& parent, int start, int end);

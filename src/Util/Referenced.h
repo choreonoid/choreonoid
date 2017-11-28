@@ -64,40 +64,42 @@ class Referenced
     template<class Y> friend class weak_ref_ptr;
     template<class Y> friend class ref_ptr;
 
-protected:
-    Referenced() : refCount_(0), weakCounter_(0) { }
-    Referenced(const Referenced& org) : refCount_(0), weakCounter_(0) { }
-
-public:
-    virtual ~Referenced() {
-        if(weakCounter_){
-            weakCounter_->setDestructed();
-        }
-    }
-
+    mutable std::atomic<int> refCount_;
+    WeakCounter* weakCounter_;
+            
     void addRef() const {
         refCount_.fetch_add(1, std::memory_order_relaxed);
     }
+
     void releaseRef() const {
         if(refCount_.fetch_sub(1, std::memory_order_release) == 1) {
             std::atomic_thread_fence(std::memory_order_acquire);
             delete this;
         }
     }
-private:
-    mutable std::atomic<int> refCount_;
-            
-protected:
-    int refCount() const { return refCount_.load(std::memory_order_relaxed); }
 
-private:
-    WeakCounter* weakCounter_;
-        
+    void decrementRef() const {
+        refCount_.fetch_sub(1, std::memory_order_release);
+    }
+    
     WeakCounter* weakCounter(){
         if(!weakCounter_){
             weakCounter_ = new WeakCounter();
         }
         return weakCounter_;
+    }
+
+protected:
+    Referenced() : refCount_(0), weakCounter_(0) { }
+    Referenced(const Referenced& org) : refCount_(0), weakCounter_(0) { }
+
+    int refCount() const { return refCount_.load(std::memory_order_relaxed); }
+    
+public:
+    virtual ~Referenced() {
+        if(weakCounter_){
+            weakCounter_->setDestructed();
+        }
     }
 };
 
@@ -167,8 +169,17 @@ public:
     }
 
     // explicit conversion to the raw pointer
-    T* get() const{
+    T* get() const {
         return px;
+    }
+
+    T* retn(){
+        T* p = px;
+        if(px != 0){
+            px->decrementRef();
+            px = 0;
+        }
+        return p;
     }
 
     // implict conversion to the raw pointer

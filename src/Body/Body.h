@@ -8,7 +8,9 @@
 
 #include "LinkTraverse.h"
 #include "Link.h"
+#include "ExtraJoint.h"
 #include "DeviceList.h"
+#include "MassMatrix.h"
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -93,6 +95,18 @@ public:
         return jointIdToLinkArray[id];
     }
 
+    class JointAccessor {
+        typedef std::vector<LinkPtr> Container;
+        Container& joints;
+        size_t size;
+    public:
+        JointAccessor(std::vector<LinkPtr>& joints, size_t size) : joints(joints), size(size) { }
+        Container::iterator begin() { return joints.begin(); }
+        Container::iterator end() { return joints.begin() + size; }
+    };
+
+    JointAccessor joints() { return JointAccessor(jointIdToLinkArray, numActualJoints); }
+
     /**
        The number of all the links the body has.
        The value corresponds to the size of the sequence obtained by link() function.
@@ -161,7 +175,7 @@ public:
     void addDevice(Device* device);
     void initializeDeviceStates();
     void clearDevices();
-        
+
     /**
        This function returns true when the whole body is a static, fixed object like a floor.
     */
@@ -187,15 +201,6 @@ public:
     }
         
     void clearExternalForces();
-
-    enum ExtraJointType { EJ_PISTON, EJ_BALL };
-
-    struct ExtraJoint {
-        ExtraJointType type;
-        Vector3 axis;
-        Link* link[2];
-        Vector3 point[2];
-    };
 
     int numExtraJoints() const { return extraJoints_.size(); }
     ExtraJoint& extraJoint(int index) { return extraJoints_[index]; }
@@ -227,7 +232,7 @@ public:
     }
 
     bool getCaches(PolymorphicReferencedArrayBase<>& out_caches, std::vector<std::string>& out_names) const;
-            
+
     void removeCache(const std::string& name);
 
     BodyCustomizerHandle customizerHandle() const;

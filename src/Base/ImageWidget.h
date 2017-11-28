@@ -40,6 +40,7 @@ public:
     void rotate(double angle);
     void reset();
     Image& getImage();
+    void clear();
     std::mutex mtx;
 
   protected:

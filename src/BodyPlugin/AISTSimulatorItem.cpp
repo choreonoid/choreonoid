@@ -26,12 +26,10 @@
 #include <cnoid/IdPair>
 #include <boost/lexical_cast.hpp>
 #include <mutex>
-#include <iostream>
 #include <iomanip>
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 using boost::format;
 
@@ -84,12 +82,14 @@ public:
     AISTSimulatorItem* self;
 
     World<ConstraintForceSolver> world;
+
+    vector<shared_ptr<ForwardDynamicsCBM>> highGainDynamicsList;
         
     Selection dynamicsMode;
     Selection integrationMode;
     Vector3 gravity;
     double staticFriction;
-    double slipFriction;
+    double dynamicFriction;
     FloatingNumberString contactCullingDistance;
     FloatingNumberString contactCullingDepth;
     FloatingNumberString errorCriterion;
@@ -110,7 +110,7 @@ public:
     struct ContactAttribute
     {
         boost::optional<double> staticFriction;
-        boost::optional<double> slipFriction;
+        boost::optional<double> dynamicFriction;
         boost::optional<int> collisionHandlerId;
     };
 
@@ -131,6 +131,8 @@ public:
     void setForcedPosition(BodyItem* bodyItem, const Position& T);
     void doSetForcedPosition();
     void doPutProperties(PutPropertyFunction& putProperty);
+    void addExtraJoint(ExtraJoint& extrajoint);
+    void clearExtraJoint();
     bool store(Archive& archive);
     bool restore(const Archive& archive);
 
@@ -161,7 +163,6 @@ AISTSimulatorItemImpl::AISTSimulatorItemImpl(AISTSimulatorItem* self)
       integrationMode(AISTSimulatorItem::N_INTEGRATION_MODES, CNOID_GETTEXT_DOMAIN_NAME)
 {
     dynamicsMode.setSymbol(AISTSimulatorItem::FORWARD_DYNAMICS,  N_("Forward dynamics"));
-    dynamicsMode.setSymbol(AISTSimulatorItem::HG_DYNAMICS,       N_("High-gain dynamics"));
     dynamicsMode.setSymbol(AISTSimulatorItem::KINEMATICS,        N_("Kinematics"));
 
     integrationMode.setSymbol(AISTSimulatorItem::EULER_INTEGRATION,  N_("Euler"));
@@ -172,7 +173,7 @@ AISTSimulatorItemImpl::AISTSimulatorItemImpl(AISTSimulatorItem* self)
 
     ConstraintForceSolver& cfs = world.constraintForceSolver;
     staticFriction = cfs.staticFriction();
-    slipFriction = cfs.slipFriction();
+    dynamicFriction = cfs.slipFriction();
     contactCullingDistance = cfs.contactCullingDistance();
     contactCullingDepth = cfs.contactCullingDepth();
     epsilon = cfs.coefficientOfRestitution();
@@ -203,7 +204,7 @@ AISTSimulatorItemImpl::AISTSimulatorItemImpl(AISTSimulatorItem* self, const AIST
 {
     gravity = org.gravity;
     staticFriction = org.staticFriction;
-    slipFriction = org.slipFriction;
+    dynamicFriction = org.dynamicFriction;
     contactCullingDistance = org.contactCullingDistance;
     contactCullingDepth = org.contactCullingDepth;
     errorCriterion = org.errorCriterion;
@@ -254,18 +255,30 @@ AISTSimulatorItemImpl::getOrCreateContactAttribute(Link* link1, Link* link2)
 }
         
 
-void AISTSimulatorItem::setFriction(double staticFriction, double slipFriction)
+void AISTSimulatorItem::setFriction(double staticFriction, double dynamicFriction)
 {
     impl->staticFriction = staticFriction;
-    impl->slipFriction = slipFriction;
+    impl->dynamicFriction = dynamicFriction;
 }
 
 
-void AISTSimulatorItem::setFriction(Link* link1, Link* link2, double staticFriction, double slipFriction)
+double AISTSimulatorItem::staticFriction() const
+{
+    return impl->staticFriction;
+}
+
+
+double AISTSimulatorItem::dynamicFriction() const
+{
+    return impl->dynamicFriction;
+}
+
+
+void AISTSimulatorItem::setFriction(Link* link1, Link* link2, double staticFriction, double dynamicFriction)
 {
     AISTSimulatorItemImpl::ContactAttribute& attr = impl->getOrCreateContactAttribute(link1, link2);
     attr.staticFriction = staticFriction;
-    attr.slipFriction = slipFriction;
+    attr.dynamicFriction = dynamicFriction;
 }
 
 
@@ -423,20 +436,26 @@ bool AISTSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBod
     cfs.setContactDepthCorrection(
         contactCorrectionDepth.value(), contactCorrectionVelocityRatio.value());
 
-    self->addPreDynamicsFunction(std::bind(&AISTSimulatorItemImpl::clearExternalForces, this));
+    self->addPreDynamicsFunction([&](){ clearExternalForces(); });
 
     world.clearBodies();
     bodyIndexMap.clear();
+    highGainDynamicsList.clear();
 
     for(size_t i=0; i < simBodies.size(); ++i){
         addBody(static_cast<AISTSimBody*>(simBodies[i]));
     }
 
-    cfs.setFriction(staticFriction, slipFriction);
+    if(!highGainDynamicsList.empty()){
+        mvout() << (format(_("%1% uses the ForwardDynamicsCBM module to perform the high-gain control.")) % self->name()) << endl;
+    }
+
+    cfs.setFriction(staticFriction, dynamicFriction);
     cfs.setContactCullingDistance(contactCullingDistance.value());
     cfs.setContactCullingDepth(contactCullingDepth.value());
     cfs.setCoefficientOfRestitution(epsilon);
     cfs.setCollisionDetector(self->collisionDetector());
+    cfs.setSelfCollisionEnabled(self->isSelfCollisionEnabled());
 
     if(is2Dmode){
         cfs.set2Dmode(true);
@@ -458,11 +477,11 @@ bool AISTSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBod
                 actualLinksFound = true;
 
                 const ContactAttribute& attr = iter->second;
-                if(attr.staticFriction || attr.slipFriction){
+                if(attr.staticFriction || attr.dynamicFriction){
                     cfs.setFriction(
                         iLink0, iLink1,
                         attr.staticFriction ? *attr.staticFriction : staticFriction,
-                        attr.slipFriction ? *attr.slipFriction : slipFriction);
+                        attr.dynamicFriction ? *attr.dynamicFriction : dynamicFriction);
                 }
                 if(attr.collisionHandlerId){
                     cfs.setCollisionHandler(iLink0, iLink1, *attr.collisionHandlerId);
@@ -494,21 +513,29 @@ void AISTSimulatorItemImpl::addBody(AISTSimBody* simBody)
     rootLink->vo().setZero();
     rootLink->dvo().setZero();
 
+    bool hasHighgainJoints = false;
+
     for(int i=0; i < body->numLinks(); ++i){
         Link* link = body->link(i);
         link->u() = 0.0;
         link->dq() = 0.0;
         link->ddq() = 0.0;
+        if(link->actuationMode() == Link::JOINT_DISPLACEMENT ||
+           link->actuationMode() == Link::JOINT_VELOCITY ||
+           link->actuationMode() == Link::LINK_POSITION){
+            hasHighgainJoints = true;
+        }
     }
     
     body->clearExternalForces();
     body->calcForwardKinematics(true, true);
 
     int bodyIndex;
-    if(dynamicsMode.is(AISTSimulatorItem::HG_DYNAMICS)){
-        ForwardDynamicsCBMPtr cbm = make_shared_aligned<ForwardDynamicsCBM>(body);
-        cbm->setHighGainModeForAllJoints();
-        bodyIndex = world.addBody(body, cbm);
+
+    if(hasHighgainJoints){
+        auto dynamics = make_shared_aligned<ForwardDynamicsCBM>(body);
+        highGainDynamicsList.push_back(dynamics);
+        bodyIndex = world.addBody(body, dynamics);
     } else {
         bodyIndex = world.addBody(body);
     }
@@ -525,7 +552,10 @@ void AISTSimulatorItemImpl::clearExternalForces()
 bool AISTSimulatorItem::stepSimulation(const std::vector<SimulationBody*>& activeSimBodies)
 {
     if(!impl->dynamicsMode.is(KINEMATICS)){
-         impl->world.calcNextState();
+        for(auto&& dynamics : impl->highGainDynamicsList){
+            dynamics->complementHighGainModeCommandValues();
+        }
+        impl->world.calcNextState();
         return true;
     }
 
@@ -602,8 +632,7 @@ void AISTSimulatorItemImpl::setForcedPosition(BodyItem* bodyItem, const Position
         }
         if(!forcedBodyPositionFunctionId){
             forcedBodyPositionFunctionId =
-                self->addPostDynamicsFunction(
-                    std::bind(&AISTSimulatorItemImpl::doSetForcedPosition, this));
+                self->addPostDynamicsFunction([&](){ doSetForcedPosition(); });
         }
     }
 }
@@ -653,27 +682,51 @@ void AISTSimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
 }
 
 
+void AISTSimulatorItem::clearExtraJoint()
+{
+    impl->clearExtraJoint();
+}
+
+
+void AISTSimulatorItem::addExtraJoint(ExtraJoint& extrajoint)
+{
+    impl->addExtraJoint(extrajoint);
+}
+
+
+void AISTSimulatorItemImpl::clearExtraJoint()
+{
+    world.extrajoints.clear();
+}
+
+
+void AISTSimulatorItemImpl::addExtraJoint(ExtraJoint& extrajoint)
+{
+    world.extrajoints.push_back(extrajoint);
+}
+
+
 void AISTSimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Dynamics mode"), dynamicsMode,
-                std::bind(&Selection::selectIndex, &dynamicsMode, _1));
+                [&](int index){ return dynamicsMode.selectIndex(index); });
     putProperty(_("Integration mode"), integrationMode,
-                std::bind(&Selection::selectIndex, &integrationMode, _1));
-    putProperty(_("Gravity"), str(gravity), std::bind(toVector3, _1, std::ref(gravity)));
+                [&](int index){ return integrationMode.selectIndex(index); });
+    putProperty(_("Gravity"), str(gravity), [&](const string& v){ return toVector3(v, gravity); });
     putProperty.decimals(3).min(0.0);
     putProperty(_("Static friction"), staticFriction, changeProperty(staticFriction));
-    putProperty(_("Slip friction"), slipFriction, changeProperty(slipFriction));
+    putProperty(_("Slip friction"), dynamicFriction, changeProperty(dynamicFriction));
     putProperty(_("Contact culling distance"), contactCullingDistance,
-                (std::bind(&FloatingNumberString::setNonNegativeValue, std::ref(contactCullingDistance), _1)));
+                [&](const string& v){ return contactCullingDistance.setNonNegativeValue(v); });
     putProperty(_("Contact culling depth"), contactCullingDepth,
-                (std::bind(&FloatingNumberString::setNonNegativeValue, std::ref(contactCullingDepth), _1)));
+                [&](const string& v){ return contactCullingDepth.setNonNegativeValue(v); });
     putProperty(_("Error criterion"), errorCriterion,
-                std::bind(&FloatingNumberString::setPositiveValue, std::ref(errorCriterion), _1));
+                [&](const string& v){ return errorCriterion.setPositiveValue(v); });
     putProperty.min(1.0)(_("Max iterations"), maxNumIterations, changeProperty(maxNumIterations));
     putProperty(_("CC depth"), contactCorrectionDepth,
-                std::bind(&FloatingNumberString::setNonNegativeValue, std::ref(contactCorrectionDepth), _1));
+                [&](const string& v){ return contactCorrectionDepth.setNonNegativeValue(v); });
     putProperty(_("CC v-ratio"), contactCorrectionVelocityRatio,
-                std::bind(&FloatingNumberString::setNonNegativeValue, std::ref(contactCorrectionVelocityRatio), _1));
+                [&](const string& v){ return contactCorrectionVelocityRatio.setNonNegativeValue(v); });
     putProperty(_("Kinematic walking"), isKinematicWalkingEnabled,
                 changeProperty(isKinematicWalkingEnabled));
     putProperty(_("2D mode"), is2Dmode, changeProperty(is2Dmode));
@@ -694,7 +747,7 @@ bool AISTSimulatorItemImpl::store(Archive& archive)
     archive.write("integrationMode", integrationMode.selectedSymbol(), DOUBLE_QUOTED);
     write(archive, "gravity", gravity);
     archive.write("staticFriction", staticFriction);
-    archive.write("slipFriction", slipFriction);
+    archive.write("dynamicFriction", dynamicFriction);
     archive.write("cullingThresh", contactCullingDistance);
     archive.write("contactCullingDepth", contactCullingDepth);
     archive.write("errorCriterion", errorCriterion);
@@ -726,7 +779,9 @@ bool AISTSimulatorItemImpl::restore(const Archive& archive)
     }
     read(archive, "gravity", gravity);
     archive.read("staticFriction", staticFriction);
-    archive.read("slipFriction", slipFriction);
+    if(!archive.read("dynamicFriction", dynamicFriction)){
+        archive.read("slipFriction", dynamicFriction);
+    }
     contactCullingDistance = archive.get("cullingThresh", contactCullingDistance.string());
     contactCullingDepth = archive.get("contactCullingDepth", contactCullingDepth.string());
     errorCriterion = archive.get("errorCriterion", errorCriterion.string());

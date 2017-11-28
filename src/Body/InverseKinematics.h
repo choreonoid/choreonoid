@@ -2,8 +2,8 @@
     \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_INVERSE_KINEMATICS_H
-#define CNOID_INVERSE_KINEMATICS_H
+#ifndef CNOID_BODY_INVERSE_KINEMATICS_H
+#define CNOID_BODY_INVERSE_KINEMATICS_H
 
 #include <cnoid/EigenTypes>
 #include <memory>
@@ -18,10 +18,15 @@ public:
     virtual ~InverseKinematics() {  }
     virtual AxisSet axisType() const { return TRANSFORM_6D; }
 
-    /**
-       \todo This should be "bool calcInverseKinematics(const Position& T) = 0
-    */
-    virtual bool calcInverseKinematics(const Vector3& end_p, const Matrix3& end_R) = 0;
+    virtual bool calcInverseKinematics(const Position& T) = 0;
+
+    //! deprecated
+    bool calcInverseKinematics(const Vector3& p, const Matrix3& R) {
+        Position T;
+        T.linear() = R;
+        T.translation() = p;
+        return calcInverseKinematics(T);
+    }
 };
 
 typedef std::shared_ptr<InverseKinematics> InverseKinematicsPtr;

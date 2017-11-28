@@ -1,0 +1,28 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: radian
+name: PressRoom
+
+links:
+  -
+    name: WAIST
+    jointType: fixed
+    rotation: [ 0, 1, 0, 0 ]
+    elements:
+      -
+        type: RigidBody
+        centerOfMass: [ 0.0, 0.0, 0.0 ]
+        mass: 1.0
+        inertia: [
+          1.0, 0.0, 0.0,
+          0.0, 1.0, 0.0,
+          0.0, 0.0, 1.0 ]
+        elements:
+          Shape:
+            geometry:
+              #type: Plane
+              type: Box
+              size: [ 10, 10, 0 ]
+            appearance:
+              material:
+                diffuseColor: [ 0.9, 0.9, 0.9 ]

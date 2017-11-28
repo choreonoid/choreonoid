@@ -103,7 +103,7 @@ class SlotCallIterator
     std::tuple<Args...>& args;
 
 public:
-    void seekUnblockedSlot(){
+    void seekActiveSlot(){
         while(currentSlotHolder && currentSlotHolder->isBlocked){
             currentSlotHolder = currentSlotHolder->next;
         }
@@ -111,12 +111,12 @@ public:
     
     SlotCallIterator(SlotHolderType* firstSlot, std::tuple<Args...>& args)
         : currentSlotHolder(firstSlot), args(args) {
-        seekUnblockedSlot();
+        seekActiveSlot();
     }
 
     SlotCallIterator(const SlotCallIterator& org)
         : currentSlotHolder(org.currentSlotHolder), args(org.args) {
-        seekUnblockedSlot();
+        seekActiveSlot();
     }
 
     bool operator==(const SlotCallIterator& rhs) const {
@@ -130,11 +130,22 @@ public:
     SlotCallIterator operator++(int) {
         SlotCallIterator iter(*this);
         currentSlotHolder = currentSlotHolder->next;
-        seekUnblockedSlot();
+        seekActiveSlot();
         return iter;
     }
     
     result_type operator*() const {
+        /**
+           The reference to currentSlotHolder should be kept when the slot
+           function is called to guarantee the existence of the slot function.
+           For example, if the corresponding cnoid::Connection object is holded
+           in a Lua script, the connection may be deleted by the garbage collection
+           in the Lua interperter when a slot function defined in the Lua script
+           is called. In this case, the function does not exist when it is actually
+           called unless the reference to currentSlotHolder is kept here.
+        */
+        ref_ptr<SlotHolderBase> holder = currentSlotHolder;
+        
         return apply(currentSlotHolder->func, args);
     }
 };
@@ -314,8 +325,14 @@ public:
                 firstSlot = next;
             }
             slot->prev = 0;
-            slot->next = 0;
             slot->owner = 0;
+            slot->isBlocked = true;
+
+            /**
+               keep slot->next so that the slot call iteration
+               can be continued even if the slot is disconnected
+               during the iteration.
+            */
         }
     }
 

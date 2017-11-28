@@ -3,23 +3,18 @@
 */
 
 #include "SceneGraphView.h"
+#include <cnoid/SceneDrawables>
 #include <cnoid/SceneCameras>
 #include <cnoid/SceneLights>
 #include <cnoid/SceneEffects>
-#include <cnoid/SceneVisitor>
 #include <cnoid/SceneMarkers>
+#include <cnoid/PolymorphicFunctionSet>
 #include <cnoid/TreeWidget>
 #include <cnoid/SceneView>
-#include <cnoid/GL1SceneRenderer>
 #include <cnoid/ViewManager>
 #include <QBoxLayout>
-#ifdef _WIN32
-#include <Windows.h>
-#endif
-#include <GL/glew.h>
 #include <cassert>
 #include <list>
-#include <GL/gl.h>
 #include "gettext.h"
 
 using namespace std;
@@ -53,20 +48,24 @@ public:
     SgvMarkerItem();
     ~SgvMarkerItem();
 
-    SgCustomGLNodePtr marker;
+    SgLineSetPtr marker;
 };
+
 }
 
 
 namespace cnoid {
 
-class SceneGraphViewImpl : public TreeWidget, public SceneVisitor
+class SceneGraphViewImpl : public TreeWidget
 {
 public:
     SceneGraphViewImpl(SceneGraphView* self, SgNode* sceneRoot);
     ~SceneGraphViewImpl();
 
     SceneGraphView* self;
+
+    PolymorphicFunctionSet<SgNode> visitor;
+    
     SgNode* sceneRoot;
     SgvItem* rootItem;
     SgvItem* parentItem;
@@ -87,17 +86,18 @@ public:
     void removeItem(SgvItem* item);
 
     void visitObject(SgObject* obj);
-    virtual void visitNode(SgNode* node);
-    virtual void visitGroup(SgGroup* group);
-    virtual void visitShape(SgShape* shape);
-    virtual void visitPointSet(SgPointSet* pointSet);
+    void visitNode(SgNode* node);
+    void visitGroup(SgGroup* group);
+    void visitShape(SgShape* shape);
+    void visitPointSet(SgPointSet* pointSet);
 
     void onSelectionChanged();
     void addSelectedMarker();
+    void updateSelectedMarker(SgLineSet* marker);
     void removeSelectedMarker();
-    void renderMarker(GL1SceneRenderer& renderer);
     const SgObject* selectedObject();
 };
+
 }
 
 
@@ -110,8 +110,9 @@ SgvItem::~SgvItem()
 
 SgvMarkerItem::SgvMarkerItem()
 {
-    marker = new SgCustomGLNode();
+    marker = new SgLineSet();
     marker->setName("GraphViewMarker");
+    marker->getOrCreateMaterial()->setDiffuseColor(Vector3f(1.0f, 0.0f, 1.0f));
     setFlags(Qt::NoItemFlags);
     setText(0, QString("GraphViewMarker (SgCustomGLNode)"));
 }
@@ -153,6 +154,12 @@ SceneGraphViewImpl::SceneGraphViewImpl(SceneGraphView* self, SgNode* sceneRoot)
     : self(self),
       sceneRoot(sceneRoot)
 {
+    visitor.setFunction<SgNode>([&](SgNode* node){ visitNode(node); });
+    visitor.setFunction<SgGroup>([&](SgNode* node){ visitGroup(static_cast<SgGroup*>(node)); });
+    visitor.setFunction<SgShape>([&](SgNode* node){ visitShape(static_cast<SgShape*>(node)); });
+    visitor.setFunction<SgPointSet>([&](SgNode* node){ visitPointSet(static_cast<SgPointSet*>(node)); });
+    visitor.updateDispatchTable();
+    
     setColumnCount(2);
     header()->setStretchLastSection(false);
 #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
@@ -206,13 +213,13 @@ void SceneGraphViewImpl::createGraph(SgvItem* item, SgNode* node)
 
     SgGroup* group = dynamic_cast<SgGroup*>(node);
     if(group){
-        for(SgGroup::const_iterator p = group->begin(); p != group->end(); ++p){
-            SgvItem* item_ = findItem(parentItem, (*p).get());
+        for(const auto childNode : *group){
+            SgvItem* item_ = findItem(parentItem, childNode);
             if(item_){
-                createGraph(item_, (*p).get());
+                createGraph(item_, childNode);
                 children.remove(item_);
             }else{
-                (*p)->accept(*this);
+                visitor.dispatch(childNode);
             }
         }
         for(list<SgvItem*>::iterator it = children.begin(); it != children.end(); it++){
@@ -285,8 +292,6 @@ void SceneGraphViewImpl::visitNode(SgNode* node)
         type = "SgGroup";
     else if(dynamic_cast<CrossMarker*>(node))
         type = "CrossMarker";
-    else if(dynamic_cast<SgCustomGLNode*>(node))
-        type = "SgCustomGLNode";
     else if(dynamic_cast<SgNode*>(node))
         type = "SgNode";
 
@@ -301,8 +306,8 @@ void SceneGraphViewImpl::visitGroup(SgGroup* group)
     visitNode(group);
     SgvItem* oldParent = parentItem;
     parentItem = sgvItem;
-    for(SgGroup::const_iterator p = group->begin(); p != group->end(); ++p){
-        (*p)->accept(*this);
+    for(const auto childNode : *group){
+        visitor.dispatch(childNode);
     }
     parentItem = oldParent;
 }
@@ -438,7 +443,7 @@ void SceneGraphViewImpl::onSceneGraphUpdated(const SgUpdate& update)
         if(group){
             SgNode* node = findAddNode(group);
             if(node){
-                node->accept(*this);
+                visitor.dispatch(node);
             }
         }
     }
@@ -489,15 +494,85 @@ void SceneGraphViewImpl::addSelectedMarker()
 {
     if(!selectedSgvItem->markerItem()){
         selectedSgvItem->setMarkerItem( new SgvMarkerItem() );
-        selectedSgvItem->markerItem()->marker->setRenderingFunction(
-            std::bind(&SceneGraphViewImpl::renderMarker, this, _1));
     }
-    SgCustomGLNodePtr marker = selectedSgvItem->markerItem()->marker;
+    auto marker = selectedSgvItem->markerItem()->marker;
     if(marker && !selectedSgvItem->group->contains(marker)){
         selectedSgvItem->group->addChild(marker);
         selectedSgvItem->groupItem->addChild(selectedSgvItem->markerItem());
-        selectedSgvItem->group->notifyUpdate();
+        updateSelectedMarker(marker);
     }
+}
+
+
+void SceneGraphViewImpl::updateSelectedMarker(SgLineSet* marker)
+{
+    SgNode* node = 0;
+    SgTransform* trans = 0;
+    SgMeshBase* mesh = 0;
+
+    if(selectedSgvItem->markerNode){
+        node = selectedSgvItem->markerNode;
+    }else if(dynamic_cast<SgScaleTransform*>(selectedSgvItem->node) ||
+             dynamic_cast<SgPosTransform*>(selectedSgvItem->node)){
+        trans = dynamic_cast<SgTransform*>(selectedSgvItem->node);
+    }else{
+        mesh = dynamic_cast<SgMeshBase*>(selectedSgvItem->node);
+        if(!mesh)
+            node = dynamic_cast<SgNode*>(selectedSgvItem->node);
+    }
+
+    BoundingBoxf bb;
+    if(trans)
+        bb = trans->untransformedBoundingBox();
+    else if(mesh){
+        bb = mesh->boundingBox();
+    }else if(node){
+        bb = node->boundingBox();
+    }else
+        return;
+    if(bb.empty())
+        return;
+
+    SgVertexArray& vertices = *marker->getOrCreateVertices();
+    vertices.clear();
+
+    const Vector3f& min = bb.min();
+    const Vector3f& max = bb.max();
+
+    float y[2];
+    y[0] = min.y();
+    y[1] = max.y();
+            
+    for(int i=0; i < 2; ++i){
+        vertices.push_back(Vector3f(min.x(), y[i], min.z()));
+        vertices.push_back(Vector3f(min.x(), y[i], max.z()));
+        vertices.push_back(Vector3f(min.x(), y[i], max.z()));
+        vertices.push_back(Vector3f(max.x(), y[i], max.z()));
+
+        vertices.push_back(Vector3f(max.x(), y[i], max.z()));
+        vertices.push_back(Vector3f(max.x(), y[i], min.z()));
+        vertices.push_back(Vector3f(max.x(), y[i], min.z()));
+        vertices.push_back(Vector3f(min.x(), y[i], min.z()));
+    }
+
+    float z[2];
+    z[0] = min.z();
+    z[1] = max.z();
+    for(int i=0; i < 2; ++i){
+        vertices.push_back(Vector3f(min.x(), min.y(), z[i]));
+        vertices.push_back(Vector3f(min.x(), max.y(), z[i]));
+        vertices.push_back(Vector3f(max.x(), min.y(), z[i]));
+        vertices.push_back(Vector3f(max.x(), max.y(), z[i]));
+    }
+
+    const int n = vertices.size();
+    SgIndexArray& lineVertices = marker->lineVertices();
+    lineVertices.resize(n);
+    for(int i=0; i < n; ++i){
+        lineVertices[i] = i;
+    }
+
+    marker->notifyUpdate();
 }
 
 
@@ -541,76 +616,6 @@ const SgObject* SceneGraphView::selectedObject()
 const SgObject* SceneGraphViewImpl::selectedObject()
 {
     return selectedSgObject;
-}
-
-
-void SceneGraphViewImpl::renderMarker(GL1SceneRenderer& renderer)
-{
-    SgNode* node = 0;
-    SgTransform* trans = 0;
-    SgMeshBase* mesh = 0;
-
-    if(selectedSgvItem->markerNode){
-        node = selectedSgvItem->markerNode;
-    }else if(dynamic_cast<SgScaleTransform*>(selectedSgvItem->node) ||
-             dynamic_cast<SgPosTransform*>(selectedSgvItem->node)){
-        trans = dynamic_cast<SgTransform*>(selectedSgvItem->node);
-    }else{
-        mesh = dynamic_cast<SgMeshBase*>(selectedSgvItem->node);
-        if(!mesh)
-            node = dynamic_cast<SgNode*>(selectedSgvItem->node);
-    }
-
-    BoundingBoxf bb;
-    if(trans)
-        bb = trans->untransformedBoundingBox();
-    else if(mesh){
-        bb = mesh->boundingBox();
-    }else if(node){
-        bb = node->boundingBox();
-    }else
-        return;
-    if(bb.empty())
-        return;
-
-    glPushAttrib(GL_LIGHTING_BIT | GL_CURRENT_BIT);
-    glDisable(GL_LIGHTING);
-
-    glColor3f(1.0f, 0.0f, 1.0f);
-
-    glBegin(GL_LINES);
-
-    const Vector3f& min = bb.min();
-    const Vector3f& max = bb.max();
-
-    float y[2];
-    y[0] = min.y();
-    y[1] = max.y();
-            
-    for(int i=0; i < 2; ++i){
-        glVertex3f(min.x(), y[i], min.z());
-        glVertex3f(min.x(), y[i], max.z());
-        glVertex3f(min.x(), y[i], max.z());
-        glVertex3f(max.x(), y[i], max.z());
-
-        glVertex3f(max.x(), y[i], max.z());
-        glVertex3f(max.x(), y[i], min.z());
-        glVertex3f(max.x(), y[i], min.z());
-        glVertex3f(min.x(), y[i], min.z());
-    }
-
-    float z[2];
-    z[0] = min.z();
-    z[1] = max.z();
-    for(int i=0; i < 2; ++i){
-        glVertex3f(min.x(), min.y(), z[i]);
-        glVertex3f(min.x(), max.y(), z[i]);
-        glVertex3f(max.x(), min.y(), z[i]);
-        glVertex3f(max.x(), max.y(), z[i]);
-    }
-
-    glEnd();
-    glPopAttrib();
 }
 
 

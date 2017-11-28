@@ -14,12 +14,11 @@ namespace cnoid {
 class CNOID_EXPORT SgLight : public SgPreprocessed
 {
 protected:
-    SgLight();
+    SgLight(int polymorhicId);
     SgLight(const SgLight& org);
         
 public:
     virtual SgObject* clone(SgCloneMap& cloneMap) const;
-    virtual void accept(SceneVisitor& visitor);
 
     bool on() const { return on_; }
     void on(bool on) { on_ = on; }
@@ -42,11 +41,13 @@ typedef ref_ptr<SgLight> SgLightPtr;
 
 class CNOID_EXPORT SgDirectionalLight : public SgLight
 {
+protected:
+    SgDirectionalLight(int polymorhicId);
+    
 public:
     SgDirectionalLight();
     SgDirectionalLight(const SgDirectionalLight& org);
     virtual SgObject* clone(SgCloneMap& cloneMap) const;
-    virtual void accept(SceneVisitor& visitor);
 
     const Vector3& direction() const { return direction_; }
     template<typename Derived> void setDirection(const Eigen::MatrixBase<Derived>& d) {
@@ -60,11 +61,13 @@ typedef ref_ptr<SgDirectionalLight> SgDirectionalLightPtr;
 
 class CNOID_EXPORT SgPointLight : public SgLight
 {
+protected:
+    SgPointLight(int polymorhicId);
+    
 public:
     SgPointLight();
     SgPointLight(const SgPointLight& org);
     virtual SgObject* clone(SgCloneMap& cloneMap) const;
-    virtual void accept(SceneVisitor& visitor);
 
     float constantAttenuation() const { return constantAttenuation_; }
     void setConstantAttenuation(float a) { constantAttenuation_ = a; }
@@ -85,11 +88,13 @@ typedef ref_ptr<SgPointLight> SgPointLightPtr;
 
 class CNOID_EXPORT SgSpotLight : public SgPointLight
 {
+protected:
+    SgSpotLight(int polymorhicId);
+    
 public:
     SgSpotLight();
     SgSpotLight(const SgSpotLight& org);
     virtual SgObject* clone(SgCloneMap& cloneMap) const;
-    virtual void accept(SceneVisitor& visitor);
 
     const Vector3& direction() const { return direction_; }
     template<typename Derived> void setDirection(const Eigen::MatrixBase<Derived>& d) {

@@ -60,9 +60,9 @@ const std::string& PythonSimScriptItem::scriptFilename() const
 }
 
 
-bool PythonSimScriptItem::setBackgroundMode(bool on)
+void PythonSimScriptItem::setBackgroundMode(bool on)
 {
-    return impl->setBackgroundMode(on);
+    impl->setBackgroundMode(on);
 }
 
 

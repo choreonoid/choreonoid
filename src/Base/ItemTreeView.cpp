@@ -13,16 +13,13 @@
 #include "TreeWidget.h"
 #include <cnoid/ConnectionSet>
 #include <QBoxLayout>
-#include <QApplication>
 #include <QMouseEvent>
 #include <QHeaderView>
 #include <set>
-#include <cassert>
-#include <iostream>
+#include <unordered_map>
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 
 namespace {
@@ -36,40 +33,17 @@ typedef std::shared_ptr<SigCheckToggled> SigCheckToggledPtr;
 class ItvItem : public QTreeWidgetItem
 {
 public:
+    Item* item;
+    ItemTreeViewImpl* itemTreeViewImpl;
+    bool isExpandedBeforeRemoving;
+    vector<SigCheckToggledPtr> sigCheckToggledList;
+
     ItvItem(Item* item, ItemTreeViewImpl* itemTreeViewImpl);
     virtual ~ItvItem();
     virtual QVariant data(int column, int role) const;
     virtual void setData(int column, int role, const QVariant& value);
-
-    SigCheckToggled* sigCheckToggled(int id){
-        if(id < sigCheckToggledList.size()){
-            return sigCheckToggledList[id].get();
-        }
-        return 0;
-    }
-    SigCheckToggled& getOrCreateSigCheckToggled(int id){
-        if(id >= sigCheckToggledList.size()){
-            sigCheckToggledList.resize(id + 1);
-        }
-        if(!sigCheckToggledList[id]){
-            sigCheckToggledList[id] = std::make_shared<SigCheckToggled>();
-        }
-        return *sigCheckToggledList[id];
-    }
-
-    ItemPtr item;
-    ItemTreeViewImpl* itemTreeViewImpl;
-    bool isExpandedBeforeRemoving;
-private:
-    vector<SigCheckToggledPtr> sigCheckToggledList;
-};
-
-// Preserved as custom data in an item
-class ItvItemRef : public Referenced
-{
-public:
-    ItvItemRef(ItvItem* itvItem) : itvItem(itvItem) { }
-    ItvItem* itvItem;
+    SigCheckToggled* sigCheckToggled(int id);
+    SigCheckToggled& getOrCreateSigCheckToggled(int id);
 };
 
 class CheckColumn : public Referenced
@@ -80,28 +54,26 @@ public:
     Signal<void(Item* item, bool isChecked)> sigCheckToggled;
     QString tooltip;
 
-    CheckColumn() {
-        needToUpdateCheckedItemList = true;
-    }
+    CheckColumn() { needToUpdateCheckedItemList = true;  }
 };
 
 typedef ref_ptr<CheckColumn> CheckColumnPtr;
-}
 
+}
 
 namespace cnoid {
 
 class ItemTreeViewImpl : public TreeWidget
 {
 public:
-    ItemTreeViewImpl(ItemTreeView* self, RootItem* rootItem, bool showRoot);
-    ~ItemTreeViewImpl();
-
     ItemTreeView* self;
     RootItemPtr rootItem;
 
+    unordered_map<Item*, ItvItem*> itemToItvItemMap;
+
     int isProceccingSlotForRootItemSignals;
-    ConnectionSet connectionsFromRootItem;
+    ScopedConnectionSet connectionsFromRootItem;
+    set<Item*> itemsBeingOperated;
 
     vector<CheckColumnPtr> checkColumns;
 
@@ -119,6 +91,9 @@ public:
     bool isDropping;
     int fontPointSizeDiff;
 
+    ItemTreeViewImpl(ItemTreeView* self, RootItem* rootItem, bool showRoot);
+    ~ItemTreeViewImpl();
+
     int addCheckColumn();
     void initializeCheckState(QTreeWidgetItem* item, int column);
     void updateCheckColumnToolTipIter(QTreeWidgetItem* item, int column, const QString& tooltip);
@@ -130,10 +105,10 @@ public:
         
     ItvItem* getItvItem(Item* item);
     ItvItem* getOrCreateItvItem(Item* item);
+    bool isItemBeingOperated(Item* item);
     void onSubTreeAddedOrMoved(Item* item);
     void insertItem(QTreeWidgetItem* parentTwItem, Item* item, Item* nextItem);
     void onSubTreeRemoved(Item* item, bool isMoving);
-    void onTreeChanged();
     void onItemAssigned(Item* assigned, Item* srcItem);
 
     virtual void dropEvent(QDropEvent* event);
@@ -152,7 +127,7 @@ public:
     void forEachTopItems(const ItemList<>& orgItemList, std::function<void(Item*)> callback);
     void cutSelectedItems();
     void copySelectedItems();
-    void copySelectedItemsSub(Item* item, ItemPtr& duplicated, set<Item*>& items);
+    void copySelectedItemsSub(Item* item, Item* duplicated, set<Item*>& items);
     void copySelectedItemsWithChildren();
     void addCopiedItemToCopiedItemList(Item* item);
     void pasteItems();
@@ -162,12 +137,13 @@ public:
     bool storeState(Archive& archive);
     void storeItemIds(Archive& archive, const char* key, const ItemList<>& items);
     bool restoreState(const Archive& archive);
-    bool restoreItemStates(const Archive& archive, const char* key, std::function<void(ItemPtr)> stateChangeFunc);
+    bool restoreItemStates(const Archive& archive, const char* key, std::function<void(Item*)> stateChangeFunc);
     void storeExpandedItems(Archive& archive);
     void storeExpandedItemsSub(QTreeWidgetItem* parentTwItem, Archive& archive, ListingPtr& expanded);
     void restoreExpandedItems(const Archive& archive);
     void zoomFontSize(int pointSizeDiff);
 };
+
 }
 
 
@@ -189,9 +165,8 @@ ItvItem::ItvItem(Item* item, ItemTreeViewImpl* itemTreeViewImpl)
         setCheckState(i + 1, Qt::Unchecked);
         setToolTip(i + 1, checkColumns[i]->tooltip);
     }
-    
-    ItvItemRef* ref = new ItvItemRef(this);
-    item->setCustomData(0, ref);
+
+    itemTreeViewImpl->itemToItvItemMap[item] = this;
 
     isExpandedBeforeRemoving = false;
 }
@@ -199,7 +174,7 @@ ItvItem::ItvItem(Item* item, ItemTreeViewImpl* itemTreeViewImpl)
 
 ItvItem::~ItvItem()
 {
-    item->clearCustomData(0);
+    itemTreeViewImpl->itemToItvItemMap.erase(item);
 }
 
 
@@ -230,13 +205,34 @@ void ItvItem::setData(int column, int role, const QVariant& value)
             CheckColumnPtr& cc = itemTreeViewImpl->checkColumns[id];
             cc->needToUpdateCheckedItemList = true;
             const bool checked = ((Qt::CheckState)value.toInt() == Qt::Checked);
-            cc->sigCheckToggled(item.get(), checked);
+            cc->sigCheckToggled(item, checked);
             SigCheckToggled* sig = sigCheckToggled(id);
             if(sig){
                 (*sig)(checked);
             }
         }
     }
+}
+
+
+SigCheckToggled* ItvItem::sigCheckToggled(int id)
+{
+    if(id < sigCheckToggledList.size()){
+        return sigCheckToggledList[id].get();
+    }
+    return 0;
+}
+
+
+SigCheckToggled& ItvItem::getOrCreateSigCheckToggled(int id)
+{
+    if(id >= sigCheckToggledList.size()){
+        sigCheckToggledList.resize(id + 1);
+    }
+    if(!sigCheckToggledList[id]){
+        sigCheckToggledList[id] = std::make_shared<SigCheckToggled>();
+    }
+    return *sigCheckToggledList[id];
 }
 
 
@@ -295,11 +291,10 @@ ItemTreeViewImpl::ItemTreeViewImpl(ItemTreeView* self, RootItem* rootItem, bool 
 
 #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
     header()->setResizeMode(0, QHeaderView::Stretch);
-    header()->setMinimumSectionSize(0);
 #else
     header()->setSectionResizeMode(0, QHeaderView::Stretch);
-    //header()->setMinimumSectionSize(0);
 #endif
+    header()->setMinimumSectionSize(0);
 
     // default check column
     addCheckColumn();
@@ -313,18 +308,16 @@ ItemTreeViewImpl::ItemTreeViewImpl(ItemTreeView* self, RootItem* rootItem, bool 
     setSelectionMode(QAbstractItemView::ExtendedSelection);
     setDragDropMode(QAbstractItemView::InternalMove);
 
-    sigItemSelectionChanged().connect(std::bind(&ItemTreeViewImpl::onSelectionChanged, this));
+    sigItemSelectionChanged().connect([&](){ onSelectionChanged(); });
 
     connectionsFromRootItem.add(
-        rootItem->sigSubTreeAdded().connect(std::bind(&ItemTreeViewImpl::onSubTreeAddedOrMoved, this, _1)));
+        rootItem->sigSubTreeAdded().connect([&](Item* item){ onSubTreeAddedOrMoved(item); }));
     connectionsFromRootItem.add(
-        rootItem->sigSubTreeMoved().connect(std::bind(&ItemTreeViewImpl::onSubTreeAddedOrMoved, this, _1)));
+        rootItem->sigSubTreeMoved().connect([&](Item* item){ onSubTreeAddedOrMoved(item); }));
     connectionsFromRootItem.add(
-        rootItem->sigSubTreeRemoved().connect(std::bind(&ItemTreeViewImpl::onSubTreeRemoved, this, _1, _2)));
+        rootItem->sigSubTreeRemoved().connect([&](Item* item, bool isMoving){ onSubTreeRemoved(item, isMoving); }));
     connectionsFromRootItem.add(
-        rootItem->sigTreeChanged().connect(std::bind(&ItemTreeViewImpl::onTreeChanged, this)));
-    connectionsFromRootItem.add(
-        rootItem->sigItemAssigned().connect(std::bind(&ItemTreeViewImpl::onItemAssigned, this, _1, _2)));
+        rootItem->sigItemAssigned().connect([&](Item* assigned, Item* srcItem){ onItemAssigned(assigned, srcItem); }));
 
     QObject::connect(model(), SIGNAL(rowsAboutToBeRemoved(const QModelIndex&, int, int)),
                      self, SLOT(onRowsAboutToBeRemoved(const QModelIndex&, int, int)));
@@ -335,27 +328,31 @@ ItemTreeViewImpl::ItemTreeViewImpl(ItemTreeView* self, RootItem* rootItem, bool 
     menuManager.setTopMenu(popupMenu);
 
     menuManager.addItem(_("Cut"))
-        ->sigTriggered().connect(std::bind(&ItemTreeViewImpl::cutSelectedItems, this));
+        ->sigTriggered().connect([&](){ cutSelectedItems(); });
     menuManager.addItem(_("Copy (single)"))
-        ->sigTriggered().connect(std::bind(&ItemTreeViewImpl::copySelectedItems, this));
+        ->sigTriggered().connect([&](){ copySelectedItems(); });
     menuManager.addItem(_("Copy (sub tree)"))
-        ->sigTriggered().connect(std::bind(&ItemTreeViewImpl::copySelectedItemsWithChildren, this));
+        ->sigTriggered().connect([&](){ copySelectedItemsWithChildren(); });
     menuManager.addItem(_("Paste"))
-        ->sigTriggered().connect(std::bind(&ItemTreeViewImpl::pasteItems, this));
+        ->sigTriggered().connect([&](){ pasteItems(); });
 
     menuManager.addSeparator();
     menuManager.addItem(_("Check"))
-        ->sigTriggered().connect(std::bind(&ItemTreeViewImpl::checkSelectedItems, this, true));
+        ->sigTriggered().connect([&](){ checkSelectedItems(true); });
     menuManager.addItem(_("Uncheck"))
-        ->sigTriggered().connect(std::bind(&ItemTreeViewImpl::checkSelectedItems, this, false));
+        ->sigTriggered().connect([&](){ checkSelectedItems(false); });
     menuManager.addItem(_("Toggle checks"))
-        ->sigTriggered().connect(std::bind(&ItemTreeViewImpl::toggleSelectedItemChecks, this));
+        ->sigTriggered().connect([&](){ toggleSelectedItemChecks(); });
+
+    menuManager.addSeparator();
+    menuManager.addItem(_("Reload"))
+        ->sigTriggered().connect([&](){ ItemManager::reloadItems(selectedItemList); });
 
     menuManager.addSeparator();
     menuManager.addItem(_("Select all"))
-        ->sigTriggered().connect(std::bind(&ItemTreeView::selectAllItems, self));
+        ->sigTriggered().connect([=](){ self->selectAllItems(); });
     menuManager.addItem(_("Clear selection"))
-        ->sigTriggered().connect(std::bind(&ItemTreeView::clearSelection, self));
+        ->sigTriggered().connect([=](){ self->clearSelection(); });
     
     fontPointSizeDiff = 0;
     MappingPtr config = AppConfig::archive()->openMapping("ItemTreeView");
@@ -483,7 +480,7 @@ void ItemTreeViewImpl::releaseCheckColumn(int id)
 
 RootItem* ItemTreeView::rootItem()
 {
-    return impl->rootItem.get();
+    return impl->rootItem;
 }
 
 
@@ -550,9 +547,9 @@ void ItemTreeViewImpl::keyPressEvent(QKeyEvent* event)
 ItvItem* ItemTreeViewImpl::getItvItem(Item* item)
 {
     ItvItem* itvItem = 0;
-    ItvItemRef* ref = dynamic_cast<ItvItemRef*>(item->customData(0));
-    if(ref){
-        itvItem = ref->itvItem;
+    auto iter = itemToItvItemMap.find(item);
+    if(iter != itemToItvItemMap.end()){
+        itvItem = iter->second;
     }
     return itvItem;
 }
@@ -568,8 +565,18 @@ ItvItem* ItemTreeViewImpl::getOrCreateItvItem(Item* item)
 }
 
 
+bool ItemTreeViewImpl::isItemBeingOperated(Item* item)
+{
+    return itemsBeingOperated.find(item) != itemsBeingOperated.end();
+}
+
+
 void ItemTreeViewImpl::onSubTreeAddedOrMoved(Item* item)
 {
+    if(isItemBeingOperated(item)){
+        return;
+    }
+    
     isProceccingSlotForRootItemSignals++;
     
     Item* parentItem = item->parentItem();
@@ -618,6 +625,10 @@ void ItemTreeViewImpl::insertItem(QTreeWidgetItem* parentTwItem, Item* item, Ite
 
 void ItemTreeViewImpl::onSubTreeRemoved(Item* item, bool isMoving)
 {
+    if(isItemBeingOperated(item)){
+        return;
+    }
+    
     isProceccingSlotForRootItemSignals++;
     
     ItvItem* itvItem = getItvItem(item);
@@ -653,27 +664,31 @@ void ItemTreeView::onRowsAboutToBeRemoved(const QModelIndex& parent, int start, 
 
 void ItemTreeViewImpl::onRowsAboutToBeRemoved(const QModelIndex& parent, int start, int end)
 {
-    connectionsFromRootItem.block();
-
     QTreeWidgetItem* parentTwItem = itemFromIndex(parent);
     if(!parentTwItem){
         parentTwItem = invisibleRootItem();
     }
 
+    vector<ItemPtr> items;
     for(int i=start; i <= end; ++i){
         ItvItem* itvItem = dynamic_cast<ItvItem*>(parentTwItem->child(i));
         if(itvItem){
             itvItem->isExpandedBeforeRemoving = itvItem->isExpanded();
             if(!isDropping){
-                ItemPtr& item = itvItem->item;
+                Item* item = itvItem->item;
                 if(!item->isSubItem()){
-                    item->detachFromParentItem();
+                    items.push_back(item);
                 }
+                itemsBeingOperated.insert(item);
             }
         }
     }
-    
-    connectionsFromRootItem.unblock();
+
+    for(auto item : items){
+        item->detachFromParentItem();
+    }
+
+    itemsBeingOperated.clear();
 }
 
 
@@ -687,8 +702,6 @@ void ItemTreeView::onRowsInserted(const QModelIndex& parent, int start, int end)
 
 void ItemTreeViewImpl::onRowsInserted(const QModelIndex& parent, int start, int end)
 {
-    connectionsFromRootItem.block();
-
     QTreeWidgetItem* parentTwItem = itemFromIndex(parent);
     if(parentTwItem){
         parentTwItem->setExpanded(true);
@@ -697,9 +710,9 @@ void ItemTreeViewImpl::onRowsInserted(const QModelIndex& parent, int start, int 
     }
 
     ItvItem* parentItvItem = dynamic_cast<ItvItem*>(parentTwItem);
-    Item* parentItem = parentItvItem ? parentItvItem->item.get() : rootItem.get();
+    Item* parentItem = parentItvItem ? parentItvItem->item : rootItem.get();
 
-    ItemPtr nextItem = 0;
+    ItemPtr nextItem;
     if(end + 1 < parentTwItem->childCount()){
         ItvItem* nextItvItem = dynamic_cast<ItvItem*>(parentTwItem->child(end + 1));
         if(nextItvItem){
@@ -707,26 +720,26 @@ void ItemTreeViewImpl::onRowsInserted(const QModelIndex& parent, int start, int 
         }
     }
     
+    vector<ItemPtr> items;
     for(int i=start; i <= end; ++i){
         ItvItem* itvItem = dynamic_cast<ItvItem*>(parentTwItem->child(i));
         if(itvItem){
-            ItemPtr& item = itvItem->item;
+            Item* item = itvItem->item;
             if(!item->isSubItem()){
-                parentItem->insertChildItem(item, nextItem, true);
+                items.push_back(item);
             }
             if(itvItem->isExpandedBeforeRemoving){
                 itvItem->setExpanded(true);
             }
+            itemsBeingOperated.insert(item);
         }
     }
-    
-    connectionsFromRootItem.unblock();
-}
 
+    for(auto item : items){
+        parentItem->insertChildItem(item, nextItem, true);
+    }
 
-void ItemTreeViewImpl::onTreeChanged()
-{
-
+    itemsBeingOperated.clear();    
 }
 
 
@@ -760,7 +773,7 @@ void ItemTreeViewImpl::onSelectionChanged()
     for(int i=0; i < selected.size(); ++i){
         ItvItem* itvItem = dynamic_cast<ItvItem*>(selected[i]);
         if(itvItem){
-            selectedItemList.push_back(itvItem->item.get());
+            selectedItemList.push_back(itvItem->item);
         }
     }
 
@@ -821,9 +834,9 @@ void ItemTreeView::clearSelection()
 }
 
 
-bool ItemTreeView::isItemChecked(ItemPtr item, int id)
+bool ItemTreeView::isItemChecked(Item* item, int id)
 {
-    return impl->isItemChecked(item.get(), id);
+    return impl->isItemChecked(item, id);
 }
 
 
@@ -837,9 +850,9 @@ bool ItemTreeViewImpl::isItemChecked(Item* item, int id)
 }
     
 
-bool ItemTreeView::checkItem(ItemPtr item, bool checked, int id)
+bool ItemTreeView::checkItem(Item* item, bool checked, int id)
 {
-    return impl->checkItem(item.get(), checked, id);
+    return impl->checkItem(item, checked, id);
 }
 
 
@@ -875,10 +888,10 @@ SignalProxy<void(Item* item, bool isChecked)> ItemTreeView::sigCheckToggled(int 
 }
 
 
-SignalProxy<void(bool isChecked)> ItemTreeView::sigCheckToggled(Item* targetItem, int id)
+SignalProxy<void(bool isChecked)> ItemTreeView::sigCheckToggled(Item* item, int id)
 {
     if(id < impl->checkColumns.size()){
-        return impl->getOrCreateItvItem(targetItem)->getOrCreateSigCheckToggled(id);
+        return impl->getOrCreateItvItem(item)->getOrCreateSigCheckToggled(id);
     }
     return impl->sigCheckToggledForInvalidItem;
 }
@@ -890,9 +903,9 @@ ItemList<>& ItemTreeView::allSelectedItems()
 }
 
 
-void ItemTreeView::extractSelectedItemsOfSubTree(ItemPtr topItem, ItemList<>& io_items)
+void ItemTreeView::extractSelectedItemsOfSubTree(Item* topItem, ItemList<>& io_items)
 {
-    topItem->traverse(std::bind(&ItemTreeViewImpl::extractSelectedItemsOfSubTreeTraverse, impl, _1, &io_items));
+    topItem->traverse([&](Item* item){ return impl->extractSelectedItemsOfSubTreeTraverse(item, &io_items); });
 }
 
 
@@ -935,7 +948,7 @@ void ItemTreeViewImpl::extractCheckedItems(QTreeWidgetItem* twItem, int column, 
     ItvItem* itvItem = dynamic_cast<ItvItem*>(twItem);
     if(itvItem){
         if(itvItem->checkState(column) == Qt::Checked){
-            checkedItemList.push_back(itvItem->item.get());
+            checkedItemList.push_back(itvItem->item);
         }
     }
     int n = twItem->childCount();
@@ -949,11 +962,11 @@ void ItemTreeViewImpl::forEachTopItems(const ItemList<>& items, std::function<vo
 {
     set<Item*> itemSet;
     for(size_t i=0; i < items.size(); ++i){
-        itemSet.insert(items.get(i));
+        itemSet.insert(items[i]);
     }
 
     for(size_t i=0; i < items.size(); ++i){
-        Item* item = items.get(i);
+        Item* item = items[i];
         bool isChild = false;
         Item* parentItem = item->parentItem();
         while(parentItem){
@@ -975,7 +988,7 @@ void ItemTreeViewImpl::cutSelectedItems()
 {
     copiedItemList.clear();
     ItemList<> selected = selectedItemList;
-    forEachTopItems(selected, std::bind(&ItemTreeViewImpl::moveCutItemsToCopiedItemList, this, _1));
+    forEachTopItems(selected, [&](Item* item){ moveCutItemsToCopiedItemList(item); });
 }
 
 
@@ -991,11 +1004,11 @@ void ItemTreeViewImpl::copySelectedItems()
 
     set<Item*> items;
     for(size_t i=0; i < selectedItemList.size(); ++i){
-        items.insert(selectedItemList.get(i));
+        items.insert(selectedItemList[i]);
     }
     
     for(size_t i=0; i < selectedItemList.size(); ++i){
-        Item* item = selectedItemList.get(i);
+        Item* item = selectedItemList[i];
         bool isChild = false;
         Item* parentItem = item->parentItem();
         while(parentItem){
@@ -1019,7 +1032,7 @@ void ItemTreeViewImpl::copySelectedItems()
 }
 
 
-void ItemTreeViewImpl::copySelectedItemsSub(Item* item, ItemPtr& duplicated, set<Item*>& items)
+void ItemTreeViewImpl::copySelectedItemsSub(Item* item, Item* duplicated, set<Item*>& items)
 {
     for(Item* childItem = item->childItem(); childItem; childItem = childItem->nextItem()){
         set<Item*>::iterator p = items.find(childItem);
@@ -1044,7 +1057,7 @@ void ItemTreeViewImpl::copySelectedItemsSub(Item* item, ItemPtr& duplicated, set
 void ItemTreeViewImpl::copySelectedItemsWithChildren()
 {
     copiedItemList.clear();
-    forEachTopItems(selectedItemList, std::bind(&ItemTreeViewImpl::addCopiedItemToCopiedItemList, this, _1));
+    forEachTopItems(selectedItemList, [&](Item* item){ addCopiedItemToCopiedItemList(item); });
 }
 
 
@@ -1092,7 +1105,7 @@ void ItemTreeViewImpl::moveCutItemsToCopiedItemList(Item* item)
 void ItemTreeViewImpl::checkSelectedItems(bool on)
 {
     for(size_t i=0; i < selectedItemList.size(); ++i){
-        checkItem(selectedItemList[i].get(), on, 0);
+        checkItem(selectedItemList[i], on, 0);
     }
 }
 
@@ -1100,7 +1113,7 @@ void ItemTreeViewImpl::checkSelectedItems(bool on)
 void ItemTreeViewImpl::toggleSelectedItemChecks()
 {
     for(size_t i=0; i < selectedItemList.size(); ++i){
-        Item* item = selectedItemList[i].get();
+        Item* item = selectedItemList[i];
         checkItem(item, !isItemChecked(item, 0), 0);
     }
 }
@@ -1145,15 +1158,15 @@ void ItemTreeViewImpl::storeItemIds(Archive& archive, const char* key, const Ite
 
 bool ItemTreeView::restoreState(const Archive& archive)
 {
-    archive.addPostProcess(std::bind(&ItemTreeViewImpl::restoreState, impl, std::ref(archive)));
+    archive.addPostProcess([&](){ impl->restoreState(archive); });
     return true;
 }
 
 
 bool ItemTreeViewImpl::restoreState(const Archive& archive)
 {
-    restoreItemStates(archive, "checked", std::bind(&ItemTreeView::checkItem, self, _1, true, 0));
-    restoreItemStates(archive, "selected", std::bind(&ItemTreeView::selectItem, self, _1, true));
+    restoreItemStates(archive, "checked", [&](Item* item){ checkItem(item, true, 0); });
+    restoreItemStates(archive, "selected", [&](Item* item){ selectItem(item, true); });
     restoreExpandedItems(archive);
     return true;
 }
@@ -1161,12 +1174,12 @@ bool ItemTreeViewImpl::restoreState(const Archive& archive)
 
 bool ItemTreeView::restoreCheckColumnState(int id, const Archive& archive)
 {
-    return impl->restoreItemStates(archive, "checked", std::bind(&ItemTreeView::checkItem, this, _1, true, id));
+    return impl->restoreItemStates(archive, "checked", [&](Item* item){ checkItem(item, true, id); });
 }
 
 
 bool ItemTreeViewImpl::restoreItemStates
-(const Archive& archive, const char* key, std::function<void(ItemPtr)> stateChangeFunc)
+(const Archive& archive, const char* key, std::function<void(Item*)> stateChangeFunc)
 {
     bool completed = false;
     const Listing& idseq = *archive.findListing(key);

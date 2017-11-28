@@ -24,6 +24,8 @@
 #include <cnoid/Separator>
 #include <cnoid/LazyCaller>
 #include <cnoid/ViewManager>
+#include <cnoid/MenuManager>
+#include <cnoid/AppConfig>
 #include <QScrollArea>
 #include <QGridLayout>
 #include <QGroupBox>
@@ -35,6 +37,14 @@ using namespace cnoid;
 
 namespace {
 static const double sliderResolution = 1000000.0;
+Action* useQuaternionCheck;
+
+void onUseQuaternionToggled(bool on)
+{
+    AppConfig::archive()->openMapping("Body")->openMapping("Link View")->write("useQuaternion", on);
+    BodyLinkView::instance()->switchRpyQuat(on);
+}
+BodyLinkView* bodyLinkView = 0;
 }
 
 namespace cnoid {
@@ -68,6 +78,9 @@ public:
 
     DoubleSpinBox xyzSpin[3];
     DoubleSpinBox rpySpin[3];
+    DoubleSpinBox quatSpin[4];
+    QLabel* rpyLabels[3];
+    QLabel* quatLabels[4];
     CheckBox attMatrixCheck;
     QWidget attMatrixBox;
     QLabel attLabels[3][3];
@@ -108,8 +121,11 @@ public:
     void on_dqLimitChanged(bool isMin);
     void onXyzChanged();
     void onRpyChanged();
+    void onQuatChanged();
+    void setPosture(Matrix3 R);
     void doInverseKinematics(Vector3 p, Matrix3 R);
     void onZmpXyzChanged();
+    void switchRpyQuat(bool on);
     bool storeState(Archive& archive);
     bool restoreState(const Archive& archive);
 };
@@ -127,8 +143,22 @@ const int M4 = 16;
 
 void BodyLinkView::initializeClass(ExtensionManager* ext)
 {
-    ext->viewManager().registerClass<BodyLinkView>(
+    bodyLinkView = ext->viewManager().registerClass<BodyLinkView>(
         "BodyLinkView", N_("Body / Link"), ViewManager::SINGLE_DEFAULT);
+    MenuManager& mm = ext->menuManager().setPath("/Options").setPath(N_("BodyLink View"));
+    MappingPtr config = AppConfig::archive()->openMapping("Body")->openMapping("Link View");
+    useQuaternionCheck = mm.addCheckItem(_("Use Quaternion"));
+    useQuaternionCheck->setChecked(config->get("useQuaternion", false));
+    useQuaternionCheck->sigToggled().connect(onUseQuaternionToggled);
+    if(config->get("useQuaternion", false)){
+        BodyLinkView::instance()->switchRpyQuat(config->get("useQuaternion", false));
+    }
+}
+
+
+BodyLinkView* BodyLinkView::instance()
+{
+    return bodyLinkView;
 }
 
 
@@ -250,10 +280,13 @@ void BodyLinkViewImpl::setupWidgets()
                 std::bind(&BodyLinkViewImpl::onXyzChanged, this)));
     }
 
-    static const char* rpyLabels[] = {"R", "P", "Y"};
+    grid = new QGridLayout();
+    static const char* rpyLabelChar[] = {"R", "P", "Y"};
+    vbox->addLayout(grid);
 
     for(int i=0; i < 3; ++i){
-        grid->addWidget(new QLabel(rpyLabels[i], frame), 2, i, Qt::AlignCenter);
+        rpyLabels[i] = new QLabel(rpyLabelChar[i], frame);
+        grid->addWidget(rpyLabels[i], 2, i, Qt::AlignCenter);
         grid->addWidget(&rpySpin[i], 3, i);
 
         rpySpin[i].setAlignment(Qt::AlignCenter);
@@ -264,6 +297,27 @@ void BodyLinkViewImpl::setupWidgets()
         stateWidgetConnections.add(
             rpySpin[i].sigValueChanged().connect(
                 std::bind(&BodyLinkViewImpl::onRpyChanged, this)));
+    }
+
+    grid = new QGridLayout();
+    static const char* quatLabelChar[] = {"x", "y", "z", "w"};
+    vbox->addLayout(grid);
+
+    for(int i=0; i< 4; ++i){
+        quatLabels[i] = new QLabel(quatLabelChar[i], frame);
+        grid->addWidget(quatLabels[i], 2, i, Qt::AlignCenter);
+        grid->addWidget(&quatSpin[i], 3, i);
+
+        quatSpin[i].setAlignment(Qt::AlignCenter);
+        quatSpin[i].setDecimals(4);
+        quatSpin[i].setRange(-1.0000, 1.0000);
+        quatSpin[i].setSingleStep(0.0001);
+
+        stateWidgetConnections.add(
+            quatSpin[i].sigValueChanged().connect(
+                std::bind(&BodyLinkViewImpl::onQuatChanged, this)));
+        quatLabels[i]->hide();
+        quatSpin[i].hide();
     }
 
     attMatrixCheck.setText(_("Matrix"));
@@ -650,6 +704,13 @@ void BodyLinkViewImpl::updateKinematicState(bool blockSignals)
                     rpySpin_i.setValue(degree(rpy[i]));
                 }
             }
+            if(!quatSpin[0].hasFocus() && !quatSpin[1].hasFocus() && !quatSpin[2].hasFocus() && !quatSpin[3].hasFocus()){
+                Eigen::Quaterniond quat(R);
+                quatSpin[0].setValue(quat.x());
+                quatSpin[1].setValue(quat.y());
+                quatSpin[2].setValue(quat.z());
+                quatSpin[3].setValue(quat.w());
+            }
             if(attMatrixCheck.isChecked()){
                 for(int i=0; i < 3; ++i){
                     for(int j=0; j < 3; ++j){
@@ -802,15 +863,34 @@ void BodyLinkViewImpl::onRpyChanged()
         }
         Matrix3 R = currentLink->calcRfromAttitude(rotFromRpy(rpy));
 
-        SimulatorItem* activeSimulator = SimulatorItem::findActiveSimulatorItemFor(currentBodyItem);
-        if(!activeSimulator){
-            doInverseKinematics(currentLink->p(), R);
-        } else {
-            if(currentLink->isRoot() && activeSimulator->isForcedPositionActiveFor(currentBodyItem)){
-                Position position = currentLink->position();
-                position.linear() = R;
-                activeSimulator->setForcedPosition(currentBodyItem, position);
-            }
+        setPosture(R);
+    }
+}
+
+
+void BodyLinkViewImpl::onQuatChanged()
+{
+    if(currentBodyItem && currentLink){
+        Eigen::Quaterniond quat = Eigen::Quaterniond(quatSpin[3].value(), quatSpin[0].value(), quatSpin[1].value(), quatSpin[2].value());
+        if(quat.norm()<1.0e-20) return;
+        quat.normalize();
+        Matrix3 R = quat.toRotationMatrix();
+
+        setPosture(R);
+    }
+}
+
+
+void BodyLinkViewImpl::setPosture(Matrix3 R)
+{
+    SimulatorItem* activeSimulator = SimulatorItem::findActiveSimulatorItemFor(currentBodyItem);
+    if(!activeSimulator){
+        doInverseKinematics(currentLink->p(), R);
+    } else {
+        if(currentLink->isRoot() && activeSimulator->isForcedPositionActiveFor(currentBodyItem)){
+            Position position = currentLink->position();
+            position.linear() = R;
+            activeSimulator->setForcedPosition(currentBodyItem, position);
         }
     }
 }
@@ -822,6 +902,8 @@ void BodyLinkViewImpl::doInverseKinematics(Vector3 p, Matrix3 R)
 
     if(ik){
         currentBodyItem->beginKinematicStateEdit();
+
+        Position T0 = currentLink->T();
 
         if(KinematicsBar::instance()->isPenetrationBlockMode()){
             PenetrationBlockerPtr blocker = currentBodyItem->createPenetrationBlocker(currentLink, true);
@@ -838,6 +920,22 @@ void BodyLinkViewImpl::doInverseKinematics(Vector3 p, Matrix3 R)
         if(ik->calcInverseKinematics(p, R)){
             currentBodyItem->notifyKinematicStateChange(true);
             currentBodyItem->acceptKinematicStateEdit();
+
+            if(currentLink->isRoot()){
+                Position Tinv = currentLink->T().inverse();
+                Position Trel = T0.inverse() * currentLink->T();
+                const ItemList<BodyItem>& bodyItems = BodyBar::instance()->selectedBodyItems();
+                for(int i=0; i < bodyItems.size(); ++i){
+                    BodyItem* bodyItem = bodyItems[i];
+                    if(bodyItem != currentBodyItem){
+                        Link* rootLink = bodyItem->body()->rootLink();
+                        Position T = currentLink->T() * Trel * Tinv * rootLink->T();
+                        normalizeRotation(T);
+                        rootLink->T() = T;
+                        bodyItem->notifyKinematicStateChange(true);
+                    }
+                }
+            }
         }
     }
 }
@@ -852,6 +950,53 @@ void BodyLinkViewImpl::onZmpXyzChanged()
         }
         currentBodyItem->setZmp(zmp);
         currentBodyItem->notifyKinematicStateChange(false);
+    }
+}
+
+
+void BodyLinkView::switchRpyQuat(bool on)
+{
+    impl->switchRpyQuat(on);
+}
+
+
+void BodyLinkViewImpl::switchRpyQuat(bool on)
+{
+    if(on){
+        Vector3 rpy;
+        for(int i=0; i < 3; ++i){
+            rpy[i] = radian(rpySpin[i].value());
+        }
+        Matrix3 m = rotFromRpy(rpy);
+        Eigen::Quaterniond quat(m);
+        quatSpin[0].setValue(quat.x());
+        quatSpin[1].setValue(quat.y());
+        quatSpin[2].setValue(quat.z());
+        quatSpin[3].setValue(quat.w());
+        for(int i=0; i<3; ++i){
+            rpyLabels[i]->hide();
+            rpySpin[i].hide();
+        }
+        for(int i=0; i<4; ++i){
+            quatLabels[i]->show();
+            quatSpin[i].show();
+        }
+    } else {
+        Eigen::Quaterniond quat = Eigen::Quaterniond(quatSpin[3].value(), quatSpin[0].value(), quatSpin[1].value(), quatSpin[2].value());
+        quat.normalize();
+        Matrix3 R = quat.toRotationMatrix();
+        Vector3 rpy = rpyFromRot(R);
+        rpySpin[0].setValue(degree(rpy[0]));
+        rpySpin[1].setValue(degree(rpy[1]));
+        rpySpin[2].setValue(degree(rpy[2]));
+        for(int i=0; i<4; ++i){
+            quatLabels[i]->hide();
+            quatSpin[i].hide();
+        }
+        for(int i=0; i<3; ++i){
+            rpyLabels[i]->show();
+            rpySpin[i].show();
+        }
     }
 }
 
