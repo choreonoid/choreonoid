@@ -7,6 +7,7 @@
 #define CNOID_BODY_PLUGIN_CONTROLLER_ITEM_H
 
 #include "SimulatorItem.h"
+#include <cnoid/ControllerIO>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -15,23 +16,12 @@ class ControllerIO;
 
 class Body;
 
-/*
-class CNOID_EXPORT ControllerItemIO
-{
-public:
-    virtual ~ControllerItemIO();
-    virtual Body* body() = 0;
-    virtual double timeStep() const = 0;
-    virtual std::string optionString() const = 0;
-
-    //! \deprecated Use timeStep().
-    virtual double worldTimeStep() const;
-};
-*/
-    
 class CNOID_EXPORT ControllerItem : public Item
 {
 public:
+    // for the backward compatibility
+    typedef ControllerIO Target;
+
     ControllerItem();
     ControllerItem(const ControllerItem& org);
     virtual ~ControllerItem();
@@ -45,7 +35,7 @@ public:
     /**
        This function is called before the simulation world is initialized.
 
-       @note If the body() of the target returns a null pointer, a controller is not associated with a particular body.
+       @note If the io->body() returns a null pointer, a controller is not associated with a particular body.
        This is for a controller which does some general operations.
            
        @note This function is called from the main thread.
