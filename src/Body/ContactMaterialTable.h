@@ -7,6 +7,7 @@
 #define CNOID_BODY_CONTACT_MATERIAL_TABLE_H
 
 #include <cnoid/Referenced>
+#include <string>
 
 namespace cnoid {
 
