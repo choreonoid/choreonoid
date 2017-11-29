@@ -469,6 +469,7 @@ links:
     translation: [ 0, 0.22, -0.026 ]
     jointType: fixed
     jointAxis: Y
+    actuationMode: jointSurfaceVelocity
     centerOfMass: [ 0, 0, 0 ]
     mass: 1.0
     inertia: [
@@ -569,6 +570,7 @@ links:
     translation: [ 0, -0.22, -0.026 ]
     jointType: fixed
     jointAxis: Y
+    actuationMode: jointSurfaceVelocity
     centerOfMass: [ 0, 0, 0 ]
     mass: 1.0
     inertia: [

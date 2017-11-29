@@ -1,7 +1,7 @@
 format: ChoreonoidBody
 formatVersion: 1.0
 angleUnit: degree
-name: Tank
+name: SimpleTank
 
 links:
   -
@@ -114,23 +114,23 @@ links:
                 ambientIntensity: 0.3
                 emissiveColor: [ 0.8, 0.8, 0.3 ]
       - 
-        type: Transform
+        type: Camera
+        name: Camera
         translation: [ 0.1, 0, 0.05 ]
         rotation: [ [ 1, 0, 0, 90 ], [ 0, 1, 0, -90 ] ]
+        format: COLOR_DEPTH
+        fieldOfView: 65
+        width: 320
+        height: 240
+        frameRate: 30
         elements:
-          -
-            type: Camera
-            name: Camera
-            format: COLOR_DEPTH
-            fieldOfView: 65
-            width: 320
-            height: 240
-            frameRate: 30
-          -
-            type: Shape
+          Shape:
+            translation: [ 0, 0, 0.005 ]
+            rotation: [ 1, 0, 0, 90 ]
             geometry:
-              type: Box
-              size: [ 0.04, 0.015, 0.01 ]
+              type: Cylinder
+              radius: 0.02
+              height: 0.02
             appearance:
               material:
                 diffuseColor: [ 0.2, 0.2, 0.8 ]
@@ -140,8 +140,9 @@ links:
     name: TRACK_L
     parent: CHASSIS
     translation: [ 0, 0.2, 0 ]
-    jointType: pseudoContinuousTrack
+    jointType: fixed
     jointAxis: Y
+    actuationMode: jointSurfaceVelocity
     centerOfMass: [ 0, 0, 0 ]
     mass: 1.0
     inertia: [
@@ -167,8 +168,9 @@ links:
     name: TRACK_R
     parent: CHASSIS
     translation: [ 0, -0.2, 0 ]
-    jointType: pseudoContinuousTrack
+    jointType: fixed
     jointAxis: Y
+    actuationMode: jointSurfaceVelocity
     centerOfMass: [ 0, 0, 0 ]
     mass: 1.0
     inertia: [
