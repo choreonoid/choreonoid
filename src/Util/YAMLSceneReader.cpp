@@ -538,8 +538,8 @@ SgMesh* YAMLSceneReaderImpl::readCylinder(Mapping& node)
     double radius = node.get("radius", 1.0);
     double height = node.get("height", 1.0);
     bool bottom = node.get("bottom", true);
-    bool side = node.get("side", true);
-    return meshGenerator.generateCylinder(radius, height, bottom, side);
+    bool top = node.get("top", true);
+    return meshGenerator.generateCylinder(radius, height, bottom, top);
 }
 
 
@@ -548,8 +548,7 @@ SgMesh* YAMLSceneReaderImpl::readCone(Mapping& node)
     double radius = node.get("radius", 1.0);
     double height = node.get("height", 1.0);
     bool bottom = node.get("bottom", true);
-    bool side = node.get("side", true);
-    return meshGenerator.generateCone(radius, height, bottom, side);
+    return meshGenerator.generateCone(radius, height, bottom);
 }
 
 
