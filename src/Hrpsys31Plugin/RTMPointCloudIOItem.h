@@ -9,13 +9,14 @@
 #include <cnoid/Item>
 #include <cnoid/BodyItem>
 #include <cnoid/SceneProvider>
+#include <cnoid/ControllerItem>
 #include "exportdecl.h"
 
 namespace cnoid {
 
 class RTMPointCloudIOItemImpl;
 
-class CNOID_EXPORT RTMPointCloudIOItem : public Item
+class CNOID_EXPORT RTMPointCloudIOItem : public ControllerItem
 {
 public:
     static void initializeClass(ExtensionManager* ext);
@@ -30,6 +31,13 @@ public:
     virtual void doPutProperties(PutPropertyFunction& putProperty);
     virtual bool store(Archive& archive);
     virtual bool restore(const Archive& archive);
+
+    virtual bool start() override;
+    virtual double timeStep() const override;
+    virtual void input() override;
+    virtual bool control() override;
+    virtual void output() override;
+    virtual void stop() override;
 
 private:
     RTMPointCloudIOItemImpl* impl;

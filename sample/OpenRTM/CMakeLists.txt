@@ -49,6 +49,7 @@ configure_file(OpenRTM-PA10Pickup.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYON
 
 # Tank IO
 add_cnoid_body_io_rtc(TankIoRTC TankIoRTC.cpp)
+add_cnoid_body_io_rtc(TankVisionSensorIoRTC TankVisionSensorIoRTC.cpp)
 
 # Joystick
 add_cnoid_sample_rtc(JoystickRTC JoystickRTC.cpp)
@@ -58,3 +59,4 @@ target_link_libraries(JoystickRTC CnoidUtil)
 set(target TankJoystickControllerRTC)
 add_cnoid_sample_rtc(${target} TankJoystickControllerRTC.cpp)
 configure_file(OpenRTM-TankJoystick.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+configure_file(OpenRTM-TankVisionSensors.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)

@@ -80,10 +80,11 @@ void AGXLink::constructAGXLink()
 void AGXLink::setAGXMaterial(){
     Mapping* mapping = getOrgLink()->info();
     // Set material
-    if(mapping->find("material")->isValid()){
-        setAGXMaterialFromName(getOrgLink()->materialName());
-    }else{
+    string materialName = mapping->get("material", "default");
+    if(materialName == "useLinkInfo"){
         setAGXMaterialFromLinkInfo();
+    }else{
+        setAGXMaterialFromName(getOrgLink()->materialName());
     }
 
     // Set density or mass
@@ -720,6 +721,7 @@ void AGXBody::setCollisionExclude(){
     setCollisionExcludeLinks(cdMapping);
     setCollisionExcludeTreeDepth(cdMapping);
     setCollisionExcludeLinkGroups(cdMapping);
+    setCollisionExcludeSelfCollisionLinks(cdMapping);
 }
 
 void AGXBody::setCollisionExcludeLinks(const Mapping& cdMapping){
@@ -786,7 +788,29 @@ void AGXBody::setCollisionExcludeLinkGroups(const Mapping& cdMapping){
         vector<string> excludeLinkNames;
         if(!agxConvert::setVector(linkNode->toListing(), excludeLinkNames)) continue;
         for(auto linkName : excludeLinkNames){
-            if(agxCollide::Geometry* geometry = getAGXLink(linkName)->getAGXGeometry())
+            if(AGXLink*agxLink = getAGXLink(linkName)){
+                if(agxCollide::Geometry*geometry = agxLink->getAGXGeometry())
+                    geometry->addGroup(ss.str());
+            }
+        }
+    }
+}
+
+void AGXBody::setCollisionExcludeSelfCollisionLinks(const Mapping& cdMapping)
+{
+    const ValueNodePtr& excludeSCLinksNode = cdMapping.find("excludeSelfCollisionLinks");
+    if(!excludeSCLinksNode->isValid())   return;
+    if(!excludeSCLinksNode->isListing()) return;
+    stringstream ss;
+    ss << "AGXExcludeSelfCollisionLinks_" << agx::UuidGenerator().generate().str() << std::endl;
+    addCollisionGroupNameToDisableCollision(ss.str());
+    getAGXScene()->setCollisionPair(ss.str(), getCollisionGroupName(), false);
+
+    vector<string> linkNames;
+    if(!agxConvert::setVector(excludeSCLinksNode->toListing(), linkNames)) return;
+    for(auto linkName : linkNames){
+        if(AGXLink* agxLink = getAGXLink(linkName)){
+            if(agxCollide::Geometry* geometry = agxLink->getAGXGeometry())
                 geometry->addGroup(ss.str());
         }
     }

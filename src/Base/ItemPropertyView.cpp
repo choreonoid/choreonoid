@@ -625,7 +625,8 @@ void PropertyItem::setData(int role, const QVariant& qvalue)
             }
         }
         if(itemPropertyViewImpl->updateRequestedDuringPropertyEditing){
-            callLater([=](){ itemPropertyViewImpl->updateProperties(); });
+            auto itemPropertyViewImpl = this->itemPropertyViewImpl;
+            callLater([itemPropertyViewImpl](){ itemPropertyViewImpl->updateProperties(); });
         }
     }
 

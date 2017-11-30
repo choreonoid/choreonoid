@@ -417,28 +417,42 @@ void YAMLSceneReaderImpl::readNodeList(ValueNode& elements, SgGroup* group)
 
 SgNode* YAMLSceneReaderImpl::readTransform(Mapping& node)
 {
-    SgPosTransformPtr transform = new SgPosTransform;
+    SgGroupPtr group;
 
+    SgPosTransformPtr posTransform = new SgPosTransform;
     if(read(node, "translation", v)){
-        transform->setTranslation(v);
+        posTransform->setTranslation(v);
+        group = posTransform;
     }
     Matrix3 R;
     if(self->readRotation(node, R, false)){
-        transform->setRotation(R);
-    }
-    Vector3 scale;
-    bool hasScale = read(node, "scale", scale);
-
-    if(hasScale){
-        SgScaleTransformPtr scaleT = new SgScaleTransform;
-        scaleT->setScale(scale);
-        transform->addChild(scaleT);
-        readElements(node, scaleT);
-    }else{
-        readElements(node, transform);
+        posTransform->setRotation(R);
+        if(!group){
+            group = posTransform;
+        }
     }
 
-    return transform.retn();
+    if(!read(node, "scale", v)){
+        if(!group){
+            group = new SgGroup;
+        }
+        readElements(node, group);
+
+    } else {
+        SgScaleTransformPtr scale = new SgScaleTransform;
+        scale->setScale(v);
+        if(group){
+            group->addChild(scale);
+        } else {
+            group = scale;
+        }
+        readElements(node, scale);
+    }
+
+    // Necessary to prevent group from being deleted when exiting the function
+    posTransform.reset();
+    
+    return group.retn();
 }
 
 
@@ -549,8 +563,8 @@ SgMesh* YAMLSceneReaderImpl::readCylinder(Mapping& node)
     double height = node.get("height", 1.0);
     bool bottom = node.get("bottom", true);
     bool top = node.get("top", true);
-    bool side = node.get("side", true);
-    return meshGenerator.generateCylinder(radius, height, bottom, top, side, generateTexCoord);
+    return meshGenerator.generateCylinder(radius, height, bottom, top, true, generateTexCoord);
+
 }
 
 
@@ -559,8 +573,7 @@ SgMesh* YAMLSceneReaderImpl::readCone(Mapping& node)
     double radius = node.get("radius", 1.0);
     double height = node.get("height", 1.0);
     bool bottom = node.get("bottom", true);
-    bool side = node.get("side", true);
-    return meshGenerator.generateCone(radius, height, bottom, side, generateTexCoord);
+    return meshGenerator.generateCone(radius, height, bottom, true, generateTexCoord);
 }
 
 

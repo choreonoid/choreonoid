@@ -2,8 +2,7 @@
 # @author Shin'ichiro Nakaoka
 
 #set(CMAKE_BUILD_TYPE Debug)
-
-#set_source_files_properties(SceneWidget.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
+#set_source_files_properties(GLSLSceneRenderer.cpp PROPERTIES COMPILE_FLAGS "-O3 -g")
 
 set(sources
   App.cpp
