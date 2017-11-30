@@ -2498,10 +2498,10 @@ void SimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
                 [&](bool on){ return onAllLinkPositionOutputModeChanged(on); });
     putProperty(_("Device state output"), isDeviceStateOutputEnabled,
                 changeProperty(isDeviceStateOutputEnabled));
-    putProperty(_("Controller Threads"), useControllerThreadsProperty,
-                changeProperty(useControllerThreadsProperty));
     putProperty(_("Record collision data"), recordCollisionData,
                 changeProperty(recordCollisionData));
+    putProperty(_("Controller Threads"), useControllerThreadsProperty,
+                changeProperty(useControllerThreadsProperty));
     putProperty(_("Controller options"), controllerOptionString_,
                 changeProperty(controllerOptionString_));
 }
