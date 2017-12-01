@@ -120,12 +120,12 @@ links:
         rotation: [ [ 1, 0, 0, 90 ], [ 0, 1, 0, -90 ] ]
         format: COLOR_DEPTH
         fieldOfView: 65
+        nearClipDistance: 0.02
         width: 320
         height: 240
         frameRate: 30
         elements:
           Shape:
-            translation: [ 0, 0, 0.005 ]
             rotation: [ 1, 0, 0, 90 ]
             geometry:
               type: Cylinder
