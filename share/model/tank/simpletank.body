@@ -135,7 +135,7 @@ links:
               material:
                 diffuseColor: [ 0.2, 0.2, 0.8 ]
                 specularColor: [ 0.6, 0.6, 1.0 ]
-                shininesss: 0.6
+                shininess: 0.6
   -
     name: TRACK_L
     parent: CHASSIS
