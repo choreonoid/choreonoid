@@ -121,7 +121,7 @@ struct AGXRigidBodyDesc
     //agx::Vec3 c = agx::Vec3();            // center of mass(local)
     //agx::MassProperties::AutoGenerateFlags genflags = agx::MassProperties::AutoGenerateFlags::AUTO_GENERATE_ALL;        //
     agx::String name;                    // name
-    agx::Bool   enableAutoSleep = true;
+    agx::Bool   enableAutoSleep = false;
 };
 
 struct AGXGeometryDesc

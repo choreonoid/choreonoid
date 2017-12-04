@@ -344,6 +344,8 @@ agx::RigidBodyRef AGXLink::createAGXRigidBody()
         desc.control = agx::RigidBody::MotionControl::KINEMATICS;
     }
 
+    desc.enableAutoSleep = orgLink->info("autoSleep", desc.enableAutoSleep);
+
     return AGXObjectFactory::createRigidBody(desc);
 }
 
