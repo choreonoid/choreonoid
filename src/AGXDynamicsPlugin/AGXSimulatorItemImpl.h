@@ -45,6 +45,7 @@ private:
     bool    _p_enableContactReduction;
     int     _p_contactReductionBinResolution;
     int     _p_contactReductionThreshhold;
+    bool    _p_enableContactWarmstarting;
     bool    _p_enableAutoSleep;
     AGXScene* getAGXScene();
 };
