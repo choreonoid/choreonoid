@@ -288,9 +288,8 @@ msgid "Image"
 msgstr "画像"
 
 #: ImageView.cpp:277
-#, fuzzy
 msgid "ImageViewBar"
-msgstr "画像サイズ"
+msgstr "画像ビューバー"
 
 #: ImageView.cpp:296
 msgid "Select a ImageProvider Item"
