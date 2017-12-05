@@ -772,7 +772,15 @@ SgMesh* YAMLSceneReaderImpl::readResourceAsGeometry(Mapping& node)
         if(!shape){
             node.throwException(_("A resouce specified as a geometry must be a single mesh"));
         }
-        return shape->mesh();
+        if(generateTexCoord){
+            SgMesh* mesh = shape->mesh();
+            if(mesh && !mesh->hasTexCoords()){
+                meshGenerator.generateTextureCoordinateForIndexedFaceSet(mesh);
+            }
+            return mesh;
+        }else{
+            return shape->mesh();
+        }
     }
     return 0;
 }
