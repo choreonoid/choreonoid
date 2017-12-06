@@ -48,6 +48,7 @@ configure_file(TankJoystickLightBlink.cnoid ${CNOID_SOURCE_SHARE_DIR}/project CO
 # DoubleArmV7 sample
 add_cnoid_simple_controller(DoubleArmV7Controller DoubleArmV7Controller.cpp)
 configure_file(DoubleArmV7SJoystick.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+configure_file(DoubleArmV7AJoystick.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 
 # Other samples
 add_cnoid_simple_controller(ConveyorController ConveyorController.cpp)

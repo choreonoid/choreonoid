@@ -48,6 +48,7 @@ AGXSimulatorItemImpl::AGXSimulatorItemImpl(AGXSimulatorItem* self)
     _p_enableContactReduction = simDesc.enableContactReduction;
     _p_contactReductionBinResolution = simDesc.contactReductionBinResolution;
     _p_contactReductionThreshhold = (int)simDesc.contactReductionThreshhold;
+    _p_enableContactWarmstarting = simDesc.enableContactWarmstarting;
     _p_enableAutoSleep = simDesc.enableAutoSleep;
 }
 
@@ -68,6 +69,7 @@ void AGXSimulatorItemImpl::doPutProperties(PutPropertyFunction & putProperty)
     putProperty(_("ContactReduction"), _p_enableContactReduction, changeProperty(_p_enableContactReduction));
     putProperty(_("ContactReductionBinResolution"), _p_contactReductionBinResolution, changeProperty(_p_contactReductionBinResolution));
     putProperty(_("ContactReductionThreshhold"), _p_contactReductionThreshhold, changeProperty(_p_contactReductionThreshhold));
+    putProperty(_("ContactWarmstarting"), _p_enableContactWarmstarting, changeProperty(_p_enableContactWarmstarting));
     putProperty(_("AutoSleep(experimental)"), _p_enableAutoSleep, changeProperty(_p_enableAutoSleep));
 }
 
@@ -102,6 +104,7 @@ bool AGXSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody
     sd.simdesc.enableContactReduction = _p_enableContactReduction;
     sd.simdesc.contactReductionBinResolution = (agx::UInt8)_p_contactReductionBinResolution;
     sd.simdesc.contactReductionThreshhold = (agx::UInt8)_p_contactReductionThreshhold;
+    sd.simdesc.enableContactWarmstarting = _p_enableContactWarmstarting;
     sd.simdesc.enableAutoSleep = _p_enableAutoSleep;
     agxScene = AGXScene::create(sd);
 

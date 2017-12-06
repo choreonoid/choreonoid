@@ -48,7 +48,6 @@ AGXVehicleContinuousTrack::AGXVehicleContinuousTrack(AGXVehicleContinuousTrackDe
             radius = l_cylinder->getRadius();
         }else if(auto l_capsule = dynamic_cast<agxCollide::Capsule*>(shape)){
             radius = l_capsule->getRadius();
-                std::cout << name << std::endl;
         }else{
             std::cout << "failed to cast agxCollide::Cylinder or agxCollide::Capsule." << std::endl;
             return nullptr;
