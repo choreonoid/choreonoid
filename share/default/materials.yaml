@@ -71,7 +71,7 @@ contactMaterials:
     materials: [ Default, Hand ]
     friction: 1.0
     restitution: 0.0
-    viscosity: 0.1
+    surfaceViscosity: 1e-8
     frictionModel: [ cone, direct ]
   -
     materials: [ Ground, TankTracks]
