@@ -21,8 +21,8 @@ public:
 protected:
     virtual Item* doDuplicate() const;
     void doPutProperties(PutPropertyFunction& putProperty);
-    //virtual bool store(Archive& archive);
-    //virtual bool restore(const Archive& archive);
+    virtual bool store(Archive& archive);
+    virtual bool restore(const Archive& archive);
     virtual SimulationBody* createSimulationBody(Body* orgBody);
     virtual bool initializeSimulation(const std::vector<SimulationBody*>& simBodies);
 //    virtual void initializeSimulationThread();
