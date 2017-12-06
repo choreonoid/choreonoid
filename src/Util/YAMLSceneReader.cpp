@@ -7,11 +7,15 @@
 #include <cnoid/SceneDrawables>
 #include <cnoid/SceneLights>
 #include <cnoid/MeshGenerator>
+#include <cnoid/PolygonMeshTriangulator>
+#include <cnoid/MeshNormalGenerator>
 #include <cnoid/SceneLoader>
 #include <cnoid/EigenArchive>
 #include <cnoid/FileUtil>
 #include <cnoid/NullOut>
+#include <cnoid/Exception>
 #include <boost/format.hpp>
+#include <cnoid/ImageIO>
 #include <unordered_map>
 #include <mutex>
 #include <regex>
@@ -65,17 +69,24 @@ public:
     string symbol;
     Vector3f color;
     Vector3 v;
+    Vector2 v2;
     bool on;
     
     MeshGenerator meshGenerator;
+    PolygonMeshTriangulator polygonMeshTriangulator;
+    MeshNormalGenerator normalGenerator;
     SgMaterialPtr defaultMaterial;
+    ImageIO imageIO;
 
     map<string, ResourceInfoPtr> resourceInfoMap;
     SceneLoader sceneLoader;
     filesystem::path baseDirectory;
     std::regex uriSchemeRegex;
     bool isUriSchemeRegexReady;
-    
+    typedef map<string, SgImagePtr> ImagePathToSgImageMap;
+    ImagePathToSgImageMap imagePathToSgImageMap;
+    bool generateTexCoord;
+
     YAMLSceneReaderImpl(YAMLSceneReader* self);
     ~YAMLSceneReaderImpl();
 
@@ -96,10 +107,13 @@ public:
     SgMesh* readCapsule(Mapping& node);
     SgMesh* readExtrusion(Mapping& node);
     SgMesh* readElevationGrid(Mapping& node);
+    SgMesh* readIndexedFaceSet(Mapping& node);
     SgMesh* readResourceAsGeometry(Mapping& node);
     void readAppearance(SgShape* shape, Mapping& node);
     void readMaterial(SgShape* shape, Mapping& node);
     void setDefaultMaterial(SgShape* shape);
+    void readTexture(SgShape* shape, Mapping& node);
+    void readTextureTransform(SgTexture* texture, Mapping& node);
     void readLightCommon(Mapping& node, SgLight* light);
     SgNode* readDirectionalLight(Mapping& node);
     SgNode* readSpotLight(Mapping& node);
@@ -159,6 +173,7 @@ YAMLSceneReaderImpl::YAMLSceneReaderImpl(YAMLSceneReader* self)
     }
     os_ = &nullout();
     isUriSchemeRegexReady = false;
+    imageIO.setUpsideDown(true);
 }
 
 
@@ -211,6 +226,7 @@ void YAMLSceneReader::clear()
     isDegreeMode_ = true;
     impl->defaultMaterial = 0;
     impl->resourceInfoMap.clear();
+    impl->imagePathToSgImageMap.clear();
 }
 
 
@@ -468,7 +484,6 @@ SgNode* YAMLSceneReaderImpl::readShape(Mapping& node)
     Mapping& geometry = *node.findMapping("geometry");
     if(geometry.isValid()){
         SgShapePtr shape = new SgShape;
-        shape->setMesh(readGeometry(geometry));
 
         Mapping& appearance = *node.findMapping("appearance");
         if(appearance.isValid()){
@@ -476,6 +491,13 @@ SgNode* YAMLSceneReaderImpl::readShape(Mapping& node)
         } else {
             setDefaultMaterial(shape);
         }
+
+        if(shape->texture()){
+            generateTexCoord = true;
+        }else{
+            generateTexCoord = false;
+        }
+        shape->setMesh(readGeometry(geometry));
 
         scene = readTransformParameters(node, shape);
 
@@ -507,6 +529,8 @@ SgMesh* YAMLSceneReaderImpl::readGeometry(Mapping& node)
         mesh = readExtrusion(node);
     } else if(type == "ElevationGrid"){
         mesh = readElevationGrid(node);
+    } else if(type == "IndexedFaceSet"){
+        mesh = readIndexedFaceSet(node);
     } else if(type == "Resource"){
         mesh = readResourceAsGeometry(node);
     } else {
@@ -523,13 +547,13 @@ SgMesh* YAMLSceneReaderImpl::readBox(Mapping& node)
     if(!read(node, "size", size)){
         size.setOnes(1.0);
     }
-    return meshGenerator.generateBox(size);
+    return meshGenerator.generateBox(size, generateTexCoord);
 }
 
 
 SgMesh* YAMLSceneReaderImpl::readSphere(Mapping& node)
 {
-    return meshGenerator.generateSphere(node.get("radius", 1.0));
+    return meshGenerator.generateSphere(node.get("radius", 1.0), generateTexCoord);
 }
 
 
@@ -538,8 +562,9 @@ SgMesh* YAMLSceneReaderImpl::readCylinder(Mapping& node)
     double radius = node.get("radius", 1.0);
     double height = node.get("height", 1.0);
     bool bottom = node.get("bottom", true);
-    bool side = node.get("side", true);
-    return meshGenerator.generateCylinder(radius, height, bottom, side);
+    bool top = node.get("top", true);
+    return meshGenerator.generateCylinder(radius, height, bottom, top, true, generateTexCoord);
+
 }
 
 
@@ -548,8 +573,7 @@ SgMesh* YAMLSceneReaderImpl::readCone(Mapping& node)
     double radius = node.get("radius", 1.0);
     double height = node.get("height", 1.0);
     bool bottom = node.get("bottom", true);
-    bool side = node.get("side", true);
-    return meshGenerator.generateCone(radius, height, bottom, side);
+    return meshGenerator.generateCone(radius, height, bottom, true, generateTexCoord);
 }
 
 
@@ -623,7 +647,7 @@ SgMesh* YAMLSceneReaderImpl::readExtrusion(Mapping& node)
     node.read("beginCap", extrusion.beginCap);
     node.read("endCap", extrusion.endCap);
 
-    return meshGenerator.generateExtrusion(extrusion);
+    return meshGenerator.generateExtrusion(extrusion, generateTexCoord);
 }
 
 
@@ -645,7 +669,98 @@ SgMesh* YAMLSceneReaderImpl::readElevationGrid(Mapping& node)
         }
     }
 
-    return meshGenerator.generateElevationGrid(grid);
+    SgTexCoordArray* texCoord = 0;
+    Listing& texCoordNode = *node.findListing("texCoord");
+    if(texCoordNode.isValid()){
+        const int size = texCoordNode.size() / 2;
+        texCoord = new SgTexCoordArray();
+        texCoord->resize(size);
+        for(int i=0; i < size; ++i){
+            Vector2f& s = texCoord->at(i);
+            for(int j=0; j < 2; ++j){
+                s[j] = texCoordNode[i*2+j].toDouble();
+            }
+        }
+        generateTexCoord = false;
+    }
+
+    SgMesh* mesh= meshGenerator.generateElevationGrid(grid, generateTexCoord);
+    if(texCoord){
+        mesh->setTexCoords(texCoord);
+        mesh->texCoordIndices() = mesh->triangleVertices();
+    }
+
+    return mesh;
+}
+
+
+SgMesh* YAMLSceneReaderImpl::readIndexedFaceSet(Mapping& node)
+{
+    SgPolygonMeshPtr polygonMesh = new SgPolygonMesh;
+
+    Listing& coordinateNode = *node.findListing("coordinate");
+    if(coordinateNode.isValid()){
+        const int size = coordinateNode.size() / 3;
+        SgVertexArray& vertices = *polygonMesh->setVertices(new SgVertexArray());
+        vertices.resize(size);
+        for(int i=0; i < size; ++i){
+            Vector3f& s = vertices[i];
+            for(int j=0; j < 3; ++j){
+                s[j] = coordinateNode[i*3+j].toDouble();
+            }
+        }
+    }
+
+    Listing& coordIndexNode = *node.findListing("coordIndex");
+    if(coordIndexNode.isValid()){
+        SgIndexArray& polygonVertices = polygonMesh->polygonVertices();
+        const int size = coordIndexNode.size();
+        polygonVertices.reserve(size);
+        for(int i=0; i<size; i++){
+            polygonVertices.push_back(coordIndexNode[i].toInt());
+        }
+    }
+
+    Listing& texCoordNode = *node.findListing("texCoord");
+    if(texCoordNode.isValid()){
+        const int size = texCoordNode.size() / 2;
+        SgTexCoordArray& texCoord = *polygonMesh->setTexCoords(new SgTexCoordArray());
+        texCoord.resize(size);
+        for(int i=0; i < size; ++i){
+            Vector2f& s = texCoord[i];
+            for(int j=0; j < 2; ++j){
+                s[j] = texCoordNode[i*2+j].toDouble();
+            }
+        }
+    }
+
+    Listing& texCoordIndexNode = *node.findListing("texCoordIndex");
+    if(texCoordIndexNode.isValid()){
+        SgIndexArray& texCoordIndices = polygonMesh->texCoordIndices();
+        const int size = texCoordIndexNode.size();
+        texCoordIndices.reserve(size);
+        for(int i=0; i<size; i++){
+            texCoordIndices.push_back(texCoordIndexNode[i].toInt());
+        }
+    }
+
+    //polygonMeshTriangulator.setDeepCopyEnabled(true);
+    SgMesh* mesh= polygonMeshTriangulator.triangulate(polygonMesh);
+    const string& errorMessage = polygonMeshTriangulator.errorMessage();
+    if(!errorMessage.empty()){
+        node.throwException("Error of an IndexedFaceSet node: \n" + errorMessage);
+    }
+
+    if(generateTexCoord){
+        if(mesh && !mesh->hasTexCoords()){
+            meshGenerator.generateTextureCoordinateForIndexedFaceSet(mesh);
+        }
+    }
+
+    double creaseAngle = node.get("creaseAngle", 0.0);
+    normalGenerator.generateNormals(mesh, creaseAngle);
+
+    return mesh;
 }
 
 
@@ -657,7 +772,15 @@ SgMesh* YAMLSceneReaderImpl::readResourceAsGeometry(Mapping& node)
         if(!shape){
             node.throwException(_("A resouce specified as a geometry must be a single mesh"));
         }
-        return shape->mesh();
+        if(generateTexCoord){
+            SgMesh* mesh = shape->mesh();
+            if(mesh && !mesh->hasTexCoords()){
+                meshGenerator.generateTextureCoordinateForIndexedFaceSet(mesh);
+            }
+            return mesh;
+        }else{
+            return shape->mesh();
+        }
     }
     return 0;
 }
@@ -670,6 +793,16 @@ void YAMLSceneReaderImpl::readAppearance(SgShape* shape, Mapping& node)
         readMaterial(shape, material);
     } else {
         setDefaultMaterial(shape);
+    }
+
+    Mapping& texture = *node.findMapping("texture");
+    if(texture.isValid()){
+        readTexture(shape, texture);
+
+        Mapping& textureTransform = *node.findMapping("textureTransform");
+        if(textureTransform.isValid() && shape->texture()){
+            readTextureTransform(shape->texture(), textureTransform);
+        }
     }
 }
 
@@ -702,6 +835,55 @@ void YAMLSceneReaderImpl::setDefaultMaterial(SgShape* shape)
         defaultMaterial->setShininess(0.2f);
     }
     shape->setMaterial(defaultMaterial);
+}
+
+
+void YAMLSceneReaderImpl::readTexture(SgShape* shape, Mapping& node)
+{
+    string& url = symbol;
+    if(node.read("url", url)){
+        if(!url.empty()){
+            SgImagePtr image=0;
+            ImagePathToSgImageMap::iterator p = imagePathToSgImageMap.find(url);
+            if(p != imagePathToSgImageMap.end()){
+                image = p->second;
+            }else{
+                try{
+                    image = new SgImage;
+                    filesystem::path filepath(url);
+                    if(!checkAbsolute(filepath)){
+                        filepath = baseDirectory / filepath;
+                        filepath.normalize();
+                    }
+                    imageIO.load(image->image(), getAbsolutePathString(filepath));
+                    imagePathToSgImageMap[url] = image;
+                }catch(const exception_base& ex){
+                    node.throwException(*boost::get_error_info<error_info_message>(ex));
+                }
+            }
+            if(image){
+                SgTexturePtr texture = new SgTexture;
+                texture->setImage(image);
+                bool repeatS = true;
+                bool repeatT = true;
+                node.read("repeatS", repeatS);
+                node.read("repeatT", repeatT);
+                texture->setRepeat(repeatS, repeatT);
+                texture->setTextureTransform(new SgTextureTransform);
+                shape->setTexture(texture);
+            }
+        }
+    }
+}
+
+
+void YAMLSceneReaderImpl::readTextureTransform(SgTexture* texture, Mapping& node)
+{
+    SgTextureTransform* textureTransform = texture->textureTransform();
+    if(read(node, "center", v2)) textureTransform->setCenter(v2);
+    if(read(node, "scale", v2)) textureTransform->setScale(v2);
+    if(read(node, "translation", v2)) textureTransform->setTranslation(v2);
+    if(self->readAngle(node, "rotation", value)) textureTransform->setRotation(value);
 }
 
 
