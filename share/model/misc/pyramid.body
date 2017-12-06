@@ -9,6 +9,7 @@ links:
       translation: [ -0.35, 1.0, 0.3 ]
       jointType: free
       density: 1.0
+      autoSleep: true
       elements: &box
         Shape:
           geometry: { type: Box, size: [ 0.5, 0.5, 0.5 ] }
@@ -21,6 +22,7 @@ links:
       translation: [ 0.7, 0.0, 0.0 ]
       jointType: free
       density: 1.0
+      autoSleep: true
       elements: *box
   -
       name: box3
@@ -28,5 +30,6 @@ links:
       translation: [ 0.35, 0, 0.5 ]
       jointType: free
       density: 1.0
+      autoSleep: true
       elements: *box
 

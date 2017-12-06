@@ -495,7 +495,7 @@ public:
     }
 
     void clear();
-    void updateProperties();
+    void updateProperties(bool isItemChanged = false);
     void addProperty(const std::string& name, PropertyItem* propertyItem);
     void onItemSelectionChanged(const ItemList<>& items);
     void zoomFontSize(int pointSizeDiff);
@@ -508,7 +508,7 @@ PropertyItem::PropertyItem(ItemPropertyViewImpl* viewImpl, ValueVariant value)
     : itemPropertyViewImpl(viewImpl),
       value(value)
 {
-    setFlags(Qt::ItemIsEnabled);
+    setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
     hasValidFunction = false;
 }
 
@@ -518,7 +518,7 @@ PropertyItem::PropertyItem(ItemPropertyViewImpl* viewImpl, ValueVariant value, F
       value(value),
       func(func)
 {
-    setFlags(Qt::ItemIsEnabled | Qt::ItemIsEditable);
+    setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsEditable);
     hasValidFunction = true;
 }
 
@@ -659,7 +659,12 @@ ItemPropertyViewImpl::ItemPropertyViewImpl(ItemPropertyView* self)
     tableWidget->setFrameShape(QFrame::NoFrame);
     tableWidget->setColumnCount(2);
     tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
-    tableWidget->setSelectionMode(QAbstractItemView::NoSelection);
+    tableWidget->setSelectionMode(QAbstractItemView::SingleSelection);
+    tableWidget->setTabKeyNavigation(true);
+    tableWidget->setEditTriggers(
+        QAbstractItemView::DoubleClicked |
+        QAbstractItemView::SelectedClicked | 
+        QAbstractItemView::AnyKeyPressed);
 
     QHeaderView* hh = tableWidget->horizontalHeader();
     QHeaderView* vh = tableWidget->verticalHeader();
@@ -732,11 +737,11 @@ void ItemPropertyViewImpl::clear()
     
     itemConnections.disconnect();
     currentItem = 0;
-    updateProperties();
+    updateProperties(true);
 }
 
 
-void ItemPropertyViewImpl::updateProperties()
+void ItemPropertyViewImpl::updateProperties(bool isItemChanged)
 {
     if(TRACE_FUNCTIONS){
         cout << "ItemPropertyView::updateProperties()" << endl;
@@ -746,13 +751,23 @@ void ItemPropertyViewImpl::updateProperties()
         updateRequestedDuringPropertyEditing = true;
 
     } else {
+        int currentRow;
+        int currentColumn;
+        if(!isItemChanged){
+            currentRow = tableWidget->currentRow();
+            currentColumn = tableWidget->currentColumn();
+        }
+
         tableWidget->setRowCount(0);
-        
         tmpListIndex = 0;
         properties.clear();
         if(currentItem){
             reset();
             currentItem->putProperties(*this);
+        }
+
+        if(!isItemChanged){
+            tableWidget->setCurrentCell(currentRow, currentColumn);
         }
     }
 }
@@ -793,7 +808,7 @@ void ItemPropertyViewImpl::onItemSelectionChanged(const ItemList<>& items)
                 item->sigDetachedFromRoot().connect(
                     [&](){ clear(); }));
         }
-        updateProperties();
+        updateProperties(true);
     }
 }
 

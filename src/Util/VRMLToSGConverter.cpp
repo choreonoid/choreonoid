@@ -95,14 +95,6 @@ public:
     void setIndicesForPerPolygonData(SgIndexArray& indices, int dataSize, const MFInt32& orgCoordIndices);
     void convertIndicesForPolygons(
         SgIndexArray& indices, const MFInt32& orgIndices, const MFInt32& orgCoordIndices, const bool perVertex, const bool ccw);
-    void setDefaultTextureCoordinateForIndexedFaceSet(const SgMeshPtr& mesh);
-    BoxFaceID faceOfBoxTriangle(const Vector3f& v0, const Vector3f& v1, const Vector3f& v2);
-    void setDefaultTextureCoordinateForBox(const SgMeshPtr& mesh);
-    double calcPolarAngle(const Vector3f& point);
-    int findTexCoordPoint(const SgTexCoordArray& texCoord, const Vector2f& point);
-    void setDefaultTextureCoordinateForSphere(const SgMeshPtr& mesh);
-    void setDefaultTextureCoordinateForCylinder(const SgMeshPtr& mesh);
-    void setDefaultTextureCoordinateForCone(const SgMeshPtr& mesh);
     SgMeshPtr createMeshFromElevationGrid(VRMLElevationGrid* grid);
     void setDefaultTextureCoordinateForElevationGrid(const SgMeshPtr& mesh, const VRMLElevationGrid* grid);
     SgMeshPtr createMeshFromExtrusion(VRMLExtrusion* extrusion);
@@ -335,6 +327,10 @@ SgNode* VRMLToSGConverterImpl::convertShapeNode(VRMLShape* vshape)
         if(p != vrmlGeometryToSgMeshMap.end()){
             mesh = p->second;
         } else {
+            bool generateTexCoord = false;
+            if(vshape->appearance && vshape->appearance->texture){
+                generateTexCoord = true;
+            }
             if(VRMLIndexedFaceSet* faceSet = dynamic_cast<VRMLIndexedFaceSet*>(vrmlGeometry)){
                 if(!isTriangulationEnabled){
                     mesh = createMeshFromIndexedFaceSet(faceSet);
@@ -360,18 +356,18 @@ SgNode* VRMLToSGConverterImpl::convertShapeNode(VRMLShape* vshape)
                     
             } else if(VRMLBox* box = dynamic_cast<VRMLBox*>(vrmlGeometry)){
                 mesh = meshGenerator.generateBox(
-                    Vector3(box->size[0], box->size[1], box->size[2]));
+                    Vector3(box->size[0], box->size[1], box->size[2]), generateTexCoord);
                 
             } else if(VRMLSphere* sphere = dynamic_cast<VRMLSphere*>(vrmlGeometry)){
-                mesh = meshGenerator.generateSphere(sphere->radius);
+                mesh = meshGenerator.generateSphere(sphere->radius, generateTexCoord);
                 
             } else if(VRMLCylinder* cylinder = dynamic_cast<VRMLCylinder*>(vrmlGeometry)){
                 mesh = meshGenerator.generateCylinder(
-                    cylinder->radius, cylinder->height, cylinder->bottom, cylinder->side, cylinder->top);
+                    cylinder->radius, cylinder->height, cylinder->bottom, cylinder->top, cylinder->side, generateTexCoord);
                 
             } else if(VRMLCone* cone = dynamic_cast<VRMLCone*>(vrmlGeometry)){
                 mesh = meshGenerator.generateCone(
-                    cone->bottomRadius, cone->height, cone->bottom, cone->side);
+                    cone->bottomRadius, cone->height, cone->bottom, cone->side, generateTexCoord);
                 
             } else if(VRMLElevationGrid* elevationGrid = dynamic_cast<VRMLElevationGrid*>(vrmlGeometry)){
                 mesh = createMeshFromElevationGrid(elevationGrid);
@@ -445,15 +441,7 @@ SgNode* VRMLToSGConverterImpl::convertShapeNode(VRMLShape* vshape)
 
                     if(!mesh->texCoords()){
                         if(dynamic_cast<VRMLIndexedFaceSet*>(vrmlGeometry)){
-                            setDefaultTextureCoordinateForIndexedFaceSet(mesh);
-                        } else if(dynamic_cast<VRMLBox*>(vrmlGeometry)){
-                            setDefaultTextureCoordinateForBox(mesh);
-                        } else if(dynamic_cast<VRMLSphere*>(vrmlGeometry)){
-                            setDefaultTextureCoordinateForSphere(mesh);
-                        } else if(dynamic_cast<VRMLCylinder*>(vrmlGeometry)){
-                            setDefaultTextureCoordinateForCylinder(mesh);
-                        } else if(dynamic_cast<VRMLCone*>(vrmlGeometry)){
-                            setDefaultTextureCoordinateForCone(mesh);
+                            meshGenerator.generateTextureCoordinateForIndexedFaceSet(mesh);
                         } else if(VRMLElevationGrid* elevationGrid = dynamic_cast<VRMLElevationGrid*>(vrmlGeometry)){
                             setDefaultTextureCoordinateForElevationGrid(mesh, elevationGrid);
                         } else if(VRMLExtrusion* extrusion = dynamic_cast<VRMLExtrusion*>(vrmlGeometry)){
@@ -798,409 +786,6 @@ void VRMLToSGConverterImpl::convertIndicesForPolygons
                     indices.push_back(index);
                 }
                 indices.push_back(-1);
-            }
-        }
-    }
-}
-
-
-void VRMLToSGConverterImpl::setDefaultTextureCoordinateForIndexedFaceSet(const SgMeshPtr& mesh)
-{
-    const SgVertexArray& vertices = *mesh->vertices();
-
-    const Vector3f& v0 = vertices[0];
-    Vector3f max = v0;
-    Vector3f min = v0;
-
-    const int n = vertices.size();
-    for(int i=1; i < n; ++i){
-        const Vector3f& vi = vertices[i];
-        for(int j=0; j < 3; ++j){
-            float vij = vi[j];
-            if(vij > max[j]){
-                max[j] = vij;
-            } else if(vij < min[j]){
-                min[j] = vij;
-            }
-        }
-    }
-
-    int s,t;
-    const Vector3f size = max - min;
-    if(size.x() >= size.y()){
-        if(size.x() >= size.z()){
-            s = 0;
-            t = (size.y() >= size.z()) ? 1 : 2;
-        } else {
-            s = 2;
-            t = 0;
-        }
-    } else {
-        if(size.y() >= size.z()){
-            s = 1;
-            t = (size.x() >= size.z()) ? 0 : 2;
-        } else {
-            s = 2;
-            t = 1;
-        }
-    }
-    const float ratio = size[t] / size[s];
-
-    mesh->setTexCoords(new SgTexCoordArray());
-    SgTexCoordArray& texCoords = *mesh->texCoords();
-    texCoords.resize(n);
-    for(int i=0; i < n; ++i){
-        texCoords[i] <<
-            (vertices[i][s] - min[s]) / size[s],
-            (vertices[i][t] - min[t]) / size[t] * ratio;
-    }
-
-    // Is this really necessary for rendering?
-    mesh->texCoordIndices() = mesh->triangleVertices();
-}
-
-
-/**
-   \todo The face correcpondence relationship obtained from the primitive mesh creation
-   (SgMesh::setBox function) should be used to obtain which face the given one is.
-*/
-VRMLToSGConverterImpl::BoxFaceID VRMLToSGConverterImpl::faceOfBoxTriangle
-(const Vector3f& v0, const Vector3f& v1, const Vector3f& v2)
-{
-    if(v0.x() <= 0.0 && v1.x() <= 0.0 && v2.x() <= 0.0 ) return LEFT_FACE;
-    if(v0.x() > 0.0 && v1.x() > 0.0 && v2.x() > 0.0 ) return RIGHT_FACE;
-    if(v0.y() <= 0.0 && v1.y() <= 0.0 && v2.y() <= 0.0 ) return BOTTOM_FACE;
-    if(v0.y() > 0.0 && v1.y() > 0.0 && v2.y() > 0.0 ) return TOP_FACE;
-    if(v0.z() <= 0.0 && v1.z() <= 0.0 && v2.z() <= 0.0 ) return BACK_FACE;
-    if(v0.z() > 0.0 && v1.z() > 0.0 && v2.z() > 0.0 ) return FRONT_FACE;
-
-    return NO_FACE;
-
-    /**
-       \todo use the algorithm like the following code to support arbitrary box meshs
-       whose number of vertices is more than eight.
-    */
-    /*
-      int faceNormalAxis = 0;
-      SgFloat minNorm = std::numeric_limits<SgFloat>::max();
-      for(int i=0; i < 3; ++i){
-      const SgFloat d1 = (v0[i] - v1[i]);
-      const SgFloat d2 = (v0[i] - v2[i]);
-      const SgFloat n = d1 * d1 + d2 * d2;
-      if(n < minNorm){
-      minNorm = n;
-      faceNormalAxis = i;
-      }
-      }
-      bool isFront = (v0[faceNormalAxis] > 0.0);
-
-      return (faceNormalAxis, isFront);
-    */
-}
-
-
-void VRMLToSGConverterImpl::setDefaultTextureCoordinateForBox(const SgMeshPtr& mesh)
-{
-    mesh->setTexCoords(new SgTexCoordArray());
-    SgTexCoordArray& texCoords = *mesh->texCoords();
-    texCoords.resize(4);
-    texCoords[0] << 0.0, 0.0;
-    texCoords[1] << 1.0, 0.0;
-    texCoords[2] << 0.0, 1.0;
-    texCoords[3] << 1.0, 1.0;
-
-    SgIndexArray& texCoordIndices = mesh->texCoordIndices();
-    texCoordIndices.clear();
-    texCoordIndices.reserve(36);
-    const SgVertexArray& vertices = *mesh->vertices();
-    const SgIndexArray& triangles = mesh->triangleVertices();
-
-    for(int i=0; i < 12; ++i){
-        const Vector3f* v[3] = {
-            &vertices[triangles[i*3]],
-            &vertices[triangles[i*3+1]],
-            &vertices[triangles[i*3+2]] };
-        
-        switch(faceOfBoxTriangle(*v[0], *v[1], *v[2])){
-        case LEFT_FACE:
-            for(int j=0; j < 3; ++j){
-                if(v[j]->y() > 0.0 && v[j]->z() > 0.0) texCoordIndices.push_back(3);
-                else if(v[j]->y() >  0.0 && v[j]->z() <= 0.0) texCoordIndices.push_back(2);
-                else if(v[j]->y() <= 0.0 && v[j]->z() > 0.0) texCoordIndices.push_back(1);
-                else if(v[j]->y() <= 0.0 && v[j]->z() <= 0.0) texCoordIndices.push_back(0);
-            }
-            break;
-        case RIGHT_FACE:
-            for(int j=0; j < 3; ++j){
-                if(v[j]->y() > 0.0 && v[j]->z() > 0.0) texCoordIndices.push_back(2);
-                else if(v[j]->y() >  0.0 && v[j]->z() <= 0.0) texCoordIndices.push_back(3);
-                else if(v[j]->y() <= 0.0 && v[j]->z() > 0.0) texCoordIndices.push_back(0);
-                else if(v[j]->y() <= 0.0 && v[j]->z() <= 0.0) texCoordIndices.push_back(1);
-            }
-            break;
-        case BOTTOM_FACE:
-            for(int j=0; j < 3; ++j){
-                if(v[j]->z() > 0.0 && v[j]->x() > 0.0) texCoordIndices.push_back(3);
-                else if(v[j]->z() >  0.0 && v[j]->x() <= 0.0) texCoordIndices.push_back(2);
-                else if(v[j]->z() <= 0.0 && v[j]->x()  > 0.0) texCoordIndices.push_back(1);
-                else if(v[j]->z() <= 0.0 && v[j]->x() <= 0.0) texCoordIndices.push_back(0);
-            }
-            break;
-        case TOP_FACE:
-            for(int j=0; j < 3; ++j){
-                if(v[j]->z() > 0.0 && v[j]->x() > 0.0) texCoordIndices.push_back(1);
-                else if(v[j]->z() >  0.0 && v[j]->x() <= 0.0) texCoordIndices.push_back(0);
-                else if(v[j]->z() <= 0.0 && v[j]->x() >  0.0) texCoordIndices.push_back(3);
-                else if(v[j]->z() <= 0.0 && v[j]->x() <= 0.0) texCoordIndices.push_back(2);
-            }
-            break;
-        case BACK_FACE:
-            for(int j=0; j < 3; ++j){
-                if(v[j]->y() > 0.0 && v[j]->x() > 0.0) texCoordIndices.push_back(2);
-                else if(v[j]->y() >  0.0 && v[j]->x() <= 0.0) texCoordIndices.push_back(3);
-                else if(v[j]->y() <= 0.0 && v[j]->x() >  0.0) texCoordIndices.push_back(0);
-                else if(v[j]->y() <= 0.0 && v[j]->x() <= 0.0) texCoordIndices.push_back(1);
-            }
-            break;
-        case FRONT_FACE:
-            for(int j=0; j < 3; ++j){
-                if(v[j]->y() > 0.0 && v[j]->x() > 0.0) texCoordIndices.push_back(3);
-                else if(v[j]->y() >  0.0 && v[j]->x() <= 0.0) texCoordIndices.push_back(2);
-                else if(v[j]->y() <= 0.0 && v[j]->x() >  0.0) texCoordIndices.push_back(1);
-                else if(v[j]->y() <= 0.0 && v[j]->x() <= 0.0) texCoordIndices.push_back(0);
-            }
-            break;
-        default:
-            break;
-        }
-    }
-}
-
-
-double VRMLToSGConverterImpl::calcPolarAngle(const Vector3f& point)
-{
-    double angle = atan2(point[2], point[0]);
-    if(angle>=0){
-        angle = 1.5 * PI - angle;
-    } else if(-0.5 * PI < angle){
-        angle = -angle + 1.5 * PI;
-    } else {
-        angle = -angle - 0.5 * PI;
-    }
-    return angle;
-}
-
-
-/**
-   \todo Check if the use of this inefficient function is rellay necessary.
-*/
-int VRMLToSGConverterImpl::findTexCoordPoint(const SgTexCoordArray& texCoords, const Vector2f& point)
-{
-    for(size_t i=0; i < texCoords.size(); ++i){
-        if(texCoords[i].isApprox(point)){
-            return i;
-        }
-    }
-    return -1;
-}
-
-
-void VRMLToSGConverterImpl::setDefaultTextureCoordinateForSphere(const SgMeshPtr& mesh)
-{
-    const SgMesh::Sphere& sphere = mesh->primitive<SgMesh::Sphere>();
-    const SgVertexArray& vertices = *mesh->vertices();
-
-    mesh->setTexCoords(new SgTexCoordArray());
-    SgTexCoordArray& texCoords = *mesh->texCoords();
-    SgIndexArray& texCoordIndices = mesh->texCoordIndices();
-    texCoordIndices.clear();
-
-    Vector2f texPoint;
-    int texIndex = 0;
-    const int numTriangles = mesh->numTriangles();
-    for(int i=0; i < numTriangles; ++i){
-        const Vector3f* point[3];
-        bool over = false;
-        double s[3] = { 0.0, 0.0, 0.0 };
-        const SgMesh::TriangleRef triangle = mesh->triangle(i);
-        for(int j=0; j < 3; ++j){
-            point[j] = &vertices[triangle[j]];
-            s[j] = calcPolarAngle(*point[j]) / 2.0 / PI; 
-            if(s[j] > 0.5){
-                over = true;
-            }
-        }
-        for(int j=0; j < 3; ++j){
-            if(over && s[j] < 1.0e-6){
-                s[j] = 1.0;
-            }
-            texPoint << s[j], 1.0 - acos(point[j]->y() / sphere.radius) / PI;
-
-            int k = findTexCoordPoint(texCoords, texPoint);
-            if(k >= 0){
-                texCoordIndices.push_back(k);
-            } else {
-                texCoords.push_back(texPoint);
-                texCoordIndices.push_back(texIndex++);
-            }
-        }
-    }
-}
-
-
-void VRMLToSGConverterImpl::setDefaultTextureCoordinateForCylinder(const SgMeshPtr& mesh)
-{
-    const SgVertexArray& vertices = *mesh->vertices();
-    mesh->setTexCoords(new SgTexCoordArray());
-    SgTexCoordArray& texCoords = *mesh->texCoords();
-    SgIndexArray& texCoordIndices = mesh->texCoordIndices();
-    texCoordIndices.clear();
-    
-    Vector2f texPoint(0.5f, 0.5f); // center of top(bottom) index=0
-    
-    texCoords.push_back(texPoint);
-    int texIndex = 1;
-    const int numTriangles = mesh->numTriangles();
-    for(int i=0; i < numTriangles; ++i){
-        Vector3f point[3];
-        bool notside = true;
-        int center = -1;
-        SgMesh::TriangleRef triangle = mesh->triangle(i);
-        for(int j=0; j < 3; ++j){
-            point[j] = vertices[triangle[j]];
-            if(j > 0){
-                if(point[0][1] != point[j][1]){
-                    notside = false;
-                }
-            }
-            if(point[j][0] == 0.0 && point[j][2] == 0.0){
-                center = j;
-            }
-        }
-        if(!notside){         //side
-            bool over=false;
-            Vector3f s(0.0, 0.0, 0.0);
-            for(int j=0; j < 3; ++j){
-                s[j] = calcPolarAngle(point[j]) / 2.0 / PI;
-                if(s[j] > 0.5){
-                    over = true;
-                }
-            }
-            for(int j=0; j < 3; ++j){
-                if(over && s[j] < 1.0e-6){
-                    s[j] = 1.0;
-                }
-                texPoint[0] = s[j];        
-                if(point[j][1] > 0.0){
-                    texPoint[1] = 1.0;
-                } else {
-                    texPoint[1] = 0.0;
-                }
-                const int k = findTexCoordPoint(texCoords, texPoint);
-                if(k >= 0){
-                    texCoordIndices.push_back(k);
-                }else{
-                    texCoords.push_back(texPoint);
-                    texCoordIndices.push_back(texIndex++);
-                }
-            }
-        } else {              // top / bottom
-            for(int j=0; j < 3; ++j){
-                if(j!=center){
-                    const double angle = atan2(point[j][2], point[j][0]);
-                    texPoint[0] = 0.5 + 0.5 * cos(angle);    
-                    if(point[0][1] > 0.0){  //top
-                        texPoint[1] = 0.5 - 0.5 * sin(angle);
-                    } else {               //bottom
-                        texPoint[1] = 0.5 + 0.5 * sin(angle);
-                    }
-                    const int k = findTexCoordPoint(texCoords, texPoint);
-                    if(k != -1){
-                        texCoordIndices.push_back(k);
-                    }else{
-                        texCoords.push_back(texPoint);
-                        texCoordIndices.push_back(texIndex++);
-                    }
-                }else{
-                    texCoordIndices.push_back(0);
-                }
-            }
-        }
-    }
-}
-
-
-void VRMLToSGConverterImpl::setDefaultTextureCoordinateForCone(const SgMeshPtr& mesh)
-{
-    mesh->setTexCoords(new SgTexCoordArray());
-    SgTexCoordArray& texCoords = *mesh->texCoords();
-    SgIndexArray& texCoordIndices = mesh->texCoordIndices();
-    texCoordIndices.clear();
-
-    Vector2f texPoint(0.5, 0.5); //center of bottom index=0
-    texCoords.push_back(texPoint);
-
-    const SgVertexArray& vertices = *mesh->vertices();
-    
-    int texIndex = 1;
-    const int numTriangles = mesh->numTriangles();
-    for(int i=0; i < numTriangles; ++i){
-        Vector3f point[3];
-        int top = -1;
-        int center = -1;
-        SgMesh::TriangleRef triangle = mesh->triangle(i);
-        for(int j=0; j < 3; ++j){
-            point[j] = vertices[triangle[j]];
-            if(point[j][1] > 0.0){
-                top = j;
-            }
-            if(point[j][0] == 0.0 && point[j][2] == 0.0){
-                center = j;
-            }
-        }
-        if(top >= 0){ //side
-            Vector3f s(0.0f, 0.0f, 0.0f);
-            int pre = -1;
-            for(int j=0; j < 3; ++j){
-                if(j != top){
-                    s[j] = calcPolarAngle(point[j]) / 2.0 / PI;     
-                    if(pre != -1){
-                        if(s[pre] > 0.5 && s[j] < 1.0e-6){
-                            s[j] = 1.0;
-                        }
-                    }
-                    pre = j;
-                }
-            }
-            for(int j=0; j < 3; ++j){
-                if(j != top){
-                    texPoint << s[j], 0.0;
-                } else {
-                    texPoint << (s[0] + s[1] + s[2]) / 2.0, 1.0;
-                }
-                const int k = findTexCoordPoint(texCoords, texPoint);
-                if(k != -1){
-                    texCoordIndices.push_back(k);
-                } else {
-                    texCoords.push_back(texPoint);
-                    texCoordIndices.push_back(texIndex++);
-                }
-            }
-        } else { // bottom
-            for(int j=0; j < 3; ++j){
-                if(j != center){
-                    const double angle = atan2(point[j][2], point[j][0]);
-                    texPoint << 0.5 + 0.5 * cos(angle), 0.5 + 0.5 * sin(angle);
-                    const int k = findTexCoordPoint(texCoords, texPoint);
-                    if(k != -1){
-                        texCoordIndices.push_back(k);
-                    } else {
-                        texCoords.push_back(texPoint);
-                        texCoordIndices.push_back(texIndex++);
-                    }
-                } else {
-                    texCoordIndices.push_back(0);
-                }
             }
         }
     }

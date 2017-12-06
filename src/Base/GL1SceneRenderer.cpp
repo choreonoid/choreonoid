@@ -292,6 +292,7 @@ public:
     void popPickName();
 
     void renderGroup(SgGroup* group);
+    void renderSwitch(SgSwitch* node);
     void renderInvariantGroup(SgInvariantGroup* group);
     void renderDisplayListSubTree(SgInvariantGroup* group, DisplayListResource* resource, GLuint& listID);
     void renderTransform(SgTransform* transform);
@@ -402,6 +403,8 @@ void GL1SceneRendererImpl::initialize()
         [&](SgInvariantGroup* node){ renderInvariantGroup(node); });
     renderingFunctions.setFunction<SgTransform>(
         [&](SgTransform* node){ renderTransform(node); });
+    renderingFunctions.setFunction<SgSwitch>(
+        [&](SgSwitch* node){ renderSwitch(node); });
     renderingFunctions.setFunction<SgUnpickableGroup>(
         [&](SgUnpickableGroup* node){ renderUnpickableGroup(node); });
     renderingFunctions.setFunction<SgShape>(
@@ -944,6 +947,13 @@ void GL1SceneRenderer::renderCustomGroup(SgGroup* group, std::function<void()> t
     impl->popPickName();
 }
 
+
+void GL1SceneRendererImpl::renderSwitch(SgSwitch* node)
+{
+    if(node->isTurnedOn()){
+        renderGroup(node);
+    }
+}
 
 void GL1SceneRendererImpl::renderInvariantGroup(SgInvariantGroup* group)
 {

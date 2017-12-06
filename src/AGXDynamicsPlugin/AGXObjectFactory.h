@@ -17,6 +17,7 @@ struct AGXSimulationDesc
         enableContactReduction = true;
         contactReductionBinResolution = 3;
         contactReductionThreshhold = 12;
+        enableContactWarmstarting = false;
         enableAutoSleep = false;
     }
     agx::Int   numThreads;
@@ -25,6 +26,7 @@ struct AGXSimulationDesc
     agx::Bool  enableContactReduction;
     agx::UInt8 contactReductionBinResolution;
     agx::UInt  contactReductionThreshhold;
+    agx::Bool  enableContactWarmstarting;
     agx::Bool  enableAutoSleep;
 };
 
@@ -119,7 +121,7 @@ struct AGXRigidBodyDesc
     //agx::Vec3 c = agx::Vec3();            // center of mass(local)
     //agx::MassProperties::AutoGenerateFlags genflags = agx::MassProperties::AutoGenerateFlags::AUTO_GENERATE_ALL;        //
     agx::String name;                    // name
-    agx::Bool   enableAutoSleep = true;
+    agx::Bool   enableAutoSleep = false;
 };
 
 struct AGXGeometryDesc

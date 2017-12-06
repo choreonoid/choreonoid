@@ -1443,7 +1443,7 @@ links:
           -
             type: Visual
             shape:
-              geometry: { type: Resource, uri: "package://warec_description/meshes//warec_01/08_LEE.stl" }
+              geometry: { type: Resource, uri: "meshes/08_LEE.stl" }
               appearance: *RedAppearance
           -
             type: Collision
@@ -2140,7 +2140,7 @@ links:
           -
             type: Visual
             shape:
-              geometry: { type: Resource, uri: "package://warec_description/meshes//warec_01/08_REE.stl" }
+              geometry: { type: Resource, uri: "meshes/08_REE.stl" }
               appearance: *RedAppearance
           -
             type: Collision

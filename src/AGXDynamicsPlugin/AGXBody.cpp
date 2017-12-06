@@ -80,10 +80,11 @@ void AGXLink::constructAGXLink()
 void AGXLink::setAGXMaterial(){
     Mapping* mapping = getOrgLink()->info();
     // Set material
-    if(mapping->find("material")->isValid()){
-        setAGXMaterialFromName(getOrgLink()->materialName());
-    }else{
+    string materialName = mapping->get("material", "default");
+    if(materialName == "useLinkInfo"){
         setAGXMaterialFromLinkInfo();
+    }else{
+        setAGXMaterialFromName(getOrgLink()->materialName());
     }
 
     // Set density or mass
@@ -342,6 +343,8 @@ agx::RigidBodyRef AGXLink::createAGXRigidBody()
     if(orgLink->actuationMode() == Link::LINK_POSITION){
         desc.control = agx::RigidBody::MotionControl::KINEMATICS;
     }
+
+    desc.enableAutoSleep = orgLink->info("autoSleep", desc.enableAutoSleep);
 
     return AGXObjectFactory::createRigidBody(desc);
 }
