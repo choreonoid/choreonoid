@@ -1,0 +1,13 @@
+dist: trusty
+sudo: required
+
+services:
+  - docker
+
+env:
+  matrix:
+    - TARGET_ENVIRONMENT=ubuntu-xenial-gcc
+    - TARGET_ENVIRONMENT=ubuntu-xenial-clang
+
+script:
+  - docker build --rm -t ${TARGET_ENVIRONMENT} -f misc/docker/Dockerfile-${TARGET_ENVIRONMENT} .
