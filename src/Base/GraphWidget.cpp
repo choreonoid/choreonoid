@@ -31,9 +31,7 @@ inline int isfinite(double x) { return _finite(x); }
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
-
 
 namespace {
 
@@ -50,8 +48,8 @@ struct EditHistory
 };
 typedef std::shared_ptr<EditHistory> EditHistoryPtr;
 typedef deque<EditHistoryPtr> EditHistoryList;
-}
 
+}
 
 namespace cnoid {
 
@@ -92,7 +90,6 @@ public:
     GraphDataHandler::DataRequestCallback dataRequestCallback;
     GraphDataHandler::DataModifiedCallback dataModifiedCallback;
 };
-
 
 class GraphWidgetImpl
 {
@@ -242,6 +239,7 @@ public:
     bool storeState(Archive& archive);
     bool restoreState(const Archive& archive);        
 };
+
 }
 
 
@@ -275,9 +273,6 @@ GraphDataHandler::~GraphDataHandler()
 {
     delete impl;
 }
-
-
-
 
 
 void GraphDataHandler::setColor(float r, float g, float b)
@@ -381,11 +376,11 @@ GraphWidgetImpl::GraphWidgetImpl(GraphWidget* self, View* parentView)
 
     hScrollbar = new DoubleScrollBar(Qt::Horizontal, self);
     hScrollbar->sigValueChanged().connect(
-        std::bind(&GraphWidgetImpl::onHScrollbarChanged, this, _1));
+        [&](double value){ onHScrollbarChanged(value); });
     
     vScrollbar = new DoubleScrollBar(Qt::Vertical, self);
     vScrollbar->sigValueChanged().connect(
-        std::bind(&GraphWidgetImpl::onVScrollbarChanged, this, _1));
+        [&](double value){ onVScrollbarChanged(value); });
 
     QGridLayout* grid = new QGridLayout(self);
     grid->setSpacing(0);
@@ -438,8 +433,8 @@ GraphWidgetImpl::GraphWidgetImpl(GraphWidget* self, View* parentView)
     timeBar = TimeBar::instance();
     timeBarSyncMode = true;
 
-    parentView->sigActivated().connect(std::bind(&GraphWidgetImpl::onActivated, this));
-    parentView->sigDeactivated().connect(std::bind(&GraphWidgetImpl::onDeactivated, this));
+    parentView->sigActivated().connect([&](){ onActivated(); });
+    parentView->sigDeactivated().connect([&](){ onDeactivated(); });
 
     statusLabel.setAlignment(Qt::AlignLeft);
     QFont font = statusLabel.font();
@@ -489,8 +484,9 @@ void GraphWidgetImpl::addDataHandler(GraphDataHandlerPtr handler)
     GraphDataHandlerImpl* data = handler->impl;
     
     handlers.push_back(handler);
-    connections.add(handler->impl->sigDataUpdated.connect(
-                        std::bind(&GraphWidgetImpl::updateData, this, handler)));
+    connections.add(
+        handler->impl->sigDataUpdated.connect(
+            [this,handler](){ updateData(handler); }));
 
     isReconfigurationNeeded = true;
     isDomainUpdateNeeded = true;
@@ -686,8 +682,9 @@ void GraphWidgetImpl::enableTimeBarSync(bool on)
         }
     } else {
         if(on && parentView->isActive()){
-            timeChangedConnetion = timeBar->sigTimeChanged().connect(
-                std::bind(&GraphWidgetImpl::setCursorPosition, this, _1, false, false));
+            timeChangedConnetion =
+                timeBar->sigTimeChanged().connect(
+                    [&](double time){ return setCursorPosition(time, false, false); });
             setCursorPosition(timeBar->time(), false, false);
         }
     }
