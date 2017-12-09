@@ -459,7 +459,10 @@ GraphWidget::~GraphWidget()
 GraphWidgetImpl::~GraphWidgetImpl()
 {
     connections.disconnect();
-    GraphBar::instance()->releaseFocus(self);
+
+    if(auto bar = GraphBar::instance()){
+        bar->releaseFocus(self);
+    }
 }
 
 
@@ -1050,7 +1053,9 @@ bool GraphWidget::eventFilter(QObject* obj, QEvent* event)
 
 bool GraphWidgetImpl::onFocusInEvent(QFocusEvent*)
 {
-    GraphBar::instance()->focus(self);
+    if(auto bar = GraphBar::instance()){
+        bar->focus(self);
+    }
     return false;
 }
 

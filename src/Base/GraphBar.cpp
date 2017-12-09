@@ -21,6 +21,8 @@ using namespace std::placeholders;
 
 namespace {
 
+GraphBar* graphBar = nullptr;
+
 class ConfigDialog : public Dialog
 {
 public:
@@ -92,14 +94,14 @@ void GraphBar::initialize(ExtensionManager* ext)
 {
     static bool initialized = false;
     if(!initialized){
-        ext->addToolBar(GraphBar::instance());
+        graphBar = new GraphBar;
+        ext->addToolBar(graphBar);
         initialized = true;
     }
 }
 
 GraphBar* GraphBar::instance()
 {
-    static GraphBar* graphBar = new GraphBar();
     return graphBar;
 }
        
@@ -143,7 +145,7 @@ GraphBarImpl::GraphBarImpl(GraphBar* self)
 
     self->setEnabled(false);
     
-    focusedGraphWidget = 0;
+    focusedGraphWidget = nullptr;
 }
 
 
@@ -287,6 +289,7 @@ ConfigDialog::ConfigDialog(GraphBarImpl* barImpl)
 GraphBar::~GraphBar()
 {
     delete impl;
+    graphBar = nullptr;
 }
 
 
@@ -362,7 +365,7 @@ void ConfigDialog::focus(GraphWidget* graph)
 void GraphBar::releaseFocus(GraphWidget* graphWidget)
 {
     if(impl->focusedGraphWidget == graphWidget){
-        impl->focusedGraphWidget = 0;
+        impl->focusedGraphWidget = nullptr;
         setEnabled(false);
     }
 }
