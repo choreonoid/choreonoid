@@ -11,10 +11,16 @@ matrix:
           env: TARGET_ENVIRONMENT=ubuntu-xenial-gcc
         - os: linux
           env: TARGET_ENVIRONMENT=ubuntu-xenial-clang
+        - os: linux
+          env: TARGET_ENVIRONMENT=ubuntu-artful-gcc
+        - os: linux
+          env: TARGET_ENVIRONMENT=ubuntu-artful-clang
         - os: osx
           env: TARGET_ENVIRONMENT=osx-macports
 
 script:
   - if [[ "$TARGET_ENVIRONMENT" == "ubuntu-xenial-gcc"   ]]; then docker build --rm -t ${TARGET_ENVIRONMENT} -f misc/docker/Dockerfile-${TARGET_ENVIRONMENT} . ; fi
   - if [[ "$TARGET_ENVIRONMENT" == "ubuntu-xenial-clang" ]]; then docker build --rm -t ${TARGET_ENVIRONMENT} -f misc/docker/Dockerfile-${TARGET_ENVIRONMENT} . ; fi
+  - if [[ "$TARGET_ENVIRONMENT" == "ubuntu-artful-gcc"   ]]; then docker build --rm -t ${TARGET_ENVIRONMENT} -f misc/docker/Dockerfile-${TARGET_ENVIRONMENT} . ; fi
+  - if [[ "$TARGET_ENVIRONMENT" == "ubuntu-artful-clang" ]]; then docker build --rm -t ${TARGET_ENVIRONMENT} -f misc/docker/Dockerfile-${TARGET_ENVIRONMENT} . ; fi
   - if [[ "$TARGET_ENVIRONMENT" == "osx-macports"        ]]; then ./.travis-osx-macports.sh ; fi
