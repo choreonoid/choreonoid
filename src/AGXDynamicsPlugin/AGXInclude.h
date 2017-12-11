@@ -40,6 +40,10 @@
 // agxVehicle
 #include <agxVehicle/Track.h>
 
+// agxWire
+#include <agxWire/Wire.h>
+
+// etc
 #include <agxCollide/ConvexBuilder.h>
 
 #endif

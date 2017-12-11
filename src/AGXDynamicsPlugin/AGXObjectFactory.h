@@ -225,7 +225,8 @@ struct AGXConstraintDesc
     agx::RigidBodyRef rigidBodyB;
 };
 
-struct AGXElementaryConstraint {
+struct AGXElementaryConstraint
+{
     AGXElementaryConstraint(){
         enable = false;
         compliance = 1e-08;
@@ -238,7 +239,8 @@ struct AGXElementaryConstraint {
     agx::RangeReal forceRange;
 };
 
-struct AGXMotor1DDesc : public AGXElementaryConstraint{
+struct AGXMotor1DDesc : public AGXElementaryConstraint
+{
     AGXMotor1DDesc(){
         enableLock = false;
         enableLockAtZeroSpeed = false;
@@ -247,11 +249,13 @@ struct AGXMotor1DDesc : public AGXElementaryConstraint{
     agx::Bool enableLockAtZeroSpeed;
 };
 
-struct AGXLock1DDesc : public AGXElementaryConstraint{
+struct AGXLock1DDesc : public AGXElementaryConstraint
+{
     AGXLock1DDesc(){}
 };
 
-struct AGXRange1DDesc : public AGXElementaryConstraint{
+struct AGXRange1DDesc : public AGXElementaryConstraint
+{
     AGXRange1DDesc() {
         range = agx::RangeReal(agx::Infinity);
     } 
@@ -298,7 +302,8 @@ struct AGXPlaneJointDesc : public AGXConstraintDesc
     agx::FrameRef frameB;
 };
 
-struct AGXVehicleTrackWheelDesc{
+struct AGXVehicleTrackWheelDesc
+{
     AGXVehicleTrackWheelDesc(){
         model = agxVehicle::TrackWheel::Model::SPROCKET;
         radius = 1.0;
@@ -311,7 +316,8 @@ struct AGXVehicleTrackWheelDesc{
     agx::AffineMatrix4x4 rbRelTransform;
 };
 
-struct AGXVehicleTrackDesc{
+struct AGXVehicleTrackDesc
+{
     AGXVehicleTrackDesc() {
         numberOfNodes = 50;
         nodeThickness = 0.075;
@@ -359,6 +365,30 @@ struct AGXVehicleTrackDesc{
     std::vector<agxVehicle::TrackWheelRef> trackWheelRefs;
 };
 
+struct AGXWireDesc
+{
+    AGXWireDesc(){
+        radius = 0.1;
+        resolutionPerUnitLength = 1.0;
+        enableCollisions = true;
+    }
+    agx::Real radius;
+    agx::Real resolutionPerUnitLength;
+    agx::Bool enableCollisions;
+};
+
+struct AGXWireWinchControllerDesc
+{
+    AGXWireWinchControllerDesc(){
+        rigidBody = nullptr;
+        pulledInLength = agx::Real(0);
+    }
+    agx::RigidBody* rigidBody;
+    agx::Vec3 positionInBodyFrame;  // position of this winch on body
+    agx::Vec3 normalInBodyFrame;    // direction of this winch
+    agx::Real pulledInLength;       // pulled in length in this winch
+};
+
 class CNOID_EXPORT AGXObjectFactory
 {
 public:
@@ -394,6 +424,9 @@ private:
 public:
     static agxVehicle::TrackWheelRef createVehicleTrackWheel(const AGXVehicleTrackWheelDesc& desc);
     static agxVehicle::TrackRef createVehicleTrack(const AGXVehicleTrackDesc& desc);
+    static agxWire::WireRef createWire(const AGXWireDesc& desc);
+    static agxWire::FreeNodeRef createWireFreeNode(const agx::Vec3& pos);
+    static agxWire::WireWinchControllerRef createWinchController(const AGXWireWinchControllerDesc& desc);
     static agxCollide::ConvexBuilderRef createConvexBuilder();
 };
 
