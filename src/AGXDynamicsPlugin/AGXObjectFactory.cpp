@@ -59,6 +59,13 @@ agx::MaterialRef AGXObjectFactory::createMaterial(const AGXMaterialDesc & desc)
     m->getSurfaceMaterial()->setRoughness(desc.roughness);
     m->getSurfaceMaterial()->setViscosity(desc.surfaceViscosity);
     m->getSurfaceMaterial()->setAdhesion(desc.adhesionForce, desc.adhesivOverlap);
+
+    // WireMaterial
+    m->getWireMaterial()->setYoungsModulusBend(desc.wireYoungsModulusBend);
+    m->getWireMaterial()->setDampingBend(desc.wireDampingBend);
+    m->getWireMaterial()->setYoungsModulusStretch(desc.wireYoungsModulusStretch);
+    m->getWireMaterial()->setDampingStretch(desc.wireDampingStretch);
+
     return m;
 }
 

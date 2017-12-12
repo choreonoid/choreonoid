@@ -288,6 +288,19 @@ AGXWire::AGXWire(AGXWireDevice* device, AGXBody* agxBody) :
     if(mat == nullptr){
         mat = sim->getMaterialManager()->getMaterial(Material::name(0));
     }
+    double tmpValue;
+    if(wireDeviceInfo.read("wireYoungsModulusStretch", tmpValue)){
+        mat->getWireMaterial()->setYoungsModulusStretch(tmpValue);
+    }
+    if(wireDeviceInfo.read("wireDampingStretch", tmpValue)){
+        mat->getWireMaterial()->setDampingStretch(tmpValue);
+    }
+    if(wireDeviceInfo.read("wireYoungsModulusBend", tmpValue)){
+        mat->getWireMaterial()->setYoungsModulusBend(tmpValue);
+    }
+    if(wireDeviceInfo.read("wireDampingBend", tmpValue)){
+        mat->getWireMaterial()->setDampingBend(tmpValue);
+    }
     m_wire->setMaterial(mat);
     sim->add((agxSDK::StepEventListener*)m_wire);
 

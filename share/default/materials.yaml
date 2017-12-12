@@ -49,6 +49,9 @@ materials:
     youngsModulus: 1e10
     roughness: 0.0
     viscosity: 0.0
+  -
+    name: Wire
+    wireYoungsModulusBend: 1e7
 
 contactMaterials:
   -
@@ -121,4 +124,12 @@ contactMaterials:
     materials: [ DoubleArmV7AWheel, DoubleArmV7ATracks ]
     youngsModulus: 1e10
     friction: 0.0
+    restitution: 0.0
+  -
+    materials: [ Wire, Default ]
+    friction: 0.5
+    restitution: 0.0
+  -
+    materials: [ Wire, Ground ]
+    friction: 0.5
     restitution: 0.0

@@ -43,6 +43,8 @@ struct AGXMaterialDesc
         surfaceViscosity = 5E-09;
         adhesionForce = 0.0;
         adhesivOverlap = 0.0;
+        wireYoungsModulusStretch = wireYoungsModulusBend = 6E10;
+        wireDampingStretch = wireDampingBend = 0.075;
     }
     static agx::String default_name()
     {
@@ -53,13 +55,19 @@ struct AGXMaterialDesc
     agx::Real youngsModulus;        // stiffness[Pa]
     agx::Real poissonRatio;
 
-    // Below are overried when ContactMaterials are used.
+    // Below are override when ContactMaterials are used.
     agx::Real viscosity;            // relation to restitution. compliace.
     agx::Real damping;              // relax time of penetration
     agx::Real roughness;            // relation to friction
     agx::Real surfaceViscosity;     // wetness
     agx::Real adhesionForce;        // attracive force[N]
     agx::Real adhesivOverlap;       // range[m]
+
+    // WireMaterial
+    agx::Real wireYoungsModulusStretch;
+    agx::Real wireDampingStretch;
+    agx::Real wireYoungsModulusBend;
+    agx::Real wireDampingBend;
 };
 
 enum AGXFrictionModelType

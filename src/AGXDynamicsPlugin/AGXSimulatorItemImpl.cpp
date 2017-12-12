@@ -154,6 +154,10 @@ void AGXSimulatorItemImpl::createAGXMaterialTable()
             SET_AGXMATERIAL_FIELD(surfaceViscosity);
             SET_AGXMATERIAL_FIELD(adhesionForce);
             SET_AGXMATERIAL_FIELD(adhesivOverlap);
+            SET_AGXMATERIAL_FIELD(wireYoungsModulusStretch);
+            SET_AGXMATERIAL_FIELD(wireDampingStretch);
+            SET_AGXMATERIAL_FIELD(wireYoungsModulusBend);
+            SET_AGXMATERIAL_FIELD(wireDampingBend);
             getAGXScene()->createMaterial(desc);
         });
 
