@@ -311,6 +311,7 @@ public:
             return value;
         } else {
             throwKeyNotFoundException(key);
+            return value;
         }
     }
 
