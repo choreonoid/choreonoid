@@ -554,6 +554,12 @@ CollisionLinkPairListPtr AISTSimulatorItem::getCollisions()
 }
 
 
+Vector3 AISTSimulatorItem::getGravitationalAcceleration() const
+{
+    return impl->gravity;
+}
+
+
 void AISTSimulatorItem::setForcedPosition(BodyItem* bodyItem, const Position& T)
 {
     impl->setForcedPosition(bodyItem, T);

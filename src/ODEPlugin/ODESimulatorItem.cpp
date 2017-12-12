@@ -1028,11 +1028,17 @@ void ODESimulatorItem::useWorldCollisionDetector(bool on)
 }
 
 
-void ODESimulatorItem::setAllLinkPositionOutputMode(bool on)
+void ODESimulatorItem::setAllLinkPositionOutputMode(bool)
 {
     // The mode is not changed.
     // This simulator only supports the all link position output
     // because joint positions may be slightly changed
+}
+
+
+Vector3 ODESimulatorItem::getGravitationalAcceleration() const
+{
+    return impl->gravity;
 }
 
 

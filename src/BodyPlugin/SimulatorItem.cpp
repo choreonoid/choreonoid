@@ -2319,6 +2319,12 @@ SignalProxy<void()> SimulatorItem::sigSimulationFinished()
 }
 
 
+Vector3 SimulatorItem::getGravitationalAcceleration() const
+{
+    return Vector3::Zero();
+}
+
+
 void SimulatorItem::setExternalForce(BodyItem* bodyItem, Link* link, const Vector3& point, const Vector3& f, double time)
 {
     impl->setExternalForce(bodyItem, link, point, f, time);

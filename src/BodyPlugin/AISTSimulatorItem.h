@@ -50,6 +50,7 @@ public:
     void addExtraJoint(ExtraJoint& extrajoint);
     void clearExtraJoint();
 
+    virtual Vector3 getGravitationalAcceleration() const override;
     virtual void setForcedPosition(BodyItem* bodyItem, const Position& T);
     virtual bool isForcedPositionActiveFor(BodyItem* bodyItem) const;
     virtual void clearForcedPositions();

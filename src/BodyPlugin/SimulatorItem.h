@@ -165,6 +165,11 @@ public:
         sigSimulationBodyListUpdated();
 
     /**
+       \note This function should be a pure virtual function
+    */
+    virtual Vector3 getGravitationalAcceleration() const;
+    
+    /**
        @param point link local position to apply the force
        @param f linear force to apply in global coordinate
     */
