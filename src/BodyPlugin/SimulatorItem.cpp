@@ -29,12 +29,14 @@
 #include <cnoid/ConnectionSet>
 #include <cnoid/FloatingNumberString>
 #include <cnoid/Sleep>
+#include <cnoid/SceneGraph>
 #include <QThread>
 #include <QMutex>
 #include <boost/dynamic_bitset.hpp>
 #include <thread>
 #include <mutex>
 #include <condition_variable>
+#include <set>
 
 #ifdef ENABLE_SIMULATION_PROFILING
 #include <cnoid/ViewManager>
@@ -1249,7 +1251,7 @@ void SimulatorItemImpl::setSpecifiedRecordingTimeLength(double length)
 }
 
 
-CollisionDetectorPtr SimulatorItem::collisionDetector()
+CollisionDetector* SimulatorItem::getOrCreateCollisionDetector()
 {
     if(impl->collisionDetector){
         return impl->collisionDetector;
@@ -1258,6 +1260,12 @@ CollisionDetectorPtr SimulatorItem::collisionDetector()
         return impl->worldItem->collisionDetector()->clone();
     }
     return CollisionDetector::create(0); // the null collision detector
+}
+
+
+CollisionDetector* SimulatorItem::collisionDetector()
+{
+    return getOrCreateCollisionDetector();
 }
 
 

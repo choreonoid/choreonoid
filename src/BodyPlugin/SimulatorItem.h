@@ -21,7 +21,6 @@ const bool SIMULATION_PROFILING = false;
 class Body;
 class Device;
 class CollisionDetector;
-typedef std::shared_ptr<CollisionDetector> CollisionDetectorPtr;
 class WorldItem;
 class BodyItem;
 class ControllerItem;
@@ -200,7 +199,10 @@ protected:
     */
     virtual SimulationBody* createSimulationBody(Body* orgBody) = 0;
 
-    CollisionDetectorPtr collisionDetector();
+    CollisionDetector* getOrCreateCollisionDetector();
+
+    //! \deprecated. Use getOrCreateCollisionDetector().
+    CollisionDetector* collisionDetector();
 
     /**
        @param simBodies SimulatorBody objects which have a valid body

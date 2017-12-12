@@ -10,11 +10,12 @@ using namespace std;
 using namespace cnoid;
 
 namespace {
+
 struct FactoryInfo
 {
     string name;
-    std::function<CollisionDetectorPtr()> factory;
-    FactoryInfo(const string& name, const std::function<CollisionDetectorPtr()>& factory)
+    std::function<CollisionDetector*()> factory;
+    FactoryInfo(const string& name, const std::function<CollisionDetector*()>& factory)
         : name(name), factory(factory) { }
 };
     
@@ -31,29 +32,65 @@ FactoryMap factoryMap;
 class NullCollisionDetector : public CollisionDetector
 {
     int numGeometries_;
+    
 public:
-    NullCollisionDetector() { numGeometries_ = 0; }
-    virtual const char* name() const override { return "NullCollisionDetector"; }
-    virtual CollisionDetectorPtr clone() const override { return std::make_shared<NullCollisionDetector>(); }
-    virtual bool enableGeometryCache(bool) override { return true; }
-    virtual void clearGeometryCache(SgNodePtr) override { }
+    NullCollisionDetector()
+    {
+        numGeometries_ = 0;
+    }
+
+    virtual const char* name() const override
+    {
+        return "NullCollisionDetector";
+    }
+
+    virtual CollisionDetector* clone() const override
+    {
+        return new NullCollisionDetector;
+    }
+
+    virtual bool enableGeometryCache(bool) override
+    {
+        return true;
+    }
+
+    virtual void clearGeometryCache(SgNode*) override { }
+
     virtual void clearAllGeometryCaches() override { }
-    virtual void clearGeometries() override { numGeometries_ = 0; }
-    virtual int numGeometries() const override { return numGeometries_; }
-    virtual int addGeometry(SgNodePtr) override {
+    
+    virtual void clearGeometries() override
+    {
+        numGeometries_ = 0;
+    }
+
+    virtual int numGeometries() const override
+    {
+        return numGeometries_;
+    }
+
+    virtual int addGeometry(SgNode*) override
+    {
         const int id = numGeometries_++;
         return id;
     }
+
     virtual void setGeometryStatic(int /* geometryId */, bool isStatic = true) override { }
+
     virtual void setNonInterfarenceGeometyrPair(int /* geometryId1 */, int /* geometryId2 */) override { }
-    virtual bool makeReady() override { return true; }
+
+    virtual bool makeReady() override
+    {
+        return true;
+    }
+
     virtual void updatePosition(int /* geometryId */, const Position& /* position */) override { }
+
     virtual void detectCollisions(std::function<void(const CollisionPair&)> /* callback */) override { }
 };
 
-CollisionDetectorPtr factory()
+CollisionDetector* factory()
 {
-    return std::make_shared<NullCollisionDetector>();
+    return new NullCollisionDetector;
 }
 
 struct FactoryRegistration
@@ -62,10 +99,11 @@ struct FactoryRegistration
         CollisionDetector::registerFactory("NullCollisionDetector", factory);
     }
 } factoryRegistration;
+
 }
 
 
-bool CollisionDetector::registerFactory(const std::string& name, std::function<CollisionDetectorPtr()> factory)
+bool CollisionDetector::registerFactory(const std::string& name, std::function<CollisionDetector*()> factory)
 {
     if(!name.empty()){
         int index = factories.size();
@@ -104,16 +142,28 @@ int CollisionDetector::factoryIndex(const std::string& name)
 }
 
 
-CollisionDetectorPtr CollisionDetector::create(int factoryIndex)
+CollisionDetector* CollisionDetector::create(int factoryIndex)
 {
     if(factoryIndex >= 0 && factoryIndex < static_cast<int>(factories.size())){
         return factories[factoryIndex].factory();
     }
-    return CollisionDetectorPtr();
+    return nullptr;
 }
 
 
 CollisionDetector::~CollisionDetector()
 {
 
+}
+
+
+bool CollisionDetector::isFindClosestPointsAvailable() const
+{
+    return false;
+}
+
+
+double CollisionDetector::findClosestPoints(int geometryId1, int geometryId2, Vector3& out_point1, Vector3& out_point2)
+{
+    return -1.0;
 }

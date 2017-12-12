@@ -425,7 +425,7 @@ bool AISTSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBod
     cfs.setContactCullingDistance(contactCullingDistance.value());
     cfs.setContactCullingDepth(contactCullingDepth.value());
     cfs.setCoefficientOfRestitution(epsilon);
-    cfs.setCollisionDetector(self->collisionDetector());
+    cfs.setCollisionDetector(self->getOrCreateCollisionDetector());
 
     if(is2Dmode){
         cfs.set2Dmode(true);
