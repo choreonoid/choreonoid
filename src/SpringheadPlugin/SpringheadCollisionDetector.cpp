@@ -21,9 +21,9 @@ using namespace cnoid;
 
 namespace {
 
-CollisionDetectorPtr factory()
+CollisionDetector* factory()
 {
-    return std::make_shared<SpringheadCollisionDetector>();
+    return new SpringheadCollisionDetector;
 }
 
 struct FactoryRegistration
@@ -132,9 +132,9 @@ const char* SpringheadCollisionDetector::name() const
 }
 
 
-CollisionDetectorPtr SpringheadCollisionDetector::clone() const
+CollisionDetector* SpringheadCollisionDetector::clone() const
 {
-    return std::make_shared<SpringheadCollisionDetector>();
+    return new SpringheadCollisionDetector;
 }
 
         
@@ -153,9 +153,9 @@ int SpringheadCollisionDetector::numGeometries() const
 }
 
 
-int SpringheadCollisionDetector::addGeometry(SgNodePtr geometry)
+int SpringheadCollisionDetector::addGeometry(SgNode* geometry)
 {
-    return impl->addGeometry(geometry.get());
+    return impl->addGeometry(geometry);
 }
 
 
@@ -305,13 +305,13 @@ void SpringheadCollisionDetector::setGeometryStatic(int geometryId, bool isStati
 }
 
 
-bool SpringheadCollisionDetector::enableGeometryCache(bool on)
+bool SpringheadCollisionDetector::enableGeometryCache(bool)
 {
     return false;
 }
 
 
-void SpringheadCollisionDetector::clearGeometryCache(SgNodePtr geometry)
+void SpringheadCollisionDetector::clearGeometryCache(SgNode*)
 {
     
 }
