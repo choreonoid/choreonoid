@@ -145,7 +145,7 @@ void WorldItemImpl::init()
 {
     kinematicsBar = KinematicsBar::instance();
     collisionDetector = CollisionDetector::create(collisionDetectorType.selectedIndex());
-    collisions = std::make_shared< vector<CollisionLinkPairPtr> >();
+    collisions = std::make_shared<vector<CollisionLinkPairPtr>>();
     sceneCollision = new SceneCollision(collisions);
     sceneCollision->setName("Collisions");
 }
@@ -185,7 +185,7 @@ bool WorldItem::selectCollisionDetector(const std::string& name)
 bool WorldItemImpl::selectCollisionDetector(int index)
 {
     if(index >= 0 && index < collisionDetectorType.size()){
-        CollisionDetectorPtr newCollisionDetector = CollisionDetector::create(index);
+        CollisionDetector* newCollisionDetector = CollisionDetector::create(index);
         if(newCollisionDetector){
             collisionDetector = newCollisionDetector;
             collisionDetectorType.select(index);
@@ -199,7 +199,7 @@ bool WorldItemImpl::selectCollisionDetector(int index)
 }
 
 
-CollisionDetectorPtr WorldItem::collisionDetector()
+CollisionDetector* WorldItem::collisionDetector()
 {
     if(impl->isCollisionDetectionEnabled){
         impl->updateCollisionDetectorLater.flush();

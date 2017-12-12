@@ -21,7 +21,7 @@ namespace {
 const bool MULTITHREAD_TYPE = 0;
 const bool ENABLE_SHUFFLE = false;
 
-CollisionDetectorPtr factory()
+CollisionDetector* factory()
 {
     return new AISTCollisionDetector;
 }

@@ -21,7 +21,7 @@ namespace {
 const btScalar DEFAULT_COLLISION_MARGIN = 0.0001;
 const bool useHACD = true;
 
-CollisionDetectorPtr factory()
+CollisionDetector* factory()
 {
     return new BulletCollisionDetector;
 }
