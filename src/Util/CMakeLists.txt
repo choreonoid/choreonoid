@@ -166,7 +166,7 @@ if(UNIX)
   set(libraries 
     yaml ${PNG_LIBRARY} ${JPEG_LIBRARY}
     ${CMAKE_THREAD_LIBS_INIT}
-    ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_THREAD_LIBRARY}
+    ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY}
     ${GETTEXT_LIBRARIES}
     m)
 

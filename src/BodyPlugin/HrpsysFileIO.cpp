@@ -13,7 +13,6 @@
 #include <QMessageBox>
 #include <boost/tokenizer.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/regex.hpp>
 #include <boost/format.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
 #ifndef _WINDOWS
@@ -21,6 +20,7 @@
 #include <boost/iostreams/filter/bzip2.hpp>
 #endif
 #include <boost/filesystem.hpp>
+#include <regex>
 #include <fstream>
 #include <list>
 #include <vector>
@@ -37,7 +37,7 @@ namespace {
 
 map<string,int> labelToTypeMap;
 
-boost::regex labelPattern("^(JA|JV|TQ|F|M|A|W|zmp|waist|R|P|Y)([XYZRP]?)(\\d*)$");
+std::regex labelPattern("^(JA|JV|TQ|F|M|A|W|zmp|waist|R|P|Y)([XYZRP]?)(\\d*)$");
     
 class HrpsysLogLoader
 {
@@ -180,7 +180,7 @@ public:
 
     void readHeader(Tokenizer::iterator it, Tokenizer::iterator end){
         
-        boost::smatch match;
+        std::smatch match;
 
         for(int i=0; i < NUM_DATA_TYPES; ++i){
             numComponents[i] = 0;
@@ -192,7 +192,7 @@ public:
 
             Element element;
 
-            if(regex_match(*it, match, labelPattern)){
+            if(std::regex_match(*it, match, labelPattern)){
 
                 map<string,int>::iterator p = labelToTypeMap.find(match.str(1));
 
