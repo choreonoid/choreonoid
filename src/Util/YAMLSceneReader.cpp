@@ -14,11 +14,21 @@
 #include <cnoid/FileUtil>
 #include <cnoid/NullOut>
 #include <cnoid/Exception>
-#include <boost/format.hpp>
 #include <cnoid/ImageIO>
+#include <cnoid/Config>
+#include <boost/format.hpp>
 #include <unordered_map>
 #include <mutex>
+
+#ifdef CNOID_USE_BOOST_REGEX
+#include <boost/regex.hpp>
+using boost::regex;
+using boost::smatch;
+using boost::regex_match;
+#else
 #include <regex>
+#endif
+
 #include "gettext.h"
 
 using namespace std;
@@ -81,7 +91,7 @@ public:
     map<string, ResourceInfoPtr> resourceInfoMap;
     SceneLoader sceneLoader;
     filesystem::path baseDirectory;
-    std::regex uriSchemeRegex;
+    regex uriSchemeRegex;
     bool isUriSchemeRegexReady;
     typedef map<string, SgImagePtr> ImagePathToSgImageMap;
     ImagePathToSgImageMap imagePathToSgImageMap;
@@ -1036,10 +1046,10 @@ ResourceInfo* YAMLSceneReaderImpl::getOrCreateResourceInfo(const string& uri)
         uriSchemeRegex.assign("^(.+)://(.+)$");
         isUriSchemeRegexReady = true;
     }
-    std::smatch match;
+    smatch match;
     bool hasScheme = false;
         
-    if(std::regex_match(uri, match, uriSchemeRegex)){
+    if(regex_match(uri, match, uriSchemeRegex)){
         hasScheme = true;
         if(match.size() == 3){
             const string scheme = match.str(1);

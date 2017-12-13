@@ -376,6 +376,17 @@ if(ENABLE_PYTHON AND USE_BOOST_PYTHON)
   set(boost_packages ${boost_packages} python)
 endif()
 
+# Old GCC does not implement the regex library correctly
+if(CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.9.3)
+  set(CNOID_USE_BOOST_REGEX ON)
+else()
+  set(CNOID_USE_BOOST_REGEX OFF)
+endif()
+
+if(CNOID_USE_BOOST_REGEX)
+  set(boost_packages ${boost_packages} regex)
+endif()
+
 find_package(Boost 1.54.0 REQUIRED COMPONENTS ${boost_packages})
 
 if(NOT Boost_FOUND)
@@ -395,6 +406,10 @@ if(MSVC)
   install_external_libraries(${Boost_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS}
     ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY}
     ${Boost_IOSTREAMS_LIBRARY} ${Boost_ZLIB_LIBRARY})
+
+  if(CNOID_USE_BOOST_REGEX)
+    install_external_libraries(${Boost_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS} ${Boost_REGEX_LIBRARY})
+  endif()
   
   if(ENABLE_PYTHON AND USE_BOOST_PYTHON)
     install_external_libraries(${Boost_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS} ${Boost_PYTHON_LIBRARY})

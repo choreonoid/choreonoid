@@ -10,6 +10,7 @@
 #include <cnoid/ItemManager>
 #include <cnoid/BodyMotionUtil>
 #include <cnoid/ZMPSeq>
+#include <cnoid/Config>
 #include <QMessageBox>
 #include <boost/tokenizer.hpp>
 #include <boost/lexical_cast.hpp>
@@ -20,11 +21,22 @@
 #include <boost/iostreams/filter/bzip2.hpp>
 #endif
 #include <boost/filesystem.hpp>
-#include <regex>
 #include <fstream>
 #include <list>
 #include <vector>
 #include <map>
+
+#ifdef CNOID_USE_BOOST_REGEX
+#include <boost/regex.hpp>
+using boost::regex;
+using boost::regex_match;
+using boost::smatch;
+#else
+#include <regex>
+#endif
+
+#include <iostream>
+
 #include "gettext.h"
 
 using namespace std;
@@ -37,8 +49,6 @@ namespace {
 
 map<string,int> labelToTypeMap;
 
-std::regex labelPattern("^(JA|JV|TQ|F|M|A|W|zmp|waist|R|P|Y)([XYZRP]?)(\\d*)$");
-    
 class HrpsysLogLoader
 {
 public:
@@ -68,8 +78,12 @@ public:
     int numComponents[NUM_DATA_TYPES];
     
     std::list< std::vector<double> > frames;
+
+    regex labelPattern;
     
-    HrpsysLogLoader() {
+    HrpsysLogLoader()
+        : labelPattern("^(JA|JV|TQ|F|M|A|W|zmp|waist|R|P|Y)([XYZRP]?)(\\d*)$")
+    {
         if(labelToTypeMap.empty()){
             labelToTypeMap["JA"] = JOINT_POS;
             labelToTypeMap["JV"] = JOINT_VEL;
@@ -86,8 +100,8 @@ public:
         }
     }
 
-    bool loadLogFile(BodyMotionItem* item, const std::string& filename, std::ostream& os){
-
+    bool loadLogFile(BodyMotionItem* item, const std::string& filename, std::ostream& os)
+    {
         boost::iostreams::filtering_istream is;
 
 #ifndef _WINDOWS
@@ -178,9 +192,9 @@ public:
         return true;
     }
 
-    void readHeader(Tokenizer::iterator it, Tokenizer::iterator end){
-        
-        std::smatch match;
+    void readHeader(Tokenizer::iterator it, Tokenizer::iterator end)
+    {
+        smatch match;
 
         for(int i=0; i < NUM_DATA_TYPES; ++i){
             numComponents[i] = 0;
@@ -192,7 +206,7 @@ public:
 
             Element element;
 
-            if(std::regex_match(*it, match, labelPattern)){
+            if(regex_match(*it, match, labelPattern)){
 
                 map<string,int>::iterator p = labelToTypeMap.find(match.str(1));
 

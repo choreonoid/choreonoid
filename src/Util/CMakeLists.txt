@@ -170,6 +170,10 @@ if(UNIX)
     ${GETTEXT_LIBRARIES}
     m)
 
+  if(CNOID_USE_BOOST_REGEX)
+    set(libraries ${libraries} ${Boost_REGEX_LIBRARY})
+  endif()
+
   if(APPLE)
     target_link_libraries(${target} ${libraries} "-framework IOKit -framework Foundation")
   else()

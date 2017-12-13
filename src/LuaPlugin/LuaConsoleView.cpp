@@ -6,13 +6,22 @@
 #include "LuaInterpreter.h"
 #include <cnoid/ViewManager>
 #include <cnoid/LazyCaller>
+#include <cnoid/Config>
 #include <QPlainTextEdit>
 #include <QBoxLayout>
 #include <QTextBlock>
 #include <boost/iostreams/concepts.hpp>
 #include <boost/iostreams/stream_buffer.hpp>
 #include <lua.hpp>
+
+#ifdef CNOID_USE_BOOST_REGEX
+#include <boost/regex.hpp>
+using boost::regex;
+using boost::regex_match;
+#else
 #include <regex>
+#endif
+
 #include "gettext.h"
 
 using namespace std;
@@ -322,8 +331,8 @@ void LuaConsoleViewImpl::fixLine()
             isIncomplete = false;
         } else if(status == LUA_ERRSYNTAX) {
             const string msg(lua_tostring(L, -1));
-            static const std::regex eofmark(".*<eof>");
-            if(std::regex_match(msg, eofmark)){
+            static const regex eofmark(".*<eof>");
+            if(regex_match(msg, eofmark)){
                 lua_pop(L, 1);
                 isIncomplete = true;
             } else {
