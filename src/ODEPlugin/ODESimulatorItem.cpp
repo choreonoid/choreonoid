@@ -1036,7 +1036,7 @@ void ODESimulatorItem::setAllLinkPositionOutputMode(bool)
 }
 
 
-Vector3 ODESimulatorItem::getGravitationalAcceleration() const
+Vector3 ODESimulatorItem::getGravity() const
 {
     return impl->gravity;
 }

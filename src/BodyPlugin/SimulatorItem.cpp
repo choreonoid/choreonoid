@@ -2327,7 +2327,7 @@ SignalProxy<void()> SimulatorItem::sigSimulationFinished()
 }
 
 
-Vector3 SimulatorItem::getGravitationalAcceleration() const
+Vector3 SimulatorItem::getGravity() const
 {
     return Vector3::Zero();
 }

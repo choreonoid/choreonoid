@@ -33,7 +33,7 @@ bool AGXSimulatorItem::saveSimulationToAGXFile()
     return impl->saveSimulationToAGXFile();
 }
 
-Vector3 AGXSimulatorItem::getGravitationalAcceleration() const
+Vector3 AGXSimulatorItem::getGravity() const
 {
     return impl->getGravity();
 }

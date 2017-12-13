@@ -554,7 +554,7 @@ CollisionLinkPairListPtr AISTSimulatorItem::getCollisions()
 }
 
 
-Vector3 AISTSimulatorItem::getGravitationalAcceleration() const
+Vector3 AISTSimulatorItem::getGravity() const
 {
     return impl->gravity;
 }
