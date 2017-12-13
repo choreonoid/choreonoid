@@ -8,12 +8,11 @@ subdir=@CNOID_SUBDIR@
 pluginsubdir=@CNOID_PLUGIN_SUBDIR@
 plugindir=${exec_prefix}/@CNOID_PLUGIN_SUBDIR@
 sharedir=@CNOID_SHARE_DIR@
-simplecontrollerdir=${prefix}/${subdir}/simplecontroller
-customizerdir=${prefix}/${subdir}/customizer
 
-Name: choreonoid-body-plugin
-Description: Choreonoid Body plugin
+Name: choreonoid-base
+Description: Choreonoid base library
 Version: @CNOID_FULL_VERSION@
-Requires: choreonoid-base = @CNOID_FULL_VERSION@ choreonoid-body = @CNOID_FULL_VERSION@
+Requires: choreonoid-util = @CNOID_FULL_VERSION@ @PKGCONFIG_QT_REQUIREMENTS@
 Conflicts:
-Libs: -lCnoidBodyPlugin
+Libs: -L${plugindir} -lCnoidBase
+Cflags: -DQT_NO_KEYWORDS

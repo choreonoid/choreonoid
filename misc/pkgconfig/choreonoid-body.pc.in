@@ -5,15 +5,13 @@ exec_prefix=${prefix}
 libdir=${exec_prefix}/lib
 includedir=${prefix}/@CNOID_HEADER_SUBDIR@
 subdir=@CNOID_SUBDIR@
-pluginsubdir=@CNOID_PLUGIN_SUBDIR@
-plugindir=${exec_prefix}/@CNOID_PLUGIN_SUBDIR@
 sharedir=@CNOID_SHARE_DIR@
 simplecontrollerdir=${prefix}/${subdir}/simplecontroller
 customizerdir=${prefix}/${subdir}/customizer
 
-Name: choreonoid-body-plugin
-Description: Choreonoid Body plugin
+Name: choreonoid-body
+Description: Choreonoid Body library
 Version: @CNOID_FULL_VERSION@
-Requires: choreonoid-base = @CNOID_FULL_VERSION@ choreonoid-body = @CNOID_FULL_VERSION@
+Requires: choreonoid-util = @CNOID_FULL_VERSION@
 Conflicts:
-Libs: -lCnoidBodyPlugin
+Libs: -lCnoidBody
