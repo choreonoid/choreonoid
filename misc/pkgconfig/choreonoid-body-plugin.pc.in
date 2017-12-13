@@ -5,11 +5,10 @@ exec_prefix=${prefix}
 libdir=${exec_prefix}/lib
 includedir=${prefix}/@CNOID_HEADER_SUBDIR@
 subdir=@CNOID_SUBDIR@
-pluginsubdir=@CNOID_PLUGIN_SUBDIR@
-plugindir=${exec_prefix}/@CNOID_PLUGIN_SUBDIR@
 sharedir=@CNOID_SHARE_DIR@
-simplecontrollerdir=${prefix}/${subdir}/simplecontroller
-customizerdir=${prefix}/${subdir}/customizer
+plugindir=${exec_prefix}/@CNOID_PLUGIN_SUBDIR@
+simplecontrollerdir=${plugindir}/simplecontroller
+customizerdir=${plugindir}/simplecontroller/customizer
 
 Name: choreonoid-body-plugin
 Description: Choreonoid Body plugin

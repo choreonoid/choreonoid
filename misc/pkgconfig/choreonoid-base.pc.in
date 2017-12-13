@@ -5,9 +5,8 @@ exec_prefix=${prefix}
 libdir=${exec_prefix}/lib
 includedir=${prefix}/@CNOID_HEADER_SUBDIR@
 subdir=@CNOID_SUBDIR@
-pluginsubdir=@CNOID_PLUGIN_SUBDIR@
-plugindir=${exec_prefix}/@CNOID_PLUGIN_SUBDIR@
 sharedir=@CNOID_SHARE_DIR@
+plugindir=${exec_prefix}/@CNOID_PLUGIN_SUBDIR@
 
 Name: choreonoid-base
 Description: Choreonoid base library

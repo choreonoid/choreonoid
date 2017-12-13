@@ -18,3 +18,10 @@ foreach(file choreonoid-util.pc choreonoid-base.pc choreonoid-body.pc choreonoid
     install(FILES ${pkgconfig_dir}/${file} DESTINATION lib/pkgconfig)
   endif()
 endforeach()
+
+# choreonoid.pc is replaced with choreonoid-base.pc, 
+# but it is still generated for the backward compatibility
+configure_file(choreonoid-base.pc.in ${pkgconfig_dir}/choreonoid.pc @ONLY)
+if(INSTALL_SDK)
+  install(FILES ${pkgconfig_dir}/choreonoid.pc DESTINATION lib/pkgconfig)
+endif()

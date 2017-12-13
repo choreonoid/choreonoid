@@ -361,8 +361,6 @@ endif()
 
 # boost
 
-# set(Boost_NO_SYSTEM_PATHS true)
-
 set(Boost_USE_STATIC_LIBS OFF)
 set(Boost_ADDITIONAL_VERSIONS "1.56" "1.57" "1.58" "1.59" "1.60" "1.61" "1.62" "1.63" "1.64" "1.65")
 

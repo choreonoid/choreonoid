@@ -6,8 +6,9 @@ libdir=${exec_prefix}/lib
 includedir=${prefix}/@CNOID_HEADER_SUBDIR@
 subdir=@CNOID_SUBDIR@
 sharedir=@CNOID_SHARE_DIR@
-simplecontrollerdir=${prefix}/${subdir}/simplecontroller
-customizerdir=${prefix}/${subdir}/customizer
+plugindir=${exec_prefix}/@CNOID_PLUGIN_SUBDIR@
+simplecontrollerdir=${plugindir}/simplecontroller
+customizerdir=${plugindir}/simplecontroller/customizer
 
 Name: choreonoid-body
 Description: Choreonoid Body library
