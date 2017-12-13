@@ -18,7 +18,7 @@ public:
     virtual ~AGXSimulatorItem();
     bool saveSimulationToAGXFile();
 
-    virtual Vector3 getGravitationalAcceleration() const override;
+    virtual Vector3 getGravity() const override;
     
 protected:
     virtual Item* doDuplicate() const;

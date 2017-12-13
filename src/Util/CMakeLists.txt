@@ -166,9 +166,13 @@ if(UNIX)
   set(libraries 
     yaml ${PNG_LIBRARY} ${JPEG_LIBRARY}
     ${CMAKE_THREAD_LIBS_INIT}
-    ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_THREAD_LIBRARY}
+    ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY}
     ${GETTEXT_LIBRARIES}
     m)
+
+  if(CNOID_USE_BOOST_REGEX)
+    set(libraries ${libraries} ${Boost_REGEX_LIBRARY})
+  endif()
 
   if(APPLE)
     target_link_libraries(${target} ${libraries} "-framework IOKit -framework Foundation")

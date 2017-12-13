@@ -166,7 +166,7 @@ public:
     /**
        \note This function should be a pure virtual function
     */
-    virtual Vector3 getGravitationalAcceleration() const;
+    virtual Vector3 getGravity() const;
     
     /**
        @param point link local position to apply the force

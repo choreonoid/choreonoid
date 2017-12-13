@@ -18,7 +18,6 @@
 #include <cnoid/Sleep>
 #include <cnoid/ProjectManager>
 #include <rtm/CorbaNaming.h>
-#include <boost/regex.hpp>
 #include "../gettext.h"
 
 using namespace std;
