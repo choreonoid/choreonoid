@@ -1,0 +1,60 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: agxWireSample
+
+links:
+  -
+    name: Wire
+    translation: [ 0.0, 0.0, 0.0 ]
+    jointType: fixed
+  -
+    name: Drum
+    parent: Wire
+    jointType: fixed
+    elements:
+      -
+        type: Shape
+        geometry: { type: Cylinder, radius: 0.25, height: 0.2 }
+        appearance: { material: { diffuseColor: [ 1.0, 0, 0 ] }}
+      -
+        type: AGXWireDevice
+        radius: 0.02
+        resolutionPerUnitLength: 5
+        enableCollisions: true
+        materialName: Wire
+        Winch:
+            linkName: Drum
+            position: [ 0.27, 0.0, 0.0 ]
+            normal: [0.0 , 0.0, -1.0 ]
+        Nodes:
+          -
+            type: free
+            coordinate: world
+            position: [ 1.0, 1.0, 2.0]
+  -
+    name: Drum2
+    parent: Wire
+    translation: [ 1.0, 0.0, 0.0 ]
+    rotation: [ 0, 0, 1, -90 ]
+    jointType: fixed
+    elements:
+      -
+        type: Shape
+        geometry: { type: Cylinder, radius: 0.25, height: 0.2 }
+        appearance: { material: { diffuseColor: [ 0.0, 1.0, 0 ] }}
+      -
+        type: AGXWireDevice
+        radius: 0.02
+        resolutionPerUnitLength: 5
+        enableCollisions: true
+        materialName: Wire
+        Winch:
+            linkName: Drum2
+            position: [ 0.27, 0.0, 0.0 ]
+            normal: [0.0 , 0.0, -1.0 ]
+        Nodes:
+          -
+            type: free
+            coordinate: world
+            position: [ 1.0, 1.0, 2.0]
