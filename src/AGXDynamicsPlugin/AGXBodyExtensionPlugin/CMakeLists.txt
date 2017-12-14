@@ -17,7 +17,6 @@ set(sources
 )
 
 set(headers
-  AGXBodyExtensionSample.h
   AGXBreakableJoint.h
 )
 
