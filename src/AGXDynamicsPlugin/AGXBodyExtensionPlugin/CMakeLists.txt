@@ -17,7 +17,6 @@ set(sources
 )
 
 set(headers
-  AGXBreakableJoint.h
 )
 
 set(target CnoidAGXBodyExtensionPlugin)

@@ -3,9 +3,10 @@
    \author Ikumi Susa
 */
 
-#include "AGXBreakableJoint.h"
+#include <cnoid/Device>
 #include <cnoid/YAMLBodyLoader>
 #include <cnoid/YAMLReader>
+#include <cnoid/AGXBodyExtension>
 #include <cnoid/AGXBody>
 #include <cnoid/AGXScene>
 
@@ -13,19 +14,55 @@ using namespace std;
 namespace cnoid{
 
 /////////////////////////////////////////////////////////////////////////
-// Register Device
+// AGXBreakableJointDevice
+struct AGXBreakableJointDeviceDesc
+{
+    AGXBreakableJointDeviceDesc(){
+        breakLimitForce = std::numeric_limits<double>::max();
+        jointType = "revolute";
+    }
+    std::string     link1Name;
+    std::string     link2Name;
+    Vector3         link1LocalPos;
+    Vector3         link2LocalPos;
+    std::string     jointType;
+    Vector3         jointAxis;
+    double          breakLimitForce;
+};
+
+class AGXBreakableJointDevice : private AGXBreakableJointDeviceDesc, public Device
+{
+public:
+    static bool createAGXBreakableJointDevice(YAMLBodyLoader& loader, Mapping& node);
+    AGXBreakableJointDevice(const AGXBreakableJointDeviceDesc& desc);
+    AGXBreakableJointDevice(const AGXBreakableJointDevice& org, bool copyStateOnly = false);
+    virtual const char* typeName() override;
+    void copyStateFrom(const AGXBreakableJointDevice& other);
+    virtual void copyStateFrom(const DeviceState& other) override;
+    virtual DeviceState* cloneState() const override;
+    virtual Device* clone() const override;
+    virtual void forEachActualType(std::function<bool(const std::type_info& type)> func) override;
+    virtual int stateSize() const override;
+    virtual const double* readState(const double* buf) override;
+    virtual double* writeState(double* out_buf) const override;
+
+    void setDesc(const AGXBreakableJointDeviceDesc& desc);
+    void getDesc(AGXBreakableJointDeviceDesc& desc);
+    //void initialize();
+};
+typedef ref_ptr<AGXBreakableJointDevice> AGXBreakableJointDevicePtr;
 
 #define NODE_READ(FIELD1)    node.read(#FIELD1, desc.FIELD1)
 #define NODE_TO_VEC3(FIELD1) valueNodeToVec3(info->extract(#FIELD1), desc.FIELD1);
-bool readAGXBreakableJointDevice(YAMLBodyLoader&loader, Mapping&node)
+bool AGXBreakableJointDevice::createAGXBreakableJointDevice(YAMLBodyLoader&loader, Mapping&node)
 {
-    auto valueNodeToVec3 = [](ValueNodePtr vnode, Vector3& vec)
+    auto valueNodeToVec3 = [](ValueNodePtr vnode, Vector3&vec)
     {
         if(!vnode){
             cout << "NOt Correct Vec3!" << std::endl;
             return false;
         }
-        Listing& u = *vnode->toListing();
+        Listing&u = *vnode->toListing();
         if(u.size() != 3){
             cout << "Not correct Vec3!" << std::endl;
             return false;
@@ -49,16 +86,6 @@ bool readAGXBreakableJointDevice(YAMLBodyLoader&loader, Mapping&node)
 }
 #undef NODE_READ
 #undef NODE_TO_VEC3
-
-struct TypeRegistration
-{
-    TypeRegistration(){
-        YAMLBodyLoader::addNodeType("AGXBreakableJointDevice", readAGXBreakableJointDevice);
-    }
-}registration;
-
-/////////////////////////////////////////////////////////////////////////
-// AGXBreakableJointDevice
 
 AGXBreakableJointDevice::AGXBreakableJointDevice(const AGXBreakableJointDeviceDesc& desc) :
     AGXBreakableJointDeviceDesc(desc)
@@ -135,29 +162,7 @@ void AGXBreakableJointDevice::getDesc(AGXBreakableJointDeviceDesc& desc)
 }
 
 /////////////////////////////////////////////////////////////////////////
-// Register AGXBreakableJoint
-bool createAGXBreakableJoint(cnoid::AGXBody* agxBody)
-{
-    DeviceList<> devices = agxBody->body()->devices();
-    DeviceList<AGXBreakableJointDevice> jointDevices;
-    jointDevices.extractFrom(devices);
-    for(auto device : jointDevices){
-        agxBody->addAGXBodyExtension(new cnoid::AGXBreakableJoint(device, agxBody));
-    }
-    return true;
-}
-
-struct AGXBreakableJointRegistration
-{
-    AGXBreakableJointRegistration() {
-        cnoid::AGXBody::addAGXBodyExtensionAdditionalFunc("AGXBreakableJoint", createAGXBreakableJoint);
-    }
-};
-AGXBreakableJointRegistration registrationAGXBreakableJoint;
-
-/////////////////////////////////////////////////////////////////////////
-// AGXBreakableJoint
-
+// JointBreaker
 class JointBreaker : public agxSDK::StepEventListener
 {
 private:
@@ -185,6 +190,30 @@ public:
     }
 };
 
+/////////////////////////////////////////////////////////////////////////
+// AGXBreakableJoint
+class AGXBreakableJoint : public AGXBodyExtension
+{
+public:
+    static bool createAGXBreakableJoint(cnoid::AGXBody* agxBody);
+    AGXBreakableJoint(AGXBreakableJointDevice* device, AGXBody* agxBody);
+private:
+    AGXBreakableJointDevicePtr m_device;
+};
+typedef ref_ptr<AGXBreakableJoint> AGXBreakableJointPtr;
+
+
+bool AGXBreakableJoint::createAGXBreakableJoint(cnoid::AGXBody* agxBody)
+{
+    DeviceList<> devices = agxBody->body()->devices();
+    DeviceList<AGXBreakableJointDevice> jointDevices;
+    jointDevices.extractFrom(devices);
+    for(auto device : jointDevices){
+        agxBody->addAGXBodyExtension(new cnoid::AGXBreakableJoint(device, agxBody));
+    }
+    return true;
+}
+
 AGXBreakableJoint::AGXBreakableJoint(AGXBreakableJointDevice* device, AGXBody* agxBody) :
     AGXBodyExtension(agxBody)
 {
@@ -211,5 +240,29 @@ AGXBreakableJoint::AGXBreakableJoint(AGXBreakableJointDevice* device, AGXBody* a
     getAGXBody()->getAGXScene()->getSimulation()
         ->add(new JointBreaker(joint1DOF, ddesc.breakLimitForce));
 }
+
+} // cnoid
+
+namespace{
+using namespace cnoid;
+
+/////////////////////////////////////////////////////////////////////////
+// Register AGXBreakableJointDevice
+struct AGXBreakableJointDeviceRegistration
+{
+    AGXBreakableJointDeviceRegistration()
+    {
+        YAMLBodyLoader::addNodeType("AGXBreakableJointDevice", AGXBreakableJointDevice::createAGXBreakableJointDevice);
+    }
+}registrationAGXBreakableJointDevice;
+
+/////////////////////////////////////////////////////////////////////////
+// Register AGXBreakableJoint
+struct AGXBreakableJointRegistration
+{
+    AGXBreakableJointRegistration() {
+        AGXBody::addAGXBodyExtensionAdditionalFunc("AGXBreakableJoint", AGXBreakableJoint::createAGXBreakableJoint);
+    }
+}registrationAGXBreakableJoint;
 
 }
