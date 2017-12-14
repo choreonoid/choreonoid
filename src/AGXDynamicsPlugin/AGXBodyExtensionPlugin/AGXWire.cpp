@@ -250,6 +250,7 @@ bool AGXWire::createAGXWire(cnoid::AGXBody* agxBody)
 };
 
 #define NODE_READ(FIELD1)    wireDeviceInfo.read(#FIELD1, wireDesc.FIELD1)
+#define WINCH_READ(FIELD1)   wireWinchInfo.read(#FIELD1, winchDesc.FIELD1)
 AGXWire::AGXWire(AGXWireDevice* device, AGXBody* agxBody) :
     AGXBodyExtension(agxBody),
     m_device(device)
@@ -265,6 +266,52 @@ AGXWire::AGXWire(AGXWireDevice* device, AGXBody* agxBody) :
     NODE_READ(enableCollisions);
     m_wire = AGXObjectFactory::createWire(wireDesc);
 
+    {   // set Material
+        agx::Material*mat = sim->getMaterialManager()->getMaterial(wireDeviceInfo.read<string>("materialName"));
+        if(mat == nullptr){
+            mat = sim->getMaterialManager()->getMaterial(Material::name(0));
+        }
+        double tmpMatValue;
+        if(wireDeviceInfo.read("wireYoungsModulusStretch", tmpMatValue)){
+            mat->getWireMaterial()->setYoungsModulusStretch(tmpMatValue);
+        }
+        if(wireDeviceInfo.read("wireDampingStretch", tmpMatValue)){
+            mat->getWireMaterial()->setDampingStretch(tmpMatValue);
+        }
+        if(wireDeviceInfo.read("wireYoungsModulusBend", tmpMatValue)){
+            mat->getWireMaterial()->setYoungsModulusBend(tmpMatValue);
+        }
+        if(wireDeviceInfo.read("wireDampingBend", tmpMatValue)){
+            mat->getWireMaterial()->setDampingBend(tmpMatValue);
+        }
+        m_wire->setMaterial(mat);
+    }
+
+    // create winch
+    const ValueNodePtr& wireWinchVNPtr = wireDeviceInfo.find("Winch");
+    if(wireWinchVNPtr->isMapping()){
+        const Mapping&  wireWinchInfo = *wireWinchVNPtr->toMapping();
+        AGXWireWinchControllerDesc winchDesc;
+        string linkName;
+        wireWinchInfo.read("linkName", linkName);
+        winchDesc.rigidBody = agxBody->getAGXRigidBody(linkName);
+        Vector3 positionInBodyFrame;
+        agxConvert::setVector(wireWinchInfo.find("position"), positionInBodyFrame);
+        winchDesc.positionInBodyFrame = agxConvert::toAGX(positionInBodyFrame);
+        Vector3 normalInBodyFrame;
+        agxConvert::setVector(wireWinchInfo.find("normal"), normalInBodyFrame);
+        winchDesc.normalInBodyFrame = agxConvert::toAGX(normalInBodyFrame);
+        wireWinchInfo.read("pulledInLength", winchDesc.pulledInLength);
+        m_winch = AGXObjectFactory::createWinchController(winchDesc);
+        if(m_winch){
+            std::vector<string> haulForceRange;
+            if(agxConvert::setVector(wireWinchInfo.find("haulForceRange"), 2, haulForceRange)){
+                m_winch->setForceRange(agx::RangeReal(std::stod(haulForceRange[0]), std::stod(haulForceRange[1])));
+            }
+            m_wire->add(m_winch);
+        }
+    }
+
     // set wire node
     const ValueNodePtr& wireNodesInfo = wireDeviceInfo.find("Nodes");
     if(wireNodesInfo->isListing()){
@@ -272,50 +319,28 @@ AGXWire::AGXWire(AGXWireDevice* device, AGXBody* agxBody) :
         for(const auto& wireNode : wireNodeList){
             if(!wireNode->isMapping()) continue;
             const Mapping&  wireNodeInfo = *wireNode->toMapping();
-            string nodeType;
+            string nodeType, coordinate;
             Vector3 pos;
+            // Read yaml
             wireNodeInfo.read("type", nodeType);
+            wireNodeInfo.read("coordinate", coordinate);
             agxConvert::setVector(wireNodeInfo.find("position"), pos);
+
+            // Calc world position
+            agx::RigidBody* rigid = getAGXBody()->getAGXRigidBody(coordinate);
+            agx::Vec3 agxPos = agxConvert::toAGX(pos);
+            if(rigid) agxPos = rigid->getTransform() * agxPos;
+
             if(nodeType == "free"){
-                m_wire->add(AGXObjectFactory::createWireFreeNode(agxConvert::toAGX(pos)));
+                m_wire->add(AGXObjectFactory::createWireFreeNode(agxPos));
             }else if(nodeType == "fixed"){
 
             }
         }
     }
 
-    agx::Material* mat = sim->getMaterialManager()->getMaterial(wireDeviceInfo.read<string>("materialName"));
-    if(mat == nullptr){
-        mat = sim->getMaterialManager()->getMaterial(Material::name(0));
-    }
-    double tmpValue;
-    if(wireDeviceInfo.read("wireYoungsModulusStretch", tmpValue)){
-        mat->getWireMaterial()->setYoungsModulusStretch(tmpValue);
-    }
-    if(wireDeviceInfo.read("wireDampingStretch", tmpValue)){
-        mat->getWireMaterial()->setDampingStretch(tmpValue);
-    }
-    if(wireDeviceInfo.read("wireYoungsModulusBend", tmpValue)){
-        mat->getWireMaterial()->setYoungsModulusBend(tmpValue);
-    }
-    if(wireDeviceInfo.read("wireDampingBend", tmpValue)){
-        mat->getWireMaterial()->setDampingBend(tmpValue);
-    }
-    m_wire->setMaterial(mat);
+    // add wire to simulation
     sim->add((agxSDK::StepEventListener*)m_wire);
-
-
-    // create winch
-    AGXLink* link = agxBody->getAGXLink(m_device->link()->name());
-    if(link){
-        AGXWireWinchControllerDesc winchDesc;
-        winchDesc.rigidBody = link->getAGXRigidBody();
-        //winchDesc.positionInBodyFrame = ddesc.winchPosition;
-        std::string winchLinkName;
-        Vector3 winchPosition;
-        Vector3 winchDirection;
-        double  winchPulledInLenght;
-    }
 
     // Rendering
     sim->add(new WireListener(this));

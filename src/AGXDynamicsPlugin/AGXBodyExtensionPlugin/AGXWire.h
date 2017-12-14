@@ -68,6 +68,7 @@ public:
 private:
     AGXWireDevicePtr m_device;
     agxWire::WireRef m_wire;
+    agxWire::WireWinchControllerRef m_winch;
 };
 typedef ref_ptr<AGXWire> AGXWirePtr;
 
