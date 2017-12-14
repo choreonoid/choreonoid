@@ -52,6 +52,7 @@ AGXSimulatorItemImpl::AGXSimulatorItemImpl(AGXSimulatorItem* self)
     m_p_contactReductionThreshhold = (int)simDesc.contactReductionThreshhold;
     m_p_enableContactWarmstarting = simDesc.enableContactWarmstarting;
     m_p_enableAutoSleep = simDesc.enableAutoSleep;
+    m_p_saveToAGXFileOnStart = false;
 }
 
 AGXSimulatorItemImpl::AGXSimulatorItemImpl(AGXSimulatorItem* self, const AGXSimulatorItemImpl& org)
@@ -73,6 +74,7 @@ void AGXSimulatorItemImpl::doPutProperties(PutPropertyFunction & putProperty)
     putProperty(_("ContactReductionThreshhold"), m_p_contactReductionThreshhold, changeProperty(m_p_contactReductionThreshhold));
     putProperty(_("ContactWarmstarting"), m_p_enableContactWarmstarting, changeProperty(m_p_enableContactWarmstarting));
     putProperty(_("AutoSleep"), m_p_enableAutoSleep, changeProperty(m_p_enableAutoSleep));
+    putProperty(_("SaveToAGXFileOnStart"), m_p_saveToAGXFileOnStart, changeProperty(m_p_saveToAGXFileOnStart));
 }
 
 bool AGXSimulatorItemImpl::store(Archive & archive)
@@ -84,6 +86,7 @@ bool AGXSimulatorItemImpl::store(Archive & archive)
     archive.write("ContactReductionThreshhold", m_p_contactReductionThreshhold);
     archive.write("ContactWarmstarting", m_p_enableContactWarmstarting);
     archive.write("AutoSleep", m_p_enableAutoSleep);
+    archive.write("SaveToAGXFileOnStart", m_p_saveToAGXFileOnStart);
     return true;
 }
 
@@ -96,6 +99,7 @@ bool AGXSimulatorItemImpl::restore(const Archive & archive)
     archive.read("ContactReductionThreshhold", m_p_contactReductionThreshhold);
     archive.read("ContactWarmstarting", m_p_enableContactWarmstarting);
     archive.read("AutoSleep", m_p_enableAutoSleep);
+    archive.read("SaveToAGXFileOnStart", m_p_saveToAGXFileOnStart);
     return true;
 }
 
@@ -130,6 +134,8 @@ bool AGXSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody
 
     setAdditionalAGXMaterialParam();
 
+    if(m_p_saveToAGXFileOnStart) saveSimulationToAGXFile();
+    
     return true;
 }
 

@@ -47,6 +47,7 @@ private:
     int     m_p_contactReductionThreshhold;
     bool    m_p_enableContactWarmstarting;
     bool    m_p_enableAutoSleep;
+    bool    m_p_saveToAGXFileOnStart;
     AGXScene* getAGXScene();
 };
 }
