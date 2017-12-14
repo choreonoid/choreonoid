@@ -49,19 +49,15 @@ void AGXSimulatorItem::doPutProperties(PutPropertyFunction & putProperty){
     impl->doPutProperties(putProperty);
 }
 
-//bool AGXSimulatorItem::store(Archive & archive){
-//    // save the common properties of SimulatorItem
-//    SimulatorItem::store(archive);
-//    //save the agx properties
-//    return impl->store(archive);
-//}
-//
-//bool AGXSimulatorItem::restore(const Archive & archive){
-//    // restore the common properties of SimulatorItem
-//    SimulatorItem::restore(archive);
-//    // restore the agx properties
-//    return impl->restore(archive);
-//}
+bool AGXSimulatorItem::store(Archive & archive){
+    SimulatorItem::store(archive);
+    return impl->store(archive);
+}
+
+bool AGXSimulatorItem::restore(const Archive & archive){
+    SimulatorItem::restore(archive);
+    return impl->restore(archive);
+}
 
 SimulationBody* AGXSimulatorItem::createSimulationBody(Body* orgBody)
 {

@@ -16,6 +16,30 @@ items:
       children: 
         - 
           id: 2
+          name: "AGXSimulator"
+          plugin: AGXDynamics
+          class: AGXSimulatorItem
+          data: 
+            timestep: 0.005
+            realtimeSync: true
+            recording: "full"
+            timeRangeMode: "Unlimited"
+            timeLength: 180
+            allLinkPositionOutputMode: true
+            deviceStateOutput: true
+            controllerThreads: true
+            recordCollisionData: false
+            controllerOptions: ""
+            Gravity: [ 0, 0, -9.80665 ]
+            NumThreads: 1
+            ContactReduction: true
+            ContactReductionBinResolution: 3
+            ContactReductionThreshhold: 12
+            ContactWarmstarting: false
+            AutoSleep: false
+            SaveToAGXFileOnStart: true
+        - 
+          id: 3
           name: "Floor"
           plugin: Body
           class: BodyItem
@@ -38,53 +62,28 @@ items:
             selfCollisionDetection: false
             isEditable: false
         - 
-          id: 3
-          name: "AGXSimulator"
-          plugin: AGXDynamics
-          class: AGXSimulatorItem
-          data: 
-            framerate: 200
-            realtimeSync: true
-            recording: "full"
-            timeRangeMode: "Unlimited"
-            timeLength: 180
-            allLinkPositionOutputMode: true
-            deviceStateOutput: true
-            controllerThreads: true
-            recordCollisionData: false
-            controllerOptions: ""
-            Gravity: [ 0, 0, -9.80665 ]
-            NumThreads: 1
-            ContactReduction: true
-            ContactReductionBinResolution: 3
-            ContactReductionThreshhold: 12
-            ContactWarmstarting: false
-            AutoSleep: false
-            SaveToAGXFileOnStart: true
-        - 
           id: 4
-          name: "FireHose"
+          name: "agxWireSample"
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${PROJECT_DIR}/FireHose.body"
-            currentBaseLink: "HoseBox"
+            modelFile: "${PROJECT_DIR}/agxWireSample.body"
+            currentBaseLink: "Wire"
             rootPosition: [ 0, 0, 1 ]
             rootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            jointPositions: [  0.000000 ]
+            jointPositions: [  ]
             initialRootPosition: [ 0, 0, 1 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            initialJointPositions: [  0.000000 ]
             zmp: [ 0, 0, 0 ]
             collisionDetection: true
             selfCollisionDetection: false
-            isEditable: true
+            isEditable: false
 views: 
   - 
     id: 0
@@ -97,9 +96,9 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      selected: [ 3 ]
-      checked: [ 2, 3, 4 ]
-      expanded: [ 1, 4 ]
+      selected: [ 2 ]
+      checked: [ 3, 4 ]
+      expanded: [ 1, 2 ]
   - 
     id: 2
     plugin: Base
@@ -149,9 +148,9 @@ views:
           fieldOfView: 0.698132
           near: 0.01
           far: 100
-          eye: [ 2.6506594, -0.0537780711, 2.14194809 ]
-          direction: [ -0.863391328, 0.0806730719, -0.498043442 ]
-          up: [ -0.495883477, 0.0463340806, 0.86715208 ]
+          eye: [ 0.859689361, -5.69363759, 4.62837498 ]
+          direction: [ 0.00461254861, 0.830181037, -0.557474816 ]
+          up: [ 0.00309732442, 0.557466211, 0.830193851 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
@@ -164,13 +163,18 @@ views:
       dedicatedItemTreeViewChecks: false
   - 
     id: 4
+    name: "Virtual Joystick"
+    plugin: Base
+    class: VirtualJoystickView
+  - 
+    id: 5
     plugin: Body
     class: BodyLinkView
     mounted: true
     state: 
       showRotationMatrix: false
   - 
-    id: 5
+    id: 6
     plugin: Body
     class: JointSliderView
     mounted: true
@@ -184,26 +188,22 @@ views:
       labelOnLeft: true
       currentBodyItem: 4
   - 
-    id: 6
+    id: 7
     plugin: Body
     class: LinkSelectionView
     mounted: true
     state: 
       listingMode: "Link List"
       currentBodyItem: 4
-      bodyItems: 
-        - 
-          id: 4
-          selectedLinks: [ 1 ]
   - 
-    id: 7
+    id: 8
     plugin: Python
     class: PythonConsoleView
     mounted: true
 toolbars: 
   "TimeBar": 
     minTime: 0
-    maxTime: 31.57
+    maxTime: 108.5
     frameRate: 100
     playbackFrameRate: 50
     idleLoopDrivenMode: false
@@ -262,7 +262,7 @@ Body:
   "EditableSceneBody": 
     editableSceneBodies: 
       - 
-        bodyItem: 2
+        bodyItem: 3
         showCenterOfMass: false
         showPpcom: false
         showZmp: false
@@ -301,8 +301,8 @@ viewAreas:
               current: 1
             - 
               type: pane
-              views: [ 0, 6 ]
-              current: 0
+              views: [ 0, 7 ]
+              current: 7
         - 
           type: splitter
           orientation: vertical
@@ -315,15 +315,15 @@ viewAreas:
               children: 
                 - 
                   type: pane
-                  views: [ 4, 5 ]
-                  current: 4
+                  views: [ 5, 6 ]
+                  current: 5
                 - 
                   type: pane
                   views: [ 3 ]
                   current: 3
             - 
               type: pane
-              views: [ 2, 7 ]
+              views: [ 2, 8 ]
               current: 2
 layoutOfToolBars: 
   rows: 
@@ -331,10 +331,10 @@ layoutOfToolBars:
       - { name: "FileBar", x: 0, priority: 0 }
       - { name: "ScriptBar", x: 47, priority: 0 }
       - { name: "TimeBar", x: 94, priority: 0 }
-      - { name: "SceneBar", x: 1007, priority: 0 }
-      - { name: "GraphBar", x: 1355, priority: 0 }
-      - { name: "SimulationBar", x: 1462, priority: 0 }
-      - { name: "BodyMotionGenerationBar", x: 1659, priority: 0 }
+      - { name: "SceneBar", x: 1053, priority: 0 }
+      - { name: "GraphBar", x: 1401, priority: 0 }
+      - { name: "SimulationBar", x: 1508, priority: 0 }
+      - { name: "BodyMotionGenerationBar", x: 1705, priority: 0 }
     - 
       - { name: "BodyBar", x: 0, priority: 0 }
       - { name: "KinematicsBar", x: 260, priority: 0 }

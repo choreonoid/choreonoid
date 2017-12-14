@@ -59,6 +59,13 @@ agx::MaterialRef AGXObjectFactory::createMaterial(const AGXMaterialDesc & desc)
     m->getSurfaceMaterial()->setRoughness(desc.roughness);
     m->getSurfaceMaterial()->setViscosity(desc.surfaceViscosity);
     m->getSurfaceMaterial()->setAdhesion(desc.adhesionForce, desc.adhesivOverlap);
+
+    // WireMaterial
+    m->getWireMaterial()->setYoungsModulusBend(desc.wireYoungsModulusBend);
+    m->getWireMaterial()->setDampingBend(desc.wireDampingBend);
+    m->getWireMaterial()->setYoungsModulusStretch(desc.wireYoungsModulusStretch);
+    m->getWireMaterial()->setDampingStretch(desc.wireDampingStretch);
+
     return m;
 }
 
@@ -356,7 +363,24 @@ agxVehicle::TrackRef AGXObjectFactory::createVehicleTrack(const AGXVehicleTrackD
     return track;
 }
 
-agxCollide::ConvexBuilderRef AGXObjectFactory::createConvexBuilder(){
+agxWire::WireRef AGXObjectFactory::createWire(const AGXWireDesc& desc)
+{
+    agxWire::WireRef wire = new agxWire::Wire(desc.radius, desc.resolutionPerUnitLength, desc.enableCollisions);
+    return wire;
+}
+
+agxWire::FreeNodeRef AGXObjectFactory::createWireFreeNode(const agx::Vec3& pos)
+{
+    return new agxWire::FreeNode(pos);
+}
+
+agxWire::WireWinchControllerRef AGXObjectFactory::createWinchController(const AGXWireWinchControllerDesc& desc)
+{
+    return new agxWire::WireWinchController(desc.rigidBody, desc.positionInBodyFrame, desc.normalInBodyFrame, desc.pulledInLength);
+}
+
+agxCollide::ConvexBuilderRef AGXObjectFactory::createConvexBuilder()
+{
     return new agxCollide::ConvexBuilder();
 }
 

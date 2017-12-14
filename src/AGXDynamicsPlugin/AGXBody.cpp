@@ -162,8 +162,8 @@ bool AGXLink::setCenterOfMassFromLinkInfo()
 
 bool AGXLink::setMassFromLinkInfo()
 {
-    const double& m = getOrgLink()->m();
-    if(m <= 0.0) return false;
+    double m = getOrgLink()->m();
+    if(m <= 0.0) m = 1.0;
     getAGXRigidBody()->getMassProperties()->setMass(m, false);
     return true;
 }
@@ -269,9 +269,6 @@ void AGXLink::setLinkStateToCnoid()
     Vector3 v0(v.x(), v.y(), v.z());
     const Vector3 c = orgLink->R() * orgLink->c();
     orgLink->v() = v0 - orgLink->w().cross(c);
-
-    //const agx::RigidBody::AutoSleepProperties& p = agxRigidBody->getAutoSleepProperties();
-    //std::cout << agxRigidBody->getName() << " : " << p.getEnable() << " " << p.getState() << std::endl;
 }
 
 int AGXLink::getIndex() const
