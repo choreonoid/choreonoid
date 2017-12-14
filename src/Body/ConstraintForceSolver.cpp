@@ -622,7 +622,7 @@ void CFSImpl::initialize(void)
     bodiesData.resize(numBodies);
 
     if(!collisionDetector){
-        collisionDetector = std::make_shared<AISTCollisionDetector>();
+        collisionDetector = new AISTCollisionDetector;
     } else {
         collisionDetector->clearGeometries();
     }
@@ -2300,13 +2300,13 @@ ConstraintForceSolver::~ConstraintForceSolver()
 }
 
 
-void ConstraintForceSolver::setCollisionDetector(CollisionDetectorPtr detector)
+void ConstraintForceSolver::setCollisionDetector(CollisionDetector* detector)
 {
     impl->collisionDetector = detector;
 }
 
 
-CollisionDetectorPtr ConstraintForceSolver::collisionDetector()
+CollisionDetector* ConstraintForceSolver::collisionDetector()
 {
     return impl->collisionDetector;
 }

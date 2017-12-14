@@ -18,6 +18,8 @@ public:
     virtual ~AGXSimulatorItem();
     bool saveSimulationToAGXFile();
 
+    virtual Vector3 getGravity() const override;
+    
 protected:
     virtual Item* doDuplicate() const;
     void doPutProperties(PutPropertyFunction& putProperty);

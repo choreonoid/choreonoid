@@ -8,6 +8,7 @@
 
 #include "Body.h"
 #include <cnoid/CollisionDetector>
+#include <memory>
 
 namespace cnoid {
     

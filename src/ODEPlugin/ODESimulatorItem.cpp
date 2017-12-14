@@ -153,7 +153,7 @@ public:
     bool enableMaxCorrectingVel;
     FloatingNumberString maxCorrectingVel;
     double surfaceLayerDepth;
-    bool useWorldCollision;
+    bool useWorldCollisionDetector;
     CollisionDetectorPtr collisionDetector;
 
     double physicsTime;
@@ -194,7 +194,7 @@ ODELink::ODELink
     if(odeBody->worldID){
         createLinkBody(simImpl, odeBody->worldID, parent, o);
     }
-    if(!simImpl->useWorldCollision){
+    if(!simImpl->useWorldCollisionDetector){
         createGeometry(odeBody);
     }
 
@@ -662,7 +662,7 @@ void ODEBody::createBody(ODESimulatorItemImpl* simImpl)
     Body* body = this->body();
     
     worldID = body->isStaticModel() ? 0 : simImpl->worldID;
-    if(simImpl->useWorldCollision){
+    if(simImpl->useWorldCollisionDetector){
         geometryId = addBodyToCollisionDetector(*body, *simImpl->collisionDetector, 
                                                 bodyItem()->isSelfCollisionDetectionEnabled());
     }else{
@@ -674,7 +674,7 @@ void ODEBody::createBody(ODESimulatorItemImpl* simImpl)
 
     setKinematicStateToODE(simImpl->flipYZ);
 
-    if(simImpl->useWorldCollision){
+    if(simImpl->useWorldCollisionDetector){
         int size = simImpl->geometryIdToLink.size();
         int numLinks = odeLinks.size();
         simImpl->geometryIdToLink.resize(geometryId+numLinks);
@@ -892,7 +892,7 @@ ODESimulatorItemImpl::ODESimulatorItemImpl(ODESimulatorItem* self)
     isJointLimitMode = false;
     is2Dmode = false;
     flipYZ = false;
-    useWorldCollision = false;
+    useWorldCollisionDetector = false;
 }
 
 
@@ -921,7 +921,7 @@ ODESimulatorItemImpl::ODESimulatorItemImpl(ODESimulatorItem* self, const ODESimu
     isJointLimitMode = org.isJointLimitMode;
     is2Dmode = org.is2Dmode;
     flipYZ = org.flipYZ;
-    useWorldCollision = org.useWorldCollision;
+    useWorldCollisionDetector = org.useWorldCollisionDetector;
 }
 
 
@@ -1024,15 +1024,21 @@ void ODESimulatorItem::setSurfaceLayerDepth(double value)
 
 void ODESimulatorItem::useWorldCollisionDetector(bool on)
 {
-    impl->useWorldCollision = on;
+    impl->useWorldCollisionDetector = on;
 }
 
 
-void ODESimulatorItem::setAllLinkPositionOutputMode(bool on)
+void ODESimulatorItem::setAllLinkPositionOutputMode(bool)
 {
     // The mode is not changed.
     // This simulator only supports the all link position output
     // because joint positions may be slightly changed
+}
+
+
+Vector3 ODESimulatorItem::getGravity() const
+{
+    return impl->gravity;
 }
 
 
@@ -1085,10 +1091,10 @@ bool ODESimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody
     }
 
     worldID = dWorldCreate();
-    if(useWorldCollision){
-        collisionDetector = self->collisionDetector();
+    if(useWorldCollisionDetector){
+        collisionDetector = self->getOrCreateCollisionDetector();
         collisionDetector->clearGeometries();
-    }else{
+    } else {
         spaceID = dHashSpaceCreate(0);
         dSpaceSetCleanup(spaceID, 0);
     }
@@ -1108,8 +1114,9 @@ bool ODESimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody
     for(size_t i=0; i < simBodies.size(); ++i){
         addBody(static_cast<ODEBody*>(simBodies[i]));
     }
-    if(useWorldCollision)
+    if(useWorldCollisionDetector){
         collisionDetector->makeReady();
+    }
 
     if(MEASURE_PHYSICS_CALCULATION_TIME){
         physicsTime = 0;
@@ -1248,7 +1255,7 @@ bool ODESimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& ac
 	}
 
     dJointGroupEmpty(contactJointGroupID);
-    if(useWorldCollision){
+    if(useWorldCollisionDetector){
         for(size_t i=0; i < activeSimBodies.size(); ++i){
             ODEBody* odeBody = static_cast<ODEBody*>(activeSimBodies[i]);
             for(size_t j=0; j< odeBody->odeLinks.size(); j++){
@@ -1411,7 +1418,7 @@ void ODESimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 
     putProperty(_("2D mode"), is2Dmode, changeProperty(is2Dmode));
 
-    putProperty(_("Use WorldItem's Collision Detector"), useWorldCollision, changeProperty(useWorldCollision));
+    putProperty(_("Use WorldItem's Collision Detector"), useWorldCollisionDetector, changeProperty(useWorldCollisionDetector));
 
 }
 
@@ -1437,7 +1444,7 @@ void ODESimulatorItemImpl::store(Archive& archive)
     archive.write("limitCorrectingVel", enableMaxCorrectingVel);
     archive.write("maxCorrectingVel", maxCorrectingVel);
     archive.write("2Dmode", is2Dmode);
-    archive.write("UseWorldItem'sCollisionDetector", useWorldCollision);
+    archive.write("useWorldCollisionDetector", useWorldCollisionDetector);
 }
 
 
@@ -1465,5 +1472,7 @@ void ODESimulatorItemImpl::restore(const Archive& archive)
     archive.read("limitCorrectingVel", enableMaxCorrectingVel);
     maxCorrectingVel = archive.get("maxCorrectingVel", maxCorrectingVel.string());
     archive.read("2Dmode", is2Dmode);
-    archive.read("UseWorldItem'sCollisionDetector", useWorldCollision);
+    if(!archive.read("useWorldCollisionDetector", useWorldCollisionDetector)){
+        archive.read("UseWorldItem'sCollisionDetector", useWorldCollisionDetector);
+    }
 }

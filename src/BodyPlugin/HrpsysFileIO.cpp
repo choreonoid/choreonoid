@@ -10,10 +10,10 @@
 #include <cnoid/ItemManager>
 #include <cnoid/BodyMotionUtil>
 #include <cnoid/ZMPSeq>
+#include <cnoid/Config>
 #include <QMessageBox>
 #include <boost/tokenizer.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/regex.hpp>
 #include <boost/format.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
 #ifndef _WINDOWS
@@ -25,6 +25,18 @@
 #include <list>
 #include <vector>
 #include <map>
+
+#ifdef CNOID_USE_BOOST_REGEX
+#include <boost/regex.hpp>
+using boost::regex;
+using boost::regex_match;
+using boost::smatch;
+#else
+#include <regex>
+#endif
+
+#include <iostream>
+
 #include "gettext.h"
 
 using namespace std;
@@ -37,8 +49,6 @@ namespace {
 
 map<string,int> labelToTypeMap;
 
-boost::regex labelPattern("^(JA|JV|TQ|F|M|A|W|zmp|waist|R|P|Y)([XYZRP]?)(\\d*)$");
-    
 class HrpsysLogLoader
 {
 public:
@@ -68,8 +78,12 @@ public:
     int numComponents[NUM_DATA_TYPES];
     
     std::list< std::vector<double> > frames;
+
+    regex labelPattern;
     
-    HrpsysLogLoader() {
+    HrpsysLogLoader()
+        : labelPattern("^(JA|JV|TQ|F|M|A|W|zmp|waist|R|P|Y)([XYZRP]?)(\\d*)$")
+    {
         if(labelToTypeMap.empty()){
             labelToTypeMap["JA"] = JOINT_POS;
             labelToTypeMap["JV"] = JOINT_VEL;
@@ -86,8 +100,8 @@ public:
         }
     }
 
-    bool loadLogFile(BodyMotionItem* item, const std::string& filename, std::ostream& os){
-
+    bool loadLogFile(BodyMotionItem* item, const std::string& filename, std::ostream& os)
+    {
         boost::iostreams::filtering_istream is;
 
 #ifndef _WINDOWS
@@ -178,9 +192,9 @@ public:
         return true;
     }
 
-    void readHeader(Tokenizer::iterator it, Tokenizer::iterator end){
-        
-        boost::smatch match;
+    void readHeader(Tokenizer::iterator it, Tokenizer::iterator end)
+    {
+        smatch match;
 
         for(int i=0; i < NUM_DATA_TYPES; ++i){
             numComponents[i] = 0;

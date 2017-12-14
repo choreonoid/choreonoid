@@ -602,7 +602,7 @@ double ColdetModelPair::computeDistance(double *point0, double *point1)
         return d;
     }
 
-    return -1;
+    return -1.0;
 }
 
 double ColdetModelPair::computeDistance(int& triangle0, double* point0, int& triangle1, double* point1)
@@ -631,7 +631,7 @@ double ColdetModelPair::computeDistance(int& triangle0, double* point0, int& tri
         return d;
     }
 
-    return -1;
+    return -1.0;
 }
 
 

@@ -200,8 +200,6 @@ install(
   DESTINATION ${CNOID_PLUGIN_SUBDIR}/simplecontroller
   FILES_MATCHING PATTERN "*" EXCLUDE)
 
-install_external_libraries(${Boost_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS})
-
 if(ENABLE_PYTHON)
   if(USE_PYBIND11)
     add_subdirectory(pybind11)

@@ -9,21 +9,21 @@
 #include <cnoid/SceneDrawables>
 #include <cnoid/EigenUtil>
 #include <boost/optional.hpp>
+
 #ifdef GAZEBO_ODE
 #include <gazebo/ode/ode.h>
 #else
 #include <ode/ode.h>
 #endif
 
-
 using namespace std;
 using namespace cnoid;
 
 namespace {
 
-CollisionDetectorPtr factory()
+CollisionDetector* factory()
 {
-    return std::make_shared<ODECollisionDetector>();
+    return new ODECollisionDetector;
 }
 
 struct FactoryRegistration
@@ -109,17 +109,14 @@ public:
     bool makeReady();
     void updatePosition(int geometryId, const Position& position);
     void detectCollisions(std::function<void(const CollisionPair&)> callback);
-
-private :
-
-
 };
+
 }
 
 
 ODECollisionDetector::ODECollisionDetector()
 {
-    impl = new ODECollisionDetectorImpl();
+    impl = new ODECollisionDetectorImpl;
 }
 
 
@@ -140,8 +137,9 @@ ODECollisionDetector::~ODECollisionDetector()
 
 ODECollisionDetectorImpl::~ODECollisionDetectorImpl()
 {
-    if(spaceID)
+    if(spaceID){
         dSpaceDestroy(spaceID);
+    }
     delete meshExtractor;
 }
 
@@ -152,9 +150,9 @@ const char* ODECollisionDetector::name() const
 }
 
 
-CollisionDetectorPtr ODECollisionDetector::clone() const
+CollisionDetector* ODECollisionDetector::clone() const
 {
-    return std::make_shared<ODECollisionDetector>();
+    return new ODECollisionDetector;
 }
 
         
@@ -173,9 +171,9 @@ int ODECollisionDetector::numGeometries() const
 }
 
 
-int ODECollisionDetector::addGeometry(SgNodePtr geometry)
+int ODECollisionDetector::addGeometry(SgNode* geometry)
 {
-    return impl->addGeometry(geometry.get());
+    return impl->addGeometry(geometry);
 }
 
 
@@ -334,7 +332,7 @@ bool ODECollisionDetector::enableGeometryCache(bool on)
 }
 
 
-void ODECollisionDetector::clearGeometryCache(SgNodePtr geometry)
+void ODECollisionDetector::clearGeometryCache(SgNode* geometry)
 {
     
 }

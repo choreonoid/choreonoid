@@ -361,23 +361,31 @@ endif()
 
 # boost
 
-# set(Boost_NO_SYSTEM_PATHS true)
-
 set(Boost_USE_STATIC_LIBS OFF)
-set(Boost_ADDITIONAL_VERSIONS "1.42" "1.42.0" "1.43" "1.43.0" "1.44" "1.44.0" "1.45" "1.45.0" "1.46" "1.46.0" "1.46.1" "1.47" "1.47.0" "1.48" "1.48.0" "1.49.0" "1.50.0")
-
+set(Boost_ADDITIONAL_VERSIONS "1.56" "1.57" "1.58" "1.59" "1.60" "1.61" "1.62" "1.63" "1.64" "1.65")
 
 if(MSVC)
-  find_package(Boost 1.36.0 QUIET OPTIONAL_COMPONENTS  bzip2 zlib)
+  find_package(Boost 1.54.0 QUIET OPTIONAL_COMPONENTS bzip2 zlib)
 endif()
 
-set(boost_packages system filesystem program_options regex thread iostreams date_time)
+set(boost_packages system filesystem program_options iostreams)
 
 if(ENABLE_PYTHON AND USE_BOOST_PYTHON)
   set(boost_packages ${boost_packages} python)
 endif()
 
-find_package(Boost 1.36.0 REQUIRED COMPONENTS ${boost_packages})
+# Old GCC does not implement the regex library correctly
+if(CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.9.3)
+  set(CNOID_USE_BOOST_REGEX ON)
+else()
+  set(CNOID_USE_BOOST_REGEX OFF)
+endif()
+
+if(CNOID_USE_BOOST_REGEX)
+  set(boost_packages ${boost_packages} regex)
+endif()
+
+find_package(Boost 1.54.0 REQUIRED COMPONENTS ${boost_packages})
 
 if(NOT Boost_FOUND)
   set(BOOST_ROOT ${BOOST_ROOT} CACHE PATH "set the directory of the boost root")
@@ -385,38 +393,32 @@ if(NOT Boost_FOUND)
   message(FATAL_ERROR "Boost cannot be found. Please specify the boost top directory to BOOST_ROOT.")
 endif()
 
-if(Boost_VERSION GREATER "104699")
-  find_package(Boost 1.47.0 REQUIRED COMPONENTS chrono)
-endif()
-
 include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
 
 set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS $<$<CONFIG:Release>:BOOST_DISABLE_ASSERTS>)
 
-install_external_libraries(${Boost_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS}
-  ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_THREAD_LIBRARY} 
-  ${Boost_DATE_TIME_LIBRARY} ${Boost_REGEX_LIBRARY} ${Boost_CHRONO_LIBRARY} ${Boost_PYTHON_LIBRARY} 
-  ${Boost_IOSTREAMS_LIBRARY} ${Boost_ZLIB_LIBRARY})
-
-
-if(INSTALL_SDK_WITH_EXTLIBS)
-  foreach(dir ${Boost_INCLUDE_DIRS})
-    if(EXISTS ${dir}/boost)
-      install(DIRECTORY ${dir}/boost DESTINATION ${CNOID_HEADER_SUBDIR})
-    endif()
-  endforeach()
-endif()
-
 if(MSVC)
   set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS BOOST_ALL_DYN_LINK ${BOOST_LIB_DIAGNOSTIC})
 
-  #MSVC 2010 problem
-  if(MSVC_VERSION EQUAL 1600)
-    # for VC++2010 Express Edition
-    IF(NOT DEFINED CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_NO_WARNINGS)
-      SET(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_NO_WARNINGS ON)
-    ENDIF()
+  install_external_libraries(${Boost_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS}
+    ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY}
+    ${Boost_IOSTREAMS_LIBRARY} ${Boost_ZLIB_LIBRARY})
+
+  if(CNOID_USE_BOOST_REGEX)
+    install_external_libraries(${Boost_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS} ${Boost_REGEX_LIBRARY})
+  endif()
+  
+  if(ENABLE_PYTHON AND USE_BOOST_PYTHON)
+    install_external_libraries(${Boost_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS} ${Boost_PYTHON_LIBRARY})
+  endif()
+
+  if(INSTALL_SDK_WITH_EXTLIBS)
+    foreach(dir ${Boost_INCLUDE_DIRS})
+      if(EXISTS ${dir}/boost)
+	install(DIRECTORY ${dir}/boost DESTINATION ${CNOID_HEADER_SUBDIR})
+      endif()
+    endforeach()
   endif()
 endif()
 
@@ -1130,7 +1132,6 @@ if(ENABLE_PYTHON)
 	  elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 	    target_compile_options(${target} PRIVATE "-flto=thin")
 	    set(link_lto_flags "-flto=thin")
-	    target_link_libraries(${target} PRIVATE "-flto=thin")
 	  endif()
 	  get_target_property(existing_link_flags ${target} LINK_FLAGS)
 	  if(existing_link_flags STREQUAL existing_link_flags-NOTFOUND)
@@ -1234,8 +1235,6 @@ if(ENABLE_LUA)
     
 
 endif()
-
-
 
 #function(make_gettext_mofiles out_mofiles)
 function(make_gettext_mofiles target out_mofiles)
@@ -1424,7 +1423,7 @@ if(WIN32)
 elseif(UNIX)
   set(CPACK_GENERATOR DEB)
   set(CPACK_PACKAGE_FILE_NAME "choreonoid_${CNOID_FULL_VERSION}_i386")
-  set(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6, libgcc1, libstdc++6, libpng12-0, libjpeg62, libyaml-0-2, zlib1g, libboost-filesystem1.42.0, libboost-date-time1.42.0, libboost-program-options1.42.0, libboost-python1.42.0, libboost-regex1.42.0, libboost-system1.42.0, libboost-thread1.42.0, libqtcore4, libqtgui4, libqt4-test, libqt4-opengl")
+  set(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6, libgcc1, libstdc++6, libpng12-0, libjpeg62, libyaml-0-2, zlib1g, libboost-filesystem1.42.0, libboost-date-time1.42.0, libboost-program-options1.42.0, libboost-python1.42.0, libboost-system1.42.0, libqtcore4, libqtgui4, libqt4-test, libqt4-opengl")
   if(INSTALL_SDK)
     set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libstdc++-dev, libboost-dev, libboost-program-options-dev, libboost-python-dev, libqt4-dev, libqt4-opengl-dev")
   endif()

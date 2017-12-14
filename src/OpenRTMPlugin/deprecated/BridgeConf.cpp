@@ -5,15 +5,26 @@
 
 #include "BridgeConf.h"
 #include "../OpenRTMUtil.h"
-#include <boost/regex.hpp>
+#include <cnoid/Config>
 #include <boost/format.hpp>
 #include <boost/filesystem.hpp>
 #include <iostream>
+
+#ifdef CNOID_USE_BOOST_REGEX
+#include <boost/regex.hpp>
+using boost::regex;
+using boost::match_results;
+using boost::regex_search;
+namespace regex_constants = boost::regex_constants;
+#else
+#include <regex>
+#endif
 
 using namespace std;
 namespace program_options = boost::program_options;
 namespace filesystem = boost::filesystem;
 using boost::format;
+
 
 BridgeConf::BridgeConf() :
     options("Allowed options"),
@@ -390,10 +401,10 @@ void BridgeConf::extractParameters(const std::string& str, std::vector<std::stri
 
 std::string BridgeConf::expandEnvironmentVariables(const std::string& str)
 {
-    boost::regex variablePattern("\\$([A-z][A-z_0-9]*)");
+    regex variablePattern("\\$([A-z][A-z_0-9]*)");
     
-    boost::match_results<string::const_iterator> result; 
-    boost::regex_constants::match_flag_type flags = boost::regex_constants::match_default; 
+    match_results<string::const_iterator> result; 
+    regex_constants::match_flag_type flags = regex_constants::match_default; 
     
     string::const_iterator start, end;
     std::string str_(str);
@@ -401,17 +412,15 @@ std::string BridgeConf::expandEnvironmentVariables(const std::string& str)
     end = str_.end();
     int pos = 0;
 
-    vector< pair< int, int > > results;
+    vector<pair<int, int>> results;
 
-    while ( boost::regex_search(start, end, result, variablePattern, flags) ) {
+    while(regex_search(start, end, result, variablePattern, flags)){
         results.push_back(std::make_pair(pos+result.position(1), result.length(1)));
 
         // seek to the remaining part
         start = result[0].second;
         pos += result.length(0);
-
-        flags |= boost::match_prev_avail; 
-        flags |= boost::match_not_bob; 
+        flags |= regex_constants::match_prev_avail; 
     }
     // replace the variables in reverse order
     while (!results.empty()) {

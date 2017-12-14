@@ -18,13 +18,13 @@ public:
     BulletCollisionDetector();
     virtual ~BulletCollisionDetector();
     virtual const char* name() const;
-    virtual CollisionDetectorPtr clone() const;
+    virtual CollisionDetector* clone() const;
     virtual void clearGeometries();
     virtual int numGeometries() const;
-    virtual int addGeometry(SgNodePtr geometry);
+    virtual int addGeometry(SgNode* geometry);
     virtual void setGeometryStatic(int geometryId, bool isStatic = true);
     virtual bool enableGeometryCache(bool on);
-    virtual void clearGeometryCache(SgNodePtr geometry);
+    virtual void clearGeometryCache(SgNode* geometry);
     virtual void clearAllGeometryCaches();
     virtual void setNonInterfarenceGeometyrPair(int geometryId1, int geometryId2);
     virtual bool makeReady();
@@ -35,7 +35,7 @@ private:
     BulletCollisionDetectorImpl* impl;
 };
 
-typedef std::shared_ptr<BulletCollisionDetector> BulletCollisionDetectorPtr;
+typedef ref_ptr<BulletCollisionDetector> BulletCollisionDetectorPtr;
 
 }
 

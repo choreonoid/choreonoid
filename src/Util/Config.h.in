@@ -14,5 +14,6 @@
 #cmakedefine CNOID_USE_PYBIND11
 #cmakedefine CNOID_USE_BOOST_PYTHON
 #cmakedefine CNOID_USE_PYTHON2
+#cmakedefine CNOID_USE_BOOST_REGEX
 
 #endif

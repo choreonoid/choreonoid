@@ -15,8 +15,8 @@
 #include "WorldLogFileItem.h"
 #include "SensorVisualizerItem.h"
 #include "BodyTrackingCameraItem.h"
-//#include "FilterDialogs.h"
 #include "KinematicFaultChecker.h"
+#include "SplineFilterDialog.h"
 #include "BodyBar.h"
 #include "LeggedBodyBar.h"
 #include "LinkSelectionView.h"
@@ -79,8 +79,8 @@ public:
 
         BodyMotionEngine::initialize(this);
         CollisionSeqEngine::initialize(this);
-        //initializeFilterDialogs(*this);
         KinematicFaultChecker::initialize(this);
+        initializeSplineFilterDialog(this);
 
         // This should be after the initialization of BodyMotionEngine
         ZMPSeqItem::initializeClass(this); 
