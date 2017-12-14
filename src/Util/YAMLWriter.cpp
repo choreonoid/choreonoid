@@ -3,6 +3,7 @@
 */
 
 #include "YAMLWriter.h"
+#include "NullOut.h"
 #include <iostream>
 #include <algorithm>
 #include <boost/tokenizer.hpp>
@@ -20,6 +21,7 @@ YAMLWriter::YAMLWriter(const std::string filename)
     current = 0;
     numDocuments = 0;
     isKeyOrderPreservationMode = false;
+    messageSink_ = &nullout();
 
     doubleFormat = "%.7g";
 
@@ -37,6 +39,7 @@ YAMLWriter::YAMLWriter(std::ostream& os)
     current = 0;
     numDocuments = 0;
     isKeyOrderPreservationMode = false;
+    messageSink_ = &nullout();
 
     doubleFormat = "%.7g";
 
@@ -48,6 +51,24 @@ YAMLWriter::~YAMLWriter()
 {
     os.flush();
     ofs.close();
+}
+
+
+void YAMLWriter::setMessageSink(std::ostream& os)
+{
+    messageSink_ = &os;
+}
+
+
+void YAMLWriter::putMessage(const std::string& message)
+{
+    (*messageSink_) << message;
+}
+
+
+std::ostream& YAMLWriter::messageSink()
+{
+    return *messageSink_;
 }
 
 

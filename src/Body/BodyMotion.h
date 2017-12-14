@@ -9,6 +9,7 @@
 #include <cnoid/MultiValueSeq>
 #include <cnoid/MultiSE3Seq>
 #include <cnoid/Signal>
+#include <cnoid/NullOut>
 #include <map>
 #include "exportdecl.h"
 
@@ -26,29 +27,29 @@ public:
     BodyMotion& operator=(const BodyMotion& rhs);
     virtual AbstractSeqPtr cloneSeq() const;        
 
-    virtual void setDimension(int numFrames, int numJoints, bool clearNewArea = false);
+    virtual void setDimension(int numFrames, int numJoints, bool clearNewArea = false) override;
 
     void setDimension(int numFrames, int numJoints, int numLinks, bool clearNewArea = false);
 
-    virtual void setNumParts(int numParts, bool clearNewElements = false);
-    virtual int getNumParts() const;
+    virtual void setNumParts(int numParts, bool clearNewElements = false) override;
+    virtual int getNumParts() const override;
 
     int numJoints() const { return jointPosSeq_->numParts(); }
     int numLinks() const { return linkPosSeq_->numParts(); }
 
     double frameRate() const { return jointPosSeq_->frameRate(); }
-    virtual double getFrameRate() const;
-    virtual void setFrameRate(double frameRate);
+    virtual double getFrameRate() const override;
+    virtual void setFrameRate(double frameRate) override;
 
     double timeStep() const { return jointPosSeq_->timeStep(); }
 
-    virtual int getOffsetTimeFrame() const;
+    virtual int getOffsetTimeFrame() const override;
 
     int numFrames() const {
         return std::max(jointPosSeq_->numFrames(), linkPosSeq_->numFrames());
     }
-    virtual int getNumFrames() const;
-    virtual void setNumFrames(int n, bool clearNewArea = false);
+    virtual int getNumFrames() const override;
+    virtual void setNumFrames(int n, bool clearNewArea = false) override;
 
     MultiValueSeqPtr jointPosSeq() {
         return jointPosSeq_;
@@ -99,11 +100,8 @@ public:
     Frame frame(int frame) { return Frame(*this, frame); }
     ConstFrame frame(int frame) const { return ConstFrame(*this, frame); }
 
-    virtual bool read(const Mapping& archive);
-    virtual bool write(YAMLWriter& writer);
-
-    bool loadStandardYAMLformat(const std::string& filename);
-    bool saveAsStandardYAMLformat(const std::string& filename);
+    bool loadStandardYAMLformat(const std::string& filename, std::ostream& os = nullout());
+    bool saveAsStandardYAMLformat(const std::string& filename, std::ostream& os = nullout());
 
     typedef std::map<std::string, AbstractSeqPtr> ExtraSeqMap;
     typedef ExtraSeqMap::const_iterator ConstSeqIterator;
@@ -141,9 +139,17 @@ public:
     SignalProxy<void()> sigExtraSeqsChanged() {
         return sigExtraSeqsChanged_;
     }
+
+    //! \deprecated. Use the readSeq function.
+    //bool read(const Mapping& archive);
+    //! \deprecated. Use the writeSeq function.
+    //bool write(YAMLWriter& writer);
+
+protected:
+    virtual bool doReadSeq(const Mapping& archive, std::ostream& os) override;
+    virtual bool doWriteSeq(YAMLWriter& writer) override;
         
 private:
-
     MultiValueSeqPtr jointPosSeq_;
     MultiSE3SeqPtr linkPosSeq_;
 
@@ -154,8 +160,6 @@ private:
 
 typedef std::shared_ptr<BodyMotion> BodyMotionPtr;
 typedef std::shared_ptr<const BodyMotion> ConstBodyMotionPtr;
-
-class Body;
 
 CNOID_EXPORT BodyMotion::Frame operator<<(BodyMotion::Frame frame, const Body& body);
 CNOID_EXPORT BodyMotion::Frame operator>>(BodyMotion::Frame frame, const Body& body);

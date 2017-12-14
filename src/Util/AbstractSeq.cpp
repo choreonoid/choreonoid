@@ -6,11 +6,18 @@
 #include "AbstractSeq.h"
 #include "YAMLWriter.h"
 #include <boost/format.hpp>
+#include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
 
 using boost::format;
+
+namespace {
+
+string dummySeqMessage;
+
+}
 
 
 AbstractSeq::AbstractSeq(const char* seqType)
@@ -22,7 +29,7 @@ AbstractSeq::AbstractSeq(const char* seqType)
 
 AbstractSeq::AbstractSeq(const AbstractSeq& org)
     : seqType_(org.seqType_),
-      content(org.content)
+      contentName_(org.contentName_)
 {
 
 }
@@ -31,7 +38,7 @@ AbstractSeq::AbstractSeq(const AbstractSeq& org)
 AbstractSeq& AbstractSeq::operator=(const AbstractSeq& rhs)
 {
     seqType_ = rhs.seqType_;
-    content = rhs.content;
+    contentName_ = rhs.contentName_;
     return *this;
 }
 
@@ -39,7 +46,7 @@ AbstractSeq& AbstractSeq::operator=(const AbstractSeq& rhs)
 void AbstractSeq::copySeqProperties(const AbstractSeq& source)
 {
     seqType_ = source.seqType_;
-    content = source.content;
+    contentName_ = source.contentName_;
 }
 
 
@@ -73,88 +80,95 @@ bool AbstractSeq::setOffsetTimeFrame(int offset)
 }
 
 
-bool AbstractSeq::readSeq(const Mapping& archive)
+bool AbstractSeq::readSeq(const Mapping& archive, std::ostream& os)
 {
     try {
-        if(content.empty()){
-            if(!archive.read("content", content)){
-                archive.read("purpose", content); // old version
+        if(contentName_.empty()){
+            if(!archive.read("content", contentName_)){
+                archive.read("purpose", contentName_); // old version
             }
         }
-        setFrameRate(archive["frameRate"].toDouble());
+        auto frameRateNode = archive.find("frameRate");
+        if(frameRateNode->isValid()){
+            if(frameRateNode->isString() && frameRateNode->toString() == "irregular"){
+                frameRateNode->throwException(_("Irregular interval data cannot be loaded."));
+            }
+            setFrameRate(frameRateNode->toDouble());
+        }
 
-        return doReadSeq(archive);
+        return doReadSeq(archive, os);
 
     } catch (ValueNode::Exception& ex) {
-        addSeqMessage(ex.message());
+        os << ex.message();
         return false;
     }
 }
 
 
-bool AbstractSeq::doReadSeq(const Mapping&)
+bool AbstractSeq::doReadSeq(const Mapping&, std::ostream&)
 {
     return true;
 }
 
 
-bool AbstractSeq::checkSeqContent(const Mapping& archive, const std::string contentName, bool throwEx)
+bool AbstractSeq::checkSeqContent(const Mapping& archive, const std::string requiredContent, std::ostream& os)
 {
     string content_;
-    if(!archive.read("content", content_)){
-        archive.read("purpose", content_); // old version
+    if(!archive.read("content", contentName_)){
+        archive.read("purpose", contentName_); // old version
     }
-    bool result = (content_ == contentName);
-
-    if(!result){
-        string message;
-
-        if(content_.empty()){
-            message =
-                str(format("Content of %1% should be \"%2%\" but it is not specified.")
-                    % seqType() % contentName);
-        } else {
-            message =
-                str(format("Content \"%1%\" of %2% is different from the required content \"%3%\".")
-                    % content_ % seqType() % contentName);
-        }
-        if(throwEx){
-            archive.throwException(message);
-        } else {
-            addSeqMessage(message);
-        }
+    if(contentName_ == requiredContent){
+        return true;
     }
-    return result;
+
+    if(content_.empty()){
+        os << format(_("Content of %1% should be \"%2%\" but it is not specified."))
+            % seqType() % requiredContent;
+    } else {
+        os << format(_("Content \"%1%\" of %2% is different from the required content \"%3%\"."))
+            % contentName_ % seqType() % requiredContent;
+    }
+    return false;
 }
 
 
 bool AbstractSeq::writeSeq(YAMLWriter& writer)
 {
-    bool result = false;
-    
-    if(seqType().empty()){
-        addSeqMessage("setType() is empty.");
-
-    } else {
-        writer.startMapping();
-        
-        writer.putKeyValue("type", seqType());
-        writer.putKeyValue("content", seqContentName());
-        writer.putKeyValue("frameRate", getFrameRate());
-        writer.putKeyValue("numFrames", getNumFrames());
-
-        result = doWriteSeq(writer);
-
-        writer.endMapping();
+    if(seqType_.empty()){
+        if(contentName_.empty()){
+            writer.putMessage(_("The type of the sequence to write is unknown."));
+        } else {
+            writer.putMessage(str(format(_("The type of the %1% sequence to write is unknown.")) % contentName_));
+        }
+        return false;
     }
+
+    writer.startMapping();
+        
+    writer.putKeyValue("type", seqType());
+    if(!contentName_.empty()){
+        writer.putKeyValue("content", contentName_);
+    }
+    writer.putKeyValue("frameRate", getFrameRate());
+    writer.putKeyValue("numFrames", getNumFrames());
+    
+    bool result = doWriteSeq(writer);
+    
+    writer.endMapping();
     
     return result;
 }
 
 
-bool AbstractSeq::doWriteSeq(YAMLWriter& /* writer */)
+bool AbstractSeq::doWriteSeq(YAMLWriter&)
 {
     return true;
+}
+
+
+const std::string& AbstractSeq::seqMessage() const
+{
+    return dummySeqMessage;
 }
 
 
@@ -211,18 +225,16 @@ bool AbstractMultiSeq::doWriteSeq(YAMLWriter& writer)
 }
 
 
-bool AbstractMultiSeq::readSeqPartLabels(const Mapping& archive, SetPartLabelFunction setPartLabel)
+std::vector<std::string> AbstractMultiSeq::readSeqPartLabels(const Mapping& archive)
 {
+    vector<string> labelStrings;
     const Listing& labels = *archive.findListing("partLabels");
     if(labels.isValid()){
         for(int i=0; i < labels.size(); ++i){
-            setPartLabel(labels[i].toString(), i);
+            labelStrings.push_back(labels[i].toString());
         }
-        return true;
-    } else {
-        addSeqMessage("\"partLabels\" is not valid.");
     }
-    return false;
+    return labelStrings;
 }
 
 

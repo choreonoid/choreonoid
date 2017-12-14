@@ -50,33 +50,33 @@ public:
         }
     }
 
-    virtual AbstractSeqPtr cloneSeq() const {
+    virtual AbstractSeqPtr cloneSeq() const override {
         return std::make_shared<SeqType>(*this);
     }
         
     virtual ~Seq() { }
         
-    virtual double getFrameRate() const {
+    virtual double getFrameRate() const override {
         return frameRate_;
     }
 
-    inline double frameRate() const {
+    double frameRate() const {
         return frameRate_;
     }
 
-    virtual void setFrameRate(double frameRate) {
+    virtual void setFrameRate(double frameRate) override {
         frameRate_ = frameRate;
     }
 
-    virtual int getNumFrames() const {
+    virtual int getNumFrames() const override {
         return container.size();
     }
 
-    inline int numFrames() const {
+    int numFrames() const {
         return container.size();
     }
 
-    virtual void setNumFrames(int n, bool clearNewElements = false) {
+    virtual void setNumFrames(int n, bool clearNewElements = false) override {
         if(clearNewElements){
             container.resize(n, defaultValue());
         } else {
@@ -84,31 +84,31 @@ public:
         }
     }
 
-    inline bool empty() const {
+    bool empty() const {
         return container.empty();
     }
 
-    inline int frameOfTime(double time) const {
+    int frameOfTime(double time) const {
         return (int)(time * frameRate_);
     }
 
-    inline double timeOfFrame(int frame) const {
+    double timeOfFrame(int frame) const {
         return (frame / frameRate_);
     }
 
-    inline ElementType& operator[](int frameIndex) {
+    ElementType& operator[](int frameIndex) {
         return container[frameIndex];
     }
 
-    inline const ElementType& operator[](int frameIndex) const {
+    const ElementType& operator[](int frameIndex) const {
         return container[frameIndex];
     }
 
-    inline ElementType& at(int frameIndex) {
+    ElementType& at(int frameIndex) {
         return container[frameIndex];
     }
 
-    inline const ElementType& at(int frameIndex) const {
+    const ElementType& at(int frameIndex) const {
         return container[frameIndex];
     }
 

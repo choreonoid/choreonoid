@@ -23,7 +23,7 @@ set(sources
   MultiAffine3Seq.cpp
   MultiValueSeq.cpp
   MultiVector3Seq.cpp
-  PlainSeqFormatLoader.cpp
+  PlainSeqFileLoader.cpp
   Task.cpp
   AbstractTaskSequencer.cpp
   CollisionDetector.cpp
@@ -89,7 +89,7 @@ set(headers
   MultiValueSeq.h
   MultiVector3Seq.h
   NullOut.h
-  PlainSeqFormatLoader.h
+  PlainSeqFileLoader.h
   RangeLimiter.h
   Referenced.h
   Seq.h

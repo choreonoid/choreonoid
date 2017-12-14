@@ -4,14 +4,16 @@
 */
 
 #include "MultiAffine3Seq.h"
-#include "PlainSeqFormatLoader.h"
+#include "PlainSeqFileLoader.h"
 #include "ValueTree.h"
 #include "YAMLWriter.h"
 #include "EigenUtil.h"
 #include <boost/format.hpp>
+#include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
+using boost::format;
 
 
 MultiAffine3Seq::MultiAffine3Seq()
@@ -47,79 +49,50 @@ AbstractSeqPtr MultiAffine3Seq::cloneSeq() const
 }
 
 
-bool MultiAffine3Seq::loadPlainFormat(const std::string& filename)
+static void readAffine3(const Listing& node, Affine3& out_value)
 {
-    clearSeqMessage();
-    PlainSeqFileLoader loader;
+    if(node.size() == 6){
 
-    if(!loader.load(filename)){
-        addSeqMessage(loader.errorMessage());
-        return false;
+        Affine3::TranslationPart t = out_value.translation();
+        t[0] = node[0].toDouble();
+        t[1] = node[1].toDouble();
+        t[2] = node[2].toDouble();
+
+        const double r = node[3].toDouble();
+        const double p = node[4].toDouble();
+        const double y = node[5].toDouble();
+        
+        out_value.linear() = rotFromRpy(r, p, y);
     }
-
-    if(loader.numParts() < 12){
-        addSeqMessage(filename +
-                      "does not have 12-columns "
-                      "(3 for position vectors, 9 for attitde matrices)");
-        return false;
-    }
-  
-    setDimension(loader.numFrames(), 1);
-    setTimeStep(loader.timeStep());
-
-    int i = 0;
-    Part base = part(0);
-    for(PlainSeqFileLoader::iterator it = loader.begin(); it != loader.end(); ++it){
-        vector<double>& data = *it;
-        base[i].translation() << data[1], data[2], data[3];
-        base[i].linear() <<
-            data[ 4], data[ 5], data[ 6],
-            data[ 7], data[ 8], data[ 9],
-            data[10], data[11], data[12];
-        ++i;
-    }
-
-    return true;
 }
 
 
-bool MultiAffine3Seq::saveTopPartAsPlainFormat(const std::string& filename)
+bool MultiAffine3Seq::doReadSeq(const Mapping& archive, std::ostream& os)
 {
-    clearSeqMessage();
-    boost::format f("%1$.4f");
-    const int nFrames = numFrames();
+    if(!BaseSeqType::doReadSeq(archive, os)){
+        return false;
+    }
 
-    if(nFrames > 0 && numParts() > 0){
-
-        ofstream os(filename.c_str());
-        if(!os){
-            addSeqMessage(filename + " cannot be opened.");
-            return false;
-        }
-
-        const double r = frameRate();
-
-        Part base = part(0);
-        for(int i=0; i < nFrames; ++i){
-            os << (f % (i / r));
-            const Affine3& T = base[i];
-            for(int j=0; j < 3; ++j){
-                os << " " << T.translation()[j];
-            }
-            for(int j=0; j < 3; ++j){
-                for(int k=0; k < 3; ++k){
-                    double m = T.linear()(j, k);
-                    if(fabs(m) < 1.0e-14){
-                        m = 0.0;
-                    }
-                    os << " " << m;
+    const string& type = archive["type"].toString();
+    if((type == seqType() || type == "MultiSe3Seq") && (archive["format"].toString() == "XYZRPY")){
+        
+        const Listing& values = *archive.findListing("frames");
+        
+        if(values.isValid()){
+            const int nParts = archive["numParts"].toInt();
+            const int nFrames = values.size();
+            setDimension(nFrames, nParts);
+            
+            for(int i=0; i < nFrames; ++i){
+                const Listing& frameNode = *values[i].toListing();
+                Frame f = frame(i);
+                const int n = std::min(frameNode.size(), nParts);
+                for(int j=0; j < n; ++j){
+                    readAffine3(*frameNode[j].toListing(), f[j]);
                 }
             }
-            os << " 0 0 0 0 0 0"; // velocity elements (dv, omega)
-            os << "\n";
+            return true;
         }
-
-        return true;
     }
 
     return false;
@@ -170,49 +143,76 @@ bool MultiAffine3Seq::doWriteSeq(YAMLWriter& writer)
 }
 
 
-static void readAffine3(const Listing& node, Affine3& out_value)
+bool MultiAffine3Seq::loadPlainFormat(const std::string& filename, std::ostream& os)
 {
-    if(node.size() == 6){
+    PlainSeqFileLoader loader;
 
-        Affine3::TranslationPart t = out_value.translation();
-        t[0] = node[0].toDouble();
-        t[1] = node[1].toDouble();
-        t[2] = node[2].toDouble();
-
-        const double r = node[3].toDouble();
-        const double p = node[4].toDouble();
-        const double y = node[5].toDouble();
-        
-        out_value.linear() = rotFromRpy(r, p, y);
+    if(!loader.load(filename, os)){
+        return false;
     }
+
+    if(loader.numParts() < 12){
+        os << (format(_("\"%1%\" does not have 12-columns (3 for position vectors, 9 for attitde matrices)"))
+               % filename) << endl;
+        return false;
+    }
+  
+    setDimension(loader.numFrames(), 1);
+    setTimeStep(loader.timeStep());
+
+    int i = 0;
+    Part base = part(0);
+    for(PlainSeqFileLoader::iterator it = loader.begin(); it != loader.end(); ++it){
+        vector<double>& data = *it;
+        base[i].translation() << data[1], data[2], data[3];
+        base[i].linear() <<
+            data[ 4], data[ 5], data[ 6],
+            data[ 7], data[ 8], data[ 9],
+            data[10], data[11], data[12];
+        ++i;
+    }
+
+    return true;
 }
 
 
-bool MultiAffine3Seq::doReadSeq(const Mapping& archive)
+bool MultiAffine3Seq::saveTopPartAsPlainFormat(const std::string& filename, std::ostream& os)
 {
-    if(BaseSeqType::doReadSeq(archive)){
+    boost::format f("%1$.4f");
+    const int nFrames = numFrames();
 
-        const string& type = archive["type"].toString();
-        if((type == seqType() || type == "MultiSe3Seq") && (archive["format"].toString() == "XYZRPY")){
+    if(nFrames > 0 && numParts() > 0){
 
-            const Listing& values = *archive.findListing("frames");
-
-            if(values.isValid()){
-                const int nParts = archive["numParts"].toInt();
-                const int nFrames = values.size();
-                setDimension(nFrames, nParts);
-                
-                for(int i=0; i < nFrames; ++i){
-                    const Listing& frameNode = *values[i].toListing();
-                    Frame f = frame(i);
-                    const int n = std::min(frameNode.size(), nParts);
-                    for(int j=0; j < n; ++j){
-                        readAffine3(*frameNode[j].toListing(), f[j]);
-                    }
-                }
-                return true;
-            }
+        ofstream file(filename.c_str());
+        if(!file){
+            os << format(_("\"%1%\" cannot be opened.")) % filename << endl;
+            return false;
         }
+
+        const double r = frameRate();
+
+        Part base = part(0);
+        for(int i=0; i < nFrames; ++i){
+            file << (f % (i / r));
+            const Affine3& T = base[i];
+            for(int j=0; j < 3; ++j){
+                file << " " << T.translation()[j];
+            }
+            for(int j=0; j < 3; ++j){
+                for(int k=0; k < 3; ++k){
+                    double m = T.linear()(j, k);
+                    if(fabs(m) < 1.0e-14){
+                        m = 0.0;
+                    }
+                    file << " " << m;
+                }
+            }
+            file << " 0 0 0 0 0 0"; // velocity elements (dv, omega)
+            file << "\n";
+        }
+
+        return true;
     }
+
     return false;
 }

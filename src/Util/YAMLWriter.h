@@ -21,6 +21,11 @@ public:
     YAMLWriter(std::ostream& os);
     ~YAMLWriter();
 
+    void setMessageSink(std::ostream& os);
+    void putMessage(const std::string& message);
+    std::ostream& messageSink();
+
+
     void putNode(const ValueNode* node);
 
     void setIndentWidth(int n);
@@ -77,6 +82,7 @@ private:
 
     std::ofstream ofs;
     std::ostream& os;
+    std::ostream* messageSink_;
 
     int indentWidth;
     bool isCurrentNewLine;

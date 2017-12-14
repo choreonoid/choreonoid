@@ -8,6 +8,7 @@
 
 #include "MultiSeq.h"
 #include "EigenTypes.h"
+#include "NullOut.h"
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -15,9 +16,9 @@ namespace cnoid {
 class Mapping;
 class YAMLWriter;
 
-class CNOID_EXPORT MultiAffine3Seq : public MultiSeq<Affine3, Eigen::aligned_allocator<Affine3> >
+class CNOID_EXPORT MultiAffine3Seq : public MultiSeq<Affine3, Eigen::aligned_allocator<Affine3>>
 {
-    typedef MultiSeq<Affine3, Eigen::aligned_allocator<Affine3> > BaseSeqType;
+    typedef MultiSeq<Affine3, Eigen::aligned_allocator<Affine3>> BaseSeqType;
 
 public:
     typedef std::shared_ptr<MultiAffine3Seq> Ptr;
@@ -30,16 +31,16 @@ public:
 
     using BaseSeqType::operator=;
 
-    virtual AbstractSeqPtr cloneSeq() const;
+    virtual AbstractSeqPtr cloneSeq() const override;
         
-    virtual bool loadPlainFormat(const std::string& filename);
-    bool saveTopPartAsPlainFormat(const std::string& filename);
+    bool loadPlainFormat(const std::string& filename, std::ostream& os = nullout());
+    bool saveTopPartAsPlainFormat(const std::string& filename, std::ostream& os = nullout());
 
 protected:
     virtual Affine3 defaultValue() const { return Affine3::Identity(); }
 
-    virtual bool doWriteSeq(YAMLWriter& writer);
-    virtual bool doReadSeq(const Mapping& archive);
+    virtual bool doReadSeq(const Mapping& archive, std::ostream& os) override;
+    virtual bool doWriteSeq(YAMLWriter& writer) override;
 };
 
 typedef MultiAffine3Seq::Ptr MultiAffine3SeqPtr;
