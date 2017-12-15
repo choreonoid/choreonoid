@@ -1436,7 +1436,7 @@ bool BulletSimulatorItemImpl::initializeSimulation(const std::vector<SimulationB
         self->setAllLinkPositionOutputMode(true);
     }
     if(useWorldCollision){
-        collisionDetector = self->collisionDetector();
+        collisionDetector = self->getOrCreateCollisionDetector();
         collisionDetector->clearGeometries();
     }
 

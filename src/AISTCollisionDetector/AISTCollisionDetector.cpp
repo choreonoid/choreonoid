@@ -11,7 +11,7 @@
 #include <cnoid/ThreadPool>
 #include <random>
 #include <algorithm>
-#include <map>
+#include <unordered_map>
 
 using namespace std;
 using namespace cnoid;
@@ -21,9 +21,9 @@ namespace {
 const bool MULTITHREAD_TYPE = 0;
 const bool ENABLE_SHUFFLE = false;
 
-CollisionDetectorPtr factory()
+CollisionDetector* factory()
 {
-    return std::make_shared<AISTCollisionDetector>();
+    return new AISTCollisionDetector;
 }
 
 struct FactoryRegistration
@@ -61,8 +61,8 @@ public:
 typedef std::shared_ptr<ColdetModelPairEx> ColdetModelPairExPtr;
 
 
-typedef map<weak_ref_ptr<SgNode>, ColdetModelExPtr>  ModelMap;
-ModelMap modelCache;
+typedef unordered_map<weak_ref_ptr<SgNode>, ColdetModelExPtr>  ModelMap;
+//ModelMap modelCache;
 
 }
 
@@ -81,7 +81,7 @@ public:
 
     vector<int> shuffledPairIndices;
 
-    map<IdPair<>, int> modelPairIdMap;
+    unordered_map<IdPair<>, int> modelPairIdMap;
 
     typedef set<IdPair<>> IdPairSet;
     IdPairSet nonInterfarencePairs;
@@ -125,7 +125,7 @@ AISTCollisionDetectorImpl::AISTCollisionDetectorImpl()
 {
     maxNumThreads = 0;
     numThreads = 0;
-    meshExtractor = new MeshExtractor();
+    meshExtractor = new MeshExtractor;
 }
 
 
@@ -148,9 +148,9 @@ const char* AISTCollisionDetector::name() const
 }
 
 
-CollisionDetectorPtr AISTCollisionDetector::clone() const
+CollisionDetector* AISTCollisionDetector::clone() const
 {
-    return std::make_shared<AISTCollisionDetector>();
+    return new AISTCollisionDetector;
 }
 
 
@@ -175,9 +175,9 @@ int AISTCollisionDetector::numGeometries() const
 }
 
 
-int AISTCollisionDetector::addGeometry(SgNodePtr geometry)
+int AISTCollisionDetector::addGeometry(SgNode* geometry)
 {
-    return impl->addGeometry(geometry.get());
+    return impl->addGeometry(geometry);
 }
 
 
@@ -246,15 +246,15 @@ bool AISTCollisionDetector::enableGeometryCache(bool)
 }
 
 
-void AISTCollisionDetector::clearGeometryCache(SgNodePtr geometry)
+void AISTCollisionDetector::clearGeometryCache(SgNode* geometry)
 {
-    modelCache.erase(weak_ref_ptr<SgNode>(geometry));
+    //modelCache.erase(weak_ref_ptr<SgNode>(geometry));
 }
 
 
 void AISTCollisionDetector::clearAllGeometryCaches()
 {
-    modelCache.clear();
+    //modelCache.clear();
 }
 
 
@@ -542,4 +542,21 @@ int AISTCollisionDetector::geometryPairId(int geometryId1, int geometryId2) cons
 double AISTCollisionDetector::findClosestPoints(int geometryPairId, Vector3& out_point1, Vector3& out_point2)
 {
     return impl->modelPairs[geometryPairId]->computeDistance(out_point1.data(), out_point2.data());
+}
+
+
+bool AISTCollisionDetector::isFindClosestPointsAvailable() const
+{
+    return true;
+}
+
+
+double AISTCollisionDetector::findClosestPoints(int geometryId1, int geometryId2, Vector3& out_point1, Vector3& out_point2)
+{
+    auto p = impl->modelPairIdMap.find(IdPair<>(geometryId1, geometryId2));
+    if(p != impl->modelPairIdMap.end()){
+        int pairId = p->second;
+        return impl->modelPairs[pairId]->computeDistance(out_point1.data(), out_point2.data());
+    }
+    return -1.0;
 }

@@ -25,10 +25,10 @@ omniidl \
 omniorb-nameserver \
 python-omniorb \
 omniidl-python \
-libgstreamer0.10-dev \
-libgstreamer-plugins-base0.10-dev \
 libpulse-dev \
 libsndfile1-dev \
+libgstreamer1.0-dev \
+libgstreamer-plugins-base1.0-dev \
 python3-dev \
 python3-numpy \
 python2.7-dev \

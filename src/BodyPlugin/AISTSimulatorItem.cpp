@@ -28,6 +28,7 @@
 #include <boost/lexical_cast.hpp>
 #include <mutex>
 #include <iomanip>
+#include <fstream>
 #include "gettext.h"
 
 using namespace std;
@@ -425,7 +426,7 @@ bool AISTSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBod
     cfs.setContactCullingDistance(contactCullingDistance.value());
     cfs.setContactCullingDepth(contactCullingDepth.value());
     cfs.setCoefficientOfRestitution(epsilon);
-    cfs.setCollisionDetector(self->collisionDetector());
+    cfs.setCollisionDetector(self->getOrCreateCollisionDetector());
 
     if(is2Dmode){
         cfs.set2Dmode(true);
@@ -551,6 +552,12 @@ void AISTSimulatorItem::finalizeSimulation()
 CollisionLinkPairListPtr AISTSimulatorItem::getCollisions()
 {
     return impl->world.constraintForceSolver.getCollisions();
+}
+
+
+Vector3 AISTSimulatorItem::getGravity() const
+{
+    return impl->gravity;
 }
 
 

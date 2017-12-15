@@ -86,6 +86,7 @@ public:
     void setCollisionExcludeLinks(const Mapping& cdMapping);
     void setCollisionExcludeTreeDepth(const Mapping& cdMapping);
     void setCollisionExcludeLinkGroups(const Mapping& cdMapping);
+    void setCollisionExcludeSelfCollisionLinks(const Mapping& cdMapping);
     std::string getCollisionGroupName() const;
     void enableExternalCollision(const bool& bOn);
     void addCollisionGroupNameToDisableCollision(const std::string& name);

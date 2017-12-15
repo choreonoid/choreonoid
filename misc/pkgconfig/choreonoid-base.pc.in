@@ -1,0 +1,17 @@
+# pkg-config source file
+
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/@CNOID_HEADER_SUBDIR@
+subdir=@CNOID_SUBDIR@
+sharedir=@CNOID_SHARE_DIR@
+plugindir=${exec_prefix}/@CNOID_PLUGIN_SUBDIR@
+
+Name: choreonoid-base
+Description: Choreonoid base library
+Version: @CNOID_FULL_VERSION@
+Requires: choreonoid-util = @CNOID_FULL_VERSION@ @PKGCONFIG_QT_REQUIREMENTS@
+Conflicts:
+Libs: -L${plugindir} -lCnoidBase
+Cflags: -DQT_NO_KEYWORDS

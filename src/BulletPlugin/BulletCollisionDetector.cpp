@@ -21,9 +21,9 @@ namespace {
 const btScalar DEFAULT_COLLISION_MARGIN = 0.0001;
 const bool useHACD = true;
 
-CollisionDetectorPtr factory()
+CollisionDetector* factory()
 {
-    return std::make_shared<BulletCollisionDetector>();
+    return new BulletCollisionDetector;
 }
 
 struct FactoryRegistration
@@ -113,7 +113,7 @@ public:
 
 BulletCollisionDetector::BulletCollisionDetector()
 {
-    impl = new BulletCollisionDetectorImpl();
+    impl = new BulletCollisionDetectorImpl;
 }
 
 
@@ -129,9 +129,9 @@ const char* BulletCollisionDetector::name() const
 }
 
 
-CollisionDetectorPtr BulletCollisionDetector::clone() const
+CollisionDetector* BulletCollisionDetector::clone() const
 {
-    return std::make_shared<BulletCollisionDetector>();
+    return new BulletCollisionDetector;
 }
 
 
@@ -176,9 +176,9 @@ int BulletCollisionDetector::numGeometries() const
 }
 
 
-int BulletCollisionDetector::addGeometry(SgNodePtr geometry)
+int BulletCollisionDetector::addGeometry(SgNode* geometry)
 {
-    return impl->addGeometry(geometry.get());
+    return impl->addGeometry(geometry);
 }
 
 
@@ -481,13 +481,13 @@ void BulletCollisionDetector::setGeometryStatic(int geometryId, bool isStatic)
 }
 
 
-bool BulletCollisionDetector::enableGeometryCache(bool on)
+bool BulletCollisionDetector::enableGeometryCache(bool)
 {
     return false;
 }
 
 
-void BulletCollisionDetector::clearGeometryCache(SgNodePtr geometry)
+void BulletCollisionDetector::clearGeometryCache(SgNode*)
 {
     
 }

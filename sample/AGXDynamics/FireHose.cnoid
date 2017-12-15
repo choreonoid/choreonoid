@@ -12,6 +12,7 @@ items:
       data: 
         collisionDetection: false
         collisionDetector: AISTCollisionDetector
+        materialTableFile: "${SHARE}/default/materials.yaml"
       children: 
         - 
           id: 2
@@ -49,10 +50,17 @@ items:
             timeLength: 180
             allLinkPositionOutputMode: true
             deviceStateOutput: true
-            selfCollision: false
             controllerThreads: true
             recordCollisionData: false
             controllerOptions: ""
+            Gravity: [ 0, 0, -9.80665 ]
+            NumThreads: 1
+            ContactReduction: true
+            ContactReductionBinResolution: 3
+            ContactReductionThreshhold: 12
+            ContactWarmstarting: false
+            AutoSleep: false
+            SaveToAGXFileOnStart: true
         - 
           id: 4
           name: "FireHose"
@@ -66,13 +74,13 @@ items:
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            jointPositions: [  2.107034,  0.545265 ]
+            jointPositions: [  0.000000 ]
             initialRootPosition: [ 0, 0, 1 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            initialJointPositions: [  0.000000,  0.000000 ]
+            initialJointPositions: [  0.000000 ]
             zmp: [ 0, 0, 0 ]
             collisionDetection: true
             selfCollisionDetection: false
@@ -91,7 +99,7 @@ views:
     state: 
       selected: [ 3 ]
       checked: [ 2, 3, 4 ]
-      expanded: [ 1 ]
+      expanded: [ 1, 4 ]
   - 
     id: 2
     plugin: Base
@@ -141,9 +149,9 @@ views:
           fieldOfView: 0.698132
           near: 0.01
           far: 100
-          eye: [ 5.4995863, -2.17277611, 4.11304518 ]
-          direction: [ -0.750799465, 0.413256324, -0.515285721 ]
-          up: [ -0.451421137, 0.248471994, 0.857018451 ]
+          eye: [ 2.6506594, -0.0537780711, 2.14194809 ]
+          direction: [ -0.863391328, 0.0806730719, -0.498043442 ]
+          up: [ -0.495883477, 0.0463340806, 0.86715208 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
@@ -195,7 +203,7 @@ views:
 toolbars: 
   "TimeBar": 
     minTime: 0
-    maxTime: 30
+    maxTime: 31.57
     frameRate: 100
     playbackFrameRate: 50
     idleLoopDrivenMode: false
@@ -280,7 +288,7 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 304, 1485 ]
+      sizes: [ 315, 1536 ]
       children: 
         - 
           type: splitter
@@ -294,7 +302,7 @@ viewAreas:
             - 
               type: pane
               views: [ 0, 6 ]
-              current: 6
+              current: 0
         - 
           type: splitter
           orientation: vertical
@@ -303,7 +311,7 @@ viewAreas:
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 643, 836 ]
+              sizes: [ 665, 865 ]
               children: 
                 - 
                   type: pane

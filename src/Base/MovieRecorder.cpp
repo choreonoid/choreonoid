@@ -884,9 +884,12 @@ void MovieRecorderImpl::captureViewImage(bool waitForPrevOutput)
             drawMouseCursorImage(painter);
         }
     } else {
-        captured->image = QPixmap();
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
+        captured->image = QPixmap::grabWidget(targetView);
+#else
+        captured->image = targetView->grab();
+#endif
         QPixmap& pixmap = boost::get<QPixmap>(captured->image);
-        pixmap.grabWidget(targetView);
 
         captureSceneWidgets(targetView, pixmap);
 
@@ -1144,7 +1147,6 @@ ViewMarker::ViewMarker(MovieRecorderImpl* recorder)
 {
     setWindowFlags(Qt::Widget | Qt::FramelessWindowHint);
     setAttribute(Qt::WA_NoSystemBackground);
-    setAttribute(Qt::WA_PaintOnScreen);
     setAttribute(Qt::WA_TransparentForMouseEvents);
 
     pen.setStyle(Qt::SolidLine);

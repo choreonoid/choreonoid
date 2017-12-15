@@ -23,7 +23,7 @@ set(sources
   MultiAffine3Seq.cpp
   MultiValueSeq.cpp
   MultiVector3Seq.cpp
-  PlainSeqFormatLoader.cpp
+  PlainSeqFileLoader.cpp
   Task.cpp
   AbstractTaskSequencer.cpp
   CollisionDetector.cpp
@@ -89,7 +89,7 @@ set(headers
   MultiValueSeq.h
   MultiVector3Seq.h
   NullOut.h
-  PlainSeqFormatLoader.h
+  PlainSeqFileLoader.h
   RangeLimiter.h
   Referenced.h
   Seq.h
@@ -166,9 +166,13 @@ if(UNIX)
   set(libraries 
     yaml ${PNG_LIBRARY} ${JPEG_LIBRARY}
     ${CMAKE_THREAD_LIBS_INIT}
-    ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_THREAD_LIBRARY}
+    ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY}
     ${GETTEXT_LIBRARIES}
     m)
+
+  if(CNOID_USE_BOOST_REGEX)
+    set(libraries ${libraries} ${Boost_REGEX_LIBRARY})
+  endif()
 
   if(APPLE)
     target_link_libraries(${target} ${libraries} "-framework IOKit -framework Foundation")

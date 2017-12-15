@@ -4,12 +4,15 @@
 */
 
 #include "MultiValueSeq.h"
-#include "PlainSeqFormatLoader.h"
+#include "PlainSeqFileLoader.h"
 #include "ValueTree.h"
 #include "YAMLWriter.h"
+#include <fstream>
+#include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
+using boost::format;
 
 
 MultiValueSeq::MultiValueSeq()
@@ -45,53 +48,39 @@ MultiValueSeq::~MultiValueSeq()
 }
 
 
-bool MultiValueSeq::loadPlainFormat(const std::string& filename)
+
+
+bool MultiValueSeq::doReadSeq(const Mapping& archive, std::ostream& os)
 {
-    clearSeqMessage();
-    PlainSeqFileLoader loader;
+    if(BaseSeqType::doReadSeq(archive, os) && (archive["type"].toString() == seqType())){
 
-    if(!loader.load(filename)){
-        addSeqMessage(loader.errorMessage());
-        return false;
-    }
-
-    setDimension(loader.numFrames(), loader.numParts());
-    setFrameRate(1.0 / loader.timeStep());
-
-    int i = 0;
-    for(PlainSeqFileLoader::iterator it = loader.begin(); it != loader.end(); ++it){
-        copy((it->begin() + 1), it->end(), frame(i++).begin());
-    }
-
-    return true;
-}
-
-
-bool MultiValueSeq::saveAsPlainFormat(const std::string& filename)
-{
-    clearSeqMessage();
-    ofstream os(filename.c_str());
-    os.setf(ios::fixed);
-
-    if(!os){
-        addSeqMessage(filename + " cannot be opened.");
-        return false;
-    }
-
-    const int n = numFrames();
-    const int m = numParts();
-    const double r = frameRate();
-
-    for(int i=0; i < n; ++i){
-        os << (i / r);
-        Frame v = frame(i);
-        for(int j=0; j < m; ++j){
-            os << " " << v[j];
+        const int nParts = archive["numParts"].toInt();
+        int nFrames;
+        if(archive.read("numFrames", nFrames)){
+            if(nFrames == 0){
+                setDimension(0, nParts);
+                return true;
+            }
         }
-        os << "\n";
+        const Listing& values = *archive.findListing("frames");
+        if(!values.isValid()){
+            os << _("Actual frame data is missing.");
+        } else {
+            const int nFrames = values.size();
+            setDimension(nFrames, nParts);
+            for(int i=0; i < nFrames; ++i){
+                const Listing& frameNode = *values[i].toListing();
+                const int n = std::min(frameNode.size(), nParts);
+                Frame v = frame(i);
+                for(int j=0; j < n; ++j){
+                    v[j] = frameNode[j].toDouble();
+                }
+            }
+            return true;
+        }
+        
     }
-    
-    return true;
+    return false;
 }
 
 
@@ -117,35 +106,48 @@ bool MultiValueSeq::doWriteSeq(YAMLWriter& writer)
 }
 
 
-bool MultiValueSeq::doReadSeq(const Mapping& archive)
+bool MultiValueSeq::loadPlainFormat(const std::string& filename, std::ostream& os)
 {
-    if(BaseSeqType::doReadSeq(archive) && (archive["type"].toString() == seqType())){
+    PlainSeqFileLoader loader;
 
-        const int nParts = archive["numParts"].toInt();
-        int nFrames;
-        if(archive.read("numFrames", nFrames)){
-            if(nFrames == 0){
-                setDimension(0, nParts);
-                return true;
-            }
-        }
-        const Listing& values = *archive.findListing("frames");
-        if(!values.isValid()){
-            addSeqMessage("Actual frame data is missing.");
-        } else {
-            const int nFrames = values.size();
-            setDimension(nFrames, nParts);
-            for(int i=0; i < nFrames; ++i){
-                const Listing& frameNode = *values[i].toListing();
-                const int n = std::min(frameNode.size(), nParts);
-                Frame v = frame(i);
-                for(int j=0; j < n; ++j){
-                    v[j] = frameNode[j].toDouble();
-                }
-            }
-            return true;
-        }
-        
+    if(!loader.load(filename, os)){
+        return false;
     }
-    return false;
+
+    setDimension(loader.numFrames(), loader.numParts());
+    setFrameRate(1.0 / loader.timeStep());
+
+    int i = 0;
+    for(PlainSeqFileLoader::iterator it = loader.begin(); it != loader.end(); ++it){
+        copy((it->begin() + 1), it->end(), frame(i++).begin());
+    }
+
+    return true;
+}
+
+
+bool MultiValueSeq::saveAsPlainFormat(const std::string& filename, std::ostream& os)
+{
+    ofstream file(filename.c_str());
+    file.setf(ios::fixed);
+
+    if(!file){
+        os << format(_("\"%1%\" cannot be opened.")) % filename << endl;
+        return false;
+    }
+
+    const int n = numFrames();
+    const int m = numParts();
+    const double r = frameRate();
+
+    for(int i=0; i < n; ++i){
+        file << (i / r);
+        Frame v = frame(i);
+        for(int j=0; j < m; ++j){
+            file << " " << v[j];
+        }
+        file << "\n";
+    }
+    
+    return true;
 }

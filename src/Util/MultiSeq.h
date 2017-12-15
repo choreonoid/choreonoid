@@ -69,7 +69,7 @@ public:
         }
     }
 
-    virtual AbstractSeqPtr cloneSeq() const {
+    virtual AbstractSeqPtr cloneSeq() const override {
         return std::make_shared<MultiSeqType>(*this);
     }
         
@@ -79,7 +79,7 @@ public:
         setNumParts(source.numParts());
     }
             
-    virtual void setDimension(int newNumFrames, int newNumParts, bool clearNewElements = false) {
+    virtual void setDimension(int newNumFrames, int newNumParts, bool clearNewElements = false) override {
 
         const int prevNumParts = numParts();
         const int prevNumFrames = numFrames();
@@ -99,7 +99,7 @@ public:
         }
     }
 
-    virtual double getFrameRate() const {
+    virtual double getFrameRate() const override {
         return frameRate_;
     }
 
@@ -107,7 +107,7 @@ public:
         return frameRate_;
     }
 
-    virtual void setFrameRate(double frameRate) {
+    virtual void setFrameRate(double frameRate) override {
         frameRate_ = frameRate;
     }
 
@@ -115,11 +115,11 @@ public:
         return 1.0 / frameRate_;
     }
 
-    virtual void setNumParts(int newNumParts, bool clearNewElements = false) {
+    virtual void setNumParts(int newNumParts, bool clearNewElements = false) override {
         setDimension(numFrames(), newNumParts, clearNewElements);
     }
 
-    virtual int getNumFrames() const {
+    virtual int getNumFrames() const override {
         return Container::rowSize();
     }
 
@@ -127,7 +127,7 @@ public:
         return Container::rowSize();
     }
 
-    virtual void setNumFrames(int newNumFrames, bool clearNewElements = false) {
+    virtual void setNumFrames(int newNumFrames, bool clearNewElements = false) override {
         setDimension(newNumFrames, numParts(), clearNewElements);
     }
 
@@ -135,7 +135,7 @@ public:
         setNumFrames(0);
     }
 
-    virtual int getNumParts() const {
+    virtual int getNumParts() const override {
         return Container::colSize();
     }
 
@@ -147,7 +147,7 @@ public:
         return numFrames() / frameRate();
     }
 
-    virtual bool setOffsetTimeFrame(int frameOffset) {
+    virtual bool setOffsetTimeFrame(int frameOffset) override {
         offsetTimeFrame_ = frameOffset;
         return true;
     }
@@ -156,7 +156,7 @@ public:
         return offsetTimeFrame_;
     }
 
-    virtual int getOffsetTimeFrame() const {
+    virtual int getOffsetTimeFrame() const override {
         return offsetTimeFrame_;
     }
 

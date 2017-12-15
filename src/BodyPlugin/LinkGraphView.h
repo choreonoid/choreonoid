@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODYPLUGIN_LINK_GRAPH_VIEW_H
-#define CNOID_BODYPLUGIN_LINK_GRAPH_VIEW_H
+#ifndef CNOID_BODY_PLUGIN_LINK_GRAPH_VIEW_H
+#define CNOID_BODY_PLUGIN_LINK_GRAPH_VIEW_H
 
 #include "BodyItem.h"
 #include <cnoid/Buttons>
@@ -13,6 +13,7 @@
 #include <cnoid/ItemList>
 #include <cnoid/ConnectionSet>
 #include <QBoxLayout>
+#include <set>
 
 namespace cnoid {
 
@@ -81,7 +82,6 @@ private:
     void onDataModified(
         std::list<ItemInfo>::iterator itemInfoIter,
         int linkIndex, int type, int axis, int frame, int size, double* values);
-
 };
 
 }

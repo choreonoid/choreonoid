@@ -21,21 +21,21 @@ items:
           data: 
             modelFile: "${SHARE}/model/tank/tank.body"
             currentBaseLink: "CHASSIS"
-            rootPosition: [ 0, 0, 0.1 ]
+            rootPosition: [ 0, 0, 0.11 ]
             rootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            jointPositions: [  0.000000,  0.000000,  0.000000,  0.000000 ]
-            initialRootPosition: [ 0, 0, 0.1 ]
+            jointPositions: [ 0.000000,  0.000000 ]
+            initialRootPosition: [ 0, 0, 0.11 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            initialJointPositions: [  0.000000,  0.000000,  0.000000,  0.000000 ]
+            initialJointPositions: [ 0.000000,  0.000000 ]
             zmp: [ 0, 0, 0 ]
             collisionDetection: true
-            selfCollisionDetection: false
+            selfCollisionDetection: true
             isEditable: true
         - 
           id: 6

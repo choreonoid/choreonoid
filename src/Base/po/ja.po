@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-11-13 11:29+0900\n"
+"POT-Creation-Date: 2017-12-06 16:11+0900\n"
 "PO-Revision-Date: 2011-11-12 11:42+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -283,20 +283,19 @@ msgstr "ページ"
 msgid "Graph: Position = (%1$.5f, %2$.5f)"
 msgstr "グラフ位置 = (%1$.5f, %2$.5f)"
 
-#: ImageView.cpp:133
+#: ImageView.cpp:132
 msgid "Image"
 msgstr "画像"
 
-#: ImageView.cpp:277
-#, fuzzy
+#: ImageView.cpp:276
 msgid "ImageViewBar"
-msgstr "画像サイズ"
+msgstr "画像ビューバー"
 
-#: ImageView.cpp:296
+#: ImageView.cpp:295
 msgid "Select a ImageProvider Item"
 msgstr "画像アイテムの選択"
 
-#: ImageView.cpp:305
+#: ImageView.cpp:304
 msgid "Adjust image size according to view"
 msgstr "画像サイスをビューに合わせる"
 
@@ -308,7 +307,7 @@ msgstr "名前"
 msgid "Class"
 msgstr "クラス"
 
-#: Item.cpp:720 MainWindow.cpp:246 PointSetItem.cpp:519 SceneItem.cpp:106
+#: Item.cpp:720 MainWindow.cpp:246 PointSetItem.cpp:519 SceneItem.cpp:108
 msgid "File"
 msgstr "ファイル"
 
@@ -460,15 +459,15 @@ msgstr "ファイルを選択"
 msgid "Select"
 msgstr "選択"
 
-#: ItemPropertyView.cpp:639
+#: ItemPropertyView.cpp:640
 msgid "Property"
 msgstr "プロパティ"
 
-#: ItemPropertyView.cpp:831
+#: ItemPropertyView.cpp:847
 msgid "Update"
 msgstr "更新"
 
-#: ItemPropertyView.cpp:834
+#: ItemPropertyView.cpp:850
 msgid "Reset Column Sizes"
 msgstr "コラムサイズのリセット"
 
@@ -760,7 +759,7 @@ msgstr "オンラインモードによる%1%の録画を待機しています。
 
 #: MovieRecorder.cpp:998
 msgid "Saving an image to \"%1%\" failed."
-msgstr "画像を\"%1%\"に保存"
+msgstr "画像の\"%1%\"への保存ができませんでした。"
 
 #: MovieRecorder.cpp:1032
 msgid "Outputting sequential image files..."
@@ -998,7 +997,7 @@ msgstr "編集可能"
 msgid "Num points"
 msgstr "ポイント数"
 
-#: PointSetItem.cpp:529 SceneItem.cpp:107
+#: PointSetItem.cpp:529 SceneItem.cpp:109
 msgid "Translation"
 msgstr "並進"
 
@@ -1171,7 +1170,7 @@ msgstr " 頂点: %1%\n"
 msgid " Triangles: %1%"
 msgstr " トライアングル: %1%"
 
-#: SceneItem.cpp:45
+#: SceneItem.cpp:47
 msgid "SceneItem"
 msgstr "シーンアイテム"
 
@@ -1570,12 +1569,12 @@ msgstr ""
 "生成されています。"
 
 #: ViewManager.cpp:845
-#, fuzzy
 msgid ""
 "The \"%1%\" plugin for \"%2%\" is not found. The view cannot be restored."
 msgstr ""
-"サブアイテム\"%1%\"が見つからないため、その小アイテムの読み込みができません。"
+"\"%2%\"のための\"%1%\"プラグインが見つかりません。ビューの復帰ができません。"
 
 #: VirtualJoystickView.cpp:107
 msgid "Virtual Joystick"
 msgstr "仮想ジョイスティック"
+

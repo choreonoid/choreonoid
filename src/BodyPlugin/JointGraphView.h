@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODYPLUGIN_JOINT_GRAPH_VIEW_H_INCLUDED
-#define CNOID_BODYPLUGIN_JOINT_GRAPH_VIEW_H_INCLUDED
+#ifndef CNOID_BODY_PLUGIN_JOINT_GRAPH_VIEW_H
+#define CNOID_BODY_PLUGIN_JOINT_GRAPH_VIEW_H
 
 #include "BodyItem.h"
 #include "LinkSelectionView.h"
@@ -12,6 +12,7 @@
 #include <cnoid/GraphWidget>
 #include <cnoid/ItemList>
 #include <cnoid/ConnectionSet>
+#include <set>
 
 namespace cnoid {
 
@@ -29,11 +30,9 @@ public:
     virtual bool restoreState(const Archive& archive);
             
 protected:
-
     virtual QWidget* indicatorOnInfoBar();
             
 private:
-            
     GraphWidget graph;
     LinkSelectionView* linkSelection;
 
@@ -64,8 +63,8 @@ private:
     void onDataItemUpdated(std::list<ItemInfo>::iterator itemInfoIter);
     void onDataRequest(std::list<ItemInfo>::iterator itemInfoIter, int jointId, int frame, int size, double* out_values);
     void onDataModified(std::list<ItemInfo>::iterator itemInfoIter, int jointId, int frame, int size, double* values);
-
 };
+
 }
 
 #endif

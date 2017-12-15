@@ -29,12 +29,14 @@
 #include <cnoid/ConnectionSet>
 #include <cnoid/FloatingNumberString>
 #include <cnoid/Sleep>
+#include <cnoid/SceneGraph>
 #include <QThread>
 #include <QMutex>
 #include <boost/dynamic_bitset.hpp>
 #include <thread>
 #include <mutex>
 #include <condition_variable>
+#include <set>
 
 #ifdef ENABLE_SIMULATION_PROFILING
 #include <cnoid/ViewManager>
@@ -1249,7 +1251,7 @@ void SimulatorItemImpl::setSpecifiedRecordingTimeLength(double length)
 }
 
 
-CollisionDetectorPtr SimulatorItem::collisionDetector()
+CollisionDetector* SimulatorItem::getOrCreateCollisionDetector()
 {
     if(impl->collisionDetector){
         return impl->collisionDetector;
@@ -1258,6 +1260,12 @@ CollisionDetectorPtr SimulatorItem::collisionDetector()
         return impl->worldItem->collisionDetector()->clone();
     }
     return CollisionDetector::create(0); // the null collision detector
+}
+
+
+CollisionDetector* SimulatorItem::collisionDetector()
+{
+    return getOrCreateCollisionDetector();
 }
 
 
@@ -2319,6 +2327,12 @@ SignalProxy<void()> SimulatorItem::sigSimulationFinished()
 }
 
 
+Vector3 SimulatorItem::getGravity() const
+{
+    return Vector3::Zero();
+}
+
+
 void SimulatorItem::setExternalForce(BodyItem* bodyItem, Link* link, const Vector3& point, const Vector3& f, double time)
 {
     impl->setExternalForce(bodyItem, link, point, f, time);
@@ -2498,10 +2512,10 @@ void SimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
                 [&](bool on){ return onAllLinkPositionOutputModeChanged(on); });
     putProperty(_("Device state output"), isDeviceStateOutputEnabled,
                 changeProperty(isDeviceStateOutputEnabled));
-    putProperty(_("Controller Threads"), useControllerThreadsProperty,
-                changeProperty(useControllerThreadsProperty));
     putProperty(_("Record collision data"), recordCollisionData,
                 changeProperty(recordCollisionData));
+    putProperty(_("Controller Threads"), useControllerThreadsProperty,
+                changeProperty(useControllerThreadsProperty));
     putProperty(_("Controller options"), controllerOptionString_,
                 changeProperty(controllerOptionString_));
 }

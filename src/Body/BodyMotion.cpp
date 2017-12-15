@@ -151,37 +151,45 @@ void BodyMotion::setExtraSeq(AbstractSeqPtr seq)
 }
 
 
-bool BodyMotion::loadStandardYAMLformat(const std::string& filename)
+bool BodyMotion::loadStandardYAMLformat(const std::string& filename, std::ostream& os)
 {
-    bool result = false;
-    clearSeqMessage();
     YAMLReader reader;
     reader.expectRegularMultiListing();
-    
+    bool result = false;
+
     try {
-        result = read(*reader.loadDocument(filename)->toMapping());
+        result = readSeq(*reader.loadDocument(filename)->toMapping(), os);
     } catch(const ValueNode::Exception& ex){
-        addSeqMessage(ex.message());
+        os << ex.message();
     }
 
     return result;
 }
 
 
+/*
 bool BodyMotion::read(const Mapping& archive)
+{
+    return readSeq(archive);
+}
+
+
+bool BodyMotion::write(YAMLWriter& writer)
+{
+    return writeSeq(writer);
+}
+*/
+
+
+bool BodyMotion::doReadSeq(const Mapping& archive, std::ostream& os)
 {
     setDimension(0, 1, 1);
 
-    bool result = true;
     bool loaded = false;
-    ZMPSeqPtr zmpSeq;
-    Vector3SeqPtr userVec3;
     
     try {
-        if(archive["type"].toString() != "BodyMotion"){
-            result = false;
+        if(archive["type"].toString() == "BodyMotion"){
 
-        } else {
             const Listing& components = *archive["components"].toListing();
         
             for(int i=0; i < components.size(); ++i){
@@ -192,84 +200,62 @@ bool BodyMotion::read(const Mapping& archive)
                     component.read("purpose", content);
                 }
                 if(type == "MultiValueSeq" && content == "JointPosition"){
-                    result &= jointPosSeq_->readSeq(component);
-                    if(result){
-                        loaded = true;
-                    } else {
-                        addSeqMessage(jointPosSeq_->seqMessage());
+                    loaded = jointPosSeq_->readSeq(component, os);
+                    if(!loaded){
+                        break;
                     }
-                }
-		else if((type == "MultiAffine3Seq" || type == "MultiSe3Seq" || type == "MultiSE3Seq")
+                } else if((type == "MultiAffine3Seq" || type == "MultiSe3Seq" || type == "MultiSE3Seq")
                           && content == "LinkPosition"){
-                    result &= linkPosSeq_->readSeq(component);
-                    if(result){
-                        loaded = true;
-                    } else {
-                        addSeqMessage(linkPosSeq_->seqMessage());
+                    loaded = linkPosSeq_->readSeq(component, os);
+                    if(!loaded){
+                        break;
                     }
+                } else if(type == "Vector3Seq") {
+                    if(content == "ZMP" || content == "RelativeZMP" || content == "RelativeZmp"){
+                        auto zmpSeq = getOrCreateExtraSeq<ZMPSeq>("ZMP");
+                        loaded = zmpSeq->readSeq(component, os);
+                        if(!loaded){
+                            break;
+                        }
+                        zmpSeq->setRootRelative(content != "ZMP");
+                    } else {
+                        //----------- user defined Vector3 data --------- 
+                        auto userVec3 = getOrCreateExtraSeq<Vector3Seq>(content);
+                        loaded = userVec3->readSeq(component, os);
+                        if(!loaded){
+                            break;
+                        }
+		    }
                 }
-		else if(type == "Vector3Seq") {
-		  if(content == "ZMP" || content == "RelativeZMP" || content == "RelativeZmp"){
-		    bool isRelativeZmp = false;
-		    if(content != "ZMP"){
-		      isRelativeZmp = true;
-		    }
-
-		    zmpSeq = getOrCreateExtraSeq<ZMPSeq>("ZMP");
-		    result = zmpSeq->readSeq(component);
-		    if(result){
-		      if(isRelativeZmp){
-			zmpSeq->setRootRelative(true);
-		      }
-		    } else {
-		      addSeqMessage(zmpSeq->seqMessage());
-		    }
-		    if(!result){
-		      //break;
-		    }
-		  }
-		  else {
-		    //----------- user defined Vector3 data --------- 
-		    userVec3 = getOrCreateExtraSeq<Vector3Seq>(content);
-		    result = userVec3->readSeq(component);
-		    if(!result){
-		      addSeqMessage(userVec3->seqMessage());
-		    }
-		    if(!result){
-		      //break;
-		    }
-		  }
-		}
-		
             }
         }
     } catch(const ValueNode::Exception& ex){
-        addSeqMessage(ex.message());
-        result = false;
+        os << ex.message();
+        loaded = false;
     }
 
-    if(!result){
+    if(!loaded){
         setDimension(0, 1, 1);
 
     }
     
-    return (result && loaded);
+    return loaded;
 }
 
 
-bool BodyMotion::write(YAMLWriter& writer)
+bool BodyMotion::doWriteSeq(YAMLWriter& writer)
 {
+    writer.putKey("components");
+
     writer.startListing();
 
     if(jointPosSeq_->numFrames() > 0){
         if(!jointPosSeq_->writeSeq(writer)){
-            addSeqMessage(jointPosSeq_->seqMessage());
             return false;
         }
     }
     if(linkPosSeq_->numFrames() > 0){
         if(!linkPosSeq_->writeSeq(writer)){
-            addSeqMessage(linkPosSeq_->seqMessage());
             return false;
         }
     }
@@ -277,7 +263,6 @@ bool BodyMotion::write(YAMLWriter& writer)
     for(ExtraSeqMap::iterator p = extraSeqs.begin(); p != extraSeqs.end(); ++p){
         AbstractSeqPtr& seq = p->second;
         if(!seq->writeSeq(writer)){
-            addSeqMessage(seq->seqMessage());
             return false;
         }
     }
@@ -288,23 +273,15 @@ bool BodyMotion::write(YAMLWriter& writer)
 }
 
 
-bool BodyMotion::saveAsStandardYAMLformat(const std::string& filename)
+bool BodyMotion::saveAsStandardYAMLformat(const std::string& filename, std::ostream& os)
 {
     YAMLWriter writer(filename);
-    writer.setDoubleFormat("%.9g");
 
+    writer.setMessageSink(os);
+    writer.setDoubleFormat("%.9g");
     writer.putComment("Body motion data set format version 1.0 defined by Choreonoid\n");
 
-    writer.startMapping();
-
-    writer.putKeyValue("type", "BodyMotion");
-    writer.putKey("components");
-
-    bool result = write(writer);
-
-    writer.endMapping();
-
-    return result;
+    return writeSeq(writer);
 }
 
 

@@ -85,46 +85,14 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/house/table.body"
-            currentBaseLink: "WAIST"
-            rootPosition: [ 0, 2.5, 0 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 0.000796, -1, 
-              0, 1, 0.000796 ]
-            jointPositions: [  ]
-            initialRootPosition: [ 0, 2.5, 0 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 0.000791744293, -1, 
-              0, 1, 0.000791744293 ]
-            zmp: [ 0, 0, 0 ]
-            collisionDetection: true
-            selfCollisionDetection: false
-            isEditable: true
+            modelFile: "${SHARE}/model/house/table.wrl"
         - 
           id: 6
-          name: "longfloor"
+          name: "floor"
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/house/floor.body"
-            currentBaseLink: "WAIST"
-            rootPosition: [ 0, 2.5, 0 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 0.000796, -1, 
-              0, 1, 0.000796 ]
-            jointPositions: [  ]
-            initialRootPosition: [ 0, 2.5, 0 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 0.000791744293, -1, 
-              0, 1, 0.000791744293 ]
-            zmp: [ 0, 0, 0 ]
-            collisionDetection: true
-            selfCollisionDetection: false
-            isEditable: true
+            modelFile: "${SHARE}/model/house/floor.wrl"
         - 
           id: 7
           name: "Simulators"
@@ -214,6 +182,16 @@ items:
                 contactReductionThreshold: 4
     - 
       id: 11
+      name: "vase"
+      plugin: Base
+      class: SceneItem
+      data: 
+        file: "${SHARE}/model/house/vase.wrl"
+        format: AVAILABLE-SCENE-FILE
+        translation: [ 1.9, 1.4, 0.84 ]
+        rotation: [ 1, 0, 0, 0 ]
+    - 
+      id: 12
       name: "house"
       plugin: Base
       class: SceneItem
@@ -222,6 +200,7 @@ items:
         format: VRML-FILE
         translation: [ 0, 0, 0 ]
         rotation: [ 1, 0, 0, 0 ]
+
 views: 
   - 
     id: 0
@@ -235,7 +214,7 @@ views:
     mounted: true
     state: 
       selected: [ 8 ]
-      checked: [ 1, 2, 6, 5, 4, 11 ]
+      checked: [ 1, 2, 6, 5, 4, 11, 12 ]
       expanded: [ 1, 2, 3, 7 ]
   - 
     id: 2

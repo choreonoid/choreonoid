@@ -1168,7 +1168,7 @@ RangeSensorPtr VRMLBodyLoaderImpl::createRangeSensor(VRMLProtoInstance* node)
     rangeSensor->setYawRange(getValue<SFFloat>(node, "scanAngle"));
     rangeSensor->setPitchRange(0.0);
     const double scanStep = getValue<SFFloat>(node, "scanStep");
-    rangeSensor->setYawResolution(rangeSensor->yawRange() / scanStep);
+    rangeSensor->setYawStep(scanStep);
     rangeSensor->setMinDistance(getValue<SFFloat>(node, "minDistance"));
     rangeSensor->setMaxDistance(getValue<SFFloat>(node, "maxDistance"));
     rangeSensor->setFrameRate(getValue<SFFloat>(node, "scanRate"));

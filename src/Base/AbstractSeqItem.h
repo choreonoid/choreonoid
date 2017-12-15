@@ -22,9 +22,9 @@ public:
     virtual AbstractSeqPtr abstractSeq() = 0;
 
 protected:
-    virtual void doPutProperties(PutPropertyFunction& putProperty);
-    virtual bool store(Archive& archive);
-    virtual bool restore(const Archive& archive);
+    virtual void doPutProperties(PutPropertyFunction& putProperty) override;
+    virtual bool store(Archive& archive) override;
+    virtual bool restore(const Archive& archive) override;
 };
 
 typedef ref_ptr<AbstractSeqItem> AbstractSeqItemPtr;
@@ -37,11 +37,11 @@ public:
     AbstractMultiSeqItem(const AbstractMultiSeqItem& org);
     virtual ~AbstractMultiSeqItem();
 
-    virtual AbstractSeqPtr abstractSeq();
+    virtual AbstractSeqPtr abstractSeq() override;
     virtual AbstractMultiSeqPtr abstractMultiSeq() = 0;
 
 protected:
-    virtual void doPutProperties(PutPropertyFunction& putProperty);
+    virtual void doPutProperties(PutPropertyFunction& putProperty) override;
 };
 
 typedef ref_ptr<AbstractMultiSeqItem> AbstractMultiSeqItemPtr;
