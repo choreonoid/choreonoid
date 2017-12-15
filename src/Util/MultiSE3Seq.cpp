@@ -9,6 +9,7 @@
 #include "YAMLWriter.h"
 #include "EigenUtil.h"
 #include <boost/format.hpp>
+#include <fstream>
 #include "gettext.h"
 
 using namespace std;

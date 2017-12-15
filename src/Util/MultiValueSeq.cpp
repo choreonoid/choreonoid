@@ -7,6 +7,7 @@
 #include "PlainSeqFileLoader.h"
 #include "ValueTree.h"
 #include "YAMLWriter.h"
+#include <fstream>
 #include "gettext.h"
 
 using namespace std;

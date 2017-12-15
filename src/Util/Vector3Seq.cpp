@@ -8,6 +8,7 @@
 #include "ValueTree.h"
 #include "YAMLWriter.h"
 #include <boost/format.hpp>
+#include <fstream>
 #include "gettext.h"
 
 using namespace std;
