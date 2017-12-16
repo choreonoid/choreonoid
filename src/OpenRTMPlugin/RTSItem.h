@@ -144,7 +144,6 @@ public :
 
     QPointF pos;
 
-    bool isActive();
     bool connectionCheckSub(RTSPort* rtsPort);
     bool connectionCheck();
     void setRtc(RTC::RTObject_ptr rtc);

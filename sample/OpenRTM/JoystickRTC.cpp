@@ -85,7 +85,7 @@ RTC::ReturnCode_t JoystickRTC::onActivated(RTC::UniqueId ec_id)
             m_buttons.data[i] = m_joystick->getButtonState(i);
         }
         return RTC::RTC_OK;
-    }
+		}
 }
 
 

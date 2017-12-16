@@ -516,7 +516,9 @@ public :
   ~RTSCompGItem();
   QVariant itemChange ( GraphicsItemChange change, const QVariant & value );
   void create(const QPointF& pos);
-  void stateCheck();
+
+	void stateCheck();
+	void setStatus(RTC_STATUS status);
 
   RTSDiagramViewImpl* impl;
   RTSComp* rtsComp;
@@ -558,7 +560,7 @@ int RTSCompGItem::correctTextY() {
 }
 
 void RTSCompGItem::stateCheck() {
-	rect->setBrush(QBrush(QColor(rtsComp->isActive() ? "lightgreen" : "blue")));
+	setStatus(rtsComp->getRTCState());
 
 	for (map<string, RTSPortGItemPtr>::iterator it = inPorts.begin(); it != inPorts.end(); it++) {
 		it->second->stateCheck();
@@ -566,6 +568,16 @@ void RTSCompGItem::stateCheck() {
 
 	for (map<string, RTSPortGItemPtr>::iterator it = outPorts.begin(); it != outPorts.end(); it++) {
 		it->second->stateCheck();
+	}
+}
+
+void RTSCompGItem::setStatus(RTC_STATUS status) {
+	if (status == RTC_STATUS::RTC_INACTIVE) {
+		rect->setBrush(QBrush(QColor("blue")));
+	} else if (status == RTC_STATUS::RTC_ACTIVE) {
+		rect->setBrush(QBrush(QColor("lightgreen")));
+	} else if (status == RTC_STATUS::RTC_ERROR) {
+		rect->setBrush(QBrush(QColor("red")));
 	}
 }
 ////////////////////

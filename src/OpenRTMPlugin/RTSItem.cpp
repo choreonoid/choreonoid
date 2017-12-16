@@ -384,23 +384,6 @@ bool RTSComp::connectionCheck()
     return modified;
 }
 
-
-bool RTSComp::isActive()
-{
-    if(CORBA::is_nil(rtc_) || rtc_->_non_existent())
-        return false;
-
-    for(CORBA::ULong i=0; i<ownedExeContList_->length(); i++){
-        if(ownedExeContList_[i]->get_component_state(rtc_) == RTC::ACTIVE_STATE)
-            return true;
-    }
-    for(CORBA::ULong i=0; i<participatingExeContList->length(); i++){
-        if(participatingExeContList[i]->get_component_state(rtc_) == RTC::ACTIVE_STATE)
-            return true;
-    }
-    return false;
-}
-
 void RTSComp::setRtc(RTObject_ptr rtc) {
 	setRTObject(rtc);
 

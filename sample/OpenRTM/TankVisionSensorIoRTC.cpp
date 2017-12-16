@@ -9,7 +9,7 @@
 #include <cnoid/RangeCamera>
 #include <cnoid/ConnectionSet>
 #include <cnoid/corba/PointCloud.hh>
-#include <cnoid/corba/CameraImage.hh>
+#include <cnoid/corba/CameraCommonInterface.hh>
 #include <rtm/idl/BasicDataTypeSkel.h>
 #include <rtm/idl/InterfaceDataTypes.hh>
 #include <rtm/DataInPort.h>

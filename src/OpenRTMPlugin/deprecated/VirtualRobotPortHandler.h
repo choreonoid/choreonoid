@@ -11,7 +11,7 @@
 #include <cnoid/Camera>
 #include <cnoid/RangeCamera>
 #include <cnoid/RangeSensor>
-#include <cnoid/corba/CameraImage.hh>
+#include <cnoid/corba/CameraCommonInterface.hh>
 #include <cnoid/corba/PointCloud.hh>
 #include <rtm/idl/BasicDataType.hh>
 #include <rtm/idl/ExtendedDataTypes.hh>

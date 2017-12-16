@@ -5,10 +5,13 @@
  */
 #include "OpenRTMItem.h"
 #include <cnoid/CorbaUtil>
+#include <rtm/idl/RTC.hh>
 
 #include "LoggerUtil.h"
 
 #include "gettext.h"
+
+using namespace RTC;
 
 namespace cnoid { 
 
@@ -72,6 +75,20 @@ bool RTCWrapper::stopExecutionContext() {
 	RTC::ReturnCode_t ret = ownedExeContList_[0]->stop();
 	if (ret != RTC::ReturnCode_t::RTC_OK) return false;
 	return true;
+}
+
+RTC_STATUS RTCWrapper::getRTCState() {
+	if (CORBA::is_nil(rtc_) || rtc_->_non_existent()) return RTC_FINALIZE;
+	if (ownedExeContList_->length() == 0) return RTC_UNKNOWN;
+
+	LifeCycleState state = ownedExeContList_[0]->get_component_state(rtc_);
+	if (state == RTC::ERROR_STATE) {
+		return RTC_ERROR;
+	} else if (state == RTC::ACTIVE_STATE) {
+		return RTC_ACTIVE;
+	} else {
+		return RTC_INACTIVE;
+	}
 }
 
 }

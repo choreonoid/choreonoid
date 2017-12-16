@@ -224,7 +224,10 @@ void BridgeConf::setPortInfos(const char* optionLabel, PortInfoMap& portInfos)
         info.portName = parameters[0];
         int j;
         for(j=1; j<3; j++){
-            LabelToDataTypeIdMap::iterator it = labelToDataTypeIdMap.find(parameters[j]);
+					if (parameters.size() <= j) {
+						throw invalid_argument(string("invalid in port setting"));
+					}
+					LabelToDataTypeIdMap::iterator it = labelToDataTypeIdMap.find(parameters[j]);
             if(it == labelToDataTypeIdMap.end() ){ // Handle as identification name because it is not a property name
                 if(j==2)    // Error because there is no property name by the third
                     throw invalid_argument(string("invalid data type"));
