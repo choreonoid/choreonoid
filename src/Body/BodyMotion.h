@@ -100,8 +100,9 @@ public:
     Frame frame(int frame) { return Frame(*this, frame); }
     ConstFrame frame(int frame) const { return ConstFrame(*this, frame); }
 
-    bool loadStandardYAMLformat(const std::string& filename, std::ostream& os = nullout());
-    bool saveAsStandardYAMLformat(const std::string& filename, std::ostream& os = nullout());
+    bool loadStandardFormat(const std::string& filename, std::ostream& os = nullout());
+    bool saveAsStandardFormat(const std::string& filename, std::ostream& os = nullout());
+    bool saveAsStandardFormat(const std::string& filename, double version, std::ostream& os = nullout());
 
     typedef std::map<std::string, AbstractSeqPtr> ExtraSeqMap;
     typedef ExtraSeqMap::const_iterator ConstSeqIterator;
@@ -140,10 +141,14 @@ public:
         return sigExtraSeqsChanged_;
     }
 
-    //! \deprecated. Use the readSeq function.
-    //bool read(const Mapping& archive);
-    //! \deprecated. Use the writeSeq function.
-    //bool write(YAMLWriter& writer);
+    //! \deprecated
+    bool loadStandardYAMLformat(const std::string& filename, std::ostream& os = nullout()){
+        return loadStandardFormat(filename, os);
+    }
+    //! \deprecated
+    bool saveAsStandardYAMLformat(const std::string& filename, std::ostream& os = nullout()){
+        return saveAsStandardYAMLformat(filename, os);
+    }
 
 protected:
     virtual bool doReadSeq(const Mapping& archive, std::ostream& os) override;

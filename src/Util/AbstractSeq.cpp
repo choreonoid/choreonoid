@@ -83,19 +83,6 @@ bool AbstractSeq::setOffsetTimeFrame(int offset)
 bool AbstractSeq::readSeq(const Mapping& archive, std::ostream& os)
 {
     try {
-        if(contentName_.empty()){
-            if(!archive.read("content", contentName_)){
-                archive.read("purpose", contentName_); // old version
-            }
-        }
-        auto frameRateNode = archive.find("frameRate");
-        if(frameRateNode->isValid()){
-            if(frameRateNode->isString() && frameRateNode->toString() == "irregular"){
-                frameRateNode->throwException(_("Irregular interval data cannot be loaded."));
-            }
-            setFrameRate(frameRateNode->toDouble());
-        }
-
         return doReadSeq(archive, os);
 
     } catch (ValueNode::Exception& ex) {
@@ -105,8 +92,20 @@ bool AbstractSeq::readSeq(const Mapping& archive, std::ostream& os)
 }
 
 
-bool AbstractSeq::doReadSeq(const Mapping&, std::ostream&)
+bool AbstractSeq::doReadSeq(const Mapping& archive, std::ostream&)
 {
+    if(contentName_.empty()){
+        if(!archive.read("content", contentName_)){
+            archive.read("purpose", contentName_); // old version
+        }
+    }
+    if(archive.get("hasFrameTime", false)){
+        archive.throwException(
+            _("Sequence data with frame time cannot be loaded as regular interval sequence data."));
+    }
+    
+    setFrameRate(archive.read<double>("frameRate"));
+
     return true;
 }
 
@@ -134,6 +133,18 @@ bool AbstractSeq::checkSeqContent(const Mapping& archive, const std::string requ
 
 bool AbstractSeq::writeSeq(YAMLWriter& writer)
 {
+    writer.startMapping();
+        
+    bool result = doWriteSeq(writer);
+    
+    writer.endMapping();
+    
+    return result;
+}
+
+
+bool AbstractSeq::doWriteSeq(YAMLWriter& writer)
+{
     if(seqType_.empty()){
         if(contentName_.empty()){
             writer.putMessage(_("The type of the sequence to write is unknown."));
@@ -143,25 +154,26 @@ bool AbstractSeq::writeSeq(YAMLWriter& writer)
         return false;
     }
 
-    writer.startMapping();
-        
-    writer.putKeyValue("type", seqType());
+    const double frameRate = getFrameRate();
+    if(frameRate <= 0.0){
+        writer.putMessage(
+            str(format(_("Frame rate %1% of %2% is invalid"))
+                % frameRate % (contentName_.empty() ? seqType_ : contentName_)));
+        return false;
+    }
+
+    writer.putKeyValue("type", seqType_);
     if(!contentName_.empty()){
         writer.putKeyValue("content", contentName_);
     }
-    writer.putKeyValue("frameRate", getFrameRate());
+
+    double version = writer.info("formatVersion", 0.0);
+    if(version == 0.0 || !writer.info("isComponent", false)){
+        writer.putKeyValue("formatVersion", version == 0.0 ? 2.0 : version);
+    }
+    writer.putKeyValue("frameRate", frameRate);
     writer.putKeyValue("numFrames", getNumFrames());
-    
-    bool result = doWriteSeq(writer);
-    
-    writer.endMapping();
-    
-    return result;
-}
 
-
-bool AbstractSeq::doWriteSeq(YAMLWriter&)
-{
     return true;
 }
 
@@ -220,8 +232,11 @@ const std::string& AbstractMultiSeq::partLabel(int /* partIndex */) const
 
 bool AbstractMultiSeq::doWriteSeq(YAMLWriter& writer)
 {
-    writer.putKeyValue("numParts", getNumParts());
-    return true;
+    if(AbstractSeq::doWriteSeq(writer)){
+        writer.putKeyValue("numParts", getNumParts());
+        return true;
+    }
+    return false;
 }
 
 
