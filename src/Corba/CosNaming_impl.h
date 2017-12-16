@@ -59,6 +59,7 @@ private:
     BindingNode* firstNode;
     BindingNode* lastNode;
     int size;
+		int count = 0;
 
     ~NamingContext_impl();
         
