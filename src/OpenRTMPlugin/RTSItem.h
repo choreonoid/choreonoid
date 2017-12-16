@@ -9,6 +9,7 @@
 #include <cnoid/Item>
 #include <cnoid/EigenUtil>
 #include <cnoid/IdPair>
+#include <cnoid/CorbaUtil>
 #include <rtm/idl/RTC.hh>
 #include <rtm/NVUtil.h>
 #include <rtm/CORBA_SeqUtil.h>
@@ -135,10 +136,12 @@ class RTSystemItemImpl;
 class RTSComp : public Referenced, public RTCWrapper {
 public :
     RTSComp(const std::string& name, RTC::RTObject_ptr rtc, RTSystemItemImpl* impl, const QPointF& pos);
+		RTSComp(const std::string& name, const std::string& fullPath, RTC::RTObject_ptr rtc, RTSystemItemImpl* impl, const QPointF& pos);
 
     RTSystemItemImpl* impl;
     std::string name;
-    RTC::ExecutionContextList_var participatingExeContList;
+		std::string fullPath;
+		RTC::ExecutionContextList_var participatingExeContList;
 		std::vector<RTSPortPtr> inPorts;
 		std::vector<RTSPortPtr> outPorts;
 
@@ -165,9 +168,10 @@ public:
     static void initialize(ExtensionManager* ext);
 
     RTSComp* addRTSComp(const std::string& name, const QPointF& pos);
-    void deleteRTSComp(const std::string& name);
+		RTSComp* addRTSComp(const NamingContextHelper::ObjectInfo& info, const QPointF& pos);
+		void deleteRTSComp(const std::string& name);
     bool compIsAlive(RTSComp* rtsComp);
-    RTSComp* nameToRTSComp(const std::string& name);
+    //RTSComp* nameToRTSComp(const std::string& name);
     RTSConnection* addRTSConnection(const std::string& id, const std::string& name,
             RTSPort* sourcePort, RTSPort* targetPort, const std::string& dataflow, const std::string& subscription);
 		RTSConnection* addRTSConnection(const std::string& id, const std::string& name,

@@ -76,7 +76,6 @@ private:
 	void subscriptionComboSelectionChanged(int target);
 	void pushpolicyComboSelectionChanged(int target);
 	void actionOkClicked();
-
 };
 
 class ServiceConnectorCreaterDialog : public ConnectorCreaterDialogBase {
@@ -98,8 +97,6 @@ private:
 
 	void actionOkClicked();
 	void registInterfaceMap(RTSPort* port);
-
-
 };
 
 }

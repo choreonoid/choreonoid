@@ -207,7 +207,8 @@ public:
     void initialize();
     void onLocationChanged(std::string host, int port);
     RTSComp* addRTSComp(const string& name, const QPointF& pos);
-    void deleteRTSComp(const string& name);
+		RTSComp* addRTSComp(const NamingContextHelper::ObjectInfo& info, const QPointF& pos);
+		void deleteRTSComp(const string& name);
     RTSComp* nameToRTSComp(const string& name);
     bool compIsAlive(RTSComp* rtsComp);
     RTSConnection* addRTSConnection(const string& id, const string& name,
@@ -312,11 +313,14 @@ bool RTSConnection::disConnect()
 
 
 RTSComp::RTSComp(const string& name, RTC::RTObject_ptr rtc, RTSystemItemImpl* impl, const QPointF& pos) :
-        impl(impl), pos(pos), name(name)
-{
-    setRtc(rtc);
+	impl(impl), pos(pos), name(name), fullPath(name) {
+	setRtc(rtc);
 }
 
+RTSComp::RTSComp(const string& name, const std::string& fullPath, RTC::RTObject_ptr rtc, RTSystemItemImpl* impl, const QPointF& pos) :
+	impl(impl), pos(pos), name(name), fullPath(fullPath) {
+	setRtc(rtc);
+}
 
 bool RTSComp::connectionCheckSub(RTSPort* rtsPort)
 {
@@ -338,7 +342,7 @@ bool RTSComp::connectionCheckSub(RTSPort* rtsPort)
             RTCCommonUtil::splitPortName(portName, target);
             if(target[0] == name)
                 continue;
-            RTSComp* targetRTC = impl->nameToRTSComp(target[0]);
+						RTSComp* targetRTC = impl->nameToRTSComp(target[0] + "|rtc::");
             if(targetRTC){
                 RTSPort* targetPort = targetRTC->nameToRTSPort(portName);
                 if(targetPort){
@@ -519,10 +523,10 @@ void RTSystemItemImpl::onLocationChanged(string host, int port)
 }
 
 
-RTSComp* RTSystemItem::nameToRTSComp(const string& name)
-{
-    return impl->nameToRTSComp(name);
-}
+//RTSComp* RTSystemItem::nameToRTSComp(const string& name)
+//{
+//    return impl->nameToRTSComp(name);
+//}
 
 
 RTSComp* RTSystemItemImpl::nameToRTSComp(const string& name)
@@ -542,22 +546,43 @@ RTSComp* RTSystemItem::addRTSComp(const string& name, const QPointF& pos) {
 
 
 RTSComp* RTSystemItemImpl::addRTSComp(const string& name, const QPointF& pos) {
-	DDEBUG("RTSystemItemImpl::addRTSComp");
+	DDEBUG_V("RTSystemItemImpl::addRTSComp:%s", name.c_str());
 
-  if(!nameToRTSComp(name)){
-    RTC::RTObject_ptr rtc = ncHelper.findObject<RTC::RTObject>(name, "rtc");
+	if (!nameToRTSComp(name + "|rtc::")) {
+		RTC::RTObject_ptr rtc = ncHelper.findObject<RTC::RTObject>(name, "rtc");
 
-    RTSCompPtr rtsComp = new RTSComp(name, rtc, this, pos);
-    rtsComps[name] = rtsComp;
+		string fullPath = name + "|rtc::";
+		RTSCompPtr rtsComp = new RTSComp(name, fullPath, rtc, this, pos);
+		rtsComps[fullPath] = rtsComp;
 
-		//observer_ = new ComponentObserverImpl();
-		//observer_->attachComponent(rtc);
-	
+//		ComponentObserverImpl* obs = new ComponentObserverImpl();
+//		obs->attachComponent(rtsComp);
+
 		return rtsComp.get();
-  }
-  return 0;
+	}
+	return 0;
 }
 
+RTSComp* RTSystemItem::addRTSComp(const  NamingContextHelper::ObjectInfo& info, const QPointF& pos) {
+	return impl->addRTSComp(info, pos);
+}
+
+RTSComp* RTSystemItemImpl::addRTSComp(const NamingContextHelper::ObjectInfo& info, const QPointF& pos) {
+	string fullPath = info.getFullPath();
+	if (!nameToRTSComp(fullPath)) {
+		std::vector<NamingContextHelper::ObjectPath> target = info.fullPath;
+		RTC::RTObject_ptr rtc = ncHelper.findObject<RTC::RTObject>(target);
+
+		RTSCompPtr rtsComp = new RTSComp(info.id, fullPath, rtc, this, pos);
+		rtsComps[fullPath] = rtsComp;
+
+//		ComponentObserverImpl* obs = new ComponentObserverImpl();
+//		obs->attachComponent(rtsComp);
+
+		return rtsComp.get();
+	}
+	return 0;
+}
 
 void RTSystemItem::deleteRTSComp(const string& name)
 {
@@ -616,25 +641,28 @@ RTSConnection* RTSystemItem::addRTSConnection(const std::string& id, const std::
 }
 
 RTSConnection* RTSystemItemImpl::addRTSConnectionName(const string& id, const string& name,
-        const string& sourceCompName, const string& sourcePortName,
-        const string& targetCompName, const string& targetPortName,
-        const string& dataflow, const string& subscription,
-        const bool setPos, const Vector2 pos[] )
-{
-    RTSPort* sourcePort;
-    RTSPort* targetPort;
-    RTSComp* sourceRtc = nameToRTSComp(sourceCompName);
-    if(sourceRtc){
-        sourcePort = sourceRtc->nameToRTSPort(sourcePortName);
-    }
-    RTSComp* targetRtc = nameToRTSComp(targetCompName);
-    if(targetRtc){
-        targetPort = targetRtc->nameToRTSPort(targetPortName);
-    }
-    if(sourcePort && targetPort){
-        return addRTSConnection(id, name, sourcePort, targetPort, dataflow, subscription, setPos, pos);
-    }
-    return 0;
+	const string& sourceCompName, const string& sourcePortName,
+	const string& targetCompName, const string& targetPortName,
+	const string& dataflow, const string& subscription,
+	const bool setPos, const Vector2 pos[]) {
+
+	string sourceId = sourceCompName + "|rtc::";
+	RTSPort* sourcePort;
+	RTSComp* sourceRtc = nameToRTSComp(sourceId);
+	if (sourceRtc) {
+		sourcePort = sourceRtc->nameToRTSPort(sourcePortName);
+	}
+
+	string targetId = targetCompName + "|rtc::";
+	RTSPort* targetPort;
+	RTSComp* targetRtc = nameToRTSComp(targetId);
+	if (targetRtc) {
+		targetPort = targetRtc->nameToRTSPort(targetPortName);
+	}
+	if (sourcePort && targetPort) {
+		return addRTSConnection(id, name, sourcePort, targetPort, dataflow, subscription, setPos, pos);
+	}
+	return 0;
 }
 
 string RTSystemItemImpl::getConnectionNumber()

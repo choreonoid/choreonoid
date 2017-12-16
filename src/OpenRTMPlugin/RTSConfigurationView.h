@@ -135,9 +135,13 @@ public:
 	void updateConfigSet();
 	void updateDetail();
 
+	void updateConfigurationSet();
+
 private Q_SLOTS:
 	void configSetSelectionChanged();
 	void activeSetChanged();
+	void setDetailClicked();
+	void detailClicked();
 	void applyClicked();
 	void cancelClicked();
 
@@ -148,13 +152,15 @@ private:
 
 	QLineEdit* txtCompName_;
 	QTableWidget* lstConfigSet_;
+	QCheckBox* chkSetDetail_;
+
 	QLineEdit* txtConfSetName_;
 	QTableWidget* lstDetail_;
+	QCheckBox* chkDetail_;
 
 	std::vector<ConfigurationSetParamPtr> configSetList_;
 	ConfigurationSetParamPtr currentSet_;
 
-	void updateConfigurationSet();
 	void getConfigurationSet();
 	void showConfigurationSetView();
 	void showConfigurationView();
@@ -186,6 +192,10 @@ public:
 
 	RTSConfigurationView();
   ~RTSConfigurationView();
+
+	void updateConfigurationSet() {
+		impl->updateConfigurationSet();
+	}
 
 private:
 	RTSConfigurationViewImpl* impl;

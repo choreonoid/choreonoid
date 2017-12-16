@@ -32,8 +32,7 @@ const bool TRACE_FUNCTIONS = false;
 }
 
 
-void RTCItem::initialize(ExtensionManager* ext)
-{
+void RTCItem::initialize(ExtensionManager* ext) {
     static bool initialized = false;
     if(!initialized){
         ext->itemManager().registerClass<RTCItem>(N_("RTCItem"));
@@ -46,8 +45,7 @@ void RTCItem::initialize(ExtensionManager* ext)
 RTCItem::RTCItem()
     : os(MessageView::instance()->cout()),
       periodicType(N_PERIODIC_TYPE, CNOID_GETTEXT_DOMAIN_NAME),
-			baseDirectoryType(N_BASE_DIRECTORY_TYPES, CNOID_GETTEXT_DOMAIN_NAME)
-{
+			baseDirectoryType(N_BASE_DIRECTORY_TYPES, CNOID_GETTEXT_DOMAIN_NAME) {
     rtcomp = 0;
     moduleName.clear();
     mv = MessageView::instance();

@@ -609,8 +609,8 @@ public:
   RTSDiagramViewImpl(RTSDiagramView* self);
   ~RTSDiagramViewImpl();
   void setNewRTSItemDetector();
-  void addRTSComp(string name, const QPointF& pos);
-  void addRTSComp(RTSComp* rtsComp);
+	void addRTSComp(NamingContextHelper::ObjectInfo& info, const QPointF& pos);
+	void addRTSComp(RTSComp* rtsComp);
   void deleteRTSComp(RTSCompGItem* rtsComp);
   void deleteRTSConnection(RTSConnectionGItem* rtsConnection);
   void deleteSelectedRTSItem();
@@ -731,7 +731,7 @@ void RTSDiagramViewImpl::dropEvent(QDropEvent *event) {
         if(!info.isAlive)
             MessageView::instance()->putln((boost::format(_("%1% is not alive")) % info.id).str());
         else{
-            addRTSComp(info.id, mapToScene(event->pos()));
+            addRTSComp(info, mapToScene(event->pos()));
         }
     }
 }
@@ -942,14 +942,14 @@ void RTSDiagramViewImpl::onRTSCompSelectionChange() {
 	if (selectionRTCs.size() == 1 && singleSelectedRTC != selectionRTCs.front()) {
 		RTSNameServerView* nsView = RTSNameServerView::instance();
 		if (nsView) {
-			nsView->setSelection(selectionRTCs.front()->rtsComp->name);
+			nsView->setSelection(selectionRTCs.front()->rtsComp->name, selectionRTCs.front()->rtsComp->fullPath);
 		}
 	}
 
 	if (selectionRTSConnections.size() == 1 && singleSelectedConnection != selectionRTSConnections.front()) {
 		RTSNameServerView* nsView = RTSNameServerView::instance();
 		if (nsView) {
-			nsView->setSelection("");
+			nsView->setSelection("", "");
 		}
 		RTSPropertiesView* propView = RTSPropertiesView::instance();
 		if (propView) {
@@ -1081,37 +1081,35 @@ void RTSDiagramViewImpl::setNewRTSItemDetector()
 
 
 
-void RTSDiagramViewImpl::addRTSComp(string name, const QPointF& pos) {
-	DDEBUG("RTSDiagramViewImpl::addRTSComp");
-
+void RTSDiagramViewImpl::addRTSComp(NamingContextHelper::ObjectInfo& info, const QPointF& pos) {
 	timeOutConnection.block();
-  RTSComp* rtsComp = currentRTSItem->addRTSComp(name, pos);
-  if(rtsComp){
-    RTSCompGItemPtr rtsCompGItem = new RTSCompGItem(rtsComp, this, pos);
-    rtsComps[name] = rtsCompGItem;
-    scene.addItem(rtsCompGItem);
+	RTSComp* rtsComp = currentRTSItem->addRTSComp(info, pos);
+	if (rtsComp) {
+		RTSCompGItemPtr rtsCompGItem = new RTSCompGItem(rtsComp, this, pos);
+		rtsComps[info.getFullPath()] = rtsCompGItem;
+		scene.addItem(rtsCompGItem);
 
-    RTSystemItem::RTSConnectionMap& connections = currentRTSItem->rtsConnections();
-    for(RTSystemItem::RTSConnectionMap::iterator itr = connections.begin(); itr != connections.end(); itr++){
-      if(rtsConnections.find(itr->second->id)==rtsConnections.end()){
-        RTSConnection* rtsConnection = itr->second.get();
-        RTSPortGItem* source = rtsPortMap.find(rtsConnection->sourcePort)->second;
-        RTSPortGItem* target = rtsPortMap.find(rtsConnection->targetPort)->second;
-        createConnectionGItem(rtsConnection, source, target);
-      }
-    }
-  }
-  timeOutConnection.unblock();
+		RTSystemItem::RTSConnectionMap& connections = currentRTSItem->rtsConnections();
+		for (RTSystemItem::RTSConnectionMap::iterator itr = connections.begin(); itr != connections.end(); itr++) {
+			if (rtsConnections.find(itr->second->id) == rtsConnections.end()) {
+				RTSConnection* rtsConnection = itr->second.get();
+				RTSPortGItem* source = rtsPortMap.find(rtsConnection->sourcePort)->second;
+				RTSPortGItem* target = rtsPortMap.find(rtsConnection->targetPort)->second;
+				createConnectionGItem(rtsConnection, source, target);
+			}
+		}
+	}
+	updateView();
+	timeOutConnection.unblock();
 }
 
 
-void RTSDiagramViewImpl::addRTSComp(RTSComp* rtsComp)
-{
-    timeOutConnection.block();
-    RTSCompGItemPtr rtsCompGItem = new RTSCompGItem(rtsComp, this, rtsComp->pos);
-    rtsComps[rtsComp->name] = rtsCompGItem;
-    scene.addItem(rtsCompGItem);
-    timeOutConnection.unblock();
+void RTSDiagramViewImpl::addRTSComp(RTSComp* rtsComp) {
+	timeOutConnection.block();
+	RTSCompGItemPtr rtsCompGItem = new RTSCompGItem(rtsComp, this, rtsComp->pos);
+	rtsComps[rtsComp->fullPath] = rtsCompGItem;
+	scene.addItem(rtsCompGItem);
+	timeOutConnection.unblock();
 }
 
 
@@ -1129,8 +1127,8 @@ void RTSDiagramViewImpl::deleteRTSComp(RTSCompGItem* rtsCompGItem)
             deleteRTSConnection(it->second);
     }
 
-    const string name = rtsCompGItem->rtsComp->name;
-    currentRTSItem->deleteRTSComp(name);
+		const string name = rtsCompGItem->rtsComp->fullPath;
+		currentRTSItem->deleteRTSComp(name);
     rtsComps.erase(name);
 
     timeOutConnection.unblock();
@@ -1162,7 +1160,8 @@ void RTSDiagramViewImpl::deleteSelectedRTSItem()
         deleteRTSComp(*it);
     }
     selectionRTCs.clear();
-    connect(&scene, SIGNAL(selectionChanged()), self, SLOT(onRTSCompSelectionChange()));
+		updateView();
+		connect(&scene, SIGNAL(selectionChanged()), self, SLOT(onRTSCompSelectionChange()));
 }
 
 

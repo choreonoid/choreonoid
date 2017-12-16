@@ -31,8 +31,11 @@ namespace cnoid
 public:
     ChoreonoidPeriodicExecutionContext();
     virtual ~ChoreonoidPeriodicExecutionContext(void);
-    virtual RTC::ReturnCode_t deactivate_component(RTC::LightweightRTObject_ptr comp) throw (CORBA::SystemException);
-};
+
+		virtual RTC::ReturnCode_t activate_component(RTC::LightweightRTObject_ptr comp) throw (CORBA::SystemException);
+		virtual RTC::ReturnCode_t deactivate_component(RTC::LightweightRTObject_ptr comp) throw (CORBA::SystemException);
+		virtual RTC::ReturnCode_t	reset_component(RTC::LightweightRTObject_ptr comp) throw (CORBA::SystemException);
+	};
 };
 
 #endif

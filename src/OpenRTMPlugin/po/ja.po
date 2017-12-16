@@ -125,13 +125,21 @@ msgstr "実行コンテキスト"
 msgid "Periodic rate"
 msgstr "実行周波数"
 
-#: OpenRTMPlugin.cpp:131
+#: OpenRTMPlugin.cpp:129
 msgid "ChoreonoidExecutionContext has been registered."
 msgstr "ChoreonoidExecutionContextを登録しました。"
+
+#: OpenRTMPlugin.cpp:131
+msgid "Failed to register ChoreonoidExecutionContext."
+msgstr "ChoreonoidExecutionContextの登録に失敗しました。"
 
 #: OpenRTMPlugin.cpp:142
 msgid "ChoreonoidPeriodicExecutionContext has been registered."
 msgstr "ChoreonoidPeriodicExecutionContextを登録しました。"
+
+#: OpenRTMPlugin.cpp:14４
+msgid "Failed to register ChoreonoidPeriodicExecutionContext."
+msgstr "ChoreonoidPeriodicExecutionContextの登録に失敗しました。"
 
 #: OpenRTMPlugin.cpp:165
 msgid "Delete unmanaged RT components"
@@ -557,3 +565,45 @@ msgstr "キャンセル"
 #: RTSConfigurationView.cpp:472
 msgid "Configuration"
 msgstr "RTCコンフィギュレーション"
+
+#: RTSNameServiceView.cpp:99
+msgid "Show IOR"
+msgstr "IOR 表示"
+
+#: RTSConfigurationView.cpp:93
+msgid "Detail"
+msgstr "詳細表示"
+
+#: RTSNameServiceView.cpp:121
+msgid "Delete from View"
+msgstr "ビューから削除"
+
+#: RTSNameServiceView.cpp:106
+msgid "Delete from Name Service"
+msgstr "ネームサービスから削除"
+
+#: RTSNameServiceView.cpp:147
+msgid "Confirm"
+msgstr "確認"
+
+#: RTSNameServiceView.cpp:147
+msgid "Are you sure you want to delete?"
+msgstr "本当に削除しても良いですか？"
+
+#: RTSNameServiceView.cpp:129
+msgid "Add Context"
+msgstr "コンテキストを追加"
+
+#: RTSNameServiceView.cpp:131
+msgid "Add Object"
+msgstr "オブジェクトを追加"
+
+#: RTSNameServiceView.cpp:637
+msgid "Failed to add context."
+msgstr "コンテキストの追加に失敗しました"
+
+#: RTSNameServiceView.cpp:653
+msgid "Failed to add object."
+msgstr "オブジェクトの追加に失敗しました"
+
+

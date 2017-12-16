@@ -25,7 +25,6 @@
 #include <cnoid/Sleep>
 #include <QTcpSocket>
 #include <rtm/ComponentActionListener.h>
-#include <thread>
 
 #include "LoggerUtil.h"
 
@@ -84,13 +83,13 @@ virtual bool initialize() {
       "-o", "corba.args: -ORBclientCallTimeOutPeriod 100",
 #endif
 			"-o", "logger.enable: YES",
+			"-o", "logger.log_level: TRACE",
 			//"-o", "corba.nameservers: localhost",
       //"-o", "exec_cxt.periodic.type: SynchExtTriggerEC",
       //"-o", "exec_cxt.periodic.rate: 1000000",
       //"-o", "manager.is_master: YES"
       //"-o", "logger.enable: YES",
       //"-o", "logger.file_name: stdout",
-      //"-o", "logger.log_level: TRACE",
       //"-o", "corba.args: -ORBendPoint giop:tcp::2809 -ORBpoaUniquePersistentSystemIds 1"
   };
         
@@ -104,7 +103,7 @@ virtual bool initialize() {
       numArgs += 2;
   }
         
-  mv = MessageView::instance();
+  mv = MessageView::mainInstance();
         
   cnoid::checkOrInvokeCorbaNameServer();
         
@@ -122,10 +121,12 @@ virtual bool initialize() {
   if(RTC::ExecutionContextFactory::instance().addFactory(
           "ChoreonoidExecutionContext",
           ::coil::Creator< ::RTC::ExecutionContextBase, ::cnoid::ChoreonoidExecutionContext>,
-          ::coil::Destructor< ::RTC::ExecutionContextBase, ::cnoid::ChoreonoidExecutionContext>)){
+					::coil::Destructor< ::RTC::ExecutionContextBase, ::cnoid::ChoreonoidExecutionContext>) == 0) {
 #endif
     mv->putln(_("ChoreonoidExecutionContext has been registered."));
-  }
+	} else {
+		mv->putln(MessageView::WARNING, _("Failed to register ChoreonoidExecutionContext."));
+	}
 #ifdef OPENRTM_VERSION110
   if(manager->registerECFactory("ChoreonoidPeriodicExecutionContext",
                                 RTC::ECCreate<cnoid::ChoreonoidPeriodicExecutionContext>,
@@ -133,10 +134,12 @@ virtual bool initialize() {
 #else
   if(RTC::ExecutionContextFactory::instance().addFactory("ChoreonoidPeriodicExecutionContext",
           ::coil::Creator< ::RTC::ExecutionContextBase, ::cnoid::ChoreonoidPeriodicExecutionContext>,
-          ::coil::Destructor< ::RTC::ExecutionContextBase, ::cnoid::ChoreonoidPeriodicExecutionContext>)){
+					::coil::Destructor< ::RTC::ExecutionContextBase, ::cnoid::ChoreonoidPeriodicExecutionContext>) == 0) {
 #endif
       mv->putln(_("ChoreonoidPeriodicExecutionContext has been registered."));
-  }
+	} else {
+		mv->putln(MessageView::WARNING, _("Failed to register ChoreonoidPeriodicExecutionContext."));
+	}
 
   manager->activateManager();
             

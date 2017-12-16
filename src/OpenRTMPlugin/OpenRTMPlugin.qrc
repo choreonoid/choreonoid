@@ -3,6 +3,13 @@
 
 <qresource prefix="/Corba" >
 
+  <file>icons/RT.png</file>
+  <file>icons/CategoryNamingContext.png</file>
+  <file>icons/ManagerNamingContext.png</file>
+  <file>icons/ModuleNamingContext.png</file>
+  <file>icons/Server.png</file>
+  <file>icons/Question.png</file>
+  <file>icons/Folder.png</file>
   <file>icons/NSRTC.png</file>
   <file>icons/NSZombi.png</file>
 
