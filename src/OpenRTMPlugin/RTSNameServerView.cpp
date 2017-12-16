@@ -21,13 +21,12 @@
 
 #include <QMessageBox>
 #include <rtm/idl/RTC.hh>
+#include <rtm/CORBA_IORUtil.h>
 
 #include "OpenRTMUtil.h"
 #include "LoggerUtil.h"
 
 #include "gettext.h"
-
-#undef _HOST_CXT_VERSION
 
 namespace cnoid {
 
@@ -58,11 +57,18 @@ namespace cnoid {
 		txtIOR->setReadOnly(true);
 		txtIOR->setText(QString::fromStdString(ior));
 
+		QLabel* label02 = new QLabel(_("Detail : "));
+		QTextEdit* txtDetail = new QTextEdit;
+		txtDetail->setReadOnly(true);
+		txtDetail->setText(QString::fromStdString(CORBA_IORUtil::formatIORinfo(ior.c_str())));
+
 		QFrame* frmDisp = new QFrame;
-		QHBoxLayout* dispLayout = new QHBoxLayout(frmDisp);
+		QGridLayout* dispLayout = new QGridLayout(frmDisp);
 		dispLayout->setContentsMargins(2, 2, 2, 2);
-		dispLayout->addWidget(label01);
-		dispLayout->addWidget(txtIOR);
+		dispLayout->addWidget(label01, 0, 0);
+		dispLayout->addWidget(txtIOR, 0, 1);
+		dispLayout->addWidget(label02, 1, 0);
+		dispLayout->addWidget(txtDetail, 1, 1);
 		/////
 		QFrame* frmButton = new QFrame;
 		QPushButton* okButton = new QPushButton(_("&OK"));
@@ -362,9 +368,6 @@ namespace cnoid {
 		void setConnection();
 		void onSelectionChanged();
 		//void selectedItem();
-#ifdef _HOST_CXT_VERSION
-		void extendDiagram(const NamingContextHelper::ObjectInfo& info, QTreeWidgetItem* parent);
-#endif
 		void clearDiagram();
 		void setSelection(std::string RTCName, std::string RTCfullPath);
 
@@ -617,36 +620,6 @@ void RTSNameServerViewImpl::setSelection(std::string RTCName, std::string RTCful
 	}
 
 }
-
-
-#ifdef _HOST_CXT_VERSION
-void RTSNameServerViewImpl::extendDiagram(const NamingContextHelper::ObjectInfo& info, QTreeWidgetItem* parent) {
-	// view the host context.
-	QTreeWidgetItem* item = new QTreeWidgetItem();
-	QString name = info.id.c_str();
-	string rtcName = string(qtos(name));
-	item->setIcon(0, QIcon(":/Corba/icons/NSHostCxt.png"));
-	item->setText(0, QString(string(rtcName).c_str()));
-	if (parent == NULL) treeWidget.addTopLevelItem(item);
-	else parent->addChild(item);
-
-	// view the rtc in host context.
-	NamingContextHelperPtr helper = NamingContextHelperPtr(new NamingContextHelper);
-	QString addressText = hostAddressBox.text();
-	string address = string(qtos(addressText));
-	int port = portNumberSpin.value();
-	helper->setLocation(address, port);
-	if (helper->isAlive()) {
-		CORBA::Object_var obj = helper->findObject(rtcName, "host_cxt");
-		helper->bindObject(obj, rtcName, "host_cxt");
-		NamingContextHelper::ObjectInfoList objects = helper->getObjectList();
-		updateObjectList(objects, item);
-		//RTS_RELEASE(obj, "release");
-		if (!CORBA::is_nil(obj)) CORBA::release(obj);
-	}
-
-}
-#endif
 
 NamingContextHelper RTSNameServerView::getNCHelper() {
 	return impl->ncHelper;
