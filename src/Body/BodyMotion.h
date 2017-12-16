@@ -17,22 +17,18 @@ namespace cnoid {
 
 class Body;
 
-class CNOID_EXPORT BodyMotion : public AbstractMultiSeq
+class CNOID_EXPORT BodyMotion : public AbstractSeq
 {
 public:
     BodyMotion();
     BodyMotion(const BodyMotion& org);
 
-    using AbstractMultiSeq::operator=;
+    using AbstractSeq::operator=;
     BodyMotion& operator=(const BodyMotion& rhs);
     virtual AbstractSeqPtr cloneSeq() const;        
 
-    virtual void setDimension(int numFrames, int numJoints, bool clearNewArea = false) override;
-
     void setDimension(int numFrames, int numJoints, int numLinks, bool clearNewArea = false);
-
-    virtual void setNumParts(int numParts, bool clearNewElements = false) override;
-    virtual int getNumParts() const override;
+    void setNumJoints(int numJoints, bool clearNewElements = false);
 
     int numJoints() const { return jointPosSeq_->numParts(); }
     int numLinks() const { return linkPosSeq_->numParts(); }

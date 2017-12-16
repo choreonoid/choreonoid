@@ -20,7 +20,7 @@ namespace {
 
 
 BodyMotion::BodyMotion()
-    : AbstractMultiSeq("CompositeSeq"),
+    : AbstractSeq("CompositeSeq"),
       jointPosSeq_(new MultiValueSeq()),
       linkPosSeq_(new MultiSE3Seq())
 {
@@ -31,7 +31,7 @@ BodyMotion::BodyMotion()
 
 
 BodyMotion::BodyMotion(const BodyMotion& org)
-    : AbstractMultiSeq(org),
+    : AbstractSeq(org),
       jointPosSeq_(new MultiValueSeq(*org.jointPosSeq_)),
       linkPosSeq_(new MultiSE3Seq(*org.linkPosSeq_))
 {
@@ -44,7 +44,7 @@ BodyMotion::BodyMotion(const BodyMotion& org)
 BodyMotion& BodyMotion::operator=(const BodyMotion& rhs)
 {
     if(this != &rhs){
-        AbstractMultiSeq::operator=(rhs);
+        AbstractSeq::operator=(rhs);
     }
     *jointPosSeq_ = *rhs.jointPosSeq_;
     *linkPosSeq_ = *rhs.linkPosSeq_;
@@ -69,20 +69,11 @@ AbstractSeqPtr BodyMotion::cloneSeq() const
 /*
   This function sets the number of joints
 */
-void BodyMotion::setNumParts(int numParts, bool clearNewElements)
+void BodyMotion::setNumJoints(int numJoints, bool clearNewElements)
 {
-    jointPosSeq_->setNumParts(numParts, clearNewElements);
+    jointPosSeq_->setNumParts(numJoints, clearNewElements);
 }
 
-
-/**
-   This function returns the number of joints
-*/
-int BodyMotion::getNumParts() const
-{
-    return jointPosSeq_->numParts();
-}
-        
 
 double BodyMotion::getFrameRate() const
 {
@@ -127,17 +118,6 @@ void BodyMotion::setDimension(int numFrames, int numJoints, int numLinks, bool c
 {
     jointPosSeq_->setDimension(numFrames, numJoints, clearNewArea);
     linkPosSeq_->setDimension(numFrames, numLinks, clearNewArea);
-
-    for(ExtraSeqMap::iterator p = extraSeqs.begin(); p != extraSeqs.end(); ++p){
-        p->second->setNumFrames(numFrames, clearNewArea);
-    }
-}
-
-
-void BodyMotion::setDimension(int numFrames, int numJoints, bool clearNewArea)
-{
-    jointPosSeq_->setDimension(numFrames, numJoints, clearNewArea);
-    linkPosSeq_->setNumFrames(numFrames, clearNewArea);
 
     for(ExtraSeqMap::iterator p = extraSeqs.begin(); p != extraSeqs.end(); ++p){
         p->second->setNumFrames(numFrames, clearNewArea);
@@ -273,7 +253,7 @@ bool BodyMotion::doWriteSeq(YAMLWriter& writer)
         writer.putComment("Body motion data set format version 1.0 defined by Choreonoid\n");
         writer.putKeyValue("type", "BodyMotion");
     } else {
-        AbstractMultiSeq::doWriteSeq(writer);
+        AbstractSeq::doWriteSeq(writer);
     }
         
     writer.putKey("components");

@@ -15,7 +15,7 @@ namespace cnoid {
 
 class BodyMotionItemImpl;
 
-class CNOID_EXPORT BodyMotionItem : public AbstractMultiSeqItem
+class CNOID_EXPORT BodyMotionItem : public AbstractSeqItem
 {
 public:
     static void initializeClass(ExtensionManager* ext);
@@ -28,7 +28,7 @@ public:
     BodyMotionItem(const BodyMotionItem& org);
     ~BodyMotionItem();
 
-    virtual AbstractMultiSeqPtr abstractMultiSeq() override;
+    virtual AbstractSeqPtr abstractSeq() override;
 
     BodyMotionPtr motion() { return bodyMotion_; }
     ConstBodyMotionPtr motion() const { return bodyMotion_; }

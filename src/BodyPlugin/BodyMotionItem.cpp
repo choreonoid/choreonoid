@@ -168,7 +168,7 @@ BodyMotionItem::BodyMotionItem(BodyMotionPtr bodyMotion)
 
 
 BodyMotionItem::BodyMotionItem(const BodyMotionItem& org)
-    : AbstractMultiSeqItem(org),
+    : AbstractSeqItem(org),
       bodyMotion_(new BodyMotion(*org.bodyMotion_))
 {
     impl = new BodyMotionItemImpl(this);
@@ -222,7 +222,7 @@ BodyMotionItemImpl::~BodyMotionItemImpl()
 }
 
 
-AbstractMultiSeqPtr BodyMotionItem::abstractMultiSeq()
+AbstractSeqPtr BodyMotionItem::abstractSeq()
 {
     return bodyMotion_;
 }
