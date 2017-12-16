@@ -1599,7 +1599,7 @@ bool SensorScreenRenderer::getRangeSensorData(vector<double>& rangeData)
     }
 
     if(wh > 1e6){
-        free(depthBuf);
+        //free(depthBuf);
     }
     return true;
 }
