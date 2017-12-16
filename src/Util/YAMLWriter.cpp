@@ -44,6 +44,8 @@ public:
 
     State* current;
 
+    MappingPtr info;
+
     YAMLWriterImpl(const std::string filename);
     YAMLWriterImpl(std::ostream& os);
     ~YAMLWriterImpl();
@@ -106,6 +108,8 @@ YAMLWriterImpl::YAMLWriterImpl(std::ostream& os)
     doubleFormat = "%.7g";
 
     pushState(TOP, false);
+
+    info = new Mapping;
 }    
 
 
@@ -706,4 +710,60 @@ void YAMLWriterImpl::putListingNode(const Listing* listing)
     }
 
     endListing();
+}
+
+
+const Mapping* YAMLWriter::info() const
+{
+    return impl->info;
+}
+
+
+Mapping* YAMLWriter::info()
+{
+    return impl->info;
+}
+
+
+template<> double YAMLWriter::info(const std::string& key) const
+{
+    return impl->info->get(key).toDouble();
+}
+
+
+template<> double YAMLWriter::info(const std::string& key, const double& defaultValue) const
+{
+    double value;
+    if(impl->info->read(key, value)){
+        return value;
+    }
+    return defaultValue;
+}
+
+
+template<> bool YAMLWriter::info(const std::string& key, const bool& defaultValue) const
+{
+    bool value;
+    if(impl->info->read(key, value)){
+        return value;
+    }
+    return defaultValue;
+}
+
+
+template<> void YAMLWriter::setInfo(const std::string& key, const double& value)
+{
+    impl->info->write(key, value);
+}
+
+
+template<> void YAMLWriter::setInfo(const std::string& key, const bool& value)
+{
+    impl->info->write(key, value);
+}
+
+
+void YAMLWriter::resetInfo(Mapping* info)
+{
+    impl->info = info;
 }
