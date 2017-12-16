@@ -26,7 +26,8 @@ class ControllerRTCItemImpl
 public:
     ControllerRTCItem* self;
     RTC::RtcBase* rtc = 0;
-    OpenRTM::ExtTrigExecutionContextService_var execContext;
+		RTC::ExecutionContextService_var execContext;
+		OpenRTM::ExtTrigExecutionContextService_var execContextExt;
     bool isChoreonoidExecutionContext;
 
     int periodicRateProperty;
@@ -386,12 +387,12 @@ bool ControllerRTCItemImpl::createRTCmain()
         periodicRate = boost::lexical_cast<int>(rtc->getProperties()["exec_cxt.periodic.rate"]);
     }
 
-    execContext = OpenRTM::ExtTrigExecutionContextService::_nil();
+    execContext = RTC::ExecutionContextService::_nil();
     isChoreonoidExecutionContext = false; 
     RTC::ExecutionContextList_var eclist = rtc->get_owned_contexts();
     for(CORBA::ULong i=0; i < eclist->length(); ++i){
         if(!CORBA::is_nil(eclist[i])){
-            execContext = OpenRTM::ExtTrigExecutionContextService::_narrow(eclist[i]);
+            execContext = RTC::ExecutionContextService::_narrow(eclist[i]);
             isChoreonoidExecutionContext = execContextType.is(CHOREONOID_EXECUTION_CONTEXT);
             break;
         }
@@ -446,16 +447,26 @@ bool ControllerRTCItemImpl::start()
         if(!CORBA::is_nil(execContext)){
             RTC::ReturnCode_t result = RTC::RTC_OK;
             RTC::LifeCycleState state = execContext->get_component_state(rtc->getObjRef());
+						if (CORBA::is_nil(execContextExt)) {
+							execContextExt = OpenRTM::ExtTrigExecutionContextService::_narrow(execContext);
+						}
+
             if(state == RTC::ERROR_STATE){
                 result = execContext->reset_component(rtc->getObjRef());
-                execContext->tick();
+								if (!CORBA::is_nil(execContextExt)) {
+									execContextExt->tick();
+								}
             } else if(state == RTC::ACTIVE_STATE){
                 result = execContext->deactivate_component(rtc->getObjRef());
-                execContext->tick();
+								if (!CORBA::is_nil(execContextExt)) {
+									execContextExt->tick();
+								}
             }
             if(result == RTC::RTC_OK){
                 result = execContext->activate_component(rtc->getObjRef());
-                execContext->tick();
+								if (!CORBA::is_nil(execContextExt)) {
+									execContextExt->tick();
+								}
             }
             if(result == RTC::RTC_OK){
                 isReady = true;
@@ -482,7 +493,14 @@ void ControllerRTCItem::input()
 bool ControllerRTCItem::control()
 {
     if(impl->isChoreonoidExecutionContext){
-        impl->execContext->tick();
+			if (!CORBA::is_nil(impl->execContext)) {
+				if (CORBA::is_nil(impl->execContextExt)) {
+					impl->execContextExt = OpenRTM::ExtTrigExecutionContextService::_narrow(impl->execContext);
+				}
+				if (!CORBA::is_nil(impl->execContextExt)) {
+					impl->execContextExt->tick();
+				}
+			}
     }
     return true;
 }
@@ -508,7 +526,12 @@ void ControllerRTCItemImpl::stop()
     } else {
         execContext->deactivate_component(rtc->getObjRef());
     }
-    execContext->tick();
+		if (CORBA::is_nil(execContextExt)) {
+			execContextExt = OpenRTM::ExtTrigExecutionContextService::_narrow(execContext);
+		}
+		if (!CORBA::is_nil(execContextExt)) {
+			execContextExt->tick();
+		}
 }
 
 
