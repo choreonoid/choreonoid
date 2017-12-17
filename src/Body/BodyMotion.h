@@ -138,6 +138,14 @@ public:
     }
 
     //! \deprecated
+    void setNumParts(int numJoints, bool clearNewElements = false){
+        setNumJoints(numJoints, clearNewElements);
+    }
+
+    //! \deprecated
+    int getNumParts() const { return numJoints(); }
+    
+    //! \deprecated
     bool loadStandardYAMLformat(const std::string& filename, std::ostream& os = nullout()){
         return loadStandardFormat(filename, os);
     }
