@@ -10,7 +10,7 @@
 #include "../ScriptItem.h"
 #include "../ExtCommandItem.h"
 #include "../MultiValueSeqItem.h"
-#include "../MultiAffine3SeqItem.h"
+#include "../MultiSE3MatrixSeqItem.h"
 #include "../MultiSE3SeqItem.h"
 #include "../Vector3SeqItem.h"
 #include "../SceneItem.h"
@@ -113,7 +113,7 @@ void exportPyItems()
     py::to_python_converter<ItemList<ScriptItem>, ItemList_to_pylist_converter<ScriptItem> >();
     py::to_python_converter<ItemList<ExtCommandItem>, ItemList_to_pylist_converter<ExtCommandItem> >();
     py::to_python_converter<ItemList<MultiValueSeqItem>, ItemList_to_pylist_converter<MultiValueSeqItem> >();
-    py::to_python_converter<ItemList<MultiAffine3SeqItem>, ItemList_to_pylist_converter<MultiAffine3SeqItem> >();
+    py::to_python_converter<ItemList<MultiSE3MatrixSeqItem>, ItemList_to_pylist_converter<MultiSE3MatrixSeqItem> >();
     py::to_python_converter<ItemList<MultiSE3SeqItem>, ItemList_to_pylist_converter<MultiSE3SeqItem> >();
     py::to_python_converter<ItemList<Vector3SeqItem>, ItemList_to_pylist_converter<Vector3SeqItem> >();
 
@@ -253,12 +253,12 @@ void exportPyItems()
     py::implicitly_convertible<MultiValueSeqItemPtr, AbstractMultiSeqItemPtr>();
     PyItemList<MultiValueSeqItem>("MultiValueSeqItemList");
 
-    py::class_<MultiAffine3SeqItem, MultiAffine3SeqItemPtr, py::bases<AbstractMultiSeqItem>>("MultiAffine3SeqItem")
-        .def("abstractMultiSeq", &MultiAffine3SeqItem::abstractMultiSeq)
-        .def("seq", &MultiAffine3SeqItem::seq);
+    py::class_<MultiSE3MatrixSeqItem, MultiSE3MatrixSeqItemPtr, py::bases<AbstractMultiSeqItem>>("MultiSE3MatrixSeqItem")
+        .def("abstractMultiSeq", &MultiSE3MatrixSeqItem::abstractMultiSeq)
+        .def("seq", &MultiSE3MatrixSeqItem::seq);
 
-    py::implicitly_convertible<MultiAffine3SeqItemPtr, AbstractMultiSeqItemPtr>();
-    PyItemList<MultiAffine3SeqItem>("MultiAffine3SeqItemList");
+    py::implicitly_convertible<MultiSE3MatrixSeqItemPtr, AbstractMultiSeqItemPtr>();
+    PyItemList<MultiSE3MatrixSeqItem>("MultiSE3MatrixSeqItemList");
 
     py::class_<MultiSE3SeqItem, MultiSE3SeqItemPtr, py::bases<AbstractMultiSeqItem>>("MultiSE3SeqItem")
         .def("abstractMultiSeq", &MultiSE3SeqItem::abstractMultiSeq)

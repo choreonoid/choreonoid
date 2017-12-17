@@ -3,7 +3,7 @@
    @author Shin'ichiro Nakaoka
 */
 
-#include "MultiAffine3Seq.h"
+#include "MultiSE3MatrixSeq.h"
 #include "PlainSeqFileLoader.h"
 #include "ValueTree.h"
 #include "YAMLWriter.h"
@@ -17,36 +17,36 @@ using namespace cnoid;
 using boost::format;
 
 
-MultiAffine3Seq::MultiAffine3Seq()
-    : MultiAffine3Seq::BaseSeqType("MultiAffine3Seq")
+MultiSE3MatrixSeq::MultiSE3MatrixSeq()
+    : MultiSE3MatrixSeq::BaseSeqType("MultiSE3MatrixSeq")
 {
 
 }
 
 
-MultiAffine3Seq::MultiAffine3Seq(int numFrames, int numParts)
-    : MultiAffine3Seq::BaseSeqType("MultiAffine3Seq", numFrames, numParts)
+MultiSE3MatrixSeq::MultiSE3MatrixSeq(int numFrames, int numParts)
+    : MultiSE3MatrixSeq::BaseSeqType("MultiSE3MatrixSeq", numFrames, numParts)
 {
 
 }
 
 
-MultiAffine3Seq::MultiAffine3Seq(const MultiAffine3Seq& org)
-    : MultiAffine3Seq::BaseSeqType(org)
+MultiSE3MatrixSeq::MultiSE3MatrixSeq(const MultiSE3MatrixSeq& org)
+    : MultiSE3MatrixSeq::BaseSeqType(org)
 {
 
 }
 
 
-MultiAffine3Seq::~MultiAffine3Seq()
+MultiSE3MatrixSeq::~MultiSE3MatrixSeq()
 {
 
 }
 
 
-AbstractSeqPtr MultiAffine3Seq::cloneSeq() const
+AbstractSeqPtr MultiSE3MatrixSeq::cloneSeq() const
 {
-    return std::make_shared<MultiAffine3Seq>(*this);
+    return std::make_shared<MultiSE3MatrixSeq>(*this);
 }
 
 
@@ -68,7 +68,7 @@ static void readAffine3(const Listing& node, Affine3& out_value)
 }
 
 
-bool MultiAffine3Seq::doReadSeq(const Mapping& archive, std::ostream& os)
+bool MultiSE3MatrixSeq::doReadSeq(const Mapping& archive, std::ostream& os)
 {
     if(!BaseSeqType::doReadSeq(archive, os)){
         return false;
@@ -117,7 +117,7 @@ static inline void writeAffine3(YAMLWriter& writer, const Affine3& value)
 }
     
 
-bool MultiAffine3Seq::doWriteSeq(YAMLWriter& writer)
+bool MultiSE3MatrixSeq::doWriteSeq(YAMLWriter& writer)
 {
     if(BaseSeqType::doWriteSeq(writer)){
 
@@ -144,7 +144,7 @@ bool MultiAffine3Seq::doWriteSeq(YAMLWriter& writer)
 }
 
 
-bool MultiAffine3Seq::loadPlainFormat(const std::string& filename, std::ostream& os)
+bool MultiSE3MatrixSeq::loadPlainFormat(const std::string& filename, std::ostream& os)
 {
     PlainSeqFileLoader loader;
 
@@ -177,7 +177,7 @@ bool MultiAffine3Seq::loadPlainFormat(const std::string& filename, std::ostream&
 }
 
 
-bool MultiAffine3Seq::saveTopPartAsPlainFormat(const std::string& filename, std::ostream& os)
+bool MultiSE3MatrixSeq::saveTopPartAsPlainFormat(const std::string& filename, std::ostream& os)
 {
     boost::format f("%1$.4f");
     const int nFrames = numFrames();

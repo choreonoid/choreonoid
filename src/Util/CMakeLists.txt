@@ -20,7 +20,7 @@ set(sources
   AbstractSeq.cpp
   Vector3Seq.cpp
   MultiSE3Seq.cpp
-  MultiAffine3Seq.cpp
+  MultiSE3MatrixSeq.cpp
   MultiValueSeq.cpp
   MultiVector3Seq.cpp
   PlainSeqFileLoader.cpp
@@ -84,7 +84,7 @@ set(headers
   PolymorphicPointerArray.h
   PolymorphicFunctionSet.h
   MultiSE3Seq.h
-  MultiAffine3Seq.h
+  MultiSE3MatrixSeq.h
   MultiSeq.h
   MultiValueSeq.h
   MultiVector3Seq.h
