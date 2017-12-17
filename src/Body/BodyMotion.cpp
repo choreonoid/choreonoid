@@ -154,86 +154,80 @@ bool BodyMotion::doReadSeq(const Mapping& archive, std::ostream& os)
 
     bool loaded = false;
     
-    try {
-        double version;
-        if(!archive.read("formatVersion", version)){
-            version = 1.0;
-        }
-        const char* type;
-        const char* jointContent;
-        std::function<string(Mapping* mapping)> readContent;
-        if(version >= 2.0){
-            type = "CompositeSeq";
-            jointContent = "JointDisplacement";
-            readContent = [](Mapping* mapping){
-                string content;
-                mapping->read("content", content);
-                return content;
-            };
-        } else {
-            type = "BodyMotion";
-            jointContent = "JointPosition";
-            readContent = [](Mapping* mapping){
-                string content;
-                if(!mapping->read("content", content)){
-                    mapping->read("purpose", content);
-                }
-                return content;
-            };
-        }
-
-        if(archive["type"].toString() == type){
-
-            const Listing& components = *archive["components"].toListing();
+    double version;
+    if(!archive.read("formatVersion", version)){
+        version = 1.0;
+    }
+    const char* type;
+    const char* jointContent;
+    std::function<string(Mapping* mapping)> readContent;
+    if(version >= 2.0){
+        type = "CompositeSeq";
+        jointContent = "JointDisplacement";
+        readContent = [](Mapping* mapping){
+            string content;
+            mapping->read("content", content);
+            return content;
+        };
+    } else {
+        type = "BodyMotion";
+        jointContent = "JointPosition";
+        readContent = [](Mapping* mapping){
+            string content;
+            if(!mapping->read("content", content)){
+                mapping->read("purpose", content);
+            }
+            return content;
+        };
+    }
+    
+    if(archive["type"].toString() == type){
         
-            for(int i=0; i < components.size(); ++i){
-                MappingPtr component = components[i].toMapping()->cloneMapping();
-
-                if(!component->find("formatVersion")->isValid()){
-                    component->write("formatVersion", version);
+        const Listing& components = *archive["components"].toListing();
+        
+        for(int i=0; i < components.size(); ++i){
+            MappingPtr component = components[i].toMapping()->cloneMapping();
+            
+            if(!component->find("formatVersion")->isValid()){
+                component->write("formatVersion", version);
+            }
+            
+            const string type = component->read<string>("type");
+            string content = readContent(component);
+            
+            if(type == "MultiValueSeq" && content == jointContent){
+                loaded = jointPosSeq_->readSeq(*component, os);
+                if(!loaded){
+                    break;
                 }
-                
-                const string type = component->read<string>("type");
-                string content = readContent(component);
-
-                if(type == "MultiValueSeq" && content == jointContent){
-                    loaded = jointPosSeq_->readSeq(*component, os);
+            } else if((type == "MultiAffine3Seq" || type == "MultiSe3Seq" || type == "MultiSE3Seq")
+                      && content == "LinkPosition"){
+                loaded = linkPosSeq_->readSeq(*component, os);
+                if(!loaded){
+                    break;
+                }
+            } else if(type == "Vector3Seq") {
+                if(content == "ZMP" || content == "RelativeZMP" || content == "RelativeZmp"){
+                    auto zmpSeq = getOrCreateExtraSeq<ZMPSeq>("ZMP");
+                    loaded = zmpSeq->readSeq(*component, os);
                     if(!loaded){
                         break;
                     }
-                } else if((type == "MultiAffine3Seq" || type == "MultiSe3Seq" || type == "MultiSE3Seq")
-                          && content == "LinkPosition"){
-                    loaded = linkPosSeq_->readSeq(*component, os);
+                    zmpSeq->setRootRelative(content != "ZMP");
+                } else {
+                    //----------- user defined Vector3 data --------- 
+                    auto userVec3 = getOrCreateExtraSeq<Vector3Seq>(content);
+                    loaded = userVec3->readSeq(*component, os);
                     if(!loaded){
                         break;
-                    }
-                } else if(type == "Vector3Seq") {
-                    if(content == "ZMP" || content == "RelativeZMP" || content == "RelativeZmp"){
-                        auto zmpSeq = getOrCreateExtraSeq<ZMPSeq>("ZMP");
-                        loaded = zmpSeq->readSeq(*component, os);
-                        if(!loaded){
-                            break;
-                        }
-                        zmpSeq->setRootRelative(content != "ZMP");
-                    } else {
-                        //----------- user defined Vector3 data --------- 
-                        auto userVec3 = getOrCreateExtraSeq<Vector3Seq>(content);
-                        loaded = userVec3->readSeq(*component, os);
-                        if(!loaded){
-                            break;
-                        }
                     }
                 }
             }
         }
-    } catch(const ValueNode::Exception& ex){
-        os << ex.message();
-        loaded = false;
     }
-
+    
     if(!loaded){
         setDimension(0, 1, 1);
-
     }
     
     return loaded;

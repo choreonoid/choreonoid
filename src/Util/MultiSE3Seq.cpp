@@ -53,22 +53,32 @@ MultiSE3Seq::~MultiSE3Seq()
 bool MultiSE3Seq::doReadSeq(const Mapping& archive, std::ostream& os)
 {
     if(BaseSeqType::doReadSeq(archive, os)){
-        const string& type = archive["type"].toString();
-        if(type == seqType() || type == "MultiSe3Seq" || type == "MultiAffine3Seq"){
-            string formatString = archive["format"].toString();
-            const Listing& values = *archive.findListing("frames");
-            if(values.isValid()){
-                const int nParts = archive["numParts"].toInt();
-                const int nFrames = values.size();
+        double version;
+        if(!archive.read("formatVersion", version)){
+            version = 1.0;
+        }
+        string formatKey;
+        function<bool(const string& type)> checkType;
+        if(version >= 2.0){
+            formatKey = "SE3Format";
+            checkType = [](const string& type){
+                return (type == "MultiSE3Seq");
+            };
+        } else {
+            formatKey = "format";
+            checkType = [](const string& type){
+                return (type == "MultiSE3Seq" || type == "MultiSe3Seq" || type == "MultiAffine3Seq");
+            };
+        }
+        if(checkType(archive.get<string>("type"))){
+            string se3format = archive.get<string>(formatKey);
+            const Listing& frames = *archive.findListing("frames");
+            if(frames.isValid()){
+                const int nParts = archive.get<int>("numParts");
+                const int nFrames = frames.size();
                 setDimension(nFrames, nParts);
-                if(formatString == "XYZQWQXQYQZ"){
-                    readPosQuatSeq(nParts, nFrames, values, true);
-                } else if(formatString == "XYZQXQYQZQW"){
-                    readPosQuatSeq(nParts, nFrames, values, false);
-                } else if(formatString == "XYZRPY"){
-                    readPosRpySeq(nParts, nFrames, values);
-                } else {
-                    os << format(_("Unknown format \"%1%\" cannot be loaded into MultiSE3Seq.")) % formatString;
+                if(!checkFormatAndReadFrames(se3format, version, nParts, nFrames, frames)){
+                    os << format(_("SE3 format \"%1%\" is unsupported.")) % se3format << endl;
                     return false;
                 }
             }
@@ -79,23 +89,42 @@ bool MultiSE3Seq::doReadSeq(const Mapping& archive, std::ostream& os)
 }
 
 
-void MultiSE3Seq::readPosQuatSeq(int nParts, int nFrames, const Listing& values, bool isWfirst)
+bool MultiSE3Seq::checkFormatAndReadFrames
+(const string& se3format, double version, int nParts, int nFrames, const Listing& frames)
+{
+    if(se3format == "XYZQWQXQYQZ"){
+        if(version < 2.0){
+            readPosQuatSeq(nParts, nFrames, frames, true);
+            return true;
+        }
+    } else if(se3format == "XYZQXQYQZQW"){
+        readPosQuatSeq(nParts, nFrames, frames, false);
+        return true;
+    } else if(se3format == "XYZRPY"){
+        readPosRpySeq(nParts, nFrames, frames);
+        return false;
+    }
+    return false;
+}
+        
+
+void MultiSE3Seq::readPosQuatSeq(int nParts, int nFrames, const Listing& frames, bool isWfirst)
 {
     for(int i=0; i < nFrames; ++i){
-        const Listing& frameNode = *values[i].toListing();
+        const Listing& values = *frames[i].toListing();
         Frame f = frame(i);
-        const int n = std::min(frameNode.size(), nParts);
+        const int n = std::min(values.size(), nParts);
         for(int j=0; j < n; ++j){
-            const Listing& node = *frameNode[j].toListing();
+            const Listing& node = *values[j].toListing();
             SE3& x = f[j];
             if(node.size() == 7){
                 x.translation() << node[0].toDouble(), node[1].toDouble(), node[2].toDouble();
                 if(isWfirst){
-                    x.rotation() = Quat(node[3].toDouble(),
-                                        node[4].toDouble(), node[5].toDouble(), node[6].toDouble());
+                    x.rotation() = Quat(
+                        node[3].toDouble(), node[4].toDouble(), node[5].toDouble(), node[6].toDouble());
                 } else {
-                    x.rotation() = Quat(node[6].toDouble(),
-                                        node[3].toDouble(), node[4].toDouble(), node[5].toDouble());
+                    x.rotation() = Quat(
+                        node[6].toDouble(), node[3].toDouble(), node[4].toDouble(), node[5].toDouble());
                 }
             }
         }
@@ -103,14 +132,14 @@ void MultiSE3Seq::readPosQuatSeq(int nParts, int nFrames, const Listing& values,
 }
 
 
-void MultiSE3Seq::readPosRpySeq(int nParts, int nFrames, const Listing& values)
+void MultiSE3Seq::readPosRpySeq(int nParts, int nFrames, const Listing& frames)
 {
     for(int i=0; i < nFrames; ++i){
-        const Listing& frameNode = *values[i].toListing();
+        const Listing& values = *frames[i].toListing();
         Frame f = frame(i);
-        const int n = std::min(frameNode.size(), nParts);
+        const int n = std::min(values.size(), nParts);
         for(int j=0; j < n; ++j){
-            const Listing& node = *frameNode[j].toListing();
+            const Listing& node = *values[j].toListing();
             if(node.size() == 6){
                 SE3& x = f[j];
                 x.translation() << node[0].toDouble(), node[1].toDouble(), node[2].toDouble();

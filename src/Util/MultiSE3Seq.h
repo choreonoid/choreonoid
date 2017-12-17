@@ -45,6 +45,8 @@ protected:
     virtual bool doWriteSeq(YAMLWriter& writer) override;
 
 private:
+    bool checkFormatAndReadFrames(
+        const std::string& format, double version, int nParts, int nFrames, const Listing& frames);
     void readPosQuatSeq(int nParts, int nFrames, const Listing& values, bool isWfirst);
     void readPosRpySeq(int nParts, int nFrames, const Listing& values);
 };
