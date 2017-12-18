@@ -15,7 +15,7 @@ namespace cnoid {
 
 class BodyMotionItemImpl;
 
-class CNOID_EXPORT BodyMotionItem : public AbstractMultiSeqItem
+class CNOID_EXPORT BodyMotionItem : public AbstractSeqItem
 {
 public:
     static void initializeClass(ExtensionManager* ext);
@@ -28,7 +28,7 @@ public:
     BodyMotionItem(const BodyMotionItem& org);
     ~BodyMotionItem();
 
-    virtual AbstractMultiSeqPtr abstractMultiSeq();
+    virtual AbstractSeqPtr abstractSeq() override;
 
     BodyMotionPtr motion() { return bodyMotion_; }
     ConstBodyMotionPtr motion() const { return bodyMotion_; }
@@ -64,13 +64,13 @@ public:
     SignalProxy<void()> sigExtraSeqItemsChanged();
     void updateExtraSeqItems();
 
-    virtual void notifyUpdate();
+    virtual void notifyUpdate() override;
 
 protected:
-    virtual bool onChildItemAboutToBeAdded(Item* childItem, bool isManualOperation);
-    virtual Item* doDuplicate() const;
-    virtual bool store(Archive& archive);
-    virtual bool restore(const Archive& archive);
+    virtual bool onChildItemAboutToBeAdded(Item* childItem, bool isManualOperation) override;
+    virtual Item* doDuplicate() const override;
+    virtual bool store(Archive& archive) override;
+    virtual bool restore(const Archive& archive) override;
 
 private:
     BodyMotionPtr bodyMotion_;

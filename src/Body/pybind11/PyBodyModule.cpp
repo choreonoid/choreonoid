@@ -63,8 +63,7 @@ PYBIND11_MODULE(Body, m)
 
     py::class_<BodyMotion, BodyMotionPtr> bodyMotion(m, "BodyMotion");
     bodyMotion
-        .def("setNumParts", &BodyMotion::setNumParts)
-        .def("getNumParts", &BodyMotion::getNumParts)
+        .def("setNumJoints", &BodyMotion::setNumParts)
         .def("numJoints", &BodyMotion::numJoints)
         .def("numLings", &BodyMotion::numLinks)
         .def("frameRate", &BodyMotion::frameRate)
@@ -77,6 +76,9 @@ PYBIND11_MODULE(Body, m)
         .def("jointPosSeq", (MultiValueSeqPtr(BodyMotion::*)())&BodyMotion::jointPosSeq)
         .def("linkPosSeq", (MultiSE3SeqPtr(BodyMotion::*)())&BodyMotion::linkPosSeq)
         .def("frame", (BodyMotion::Frame (BodyMotion::*)(int)) &BodyMotion::frame)
+        // deprecated
+        .def("setNumParts", &BodyMotion::setNumJoints)
+        .def("getNumParts", &BodyMotion::numJoints)
         ;
 
     py::class_<BodyMotion::Frame>(m, "Frame")

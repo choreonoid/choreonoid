@@ -89,9 +89,9 @@ bool ZMPSeq::doWriteSeq(YAMLWriter& writer)
 }
 
 
-bool ZMPSeq::doReadSeq(const Mapping& archive)
+bool ZMPSeq::doReadSeq(const Mapping& archive, std::ostream& os)
 {
-    if(Vector3Seq::doReadSeq(archive)){
+    if(Vector3Seq::doReadSeq(archive, os)){
         archive.read("isRootRelative", isRootRelative_);
         return true;
     }

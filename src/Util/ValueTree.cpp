@@ -99,7 +99,7 @@ ValueNode::ValueNode(const ValueNode& org)
     : typeBits(org.typeBits),
       line_(org.line_),
       column_(org.column_),
-      indexInMapping(org.indexInMapping)
+      indexInMapping_(org.indexInMapping_)
 {
 
 }
@@ -149,7 +149,7 @@ ValueNode& ValueNode::operator=(const ValueNode&)
 bool ValueNode::read(int &out_value) const
 {
     if(isScalar()){
-        const char* nptr = &(static_cast<const ScalarNode* const>(this)->stringValue[0]);
+        const char* nptr = &(static_cast<const ScalarNode* const>(this)->stringValue_[0]);
         char* endptr;
         out_value = strtol(nptr, &endptr, 10);
         if(endptr > nptr){
@@ -168,14 +168,14 @@ int ValueNode::toInt() const
 
     const ScalarNode* const scalar = static_cast<const ScalarNode* const>(this);
     
-    const char* nptr = &(scalar->stringValue[0]);
+    const char* nptr = &(scalar->stringValue_[0]);
     char* endptr;
     const int value = strtol(nptr, &endptr, 10);
 
     if(endptr == nptr){
         ScalarTypeMismatchException ex;
         ex.setPosition(line(), column());
-        ex.setMessage(str(format(_("The value \"%1%\" must be an integer value")) % scalar->stringValue));
+        ex.setMessage(str(format(_("The value \"%1%\" must be an integer value")) % scalar->stringValue_));
         throw ex;
     }
 
@@ -186,7 +186,7 @@ int ValueNode::toInt() const
 bool ValueNode::read(double& out_value) const
 {
     if(isScalar()){
-        const char* nptr = &(static_cast<const ScalarNode* const>(this)->stringValue[0]);
+        const char* nptr = &(static_cast<const ScalarNode* const>(this)->stringValue_[0]);
         char* endptr;
         out_value = strtod(nptr, &endptr);
         if(endptr > nptr){
@@ -205,14 +205,14 @@ double ValueNode::toDouble() const
 
     const ScalarNode* const scalar = static_cast<const ScalarNode* const>(this);
 
-    const char* nptr = &(scalar->stringValue[0]);
+    const char* nptr = &(scalar->stringValue_[0]);
     char* endptr;
     const double value = strtod(nptr, &endptr);
 
     if(endptr == nptr){
         ScalarTypeMismatchException ex;
         ex.setPosition(line(), column());
-        ex.setMessage(str(format(_("The value \"%1%\" must be a double value")) % scalar->stringValue));
+        ex.setMessage(str(format(_("The value \"%1%\" must be a double value")) % scalar->stringValue_));
         throw ex;
     }
 
@@ -224,7 +224,7 @@ bool ValueNode::read(bool& out_value) const
 {
     if(isScalar()){
         const ScalarNode* const scalar = static_cast<const ScalarNode* const>(this);
-        map<string, bool>::iterator p = booleanSymbols.find(scalar->stringValue);
+        map<string, bool>::iterator p = booleanSymbols.find(scalar->stringValue_);
         if(p != booleanSymbols.end()){
             out_value = p->second;
             return true;
@@ -241,14 +241,14 @@ bool ValueNode::toBool() const
     }
 
     const ScalarNode* const scalar = static_cast<const ScalarNode* const>(this);
-    map<string, bool>::iterator p = booleanSymbols.find(scalar->stringValue);
+    map<string, bool>::iterator p = booleanSymbols.find(scalar->stringValue_);
     if(p != booleanSymbols.end()){
         return p->second;
     }
     
     ScalarTypeMismatchException ex;
     ex.setPosition(line(), column());
-    ex.setMessage(str(format(_("The value \"%1%\" must be a boolean value")) % scalar->stringValue));
+    ex.setMessage(str(format(_("The value \"%1%\" must be a boolean value")) % scalar->stringValue_));
     throw ex;
 }
 
@@ -258,7 +258,7 @@ bool ValueNode::toBool() const
 bool ValueNode::read(std::string& out_value) const
 {
     if(isScalar()){
-        out_value = static_cast<const ScalarNode* const>(this)->stringValue;
+        out_value = static_cast<const ScalarNode* const>(this)->stringValue_;
         return !out_value.empty();
     }
     return false;
@@ -270,7 +270,7 @@ const std::string ValueNode::toString() const
     if(!isScalar()){
         throwNotScalrException();
     }
-    return static_cast<const ScalarNode* const>(this)->stringValue;
+    return static_cast<const ScalarNode* const>(this)->stringValue_;
 }
 
 #else
@@ -278,7 +278,7 @@ const std::string ValueNode::toString() const
 bool ValueNode::read(std::string& out_value) const
 {
     if(isScalar()){
-        out_value = static_cast<const ScalarNode* const>(this)->stringValue;
+        out_value = static_cast<const ScalarNode* const>(this)->stringValue_;
         return !out_value.empty();
     }
     return false;
@@ -290,15 +290,15 @@ const std::string& ValueNode::toString() const
     if(!isScalar()){
         throwNotScalrException();
     }
-    return static_cast<const ScalarNode* const>(this)->stringValue;
+    return static_cast<const ScalarNode* const>(this)->stringValue_;
 }
 
 #endif
 
 
 ScalarNode::ScalarNode(const std::string& value, StringStyle stringStyle)
-    : stringValue(value),
-      stringStyle(stringStyle)
+    : stringValue_(value),
+      stringStyle_(stringStyle)
 {
     typeBits = SCALAR;
     line_ = -1;
@@ -307,16 +307,16 @@ ScalarNode::ScalarNode(const std::string& value, StringStyle stringStyle)
 
 
 ScalarNode::ScalarNode(const char* text, size_t length)
-    : stringValue(text, length)
+    : stringValue_(text, length)
 {
     typeBits = SCALAR;
-    stringStyle = PLAIN_STRING;
+    stringStyle_ = PLAIN_STRING;
 }
 
 
 ScalarNode::ScalarNode(const char* text, size_t length, StringStyle stringStyle)
-    : stringValue(text, length),
-      stringStyle(stringStyle)
+    : stringValue_(text, length),
+      stringStyle_(stringStyle)
 {
     typeBits = SCALAR;
     line_ = -1;
@@ -325,19 +325,19 @@ ScalarNode::ScalarNode(const char* text, size_t length, StringStyle stringStyle)
 
 
 ScalarNode::ScalarNode(int value)
-    : stringValue(lexical_cast<string>(value))
+    : stringValue_(lexical_cast<string>(value))
 {
     typeBits = SCALAR;
     line_ = -1;
     column_ = -1;
-    stringStyle = PLAIN_STRING;
+    stringStyle_ = PLAIN_STRING;
 }
 
 
 ScalarNode::ScalarNode(const ScalarNode& org)
     : ValueNode(org),
-      stringValue(org.stringValue),
-      stringStyle(org.stringStyle)
+      stringValue_(org.stringValue_),
+      stringStyle_(org.stringStyle_)
 {
 
 }
@@ -427,7 +427,7 @@ Mapping::Mapping()
     column_ = -1;
     mode = READ_MODE;
     indexCounter = 0;
-    keyQuoteStyle = PLAIN_STRING;
+    keyStringStyle_ = PLAIN_STRING;
     isFlowStyle_ = false;
     doubleFormat_ = defaultDoubleFormat;
 }
@@ -451,7 +451,7 @@ Mapping::Mapping(const Mapping& org)
       mode(org.mode),
       doubleFormat_(org.doubleFormat_),
       isFlowStyle_(org.isFlowStyle_),
-      keyQuoteStyle(org.keyQuoteStyle)
+      keyStringStyle_(org.keyStringStyle_)
 {
     
 }
@@ -490,7 +490,7 @@ void Mapping::setDoubleFormat(const char* format)
 
 void Mapping::setKeyQuoteStyle(StringStyle style)
 {
-    keyQuoteStyle = style;
+    keyStringStyle_ = style;
 }
 
 
@@ -608,7 +608,7 @@ inline void Mapping::insertSub(const std::string& key, ValueNode* node)
     }
     //values.insert(make_pair(key, node));
     values[key] = node;
-    node->indexInMapping = indexCounter++;
+    node->indexInMapping_ = indexCounter++;
 }
 
 
@@ -649,7 +649,7 @@ Mapping* Mapping::openMapping_(const std::string& key, bool doOverwrite)
             if(doOverwrite){
                 mapping->clear();
             }
-            mapping->indexInMapping = indexCounter++;
+            mapping->indexInMapping_ = indexCounter++;
         }
     }
 
@@ -689,7 +689,7 @@ Listing* Mapping::openListing_(const std::string& key, bool doOverwrite)
             if(doOverwrite){
                 sequence->clear();
             }
-            sequence->indexInMapping = indexCounter++;
+            sequence->indexInMapping_ = indexCounter++;
         }
     }
 
@@ -765,9 +765,9 @@ void Mapping::write(const std::string &key, const std::string& value, StringStyl
         ValueNode* node = p->second.get();
         if(node->isScalar()){
             ScalarNode* scalar = static_cast<ScalarNode*>(node);
-            scalar->stringValue = value;
-            scalar->stringStyle = stringStyle;
-            scalar->indexInMapping = indexCounter++;
+            scalar->stringValue_ = value;
+            scalar->stringStyle_ = stringStyle;
+            scalar->indexInMapping_ = indexCounter++;
         } else {
             throwNotScalrException();
         }
@@ -784,9 +784,9 @@ void Mapping::writeSub(const std::string &key, const char* text, size_t length, 
         ValueNode* node = p->second.get();
         if(node->isScalar()){
             ScalarNode* scalar = static_cast<ScalarNode*>(node);
-            scalar->stringValue = string(text, length);
-            scalar->stringStyle = stringStyle;
-            scalar->indexInMapping = indexCounter++;
+            scalar->stringValue_ = string(text, length);
+            scalar->stringStyle_ = stringStyle;
+            scalar->indexInMapping_ = indexCounter++;
         } else {
             throwNotScalrException();
         }
@@ -824,12 +824,6 @@ void Mapping::write(const std::string &key, double value)
 void Mapping::writePath(const std::string &key, const std::string& value)
 {
     write(key, filesystem::path(value).string(), DOUBLE_QUOTED);
-}
-
-
-bool Mapping::compareIters(const Mapping::const_iterator& it1, const Mapping::const_iterator& it2)
-{
-    return (it1->second->indexInMapping < it2->second->indexInMapping);
 }
 
 

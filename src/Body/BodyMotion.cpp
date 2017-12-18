@@ -20,17 +20,18 @@ namespace {
 
 
 BodyMotion::BodyMotion()
-    : AbstractMultiSeq("BodyMotion"),
+    : AbstractSeq("CompositeSeq"),
       jointPosSeq_(new MultiValueSeq()),
       linkPosSeq_(new MultiSE3Seq())
 {
-    jointPosSeq_->setSeqContentName("JointPosition");
+    setSeqContentName("BodyMotion");
+    jointPosSeq_->setSeqContentName("JointDisplacement");
     linkPosSeq_->setSeqContentName("LinkPosition");
 }
 
 
 BodyMotion::BodyMotion(const BodyMotion& org)
-    : AbstractMultiSeq(org),
+    : AbstractSeq(org),
       jointPosSeq_(new MultiValueSeq(*org.jointPosSeq_)),
       linkPosSeq_(new MultiSE3Seq(*org.linkPosSeq_))
 {
@@ -43,7 +44,7 @@ BodyMotion::BodyMotion(const BodyMotion& org)
 BodyMotion& BodyMotion::operator=(const BodyMotion& rhs)
 {
     if(this != &rhs){
-        AbstractMultiSeq::operator=(rhs);
+        AbstractSeq::operator=(rhs);
     }
     *jointPosSeq_ = *rhs.jointPosSeq_;
     *linkPosSeq_ = *rhs.linkPosSeq_;
@@ -68,20 +69,11 @@ AbstractSeqPtr BodyMotion::cloneSeq() const
 /*
   This function sets the number of joints
 */
-void BodyMotion::setNumParts(int numParts, bool clearNewElements)
+void BodyMotion::setNumJoints(int numJoints, bool clearNewElements)
 {
-    jointPosSeq_->setNumParts(numParts, clearNewElements);
+    jointPosSeq_->setNumParts(numJoints, clearNewElements);
 }
 
-
-/**
-   This function returns the number of joints
-*/
-int BodyMotion::getNumParts() const
-{
-    return jointPosSeq_->numParts();
-}
-        
 
 double BodyMotion::getFrameRate() const
 {
@@ -133,17 +125,6 @@ void BodyMotion::setDimension(int numFrames, int numJoints, int numLinks, bool c
 }
 
 
-void BodyMotion::setDimension(int numFrames, int numJoints, bool clearNewArea)
-{
-    jointPosSeq_->setDimension(numFrames, numJoints, clearNewArea);
-    linkPosSeq_->setNumFrames(numFrames, clearNewArea);
-
-    for(ExtraSeqMap::iterator p = extraSeqs.begin(); p != extraSeqs.end(); ++p){
-        p->second->setNumFrames(numFrames, clearNewArea);
-    }
-}
-
-
 void BodyMotion::setExtraSeq(AbstractSeqPtr seq)
 {
     extraSeqs[seq->seqContentName()] = seq;
@@ -151,125 +132,151 @@ void BodyMotion::setExtraSeq(AbstractSeqPtr seq)
 }
 
 
-bool BodyMotion::loadStandardYAMLformat(const std::string& filename)
+bool BodyMotion::loadStandardFormat(const std::string& filename, std::ostream& os)
 {
-    bool result = false;
-    clearSeqMessage();
     YAMLReader reader;
     reader.expectRegularMultiListing();
-    
+    bool result = false;
+
     try {
-        result = read(*reader.loadDocument(filename)->toMapping());
+        result = readSeq(*reader.loadDocument(filename)->toMapping(), os);
     } catch(const ValueNode::Exception& ex){
-        addSeqMessage(ex.message());
+        os << ex.message();
     }
 
     return result;
 }
 
 
-bool BodyMotion::read(const Mapping& archive)
+bool BodyMotion::doReadSeq(const Mapping& archive, std::ostream& os)
 {
     setDimension(0, 1, 1);
 
-    bool result = true;
     bool loaded = false;
-    ZMPSeqPtr zmpSeq;
-    Vector3SeqPtr userVec3;
     
     try {
-        if(archive["type"].toString() != "BodyMotion"){
-            result = false;
-
+        double version;
+        if(!archive.read("formatVersion", version)){
+            version = 1.0;
+        }
+        const char* type;
+        const char* jointContent;
+        std::function<string(Mapping* mapping)> readContent;
+        if(version >= 2.0){
+            type = "CompositeSeq";
+            jointContent = "JointDisplacement";
+            readContent = [](Mapping* mapping){
+                string content;
+                mapping->read("content", content);
+                return content;
+            };
         } else {
+            type = "BodyMotion";
+            jointContent = "JointPosition";
+            readContent = [](Mapping* mapping){
+                string content;
+                if(!mapping->read("content", content)){
+                    mapping->read("purpose", content);
+                }
+                return content;
+            };
+        }
+
+        if(archive["type"].toString() == type){
+
             const Listing& components = *archive["components"].toListing();
         
             for(int i=0; i < components.size(); ++i){
-                const Mapping& component = *components[i].toMapping();
-                const string& type = component["type"];
-                string content;
-                if(!component.read("content", content)){
-                    component.read("purpose", content);
-                }
-                if(type == "MultiValueSeq" && content == "JointPosition"){
-                    result &= jointPosSeq_->readSeq(component);
-                    if(result){
-                        loaded = true;
-                    } else {
-                        addSeqMessage(jointPosSeq_->seqMessage());
-                    }
-                }
-		else if((type == "MultiAffine3Seq" || type == "MultiSe3Seq" || type == "MultiSE3Seq")
-                          && content == "LinkPosition"){
-                    result &= linkPosSeq_->readSeq(component);
-                    if(result){
-                        loaded = true;
-                    } else {
-                        addSeqMessage(linkPosSeq_->seqMessage());
-                    }
-                }
-		else if(type == "Vector3Seq") {
-		  if(content == "ZMP" || content == "RelativeZMP" || content == "RelativeZmp"){
-		    bool isRelativeZmp = false;
-		    if(content != "ZMP"){
-		      isRelativeZmp = true;
-		    }
+                MappingPtr component = components[i].toMapping()->cloneMapping();
 
-		    zmpSeq = getOrCreateExtraSeq<ZMPSeq>("ZMP");
-		    result = zmpSeq->readSeq(component);
-		    if(result){
-		      if(isRelativeZmp){
-			zmpSeq->setRootRelative(true);
-		      }
-		    } else {
-		      addSeqMessage(zmpSeq->seqMessage());
-		    }
-		    if(!result){
-		      //break;
-		    }
-		  }
-		  else {
-		    //----------- user defined Vector3 data --------- 
-		    userVec3 = getOrCreateExtraSeq<Vector3Seq>(content);
-		    result = userVec3->readSeq(component);
-		    if(!result){
-		      addSeqMessage(userVec3->seqMessage());
-		    }
-		    if(!result){
-		      //break;
-		    }
-		  }
-		}
-		
+                if(!component->find("formatVersion")->isValid()){
+                    component->write("formatVersion", version);
+                }
+                
+                const string type = component->read<string>("type");
+                string content = readContent(component);
+
+                if(type == "MultiValueSeq" && content == jointContent){
+                    loaded = jointPosSeq_->readSeq(*component, os);
+                    if(!loaded){
+                        break;
+                    }
+                } else if((type == "MultiAffine3Seq" || type == "MultiSe3Seq" || type == "MultiSE3Seq")
+                          && content == "LinkPosition"){
+                    loaded = linkPosSeq_->readSeq(*component, os);
+                    if(!loaded){
+                        break;
+                    }
+                } else if(type == "Vector3Seq") {
+                    if(content == "ZMP" || content == "RelativeZMP" || content == "RelativeZmp"){
+                        auto zmpSeq = getOrCreateExtraSeq<ZMPSeq>("ZMP");
+                        loaded = zmpSeq->readSeq(*component, os);
+                        if(!loaded){
+                            break;
+                        }
+                        zmpSeq->setRootRelative(content != "ZMP");
+                    } else {
+                        //----------- user defined Vector3 data --------- 
+                        auto userVec3 = getOrCreateExtraSeq<Vector3Seq>(content);
+                        loaded = userVec3->readSeq(*component, os);
+                        if(!loaded){
+                            break;
+                        }
+                    }
+                }
             }
         }
     } catch(const ValueNode::Exception& ex){
-        addSeqMessage(ex.message());
-        result = false;
+        os << ex.message();
+        loaded = false;
     }
 
-    if(!result){
+    if(!loaded){
         setDimension(0, 1, 1);
 
     }
     
-    return (result && loaded);
+    return loaded;
 }
 
 
-bool BodyMotion::write(YAMLWriter& writer)
+bool BodyMotion::doWriteSeq(YAMLWriter& writer)
 {
+    double version = writer.info("formatVersion", 2.0);
+    bool isVersion1 = version >= 1.0 && version < 2.0;
+
+    writer.setInfo("formatVersion", version);
+
+    writer.setDoubleFormat("%.9g");
+
+    if(isVersion1){
+        writer.putComment("Body motion data set format version 1.0 defined by Choreonoid\n");
+        writer.putKeyValue("type", "BodyMotion");
+    } else {
+        AbstractSeq::doWriteSeq(writer);
+    }
+        
+    writer.putKey("components");
+    writer.setInfo("isComponent", true);
+
     writer.startListing();
 
     if(jointPosSeq_->numFrames() > 0){
-        if(!jointPosSeq_->writeSeq(writer)){
-            addSeqMessage(jointPosSeq_->seqMessage());
+        string orgContentName;
+        if(isVersion1){
+            orgContentName = jointPosSeq_->seqContentName();
+            jointPosSeq_->setSeqContentName("JointPosition");
+        }
+        bool result = jointPosSeq_->writeSeq(writer);
+        if(isVersion1){
+            jointPosSeq_->setSeqContentName(orgContentName);
+        }
+        if(!result){
             return false;
         }
     }
     if(linkPosSeq_->numFrames() > 0){
         if(!linkPosSeq_->writeSeq(writer)){
-            addSeqMessage(linkPosSeq_->seqMessage());
             return false;
         }
     }
@@ -277,7 +284,6 @@ bool BodyMotion::write(YAMLWriter& writer)
     for(ExtraSeqMap::iterator p = extraSeqs.begin(); p != extraSeqs.end(); ++p){
         AbstractSeqPtr& seq = p->second;
         if(!seq->writeSeq(writer)){
-            addSeqMessage(seq->seqMessage());
             return false;
         }
     }
@@ -288,23 +294,22 @@ bool BodyMotion::write(YAMLWriter& writer)
 }
 
 
-bool BodyMotion::saveAsStandardYAMLformat(const std::string& filename)
+bool BodyMotion::saveAsStandardFormat(const std::string& filename, std::ostream& os)
+{
+    return saveAsStandardFormat(filename, 0.0 /* latest */, os);
+}
+        
+
+bool BodyMotion::saveAsStandardFormat(const std::string& filename, double version, std::ostream& os)
 {
     YAMLWriter writer(filename);
-    writer.setDoubleFormat("%.9g");
+    if(version > 0.0){
+        writer.setInfo("formatVersion", version);
+    }
 
-    writer.putComment("Body motion data set format version 1.0 defined by Choreonoid\n");
+    writer.setMessageSink(os);
 
-    writer.startMapping();
-
-    writer.putKeyValue("type", "BodyMotion");
-    writer.putKey("components");
-
-    bool result = write(writer);
-
-    writer.endMapping();
-
-    return result;
+    return writeSeq(writer);
 }
 
 
