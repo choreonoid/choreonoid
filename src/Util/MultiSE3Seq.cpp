@@ -16,6 +16,12 @@ using namespace std;
 using namespace cnoid;
 using boost::format;
 
+namespace {
+
+enum SE3Format { XYZQWQXQYQZ, XYZQXQYQZQW, XYZRPY };
+
+}
+
 
 MultiSE3Seq::MultiSE3Seq()
     : MultiSE3Seq::BaseSeqType("MultiSE3Seq")
@@ -52,79 +58,85 @@ MultiSE3Seq::~MultiSE3Seq()
 
 bool MultiSE3Seq::doReadSeq(const Mapping& archive, std::ostream& os)
 {
-    if(BaseSeqType::doReadSeq(archive, os)){
-        double version;
-        if(!archive.read("formatVersion", version)){
-            version = 1.0;
-        }
-        string formatKey;
-        function<bool(const string& type)> checkType;
-        if(version >= 2.0){
-            formatKey = "SE3Format";
-            checkType = [](const string& type){
-                return (type == "MultiSE3Seq");
-            };
-        } else {
-            formatKey = "format";
-            checkType = [](const string& type){
-                return (type == "MultiSE3Seq" || type == "MultiSe3Seq" || type == "MultiAffine3Seq");
-            };
-        }
-        if(checkType(archive.get<string>("type"))){
-            string se3format = archive.get<string>(formatKey);
-            const Listing& frames = *archive.findListing("frames");
-            if(frames.isValid()){
-                const int nParts = archive.get<int>("numParts");
-                const int nFrames = frames.size();
-                setDimension(nFrames, nParts);
-                if(!checkFormatAndReadFrames(se3format, version, nParts, nFrames, frames)){
-                    os << format(_("SE3 format \"%1%\" is unsupported.")) % se3format << endl;
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-    return false;
-}
+    bool result = false;
 
-
-bool MultiSE3Seq::checkFormatAndReadFrames
-(const string& se3format, double version, int nParts, int nFrames, const Listing& frames)
-{
-    if(se3format == "XYZQWQXQYQZ"){
-        if(version < 2.0){
-            readPosQuatSeq(nParts, nFrames, frames, true);
-            return true;
-        }
-    } else if(se3format == "XYZQXQYQZQW"){
-        readPosQuatSeq(nParts, nFrames, frames, false);
-        return true;
-    } else if(se3format == "XYZRPY"){
-        readPosRpySeq(nParts, nFrames, frames);
+    if(!BaseSeqType::doReadSeq(archive, os)){
         return false;
     }
-    return false;
-}
-        
 
-void MultiSE3Seq::readPosQuatSeq(int nParts, int nFrames, const Listing& frames, bool isWfirst)
+    double version;
+    if(!archive.read("formatVersion", version)){
+        version = 1.0;
+    }
+    string formatKey;
+    function<bool(const string& type)> checkType;
+    if(version >= 2.0){
+        formatKey = "SE3Format";
+        checkType = [](const string& type){
+            return (type == "MultiSE3Seq");
+        };
+    } else {
+        formatKey = "format";
+        checkType = [](const string& type){
+            return (type == "MultiSE3Seq" || type == "MultiSe3Seq" || type == "MultiAffine3Seq");
+        };
+    }
+    if(checkType(archive.get<string>("type"))){
+        string se3format = archive.get<string>(formatKey);
+        const Listing& frames = *archive.findListing("frames");
+        if(frames.isValid()){
+            const int nParts = archive.get<int>("numParts");
+            const int nFrames = frames.size();
+            setDimension(nFrames, nParts);
+
+            if(se3format == "XYZQWQXQYQZ"){
+                readFrames(nParts, nFrames, frames, true, true);
+                result = true;
+            } else if(se3format == "XYZQXQYQZQW"){
+                readFrames(nParts, nFrames, frames, true, false);
+                result = true;
+            } else if(se3format == "XYZRPY"){
+                readFrames(nParts, nFrames, frames, false, false);
+                result = true;
+            }
+            if(!result){
+                os << format(_("SE3 format \"%1%\" is unsupported.")) % se3format << endl;
+            }
+        }
+    }
+
+    return result;
+}
+
+
+void MultiSE3Seq::readFrames(int nParts, int nFrames, const Listing& frames, bool isQuaternion, bool isWXYZ)
 {
     for(int i=0; i < nFrames; ++i){
         const Listing& values = *frames[i].toListing();
-        Frame f = frame(i);
+        auto f = frame(i);
         const int n = std::min(values.size(), nParts);
         for(int j=0; j < n; ++j){
-            const Listing& node = *values[j].toListing();
-            SE3& x = f[j];
-            if(node.size() == 7){
-                x.translation() << node[0].toDouble(), node[1].toDouble(), node[2].toDouble();
-                if(isWfirst){
-                    x.rotation() = Quat(
-                        node[3].toDouble(), node[4].toDouble(), node[5].toDouble(), node[6].toDouble());
+            const Listing& v = *values[j].toListing();
+            SE3& s = f[j];
+            if(isQuaternion){
+                if(v.size() != 7){
+                    v.throwException(_("Invalid number of values are specified."));
                 } else {
-                    x.rotation() = Quat(
-                        node[6].toDouble(), node[3].toDouble(), node[4].toDouble(), node[5].toDouble());
+                    s.translation() << v[0].toDouble(), v[1].toDouble(), v[2].toDouble();
+                    if(isWXYZ){
+                        s.rotation() = Quat(
+                            v[3].toDouble(), v[4].toDouble(), v[5].toDouble(), v[6].toDouble());
+                    } else {
+                        s.rotation() = Quat(
+                            v[6].toDouble(), v[3].toDouble(), v[4].toDouble(), v[5].toDouble());
+                    }
+                }
+            } else { // RPY
+                if(v.size() != 6){
+                    v.throwException(_("Invalid number of values are specified."));
+                } else {
+                    s.translation() << v[0].toDouble(), v[1].toDouble(), v[2].toDouble();
+                    s.rotation() = rotFromRpy(v[3].toDouble(), v[4].toDouble(), v[5].toDouble());
                 }
             }
         }
@@ -132,28 +144,7 @@ void MultiSE3Seq::readPosQuatSeq(int nParts, int nFrames, const Listing& frames,
 }
 
 
-void MultiSE3Seq::readPosRpySeq(int nParts, int nFrames, const Listing& frames)
-{
-    for(int i=0; i < nFrames; ++i){
-        const Listing& values = *frames[i].toListing();
-        Frame f = frame(i);
-        const int n = std::min(values.size(), nParts);
-        for(int j=0; j < n; ++j){
-            const Listing& node = *values[j].toListing();
-            if(node.size() == 6){
-                SE3& x = f[j];
-                x.translation() << node[0].toDouble(), node[1].toDouble(), node[2].toDouble();
-                const double r = node[3].toDouble();
-                const double p = node[4].toDouble();
-                const double y = node[5].toDouble();
-                x.rotation() = rotFromRpy(r, p, y);
-            }
-        }
-    }
-}
-
-
-static inline void writeSE3(YAMLWriter& writer, const SE3& value)
+static void writeSE3(YAMLWriter& writer, const SE3& value)
 {
     writer.startFlowStyleListing();
 
@@ -174,27 +165,36 @@ static inline void writeSE3(YAMLWriter& writer, const SE3& value)
 
 bool MultiSE3Seq::doWriteSeq(YAMLWriter& writer)
 {
-    if(BaseSeqType::doWriteSeq(writer)){
+    if(!BaseSeqType::doWriteSeq(writer)){
+        return false;
+    }
 
-        writer.putKeyValue("format", "XYZQWQXQYQZ");
+    double version = writer.info("formatVersion", 2.0);
+
+    string formatKey;
+    if(version >= 2.0){
+        formatKey = "SE3Format";
+    } else {
+        formatKey = "format";
+    }
+
+    writer.putKeyValue(formatKey, "XYZQWQXQYQZ");
     
-        writer.putKey("frames");
-        writer.startListing();
-        const int m = numParts();
-        const int n = numFrames();
-        for(int i=0; i < n; ++i){
-            Frame f = frame(i);
-            writer.startFlowStyleListing();
-            for(int j=0; j < m; ++j){
-                writeSE3(writer, f[j]);
-            }
-            writer.endListing();
+    writer.putKey("frames");
+    writer.startListing();
+    const int m = numParts();
+    const int n = numFrames();
+    for(int i=0; i < n; ++i){
+        Frame f = frame(i);
+        writer.startFlowStyleListing();
+        for(int j=0; j < m; ++j){
+            writeSE3(writer, f[j]);
         }
         writer.endListing();
-        
-        return true;
     }
-    return false;
+    writer.endListing();
+    
+    return true;
 }
 
 
