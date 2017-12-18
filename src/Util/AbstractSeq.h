@@ -101,7 +101,8 @@ protected:
     virtual bool doReadSeq(const Mapping& archive, std::ostream& os);
     virtual bool doWriteSeq(YAMLWriter& writer);
 
-    bool checkSeqContent(const Mapping& archive, const std::string requiredContent, std::ostream& os = nullout());
+    void checkSeqType(const Mapping& archive);
+    bool checkSeqContent(const Mapping& archive, const std::string requiredContent, std::ostream& os);
 
     //! deprecated. Use the os parameter of readSeq to get messages in reading
     void clearSeqMessage() { }

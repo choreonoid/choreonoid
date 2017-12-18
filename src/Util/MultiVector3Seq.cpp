@@ -53,58 +53,63 @@ MultiVector3Seq::~MultiVector3Seq()
 
 bool MultiVector3Seq::doReadSeq(const Mapping& archive, std::ostream& os)
 {
-    if(BaseSeqType::doReadSeq(archive, os)){
-        const string& type = archive["type"].toString();
-        if(type == seqType()){
-            const Listing& values = *archive.findListing("frames");
-            if(values.isValid()){
-                const int nParts = archive["numParts"].toInt();
-                const int nFrames = values.size();
-                setDimension(nFrames, nParts);
+    if(!BaseSeqType::doReadSeq(archive, os)){
+        return false;
+    }
+
+    checkSeqType(archive);
+
+    const int nParts = archive["numParts"].toInt();
+    
+    const Listing& frames = *archive.findListing("frames");
+    if(!frames.isValid()){
+        setDimension(0, nParts);
+    } else {
+        const int nFrames = frames.size();
+        setDimension(nFrames, nParts);
                 
-                for(int i=0; i < nFrames; ++i){
-                    const Listing& frameNode = *values[i].toListing();
-                    Frame f = frame(i);
-                    const int n = std::min(frameNode.size(), nParts);
-                    for(int j=0; j < n; ++j){
-                        const Listing& node = *frameNode[j].toListing();
-                        if(node.size() == 3){
-                            f[j] << node[0].toDouble(), node[1].toDouble(), node[2].toDouble();
-                        } else {
-                            node.throwException(_("Element is not a three dimension vector"));
-                        }
-                    }
+        for(int i=0; i < nFrames; ++i){
+            const Listing& frameNode = *frames[i].toListing();
+            Frame f = frame(i);
+            const int n = std::min(frameNode.size(), nParts);
+            for(int j=0; j < n; ++j){
+                const Listing& v = *frameNode[j].toListing();
+                if(v.size() != 3){
+                    v.throwException(_("The number of elements specified as a 3D vector is invalid."));
+                } else {
+                    f[j] << v[0].toDouble(), v[1].toDouble(), v[2].toDouble();
                 }
             }
         }
-        return true;
     }
-    return false;
+    
+    return true;
 }
 
 
 bool MultiVector3Seq::doWriteSeq(YAMLWriter& writer)
 {
-    if(BaseSeqType::doWriteSeq(writer)){
-        writer.putKey("frames");
-        writer.startListing();
-        const int m = numParts();
-        const int n = numFrames();
-        for(int i=0; i < n; ++i){
-            Frame f = frame(i);
+    if(!BaseSeqType::doWriteSeq(writer)){
+        return false;
+    }
+
+    writer.putKey("frames");
+    writer.startListing();
+    const int m = numParts();
+    const int n = numFrames();
+    for(int i=0; i < n; ++i){
+        Frame f = frame(i);
+        writer.startFlowStyleListing();
+        for(int j=0; j < m; ++j){
             writer.startFlowStyleListing();
-            for(int j=0; j < m; ++j){
-                writer.startFlowStyleListing();
-                const Vector3& p = f[j];
-                writer.putScalar(p.x());
-                writer.putScalar(p.y());
-                writer.putScalar(p.z());
-                writer.endListing();
-            }
+            const Vector3& p = f[j];
+            writer.putScalar(p.x());
+            writer.putScalar(p.y());
+            writer.putScalar(p.z());
             writer.endListing();
         }
         writer.endListing();
-        return true;
     }
-    return false;
+    writer.endListing();
+    return true;
 }

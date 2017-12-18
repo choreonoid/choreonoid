@@ -110,6 +110,15 @@ bool AbstractSeq::doReadSeq(const Mapping& archive, std::ostream&)
 }
 
 
+void AbstractSeq::checkSeqType(const Mapping& archive)
+{
+    auto& typeNode = archive["type"];
+    if(typeNode.toString() != seqType()){
+        typeNode.throwException(str(format(_("The seq type must be %1%.")) % seqType()));
+    }
+}
+
+
 bool AbstractSeq::checkSeqContent(const Mapping& archive, const std::string requiredContent, std::ostream& os)
 {
     string content_;

@@ -81,11 +81,16 @@ bool MultiSE3Seq::doReadSeq(const Mapping& archive, std::ostream& os)
             return (type == "MultiSE3Seq" || type == "MultiSe3Seq" || type == "MultiAffine3Seq");
         };
     }
+
+    const int nParts = archive.get<int>("numParts");
+    
     if(checkType(archive.get<string>("type"))){
         string se3format = archive.get<string>(formatKey);
         const Listing& frames = *archive.findListing("frames");
-        if(frames.isValid()){
-            const int nParts = archive.get<int>("numParts");
+        if(!frames.isValid()){
+            setDimension(0, nParts);
+            result = true;
+        } else {
             const int nFrames = frames.size();
             setDimension(nFrames, nParts);
 
@@ -120,7 +125,7 @@ void MultiSE3Seq::readFrames(int nParts, int nFrames, const Listing& frames, boo
             SE3& s = f[j];
             if(isQuaternion){
                 if(v.size() != 7){
-                    v.throwException(_("Invalid number of values are specified."));
+                    v.throwException(_("The number of elements specified as a SE3 value is invalid."));
                 } else {
                     s.translation() << v[0].toDouble(), v[1].toDouble(), v[2].toDouble();
                     if(isWXYZ){
@@ -133,7 +138,7 @@ void MultiSE3Seq::readFrames(int nParts, int nFrames, const Listing& frames, boo
                 }
             } else { // RPY
                 if(v.size() != 6){
-                    v.throwException(_("Invalid number of values are specified."));
+                    v.throwException(_("The number of elements specified as a SE3 value is invalid."));
                 } else {
                     s.translation() << v[0].toDouble(), v[1].toDouble(), v[2].toDouble();
                     s.rotation() = rotFromRpy(v[3].toDouble(), v[4].toDouble(), v[5].toDouble());

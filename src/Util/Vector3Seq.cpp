@@ -44,47 +44,53 @@ Vector3Seq::~Vector3Seq()
 
 bool Vector3Seq::doReadSeq(const Mapping& archive, std::ostream& os)
 {
-    if(BaseSeqType::doReadSeq(archive, os)){
-        if(archive["type"].toString() == seqType()){
-            const Listing& frames = *archive.findListing("frames");
-            if(!frames.isValid()){
-                archive.throwException(_("Valid \"frames\" field of Vector3Seq is not found."));
-            } else {
-                const int n = frames.size();
-                setNumFrames(n);
-                for(int i=0; i < n; ++i){
-                    const Listing& frame = *frames[i].toListing();
-                    Vector3& v = (*this)[i];
-                    for(int j=0; j < 3; ++j){
-                        v[j] = frame[j].toDouble();
-                    }
-                }
-                return true;
+    if(!BaseSeqType::doReadSeq(archive, os)){
+        return false;
+    }
+
+    checkSeqType(archive);    
+
+    const Listing& frames = *archive.findListing("frames");
+    if(!frames.isValid()){
+        setNumFrames(0);
+    } else {
+        const int n = frames.size();
+        setNumFrames(n);
+        for(int i=0; i < n; ++i){
+            const Listing& frame = *frames[i].toListing();
+            if(frame.size() != 3){
+                frame.throwException(_("The number of elements specified as a 3D vector is invalid."));
+            }
+            Vector3& v = (*this)[i];
+            for(int j=0; j < 3; ++j){
+                v[j] = frame[j].toDouble();
             }
         }
     }
-    return false;
+    
+    return true;
 }
 
 
 bool Vector3Seq::doWriteSeq(YAMLWriter& writer)
 {
-    if(BaseSeqType::doWriteSeq(writer)){
-        writer.putKey("frames");
-        writer.startListing();
-        const int n = numFrames();
-        for(int i=0; i < n; ++i){
-            writer.startFlowStyleListing();
-            const Vector3& v = (*this)[i];
-            for(int j=0; j < 3; ++j){
-                writer.putScalar(v[j]);
-            }
-            writer.endListing();
+    if(!BaseSeqType::doWriteSeq(writer)){
+        return false;
+    }
+    
+    writer.putKey("frames");
+    writer.startListing();
+    const int n = numFrames();
+    for(int i=0; i < n; ++i){
+        writer.startFlowStyleListing();
+        const Vector3& v = (*this)[i];
+        for(int j=0; j < 3; ++j){
+            writer.putScalar(v[j]);
         }
         writer.endListing();
-        return true;
     }
-    return false;
+    writer.endListing();
+    return true;
 }
 
 
