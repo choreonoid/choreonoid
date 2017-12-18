@@ -79,19 +79,24 @@ public:
         setNumParts(source.numParts());
     }
             
-    virtual void setDimension(int newNumFrames, int newNumParts, bool clearNewElements = false) override {
+    virtual void setDimension(int newNumFrames, int newNumParts, bool fillNewElements = false) override {
 
         const int prevNumParts = numParts();
         const int prevNumFrames = numFrames();
 
         Container::resize(newNumFrames, newNumParts);
 
-        if(clearNewElements){
+        if(fillNewElements){
             if(newNumParts == prevNumParts){
                 if(newNumFrames > prevNumFrames){
-                    std::fill(Container::begin() + prevNumFrames * newNumParts,
-                              Container::end(),
-                              defaultValue());
+                    if(prevNumFrames > 0){
+                        Frame last = frame(prevNumFrames - 1);
+                        for(int i=prevNumFrames; i < newNumFrames; ++i){
+                            frame(i) = last;
+                        }
+                    } else {
+                        std::fill(Container::begin() + prevNumFrames * newNumParts, Container::end(), defaultValue());
+                    }
                 }
             } else {
                 std::fill(Container::begin(), Container::end(), defaultValue());
@@ -115,8 +120,8 @@ public:
         return 1.0 / frameRate_;
     }
 
-    virtual void setNumParts(int newNumParts, bool clearNewElements = false) override {
-        setDimension(numFrames(), newNumParts, clearNewElements);
+    virtual void setNumParts(int newNumParts, bool fillNewElements = false) override {
+        setDimension(numFrames(), newNumParts, fillNewElements);
     }
 
     virtual int getNumFrames() const override {
@@ -127,8 +132,8 @@ public:
         return Container::rowSize();
     }
 
-    virtual void setNumFrames(int newNumFrames, bool clearNewElements = false) override {
-        setDimension(newNumFrames, numParts(), clearNewElements);
+    virtual void setNumFrames(int newNumFrames, bool fillNewElements = false) override {
+        setDimension(newNumFrames, numParts(), fillNewElements);
     }
 
     void clearFrames(){
