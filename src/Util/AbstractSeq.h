@@ -102,7 +102,9 @@ protected:
     virtual bool doWriteSeq(YAMLWriter& writer);
 
     void checkSeqType(const Mapping& archive);
+    bool readSeqContent(const Mapping& archive);
     bool checkSeqContent(const Mapping& archive, const std::string requiredContent, std::ostream& os);
+    int readNumParts(const Mapping& archive);
 
     //! deprecated. Use the os parameter of readSeq to get messages in reading
     void clearSeqMessage() { }

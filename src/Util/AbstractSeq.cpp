@@ -82,23 +82,23 @@ bool AbstractSeq::setOffsetTimeFrame(int offset)
 
 bool AbstractSeq::readSeq(const Mapping& archive, std::ostream& os)
 {
+    bool result = false;
+    
     try {
-        return doReadSeq(archive, os);
-
-    } catch (ValueNode::Exception& ex) {
-        os << ex.message();
-        return false;
+        result = doReadSeq(archive, os);
     }
+    catch (ValueNode::Exception& ex) {
+        os << ex.message();
+    }
+
+    return result;
 }
 
 
 bool AbstractSeq::doReadSeq(const Mapping& archive, std::ostream&)
 {
-    if(contentName_.empty()){
-        if(!archive.read("content", contentName_)){
-            archive.read("purpose", contentName_); // old version
-        }
-    }
+    readSeqContent(archive);
+
     if(archive.get("hasFrameTime", false)){
         archive.throwException(
             _("Sequence data with frame time cannot be loaded as regular interval sequence data."));
@@ -119,17 +119,24 @@ void AbstractSeq::checkSeqType(const Mapping& archive)
 }
 
 
-bool AbstractSeq::checkSeqContent(const Mapping& archive, const std::string requiredContent, std::ostream& os)
+bool AbstractSeq::readSeqContent(const Mapping& archive)
 {
-    string content_;
     if(!archive.read("content", contentName_)){
         archive.read("purpose", contentName_); // old version
     }
+    return !contentName_.empty();
+}
+
+
+bool AbstractSeq::checkSeqContent(const Mapping& archive, const std::string requiredContent, std::ostream& os)
+{
+    readSeqContent(archive);
+    
     if(contentName_ == requiredContent){
         return true;
     }
 
-    if(content_.empty()){
+    if(contentName_.empty()){
         os << format(_("Content of %1% should be \"%2%\" but it is not specified."))
             % seqType() % requiredContent;
     } else {
@@ -139,6 +146,17 @@ bool AbstractSeq::checkSeqContent(const Mapping& archive, const std::string requ
     return false;
 }
 
+
+int AbstractSeq::readNumParts(const Mapping& archive)
+{
+    auto& node = archive["numParts"];
+    const int n = node.toInt();
+    if(n < 1){
+        node.throwException(_("Invaid number of parts is specified"));
+    }
+    return n;
+}
+    
 
 bool AbstractSeq::writeSeq(YAMLWriter& writer)
 {
