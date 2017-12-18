@@ -272,13 +272,15 @@ void AGXSimulatorItemImpl::setAdditionalAGXMaterialParam()
 bool AGXSimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& activeSimBodies)
 {
     for(auto simBody : activeSimBodies){
-        static_cast<AGXBody*>(simBody)->setControlInputToAGX();
+        auto const agxBody = dynamic_cast<AGXBody*>(simBody);
+        agxBody->setControlInputToAGX();
+        agxBody->addForceTorqueToAGX();
     }
 
     agxScene->stepSimulation();
 
     for(auto simBody : activeSimBodies){
-        AGXBody* agxBody = static_cast<AGXBody*>(simBody);
+        auto const agxBody = dynamic_cast<AGXBody*>(simBody);
         agxBody->setLinkStateToCnoid();
 
         // Update sensors

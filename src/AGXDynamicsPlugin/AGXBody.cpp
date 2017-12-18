@@ -211,6 +211,12 @@ void AGXLink::setControlInputToAGX()
     }
 }
 
+void AGXLink::addForceTorqueToAGX()
+{
+    getAGXRigidBody()->addForce(agxConvert::toAGX(getOrgLink()->f_ext()));
+    getAGXRigidBody()->addTorque(agxConvert::toAGX(getOrgLink()->tau_ext()));
+}
+
 void AGXLink::setLinkStateToAGX()
 {
     agx::RigidBodyRef const agxRigidBody = getAGXRigidBody();
@@ -455,14 +461,14 @@ void AGXLink::detectPrimitiveShape(MeshExtractor* extractor, AGXTrimeshDesc& td)
                     break;
                 }
                 case SgMesh::SPHERE : {
-                    const SgMesh::Sphere& sphere = mesh->primitive<SgMesh::Sphere>();
+                    const auto& sphere = mesh->primitive<SgMesh::Sphere>();
                     AGXSphereDesc sd;
                     sd.radius = sphere.radius * scale.x();
                     shape = AGXObjectFactory::createShape(sd);
                     break;
                 }
                 case SgMesh::CAPSULE : {
-                    SgMesh::Capsule capsule = mesh->primitive<SgMesh::Capsule>();
+                    const auto& capsule = mesh->primitive<SgMesh::Capsule>();
                     AGXCapsuleDesc cd;
                     cd.radius = capsule.radius * scale.x();
                     cd .height =  capsule.height * scale.y();
@@ -470,7 +476,7 @@ void AGXLink::detectPrimitiveShape(MeshExtractor* extractor, AGXTrimeshDesc& td)
                     break;
                 }
                 case SgMesh::CYLINDER : {
-                    const SgMesh::Cylinder& cylinder = mesh->primitive<SgMesh::Cylinder>();
+                    const auto& cylinder = mesh->primitive<SgMesh::Cylinder>();
                     AGXCylinderDesc cd;
                     cd.radius = cylinder.radius * scale.x();
                     cd.height =  cylinder.height * scale.y();
@@ -853,6 +859,13 @@ void AGXBody::setControlInputToAGX()
 {
     for(const auto& clink : getControllableLinks()){
         clink->setControlInputToAGX();
+    }
+}
+
+void AGXBody::addForceTorqueToAGX()
+{
+    for(const auto& link : getAGXLinks()){
+        link->addForceTorqueToAGX();
     }
 }
 
