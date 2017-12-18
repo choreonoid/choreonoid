@@ -18,6 +18,7 @@ template <typename ElementType> class Seq : public AbstractSeq
     typedef Seq<ElementType> SeqType;
         
 public:
+    typedef ElementType value_type;
     typedef std::shared_ptr<SeqType> Ptr;
         
     Seq(const char* seqType, int nFrames = 0.0)
@@ -76,9 +77,14 @@ public:
         return container.size();
     }
 
-    virtual void setNumFrames(int n, bool clearNewElements = false) override {
-        if(clearNewElements){
-            container.resize(n, defaultValue());
+    virtual void setNumFrames(int n, bool fillNewElements = false) override {
+        if(fillNewElements){
+            const int nold = numFrames();
+            if(n > nold && nold > 0){
+                container.resize(n, container[nold - 1]);
+            } else {
+                container.resize(n, defaultValue());
+            }
         } else {
             container.resize(n);
         }

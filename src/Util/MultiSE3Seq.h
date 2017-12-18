@@ -43,6 +43,7 @@ protected:
 
     virtual bool doReadSeq(const Mapping& archive, std::ostream& os) override;
     virtual bool doWriteSeq(YAMLWriter& writer) override;
+    virtual bool doImportTimedFrameSeq(const Mapping& archive, std::ostream& os) override;
 
 private:
     void readFrames(int nParts, int nFrames, const Listing& frames, bool isQuaternion, bool isWXYZ);

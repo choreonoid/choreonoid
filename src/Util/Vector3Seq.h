@@ -33,6 +33,7 @@ protected:
 
     virtual bool doReadSeq(const Mapping& archive, std::ostream& os) override;
     virtual bool doWriteSeq(YAMLWriter& writer) override;
+    virtual bool doImportTimedFrameSeq(const Mapping& archive, std::ostream& os) override;
 };
 
 typedef std::shared_ptr<Vector3Seq> Vector3SeqPtr;

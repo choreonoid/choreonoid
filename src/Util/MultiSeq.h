@@ -15,7 +15,7 @@
 
 namespace cnoid {
 
-template <typename ElementType, typename Allocator = std::allocator<ElementType> >
+template <typename ElementType, typename Allocator = std::allocator<ElementType>>
 class MultiSeq : public Deque2D<ElementType, Allocator>, public AbstractMultiSeq
 {
     typedef MultiSeq<ElementType, Allocator> MultiSeqType;
@@ -23,10 +23,11 @@ class MultiSeq : public Deque2D<ElementType, Allocator>, public AbstractMultiSeq
 public:
     typedef Deque2D<ElementType, Allocator> Container;
     
-    typedef typename Container::Element Element;
-    typedef std::shared_ptr< MultiSeqType > Ptr;
+    typedef typename Container::value_type value_type;
+    typedef std::shared_ptr<MultiSeqType> Ptr;
     typedef typename Container::Row Frame;
     typedef typename Container::Column Part;
+    typedef value_type Element; ///< \deprecated. Use value_type.
 
     MultiSeq(const char* seqType)
         : Container(0, 1),
@@ -208,11 +209,10 @@ public:
     }
 
 protected:
-
     double frameRate_;
     int offsetTimeFrame_;
 
-    virtual ElementType defaultValue() const { return ElementType(); }
+    virtual value_type defaultValue() const { return value_type(); }
 };
 
 }

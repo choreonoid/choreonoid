@@ -7,6 +7,7 @@
 #include "PlainSeqFileLoader.h"
 #include "ValueTree.h"
 #include "YAMLWriter.h"
+#include "TimedFrameSeqImporter.h"
 #include <fstream>
 #include "gettext.h"
 
@@ -78,6 +79,18 @@ bool MultiValueSeq::doReadSeq(const Mapping& archive, std::ostream& os)
 }
 
 
+bool MultiValueSeq::doImportTimedFrameSeq(const Mapping& archive, std::ostream& os)
+{
+    TimedFrameSeqImporter importer;
+
+    importer.import(
+        archive, *this, os,
+        [](const ValueNode& node, double& v){ v = node.toDouble(); });
+
+    return true;
+}
+
+
 bool MultiValueSeq::doWriteSeq(YAMLWriter& writer)
 {
     if(!BaseSeqType::doWriteSeq(writer)){
@@ -144,68 +157,5 @@ bool MultiValueSeq::saveAsPlainFormat(const std::string& filename, std::ostream&
         file << "\n";
     }
     
-    return true;
-}
-
-
-bool MultiValueSeq::importTimedFrameSeq(const Mapping& archive, std::ostream& os)
-{
-    bool result = false;
-    try {
-        if(!archive.get("hasFrameTime", false)){
-            result = doReadSeq(archive, os);
-        } else {
-            result = importTimedFrameSeqMain(archive, os);
-        }
-    }
-    catch (ValueNode::Exception& ex) {
-        os << ex.message();
-    }
-
-    return result;
-}
-
-
-bool MultiValueSeq::importTimedFrameSeqMain(const Mapping& archive, std::ostream& os)
-{
-    checkSeqType(archive);
-    readSeqContent(archive);
-
-    if(frameRate() <= 0.0){
-        double r;
-        if(archive.read("frameRate", r)){
-            setFrameRate(r);
-        }
-    }
-    if(frameRate() <= 0.0){
-        os << _("Invalid frame rate") << endl;
-        return false;
-    }
-    
-    const int nParts = readNumParts(archive);
-    setDimension(0, nParts);
-    
-    const int frameSize = nParts + 1;
-    
-    const Listing& frames = *archive.findListing("frames");
-    if(frames.isValid()){
-        const int nFrames = frames.size();
-        for(int i=0; i < nFrames; ++i){
-            const Listing& values = *frames[i].toListing();
-            if(values.size() != frameSize){
-                values.throwException("Invalid frame size");
-            }
-            double time = values[0].toDouble();
-            int frameIndex = frameOfTime(time);
-            if(frameIndex >= numFrames()){
-                setNumFrames(frameIndex + 1, true);
-            }
-            Frame v = frame(frameIndex);
-            for(int j=0; j < nParts; ++j){
-                v[j] = values[j+1].toDouble();
-            }
-        }
-    }
-
     return true;
 }

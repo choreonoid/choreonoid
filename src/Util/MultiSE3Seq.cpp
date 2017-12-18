@@ -8,6 +8,7 @@
 #include "ValueTree.h"
 #include "YAMLWriter.h"
 #include "EigenUtil.h"
+#include "TimedFrameSeqImporter.h"
 #include <boost/format.hpp>
 #include <fstream>
 #include "gettext.h"
@@ -15,12 +16,6 @@
 using namespace std;
 using namespace cnoid;
 using boost::format;
-
-namespace {
-
-enum SE3Format { XYZQWQXQYQZ, XYZQXQYQZQW, XYZRPY };
-
-}
 
 
 MultiSE3Seq::MultiSE3Seq()
@@ -97,7 +92,7 @@ bool MultiSE3Seq::doReadSeq(const Mapping& archive, std::ostream& os)
             if(se3format == "XYZQWQXQYQZ"){
                 readFrames(nParts, nFrames, frames, true, true);
                 result = true;
-            } else if(se3format == "XYZQXQYQZQW"){
+            } else if(se3format == "XYZQXQYQZQW" && version < 2.0){
                 readFrames(nParts, nFrames, frames, true, false);
                 result = true;
             } else if(se3format == "XYZRPY"){
@@ -105,7 +100,7 @@ bool MultiSE3Seq::doReadSeq(const Mapping& archive, std::ostream& os)
                 result = true;
             }
             if(!result){
-                os << format(_("SE3 format \"%1%\" is unsupported.")) % se3format << endl;
+                os << format(_("SE3 format \"%1%\" is not supported.")) % se3format << endl;
             }
         }
     }
@@ -126,26 +121,59 @@ void MultiSE3Seq::readFrames(int nParts, int nFrames, const Listing& frames, boo
             if(isQuaternion){
                 if(v.size() != 7){
                     v.throwException(_("The number of elements specified as a SE3 value is invalid."));
+                }
+                s.translation() << v[0].toDouble(), v[1].toDouble(), v[2].toDouble();
+                if(isWXYZ){
+                    s.rotation() = Quat(
+                        v[3].toDouble(), v[4].toDouble(), v[5].toDouble(), v[6].toDouble());
                 } else {
-                    s.translation() << v[0].toDouble(), v[1].toDouble(), v[2].toDouble();
-                    if(isWXYZ){
-                        s.rotation() = Quat(
-                            v[3].toDouble(), v[4].toDouble(), v[5].toDouble(), v[6].toDouble());
-                    } else {
-                        s.rotation() = Quat(
-                            v[6].toDouble(), v[3].toDouble(), v[4].toDouble(), v[5].toDouble());
-                    }
+                    s.rotation() = Quat(
+                        v[6].toDouble(), v[3].toDouble(), v[4].toDouble(), v[5].toDouble());
                 }
             } else { // RPY
                 if(v.size() != 6){
                     v.throwException(_("The number of elements specified as a SE3 value is invalid."));
-                } else {
-                    s.translation() << v[0].toDouble(), v[1].toDouble(), v[2].toDouble();
-                    s.rotation() = rotFromRpy(v[3].toDouble(), v[4].toDouble(), v[5].toDouble());
                 }
+                s.translation() << v[0].toDouble(), v[1].toDouble(), v[2].toDouble();
+                s.rotation() = rotFromRpy(v[3].toDouble(), v[4].toDouble(), v[5].toDouble());
             }
         }
     }
+}
+
+
+bool MultiSE3Seq::doImportTimedFrameSeq(const Mapping& archive, std::ostream& os)
+{
+    TimedFrameSeqImporter importer;
+    
+    string format = archive.get<string>("SE3Format");
+
+    if(format == "XYZQWQXQYQZ"){
+        importer.import(
+            archive, *this, os,
+            [](const ValueNode& node, SE3& s){
+                const Listing& v = *node.toListing();
+                if(v.size() != 7){
+                    v.throwException(_("The number of elements specified as a SE3 value is invalid."));
+                }
+                s.translation() << v[0].toDouble(), v[1].toDouble(), v[2].toDouble();
+                s.rotation() = Quat(v[3].toDouble(), v[4].toDouble(), v[5].toDouble(), v[6].toDouble());
+            });
+        
+    } else if(format == "XYZRPY"){
+        importer.import(
+            archive, *this, os,
+            [](const ValueNode& node, SE3& s){
+                const Listing& v = *node.toListing();
+                if(v.size() != 6){
+                    v.throwException(_("The number of elements specified as a SE3 value is invalid."));
+                }
+                s.translation() << v[0].toDouble(), v[1].toDouble(), v[2].toDouble();
+                s.rotation() = rotFromRpy(v[3].toDouble(), v[4].toDouble(), v[5].toDouble());                
+            });
+    }
+
+    return true;
 }
 
 

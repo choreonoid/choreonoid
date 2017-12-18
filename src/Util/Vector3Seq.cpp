@@ -7,6 +7,7 @@
 #include "PlainSeqFileLoader.h"
 #include "ValueTree.h"
 #include "YAMLWriter.h"
+#include "TimedFrameSeqImporter.h"
 #include <boost/format.hpp>
 #include <fstream>
 #include "gettext.h"
@@ -72,6 +73,23 @@ bool Vector3Seq::doReadSeq(const Mapping& archive, std::ostream& os)
 }
 
 
+bool Vector3Seq::doImportTimedFrameSeq(const Mapping& archive, std::ostream& os)
+{
+    TimedFrameSeqImporter importer;
+
+    importer.import(
+        archive, *this, os,
+        [](const Listing& v, Vector3& value){
+            if(v.size() != 4 /* time + vector3 */){
+                v.throwException(_("The number of elements specified as a Vector3 value is invalid."));
+            }
+            value << v[1].toDouble(), v[2].toDouble(), v[3].toDouble();
+        });
+
+    return true;
+}
+
+    
 bool Vector3Seq::doWriteSeq(YAMLWriter& writer)
 {
     if(!BaseSeqType::doWriteSeq(writer)){

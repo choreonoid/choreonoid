@@ -205,6 +205,41 @@ bool AbstractSeq::doWriteSeq(YAMLWriter& writer)
 }
 
 
+bool AbstractSeq::importTimedFrameSeq(const Mapping& archive, std::ostream& os)
+{
+    bool result = false;
+    
+    try {
+        double version = archive.get<double>("formatVersion", 1.0);
+        if(version < 2.0){
+            os << "This version of seq data does not support timed frames." << endl;
+        } else {
+            if(!archive.get("hasFrameTime", false)){
+                result = doReadSeq(archive, os);
+            } else {
+                if(getFrameRate() <= 0.0){
+                    os << _("The frame rate for importing timed-frame seq data is not specified.") << endl;
+                } else {
+                    result = doImportTimedFrameSeq(archive, os);
+                }
+            }
+        }
+    }
+    catch (ValueNode::Exception& ex) {
+        os << ex.message();
+    }
+
+    return result;
+}
+
+
+bool AbstractSeq::doImportTimedFrameSeq(const Mapping& archive, std::ostream& os)
+{
+    os << format(_("Importing timed-frame seq data into %1% is not supported.")) % seqType() << endl;
+    return false;
+}
+
+
 const std::string& AbstractSeq::seqMessage() const
 {
     return dummySeqMessage;

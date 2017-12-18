@@ -89,22 +89,25 @@ public:
         this->contentName_ = name;
     }
 
+    static const double defaultFrameRate() { return 100.0; }
+        
     bool readSeq(const Mapping& archive, std::ostream& os = nullout());
     bool writeSeq(YAMLWriter& writer);
 
-    static const double defaultFrameRate() { return 100.0; }
-        
+    bool importTimedFrameSeq(const Mapping& archive, std::ostream& os = nullout());
+
+    void checkSeqType(const Mapping& archive);
+    bool readSeqContent(const Mapping& archive);
+    bool checkSeqContent(const Mapping& archive, const std::string requiredContent, std::ostream& os);
+    int readNumParts(const Mapping& archive);
+
     //! deprecated. Use the os parameter of readSeq to get messages in reading
     const std::string& seqMessage() const;
 
 protected:
     virtual bool doReadSeq(const Mapping& archive, std::ostream& os);
     virtual bool doWriteSeq(YAMLWriter& writer);
-
-    void checkSeqType(const Mapping& archive);
-    bool readSeqContent(const Mapping& archive);
-    bool checkSeqContent(const Mapping& archive, const std::string requiredContent, std::ostream& os);
-    int readNumParts(const Mapping& archive);
+    virtual bool doImportTimedFrameSeq(const Mapping& archive, std::ostream& os);
 
     //! deprecated. Use the os parameter of readSeq to get messages in reading
     void clearSeqMessage() { }

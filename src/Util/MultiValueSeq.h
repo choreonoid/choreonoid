@@ -31,14 +31,10 @@ public:
     bool loadPlainFormat(const std::string& filename, std::ostream& os = nullout());
     bool saveAsPlainFormat(const std::string& filename, std::ostream& os = nullout());
 
-    bool importTimedFrameSeq(const Mapping& archive, std::ostream& os = nullout());
-
 protected:
     virtual bool doReadSeq(const Mapping& archive, std::ostream& os) override;
     virtual bool doWriteSeq(YAMLWriter& writer) override;
-
-private:
-    bool importTimedFrameSeqMain(const Mapping& archive, std::ostream& os);
+    virtual bool doImportTimedFrameSeq(const Mapping& archive, std::ostream& os) override;
 };
 
 typedef MultiValueSeq::Ptr MultiValueSeqPtr;        
