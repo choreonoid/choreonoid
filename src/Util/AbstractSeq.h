@@ -96,6 +96,7 @@ public:
 
     bool importTimedFrameSeq(const Mapping& archive, std::ostream& os = nullout());
 
+    double checkSeqFormatVersion(const Mapping& archive, double minVersion, double strictMaxVersion = -1.0);
     void checkSeqType(const Mapping& archive);
     bool readSeqContent(const Mapping& archive);
     bool checkSeqContent(const Mapping& archive, const std::string requiredContent, std::ostream& os);

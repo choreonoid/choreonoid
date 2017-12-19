@@ -96,9 +96,11 @@ public:
     Frame frame(int frame) { return Frame(*this, frame); }
     ConstFrame frame(int frame) const { return ConstFrame(*this, frame); }
 
-    bool loadStandardFormat(const std::string& filename, std::ostream& os = nullout());
-    bool saveAsStandardFormat(const std::string& filename, std::ostream& os = nullout());
-    bool saveAsStandardFormat(const std::string& filename, double version, std::ostream& os = nullout());
+    bool load(const std::string& filename, std::ostream& os = nullout());
+    bool save(const std::string& filename, std::ostream& os = nullout());
+    bool save(const std::string& filename, double version, std::ostream& os = nullout());
+
+    bool importTimedFrameSeqFile(const std::string& filename, std::ostream& os = nullout());
 
     typedef std::map<std::string, AbstractSeqPtr> ExtraSeqMap;
     typedef ExtraSeqMap::const_iterator ConstSeqIterator;
@@ -147,16 +149,17 @@ public:
     
     //! \deprecated
     bool loadStandardYAMLformat(const std::string& filename, std::ostream& os = nullout()){
-        return loadStandardFormat(filename, os);
+        return load(filename, os);
     }
     //! \deprecated
     bool saveAsStandardYAMLformat(const std::string& filename, std::ostream& os = nullout()){
-        return saveAsStandardYAMLformat(filename, os);
+        return save(filename, os);
     }
 
 protected:
     virtual bool doReadSeq(const Mapping& archive, std::ostream& os) override;
     virtual bool doWriteSeq(YAMLWriter& writer) override;
+    virtual bool doImportTimedFrameSeq(const Mapping& archive, std::ostream& os) override;
         
 private:
     MultiValueSeqPtr jointPosSeq_;

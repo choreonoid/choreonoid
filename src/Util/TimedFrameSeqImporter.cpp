@@ -8,7 +8,12 @@
 
 using namespace cnoid;
 
-const char* TimedFrameSeqImporter::invalid_frame_size_message()
+std::string TimedFrameSeqImporter::non_timed_frame_seq_message()
 {
-    return _("Invalid frame size");
+    return _("The seq data to import is not a timed-frame seq data");
+}
+
+std::string TimedFrameSeqImporter::invalid_frame_size_message()
+{
+    return _("Invalid frame size.");
 }

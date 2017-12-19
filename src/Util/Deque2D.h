@@ -12,7 +12,7 @@
 
 namespace cnoid {
 
-template <typename ElementType, typename Allocator = std::allocator<ElementType> >
+template <typename ElementType, typename Allocator = std::allocator<ElementType>>
 class Deque2D
 {
     typedef Deque2D<ElementType, Allocator> Deque2DType;

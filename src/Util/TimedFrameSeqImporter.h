@@ -14,10 +14,10 @@ namespace cnoid {
 
 class TimedFrameSeqImporter
 {
-    static const char* invalid_frame_size_message();
+    static std::string non_timed_frame_seq_message();
+    static std::string invalid_frame_size_message();
     
 public:
-
     template<
       class SeqType,
       typename std::enable_if<
@@ -28,6 +28,9 @@ public:
         const Mapping& archive, SeqType& seq, std::ostream& os, 
         std::function<void(const Listing& v, typename SeqType::value_type& value)> readValue)
     {
+        if(!archive.get("hasFrameTime", false)){
+            archive.throwException(non_timed_frame_seq_message());
+        }
         seq.checkSeqType(archive);
         seq.readSeqContent(archive);
 
@@ -57,6 +60,9 @@ public:
         const Mapping& archive, SeqType& seq, std::ostream& os,
         std::function<void(const ValueNode& node, typename SeqType::value_type& v)> readValue)
     {
+        if(!archive.get("hasFrameTime", false)){
+            archive.throwException(non_timed_frame_seq_message());
+        }
         seq.checkSeqType(archive);
         seq.readSeqContent(archive);
 

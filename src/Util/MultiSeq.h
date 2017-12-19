@@ -88,19 +88,19 @@ public:
         Container::resize(newNumFrames, newNumParts);
 
         if(fillNewElements){
-            if(newNumParts == prevNumParts){
+            if(newNumParts != prevNumParts){
+                std::fill(Container::begin(), Container::end(), defaultValue());
+            } else {
                 if(newNumFrames > prevNumFrames){
-                    if(prevNumFrames > 0){
+                    if(prevNumFrames == 0){
+                        std::fill(Container::begin() + prevNumFrames * newNumParts, Container::end(), defaultValue());
+                    } else {
                         Frame last = frame(prevNumFrames - 1);
                         for(int i=prevNumFrames; i < newNumFrames; ++i){
-                            frame(i) = last;
+                            std::copy(last.begin(), last.end(), frame(i).begin());
                         }
-                    } else {
-                        std::fill(Container::begin() + prevNumFrames * newNumParts, Container::end(), defaultValue());
                     }
                 }
-            } else {
-                std::fill(Container::begin(), Container::end(), defaultValue());
             }
         }
     }

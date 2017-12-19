@@ -110,6 +110,52 @@ bool AbstractSeq::doReadSeq(const Mapping& archive, std::ostream&)
 }
 
 
+bool AbstractSeq::importTimedFrameSeq(const Mapping& archive, std::ostream& os)
+{
+    bool result = false;
+    
+    try {
+        checkSeqFormatVersion(archive, 2.0);
+
+        if(getFrameRate() <= 0.0){
+            os << _("The frame rate for importing timed-frame seq data is not specified.") << endl;
+        } else {
+            result = doImportTimedFrameSeq(archive, os);
+        }
+    }
+    catch (ValueNode::Exception& ex){
+        os << ex.message();
+    }
+
+    return result;
+}
+
+
+bool AbstractSeq::doImportTimedFrameSeq(const Mapping& archive, std::ostream& os)
+{
+    os << format(_("Importing timed-frame seq data into %1% is not supported.")) % seqType() << endl;
+    return false;
+}
+
+
+double AbstractSeq::checkSeqFormatVersion(const Mapping& archive, double minVersion, double strictMaxVersion)
+{
+    auto versionNode = archive.find("formatVersion");
+    double version = versionNode->isValid() ? versionNode->toDouble() : 1.0;
+    bool isSupported = true;
+    if(minVersion > 0.0 && version < minVersion){
+        isSupported = false;
+    } else if(strictMaxVersion > 0.0 && version >= strictMaxVersion){
+        isSupported = false;
+    }
+    if(!isSupported){
+        const ValueNode* node = versionNode->isValid() ? versionNode : &archive;
+        node->throwException(str(format(_("Format version %1% is not supported in this operation.")) % version));
+    }
+    return version;
+}    
+    
+
 void AbstractSeq::checkSeqType(const Mapping& archive)
 {
     auto& typeNode = archive["type"];
@@ -202,41 +248,6 @@ bool AbstractSeq::doWriteSeq(YAMLWriter& writer)
     writer.putKeyValue("numFrames", getNumFrames());
 
     return true;
-}
-
-
-bool AbstractSeq::importTimedFrameSeq(const Mapping& archive, std::ostream& os)
-{
-    bool result = false;
-    
-    try {
-        double version = archive.get<double>("formatVersion", 1.0);
-        if(version < 2.0){
-            os << "This version of seq data does not support timed frames." << endl;
-        } else {
-            if(!archive.get("hasFrameTime", false)){
-                result = doReadSeq(archive, os);
-            } else {
-                if(getFrameRate() <= 0.0){
-                    os << _("The frame rate for importing timed-frame seq data is not specified.") << endl;
-                } else {
-                    result = doImportTimedFrameSeq(archive, os);
-                }
-            }
-        }
-    }
-    catch (ValueNode::Exception& ex) {
-        os << ex.message();
-    }
-
-    return result;
-}
-
-
-bool AbstractSeq::doImportTimedFrameSeq(const Mapping& archive, std::ostream& os)
-{
-    os << format(_("Importing timed-frame seq data into %1% is not supported.")) % seqType() << endl;
-    return false;
 }
 
 
