@@ -1602,6 +1602,17 @@ bool YAMLBodyLoaderImpl::readCamera(Mapping& node)
     if(node.read("nearClipDistance", value)) camera->setNearClipDistance(value);
     if(node.read("farClipDistance", value)) camera->setFarClipDistance(value);
     if(node.read("frameRate", value)) camera->setFrameRate(value);
+    if(node.read("lensType", symbol)){
+        if(symbol == "NORMAL"){
+            camera->setLensType(Camera::NORMAL);
+        }else if(symbol == "FISHEYE"){
+            camera->setLensType(Camera::FISHEYE);
+            //  throwException    ImageType must be COLOR
+        }else if(symbol == "DOUBLE_FISHEYE"){
+            camera->setLensType(Camera::DOUBLE_FISHEYE);
+            //  throwException    ImageType must be COLOR
+        }
+    }
     
     return readDevice(camera, node);
 }

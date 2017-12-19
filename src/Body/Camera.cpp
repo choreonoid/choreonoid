@@ -27,6 +27,7 @@ Camera::Camera()
     frameRate_ = 30.0;
     delay_ = 0.0;
     image_ = std::make_shared<Image>();
+    lensType_ = NORMAL;
 }
 
 
@@ -58,6 +59,7 @@ void Camera::copyCameraStateFrom(const Camera& other)
     farClipDistance_ = other.farClipDistance_;
     frameRate_ = other.frameRate_;
     delay_ = other.delay_;
+    lensType_ = other.lensType_;
 }
 
 

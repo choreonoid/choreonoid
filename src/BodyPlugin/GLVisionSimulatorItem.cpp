@@ -31,6 +31,7 @@
 #include <iostream>
 
 static const bool DEBUG_MESSAGE = false;
+static const bool DEBUG_MESSAGE2 = true;
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 #define USE_QT5_OPENGL 1
@@ -53,6 +54,11 @@ using namespace cnoid;
 using boost::format;
 
 namespace {
+
+inline int range(int i, int min, int max)
+{
+    return i<min ? min : i<max ? i : max-1;
+}
 
 inline double myNearByInt(double x)
 {
@@ -176,6 +182,7 @@ public:
     std::shared_ptr<Image> tmpImage;
     std::shared_ptr<RangeCamera::PointData> tmpPoints;
     std::shared_ptr<RangeSensor::RangeData> tmpRangeData;
+    enum ScreenId { NONE = -1, FRONT, LEFT, RIGHT, TOP, BOTTOM, BACK } screenId;
 
     SensorScreenRenderer(GLVisionSimulatorItemImpl* simImpl, Device* device, Device* deviceForRendering);
     ~SensorScreenRenderer();
@@ -197,6 +204,26 @@ public:
 };
 typedef ref_ptr<SensorScreenRenderer> SensorScreenRendererPtr;
 
+class FisheyeLensConverter
+{
+public:
+    int width;
+    int height;
+    int screenWidth;
+    vector<SensorScreenRenderer*> screens;
+    struct ScreenIndex{
+        SensorScreenRenderer::ScreenId sid;
+        int ix;
+        int iy;
+    };
+    vector<vector<ScreenIndex>> fisheyeLensMap;
+
+    void initialize(int width, int height,
+            int screenWidth, vector<SensorScreenRendererPtr>& screens);
+    void convertImage(Image* image);
+};
+
+
 class SensorRenderer : public Referenced
 {
 public:
@@ -217,6 +244,7 @@ public:
     vector<SensorScreenRendererPtr> screens;
     bool isRendering;  // only updated and referred to in the simulation thread
     std::shared_ptr<RangeSensor::RangeData> rangeData;
+    FisheyeLensConverter fisheyeLensConverter;
 
     SensorRenderer(GLVisionSimulatorItemImpl* simImpl, Device* sensor, SimulationBody* simBody, int bodyIndex);
     ~SensorRenderer();
@@ -615,8 +643,38 @@ SensorRenderer::SensorRenderer(GLVisionSimulatorItemImpl* simImpl, Device* devic
     rangeSensor = dynamic_cast<RangeSensor*>(device);
     
     if(camera){
-        screens.push_back(new SensorScreenRenderer(simImpl, device, deviceForRendering));
-        
+        if(camera->lensType()==Camera::NORMAL){
+            screens.push_back(new SensorScreenRenderer(simImpl, device, deviceForRendering));
+        }else{
+            int n = 5;
+            int resolution = camera->resolutionX();
+            int width = resolution;
+            if(camera->lensType()==Camera::DOUBLE_FISHEYE){
+                n=6;
+                resolution /= 2;
+            }
+
+            Matrix3 R[6];
+            R[SensorScreenRenderer::FRONT] = camera->localRotaion();
+            R[SensorScreenRenderer::RIGHT] = R[SensorScreenRenderer::FRONT] * AngleAxis(radian(-90), Vector3::UnitY());
+            R[SensorScreenRenderer::TOP] = R[SensorScreenRenderer::FRONT] * AngleAxis(radian(90), Vector3::UnitX());
+            R[SensorScreenRenderer::LEFT] = R[SensorScreenRenderer::TOP] * AngleAxis(radian(90), Vector3::UnitY());
+            R[SensorScreenRenderer::BOTTOM] = R[SensorScreenRenderer::RIGHT] * AngleAxis(radian(-90), Vector3::UnitX());
+            if(n==6){
+                R[SensorScreenRenderer::BACK] = R[SensorScreenRenderer::LEFT] * AngleAxis(radian(90), Vector3::UnitX());
+            }
+
+            for(int i=0; i<n; i++){
+                auto cameraForRendering = new Camera(*camera);
+                auto screen = new SensorScreenRenderer(simImpl, device, cameraForRendering);
+                screen->screenId = (SensorScreenRenderer::ScreenId)i;
+                cameraForRendering->setLocalRotation(R[i]);
+                cameraForRendering->setResolution(resolution,resolution);
+                screens.push_back(screen);
+            }
+
+            fisheyeLensConverter.initialize(width, resolution, resolution, screens);
+        }
     } else if(rangeSensor){
 
         int numScreens = 1;
@@ -776,6 +834,7 @@ SensorScreenRenderer::SensorScreenRenderer(GLVisionSimulatorItemImpl* simImpl, D
 #endif
 
     renderer = 0;
+    screenId = SensorScreenRenderer::FRONT;
 }
 
 
@@ -802,12 +861,29 @@ SgCamera* SensorScreenRenderer::initializeCamera(int bodyIndex)
     SgCamera* sceneCamera = nullptr;
 
     if(camera){
-        auto sceneDevice = sceneBody->getSceneDevice(camera);
-        if(sceneDevice){
-            sceneCamera = sceneDevice->findNodeOfType<SgCamera>();
-            pixelWidth = camera->resolutionX();
-            pixelHeight = camera->resolutionY();
-         }
+        if(camera->lensType() == Camera::NORMAL){
+            auto sceneDevice = sceneBody->getSceneDevice(camera);
+            if(sceneDevice){
+                sceneCamera = sceneDevice->findNodeOfType<SgCamera>();
+                pixelWidth = camera->resolutionX();
+                pixelHeight = camera->resolutionY();
+            }
+        }else{
+            auto sceneLink = sceneBody->sceneLink(camera->link()->index());
+            if(sceneLink){
+                auto persCamera = new SgPerspectiveCamera;
+                sceneCamera = persCamera;
+                persCamera->setNearClipDistance(cameraForRendering->nearClipDistance());
+                persCamera->setFarClipDistance(cameraForRendering->farClipDistance());
+                persCamera->setFieldOfView(radian(90.0));
+                auto cameraPos = new SgPosTransform();
+                cameraPos->setTransform(camera->link()->Rs().transpose() * cameraForRendering->T_local());
+                cameraPos->addChild(persCamera);
+                sceneLink->addChild(cameraPos);
+                pixelWidth = cameraForRendering->resolutionX();
+                pixelHeight = cameraForRendering->resolutionY();
+            }
+        }
     } else if(rangeSensor){
         auto sceneLink = sceneBody->sceneLink(rangeSensor->link()->index());
         if(sceneLink){
@@ -916,6 +992,28 @@ void SensorScreenRenderer::initializeGL(SgCamera* sceneCamera)
     if(rangeSensorForRendering){
         renderer->setDefaultLighting(false);
     } else {
+        if(screenId != FRONT){
+            SgDirectionalLight* headLight = dynamic_cast<SgDirectionalLight*>(renderer->headLight());
+            if(headLight){
+                switch(screenId){
+                case LEFT:
+                    headLight->setDirection(Vector3( 0, -1 ,0));
+                    break;
+                case RIGHT:
+                    headLight->setDirection(Vector3( -1, 0 ,0));
+                    break;
+                case TOP:
+                    headLight->setDirection(Vector3( 0, -1 ,0));
+                    break;
+                case BOTTOM:
+                    headLight->setDirection(Vector3( -1, 0 ,0));
+                    break;
+                case BACK:
+                    headLight->setDirection(Vector3( 0, 0 ,1));
+                    break;
+                }
+            }
+        }
         renderer->headLight()->on(simImpl->isHeadLightEnabled);
         renderer->enableAdditionalLights(simImpl->areAdditionalLightsEnabled);
     }
@@ -1320,15 +1418,20 @@ void SensorRenderer::copyVisionData()
     if(hasUpdatedData){
         double delay = simImpl->currentTime - onsetTime;
         if(camera){
-            auto& screen = screens[0];
-            if(!screen->tmpImage->empty()){
-                camera->setImage(screen->tmpImage);
+            if(camera->lensType()==Camera::NORMAL){
+                auto& screen = screens[0];
+                if(!screen->tmpImage->empty()){
+                    camera->setImage(screen->tmpImage);
+                }
+                if(rangeCamera){
+                    rangeCamera->setPoints(screen->tmpPoints);
+                }
+                camera->setDelay(delay);
+            }else{
+                std::shared_ptr<Image> image = std::make_shared<Image>();
+                fisheyeLensConverter.convertImage(image.get());
+                camera->setImage( image );
             }
-            if(rangeCamera){
-                rangeCamera->setPoints(screen->tmpPoints);
-            }
-            camera->setDelay(delay);
-
         } else if(rangeSensor){
             if(screens.empty()){
                 rangeData = std::make_shared<vector<double>>();
@@ -1370,6 +1473,213 @@ void SensorRenderer::copyVisionData()
 
         for(auto& screen : screens){
             screen->hasUpdatedData = false;
+        }
+    }
+}
+
+
+void FisheyeLensConverter::initialize(int width_, int height_,
+        int screenWidth_, vector<SensorScreenRendererPtr>& screens_)
+{
+    width = width_;
+    height = height_;
+    screenWidth = screenWidth_;
+    for(auto& screen : screens_){
+        screens.push_back(screen);
+    }
+    fisheyeLensMap.clear();
+}
+
+
+void  FisheyeLensConverter::convertImage(Image* image)
+{
+    image->setSize(width, height, 3);
+
+    if(fisheyeLensMap.empty()){
+        fisheyeLensMap.resize(height);
+        for(int i=0; i<height; i++){
+            fisheyeLensMap[i].resize(width);
+        }
+
+        unsigned char* pixels = image->pixels();
+        double height2 = height/2.0;
+        double screenWidth2 = screenWidth / 2.0;
+        double sw22 = screenWidth2 * screenWidth2;
+
+        for(int j=0; j<height; j++){
+            double y = j - height2;
+            for(int i=0; i<width; i++){
+                bool picked = false;
+
+                SensorScreenRenderer::ScreenId screenId;
+                int ii,jj;
+                if(i<height){
+                    double x = i - height2;
+                    double l = sqrt(x*x+y*y);
+
+                    if(l<=height2){
+                        double tanTheta;
+                        if(l==0){
+                            tanTheta = 0.0;
+                        } else {
+                            tanTheta = screenWidth2 / l * tan(l/height*PI);
+                        }
+                        double xx = x*tanTheta;
+                        double yy = y*tanTheta;
+                        ii = myNearByInt(xx + screenWidth2);
+                        jj = myNearByInt(yy + screenWidth2);
+                        if(0<=ii && ii<screenWidth && 0<=jj && jj<screenWidth){
+                            screenId = SensorScreenRenderer::FRONT;
+                            picked = true;
+                        }
+                        if(!picked && ii >= screenWidth){  //right
+                            double xx_ = sw22 / xx;
+                            double yy_ = screenWidth2 * yy / xx;
+                            int iir = myNearByInt(-xx_ + screenWidth2);
+                            int jjr = myNearByInt(yy_ + screenWidth2);
+                            if( 0 <= jjr && jjr < screenWidth){
+                                screenId = SensorScreenRenderer::RIGHT;
+                                ii = iir;
+                                jj = range(jjr, 0, screenWidth);
+                                picked = true;
+                            }
+                        }
+                        if(!picked && ii < 0){    //left
+                            double xx_ = sw22 / -xx;
+                            double yy_ = screenWidth2 * yy / -xx;
+                            int iil = myNearByInt(-yy_ +screenWidth2);
+                            int jjl = myNearByInt(xx_ + screenWidth2);
+                            if( 0 <= iil && iil < screenWidth){
+                                screenId = SensorScreenRenderer::LEFT;
+                                ii = iil;
+                                jj = range(jjl, 0, screenWidth);
+                                picked = true;
+                            }
+                        }
+                        if(!picked && jj >= screenWidth){    //bottom
+                            double xx_ = screenWidth2 * xx / yy;
+                            double yy_ = sw22 / yy;
+                            int iib = myNearByInt(-yy_ + screenWidth2);
+                            int jjb = myNearByInt(-xx_ + screenWidth2);
+                            screenId = SensorScreenRenderer::BOTTOM;
+                            ii = range(iib, 0, screenWidth);
+                            jj = range(jjb, 0, screenWidth);
+                            picked = true;
+                        }
+                        if(!picked && jj < 0){    //top
+                            double xx_ = screenWidth2 * xx / -yy;
+                            double yy_ = sw22 / -yy;
+                            int iit = myNearByInt(xx_ + screenWidth2);
+                            int jjt = myNearByInt(yy_ + screenWidth2);
+                            screenId = SensorScreenRenderer::TOP;
+                            ii = range(iit, 0, screenWidth);
+                            jj = range(jjt, 0, screenWidth);
+                            picked = true;
+                        }
+                        if(DEBUG_MESSAGE2 && !picked){
+                            cout << "Could not pick it up. " << i << " " << j << endl;
+                        }
+                    }
+                }else{
+                    double x = i - height - height2;
+                    double l = sqrt(x*x+y*y);
+                    if(l<=height2){
+                        double tanTheta;
+                        if(l==0){
+                            tanTheta = 0.0;
+                        } else {
+                            tanTheta = screenWidth2 / l * tan(l/height*PI);
+                        }
+                        double xx = x*tanTheta;
+                        double yy = y*tanTheta;
+                        ii = myNearByInt(-yy + screenWidth2);
+                        jj = myNearByInt(xx + screenWidth2);
+                        if(0<=ii && ii<screenWidth && 0<=jj && jj<screenWidth){
+                            screenId = SensorScreenRenderer::BACK;
+                            picked = true;
+                        }
+                        if(!picked && jj >= screenWidth){
+                            double xx_ = sw22 / xx;
+                            double yy_ = screenWidth2 * yy / xx;
+                            int iir = myNearByInt(-yy_ + screenWidth2);
+                            int jjr = myNearByInt(-xx_ + screenWidth2);
+                            if( 0 <= iir && iir < screenWidth){
+                                screenId = SensorScreenRenderer::LEFT;
+                                ii = iir;
+                                jj = range(jjr, 0, screenWidth);
+                                picked = true;
+                            }
+                        }
+                        if(!picked && jj < 0){
+                            double xx_ = sw22 / -xx;
+                            double yy_ = screenWidth2 * yy / -xx;
+                            int iil = myNearByInt(xx_ +screenWidth2);
+                            int jjl = myNearByInt(yy_ + screenWidth2);
+                            if( 0 <= jjl && jjl < screenWidth){
+                                screenId = SensorScreenRenderer::RIGHT;
+                                ii = range(iil, 0, screenWidth);
+                                jj = jjl;
+                                picked = true;
+                            }
+                        }
+                        if(!picked && ii < 0){
+                            double xx_ = screenWidth2 * xx / yy;
+                            double yy_ = sw22 / yy;
+                            int iib = myNearByInt(yy_ + screenWidth2);
+                            int jjb = myNearByInt(xx_ + screenWidth2);
+                            screenId = SensorScreenRenderer::BOTTOM;
+                            ii = range(iib, 0, screenWidth);
+                            jj = range(jjb, 0, screenWidth);
+                            picked = true;
+                        }
+                        if(!picked && ii >= screenWidth){
+                            double xx_ = screenWidth2 * xx / -yy;
+                            double yy_ = sw22 / -yy;
+                            int iit = myNearByInt(-xx_ + screenWidth2);
+                            int jjt = myNearByInt(-yy_ + screenWidth2);
+                            screenId = SensorScreenRenderer::TOP;
+                            ii = range(iit, 0, screenWidth);
+                            jj = range(jjt, 0, screenWidth);
+                            picked = true;
+                        }
+                        if(DEBUG_MESSAGE2 && !picked){
+                            cout << "Could not pick it up. " << i << " " << j << endl;
+                        }
+                    }
+                }
+
+                unsigned char* pix = &pixels[(i+j*width)*3];
+                if(picked){
+                    unsigned char* tempPixels = screens[screenId]->tmpImage->pixels();
+                    unsigned char* tempPix = &tempPixels[(int)((ii + jj * screenWidth) * 3)];
+                    pix[0] = tempPix[0];
+                    pix[1] = tempPix[1];
+                    pix[2] = tempPix[2];
+                    fisheyeLensMap[j][i].sid = screenId;
+                    fisheyeLensMap[j][i].ix = ii;
+                    fisheyeLensMap[j][i].iy = jj;
+                }else{
+                    pix[0] = pix[1] = pix[2] = 0;
+                    fisheyeLensMap[j][i].sid = SensorScreenRenderer::NONE;
+                }
+            }
+        }
+    }else{
+        for(int j=0; j<height; j++){
+            for(int i=0; i<width; i++){
+                unsigned char* pixels = image->pixels();
+                unsigned char* pix = &pixels[(i+j*width)*3];
+                ScreenIndex& screenIndex = fisheyeLensMap[j][i];
+                if(screenIndex.sid != SensorScreenRenderer::NONE){
+                    unsigned char* tempPixels = screens[screenIndex.sid]->tmpImage->pixels();
+                    unsigned char* tempPix = &tempPixels[(int)((screenIndex.ix + screenIndex.iy * screenWidth) * 3)];
+                    pix[0] = tempPix[0];
+                    pix[1] = tempPix[1];
+                    pix[2] = tempPix[2];
+                }else{
+                    pix[0] = pix[1] = pix[2] = 0;
+                }
+            }
         }
     }
 }

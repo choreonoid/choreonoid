@@ -34,8 +34,13 @@ public:
     bool isImageStateClonable() const { return isImageStateClonable_; }
 
     enum ImageType { NO_IMAGE, COLOR_IMAGE, GRAYSCALE_IMAGE };
+    enum LensType { NORMAL, FISHEYE, DOUBLE_FISHEYE };
+
     ImageType imageType() const { return imageType_; }
     void setImageType(ImageType type) { imageType_ = type; }
+
+    LensType lensType() const { return lensType_; }
+    void setLensType(LensType type) { lensType_ = type; }
 
     bool on() const { return on_; }
     void on(bool on) { on_ = on; }
@@ -96,6 +101,7 @@ private:
     double nearClipDistance_;
     double farClipDistance_;
     double fieldOfView_;
+    LensType lensType_;
     double frameRate_;
     double delay_;
     std::shared_ptr<Image> image_;
