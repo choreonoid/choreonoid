@@ -7,7 +7,7 @@
 #include "PlainSeqFileLoader.h"
 #include "ValueTree.h"
 #include "YAMLWriter.h"
-#include "TimedFrameSeqImporter.h"
+#include "GeneralSeqReader.h"
 #include <boost/format.hpp>
 #include <fstream>
 #include "gettext.h"
@@ -43,53 +43,27 @@ Vector3Seq::~Vector3Seq()
 }
 
 
+Vector3 Vector3Seq::defaultValue() const
+{
+    return Vector3::Zero();
+}
+
+
 bool Vector3Seq::doReadSeq(const Mapping& archive, std::ostream& os)
 {
-    if(!BaseSeqType::doReadSeq(archive, os)){
-        return false;
-    }
+    GeneralSeqReader reader(os);
 
-    checkSeqType(archive);    
-
-    const Listing& frames = *archive.findListing("frames");
-    if(!frames.isValid()){
-        setNumFrames(0);
-    } else {
-        const int n = frames.size();
-        setNumFrames(n);
-        for(int i=0; i < n; ++i){
-            const Listing& frame = *frames[i].toListing();
-            if(frame.size() != 3){
-                frame.throwException(_("The number of elements specified as a 3D vector is invalid."));
+    return reader.read(
+        &archive, this,
+        [](const Listing& v, int topIndex, Vector3& value){
+            if(v.size() != topIndex + 3){
+                v.throwException(_("The number of elements specified as a 3D vector is invalid."));
             }
-            Vector3& v = (*this)[i];
-            for(int j=0; j < 3; ++j){
-                v[j] = frame[j].toDouble();
-            }
-        }
-    }
-    
-    return true;
-}
-
-
-bool Vector3Seq::doImportTimedFrameSeq(const Mapping& archive, std::ostream& os)
-{
-    TimedFrameSeqImporter importer;
-
-    importer.import(
-        archive, *this, os,
-        [](const Listing& v, Vector3& value){
-            if(v.size() != 4 /* time + vector3 */){
-                v.throwException(_("The number of elements specified as a Vector3 value is invalid."));
-            }
-            value << v[1].toDouble(), v[2].toDouble(), v[3].toDouble();
+            value << v[topIndex].toDouble(), v[topIndex+1].toDouble(), v[topIndex+2].toDouble();
         });
-
-    return true;
 }
 
-    
+
 bool Vector3Seq::doWriteSeq(YAMLWriter& writer)
 {
     if(!BaseSeqType::doWriteSeq(writer)){

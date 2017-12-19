@@ -6,6 +6,7 @@
 #include "MultiVector3Seq.h"
 #include "ValueTree.h"
 #include "YAMLWriter.h"
+#include "GeneralSeqReader.h"
 #include "gettext.h"
 
 using namespace std;
@@ -51,39 +52,25 @@ MultiVector3Seq::~MultiVector3Seq()
 }
         
 
+Vector3 MultiVector3Seq::defaultValue() const
+{
+    return Vector3::Zero();
+}
+
+
 bool MultiVector3Seq::doReadSeq(const Mapping& archive, std::ostream& os)
 {
-    if(!BaseSeqType::doReadSeq(archive, os)){
-        return false;
-    }
+    GeneralSeqReader reader(os);
 
-    checkSeqType(archive);
-
-    const int nParts = archive["numParts"].toInt();
-    
-    const Listing& frames = *archive.findListing("frames");
-    if(!frames.isValid()){
-        setDimension(0, nParts);
-    } else {
-        const int nFrames = frames.size();
-        setDimension(nFrames, nParts);
-                
-        for(int i=0; i < nFrames; ++i){
-            const Listing& frameNode = *frames[i].toListing();
-            Frame f = frame(i);
-            const int n = std::min(frameNode.size(), nParts);
-            for(int j=0; j < n; ++j){
-                const Listing& v = *frameNode[j].toListing();
-                if(v.size() != 3){
-                    v.throwException(_("The number of elements specified as a 3D vector is invalid."));
-                } else {
-                    f[j] << v[0].toDouble(), v[1].toDouble(), v[2].toDouble();
-                }
+    return reader.read(
+        &archive, this,
+        [](const ValueNode& node, Vector3& value){
+            const Listing& v = *node.toListing();
+            if(v.size() != 3){
+                v.throwException(_("The number of elements specified as a 3D vector is invalid."));
             }
-        }
-    }
-    
-    return true;
+            value << v[0].toDouble(), v[1].toDouble(), v[2].toDouble();
+        });
 }
 
 

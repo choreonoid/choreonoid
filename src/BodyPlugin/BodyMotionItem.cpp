@@ -139,13 +139,6 @@ void BodyMotionItem::initializeClass(ExtensionManager* ext)
             return item->motion()->save(filename, 1.0, os);
         });
 
-    im.addLoader<BodyMotionItem>(
-        _("Body Motion (Timed-frame version)"), "BODY-MOTION-YAML", "yaml",
-        [](BodyMotionItem* item, const std::string& filename, std::ostream& os, Item* /* parentItem */){
-            return item->motion()->importTimedFrameSeqFile(filename, os);
-        },
-        ItemManager::PRIORITY_CONVERSION);
-
     initialized = true;
 }
 

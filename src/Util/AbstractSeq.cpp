@@ -119,114 +119,12 @@ bool AbstractSeq::readSeq(const Mapping& archive, std::ostream& os)
 }
 
 
-bool AbstractSeq::doReadSeq(const Mapping& archive, std::ostream&)
+bool AbstractSeq::doReadSeq(const Mapping& archive, std::ostream& os)
 {
-    readSeqContent(archive);
-
-    if(archive.get("hasFrameTime", false)){
-        archive.throwException(
-            _("Sequence data with frame time cannot be loaded as regular interval sequence data."));
-    }
-    
-    setFrameRate(archive.read<double>("frameRate"));
-
-    return true;
-}
-
-
-bool AbstractSeq::importTimedFrameSeq(const Mapping& archive, std::ostream& os)
-{
-    bool result = false;
-    
-    try {
-        checkSeqFormatVersion(archive, 2.0);
-
-        if(getFrameRate() <= 0.0){
-            os << _("The frame rate for importing timed-frame seq data is not specified.") << endl;
-        } else {
-            result = doImportTimedFrameSeq(archive, os);
-        }
-    }
-    catch (ValueNode::Exception& ex){
-        os << ex.message();
-    }
-
-    return result;
-}
-
-
-bool AbstractSeq::doImportTimedFrameSeq(const Mapping& archive, std::ostream& os)
-{
-    os << format(_("Importing timed-frame seq data into %1% is not supported.")) % seqType() << endl;
+    os << format(_("The function to read %1% is not implemented.")) % seqType() << endl;
     return false;
 }
 
-
-double AbstractSeq::checkSeqFormatVersion(const Mapping& archive, double minVersion, double strictMaxVersion)
-{
-    auto versionNode = archive.find("formatVersion");
-    double version = versionNode->isValid() ? versionNode->toDouble() : 1.0;
-    bool isSupported = true;
-    if(minVersion > 0.0 && version < minVersion){
-        isSupported = false;
-    } else if(strictMaxVersion > 0.0 && version >= strictMaxVersion){
-        isSupported = false;
-    }
-    if(!isSupported){
-        const ValueNode* node = versionNode->isValid() ? versionNode : &archive;
-        node->throwException(str(format(_("Format version %1% is not supported in this operation.")) % version));
-    }
-    return version;
-}    
-    
-
-void AbstractSeq::checkSeqType(const Mapping& archive)
-{
-    auto& typeNode = archive["type"];
-    if(typeNode.toString() != seqType()){
-        typeNode.throwException(str(format(_("The seq type must be %1%.")) % seqType()));
-    }
-}
-
-
-bool AbstractSeq::readSeqContent(const Mapping& archive)
-{
-    if(!archive.read("content", contentName_)){
-        archive.read("purpose", contentName_); // old version
-    }
-    return !contentName_.empty();
-}
-
-
-bool AbstractSeq::checkSeqContent(const Mapping& archive, const std::string requiredContent, std::ostream& os)
-{
-    readSeqContent(archive);
-    
-    if(contentName_ == requiredContent){
-        return true;
-    }
-
-    if(contentName_.empty()){
-        os << format(_("Content of %1% should be \"%2%\" but it is not specified."))
-            % seqType() % requiredContent;
-    } else {
-        os << format(_("Content \"%1%\" of %2% is different from the required content \"%3%\"."))
-            % contentName_ % seqType() % requiredContent;
-    }
-    return false;
-}
-
-
-int AbstractSeq::readNumParts(const Mapping& archive)
-{
-    auto& node = archive["numParts"];
-    const int n = node.toInt();
-    if(n < 1){
-        node.throwException(_("Invaid number of parts is specified"));
-    }
-    return n;
-}
-    
 
 bool AbstractSeq::writeSeq(YAMLWriter& writer)
 {

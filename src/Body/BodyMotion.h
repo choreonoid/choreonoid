@@ -42,7 +42,7 @@ public:
     virtual double getOffsetTime() const override;
     virtual void setOffsetTime(double time) override;
 
-    int numFrames() const { return linkPosSeq_->numFrames(); }
+    int numFrames() const;
     virtual int getNumFrames() const override;
     virtual void setNumFrames(int n, bool clearNewArea = false) override;
 
@@ -99,8 +99,6 @@ public:
     bool save(const std::string& filename, std::ostream& os = nullout());
     bool save(const std::string& filename, double version, std::ostream& os = nullout());
 
-    bool importTimedFrameSeqFile(const std::string& filename, std::ostream& os = nullout());
-
     typedef std::map<std::string, AbstractSeqPtr> ExtraSeqMap;
     typedef ExtraSeqMap::const_iterator ConstSeqIterator;
         
@@ -124,9 +122,10 @@ public:
             seq = std::dynamic_pointer_cast<SeqType>(base);
         }
         if(!seq){
-            seq = std::make_shared<SeqType>(numFrames());
-            seq->setFrameRate(frameRate());
+            seq = std::make_shared<SeqType>();
             base = seq;
+            seq->setFrameRate(frameRate());
+            seq->setNumFrames(numFrames());
             sigExtraSeqsChanged_();
         }
         return seq;
@@ -158,7 +157,6 @@ public:
 protected:
     virtual bool doReadSeq(const Mapping& archive, std::ostream& os) override;
     virtual bool doWriteSeq(YAMLWriter& writer) override;
-    virtual bool doImportTimedFrameSeq(const Mapping& archive, std::ostream& os) override;
         
 private:
     MultiSE3SeqPtr linkPosSeq_;

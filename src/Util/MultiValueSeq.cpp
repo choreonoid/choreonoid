@@ -7,7 +7,7 @@
 #include "PlainSeqFileLoader.h"
 #include "ValueTree.h"
 #include "YAMLWriter.h"
-#include "TimedFrameSeqImporter.h"
+#include "GeneralSeqReader.h"
 #include <fstream>
 #include "gettext.h"
 
@@ -51,45 +51,10 @@ MultiValueSeq::~MultiValueSeq()
 
 bool MultiValueSeq::doReadSeq(const Mapping& archive, std::ostream& os)
 {
-    if(!BaseSeqType::doReadSeq(archive, os)){
-        return false;
-    }
-
-    checkSeqType(archive);
-    
-    const int nParts = readNumParts(archive);
-
-    const Listing& frames = *archive.findListing("frames");
-    if(!frames.isValid()){
-        setDimension(0, nParts);
-    } else {
-        const int nFrames = frames.size();
-        setDimension(nFrames, nParts);
-        for(int i=0; i < nFrames; ++i){
-            const Listing& frameNode = *frames[i].toListing();
-            const int n = std::min(frameNode.size(), nParts);
-            Frame v = frame(i);
-            for(int j=0; j < n; ++j){
-                v[j] = frameNode[j].toDouble();
-            }
-        }
-    }
-    
-    return true;
+    GeneralSeqReader reader(os);
+    return reader.read(&archive, this, [](const ValueNode& node, double& v){ v = node.toDouble(); });
 }
-
-
-bool MultiValueSeq::doImportTimedFrameSeq(const Mapping& archive, std::ostream& os)
-{
-    TimedFrameSeqImporter importer;
-
-    importer.import(
-        archive, *this, os,
-        [](const ValueNode& node, double& v){ v = node.toDouble(); });
-
-    return true;
-}
-
+    
 
 bool MultiValueSeq::doWriteSeq(YAMLWriter& writer)
 {

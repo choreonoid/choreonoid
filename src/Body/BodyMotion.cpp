@@ -92,6 +92,21 @@ void BodyMotion::setFrameRate(double frameRate)
 }
 
 
+int BodyMotion::numFrames() const
+{
+    int maxNumFrames = std::max(linkPosSeq_->numFrames(), jointPosSeq_->numFrames());
+
+    for(auto& kv : extraSeqs){
+        int n = kv.second->getNumFrames();
+        if(n > maxNumFrames){
+            maxNumFrames = n;
+        }
+    }
+    
+    return maxNumFrames;
+}
+
+
 int BodyMotion::getNumFrames() const
 {
     return numFrames();
@@ -268,27 +283,9 @@ bool BodyMotion::load(const std::string& filename, std::ostream& os)
 }
 
 
-bool BodyMotion::importTimedFrameSeqFile(const std::string& filename, std::ostream& os)
+bool BodyMotion::doReadSeq(const Mapping& archive, std::ostream& os)
 {
-    YAMLReader reader;
-    reader.expectRegularMultiListing();
-    bool result = false;
-
-    try {
-        result = importTimedFrameSeq(*reader.loadDocument(filename)->toMapping(), os);
-    } catch(const ValueNode::Exception& ex){
-        os << ex.message();
-    }
-
-    return result;
-}
-
-
-static bool doCommonPorcessingInReadSeqAndImportTimedFrameSeq
-(BodyMotion& motion, const Mapping& archive, std::ostream& os,
- function<bool(AbstractSeq& seq, const Mapping& archive, std::ostream& os)> readSeqComponent)
-{
-    motion.setDimension(0, 1, 1);
+    setDimension(0, 1, 1);
 
     bool loaded = false;
     
@@ -300,7 +297,7 @@ static bool doCommonPorcessingInReadSeqAndImportTimedFrameSeq
     const char* jointContent;
     std::function<string(Mapping* mapping)> readContent;
     if(version >= 2.0){
-        type = motion.seqType();
+        type = seqType();
         jointContent = "JointDisplacement";
         readContent = [](Mapping* mapping){
             string content;
@@ -332,29 +329,31 @@ static bool doCommonPorcessingInReadSeqAndImportTimedFrameSeq
             const string type = component->read<string>("type");
             string content = readContent(component);
             
-            if((type == "MultiAffine3Seq" || type == "MultiSe3Seq" || type == "MultiSE3Seq")
+            if((type == "MultiSE3Seq" || (version < 2.0 && (type == "MultiSe3Seq" || type == "MultiAffine3Seq")))
                && content == "LinkPosition"){
-                loaded = readSeqComponent(*motion.linkPosSeq(), *component, os);
+                loaded = linkPosSeq()->readSeq(*component, os);
                 if(!loaded){
                     break;
                 }
             } else if(type == "MultiValueSeq" && content == jointContent){
-                loaded = readSeqComponent(*motion.jointPosSeq(), *component, os);
+                loaded = jointPosSeq()->readSeq(*component, os);
                 if(!loaded){
                     break;
                 }
             } else if(type == "Vector3Seq") {
-                if(content == "ZMP" || content == "RelativeZMP" || content == "RelativeZmp"){
-                    auto zmpSeq = motion.getOrCreateExtraSeq<ZMPSeq>("ZMP");
-                    loaded = readSeqComponent(*zmpSeq, *component, os);
+                if(content == "ZMP" || (version < 2.0) && (content == "RelativeZMP" || content == "RelativeZmp")){
+                    auto zmpSeq = getOrCreateExtraSeq<ZMPSeq>("ZMP");
+                    loaded = zmpSeq->readSeq(*component, os);
                     if(!loaded){
                         break;
                     }
-                    zmpSeq->setRootRelative(content != "ZMP");
+                    if(version < 2.0){
+                        zmpSeq->setRootRelative(content != "ZMP");
+                    }
                 } else {
                     //----------- user defined Vector3 data --------- 
-                    auto userVec3 = motion.getOrCreateExtraSeq<Vector3Seq>(content);
-                    loaded = readSeqComponent(*userVec3, *component, os);
+                    auto userVec3 = getOrCreateExtraSeq<Vector3Seq>(content);
+                    loaded = userVec3->readSeq(*component, os);
                     if(!loaded){
                         break;
                     }
@@ -364,30 +363,10 @@ static bool doCommonPorcessingInReadSeqAndImportTimedFrameSeq
     }
     
     if(!loaded){
-        motion.setDimension(0, 1, 1);
+        setDimension(0, 1, 1);
     }
     
     return loaded;
-}
-
-
-bool BodyMotion::doReadSeq(const Mapping& archive, std::ostream& os)
-{
-    return doCommonPorcessingInReadSeqAndImportTimedFrameSeq(
-        *this, archive, os,
-        [](AbstractSeq& seq, const Mapping& archive, std::ostream& os){
-            return seq.readSeq(archive, os);
-        });
-}
-
-
-bool BodyMotion::doImportTimedFrameSeq(const Mapping& archive, std::ostream& os)
-{
-    return doCommonPorcessingInReadSeqAndImportTimedFrameSeq(
-        *this, archive, os,
-        [](AbstractSeq& seq, const Mapping& archive, std::ostream& os){
-            return seq.importTimedFrameSeq(archive, os);
-        });
 }
 
 

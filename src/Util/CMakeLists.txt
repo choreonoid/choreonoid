@@ -23,7 +23,7 @@ set(sources
   MultiSE3MatrixSeq.cpp
   MultiValueSeq.cpp
   MultiVector3Seq.cpp
-  TimedFrameSeqImporter.cpp
+  GeneralSeqReader.cpp
   PlainSeqFileLoader.cpp
   Task.cpp
   AbstractTaskSequencer.cpp
