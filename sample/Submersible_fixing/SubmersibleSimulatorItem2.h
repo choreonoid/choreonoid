@@ -34,11 +34,7 @@ public:
     SubmersibleSimulatorItem2(const SubmersibleSimulatorItem2& org);
     ~SubmersibleSimulatorItem2();
     virtual bool initializeSimulation(SimulatorItem* simulatorItem);
-
     Link* root;
-//    Link* getRootLink() const{ return rootLink_; };
-//    void setRootLink(Link* rootLink){ rootLink_ = rootLink; };
-//    SubmersibleSimulatorItem2* test;
 
 protected:
     virtual Item* doDuplicate() const;
@@ -56,7 +52,6 @@ private:
     std::vector<Body*> body;
     double max_bbox[3] = {0};
 	double min_bbox[3] = {0};
-//	Link* rootLink_;
 };
 
 typedef ref_ptr<SubmersibleSimulatorItem2> SubmersibleSimulatorItem2Ptr;

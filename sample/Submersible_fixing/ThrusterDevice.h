@@ -12,21 +12,15 @@
 #include "exportdecl.h"
 #include <typeinfo>
 #include <cnoid/YAMLBodyLoader>
-//#include <cnoid/SimulatorItem>
-//#include <cnoid/SubSimulatorItem>
 #include <cnoid/Item>
 
 using namespace std;
 
 namespace cnoid {
 
-//class SimulationBodyImpl;
-
 class CNOID_EXPORT ThrusterDevice : public Device
 {
 public:
-//	static void initializeClass(ExtensionManager* ext);
-//	static bool readThrusterDevice(YAMLBodyLoader& loader, Mapping& node);
 
 	ThrusterDevice();
 	ThrusterDevice(const ThrusterDevice& org, bool copyStateOnly = false);
@@ -44,18 +38,8 @@ public:
 	const double hydraulic() const { return hydraulic_; }
 	void setHydraulic(const double& h) { hydraulic_ = h; }
 
-//protected:
-//    virtual void doPutProperties(PutPropertyFunction& putProperty);
-//    virtual bool store(Archive& archive);
-//    virtual bool restore(const Archive& archive);
-
 private:
 	double hydraulic_;
-//	SimulatorItem* simulatorItem;
-//	Body* simBody;
-//	SimulatorItemImpl* impl;
-
-//	void applyResistanceForce();
 };
 
 typedef ref_ptr<ThrusterDevice> ThrusterDevicePtr;
