@@ -42,28 +42,17 @@ public:
 
     virtual double getFrameRate() const = 0;
     virtual void setFrameRate(double frameRate) = 0;
-
-    double getTimeStep() const {
-        return 1.0 / getFrameRate();
-    }
-    
-    void setTimeStep(double timeStep){
-        return setFrameRate(1.0 / timeStep);
-    }
+    static double defaultFrameRate();
+        
+    double getTimeStep() const;
+    void setTimeStep(double timeStep);
 
     double getTimeOfFrame(int frame) const;
     int getFrameOfTime(double time) const;
 
-    virtual int getOffsetTimeFrame() const;
-    virtual bool setOffsetTimeFrame(int offset);
-
-    double getOffsetTime() const {
-        return getOffsetTimeFrame() / getFrameRate();
-    }
-
-    bool setOffsetTime(double offset) {
-        return setOffsetTimeFrame(static_cast<int>(offset * getFrameRate()));
-    }
+    virtual double getOffsetTime() const = 0;
+    virtual void setOffsetTime(double time) = 0;
+    int getOffsetTimeFrame() const;
     
     virtual int getNumFrames() const = 0;
     virtual void setNumFrames(int n, bool clearNewElements = false) = 0;
@@ -75,11 +64,10 @@ public:
     /**
        This function returns the duration of the sequence.
        @note Valid data exists for time less than this time.
-       Sine there is no data of this time, you must not access to it.
+       You must not access to the frame corresponding to this time because
+       there is no data at the time.
     */
-    double getTimeLength() const {
-        return getNumFrames() / getFrameRate();
-    }
+    double getTimeLength() const;
 
     const std::string& seqContentName() {
         return contentName_;
@@ -89,8 +77,6 @@ public:
         this->contentName_ = name;
     }
 
-    static const double defaultFrameRate() { return 100.0; }
-        
     bool readSeq(const Mapping& archive, std::ostream& os = nullout());
     bool writeSeq(YAMLWriter& writer);
 

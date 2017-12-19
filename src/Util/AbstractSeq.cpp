@@ -56,27 +56,51 @@ AbstractSeq::~AbstractSeq()
 }
 
 
+double AbstractSeq::defaultFrameRate()
+{
+    return 100.0;
+}
+
+double AbstractSeq::getTimeStep() const
+{
+    double r = getFrameRate();
+    return (r > 0.0) ? 1.0 / r : 0.0;
+}
+    
+
+void AbstractSeq::setTimeStep(double timeStep)
+{
+    if(timeStep > 0.0){
+        setFrameRate(1.0 / timeStep);
+    } else {
+        setFrameRate(0.0);
+    }
+}
+
+
 double AbstractSeq::getTimeOfFrame(int frame) const
 {
-    return (frame + getOffsetTimeFrame()) / getFrameRate();
+    double r = getFrameRate();
+    return (r > 0.0) ? (frame / r) + getOffsetTime() : getOffsetTime();
 }
 
 
 int AbstractSeq::getFrameOfTime(double time) const
 {
-    return static_cast<int>(time * getFrameRate()) - getOffsetTimeFrame();
+    return static_cast<int>(time - getOffsetTime()) * getFrameRate();
 }
 
 
 int AbstractSeq::getOffsetTimeFrame() const
 {
-    return 0;
+    return static_cast<int>(getOffsetTime() * getFrameRate());
 }
 
 
-bool AbstractSeq::setOffsetTimeFrame(int offset)
+double AbstractSeq::getTimeLength() const
 {
-    return (offset == 0);
+    double r = getFrameRate();
+    return (r > 0.0) ? (getNumFrames() / r) : 0.0;
 }
 
 

@@ -918,33 +918,49 @@ void SimulationBodyImpl::flushResultsToBodyMotionItems()
 
     const int ringBufferSize = simImpl->ringBufferSize;
     const int numBufFrames = linkPosBuf.rowSize();
+    const int nextFrame = simImpl->currentFrame + 1;
 
     if(linkPosBuf.colSize() > 0){
+        bool offsetChanged = false;
         for(int i=0; i < numBufFrames; ++i){
             MultiSE3Deque::Row buf = linkPosBuf.row(i);
             if(linkPosResults->numFrames() >= ringBufferSize){
                 linkPosResults->popFrontFrame();
+                offsetChanged = true;
             }
             std::copy(buf.begin(), buf.end(), linkPosResults->appendFrame().begin());
         }
+        if(offsetChanged){
+            linkPosResults->setOffsetTimeFrame(nextFrame - linkPosResults->numFrames());
+        }
     }
     if(jointPosBuf.colSize() > 0){
+        bool offsetChanged = false;
         for(int i=0; i < numBufFrames; ++i){
             Deque2D<double>::Row buf = jointPosBuf.row(i);
             if(jointPosResults->numFrames() >= ringBufferSize){
                 jointPosResults->popFrontFrame();
+                offsetChanged = true;
             }
             std::copy(buf.begin(), buf.end(), jointPosResults->appendFrame().begin());
         }
+        if(offsetChanged){
+            jointPosResults->setOffsetTimeFrame(nextFrame - jointPosResults->numFrames());
+        }
     }
     if(deviceStateBuf.colSize() > 0){
+        bool offsetChanged = false;
         // This loop begins with the second element to skip the first element to keep the unchanged states
         for(int i=1; i < deviceStateBuf.rowSize(); ++i){ 
             Deque2D<DeviceStatePtr>::Row buf = deviceStateBuf.row(i);
             if(deviceStateResults->numFrames() >= ringBufferSize){
                 deviceStateResults->popFrontFrame();
+                offsetChanged = true;
             }
             std::copy(buf.begin(), buf.end(), deviceStateResults->appendFrame().begin());
+        }
+        if(offsetChanged){
+            deviceStateResults->setOffsetTimeFrame(nextFrame - deviceStateResults->numFrames());
         }
     }
 }
@@ -2105,24 +2121,36 @@ void SimulatorItemImpl::flushResults()
     for(size_t i=0; i < activeSimBodies.size(); ++i){
         activeSimBodies[i]->flushResults();
     }
+
+    bool offsetChanged;
     if(isRecordingEnabled && recordCollisionData){
+        offsetChanged = false;
         for(size_t i=0 ; i < collisionPairsBuf.size(); ++i){
             if(collisionSeq->numFrames() >= ringBufferSize){
                 collisionSeq->popFrontFrame();
+                offsetChanged = true;
             }
             CollisionSeq::Frame collisionSeq0 = collisionSeq->appendFrame();
             collisionSeq0[0] = collisionPairsBuf[i];
+        }
+        if(offsetChanged){
+            collisionSeq->setOffsetTimeFrame(currentFrame + 1 - collisionSeq->numFrames());
         }
     }
     collisionPairsBuf.clear();
 
 #ifdef ENABLE_SIMULATION_PROFILING
+    offsetChanged = false;
     for(int i=0 ; i < simProfilingBuf.rowSize(); i++){
         Deque2D<double>::Row buf = simProfilingBuf.row(i);
         if(simProfilingSeq.numFrames() >= ringBufferSize){
             simProfilingSeq.popFrontFrame();
+            offsetChanged = true;
         }
         std::copy(buf.begin(), buf.end(), simProfilingSeq.appendFrame().begin());
+    }
+    if(offsetChanged){
+        simProfilingSeq.setOffsetTimeFrame(currentFrame + 1 - simProfilingSeq.numFrames());
     }
     simProfilingBuf.resizeRow(0);
 #endif

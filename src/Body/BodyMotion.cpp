@@ -21,19 +21,19 @@ namespace {
 
 BodyMotion::BodyMotion()
     : AbstractSeq("CompositeSeq"),
-      jointPosSeq_(new MultiValueSeq()),
-      linkPosSeq_(new MultiSE3Seq())
+      linkPosSeq_(new MultiSE3Seq()),
+      jointPosSeq_(new MultiValueSeq())
 {
     setSeqContentName("BodyMotion");
-    jointPosSeq_->setSeqContentName("JointDisplacement");
     linkPosSeq_->setSeqContentName("LinkPosition");
+    jointPosSeq_->setSeqContentName("JointDisplacement");
 }
 
 
 BodyMotion::BodyMotion(const BodyMotion& org)
     : AbstractSeq(org),
-      jointPosSeq_(new MultiValueSeq(*org.jointPosSeq_)),
-      linkPosSeq_(new MultiSE3Seq(*org.linkPosSeq_))
+      linkPosSeq_(new MultiSE3Seq(*org.linkPosSeq_)),
+      jointPosSeq_(new MultiValueSeq(*org.jointPosSeq_))
 {
     for(ExtraSeqMap::const_iterator p = org.extraSeqs.begin(); p != org.extraSeqs.end(); ++p){
         extraSeqs.insert(ExtraSeqMap::value_type(p->first, p->second->cloneSeq()));
@@ -46,8 +46,8 @@ BodyMotion& BodyMotion::operator=(const BodyMotion& rhs)
     if(this != &rhs){
         AbstractSeq::operator=(rhs);
     }
-    *jointPosSeq_ = *rhs.jointPosSeq_;
     *linkPosSeq_ = *rhs.linkPosSeq_;
+    *jointPosSeq_ = *rhs.jointPosSeq_;
 
     //! \todo do copy instead of replacing the pointers to the cloned ones
     extraSeqs.clear();
@@ -83,8 +83,8 @@ double BodyMotion::getFrameRate() const
 
 void BodyMotion::setFrameRate(double frameRate)
 {
-    jointPosSeq_->setFrameRate(frameRate);
     linkPosSeq_->setFrameRate(frameRate);
+    jointPosSeq_->setFrameRate(frameRate);
 
     for(ExtraSeqMap::iterator p = extraSeqs.begin(); p != extraSeqs.end(); ++p){
         p->second->setFrameRate(frameRate);
@@ -100,8 +100,8 @@ int BodyMotion::getNumFrames() const
 
 void BodyMotion::setNumFrames(int n, bool clearNewArea)
 {
-    jointPosSeq_->setNumFrames(n, clearNewArea);
     linkPosSeq_->setNumFrames(n, clearNewArea);
+    jointPosSeq_->setNumFrames(n, clearNewArea);
 
     for(ExtraSeqMap::iterator p = extraSeqs.begin(); p != extraSeqs.end(); ++p){
         p->second->setNumFrames(n, clearNewArea);
@@ -109,15 +109,27 @@ void BodyMotion::setNumFrames(int n, bool clearNewArea)
 }
 
 
-int BodyMotion::getOffsetTimeFrame() const {
-    return linkPosSeq_->offsetTimeFrame();
+double BodyMotion::getOffsetTime() const
+{
+    return linkPosSeq_->offsetTime();
 }
+
+
+void BodyMotion::setOffsetTime(double time)
+{
+    linkPosSeq_->setOffsetTime(time);
+    jointPosSeq_->setOffsetTime(time);
+
+    for(ExtraSeqMap::iterator p = extraSeqs.begin(); p != extraSeqs.end(); ++p){
+        p->second->setOffsetTime(time);
+    }
+}    
 
 
 void BodyMotion::setDimension(int numFrames, int numJoints, int numLinks, bool clearNewArea)
 {
-    jointPosSeq_->setDimension(numFrames, numJoints, clearNewArea);
     linkPosSeq_->setDimension(numFrames, numLinks, clearNewArea);
+    jointPosSeq_->setDimension(numFrames, numJoints, clearNewArea);
 
     for(ExtraSeqMap::iterator p = extraSeqs.begin(); p != extraSeqs.end(); ++p){
         p->second->setNumFrames(numFrames, clearNewArea);
@@ -166,16 +178,16 @@ BodyMotion::ConstFrame::ConstFrame()
 static void copyBodyStateToFrame(const Body& body, BodyMotion::Frame& frame)
 {
     BodyMotion& motion = frame.motion();
-    int numJoints = std::min(body.numJoints(), motion.numJoints());
-    MultiValueSeq::Frame q = motion.jointPosSeq()->frame(frame.frame());
-    for(int i=0; i < numJoints; ++i){
-        q[i] = body.joint(i)->q();
-    }
     int numLinks =  std::min(body.numLinks(), motion.numLinks());
     MultiSE3Seq::Frame p = motion.linkPosSeq()->frame(frame.frame());
     for(int i=0; i < numLinks; ++i){
         const Link* link = body.link(i);
         p[i].set(link->p(), link->R());
+    }
+    int numJoints = std::min(body.numJoints(), motion.numJoints());
+    MultiValueSeq::Frame q = motion.jointPosSeq()->frame(frame.frame());
+    for(int i=0; i < numJoints; ++i){
+        q[i] = body.joint(i)->q();
     }
 }
     
@@ -184,17 +196,17 @@ template<class FrameType>
 static void copyFrameToBodyState(FrameType& frame, const Body& body)
 {
     const BodyMotion& motion = frame.motion();
-    int numJoints = std::min(body.numJoints(), motion.numJoints());
-    const MultiValueSeq::Frame q = motion.jointPosSeq()->frame(frame.frame());
-    for(int i=0; i < numJoints; ++i){
-        body.joint(i)->q() = q[i];
-    }
     int numLinks =  std::min(body.numLinks(), motion.numLinks());
     const MultiSE3Seq::Frame p = motion.linkPosSeq()->frame(frame.frame());
     for(int i=0; i < numLinks; ++i){
         Link* link = body.link(i);
         link->p() = p[i].translation();
         link->R() = p[i].rotation().toRotationMatrix();
+    }
+    int numJoints = std::min(body.numJoints(), motion.numJoints());
+    const MultiValueSeq::Frame q = motion.jointPosSeq()->frame(frame.frame());
+    for(int i=0; i < numJoints; ++i){
+        body.joint(i)->q() = q[i];
     }
 }
 
@@ -320,14 +332,14 @@ static bool doCommonPorcessingInReadSeqAndImportTimedFrameSeq
             const string type = component->read<string>("type");
             string content = readContent(component);
             
-            if(type == "MultiValueSeq" && content == jointContent){
-                loaded = readSeqComponent(*motion.jointPosSeq(), *component, os);
+            if((type == "MultiAffine3Seq" || type == "MultiSe3Seq" || type == "MultiSE3Seq")
+               && content == "LinkPosition"){
+                loaded = readSeqComponent(*motion.linkPosSeq(), *component, os);
                 if(!loaded){
                     break;
                 }
-            } else if((type == "MultiAffine3Seq" || type == "MultiSe3Seq" || type == "MultiSE3Seq")
-                      && content == "LinkPosition"){
-                loaded = readSeqComponent(*motion.linkPosSeq(), *component, os);
+            } else if(type == "MultiValueSeq" && content == jointContent){
+                loaded = readSeqComponent(*motion.jointPosSeq(), *component, os);
                 if(!loaded){
                     break;
                 }
@@ -400,6 +412,12 @@ bool BodyMotion::doWriteSeq(YAMLWriter& writer)
 
     writer.startListing();
 
+    if(linkPosSeq_->numFrames() > 0){
+        if(!linkPosSeq_->writeSeq(writer)){
+            return false;
+        }
+    }
+
     if(jointPosSeq_->numFrames() > 0){
         string orgContentName;
         if(isVersion1){
@@ -411,11 +429,6 @@ bool BodyMotion::doWriteSeq(YAMLWriter& writer)
             jointPosSeq_->setSeqContentName(orgContentName);
         }
         if(!result){
-            return false;
-        }
-    }
-    if(linkPosSeq_->numFrames() > 0){
-        if(!linkPosSeq_->writeSeq(writer)){
             return false;
         }
     }

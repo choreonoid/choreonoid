@@ -23,21 +23,27 @@ public:
         
     Seq(const char* seqType, int nFrames = 0.0)
         : AbstractSeq(seqType),
-          container(nFrames) {
+          container(nFrames)
+    {
         frameRate_ = defaultFrameRate();
+        offsetTime_ = 0.0;
     }
         
     Seq(const SeqType& org)
         : AbstractSeq(org),
-          container(org.container) {
+          container(org.container)
+    {
         frameRate_ = org.frameRate_;
+        offsetTime_ = org.offsetTime_;
     }
 
-    SeqType& operator=(const SeqType& rhs) {
+    SeqType& operator=(const SeqType& rhs)
+    {
         if(this != &rhs){
             AbstractSeq::operator=(rhs);
             container = rhs.container;
             frameRate_ = rhs.frameRate_;
+            offsetTime_ = rhs.offsetTime_;
         }
         return *this;
     }
@@ -57,11 +63,11 @@ public:
         
     virtual ~Seq() { }
         
-    virtual double getFrameRate() const override {
+    double frameRate() const {
         return frameRate_;
     }
 
-    double frameRate() const {
+    virtual double getFrameRate() const override {
         return frameRate_;
     }
 
@@ -69,11 +75,11 @@ public:
         frameRate_ = frameRate;
     }
 
-    virtual int getNumFrames() const override {
+    int numFrames() const {
         return container.size();
     }
 
-    int numFrames() const {
+    virtual int getNumFrames() const override {
         return container.size();
     }
 
@@ -94,14 +100,34 @@ public:
         return container.empty();
     }
 
+    double timeLength() const {
+        return (frameRate_ > 0.0) ? (numFrames() / frameRate_) : 0.0;
+    }
+
     int frameOfTime(double time) const {
-        return (int)(time * frameRate_);
+        return static_cast<int>((time - offsetTime_) * frameRate_);
     }
-
+            
     double timeOfFrame(int frame) const {
-        return (frame / frameRate_);
+        return (frameRate_ > 0.0) ? ((frame / frameRate_) + offsetTime_) : offsetTime_;
     }
 
+    virtual double getOffsetTime() const override {
+        return offsetTime_;
+    }
+
+    virtual void setOffsetTime(double time) override {
+        offsetTime_ = time;
+    }
+
+    int offsetTimeFrame() const {
+        return static_cast<int>(offsetTime_ * frameRate_);
+    }
+
+    void setOffsetTimeFrame(int offset) {
+        offsetTime_ = (frameRate_ > 0) ? (offset / frameRate_) : 0.0;
+    }
+    
     ElementType& operator[](int frameIndex) {
         return container[frameIndex];
     }
@@ -132,9 +158,9 @@ public:
     }
 
 protected:
-
     std::vector<ElementType> container;
     double frameRate_;
+    double offsetTime_;
 
     virtual ElementType defaultValue() const { return ElementType(); }
 };

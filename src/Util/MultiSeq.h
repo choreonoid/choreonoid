@@ -12,7 +12,6 @@
 #include <algorithm>
 #include <memory>
 
-
 namespace cnoid {
 
 template <typename ElementType, typename Allocator = std::allocator<ElementType>>
@@ -32,22 +31,22 @@ public:
     MultiSeq(const char* seqType)
         : Container(0, 1),
           AbstractMultiSeq(seqType) {
-        frameRate_ = defaultFrameRate();
-        offsetTimeFrame_ = 0;
+        frameRate_ = 0.0;
+        offsetTime_ = 0.0;
     }
 
     MultiSeq(const char* seqType, int numFrames, int numParts)
         : Container(numFrames, numParts),
           AbstractMultiSeq(seqType) {
-        frameRate_ = defaultFrameRate();
-        offsetTimeFrame_ = 0;
+        frameRate_ = 0.0;
+        offsetTime_ = 0.0;
     }
 
     MultiSeq(const MultiSeqType& org)
         : Container(org),
           AbstractMultiSeq(org) {
         frameRate_ = org.frameRate_;
-        offsetTimeFrame_ = org.offsetTimeFrame_;
+        offsetTime_ = org.offsetTime_;
     }
     
     virtual ~MultiSeq() { }
@@ -57,6 +56,7 @@ public:
             AbstractMultiSeq::operator=(rhs);
             Container::operator=(rhs);
             frameRate_ = rhs.frameRate_;
+            offsetTime_ = rhs.offsetTime_;
         }
         return *this;
     }
@@ -118,19 +118,20 @@ public:
     }
 
     const double timeStep() const {
-        return 1.0 / frameRate_;
+        const double r = getFrameRate();
+        return (r > 0.0) ? 1.0 / r : 0.0;
     }
 
     virtual void setNumParts(int newNumParts, bool fillNewElements = false) override {
         setDimension(numFrames(), newNumParts, fillNewElements);
     }
 
-    virtual int getNumFrames() const override {
+    int numFrames() const {
         return Container::rowSize();
     }
 
-    int numFrames() const {
-        return Container::rowSize();
+    virtual int getNumFrames() const override {
+        return numFrames();
     }
 
     virtual void setNumFrames(int newNumFrames, bool fillNewElements = false) override {
@@ -150,30 +151,37 @@ public:
     }
 
     double timeLength() const {
-        return numFrames() / frameRate();
-    }
-
-    virtual bool setOffsetTimeFrame(int frameOffset) override {
-        offsetTimeFrame_ = frameOffset;
-        return true;
-    }
-
-    int offsetTimeFrame() const {
-        return offsetTimeFrame_;
-    }
-
-    virtual int getOffsetTimeFrame() const override {
-        return offsetTimeFrame_;
+        return (frameRate_ > 0.0) ? (numFrames() / frameRate_) : 0.0;
     }
 
     int frameOfTime(double time) const {
-        return (int)(time * frameRate_) - offsetTimeFrame_;
+        return static_cast<int>((time - offsetTime_) * frameRate_);
     }
             
     double timeOfFrame(int frame) const {
-        return ((frame + offsetTimeFrame_) / frameRate_);
+        return (frameRate_ > 0.0) ? ((frame / frameRate_) + offsetTime_) : offsetTime_;
     }
 
+    double offsetTime() const {
+        return offsetTime_;
+    }
+
+    virtual double getOffsetTime() const override {
+        return offsetTime_;
+    }
+
+    virtual void setOffsetTime(double time) override {
+        offsetTime_ = time;
+    }
+
+    int offsetTimeFrame() const {
+        return static_cast<int>(offsetTime_ * frameRate_);
+    }
+
+    void setOffsetTimeFrame(int offset) {
+        offsetTime_ = (frameRate_ > 0) ? (offset / frameRate_) : 0.0;
+    }
+    
     const Part part(int index) const {
         return Container::column(index);
     }
@@ -192,7 +200,6 @@ public:
 
     void popFrontFrame() {
         Container::pop_front();
-        offsetTimeFrame_ += 1;
     }
 
     Frame appendFrame() {
@@ -210,7 +217,7 @@ public:
 
 protected:
     double frameRate_;
-    int offsetTimeFrame_;
+    double offsetTime_;
 
     virtual value_type defaultValue() const { return value_type(); }
 };
