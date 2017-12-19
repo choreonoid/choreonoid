@@ -48,15 +48,7 @@ AbstractSeqPtr MultiSE3MatrixSeq::cloneSeq() const
 }
 
 
-bool MultiSE3MatrixSeq::doReadSeq(const Mapping& archive, std::ostream& os)
+Affine3 MultiSE3MatrixSeq::defaultValue() const
 {
-    os << _("Reading MultiSE3MatrixSeq data is not supported.") << endl;
-    return false;
-}
-
-
-bool MultiSE3MatrixSeq::doWriteSeq(YAMLWriter& writer)
-{
-    writer.putMessage(_("Writing MultiSE3MatrixSeq data is not supported.\n"));
-    return false;
+    return Affine3::Identity();
 }

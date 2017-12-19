@@ -274,7 +274,7 @@ bool BodyMotion::load(const std::string& filename, std::ostream& os)
     bool result = false;
 
     try {
-        result = readSeq(*reader.loadDocument(filename)->toMapping(), os);
+        result = readSeq(reader.loadDocument(filename)->toMapping(), os);
     } catch(const ValueNode::Exception& ex){
         os << ex.message();
     }
@@ -283,14 +283,14 @@ bool BodyMotion::load(const std::string& filename, std::ostream& os)
 }
 
 
-bool BodyMotion::doReadSeq(const Mapping& archive, std::ostream& os)
+bool BodyMotion::doReadSeq(const Mapping* archive, std::ostream& os)
 {
     setDimension(0, 1, 1);
 
     bool loaded = false;
     
     double version;
-    if(!archive.read("formatVersion", version)){
+    if(!archive->read("formatVersion", version)){
         version = 1.0;
     }
     string type;
@@ -316,34 +316,34 @@ bool BodyMotion::doReadSeq(const Mapping& archive, std::ostream& os)
         };
     }
     
-    if(archive.get<string>("type") == type){
+    if(archive->get<string>("type") == type){
         
-        const Listing& components = *archive["components"].toListing();
+        const Listing& components = *(*archive)["components"].toListing();
         
         for(int i=0; i < components.size(); ++i){
 
             // Merge the parameters of the parent node into the child (component) node
             MappingPtr component = components[i].toMapping()->cloneMapping();
-            component->insert(&archive);
+            component->insert(archive);
             
             const string type = component->read<string>("type");
             string content = readContent(component);
             
             if((type == "MultiSE3Seq" || (version < 2.0 && (type == "MultiSe3Seq" || type == "MultiAffine3Seq")))
                && content == "LinkPosition"){
-                loaded = linkPosSeq()->readSeq(*component, os);
+                loaded = linkPosSeq()->readSeq(component, os);
                 if(!loaded){
                     break;
                 }
             } else if(type == "MultiValueSeq" && content == jointContent){
-                loaded = jointPosSeq()->readSeq(*component, os);
+                loaded = jointPosSeq()->readSeq(component, os);
                 if(!loaded){
                     break;
                 }
             } else if(type == "Vector3Seq") {
                 if(content == "ZMP" || (version < 2.0) && (content == "RelativeZMP" || content == "RelativeZmp")){
                     auto zmpSeq = getOrCreateExtraSeq<ZMPSeq>("ZMP");
-                    loaded = zmpSeq->readSeq(*component, os);
+                    loaded = zmpSeq->readSeq(component, os);
                     if(!loaded){
                         break;
                     }
@@ -353,7 +353,7 @@ bool BodyMotion::doReadSeq(const Mapping& archive, std::ostream& os)
                 } else {
                     //----------- user defined Vector3 data --------- 
                     auto userVec3 = getOrCreateExtraSeq<Vector3Seq>(content);
-                    loaded = userVec3->readSeq(*component, os);
+                    loaded = userVec3->readSeq(component, os);
                     if(!loaded){
                         break;
                     }

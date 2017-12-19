@@ -49,12 +49,12 @@ Vector3 Vector3Seq::defaultValue() const
 }
 
 
-bool Vector3Seq::doReadSeq(const Mapping& archive, std::ostream& os)
+bool Vector3Seq::doReadSeq(const Mapping* archive, std::ostream& os)
 {
     GeneralSeqReader reader(os);
 
     return reader.read(
-        &archive, this,
+        archive, this,
         [](const Listing& v, int topIndex, Vector3& value){
             if(v.size() != topIndex + 3){
                 v.throwException(_("The number of elements specified as a 3D vector is invalid."));
@@ -66,7 +66,7 @@ bool Vector3Seq::doReadSeq(const Mapping& archive, std::ostream& os)
 
 bool Vector3Seq::doWriteSeq(YAMLWriter& writer)
 {
-    if(!BaseSeqType::doWriteSeq(writer)){
+    if(!writeSeqHeaders(writer)){
         return false;
     }
     

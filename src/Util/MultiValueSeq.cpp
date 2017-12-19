@@ -49,16 +49,16 @@ MultiValueSeq::~MultiValueSeq()
 }
 
 
-bool MultiValueSeq::doReadSeq(const Mapping& archive, std::ostream& os)
+bool MultiValueSeq::doReadSeq(const Mapping* archive, std::ostream& os)
 {
     GeneralSeqReader reader(os);
-    return reader.read(&archive, this, [](const ValueNode& node, double& v){ v = node.toDouble(); });
+    return reader.read(archive, this, [](const ValueNode& node, double& v){ v = node.toDouble(); });
 }
     
 
 bool MultiValueSeq::doWriteSeq(YAMLWriter& writer)
 {
-    if(!BaseSeqType::doWriteSeq(writer)){
+    if(!writeSeqHeaders(writer)){
         return false;
     }
 

@@ -77,15 +77,17 @@ public:
         this->contentName_ = name;
     }
 
-    bool readSeq(const Mapping& archive, std::ostream& os = nullout());
+    bool readSeq(const Mapping* archive, std::ostream& os = nullout());
     bool writeSeq(YAMLWriter& writer);
 
     //! deprecated. Use the os parameter of readSeq to get messages in reading
     const std::string& seqMessage() const;
 
 protected:
-    virtual bool doReadSeq(const Mapping& archive, std::ostream& os);
+    virtual bool doReadSeq(const Mapping* archive, std::ostream& os);
     virtual bool doWriteSeq(YAMLWriter& writer);
+
+    bool writeSeqHeaders(YAMLWriter& writer);
 
     //! deprecated. Use the os parameter of readSeq to get messages in reading
     void clearSeqMessage() { }

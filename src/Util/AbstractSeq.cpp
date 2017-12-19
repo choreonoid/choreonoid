@@ -104,7 +104,7 @@ double AbstractSeq::getTimeLength() const
 }
 
 
-bool AbstractSeq::readSeq(const Mapping& archive, std::ostream& os)
+bool AbstractSeq::readSeq(const Mapping* archive, std::ostream& os)
 {
     bool result = false;
     
@@ -119,7 +119,7 @@ bool AbstractSeq::readSeq(const Mapping& archive, std::ostream& os)
 }
 
 
-bool AbstractSeq::doReadSeq(const Mapping& archive, std::ostream& os)
+bool AbstractSeq::doReadSeq(const Mapping*, std::ostream& os)
 {
     os << format(_("The function to read %1% is not implemented.")) % seqType() << endl;
     return false;
@@ -140,11 +140,18 @@ bool AbstractSeq::writeSeq(YAMLWriter& writer)
 
 bool AbstractSeq::doWriteSeq(YAMLWriter& writer)
 {
+    writer.putMessage(str(format(_("The function to write %1% is not implemented.\n")) % seqType()));
+    return false;
+}
+
+
+bool AbstractSeq::writeSeqHeaders(YAMLWriter& writer)
+{
     if(seqType_.empty()){
         if(contentName_.empty()){
-            writer.putMessage(_("The type of the sequence to write is unknown."));
+            writer.putMessage(_("The type of the sequence to write is unknown.\n"));
         } else {
-            writer.putMessage(str(format(_("The type of the %1% sequence to write is unknown.")) % contentName_));
+            writer.putMessage(str(format(_("The type of the %1% sequence to write is unknown.\n")) % contentName_));
         }
         return false;
     }
@@ -152,7 +159,7 @@ bool AbstractSeq::doWriteSeq(YAMLWriter& writer)
     const double frameRate = getFrameRate();
     if(frameRate <= 0.0){
         writer.putMessage(
-            str(format(_("Frame rate %1% of %2% is invalid"))
+            str(format(_("Frame rate %1% of %2% is invalid.\n"))
                 % frameRate % (contentName_.empty() ? seqType_ : contentName_)));
         return false;
     }

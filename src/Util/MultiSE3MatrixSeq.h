@@ -34,9 +34,7 @@ public:
     virtual AbstractSeqPtr cloneSeq() const override;
         
 protected:
-    virtual Affine3 defaultValue() const { return Affine3::Identity(); }
-    bool doReadSeq(const Mapping& archive, std::ostream& os) override;
-    bool doWriteSeq(YAMLWriter& writer) override;
+    virtual Affine3 defaultValue() const override;
 };
 
 typedef MultiSE3MatrixSeq::Ptr MultiSE3MatrixSeqPtr;

@@ -33,7 +33,7 @@ public:
         
 protected:
     virtual Vector3 defaultValue() const override;
-    virtual bool doReadSeq(const Mapping& archive, std::ostream& os) override;
+    virtual bool doReadSeq(const Mapping* archive, std::ostream& os) override;
     virtual bool doWriteSeq(YAMLWriter& writer) override;
 };
 

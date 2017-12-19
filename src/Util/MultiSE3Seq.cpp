@@ -57,24 +57,24 @@ SE3 MultiSE3Seq::defaultValue() const
 }
 
 
-bool MultiSE3Seq::doReadSeq(const Mapping& archive, std::ostream& os)
+bool MultiSE3Seq::doReadSeq(const Mapping* archive, std::ostream& os)
 {
     GeneralSeqReader reader(os);
 
-    if(!reader.readHeaders(&archive, this)){
+    if(!reader.readHeaders(archive, this)){
         return false;
     }
     
     string se3format;
 
     if(reader.formatVersion() >= 2.0){
-        se3format = archive.get<string>("SE3Format");
+        se3format = archive->get<string>("SE3Format");
     } else {
         reader.setFuncToCheckSeqType(
             [&](const string& type){
                 return (type == "MultiSE3Seq" || type == "MultiSe3Seq" || type == "MultiAffine3Seq");
             });
-        se3format = archive.get<string>("format");
+        se3format = archive->get<string>("format");
     }
 
     bool result = false;
@@ -83,7 +83,7 @@ bool MultiSE3Seq::doReadSeq(const Mapping& archive, std::ostream& os)
     
     if(se3format == "XYZQWQXQYQZ"){
         result = reader.readFrames(
-            &archive, this,
+            archive, this,
             [](const ValueNode& node, SE3& value){
                 const Listing& v = *node.toListing();
                 if(v.size() != 7){
@@ -95,7 +95,7 @@ bool MultiSE3Seq::doReadSeq(const Mapping& archive, std::ostream& os)
 
     } else if(se3format == "XYZQXQYQZQW" && reader.formatVersion() < 2.0){
         result = reader.readFrames(
-            &archive, this,
+            archive, this,
             [](const ValueNode& node, SE3& value){
                 const Listing& v = *node.toListing();
                 if(v.size() != 7){
@@ -107,7 +107,7 @@ bool MultiSE3Seq::doReadSeq(const Mapping& archive, std::ostream& os)
 
     } else if(se3format == "XYZRPY"){
         result = reader.readFrames(
-            &archive, this,
+            archive, this,
             [](const ValueNode& node, SE3& value){
                 const Listing& v = *node.toListing();
                 if(v.size() != 6){
@@ -146,7 +146,7 @@ static void writeSE3(YAMLWriter& writer, const SE3& value)
 
 bool MultiSE3Seq::doWriteSeq(YAMLWriter& writer)
 {
-    if(!BaseSeqType::doWriteSeq(writer)){
+    if(!writeSeqHeaders(writer)){
         return false;
     }
 
