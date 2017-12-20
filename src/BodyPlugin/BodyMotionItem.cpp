@@ -76,9 +76,8 @@ static bool bodyMotionItemPreFilter(BodyMotionItem* protoItem, Item* parentItem)
     }
     if(bodyItem){
         MultiValueSeqPtr jointPosSeq = protoItem->motion()->jointPosSeq();
-        int prevNumJoints = jointPosSeq->numParts();
         int numJoints = bodyItem->body()->numJoints();
-        if(numJoints != prevNumJoints){
+        if(numJoints != jointPosSeq->numParts()){
             jointPosSeq->setNumParts(numJoints, true);
         }
     }
@@ -86,29 +85,27 @@ static bool bodyMotionItemPreFilter(BodyMotionItem* protoItem, Item* parentItem)
 }
 
 
-/*
-  static bool bodyMotionItemPostFilter(BodyMotionItem* protoItem, Item* parentItem)
-  {
-  BodyItemPtr bodyItem = dynamic_cast<BodyItem*>(parentItem);
-  if(!bodyItem){
-  bodyItem = parentItem->findOwnerItem<BodyItem>();
-  }
-  if(bodyItem){
-  BodyPtr body = bodyItem->body();
-  MultiValueSeqPtr qseq = protoItem->jointPosSeq();
-  int n = std::min(body->numJoints(), qseq->numParts());
-  for(int i=0; i < n; ++i){
-  Link* joint = body->joint(i);
-  if(joint->defaultJointValue != 0.0){
-  MultiValueSeq::Part part = qseq->part(i);
-  std::fill(part.begin(), part.end(), joint->defaultJointValue);
-  }
-  }
-  }
+static bool bodyMotionItemPostFilter(BodyMotionItem* protoItem, Item* parentItem)
+{
+    BodyItemPtr bodyItem = dynamic_cast<BodyItem*>(parentItem);
+    if(!bodyItem){
+        bodyItem = parentItem->findOwnerItem<BodyItem>();
+    }
+    if(bodyItem){
+        BodyPtr body = bodyItem->body();
+        MultiValueSeqPtr qseq = protoItem->jointPosSeq();
+        int n = std::min(body->numJoints(), qseq->numParts());
+        for(int i=0; i < n; ++i){
+            Link* joint = body->joint(i);
+            if(joint->q_initial() != 0.0){
+                MultiValueSeq::Part part = qseq->part(i);
+                std::fill(part.begin(), part.end(), joint->q_initial());
+            }
+        }
+    }
     
-  return true;
-  }
-*/
+    return true;
+}
 
 
 void BodyMotionItem::initializeClass(ExtensionManager* ext)
@@ -125,21 +122,21 @@ void BodyMotionItem::initializeClass(ExtensionManager* ext)
 
     im.addCreationPanel<BodyMotionItem>(new MultiSeqItemCreationPanel(_("Number of joints")));
     im.addCreationPanelPreFilter<BodyMotionItem>(bodyMotionItemPreFilter);
-    //im.addCreationPanelPostFilter<BodyMotionItem>(bodyMotionItemPostFilter);
+    im.addCreationPanelPostFilter<BodyMotionItem>(bodyMotionItemPostFilter);
 
     im.addLoaderAndSaver<BodyMotionItem>(
-        _("Body Motion"), "SEQUENCE-SET", "yaml",
+        _("Body Motion"), "BODY-MOTION-YAML", "yaml",
         [](BodyMotionItem* item, const std::string& filename, std::ostream& os, Item* /* parentItem */){
-            return item->motion()->loadStandardFormat(filename, os);
+            return item->motion()->load(filename, os);
         },
         [](BodyMotionItem* item, const std::string& filename, std::ostream& os, Item* /* parentItem */){
-            return item->motion()->saveAsStandardFormat(filename, os);
+            return item->motion()->save(filename, os);
         });
 
     im.addSaver<BodyMotionItem>(
         _("Body Motion (version 1.0)"), "BODY-MOTION-YAML", "yaml",
         [](BodyMotionItem* item, const std::string& filename, std::ostream& os, Item* /* parentItem */){
-            return item->motion()->saveAsStandardFormat(filename, 1.0, os);
+            return item->motion()->save(filename, 1.0, os);
         });
 
     initialized = true;

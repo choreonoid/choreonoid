@@ -17,6 +17,7 @@ class CNOID_EXPORT Vector3Seq : public Seq<Vector3>
 {
 public:
     typedef Seq<Vector3> BaseSeqType;
+    typedef typename BaseSeqType::value_type value_type;
             
     Vector3Seq(int nFrames = 0);
     Vector3Seq(const Vector3Seq& org);
@@ -29,9 +30,8 @@ public:
     bool saveAsPlainFormat(const std::string& filename, std::ostream& os = nullout());
 
 protected:
-    virtual Vector3 defaultValue() const { return Vector3::Zero(); }
-
-    virtual bool doReadSeq(const Mapping& archive, std::ostream& os) override;
+    virtual Vector3 defaultValue() const override;
+    virtual bool doReadSeq(const Mapping* archive, std::ostream& os) override;
     virtual bool doWriteSeq(YAMLWriter& writer) override;
 };
 

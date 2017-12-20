@@ -30,30 +30,21 @@ public:
     void setDimension(int numFrames, int numJoints, int numLinks, bool clearNewArea = false);
     void setNumJoints(int numJoints, bool clearNewElements = false);
 
-    int numJoints() const { return jointPosSeq_->numParts(); }
     int numLinks() const { return linkPosSeq_->numParts(); }
+    int numJoints() const { return jointPosSeq_->numParts(); }
 
-    double frameRate() const { return jointPosSeq_->frameRate(); }
+    double frameRate() const { return linkPosSeq_->frameRate(); }
     virtual double getFrameRate() const override;
     virtual void setFrameRate(double frameRate) override;
 
-    double timeStep() const { return jointPosSeq_->timeStep(); }
+    double timeStep() const { return linkPosSeq_->timeStep(); }
 
-    virtual int getOffsetTimeFrame() const override;
+    virtual double getOffsetTime() const override;
+    virtual void setOffsetTime(double time) override;
 
-    int numFrames() const {
-        return std::max(jointPosSeq_->numFrames(), linkPosSeq_->numFrames());
-    }
+    int numFrames() const;
     virtual int getNumFrames() const override;
     virtual void setNumFrames(int n, bool clearNewArea = false) override;
-
-    MultiValueSeqPtr jointPosSeq() {
-        return jointPosSeq_;
-    }
-
-    ConstMultiValueSeqPtr jointPosSeq() const {
-        return jointPosSeq_;
-    }
 
     MultiSE3SeqPtr linkPosSeq() {
         return linkPosSeq_;
@@ -61,6 +52,14 @@ public:
 
     ConstMultiSE3SeqPtr linkPosSeq() const {
         return linkPosSeq_;
+    }
+
+    MultiValueSeqPtr jointPosSeq() {
+        return jointPosSeq_;
+    }
+
+    ConstMultiValueSeqPtr jointPosSeq() const {
+        return jointPosSeq_;
     }
 
     class CNOID_EXPORT Frame {
@@ -96,9 +95,9 @@ public:
     Frame frame(int frame) { return Frame(*this, frame); }
     ConstFrame frame(int frame) const { return ConstFrame(*this, frame); }
 
-    bool loadStandardFormat(const std::string& filename, std::ostream& os = nullout());
-    bool saveAsStandardFormat(const std::string& filename, std::ostream& os = nullout());
-    bool saveAsStandardFormat(const std::string& filename, double version, std::ostream& os = nullout());
+    bool load(const std::string& filename, std::ostream& os = nullout());
+    bool save(const std::string& filename, std::ostream& os = nullout());
+    bool save(const std::string& filename, double version, std::ostream& os = nullout());
 
     typedef std::map<std::string, AbstractSeqPtr> ExtraSeqMap;
     typedef ExtraSeqMap::const_iterator ConstSeqIterator;
@@ -123,9 +122,10 @@ public:
             seq = std::dynamic_pointer_cast<SeqType>(base);
         }
         if(!seq){
-            seq = std::make_shared<SeqType>(numFrames());
-            seq->setFrameRate(frameRate());
+            seq = std::make_shared<SeqType>();
             base = seq;
+            seq->setFrameRate(frameRate());
+            seq->setNumFrames(numFrames());
             sigExtraSeqsChanged_();
         }
         return seq;
@@ -147,23 +147,21 @@ public:
     
     //! \deprecated
     bool loadStandardYAMLformat(const std::string& filename, std::ostream& os = nullout()){
-        return loadStandardFormat(filename, os);
+        return load(filename, os);
     }
     //! \deprecated
     bool saveAsStandardYAMLformat(const std::string& filename, std::ostream& os = nullout()){
-        return saveAsStandardYAMLformat(filename, os);
+        return save(filename, os);
     }
 
 protected:
-    virtual bool doReadSeq(const Mapping& archive, std::ostream& os) override;
+    virtual bool doReadSeq(const Mapping* archive, std::ostream& os) override;
     virtual bool doWriteSeq(YAMLWriter& writer) override;
         
 private:
-    MultiValueSeqPtr jointPosSeq_;
     MultiSE3SeqPtr linkPosSeq_;
-
+    MultiValueSeqPtr jointPosSeq_;
     ExtraSeqMap extraSeqs;
-
     Signal<void()> sigExtraSeqsChanged_;
 };
 
