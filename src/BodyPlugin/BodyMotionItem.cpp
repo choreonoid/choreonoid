@@ -125,7 +125,7 @@ void BodyMotionItem::initializeClass(ExtensionManager* ext)
     im.addCreationPanelPostFilter<BodyMotionItem>(bodyMotionItemPostFilter);
 
     im.addLoaderAndSaver<BodyMotionItem>(
-        _("Body Motion"), "BODY-MOTION-YAML", "yaml",
+        _("Body Motion"), "BODY-MOTION-YAML", "seq;yaml",
         [](BodyMotionItem* item, const std::string& filename, std::ostream& os, Item* /* parentItem */){
             return item->motion()->load(filename, os);
         },
@@ -134,7 +134,7 @@ void BodyMotionItem::initializeClass(ExtensionManager* ext)
         });
 
     im.addSaver<BodyMotionItem>(
-        _("Body Motion (version 1.0)"), "BODY-MOTION-YAML", "yaml",
+        _("Body Motion (version 1.0)"), "BODY-MOTION-YAML", "seq;yaml",
         [](BodyMotionItem* item, const std::string& filename, std::ostream& os, Item* /* parentItem */){
             return item->motion()->save(filename, 1.0, os);
         });
