@@ -867,6 +867,7 @@ void AGXBody::addForceTorqueToAGX()
     for(const auto& link : getAGXLinks()){
         link->addForceTorqueToAGX();
     }
+    body()->clearExternalForces();
 }
 
 void AGXBody::setLinkStateToAGX()
