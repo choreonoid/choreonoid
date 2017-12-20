@@ -15,12 +15,6 @@
 using namespace std;
 using namespace cnoid;
 
-namespace{
-//    vector<Vector3, Eigen::aligned_allocator<Vector3> > resistancePoints;
-    vector<Vector3, Eigen::aligned_allocator<Vector3> > thrustPoints;
-
-}
-
 class SubmersibleController : public SimpleController
 {
 	Link* root;
@@ -40,9 +34,6 @@ public:
 		root = io->body()->rootLink();
 
 		thrusts << body->devices();
-		for(size_t i = 0; i < thrusts.size(); ++i){
-			Device* thrust = thrusts[i];
-		}
 
 		DeviceList<Light> lights(body->devices());
 
