@@ -32,9 +32,8 @@ public:
     void copySeqProperties(const MultiVector3Seq& source);
         
 protected:
-    virtual Vector3 defaultValue() const { return Vector3::Zero(); }
-
-    virtual bool doReadSeq(const Mapping& archive, std::ostream& os) override;
+    virtual Vector3 defaultValue() const override;
+    virtual bool doReadSeq(const Mapping* archive, std::ostream& os) override;
     virtual bool doWriteSeq(YAMLWriter& writer) override;
 };
 

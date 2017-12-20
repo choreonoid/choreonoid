@@ -56,77 +56,72 @@ AbstractSeq::~AbstractSeq()
 }
 
 
+double AbstractSeq::defaultFrameRate()
+{
+    return 100.0;
+}
+
+double AbstractSeq::getTimeStep() const
+{
+    double r = getFrameRate();
+    return (r > 0.0) ? 1.0 / r : 0.0;
+}
+    
+
+void AbstractSeq::setTimeStep(double timeStep)
+{
+    if(timeStep > 0.0){
+        setFrameRate(1.0 / timeStep);
+    } else {
+        setFrameRate(0.0);
+    }
+}
+
+
 double AbstractSeq::getTimeOfFrame(int frame) const
 {
-    return (frame + getOffsetTimeFrame()) / getFrameRate();
+    double r = getFrameRate();
+    return (r > 0.0) ? (frame / r) + getOffsetTime() : getOffsetTime();
 }
 
 
 int AbstractSeq::getFrameOfTime(double time) const
 {
-    return static_cast<int>(time * getFrameRate()) - getOffsetTimeFrame();
+    return static_cast<int>(time - getOffsetTime()) * getFrameRate();
 }
 
 
 int AbstractSeq::getOffsetTimeFrame() const
 {
-    return 0;
+    return static_cast<int>(getOffsetTime() * getFrameRate());
 }
 
 
-bool AbstractSeq::setOffsetTimeFrame(int offset)
+double AbstractSeq::getTimeLength() const
 {
-    return (offset == 0);
+    double r = getFrameRate();
+    return (r > 0.0) ? (getNumFrames() / r) : 0.0;
 }
 
 
-bool AbstractSeq::readSeq(const Mapping& archive, std::ostream& os)
+bool AbstractSeq::readSeq(const Mapping* archive, std::ostream& os)
 {
-    try {
-        return doReadSeq(archive, os);
-
-    } catch (ValueNode::Exception& ex) {
-        os << ex.message();
-        return false;
-    }
-}
-
-
-bool AbstractSeq::doReadSeq(const Mapping& archive, std::ostream&)
-{
-    if(contentName_.empty()){
-        if(!archive.read("content", contentName_)){
-            archive.read("purpose", contentName_); // old version
-        }
-    }
-    if(archive.get("hasFrameTime", false)){
-        archive.throwException(
-            _("Sequence data with frame time cannot be loaded as regular interval sequence data."));
-    }
+    bool result = false;
     
-    setFrameRate(archive.read<double>("frameRate"));
+    try {
+        result = doReadSeq(archive, os);
+    }
+    catch (ValueNode::Exception& ex) {
+        os << ex.message();
+    }
 
-    return true;
+    return result;
 }
 
 
-bool AbstractSeq::checkSeqContent(const Mapping& archive, const std::string requiredContent, std::ostream& os)
+bool AbstractSeq::doReadSeq(const Mapping*, std::ostream& os)
 {
-    string content_;
-    if(!archive.read("content", contentName_)){
-        archive.read("purpose", contentName_); // old version
-    }
-    if(contentName_ == requiredContent){
-        return true;
-    }
-
-    if(content_.empty()){
-        os << format(_("Content of %1% should be \"%2%\" but it is not specified."))
-            % seqType() % requiredContent;
-    } else {
-        os << format(_("Content \"%1%\" of %2% is different from the required content \"%3%\"."))
-            % contentName_ % seqType() % requiredContent;
-    }
+    os << format(_("The function to read %1% is not implemented.")) % seqType() << endl;
     return false;
 }
 
@@ -145,11 +140,18 @@ bool AbstractSeq::writeSeq(YAMLWriter& writer)
 
 bool AbstractSeq::doWriteSeq(YAMLWriter& writer)
 {
+    writer.putMessage(str(format(_("The function to write %1% is not implemented.\n")) % seqType()));
+    return false;
+}
+
+
+bool AbstractSeq::writeSeqHeaders(YAMLWriter& writer)
+{
     if(seqType_.empty()){
         if(contentName_.empty()){
-            writer.putMessage(_("The type of the sequence to write is unknown."));
+            writer.putMessage(_("The type of the sequence to write is unknown.\n"));
         } else {
-            writer.putMessage(str(format(_("The type of the %1% sequence to write is unknown.")) % contentName_));
+            writer.putMessage(str(format(_("The type of the %1% sequence to write is unknown.\n")) % contentName_));
         }
         return false;
     }
@@ -157,7 +159,7 @@ bool AbstractSeq::doWriteSeq(YAMLWriter& writer)
     const double frameRate = getFrameRate();
     if(frameRate <= 0.0){
         writer.putMessage(
-            str(format(_("Frame rate %1% of %2% is invalid"))
+            str(format(_("Frame rate %1% of %2% is invalid.\n"))
                 % frameRate % (contentName_.empty() ? seqType_ : contentName_)));
         return false;
     }

@@ -28,7 +28,7 @@ public:
     void setRootRelative(bool on);
 
 protected:
-    virtual bool doReadSeq(const Mapping& archive, std::ostream& os) override;
+    virtual bool doReadSeq(const Mapping* archive, std::ostream& os) override;
     virtual bool doWriteSeq(YAMLWriter& writer) override;
 
 private:
