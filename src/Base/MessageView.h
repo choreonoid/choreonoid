@@ -59,23 +59,6 @@ public:
     void notify(const boost::format& message);
     void notify(const QString& message);
 
-    /*
-      int start(const char* message);
-      int start(const std::string& message);
-      int start(const boost::format& message);
-      int start(const QString& message);
-
-      void progress(int id, const char* message);
-      void progress(int id, const std::string& message);
-      void progress(int id, const boost::format& message);
-      void progress(int id, const QString& message);
-
-      void finish(int id, const char* message);
-      void finish(int id, const std::string& message);
-      void finish(int id, const boost::format& message);
-      void finish(int id, const QString& message);
-    */
-
     int currentColumn();
         
     void flush();
