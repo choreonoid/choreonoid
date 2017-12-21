@@ -82,7 +82,7 @@ bool MultiSE3Seq::doReadSeq(const Mapping* archive, std::ostream& os)
         _("The number of elements specified as a SE3 value is invalid.");
     
     if(se3format == "XYZQWQXQYQZ"){
-        result = reader.readFrames(
+        result = reader.readFrames<MultiSE3Seq>(
             archive, this,
             [](const ValueNode& node, SE3& value){
                 const Listing& v = *node.toListing();
@@ -94,7 +94,7 @@ bool MultiSE3Seq::doReadSeq(const Mapping* archive, std::ostream& os)
             });
 
     } else if(se3format == "XYZQXQYQZQW" && reader.formatVersion() < 2.0){
-        result = reader.readFrames(
+        result = reader.readFrames<MultiSE3Seq>(
             archive, this,
             [](const ValueNode& node, SE3& value){
                 const Listing& v = *node.toListing();
@@ -106,7 +106,7 @@ bool MultiSE3Seq::doReadSeq(const Mapping* archive, std::ostream& os)
             });
 
     } else if(se3format == "XYZRPY"){
-        result = reader.readFrames(
+        result = reader.readFrames<MultiSE3Seq>(
             archive, this,
             [](const ValueNode& node, SE3& value){
                 const Listing& v = *node.toListing();
