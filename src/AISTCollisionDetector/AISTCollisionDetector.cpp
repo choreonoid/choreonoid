@@ -34,29 +34,27 @@ struct FactoryRegistration
 } factoryRegistration;
 
 
-class ColdetModelEx : public ColdetModel
+struct ColdetModelEx : public ColdetModel
 {
-public:
-    ColdetModelEx() { isStatic = false; }
+    ReferencedPtr object;
     bool isStatic;
+    ColdetModelEx(Referenced* object) : object(object), isStatic(false) { }
 };
-typedef std::shared_ptr<ColdetModelEx> ColdetModelExPtr;
+typedef shared_ptr<ColdetModelEx> ColdetModelExPtr;
         
 
-class ColdetModelPairEx : public ColdetModelPair
+struct ColdetModelPairEx : public ColdetModelPair
 {
-    int id1_;
-    int id2_;
-        
-public:
-    ColdetModelPairEx(const ColdetModelPtr& model1, int id1, const ColdetModelPtr& model2, int id2)
+    CollisionPair collisionPair;
+
+    ColdetModelPairEx(const ColdetModelExPtr& model1, int id1, const ColdetModelExPtr& model2, int id2)
         : ColdetModelPair(model1, model2)
-        {
-            id1_ = id1;
-            id2_ = id2;
-        }
-    const int id1() const { return id1_; }
-    const int id2() const { return id2_; }
+    {
+        collisionPair.objects[0] = model1->object;
+        collisionPair.objects[1] = model2->object;
+        collisionPair.geometryId[0] = id1;
+        collisionPair.geometryId[1] = id2;
+    }
 };
 typedef std::shared_ptr<ColdetModelPairEx> ColdetModelPairExPtr;
 
@@ -90,7 +88,7 @@ public:
         
     AISTCollisionDetectorImpl();
     ~AISTCollisionDetectorImpl();
-    int addGeometry(SgNode* geometry);
+    int addGeometry(SgNode* geometry, Referenced* object);
     void addMesh(ColdetModelEx* model);
     bool makeReady();
     void detectCollisions(std::function<void(const CollisionPair&)> callback);
@@ -105,7 +103,7 @@ public:
     void dispatchCollisionsInCollisionPairArrays(std::function<void(const CollisionPair&)> callback);    
     
     // for multithread type 1
-    vector< vector<ColdetModelPairEx*> > collidingModelPairArrays;
+    vector<vector<ColdetModelPairEx*>> collidingModelPairArrays;
 
     void checkCollisionsOfAssignedPairs(
         int pairIndexBegin, int pairIndexEnd, vector<ColdetModelPairEx*>& collidingModelPairs);
@@ -175,19 +173,19 @@ int AISTCollisionDetector::numGeometries() const
 }
 
 
-int AISTCollisionDetector::addGeometry(SgNode* geometry)
+int AISTCollisionDetector::addGeometry(SgNode* geometry, Referenced* object)
 {
-    return impl->addGeometry(geometry);
+    return impl->addGeometry(geometry, object);
 }
 
 
-int AISTCollisionDetectorImpl::addGeometry(SgNode* geometry)
+int AISTCollisionDetectorImpl::addGeometry(SgNode* geometry, Referenced* object)
 {
     const int index = models.size();
     bool isValid = false;
 
     if(geometry){
-        ColdetModelExPtr model = std::make_shared<ColdetModelEx>();
+        ColdetModelExPtr model = std::make_shared<ColdetModelEx>(object);
         if(meshExtractor->extract(geometry, [&]() { addMesh(model.get()); })){
             model->setName(geometry->name());
             model->build();
@@ -199,7 +197,7 @@ int AISTCollisionDetectorImpl::addGeometry(SgNode* geometry)
     }
 
     if(!isValid){
-        models.push_back(ColdetModelExPtr());
+        models.push_back(nullptr);
     }
 
     return index;
@@ -348,16 +346,13 @@ void AISTCollisionDetector::detectCollisions(std::function<void(const CollisionP
 */
 void AISTCollisionDetectorImpl::detectCollisions(std::function<void(const CollisionPair&)> callback)
 {
-    CollisionPair collisionPair;
-    vector<Collision>& collisions = collisionPair.collisions;
-    
     const int n = modelPairs.size();
     for(int i=0; i < n; ++i){
         ColdetModelPairEx& modelPair = *modelPairs[i];
         const std::vector<collision_data>& cdata = modelPair.detectCollisions();
         if(!cdata.empty()){
-            collisionPair.geometryId[0] = modelPair.id1();
-            collisionPair.geometryId[1] = modelPair.id2();
+            CollisionPair& collisionPair = modelPair.collisionPair;
+            vector<Collision>& collisions = collisionPair.collisions;
             collisions.clear();
             for(size_t j=0; j < cdata.size(); ++j){
                 const collision_data& cd = cdata[j];
@@ -434,10 +429,11 @@ void AISTCollisionDetectorImpl::extractCollisionsOfAssignedPairs
         }
         const std::vector<collision_data>& cdata = modelPair->detectCollisions();
         if(!cdata.empty()){
+            CollisionPair& srcCollisionPair = modelPair->collisionPair;
             collisionPairs.push_back(CollisionPair());
             CollisionPair& collisionPair = collisionPairs.back();
-            collisionPair.geometryId[0] = modelPair->id1();
-            collisionPair.geometryId[1] = modelPair->id2();
+            collisionPair.geometryId[0] = srcCollisionPair.geometryId[0];
+            collisionPair.geometryId[1] = srcCollisionPair.geometryId[1];
             vector<Collision>& collisions = collisionPair.collisions;
             const int n = cdata.size();
             collisions.reserve(n);
@@ -495,16 +491,14 @@ void AISTCollisionDetectorImpl::checkCollisionsOfAssignedPairs
 void AISTCollisionDetectorImpl::dispatchCollisionsInCollidingModelPairs
 (std::function<void(const CollisionPair&)> callback)
 {
-    CollisionPair collisionPair;
-    vector<Collision>& collisions = collisionPair.collisions;
     for(int i=0; i < numThreads; ++i){
         const vector<ColdetModelPairEx*>& collidingModelPairs = collidingModelPairArrays[i];
         for(size_t j=0; j < collidingModelPairs.size(); ++j){
             ColdetModelPairEx& collidingModelPair = *collidingModelPairs[j];
+            CollisionPair& collisionPair = collidingModelPair.collisionPair;
+            vector<Collision>& collisions = collisionPair.collisions;
             const std::vector<collision_data>& cdata = collidingModelPair.collisions();
             if(!cdata.empty()){
-                collisionPair.geometryId[0] = collidingModelPair.id1();
-                collisionPair.geometryId[1] = collidingModelPair.id2();
                 collisions.clear();
                 for(size_t k=0; k < cdata.size(); ++k){
                     const collision_data& cd = cdata[k];

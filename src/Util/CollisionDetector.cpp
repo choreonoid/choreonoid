@@ -68,7 +68,7 @@ public:
         return numGeometries_;
     }
 
-    virtual int addGeometry(SgNode*) override
+    virtual int addGeometry(SgNode*, Referenced*) override
     {
         const int id = numGeometries_++;
         return id;
@@ -154,6 +154,18 @@ CollisionDetector* CollisionDetector::create(int factoryIndex)
 CollisionDetector::~CollisionDetector()
 {
 
+}
+
+
+int CollisionDetector::addGeometry(SgNode* geometry, Referenced* object)
+{
+    return addGeometry(geometry);
+}
+
+
+int CollisionDetector::addGeometry(SgNode* geometry)
+{
+    return addGeometry(geometry, 0);
 }
 
 

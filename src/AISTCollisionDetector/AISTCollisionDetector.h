@@ -22,7 +22,7 @@ public:
     virtual CollisionDetector* clone() const override;
     virtual void clearGeometries() override;
     virtual int numGeometries() const override;
-    virtual int addGeometry(SgNode* geometry) override;
+    virtual int addGeometry(SgNode* geometry, Referenced* object) override;
     virtual void setGeometryStatic(int geometryId, bool isStatic = true) override;
     virtual bool enableGeometryCache(bool on) override;
     virtual void clearGeometryCache(SgNode* geometry) override;
