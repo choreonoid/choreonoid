@@ -6,9 +6,10 @@
 #ifndef CNOID_UTIL_ABSTRACT_SEQ_H
 #define CNOID_UTIL_ABSTRACT_SEQ_H
 
+#include "NullOut.h"
 #include <string>
+#include <vector>
 #include <memory>
-#include <functional>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -41,28 +42,17 @@ public:
 
     virtual double getFrameRate() const = 0;
     virtual void setFrameRate(double frameRate) = 0;
-
-    double getTimeStep() const {
-        return 1.0 / getFrameRate();
-    }
-    
-    void setTimeStep(double timeStep){
-        return setFrameRate(1.0 / timeStep);
-    }
+    static double defaultFrameRate();
+        
+    double getTimeStep() const;
+    void setTimeStep(double timeStep);
 
     double getTimeOfFrame(int frame) const;
     int getFrameOfTime(double time) const;
 
-    virtual int getOffsetTimeFrame() const;
-    virtual bool setOffsetTimeFrame(int offset);
-
-    double getOffsetTime() const {
-        return getOffsetTimeFrame() / getFrameRate();
-    }
-
-    bool setOffsetTime(double offset) {
-        return setOffsetTimeFrame(static_cast<int>(offset * getFrameRate()));
-    }
+    virtual double getOffsetTime() const = 0;
+    virtual void setOffsetTime(double time) = 0;
+    int getOffsetTimeFrame() const;
     
     virtual int getNumFrames() const = 0;
     virtual void setNumFrames(int n, bool clearNewElements = false) = 0;
@@ -74,46 +64,40 @@ public:
     /**
        This function returns the duration of the sequence.
        @note Valid data exists for time less than this time.
-       Sine there is no data of this time, you must not access to it.
+       You must not access to the frame corresponding to this time because
+       there is no data at the time.
     */
-    inline double getTimeLength() const {
-        return getNumFrames() / getFrameRate();
+    double getTimeLength() const;
+
+    const std::string& seqContentName() {
+        return contentName_;
     }
 
-    inline const std::string& seqContentName() {
-        return content;
+    virtual void setSeqContentName(const std::string& name) {
+        this->contentName_ = name;
     }
 
-    virtual void setSeqContentName(const std::string& content) {
-        this->content = content;
-    }
-
-    bool readSeq(const Mapping& archive);
+    bool readSeq(const Mapping* archive, std::ostream& os = nullout());
     bool writeSeq(YAMLWriter& writer);
 
-    inline const std::string& seqMessage() const {
-        return message;
-    }
+    //! deprecated. Use the os parameter of readSeq to get messages in reading
+    const std::string& seqMessage() const;
 
-    static const double defaultFrameRate() { return 100.0; }
-        
 protected:
-
-    virtual bool doReadSeq(const Mapping& archive);
+    virtual bool doReadSeq(const Mapping* archive, std::ostream& os);
     virtual bool doWriteSeq(YAMLWriter& writer);
 
-    bool checkSeqContent(const Mapping& archive, const std::string contentName, bool throwEx = false);
+    bool writeSeqHeaders(YAMLWriter& writer);
 
-    void clearSeqMessage() { message.clear(); }
-        
-    void addSeqMessage(const std::string& message) {
-        this->message += message;
-    }
+    //! deprecated. Use the os parameter of readSeq to get messages in reading
+    void clearSeqMessage() { }
+
+    //! deprecated. Use the os parameter of readSeq to get messages in reading
+    void addSeqMessage(const std::string& message) { }
 
 private:
     std::string seqType_;
-    std::string content;
-    std::string message;
+    std::string contentName_;
 };
 
 
@@ -141,13 +125,13 @@ public:
 
 protected:
     virtual bool doWriteSeq(YAMLWriter& writer);
-
-    typedef std::function<void(const std::string& label, int index)> SetPartLabelFunction;
-    bool readSeqPartLabels(const Mapping& archive, SetPartLabelFunction setPartLabel);
+ 
+    std::vector<std::string> readSeqPartLabels(const Mapping& archive);
     bool writeSeqPartLabels(YAMLWriter& writer);
 };
 
 typedef std::shared_ptr<AbstractMultiSeq> AbstractMultiSeqPtr;
+
 }
 
 #endif

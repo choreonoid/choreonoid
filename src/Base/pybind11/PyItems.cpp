@@ -11,8 +11,8 @@
 #include "../ScriptItem.h"
 #include "../ExtCommandItem.h"
 #include "../MultiValueSeqItem.h"
-#include "../MultiAffine3SeqItem.h"
 #include "../MultiSE3SeqItem.h"
+#include "../MultiSE3MatrixSeqItem.h"
 #include "../Vector3SeqItem.h"
 #include "../SceneItem.h"
 #include "../PointSetItem.h"
@@ -162,12 +162,12 @@ void exportPyItems(py::module m)
 
     PyItemList<MultiValueSeqItem>(m, "MultiValueSeqItemList");
 
-    py::class_<MultiAffine3SeqItem, MultiAffine3SeqItemPtr, AbstractMultiSeqItem>(m, "MultiAffine3SeqItem")
+    py::class_<MultiSE3MatrixSeqItem, MultiSE3MatrixSeqItemPtr, AbstractMultiSeqItem>(m, "MultiSE3MatrixSeqItem")
         .def(py::init<>())
-        .def("abstractMultiSeq", &MultiAffine3SeqItem::abstractMultiSeq)
-        .def("seq", &MultiAffine3SeqItem::seq);
+        .def("abstractMultiSeq", &MultiSE3MatrixSeqItem::abstractMultiSeq)
+        .def("seq", &MultiSE3MatrixSeqItem::seq);
 
-    PyItemList<MultiAffine3SeqItem>(m, "MultiAffine3SeqItemList");
+    PyItemList<MultiSE3MatrixSeqItem>(m, "MultiSE3MatrixSeqItemList");
 
     py::class_<MultiSE3SeqItem, MultiSE3SeqItemPtr, AbstractMultiSeqItem> (m, "MultiSE3SeqItem")
         .def(py::init<>())

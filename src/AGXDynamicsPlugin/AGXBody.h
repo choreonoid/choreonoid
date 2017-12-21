@@ -41,6 +41,7 @@ public:
     bool setInertiaFromLinkInfo();
     void enableExternalCollision(const bool& bOn);
     void setControlInputToAGX();
+    void addForceTorqueToAGX();
     void setLinkStateToAGX();
     void setLinkStateToCnoid();
     int getIndex() const;
@@ -94,6 +95,7 @@ public:
     void addCollisionGroupNameToAllLink(const std::string& name);
     void setAGXMaterial(const int& index, agx::Material* const mat);
     void setControlInputToAGX();
+    void addForceTorqueToAGX();
     void setLinkStateToAGX();
     void setLinkStateToCnoid();
     bool hasForceSensors() const;

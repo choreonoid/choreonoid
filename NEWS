@@ -2,6 +2,10 @@
 Changes since 1.6.0:
 
 * Supported wide viewing angle range sensors
+* pkg-config
+* texture description in a body files
+* Fix the warec-1 model
+* Improve the sensor visualization
 
 
 Choreonoid 1.6.0 released on October 31, 2016
@@ -24,6 +28,7 @@ Changes since 1.5.0:
 * Added sample models and projects
 * Other minor improvements and bug fixes
 
+
 Choreonoid 1.5.0 released on July 13, 2016
 ==========================================
 
@@ -45,6 +50,7 @@ Changes since 1.4.0:
 * Supported both Qt4 and Qt5
 * The license was changed from LGPL to the MIT license
 * Other minor improvements and bug fixes
+
 
 Choreonoid 1.4.0 released on August 29, 2013
 ============================================

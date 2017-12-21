@@ -49,6 +49,9 @@ materials:
     youngsModulus: 1e10
     roughness: 0.0
     viscosity: 0.0
+  -
+    name: Wire
+    wireYoungsModulusBend: 1e7
 
 contactMaterials:
   -
@@ -92,10 +95,10 @@ contactMaterials:
   -
     materials: [ Ground, SpiderTracks ]
     youngsModulus: 1e10
-    friction: 0.5
+    friction: 0.7
     restitution: 0.0
     surfaceViscosity: 1e-2
-    secondarySurfaceViscosity: 4e-2
+    secondarySurfaceViscosity: 2e-2
     primaryDirection: [ 1, 0, 0 ]
     frictionModel: [ orientedBox, direct ]
     referenceBodyName: ARM_SPIDER
@@ -121,4 +124,12 @@ contactMaterials:
     materials: [ DoubleArmV7AWheel, DoubleArmV7ATracks ]
     youngsModulus: 1e10
     friction: 0.0
+    restitution: 0.0
+  -
+    materials: [ Wire, Default ]
+    friction: 0.5
+    restitution: 0.0
+  -
+    materials: [ Wire, Ground ]
+    friction: 0.5
     restitution: 0.0

@@ -199,8 +199,7 @@ void ProjectManagerImpl::loadProject(const std::string& filename, bool isInvokin
 
     try {
         messageView->putln();
-        messageView->notify(str(fmt(_("Loading project file \"%1%\" ...")) % filename));
-
+        messageView->notify(format(_("Loading project file \"%1%\" ...")) % filename);
         if(!isInvokingApplication){
             messageView->flush();
         }
@@ -313,9 +312,9 @@ void ProjectManagerImpl::loadProject(const std::string& filename, bool isInvokin
                 archive->callPostProcesses();
 
                 if(numRestoredItems == numArchivedItems){
-                    messageView->notify(str(fmt(_("Project \"%1%\" has successfully been loaded.")) % filename));
+                    messageView->notify(format(_("Project \"%1%\" has successfully been loaded.")) % filename);
                 } else {
-                    messageView->notify(str(fmt(_("Project \"%1%\" has been loaded.")) % filename));
+                    messageView->notify(format(_("Project \"%1%\" has been loaded.")) % filename);
                 }
             }
         }
@@ -324,7 +323,7 @@ void ProjectManagerImpl::loadProject(const std::string& filename, bool isInvokin
     }
 
     if(!loaded){                
-        messageView->notify(str(fmt(_("Project \"%1%\" cannot be loaded.")) % filename));
+        messageView->notify(format(_("Project \"%1%\" cannot be loaded.")) % filename);
         lastAccessedProjectFile.clear();
     }
 }
@@ -369,12 +368,14 @@ void ProjectManagerImpl::saveProject(const string& filename)
 {
     YAMLWriter writer(filename);
     if(!writer.isOpen()){
-        messageView->put(MessageView::ERROR, str(fmt(_("Can't open file \"%1%\" for writing.\n")) % filename));
+        messageView->put(
+            MessageView::ERROR,
+            format(_("Can't open file \"%1%\" for writing.\n")) % filename);
         return;
     }
 
     messageView->putln();
-    messageView->notify(str(fmt(_("Saving a project to \"%1%\" ...\n")) % filename));
+    messageView->notify(format(_("Saving a project to \"%1%\" ...")) % filename);
     messageView->flush();
     
     itemTreeArchiver.reset();
@@ -439,11 +440,11 @@ void ProjectManagerImpl::saveProject(const string& filename)
     if(stored){
         writer.setKeyOrderPreservationMode(true);
         writer.putNode(archive);
-        messageView->notify(_("Saving a project file has been finished.\n"));
+        messageView->notify(_("Saving a project file has been finished."));
         mainWindow->setProjectTitle(getBasename(filename));
         lastAccessedProjectFile = filename;
     } else {
-        messageView->notify(_("Saving a project file failed.\n"));
+        messageView->notify(_("Saving a project file failed."));
         lastAccessedProjectFile.clear();
     }
 }

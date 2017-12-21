@@ -35,7 +35,7 @@ void BodyMotionPoseProvider::initialize(Body* body__, BodyMotionPtr motion)
 {
     body_ = body__->clone();
     this->motion = motion;
-    footLinkPositions.reset(new MultiAffine3Seq());
+    footLinkPositions.reset(new MultiSE3MatrixSeq());
     footLinks.clear();
     ikPaths.clear();
 

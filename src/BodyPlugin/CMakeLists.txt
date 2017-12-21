@@ -24,7 +24,7 @@ set(sources
   BodyTrackingCameraItem.cpp
   BodyMotionEngine.cpp
   KinematicFaultChecker.cpp
-  #FilterDialogs.cpp
+  SplineFilterDialog.cpp
   EditableSceneBody.cpp
   BodyBar.cpp
   LeggedBodyBar.cpp

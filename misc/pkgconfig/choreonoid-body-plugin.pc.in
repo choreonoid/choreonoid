@@ -1,8 +1,18 @@
 # pkg-config source file
 
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/@CNOID_HEADER_SUBDIR@
+subdir=@CNOID_SUBDIR@
+sharedir=@CNOID_SHARE_DIR@
+plugindir=${exec_prefix}/@CNOID_PLUGIN_SUBDIR@
+simplecontrollerdir=${plugindir}/simplecontroller
+customizerdir=${plugindir}/simplecontroller/customizer
+
 Name: choreonoid-body-plugin
-Description: Body plugin of choreonoid
+Description: Choreonoid Body plugin
 Version: @CNOID_FULL_VERSION@
-Requires: choreonoid >= @CNOID_FULL_VERSION@
+Requires: choreonoid-base = @CNOID_FULL_VERSION@ choreonoid-body = @CNOID_FULL_VERSION@
 Conflicts:
-Libs: -lCnoidBody -lCnoidBodyPlugin
+Libs: -lCnoidBodyPlugin

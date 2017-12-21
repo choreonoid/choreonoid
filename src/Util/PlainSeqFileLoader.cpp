@@ -3,25 +3,25 @@
    @author Shin'ichiro Nakaoka
 */
 
-#include "PlainSeqFormatLoader.h"
+#include "PlainSeqFileLoader.h"
 #include <fstream>
 #include <boost/tokenizer.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/format.hpp>
+#include "gettext.h"
 
 using namespace std;
 using namespace boost;
 using namespace cnoid;
+using boost::format;
 
 
-bool PlainSeqFileLoader::load(const std::string& filename)
+bool PlainSeqFileLoader::load(const std::string& filename, std::ostream& os)
 {
     ifstream is(filename.c_str());
   
-    string errorMessageBase("\"");
-    errorMessageBase += filename + "\"";
-  
     if(!is){
-        errorMessage_ = errorMessageBase + " cannot be opened.";
+        os << (format(_("\"%1%\" cannot be opened.")) % filename) << endl;
         return false;
     }
   
@@ -48,13 +48,13 @@ bool PlainSeqFileLoader::load(const std::string& filename)
         if(nColumns == 0){
             nColumns = v.size();
         } else if(v.size() != nColumns){
-            errorMessage_ = errorMessageBase + " contains different size columns";
+            os << (format(_("\"%1%\" contains different size columns.")) % filename) << endl;
             return false;
         }
     }
 
     if(nColumns < 2 || nLines < 1){
-        errorMessage_ = errorMessageBase + ": Empty sequence.";
+        os << (format(_("\"%1%\": Empty sequence.")) % filename) << endl;
         return false;
     }
   
@@ -67,7 +67,7 @@ bool PlainSeqFileLoader::load(const std::string& filename)
         double time1 = (*(++it))[0];
         timeStep_ = time1 - time0;
         if(timeStep_ <= 0.0){
-            errorMessage_ = errorMessageBase + ": Time values are not arranged.";
+            os << (format(_("\"%1%\": Time values are not arranged.")) % filename) << endl;
             return false;
         }
     } else {
@@ -75,10 +75,4 @@ bool PlainSeqFileLoader::load(const std::string& filename)
     }
   
     return true;
-}
-
-
-const std::string& PlainSeqFileLoader::errorMessage()
-{
-    return errorMessage_;
 }

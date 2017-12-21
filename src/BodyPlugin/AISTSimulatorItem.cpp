@@ -28,6 +28,7 @@
 #include <boost/lexical_cast.hpp>
 #include <mutex>
 #include <iomanip>
+#include <fstream>
 #include "gettext.h"
 
 using namespace std;

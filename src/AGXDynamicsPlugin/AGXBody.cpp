@@ -162,8 +162,8 @@ bool AGXLink::setCenterOfMassFromLinkInfo()
 
 bool AGXLink::setMassFromLinkInfo()
 {
-    const double& m = getOrgLink()->m();
-    if(m <= 0.0) return false;
+    double m = getOrgLink()->m();
+    if(m <= 0.0) m = 1.0;
     getAGXRigidBody()->getMassProperties()->setMass(m, false);
     return true;
 }
@@ -209,6 +209,12 @@ void AGXLink::setControlInputToAGX()
         default :
             break;
     }
+}
+
+void AGXLink::addForceTorqueToAGX()
+{
+    getAGXRigidBody()->addForce(agxConvert::toAGX(getOrgLink()->f_ext()));
+    getAGXRigidBody()->addTorque(agxConvert::toAGX(getOrgLink()->tau_ext()));
 }
 
 void AGXLink::setLinkStateToAGX()
@@ -269,9 +275,6 @@ void AGXLink::setLinkStateToCnoid()
     Vector3 v0(v.x(), v.y(), v.z());
     const Vector3 c = orgLink->R() * orgLink->c();
     orgLink->v() = v0 - orgLink->w().cross(c);
-
-    //const agx::RigidBody::AutoSleepProperties& p = agxRigidBody->getAutoSleepProperties();
-    //std::cout << agxRigidBody->getName() << " : " << p.getEnable() << " " << p.getState() << std::endl;
 }
 
 int AGXLink::getIndex() const
@@ -458,14 +461,14 @@ void AGXLink::detectPrimitiveShape(MeshExtractor* extractor, AGXTrimeshDesc& td)
                     break;
                 }
                 case SgMesh::SPHERE : {
-                    const SgMesh::Sphere& sphere = mesh->primitive<SgMesh::Sphere>();
+                    const auto& sphere = mesh->primitive<SgMesh::Sphere>();
                     AGXSphereDesc sd;
                     sd.radius = sphere.radius * scale.x();
                     shape = AGXObjectFactory::createShape(sd);
                     break;
                 }
                 case SgMesh::CAPSULE : {
-                    SgMesh::Capsule capsule = mesh->primitive<SgMesh::Capsule>();
+                    const auto& capsule = mesh->primitive<SgMesh::Capsule>();
                     AGXCapsuleDesc cd;
                     cd.radius = capsule.radius * scale.x();
                     cd .height =  capsule.height * scale.y();
@@ -473,7 +476,7 @@ void AGXLink::detectPrimitiveShape(MeshExtractor* extractor, AGXTrimeshDesc& td)
                     break;
                 }
                 case SgMesh::CYLINDER : {
-                    const SgMesh::Cylinder& cylinder = mesh->primitive<SgMesh::Cylinder>();
+                    const auto& cylinder = mesh->primitive<SgMesh::Cylinder>();
                     AGXCylinderDesc cd;
                     cd.radius = cylinder.radius * scale.x();
                     cd.height =  cylinder.height * scale.y();
@@ -857,6 +860,14 @@ void AGXBody::setControlInputToAGX()
     for(const auto& clink : getControllableLinks()){
         clink->setControlInputToAGX();
     }
+}
+
+void AGXBody::addForceTorqueToAGX()
+{
+    for(const auto& link : getAGXLinks()){
+        link->addForceTorqueToAGX();
+    }
+    body()->clearExternalForces();
 }
 
 void AGXBody::setLinkStateToAGX()

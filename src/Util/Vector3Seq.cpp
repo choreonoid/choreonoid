@@ -4,13 +4,17 @@
 */
 
 #include "Vector3Seq.h"
-#include "PlainSeqFormatLoader.h"
+#include "PlainSeqFileLoader.h"
 #include "ValueTree.h"
 #include "YAMLWriter.h"
+#include "GeneralSeqReader.h"
 #include <boost/format.hpp>
+#include <fstream>
+#include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
+using boost::format;
 
 
 Vector3Seq::Vector3Seq(int nFrames)
@@ -39,18 +43,67 @@ Vector3Seq::~Vector3Seq()
 }
 
 
-bool Vector3Seq::loadPlainFormat(const std::string& filename)
+Vector3 Vector3Seq::defaultValue() const
 {
-    clearSeqMessage();
+    return Vector3::Zero();
+}
+
+
+bool Vector3Seq::doReadSeq(const Mapping* archive, std::ostream& os)
+{
+    GeneralSeqReader reader(os);
+
+    return reader.read<Vector3Seq>(
+        archive, this,
+        [](const Listing& v, int topIndex, Vector3& value){
+            if(v.size() != topIndex + 3){
+                v.throwException(_("The number of elements specified as a 3D vector is invalid."));
+            }
+            value << v[topIndex].toDouble(), v[topIndex+1].toDouble(), v[topIndex+2].toDouble();
+        });
+}
+
+
+bool Vector3Seq::doWriteSeq(YAMLWriter& writer)
+{
+    return writeVector3SeqHeaders(writer) && writeVector3SeqFrames(writer);
+}
+
+
+bool Vector3Seq::writeVector3SeqHeaders(YAMLWriter& writer)
+{
+    return writeSeqHeaders(writer);
+}
+
+
+bool Vector3Seq::writeVector3SeqFrames(YAMLWriter& writer)
+{
+    writer.putKey("frames");
+    writer.startListing();
+    const int n = numFrames();
+    for(int i=0; i < n; ++i){
+        writer.startFlowStyleListing();
+        const Vector3& v = (*this)[i];
+        for(int j=0; j < 3; ++j){
+            writer.putScalar(v[j]);
+        }
+        writer.endListing();
+    }
+    writer.endListing();
+    return true;
+}
+
+
+bool Vector3Seq::loadPlainFormat(const std::string& filename, std::ostream& os)
+{
     PlainSeqFileLoader loader;
 
-    if(!loader.load(filename)){
-        addSeqMessage(loader.errorMessage());
+    if(!loader.load(filename, os)){
         return false;
     }
 
     if(loader.numParts() < 3){
-        addSeqMessage(filename + "does not have 3 columns for 3d vector elements");
+        os << format(_("\"%1%\" does not have 3 columns for 3d vector elements.")) % filename << endl;
         return false;
     }
   
@@ -67,72 +120,26 @@ bool Vector3Seq::loadPlainFormat(const std::string& filename)
 }
 
 
-bool Vector3Seq::saveAsPlainFormat(const std::string& filename)
+bool Vector3Seq::saveAsPlainFormat(const std::string& filename, std::ostream& os)
 {
     clearSeqMessage();
-    ofstream os(filename.c_str());
-    os.setf(ios::fixed);
+    ofstream file(filename.c_str());
+    file.setf(ios::fixed);
 
-    if(!os){
-        addSeqMessage(filename + " cannot be opened.");
+    if(!file){
+        os << format(_("\"%1%\" cannot be opened.")) % filename << endl;
         return false;
     }
 
-    static boost::format f("%1$.4f %2$.6f %3$.6f %4$.6f\n");
+    format f("%1$.4f %2$.6f %3$.6f %4$.6f\n");
 
     const int n = numFrames();
     const double r = frameRate();
 
     for(int i=0; i < n; ++i){
         const Vector3& v = (*this)[i];
-        os << (f % (i / r) % v.x() % v.y() % v.z());
+        file << (f % (i / r) % v.x() % v.y() % v.z());
     }
     
     return true;
-}
-
-
-bool Vector3Seq::doWriteSeq(YAMLWriter& writer)
-{
-    if(BaseSeqType::doWriteSeq(writer)){
-        writer.putKey("frames");
-        writer.startListing();
-        const int n = numFrames();
-        for(int i=0; i < n; ++i){
-            writer.startFlowStyleListing();
-            const Vector3& v = (*this)[i];
-            for(int j=0; j < 3; ++j){
-                writer.putScalar(v[j]);
-            }
-            writer.endListing();
-        }
-        writer.endListing();
-        return true;
-    }
-    return false;
-}
-
-
-bool Vector3Seq::doReadSeq(const Mapping& archive)
-{
-    if(BaseSeqType::doReadSeq(archive)){
-        if(archive["type"].toString() == seqType()){
-            const Listing& frames = *archive.findListing("frames");
-            if(!frames.isValid()){
-                addSeqMessage("Valid \"frames\" field of Vector3Seq is not found.");
-            } else {
-                const int n = frames.size();
-                setNumFrames(n);
-                for(int i=0; i < n; ++i){
-                    const Listing& frame = *frames[i].toListing();
-                    Vector3& v = (*this)[i];
-                    for(int j=0; j < 3; ++j){
-                        v[j] = frame[j].toDouble();
-                    }
-                }
-                return true;
-            }
-        }
-    }
-    return false;
 }

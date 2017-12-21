@@ -11,6 +11,7 @@
 #include <cnoid/Sleep>
 #include <cnoid/ExecutablePath>
 #include <cnoid/FileUtil>
+#include <boost/lexical_cast.hpp>
 #include "gettext.h"
 
 using namespace std;

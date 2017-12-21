@@ -4,12 +4,16 @@
 */
 
 #include "MultiValueSeq.h"
-#include "PlainSeqFormatLoader.h"
+#include "PlainSeqFileLoader.h"
 #include "ValueTree.h"
 #include "YAMLWriter.h"
+#include "GeneralSeqReader.h"
+#include <fstream>
+#include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
+using boost::format;
 
 
 MultiValueSeq::MultiValueSeq()
@@ -45,13 +49,43 @@ MultiValueSeq::~MultiValueSeq()
 }
 
 
-bool MultiValueSeq::loadPlainFormat(const std::string& filename)
+bool MultiValueSeq::doReadSeq(const Mapping* archive, std::ostream& os)
 {
-    clearSeqMessage();
+    GeneralSeqReader reader(os);
+    return reader.read<MultiValueSeq>(
+        archive, this,
+        [](const ValueNode& node, double& v){ v = node.toDouble(); });
+}
+    
+
+bool MultiValueSeq::doWriteSeq(YAMLWriter& writer)
+{
+    if(!writeSeqHeaders(writer)){
+        return false;
+    }
+
+    writer.putKey("frames");
+    writer.startListing();
+    const int n = numFrames();
+    const int m = numParts();
+    for(int i=0; i < n; ++i){
+        writer.startFlowStyleListing();
+        Frame v = frame(i);
+        for(int j=0; j < m; ++j){
+            writer.putScalar(v[j]);
+        }
+        writer.endListing();
+    }
+    writer.endListing();
+    return true;
+}
+
+
+bool MultiValueSeq::loadPlainFormat(const std::string& filename, std::ostream& os)
+{
     PlainSeqFileLoader loader;
 
-    if(!loader.load(filename)){
-        addSeqMessage(loader.errorMessage());
+    if(!loader.load(filename, os)){
         return false;
     }
 
@@ -67,14 +101,13 @@ bool MultiValueSeq::loadPlainFormat(const std::string& filename)
 }
 
 
-bool MultiValueSeq::saveAsPlainFormat(const std::string& filename)
+bool MultiValueSeq::saveAsPlainFormat(const std::string& filename, std::ostream& os)
 {
-    clearSeqMessage();
-    ofstream os(filename.c_str());
-    os.setf(ios::fixed);
+    ofstream file(filename.c_str());
+    file.setf(ios::fixed);
 
-    if(!os){
-        addSeqMessage(filename + " cannot be opened.");
+    if(!file){
+        os << format(_("\"%1%\" cannot be opened.")) % filename << endl;
         return false;
     }
 
@@ -83,69 +116,13 @@ bool MultiValueSeq::saveAsPlainFormat(const std::string& filename)
     const double r = frameRate();
 
     for(int i=0; i < n; ++i){
-        os << (i / r);
+        file << (i / r);
         Frame v = frame(i);
         for(int j=0; j < m; ++j){
-            os << " " << v[j];
+            file << " " << v[j];
         }
-        os << "\n";
+        file << "\n";
     }
     
     return true;
-}
-
-
-bool MultiValueSeq::doWriteSeq(YAMLWriter& writer)
-{
-    if(BaseSeqType::doWriteSeq(writer)){
-        writer.putKey("frames");
-        writer.startListing();
-        const int n = numFrames();
-        const int m = numParts();
-        for(int i=0; i < n; ++i){
-            writer.startFlowStyleListing();
-            Frame v = frame(i);
-            for(int j=0; j < m; ++j){
-                writer.putScalar(v[j]);
-            }
-            writer.endListing();
-        }
-        writer.endListing();
-        return true;
-    }
-    return false;
-}
-
-
-bool MultiValueSeq::doReadSeq(const Mapping& archive)
-{
-    if(BaseSeqType::doReadSeq(archive) && (archive["type"].toString() == seqType())){
-
-        const int nParts = archive["numParts"].toInt();
-        int nFrames;
-        if(archive.read("numFrames", nFrames)){
-            if(nFrames == 0){
-                setDimension(0, nParts);
-                return true;
-            }
-        }
-        const Listing& values = *archive.findListing("frames");
-        if(!values.isValid()){
-            addSeqMessage("Actual frame data is missing.");
-        } else {
-            const int nFrames = values.size();
-            setDimension(nFrames, nParts);
-            for(int i=0; i < nFrames; ++i){
-                const Listing& frameNode = *values[i].toListing();
-                const int n = std::min(frameNode.size(), nParts);
-                Frame v = frame(i);
-                for(int j=0; j < n; ++j){
-                    v[j] = frameNode[j].toDouble();
-                }
-            }
-            return true;
-        }
-        
-    }
-    return false;
 }

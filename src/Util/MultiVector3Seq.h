@@ -28,14 +28,13 @@ public:
     virtual ~MultiVector3Seq();
 
     using BaseSeqType::operator=;
-    virtual AbstractSeqPtr cloneSeq() const;
+    virtual AbstractSeqPtr cloneSeq() const override;
     void copySeqProperties(const MultiVector3Seq& source);
         
 protected:
-    virtual Vector3 defaultValue() const { return Vector3::Zero(); }
-
-    virtual bool doWriteSeq(YAMLWriter& writer);
-    virtual bool doReadSeq(const Mapping& archive);
+    virtual Vector3 defaultValue() const override;
+    virtual bool doReadSeq(const Mapping* archive, std::ostream& os) override;
+    virtual bool doWriteSeq(YAMLWriter& writer) override;
 };
 
 typedef MultiVector3Seq::Ptr MultiVector3SeqPtr;

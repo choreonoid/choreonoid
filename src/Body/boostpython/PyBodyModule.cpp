@@ -311,9 +311,8 @@ BOOST_PYTHON_MODULE(Body)
 
     {
         py::scope bodyMotionScope =
-            py::class_<BodyMotion, BodyMotionPtr, py::bases<AbstractMultiSeq>>("BodyMotion")
-            .def("setNumParts", &BodyMotion::setNumParts)
-            .def("getNumParts", &BodyMotion::getNumParts)
+            py::class_<BodyMotion, BodyMotionPtr, py::bases<AbstractSeq>>("BodyMotion")
+            .def("setNumJoints", &BodyMotion::setNumJoints)
             .def("numJoints", &BodyMotion::numJoints)
             .def("numLings", &BodyMotion::numLinks)
             .def("frameRate", &BodyMotion::frameRate)
@@ -328,6 +327,9 @@ BOOST_PYTHON_MODULE(Body)
             .add_property("jointPosSeq", BodyMotion_get_jointPosSeq, BodyMotion_set_jointPosSeq)
             .add_property("linkPosSeq", BodyMotion_get_linkPosSeq, BodyMotion_set_linkPosSeq)
             .def("frame", BodyMotion_frame)
+            // deprecated
+            .def("setNumParts", &BodyMotion::setNumJoints)
+            .def("getNumParts", &BodyMotion::numJoints)
             ;
 
         py::class_<BodyMotion::Frame>("Frame", py::no_init)
@@ -337,7 +339,7 @@ BOOST_PYTHON_MODULE(Body)
             ;
     }
 
-    py::implicitly_convertible<BodyMotionPtr, AbstractMultiSeqPtr>();
+    py::implicitly_convertible<BodyMotionPtr, AbstractSeqPtr>();
 
     {
         py::scope deviceScope =

@@ -5,6 +5,8 @@
 #include <cnoid/MaterialTable>
 #include "AGXConvert.h"
 #include <unordered_map>
+#include <cnoid/Archive>
+#include <cnoid/EigenArchive>
 #include "gettext.h"
 
 using namespace std;
@@ -43,13 +45,14 @@ AGXSimulatorItemImpl::AGXSimulatorItemImpl(AGXSimulatorItem* self)
     initialize();
     AGXSimulationDesc simDesc;
     const agx::Vec3& g = simDesc.gravity;
-    _p_gravity = Vector3(g.x(), g.y(), g.z());
-    _p_numThreads = (int)simDesc.numThreads;
-    _p_enableContactReduction = simDesc.enableContactReduction;
-    _p_contactReductionBinResolution = simDesc.contactReductionBinResolution;
-    _p_contactReductionThreshhold = (int)simDesc.contactReductionThreshhold;
-    _p_enableContactWarmstarting = simDesc.enableContactWarmstarting;
-    _p_enableAutoSleep = simDesc.enableAutoSleep;
+    m_p_gravity = Vector3(g.x(), g.y(), g.z());
+    m_p_numThreads = (int)simDesc.numThreads;
+    m_p_enableContactReduction = simDesc.enableContactReduction;
+    m_p_contactReductionBinResolution = simDesc.contactReductionBinResolution;
+    m_p_contactReductionThreshhold = (int)simDesc.contactReductionThreshhold;
+    m_p_enableContactWarmstarting = simDesc.enableContactWarmstarting;
+    m_p_enableAutoSleep = simDesc.enableAutoSleep;
+    m_p_saveToAGXFileOnStart = false;
 }
 
 AGXSimulatorItemImpl::AGXSimulatorItemImpl(AGXSimulatorItem* self, const AGXSimulatorItemImpl& org)
@@ -64,28 +67,40 @@ void AGXSimulatorItemImpl::initialize(){}
 
 void AGXSimulatorItemImpl::doPutProperties(PutPropertyFunction & putProperty)
 {
-    putProperty(_("Gravity"), str(_p_gravity), [&](const string& value){ return toVector3(value, _p_gravity); });
-    putProperty(_("NumThreads"), _p_numThreads, changeProperty(_p_numThreads));
-    putProperty(_("ContactReduction"), _p_enableContactReduction, changeProperty(_p_enableContactReduction));
-    putProperty(_("ContactReductionBinResolution"), _p_contactReductionBinResolution, changeProperty(_p_contactReductionBinResolution));
-    putProperty(_("ContactReductionThreshhold"), _p_contactReductionThreshhold, changeProperty(_p_contactReductionThreshhold));
-    putProperty(_("ContactWarmstarting"), _p_enableContactWarmstarting, changeProperty(_p_enableContactWarmstarting));
-    putProperty(_("AutoSleep(experimental)"), _p_enableAutoSleep, changeProperty(_p_enableAutoSleep));
+    putProperty(_("Gravity"), str(m_p_gravity), [&](const string& value){ return toVector3(value, m_p_gravity); });
+    putProperty(_("NumThreads"), m_p_numThreads, changeProperty(m_p_numThreads));
+    putProperty(_("ContactReduction"), m_p_enableContactReduction, changeProperty(m_p_enableContactReduction));
+    putProperty(_("ContactReductionBinResolution"), m_p_contactReductionBinResolution, changeProperty(m_p_contactReductionBinResolution));
+    putProperty(_("ContactReductionThreshhold"), m_p_contactReductionThreshhold, changeProperty(m_p_contactReductionThreshhold));
+    putProperty(_("ContactWarmstarting"), m_p_enableContactWarmstarting, changeProperty(m_p_enableContactWarmstarting));
+    putProperty(_("AutoSleep"), m_p_enableAutoSleep, changeProperty(m_p_enableAutoSleep));
+    putProperty(_("SaveToAGXFileOnStart"), m_p_saveToAGXFileOnStart, changeProperty(m_p_saveToAGXFileOnStart));
 }
 
 bool AGXSimulatorItemImpl::store(Archive & archive)
 {
-    (void) archive;
-    // Write agx parameter to save
-    //archive.write("friction", friction);
-    return false;
+    write(archive, "Gravity", m_p_gravity);
+    archive.write("NumThreads", m_p_numThreads);
+    archive.write("ContactReduction", m_p_enableContactReduction);
+    archive.write("ContactReductionBinResolution", m_p_contactReductionBinResolution);
+    archive.write("ContactReductionThreshhold", m_p_contactReductionThreshhold);
+    archive.write("ContactWarmstarting", m_p_enableContactWarmstarting);
+    archive.write("AutoSleep", m_p_enableAutoSleep);
+    archive.write("SaveToAGXFileOnStart", m_p_saveToAGXFileOnStart);
+    return true;
 }
 
 bool AGXSimulatorItemImpl::restore(const Archive & archive)
 {
-    (void) archive;
-    // Write agx parameter to restore
-    return false;
+    read(archive, "Gravity", m_p_gravity);
+    archive.read("NumThreads", m_p_numThreads);
+    archive.read("ContactReduction", m_p_enableContactReduction);
+    archive.read("ContactReductionBinResolution", m_p_contactReductionBinResolution);
+    archive.read("ContactReductionThreshhold", m_p_contactReductionThreshhold);
+    archive.read("ContactWarmstarting", m_p_enableContactWarmstarting);
+    archive.read("AutoSleep", m_p_enableAutoSleep);
+    archive.read("SaveToAGXFileOnStart", m_p_saveToAGXFileOnStart);
+    return true;
 }
 
 SimulationBody * AGXSimulatorItemImpl::createSimulationBody(Body * orgBody)
@@ -96,16 +111,16 @@ SimulationBody * AGXSimulatorItemImpl::createSimulationBody(Body * orgBody)
 
 bool AGXSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody*>& simBodies)
 {
-    const Vector3& g = _p_gravity;
+    const Vector3& g = m_p_gravity;
     AGXSceneDesc sd;
     sd.simdesc.timeStep = self->worldTimeStep();
     sd.simdesc.gravity = agx::Vec3(g(0), g(1), g(2));
-    sd.simdesc.numThreads = _p_numThreads;
-    sd.simdesc.enableContactReduction = _p_enableContactReduction;
-    sd.simdesc.contactReductionBinResolution = (agx::UInt8)_p_contactReductionBinResolution;
-    sd.simdesc.contactReductionThreshhold = (agx::UInt8)_p_contactReductionThreshhold;
-    sd.simdesc.enableContactWarmstarting = _p_enableContactWarmstarting;
-    sd.simdesc.enableAutoSleep = _p_enableAutoSleep;
+    sd.simdesc.numThreads = m_p_numThreads;
+    sd.simdesc.enableContactReduction = m_p_enableContactReduction;
+    sd.simdesc.contactReductionBinResolution = (agx::UInt8)m_p_contactReductionBinResolution;
+    sd.simdesc.contactReductionThreshhold = (agx::UInt8)m_p_contactReductionThreshhold;
+    sd.simdesc.enableContactWarmstarting = m_p_enableContactWarmstarting;
+    sd.simdesc.enableAutoSleep = m_p_enableAutoSleep;
     agxScene = AGXScene::create(sd);
 
     createAGXMaterialTable();
@@ -119,6 +134,8 @@ bool AGXSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody
 
     setAdditionalAGXMaterialParam();
 
+    if(m_p_saveToAGXFileOnStart) saveSimulationToAGXFile();
+    
     return true;
 }
 
@@ -143,6 +160,10 @@ void AGXSimulatorItemImpl::createAGXMaterialTable()
             SET_AGXMATERIAL_FIELD(surfaceViscosity);
             SET_AGXMATERIAL_FIELD(adhesionForce);
             SET_AGXMATERIAL_FIELD(adhesivOverlap);
+            SET_AGXMATERIAL_FIELD(wireYoungsModulusStretch);
+            SET_AGXMATERIAL_FIELD(wireDampingStretch);
+            SET_AGXMATERIAL_FIELD(wireYoungsModulusBend);
+            SET_AGXMATERIAL_FIELD(wireDampingBend);
             getAGXScene()->createMaterial(desc);
         });
 
@@ -251,13 +272,15 @@ void AGXSimulatorItemImpl::setAdditionalAGXMaterialParam()
 bool AGXSimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& activeSimBodies)
 {
     for(auto simBody : activeSimBodies){
-        static_cast<AGXBody*>(simBody)->setControlInputToAGX();
+        auto const agxBody = dynamic_cast<AGXBody*>(simBody);
+        agxBody->setControlInputToAGX();
+        agxBody->addForceTorqueToAGX();
     }
 
     agxScene->stepSimulation();
 
     for(auto simBody : activeSimBodies){
-        AGXBody* agxBody = static_cast<AGXBody*>(simBody);
+        auto const agxBody = dynamic_cast<AGXBody*>(simBody);
         agxBody->setLinkStateToCnoid();
 
         // Update sensors
