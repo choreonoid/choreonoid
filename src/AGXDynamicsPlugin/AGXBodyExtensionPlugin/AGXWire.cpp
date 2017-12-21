@@ -393,9 +393,9 @@ AGXWire::AGXWire(AGXWireDevice* device, AGXBody* agxBody) :
             // Calc world position
             agx::RigidBody* rigid = getAGXBody()->getAGXRigidBody(coordinate);
             Link* const link = getAGXBody()->body()->link(coordinate);
-            if(link) pos = link->T() *  link->attitude() * pos;
+            link->attitude();
+            if(link) pos =  link->p() + link->attitude() *  pos;
             agx::Vec3 agxPos = agxConvert::toAGX(pos);
-            //if(rigid) agxPos = rigid->getTransform() * agxPos;
 
             if(nodeType == "free"){
                 m_wire->add(AGXObjectFactory::createWireFreeNode(agxPos));
