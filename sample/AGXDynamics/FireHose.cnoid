@@ -16,28 +16,27 @@ items:
       children: 
         - 
           id: 2
-          name: "AGXSimulator"
-          plugin: AGXDynamics
-          class: AGXSimulatorItem
+          name: "Floor"
+          plugin: Body
+          class: BodyItem
           data: 
-            framerate: 200
-            realtimeSync: true
-            recording: "full"
-            timeRangeMode: "Unlimited"
-            timeLength: 180
-            allLinkPositionOutputMode: true
-            deviceStateOutput: true
-            controllerThreads: true
-            recordCollisionData: false
-            controllerOptions: ""
-            Gravity: [ 0, 0, -9.80665 ]
-            NumThreads: 1
-            ContactReduction: true
-            ContactReductionBinResolution: 3
-            ContactReductionThreshhold: 12
-            ContactWarmstarting: false
-            AutoSleep: false
-            SaveToAGXFileOnStart: true
+            modelFile: "${SHARE}/model/misc/floor.body"
+            currentBaseLink: "Floor"
+            rootPosition: [ 0, 0, -0.1 ]
+            rootAttitude: [ 
+              1, 0, 0, 
+              0, 1, 0, 
+              0, 0, 1 ]
+            jointPositions: [  ]
+            initialRootPosition: [ 0, 0, -0.1 ]
+            initialRootAttitude: [ 
+              1, 0, 0, 
+              0, 1, 0, 
+              0, 0, 1 ]
+            zmp: [ 0, 0, 0 ]
+            collisionDetection: true
+            selfCollisionDetection: false
+            isEditable: false
         - 
           id: 3
           name: "FireHose"
@@ -62,29 +61,30 @@ items:
             collisionDetection: true
             selfCollisionDetection: false
             isEditable: true
-    - 
-      id: 4
-      name: "Floor"
-      plugin: Body
-      class: BodyItem
-      data: 
-        modelFile: "${SHARE}/model/misc/floor.body"
-        currentBaseLink: "Floor"
-        rootPosition: [ 0, 0, -0.1 ]
-        rootAttitude: [ 
-          1, 0, 0, 
-          0, 1, 0, 
-          0, 0, 1 ]
-        jointPositions: [  ]
-        initialRootPosition: [ 0, 0, -0.1 ]
-        initialRootAttitude: [ 
-          1, 0, 0, 
-          0, 1, 0, 
-          0, 0, 1 ]
-        zmp: [ 0, 0, 0 ]
-        collisionDetection: true
-        selfCollisionDetection: false
-        isEditable: false
+        - 
+          id: 4
+          name: "AGXSimulator"
+          plugin: AGXDynamics
+          class: AGXSimulatorItem
+          data: 
+            framerate: 200
+            realtimeSync: true
+            recording: "full"
+            timeRangeMode: "Unlimited"
+            timeLength: 180
+            allLinkPositionOutputMode: true
+            deviceStateOutput: true
+            controllerThreads: true
+            recordCollisionData: false
+            controllerOptions: ""
+            Gravity: [ 0, 0, -9.80665 ]
+            NumThreads: 1
+            ContactReduction: true
+            ContactReductionBinResolution: 3
+            ContactReductionThreshhold: 12
+            ContactWarmstarting: false
+            AutoSleep: false
+            SaveToAGXFileOnStart: true
 views: 
   - 
     id: 0
@@ -97,8 +97,8 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      selected: [ 2 ]
-      checked: [ 2, 3 ]
+      selected: [ 4 ]
+      checked: [ 3, 4 ]
       expanded: [ 1, 3 ]
   - 
     id: 2
@@ -149,9 +149,9 @@ views:
           fieldOfView: 0.698132
           near: 0.01
           far: 100
-          eye: [ 4.19899692, -3.94539714, 3.88289181 ]
-          direction: [ -0.56687359, 0.704411239, -0.427152361 ]
-          up: [ -0.2678023, 0.332777805, 0.904179662 ]
+          eye: [ 3.84382903, -1.77395845, 3.29985749 ]
+          direction: [ -0.792871328, 0.489575104, -0.362865366 ]
+          up: [ -0.308749418, 0.190643832, 0.931841578 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
@@ -187,7 +187,7 @@ views:
       spinBox: true
       slider: true
       labelOnLeft: true
-      currentBodyItem: 3
+      currentBodyItem: 2
   - 
     id: 7
     plugin: Body
@@ -195,11 +195,7 @@ views:
     mounted: true
     state: 
       listingMode: "Link List"
-      currentBodyItem: 3
-      bodyItems: 
-        - 
-          id: 3
-          selectedLinks: [ 2 ]
+      currentBodyItem: 2
   - 
     id: 8
     plugin: Python
@@ -225,7 +221,7 @@ toolbars:
     penetrationBlockDepth: 0.0005
     lazyCollisionDetectionMode: true
   "BodyBar": 
-    current: 3
+    current: 2
   "LeggedBodyBar": 
     stanceWidth: 0.15
   "BodyMotionGenerationBar": 
@@ -267,12 +263,12 @@ Body:
   "EditableSceneBody": 
     editableSceneBodies: 
       - 
-        bodyItem: 3
+        bodyItem: 2
         showCenterOfMass: false
         showPpcom: false
         showZmp: false
       - 
-        bodyItem: 4
+        bodyItem: 3
         showCenterOfMass: false
         showPpcom: false
         showZmp: false

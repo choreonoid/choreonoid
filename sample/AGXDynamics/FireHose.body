@@ -101,7 +101,8 @@ links:
             linkName: HoseDrum
             position: [ 0, -0.02, 0]
             normal: [ 0, 0, 1 ]
-            pulledInLength: 10
+            pulledInLength: 100
+            haulForceRange: [ -50, 50 ]
         Nodes:
           -
             type: free

@@ -393,7 +393,6 @@ AGXWire::AGXWire(AGXWireDevice* device, AGXBody* agxBody) :
             // Calc world position
             agx::RigidBody* rigid = getAGXBody()->getAGXRigidBody(coordinate);
             Link* const link = getAGXBody()->body()->link(coordinate);
-            link->attitude();
             if(link) pos =  link->p() + link->attitude() *  pos;
             agx::Vec3 agxPos = agxConvert::toAGX(pos);
 
