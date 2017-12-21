@@ -383,7 +383,9 @@ bool BodyMotion::doWriteSeq(YAMLWriter& writer)
         writer.putComment("Body motion data set format version 1.0 defined by Choreonoid\n");
         writer.putKeyValue("type", "BodyMotion");
     } else {
-        AbstractSeq::doWriteSeq(writer);
+        if(!AbstractSeq::writeSeqHeaders(writer)){
+            return false;
+        }
     }
         
     writer.putKey("components");

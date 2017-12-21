@@ -169,13 +169,17 @@ bool AbstractSeq::writeSeqHeaders(YAMLWriter& writer)
         writer.putKeyValue("content", contentName_);
     }
 
+    if(auto multiSeq = dynamic_cast<AbstractMultiSeq*>(this)){
+        writer.putKeyValue("numParts", multiSeq->getNumParts());
+    }
+
     double version = writer.info("formatVersion", 0.0);
     if(version == 0.0 || !writer.info("isComponent", false)){
         writer.putKeyValue("formatVersion", version == 0.0 ? 2.0 : version);
     }
     writer.putKeyValue("frameRate", frameRate);
     writer.putKeyValue("numFrames", getNumFrames());
-
+    
     return true;
 }
 
