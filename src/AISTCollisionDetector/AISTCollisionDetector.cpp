@@ -37,30 +37,64 @@ struct FactoryRegistration
 struct ColdetModelEx : public ColdetModel
 {
     ReferencedPtr object;
+    int geometryId;
     bool isStatic;
-    ColdetModelEx(Referenced* object) : object(object), isStatic(false) { }
+    ColdetModelEx(Referenced* object, int geometryId)
+        : object(object), geometryId(geometryId), isStatic(false) { }
 };
-typedef shared_ptr<ColdetModelEx> ColdetModelExPtr;
+typedef ref_ptr<ColdetModelEx> ColdetModelExPtr;
         
 
 struct ColdetModelPairEx : public ColdetModelPair
 {
-    CollisionPair collisionPair;
+    ColdetModelPairEx(ColdetModelEx* model1, ColdetModelEx* model2)
+        : ColdetModelPair(model1, model2) { }
 
-    ColdetModelPairEx(const ColdetModelExPtr& model1, int id1, const ColdetModelExPtr& model2, int id2)
-        : ColdetModelPair(model1, model2)
-    {
-        collisionPair.objects[0] = model1->object;
-        collisionPair.objects[1] = model2->object;
-        collisionPair.geometryId[0] = id1;
-        collisionPair.geometryId[1] = id2;
+    ColdetModelEx* model(int which) {
+        return static_cast<ColdetModelEx*>(ColdetModelPair::model(which));
     }
 };
-typedef std::shared_ptr<ColdetModelPairEx> ColdetModelPairExPtr;
+typedef ref_ptr<ColdetModelPairEx> ColdetModelPairExPtr;
 
 
 typedef unordered_map<weak_ref_ptr<SgNode>, ColdetModelExPtr>  ModelMap;
 //ModelMap modelCache;
+
+bool copyCollisionPairCollisions(ColdetModelPairEx* srcPair, CollisionPair& destPair, bool doReserve = false)
+{
+    for(int i=0; i < 2; ++i){
+        auto model = srcPair->model(i);
+        destPair.objects[i] = model->object;
+        destPair.geometryId[i] = model->geometryId;
+    }
+
+    bool hasCollisions = false;
+    const std::vector<collision_data>& cdata = srcPair->collisions();
+    vector<Collision>& collisions = destPair.collisions;
+    collisions.clear();
+    const int n = cdata.size();
+
+    if(doReserve){
+        collisions.reserve(n);
+    }
+
+    for(size_t j=0; j < n; ++j){
+        const collision_data& cd = cdata[j];
+        for(int k=0; k < cd.num_of_i_points; ++k){
+            if(cd.i_point_new[k]){
+                collisions.push_back(Collision());
+                Collision& collision = collisions.back();
+                collision.point = cd.i_points[k];
+                collision.normal = cd.n_vector;
+                collision.depth = cd.depth;
+                collision.id1 = cd.id1;
+                collision.id2 = cd.id2;
+            }
+        }
+    }
+
+    return !collisions.empty();
+}
 
 }
 
@@ -185,8 +219,8 @@ int AISTCollisionDetectorImpl::addGeometry(SgNode* geometry, Referenced* object)
     bool isValid = false;
 
     if(geometry){
-        ColdetModelExPtr model = std::make_shared<ColdetModelEx>(object);
-        if(meshExtractor->extract(geometry, [&]() { addMesh(model.get()); })){
+        ColdetModelExPtr model = new ColdetModelEx(object, index);
+        if(meshExtractor->extract(geometry, [&]() { addMesh(model); })){
             model->setName(geometry->name());
             model->build();
             if(model->isValid()){
@@ -231,7 +265,7 @@ void AISTCollisionDetectorImpl::addMesh(ColdetModelEx* model)
 
 void AISTCollisionDetector::setGeometryStatic(int geometryId, bool isStatic)
 {
-    ColdetModelExPtr& model = impl->models[geometryId];
+    ColdetModelEx* model = impl->models[geometryId];
     if(model){
         model->isStatic = isStatic;
     }
@@ -275,15 +309,15 @@ bool AISTCollisionDetectorImpl::makeReady()
 
     const int n = models.size();
     for(int i=0; i < n; ++i){
-        ColdetModelExPtr& model1 = models[i];
+        ColdetModelEx* model1 = models[i];
         if(model1){
             for(int j = i+1; j < n; ++j){
-                ColdetModelExPtr& model2 = models[j];
+                ColdetModelEx* model2 = models[j];
                 if(model2){
                     if(!model1->isStatic || !model2->isStatic){
                         IdPair<> idPair(i, j);
                         if(nonInterfarencePairs.find(idPair) == nonInterfarencePairs.end()){
-                            ColdetModelPairExPtr modelPair = std::make_shared<ColdetModelPairEx>(model1, i, model2, j);
+                            auto modelPair = new ColdetModelPairEx(model1, model2);
                             modelPairIdMap[idPair] = modelPairs.size();
                             modelPairs.push_back(modelPair);
                         }
@@ -323,7 +357,7 @@ bool AISTCollisionDetectorImpl::makeReady()
 
 void AISTCollisionDetector::updatePosition(int geometryId, const Position& position)
 {
-    ColdetModelExPtr& model = impl->models[geometryId];
+    ColdetModelEx* model = impl->models[geometryId];
     if(model){
         model->setPosition(position);
     }
@@ -346,29 +380,12 @@ void AISTCollisionDetector::detectCollisions(std::function<void(const CollisionP
 */
 void AISTCollisionDetectorImpl::detectCollisions(std::function<void(const CollisionPair&)> callback)
 {
+    CollisionPair collisionPair;
     const int n = modelPairs.size();
     for(int i=0; i < n; ++i){
-        ColdetModelPairEx& modelPair = *modelPairs[i];
-        const std::vector<collision_data>& cdata = modelPair.detectCollisions();
-        if(!cdata.empty()){
-            CollisionPair& collisionPair = modelPair.collisionPair;
-            vector<Collision>& collisions = collisionPair.collisions;
-            collisions.clear();
-            for(size_t j=0; j < cdata.size(); ++j){
-                const collision_data& cd = cdata[j];
-                for(int k=0; k < cd.num_of_i_points; ++k){
-                    if(cd.i_point_new[k]){
-                        collisions.push_back(Collision());
-                        Collision& collision = collisions.back();
-                        collision.point = cd.i_points[k];
-                        collision.normal = cd.n_vector;
-                        collision.depth = cd.depth;
-                        collision.id1 = cd.id1;
-                        collision.id2 = cd.id2;
-                    }
-                }
-            }
-            if(!collisions.empty()){
+        ColdetModelPairEx* modelPair = modelPairs[i];
+        if(!modelPair->detectCollisions().empty()){
+            if(copyCollisionPairCollisions(modelPair, collisionPair)){
                 callback(collisionPair);
             }
         }
@@ -423,35 +440,14 @@ void AISTCollisionDetectorImpl::extractCollisionsOfAssignedPairs
     for(int i=pairIndexBegin; i < pairIndexEnd; ++i){
         ColdetModelPairEx* modelPair;
         if(ENABLE_SHUFFLE){
-            modelPair = modelPairs[shuffledPairIndices[i]].get();
+            modelPair = modelPairs[shuffledPairIndices[i]];
         } else {
-            modelPair = modelPairs[i].get();
+            modelPair = modelPairs[i];
         }
-        const std::vector<collision_data>& cdata = modelPair->detectCollisions();
-        if(!cdata.empty()){
-            CollisionPair& srcCollisionPair = modelPair->collisionPair;
+        if(!modelPair->detectCollisions().empty()){
             collisionPairs.push_back(CollisionPair());
             CollisionPair& collisionPair = collisionPairs.back();
-            collisionPair.geometryId[0] = srcCollisionPair.geometryId[0];
-            collisionPair.geometryId[1] = srcCollisionPair.geometryId[1];
-            vector<Collision>& collisions = collisionPair.collisions;
-            const int n = cdata.size();
-            collisions.reserve(n);
-            for(int j=0; j < n; ++j){
-                const collision_data& cd = cdata[j];
-                for(int k=0; k < cd.num_of_i_points; ++k){
-                    if(cd.i_point_new[k]){
-                        collisions.push_back(Collision());
-                        Collision& collision = collisions.back();
-                        collision.point = cd.i_points[k];
-                        collision.normal = cd.n_vector;
-                        collision.depth = cd.depth;
-                        collision.id1 = cd.id1;
-                        collision.id2 = cd.id2;
-                    }
-                }
-            }
-            if(collisions.empty()){
+            if(!copyCollisionPairCollisions(modelPair, collisionPair, true)){
                 collisionPairs.pop_back();
             }
         }
@@ -477,9 +473,9 @@ void AISTCollisionDetectorImpl::checkCollisionsOfAssignedPairs
     for(int i=pairIndexBegin; i < pairIndexEnd; ++i){
         ColdetModelPairEx* modelPair;
         if(ENABLE_SHUFFLE){
-            modelPair = modelPairs[shuffledPairIndices[i]].get();
+            modelPair = modelPairs[shuffledPairIndices[i]];
         } else {
-            modelPair = modelPairs[i].get();
+            modelPair = modelPairs[i];
         }
         if(!modelPair->detectCollisions().empty()){
             collidingModelPairs.push_back(modelPair);
@@ -491,32 +487,12 @@ void AISTCollisionDetectorImpl::checkCollisionsOfAssignedPairs
 void AISTCollisionDetectorImpl::dispatchCollisionsInCollidingModelPairs
 (std::function<void(const CollisionPair&)> callback)
 {
+    CollisionPair collisionPair;
     for(int i=0; i < numThreads; ++i){
         const vector<ColdetModelPairEx*>& collidingModelPairs = collidingModelPairArrays[i];
         for(size_t j=0; j < collidingModelPairs.size(); ++j){
-            ColdetModelPairEx& collidingModelPair = *collidingModelPairs[j];
-            CollisionPair& collisionPair = collidingModelPair.collisionPair;
-            vector<Collision>& collisions = collisionPair.collisions;
-            const std::vector<collision_data>& cdata = collidingModelPair.collisions();
-            if(!cdata.empty()){
-                collisions.clear();
-                for(size_t k=0; k < cdata.size(); ++k){
-                    const collision_data& cd = cdata[k];
-                    for(int l=0; l < cd.num_of_i_points; ++l){
-                        if(cd.i_point_new[l]){
-                            collisions.push_back(Collision());
-                            Collision& collision = collisions.back();
-                            collision.point = cd.i_points[l];
-                            collision.normal = cd.n_vector;
-                            collision.depth = cd.depth;
-                            collision.id1 = cd.id1;
-                            collision.id2 = cd.id2;
-                        }
-                    }
-                }
-                if(!collisions.empty()){
-                    callback(collisionPair);
-                }
+            if(copyCollisionPairCollisions(collidingModelPairs[j], collisionPair)){
+               callback(collisionPair);
             }
         }
     }

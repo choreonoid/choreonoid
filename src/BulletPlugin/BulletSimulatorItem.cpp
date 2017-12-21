@@ -11,7 +11,6 @@
 #include <cnoid/Body>
 #include <cnoid/BodyItem>
 #include <cnoid/Link>
-#include <cnoid/ColdetModel>
 #include <cnoid/FloatingNumberString>
 #include <cnoid/BasicSensorSimulationHelper>
 #include <cnoid/BodyCollisionDetectorUtil>
