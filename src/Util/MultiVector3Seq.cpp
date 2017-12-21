@@ -62,7 +62,7 @@ bool MultiVector3Seq::doReadSeq(const Mapping* archive, std::ostream& os)
 {
     GeneralSeqReader reader(os);
 
-    return reader.read(
+    return reader.read<MultiVector3Seq>(
         archive, this,
         [](const ValueNode& node, Vector3& value){
             const Listing& v = *node.toListing();

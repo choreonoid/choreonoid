@@ -53,7 +53,7 @@ bool Vector3Seq::doReadSeq(const Mapping* archive, std::ostream& os)
 {
     GeneralSeqReader reader(os);
 
-    return reader.read(
+    return reader.read<Vector3Seq>(
         archive, this,
         [](const Listing& v, int topIndex, Vector3& value){
             if(v.size() != topIndex + 3){
