@@ -30,7 +30,8 @@ public:
     virtual void setNonInterfarenceGeometyrPair(int geometryId1, int geometryId2) override;
     virtual bool makeReady() override;
     virtual void updatePosition(int geometryId, const Position& position) override;
-    virtual void detectCollisions(std::function<void(const CollisionPair&)> callback) override;
+    virtual void updatePositions(std::function<void(Referenced* object, Position* out_Position)> positionQuery) override;
+    virtual void detectCollisions(std::function<void(const CollisionPair& collisionPair)> callback) override;
 
     virtual bool isFindClosestPointsAvailable() const override;
     virtual double findClosestPoints(int geometryId1, int geometryId2, Vector3& out_point1, Vector3& out_point2);

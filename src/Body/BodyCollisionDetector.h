@@ -6,11 +6,13 @@
 #ifndef CNOID_BODY_BODY_COLLISION_DETECTOR_H
 #define CNOID_BODY_BODY_COLLISION_DETECTOR_H
 
+#include <cnoid/CollisionDetector>
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class BollisionDetector;
+class Body;
+class Link;
 class BodyCollisionDetectorImpl;
 
 class CNOID_EXPORT BodyCollisionDetector : public Referenced
@@ -22,15 +24,11 @@ public:
     void setCollisionDetecotr(CollisionDetector* collisionDetector);
     CollisionDetector* collisionDetector();
     
-    void addBody(Body* body);
-    void addLink(Link* link);
-
-    void enableSelfCollisions(Body* body);
-
+    void addBody(Body* body, bool isSelfCollisionDetectionEnabled);
     bool makeReady();
 
     void updatePositions();
-    void detectCollisions(std::function<void(Link* link1, Link* link2, const CollisionArray& collisions)> callback);
+    void detectCollisions(std::function<void(const CollisionPair& collisionPair)> callback);
 
     bool isFindClosestPointsAvailable() const;
     double findClosestPoints(Link* link1, Link* link2, Vector3& out_point1, Vector3& out_point2);

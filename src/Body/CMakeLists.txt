@@ -36,6 +36,7 @@ set(sources
   PinDragIK.cpp
   LinkGroup.cpp
   LeggedBodyHelper.cpp
+  BodyCollisionDetector.cpp
   BodyCollisionDetectorUtil.cpp
   BodyMotion.cpp
   BodyMotionPoseProvider.cpp
@@ -80,6 +81,7 @@ set(headers
   Material.h
   ContactMaterial.h
   MaterialTable.h
+  BodyCollisionDetector.h
   BodyCollisionDetectorUtil.h
   MultiDeviceStateSeq.h
   Device.h

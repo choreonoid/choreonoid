@@ -364,6 +364,18 @@ void AISTCollisionDetector::updatePosition(int geometryId, const Position& posit
 }
 
 
+void AISTCollisionDetector::updatePositions(std::function<void(Referenced* object, Position* out_Position)> positionQuery)
+{
+    for(auto& model : impl->models){
+        if(model){
+            Position* T;
+            positionQuery(model->object, T);
+            model->setPosition(*T);
+        }
+    }
+}
+
+
 void AISTCollisionDetector::detectCollisions(std::function<void(const CollisionPair&)> callback)
 {
     if(impl->numThreads > 0){
