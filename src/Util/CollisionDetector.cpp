@@ -169,7 +169,7 @@ int CollisionDetector::addGeometry(SgNode* geometry)
 }
 
 
-void CollisionDetector::updatePositions(std::function<void(Referenced* object, Position* out_Position)> positionQuery)
+void CollisionDetector::updatePositions(std::function<void(Referenced* object, Position*& out_Position)> positionQuery)
 {
 
 }

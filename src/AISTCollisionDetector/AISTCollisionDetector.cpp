@@ -364,7 +364,7 @@ void AISTCollisionDetector::updatePosition(int geometryId, const Position& posit
 }
 
 
-void AISTCollisionDetector::updatePositions(std::function<void(Referenced* object, Position* out_Position)> positionQuery)
+void AISTCollisionDetector::updatePositions(std::function<void(Referenced* object, Position*& out_Position)> positionQuery)
 {
     for(auto& model : impl->models){
         if(model){

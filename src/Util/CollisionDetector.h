@@ -54,7 +54,7 @@ public:
     virtual bool makeReady() = 0;
     
     virtual void updatePosition(int geometryId, const Position& position) = 0;
-    virtual void updatePositions(std::function<void(Referenced* object, Position* out_Position)> positionQuery);
+    virtual void updatePositions(std::function<void(Referenced* object, Position*& out_Position)> positionQuery);
 
     virtual void detectCollisions(std::function<void(const CollisionPair& collisionPair)> callback) = 0;
 

@@ -15,15 +15,16 @@ class Body;
 class Link;
 class BodyCollisionDetectorImpl;
 
-class CNOID_EXPORT BodyCollisionDetector : public Referenced
+class CNOID_EXPORT BodyCollisionDetector
 {
 public:
     BodyCollisionDetector();
     virtual ~BodyCollisionDetector();
 
-    void setCollisionDetecotr(CollisionDetector* collisionDetector);
+    void setCollisionDetector(CollisionDetector* collisionDetector);
     CollisionDetector* collisionDetector();
-    
+
+    void clearBodies();
     void addBody(Body* body, bool isSelfCollisionDetectionEnabled);
     bool makeReady();
 

@@ -85,7 +85,7 @@ BodyCollisionDetector::~BodyCollisionDetector()
 }
 
 
-void BodyCollisionDetector::setCollisionDetecotr(CollisionDetector* collisionDetector)
+void BodyCollisionDetector::setCollisionDetector(CollisionDetector* collisionDetector)
 {
     impl->collisionDetector = collisionDetector;
     impl->linkToGeometryIdSetMap.clear();
@@ -95,6 +95,13 @@ void BodyCollisionDetector::setCollisionDetecotr(CollisionDetector* collisionDet
 CollisionDetector* BodyCollisionDetector::collisionDetector()
 {
     return impl->collisionDetector;
+}
+
+
+void BodyCollisionDetector::clearBodies()
+{
+    impl->linkToGeometryIdSetMap.clear();
+    impl->collisionDetector->clearGeometries();
 }
 
 
@@ -184,7 +191,7 @@ void BodyCollisionDetectorImpl::addLinkRecursively
         }
     }
     
-    for(Link* child = link->child(); link; link = link->sibling()){
+    for(Link* child = link->child(); child; child = child->sibling()){
         addLinkRecursively(child, linkIndexToGeometryIdSetMap, exclusions, isStatic);
     }
 }
@@ -264,7 +271,7 @@ bool BodyCollisionDetector::makeReady()
 void BodyCollisionDetector::updatePositions()
 {
     impl->collisionDetector->updatePositions(
-        [](Referenced* object, Position* out_Position){
+        [](Referenced* object, Position*& out_Position){
             Link* link = static_cast<Link*>(object);
             out_Position = &link->position();
         });
