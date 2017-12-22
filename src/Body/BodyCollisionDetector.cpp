@@ -50,7 +50,7 @@ class BodyCollisionDetectorImpl
 {
 public:
     CollisionDetectorPtr collisionDetector;
-    unordered_map<Link*, GeometryIdSet> linkToGeometryIdSetMap;
+    unordered_map<LinkPtr, GeometryIdSet> linkToGeometryIdSetMap;
 
     BodyCollisionDetectorImpl();
     void addBody(Body* body, bool isSelfCollisionEnabled);
@@ -122,25 +122,28 @@ void BodyCollisionDetectorImpl::addBody(Body* body, bool isSelfCollisionDetectio
     if(cdInfo->isValid()){
         excludeTreeDepth = cdInfo->get("excludeTreeDepth", excludeTreeDepth);
         const Listing& excludeLinks = *cdInfo->findListing("excludeLinks");
-        for(int i=0; i < excludeLinks.size(); ++i){
+        for(size_t i=0; i < excludeLinks.size(); ++i){
             Link* link = body->link(excludeLinks[i].toString());
             if(link){
                 exclusions[link->index()] = true;
             }
         }
         auto& excludeLinkGroupList = *cdInfo->findListing("excludeLinkGroups");
-        excludeLinkGroups.resize(excludeLinkGroupList.size());
+        excludeLinkGroups.reserve(excludeLinkGroupList.size());
         for(int i=0; i < excludeLinkGroupList.size(); ++i){
             auto groupInfo = excludeLinkGroupList[i].toMapping();
             if(groupInfo->isValid()){
+                vector<int> excludeLinkGroup;
                 string groupName = groupInfo->get<string>("name");
                 auto& excludeLinks = *groupInfo->findListing("links");
-                vector<int>& excludeLinkGroup = excludeLinkGroups[i];
-                for(int j=0; j < excludeLinks.size(); ++j){
+                for(size_t j=0; j < excludeLinks.size(); ++j){
                     Link* link = body->link(excludeLinks[j].toString());
                     if(link){
                         excludeLinkGroup.push_back(link->index());
                     }
+                }
+                if(!excludeLinkGroup.empty()){
+                    excludeLinkGroups.push_back(excludeLinkGroup);
                 }
             }
         }
