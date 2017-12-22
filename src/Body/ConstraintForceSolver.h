@@ -34,8 +34,8 @@ public:
     double staticFriction() const;
     double slipFriction() const;
 
-    void setSelfCollisionEnabled(int bodyIndex, bool on);
-    bool isSelfCollisionEnabled(int bodyIndex) const;
+    void setSelfCollisionDetectionEnabled(int bodyIndex, bool on);
+    bool isSelfCollisionDetectionEnabled(int bodyIndex) const;
 
     void setContactCullingDistance(double thresh);
     double contactCullingDistance() const;
