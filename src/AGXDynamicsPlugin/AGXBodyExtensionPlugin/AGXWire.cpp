@@ -383,23 +383,32 @@ AGXWire::AGXWire(AGXWireDevice* device, AGXBody* agxBody) :
         for(const auto& wireNode : wireNodeList){
             if(!wireNode->isMapping()) continue;
             const Mapping&  wireNodeInfo = *wireNode->toMapping();
-            string nodeType, coordinate;
+            string nodeType, coordinate, linkName;
             Vector3 pos;
             // Read yaml
             wireNodeInfo.read("type", nodeType);
-            wireNodeInfo.read("coordinate", coordinate);
+            wireNodeInfo.read("linkName", linkName);
             agxConvert::setVector(wireNodeInfo.find("position"), pos);
 
-            // Calc world position
-            agx::RigidBody* rigid = getAGXBody()->getAGXRigidBody(coordinate);
-            Link* const link = getAGXBody()->body()->link(coordinate);
-            if(link) pos =  link->p() + link->attitude() *  pos;
-            agx::Vec3 agxPos = agxConvert::toAGX(pos);
+            auto transformToWorld = [&](){
+                // Transform pos from link coord to world coord, if link exist
+                if(Link* const link = getAGXBody()->body()->link(linkName)){
+                    pos = link->p() + link->attitude() * pos;
+                }
+                return agxConvert::toAGX(pos);
+            };
 
             if(nodeType == "free"){
-                m_wire->add(AGXObjectFactory::createWireFreeNode(agxPos));
+                // set in world coord
+                m_wire->add(AGXObjectFactory::createWireFreeNode(transformToWorld()));
             }else if(nodeType == "fixed"){
-
+                if(agx::RigidBody* body = getAGXBody()->getAGXRigidBody(linkName)){
+                    // set in link coord
+                    m_wire->add(AGXObjectFactory::createWireBodyFixedNode(body, agxConvert::toAGX(pos)));
+                }else{
+                    // set in world coord
+                    m_wire->add(AGXObjectFactory::createWireBodyFixedNode(body, transformToWorld()));
+                }
             }
         }
     }
