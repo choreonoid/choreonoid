@@ -209,8 +209,12 @@ class FisheyeLensConverter
 public:
     int width;
     int height;
+    double fov;
     int screenWidth;
     vector<SensorScreenRenderer*> screens;
+    bool rotateOutputDirection;
+    bool enableInterpolation;
+
     struct ScreenIndex{
         SensorScreenRenderer::ScreenId sid;
         int ix;
@@ -218,7 +222,7 @@ public:
     };
     vector<vector<ScreenIndex>> fisheyeLensMap;
 
-    void initialize(int width, int height,
+    void initialize(int width, int height, double fov,
             int screenWidth, vector<SensorScreenRendererPtr>& screens);
     void convertImage(Image* image);
 };
@@ -646,25 +650,34 @@ SensorRenderer::SensorRenderer(GLVisionSimulatorItemImpl* simImpl, Device* devic
         if(camera->lensType()==Camera::NORMAL){
             screens.push_back(new SensorScreenRenderer(simImpl, device, deviceForRendering));
         }else{
-            int n = 5;
+            int numScreen = 5;
+            double fov = camera->fieldOfView();
+            if(fov <= radian(90)){
+                numScreen = 1;
+            }
             int resolution = camera->resolutionX();
             int width = resolution;
             if(camera->lensType()==Camera::DOUBLE_FISHEYE){
-                n=6;
+                numScreen = 6;
                 resolution /= 2;
+                fov = radian(180);
+            }
+            if(fov > radian(180)){
+                fov = radian(180);
             }
 
             Matrix3 R[6];
             R[SensorScreenRenderer::FRONT] = camera->localRotaion();
-            R[SensorScreenRenderer::RIGHT] = R[SensorScreenRenderer::FRONT] * AngleAxis(radian(-90), Vector3::UnitY());
-            R[SensorScreenRenderer::TOP] = R[SensorScreenRenderer::FRONT] * AngleAxis(radian(90), Vector3::UnitX());
-            R[SensorScreenRenderer::LEFT] = R[SensorScreenRenderer::TOP] * AngleAxis(radian(90), Vector3::UnitY());
-            R[SensorScreenRenderer::BOTTOM] = R[SensorScreenRenderer::RIGHT] * AngleAxis(radian(-90), Vector3::UnitX());
-            if(n==6){
-                R[SensorScreenRenderer::BACK] = R[SensorScreenRenderer::LEFT] * AngleAxis(radian(90), Vector3::UnitX());
+            if(numScreen > 1){
+                R[SensorScreenRenderer::RIGHT] = R[SensorScreenRenderer::FRONT] * AngleAxis(radian(-90), Vector3::UnitY());
+                R[SensorScreenRenderer::TOP] = R[SensorScreenRenderer::FRONT] * AngleAxis(radian(90), Vector3::UnitX());
+                R[SensorScreenRenderer::LEFT] = R[SensorScreenRenderer::TOP] * AngleAxis(radian(90), Vector3::UnitY());
+                R[SensorScreenRenderer::BOTTOM] = R[SensorScreenRenderer::RIGHT] * AngleAxis(radian(-90), Vector3::UnitX());
+                if(numScreen==6){
+                    R[SensorScreenRenderer::BACK] = R[SensorScreenRenderer::LEFT] * AngleAxis(radian(90), Vector3::UnitX());
+                }
             }
-
-            for(int i=0; i<n; i++){
+            for(int i=0; i<numScreen; i++){
                 auto cameraForRendering = new Camera(*camera);
                 auto screen = new SensorScreenRenderer(simImpl, device, cameraForRendering);
                 screen->screenId = (SensorScreenRenderer::ScreenId)i;
@@ -673,7 +686,7 @@ SensorRenderer::SensorRenderer(GLVisionSimulatorItemImpl* simImpl, Device* devic
                 screens.push_back(screen);
             }
 
-            fisheyeLensConverter.initialize(width, resolution, resolution, screens);
+            fisheyeLensConverter.initialize(width, resolution, fov, resolution, screens);
         }
     } else if(rangeSensor){
 
@@ -1478,11 +1491,12 @@ void SensorRenderer::copyVisionData()
 }
 
 
-void FisheyeLensConverter::initialize(int width_, int height_,
+void FisheyeLensConverter::initialize(int width_, int height_, double fov_,
         int screenWidth_, vector<SensorScreenRendererPtr>& screens_)
 {
     width = width_;
     height = height_;
+    fov = fov_;
     screenWidth = screenWidth_;
     for(auto& screen : screens_){
         screens.push_back(screen);
@@ -1505,6 +1519,7 @@ void  FisheyeLensConverter::convertImage(Image* image)
         double height2 = height/2.0;
         double screenWidth2 = screenWidth / 2.0;
         double sw22 = screenWidth2 * screenWidth2;
+        double r = fov / height;
 
         for(int j=0; j<height; j++){
             double y = j - height2;
@@ -1522,7 +1537,7 @@ void  FisheyeLensConverter::convertImage(Image* image)
                         if(l==0){
                             tanTheta = 0.0;
                         } else {
-                            tanTheta = screenWidth2 / l * tan(l/height*PI);
+                            tanTheta = screenWidth2 / l * tan(l*r);
                         }
                         double xx = x*tanTheta;
                         double yy = y*tanTheta;
@@ -1588,7 +1603,7 @@ void  FisheyeLensConverter::convertImage(Image* image)
                         if(l==0){
                             tanTheta = 0.0;
                         } else {
-                            tanTheta = screenWidth2 / l * tan(l/height*PI);
+                            tanTheta = screenWidth2 / l * tan(l*r);
                         }
                         double xx = x*tanTheta;
                         double yy = y*tanTheta;
