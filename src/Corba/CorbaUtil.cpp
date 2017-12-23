@@ -5,6 +5,7 @@
 #include "CorbaUtil.h"
 #include <boost/format.hpp>
 
+#include <iterator>
 #include <iostream>
 
 using namespace std;
@@ -264,7 +265,7 @@ void NamingContextHelper::appendBindingList(CosNaming::BindingList_var& bList, s
 		CORBA::Object_ptr obj = findObjectSub(pathList);
 		info.isAlive = isObjectAlive(obj);
 		info.ior = orb->object_to_string(obj);
-		copy(pathList.begin(), pathList.end(), back_inserter(info.fullPath));
+		copy(pathList.begin(), pathList.end(), std::back_inserter(info.fullPath));
 		pathList.pop_back();
 		CORBA::release(obj);
 		objects.push_back(info);

@@ -30,14 +30,14 @@ RTC::ReturnCode_t ChoreonoidPeriodicExecutionContext::activate_component(RTC::Li
 	if (it == m_comps.end())
 		return RTC::BAD_PARAMETER;
 
-	if (!(it->_sm.m_sm.isIn(INACTIVE_STATE)))
+	if (!(it->_sm.m_sm.isIn(RTC::INACTIVE_STATE)))
 		return RTC::PRECONDITION_NOT_MET;
 
-	it->_sm.m_sm.goTo(ACTIVE_STATE);
+	it->_sm.m_sm.goTo(RTC::ACTIVE_STATE);
 
 	it->_sm.worker();
 
-	if ((it->_sm.m_sm.isIn(ACTIVE_STATE)))
+	if ((it->_sm.m_sm.isIn(RTC::ACTIVE_STATE)))
 		return RTC::RTC_OK;
 
 	return RTC::RTC_ERROR;
@@ -115,14 +115,14 @@ RTC::ReturnCode_t ChoreonoidPeriodicExecutionContext::reset_component(RTC::Light
 	if (it == m_comps.end())
 		return RTC::BAD_PARAMETER;
 
-	if (!(it->_sm.m_sm.isIn(ERROR_STATE)))
+	if (!(it->_sm.m_sm.isIn(RTC::ERROR_STATE)))
 		return RTC::PRECONDITION_NOT_MET;
 
-	it->_sm.m_sm.goTo(INACTIVE_STATE);
+	it->_sm.m_sm.goTo(RTC::INACTIVE_STATE);
 
 	it->_sm.worker();
 
-	if ((it->_sm.m_sm.isIn(INACTIVE_STATE)))
+	if ((it->_sm.m_sm.isIn(RTC::INACTIVE_STATE)))
 		return RTC::RTC_OK;
 
 	return RTC::RTC_ERROR;

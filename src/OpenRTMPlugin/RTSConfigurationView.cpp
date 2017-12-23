@@ -37,16 +37,6 @@ namespace cnoid {
 			return elem->getId() == id_;
 		}
 	};
-
-	struct ConfigurationSetNameComparator {
-		QString name_;
-		ConfigurationSetNameComparator(QString value) {
-			name_ = value;
-		}
-		bool operator()(const ConfigurationSetParamPtr elem) const {
-			return elem->getNameOrg() == name_;
-		}
-	};
 	//////////
 	DetailDelegate::DetailDelegate(RTSConfigurationViewImpl* view, QWidget *parent) : QStyledItemDelegate(parent) {
 		this->view_ = view;
@@ -91,13 +81,15 @@ namespace cnoid {
 		lstConfigSet_->setItemDelegate(new ConfigSetDelegate(this));
 
 		chkSetDetail_ = new QCheckBox(_("Detail"));
-		//QPushButton* btnSetAdd = new QPushButton(_("Add"));
-		//QPushButton* btnSetDelete = new QPushButton(_("Delete"));
+		QPushButton* btnSetCopy = new QPushButton(_("Copy"));
+		QPushButton* btnSetAdd = new QPushButton(_("Add"));
+		QPushButton* btnSetDelete = new QPushButton(_("Delete"));
 		QFrame* frmSetButtons = new QFrame;
 		QHBoxLayout* setBtnLayout = new QHBoxLayout(frmSetButtons);
+		setBtnLayout->addWidget(btnSetCopy);
 		setBtnLayout->addStretch();
-		//setBtnLayout->addWidget(btnSetAdd);
-		//setBtnLayout->addWidget(btnSetDelete);
+		setBtnLayout->addWidget(btnSetAdd);
+		setBtnLayout->addWidget(btnSetDelete);
 		setBtnLayout->addWidget(chkSetDetail_);
 		setBtnLayout->setMargin(1);
 
@@ -129,13 +121,15 @@ namespace cnoid {
 		lstDetail_->setItemDelegate(new DetailDelegate(this));
 
 		chkDetail_ = new QCheckBox(_("Detail"));
-		//QPushButton* btnAdd = new QPushButton(_("Add"));
-		//QPushButton* btnDelete = new QPushButton(_("Delete"));
+		QPushButton* btnAdd = new QPushButton(_("Add"));
+		btnAdd->setEnabled(false);
+		QPushButton* btnDelete = new QPushButton(_("Delete"));
+		btnDelete->setEnabled(false);
 		QFrame* frmButtons = new QFrame;
 		QHBoxLayout* btnLayout = new QHBoxLayout(frmButtons);
 		btnLayout->addStretch();
-		//btnLayout->addWidget(btnAdd);
-		//btnLayout->addWidget(btnDelete);
+		btnLayout->addWidget(btnAdd);
+		btnLayout->addWidget(btnDelete);
 		btnLayout->addWidget(chkDetail_);
 		btnLayout->setMargin(1);
 
@@ -179,9 +173,14 @@ namespace cnoid {
 		}
 
 		connect(lstConfigSet_, SIGNAL(itemSelectionChanged()), this, SLOT(configSetSelectionChanged()));
+		connect(btnSetCopy, SIGNAL(clicked()), this, SLOT(setCopyClicked()));
+		connect(btnSetAdd, SIGNAL(clicked()), this, SLOT(setAddClicked()));
+		connect(btnSetDelete, SIGNAL(clicked()), this, SLOT(setDeleteClicked()));
 		connect(chkSetDetail_, SIGNAL(clicked()), this, SLOT(setDetailClicked()));
+
 		connect(chkDetail_, SIGNAL(clicked()), this, SLOT(detailClicked()));
-		//connect(btnDelete, SIGNAL(clicked()), this, SLOT(deleteDetailClicked()));
+		connect(btnAdd, SIGNAL(clicked()), this, SLOT(addClicked()));
+		connect(btnDelete, SIGNAL(clicked()), this, SLOT(deleteClicked()));
 		connect(btnApply, SIGNAL(clicked()), this, SLOT(applyClicked()));
 		connect(btnCancel, SIGNAL(clicked()), this, SLOT(cancelClicked()));
 	}
@@ -234,6 +233,41 @@ namespace cnoid {
 		showConfigurationView();
 	}
 
+	void RTSConfigurationViewImpl::addClicked() {
+		if (!currentSet_) return;
+
+		int maxId = 0;
+		for (int index = 0; index < currentSet_->getConfigurationList().size(); index++) {
+			ConfigurationParamPtr param = currentSet_->getConfigurationList()[index];
+			if (maxId < param->getId()) {
+				maxId = param->getId();
+			}
+		}
+		ConfigurationParamPtr param = std::make_shared<ConfigurationParam>(maxId, "New Config", "New Value");
+		param->setNew();
+		currentSet_->addConfiguration(param);
+
+		showConfigurationView();
+	}
+
+	void RTSConfigurationViewImpl::deleteClicked() {
+		if (!currentSet_) return;
+
+		int selectedId = -1;
+		QTableWidgetItem* item = lstDetail_->currentItem();
+		if (item) {
+			selectedId = item->data(Qt::UserRole).toInt();
+		}
+		if (selectedId == -1) return;
+
+		vector<ConfigurationParamPtr>::iterator targetConf = find_if(currentSet_->getConfigurationList().begin(), currentSet_->getConfigurationList().end(), ConfigurationComparator(selectedId));
+		if (targetConf == currentSet_->getConfigurationList().end()) return;
+
+		(*targetConf)->setDelete();
+
+		showConfigurationView();
+	}
+
 	void RTSConfigurationViewImpl::detailClicked() {
 		showConfigurationView();
 	}
@@ -259,17 +293,19 @@ namespace cnoid {
 			lstDetail_->setItem(row, 0, itemName);
 			itemName->setText(param->getName());
 			itemName->setData(Qt::UserRole, param->getId());
+			if (param->isChangedName()) {
+				lstDetail_->item(row, 0)->setBackgroundColor("#FFC0C0");
+			} else {
+				lstDetail_->item(row, 0)->setBackgroundColor(Qt::white);
+			}
 
 			QTableWidgetItem* itemValue = new QTableWidgetItem;
 			lstDetail_->setItem(row, 1, itemValue);
 			itemValue->setText(param->getValue());
 			itemValue->setData(Qt::UserRole, param->getId());
-
-			if (param->isChanged()) {
-				lstDetail_->item(row, 0)->setBackgroundColor("#FFC0C0");
+			if (param->isChangedValue()) {
 				lstDetail_->item(row, 1)->setBackgroundColor("#FFC0C0");
 			} else {
-				lstDetail_->item(row, 0)->setBackgroundColor(Qt::white);
 				lstDetail_->item(row, 1)->setBackgroundColor(Qt::white);
 			}
 		}
@@ -282,6 +318,62 @@ namespace cnoid {
 			getConfigurationSet();
 			showConfigurationSetView();
 		}
+	}
+
+	void RTSConfigurationViewImpl::setCopyClicked() {
+		if (!currentSet_) return;
+
+		int maxId = 0;
+		for (int index = 0; index < configSetList_.size(); index++) {
+			ConfigurationSetParamPtr param = configSetList_[index];
+			if (maxId < param->getId()) {
+				maxId = param->getId();
+			}
+		}
+		ConfigurationSetParamPtr configSet = std::make_shared<ConfigurationSetParam>(maxId + 1, currentSet_->getName()+"_copy");
+		configSet->setNew();
+		configSetList_.push_back(configSet);
+
+		std::vector<ConfigurationParamPtr> configList = currentSet_->getConfigurationList();
+		for (int index = 0; index < configList.size(); index++) {
+			ConfigurationParamPtr param = configList[index];
+			ConfigurationParamPtr newParam = std::make_shared<ConfigurationParam>(param);
+			newParam->setNew();
+			configSet->addConfiguration(newParam);
+		}
+		showConfigurationSetView();
+	}
+
+	void RTSConfigurationViewImpl::setAddClicked() {
+		int maxId = 0;
+		for (int index = 0; index < configSetList_.size(); index++) {
+			ConfigurationSetParamPtr param = configSetList_[index];
+			if (maxId < param->getId()) {
+				maxId = param->getId();
+			}
+		}
+		QString name = QString::fromStdString("configSet_") + QString::number(maxId);
+		ConfigurationSetParamPtr configSet = std::make_shared<ConfigurationSetParam>(maxId + 1, name);
+		configSet->setNew();
+		configSetList_.push_back(configSet);
+
+		if (currentSet_) {
+			std::vector<ConfigurationParamPtr> configList = currentSet_->getConfigurationList();
+			for (int index = 0; index < configList.size(); index++) {
+				ConfigurationParamPtr param = configList[index];
+				ConfigurationParamPtr newParam = std::make_shared<ConfigurationParam>(param->getId(), param->getName(), "value");
+				newParam->setNew();
+				configSet->addConfiguration(newParam);
+			}
+		}
+		showConfigurationSetView();
+	}
+
+	void RTSConfigurationViewImpl::setDeleteClicked() {
+		if (!currentSet_) return;
+
+		currentSet_->setDelete();
+		showConfigurationSetView();
 	}
 
 	void RTSConfigurationViewImpl::setDetailClicked() {
@@ -297,6 +389,7 @@ namespace cnoid {
 
 		for (int index = 0; index < configSetList_.size(); index++) {
 			ConfigurationSetParamPtr param = configSetList_[index];
+			if (param->getMode() == MODE_DELETE || param->getMode() == MODE_IGNORE) continue;
 			if (chkSetDetail_->isChecked() == false) {
 				if (param->getName().startsWith(QString::fromStdString("__"))) continue;
 			}
@@ -329,6 +422,11 @@ namespace cnoid {
 			lstConfigSet_->setItem(row, 1, itemName);
 			itemName->setText(param->getName());
 			itemName->setData(Qt::UserRole, param->getId());
+			if (param->isChangedName()) {
+				lstConfigSet_->item(row, 1)->setBackgroundColor("#FFC0C0");
+			} else {
+				lstConfigSet_->item(row, 1)->setBackgroundColor(Qt::white);
+			}
 		}
 
 		if (0 < configSetList_.size()) {
@@ -393,42 +491,82 @@ namespace cnoid {
 
 	void RTSConfigurationViewImpl::applyClicked() {
 		DDEBUG("RTSConfigurationViewImpl::applyClicked");
-		SDOPackage::ConfigurationSetList_var confSet = currentConf_->get_configuration_sets();
-		int setNum = confSet->length();
 		QString activeName;
-		for (int index = 0; index < setNum; index++) {
-			SDOPackage::ConfigurationSet conf = confSet[index];
-			QString name = QString(string(conf.id).c_str());
-			vector<ConfigurationSetParamPtr>::iterator targetConf = find_if(configSetList_.begin(), configSetList_.end(), ConfigurationSetNameComparator(name));
-			if (targetConf == configSetList_.end()) continue;
+		int selectedSet = lstConfigSet_->currentRow();
+		int selected = lstDetail_->currentRow();
 
-			if ((*targetConf)->getActive()) {
-				activeName = (*targetConf)->getName();
+		for (int index = 0; index < configSetList_.size(); index++) {
+			ConfigurationSetParamPtr target = configSetList_[index];
+			if (target->getActive()) {
+				activeName = target->getName();
 			}
-			if ((*targetConf)->getChanged() == false) continue;
 
-			conf.id = CORBA::string_dup((*targetConf)->getName().toStdString().c_str());
-			NVList configList;
-			std::vector<ConfigurationParamPtr> configSetList = (*targetConf)->getConfigurationList();
-			for (int idxDetail = 0; idxDetail < configSetList.size(); idxDetail++) {
-				ConfigurationParamPtr param = configSetList[idxDetail];
-				if (param->getMode() == MODE_DELETE || param->getMode() == MODE_IGNORE) continue;
-				DDEBUG_V("id:%d", param->getId());
-				CORBA_SeqUtil::push_back(configList,
-					NVUtil::newNV(param->getName().toStdString().c_str(), param->getValue().toStdString().c_str()));
+			if (target->getMode() == ParamMode::MODE_INSERT) {
+				DDEBUG("ConfigurationSet MODE_INSERT");
+				SDOPackage::ConfigurationSet newSet;
+				newSet.id = CORBA::string_dup(target->getName().toStdString().c_str());
+				NVList configList;
+				std::vector<ConfigurationParamPtr> configSetList = target->getConfigurationList();
+				for (int idxDetail = 0; idxDetail < configSetList.size(); idxDetail++) {
+					ConfigurationParamPtr param = configSetList[idxDetail];
+					if (param->getMode() == MODE_DELETE || param->getMode() == MODE_IGNORE) continue;
+					DDEBUG_V("id:%d", param->getId());
+					CORBA_SeqUtil::push_back(configList,
+						NVUtil::newNV(param->getName().toStdString().c_str(), param->getValue().toStdString().c_str()));
+				}
+				newSet.configuration_data = configList;
+				currentConf_->add_configuration_set(newSet);
+
+			} else if (target->getMode() == ParamMode::MODE_UPDATE) {
+				DDEBUG("ConfigurationSet MODE_UPDATE");
+				SDOPackage::ConfigurationSetList_var confSet = currentConf_->get_configuration_sets();
+				for (int idxConf = 0; idxConf < confSet->length(); idxConf++) {
+					SDOPackage::ConfigurationSet conf = confSet[idxConf];
+					QString name = QString(string(conf.id).c_str());
+					if (name == target->getNameOrg()) {
+						conf.id = CORBA::string_dup(target->getName().toStdString().c_str());
+						NVList configList;
+						std::vector<ConfigurationParamPtr> configSetList = target->getConfigurationList();
+						for (int idxDetail = 0; idxDetail < configSetList.size(); idxDetail++) {
+							ConfigurationParamPtr param = configSetList[idxDetail];
+							if (param->getMode() == MODE_DELETE || param->getMode() == MODE_IGNORE) continue;
+							DDEBUG_V("id:%d", param->getId());
+							CORBA_SeqUtil::push_back(configList,
+								NVUtil::newNV(param->getName().toStdString().c_str(), param->getValue().toStdString().c_str()));
+						}
+						conf.configuration_data = configList;
+						currentConf_->set_configuration_set_values(conf);
+
+					}
+				}
+
+			} else if (target->getMode() == ParamMode::MODE_DELETE) {
+				DDEBUG("ConfigurationSet MODE_DELETE");
+				currentConf_->remove_configuration_set(CORBA::string_dup(target->getName().toStdString().c_str()));
 			}
-			conf.configuration_data = configList;
-			currentConf_->set_configuration_set_values(conf);
 		}
 		currentConf_->activate_configuration_set(activeName.toStdString().c_str());
 		//
 		getConfigurationSet();
 		showConfigurationSetView();
+
+		if (selectedSet < lstConfigSet_->rowCount()) {
+			lstConfigSet_->setCurrentCell(selectedSet, 0);
+		}
+		if (selected < lstDetail_->rowCount()) {
+			lstDetail_->setCurrentCell(selected, 0);
+		}
 	}
 
 	void RTSConfigurationViewImpl::cancelClicked() {
+		int selectedSet = lstConfigSet_->currentRow();
+		int selected = lstDetail_->currentRow();
+
 		getConfigurationSet();
 		showConfigurationSetView();
+
+		lstConfigSet_->setCurrentCell(selectedSet, 0);
+		lstDetail_->setCurrentCell(selected, 0);
 	}
 
 	void RTSConfigurationViewImpl::updateConfigSet() {
@@ -446,7 +584,7 @@ namespace cnoid {
 
 		int row = lstConfigSet_->currentRow();
 		(*targetConf)->setName(lstConfigSet_->item(row, 1)->text());
-		(*targetConf)->setChanged(true);
+		(*targetConf)->setChanged();
 
 		if ((*targetConf)->isChangedName()) {
 			lstConfigSet_->item(row, 1)->setBackgroundColor("#FFC0C0");
@@ -486,13 +624,16 @@ namespace cnoid {
 		int row = lstDetail_->currentRow();
 		(*targetConf)->setName(lstDetail_->item(row, 0)->text());
 		(*targetConf)->setValue(lstDetail_->item(row, 1)->text());
-		currentSet_->setChanged(true);
+		currentSet_->setChanged();
 
-		if ((*targetConf)->isChanged()) {
+		if ((*targetConf)->isChangedName()) {
 			lstDetail_->item(row, 0)->setBackgroundColor("#FFC0C0");
-			lstDetail_->item(row, 1)->setBackgroundColor("#FFC0C0");
 		} else {
 			lstDetail_->item(row, 0)->setBackgroundColor(Qt::white);
+		}
+		if ((*targetConf)->isChangedValue()) {
+			lstDetail_->item(row, 1)->setBackgroundColor("#FFC0C0");
+		} else {
 			lstDetail_->item(row, 1)->setBackgroundColor(Qt::white);
 		}
 	}

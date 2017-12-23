@@ -17,18 +17,26 @@ using namespace RTC;
 
 namespace cnoid {
 class RTSConfigurationView;
+class ConfigurationParam;
 
 enum ParamMode {
 	MODE_NORMAL = 1,
+	MODE_UPDATE,
 	MODE_DELETE,
 	MODE_INSERT,
 	MODE_IGNORE
 };
 
+typedef std::shared_ptr<ConfigurationParam> ConfigurationParamPtr;
+
 class ConfigurationParam {
 public:
 	ConfigurationParam(int id, QString name, QString value)
 		: id_(id), name_(name), nameOrg_(name), value_(value), valueOrg_(value), mode_(MODE_NORMAL){
+	}
+	ConfigurationParam(const ConfigurationParamPtr source)
+		: id_(source->id_), name_(source->name_), nameOrg_(source->nameOrg_),
+		  value_(source->value_), valueOrg_(source->valueOrg_), mode_(MODE_NORMAL) {
 	}
 
 	inline ParamMode getMode() const { return this->mode_; }
@@ -42,13 +50,27 @@ public:
 	inline QString getValue() const { return this->value_; }
 	inline void setValue(QString value) { this->value_ = value; }
 
-	inline bool isChanged() {
-		if (name_ != nameOrg_ || value_ != valueOrg_) return true;
+	inline bool isChangedName() {
+		if (name_ != nameOrg_ || mode_== ParamMode::MODE_INSERT) return true;
+		return false;
+	}
+	inline bool isChangedValue() {
+		if (value_ != valueOrg_ || mode_ == ParamMode::MODE_INSERT) return true;
 		return false;
 	}
 
 	inline void setDelete() {
-		mode_ = MODE_DELETE;
+		if (mode_ == ParamMode::MODE_NORMAL || mode_ == ParamMode::MODE_UPDATE) {
+			mode_ = ParamMode::MODE_DELETE;
+
+		} else if (mode_ == ParamMode::MODE_INSERT) {
+			mode_ = ParamMode::MODE_IGNORE;
+		}
+	}
+	inline void setNew() {
+		if (this->mode_ == ParamMode::MODE_NORMAL) {
+			this->mode_ = ParamMode::MODE_INSERT;
+		}
 	}
 
 private:
@@ -59,12 +81,11 @@ private:
 	QString nameOrg_;
 	QString valueOrg_;
 };
-typedef std::shared_ptr<ConfigurationParam> ConfigurationParamPtr;
 
 class ConfigurationSetParam {
 public:
 	ConfigurationSetParam(int id, QString name)
-		: id_(id), name_(name), nameOrg_(name), active_(false) {
+		: id_(id), name_(name), nameOrg_(name), active_(false), mode_(MODE_NORMAL) {
 	}
 
 	inline int getId() const { return this->id_; }
@@ -74,6 +95,20 @@ public:
 	inline void setName(QString value) { this->name_ = value; }
 
 	inline QString getNameOrg() const { return this->nameOrg_; }
+
+	inline void setDelete() {
+		if (mode_ == ParamMode::MODE_NORMAL || mode_ == ParamMode::MODE_UPDATE) {
+			mode_ = ParamMode::MODE_DELETE;
+
+		} else if (mode_ == ParamMode::MODE_INSERT) {
+			mode_ = ParamMode::MODE_IGNORE;
+		}
+	}
+	inline void setNew() {
+		if (this->mode_ == ParamMode::MODE_NORMAL) {
+			this->mode_ = ParamMode::MODE_INSERT;
+		}
+	}
 
 	inline bool getActive() const { return this->active_; }
 	inline void setActive(bool value) {
@@ -86,31 +121,37 @@ public:
 	inline int getRowCount() const { return this->rowCount_; }
 	inline void setRowCount(int value) { this->rowCount_ = value; }
 
-	inline bool getChanged() const { return this->isChanged_; }
-	inline void setChanged(bool value) { this->isChanged_ = value; }
+	inline int getMode() const { return this->mode_; }
+	inline void setChanged() {
+		if (mode_ == ParamMode::MODE_NORMAL) {
+			mode_ = ParamMode::MODE_UPDATE;
+		}
+	}
 
 	inline std::vector<ConfigurationParamPtr> getConfigurationList() const { return this->configurationList_; }
 	inline void addConfiguration(ConfigurationParamPtr target) { this->configurationList_.push_back(target); }
 
 	inline void updateActive() {
-		active_ = radioActive_->isChecked();
+		if (radioActive_) {
+			active_ = radioActive_->isChecked();
+		}
 	}
 	inline bool isChangedActive() {
 		if (active_ != activeOrg_) return true;
 		return false;
 	}
 	inline bool isChangedName() {
-		if (name_ != nameOrg_) return true;
+		if (name_ != nameOrg_ || mode_ == ParamMode::MODE_INSERT) return true;
 		return false;
 	}
 
 private:
 	int id_;
+	ParamMode mode_;
 	QString name_;
 	QString nameOrg_;
 	bool active_;
 	bool activeOrg_;
-	bool isChanged_;
 
 	QRadioButton* radioActive_;
 	int rowCount_;
@@ -140,8 +181,15 @@ public:
 private Q_SLOTS:
 	void configSetSelectionChanged();
 	void activeSetChanged();
+	void setCopyClicked();
+	void setAddClicked();
+	void setDeleteClicked();
 	void setDetailClicked();
+
+	void addClicked();
+	void deleteClicked();
 	void detailClicked();
+
 	void applyClicked();
 	void cancelClicked();
 

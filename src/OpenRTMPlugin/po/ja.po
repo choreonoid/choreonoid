@@ -566,13 +566,25 @@ msgstr "キャンセル"
 msgid "Configuration"
 msgstr "RTCコンフィギュレーション"
 
-#: RTSNameServiceView.cpp:99
-msgid "Show IOR"
-msgstr "IOR 表示"
-
 #: RTSConfigurationView.cpp:93
 msgid "Detail"
 msgstr "詳細表示"
+
+#: RTSConfigurationView.cpp:94
+msgid "Copy"
+msgstr "複製"
+
+#: RTSConfigurationView.cpp:95
+msgid "Add"
+msgstr "追加"
+
+#: RTSConfigurationView.cpp:96
+msgid "Delete"
+msgstr "削除"
+
+#: RTSNameServiceView.cpp:99
+msgid "Show IOR"
+msgstr "IOR 表示"
 
 #: RTSNameServiceView.cpp:121
 msgid "Delete from View"

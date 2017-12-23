@@ -33,6 +33,10 @@ if(OPENRTM_DIR)
       set(OPENRTM_DIR ${OPENRTM_DIR_BACK})
       set(OPENRTM_LIBRARY_DIRS ${OPENRTM_DIR}/bin)
     endif()
+    set(OPENRTM_EXT_LIBRARIES 
+      optimized rtmCamera112_$ENV{RTM_VC_VERSION}_x64 debug rtmCamera112_$ENV{RTM_VC_VERSION}_x64d
+    )
+    set(OPENRTM_LIBRARIES ${OPENRTM_LIBRARIES} ${OPENRTM_EXT_LIBRARIES})
     if(NOT (EXISTS "${OPENRTM_DIR}/rtm/RTObjectStateMachine.h"))
       set(OPENRTM_DEFINITIONS -DOPENRTM_VERSION110)
     else()
@@ -119,9 +123,9 @@ set(IDL_INCLUDE_DIRS
   ${OPENRTM_PREFIX}/include/openrtm-1.1/rtm/idl
   ${OPENRTM_PREFIX}/rtm/idl # for the Windows installer version
   )
-idl_compile_cpp(idl_cpp_files idl_h_files corba CameraCommonInterface PointCloud)
-add_cnoid_library(${target1} STATIC ${idl_cpp_files} ${idl_h_files})
-apply_common_setting_for_library(${target1} "")
+#idl_compile_cpp(idl_cpp_files idl_h_files corba CameraCommonInterface PointCloud)
+#add_cnoid_library(${target1} STATIC ${idl_cpp_files} ${idl_h_files})
+#apply_common_setting_for_library(${target1} "")
 
 
 # BodyIoRTC
