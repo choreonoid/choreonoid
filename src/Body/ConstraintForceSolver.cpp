@@ -257,7 +257,6 @@ public:
     typedef std::shared_ptr<Constrain2dLinkPair> Constrain2dLinkPairPtr;
     vector<Constrain2dLinkPairPtr> constrain2dLinkPairs;
         
-
     std::vector<LinkPair*> constrainedLinkPairs;
 
     int globalNumConstraintVectors;
@@ -629,6 +628,7 @@ void CFSImpl::initialize(void)
     }
     bodyIndexMap.clear();
     geometryPairToLinkPairMap.clear();
+    constrainedLinkPairs.clear();
 
     initializeContactMaterials();
     
