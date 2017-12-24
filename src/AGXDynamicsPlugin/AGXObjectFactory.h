@@ -434,6 +434,7 @@ public:
     static agxVehicle::TrackRef createVehicleTrack(const AGXVehicleTrackDesc& desc);
     static agxWire::WireRef createWire(const AGXWireDesc& desc);
     static agxWire::FreeNodeRef createWireFreeNode(const agx::Vec3& pos);
+    static agxWire::BodyFixedNodeRef createWireBodyFixedNode(agx::RigidBody* rigid, const agx::Vec3& pos);
     static agxWire::WireWinchControllerRef createWinchController(const AGXWireWinchControllerDesc& desc);
     static agxCollide::ConvexBuilderRef createConvexBuilder();
 };
