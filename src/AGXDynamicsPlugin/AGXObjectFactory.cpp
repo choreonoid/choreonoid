@@ -384,6 +384,11 @@ agxWire::WireWinchControllerRef AGXObjectFactory::createWinchController(const AG
     return new agxWire::WireWinchController(desc.rigidBody, desc.positionInBodyFrame, desc.normalInBodyFrame, desc.pulledInLength);
 }
 
+agxWire::LinkRef AGXObjectFactory::createWireLink(agx::RigidBody* rigid)
+{
+    return new agxWire::Link(rigid);
+}
+
 agxCollide::ConvexBuilderRef AGXObjectFactory::createConvexBuilder()
 {
     return new agxCollide::ConvexBuilder();

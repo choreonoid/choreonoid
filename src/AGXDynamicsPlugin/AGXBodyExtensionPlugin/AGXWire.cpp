@@ -321,7 +321,7 @@ AGXWire::AGXWire(AGXWireDevice* device, AGXBody* agxBody) :
     NODE_READ(radius);
     m_device->setWireRadius(wireDesc.radius);
     NODE_READ(resolutionPerUnitLength);
-    NODE_READ(enableCollisions);
+    wireDeviceInfo.read("collision", wireDesc.enableCollisions);
     m_wire = AGXObjectFactory::createWire(wireDesc);
 
     {   // set Material
@@ -409,12 +409,29 @@ AGXWire::AGXWire(AGXWireDevice* device, AGXBody* agxBody) :
                     // set in world coord
                     m_wire->add(AGXObjectFactory::createWireBodyFixedNode(body, transformToWorld()));
                 }
+            }else if(nodeType == "link"){
+                agx::RigidBody* wireLinkBody = getAGXBody()->getAGXRigidBody(linkName);
+                agxWire::LinkRef wireLink = AGXObjectFactory::createWireLink(wireLinkBody);
+                // set in link coord
+                m_wire->add(wireLink, agxConvert::toAGX(pos));
+                agxWire::ILinkNodeRef iLinkNode = wireLink->getConnectingNode(m_wire);
+                if(iLinkNode){
+                    auto getILinkNodeValue = [&](string key, auto defaultValue){
+                        return wireNodeInfo.get(key, defaultValue);
+                    };
+                    agxWire::ILinkNode::ConnectionProperties* cp = iLinkNode->getConnectionProperties();
+                    cp->setTwistStiffness(getILinkNodeValue("twistStiffness", cp->getTwistStiffness()));
+                    cp->setBendStiffness(getILinkNodeValue("bendStiffness", cp->getBendStiffness()));
+                    iLinkNode->setSuperBendReplacedWithBend(getILinkNodeValue("superBendReplacedWithBend", iLinkNode->getSuperBendReplacedWithBend()));
+                    m_wire->setEnableCollisions(wireLinkBody, false);
+                }
             }
         }
     }
 
     // add wire to simulation
     sim->add((agxSDK::StepEventListener*)m_wire);
+    agxWire::WireController::instance()->setEnableCollisions(m_wire, m_wire, wireDeviceInfo.get("selfCollision", false));
 
     // Rendering
     sim->add(new WireListener(this));

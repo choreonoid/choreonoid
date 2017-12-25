@@ -436,6 +436,7 @@ public:
     static agxWire::FreeNodeRef createWireFreeNode(const agx::Vec3& pos);
     static agxWire::BodyFixedNodeRef createWireBodyFixedNode(agx::RigidBody* rigid, const agx::Vec3& pos);
     static agxWire::WireWinchControllerRef createWinchController(const AGXWireWinchControllerDesc& desc);
+    static agxWire::LinkRef createWireLink(agx::RigidBody* rigid);
     static agxCollide::ConvexBuilderRef createConvexBuilder();
 };
 
