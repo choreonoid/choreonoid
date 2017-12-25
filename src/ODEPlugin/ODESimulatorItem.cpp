@@ -30,7 +30,6 @@
 #include <iostream>
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 
 namespace {
@@ -344,7 +343,8 @@ void ODELink::createGeometry(ODEBody* odeBody)
 {
     if(link->collisionShape()){
         MeshExtractor* extractor = new MeshExtractor;
-        if(extractor->extract(link->collisionShape(), std::bind(&ODELink::addMesh, this, extractor, odeBody))){
+        if(extractor->extract(
+               link->collisionShape(), [&](){ addMesh(extractor, odeBody); })){
             if(!vertices.empty()){
                 triMeshDataID = dGeomTriMeshDataCreate();
                 dGeomTriMeshDataBuildSingle(triMeshDataID,
@@ -1391,7 +1391,7 @@ void ODESimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
         (_("Global ERP"), globalERP, changeProperty(globalERP));
 
     putProperty(_("Global CFM"), globalCFM,
-                std::bind(&FloatingNumberString::setNonNegativeValue, std::ref(globalCFM), _1));
+                [&](const string& value){ return globalCFM.setNonNegativeValue(value); });
 
     putProperty.min(1)
         (_("Iterations"), numIterations, changeProperty(numIterations));
@@ -1402,7 +1402,7 @@ void ODESimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("Limit correcting vel."), enableMaxCorrectingVel, changeProperty(enableMaxCorrectingVel));
 
     putProperty(_("Max correcting vel."), maxCorrectingVel,
-                std::bind(&FloatingNumberString::setNonNegativeValue, std::ref(maxCorrectingVel), _1));
+                [&](const string& value){ return maxCorrectingVel.setNonNegativeValue(value); });
 
     putProperty(_("2D mode"), is2Dmode, changeProperty(is2Dmode));
 
