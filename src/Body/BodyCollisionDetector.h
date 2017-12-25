@@ -26,9 +26,12 @@ public:
 
     void clearBodies();
     void addBody(Body* body, bool isSelfCollisionDetectionEnabled);
+    void addBody(Body* body, bool isSelfCollisionDetectionEnabled,
+                 std::function<Referenced*(Link* link)> getObjectAssociatedWithLink);
     bool makeReady();
 
     void updatePositions();
+    void updatePositions(std::function<void(Referenced* object, Position*& out_Position)> positionQuery);
     void detectCollisions(std::function<void(const CollisionPair& collisionPair)> callback);
 
     bool isFindClosestPointsAvailable() const;

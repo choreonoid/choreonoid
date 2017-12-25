@@ -46,6 +46,9 @@ public:
     virtual void clearGeometries() = 0;
     virtual int numGeometries() const = 0;
 
+    /**
+       \return Geometry ID
+    */
     virtual int addGeometry(SgNode* geometry, Referenced* object);
 
     virtual void setGeometryStatic(int geometryId, bool isStatic = true) = 0;
@@ -54,7 +57,8 @@ public:
     virtual bool makeReady() = 0;
     
     virtual void updatePosition(int geometryId, const Position& position) = 0;
-    virtual void updatePositions(std::function<void(Referenced* object, Position*& out_Position)> positionQuery);
+    virtual void updatePositions(
+        std::function<void(Referenced* object, Position*& out_Position)> positionQuery);
 
     virtual void detectCollisions(std::function<void(const CollisionPair& collisionPair)> callback) = 0;
 

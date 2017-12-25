@@ -51,6 +51,7 @@ class BodyCollisionDetectorImpl
 public:
     CollisionDetectorPtr collisionDetector;
     unordered_map<LinkPtr, GeometryIdSet> linkToGeometryIdSetMap;
+    std::function<Referenced*(Link* link)> funcToGetObjectAssociatedWithLink;
 
     BodyCollisionDetectorImpl();
     void addBody(Body* body, bool isSelfCollisionEnabled);
@@ -88,7 +89,7 @@ BodyCollisionDetector::~BodyCollisionDetector()
 void BodyCollisionDetector::setCollisionDetector(CollisionDetector* collisionDetector)
 {
     impl->collisionDetector = collisionDetector;
-    impl->linkToGeometryIdSetMap.clear();
+    clearBodies();
 }
 
 
@@ -101,12 +102,24 @@ CollisionDetector* BodyCollisionDetector::collisionDetector()
 void BodyCollisionDetector::clearBodies()
 {
     impl->linkToGeometryIdSetMap.clear();
-    impl->collisionDetector->clearGeometries();
+    if(impl->collisionDetector){
+        impl->collisionDetector->clearGeometries();
+    }
 }
 
 
 void BodyCollisionDetector::addBody(Body* body, bool isSelfCollisionDetectionEnabled)
 {
+    impl->funcToGetObjectAssociatedWithLink = nullptr;
+    impl->addBody(body, isSelfCollisionDetectionEnabled);
+}
+
+
+void BodyCollisionDetector::addBody
+(Body* body, bool isSelfCollisionDetectionEnabled,
+ std::function<Referenced*(Link* link)> getObjectAssociatedWithLink)
+{
+    impl->funcToGetObjectAssociatedWithLink = getObjectAssociatedWithLink;
     impl->addBody(body, isSelfCollisionDetectionEnabled);
 }
 
@@ -177,7 +190,13 @@ void BodyCollisionDetectorImpl::addLinkRecursively
     bool isStatic = isParentStatic && link->isFixedJoint();
 
     if(!exclusions[link->index()]){
-        GeometryIdSet idSet = collisionDetector->addGeometry(link->collisionShape(), link);
+        Referenced* object;
+        if(funcToGetObjectAssociatedWithLink){
+            object = funcToGetObjectAssociatedWithLink(link);
+        } else {
+            object = link;
+        }
+        GeometryIdSet idSet = collisionDetector->addGeometry(link->collisionShape(), object);
 
         linkToGeometryIdSetMap[link] = idSet;
         linkIndexToGeometryIdSetMap[link->index()] = idSet;
@@ -275,9 +294,14 @@ void BodyCollisionDetector::updatePositions()
 {
     impl->collisionDetector->updatePositions(
         [](Referenced* object, Position*& out_Position){
-            Link* link = static_cast<Link*>(object);
-            out_Position = &link->position();
-        });
+            out_Position = &(static_cast<Link*>(object)->position()); });
+}
+
+
+void BodyCollisionDetector::updatePositions
+(std::function<void(Referenced* object, Position*& out_Position)> positionQuery)
+{
+    impl->collisionDetector->updatePositions(positionQuery);
 }
 
 

@@ -16,7 +16,7 @@
 #include <cnoid/Sensor>
 #include <cnoid/BasicSensorSimulationHelper>
 #include <cnoid/BodyItem>
-#include <cnoid/BodyCollisionDetectorUtil>
+#include <cnoid/BodyCollisionDetector>
 #include <QElapsedTimer>
 #include "gettext.h"
 
@@ -109,7 +109,6 @@ public:
     dSpaceID spaceID;
     vector<dJointFeedback> forceSensorFeedbacks;
     BasicSensorSimulationHelper sensorHelper;
-    int geometryId;
         
     ODEBody(const Body& orgBody);
     ~ODEBody();
@@ -121,6 +120,7 @@ public:
     void updateForceSensors(bool flipYZ);
     void alignToZAxisIn2Dmode();
 };
+
 }
 
 
@@ -139,7 +139,6 @@ public:
     dJointGroupID contactJointGroupID;
     double timeStep;
     CrawlerLinkMap crawlerLinks;
-    vector<ODELink*> geometryIdToLink;
 
     Selection stepMode;
     Vector3 gravity;
@@ -154,7 +153,7 @@ public:
     FloatingNumberString maxCorrectingVel;
     double surfaceLayerDepth;
     bool useWorldCollisionDetector;
-    CollisionDetectorPtr collisionDetector;
+    BodyCollisionDetector bodyCollisionDetector;
 
     double physicsTime;
     QElapsedTimer physicsTimer;
@@ -172,7 +171,7 @@ public:
     void doPutProperties(PutPropertyFunction& putProperty);
     void store(Archive& archive);
     void restore(const Archive& archive);
-    void collisionCallback(const CollisionPair& collisionPair);
+    void onCollisionPairDetected(const CollisionPair& collisionPair);
 };
 }
 
@@ -628,11 +627,11 @@ void ODELink::setVelocityToODE()
 {
     if(link->isRotationalJoint()){
     	dReal v = link->dq();
-    	if(!USE_AMOTOR)
+    	if(!USE_AMOTOR){
     		dJointSetHingeParam(jointID, dParamVel, v);
-    	else
+        } else {
     		dJointSetAMotorParam(motorID, dParamVel, v);
-
+        }
     } else if(link->isSlideJoint()){
     	dReal v = link->dq();
     	dJointSetSliderParam(jointID, dParamVel, v);
@@ -645,7 +644,6 @@ ODEBody::ODEBody(const Body& orgBody)
 {
     worldID = 0;
     spaceID = 0;
-    geometryId = 0;
 }
 
 
@@ -662,10 +660,8 @@ void ODEBody::createBody(ODESimulatorItemImpl* simImpl)
     Body* body = this->body();
     
     worldID = body->isStaticModel() ? 0 : simImpl->worldID;
-    if(simImpl->useWorldCollisionDetector){
-        geometryId = addBodyToCollisionDetector(*body, *simImpl->collisionDetector, 
-                                                bodyItem()->isSelfCollisionDetectionEnabled());
-    }else{
+
+    if(!simImpl->useWorldCollisionDetector){
         spaceID = dHashSpaceCreate(simImpl->spaceID);
         dSpaceSetCleanup(spaceID, 0);
     }
@@ -675,15 +671,9 @@ void ODEBody::createBody(ODESimulatorItemImpl* simImpl)
     setKinematicStateToODE(simImpl->flipYZ);
 
     if(simImpl->useWorldCollisionDetector){
-        int size = simImpl->geometryIdToLink.size();
-        int numLinks = odeLinks.size();
-        simImpl->geometryIdToLink.resize(geometryId+numLinks);
-        for(int i=0; i < numLinks; i++){
-            ODELink* odeLink = odeLinks[i].get();
-            int index = odeLink->link->index();
-            simImpl->geometryIdToLink[geometryId+index] = odeLink;
-            simImpl->collisionDetector->updatePosition(geometryId+index, odeLink->link->T());
-        }
+        simImpl->bodyCollisionDetector.addBody(
+            body, bodyItem()->isSelfCollisionDetectionEnabled(),
+            [&](Link* link){ return odeLinks[link->index()]; });
     }
 
     setExtraJoints(simImpl->flipYZ);
@@ -1056,7 +1046,6 @@ void ODESimulatorItemImpl::clear()
     }
 
     crawlerLinks.clear();
-    geometryIdToLink.clear();
 }    
 
 
@@ -1092,8 +1081,7 @@ bool ODESimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody
 
     worldID = dWorldCreate();
     if(useWorldCollisionDetector){
-        collisionDetector = self->getOrCreateCollisionDetector();
-        collisionDetector->clearGeometries();
+        bodyCollisionDetector.setCollisionDetector(self->getOrCreateCollisionDetector());
     } else {
         spaceID = dHashSpaceCreate(0);
         dSpaceSetCleanup(spaceID, 0);
@@ -1115,7 +1103,7 @@ bool ODESimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody
         addBody(static_cast<ODEBody*>(simBodies[i]));
     }
     if(useWorldCollisionDetector){
-        collisionDetector->makeReady();
+        bodyCollisionDetector.makeReady();
     }
 
     if(MEASURE_PHYSICS_CALCULATION_TIME){
@@ -1255,16 +1243,16 @@ bool ODESimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& ac
 	}
 
     dJointGroupEmpty(contactJointGroupID);
+
     if(useWorldCollisionDetector){
-        for(size_t i=0; i < activeSimBodies.size(); ++i){
-            ODEBody* odeBody = static_cast<ODEBody*>(activeSimBodies[i]);
-            for(size_t j=0; j< odeBody->odeLinks.size(); j++){
-                int k = odeBody->geometryId+j;
-                collisionDetector->updatePosition( k, geometryIdToLink[k]->link->T());
-            }
-        }
-        collisionDetector->detectCollisions(std::bind(&ODESimulatorItemImpl::collisionCallback, this, _1));
-    }else{
+        bodyCollisionDetector.updatePositions(
+            [&](Referenced* object, Position*& out_Position){
+                out_Position = &(static_cast<ODELink*>(object)->link->position()); });
+        
+        bodyCollisionDetector.detectCollisions(
+            [&](const CollisionPair& collisionPair){ onCollisionPairDetected(collisionPair); });
+        
+    } else {
         if(MEASURE_PHYSICS_CALCULATION_TIME){
             collisionTimer.start();
         }
@@ -1307,10 +1295,10 @@ bool ODESimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& ac
 }
 
 
-void ODESimulatorItemImpl::collisionCallback(const CollisionPair& collisionPair)
+void ODESimulatorItemImpl::onCollisionPairDetected(const CollisionPair& collisionPair)
 {
-    ODELink* link1 = geometryIdToLink[collisionPair.geometryId[0]];
-    ODELink* link2 = geometryIdToLink[collisionPair.geometryId[1]];
+    ODELink* link1 = static_cast<ODELink*>(collisionPair.objects[0]);
+    ODELink* link2 = static_cast<ODELink*>(collisionPair.objects[1]);
     const vector<Collision>& collisions = collisionPair.collisions;
 
     dBodyID body1ID = link1->bodyID;
