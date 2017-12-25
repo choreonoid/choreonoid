@@ -39,10 +39,6 @@ public:
     */
     virtual CollisionDetector* clone() const = 0;
         
-    virtual bool enableGeometryCache(bool on) = 0;
-    virtual void clearGeometryCache(SgNode* geometry) = 0;
-    virtual void clearAllGeometryCaches() = 0;
-
     virtual void clearGeometries() = 0;
     virtual int numGeometries() const = 0;
 
@@ -71,6 +67,13 @@ public:
       \note If this function is overriden, int addToometry(SgNode* geomety, Referenced* object) must not be overriden.
     */
     virtual int addGeometry(SgNode* geometry);
+
+    //! \deprecated
+    virtual bool enableGeometryCache(bool on);
+    //! \deprecated
+    virtual void clearGeometryCache(SgNode* geometry);
+    //! \deprecated
+    virtual void clearAllGeometryCaches();
 };
 
 typedef ref_ptr<CollisionDetector> CollisionDetectorPtr;

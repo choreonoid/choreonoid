@@ -49,15 +49,6 @@ public:
         return new NullCollisionDetector;
     }
 
-    virtual bool enableGeometryCache(bool) override
-    {
-        return true;
-    }
-
-    virtual void clearGeometryCache(SgNode*) override { }
-
-    virtual void clearAllGeometryCaches() override { }
-    
     virtual void clearGeometries() override
     {
         numGeometries_ = 0;
@@ -184,4 +175,22 @@ bool CollisionDetector::isFindClosestPointsAvailable() const
 double CollisionDetector::findClosestPoints(int geometryId1, int geometryId2, Vector3& out_point1, Vector3& out_point2)
 {
     return -1.0;
+}
+
+
+bool CollisionDetector::enableGeometryCache(bool)
+{
+    return false;
+}
+
+
+void CollisionDetector::clearGeometryCache(SgNode*)
+{
+
+}
+
+
+void CollisionDetector::clearAllGeometryCaches()
+{
+
 }

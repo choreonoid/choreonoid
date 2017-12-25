@@ -10,7 +10,6 @@
 #include <cnoid/MeshExtractor>
 #include <cnoid/ThreadPool>
 #include <random>
-#include <algorithm>
 #include <unordered_map>
 
 using namespace std;
@@ -34,16 +33,18 @@ struct FactoryRegistration
 } factoryRegistration;
 
 
-struct ColdetModelEx : public ColdetModel
+class ColdetModelEx : public ColdetModel
 {
+public:
     ReferencedPtr object;
     int geometryId;
     bool isStatic;
+    
     ColdetModelEx(Referenced* object, int geometryId)
         : object(object), geometryId(geometryId), isStatic(false) { }
 };
 typedef ref_ptr<ColdetModelEx> ColdetModelExPtr;
-        
+
 
 struct ColdetModelPairEx : public ColdetModelPair
 {
@@ -56,9 +57,6 @@ struct ColdetModelPairEx : public ColdetModelPair
 };
 typedef ref_ptr<ColdetModelPairEx> ColdetModelPairExPtr;
 
-
-typedef unordered_map<weak_ref_ptr<SgNode>, ColdetModelExPtr>  ModelMap;
-//ModelMap modelCache;
 
 bool copyCollisionPairCollisions(ColdetModelPairEx* srcPair, CollisionPair& destPair, bool doReserve = false)
 {
@@ -269,24 +267,6 @@ void AISTCollisionDetector::setGeometryStatic(int geometryId, bool isStatic)
     if(model){
         model->isStatic = isStatic;
     }
-}
-
-
-bool AISTCollisionDetector::enableGeometryCache(bool)
-{
-    return false;
-}
-
-
-void AISTCollisionDetector::clearGeometryCache(SgNode* geometry)
-{
-    //modelCache.erase(weak_ref_ptr<SgNode>(geometry));
-}
-
-
-void AISTCollisionDetector::clearAllGeometryCaches()
-{
-    //modelCache.clear();
 }
 
 
