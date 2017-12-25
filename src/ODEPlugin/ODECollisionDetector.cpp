@@ -323,24 +323,6 @@ void ODECollisionDetector::setGeometryStatic(int geometryId, bool isStatic)
 }
 
 
-bool ODECollisionDetector::enableGeometryCache(bool on)
-{
-    return false;
-}
-
-
-void ODECollisionDetector::clearGeometryCache(SgNode* geometry)
-{
-    
-}
-
-
-void ODECollisionDetector::clearAllGeometryCaches()
-{
-
-}
-
-
 void ODECollisionDetector::setNonInterfarenceGeometyrPair(int geometryId1, int geometryId2)
 {
     impl->setNonInterfarenceGeometyrPair(geometryId1, geometryId2);
