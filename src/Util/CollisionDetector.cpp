@@ -68,7 +68,7 @@ public:
         return numGeometries_;
     }
 
-    virtual int addGeometry(SgNode*) override
+    virtual int addGeometry(SgNode*, Referenced*) override
     {
         const int id = numGeometries_++;
         return id;
@@ -85,7 +85,7 @@ public:
 
     virtual void updatePosition(int /* geometryId */, const Position& /* position */) override { }
 
-    virtual void detectCollisions(std::function<void(const CollisionPair&)> /* callback */) override { }
+    virtual void detectCollisions(std::function<void(const CollisionPair& collisionPair)> /* callback */) override { }
 };
 
 CollisionDetector* factory()
@@ -152,6 +152,24 @@ CollisionDetector* CollisionDetector::create(int factoryIndex)
 
 
 CollisionDetector::~CollisionDetector()
+{
+
+}
+
+
+int CollisionDetector::addGeometry(SgNode* geometry, Referenced* object)
+{
+    return addGeometry(geometry);
+}
+
+
+int CollisionDetector::addGeometry(SgNode* geometry)
+{
+    return addGeometry(geometry, 0);
+}
+
+
+void CollisionDetector::updatePositions(std::function<void(Referenced* object, Position*& out_Position)> positionQuery)
 {
 
 }

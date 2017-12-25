@@ -22,7 +22,7 @@ public:
     virtual CollisionDetector* clone() const override;
     virtual void clearGeometries() override;
     virtual int numGeometries() const override;
-    virtual int addGeometry(SgNode* geometry) override;
+    virtual int addGeometry(SgNode* geometry, Referenced* object) override;
     virtual void setGeometryStatic(int geometryId, bool isStatic = true) override;
     virtual bool enableGeometryCache(bool on) override;
     virtual void clearGeometryCache(SgNode* geometry) override;
@@ -30,7 +30,8 @@ public:
     virtual void setNonInterfarenceGeometyrPair(int geometryId1, int geometryId2) override;
     virtual bool makeReady() override;
     virtual void updatePosition(int geometryId, const Position& position) override;
-    virtual void detectCollisions(std::function<void(const CollisionPair&)> callback) override;
+    virtual void updatePositions(std::function<void(Referenced* object, Position*& out_Position)> positionQuery) override;
+    virtual void detectCollisions(std::function<void(const CollisionPair& collisionPair)> callback) override;
 
     virtual bool isFindClosestPointsAvailable() const override;
     virtual double findClosestPoints(int geometryId1, int geometryId2, Vector3& out_point1, Vector3& out_point2);

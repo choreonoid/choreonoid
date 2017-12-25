@@ -1,6 +1,6 @@
 
-#ifndef CNOID_COLLISION_COLLISION_DATA_H_INCLUDED
-#define CNOID_COLLISION_COLLISION_DATA_H_INCLUDED
+#ifndef CNOID_AIST_COLLISION_DETECTOR_COLLISION_DATA_H
+#define CNOID_AIST_COLLISION_DETECTOR_COLLISION_DATA_H
 
 #include <cnoid/EigenTypes>
 #include "exportdecl.h"
@@ -30,6 +30,7 @@ public:
     Vector3 m; // normal vector of triangle id2
     int c_type; // c_type=1 for vertex-face contact, c_type=2 for edge-edge contact
 };
+
 }
     
 #endif
