@@ -9,6 +9,7 @@
 #include <cnoid/SceneDrawables>
 #include <cnoid/MeshExtractor>
 #include <cnoid/ThreadPool>
+#include <boost/optional.hpp>
 #include <random>
 #include <unordered_map>
 
@@ -17,7 +18,6 @@ using namespace cnoid;
 
 namespace {
 
-const bool MULTITHREAD_TYPE = 0;
 const bool ENABLE_SHUFFLE = false;
 
 CollisionDetector* factory()
@@ -32,6 +32,8 @@ struct FactoryRegistration
     }
 } factoryRegistration;
 
+class ColdetModelEx;
+typedef ref_ptr<ColdetModelEx> ColdetModelExPtr;
 
 class ColdetModelEx : public ColdetModel
 {
@@ -39,37 +41,56 @@ public:
     ReferencedPtr object;
     int geometryId;
     bool isStatic;
+    boost::optional<Position> localPosition;
+    ColdetModelExPtr sibling;
     
     ColdetModelEx(Referenced* object, int geometryId)
         : object(object), geometryId(geometryId), isStatic(false) { }
 };
-typedef ref_ptr<ColdetModelEx> ColdetModelExPtr;
 
+class ColdetModelPairEx;
+typedef ref_ptr<ColdetModelPairEx> ColdetModelPairExPtr;
 
-struct ColdetModelPairEx : public ColdetModelPair
+class ColdetModelPairEx : public ColdetModelPair
 {
+    ColdetModelPairEx(){ }
+    
+public:
     ColdetModelPairEx(ColdetModelEx* model1, ColdetModelEx* model2)
-        : ColdetModelPair(model1, model2) { }
+        : ColdetModelPair(model1, model2)
+    {
+        ColdetModelPairEx* last = this;
+        for(auto sibling1 = model1->sibling; sibling1; sibling1 = sibling1->sibling){
+            for(auto sibling2 = model2->sibling; sibling2; sibling2 = sibling2->sibling){
+                last->sibling = new ColdetModelPairEx;
+                last->sibling->set(sibling1, sibling2);
+                last = last->sibling->sibling;
+            }
+        }
+    }
 
     ColdetModelEx* model(int which) {
         return static_cast<ColdetModelEx*>(ColdetModelPair::model(which));
     }
+
+    ColdetModelPairExPtr sibling;
 };
-typedef ref_ptr<ColdetModelPairEx> ColdetModelPairExPtr;
 
 
 bool copyCollisionPairCollisions(ColdetModelPairEx* srcPair, CollisionPair& destPair, bool doReserve = false)
 {
-    for(int i=0; i < 2; ++i){
-        auto model = srcPair->model(i);
-        destPair.objects[i] = model->object;
-        destPair.geometryId[i] = model->geometryId;
+    vector<Collision>& collisions = destPair.collisions;
+
+    if(collisions.empty()){
+        for(int i=0; i < 2; ++i){
+            auto model = srcPair->model(i);
+            destPair.objects[i] = model->object;
+            destPair.geometryId[i] = model->geometryId;
+        }
     }
 
     bool hasCollisions = false;
     const std::vector<collision_data>& cdata = srcPair->collisions();
-    vector<Collision>& collisions = destPair.collisions;
-    collisions.clear();
     const int n = cdata.size();
 
     if(doReserve){
@@ -102,20 +123,11 @@ class AISTCollisionDetectorImpl
 {
 public:
     vector<ColdetModelExPtr> models;
-
     vector<ColdetModelPairExPtr> modelPairs;
-
     int maxNumThreads;
-    int numThreads;
-    std::unique_ptr<ThreadPool> threadPool;
-
-    vector<int> shuffledPairIndices;
-
     unordered_map<IdPair<>, int> modelPairIdMap;
-
     typedef set<IdPair<>> IdPairSet;
     IdPairSet nonInterfarencePairs;
-
     MeshExtractor* meshExtractor;
         
     AISTCollisionDetectorImpl();
@@ -126,20 +138,15 @@ public:
     void detectCollisions(std::function<void(const CollisionPair&)> callback);
     void detectCollisionsInParallel(std::function<void(const CollisionPair&)> callback);
 
-    // for multithread type 0
-    typedef vector<CollisionPair> CollisionPairArray;
-    vector<CollisionPairArray> collisionPairArrays;
-
-    void extractCollisionsOfAssignedPairs(
-        int pairIndexBegin, int pairIndexEnd, CollisionPairArray& collisionPairs);    
-    void dispatchCollisionsInCollisionPairArrays(std::function<void(const CollisionPair&)> callback);    
+    // for multithread version
+    int numThreads;
+    std::unique_ptr<ThreadPool> threadPool;
+    vector<int> shuffledPairIndices;
+    vector<vector<CollisionPair>> collisionPairArrays;
     
-    // for multithread type 1
-    vector<vector<ColdetModelPairEx*>> collidingModelPairArrays;
-
-    void checkCollisionsOfAssignedPairs(
-        int pairIndexBegin, int pairIndexEnd, vector<ColdetModelPairEx*>& collidingModelPairs);
-    void dispatchCollisionsInCollidingModelPairs(std::function<void(const CollisionPair&)> callback);    
+    void extractCollisionsOfAssignedPairs(
+        int pairIndexBegin, int pairIndexEnd, vector<CollisionPair>& collisionPairs);    
+    void dispatchCollisionsInCollisionPairArrays(std::function<void(const CollisionPair&)> callback);    
 };
 
 }
@@ -313,7 +320,6 @@ bool AISTCollisionDetectorImpl::makeReady()
         numThreads = 0;
         threadPool.reset();
         collisionPairArrays.clear();
-        collidingModelPairArrays.clear();
 
     } else {
         numThreads = (maxNumThreads > numPairs) ? numPairs : maxNumThreads;
@@ -324,11 +330,7 @@ bool AISTCollisionDetectorImpl::makeReady()
                 shuffledPairIndices[i] = i;
             }
         }
-        if(MULTITHREAD_TYPE == 0){
-            collisionPairArrays.resize(numThreads);
-        } else {
-            collidingModelPairArrays.resize(numThreads);
-        }
+        collisionPairArrays.resize(numThreads);
     }
 
     return true;
@@ -337,20 +339,31 @@ bool AISTCollisionDetectorImpl::makeReady()
 
 void AISTCollisionDetector::updatePosition(int geometryId, const Position& position)
 {
-    ColdetModelEx* model = impl->models[geometryId];
-    if(model){
-        model->setPosition(position);
+    for(ColdetModelEx* model = impl->models[geometryId]; model; model = model->sibling){
+        if(model->localPosition){
+            Position T = position * (*model->localPosition);
+            model->setPosition(T);
+        } else {
+            model->setPosition(position);
+        }
     }
 }
 
 
-void AISTCollisionDetector::updatePositions(std::function<void(Referenced* object, Position*& out_Position)> positionQuery)
+void AISTCollisionDetector::updatePositions
+(std::function<void(Referenced* object, Position*& out_Position)> positionQuery)
 {
-    for(auto& model : impl->models){
-        if(model){
+    for(ColdetModelEx* model : impl->models){
+        while(model){
             Position* T;
             positionQuery(model->object, T);
-            model->setPosition(*T);
+            if(model->localPosition){
+                Position T2 = (*T) * (*model->localPosition);
+                model->setPosition(T2);
+            } else {
+                model->setPosition(*T);
+            }
+            model = model->sibling;
         }
     }
 }
@@ -373,13 +386,19 @@ void AISTCollisionDetector::detectCollisions(std::function<void(const CollisionP
 void AISTCollisionDetectorImpl::detectCollisions(std::function<void(const CollisionPair&)> callback)
 {
     CollisionPair collisionPair;
-    const int n = modelPairs.size();
-    for(int i=0; i < n; ++i){
-        ColdetModelPairEx* modelPair = modelPairs[i];
-        if(!modelPair->detectCollisions().empty()){
-            if(copyCollisionPairCollisions(modelPair, collisionPair)){
-                callback(collisionPair);
+    auto& collisions = collisionPair.collisions;
+    
+    for(ColdetModelPairEx* modelPair : modelPairs){
+        collisions.clear();
+        do {
+            if(!modelPair->detectCollisions().empty()){
+                copyCollisionPairCollisions(modelPair, collisionPair);
             }
+            modelPair = modelPair->sibling;
+        } while(modelPair);
+
+        if(!collisions.empty()){
+            callback(collisionPair);
         }
     }
 }
@@ -404,28 +423,19 @@ void AISTCollisionDetectorImpl::detectCollisionsInParallel(std::function<void(co
         if(size == 0){
             break;
         }
-        if(MULTITHREAD_TYPE == 0){
-            threadPool->start([this, i, index, size](){
-                    extractCollisionsOfAssignedPairs(index, index + size, collisionPairArrays[i]); });
-        } else {
-            threadPool->start([this, i, index, size](){
-                    checkCollisionsOfAssignedPairs(index, index + size, collidingModelPairArrays[i]); });
-        }
+        threadPool->start([this, i, index, size](){
+                extractCollisionsOfAssignedPairs(index, index + size, collisionPairArrays[i]); });
         index += size;
     }
     threadPool->waitLoop();
     //threadPool->wait();
 
-    if(MULTITHREAD_TYPE == 0){
-        dispatchCollisionsInCollisionPairArrays(callback);
-    } else {
-        dispatchCollisionsInCollidingModelPairs(callback);
-    }
+    dispatchCollisionsInCollisionPairArrays(callback);
 }
 
 
 void AISTCollisionDetectorImpl::extractCollisionsOfAssignedPairs
-(int pairIndexBegin, int pairIndexEnd, CollisionPairArray& collisionPairs)
+(int pairIndexBegin, int pairIndexEnd, vector<CollisionPair>& collisionPairs)
 {
     collisionPairs.clear();
 
@@ -436,12 +446,18 @@ void AISTCollisionDetectorImpl::extractCollisionsOfAssignedPairs
         } else {
             modelPair = modelPairs[i];
         }
-        if(!modelPair->detectCollisions().empty()){
-            collisionPairs.push_back(CollisionPair());
-            CollisionPair& collisionPair = collisionPairs.back();
-            if(!copyCollisionPairCollisions(modelPair, collisionPair, true)){
-                collisionPairs.pop_back();
+
+        collisionPairs.push_back(CollisionPair());
+        CollisionPair& collisionPair = collisionPairs.back();
+        do {
+            if(!modelPair->detectCollisions().empty()){
+                copyCollisionPairCollisions(modelPair, collisionPair, true);
             }
+            modelPair = modelPair->sibling;
+        } while(modelPair);
+
+        if(collisionPair.collisions.empty()){
+            collisionPairs.pop_back();
         }
     }
 }
@@ -450,42 +466,9 @@ void AISTCollisionDetectorImpl::dispatchCollisionsInCollisionPairArrays
 (std::function<void(const CollisionPair&)> callback)
 {
     for(int i=0; i < numThreads; ++i){
-        const CollisionPairArray& collisionPairs = collisionPairArrays[i];
+        const vector<CollisionPair>& collisionPairs = collisionPairArrays[i];
         for(size_t j=0; j < collisionPairs.size(); ++j){
             callback(collisionPairs[j]);
-        }
-    }
-}
-
-
-void AISTCollisionDetectorImpl::checkCollisionsOfAssignedPairs
-(int pairIndexBegin, int pairIndexEnd, vector<ColdetModelPairEx*>& collidingModelPairs)
-{
-    collidingModelPairs.clear();
-    for(int i=pairIndexBegin; i < pairIndexEnd; ++i){
-        ColdetModelPairEx* modelPair;
-        if(ENABLE_SHUFFLE){
-            modelPair = modelPairs[shuffledPairIndices[i]];
-        } else {
-            modelPair = modelPairs[i];
-        }
-        if(!modelPair->detectCollisions().empty()){
-            collidingModelPairs.push_back(modelPair);
-        }
-    }
-}
-
-
-void AISTCollisionDetectorImpl::dispatchCollisionsInCollidingModelPairs
-(std::function<void(const CollisionPair&)> callback)
-{
-    CollisionPair collisionPair;
-    for(int i=0; i < numThreads; ++i){
-        const vector<ColdetModelPairEx*>& collidingModelPairs = collidingModelPairArrays[i];
-        for(size_t j=0; j < collidingModelPairs.size(); ++j){
-            if(copyCollisionPairCollisions(collidingModelPairs[j], collisionPair)){
-               callback(collisionPair);
-            }
         }
     }
 }

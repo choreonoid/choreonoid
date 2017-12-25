@@ -31,13 +31,15 @@ public:
     virtual void detectCollisions(std::function<void(const CollisionPair& collisionPair)> callback) override;
 
     virtual bool isFindClosestPointsAvailable() const override;
-    virtual double findClosestPoints(int geometryId1, int geometryId2, Vector3& out_point1, Vector3& out_point2);
-    
-    // experimental API
-    int geometryPairId(int geometryId1, int geometryId2) const;
-    double findClosestPoints(int geometryPairId, Vector3& out_point1, Vector3& out_point2);
+    virtual double findClosestPoints(int geometryId1, int geometryId2, Vector3& out_point1, Vector3& out_point2) override;
 
+    // experimental
     void setNumThreads(int n);
+
+    //! \deprecated
+    int geometryPairId(int geometryId1, int geometryId2) const;
+    //! \deprecated
+    double findClosestPoints(int geometryPairId, Vector3& out_point1, Vector3& out_point2);
 
 private:
     AISTCollisionDetectorImpl* impl;
