@@ -118,7 +118,7 @@ link_directories(${OPENRTM_LIBRARY_DIRS})
 
 
 # Port data type stubs
-set(target1 CnoidOpenRTM)
+#set(target1 CnoidOpenRTM)
 set(IDL_INCLUDE_DIRS 
   ${OPENRTM_PREFIX}/include/openrtm-1.1/rtm/idl
   ${OPENRTM_PREFIX}/rtm/idl # for the Windows installer version
@@ -138,7 +138,8 @@ if(MSVC)
 endif()
 
 add_cnoid_library(${target2} SHARED ${sources} ${headers})
-target_link_libraries(${target2} CnoidBody CnoidOpenRTM CnoidCorba ${OPENRTM_LIBRARIES})
+#target_link_libraries(${target2} CnoidBody CnoidOpenRTM CnoidCorba ${OPENRTM_LIBRARIES})
+target_link_libraries(${target2} CnoidBody CnoidCorba ${OPENRTM_LIBRARIES})
 apply_common_setting_for_library(${target2} "${headers}")
 
 

@@ -122,7 +122,8 @@ add_cnoid_plugin(${plugin} SHARED ${plugin_sources} ${plugin_headers} ${mofiles}
 #   endif()
 # endif()
 
-target_link_libraries(${plugin} CnoidBodyPlugin CnoidCorbaPlugin CnoidOpenRTM CnoidBodyIoRTC ${OPENRTM_LIBRARIES})
+#target_link_libraries(${plugin} CnoidBodyPlugin CnoidCorbaPlugin CnoidOpenRTM CnoidBodyIoRTC ${OPENRTM_LIBRARIES})
+target_link_libraries(${plugin} CnoidBodyPlugin CnoidCorbaPlugin CnoidBodyIoRTC ${OPENRTM_LIBRARIES})
 apply_common_setting_for_plugin(${plugin} "${plugin_headers}")
 
 if(ENABLE_PYTHON)

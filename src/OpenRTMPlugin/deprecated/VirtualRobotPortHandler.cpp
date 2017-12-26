@@ -492,43 +492,43 @@ void CameraRangeOutPortHandler::initialize(Body* simBody)
             format = "xyz";
             break;
         }
-        value.type = CORBA::string_dup(format.c_str());
+        //value.type = CORBA::string_dup(format.c_str());
 
         if (format == "xyz"){
-            value.fields.length(3);
+            //value.fields.length(3);
         }else if (format == "xyzrgb"){
-            value.fields.length(6);
+            //value.fields.length(6);
         }
-        value.fields[0].name = "x";
-        value.fields[0].offset = 0;
-        value.fields[0].data_type = PointCloudTypes::FLOAT32;
-        value.fields[0].count = 4;
-        value.fields[1].name = "y";
-        value.fields[1].offset = 4;
-        value.fields[1].data_type = PointCloudTypes::FLOAT32;
-        value.fields[1].count = 4;
-        value.fields[2].name = "z";
-        value.fields[2].offset = 8;
-        value.fields[2].data_type = PointCloudTypes::FLOAT32;
-        value.fields[2].count = 4;
-        value.point_step = 12;
+        //value.fields[0].name = "x";
+        //value.fields[0].offset = 0;
+        //value.fields[0].data_type = PointCloudTypes::FLOAT32;
+        //value.fields[0].count = 4;
+        //value.fields[1].name = "y";
+        //value.fields[1].offset = 4;
+        //value.fields[1].data_type = PointCloudTypes::FLOAT32;
+        //value.fields[1].count = 4;
+        //value.fields[2].name = "z";
+        //value.fields[2].offset = 8;
+        //value.fields[2].data_type = PointCloudTypes::FLOAT32;
+        //value.fields[2].count = 4;
+        //value.point_step = 12;
         if (format == "xyzrgb"){
-            value.fields[3].name = "r";
-            value.fields[3].offset = 12;
-            value.fields[3].data_type = PointCloudTypes::UINT8;
-            value.fields[3].count = 1;
-            value.fields[4].name = "g";
-            value.fields[4].offset = 13;
-            value.fields[4].data_type = PointCloudTypes::UINT8;
-            value.fields[4].count = 1;
-            value.fields[5].name = "b";
-            value.fields[5].offset = 14;
-            value.fields[5].data_type = PointCloudTypes::UINT8;
-            value.fields[5].count = 1;
-            value.point_step = 16;
+            //value.fields[3].name = "r";
+            //value.fields[3].offset = 12;
+            //value.fields[3].data_type = PointCloudTypes::UINT8;
+            //value.fields[3].count = 1;
+            //value.fields[4].name = "g";
+            //value.fields[4].offset = 13;
+            //value.fields[4].data_type = PointCloudTypes::UINT8;
+            //value.fields[4].count = 1;
+            //value.fields[5].name = "b";
+            //value.fields[5].offset = 14;
+            //value.fields[5].data_type = PointCloudTypes::UINT8;
+            //value.fields[5].count = 1;
+            //value.point_step = 16;
         }
-        value.is_bigendian = false;
-        value.is_dense = true;
+        //value.is_bigendian = false;
+        //value.is_dense = true;
         
         rangeCamera->sigStateChanged().connect(std::bind(&CameraRangeOutPortHandler::onCameraStateChanged, this));
     }
@@ -544,35 +544,35 @@ void CameraRangeOutPortHandler::onCameraStateChanged()
 
         if(!points.empty()){
             if(!image.empty()){
-                value.height = image.height();
-                value.width = image.width();
+                //value.height = image.height();
+                //value.width = image.width();
             }else{
                 if(rangeCamera->isOrganized()){
-                    value.height = rangeCamera->resolutionY();
-                    value.width = rangeCamera->resolutionX();
+                    //value.height = rangeCamera->resolutionY();
+                    //value.width = rangeCamera->resolutionX();
                 }else{
-                    value.height = 1;
-                    value.width = rangeCamera->numPoints();
+                    //value.height = 1;
+                    //value.width = rangeCamera->numPoints();
                 }
             }
-            value.row_step = value.point_step * value.width;
-            size_t length = points.size() * value.point_step;
-            value.data.length(length);
-            unsigned char* dis = (unsigned char*)value.data.get_buffer();
+            //value.row_step = value.point_step * value.width;
+            //size_t length = points.size() * value.point_step;
+            //value.data.length(length);
+            //unsigned char* dis = (unsigned char*)value.data.get_buffer();
             const unsigned char* pixels = 0;
             if(!image.empty())
                 pixels = image.pixels();
-            for(size_t i=0; i < points.size(); i++, dis += value.point_step){
-                memcpy(&dis[0], &points[i].x(), 4);
-                memcpy(&dis[4], &points[i].y(), 4);
-                memcpy(&dis[8], &points[i].z(), 4);
-                if(pixels){
-                    dis[12] = *pixels++;
-                    dis[13] = *pixels++;
-                    dis[14] = *pixels++;
-                    dis[15] = 0;
-                }
-            }
+            //for(size_t i=0; i < points.size(); i++, dis += value.point_step){
+            //    memcpy(&dis[0], &points[i].x(), 4);
+            //    memcpy(&dis[4], &points[i].y(), 4);
+            //    memcpy(&dis[8], &points[i].z(), 4);
+            //    if(pixels){
+            //        dis[12] = *pixels++;
+            //        dis[13] = *pixels++;
+            //        dis[14] = *pixels++;
+            //        dis[15] = 0;
+            //    }
+            //}
         }
 
         prevPoints = rangeCamera->sharedPoints();
