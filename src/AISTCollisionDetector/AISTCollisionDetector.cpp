@@ -468,19 +468,9 @@ void AISTCollisionDetectorImpl::dispatchCollisionsInCollisionPairArrays
 }
 
 
-bool AISTCollisionDetector::isFindClosestPointsAvailable() const
-{
-    return true;
-}
-
-
-double AISTCollisionDetector::findClosestPoints
+double AISTCollisionDetector::detectDistance
 (GeometryHandle geometry1, GeometryHandle geometry2, Vector3& out_point1, Vector3& out_point2)
 {
-    auto p = impl->modelPairIdMap.find(GeometryPair(geometry1, geometry1));
-    if(p != impl->modelPairIdMap.end()){
-        int pairId = p->second;
-        return impl->modelPairs[pairId]->computeDistance(out_point1.data(), out_point2.data());
-    }
-    return -1.0;
+    return ColdetModelPair::computeDistance(
+        impl->models[geometry1], impl->models[geometry2], out_point1.data(), out_point2.data());
 }

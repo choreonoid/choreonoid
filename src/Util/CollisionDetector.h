@@ -55,13 +55,18 @@ public:
         std::function<void(Referenced* object, Position*& out_position)> positionQuery) = 0;
 
     virtual void detectCollisions(std::function<void(const CollisionPair& collisionPair)> callback) = 0;
-
-    // optional functions
-    virtual bool isFindClosestPointsAvailable() const;
-    virtual double findClosestPoints(GeometryHandle geometry1, GeometryHandle geometry2, Vector3& out_point1, Vector3& out_point2);
 };
 
 typedef ref_ptr<CollisionDetector> CollisionDetectorPtr;
+
+
+class CollisionDetectorDistanceAPI
+{
+public:
+    virtual double detectDistance(
+        CollisionDetector::GeometryHandle geometry1, CollisionDetector::GeometryHandle geometry2,
+        Vector3& out_point1, Vector3& out_point2) = 0;
+};
 
 
 class CollisionPair

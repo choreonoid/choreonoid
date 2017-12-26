@@ -41,6 +41,7 @@ public:
         return !detectCollisionsSub(false).empty();
     }
 
+    static double computeDistance(ColdetModel* model0, ColdetModel* model1, double* point0, double* point1);
     double computeDistance(double* point0, double* point1);
 
     /**

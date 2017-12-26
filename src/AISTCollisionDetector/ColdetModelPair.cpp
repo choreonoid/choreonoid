@@ -587,21 +587,21 @@ bool ColdetModelPair::detectPlaneCylinderCollisions(bool detectAllContacts) {
 }
 
 
-double ColdetModelPair::computeDistance(double *point0, double *point1)
+double ColdetModelPair::computeDistance(ColdetModel* model0, ColdetModel* model1, double* point0, double* point1)
 {
-    if(models[0]->isValid() && models[1]->isValid()){
+    if(model0->isValid() && model1->isValid()){
 
         Opcode::BVTCache colCache;
 
-        colCache.Model0 = &models[1]->internalModel->model;
-        colCache.Model1 = &models[0]->internalModel->model;
+        colCache.Model0 = &model1->internalModel->model;
+        colCache.Model1 = &model0->internalModel->model;
         
         Opcode::SSVTreeCollider collider;
         
         float d;
         Point p0, p1;
         collider.Distance(colCache, d, p0, p1,
-                          models[1]->transform, models[0]->transform);
+                          model1->transform, model0->transform);
         point0[0] = p1.x;
         point0[1] = p1.y;
         point0[2] = p1.z;
@@ -613,6 +613,13 @@ double ColdetModelPair::computeDistance(double *point0, double *point1)
 
     return -1.0;
 }
+
+
+double ColdetModelPair::computeDistance(double* point0, double* point1)
+{
+    return computeDistance(models[0], models[1], point0, point1);
+}
+    
 
 double ColdetModelPair::computeDistance(int& triangle0, double* point0, int& triangle1, double* point1)
 {

@@ -152,15 +152,3 @@ CollisionDetector::~CollisionDetector()
 {
 
 }
-
-
-bool CollisionDetector::isFindClosestPointsAvailable() const
-{
-    return false;
-}
-
-
-double CollisionDetector::findClosestPoints(GeometryHandle geometry1, GeometryHandle geometry2, Vector3& out_point1, Vector3& out_point2)
-{
-    return -1.0;
-}
