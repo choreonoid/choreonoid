@@ -673,7 +673,8 @@ void ODEBody::createBody(ODESimulatorItemImpl* simImpl)
     if(simImpl->useWorldCollisionDetector){
         simImpl->bodyCollisionDetector.addBody(
             body, bodyItem()->isSelfCollisionDetectionEnabled(),
-            [&](Link* link){ return odeLinks[link->index()]; });
+            [&](Link* link, CollisionDetector::GeometryHandle geometry){
+                return odeLinks[link->index()]; });
     }
 
     setExtraJoints(simImpl->flipYZ);
@@ -1297,9 +1298,9 @@ bool ODESimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& ac
 
 void ODESimulatorItemImpl::onCollisionPairDetected(const CollisionPair& collisionPair)
 {
-    ODELink* link1 = static_cast<ODELink*>(collisionPair.objects[0]);
-    ODELink* link2 = static_cast<ODELink*>(collisionPair.objects[1]);
-    const vector<Collision>& collisions = collisionPair.collisions;
+    ODELink* link1 = static_cast<ODELink*>(collisionPair.object(0));
+    ODELink* link2 = static_cast<ODELink*>(collisionPair.object(1));
+    const vector<Collision>& collisions = collisionPair.collisions();
 
     dBodyID body1ID = link1->bodyID;
     dBodyID body2ID = link2->bodyID;

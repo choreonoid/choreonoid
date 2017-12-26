@@ -20,6 +20,8 @@ using namespace cnoid;
 
 namespace {
 
+typedef CollisionDetector::GeometryHandle GeometryHandle;
+
 struct FactoryRegistration
 {
     FactoryRegistration(){
@@ -41,7 +43,7 @@ class GeometryInfo : public Referenced
 public :
     GeometryInfo();
     ~GeometryInfo();
-    int externalId;
+    GeometryHandle geometryHandle;
     ReferencedPtr object;
     dSpaceID spaceID;
     vector<PrimitiveInfo, Eigen::aligned_allocator<PrimitiveInfo>> primitives;
@@ -53,7 +55,7 @@ typedef ref_ptr<GeometryInfo> GeometryInfoPtr;
 
 GeometryInfo::GeometryInfo()
 {
-    externalId = -1;
+    geometryHandle = 0;
     spaceID = 0;
     meshGeomID = 0;
     triMeshDataID = 0;
@@ -99,9 +101,9 @@ public:
 
     ODECollisionDetectorImpl();
     ~ODECollisionDetectorImpl();
-    int addGeometry(SgNode* geometry, Referenced* object);
+    boost::optional<GeometryHandle> addGeometry(SgNode* geometry);
     void addMesh(GeometryInfo* model);
-    void setNonInterfarenceGeometyrPair(int geometryId1, int geometryId2);
+    void setNonInterfarenceGeometyrPair(GeometryHandle geometry1, GeometryHandle geometry2);
     bool makeReady();
     void setGeometryPosition(GeometryInfo* ginfo, const Position& position);
     void detectCollisions(std::function<void(const CollisionPair&)> callback);
@@ -162,21 +164,18 @@ int ODECollisionDetector::numGeometries() const
 }
 
 
-int ODECollisionDetector::addGeometry(SgNode* geometry, Referenced* object)
+boost::optional<GeometryHandle> ODECollisionDetector::addGeometry(SgNode* geometry)
 {
-    return impl->addGeometry(geometry, object);
+    return impl->addGeometry(geometry);
 }
 
 
-int ODECollisionDetectorImpl::addGeometry(SgNode* geometry, Referenced* object)
+boost::optional<GeometryHandle> ODECollisionDetectorImpl::addGeometry(SgNode* geometry)
 {
-    const int index = geometryInfos.size();
-    bool isValid = false;
-
     if(geometry){
+        GeometryHandle handle = geometryInfos.size();
         GeometryInfoPtr ginfo = new GeometryInfo;
-        ginfo->externalId = index;
-        ginfo->object = object;
+        ginfo->geometryHandle = handle;
         ginfo->spaceID = dHashSpaceCreate(spaceID);
         dSpaceSetCleanup(ginfo->spaceID, 0);
         if(meshExtractor.extract(geometry, [this, ginfo](){ addMesh(ginfo.get()); })){
@@ -193,15 +192,11 @@ int ODECollisionDetectorImpl::addGeometry(SgNode* geometry, Referenced* object)
                dGeomSetData(pinfo.geomId, ginfo.get());
            }
            geometryInfos.push_back(ginfo);
-           isValid = true;
+           return handle;
         }
     }
 
-    if(!isValid){
-        geometryInfos.push_back(nullptr);
-    }
-    
-    return index;
+    return boost::none;
 }
 
 
@@ -314,25 +309,34 @@ void ODECollisionDetectorImpl::addMesh(GeometryInfo* ginfo)
 }
 
 
-void ODECollisionDetector::setGeometryStatic(int geometryId, bool isStatic)
+void ODECollisionDetector::setCustomObject(GeometryHandle geometry, Referenced* object)
 {
-    GeometryInfo* ginfo = impl->geometryInfos[geometryId];
+    GeometryInfo* ginfo = impl->geometryInfos[geometry];
+    if(ginfo){
+        ginfo->object = object;
+    }
+}
+
+
+void ODECollisionDetector::setGeometryStatic(GeometryHandle geometry, bool isStatic)
+{
+    GeometryInfo* ginfo = impl->geometryInfos[geometry];
     if(ginfo){
         ginfo->isStatic = isStatic;
     }
 }
 
 
-void ODECollisionDetector::setNonInterfarenceGeometyrPair(int geometryId1, int geometryId2)
+void ODECollisionDetector::setNonInterfarenceGeometyrPair(GeometryHandle geometry1, GeometryHandle geometry2)
 {
-    impl->setNonInterfarenceGeometyrPair(geometryId1, geometryId2);
+    impl->setNonInterfarenceGeometyrPair(geometry1, geometry2);
 }
 
 
-void ODECollisionDetectorImpl::setNonInterfarenceGeometyrPair(int geometryId1, int geometryId2)
+void ODECollisionDetectorImpl::setNonInterfarenceGeometyrPair(GeometryHandle geometry1, GeometryHandle geometry2)
 {
-    GeometryInfo* ginfo1 = geometryInfos[geometryId1];
-    GeometryInfo* ginfo2 = geometryInfos[geometryId2];
+    GeometryInfo* ginfo1 = geometryInfos[geometry1];
+    GeometryInfo* ginfo2 = geometryInfos[geometry2];
     if(ginfo1 && ginfo2){
         dSpaceID space1 = ginfo1->spaceID;
         dSpaceID space2 = ginfo2->spaceID;
@@ -395,9 +399,9 @@ void ODECollisionDetectorImpl::setGeometryPosition(GeometryInfo* ginfo, const Po
 }
 
 
-void ODECollisionDetector::updatePosition(int geometryId, const Position& position)
+void ODECollisionDetector::updatePosition(GeometryHandle geometry, const Position& position)
 {
-    GeometryInfo* ginfo = impl->geometryInfos[geometryId];
+    GeometryInfo* ginfo = impl->geometryInfos[geometry];
     if(ginfo){
         impl->setGeometryPosition(ginfo, position);
     }
@@ -437,18 +441,13 @@ static void nearCallback(void* data, dGeomID g1, dGeomID g2)
         int numContacts= dCollide(g1, g2, MaxNumContacts, &contacts[0].geom, sizeof(dContact));
 
         if(numContacts > 0 ){
-            CollisionPair collisionPair;
-            vector<Collision>& collisions = collisionPair.collisions;
             GeometryInfo* ginfo1 = static_cast<GeometryInfo*>(dGeomGetData(g1));
             GeometryInfo* ginfo2 = static_cast<GeometryInfo*>(dGeomGetData(g2));
-            collisionPair.geometryId[0] = ginfo2->externalId;
-            collisionPair.objects[0] = ginfo2->object;
-            collisionPair.geometryId[1] = ginfo1->externalId;
-            collisionPair.objects[1] = ginfo1->object;
-            
+            CollisionPair collisionPair(
+                ginfo2->geometryHandle, ginfo2->object, ginfo1->geometryHandle, ginfo1->object);
+
             for(size_t i=0; i < numContacts; i++){
-                collisions.push_back(Collision());
-                Collision& collision = collisions.back();
+                Collision& collision = collisionPair.newCollision();
                 collision.point[0] = contacts[i].geom.pos[0];
                 collision.point[1] = contacts[i].geom.pos[1];
                 collision.point[2] = contacts[i].geom.pos[2];
