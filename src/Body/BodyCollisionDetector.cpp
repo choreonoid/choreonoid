@@ -183,20 +183,20 @@ bool BodyCollisionDetectorImpl::addLinkRecursively
     bool isStatic = isParentStatic && link->isFixedJoint();
 
     if(!exclusions[link->index()]){
-        auto geometry = collisionDetector->addGeometry(link->collisionShape());
-        if(geometry){
+        auto handle = collisionDetector->addGeometry(link->collisionShape());
+        if(handle){
             Referenced* object;
             if(funcToGetObjectAssociatedWithLink){
-                object = funcToGetObjectAssociatedWithLink(link, *geometry);
+                object = funcToGetObjectAssociatedWithLink(link, *handle);
             } else {
                 object = link;
             }
-            collisionDetector->setCustomObject(*geometry, object);
+            collisionDetector->setCustomObject(*handle, object);
 
-            linkIndexToGeometryHandleMap[link->index()] = *geometry;
+            linkIndexToGeometryHandleMap[link->index()] = *handle;
 
             if(isGeometryHandleMapEnabled){
-                linkToGeometryHandleMap[link] = *geometry;
+                linkToGeometryHandleMap[link] = *handle;
             }
             added = true;
         }
