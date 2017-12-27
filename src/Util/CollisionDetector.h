@@ -8,9 +8,9 @@
 
 #include "Collision.h"
 #include "Referenced.h"
-#include "exportdecl.h"
 #include <boost/optional.hpp>
 #include <cstdint>
+#include "exportdecl.h"
 
 namespace cnoid {
 

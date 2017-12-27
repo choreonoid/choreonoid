@@ -192,9 +192,10 @@ bool BodyCollisionDetectorImpl::addLinkRecursively
                 object = link;
             }
             collisionDetector->setCustomObject(*handle, object);
-
+            if(isStatic){
+                collisionDetector->setGeometryStatic(*handle, object);
+            }
             linkIndexToGeometryHandleMap[link->index()] = *handle;
-
             if(isGeometryHandleMapEnabled){
                 linkToGeometryHandleMap[link] = *handle;
             }
