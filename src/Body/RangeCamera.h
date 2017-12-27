@@ -56,6 +56,6 @@ private:
 
 typedef ref_ptr<RangeCamera> RangeCameraPtr;
 
-};
+}
 
 #endif

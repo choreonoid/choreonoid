@@ -27,8 +27,10 @@ public:
     CollisionSeqItem* collisionSeqItem_;
     CollisionSeq(CollisionSeqItem* collisionSeqItem);
 
-    virtual bool doWriteSeq(YAMLWriter& writer);
-    virtual bool doReadSeq(const Mapping& archive);
+    using BaseSeqType::operator=;
+
+    virtual bool doReadSeq(const Mapping* archive, std::ostream& os) override;
+    virtual bool doWriteSeq(YAMLWriter& writer) override;
 
     bool loadStandardYAMLformat(const std::string& filename);
     bool saveAsStandardYAMLformat(const std::string& filename);

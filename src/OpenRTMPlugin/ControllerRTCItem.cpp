@@ -11,6 +11,7 @@
 #include <cnoid/Sleep>
 #include <cnoid/ExecutablePath>
 #include <cnoid/FileUtil>
+#include <boost/lexical_cast.hpp>
 #include "gettext.h"
 
 using namespace std;
@@ -95,9 +96,9 @@ ControllerRTCItem::ControllerRTCItem()
 
 ControllerRTCItemImpl::ControllerRTCItemImpl(ControllerRTCItem* self)
     : self(self),
-      mv(MessageView::instance()),
       baseDirectoryType(N_BASE_DIRECTORY_TYPES, CNOID_GETTEXT_DOMAIN_NAME),
-      execContextType(N_EXEC_CONTEXT_TYPES, CNOID_GETTEXT_DOMAIN_NAME)
+      execContextType(N_EXEC_CONTEXT_TYPES, CNOID_GETTEXT_DOMAIN_NAME),
+      mv(MessageView::instance())
 {
     baseDirectoryType.setSymbol(NO_BASE_DIRECTORY, N_("None"));
     baseDirectoryType.setSymbol(RTC_DIRECTORY, N_("RTC directory"));

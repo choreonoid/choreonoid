@@ -47,7 +47,7 @@ SgMaterial::SgMaterial(const SgMaterial& org)
 }
 
 
-SgObject* SgMaterial::clone(SgCloneMap& cloneMap) const
+SgObject* SgMaterial::clone(SgCloneMap&) const
 {
     return new SgMaterial(*this);
 }
@@ -82,7 +82,7 @@ SgImage::SgImage(const SgImage& org)
 }
 
 
-SgObject* SgImage::clone(SgCloneMap& cloneMap) const
+SgObject* SgImage::clone(SgCloneMap&) const
 {
     return new SgImage(*this);
 }
@@ -137,7 +137,7 @@ SgTextureTransform::SgTextureTransform(const SgTextureTransform& org)
 }
 
 
-SgObject* SgTextureTransform::clone(SgCloneMap& cloneMap) const
+SgObject* SgTextureTransform::clone(SgCloneMap&) const
 {
     return new SgTextureTransform(*this);
 }
@@ -911,7 +911,7 @@ SgObject* SgOverlay::clone(SgCloneMap& cloneMap) const
 }
 
 
-void SgOverlay::calcViewVolume(double viewportWidth, double viewportHeight, ViewVolume& io_volume)
+void SgOverlay::calcViewVolume(double /* viewportWidth */, double /* viewportHeight */, ViewVolume& io_volume)
 {
     io_volume.left = -1.0;
     io_volume.right = 1.0;

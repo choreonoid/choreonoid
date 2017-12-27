@@ -7,8 +7,8 @@ static bool read_(const Mapping& mapping, const std::string& key, Eigen::AngleAx
 {
     const Listing& s = *mapping.findListing(key);
     if(s.isValid() && s.size() == 4){
-        r.axis() << s[0].toDouble(), s[1].toDouble(), s[2].toDouble();
-        r.angle() = s[3].toDouble();
+        r.axis() << s[0].to<Scalar>(), s[1].to<Scalar>(), s[2].to<Scalar>();
+        r.angle() = s[3].to<Scalar>();
         return true;
     }
     return false;

@@ -19,11 +19,12 @@ protected:
 
 public:
     void copyStateFrom(const Light& other);
-    virtual void forEachActualType(std::function<bool(const std::type_info& type)> func);
+    using Device::copyStateFrom;
+    virtual void forEachActualType(std::function<bool(const std::type_info& type)> func) override;
 
     static int lightStateSize();
-    virtual const double* readState(const double* buf);
-    virtual double* writeState(double* out_buf) const;
+    virtual const double* readState(const double* buf) override;
+    virtual double* writeState(double* out_buf) const override;
 
     bool on() const { return on_; }
     void on(bool on) { on_ = on; }

@@ -76,7 +76,7 @@ public:
         button.setText(label.c_str());
         hbox->addWidget(&button);
         
-        int pos = 0;
+        size_t pos = 0;
         while(true){
             pos = funcString.find('#', pos);
             if(pos == std::string::npos){
@@ -470,7 +470,7 @@ MenuWidget::MenuWidget
 
     bool hasSequencePages = false;
     if(buttonList.size() >= 2){
-        for(int i=1; i < buttonList.size(); ++i){
+        for(size_t i=1; i < buttonList.size(); ++i){
             if(!buttonList[i].empty()){
                 hasSequencePages = true;
                 break;
@@ -555,8 +555,8 @@ void MenuWidget::onButtonClicked(int indexInPage, FuncButtonBox* box)
 {
     string code = box->funcString;
 
-    int pos = 0;
-    for(int i=0; i < box->entries.size(); ++i){
+    size_t pos = 0;
+    for(size_t i=0; i < box->entries.size(); ++i){
         const FuncParamEntry* entry = box->entries[i];
         pos = code.find(entry->marker, pos);
         if(pos != string::npos){
@@ -628,7 +628,7 @@ void MenuWidget::moveNext()
         if(isLocalSequentialMode){
             moveToNextButton();
         } else if(lastIndexInPage == 0){
-            if(currentSequencePageIndex + 1 < buttonList.size() - 1){
+            if(currentSequencePageIndex + 1 < static_cast<int>(buttonList.size()) - 1){
                 setCurrentSequentialPage(currentSequencePageIndex + 1);
             }
         }
@@ -639,10 +639,10 @@ void MenuWidget::moveNext()
 void MenuWidget::moveToNextButton()
 {
     vector<QWidget*> buttons = buttonList[currentSequencePageIndex+1];
-    if(currentButton < buttons.size() - 1){
+    if(currentButton < static_cast<int>(buttons.size()) - 1){
         ++currentButton;
         setCurrentSequentialPage(currentSequencePageIndex);
-    } else if(currentSequencePageIndex < buttonList.size() - 1){
+    } else if(currentSequencePageIndex < static_cast<int>(buttonList.size()) - 1){
         currentButton = 0;
         ++currentButtonPage; 
         setCurrentSequentialPage(currentSequencePageIndex + 1);
@@ -684,7 +684,7 @@ void MenuWidget::setCurrentSequentialPage(int index)
     if(isLocalSequentialMode){
         const bool hasCurrentButton = (index == currentButtonPage);
         vector<QWidget*>& buttons = buttonList[index + 1];
-        for(int i=0; i < buttons.size(); ++i){
+        for(int i=0; i < static_cast<int>(buttons.size()); ++i){
             buttons[i]->setEnabled(
                 !sequentialCheck.isChecked() ||(hasCurrentButton && (i == currentButton)));
         }

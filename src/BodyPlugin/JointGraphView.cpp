@@ -238,4 +238,3 @@ bool JointGraphView::restoreState(const Archive& archive)
 {
     return graph.restoreState(archive);
 }
-

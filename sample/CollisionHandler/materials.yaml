@@ -1,0 +1,17 @@
+materials:
+  -
+    name: Foot
+  -
+    name: Floor
+
+contactMaterials:
+  -
+    materials: [ Default, Default ]
+    friction: 0.5
+  -
+    materials: [ Foot, Floor ]
+    friction: 0.5
+    collisionHandler: SpringDamperContact
+  -
+    materials: [ Default, Floor ]
+    friction: 0.5

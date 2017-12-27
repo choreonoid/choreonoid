@@ -131,37 +131,30 @@ links:
               material:
                 diffuseColor: [ 0.5, 0.8, 0.5]
       -
-        type: Transform
+        type: Camera
+        name: LeftCamera
         translation: [ 0.15, 0.05, 0.15 ]
-        rotation: [ 0, 1, 0, -90 ]
-        elements:
-          Camera:
-            name: LeftCamera
-            rotation: [ 0, 0, 1, -90 ]
-            id: 0
-            format: COLOR_DEPTH
-            nearClipDistance: 0.1
-            elements: &CameraShape
-              Transform:
-                rotation: [ 1, 0, 0, 90 ]
-                elements:
-                  Shape:
-                    geometry: { type: Cylinder, radius: 0.02, height: 0.025 }
-                    appearance:
-                      material:
-                        diffuseColor: [ 1, 0, 0 ]
+        rotation: [ [ 0, 1, 0, -90 ], [ 0, 0, 1, -90 ] ]
+        id: 0
+        format: COLOR
+        nearClipDistance: 0.1
+        elements: &CameraShape
+          Transform:
+            rotation: [ 1, 0, 0, 90 ]
+            elements:
+              Shape:
+                geometry: { type: Cylinder, radius: 0.02, height: 0.025 }
+                appearance:
+                  material: { diffuseColor: [ 1, 0, 0 ] }
       -
-        type: Transform
+        type: Camera
+        name: RightCamera
         translation: [ 0.15, -0.05, 0.15 ]
-        rotation: [ 0, 1, 0, -90 ]
-        elements:
-          Camera:
-            name: RightCamera
-            rotation: [ 0, 0, 1, -90 ]
-            id: 1
-            format: COLOR_DEPTH
-            nearClipDistance: 0.1
-            elements: *CameraShape
+        rotation: [ [ 0, 1, 0, -90 ], [ 0, 0, 1, -90 ] ]
+        id: 1
+        format: COLOR
+        nearClipDistance: 0.1
+        elements: *CameraShape
   -
     name: LARM_SHOULDER_P
     parent: CHEST

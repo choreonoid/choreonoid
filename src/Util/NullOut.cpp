@@ -14,7 +14,7 @@ namespace {
 class NullSink : public iostreams::sink
 {
 public:
-    streamsize write(const char* s, streamsize n) { return n; }
+    streamsize write(const char*, streamsize n) { return n; }
 };
 
 }

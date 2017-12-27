@@ -41,7 +41,7 @@ void forEachCheckedRobotAccessItems
     if(items.empty()){
         MessageView::instance()->putln(noTargetMessage);
     } else {
-        for(int i=0; i < items.size(); ++i){
+        for(size_t i=0; i < items.size(); ++i){
             func(items[i].get());
         }
     }

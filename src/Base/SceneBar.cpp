@@ -162,7 +162,7 @@ void SceneBarImpl::initialize()
     visualModelToggle = self->addToggleButton("V", _("Show visual models"));
     visualModelToggle->setChecked(true);
     visualModelToggle->sigToggled().connect(
-        [&](bool on){ updateCollisionModelVisibility(); });
+        [&](bool){ updateCollisionModelVisibility(); });
 
     modelTypeFlipButton = self->addButton("F", _("Flip active model types"));
     modelTypeFlipButton->sigClicked().connect(
@@ -170,7 +170,7 @@ void SceneBarImpl::initialize()
 
     collisionModelToggle = self->addToggleButton("C", _("Show the collision detection models"));
     collisionModelToggle->sigToggled().connect(
-        [&](bool on){ updateCollisionModelVisibility(); });
+        [&](bool){ updateCollisionModelVisibility(); });
     
     collisionLineToggle = self->addToggleButton(
         QIcon(":/Base/icons/collisionlines.png"), _("Toggle the collision line visibility"));

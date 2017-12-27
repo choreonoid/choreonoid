@@ -91,7 +91,7 @@ public:
     bool isDropping;
     int fontPointSizeDiff;
 
-    ItemTreeViewImpl(ItemTreeView* self, RootItem* rootItem, bool showRoot);
+    ItemTreeViewImpl(ItemTreeView* self, RootItem* rootItem);
     ~ItemTreeViewImpl();
 
     int addCheckColumn();
@@ -160,8 +160,7 @@ ItvItem::ItvItem(Item* item, ItemTreeViewImpl* itemTreeViewImpl)
     setToolTip(0, QString());
 
     vector<CheckColumnPtr>& checkColumns = itemTreeViewImpl->checkColumns;
-    const int n = checkColumns.size();
-    for(size_t i=0; i < n; ++i){
+    for(size_t i=0; i < checkColumns.size(); ++i){
         setCheckState(i + 1, Qt::Unchecked);
         setToolTip(i + 1, checkColumns[i]->tooltip);
     }
@@ -200,7 +199,7 @@ void ItvItem::setData(int column, int role, const QVariant& value)
             }
         }
     } else if(column >= 1 && role == Qt::CheckStateRole){
-        const int id = column - 1;
+        const unsigned int id = column - 1;
         if(id < itemTreeViewImpl->checkColumns.size()){
             CheckColumnPtr& cc = itemTreeViewImpl->checkColumns[id];
             cc->needToUpdateCheckedItemList = true;
@@ -217,7 +216,7 @@ void ItvItem::setData(int column, int role, const QVariant& value)
 
 SigCheckToggled* ItvItem::sigCheckToggled(int id)
 {
-    if(id < sigCheckToggledList.size()){
+    if(id < static_cast<int>(sigCheckToggledList.size())){
         return sigCheckToggledList[id].get();
     }
     return 0;
@@ -226,7 +225,7 @@ SigCheckToggled* ItvItem::sigCheckToggled(int id)
 
 SigCheckToggled& ItvItem::getOrCreateSigCheckToggled(int id)
 {
-    if(id >= sigCheckToggledList.size()){
+    if(id >= static_cast<int>(sigCheckToggledList.size())){
         sigCheckToggledList.resize(id + 1);
     }
     if(!sigCheckToggledList[id]){
@@ -257,22 +256,22 @@ ItemTreeView* ItemTreeView::mainInstance()
 
 ItemTreeView::ItemTreeView()
 {
-    construct(RootItem::instance(), false);
+    construct(RootItem::instance());
 }
 
 
-ItemTreeView::ItemTreeView(RootItem* rootItem, bool showRoot)
+ItemTreeView::ItemTreeView(RootItem* rootItem)
 {
-    construct(rootItem, showRoot);
+    construct(rootItem);
 }
 
 
-void ItemTreeView::construct(RootItem* rootItem, bool showRoot)
+void ItemTreeView::construct(RootItem* rootItem)
 {
     setDefaultLayoutArea(View::LEFT);
     setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
     
-    impl = new ItemTreeViewImpl(this, rootItem, showRoot);
+    impl = new ItemTreeViewImpl(this, rootItem);
 
     QVBoxLayout* layout = new QVBoxLayout();
     layout->addWidget(impl);
@@ -280,7 +279,7 @@ void ItemTreeView::construct(RootItem* rootItem, bool showRoot)
 }
 
 
-ItemTreeViewImpl::ItemTreeViewImpl(ItemTreeView* self, RootItem* rootItem, bool showRoot)
+ItemTreeViewImpl::ItemTreeViewImpl(ItemTreeView* self, RootItem* rootItem)
     : self(self),
       rootItem(rootItem)
 {
@@ -416,7 +415,7 @@ void ItemTreeViewImpl::initializeCheckState(QTreeWidgetItem* item, int column)
 
 void ItemTreeView::setCheckColumnToolTip(int id, const QString& whatsThis)
 {
-    if(id > 0 && id < impl->checkColumns.size()){
+    if(id > 0 && id < static_cast<int>(impl->checkColumns.size())){
         impl->checkColumns[id]->tooltip = whatsThis;
         updateCheckColumnToolTip(id);
     }
@@ -425,7 +424,7 @@ void ItemTreeView::setCheckColumnToolTip(int id, const QString& whatsThis)
 
 void ItemTreeView::updateCheckColumnToolTip(int id)
 {
-    if(id > 0 && id < impl->checkColumns.size()){
+    if(id > 0 && id < static_cast<int>(impl->checkColumns.size())){
         impl->updateCheckColumnToolTipIter(
             impl->invisibleRootItem(), id + 1, impl->checkColumns[id]->tooltip);
     }
@@ -450,7 +449,7 @@ void ItemTreeView::showCheckColumn(int id, bool on)
 
 void ItemTreeViewImpl::showCheckColumn(int id, bool on)
 {
-    if(id > 0 && id < checkColumns.size()){
+    if(id > 0 && id < static_cast<int>(checkColumns.size())){
         if(!on){
             header()->hideSection(id + 1);
         } else {
@@ -481,12 +480,6 @@ void ItemTreeViewImpl::releaseCheckColumn(int id)
 RootItem* ItemTreeView::rootItem()
 {
     return impl->rootItem;
-}
-
-
-void ItemTreeView::showRoot(bool show)
-{
-
 }
 
 
@@ -532,7 +525,7 @@ void ItemTreeViewImpl::keyPressEvent(QKeyEvent* event)
         case Qt::Key_Minus:
             zoomFontSize(-1);
             break;
-        defaut:
+        default:
             processed = false;
             break;
         }
@@ -752,7 +745,6 @@ void ItemTreeViewImpl::onItemAssigned(Item* assigned, Item* srcItem)
             itvItem->setCheckState(i + 1, srcItvItem->checkState(i + 1));
         }
         QModelIndex index = indexFromItem(itvItem);
-        QModelIndex srcIndex = indexFromItem(srcItvItem);
         selectionModel()->select(
             index, srcItvItem->isSelected() ? QItemSelectionModel::Select : QItemSelectionModel::Deselect);
     }
@@ -881,7 +873,7 @@ SignalProxy<void(const ItemList<>&)> ItemTreeView::sigSelectionOrTreeChanged()
 
 SignalProxy<void(Item* item, bool isChecked)> ItemTreeView::sigCheckToggled(int id)
 {
-    if(id < impl->checkColumns.size()){
+    if(id < static_cast<int>(impl->checkColumns.size())){
         return impl->checkColumns[id]->sigCheckToggled;
     }
     return impl->sigCheckToggledForInvalidId; // or throw exception
@@ -890,7 +882,7 @@ SignalProxy<void(Item* item, bool isChecked)> ItemTreeView::sigCheckToggled(int 
 
 SignalProxy<void(bool isChecked)> ItemTreeView::sigCheckToggled(Item* item, int id)
 {
-    if(id < impl->checkColumns.size()){
+    if(id < static_cast<int>(impl->checkColumns.size())){
         return impl->getOrCreateItvItem(item)->getOrCreateSigCheckToggled(id);
     }
     return impl->sigCheckToggledForInvalidItem;
@@ -927,7 +919,7 @@ ItemList<>& ItemTreeView::allCheckedItems(int id)
 
 ItemList<>& ItemTreeViewImpl::checkedItems(int id)
 {
-    if(id >= 0 && id < checkColumns.size()){
+    if(id >= 0 && id < static_cast<int>(checkColumns.size())){
         CheckColumnPtr& cc = checkColumns[id];
         if(cc){
             if(cc->needToUpdateCheckedItemList){

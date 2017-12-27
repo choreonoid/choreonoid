@@ -15,9 +15,9 @@ namespace cnoid {
 class Mapping;
 class YAMLWriter;
 
-class CNOID_EXPORT MultiVector3Seq : public MultiSeq<Vector3, Eigen::aligned_allocator<Vector3> >
+class CNOID_EXPORT MultiVector3Seq : public MultiSeq<Vector3, Eigen::aligned_allocator<Vector3>>
 {
-    typedef MultiSeq<Vector3, Eigen::aligned_allocator<Vector3> > BaseSeqType;
+    typedef MultiSeq<Vector3, Eigen::aligned_allocator<Vector3>> BaseSeqType;
 
 public:
     typedef std::shared_ptr<MultiVector3Seq> Ptr;
@@ -27,14 +27,14 @@ public:
     MultiVector3Seq(const MultiVector3Seq& org);
     virtual ~MultiVector3Seq();
 
-    virtual AbstractSeqPtr cloneSeq() const;
+    using BaseSeqType::operator=;
+    virtual AbstractSeqPtr cloneSeq() const override;
     void copySeqProperties(const MultiVector3Seq& source);
         
 protected:
-    virtual Vector3 defaultValue() const { return Vector3::Zero(); }
-
-    virtual bool doWriteSeq(YAMLWriter& writer);
-    virtual bool doReadSeq(const Mapping& archive);
+    virtual Vector3 defaultValue() const override;
+    virtual bool doReadSeq(const Mapping* archive, std::ostream& os) override;
+    virtual bool doWriteSeq(YAMLWriter& writer) override;
 };
 
 typedef MultiVector3Seq::Ptr MultiVector3SeqPtr;

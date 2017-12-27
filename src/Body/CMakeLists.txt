@@ -13,7 +13,9 @@ set(sources
   LinkPath.cpp
   JointPath.cpp
   Jacobian.cpp
-  ContactMaterialTable.cpp
+  Material.cpp
+  ContactMaterial.cpp
+  MaterialTable.cpp
   Device.cpp
   ForceSensor.cpp
   RateGyroSensor.cpp
@@ -34,6 +36,7 @@ set(sources
   PinDragIK.cpp
   LinkGroup.cpp
   LeggedBodyHelper.cpp
+  BodyCollisionDetector.cpp
   BodyCollisionDetectorUtil.cpp
   BodyMotion.cpp
   BodyMotionPoseProvider.cpp
@@ -56,6 +59,7 @@ set(sources
   VRMLBodyWriter.cpp
   PoseProviderToBodyMotionConverter.cpp
   BodyMotionUtil.cpp
+  ControllerIO.cpp
   SimpleController.cpp
   CnoidBody.cpp # This file must be placed at the last position
   )
@@ -74,7 +78,10 @@ set(headers
   LinkPath.h
   JointPath.h
   LinkGroup.h
-  ContactMaterialTable.h
+  Material.h
+  ContactMaterial.h
+  MaterialTable.h
+  BodyCollisionDetector.h
   BodyCollisionDetectorUtil.h
   MultiDeviceStateSeq.h
   Device.h
@@ -105,7 +112,6 @@ set(headers
   InverseDynamics.h
   Jacobian.h
   MassMatrix.h
-  ContactAttribute.h
   ConstraintForceSolver.h
   PoseProvider.h
   BodyMotion.h
@@ -115,8 +121,10 @@ set(headers
   BodyState.h
   CollisionLinkPair.h
   ExtraJoint.h
+  ControllerIO.h
   SimpleController.h
   exportdecl.h
+  CnoidBody.h
   )
 
 make_gettext_mofiles(${target} mofiles)
@@ -146,9 +154,7 @@ function(add_cnoid_body_customizer)
     set_target_properties(${target} PROPERTIES INSTALL_RPATH "$ORIGIN")
   endif()
 
-  if(QT5)
-    qt5_use_modules(${target} Widgets)
-  endif()
+  target_link_libraries(${target} CnoidBase)
 
   install(TARGETS ${target}
     RUNTIME DESTINATION ${CNOID_PLUGIN_SUBDIR}/customizer CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
@@ -195,8 +201,6 @@ install(
   DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}/simplecontroller
   DESTINATION ${CNOID_PLUGIN_SUBDIR}/simplecontroller
   FILES_MATCHING PATTERN "*" EXCLUDE)
-
-install_external_libraries(${Boost_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS})
 
 if(ENABLE_PYTHON)
   if(USE_PYBIND11)

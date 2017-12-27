@@ -81,7 +81,7 @@ SceneDevice* createSceneSpotLight(Device* device)
     return new SceneDevice(spotLight, scene, [=](){ updateSpotLight(spotLight, scene); });
 }
 
-SceneDevice* createNullSceneDevice(Device* device)
+SceneDevice* createNullSceneDevice(Device*)
 {
     return 0;
 }

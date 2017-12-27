@@ -62,6 +62,37 @@ agx::ContactMaterialRef AGXScene::createContactMaterial(const AGXContactMaterial
     return AGXObjectFactory::createContactMaterial(desc, getSimulation()->getMaterialManager());
 }
 
+#define PRINT_MATERIAL(field, field2) std::cout << "  " << #field << " " << field2 << std::endl
+void AGXScene::printMaterials()
+{
+    for(auto it : getSimulation()->getMaterialManager()->getMaterials()){
+        agx::Material* const mat = it.second;
+    }
+}
+
+void AGXScene::printContactMaterialTable()
+{
+    for(auto it : getSimulation()->getMaterialManager()->getContactMaterials()){
+        agx::ContactMaterial* const mat = it.second;
+        std::cout << "[" << mat->getMaterial1()->getName() << " " << mat->getMaterial2()->getName() << "]" << std::endl;
+        PRINT_MATERIAL(youngsModulus, mat->getYoungsModulus());
+        PRINT_MATERIAL(restitution, mat->getRestitution());
+        PRINT_MATERIAL(damping, mat->getDamping());
+        PRINT_MATERIAL(friction, mat->getFrictionCoefficient());
+        PRINT_MATERIAL(surfaceViscosity, mat->getSurfaceViscosity());
+        PRINT_MATERIAL(enableSurfaceFriction, mat->getSurfaceFrictionEnabled());
+        PRINT_MATERIAL(adhesionForce, mat->getAdhesion());
+        PRINT_MATERIAL(adhesivOverLap, mat->getAdhesiveOverlap());
+        PRINT_MATERIAL(contactReductionMode, mat->getContactReductionMode());
+        PRINT_MATERIAL(contactReductionBinResolution, mat->getContactReductionBinResolution());
+        if(!mat->getFrictionModel()) continue;
+        PRINT_MATERIAL(frictionModel, mat->getFrictionModel()->getClassName());
+        PRINT_MATERIAL(solveType, mat->getFrictionModel()->getSolveType());
+
+    }
+}
+#undef PRINT_MATERIAL
+
 void AGXScene::setCollision(const agx::Name& name, bool bOn)
 {
     getSimulation()->getSpace()->setEnablePair(name, name, bOn);

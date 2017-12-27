@@ -12,18 +12,21 @@ class CameraSampleController : public SimpleController
     DeviceList<Camera> cameras;
     double timeCounter;
     double timeStep;
+    std::ostream* os;
     
 public:
-    virtual bool initialize(SimpleControllerIO* io)
+    virtual bool initialize(SimpleControllerIO* io) override
     {
+        os = &io->os();
+        
         cameras << io->body()->devices();
 
         for(size_t i=0; i < cameras.size(); ++i){
             Device* camera = cameras[i];
             io->enableInput(camera);
-            os() << "Device type: " << camera->typeName()
-                 << ", id: " << camera->id()
-                 << ", name: " << camera->name() << std::endl;
+            *os << "Device type: " << camera->typeName()
+                << ", id: " << camera->id()
+                << ", name: " << camera->name() << std::endl;
         }
         
         timeCounter = 0.0;
@@ -32,7 +35,7 @@ public:
         return true;
     }
 
-    virtual bool control()
+    virtual bool control() override
     {
         timeCounter += timeStep;
         if(timeCounter >= 1.0){
@@ -40,7 +43,8 @@ public:
                 Camera* camera = cameras[i];
                 std::string filename = camera->name() + ".png";
                 camera->constImage().save(filename);
-                os() << "The image of " << camera->name() << " has been saved to \"" << filename << "\"." << std::endl;
+                *os << "The image of " << camera->name()
+                    << " has been saved to \"" << filename << "\"." << std::endl;
             }
             timeCounter = 0.0;
         }

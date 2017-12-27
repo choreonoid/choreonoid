@@ -327,7 +327,7 @@ SgMaterial* AssimpSceneLoaderImpl::convertAiMaterial(unsigned int index)
     }
     
     aiColor3D color(0.f, 0.f, 0.f);
-    float diffuse;
+    float diffuse{};
     if(AI_SUCCESS == srcMaterial->Get(AI_MATKEY_COLOR_DIFFUSE, color)){
         material->setDiffuseColor(Vector3(color.r, color.g, color.b));
         diffuse = color.r+color.g+color.b;
@@ -344,7 +344,7 @@ SgMaterial* AssimpSceneLoaderImpl::convertAiMaterial(unsigned int index)
         material->setShininess(s / 128.0f);
     }
     if(AI_SUCCESS == srcMaterial->Get(AI_MATKEY_COLOR_AMBIENT, color)){
-        float c = diffuse==0? 0 : (color.r+color.g+color.b)/diffuse;
+        float c = diffuse ==0 ? 0 : (color.r + color.g + color.b) / diffuse;
         if(c>1)
             c=1;
         material->setAmbientIntensity(c);

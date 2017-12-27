@@ -27,7 +27,7 @@ public:
         colSeq = collisionSeqItem->collisionSeq();
     }
 
-    virtual bool onTimeChanged(double time){
+    bool onTimeChanged(double time){
         bool isValid = false;
 
         if(colSeq){
@@ -39,7 +39,7 @@ public:
                 const CollisionSeq::Frame collisionPairs0 = colSeq->frame(clampedFrame);
                 CollisionLinkPairList& collisionPairs = worldItem->collisions();
                 collisionPairs.clear();
-                for(int i=0; i<collisionPairs0[0]->size(); i++){
+                for(size_t i=0; i < collisionPairs0[0]->size(); i++){
                     collisionPairs.push_back(collisionPairs0[0]->at(i));
                 }
             }

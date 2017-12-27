@@ -5,6 +5,7 @@
 #include "OpenHRPControllerItem.h"
 #include "OnlineViewerServer.h"
 #include "OpenHRPOnlineViewerItem.h"
+#include "OpenHRPClockGeneratorItem.h"
 
 #ifdef OPENHRP_3_1
 #include "OpenHRPInterpreterServiceItem.h"
@@ -39,13 +40,12 @@ public:
         itemManager().registerClass<OpenHRPControllerItem>(ITEM_NAME);
         itemManager().addCreationPanel<OpenHRPControllerItem>();
 
+        OpenHRPOnlineViewerItem::initializeClass(this);
+
 #ifdef OPENHRP_3_1
         OpenHRPInterpreterServiceItem::initializeClass(this);
+        OpenHRPClockGeneratorItem::initialize(this);
 #endif
-
-//        OnlineViewerServer* onlineViewer = new OnlineViewerServer();
-//        getDefaultNamingContextHelper()->bindObject(onlineViewer->_this(), "OnlineViewer");
-        OpenHRPOnlineViewerItem::initializeClass(this);
 
         return true;
     }

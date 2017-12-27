@@ -17,7 +17,7 @@ namespace cnoid
 class CNOID_EXPORT ForwardDynamicsABM : public ForwardDynamics
 {
 public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         
     ForwardDynamicsABM(DyBody* body);
     ~ForwardDynamicsABM();
@@ -68,6 +68,6 @@ private:
     std::vector<double> ddq;
 };
 	
-};
+}
 
 #endif

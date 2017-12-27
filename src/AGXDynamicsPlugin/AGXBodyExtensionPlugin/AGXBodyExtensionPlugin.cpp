@@ -1,3 +1,8 @@
+/**
+   \file
+   \author Ikumi Susa
+*/
+
 #include <cnoid/Plugin>
 
 namespace cnoid{
@@ -15,6 +20,6 @@ public:
     }
 };
 
-CNOID_IMPLEMENT_PLUGIN_ENTRY(AGXBodyExtensionPlugin);
+CNOID_IMPLEMENT_PLUGIN_ENTRY(AGXBodyExtensionPlugin)
 
 }

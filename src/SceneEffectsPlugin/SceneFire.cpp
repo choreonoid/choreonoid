@@ -92,7 +92,7 @@ bool FireProgram::initializeRendering(SceneParticles* particles)
     Vector3f v;
     float speed, theta, phi;
     vector<GLfloat> data(nParticles * 3);
-    for(int i = 0; i < nParticles; ++i) {
+    for(GLuint i = 0; i < nParticles; ++i) {
         theta = fire->initialVelocityAngleRange() * random();
         phi = 2.0 * PI * random();
 
@@ -115,7 +115,7 @@ bool FireProgram::initializeRendering(SceneParticles* particles)
     data.resize(nParticles);
     float rate = fire->lifeTime() / nParticles;
     float time = 0.0f;
-    for(int i = 0; i < nParticles; ++i) {
+    for(GLuint i = 0; i < nParticles; ++i) {
         data[i] = time;
         time += rate;
     }

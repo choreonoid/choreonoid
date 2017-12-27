@@ -17,7 +17,7 @@ const char* DLL_EXTENSION = "dll";
 const char* EXEC_SUFFIX = ".exe";
 const char* EXEC_EXTENSION = "exe";
 const char* PATH_DELIMITER = ";";
-#elif __APPLE__
+#elif defined(__APPLE__)
 const char* DLL_PREFIX = "lib";
 const char* DLL_SUFFIX = ".dylib";
 const char* DLL_EXTENSION = "dylib";

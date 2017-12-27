@@ -10,13 +10,13 @@
 using namespace cnoid;
 
 
-LinkGroup::LinkGroup(private_tag tag)
+LinkGroup::LinkGroup(private_tag)
 {
 
 }
 
 
-LinkGroup::LinkGroup(const LinkGroup& org)
+LinkGroup::LinkGroup(const LinkGroup&)
 {
 
 }

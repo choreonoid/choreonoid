@@ -10,7 +10,7 @@
 #include "PoseProvider.h"
 #include "BodyMotion.h"
 #include "ZMPSeq.h"
-#include <cnoid/MultiAffine3Seq>
+#include <cnoid/MultiSE3MatrixSeq>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -47,7 +47,7 @@ private:
     int minNumJoints;
     std::vector<Link*> footLinks;
     std::vector<JointPathPtr> ikPaths;
-    MultiAffine3SeqPtr footLinkPositions;
+    MultiSE3MatrixSeqPtr footLinkPositions;
     std::vector<double> qTranslated;
     Vector3 p_waist;
     Matrix3 R_waist;

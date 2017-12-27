@@ -149,14 +149,14 @@ void Impl::initialize(Body* body, double timeStep, const Vector3& gravityAcceler
 
     // initialize kalman filtering
     kfStates.resize(accelerationSensors.size());
-    for(int i=0; i < accelerationSensors.size(); ++i){
+    for(size_t i=0; i < accelerationSensors.size(); ++i){
         const AccelerationSensor* sensor = accelerationSensors[i];
         const Link* link = sensor->link();
         const Vector3 o_Vgsens = link->R() * (link->R().transpose() * link->w()).cross(sensor->localTranslation()) + link->v();
         KFState& s = kfStates[i];
-        for(int i=0; i < 3; ++i){
-            s.x[i](0) = o_Vgsens(i);
-            s.x[i](1) = 0.0;
+        for(int j=0; j < 3; ++j){
+            s.x[j](0) = o_Vgsens(j);
+            s.x[j](1) = 0.0;
         }
     }
 }

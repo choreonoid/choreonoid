@@ -14,7 +14,7 @@ namespace cnoid {
 PortableServer::POA_var nspoa;
 }
 
-int main(int argc, char* argv[])
+int main()
 {
     char** argv2 = new char*[5];
     int argc2 = 0;

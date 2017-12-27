@@ -326,7 +326,7 @@ void YAMLReaderImpl::setAnchor(ValueNode* node, yaml_char_t* anchor, const yaml_
 }
 
     
-void YAMLReaderImpl::onDocumentStart(yaml_event_t& event)
+void YAMLReaderImpl::onDocumentStart(yaml_event_t&)
 {
     if(debugTrace){
         cout << "YAMLReaderImpl::onDocumentStart()" << endl;
@@ -334,7 +334,7 @@ void YAMLReaderImpl::onDocumentStart(yaml_event_t& event)
 }
 
 
-void YAMLReaderImpl::onDocumentEnd(yaml_event_t& event)
+void YAMLReaderImpl::onDocumentEnd(yaml_event_t&)
 {
     if(debugTrace){
         cout << "YAMLReaderImpl::onDocumentEnd()" << endl;
@@ -362,7 +362,7 @@ void YAMLReaderImpl::onMappingStart(yaml_event_t& event)
 }
 
 
-void YAMLReaderImpl::onMappingEnd(yaml_event_t& event)
+void YAMLReaderImpl::onMappingEnd(yaml_event_t&)
 {
     if(debugTrace){
         cout << "YAMLReaderImpl::onMappingEnd()" << endl;
@@ -404,7 +404,7 @@ void YAMLReaderImpl::onListingStart(yaml_event_t& event)
 }
 
 
-void YAMLReaderImpl::onListingEnd(yaml_event_t& event)
+void YAMLReaderImpl::onListingEnd(yaml_event_t&)
 {
     if(debugTrace){
         cout << "YAMLReaderImpl::onListingEnd()" << endl;
@@ -477,22 +477,22 @@ ScalarNode* YAMLReaderImpl::createScalar(const yaml_event_t& event)
 
     switch(event.data.scalar.style){
     case YAML_PLAIN_SCALAR_STYLE:
-        scalar->stringStyle = PLAIN_STRING;
+        scalar->stringStyle_ = PLAIN_STRING;
         break;
     case YAML_SINGLE_QUOTED_SCALAR_STYLE:
-        scalar->stringStyle = SINGLE_QUOTED;
+        scalar->stringStyle_ = SINGLE_QUOTED;
         break;
     case YAML_DOUBLE_QUOTED_SCALAR_STYLE:
-        scalar->stringStyle = DOUBLE_QUOTED;
+        scalar->stringStyle_ = DOUBLE_QUOTED;
         break;
     case YAML_LITERAL_SCALAR_STYLE:
-        scalar->stringStyle = LITERAL_STRING;
+        scalar->stringStyle_ = LITERAL_STRING;
         break;
     case YAML_FOLDED_SCALAR_STYLE:
-        scalar->stringStyle = FOLDED_STRING;
+        scalar->stringStyle_ = FOLDED_STRING;
         break;
     default:
-        scalar->stringStyle = DOUBLE_QUOTED;
+        scalar->stringStyle_ = DOUBLE_QUOTED;
     }
 
     return scalar;

@@ -1,0 +1,697 @@
+#VRML V2.0 utf8
+
+
+Group {
+  children 
+    Group {
+      children [ 
+        Switch {
+          whichChoice 0
+          choice 
+            Group {
+              children [ 
+                Switch {
+                  whichChoice 0
+                  choice 
+                    Group {
+
+                    }
+
+                },
+                  
+                Switch {
+                  whichChoice 0
+                  choice 
+                    Group {
+
+                    }
+
+                } ]
+
+            }
+
+        },
+          
+        Group {
+          children 
+            Transform {
+              translation 0 0 0
+              rotation 0 0 1  0
+              scale 1 1 1
+              scaleOrientation 0 0 1  0
+              center 0 0 0
+              children 
+                Switch {
+                  whichChoice 0
+                  choice 
+                    Group {
+                      children 
+                        DEF Rep_0 Group {
+                          children 
+                            DEF Geom_0 Group {
+                              children 
+                                DEF Poly_Geom_Data Group {
+                                  children [ 
+                                    DEF myShape_18 Group {
+                                      children 
+                                        Shape {
+                                          appearance 
+                                          Appearance {
+                                            material 
+                                            Material {
+                                              diffuseColor 0.58499998 0.46799999 0.44999999
+                                              ambientIntensity 0.30625969
+                                              specularColor 0.60000002 0.60000002 0.60000002
+                                              shininess 0.38999999
+
+                                            }
+
+                                          }
+                                          geometry 
+                                          IndexedFaceSet {
+                                            coord 
+                                            Coordinate {
+                                              point [ 0.0099999998 0 0,
+                                                  0 0 -0.0099999998,
+                                                  0.19 0 0,
+                                                  0.2 0 -0.0099999998,
+                                                  0 0 -0.19,
+                                                  0.16 0 -0.16,
+                                                  0.039999999 0 -0.16,
+                                                  0.039999999 0 -0.039999999,
+                                                  0.16 0 -0.039999999,
+                                                  0.2 0 -0.19,
+                                                  0.0099999998 0 -0.2,
+                                                  0.19 0 -0.2 ]
+
+                                            }
+                                            normal 
+                                            Normal {
+                                              vector 0 -1 0
+
+                                            }
+                                            coordIndex [ 0, 1, 2, -1, 3, 2, 1, -1,
+                                                4, 5, 6, -1, 4, 6, 7, -1,
+                                                7, 3, 1, -1, 1, 4, 7, -1,
+                                                3, 7, 8, -1, 3, 8, 5, -1,
+                                                5, 4, 9, -1, 9, 3, 5, -1,
+                                                4, 10, 9, -1, 11, 9, 10, -1 ]
+                                            normalIndex [ 0, 0, 0, -1, 0, 0, 0, -1,
+                                                0, 0, 0, -1, 0, 0, 0, -1,
+                                                0, 0, 0, -1, 0, 0, 0, -1,
+                                                0, 0, 0, -1, 0, 0, 0, -1,
+                                                0, 0, 0, -1, 0, 0, 0, -1,
+                                                0, 0, 0, -1, 0, 0, 0, -1 ]
+                                            ccw TRUE
+                                            solid TRUE
+                                            convex TRUE
+                                            creaseAngle 0
+
+                                          }
+
+                                        }
+
+                                    },
+                                      
+                                    DEF myShape_27 Group {
+                                      children 
+                                        Shape {
+                                          appearance 
+                                          Appearance {
+                                            material 
+                                            Material {
+                                              diffuseColor 0.58499998 0.46799999 0.44999999
+                                              ambientIntensity 0.30625969
+                                              specularColor 0.60000002 0.60000002 0.60000002
+                                              shininess 0.38999999
+
+                                            }
+
+                                          }
+                                          geometry 
+                                          IndexedFaceSet {
+                                            coord 
+                                            Coordinate {
+                                              point [ 0.0099999998 0.44999999 -0.2,
+                                                  0 0.44999999 -0.19,
+                                                  0.19 0.44999999 -0.2,
+                                                  0.2 0.44999999 -0.19,
+                                                  0 0.44999999 -0.0099999998,
+                                                  0.16 0.44999999 -0.039999999,
+                                                  0.039999999 0.44999999 -0.039999999,
+                                                  0.039999999 0.44999999 -0.16,
+                                                  0.16 0.44999999 -0.16,
+                                                  0.2 0.44999999 -0.0099999998,
+                                                  0.0099999998 0.44999999 0,
+                                                  0.19 0.44999999 0 ]
+
+                                            }
+                                            normal 
+                                            Normal {
+                                              vector 0 1 0
+
+                                            }
+                                            coordIndex [ 0, 1, 2, -1, 3, 2, 1, -1,
+                                                4, 5, 6, -1, 4, 6, 7, -1,
+                                                7, 3, 1, -1, 1, 4, 7, -1,
+                                                3, 7, 8, -1, 3, 8, 5, -1,
+                                                5, 4, 9, -1, 9, 3, 5, -1,
+                                                4, 10, 9, -1, 11, 9, 10, -1 ]
+                                            normalIndex [ 0, 0, 0, -1, 0, 0, 0, -1,
+                                                0, 0, 0, -1, 0, 0, 0, -1,
+                                                0, 0, 0, -1, 0, 0, 0, -1,
+                                                0, 0, 0, -1, 0, 0, 0, -1,
+                                                0, 0, 0, -1, 0, 0, 0, -1,
+                                                0, 0, 0, -1, 0, 0, 0, -1 ]
+                                            ccw TRUE
+                                            solid TRUE
+                                            convex TRUE
+                                            creaseAngle 0
+
+                                          }
+
+                                        }
+
+                                    },
+                                      
+                                    DEF myShape_36 Group {
+                                      children 
+                                        Shape {
+                                          appearance 
+                                          Appearance {
+                                            material 
+                                            Material {
+                                              diffuseColor 0.58499998 0.46799999 0.44999999
+                                              ambientIntensity 0.30625969
+                                              specularColor 0.60000002 0.60000002 0.60000002
+                                              shininess 0.38999999
+
+                                            }
+
+                                          }
+                                          geometry 
+                                          IndexedFaceSet {
+                                            coord 
+                                            Coordinate {
+                                              point [ 0.0099999998 0.44999999 0,
+                                                  0.0099999998 0 0,
+                                                  0.19 0.44999999 0,
+                                                  0.19 0 0 ]
+
+                                            }
+                                            normal 
+                                            DEF _+0 Normal {
+                                              vector 0 0 1
+
+                                            }
+                                            coordIndex [ 0, 1, 2, -1, 3, 2, 1, -1 ]
+                                            normalIndex [ 0, 0, 0, -1, 0, 0, 0, -1 ]
+                                            ccw TRUE
+                                            solid TRUE
+                                            convex TRUE
+                                            creaseAngle 0
+
+                                          }
+
+                                        }
+
+                                    },
+                                      
+                                    DEF myShape_38 Group {
+                                      children 
+                                        Shape {
+                                          appearance 
+                                          Appearance {
+                                            material 
+                                            Material {
+                                              diffuseColor 0.58499998 0.46799999 0.44999999
+                                              ambientIntensity 0.30625969
+                                              specularColor 0.60000002 0.60000002 0.60000002
+                                              shininess 0.38999999
+
+                                            }
+
+                                          }
+                                          geometry 
+                                          IndexedFaceSet {
+                                            coord 
+                                            Coordinate {
+                                              point [ 0.2 0.44999999 -0.0099999998,
+                                                  0.2 0 -0.0099999998,
+                                                  0.2 0.44999999 -0.19,
+                                                  0.2 0 -0.19 ]
+
+                                            }
+                                            normal 
+                                            DEF _+1 Normal {
+                                              vector 1 0 0
+
+                                            }
+                                            coordIndex [ 0, 1, 2, -1, 3, 2, 1, -1 ]
+                                            normalIndex [ 0, 0, 0, -1, 0, 0, 0, -1 ]
+                                            ccw TRUE
+                                            solid TRUE
+                                            convex TRUE
+                                            creaseAngle 0
+
+                                          }
+
+                                        }
+
+                                    },
+                                      
+                                    DEF myShape_40 Group {
+                                      children 
+                                        Shape {
+                                          appearance 
+                                          Appearance {
+                                            material 
+                                            Material {
+                                              diffuseColor 0.58499998 0.46799999 0.44999999
+                                              ambientIntensity 0.30625969
+                                              specularColor 0.60000002 0.60000002 0.60000002
+                                              shininess 0.38999999
+
+                                            }
+
+                                          }
+                                          geometry 
+                                          IndexedFaceSet {
+                                            coord 
+                                            Coordinate {
+                                              point [ 0.19 0.44999999 -0.2,
+                                                  0.19 0 -0.2,
+                                                  0.0099999998 0.44999999 -0.2,
+                                                  0.0099999998 0 -0.2 ]
+
+                                            }
+                                            normal 
+                                            DEF _+2 Normal {
+                                              vector 0 0 -1
+
+                                            }
+                                            coordIndex [ 0, 1, 2, -1, 3, 2, 1, -1 ]
+                                            normalIndex [ 0, 0, 0, -1, 0, 0, 0, -1 ]
+                                            ccw TRUE
+                                            solid TRUE
+                                            convex TRUE
+                                            creaseAngle 0
+
+                                          }
+
+                                        }
+
+                                    },
+                                      
+                                    DEF myShape_42 Group {
+                                      children 
+                                        Shape {
+                                          appearance 
+                                          Appearance {
+                                            material 
+                                            Material {
+                                              diffuseColor 0.58499998 0.46799999 0.44999999
+                                              ambientIntensity 0.30625969
+                                              specularColor 0.60000002 0.60000002 0.60000002
+                                              shininess 0.38999999
+
+                                            }
+
+                                          }
+                                          geometry 
+                                          IndexedFaceSet {
+                                            coord 
+                                            Coordinate {
+                                              point [ 0 0.44999999 -0.19,
+                                                  0 0 -0.19,
+                                                  0 0.44999999 -0.0099999998,
+                                                  0 0 -0.0099999998 ]
+
+                                            }
+                                            normal 
+                                            DEF _+3 Normal {
+                                              vector -1 0 0
+
+                                            }
+                                            coordIndex [ 0, 1, 2, -1, 3, 2, 1, -1 ]
+                                            normalIndex [ 0, 0, 0, -1, 0, 0, 0, -1 ]
+                                            ccw TRUE
+                                            solid TRUE
+                                            convex TRUE
+                                            creaseAngle 0
+
+                                          }
+
+                                        }
+
+                                    },
+                                      
+                                    DEF myShape_44 Group {
+                                      children 
+                                        Shape {
+                                          appearance 
+                                          Appearance {
+                                            material 
+                                            Material {
+                                              diffuseColor 0.58499998 0.46799999 0.44999999
+                                              ambientIntensity 0.30625969
+                                              specularColor 0.60000002 0.60000002 0.60000002
+                                              shininess 0.38999999
+
+                                            }
+
+                                          }
+                                          geometry 
+                                          IndexedFaceSet {
+                                            coord 
+                                            Coordinate {
+                                              point [ 0.039999999 0.44999999 -0.16,
+                                                  0.039999999 0 -0.16,
+                                                  0.16 0.44999999 -0.16,
+                                                  0.16 0 -0.16 ]
+
+                                            }
+                                            normal 
+                                            USE _+0
+                                            coordIndex [ 0, 1, 2, -1, 3, 2, 1, -1 ]
+                                            normalIndex [ 0, 0, 0, -1, 0, 0, 0, -1 ]
+                                            ccw TRUE
+                                            solid TRUE
+                                            convex TRUE
+                                            creaseAngle 0
+
+                                          }
+
+                                        }
+
+                                    },
+                                      
+                                    DEF myShape_46 Group {
+                                      children 
+                                        Shape {
+                                          appearance 
+                                          Appearance {
+                                            material 
+                                            Material {
+                                              diffuseColor 0.58499998 0.46799999 0.44999999
+                                              ambientIntensity 0.30625969
+                                              specularColor 0.60000002 0.60000002 0.60000002
+                                              shininess 0.38999999
+
+                                            }
+
+                                          }
+                                          geometry 
+                                          IndexedFaceSet {
+                                            coord 
+                                            Coordinate {
+                                              point [ 0.16 0.44999999 -0.16,
+                                                  0.16 0 -0.16,
+                                                  0.16 0.44999999 -0.039999999,
+                                                  0.16 0 -0.039999999 ]
+
+                                            }
+                                            normal 
+                                            USE _+3
+                                            coordIndex [ 0, 1, 2, -1, 3, 2, 1, -1 ]
+                                            normalIndex [ 0, 0, 0, -1, 0, 0, 0, -1 ]
+                                            ccw TRUE
+                                            solid TRUE
+                                            convex TRUE
+                                            creaseAngle 0
+
+                                          }
+
+                                        }
+
+                                    },
+                                      
+                                    DEF myShape_48 Group {
+                                      children 
+                                        Shape {
+                                          appearance 
+                                          Appearance {
+                                            material 
+                                            Material {
+                                              diffuseColor 0.58499998 0.46799999 0.44999999
+                                              ambientIntensity 0.30625969
+                                              specularColor 0.60000002 0.60000002 0.60000002
+                                              shininess 0.38999999
+
+                                            }
+
+                                          }
+                                          geometry 
+                                          IndexedFaceSet {
+                                            coord 
+                                            Coordinate {
+                                              point [ 0.16 0.44999999 -0.039999999,
+                                                  0.16 0 -0.039999999,
+                                                  0.039999999 0.44999999 -0.039999999,
+                                                  0.039999999 0 -0.039999999 ]
+
+                                            }
+                                            normal 
+                                            USE _+2
+                                            coordIndex [ 0, 1, 2, -1, 3, 2, 1, -1 ]
+                                            normalIndex [ 0, 0, 0, -1, 0, 0, 0, -1 ]
+                                            ccw TRUE
+                                            solid TRUE
+                                            convex TRUE
+                                            creaseAngle 0
+
+                                          }
+
+                                        }
+
+                                    },
+                                      
+                                    DEF myShape_50 Group {
+                                      children 
+                                        Shape {
+                                          appearance 
+                                          Appearance {
+                                            material 
+                                            Material {
+                                              diffuseColor 0.58499998 0.46799999 0.44999999
+                                              ambientIntensity 0.30625969
+                                              specularColor 0.60000002 0.60000002 0.60000002
+                                              shininess 0.38999999
+
+                                            }
+
+                                          }
+                                          geometry 
+                                          IndexedFaceSet {
+                                            coord 
+                                            Coordinate {
+                                              point [ 0.039999999 0.44999999 -0.039999999,
+                                                  0.039999999 0 -0.039999999,
+                                                  0.039999999 0.44999999 -0.16,
+                                                  0.039999999 0 -0.16 ]
+
+                                            }
+                                            normal 
+                                            USE _+1
+                                            coordIndex [ 0, 1, 2, -1, 3, 2, 1, -1 ]
+                                            normalIndex [ 0, 0, 0, -1, 0, 0, 0, -1 ]
+                                            ccw TRUE
+                                            solid TRUE
+                                            convex TRUE
+                                            creaseAngle 0
+
+                                          }
+
+                                        }
+
+                                    },
+                                      
+                                    DEF myShape_59 Group {
+                                      children 
+                                        Shape {
+                                          appearance 
+                                          Appearance {
+                                            material 
+                                            Material {
+                                              diffuseColor 0.58499998 0.46799999 0.44999999
+                                              ambientIntensity 0.30625969
+                                              specularColor 0.60000002 0.60000002 0.60000002
+                                              shininess 0.38999999
+
+                                            }
+
+                                          }
+                                          geometry 
+                                          IndexedFaceSet {
+                                            coord 
+                                            Coordinate {
+                                              point [ 0.2 0 -0.0099999998,
+                                                  0.2 0.44999999 -0.0099999998,
+                                                  0.19 0 0,
+                                                  0.19 0.44999999 0 ]
+
+                                            }
+                                            normal 
+                                            Normal {
+                                              vector 0.70700002 0 0.70700002
+
+                                            }
+                                            coordIndex [ 0, 1, 2, -1, 3, 2, 1, -1 ]
+                                            normalIndex [ 0, 0, 0, -1, 0, 0, 0, -1 ]
+                                            ccw TRUE
+                                            solid TRUE
+                                            convex TRUE
+                                            creaseAngle 0
+
+                                          }
+
+                                        }
+
+                                    },
+                                      
+                                    DEF myShape_64 Group {
+                                      children 
+                                        Shape {
+                                          appearance 
+                                          Appearance {
+                                            material 
+                                            Material {
+                                              diffuseColor 0.58499998 0.46799999 0.44999999
+                                              ambientIntensity 0.30625969
+                                              specularColor 0.60000002 0.60000002 0.60000002
+                                              shininess 0.38999999
+
+                                            }
+
+                                          }
+                                          geometry 
+                                          IndexedFaceSet {
+                                            coord 
+                                            Coordinate {
+                                              point [ 0.19 0 -0.2,
+                                                  0.19 0.44999999 -0.2,
+                                                  0.2 0 -0.19,
+                                                  0.2 0.44999999 -0.19 ]
+
+                                            }
+                                            normal 
+                                            Normal {
+                                              vector 0.70700002 0 -0.70700002
+
+                                            }
+                                            coordIndex [ 0, 1, 2, -1, 3, 2, 1, -1 ]
+                                            normalIndex [ 0, 0, 0, -1, 0, 0, 0, -1 ]
+                                            ccw TRUE
+                                            solid TRUE
+                                            convex TRUE
+                                            creaseAngle 0
+
+                                          }
+
+                                        }
+
+                                    },
+                                      
+                                    DEF myShape_69 Group {
+                                      children 
+                                        Shape {
+                                          appearance 
+                                          Appearance {
+                                            material 
+                                            Material {
+                                              diffuseColor 0.58499998 0.46799999 0.44999999
+                                              ambientIntensity 0.30625969
+                                              specularColor 0.60000002 0.60000002 0.60000002
+                                              shininess 0.38999999
+
+                                            }
+
+                                          }
+                                          geometry 
+                                          IndexedFaceSet {
+                                            coord 
+                                            Coordinate {
+                                              point [ 0.0099999998 0 0,
+                                                  0.0099999998 0.44999999 0,
+                                                  0 0 -0.0099999998,
+                                                  0 0.44999999 -0.0099999998 ]
+
+                                            }
+                                            normal 
+                                            Normal {
+                                              vector -0.70700002 0 0.70700002
+
+                                            }
+                                            coordIndex [ 0, 1, 2, -1, 3, 2, 1, -1 ]
+                                            normalIndex [ 0, 0, 0, -1, 0, 0, 0, -1 ]
+                                            ccw TRUE
+                                            solid TRUE
+                                            convex TRUE
+                                            creaseAngle 0
+
+                                          }
+
+                                        }
+
+                                    },
+                                      
+                                    DEF myShape_74 Group {
+                                      children 
+                                        Shape {
+                                          appearance 
+                                          Appearance {
+                                            material 
+                                            Material {
+                                              diffuseColor 0.58499998 0.46799999 0.44999999
+                                              ambientIntensity 0.30625969
+                                              specularColor 0.60000002 0.60000002 0.60000002
+                                              shininess 0.38999999
+
+                                            }
+
+                                          }
+                                          geometry 
+                                          IndexedFaceSet {
+                                            coord 
+                                            Coordinate {
+                                              point [ 0 0 -0.19,
+                                                  0 0.44999999 -0.19,
+                                                  0.0099999998 0 -0.2,
+                                                  0.0099999998 0.44999999 -0.2 ]
+
+                                            }
+                                            normal 
+                                            Normal {
+                                              vector -0.70700002 0 -0.70700002
+
+                                            }
+                                            coordIndex [ 0, 1, 2, -1, 3, 2, 1, -1 ]
+                                            normalIndex [ 0, 0, 0, -1, 0, 0, 0, -1 ]
+                                            ccw TRUE
+                                            solid TRUE
+                                            convex TRUE
+                                            creaseAngle 0
+
+                                          }
+
+                                        }
+
+                                    } ]
+
+                                }
+
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        } ]
+
+    }
+
+}

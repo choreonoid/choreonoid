@@ -542,7 +542,7 @@ void ConfigDialog::onTargetViewIndexChanged(int index)
     if(index == 0){
         recorder->setTargetView(0);
     } else {
-        int viewIndex = index - 1;
+        size_t viewIndex = index - 1;
         if(viewIndex < activeViews.size()){
             recorder->setTargetView(activeViews[viewIndex]);
         }
@@ -799,7 +799,7 @@ void MovieRecorderImpl::setupOnlineModeRecording()
 }
 
 
-void MovieRecorderImpl::onPlaybackStarted(double time)
+void MovieRecorderImpl::onPlaybackStarted(double /* time */)
 {
     startOnlineModeRecording();
 }
@@ -884,9 +884,12 @@ void MovieRecorderImpl::captureViewImage(bool waitForPrevOutput)
             drawMouseCursorImage(painter);
         }
     } else {
-        captured->image = QPixmap();
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
+        captured->image = QPixmap::grabWidget(targetView);
+#else
+        captured->image = targetView->grab();
+#endif
         QPixmap& pixmap = boost::get<QPixmap>(captured->image);
-        pixmap.grabWidget(targetView);
 
         captureSceneWidgets(targetView, pixmap);
 
@@ -922,7 +925,7 @@ void MovieRecorderImpl::drawMouseCursorImage(QPainter& painter)
                                      QImage::Format_ARGB32);
             } else {
                 tmpImageBuf.resize(cursor->width * cursor->height);
-                for(int i = 0; i < tmpImageBuf.size(); ++i){
+                for(size_t i=0; i < tmpImageBuf.size(); ++i){
                     tmpImageBuf[i] = (quint32)cursor->pixels[i];
                 }
                 cursorImage = QImage((uchar*)(&tmpImageBuf.front()),
@@ -1144,7 +1147,6 @@ ViewMarker::ViewMarker(MovieRecorderImpl* recorder)
 {
     setWindowFlags(Qt::Widget | Qt::FramelessWindowHint);
     setAttribute(Qt::WA_NoSystemBackground);
-    setAttribute(Qt::WA_PaintOnScreen);
     setAttribute(Qt::WA_TransparentForMouseEvents);
 
     pen.setStyle(Qt::SolidLine);
@@ -1166,7 +1168,7 @@ void ViewMarker::setTargetView(View* view)
 }
 
 
-void ViewMarker::paintEvent(QPaintEvent* event)
+void ViewMarker::paintEvent(QPaintEvent*)
 {
     QPainter painter(this);
     painter.setPen(pen);

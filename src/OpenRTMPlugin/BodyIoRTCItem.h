@@ -21,7 +21,7 @@ public:
     BodyIoRTCItem(const BodyIoRTCItem& org);
     virtual ~BodyIoRTCItem();
         
-    virtual bool initialize(ControllerItemIO* io) override;
+    virtual bool initialize(ControllerIO* io) override;
     virtual bool start() override;
     virtual void input() override;
     virtual void output() override;

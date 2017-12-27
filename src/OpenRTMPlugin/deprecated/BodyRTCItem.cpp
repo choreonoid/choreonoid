@@ -9,6 +9,7 @@
 #include <cnoid/BodyItem>
 #include <cnoid/Link>
 #include <cnoid/BasicSensors>
+#include <cnoid/ControllerIO>
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
 #include <cnoid/FileUtil>
@@ -17,7 +18,6 @@
 #include <cnoid/Sleep>
 #include <cnoid/ProjectManager>
 #include <rtm/CorbaNaming.h>
-#include <boost/regex.hpp>
 #include "../gettext.h"
 
 using namespace std;
@@ -291,12 +291,18 @@ Item* BodyRTCItem::doDuplicate() const
 }
 
 
-bool BodyRTCItem::start(ControllerItemIO* io)
+bool BodyRTCItem::initialize(ControllerIO* io)
 {
     this->io = io;
     simulationBody = io->body();
     timeStep_ = io->timeStep();
     controlTime_ = io->currentTime();
+
+    for(auto joint : simulationBody->joints()){
+        if(joint->isRevoluteJoint() || joint->isPrismaticJoint()){
+            joint->setActuationMode(Link::JOINT_EFFORT);
+        }
+    }
 
     forceSensors_ = simulationBody->devices<ForceSensor>().getSortedById();
     gyroSensors_ = simulationBody->devices<RateGyroSensor>().getSortedById();
@@ -305,6 +311,12 @@ bool BodyRTCItem::start(ControllerItemIO* io)
     executionCycle = (executionCycleProperty > 0.0) ? executionCycleProperty : timeStep_;
     executionCycleCounter = executionCycle;
 
+    return true;
+}
+
+
+bool BodyRTCItem::start()
+{
     bool isReady = true;
     
     if(rtcomp && !rtcomp->isValid()){

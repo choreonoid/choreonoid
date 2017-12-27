@@ -217,7 +217,9 @@ bool RTSConnection::disConnect()
 
 
 RTSComp::RTSComp(const string& name, RTC::RTObject_ptr rtc, RTSystemItemImpl* impl, const QPointF& pos) :
-        impl(impl), pos(pos), name(name)
+        impl(impl),
+        name(name),
+        pos(pos)
 {
     setRtc(rtc);
 }
@@ -538,8 +540,8 @@ RTSConnection* RTSystemItemImpl::addRTSConnectionName(const string& id, const st
         const string& dataflow, const string& subscription,
         const bool setPos, const Vector2 pos[] )
 {
-    RTSPort* sourcePort;
-    RTSPort* targetPort;
+    RTSPort* sourcePort{};
+    RTSPort* targetPort{};
     RTSComp* sourceRtc = nameToRTSComp(sourceCompName);
     if(sourceRtc){
         sourcePort = sourceRtc->nameToRTSPort(sourcePortName);
@@ -864,13 +866,13 @@ void RTSystemItemImpl::restoreRTSComp(const string& name, const Vector2& pos,
     if(!comp->rtc_){
         comp->inPorts.clear();
         comp->outPorts.clear();
-        for(int i=0; i<inPorts.size(); i++){
+        for(size_t i=0; i < inPorts.size(); i++){
             RTSPortPtr rtsPort = new RTSPort(inPorts[i].first, 0, comp);
             rtsPort->isInPort = true;
             rtsPort->isServicePort = inPorts[i].second;
             comp->inPorts.insert(pair<string, RTSPortPtr>(rtsPort->name, rtsPort));
         }
-        for(int i=0; i<outPorts.size(); i++){
+        for(size_t i=0; i < outPorts.size(); i++){
             RTSPortPtr rtsPort = new RTSPort(outPorts[i].first, 0, comp);
             rtsPort->isInPort = false;
             rtsPort->isServicePort = outPorts[i].second;

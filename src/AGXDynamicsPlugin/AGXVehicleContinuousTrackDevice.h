@@ -22,6 +22,8 @@ struct AGXVehicleContinuousTrackDeviceDesc
         hingeDamping = 0.0333;
         minStabilizingHingeNormalForce = 100;
         stabilizingHingeFrictionParameter = 1.5;
+        nodesToWheelsMergeThreshold = -0.1;
+        nodesToWheelsSplitThreshold = -0.05;
         enableMerge = false;
         numNodesPerMergeSegment = 3;
         contactReduction = 1;
@@ -32,6 +34,7 @@ struct AGXVehicleContinuousTrackDeviceDesc
         sprocketNames.clear();
         idlerNames.clear();
         rollerNames.clear();
+        guideNames.clear();
     }
     Vector3 upAxis;
     int numberOfNodes;           // Total number of nodes in the track.
@@ -47,6 +50,8 @@ struct AGXVehicleContinuousTrackDeviceDesc
     double hingeDamping;
     double minStabilizingHingeNormalForce;
     double stabilizingHingeFrictionParameter;
+    double nodesToWheelsMergeThreshold;
+    double nodesToWheelsSplitThreshold;
     bool enableMerge;
     int numNodesPerMergeSegment;
     int contactReduction;
@@ -57,6 +62,8 @@ struct AGXVehicleContinuousTrackDeviceDesc
     vector<string> sprocketNames;
     vector<string> idlerNames;
     vector<string> rollerNames;
+    vector<string> guideNames;
+    string materialName;
 };
 
 struct TrackState{

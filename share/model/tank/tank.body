@@ -423,20 +423,23 @@ links:
               -
                 type: Camera
                 name: Camera
+                rotation: [ [ 1, 0, 0, 90 ], [ 0, 1, 0, -90 ] ]
                 format: COLOR_DEPTH
                 fieldOfView: 65
                 width: 320
                 height: 240
                 frameRate: 30
-                rotation: [ [ 1, 0, 0, 90 ], [ 0, 1, 0, -90 ] ]
               -
                 type: RangeSensor
-                name: RangeSensor
-                scanAngle: 90
-                scanStep:  0.5
-                scanRate:  10
-                maxDistance: 10
+                name: VelodyneVLP-16
+                translation: [ 0, 0, 0.1 ]
                 rotation: [ [ 1, 0, 0, 90 ], [ 0, 1, 0, -90 ] ]
+                yawRange: 360.0
+                yawStep:  0.4
+                pitchRange: 30.0
+                pitchStep: 2.0
+                scanRate:  5
+                maxDistance: 100.0
               -
                 type: Transform
                 translation: [ -0.01, 0, 0.045 ]
@@ -464,8 +467,9 @@ links:
     name: TRACK_L
     parent: CHASSIS
     translation: [ 0, 0.22, -0.026 ]
-    jointType: pseudoContinuousTrack
+    jointType: fixed
     jointAxis: Y
+    actuationMode: jointSurfaceVelocity
     centerOfMass: [ 0, 0, 0 ]
     mass: 1.0
     inertia: [
@@ -564,8 +568,9 @@ links:
     name: TRACK_R
     parent: CHASSIS
     translation: [ 0, -0.22, -0.026 ]
-    jointType: pseudoContinuousTrack
+    jointType: fixed
     jointAxis: Y
+    actuationMode: jointSurfaceVelocity
     centerOfMass: [ 0, 0, 0 ]
     mass: 1.0
     inertia: [

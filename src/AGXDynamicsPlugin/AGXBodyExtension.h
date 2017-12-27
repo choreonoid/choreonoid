@@ -26,11 +26,11 @@ public:
     void createJoints();
 };
 
-class AGXContinousTrack : public AGXBodyExtension {
+class AGXContinuousTrack : public AGXBodyExtension {
 public:
-    AGXContinousTrack(AGXLink* footLinkStart, AGXBody* body);
+    AGXContinuousTrack(AGXLink* footLinkStart, AGXBody* body);
 private:
-    AGXContinousTrack();
+    AGXContinuousTrack();
     AGXLink*  _chassisLink;
     std::vector<AGXLink*> _feet;
     void addFoot(Link* link, AGXBody* body);

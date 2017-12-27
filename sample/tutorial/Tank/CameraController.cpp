@@ -12,7 +12,7 @@ class CameraController : public SimpleController
     std::ostream* os;
     
 public:
-    virtual bool initialize(SimpleControllerIO* io)
+    virtual bool initialize(SimpleControllerIO* io) override
     {
         camera = io->body()->findDevice<Camera>("Camera");
         io->enableInput(camera);
@@ -21,7 +21,7 @@ public:
         return true;
     }
 
-    virtual bool control()
+    virtual bool control() override
     {
         joystick.readCurrentState();
 

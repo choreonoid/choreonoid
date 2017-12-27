@@ -8,6 +8,7 @@
 #include <atomic>
 #include <cassert>
 #include <iosfwd>
+#include <functional>
 
 #ifdef WIN32
 #include <memory>
@@ -91,7 +92,7 @@ class Referenced
 
 protected:
     Referenced() : refCount_(0), weakCounter_(0) { }
-    Referenced(const Referenced& org) : refCount_(0), weakCounter_(0) { }
+    Referenced(const Referenced&) : refCount_(0), weakCounter_(0) { }
 
     int refCount() const { return refCount_.load(std::memory_order_relaxed); }
     
@@ -204,10 +205,11 @@ public:
     }
 
 private:
-    template<class Y> friend class weak_ref_ptr;
-    template<class Y> friend class ref_ptr;
-
     T* px;
+
+    template<class Y> friend class ref_ptr;
+    template<class Y> friend class weak_ref_ptr;
+    friend class std::hash<ref_ptr<T>>;
 };
 
 
@@ -373,11 +375,12 @@ public:
     }
         
 private:
-    template<class Y> friend class weak_ref_ptr;
-    template<class Y> friend class ref_ptr;
-                                                        
     T* px;
     WeakCounter* counter;
+
+    template<class Y> friend class weak_ref_ptr;
+    template<class Y> friend class ref_ptr;
+    friend class std::hash<weak_ref_ptr<T>>;
 };
 
 template<class T, class U> inline bool operator<(weak_ref_ptr<T> const & a, weak_ref_ptr<U> const & b)
@@ -389,6 +392,30 @@ template<class T> void swap(weak_ref_ptr<T> & a, weak_ref_ptr<T> & b)
 {
     a.swap(b);
 }
+
+}
+
+namespace std {
+
+template<class T>
+class hash<cnoid::ref_ptr<T>>
+{
+public:
+    size_t operator()(const cnoid::ref_ptr<T>& p) const
+    {
+        return hash<T*>()(p.px);
+    }
+};
+
+template<class T>
+class hash<cnoid::weak_ref_ptr<T>>
+{
+public:
+    size_t operator()(const cnoid::weak_ref_ptr<T>& p) const
+    {
+        return hash<cnoid::WeakCounter*>()(p.counter);
+    }
+};
 
 }
 

@@ -247,7 +247,7 @@ public :
             else
                 rangeCameraColors.clear();
             Vector3f point;
-            for(size_t i=0; i<numPoints; i++, src+=timedPointCloud.point_step){
+            for(int i=0; i < numPoints; i++, src+=timedPointCloud.point_step){
                 memcpy(&point.x(), &src[0], 4);
                 memcpy(&point.y(), &src[4], 4);
                 memcpy(&point.z(), &src[8], 4);
@@ -411,7 +411,7 @@ public:
         
         if(BodyItem* bodyItem = dynamic_cast<BodyItem*>(item)){
             Body* body = bodyItem->body();
-            for(size_t i=0; i < body->numDevices(); ++i){
+            for(int i=0; i < body->numDevices(); ++i){
                 Device* device = body->device(i);
                 if(!camera){
                     camera = dynamic_cast<Camera*>(device);

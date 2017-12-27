@@ -7,10 +7,9 @@
 #include <cnoid/ItemManager>
 #include <cnoid/SubSimulatorItem>
 #include <cnoid/AISTSimulatorItem>
-#include <cnoid/ContactAttribute>
+#include <cnoid/ContactMaterial>
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 
 namespace {
@@ -29,10 +28,9 @@ protected:
     virtual Item* doDuplicate() const;
 
 private:
-    bool calcContactForce(Link* link1, Link* link2, const CollisionArray& collisions, const ContactAttribute& attribute);
+    bool calcContactForce(Link* link1, Link* link2, const CollisionArray& collisions, ContactMaterial* cm);
 
     weak_ref_ptr<AISTSimulatorItem> weakCurrentSimulator;
-    int handlerId;
 };
 
 
@@ -56,17 +54,16 @@ public:
 CNOID_IMPLEMENT_PLUGIN_ENTRY(SpringDamperContactPlugin);
 
 
-
 SpringDamperContactItem::SpringDamperContactItem()
 {
-    handlerId = -1;
+
 }
 
 
 SpringDamperContactItem::SpringDamperContactItem(const SpringDamperContactItem& org)
     : SubSimulatorItem(org)
 {
-    handlerId = -1;
+
 }
 
 
@@ -82,14 +79,15 @@ void SpringDamperContactItem::onPositionChanged()
     AISTSimulatorItem* currentSimulator = weakCurrentSimulator.lock();
     if(simulator != currentSimulator){
         if(currentSimulator){
-            currentSimulator->unregisterCollisionHandler(handlerId);
+            currentSimulator->unregisterCollisionHandler("SpringDamperContact");
             weakCurrentSimulator.reset();
         }
         if(simulator){
-            handlerId =
-                simulator->registerCollisionHandler(
-                    "SpringDamperContact",
-                    std::bind(&SpringDamperContactItem::calcContactForce, this, _1, _2, _3, _4));
+            simulator->registerCollisionHandler(
+                "SpringDamperContact",
+                [&](Link* link1, Link* link2, const CollisionArray& collisions, ContactMaterial* cm){
+                    return calcContactForce(link1, link2, collisions, cm); });
+            
             weakCurrentSimulator = simulator;
         }
     }
@@ -103,11 +101,11 @@ bool SpringDamperContactItem::initializeSimulation(SimulatorItem* simulatorItem)
 
 
 bool SpringDamperContactItem::calcContactForce
-(Link* link1, Link* link2, const CollisionArray& collisions, const ContactAttribute& attribute)
+(Link* link1, Link* link2, const CollisionArray& collisions, ContactMaterial* cm)
 {
     const bool doApplyToLink1 = !link1->isRoot() || !link1->isFixedJoint();
     const bool doApplyToLink2 = !link2->isRoot() || !link2->isFixedJoint();
-    const double mu = attribute.dynamicFriction();
+    const double mu = cm->dynamicFriction();
 
     for(size_t i=0; i < collisions.size(); ++i){
         const Collision& c = collisions[i];

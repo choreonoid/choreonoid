@@ -1,6 +1,7 @@
 #include "AGXVehicleContinuousTrack.h"
 #include "AGXBody.h"
 #include "AGXScene.h"
+#include <agx/version.h>
 
 
 using namespace std;
@@ -41,13 +42,18 @@ AGXVehicleContinuousTrack::AGXVehicleContinuousTrack(AGXVehicleContinuousTrackDe
             return nullptr;
         }
         // get raduis of wheel
+        double radius = 0.0;
         if(l_agxLink->getAGXGeometry()->getShapes().size() <= 0 ) return nullptr;
         agxCollide::Shape* shape = l_agxLink->getAGXGeometry()->getShapes()[0];
-        agxCollide::Cylinder* l_cylinder = dynamic_cast<agxCollide::Cylinder*>(shape);
-        if(!l_cylinder){
-            std::cout << "failed to cast agxCollide::Cylinder." << std::endl;
+        if(auto l_cylinder = dynamic_cast<agxCollide::Cylinder*>(shape)){
+            radius = l_cylinder->getRadius();
+        }else if(auto l_capsule = dynamic_cast<agxCollide::Capsule*>(shape)){
+            radius = l_capsule->getRadius();
+        }else{
+            std::cout << "failed to cast agxCollide::Cylinder or agxCollide::Capsule." << std::endl;
             return nullptr;
         }
+
         // create rotate matrix
         Link* l_link = l_agxLink->getOrgLink();
         const Vector3& a = l_link->a();            // rotational axis
@@ -66,7 +72,7 @@ AGXVehicleContinuousTrack::AGXVehicleContinuousTrack(AGXVehicleContinuousTrackDe
         AGXVehicleTrackWheelDesc l_desc;
         l_desc.rigidbody = l_agxLink->getAGXRigidBody();
         l_desc.model = model;
-        l_desc.radius = l_cylinder->getRadius();
+        l_desc.radius = radius;
         l_desc.rbRelTransform.setRotate(l_desc.rigidbody->getRotation());
         l_desc.rbRelTransform.setRotate(rotation);
         return AGXObjectFactory::createVehicleTrackWheel(l_desc);
@@ -75,7 +81,9 @@ AGXVehicleContinuousTrack::AGXVehicleContinuousTrack(AGXVehicleContinuousTrackDe
     auto createWheels = [createWheel, &trackDesc](const vector<string>& names, const agxVehicle::TrackWheel::Model& model)
     {
         for(auto it : names){
-            trackDesc.trackWheelRefs.push_back(createWheel(it, model));
+            if(auto wheel = createWheel(it, model)){
+                trackDesc.trackWheelRefs.push_back(wheel);
+            }
         }
     };
 
@@ -97,6 +105,8 @@ AGXVehicleContinuousTrack::AGXVehicleContinuousTrack(AGXVehicleContinuousTrackDe
     trackDesc.hingeDamping= desc.hingeDamping;
     trackDesc.minStabilizingHingeNormalForce = desc.minStabilizingHingeNormalForce;
     trackDesc.stabilizingHingeFrictionParameter = desc.stabilizingHingeFrictionParameter;
+    trackDesc.nodesToWheelsMergeThreshold = desc.nodesToWheelsMergeThreshold;
+    trackDesc.nodesToWheelsSplitThreshold = desc.nodesToWheelsSplitThreshold;
     trackDesc.enableMerge = desc.enableMerge;
     trackDesc.numNodesPerMergeSegment = (agx::UInt)desc.numNodesPerMergeSegment;
     switch(desc.contactReduction)
@@ -111,7 +121,11 @@ AGXVehicleContinuousTrack::AGXVehicleContinuousTrack(AGXVehicleContinuousTrackDe
             trackDesc.contactReduction =  agxVehicle::TrackInternalMergeProperties::ContactReduction::MODERATE;
             break;
         case 3:
+#if AGX_VERSION_GREATER_OR_EQUAL(2 ,21, 1, 0)
+            trackDesc.contactReduction =  agxVehicle::TrackInternalMergeProperties::ContactReduction::AGGRESSIVE;
+#else
             trackDesc.contactReduction =  agxVehicle::TrackInternalMergeProperties::ContactReduction::AGRESSIVE;
+#endif
             break;
         default:
             break;
@@ -123,22 +137,33 @@ AGXVehicleContinuousTrack::AGXVehicleContinuousTrack(AGXVehicleContinuousTrackDe
     m_track = AGXObjectFactory::createVehicleTrack(trackDesc);
     if(!m_track) return;
 
+    AGXScene* agxScene = getAGXBody()->getAGXScene();
+    // Set material
+    m_track->setMaterial(agxScene->getMaterial(desc.materialName));
+
     // Add to simulation
-    getAGXBody()->getAGXScene()->getSimulation()->add((agxSDK::Assembly*)m_track);
-    getAGXBody()->getAGXScene()->getSimulation()->add(new TrackListener(this));
+    agxScene->getSimulation()->add((agxSDK::Assembly*)m_track);
+    agxScene->getSimulation()->add(new TrackListener(this));
 
     /* Set collision Group*/
     // 1. All links(except tracks) are member of body's collision group
     // 2. Collision b/w tracks and links(except wheels) are not need -> create new group trackCollision
-    // 3. Collision b/w wheels and tracks needs collision -> remove wheels from trackCollision
+    // 3. Collision b/w wheels, guides andtracks needs collision -> remove wheels from trackCollision
     std::stringstream trackCollision;
-    trackCollision << "trackCollision" << generateUID() << std::endl;
+    trackCollision << "trackCollision" << agx::UuidGenerator().generate().str() << std::endl;
     m_track->addGroup(trackCollision.str());
     getAGXBody()->addCollisionGroupNameToAllLink(trackCollision.str());
     getAGXBody()->addCollisionGroupNameToDisableCollision(trackCollision.str());
-    for(auto wheels : trackDesc.trackWheelRefs){
-        agxCollide::GeometryRef geometry = wheels->getRigidBody()->getGeometries().front();
+    for(auto wheel : trackDesc.trackWheelRefs){
+        agxCollide::GeometryRef geometry = wheel->getRigidBody()->getGeometries().front();
         geometry->removeGroup(trackCollision.str());
+    }
+    for(auto guide : desc.guideNames){
+        if(agx::RigidBody* rigid = getAGXBody()->getAGXRigidBody(guide)){
+            if(agxCollide::GeometryRef geometry = rigid->getGeometries().front()){
+                geometry->removeGroup(trackCollision.str());
+            }
+        }
     }
 
     /* Rendering */
@@ -158,7 +183,7 @@ AGXVehicleContinuousTrack::AGXVehicleContinuousTrack(AGXVehicleContinuousTrackDe
         }
     }
     m_device->notifyStateChange();
-    printParameters(trackDesc);
+    //printParameters(trackDesc);
 }
 
 void AGXVehicleContinuousTrack::updateTrackState() {

@@ -4,11 +4,13 @@
 */
 
 #include "MultiSE3Seq.h"
-#include "PlainSeqFormatLoader.h"
+#include "PlainSeqFileLoader.h"
 #include "ValueTree.h"
 #include "YAMLWriter.h"
 #include "EigenUtil.h"
+#include "GeneralSeqReader.h"
 #include <boost/format.hpp>
+#include <fstream>
 #include "gettext.h"
 
 using namespace std;
@@ -49,21 +51,146 @@ MultiSE3Seq::~MultiSE3Seq()
 }
 
 
-bool MultiSE3Seq::loadPlainMatrixFormat(const std::string& filename)
+SE3 MultiSE3Seq::defaultValue() const
 {
-    clearSeqMessage();
+    return SE3(Vector3::Zero(), Quat::Identity());
+}
+
+
+bool MultiSE3Seq::doReadSeq(const Mapping* archive, std::ostream& os)
+{
+    GeneralSeqReader reader(os);
+
+    if(!reader.readHeaders(archive, this)){
+        return false;
+    }
+    
+    string se3format;
+
+    if(reader.formatVersion() >= 2.0){
+        se3format = archive->get<string>("SE3Format");
+    } else {
+        reader.setFuncToCheckSeqType(
+            [&](const string& type){
+                return (type == "MultiSE3Seq" || type == "MultiSe3Seq" || type == "MultiAffine3Seq");
+            });
+        se3format = archive->get<string>("format");
+    }
+
+    bool result = false;
+    static const char* illegal_number_of_SE3_elements_message =
+        _("The number of elements specified as a SE3 value is invalid.");
+    
+    if(se3format == "XYZQWQXQYQZ"){
+        result = reader.readFrames<MultiSE3Seq>(
+            archive, this,
+            [](const ValueNode& node, SE3& value){
+                const Listing& v = *node.toListing();
+                if(v.size() != 7){
+                    v.throwException(illegal_number_of_SE3_elements_message);
+                }
+                value.translation() << v[0].toDouble(), v[1].toDouble(), v[2].toDouble();
+                value.rotation() = Quat(v[3].toDouble(), v[4].toDouble(), v[5].toDouble(), v[6].toDouble());
+            });
+
+    } else if(se3format == "XYZQXQYQZQW" && reader.formatVersion() < 2.0){
+        result = reader.readFrames<MultiSE3Seq>(
+            archive, this,
+            [](const ValueNode& node, SE3& value){
+                const Listing& v = *node.toListing();
+                if(v.size() != 7){
+                    v.throwException(illegal_number_of_SE3_elements_message);
+                }
+                value.translation() << v[0].toDouble(), v[1].toDouble(), v[2].toDouble();
+                value.rotation() = Quat(v[6].toDouble(), v[3].toDouble(), v[4].toDouble(), v[5].toDouble());
+            });
+
+    } else if(se3format == "XYZRPY"){
+        result = reader.readFrames<MultiSE3Seq>(
+            archive, this,
+            [](const ValueNode& node, SE3& value){
+                const Listing& v = *node.toListing();
+                if(v.size() != 6){
+                    v.throwException(illegal_number_of_SE3_elements_message);
+                }
+                value.translation() << v[0].toDouble(), v[1].toDouble(), v[2].toDouble();
+                value.rotation() = rotFromRpy(v[3].toDouble(), v[4].toDouble(), v[5].toDouble());
+            });
+
+    } else {
+        os << format(_("SE3 format \"%1%\" is not supported.")) % se3format << endl;
+    }
+
+    return result;
+}
+
+
+static void writeSE3(YAMLWriter& writer, const SE3& value)
+{
+    writer.startFlowStyleListing();
+
+    const Vector3& p = value.translation();
+    writer.putScalar(p.x());
+    writer.putScalar(p.y());
+    writer.putScalar(p.z());
+
+    const Quat& q = value.rotation();
+    writer.putScalar(q.w());
+    writer.putScalar(q.x());
+    writer.putScalar(q.y());
+    writer.putScalar(q.z());
+
+    writer.endListing();
+}
+    
+
+bool MultiSE3Seq::doWriteSeq(YAMLWriter& writer)
+{
+    if(!writeSeqHeaders(writer)){
+        return false;
+    }
+
+    double version = writer.info("formatVersion", 2.0);
+
+    string formatKey;
+    if(version >= 2.0){
+        formatKey = "SE3Format";
+    } else {
+        formatKey = "format";
+    }
+
+    writer.putKeyValue(formatKey, "XYZQWQXQYQZ");
+    
+    writer.putKey("frames");
+    writer.startListing();
+    const int m = numParts();
+    const int n = numFrames();
+    for(int i=0; i < n; ++i){
+        Frame f = frame(i);
+        writer.startFlowStyleListing();
+        for(int j=0; j < m; ++j){
+            writeSE3(writer, f[j]);
+        }
+        writer.endListing();
+    }
+    writer.endListing();
+    
+    return true;
+}
+
+
+bool MultiSE3Seq::loadPlainMatrixFormat(const std::string& filename, std::ostream& os)
+{
     PlainSeqFileLoader loader;
 
-    if(!loader.load(filename)){
-        addSeqMessage(loader.errorMessage());
+    if(!loader.load(filename, os)){
         return false;
     }
 
     int n = loader.numParts();
     if(n < 12 || (n % 12) != 0){
-        addSeqMessage(filename +
-                      "does not have elements in multiple of twelve "
-                      "(each 3 for position vectors, 9 for attitde matrices)");
+        os << format(_("\"%1%\" does not have elements in multiple of twelve (each 3 for position vectors, 9 for attitde matrices)"))
+            % filename << endl;
         return false;
     }
     int m = n / 12;
@@ -95,20 +222,17 @@ bool MultiSE3Seq::loadPlainMatrixFormat(const std::string& filename)
 }
 
 
-bool MultiSE3Seq::loadPlainRpyFormat(const std::string& filename)
+bool MultiSE3Seq::loadPlainRpyFormat(const std::string& filename, std::ostream& os)
 {
-    clearSeqMessage();
     PlainSeqFileLoader loader;
 
-    if(!loader.load(filename)){
-        addSeqMessage(loader.errorMessage());
+    if(!loader.load(filename, os)){
         return false;
     }
 
     int n = loader.numParts();
     if(n != 3){
-        addSeqMessage(filename +
-                      "does not have a multiple of 3 elements (R,P,Y)");
+        os << format(_("\"%1%\" does not have a multiple of 3 elements (R,P,Y)")) % filename << endl;
         return false;
     }
 
@@ -135,18 +259,16 @@ bool MultiSE3Seq::loadPlainRpyFormat(const std::string& filename)
 }
 
 
-
-bool MultiSE3Seq::saveTopPartAsPlainMatrixFormat(const std::string& filename)
+bool MultiSE3Seq::saveTopPartAsPlainMatrixFormat(const std::string& filename, std::ostream& os)
 {
-    clearSeqMessage();
     boost::format f("%1$.4f");
     const int nFrames = numFrames();
 
     if(nFrames > 0 && numParts() > 0){
 
-        ofstream os(filename.c_str());
-        if(!os){
-            addSeqMessage(filename + " cannot be opened.");
+        ofstream file(filename.c_str());
+        if(!file){
+            os << format(_("\"%1%\" cannot be opened.")) % filename << endl;
             return false;
         }
 
@@ -154,10 +276,10 @@ bool MultiSE3Seq::saveTopPartAsPlainMatrixFormat(const std::string& filename)
 
         Part base = part(0);
         for(int i=0; i < nFrames; ++i){
-            os << (f % (i / r));
+            file << (f % (i / r));
             const SE3& x = base[i];
             for(int j=0; j < 3; ++j){
-                os << " " << x.translation()[j];
+                file << " " << x.translation()[j];
             }
             Matrix3 R(x.rotation());
             for(int j=0; j < 3; ++j){
@@ -166,136 +288,15 @@ bool MultiSE3Seq::saveTopPartAsPlainMatrixFormat(const std::string& filename)
                     if(fabs(m) < 1.0e-14){
                         m = 0.0;
                     }
-                    os << " " << m;
+                    file << " " << m;
                 }
             }
-            os << " 0 0 0 0 0 0"; // velocity elements (dv, omega)
-            os << "\n";
+            file << " 0 0 0 0 0 0"; // velocity elements (dv, omega)
+            file << "\n";
         }
 
         return true;
     }
 
     return false;
-}
-
-
-static inline void writeSE3(YAMLWriter& writer, const SE3& value)
-{
-    writer.startFlowStyleListing();
-
-    const Vector3& p = value.translation();
-    writer.putScalar(p.x());
-    writer.putScalar(p.y());
-    writer.putScalar(p.z());
-
-    const Quat& q = value.rotation();
-    writer.putScalar(q.w());
-    writer.putScalar(q.x());
-    writer.putScalar(q.y());
-    writer.putScalar(q.z());
-
-    writer.endListing();
-}
-    
-
-bool MultiSE3Seq::doWriteSeq(YAMLWriter& writer)
-{
-    if(BaseSeqType::doWriteSeq(writer)){
-
-        writer.putKeyValue("format", "XYZQWQXQYQZ");
-    
-        writer.putKey("frames");
-        writer.startListing();
-        const int m = numParts();
-        const int n = numFrames();
-        for(int i=0; i < n; ++i){
-            Frame f = frame(i);
-            writer.startFlowStyleListing();
-            for(int j=0; j < m; ++j){
-                writeSE3(writer, f[j]);
-            }
-            writer.endListing();
-        }
-        writer.endListing();
-        
-        return true;
-    }
-    return false;
-}
-
-
-bool MultiSE3Seq::doReadSeq(const Mapping& archive)
-{
-    if(BaseSeqType::doReadSeq(archive)){
-        const string& type = archive["type"].toString();
-        if(type == seqType() || type == "MultiSe3Seq" || type == "MultiAffine3Seq"){
-            string formatString = archive["format"].toString();
-            const Listing& values = *archive.findListing("frames");
-            if(values.isValid()){
-                const int nParts = archive["numParts"].toInt();
-                const int nFrames = values.size();
-                setDimension(nFrames, nParts);
-                if(formatString == "XYZQWQXQYQZ"){
-                    readPosQuatSeq(nParts, nFrames, values, true);
-                } else if(formatString == "XYZQXQYQZQW"){
-                    readPosQuatSeq(nParts, nFrames, values, false);
-                } else if(formatString == "XYZRPY"){
-                    readPosRpySeq(nParts, nFrames, values);
-                } else {
-                    addSeqMessage(
-                        str(format(("Unknown format \"%1%\" cannot be loaded into MultiSE3Seq."))
-                            % formatString));
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-    return false;
-}
-
-
-void MultiSE3Seq::readPosQuatSeq(int nParts, int nFrames, const Listing& values, bool isWfirst)
-{
-    for(int i=0; i < nFrames; ++i){
-        const Listing& frameNode = *values[i].toListing();
-        Frame f = frame(i);
-        const int n = std::min(frameNode.size(), nParts);
-        for(int j=0; j < n; ++j){
-            const Listing& node = *frameNode[j].toListing();
-            SE3& x = f[j];
-            if(node.size() == 7){
-                x.translation() << node[0].toDouble(), node[1].toDouble(), node[2].toDouble();
-                if(isWfirst){
-                    x.rotation() = Quat(node[3].toDouble(),
-                                        node[4].toDouble(), node[5].toDouble(), node[6].toDouble());
-                } else {
-                    x.rotation() = Quat(node[6].toDouble(),
-                                        node[3].toDouble(), node[4].toDouble(), node[5].toDouble());
-                }
-            }
-        }
-    }
-}
-
-
-void MultiSE3Seq::readPosRpySeq(int nParts, int nFrames, const Listing& values)
-{
-    for(int i=0; i < nFrames; ++i){
-        const Listing& frameNode = *values[i].toListing();
-        Frame f = frame(i);
-        const int n = std::min(frameNode.size(), nParts);
-        for(int j=0; j < n; ++j){
-            const Listing& node = *frameNode[j].toListing();
-            if(node.size() == 6){
-                SE3& x = f[j];
-                x.translation() << node[0].toDouble(), node[1].toDouble(), node[2].toDouble();
-                const double r = node[3].toDouble();
-                const double p = node[4].toDouble();
-                const double y = node[5].toDouble();
-                x.rotation() = rotFromRpy(r, p, y);
-            }
-        }
-    }
 }

@@ -17,7 +17,7 @@ class SceneLinkImpl;
 class CNOID_EXPORT SceneLink : public SgPosTransform
 {
 public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         
     SceneLink(Link* link);
     ~SceneLink();
@@ -54,7 +54,7 @@ class SceneBodyImpl;
 class CNOID_EXPORT SceneBody : public SgPosTransform
 {
 public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         
     SceneBody(Body* body);
     SceneBody(Body* body, std::function<SceneLink*(Link*)> sceneLinkFactory);

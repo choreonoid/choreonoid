@@ -95,7 +95,7 @@ RTC::ReturnCode_t SR1WalkControllerRTC::onActivated(RTC::UniqueId ec_id)
     if(m_angleIn.isNew()){
         m_angleIn.read();
     }
-    for(size_t i=0; i < qseq->numParts(); ++i){
+    for(int i=0; i < qseq->numParts(); ++i){
         q0[i] = m_angle.data[i];
     }
     oldFrame = qseq->frame(0);

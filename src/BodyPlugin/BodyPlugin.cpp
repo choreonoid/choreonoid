@@ -15,8 +15,8 @@
 #include "WorldLogFileItem.h"
 #include "SensorVisualizerItem.h"
 #include "BodyTrackingCameraItem.h"
-//#include "FilterDialogs.h"
 #include "KinematicFaultChecker.h"
+#include "SplineFilterDialog.h"
 #include "BodyBar.h"
 #include "LeggedBodyBar.h"
 #include "LinkSelectionView.h"
@@ -39,6 +39,7 @@
 #include <cnoid/Plugin>
 #include <cnoid/ItemManager>
 #include <cnoid/MessageView>
+#include <cnoid/CnoidBody>
 #include "gettext.h"
 
 using namespace cnoid;
@@ -48,12 +49,18 @@ namespace {
 class BodyPlugin : public Plugin
 {
 public:
-    BodyPlugin() : Plugin("Body") {
+    BodyPlugin() : Plugin("Body")
+    {
         addOldName("SimpleController");
         setActivationPriority(0);
     }
 
-    virtual bool initialize(){
+    virtual bool initialize()
+    {
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0) && CNOID_ENABLE_GETTEXT
+        setCnoidBodyTextDomainCodeset();
+#endif
 
         Body::addCustomizerDirectory(
             executableTopDirectory() + "/" + CNOID_PLUGIN_SUBDIR + "/customizer");
@@ -72,8 +79,8 @@ public:
 
         BodyMotionEngine::initialize(this);
         CollisionSeqEngine::initialize(this);
-        //initializeFilterDialogs(*this);
         KinematicFaultChecker::initialize(this);
+        initializeSplineFilterDialog(this);
 
         // This should be after the initialization of BodyMotionEngine
         ZMPSeqItem::initializeClass(this); 
@@ -104,8 +111,8 @@ public:
         return true;
     }
 
-    virtual const char* description() {
-
+    virtual const char* description() const override
+    {
         static std::string text =
             str(fmt(_("Body Plugin Version %1%\n")) % CNOID_FULL_VERSION_STRING) +
             "\n" +
@@ -121,6 +128,7 @@ public:
         
     }
 };
+
 }
 
 CNOID_IMPLEMENT_PLUGIN_ENTRY(BodyPlugin);

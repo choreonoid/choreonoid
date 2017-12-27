@@ -18,7 +18,7 @@ namespace cnoid {
 class CNOID_EXPORT DyLink : public Link
 {
 public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     DyLink();
     DyLink(const Link& link);
@@ -143,6 +143,6 @@ public:
 
 typedef ref_ptr<DyBody> DyBodyPtr;
 
-};
+}
 
 #endif

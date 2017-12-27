@@ -13,7 +13,6 @@
 namespace cnoid {
 
 class YAMLReaderImpl;
-class YAMLWriter;
 class ValueNode;
 class ScalarNode;
 class Mapping;
@@ -158,6 +157,9 @@ private:
     class UnknownNodeTypeException : public Exception {
     };
 
+    // This function is only used by YAMLWriter
+    int indexInMapping() const { return indexInMapping_; }
+
 protected:
 
     ValueNode() { }
@@ -177,16 +179,18 @@ private:
 
     int line_;
     int column_;
-    int indexInMapping; // used for YAMLWriter
+
+    //! \todo Move this information to a value of the map defined in Mapping
+    int indexInMapping_;
 
     friend class YAMLReaderImpl;
-    friend class YAMLWriter;
     friend class ScalarNode;
     friend class Mapping;
     friend class Listing;
 };
 
 template<> inline double ValueNode::to<double>() const { return toDouble(); }
+template<> inline float ValueNode::to<float>() const { return static_cast<float>(toDouble()); }
 template<> inline int ValueNode::to<int>() const { return toInt(); }
 template<> inline std::string ValueNode::to<std::string>() const { return toString(); }
     
@@ -200,17 +204,19 @@ public:
     ScalarNode(int value);
     
     virtual ValueNode* clone() const;
+
+    const std::string& stringValue() const { return stringValue_; }
+    StringStyle stringStyle() const { return stringStyle_; }
     
 private:
     ScalarNode(const char* text, size_t length);
     ScalarNode(const char* text, size_t length, StringStyle stringStyle);
     ScalarNode(const ScalarNode& org);
 
-    std::string stringValue;
-    StringStyle stringStyle;
+    std::string stringValue_;
+    StringStyle stringStyle_;
 
     friend class YAMLReaderImpl;
-    friend class YAMLWriter;
     friend class ValueNode;
     friend class Mapping;
     friend class Listing;
@@ -234,7 +240,7 @@ public:
     virtual Mapping* cloneMapping() const;
     
     bool empty() const { return values.empty(); }
-    int size() const { return values.size(); }
+    int size() const { return static_cast<int>(values.size()); }
     void clear();
 
     void setFlowStyle(bool isFlowStyle = true) { isFlowStyle_ = isFlowStyle; }
@@ -250,6 +256,9 @@ public:
     Listing* findListing(const std::string& key) const;
 
     ValueNodePtr extract(const std::string& key);
+
+    bool extract(const std::string& key, double& out_value);
+    bool extract(const std::string& key, std::string& out_value);
 
     ValueNode& get(const std::string& key) const;
 
@@ -295,21 +304,21 @@ public:
 
     bool remove(const std::string& key);
 
-    bool read(const std::string &key, std::string &out_value) const;
-    bool read(const std::string &key, bool &out_value) const;
-    bool read(const std::string &key, int &out_value) const;
-    bool read(const std::string &key, double &out_value) const;
+    bool read(const std::string& key, std::string& out_value) const;
+    bool read(const std::string& key, bool& out_value) const;
+    bool read(const std::string& key, int& out_value) const;
+    bool read(const std::string& key, double& out_value) const;
 
-    template <class T>
-        T read(const std::string& key) const {
+    template <class T> T get(const std::string& key) const {
         T value;
         if(read(key, value)){
             return value;
         } else {
             throwKeyNotFoundException(key);
+            return value;
         }
     }
-
+    
     template <class T>
         T get(const std::string& key, const T& defaultValue) const {
         T value;
@@ -364,6 +373,11 @@ public:
 
     void throwKeyNotFoundException(const std::string& key) const;
 
+    StringStyle keyStringStyle() const { return keyStringStyle_; }
+
+    //! \deprecated
+    template <class T> T read(const std::string& key) const { return get<T>(key); }
+
 #ifdef CNOID_BACKWARD_COMPATIBILITY
     Listing* findSequence(const std::string& key) const { return findListing(key); }
     Listing* openSequence(const std::string& key) { return openListing(key); }
@@ -386,18 +400,15 @@ private:
 
     void writeSub(const std::string &key, const char* text, size_t length, StringStyle stringStyle);
 
-    static bool compareIters(const Mapping::const_iterator& it1, const Mapping::const_iterator& it2);
-
     Container values;
     AssignMode mode;
     int indexCounter;
     const char* doubleFormat_;
     bool isFlowStyle_;
-    StringStyle keyQuoteStyle;
+    StringStyle keyStringStyle_;
 
     friend class Listing;
     friend class YAMLReaderImpl;
-    friend class YAMLWriter;
 };
 
 typedef ref_ptr<Mapping> MappingPtr;
@@ -424,7 +435,7 @@ public:
     typedef Container::const_iterator const_iterator;
 
     bool empty() const { return values.empty(); }
-    int size() const { return values.size(); }
+    int size() const { return static_cast<int>(values.size()); }
     void clear();
     void reserve(int size);
 
@@ -548,7 +559,6 @@ private:
 
     friend class Mapping;
     friend class YAMLReaderImpl;
-    friend class YAMLWriter;
 };
 
 typedef ref_ptr<Listing> ListingPtr;

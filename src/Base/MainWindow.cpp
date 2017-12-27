@@ -37,16 +37,20 @@ MainWindow* mainWindow = 0;
 QSize getAvailableScreenSize() {
     return QGuiApplication::primaryScreen()->availableSize();
 }
+#ifdef Q_OS_WIN32
 QSize getScreenSize() {
     return QGuiApplication::primaryScreen()->size();
 }
+#endif
 #else
 QSize getAvailableScreenSize() {
     return QApplication::desktop()->availableGeometry().size();
 }
+#ifdef Q_OS_WIN32
 QSize getScreenSize() {
     return QApplication::desktop()->screenGeometry().size();
 }
+#endif
 #endif
     
 }

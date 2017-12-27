@@ -103,16 +103,15 @@ typedef std::shared_ptr<Property> PropertyPtr;
 class PropertyItem : public QTableWidgetItem
 {
 public:
-    PropertyItem(ItemPropertyViewImpl* viewImpl, ValueVariant value);
-    PropertyItem(ItemPropertyViewImpl* viewImpl, ValueVariant value, FunctionVariant func);
-
-    virtual QVariant data(int role) const;
-    virtual void setData(int role, const QVariant& qvalue);
-
     ItemPropertyViewImpl* itemPropertyViewImpl;
     ValueVariant value;
     FunctionVariant func;
     bool hasValidFunction;
+
+    PropertyItem(ItemPropertyViewImpl* viewImpl, ValueVariant value);
+    PropertyItem(ItemPropertyViewImpl* viewImpl, ValueVariant value, FunctionVariant func);
+    virtual QVariant data(int role) const;
+    virtual void setData(int role, const QVariant& qvalue);
 };
 
 class CustomizedItemDelegate;
@@ -173,6 +172,11 @@ public:
     virtual void mouseReleaseEvent(QMouseEvent* event){
         isResizing = false;
         QTableWidget::mouseReleaseEvent(event);
+    }
+
+    virtual void resizeEvent(QResizeEvent* event){
+        QTableWidget::resizeEvent(event);
+        horizontalHeader()->resizeSections(QHeaderView::Stretch);
     }
 };
 
@@ -427,7 +431,7 @@ public:
         addProperty(name, new PropertyItem(this, value, func));
     }
     virtual void operator()(const std::string& name, bool value,
-                            const std::function<void(bool)>& func, bool forceUpdate) {
+                            const std::function<void(bool)>& func, bool /* forceUpdate */) {
         addProperty(name, new PropertyItem
                     (this, value, std::function<bool(bool)>(ReturnTrue<bool>(func))));
     }
@@ -438,7 +442,7 @@ public:
         addProperty(name, new PropertyItem(this, Int(value, imin, imax), func));
     }
     virtual void operator()(const std::string& name, int value,
-                            const std::function<void(int)>& func, bool forceUpdate){
+                            const std::function<void(int)>& func, bool /* forceUpdate */){
         addProperty(name, new PropertyItem(this, Int(value, imin, imax),
                                            std::function<bool(int)>(ReturnTrue<int>(func))));
     }
@@ -450,7 +454,7 @@ public:
         addProperty(name, new PropertyItem(this, Double(value, decimals_, dmin, dmax), func));
     }
     virtual void operator()(const std::string& name, double value,
-                            const std::function<void(double)>& func, bool forceUpdate){
+                            const std::function<void(double)>& func, bool /* forceUpdate */){
         addProperty(name, new PropertyItem(this, Double(value, decimals_, dmin, dmax),
                                            std::function<bool(double)>(ReturnTrue<double>(func))));
     }
@@ -462,7 +466,7 @@ public:
         addProperty(name, new PropertyItem(this, value, func));
     }
     virtual void operator()(const std::string& name, const std::string& value,
-                            const std::function<void(const std::string&)>& func, bool forceUpdate){
+                            const std::function<void(const std::string&)>& func, bool /* forceUpdate */){
         addProperty(name, new PropertyItem
                     (this, value, std::function<bool(const std::string&)>(ReturnTrue<const std::string&>(func))));
     }
@@ -474,7 +478,7 @@ public:
         addProperty(name, new PropertyItem(this, selection, func));
     }
     void operator()(const std::string& name, const Selection& selection,
-                    const std::function<void(int which)>& func, bool forceUpdate){
+                    const std::function<void(int which)>& func, bool /* forceUpdate */){
         addProperty(name, new PropertyItem
                     (this, selection,  std::function<bool(int)>(ReturnTrue<int>(func))));
     }
@@ -486,25 +490,25 @@ public:
         addProperty(name, new PropertyItem(this, filepath, func) );
     }
     void operator()(const std::string& name, const FilePathProperty& filepath,
-                    const std::function<void(const std::string&)>& func, bool forceUpdate){
+                    const std::function<void(const std::string&)>& func, bool /* forceUpdate */){
         addProperty(name, new PropertyItem(this, filepath, std::function<bool(const std::string&)>(ReturnTrue<const std::string&>(func))));
     }
 
     void clear();
-    void updateProperties();
+    void updateProperties(bool isItemChanged = false);
     void addProperty(const std::string& name, PropertyItem* propertyItem);
     void onItemSelectionChanged(const ItemList<>& items);
     void zoomFontSize(int pointSizeDiff);
 };
-}
 
+}
 
 
 PropertyItem::PropertyItem(ItemPropertyViewImpl* viewImpl, ValueVariant value)
     : itemPropertyViewImpl(viewImpl),
       value(value)
 {
-    setFlags(Qt::ItemIsEnabled);
+    setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
     hasValidFunction = false;
 }
 
@@ -514,7 +518,7 @@ PropertyItem::PropertyItem(ItemPropertyViewImpl* viewImpl, ValueVariant value, F
       value(value),
       func(func)
 {
-    setFlags(Qt::ItemIsEnabled | Qt::ItemIsEditable);
+    setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsEditable);
     hasValidFunction = true;
 }
 
@@ -529,25 +533,43 @@ QVariant PropertyItem::data(int role) const
         case TYPE_STRING:    return boost::get<string>(value).c_str();
 
         case TYPE_SELECTION:
-        {
-            const Selection& s = boost::get<Selection>(value);
-            if(role == Qt::DisplayRole){
-                return s.selectedLabel();
-            } else if(role == Qt::EditRole){
-                QStringList labels;
-                labels << QString::number(s.selectedIndex());
-                for(int i=0; i < s.size(); ++i){
-                    labels << s.label(i);
+            {
+                const Selection& s = boost::get<Selection>(value);
+                if(role == Qt::DisplayRole){
+                    return s.selectedLabel();
+                } else if(role == Qt::EditRole){
+                    QStringList labels;
+                    labels << QString::number(s.selectedIndex());
+                    for(int i=0; i < s.size(); ++i){
+                        labels << s.label(i);
+                    }
+                    return labels;
                 }
-                return labels;
             }
-        }
 
         case TYPE_FILEPATH:
-            return boost::get<FilePathProperty>(value).filename().c_str();
+            {
+                const FilePathProperty& f = boost::get<FilePathProperty>(value);
+                string filename = f.filename();
+                if(!f.isFullpathDisplayMode()){
+                    filename = filesystem::path(filename).filename().string();
+                }
+                return filename.c_str();
+            }
         }
-
+    } else if(role == Qt::ToolTipRole){
+        if(value.which() == TYPE_FILEPATH){
+            const FilePathProperty& f = boost::get<FilePathProperty>(value);
+            if(!f.isFullpathDisplayMode()){
+                string fullpath = f.filename();
+                string filename = filesystem::path(fullpath).filename().string();
+                if(filename != fullpath){
+                    return fullpath.c_str();
+                }
+            }
+        }
     }
+
     return QTableWidgetItem::data(role);
 }
 
@@ -603,7 +625,8 @@ void PropertyItem::setData(int role, const QVariant& qvalue)
             }
         }
         if(itemPropertyViewImpl->updateRequestedDuringPropertyEditing){
-            callLater([=](){ itemPropertyViewImpl->updateProperties(); });
+            auto itemPropertyViewImpl = this->itemPropertyViewImpl;
+            callLater([itemPropertyViewImpl](){ itemPropertyViewImpl->updateProperties(); });
         }
     }
 
@@ -636,17 +659,22 @@ ItemPropertyViewImpl::ItemPropertyViewImpl(ItemPropertyView* self)
     tableWidget->setFrameShape(QFrame::NoFrame);
     tableWidget->setColumnCount(2);
     tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
-    tableWidget->setSelectionMode(QAbstractItemView::NoSelection);
+    tableWidget->setSelectionMode(QAbstractItemView::SingleSelection);
+    tableWidget->setTabKeyNavigation(true);
+    tableWidget->setEditTriggers(
+        QAbstractItemView::DoubleClicked |
+        QAbstractItemView::SelectedClicked | 
+        QAbstractItemView::AnyKeyPressed);
 
     QHeaderView* hh = tableWidget->horizontalHeader();
     QHeaderView* vh = tableWidget->verticalHeader();
     hh->hide();
     vh->hide();
 #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-    hh->setResizeMode(QHeaderView::Fixed);
+    hh->setResizeMode(QHeaderView::Interactive);
     vh->setResizeMode(QHeaderView::ResizeToContents);    
 #else
-    hh->setSectionResizeMode(QHeaderView::Stretch);
+    hh->setSectionResizeMode(QHeaderView::Interactive);
     vh->setSectionResizeMode(QHeaderView::ResizeToContents);
 #endif
     hh->setStretchLastSection(true);
@@ -709,11 +737,11 @@ void ItemPropertyViewImpl::clear()
     
     itemConnections.disconnect();
     currentItem = 0;
-    updateProperties();
+    updateProperties(true);
 }
 
 
-void ItemPropertyViewImpl::updateProperties()
+void ItemPropertyViewImpl::updateProperties(bool isItemChanged)
 {
     if(TRACE_FUNCTIONS){
         cout << "ItemPropertyView::updateProperties()" << endl;
@@ -723,13 +751,23 @@ void ItemPropertyViewImpl::updateProperties()
         updateRequestedDuringPropertyEditing = true;
 
     } else {
+        int currentRow;
+        int currentColumn;
+        if(!isItemChanged){
+            currentRow = tableWidget->currentRow();
+            currentColumn = tableWidget->currentColumn();
+        }
+
         tableWidget->setRowCount(0);
-        
         tmpListIndex = 0;
         properties.clear();
         if(currentItem){
             reset();
             currentItem->putProperties(*this);
+        }
+
+        if(!isItemChanged){
+            tableWidget->setCurrentCell(currentRow, currentColumn);
         }
     }
 }
@@ -765,12 +803,12 @@ void ItemPropertyViewImpl::onItemSelectionChanged(const ItemList<>& items)
                     [&](){ updateProperties(); }));
             itemConnections.add(
                 item->sigNameChanged().connect(
-                    [&](const std::string& oldName){ updateProperties(); }));
+                    [&](const std::string& /* oldName */){ updateProperties(); }));
             itemConnections.add(
                 item->sigDetachedFromRoot().connect(
                     [&](){ clear(); }));
         }
-        updateProperties();
+        updateProperties(true);
     }
 }
 
@@ -786,7 +824,7 @@ void ItemPropertyView::keyPressEvent(QKeyEvent* event)
         case Qt::Key_Minus:
             impl->zoomFontSize(-1);
             return;
-        defaut:
+        default:
             break;
         }
     }

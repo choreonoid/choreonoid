@@ -10,9 +10,9 @@
 #include <cnoid/Archive>
 #include <cnoid/ConnectionSet>
 #include <cnoid/LazyCaller>
-#include <cnoid/BodyCollisionDetectorUtil>
+#include <cnoid/BodyCollisionDetector>
 #include <cnoid/SceneCollision>
-#include <cnoid/ContactMaterialTable>
+#include <cnoid/MaterialTable>
 #include <cnoid/ExecutablePath>
 #include <boost/format.hpp>
 #include "gettext.h"
@@ -25,62 +25,72 @@ namespace {
 
 const bool TRACE_FUNCTIONS = false;
 
-struct BodyItemInfo {
-    BodyItemInfo() {
-        kinematicStateChanged = false;
-    }
-    int geometryId;
-    bool kinematicStateChanged;
-};
-typedef map<BodyItem*, BodyItemInfo> BodyItemInfoMap;
-}
+typedef CollisionDetector::GeometryHandle GeometryHandle;
 
+struct ColdetLinkInfo : public Referenced
+{
+    BodyItem* bodyItem;
+    Link* link;
+    GeometryHandle geometry;
+    ColdetLinkInfo(BodyItem* bodyItem, Link* link, GeometryHandle geometry)
+        : bodyItem(bodyItem), link(link), geometry(geometry) { }
+};
+typedef ref_ptr<ColdetLinkInfo> ColdetLinkInfoPtr;
+    
+struct ColdetBodyInfo
+{
+    BodyItem* bodyItem;
+    vector<ColdetLinkInfoPtr> linkInfos;
+    bool kinematicStateChanged;
+    bool isSelfCollisionDetectionEnabled;
+
+    ColdetBodyInfo(BodyItem* bodyItem)
+        : bodyItem(bodyItem),
+          kinematicStateChanged(false)
+    {
+        isSelfCollisionDetectionEnabled = bodyItem->isSelfCollisionDetectionEnabled();
+    }
+};
+
+}
 
 namespace cnoid {
 
 class WorldItemImpl
 {
 public:
+    WorldItem* self;
+    ostream& os;
+    KinematicsBar* kinematicsBar;
+
+    Connection sigSubTreeChangedConnection;
+    ConnectionSet sigKinematicStateChangedConnections;
+
+    Selection collisionDetectorType;
+    BodyCollisionDetector bodyCollisionDetector;
+    vector<ColdetBodyInfo> coldetBodyInfos;
+    std::shared_ptr<vector<CollisionLinkPairPtr>> collisions;
+    Signal<void()> sigCollisionsUpdated;
+    LazyCaller updateCollisionDetectorLater;
+    LazyCaller updateCollisionsLater;
+    bool isCollisionDetectionEnabled;
+    SceneCollisionPtr sceneCollision;
+
+    string materialTableFile;
+    MaterialTablePtr materialTable;
+
     WorldItemImpl(WorldItem* self);
     WorldItemImpl(WorldItem* self, const WorldItemImpl& org);
     ~WorldItemImpl();
-            
-    WorldItem* self;
-    ostream& os;
-
-    ItemList<BodyItem> collisionBodyItems;
-    vector<bool> collisionBodyItemsSelfCollisionFlags;
-
-    Connection sigItemTreeChangedConnection;
-    ConnectionSet sigKinematicStateChangedConnections;
-
-    bool isCollisionDetectionEnabled;
-    LazyCaller updateCollisionsLater;
-    KinematicsBar* kinematicsBar;
-
-    BodyItemInfoMap bodyItemInfoMap;
-
-    Selection collisionDetectorType;
-    CollisionDetectorPtr collisionDetector;
-    vector<BodyItemInfoMap::iterator> geometryIdToBodyInfoMap;
-    std::shared_ptr< vector<CollisionLinkPairPtr> > collisions;
-    Signal<void()> sigCollisionsUpdated;
-    LazyCaller updateCollisionDetectorLater;
-
-    SceneCollisionPtr sceneCollision;
-
-    string contactMaterialFile;
-    ContactMaterialTablePtr contactMaterialTable;
-
     void init();
     bool selectCollisionDetector(int index);
     void enableCollisionDetection(bool on);
     void clearCollisionDetector();
     void updateCollisionDetector(bool forceUpdate);
-    void updateCollisionBodyItems();
-    void onBodyKinematicStateChanged(BodyItem* bodyItem);
+    void updateColdetBodyInfos(vector<ColdetBodyInfo>& infos);
     void updateCollisions(bool forceUpdate);
     void extractCollisions(const CollisionPair& collisionPair);
+    void createMaterialTable();
 };
 
 }
@@ -115,6 +125,8 @@ WorldItemImpl::WorldItemImpl(WorldItem* self)
     isCollisionDetectionEnabled = false;
 
     init();
+
+    materialTableFile = (filesystem::path(shareDirectory()) / "default" / "materials.yaml").string();
 }
 
 
@@ -130,7 +142,7 @@ WorldItemImpl::WorldItemImpl(WorldItem* self, const WorldItemImpl& org)
       os(org.os),
       updateCollisionsLater([&](){ updateCollisions(false); }),
       updateCollisionDetectorLater([&](){ updateCollisionDetector(false); }),
-      contactMaterialFile(org.contactMaterialFile)
+      materialTableFile(org.materialTableFile)
 {
     collisionDetectorType = org.collisionDetectorType;
     isCollisionDetectionEnabled = org.isCollisionDetectionEnabled;
@@ -142,8 +154,8 @@ WorldItemImpl::WorldItemImpl(WorldItem* self, const WorldItemImpl& org)
 void WorldItemImpl::init()
 {
     kinematicsBar = KinematicsBar::instance();
-    collisionDetector = CollisionDetector::create(collisionDetectorType.selectedIndex());
-    collisions = std::make_shared< vector<CollisionLinkPairPtr> >();
+    bodyCollisionDetector.setCollisionDetector(CollisionDetector::create(collisionDetectorType.selectedIndex()));
+    collisions = std::make_shared<vector<CollisionLinkPairPtr>>();
     sceneCollision = new SceneCollision(collisions);
     sceneCollision->setName("Collisions");
 }
@@ -158,13 +170,17 @@ WorldItem::~WorldItem()
 WorldItemImpl::~WorldItemImpl()
 {
     sigKinematicStateChangedConnections.disconnect();
-    sigItemTreeChangedConnection.disconnect();
+    sigSubTreeChangedConnection.disconnect();
 }
 
 
-const ItemList<BodyItem>& WorldItem::collisionBodyItems() const
+ItemList<BodyItem> WorldItem::coldetBodyItems() const
 {
-    return impl->collisionBodyItems;
+    ItemList<BodyItem> bodyItems;
+    for(auto& info : impl->coldetBodyInfos){
+        bodyItems.push_back(info.bodyItem);
+    }
+    return bodyItems;
 }
 
 
@@ -183,9 +199,9 @@ bool WorldItem::selectCollisionDetector(const std::string& name)
 bool WorldItemImpl::selectCollisionDetector(int index)
 {
     if(index >= 0 && index < collisionDetectorType.size()){
-        CollisionDetectorPtr newCollisionDetector = CollisionDetector::create(index);
+        CollisionDetector* newCollisionDetector = CollisionDetector::create(index);
         if(newCollisionDetector){
-            collisionDetector = newCollisionDetector;
+            bodyCollisionDetector.setCollisionDetector(newCollisionDetector);
             collisionDetectorType.select(index);
             if(isCollisionDetectionEnabled){
                 updateCollisionDetector(true);
@@ -197,12 +213,9 @@ bool WorldItemImpl::selectCollisionDetector(int index)
 }
 
 
-CollisionDetectorPtr WorldItem::collisionDetector()
+CollisionDetector* WorldItem::collisionDetector()
 {
-    if(impl->isCollisionDetectionEnabled){
-        impl->updateCollisionDetectorLater.flush();
-    }
-    return impl->collisionDetector;
+    return impl->bodyCollisionDetector.collisionDetector();
 }
 
 
@@ -222,7 +235,7 @@ void WorldItemImpl::enableCollisionDetection(bool on)
     
     if(isCollisionDetectionEnabled && !on){
         clearCollisionDetector();
-        sigItemTreeChangedConnection.disconnect();
+        sigSubTreeChangedConnection.disconnect();
         isCollisionDetectionEnabled = false;
         changed = true;
         
@@ -230,8 +243,8 @@ void WorldItemImpl::enableCollisionDetection(bool on)
         isCollisionDetectionEnabled = true;
 
         updateCollisionDetector(true);
-        sigItemTreeChangedConnection =
-            RootItem::mainInstance()->sigTreeChanged().connect(
+        sigSubTreeChangedConnection =
+            self->sigSubTreeChanged().connect(
                 [&](){ self->updateCollisionDetector(); });
         changed = true;
     }
@@ -255,13 +268,11 @@ void WorldItemImpl::clearCollisionDetector()
         os << "WorldItemImpl::clearCollisionDetector()" << endl;
     }
 
-    collisionDetector->clearGeometries();
-    geometryIdToBodyInfoMap.clear();
+    bodyCollisionDetector.clearBodies();
     sigKinematicStateChangedConnections.disconnect();
-    bodyItemInfoMap.clear();
 
-    for(size_t i=0; i < collisionBodyItems.size(); ++i){
-        collisionBodyItems[i]->clearCollisions();
+    for(auto& info : coldetBodyInfos){
+        info.bodyItem->clearCollisions();
     }
 }
 
@@ -291,76 +302,59 @@ void WorldItemImpl::updateCollisionDetector(bool forceUpdate)
         return;
     }
 
-    if(!forceUpdate){
-        ItemList<BodyItem> prevBodyItems = collisionBodyItems;
-        vector<bool> prevSelfCollisionFlags = collisionBodyItemsSelfCollisionFlags;
-        updateCollisionBodyItems();
-        if(collisionBodyItems == prevBodyItems &&
-           collisionBodyItemsSelfCollisionFlags == prevSelfCollisionFlags){
-            return;
-        }
+    if(forceUpdate){
+        updateColdetBodyInfos(coldetBodyInfos);
     } else {
-        updateCollisionBodyItems();
+        vector<ColdetBodyInfo> infos;
+        updateColdetBodyInfos(infos);
+        if(infos.size() == coldetBodyInfos.size()){
+            if(std::equal(infos.begin(), infos.end(), coldetBodyInfos.begin(),
+                          [](ColdetBodyInfo& info1, ColdetBodyInfo& info2){
+                              return (info1.bodyItem == info2.bodyItem &&
+                                      info1.isSelfCollisionDetectionEnabled == info2.isSelfCollisionDetectionEnabled); })){
+                return; // not changed
+            }
+        }
+        coldetBodyInfos = infos;
     }
 
     clearCollisionDetector();
 
-    for(size_t i=0; i < collisionBodyItems.size(); ++i){
-        BodyItem* bodyItem = collisionBodyItems.get(i);
-        const BodyPtr& body = bodyItem->body();
-        const int numLinks = body->numLinks();
-            
-        pair<BodyItemInfoMap::iterator, bool> inserted =
-            bodyItemInfoMap.insert(make_pair(bodyItem, BodyItemInfo()));
-        BodyItemInfo& info = inserted.first->second;
-            
-        info.geometryId = addBodyToCollisionDetector(
-            *body, *collisionDetector, bodyItem->isSelfCollisionDetectionEnabled());
-        geometryIdToBodyInfoMap.resize(collisionDetector->numGeometries(), inserted.first);
-        
+    for(auto& bodyInfo : coldetBodyInfos){
+        BodyItem* bodyItem = bodyInfo.bodyItem;
+
+        bodyCollisionDetector.addBody(
+            bodyItem->body(), bodyInfo.isSelfCollisionDetectionEnabled,
+            [&bodyInfo](Link* link, GeometryHandle geometry){
+                ColdetLinkInfo* linkInfo = new ColdetLinkInfo(bodyInfo.bodyItem, link, geometry);
+                bodyInfo.linkInfos.push_back(linkInfo);
+                return linkInfo;
+            });
+
+        ColdetBodyInfo* pBodyInfo = &bodyInfo;
         sigKinematicStateChangedConnections.add(
             bodyItem->sigKinematicStateChanged().connect(
-                [=](){ onBodyKinematicStateChanged(bodyItem); }));
+                [&, pBodyInfo](){
+                    pBodyInfo->kinematicStateChanged = true;
+                    updateCollisionsLater.setPriority(kinematicsBar->collisionDetectionPriority());
+                    updateCollisionsLater();
+                }));
     }
 
-    collisionDetector->makeReady();
+    bodyCollisionDetector.makeReady();
     updateCollisions(true);
 }
 
 
-void WorldItemImpl::updateCollisionBodyItems()
+void WorldItemImpl::updateColdetBodyInfos(vector<ColdetBodyInfo>& infos)
 {
-    collisionBodyItemsSelfCollisionFlags.clear();
-    collisionBodyItems.extractChildItems(self);
-    ItemList<BodyItem>::iterator p = collisionBodyItems.begin();
-    while(p != collisionBodyItems.end()){
-        BodyItemPtr& bodyItem = *p;
+    infos.clear();
+    ItemList<BodyItem> bodyItems;
+    bodyItems.extractChildItems(self);
+    for(auto bodyItem : bodyItems){
         if(bodyItem->isCollisionDetectionEnabled()){
-            collisionBodyItemsSelfCollisionFlags.push_back(
-                bodyItem->isSelfCollisionDetectionEnabled());
-            ++p;
-        } else {
-            p = collisionBodyItems.erase(p);
+            infos.push_back(ColdetBodyInfo(bodyItem));
         }
-    }
-}
-
-
-/**
-   \todo Check if BodyItemInfoMap::iterator can be used as the function parameter
-*/
-void WorldItemImpl::onBodyKinematicStateChanged(BodyItem* bodyItem)
-{
-    if(TRACE_FUNCTIONS){
-        os << "WorldItemImpl::onBodyKinematicStateChanged()" << endl;
-    }
-    
-    BodyItemInfoMap::iterator p = bodyItemInfoMap.find(bodyItem);
-    if(p != bodyItemInfoMap.end()){
-        BodyItemInfo& info = p->second;
-        info.kinematicStateChanged = true;
-        updateCollisionsLater.setPriority(kinematicsBar->collisionDetectionPriority());
-        updateCollisionsLater();
     }
 }
 
@@ -373,29 +367,29 @@ void WorldItem::updateCollisions()
 
 void WorldItemImpl::updateCollisions(bool forceUpdate)
 {
-    for(BodyItemInfoMap::iterator p = bodyItemInfoMap.begin(); p != bodyItemInfoMap.end(); ++p){
-        BodyItemInfo& info = p->second;
-        BodyItem* bodyItem = p->first;
+    auto collisionDetector = bodyCollisionDetector.collisionDetector();
+
+    for(auto& bodyInfo : coldetBodyInfos){
+        auto bodyItem = bodyInfo.bodyItem;
         bodyItem->clearCollisions();
-        if(info.kinematicStateChanged || forceUpdate){
-            const BodyPtr& body = bodyItem->body();
-            for(int i=0; i < body->numLinks(); ++i){
-                collisionDetector->updatePosition(info.geometryId + i, body->link(i)->T());
+        if(bodyInfo.kinematicStateChanged || forceUpdate){
+            for(auto& linkInfo : bodyInfo.linkInfos){
+                collisionDetector->updatePosition(
+                    linkInfo->geometry, linkInfo->link->position());
             }
         }
-        info.kinematicStateChanged = false;
+        bodyInfo.kinematicStateChanged = false;
     }
 
     collisions->clear();
 
-    collisionDetector->detectCollisions([&](const CollisionPair& pair){ extractCollisions(pair); });
+    bodyCollisionDetector.detectCollisions(
+        [&](const CollisionPair& pair){ extractCollisions(pair); });
 
     sceneCollision->setDirty();
 
-    for(BodyItemInfoMap::iterator p = bodyItemInfoMap.begin(); p != bodyItemInfoMap.end(); ++p){
-        BodyItem* bodyItem = p->first;
-        BodyItemInfo& info = p->second;
-        bodyItem->notifyCollisionUpdate();
+    for(auto& info : coldetBodyInfos){
+        info.bodyItem->notifyCollisionUpdate();
     }
     
     sigCollisionsUpdated();
@@ -405,22 +399,19 @@ void WorldItemImpl::updateCollisions(bool forceUpdate)
 void WorldItemImpl::extractCollisions(const CollisionPair& collisionPair)
 {
     CollisionLinkPairPtr collisionLinkPair = std::make_shared<CollisionLinkPair>();
-    collisionLinkPair->collisions = collisionPair.collisions;
+    collisionLinkPair->collisions = collisionPair.collisions();
     BodyItem* bodyItem = 0;
     for(int i=0; i < 2; ++i){
-        const int geometryId = collisionPair.geometryId[i];
-        BodyItemInfoMap::const_iterator p = geometryIdToBodyInfoMap[geometryId];
-        const BodyItemInfo& info = p->second;
-        const int linkIndex = geometryId - info.geometryId;
-        if(p->first != bodyItem){
-            bodyItem = p->first;
+        ColdetLinkInfo* linkInfo = static_cast<ColdetLinkInfo*>(collisionPair.object(i));
+        if(linkInfo->bodyItem != bodyItem){
+            bodyItem = linkInfo->bodyItem;
             bodyItem->collisions().push_back(collisionLinkPair);
         }
-        const BodyPtr& body = bodyItem->body();
-        collisionLinkPair->body[i] = body;
-        collisionLinkPair->link[i] = body->link(linkIndex);
-        bodyItem->collisionsOfLink(linkIndex).push_back(collisionLinkPair);
-        bodyItem->collisionLinkBitSet().set(linkIndex);
+        collisionLinkPair->body[i] = bodyItem->body();
+        Link* link = linkInfo->link;
+        collisionLinkPair->link[i] = link;
+        bodyItem->collisionsOfLink(link->index()).push_back(collisionLinkPair);
+        bodyItem->collisionLinkBitSet().set(link->index());
     }
     collisions->push_back(collisionLinkPair);
 }
@@ -438,24 +429,31 @@ SgNode* WorldItem::getScene()
 }
 
 
-void WorldItem::setContactMaterialFile(const std::string& filename)
+void WorldItem::setMaterialTableFile(const std::string& filename)
 {
-    impl->contactMaterialFile = filename;
+    if(filename != impl->materialTableFile){
+        impl->materialTable = nullptr;
+        impl->materialTableFile = filename;
+    }
 }
 
 
-ContactMaterialTable* WorldItem::contactMaterialTable()
+MaterialTable* WorldItem::materialTable()
 {
-    if(!impl->contactMaterialTable){
-        string filename = impl->contactMaterialFile;
-        if(filename.empty()){
-            filename = (filesystem::path(shareDirectory()) / "misc" / "stdmaterials.yaml").string();
-        }
-        impl->contactMaterialTable = new ContactMaterialTable;
-        impl->contactMaterialTable->load(filename);
+    if(!impl->materialTable){
+        impl->createMaterialTable();
     }
+    return impl->materialTable;
+}
 
-    return impl->contactMaterialTable;
+
+void WorldItemImpl::createMaterialTable()
+{
+    materialTable = new MaterialTable;
+    
+    if(!materialTableFile.empty()){
+        materialTable->load(materialTableFile, os);
+    }
 }
 
         
@@ -472,9 +470,9 @@ void WorldItem::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("Collision detector"), impl->collisionDetectorType,
                 [&](int index){ return impl->selectCollisionDetector(index); });
 
-    FilePathProperty materialFileProperty(impl->contactMaterialFile, { _("Contact material definition file (*.yaml)") });
-    putProperty(_("Contact material"), materialFileProperty,
-                [&](const string& filename){ setContactMaterialFile(filename); return true; });
+    FilePathProperty materialFileProperty(impl->materialTableFile, { _("Contact material definition file (*.yaml)") });
+    putProperty(_("Material table"), materialFileProperty,
+                [&](const string& filename){ setMaterialTableFile(filename); return true; });
 }
 
 
@@ -482,6 +480,7 @@ bool WorldItem::store(Archive& archive)
 {
     archive.write("collisionDetection", isCollisionDetectionEnabled());
     archive.write("collisionDetector", impl->collisionDetectorType.selectedSymbol());
+    archive.writeRelocatablePath("materialTableFile", impl->materialTableFile);
     return true;
 }
 
@@ -494,6 +493,9 @@ bool WorldItem::restore(const Archive& archive)
     }
     if(archive.get("collisionDetection", false)){
         archive.addPostProcess([&](){ impl->enableCollisionDetection(true); });
+    }
+    if(archive.readRelocatablePath("materialTableFile", symbol)){
+        setMaterialTableFile(symbol);
     }
     return true;
 }

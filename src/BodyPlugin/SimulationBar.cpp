@@ -62,8 +62,6 @@ SimulationBar::SimulationBar()
               _("Restore body positions from the initial world state"))->
         sigClicked().connect(std::bind(&SimulationBar::onRestoreInitialClicked, this));
 
-    typedef std::function<void(SimulatorItem* simulator)> Callback;
-
     addButton(QIcon(":/Body/icons/start-simulation.png"), _("Start simulation from the beginning"))->
         sigClicked().connect(
             std::bind(static_cast<void(SimulationBar::*)(bool)>(&SimulationBar::startSimulation), this, true));
@@ -96,7 +94,7 @@ static void forEachTargetBodyItem(std::function<void(BodyItem*)> callback)
     ItemList<BodyItem> bodyItems;
     bodyItems.extractChildItems(RootItem::instance());
     
-    for(int i=0; i < bodyItems.size(); ++i){
+    for(size_t i=0; i < bodyItems.size(); ++i){
         BodyItem* bodyItem = bodyItems.get(i);
         bool isTarget = itemTreeView->isItemSelected(bodyItem);
         if(!isTarget){
@@ -159,7 +157,7 @@ void SimulationBar::forEachSimulator(std::function<void(SimulatorItem* simulator
     typedef map<WorldItem*, SimulatorItem*> WorldToSimulatorMap;
     WorldToSimulatorMap worldToSimulator;
 
-    for(int i=0; i < simulators.size(); ++i){
+    for(size_t i=0; i < simulators.size(); ++i){
         SimulatorItem* simulator = simulators.get(i);
         WorldItem* world = simulator->findOwnerItem<WorldItem>();
         if(world){
@@ -172,7 +170,7 @@ void SimulationBar::forEachSimulator(std::function<void(SimulatorItem* simulator
         }
     }
 
-    for(int i=0; i < simulators.size(); ++i){
+    for(size_t i=0; i < simulators.size(); ++i){
         SimulatorItem* simulator = simulators.get(i);
         WorldItem* world = simulator->findOwnerItem<WorldItem>();
         if(!world){

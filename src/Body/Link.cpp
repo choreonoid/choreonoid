@@ -4,6 +4,7 @@
 */
 
 #include "Link.h"
+#include "Material.h"
 #include <cnoid/SceneGraph>
 #include <cnoid/ValueTree>
 
@@ -42,6 +43,7 @@ Link::Link()
     q_lower_ = -std::numeric_limits<double>::max();
     dq_upper_ = std::numeric_limits<double>::max();
     dq_lower_ = -std::numeric_limits<double>::max();
+    materialId_ = 0;
     info_ = new Mapping;
 }
 
@@ -86,6 +88,8 @@ Link::Link(const Link& org)
     q_lower_ = org.q_lower_;
     dq_upper_ = org.dq_upper_;
     dq_lower_ = org.dq_lower_;
+
+    materialId_ = org.materialId_;
 
     //! \todo add the mode for doing deep copy of the following objects
     visualShape_ = org.visualShape_;
@@ -174,8 +178,6 @@ void Link::appendChild(Link* link)
 */
 bool Link::removeChild(Link* childToRemove)
 {
-    bool removed = false;
-
     Link* link = child_;
     Link* prevSibling = 0;
     while(link){
@@ -211,9 +213,58 @@ std::string Link::jointTypeString() const
     case FREE_JOINT:        return "free";
     case FIXED_JOINT:       return "fixed";
     case PSEUDO_CONTINUOUS_TRACK: return "pseudo continuous track";
-    case CRAWLER_JOINT:     return "crawler";
     default: return "unknown";
     }
+}
+
+
+std::string Link::actuationModeString() const
+{
+    switch(actuationMode_){
+
+    case NO_ACTUATION:
+        return "no actuation";
+
+    case JOINT_EFFORT:
+        if(isRevoluteJoint()){
+            return "joint torque";
+        } else if(isPrismaticJoint()){
+            return "joint force";
+        } else {
+            return "joint effort";
+        }
+
+    case JOINT_DISPLACEMENT:
+        if(isRevoluteJoint()){
+            return "joint angle";
+        } else {
+            return "joint displacement";
+        }
+
+    case JOINT_VELOCITY:
+        return "joint velocity";
+
+    case JOINT_SURFACE_VELOCITY:
+        return "joint surface velocity";
+
+    case LINK_POSITION:
+        return "link position";
+
+    default:
+        return "unknown";
+    }
+}
+
+
+std::string Link::materialName() const
+{
+    return Material::name(materialId_);
+}
+
+
+void Link::setMaterial(const std::string& name)
+{
+    setMaterial(Material::id(name));
 }
 
 

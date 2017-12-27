@@ -9,7 +9,7 @@
 #include "gettext.h"
 
 using namespace cnoid;
-using namespace std::placeholders;
+
 
 AbstractSeqItem::AbstractSeqItem()
 {
@@ -30,41 +30,38 @@ AbstractSeqItem::~AbstractSeqItem()
 }
 
 
-static bool setOffsetTime(AbstractSeqItem* item, double offset)
-{
-    return item->abstractSeq()->setOffsetTime(offset);
-}
-
-
-static bool setPropertyNumFrames(AbstractSeqItem* item, int numFrames)
-{
-    if(numFrames >= 0){
-        item->abstractSeq()->setNumFrames(numFrames);
-        item->suggestFileUpdate();
-        return true;
-    }
-    return false;
-}
-
-
-static bool setPropertyTimeLength(AbstractSeqItem* item, double timeLength)
-{
-    if(timeLength >= 0){
-        item->abstractSeq()->setTimeLength(timeLength);
-        item->suggestFileUpdate();
-        return true;
-    }
-    return false;
-}
-
-
 void AbstractSeqItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     AbstractSeqPtr seq = abstractSeq();
+
     putProperty(_("Frame rate"), seq->getFrameRate());
-    putProperty(_("Offset time"), seq->getOffsetTime(), std::bind(setOffsetTime, this, _1));
-    putProperty(_("Number of frames"), seq->getNumFrames(), std::bind(setPropertyNumFrames, this, _1));
-    putProperty(_("Time length"), seq->getTimeLength(), std::bind(setPropertyTimeLength, this, _1));
+
+    putProperty(_("Offset time"), seq->getOffsetTime(),
+                [&](double value){
+                    abstractSeq()->setOffsetTime(value);
+                    return true;
+                });
+
+    putProperty(_("Number of frames"), seq->getNumFrames(),
+                [&](int value){
+                    if(value >= 0){
+                        abstractSeq()->setNumFrames(value);
+                        suggestFileUpdate();
+                        return true;
+                    }
+                    return false;
+                });
+    
+    putProperty(_("Time length"), seq->getTimeLength(),
+                [&](double value){
+                    if(value >= 0){
+                        abstractSeq()->setTimeLength(value);
+                        suggestFileUpdate();
+                        return true;
+                    }
+                    return false;
+                });
+                    
     putProperty.decimals(3)(_("Time step"), seq->getTimeStep());
 }
 

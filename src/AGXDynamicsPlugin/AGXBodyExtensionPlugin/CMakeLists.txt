@@ -13,11 +13,10 @@ set(sources
   AGXBodyExtensionPlugin.cpp
   AGXBodyExtensionSample.cpp
   AGXBreakableJoint.cpp
+  AGXWire.cpp
 )
 
 set(headers
-  AGXBodyExtensionSample.h
-  AGXBreakableJoint.h
 )
 
 set(target CnoidAGXBodyExtensionPlugin)

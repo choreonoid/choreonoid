@@ -18,7 +18,6 @@
 #include <rtm/RTObject.h>
 #include <rtm/CorbaNaming.h>
 #include <boost/format.hpp>
-#include <boost/regex.hpp>
 #include "gettext.h"
 
 using namespace std;

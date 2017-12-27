@@ -32,7 +32,7 @@ LinkPath::LinkPath(Link* base)
 
 
 /// This method is disabled.
-void LinkPath::find(Link* root, bool doUpward, bool doDownward)
+void LinkPath::find(Link* /* root */, bool /* doUpward */, bool /* doDownward */)
 {
     throw "The find method for LinkTraverse cannot be used in LinkPath";
 }

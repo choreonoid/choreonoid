@@ -33,7 +33,7 @@ py::list getPyNarrowedItemList(const ItemList<>& orgItemList, py::object itemCla
     checkIfItemSubclass(itemClass.ptr());
 
     py::list narrowedItemList;
-    for(int i=0; i < orgItemList.size(); ++i){
+    for(size_t i=0; i < orgItemList.size(); ++i){
         py::object item(py::cast(orgItemList[i]));
         if(PyObject_IsInstance(item.ptr(), itemClass.ptr()) > 0){
             narrowedItemList.append(item);
@@ -61,7 +61,7 @@ py::object getPyNarrowedFirstItem(const ItemList<>& orgItemList, py::object item
 {
     checkIfItemSubclass(itemClass.ptr());
 
-    for(int i=0; i < orgItemList.size(); ++i){
+    for(size_t i=0; i < orgItemList.size(); ++i){
         py::object item(py::cast(orgItemList[i]));
         if(PyObject_IsInstance(item.ptr(), itemClass.ptr()) > 0){
             return item;

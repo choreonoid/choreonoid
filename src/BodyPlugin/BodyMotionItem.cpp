@@ -15,7 +15,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 using boost::format;
 
@@ -41,8 +40,8 @@ struct ExtraSeqItemInfo : public Referenced
 typedef ref_ptr<ExtraSeqItemInfo> ExtraSeqItemInfoPtr;
     
 typedef std::map<std::string, ExtraSeqItemInfoPtr> ExtraSeqItemInfoMap;
-}
 
+}
 
 namespace cnoid {
 
@@ -63,31 +62,11 @@ public:
     ~BodyMotionItemImpl();
     void initialize();
     void onSubItemUpdated();
-    void onExtraSeqItemSetChanged();
     void updateExtraSeqItems();
 };
+
 }
 
-
-static bool fileIoSub(BodyMotionItem* item, std::ostream& os, bool loaded, bool isLoading)
-{
-    if(!loaded){
-        os << item->motion()->seqMessage();
-    }
-    return loaded;
-}
-                
-
-static bool loadStandardYamlFormat(BodyMotionItem* item, const std::string& filename, std::ostream& os)
-{
-    return fileIoSub(item, os, item->motion()->loadStandardYAMLformat(filename), true);
-}
-    
-
-static bool saveAsStandardYamlFormat(BodyMotionItem* item, const std::string& filename, std::ostream& os)
-{
-    return fileIoSub(item, os, item->motion()->saveAsStandardYAMLformat(filename), false);
-}
 
 static bool bodyMotionItemPreFilter(BodyMotionItem* protoItem, Item* parentItem)
 {
@@ -97,9 +76,8 @@ static bool bodyMotionItemPreFilter(BodyMotionItem* protoItem, Item* parentItem)
     }
     if(bodyItem){
         MultiValueSeqPtr jointPosSeq = protoItem->motion()->jointPosSeq();
-        int prevNumJoints = jointPosSeq->numParts();
         int numJoints = bodyItem->body()->numJoints();
-        if(numJoints != prevNumJoints){
+        if(numJoints != jointPosSeq->numParts()){
             jointPosSeq->setNumParts(numJoints, true);
         }
     }
@@ -107,29 +85,27 @@ static bool bodyMotionItemPreFilter(BodyMotionItem* protoItem, Item* parentItem)
 }
 
 
-/*
-  static bool bodyMotionItemPostFilter(BodyMotionItem* protoItem, Item* parentItem)
-  {
-  BodyItemPtr bodyItem = dynamic_cast<BodyItem*>(parentItem);
-  if(!bodyItem){
-  bodyItem = parentItem->findOwnerItem<BodyItem>();
-  }
-  if(bodyItem){
-  BodyPtr body = bodyItem->body();
-  MultiValueSeqPtr qseq = protoItem->jointPosSeq();
-  int n = std::min(body->numJoints(), qseq->numParts());
-  for(int i=0; i < n; ++i){
-  Link* joint = body->joint(i);
-  if(joint->defaultJointValue != 0.0){
-  MultiValueSeq::Part part = qseq->part(i);
-  std::fill(part.begin(), part.end(), joint->defaultJointValue);
-  }
-  }
-  }
+static bool bodyMotionItemPostFilter(BodyMotionItem* protoItem, Item* parentItem)
+{
+    BodyItemPtr bodyItem = dynamic_cast<BodyItem*>(parentItem);
+    if(!bodyItem){
+        bodyItem = parentItem->findOwnerItem<BodyItem>();
+    }
+    if(bodyItem){
+        BodyPtr body = bodyItem->body();
+        MultiValueSeqPtr qseq = protoItem->jointPosSeq();
+        int n = std::min(body->numJoints(), qseq->numParts());
+        for(int i=0; i < n; ++i){
+            Link* joint = body->joint(i);
+            if(joint->q_initial() != 0.0){
+                MultiValueSeq::Part part = qseq->part(i);
+                std::fill(part.begin(), part.end(), joint->q_initial());
+            }
+        }
+    }
     
-  return true;
-  }
-*/
+    return true;
+}
 
 
 void BodyMotionItem::initializeClass(ExtensionManager* ext)
@@ -146,11 +122,22 @@ void BodyMotionItem::initializeClass(ExtensionManager* ext)
 
     im.addCreationPanel<BodyMotionItem>(new MultiSeqItemCreationPanel(_("Number of joints")));
     im.addCreationPanelPreFilter<BodyMotionItem>(bodyMotionItemPreFilter);
-    //im.addCreationPanelPostFilter<BodyMotionItem>(bodyMotionItemPostFilter);
+    im.addCreationPanelPostFilter<BodyMotionItem>(bodyMotionItemPostFilter);
 
     im.addLoaderAndSaver<BodyMotionItem>(
-        _("Body Motion"), "BODY-MOTION-YAML", "yaml",
-        std::bind(loadStandardYamlFormat, _1, _2, _3),  std::bind(saveAsStandardYamlFormat, _1, _2, _3));
+        _("Body Motion"), "BODY-MOTION-YAML", "seq;yaml",
+        [](BodyMotionItem* item, const std::string& filename, std::ostream& os, Item* /* parentItem */){
+            return item->motion()->load(filename, os);
+        },
+        [](BodyMotionItem* item, const std::string& filename, std::ostream& os, Item* /* parentItem */){
+            return item->motion()->save(filename, os);
+        });
+
+    im.addSaver<BodyMotionItem>(
+        _("Body Motion (version 1.0)"), "BODY-MOTION-YAML", "seq;yaml",
+        [](BodyMotionItem* item, const std::string& filename, std::ostream& os, Item* /* parentItem */){
+            return item->motion()->save(filename, 1.0, os);
+        });
 
     initialized = true;
 }
@@ -178,7 +165,7 @@ BodyMotionItem::BodyMotionItem(BodyMotionPtr bodyMotion)
 
 
 BodyMotionItem::BodyMotionItem(const BodyMotionItem& org)
-    : AbstractMultiSeqItem(org),
+    : AbstractSeqItem(org),
       bodyMotion_(new BodyMotion(*org.bodyMotion_))
 {
     impl = new BodyMotionItemImpl(this);
@@ -200,7 +187,7 @@ void BodyMotionItemImpl::initialize()
 
     jointPosSeqUpdateConnection =
         self->jointPosSeqItem_->sigUpdated().connect(
-            std::bind(&BodyMotionItemImpl::onSubItemUpdated, this));
+            [&](){ onSubItemUpdated(); });
 
     self->linkPosSeqItem_ = new MultiSE3SeqItem(self->bodyMotion_->linkPosSeq());
     self->linkPosSeqItem_->setName("Cartesian");
@@ -208,11 +195,11 @@ void BodyMotionItemImpl::initialize()
 
     linkPosSeqUpdateConnection = 
         self->linkPosSeqItem_->sigUpdated().connect(
-            std::bind(&BodyMotionItemImpl::onSubItemUpdated, this));
+            [&](){ onSubItemUpdated(); });
 
     extraSeqsChangedConnection =
         self->bodyMotion_->sigExtraSeqsChanged().connect(
-            std::bind(&BodyMotionItemImpl::onExtraSeqItemSetChanged, this));
+            [&](){ callLater([&](){ updateExtraSeqItems(); }); });
 
     updateExtraSeqItems();
 }
@@ -232,7 +219,7 @@ BodyMotionItemImpl::~BodyMotionItemImpl()
 }
 
 
-AbstractMultiSeqPtr BodyMotionItem::abstractMultiSeq()
+AbstractSeqPtr BodyMotionItem::abstractSeq()
 {
     return bodyMotion_;
 }
@@ -297,12 +284,6 @@ SignalProxy<void()> BodyMotionItem::sigExtraSeqItemsChanged()
 }
 
 
-void BodyMotionItemImpl::onExtraSeqItemSetChanged()
-{
-    callLater(std::bind(&BodyMotionItemImpl::updateExtraSeqItems, this));
-}
-
-
 void BodyMotionItem::updateExtraSeqItems()
 {
     impl->updateExtraSeqItems();
@@ -337,8 +318,7 @@ void BodyMotionItemImpl::updateExtraSeqItems()
                     self->addSubItem(newItem);
                     ExtraSeqItemInfo* info = new ExtraSeqItemInfo(key, newItem);
                     info->sigUpdateConnection =
-                        newItem->sigUpdated().connect(
-                            std::bind(&BodyMotionItemImpl::onSubItemUpdated, this));
+                        newItem->sigUpdated().connect([&](){ onSubItemUpdated(); });
                     extraSeqItemInfos.push_back(info);
                 }
             }

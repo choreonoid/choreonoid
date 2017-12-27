@@ -9,6 +9,7 @@
 #include <cnoid/CollisionSeqItem>
 #include <cnoid/YAMLReader>
 #include <cnoid/YAMLWriter>
+#include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
@@ -34,8 +35,8 @@ bool CollisionSeq::loadStandardYAMLformat(const std::string& filename)
     reader.expectRegularMultiListing();
 
     try {
-        const Mapping& archive = *reader.loadDocument(filename)->toMapping();
-        if(archive["type"].toString() != "CollisionSeq"){
+        auto archive = reader.loadDocument(filename)->toMapping();
+        if(archive->get<string>("type") != "CollisionSeq"){
             result = false;
         }else{
             result = readSeq(archive);
@@ -72,78 +73,19 @@ bool CollisionSeq::saveAsStandardYAMLformat(const std::string& filename)
 }
 
 
-void CollisionSeq::writeCollsionData(YAMLWriter& writer, const CollisionLinkPairListPtr ptr)
+//! \todo Implement this function with GeneralSeqReader
+bool CollisionSeq::doReadSeq(const Mapping* archive, std::ostream& os)
 {
-    writer.startMapping();
-    writer.putKey("LinkPairs");
-
-    writer.startListing();
-    for(CollisionLinkPairList::iterator it=ptr->begin(); it!=ptr->end(); it++){
-        CollisionLinkPairPtr linkPair = *it;
-        writer.startMapping();
-        writer.putKeyValue("body0",linkPair->body[0]->name());
-        writer.putKeyValue("link0",linkPair->link[0]->name());
-        writer.putKeyValue("body1",linkPair->body[1]->name());
-        writer.putKeyValue("link1",linkPair->link[1]->name());
-        int numCollisions = linkPair->collisions.size();
-        writer.putKey("Collisions");
-        writer.startListing();
-        for(int j=0; j<numCollisions; j++){
-            Collision& collision = linkPair->collisions[j];
-            writer.startFlowStyleListing();
-            const Vector3& point = collision.point;
-            writer.putScalar(point.x());
-            writer.putScalar(point.y());
-            writer.putScalar(point.z());
-            const Vector3& normal = collision.normal;
-            writer.putScalar(normal.x());
-            writer.putScalar(normal.y());
-            writer.putScalar(normal.z());
-            writer.putScalar(collision.depth);
-            writer.endListing();
-        }
-        writer.endListing();
-        writer.endMapping();
-        }
-    writer.endListing();
-
-    writer.endMapping();
-}
-
-
-bool CollisionSeq::doWriteSeq(YAMLWriter& writer)
-{
-    if(BaseSeqType::doWriteSeq(writer)){
-
-        writer.putKeyValue("format", "PxPyPzNxNyNzD");
-
-        writer.putKey("frames");
-        writer.startListing();
-
-        const int n = numFrames();
-        for(int i=0; i < n; ++i){
-            Frame f = frame(i);
-            writeCollsionData(writer, f[0]);
-        }
-        writer.endListing();
-        return true;
-    }
+    os << _("The function to read CollisionSeq is not implemented.") << endl;
     return false;
-}
-
-
-bool CollisionSeq::doReadSeq(const Mapping& archive)
-{
-    if(BaseSeqType::doReadSeq(archive)){
-        const Listing& values = *archive.findListing("frames");
-        if(values.isValid()){
-            const int nFrames = values.size();
-            setDimension(nFrames, 1);
-            readCollisionData(nFrames, values);
-        }
-        return true;
+    
+    const Listing& values = *archive->findListing("frames");
+    if(values.isValid()){
+        const int nFrames = values.size();
+        setDimension(nFrames, 1);
+        readCollisionData(nFrames, values);
     }
-    return false;
+    return true;
 }
 
 
@@ -205,4 +147,64 @@ void CollisionSeq::readCollisionData(int nFrames, const Listing& values)
             f[0]->push_back(destLinkPair);
         }
     }
+}
+
+
+void CollisionSeq::writeCollsionData(YAMLWriter& writer, const CollisionLinkPairListPtr ptr)
+{
+    writer.startMapping();
+    writer.putKey("LinkPairs");
+
+    writer.startListing();
+    for(CollisionLinkPairList::iterator it=ptr->begin(); it!=ptr->end(); it++){
+        CollisionLinkPairPtr linkPair = *it;
+        writer.startMapping();
+        writer.putKeyValue("body0",linkPair->body[0]->name());
+        writer.putKeyValue("link0",linkPair->link[0]->name());
+        writer.putKeyValue("body1",linkPair->body[1]->name());
+        writer.putKeyValue("link1",linkPair->link[1]->name());
+        int numCollisions = linkPair->collisions.size();
+        writer.putKey("Collisions");
+        writer.startListing();
+        for(int j=0; j<numCollisions; j++){
+            Collision& collision = linkPair->collisions[j];
+            writer.startFlowStyleListing();
+            const Vector3& point = collision.point;
+            writer.putScalar(point.x());
+            writer.putScalar(point.y());
+            writer.putScalar(point.z());
+            const Vector3& normal = collision.normal;
+            writer.putScalar(normal.x());
+            writer.putScalar(normal.y());
+            writer.putScalar(normal.z());
+            writer.putScalar(collision.depth);
+            writer.endListing();
+        }
+        writer.endListing();
+        writer.endMapping();
+        }
+    writer.endListing();
+
+    writer.endMapping();
+}
+
+
+bool CollisionSeq::doWriteSeq(YAMLWriter& writer)
+{
+    if(!writeSeqHeaders(writer)){
+        return false;
+    }
+
+    writer.putKeyValue("format", "PxPyPzNxNyNzD");
+
+    writer.putKey("frames");
+    writer.startListing();
+    
+    const int n = numFrames();
+    for(int i=0; i < n; ++i){
+        Frame f = frame(i);
+        writeCollsionData(writer, f[0]);
+    }
+    writer.endListing();
+    return true;
 }

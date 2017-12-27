@@ -84,7 +84,7 @@ void OpenHRPControllerBase::destroy()
 
 
 #ifdef OPENHRP_3_1
-void OpenHRPControllerBase::setModelName(const char* localModelName)
+void OpenHRPControllerBase::setModelName(const char* /* localModelName */)
 {
 
 }

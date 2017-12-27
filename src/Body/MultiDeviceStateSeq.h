@@ -26,6 +26,7 @@ public:
     MultiDeviceStateSeq(const MultiDeviceStateSeq& org);
     virtual ~MultiDeviceStateSeq();
 
+    using BaseSeqType::operator=;
     MultiDeviceStateSeq& operator=(const MultiDeviceStateSeq& rhs);
     virtual AbstractSeqPtr cloneSeq() const;        
 };

@@ -29,7 +29,9 @@ bool loadScene(SceneItem* item, const std::string& filename, std::ostream& os)
     if(scene){
         auto invariant = new SgInvariantGroup;
         invariant->addChild(scene);
-        item->topNode()->addChild(invariant);
+        auto node = item->topNode();
+        node->clearChildren();
+        node->addChild(invariant);
         return true;
     }
     return false;
@@ -91,7 +93,7 @@ void SceneItem::setName(const std::string& name)
 
 SgNode* SceneItem::getScene()
 {
-    return topNode_.get();
+    return topNode_;
 }
 
 
