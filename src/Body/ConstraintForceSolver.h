@@ -5,7 +5,6 @@
 #ifndef CNOID_BODY_CONSTRAINT_FORCE_SOLVER_H
 #define CNOID_BODY_CONSTRAINT_FORCE_SOLVER_H
 
-#include <cnoid/CollisionDetector>
 #include <cnoid/CollisionSeq>
 #include "exportdecl.h"
 
@@ -14,6 +13,7 @@ namespace cnoid {
 class Link;
 class ConstraintForceSolverImpl;
 class WorldBase;
+class CollisionDetector;
 class ContactMaterial;
 class MaterialTable;
 	
@@ -25,8 +25,8 @@ public:
     ConstraintForceSolver(WorldBase& world);
     ~ConstraintForceSolver();
 		
-    void setCollisionDetector(CollisionDetectorPtr detector);
-    CollisionDetectorPtr collisionDetector();
+    void setCollisionDetector(CollisionDetector* detector);
+    CollisionDetector* collisionDetector();
 
     void setMaterialTable(MaterialTable* table);
 
@@ -34,8 +34,8 @@ public:
     double staticFriction() const;
     double slipFriction() const;
 
-    void setSelfCollisionEnabled(int bodyIndex, bool on);
-    bool isSelfCollisionEnabled(int bodyIndex) const;
+    void setSelfCollisionDetectionEnabled(int bodyIndex, bool on);
+    bool isSelfCollisionDetectionEnabled(int bodyIndex) const;
 
     void setContactCullingDistance(double thresh);
     double contactCullingDistance() const;

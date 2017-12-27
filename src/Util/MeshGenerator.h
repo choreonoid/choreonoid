@@ -8,12 +8,11 @@
 
 #include "EigenTypes.h"
 #include <Eigen/StdVector>
+#include "SceneDrawables.h"
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class SgMesh;
-class SgLineSet;
 class MeshNormalGenerator;
 
 class CNOID_EXPORT MeshGenerator
@@ -30,10 +29,12 @@ public:
     void enableNormalGeneration(bool on);
     bool isNormalGenerationEnabled() const;
 
-    SgMesh* generateBox(Vector3 size);
-    SgMesh* generateSphere(double radius);
-    SgMesh* generateCylinder(double radius, double height, bool bottom = true, bool top = true, bool side = true);
-    SgMesh* generateCone(double radius, double height, bool bottom = true, bool side = true);
+    SgMesh* generateBox(Vector3 size, bool enableTextureCoordinate=false);
+    SgMesh* generateSphere(double radius, bool enableTextureCoordinate=false);
+    SgMesh* generateCylinder(double radius, double height, bool bottom = true,
+            bool top = true, bool side = true, bool enableTextureCoordinate=false);
+    SgMesh* generateCone(double radius, double height,
+            bool bottom = true, bool side = true, bool enableTextureCoordinate=false);
     SgMesh* generateCapsule(double radius, double height);
     SgMesh* generateDisc(double radius, double innerRadius);
     SgMesh* generateArrow(double cylinderRadius, double cylinderHeight, double coneRadius, double coneHeight);
@@ -59,7 +60,7 @@ public:
         }
     };
             
-    SgMesh* generateExtrusion(const Extrusion& extrusion);
+    SgMesh* generateExtrusion(const Extrusion& extrusion, bool enableTextureCoordinate=false);
     SgLineSet* generateExtrusionLineSet(const Extrusion& extrusion, SgMesh* mesh);
 
     struct ElevationGrid
@@ -81,7 +82,9 @@ public:
         }
     };
 
-    SgMesh* generateElevationGrid(const ElevationGrid& elevationGrid);
+    SgMesh* generateElevationGrid(const ElevationGrid& elevationGrid, bool enableTextureCoordinate=false);
+
+    void generateTextureCoordinateForIndexedFaceSet(SgMesh* mesh);
 
 private:
     int divisionNumber_;
@@ -89,6 +92,15 @@ private:
     MeshNormalGenerator* normalGenerator;
 
     void generateNormals(SgMesh* mesh, double creaseAngle);
+
+    int findTexCoordPoint(const SgTexCoordArray& texCoord, const Vector2f& point);
+    void generateTextureCoordinateForBox(SgMesh* mesh);
+    void generateTextureCoordinateForSphere(SgMesh* mesh);
+    void generateTextureCoordinateForCylinder(SgMesh* mesh);
+    void generateTextureCoordinateForCone(SgMesh* mesh);
+    void generateTextureCoordinateForElevationGrid(SgMesh* mesh, const ElevationGrid& grid);
+    void generateTextureCoordinateForExtrusion(SgMesh* mesh, const Extrusion& extrusion,
+            int numTriOfbeginCap, int numTriOfendCap, int indexOfendCap);
 };
 
 }

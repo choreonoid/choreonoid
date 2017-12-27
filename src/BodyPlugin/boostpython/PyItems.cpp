@@ -20,7 +20,7 @@ AbstractSeqItemPtr BodyMotionItem_extraSeqItem(BodyMotionItem& self, int index) 
 
 void exportItems()
 {
-    class_< WorldItem, WorldItemPtr, bases<Item, SceneProvider> >("WorldItem")
+    class_<WorldItem, WorldItemPtr, bases<Item, SceneProvider>>("WorldItem")
         .def("selectCollisionDetector", &WorldItem::selectCollisionDetector)
         .def("enableCollisionDetection", &WorldItem::enableCollisionDetection)
         .def("isCollisionDetectionEnabled", &WorldItem::isCollisionDetectionEnabled)
@@ -34,7 +34,7 @@ void exportItems()
     implicitly_convertible<WorldItemPtr, SceneProvider*>();
     PyItemList<WorldItem>("WorldItemList");
     
-    class_< BodyMotionItem, BodyMotionItemPtr, bases<AbstractMultiSeqItem> >("BodyMotionItem")
+    class_<BodyMotionItem, BodyMotionItemPtr, bases<AbstractSeqItem>>("BodyMotionItem")
         .def("motion", BodyMotionItem_motion)
         .def("jointPosSeqItem", BodyMotionItem_jointPosSeqItem)
         .def("jointPosSeq", &BodyMotionItem::jointPosSeq)
@@ -46,6 +46,6 @@ void exportItems()
         .def("updateExtraSeqItems", &BodyMotionItem::updateExtraSeqItems)
         ;
 
-    implicitly_convertible<BodyMotionItemPtr, AbstractMultiSeqItemPtr>();
+    implicitly_convertible<BodyMotionItemPtr, AbstractSeqItemPtr>();
     PyItemList<BodyMotionItem>("BodyMotionItemList");
 }

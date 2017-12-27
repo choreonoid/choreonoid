@@ -3,8 +3,8 @@
    \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODY_BODY_COLLISION_DETECTOR_UTIL_H_INCLUDED
-#define CNOID_BODY_BODY_COLLISION_DETECTOR_UTIL_H_INCLUDED
+#ifndef CNOID_BODY_BODY_COLLISION_DETECTOR_UTIL_H
+#define CNOID_BODY_BODY_COLLISION_DETECTOR_UTIL_H
 
 #include <cnoid/CollisionDetector>
 #include <cnoid/Body>

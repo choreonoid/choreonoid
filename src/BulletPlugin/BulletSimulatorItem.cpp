@@ -11,7 +11,6 @@
 #include <cnoid/Body>
 #include <cnoid/BodyItem>
 #include <cnoid/Link>
-#include <cnoid/ColdetModel>
 #include <cnoid/FloatingNumberString>
 #include <cnoid/BasicSensorSimulationHelper>
 #include <cnoid/BodyCollisionDetectorUtil>
@@ -1436,7 +1435,7 @@ bool BulletSimulatorItemImpl::initializeSimulation(const std::vector<SimulationB
         self->setAllLinkPositionOutputMode(true);
     }
     if(useWorldCollision){
-        collisionDetector = self->collisionDetector();
+        collisionDetector = self->getOrCreateCollisionDetector();
         collisionDetector->clearGeometries();
     }
 

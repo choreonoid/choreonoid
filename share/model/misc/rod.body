@@ -16,6 +16,7 @@ links:
         0,     74.25, 0,
         0,     0    , 74.25 ]
       material: Default
+      autoSleep: true
       elements: &box
         Shape:
           geometry: { type: Box, size: [ 1.5, 0.15, 0.15 ] }

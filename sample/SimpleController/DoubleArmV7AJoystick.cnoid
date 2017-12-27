@@ -44,26 +44,26 @@ items:
               data: 
                 modelFile: "${SHARE}/model/DoubleArmV7/DoubleArmV7A.body"
                 currentBaseLink: "TFRAME"
-                rootPosition: [ 0, 0, 0.52 ]
+                rootPosition: [ 6.92089792e-05, 4.6847637e-06, 0.53746052 ]
                 rootAttitude: [ 
-                  -1, -1.23259516e-32, 1.2246468e-16, 
-                  1.2246468e-16, -2.22044605e-16, 1, 
-                  1.23259516e-32, 1, 2.22044605e-16 ]
+                  -0.999999999, -5.01305606e-05, 1.23659299e-06, 
+                  1.23613218e-06, 9.19224176e-06, 1, 
+                  -5.0130572e-05, 0.999999999, -9.19217978e-06 ]
                 jointPositions: [ 
-                   0.000000,  0.000000,  0.000000,  0.000000, -1.221730,  2.617994,  0.000000,  0.000000,  0.000000,  0.000000, 
-                   0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000, 
-                   0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000, 
-                   0.000000,  0.000000,  0.001231, -0.000949 ]
-                initialRootPosition: [ 0, 0, 0.52 ]
+                   0.000000,  0.000000, -0.000000,  0.000000, -1.221730,  2.617994,  0.000000,  0.000000,  0.000000,  0.000000, 
+                  -0.000000, -0.000000,  0.000000,  0.000000, -0.000000, -0.000000,  0.000000,  0.000000,  0.000019,  0.000043, 
+                  -0.000019,  0.000900,  0.000019,  0.000041, -0.000019,  0.000887,  0.000013, -0.000013, -0.000028,  0.000038, 
+                  -0.000029, -0.000028,  0.001269, -0.000978 ]
+                initialRootPosition: [ 6.92089792e-05, 4.6847637e-06, 0.53746052 ]
                 initialRootAttitude: [ 
-                  1, 0, 0, 
-                  0, 2.22044605e-16, -1, 
-                  0, 1, 2.22044605e-16 ]
+                  -0.999999999, -5.01305606e-05, 1.23659301e-06, 
+                  1.2361322e-06, 9.19202861e-06, 1, 
+                  -5.0130572e-05, 0.999999999, -9.19230843e-06 ]
                 initialJointPositions: [ 
-                   0.000000,  0.000000,  0.000000,  0.000000, -1.221730,  2.617994,  0.000000,  0.000000,  0.000000,  0.000000, 
-                   0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000, 
-                   0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000, 
-                   0.000000,  0.000000 ]
+                   0.000000,  0.000000, -0.000000,  0.000000, -1.221730,  2.617994,  0.000000,  0.000000,  0.000000,  0.000000, 
+                  -0.000000, -0.000000,  0.000000,  0.000000, -0.000000, -0.000000,  0.000000,  0.000000,  0.000019,  0.000043, 
+                  -0.000019,  0.000900,  0.000019,  0.000041, -0.000019,  0.000887,  0.000013, -0.000013, -0.000028,  0.000038, 
+                  -0.000029, -0.000028,  0.001269, -0.000978 ]
                 zmp: [ 0, 0, 0 ]
                 collisionDetection: true
                 selfCollisionDetection: false
@@ -111,27 +111,22 @@ items:
               data: 
                 modelFile: "${SHARE}/model/misc/rod.body"
                 currentBaseLink: "rod"
-                rootPosition: [ 3, 0, 0.5 ]
+                rootPosition: [ 3, 2.50423019e-17, 0.0749877417 ]
                 rootAttitude: [ 
-                  2.22044605e-16, -1, 0, 
-                  1, 2.22044605e-16, 0, 
-                  0, 0, 1 ]
+                  2.22044605e-16, -1, -8.06710249e-17, 
+                  1, 2.22044605e-16, -1.92094662e-20, 
+                  1.92094662e-20, -8.06710249e-17, 1 ]
                 jointPositions: [  ]
-                initialRootPosition: [ 0, 0, 0.5 ]
+                initialRootPosition: [ 3, 2.50423019e-17, 0.0749877417 ]
                 initialRootAttitude: [ 
-                  1, 0, 0, 
-                  0, 1, 0, 
-                  0, 0, 1 ]
+                  2.22044605e-16, -1, -8.06710249e-17, 
+                  1, 2.22044605e-16, -1.92094662e-20, 
+                  1.92094662e-20, -8.06710249e-17, 1 ]
                 zmp: [ 0, 0, 0 ]
                 collisionDetection: true
                 selfCollisionDetection: false
                 isEditable: true
 views: 
-  - 
-    id: 0
-    name: "CameraImage"
-    plugin: Base
-    class: ImageView
   - 
     id: 1
     plugin: Base
@@ -156,291 +151,6 @@ views:
     plugin: Base
     class: SceneView
     mounted: true
-    state: 
-      editMode: false
-      viewpointControlMode: thirdPerson
-      collisionLines: false
-      polygonMode: fill
-      defaultHeadLight: true
-      defaultHeadLightIntensity: 0.75
-      headLightLightingFromBack: false
-      worldLight: true
-      worldLightIntensity: 0.5
-      worldLightAmbient: 0.3
-      additionalLights: true
-      fog: true
-      floorGrid: false
-      floorGridSpan: 10
-      floorGridInterval: 0.5
-      xzGridSpan: 10
-      xzGridInterval: 0.5
-      xzGrid: false
-      yzGridSpan: 10
-      yzGridInterval: 0.5
-      texture: true
-      lineWidth: 1
-      pointSize: 1
-      normalVisualization: false
-      normalLength: 0.01
-      coordinateAxes: true
-      fpsTestIteration: 1
-      showFPS: false
-      enableNewDisplayListDoubleRendering: false
-      useBufferForPicking: true
-      upsideDown: false
-      cameras: 
-        - 
-          camera: [ System, Perspective ]
-          isCurrent: true
-          fieldOfView: 0.698132
-          near: 0.01
-          far: 100
-          eye: [ -0.40493883, -6.97762671, 5.08344426 ]
-          direction: [ 0.279336879, 0.836281938, -0.471808678 ]
-          up: [ 0.14947649, 0.447504422, 0.881700953 ]
-        - 
-          camera: [ System, Orthographic ]
-          orthoHeight: 20
-          near: 0.01
-          far: 100
-      backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
-      gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      dedicatedItemTreeViewChecks: false
-  - 
-    id: 5
-    name: "CameraView"
-    plugin: Base
-    class: SceneView
-    state: 
-      editMode: false
-      viewpointControlMode: thirdPerson
-      collisionLines: false
-      polygonMode: fill
-      defaultHeadLight: true
-      defaultHeadLightIntensity: 0.75
-      headLightLightingFromBack: false
-      worldLight: true
-      worldLightIntensity: 0.5
-      worldLightAmbient: 0.3
-      additionalLights: true
-      fog: true
-      floorGrid: true
-      floorGridSpan: 10
-      floorGridInterval: 0.5
-      xzGridSpan: 10
-      xzGridInterval: 0.5
-      xzGrid: false
-      yzGridSpan: 10
-      yzGridInterval: 0.5
-      texture: true
-      lineWidth: 1
-      pointSize: 1
-      normalVisualization: false
-      normalLength: 0.01
-      coordinateAxes: true
-      fpsTestIteration: 1
-      showFPS: false
-      enableNewDisplayListDoubleRendering: false
-      useBufferForPicking: true
-      upsideDown: false
-      cameras: 
-        - 
-          camera: [ System, Perspective ]
-          isCurrent: true
-          fieldOfView: 0.698132
-          near: 0.01
-          far: 100
-          eye: [ 3.98593415, 2.06956276, 1.43167603 ]
-          direction: [ -0.881614075, -0.463073017, -0.0912140553 ]
-          up: [ -0.080752226, -0.0424155853, 0.995831309 ]
-        - 
-          camera: [ System, Orthographic ]
-          orthoHeight: 20
-          near: 0.01
-          far: 100
-      backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
-      gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      dedicatedItemTreeViewChecks: false
-  - 
-    id: 6
-    name: "Camera2"
-    plugin: Base
-    class: SceneView
-    state: 
-      editMode: false
-      viewpointControlMode: thirdPerson
-      collisionLines: false
-      polygonMode: fill
-      defaultHeadLight: true
-      defaultHeadLightIntensity: 0.75
-      headLightLightingFromBack: false
-      worldLight: true
-      worldLightIntensity: 0.5
-      worldLightAmbient: 0.3
-      additionalLights: true
-      fog: true
-      floorGrid: true
-      floorGridSpan: 10
-      floorGridInterval: 0.5
-      xzGridSpan: 10
-      xzGridInterval: 0.5
-      xzGrid: false
-      yzGridSpan: 10
-      yzGridInterval: 0.5
-      texture: true
-      lineWidth: 1
-      pointSize: 1
-      normalVisualization: false
-      normalLength: 0.01
-      coordinateAxes: true
-      fpsTestIteration: 1
-      showFPS: false
-      enableNewDisplayListDoubleRendering: false
-      useBufferForPicking: true
-      upsideDown: false
-      cameras: 
-        - 
-          camera: [ System, Perspective ]
-          isCurrent: true
-          fieldOfView: 0.698132
-          near: 0.01
-          far: 100
-          eye: [ 4.01502165, 1.96405027, 1.5 ]
-          direction: [ -0.893288815, -0.435533482, -0.111111111 ]
-          up: [ -0.0998727256, -0.0486941236, 0.99380799 ]
-        - 
-          camera: [ System, Orthographic ]
-          orthoHeight: 20
-          near: 0.01
-          far: 100
-      backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
-      gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      dedicatedItemTreeViewChecks: false
-  - 
-    id: 7
-    name: "Camera3"
-    plugin: Base
-    class: SceneView
-    state: 
-      editMode: false
-      viewpointControlMode: thirdPerson
-      collisionLines: false
-      polygonMode: fill
-      defaultHeadLight: true
-      defaultHeadLightIntensity: 0.75
-      headLightLightingFromBack: false
-      worldLight: true
-      worldLightIntensity: 0.5
-      worldLightAmbient: 0.3
-      additionalLights: true
-      fog: true
-      floorGrid: true
-      floorGridSpan: 10
-      floorGridInterval: 0.5
-      xzGridSpan: 10
-      xzGridInterval: 0.5
-      xzGrid: false
-      yzGridSpan: 10
-      yzGridInterval: 0.5
-      texture: true
-      lineWidth: 1
-      pointSize: 1
-      normalVisualization: false
-      normalLength: 0.01
-      coordinateAxes: true
-      fpsTestIteration: 1
-      showFPS: false
-      enableNewDisplayListDoubleRendering: false
-      useBufferForPicking: true
-      upsideDown: false
-      cameras: 
-        - 
-          camera: [ System, Perspective ]
-          isCurrent: true
-          fieldOfView: 0.698132
-          near: 0.01
-          far: 100
-          eye: [ 4, 2, 1.5 ]
-          direction: [ -0.888888889, -0.444444444, -0.111111111 ]
-          up: [ -0.0993807989, -0.0496903995, 0.99380799 ]
-        - 
-          camera: [ System, Orthographic ]
-          orthoHeight: 20
-          near: 0.01
-          far: 100
-      backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
-      gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      dedicatedItemTreeViewChecks: false
-  - 
-    id: 8
-    name: "Camera4"
-    plugin: Base
-    class: SceneView
-    state: 
-      editMode: false
-      viewpointControlMode: thirdPerson
-      collisionLines: false
-      polygonMode: fill
-      defaultHeadLight: true
-      defaultHeadLightIntensity: 0.75
-      headLightLightingFromBack: false
-      worldLight: true
-      worldLightIntensity: 0.5
-      worldLightAmbient: 0.3
-      additionalLights: true
-      fog: true
-      floorGrid: true
-      floorGridSpan: 10
-      floorGridInterval: 0.5
-      xzGridSpan: 10
-      xzGridInterval: 0.5
-      xzGrid: false
-      yzGridSpan: 10
-      yzGridInterval: 0.5
-      texture: true
-      lineWidth: 1
-      pointSize: 1
-      normalVisualization: false
-      normalLength: 0.01
-      coordinateAxes: true
-      fpsTestIteration: 1
-      showFPS: false
-      enableNewDisplayListDoubleRendering: false
-      useBufferForPicking: true
-      upsideDown: false
-      cameras: 
-        - 
-          camera: [ System, Perspective ]
-          isCurrent: true
-          fieldOfView: 0.698132
-          near: 0.01
-          far: 100
-          eye: [ 3.98906058, 2.03769293, 1.46142952 ]
-          direction: [ -0.885344628, -0.453795106, -0.101167642 ]
-          up: [ -0.0900301376, -0.0461461386, 0.994869393 ]
-        - 
-          camera: [ System, Orthographic ]
-          orthoHeight: 20
-          near: 0.01
-          far: 100
-      backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
-      gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      dedicatedItemTreeViewChecks: false
-  - 
-    id: 9
-    name: "Scene 2"
-    plugin: Base
-    class: SceneView
     state: 
       editMode: false
       viewpointControlMode: thirdPerson
@@ -479,12 +189,12 @@ views:
         - 
           camera: [ System, Perspective ]
           isCurrent: true
-          fieldOfView: 0.6978
+          fieldOfView: 0.698132
           near: 0.01
           far: 100
-          eye: [ -5.29126118, -5.01169376, 3.84184278 ]
-          direction: [ 0.756596254, 0.487150344, -0.43617273 ]
-          up: [ 0.3667299, 0.236126726, 0.899862962 ]
+          eye: [ -0.40493883, -6.97762671, 5.08344426 ]
+          direction: [ 0.279336879, 0.836281938, -0.471808678 ]
+          up: [ 0.14947649, 0.447504422, 0.881700954 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
@@ -496,23 +206,11 @@ views:
       yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       dedicatedItemTreeViewChecks: false
   - 
-    id: 10
-    name: "Task"
-    plugin: Base
-    class: TaskView
-    state: 
-      layoutMode: horizontal
-      isAutoMode: false
-  - 
-    id: 11
-    name: "Text Editor"
-    plugin: Base
-    class: TextEditView
-  - 
     id: 12
     name: "Virtual Joystick"
     plugin: Base
     class: VirtualJoystickView
+    mounted: true
   - 
     id: 13
     plugin: Body
@@ -520,11 +218,6 @@ views:
     mounted: true
     state: 
       showRotationMatrix: false
-  - 
-    id: 14
-    name: "Body State"
-    plugin: Body
-    class: BodyStateView
   - 
     id: 15
     plugin: Body
@@ -643,7 +336,7 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 312, 1448 ]
+      sizes: [ 328, 1523 ]
       children: 
         - 
           type: splitter
@@ -666,7 +359,7 @@ viewAreas:
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 595, 847 ]
+              sizes: [ 626, 891 ]
               children: 
                 - 
                   type: pane
@@ -677,9 +370,18 @@ viewAreas:
                   views: [ 4 ]
                   current: 4
             - 
-              type: pane
-              views: [ 3, 17 ]
-              current: 3
+              type: splitter
+              orientation: horizontal
+              sizes: [ 759, 758 ]
+              children: 
+                - 
+                  type: pane
+                  views: [ 3, 17 ]
+                  current: 3
+                - 
+                  type: pane
+                  views: [ 12 ]
+                  current: 12
 layoutOfToolBars: 
   rows: 
     - 

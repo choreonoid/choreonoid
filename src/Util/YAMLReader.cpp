@@ -477,22 +477,22 @@ ScalarNode* YAMLReaderImpl::createScalar(const yaml_event_t& event)
 
     switch(event.data.scalar.style){
     case YAML_PLAIN_SCALAR_STYLE:
-        scalar->stringStyle = PLAIN_STRING;
+        scalar->stringStyle_ = PLAIN_STRING;
         break;
     case YAML_SINGLE_QUOTED_SCALAR_STYLE:
-        scalar->stringStyle = SINGLE_QUOTED;
+        scalar->stringStyle_ = SINGLE_QUOTED;
         break;
     case YAML_DOUBLE_QUOTED_SCALAR_STYLE:
-        scalar->stringStyle = DOUBLE_QUOTED;
+        scalar->stringStyle_ = DOUBLE_QUOTED;
         break;
     case YAML_LITERAL_SCALAR_STYLE:
-        scalar->stringStyle = LITERAL_STRING;
+        scalar->stringStyle_ = LITERAL_STRING;
         break;
     case YAML_FOLDED_SCALAR_STYLE:
-        scalar->stringStyle = FOLDED_STRING;
+        scalar->stringStyle_ = FOLDED_STRING;
         break;
     default:
-        scalar->stringStyle = DOUBLE_QUOTED;
+        scalar->stringStyle_ = DOUBLE_QUOTED;
     }
 
     return scalar;

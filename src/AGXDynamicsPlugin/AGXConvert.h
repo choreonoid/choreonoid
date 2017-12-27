@@ -76,6 +76,11 @@ inline agx::Vec3 toAGX(const Vector3& v)
     return agx::Vec3(v.x(), v.y(), v.z());
 }
 
+inline Vector3 toCnoid(const agx::Vec3& v)
+{
+    return Vector3(v.x(), v.y(), v.z());
+}
+
 }
 }
 

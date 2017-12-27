@@ -7,6 +7,7 @@
 #define CNOID_UTIL_MULTI_VALUE_SEQ_H
 
 #include "MultiSeq.h"
+#include "NullOut.h"
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -25,14 +26,14 @@ public:
     virtual ~MultiValueSeq();
 
     using BaseSeqType::operator=;
-    virtual AbstractSeqPtr cloneSeq() const;
+    virtual AbstractSeqPtr cloneSeq() const override;
         
-    virtual bool loadPlainFormat(const std::string& filename);
-    virtual bool saveAsPlainFormat(const std::string& filename);
+    bool loadPlainFormat(const std::string& filename, std::ostream& os = nullout());
+    bool saveAsPlainFormat(const std::string& filename, std::ostream& os = nullout());
 
 protected:
-    virtual bool doWriteSeq(YAMLWriter& writer);
-    virtual bool doReadSeq(const Mapping& archive);
+    virtual bool doReadSeq(const Mapping* archive, std::ostream& os) override;
+    virtual bool doWriteSeq(YAMLWriter& writer) override;
 };
 
 typedef MultiValueSeq::Ptr MultiValueSeqPtr;        

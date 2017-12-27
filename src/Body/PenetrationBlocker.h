@@ -7,6 +7,7 @@
 
 #include "Link.h"
 #include <cnoid/CollisionDetector>
+#include <memory>
 #include "exportdecl.h"
 
 namespace cnoid {

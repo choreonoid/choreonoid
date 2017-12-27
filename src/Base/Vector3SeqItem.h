@@ -21,7 +21,7 @@ public:
     Vector3SeqItem(const Vector3SeqItem& org);
     Vector3SeqItem(Vector3SeqPtr seq);
 
-    virtual AbstractSeqPtr abstractSeq();
+    virtual AbstractSeqPtr abstractSeq() override;
         
     Vector3SeqPtr seq() { return seq_; }
 
@@ -36,7 +36,7 @@ protected:
         
     virtual ~Vector3SeqItem();
 
-    virtual Item* doDuplicate() const;
+    virtual Item* doDuplicate() const override;
             
     Vector3SeqPtr seq_;
 };

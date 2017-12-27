@@ -10,12 +10,12 @@
 #include <cnoid/Item>
 #include <cnoid/ItemList>
 #include <cnoid/SceneProvider>
-#include <cnoid/CollisionDetector>
 #include "exportdecl.h"
 
 namespace cnoid {
 
 class WorldItemImpl;
+class CollisionDetector;
 class MaterialTable;
 
 class CNOID_EXPORT WorldItem : public Item, public SceneProvider
@@ -27,10 +27,10 @@ public:
     WorldItem(const WorldItem& org);
     virtual ~WorldItem();
 
-    const ItemList<BodyItem>& collisionBodyItems() const;
+    ItemList<BodyItem> coldetBodyItems() const;
 
     bool selectCollisionDetector(const std::string& name);
-    CollisionDetectorPtr collisionDetector();
+    CollisionDetector* collisionDetector();
     void enableCollisionDetection(bool on);
     bool isCollisionDetectionEnabled();
     void updateCollisionDetectorLater();
@@ -39,16 +39,19 @@ public:
     std::vector<CollisionLinkPairPtr>& collisions() const;
     SignalProxy<void()> sigCollisionsUpdated();
 
-    virtual SgNode* getScene();
+    virtual SgNode* getScene() override;
 
     void setMaterialTableFile(const std::string& filename);
     MaterialTable* materialTable();
 
+    //! \deprecated
+    ItemList<BodyItem> collisionBodyItems() const { return coldetBodyItems(); }
+
 protected:
-    virtual Item* doDuplicate() const;
-    virtual void doPutProperties(PutPropertyFunction& putProperty);
-    virtual bool store(Archive& archive);
-    virtual bool restore(const Archive& archive);
+    virtual Item* doDuplicate() const override;
+    virtual void doPutProperties(PutPropertyFunction& putProperty) override;
+    virtual bool store(Archive& archive) override;
+    virtual bool restore(const Archive& archive) override;
 
 private:
     WorldItemImpl* impl;

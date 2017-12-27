@@ -8,6 +8,7 @@
 
 #include "MultiSeq.h"
 #include "EigenTypes.h"
+#include "NullOut.h"
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -16,9 +17,9 @@ class Mapping;
 class Listing;
 class YAMLWriter;
         
-class CNOID_EXPORT MultiSE3Seq : public MultiSeq<SE3, Eigen::aligned_allocator<SE3> >
+class CNOID_EXPORT MultiSE3Seq : public MultiSeq<SE3, Eigen::aligned_allocator<SE3>>
 {
-    typedef MultiSeq<SE3, Eigen::aligned_allocator<SE3> > BaseSeqType;
+    typedef MultiSeq<SE3, Eigen::aligned_allocator<SE3>> BaseSeqType;
 
 public:
     typedef std::shared_ptr<MultiSE3Seq> Ptr;
@@ -31,23 +32,16 @@ public:
 
     using BaseSeqType::operator=;
 
-    virtual AbstractSeqPtr cloneSeq() const;
+    virtual AbstractSeqPtr cloneSeq() const override;
         
-    //virtual bool loadPlainFormat(const std::string& filename);
-
-    bool loadPlainMatrixFormat(const std::string& filename);
-    bool loadPlainRpyFormat(const std::string& filename);
-    bool saveTopPartAsPlainMatrixFormat(const std::string& filename);
+    bool loadPlainMatrixFormat(const std::string& filename, std::ostream& os = nullout());
+    bool loadPlainRpyFormat(const std::string& filename, std::ostream& os = nullout());
+    bool saveTopPartAsPlainMatrixFormat(const std::string& filename, std::ostream& os = nullout());
 
 protected:
-    virtual SE3 defaultValue() const { return SE3(Vector3::Zero(), Quat::Identity()); }
-
-    virtual bool doWriteSeq(YAMLWriter& writer);
-    virtual bool doReadSeq(const Mapping& archive);
-
-private:
-    void readPosQuatSeq(int nParts, int nFrames, const Listing& values, bool isWfirst);
-    void readPosRpySeq(int nParts, int nFrames, const Listing& values);
+    virtual SE3 defaultValue() const override;
+    virtual bool doReadSeq(const Mapping* archive, std::ostream& os) override;
+    virtual bool doWriteSeq(YAMLWriter& writer) override;
 };
 
 typedef MultiSE3Seq::Ptr MultiSE3SeqPtr;

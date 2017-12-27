@@ -15,6 +15,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <chrono>
 
 using namespace std;
 using namespace cnoid;
@@ -55,12 +56,12 @@ const map<string, ModelInfo> modelMap = {
 
     // CUH-ZCT1J or CUH-ZCT2J
     { "Sony Computer Entertainment Wireless Controller",    { PS4,  PS4_Axes,  PS4_Buttons } },
-    
     { "Sony Interactive Entertainment Wireless Controller", { PS4,  PS4_Axes,  PS4_Buttons } },
     { "Sony PLAYSTATION(R)3 Controller",                    { PS3,  PS3_Axes,  PS3_Buttons } },
-    { "Microsoft X-Box 360 pad",                            { XBOX, XBOX_Axes, XBOX_Axes } },
-    { "Microsoft X-Box One pad",                            { XBOX, XBOX_Axes, XBOX_Axes } },
-    { "Logitech Gamepad F310",                              { F310_XInput, F310X_Axes, F310D_Axes } }
+    { "Microsoft X-Box 360 pad",                            { XBOX, XBOX_Axes, XBOX_Buttons } },
+    { "Microsoft X-Box One pad",                            { XBOX, XBOX_Axes, XBOX_Buttons } },
+    { "Logitech Gamepad F310",                              { F310_XInput, F310X_Axes, F310X_Buttons } },
+    { "Logicool Logicool Dual Action",                      { F310_DirectInput, F310D_Axes, F310D_Buttons } }
 };
 
 ModelInfo unsupportedModel { UNSUPPORTED, Unsupported_Axes, Unsupported_Buttons };
@@ -78,6 +79,9 @@ public:
     vector<double> axes;
     vector<bool> axisEnabled;
     vector<bool> buttons;
+    vector<bool> prevButtons;
+    vector<chrono::system_clock::time_point> buttonDownTime;
+    vector<bool> buttonHoldValid;
     string errorMessage;
     Signal<void(int id, bool isPressed)> sigButton;
     Signal<void(int id, double position)> sigAxis;
@@ -148,6 +152,9 @@ bool JoystickImpl::openDevice(const char* device)
     char numButtons;
     ioctl(fd, JSIOCGBUTTONS, &numButtons);
     buttons.resize(numButtons, false);
+    prevButtons.resize(numButtons, false);
+    buttonDownTime.resize(numButtons);
+    buttonHoldValid.resize(numButtons, false);
 
     char identifier[1024];
     ioctl(fd, JSIOCGNAME(sizeof(identifier)), identifier);
@@ -251,6 +258,7 @@ bool Joystick::readCurrentState()
 
 bool JoystickImpl::readCurrentState()
 {
+    prevButtons = buttons;
     while(readEvent());
     return (fd >= 0);
 }
@@ -288,6 +296,10 @@ bool JoystickImpl::readEvent()
         bool isPressed = (pos > 0.0);
         buttons[id] = isPressed;
         sigButton(id, isPressed);
+        if(isPressed){
+            buttonDownTime[id] = chrono::system_clock::now();
+            buttonHoldValid[id] = false;
+        }
     } else if(event.type & JS_EVENT_AXIS){
         if(axisEnabled[id]){
             // normalize value (-1.0 to 1.0)
@@ -426,6 +438,48 @@ bool Joystick::getNativeButtonState(int button) const
     if(button < static_cast<int>(impl->buttons.size())){
         return impl->buttons[button];
     }
+    return false;
+}
+
+
+bool Joystick::getButtonDown(int button) const
+{
+    if(button >= NUM_STD_BUTTONS){
+        return false;
+    }
+    return getButtonState(button) && !impl->prevButtons[impl->currentModel.buttonMap[button]];
+}
+
+
+bool Joystick::getButtonUp(int button) const
+{
+    if(button >= NUM_STD_BUTTONS){
+        return false;
+    }
+    return !getButtonState(button) && impl->prevButtons[impl->currentModel.buttonMap[button]];
+}
+
+
+bool Joystick::getButtonHold(int button, int duration/*(msec)*/) const
+{
+    if(impl->buttonHoldValid[impl->currentModel.buttonMap[button]]){
+        return false;
+    }
+    if(getButtonHoldOn(button, duration)){
+        impl->buttonHoldValid[impl->currentModel.buttonMap[button]] = true;
+        return true;
+    }
+    return false;
+}
+
+
+bool Joystick::getButtonHoldOn(int button, int duration/*(msec)*/) const
+{
+    if(button >= NUM_STD_BUTTONS || !getButtonState(button)){
+        return false;
+    }
+    auto dur = chrono::system_clock::now() - impl->buttonDownTime[impl->currentModel.buttonMap[button]];
+    if(chrono::duration_cast<chrono::milliseconds>(dur).count() > duration) return true;
     return false;
 }
 

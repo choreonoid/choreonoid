@@ -57,6 +57,29 @@ items:
                 baseDirectory: "Controller directory"
                 reloading: true
         - 
+          id: 6
+          name: "Rod"
+          plugin: Body
+          class: BodyItem
+          data: 
+            modelFile: "${SHARE}/model/misc/rod.body"
+            currentBaseLink: "rod"
+            rootPosition: [ 3, 2.50423019e-17, 0.0749877417 ]
+            rootAttitude: [ 
+              2.22044605e-16, -1, -8.06710249e-17, 
+              1, 2.22044605e-16, -1.92094662e-20, 
+              1.92094662e-20, -8.06710249e-17, 1 ]
+            jointPositions: [  ]
+            initialRootPosition: [ 3, 2.50423019e-17, 0.0749877417 ]
+            initialRootAttitude: [ 
+              2.22044605e-16, -1, -8.06710249e-17, 
+              1, 2.22044605e-16, -1.92094662e-20, 
+              1.92094662e-20, -8.06710249e-17, 1 ]
+            zmp: [ 0, 0, 0 ]
+            collisionDetection: true
+            selfCollisionDetection: false
+            isEditable: true
+        - 
           id: 4
           name: "Floor"
           plugin: Body
@@ -123,7 +146,7 @@ views:
     mounted: true
     state: 
       selected: [ 5 ]
-      checked: [ 2, 4 ]
+      checked: [ 2, 4, 6 ]
       expanded: [ 1, 2 ]
   - 
     id: 2
@@ -147,6 +170,8 @@ views:
       worldLightIntensity: 0.5
       worldLightAmbient: 0.3
       additionalLights: true
+      shadowLights: 
+        - 0
       fog: true
       floorGrid: false
       floorGridSpan: 10

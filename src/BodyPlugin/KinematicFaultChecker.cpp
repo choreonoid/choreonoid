@@ -20,7 +20,8 @@
 #include <cnoid/Dialog>
 #include <cnoid/Separator>
 #include <cnoid/EigenUtil>
-#include <cnoid/BodyCollisionDetectorUtil>
+#include <cnoid/BodyCollisionDetector>
+#include <cnoid/AISTCollisionDetector>
 #include <cnoid/IdPair>
 #include <QDialogButtonBox>
 #include <QBoxLayout>
@@ -30,7 +31,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 using boost::dynamic_bitset;
 using boost::format;
@@ -74,7 +74,8 @@ public:
     int numFaults;
     vector<int> lastPosFaultFrames;
     vector<int> lastVelFaultFrames;
-    typedef std::map<IdPair<int>, int> LastCollisionFrameMap;
+    typedef IdPair<CollisionDetector::GeometryHandle> GeometryPair;
+    typedef std::map<GeometryPair, int> LastCollisionFrameMap;
     LastCollisionFrameMap lastCollisionFrames;
 
     double frameRate;
@@ -105,12 +106,12 @@ void KinematicFaultChecker::initialize(ExtensionManager* ext)
         MenuManager& mm = ext->menuManager();
         mm.setPath("/Tools");
         mm.addItem(_("Kinematic Fault Checker"))
-            ->sigTriggered().connect(std::bind(&KinematicFaultCheckerImpl::show, checkerInstance->impl));
+            ->sigTriggered().connect([](){ checkerInstance->impl->show(); });
         
         ext->setProjectArchiver(
             "KinematicFaultChecker",
-            std::bind(&KinematicFaultCheckerImpl::store, checkerInstance->impl, _1),
-            std::bind(&KinematicFaultCheckerImpl::restore, checkerInstance->impl, _1));
+            [](Archive& archive){ return checkerInstance->impl->store(archive); },
+            [](const Archive& archive) { return checkerInstance->impl->restore(archive); });
     }
 }
 
@@ -225,7 +226,7 @@ KinematicFaultCheckerImpl::KinematicFaultCheckerImpl()
     applyButton->setDefault(true);
     QDialogButtonBox* buttonBox = new QDialogButtonBox(this);
     buttonBox->addButton(applyButton, QDialogButtonBox::AcceptRole);
-    applyButton->sigClicked().connect(std::bind(&KinematicFaultCheckerImpl::apply, this));
+    applyButton->sigClicked().connect([&](){ apply(); });
     
     vbox->addWidget(buttonBox);
 }
@@ -363,22 +364,16 @@ int KinematicFaultCheckerImpl::checkFaults
         bodyItem->storeKinematicState(orgKinematicState);
     }
 
-    CollisionDetectorPtr collisionDetector;
+    BodyCollisionDetector bodyCollisionDetector;
     WorldItem* worldItem = bodyItem->findOwnerItem<WorldItem>();
     if(worldItem){
-        collisionDetector = worldItem->collisionDetector()->clone();
+        bodyCollisionDetector.setCollisionDetector(worldItem->collisionDetector()->clone());
     } else {
-        int index = CollisionDetector::factoryIndex("AISTCollisionDetector");
-        if(index >= 0){
-            collisionDetector = CollisionDetector::create(index);
-        } else {
-            collisionDetector = CollisionDetector::create(0);
-            os << _("A collision detector is not found. Collisions cannot be detected this time.") << endl;
-        }
+        bodyCollisionDetector.setCollisionDetector(new AISTCollisionDetector);
     }
 
-    addBodyToCollisionDetector(*body, *collisionDetector);
-    collisionDetector->makeReady();
+    bodyCollisionDetector.addBody(body, true);
+    bodyCollisionDetector.makeReady();
 
     const int numJoints = std::min(body->numJoints(), qseq->numParts());
     const int numLinks = std::min(body->numLinks(), pseq->numParts());
@@ -462,12 +457,12 @@ int KinematicFaultCheckerImpl::checkFaults
                 }
             }
 
-            for(int i=0; i < numLinks; ++i){
-                link = body->link(i);
-                collisionDetector->updatePosition(i, link->position());
-            }
-            collisionDetector->detectCollisions(
-                std::bind(&KinematicFaultCheckerImpl::putSelfCollision, this, body.get(), frame, _1, std::ref(os)));
+            bodyCollisionDetector.updatePositions();
+
+            bodyCollisionDetector.detectCollisions(
+                [&](const CollisionPair& collisionPair){
+                    putSelfCollision(body, frame, collisionPair, os);
+                });
         }
     }
 
@@ -542,11 +537,11 @@ void KinematicFaultCheckerImpl::putSelfCollision(Body* body, int frame, const Co
     static format f(fmt(_("%1$7.3f [s]: Collision between %2% and %3%")));
     
     bool putMessage = false;
-    IdPair<int> idPair(collisionPair.geometryId);
-    LastCollisionFrameMap::iterator p = lastCollisionFrames.find(idPair);
+    GeometryPair gPair(collisionPair.geometries());
+    auto p = lastCollisionFrames.find(gPair);
     if(p == lastCollisionFrames.end()){
         putMessage = true;
-        lastCollisionFrames[idPair] = frame;
+        lastCollisionFrames[gPair] = frame;
     } else {
         if(frame > p->second + 1){
             putMessage = true;
@@ -555,8 +550,8 @@ void KinematicFaultCheckerImpl::putSelfCollision(Body* body, int frame, const Co
     }
 
     if(putMessage){
-        Link* link0 = body->link(collisionPair.geometryId[0]);
-        Link* link1 = body->link(collisionPair.geometryId[1]);
+        Link* link0 = static_cast<Link*>(collisionPair.object(0));
+        Link* link1 = static_cast<Link*>(collisionPair.object(1));
         os << (f % (frame / frameRate) % link0->name() % link1->name()) << endl;
         numFaults++;
     }

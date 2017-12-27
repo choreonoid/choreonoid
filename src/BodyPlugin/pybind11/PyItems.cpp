@@ -26,7 +26,7 @@ void exportItems(py::module m)
 
     PyItemList<WorldItem>(m, "WorldItemList");
     
-    py::class_<BodyMotionItem, BodyMotionItemPtr, AbstractMultiSeqItem>(m, "BodyMotionItem")
+    py::class_<BodyMotionItem, BodyMotionItemPtr, AbstractSeqItem>(m, "BodyMotionItem")
         .def(py::init<>())
         .def("motion", (BodyMotionPtr(BodyMotionItem::*)()) &BodyMotionItem::motion)
         .def("jointPosSeqItem", (MultiValueSeqItem*(BodyMotionItem::*)())&BodyMotionItem::jointPosSeqItem)

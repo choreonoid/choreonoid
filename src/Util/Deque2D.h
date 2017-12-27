@@ -12,14 +12,15 @@
 
 namespace cnoid {
 
-template <typename ElementType, typename Allocator = std::allocator<ElementType> >
+template <typename ElementType, typename Allocator = std::allocator<ElementType>>
 class Deque2D
 {
     typedef Deque2D<ElementType, Allocator> Deque2DType;
     
 public:
-    typedef ElementType Element;
-
+    typedef ElementType value_type;
+    typedef ElementType Element; ///< \deprecated. Use value_type.
+    
     class const_iterator : public std::iterator<std::random_access_iterator_tag, ElementType> {
 
         friend class Deque2D<ElementType, Allocator>;

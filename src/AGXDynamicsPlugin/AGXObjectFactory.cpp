@@ -41,6 +41,7 @@ agxSDK::SimulationRef AGXObjectFactory::createSimulation(const AGXSimulationDesc
     sim->getSpace()->setEnableContactReduction(desc.enableContactReduction);
     sim->getSpace()->setContactReductionBinResolution(desc.contactReductionBinResolution);
     sim->getSpace()->setContactReductionThreshold(desc.contactReductionThreshhold);
+    sim->getDynamicsSystem()->setEnableContactWarmstarting(desc.enableContactWarmstarting);
     sim->getDynamicsSystem()->getAutoSleep()->setEnable(desc.enableAutoSleep);
     return sim;
 }
@@ -58,6 +59,13 @@ agx::MaterialRef AGXObjectFactory::createMaterial(const AGXMaterialDesc & desc)
     m->getSurfaceMaterial()->setRoughness(desc.roughness);
     m->getSurfaceMaterial()->setViscosity(desc.surfaceViscosity);
     m->getSurfaceMaterial()->setAdhesion(desc.adhesionForce, desc.adhesivOverlap);
+
+    // WireMaterial
+    m->getWireMaterial()->setYoungsModulusBend(desc.wireYoungsModulusBend);
+    m->getWireMaterial()->setDampingBend(desc.wireDampingBend);
+    m->getWireMaterial()->setYoungsModulusStretch(desc.wireYoungsModulusStretch);
+    m->getWireMaterial()->setDampingStretch(desc.wireDampingStretch);
+
     return m;
 }
 
@@ -355,7 +363,34 @@ agxVehicle::TrackRef AGXObjectFactory::createVehicleTrack(const AGXVehicleTrackD
     return track;
 }
 
-agxCollide::ConvexBuilderRef AGXObjectFactory::createConvexBuilder(){
+agxWire::WireRef AGXObjectFactory::createWire(const AGXWireDesc& desc)
+{
+    agxWire::WireRef wire = new agxWire::Wire(desc.radius, desc.resolutionPerUnitLength, desc.enableCollisions);
+    return wire;
+}
+
+agxWire::FreeNodeRef AGXObjectFactory::createWireFreeNode(const agx::Vec3& pos)
+{
+    return new agxWire::FreeNode(pos);
+}
+
+agxWire::BodyFixedNodeRef AGXObjectFactory::createWireBodyFixedNode(agx::RigidBody* rigid, const agx::Vec3& pos)
+{
+    return new agxWire::BodyFixedNode(rigid, pos);
+}
+
+agxWire::WireWinchControllerRef AGXObjectFactory::createWinchController(const AGXWireWinchControllerDesc& desc)
+{
+    return new agxWire::WireWinchController(desc.rigidBody, desc.positionInBodyFrame, desc.normalInBodyFrame, desc.pulledInLength);
+}
+
+agxWire::LinkRef AGXObjectFactory::createWireLink(agx::RigidBody* rigid)
+{
+    return new agxWire::Link(rigid);
+}
+
+agxCollide::ConvexBuilderRef AGXObjectFactory::createConvexBuilder()
+{
     return new agxCollide::ConvexBuilder();
 }
 

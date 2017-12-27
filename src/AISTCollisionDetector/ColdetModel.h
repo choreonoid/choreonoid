@@ -5,10 +5,10 @@
 #ifndef CNOID_AIST_COLLISION_DETECTOR_COLDET_MODEL_H
 #define CNOID_AIST_COLLISION_DETECTOR_COLDET_MODEL_H
 
+#include <cnoid/Referenced>
 #include <cnoid/EigenTypes>
 #include <string>
 #include <vector>
-#include <memory>
 #include "exportdecl.h"
 
 namespace IceMaths {
@@ -17,12 +17,9 @@ class Matrix4x4;
 
 namespace cnoid {
 
-class ColdetModel;
-typedef std::shared_ptr<ColdetModel> ColdetModelPtr;
-
 class ColdetModelInternalModel;
 
-class CNOID_EXPORT ColdetModel
+class CNOID_EXPORT ColdetModel : public Referenced
 {
 public:
     enum PrimitiveType { SP_MESH, SP_BOX, SP_CYLINDER, SP_CONE, SP_SPHERE, SP_PLANE };
@@ -44,7 +41,7 @@ public:
      */
     virtual ~ColdetModel();
 
-    virtual ColdetModelPtr clone() const;
+    virtual ColdetModel* clone() const;
 
     void cloneInternalModel();
 
@@ -224,6 +221,8 @@ private:
 
     friend class ColdetModelPair;
 };
+
+typedef ref_ptr<ColdetModel> ColdetModelPtr;
 
 }
 
