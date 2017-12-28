@@ -33,11 +33,11 @@ public:
     int numLinks() const { return linkPosSeq_->numParts(); }
     int numJoints() const { return jointPosSeq_->numParts(); }
 
-    double frameRate() const { return linkPosSeq_->frameRate(); }
+    double frameRate() const;
     virtual double getFrameRate() const override;
     virtual void setFrameRate(double frameRate) override;
 
-    double timeStep() const { return linkPosSeq_->timeStep(); }
+    double timeStep() const;
 
     virtual double getOffsetTime() const override;
     virtual void setOffsetTime(double time) override;
