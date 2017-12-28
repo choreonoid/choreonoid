@@ -343,11 +343,11 @@ EditableSceneBodyImpl::EditableSceneBodyImpl(EditableSceneBody* self, BodyItemPt
     if(legged->isValid() && legged->numFeet() > 0){
         Link* footLink = legged->footLink(0);
         const double r = calcLinkMarkerRadius(self->sceneLink(footLink->index()));
-        zmpMarker = new SphereMarker(r, Vector3f(0.0f, 1.0f, 0.0f), 0.3);
+        zmpMarker = new SphereMarker(r, Vector3f(0.0f, 1.0f, 0.0f), 0.3f);
         zmpMarker->setName("ZMP");
         zmpMarker->addChild(new CrossMarker(r * 2.5, Vector3f(0.0f, 1.0f, 0.0f), 2.0f));
     } else {
-        zmpMarker = new SphereMarker(0.1, Vector3f(0.0f, 1.0f, 0.0f), 0.3);
+        zmpMarker = new SphereMarker(0.1, Vector3f(0.0f, 1.0f, 0.0f), 0.3f);
     }
     isZmpVisible = false;
 
@@ -680,11 +680,11 @@ void EditableSceneBodyImpl::updateMarkersAndManipulators()
         if(isEditMode && !activeSimulatorItem){
             Link* link = sceneLink->link();
             if(link == baseLink){
-                sceneLink->showMarker(Vector3f(1.0f, 0.1f, 0.1f), 0.4);
+                sceneLink->showMarker(Vector3f(1.0f, 0.1f, 0.1f), 0.4f);
             } else {
                 int pinAxes = pin->pinAxes(link);
                 if(pinAxes & (InverseKinematics::TRANSFORM_6D)){
-                    sceneLink->showMarker(Vector3f(1.0f, 1.0f, 0.1f), 0.4);
+                    sceneLink->showMarker(Vector3f(1.0f, 1.0f, 0.1f), 0.4f);
                 }
             }
         }

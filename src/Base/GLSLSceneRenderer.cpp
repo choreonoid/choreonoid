@@ -436,7 +436,7 @@ void GLSLSceneRendererImpl::initialize()
     defaultLighting = true;
     defaultSmoothShading = true;
     defaultMaterial = new SgMaterial;
-    defaultMaterial->setDiffuseColor(Vector3f(0.8, 0.8, 0.8));
+    defaultMaterial->setDiffuseColor(Vector3f(0.8f, 0.8f, 0.8f));
     defaultPointSize = 1.0f;
     defaultLineWidth = 1.0f;
 

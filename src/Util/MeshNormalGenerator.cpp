@@ -142,7 +142,7 @@ void MeshNormalGeneratorImpl::calculateFaceNormals(SgMesh* mesh)
             for(size_t k=0; k < trianglesOfVertex.size(); ++k){
                 const Vector3f& otherNormal = (*faceNormals)[trianglesOfVertex[k]];
                 // the same face is not appended
-                if(otherNormal.isApprox(normal, 5.0e-4)){
+                if(otherNormal.isApprox(normal, 5.0e-4f)){
                     isSameNormalFaceFound = true;
                     break;
                 }
