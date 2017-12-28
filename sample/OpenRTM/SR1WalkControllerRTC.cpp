@@ -15,11 +15,11 @@ namespace {
 
 const double pgain[] = {
     8000.0, 8000.0, 8000.0, 8000.0, 8000.0, 8000.0,
-    3000.0, 3000.0, 3000.0, 3000.0, 3000.0, 3000.0, 3000.0, 
+    3000.0, 3000.0, 3000.0, 3000.0, 3000.0, 3000.0, 3000.0,
     8000.0, 8000.0, 8000.0, 8000.0, 8000.0, 8000.0,
-    3000.0, 3000.0, 3000.0, 3000.0, 3000.0, 3000.0, 3000.0, 
+    3000.0, 3000.0, 3000.0, 3000.0, 3000.0, 3000.0, 3000.0,
     8000.0, 8000.0, 8000.0 };
-    
+
 const double dgain[] = {
     100.0, 100.0, 100.0, 100.0, 100.0, 100.0,
     100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0,
@@ -41,6 +41,7 @@ const char* samplepd_spec[] =
     "lang_type",         "compile",
     ""
 };
+
 }
 
 
@@ -62,7 +63,7 @@ RTC::ReturnCode_t SR1WalkControllerRTC::onInitialize()
 {
     // Set InPort buffers
     addInPort("q", m_angleIn);
-  
+
     // Set OutPort buffer
     addOutPort("u", m_torqueOut);
 
@@ -74,7 +75,7 @@ RTC::ReturnCode_t SR1WalkControllerRTC::onActivated(RTC::UniqueId ec_id)
     if(!qseq){
         string filename = getNativePathString(
             boost::filesystem::path(shareDirectory())
-            / "motion" / "SR1" / "SR1WalkPattern.yaml");
+            / "motion" / "SR1" / "SR1WalkPattern1.seq");
 
         BodyMotion motion;
         if(!motion.loadStandardYAMLformat(filename)){
@@ -131,10 +132,9 @@ RTC::ReturnCode_t SR1WalkControllerRTC::onExecute(RTC::UniqueId ec_id)
         oldFrame = frame;
     }
     m_torqueOut.write();
-  
+
     return RTC::RTC_OK;
 }
-
 
 extern "C"
 {

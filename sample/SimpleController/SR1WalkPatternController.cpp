@@ -50,15 +50,15 @@ public:
         
         if(opt == "position"){
             actuationMode = Link::JOINT_ANGLE;
-            patternFile = "SR1WalkPattern2.yaml";
+            patternFile = "SR1WalkPattern2.seq";
             io->os() << "SR1WalkPatternController: position control mode." << endl;
         } else if(opt == "velocity"){
             actuationMode = Link::JOINT_VELOCITY;
-            patternFile = "SR1WalkPattern2.yaml";
+            patternFile = "SR1WalkPattern2.seq";
             io->os() << "SR1WalkPatternController: velocity control mode." << endl;
         } else {
             actuationMode = Link::JOINT_TORQUE;
-            patternFile = "SR1WalkPattern.yaml";
+            patternFile = "SR1WalkPattern1.seq";
             io->os() << "SR1WalkPatternController: torque control mode." << endl;
         }
 
