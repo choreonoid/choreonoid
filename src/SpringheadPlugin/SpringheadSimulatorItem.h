@@ -34,16 +34,15 @@ public:
 
 protected:
         
-    virtual SimulationBody* createSimulationBody(Body* orgBody);
-    virtual bool initializeSimulation(const std::vector<SimulationBody*>& simBodies);
-    virtual void initializeSimulationThread();
-    virtual bool stepSimulation(const std::vector<SimulationBody*>& activeSimBodies);
-    virtual void finalizeSimulation();
-
-    virtual Item* doDuplicate() const;
-    virtual void doPutProperties(PutPropertyFunction& putProperty);
-    virtual bool store(Archive& archive);
-    virtual bool restore(const Archive& archive);
+    virtual SimulationBody* createSimulationBody      (Body* orgBody)                                       override;
+    virtual bool            initializeSimulation      (const std::vector<SimulationBody*>& simBodies)       override;
+    virtual void            initializeSimulationThread()                                                    override;
+    virtual bool            stepSimulation            (const std::vector<SimulationBody*>& activeSimBodies) override;
+    virtual void            finalizeSimulation        ()                                                    override;
+    virtual Item*           doDuplicate               ()                                              const override;
+    virtual void            doPutProperties           (PutPropertyFunction& putProperty)                    override;
+    virtual bool            store                     (Archive& archive)                                    override;
+    virtual bool            restore                   (const Archive& archive)                              override;
 
 private:
     SpringheadSimulatorItemImpl* impl;

@@ -55,6 +55,8 @@ class SpringheadLink;
 class SpringheadBody;
 class SpringheadSimulatorItemImpl;
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 class SpringheadLink : public Referenced
 {
 public:
@@ -82,6 +84,8 @@ public:
 };
 typedef ref_ptr<SpringheadLink> SpringheadLinkPtr;
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 class SpringheadBody : public SimulationBody
 {
 public:
@@ -102,6 +106,8 @@ public:
     void updateForceSensors();
     void alignToZAxisIn2Dmode();
 };
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 class SpringheadSimulatorItemImpl
 {
@@ -149,8 +155,6 @@ public:
     void collisionCallback   (const CollisionPair& collisionPair);
 };
 
-}
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 SpringheadLink::SpringheadLink(SpringheadSimulatorItemImpl* simImpl, SpringheadBody* sprBody, SpringheadLink* parent, const Vector3& parentOrigin, Link* link)
@@ -168,8 +172,8 @@ SpringheadLink::SpringheadLink(SpringheadSimulatorItemImpl* simImpl, SpringheadB
     
     Vector3 o = parentOrigin + link->b();
     
-    createLinkBody(simImpl, parent, o);
-    
+	createLinkBody(simImpl, parent, o);
+	
 	if(!simImpl->param.useWorldCollision){
         createGeometry(sprBody);
     }
@@ -183,8 +187,9 @@ void SpringheadLink::createLinkBody(SpringheadSimulatorItemImpl* simImpl, Spring
 {
 	phSolid = simImpl->phScene->CreateSolid();
 
-	phSolid->SetMass(link->m());
-	phSolid->SetInertia(ToSpr(link->I()));
+	phSolid->SetDynamical( !body->body()->isStaticModel() );
+	phSolid->SetMass     (link->m());
+	phSolid->SetInertia  (ToSpr(link->I()));
 
     Vector3 c; ///< center of mass of the link
     Vector3 o; ///< origin of the joint (in world coord.)
@@ -264,7 +269,6 @@ void SpringheadLink::createLinkBody(SpringheadSimulatorItemImpl* simImpl, Spring
 
 }
 
-
 void SpringheadLink::createGeometry(SpringheadBody* sprBody)
 {
     if(link->shape()){
@@ -273,7 +277,6 @@ void SpringheadLink::createGeometry(SpringheadBody* sprBody)
         delete extractor;
     }
 }
-
 
 void SpringheadLink::addMesh(MeshExtractor* extractor, SpringheadBody* sprBody)
 {
@@ -394,12 +397,10 @@ void SpringheadLink::addMesh(MeshExtractor* extractor, SpringheadBody* sprBody)
     }
 }
 
-
 SpringheadLink::~SpringheadLink()
 {
 
 }
-
 
 void SpringheadLink::setKinematicStateToSpringhead()
 {
@@ -459,7 +460,6 @@ void SpringheadLink::setTorqueToSpringhead()
 	}
 }
 
-
 void SpringheadLink::setVelocityToSpringhead()
 {
 	if(phJoint1D){
@@ -485,7 +485,6 @@ void SpringheadBody::createBody(SpringheadSimulatorItemImpl* simImpl)
 {
     Body* body = this->body();
     
-    //worldID = body->isStaticModel() ? 0 : simImpl->worldID;
     if(simImpl->param.useWorldCollision){
         geometryId = addBodyToCollisionDetector(*body, *simImpl->collisionDetector, 
                                                 bodyItem()->isSelfCollisionDetectionEnabled());
@@ -506,7 +505,6 @@ void SpringheadBody::createBody(SpringheadSimulatorItemImpl* simImpl)
 
     sensorHelper.initialize(body, simImpl->param.timeStep, simImpl->param.gravity);
 }
-
 
 void SpringheadBody::setExtraJoints()
 {
@@ -547,14 +545,12 @@ void SpringheadBody::setExtraJoints()
     }
 }
 
-
 void SpringheadBody::setKinematicStateToSpringhead()
 {
     for(size_t i=0; i < sprLinks.size(); ++i){
         sprLinks[i]->setKinematicStateToSpringhead();
     }
 }
-
 
 void SpringheadBody::setTorqueToSpringhead()
 {
@@ -563,7 +559,6 @@ void SpringheadBody::setTorqueToSpringhead()
         sprLinks[i]->setTorqueToSpringhead();
     }
 }
-
 
 void SpringheadBody::setVelocityToSpringhead()
 {
@@ -580,7 +575,6 @@ void SpringheadBody::getKinematicStateFromSpringhead()
         sprLinks[i]->getKinematicStateFromSpringhead();
     }
 }
-
 
 void SpringheadBody::updateForceSensors()
 {
@@ -617,7 +611,6 @@ void SpringheadBody::updateForceSensors()
         sensor->notifyStateChange();
     }
 }
-
 
 void SpringheadBody::alignToZAxisIn2Dmode()
 {
@@ -661,33 +654,12 @@ SpringheadSimulatorItemImpl::Param::Param()
     velocityMode           = false;
 }
 
-void SpringheadSimulatorItem::initializeClass(ExtensionManager* ext)
-{
-    ext->itemManager().registerClass<SpringheadSimulatorItem>(ITEM_NAME);
-    ext->itemManager().addCreationPanel<SpringheadSimulatorItem>();
-}
-
-
-SpringheadSimulatorItem::SpringheadSimulatorItem()
-{
-    impl = new SpringheadSimulatorItemImpl(this);
-}
-
-
 SpringheadSimulatorItemImpl::SpringheadSimulatorItemImpl(SpringheadSimulatorItem* self)
     : self(self)
 {
     phSdk   = 0;
 	phScene = 0;
 }
-
-
-SpringheadSimulatorItem::SpringheadSimulatorItem(const SpringheadSimulatorItem& org)
-    : SimulatorItem(org)
-{
-    impl = new SpringheadSimulatorItemImpl(this, *org.impl);
-}
-
 
 SpringheadSimulatorItemImpl::SpringheadSimulatorItemImpl(SpringheadSimulatorItem* self, const SpringheadSimulatorItemImpl& org)
     : self(self)
@@ -697,56 +669,9 @@ SpringheadSimulatorItemImpl::SpringheadSimulatorItemImpl(SpringheadSimulatorItem
     param = org.param;
 }
 
-
-SpringheadSimulatorItem::~SpringheadSimulatorItem()
-{
-    delete impl;
-}
-
-
 SpringheadSimulatorItemImpl::~SpringheadSimulatorItemImpl()
 {
     clear();
-}
-
-void SpringheadSimulatorItem::setGravity(const Vector3& gravity)
-{
-    impl->param.gravity = gravity;
-}
-
-void SpringheadSimulatorItem::setStaticFriction(double mu0)
-{
-    impl->param.staticFriction = mu0;
-}
-
-void SpringheadSimulatorItem::setDynamicFriction(double mu)
-{
-	impl->param.dynamicFriction = mu;
-}
-
-void SpringheadSimulatorItem::setBouncingFactor(double e)
-{
-	impl->param.elasticity = e;
-}
-
-void SpringheadSimulatorItem::setContactSpring(double K)
-{
-	impl->param.contactSpring = K;
-}
-
-void SpringheadSimulatorItem::setContactDamper(double D)
-{
-	impl->param.contactDamper = D;
-}
-    
-void SpringheadSimulatorItem::setNumIterations(int n)
-{
-    impl->param.numIterations = n;
-}
-
-void SpringheadSimulatorItem::useWorldCollisionDetector(bool on)
-{
-    impl->param.useWorldCollision = on;
 }
 
 void SpringheadSimulatorItemImpl::clear()
@@ -754,24 +679,6 @@ void SpringheadSimulatorItemImpl::clear()
 	if(phSdk)
 		phSdk->Clear();
 }    
-
-Item* SpringheadSimulatorItem::doDuplicate() const
-{
-    return new SpringheadSimulatorItem(*this);
-}
-
-SimulationBody* SpringheadSimulatorItem::createSimulationBody(Body* orgBody)
-{
-    return new SpringheadBody(*orgBody);
-}
-
-
-bool SpringheadSimulatorItem::initializeSimulation(const std::vector<SimulationBody*>& simBodies)
-{
-    return impl->initializeSimulation(simBodies);
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
 
 bool SpringheadSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody*>& simBodies)
 {
@@ -815,7 +722,6 @@ bool SpringheadSimulatorItemImpl::initializeSimulation(const std::vector<Simulat
     return true;
 }
 
-
 void SpringheadSimulatorItemImpl::addBody(SpringheadBody* sprBody)
 {
 	Body& body = *sprBody->body();
@@ -838,17 +744,6 @@ void SpringheadSimulatorItemImpl::addBody(SpringheadBody* sprBody)
 
     sprBody->createBody(this);
 }
-
-
-void SpringheadSimulatorItem::initializeSimulationThread()
-{
-}
-
-bool SpringheadSimulatorItem::stepSimulation(const std::vector<SimulationBody*>& activeSimBodies)
-{
-    return impl->stepSimulation(activeSimBodies);
-}
-
 
 bool SpringheadSimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& activeSimBodies)
 {
@@ -911,22 +806,6 @@ bool SpringheadSimulatorItemImpl::stepSimulation(const std::vector<SimulationBod
     return true;
 }
 
-void SpringheadSimulatorItem::finalizeSimulation()
-{
-    if(MEASURE_PHYSICS_CALCULATION_TIME){
-        cout << "Springhead physicsTime= "   << impl->physicsTime *1.0e-9   << "[s]"<< endl;
-        cout << "Springhead collisionTime= " << impl->collisionTime *1.0e-9 << "[s]"<< endl;
-    }
-}
-
-
-void SpringheadSimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
-{
-    SimulatorItem::doPutProperties(putProperty);
-    impl->doPutProperties(putProperty);
-}
-
-
 void SpringheadSimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty                     (_("Gravity"                           ), str(param.gravity)     , [&](const string& v){ return toVector3(v, param.gravity); });
@@ -939,15 +818,6 @@ void SpringheadSimulatorItemImpl::doPutProperties(PutPropertyFunction& putProper
 	putProperty                     (_("Use Joint Coordinate Simulation"   ), param.useABA           , changeProperty(param.useABA           ));
 	putProperty                     (_("Use WorldItem's Collision Detector"), param.useWorldCollision, changeProperty(param.useWorldCollision));
 }
-
-
-bool SpringheadSimulatorItem::store(Archive& archive)
-{
-    SimulatorItem::store(archive);
-    impl->store(archive);
-    return true;
-}
-
 
 void SpringheadSimulatorItemImpl::store(Archive& archive)
 {
@@ -962,15 +832,6 @@ void SpringheadSimulatorItemImpl::store(Archive& archive)
     archive.write("useWorldCollision", param.useWorldCollision);
 }
 
-
-bool SpringheadSimulatorItem::restore(const Archive& archive)
-{
-    SimulatorItem::restore(archive);
-    impl->restore(archive);
-    return true;
-}
-
-
 void SpringheadSimulatorItemImpl::restore(const Archive& archive)
 {
     read(archive, "gravity"         , param.gravity          );
@@ -982,4 +843,124 @@ void SpringheadSimulatorItemImpl::restore(const Archive& archive)
     archive.read("numIterations"    , param.numIterations    );
 	archive.read("useABA"           , param.useABA           );
     archive.read("useWorldCollision", param.useWorldCollision);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void SpringheadSimulatorItem::initializeClass(ExtensionManager* ext)
+{
+    ext->itemManager().registerClass<SpringheadSimulatorItem>(ITEM_NAME);
+    ext->itemManager().addCreationPanel<SpringheadSimulatorItem>();
+}
+
+SpringheadSimulatorItem::SpringheadSimulatorItem()
+{
+    impl = new SpringheadSimulatorItemImpl(this);
+}
+
+SpringheadSimulatorItem::SpringheadSimulatorItem(const SpringheadSimulatorItem& org)
+	: SimulatorItem(org)
+{
+    impl = new SpringheadSimulatorItemImpl(this, *org.impl);
+}
+
+SpringheadSimulatorItem::~SpringheadSimulatorItem()
+{
+    delete impl;
+}
+
+void SpringheadSimulatorItem::setGravity(const Vector3& gravity)
+{
+    impl->param.gravity = gravity;
+}
+
+void SpringheadSimulatorItem::setStaticFriction(double mu0)
+{
+    impl->param.staticFriction = mu0;
+}
+
+void SpringheadSimulatorItem::setDynamicFriction(double mu)
+{
+	impl->param.dynamicFriction = mu;
+}
+
+void SpringheadSimulatorItem::setBouncingFactor(double e)
+{
+	impl->param.elasticity = e;
+}
+
+void SpringheadSimulatorItem::setContactSpring(double K)
+{
+	impl->param.contactSpring = K;
+}
+
+void SpringheadSimulatorItem::setContactDamper(double D)
+{
+	impl->param.contactDamper = D;
+}
+    
+void SpringheadSimulatorItem::setNumIterations(int n)
+{
+    impl->param.numIterations = n;
+}
+
+void SpringheadSimulatorItem::useWorldCollisionDetector(bool on)
+{
+    impl->param.useWorldCollision = on;
+}
+
+Item* SpringheadSimulatorItem::doDuplicate() const
+{
+    return new SpringheadSimulatorItem(*this);
+}
+
+SimulationBody* SpringheadSimulatorItem::createSimulationBody(Body* orgBody)
+{
+    return new SpringheadBody(*orgBody);
+}
+
+
+bool SpringheadSimulatorItem::initializeSimulation(const std::vector<SimulationBody*>& simBodies)
+{
+    return impl->initializeSimulation(simBodies);
+}
+
+void SpringheadSimulatorItem::initializeSimulationThread()
+{
+
+}
+
+bool SpringheadSimulatorItem::stepSimulation(const std::vector<SimulationBody*>& activeSimBodies)
+{
+    return impl->stepSimulation(activeSimBodies);
+}
+
+void SpringheadSimulatorItem::finalizeSimulation()
+{
+    if(MEASURE_PHYSICS_CALCULATION_TIME){
+        cout << "Springhead physicsTime= "   << impl->physicsTime *1.0e-9   << "[s]"<< endl;
+        cout << "Springhead collisionTime= " << impl->collisionTime *1.0e-9 << "[s]"<< endl;
+    }
+}
+
+void SpringheadSimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
+{
+    SimulatorItem::doPutProperties(putProperty);
+    impl->doPutProperties(putProperty);
+}
+
+bool SpringheadSimulatorItem::store(Archive& archive)
+{
+    SimulatorItem::store(archive);
+    impl->store(archive);
+    return true;
+}
+
+bool SpringheadSimulatorItem::restore(const Archive& archive)
+{
+    SimulatorItem::restore(archive);
+    impl->restore(archive);
+    return true;
+}
+
 }
