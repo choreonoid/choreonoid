@@ -7,42 +7,17 @@
 #include "Body.h"
 #include "Link.h"
 #include <cnoid/ValueTree>
-#include <boost/variant.hpp>
 #include <unordered_map>
 #include <vector>
 
 using namespace std;
 using namespace cnoid;
-using boost::variant;
 
 namespace {
 
-typedef variant<int, vector<int>> GeometryIdSet;
+typedef CollisionDetector::GeometryHandle GeometryHandle;
 
-class GeometryIdSetAccessor
-{
-    GeometryIdSet& ids;
-    int* begin_;
-    int* end_;
-
-public:
-    GeometryIdSetAccessor(GeometryIdSet& ids) : ids(ids)
-    {
-        if(ids.which() == 0){
-            begin_ = &get<int>(ids);
-            end_ = begin_ + 1;
-        } else {
-            auto& v = get<vector<int>>(ids);
-            begin_ = &v.front();
-            end_ = begin_ + v.size();
-        }
-    }
-    int* begin() { return begin_; }
-    int* end() { return end_; }
-};
-    
 }
-
 
 namespace cnoid {
 
@@ -50,17 +25,19 @@ class BodyCollisionDetectorImpl
 {
 public:
     CollisionDetectorPtr collisionDetector;
-    unordered_map<LinkPtr, GeometryIdSet> linkToGeometryIdSetMap;
-    std::function<Referenced*(Link* link)> funcToGetObjectAssociatedWithLink;
+    unordered_map<LinkPtr, GeometryHandle> linkToGeometryHandleMap;
+    std::function<Referenced*(Link* link, CollisionDetector::GeometryHandle geometry)> funcToGetObjectAssociatedWithLink;
+    bool hasCustomObjectsAssociatedWithLinks;
+    bool isGeometryHandleMapEnabled;
 
     BodyCollisionDetectorImpl();
-    void addBody(Body* body, bool isSelfCollisionEnabled);
-    void addLinkRecursively(
-        Link* link, vector<GeometryIdSet>& linkIndexToGeometryIdSetMap, vector<bool>& exclusions, bool isParentStatic);
+    bool addBody(Body* body, bool isSelfCollisionEnabled);
+    bool addLinkRecursively(
+        Link* link, vector<GeometryHandle>& linkIndexToGeometryIdSetMap, vector<bool>& exclusions, bool isParentStatic);
     void setNonInterfarenceLinkPair(
-        int link1Index, int link2Index, vector<GeometryIdSet>& linkIndexToGeometryIdSetMap);
+        int link1Index, int link2Index, vector<GeometryHandle>& linkIndexToGeometryIdSetMap);
     void setNonInterfarenceLinkPairs(
-        Body* body, vector<GeometryIdSet>& linkIndexToGeometryIdSetMap,
+        Body* body, vector<GeometryHandle>& linkIndexToGeometryIdSetMap,
         int excludeTreeDepth, vector<bool>& exclusions, vector<vector<int>>& excludeLinkGroups);
     double findClosestPoints(Link* link1, Link* link2, Vector3& out_point1, Vector3& out_point2);    
 };
@@ -76,7 +53,8 @@ BodyCollisionDetector::BodyCollisionDetector()
 
 BodyCollisionDetectorImpl::BodyCollisionDetectorImpl()
 {
-
+    hasCustomObjectsAssociatedWithLinks = false;
+    isGeometryHandleMapEnabled = false;
 }
 
 
@@ -99,12 +77,22 @@ CollisionDetector* BodyCollisionDetector::collisionDetector()
 }
 
 
+void BodyCollisionDetector::enableGeometryHandleMap(bool on)
+{
+    if(!on){
+        impl->linkToGeometryHandleMap.clear();
+    }
+    impl->isGeometryHandleMapEnabled = on;
+}
+
+
 void BodyCollisionDetector::clearBodies()
 {
-    impl->linkToGeometryIdSetMap.clear();
     if(impl->collisionDetector){
         impl->collisionDetector->clearGeometries();
     }
+    impl->linkToGeometryHandleMap.clear();
+    impl->hasCustomObjectsAssociatedWithLinks = false;
 }
 
 
@@ -117,14 +105,16 @@ void BodyCollisionDetector::addBody(Body* body, bool isSelfCollisionDetectionEna
 
 void BodyCollisionDetector::addBody
 (Body* body, bool isSelfCollisionDetectionEnabled,
- std::function<Referenced*(Link* link)> getObjectAssociatedWithLink)
+ std::function<Referenced*(Link* link, CollisionDetector::GeometryHandle geometry)> getObjectAssociatedWithLink)
 {
     impl->funcToGetObjectAssociatedWithLink = getObjectAssociatedWithLink;
-    impl->addBody(body, isSelfCollisionDetectionEnabled);
+    if(impl->addBody(body, isSelfCollisionDetectionEnabled)){
+        impl->hasCustomObjectsAssociatedWithLinks = true;
+    }
 }
 
 
-void BodyCollisionDetectorImpl::addBody(Body* body, bool isSelfCollisionDetectionEnabled)
+bool BodyCollisionDetectorImpl::addBody(Body* body, bool isSelfCollisionDetectionEnabled)
 {
     const int numLinks = body->numLinks();
     int excludeTreeDepth = 0;
@@ -162,79 +152,75 @@ void BodyCollisionDetectorImpl::addBody(Body* body, bool isSelfCollisionDetectio
         }
     }
 
-    vector<GeometryIdSet> linkIndexToGeometryIdSetMap(numLinks);
+    vector<GeometryHandle> linkIndexToGeometryHandleMap(numLinks);
 
-    addLinkRecursively(body->rootLink(), linkIndexToGeometryIdSetMap, exclusions, true);
+    bool added = addLinkRecursively(body->rootLink(), linkIndexToGeometryHandleMap, exclusions, true);
 
     if(isSelfCollisionDetectionEnabled){
         setNonInterfarenceLinkPairs(
-            body, linkIndexToGeometryIdSetMap, excludeTreeDepth, exclusions, excludeLinkGroups);
+            body, linkIndexToGeometryHandleMap, excludeTreeDepth, exclusions, excludeLinkGroups);
     } else {
         // exclude all the self link pairs
         for(int i=0; i < numLinks; ++i){
             if(!exclusions[i]){
                 for(int j=i+1; j < numLinks; ++j){
                     if(!exclusions[j]){
-                        setNonInterfarenceLinkPair(i, j, linkIndexToGeometryIdSetMap);
+                        setNonInterfarenceLinkPair(i, j, linkIndexToGeometryHandleMap);
                     }
                 }
             }
         }
     }
+
+    return added;
 }
 
 
-void BodyCollisionDetectorImpl::addLinkRecursively
-(Link* link, vector<GeometryIdSet>& linkIndexToGeometryIdSetMap, vector<bool>& exclusions, bool isParentStatic)
+bool BodyCollisionDetectorImpl::addLinkRecursively
+(Link* link, vector<GeometryHandle>& linkIndexToGeometryHandleMap, vector<bool>& exclusions, bool isParentStatic)
 {
+    bool added = false;
     bool isStatic = isParentStatic && link->isFixedJoint();
 
     if(!exclusions[link->index()]){
-        Referenced* object;
-        if(funcToGetObjectAssociatedWithLink){
-            object = funcToGetObjectAssociatedWithLink(link);
-        } else {
-            object = link;
-        }
-        GeometryIdSet idSet = collisionDetector->addGeometry(link->collisionShape(), object);
-
-        linkToGeometryIdSetMap[link] = idSet;
-        linkIndexToGeometryIdSetMap[link->index()] = idSet;
-        
-        GeometryIdSetAccessor accessor(idSet);
-        for(auto p = accessor.begin(); p != accessor.end(); ++p){
+        auto handle = collisionDetector->addGeometry(link->collisionShape());
+        if(handle){
+            Referenced* object;
+            if(funcToGetObjectAssociatedWithLink){
+                object = funcToGetObjectAssociatedWithLink(link, *handle);
+            } else {
+                object = link;
+            }
+            collisionDetector->setCustomObject(*handle, object);
             if(isStatic){
-                collisionDetector->setGeometryStatic(*p);
+                collisionDetector->setGeometryStatic(*handle, object);
             }
-            // disable the collision detection for the geometries in a link
-            for(auto q = p + 1; q != accessor.end(); ++q){
-                collisionDetector->setNonInterfarenceGeometyrPair(*p, *q);
+            linkIndexToGeometryHandleMap[link->index()] = *handle;
+            if(isGeometryHandleMapEnabled){
+                linkToGeometryHandleMap[link] = *handle;
             }
+            added = true;
         }
-    }
-    
+    }    
     for(Link* child = link->child(); child; child = child->sibling()){
-        addLinkRecursively(child, linkIndexToGeometryIdSetMap, exclusions, isStatic);
+        added |= addLinkRecursively(child, linkIndexToGeometryHandleMap, exclusions, isStatic);
     }
+
+    return added;
 }
 
 
 void BodyCollisionDetectorImpl::setNonInterfarenceLinkPair
-(int link1Index, int link2Index, vector<GeometryIdSet>& linkIndexToGeometryIdSetMap)
+(int link1Index, int link2Index, vector<GeometryHandle>& linkIndexToGeometryHandleMap)
 {
-    GeometryIdSetAccessor accessor1(linkIndexToGeometryIdSetMap[link1Index]);
-    GeometryIdSetAccessor accessor2(linkIndexToGeometryIdSetMap[link2Index]);
-
-    for(auto p = accessor1.begin(); p != accessor1.end(); ++p){
-        for(auto q = accessor2.begin(); q != accessor2.end(); ++q){
-            collisionDetector->setNonInterfarenceGeometyrPair(*p, *q);
-        }
-    }
+    GeometryHandle geometry1 = linkIndexToGeometryHandleMap[link1Index];
+    GeometryHandle geometry2 = linkIndexToGeometryHandleMap[link2Index];
+    collisionDetector->setNonInterfarenceGeometyrPair(geometry1, geometry2);
 }
 
 
 void BodyCollisionDetectorImpl::setNonInterfarenceLinkPairs
-(Body* body, vector<GeometryIdSet>& linkIndexToGeometryIdSetMap,
+(Body* body, vector<GeometryHandle>& linkIndexToGeometryHandleMap,
  int excludeTreeDepth, vector<bool>& exclusions, vector<vector<int>>& excludeLinkGroups)
 {
     const int numLinks = body->numLinks();
@@ -260,7 +246,7 @@ void BodyCollisionDetectorImpl::setNonInterfarenceLinkPairs
                                 break;
                             }
                             if(parent1 == link2 || parent2 == link1){
-                                setNonInterfarenceLinkPair(i, j, linkIndexToGeometryIdSetMap);
+                                setNonInterfarenceLinkPair(i, j, linkIndexToGeometryHandleMap);
                             }
                         }
                     }
@@ -276,7 +262,7 @@ void BodyCollisionDetectorImpl::setNonInterfarenceLinkPairs
             for(int k = j + 1; k < excludeLinkGroup.size(); ++k){
                 int index2 = excludeLinkGroup[k];
                 if(!exclusions[index1] && !exclusions[index2]){
-                    setNonInterfarenceLinkPair(index1, index2, linkIndexToGeometryIdSetMap);
+                    setNonInterfarenceLinkPair(index1, index2, linkIndexToGeometryHandleMap);
                 }
             }
         }
@@ -290,16 +276,28 @@ bool BodyCollisionDetector::makeReady()
 }
 
 
+boost::optional<CollisionDetector::GeometryHandle> BodyCollisionDetector::findGeometryHandle(Link* link)
+{
+    auto iter = impl->linkToGeometryHandleMap.find(link);
+    if(iter != impl->linkToGeometryHandleMap.end()){
+        return iter->second;
+    }
+    return boost::none;
+}
+
+
 void BodyCollisionDetector::updatePositions()
 {
-    impl->collisionDetector->updatePositions(
-        [](Referenced* object, Position*& out_Position){
-            out_Position = &(static_cast<Link*>(object)->position()); });
+    if(!impl->hasCustomObjectsAssociatedWithLinks){
+        impl->collisionDetector->updatePositions(
+            [](Referenced* object, Position*& out_position){
+                out_position = &(static_cast<Link*>(object)->position()); });
+    }
 }
 
 
 void BodyCollisionDetector::updatePositions
-(std::function<void(Referenced* object, Position*& out_Position)> positionQuery)
+(std::function<void(Referenced* object, Position*& out_position)> positionQuery)
 {
     impl->collisionDetector->updatePositions(positionQuery);
 }
@@ -309,51 +307,3 @@ void BodyCollisionDetector::detectCollisions(std::function<void(const CollisionP
 {
     impl->collisionDetector->detectCollisions(callback);
 }
-
-
-bool BodyCollisionDetector::isFindClosestPointsAvailable() const
-{
-    return impl->collisionDetector->isFindClosestPointsAvailable();
-}
-
-
-double BodyCollisionDetector::findClosestPoints(Link* link1, Link* link2, Vector3& out_point1, Vector3& out_point2)
-{
-    return impl->findClosestPoints(link1, link2, out_point1, out_point2);
-}
-
-
-double BodyCollisionDetectorImpl::findClosestPoints(Link* link1, Link* link2, Vector3& out_point1, Vector3& out_point2)
-{
-    auto pids1 = linkToGeometryIdSetMap.find(link1);
-    if(pids1 != linkToGeometryIdSetMap.end()){
-        auto pids2 = linkToGeometryIdSetMap.find(link2);
-        if(pids2 != linkToGeometryIdSetMap.end()){
-            GeometryIdSet& ids1 = pids1->second;
-            GeometryIdSet& ids2 = pids2->second;
-            if(ids1.which() == 0 && ids2.which() == 0){
-                return collisionDetector->findClosestPoints(
-                    boost::get<int>(ids1), boost::get<int>(ids2), out_point1, out_point2);
-            } else {
-                double minDistance = std::numeric_limits<double>::max();
-                GeometryIdSetAccessor accessor1(ids1);
-                GeometryIdSetAccessor accessor2(ids2);
-                for(auto pid1 = accessor1.begin(); pid1 != accessor1.end(); ++pid1){
-                    for(auto pid2 = accessor2.begin(); pid2 != accessor2.end(); ++pid2){
-                        Vector3 point1, point2;
-                        double distance = collisionDetector->findClosestPoints(*pid1, *pid2, point1, point2);
-                        if(distance < minDistance){
-                            minDistance = distance;
-                            out_point1 = point1;
-                            out_point2 = point2;
-                        }
-                    }
-                }
-                return minDistance;
-            }
-        }
-    }
-    return -1.0;
-}
-
-

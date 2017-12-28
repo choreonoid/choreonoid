@@ -30,6 +30,10 @@
 using namespace std;
 using namespace cnoid;
 
+namespace {
+
+typedef CollisionDetector::GeometryHandle GeometryHandle;
+
 // Is LCP solved by Iterative or Pivoting method ?
 // #define USE_PIVOTING_LCP
 #ifdef USE_PIVOTING_LCP
@@ -38,7 +42,6 @@ static const bool usePivotingLCP = true;
 #else
 static const bool usePivotingLCP = false;
 #endif
-
 
 // settings
 
@@ -109,6 +112,7 @@ static const Vector3 local2dConstraintPoints[3] = {
     Vector3( 0.0, 0.0, ( sqrt(3.0) / 2.0))
 };
 
+}
 
 namespace cnoid
 {
@@ -227,7 +231,7 @@ public:
     
     unordered_map<Body*, int> bodyIndexMap;
     
-    typedef unordered_map<IdPair<>, LinkPair> GeometryPairToLinkPairMap;
+    typedef unordered_map<IdPair<GeometryHandle>, LinkPair> GeometryPairToLinkPairMap;
     GeometryPairToLinkPairMap geometryPairToLinkPairMap;
 
     double defaultStaticFriction;
@@ -863,9 +867,9 @@ void CFSImpl::extractConstraintPoints(const CollisionPair& collisionPair)
 {
     LinkPair* pLinkPair;
     
-    const IdPair<> idPair(collisionPair.geometryId);
-    GeometryPairToLinkPairMap::iterator p = geometryPairToLinkPairMap.find(idPair);
-    
+    const IdPair<GeometryHandle> idPair(collisionPair.geometries());
+    auto p = geometryPairToLinkPairMap.find(idPair);
+
     if(p != geometryPairToLinkPairMap.end()){
         pLinkPair = &p->second;
     } else {
@@ -873,7 +877,7 @@ void CFSImpl::extractConstraintPoints(const CollisionPair& collisionPair)
         int material[2];
         
         for(int i=0; i < 2; ++i){
-            DyLink* link = static_cast<DyLink*>(collisionPair.objects[i]);
+            DyLink* link = static_cast<DyLink*>(collisionPair.object(i));
             const int bodyIndex = bodyIndexMap[link->body()];
             linkPair.bodyIndex[i] = bodyIndex;
             BodyData& bodyData = bodiesData[bodyIndex];
@@ -893,7 +897,7 @@ void CFSImpl::extractConstraintPoints(const CollisionPair& collisionPair)
         pLinkPair = &linkPair;
     }
 
-    const vector<Collision>& collisions = collisionPair.collisions;
+    const vector<Collision>& collisions = collisionPair.collisions();
 
     auto& collisionHandler = pLinkPair->contactMaterial->collisionHandler;
     if(collisionHandler){

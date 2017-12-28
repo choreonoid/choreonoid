@@ -27,7 +27,7 @@ public:
     WorldItem(const WorldItem& org);
     virtual ~WorldItem();
 
-    const ItemList<BodyItem>& collisionBodyItems() const;
+    ItemList<BodyItem> coldetBodyItems() const;
 
     bool selectCollisionDetector(const std::string& name);
     CollisionDetector* collisionDetector();
@@ -43,6 +43,9 @@ public:
 
     void setMaterialTableFile(const std::string& filename);
     MaterialTable* materialTable();
+
+    //! \deprecated
+    ItemList<BodyItem> collisionBodyItems() const { return coldetBodyItems(); }
 
 protected:
     virtual Item* doDuplicate() const override;

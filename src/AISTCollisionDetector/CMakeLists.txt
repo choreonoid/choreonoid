@@ -1,7 +1,7 @@
 
 # @author Shin'ichiro Nakaoka
 
-# set(CMAKE_BUILD_TYPE Debug)
+#set(CMAKE_BUILD_TYPE Debug)
 
 set(sources
   AISTCollisionDetector.cpp

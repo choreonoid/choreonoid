@@ -25,17 +25,19 @@ public:
     CollisionDetector* collisionDetector();
 
     void clearBodies();
+
+    void enableGeometryHandleMap(bool on);
+    boost::optional<CollisionDetector::GeometryHandle> findGeometryHandle(Link* link);
+
     void addBody(Body* body, bool isSelfCollisionDetectionEnabled);
     void addBody(Body* body, bool isSelfCollisionDetectionEnabled,
-                 std::function<Referenced*(Link* link)> getObjectAssociatedWithLink);
+                 std::function<Referenced*(Link* link, CollisionDetector::GeometryHandle geometry)> getObjectAssociatedWithLink);
     bool makeReady();
 
     void updatePositions();
-    void updatePositions(std::function<void(Referenced* object, Position*& out_Position)> positionQuery);
-    void detectCollisions(std::function<void(const CollisionPair& collisionPair)> callback);
+    void updatePositions(std::function<void(Referenced* object, Position*& out_position)> positionQuery);
 
-    bool isFindClosestPointsAvailable() const;
-    double findClosestPoints(Link* link1, Link* link2, Vector3& out_point1, Vector3& out_point2);
+    void detectCollisions(std::function<void(const CollisionPair& collisionPair)> callback);
 
 private:
     BodyCollisionDetectorImpl* impl;

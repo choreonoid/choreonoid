@@ -59,22 +59,28 @@ public:
         return numGeometries_;
     }
 
-    virtual int addGeometry(SgNode*, Referenced*) override
+    virtual boost::optional<GeometryHandle> addGeometry(SgNode*) override
     {
-        const int id = numGeometries_++;
-        return id;
+        GeometryHandle handle;
+        handle = numGeometries_++;
+        return handle;
     }
 
-    virtual void setGeometryStatic(int /* geometryId */, bool isStatic = true) override { }
+    virtual void setCustomObject(GeometryHandle geometry, Referenced* object) { }
 
-    virtual void setNonInterfarenceGeometyrPair(int /* geometryId1 */, int /* geometryId2 */) override { }
+    virtual void setGeometryStatic(GeometryHandle, bool isStatic = true) override { }
+
+    virtual void setNonInterfarenceGeometyrPair(GeometryHandle, GeometryHandle) override { }
 
     virtual bool makeReady() override
     {
         return true;
     }
 
-    virtual void updatePosition(int /* geometryId */, const Position& /* position */) override { }
+    virtual void updatePosition(GeometryHandle, const Position& /* position */) override { }
+
+    virtual void updatePositions(
+        std::function<void(Referenced* object, Position*& out_position)> positionQuery) override { }
 
     virtual void detectCollisions(std::function<void(const CollisionPair& collisionPair)> /* callback */) override { }
 };
@@ -143,54 +149,6 @@ CollisionDetector* CollisionDetector::create(int factoryIndex)
 
 
 CollisionDetector::~CollisionDetector()
-{
-
-}
-
-
-int CollisionDetector::addGeometry(SgNode* geometry, Referenced* object)
-{
-    return addGeometry(geometry);
-}
-
-
-int CollisionDetector::addGeometry(SgNode* geometry)
-{
-    return addGeometry(geometry, 0);
-}
-
-
-void CollisionDetector::updatePositions(std::function<void(Referenced* object, Position*& out_Position)> positionQuery)
-{
-
-}
-
-
-bool CollisionDetector::isFindClosestPointsAvailable() const
-{
-    return false;
-}
-
-
-double CollisionDetector::findClosestPoints(int geometryId1, int geometryId2, Vector3& out_point1, Vector3& out_point2)
-{
-    return -1.0;
-}
-
-
-bool CollisionDetector::enableGeometryCache(bool)
-{
-    return false;
-}
-
-
-void CollisionDetector::clearGeometryCache(SgNode*)
-{
-
-}
-
-
-void CollisionDetector::clearAllGeometryCaches()
 {
 
 }
