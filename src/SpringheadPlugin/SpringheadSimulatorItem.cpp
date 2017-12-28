@@ -76,9 +76,10 @@ public:
     ~SpringheadLink();
     void createLinkBody(SpringheadSimulatorItemImpl* simImpl, SpringheadLink* parent, const Vector3& origin);
     void createGeometry(SpringheadBody* sprBody);
-    void setKinematicStateToSpringhead();
-    void setTorqueToSpringhead();
-    void setVelocityToSpringhead();
+    void setKinematicStateToSpringhead  ();
+    void setTorqueToSpringhead          ();
+    void setVelocityToSpringhead        ();
+	void setExternalForceToSpringhead   ();
     void getKinematicStateFromSpringhead();
     void addMesh(MeshExtractor* extractor, SpringheadBody* sprBody);
 };
@@ -99,9 +100,9 @@ public:
     ~SpringheadBody();
     void createBody(SpringheadSimulatorItemImpl* simImpl);
     void setExtraJoints();
-    void setKinematicStateToSpringhead();
-    void setTorqueToSpringhead();
-    void setVelocityToSpringhead();
+    void setKinematicStateToSpringhead  ();
+    void setControlValToSpringhead      ();
+	void setExternalForceToSpringhead   ();
     void getKinematicStateFromSpringhead();
     void updateForceSensors();
     void alignToZAxisIn2Dmode();
@@ -145,7 +146,8 @@ public:
      SpringheadSimulatorItemImpl(SpringheadSimulatorItem* self, const SpringheadSimulatorItemImpl& org);
     ~SpringheadSimulatorItemImpl();
 
-    void clear();
+    void clear               ();
+	void clearExternalForces ();
     bool initializeSimulation(const std::vector<SimulationBody*>& simBodies);
     void addBody             (SpringheadBody* sprBody);
     bool stepSimulation      (const std::vector<SimulationBody*>& activeSimBodies);
@@ -463,8 +465,22 @@ void SpringheadLink::setTorqueToSpringhead()
 void SpringheadLink::setVelocityToSpringhead()
 {
 	if(phJoint1D){
+		phJoint1D->SetDamper(100000000.0);
 		phJoint1D->SetTargetVelocity(link->dq());
 	}
+}
+
+void SpringheadLink::setExternalForceToSpringhead(){
+	Vector3 f_ext   = link->f_ext  ();
+	Vector3 tau_ext = link->tau_ext();
+	phSolid->AddForce (ToSpr(f_ext  ));
+	phSolid->AddTorque(ToSpr(tau_ext));
+
+	// not appropriate to clear forces here...
+	link->f_ext  ().setZero();
+	link->tau_ext().setZero();
+
+	DSTR << ToSpr(f_ext) << endl;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -501,7 +517,7 @@ void SpringheadBody::createBody(SpringheadSimulatorItemImpl* simImpl)
 
     setExtraJoints();
 
-    setTorqueToSpringhead();
+    setControlValToSpringhead();
 
     sensorHelper.initialize(body, simImpl->param.timeStep, simImpl->param.gravity);
 }
@@ -552,22 +568,30 @@ void SpringheadBody::setKinematicStateToSpringhead()
     }
 }
 
-void SpringheadBody::setTorqueToSpringhead()
+void SpringheadBody::setControlValToSpringhead()
 {
     // Skip the root link
-    for(size_t i=1; i < sprLinks.size(); ++i){
-        sprLinks[i]->setTorqueToSpringhead();
-    }
+    for(size_t i = 1; i < sprLinks.size(); ++i){
+        switch(sprLinks[i]->link->actuationMode()){
+        case Link::NO_ACTUATION :
+            break;
+        case Link::JOINT_TORQUE :
+            sprLinks[i]->setTorqueToSpringhead();
+            break;
+        case Link::JOINT_VELOCITY :
+            sprLinks[i]->setVelocityToSpringhead();
+            break;
+        default :
+            break;
+        }
+     }
 }
 
-void SpringheadBody::setVelocityToSpringhead()
-{
-    // Skip the root link
-    for(size_t i=1; i < sprLinks.size(); ++i){
-        sprLinks[i]->setVelocityToSpringhead();
-    }
+void SpringheadBody::setExternalForceToSpringhead(){
+	for(size_t i = 0; i < sprLinks.size(); ++i){
+        sprLinks[i]->setExternalForceToSpringhead();
+	}
 }
-
 
 void SpringheadBody::getKinematicStateFromSpringhead()
 {
@@ -750,10 +774,8 @@ bool SpringheadSimulatorItemImpl::stepSimulation(const std::vector<SimulationBod
 	for(size_t i=0; i < activeSimBodies.size(); ++i){
         SpringheadBody* sprBody = static_cast<SpringheadBody*>(activeSimBodies[i]);
         sprBody->body()->setVirtualJointForces();
-        if(param.velocityMode)
-        	sprBody->setVelocityToSpringhead();
-        else
-        	sprBody->setTorqueToSpringhead();
+		sprBody->setControlValToSpringhead();
+		sprBody->setExternalForceToSpringhead();
     }
 
 	if(MEASURE_PHYSICS_CALCULATION_TIME){

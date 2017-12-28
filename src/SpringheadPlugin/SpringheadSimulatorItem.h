@@ -34,7 +34,7 @@ public:
 
 protected:
         
-    virtual SimulationBody* createSimulationBody      (Body* orgBody)                                       override;
+	virtual SimulationBody* createSimulationBody      (Body* orgBody)                                       override;
     virtual bool            initializeSimulation      (const std::vector<SimulationBody*>& simBodies)       override;
     virtual void            initializeSimulationThread()                                                    override;
     virtual bool            stepSimulation            (const std::vector<SimulationBody*>& activeSimBodies) override;
