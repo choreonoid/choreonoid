@@ -213,7 +213,7 @@ void AGXLink::setControlInputToAGX()
 
 void AGXLink::addForceTorqueToAGX()
 {
-    getAGXRigidBody()->addForce(agxConvert::toAGX(getOrgLink()->f_ext()));
+    getAGXRigidBody()->addForceAtPosition(agxConvert::toAGX(getOrgLink()->f_ext()), agx::Vec3());
     getAGXRigidBody()->addTorque(agxConvert::toAGX(getOrgLink()->tau_ext()));
 }
 
