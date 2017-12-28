@@ -209,7 +209,7 @@ private:
 
     template<class Y> friend class ref_ptr;
     template<class Y> friend class weak_ref_ptr;
-    friend class std::hash<ref_ptr<T>>;
+    friend struct std::hash<ref_ptr<T>>;
 };
 
 
@@ -380,7 +380,7 @@ private:
 
     template<class Y> friend class weak_ref_ptr;
     template<class Y> friend class ref_ptr;
-    friend class std::hash<weak_ref_ptr<T>>;
+    friend struct std::hash<weak_ref_ptr<T>>;
 };
 
 template<class T, class U> inline bool operator<(weak_ref_ptr<T> const & a, weak_ref_ptr<U> const & b)
