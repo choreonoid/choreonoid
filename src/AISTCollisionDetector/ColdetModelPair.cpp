@@ -40,7 +40,7 @@ ColdetModelPair::ColdetModelPair()
 }
 
 
-ColdetModelPair::ColdetModelPair(const ColdetModelPtr& model0, const ColdetModelPtr& model1, double tolerance)
+ColdetModelPair::ColdetModelPair(ColdetModel* model0, ColdetModel* model1, double tolerance)
 {
     collisionPairInserter = new Opcode::StdCollisionPairInserter;
     set(model0, model1);
@@ -62,7 +62,7 @@ ColdetModelPair::~ColdetModelPair()
 }
 
 
-void ColdetModelPair::set(const ColdetModelPtr& model0, const ColdetModelPtr& model1)
+void ColdetModelPair::set(ColdetModel* model0, ColdetModel* model1)
 {
     models[0] = model0;
     models[1] = model1;
@@ -113,22 +113,27 @@ bool ColdetModelPair::detectPlaneMeshCollisions(bool detectAllContacts)
 {
     bool result = false;
 
-    ColdetModelPtr plane, mesh;
+    ColdetModel* plane = nullptr;
+    ColdetModel* mesh = nullptr;
+    
     bool reversed=false;
-    if (models[0]->getPrimitiveType() == ColdetModel::SP_PLANE){
+    if(models[0]->getPrimitiveType() == ColdetModel::SP_PLANE){
         plane = models[0];
         mesh = models[1];
     }
-    if (models[1]->getPrimitiveType() == ColdetModel::SP_PLANE){
+    if(models[1]->getPrimitiveType() == ColdetModel::SP_PLANE){
         plane = models[1];
         mesh = models[0];
         reversed = true;
     }
-    if (!plane || !mesh || !mesh->internalModel->model.GetMeshInterface()) return false;
-    
+    if(!plane || !mesh || !mesh->internalModel->model.GetMeshInterface()){
+        return false;
+    }
 
     Opcode::PlanesCollider PC;
-    if(!detectAllContacts) PC.SetFirstContact(true);
+    if(!detectAllContacts){
+        PC.SetFirstContact(true);
+    }
     PC.setCollisionPairInserter(collisionPairInserter);
     IceMaths::Matrix4x4 mTrans = *(mesh->transform);
     for(udword i=0; i<3; i++){
@@ -149,13 +154,12 @@ bool ColdetModelPair::detectPlaneMeshCollisions(bool detectAllContacts)
                            mesh->transform);
     if (!IsOk){
         std::cerr << "PlanesCollider::Collide() failed" << std::endl;
-    }else{
+    } else {
         result = PC.GetContactStatus();
     }
-    if (reversed){
-        std::vector<collision_data>& cdata 
-            = collisionPairInserter->collisions();
-        for (size_t i=0; i<cdata.size(); i++){
+    if(reversed){
+        std::vector<collision_data>& cdata = collisionPairInserter->collisions();
+        for(size_t i=0; i < cdata.size(); i++){
             cdata[i].n_vector *= -1;
         }
     }
@@ -207,9 +211,8 @@ bool ColdetModelPair::detectSphereSphereCollisions(bool detectAllContacts) {
 	
     if (models[0]->isValid() && models[1]->isValid()) {
 		
-        ColdetModelPtr sphereA, sphereB;
-        sphereA = models[0];
-        sphereB = models[1];
+        ColdetModel* sphereA = models[0];
+        ColdetModel* sphereB = models[1];
 		
         IceMaths::Matrix4x4 sATrans = (*(sphereA->pTransform)) * (*(sphereA->transform));
         IceMaths::Matrix4x4 sBTrans = (*(sphereB->pTransform)) * (*(sphereB->transform));
@@ -266,20 +269,22 @@ bool ColdetModelPair::detectSphereMeshCollisions(bool detectAllContacts) {
 
     if (models[0]->isValid() && models[1]->isValid()) {
 		
-        ColdetModelPtr sphere, mesh;
+        ColdetModel* sphere = nullptr;
+        ColdetModel* mesh = nullptr;
 
-        if (models[0]->getPrimitiveType() == ColdetModel::SP_SPHERE) {
+        if(models[0]->getPrimitiveType() == ColdetModel::SP_SPHERE){
             sphere = models[0];
             mesh = models[1];
             sign = -1;
         }
-        else if (models[1]->getPrimitiveType() == ColdetModel::SP_SPHERE) {
+        else if(models[1]->getPrimitiveType() == ColdetModel::SP_SPHERE){
             sphere = models[1];
             mesh = models[0];
         }
 
-        if (!sphere || !mesh)
+        if(!sphere || !mesh){
             return false;
+        }
 
         IceMaths::Matrix4x4 sTrans = (*(sphere->pTransform)) * (*(sphere->transform));
 		
@@ -469,20 +474,24 @@ bool ColdetModelPair::detectSphereMeshCollisions(bool detectAllContacts) {
 
 bool ColdetModelPair::detectPlaneCylinderCollisions(bool detectAllContacts) {
 
-    ColdetModelPtr plane, cylinder;
+    ColdetModel* plane = nullptr;
+    ColdetModel* cylinder = nullptr;
+    
     bool reversed=false;
-    if (models[0]->getPrimitiveType() == ColdetModel::SP_PLANE){
+    if(models[0]->getPrimitiveType() == ColdetModel::SP_PLANE){
         plane = models[0];
-    }else if(models[0]->getPrimitiveType() == ColdetModel::SP_CYLINDER){
+    } else if(models[0]->getPrimitiveType() == ColdetModel::SP_CYLINDER){
         cylinder = models[0];
     }
-    if (models[1]->getPrimitiveType() == ColdetModel::SP_PLANE){
+    if(models[1]->getPrimitiveType() == ColdetModel::SP_PLANE){
         plane = models[1];
         reversed = true;
-    }else if(models[1]->getPrimitiveType() == ColdetModel::SP_CYLINDER){
+    } else if(models[1]->getPrimitiveType() == ColdetModel::SP_CYLINDER){
         cylinder = models[1];
     }
-    if (!plane || !cylinder) return false;
+    if(!plane || !cylinder){
+        return false;
+    }
 
     IceMaths::Matrix4x4 pTrans = (*(plane->pTransform)) * (*(plane->transform));
     IceMaths::Matrix4x4 cTrans = (*(cylinder->pTransform)) * (*(cylinder->transform));
@@ -578,21 +587,21 @@ bool ColdetModelPair::detectPlaneCylinderCollisions(bool detectAllContacts) {
 }
 
 
-double ColdetModelPair::computeDistance(double *point0, double *point1)
+double ColdetModelPair::computeDistance(ColdetModel* model0, ColdetModel* model1, double* point0, double* point1)
 {
-    if(models[0]->isValid() && models[1]->isValid()){
+    if(model0->isValid() && model1->isValid()){
 
         Opcode::BVTCache colCache;
 
-        colCache.Model0 = &models[1]->internalModel->model;
-        colCache.Model1 = &models[0]->internalModel->model;
+        colCache.Model0 = &model1->internalModel->model;
+        colCache.Model1 = &model0->internalModel->model;
         
         Opcode::SSVTreeCollider collider;
         
         float d;
         Point p0, p1;
         collider.Distance(colCache, d, p0, p1,
-                          models[1]->transform, models[0]->transform);
+                          model1->transform, model0->transform);
         point0[0] = p1.x;
         point0[1] = p1.y;
         point0[2] = p1.z;
@@ -604,6 +613,13 @@ double ColdetModelPair::computeDistance(double *point0, double *point1)
 
     return -1.0;
 }
+
+
+double ColdetModelPair::computeDistance(double* point0, double* point1)
+{
+    return computeDistance(models[0], models[1], point0, point1);
+}
+    
 
 double ColdetModelPair::computeDistance(int& triangle0, double* point0, int& triangle1, double* point1)
 {

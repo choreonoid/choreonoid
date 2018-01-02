@@ -4,8 +4,16 @@
  * @file
  */
 #include "OpenRTMItem.h"
-#include <cnoid/CorbaUtil>
+
+#include <rtm/NVUtil.h>
 #include <rtm/idl/RTC.hh>
+#include <rtm/CORBA_SeqUtil.h>
+#include <coil/Properties.h>
+
+#include <cnoid/CorbaUtil>
+
+#include "RTSNameServerView.h"
+#include "RTSConfigurationView.h"
 
 #include "LoggerUtil.h"
 
@@ -15,7 +23,112 @@ using namespace RTC;
 
 namespace cnoid { 
 
+bool RTCWrapper::getConfiguration(NamingContextHelper::ObjectInfo& target, std::vector<ConfigurationSetParamPtr>& configSetList) {
+	RTSNameServerView* nsView = RTSNameServerView::instance();
+	ncHelper_.setLocation(nsView->getHost(), nsView->getPort());
+
+	RTCWrapper result;
+	if (target.fullPath.size() == 0) {
+		rtc_ = ncHelper_.findObject<RTC::RTObject>(target.id, "rtc");
+	} else {
+		CORBA::Object::_ptr_type obj = ncHelper_.findObject(target.fullPath);
+		if (CORBA::is_nil(obj)) {
+			rtc_ = RTC::RTObject::_nil();
+		} else {
+			rtc_ = RTC::RTObject::_narrow(obj);
+			CORBA::release(obj);
+		}
+	}
+	if (!ncHelper_.isObjectAlive(rtc_)) return false;
+
+	compProfile_ = rtc_->get_component_profile();
+	configuration_ = rtc_->get_configuration();
+
+	QString activeName;
+	try {
+		SDOPackage::ConfigurationSet* activeConf = configuration_->get_active_configuration_set();
+		if (activeConf) {
+			activeName = QString(string(activeConf->id).c_str());
+		}
+	} catch (...) {
+	}
+
+	SDOPackage::ConfigurationSetList_var confSet = configuration_->get_configuration_sets();
+	int setNum = confSet->length();
+	for (int index = 0; index < setNum; index++) {
+		SDOPackage::ConfigurationSet conf = confSet[index];
+		QString name = QString(string(conf.id).c_str());
+		ConfigurationSetParamPtr configSet = std::make_shared<ConfigurationSetParam>(index + 1, name);
+		if (name == activeName) configSet->setActive(true);
+		configSetList.push_back(configSet);
+		//
+		coil::Properties confs = NVUtil::toProperties(conf.configuration_data);
+		vector<string> confNames = confs.propertyNames();
+		int id = 1;
+		for (vector<string>::iterator iter = confNames.begin(); iter != confNames.end(); iter++) {
+			QString name = QString((*iter).c_str());
+			QString value = QString((confs[*iter]).c_str());
+			ConfigurationParamPtr param = std::make_shared<ConfigurationParam>(id, name, value);
+			configSet->addConfiguration(param);
+			id++;
+		}
+	}
+	return true;
+}
+
+void RTCWrapper::updateConfiguration(std::vector<ConfigurationSetParamPtr>& configList) {
+	QString activeName;
+	for (int index = 0; index < configList.size(); index++) {
+		ConfigurationSetParamPtr target = configList[index];
+		if (target->getActive()) {
+			activeName = target->getName();
+		}
+
+		if (target->getMode() == ParamMode::MODE_INSERT) {
+			SDOPackage::ConfigurationSet newSet;
+			newSet.id = CORBA::string_dup(target->getName().toStdString().c_str());
+			NVList configList;
+			std::vector<ConfigurationParamPtr> configSetList = target->getConfigurationList();
+			for (int idxDetail = 0; idxDetail < configSetList.size(); idxDetail++) {
+				ConfigurationParamPtr param = configSetList[idxDetail];
+				if (param->getMode() == MODE_DELETE || param->getMode() == MODE_IGNORE) continue;
+				DDEBUG_V("id:%d", param->getId());
+				CORBA_SeqUtil::push_back(configList,
+					NVUtil::newNV(param->getName().toStdString().c_str(), param->getValue().toStdString().c_str()));
+			}
+			newSet.configuration_data = configList;
+			configuration_->add_configuration_set(newSet);
+
+		} else if (target->getMode() == ParamMode::MODE_UPDATE) {
+			SDOPackage::ConfigurationSetList_var confSet = configuration_->get_configuration_sets();
+			for (int idxConf = 0; idxConf < confSet->length(); idxConf++) {
+				SDOPackage::ConfigurationSet conf = confSet[idxConf];
+				QString name = QString(string(conf.id).c_str());
+				if (name == target->getNameOrg()) {
+					conf.id = CORBA::string_dup(target->getName().toStdString().c_str());
+					NVList configList;
+					std::vector<ConfigurationParamPtr> configSetList = target->getConfigurationList();
+					for (int idxDetail = 0; idxDetail < configSetList.size(); idxDetail++) {
+						ConfigurationParamPtr param = configSetList[idxDetail];
+						if (param->getMode() == MODE_DELETE || param->getMode() == MODE_IGNORE) continue;
+						DDEBUG_V("id:%d", param->getId());
+						CORBA_SeqUtil::push_back(configList,
+							NVUtil::newNV(param->getName().toStdString().c_str(), param->getValue().toStdString().c_str()));
+					}
+					conf.configuration_data = configList;
+					configuration_->set_configuration_set_values(conf);
+				}
+			}
+
+		} else if (target->getMode() == ParamMode::MODE_DELETE) {
+			configuration_->remove_configuration_set(CORBA::string_dup(target->getName().toStdString().c_str()));
+		}
+	}
+	configuration_->activate_configuration_set(activeName.toStdString().c_str());
+}
+
 void RTCWrapper::setRTObject(RTC::RTObject_ptr target) {
+	DDEBUG("RTSComp::setRTObject");
 	rtc_ = 0;
 
 	if (!NamingContextHelper::isObjectAlive(target)) {

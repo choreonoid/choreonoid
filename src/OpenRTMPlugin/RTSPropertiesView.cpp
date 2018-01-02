@@ -11,11 +11,10 @@
 #include <cnoid/TreeWidget>
 #include <cnoid/ConnectionSet>
 #include <QVBoxLayout>
-#include <boost/lexical_cast.hpp>
-#include <boost/algorithm/string.hpp>
 #include <rtm/idl/RTC.hh>
 #include <rtm/NVUtil.h>
 #include <coil/Properties.h>
+
 #include "gettext.h"
 
 using namespace RTC;
@@ -138,10 +137,8 @@ RTSPropertiesViewImpl::~RTSPropertiesViewImpl()
 }
 
 
-void RTSPropertiesViewImpl::onItemSelectionChanged(const list<NamingContextHelper::ObjectInfo>& items)
-{
-    if(items.size()!=1)
-        return;
+void RTSPropertiesViewImpl::onItemSelectionChanged(const list<NamingContextHelper::ObjectInfo>& items) {
+    if(items.size()!=1) return;
 
     const NamingContextHelper::ObjectInfo& item = items.front();
     if(item.id != currentItem.id){
@@ -159,14 +156,12 @@ void RTSPropertiesViewImpl::onLocationChanged(string host, int port)
 }
 
 
-void RTSPropertiesViewImpl::showProperties()
-{
+void RTSPropertiesViewImpl::showProperties() {
     treeWidget.clear();
 
     if(currentItem.id!="" && currentItem.isAlive){
         RTC::RTObject_ptr rtc = ncHelper.findObject<RTC::RTObject>(currentItem.id, "rtc");
-        if(!ncHelper.isObjectAlive(rtc))
-                return;
+        if(!ncHelper.isObjectAlive(rtc)) return;
         ComponentProfile_var cprofile = rtc->get_component_profile();
         QTreeWidgetItem *item = new QTreeWidgetItem;
 
@@ -175,7 +170,6 @@ void RTSPropertiesViewImpl::showProperties()
         showPort(cprofile, item);
         treeWidget.insertTopLevelItem(0, item);
     }
-
     treeWidget.expandAll();
 }
 
@@ -263,8 +257,7 @@ void RTSPropertiesViewImpl::showExecutionContext(RTC::RTObject_ptr rtc, QTreeWid
 }
 
 
-void RTSPropertiesViewImpl::showExecutionContext(RTC::RTObject_ptr rtc, ExecutionContextList_var exeContList, QTreeWidgetItem* item)
-{
+void RTSPropertiesViewImpl::showExecutionContext(RTC::RTObject_ptr rtc, ExecutionContextList_var exeContList, QTreeWidgetItem* item) {
     CORBA::ULong elen(exeContList->length());
     for (CORBA::ULong e = 0; e < elen; e++) {
 
@@ -277,7 +270,7 @@ void RTSPropertiesViewImpl::showExecutionContext(RTC::RTObject_ptr rtc, Executio
 
         QTreeWidgetItem* ownedPropChild = new QTreeWidgetItem;
         ownedPropChild->setText(0, _("ID"));
-        ownedPropChild->setText(1, QString((boost::lexical_cast<string>(e)).c_str()));
+				ownedPropChild->setText(1, QString(std::to_string(e).c_str()));
         ownedProp->addChild(ownedPropChild);
 
         ownedPropChild = new QTreeWidgetItem;
@@ -299,15 +292,12 @@ void RTSPropertiesViewImpl::showExecutionContext(RTC::RTObject_ptr rtc, Executio
 
         ownedPropChild = new QTreeWidgetItem;
         ownedPropChild->setText(0, _("Rate"));
-        ownedPropChild->setText(1, QString((boost::lexical_cast<string>(context->get_rate())).c_str()));
+				ownedPropChild->setText(1, QString(std::to_string(context->get_rate()).c_str()));
         ownedProp->addChild(ownedPropChild);
-
     }
 }
 
-
-void RTSPropertiesViewImpl::showPortConcrete(PortProfile* portprofile, QTreeWidgetItem* item)
-{
+void RTSPropertiesViewImpl::showPortConcrete(PortProfile* portprofile, QTreeWidgetItem* item) {
     coil::Properties pproperties = NVUtil::toProperties(portprofile->properties);
 
     string portName = string(portprofile->name);
@@ -315,12 +305,12 @@ void RTSPropertiesViewImpl::showPortConcrete(PortProfile* portprofile, QTreeWidg
     string portType = pproperties["port.port_type"];
 
     QTreeWidgetItem* port = new QTreeWidgetItem;
-    if (boost::iequals(portType, "CorbaPort")) {
+		if (RTCCommonUtil::matchIgnore(portType, "CorbaPort")) {
         port->setText(0, QString("ServicePort"));
         port->setIcon(0, QIcon(":/RTSystemEditor/icons/IconServicePort.png"));
     } else {
         port->setText(0, QString(portType.substr(4).c_str()));
-        port->setIcon(0, QIcon(boost::iequals(portType, "DataOutPort") ?
+				port->setIcon(0, QIcon(RTCCommonUtil::matchIgnore(portType, "DataOutPort") ? 
                 ":/RTSystemEditor/icons/IconOutPort.png" :
                 ":/RTSystemEditor/icons/IconInPort.png"));
     }
@@ -331,7 +321,7 @@ void RTSPropertiesViewImpl::showPortConcrete(PortProfile* portprofile, QTreeWidg
     portChild->setText(1, QString(portName.c_str()));
     port->addChild(portChild);
 
-    if (boost::iequals(portType, "CorbaPort")) {
+		if (RTCCommonUtil::matchIgnore(portType, "CorbaPort")) {
         RTC::PortInterfaceProfileList iflist = portprofile->interfaces;
         for (CORBA::ULong i = 0; i < iflist.length(); i++) {
             QTreeWidgetItem* ifport = new QTreeWidgetItem;

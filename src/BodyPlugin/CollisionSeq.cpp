@@ -9,6 +9,7 @@
 #include <cnoid/CollisionSeqItem>
 #include <cnoid/YAMLReader>
 #include <cnoid/YAMLWriter>
+#include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
@@ -34,8 +35,8 @@ bool CollisionSeq::loadStandardYAMLformat(const std::string& filename)
     reader.expectRegularMultiListing();
 
     try {
-        const Mapping& archive = *reader.loadDocument(filename)->toMapping();
-        if(archive["type"].toString() != "CollisionSeq"){
+        auto archive = reader.loadDocument(filename)->toMapping();
+        if(archive->get<string>("type") != "CollisionSeq"){
             result = false;
         }else{
             result = readSeq(archive);
@@ -72,18 +73,19 @@ bool CollisionSeq::saveAsStandardYAMLformat(const std::string& filename)
 }
 
 
-bool CollisionSeq::doReadSeq(const Mapping& archive, std::ostream& os)
+//! \todo Implement this function with GeneralSeqReader
+bool CollisionSeq::doReadSeq(const Mapping* archive, std::ostream& os)
 {
-    if(BaseSeqType::doReadSeq(archive, os)){
-        const Listing& values = *archive.findListing("frames");
-        if(values.isValid()){
-            const int nFrames = values.size();
-            setDimension(nFrames, 1);
-            readCollisionData(nFrames, values);
-        }
-        return true;
-    }
+    os << _("The function to read CollisionSeq is not implemented.") << endl;
     return false;
+    
+    const Listing& values = *archive->findListing("frames");
+    if(values.isValid()){
+        const int nFrames = values.size();
+        setDimension(nFrames, 1);
+        readCollisionData(nFrames, values);
+    }
+    return true;
 }
 
 
@@ -189,20 +191,20 @@ void CollisionSeq::writeCollsionData(YAMLWriter& writer, const CollisionLinkPair
 
 bool CollisionSeq::doWriteSeq(YAMLWriter& writer)
 {
-    if(BaseSeqType::doWriteSeq(writer)){
-
-        writer.putKeyValue("format", "PxPyPzNxNyNzD");
-
-        writer.putKey("frames");
-        writer.startListing();
-
-        const int n = numFrames();
-        for(int i=0; i < n; ++i){
-            Frame f = frame(i);
-            writeCollsionData(writer, f[0]);
-        }
-        writer.endListing();
-        return true;
+    if(!writeSeqHeaders(writer)){
+        return false;
     }
-    return false;
+
+    writer.putKeyValue("format", "PxPyPzNxNyNzD");
+
+    writer.putKey("frames");
+    writer.startListing();
+    
+    const int n = numFrames();
+    for(int i=0; i < n; ++i){
+        Frame f = frame(i);
+        writeCollsionData(writer, f[0]);
+    }
+    writer.endListing();
+    return true;
 }

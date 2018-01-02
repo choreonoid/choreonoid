@@ -68,22 +68,23 @@ items:
           class: BodyItem
           data: 
             modelFile: "${PROJECT_DIR}/agxWireSample.body"
-            currentBaseLink: "Wire"
-            rootPosition: [ 0, 0, 1 ]
+            currentBaseLink: "Root"
+            rootPosition: [ 0, 0, 5 ]
             rootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            jointPositions: [  ]
-            initialRootPosition: [ 0, 0, 1 ]
+            jointPositions: [  0.000000 ]
+            initialRootPosition: [ 0, 0, 5 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
+            initialJointPositions: [  0.000000 ]
             zmp: [ 0, 0, 0 ]
             collisionDetection: true
             selfCollisionDetection: false
-            isEditable: false
+            isEditable: true
 views: 
   - 
     id: 0
@@ -98,7 +99,7 @@ views:
     state: 
       selected: [ 2 ]
       checked: [ 3, 4 ]
-      expanded: [ 1, 2 ]
+      expanded: [ 1, 2, 4 ]
   - 
     id: 2
     plugin: Base
@@ -148,9 +149,9 @@ views:
           fieldOfView: 0.698132
           near: 0.01
           far: 100
-          eye: [ 0.859689361, -5.69363759, 4.62837498 ]
-          direction: [ 0.00461254861, 0.830181037, -0.557474816 ]
-          up: [ 0.00309732442, 0.557466211, 0.830193851 ]
+          eye: [ -0.451021053, -12.7498541, 4.82750099 ]
+          direction: [ 0.064313537, 0.979641265, -0.190175604 ]
+          up: [ 0.0124582273, 0.189767102, 0.98175009 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
@@ -186,7 +187,7 @@ views:
       spinBox: true
       slider: true
       labelOnLeft: true
-      currentBodyItem: 4
+      currentBodyItem: 3
   - 
     id: 7
     plugin: Body
@@ -194,7 +195,7 @@ views:
     mounted: true
     state: 
       listingMode: "Link List"
-      currentBodyItem: 4
+      currentBodyItem: 3
   - 
     id: 8
     plugin: Python
@@ -220,7 +221,7 @@ toolbars:
     penetrationBlockDepth: 0.0005
     lazyCollisionDetectionMode: true
   "BodyBar": 
-    current: 4
+    current: 3
   "LeggedBodyBar": 
     stanceWidth: 0.15
   "BodyMotionGenerationBar": 
@@ -281,6 +282,11 @@ Body:
     targetJoints: all
     checkSelfCollisions: true
     onlyTimeBarRange: false
+  "SplineFilterDialog": 
+    isInputFrameRateSpecified: false
+    inputFrameRate: 200
+    isOutputFrameRateSpecified: false
+    outputFrameRate: 200
 viewAreas: 
   - 
     type: embedded
@@ -311,7 +317,7 @@ viewAreas:
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 665, 865 ]
+              sizes: [ 619, 911 ]
               children: 
                 - 
                   type: pane

@@ -481,24 +481,6 @@ void BulletCollisionDetector::setGeometryStatic(int geometryId, bool isStatic)
 }
 
 
-bool BulletCollisionDetector::enableGeometryCache(bool)
-{
-    return false;
-}
-
-
-void BulletCollisionDetector::clearGeometryCache(SgNode*)
-{
-    
-}
-
-
-void BulletCollisionDetector::clearAllGeometryCaches()
-{
-
-}
-
-
 void BulletCollisionDetector::setNonInterfarenceGeometyrPair(int geometryId1, int geometryId2)
 {
     impl->nonInterfarencePairs.insert(IdPair<>(geometryId1, geometryId2));

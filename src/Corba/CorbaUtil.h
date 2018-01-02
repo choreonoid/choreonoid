@@ -99,7 +99,7 @@ namespace cnoid {
 				std::string result;
 				for (int index = 0; index < fullPath.size(); index++) {
 					ObjectPath path = fullPath[index];
-					result = result + path.id + "|" + path.kind + "::";
+					result = result + "/" + path.id + "." + path.kind;
 				}
 				return result;
 			}

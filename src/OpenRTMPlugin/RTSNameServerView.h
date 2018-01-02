@@ -6,13 +6,11 @@
 #ifndef CNOID_OPENRTM_PLUGIN_RTS_NAME_SERVER_VIEW_H_INCLUDED
 #define CNOID_OPENRTM_PLUGIN_RTS_NAME_SERVER_VIEW_H_INCLUDED
 
+#include <QtWidgets>
 #include <cnoid/Dialog>
 #include <cnoid/View>
 #include <cnoid/CorbaUtil>
 #include <cnoid/TreeWidget>
-#include <QDialog>
-#include <QTextEdit>
-
 #include <cnoid/MenuManager>
 #include "OpenRTMItem.h"
 
@@ -37,12 +35,13 @@ namespace cnoid {
 			sigSelectionChanged();
 		SignalProxy<void(std::string, int)> sigLocationChanged();
 
+		std::list<NamingContextHelper::ObjectInfo> getSelection();
+
+		//Proxy to RTSNameServerViewImpl
 		const std::string getHost();
 		int getPort();
-		std::list<NamingContextHelper::ObjectInfo> getSelection();
-		void setSelection(std::string RTCname, std::string RTCfullPath);
-
 		void updateView();
+		void setSelection(std::string RTCname, std::string RTCfullPath);
 		NamingContextHelper getNCHelper();
 
 	private:
@@ -81,8 +80,6 @@ namespace cnoid {
 
 		NamingContextHelper::ObjectInfo info_;
 		CORBA_KIND kind_;
-		std::string ior_;
-
 	};
 
 	class AddContextDialog : public Dialog {

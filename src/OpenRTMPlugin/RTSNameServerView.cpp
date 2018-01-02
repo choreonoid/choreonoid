@@ -9,20 +9,10 @@
 #include <cnoid/SpinBox>
 #include <cnoid/LineEdit>
 #include <cnoid/MessageView>
-#include <QLabel>
-#include <QBoxLayout>
-#include <QIcon>
-#include <QMimeData>
-#include <QDrag>
-#include <QMouseEvent>
-#include <QTextEdit>
-#include <QComboBox>
-#include <boost/algorithm/string.hpp>
 
-#include <QMessageBox>
-#include <rtm/idl/RTC.hh>
 #include <rtm/CORBA_IORUtil.h>
 
+#include "RTSCommonUtil.h"
 #include "OpenRTMUtil.h"
 #include "LoggerUtil.h"
 
@@ -39,7 +29,7 @@ namespace cnoid {
 		setText(0, name);
 		setIcon(0, info_.isAlive ? QIcon(":/Corba/icons/NSRTC.png") :
 			QIcon(":/Corba/icons/NSZombi.png"));
-		ior_ = info.ior;
+		setIOR(info.ior);
 		//
 		if (rtc) {
 			setRTObject(rtc);
@@ -282,7 +272,7 @@ namespace cnoid {
 	}
 
 	void RTSNameTreeWidget::showIOR() {
-		InfomationDialog dialog(((RTSVItem*)this->currentItem())->ior_);
+		InfomationDialog dialog(((RTSVItem*)this->currentItem())->getIOR());
 		dialog.exec();
 	}
 
@@ -365,10 +355,7 @@ namespace cnoid {
 		~RTSNameServerViewImpl();
 		void updateObjectList(bool force = false);
 		void updateObjectList(const NamingContextHelper::ObjectInfoList& objects, QTreeWidgetItem* parent, vector<NamingContextHelper::ObjectPath> pathList);
-		void setConnection();
 		void onSelectionChanged();
-		//void selectedItem();
-		void clearDiagram();
 		void setSelection(std::string RTCName, std::string RTCfullPath);
 
 		Signal<void(const std::list<NamingContextHelper::ObjectInfo>&)> sigSelectionChanged;
@@ -443,7 +430,6 @@ RTSNameServerViewImpl::RTSNameServerViewImpl(RTSNameServerView* self) {
 	treeWidget.setDragEnabled(true);
 	treeWidget.setDropIndicatorShown(true);
 
-	//treeWidget.sigItemClicked().connect(std::bind(&RTSNameServerViewImpl::selectedItem, this));
 	treeWidget.sigItemSelectionChanged().connect(std::bind(&RTSNameServerViewImpl::onSelectionChanged, this));
 	treeWidget.setSelectionMode(QAbstractItemView::ExtendedSelection);
 	treeWidget.header()->close();
@@ -504,7 +490,7 @@ void RTSNameServerViewImpl::updateObjectList(bool force) {
 		} else {
 			showWarningDialog(ncHelper.errorMessage());
 		}
-		topElem->ior_ = string(ncHelper.getRootIOR());
+		topElem->setIOR(string(ncHelper.getRootIOR()));
 
 	} catch (...) {
 		// ignore the exception for non crash.
@@ -542,23 +528,23 @@ void RTSNameServerViewImpl::updateObjectList(const NamingContextHelper::ObjectIn
 		item->setText(0, QString::fromStdString(info.id) + "|" + QString::fromStdString(info.kind));
 
 		NamingContextHelper::ObjectPath pathSub(info.id, info.kind);
-		if (boost::iequals(info.kind, "host_cxt")) {
+		if (RTCCommonUtil::matchIgnore(info.kind, "host_cxt")) {
 			item->setIcon(0, QIcon(":/Corba/icons/Server.png"));
 			item->kind_ = KIND_HOST;
 
-		} else if (boost::iequals(info.kind, "cate_cxt")) {
+		} else if (RTCCommonUtil::matchIgnore(info.kind, "cate_cxt")) {
 			item->setIcon(0, QIcon(":/Corba/icons/CategoryNamingContext.png"));
 			item->kind_ = KIND_CATEGORY;
 
-		} else if (boost::iequals(info.kind, "mgr_cxt")) {
+		} else if (RTCCommonUtil::matchIgnore(info.kind, "mgr_cxt")) {
 			item->setIcon(0, QIcon(":/Corba/icons/ManagerNamingContext.png"));
 			item->kind_ = KIND_MANAGER;
 
-		} else if (boost::iequals(info.kind, "mod_cxt")) {
+		} else if (RTCCommonUtil::matchIgnore(info.kind, "mod_cxt")) {
 			item->setIcon(0, QIcon(":/Corba/icons/ModuleNamingContext.png"));
 			item->kind_ = KIND_MODULE;
 
-		} else if (boost::iequals(info.kind, "server_cxt")) {
+		} else if (RTCCommonUtil::matchIgnore(info.kind, "server_cxt")) {
 			item->setIcon(0, QIcon(":/Corba/icons/RT.png"));
 			item->kind_ = KIND_SERVER;
 
@@ -592,7 +578,6 @@ void RTSNameServerViewImpl::onSelectionChanged() {
 }
 
 void RTSNameServerView::setSelection(std::string RTCName, std::string RTCfullPath) {
-	DDEBUG("RTSNameServerView::setSelection");
 	impl->setSelection(RTCName, RTCfullPath);
 }
 
@@ -618,7 +603,6 @@ void RTSNameServerViewImpl::setSelection(std::string RTCName, std::string RTCful
 			}
 		}
 	}
-
 }
 
 NamingContextHelper RTSNameServerView::getNCHelper() {

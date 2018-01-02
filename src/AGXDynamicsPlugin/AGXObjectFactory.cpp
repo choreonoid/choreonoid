@@ -374,9 +374,19 @@ agxWire::FreeNodeRef AGXObjectFactory::createWireFreeNode(const agx::Vec3& pos)
     return new agxWire::FreeNode(pos);
 }
 
+agxWire::BodyFixedNodeRef AGXObjectFactory::createWireBodyFixedNode(agx::RigidBody* rigid, const agx::Vec3& pos)
+{
+    return new agxWire::BodyFixedNode(rigid, pos);
+}
+
 agxWire::WireWinchControllerRef AGXObjectFactory::createWinchController(const AGXWireWinchControllerDesc& desc)
 {
     return new agxWire::WireWinchController(desc.rigidBody, desc.positionInBodyFrame, desc.normalInBodyFrame, desc.pulledInLength);
+}
+
+agxWire::LinkRef AGXObjectFactory::createWireLink(agx::RigidBody* rigid)
+{
+    return new agxWire::Link(rigid);
 }
 
 agxCollide::ConvexBuilderRef AGXObjectFactory::createConvexBuilder()

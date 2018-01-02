@@ -39,6 +39,30 @@ items:
             isEditable: false
         - 
           id: 3
+          name: "FireHose"
+          plugin: Body
+          class: BodyItem
+          data: 
+            modelFile: "${PROJECT_DIR}/FireHose.body"
+            currentBaseLink: "HoseBox"
+            rootPosition: [ 0, 0, 2 ]
+            rootAttitude: [ 
+              1, 0, 0, 
+              0, 1, 0, 
+              0, 0, 1 ]
+            jointPositions: [  2.005686,  0.523599 ]
+            initialRootPosition: [ 0, 0, 2 ]
+            initialRootAttitude: [ 
+              1, 0, 0, 
+              0, 1, 0, 
+              0, 0, 1 ]
+            initialJointPositions: [  2.005686,  0.523599 ]
+            zmp: [ 0, 0, 0 ]
+            collisionDetection: true
+            selfCollisionDetection: false
+            isEditable: true
+        - 
+          id: 4
           name: "AGXSimulator"
           plugin: AGXDynamics
           class: AGXSimulatorItem
@@ -61,30 +85,6 @@ items:
             ContactWarmstarting: false
             AutoSleep: false
             SaveToAGXFileOnStart: true
-        - 
-          id: 4
-          name: "FireHose"
-          plugin: Body
-          class: BodyItem
-          data: 
-            modelFile: "${PROJECT_DIR}/FireHose.body"
-            currentBaseLink: "HoseBox"
-            rootPosition: [ 0, 0, 1 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            jointPositions: [  0.000000 ]
-            initialRootPosition: [ 0, 0, 1 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            initialJointPositions: [  0.000000 ]
-            zmp: [ 0, 0, 0 ]
-            collisionDetection: true
-            selfCollisionDetection: false
-            isEditable: true
 views: 
   - 
     id: 0
@@ -97,9 +97,9 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      selected: [ 3 ]
-      checked: [ 2, 3, 4 ]
-      expanded: [ 1, 4 ]
+      selected: [ 4 ]
+      checked: [ 3, 4 ]
+      expanded: [ 1, 3 ]
   - 
     id: 2
     plugin: Base
@@ -149,9 +149,9 @@ views:
           fieldOfView: 0.698132
           near: 0.01
           far: 100
-          eye: [ 2.6506594, -0.0537780711, 2.14194809 ]
-          direction: [ -0.863391328, 0.0806730719, -0.498043442 ]
-          up: [ -0.495883477, 0.0463340806, 0.86715208 ]
+          eye: [ 3.84382903, -1.77395845, 3.29985749 ]
+          direction: [ -0.792871328, 0.489575104, -0.362865366 ]
+          up: [ -0.308749418, 0.190643832, 0.931841578 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
@@ -164,13 +164,18 @@ views:
       dedicatedItemTreeViewChecks: false
   - 
     id: 4
+    name: "Virtual Joystick"
+    plugin: Base
+    class: VirtualJoystickView
+  - 
+    id: 5
     plugin: Body
     class: BodyLinkView
     mounted: true
     state: 
       showRotationMatrix: false
   - 
-    id: 5
+    id: 6
     plugin: Body
     class: JointSliderView
     mounted: true
@@ -182,28 +187,24 @@ views:
       spinBox: true
       slider: true
       labelOnLeft: true
-      currentBodyItem: 4
+      currentBodyItem: 2
   - 
-    id: 6
+    id: 7
     plugin: Body
     class: LinkSelectionView
     mounted: true
     state: 
       listingMode: "Link List"
-      currentBodyItem: 4
-      bodyItems: 
-        - 
-          id: 4
-          selectedLinks: [ 1 ]
+      currentBodyItem: 2
   - 
-    id: 7
+    id: 8
     plugin: Python
     class: PythonConsoleView
     mounted: true
 toolbars: 
   "TimeBar": 
     minTime: 0
-    maxTime: 31.57
+    maxTime: 76.12
     frameRate: 100
     playbackFrameRate: 50
     idleLoopDrivenMode: false
@@ -220,7 +221,7 @@ toolbars:
     penetrationBlockDepth: 0.0005
     lazyCollisionDetectionMode: true
   "BodyBar": 
-    current: 4
+    current: 2
   "LeggedBodyBar": 
     stanceWidth: 0.15
   "BodyMotionGenerationBar": 
@@ -267,7 +268,7 @@ Body:
         showPpcom: false
         showZmp: false
       - 
-        bodyItem: 4
+        bodyItem: 3
         showCenterOfMass: false
         showPpcom: false
         showZmp: false
@@ -281,6 +282,11 @@ Body:
     targetJoints: all
     checkSelfCollisions: true
     onlyTimeBarRange: false
+  "SplineFilterDialog": 
+    isInputFrameRateSpecified: false
+    inputFrameRate: 200
+    isOutputFrameRateSpecified: false
+    outputFrameRate: 200
 viewAreas: 
   - 
     type: embedded
@@ -301,8 +307,8 @@ viewAreas:
               current: 1
             - 
               type: pane
-              views: [ 0, 6 ]
-              current: 0
+              views: [ 0, 7 ]
+              current: 7
         - 
           type: splitter
           orientation: vertical
@@ -311,19 +317,19 @@ viewAreas:
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 665, 865 ]
+              sizes: [ 547, 983 ]
               children: 
                 - 
                   type: pane
-                  views: [ 4, 5 ]
-                  current: 4
+                  views: [ 5, 6 ]
+                  current: 5
                 - 
                   type: pane
                   views: [ 3 ]
                   current: 3
             - 
               type: pane
-              views: [ 2, 7 ]
+              views: [ 2, 8 ]
               current: 2
 layoutOfToolBars: 
   rows: 

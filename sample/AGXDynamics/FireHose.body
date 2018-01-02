@@ -9,54 +9,54 @@ links:
     translation: [ 0.0, 0.0, 2.0 ]
     jointType: fixed
     density: 1.0
-#    elements:
-#      -
-#        name: BoxBack
-#        type: Shape
-#        translation: [ 0.0, 0.0, 0.0 ]
-#        geometry: &boxBack { type: Box, size: [ 0.01, 1.1, 1.0 ] }
-#        appearance: &red { material: { diffuseColor: [ 1.0, 0, 0 ] }}
-#      -
-#        name: BoxLeft
-#        type: Shape
-#        translation: [ 0.15, -0.55, 0.0 ]
-#        geometry: &boxSide { type: Box, size: [ 0.3, 0.01, 1.0 ] }
-#        appearance: *red
-#      -
-#        name: BoxRight
-#        type: Shape
-#        translation: [ 0.15, 0.55, 0.0 ]
-#        geometry: *boxSide
-#        appearance: *red
-#      -
-#        name: BoxTop
-#        type: Shape
-#        translation: [ 0.15, 0.0, 0.5 ]
-#        geometry: &boxTop { type: Box, size: [ 0.3, 1.1, 0.01 ] }
-#        appearance: *red
-#      -
-#        name: BoxBottom
-#        type: Shape
-#        translation: [ 0.15, 0.0, -0.5 ]
-#        geometry: *boxTop
-#        appearance: *red
-#  -
-#    name: HoseBoxDoor
-#    parent: HoseBox
-#    translation: [ 0.3, 0.55, 0.0 ]
-#    jointType: revolute
-#    joitAxis: Z
-#    jointRange: [ 0, 180 ]
-#    density: 1.0
-#    elements:
-#      -
-#        type: Transform
-#        translation: [ 0.0, -0.55, 0.0 ]
-#        elements:
-#          name: HoseBoxDoor
-#          type: Shape
-#          geometry: *boxBack
-#          appearance: *red
+    elements:
+      -
+        name: BoxBack
+        type: Shape
+        translation: [ 0.0, 0.0, 0.0 ]
+        geometry: &boxBack { type: Box, size: [ 0.01, 1.1, 1.0 ] }
+        appearance: &red { material: { diffuseColor: [ 1.0, 0, 0 ] }}
+      -
+        name: BoxLeft
+        type: Shape
+        translation: [ 0.15, -0.55, 0.0 ]
+        geometry: &boxSide { type: Box, size: [ 0.3, 0.01, 1.0 ] }
+        appearance: *red
+      -
+        name: BoxRight
+        type: Shape
+        translation: [ 0.15, 0.55, 0.0 ]
+        geometry: *boxSide
+        appearance: *red
+      -
+        name: BoxTop
+        type: Shape
+        translation: [ 0.15, 0.0, 0.5 ]
+        geometry: &boxTop { type: Box, size: [ 0.3, 1.1, 0.01 ] }
+        appearance: *red
+      -
+        name: BoxBottom
+        type: Shape
+        translation: [ 0.15, 0.0, -0.5 ]
+        geometry: *boxTop
+        appearance: *red
+  -
+    name: HoseBoxDoor
+    parent: HoseBox
+    translation: [ 0.3, 0.55, 0.0 ]
+    jointType: revolute
+    joitAxis: Z
+    jointRange: [ 0, 180 ]
+    density: 1.0
+    elements:
+      -
+        type: Transform
+        translation: [ 0.0, -0.55, 0.0 ]
+        elements:
+          name: HoseBoxDoor
+          type: Shape
+          geometry: *boxBack
+          appearance: *red
   -
     name: HoseDrum
     parent: HoseBox
@@ -91,29 +91,56 @@ links:
         type: AGXWireDevice
         radius: 0.02
         resolutionPerUnitLength: 1
-        enableCollisions: true
+        collision: true
+        selfCollision: true
         materialName: Wire
-        #wireYoungsModulusStretch: 6E10
-        #wireDampingStretch: 0.075
-        #wireYoungsModulusBend: 6E10
-        #wireDampingBend: 0.075
         Winch:
             linkName: HoseDrum
             position: [ 0, -0.02, 0]
             normal: [ 0, 0, 1 ]
-            pulledInLength: 10
+            pulledInLength: 100
+            haulForceRange: [ -50, 50 ]
         Nodes:
           -
             type: free
-            #coordinate: HoseDrum
-            position: [ 1.0, 1.0, 1.0 ]
-            #position: [ 0, -0.02, 0.25]
-#          -
-#            type: free
-#            coordinate: HoseDrum
-#            position: [ 0, 0.52, 0.25]
-#          -
-#            type: free
-#            coordinate: HoseDrum
-#            position: [ 0, 1.0, 0.25]
-#
+            linkName: HoseDrum
+            position: [ 0, -0.02, 0.27]
+          -
+            type: free
+            linkName: HoseDrum
+            position: [ 0, 0.57, 0.27]
+          -
+            type: free
+            linkName: HoseDrum
+            position: [ 0, 0.57, 0]
+          -
+            type: free
+            linkName: HoseDrum
+            position: [ 0, 1.0, 0]
+          -
+            type: link
+            linkName: HoseNozzle
+            position: [ 0, 0.09, 0]
+            twistStiffness: 1e8
+            bendStiffness: 1e8
+            superBendReplacedWithBend: true
+  -
+    name: HoseNozzle
+    parent: HoseDrum
+    translation: [ 0, 1.1, 0 ]
+    rotation: [ 0, 0, 1, -180 ]
+    jointType: free
+    density: 1.0
+    elements:
+    -
+      name: Nozzle
+      type: Shape
+      geometry: { type: Cylinder, radius: 0.016, height: 0.15 }
+      appearance: *red
+    -
+      name: Attachment
+      type: Shape
+      translation: [ 0, 0.075, 0 ]
+      geometry: { type: Sphere, radius: 0.024 }
+      appearance: *red
+

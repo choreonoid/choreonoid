@@ -237,7 +237,8 @@ void SceneWireDevice::update()
     if(m_wireDevice->getWireNodeStates().size() <= 0) return;
     MeshGenerator meshGenerator;
     const double& radius = m_wireDevice->getWireRadius();
-    const Position& linkPos_inv = m_wireDevice->link()->T().inverse();
+    const Position::TranslationPart& link_p = m_wireDevice->link()->p();
+    const Matrix3& link_attitude_inv = m_wireDevice->link()->attitude().inverse();
     const int& numNodes = (int)m_wireDevice->getWireNodeStates().size();
     for(size_t i = 0; i < numNodes - 1; ++i){
         const WireNodeState& node1 = m_wireDevice->getWireNodeStates()[i];
@@ -265,17 +266,11 @@ void SceneWireDevice::update()
 
         Position p;
         p.setIdentity();
-        p.translation() = pos;
+        p.translation() = pos - link_p;
         p.linear().col(0) = nx;
         p.linear().col(1) = ny;
         p.linear().col(2) = nz;
-        sgWireNode->setTransform(linkPos_inv * p);
-
-        //Eigen::IOFormat fmt(4, 0, ", ", "\n", "", "");
-        //std::cout << "wire translation " << sgWireNode->translation() << std::endl;
-        //Affine3 af;
-        //sgWireNode->getTransform(af);
-        //std::cout << "wire transform " << af.matrix().format(fmt) << std::endl;
+        sgWireNode->setTransform(link_attitude_inv * p);
     }
 }
 
@@ -326,7 +321,7 @@ AGXWire::AGXWire(AGXWireDevice* device, AGXBody* agxBody) :
     NODE_READ(radius);
     m_device->setWireRadius(wireDesc.radius);
     NODE_READ(resolutionPerUnitLength);
-    NODE_READ(enableCollisions);
+    wireDeviceInfo.read("collision", wireDesc.enableCollisions);
     m_wire = AGXObjectFactory::createWire(wireDesc);
 
     {   // set Material
@@ -357,13 +352,19 @@ AGXWire::AGXWire(AGXWireDevice* device, AGXBody* agxBody) :
         AGXWireWinchControllerDesc winchDesc;
         string linkName;
         wireWinchInfo.read("linkName", linkName);
+        AGXLink* const agxLink = agxBody->getAGXLink(linkName);
+        const Matrix3& attitude = agxLink->getOrgLink()->attitude();
+
         winchDesc.rigidBody = agxBody->getAGXRigidBody(linkName);
+
         Vector3 positionInBodyFrame;
         agxConvert::setVector(wireWinchInfo.find("position"), positionInBodyFrame);
-        winchDesc.positionInBodyFrame = agxConvert::toAGX(positionInBodyFrame);
+        winchDesc.positionInBodyFrame = agxConvert::toAGX(attitude* positionInBodyFrame);   // link coord
+
         Vector3 normalInBodyFrame;
         agxConvert::setVector(wireWinchInfo.find("normal"), normalInBodyFrame);
-        winchDesc.normalInBodyFrame = agxConvert::toAGX(normalInBodyFrame);
+        winchDesc.normalInBodyFrame = agxConvert::toAGX(attitude * normalInBodyFrame);      // link coord
+
         wireWinchInfo.read("pulledInLength", winchDesc.pulledInLength);
         m_winch = AGXObjectFactory::createWinchController(winchDesc);
         if(m_winch){
@@ -382,28 +383,55 @@ AGXWire::AGXWire(AGXWireDevice* device, AGXBody* agxBody) :
         for(const auto& wireNode : wireNodeList){
             if(!wireNode->isMapping()) continue;
             const Mapping&  wireNodeInfo = *wireNode->toMapping();
-            string nodeType, coordinate;
+            string nodeType, coordinate, linkName;
             Vector3 pos;
             // Read yaml
             wireNodeInfo.read("type", nodeType);
-            wireNodeInfo.read("coordinate", coordinate);
+            wireNodeInfo.read("linkName", linkName);
             agxConvert::setVector(wireNodeInfo.find("position"), pos);
 
-            // Calc world position
-            agx::RigidBody* rigid = getAGXBody()->getAGXRigidBody(coordinate);
-            agx::Vec3 agxPos = agxConvert::toAGX(pos);
-            if(rigid) agxPos = rigid->getTransform() * agxPos;
+            auto transformToWorld = [&](){
+                // Transform pos from link coord to world coord, if link exist
+                if(Link* const link = getAGXBody()->body()->link(linkName)){
+                    pos = link->p() + link->attitude() * pos;
+                }
+                return agxConvert::toAGX(pos);
+            };
 
             if(nodeType == "free"){
-                m_wire->add(AGXObjectFactory::createWireFreeNode(agxPos));
+                // set in world coord
+                m_wire->add(AGXObjectFactory::createWireFreeNode(transformToWorld()));
             }else if(nodeType == "fixed"){
-
+                if(agx::RigidBody* body = getAGXBody()->getAGXRigidBody(linkName)){
+                    // set in link coord
+                    m_wire->add(AGXObjectFactory::createWireBodyFixedNode(body, agxConvert::toAGX(pos)));
+                }else{
+                    // set in world coord
+                    m_wire->add(AGXObjectFactory::createWireBodyFixedNode(body, transformToWorld()));
+                }
+            }else if(nodeType == "link"){
+                agx::RigidBody* wireLinkBody = getAGXBody()->getAGXRigidBody(linkName);
+                agxWire::LinkRef wireLink = AGXObjectFactory::createWireLink(wireLinkBody);
+                // set in link coord
+                m_wire->add(wireLink, agxConvert::toAGX(pos));
+                agxWire::ILinkNodeRef iLinkNode = wireLink->getConnectingNode(m_wire);
+                if(iLinkNode){
+                    auto getILinkNodeValue = [&](string key, auto defaultValue){
+                        return wireNodeInfo.get(key, defaultValue);
+                    };
+                    agxWire::ILinkNode::ConnectionProperties* cp = iLinkNode->getConnectionProperties();
+                    cp->setTwistStiffness(getILinkNodeValue("twistStiffness", cp->getTwistStiffness()));
+                    cp->setBendStiffness(getILinkNodeValue("bendStiffness", cp->getBendStiffness()));
+                    iLinkNode->setSuperBendReplacedWithBend(getILinkNodeValue("superBendReplacedWithBend", iLinkNode->getSuperBendReplacedWithBend()));
+                    m_wire->setEnableCollisions(wireLinkBody, false);
+                }
             }
         }
     }
 
     // add wire to simulation
     sim->add((agxSDK::StepEventListener*)m_wire);
+    agxWire::WireController::instance()->setEnableCollisions(m_wire, m_wire, wireDeviceInfo.get("selfCollision", false));
 
     // Rendering
     sim->add(new WireListener(this));

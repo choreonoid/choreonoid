@@ -47,12 +47,15 @@ set(plugin_sources
   RTCItem.cpp
   ChoreonoidExecutionContext.cpp
   ChoreonoidPeriodicExecutionContext.cpp
+  ProfileHandler.cpp
   RTSNameServerView.cpp
   RTSPropertiesView.cpp
   RTSItem.cpp
   RTSDiagramView.cpp
   RTSCommonUtil.cpp
   RTSConfigurationView.cpp
+
+  pugixml/pugixml.cpp
 
   deprecated/BodyRTCItem.cpp
   deprecated/VirtualRobotRTC.cpp

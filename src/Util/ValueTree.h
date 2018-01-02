@@ -304,13 +304,12 @@ public:
 
     bool remove(const std::string& key);
 
-    bool read(const std::string &key, std::string &out_value) const;
-    bool read(const std::string &key, bool &out_value) const;
-    bool read(const std::string &key, int &out_value) const;
-    bool read(const std::string &key, double &out_value) const;
+    bool read(const std::string& key, std::string& out_value) const;
+    bool read(const std::string& key, bool& out_value) const;
+    bool read(const std::string& key, int& out_value) const;
+    bool read(const std::string& key, double& out_value) const;
 
-    template <class T>
-        T read(const std::string& key) const {
+    template <class T> T get(const std::string& key) const {
         T value;
         if(read(key, value)){
             return value;
@@ -319,7 +318,7 @@ public:
             return value;
         }
     }
-
+    
     template <class T>
         T get(const std::string& key, const T& defaultValue) const {
         T value;
@@ -375,6 +374,9 @@ public:
     void throwKeyNotFoundException(const std::string& key) const;
 
     StringStyle keyStringStyle() const { return keyStringStyle_; }
+
+    //! \deprecated
+    template <class T> T read(const std::string& key) const { return get<T>(key); }
 
 #ifdef CNOID_BACKWARD_COMPATIBILITY
     Listing* findSequence(const std::string& key) const { return findListing(key); }

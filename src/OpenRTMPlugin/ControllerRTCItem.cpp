@@ -11,7 +11,6 @@
 #include <cnoid/Sleep>
 #include <cnoid/ExecutablePath>
 #include <cnoid/FileUtil>
-#include <boost/lexical_cast.hpp>
 #include "gettext.h"
 
 using namespace std;
@@ -384,7 +383,7 @@ bool ControllerRTCItemImpl::createRTCmain()
     }
 
     if(periodicRate == 0){
-        periodicRate = boost::lexical_cast<int>(rtc->getProperties()["exec_cxt.periodic.rate"]);
+			periodicRate = QString::fromStdString(string(rtc->getProperties()["exec_cxt.periodic.rate"])).toInt();  
     }
 
     execContext = RTC::ExecutionContextService::_nil();

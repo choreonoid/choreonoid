@@ -1,6 +1,7 @@
 #include "AGXVehicleContinuousTrack.h"
 #include "AGXBody.h"
 #include "AGXScene.h"
+#include <agx/version.h>
 
 
 using namespace std;
@@ -120,7 +121,11 @@ AGXVehicleContinuousTrack::AGXVehicleContinuousTrack(AGXVehicleContinuousTrackDe
             trackDesc.contactReduction =  agxVehicle::TrackInternalMergeProperties::ContactReduction::MODERATE;
             break;
         case 3:
+#if AGX_VERSION_GREATER_OR_EQUAL(2 ,21, 1, 0)
+            trackDesc.contactReduction =  agxVehicle::TrackInternalMergeProperties::ContactReduction::AGGRESSIVE;
+#else
             trackDesc.contactReduction =  agxVehicle::TrackInternalMergeProperties::ContactReduction::AGRESSIVE;
+#endif
             break;
         default:
             break;

@@ -57,7 +57,7 @@ public:
         if(!qseq){
             string filename = getNativePathString(
                 boost::filesystem::path(shareDirectory())
-                / "motion" / "SR1" / "SR1WalkPattern3.yaml");
+                / "motion" / "SR1" / "SR1WalkPattern3.seq");
 
             BodyMotion motion;
             if(!motion.loadStandardYAMLformat(filename)){

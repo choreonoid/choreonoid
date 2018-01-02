@@ -6,9 +6,6 @@
 #include "RTSConfigurationView.h"
 
 #include <cnoid/ViewManager>
-#include <rtm/NVUtil.h>
-#include <rtm/CORBA_SeqUtil.h>
-#include <coil/Properties.h>
 
 #include "LoggerUtil.h"
 #include "gettext.h"
@@ -58,7 +55,7 @@ namespace cnoid {
 	}
 	//////////
 	RTSConfigurationViewImpl::RTSConfigurationViewImpl(RTSConfigurationView* self)
-		: self(self) {
+		: self(self), currentRtc_(0){
 
 		QLabel* lblCompName = new QLabel(_("Component Name : "));
 		txtCompName_ = new QLineEdit;
@@ -168,7 +165,9 @@ namespace cnoid {
 			if (!locationChangedConnection.connected()) {
 				locationChangedConnection = nsView->sigLocationChanged().connect(
 					std::bind(&RTSConfigurationViewImpl::onLocationChanged, this, _1, _2));
-				ncHelper_.setLocation(nsView->getHost(), nsView->getPort());
+				if (currentRtc_) {
+					currentRtc_->setLocation(nsView->getHost(), nsView->getPort());
+				}
 			}
 		}
 
@@ -191,7 +190,9 @@ namespace cnoid {
 	}
 
 	void RTSConfigurationViewImpl::onLocationChanged(string host, int port) {
-		ncHelper_.setLocation(host, port);
+		if (currentRtc_) {
+			currentRtc_->setLocation(host, port);
+		}
 	}
 
 	void RTSConfigurationViewImpl::onItemSelectionChanged(const list<NamingContextHelper::ObjectInfo>& items) {
@@ -440,112 +441,18 @@ namespace cnoid {
 		DDEBUG("RTSConfigurationViewImpl::getConfigurationSet");
 		configSetList_.clear();
 
-		RTC::RTObject_ptr rtc;
-		if (currentItem_.fullPath.size() == 0) {
-			rtc = ncHelper_.findObject<RTC::RTObject>(currentItem_.id, "rtc");
-		} else {
-			CORBA::Object::_ptr_type obj = ncHelper_.findObject(currentItem_.fullPath);
-			if (CORBA::is_nil(obj)) {
-				rtc = RTC::RTObject::_nil();
-			} else {
-				rtc = RTC::RTObject::_narrow(obj);
-				CORBA::release(obj);
-			}
-		}
-		if (!ncHelper_.isObjectAlive(rtc)) return;
-
-		ComponentProfile_var cprofile = rtc->get_component_profile();
-		txtCompName_->setText(QString(string(cprofile->instance_name).c_str()));
-
-		currentConf_ = rtc->get_configuration();
-		QString activeName;
-		try {
-			SDOPackage::ConfigurationSet* activeConf = currentConf_->get_active_configuration_set();
-			if (activeConf) {
-				activeName = QString(string(activeConf->id).c_str());
-			}
-		} catch (...) {
-		}
-
-		SDOPackage::ConfigurationSetList_var confSet = currentConf_->get_configuration_sets();
-		int setNum = confSet->length();
-		for (int index = 0; index < setNum; index++) {
-			SDOPackage::ConfigurationSet conf = confSet[index];
-			QString name = QString(string(conf.id).c_str());
-			ConfigurationSetParamPtr configSet = std::make_shared<ConfigurationSetParam>(index + 1, name);
-			if (name == activeName) configSet->setActive(true);
-			configSetList_.push_back(configSet);
-			//
-			coil::Properties confs = NVUtil::toProperties(conf.configuration_data);
-			vector<string> confNames = confs.propertyNames();
-			int id = 1;
-			for (vector<string>::iterator iter = confNames.begin(); iter != confNames.end(); iter++) {
-				QString name = QString((*iter).c_str());
-				QString value = QString((confs[*iter]).c_str());
-				ConfigurationParamPtr param = std::make_shared<ConfigurationParam>(id, name, value);
-				configSet->addConfiguration(param);
-				id++;
-			}
+		currentRtc_ = std::make_shared<RTCWrapper>();
+		if(currentRtc_->getConfiguration(currentItem_, configSetList_)) {
+			txtCompName_->setText(QString(string(currentRtc_->getInstanceName()).c_str()));
 		}
 	}
 
 	void RTSConfigurationViewImpl::applyClicked() {
 		DDEBUG("RTSConfigurationViewImpl::applyClicked");
-		QString activeName;
 		int selectedSet = lstConfigSet_->currentRow();
 		int selected = lstDetail_->currentRow();
 
-		for (int index = 0; index < configSetList_.size(); index++) {
-			ConfigurationSetParamPtr target = configSetList_[index];
-			if (target->getActive()) {
-				activeName = target->getName();
-			}
-
-			if (target->getMode() == ParamMode::MODE_INSERT) {
-				DDEBUG("ConfigurationSet MODE_INSERT");
-				SDOPackage::ConfigurationSet newSet;
-				newSet.id = CORBA::string_dup(target->getName().toStdString().c_str());
-				NVList configList;
-				std::vector<ConfigurationParamPtr> configSetList = target->getConfigurationList();
-				for (int idxDetail = 0; idxDetail < configSetList.size(); idxDetail++) {
-					ConfigurationParamPtr param = configSetList[idxDetail];
-					if (param->getMode() == MODE_DELETE || param->getMode() == MODE_IGNORE) continue;
-					DDEBUG_V("id:%d", param->getId());
-					CORBA_SeqUtil::push_back(configList,
-						NVUtil::newNV(param->getName().toStdString().c_str(), param->getValue().toStdString().c_str()));
-				}
-				newSet.configuration_data = configList;
-				currentConf_->add_configuration_set(newSet);
-
-			} else if (target->getMode() == ParamMode::MODE_UPDATE) {
-				DDEBUG("ConfigurationSet MODE_UPDATE");
-				SDOPackage::ConfigurationSetList_var confSet = currentConf_->get_configuration_sets();
-				for (int idxConf = 0; idxConf < confSet->length(); idxConf++) {
-					SDOPackage::ConfigurationSet conf = confSet[idxConf];
-					QString name = QString(string(conf.id).c_str());
-					if (name == target->getNameOrg()) {
-						conf.id = CORBA::string_dup(target->getName().toStdString().c_str());
-						NVList configList;
-						std::vector<ConfigurationParamPtr> configSetList = target->getConfigurationList();
-						for (int idxDetail = 0; idxDetail < configSetList.size(); idxDetail++) {
-							ConfigurationParamPtr param = configSetList[idxDetail];
-							if (param->getMode() == MODE_DELETE || param->getMode() == MODE_IGNORE) continue;
-							DDEBUG_V("id:%d", param->getId());
-							CORBA_SeqUtil::push_back(configList,
-								NVUtil::newNV(param->getName().toStdString().c_str(), param->getValue().toStdString().c_str()));
-						}
-						conf.configuration_data = configList;
-						currentConf_->set_configuration_set_values(conf);
-
-					}
-				}
-
-			} else if (target->getMode() == ParamMode::MODE_DELETE) {
-				DDEBUG("ConfigurationSet MODE_DELETE");
-				currentConf_->remove_configuration_set(CORBA::string_dup(target->getName().toStdString().c_str()));
-			}
-		}
-		currentConf_->activate_configuration_set(activeName.toStdString().c_str());
+		currentRtc_->updateConfiguration(configSetList_);
 		//
 		getConfigurationSet();
 		showConfigurationSetView();
@@ -598,6 +505,7 @@ namespace cnoid {
 		for (int index = 0; index < configSetList_.size(); index++) {
 			configSetList_[index]->updateActive();
 			int row = configSetList_[index]->getRowCount();
+			if (lstConfigSet_->rowCount() <= row) continue;
 			DDEBUG_V("index:%d, row:%d", index, row);
 			if (configSetList_[index]->isChangedActive()) {
 				lstConfigSet_->item(row, 0)->setBackgroundColor("#FFC0C0");

@@ -1,14 +1,13 @@
 /**
    \file
    \author Shizuko Hattori
+   \author Shin'ichiro Nakaoka
 */
 
 #include "ODECollisionDetector.h"
-#include <map>
 #include <cnoid/MeshExtractor>
 #include <cnoid/SceneDrawables>
 #include <cnoid/EigenUtil>
-#include <boost/optional.hpp>
 
 #ifdef GAZEBO_ODE
 #include <gazebo/ode/ode.h>
@@ -21,93 +20,92 @@ using namespace cnoid;
 
 namespace {
 
-CollisionDetector* factory()
-{
-    return new ODECollisionDetector;
-}
+typedef CollisionDetector::GeometryHandle GeometryHandle;
 
 struct FactoryRegistration
 {
     FactoryRegistration(){
-        CollisionDetector::registerFactory("ODECollisionDetector", factory);
+        CollisionDetector::registerFactory(
+            "ODECollisionDetector",
+            [](){ return new ODECollisionDetector; });
     }
 } factoryRegistration;
 
-typedef Eigen::Matrix<float, 3, 1> Vertex;
-
-struct Triangle {
-    int indices[3];
+struct PrimitiveInfo
+{
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    dGeomID geomId;
+    Position localPosition;
 };
 
-class GeometryEx
+class GeometryInfo : public Referenced
 {
 public :
-    GeometryEx();
-    ~GeometryEx();
+    GeometryInfo();
+    ~GeometryInfo();
+    GeometryHandle geometryHandle;
+    ReferencedPtr object;
     dSpaceID spaceID;
-    vector<dGeomID> primitiveGeomID;
+    vector<PrimitiveInfo, Eigen::aligned_allocator<PrimitiveInfo>> primitives;
     dGeomID meshGeomID;
     dTriMeshDataID triMeshDataID;
     bool isStatic;
-    vector<Vertex> vertices;
-    vector<Triangle> triangles;
 };
-typedef std::shared_ptr<GeometryEx> GeometryExPtr;
+typedef ref_ptr<GeometryInfo> GeometryInfoPtr;
 
-GeometryEx::GeometryEx()
+GeometryInfo::GeometryInfo()
 {
+    geometryHandle = 0;
     spaceID = 0;
     meshGeomID = 0;
-    primitiveGeomID.clear();
     triMeshDataID = 0;
     isStatic = false;
-    vertices.clear();
-    triangles.clear();
 }
 
-GeometryEx::~GeometryEx()
+GeometryInfo::~GeometryInfo()
 {
-    for(vector<dGeomID>::iterator it=primitiveGeomID.begin(); it!=primitiveGeomID.end(); it++)
-        dGeomDestroy(*it);
-    if(meshGeomID)
+    for(auto& pinfo : primitives){
+        dGeomDestroy(pinfo.geomId);
+    }
+    if(meshGeomID){
         dGeomDestroy(meshGeomID);
-    if(triMeshDataID)
+    }
+    if(triMeshDataID){
         dGeomTriMeshDataDestroy(triMeshDataID);
-    if(spaceID)
+    }
+    if(spaceID){
         dSpaceDestroy(spaceID);
+    }
 }
 
 }
-
 
 namespace cnoid {
 
 class ODECollisionDetectorImpl
 {
 public:
+    dSpaceID spaceID;
+    vector<GeometryInfoPtr> geometryInfos;
+    typedef set <pair<dSpaceID, dSpaceID>> SpaceIDPairSet;
+    SpaceIDPairSet nonInterfarencePairs;
+    std::function<void(const CollisionPair&)> callbackOnCollisionDetected;
+
+    MeshExtractor meshExtractor;
+    typedef Eigen::Matrix<float, 3, 1> Vertex;
+    vector<Vertex> vertices;
+    struct Triangle {
+        int indices[3];
+    };
+    vector<Triangle> triangles;
+
     ODECollisionDetectorImpl();
     ~ODECollisionDetectorImpl();
-
-    dSpaceID spaceID;
-    vector<GeometryExPtr> models;
-       
-    typedef set < pair<dSpaceID, dSpaceID> > SpaceIDPairSet;
-    SpaceIDPairSet nonInterfarencePairs;
-    typedef map< dGeomID, int > GeomIDMap;
-    GeomIDMap geomIDMap;
-    typedef map< dGeomID, Position, std::less<dGeomID>, 
-                 Eigen::aligned_allocator< pair<const dGeomID, Position> > > OffsetMap;
-    OffsetMap offsetMap;
-
-    std::function<void(const CollisionPair&)> callback_;
-
-    MeshExtractor* meshExtractor;
-
-    int addGeometry(SgNode* geometry);
-    void addMesh(GeometryEx* model);
-    void setNonInterfarenceGeometyrPair(int geometryId1, int geometryId2);
+    boost::optional<GeometryHandle> addGeometry(SgNode* geometry);
+    void addMesh(GeometryInfo* model);
+    void setNonInterfarenceGeometyrPair(GeometryHandle geometry1, GeometryHandle geometry2);
     bool makeReady();
-    void updatePosition(int geometryId, const Position& position);
+    void setGeometryPosition(GeometryInfo* ginfo, const Position& position);
     void detectCollisions(std::function<void(const CollisionPair&)> callback);
 };
 
@@ -124,8 +122,6 @@ ODECollisionDetectorImpl::ODECollisionDetectorImpl()
 {
     spaceID = dHashSpaceCreate(0);
     dSpaceSetCleanup(spaceID, 0);
-
-    meshExtractor = new MeshExtractor;
 }
 
 
@@ -140,7 +136,6 @@ ODECollisionDetectorImpl::~ODECollisionDetectorImpl()
     if(spaceID){
         dSpaceDestroy(spaceID);
     }
-    delete meshExtractor;
 }
 
 
@@ -158,82 +153,77 @@ CollisionDetector* ODECollisionDetector::clone() const
         
 void ODECollisionDetector::clearGeometries()
 {
-    impl->models.clear();
+    impl->geometryInfos.clear();
     impl->nonInterfarencePairs.clear();
-    impl->geomIDMap.clear();
-    impl->offsetMap.clear();
 }
 
 
 int ODECollisionDetector::numGeometries() const
 {
-    return impl->models.size();
+    return impl->geometryInfos.size();
 }
 
 
-int ODECollisionDetector::addGeometry(SgNode* geometry)
+boost::optional<GeometryHandle> ODECollisionDetector::addGeometry(SgNode* geometry)
 {
     return impl->addGeometry(geometry);
 }
 
 
-int ODECollisionDetectorImpl::addGeometry(SgNode* geometry)
+boost::optional<GeometryHandle> ODECollisionDetectorImpl::addGeometry(SgNode* geometry)
 {
-    const int index = models.size();
-    bool isValid = false;
-
     if(geometry){
-        GeometryExPtr model =  std::make_shared<GeometryEx>();
-        model->spaceID = dHashSpaceCreate(spaceID);
-        dSpaceSetCleanup(model->spaceID, 0);
-        if(meshExtractor->extract(geometry, std::bind(&ODECollisionDetectorImpl::addMesh, this, model.get()))){
-            if(!model->vertices.empty()){
-                model->triMeshDataID = dGeomTriMeshDataCreate();
-                dGeomTriMeshDataBuildSingle(model->triMeshDataID,
-                                            &model->vertices[0], sizeof(Vertex), model->vertices.size(),
-                                            &model->triangles[0], model->triangles.size() * 3, sizeof(Triangle));
-                model->meshGeomID = dCreateTriMesh(model->spaceID, model->triMeshDataID, 0, 0, 0);
-                geomIDMap.insert(make_pair( model->meshGeomID, index ));
-            }
-            for(vector<dGeomID>::iterator it1=model->primitiveGeomID.begin();
-                it1!=model->primitiveGeomID.end(); it1++){
-                geomIDMap.insert(make_pair( *it1, index ));
-            }
-            models.push_back(model);
-            isValid = true;
+        GeometryHandle handle = geometryInfos.size();
+        GeometryInfoPtr ginfo = new GeometryInfo;
+        ginfo->geometryHandle = handle;
+        ginfo->spaceID = dHashSpaceCreate(spaceID);
+        dSpaceSetCleanup(ginfo->spaceID, 0);
+        if(meshExtractor.extract(geometry, [this, ginfo](){ addMesh(ginfo.get()); })){
+           if(!vertices.empty()){
+               ginfo->triMeshDataID = dGeomTriMeshDataCreate();
+               dGeomTriMeshDataBuildSingle(ginfo->triMeshDataID,
+                                           &vertices[0], sizeof(Vertex), vertices.size(),
+                                           &triangles[0], triangles.size() * 3, sizeof(Triangle));
+               auto id = dCreateTriMesh(ginfo->spaceID, ginfo->triMeshDataID, 0, 0, 0);
+               ginfo->meshGeomID = id;
+               dGeomSetData(id, ginfo.get());
+           }
+           for(auto& pinfo : ginfo->primitives){
+               dGeomSetData(pinfo.geomId, ginfo.get());
+           }
+           geometryInfos.push_back(ginfo);
+           return handle;
         }
     }
 
-    if(!isValid){
-        models.push_back(GeometryExPtr());
-    }
-    
-    return index;
-
+    return boost::none;
 }
 
 
-void ODECollisionDetectorImpl::addMesh(GeometryEx* model)
+void ODECollisionDetectorImpl::addMesh(GeometryInfo* ginfo)
 {
-    SgMesh* mesh = meshExtractor->currentMesh();
-    const Affine3& T = meshExtractor->currentTransform();
+    SgMesh* mesh = meshExtractor.currentMesh();
+    const Affine3& T = meshExtractor.currentTransform();
 
     bool meshAdded = false;
     
     if(mesh->primitiveType() != SgMesh::MESH){
         bool doAddPrimitive = false;
         Vector3 scale;
-        boost::optional<Vector3> translation;
-        if(!meshExtractor->isCurrentScaled()){
+        bool hasTranslationByScaling = false;
+        Vector3 translationByScaling;
+        if(!meshExtractor.isCurrentScaled()){
             scale.setOnes();
             doAddPrimitive = true;
         } else {
-            Affine3 S = meshExtractor->currentTransformWithoutScaling().inverse() *
-                meshExtractor->currentTransform();
+            Affine3 S =
+                meshExtractor.currentTransformWithoutScaling().inverse() *
+                meshExtractor.currentTransform();
 
             if(S.linear().isDiagonal()){
                 if(!S.translation().isZero()){
-                    translation = S.translation();
+                    hasTranslationByScaling = true;
+                    translationByScaling = S.translation();
                 }
                 scale = S.linear().diagonal();
                 if(mesh->primitiveType() == SgMesh::BOX){
@@ -258,50 +248,52 @@ void ODECollisionDetectorImpl::addMesh(GeometryEx* model)
             switch(mesh->primitiveType()){
             case SgMesh::BOX : {
                 const Vector3& s = mesh->primitive<SgMesh::Box>().size;
-                geomId = dCreateBox(model->spaceID, s.x() * scale.x(), s.y() * scale.y(), s.z() * scale.z());
+                geomId = dCreateBox(ginfo->spaceID, s.x() * scale.x(), s.y() * scale.y(), s.z() * scale.z());
                 created = true;
                 break; }
             case SgMesh::SPHERE : {
                 SgMesh::Sphere sphere = mesh->primitive<SgMesh::Sphere>();
-                geomId = dCreateSphere(model->spaceID, sphere.radius * scale.x());
+                geomId = dCreateSphere(ginfo->spaceID, sphere.radius * scale.x());
                 created = true;
                 break; }
             case SgMesh::CYLINDER : {
                 SgMesh::Cylinder cylinder = mesh->primitive<SgMesh::Cylinder>();
-                geomId = dCreateCylinder(model->spaceID, cylinder.radius * scale.x(), cylinder.height * scale.y());
+                geomId = dCreateCylinder(ginfo->spaceID, cylinder.radius * scale.x(), cylinder.height * scale.y());
                 created = true;
                 break; }
             case SgMesh::CAPSULE : {
                 SgMesh::Capsule capsule = mesh->primitive<SgMesh::Capsule>();
-                geomId = dCreateCapsule(model->spaceID, capsule.radius * scale.x(), capsule.height * scale.y());
+                geomId = dCreateCapsule(ginfo->spaceID, capsule.radius * scale.x(), capsule.height * scale.y());
                 created = true;
                 break; }
             default :
                 break;
             }
             if(created){
-                model->primitiveGeomID.push_back(geomId);
-                Affine3 T_ = meshExtractor->currentTransformWithoutScaling();
-                if(translation){
-                    T_ *= Translation3(*translation);
+                PrimitiveInfo pinfo;
+                pinfo.geomId = geomId;
+                Position& T = pinfo.localPosition;
+                T = meshExtractor.currentTransformWithoutScaling();
+                if(hasTranslationByScaling){
+                    T.translation() += translationByScaling;
                 }
-                if(mesh->primitiveType()==SgMesh::CYLINDER ||
-                        mesh->primitiveType()==SgMesh::CAPSULE )
-                    T_ *= AngleAxis(radian(90), Vector3::UnitX());
-                offsetMap.insert(OffsetMap::value_type(geomId, T_));
+                if(mesh->primitiveType()==SgMesh::CYLINDER || mesh->primitiveType()==SgMesh::CAPSULE){
+                    T *= AngleAxis(radian(90.0), Vector3::UnitX());
+                }
+                ginfo->primitives.push_back(pinfo);
                 meshAdded = true;
             }
         }
     }
 
     if(!meshAdded){
-        const int vertexIndexTop = model->vertices.size();
+        const int vertexIndexTop = vertices.size();
 
-        const SgVertexArray& vertices_ = *mesh->vertices();
-        const int numVertices = vertices_.size();
+        const SgVertexArray& srcVertices = *mesh->vertices();
+        const int numVertices = srcVertices.size();
         for(int i=0; i < numVertices; ++i){
-            const Vector3 v = T * vertices_[i].cast<Position::Scalar>();
-            model->vertices.push_back(Vertex(v.x(), v.y(), v.z()));
+            const Vector3 v = T * srcVertices[i].cast<Position::Scalar>();
+            vertices.push_back(Vertex(v.x(), v.y(), v.z()));
         }
 
         const int numTriangles = mesh->numTriangles();
@@ -311,52 +303,43 @@ void ODECollisionDetectorImpl::addMesh(GeometryEx* model)
             tri.indices[0] = vertexIndexTop + src[0];
             tri.indices[1] = vertexIndexTop + src[1];
             tri.indices[2] = vertexIndexTop + src[2];
-            model->triangles.push_back(tri);
+            triangles.push_back(tri);
         }
     }
 }
 
 
-void ODECollisionDetector::setGeometryStatic(int geometryId, bool isStatic)
+void ODECollisionDetector::setCustomObject(GeometryHandle geometry, Referenced* object)
 {
-    GeometryExPtr& model = impl->models[geometryId];
-    if(model){
-        model->isStatic = isStatic;
+    GeometryInfo* ginfo = impl->geometryInfos[geometry];
+    if(ginfo){
+        ginfo->object = object;
     }
 }
 
 
-bool ODECollisionDetector::enableGeometryCache(bool on)
+void ODECollisionDetector::setGeometryStatic(GeometryHandle geometry, bool isStatic)
 {
-    return false;
+    GeometryInfo* ginfo = impl->geometryInfos[geometry];
+    if(ginfo){
+        ginfo->isStatic = isStatic;
+    }
 }
 
 
-void ODECollisionDetector::clearGeometryCache(SgNode* geometry)
+void ODECollisionDetector::setNonInterfarenceGeometyrPair(GeometryHandle geometry1, GeometryHandle geometry2)
 {
-    
+    impl->setNonInterfarenceGeometyrPair(geometry1, geometry2);
 }
 
 
-void ODECollisionDetector::clearAllGeometryCaches()
+void ODECollisionDetectorImpl::setNonInterfarenceGeometyrPair(GeometryHandle geometry1, GeometryHandle geometry2)
 {
-
-}
-
-
-void ODECollisionDetector::setNonInterfarenceGeometyrPair(int geometryId1, int geometryId2)
-{
-    impl->setNonInterfarenceGeometyrPair(geometryId1, geometryId2);
-}
-
-
-void ODECollisionDetectorImpl::setNonInterfarenceGeometyrPair(int geometryId1, int geometryId2)
-{
-    GeometryExPtr& model1 = models[geometryId1];
-    GeometryExPtr& model2 = models[geometryId2];
-    if(model1 && model2){
-        dSpaceID space1 = model1->spaceID;
-        dSpaceID space2 = model2->spaceID;
+    GeometryInfo* ginfo1 = geometryInfos[geometry1];
+    GeometryInfo* ginfo2 = geometryInfos[geometry2];
+    if(ginfo1 && ginfo2){
+        dSpaceID space1 = ginfo1->spaceID;
+        dSpaceID space2 = ginfo2->spaceID;
         //if(nonInterfarencePairs.find(make_pair(space1, space2)) == nonInterfarencePairs.end())
         nonInterfarencePairs.insert(make_pair(space1, space2));
     }
@@ -371,20 +354,21 @@ bool ODECollisionDetector::makeReady()
 
 bool ODECollisionDetectorImpl::makeReady()
 {
-    const int n = models.size();
+    const int n = geometryInfos.size();
     for(int i=0; i < n; ++i){
-        GeometryExPtr& model1 = models[i];
-        if(!model1)
-            continue;
-        for(int j = i+1; j < n; ++j){
-            GeometryExPtr& model2 = models[j];
-            if(!model2)
-                continue;
-            if(model1->isStatic && model2->isStatic){
-                dSpaceID space1 = model1->spaceID;
-                dSpaceID space2 = model2->spaceID;
-                if(nonInterfarencePairs.find(make_pair(space1, space2)) == nonInterfarencePairs.end())
-                    nonInterfarencePairs.insert(make_pair(space1, space2));
+        GeometryInfo* info1 = geometryInfos[i];
+        if(info1){
+            for(int j=i + 1; j < n; ++j){
+                GeometryInfo* info2 = geometryInfos[j];
+                if(info2){
+                    if(info1->isStatic && info2->isStatic){
+                        dSpaceID space1 = info1->spaceID;
+                        dSpaceID space2 = info2->spaceID;
+                        if(nonInterfarencePairs.find(make_pair(space1, space2)) == nonInterfarencePairs.end()){
+                            nonInterfarencePairs.insert(make_pair(space1, space2));
+                        }
+                    }
+                }
             }
         }
     }
@@ -392,48 +376,62 @@ bool ODECollisionDetectorImpl::makeReady()
 }
 
 
-void ODECollisionDetector::updatePosition(int geometryId, const Position& position)
+void ODECollisionDetectorImpl::setGeometryPosition(GeometryInfo* ginfo, const Position& position)
 {
-    impl->updatePosition(geometryId, position);
-}
-
-
-void ODECollisionDetectorImpl::updatePosition(int geometryId, const Position& _position)
-{
-    GeometryExPtr& model = models[geometryId];
-    if(model){
-        if(model->meshGeomID){
-            Vector3 p = _position.translation();
-            dMatrix3 R = { _position(0,0), _position(0,1), _position(0,2), 0.0,
-                           _position(1,0), _position(1,1), _position(1,2), 0.0,
-                           _position(2,0), _position(2,1), _position(2,2), 0.0 };
-            dGeomSetPosition(model->meshGeomID, p.x(), p.y(), p.z());
-            dGeomSetRotation(model->meshGeomID, R);
-        }
-        for(vector<dGeomID>::iterator it = model->primitiveGeomID.begin();
-            it!=model->primitiveGeomID.end(); it++)
-            if(*it){
-                Position position = _position * offsetMap[*it];
-                Vector3 p = position.translation();
-                dMatrix3 R = { position(0,0), position(0,1), position(0,2), 0.0,
-                               position(1,0), position(1,1), position(1,2), 0.0,
-                               position(2,0), position(2,1), position(2,2), 0.0 };
-                dGeomSetPosition(*it, p.x(), p.y(), p.z());
-                dGeomSetRotation(*it, R);
-            }
+    if(ginfo->meshGeomID){
+        Vector3 p = position.translation();
+        const Position& T = position;
+        dMatrix3 R = { T(0,0), T(0,1), T(0,2), 0.0,
+                       T(1,0), T(1,1), T(1,2), 0.0,
+                       T(2,0), T(2,1), T(2,2), 0.0 };
+        dGeomSetPosition(ginfo->meshGeomID, p.x(), p.y(), p.z());
+        dGeomSetRotation(ginfo->meshGeomID, R);
+    }
+    for(auto& pinfo : ginfo->primitives){
+        Position T = position * pinfo.localPosition;
+        auto p = T.translation();
+        dMatrix3 R = { T(0,0), T(0,1), T(0,2), 0.0,
+                       T(1,0), T(1,1), T(1,2), 0.0,
+                       T(2,0), T(2,1), T(2,2), 0.0 };
+        dGeomSetPosition(pinfo.geomId, p.x(), p.y(), p.z());
+        dGeomSetRotation(pinfo.geomId, R);
     }
 }
 
 
+void ODECollisionDetector::updatePosition(GeometryHandle geometry, const Position& position)
+{
+    GeometryInfo* ginfo = impl->geometryInfos[geometry];
+    if(ginfo){
+        impl->setGeometryPosition(ginfo, position);
+    }
+}
+
+
+void ODECollisionDetector::updatePositions
+(std::function<void(Referenced* object, Position*& out_Position)> positionQuery)
+{
+    for(auto& info : impl->geometryInfos){
+        if(info){
+            Position* T;
+            positionQuery(info->object, T);
+            impl->setGeometryPosition(info, *T);
+        }
+    }
+}
+
+                                      
 static void nearCallback(void* data, dGeomID g1, dGeomID g2)
 {
-    dSpaceID space1 = dGeomGetSpace (g1);
-    dSpaceID space2 = dGeomGetSpace (g2);
-    ODECollisionDetectorImpl* impl = (ODECollisionDetectorImpl*)data;
-    if(impl->nonInterfarencePairs.find(make_pair(space1, space2)) != impl->nonInterfarencePairs.end())
+    dSpaceID space1 = dGeomGetSpace(g1);
+    dSpaceID space2 = dGeomGetSpace(g2);
+    ODECollisionDetectorImpl* impl = static_cast<ODECollisionDetectorImpl*>(data);
+    if(impl->nonInterfarencePairs.find(make_pair(space1, space2)) != impl->nonInterfarencePairs.end()){
         return;
-    if(impl->nonInterfarencePairs.find(make_pair(space2, space1)) != impl->nonInterfarencePairs.end())
+    }
+    if(impl->nonInterfarencePairs.find(make_pair(space2, space1)) != impl->nonInterfarencePairs.end()){
         return;
+    }
 
     if(dGeomIsSpace(g1) || dGeomIsSpace(g2)) { 
         dSpaceCollide2(g1, g2, data, &nearCallback);
@@ -443,15 +441,13 @@ static void nearCallback(void* data, dGeomID g1, dGeomID g2)
         int numContacts= dCollide(g1, g2, MaxNumContacts, &contacts[0].geom, sizeof(dContact));
 
         if(numContacts > 0 ){
-            CollisionPair collisionPair;
-            vector<Collision>& collisions = collisionPair.collisions;
-            int id1 = impl->geomIDMap.find(g1)->second;
-            int id2 = impl->geomIDMap.find(g2)->second;
-            collisionPair.geometryId[0] = id2;
-            collisionPair.geometryId[1] = id1;
+            GeometryInfo* ginfo1 = static_cast<GeometryInfo*>(dGeomGetData(g1));
+            GeometryInfo* ginfo2 = static_cast<GeometryInfo*>(dGeomGetData(g2));
+            CollisionPair collisionPair(
+                ginfo2->geometryHandle, ginfo2->object, ginfo1->geometryHandle, ginfo1->object);
+
             for(size_t i=0; i < numContacts; i++){
-                collisions.push_back(Collision());
-                Collision& collision = collisions.back();
+                Collision& collision = collisionPair.newCollision();
                 collision.point[0] = contacts[i].geom.pos[0];
                 collision.point[1] = contacts[i].geom.pos[1];
                 collision.point[2] = contacts[i].geom.pos[2];
@@ -460,7 +456,7 @@ static void nearCallback(void* data, dGeomID g1, dGeomID g2)
                 collision.normal[2] = contacts[i].geom.normal[2];
                 collision.depth = contacts[i].geom.depth;
             }
-            impl->callback_(collisionPair);
+            impl->callbackOnCollisionDetected(collisionPair);
         }
     }
 }
@@ -468,6 +464,6 @@ static void nearCallback(void* data, dGeomID g1, dGeomID g2)
 
 void ODECollisionDetector::detectCollisions(std::function<void(const CollisionPair&)> callback)
 {
-    impl->callback_ = callback;
+    impl->callbackOnCollisionDetected = callback;
     dSpaceCollide(impl->spaceID, (void*)impl, &nearCallback);
 }

@@ -110,7 +110,7 @@ private:
   ~LoggerUtil();
 };
 
-//#define LOG_OUT
+#define LOG_OUT
 
 #ifdef LOG_OUT
 #define DDEBUG(s) { \

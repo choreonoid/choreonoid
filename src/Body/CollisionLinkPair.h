@@ -19,12 +19,13 @@ struct CollisionLinkPair
         link[1] = 0;
     }
 
-    CollisionLinkPair(Body* body1, Link* link1, Body* body2, Link* link2, const CollisionPair& collisionPair){
+    CollisionLinkPair(Body* body1, Link* link1, Body* body2, Link* link2, const CollisionPair& collisionPair)
+        : collisions(collisionPair.collisions())
+    {
         body[0] = body1;
         body[1] = body2;
         link[0] = link1;
         link[1] = link2;
-        collisions = collisionPair.collisions;
     }
 
     bool isSelfCollision() const {

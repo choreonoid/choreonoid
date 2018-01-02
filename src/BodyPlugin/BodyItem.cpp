@@ -684,7 +684,7 @@ void BodyItemImpl::createPenetrationBlocker(Link* link, bool excludeSelfCollisio
     WorldItem* worldItem = self->findOwnerItem<WorldItem>();
     if(worldItem){
         blocker = std::make_shared<PenetrationBlocker>(worldItem->collisionDetector()->clone(), link);
-        const ItemList<BodyItem>& bodyItems = worldItem->collisionBodyItems();
+        const ItemList<BodyItem>& bodyItems = worldItem->coldetBodyItems();
         for(size_t i=0; i < bodyItems.size(); ++i){
             BodyItem* bodyItem = bodyItems.get(i);
             if(bodyItem != self && bodyItem->body()->isStaticModel()){

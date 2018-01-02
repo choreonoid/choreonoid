@@ -17,7 +17,6 @@
 #include <cnoid/ProjectManager>
 #include <rtm/RTObject.h>
 #include <rtm/CorbaNaming.h>
-#include <boost/format.hpp>
 #include "gettext.h"
 
 #include "LoggerUtil.h"

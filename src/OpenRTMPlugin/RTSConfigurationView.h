@@ -8,7 +8,6 @@
 
 #include <QtWidgets>
 #include <cnoid/View>
-#include <rtm/idl/RTC.hh>
 
 #include "RTSNameServerView.h"
 
@@ -195,8 +194,7 @@ private Q_SLOTS:
 
 private:
 	NamingContextHelper::ObjectInfo currentItem_;
-	NamingContextHelper ncHelper_;
-	SDOPackage::Configuration_ptr currentConf_;
+	RTCWrapperPtr currentRtc_;
 
 	QLineEdit* txtCompName_;
 	QTableWidget* lstConfigSet_;

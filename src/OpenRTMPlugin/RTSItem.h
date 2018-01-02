@@ -18,6 +18,7 @@
 
 #include <string>
 #include "OpenRTMItem.h"
+#include "ProfileHandler.h"
 
 #include "exportdecl.h"
 
@@ -171,9 +172,9 @@ public:
 		RTSComp* addRTSComp(const NamingContextHelper::ObjectInfo& info, const QPointF& pos);
 		void deleteRTSComp(const std::string& name);
     bool compIsAlive(RTSComp* rtsComp);
-    //RTSComp* nameToRTSComp(const std::string& name);
-    RTSConnection* addRTSConnection(const std::string& id, const std::string& name,
-            RTSPort* sourcePort, RTSPort* targetPort, const std::string& dataflow, const std::string& subscription);
+    RTSComp* nameToRTSComp(const std::string& name);
+    //RTSConnection* addRTSConnection(const std::string& id, const std::string& name,
+    //        RTSPort* sourcePort, RTSPort* targetPort, const std::string& dataflow, const std::string& subscription);
 		RTSConnection* addRTSConnection(const std::string& id, const std::string& name,
 						RTSPort* sourcePort, RTSPort* targetPort, const std::vector<NamedValuePtr>& propList);
 		bool connectionCheck();

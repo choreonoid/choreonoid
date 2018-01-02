@@ -49,15 +49,6 @@ public:
         return new NullCollisionDetector;
     }
 
-    virtual bool enableGeometryCache(bool) override
-    {
-        return true;
-    }
-
-    virtual void clearGeometryCache(SgNode*) override { }
-
-    virtual void clearAllGeometryCaches() override { }
-    
     virtual void clearGeometries() override
     {
         numGeometries_ = 0;
@@ -68,24 +59,30 @@ public:
         return numGeometries_;
     }
 
-    virtual int addGeometry(SgNode*) override
+    virtual boost::optional<GeometryHandle> addGeometry(SgNode*) override
     {
-        const int id = numGeometries_++;
-        return id;
+        GeometryHandle handle;
+        handle = numGeometries_++;
+        return handle;
     }
 
-    virtual void setGeometryStatic(int /* geometryId */, bool isStatic = true) override { }
+    virtual void setCustomObject(GeometryHandle geometry, Referenced* object) { }
 
-    virtual void setNonInterfarenceGeometyrPair(int /* geometryId1 */, int /* geometryId2 */) override { }
+    virtual void setGeometryStatic(GeometryHandle, bool isStatic = true) override { }
+
+    virtual void setNonInterfarenceGeometyrPair(GeometryHandle, GeometryHandle) override { }
 
     virtual bool makeReady() override
     {
         return true;
     }
 
-    virtual void updatePosition(int /* geometryId */, const Position& /* position */) override { }
+    virtual void updatePosition(GeometryHandle, const Position& /* position */) override { }
 
-    virtual void detectCollisions(std::function<void(const CollisionPair&)> /* callback */) override { }
+    virtual void updatePositions(
+        std::function<void(Referenced* object, Position*& out_position)> positionQuery) override { }
+
+    virtual void detectCollisions(std::function<void(const CollisionPair& collisionPair)> /* callback */) override { }
 };
 
 CollisionDetector* factory()
@@ -154,16 +151,4 @@ CollisionDetector* CollisionDetector::create(int factoryIndex)
 CollisionDetector::~CollisionDetector()
 {
 
-}
-
-
-bool CollisionDetector::isFindClosestPointsAvailable() const
-{
-    return false;
-}
-
-
-double CollisionDetector::findClosestPoints(int geometryId1, int geometryId2, Vector3& out_point1, Vector3& out_point2)
-{
-    return -1.0;
 }

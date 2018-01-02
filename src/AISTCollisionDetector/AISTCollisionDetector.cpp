@@ -10,16 +10,16 @@
 #include <cnoid/MeshExtractor>
 #include <cnoid/ThreadPool>
 #include <random>
-#include <algorithm>
-#include <unordered_map>
+#include <set>
 
 using namespace std;
 using namespace cnoid;
 
 namespace {
 
-const bool MULTITHREAD_TYPE = 0;
 const bool ENABLE_SHUFFLE = false;
+
+typedef CollisionDetector::GeometryHandle GeometryHandle;
 
 CollisionDetector* factory()
 {
@@ -33,36 +33,95 @@ struct FactoryRegistration
     }
 } factoryRegistration;
 
+class ColdetModelEx;
+typedef ref_ptr<ColdetModelEx> ColdetModelExPtr;
 
 class ColdetModelEx : public ColdetModel
 {
 public:
-    ColdetModelEx() { isStatic = false; }
+    ReferencedPtr object;
     bool isStatic;
+    boost::optional<Position> localPosition;
+    ColdetModelExPtr sibling;
+    
+    ColdetModelEx() : isStatic(false) { }
 };
-typedef std::shared_ptr<ColdetModelEx> ColdetModelExPtr;
-        
+
+class ColdetModelPairEx;
+typedef ref_ptr<ColdetModelPairEx> ColdetModelPairExPtr;
+
+ColdetModelEx* getColdetModel(GeometryHandle handle)
+{
+    return reinterpret_cast<ColdetModelEx*>(handle);
+}
+
+GeometryHandle getHandle(ColdetModelEx* model)
+{
+    return reinterpret_cast<GeometryHandle>(model);
+}
 
 class ColdetModelPairEx : public ColdetModelPair
 {
-    int id1_;
-    int id2_;
-        
+    ColdetModelPairEx(){ }
+    
 public:
-    ColdetModelPairEx(const ColdetModelPtr& model1, int id1, const ColdetModelPtr& model2, int id2)
+    ColdetModelPairEx(ColdetModelEx* model1, ColdetModelEx* model2)
         : ColdetModelPair(model1, model2)
-        {
-            id1_ = id1;
-            id2_ = id2;
+    {
+        ColdetModelPairEx* last = this;
+        for(auto sibling1 = model1->sibling; sibling1; sibling1 = sibling1->sibling){
+            for(auto sibling2 = model2->sibling; sibling2; sibling2 = sibling2->sibling){
+                last->sibling = new ColdetModelPairEx;
+                last->sibling->set(sibling1, sibling2);
+                last = last->sibling->sibling;
+            }
         }
-    const int id1() const { return id1_; }
-    const int id2() const { return id2_; }
+    }
+
+    ColdetModelEx* model(int which) {
+        return static_cast<ColdetModelEx*>(ColdetModelPair::model(which));
+    }
+
+    ColdetModelPairExPtr sibling;
 };
-typedef std::shared_ptr<ColdetModelPairEx> ColdetModelPairExPtr;
 
 
-typedef unordered_map<weak_ref_ptr<SgNode>, ColdetModelExPtr>  ModelMap;
-//ModelMap modelCache;
+bool copyCollisionPairCollisions(ColdetModelPairEx* srcPair, CollisionPair& destPair, bool doReserve = false)
+{
+    vector<Collision>& collisions = destPair.collisions();
+
+    if(collisions.empty()){
+        for(int i=0; i < 2; ++i){
+            auto model = srcPair->model(i);
+            destPair.object(i) = model->object;
+            destPair.geometry(i) = getHandle(model);
+        }
+    }
+
+    bool hasCollisions = false;
+    const std::vector<collision_data>& cdata = srcPair->collisions();
+    const int n = cdata.size();
+
+    if(doReserve){
+        collisions.reserve(n);
+    }
+
+    for(size_t j=0; j < n; ++j){
+        const collision_data& cd = cdata[j];
+        for(int k=0; k < cd.num_of_i_points; ++k){
+            if(cd.i_point_new[k]){
+                Collision& collision = destPair.newCollision();
+                collision.point = cd.i_points[k];
+                collision.normal = cd.n_vector;
+                collision.depth = cd.depth;
+                collision.id1 = cd.id1;
+                collision.id2 = cd.id2;
+            }
+        }
+    }
+
+    return !collisions.empty();
+}
 
 }
 
@@ -72,44 +131,28 @@ class AISTCollisionDetectorImpl
 {
 public:
     vector<ColdetModelExPtr> models;
-
     vector<ColdetModelPairExPtr> modelPairs;
-
     int maxNumThreads;
-    int numThreads;
-    std::unique_ptr<ThreadPool> threadPool;
-
-    vector<int> shuffledPairIndices;
-
-    unordered_map<IdPair<>, int> modelPairIdMap;
-
-    typedef set<IdPair<>> IdPairSet;
-    IdPairSet nonInterfarencePairs;
-
+    set<IdPair<GeometryHandle>> nonInterfarencePairs;
     MeshExtractor* meshExtractor;
         
     AISTCollisionDetectorImpl();
     ~AISTCollisionDetectorImpl();
-    int addGeometry(SgNode* geometry);
+    boost::optional<GeometryHandle> addGeometry(SgNode* geometry);
     void addMesh(ColdetModelEx* model);
     bool makeReady();
     void detectCollisions(std::function<void(const CollisionPair&)> callback);
     void detectCollisionsInParallel(std::function<void(const CollisionPair&)> callback);
 
-    // for multithread type 0
-    typedef vector<CollisionPair> CollisionPairArray;
-    vector<CollisionPairArray> collisionPairArrays;
-
-    void extractCollisionsOfAssignedPairs(
-        int pairIndexBegin, int pairIndexEnd, CollisionPairArray& collisionPairs);    
-    void dispatchCollisionsInCollisionPairArrays(std::function<void(const CollisionPair&)> callback);    
+    // for multithread version
+    int numThreads;
+    std::unique_ptr<ThreadPool> threadPool;
+    vector<int> shuffledPairIndices;
+    vector<vector<CollisionPair>> collisionPairArrays;
     
-    // for multithread type 1
-    vector< vector<ColdetModelPairEx*> > collidingModelPairArrays;
-
-    void checkCollisionsOfAssignedPairs(
-        int pairIndexBegin, int pairIndexEnd, vector<ColdetModelPairEx*>& collidingModelPairs);
-    void dispatchCollisionsInCollidingModelPairs(std::function<void(const CollisionPair&)> callback);    
+    void extractCollisionsOfAssignedPairs(
+        int pairIndexBegin, int pairIndexEnd, vector<CollisionPair>& collisionPairs);    
+    void dispatchCollisionsInCollisionPairArrays(std::function<void(const CollisionPair&)> callback);    
 };
 
 }
@@ -164,7 +207,6 @@ void AISTCollisionDetector::clearGeometries()
 {
     impl->models.clear();
     impl->modelPairs.clear();
-    impl->modelPairIdMap.clear();
     impl->nonInterfarencePairs.clear();
 }
 
@@ -175,34 +217,26 @@ int AISTCollisionDetector::numGeometries() const
 }
 
 
-int AISTCollisionDetector::addGeometry(SgNode* geometry)
+boost::optional<GeometryHandle> AISTCollisionDetector::addGeometry(SgNode* geometry)
 {
     return impl->addGeometry(geometry);
 }
 
 
-int AISTCollisionDetectorImpl::addGeometry(SgNode* geometry)
+boost::optional<GeometryHandle> AISTCollisionDetectorImpl::addGeometry(SgNode* geometry)
 {
-    const int index = models.size();
-    bool isValid = false;
-
     if(geometry){
-        ColdetModelExPtr model = std::make_shared<ColdetModelEx>();
-        if(meshExtractor->extract(geometry, [&]() { addMesh(model.get()); })){
+        ColdetModelExPtr model = new ColdetModelEx;
+        if(meshExtractor->extract(geometry, [&]() { addMesh(model); })){
             model->setName(geometry->name());
             model->build();
             if(model->isValid()){
                 models.push_back(model);
-                isValid = true;
+                return getHandle(model);
             }
         }
     }
-
-    if(!isValid){
-        models.push_back(ColdetModelExPtr());
-    }
-
-    return index;
+    return boost::none;
 }
 
 
@@ -231,36 +265,21 @@ void AISTCollisionDetectorImpl::addMesh(ColdetModelEx* model)
 }
 
 
-void AISTCollisionDetector::setGeometryStatic(int geometryId, bool isStatic)
+void AISTCollisionDetector::setCustomObject(GeometryHandle geometry, Referenced* object)
 {
-    ColdetModelExPtr& model = impl->models[geometryId];
-    if(model){
-        model->isStatic = isStatic;
-    }
+    getColdetModel(geometry)->object = object;
 }
 
 
-bool AISTCollisionDetector::enableGeometryCache(bool)
+void AISTCollisionDetector::setGeometryStatic(GeometryHandle geometry, bool isStatic)
 {
-    return false;
+    getColdetModel(geometry)->isStatic = isStatic;
 }
 
 
-void AISTCollisionDetector::clearGeometryCache(SgNode* geometry)
+void AISTCollisionDetector::setNonInterfarenceGeometyrPair(GeometryHandle geometry1, GeometryHandle geometry2)
 {
-    //modelCache.erase(weak_ref_ptr<SgNode>(geometry));
-}
-
-
-void AISTCollisionDetector::clearAllGeometryCaches()
-{
-    //modelCache.clear();
-}
-
-
-void AISTCollisionDetector::setNonInterfarenceGeometyrPair(int geometryId1, int geometryId2)
-{
-    impl->nonInterfarencePairs.insert(IdPair<>(geometryId1, geometryId2));
+    impl->nonInterfarencePairs.insert(IdPair<GeometryHandle>(geometry1, geometry2));
 }
 
 
@@ -273,23 +292,15 @@ bool AISTCollisionDetector::makeReady()
 bool AISTCollisionDetectorImpl::makeReady()
 {
     modelPairs.clear();
-    modelPairIdMap.clear();
-
     const int n = models.size();
     for(int i=0; i < n; ++i){
-        ColdetModelExPtr& model1 = models[i];
-        if(model1){
-            for(int j = i+1; j < n; ++j){
-                ColdetModelExPtr& model2 = models[j];
-                if(model2){
-                    if(!model1->isStatic || !model2->isStatic){
-                        IdPair<> idPair(i, j);
-                        if(nonInterfarencePairs.find(idPair) == nonInterfarencePairs.end()){
-                            ColdetModelPairExPtr modelPair = std::make_shared<ColdetModelPairEx>(model1, i, model2, j);
-                            modelPairIdMap[idPair] = modelPairs.size();
-                            modelPairs.push_back(modelPair);
-                        }
-                    }
+        ColdetModelEx* model1 = models[i];
+        for(int j = i + 1; j < n; ++j){
+            ColdetModelEx* model2 = models[j];
+            if(!model1->isStatic || !model2->isStatic){
+                IdPair<GeometryHandle> handlePair(getHandle(model1), getHandle(model2));
+                if(nonInterfarencePairs.find(handlePair) == nonInterfarencePairs.end()){
+                    modelPairs.push_back(new ColdetModelPairEx(model1, model2));
                 }
             }
         }
@@ -301,8 +312,6 @@ bool AISTCollisionDetectorImpl::makeReady()
         numThreads = 0;
         threadPool.reset();
         collisionPairArrays.clear();
-        collidingModelPairArrays.clear();
-
     } else {
         numThreads = (maxNumThreads > numPairs) ? numPairs : maxNumThreads;
         threadPool.reset(new ThreadPool(numThreads));
@@ -312,22 +321,43 @@ bool AISTCollisionDetectorImpl::makeReady()
                 shuffledPairIndices[i] = i;
             }
         }
-        if(MULTITHREAD_TYPE == 0){
-            collisionPairArrays.resize(numThreads);
-        } else {
-            collidingModelPairArrays.resize(numThreads);
-        }
+        collisionPairArrays.resize(numThreads);
     }
 
     return true;
 }
 
 
-void AISTCollisionDetector::updatePosition(int geometryId, const Position& position)
+void AISTCollisionDetector::updatePosition(GeometryHandle geometry, const Position& position)
 {
-    ColdetModelExPtr& model = impl->models[geometryId];
-    if(model){
-        model->setPosition(position);
+    auto model = getColdetModel(geometry);
+    do {
+        if(model->localPosition){
+            Position T = position * (*model->localPosition);
+            model->setPosition(T);
+        } else {
+            model->setPosition(position);
+        }
+        model = model->sibling;
+    } while(model);
+}
+
+
+void AISTCollisionDetector::updatePositions
+(std::function<void(Referenced* object, Position*& out_Position)> positionQuery)
+{
+    for(ColdetModelEx* model : impl->models){ // Do not use auto&
+        do {
+            Position* T;
+            positionQuery(model->object, T);
+            if(model->localPosition){
+                Position T2 = (*T) * (*model->localPosition);
+                model->setPosition(T2);
+            } else {
+                model->setPosition(*T);
+            }
+            model = model->sibling; // Elements in models are overridden here if auto& is used
+        } while(model);
     }
 }
 
@@ -349,33 +379,19 @@ void AISTCollisionDetector::detectCollisions(std::function<void(const CollisionP
 void AISTCollisionDetectorImpl::detectCollisions(std::function<void(const CollisionPair&)> callback)
 {
     CollisionPair collisionPair;
-    vector<Collision>& collisions = collisionPair.collisions;
+    auto& collisions = collisionPair.collisions();
     
-    const int n = modelPairs.size();
-    for(int i=0; i < n; ++i){
-        ColdetModelPairEx& modelPair = *modelPairs[i];
-        const std::vector<collision_data>& cdata = modelPair.detectCollisions();
-        if(!cdata.empty()){
-            collisionPair.geometryId[0] = modelPair.id1();
-            collisionPair.geometryId[1] = modelPair.id2();
-            collisions.clear();
-            for(size_t j=0; j < cdata.size(); ++j){
-                const collision_data& cd = cdata[j];
-                for(int k=0; k < cd.num_of_i_points; ++k){
-                    if(cd.i_point_new[k]){
-                        collisions.push_back(Collision());
-                        Collision& collision = collisions.back();
-                        collision.point = cd.i_points[k];
-                        collision.normal = cd.n_vector;
-                        collision.depth = cd.depth;
-                        collision.id1 = cd.id1;
-                        collision.id2 = cd.id2;
-                    }
-                }
+    for(ColdetModelPairEx* modelPair : modelPairs){ // Do not use auto&
+        collisions.clear();
+        do {
+            if(!modelPair->detectCollisions().empty()){
+                copyCollisionPairCollisions(modelPair, collisionPair);
             }
-            if(!collisions.empty()){
-                callback(collisionPair);
-            }
+            modelPair = modelPair->sibling;  // Elements in models are overridden here if auto& is used
+        } while(modelPair);
+
+        if(!collisions.empty()){
+            callback(collisionPair);
         }
     }
 }
@@ -400,64 +416,41 @@ void AISTCollisionDetectorImpl::detectCollisionsInParallel(std::function<void(co
         if(size == 0){
             break;
         }
-        if(MULTITHREAD_TYPE == 0){
-            threadPool->start([this, i, index, size](){
-                    extractCollisionsOfAssignedPairs(index, index + size, collisionPairArrays[i]); });
-        } else {
-            threadPool->start([this, i, index, size](){
-                    checkCollisionsOfAssignedPairs(index, index + size, collidingModelPairArrays[i]); });
-        }
+        threadPool->start([this, i, index, size](){
+                extractCollisionsOfAssignedPairs(index, index + size, collisionPairArrays[i]); });
         index += size;
     }
     threadPool->waitLoop();
     //threadPool->wait();
 
-    if(MULTITHREAD_TYPE == 0){
-        dispatchCollisionsInCollisionPairArrays(callback);
-    } else {
-        dispatchCollisionsInCollidingModelPairs(callback);
-    }
+    dispatchCollisionsInCollisionPairArrays(callback);
 }
 
 
 void AISTCollisionDetectorImpl::extractCollisionsOfAssignedPairs
-(int pairIndexBegin, int pairIndexEnd, CollisionPairArray& collisionPairs)
+(int pairIndexBegin, int pairIndexEnd, vector<CollisionPair>& collisionPairs)
 {
     collisionPairs.clear();
 
     for(int i=pairIndexBegin; i < pairIndexEnd; ++i){
         ColdetModelPairEx* modelPair;
         if(ENABLE_SHUFFLE){
-            modelPair = modelPairs[shuffledPairIndices[i]].get();
+            modelPair = modelPairs[shuffledPairIndices[i]];
         } else {
-            modelPair = modelPairs[i].get();
+            modelPair = modelPairs[i];
         }
-        const std::vector<collision_data>& cdata = modelPair->detectCollisions();
-        if(!cdata.empty()){
-            collisionPairs.push_back(CollisionPair());
-            CollisionPair& collisionPair = collisionPairs.back();
-            collisionPair.geometryId[0] = modelPair->id1();
-            collisionPair.geometryId[1] = modelPair->id2();
-            vector<Collision>& collisions = collisionPair.collisions;
-            const int n = cdata.size();
-            collisions.reserve(n);
-            for(int j=0; j < n; ++j){
-                const collision_data& cd = cdata[j];
-                for(int k=0; k < cd.num_of_i_points; ++k){
-                    if(cd.i_point_new[k]){
-                        collisions.push_back(Collision());
-                        Collision& collision = collisions.back();
-                        collision.point = cd.i_points[k];
-                        collision.normal = cd.n_vector;
-                        collision.depth = cd.depth;
-                        collision.id1 = cd.id1;
-                        collision.id2 = cd.id2;
-                    }
-                }
+
+        collisionPairs.push_back(CollisionPair());
+        CollisionPair& collisionPair = collisionPairs.back();
+        do {
+            if(!modelPair->detectCollisions().empty()){
+                copyCollisionPairCollisions(modelPair, collisionPair, true);
             }
-            if(collisions.empty()){
-                collisionPairs.pop_back();
-            }
+            modelPair = modelPair->sibling;
+        } while(modelPair);
+
+        if(collisionPair.empty()){
+            collisionPairs.pop_back();
         }
     }
 }
@@ -466,7 +459,7 @@ void AISTCollisionDetectorImpl::dispatchCollisionsInCollisionPairArrays
 (std::function<void(const CollisionPair&)> callback)
 {
     for(int i=0; i < numThreads; ++i){
-        const CollisionPairArray& collisionPairs = collisionPairArrays[i];
+        const vector<CollisionPair>& collisionPairs = collisionPairArrays[i];
         for(size_t j=0; j < collisionPairs.size(); ++j){
             callback(collisionPairs[j]);
         }
@@ -474,89 +467,9 @@ void AISTCollisionDetectorImpl::dispatchCollisionsInCollisionPairArrays
 }
 
 
-void AISTCollisionDetectorImpl::checkCollisionsOfAssignedPairs
-(int pairIndexBegin, int pairIndexEnd, vector<ColdetModelPairEx*>& collidingModelPairs)
+double AISTCollisionDetector::detectDistance
+(GeometryHandle geometry1, GeometryHandle geometry2, Vector3& out_point1, Vector3& out_point2)
 {
-    collidingModelPairs.clear();
-    for(int i=pairIndexBegin; i < pairIndexEnd; ++i){
-        ColdetModelPairEx* modelPair;
-        if(ENABLE_SHUFFLE){
-            modelPair = modelPairs[shuffledPairIndices[i]].get();
-        } else {
-            modelPair = modelPairs[i].get();
-        }
-        if(!modelPair->detectCollisions().empty()){
-            collidingModelPairs.push_back(modelPair);
-        }
-    }
-}
-
-
-void AISTCollisionDetectorImpl::dispatchCollisionsInCollidingModelPairs
-(std::function<void(const CollisionPair&)> callback)
-{
-    CollisionPair collisionPair;
-    vector<Collision>& collisions = collisionPair.collisions;
-    for(int i=0; i < numThreads; ++i){
-        const vector<ColdetModelPairEx*>& collidingModelPairs = collidingModelPairArrays[i];
-        for(size_t j=0; j < collidingModelPairs.size(); ++j){
-            ColdetModelPairEx& collidingModelPair = *collidingModelPairs[j];
-            const std::vector<collision_data>& cdata = collidingModelPair.collisions();
-            if(!cdata.empty()){
-                collisionPair.geometryId[0] = collidingModelPair.id1();
-                collisionPair.geometryId[1] = collidingModelPair.id2();
-                collisions.clear();
-                for(size_t k=0; k < cdata.size(); ++k){
-                    const collision_data& cd = cdata[k];
-                    for(int l=0; l < cd.num_of_i_points; ++l){
-                        if(cd.i_point_new[l]){
-                            collisions.push_back(Collision());
-                            Collision& collision = collisions.back();
-                            collision.point = cd.i_points[l];
-                            collision.normal = cd.n_vector;
-                            collision.depth = cd.depth;
-                            collision.id1 = cd.id1;
-                            collision.id2 = cd.id2;
-                        }
-                    }
-                }
-                if(!collisions.empty()){
-                    callback(collisionPair);
-                }
-            }
-        }
-    }
-}
-
-
-int AISTCollisionDetector::geometryPairId(int geometryId1, int geometryId2) const
-{
-    auto p = impl->modelPairIdMap.find(IdPair<>(geometryId1, geometryId2));
-    if(p != impl->modelPairIdMap.end()){
-        return p->second;
-    }
-    return -1;
-}
-
-
-double AISTCollisionDetector::findClosestPoints(int geometryPairId, Vector3& out_point1, Vector3& out_point2)
-{
-    return impl->modelPairs[geometryPairId]->computeDistance(out_point1.data(), out_point2.data());
-}
-
-
-bool AISTCollisionDetector::isFindClosestPointsAvailable() const
-{
-    return true;
-}
-
-
-double AISTCollisionDetector::findClosestPoints(int geometryId1, int geometryId2, Vector3& out_point1, Vector3& out_point2)
-{
-    auto p = impl->modelPairIdMap.find(IdPair<>(geometryId1, geometryId2));
-    if(p != impl->modelPairIdMap.end()){
-        int pairId = p->second;
-        return impl->modelPairs[pairId]->computeDistance(out_point1.data(), out_point2.data());
-    }
-    return -1.0;
+    return ColdetModelPair::computeDistance(
+        getColdetModel(geometry1), getColdetModel(geometry2), out_point1.data(), out_point2.data());
 }

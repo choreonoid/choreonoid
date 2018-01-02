@@ -8,20 +8,20 @@
 
 #include "Collision.h"
 #include "Referenced.h"
+#include <boost/optional.hpp>
+#include <cstdint>
 #include "exportdecl.h"
 
 namespace cnoid {
 
 class SgNode;
-
-struct CollisionPair {
-    int geometryId[2];
-    CollisionArray collisions;
-};
+class CollisionPair;
 
 class CNOID_EXPORT CollisionDetector : public Referenced
 {
 public:
+    typedef intptr_t GeometryHandle;
+
     static bool registerFactory(const std::string& name, std::function<CollisionDetector*()> factory);
     static int numFactories();
     static std::string factoryName(int factoryIndex);
@@ -38,30 +38,69 @@ public:
     */
     virtual CollisionDetector* clone() const = 0;
         
-    virtual bool enableGeometryCache(bool on) = 0;
-    virtual void clearGeometryCache(SgNode* geometry) = 0;
-    virtual void clearAllGeometryCaches() = 0;
-
     virtual void clearGeometries() = 0;
     virtual int numGeometries() const = 0;
 
     /**
-       \return id of the geometry
+       \return A handle of the geometry in the collision detector
     */
-    virtual int addGeometry(SgNode* geometry) = 0;
-    
-    virtual void setGeometryStatic(int geometryId, bool isStatic = true) = 0;
-    virtual void setNonInterfarenceGeometyrPair(int geometryId1, int geometryId2) = 0;
+    virtual boost::optional<GeometryHandle> addGeometry(SgNode* geometry) = 0;
+    virtual void setCustomObject(GeometryHandle geometry, Referenced* object) = 0;
+    virtual void setGeometryStatic(GeometryHandle geometry, bool isStatic = true) = 0;
+    virtual void setNonInterfarenceGeometyrPair(GeometryHandle geometry1, GeometryHandle geometry2) = 0;
     virtual bool makeReady() = 0;
-    virtual void updatePosition(int geometryId, const Position& position) = 0;
-    virtual void detectCollisions(std::function<void(const CollisionPair&)> callback) = 0;
+    
+    virtual void updatePosition(GeometryHandle geometry, const Position& position) = 0;
+    virtual void updatePositions(
+        std::function<void(Referenced* object, Position*& out_position)> positionQuery) = 0;
 
-    // optional functions
-    virtual bool isFindClosestPointsAvailable() const;
-    virtual double findClosestPoints(int geometryId1, int geometryId2, Vector3& out_point1, Vector3& out_point2);
+    virtual void detectCollisions(std::function<void(const CollisionPair& collisionPair)> callback) = 0;
 };
 
 typedef ref_ptr<CollisionDetector> CollisionDetectorPtr;
+
+
+class CollisionDetectorDistanceAPI
+{
+public:
+    virtual double detectDistance(
+        CollisionDetector::GeometryHandle geometry1, CollisionDetector::GeometryHandle geometry2,
+        Vector3& out_point1, Vector3& out_point2) = 0;
+};
+
+
+class CollisionPair
+{
+    typedef CollisionDetector::GeometryHandle GeometryHandle;
+    GeometryHandle geometries_[2];
+    Referenced* objects_[2];
+    CollisionArray collisions_;
+
+public:
+    CollisionPair() { }
+    CollisionPair(GeometryHandle geometry1, GeometryHandle geometry2){
+        geometries_[0] = geometry1;
+        geometries_[1] = geometry2;
+    }
+    CollisionPair(GeometryHandle geometry1, Referenced* object1, GeometryHandle geometry2, Referenced* object2){
+        geometries_[0] = geometry1;
+        geometries_[1] = geometry2;
+        objects_[0] = object1;
+        objects_[1] = object2;
+    }
+    GeometryHandle& geometry(int i) { return geometries_[i]; };
+    const GeometryHandle geometry(int i) const { return geometries_[i]; };
+    const GeometryHandle* geometries() const { return geometries_; }
+    Referenced*& object(int i){ return objects_[i]; };
+    Referenced* object(int i) const { return objects_[i]; };
+    CollisionArray& collisions() { return collisions_; }
+    const CollisionArray& collisions() const { return collisions_; }
+    void addCollision(const Collision& c){ collisions_.push_back(c); }
+    Collision& newCollision() { collisions_.resize(collisions_.size() + 1); return collisions_.back(); }
+    void clearCollisions(){ collisions_.clear(); }
+    bool empty() const { return collisions_.empty(); }
+    int numCollisions() const { return collisions_.size(); }
+};
 
 }
 

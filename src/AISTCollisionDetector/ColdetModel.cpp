@@ -74,9 +74,9 @@ void ColdetModel::initialize()
 }
 
 
-ColdetModelPtr ColdetModel::clone() const
+ColdetModel* ColdetModel::clone() const
 {
-    return std::make_shared<ColdetModel>(*this);
+    return new ColdetModel(*this);
 }
 
 

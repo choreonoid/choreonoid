@@ -1,6 +1,6 @@
 
-#ifndef CNOID_COLLISION_COLLISION_PAIR_INSERTER_H_INCLUDED
-#define CNOID_COLLISION_COLLISION_PAIR_INSERTER_H_INCLUDED
+#ifndef CNOID_AIST_COLLISION_DETECTOR_COLLISION_PAIR_INSERTER_H
+#define CNOID_AIST_COLLISION_DETECTOR_COLLISION_PAIR_INSERTER_H
 
 #include "CollisionData.h"
 #include <vector>
@@ -103,6 +103,7 @@ public:
         
     cnoid::ColdetModelInternalModel* models[2];
 };
+
 }
 
 #endif

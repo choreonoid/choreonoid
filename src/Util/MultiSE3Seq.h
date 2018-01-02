@@ -39,14 +39,9 @@ public:
     bool saveTopPartAsPlainMatrixFormat(const std::string& filename, std::ostream& os = nullout());
 
 protected:
-    virtual SE3 defaultValue() const { return SE3(Vector3::Zero(), Quat::Identity()); }
-
-    virtual bool doReadSeq(const Mapping& archive, std::ostream& os) override;
+    virtual SE3 defaultValue() const override;
+    virtual bool doReadSeq(const Mapping* archive, std::ostream& os) override;
     virtual bool doWriteSeq(YAMLWriter& writer) override;
-
-private:
-    void readPosQuatSeq(int nParts, int nFrames, const Listing& values, bool isWfirst);
-    void readPosRpySeq(int nParts, int nFrames, const Listing& values);
 };
 
 typedef MultiSE3Seq::Ptr MultiSE3SeqPtr;

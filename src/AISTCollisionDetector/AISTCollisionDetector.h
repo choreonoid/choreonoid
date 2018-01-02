@@ -13,7 +13,7 @@ namespace cnoid {
 
 class AISTCollisionDetectorImpl;
 
-class CNOID_EXPORT AISTCollisionDetector : public CollisionDetector
+class CNOID_EXPORT AISTCollisionDetector : public CollisionDetector, public CollisionDetectorDistanceAPI
 {
 public:
     AISTCollisionDetector();
@@ -22,23 +22,19 @@ public:
     virtual CollisionDetector* clone() const override;
     virtual void clearGeometries() override;
     virtual int numGeometries() const override;
-    virtual int addGeometry(SgNode* geometry) override;
-    virtual void setGeometryStatic(int geometryId, bool isStatic = true) override;
-    virtual bool enableGeometryCache(bool on) override;
-    virtual void clearGeometryCache(SgNode* geometry) override;
-    virtual void clearAllGeometryCaches() override;
-    virtual void setNonInterfarenceGeometyrPair(int geometryId1, int geometryId2) override;
+    virtual boost::optional<GeometryHandle> addGeometry(SgNode* geometry) override;
+    virtual void setCustomObject(GeometryHandle geometry, Referenced* object) override;
+    virtual void setGeometryStatic(GeometryHandle geometry, bool isStatic = true) override;
+    virtual void setNonInterfarenceGeometyrPair(GeometryHandle geometry1, GeometryHandle geometry2) override;
     virtual bool makeReady() override;
-    virtual void updatePosition(int geometryId, const Position& position) override;
-    virtual void detectCollisions(std::function<void(const CollisionPair&)> callback) override;
+    virtual void updatePosition(GeometryHandle geometry, const Position& position) override;
+    virtual void updatePositions(std::function<void(Referenced* object, Position*& out_Position)> positionQuery) override;
+    virtual void detectCollisions(std::function<void(const CollisionPair& collisionPair)> callback) override;
 
-    virtual bool isFindClosestPointsAvailable() const override;
-    virtual double findClosestPoints(int geometryId1, int geometryId2, Vector3& out_point1, Vector3& out_point2);
-    
-    // experimental API
-    int geometryPairId(int geometryId1, int geometryId2) const;
-    double findClosestPoints(int geometryPairId, Vector3& out_point1, Vector3& out_point2);
+    // CollisionDetectorDistanceAPI
+    virtual double detectDistance(GeometryHandle geometry1, GeometryHandle geometry2, Vector3& out_point1, Vector3& out_point2) override;
 
+    // experimental
     void setNumThreads(int n);
 
 private:

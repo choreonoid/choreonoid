@@ -139,7 +139,7 @@ CORBA::Object_ptr NamingContextHelper::findObjectSub(std::vector<ObjectPath>& pa
 			ncName[index].id = CORBA::string_dup(pathList[index].id.c_str());
 			ncName[index].kind = CORBA::string_dup(pathList[index].kind.c_str());
 			if (0 < fullName.length()) {
-				fullName = fullName + "::";
+				fullName = fullName + "/";
 			}
 			fullName = fullName + pathList[index].id;
 		}

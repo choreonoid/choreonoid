@@ -40,7 +40,6 @@ using boost::smatch;
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 namespace filesystem = boost::filesystem;
 using boost::format;
@@ -330,7 +329,12 @@ void cnoid::initializeHrpsysFileIO(ExtensionManager* ext)
     
     im.addLoaderAndSaver<BodyMotionItem>(
         _("HRPSYS Sequence File Set"), "HRPSYS-SEQ-FILE-SET", "pos;vel;acc;hip;waist;gsens;zmp",
-        std::bind(importHrpsysSeqFileSet, _1, _2, _3), std::bind(exportHrpsysSeqFileSet, _1, _2, _3),
+        [](BodyMotionItem* item, const std::string& filename, std::ostream& os, Item* /* parentItem */){
+            return importHrpsysSeqFileSet(item, filename, os);
+        },
+        [](BodyMotionItem* item, const std::string& filename, std::ostream& os, Item* /* parentItem */){
+            return exportHrpsysSeqFileSet(item, filename, os);
+        },
         ItemManager::PRIORITY_CONVERSION);
 
     im.addLoader<BodyMotionItem>(

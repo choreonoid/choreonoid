@@ -7,6 +7,7 @@
 #include "PlainSeqFileLoader.h"
 #include "ValueTree.h"
 #include "YAMLWriter.h"
+#include "GeneralSeqReader.h"
 #include <fstream>
 #include "gettext.h"
 
@@ -48,61 +49,35 @@ MultiValueSeq::~MultiValueSeq()
 }
 
 
-
-
-bool MultiValueSeq::doReadSeq(const Mapping& archive, std::ostream& os)
+bool MultiValueSeq::doReadSeq(const Mapping* archive, std::ostream& os)
 {
-    if(BaseSeqType::doReadSeq(archive, os) && (archive["type"].toString() == seqType())){
-
-        const int nParts = archive["numParts"].toInt();
-        int nFrames;
-        if(archive.read("numFrames", nFrames)){
-            if(nFrames == 0){
-                setDimension(0, nParts);
-                return true;
-            }
-        }
-        const Listing& values = *archive.findListing("frames");
-        if(!values.isValid()){
-            os << _("Actual frame data is missing.");
-        } else {
-            const int nFrames = values.size();
-            setDimension(nFrames, nParts);
-            for(int i=0; i < nFrames; ++i){
-                const Listing& frameNode = *values[i].toListing();
-                const int n = std::min(frameNode.size(), nParts);
-                Frame v = frame(i);
-                for(int j=0; j < n; ++j){
-                    v[j] = frameNode[j].toDouble();
-                }
-            }
-            return true;
-        }
-        
-    }
-    return false;
+    GeneralSeqReader reader(os);
+    return reader.read<MultiValueSeq>(
+        archive, this,
+        [](const ValueNode& node, double& v){ v = node.toDouble(); });
 }
-
+    
 
 bool MultiValueSeq::doWriteSeq(YAMLWriter& writer)
 {
-    if(BaseSeqType::doWriteSeq(writer)){
-        writer.putKey("frames");
-        writer.startListing();
-        const int n = numFrames();
-        const int m = numParts();
-        for(int i=0; i < n; ++i){
-            writer.startFlowStyleListing();
-            Frame v = frame(i);
-            for(int j=0; j < m; ++j){
-                writer.putScalar(v[j]);
-            }
-            writer.endListing();
+    if(!writeSeqHeaders(writer)){
+        return false;
+    }
+
+    writer.putKey("frames");
+    writer.startListing();
+    const int n = numFrames();
+    const int m = numParts();
+    for(int i=0; i < n; ++i){
+        writer.startFlowStyleListing();
+        Frame v = frame(i);
+        for(int j=0; j < m; ++j){
+            writer.putScalar(v[j]);
         }
         writer.endListing();
-        return true;
     }
-    return false;
+    writer.endListing();
+    return true;
 }
 
 

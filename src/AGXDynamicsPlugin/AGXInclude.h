@@ -42,6 +42,8 @@
 
 // agxWire
 #include <agxWire/Wire.h>
+#include <agxWire/Link.h>
+#include <agxWire/WireController.h>
 
 // etc
 #include <agxCollide/ConvexBuilder.h>

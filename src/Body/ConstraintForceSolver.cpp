@@ -13,7 +13,7 @@
 #include "LinkTraverse.h"
 #include "ForwardDynamicsCBM.h"
 #include "ConstraintForceSolver.h"
-#include "BodyCollisionDetectorUtil.h"
+#include "BodyCollisionDetector.h"
 #include "MaterialTable.h"
 #include <cnoid/IdPair>
 #include <cnoid/EigenUtil>
@@ -30,6 +30,10 @@
 using namespace std;
 using namespace cnoid;
 
+namespace {
+
+typedef CollisionDetector::GeometryHandle GeometryHandle;
+
 // Is LCP solved by Iterative or Pivoting method ?
 // #define USE_PIVOTING_LCP
 #ifdef USE_PIVOTING_LCP
@@ -38,7 +42,6 @@ static const bool usePivotingLCP = true;
 #else
 static const bool usePivotingLCP = false;
 #endif
-
 
 // settings
 
@@ -109,6 +112,7 @@ static const Vector3 local2dConstraintPoints[3] = {
     Vector3( 0.0, 0.0, ( sqrt(3.0) / 2.0))
 };
 
+}
 
 namespace cnoid
 {
@@ -119,7 +123,7 @@ public:
     WorldBase& world;
 
     bool isConstraintForceOutputMode;
-    vector<bool> isSelfCollisionEnabled;
+    vector<bool> isSelfCollisionDetectionEnabled;
         
     struct ConstraintPoint {
         int globalIndex;
@@ -158,7 +162,6 @@ public:
         bool isStatic;
         bool hasConstrainedLinks;
         bool isTestForceBeingApplied;
-        int geometryId;
         LinkDataArray linksData;
 
         Vector3 dpf;
@@ -224,11 +227,13 @@ public:
         ContactMaterialExPtr contactMaterial;
     };
 
-    CollisionDetectorPtr collisionDetector;
-    vector<int> geometryIdToBodyIndexMap;
-    typedef unordered_map<IdPair<>, LinkPair> GeometryPairToLinkPairMap;
+    BodyCollisionDetector bodyCollisionDetector;
+    
+    unordered_map<Body*, int> bodyIndexMap;
+    
+    typedef unordered_map<IdPair<GeometryHandle>, LinkPair> GeometryPairToLinkPairMap;
     GeometryPairToLinkPairMap geometryPairToLinkPairMap;
-        
+
     double defaultStaticFriction;
     double defaultSlipFriction;
     double defaultContactCullingDistance;
@@ -256,7 +261,6 @@ public:
     typedef std::shared_ptr<Constrain2dLinkPair> Constrain2dLinkPairPtr;
     vector<Constrain2dLinkPairPtr> constrain2dLinkPairs;
         
-
     std::vector<LinkPair*> constrainedLinkPairs;
 
     int globalNumConstraintVectors;
@@ -443,7 +447,7 @@ CFSImpl::ConstraintForceSolverImpl(WorldBase& world) :
     contactCorrectionVelocityRatio = DEFAULT_CONTACT_CORRECTION_VELOCITY_RATIO;
 
     isConstraintForceOutputMode = false;
-    isSelfCollisionEnabled.clear();
+    isSelfCollisionDetectionEnabled.clear();
     is2Dmode = false;
 }
 
@@ -621,13 +625,14 @@ void CFSImpl::initialize(void)
 
     bodiesData.resize(numBodies);
 
-    if(!collisionDetector){
-        collisionDetector = new AISTCollisionDetector;
+    if(!bodyCollisionDetector.collisionDetector()){
+        bodyCollisionDetector.setCollisionDetector(new AISTCollisionDetector);
     } else {
-        collisionDetector->clearGeometries();
+        bodyCollisionDetector.clearBodies();
     }
-    geometryIdToBodyIndexMap.clear();
+    bodyIndexMap.clear();
     geometryPairToLinkPairMap.clear();
+    constrainedLinkPairs.clear();
 
     initializeContactMaterials();
     
@@ -636,10 +641,10 @@ void CFSImpl::initialize(void)
 
     for(int bodyIndex=0; bodyIndex < numBodies; ++bodyIndex){
 
-        const DyBodyPtr& body = world.body(bodyIndex);
+        DyBody* body = world.body(bodyIndex);
         BodyData& bodyData = bodiesData[bodyIndex];
-
         initBody(body, bodyData);
+        bodyIndexMap[body] = bodyIndex;
 
         bodyData.forwardDynamicsCBM =
             dynamic_pointer_cast<ForwardDynamicsCBM>(world.forwardDynamics(bodyIndex));
@@ -653,9 +658,8 @@ void CFSImpl::initialize(void)
             }
         }
 
-        bodyData.geometryId = addBodyToCollisionDetector(*body, *collisionDetector, isSelfCollisionEnabled[bodyIndex]);
-        geometryIdToBodyIndexMap.resize(collisionDetector->numGeometries(), bodyIndex);
-
+        bodyCollisionDetector.addBody(body, isSelfCollisionDetectionEnabled[bodyIndex]);
+        
         initBodyExtraJoints(bodyIndex);
 
         if(is2Dmode && !body->isStaticModel()){
@@ -665,7 +669,7 @@ void CFSImpl::initialize(void)
 
     initWorldExtraJoints();
 
-    collisionDetector->makeReady();
+    bodyCollisionDetector.makeReady();
 
     prevGlobalNumConstraintVectors = 0;
     prevGlobalNumFrictionVectors = 0;
@@ -740,18 +744,22 @@ void CFSImpl::solve()
     for(size_t i=0; i < bodiesData.size(); ++i){
         BodyData& data = bodiesData[i];
         data.hasConstrainedLinks = false;
-        DyBodyPtr& body = data.body;
+        DyBody* body = data.body;
         const int n = body->numLinks();
         for(int j=0; j < n; ++j){
-            DyLink* link = body->link(j);
-            collisionDetector->updatePosition(data.geometryId + j, link->T());
-            link->constraintForces().clear();
+            body->link(j)->constraintForces().clear();
         }
     }
+
+    bodyCollisionDetector.updatePositions();
 
     globalNumConstraintVectors = 0;
     globalNumFrictionVectors = 0;
     areThereImpacts = false;
+
+    for(auto linkPair : constrainedLinkPairs){
+        linkPair->constraintPoints.clear();
+    }
     constrainedLinkPairs.clear();
 
     setConstraintPoints();
@@ -835,7 +843,7 @@ void CFSImpl::setConstraintPoints()
     timer.begin();
 #endif
 
-    collisionDetector->detectCollisions(
+    bodyCollisionDetector.detectCollisions(
         [&](const CollisionPair& collisionPair){
             extractConstraintPoints(collisionPair); });
 
@@ -859,27 +867,23 @@ void CFSImpl::extractConstraintPoints(const CollisionPair& collisionPair)
 {
     LinkPair* pLinkPair;
     
-    const IdPair<> idPair(collisionPair.geometryId);
-    GeometryPairToLinkPairMap::iterator p = geometryPairToLinkPairMap.find(idPair);
-    
+    const IdPair<GeometryHandle> idPair(collisionPair.geometries());
+    auto p = geometryPairToLinkPairMap.find(idPair);
+
     if(p != geometryPairToLinkPairMap.end()){
         pLinkPair = &p->second;
-        pLinkPair->constraintPoints.clear();
     } else {
-        
         LinkPair& linkPair = geometryPairToLinkPairMap.insert(make_pair(idPair, LinkPair())).first->second;
         int material[2];
         
         for(int i=0; i < 2; ++i){
-            const int id = collisionPair.geometryId[i];
-            const int bodyIndex = geometryIdToBodyIndexMap[id];
+            DyLink* link = static_cast<DyLink*>(collisionPair.object(i));
+            const int bodyIndex = bodyIndexMap[link->body()];
             linkPair.bodyIndex[i] = bodyIndex;
             BodyData& bodyData = bodiesData[bodyIndex];
             linkPair.bodyData[i] = &bodyData;
-            const int linkIndex = id - bodyData.geometryId;
-            DyLink* link = bodyData.body->link(linkIndex);
             linkPair.link[i] = link;
-            linkPair.linkData[i] = &bodyData.linksData[linkIndex];
+            linkPair.linkData[i] = &bodyData.linksData[link->index()];
             material[i] = link->materialId();
         }
         linkPair.isSameBodyPair = (linkPair.bodyIndex[0] == linkPair.bodyIndex[1]);
@@ -893,7 +897,7 @@ void CFSImpl::extractConstraintPoints(const CollisionPair& collisionPair)
         pLinkPair = &linkPair;
     }
 
-    const vector<Collision>& collisions = collisionPair.collisions;
+    const vector<Collision>& collisions = collisionPair.collisions();
 
     auto& collisionHandler = pLinkPair->contactMaterial->collisionHandler;
     if(collisionHandler){
@@ -2302,13 +2306,13 @@ ConstraintForceSolver::~ConstraintForceSolver()
 
 void ConstraintForceSolver::setCollisionDetector(CollisionDetector* detector)
 {
-    impl->collisionDetector = detector;
+    impl->bodyCollisionDetector.setCollisionDetector(detector);
 }
 
 
 CollisionDetector* ConstraintForceSolver::collisionDetector()
 {
-    return impl->collisionDetector;
+    return impl->bodyCollisionDetector.collisionDetector();
 }
 
 
@@ -2351,9 +2355,9 @@ bool ConstraintForceSolver::unregisterCollisionHandler(const std::string& name)
 }
 
 
-void ConstraintForceSolver::setSelfCollisionEnabled(int bodyIndex, bool on)
+void ConstraintForceSolver::setSelfCollisionDetectionEnabled(int bodyIndex, bool on)
 {
-    vector<bool>& isSCE = impl->isSelfCollisionEnabled;
+    vector<bool>& isSCE = impl->isSelfCollisionDetectionEnabled;
     if(bodyIndex >= isSCE.size()){
         isSCE.resize(bodyIndex+1);
     }
@@ -2361,11 +2365,11 @@ void ConstraintForceSolver::setSelfCollisionEnabled(int bodyIndex, bool on)
 }
 
 
-bool ConstraintForceSolver::isSelfCollisionEnabled(int bodyIndex) const
+bool ConstraintForceSolver::isSelfCollisionDetectionEnabled(int bodyIndex) const
 {
-    vector<bool>& isSCE = impl->isSelfCollisionEnabled;
+    vector<bool>& isSCE = impl->isSelfCollisionDetectionEnabled;
     if(bodyIndex < isSCE.size()){
-        return impl->isSelfCollisionEnabled[bodyIndex];
+        return impl->isSelfCollisionDetectionEnabled[bodyIndex];
     }else{
         return false;
     }

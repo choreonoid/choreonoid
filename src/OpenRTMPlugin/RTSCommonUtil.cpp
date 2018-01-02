@@ -3,8 +3,6 @@
  * @author Hisashi Ikari 
  * @file
  */
-#include <boost/algorithm/string.hpp>
-
 #include "RTSCommonUtil.h"
 
 #include "LoggerUtil.h"
@@ -18,14 +16,14 @@ namespace cnoid {
 string DataTypeComparer::match(string type1, string type2) {
 	bool isIFR1 = RTCCommonUtil::isIFR(type1);
 	bool isIFR2 = RTCCommonUtil::isIFR(type2);
-	// IFR形式同士(1.1)、単純形式同士(1.0)の場合はデフォルト型比較
+	// For IFR formats (1.1) and simple forms (1.0), default type comparison  
 	if (isIFR1 == isIFR2) {
-		if (!_stricmp(type1.c_str(), type2.c_str())) {
+		if (_stricmp(type1.c_str(), type2.c_str())==0) {
 			return type1;
 		}
 		return "";
 	}
-	// 1.1/1.0混在時は後方一致によるあいまい比較
+	// When 1.1 / 1.0 is mixed, fuzzy comparison by backward matching  
 	string ifrType;
 	string oldType;
 	if (isIFR1) {
@@ -51,40 +49,36 @@ string DataTypeComparer::match(string type1, string type2) {
 			return "";
 		}
 	}
-	// 1.1/1.0混在時のConnectorProfileにはIFR形式を使用
-	// return oldType;
+	// Using IFR format for ConnectorProfile when mixed 1.1 / 1.0  
 	return ifrType;
 }
 
 string ignoreCaseComparer::match(string type1, string type2) {
-	if (_stricmp(type1.c_str(), type2.c_str())) {
+	if (_stricmp(type1.c_str(), type2.c_str())==0) {
 		return type1;
 	}
 	return "";
 }
 ////////////////////
-void RTCCommonUtil::splitPortName(string& value)
-{
+void RTCCommonUtil::splitPortName(string& value) {
     if (string::npos == value.find(".")) {
         return;
     }
-    vector<string> results;
-    boost::split(results, value, boost::is_any_of("."));
-    BOOST_ASSERT(0 < results.size());
-    value = results[results.size() - 1];
+		vector<string> results = split(value, '.');
+		BOOST_ASSERT(0 < results.size());
+		value = results[results.size() - 1];
 }
 
 
-void RTCCommonUtil::splitPortName(string& value, vector<string>& result)
-{
+void RTCCommonUtil::splitPortName(string& value, vector<string>& result) {
     result.clear();
     if (string::npos == value.find(".")) {
         result.push_back(value);
         return;
     }
-    vector<string> temp;
-    boost::split(temp, value, boost::is_any_of("."));
-    result = temp;
+		vector<string> temp;
+		temp = split(value, '.');
+		result = temp;
 }
 
 vector<string> RTCCommonUtil::split(const std::string &str, char delim) {
@@ -107,6 +101,7 @@ vector<string> RTCCommonUtil::getAllowDataTypes(RTSPort* source, RTSPort* target
 	DataTypeComparer comparator;
 	vector<string> result = getAllowList(sourceTypes, targetTypes, comparator);
 
+	DDEBUG_V("RTCCommonUtil::getAllowDataTypes:%d", result.size());
 	return result;
 }
 
@@ -128,6 +123,7 @@ vector<string> RTCCommonUtil::getAllowInterfaceTypes(RTSPort* source, RTSPort* t
 	ignoreCaseComparer comparator;
 	result = getAllowList(sourceTypes, targetTypes, comparator);
 
+	DDEBUG_V("RTCCommonUtil::getAllowInterfaceTypes:%d", result.size());
 	return result;
 }
 
@@ -149,6 +145,7 @@ vector<string> RTCCommonUtil::getAllowDataflowTypes(RTSPort* source, RTSPort* ta
 	ignoreCaseComparer comparator;
 	result = getAllowList(sourceTypes, targetTypes, comparator);
 
+	DDEBUG_V("RTCCommonUtil::getAllowDataflowTypes %d", result.size());
 	return result;
 }
 
@@ -170,6 +167,8 @@ vector<string> RTCCommonUtil::getAllowSubscriptionTypes(RTSPort* source, RTSPort
 	ignoreCaseComparer comparator;
 	result = getAllowList(sourceTypes, targetTypes, comparator);
 
+	DDEBUG_V("RTCCommonUtil::getAllowSubscriptionTypes:%d", result.size());
+
 	return result;
 }
 
@@ -190,6 +189,7 @@ vector<string> RTCCommonUtil::getAllowList(vector<string>& source, vector<string
 			for (int idx02 = 0; idx02 < target.size(); idx02++) {
 				string type2 = target[idx02];
 				match = comparer.match(type1, type2);
+				DDEBUG_V("type01:%s, type02:%s, match:%s", type1.c_str(), type2.c_str(), match.c_str());
 				if (0 < match.length()) {
 					resultTmp.push_back(match);
 					break;
@@ -256,6 +256,12 @@ bool RTCCommonUtil::isIFR(string type) {
 	return false;
 }
 
+bool RTCCommonUtil::matchIgnore(string type1, string type2) {
+	if (_stricmp(type1.c_str(), type2.c_str()) == 0) {
+		return true;
+	}
+	return false;
+}
 
 }
 
