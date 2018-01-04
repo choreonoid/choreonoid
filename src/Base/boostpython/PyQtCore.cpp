@@ -59,8 +59,13 @@ BOOST_PYTHON_MODULE(QtCore)
         .def("parent", &QObject::parent, return_value_policy<reference_existing_object>())
         .def("setObjectName", &QObject::setObjectName)
         .def("setParent", &QObject::setParent)
+        .def("deleteLater", &QObject::deleteLater)
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
+        .def("startTimer", &QObject::startTimer)
+#else
         .def("startTimer", (int (QObject::*)(int, Qt::TimerType)) &QObject::startTimer)
-        .def("deleteLater", &QObject::deleteLater);
+#endif
+        ;
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
     void (*singleShotPtr) (int, const QObject*, const char*) = &QTimer::singleShot;
