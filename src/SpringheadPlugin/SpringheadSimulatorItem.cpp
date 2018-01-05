@@ -78,6 +78,7 @@ public:
     void createGeometry(SpringheadBody* sprBody);
     void setKinematicStateToSpringhead  ();
     void setTorqueToSpringhead          ();
+    void getTorqueFromSpringhead        ();
     void setVelocityToSpringhead        ();
 	void setExternalForceToSpringhead   ();
     void getKinematicStateFromSpringhead();
@@ -102,6 +103,7 @@ public:
     void setExtraJoints();
     void setKinematicStateToSpringhead  ();
     void setControlValToSpringhead      ();
+	void getControlValFromSpringhead    ();
 	void setExternalForceToSpringhead   ();
     void getKinematicStateFromSpringhead();
     void updateForceSensors();
@@ -462,6 +464,13 @@ void SpringheadLink::setTorqueToSpringhead()
 	}
 }
 
+void SpringheadLink::getTorqueFromSpringhead()
+{
+	if(phJoint1D){
+		link->u() = phJoint1D->GetMotorForce();		
+	}
+}
+
 void SpringheadLink::setVelocityToSpringhead()
 {
 	if(phJoint1D){
@@ -580,6 +589,24 @@ void SpringheadBody::setControlValToSpringhead()
             break;
         case Link::JOINT_VELOCITY :
             sprLinks[i]->setVelocityToSpringhead();
+            break;
+        default :
+            break;
+        }
+     }
+}
+
+void SpringheadBody::getControlValFromSpringhead()
+{
+    // Skip the root link
+    for(size_t i = 1; i < sprLinks.size(); ++i){
+        switch(sprLinks[i]->link->actuationMode()){
+        case Link::NO_ACTUATION :
+            break;
+        case Link::JOINT_TORQUE :
+            break;
+        case Link::JOINT_VELOCITY :
+            sprLinks[i]->getTorqueFromSpringhead();
             break;
         default :
             break;
@@ -814,6 +841,9 @@ bool SpringheadSimulatorItemImpl::stepSimulation(const std::vector<SimulationBod
     //! \todo Bodies with sensors should be managed by the specialized container to increase the efficiency
     for(size_t i=0; i < activeSimBodies.size(); ++i){
         SpringheadBody* sprBody = static_cast<SpringheadBody*>(activeSimBodies[i]);
+
+		// get computed torque
+		sprBody->getControlValFromSpringhead();
 
         // Move the following code to the SpringheadBody class
         if(!sprBody->sensorHelper.forceSensors().empty()){
