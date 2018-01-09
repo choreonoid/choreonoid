@@ -85,6 +85,7 @@ public:
     void setCollision();
     void setCollisionExclude();
     void setCollisionExcludeLinks(const Mapping& cdMapping);
+    void setCollisionExcludeLinksDynamic(const Mapping& cdMapping);
     void setCollisionExcludeTreeDepth(const Mapping& cdMapping);
     void setCollisionExcludeLinkGroups(const Mapping& cdMapping);
     void setCollisionExcludeSelfCollisionLinks(const Mapping& cdMapping);

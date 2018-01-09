@@ -3,6 +3,10 @@
 namespace cnoid{
 
 ////////////////////////////////////////////////////////////
+// AGXGeometryDesc
+const agx::Name AGXGeometryDesc::globalCollisionGroupName = "AGXGlobalCollisionGroup";
+
+////////////////////////////////////////////////////////////
 // AGXPseudoContinuousTrackGeometry
 void AGXPseudoContinuousTrackGeometry::setAxis(const agx::Vec3& axis)
 {
@@ -111,7 +115,8 @@ agxCollide::GeometryRef AGXObjectFactory::createGeometry(const AGXGeometryDesc& 
     }else{
         geometry = new agxCollide::Geometry();
     }
-    geometry->addGroup(desc.selfCollsionGroupName);
+    geometry->addGroup(desc.globalCollisionGroupName);
+    geometry->addGroup(desc.selfCollisionGroupName);
     return geometry;
 }
 
@@ -360,6 +365,7 @@ agxVehicle::TrackRef AGXObjectFactory::createVehicleTrack(const AGXVehicleTrackD
         agx::AffineMatrix4x4::translate( heightOffset, 0, node.getHalfExtents().z() ) );
         }
     );
+    track->addGroup(AGXGeometryDesc::globalCollisionGroupName);
     return track;
 }
 

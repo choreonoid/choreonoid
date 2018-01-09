@@ -137,9 +137,10 @@ struct AGXGeometryDesc
     AGXGeometryDesc(){
         isPseudoContinuousTrack = false;
     };
+    static const agx::Name globalCollisionGroupName;
     bool isPseudoContinuousTrack;
     agx::Vec3 axis;
-    agx::Name selfCollsionGroupName;
+    agx::Name selfCollisionGroupName;
 };
 
 class AGXPseudoContinuousTrackGeometry : public agxCollide::Geometry

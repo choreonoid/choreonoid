@@ -356,7 +356,7 @@ agxCollide::GeometryRef AGXLink::createAGXGeometry()
 {
     LinkPtr const orgLink = getOrgLink();
     AGXGeometryDesc gdesc;
-    gdesc.selfCollsionGroupName = getAGXBody()->getCollisionGroupName();
+    gdesc.selfCollisionGroupName = getAGXBody()->getCollisionGroupName();
     if(orgLink->actuationMode() == Link::JOINT_SURFACE_VELOCITY){
         gdesc.isPseudoContinuousTrack = true;
         const Vector3& a = orgLink->a();
@@ -724,6 +724,7 @@ void AGXBody::setCollisionExclude(){
     const Mapping& cdMapping = *body()->info()->findMapping("collisionDetection");
     if(!cdMapping.isValid()) return;
     setCollisionExcludeLinks(cdMapping);
+    setCollisionExcludeLinksDynamic(cdMapping);
     setCollisionExcludeTreeDepth(cdMapping);
     setCollisionExcludeLinkGroups(cdMapping);
     setCollisionExcludeSelfCollisionLinks(cdMapping);
@@ -733,6 +734,18 @@ void AGXBody::setCollisionExcludeLinks(const Mapping& cdMapping){
     const Listing& excludeLinks = *cdMapping.findListing("excludeLinks");
     for(auto linkName : excludeLinks){
         getAGXLink(linkName->toString())->enableExternalCollision(false);
+    }
+}
+
+void AGXBody::setCollisionExcludeLinksDynamic(const Mapping& cdMapping){
+    const Listing& excludeLinksDynamic = *cdMapping.findListing("excludeLinksDynamic");
+    for(auto linkName : excludeLinksDynamic){
+        stringstream ss;
+        ss << "AGXExcludeLinkDynamic_" << agx::UuidGenerator().generate().str() << std::endl;
+        if(AGXLink* agxLink = getAGXLink(linkName->toString())){
+            agxLink->getAGXGeometry()->addGroup(ss.str());
+        }
+        getAGXScene()->setCollisionPair(ss.str(), AGXGeometryDesc::globalCollisionGroupName, false);
     }
 }
 
