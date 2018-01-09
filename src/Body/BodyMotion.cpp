@@ -10,9 +10,12 @@
 #include <cnoid/Vector3Seq>
 #include <cnoid/YAMLReader>
 #include <cnoid/YAMLWriter>
+#include <boost/format.hpp>
+#include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
+using boost::format;
 
 namespace {
 //bool TRACE_FUNCTIONS = false;
@@ -75,6 +78,12 @@ void BodyMotion::setNumJoints(int numJoints, bool clearNewElements)
 }
 
 
+double BodyMotion::frameRate() const
+{
+    return (linkPosSeq_->frameRate() > 0.0) ? linkPosSeq_->frameRate() : jointPosSeq_->frameRate();
+}
+
+
 double BodyMotion::getFrameRate() const
 {
     return frameRate();
@@ -89,6 +98,12 @@ void BodyMotion::setFrameRate(double frameRate)
     for(ExtraSeqMap::iterator p = extraSeqs.begin(); p != extraSeqs.end(); ++p){
         p->second->setFrameRate(frameRate);
     }
+}
+
+
+double BodyMotion::timeStep() const
+{
+    return (linkPosSeq_->frameRate() > 0.0) ? linkPosSeq_->timeStep() : jointPosSeq_->timeStep();
 }
 
 
@@ -325,20 +340,30 @@ bool BodyMotion::doReadSeq(const Mapping* archive, std::ostream& os)
             // Merge the parameters of the parent node into the child (component) node
             MappingPtr component = components[i].toMapping()->cloneMapping();
             component->insert(archive);
-            
-            const string type = component->read<string>("type");
+
+            const ValueNode& typeNode = (*component)["type"];
+            const string type = typeNode.toString();
             string content = readContent(component);
             
-            if((type == "MultiSE3Seq" || (version < 2.0 && (type == "MultiSe3Seq" || type == "MultiAffine3Seq")))
-               && content == "LinkPosition"){
-                loaded = linkPosSeq()->readSeq(component, os);
-                if(!loaded){
-                    break;
+            if((type == "MultiSE3Seq" || (version < 2.0 && (type == "MultiSe3Seq" || type == "MultiAffine3Seq")))){
+                if(content == "LinkPosition"){
+                    loaded = linkPosSeq()->readSeq(component, os);
+                    if(!loaded){
+                        break;
+                    }
+                } else {
+                    os << (format(_("Unknown content \"%1%\" of type \"%2%\".")) % content % type) << endl;
                 }
-            } else if(type == "MultiValueSeq" && content == jointContent){
-                loaded = jointPosSeq()->readSeq(component, os);
-                if(!loaded){
-                    break;
+            } else if(type == "MultiValueSeq"){
+                if(content == jointContent){
+                    loaded = jointPosSeq_->readSeq(component, os);
+                    if(loaded){
+                        jointPosSeq_->setSeqContentName("JointDisplacement");
+                    } else {
+                        break;
+                    }
+                } else {
+                    os << (format(_("Unknown content \"%1%\" of type \"%2%\".")) % content % type) << endl;
                 }
             } else if(type == "Vector3Seq") {
                 if(content == "ZMP" || (version < 2.0) && (content == "RelativeZMP" || content == "RelativeZmp")){
@@ -358,6 +383,8 @@ bool BodyMotion::doReadSeq(const Mapping* archive, std::ostream& os)
                         break;
                     }
                 }
+            } else {
+                os << (format(_("Unknown type \"%1%\".")) % type) << endl;
             }
         }
     }

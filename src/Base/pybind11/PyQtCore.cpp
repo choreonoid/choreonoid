@@ -22,14 +22,19 @@ PYBIND11_MODULE(QtCore, m)
         .def("parent", &QObject::parent, py::return_value_policy::reference)
         .def("setObjectName", &QObject::setObjectName)
         .def("setParent", &QObject::setParent)
+        .def("deleteLater", &QObject::deleteLater)
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
         .def("startTimer", &QObject::startTimer)
-        .def("deleteLater", &QObject::deleteLater);
+#else
+        .def("startTimer", (int (QObject::*)(int, Qt::TimerType)) &QObject::startTimer)
+#endif
+        ;
 
     py::class_<QTimer>(m, "QTimer")
         .def("interval", &QTimer::interval)
         .def("isActive", &QTimer::isActive)
         .def("isSingleShot", &QTimer::isSingleShot)
-        .def("setInterval", &QTimer::setInterval)
+        .def("setInterval", (void (QTimer::*)(int)) &QTimer::setInterval)
         .def("setSingleShot", &QTimer::setSingleShot)
         .def("timerId", &QTimer::timerId)
         .def("start", (void (QTimer::*)()) &QTimer::start)
