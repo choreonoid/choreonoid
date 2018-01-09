@@ -203,3 +203,45 @@ links:
     type: SubBody
     uri: DoubleArmV7-Upper.body
     parent: TFRAME
+  -
+    name: WIRE_GUARD_L
+    parent: TFRAME
+    jointType: fixed
+    translation: [ -0.02, -0.595, 0.600 ]
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 1.0
+    inertia: [
+      0.208, 0, 0,
+      0, 0.388, 0,
+      0, 0, 0.555 ]
+    material: default
+    elements: &WireGuard
+      -
+        type: Collision
+        elements:
+        -
+          type: Shape
+          appearance: &red
+            material:
+              diffuseColor: [ 0.8, 0.0, 0.0 ]
+              ambientIntensity: 0.2
+              specularColor: [ 0.8, 0.8, 0.8 ]
+              transparency: 0.8
+          geometry: { type: Box, size: [ 2.1, 1.5, 0.5 ] }
+  -
+    name: WIRE_GUARD_R
+    parent: TFRAME
+    jointType: fixed
+    translation: [ -0.02, -0.595, -0.600 ]
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 1.0
+    inertia: [
+      0.208, 0, 0,
+      0, 0.388, 0,
+      0, 0, 0.555 ]
+    material: default
+    elements: *WireGuard
+
+
+collisionDetection:
+  excludeLinksDynamic: [ WIRE_GUARD_L, WIRE_GUARD_R ]
