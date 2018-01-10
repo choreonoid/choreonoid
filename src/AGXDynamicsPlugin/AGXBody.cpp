@@ -846,6 +846,12 @@ void AGXBody::enableExternalCollision(const bool& bOn)
     }
 }
 
+void AGXBody::enableAGXWireContact(const bool& bOn)
+{
+    //getAGXScene()->setCollisionPair(getCollisionGroupName(), AGXWireDesc::, bOn);
+}
+
+
 void AGXBody::addCollisionGroupNameToDisableCollision(const std::string & name)
 {
     return _collisionGroupNamesToDisableCollision.push_back(name);

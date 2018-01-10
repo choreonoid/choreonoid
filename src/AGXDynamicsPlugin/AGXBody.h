@@ -91,6 +91,7 @@ public:
     void setCollisionExcludeSelfCollisionLinks(const Mapping& cdMapping);
     std::string getCollisionGroupName() const;
     void enableExternalCollision(const bool& bOn);
+    void enableAGXWireContact(const bool& bOn);
     void addCollisionGroupNameToDisableCollision(const std::string& name);
     const std::vector<std::string>& getCollisionGroupNamesToDisableCollision() const;
     void addCollisionGroupNameToAllLink(const std::string& name);
