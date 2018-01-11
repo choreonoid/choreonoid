@@ -377,3 +377,10 @@ links:
 
 collisionDetection:
   excludeTreeDepth: 2
+  excludeLinkGroups:
+    -
+      name: groupA
+      links: [ CHEST, ARM_R, ARM_L ]
+    -
+      name: groupB
+      links: [ WAIST, THIGH_L, THIGH_R ]
