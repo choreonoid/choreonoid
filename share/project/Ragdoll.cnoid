@@ -124,11 +124,16 @@ items:
 views: 
   - 
     id: 0
+    name: "CameraImage"
+    plugin: Base
+    class: ImageView
+  - 
+    id: 1
     plugin: Base
     class: ItemPropertyView
     mounted: true
   - 
-    id: 1
+    id: 2
     plugin: Base
     class: ItemTreeView
     mounted: true
@@ -137,12 +142,12 @@ views:
       checked: [ 2, 5 ]
       expanded: [ 1, 5 ]
   - 
-    id: 2
+    id: 3
     plugin: Base
     class: MessageView
     mounted: true
   - 
-    id: 3
+    id: 4
     plugin: Base
     class: SceneView
     mounted: true
@@ -164,7 +169,7 @@ views:
       floorGridInterval: 0.5
       xzGridSpan: 10
       xzGridInterval: 0.5
-      xzGrid: true
+      xzGrid: false
       yzGridSpan: 10
       yzGridInterval: 0.5
       texture: true
@@ -185,9 +190,9 @@ views:
           fieldOfView: 0.698132
           near: 0.01
           far: 100
-          eye: [ 3.1631302, -0.0161977519, 1.1184422 ]
-          direction: [ -0.99470587, 0.0629162208, -0.0812513489 ]
-          up: [ -0.0810893039, 0.00512898606, 0.996693643 ]
+          eye: [ 3.11086876, 0.6154365, 2.22695158 ]
+          direction: [ -0.894920899, -0.178460712, -0.408984546 ]
+          up: [ -0.401087396, -0.0799828702, 0.912541309 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
@@ -199,19 +204,324 @@ views:
       yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       dedicatedItemTreeViewChecks: false
   - 
-    id: 4
+    id: 5
+    name: "CameraView"
+    plugin: Base
+    class: SceneView
+    state: 
+      editMode: false
+      viewpointControlMode: thirdPerson
+      collisionLines: false
+      polygonMode: fill
+      defaultHeadLight: true
+      defaultHeadLightIntensity: 0.75
+      headLightLightingFromBack: false
+      worldLight: true
+      worldLightIntensity: 0.5
+      worldLightAmbient: 0.3
+      additionalLights: true
+      fog: true
+      floorGrid: true
+      floorGridSpan: 10
+      floorGridInterval: 0.5
+      xzGridSpan: 10
+      xzGridInterval: 0.5
+      xzGrid: false
+      yzGridSpan: 10
+      yzGridInterval: 0.5
+      texture: true
+      lineWidth: 1
+      pointSize: 1
+      normalVisualization: false
+      normalLength: 0.01
+      coordinateAxes: true
+      fpsTestIteration: 1
+      showFPS: false
+      enableNewDisplayListDoubleRendering: false
+      useBufferForPicking: true
+      upsideDown: false
+      cameras: 
+        - 
+          camera: [ System, Perspective ]
+          isCurrent: true
+          fieldOfView: 0.698132
+          near: 0.01
+          far: 100
+          eye: [ 3.98593415, 2.06956276, 1.43167603 ]
+          direction: [ -0.881614075, -0.463073017, -0.0912140553 ]
+          up: [ -0.080752226, -0.0424155853, 0.995831309 ]
+        - 
+          camera: [ System, Orthographic ]
+          orthoHeight: 20
+          near: 0.01
+          far: 100
+      backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
+      gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
+      xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
+      yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
+      dedicatedItemTreeViewChecks: false
+  - 
+    id: 6
+    name: "Camera2"
+    plugin: Base
+    class: SceneView
+    state: 
+      editMode: false
+      viewpointControlMode: thirdPerson
+      collisionLines: false
+      polygonMode: fill
+      defaultHeadLight: true
+      defaultHeadLightIntensity: 0.75
+      headLightLightingFromBack: false
+      worldLight: true
+      worldLightIntensity: 0.5
+      worldLightAmbient: 0.3
+      additionalLights: true
+      fog: true
+      floorGrid: true
+      floorGridSpan: 10
+      floorGridInterval: 0.5
+      xzGridSpan: 10
+      xzGridInterval: 0.5
+      xzGrid: false
+      yzGridSpan: 10
+      yzGridInterval: 0.5
+      texture: true
+      lineWidth: 1
+      pointSize: 1
+      normalVisualization: false
+      normalLength: 0.01
+      coordinateAxes: true
+      fpsTestIteration: 1
+      showFPS: false
+      enableNewDisplayListDoubleRendering: false
+      useBufferForPicking: true
+      upsideDown: false
+      cameras: 
+        - 
+          camera: [ System, Perspective ]
+          isCurrent: true
+          fieldOfView: 0.698132
+          near: 0.01
+          far: 100
+          eye: [ -18.2291077, -0.047560148, 10.2820504 ]
+          direction: [ 0.888471532, -0.0665458465, -0.454081476 ]
+          up: [ 0.452813135, -0.0339153617, 0.890960164 ]
+        - 
+          camera: [ System, Orthographic ]
+          orthoHeight: 20
+          near: 0.01
+          far: 100
+      backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
+      gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
+      xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
+      yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
+      dedicatedItemTreeViewChecks: false
+  - 
+    id: 7
+    name: "Camera3"
+    plugin: Base
+    class: SceneView
+    state: 
+      editMode: false
+      viewpointControlMode: thirdPerson
+      collisionLines: false
+      polygonMode: fill
+      defaultHeadLight: true
+      defaultHeadLightIntensity: 0.75
+      headLightLightingFromBack: false
+      worldLight: true
+      worldLightIntensity: 0.5
+      worldLightAmbient: 0.3
+      additionalLights: true
+      fog: true
+      floorGrid: true
+      floorGridSpan: 10
+      floorGridInterval: 0.5
+      xzGridSpan: 10
+      xzGridInterval: 0.5
+      xzGrid: false
+      yzGridSpan: 10
+      yzGridInterval: 0.5
+      texture: true
+      lineWidth: 1
+      pointSize: 1
+      normalVisualization: false
+      normalLength: 0.01
+      coordinateAxes: true
+      fpsTestIteration: 1
+      showFPS: false
+      enableNewDisplayListDoubleRendering: false
+      useBufferForPicking: true
+      upsideDown: false
+      cameras: 
+        - 
+          camera: [ System, Perspective ]
+          isCurrent: true
+          fieldOfView: 0.698132
+          near: 0.01
+          far: 100
+          eye: [ -4.92423889, -0.471972794, 20.5265241 ]
+          direction: [ 0.138993665, 0.00167563518, -0.990291853 ]
+          up: [ 0.990219899, 0.011937575, 0.139003765 ]
+        - 
+          camera: [ System, Orthographic ]
+          orthoHeight: 20
+          near: 0.01
+          far: 100
+      backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
+      gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
+      xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
+      yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
+      dedicatedItemTreeViewChecks: false
+  - 
+    id: 8
+    name: "Camera4"
+    plugin: Base
+    class: SceneView
+    state: 
+      editMode: false
+      viewpointControlMode: thirdPerson
+      collisionLines: false
+      polygonMode: fill
+      defaultHeadLight: true
+      defaultHeadLightIntensity: 0.75
+      headLightLightingFromBack: false
+      worldLight: true
+      worldLightIntensity: 0.5
+      worldLightAmbient: 0.3
+      additionalLights: true
+      fog: true
+      floorGrid: true
+      floorGridSpan: 10
+      floorGridInterval: 0.5
+      xzGridSpan: 10
+      xzGridInterval: 0.5
+      xzGrid: false
+      yzGridSpan: 10
+      yzGridInterval: 0.5
+      texture: true
+      lineWidth: 1
+      pointSize: 1
+      normalVisualization: false
+      normalLength: 0.01
+      coordinateAxes: true
+      fpsTestIteration: 1
+      showFPS: false
+      enableNewDisplayListDoubleRendering: false
+      useBufferForPicking: true
+      upsideDown: false
+      cameras: 
+        - 
+          camera: [ System, Perspective ]
+          isCurrent: true
+          fieldOfView: 0.698132
+          near: 0.01
+          far: 100
+          eye: [ 3.98906058, 2.03769293, 1.46142952 ]
+          direction: [ -0.885344628, -0.453795106, -0.101167642 ]
+          up: [ -0.0900301376, -0.0461461386, 0.994869393 ]
+        - 
+          camera: [ System, Orthographic ]
+          orthoHeight: 20
+          near: 0.01
+          far: 100
+      backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
+      gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
+      xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
+      yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
+      dedicatedItemTreeViewChecks: false
+  - 
+    id: 9
+    name: "Scene 2"
+    plugin: Base
+    class: SceneView
+    state: 
+      editMode: false
+      viewpointControlMode: thirdPerson
+      collisionLines: false
+      polygonMode: fill
+      defaultHeadLight: true
+      defaultHeadLightIntensity: 0.75
+      headLightLightingFromBack: false
+      worldLight: true
+      worldLightIntensity: 0.5
+      worldLightAmbient: 0.3
+      additionalLights: true
+      shadowLights: 
+        - 0
+      fog: true
+      floorGrid: false
+      floorGridSpan: 10
+      floorGridInterval: 0.5
+      xzGridSpan: 10
+      xzGridInterval: 0.5
+      xzGrid: false
+      yzGridSpan: 10
+      yzGridInterval: 0.5
+      texture: true
+      lineWidth: 1
+      pointSize: 1
+      normalVisualization: false
+      normalLength: 0.01
+      coordinateAxes: true
+      fpsTestIteration: 1
+      showFPS: false
+      enableNewDisplayListDoubleRendering: false
+      useBufferForPicking: true
+      upsideDown: false
+      cameras: 
+        - 
+          camera: [ System, Perspective ]
+          isCurrent: true
+          fieldOfView: 0.6978
+          near: 0.01
+          far: 100
+          eye: [ -5.29126118, -5.01169376, 3.84184278 ]
+          direction: [ 0.756596254, 0.487150344, -0.43617273 ]
+          up: [ 0.3667299, 0.236126726, 0.899862962 ]
+        - 
+          camera: [ System, Orthographic ]
+          orthoHeight: 20
+          near: 0.01
+          far: 100
+      backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
+      gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
+      xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
+      yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
+      dedicatedItemTreeViewChecks: false
+  - 
+    id: 10
+    name: "Task"
+    plugin: Base
+    class: TaskView
+    state: 
+      layoutMode: horizontal
+      isAutoMode: false
+  - 
+    id: 11
+    name: "Text Editor"
+    plugin: Base
+    class: TextEditView
+  - 
+    id: 12
     name: "Virtual Joystick"
     plugin: Base
     class: VirtualJoystickView
   - 
-    id: 5
+    id: 13
     plugin: Body
     class: BodyLinkView
     mounted: true
     state: 
       showRotationMatrix: false
   - 
-    id: 6
+    id: 14
+    name: "Body State"
+    plugin: Body
+    class: BodyStateView
+  - 
+    id: 15
     plugin: Body
     class: JointSliderView
     mounted: true
@@ -225,7 +535,7 @@ views:
       labelOnLeft: true
       currentBodyItem: 5
   - 
-    id: 7
+    id: 16
     plugin: Body
     class: LinkSelectionView
     mounted: true
@@ -237,14 +547,14 @@ views:
           id: 2
           selectedLinks: [ 0 ]
   - 
-    id: 8
+    id: 17
     plugin: Python
     class: PythonConsoleView
     mounted: true
 toolbars: 
   "TimeBar": 
     minTime: 0
-    maxTime: 121.77
+    maxTime: 156.25
     frameRate: 100
     playbackFrameRate: 50
     idleLoopDrivenMode: false
@@ -343,12 +653,12 @@ viewAreas:
           children: 
             - 
               type: pane
-              views: [ 1 ]
-              current: 1
+              views: [ 2 ]
+              current: 2
             - 
               type: pane
-              views: [ 0, 7 ]
-              current: 0
+              views: [ 1, 16 ]
+              current: 1
         - 
           type: splitter
           orientation: vertical
@@ -361,16 +671,16 @@ viewAreas:
               children: 
                 - 
                   type: pane
-                  views: [ 5, 6 ]
-                  current: 5
+                  views: [ 13, 15 ]
+                  current: 13
                 - 
                   type: pane
-                  views: [ 3 ]
-                  current: 3
+                  views: [ 4 ]
+                  current: 4
             - 
               type: pane
-              views: [ 2, 8 ]
-              current: 2
+              views: [ 3, 17 ]
+              current: 3
 layoutOfToolBars: 
   rows: 
     - 
