@@ -119,7 +119,7 @@ items:
                0.000000,  0.000000 ]
             zmp: [ 0, 0, 0 ]
             collisionDetection: true
-            selfCollisionDetection: false
+            selfCollisionDetection: true
             isEditable: true
 views: 
   - 
@@ -133,9 +133,9 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      selected: [ 1 ]
+      selected: [ 4 ]
       checked: [ 2, 5 ]
-      expanded: [ 1 ]
+      expanded: [ 1, 5 ]
   - 
     id: 2
     plugin: Base
@@ -147,7 +147,7 @@ views:
     class: SceneView
     mounted: true
     state: 
-      editMode: false
+      editMode: true
       viewpointControlMode: thirdPerson
       collisionLines: false
       polygonMode: fill
@@ -164,7 +164,7 @@ views:
       floorGridInterval: 0.5
       xzGridSpan: 10
       xzGridInterval: 0.5
-      xzGrid: false
+      xzGrid: true
       yzGridSpan: 10
       yzGridInterval: 0.5
       texture: true
@@ -185,9 +185,9 @@ views:
           fieldOfView: 0.698132
           near: 0.01
           far: 100
-          eye: [ 4.30674065, -0.0090188765, 2.16043311 ]
-          direction: [ -0.935418888, 0.00296241973, -0.353528963 ]
-          up: [ -0.35352719, 0.001119601, 0.935423579 ]
+          eye: [ 3.1631302, -0.0161977519, 1.1184422 ]
+          direction: [ -0.99470587, 0.0629162208, -0.0812513489 ]
+          up: [ -0.0810893039, 0.00512898606, 0.996693643 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20

@@ -6,11 +6,11 @@ links:
   -
     name: WAIST
     jointType: free
-    mass: 12.8  
+    mass: 10.01
     inertia: [
-      0.72533, 0,       0,
-      0,       0.08533, 0,
-      0,       0,       0.72533 ]
+      0.044377667, 0,       0,
+      0,       0.0605605, 0,
+      0,       0,       0.044377667 ]
     elements:
       -
         type: Shape
@@ -24,11 +24,11 @@ links:
     jointType: revolute
     jointAxis: [ 0, 0, 1 ]
     jointRange: [ -45, 45 ]
-    mass: 12.8
+    mass: 0.001
     inertia: [
-      0.72533, 0,       0,
-      0,       0.08533, 0,
-      0,       0,       0.72533 ]
+      0.001, 0,       0,
+      0,       0.001, 0,
+      0,       0,     0.001 ]
     translation: [ 0.0, 0.0, 0.11 ]
   -
     name: STOMACH
@@ -36,11 +36,11 @@ links:
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
     jointRange: [ 0.0, 100 ]
-    mass: 12.8
+    mass: 10.01
     inertia: [
-      0.72533, 0,       0,
-      0,       0.08533, 0,
-      0,       0,       0.72533 ]
+      0.044377667, 0,       0,
+      0,       0.0605605, 0,
+      0,       0,       0.044377667 ]
     #translation: [ 0.0, 0.0, 0.11 ]
     elements:
       -
@@ -54,11 +54,11 @@ links:
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
     jointRange: [ 0.0, 100 ]
-    mass: 12.8
+    mass: 10.01
     inertia: [
-      0.72533, 0,       0,
-      0,       0.08533, 0,
-      0,       0,       0.72533 ]
+      0.044377667, 0,       0,
+      0,       0.0605605, 0,
+      0,       0,       0.044377667 ]
     translation: [ 0.0, 0.0, 0.22 ]
     elements:
       -
@@ -72,11 +72,11 @@ links:
     jointType: revolute
     jointAxis: [ 0, 0, 1 ]
     jointRange: [ -70, 70 ]
-    mass: 12.8
+    mass: 4.9
     inertia: [
-      0.72533, 0,       0,
-      0,       0.08533, 0,
-      0,       0,       0.72533 ]
+      0.023716, 0,       0,
+      0,       0.023716, 0,
+      0,       0,       0.023716 ]
     translation: [ 0.0, 0.0, 0.22 ]
     elements:
       -
@@ -90,11 +90,11 @@ links:
     jointType: revolute
     jointAxis: [ 0, 0, -1 ]
     jointRange: [ -10, 90 ]
-    mass: 12.8
+    mass: 0.001
     inertia: [
-      0.72533, 0,       0,
-      0,       0.08533, 0,
-      0,       0,       0.72533 ]
+      0.001, 0,       0,
+      0,       0.001, 0,
+      0,       0,     0.001 ]
     translation: [ 0.0, -0.07, -0.11 ]
   -
     name: THIGH_R
@@ -102,11 +102,11 @@ links:
     jointType: revolute
     jointAxis: [ 0, -1, 0 ]
     jointRange: [ -20, 100 ]
-    mass: 12.8
+    mass: 7.98
     inertia: [
-      0.72533, 0,       0,
-      0,       0.08533, 0,
-      0,       0,       0.72533 ]
+      0.029792, 0,       0,
+      0,       0.029792, 0,
+      0,       0,       0.025536 ]
     #translation: [ 0.0, -0.07, -0.11 ]
     elements:
       -
@@ -121,11 +121,11 @@ links:
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
     jointRange: [ 0.0, 145 ]
-    mass: 12.8
+    mass: 3.71
     inertia: [
-      0.72533, 0,       0,
-      0,       0.08533, 0,
-      0,       0,       0.72533 ]
+      0.010604417, 0,       0,
+      0,       0.010604417, 0,
+      0,       0,       0.0090895 ]
     translation: [ 0.0, 0.0, -0.32 ]
     elements:
       -
@@ -140,11 +140,11 @@ links:
     jointType: revolute
     jointAxis: [ 0, -1, 0 ]
     jointRange: [ -45, 10 ]
-    mass: 12.8
+    mass: 1.26
     inertia: [
-      0.72533, 0,       0,
-      0,       0.08533, 0,
-      0,       0,       0.72533 ]
+      0.00189, 0,       0,
+      0,       0.006833333, 0,
+      0,       0,       0.007733333 ]
     translation: [ 0.0, 0.0, -0.28 ]
     elements:
       -
@@ -158,11 +158,11 @@ links:
     jointType: revolute
     jointAxis: [ 0, 0, 1 ]
     jointRange: [ -10, 90 ]
-    mass: 12.8
+    mass: 0.001
     inertia: [
-      0.72533, 0,       0,
-      0,       0.08533, 0,
-      0,       0,       0.72533 ]
+      0.001, 0,       0,
+      0,       0.001, 0,
+      0,       0,     0.001 ]
     translation: [ 0.0, 0.07, -0.11 ]
   -
     name: THIGH_L
@@ -170,11 +170,11 @@ links:
     jointType: revolute
     jointAxis: [ 0, -1, 0 ]
     jointRange: [ -20, 100 ]
-    mass: 12.8
+    mass: 7.98
     inertia: [
-      0.72533, 0,       0,
-      0,       0.08533, 0,
-      0,       0,       0.72533 ]
+      0.029792, 0,       0,
+      0,       0.029792, 0,
+      0,       0,       0.025536 ]
     #translation: [ 0.0, 0.07, -0.11 ]
     elements:
       -
@@ -189,11 +189,11 @@ links:
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
     jointRange: [ 0.0, 145 ]
-    mass: 12.8
+    mass: 3.71
     inertia: [
-      0.72533, 0,       0,
-      0,       0.08533, 0,
-      0,       0,       0.72533 ]
+      0.010604417, 0,       0,
+      0,       0.010604417, 0,
+      0,       0,       0.0090895 ]
     translation: [ 0.0, 0.0, -0.32 ]
     elements:
       -
@@ -208,11 +208,11 @@ links:
     jointType: revolute
     jointAxis: [ 0, -1, 0 ]
     jointRange: [ -45, 10 ]
-    mass: 12.8
+    mass: 1.26
     inertia: [
-      0.72533, 0,       0,
-      0,       0.08533, 0,
-      0,       0,       0.72533 ]
+      0.00189, 0,       0,
+      0,       0.006833333, 0,
+      0,       0,       0.007733333 ]
     translation: [ 0.0, 0.0, -0.28 ]
     elements:
       -
@@ -226,11 +226,11 @@ links:
     jointType: revolute
     jointAxis: [ 0, -1, 0 ]
     jointRange: [ -180, 45 ]
-    mass: 12.8
+    mass: 0.001
     inertia: [
-      0.72533, 0,       0,
-      0,       0.08533, 0,
-      0,       0,       0.72533 ]
+      0.001, 0,       0,
+      0,       0.001, 0,
+      0,       0,     0.001 ]
     translation: [ 0.0, -0.175, 0.11]
   -
     name: ARM_JOINT_R
@@ -238,22 +238,22 @@ links:
     jointType: revolute
     jointAxis: [ 1, 0, 0 ]
     jointRange: [ -90, 90 ]
-    mass: 12.8
+    mass: 0.001
     inertia: [
-      0.72533, 0,       0,
-      0,       0.08533, 0,
-      0,       0,       0.72533 ]
+      0.001, 0,       0,
+      0,       0.001, 0,
+      0,       0,     0.001 ]
   -
     name: ARM_R
     parent: ARM_JOINT_R  #CHEST
     jointType: revolute
     jointAxis: [ 0, 0, 1 ]
     jointRange: [ -5, 100 ]
-    mass: 12.8
+    mass: 2.38
     inertia: [
-      0.72533, 0,       0,
-      0,       0.08533, 0,
-      0,       0,       0.72533 ]
+      0.006029333, 0,       0,
+      0,       0.004284, 0,
+      0,       0,       0.006029333 ]
     #translation: [ 0.0, -0.175, 0.11]
     elements:
       -
@@ -267,11 +267,11 @@ links:
     jointType: revolute
     jointAxis: [ 0, 0, 1 ]
     jointRange: [ 0.0, 160 ]
-    mass: 12.8
+    mass: 1.61
     inertia: [
-      0.72533, 0,       0,
-      0,       0.08533, 0,
-      0,       0,       0.72533 ]
+      0.004440917, 0,       0,
+      0,       0.0020125, 0,
+      0,       0,       0.004440917 ]
     translation: [ 0.0, -0.26, 0.0]
     elements:
       -
@@ -285,11 +285,11 @@ links:
     jointType: revolute
     jointAxis: [ 0, 0, 1 ]
     jointRange: [ -45, 90 ]
-    mass: 12.8
+    mass: 0.56
     inertia: [
-      0.72533, 0,       0,
-      0,       0.08533, 0,
-      0,       0,       0.72533 ]
+      0.00189, 0,       0,
+      0,       0.000883333, 0,
+      0,       0,       0.002908333 ]
     translation: [ 0.0, -0.26, 0.0]
     elements:
       -
@@ -303,11 +303,11 @@ links:
     jointType: revolute
     jointAxis: [ 0, -1, 0 ]
     jointRange: [ -180, 45 ]
-    mass: 12.8
+    mass: 0.001
     inertia: [
-      0.72533, 0,       0,
-      0,       0.08533, 0,
-      0,       0,       0.72533 ]
+      0.001, 0,       0,
+      0,       0.001, 0,
+      0,       0,     0.001 ]
     translation: [ 0.0, 0.175, 0.11]
   -
     name: ARM_JOINT_L
@@ -315,22 +315,22 @@ links:
     jointType: revolute
     jointAxis: [ 1, 0, 0 ]
     jointRange: [ -90, 90 ]
-    mass: 12.8
+    mass: 0.001
     inertia: [
-      0.72533, 0,       0,
-      0,       0.08533, 0,
-      0,       0,       0.72533 ]
+      0.001, 0,       0,
+      0,       0.001, 0,
+      0,       0,     0.001 ]
   -
     name: ARM_L
     parent: ARM_JOINT_L  #CHEST
     jointType: revolute
     jointAxis: [ 0, 0, -1 ]
     jointRange: [ -5, 100 ]
-    mass: 12.8
+    mass: 2.38
     inertia: [
-      0.72533, 0,       0,
-      0,       0.08533, 0,
-      0,       0,       0.72533 ]
+      0.006029333, 0,       0,
+      0,       0.004284, 0,
+      0,       0,       0.006029333 ]
     #translation: [ 0.0, 0.175, 0.11]
     elements:
       -
@@ -344,11 +344,11 @@ links:
     jointType: revolute
     jointAxis: [ 0, 0, -1 ]
     jointRange: [ 0.0, 160 ]
-    mass: 12.8
+    mass: 1.61
     inertia: [
-      0.72533, 0,       0,
-      0,       0.08533, 0,
-      0,       0,       0.72533 ]
+      0.004440917, 0,       0,
+      0,       0.0020125, 0,
+      0,       0,       0.004440917 ]
     translation: [ 0.0, 0.26, 0.0]
     elements:
       -
@@ -362,11 +362,11 @@ links:
     jointType: revolute
     jointAxis: [ 0, 0, -1 ]
     jointRange: [ -45, 90 ]
-    mass: 12.8
+    mass: 0.56
     inertia: [
-      0.72533, 0,       0,
-      0,       0.08533, 0,
-      0,       0,       0.72533 ]
+      0.00189, 0,       0,
+      0,       0.000883333, 0,
+      0,       0,       0.002908333 ]
     translation: [ 0.0, 0.26, 0.0]
     elements:
       -
