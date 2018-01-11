@@ -266,14 +266,25 @@ void AGXLink::setLinkStateToCnoid()
                  t(0,1), t(1,1), t(2,1),
                  t(0,2), t(1,2), t(2,2);
 
+    // angular acceleration
+    const agx::Vec3& dw = agxRigidBody->getAngularAcceleration();
+    orgLink->dw() = Vector3(dw.x(), dw.y(), dw.z());
+
     // angular velocity
     const agx::Vec3& w = agxRigidBody->getAngularVelocity();
     orgLink->w() = Vector3(w.x(), w.y(), w.z());
 
+    // center of mass
+    const Vector3 c = orgLink->R() * orgLink->c();
+
+    // acceleration
+    const agx::Vec3& dv = agxRigidBody->getAcceleration();
+    const Vector3 dv0(dv.x(), dv.y(), dv.z());
+    orgLink->dv() = dv0 - orgLink->dw().cross(c);
+
     // velocity
     const agx::Vec3& v = agxRigidBody->getVelocity();
-    Vector3 v0(v.x(), v.y(), v.z());
-    const Vector3 c = orgLink->R() * orgLink->c();
+    const Vector3 v0(v.x(), v.y(), v.z());
     orgLink->v() = v0 - orgLink->w().cross(c);
 }
 
