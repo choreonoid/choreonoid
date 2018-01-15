@@ -31,7 +31,7 @@
 #include <iostream>
 
 static const bool DEBUG_MESSAGE = false;
-static const bool DEBUG_MESSAGE2 = true;
+static const bool DEBUG_MESSAGE2 = false;
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 #define USE_QT5_OPENGL 1
@@ -213,7 +213,6 @@ public:
     int screenWidth;
     vector<SensorScreenRenderer*> screens;
     bool rotateOutputDirection;
-    bool enableInterpolation;
 
     struct ScreenIndex{
         SensorScreenRenderer::ScreenId sid;
@@ -222,9 +221,142 @@ public:
     };
     vector<vector<ScreenIndex>> fisheyeLensMap;
 
+    // for Interpolation
+    SensorScreenRenderer::ScreenId screenId[4];
+    int npx[4],npy[4];
+    struct ScreenIndex4 {
+        ScreenIndex screenIndex[4];
+        double bias[4];
+    };
+    vector<vector<ScreenIndex4>> fisheyeLensInterpolationMap;
+
+
+    FisheyeLensConverter(){
+        rotateOutputDirection = false;
+    };
     void initialize(int width, int height, double fov,
             int screenWidth, vector<SensorScreenRendererPtr>& screens);
     void convertImage(Image* image);
+    void convertImageInterpolation(Image* image);
+    void setRotateOutputDirection(bool on){
+        if(rotateOutputDirection!=on){
+            fisheyeLensMap.clear();
+            fisheyeLensInterpolationMap.clear();
+            rotateOutputDirection = on;
+        }
+    };
+
+    enum Corner { FRONT_UR, FRONT_UL, FRONT_DR, FRONT_DL, LEFT_UR, LEFT_UL, LEFT_DR, LEFT_DL,
+        RIGHT_UR, RIGHT_UL, RIGHT_DR, RIGHT_DL, BOTTOM_UR, BOTTOM_UL, BOTTOM_DR, BOTTOM_DL,
+        TOP_UR, TOP_UL, TOP_DR, TOP_DL, BACK_UR, BACK_UL, BACK_DR, BACK_DL};
+    void setCornerPoint(int i, Corner corner){
+            switch(corner){
+            case FRONT_UR:
+            case FRONT_UL:
+            case FRONT_DR:
+            case FRONT_DL:
+                screenId[i] = SensorScreenRenderer::FRONT;
+                break;
+            case LEFT_UR:
+            case LEFT_UL:
+            case LEFT_DR:
+            case LEFT_DL:
+                screenId[i] = SensorScreenRenderer::LEFT;
+                break;
+            case RIGHT_UR:
+            case RIGHT_UL:
+            case RIGHT_DR:
+            case RIGHT_DL:
+                screenId[i] = SensorScreenRenderer::RIGHT;
+                break;
+            case BOTTOM_UR:
+            case BOTTOM_UL:
+            case BOTTOM_DR:
+            case BOTTOM_DL:
+                screenId[i] = SensorScreenRenderer::BOTTOM;
+                break;
+            case TOP_UR:
+            case TOP_UL:
+            case TOP_DR:
+            case TOP_DL:
+                screenId[i] = SensorScreenRenderer::TOP;
+                break;
+            case BACK_UR:
+            case BACK_UL:
+            case BACK_DR:
+            case BACK_DL:
+                screenId[i] = SensorScreenRenderer::BACK;
+                break;
+            }
+            switch(corner){
+            case FRONT_UL:
+            case LEFT_UL:
+            case RIGHT_UL:
+            case BOTTOM_UL:
+            case TOP_UL:
+            case BACK_UL:
+                npx[i] = npy[i] = 0;
+                break;
+            case FRONT_UR:
+            case LEFT_UR:
+            case RIGHT_UR:
+            case BOTTOM_UR:
+            case TOP_UR:
+            case BACK_UR:
+                npx[i] = screenWidth - 1;
+                npy[i] = 0;
+                break;
+            case FRONT_DL:
+            case LEFT_DL:
+            case RIGHT_DL:
+            case BOTTOM_DL:
+            case TOP_DL:
+            case BACK_DL:
+                npx[i] = 0;
+                npy[i] = screenWidth - 1;
+                break;
+            case FRONT_DR:
+            case LEFT_DR:
+            case RIGHT_DR:
+            case BOTTOM_DR:
+            case TOP_DR:
+            case BACK_DR:
+                npx[i] = screenWidth - 1;
+                npy[i] = screenWidth - 1;
+                break;
+            }
+    };
+    void setCubeCorner(Corner corner0, Corner corner1, Corner corner2, Corner corner3 ){
+        setCornerPoint(0, corner0);
+        setCornerPoint(1, corner1);
+        setCornerPoint(2, corner2);
+        setCornerPoint(3, corner3);
+    };
+    void setCenter(SensorScreenRenderer::ScreenId id, double sx, double sy){
+        screenId[0] = screenId[1] = screenId[2] = screenId[3] = id;
+        npx[0] = sx;              npy[0] = sy;
+        npx[1] = npx[0]+1;        npy[1] = npy[0];
+        npx[2] = npx[0];          npy[2] = npy[0]+1;
+        npx[3] = npx[1];          npy[3] = npy[2];
+    };
+    void setVerticalBorder(SensorScreenRenderer::ScreenId id0,
+            SensorScreenRenderer::ScreenId id1, double sy){
+        screenId[0] = screenId[2] = id0;
+        screenId[1] = screenId[3] = id1;
+        npx[0] = screenWidth - 1;  npy[0] = sy;
+        npx[1] = 0;                npy[1] = npy[0];
+        npx[2] = screenWidth - 1;  npy[2] = npy[0]+1;
+        npx[3] = 0;                npy[3] = npy[2];
+    };
+    void setHorizontalBorder(SensorScreenRenderer::ScreenId id0,
+            SensorScreenRenderer::ScreenId id1, double sx){
+        screenId[0] = screenId[1] = id0;
+        screenId[2] = screenId[3] = id1;
+        npx[0] = sx;              npy[0] = screenWidth - 1;
+        npx[1] = npx[0]+1;        npy[1] = screenWidth - 1;
+        npx[2] = npx[0];          npy[2] = 0;
+        npx[3] = npx[1];          npy[3] = 0;
+    }
 };
 
 
@@ -310,6 +442,8 @@ public:
     double maxFrameRate;
     double maxLatency;
     SgCloneMap cloneMap;
+    bool rotateOutputDirection;  // for FishEyeLens
+    bool enableInterpolation;
         
     GLVisionSimulatorItemImpl(GLVisionSimulatorItem* self);
     GLVisionSimulatorItemImpl(GLVisionSimulatorItem* self, const GLVisionSimulatorItemImpl& org);
@@ -372,6 +506,9 @@ GLVisionSimulatorItemImpl::GLVisionSimulatorItemImpl(GLVisionSimulatorItem* self
     threadMode.setSymbol(GLVisionSimulatorItem::SENSOR_THREAD_MODE, N_("Sensor"));
     threadMode.setSymbol(GLVisionSimulatorItem::SCREEN_THREAD_MODE, N_("Screen"));
     threadMode.select(GLVisionSimulatorItem::SENSOR_THREAD_MODE);
+
+    rotateOutputDirection = false;
+    enableInterpolation = false;
 }
 
 
@@ -403,6 +540,8 @@ GLVisionSimulatorItemImpl::GLVisionSimulatorItemImpl(GLVisionSimulatorItem* self
     areAdditionalLightsEnabled = org.areAdditionalLightsEnabled;
     maxFrameRate = org.maxFrameRate;
     maxLatency = org.maxLatency;
+    rotateOutputDirection = org.rotateOutputDirection;
+    enableInterpolation = org.enableInterpolation;
 }
 
 
@@ -657,25 +796,27 @@ SensorRenderer::SensorRenderer(GLVisionSimulatorItemImpl* simImpl, Device* devic
             }
             int resolution = camera->resolutionX();
             int width = resolution;
+            int height = resolution;
             if(camera->lensType()==Camera::DOUBLE_FISHEYE){
                 numScreen = 6;
                 resolution /= 2;
+                height /=2;
                 fov = radian(180);
             }
             if(fov > radian(180)){
                 fov = radian(180);
             }
+            resolution /= 2;   //screen resolution
 
             Matrix3 R[6];
             R[SensorScreenRenderer::FRONT] = camera->localRotaion();
             if(numScreen > 1){
                 R[SensorScreenRenderer::RIGHT] = R[SensorScreenRenderer::FRONT] * AngleAxis(radian(-90), Vector3::UnitY());
+                R[SensorScreenRenderer::LEFT] = R[SensorScreenRenderer::FRONT] * AngleAxis(radian(90), Vector3::UnitY());
                 R[SensorScreenRenderer::TOP] = R[SensorScreenRenderer::FRONT] * AngleAxis(radian(90), Vector3::UnitX());
-                R[SensorScreenRenderer::LEFT] = R[SensorScreenRenderer::TOP] * AngleAxis(radian(90), Vector3::UnitY());
-                R[SensorScreenRenderer::BOTTOM] = R[SensorScreenRenderer::RIGHT] * AngleAxis(radian(-90), Vector3::UnitX());
-                if(numScreen==6){
-                    R[SensorScreenRenderer::BACK] = R[SensorScreenRenderer::LEFT] * AngleAxis(radian(90), Vector3::UnitX());
-                }
+                R[SensorScreenRenderer::BOTTOM] = R[SensorScreenRenderer::FRONT] * AngleAxis(radian(-90), Vector3::UnitX());
+                if(numScreen==6)
+                    R[SensorScreenRenderer::BACK] = R[SensorScreenRenderer::FRONT] * AngleAxis(radian(180), Vector3::UnitY());
             }
             for(int i=0; i<numScreen; i++){
                 auto cameraForRendering = new Camera(*camera);
@@ -686,7 +827,8 @@ SensorRenderer::SensorRenderer(GLVisionSimulatorItemImpl* simImpl, Device* devic
                 screens.push_back(screen);
             }
 
-            fisheyeLensConverter.initialize(width, resolution, fov, resolution, screens);
+            fisheyeLensConverter.initialize(width, height, fov, resolution, screens);
+            fisheyeLensConverter.setRotateOutputDirection(simImpl->rotateOutputDirection);
         }
     } else if(rangeSensor){
 
@@ -1010,7 +1152,7 @@ void SensorScreenRenderer::initializeGL(SgCamera* sceneCamera)
             if(headLight){
                 switch(screenId){
                 case LEFT:
-                    headLight->setDirection(Vector3( 0, -1 ,0));
+                    headLight->setDirection(Vector3( 1, 0, 0));
                     break;
                 case RIGHT:
                     headLight->setDirection(Vector3( -1, 0 ,0));
@@ -1019,7 +1161,7 @@ void SensorScreenRenderer::initializeGL(SgCamera* sceneCamera)
                     headLight->setDirection(Vector3( 0, -1 ,0));
                     break;
                 case BOTTOM:
-                    headLight->setDirection(Vector3( -1, 0 ,0));
+                    headLight->setDirection(Vector3( 0, 1 ,0));
                     break;
                 case BACK:
                     headLight->setDirection(Vector3( 0, 0 ,1));
@@ -1442,7 +1584,11 @@ void SensorRenderer::copyVisionData()
                 camera->setDelay(delay);
             }else{
                 std::shared_ptr<Image> image = std::make_shared<Image>();
-                fisheyeLensConverter.convertImage(image.get());
+                if(simImpl->enableInterpolation){
+                    fisheyeLensConverter.convertImageInterpolation(image.get());
+                }else{
+                    fisheyeLensConverter.convertImage(image.get());
+                }
                 camera->setImage( image );
             }
         } else if(rangeSensor){
@@ -1502,12 +1648,14 @@ void FisheyeLensConverter::initialize(int width_, int height_, double fov_,
         screens.push_back(screen);
     }
     fisheyeLensMap.clear();
+    fisheyeLensInterpolationMap.clear();
 }
 
 
 void  FisheyeLensConverter::convertImage(Image* image)
 {
     image->setSize(width, height, 3);
+    unsigned char* pixels = image->pixels();
 
     if(fisheyeLensMap.empty()){
         fisheyeLensMap.resize(height);
@@ -1515,21 +1663,20 @@ void  FisheyeLensConverter::convertImage(Image* image)
             fisheyeLensMap[i].resize(width);
         }
 
-        unsigned char* pixels = image->pixels();
         double height2 = height/2.0;
         double screenWidth2 = screenWidth / 2.0;
         double sw22 = screenWidth2 * screenWidth2;
         double r = fov / height;
 
         for(int j=0; j<height; j++){
-            double y = j - height2;
+            double y = j - height2 + 0.5;
             for(int i=0; i<width; i++){
                 bool picked = false;
 
                 SensorScreenRenderer::ScreenId screenId;
                 int ii,jj;
                 if(i<height){
-                    double x = i - height2;
+                    double x = i - height2 + 0.5;;
                     double l = sqrt(x*x+y*y);
 
                     if(l<=height2){
@@ -1541,51 +1688,48 @@ void  FisheyeLensConverter::convertImage(Image* image)
                         }
                         double xx = x*tanTheta;
                         double yy = y*tanTheta;
-                        ii = myNearByInt(xx + screenWidth2);
-                        jj = myNearByInt(yy + screenWidth2);
+                        ii = myNearByInt(xx + screenWidth2-0.5);
+                        jj = myNearByInt(yy + screenWidth2-0.5);
                         if(0<=ii && ii<screenWidth && 0<=jj && jj<screenWidth){
                             screenId = SensorScreenRenderer::FRONT;
                             picked = true;
-                        }
-                        if(!picked && ii >= screenWidth){  //right
+                        }else if(ii >= screenWidth){  //right
                             double xx_ = sw22 / xx;
                             double yy_ = screenWidth2 * yy / xx;
-                            int iir = myNearByInt(-xx_ + screenWidth2);
-                            int jjr = myNearByInt(yy_ + screenWidth2);
+                            int iir = myNearByInt(-xx_ + screenWidth2-0.5);
+                            int jjr = myNearByInt(yy_ + screenWidth2-0.5);
                             if( 0 <= jjr && jjr < screenWidth){
                                 screenId = SensorScreenRenderer::RIGHT;
-                                ii = iir;
-                                jj = range(jjr, 0, screenWidth);
+                                ii = range(iir, 0, screenWidth);
+                                jj = jjr;
                                 picked = true;
                             }
-                        }
-                        if(!picked && ii < 0){    //left
+                        }else if(ii < 0){    //left
                             double xx_ = sw22 / -xx;
                             double yy_ = screenWidth2 * yy / -xx;
-                            int iil = myNearByInt(-yy_ +screenWidth2);
-                            int jjl = myNearByInt(xx_ + screenWidth2);
-                            if( 0 <= iil && iil < screenWidth){
+                            int iil = myNearByInt(xx_ +screenWidth2-0.5);
+                            int jjl = myNearByInt(yy_ + screenWidth2-0.5);
+                            if( 0 <= jjl && jjl < screenWidth){
                                 screenId = SensorScreenRenderer::LEFT;
-                                ii = iil;
-                                jj = range(jjl, 0, screenWidth);
+                                ii = range(iil, 0, screenWidth);
+                                jj = jjl;
                                 picked = true;
                             }
                         }
                         if(!picked && jj >= screenWidth){    //bottom
                             double xx_ = screenWidth2 * xx / yy;
                             double yy_ = sw22 / yy;
-                            int iib = myNearByInt(-yy_ + screenWidth2);
-                            int jjb = myNearByInt(-xx_ + screenWidth2);
+                            int iib = myNearByInt(xx_ + screenWidth2-0.5);
+                            int jjb = myNearByInt(-yy_ + screenWidth2-0.5);
                             screenId = SensorScreenRenderer::BOTTOM;
                             ii = range(iib, 0, screenWidth);
                             jj = range(jjb, 0, screenWidth);
                             picked = true;
-                        }
-                        if(!picked && jj < 0){    //top
+                        }else if(!picked && jj < 0){    //top
                             double xx_ = screenWidth2 * xx / -yy;
                             double yy_ = sw22 / -yy;
-                            int iit = myNearByInt(xx_ + screenWidth2);
-                            int jjt = myNearByInt(yy_ + screenWidth2);
+                            int iit = myNearByInt(xx_ + screenWidth2-0.5);
+                            int jjt = myNearByInt(yy_ + screenWidth2-0.5);
                             screenId = SensorScreenRenderer::TOP;
                             ii = range(iit, 0, screenWidth);
                             jj = range(jjt, 0, screenWidth);
@@ -1596,7 +1740,7 @@ void  FisheyeLensConverter::convertImage(Image* image)
                         }
                     }
                 }else{
-                    double x = i - height - height2;
+                    double x = i - height - height2 +0.5;
                     double l = sqrt(x*x+y*y);
                     if(l<=height2){
                         double tanTheta;
@@ -1607,29 +1751,27 @@ void  FisheyeLensConverter::convertImage(Image* image)
                         }
                         double xx = x*tanTheta;
                         double yy = y*tanTheta;
-                        ii = myNearByInt(-yy + screenWidth2);
-                        jj = myNearByInt(xx + screenWidth2);
+                        ii = myNearByInt(xx + screenWidth2-0.5);
+                        jj = myNearByInt(yy + screenWidth2-0.5);
                         if(0<=ii && ii<screenWidth && 0<=jj && jj<screenWidth){
                             screenId = SensorScreenRenderer::BACK;
                             picked = true;
-                        }
-                        if(!picked && jj >= screenWidth){
+                        }else if(ii >= screenWidth){
                             double xx_ = sw22 / xx;
                             double yy_ = screenWidth2 * yy / xx;
-                            int iir = myNearByInt(-yy_ + screenWidth2);
-                            int jjr = myNearByInt(-xx_ + screenWidth2);
-                            if( 0 <= iir && iir < screenWidth){
+                            int iir = myNearByInt(-xx_ + screenWidth2-0.5);
+                            int jjr = myNearByInt(yy_ + screenWidth2-0.5);
+                            if( 0 <= jjr && jjr < screenWidth){
                                 screenId = SensorScreenRenderer::LEFT;
-                                ii = iir;
-                                jj = range(jjr, 0, screenWidth);
+                                ii = range(iir, 0, screenWidth);
+                                jj = jjr;
                                 picked = true;
                             }
-                        }
-                        if(!picked && jj < 0){
+                        }else if(ii < 0){
                             double xx_ = sw22 / -xx;
                             double yy_ = screenWidth2 * yy / -xx;
-                            int iil = myNearByInt(xx_ +screenWidth2);
-                            int jjl = myNearByInt(yy_ + screenWidth2);
+                            int iil = myNearByInt(xx_ +screenWidth2-0.5);
+                            int jjl = myNearByInt(yy_ + screenWidth2-0.5);
                             if( 0 <= jjl && jjl < screenWidth){
                                 screenId = SensorScreenRenderer::RIGHT;
                                 ii = range(iil, 0, screenWidth);
@@ -1637,21 +1779,20 @@ void  FisheyeLensConverter::convertImage(Image* image)
                                 picked = true;
                             }
                         }
-                        if(!picked && ii < 0){
+                        if(!picked && jj >= screenWidth){
                             double xx_ = screenWidth2 * xx / yy;
                             double yy_ = sw22 / yy;
-                            int iib = myNearByInt(yy_ + screenWidth2);
-                            int jjb = myNearByInt(xx_ + screenWidth2);
+                            int iib = myNearByInt(-xx_ + screenWidth2-0.5);
+                            int jjb = myNearByInt(yy_ + screenWidth2-0.5);
                             screenId = SensorScreenRenderer::BOTTOM;
                             ii = range(iib, 0, screenWidth);
                             jj = range(jjb, 0, screenWidth);
                             picked = true;
-                        }
-                        if(!picked && ii >= screenWidth){
+                        }else if(!picked && jj < 0){
                             double xx_ = screenWidth2 * xx / -yy;
                             double yy_ = sw22 / -yy;
-                            int iit = myNearByInt(-xx_ + screenWidth2);
-                            int jjt = myNearByInt(-yy_ + screenWidth2);
+                            int iit = myNearByInt(-xx_ + screenWidth2-0.5);
+                            int jjt = myNearByInt(-yy_ + screenWidth2-0.5);
                             screenId = SensorScreenRenderer::TOP;
                             ii = range(iit, 0, screenWidth);
                             jj = range(jjt, 0, screenWidth);
@@ -1663,26 +1804,38 @@ void  FisheyeLensConverter::convertImage(Image* image)
                     }
                 }
 
-                unsigned char* pix = &pixels[(i+j*width)*3];
+                int i_, j_;
+                if(!rotateOutputDirection){
+                    i_ = i;
+                    j_ = j;
+                }else{
+                    if(i<height){
+                        i_ = j;
+                        j_ = height - 1 - i;
+                    }else{
+                        i_ = height - 1 - j + height;
+                        j_ = i - height;
+                    }
+                }
+                unsigned char* pix = &pixels[(i_+j_*width)*3];
                 if(picked){
                     unsigned char* tempPixels = screens[screenId]->tmpImage->pixels();
                     unsigned char* tempPix = &tempPixels[(int)((ii + jj * screenWidth) * 3)];
                     pix[0] = tempPix[0];
                     pix[1] = tempPix[1];
                     pix[2] = tempPix[2];
-                    fisheyeLensMap[j][i].sid = screenId;
-                    fisheyeLensMap[j][i].ix = ii;
-                    fisheyeLensMap[j][i].iy = jj;
+                    fisheyeLensMap[j_][i_].sid = screenId;
+                    fisheyeLensMap[j_][i_].ix = ii;
+                    fisheyeLensMap[j_][i_].iy = jj;
                 }else{
                     pix[0] = pix[1] = pix[2] = 0;
-                    fisheyeLensMap[j][i].sid = SensorScreenRenderer::NONE;
+                    fisheyeLensMap[j_][i_].sid = SensorScreenRenderer::NONE;
                 }
             }
         }
     }else{
         for(int j=0; j<height; j++){
             for(int i=0; i<width; i++){
-                unsigned char* pixels = image->pixels();
                 unsigned char* pix = &pixels[(i+j*width)*3];
                 ScreenIndex& screenIndex = fisheyeLensMap[j][i];
                 if(screenIndex.sid != SensorScreenRenderer::NONE){
@@ -1691,6 +1844,521 @@ void  FisheyeLensConverter::convertImage(Image* image)
                     pix[0] = tempPix[0];
                     pix[1] = tempPix[1];
                     pix[2] = tempPix[2];
+                }else{
+                    pix[0] = pix[1] = pix[2] = 0;
+                }
+            }
+        }
+    }
+}
+
+
+void  FisheyeLensConverter::convertImageInterpolation(Image* image)
+{
+    image->setSize(width, height, 3);
+    unsigned char* pixels = image->pixels();
+
+    if(fisheyeLensInterpolationMap.empty()){
+        fisheyeLensInterpolationMap.resize(height);
+        for(int i=0; i<height; i++){
+            fisheyeLensInterpolationMap[i].resize(width);
+        }
+
+        double height2 = height/2.0;
+        double screenWidth2 = screenWidth / 2.0;
+        double sw22 = screenWidth2 * screenWidth2;
+        double r = fov / height;
+
+        for(int j=0; j<height; j++){
+            double y = j - height2 +0.5;
+            for(int i=0; i<width; i++){
+                bool picked = false;
+                double sx,sy;
+                int ii,jj;
+                if(i<height){  //front
+                    double x = i - height2+0.5;
+                    double l = sqrt(x*x+y*y);
+
+                    if(l<=height2){
+                        double tanTheta;
+                        if(l==0){
+                            tanTheta = 0.0;
+                        } else {
+                            tanTheta = screenWidth2 / l * tan(l*r);
+                        }
+                        double xx = x*tanTheta;
+                        double yy = y*tanTheta;
+                        ii = myNearByInt(xx + screenWidth2-0.5);
+                        jj = myNearByInt(yy + screenWidth2-0.5);
+                        if(0<=ii && ii<screenWidth && 0<=jj && jj<screenWidth){  //center
+                            sx = xx + screenWidth2-0.5;
+                            sy = yy + screenWidth2-0.5;
+                            if(sx<0){
+                                if(sy<0){
+                                    setCubeCorner(TOP_DL, TOP_DL, LEFT_UR, FRONT_UL);
+                                }else if(sy>=screenWidth-1){
+                                    setCubeCorner(LEFT_DR, FRONT_DL, BOTTOM_UL, BOTTOM_UL);
+                                }else{
+                                    setVerticalBorder(SensorScreenRenderer::LEFT,
+                                            SensorScreenRenderer::FRONT, sy);
+                                }
+                            }else if(sx>=screenWidth-1){
+                                if(sy<0){
+                                    setCubeCorner(TOP_DR, TOP_DR, FRONT_UR, RIGHT_UL);
+                                }else if(sy>=screenWidth-1){
+                                    setCubeCorner(FRONT_DR, RIGHT_DL, BOTTOM_UR, BOTTOM_UR);
+                                }else{
+                                    setVerticalBorder(SensorScreenRenderer::FRONT,
+                                            SensorScreenRenderer::RIGHT, sy);
+                                  }
+                            }else{
+                                if(sy<0){
+                                    setHorizontalBorder(SensorScreenRenderer::TOP,
+                                            SensorScreenRenderer::FRONT, sx);
+                                }else if(sy>=screenWidth-1){
+                                    setHorizontalBorder(SensorScreenRenderer::FRONT,
+                                            SensorScreenRenderer::BOTTOM, sx);
+                                }else{
+                                    setCenter(SensorScreenRenderer::FRONT, sx, sy);
+                                }
+                            }
+                            picked = true;
+                        }else if(ii >= screenWidth){  //right
+                            double xx_ = sw22 / xx;
+                            double yy_ = screenWidth2 * yy / xx;
+                            int iir = myNearByInt(-xx_ + screenWidth2-0.5);
+                            int jjr = myNearByInt(yy_ + screenWidth2-0.5);
+                            if( 0 <= jjr && jjr < screenWidth){
+                                sx = -xx_ + screenWidth2-0.5;
+                                sy = yy_ + screenWidth2-0.5;
+                                if(sx<0){
+                                    if(sy<0){
+                                        setCubeCorner(TOP_DR, TOP_DR, FRONT_UR, RIGHT_UL);
+                                    }else if(sy>=screenWidth-1){
+                                        setCubeCorner(FRONT_DR, RIGHT_DL, BOTTOM_UR, BOTTOM_UR);
+                                    }else{
+                                        setVerticalBorder(SensorScreenRenderer::FRONT,
+                                                SensorScreenRenderer::RIGHT, sy);
+                                    }
+                                }else{
+                                    if(sy<0){
+                                        screenId[0] = screenId[1] = SensorScreenRenderer::TOP;
+                                        screenId[2] = screenId[3] = SensorScreenRenderer::RIGHT;
+                                        npx[0] = screenWidth - 1;    npy[0] = screenWidth - 1 - (int)sx;
+                                        npx[1] = screenWidth - 1;    npy[1] = npy[0] - 1;
+                                        npx[2] = sx;                 npy[2] = 0;
+                                        npx[3] = npx[2]+1;           npy[3] = 0;
+                                    }else if(sy>=screenWidth-1){
+                                        screenId[0] = screenId[1] = SensorScreenRenderer::RIGHT;
+                                        screenId[2] = screenId[3] = SensorScreenRenderer::BOTTOM;
+                                        npx[0] = sx;                 npy[0] = screenWidth - 1;
+                                        npx[1] = npx[0]+1;           npy[1] = screenWidth - 1;
+                                        npx[2] = screenWidth - 1;    npy[2] = sx;
+                                        npx[3] = screenWidth - 1;    npy[3] = npy[2] + 1;
+                                    }else{
+                                        setCenter(SensorScreenRenderer::RIGHT, sx, sy);
+                                    }
+                                }
+                                picked = true;
+                            }
+                        }else if(ii < 0){    //left
+                            double xx_ = sw22 / -xx;
+                            double yy_ = screenWidth2 * yy / -xx;
+                            int iil = myNearByInt(xx_ +screenWidth2-0.5);
+                            int jjl = myNearByInt(yy_ + screenWidth2-0.5);
+                            if( 0 <= jjl && jjl < screenWidth){
+                                sx = xx_ + screenWidth2-0.5;
+                                sy = yy_ + screenWidth2-0.5;
+                                if(sx>=screenWidth-1){
+                                    if(sy<0){
+                                        setCubeCorner(TOP_DL, TOP_DL, LEFT_UR, FRONT_UL);
+                                    }else if(sy>=screenWidth-1){
+                                        setCubeCorner(LEFT_DR, FRONT_DL, BOTTOM_UL, BOTTOM_UL);
+                                    }else{
+                                        setVerticalBorder(SensorScreenRenderer::LEFT,
+                                                SensorScreenRenderer::FRONT, sy);
+                                    }
+                                }else{
+                                    if(sy<0){
+                                        screenId[0] = screenId[1] = SensorScreenRenderer::TOP;
+                                        screenId[2] = screenId[3] = SensorScreenRenderer::LEFT;
+                                        npx[0] = 0;    npy[0] = sx;
+                                        npx[1] = 0;    npy[1] = npy[0] + 1;
+                                        npx[2] = sx;                 npy[2] = 0;
+                                        npx[3] = npx[2]+1;           npy[3] = 0;
+                                    }else if(sy>=screenWidth-1){
+                                        screenId[0] = screenId[1] = SensorScreenRenderer::LEFT;
+                                        screenId[2] = screenId[3] = SensorScreenRenderer::BOTTOM;
+                                        npx[0] = sx;                 npy[0] = screenWidth - 1;
+                                        npx[1] = npx[0]+1;           npy[1] = screenWidth - 1;
+                                        npx[2] = 0;                  npy[2] = screenWidth - 1 - (int)sx;
+                                        npx[3] = 0;                  npy[3] = npy[2] - 1;
+                                    }else{
+                                        setCenter(SensorScreenRenderer::LEFT, sx, sy);
+                                    }
+                                }
+                                picked = true;
+                            }
+                        }
+                        if(!picked && jj >= screenWidth){    //bottom
+                            double xx_ = screenWidth2 * xx / yy;
+                            double yy_ = sw22 / yy;
+                            sx = xx_ + screenWidth2-0.5;
+                            sy = -yy_ + screenWidth2-0.5;
+                            if(sy<0){
+                                if(sx<0){
+                                    setCubeCorner(FRONT_DL, FRONT_DL, LEFT_DR, BOTTOM_UL);
+                                }else if(sx>=screenWidth-1){
+                                    setCubeCorner(FRONT_DR, FRONT_DR, BOTTOM_UR, RIGHT_DL);
+                                }else{
+                                    setHorizontalBorder(SensorScreenRenderer::FRONT,
+                                            SensorScreenRenderer::BOTTOM, sx);
+                                }
+                            }else{
+                                if(sx<0){
+                                    screenId[0] = screenId[2] = SensorScreenRenderer::LEFT;
+                                    screenId[1] = screenId[3] = SensorScreenRenderer::BOTTOM;
+                                    npx[0] = screenWidth - 1 -(int)sy;   npy[0] = screenWidth - 1;
+                                    npx[1] = 0;                          npy[1] = sy;
+                                    npx[2] = npx[0] - 1;                 npy[2] = screenWidth - 1;
+                                    npx[3] = 0;                          npy[3] = npy[1]+1;
+                                }else if(sx>=screenWidth-1){
+                                    screenId[0] = screenId[2] = SensorScreenRenderer::BOTTOM;
+                                    screenId[1] = screenId[3] = SensorScreenRenderer::RIGHT;
+                                    npx[0] = screenWidth-1;     npy[0] = sy;
+                                    npx[1] = sy;                npy[1] = screenWidth - 1;
+                                    npx[2] = screenWidth - 1;   npy[2] = npy[0] + 1;
+                                    npx[3] = npx[1] + 1;        npy[3] = screenWidth - 1;
+                                }else{
+                                    setCenter(SensorScreenRenderer::BOTTOM, sx, sy);
+                                }
+                            }
+                            picked = true;
+                        }
+                        if(!picked && jj < 0){    //top
+                            double xx_ = screenWidth2 * xx / -yy;
+                            double yy_ = sw22 / -yy;
+                            sx = xx_ + screenWidth2-0.5;
+                            sy = yy_ + screenWidth2-0.5;
+                            if(sy>=screenWidth-1){
+                                if(sx<0){
+                                    setCubeCorner(LEFT_UR, TOP_DL, FRONT_UL, FRONT_UL);
+                                }else if(sx>=screenWidth-1){
+                                    setCubeCorner(TOP_DR, RIGHT_UL, FRONT_UR, FRONT_UR);
+                                }else{
+                                    setHorizontalBorder(SensorScreenRenderer::TOP,
+                                            SensorScreenRenderer::FRONT, sx);
+                                }
+                            }else{
+                                if(sx<0){
+                                    screenId[0] = screenId[2] = SensorScreenRenderer::LEFT;
+                                    screenId[1] = screenId[3] = SensorScreenRenderer::TOP;
+                                    npx[0] = sy;           npy[0] = 0;
+                                    npx[1] = 0;            npy[1] = sy;
+                                    npx[2] = npx[0] + 1;   npy[2] = 0;
+                                    npx[3] = 0;            npy[3] = npy[1] + 1;
+                                }else if(sx>=screenWidth-1){
+                                    screenId[0] = screenId[2] = SensorScreenRenderer::TOP;
+                                    screenId[1] = screenId[3] = SensorScreenRenderer::RIGHT;
+                                    npx[0] = screenWidth - 1;            npy[0] = sy;
+                                    npx[1] = screenWidth - 1 - (int)sy;  npy[1] = 0;
+                                    npx[2] = screenWidth - 1;            npy[2] = npy[0] + 1;
+                                    npx[3] = npx[1] - 1;                 npy[3] = 0;
+                                }else{
+                                    setCenter(SensorScreenRenderer::TOP, sx, sy);
+                                }
+                            }
+                            picked = true;
+                        }
+                        if(DEBUG_MESSAGE2 && !picked){
+                            cout << "Could not pick it up. " << i << " " << j << endl;
+                        }
+                    }
+                }else{  //back
+                    double x = i - height - height2 + 0.5;
+                    double l = sqrt(x*x+y*y);
+                    if(l<=height2){
+                        double tanTheta;
+                        if(l==0){
+                            tanTheta = 0.0;
+                        } else {
+                            tanTheta = screenWidth2 / l * tan(l*r);
+                        }
+                        double xx = x*tanTheta;
+                        double yy = y*tanTheta;
+                        ii = myNearByInt(xx + screenWidth2-0.5);
+                        jj = myNearByInt(yy + screenWidth2-0.5);
+                        if(0<=ii && ii<screenWidth && 0<=jj && jj<screenWidth){  // center
+                            sx = xx + screenWidth2-0.5;
+                            sy = yy + screenWidth2-0.5;
+                            if(sx<0){
+                                if(sy<0){
+                                    setCubeCorner(TOP_UR, TOP_UR, RIGHT_UR, BACK_UL);
+                                }else if(sy>=screenWidth-1){
+                                    setCubeCorner(RIGHT_DR, BACK_DL, BOTTOM_DR, BOTTOM_DR);
+                                }else{
+                                    setVerticalBorder(SensorScreenRenderer::RIGHT,
+                                            SensorScreenRenderer::BACK, sy);
+                                }
+                            }else if(sx>=screenWidth-1){
+                                if(sy<0){
+                                    setCubeCorner(TOP_UL, TOP_UL, BACK_UR, LEFT_UL);
+                                }else if(sy>=screenWidth-1){
+                                    setCubeCorner(BACK_DR, LEFT_DL, BOTTOM_DL, BOTTOM_DL);
+                                }else{
+                                    setVerticalBorder(SensorScreenRenderer::BACK,
+                                            SensorScreenRenderer::LEFT, sy);
+                                }
+                            }else{
+                                if(sy<0){
+                                    screenId[0] = screenId[1] = SensorScreenRenderer::TOP;
+                                    screenId[2] = screenId[3] = SensorScreenRenderer::BACK;
+                                    npx[0] = screenWidth - 1 -(int)sx;    npy[0] = 0;
+                                    npx[1] = npx[0] - 1;                  npy[1] = 0;
+                                    npx[2] = sx;                          npy[2] = 0;
+                                    npx[3] = npx[2] + 1;                  npy[3] = 0;
+                                }else if(sy>=screenWidth-1){
+                                    screenId[0] = screenId[1] = SensorScreenRenderer::BACK;
+                                    screenId[2] = screenId[3] = SensorScreenRenderer::BOTTOM;
+                                    npx[0] = sx;                          npy[0] = screenWidth - 1;
+                                    npx[1] = npx[0] + 1;                  npy[1] = screenWidth - 1;
+                                    npx[2] = screenWidth - 1 -(int)sx;;   npy[2] = screenWidth - 1;
+                                    npx[3] = npx[2] - 1;                  npy[3] = screenWidth - 1;
+                                }else{
+                                    setCenter(SensorScreenRenderer::BACK, sx, sy);
+                                }
+                            }
+                            picked = true;
+                        }else if(ii >= screenWidth){  //right
+                            double xx_ = sw22 / xx;
+                            double yy_ = screenWidth2 * yy / xx;
+                            int iir = myNearByInt(-xx_ + screenWidth2-0.5);
+                            int jjr = myNearByInt(yy_ + screenWidth2-0.5);
+                            if( 0 <= jjr && jjr < screenWidth){
+                                sx = -xx_ + screenWidth2-0.5;
+                                sy = yy_ + screenWidth2-0.5;
+                                if(sx<0){
+                                    if(sy<0){
+                                        setCubeCorner(TOP_UL, TOP_UL, BACK_UR, LEFT_UL);
+                                    }else if(sy>=screenWidth-1){
+                                        setCubeCorner(BACK_DR, LEFT_DL, BOTTOM_DL, BOTTOM_DL);
+                                    }else{
+                                        setVerticalBorder(SensorScreenRenderer::BACK,
+                                                SensorScreenRenderer::LEFT, sy);
+                                    }
+                                }else{
+                                    if(sy<0){
+                                        screenId[0] = screenId[1] = SensorScreenRenderer::TOP;
+                                        screenId[2] = screenId[3] = SensorScreenRenderer::LEFT;
+                                        npx[0] = 0;                  npy[0] = sx;
+                                        npx[1] = 0;                  npy[1] = npy[0] + 1;
+                                        npx[2] = sx;                 npy[2] = 0;
+                                        npx[3] = npx[2] + 1;         npy[3] = 0;
+                                    }else if(sy>=screenWidth-1){
+                                        screenId[0] = screenId[1] = SensorScreenRenderer::LEFT;
+                                        screenId[2] = screenId[3] = SensorScreenRenderer::BOTTOM;
+                                        npx[0] = sx;                 npy[0] = screenWidth - 1;
+                                        npx[1] = npx[0]+1;           npy[1] = screenWidth - 1;
+                                        npx[2] = 0;                  npy[2] = screenWidth - 1 - (int)sx;
+                                        npx[3] = 0;                  npy[3] = npy[2] - 1;
+                                    }else{
+                                        setCenter(SensorScreenRenderer::LEFT, sx, sy);
+                                    }
+                                }
+                                picked = true;
+                            }
+                        }else if(ii < 0){   //left
+                            double xx_ = sw22 / -xx;
+                            double yy_ = screenWidth2 * yy / -xx;
+                            int iil = myNearByInt(xx_ + screenWidth2-0.5);
+                            int jjl = myNearByInt(yy_ + screenWidth2-0.5);
+                            if( 0 <= jjl && jjl < screenWidth){
+                                sx = xx_ + screenWidth2-0.5;
+                                sy = yy_ + screenWidth2-0.5;
+                                if(sx>=screenWidth-1){
+                                    if(sy<0){
+                                        setCubeCorner(TOP_UR, TOP_UR, RIGHT_UR, BACK_UL);
+                                    }else if(sy>=screenWidth-1){
+                                        setCubeCorner(RIGHT_DR, BACK_DL, BOTTOM_DR, BOTTOM_DR);
+                                    }else{
+                                        setVerticalBorder(SensorScreenRenderer::RIGHT,
+                                                SensorScreenRenderer::BACK, sy);
+                                    }
+                                }else{
+                                    if(sy<0){
+                                        screenId[0] = screenId[1] = SensorScreenRenderer::TOP;
+                                        screenId[2] = screenId[3] = SensorScreenRenderer::RIGHT;
+                                        npx[0] = screenWidth - 1;    npy[0] = screenWidth - 1 - (int)sx;
+                                        npx[1] = screenWidth - 1;    npy[1] = npy[0] - 1;
+                                        npx[2] = sx;                 npy[2] = 0;
+                                        npx[3] = npx[2]+1;           npy[3] = 0;
+                                    }else if(sy>=screenWidth-1){
+                                        screenId[0] = screenId[1] = SensorScreenRenderer::RIGHT;
+                                        screenId[2] = screenId[3] = SensorScreenRenderer::BOTTOM;
+                                        npx[0] = sx;                 npy[0] = screenWidth - 1;
+                                        npx[1] = npx[0]+1;           npy[1] = screenWidth - 1;
+                                        npx[2] = screenWidth - 1;    npy[2] = sx;
+                                        npx[3] = screenWidth - 1;    npy[3] = npy[2] + 1;
+                                    }else{
+                                        setCenter(SensorScreenRenderer::RIGHT, sx, sy);
+                                    }
+                                }
+                                picked = true;
+                            }
+                        }
+                        if(!picked && jj >= screenWidth){    //bottom
+                            double xx_ = screenWidth2 * xx / yy;
+                            double yy_ = sw22 / yy;
+                            sx = -xx_ + screenWidth2-0.5;
+                            sy = yy_ + screenWidth2-0.5;
+                            if(sy>=screenWidth-1){
+                                if(sx<0){
+                                    setCubeCorner(LEFT_DL, BOTTOM_DL, BACK_DR, BACK_DR);
+                                }else if(sx>=screenWidth-1){
+                                    setCubeCorner(BOTTOM_DR, RIGHT_DR, BACK_DL, BACK_DL);
+                                }else{
+                                    screenId[0] = screenId[1] = SensorScreenRenderer::BOTTOM;
+                                    screenId[2] = screenId[3] = SensorScreenRenderer::BACK;
+                                    npx[0] = sx;                         npy[0] = screenWidth - 1;
+                                    npx[1] = npx[0]+1;                   npy[1] = screenWidth - 1;
+                                    npx[2] = screenWidth - 1 - (int)sx;  npy[2] = screenWidth - 1;
+                                    npx[3] = npx[2] - 1;                 npy[3] = screenWidth - 1;
+                                }
+                            }else{
+                                if(sx<0){
+                                    screenId[0] = screenId[2] = SensorScreenRenderer::LEFT;
+                                    screenId[1] = screenId[3] = SensorScreenRenderer::BOTTOM;
+                                    npx[0] = screenWidth - 1 -(int)sy;   npy[0] = screenWidth - 1;
+                                    npx[1] = 0;                          npy[1] = sy;
+                                    npx[2] = npx[0] - 1;                 npy[2] = screenWidth - 1;
+                                    npx[3] = 0;                          npy[3] = npy[1]+1;
+                                }else if(sx>=screenWidth-1){
+                                    screenId[0] = screenId[2] = SensorScreenRenderer::BOTTOM;
+                                    screenId[1] = screenId[3] = SensorScreenRenderer::RIGHT;
+                                    npx[0] = screenWidth-1;     npy[0] = sy;
+                                    npx[1] = sy;                npy[1] = screenWidth - 1;
+                                    npx[2] = screenWidth - 1;   npy[2] = npy[0] + 1;
+                                    npx[3] = npx[1] + 1;        npy[3] = screenWidth - 1;
+                                }else{
+                                    setCenter(SensorScreenRenderer::BOTTOM, sx, sy);
+                                }
+                            }
+                            picked = true;
+                        }else if(!picked && jj < 0){   //top
+                            double xx_ = screenWidth2 * xx / -yy;
+                            double yy_ = sw22 / -yy;
+                            sx = -xx_ + screenWidth2-0.5;
+                            sy = -yy_ + screenWidth2-0.5;
+                            if(sy<0){
+                                if(sx<0){
+                                    setCubeCorner(BACK_UR, BACK_UR, LEFT_UL, TOP_UL);
+                                }else if(sx>=screenWidth-1){
+                                    setCubeCorner(BACK_UL, BACK_UL, TOP_UR, TOP_UR);
+                                }else{
+                                    screenId[0] = screenId[1] = SensorScreenRenderer::BACK;
+                                    screenId[2] = screenId[3] = SensorScreenRenderer::TOP;
+                                    npx[0] = screenWidth - 1 - (int)sx;     npy[0] = 0;
+                                    npx[1] = npx[0] - 1;                    npy[1] = 0;
+                                    npx[2] = sx;                            npy[2] = 0;
+                                    npx[3] = npx[2] + 1;                    npy[3] = 0;
+                                }
+                            }else{
+                                if(sx<0){
+                                    screenId[0] = screenId[2] = SensorScreenRenderer::LEFT;
+                                    screenId[1] = screenId[3] = SensorScreenRenderer::TOP;
+                                    npx[0] = sy;           npy[0] = 0;
+                                    npx[1] = 0;            npy[1] = sy;
+                                    npx[2] = npx[0] + 1;   npy[2] = 0;
+                                    npx[3] = 0;            npy[3] = npy[1] + 1;
+                                }else if(sx>=screenWidth-1){
+                                    screenId[0] = screenId[2] = SensorScreenRenderer::TOP;
+                                    screenId[1] = screenId[3] = SensorScreenRenderer::RIGHT;
+                                    npx[0] = screenWidth - 1;            npy[0] = sy;
+                                    npx[1] = screenWidth - 1 - (int)sy;  npy[1] = 0;
+                                    npx[2] = screenWidth - 1;            npy[2] = npy[0] + 1;
+                                    npx[3] = npx[1]-1;                   npy[3] = 0;
+                                }else{
+                                    setCenter(SensorScreenRenderer::TOP, sx, sy);
+                                }
+                            }
+                            picked = true;
+                        }
+                        if(DEBUG_MESSAGE2 && !picked){
+                            cout << "Could not pick it up. " << i << " " << j << endl;
+                        }
+                    }
+                }
+
+                int i_, j_;
+                if(!rotateOutputDirection){
+                    i_ = i;
+                    j_ = j;
+                }else{
+                    if(i<height){
+                        i_ = j;
+                        j_ = height - 1 - i;
+                    }else{
+                        i_ = height - 1 - j + height;
+                        j_ = i - height;
+                    }
+                }
+                unsigned char* pix = &pixels[(i_+j_*width)*3];
+                ScreenIndex4& map = fisheyeLensInterpolationMap[j_][i_];
+                if(picked){
+                    double dx, dy;
+                    if(sx<0){
+                        dx = sx + 1;
+                    }else{
+                        dx = sx - (int)sx;
+                    }
+                    if(sy<0){
+                        dy = sy + 1;
+                    }else{
+                        dy = sy - (int)sy;
+                    }
+                    double bias[4];
+                    bias[0] = (1.0-dx)*(1.0-dy);
+                    bias[1] = dx*(1.0-dy);
+                    bias[2] = (1.0-dx)*dy;
+                    bias[3] = dx*dy;
+                    double pixd[3] = {0.0,0.0,0.0};
+                    for(int k=0; k<4; k++){
+                        unsigned char* tempPixels = screens[screenId[k]]->tmpImage->pixels();
+                        unsigned char* tempPix = &tempPixels[(int)((npx[k] + npy[k] * screenWidth) * 3)];
+                        for(int kk=0; kk<3; kk++){
+                            pixd[kk] += bias[k] * tempPix[kk];
+                        }
+                        map.screenIndex[k].sid = screenId[k];
+                        map.screenIndex[k].ix = npx[k];
+                        map.screenIndex[k].iy = npy[k];
+                        map.bias[k] = bias[k];
+                    }
+                    for(int kk=0; kk<3; kk++){
+                        pix[kk] = myNearByInt(pixd[kk]);
+                    }
+                }else{
+                    pix[0] = pix[1] = pix[2] = 0;
+                    map.screenIndex[0].sid = SensorScreenRenderer::NONE;
+                }
+            }
+        }
+    }else{
+        for(int j=0; j<height; j++){
+            for(int i=0; i<width; i++){
+                unsigned char* pix = &pixels[(i+j*width)*3];
+                ScreenIndex4& map = fisheyeLensInterpolationMap[j][i];
+                if(map.screenIndex[0].sid != SensorScreenRenderer::NONE){
+                    double pixd[3] = {0.0,0.0,0.0};
+                    for(int k=0; k<4; k++){
+                        unsigned char* tempPixels = screens[map.screenIndex[k].sid]->tmpImage->pixels();
+                        unsigned char* tempPix = &tempPixels[(int)((map.screenIndex[k].ix + map.screenIndex[k].iy * screenWidth) * 3)];
+                        for(int kk=0; kk<3; kk++){
+                            pixd[kk] += map.bias[k] * tempPix[kk];
+                        }
+                    }
+                    for(int kk=0; kk<3; kk++){
+                        pix[kk] = myNearByInt(pixd[kk]);
+                    }
                 }else{
                     pix[0] = pix[1] = pix[2] = 0;
                 }
@@ -2025,6 +2693,8 @@ void GLVisionSimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty
     putProperty.reset()(_("Depth error"), depthError, changeProperty(depthError));
     putProperty.reset()(_("Head light"), isHeadLightEnabled, changeProperty(isHeadLightEnabled));
     putProperty.reset()(_("Additional lights"), areAdditionalLightsEnabled, changeProperty(areAdditionalLightsEnabled));
+    putProperty(_("Rotate fisheye lens output direction"), rotateOutputDirection, changeProperty(rotateOutputDirection));
+    putProperty(_("Enable Interpolation"), enableInterpolation, changeProperty(enableInterpolation));
 }
 
 
@@ -2049,6 +2719,8 @@ bool GLVisionSimulatorItemImpl::store(Archive& archive)
     archive.write("depthError", depthError);
     archive.write("enableHeadLight", isHeadLightEnabled);    
     archive.write("enableAdditionalLights", areAdditionalLightsEnabled);
+    archive.write("rotateOutputDirection", rotateOutputDirection);
+    archive.write("enableInterpolation", enableInterpolation);
     return true;
 }
 
@@ -2076,6 +2748,8 @@ bool GLVisionSimulatorItemImpl::restore(const Archive& archive)
     archive.read("depthError", depthError);
     archive.read("enableHeadLight", isHeadLightEnabled);
     archive.read("enableAdditionalLights", areAdditionalLightsEnabled);
+    archive.read("rotateOutputDirection", rotateOutputDirection);
+    archive.read("enableInterpolation", enableInterpolation);
 
     string symbol;
     if(archive.read("threadMode", symbol)){
