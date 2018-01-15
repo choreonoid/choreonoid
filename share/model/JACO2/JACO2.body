@@ -2,10 +2,10 @@ format: ChoreonoidBody
 formatVersion: 1.0
 angleUnit: degree
 name: JACO2
-rootLink: ARM1
+rootLink: BASE
 
-# The specification of the camera in the gripper (SP360 4K)
-GRIPPER_CAMERA_SPEC: &GRIPPER_CAMERA_SPEC
+# The specification of the camera in the end effector (SP360 4K)
+CAMERA_SPEC: &CAMERA_SPEC
   format: COLOR
   fieldOfView: 117.5
   width: 2880
@@ -14,7 +14,7 @@ GRIPPER_CAMERA_SPEC: &GRIPPER_CAMERA_SPEC
 
 links:
   -
-    name: ARM1
+    name: BASE
     jointType: fixed
     # object coordinate
     elements:
@@ -50,8 +50,8 @@ links:
                             specularColor: [ 0, 0, 0 ]
                             shinines: 0
   -
-    name: ARM2
-    parent: ARM1
+    name: ARM1
+    parent: BASE
     translation: [ 0, 0, 0.1565 ]
     jointType: revolute
     jointAxis: [ 0, 0, -1 ]
@@ -106,8 +106,8 @@ links:
                           radius: 0.04125
                         appearance: *ARM2_appearance
   -
-    name: ARM3
-    parent: ARM2
+    name: ARM2
+    parent: ARM1
     translation: [ 0, 0.0015, 0.119 ]
     jointType: revolute
     jointAxis: [ 0, -1, 0 ]
@@ -163,8 +163,8 @@ links:
                           radius: 0.04125
                         appearance: *ARM3_appearance
   -
-    name: ARM4
-    parent: ARM3
+    name: ARM3
+    parent: ARM2
     translation: [ 0, 0, 0.41 ]
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
@@ -220,8 +220,8 @@ links:
                           radius: 0.0315
                         appearance: *ARM4_appearance
   -
-    name: ARM5
-    parent: ARM4
+    name: ARM4
+    parent: ARM3
     translation: [ 0, -0.01125, 0.207 ]
     jointType: revolute
     jointAxis: [ 0, 0, -1 ]
@@ -281,8 +281,8 @@ links:
                               radius: 0.0315
                             appearance: *ARM5_appearance
   -
-    name: ARM6
-    parent: ARM5
+    name: ARM5
+    parent: ARM4
     translation: [ 0, 0.03725, 0.06401 ]
     jointType: revolute
     jointAxis: [ 0, -0.866, -0.5 ]
@@ -342,8 +342,8 @@ links:
                               radius: 0.0315
                             appearance: *ARM6_appearance
   -
-    name: GRIPPER
-    parent: ARM6
+    name: ARM6
+    parent: ARM5
     translation: [ 0, 0.03725, 0.06401 ]
     jointType: revolute
     jointAxis: [ 0, 0, -1 ]
@@ -369,23 +369,21 @@ links:
                   Transform:
                     translation: [ 0, -0.01175, 0.050 ]
                     elements:
-                      Transform:
+                      Camera:
                         translation: [ 0, 0.01175, 0 ]
                         rotation: [ 1, 0, 0, 90 ]
-                        elements:
-                          Camera:
-                            name: GRIPPER_CAMERA
-                            <<: *GRIPPER_CAMERA_SPEC
-                            #elements:
-                            #  Shape:
-                            #    geometry:
-                            #      type: Box
-                            #      size: [ 0.064, 0.02350, 0.037 ]
-                            #    appearance:
-                            #      material:
-                            #        diffuseColor: [ 1, 1, 1 ]
-                            #        specularColor: [ 0, 0, 0 ]
-                            #        shinines: 0
+                        name: CAMERA
+                        <<: *CAMERA_SPEC
+                        #elements:
+                        #  Shape:
+                        #    geometry:
+                        #      type: Box
+                        #      size: [ 0.064, 0.02350, 0.037 ]
+                        #    appearance:
+                        #      material:
+                        #        diffuseColor: [ 1, 1, 1 ]
+                        #        specularColor: [ 0, 0, 0 ]
+                        #        shinines: 0
                   Visual: { resource: { uri: "parts/gripper.wrl" } }
                   Collision:
                     elements:
@@ -396,7 +394,7 @@ links:
                           type: Cylinder
                           height: 0.030
                           radius: 0.0315
-                        appearance: &GRIPPER_appearance
+                        appearance: &ARM6_APPEARANCE
                           material:
                             diffuseColor: [ 0.75, 1, 0.75 ]
                             specularColor: [ 0, 0, 0 ]
@@ -409,7 +407,7 @@ links:
                           type: Capsule
                           height: 0.05655
                           radius: 0.026
-                        appearance: *GRIPPER_appearance
+                        appearance: *ARM6_APPEARANCE
                       -
                         type: Shape
                         translation: [ 0.00940, -0.04345, 0.0112 ]
@@ -418,7 +416,7 @@ links:
                           type: Capsule
                           height: 0.04950
                           radius: 0.030
-                        appearance: *GRIPPER_appearance
+                        appearance: *ARM6_APPEARANCE
                       -
                         type: Shape
                         translation: [ 0.00940, -0.04345, -0.01012 ]
@@ -427,29 +425,29 @@ links:
                           type: Capsule
                           height: 0.04950
                           radius: 0.030
-                        appearance: *GRIPPER_appearance
+                        appearance: *ARM6_APPEARANCE
                       -
                         type: Transform
                         translation: [ -0.03760, 0.00649, 0 ]
                         rotation: [ 0, 0, 1, 30 ]
-                        elements: &GRIPPER_type1_elements
+                        elements: &ARM6_SHAPE1
                           Shape:
                             translation: [ 0, -0.003445, 0 ]
                             geometry:
                               type: Cylinder
                               height: 0.00689
                               radius: 0.01850
-                            appearance: *GRIPPER_appearance
+                            appearance: *ARM6_APPEARANCE
                       -
                         type: Transform
                         translation: [ 0.03468, 0.00596, 0.02368 ]
                         rotation: [ [ 0, 1, 0, 169.4 ], [ 0, 0, 1, 30 ] ]
-                        elements: *GRIPPER_type1_elements
+                        elements: *ARM6_SHAPE1
                       -
                         type: Transform
                         translation: [ 0.03468, 0.00596, -0.02368 ]
                         rotation: [ [ 0, -1, 0, 169.4 ], [ 0, 0, 1, 30 ] ]
-                        elements: *GRIPPER_type1_elements
+                        elements: *ARM6_SHAPE1
                       -
                         type: Transform
                         translation: [ 0, 0.020, 0 ]
@@ -460,12 +458,12 @@ links:
                             type: Cylinder
                             height: 0.02887
                             radius: 0.024065
-                          appearance: *GRIPPER_appearance
+                          appearance: *ARM6_APPEARANCE
                       -
                         type: Transform
                         translation: [ -0.03116, 0.01948, 0 ]
                         rotation: [ 0, 0, 1, 30 ]
-                        elements: &GRIPPER_type2_elements
+                        elements: &ARM6_SHAPE2
                           -
                             type: Shape
                             rotation: [ 1, 0, 0, 90 ]
@@ -473,7 +471,7 @@ links:
                               type: Cylinder
                               height: 0.014 # Adjust from 15mm to 14mm to avoid interference
                               radius: 0.006
-                            appearance: *GRIPPER_appearance
+                            appearance: *ARM6_APPEARANCE
                           -
                             type: Shape
                             translation: [ 0, -0.004025, 0 ]
@@ -482,26 +480,26 @@ links:
                               size: [ 0.012, 0.00805, 0.014 ] # Adjust from 15mm to 14mm to avoid interference
                               height: 0.02887
                               radius: 0.024065
-                            appearance: *GRIPPER_appearance
+                            appearance: *ARM6_APPEARANCE
                       -
                         type: Transform
                         translation: [ 0.02982, 0.01840, 0.02277 ]
                         rotation: [ [ 0, 1, 0, 169.4 ], [ 0, 0, 1, 30 ] ]
-                        elements: *GRIPPER_type2_elements
+                        elements: *ARM6_SHAPE2
                       -
                         type: Transform
                         translation: [ 0.02982, 0.01840, -0.02277 ]
                         rotation: [ [ 0, -1, 0, 169.4 ], [ 0, 0, 1, 30 ] ]
-                        elements: *GRIPPER_type2_elements
+                        elements: *ARM6_SHAPE2
   -
-    name: FINGER_B1
-    parent: GRIPPER
+    name: FINGER1
+    parent: ARM6
     translation: [ -0.03116, 0, 0.11498 ]
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
     jointId: 6
     # object coordinate
-    elements: &FINGER1
+    elements: &FINGER
       Transform:
         translation: [ -0.005, 0, 0.002 ]
         # choreonoid coordinate
@@ -514,9 +512,9 @@ links:
                 centerOfMass: [ 0, -0.00429, -0.01841 ]
                 mass: 0.01975
                 inertia: [
-                  0.00000408755,    0.00000000001,    0.00000000001,
-                  0.00000000001,    0.00000425964,    -0.00000009480,
-                  0.00000000001,    -0.00000009480,   0.00000161997 ]
+                  0.00000408755,  0.00000000001,  0.00000000001,
+                  0.00000000001,  0.00000425964, -0.00000009480,
+                  0.00000000001, -0.00000009480,  0.00000161997 ]
                 elements:
                   Visual: { resource: { uri: "parts/finger1.wrl" } }
                   Collision:
@@ -527,485 +525,413 @@ links:
                         translation: [ 0, -0.00198, -0.00074 ]
                         rotation: [ 1, 0, 0, 27 ]
                         elements:
-                          Transform:
+                          Shape:
                             translation: [ 0, -0.004, -0.001 ]
-                            elements:
-                              Shape:
-                                geometry:
-                                  type: Box
-                                  size: [ 0.015, 0.008, 0.002 ]
-                                appearance: &FINGER_B1_appearance
-                                  material:
-                                    diffuseColor: [ 0.5, 1, 0.5 ]
-                                    specularColor: [ 0, 0, 0 ]
-                                    shinines: 0
+                            geometry:
+                              type: Box
+                              size: [ 0.015, 0.008, 0.002 ]
+                            appearance: &FINGER_APPEARANCE
+                              material:
+                                diffuseColor: [ 0.5, 1, 0.5 ]
+                                specularColor: [ 0, 0, 0 ]
+                                shinines: 0
                       -
                         type: Transform
                         translation: [ 0, -0.00132, -0.00204 ]
                         rotation: [ 1, 0, 0, 38.09 ]
                         elements:
-                          Transform:
+                          Shape:
                             translation: [ 0, -0.004, -0.002 ]
-                            elements:
-                              Shape:
-                                geometry:
-                                  type: Box
-                                  size: [ 0.015, 0.008, 0.004 ]
-                                appearance: *FINGER_B1_appearance
+                            geometry:
+                              type: Box
+                              size: [ 0.015, 0.008, 0.004 ]
+                            appearance: *FINGER_APPEARANCE
                       -
                         type: Transform
                         translation: [ 0, -0.00043, -0.00317 ]
                         rotation: [ 1, 0, 0, 49.14 ]
                         elements:
-                          Transform:
+                          Shape:
                             translation: [ 0, -0.004, -0.002 ]
-                            elements:
-                              Shape:
-                                geometry:
-                                  type: Box
-                                  size: [ 0.015, 0.008, 0.004 ]
-                                appearance: *FINGER_B1_appearance
+                            geometry:
+                              type: Box
+                              size: [ 0.015, 0.008, 0.004 ]
+                            appearance: *FINGER_APPEARANCE
                       -
                         type: Transform
                         translation: [ 0, 0.00066, -0.00412 ]
                         rotation: [ 1, 0, 0, 60.2 ]
                         elements:
-                          Transform:
+                          Shape:
                             translation: [ 0, -0.004, -0.002 ]
-                            elements:
-                              Shape:
-                                geometry:
-                                  type: Box
-                                  size: [ 0.015, 0.008, 0.004 ]
-                                appearance: *FINGER_B1_appearance
+                            geometry:
+                              type: Box
+                              size: [ 0.015, 0.008, 0.004 ]
+                            appearance: *FINGER_APPEARANCE
                       -
                         type: Transform
                         translation: [ 0, 0.00192, -0.00484 ]
                         rotation: [ 1, 0, 0, 71.27 ]
                         elements:
-                          Transform:
+                          Shape:
                             translation: [ 0, -0.006, -0.002 ]
-                            elements:
-                              Shape:
-                                geometry:
-                                  type: Box
-                                  size: [ 0.015, 0.012, 0.004 ]
-                                appearance: *FINGER_B1_appearance
+                            geometry:
+                              type: Box
+                              size: [ 0.015, 0.012, 0.004 ]
+                            appearance: *FINGER_APPEARANCE
                       -
                         type: Transform
                         translation: [ 0, 0.00329, -0.00530 ]
                         rotation: [ 1, 0, 0, 82.35 ]
                         elements:
-                          Transform:
+                          Shape:
                             translation: [ 0, -0.006, -0.001 ]
-                            elements:
-                              Shape:
-                                geometry:
-                                  type: Box
-                                  size: [ 0.015, 0.012, 0.002 ]
-                                appearance: *FINGER_B1_appearance
+                            geometry:
+                              type: Box
+                              size: [ 0.015, 0.012, 0.002 ]
+                            appearance: *FINGER_APPEARANCE
                       -
                         type: Transform
                         translation: [ 0, 0.00472, -0.00549 ]
                         rotation: [ 1, 0, 0, 93.34 ]
                         elements:
-                          Transform:
+                          Shape:
                             translation: [ 0, -0.00071, -0.001 ]
-                            elements:
-                              Shape:
-                                geometry:
-                                  type: Box
-                                  size: [ 0.015, 0.00142, 0.002 ]
-                                appearance: *FINGER_B1_appearance
+                            geometry:
+                              type: Box
+                              size: [ 0.015, 0.00142, 0.002 ]
+                            appearance: *FINGER_APPEARANCE
                       -
                         type: Transform
                         translation: [ 0, 0.00614, -0.00541 ]
                         rotation: [ 1, 0, 0, 104.37 ]
                         elements:
-                          Transform:
+                          Shape:
                             translation: [ 0, -0.00005, -0.0007 ]
-                            elements:
-                              Shape:
-                                geometry:
-                                  type: Box
-                                  size: [ 0.015, 0.0001, 0.0014 ]
-                                appearance: *FINGER_B1_appearance
+                            geometry:
+                              type: Box
+                              size: [ 0.015, 0.0001, 0.0014 ]
+                            appearance: *FINGER_APPEARANCE
                       # Boring of the tip
                       -
                         type: Transform
                         translation: [ 0, 0.00578, -0.03552 ]
                         rotation: [ -1, 0, 0, 126.06 ]
                         elements:
-                          Transform:
+                          Shape:
                             translation: [ 0, -0.00005, 0.00076 ]
-                            elements:
-                              Shape:
-                                geometry:
-                                  type: Box
-                                  size: [ 0.015, 0.0001, 0.00152 ]
-                                appearance: *FINGER_B1_appearance
+                            geometry:
+                              type: Box
+                              size: [ 0.015, 0.0001, 0.00152 ]
+                            appearance: *FINGER_APPEARANCE
                       -
                         type: Transform
                         translation: [ 0, 0.00578, -0.03552 ]
                         rotation: [ -1, 0, 0, 114.39 ]
                         elements:
-                          Transform:
+                          Shape:
                             translation: [ 0, -0.001, -0.000765 ]
-                            elements:
-                              Shape:
-                                geometry:
-                                  type: Box
-                                  size: [ 0.015, 0.002, 0.00153 ]
-                                appearance: *FINGER_B1_appearance
+                            geometry:
+                              type: Box
+                              size: [ 0.015, 0.002, 0.00153 ]
+                            appearance: *FINGER_APPEARANCE
                       -
                         type: Transform
                         translation: [ 0, 0.00439, -0.03489 ]
                         rotation: [ -1, 0, 0, 111.91 ]
                         elements:
-                          Transform:
+                          Shape:
                             translation: [ 0, -0.002, -0.006 ]
-                            elements:
-                              Shape:
-                                geometry:
-                                  type: Box
-                                  size: [ 0.015, 0.004, 0.012 ]
-                                appearance: *FINGER_B1_appearance
+                            geometry:
+                              type: Box
+                              size: [ 0.015, 0.004, 0.012 ]
+                            appearance: *FINGER_APPEARANCE
                       -
                         type: Transform
                         translation: [ 0, -0.0054, -0.03095 ]
                         rotation: [ -1, 0, 0, 100.94 ]
                         elements:
-                          Transform:
+                          Shape:
                             translation: [ 0, -0.005, -0.004 ]
-                            elements:
-                              Shape:
-                                geometry:
-                                  type: Box
-                                  size: [ 0.015, 0.010, 0.008 ]
-                                appearance: *FINGER_B1_appearance
+                            geometry:
+                              type: Box
+                              size: [ 0.015, 0.010, 0.008 ]
+                            appearance: *FINGER_APPEARANCE
                       -
                         type: Transform
                         translation: [ 0, -0.00703, -0.03064 ]
                         rotation: [ -1, 0, 0, 78.17 ]
                         elements:
-                          Transform:
+                          Shape:
                             translation: [ 0, -0.004, -0.0032 ]
-                            elements:
-                              Shape:
-                                geometry:
-                                  type: Box
-                                  size: [ 0.015, 0.008, 0.0064 ]
-                                appearance: *FINGER_B1_appearance
+                            geometry:
+                              type: Box
+                              size: [ 0.015, 0.008, 0.0064 ]
+                            appearance: *FINGER_APPEARANCE
                       -
                         type: Transform
                         translation: [ 0, -0.00905, -0.03106 ]
                         rotation: [ -1, 0, 0, 53.30 ]
                         elements:
-                          Transform:
+                          Shape:
                             translation: [ 0, -0.001, -0.0025 ]
-                            elements:
-                              Shape:
-                                geometry:
-                                  type: Box
-                                  size: [ 0.015, 0.002, 0.005 ]
-                                appearance: *FINGER_B1_appearance
+                            geometry:
+                              type: Box
+                              size: [ 0.015, 0.002, 0.005 ]
+                            appearance: *FINGER_APPEARANCE
                       # The shape of the portion without thickness and the gap filling
                       -
                         type: Transform
                         translation: [ 0, 0.005, -0.01940 ]
                         rotation: [ 1, 0, 0, 7.35 ]
                         elements:
-                          Transform:
+                          Shape:
                             translation: [ 0, -0.002, -0.00721 ]
-                            elements:
-                              Shape:
-                                geometry:
-                                  type: Box
-                                  size: [ 0.015, 0.004, 0.0142 ]
-                                appearance: *FINGER_B1_appearance
+                            geometry:
+                              type: Box
+                              size: [ 0.015, 0.004, 0.0142 ]
+                            appearance: *FINGER_APPEARANCE
                       -
                         type: Transform
                         translation: [ 0, 0.005, -0.01940 ]
                         rotation: [ -1, 0, 0, 8 ]
                         elements:
-                          Transform:
+                          Shape:
                             translation: [ 0, -0.004, 0.0064 ]
-                            elements:
-                              Shape:
-                                geometry:
-                                  type: Box
-                                  size: [ 0.015, 0.008, 0.0128 ]
-                                appearance: *FINGER_B1_appearance
+                            geometry:
+                              type: Box
+                              size: [ 0.015, 0.008, 0.0128 ]
+                            appearance: *FINGER_APPEARANCE
                       -
                         type: Transform
                         translation: [ 0, 0.005, -0.01940 ]
                         elements:
-                          Transform:
+                          Shape:
                             translation: [ 0, -0.008, -0.002 ]
-                            elements:
-                              Shape:
-                                geometry:
-                                  type: Box
-                                  size: [ 0.015, 0.016, 0.018 ]
-                                appearance: *FINGER_B1_appearance
+                            geometry:
+                              type: Box
+                              size: [ 0.015, 0.016, 0.018 ]
+                            appearance: *FINGER_APPEARANCE
                       -
                         type: Transform
                         translation: [ 0, -0.01460, -0.034 ]
                         rotation: [ -1, 0, 0, 49.96 ]
                         elements:
-                          Transform:
+                          Shape:
                             translation: [ 0, 0.0005, 0.005 ]
-                            elements:
-                              Shape:
-                                geometry:
-                                  type: Box
-                                  size: [ 0.015, 0.001, 0.010 ]
-                                appearance: *FINGER_B1_appearance
+                            geometry:
+                              type: Box
+                              size: [ 0.015, 0.001, 0.010 ]
+                            appearance: *FINGER_APPEARANCE
                       -
                         type: Transform
                         translation: [ 0, -0.01640, 0.00060 ]
                         rotation: [ 1, 0, 0, 2.98 ]
                         elements:
-                          Transform:
+                          Shape:
                             translation: [ 0, 0.00075, -0.017325 ]
-                            elements:
-                              Shape:
-                                geometry:
-                                  type: Box
-                                  size: [ 0.015, 0.0015, 0.03465 ]
-                                appearance: *FINGER_B1_appearance
+                            geometry:
+                              type: Box
+                              size: [ 0.015, 0.0015, 0.03465 ]
+                            appearance: *FINGER_APPEARANCE
                       -
                         type: Transform
                         translation: [ 0, -0.01640, 0.00060 ]
                         rotation: [ 1, 0, 0, 2.98 ]
                         elements:
-                          Transform:
+                          Shape:
                             translation: [ 0, 0.0025, -0.015 ]
-                            elements:
-                              Shape:
-                                geometry:
-                                  type: Box
-                                  size: [ 0.015, 0.005, 0.030 ]
-                                appearance: *FINGER_B1_appearance
+                            geometry:
+                              type: Box
+                              size: [ 0.015, 0.005, 0.030 ]
+                            appearance: *FINGER_APPEARANCE
                       -
                         type: Transform
                         translation: [ 0, -0.01640, 0.00060 ]
                         rotation: [ 1, 0, 0, 20.16 ]
                         elements:
-                          Transform:
+                          Shape:
                             translation: [ 0, 0.006535, -0.01 ]
-                            elements:
-                              Shape:
-                                geometry:
-                                  type: Box
-                                  size: [ 0.015, 0.01307, 0.02 ]
-                                appearance: *FINGER_B1_appearance
+                            geometry:
+                              type: Box
+                              size: [ 0.015, 0.01307, 0.02 ]
+                            appearance: *FINGER_APPEARANCE
                       -
                         type: Transform
                         translation: [ 0, 0.00756, -0.00505 ]
                         rotation: [ -1, 0, 0, 20.92 ]
                         elements:
-                          Transform:
+                          Shape:
                             translation: [ 0, -0.00005, -0.002 ]
-                            elements:
-                              Shape:
-                                geometry:
-                                  type: Box
-                                  size: [ 0.015, 0.0001, 0.004 ]
-                                appearance: *FINGER_B1_appearance
+                            geometry:
+                              type: Box
+                              size: [ 0.015, 0.0001, 0.004 ]
+                            appearance: *FINGER_APPEARANCE
                       -
                         type: Transform
                         translation: [ 0, 0.00701, -0.03642 ]
                         rotation: [ 1, 0, 0, 5.04 ]
                         elements:
-                          Transform:
+                          Shape:
                             translation: [ 0, -0.00005, 0.002 ]
-                            elements:
-                              Shape:
-                                geometry:
-                                  type: Box
-                                  size: [ 0.015, 0.0001, 0.004 ]
-                                appearance: *FINGER_B1_appearance
+                            geometry:
+                              type: Box
+                              size: [ 0.015, 0.0001, 0.004 ]
+                            appearance: *FINGER_APPEARANCE
                       # Left frame
                       -
                         type: Transform
                         translation: [ -0.009375, 0, 0 ]
-                        elements: &FINGER_B1_SIDE_elements
+                        elements: &FINGER_SIDE
                           -
                             type: Transform
                             translation: [ 0, -0.01640, 0.00060 ]
                             rotation: [ 1, 0, 0, 2.98 ]
                             elements:
-                              Transform:
+                              Shape:
                                 translation: [ 0, 0.010165, -0.017325 ]
-                                elements:
-                                  Shape:
-                                    geometry:
-                                      type: Box
-                                      size: [ 0.00375, 0.02033, 0.03465 ]
-                                    appearance: *FINGER_B1_appearance
+                                geometry:
+                                  type: Box
+                                  size: [ 0.00375, 0.02033, 0.03465 ]
+                                appearance: *FINGER_APPEARANCE
                           -
                             type: Transform
                             translation: [ 0, -0.01640, 0.00060 ]
                             rotation: [ 1, 0, 0, 20.16 ]
                             elements:
-                              Transform:
+                              Shape:
                                 translation: [ 0, 0.011025, -0.006 ]
-                                elements:
-                                  Shape:
-                                    geometry:
-                                      type: Box
-                                      size: [ 0.00375, 0.02205, 0.012 ]
-                                    appearance: *FINGER_B1_appearance
+                                geometry:
+                                  type: Box
+                                  size: [ 0.00375, 0.02205, 0.012 ]
+                                appearance: *FINGER_APPEARANCE
                           -
                             type: Transform
                             translation: [ 0, -0.01640, 0.00060 ]
                             rotation: [ 1, 0, 0, 20.16 ]
                             elements:
-                              Transform:
+                              Shape:
                                 translation: [ 0, 0.00307, -0.01 ]
-                                elements:
-                                  Shape:
-                                    geometry:
-                                      type: Box
-                                      size: [ 0.00375, 0.00614, 0.02 ]
-                                    appearance: *FINGER_B1_appearance
+                                geometry:
+                                  type: Box
+                                  size: [ 0.00375, 0.00614, 0.02 ]
+                                appearance: *FINGER_APPEARANCE
                           -
                             type: Transform
                             translation: [ 0, 0.005, -0.01940 ]
                             rotation: [ -1, 0, 0, 8 ]
                             elements:
-                              Transform:
+                              Shape:
                                 translation: [ 0, -0.007, 0.007 ]
-                                elements:
-                                  Shape:
-                                    geometry:
-                                      type: Box
-                                      size: [ 0.00375, 0.014, 0.014 ]
-                                    appearance: *FINGER_B1_appearance
+                                geometry:
+                                  type: Box
+                                  size: [ 0.00375, 0.014, 0.014 ]
+                                appearance: *FINGER_APPEARANCE
                           -
                             type: Transform
                             translation: [ 0, 0.00660, -0.03180 ]
                             rotation: [ 1, 0, 0, 7.35 ]
                             elements:
-                              Transform:
+                              Shape:
                                 translation: [ 0, -0.007, 0.008 ]
-                                elements:
-                                  Shape:
-                                    geometry:
-                                      type: Box
-                                      size: [ 0.00375, 0.014, 0.016 ]
-                                    appearance: *FINGER_B1_appearance
+                                geometry:
+                                  type: Box
+                                  size: [ 0.00375, 0.014, 0.016 ]
+                                appearance: *FINGER_APPEARANCE
                           -
                             type: Transform
                             translation: [ 0, 0.00750, -0.042 ]
                             rotation: [ 1, 0, 0, 5.04 ]
                             elements:
-                              Transform:
+                              Shape:
                                 translation: [ 0, -0.007, 0.00512 ]
-                                elements:
-                                  Shape:
-                                    geometry:
-                                      type: Box
-                                      size: [ 0.00375, 0.014, 0.01024 ]
-                                    appearance: *FINGER_B1_appearance
+                                geometry:
+                                  type: Box
+                                  size: [ 0.00375, 0.014, 0.01024 ]
+                                appearance: *FINGER_APPEARANCE
                           -
                             type: Transform
                             translation: [ 0, -0.00820, -0.04162 ]
                             rotation: [ -1, 0, 0, 139.96 ]
                             elements:
-                              Transform:
+                              Shape:
                                 translation: [ 0, -0.007, 0.002795 ]
-                                elements:
-                                  Shape:
-                                    geometry:
-                                      type: Box
-                                      size: [ 0.00375, 0.014, 0.00559 ]
-                                    appearance: *FINGER_B1_appearance
+                                geometry:
+                                  type: Box
+                                  size: [ 0.00375, 0.014, 0.00559 ]
+                                appearance: *FINGER_APPEARANCE
                           -
                             type: Transform
                             translation: [ 0, -0.01460, -0.034 ]
                             rotation: [ -1, 0, 0, 139.96 ]
-                            elements: &FINGER_B1_type3_elements
-                              Transform:
+                            elements:
+                              Shape:
                                 translation: [ 0, -0.007, 0.00777 ]
-                                elements:
-                                  Shape:
-                                    geometry:
-                                      type: Box
-                                      size: [ 0.00375, 0.014, 0.01554 ]
-                                    appearance: *FINGER_B1_appearance
+                                geometry:
+                                  type: Box
+                                  size: [ 0.00375, 0.014, 0.01554 ]
+                                appearance: *FINGER_APPEARANCE
                           -
                             type: Transform
                             translation: [ 0, 0.00670, -0.00730 ]
                             rotation: [ -1, 0, 0, 20.92 ]
                             elements:
-                              Transform:
+                              Shape:
                                 translation: [ 0, -0.005, 0.0023 ]
-                                elements:
-                                  Shape:
-                                    geometry:
-                                      type: Box
-                                      size: [ 0.00375, 0.01, 0.0046 ]
-                                    appearance: *FINGER_B1_appearance
+                                geometry:
+                                  type: Box
+                                  size: [ 0.00375, 0.01, 0.0046 ]
+                                appearance: *FINGER_APPEARANCE
                           -
-                            type: Transform
+                            type: Shape
                             translation: [ 0, 0.00083, -0.04204 ]
                             rotation: [ 0, 0, 1, 90 ]
-                            elements:
-                              Shape:
-                                geometry:
-                                  type: Cylinder
-                                  height: 0.00375
-                                  radius: 0.00667
-                                appearance: *FINGER_B1_appearance
+                            geometry:
+                              type: Cylinder
+                              height: 0.00375
+                              radius: 0.00667
+                            appearance: *FINGER_APPEARANCE
                           -
-                            type: Transform
+                            type: Shape
                             translation: [ 0, 0.00538, 0.00382 ]
                             rotation: [ 0, 0, 1, 90 ]
-                            elements:
-                              Shape:
-                                geometry:
-                                  type: Cylinder
-                                  height: 0.00375
-                                  radius: 0.004525
-                                appearance: *FINGER_B1_appearance
+                            geometry:
+                              type: Cylinder
+                              height: 0.00375
+                              radius: 0.004525
+                            appearance: *FINGER_APPEARANCE
                           -
-                            type: Transform
+                            type: Shape
                             translation: [ 0, 0.00436, 0.002 ]
                             rotation: [ 0, 0, 1, 90 ]
-                            elements:
-                              Shape:
-                                geometry:
-                                  type: Cylinder
-                                  height: 0.00375
-                                  radius: 0.00569
-                                appearance: *FINGER_B1_appearance
+                            geometry:
+                              type: Cylinder
+                              height: 0.00375
+                              radius: 0.00569
+                            appearance: *FINGER_APPEARANCE
                           -
-                            type: Transform
+                            type: Shape
                             translation: [ 0, 0.00351, 0.00094 ]
                             rotation: [ 0, 0, 1, 90 ]
-                            elements:
-                              Shape:
-                                geometry:
-                                  type: Cylinder
-                                  height: 0.00375
-                                  radius: 0.00660
-                                appearance: *FINGER_B1_appearance
+                            geometry:
+                              type: Cylinder
+                              height: 0.00375
+                              radius: 0.00660
+                            appearance: *FINGER_APPEARANCE
                       # Right frame
                       -
                         type: Transform
                         translation: [ 0.009375, 0, 0 ]
-                        elements: *FINGER_B1_SIDE_elements
+                        elements: *FINGER_SIDE
   -
-    name: FINGER_B2
-    parent: FINGER_B1
+    name: FINGER1_TIP
+    parent: FINGER1
     translation: [ -0.003, 0, 0.044 ]
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
     jointId: 7
     # choreonoid coordinate(=object coordinate)
-    elements: &FINGER2
+    elements: &FINGER_TIP
       Transform:
         rotation: [ [ 0, -1, 0, 180 ], [ 0, 0, 1, 90 ] ]
         # cad coordinate
@@ -1033,7 +959,7 @@ links:
                             geometry:
                               type: Box
                               size: [ 0.020, 0.01455, 0.00250 ]
-                            appearance: &FINGER_B2_appearance
+                            appearance: &FINGER_TIP_APPEARANCE
                               material:
                                 diffuseColor: [ 0, 1, 0 ]
                                 specularColor: [ 0, 0, 0 ]
@@ -1050,7 +976,7 @@ links:
                             geometry:
                               type: Box
                               size: [ 0.020, 0.002, 0.00163 ]
-                            appearance: *FINGER_B2_appearance
+                            appearance: *FINGER_TIP_APPEARANCE
                   -
                     type: Transform
                     translation: [ 0, -0.008, -0.04170 ]
@@ -1063,7 +989,7 @@ links:
                             geometry:
                               type: Box
                               size: [ 0.020, 0.03865, 0.004 ]
-                            appearance: *FINGER_B2_appearance
+                            appearance: *FINGER_TIP_APPEARANCE
                   -
                     type: Transform
                     translation: [ 0, -0.01390, -0.00350 ]
@@ -1076,7 +1002,7 @@ links:
                             geometry:
                               type: Box
                               size: [ 0.020, 0.00582, 0.001 ]
-                            appearance: *FINGER_B2_appearance
+                            appearance: *FINGER_TIP_APPEARANCE
                   -
                     type: Transform
                     translation: [ 0, -0.01441, 0.00230 ]
@@ -1089,7 +1015,7 @@ links:
                             geometry:
                               type: Box
                               size: [ 0.014, 0.00221, 0.004 ] # Adjust from 15mm to 14mm to avoid interference
-                            appearance: *FINGER_B2_appearance
+                            appearance: *FINGER_TIP_APPEARANCE
                   -
                     type: Transform
                     translation: [ 0, -0.01460, 0.00450 ]
@@ -1102,7 +1028,7 @@ links:
                             geometry:
                               type: Box
                               size: [ 0.014, 0.00277, 0.004 ] # Adjust from 15mm to 14mm to avoid interference
-                            appearance: *FINGER_B2_appearance
+                            appearance: *FINGER_TIP_APPEARANCE
                   -
                     type: Transform
                     translation: [ 0, -0.014, 0.00720 ]
@@ -1115,7 +1041,7 @@ links:
                             geometry:
                               type: Box
                               size: [ 0.014, 0.00205, 0.004 ] # Adjust from 15mm to 14mm to avoid interference
-                            appearance: *FINGER_B2_appearance
+                            appearance: *FINGER_TIP_APPEARANCE
                   -
                     type: Transform
                     translation: [ 0, -0.01260, 0.00870 ]
@@ -1128,7 +1054,7 @@ links:
                             geometry:
                               type: Box
                               size: [ 0.014, 0.00193, 0.004 ] # Adjust from 15mm to 14mm to avoid interference
-                            appearance: *FINGER_B2_appearance
+                            appearance: *FINGER_TIP_APPEARANCE
                   -
                     type: Transform
                     translation: [ 0, -0.01080, 0.00940 ]
@@ -1141,7 +1067,7 @@ links:
                             geometry:
                               type: Box
                               size: [ 0.014, 0.00160, 0.004 ] # Adjust from 15mm to 14mm to avoid interference
-                            appearance: *FINGER_B2_appearance
+                            appearance: *FINGER_TIP_APPEARANCE
                   -
                     type: Transform
                     translation: [ 0, -0.00920, 0.00940 ]
@@ -1154,7 +1080,7 @@ links:
                             geometry:
                               type: Box
                               size: [ 0.014, 0.01083, 0.004 ] # Adjust from 15mm to 14mm to avoid interference
-                            appearance: *FINGER_B2_appearance
+                            appearance: *FINGER_TIP_APPEARANCE
                   -
                     type: Transform
                     translation: [ 0, 0, 0.00750 ]
@@ -1167,7 +1093,7 @@ links:
                             geometry:
                               type: Box
                               size: [ 0.014, 0.00260, 0.004 ] # Adjust from 15mm to 14mm to avoid interference
-                            appearance: *FINGER_B2_appearance
+                            appearance: *FINGER_TIP_APPEARANCE
                   -
                     type: Transform
                     translation: [ 0, 0.00250, 0.00680 ]
@@ -1180,7 +1106,7 @@ links:
                             geometry:
                               type: Box
                               size: [ 0.014, 0.00269, 0.004 ] # Adjust from 15mm to 14mm to avoid interference
-                            appearance: *FINGER_B2_appearance
+                            appearance: *FINGER_TIP_APPEARANCE
                   -
                     type: Transform
                     translation: [ 0, 0.00450, 0.005 ]
@@ -1193,7 +1119,7 @@ links:
                             geometry:
                               type: Box
                               size: [ 0.014, 0.00433, 0.004 ] # Adjust from 15mm to 14mm to avoid interference
-                            appearance: *FINGER_B2_appearance
+                            appearance: *FINGER_TIP_APPEARANCE
                   -
                     type: Transform
                     translation: [ 0, 0.005, 0.00070 ]
@@ -1206,7 +1132,7 @@ links:
                             geometry:
                               type: Box
                               size: [ 0.014, 0.00350, 0.004 ] # Adjust from 15mm to 14mm to avoid interference
-                            appearance: *FINGER_B2_appearance
+                            appearance: *FINGER_TIP_APPEARANCE
                   -
                     type: Transform
                     translation: [ 0, 0.005, -0.00280 ]
@@ -1219,7 +1145,7 @@ links:
                             geometry:
                               type: Box
                               size: [ 0.014, 0.00302, 0.004 ] # Adjust from 15mm to 14mm to avoid interference
-                            appearance: *FINGER_B2_appearance
+                            appearance: *FINGER_TIP_APPEARANCE
                   -
                     type: Transform
                     translation: [ 0, 0.00474, -0.00581 ]
@@ -1232,7 +1158,7 @@ links:
                             geometry:
                               type: Box
                               size: [ 0.020, 0.00049, 0.001 ]
-                            appearance: *FINGER_B2_appearance
+                            appearance: *FINGER_TIP_APPEARANCE
                   -
                     type: Transform
                     translation: [ 0, 0.00470, -0.00630 ]
@@ -1245,7 +1171,7 @@ links:
                             geometry:
                               type: Box
                               size: [ 0.020, 0.02104, 0.001 ]
-                            appearance: *FINGER_B2_appearance
+                            appearance: *FINGER_TIP_APPEARANCE
                   -
                     type: Transform
                     translation: [ 0, 0.00470, -0.00630 ]
@@ -1258,7 +1184,7 @@ links:
                             geometry:
                               type: Box
                               size: [ 0.020, 0.02104, 0.002 ]
-                            appearance: *FINGER_B2_appearance
+                            appearance: *FINGER_TIP_APPEARANCE
                   -
                     type: Transform
                     translation: [ 0, -0.00120, -0.02440 ]
@@ -1271,7 +1197,7 @@ links:
                             geometry:
                               type: Box
                               size: [ 0.020, 0.00444, 0.004 ]
-                            appearance: *FINGER_B2_appearance
+                            appearance: *FINGER_TIP_APPEARANCE
                   -
                     type: Transform
                     translation: [ 0, -0.00130, -0.02684 ]
@@ -1284,7 +1210,7 @@ links:
                             geometry:
                               type: Box
                               size: [ 0.020, 0.00261, 0.004 ]
-                            appearance: *FINGER_B2_appearance
+                            appearance: *FINGER_TIP_APPEARANCE
                   -
                     type: Transform
                     translation: [ 0, -0.0054, -0.00054 ]
@@ -1293,7 +1219,7 @@ links:
                         geometry:
                           type: Box
                           size: [ 0.014, 0.016, 0.012 ] # Adjust from 15mm to 14mm to avoid interference
-                        appearance: *FINGER_B2_appearance
+                        appearance: *FINGER_TIP_APPEARANCE
                   -
                     type: Transform
                     translation: [ 0, -0.0032, -0.00654 ]
@@ -1302,7 +1228,7 @@ links:
                         geometry:
                           type: Box
                           size: [ 0.014, 0.014, 0.004 ] # Adjust from 15mm to 14mm to avoid interference
-                        appearance: *FINGER_B2_appearance
+                        appearance: *FINGER_TIP_APPEARANCE
                   -
                     type: Transform
                     translation: [ 0, -0.0032, -0.00846 ]
@@ -1311,7 +1237,7 @@ links:
                         geometry:
                           type: Box
                           size: [ 0.020, 0.013, 0.002 ]
-                        appearance: *FINGER_B2_appearance
+                        appearance: *FINGER_TIP_APPEARANCE
                   -
                     type: Transform
                     translation: [ 0, -0.008, -0.01054 ]
@@ -1321,7 +1247,7 @@ links:
                         geometry:
                           type: Box
                           size: [ 0.020, 0.0032, 0.012 ]
-                        appearance: *FINGER_B2_appearance
+                        appearance: *FINGER_TIP_APPEARANCE
                   -
                     type: Transform
                     translation: [ 0, -0.0055, -0.022 ]
@@ -1330,7 +1256,7 @@ links:
                         geometry:
                           type: Box
                           size: [ 0.020, 0.005, 0.028 ]
-                        appearance: *FINGER_B2_appearance
+                        appearance: *FINGER_TIP_APPEARANCE
                   -
                     type: Transform
                     translation: [ 0, -0.0030, -0.018 ]
@@ -1340,7 +1266,7 @@ links:
                         geometry:
                           type: Box
                           size: [ 0.020, 0.005, 0.020 ]
-                        appearance: *FINGER_B2_appearance
+                        appearance: *FINGER_TIP_APPEARANCE
                   -
                     type: Transform
                     translation: [ 0, 0.00351, -0.00663 ]
@@ -1353,7 +1279,7 @@ links:
                             geometry:
                               type: Box
                               size: [ 0.020, 0.0003, 0.001 ]
-                            appearance: *FINGER_B2_appearance
+                            appearance: *FINGER_TIP_APPEARANCE
                   -
                     type: Transform
                     translation: [ 0, 0.00351, -0.00663 ]
@@ -1366,7 +1292,7 @@ links:
                             geometry:
                               type: Box
                               size: [ 0.020, 0.002, 0.001 ]
-                            appearance: *FINGER_B2_appearance
+                            appearance: *FINGER_TIP_APPEARANCE
                   -
                     type: Transform
                     translation: [ 0, 0.00213, -0.00719 ]
@@ -1379,7 +1305,7 @@ links:
                             geometry:
                               type: Box
                               size: [ 0.020, 0.002, 0.002 ]
-                            appearance: *FINGER_B2_appearance
+                            appearance: *FINGER_TIP_APPEARANCE
                   -
                     type: Transform
                     translation: [ 0, 0.00068, -0.00747 ]
@@ -1392,7 +1318,7 @@ links:
                             geometry:
                               type: Box
                               size: [ 0.020, 0.002, 0.002 ]
-                            appearance: *FINGER_B2_appearance
+                            appearance: *FINGER_TIP_APPEARANCE
                   -
                     type: Transform
                     translation: [ 0, -0.00082, -0.00746 ]
@@ -1405,7 +1331,7 @@ links:
                             geometry:
                               type: Box
                               size: [ 0.020, 0.002, 0.002 ]
-                            appearance: *FINGER_B2_appearance
+                            appearance: *FINGER_TIP_APPEARANCE
                   # Take a lot of punching to avoid interference
                   -
                     type: Transform
@@ -1419,7 +1345,7 @@ links:
                             geometry:
                               type: Box
                               size: [ 0.020, 0.002, 0.002 ]
-                            appearance: *FINGER_B2_appearance
+                            appearance: *FINGER_TIP_APPEARANCE
                   # Take a lot of punching to avoid interference
                   -
                     type: Transform
@@ -1433,7 +1359,7 @@ links:
                             geometry:
                               type: Box
                               size: [ 0.020, 0.002, 0.002 ]
-                            appearance: *FINGER_B2_appearance
+                            appearance: *FINGER_TIP_APPEARANCE
                   # Take a lot of punching to avoid interference
                   -
                     type: Transform
@@ -1447,7 +1373,7 @@ links:
                             geometry:
                               type: Box
                               size: [ 0.020, 0.011, 0.001 ]
-                            appearance: *FINGER_B2_appearance
+                            appearance: *FINGER_TIP_APPEARANCE
                   -
                     type: Transform
                     translation: [ 0, -0.00482, -0.00675 ]
@@ -1460,7 +1386,7 @@ links:
                             geometry:
                               type: Box
                               size: [ 0.020, 0.011, 0.001 ]
-                            appearance: *FINGER_B2_appearance
+                            appearance: *FINGER_TIP_APPEARANCE
                   -
                     type: Transform
                     translation: [ 0, -0.00430, -0.00775 ]
@@ -1473,75 +1399,56 @@ links:
                             geometry:
                               type: Box
                               size: [ 0.020, 0.011, 0.002 ]
-                            appearance: *FINGER_B2_appearance
+                            appearance: *FINGER_TIP_APPEARANCE
   -
-    name: FINGER_A1
-    parent: GRIPPER
+    name: FINGER2
+    parent: ARM6
     translation: [ 0.02982, -0.02277, 0.1139 ]
     rotation: [ 0, 0, 1, 169.4 ]
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
     jointId: 8
-    elements: *FINGER1
+    elements: *FINGER
   -
-    name: FINGER_A2
-    parent: FINGER_A1
+    name: FINGER2_TIP
+    parent: FINGER2
     translation: [ -0.003, 0, 0.044 ]
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
     jointId: 9
-    elements: *FINGER2
+    elements: *FINGER_TIP
   -
-    name: FINGER_C1
-    parent: GRIPPER
+    name: FINGER3
+    parent: ARM6
     translation: [ 0.02982, 0.02277, 0.1139 ]
     rotation: [ 0, 0, 1, -169.4 ]
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
     jointId: 10
-    elements: *FINGER1
+    elements: *FINGER
   -
-    name: FINGER_C2
-    parent: FINGER_C1
+    name: FINGER3_TIP
+    parent: FINGER3
     translation: [ -0.003, 0, 0.044 ]
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
     jointId: 11
-    elements: *FINGER2
+    elements: *FINGER_TIP
 
 standardPose: [
-  270,    # ARM2
-  -35.43, # ARM3
-  -148,   # ARM4
-  -90,    # ARM5
+  270,    # ARM1
+  -35.43, # ARM2
+  -148,   # ARM3
+  -90,    # ARM4
+  0,      # ARM5
   0,      # ARM6
-  0,      # GRIPPER
-  -50,    # FINGER_B1
-  0,      # FINGER_B2
-  -50,    # FINGER_A1
-  0,      # FINGER_A2
-  -50,    # FINGER_C1
-  0       # FINGER_C2
+  -50,    # FINGER1
+  0,      # FINGER1_TIP
+  -50,    # FINGER2
+  0,      # FINGER2_TIP
+  -50,    # FINGER3
+  0       # FINGER3_TIP
 ]
 
 collisionDetection:
-  excludeTreeDepth: 0
-  excludeLinkGroups:
-    -
-      name: GROUP_ARM2
-      links: [ ARM1, ARM2 ]
-    -
-      name: GROUP_ARM3
-      links: [ ARM2, ARM3 ]
-    -
-      name: GROUP_ARM4
-      links: [ ARM3, ARM4 ]
-    -
-      name: GROUP_ARM5
-      links: [ ARM4, ARM5 ]
-    -
-      name: GROUP_ARM6
-      links: [ ARM5, ARM6 ]
-    -
-      name: GROUP_GRIPPER
-      links: [ ARM6, GRIPPER ]
+  excludeTreeDepth: 1
