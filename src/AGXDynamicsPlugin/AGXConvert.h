@@ -11,6 +11,16 @@
 namespace cnoid{
 namespace agxConvert{
 
+inline bool setVector(ValueNodePtr const vnptr, Vector2& vec)
+{
+    if(!vnptr) return false;
+    if(!vnptr->isListing())  return false;
+    const Listing& l  = *vnptr->toListing();
+    if(l.size() != 2) return false;
+    vec = Vector2(l[0].toDouble(), l[1].toDouble());
+    return true;
+}
+
 inline bool setVector(ValueNodePtr const vnptr, Vector3& vec)
 {
     if(!vnptr) return false;
