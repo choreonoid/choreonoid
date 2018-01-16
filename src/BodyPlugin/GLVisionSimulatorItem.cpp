@@ -1581,7 +1581,6 @@ void SensorRenderer::copyVisionData()
                 if(rangeCamera){
                     rangeCamera->setPoints(screen->tmpPoints);
                 }
-                camera->setDelay(delay);
             }else{
                 std::shared_ptr<Image> image = std::make_shared<Image>();
                 if(simImpl->enableInterpolation){
@@ -1591,6 +1590,7 @@ void SensorRenderer::copyVisionData()
                 }
                 camera->setImage( image );
             }
+            camera->setDelay(delay);
         } else if(rangeSensor){
             if(screens.empty()){
                 rangeData = std::make_shared<vector<double>>();
