@@ -35,6 +35,11 @@ typedef map<int, View*> IdToViewMap;
 
 typedef list< std::function<void()> > PostProcessList;
 
+void putWarning(const QString& message)
+{
+    MessageView::instance()->putln(MessageView::WARNING, message);
+}
+
 }
 
 namespace cnoid {
@@ -92,24 +97,34 @@ bool findSubDirectoryOfDirectoryVariable
 }
 
 
-void replaceDirectoryVariable(ArchiveSharedData* shared, QString& io_pathString, const QString& varname, int pos, int len)
+bool replaceDirectoryVariable(ArchiveSharedData* shared, QString& io_pathString, const QString& varname, int pos, int len)
 {
     Listing* paths = shared->directoryVariableMap->findListing(varname.toStdString());
-    if(paths){
+
+    if(!paths->isValid()){
+        putWarning(QString(_("${%1} of \"%2\" is not defined.")).arg(varname).arg(io_pathString));
+        return false;
+    }
+
+    if(paths->size() == 1){
+        io_pathString.replace(pos, len, paths->at(0)->toString().c_str());
+        return true;
+
+    } else {
+        QString replaced;
         for(int i=0; i < paths->size(); ++i){
-            string vpath;
-            QString replaced(io_pathString);
+            replaced = io_pathString;
             replaced.replace(pos, len, paths->at(i)->toString().c_str());
             filesystem::file_status fstatus = filesystem::status(filesystem::path(replaced.toStdString()));
             if(filesystem::is_directory(fstatus) || filesystem::exists(fstatus)) {
                 io_pathString = replaced;
-                return;
+                return true;
             }
         }
+        putWarning(QString(_("\"%1\" does not exist.")).arg(io_pathString));
     }
-    MessageView::mainInstance()->putln(
-        MessageView::WARNING,
-        QString(_("${%1} of \"%2\" cannot be expanded !")).arg(varname).arg(io_pathString));
+
+    return false;
 }
 
 }
@@ -132,7 +147,7 @@ Archive::Archive()
 Archive::Archive(int line, int column)
     : Mapping(line, column)
 {
-
+    
 }
 
 
@@ -145,13 +160,13 @@ Archive::~Archive()
 void Archive::initSharedInfo(bool useHomeRelativeDirectories)
 {
     shared = new ArchiveSharedData;
-
+    
     shared->topDirPath = executableTopDirectory();
     shared->shareDirPath = shareDirectory();
 
     shared->topDirString = executableTopDirectory().c_str();
     shared->shareDirString = shareDirectory().c_str();
-
+    
     char* home = getenv("HOME");
     if(home){
         if(useHomeRelativeDirectories){
@@ -162,16 +177,16 @@ void Archive::initSharedInfo(bool useHomeRelativeDirectories)
     
     shared->currentParentItem = 0;
 }    
-    
+
 
 void Archive::initSharedInfo(const std::string& projectFile, bool useHomeRelativeDirectories)
 {
     initSharedInfo(useHomeRelativeDirectories);
     
     shared->directoryVariableMap = AppConfig::archive()->openMapping("pathVariables");
-
+    
     shared->projectDirPath = projectDirPath = getAbsolutePath(filesystem::path(projectFile)).parent_path();
-
+    
     shared->projectDirString = shared->projectDirPath.string().c_str();
 }
 
@@ -279,7 +294,9 @@ std::string Archive::expandPathVariables(const std::string& path) const
             } else if (varname == "PROJECT_DIR"){
                 qpath.replace(pos, len, shared->projectDirString);
             } else {
-                replaceDirectoryVariable(shared, qpath, varname, pos, len);
+                if(!replaceDirectoryVariable(shared, qpath, varname, pos, len)){
+                    qpath.clear();
+                }
             }
         }
     }
@@ -290,7 +307,13 @@ std::string Archive::expandPathVariables(const std::string& path) const
 
 std::string Archive::resolveRelocatablePath(const std::string& relocatable) const
 {
-    filesystem::path path(expandPathVariables(relocatable));
+    string expanded = expandPathVariables(relocatable);
+
+    if(expanded.empty()){
+        return relocatable;
+    }
+    
+    filesystem::path path(expanded);
 
     if(checkAbsolute(path)){
         return getNativePathString(path);
