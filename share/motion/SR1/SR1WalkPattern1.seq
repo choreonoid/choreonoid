@@ -1,12 +1,12 @@
-# Body motion data set format version 1.0 defined by cnoid-Robotics
-
-type: BodyMotion
+type: CompositeSeq
+content: BodyMotion
+formatVersion: 2
+frameRate: 500
+numFrames: 6701
 components: 
   - 
-    type: "MultiValueSeq"
-    content: "JointPosition"
-    frameRate: 500
-    numFrames: 6701
+    type: MultiValueSeq
+    content: JointDisplacement
     numParts: 29
     frames: 
       - [ 0, -0.036, 0, 0.0785, -0.0425, 0, 0.175, -0.00349, 0, -1.57, 0, 0, 0, 0, -0.036, 0, 0.0785, -0.0425, 0, 0.175, 0.00349, 0, -1.57, 0, 0, 0, 0, 0, 0 ]
