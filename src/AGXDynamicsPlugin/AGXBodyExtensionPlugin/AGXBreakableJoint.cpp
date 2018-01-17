@@ -195,7 +195,7 @@ public:
         }else{
             bTimerOn = false;
         }
-        //std::cout << duration << " " << force.length() << " " << m_breakLimitForce << std::endl;
+        std::cout << "AGXBreakableJoint " << force.length() << " " << m_breakLimitForce << std::endl;
     }
 };
 
@@ -258,6 +258,18 @@ AGXBreakableJoint::AGXBreakableJoint(AGXBreakableJointDevice* device, AGXBody* a
     agxConvert::setVector(jointDeviceInfo.find("jointAxis"), jp.jointAxis);
     agxConvert::setVector(jointDeviceInfo.find("validAxis"), jp.validAxis);
     agxConvert::setVector(jointDeviceInfo.find("jointRange"), jp.jointRange);
+    AGXElementaryConstraint base, range;
+    jointDeviceInfo.read("jointCompliance", base.compliance);
+    jointDeviceInfo.read("jointRangeCompliance", range.compliance);
+    jointDeviceInfo.read("jointDamping", base.damping);
+    jointDeviceInfo.read("jointRangeDamping", range.damping);
+    Vector2 baseForceRange, motorForceRange, rangeForceRange, lockForceRange;
+    if(agxConvert::setVector(jointDeviceInfo.find("jointForceRange"), baseForceRange)){
+        base.forceRange = agx::RangeReal(baseForceRange(0), baseForceRange(1));
+    }
+    if(agxConvert::setVector(jointDeviceInfo.find("jointRangeForceRange"), rangeForceRange)){
+        range.forceRange = agx::RangeReal(rangeForceRange(0), rangeForceRange(1));
+    }
 
     // Create breakable joint
     AGXLink* const agxLink1 = getAGXBody()->getAGXLink(jp.link1Name);
@@ -270,10 +282,12 @@ AGXBreakableJoint::AGXBreakableJoint(AGXBreakableJointDevice* device, AGXBody* a
     auto createConstraint = [&](AGXConstraintDesc& jd){
         jd.rigidBodyA = getAGXBody()->getAGXRigidBody(jp.link1Name);
         jd.rigidBodyB = getAGXBody()->getAGXRigidBody(jp.link2Name);
+        jd.compliance = base.compliance;
+        jd.damping = base.damping;
+        jd.forceRange = base.forceRange;
         return AGXObjectFactory::createConstraint(jd);
     };
 
-    double c = 1e-3;
     agx::ConstraintRef joint;
     if(jp.jointType == "revolute"){
         AGXHingeDesc hd;
@@ -281,18 +295,19 @@ AGXBreakableJoint::AGXBreakableJoint(AGXBreakableJointDevice* device, AGXBody* a
         hd.frameCenter = agxConvert::toAGX(p);
         hd.range.enable = true;
         hd.range.range = agx::RangeReal(agx::degreesToRadians(jp.jointRange[0]), agx::degreesToRadians(jp.jointRange[1]));
-//std::cout << hd.range.range << std::endl;
+        hd.range.compliance = range.compliance;
+        hd.range.damping = range.damping;
+        hd.range.forceRange = range.forceRange;
         joint = createConstraint(hd);
-        //joint->setCompliance(c, agx::Hinge::TRANSLATIONAL_1);
-        //joint->setCompliance(c, agx::Hinge::TRANSLATIONAL_2);
-        //joint->setCompliance(c, agx::Hinge::ROTATIONAL_1);
-        //joint->setCompliance(c, agx::Hinge::ROTATIONAL_2);
     }else if(jp.jointType == "prismatic"){
         AGXPrismaticDesc pd;
         pd.frameAxis = agxConvert::toAGX(a);
         pd.framePoint = agxConvert::toAGX(p);
         pd.range.enable = true;
         pd.range.range = agx::RangeReal(agx::degreesToRadians(jp.jointRange[0]), agx::degreesToRadians(jp.jointRange[1]));
+        pd.range.compliance = range.compliance;
+        pd.range.damping = range.damping;
+        pd.range.forceRange = range.forceRange;
         joint = createConstraint(pd);
     }else if(jp.jointType == "fixed"){
         AGXLockJointDesc ld;

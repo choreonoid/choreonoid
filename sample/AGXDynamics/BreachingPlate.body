@@ -61,6 +61,7 @@ links:
         link1Name: Plate
         link2Name: PlatePiece
         jointType: fixed
-        breakLimitForce: 5000
+        jointCompliance: 1e-4
+        breakLimitForce: 2000
         period: 4
         validAxis: [0, 0, 1]

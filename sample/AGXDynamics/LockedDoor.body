@@ -24,7 +24,8 @@ links:
     parent: PillarL
     jointType: revolute
     jointAxis: [ 0, 0, -1 ]
-    jointRange: [ 1.0, 180 ]
+    jointRange: [ 0.001, 180 ]
+    jointCompliance: 1e-04
     centerOfMass: [ 0, 0.35, 0 ]
     mass: 40
     inertia: [
@@ -59,6 +60,7 @@ links:
         link1Name: Door
         link2Name: PillarR
         jointType: fixed
+        jointCompliance: 1e-5
         breakLimitForce: 300
         period: 3.0
         validAxis: [0, 1, 0]

@@ -102,7 +102,7 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      selected: [ 1 ]
+      selected: [ 3 ]
       checked: [ 2, 4 ]
       expanded: [ 1, 4 ]
   - 
@@ -668,12 +668,12 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 315, 1536 ]
+      sizes: [ 205, 1002 ]
       children: 
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 437, 437 ]
+          sizes: [ 195, 195 ]
           children: 
             - 
               type: pane
@@ -686,12 +686,12 @@ viewAreas:
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 642, 232 ]
+          sizes: [ 277, 113 ]
           children: 
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 538, 992 ]
+              sizes: [ 350, 646 ]
               children: 
                 - 
                   type: pane
@@ -713,8 +713,8 @@ layoutOfToolBars:
       - { name: "TimeBar", x: 94, priority: 0 }
       - { name: "SceneBar", x: 1007, priority: 0 }
       - { name: "GraphBar", x: 1355, priority: 0 }
-      - { name: "SimulationBar", x: 1462, priority: 0 }
       - { name: "BodyMotionGenerationBar", x: 1659, priority: 0 }
     - 
+      - { name: "SimulationBar", x: 0, priority: 1 }
       - { name: "BodyBar", x: 0, priority: 0 }
       - { name: "KinematicsBar", x: 260, priority: 0 }

@@ -169,6 +169,9 @@ agx::ConstraintRef AGXObjectFactory::createConstraint(const AGXConstraintDesc& d
         default :
             break;
     }
+    constraint->setCompliance(desc.compliance);
+    constraint->setDamping(desc.damping);
+    constraint->setForceRange(desc.forceRange);
     return constraint;
 }
 
@@ -317,6 +320,7 @@ void AGXObjectFactory::setRange1DParam(agx::Range1D* controller, const AGXRange1
 
 agx::LockJointRef AGXObjectFactory::createConstraintLockJoint(const AGXLockJointDesc & desc)
 {
+    agx::LockJointRef lock;
     return new agx::LockJoint(desc.rigidBodyA, desc.rigidBodyB);
 }
 
