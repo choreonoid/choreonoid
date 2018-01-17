@@ -600,6 +600,9 @@ if(ENABLE_GUI)
 
 endif()
 
+if(BUILD_OPENRTM_PLUGIN)
+  find_package(OpenRTM)
+endif()
 
 # CORBA, omniORB
 option(ENABLE_CORBA "Enable CORBA related modules / plugins" OFF)
