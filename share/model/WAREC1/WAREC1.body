@@ -2093,7 +2093,7 @@ links:
     jointType: revolute
     jointAxis: X
     jointId: 13
-    jointRange: [ -1.850049005, 1.850049005 ]
+    jointRange: [ -106, 106 ]
     maxJointVelocity: 1E6
     mass: 0.82
     centerOfMass: [ -0.01007, 0.0, -0.02816 ]
