@@ -1,0 +1,66 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: LockedDoor
+
+links:
+  -
+    name: PillarL
+    jointType: fixed
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 30.0
+    inertia: [
+      15.725, 0,   0,
+      0,   15.725, 0,
+      0,   0,   0.2 ]
+    elements:
+      -
+        type: Shape
+        geometry: &pillar { type: Box, size: [ 0.2, 0.2, 2.0 ]}
+        appearance: &BodyAppearance
+          material: { diffuseColor: [ 0, 0.6, 0 ], specularColor: [ 0.2, 0.8, 0.2 ], shinines: 0.6 }
+  -
+    name: Door
+    parent: PillarL
+    jointType: revolute
+    jointAxis: [ 0, 0, -1 ]
+    jointRange: [ 0.001, 180 ]
+    jointCompliance: 1e-04
+    centerOfMass: [ 0, 0.35, 0 ]
+    mass: 40
+    inertia: [
+      0.1, 0,   0,
+      0,   0.1, 0,
+      0,   0,   0.5 ]
+    translation: [ 0.1, 0.15, 0.0 ]
+    elements:
+      -
+        type: Shape
+        translation: [ -0.05, 1.0, 0.0 ]
+        geometry: { type: Box, size: [ 0.1, 2.0, 1.9 ]}
+        appearance: *BodyAppearance
+  -
+    name: PillarR
+    parent: PillarL
+    jointType: fixed
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 30.0
+    inertia: [
+      15.725, 0,   0,
+      0,   15.725, 0,
+      0,   0,   0.2 ]
+    translation: [ 0.0, 2.4, 0.0 ]
+    elements:
+      -
+        type: Shape
+        geometry: *pillar
+        appearance: *BodyAppearance
+      -
+        type: AGXBreakableJointDevice
+        link1Name: Door
+        link2Name: PillarR
+        jointType: fixed
+        jointCompliance: 1e-5
+        breakLimitForce: 300
+        period: 3.0
+        validAxis: [0, 1, 0]

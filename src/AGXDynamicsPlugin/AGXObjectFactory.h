@@ -226,14 +226,6 @@ enum AGXConstraintType
     AGXPLANEJOINT
 };
 
-struct AGXConstraintDesc
-{
-    AGXConstraintDesc(AGXConstraintType type) : constraintType(type){}
-    const AGXConstraintType constraintType;
-    agx::RigidBodyRef rigidBodyA;
-    agx::RigidBodyRef rigidBodyB;
-};
-
 struct AGXElementaryConstraint
 {
     AGXElementaryConstraint(){
@@ -246,6 +238,14 @@ struct AGXElementaryConstraint
     agx::Real compliance;
     agx::Real damping;
     agx::RangeReal forceRange;
+};
+
+struct AGXConstraintDesc : public AGXElementaryConstraint
+{
+    AGXConstraintDesc(AGXConstraintType type) : constraintType(type){}
+    const AGXConstraintType constraintType;
+    agx::RigidBodyRef rigidBodyA;
+    agx::RigidBodyRef rigidBodyB;
 };
 
 struct AGXMotor1DDesc : public AGXElementaryConstraint
