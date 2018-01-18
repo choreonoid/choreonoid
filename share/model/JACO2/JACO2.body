@@ -38,7 +38,7 @@ links:
                         translation: [ 0, -0.02025, 0 ]
                         geometry: { type: Cylinder, height: 0.1565, radius: 0.04125 }
   -
-    name: ARM1
+    name: SHOULDER
     parent: BASE
     translation: [ 0, 0, 0.1565 ]
     jointType: revolute
@@ -66,7 +66,7 @@ links:
                 #   0.00018632084,  0.00138594057,  0.00000000279,
                 #  -0.00000013062,  0.00000000279,  0.00134199834 ]
                 elements:
-                  Visual: { resource: { uri: "parts/arm1.wrl" } }
+                  Visual: { resource: { uri: "parts/shoulder.wrl" } }
                   Collision:
                     elements:
                       -
@@ -83,8 +83,8 @@ links:
                         translation: [ 0, -0.012875, 0 ]
                         geometry: { type: Cylinder, height: 0.04275, radius: 0.04125 }
   -
-    name: ARM2
-    parent: ARM1
+    name: ARM
+    parent: SHOULDER
     translation: [ 0, 0.0015, 0.119 ]
     jointType: revolute
     jointAxis: [ 0, -1, 0 ]
@@ -111,7 +111,7 @@ links:
                 #   0.00000012914,  0.00627075811, -0.00000005914,
                 #  -0.00000019319, -0.00000005914,  0.00633434212 ]
                 elements:
-                  Visual: { resource: { uri: "parts/arm2.wrl" } }
+                  Visual: { resource: { uri: "parts/arm.wrl" } }
                   Collision:
                     elements:
                       -
@@ -129,8 +129,8 @@ links:
                         rotation: [ 1, 0, 0, 90 ]
                         geometry: { type: Cylinder, height: 0.042, radius: 0.04125 }
   -
-    name: ARM3
-    parent: ARM2
+    name: FOREARM
+    parent: ARM
     translation: [ 0, 0, 0.41 ]
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
@@ -157,7 +157,7 @@ links:
                 #  -0.00000012482,  0.00335221750, -0.00000000727,
                 #   0.00013924766, -0.00000000727,  0.00343411436 ]
                 elements:
-                  Visual: { resource: { uri: "parts/arm3.wrl" } }
+                  Visual: { resource: { uri: "parts/forearm.wrl" } }
                   Collision:
                     elements:
                       -
@@ -175,8 +175,8 @@ links:
                         rotation: [ 1, 0, 0, 90 ]
                         geometry: { type: Cylinder, height: 0.04275, radius: 0.04125 }
   -
-    name: ARM4
-    parent: ARM3
+    name: WRIST1
+    parent: FOREARM
     translation: [ 0, -0.01125, 0.207 ]
     jointType: revolute
     jointAxis: [ 0, 0, -1 ]
@@ -203,7 +203,7 @@ links:
                 #   0.00003721191,  0.00016401278, -0.00000000006,
                 #  -0.00000000002, -0.00000000006,  0.00017854993 ]
                 elements:
-                  Visual: { resource: { uri: "parts/arm4.wrl" } }
+                  Visual: { resource: { uri: "parts/wrist1.wrl" } }
                   Collision:
                     elements:
                       -
@@ -225,8 +225,8 @@ links:
                             rotation: [ 0, 0, 1, 90 ]
                             geometry: { type: Cylinder, height: 0.04301, radius: 0.0315 }
   -
-    name: ARM5
-    parent: ARM4
+    name: WRIST2
+    parent: WRIST1
     translation: [ 0, 0.03725, 0.06401 ]
     jointType: revolute
     jointAxis: [ 0, -0.866, -0.5 ]
@@ -253,7 +253,7 @@ links:
                 #   0.00003721191,  0.00016401278, -0.00000000006,
                 #  -0.00000000002, -0.00000000006,  0.00017854993 ]
                 elements:
-                  Visual: { resource: { uri: "parts/arm5.wrl" } }
+                  Visual: { resource: { uri: "parts/wrist2.wrl" } }
                   Collision:
                     elements:
                       -
@@ -275,8 +275,8 @@ links:
                             rotation: [ 0, 0, 1, 90 ]
                             geometry: { type: Cylinder, height: 0.04301, radius: 0.0315 }
   -
-    name: ARM6
-    parent: ARM5
+    name: HAND
+    parent: WRIST2
     translation: [ 0, 0.03725, 0.06401 ]
     jointType: revolute
     jointAxis: [ 0, 0, -1 ]
@@ -319,7 +319,7 @@ links:
                       #-
                       #  type: Shape
                       #  geometry: { type: Box, size: [ 0.064, 0.02350, 0.037 ] }
-                  Visual: { resource: { uri: "parts/arm6.wrl" } }
+                  Visual: { resource: { uri: "parts/hand.wrl" } }
                   Collision:
                     elements:
                       -
@@ -393,7 +393,7 @@ links:
                         elements: *ARM6_SHAPE2
   -
     name: FINGER1
-    parent: ARM6
+    parent: HAND
     translation: [ -0.03116, 0, 0.11498 ]
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
@@ -420,7 +420,7 @@ links:
                 #  0.00000000001,  0.00000425964, -0.00000009480,
                 #  0.00000000001, -0.00000009480,  0.00000161997 ]
                 elements:
-                  Visual: { resource: { uri: "parts/finger1.wrl" } }
+                  Visual: { resource: { uri: "parts/finger.wrl" } }
                   Collision:
                     elements:
                       # Boring of the origin part
@@ -736,7 +736,7 @@ links:
             #  0,          0.00000239411,    0.00000001476,
             #  0,          0.00000001476,    0.00000056556 ]
             elements:
-              Visual: { resource: { uri: "parts/finger2.wrl" } }
+              Visual: { resource: { uri: "parts/finger_tip.wrl" } }
               Collision:
                 elements:
                   -
@@ -1035,7 +1035,7 @@ links:
                         geometry: { type: Box, size: [ 0.020, 0.011, 0.002 ] }
   -
     name: FINGER2
-    parent: ARM6
+    parent: HAND
     translation: [ 0.02982, -0.02277, 0.1139 ]
     rotation: [ 0, 0, 1, 169.4 ]
     jointType: revolute
@@ -1052,7 +1052,7 @@ links:
     elements: *FINGER_TIP
   -
     name: FINGER3
-    parent: ARM6
+    parent: HAND
     translation: [ 0.02982, 0.02277, 0.1139 ]
     rotation: [ 0, 0, 1, -169.4 ]
     jointType: revolute
