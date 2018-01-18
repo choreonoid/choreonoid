@@ -573,7 +573,10 @@ agx::ConstraintRef AGXLink::createAGXConstraint()
             desc.motor.compliance = motor.compliance;
             desc.motor.damping = motor.damping;
             // lock
-            if(orgLink->actuationMode() == Link::ActuationMode::JOINT_ANGLE) desc.lock.enable = true;
+            if(orgLink->actuationMode() == Link::ActuationMode::JOINT_ANGLE){
+                desc.motor.enable = false;
+                desc.lock.enable = true;
+            }
             desc.lock.compliance = lock.compliance;
             desc.lock.damping = lock.damping;
             // range
