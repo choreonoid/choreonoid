@@ -1,0 +1,67 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: BreachingPlate
+
+links:
+  -
+    name: Plate
+    jointType: fixed
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 8.0
+    inertia: [
+      0.1, 0,   0,
+      0,   0.1, 0,
+      0,   0,   0.5 ]
+    material: Ground
+    elements:
+      -
+        type: Shape
+        translation: [ -1.6, 0.0, 0.0 ]
+        geometry: &cuboidLong { type: Box, size: [ 2.8, 6.0, 0.2 ]}
+        appearance: &BodyAppearance
+          material: { diffuseColor: [ 0, 0.6, 0 ], specularColor: [ 0.2, 0.8, 0.2 ], shinines: 0.6 }
+      -
+        type: Shape
+        translation: [ 1.6, 0.0, 0.0 ]
+        geometry: *cuboidLong
+        appearance: *BodyAppearance
+      -
+        type: Shape
+        translation: [ 0.0, 1.6, 0.0 ]
+        geometry: &cuboidShort { type: Box, size: [ 0.4, 2.8, 0.2 ]}
+        appearance: *BodyAppearance
+      -
+        type: Shape
+        translation: [ 0.0, -1.6, 0.0 ]
+        geometry: *cuboidShort
+        appearance: *BodyAppearance
+
+  -
+    name: PlatePiece
+    parent: Plate
+    translation: [ 0.0, 0.0, 0.0 ]
+    jointType: free
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 8.0
+    inertia: [
+      0.1, 0,   0,
+      0,   0.1, 0,
+      0,   0,   0.5 ]
+    material: Ground
+    elements:
+      -
+        type: Shape
+        translation: [ 0.0, 0.0, 0.0 ]
+        geometry: { type: Box, size: [ 0.4, 0.4, 0.2 ]}
+        appearance:
+          material: { diffuseColor: [ 1.0, 0, 0 ], specularColor: [ 0.2, 0.8, 0.2 ], shinines: 0.6 }
+      -
+        type: AGXBreakableJointDevice
+        link1Name: Plate
+        link2Name: PlatePiece
+        jointType: fixed
+        jointCompliance: 1e-4
+        breakLimitForce: 2000
+        period: 4
+        validAxis: [0, 0, 1]
