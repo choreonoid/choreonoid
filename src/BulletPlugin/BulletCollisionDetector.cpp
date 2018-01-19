@@ -603,7 +603,12 @@ void BulletCollisionDetectorImpl::detectObjectCollisions(btCollisionObject* obje
     btCollisionObjectWrapper objectWrapper2(0, object2->getCollisionShape(), object2, object2->getWorldTransform());
     #endif
 
+#ifdef BT_VER_GT_286
+    btCollisionAlgorithm* algo = collisionWorld->getDispatcher()->findAlgorithm(&objectWrapper1, &objectWrapper2, 0, BT_CONTACT_POINT_ALGORITHMS);
+#else
     btCollisionAlgorithm* algo = collisionWorld->getDispatcher()->findAlgorithm(&objectWrapper1, &objectWrapper2);
+#endif
+
     if (algo){
         btManifoldResult contactPointResult(&objectWrapper1, &objectWrapper2);
         algo->processCollision(&objectWrapper1, &objectWrapper2, collisionWorld->getDispatchInfo(), &contactPointResult);
