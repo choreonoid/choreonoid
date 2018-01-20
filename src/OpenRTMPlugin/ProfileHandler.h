@@ -132,7 +132,7 @@ public:
 	static bool restoreRtsProfile(std::string targetFile, RTSystemItem* impl);
 
 	static void saveRtsProfile(std::string& targetFile,
-														 std::string& targetSystem, std::string& hostName,
+														 std::string& systemId, std::string& hostName,
 														 std::map<std::string, cnoid::RTSCompPtr>& comps,
 														 RTSConnectionMap& connections);
 

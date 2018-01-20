@@ -8,6 +8,7 @@
 #include "RTSNameServerView.h"
 #include "RTSCommonUtil.h"
 #include "RTSDiagramView.h"
+#include <cnoid/MessageView>
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
 #include <cnoid/CorbaUtil>
@@ -458,6 +459,7 @@ void RTSystemItem::initialize(ExtensionManager* ext) {
 RTSystemItem::RTSystemItem() {
 	impl = new RTSystemItemImpl(this);
 	autoConnection = true;
+  systemName = "";
 }
 
 
@@ -795,9 +797,13 @@ void RTSystemItemImpl::deleteRTSConnection(const RTSConnection* connection)
 }
 
 
-void RTSystemItem::doPutProperties(PutPropertyFunction& putProperty)
-{
-    putProperty(_("Auto Connection"), autoConnection, changeProperty(autoConnection));
+void RTSystemItem::doPutProperties(PutPropertyFunction& putProperty) {
+  putProperty(_("Auto Connection"), autoConnection, changeProperty(autoConnection));
+
+  putProperty(_("System Name"), systemName, changeProperty(systemName));
+  putProperty(_("Vendor Name"), vendorName, changeProperty(vendorName));
+  putProperty(_("Version"), version, changeProperty(version));
+  putProperty(_("Profile Path"), profileFileName, changeProperty(profileFileName));
 }
 
 struct ConnectorPropComparator {
@@ -812,19 +818,33 @@ struct ConnectorPropComparator {
 };
 ///////////
 bool RTSystemItem::store(Archive& archive) {
+  if (systemName.length() == 0) {
+    MessageView::instance()->putln(MessageView::ERROR, _("System name is not set."));
+    return false;
+  }
+  if (vendorName.length() == 0) {
+    MessageView::instance()->putln(MessageView::ERROR, _("Vendor is not set."));
+    return false;
+  }
+  if (version.length() == 0) {
+    MessageView::instance()->putln(MessageView::ERROR, _("Version is not set."));
+    return false;
+  }
+  if (profileFileName.length() == 0) {
+    MessageView::instance()->putln(MessageView::ERROR, _("RtsProfile file name is not set."));
+    return false;
+  }
+
 	archive.write("AutoConnection", autoConnection);
 
 	string currentFolder;
 	AppConfig::archive()->read("currentFileDialogDirectory", currentFolder);
 	DDEBUG_V("path:%s", currentFolder.c_str());
 
-	string targetFile = name() + ".xml";
-	string targetSystem = name();
-	archive.write("file", targetFile);
-
-	//saveRtsProfile(currentFolder + "/" + targetFile, targetSystem);
+	archive.write("file", profileFileName);
+  string systemId = "RTSystem:" + vendorName + ":" + systemName + ":" + version;
 	string hostName = impl->ncHelper.host();
-	ProfileHandler::saveRtsProfile(currentFolder + "/" + targetFile, targetSystem, hostName,
+	ProfileHandler::saveRtsProfile(currentFolder + "/" + profileFileName, systemId, hostName,
 																	impl->rtsComps, impl->rtsConnections);
 
   return true;
@@ -848,6 +868,7 @@ void RTSystemItemImpl::restoreRTSystem(const Archive& archive) {
 	archive.read("file", targetFile);
 	DDEBUG_V("targetFile:%s", targetFile.c_str());
 	if (0 < targetFile.length()) {
+    self->profileFileName = targetFile;
 		string currentFolder;
 		AppConfig::archive()->read("currentFileDialogDirectory", currentFolder);
 		if (ProfileHandler::restoreRtsProfile(currentFolder + "/" + targetFile, self) == false) return;

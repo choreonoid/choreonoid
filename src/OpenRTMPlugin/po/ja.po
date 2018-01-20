@@ -272,6 +272,34 @@ msgstr "RTシステムアイテム"
 msgid "Auto Connection"
 msgstr "自動接続"
 
+#: RTSItem.cpp:802
+msgid "System Name"
+msgstr "システム名"
+
+#: RTSItem.cpp:803
+msgid "Vendor Name"
+msgstr "ベンダ名"
+
+#: RTSItem.cpp:805
+msgid "Profile Path"
+msgstr "プロファイル保存先"
+
+#: RTSItem.cpp:822
+msgid "System name is not set."
+msgstr "システム名が設定されていません"
+
+#: RTSItem.cpp:826
+msgid "Vendor is not set."
+msgstr "ベンダ名が設定されていません"
+
+#: RTSItem.cpp:830
+msgid "Version is not set."
+msgstr "バージョン番号が設定されていません"
+
+#: RTSItem.cpp:834
+msgid "RtsProfile file name is not set."
+msgstr "RtsProfileのファイル名が設定されていません"
+
 #: RTSNameServerView.cpp:80
 msgid "RTC List"
 msgstr "RTCリスト"

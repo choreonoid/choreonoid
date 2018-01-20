@@ -187,6 +187,11 @@ public:
 
     bool autoConnection;
 
+    std::string systemName;
+    std::string vendorName;
+    std::string version;
+    std::string profileFileName;
+
 protected :
     virtual Item* doDuplicate() const;
     virtual void doPutProperties(PutPropertyFunction& putProperty);

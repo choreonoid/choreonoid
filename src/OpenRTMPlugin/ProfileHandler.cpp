@@ -17,7 +17,14 @@ bool ProfileHandler::restoreRtsProfile(std::string targetFile, RTSystemItem* imp
 	DDEBUG("ProfileHandler::restoreRtsProfile");
 	RtsProfile profile;
 	if (parseProfile(targetFile, profile) == false) return false;
-
+  ///
+  QString strId = QString::fromStdString(profile.id);
+  QStringList elems = strId.split(":");
+  if (elems.size() < 4) return false;
+  impl->vendorName = elems.at(1).toStdString();
+  impl->systemName = elems.at(2).toStdString();
+  impl->version = elems.at(3).toStdString();
+  ///
 	for (int index = 0; index < profile.compList.size(); index++) {
 		Component compProf = profile.compList[index];
 
@@ -266,9 +273,9 @@ TargetPort ProfileHandler::parseTargetPort(pugi::xml_node& targetPort) {
 	return result;
 }
 //////////
-void ProfileHandler::saveRtsProfile(string& targetFile, string& targetSystem, string& hostName, map<string, RTSCompPtr>& comps, RTSConnectionMap& connections) {
+void ProfileHandler::saveRtsProfile(string& targetFile, string& systemId, string& hostName, map<string, RTSCompPtr>& comps, RTSConnectionMap& connections) {
 	RtsProfile profile;
-	profile.id = "RTSystem:AIST:" + targetSystem + ":1.0.0";
+	profile.id = systemId;
 
 	for (map<string, RTSCompPtr>::iterator it = comps.begin(); it != comps.end(); it++) {
 		RTSComp* comp = it->second.get();
@@ -278,8 +285,8 @@ void ProfileHandler::saveRtsProfile(string& targetFile, string& targetSystem, st
 		compProf.instanceName = compRaw->instance_name;
 		compProf.pathUri = hostName + comp->fullPath;
 		compProf.activeConfigurationSet = comp->rtc_->get_configuration()->get_active_configuration_set()->id;
-		compProf.posX = -comp->pos.x() / 2;
-		compProf.posY = -comp->pos.y() / 2;
+		compProf.posX = comp->pos.x();
+		compProf.posY = comp->pos.y();
 
 		PortProfileList portList = compRaw->port_profiles;
 		for (vector<RTSPortPtr>::iterator p0 = comp->inPorts.begin(); p0 != comp->inPorts.end(); p0++) {
