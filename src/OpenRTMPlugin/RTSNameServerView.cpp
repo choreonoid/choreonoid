@@ -204,7 +204,8 @@ namespace cnoid {
 		QString ior = iorText_->toPlainText();
 		NamingContextHelper::ObjectPath path(name.toStdString(), kind.toStdString());
 		pathList.push_back(path);
-		if (RTSNameServerView::instance()->getNCHelper().bindObject(pathList, ior.toStdString()) == false) {
+    string strIor = ior.toStdString();
+		if (RTSNameServerView::instance()->getNCHelper().bindObject(pathList, strIor) == false) {
 			QMessageBox::information(this, _("Add Object"), _("Failed to add object."));
 			return;
 		}
@@ -224,50 +225,58 @@ namespace cnoid {
 	void RTSNameTreeWidget::mousePressEvent(QMouseEvent* event) {
 		DDEBUG("RTSNameTreeWidget::mousePressEvent");
 		if (event->button() == Qt::RightButton) {
-			if (this->currentItem()) {
-				menuManager.setNewPopupMenu(this);
-				menuManager.addItem(_("Show IOR"))
-					->sigTriggered().connect(std::bind(&RTSNameTreeWidget::showIOR, this));
+      if (this->currentItem()) {
+        menuManager.setNewPopupMenu(this);
+        menuManager.addItem(_("Show IOR"))
+          ->sigTriggered().connect(std::bind(&RTSNameTreeWidget::showIOR, this));
 
-				if (((RTSVItem*)this->currentItem())->kind_ == KIND_SERVER) {
-					menuManager.addItem(_("Delete from View"))
-						->sigTriggered().connect(std::bind(&RTSNameTreeWidget::deleteFromView, this));
-				} else {
-					menuManager.addItem(_("Delete from Name Service"))
-						->sigTriggered().connect(std::bind(&RTSNameTreeWidget::deleteFromNameService, this));
-				}
+        RTSVItem* targetItem = (RTSVItem*)this->currentItem();
+        if (RTSNameServerView::instance()->getNCHelper().isObjectAlive(targetItem->rtc_) == false) {
+          menuManager.addItem(_("Delete from Name Service"))
+            ->sigTriggered().connect(std::bind(&RTSNameTreeWidget::deleteFromNameService, this));
 
-				if (((RTSVItem*)this->currentItem())->kind_ == KIND_RTC) {
-					menuManager.addSeparator();
-					menuManager.addItem("Activate")
-						->sigTriggered().connect(std::bind(&RTSNameTreeWidget::activateComponent, this));
-					menuManager.addItem("Deactivate")
-						->sigTriggered().connect(std::bind(&RTSNameTreeWidget::deactivateComponent, this));
-					menuManager.addItem("Reset")
-						->sigTriggered().connect(std::bind(&RTSNameTreeWidget::resetComponent, this));
-					if (isManagedRTC(((RTSVItem*)this->currentItem())->rtc_) == false) {
-						menuManager.addItem("Exit")
-							->sigTriggered().connect(std::bind(&RTSNameTreeWidget::finalizeComponent, this));
-					}
-					menuManager.addSeparator();
-					menuManager.addItem("Start")
-						->sigTriggered().connect(std::bind(&RTSNameTreeWidget::startExecutionContext, this));
-					menuManager.addItem("Stop")
-						->sigTriggered().connect(std::bind(&RTSNameTreeWidget::stopExecutionContext, this));
+        } else {
+          if (targetItem->kind_ == KIND_SERVER) {
+            menuManager.addItem(_("Delete from View"))
+              ->sigTriggered().connect(std::bind(&RTSNameTreeWidget::deleteFromView, this));
+          }
+          else {
+            menuManager.addItem(_("Delete from Name Service"))
+              ->sigTriggered().connect(std::bind(&RTSNameTreeWidget::deleteFromNameService, this));
+          }
 
-				} else {
-					if (((RTSVItem*)this->currentItem())->kind_ != KIND_OTHER) {
-						menuManager.addItem(_("Add Context"))
-							->sigTriggered().connect(std::bind(&RTSNameTreeWidget::addContext, this));
-						menuManager.addItem(_("Add Object"))
-							->sigTriggered().connect(std::bind(&RTSNameTreeWidget::addObject, this));
-					}
-				}
+          if (targetItem->kind_ == KIND_RTC) {
+            menuManager.addSeparator();
+            menuManager.addItem("Activate")
+              ->sigTriggered().connect(std::bind(&RTSNameTreeWidget::activateComponent, this));
+            menuManager.addItem("Deactivate")
+              ->sigTriggered().connect(std::bind(&RTSNameTreeWidget::deactivateComponent, this));
+            menuManager.addItem("Reset")
+              ->sigTriggered().connect(std::bind(&RTSNameTreeWidget::resetComponent, this));
+            if (isManagedRTC(((RTSVItem*)this->currentItem())->rtc_) == false) {
+              menuManager.addItem("Exit")
+                ->sigTriggered().connect(std::bind(&RTSNameTreeWidget::finalizeComponent, this));
+            }
+            menuManager.addSeparator();
+            menuManager.addItem("Start")
+              ->sigTriggered().connect(std::bind(&RTSNameTreeWidget::startExecutionContext, this));
+            menuManager.addItem("Stop")
+              ->sigTriggered().connect(std::bind(&RTSNameTreeWidget::stopExecutionContext, this));
 
-				menuManager.popupMenu()->popup(event->globalPos());
-			}
+          }
+          else {
+            if (targetItem->kind_ != KIND_OTHER) {
+              menuManager.addItem(_("Add Context"))
+                ->sigTriggered().connect(std::bind(&RTSNameTreeWidget::addContext, this));
+              menuManager.addItem(_("Add Object"))
+                ->sigTriggered().connect(std::bind(&RTSNameTreeWidget::addObject, this));
+            }
+          }
+        }
+
+        menuManager.popupMenu()->popup(event->globalPos());
+      }
 		}
-
 		TreeWidget::mousePressEvent(event);
 	}
 
@@ -528,23 +537,23 @@ void RTSNameServerViewImpl::updateObjectList(const NamingContextHelper::ObjectIn
 		item->setText(0, QString::fromStdString(info.id) + "|" + QString::fromStdString(info.kind));
 
 		NamingContextHelper::ObjectPath pathSub(info.id, info.kind);
-		if (RTCCommonUtil::matchIgnore(info.kind, "host_cxt")) {
+		if (RTCCommonUtil::compareIgnoreCase(info.kind, "host_cxt")) {
 			item->setIcon(0, QIcon(":/Corba/icons/Server.png"));
 			item->kind_ = KIND_HOST;
 
-		} else if (RTCCommonUtil::matchIgnore(info.kind, "cate_cxt")) {
+		} else if (RTCCommonUtil::compareIgnoreCase(info.kind, "cate_cxt")) {
 			item->setIcon(0, QIcon(":/Corba/icons/CategoryNamingContext.png"));
 			item->kind_ = KIND_CATEGORY;
 
-		} else if (RTCCommonUtil::matchIgnore(info.kind, "mgr_cxt")) {
+		} else if (RTCCommonUtil::compareIgnoreCase(info.kind, "mgr_cxt")) {
 			item->setIcon(0, QIcon(":/Corba/icons/ManagerNamingContext.png"));
 			item->kind_ = KIND_MANAGER;
 
-		} else if (RTCCommonUtil::matchIgnore(info.kind, "mod_cxt")) {
+		} else if (RTCCommonUtil::compareIgnoreCase(info.kind, "mod_cxt")) {
 			item->setIcon(0, QIcon(":/Corba/icons/ModuleNamingContext.png"));
 			item->kind_ = KIND_MODULE;
 
-		} else if (RTCCommonUtil::matchIgnore(info.kind, "server_cxt")) {
+		} else if (RTCCommonUtil::compareIgnoreCase(info.kind, "server_cxt")) {
 			item->setIcon(0, QIcon(":/Corba/icons/RT.png"));
 			item->kind_ = KIND_SERVER;
 

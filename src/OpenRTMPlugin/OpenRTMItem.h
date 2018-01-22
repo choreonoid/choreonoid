@@ -29,7 +29,7 @@ public:
 
 	RTC_STATUS getRTCState();
 
-	inline std::string getInstanceName() { return compProfile_->instance_name; }
+	inline std::string getInstanceName() { return std::string(compProfile_->instance_name); }
 	inline std::string getIOR() const { return this->ior_; }
 	inline void setIOR(std::string value) { this->ior_ = value; }
 

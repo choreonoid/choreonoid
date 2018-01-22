@@ -81,7 +81,7 @@ bool ProfileHandler::restoreRtsProfile(std::string targetFile, RTSystemItem* imp
 			bool isExist = false;
 			SDOPackage::ConfigurationSet confRaw;
 			for (int idxConf = 0; idxConf < confSet->length(); idxConf++) {
-				string rawId = confSet[idxConf].id;
+				string rawId = string(confSet[idxConf].id);
 				if (configSetProf.id == rawId) {
 					isExist = true;
 					confRaw = confSet[idxConf];
@@ -259,7 +259,7 @@ void ProfileHandler::parseConfigurationSet(xml_node& comp, Component& proComp) {
 	}
 }
 
-TargetPort ProfileHandler::parseTargetPort(pugi::xml_node& targetPort) {
+TargetPort ProfileHandler::parseTargetPort(const pugi::xml_node& targetPort) {
 	TargetPort result;
 	result.portName = targetPort.attribute("rts:portName").as_string();
 	result.instanceName = targetPort.attribute("rts:instanceName").as_string();

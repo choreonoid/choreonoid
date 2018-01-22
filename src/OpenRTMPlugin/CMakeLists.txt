@@ -102,6 +102,39 @@ endif()
 
 make_gettext_mofiles(${plugin} mofiles)
 
+######
+if(UNIX)
+  set(OPENRTM_DIR ${OPENRTM_DIR} CACHE PATH "set the top directory of OpenRTM-aist")
+  if(NOT OPENRTM_DIR)
+    pkg_check_modules(OPENRTM REQUIRED openrtm-aist)
+    message(STATUS "OPENRTM VERSION ${OPENRTM_VERSION}" )
+    execute_process(
+      COMMAND pkg-config --variable=prefix openrtm-aist
+      OUTPUT_VARIABLE OPENRTM_DIR
+      RESULT_VARIABLE RESULT
+      OUTPUT_STRIP_TRAILING_WHITESPACE)
+    message(STATUS "OPENRTM_DIR=${OPENRTM_DIR}")
+    if(NOT (EXISTS "${OPENRTM_DIR}/include/openrtm-1.1/rtm/RTObjectStateMachine.h"))
+      set(OPENRTM_DEFINITIONS -DOPENRTM_VERSION110)
+    else()
+      set(OPENRTM_DEFINITIONS -DOPENRTM_VERSION_TRUNK)
+    endif()
+  endif()
+
+  set(OPENRTM_INCLUDE_DIRS
+    ${OPENRTM_DIR}/include 
+    ${OPENRTM_DIR}/include/coil-1.1
+    ${OPENRTM_DIR}/include/openrtm-1.1 
+    ${OPENRTM_DIR}/include/openrtm-1.1/rtm/idl
+    ${OPENRTM_DIR}/include/openrtm-1.1/rtm/ext
+    ${OPENRTM_DIR}/rtm # for the Windows installer version
+    ${OPENRTM_DIR}/rtm/idl # for the Windows installer version
+    ${OPENRTM_DIR}
+    )
+
+  set(OPENRTM_INCLUDE_DIRS ${OPENRTM_INCLUDE_DIRS} CACHE INTERNAL "OpenRTM's include directories")
+endif()
+######
 include_directories(${OPENRTM_INCLUDE_DIRS})
 link_directories(${OPENRTM_LIBRARY_DIRS})
 add_definitions(${OPENRTM_DEFINITIONS})

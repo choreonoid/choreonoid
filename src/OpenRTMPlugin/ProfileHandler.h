@@ -139,7 +139,7 @@ public:
 private:
 	static bool parseProfile(std::string targetFile, RtsProfile& profile);
 	static void parseConfigurationSet(pugi::xml_node& comp, Component& proComp);
-	static TargetPort parseTargetPort(pugi::xml_node& targetPort);
+	static TargetPort parseTargetPort(const pugi::xml_node& targetPort);
 
 	static RTSPort* getTargetPort(std::string& sourceRtc, std::string& sourcePort, RTSystemItem* impl);
 	/////

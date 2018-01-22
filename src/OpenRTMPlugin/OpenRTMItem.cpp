@@ -24,37 +24,39 @@ using namespace RTC;
 namespace cnoid { 
 
 bool RTCWrapper::getConfiguration(NamingContextHelper::ObjectInfo& target, std::vector<ConfigurationSetParamPtr>& configSetList) {
-	RTSNameServerView* nsView = RTSNameServerView::instance();
-	ncHelper_.setLocation(nsView->getHost(), nsView->getPort());
+  DDEBUG("RTCWrapper::getConfiguration");
+ 
+  RTSNameServerView* nsView = RTSNameServerView::instance();
+  ncHelper_.setLocation(nsView->getHost(), nsView->getPort());
 
 	RTCWrapper result;
-	if (target.fullPath.size() == 0) {
-		rtc_ = ncHelper_.findObject<RTC::RTObject>(target.id, "rtc");
+  if (target.fullPath.size() == 0) {
+    rtc_ = ncHelper_.findObject<RTC::RTObject>(target.id, "rtc");
 	} else {
-		CORBA::Object::_ptr_type obj = ncHelper_.findObject(target.fullPath);
+    CORBA::Object::_ptr_type obj = ncHelper_.findObject(target.fullPath);
 		if (CORBA::is_nil(obj)) {
-			rtc_ = RTC::RTObject::_nil();
+      rtc_ = RTC::RTObject::_nil();
 		} else {
-			rtc_ = RTC::RTObject::_narrow(obj);
+      rtc_ = RTC::RTObject::_narrow(obj);
 			CORBA::release(obj);
 		}
 	}
-	if (!ncHelper_.isObjectAlive(rtc_)) return false;
+  if (!ncHelper_.isObjectAlive(rtc_)) return false;
 
-	compProfile_ = rtc_->get_component_profile();
-	configuration_ = rtc_->get_configuration();
+  compProfile_ = rtc_->get_component_profile();
+  configuration_ = rtc_->get_configuration();
 
 	QString activeName;
 	try {
-		SDOPackage::ConfigurationSet* activeConf = configuration_->get_active_configuration_set();
-		if (activeConf) {
-			activeName = QString(string(activeConf->id).c_str());
+    SDOPackage::ConfigurationSet* activeConf = configuration_->get_active_configuration_set();
+    if (activeConf) {
+      activeName = QString(string(activeConf->id).c_str());
 		}
 	} catch (...) {
-	}
+  }
 
 	SDOPackage::ConfigurationSetList_var confSet = configuration_->get_configuration_sets();
-	int setNum = confSet->length();
+  int setNum = confSet->length();
 	for (int index = 0; index < setNum; index++) {
 		SDOPackage::ConfigurationSet conf = confSet[index];
 		QString name = QString(string(conf.id).c_str());
@@ -73,7 +75,7 @@ bool RTCWrapper::getConfiguration(NamingContextHelper::ObjectInfo& target, std::
 			id++;
 		}
 	}
-	return true;
+  return true;
 }
 
 void RTCWrapper::updateConfiguration(std::vector<ConfigurationSetParamPtr>& configList) {

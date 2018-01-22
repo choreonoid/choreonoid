@@ -110,7 +110,7 @@ bool RTSPort::checkConnectablePort(RTSPort* target) {
 		vector<string> dataTypes = RTCCommonUtil::getAllowDataTypes(this, target);
 		vector<string> ifTypes = RTCCommonUtil::getAllowInterfaceTypes(this, target);
 		vector<string> subTypes = RTCCommonUtil::getAllowSubscriptionTypes(this, target);
-		if (dataTypes.size() == 0 || ifTypes.size() == 0 || subTypes.size() == 0) return false;
+    if (dataTypes.size() == 0 || ifTypes.size() == 0 || subTypes.size() == 0) return false;
 	}
 	return true;
 }
@@ -416,13 +416,13 @@ void RTSComp::setRtc(RTObject_ptr rtc) {
         coil::Properties pproperties = NVUtil::toProperties(portprofile->properties);
         string portType = pproperties["port.port_type"];
         RTSPortPtr rtsPort = new RTSPort(string(portprofile->name), portlist[i], this);
-				if (RTCCommonUtil::matchIgnore(portType, "CorbaPort")) {
+				if (RTCCommonUtil::compareIgnoreCase(portType, "CorbaPort")) {
             rtsPort->isServicePort = true;
             rtsPort->isInPort = false;
             outPorts.push_back(rtsPort);
         }else{
             rtsPort->isServicePort = false;
-						if (RTCCommonUtil::matchIgnore(portType, "DataInPort"))
+						if (RTCCommonUtil::compareIgnoreCase(portType, "DataInPort"))
                 inPorts.push_back(rtsPort);
             else{
                 rtsPort->isInPort = false;
@@ -844,7 +844,8 @@ bool RTSystemItem::store(Archive& archive) {
 	archive.write("file", profileFileName);
   string systemId = "RTSystem:" + vendorName + ":" + systemName + ":" + version;
 	string hostName = impl->ncHelper.host();
-	ProfileHandler::saveRtsProfile(currentFolder + "/" + profileFileName, systemId, hostName,
+  string targetFile = currentFolder + "/" + profileFileName;
+	ProfileHandler::saveRtsProfile(targetFile, systemId, hostName,
 																	impl->rtsComps, impl->rtsConnections);
 
   return true;

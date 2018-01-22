@@ -305,12 +305,12 @@ void RTSPropertiesViewImpl::showPortConcrete(PortProfile* portprofile, QTreeWidg
     string portType = pproperties["port.port_type"];
 
     QTreeWidgetItem* port = new QTreeWidgetItem;
-		if (RTCCommonUtil::matchIgnore(portType, "CorbaPort")) {
+		if (RTCCommonUtil::compareIgnoreCase(portType, "CorbaPort")) {
         port->setText(0, QString("ServicePort"));
         port->setIcon(0, QIcon(":/RTSystemEditor/icons/IconServicePort.png"));
     } else {
         port->setText(0, QString(portType.substr(4).c_str()));
-				port->setIcon(0, QIcon(RTCCommonUtil::matchIgnore(portType, "DataOutPort") ? 
+				port->setIcon(0, QIcon(RTCCommonUtil::compareIgnoreCase(portType, "DataOutPort") ?
                 ":/RTSystemEditor/icons/IconOutPort.png" :
                 ":/RTSystemEditor/icons/IconInPort.png"));
     }
@@ -321,7 +321,7 @@ void RTSPropertiesViewImpl::showPortConcrete(PortProfile* portprofile, QTreeWidg
     portChild->setText(1, QString(portName.c_str()));
     port->addChild(portChild);
 
-		if (RTCCommonUtil::matchIgnore(portType, "CorbaPort")) {
+		if (RTCCommonUtil::compareIgnoreCase(portType, "CorbaPort")) {
         RTC::PortInterfaceProfileList iflist = portprofile->interfaces;
         for (CORBA::ULong i = 0; i < iflist.length(); i++) {
             QTreeWidgetItem* ifport = new QTreeWidgetItem;

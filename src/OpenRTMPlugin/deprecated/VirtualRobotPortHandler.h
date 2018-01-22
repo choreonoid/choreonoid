@@ -12,7 +12,11 @@
 #include <cnoid/RangeCamera>
 #include <cnoid/RangeSensor>
 #include <rtm/idl/InterfaceDataTypes.hh>
+#ifdef WIN32
 #include <rtm/idl/CameraCommonInterface.hh>
+#else
+#include <rtm/ext/CameraCommonInterface.hh>
+#endif
 #include <rtm/idl/BasicDataType.hh>
 #include <rtm/idl/ExtendedDataTypes.hh>
 #include <rtm/idl/InterfaceDataTypes.hh>

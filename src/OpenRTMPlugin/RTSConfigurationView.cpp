@@ -442,10 +442,10 @@ namespace cnoid {
 		configSetList_.clear();
 
 		currentRtc_ = std::make_shared<RTCWrapper>();
-		if(currentRtc_->getConfiguration(currentItem_, configSetList_)) {
+    if(currentRtc_->getConfiguration(currentItem_, configSetList_)) {
 			txtCompName_->setText(QString(string(currentRtc_->getInstanceName()).c_str()));
-		}
-	}
+    }
+  }
 
 	void RTSConfigurationViewImpl::applyClicked() {
 		DDEBUG("RTSConfigurationViewImpl::applyClicked");

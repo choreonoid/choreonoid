@@ -5,6 +5,9 @@
  */
 #include "RTSCommonUtil.h"
 
+#include <string>
+#include <QString>
+
 #include "LoggerUtil.h"
 #include "gettext.h"
 
@@ -18,7 +21,7 @@ string DataTypeComparer::match(string type1, string type2) {
 	bool isIFR2 = RTCCommonUtil::isIFR(type2);
 	// For IFR formats (1.1) and simple forms (1.0), default type comparison  
 	if (isIFR1 == isIFR2) {
-		if (_stricmp(type1.c_str(), type2.c_str())==0) {
+    if (RTCCommonUtil::compareIgnoreCase(type1, type2) ) {
 			return type1;
 		}
 		return "";
@@ -45,7 +48,7 @@ string DataTypeComparer::match(string type1, string type2) {
 	for (int i = 1; i <= oldSeg.size(); i++) {
 		string s1 = oldSeg[oldSeg.size() - i];
 		string s2 = ifrSeg[ifrSeg.size() - i];
-		if (_stricmp(s1.c_str(), s2.c_str())) {
+    if (RTCCommonUtil::compareIgnoreCase(s1, s2)) {
 			return "";
 		}
 	}
@@ -54,7 +57,7 @@ string DataTypeComparer::match(string type1, string type2) {
 }
 
 string ignoreCaseComparer::match(string type1, string type2) {
-	if (_stricmp(type1.c_str(), type2.c_str())==0) {
+  if (RTCCommonUtil::compareIgnoreCase(type1, type2) ) {
 		return type1;
 	}
 	return "";
@@ -163,7 +166,8 @@ vector<string> RTCCommonUtil::getAllowSubscriptionTypes(RTSPort* source, RTSPort
 
 	vector<string> sourceTypes = source->getSubscriptionTypes();
 	vector<string> targetTypes = target->getSubscriptionTypes();
-	//
+  DDEBUG_V("size %d %d", sourceTypes.size(), targetTypes.size());
+  //
 	ignoreCaseComparer comparator;
 	result = getAllowList(sourceTypes, targetTypes, comparator);
 
@@ -178,14 +182,14 @@ vector<string> RTCCommonUtil::getAllowList(vector<string>& source, vector<string
 	bool isAllowAny_Source = isExistAny(source);
 	bool isAllowAny_Target = isExistAny(target);
 	//
-	vector<string> resultTmp;
+  vector<string> resultTmp;
 	for (int index = 0; index < source.size(); index++) {
 		string type1 = source[index];
 		if (isAnyString(type1)) continue;
-		if (isAllowAny_Target) {
-			resultTmp.push_back(type1);
+    if (isAllowAny_Target) {
+      resultTmp.push_back(type1);
 		} else {
-			string match;
+      string match;
 			for (int idx02 = 0; idx02 < target.size(); idx02++) {
 				string type2 = target[idx02];
 				match = comparer.match(type1, type2);
@@ -197,22 +201,22 @@ vector<string> RTCCommonUtil::getAllowList(vector<string>& source, vector<string
 			}
 		}
 	}
-	if (isAllowAny_Source) {
-		for (int index = 0; index < source.size(); index++) {
-			string type1 = target[index];
-			if (isAnyString(type1)) continue;
-			string match;
-			for (int idx02 = 0; idx02 < resultTmp.size(); idx02++) {
-				string type2 = resultTmp[idx02];
-				match = comparer.match(type1, type2);
-				if (0 < match.length()) {
-					resultTmp.push_back(match);
-					break;
+  if (isAllowAny_Source) {
+    for (int index = 0; index < target.size(); index++) {
+      string type1 = target[index];
+      if (isAnyString(type1)) continue;
+      string match;
+      for (int idx02 = 0; idx02 < resultTmp.size(); idx02++) {
+        string type2 = resultTmp[idx02];
+        match = comparer.match(type1, type2);
+        if (0 < match.length()) {
+          resultTmp.push_back(match);
+          break;
 				}
-			}
+      }
 		}
 	}
-	vector<string> result;
+  vector<string> result;
 	for (int index = 0; index < resultTmp.size(); index++) {
 		string type = resultTmp[index];
 		if (isAnyString(type)) continue;
@@ -235,7 +239,7 @@ bool RTCCommonUtil::isAllowAnyDataType(RTSPort* source, RTSPort* target) {
 }
 
 bool RTCCommonUtil::isAnyString(std::string target) {
-	return !_stricmp(target.c_str(), "Any");
+  return RTCCommonUtil::compareIgnoreCase(target, "Any");
 }
 
 bool RTCCommonUtil::isExistAny(vector<string> target) {
@@ -256,11 +260,11 @@ bool RTCCommonUtil::isIFR(string type) {
 	return false;
 }
 
-bool RTCCommonUtil::matchIgnore(string type1, string type2) {
-	if (_stricmp(type1.c_str(), type2.c_str()) == 0) {
-		return true;
-	}
-	return false;
+bool RTCCommonUtil::compareIgnoreCase(const string& lhs, const string& rhs) {
+  QString left = QString::fromStdString(lhs);
+  QString right = QString::fromStdString(rhs);
+
+  return QString::compare(left, right, Qt::CaseInsensitive) == 0;
 }
 
 }

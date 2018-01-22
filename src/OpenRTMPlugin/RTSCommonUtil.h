@@ -43,12 +43,13 @@ public:
 	static std::vector<std::string> getAllowSubscriptionTypes(RTSPort* source, RTSPort* target);
 
 	static bool isIFR(std::string type);
-	static bool matchIgnore(std::string type1, std::string type2);
+  static bool compareIgnoreCase(const std::string& lhs, const std::string& rhs);
 
 private:
 	static std::vector<std::string> getAllowList(std::vector<std::string>& source, std::vector<std::string>& target, TypeComparer& comparer);
 	static bool isAnyString(std::string target);
 	static bool isExistAny(std::vector<std::string> target);
+
 
 };
 
