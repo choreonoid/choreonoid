@@ -528,17 +528,18 @@ agx::ConstraintRef AGXLink::createAGXConstraint()
     AGXLink* const agxParentLink = getAGXParentLink();
     if(!agxParentLink) return nullptr;
     Link* const orgLink = getOrgLink();
-
     Mapping* map = orgLink->info();
 
     AGXElementaryConstraint base, motor, range, lock;
     map->read("jointCompliance", base.compliance);
-    map->read("jointMotorCompliance", motor.compliance);
-    map->read("jointRangeCompliance", range.compliance);
-    map->read("jointLockCompliance",  lock.compliance);
     map->read("jointDamping", base.damping);
+    map->read("jointMotor", motor.enable);
+    map->read("jointMotorCompliance", motor.compliance);
     map->read("jointMotorDamping", motor.damping);
+    map->read("jointRangeCompliance", range.compliance);
     map->read("jointRangeDamping", range.damping);
+    map->read("jointLock", lock.enable);
+    map->read("jointLockCompliance",  lock.compliance);
     map->read("jointLockDamping",  lock.damping);
 
     Vector2 baseForceRange, motorForceRange, rangeForceRange, lockForceRange;
@@ -568,20 +569,32 @@ agx::ConstraintRef AGXLink::createAGXConstraint()
             desc.compliance = base.compliance;
             desc.damping = base.damping;
             desc.forceRange = base.forceRange;
+
             // motor
-            if(orgLink->actuationMode() != Link::ActuationMode::NO_ACTUATION) desc.motor.enable = true;
+            desc.motor.enable = motor.enable;
             desc.motor.compliance = motor.compliance;
             desc.motor.damping = motor.damping;
+
+            // lock
+            desc.lock.enable = lock.enable;
+            desc.lock.compliance = lock.compliance;
+            desc.lock.damping = lock.damping;
+
+            // range
+            desc.range.enable = true;  // range.enable;
+            desc.range.range = agx::RangeReal(orgLink->q_lower(), orgLink->q_upper());
+            constraint = AGXObjectFactory::createConstraint(desc);
+
+            // motor
+            if(orgLink->actuationMode() != Link::ActuationMode::NO_ACTUATION){
+                desc.motor.enable = true;
+            }
             // lock
             if(orgLink->actuationMode() == Link::ActuationMode::JOINT_ANGLE){
                 desc.motor.enable = false;
                 desc.lock.enable = true;
             }
-            desc.lock.compliance = lock.compliance;
-            desc.lock.damping = lock.damping;
-            // range
-            desc.range.enable = true;
-            desc.range.range = agx::RangeReal(orgLink->q_lower(), orgLink->q_upper());
+
             constraint = AGXObjectFactory::createConstraint(desc);
             break;
         }
@@ -596,18 +609,31 @@ agx::ConstraintRef AGXLink::createAGXConstraint()
             desc.compliance = base.compliance;
             desc.damping = base.damping;
             desc.forceRange = base.forceRange;
+
             // motor
-            if(orgLink->actuationMode() != Link::ActuationMode::NO_ACTUATION) desc.motor.enable = true;
+            desc.motor.enable = motor.enable;
             desc.motor.compliance = motor.compliance;
             desc.motor.damping = motor.damping;
+
             // lock
-            if(orgLink->actuationMode() == Link::ActuationMode::JOINT_ANGLE) desc.lock.enable = true;
+            desc.lock.enable = lock.enable;
             desc.lock.compliance = lock.compliance;
             desc.lock.damping = lock.damping;
+
             // range
-            desc.range.enable = true;
+            desc.range.enable = true;  // range.enable;
             desc.range.range = agx::RangeReal(orgLink->q_lower(), orgLink->q_upper());
             constraint = AGXObjectFactory::createConstraint(desc);
+
+            // motor
+            if(orgLink->actuationMode() != Link::ActuationMode::NO_ACTUATION){
+                desc.motor.enable = true;
+            }
+            // lock
+            if(orgLink->actuationMode() == Link::ActuationMode::JOINT_ANGLE){
+                desc.motor.enable = false;
+                desc.lock.enable = true;
+            }
             break;
         }
         case Link::FIXED_JOINT :
