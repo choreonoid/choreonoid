@@ -17,7 +17,6 @@
 #include <cnoid/Sensor>
 #include <cnoid/BasicSensorSimulationHelper>
 #include <cnoid/BodyItem>
-#include <cnoid/BodyCollisionDetectorUtil>
 #include <cnoid/FloatingNumberString>
 #include <cnoid/EigenUtil>
 #include <cnoid/MeshExtractor>
@@ -237,8 +236,6 @@ public:
     bool useContactFile;
     string contactFileName;
     map<rkChain*, Body*> bodyMap;
-    //bool useWorldCollision;
-    CollisionDetectorPtr collisionDetector;
     vector<RokiLink*> geometryIdToLink;
 
     double simulationTime;
@@ -810,12 +807,6 @@ RokiBody::~RokiBody()
 void RokiBody::createBody(RokiSimulatorItemImpl* simImpl, bool stuffisLinkName)
 {
     Body* body = this->body();
-#if 0
-    if(simImpl->useWorldCollision){
-        geometryId = addBodyToCollisionDetector(*body, *simImpl->collisionDetector,
-                bodyItem()->isSelfCollisionDetectionEnabled());
-    }
-#endif
 
     lc = zAlloc( rkFDCell, 1 );
     chain = &lc->data.chain;
@@ -863,19 +854,6 @@ void RokiBody::createBody(RokiSimulatorItemImpl* simImpl, bool stuffisLinkName)
     // Do not check for self collisions
     if(!bodyItem()->isSelfCollisionDetectionEnabled())
         rkCDPairChainUnreg( &simImpl->fd.cd, &lc->data.chain );
-
-#if 0
-    if(simImpl->useWorldCollision){
-        int numLinks = rokiLinks.size();
-        simImpl->geometryIdToLink.resize(geometryId+numLinks);
-        for(int i=0; i < numLinks; i++){
-            RokiLink* rokiLink = rokiLinks[i].get();
-            int index = rokiLink->link->index();
-            simImpl->geometryIdToLink[geometryId+index] = rokiLink;
-            simImpl->collisionDetector->updatePosition(geometryId+index, rokiLink->link->T());
-        }
-    }
-#endif
 
     sensorHelper.initialize(body, simImpl->timeStep, Vector3(0,0,-9.80665));
 
@@ -977,7 +955,6 @@ RokiSimulatorItemImpl::RokiSimulatorItemImpl(RokiSimulatorItem* self)
     viscosity = 0.0;
     useContactFile = false;
     contactFileName.clear();
-    //useWorldCollision = false;
 
 }
 
@@ -1005,7 +982,6 @@ RokiSimulatorItemImpl::RokiSimulatorItemImpl(RokiSimulatorItem* self, const Roki
     viscosity = org.viscosity;
     useContactFile = org.useContactFile;
     contactFileName = org.contactFileName;
-    //useWorldCollision = org.useWorldCollision;
 
 }
 
@@ -1045,14 +1021,6 @@ bool RokiSimulatorItem::initializeSimulation(const std::vector<SimulationBody*>&
 
 bool RokiSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody*>& simBodies)
 {
-#if 0
-    if(useWorldCollision){
-        collisionDetector = self->collisionDetector();
-        collisionDetector->clearGeometries();
-        geometryIdToLink.clear();
-    }
-#endif
-
     bodyMap.clear();
     staticBodyList.clear();
     fixedLinkList.clear();
@@ -1117,11 +1085,6 @@ bool RokiSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBod
 
     rkFDUpdateInit( &fd );
 
-#if 0
-    if(useWorldCollision)
-        collisionDetector->makeReady();
-#endif
-
     simulationTime = 0;
 
     return true;
@@ -1167,45 +1130,10 @@ bool RokiSimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& a
         rokiBody->setTorqueToRoki();
     }
 
-#if 0
-    if(useWorldCollision){
-        zODE2Update( &fd._ode, fd.t, fd.dis, fd.vel, fd.dt, &fd );
-       fd.t += fd.dt;
-       zVecClear( fd.acc );
-       _rkFDChainConnectJointState( &fd, fd.dis, fd.vel, fd.acc );
-       _rkFDChainExtWrenchDestroy( &fd );
+    timer.start();
+    rkFDUpdate( &fd );
+    simulationTime += timer.nsecsElapsed();
 
-       rkCDReset( &fd.cd );
-       fd.cd.colnum = 0;
-        for(size_t i=0; i < activeSimBodies.size(); ++i){
-            RokiBody* rokiBody = static_cast<RokiBody*>(activeSimBodies[i]);
-            for(size_t j=0; j< rokiBody->rokiLinks.size(); j++){
-                int k = rokiBody->geometryId + j;
-                collisionDetector->updatePosition( k, geometryIdToLink[k]->link->T());
-            }
-        }
-        collisionDetector->detectCollisions(std::bind(&RokiSimulatorItemImpl::collisionCallback, this, _1, &fd.cd));
-
-        //rkCDColChkVert( &fd.cd );
-
-        _rkFDJointCalcFriction( &fd, true );
-        if( fd.cd.colnum != 0 ){
-            /* compute contact force */
-            _rkFDContactCalcForce( &fd );
-            /* modify contact force */
-            _rkFDContactModForce( &fd, true );
-        }
-        //_rkFDSolveJointContact( &fd, true );
-        _rkFDUpdateAcc( &fd );
-        zVecClear( fd.acc );
-        _rkFDUpdateRefDrivingTorque( &fd );
-    }else
-#endif
-    {
-        timer.start();
-        rkFDUpdate( &fd );
-        simulationTime += timer.nsecsElapsed();
-    }
 
     for(size_t i=0; i < activeSimBodies.size(); i++){
         RokiBody* rokiBody = static_cast<RokiBody*>(activeSimBodies[i]);
