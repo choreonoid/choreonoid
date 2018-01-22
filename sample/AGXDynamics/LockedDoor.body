@@ -85,9 +85,6 @@ links:
         link1Name: Door
         link2Name: DoorLock
         jointType: fixed
-        #jointAxis: [ 0, 1, 0 ]
-        #jointRange: [ 0.0, 0.4 ]
-        #jointLock: true
         jointCompliance: 1e-6
         breakLimitForce: 3000
         validAxis: [0, 1, 0]
