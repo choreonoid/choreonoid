@@ -233,11 +233,16 @@ struct AGXElementaryConstraint
         compliance = 1e-08;
         damping = 0.0333333;
         forceRange = agx::RangeReal(agx::Infinity);
+        elasticity = -1.0;
+    }
+    void set(const AGXElementaryConstraint& org){
+        *this = org;
     }
     agx::Bool enable;
     agx::Real compliance;
     agx::Real damping;
     agx::RangeReal forceRange;
+    agx::Real elasticity;
 };
 
 struct AGXConstraintDesc : public AGXElementaryConstraint
