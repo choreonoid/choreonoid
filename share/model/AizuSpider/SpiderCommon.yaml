@@ -1,9 +1,4 @@
 B0001: &B0001
-  name: B0001
-  translation: [ 0, 0, 0.03503 ]
-  jointType: free
-  # choreonoid coordinate(=object coordinate)
-  elements:
     -
       type: Transform
       translation: [ 0, 0, 0.43050 ]
