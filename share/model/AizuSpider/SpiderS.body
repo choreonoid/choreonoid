@@ -1,0 +1,15 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: Spider
+rootLink: B0001
+
+links:
+  - 
+    name: B0001
+    translation: [ 0, 0, 0.03503 ]
+    jointType: free
+    elements:
+      Resource:
+        uri: SpiderCommon.yaml
+        node: B0001
