@@ -1,4 +1,5 @@
 #include "AGXScene.h"
+#include <agx/version.h>
 
 namespace cnoid{
 
@@ -19,7 +20,12 @@ void AGXScene::clear(){
 
 void AGXScene::stepSimulation()
 {
+#if AGX_VERSION_GREATER_OR_EQUAL(2 ,21, 0, 0)
+    agx::Thread::registerAsAgxThread();
+    getSimulation()->setMainWorkThread(agx::Thread::getCurrentThread());
+#else
     agx::Thread::makeCurrentThreadMainThread();
+#endif
     getSimulation()->stepForward();
 }
 

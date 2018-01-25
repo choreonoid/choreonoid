@@ -1,0 +1,138 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: LockedDoor
+
+links:
+  -
+    name: PillarL
+    jointType: fixed
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 30.0
+    inertia: [
+      15.725, 0,   0,
+      0,   15.725, 0,
+      0,   0,   0.2 ]
+    elements:
+      -
+        type: Shape
+        geometry: &pillar { type: Box, size: [ 0.2, 0.2, 2.0 ]}
+        appearance: &BodyAppearance
+          material: { diffuseColor: [ 0, 0.6, 0 ], specularColor: [ 0.2, 0.8, 0.2 ], shinines: 0.6 }
+  -
+    name: Door
+    parent: PillarL
+    jointType: revolute
+    jointAxis: [ 0, 0, -1 ]
+    jointRange: [ 0.1, 180 ]
+    centerOfMass: [ 0, 0.35, 0 ]
+    mass: 40
+    inertia: [
+      0.1, 0,   0,
+      0,   0.1, 0,
+      0,   0,   0.5 ]
+    translation: [ 0.1, 0.15, 0.0 ]
+    elements:
+      -
+        type: Transform
+        translation: [ -0.1, 1.0, 0.0 ]
+        elements:
+        -
+          type: Shape
+          translation: [ 0.0, 0.0, 0.6 ]
+          geometry: &long { type: Box, size: [ 0.2, 2.0, 0.6]}
+          appearance: *BodyAppearance
+        -
+          type: Shape
+          translation: [ 0.0, 0.0, -0.6 ]
+          geometry: *long
+          appearance: *BodyAppearance
+        -
+          type: Shape
+          translation: [ 0.0, -0.5, 0.0 ]
+          geometry: { type: Box, size: [ 0.2, 1.0, 0.6]}
+          appearance: *BodyAppearance
+  -
+    name: DoorLock
+    parent: Door
+    jointType: prismatic
+    jointAxis: [ 0, -1, 0]
+    jointRange: [ 0.0, 0.4 ]
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 10.0
+    inertia: [
+      5.725, 0,   0,
+      0,   5.725, 0,
+      0,   0,   0.2 ]
+    elements:
+      -
+        type: Transform
+        translation: [ -0.1, 1.04, 0.0 ]
+        elements:
+          -
+            type: Shape
+            translation: [ 0.0, 0.3, 0.0 ]
+            geometry: { type: Box, size: [ 0.2, 1.2, 0.6]}
+            appearance: { material: { diffuseColor: [ 0.8, 0.8, 0.8 ] } }
+          - # lock
+            type: Shape
+            translation: [ -0.15, 0.65, -0.5 ]
+            geometry: { type: Box, size: [ 0.1, 0.8, 0.4]}
+            appearance: { material: { diffuseColor: [ 0.8, 0.8, 0.8 ] } }
+
+      -
+        type: AGXBreakableJointDevice
+        link1Name: Door
+        link2Name: DoorLock
+        jointType: fixed
+        jointCompliance: 1e-6
+        breakLimitForce: 3000
+        validAxis: [0, 1, 0]
+        period: 3.0
+  -
+    name: DoorGap
+    parent: DoorLock
+    jointType: fixed
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 10.0
+    inertia: [
+      5.725, 0,   0,
+      0,   5.725, 0,
+      0,   0,   0.2 ]
+    elements:
+      -
+        type: Transform
+        translation: [ -0.1, 1.04, 0.0 ]
+        elements:
+          -
+            type: Shape
+            translation: [ 0.0, 0.9, 0.0 ]
+            rotation: [ 0, 0, -1, 45 ]
+            geometry: { type: Box, size: [ 0.2, 0.1, 0.6]}
+            appearance: { material: { diffuseColor: [ 0.8, 0, 0 ] } }
+  -
+    name: PillarR
+    parent: PillarL
+    jointType: fixed
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 30.0
+    inertia: [
+      15.725, 0,   0,
+      0,   15.725, 0,
+      0,   0,   0.2 ]
+    translation: [ 0.0, 2.25, 0.0 ]
+    elements:
+      -
+        type: Shape
+        geometry: *pillar
+        appearance: *BodyAppearance
+
+collisionDetection:
+  excludeLinkGroups:
+  -
+    name: groupA
+    links: [ Door, DoorLock ]
+  -
+    name: groupB
+    links: [ PillarR, PillarL, Door, DoorGap]
+

@@ -3,6 +3,10 @@
 namespace cnoid{
 
 ////////////////////////////////////////////////////////////
+// AGXGeometryDesc
+const agx::Name AGXGeometryDesc::globalCollisionGroupName = "AGXGlobalCollisionGroup";
+
+////////////////////////////////////////////////////////////
 // AGXPseudoContinuousTrackGeometry
 void AGXPseudoContinuousTrackGeometry::setAxis(const agx::Vec3& axis)
 {
@@ -111,7 +115,8 @@ agxCollide::GeometryRef AGXObjectFactory::createGeometry(const AGXGeometryDesc& 
     }else{
         geometry = new agxCollide::Geometry();
     }
-    geometry->addGroup(desc.selfCollsionGroupName);
+    geometry->addGroup(desc.globalCollisionGroupName);
+    geometry->addGroup(desc.selfCollisionGroupName);
     return geometry;
 }
 
@@ -164,6 +169,10 @@ agx::ConstraintRef AGXObjectFactory::createConstraint(const AGXConstraintDesc& d
         default :
             break;
     }
+    constraint->setCompliance(desc.compliance);
+    constraint->setDamping(desc.damping);
+    constraint->setForceRange(desc.forceRange);
+    constraint->setElasticity(desc.elasticity);
     return constraint;
 }
 
@@ -293,6 +302,8 @@ void AGXObjectFactory::setMotor1DParam(agx::Motor1D* controller, const AGXMotor1
     controller->setLockedAtZeroSpeed(desc.enableLockAtZeroSpeed);
     controller->setCompliance(desc.compliance);
     controller->setDamping(desc.damping);
+    controller->setForceRange(desc.forceRange);
+    controller->setElasticity(desc.elasticity);
 }
 
 void AGXObjectFactory::setLock1DParam(agx::Lock1D* controller, const AGXLock1DDesc& desc)
@@ -300,6 +311,8 @@ void AGXObjectFactory::setLock1DParam(agx::Lock1D* controller, const AGXLock1DDe
     controller->setEnable(desc.enable);
     controller->setCompliance(desc.compliance);
     controller->setDamping(desc.damping);
+    controller->setForceRange(desc.forceRange);
+    controller->setElasticity(desc.elasticity);
 }
 
 void AGXObjectFactory::setRange1DParam(agx::Range1D* controller, const AGXRange1DDesc& desc)
@@ -308,10 +321,13 @@ void AGXObjectFactory::setRange1DParam(agx::Range1D* controller, const AGXRange1
     controller->setRange(desc.range);
     controller->setCompliance(desc.compliance);
     controller->setDamping(desc.damping);
+    controller->setForceRange(desc.forceRange);
+    controller->setElasticity(desc.elasticity);
 }
 
 agx::LockJointRef AGXObjectFactory::createConstraintLockJoint(const AGXLockJointDesc & desc)
 {
+    agx::LockJointRef lock;
     return new agx::LockJoint(desc.rigidBodyA, desc.rigidBodyB);
 }
 
@@ -360,6 +376,7 @@ agxVehicle::TrackRef AGXObjectFactory::createVehicleTrack(const AGXVehicleTrackD
         agx::AffineMatrix4x4::translate( heightOffset, 0, node.getHalfExtents().z() ) );
         }
     );
+    track->addGroup(AGXGeometryDesc::globalCollisionGroupName);
     return track;
 }
 

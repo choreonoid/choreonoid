@@ -137,9 +137,10 @@ struct AGXGeometryDesc
     AGXGeometryDesc(){
         isPseudoContinuousTrack = false;
     };
+    static const agx::Name globalCollisionGroupName;
     bool isPseudoContinuousTrack;
     agx::Vec3 axis;
-    agx::Name selfCollsionGroupName;
+    agx::Name selfCollisionGroupName;
 };
 
 class AGXPseudoContinuousTrackGeometry : public agxCollide::Geometry
@@ -225,14 +226,6 @@ enum AGXConstraintType
     AGXPLANEJOINT
 };
 
-struct AGXConstraintDesc
-{
-    AGXConstraintDesc(AGXConstraintType type) : constraintType(type){}
-    const AGXConstraintType constraintType;
-    agx::RigidBodyRef rigidBodyA;
-    agx::RigidBodyRef rigidBodyB;
-};
-
 struct AGXElementaryConstraint
 {
     AGXElementaryConstraint(){
@@ -240,11 +233,24 @@ struct AGXElementaryConstraint
         compliance = 1e-08;
         damping = 0.0333333;
         forceRange = agx::RangeReal(agx::Infinity);
+        elasticity = -1.0;
+    }
+    void set(const AGXElementaryConstraint& org){
+        *this = org;
     }
     agx::Bool enable;
     agx::Real compliance;
     agx::Real damping;
     agx::RangeReal forceRange;
+    agx::Real elasticity;
+};
+
+struct AGXConstraintDesc : public AGXElementaryConstraint
+{
+    AGXConstraintDesc(AGXConstraintType type) : constraintType(type){}
+    const AGXConstraintType constraintType;
+    agx::RigidBodyRef rigidBodyA;
+    agx::RigidBodyRef rigidBodyB;
 };
 
 struct AGXMotor1DDesc : public AGXElementaryConstraint

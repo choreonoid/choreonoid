@@ -13,7 +13,6 @@
 #include <cnoid/Link>
 #include <cnoid/FloatingNumberString>
 #include <cnoid/BasicSensorSimulationHelper>
-#include <cnoid/BodyCollisionDetectorUtil>
 #include <cnoid/MeshExtractor>
 #include <cnoid/SceneDrawables>
 #include <btBulletDynamicsCommon.h>
@@ -116,7 +115,6 @@ public:
     vector<btJointFeedback*> forceSensorFeedbacks;
     vector<btMultiBodyJointFeedback*> multiBodyforceSensorFeedbacks;
     BasicSensorSimulationHelper sensorHelper;
-    int geometryId;
 
     BodyPtr body;
 
@@ -158,12 +156,9 @@ public:
     double friction;
     double erp2;
     double splitImpulsePenetrationThreshold;
-    bool useWorldCollision;
     bool useHACD;                           // Hierarchical Approximate Convex Decomposition
     double collisionMargin;
     bool usefeatherstoneAlgorithm;
-    CollisionDetectorPtr collisionDetector;
-    vector<BulletLink*> geometryIdToLink;
 
     BulletSimulatorItemImpl(BulletSimulatorItem* self);
     BulletSimulatorItemImpl(BulletSimulatorItem* self, const BulletSimulatorItemImpl& org);
@@ -605,9 +600,7 @@ void BulletLink::createLinkBody(BulletSimulatorItemImpl* simImpl, BulletLink* pa
 
     btMultiBody* multiBody = 0;
     if(bulletBody->multiBody){
-
-        if(!simImpl->useWorldCollision)
-            createGeometry();
+        createGeometry();
 
         multiBody = bulletBody->multiBody;
         if(link->isRoot()){
@@ -620,9 +613,7 @@ void BulletLink::createLinkBody(BulletSimulatorItemImpl* simImpl, BulletLink* pa
             isStatic = true;
             mass = 0.0;
         }
-
-        if(!simImpl->useWorldCollision)
-            createGeometry();
+        createGeometry();
 
         motionState = new btDefaultMotionState(transform * shift);
         btRigidBody::btRigidBodyConstructionInfo rbInfo(mass,motionState,collisionShape,localInertia);
@@ -1067,25 +1058,7 @@ void BulletBody::createBody(BulletSimulatorItemImpl* simImpl_, short group)
         dynamic_cast<btMultiBodyDynamicsWorld*>(simImpl->dynamicsWorld)->addMultiBody(multiBody);
     }
 
-    if(simImpl->useWorldCollision){
-        geometryId = addBodyToCollisionDetector(*body, *simImpl->collisionDetector, 
-                                                bodyItem()->isSelfCollisionDetectionEnabled());
-    }
-
     setKinematicStateToBullet();
-
-    if(simImpl->useWorldCollision){
-        int size = simImpl->geometryIdToLink.size();
-        int numLinks = bulletLinks.size();
-        simImpl->geometryIdToLink.resize(geometryId+numLinks);
-        for(int i=0; i < numLinks; i++){
-            BulletLink* bulletLink = bulletLinks[i].get();
-            int index = bulletLink->link->index();
-            simImpl->geometryIdToLink[geometryId+index] = bulletLink;
-            simImpl->collisionDetector->updatePosition(geometryId+index, bulletLink->link->T());
-        }
-    }
-
     setExtraJoints();
     setControlValToBullet();
 
@@ -1332,7 +1305,6 @@ BulletSimulatorItemImpl::BulletSimulatorItemImpl(BulletSimulatorItem* self)
     collisionMargin = DEFAULT_COLLISION_MARGIN;
     usefeatherstoneAlgorithm = true;
 
-    useWorldCollision = false;
 }
 
 
@@ -1358,7 +1330,6 @@ BulletSimulatorItemImpl::BulletSimulatorItemImpl(BulletSimulatorItem* self, cons
     collisionMargin = org.collisionMargin;
     usefeatherstoneAlgorithm = org.usefeatherstoneAlgorithm;
 
-    useWorldCollision = org.useWorldCollision;
 }
 
 void BulletSimulatorItemImpl::initialize()
@@ -1372,7 +1343,6 @@ void BulletSimulatorItemImpl::initialize()
     gContactAddedCallback = 0;
 
     //self->SimulatorItem::setAllLinkPositionOutputMode(true);
-    geometryIdToLink.clear();
 }
 
 BulletSimulatorItem::~BulletSimulatorItem()
@@ -1434,10 +1404,6 @@ bool BulletSimulatorItemImpl::initializeSimulation(const std::vector<SimulationB
         dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher,broadphase,solver,collisionConfiguration);
         self->setAllLinkPositionOutputMode(true);
     }
-    if(useWorldCollision){
-        collisionDetector = self->getOrCreateCollisionDetector();
-        collisionDetector->clearGeometries();
-    }
 
     btVector3 g(gravity.x(), gravity.y(), gravity.z());
     dynamicsWorld->setGravity(g);
@@ -1455,10 +1421,7 @@ bool BulletSimulatorItemImpl::initializeSimulation(const std::vector<SimulationB
         addBody(static_cast<BulletBody*>(simBodies[i]), group);
     }
 
-    if(useWorldCollision)
-        collisionDetector->makeReady();
-    else
-        btGImpactCollisionAlgorithm::registerAlgorithm(dispatcher);
+    btGImpactCollisionAlgorithm::registerAlgorithm(dispatcher);
 
     return true;
 }
