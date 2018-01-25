@@ -1,3 +1,57 @@
+
+LRF_UTM-30LX: &LRF_UTM-30LX
+  type: RangeSensor
+  name: B0001_LRF
+  scanAngle: &B0001_LRF_SPEC_scanAngle 135
+  scanStep: &B0001_LRF_SPEC_scanStep 0.25
+  scanRate: &B0001_LRF_SPEC_scanRate 25
+  maxDistance: &B0001_LRF_SPEC_maxDistance 30
+  elements:
+    Shape:
+      geometry: { type: Box, size: [ 0.060, 0.09150, 0.08830 ] }
+      appearance:
+        material:
+          diffuseColor: [ 0.73, 0.36, 0.02 ]
+          specularColor: [ 0, 0, 0 ]
+          shinines: 0
+
+CAMERA_MCM-4350FISH: &CAMERA_MCM-4350FISH
+  type: Camera
+  format: &B0001_CAMERA_SPEC_format COLOR
+  fieldOfView: &B0001_CAMERA_SPEC_fieldOfView 90
+  width: &B0001_CAMERA_SPEC_width 1280
+  height: &B0001_CAMERA_SPEC_height 720
+  frameRate: &B0001_CAMERA_SPEC_frameRate 30
+  elements:
+    Shape:
+      translation: [ 0, 0, 0.01175 ]
+      geometry: { type: Box, size: [ 0.064, 0.037, 0.02350 ] }
+      appearance:
+        material:
+          diffuseColor: [ 1, 1, 1 ]
+          specularColor: [ 0, 0, 0 ]
+          shinines: 0
+
+LIGHT: &LIGHT
+  type: SpotLight
+  direction: [ 0, 0, -1 ]
+  attenuation: [ 0, 0.01, 1 ]
+  beamWidth: 36
+  cutOffAngle: 40
+  cutOffExponent: 6
+  elements:
+    Shape:
+      translation: [ 0, 0, -0.02 ]
+      rotation: [ 1, 0, 0, 90 ]
+      geometry:
+        type: Cone
+        height: 0.04
+        radius: 0.025
+      appearance:
+        material:
+          diffuseColor: [ 1.0, 1.0, 0.4 ]
+          ambientIntensity: 0.3
+
 B0001: &B0001
     -
       type: Transform
@@ -24,6 +78,94 @@ B0001: &B0001
             2.38060147193, 0.02358430504, 0.00525374443,
             0.02358430504, 2.02122435831, 0.22227311339,
             0.00525374443, 0.22227311339, 1.35813384249 ]
+
+        - # B0010_3002<1>
+          type: Transform
+          translation: [ 0, 0.19975, -0.20415 ]
+          elements:
+            - *LRF_UTM-30LX
+        - # B0010_3101<1>
+          type: Transform
+          translation: [ 0, 0.13550, -0.24155 ]
+          rotation: [ -1, 0, 0, 90 ]
+          elements:
+            -
+              type: Transform
+              translation: [ 0, 0.01175, 0 ]
+              rotation: [ 1, 0, 0, 90 ]
+              elements:
+                Camera:
+                  <<: *CAMERA_MCM-4350FISH
+                  name: B0001_CAMERA_FRONT
+        - # B0010_3101<2>
+          type: Transform
+          translation: [ -0.16675, 0.04450, 0 ]
+          rotation: [ [ 0, 1, 0, 90 ], [ -1, 0, 0, 90 ] ]
+          elements:
+            -
+              type: Transform
+              translation: [ 0, 0.01175, 0 ]
+              rotation: [ 1, 0, 0, 90 ]
+              elements:
+                Camera:
+                  <<: *CAMERA_MCM-4350FISH
+                  name: B0001_CAMERA_LEFT
+        - # B0010_3101<3>
+          type: Transform
+          translation: [ 0.16675, 0.04450, 0 ]
+          rotation: [ [ 0, -1, 0, 90 ], [ -1, 0, 0, 90 ] ]
+          elements:
+            -
+              type: Transform
+              translation: [ 0, 0.01175, 0 ]
+              rotation: [ 1, 0, 0, 90 ]
+              elements:
+                Camera:
+                  <<: *CAMERA_MCM-4350FISH
+                  name: B0001_CAMERA_RIGHT
+        - # B0010_3101<4>
+          type: Transform
+          translation: [ 0, 0.094, 0.34495 ]
+          rotation: [ [ 0, 1, 0, 180 ], [ -1, 0, 0, 90 ] ]
+          elements:
+            -
+              type: Transform
+              translation: [ 0, 0.01175, 0 ]
+              rotation: [ 1, 0, 0, 90 ]
+              elements:
+                Camera:
+                  <<: *CAMERA_MCM-4350FISH
+                  name: B0001_CAMERA_REAR
+        - # Front light
+          type: Transform
+          translation: [ 0, 0.41050, -0.11180 ]
+          elements: 
+            SpotLight:
+              <<: *LIGHT
+              name: B0001_LIGHT_FRONT
+        - # Left light
+          type: Transform
+          translation: [ -0.104, 0.41050, 0.1107 ]
+          rotation: [ 0, 1, 0, 90 ]
+          elements:
+            SpotLight:
+              <<: *LIGHT
+              name: B0001_LIGHT_LEFT
+        - # Right light
+          type: Transform
+          translation: [ 0.104, 0.41050, 0.1107 ]
+          rotation: [ 0, -1, 0, 90 ]
+          elements:
+            SpotLight:
+              <<: *LIGHT
+              name: B0001_LIGHT_RIGHT
+        - # Back light
+          type: Transform
+          translation: [ 0, 0.41050, 0.33320 ]
+          rotation: [ 0, 1, 0, 180 ]
+          elements:
+            SpotLight:
+              <<: *LIGHT
         -
           type: Visual
           resource: { uri: "parts/B0001.wrl" }
@@ -447,139 +589,6 @@ B0001: &B0001
                       diffuseColor: [ 1, 1, 1 ]
                       specularColor: [ 0, 0, 0 ]
                       shinines: 0
-            - # B0010_3002<1>
-              type: Transform
-              translation: [ 0, 0.19975, -0.20415 ]
-              elements:
-                -
-                  type: RangeSensor
-                  name: B0001_LRF
-                  scanAngle: *B0001_LRF_SPEC_scanAngle
-                  scanStep: *B0001_LRF_SPEC_scanStep
-                  scanRate: *B0001_LRF_SPEC_scanRate
-                  maxDistance: *B0001_LRF_SPEC_maxDistance
-                -
-                  type: Shape
-                  geometry:
-                    type: Box
-                    size: [ 0.060, 0.09150, 0.08830 ]
-                  appearance:
-                    material:
-                      diffuseColor: [ 0.73, 0.36, 0.02 ]
-                      specularColor: [ 0, 0, 0 ]
-                      shinines: 0
-            - # B0010_3101<1>
-              type: Transform
-              translation: [ 0, 0.13550, -0.24155 ]
-              rotation: [ -1, 0, 0, 90 ]
-              elements:
-                -
-                  type: Transform
-                  translation: [ 0, 0.01175, 0 ]
-                  rotation: [ 1, 0, 0, 90 ]
-                  elements:
-                    -
-                      type: Camera
-                      name: B0001_CAMERA_FRONT
-                      format: *B0001_CAMERA_SPEC_format
-                      fieldOfView: *B0001_CAMERA_SPEC_fieldOfView
-                      width: *B0001_CAMERA_SPEC_width
-                      height: *B0001_CAMERA_SPEC_height
-                      frameRate: *B0001_CAMERA_SPEC_frameRate
-                -
-                  type: Shape
-                  geometry:
-                    type: Box
-                    size: [ 0.064, 0.02350, 0.037 ]
-                  appearance:
-                    material:
-                      diffuseColor: [ 1, 1, 1 ]
-                      specularColor: [ 0, 0, 0 ]
-                      shinines: 0
-            - # B0010_3101<2>
-              type: Transform
-              translation: [ -0.16675, 0.04450, 0 ]
-              rotation: [ [ 0, 1, 0, 90 ], [ -1, 0, 0, 90 ] ]
-              elements:
-                -
-                  type: Transform
-                  translation: [ 0, 0.01175, 0 ]
-                  rotation: [ 1, 0, 0, 90 ]
-                  elements:
-                    -
-                      type: Camera
-                      name: B0001_CAMERA_LEFT
-                      format: *B0001_CAMERA_SPEC_format
-                      fieldOfView: *B0001_CAMERA_SPEC_fieldOfView
-                      width: *B0001_CAMERA_SPEC_width
-                      height: *B0001_CAMERA_SPEC_height
-                      frameRate: *B0001_CAMERA_SPEC_frameRate
-                -
-                  type: Shape
-                  geometry:
-                    type: Box
-                    size: [ 0.064, 0.02350, 0.037 ]
-                  appearance:
-                    material:
-                      diffuseColor: [ 1, 1, 1 ]
-                      specularColor: [ 0, 0, 0 ]
-                      shinines: 0
-            - # B0010_3101<3>
-              type: Transform
-              translation: [ 0.16675, 0.04450, 0 ]
-              rotation: [ [ 0, -1, 0, 90 ], [ -1, 0, 0, 90 ] ]
-              elements:
-                -
-                  type: Transform
-                  translation: [ 0, 0.01175, 0 ]
-                  rotation: [ 1, 0, 0, 90 ]
-                  elements:
-                    -
-                      type: Camera
-                      name: B0001_CAMERA_RIGHT
-                      format: *B0001_CAMERA_SPEC_format
-                      fieldOfView: *B0001_CAMERA_SPEC_fieldOfView
-                      width: *B0001_CAMERA_SPEC_width
-                      height: *B0001_CAMERA_SPEC_height
-                      frameRate: *B0001_CAMERA_SPEC_frameRate
-                -
-                  type: Shape
-                  geometry:
-                    type: Box
-                    size: [ 0.064, 0.02350, 0.037 ]
-                  appearance:
-                    material:
-                      diffuseColor: [ 1, 1, 1 ]
-                      specularColor: [ 0, 0, 0 ]
-                      shinines: 0
-            - # B0010_3101<4>
-              type: Transform
-              translation: [ 0, 0.094, 0.34495 ]
-              rotation: [ [ 0, 1, 0, 180 ], [ -1, 0, 0, 90 ] ]
-              elements:
-                -
-                  type: Transform
-                  translation: [ 0, 0.01175, 0 ]
-                  rotation: [ 1, 0, 0, 90 ]
-                  elements:
-                    -
-                      type: Camera
-                      name: B0001_CAMERA_REAR
-                      format: *B0001_CAMERA_SPEC_format
-                      fieldOfView: *B0001_CAMERA_SPEC_fieldOfView
-                      width: *B0001_CAMERA_SPEC_width
-                      height: *B0001_CAMERA_SPEC_height
-                      frameRate: *B0001_CAMERA_SPEC_frameRate
-                -
-                  type: Shape
-                  geometry:
-                    type: Box
-                    size: [ 0.064, 0.02350, 0.037 ]
-                  appearance:
-                    material:
-                      diffuseColor: [ 1, 1, 1 ]
-                      specularColor: [ 0, 0, 0 ]
-                      shinines: 0
             - # B0013_3302<1>
               type: Transform
               translation: [ -0.168, 0.116, 0 ]
@@ -599,21 +608,22 @@ B0001: &B0001
               translation: [ 0.168, 0.116, 0 ]
               rotation: [ [ 0, 1, 0, 90 ], [ 1, 0, 0, 90 ] ]
               elements: *B0013_3302_elements
-# パーツ省略
-#                  - # B0005_2504<1>
-#                  - # B0005_2504<2>
-#                  - # B0005_2507<1>
-#                  - # B0005_2507<2>
-#                  - # B0001_2103<1>
-#                  - # B0001_2101_1<1>
-#                  - # B0001_2101_2<2>
-#                  - # B0013_3301<1>
-#                  - # B0013_3301<2>
-#                  - # B0013_3302<1>
-#                  - # B0013_3302<2>
-#                  - # HTPA60S5M150<1>
-#                  - # HTPA60S5M150<2>
-# パーツ簡易化
+            # パーツ省略
+            #- B0005_2504<1>
+            #- B0005_2504<2>
+            #- B0005_2507<1>
+            #- B0005_2507<2>
+            #- B0001_2103<1>
+            #- B0001_2101_1<1>
+            #- B0001_2101_2<2>
+            #- B0013_3301<1>
+            #- B0013_3301<2>
+            #- B0013_3302<1>
+            #- B0013_3302<2>
+            #- HTPA60S5M150<1>
+            #- HTPA60S5M150<2>
+
+            # パーツ簡易化
             - # B0001_2101_1<1>,B0001_2104<1>,B0001_2105<1>
               type: Transform
               translation: [ 0, 0.03525, 0.05410 ]
@@ -668,67 +678,3 @@ B0001: &B0001
                       diffuseColor: [ 0.25, 0.25, 0.25 ]
                       specularColor: [ 0, 0, 0 ]
                       shinines: 0
-        - # 前方のライト
-          type: Transform
-          translation: [ 0, 0.41050, -0.11180 ]
-          elements:
-            SpotLight:
-              name: B0001_LIGHT_FRONT
-              direction: [ 0, 0, -1 ]
-              attenuation: [ 0, 0.01, 1 ]
-              beamWidth: *B0001_LIGHT_SPEC_beamWidth
-              cutOffAngle: *B0001_LIGHT_SPEC_cutOffAngle
-              cutOffExponent: *B0001_LIGHT_SPEC_cutOffExponent
-              elements: &B0001_LIGHT_SpotLight_elements
-                Transform:
-                  translation: [ 0, 0, -0.02 ]
-                  rotation: [ 1, 0, 0, 90 ]
-                  elements:
-                    Shape:
-                      geometry:
-                        type: Cone
-                        height: 0.04
-                        radius: 0.025
-                      appearance:
-                        material:
-                          diffuseColor: [ 1.0, 1.0, 0.4 ]
-                          ambientIntensity: 0.3
-        - # 左側のライト
-          type: Transform
-          translation: [ -0.104, 0.41050, 0.1107 ]
-          rotation: [ 0, 1, 0, 90 ]
-          elements:
-            SpotLight:
-              name: B0001_LIGHT_LEFT
-              direction: [ 0, 0, -1 ]
-              attenuation: [ 0, 0.01, 1 ]
-              beamWidth: *B0001_LIGHT_SPEC_beamWidth
-              cutOffAngle: *B0001_LIGHT_SPEC_cutOffAngle
-              cutOffExponent: *B0001_LIGHT_SPEC_cutOffExponent
-              elements: *B0001_LIGHT_SpotLight_elements
-        - # 右側のライト
-          type: Transform
-          translation: [ 0.104, 0.41050, 0.1107 ]
-          rotation: [ 0, -1, 0, 90 ]
-          elements:
-            SpotLight:
-              name: B0001_LIGHT_RIGHT
-              direction: [ 0, 0, -1 ]
-              attenuation: [ 0, 0.01, 1 ]
-              beamWidth: *B0001_LIGHT_SPEC_beamWidth
-              cutOffAngle: *B0001_LIGHT_SPEC_cutOffAngle
-              cutOffExponent: *B0001_LIGHT_SPEC_cutOffExponent
-              elements: *B0001_LIGHT_SpotLight_elements
-        - # 後方のライト
-          type: Transform
-          translation: [ 0, 0.41050, 0.33320 ]
-          rotation: [ 0, 1, 0, 180 ]
-          elements:
-            SpotLight:
-              name: B0001_LIGHT_REAR
-              direction: [ 0, 0, -1 ]
-              attenuation: [ 0, 0.01, 1 ]
-              beamWidth: *B0001_LIGHT_SPEC_beamWidth
-              cutOffAngle: *B0001_LIGHT_SPEC_cutOffAngle
-              cutOffExponent: *B0001_LIGHT_SPEC_cutOffExponent
-              elements: *B0001_LIGHT_SpotLight_elements
