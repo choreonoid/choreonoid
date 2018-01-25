@@ -11,6 +11,7 @@
 #include <cnoid/MeshNormalGenerator>
 #include <cnoid/SceneLoader>
 #include <cnoid/EigenArchive>
+#include <cnoid/YAMLReader>
 #include <cnoid/FileUtil>
 #include <cnoid/NullOut>
 #include <cnoid/Exception>
@@ -42,7 +43,7 @@ typedef SgNode* (YAMLSceneReaderImpl::*NodeFunction)(Mapping& node);
 typedef unordered_map<string, NodeFunction> NodeFunctionMap;
 NodeFunctionMap nodeFunctionMap;
 
-struct NodeInfo
+struct SceneNodeInfo
 {
     SgGroupPtr parent;
     SgNodePtr node;
@@ -50,14 +51,16 @@ struct NodeInfo
     bool isScaled;
 };
 
-typedef unordered_map<string, NodeInfo> NodeMap;
+typedef unordered_map<string, SceneNodeInfo> SceneNodeMap;
     
 struct ResourceInfo : public Referenced
 {
-    SgNodePtr rootNode;
-    unique_ptr<NodeMap> nodeMap;
+    SgNodePtr scene;
+    unique_ptr<SceneNodeMap> sceneNodeMap;
+    unique_ptr<YAMLReader> yaml;
 };
 typedef ref_ptr<ResourceInfo> ResourceInfoPtr;
+
 
 unordered_map<string, YAMLSceneReader::UriSchemeHandler> uriSchemeHandlerMap;
 std::mutex uriSchemeHandlerMutex;
@@ -101,7 +104,8 @@ public:
     ~YAMLSceneReaderImpl();
 
     bool readAngle(Mapping& node, const char* key, double& angle) { return self->readAngle(node, key, angle); }
-    
+
+    SgNode* readNode(Mapping& node);
     SgNode* readNode(Mapping& node, const string& type);
     SgNode* readGroup(Mapping& node);
     void readElements(Mapping& node, SgGroup* group);
@@ -128,14 +132,14 @@ public:
     SgNode* readDirectionalLight(Mapping& node);
     SgNode* readSpotLight(Mapping& node);
     SgNode* readResource(Mapping& node);
-    SgNode* loadResource(const string& uri);
-    SgNode* loadResource(const string& uri, const string& nodeName);
-    void decoupleResourceNode(const string& uri, const string& nodeName);
-    ResourceInfo* getOrCreateResourceInfo(const string& uri);
+    boost::variant<SgNode*, ValueNode*> readResourceNode(Mapping& node);
+    boost::variant<SgNode*, ValueNode*> loadResource(Mapping& resourceNode, const string& uri);
+    void decoupleResourceNode(Mapping& resourceNode, const string& uri, const string& nodeName);
+    ResourceInfo* getOrCreateResourceInfo(Mapping& resourceNode, const string& uri);
     filesystem::path findFileInPackage(const string& file);
-    void adjustNodeCoordinate(NodeInfo& info);
-    void makeNodeMap(ResourceInfo* info);
-    void makeNodeMapSub(const NodeInfo& nodeInfo, NodeMap& nodeMap);
+    void adjustNodeCoordinate(SceneNodeInfo& info);
+    void makeSceneNodeMap(ResourceInfo* info);
+    void makeSceneNodeMapSub(const SceneNodeInfo& nodeInfo, SceneNodeMap& nodeMap);
 };
 
 }
@@ -314,8 +318,7 @@ bool YAMLSceneReader::readRotation(Mapping& node, Matrix3& out_R, bool doExtract
 
 SgNode* YAMLSceneReader::readNode(Mapping& node)
 {
-    const string type = node["type"].toString();
-    return impl->readNode(node, type);
+    return impl->readNode(node);
 }
 
 
@@ -347,6 +350,13 @@ SgNode* YAMLSceneReader::readNodeList(ValueNode& node)
     return removeRedundantGroup(group).retn();
 }    
 
+
+SgNode* YAMLSceneReaderImpl::readNode(Mapping& node)
+{
+    const string type = node["type"].toString();
+    return readNode(node, type);
+}
+    
 
 SgNode* YAMLSceneReaderImpl::readNode(Mapping& node, const string& type)
 {
@@ -937,91 +947,114 @@ SgNode* YAMLSceneReaderImpl::readSpotLight(Mapping& node)
 
 SgNode* YAMLSceneReaderImpl::readResource(Mapping& node)
 {
-    SgNode* scene = 0;
+    auto resource = readResourceNode(node);
+    if(auto pscene = boost::strict_get<SgNode*>(&resource)){
+        return *pscene;
+    } else if(auto pvalue = boost::strict_get<ValueNode*>(&resource)){
+        ValueNode* value = *pvalue;
+        if(value){
+            return readNode(*value->toMapping());
+        }
+    }
 
-    string& uri = symbol;
-    if(node.read("uri", uri)){
-        SgNodePtr resource;
-        string nodeName;
+    return nullptr;
+}
 
-        ValueNode& exclude = *node.find("exclude");
-        if(exclude.isValid()){
-            if(exclude.isListing()){
-                Listing& excludes = *exclude.toListing();
-                for(auto& nodeToExclude : excludes){
-                    decoupleResourceNode(uri, nodeToExclude->toString());
-                }
-            } else if(exclude.isString()){
-                decoupleResourceNode(uri, exclude.toString());
+
+boost::variant<SgNode*, ValueNode*> YAMLSceneReader::readResourceNode(Mapping& node)
+{
+    return impl->readResourceNode(node);
+}
+
+
+boost::variant<SgNode*, ValueNode*> YAMLSceneReaderImpl::readResourceNode(Mapping& node)
+{
+    string uri = node["uri"].toString();
+
+    ValueNode& exclude = *node.find("exclude");
+    if(exclude.isValid()){
+        if(exclude.isString()){
+            decoupleResourceNode(node, uri, exclude.toString());
+        } else if(exclude.isListing()){
+            Listing& excludes = *exclude.toListing();
+            for(auto& nodeToExclude : excludes){
+                decoupleResourceNode(node, uri, nodeToExclude->toString());
             }
-        }
-        
-        if(node.read("node", nodeName)){
-            resource = loadResource(uri, nodeName);
         } else {
-            resource = loadResource(uri);
+            exclude.throwException(_("The value of \"exclude\" must be string or sequence."));
         }
-        scene = readTransformParameters(node, resource);
-        if(scene == resource){
-            return resource.retn();
+    }
+        
+    auto resource = loadResource(node, uri);
+
+    if(auto pscene = boost::strict_get<SgNode*>(&resource)){
+        return readTransformParameters(node, *pscene);
+    }
+
+    return boost::get<ValueNode*>(resource);
+}
+
+
+boost::variant<SgNode*, ValueNode*> YAMLSceneReaderImpl::loadResource(Mapping& resourceNode, const string& uri)
+{
+    string name;
+    resourceNode.read("node", name);
+    
+    ResourceInfo* resourceInfo = getOrCreateResourceInfo(resourceNode, uri);
+    if(resourceInfo){
+        bool isYamlResouce = (resourceInfo->yaml != nullptr);
+        if(name.empty()){
+            if(isYamlResouce){
+                return resourceInfo->yaml->document();
+            } else {
+                return resourceInfo->scene;
+            }
+        } else {
+            if(isYamlResouce){
+                auto node = resourceInfo->yaml->findAnchoredNode(name);
+                if(!node){
+                    resourceNode.throwException(
+                        str(format(_("Node \"%1%\" is not found in \"%2%\".")) % name % uri));
+                }
+                return node;
+                    
+            } else {
+                unique_ptr<SceneNodeMap>& nodeMap = resourceInfo->sceneNodeMap;
+                if(!nodeMap){
+                    makeSceneNodeMap(resourceInfo);
+                }
+                auto iter = nodeMap->find(name);
+                if(iter == nodeMap->end()){
+                    resourceNode.throwException(
+                        str(format(_("Node \"%1%\" is not found in \"%2%\".")) % name % uri));
+                } else {
+                    SceneNodeInfo& nodeInfo = iter->second;
+                    if(nodeInfo.parent){
+                        nodeInfo.parent->removeChild(nodeInfo.node);
+                        nodeInfo.parent = 0;
+                        adjustNodeCoordinate(nodeInfo);
+                    }
+                    return nodeInfo.node;
+                }
+            }
         }
     }
     
-    return scene;
+    return (SgNode*)nullptr;
 }
 
 
-SgNode* YAMLSceneReaderImpl::loadResource(const string& uri)
+void YAMLSceneReaderImpl::decoupleResourceNode(Mapping& resourceNode, const string& uri, const string& nodeName)
 {
-    ResourceInfo* resourceInfo = getOrCreateResourceInfo(uri);
+    ResourceInfo* resourceInfo = getOrCreateResourceInfo(resourceNode, uri);
     if(resourceInfo){
-        return resourceInfo->rootNode;
-    }
-    return 0;
-}
-
-
-SgNode* YAMLSceneReaderImpl::loadResource(const string& uri, const string& nodeName)
-{
-    SgNode* scene = 0;
-    ResourceInfo* resourceInfo = getOrCreateResourceInfo(uri);
-    if(resourceInfo){
-        if(nodeName.empty()){
-            scene = resourceInfo->rootNode;
-        } else {
-            unique_ptr<NodeMap>& nodeMap = resourceInfo->nodeMap;
-            if(!nodeMap){
-                makeNodeMap(resourceInfo);
-            }
-            auto iter = nodeMap->find(nodeName);
-            if(iter == nodeMap->end()){
-                os() << str(format("Warning: Node \"%1%\" is not found in \"%2%\".") % nodeName % uri) << endl;
-            } else {
-                NodeInfo& nodeInfo = iter->second;
-                if(nodeInfo.parent){
-                    nodeInfo.parent->removeChild(nodeInfo.node);
-                    nodeInfo.parent = 0;
-                    adjustNodeCoordinate(nodeInfo);
-                }
-                scene = nodeInfo.node;
-            }
-        }
-    }
-    return scene;
-}
-
-
-void YAMLSceneReaderImpl::decoupleResourceNode(const string& uri, const string& nodeName)
-{
-    ResourceInfo* resourceInfo = getOrCreateResourceInfo(uri);
-    if(resourceInfo){
-        unique_ptr<NodeMap>& nodeMap = resourceInfo->nodeMap;
+        unique_ptr<SceneNodeMap>& nodeMap = resourceInfo->sceneNodeMap;
         if(!nodeMap){
-            makeNodeMap(resourceInfo);
+            makeSceneNodeMap(resourceInfo);
         }
         auto iter = nodeMap->find(nodeName);
         if(iter != nodeMap->end()){
-            NodeInfo& nodeInfo = iter->second;
+            SceneNodeInfo& nodeInfo = iter->second;
             if(nodeInfo.parent){
                 nodeInfo.parent->removeChild(nodeInfo.node);
                 nodeInfo.parent = 0;
@@ -1032,7 +1065,7 @@ void YAMLSceneReaderImpl::decoupleResourceNode(const string& uri, const string& 
 }
 
 
-ResourceInfo* YAMLSceneReaderImpl::getOrCreateResourceInfo(const string& uri)
+ResourceInfo* YAMLSceneReaderImpl::getOrCreateResourceInfo(Mapping& resourceNode, const string& uri)
 {
     auto iter = resourceInfoMap.find(uri);
 
@@ -1059,7 +1092,8 @@ ResourceInfo* YAMLSceneReaderImpl::getOrCreateResourceInfo(const string& uri)
                 std::lock_guard<std::mutex> guard(uriSchemeHandlerMutex);
                 auto iter = uriSchemeHandlerMap.find(scheme);
                 if(iter == uriSchemeHandlerMap.end()){
-                    os() << str(format("Warning: The \"%1%\" scheme of \"%2%\" is not available.") % scheme % uri) << endl;
+                    resourceNode.throwException(
+                        str(format(_("The \"%1%\" scheme of \"%2%\" is not available")) % scheme % uri));
                 } else {
                     auto& handler = iter->second;
                     filepath = handler(match.str(2), os());
@@ -1076,17 +1110,36 @@ ResourceInfo* YAMLSceneReaderImpl::getOrCreateResourceInfo(const string& uri)
         }
     }
     
-    ResourceInfo* info = 0;
-    
     if(filepath.empty()){
-        resourceInfoMap[uri] = info;
-        
-    } else {
-        SgNodePtr rootNode = sceneLoader.load(getAbsolutePathString(filepath));
-        if(rootNode){
-            info = new ResourceInfo;
-            info->rootNode = rootNode;
+        resourceNode.throwException(
+            str(format(_("The resource URI \"%1%\" is not valid")) % uri));
+    }
+
+    ResourceInfoPtr info = new ResourceInfo;
+
+    string filename = getAbsolutePathString(filepath);
+    string ext = filesystem::extension(filepath);
+    std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+
+    if(ext == ".yaml" || ext == ".yml"){
+        auto yaml = new YAMLReader;
+        if(!yaml->load(filename)){
+            os() << yaml->errorMessage() << endl;
+            resourceNode.throwException(
+                str(format(_("YAML resource \"%1%\" cannot be loaded")) % uri));
         }
+        info->yaml.reset(yaml);
+
+    } else {
+        SgNodePtr scene = sceneLoader.load(filename);
+        if(!scene){
+            resourceNode.throwException(
+                str(format(_("The resource is not found at URI \"%1%\"")) % uri));
+        }
+        info->scene = scene;
+    }
+
+    if(info){
         resourceInfoMap[uri] = info;
     }
 
@@ -1094,7 +1147,7 @@ ResourceInfo* YAMLSceneReaderImpl::getOrCreateResourceInfo(const string& uri)
 }
 
 
-void YAMLSceneReaderImpl::adjustNodeCoordinate(NodeInfo& info)
+void YAMLSceneReaderImpl::adjustNodeCoordinate(SceneNodeInfo& info)
 {
     if(auto pos = dynamic_cast<SgPosTransform*>(info.node.get())){
         if(info.isScaled){
@@ -1130,19 +1183,19 @@ void YAMLSceneReaderImpl::adjustNodeCoordinate(NodeInfo& info)
 }
         
 
-void YAMLSceneReaderImpl::makeNodeMap(ResourceInfo* info)
+void YAMLSceneReaderImpl::makeSceneNodeMap(ResourceInfo* info)
 {
-    info->nodeMap.reset(new NodeMap);
-    NodeInfo nodeInfo;
+    info->sceneNodeMap.reset(new SceneNodeMap);
+    SceneNodeInfo nodeInfo;
     nodeInfo.parent = 0;
-    nodeInfo.node = info->rootNode;
+    nodeInfo.node = info->scene;
     nodeInfo.R = Matrix3::Identity();
     nodeInfo.isScaled = false;
-    makeNodeMapSub(nodeInfo, *info->nodeMap);
+    makeSceneNodeMapSub(nodeInfo, *info->sceneNodeMap);
 }
 
 
-void YAMLSceneReaderImpl::makeNodeMapSub(const NodeInfo& nodeInfo, NodeMap& nodeMap)
+void YAMLSceneReaderImpl::makeSceneNodeMapSub(const SceneNodeInfo& nodeInfo, SceneNodeMap& nodeMap)
 {
     const string& name = nodeInfo.node->name();
     bool wasProcessed = false;
@@ -1152,7 +1205,7 @@ void YAMLSceneReaderImpl::makeNodeMapSub(const NodeInfo& nodeInfo, NodeMap& node
     if(!wasProcessed){
         SgGroup* group = dynamic_cast<SgGroup*>(nodeInfo.node.get());
         if(group){
-            NodeInfo childInfo;
+            SceneNodeInfo childInfo;
             childInfo.parent = group;
             childInfo.isScaled = nodeInfo.isScaled;
             SgTransform* transform = dynamic_cast<SgTransform*>(group);
@@ -1168,7 +1221,7 @@ void YAMLSceneReaderImpl::makeNodeMapSub(const NodeInfo& nodeInfo, NodeMap& node
             }
             for(SgNode* child : *group){
                 childInfo.node = child;
-                makeNodeMapSub(childInfo, nodeMap);
+                makeSceneNodeMapSub(childInfo, nodeMap);
             }
         }
     }

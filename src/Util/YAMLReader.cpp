@@ -553,7 +553,17 @@ ValueNode* YAMLReader::loadDocument(const std::string& filename)
     return document();
 }
 
-        
+
+ValueNode* YAMLReader::findAnchoredNode(const std::string& anchor)
+{
+    auto iter = impl->anchorMap.find(anchor);
+    if(iter != impl->anchorMap.end()){
+        return iter->second;
+    }
+    return nullptr;
+}
+
+
 const std::string& YAMLReader::errorMessage()
 {
     return impl->errorMessage;

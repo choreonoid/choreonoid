@@ -8,6 +8,7 @@
 
 #include <cnoid/EigenUtil>
 #include <cnoid/SceneGraph>
+#include <boost/variant.hpp>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -46,6 +47,8 @@ public:
     SgNode* readNode(Mapping& node);
     SgNode* readNode(Mapping& node, const std::string& type);
     SgNode* readNodeList(ValueNode& node);
+
+    boost::variant<SgNode*, ValueNode*> readResourceNode(Mapping& node);
     
     SgObject* readObject(Mapping& node);
 

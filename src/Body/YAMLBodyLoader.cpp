@@ -310,6 +310,7 @@ public:
     bool readTransform(Mapping& node);
     bool readRigidBody(Mapping& node);
     bool readVisualOrCollision(Mapping& node, bool isVisual);
+    bool readResource(Mapping& node);
     bool readDevice(Device* device, Mapping& node);
     bool readForceSensor(Mapping& node);
     bool readRateGyroSensor(Mapping& node);
@@ -472,6 +473,7 @@ YAMLBodyLoaderImpl::YAMLBodyLoaderImpl(YAMLBodyLoader* self)
     nodeFunctions["RigidBody"].setTE([&](Mapping& node){ return readRigidBody(node); });
     nodeFunctions["Visual"].setT([&](Mapping& node){ return readVisualOrCollision(node, true); });
     nodeFunctions["Collision"].setT([&](Mapping& node){ return readVisualOrCollision(node, false); });
+    nodeFunctions["Resource"].set([&](Mapping& node){ return readResource(node); });
     nodeFunctions["ForceSensor"].setTE([&](Mapping& node){ return readForceSensor(node); });
     nodeFunctions["RateGyroSensor"].setTE([&](Mapping& node){ return readRateGyroSensor(node); });
     nodeFunctions["AccelerationSensor"].setTE([&](Mapping& node){ return readAccelerationSensor(node); });
@@ -1275,6 +1277,8 @@ bool YAMLBodyLoaderImpl::readElementContents(ValueNode& elements)
                 ++p;
             }
         }
+    } else {
+        elements.throwException(_("A value of the \"elements\" key must be a sequence or a mapping."));
     }
 
     return isSceneNodeAdded;
@@ -1478,12 +1482,9 @@ bool YAMLBodyLoaderImpl::readVisualOrCollision(Mapping& node, bool isVisual)
     bool isSceneNodeAdded = readElements(node);
 
     if(isShapeLoadingEnabled){
-        auto resource = node.findMapping("resource");
-        if(resource->isValid()){
-            if(auto scene = sceneReader.readNode(*resource, "Resource")){
-                addScene(scene);
-                isSceneNodeAdded = true;
-            }
+        auto resourceNode = node.findMapping("resource");
+        if(resourceNode->isValid()){
+            isSceneNodeAdded = readResource(*resourceNode);
         }
         auto shape = node.findMapping("shape");
         if(shape->isValid()){
@@ -1499,6 +1500,27 @@ bool YAMLBodyLoaderImpl::readVisualOrCollision(Mapping& node, bool isVisual)
     }
 
     currentModelType = prevModelType;
+
+    return isSceneNodeAdded;
+}
+
+
+bool YAMLBodyLoaderImpl::readResource(Mapping& node)
+{
+    bool isSceneNodeAdded = false;
+    
+    auto resource = sceneReader.readResourceNode(node);
+
+    if(auto pscene = boost::strict_get<SgNode*>(&resource)){
+        if(*pscene){
+            addScene(*pscene);
+            isSceneNodeAdded = true;
+        }
+    } else if(auto pvalue = boost::strict_get<ValueNode*>(&resource)){
+        if(*pvalue){
+            isSceneNodeAdded = readElementContents(**pvalue);
+        }
+    }
 
     return isSceneNodeAdded;
 }
