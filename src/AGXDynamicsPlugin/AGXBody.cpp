@@ -6,6 +6,7 @@
 #include "AGXVehicleContinuousTrack.h"
 #include "AGXConvexDecomposition.h"
 #include "AGXConvert.h"
+#include "AGXObjectFactory.h"
 
 using namespace std;
 
@@ -528,18 +529,23 @@ agx::ConstraintRef AGXLink::createAGXConstraint()
     AGXLink* const agxParentLink = getAGXParentLink();
     if(!agxParentLink) return nullptr;
     Link* const orgLink = getOrgLink();
-
     Mapping* map = orgLink->info();
 
     AGXElementaryConstraint base, motor, range, lock;
     map->read("jointCompliance", base.compliance);
-    map->read("jointMotorCompliance", motor.compliance);
-    map->read("jointRangeCompliance", range.compliance);
-    map->read("jointLockCompliance",  lock.compliance);
     map->read("jointDamping", base.damping);
+    map->read("jointElasticity", base.elasticity);
+    map->read("jointMotor", motor.enable);
+    map->read("jointMotorCompliance", motor.compliance);
     map->read("jointMotorDamping", motor.damping);
+    map->read("jointMotorElasticity", motor.elasticity);
+    map->read("jointRangeCompliance", range.compliance);
     map->read("jointRangeDamping", range.damping);
+    map->read("jointRangeElasticity", range.elasticity);
+    map->read("jointLock", lock.enable);
+    map->read("jointLockCompliance",  lock.compliance);
     map->read("jointLockDamping",  lock.damping);
+    map->read("jointLockElasticity",  lock.elasticity);
 
     Vector2 baseForceRange, motorForceRange, rangeForceRange, lockForceRange;
     if(agxConvert::setVector(map->find("jointForceRange"), baseForceRange)){
@@ -568,20 +574,29 @@ agx::ConstraintRef AGXLink::createAGXConstraint()
             desc.compliance = base.compliance;
             desc.damping = base.damping;
             desc.forceRange = base.forceRange;
+            desc.elasticity = base.elasticity;
+
             // motor
-            if(orgLink->actuationMode() != Link::ActuationMode::NO_ACTUATION) desc.motor.enable = true;
-            desc.motor.compliance = motor.compliance;
-            desc.motor.damping = motor.damping;
+            desc.motor.set(motor);
+            // lock
+            desc.lock.set(lock);
+            // range
+            desc.range.set(range);
+            desc.range.enable = true;  // range.enable;
+            desc.range.range = agx::RangeReal(orgLink->q_lower(), orgLink->q_upper());
+            constraint = AGXObjectFactory::createConstraint(desc);
+
+            // Set from Link::ActuationMode
+            // motor
+            if(orgLink->actuationMode() != Link::ActuationMode::NO_ACTUATION){
+                desc.motor.enable = true;
+            }
             // lock
             if(orgLink->actuationMode() == Link::ActuationMode::JOINT_ANGLE){
                 desc.motor.enable = false;
                 desc.lock.enable = true;
             }
-            desc.lock.compliance = lock.compliance;
-            desc.lock.damping = lock.damping;
-            // range
-            desc.range.enable = true;
-            desc.range.range = agx::RangeReal(orgLink->q_lower(), orgLink->q_upper());
+
             constraint = AGXObjectFactory::createConstraint(desc);
             break;
         }
@@ -596,17 +611,28 @@ agx::ConstraintRef AGXLink::createAGXConstraint()
             desc.compliance = base.compliance;
             desc.damping = base.damping;
             desc.forceRange = base.forceRange;
+
             // motor
-            if(orgLink->actuationMode() != Link::ActuationMode::NO_ACTUATION) desc.motor.enable = true;
-            desc.motor.compliance = motor.compliance;
-            desc.motor.damping = motor.damping;
+            desc.motor.set(motor);
+
             // lock
-            if(orgLink->actuationMode() == Link::ActuationMode::JOINT_ANGLE) desc.lock.enable = true;
-            desc.lock.compliance = lock.compliance;
-            desc.lock.damping = lock.damping;
+            desc.lock.set(lock);
             // range
-            desc.range.enable = true;
+            desc.range.set(range);
+            desc.range.enable = true;  // range.enable;
             desc.range.range = agx::RangeReal(orgLink->q_lower(), orgLink->q_upper());
+
+            // Set from Link::ActuationMode
+            // motor
+            if(orgLink->actuationMode() != Link::ActuationMode::NO_ACTUATION){
+                desc.motor.enable = true;
+            }
+            // lock
+            if(orgLink->actuationMode() == Link::ActuationMode::JOINT_ANGLE){
+                desc.motor.enable = false;
+                desc.lock.enable = true;
+            }
+
             constraint = AGXObjectFactory::createConstraint(desc);
             break;
         }
