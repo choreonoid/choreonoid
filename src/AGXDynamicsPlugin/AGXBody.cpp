@@ -534,7 +534,7 @@ agx::ConstraintRef AGXLink::createAGXConstraint()
     AGXElementaryConstraint base, motor, range, lock;
     map->read("jointCompliance", base.compliance);
     map->read("jointDamping", base.damping);
-    map->read("jointElasticity", base.elasticity);
+    //map->read("jointElasticity", base.elasticity);
     map->read("jointMotor", motor.enable);
     map->read("jointMotorCompliance", motor.compliance);
     map->read("jointMotorDamping", motor.damping);
@@ -574,7 +574,7 @@ agx::ConstraintRef AGXLink::createAGXConstraint()
             desc.compliance = base.compliance;
             desc.damping = base.damping;
             desc.forceRange = base.forceRange;
-            desc.elasticity = base.elasticity;
+            //desc.elasticity = base.elasticity;
 
             // motor
             desc.motor.set(motor);
@@ -611,6 +611,7 @@ agx::ConstraintRef AGXLink::createAGXConstraint()
             desc.compliance = base.compliance;
             desc.damping = base.damping;
             desc.forceRange = base.forceRange;
+            //desc.elasticity = base.elasticity;
 
             // motor
             desc.motor.set(motor);

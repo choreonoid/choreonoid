@@ -172,7 +172,7 @@ agx::ConstraintRef AGXObjectFactory::createConstraint(const AGXConstraintDesc& d
     constraint->setCompliance(desc.compliance);
     constraint->setDamping(desc.damping);
     constraint->setForceRange(desc.forceRange);
-    constraint->setElasticity(desc.elasticity);
+    //constraint->setElasticity(desc.elasticity);
     return constraint;
 }
 
