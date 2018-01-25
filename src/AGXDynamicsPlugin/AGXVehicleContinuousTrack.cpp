@@ -146,22 +146,23 @@ AGXVehicleContinuousTrack::AGXVehicleContinuousTrack(AGXVehicleContinuousTrackDe
     agxScene->getSimulation()->add(new TrackListener(this));
 
     /* Set collision Group*/
-    // 1. All links(except tracks) are member of body's collision group
-    // 2. Collision b/w tracks and links(except wheels) are not need -> create new group trackCollision
-    // 3. Collision b/w wheels, guides andtracks needs collision -> remove wheels from trackCollision
-    std::stringstream trackCollision;
+    // BodyCollisionGroup(bodies, wheels, guides)
+    // trackCollisionGroup(tracks)
+    // disableTrackCollisionGroup(bodies)
+    std::stringstream trackCollision, disableTrackCollision;
     trackCollision << "trackCollision" << agx::UuidGenerator().generate().str() << std::endl;
+    disableTrackCollision << "trackCollision" << agx::UuidGenerator().generate().str() << std::endl;
     m_track->addGroup(trackCollision.str());
-    getAGXBody()->addCollisionGroupNameToAllLink(trackCollision.str());
-    getAGXBody()->addCollisionGroupNameToDisableCollision(trackCollision.str());
+    getAGXBody()->addCollisionGroupNameToAllLink(disableTrackCollision.str());
+    getAGXBody()->getAGXScene()->setCollisionPair(trackCollision.str(), disableTrackCollision.str(), false);
     for(auto wheel : trackDesc.trackWheelRefs){
         agxCollide::GeometryRef geometry = wheel->getRigidBody()->getGeometries().front();
-        geometry->removeGroup(trackCollision.str());
+        geometry->removeGroup(disableTrackCollision.str());
     }
     for(auto guide : desc.guideNames){
         if(agx::RigidBody* rigid = getAGXBody()->getAGXRigidBody(guide)){
             if(agxCollide::GeometryRef geometry = rigid->getGeometries().front()){
-                geometry->removeGroup(trackCollision.str());
+                geometry->removeGroup(disableTrackCollision.str());
             }
         }
     }
