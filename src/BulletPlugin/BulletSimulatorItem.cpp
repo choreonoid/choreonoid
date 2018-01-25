@@ -1604,3 +1604,9 @@ void BulletSimulatorItemImpl::setSolverParameter()
         slvInfo.m_solverMode |= SOLVER_ENABLE_FRICTION_DIRECTION_CACHING;
     }
 }
+
+
+Vector3 BulletSimulatorItem::getGravity() const
+{
+    return impl->gravity;
+}
