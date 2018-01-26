@@ -61,3 +61,6 @@ configure_file(FourWheelCarJoystick.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPY
 
 add_cnoid_simple_controller(LinkPositionController LinkPositionController.cpp)
 configure_file(LinkPositionControl.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+
+add_cnoid_simple_controller(HandyRockDrillController HandyRockDrillController.cpp)
+configure_file(HandyRockDrill.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
