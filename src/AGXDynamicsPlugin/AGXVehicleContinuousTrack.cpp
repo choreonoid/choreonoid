@@ -102,7 +102,7 @@ AGXVehicleContinuousTrack::AGXVehicleContinuousTrack(AGXVehicleContinuousTrackDe
     trackDesc.nodeThickerThickness = desc.nodeThickerThickness;
     trackDesc.useThickerNodeEvery = desc.useThickerNodeEvery;
     trackDesc.hingeCompliance = desc.hingeCompliance;
-    trackDesc.hingeDamping= desc.hingeDamping;
+    trackDesc.hingeSpookDamping= desc.hingeSpookDamping;
     trackDesc.minStabilizingHingeNormalForce = desc.minStabilizingHingeNormalForce;
     trackDesc.stabilizingHingeFrictionParameter = desc.stabilizingHingeFrictionParameter;
     trackDesc.nodesToWheelsMergeThreshold = desc.nodesToWheelsMergeThreshold;
@@ -132,7 +132,7 @@ AGXVehicleContinuousTrack::AGXVehicleContinuousTrack(AGXVehicleContinuousTrackDe
     }
     trackDesc.enableLockToReachMergeCondition = desc.enableLockToReachMergeCondition;
     trackDesc.lockToReachMergeConditionCompliance = desc.lockToReachMergeConditionCompliance;
-    trackDesc.lockToReachMergeConditionDamping = desc.lockToReachMergeConditionDamping;
+    trackDesc.lockToReachMergeConditionSpookDamping = desc.lockToReachMergeConditionSpookDamping;
     trackDesc.maxAngleMergeCondition = desc.maxAngleMergeCondition;
     m_track = AGXObjectFactory::createVehicleTrack(trackDesc);
     if(!m_track) return;
@@ -204,7 +204,7 @@ void AGXVehicleContinuousTrack::printParameters(const AGXVehicleTrackDesc& desc)
     PRINT_PARAMETER(desc.nodeThickerThickness);
     PRINT_PARAMETER(desc.useThickerNodeEvery);
     PRINT_PARAMETER(desc.hingeCompliance);
-    PRINT_PARAMETER(desc.hingeDamping);
+    PRINT_PARAMETER(desc.hingeSpookDamping);
     PRINT_PARAMETER(desc.minStabilizingHingeNormalForce);
     PRINT_PARAMETER(desc.stabilizingHingeFrictionParameter);
     PRINT_PARAMETER(desc.enableMerge);
@@ -212,7 +212,7 @@ void AGXVehicleContinuousTrack::printParameters(const AGXVehicleTrackDesc& desc)
     PRINT_PARAMETER(desc.contactReduction);
     PRINT_PARAMETER(desc.enableLockToReachMergeCondition);
     PRINT_PARAMETER(desc.lockToReachMergeConditionCompliance);
-    PRINT_PARAMETER(desc.lockToReachMergeConditionDamping);
+    PRINT_PARAMETER(desc.lockToReachMergeConditionSpookDamping);
     PRINT_PARAMETER(desc.maxAngleMergeCondition);
     cout << m_track->getInternalMergeProperties()->getEnableMerge() << endl;
     cout << m_track->getInternalMergeProperties()->getEnableLockToReachMergeCondition() << endl;

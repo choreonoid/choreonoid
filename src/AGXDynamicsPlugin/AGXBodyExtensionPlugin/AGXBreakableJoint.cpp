@@ -263,12 +263,12 @@ AGXBreakableJoint::AGXBreakableJoint(AGXBreakableJointDevice* device, AGXBody* a
 
     AGXElementaryConstraint base, range, lock;
     jointDeviceInfo.read("jointCompliance", base.compliance);
-    jointDeviceInfo.read("jointDamping", base.damping);
+    jointDeviceInfo.read("jointDamping", base.spookDamping);
     jointDeviceInfo.read("jointRangeCompliance", range.compliance);
-    jointDeviceInfo.read("jointRangeDamping", range.damping);
+    jointDeviceInfo.read("jointRangeDamping", range.spookDamping);
     jointDeviceInfo.read("jointLock", lock.enable);
     jointDeviceInfo.read("jointLockCompliance", lock.compliance);
-    jointDeviceInfo.read("jointLockDamping", lock.damping);
+    jointDeviceInfo.read("jointLockDamping", lock.spookDamping);
     Vector2 baseForceRange, rangeForceRange, lockForceRange;
     if(agxConvert::setVector(jointDeviceInfo.find("jointForceRange"), baseForceRange)){
         base.forceRange = agx::RangeReal(baseForceRange(0), baseForceRange(1));
@@ -289,11 +289,9 @@ AGXBreakableJoint::AGXBreakableJoint(AGXBreakableJointDevice* device, AGXBody* a
     const agx::Vec3 validAxis = agxConvert::toAGX(link1->attitude() * jp.validAxis);
 
     auto createConstraint = [&](AGXConstraintDesc& jd){
+        jd.set(base);
         jd.rigidBodyA = getAGXBody()->getAGXRigidBody(jp.link1Name);
         jd.rigidBodyB = getAGXBody()->getAGXRigidBody(jp.link2Name);
-        jd.compliance = base.compliance;
-        jd.damping = base.damping;
-        jd.forceRange = base.forceRange;
         return AGXObjectFactory::createConstraint(jd);
     };
 
@@ -302,29 +300,19 @@ AGXBreakableJoint::AGXBreakableJoint(AGXBreakableJointDevice* device, AGXBody* a
         AGXHingeDesc hd;
         hd.frameAxis = agxConvert::toAGX(a);
         hd.frameCenter = agxConvert::toAGX(p);
+        hd.range.set(range);
         hd.range.enable = true;
         hd.range.range = agx::RangeReal(agx::degreesToRadians(jp.jointRange[0]), agx::degreesToRadians(jp.jointRange[1]));
-        hd.range.compliance = range.compliance;
-        hd.range.damping = range.damping;
-        hd.range.forceRange = range.forceRange;
-        hd.lock.enable = lock.enable;
-        hd.lock.compliance = lock.compliance;
-        hd.lock.damping = lock.damping;
-        hd.lock.forceRange = lock.forceRange;
+        hd.lock.set(lock);
         joint = createConstraint(hd);
     }else if(jp.jointType == "prismatic"){
         AGXPrismaticDesc pd;
         pd.frameAxis = agxConvert::toAGX(a);
         pd.framePoint = agxConvert::toAGX(p);
+        pd.range.set(range);
         pd.range.enable = true;
         pd.range.range = agx::RangeReal(jp.jointRange[0], jp.jointRange[1]);
-        pd.range.compliance = range.compliance;
-        pd.range.damping = range.damping;
-        pd.range.forceRange = range.forceRange;
-        pd.lock.enable = lock.enable;
-        pd.lock.compliance = lock.compliance;
-        pd.lock.damping = lock.damping;
-        pd.lock.forceRange = lock.forceRange;
+        pd.lock.set(lock);
         joint = createConstraint(pd);
     }else if(jp.jointType == "fixed"){
         AGXLockJointDesc ld;

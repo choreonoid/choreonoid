@@ -533,15 +533,15 @@ agx::ConstraintRef AGXLink::createAGXConstraint()
 
     AGXElementaryConstraint base, motor, range, lock;
     map->read("jointCompliance", base.compliance);
-    map->read("jointDamping", base.damping);
+    map->read("jointDamping", base.spookDamping);
     map->read("jointMotor", motor.enable);
     map->read("jointMotorCompliance", motor.compliance);
-    map->read("jointMotorDamping", motor.damping);
+    map->read("jointMotorDamping", motor.spookDamping);
     map->read("jointRangeCompliance", range.compliance);
-    map->read("jointRangeDamping", range.damping);
+    map->read("jointRangeDamping", range.spookDamping);
     map->read("jointLock", lock.enable);
     map->read("jointLockCompliance",  lock.compliance);
-    map->read("jointLockDamping",  lock.damping);
+    map->read("jointLockDamping",  lock.spookDamping);
 
     Vector2 baseForceRange, motorForceRange, rangeForceRange, lockForceRange;
     if(agxConvert::setVector(map->find("jointForceRange"), baseForceRange)){
@@ -563,13 +563,11 @@ agx::ConstraintRef AGXLink::createAGXConstraint()
             AGXHingeDesc desc;
             const Vector3& a = orgLink->a();
             const Vector3& p = getOrigin();
+            desc.set(base);
             desc.frameAxis.set(a(0),a(1),a(2));
             desc.frameCenter.set(p(0),p(1),p(2));
             desc.rigidBodyA = getAGXRigidBody();
             desc.rigidBodyB = agxParentLink->getAGXRigidBody();
-            desc.compliance = base.compliance;
-            desc.damping = base.damping;
-            desc.forceRange = base.forceRange;
 
             // motor
             desc.motor.set(motor);
@@ -599,13 +597,11 @@ agx::ConstraintRef AGXLink::createAGXConstraint()
             AGXPrismaticDesc desc;
             const Vector3& a = orgLink->a();
             const Vector3& p = getOrigin();
+            desc.set(base);
             desc.frameAxis.set(a(0),a(1),a(2));
             desc.framePoint.set(p(0),p(1),p(2));
             desc.rigidBodyA = getAGXRigidBody();
             desc.rigidBodyB = agxParentLink->getAGXRigidBody();
-            desc.compliance = base.compliance;
-            desc.damping = base.damping;
-            desc.forceRange = base.forceRange;
 
             // motor
             desc.motor.set(motor);
@@ -635,11 +631,9 @@ agx::ConstraintRef AGXLink::createAGXConstraint()
         case Link::PSEUDO_CONTINUOUS_TRACK :    // deprecated
         {
             AGXLockJointDesc desc;
+            desc.set(base);
             desc.rigidBodyA = getAGXRigidBody();
             desc.rigidBodyB = agxParentLink->getAGXRigidBody();
-            desc.compliance = base.compliance;
-            desc.damping = base.damping;
-            desc.forceRange = base.forceRange;
             constraint = AGXObjectFactory::createConstraint(desc);
             break;
         }
