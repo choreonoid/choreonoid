@@ -1270,7 +1270,7 @@ links:
                   material:
                     diffuseColor: [ 1, 1, 0.75 ]
                     specularColor: [ 0, 0, 0 ]
-                    shinines: 0  -
+                    shinines: 0
   - # サブベルト(前右) 従動プーリー
     name: B0007_1_B0007_2708
     parent: B0007_1

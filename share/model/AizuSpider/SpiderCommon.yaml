@@ -1,4 +1,29 @@
 
+RED: &RED
+  material:
+    diffuseColor: [ 0.75, 0, 0 ]
+    specularColor: [ 0, 0, 0 ]
+    shinines: 0
+
+DARK_GRAY: &DARK_GRAY
+  material:
+    diffuseColor: [ 0.25, 0.25, 0.25 ]
+    specularColor: [ 0, 0, 0 ]
+    shinines: 0
+
+WHITE: &WHITE
+  material:
+    diffuseColor: [ 1, 1, 1 ]
+    specularColor: [ 0, 0, 0 ]
+    shinines: 0
+
+LIGHT_YELLOW: &LIGHT_YELLOW
+  material:
+    diffuseColor: [ 1, 1, 0.75 ]
+    specularColor: [ 0, 0, 0 ]
+    shinines: 0
+
+
 LRF_UTM-30LX: &LRF_UTM-30LX
   type: RangeSensor
   name: B0001_LRF
@@ -7,13 +32,16 @@ LRF_UTM-30LX: &LRF_UTM-30LX
   scanRate: &B0001_LRF_SPEC_scanRate 25
   maxDistance: &B0001_LRF_SPEC_maxDistance 30
   elements:
-    Shape:
-      geometry: { type: Box, size: [ 0.060, 0.09150, 0.08830 ] }
-      appearance:
-        material:
-          diffuseColor: [ 0.73, 0.36, 0.02 ]
-          specularColor: [ 0, 0, 0 ]
-          shinines: 0
+    # TODO: Remove the corresponding shape from parts/B0001.wrl
+    # and make the following shape normal shape
+    Collision: 
+      shape:
+        geometry: { type: Box, size: [ 0.060, 0.09150, 0.08830 ] }
+        appearance:
+          material:
+            diffuseColor: [ 0.73, 0.36, 0.02 ]
+            specularColor: [ 0, 0, 0 ]
+            shinines: 0
 
 CAMERA_MCM-4350FISH: &CAMERA_MCM-4350FISH
   type: Camera
@@ -23,14 +51,17 @@ CAMERA_MCM-4350FISH: &CAMERA_MCM-4350FISH
   height: &B0001_CAMERA_SPEC_height 720
   frameRate: &B0001_CAMERA_SPEC_frameRate 30
   elements:
-    Shape:
-      translation: [ 0, 0, 0.01175 ]
-      geometry: { type: Box, size: [ 0.064, 0.037, 0.02350 ] }
-      appearance:
-        material:
-          diffuseColor: [ 1, 1, 1 ]
-          specularColor: [ 0, 0, 0 ]
-          shinines: 0
+    # TODO: Remove the corresponding shape from parts/B0001.wrl
+    # and make the following shape normal shape
+    Collision: 
+      shape:
+        translation: [ 0, 0, 0.01175 ]
+        geometry: { type: Box, size: [ 0.064, 0.037, 0.02350 ] }
+        appearance:
+          material:
+            diffuseColor: [ 1, 1, 1 ]
+            specularColor: [ 0, 0, 0 ]
+            shinines: 0
 
 LIGHT: &LIGHT
   type: SpotLight
@@ -40,641 +71,740 @@ LIGHT: &LIGHT
   cutOffAngle: 40
   cutOffExponent: 6
   elements:
-    Shape:
-      translation: [ 0, 0, -0.02 ]
-      rotation: [ 1, 0, 0, 90 ]
-      geometry:
-        type: Cone
-        height: 0.04
-        radius: 0.025
-      appearance:
-        material:
-          diffuseColor: [ 1.0, 1.0, 0.4 ]
-          ambientIntensity: 0.3
+    # TODO: Remove the corresponding shape from parts/B0001.wrl
+    # and make the following shape normal shape
+    Collision:
+      shape:
+        translation: [ 0, 0, -0.02 ]
+        rotation: [ 1, 0, 0, 90 ]
+        geometry: { type: Cone, height: 0.04, radius: 0.025 }
+        appearance:
+          material:
+            diffuseColor: [ 1.0, 1.0, 0.4 ]
+            ambientIntensity: 0.3
 
+# Chassis
 B0001: &B0001
-    -
-      type: Transform
-      translation: [ 0, 0, 0.43050 ]
-      elements:
-        -
-          type: AccelerationSensor
-          name: B0001_ACCELERATION_SENSOR
-          id: 0
-        -
-          type: RateGyroSensor
-          name: B0001_RATE_GYRO_SENSOR
-          id: 0
-    -
-      type: Transform
-      rotation: [ [ 0, -1, 0, 90 ], [ 0, 0, -1, 90 ] ]
-      # cad coordinate
-      elements:
-        -
-          type: RigidBody
-          centerOfMass: [ 0.00132, 0.16142, 0.07955 ]
-          mass: 50.19771
-          inertia: [
-            2.38060147193, 0.02358430504, 0.00525374443,
-            0.02358430504, 2.02122435831, 0.22227311339,
-            0.00525374443, 0.22227311339, 1.35813384249 ]
+  -
+    type: Transform
+    translation: [ 0, 0, 0.43050 ]
+    elements:
+      -
+        type: AccelerationSensor
+        name: B0001_ACCELERATION_SENSOR
+        id: 0
+      -
+        type: RateGyroSensor
+        name: B0001_RATE_GYRO_SENSOR
+        id: 0
+  -
+    type: Transform
+    rotation: [ [ 0, -1, 0, 90 ], [ 0, 0, -1, 90 ] ]
+    # cad coordinate
+    elements:
+      -
+        type: RigidBody
+        centerOfMass: [ 0.00132, 0.16142, 0.07955 ]
+        mass: 50.19771
+        inertia: [
+          2.38060147193, 0.02358430504, 0.00525374443,
+          0.02358430504, 2.02122435831, 0.22227311339,
+          0.00525374443, 0.22227311339, 1.35813384249 ]
 
-        - # B0010_3002<1>
-          type: Transform
-          translation: [ 0, 0.19975, -0.20415 ]
-          elements:
-            - *LRF_UTM-30LX
-        - # B0010_3101<1>
-          type: Transform
-          translation: [ 0, 0.13550, -0.24155 ]
-          rotation: [ -1, 0, 0, 90 ]
-          elements:
-            -
-              type: Transform
-              translation: [ 0, 0.01175, 0 ]
-              rotation: [ 1, 0, 0, 90 ]
-              elements:
-                Camera:
-                  <<: *CAMERA_MCM-4350FISH
-                  name: B0001_CAMERA_FRONT
-        - # B0010_3101<2>
-          type: Transform
-          translation: [ -0.16675, 0.04450, 0 ]
-          rotation: [ [ 0, 1, 0, 90 ], [ -1, 0, 0, 90 ] ]
-          elements:
-            -
-              type: Transform
-              translation: [ 0, 0.01175, 0 ]
-              rotation: [ 1, 0, 0, 90 ]
-              elements:
-                Camera:
-                  <<: *CAMERA_MCM-4350FISH
-                  name: B0001_CAMERA_LEFT
-        - # B0010_3101<3>
-          type: Transform
-          translation: [ 0.16675, 0.04450, 0 ]
-          rotation: [ [ 0, -1, 0, 90 ], [ -1, 0, 0, 90 ] ]
-          elements:
-            -
-              type: Transform
-              translation: [ 0, 0.01175, 0 ]
-              rotation: [ 1, 0, 0, 90 ]
-              elements:
-                Camera:
-                  <<: *CAMERA_MCM-4350FISH
-                  name: B0001_CAMERA_RIGHT
-        - # B0010_3101<4>
-          type: Transform
-          translation: [ 0, 0.094, 0.34495 ]
-          rotation: [ [ 0, 1, 0, 180 ], [ -1, 0, 0, 90 ] ]
-          elements:
-            -
-              type: Transform
-              translation: [ 0, 0.01175, 0 ]
-              rotation: [ 1, 0, 0, 90 ]
-              elements:
-                Camera:
-                  <<: *CAMERA_MCM-4350FISH
-                  name: B0001_CAMERA_REAR
-        - # Front light
-          type: Transform
-          translation: [ 0, 0.41050, -0.11180 ]
-          elements: 
-            SpotLight:
-              <<: *LIGHT
-              name: B0001_LIGHT_FRONT
-        - # Left light
-          type: Transform
-          translation: [ -0.104, 0.41050, 0.1107 ]
-          rotation: [ 0, 1, 0, 90 ]
-          elements:
-            SpotLight:
-              <<: *LIGHT
-              name: B0001_LIGHT_LEFT
-        - # Right light
-          type: Transform
-          translation: [ 0.104, 0.41050, 0.1107 ]
-          rotation: [ 0, -1, 0, 90 ]
-          elements:
-            SpotLight:
-              <<: *LIGHT
-              name: B0001_LIGHT_RIGHT
-        - # Back light
-          type: Transform
-          translation: [ 0, 0.41050, 0.33320 ]
-          rotation: [ 0, 1, 0, 180 ]
-          elements:
-            SpotLight:
-              <<: *LIGHT
-        -
-          type: Visual
-          resource: { uri: "parts/B0001.wrl" }
-        -
-          type: Collision
-          elements:
-            - # B0001_2102<1>
-              type: Transform
-              translation: [ 0.097, 0.05725, 0 ]
-              elements: &B0001_2102_elements
-                -
-                  type: Shape
-                  geometry: { type: Box, size: [ 0.006, 0.13950, 0.53040 ] }
-                  appearance: &B0001_2102_appearance
-                    material:
-                      diffuseColor: [ 0.75, 0, 0 ]
-                      specularColor: [ 0, 0, 0 ]
-                      shinines: 0
-                -
-                  type: Shape
-                  translation: [ 0, 0.02060, 0.27840 ]
-                  geometry: { type: Box, size: [ 0.006, 0.09830, 0.02640 ] }
-                  appearance: *B0001_2102_appearance
-                -
-                  type: Shape
-                  translation: [ 0, 0.02060, -0.27840 ]
-                  geometry:
-                    type: Box
-                    size: [ 0.006, 0.09830, 0.02640 ]
-                  appearance: *B0001_2102_appearance
-                -
-                  type: Transform
-                  translation: [ 0, -0.06975, 0.26520 ]
-                  rotation: [ -1, 0, 0, 57.35 ]
-                  elements:
-                    Transform:
-                      translation: [ 0, 0.04915, 0.024465 ]
-                      elements:
-                        Shape:
-                          geometry:
-                            type: Box
-                            size: [ 0.006, 0.09830, 0.04893 ]
-                          appearance: *B0001_2102_appearance
-                -
-                  type: Transform
-                  translation: [ 0, -0.06975, -0.26520 ]
-                  rotation: [ 1, 0, 0, 57.35 ]
-                  elements:
-                    Transform:
-                      translation: [ 0, 0.04915, -0.024465 ]
-                      elements:
-                        Shape:
-                          geometry:
-                            type: Box
-                            size: [ 0.006, 0.09830, 0.04893 ]
-                          appearance: *B0001_2102_appearance
-            - # B0001_2102<2>
-              type: Transform
-              translation: [ -0.097, 0.05725, 0 ]
-              elements: *B0001_2102_elements
-            - # B0001_2130<1>
-              type: Transform
-              translation: [ -0.12450, 0.07025, 0 ]
-              elements: &B0001_2130_elements
-                Shape:
-                  geometry:
-                    type: Box
-                    size: [ 0.061, 0.12250, 0.290 ]
-                  appearance:
-                    material:
-                      diffuseColor: [ 0.75, 0, 0 ]
-                      specularColor: [ 0, 0, 0 ]
-                      shinines: 0
-            - # B0001_2130<2>
-              type: Transform
-              translation: [ 0.12450, 0.07025, 0 ]
-              elements: *B0001_2130_elements
-            - # B0005_2501<1>
-              type: Transform
-              translation: [ -0.152, 0.062, 0 ]
-              elements: &B0005_2501_elements
-                -
-                  type: Transform
-                  translation: [ 0, 0.004125, 0 ]
-                  elements:
-                    Shape:
-                      geometry:
-                        type: Box
-                        size: [ 0.006, 0.12175, 0.468 ]
-                      appearance: &B0005_2501_appearance
-                        material:
-                          diffuseColor: [ 0.75, 0, 0 ]
-                          specularColor: [ 0, 0, 0 ]
-                          shinines: 0
-                -
-                  type: Transform
-                  translation: [ 0, 0, 0.234 ]
-                  rotation: [ 0, 0, 1, 90 ]
-                  elements:
-                    Shape:
-                      geometry:
-                        type: Cylinder
-                        height: 0.006
-                        radius: 0.065
-                      appearance: *B0005_2501_appearance
-                -
-                  type: Transform
-                  translation: [ 0, 0, -0.234 ]
-                  rotation: [ 0, 0, 1, 90 ]
-                  elements:
-                    Shape:
-                      geometry:
-                        type: Cylinder
-                        height: 0.006
-                        radius: 0.065
-                      appearance: *B0005_2501_appearance
-                -
-                  type: Transform
-                  translation: [ 0, -0.065, 0.234 ]
-                  elements:
-                    Transform:
-                      translation: [ 0, 0.004125, -0.0275 ]
-                      elements:
-                        Shape:
-                          geometry:
-                            type: Box
-                            size: [ 0.006, 0.00825, 0.055 ]
-                          appearance: *B0005_2501_appearance
-                -
-                  type: Transform
-                  translation: [ 0, -0.065, -0.234 ]
-                  elements:
-                    Transform:
-                      translation: [ 0, 0.004125, 0.0275 ]
-                      elements:
-                        Shape:
-                          geometry:
-                            type: Box
-                            size: [ 0.006, 0.00825, 0.055 ]
-                          appearance: *B0005_2501_appearance
-                -
-                  type: Transform
-                  translation: [ 0, -0.065, 0.179 ]
-                  rotation: [ 1, 0, 0, 45 ]
-                  elements:
-                    Transform:
-                      translation: [ 0, 0.006, -0.006 ]
-                      elements:
-                        Shape:
-                          geometry:
-                            type: Box
-                            size: [ 0.006, 0.012, 0.012 ]
-                          appearance: *B0005_2501_appearance
-                -
-                  type: Transform
-                  translation: [ 0, -0.065, -0.179 ]
-                  rotation: [ -1, 0, 0, 45 ]
-                  elements:
-                    Transform:
-                      translation: [ 0, 0.006, 0.006 ]
-                      elements:
-                        Shape:
-                          geometry:
-                            type: Box
-                            size: [ 0.006, 0.012, 0.012 ]
-                          appearance: *B0005_2501_appearance
-            - # B0005_2501<2>
-              type: Transform
-              translation: [ 0.152, 0.062, 0 ]
-              elements: *B0005_2501_elements
-            - # B0005_2502<1>
-              type: Transform
-              translation: [ -0.16850, 0.062, -0.234 ]
-              rotation: [ [ 0, 0, 1, 90 ], [ 0, -1, 0, 90 ] ]
-              elements: &B0005_2502_elements
-                -
-                  type: Shape
-                  geometry:
-                    type: Cylinder
-                    height: 0.027
-                    radius: 0.07230
-                  appearance: &B0005_2502_appearance
-                    material:
-                      diffuseColor: [ 0.75, 0, 0 ]
-                      specularColor: [ 0, 0, 0 ]
-                      shinines: 0
-                -
-                  type: Transform
-                  translation: [ 0.125, 0, 0 ]
-                  elements:
-                    Shape:
-                      geometry:
-                        type: Cylinder
-                        height: 0.027
-                        radius: 0.03780
-                      appearance: *B0005_2502_appearance
-                -
-                  type: Transform
-                  rotation: [ 0, 1, 0, 16.02 ]
-                  elements:
-                    Transform:
-                      translation: [ 0.06007, 0, 0.03615 ]
-                      elements:
-                        Shape:
-                          geometry:
-                            type: Box
-                            size: [ 0.12014, 0.027, 0.07230 ]
-                          appearance: *B0005_2502_appearance
-                -
-                  type: Transform
-                  rotation: [ 0, -1, 0, 16.02 ]
-                  elements:
-                    Transform:
-                      translation: [ 0.06007, 0, -0.03615 ]
-                      elements:
-                        Shape:
-                          geometry:
-                            type: Box
-                            size: [ 0.12014, 0.027, 0.07230 ]
-                          appearance: *B0005_2502_appearance
-            - # B0005_2502<2>
-              type: Transform
-              translation: [ 0.16850, 0.062, -0.234 ]
-              rotation: [ [ 0, 0, 1, 90 ], [ 0, -1, 0, 90 ] ]
-              elements: *B0005_2502_elements
-            - # B0005_2502<3>
-              type: Transform
-              translation: [ -0.16850, 0.062, 0.234 ]
-              rotation: [ [ 0, 0, 1, 90 ], [ 0, 1, 0, 90 ] ]
-              elements: *B0005_2502_elements
-            - # B0005_2502<4>
-              type: Transform
-              translation: [ 0.16850, 0.062, 0.234 ]
-              rotation: [ [ 0, 0, 1, 90 ], [ 0, 1, 0, 90 ] ]
-              elements: *B0005_2502_elements
-            - # B0006_2602_1<1>
-              type: Transform
-              translation: [ -0.16530, 0.010, 0 ]
-              rotation: [ [ 1, 0, 0, 90 ], [ 0, 0, 1, 90 ] ]
-              elements: &B0006_2602_1_elements
-                Shape:
-                  geometry:
-                    type: Box
-                    size: [ 0.230, 0.020, 0.010 ]
-                  appearance:
-                    material:
-                      diffuseColor: [ 0.75, 0, 0 ]
-                      specularColor: [ 0, 0, 0 ]
-                      shinines: 0
-            - # B0006_2602_1<2>
-              type: Transform
-              translation: [ 0.16530, 0.010, 0 ]
-              rotation: [ [ 1, 0, 0, 90 ], [ 0, 0, 1, 90 ] ]
-              elements: *B0006_2602_1_elements
-            - # B0006_2602_2<1>
-              type: Transform
-              translation: [ -0.180, 0.00150, 0 ]
-              elements: &B0006_2602_2_elements
-                -
-                  type: Shape
-                  geometry:
-                    type: Box
-                    size: [ 0.010, 0.033, 0.23422 ]
-                  appearance: &B0006_2602_2_appearance
-                    material:
-                      diffuseColor: [ 0.75, 0, 0 ]
-                      specularColor: [ 0, 0, 0 ]
-                      shinines: 0
-                -
-                  type: Transform
-                  translation: [ 0, -0.01650, 0.160 ]
-                  elements:
-                    Transform:
-                      translation: [ 0, 0.0065, -0.021445 ]
-                      elements:
-                        Shape:
-                          geometry:
-                            type: Box
-                            size: [ 0.010, 0.013, 0.04289 ]
-                          appearance: *B0006_2602_2_appearance
-                -
-                  type: Transform
-                  translation: [ 0, -0.01650, -0.160 ]
-                  elements:
-                    Transform:
-                      translation: [ 0, 0.0065, 0.021445 ]
-                      elements:
-                        Shape:
-                          geometry:
-                            type: Box
-                            size: [ 0.010, 0.013, 0.04289 ]
-                          appearance: *B0006_2602_2_appearance
-                -
-                  type: Transform
-                  translation: [ 0, -0.00350, 0.160 ]
-                  rotation: [ 1, 0, 0, 25 ]
-                  elements:
-                    Transform:
-                      translation: [ 0, -0.0065, -0.01183 ]
-                      elements:
-                        Shape:
-                          geometry:
-                            type: Box
-                            size: [ 0.010, 0.013, 0.02366 ]
-                          appearance: *B0006_2602_2_appearance
-                -
-                  type: Transform
-                  translation: [ 0, 0.00650, 0.13855 ]
-                  rotation: [ 1, 0, 0, 25 ]
-                  elements:
-                    Transform:
-                      translation: [ 0, -0.010, -0.01183 ]
-                      elements:
-                        Shape:
-                          geometry:
-                            type: Box
-                            size: [ 0.010, 0.020, 0.02366 ]
-                          appearance: *B0006_2602_2_appearance
-                -
-                  type: Transform
-                  translation: [ 0, -0.00350, -0.160 ]
-                  rotation: [ -1, 0, 0, 25 ]
-                  elements:
-                    Transform:
-                      translation: [ 0, -0.0065, 0.01183 ]
-                      elements:
-                        Shape:
-                          geometry:
-                            type: Box
-                            size: [ 0.010, 0.013, 0.02366 ]
-                          appearance: *B0006_2602_2_appearance
-                -
-                  type: Transform
-                  translation: [ 0, 0.00650, -0.13855 ]
-                  rotation: [ -1, 0, 0, 25 ]
-                  elements:
-                    Transform:
-                      translation: [ 0, -0.010, 0.01183 ]
-                      elements:
-                        Shape:
-                          geometry:
-                            type: Box
-                            size: [ 0.010, 0.020, 0.02366 ]
-                          appearance: *B0006_2602_2_appearance
-            - # B0006_2602_2<2>
-              type: Transform
-              translation: [ 0.180, 0.00150, 0 ]
-              elements: *B0006_2602_2_elements
-            - # B0006_2604<1>
-              type: Transform
-              translation: [ -0.10420, -0.00650, 0 ]
-              rotation: [ [ 0, 0, 1, 90 ], [ 0, 1, 0, 90 ] ]
-              elements: &B0006_2604_elements
-                Shape:
-                  geometry:
-                    type: Box
-                    size: [ 0.330, 0.008, 0.023 ]
-                  appearance:
-                    material:
-                      diffuseColor: [ 0.75, 0, 0 ]
-                      specularColor: [ 0, 0, 0 ]
-                      shinines: 0
-            - # B0006_2604<2>
-              type: Transform
-              translation: [ 0.10420, -0.00650, 0 ]
-              rotation: [ [ 0, 0, 1, 90 ], [ 0, 1, 0, 90 ] ]
-              elements: *B0006_2604_elements
-            - # B0008_2825<1>
-              type: Transform
-              translation: [ 0.094, 0.463, 0.204 ]
-              elements: &B0008_2825_elements
-                Shape:
-                  geometry:
-                    type: Box
-                    size: [ 0.040, 0.065, 0.020 ]
-                  appearance:
-                    material:
-                      diffuseColor: [ 0.25, 0.25, 0.25 ]
-                      specularColor: [ 0, 0, 0 ]
-                      shinines: 0
-            - # B0008_2825<2>
-              type: Transform
-              translation: [ 0.094, 0.463, 0.084 ]
-              elements: *B0008_2825_elements
-            - # B0008_2826<1>
-              type: Transform
-              translation: [ 0.094, 0.51550, 0.114 ]
-              elements:
-                Shape:
-                  geometry:
-                    type: Box
-                    size: [ 0.040, 0.040, 0.200 ]
-                  appearance:
-                    material:
-                      diffuseColor: [ 0.25, 0.25, 0.25 ]
-                      specularColor: [ 0, 0, 0 ]
-                      shinines: 0
-            - # B0008_2827<1>
-              type: Transform
-              translation: [ -0.094, 0.48050, 0.060 ]
-              elements:
-                Shape:
-                  geometry:
-                    type: Box
-                    size: [ 0.040, 0.100, 0.040 ]
-                  appearance:
-                    material:
-                      diffuseColor: [ 0.25, 0.25, 0.25 ]
-                      specularColor: [ 0, 0, 0 ]
-                      shinines: 0
-            - # B0010_3001<1>
-              type: Transform
-              translation: [ 0, 0.18150, -0.12500 ]
-              elements:
-                Shape:
-                  geometry:
-                    type: Box
-                    size: [ 0.100, 0.202, 0.070 ]
-                  appearance:
-                    material:
-                      diffuseColor: [ 1, 1, 1 ]
-                      specularColor: [ 0, 0, 0 ]
-                      shinines: 0
-            - # B0013_3302<1>
-              type: Transform
-              translation: [ -0.168, 0.116, 0 ]
-              rotation: [ [ 0, 1, 0, 90 ], [ 1, 0, 0, 90 ] ]
-              elements: &B0013_3302_elements
-                Shape:
-                  geometry:
-                    type: Box
-                    size: [ 0.018, 0.026, 0.088 ]
-                  appearance:
-                    material:
-                      diffuseColor: [ 0.75, 0, 0 ]
-                      specularColor: [ 0, 0, 0 ]
-                      shinines: 0
-            - # B0013_3302<2>
-              type: Transform
-              translation: [ 0.168, 0.116, 0 ]
-              rotation: [ [ 0, 1, 0, 90 ], [ 1, 0, 0, 90 ] ]
-              elements: *B0013_3302_elements
-            # パーツ省略
-            #- B0005_2504<1>
-            #- B0005_2504<2>
-            #- B0005_2507<1>
-            #- B0005_2507<2>
-            #- B0001_2103<1>
-            #- B0001_2101_1<1>
-            #- B0001_2101_2<2>
-            #- B0013_3301<1>
-            #- B0013_3301<2>
-            #- B0013_3302<1>
-            #- B0013_3302<2>
-            #- HTPA60S5M150<1>
-            #- HTPA60S5M150<2>
+      - # B0010_3002<1>
+        type: Transform
+        translation: [ 0, 0.19975, -0.20415 ]
+        elements:
+          - *LRF_UTM-30LX
+      - # B0010_3101<1>
+        type: Transform
+        translation: [ 0, 0.13550, -0.24155 ]
+        rotation: [ -1, 0, 0, 90 ]
+        elements:
+          -
+            type: Transform
+            translation: [ 0, 0.01175, 0 ]
+            rotation: [ 1, 0, 0, 90 ]
+            elements:
+              Camera:
+                <<: *CAMERA_MCM-4350FISH
+                name: B0001_CAMERA_FRONT
+      - # B0010_3101<2>
+        type: Transform
+        translation: [ -0.16675, 0.04450, 0 ]
+        rotation: [ [ 0, 1, 0, 90 ], [ -1, 0, 0, 90 ] ]
+        elements:
+          -
+            type: Transform
+            translation: [ 0, 0.01175, 0 ]
+            rotation: [ 1, 0, 0, 90 ]
+            elements:
+              Camera:
+                <<: *CAMERA_MCM-4350FISH
+                name: B0001_CAMERA_LEFT
+      - # B0010_3101<3>
+        type: Transform
+        translation: [ 0.16675, 0.04450, 0 ]
+        rotation: [ [ 0, -1, 0, 90 ], [ -1, 0, 0, 90 ] ]
+        elements:
+          -
+            type: Transform
+            translation: [ 0, 0.01175, 0 ]
+            rotation: [ 1, 0, 0, 90 ]
+            elements:
+              Camera:
+                <<: *CAMERA_MCM-4350FISH
+                name: B0001_CAMERA_RIGHT
+      - # B0010_3101<4>
+        type: Transform
+        translation: [ 0, 0.094, 0.34495 ]
+        rotation: [ [ 0, 1, 0, 180 ], [ -1, 0, 0, 90 ] ]
+        elements:
+          -
+            type: Transform
+            translation: [ 0, 0.01175, 0 ]
+            rotation: [ 1, 0, 0, 90 ]
+            elements:
+              Camera:
+                <<: *CAMERA_MCM-4350FISH
+                name: B0001_CAMERA_REAR
+      - # Front light
+        type: Transform
+        translation: [ 0, 0.41050, -0.11180 ]
+        elements: 
+          SpotLight:
+            <<: *LIGHT
+            name: B0001_LIGHT_FRONT
+      - # Left light
+        type: Transform
+        translation: [ -0.104, 0.41050, 0.1107 ]
+        rotation: [ 0, 1, 0, 90 ]
+        elements:
+          SpotLight:
+            <<: *LIGHT
+            name: B0001_LIGHT_LEFT
+      - # Right light
+        type: Transform
+        translation: [ 0.104, 0.41050, 0.1107 ]
+        rotation: [ 0, -1, 0, 90 ]
+        elements:
+          SpotLight:
+            <<: *LIGHT
+            name: B0001_LIGHT_RIGHT
+      - # Back light
+        type: Transform
+        translation: [ 0, 0.41050, 0.33320 ]
+        rotation: [ 0, 1, 0, 180 ]
+        elements:
+          SpotLight:
+            <<: *LIGHT
+      -
+        type: Visual
+        resource: { uri: "parts/B0001.wrl" }
+      -
+        type: Collision
+        elements:
+          - # B0001_2102<1>
+            type: Transform
+            translation: [ 0.097, 0.05725, 0 ]
+            elements: &B0001_2102_elements
+              -
+                type: Shape
+                geometry: { type: Box, size: [ 0.006, 0.13950, 0.53040 ] }
+                appearance: *RED
+              -
+                type: Shape
+                translation: [ 0, 0.02060, 0.27840 ]
+                geometry: { type: Box, size: [ 0.006, 0.09830, 0.02640 ] }
+                appearance: *RED
+              -
+                type: Shape
+                translation: [ 0, 0.02060, -0.27840 ]
+                geometry: { type: Box, size: [ 0.006, 0.09830, 0.02640 ] }
+                appearance: *RED
+              -
+                type: Transform
+                translation: [ 0, -0.06975, 0.26520 ]
+                rotation: [ -1, 0, 0, 57.35 ]
+                elements:
+                  Shape:
+                    translation: [ 0, 0.04915, 0.024465 ]
+                    geometry: { type: Box, size: [ 0.006, 0.09830, 0.04893 ] }
+                    appearance: *RED
+              -
+                type: Transform
+                translation: [ 0, -0.06975, -0.26520 ]
+                rotation: [ 1, 0, 0, 57.35 ]
+                elements:
+                  Transform:
+                    translation: [ 0, 0.04915, -0.024465 ]
+                    elements:
+                      Shape:
+                        geometry: { type: Box, size: [ 0.006, 0.09830, 0.04893 ] }
+                        appearance: *RED
+          - # B0001_2102<2>
+            type: Transform
+            translation: [ -0.097, 0.05725, 0 ]
+            elements: *B0001_2102_elements
+          - # B0001_2130<1>
+            type: Transform
+            translation: [ -0.12450, 0.07025, 0 ]
+            elements: &B0001_2130_elements
+              Shape:
+                geometry:
+                  type: Box
+                  size: [ 0.061, 0.12250, 0.290 ]
+                appearance: *RED
+          - # B0001_2130<2>
+            type: Transform
+            translation: [ 0.12450, 0.07025, 0 ]
+            elements: *B0001_2130_elements
+          - # B0005_2501<1>
+            type: Transform
+            translation: [ -0.152, 0.062, 0 ]
+            elements: &B0005_2501_elements
+              -
+                type: Shape
+                translation: [ 0, 0.004125, 0 ]
+                geometry: { type: Box, size: [ 0.006, 0.12175, 0.468 ] }
+                appearance: *RED
+              -
+                type: Shape
+                translation: [ 0, 0, 0.234 ]
+                rotation: [ 0, 0, 1, 90 ]
+                geometry: { type: Cylinder, height: 0.006, radius: 0.065 }
+                appearance: *RED
+              -
+                type: Shape
+                translation: [ 0, 0, -0.234 ]
+                rotation: [ 0, 0, 1, 90 ]
+                geometry: { type: Cylinder, height: 0.006, radius: 0.065 }
+                appearance: *RED
+              -
+                type: Transform
+                translation: [ 0, -0.065, 0.234 ]
+                elements:
+                  Shape:
+                    translation: [ 0, 0.004125, -0.0275 ]
+                    geometry: { type: Box, size: [ 0.006, 0.00825, 0.055 ] }
+                    appearance: *RED
+              -
+                type: Transform
+                translation: [ 0, -0.065, -0.234 ]
+                elements:
+                  Shape:
+                    translation: [ 0, 0.004125, 0.0275 ]
+                    geometry: { type: Box, size: [ 0.006, 0.00825, 0.055 ] }
+                    appearance: *RED
+              -
+                type: Transform
+                translation: [ 0, -0.065, 0.179 ]
+                rotation: [ 1, 0, 0, 45 ]
+                elements:
+                  Shape:
+                    translation: [ 0, 0.006, -0.006 ]
+                    geometry: { type: Box, size: [ 0.006, 0.012, 0.012 ] }
+                    appearance: *RED
+              -
+                type: Transform
+                translation: [ 0, -0.065, -0.179 ]
+                rotation: [ -1, 0, 0, 45 ]
+                elements:
+                  Shape:
+                    translation: [ 0, 0.006, 0.006 ]
+                    geometry: { type: Box, size: [ 0.006, 0.012, 0.012 ] }
+                    appearance: *RED
 
-            # パーツ簡易化
-            - # B0001_2101_1<1>,B0001_2104<1>,B0001_2105<1>
-              type: Transform
-              translation: [ 0, 0.03525, 0.05410 ]
-              elements:
-                Shape:
-                  geometry:
-                    type: Box
-                    size: [ 0.188, 0.07550, 0.25820 ]
-                  appearance:
-                    material:
-                      diffuseColor: [ 0.75, 0, 0 ]
-                      specularColor: [ 0, 0, 0 ]
-                      shinines: 0
-            - # B0001_2101_2<1>,B0004_2402<1>,B0004_2403<1>,B0004_2403<2>,B0004_2406<1>
-              type: Transform
-              translation: [ 0, 0.039, -0.11750 ]
-              elements:
-                Shape:
-                  geometry:
-                    type: Box
-                    size: [ 0.124, 0.083, 0.085 ]
-                  appearance:
-                    material:
-                      diffuseColor: [ 0.75, 0, 0 ]
-                      specularColor: [ 0, 0, 0 ]
-                      shinines: 0
-            #- B0001_2106<1>,B0001_2107<1>,B0001_2108<1>,B0006_2604<1>,B0006_2602_2<1>,B0006_2602_1<1>
-            #- B0001_2106<2>,B0001_2107<2>,B0001_2108<2>,B0006_2604<2>,B0006_2602_2<2>,B0006_2602_1<2>
-            - # E001_0001<1>,E001_0002<1>,B0008_2820<1>,B0008_2821<1>,B0008_2821<2>,B0008_2850<1>,B0008_2850<2>,B0008_2823<1>,B0008_2823<2>
-              type: Transform
-              translation: [ 0, 0.2215, 0.1107 ]
-              elements:
-                Shape:
-                  geometry:
-                    type: Box
-                    size: [ 0.188, 0.338, 0.445 ]
-                  appearance:
-                    material:
-                      diffuseColor: [ 0.25, 0.25, 0.25 ]
-                      specularColor: [ 0, 0, 0 ]
-                      shinines: 0
-            - # B0008_2822<1>,B0008_2822<2>,B0008_2824<1>,B0008_2824<2>,B0008_2824<3>,B0008_2828<1>
-              type: Transform
-              translation: [ 0, 0.41050, 0.11070 ]
-              elements:
-                Shape:
-                  geometry:
-                    type: Box
-                    size: [ 0.228, 0.040, 0.445 ]
-                  appearance:
-                    material:
-                      diffuseColor: [ 0.25, 0.25, 0.25 ]
-                      specularColor: [ 0, 0, 0 ]
-                      shinines: 0
+          - # B0005_2501<2>
+            type: Transform
+            translation: [ 0.152, 0.062, 0 ]
+            elements: *B0005_2501_elements
+          - # B0005_2502<1>
+            type: Transform
+            translation: [ -0.16850, 0.062, -0.234 ]
+            rotation: [ [ 0, 0, 1, 90 ], [ 0, -1, 0, 90 ] ]
+            elements: &B0005_2502_elements
+              -
+                type: Shape
+                geometry: { type: Cylinder, height: 0.027, radius: 0.07230 }
+                appearance: *RED
+              -
+                type: Shape
+                translation: [ 0.125, 0, 0 ]
+                geometry: { type: Cylinder, height: 0.027, radius: 0.03780 }
+                appearance: *RED
+              -
+                type: Transform
+                rotation: [ 0, 1, 0, 16.02 ]
+                elements:
+                  Shape:
+                    translation: [ 0.06007, 0, 0.03615 ]
+                    geometry: { type: Box, size: [ 0.12014, 0.027, 0.07230 ] }
+                    appearance: *RED
+              -
+                type: Transform
+                rotation: [ 0, -1, 0, 16.02 ]
+                elements:
+                  Shape:
+                    translation: [ 0.06007, 0, -0.03615 ]
+                    geometry: { type: Box, size: [ 0.12014, 0.027, 0.07230 ] }
+                    appearance: *RED
+          - # B0005_2502<2>
+            type: Transform
+            translation: [ 0.16850, 0.062, -0.234 ]
+            rotation: [ [ 0, 0, 1, 90 ], [ 0, -1, 0, 90 ] ]
+            elements: *B0005_2502_elements
+          - # B0005_2502<3>
+            type: Transform
+            translation: [ -0.16850, 0.062, 0.234 ]
+            rotation: [ [ 0, 0, 1, 90 ], [ 0, 1, 0, 90 ] ]
+            elements: *B0005_2502_elements
+          - # B0005_2502<4>
+            type: Transform
+            translation: [ 0.16850, 0.062, 0.234 ]
+            rotation: [ [ 0, 0, 1, 90 ], [ 0, 1, 0, 90 ] ]
+            elements: *B0005_2502_elements
+          - # B0006_2602_1<1>
+            type: Transform
+            translation: [ -0.16530, 0.010, 0 ]
+            rotation: [ [ 1, 0, 0, 90 ], [ 0, 0, 1, 90 ] ]
+            elements: &B0006_2602_1_elements
+              Shape:
+                geometry: { type: Box, size: [ 0.230, 0.020, 0.010 ] }
+                appearance: *RED
+          - # B0006_2602_1<2>
+            type: Transform
+            translation: [ 0.16530, 0.010, 0 ]
+            rotation: [ [ 1, 0, 0, 90 ], [ 0, 0, 1, 90 ] ]
+            elements: *B0006_2602_1_elements
+          - # B0006_2602_2<1>
+            type: Transform
+            translation: [ -0.180, 0.00150, 0 ]
+            elements: &B0006_2602_2_elements
+              -
+                type: Shape
+                geometry: { type: Box, size: [ 0.010, 0.033, 0.23422 ] }
+                appearance: *RED
+              -
+                type: Transform
+                translation: [ 0, -0.01650, 0.160 ]
+                elements:
+                  Shape:
+                    translation: [ 0, 0.0065, -0.021445 ]
+                    geometry: { type: Box, size: [ 0.010, 0.013, 0.04289 ] }
+                    appearance: *RED
+              -
+                type: Transform
+                translation: [ 0, -0.01650, -0.160 ]
+                elements:
+                  Shape:
+                    translation: [ 0, 0.0065, 0.021445 ]
+                    geometry: { type: Box, size: [ 0.010, 0.013, 0.04289 ] }
+                    appearance: *RED
+              -
+                type: Transform
+                translation: [ 0, -0.00350, 0.160 ]
+                rotation: [ 1, 0, 0, 25 ]
+                elements:
+                  Shape:
+                    translation: [ 0, -0.0065, -0.01183 ]
+                    geometry: { type: Box, size: [ 0.010, 0.013, 0.02366 ] }
+                    appearance: *RED
+              -
+                type: Transform
+                translation: [ 0, 0.00650, 0.13855 ]
+                rotation: [ 1, 0, 0, 25 ]
+                elements:
+                  Shape:
+                    translation: [ 0, -0.010, -0.01183 ]
+                    geometry: { type: Box, size: [ 0.010, 0.020, 0.02366 ]}
+                    appearance: *RED
+              -
+                type: Transform
+                translation: [ 0, -0.00350, -0.160 ]
+                rotation: [ -1, 0, 0, 25 ]
+                elements:
+                  Shape:
+                    translation: [ 0, -0.0065, 0.01183 ]
+                    geometry: { type: Box, size: [ 0.010, 0.013, 0.02366 ] }
+                    appearance: *RED
+              -
+                type: Transform
+                translation: [ 0, 0.00650, -0.13855 ]
+                rotation: [ -1, 0, 0, 25 ]
+                elements:
+                  Shape:
+                    translation: [ 0, -0.010, 0.01183 ]
+                    geometry: { type: Box, size: [ 0.010, 0.020, 0.02366 ] }
+                    appearance: *RED
+          - # B0006_2602_2<2>
+            type: Transform
+            translation: [ 0.180, 0.00150, 0 ]
+            elements: *B0006_2602_2_elements
+          - # B0006_2604<1>
+            type: Transform
+            translation: [ -0.10420, -0.00650, 0 ]
+            rotation: [ [ 0, 0, 1, 90 ], [ 0, 1, 0, 90 ] ]
+            elements: &B0006_2604_elements
+              Shape:
+                geometry: { type: Box, size: [ 0.330, 0.008, 0.023 ] }
+                appearance: *RED
+          - # B0006_2604<2>
+            type: Transform
+            translation: [ 0.10420, -0.00650, 0 ]
+            rotation: [ [ 0, 0, 1, 90 ], [ 0, 1, 0, 90 ] ]
+            elements: *B0006_2604_elements
+          - # B0008_2825<1>
+            type: Transform
+            translation: [ 0.094, 0.463, 0.204 ]
+            elements: &B0008_2825_elements
+              Shape:
+                geometry: { type: Box, size: [ 0.040, 0.065, 0.020 ] }
+                appearance: *DARK_GRAY
+          - # B0008_2825<2>
+            type: Transform
+            translation: [ 0.094, 0.463, 0.084 ]
+            elements: *B0008_2825_elements
+          - # B0008_2826<1>
+            type: Transform
+            translation: [ 0.094, 0.51550, 0.114 ]
+            elements:
+              Shape:
+                geometry: { type: Box, size: [ 0.040, 0.040, 0.200 ] }
+                appearance: *DARK_GRAY
+          - # B0008_2827<1>
+            type: Transform
+            translation: [ -0.094, 0.48050, 0.060 ]
+            elements:
+              Shape:
+                geometry: { type: Box, size: [ 0.040, 0.100, 0.040 ] }
+                appearance: *DARK_GRAY
+          - # B0010_3001<1>
+            type: Transform
+            translation: [ 0, 0.18150, -0.12500 ]
+            elements:
+              Shape:
+                geometry: { type: Box, size: [ 0.100, 0.202, 0.070 ] }
+                appearance: *WHITE
+          - # B0013_3302<1>
+            type: Transform
+            translation: [ -0.168, 0.116, 0 ]
+            rotation: [ [ 0, 1, 0, 90 ], [ 1, 0, 0, 90 ] ]
+            elements: &B0013_3302_elements
+              Shape:
+                geometry: { type: Box, size: [ 0.018, 0.026, 0.088 ] }
+                appearance: *RED
+          - # B0013_3302<2>
+            type: Transform
+            translation: [ 0.168, 0.116, 0 ]
+            rotation: [ [ 0, 1, 0, 90 ], [ 1, 0, 0, 90 ] ]
+            elements: *B0013_3302_elements
+
+          # Omit the following parts
+          #- B0005_2504<1>
+          #- B0005_2504<2>
+          #- B0005_2507<1>
+          #- B0005_2507<2>
+          #- B0001_2103<1>
+          #- B0001_2101_1<1>
+          #- B0001_2101_2<2>
+          #- B0013_3301<1>
+          #- B0013_3301<2>
+          #- B0013_3302<1>
+          #- B0013_3302<2>
+          #- HTPA60S5M150<1>
+          #- HTPA60S5M150<2>
+
+          # Simplified parts
+
+          - # B0001_2101_1<1>,B0001_2104<1>,B0001_2105<1>
+            type: Transform
+            translation: [ 0, 0.03525, 0.05410 ]
+            elements:
+              Shape:
+                geometry: { type: Box, size: [ 0.188, 0.07550, 0.25820 ] }
+                appearance: *RED
+          - # B0001_2101_2<1>,B0004_2402<1>,B0004_2403<1>,B0004_2403<2>,B0004_2406<1>
+            type: Transform
+            translation: [ 0, 0.039, -0.11750 ]
+            elements:
+              Shape:
+                geometry: { type: Box, size: [ 0.124, 0.083, 0.085 ] }
+                appearance: *RED
+          #- B0001_2106<1>,B0001_2107<1>,B0001_2108<1>,B0006_2604<1>,B0006_2602_2<1>,B0006_2602_1<1>
+          #- B0001_2106<2>,B0001_2107<2>,B0001_2108<2>,B0006_2604<2>,B0006_2602_2<2>,B0006_2602_1<2>
+          - # E001_0001<1>,E001_0002<1>,B0008_2820<1>,B0008_2821<1>,B0008_2821<2>,B0008_2850<1>,B0008_2850<2>,B0008_2823<1>,B0008_2823<2>
+            type: Transform
+            translation: [ 0, 0.2215, 0.1107 ]
+            elements:
+              Shape:
+                geometry: { type: Box, size: [ 0.188, 0.338, 0.445 ] }
+                appearance: *DARK_GRAY
+          - # B0008_2822<1>,B0008_2822<2>,B0008_2824<1>,B0008_2824<2>,B0008_2824<3>,B0008_2828<1>
+            type: Transform
+            translation: [ 0, 0.41050, 0.11070 ]
+            elements:
+              Shape:
+                geometry: { type: Box, size: [ 0.228, 0.040, 0.445 ] }
+                appearance: *DARK_GRAY
+
+# Front Right Flipper
+B0007_1: &B0007_1
+  Transform:
+    rotation: [ [ 0, 0, -1, 90 ], [ -1, 0, 0, 90 ] ]
+    # cad coordinate
+    elements: &B0007_elements
+      RigidBody:
+        centerOfMass: [ 0, 0.00771, 0.08396 ]
+        mass: 4.02315
+        inertia: [
+          0.05947345123,  0,              0,
+          0,              0.05585057930,  0.00165415168,
+          0,              0.00165415168,  0.00597310782 ]
+        elements:
+          Visual: { resource: { uri: "parts/B0007.wrl" } }
+          Collision:
+            elements:
+              - # B0007_2703<1>
+                type: Transform
+                translation: [ -0.029, 0, 0.14725 ]
+                rotation: [ [ 0, 0, 1, 90 ], [ 0, -1, 0, 90 ] ]
+                elements: &B0007_2703_elements
+                  -
+                    type: Shape
+                    translation: [ 0.14725, 0, 0 ]
+                    geometry: { type: Cylinder, height: 0.005, radius: 0.030 }
+                    appearance: *RED
+                  -
+                    type: Shape
+                    geometry: { type: Box, size: [ 0.29450, 0.005, 0.060 ] }
+                    appearance: *RED
+                  -
+                    type: Shape
+                    translation: [ -0.14725, 0, 0 ]
+                    geometry: { type: Cylinder, height: 0.005, radius: 0.030 }
+                    appearance: *RED
+                  -
+                    type: Transform
+                    translation: [ -0.08725, 0, -0.06250 ]
+                    rotation: [ 0, -1, 0, 7.82 ]
+                    elements:
+                      Shape:
+                        translation: [ 0.12041, 0, 0.030 ]
+                        geometry: { type: Box, size: [  0.24082, 0.005, 0.060 ] }
+                        appearance: *RED
+                  -
+                    type: Transform
+                    translation: [ -0.08725, 0, -0.06250 ]
+                    rotation: [ 0, 1, 0, 25.91 ]
+                    elements:
+                      Shape:
+                        translation: [ -0.04064, 0, 0.030 ]
+                        geometry: { type: Box, size: [ 0.08128, 0.005, 0.060 ] }
+                        appearance: *RED
+              - # B0007_2703<2>
+                type: Transform
+                translation: [ 0.029, 0, 0.14725 ]
+                rotation: [ [ 0, 0, 1, 90 ], [ 0, -1, 0, 90 ] ]
+                elements: *B0007_2703_elements
+
+# Main Belt Pulley
+B0005_2505: &B0005_2505
+  RigidBody:
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 2.23528
+    inertia: [
+      0.00367412297, 0,             0,
+      0,             0.00659383758, 0,
+      0,             0,             0.00367412297 ]
+    elements:
+      Visual: { resource: { uri: "parts/B0005_2505.wrl" } }
+      Collision:
+        shape:
+          geometry: { type: Cylinder, height: 0.045, radius: 0.07681 }
+          appearance: *LIGHT_YELLOW
+
+# Main Belt Bottom Roller
+B0006_2606: &B0006_2606
+  RigidBody:
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 0.08293
+    inertia: [
+      0.00003407162, 0,             0,
+      0,             0.00000609616, 0,
+      0,             0,             0.00003407162 ]
+    elements:
+      Collision:
+        shape:
+          geometry: { type: Cylinder, height: 0.067, radius: 0.012125 }
+          appearance: *LIGHT_YELLOW
+
+# Main Belt Top Roller
+B0013_3301: &B0013_3301
+  RigidBody:
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 0.08514
+    inertia: [
+      0.00001862785, 0,             0,
+      0,             0.00000978372, 0,
+      0,             0,             0.00001862785 ]
+    elements:
+      Collision:
+        shape:
+          geometry: { type: Cylinder, height: 0.044, radius: 0.01516 }
+          appearance: *LIGHT_YELLOW
+
+# Main Belt
+MAIN_BELT: &MAIN_BELT
+  # cad coordinate
+  RigidBody:
+    centerOfMass: [ 0.234, 0.00252, 0.00176 ]
+    mass: 0.72034
+    inertia: [
+      0.00488381030,  0.00000006006,  0.00000002212,
+      0.00000006006,  0.02892266868,  -0.00000001386,
+      0.00000002212,  -0.00000001386, 0.03311383902 ]
+    elements:
+      Visual: { resource: { uri: "parts/MAIN_BELT.wrl" } }
+      Collision:
+        elements:
+          -
+            type: Shape
+            rotation: [ 1, 0, 0, 90 ]
+            geometry: { type: Cylinder, height: 0.0762, radius: 0.08821 }
+            appearance: *DARK_GRAY
+          -
+            type: Shape
+            translation: [ 0.468, 0, 0 ]
+            rotation: [ 1, 0, 0, 90 ]
+            geometry: { type: Cylinder, height: 0.0762, radius: 0.08821 }
+            appearance: *DARK_GRAY
+          -
+            type: Shape
+            translation: [ 0.234, -0.00882, 0 ]
+            geometry: { type: Box, size: [ 0.306, 0.17642, 0.0762 ] }
+            appearance: *DARK_GRAY
+          -
+            type: Transform
+            translation: [ 0.081, -0.09702, 0 ]
+            rotation: [ 0, 0, -1, 5.88 ]
+            elements:
+              Shape:
+                translation: [ -0.04526, 0.07821, 0 ]
+                geometry: { type: Box, size: [ 0.09052, 0.15642, 0.0762 ] }
+                appearance: *DARK_GRAY
+          -
+            type: Transform
+            translation: [ 0.387, -0.09702, 0 ]
+            rotation: [ 0, 0, 1, 5.88 ]
+            elements:
+              Shape:
+                translation: [ 0.04526, 0.07821, 0 ]
+                geometry: { type: Box, size: [ 0.09052, 0.15642, 0.0762 ] }
+                appearance: *DARK_GRAY
+          -
+            type: Transform
+            translation: [ -0.01039, 0.08760, 0 ]
+            rotation: [ 0, 0, 1, 6.76 ]
+            elements:
+              Shape:
+                translation: [ 0.12305, -0.07821, 0 ]
+                geometry: { type: Box, size: [ 0.24610, 0.15642, 0.0762 ] }
+                appearance: *DARK_GRAY
+          -
+            type: Transform
+            translation: [ 0.47839, 0.08760, 0 ]
+            rotation: [ 0, 0, -1, 6.76 ]
+            elements:
+              Shape:
+                translation: [ -0.12305, -0.07821, 0 ]
+                geometry: { type: Box, size: [ 0.24610, 0.15642, 0.0762 ] }
+                appearance: *DARK_GRAY
+
+# Sub Belt Drive Pulley
+B0007_2705: &B0007_2705
+  RigidBody:
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 2.23528
+    inertia: [
+      0.00367412297, 0,             0,
+      0,             0.00659383758, 0,
+      0,             0,             0.00367412297 ]
+    elements:
+      Visual: { resource: { uri: "parts/B0007_2705.wrl" } }
+      Collision:
+        shape:
+          geometry: { type: Cylinder, height: 0.045, radius: 0.07681 }
+          appearance: *LIGHT_YELLOW
+
+# Sub Belt Driven Pulley
+B0007_2708: &B0007_2708
+  RigidBody:
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 0.49044
+    inertia: [
+      0.0024144170, 0,             0,
+      0,            0.00032463614, 0,
+      0,            0,             0.00024144170 ]
+    elements:
+      Visual: { resource: { uri: "parts/B0007_2708.wrl" } }
+      Collision:
+        shape:
+          geometry: { type: Cylinder, height: 0.044, radius: 0.036385 }
+          appearance: *LIGHT_YELLOW
+
+# Sub Belt Roller
+B0007_27110: &B0007_27110
+  RigidBody:
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 0.11668
+    inertia: [
+      0.00003493862, 0,             0,
+      0,             0.00001525354, 0,
+      0,             0,             0.00003493862 ]
+    elements:
+      Collision:
+        shape:
+          geometry: { type: Cylinder, height: 0.053, radius: 0.01617 }
+          appearance: *LIGHT_YELLOW
+
+# Sub Belt
+SUB_BELT: &SUB_BELT
+  RigidBody:
+    centerOfMass: [ -0.11852, 0, 0 ]
+    mass: 0.21549
+    inertia: [
+      0.00068826686,  0,              0.00000027152,
+      0,              0.00439841795,  0,
+      0.00000027152,  0,              0.00376228509 ]
+    elements:
+      Visual: { resource: { uri: "parts/SUB_BELT.wrl" } }
+      Collision:
+        elements:
+          -
+            type: Shape
+            geometry: { type: Cylinder, height: 0.03810, radius: 0.08672 }
+            appearance: *DARK_GRAY
+          -
+            type: Transform
+            translation: [ -0.01051, 0, 0.08608 ]
+            rotation: [ 0, -1, 0, 7.86 ]
+            elements:
+              Shape:
+                translation: [ -0.14634, 0, -0.04613 ]
+                geometry: { type: Box, size: [ 0.29268, 0.03810, 0.09226 ] }
+                appearance: *DARK_GRAY
+          -
+            type: Transform
+            translation: [ -0.01051, 0, -0.08608 ]
+            rotation: [ 0, 1, 0, 7.86 ]
+            elements:
+              Shape:
+                translation: [ -0.14634, 0, 0.04613 ]
+                geometry: { type: Box, size: [ 0.29268, 0.03810, 0.09226 ] }
+                appearance: *DARK_GRAY
+          -
+            type: Shape
+            translation: [ -0.29546, 0, 0 ]
+            geometry: { type: Cylinder, height: 0.03810, radius: 0.04613 }
+            appearance: *DARK_GRAY
