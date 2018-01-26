@@ -153,7 +153,6 @@ void AGXBreakableJointDevice::resetInfo(Mapping* info)
 class JointBreaker : public agxSDK::StepEventListener
 {
 private:
-    //agx::Constraint1DOFObserver m_joint;
     agx::ConstraintObserver m_joint;
     const double m_breakLimitForce;
     agx::Vec3 m_validAxis;
@@ -310,7 +309,7 @@ AGXBreakableJoint::AGXBreakableJoint(AGXBreakableJointDevice* device, AGXBody* a
         hd.range.forceRange = range.forceRange;
         hd.lock.enable = lock.enable;
         hd.lock.compliance = lock.compliance;
-        hd.lock.damping - lock.damping;
+        hd.lock.damping = lock.damping;
         hd.lock.forceRange = lock.forceRange;
         joint = createConstraint(hd);
     }else if(jp.jointType == "prismatic"){
@@ -324,7 +323,7 @@ AGXBreakableJoint::AGXBreakableJoint(AGXBreakableJointDevice* device, AGXBody* a
         pd.range.forceRange = range.forceRange;
         pd.lock.enable = lock.enable;
         pd.lock.compliance = lock.compliance;
-        pd.lock.damping - lock.damping;
+        pd.lock.damping = lock.damping;
         pd.lock.forceRange = lock.forceRange;
         joint = createConstraint(pd);
     }else if(jp.jointType == "fixed"){

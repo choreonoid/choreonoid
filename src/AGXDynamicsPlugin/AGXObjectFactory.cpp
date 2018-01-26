@@ -172,7 +172,6 @@ agx::ConstraintRef AGXObjectFactory::createConstraint(const AGXConstraintDesc& d
     constraint->setCompliance(desc.compliance);
     constraint->setDamping(desc.damping);
     constraint->setForceRange(desc.forceRange);
-    constraint->setElasticity(desc.elasticity);
     return constraint;
 }
 
@@ -303,7 +302,6 @@ void AGXObjectFactory::setMotor1DParam(agx::Motor1D* controller, const AGXMotor1
     controller->setCompliance(desc.compliance);
     controller->setDamping(desc.damping);
     controller->setForceRange(desc.forceRange);
-    controller->setElasticity(desc.elasticity);
 }
 
 void AGXObjectFactory::setLock1DParam(agx::Lock1D* controller, const AGXLock1DDesc& desc)
@@ -312,7 +310,6 @@ void AGXObjectFactory::setLock1DParam(agx::Lock1D* controller, const AGXLock1DDe
     controller->setCompliance(desc.compliance);
     controller->setDamping(desc.damping);
     controller->setForceRange(desc.forceRange);
-    controller->setElasticity(desc.elasticity);
 }
 
 void AGXObjectFactory::setRange1DParam(agx::Range1D* controller, const AGXRange1DDesc& desc)
@@ -322,7 +319,6 @@ void AGXObjectFactory::setRange1DParam(agx::Range1D* controller, const AGXRange1
     controller->setCompliance(desc.compliance);
     controller->setDamping(desc.damping);
     controller->setForceRange(desc.forceRange);
-    controller->setElasticity(desc.elasticity);
 }
 
 agx::LockJointRef AGXObjectFactory::createConstraintLockJoint(const AGXLockJointDesc & desc)
