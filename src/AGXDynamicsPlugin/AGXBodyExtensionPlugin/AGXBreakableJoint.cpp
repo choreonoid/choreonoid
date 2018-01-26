@@ -153,10 +153,9 @@ void AGXBreakableJointDevice::resetInfo(Mapping* info)
 class JointBreaker : public agxSDK::StepEventListener
 {
 private:
-    //agx::Constraint1DOFObserver m_joint;
     agx::ConstraintObserver m_joint;
     const double m_breakLimitForce;
-    const agx::Vec3 m_validAxis;
+    agx::Vec3 m_validAxis;
     const double m_period;
     bool bTimerOn;
     double startTime;
@@ -168,6 +167,7 @@ public:
         m_validAxis(validAxis),
         m_period(period)
     {
+        m_validAxis.normalize();
         m_joint->setEnableComputeForces(true);
         bTimerOn = false;
         startTime = 0.0;
@@ -236,6 +236,8 @@ AGXBreakableJoint::AGXBreakableJoint(AGXBreakableJointDevice* device, AGXBody* a
             position = Vector3();
             jointAxis = Vector3(0, 0, 1);
             validAxis = Vector3(1, 1, 1);
+            jointRange[0] = -std::numeric_limits<double>::max();
+            jointRange[1] = std::numeric_limits<double>::max();
         }
         double breakLimitForce, period;
         string jointType;
@@ -258,17 +260,24 @@ AGXBreakableJoint::AGXBreakableJoint(AGXBreakableJointDevice* device, AGXBody* a
     agxConvert::setVector(jointDeviceInfo.find("jointAxis"), jp.jointAxis);
     agxConvert::setVector(jointDeviceInfo.find("validAxis"), jp.validAxis);
     agxConvert::setVector(jointDeviceInfo.find("jointRange"), jp.jointRange);
-    AGXElementaryConstraint base, range;
+
+    AGXElementaryConstraint base, range, lock;
     jointDeviceInfo.read("jointCompliance", base.compliance);
-    jointDeviceInfo.read("jointRangeCompliance", range.compliance);
     jointDeviceInfo.read("jointDamping", base.damping);
+    jointDeviceInfo.read("jointRangeCompliance", range.compliance);
     jointDeviceInfo.read("jointRangeDamping", range.damping);
-    Vector2 baseForceRange, motorForceRange, rangeForceRange, lockForceRange;
+    jointDeviceInfo.read("jointLock", lock.enable);
+    jointDeviceInfo.read("jointLockCompliance", lock.compliance);
+    jointDeviceInfo.read("jointLockDamping", lock.damping);
+    Vector2 baseForceRange, rangeForceRange, lockForceRange;
     if(agxConvert::setVector(jointDeviceInfo.find("jointForceRange"), baseForceRange)){
         base.forceRange = agx::RangeReal(baseForceRange(0), baseForceRange(1));
     }
     if(agxConvert::setVector(jointDeviceInfo.find("jointRangeForceRange"), rangeForceRange)){
         range.forceRange = agx::RangeReal(rangeForceRange(0), rangeForceRange(1));
+    }
+    if(agxConvert::setVector(jointDeviceInfo.find("jointLockForceRange"), rangeForceRange)){
+        lock.forceRange = agx::RangeReal(lockForceRange(0), lockForceRange(1));
     }
 
     // Create breakable joint
@@ -298,16 +307,24 @@ AGXBreakableJoint::AGXBreakableJoint(AGXBreakableJointDevice* device, AGXBody* a
         hd.range.compliance = range.compliance;
         hd.range.damping = range.damping;
         hd.range.forceRange = range.forceRange;
+        hd.lock.enable = lock.enable;
+        hd.lock.compliance = lock.compliance;
+        hd.lock.damping = lock.damping;
+        hd.lock.forceRange = lock.forceRange;
         joint = createConstraint(hd);
     }else if(jp.jointType == "prismatic"){
         AGXPrismaticDesc pd;
         pd.frameAxis = agxConvert::toAGX(a);
         pd.framePoint = agxConvert::toAGX(p);
         pd.range.enable = true;
-        pd.range.range = agx::RangeReal(agx::degreesToRadians(jp.jointRange[0]), agx::degreesToRadians(jp.jointRange[1]));
+        pd.range.range = agx::RangeReal(jp.jointRange[0], jp.jointRange[1]);
         pd.range.compliance = range.compliance;
         pd.range.damping = range.damping;
         pd.range.forceRange = range.forceRange;
+        pd.lock.enable = lock.enable;
+        pd.lock.compliance = lock.compliance;
+        pd.lock.damping = lock.damping;
+        pd.lock.forceRange = lock.forceRange;
         joint = createConstraint(pd);
     }else if(jp.jointType == "fixed"){
         AGXLockJointDesc ld;
