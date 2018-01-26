@@ -18,10 +18,9 @@ links:
     translation: [ 0, 0, 0.5 ]
     jointType: revolute
     jointAxis: [ 0, 0, 1 ]
-    jointRange: [ 0.0, 720 ]
+    jointRange: [ 0.0, inf ]
     jointMotor: true
-    jointMotorCompliance: 1e-1
-    jointMotorElasticity: 1
+    jointMotorCompliance: 0.9
     density: 55.6
     mass: 1.0
     inertia: [
