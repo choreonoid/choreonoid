@@ -15,13 +15,10 @@ MAIN_BELT_SPEC: &MAIN_BELT_SPEC
   hingeDamping: 15.0E-3
   minStabilizingHingeNormalForce: 50
   stabilizingHingeFrictionParameter: 2.0E-7
-  enableMerge: true
   numNodesPerMergeSegment: 5
-  contactReduction: 3
-  enableLockToReachMergeCondition: true
-  lockToReachMergeConditionCompliance: 1.0E-11
-  lockToReachMergeConditionDamping: ToReachMergeConditionDamping 0.05
   maxAngleMergeCondition: 1.0E-5
+  nodesToWheelsMergeThreshold: -0.01
+  nodesToWheelsSplitThreshold: -0.009
 
 SUB_BELT_SPEC: &SUB_BELT_SPEC
   numberOfNodes: 50
@@ -34,17 +31,15 @@ SUB_BELT_SPEC: &SUB_BELT_SPEC
   hingeDamping: 15.0E-3
   minStabilizingHingeNormalForce: 40
   stabilizingHingeFrictionParameter: 4.0E-9
-  enableMerge: true
   numNodesPerMergeSegment: 6
+
+COMMON_BELT_SPEC: &COMMON_BELT_SPEC
+  material: SpiderTracks
   contactReduction: 3
+  enableMerge: true
   enableLockToReachMergeCondition: true
   lockToReachMergeConditionCompliance: 1.0E-11
   lockToReachMergeConditionDamping: 0.05
-
-COMMON_BELT_SPEC: &COMMON_BELT_SPEC
-  nodesToWheelsMergeThreshold: -0.01
-  nodesToWheelsSplitThreshold: -0.009
-  material: SpiderTracks
 
 WHEEL_MATERIAL: &WHEEL_MATERIAL SpiderWheel
   
@@ -241,13 +236,13 @@ links:
         rotation: [ 0, 0, 1, 180 ]
         # cad coordinate
         elements: &SUB_BELT_elements
-          RigidBody:
-            centerOfMass: [ -0.11852, 0, 0 ]
-            mass: 0.21549
-            inertia: [
-              0.00068826686,  0,              0.00000027152,
-              0,              0.00439841795,  0,
-              0.00000027152,  0,              0.00376228509 ]
+          type: RigidBody
+          centerOfMass: [ -0.11852, 0, 0 ]
+          mass: 0.21549
+          inertia: [
+            0.00068826686,  0,              0.00000027152,
+            0,              0.00439841795,  0,
+            0.00000027152,  0,              0.00376228509 ]
       -
         type: AGXVehicleContinuousTrackDevice
         name: SUB_BELT_1_AGX
@@ -303,7 +298,6 @@ links:
       -
         type: Transform
         rotation: [ 0, 0, 1, 180 ]
-        # cad coordinate
         elements: *SUB_BELT_elements
       -
         type: AGXVehicleContinuousTrackDevice
@@ -311,5 +305,124 @@ links:
         sprocketNames: [ B0007_2_B0007_2705_1 ]
         guideNames: [ B0007_2_B0007_27110_GUIDE ]
         idlerNames: [ B0007_2_B0007_2708 ]
+        upAxis: [ 0, 0, 1 ]
+        <<: [ *SUB_BELT_SPEC, *COMMON_BELT_SPEC ]
+
+  - # Back Right Flipper
+    name: B0007_3
+    parent: B0001
+    translation: [ -0.234, -0.22350, 0.062 ]
+    jointType: revolute
+    jointAxis: [ 0, 1, 0 ]
+    jointId: 2
+    gearRatio: 2090
+    elements:
+      Transform:
+        rotation: [ 0, 0, 1, 180 ]
+        elements: { type: Resource, uri: SpiderCommon.yaml, node: B0007_1 }
+
+
+  - # Back Right Sub Belt Drive Pully
+    name: B0007_3_B0007_2705_1
+    parent: B0001
+    translation: [ -0.234, -0.22350, 0.062 ]
+    jointType: revolute
+    jointAxis: [ 0, 1, 0 ]
+    jointId: 12
+    material: *WHEEL_MATERIAL
+    elements: { type: Resource, uri: SpiderCommon.yaml, node: B0007_2705 }
+
+  - # Back Right Sub Belt Driven Pully
+    name: B0007_3_B0007_2708
+    parent: B0007_3
+    translation: [ -0.29450, 0, 0 ]
+    jointType: revolute
+    jointAxis: [ 0, 1, 0 ]
+    jointId: 13
+    material: *WHEEL_MATERIAL
+    elements: { type: Resource, uri: SpiderCommon.yaml, node: B0007_2708 }
+
+  - # Back Right Sub Belt Bottom Roller Guide
+    name: B0007_3_B0007_27110_GUIDE
+    parent: B0007_3
+    translation: [ -0.15, 0, -0.043936 ]
+    jointType: fixed
+    material: *WHEEL_MATERIAL
+    elements:
+      Transform:
+        rotation: [ 0, 0, 1, 180 ]
+        elements: { type: Resource, uri: SpiderCommon.yaml, node: B0007_27110_GUIDE }
+
+  - # Back Right Sub Belt
+    name: SUB_BELT_3
+    parent: B0007_3
+    jointType: fixed
+    elements:
+      - *SUB_BELT_elements
+      -
+        type: AGXVehicleContinuousTrackDevice
+        name: SUB_BELT_3_AGX
+        sprocketNames: [ B0007_3_B0007_2705_1 ] 
+        guideNames: [ B0007_3_B0007_27110_GUIDE ]
+        idlerNames: [ B0007_3_B0007_2708 ]
+        upAxis: [ 0, 0, 1 ]
+        <<: [ *SUB_BELT_SPEC, *COMMON_BELT_SPEC ]
+
+  - # Back Left Flipper
+    name: B0007_4
+    parent: B0001
+    translation: [ -0.234, 0.22350, 0.062 ]
+    jointType: revolute
+    jointAxis: [ 0, 1, 0 ]
+    jointId: 3
+    gearRatio: 2090
+    elements:
+      Transform:
+        rotation: [ 0, 0, 1, 180 ]
+        elements: { type: Resource, uri: SpiderCommon.yaml, node: B0007_1 }
+
+  - # Back Left Sub Belt Drive Pully
+    name: B0007_4_B0007_2705_1
+    parent: B0001
+    translation: [ -0.234, 0.22350, 0.062 ]
+    jointType: revolute
+    jointAxis: [ 0, 1, 0 ]
+    jointId: 14
+    material: *WHEEL_MATERIAL
+    elements: { type: Resource, uri: SpiderCommon.yaml, node: B0007_2705 }
+
+  - # Back Left Sub Belt Driven Pully
+    name: B0007_4_B0007_2708
+    parent: B0007_4
+    translation: [ -0.29450, 0, 0 ]
+    jointType: revolute
+    jointAxis: [ 0, 1, 0 ]
+    jointId: 15
+    material: *WHEEL_MATERIAL
+    elements: { type: Resource, uri: SpiderCommon.yaml, node: B0007_2708 }
+
+  - # Back Left Sub Belt Bottom Roller Guide
+    name: B0007_4_B0007_27110_GUIDE
+    parent: B0007_4
+    translation: [ -0.15, 0, -0.043936 ]
+    jointType: fixed
+    material: *WHEEL_MATERIAL
+    elements:
+      Transform:
+        rotation: [ 0, 0, 1, 180 ]
+        elements: { type: Resource, uri: SpiderCommon.yaml, node: B0007_27110_GUIDE }
+
+  - # Back Left Sub Belt
+    name: SUB_BELT_4
+    parent: B0007_4
+    jointType: fixed
+    elements:
+      - *SUB_BELT_elements
+      -
+        type: AGXVehicleContinuousTrackDevice
+        name: SUB_BELT_4_AGX
+        sprocketNames: [ B0007_4_B0007_2705_1 ]
+        guideNames: [ B0007_4_B0007_27110_GUIDE ]
+        idlerNames: [ B0007_4_B0007_2708 ]
         upAxis: [ 0, 0, 1 ]
         <<: [ *SUB_BELT_SPEC, *COMMON_BELT_SPEC ]
