@@ -319,7 +319,7 @@ void YAMLReaderImpl::addNode(ValueNode* node, yaml_event_t& event)
                 Listing* listing = static_cast<Listing*>(node);
                 for(auto& element : *listing){
                     if(element->isMapping()){
-                        mapping->insert(static_cast<Mapping*>(node));
+                        mapping->insert(static_cast<Mapping*>(element.get()));
                     } else {
                         ValueNode::SyntaxException ex;
                         ex.setMessage(_("An element to merge by the \"<<\" key must be a mapping"));
