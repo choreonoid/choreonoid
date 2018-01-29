@@ -60,6 +60,7 @@ if(OPENRTM_DIR)
     ${OPENRTM_DIR}/include/coil-1.1
     ${OPENRTM_DIR}/include/openrtm-1.1 
     ${OPENRTM_DIR}/include/openrtm-1.1/rtm/idl
+    ${OPENRTM_DIR}/include/openrtm-1.1/rtm/ext
     ${OPENRTM_DIR}/rtm # for the Windows installer version
     ${OPENRTM_DIR}/rtm/idl # for the Windows installer version
     ${OPENRTM_DIR}

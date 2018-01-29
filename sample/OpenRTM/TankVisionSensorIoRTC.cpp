@@ -9,7 +9,11 @@
 #include <cnoid/RangeCamera>
 #include <cnoid/ConnectionSet>
 #include <rtm/idl/InterfaceDataTypes.hh>
+#ifdef _WIN32
 #include <rtm/idl/CameraCommonInterface.hh>
+#else
+#include <rtm/ext/CameraCommonInterface.hh>
+#endif
 #include <rtm/idl/BasicDataTypeSkel.h>
 #include <rtm/idl/InterfaceDataTypes.hh>
 #include <rtm/DataInPort.h>
