@@ -1,7 +1,7 @@
 format: ChoreonoidBody
 formatVersion: 1.0
 angleUnit: degree
-name: Spider
+name: SpiderNS
 rootLink: B0001
 
 links:
@@ -74,11 +74,6 @@ links:
         translation: [ 0, -0.133, 0.151 ]
         elements: { type: Resource, uri: SpiderCommon.yaml, node: B0013_3301 }
 
-      - # Front Right Sub Belt Drive Pulley
-        type: Transform
-        translation: [ 0.234, -0.22350, 0.062 ]
-        elements: { type: Resource, uri: SpiderCommon.yaml, node: B0007_2705 }
-
       - # Left Main Belt Drive Pulley
         type: Transform
         translation: [ 0.234, 0.12575, 0.062 ]
@@ -98,6 +93,11 @@ links:
         type: Transform
         translation: [ 0, 0.133, 0.151 ]
         elements: { type: Resource, uri: SpiderCommon.yaml, node: B0013_3301 }
+
+      - # Front Right Sub Belt Drive Pulley
+        type: Transform
+        translation: [ 0.234, -0.22350, 0.062 ]
+        elements: { type: Resource, uri: SpiderCommon.yaml, node: B0007_2705 }
 
       - # Front Left Sub Belt Drive Pulley
         type: Transform

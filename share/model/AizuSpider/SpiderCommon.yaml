@@ -639,6 +639,13 @@ B0006_2606: &B0006_2606
           geometry: { type: Cylinder, height: 0.067, radius: 0.012125 }
           appearance: *LIGHT_YELLOW
 
+# Main Belt Bottom Roller Guide (For AGX)
+B0006_2606_GUIDE: &B0006_2606_GUIDE
+  Collision:
+    shape:
+      geometry: { type: Box, size: [ 0.306, 0.067, 0.050125 ] }
+      appearance: *LIGHT_YELLOW
+
 # Main Belt Top Roller
 B0013_3301: &B0013_3301
   RigidBody:
@@ -652,6 +659,21 @@ B0013_3301: &B0013_3301
       Collision:
         shape:
           geometry: { type: Cylinder, height: 0.044, radius: 0.01516 }
+          appearance: *LIGHT_YELLOW
+
+# Main Belt Top Roller (Capsule version for AGX)
+B0013_3301_CAPSULE: &B0013_3301_CAPSULE
+  RigidBody:
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 0.08514
+    inertia: [
+      0.00001862785, 0,             0,
+      0,             0.00000978372, 0,
+      0,             0,             0.00001862785 ]
+    elements:
+      Collision:
+        shape:
+          geometry: { type: Capsule, height: 0.044, radius: 0.01516 }
           appearance: *LIGHT_YELLOW
 
 # Main Belt
@@ -753,7 +775,7 @@ B0007_2708: &B0007_2708
           geometry: { type: Cylinder, height: 0.044, radius: 0.036385 }
           appearance: *LIGHT_YELLOW
 
-# Sub Belt Roller
+# Sub Belt Bottom Roller
 B0007_27110: &B0007_27110
   RigidBody:
     centerOfMass: [ 0, 0, 0 ]
@@ -767,6 +789,18 @@ B0007_27110: &B0007_27110
         shape:
           geometry: { type: Cylinder, height: 0.053, radius: 0.01617 }
           appearance: *LIGHT_YELLOW
+
+# Sub Belt Bottom Roller Guide (For AGX)
+B0007_27110_GUIDE: &B0007_27110_GUIDE
+  Collision:
+    elements:
+      Transform:
+        rotation: [ 0, -1, 0, 7.82 ]
+        elements:
+          Shape:
+            translation: [ 0, 0, 0.00383 ]
+            geometry: { type: Box, size: [ 0.14, 0.053, 0.04 ] }
+            appearance: *LIGHT_YELLOW
 
 # Sub Belt
 SUB_BELT: &SUB_BELT
