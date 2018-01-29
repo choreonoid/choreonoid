@@ -766,6 +766,12 @@ links:
     jointId: 0
     jointRange: [ -51, 148 ]
     maxJointVelocity: 1E6
+    #jointLockCompliance: 1e-4
+    #jointLockDamping: 0.1
+    #jointLockForceRange: [ -1000, 1000 ]
+    #jointMotorCompliacne: 1e-1
+    #jointMotorDamping: 0.1
+    #jointMotorForceRange: [ -1000, 1000 ]
     mass: 2.4001
     centerOfMass: [ -0.00771, -0.01238, -0.09652 ]
     inertia: [
@@ -2566,3 +2572,8 @@ links:
           Transform:
             rotation: [ 1, 0, 0, 180 ]
             elements: *LEE_SHAPE
+
+
+collisionDetection:
+  excludeTreeDepth: 1
+  excludeLinks: [ ]

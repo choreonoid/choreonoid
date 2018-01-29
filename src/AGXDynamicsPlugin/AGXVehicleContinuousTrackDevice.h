@@ -19,7 +19,7 @@ struct AGXVehicleContinuousTrackDeviceDesc
         nodeThickerThickness = 0.09;
         useThickerNodeEvery = 0;
         hingeCompliance = 1.0E-10;
-        hingeDamping = 0.0333;
+        hingeSpookDamping = 0.0333;
         minStabilizingHingeNormalForce = 100;
         stabilizingHingeFrictionParameter = 1.5;
         nodesToWheelsMergeThreshold = -0.1;
@@ -29,7 +29,7 @@ struct AGXVehicleContinuousTrackDeviceDesc
         contactReduction = 1;
         enableLockToReachMergeCondition = false;
         lockToReachMergeConditionCompliance = 1.0E-11;
-        lockToReachMergeConditionDamping = 3/ 60;
+        lockToReachMergeConditionSpookDamping = 3/ 60;
         maxAngleMergeCondition = 1.0E-5;
         sprocketNames.clear();
         idlerNames.clear();
@@ -47,7 +47,7 @@ struct AGXVehicleContinuousTrackDeviceDesc
     double nodeThickerThickness;
     int useThickerNodeEvery;
     double hingeCompliance;
-    double hingeDamping;
+    double hingeSpookDamping;
     double minStabilizingHingeNormalForce;
     double stabilizingHingeFrictionParameter;
     double nodesToWheelsMergeThreshold;
@@ -57,7 +57,7 @@ struct AGXVehicleContinuousTrackDeviceDesc
     int contactReduction;
     bool enableLockToReachMergeCondition;
     double lockToReachMergeConditionCompliance;
-    double lockToReachMergeConditionDamping;
+    double lockToReachMergeConditionSpookDamping;
     double maxAngleMergeCondition;
     vector<string> sprocketNames;
     vector<string> idlerNames;
