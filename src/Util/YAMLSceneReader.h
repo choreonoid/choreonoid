@@ -6,16 +6,13 @@
 #ifndef CNOID_UTIL_YAML_SCENE_READER_H
 #define CNOID_UTIL_YAML_SCENE_READER_H
 
-#include <cnoid/EigenUtil>
-#include <cnoid/SceneGraph>
-#include <boost/variant.hpp>
+#include "EigenUtil.h"
+#include "SceneGraph.h"
+#include "ValueTree.h"
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class ValueNode;
-class Mapping;
-class Listing;
 class YAMLSceneReaderImpl;
   
 class CNOID_EXPORT YAMLSceneReader
@@ -48,7 +45,12 @@ public:
     SgNode* readNode(Mapping& node, const std::string& type);
     SgNode* readNodeList(ValueNode& node);
 
-    boost::variant<SgNode*, ValueNode*> readResourceNode(Mapping& node);
+    struct Resource {
+        SgNodePtr scene;
+        ValueNodePtr node;
+        std::string directory;
+    };
+    Resource readResourceNode(Mapping& node);
     
     SgObject* readObject(Mapping& node);
 

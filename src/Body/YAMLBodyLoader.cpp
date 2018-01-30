@@ -1518,15 +1518,23 @@ bool YAMLBodyLoaderImpl::readResource(Mapping& node)
     
     auto resource = sceneReader.readResourceNode(node);
 
-    if(auto pscene = boost::strict_get<SgNode*>(&resource)){
-        if(*pscene){
-            addScene(*pscene);
-            isSceneNodeAdded = true;
-        }
-    } else if(auto pvalue = boost::strict_get<ValueNode*>(&resource)){
-        if(*pvalue){
-            isSceneNodeAdded = readElementContents(**pvalue);
-        }
+    if(resource.scene){
+        addScene(resource.scene);
+        isSceneNodeAdded = true;
+
+    } else if(resource.node){
+        string orgBaseDirectory = sceneReader.baseDirectory();
+        sceneReader.setBaseDirectory(resource.directory);
+
+        //isSceneNodeAdded = readElementContents(*resource.node);
+        ValueNodePtr resourceNode = resource.node;
+        isSceneNodeAdded = readTransformContents(
+            node,
+            [this, resourceNode](Mapping&){
+                return readElementContents(*resourceNode); },
+            false);
+
+        sceneReader.setBaseDirectory(orgBaseDirectory);
     }
 
     return isSceneNodeAdded;

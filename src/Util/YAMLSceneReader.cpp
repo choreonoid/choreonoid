@@ -58,6 +58,7 @@ struct ResourceInfo : public Referenced
     SgNodePtr scene;
     unique_ptr<SceneNodeMap> sceneNodeMap;
     unique_ptr<YAMLReader> yaml;
+    string directory;
 };
 typedef ref_ptr<ResourceInfo> ResourceInfoPtr;
 
@@ -132,8 +133,8 @@ public:
     SgNode* readDirectionalLight(Mapping& node);
     SgNode* readSpotLight(Mapping& node);
     SgNode* readResource(Mapping& node);
-    boost::variant<SgNode*, ValueNode*> readResourceNode(Mapping& node);
-    boost::variant<SgNode*, ValueNode*> loadResource(Mapping& resourceNode, const string& uri);
+    YAMLSceneReader::Resource readResourceNode(Mapping& node);
+    YAMLSceneReader::Resource loadResource(Mapping& resourceNode, const string& uri);
     void decoupleResourceNode(Mapping& resourceNode, const string& uri, const string& nodeName);
     ResourceInfo* getOrCreateResourceInfo(Mapping& resourceNode, const string& uri);
     filesystem::path findFileInPackage(const string& file);
@@ -948,26 +949,22 @@ SgNode* YAMLSceneReaderImpl::readSpotLight(Mapping& node)
 SgNode* YAMLSceneReaderImpl::readResource(Mapping& node)
 {
     auto resource = readResourceNode(node);
-    if(auto pscene = boost::strict_get<SgNode*>(&resource)){
-        return *pscene;
-    } else if(auto pvalue = boost::strict_get<ValueNode*>(&resource)){
-        ValueNode* value = *pvalue;
-        if(value){
-            return readNode(*value->toMapping());
-        }
+    if(resource.scene){
+        return resource.scene;
+    } else if(resource.node){
+        return readNode(*resource.node->toMapping());
     }
-
     return nullptr;
 }
 
 
-boost::variant<SgNode*, ValueNode*> YAMLSceneReader::readResourceNode(Mapping& node)
+YAMLSceneReader::Resource YAMLSceneReader::readResourceNode(Mapping& node)
 {
     return impl->readResourceNode(node);
 }
 
 
-boost::variant<SgNode*, ValueNode*> YAMLSceneReaderImpl::readResourceNode(Mapping& node)
+YAMLSceneReader::Resource YAMLSceneReaderImpl::readResourceNode(Mapping& node)
 {
     string uri = node["uri"].toString();
 
@@ -987,37 +984,39 @@ boost::variant<SgNode*, ValueNode*> YAMLSceneReaderImpl::readResourceNode(Mappin
         
     auto resource = loadResource(node, uri);
 
-    if(auto pscene = boost::strict_get<SgNode*>(&resource)){
-        return readTransformParameters(node, *pscene);
+    if(resource.scene){
+        resource.scene = readTransformParameters(node, resource.scene);
     }
 
-    return boost::get<ValueNode*>(resource);
+    return resource;
 }
 
 
-boost::variant<SgNode*, ValueNode*> YAMLSceneReaderImpl::loadResource(Mapping& resourceNode, const string& uri)
+YAMLSceneReader::Resource YAMLSceneReaderImpl::loadResource(Mapping& resourceNode, const string& uri)
 {
+    YAMLSceneReader::Resource resource;
+    
     string name;
     resourceNode.read("node", name);
     
     ResourceInfo* resourceInfo = getOrCreateResourceInfo(resourceNode, uri);
     if(resourceInfo){
+        resource.directory = resourceInfo->directory;
+        
         bool isYamlResouce = (resourceInfo->yaml != nullptr);
         if(name.empty()){
             if(isYamlResouce){
-                return resourceInfo->yaml->document();
+                resource.node = resourceInfo->yaml->document();
             } else {
-                return resourceInfo->scene;
+                resource.scene = resourceInfo->scene;
             }
         } else {
             if(isYamlResouce){
-                auto node = resourceInfo->yaml->findAnchoredNode(name);
-                if(!node){
+                resource.node = resourceInfo->yaml->findAnchoredNode(name);
+                if(!resource.node){
                     resourceNode.throwException(
                         str(format(_("Node \"%1%\" is not found in \"%2%\".")) % name % uri));
                 }
-                return node;
-                    
             } else {
                 unique_ptr<SceneNodeMap>& nodeMap = resourceInfo->sceneNodeMap;
                 if(!nodeMap){
@@ -1034,13 +1033,13 @@ boost::variant<SgNode*, ValueNode*> YAMLSceneReaderImpl::loadResource(Mapping& r
                         nodeInfo.parent = 0;
                         adjustNodeCoordinate(nodeInfo);
                     }
-                    return nodeInfo.node;
+                    resource.scene = nodeInfo.node;
                 }
             }
         }
     }
     
-    return (SgNode*)nullptr;
+    return resource;
 }
 
 
@@ -1117,7 +1116,7 @@ ResourceInfo* YAMLSceneReaderImpl::getOrCreateResourceInfo(Mapping& resourceNode
 
     ResourceInfoPtr info = new ResourceInfo;
 
-    string filename = getAbsolutePathString(filepath);
+    string filename = filesystem::absolute(filepath).string();
     string ext = filesystem::extension(filepath);
     std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 
@@ -1139,9 +1138,9 @@ ResourceInfo* YAMLSceneReaderImpl::getOrCreateResourceInfo(Mapping& resourceNode
         info->scene = scene;
     }
 
-    if(info){
-        resourceInfoMap[uri] = info;
-    }
+    info->directory = filepath.parent_path().string();
+    
+    resourceInfoMap[uri] = info;
 
     return info;
 }
