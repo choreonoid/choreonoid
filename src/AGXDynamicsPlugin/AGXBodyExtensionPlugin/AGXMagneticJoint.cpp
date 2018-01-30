@@ -179,7 +179,7 @@ public:
 
         for(size_t i = 0; i < 2; ++i){
             f_wts[i] = m_frames[i]->getLocalMatrix() * m_rigids[i]->getTransform();
-            f_wdirs[i] = (f_wts[i] * agx::Z_AXIS).normal();
+            f_wdirs[i] = (f_wts[i].getRotate() * agx::Z_AXIS).normal();
         }
         // distance b/w frame0 to frame1
         agx::Vec3 dir = f_wts[1].getTranslate() - f_wts[0].getTranslate();
@@ -188,6 +188,7 @@ public:
         double rad = acos(f_wdirs[0] * f_wdirs[1]);
         if(abs(d) < m_validDistance && abs(rad) < m_validAngleRad){
             m_joint->setEnable(true);
+            m_rigids[0]->getGeometries().front()->setEnableCollisions(m_rigids[1]->getGeometries().front(), false);
         }
 
         std::cout << "AGXMagneticJoint " << "distance: " << d << " angle: " <<  agx::radiansToDegrees(rad)<< std::endl;
@@ -265,10 +266,12 @@ AGXMagneticJoint::AGXMagneticJoint(AGXMagneticJointDevice* device, AGXBody* agxB
     if(!agxLink1 || !agxLink2) return;
     Link* const link1 = agxLink1->getOrgLink();
     Link* const link2 = agxLink2->getOrgLink();
-    agx::Vec3 axis1 = agxConvert::toAGX(link1->attitude() * jp.connectAxis1);
-    agx::Vec3 axis2 = agxConvert::toAGX(link2->attitude() * jp.connectAxis2);
-    agx::Vec3 lp1 = agxConvert::toAGX(link1->attitude() * jp.position1);
-    agx::Vec3 lp2 = agxConvert::toAGX(link2->attitude() * jp.position2);
+    agx::Vec3 axis1z = agxConvert::toAGX(Vector3(0, 0, 1));
+    agx::Vec3 axis2z = agxConvert::toAGX(Vector3(0, 0, 1));
+    agx::Vec3 axis1 = agxConvert::toAGX(jp.connectAxis1);
+    agx::Vec3 axis2 = agxConvert::toAGX(jp.connectAxis2);
+    agx::Vec3 lp1 = agxConvert::toAGX(jp.position1);
+    agx::Vec3 lp2 = agxConvert::toAGX(jp.position2);
 
     agx::RigidBody* r[2];
     r[0] = getAGXBody()->getAGXRigidBody(jp.link1Name);
@@ -278,9 +281,13 @@ AGXMagneticJoint::AGXMagneticJoint(AGXMagneticJointDevice* device, AGXBody* agxB
     f[0] = new agx::Frame();
     f[1] = new agx::Frame();
     f[0]->setLocalTranslate(lp1);
-    f[0]->setLocalRotate(agx::Quat(agx::Z_AXIS, axis1));
+    f[0]->setLocalRotate(agx::Quat(axis1z, axis1));
     f[1]->setLocalTranslate(lp2);
-    f[1]->setLocalRotate(agx::Quat(agx::Z_AXIS, axis2));
+    f[1]->setLocalRotate(agx::Quat(axis2z, axis2));
+
+    for(int i = 0; i < 2; i++){
+        std::cout << i << " localt " << f[i]->getLocalTranslate() << std::endl;
+    }
 
     auto joint = new agx::LockJoint(r[0], f[0], r[1], f[1]);
     joint->setEnable(false);
