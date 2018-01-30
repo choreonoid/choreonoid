@@ -218,11 +218,6 @@ links:
 #                                   0.27, -0.143    ]
 #                  spine: [ 0.003, 0, 0, 0, 0, 0 ]
 #                  scale: [ 1.0, 1.0 ]
-      -
-        type: Transform
-        name: base_upper_link
-        translation: [ 0, 0, 0.2729 ]
-        elements:
   -
     type: Skip
     name: UPPER_FRAME
