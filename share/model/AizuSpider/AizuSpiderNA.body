@@ -1,7 +1,7 @@
 format: ChoreonoidBody
 formatVersion: 1.0
 angleUnit: degree
-name: SpiderNA
+name: AizuSpiderNA
 rootLink: B0001
 
 MAIN_BELT_SPEC: &MAIN_BELT_SPEC

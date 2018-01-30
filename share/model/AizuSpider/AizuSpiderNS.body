@@ -1,7 +1,7 @@
 format: ChoreonoidBody
 formatVersion: 1.0
 angleUnit: degree
-name: SpiderNS
+name: AizuSpiderNS
 rootLink: B0001
 
 links:
@@ -120,7 +120,6 @@ links:
     translation: [ 0.234, -0.146, 0.062 ]
     jointType: pseudoContinuousTrack
     jointAxis: [ 0, 1, 0 ]
-    jointId: 4
     elements:
       Transform:
         rotation: [ [ 0, 0, 1, 180 ], [ 1, 0, 0, 90 ] ]
@@ -132,7 +131,6 @@ links:
     translation: [ -0.234, 0.146, 0.062 ]
     jointType: pseudoContinuousTrack
     jointAxis: [ 0, 1, 0 ]
-    jointId: 5
     elements:
       Transform:
         rotation: [ 1, 0, 0, 90 ]
@@ -185,7 +183,6 @@ links:
     parent: B0007_1
     jointType: pseudoContinuousTrack
     jointAxis: [ 0, 1, 0 ]
-    jointId: 6
     elements:
       Transform:
         rotation: [ 0, 0, 1, 180 ]
@@ -206,7 +203,6 @@ links:
     parent: B0007_2
     jointType: pseudoContinuousTrack
     jointAxis: [ 0, 1, 0 ]
-    jointId: 7
     elements:
       Transform:
         rotation: [ 0, 0, 1, 180 ]
@@ -230,7 +226,6 @@ links:
     parent: B0007_3
     jointType: pseudoContinuousTrack
     jointAxis: [ 0, 1, 0 ]
-    jointId: 8
     elements: { type: Resource, uri: SpiderCommon.yaml, node: SUB_BELT }
 
   - # Back Left Flipper
@@ -251,7 +246,6 @@ links:
     parent: B0007_4
     jointType: pseudoContinuousTrack
     jointAxis: [ 0, 1, 0 ]
-    jointId: 9
     elements: { type: Resource, uri: SpiderCommon.yaml, node: SUB_BELT }
 
 collisionDetection:
