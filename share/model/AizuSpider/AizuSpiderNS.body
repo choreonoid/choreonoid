@@ -2,143 +2,91 @@ format: ChoreonoidBody
 formatVersion: 1.0
 angleUnit: degree
 name: AizuSpiderNS
-rootLink: B0001
+rootLink: CHASSIS
+
+COMMON_RESOURCE: &COMMON_RESOURCE
+  type: Resource
+  uri: "resource/AizuSpiderCommon.yaml"
 
 links:
   - 
-    name: B0001
+    name: CHASSIS
     translation: [ 0, 0, 0.03503 ]
     jointType: free
     elements:
 
       - # Chassis
-        { type: Resource, uri: SpiderCommon.yaml, node: B0001 }
+        { <<: *COMMON_RESOURCE, node: CHASSIS }
 
       - # Right Main Belt Drive Pulley
-        type: Transform
-        translation: [ 0.234, -0.12575, 0.062 ]
-        elements: { type: Resource, uri: SpiderCommon.yaml, node: B0005_2505 }
-
+        { <<: *COMMON_RESOURCE, node: B0005_2505, translation: [ 0.234, -0.12575, 0.062 ] }
+        
       - # Right Main Belt Driven Pulley
-        type: Transform
-        translation: [ -0.234, -0.12575, 0.062 ]
-        elements: { type: Resource, uri: SpiderCommon.yaml, node: B0005_2505 }
+        { <<: *COMMON_RESOURCE, node: B0005_2505, translation: [ -0.234, -0.12575, 0.062 ] }
 
       - # Right Bottom Rollers
+        &MAIN_TRACK_BOTTOM_ROLLERS
         type: Transform
         translation: [ 0, -0.14150, -0.012 ]
-        elements: &MAIN_BELT_BOTTOM_ROLLERS
-          - # No.1
-            type: Transform
-            translation: [ 0.1535, 0, 0 ]
-            elements: &B0006_2626 { type: Resource, uri: SpiderCommon.yaml, node: B0006_2606 }
-          - # No.2
-            type: Transform
-            translation: [ 0.116, 0, 0 ]
-            elements: *B0006_2626
-          - # No.3
-            type: Transform
-            translation: [ 0.083, 0, 0 ]
-            elements: *B0006_2626
-          - # No.4
-            type: Transform
-            translation: [ 0.05, 0, 0 ]
-            elements: *B0006_2626
-          - # No.5
-            type: Transform
-            translation: [ 0.017, 0, 0 ]
-            elements: *B0006_2626
-          - # No.6
-            type: Transform
-            translation: [ -0.0165, 0, 0 ]
-            elements: *B0006_2626
-          - # No.7
-            type: Transform
-            translation: [ -0.0505, 0, 0 ]
-            elements: *B0006_2626
-          - # No.8
-            type: Transform
-            translation: [ -0.0845, 0, 0 ]
-            elements: *B0006_2626
-          - # No.9
-            type: Transform
-            translation: [ -0.1185, 0, 0 ]
-            elements: *B0006_2626
-          - # No.10
-            type: Transform
-            translation: [ -0.1525, 0, 0 ]
-            elements: *B0006_2626
+        MAIN_TRACK_BOTTOM_ROLLER: &MAIN_TRACK_BOTTOM_ROLLER { <<: *COMMON_RESOURCE, node: B0006_2606 }
+        elements:
+          - { <<: *MAIN_TRACK_BOTTOM_ROLLER, translation: [ 0.1535,  0, 0 ] }
+          - { <<: *MAIN_TRACK_BOTTOM_ROLLER, translation: [  0.116,  0, 0 ] }
+          - { <<: *MAIN_TRACK_BOTTOM_ROLLER, translation: [  0.083,  0, 0 ] }
+          - { <<: *MAIN_TRACK_BOTTOM_ROLLER, translation: [  0.05,   0, 0 ] }
+          - { <<: *MAIN_TRACK_BOTTOM_ROLLER, translation: [  0.017,  0, 0 ] }
+          - { <<: *MAIN_TRACK_BOTTOM_ROLLER, translation: [ -0.0165, 0, 0 ] }
+          - { <<: *MAIN_TRACK_BOTTOM_ROLLER, translation: [ -0.0505, 0, 0 ] }
+          - { <<: *MAIN_TRACK_BOTTOM_ROLLER, translation: [ -0.0845, 0, 0 ] }
+          - { <<: *MAIN_TRACK_BOTTOM_ROLLER, translation: [ -0.1185, 0, 0 ] }
+          - { <<: *MAIN_TRACK_BOTTOM_ROLLER, translation: [ -0.1525, 0, 0 ] }
 
       - # Right Top Roller
-        type: Transform
-        translation: [ 0, -0.133, 0.151 ]
-        elements: { type: Resource, uri: SpiderCommon.yaml, node: B0013_3301 }
+        { <<: *COMMON_RESOURCE, node: B0013_3301, translation: [ 0, -0.133, 0.151 ] }
 
       - # Left Main Belt Drive Pulley
-        type: Transform
-        translation: [ 0.234, 0.12575, 0.062 ]
-        elements: { type: Resource, uri: SpiderCommon.yaml, node: B0005_2505 }
+        { <<: *COMMON_RESOURCE, node: B0005_2505, translation: [ 0.234, 0.12575, 0.062 ] }
 
       - # Left Main Belt Driven Pulley
-        type: Transform
-        translation: [ -0.234, 0.12575, 0.062 ]
-        elements: { type: Resource, uri: SpiderCommon.yaml, node: B0005_2505 }
+        { <<: *COMMON_RESOURCE, node: B0005_2505, translation: [ -0.234, 0.12575, 0.062 ] }
 
       - # Left Bottom Rollers
-        type: Transform
-        translation: [ 0, 0.1415, -0.012 ]
-        elements: *MAIN_BELT_BOTTOM_ROLLERS
+        { <<: *MAIN_TRACK_BOTTOM_ROLLERS, translation: [ 0, 0.1415, -0.012 ] }
 
       - # Left Top Roller
-        type: Transform
-        translation: [ 0, 0.133, 0.151 ]
-        elements: { type: Resource, uri: SpiderCommon.yaml, node: B0013_3301 }
+        { <<: *COMMON_RESOURCE, node: B0013_3301, translation: [ 0, 0.133, 0.151 ] }
 
       - # Front Right Sub Belt Drive Pulley
-        type: Transform
-        translation: [ 0.234, -0.22350, 0.062 ]
-        elements: { type: Resource, uri: SpiderCommon.yaml, node: B0007_2705 }
+        { <<: *COMMON_RESOURCE, node: B0007_2705, translation: [ 0.234, -0.22350, 0.062 ] }
 
       - # Front Left Sub Belt Drive Pulley
-        type: Transform
-        translation: [ 0.234, 0.22350, 0.062 ]
-        elements: { type: Resource, uri: SpiderCommon.yaml, node: B0007_2705 }
+        { <<: *COMMON_RESOURCE, node: B0007_2705, translation: [ 0.234, 0.22350, 0.062 ] }
 
-      - # Back Right Sub Belt Drive Pulley
-        type: Transform
-        translation: [ -0.234, -0.22350, 0.062 ]
-        elements: { type: Resource, uri: SpiderCommon.yaml, node: B0007_2705 }
+      - # Rear Right Sub Belt Drive Pulley
+        { <<: *COMMON_RESOURCE, node: B0007_2705, translation: [ -0.234, -0.22350, 0.062 ] }
 
-      - # Back Left Sub Belt Drive Pulley
-        type: Transform
-        translation: [ -0.234, 0.22350, 0.062 ]
-        elements: { type: Resource, uri: SpiderCommon.yaml, node: B0007_2705 }
+      - # Rear Left Sub Belt Drive Pulley
+        { <<: *COMMON_RESOURCE, node: B0007_2705, translation: [ -0.234, 0.22350, 0.062 ] }
 
   - # Right Main Belt
-    name: MAIN_BELT_1
-    parent: B0001
+    name: R_MAIN_TRACK
+    parent: CHASSIS
     translation: [ 0.234, -0.146, 0.062 ]
     jointType: pseudoContinuousTrack
     jointAxis: [ 0, 1, 0 ]
-    elements:
-      Transform:
-        rotation: [ [ 0, 0, 1, 180 ], [ 1, 0, 0, 90 ] ]
-        elements: { type: Resource, uri: SpiderCommon.yaml, node: MAIN_BELT }
+    elements: { <<: *COMMON_RESOURCE, node: MAIN_BELT, rotation: [ [ 0, 0, 1, 180 ], [ 1, 0, 0, 90 ] ] }
 
   - # Left Main Belt
-    name: MAIN_BELT_2
-    parent: B0001
+    name: L_MAIN_TRACK
+    parent: CHASSIS
     translation: [ -0.234, 0.146, 0.062 ]
     jointType: pseudoContinuousTrack
     jointAxis: [ 0, 1, 0 ]
-    elements:
-      Transform:
-        rotation: [ 1, 0, 0, 90 ]
-        elements: { type: Resource, uri: SpiderCommon.yaml, node: MAIN_BELT }
+    elements: { <<: *COMMON_RESOURCE, node: MAIN_BELT, rotation: [ 1, 0, 0, 90 ] }
 
   - # Front Right Flipper
-    name: B0007_1
-    parent: B0001
+    name: FR_FLIPPER
+    parent: CHASSIS
     translation: [ 0.234, -0.22350, 0.062 ]
     jointType: revolute
     jointAxis: [ 0, -1, 0 ]
@@ -146,51 +94,28 @@ links:
     gearRatio: 2090
     elements: &FLIPPER_ELEMENTS
       - # Flipper Body
-        { type: Resource, uri: SpiderCommon.yaml, node: B0007_1 }
+        { <<: *COMMON_RESOURCE, node: B0007_1 }
 
       - # Belt Driven Pulley
-        type: Transform
-        translation: [ 0.29450, 0, 0 ]
-        elements: { type: Resource, uri: SpiderCommon.yaml, node: B0007_2708 }
+        { <<: *COMMON_RESOURCE, node: B0007_2708, translation: [ 0.29450, 0, 0 ] }
 
-      - # Roller No.1
-        type: Transform
-        translation: [ 0.080, 0, -0.05363 ]
-        elements: { type: Resource, uri: SpiderCommon.yaml, node: B0007_27110 }
-
-      - # Roller No.2
-        type: Transform
-        translation: [ 0.115, 0, -0.04833 ]
-        elements: { type: Resource, uri: SpiderCommon.yaml, node: B0007_27110 }
-
-      - # Roller No.3
-        type: Transform
-        translation: [ 0.150, 0, -0.04404 ]
-        elements: { type: Resource, uri: SpiderCommon.yaml, node: B0007_27110 }
-
-      - # Roller No.4
-        type: Transform
-        translation: [ 0.185, 0, -0.03924 ]
-        elements: { type: Resource, uri: SpiderCommon.yaml, node: B0007_27110 }
-
-      - # Roller No.5
-        type: Transform
-        translation: [ 0.220, 0, -0.03444 ]
-        elements: { type: Resource, uri: SpiderCommon.yaml, node: B0007_27110 }
+        # Bottom Rollers
+      - { <<: *COMMON_RESOURCE, node: B0007_27110, translation: [ 0.080, 0, -0.05363 ] }
+      - { <<: *COMMON_RESOURCE, node: B0007_27110, translation: [ 0.115, 0, -0.04833 ] }
+      - { <<: *COMMON_RESOURCE, node: B0007_27110, translation: [ 0.150, 0, -0.04404 ] }
+      - { <<: *COMMON_RESOURCE, node: B0007_27110, translation: [ 0.185, 0, -0.03924 ] }
+      - { <<: *COMMON_RESOURCE, node: B0007_27110, translation: [ 0.220, 0, -0.03444 ] }
 
   - # Front Right Sub Belt
-    name: SUB_BELT_1
-    parent: B0007_1
+    name: FR_FLIPPER_TRACK
+    parent: FR_FLIPPER
     jointType: pseudoContinuousTrack
     jointAxis: [ 0, 1, 0 ]
-    elements:
-      Transform:
-        rotation: [ 0, 0, 1, 180 ]
-        elements: { type: Resource, uri: SpiderCommon.yaml, node: SUB_BELT }
+    elements: { <<: *COMMON_RESOURCE, node: SUB_BELT, rotation: [ 0, 0, 1, 180 ] }
 
   - # Front Left Flipper
-    name: B0007_2
-    parent: B0001
+    name: FL_FLIPPER
+    parent: CHASSIS
     translation: [ 0.234, 0.22350, 0.062 ]
     jointType: revolute
     jointAxis: [ 0, -1, 0 ]
@@ -199,18 +124,15 @@ links:
     elements: *FLIPPER_ELEMENTS
 
   - # Front Left Sub Belt
-    name: SUB_BELT_2
-    parent: B0007_2
+    name: FL_FLIPPER_TRACK
+    parent: FL_FLIPPER
     jointType: pseudoContinuousTrack
     jointAxis: [ 0, 1, 0 ]
-    elements:
-      Transform:
-        rotation: [ 0, 0, 1, 180 ]
-        elements: { type: Resource, uri: SpiderCommon.yaml, node: SUB_BELT }
+    elements: { <<: *COMMON_RESOURCE, node: SUB_BELT, rotation: [ 0, 0, 1, 180 ] }
 
-  - # Back Right Flipper
-    name: B0007_3
-    parent: B0001
+  - # Rear Right Flipper
+    name: RR_FLIPPER
+    parent: CHASSIS
     translation: [ -0.234, -0.22350, 0.062 ]
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
@@ -221,16 +143,16 @@ links:
         rotation: [ 0, 0, 1, 180 ]
         elements: *FLIPPER_ELEMENTS
 
-  - # Back Right Sub Belt
-    name: SUB_BELT_3
-    parent: B0007_3
+  - # Rear Right Sub Belt
+    name: RR_FLIPPER_TRACK
+    parent: RR_FLIPPER
     jointType: pseudoContinuousTrack
     jointAxis: [ 0, 1, 0 ]
-    elements: { type: Resource, uri: SpiderCommon.yaml, node: SUB_BELT }
+    elements: { <<: *COMMON_RESOURCE, node: SUB_BELT }
 
-  - # Back Left Flipper
-    name: B0007_4
-    parent: B0001
+  - # Rear Left Flipper
+    name: RL_FLIPPER
+    parent: CHASSIS
     translation: [ -0.234, 0.22350, 0.062 ]
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
@@ -241,17 +163,16 @@ links:
         rotation: [ 0, 0, 1, 180 ]
         elements: *FLIPPER_ELEMENTS
 
-  - # Back Left Sub Belt
-    name: SUB_BELT_4
-    parent: B0007_4
+  - # Rear Left Sub Belt
+    name: RL_FLIPPER_TRACK
+    parent: RL_FLIPPER
     jointType: pseudoContinuousTrack
     jointAxis: [ 0, 1, 0 ]
-    elements: { type: Resource, uri: SpiderCommon.yaml, node: SUB_BELT }
+    elements: { <<: *COMMON_RESOURCE, node: SUB_BELT }
 
 collisionDetection:
   excludeLinkGroups:
-    -
-      links: [ B0007_1, B0007_2, B0007_3, B0007_4, MAIN_BELT_1, MAIN_BELT_2, SUB_BELT_1, SUB_BELT_3, SUB_BELT_4 ]
-      links: [ B0007_1, B0007_2, B0007_3, B0007_4, MAIN_BELT_1, MAIN_BELT_2, SUB_BELT_2, SUB_BELT_3, SUB_BELT_4 ]
-      links: [ B0007_1, B0007_2, B0007_3, B0007_4, MAIN_BELT_1, MAIN_BELT_2, SUB_BELT_1, SUB_BELT_2, SUB_BELT_3 ]
-      links: [ B0007_1, B0007_2, B0007_3, B0007_4, MAIN_BELT_1, MAIN_BELT_2, SUB_BELT_1, SUB_BELT_2, SUB_BELT_4 ]
+    - links: [ FR_FLIPPER, FL_FLIPPER, RR_FLIPPER, RL_FLIPPER, R_MAIN_TRACK, L_MAIN_TRACK, FR_FLIPPER_TRACK, RR_FLIPPER_TRACK, RL_FLIPPER_TRACK ]
+    - links: [ FR_FLIPPER, FL_FLIPPER, RR_FLIPPER, RL_FLIPPER, R_MAIN_TRACK, L_MAIN_TRACK, FL_FLIPPER_TRACK, RR_FLIPPER_TRACK, RL_FLIPPER_TRACK ]
+    - links: [ FR_FLIPPER, FL_FLIPPER, RR_FLIPPER, RL_FLIPPER, R_MAIN_TRACK, L_MAIN_TRACK, FR_FLIPPER_TRACK, FL_FLIPPER_TRACK, RR_FLIPPER_TRACK ]
+    - links: [ FR_FLIPPER, FL_FLIPPER, RR_FLIPPER, RL_FLIPPER, R_MAIN_TRACK, L_MAIN_TRACK, FR_FLIPPER_TRACK, FL_FLIPPER_TRACK, RL_FLIPPER_TRACK ]
