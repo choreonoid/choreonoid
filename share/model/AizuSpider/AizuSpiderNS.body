@@ -72,16 +72,18 @@ links:
     name: R_MAIN_TRACK
     parent: CHASSIS
     translation: [ 0.234, -0.146, 0.062 ]
-    jointType: pseudoContinuousTrack
+    jointType: fixed
     jointAxis: [ 0, 1, 0 ]
+    actuationMode: jointSurfaceVelocity
     elements: { <<: *COMMON_RESOURCE, node: MAIN_BELT, rotation: [ [ 0, 0, 1, 180 ], [ 1, 0, 0, 90 ] ] }
 
   - # Left Main Belt
     name: L_MAIN_TRACK
     parent: CHASSIS
     translation: [ -0.234, 0.146, 0.062 ]
-    jointType: pseudoContinuousTrack
+    jointType: fixed
     jointAxis: [ 0, 1, 0 ]
+    actuationMode: jointSurfaceVelocity
     elements: { <<: *COMMON_RESOURCE, node: MAIN_BELT, rotation: [ 1, 0, 0, 90 ] }
 
   - # Front Right Flipper
@@ -109,8 +111,9 @@ links:
   - # Front Right Sub Belt
     name: FR_FLIPPER_TRACK
     parent: FR_FLIPPER
-    jointType: pseudoContinuousTrack
+    jointType: fixed
     jointAxis: [ 0, 1, 0 ]
+    actuationMode: jointSurfaceVelocity
     elements: { <<: *COMMON_RESOURCE, node: SUB_BELT, rotation: [ 0, 0, 1, 180 ] }
 
   - # Front Left Flipper
@@ -126,8 +129,9 @@ links:
   - # Front Left Sub Belt
     name: FL_FLIPPER_TRACK
     parent: FL_FLIPPER
-    jointType: pseudoContinuousTrack
+    jointType: fixed
     jointAxis: [ 0, 1, 0 ]
+    actuationMode: jointSurfaceVelocity
     elements: { <<: *COMMON_RESOURCE, node: SUB_BELT, rotation: [ 0, 0, 1, 180 ] }
 
   - # Rear Right Flipper
@@ -146,8 +150,9 @@ links:
   - # Rear Right Sub Belt
     name: RR_FLIPPER_TRACK
     parent: RR_FLIPPER
-    jointType: pseudoContinuousTrack
+    jointType: fixed
     jointAxis: [ 0, 1, 0 ]
+    actuationMode: jointSurfaceVelocity
     elements: { <<: *COMMON_RESOURCE, node: SUB_BELT }
 
   - # Rear Left Flipper
@@ -166,8 +171,9 @@ links:
   - # Rear Left Sub Belt
     name: RL_FLIPPER_TRACK
     parent: RL_FLIPPER
-    jointType: pseudoContinuousTrack
+    jointType: fixed
     jointAxis: [ 0, 1, 0 ]
+    actuationMode: jointSurfaceVelocity
     elements: { <<: *COMMON_RESOURCE, node: SUB_BELT }
 
 collisionDetection:
