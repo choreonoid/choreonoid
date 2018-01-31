@@ -4,22 +4,34 @@
 
 #include "Joystick.h"
 #include "ExtJoystick.h"
+#include <cnoid/Config>
 #include <boost/format.hpp>
+#include <boost/filesystem.hpp>
 #include <linux/joystick.h>
-#include <fcntl.h>
 #include <sys/ioctl.h>
-#include <unistd.h>
-#include <cerrno>
-#include <cstring>
-#include <cmath>
 #include <string>
 #include <vector>
 #include <map>
 #include <chrono>
+#include <cerrno>
+#include <cstring>
+#include <cmath>
+#include <fcntl.h>
+#include <unistd.h>
+
+#ifdef CNOID_USE_BOOST_REGEX
+#include <boost/regex.hpp>
+using boost::regex;
+using boost::smatch;
+using boost::regex_match;
+#else
+#include <regex>
+#endif
 
 using namespace std;
 using namespace cnoid;
 using boost::format;
+namespace filesystem = boost::filesystem;
 
 namespace {
 
@@ -93,9 +105,11 @@ public:
     vector<bool> initialized;
     vector<double> PS_axes_default_pos;
 
-    JoystickImpl(Joystick* self, const char* device);
+    JoystickImpl(Joystick* self, const string& device);
     ~JoystickImpl();
-    bool openDevice(const char* device);
+    bool findDevice(const string& device);
+    bool openDevice(const string& device);
+    bool setupDevice();
     void closeDevice();
     bool readCurrentState();
     bool readEvent();
@@ -107,7 +121,7 @@ public:
 
 Joystick::Joystick()
 {
-    impl = new JoystickImpl(this, "/dev/input/js0");
+    impl = new JoystickImpl(this, "");
 }
 
 
@@ -117,7 +131,7 @@ Joystick::Joystick(const char* device)
 }
 
 
-JoystickImpl::JoystickImpl(Joystick* self, const char* device)
+JoystickImpl::JoystickImpl(Joystick* self, const string& device)
     : self(self)
 {
     fd = -1;
@@ -125,25 +139,76 @@ JoystickImpl::JoystickImpl(Joystick* self, const char* device)
     extJoystick = ExtJoystick::findJoystick(device);
 
     if(!extJoystick){
-        if(!openDevice(device)){
+        if(!findDevice(device)){
             extJoystick = ExtJoystick::findJoystick("*");
         }
     }
 }
 
 
-bool JoystickImpl::openDevice(const char* device)
+bool JoystickImpl::findDevice(const string& device)
+{
+    bool found = false;
+    
+    if(!device.empty() && device != "*"){
+        found = openDevice(device);
+
+    } else {
+        closeDevice();
+        
+        format filebase("/dev/input/js%1%");
+        regex sonyMotionSensors("^Sony.*Motion Sensors$");
+        int id = 0;
+        while(true){
+            string file = str(filebase % id);
+            if(!filesystem::exists(filesystem::path(file))){
+                break;
+            }
+            int tmpfd = open(file.c_str(), O_RDONLY | O_NONBLOCK);
+            if(tmpfd < 0){
+                break;
+            }
+
+            // check the josytick model name
+            char buf[1024];
+            if(ioctl(tmpfd, JSIOCGNAME(sizeof(buf)), buf) < 0){
+                close(tmpfd);
+                break;
+            }
+            string identifier(buf);
+            if(regex_match(identifier, sonyMotionSensors)){
+                // skip the device corresponding to the motion sensors of a Sony Dualshock gamepad
+                ++id;
+                continue;
+            }
+
+            fd = tmpfd;
+            found = setupDevice();
+            break;
+        }
+    }
+
+    return found;
+}
+        
+
+bool JoystickImpl::openDevice(const string& device)
 {
     closeDevice();
-    
-    fd = open(device, O_RDONLY | O_NONBLOCK);
+
+    fd = open(device.c_str(), O_RDONLY | O_NONBLOCK);
 
     if(fd < 0){
         errorMessage = str(format("Device \"%1%\": %2%") % device % strerror(errno));
         return false;
     }
     errorMessage.clear();
-        
+
+    return setupDevice();
+}
+
+bool JoystickImpl::setupDevice()
+{
     char numAxes;
     ioctl(fd, JSIOCGAXES, &numAxes);
     axes.resize(numAxes, 0.0);
