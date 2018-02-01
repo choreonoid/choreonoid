@@ -318,7 +318,7 @@ bool JoystickImpl::setupDevice()
         id = iter->second;
     }
     if(id == PS4){
-        if(numButtons = 13){
+        if(numButtons == 13){
             id = PS4v2;
         }
     } else if(id == PS3){
@@ -326,6 +326,7 @@ bool JoystickImpl::setupDevice()
             id = PS3v2;
         }
     }
+
     currentModel = modelInfos[id];
 
     if(id != UNSUPPORTED){
