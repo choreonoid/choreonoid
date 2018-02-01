@@ -35,12 +35,20 @@ namespace filesystem = boost::filesystem;
 
 namespace {
 
-enum Model { PS4, PS3, XBOX, F310_XInput, F310_DirectInput, UNSUPPORTED };
+enum ModelID {
+    PS4 = 0, // old hid-sony driver (kernel version 4.9 or earlier)
+    PS4v2,   // new hid-sony driver (kernel version 4.10 or later)
+    PS3,
+    XBOX, F310_XInput, F310_DirectInput,
+    UNSUPPORTED,
+    NUM_MODELS
+};
 
 // Left-Stick, Right-Stick, DirectionalPad, L2, R2
 const int NUM_STD_AXES = 8;    
 
 const int PS4_Axes[]         = {  0,  1,  2,  5,  6,  7,  3,  4 };
+const int PS4v2_Axes[]       = {  0,  1,  3,  4,  6,  7,  2,  5 };
 const int PS3_Axes[]         = {  0,  1,  2,  3, -1, -1, 12, 13 };
 const int XBOX_Axes[]        = {  0,  1,  3,  4,  6,  7,  2,  5 };
 const int F310X_Axes[]       = {  0,  1,  3,  4,  6,  7,  2,  5 };
@@ -49,34 +57,40 @@ const int Unsupported_Axes[] = { -1, -1, -1, -1, -1, -1, -1, -1 };
 
 // A, B, X, Y, L1, R1, SELECT(PS4:share), START(PS4:option), Left-Stick, Right-Stick, Logo(PS4:PS)
 const int NUM_STD_BUTTONS = 11; 
-//const int PS4_Buttons[]   =     {  0,  1,  2,  3,  4,  5, 10, 11,  9,  8, 12 };
 const int PS4_Buttons[]   =       {  1,  2,  0,  3,  4,  5,  8,  9, 10, 11, 12 };
+const int PS4v2_Buttons[] =       {  0,  1,  3,  2,  4,  5,  8,  9, 11, 12, 10 };
 const int PS3_Buttons[]   =       { 14, 13, 15, 12, 10, 11,  0,  3,  1,  2, 16 };
 const int XBOX_Buttons[]  =       {  0,  1,  2,  3,  4,  5,  6,  7,  9, 10,  8 };
 const int F310X_Buttons[] =       {  0,  1,  2,  3,  4,  5,  6,  7,  9, 10,  8 };
 const int F310D_Buttons[] =       {  1,  2,  0,  3,  4,  5,  8,  9, 10, 11, -1 };
 const int Unsupported_Buttons[] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
 
-
 struct ModelInfo {
-    Model id;
+    ModelID id;
     const int* axisMap;
     const int* buttonMap;
 };
 
-const map<string, ModelInfo> modelMap = {
-
+const map<string, ModelID> modelIdMap = {
     // CUH-ZCT1J or CUH-ZCT2J
-    { "Sony Computer Entertainment Wireless Controller",    { PS4,  PS4_Axes,  PS4_Buttons } },
-    { "Sony Interactive Entertainment Wireless Controller", { PS4,  PS4_Axes,  PS4_Buttons } },
-    { "Sony PLAYSTATION(R)3 Controller",                    { PS3,  PS3_Axes,  PS3_Buttons } },
-    { "Microsoft X-Box 360 pad",                            { XBOX, XBOX_Axes, XBOX_Buttons } },
-    { "Microsoft X-Box One pad",                            { XBOX, XBOX_Axes, XBOX_Buttons } },
-    { "Logitech Gamepad F310",                              { F310_XInput, F310X_Axes, F310X_Buttons } },
-    { "Logicool Logicool Dual Action",                      { F310_DirectInput, F310D_Axes, F310D_Buttons } }
+    { "Sony Computer Entertainment Wireless Controller",    PS4 },
+    { "Sony Interactive Entertainment Wireless Controller", PS4 },
+    { "Sony PLAYSTATION(R)3 Controller",                    PS3 },
+    { "Microsoft X-Box 360 pad",                            XBOX },
+    { "Microsoft X-Box One pad",                            XBOX },
+    { "Logitech Gamepad F310",                              F310_XInput },
+    { "Logicool Logicool Dual Action",                      F310_DirectInput }
 };
 
-ModelInfo unsupportedModel { UNSUPPORTED, Unsupported_Axes, Unsupported_Buttons };
+const vector<ModelInfo> modelInfos = {
+    { PS4,              PS4_Axes,         PS4_Buttons   },
+    { PS4v2,            PS4v2_Axes,       PS4v2_Buttons },
+    { PS3,              PS3_Axes,         PS3_Buttons   },
+    { XBOX,             XBOX_Axes,        XBOX_Buttons  },
+    { F310_XInput,      F310X_Axes,       F310X_Buttons },
+    { F310_DirectInput, F310D_Axes,       F310D_Buttons },
+    { UNSUPPORTED,      Unsupported_Axes, Unsupported_Buttons }
+};
 
 }
 
@@ -224,21 +238,26 @@ bool JoystickImpl::setupDevice()
     char identifier[1024];
     ioctl(fd, JSIOCGNAME(sizeof(identifier)), identifier);
 
-    auto iter = modelMap.find(identifier);
-    if(iter != modelMap.end()){
-        currentModel = iter->second;
+    ModelID id;
+    auto iter = modelIdMap.find(identifier);
+    if(iter != modelIdMap.end()){
+        id = iter->second;
     } else {
-        currentModel = unsupportedModel;
+        id = UNSUPPORTED;
     }
 
-    if(currentModel.id == PS4 || currentModel.id == PS3){
+    if(id == PS4 || id == PS3){
         record_init_pos.assign(axisEnabled.size(), false);
         initial_pos.assign(axisEnabled.size(), 0.0);
         initialized.assign(axisEnabled.size(), false);
         vector<double> PS_analog_input_defaults;
         if(currentModel.id == PS4){
+            if(numButtons = 13){
+                id = PS4v2;
+            }
             // Lstick_H, Lstick_V, Rstick_H, L2, R2, Rstick_V
             PS_analog_input_defaults = { 0.0, 0.0, 0.0, -1.0, -1.0, 0.0 };
+
         } else if(currentModel.id == PS3){
             // Lstick_H, Lstick_V, Rstick_H, Rstick_V, empty*4, UP, RIGHT, DOWN, LEFT, L2, R2
             PS_analog_input_defaults = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0, -1.0 };
@@ -247,6 +266,8 @@ bool JoystickImpl::setupDevice()
         copy(PS_analog_input_defaults.begin(), PS_analog_input_defaults.end(), back_inserter(PS_axes_default_pos));
         copy(PS_default_positions.begin(), PS_default_positions.end(), back_inserter(PS_axes_default_pos));
     }
+
+    currentModel = modelInfos[id];
     
     // read initial state
     return readCurrentState();
