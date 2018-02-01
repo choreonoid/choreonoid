@@ -161,7 +161,7 @@ items:
               class: SimpleControllerItem
               data: 
                 isNoDelayMode: true
-                controllerOptions: ""
+                controllerOptions: "0.5, 20"
                 controller: "HandyRockDrillController.so"
                 baseDirectory: "Controller directory"
                 reloading: true
@@ -197,7 +197,7 @@ items:
               class: SimpleControllerItem
               data: 
                 isNoDelayMode: true
-                controllerOptions: ""
+                controllerOptions: "0.5, 20"
                 controller: "HandyRockDrillController.so"
                 baseDirectory: "Controller directory"
                 reloading: true
@@ -218,7 +218,7 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      selected: [ 2 ]
+      selected: [ 10 ]
       checked: [ 3, 4, 6, 7, 9 ]
       expanded: [ 1, 2, 4, 5, 6, 7, 8, 9, 10 ]
   - 
@@ -677,7 +677,7 @@ views:
       spinBox: true
       slider: true
       labelOnLeft: true
-      currentBodyItem: 4
+      currentBodyItem: 7
   - 
     id: 17
     plugin: Body
@@ -685,7 +685,7 @@ views:
     mounted: true
     state: 
       listingMode: "Link List"
-      currentBodyItem: 4
+      currentBodyItem: 7
       bodyItems: 
         - 
           id: 4
@@ -715,7 +715,7 @@ toolbars:
     penetrationBlockDepth: 0.0005
     lazyCollisionDetectionMode: true
   "BodyBar": 
-    current: 4
+    current: 7
   "LeggedBodyBar": 
     stanceWidth: 0.15
   "BodyMotionGenerationBar": 

@@ -4,9 +4,14 @@ angleUnit: degree
 name: BreachingPlate
 
 
-jointCompliance: &BJJointCompliance 1e-6
-breakLimitForce: &BJBreakLimitForce 2000
+jointCompliance: &BJJointCompliance 1e-5
+#breakType: &BJBreakType force
+breakType: &BJBreakType impulse
+breakLimitImpulse: &BJBreakLimitImpulse 5e4
+breakLimitForce: &BJBreakLimitForce 100
+offsetForce: &BJOffsetForce 1000
 period: &BJPeriod 4
+validAxis: &BJValidAxis [ 0, 0, 1]
 
 links:
   -
@@ -54,12 +59,12 @@ links:
     inertia: [
       0.1, 0,   0,
       0,   0.1, 0,
-      0,   0,   0.5 ]
+      0,   0,   0.1 ]
     material: Ground
     elements:
       -
         type: Transform
-        translation: [ 0.0, 0.0, -0.11 ]
+        translation: [ 0.0, 0.0, -0.1 ]
         elements:
           -
             type: Shape
@@ -72,9 +77,12 @@ links:
         link2Name: PlatePiece
         jointType: fixed
         jointCompliance: *BJJointCompliance
+        breakType: *BJBreakType
+        breakLimitImpulse: *BJBreakLimitImpulse
         breakLimitForce: *BJBreakLimitForce
+        offsetForce: *BJOffsetForce
         period: *BJPeriod
-        validAxis: [0, 0, 1]
+        validAxis: *BJValidAxis
   -
     name: Plate2
     parent: Plate
@@ -122,12 +130,12 @@ links:
     inertia: [
       0.1, 0,   0,
       0,   0.1, 0,
-      0,   0,   0.5 ]
+      0,   0,   0.1 ]
     material: Ground
     elements:
       -
         type: Transform
-        translation: [ 0.0, 0.0, -0.11 ]
+        translation: [ 0.0, 0.0, -0.1 ]
         elements:
           -
             type: Shape
@@ -140,6 +148,9 @@ links:
         link2Name: PlatePiece2
         jointType: fixed
         jointCompliance: *BJJointCompliance
+        breakType: *BJBreakType
+        breakLimitImpulse: *BJBreakLimitImpulse
         breakLimitForce: *BJBreakLimitForce
+        offsetForce: *BJOffsetForce
         period: *BJPeriod
-        validAxis: [0, 0, 1]
+        validAxis: *BJValidAxis
