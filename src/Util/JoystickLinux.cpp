@@ -40,34 +40,105 @@ enum ModelID {
     PS4v2,   // new hid-sony driver (kernel version 4.10 or later)
     PS3,     // old hid-sony driver (kernel version 4.9 or earlier)
     PS3v2,   // new hid-sony driver (kernel version 4.10 or later)
-    XBOX, F310_XInput, F310_DirectInput,
+    XBOX, F310, F310_DirectInput,
     UNSUPPORTED,
     NUM_MODELS
 };
 
-// Left-Stick, Right-Stick, DirectionalPad, L2, R2
-const int NUM_STD_AXES = 8;    
+enum AxisID {
+    L_STICK_H_AXIS = Joystick::L_STICK_H_AXIS,
+    L_STICK_V_AXIS = Joystick::L_STICK_V_AXIS,
+    R_STICK_H_AXIS = Joystick::R_STICK_H_AXIS,
+    R_STICK_V_AXIS = Joystick::R_STICK_V_AXIS,
+    DIRECTIONAL_PAD_H_AXIS = Joystick::DIRECTIONAL_PAD_H_AXIS,
+    DIRECTIONAL_PAD_V_AXIS = Joystick::DIRECTIONAL_PAD_V_AXIS,
+    L_TRIGGER_AXIS = Joystick::L_TRIGGER_AXIS,
+    R_TRIGGER_AXIS = Joystick::R_TRIGGER_AXIS,
+    NUM_AXES
+};
 
-const int PS4_Axes[]         = {  0,  1,  2,  5,  6,  7,  3,  4 };
-const int PS4v2_Axes[]       = {  0,  1,  3,  4,  6,  7,  2,  5 };
-const int PS3_Axes[]         = {  0,  1,  2,  3, -1, -1, 12, 13 };
-const int PS3v2_Axes[]       = {  0,  1,  3,  4, -1, -1,  2,  5 };
-const int XBOX_Axes[]        = {  0,  1,  3,  4,  6,  7,  2,  5 };
-const int F310X_Axes[]       = {  0,  1,  3,  4,  6,  7,  2,  5 };
-const int F310D_Axes[]       = {  0,  1,  2,  3,  4,  5, -1, -1 };
-const int Unsupported_Axes[] = { -1, -1, -1, -1, -1, -1, -1, -1 };
+const int INVALID_AXIS = -1;
 
-// A, B, X, Y, L1, R1, SELECT(PS4:share), START(PS4:option), Left-Stick, Right-Stick, Logo(PS4:PS)
-const int NUM_STD_BUTTONS = 11; 
-const int PS4_Buttons[]   =       {  1,  2,  0,  3,  4,  5,  8,  9, 10, 11, 12 };
-const int PS4v2_Buttons[] =       {  0,  1,  3,  2,  4,  5,  8,  9, 11, 12, 10 };
-const int PS3_Buttons[]   =       { 14, 13, 15, 12, 10, 11,  0,  3,  1,  2, 16 };
-const int PS3v2_Buttons[]   =     {  0,  1,  3,  2,  4,  5,  8,  9, 11, 12, 10 };
-const int XBOX_Buttons[]  =       {  0,  1,  2,  3,  4,  5,  6,  7,  9, 10,  8 };
-const int F310X_Buttons[] =       {  0,  1,  2,  3,  4,  5,  6,  7,  9, 10,  8 };
-const int F310D_Buttons[] =       {  1,  2,  0,  3,  4,  5,  8,  9, 10, 11, -1 };
-const int Unsupported_Buttons[] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+enum ButtonID {
+    A_BUTTON = Joystick::A_BUTTON,
+    B_BUTTON = Joystick::B_BUTTON,
+    X_BUTTON = Joystick::X_BUTTON,
+    Y_BUTTON = Joystick::Y_BUTTON,
+    L_BUTTON = Joystick::L_BUTTON,
+    R_BUTTON = Joystick::R_BUTTON,
+    SELECT_BUTTON = Joystick::SELECT_BUTTON,
+    START_BUTTON = Joystick::START_BUTTON,
+    LOGO_BUTTON = Joystick::LOGO_BUTTON,
+    L_STICK_BUTTON = Joystick::L_STICK_BUTTON,
+    R_STICK_BUTTON = Joystick::R_STICK_BUTTON,
+    NUM_BUTTONS,
 
+    DIRECTIONAL_PAD_LEFT_BUTTON = 200,
+    DIRECTIONAL_PAD_RIGHT_BUTTON = 201,
+    DIRECTIONAL_PAD_UP_BUTTON = 202,
+    DIRECTIONAL_PAD_DOWN_BUTTON = 203,
+    
+};
+
+const int INVALID_BUTTON = 1;
+
+
+const int PS4_Axes[] = {
+    L_STICK_H_AXIS, L_STICK_V_AXIS, R_STICK_H_AXIS, L_TRIGGER_AXIS, R_TRIGGER_AXIS, R_STICK_V_AXIS,
+    DIRECTIONAL_PAD_H_AXIS, DIRECTIONAL_PAD_V_AXIS };
+
+const int PS4_Buttons[] = {
+    X_BUTTON, A_BUTTON, B_BUTTON, Y_BUTTON, L_BUTTON, R_BUTTON, INVALID_BUTTON, INVALID_BUTTON,
+    SELECT_BUTTON, START_BUTTON, L_STICK_BUTTON, R_STICK_BUTTON, LOGO_BUTTON, INVALID_BUTTON };
+
+const int PS4v2_Axes[] = {
+    L_STICK_H_AXIS,  L_STICK_V_AXIS, L_TRIGGER_AXIS, R_STICK_H_AXIS, R_STICK_V_AXIS, R_TRIGGER_AXIS,
+    DIRECTIONAL_PAD_H_AXIS, DIRECTIONAL_PAD_V_AXIS };
+
+const int PS4v2_Buttons[] = {
+    A_BUTTON, B_BUTTON, Y_BUTTON, X_BUTTON, L_BUTTON, R_BUTTON, INVALID_BUTTON, INVALID_BUTTON,
+    SELECT_BUTTON, START_BUTTON, LOGO_BUTTON, L_STICK_BUTTON, R_STICK_BUTTON };
+
+const int PS3_Axes[] = {
+    L_STICK_H_AXIS, L_STICK_V_AXIS, R_STICK_H_AXIS, R_STICK_V_AXIS,
+    // 4 - 11
+    INVALID_AXIS, INVALID_AXIS, INVALID_AXIS, INVALID_AXIS, INVALID_AXIS, INVALID_AXIS, INVALID_AXIS, INVALID_AXIS,
+    L_TRIGGER_AXIS, R_TRIGGER_AXIS,
+    // 14 - 26
+    INVALID_AXIS, INVALID_AXIS, INVALID_AXIS, INVALID_AXIS, INVALID_AXIS, INVALID_AXIS, INVALID_AXIS,
+    INVALID_AXIS, INVALID_AXIS, INVALID_AXIS, INVALID_AXIS, INVALID_AXIS, INVALID_AXIS };
+
+const int PS3_Buttons[] = {
+    SELECT_BUTTON, L_STICK_BUTTON, R_STICK_BUTTON, START_BUTTON,
+    DIRECTIONAL_PAD_UP_BUTTON, DIRECTIONAL_PAD_RIGHT_BUTTON, DIRECTIONAL_PAD_DOWN_BUTTON, DIRECTIONAL_PAD_LEFT_BUTTON,
+    INVALID_BUTTON, INVALID_BUTTON, L_BUTTON, R_BUTTON,
+    Y_BUTTON, B_BUTTON, A_BUTTON, X_BUTTON,
+    LOGO_BUTTON, INVALID_BUTTON, INVALID_BUTTON };
+    
+const int PS3v2_Axes[] = {
+    L_STICK_H_AXIS,  L_STICK_V_AXIS, L_TRIGGER_AXIS, R_STICK_H_AXIS, R_STICK_V_AXIS, R_TRIGGER_AXIS };
+
+const int PS3v2_Buttons[] = {
+    A_BUTTON, B_BUTTON, Y_BUTTON, X_BUTTON, L_BUTTON, R_BUTTON, INVALID_BUTTON, INVALID_BUTTON,
+    SELECT_BUTTON, START_BUTTON, LOGO_BUTTON, L_STICK_BUTTON, R_STICK_BUTTON,
+    DIRECTIONAL_PAD_UP_BUTTON, DIRECTIONAL_PAD_DOWN_BUTTON, DIRECTIONAL_PAD_LEFT_BUTTON, DIRECTIONAL_PAD_RIGHT_BUTTON };
+
+const int XBOX_Axes[] = {
+    L_STICK_H_AXIS, L_STICK_V_AXIS, L_TRIGGER_AXIS, R_STICK_H_AXIS, R_STICK_V_AXIS, R_TRIGGER_AXIS,
+    DIRECTIONAL_PAD_H_AXIS, DIRECTIONAL_PAD_V_AXIS };
+
+const int XBOX_Buttons[] = {
+    A_BUTTON, B_BUTTON, X_BUTTON, Y_BUTTON, L_BUTTON, R_BUTTON, SELECT_BUTTON, START_BUTTON, LOGO_BUTTON,
+    L_STICK_BUTTON, R_STICK_BUTTON };
+
+const int F310_Axes[] = {
+    L_STICK_H_AXIS, L_STICK_V_AXIS, L_TRIGGER_AXIS, R_STICK_H_AXIS, R_STICK_V_AXIS, R_TRIGGER_AXIS,
+    DIRECTIONAL_PAD_H_AXIS, DIRECTIONAL_PAD_V_AXIS };
+    
+const int F310_Buttons[] = {
+    A_BUTTON, B_BUTTON, X_BUTTON, Y_BUTTON, L_BUTTON, R_BUTTON, SELECT_BUTTON, START_BUTTON, LOGO_BUTTON,
+    L_STICK_BUTTON, R_STICK_BUTTON };
+    
 struct ModelInfo {
     ModelID id;
     const int* axisMap;
@@ -87,19 +158,17 @@ const map<string, ModelID> modelIdMap = {
     { "Sony PLAYSTATION(R)3 Controller",                    PS3 },
     { "Microsoft X-Box 360 pad",                            XBOX },
     { "Microsoft X-Box One pad",                            XBOX },
-    { "Logitech Gamepad F310",                              F310_XInput },
-    { "Logicool Logicool Dual Action",                      F310_DirectInput }
+    { "Logitech Gamepad F310",                              F310 }
 };
 
 const vector<ModelInfo> modelInfos = {
-    { PS4,              PS4_Axes,         PS4_Buttons,         true  },
-    { PS4v2,            PS4v2_Axes,       PS4v2_Buttons,       true  },
-    { PS3,              PS3_Axes,         PS3_Buttons,         true  },
-    { PS3v2,            PS3v2_Axes,       PS3v2_Buttons,       true  },
-    { XBOX,             XBOX_Axes,        XBOX_Buttons,        false },
-    { F310_XInput,      F310X_Axes,       F310X_Buttons,       false },
-    { F310_DirectInput, F310D_Axes,       F310D_Buttons,       false },
-    { UNSUPPORTED,      Unsupported_Axes, Unsupported_Buttons, false }
+    { PS4,         PS4_Axes,   PS4_Buttons,   true  },
+    { PS4v2,       PS4v2_Axes, PS4v2_Buttons, true  },
+    { PS3,         PS3_Axes,   PS3_Buttons,   true  },
+    { PS3v2,       PS3v2_Axes, PS3v2_Buttons, true  },
+    { XBOX,        XBOX_Axes,  XBOX_Buttons,  false },
+    { F310,        F310_Axes,  F310_Buttons,  false },
+    { UNSUPPORTED, nullptr,    nullptr,       false }
 };
 
 }
@@ -138,7 +207,7 @@ public:
     void closeDevice();
     bool readCurrentState();
     bool readEvent();
-    double readDirectionPadAsAxis(int axis);
+    void setAxisState(int id, double pos);
 };
 
 }
@@ -234,29 +303,20 @@ bool JoystickImpl::openDevice(const string& device)
 
 bool JoystickImpl::setupDevice()
 {
-    char numAxes;
-    ioctl(fd, JSIOCGAXES, &numAxes);
-    axes.resize(numAxes, 0.0);
-    axisEnabled.resize(numAxes, true);
-
-    char numButtons;
-    ioctl(fd, JSIOCGBUTTONS, &numButtons);
-    buttons.resize(numButtons, false);
-    prevButtons.resize(numButtons, false);
-    buttonDownTime.resize(numButtons);
-    buttonHoldValid.resize(numButtons, false);
-
     char identifier[1024];
     ioctl(fd, JSIOCGNAME(sizeof(identifier)), identifier);
 
-    ModelID id;
+    char numAxes;
+    ioctl(fd, JSIOCGAXES, &numAxes);
+
+    char numButtons;
+    ioctl(fd, JSIOCGBUTTONS, &numButtons);
+
+    ModelID id = UNSUPPORTED;
     auto iter = modelIdMap.find(identifier);
     if(iter != modelIdMap.end()){
         id = iter->second;
-    } else {
-        id = UNSUPPORTED;
     }
-
     if(id == PS4){
         if(numButtons = 13){
             id = PS4v2;
@@ -266,8 +326,18 @@ bool JoystickImpl::setupDevice()
             id = PS3v2;
         }
     }
-
     currentModel = modelInfos[id];
+
+    if(id != UNSUPPORTED){
+        numAxes = NUM_AXES;
+        numButtons = NUM_BUTTONS;
+    }
+    axes.resize(numAxes, 0.0);
+    axisEnabled.resize(numAxes, true);
+    buttons.resize(numButtons, false);
+    prevButtons.resize(numButtons, false);
+    buttonDownTime.resize(numButtons);
+    buttonHoldValid.resize(numButtons, false);
 
     if(currentModel.doIgnoreInitialState){
         record_init_pos.assign(axisEnabled.size(), false);
@@ -381,26 +451,60 @@ bool JoystickImpl::readEvent()
         return false;
     }
 
-    const int id = event.number;
+    int id = event.number;
     double pos = (double)event.value / MAX_VALUE_16BIT;
-    if(event.type & JS_EVENT_BUTTON) {
-        // button
-        bool isPressed = (pos > 0.0);
-        buttons[id] = isPressed;
-        sigButton(id, isPressed);
-        if(isPressed){
-            buttonDownTime[id] = chrono::system_clock::now();
-            buttonHoldValid[id] = false;
+
+    if(event.type & JS_EVENT_BUTTON) { // button
+
+        if(currentModel.id != UNSUPPORTED){
+            id = currentModel.buttonMap[id];
         }
-    } else if(event.type & JS_EVENT_AXIS){
-        if(axisEnabled[id]){
+        if(id != INVALID_BUTTON){
+            bool isPressed = (pos > 0.0);
+
+            if(id >= DIRECTIONAL_PAD_LEFT_BUTTON){
+                double p = isPressed ? 1.0 : 0.0;
+                switch(id){
+                case DIRECTIONAL_PAD_LEFT_BUTTON:
+                    setAxisState(DIRECTIONAL_PAD_H_AXIS, -p);
+                    break;
+                case DIRECTIONAL_PAD_RIGHT_BUTTON:
+                    setAxisState(DIRECTIONAL_PAD_H_AXIS, p);
+                    break;
+                case DIRECTIONAL_PAD_UP_BUTTON:
+                    setAxisState(DIRECTIONAL_PAD_V_AXIS, -p);
+                    break;
+                case DIRECTIONAL_PAD_DOWN_BUTTON:
+                    setAxisState(DIRECTIONAL_PAD_V_AXIS, p);
+                    break;
+                defaut:
+                    break;
+                }
+            } else {
+                buttons[id] = isPressed;
+                sigButton(id, isPressed);
+                if(isPressed){
+                    buttonDownTime[id] = chrono::system_clock::now();
+                    buttonHoldValid[id] = false;
+                }
+            }
+        }
+    } else if(event.type & JS_EVENT_AXIS){ // axis
+        if(currentModel.id != UNSUPPORTED){
+            id = currentModel.axisMap[id];
+        }
+        if(id != INVALID_AXIS && axisEnabled[id]){
             // normalize value (-1.0 to 1.0)
             pos = nearbyint(pos * 10.0) / 10.0;
 
             if(currentModel.doIgnoreInitialState){
                 if(!record_init_pos[id]){
                     initial_pos[id] = pos;
-                    pos = 0.0;
+                    if(id == L_TRIGGER_AXIS || id == R_TRIGGER_AXIS){
+                        pos = -1.0;
+                    } else {
+                        pos = 0.0;
+                    }
                     record_init_pos[id] = true;
                     initialized[id] = false;
                 } else {
@@ -413,151 +517,77 @@ bool JoystickImpl::readEvent()
                     }
                 }
             }
-            
-            double prevPos = axes[id];
-            if(pos != prevPos){
-                axes[id] = pos;
-                sigAxis(id, pos);
-            }
+
+            setAxisState(id, pos);
         }
     }
     return true;
 }
 
-double JoystickImpl::readDirectionPadAsAxis(int axis)
+
+void JoystickImpl::setAxisState(int id, double pos)
 {
-    switch(currentModel.id){
-
-    case PS3:
-        if(axis == 4){
-            if(buttons[5]){
-                return 1.0;
-            } else if(buttons[7]){
-                return -1.0;
-            }
-        } else if(axis==5){
-            if(buttons[4]){
-                return -1.0;
-            } else if(buttons[6]){
-                return 1.0;
-            }
-        }
-        break;
-
-    case F310_DirectInput:
-        if(axis==6){
-            if(buttons[6]){
-                return 1.0;
-            } else {
-                return -1.0;
-            }
-        } else if(axis==7){
-            if(buttons[7]){
-                return 1.0;
-            }else{
-                return -1.0;
-            }
-        }
-        break;
-
-    default:
-        break;
+    double prevPos = axes[id];
+    if(pos != prevPos){
+        axes[id] = pos;
+        sigAxis(id, pos);
     }
-
-    return 0.0;
 }
-
+    
 
 double Joystick::getPosition(int axis) const
 {
+    double pos = 0.0;
+    
     if(impl->extJoystick){
-        return impl->extJoystick->getPosition(axis);
+        pos = impl->extJoystick->getPosition(axis);
+    } else if(axis < impl->axes.size()){
+        pos = impl->axes[axis];
     }
 
-    if(impl->currentModel.id == UNSUPPORTED || axis >= NUM_STD_AXES){
-        return getNativePosition(axis);
-    }
-
-    int axisIndex = impl->currentModel.axisMap[axis];
-    if(axisIndex >= 0){
-      return impl->axes[axisIndex];
-    } else {
-      return impl->readDirectionPadAsAxis(axis);
-    }
-
-    return 0.0;
+    return pos;
 }
 
 
 bool Joystick::getButtonState(int button) const
 {
-    if(impl->extJoystick){
-        return impl->extJoystick->getButtonState(button);
-    }
-
-    if(impl->currentModel.id == UNSUPPORTED || button >= NUM_STD_BUTTONS){
-        return getNativeButtonState(button);
-    }
-
-    int buttonIndex = impl->currentModel.buttonMap[button];
-    if(buttonIndex >= 0){
-        return impl->buttons[buttonIndex];
-    }
+    bool state = false;
     
-    return false;
-}
-
-double Joystick::getNativePosition(int axis) const
-{
     if(impl->extJoystick){
-        return impl->extJoystick->getPosition(axis);
+        state = impl->extJoystick->getButtonState(button);
+    } else if(button < impl->buttons.size()){
+        state = impl->buttons[button];
     }
 
-    if(axis < static_cast<int>(impl->axes.size())){
-        return impl->axes[axis];
-    }
-    return 0.0;
-}
-
-
-bool Joystick::getNativeButtonState(int button) const
-{
-    if(impl->extJoystick){
-        return impl->extJoystick->getButtonState(button);
-    }
-    
-    if(button < static_cast<int>(impl->buttons.size())){
-        return impl->buttons[button];
-    }
-    return false;
+    return state;
 }
 
 
 bool Joystick::getButtonDown(int button) const
 {
-    if(button >= NUM_STD_BUTTONS){
+    if(button >= impl->buttons.size()){
         return false;
     }
-    return getButtonState(button) && !impl->prevButtons[impl->currentModel.buttonMap[button]];
+    return getButtonState(button) && !impl->prevButtons[button];
 }
 
 
 bool Joystick::getButtonUp(int button) const
 {
-    if(button >= NUM_STD_BUTTONS){
+    if(button >= impl->buttons.size()){
         return false;
     }
-    return !getButtonState(button) && impl->prevButtons[impl->currentModel.buttonMap[button]];
+    return !getButtonState(button) && impl->prevButtons[button];
 }
 
 
 bool Joystick::getButtonHold(int button, int duration/*(msec)*/) const
 {
-    if(impl->buttonHoldValid[impl->currentModel.buttonMap[button]]){
+    if(impl->buttonHoldValid[button]){
         return false;
     }
     if(getButtonHoldOn(button, duration)){
-        impl->buttonHoldValid[impl->currentModel.buttonMap[button]] = true;
+        impl->buttonHoldValid[button] = true;
         return true;
     }
     return false;
@@ -566,10 +596,10 @@ bool Joystick::getButtonHold(int button, int duration/*(msec)*/) const
 
 bool Joystick::getButtonHoldOn(int button, int duration/*(msec)*/) const
 {
-    if(button >= NUM_STD_BUTTONS || !getButtonState(button)){
+    if(button >= impl->buttons.size() || !getButtonState(button)){
         return false;
     }
-    auto dur = chrono::system_clock::now() - impl->buttonDownTime[impl->currentModel.buttonMap[button]];
+    auto dur = chrono::system_clock::now() - impl->buttonDownTime[button];
     if(chrono::duration_cast<chrono::milliseconds>(dur).count() > duration) return true;
     return false;
 }
