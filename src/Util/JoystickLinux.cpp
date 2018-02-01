@@ -38,7 +38,8 @@ namespace {
 enum ModelID {
     PS4 = 0, // old hid-sony driver (kernel version 4.9 or earlier)
     PS4v2,   // new hid-sony driver (kernel version 4.10 or later)
-    PS3,
+    PS3,     // old hid-sony driver (kernel version 4.9 or earlier)
+    PS3v2,   // new hid-sony driver (kernel version 4.10 or later)
     XBOX, F310_XInput, F310_DirectInput,
     UNSUPPORTED,
     NUM_MODELS
@@ -50,6 +51,7 @@ const int NUM_STD_AXES = 8;
 const int PS4_Axes[]         = {  0,  1,  2,  5,  6,  7,  3,  4 };
 const int PS4v2_Axes[]       = {  0,  1,  3,  4,  6,  7,  2,  5 };
 const int PS3_Axes[]         = {  0,  1,  2,  3, -1, -1, 12, 13 };
+const int PS3v2_Axes[]       = {  0,  1,  3,  4, -1, -1,  2,  5 };
 const int XBOX_Axes[]        = {  0,  1,  3,  4,  6,  7,  2,  5 };
 const int F310X_Axes[]       = {  0,  1,  3,  4,  6,  7,  2,  5 };
 const int F310D_Axes[]       = {  0,  1,  2,  3,  4,  5, -1, -1 };
@@ -60,6 +62,7 @@ const int NUM_STD_BUTTONS = 11;
 const int PS4_Buttons[]   =       {  1,  2,  0,  3,  4,  5,  8,  9, 10, 11, 12 };
 const int PS4v2_Buttons[] =       {  0,  1,  3,  2,  4,  5,  8,  9, 11, 12, 10 };
 const int PS3_Buttons[]   =       { 14, 13, 15, 12, 10, 11,  0,  3,  1,  2, 16 };
+const int PS3v2_Buttons[]   =     {  0,  1,  3,  2,  4,  5,  8,  9, 11, 12, 10 };
 const int XBOX_Buttons[]  =       {  0,  1,  2,  3,  4,  5,  6,  7,  9, 10,  8 };
 const int F310X_Buttons[] =       {  0,  1,  2,  3,  4,  5,  6,  7,  9, 10,  8 };
 const int F310D_Buttons[] =       {  1,  2,  0,  3,  4,  5,  8,  9, 10, 11, -1 };
@@ -69,6 +72,12 @@ struct ModelInfo {
     ModelID id;
     const int* axisMap;
     const int* buttonMap;
+
+    /*
+      Analog stick input of PS4 gamepad is -1.0 before the first operation.
+      The following flag is used To correct it  to the neutral position.
+    */
+    bool doIgnoreInitialState;
 };
 
 const map<string, ModelID> modelIdMap = {
@@ -83,13 +92,14 @@ const map<string, ModelID> modelIdMap = {
 };
 
 const vector<ModelInfo> modelInfos = {
-    { PS4,              PS4_Axes,         PS4_Buttons   },
-    { PS4v2,            PS4v2_Axes,       PS4v2_Buttons },
-    { PS3,              PS3_Axes,         PS3_Buttons   },
-    { XBOX,             XBOX_Axes,        XBOX_Buttons  },
-    { F310_XInput,      F310X_Axes,       F310X_Buttons },
-    { F310_DirectInput, F310D_Axes,       F310D_Buttons },
-    { UNSUPPORTED,      Unsupported_Axes, Unsupported_Buttons }
+    { PS4,              PS4_Axes,         PS4_Buttons,         true  },
+    { PS4v2,            PS4v2_Axes,       PS4v2_Buttons,       true  },
+    { PS3,              PS3_Axes,         PS3_Buttons,         true  },
+    { PS3v2,            PS3v2_Axes,       PS3v2_Buttons,       true  },
+    { XBOX,             XBOX_Axes,        XBOX_Buttons,        false },
+    { F310_XInput,      F310X_Axes,       F310X_Buttons,       false },
+    { F310_DirectInput, F310D_Axes,       F310D_Buttons,       false },
+    { UNSUPPORTED,      Unsupported_Axes, Unsupported_Buttons, false }
 };
 
 }
@@ -102,22 +112,23 @@ public:
     Joystick* self;
     ExtJoystick* extJoystick;
     int fd;
+    ModelInfo currentModel;
+    
     vector<double> axes;
     vector<bool> axisEnabled;
+    Signal<void(int id, double position)> sigAxis;
+    
     vector<bool> buttons;
     vector<bool> prevButtons;
     vector<chrono::system_clock::time_point> buttonDownTime;
     vector<bool> buttonHoldValid;
-    string errorMessage;
     Signal<void(int id, bool isPressed)> sigButton;
-    Signal<void(int id, double position)> sigAxis;
 
-    ModelInfo currentModel;
-    
     vector<bool> record_init_pos;
     vector<double> initial_pos;
     vector<bool> initialized;
-    vector<double> PS_axes_default_pos;
+
+    string errorMessage;
 
     JoystickImpl(Joystick* self, const string& device);
     ~JoystickImpl();
@@ -246,29 +257,24 @@ bool JoystickImpl::setupDevice()
         id = UNSUPPORTED;
     }
 
-    if(id == PS4 || id == PS3){
-        record_init_pos.assign(axisEnabled.size(), false);
-        initial_pos.assign(axisEnabled.size(), 0.0);
-        initialized.assign(axisEnabled.size(), false);
-        vector<double> PS_analog_input_defaults;
-        if(currentModel.id == PS4){
-            if(numButtons = 13){
-                id = PS4v2;
-            }
-            // Lstick_H, Lstick_V, Rstick_H, L2, R2, Rstick_V
-            PS_analog_input_defaults = { 0.0, 0.0, 0.0, -1.0, -1.0, 0.0 };
-
-        } else if(currentModel.id == PS3){
-            // Lstick_H, Lstick_V, Rstick_H, Rstick_V, empty*4, UP, RIGHT, DOWN, LEFT, L2, R2
-            PS_analog_input_defaults = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0, -1.0 };
+    if(id == PS4){
+        if(numButtons = 13){
+            id = PS4v2;
         }
-        vector<double> PS_default_positions(axisEnabled.size() - PS_analog_input_defaults.size(), 0.0);
-        copy(PS_analog_input_defaults.begin(), PS_analog_input_defaults.end(), back_inserter(PS_axes_default_pos));
-        copy(PS_default_positions.begin(), PS_default_positions.end(), back_inserter(PS_axes_default_pos));
+    } else if(id == PS3){
+        if(numButtons == 17){
+            id = PS3v2;
+        }
     }
 
     currentModel = modelInfos[id];
-    
+
+    if(currentModel.doIgnoreInitialState){
+        record_init_pos.assign(axisEnabled.size(), false);
+        initial_pos.assign(axisEnabled.size(), 0.0);
+        initialized.assign(axisEnabled.size(), false);
+    }
+
     // read initial state
     return readCurrentState();
 }    
@@ -391,19 +397,18 @@ bool JoystickImpl::readEvent()
             // normalize value (-1.0 to 1.0)
             pos = nearbyint(pos * 10.0) / 10.0;
 
-            if(currentModel.id == PS4 || currentModel.id == PS3){
-                // analog stick input of PS4 is -1.0 before first operation.
+            if(currentModel.doIgnoreInitialState){
                 if(!record_init_pos[id]){
                     initial_pos[id] = pos;
-                    pos = PS_axes_default_pos[id]; // replace input for default value
+                    pos = 0.0;
                     record_init_pos[id] = true;
                     initialized[id] = false;
                 } else {
                     if(!initialized[id]){
                         if(pos == initial_pos[id]){
-                            pos = PS_axes_default_pos[id]; // replace input for default value
+                            pos = 0.0;
                         } else {
-                            initialized[id]=true; // analog stick input changed
+                            initialized[id] = true; // analog stick input changed
                         }
                     }
                 }
