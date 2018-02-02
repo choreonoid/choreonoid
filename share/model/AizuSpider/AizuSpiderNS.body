@@ -62,10 +62,10 @@ links:
       - # Front Left Sub Belt Drive Pulley
         { <<: *COMMON_RESOURCE, node: B0007_2705, translation: [ 0.234, 0.22350, 0.062 ] }
 
-      - # Rear Right Sub Belt Drive Pulley
+      - # Back Right Sub Belt Drive Pulley
         { <<: *COMMON_RESOURCE, node: B0007_2705, translation: [ -0.234, -0.22350, 0.062 ] }
 
-      - # Rear Left Sub Belt Drive Pulley
+      - # Back Left Sub Belt Drive Pulley
         { <<: *COMMON_RESOURCE, node: B0007_2705, translation: [ -0.234, 0.22350, 0.062 ] }
 
   - # Right Main Belt
@@ -109,7 +109,7 @@ links:
       - { <<: *COMMON_RESOURCE, node: B0007_27110, translation: [ 0.220, 0, -0.03444 ] }
 
   - # Front Right Sub Belt
-    name: FR_FLIPPER_TRACK
+    name: FR_SUB_TRACK
     parent: FR_FLIPPER
     jointType: fixed
     jointAxis: [ 0, 1, 0 ]
@@ -127,15 +127,15 @@ links:
     elements: *FLIPPER_ELEMENTS
 
   - # Front Left Sub Belt
-    name: FL_FLIPPER_TRACK
+    name: FL_SUB_TRACK
     parent: FL_FLIPPER
     jointType: fixed
     jointAxis: [ 0, 1, 0 ]
     actuationMode: jointSurfaceVelocity
     elements: { <<: *COMMON_RESOURCE, node: SUB_BELT, rotation: [ 0, 0, 1, 180 ] }
 
-  - # Rear Right Flipper
-    name: RR_FLIPPER
+  - # Back Right Flipper
+    name: BR_FLIPPER
     parent: CHASSIS
     translation: [ -0.234, -0.22350, 0.062 ]
     jointType: revolute
@@ -147,16 +147,16 @@ links:
         rotation: [ 0, 0, 1, 180 ]
         elements: *FLIPPER_ELEMENTS
 
-  - # Rear Right Sub Belt
-    name: RR_FLIPPER_TRACK
-    parent: RR_FLIPPER
+  - # Back Right Sub Belt
+    name: BR_SUB_TRACK
+    parent: BR_FLIPPER
     jointType: fixed
     jointAxis: [ 0, 1, 0 ]
     actuationMode: jointSurfaceVelocity
     elements: { <<: *COMMON_RESOURCE, node: SUB_BELT }
 
-  - # Rear Left Flipper
-    name: RL_FLIPPER
+  - # Back Left Flipper
+    name: BL_FLIPPER
     parent: CHASSIS
     translation: [ -0.234, 0.22350, 0.062 ]
     jointType: revolute
@@ -168,9 +168,9 @@ links:
         rotation: [ 0, 0, 1, 180 ]
         elements: *FLIPPER_ELEMENTS
 
-  - # Rear Left Sub Belt
-    name: RL_FLIPPER_TRACK
-    parent: RL_FLIPPER
+  - # Back Left Sub Belt
+    name: BL_SUB_TRACK
+    parent: BL_FLIPPER
     jointType: fixed
     jointAxis: [ 0, 1, 0 ]
     actuationMode: jointSurfaceVelocity
@@ -178,7 +178,7 @@ links:
 
 collisionDetection:
   excludeLinkGroups:
-    - links: [ FR_FLIPPER, FL_FLIPPER, RR_FLIPPER, RL_FLIPPER, R_MAIN_TRACK, L_MAIN_TRACK, FR_FLIPPER_TRACK, RR_FLIPPER_TRACK, RL_FLIPPER_TRACK ]
-    - links: [ FR_FLIPPER, FL_FLIPPER, RR_FLIPPER, RL_FLIPPER, R_MAIN_TRACK, L_MAIN_TRACK, FL_FLIPPER_TRACK, RR_FLIPPER_TRACK, RL_FLIPPER_TRACK ]
-    - links: [ FR_FLIPPER, FL_FLIPPER, RR_FLIPPER, RL_FLIPPER, R_MAIN_TRACK, L_MAIN_TRACK, FR_FLIPPER_TRACK, FL_FLIPPER_TRACK, RR_FLIPPER_TRACK ]
-    - links: [ FR_FLIPPER, FL_FLIPPER, RR_FLIPPER, RL_FLIPPER, R_MAIN_TRACK, L_MAIN_TRACK, FR_FLIPPER_TRACK, FL_FLIPPER_TRACK, RL_FLIPPER_TRACK ]
+    - links: [ FR_FLIPPER, FL_FLIPPER, BR_FLIPPER, BL_FLIPPER, R_MAIN_TRACK, L_MAIN_TRACK, FR_SUB_TRACK, BR_SUB_TRACK, BL_SUB_TRACK ]
+    - links: [ FR_FLIPPER, FL_FLIPPER, BR_FLIPPER, BL_FLIPPER, R_MAIN_TRACK, L_MAIN_TRACK, FL_SUB_TRACK, BR_SUB_TRACK, BL_SUB_TRACK ]
+    - links: [ FR_FLIPPER, FL_FLIPPER, BR_FLIPPER, BL_FLIPPER, R_MAIN_TRACK, L_MAIN_TRACK, FR_SUB_TRACK, FL_SUB_TRACK, BR_SUB_TRACK ]
+    - links: [ FR_FLIPPER, FL_FLIPPER, BR_FLIPPER, BL_FLIPPER, R_MAIN_TRACK, L_MAIN_TRACK, FR_SUB_TRACK, FL_SUB_TRACK, BL_SUB_TRACK ]
