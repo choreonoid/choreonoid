@@ -37,7 +37,7 @@ public:
     virtual ~ChoreonoidExecutionContext(void);
     virtual void tick(void) throw (CORBA::SystemException);
     virtual int svc(void);
-		virtual RTC::ReturnCode_t activate_component(RTC::LightweightRTObject_ptr comp) throw (CORBA::SystemException);
+		//virtual RTC::ReturnCode_t activate_component(RTC::LightweightRTObject_ptr comp) throw (CORBA::SystemException);
     virtual RTC::ReturnCode_t deactivate_component(RTC::LightweightRTObject_ptr comp) throw (CORBA::SystemException);
 		virtual RTC::ReturnCode_t	reset_component(RTC::LightweightRTObject_ptr comp) throw (CORBA::SystemException);
 

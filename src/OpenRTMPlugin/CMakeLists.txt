@@ -8,32 +8,7 @@ else()
   endif()
 endif()
 
-#function(add_cnoid_openRTM_plugin)
-#
-#  add_library(${ARGV})
-#
-#  set_target_properties(${ARGV0} PROPERTIES
-#     LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}
-#     ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}
-#     RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR})
-
-#   if(ENABLE_INSTALL_RPATH)
-#     if(APPLE)
-#       set_target_properties(${ARGV0} PROPERTIES INSTALL_NAME_DIR "@rpath")
-#       set_target_properties(${ARGV0} PROPERTIES LINK_FLAGS "-Wl,-rpath,@loader_path,-rpath,@loader_path/..")
-#     else()
-#       set_target_properties(${ARGV0} PROPERTIES INSTALL_RPATH "$ORIGIN:$ORIGIN/..")
-#     endif()
-#   else()
-#     if(APPLE)
-#       set_target_properties(${ARGV0} PROPERTIES INSTALL_NAME_DIR "")
-#     else()
-#       set_target_properties(${ARGV0} PROPERTIES INSTALL_RPATH "$ORIGIN")
-#     endif()
-#   endif()
-
-# endfunction()
-
+message(STATUS "src/OpenRTMPlugin Build" )
 
 # Plugin
 set(plugin CnoidOpenRTMPlugin)
@@ -114,25 +89,21 @@ if(UNIX)
       RESULT_VARIABLE RESULT
       OUTPUT_STRIP_TRAILING_WHITESPACE)
     message(STATUS "OPENRTM_DIR=${OPENRTM_DIR}")
-    if(NOT (EXISTS "${OPENRTM_DIR}/include/openrtm-1.1/rtm/RTObjectStateMachine.h"))
+    if(OPENRTM_VERSION STRLESS "1.2.0")
       set(OPENRTM_DEFINITIONS -DOPENRTM_VERSION110)
-    else()
-      set(OPENRTM_DEFINITIONS -DOPENRTM_VERSION_TRUNK)
+      set(OPENRTM_INCLUDE_DIRS
+        ${OPENRTM_DIR}/include 
+        ${OPENRTM_DIR}/include/coil-1.1
+        ${OPENRTM_DIR}/include/openrtm-1.1 
+        ${OPENRTM_DIR}/include/openrtm-1.1/rtm/idl
+        ${OPENRTM_DIR}/include/openrtm-1.1/rtm/ext
+        ${OPENRTM_DIR}/rtm # for the Windows installer version
+        ${OPENRTM_DIR}/rtm/idl # for the Windows installer version
+        ${OPENRTM_DIR}
+        )
+      set(OPENRTM_INCLUDE_DIRS ${OPENRTM_INCLUDE_DIRS} CACHE INTERNAL "OpenRTM's include directories")
     endif()
   endif()
-
-  set(OPENRTM_INCLUDE_DIRS
-    ${OPENRTM_DIR}/include 
-    ${OPENRTM_DIR}/include/coil-1.1
-    ${OPENRTM_DIR}/include/openrtm-1.1 
-    ${OPENRTM_DIR}/include/openrtm-1.1/rtm/idl
-    ${OPENRTM_DIR}/include/openrtm-1.1/rtm/ext
-    ${OPENRTM_DIR}/rtm # for the Windows installer version
-    ${OPENRTM_DIR}/rtm/idl # for the Windows installer version
-    ${OPENRTM_DIR}
-    )
-
-  set(OPENRTM_INCLUDE_DIRS ${OPENRTM_INCLUDE_DIRS} CACHE INTERNAL "OpenRTM's include directories")
 endif()
 ######
 include_directories(${OPENRTM_INCLUDE_DIRS})
@@ -141,24 +112,6 @@ add_definitions(${OPENRTM_DEFINITIONS})
 
 add_cnoid_plugin(${plugin} SHARED ${plugin_sources} ${plugin_headers} ${mofiles} ${RC_SRCS})
 
-# if(OPENRTM_VERSION STREQUAL "1.1.0")
-#   add_cnoid_plugin(${plugin} SHARED ${plugin_sources} ${plugin_headers} ${mofiles}  ${RC_SRCS})
-# else()
-#   add_cnoid_OpenRTM_plugin(${plugin} SHARED ${plugin_sources} ${plugin_headers} ${mofiles} ${RC_SRCS})
-#   if(ENABLE_GCC_FVISIBILITY_HIDDEN)
-#     set_source_files_properties(BodyRTCItem.cpp
-#                                 VirtualRobotRTC.cpp
-#                                 VirtualRobotPortHandler.cpp
-#                                 BridgeConf.cpp
-#                                 RTCItem.cpp
-# 				ControllerRTCItem.cpp
-# 				BodyIoRTCItem.cpp
-#                                 ChoreonoidExecutionContext.cpp 
-#                                 PROPERTIES COMPILE_FLAGS "-fvisibility=hidden")
-#   endif()
-# endif()
-
-#target_link_libraries(${plugin} CnoidBodyPlugin CnoidCorbaPlugin CnoidOpenRTM CnoidBodyIoRTC ${OPENRTM_LIBRARIES})
 target_link_libraries(${plugin} CnoidBodyPlugin CnoidCorbaPlugin CnoidBodyIoRTC ${OPENRTM_LIBRARIES})
 apply_common_setting_for_plugin(${plugin} "${plugin_headers}")
 

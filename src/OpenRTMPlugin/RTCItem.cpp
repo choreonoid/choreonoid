@@ -94,8 +94,8 @@ RTCItem::~RTCItem()
 }
 
 
-void RTCItem::onPositionChanged()
-{
+void RTCItem::onPositionChanged() {
+  DDEBUG("RTCItem::onPositionChanged");
     if(!rtcomp){
         if(convertAbsolutePath())
             rtcomp = new RTComponent(modulePath, properties);
@@ -119,9 +119,9 @@ Item* RTCItem::doDuplicate() const
 }
 
 
-void RTCItem::setModuleName(const std::string& name)
-{
-    if(moduleName!=name){
+void RTCItem::setModuleName(const std::string& name) {
+  DDEBUG_V("RTCItem::setModuleName %s", name.c_str());
+  if(moduleName!=name){
         moduleName = name;
         if(rtcomp){
             delete rtcomp;
@@ -132,8 +132,8 @@ void RTCItem::setModuleName(const std::string& name)
 }
 
 
-void RTCItem::setPeriodicType(int type)
-{
+void RTCItem::setPeriodicType(int type) {
+  DDEBUG_V("RTCItem::setPeriodicType %d", type);
 	if (oldPeriodicType != type) {
 		oldPeriodicType = type;
 		properties["exec_cxt.periodic.type"] = periodicType.symbol(type);
@@ -146,9 +146,9 @@ void RTCItem::setPeriodicType(int type)
 }
 
 
-void RTCItem::setPeriodicRate(int rate)
-{
-    if(periodicRate!=rate){
+void RTCItem::setPeriodicRate(int rate) {
+  DDEBUG_V("RTCItem::setPeriodicRate %d", rate);
+  if(periodicRate!=rate){
         periodicRate = rate;
         stringstream ss;
         ss << periodicRate;
@@ -163,7 +163,8 @@ void RTCItem::setPeriodicRate(int rate)
 
 
 void RTCItem::setBaseDirectoryType(int base) {
-	baseDirectoryType.select(base);
+  DDEBUG_V("RTCItem::setBaseDirectoryType %d", base);
+  baseDirectoryType.select(base);
 	if (oldBaseDirectoryType != base) {
 		oldBaseDirectoryType = base;
 		if (rtcomp) {
@@ -266,9 +267,9 @@ bool RTCItem::convertAbsolutePath()
 }
 
 
-RTComponent::RTComponent(const filesystem::path& modulePath, PropertyMap& prop)
-{
-    rtc_ = 0;
+RTComponent::RTComponent(const filesystem::path& modulePath, PropertyMap& prop) {
+  DDEBUG("RTComponent::RTComponent");
+  rtc_ = 0;
     rtcRef = 0;
     if (modulePath.empty()){
         return;

@@ -18,6 +18,7 @@
 #include <cnoid/Sleep>
 #include <cnoid/ProjectManager>
 #include <rtm/CorbaNaming.h>
+#include "../LoggerUtil.h"
 #include "../gettext.h"
 
 using namespace std;
@@ -97,8 +98,9 @@ BodyRTCItem::~BodyRTCItem()
 }
 
 
-void BodyRTCItem::createRTC(BodyPtr body)
-{
+void BodyRTCItem::createRTC(BodyPtr body) {
+  DDEBUG("BodyRTCItem::createRTC");
+
     bridgeConf = new BridgeConf();
 
     filesystem::path projectDir(ProjectManager::instance()->currentProjectDirectory());
@@ -188,7 +190,11 @@ void BodyRTCItem::createRTC(BodyPtr body)
         instanceName = ss.str();
         i++;
     }
+#if defined(OPENRTM_VERSION110)
     format param("VirtualRobot?instance_name=%1%&exec_cxt.periodic.type=ChoreonoidExecutionContext&exec_cxt.periodic.rate=1000000");
+#else
+    format param("VirtualRobot?instance_name=%1%&execution_contexts=ChoreonoidExecutionContext(),OpenHRPExecutionContext()&exec_cxt.periodic.type=ChoreonoidExecutionContext&exec_cxt.periodic.rate=1000000&exec_cxt.sync_activation=NO&exec_cxt.sync_deactivation=NO");
+#endif
     RtcBase* rtc = createManagedRTC(str(param % instanceName).c_str());
     mv->putln(fmt(_("RTC \"%1%\" has been created.")) % instanceName);
     virtualRobotRTC = dynamic_cast<VirtualRobotRTC*>(rtc);

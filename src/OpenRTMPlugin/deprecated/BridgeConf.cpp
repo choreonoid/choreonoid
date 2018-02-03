@@ -5,6 +5,7 @@
 
 #include "BridgeConf.h"
 #include "../OpenRTMUtil.h"
+#include "../LoggerUtil.h"
 #include <cnoid/Config>
 #include <boost/format.hpp>
 #include <boost/filesystem.hpp>
@@ -21,6 +22,7 @@ namespace regex_constants = boost::regex_constants;
 #endif
 
 using namespace std;
+using namespace cnoid;
 namespace program_options = boost::program_options;
 namespace filesystem = boost::filesystem;
 using boost::format;
@@ -350,11 +352,15 @@ void BridgeConf::addTimeRateInfo(const std::string& value)
     }
 }
 
-void BridgeConf::setupModules()
-{
+void BridgeConf::setupModules() {
+  DDEBUG("BridgeConf::setupModules");
     RTC::Manager& rtcManager = RTC::Manager::instance();
     ModuleInfoList::iterator moduleInfo = moduleInfoList.begin();
+#if defined(OPENRTM_VERSION110)
     format param("%1%?exec_cxt.periodic.type=ChoreonoidExecutionContext&exec_cxt.periodic.rate=1000000");
+#else
+    format param("%1%?execution_contexts=ChoreonoidExecutionContext(),OpenHRPExecutionContext()&exec_cxt.periodic.type=ChoreonoidExecutionContext&exec_cxt.periodic.rate=1000000&exec_cxt.sync_activation=NO&exec_cxt.sync_deactivation=NO");
+#endif
     while(moduleInfo != moduleInfoList.end()){
         if(!moduleInfo->isLoaded){
             rtcManager.load(moduleInfo->fileName.c_str(), moduleInfo->initFuncName.c_str());

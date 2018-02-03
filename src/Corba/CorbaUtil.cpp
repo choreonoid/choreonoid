@@ -107,12 +107,12 @@ bool NamingContextHelper::checkOrUpdateNamingContext() {
 	}
 
 	try {
-		omniORB::setClientCallTimeout(1000);
+		omniORB::setClientCallTimeout(500);
 
 		CORBA::Object_var obj = getORB()->string_to_object(namingContextLocation.c_str());
 		namingContext = CosNaming::NamingContext::_narrow(obj);
 
-		omniORB::setClientCallTimeout(namingContext, 250);
+		omniORB::setClientCallTimeout(namingContext, 150);
 
 		if (CORBA::is_nil(namingContext)) {
 			errorMessage_ = str(format("The object at %1% is not a NamingContext object.") % namingContextLocation);
@@ -276,7 +276,7 @@ bool NamingContextHelper::isObjectAlive(CORBA::Object_ptr obj) {
 	bool isAlive = false;
 
 	if (obj && !CORBA::is_nil(obj)) {
-		omniORB::setClientCallTimeout(obj, 250);
+		omniORB::setClientCallTimeout(obj, 150);
 		try {
 			if (!obj->_non_existent()) {
 				isAlive = true;

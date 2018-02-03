@@ -11,6 +11,9 @@
 #include <cnoid/Sleep>
 #include <cnoid/ExecutablePath>
 #include <cnoid/FileUtil>
+
+#include "LoggerUtil.h"
+
 #include "gettext.h"
 
 using namespace std;
@@ -206,8 +209,8 @@ void ControllerRTCItem::setRTCInstanceName(const std::string& name)
 }
 
 
-void ControllerRTCItem::setExecContextType(int which)
-{
+void ControllerRTCItem::setExecContextType(int which) {
+  DDEBUG_V("ControllerRTCItem::setExecContextType %d", which);
     if(which != impl->execContextType.which()){
         impl->execContextType.select(which);
         createRTC();
@@ -316,8 +319,8 @@ bool ControllerRTCItem::createRTCmain()
 }
 
 
-bool ControllerRTCItemImpl::createRTCmain()
-{
+bool ControllerRTCItemImpl::createRTCmain() {
+  DDEBUG("ControllerRTCItemImpl::createRTCmain");
     if(rtc){
         self->deleteRTC(true);
     }
@@ -362,13 +365,23 @@ bool ControllerRTCItemImpl::createRTCmain()
     if(periodicRateProperty > 0){
         periodicRate = periodicRateProperty;
         option = 
-            str(format("instance_name=%1%&exec_cxt.periodic.type=%2%&exec_cxt.periodic.rate=%3%")
+#if defined(OPENRTM_VERSION110)
+          str(format("instance_name=%1%&exec_cxt.periodic.type=%2%&exec_cxt.periodic.rate=%3%")
                 % rtcInstanceName % execContextType.selectedSymbol() % periodicRate);
+#else
+          str(format("instance_name=%1%&execution_contexts=ChoreonoidExecutionContext(),OpenHRPExecutionContext()&exec_cxt.periodic.type=%2%&exec_cxt.periodic.rate=%3%&exec_cxt.sync_activation=NO&exec_cxt.sync_deactivation=NO")
+            % rtcInstanceName % execContextType.selectedSymbol() % periodicRate);
+#endif
     } else {
         periodicRate = 0;
         option = 
-            str(format("instance_name=%1%&exec_cxt.periodic.type=%2%")
+#if defined(OPENRTM_VERSION110)
+          str(format("instance_name=%1%&exec_cxt.periodic.type=%2%")
                 % rtcInstanceName % execContextType.selectedSymbol());
+#else
+          str(format("instance_name=%1%&execution_contexts=ChoreonoidExecutionContext(),OpenHRPExecutionContext()&exec_cxt.periodic.type=%2%&exec_cxt.sync_activation=NO&exec_cxt.sync_deactivation=NO")
+            % rtcInstanceName % execContextType.selectedSymbol());
+#endif
     }
     rtc = createManagedRTC((moduleName + "?" + option).c_str());
 
