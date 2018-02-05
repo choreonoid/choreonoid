@@ -9,8 +9,8 @@ private:
     double dt;
     Body* body;
     Link* pusher;
-    double amplitude = 0.2;
-    double w = 15.0;
+    double amplitude = 0.5;
+    double w = 20.0;
 public:
     virtual bool initialize(SimpleControllerIO* io) override;
     virtual bool control() override;

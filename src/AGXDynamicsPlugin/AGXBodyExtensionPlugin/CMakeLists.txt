@@ -13,6 +13,7 @@ set(sources
   AGXBodyExtensionPlugin.cpp
   AGXBodyExtensionSample.cpp
   AGXBreakableJoint.cpp
+  AGXMagneticJoint.cpp
   AGXWire.cpp
 )
 

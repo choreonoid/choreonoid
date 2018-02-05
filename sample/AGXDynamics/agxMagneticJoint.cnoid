@@ -37,9 +37,33 @@ items:
             ContactReductionThreshhold: 12
             ContactWarmstarting: true
             AutoSleep: true
-            SaveToAGXFileOnStart: false
+            SaveToAGXFileOnStart: true
         - 
           id: 3
+          name: "agxMagneticJoint"
+          plugin: Body
+          class: BodyItem
+          data: 
+            modelFile: "${PROJECT_DIR}/agxMagneticJoint.body"
+            currentBaseLink: "Socket"
+            rootPosition: [ 0, 0, 0.15 ]
+            rootAttitude: [ 
+              1, 0, 0, 
+              0, 1, 0, 
+              0, 0, 1 ]
+            jointPositions: [  0.000000 ]
+            initialRootPosition: [ 0, 0, 0.15 ]
+            initialRootAttitude: [ 
+              1, 0, 0, 
+              0, 1, 0, 
+              0, 0, 1 ]
+            initialJointPositions: [  0.000000 ]
+            zmp: [ 0, 0, 0 ]
+            collisionDetection: true
+            selfCollisionDetection: false
+            isEditable: true
+        - 
+          id: 4
           name: "Floor"
           plugin: Body
           class: BodyItem
@@ -61,146 +85,6 @@ items:
             collisionDetection: true
             selfCollisionDetection: false
             isEditable: false
-        - 
-          id: 4
-          name: "DoubleArmV7"
-          plugin: Body
-          class: BodyItem
-          data: 
-            modelFile: "${SHARE}/model/DoubleArmV7/DoubleArmV7A.body"
-            currentBaseLink: "TFRAME"
-            rootPosition: [ 0.765151003, 0, 0.52 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 2.22044605e-16, -1, 
-              0, 1, 2.22044605e-16 ]
-            jointPositions: [ 
-               0.000000,  0.000000,  0.000000,  0.000000, -1.221730,  2.617994,  0.000000,  0.000000,  0.000000,  0.000000, 
-               0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000, 
-               0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000, 
-               0.000000,  0.000000,  0.000000,  0.000000 ]
-            initialRootPosition: [ 0.765151003, 0, 0.52 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 2.22044605e-16, -1, 
-              0, 1, 2.22044605e-16 ]
-            initialJointPositions: [ 
-               0.000000,  0.000000,  0.000000,  0.000000, -1.221730,  2.617994,  0.000000,  0.000000,  0.000000,  0.000000, 
-               0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000, 
-               0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000, 
-               0.000000,  0.000000,  0.000000,  0.000000 ]
-            zmp: [ 0, 0, 0 ]
-            collisionDetection: true
-            selfCollisionDetection: false
-            isEditable: true
-          children: 
-            - 
-              id: 5
-              name: "DoubleArmV7Controller_velocity"
-              plugin: Body
-              class: SimpleControllerItem
-              data: 
-                isNoDelayMode: true
-                controllerOptions: "velocity"
-                controller: "DoubleArmV7Controller"
-                baseDirectory: "Controller directory"
-                reloading: true
-        - 
-          id: 6
-          name: "BreachingPlate"
-          plugin: Body
-          class: BodyItem
-          data: 
-            modelFile: "${PROJECT_DIR}/BreachingPlate.body"
-            currentBaseLink: "Plate"
-            rootPosition: [ -3, -0.7, 1 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            jointPositions: [  0.000000,  0.000000 ]
-            initialRootPosition: [ -3, -0.7, 1 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            initialJointPositions: [  0.000000,  0.000000 ]
-            zmp: [ 0, 0, 0 ]
-            collisionDetection: true
-            selfCollisionDetection: false
-            isEditable: true
-        - 
-          id: 7
-          name: "HandyRockDrill"
-          plugin: Body
-          class: BodyItem
-          data: 
-            modelFile: "${SHARE}/model/misc/HandyRockDrill.body"
-            currentBaseLink: "BASE"
-            rootPosition: [ -3, -0.7, 2 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            jointPositions: [  0.000000 ]
-            initialRootPosition: [ -3, -0.7, 2 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            initialJointPositions: [  0.000000 ]
-            zmp: [ 0, 0, 0 ]
-            collisionDetection: true
-            selfCollisionDetection: false
-            isEditable: true
-          children: 
-            - 
-              id: 8
-              name: "SimpleController"
-              plugin: Body
-              class: SimpleControllerItem
-              data: 
-                isNoDelayMode: true
-                controllerOptions: "0.5, 20"
-                controller: "HandyRockDrillController.so"
-                baseDirectory: "Controller directory"
-                reloading: true
-        - 
-          id: 9
-          name: "HandyRockDrill2"
-          plugin: Body
-          class: BodyItem
-          data: 
-            modelFile: "${SHARE}/model/misc/HandyRockDrill.body"
-            currentBaseLink: "BASE"
-            rootPosition: [ -3, 0.898540412, 2 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            jointPositions: [  0.000000 ]
-            initialRootPosition: [ -3, 0.898540412, 2 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            initialJointPositions: [  0.000000 ]
-            zmp: [ 0, 0, 0 ]
-            collisionDetection: true
-            selfCollisionDetection: false
-            isEditable: true
-          children: 
-            - 
-              id: 10
-              name: "SimpleController"
-              plugin: Body
-              class: SimpleControllerItem
-              data: 
-                isNoDelayMode: true
-                controllerOptions: "0.5, 20"
-                controller: "HandyRockDrillController.so"
-                baseDirectory: "Controller directory"
-                reloading: true
 views: 
   - 
     id: 0
@@ -218,9 +102,9 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      selected: [ 10 ]
-      checked: [ 3, 4, 6, 7, 9 ]
-      expanded: [ 1, 2, 4, 5, 6, 7, 8, 9, 10 ]
+      selected: [ 2 ]
+      checked: [ 2, 3, 4 ]
+      expanded: [ 1, 2, 3 ]
   - 
     id: 3
     plugin: Base
@@ -232,7 +116,7 @@ views:
     class: SceneView
     mounted: true
     state: 
-      editMode: false
+      editMode: true
       viewpointControlMode: thirdPerson
       collisionLines: false
       polygonMode: fill
@@ -272,9 +156,9 @@ views:
           fieldOfView: 0.698132
           near: 0.01
           far: 100
-          eye: [ 2.21723224, 6.04623797, 5.25551085 ]
-          direction: [ -0.447375604, -0.71234338, -0.540760555 ]
-          up: [ -0.287600831, -0.457938577, 0.84117657 ]
+          eye: [ 2.52823163, 0.365559147, 0.924629894 ]
+          direction: [ -0.931655561, 0.0186183394, -0.362865365 ]
+          up: [ -0.362792928, 0.00725010633, 0.931841578 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
@@ -649,7 +533,7 @@ views:
     class: TextEditView
   - 
     id: 13
-    name: "Joystick"
+    name: "Virtual Joystick"
     plugin: Base
     class: VirtualJoystickView
   - 
@@ -677,7 +561,7 @@ views:
       spinBox: true
       slider: true
       labelOnLeft: true
-      currentBodyItem: 7
+      currentBodyItem: 3
   - 
     id: 17
     plugin: Body
@@ -685,11 +569,7 @@ views:
     mounted: true
     state: 
       listingMode: "Link List"
-      currentBodyItem: 7
-      bodyItems: 
-        - 
-          id: 4
-          selectedLinks: [ 18 ]
+      currentBodyItem: 3
   - 
     id: 18
     plugin: Python
@@ -702,7 +582,7 @@ toolbars:
     frameRate: 100
     playbackFrameRate: 50
     idleLoopDrivenMode: false
-    currentTime: 0
+    currentTime: 7.02
     speedScale: 1
     syncToOngoingUpdates: true
     autoExpansion: true
@@ -715,7 +595,7 @@ toolbars:
     penetrationBlockDepth: 0.0005
     lazyCollisionDetectionMode: true
   "BodyBar": 
-    current: 7
+    current: 3
   "LeggedBodyBar": 
     stanceWidth: 0.15
   "BodyMotionGenerationBar": 
@@ -766,21 +646,6 @@ Body:
         showCenterOfMass: false
         showPpcom: false
         showZmp: false
-      - 
-        bodyItem: 6
-        showCenterOfMass: false
-        showPpcom: false
-        showZmp: false
-      - 
-        bodyItem: 7
-        showCenterOfMass: false
-        showPpcom: false
-        showZmp: false
-      - 
-        bodyItem: 9
-        showCenterOfMass: false
-        showPpcom: false
-        showZmp: false
     staticModelEditing: true
   "KinematicFaultChecker": 
     checkJointPositions: true
@@ -826,7 +691,7 @@ viewAreas:
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 626, 891 ]
+              sizes: [ 492, 1025 ]
               children: 
                 - 
                   type: pane

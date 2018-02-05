@@ -656,7 +656,7 @@ void AGXLink::setTorqueToAGX()
             joint1DOF->getElectricMotorController()->setEnable(true);
             joint1DOF->getElectricMotorController()->setTorqueConstant(orgLink->u());
 #else
-            joint1DOF->getMotor1D()->setSpeed( orgLink->u() < 0 ? -1.0e12 : 1.0e12);
+            joint1DOF->getMotor1D()->setSpeed( orgLink->u() < 0 ? orgLink->dq_lower() : orgLink->dq_upper());
             joint1DOF->getMotor1D()->setForceRange( agx::RangeReal(orgLink->u()));
 #endif
             break;
