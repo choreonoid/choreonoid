@@ -55,12 +55,11 @@ links:
     elements: { <<: *COMMON_RESOURCE, node: CHASSIS }
 
   - # Right Main Belt Drive Pully
-    name: B0005_2505_2
+    name: R_TRACK_WHEEL1
     parent: CHASSIS
     translation: [ 0.234, -0.146, 0.062 ]
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
-    jointId: 4
     material: *WHEEL_MATERIAL
     elements:
       Transform:
@@ -71,12 +70,11 @@ links:
         elements: { <<: *COMMON_RESOURCE, node: B0005_2505 }
 
   - # Right Main Belt Driven Pulley
-    name: B0005_2505_4
+    name: R_TRACK_WHEEL2
     parent: CHASSIS
     translation: [ -0.234, -0.146, 0.062 ]
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
-    jointId: 5
     material: *WHEEL_MATERIAL
     elements:
       Transform:
@@ -84,7 +82,7 @@ links:
         elements: { <<: *COMMON_RESOURCE, node: B0005_2505 }
 
   - # Right Main Belt Bottom Roller Guide
-    name: B0006_2606_GUIDE_R
+    name: R_TRACK_BOTTOM_GUIDE
     parent: CHASSIS
     translation: [ 0.00050, -0.14150, 0.00105 ]
     jointType: fixed
@@ -92,7 +90,7 @@ links:
     elements: { <<: *COMMON_RESOURCE, node: B0006_2606_GUIDE }
 
   - # Right Main Belt Top Roller
-    name: B0013_3301_2
+    name: R_TRACK_TOP_ROLLER
     parent: CHASSIS
     translation: [ 0, -0.133, 0.151 ]
     jointType: fixed
@@ -101,7 +99,7 @@ links:
     elements: { <<: *COMMON_RESOURCE, node: B0013_3301_CAPSULE }
 
   - # Right Main Belt
-    name: MAIN_BELT_1
+    name: R_TRACK
     parent: CHASSIS
     translation: [ 0.234, -0.146, 0.062 ]
     jointType: fixed
@@ -120,21 +118,20 @@ links:
               0.00000002212,  -0.00000001386, 0.03311383902 ]
       -
         type: AGXVehicleContinuousTrackDevice
-        name: MAIN_BELT_1_AGX
-        sprocketNames: [ B0005_2505_2 ]
-        rollerNames: [ B0013_3301_2 ]
-        guideNames: [ B0006_2606_GUIDE_R ]
-        idlerNames: [ B0005_2505_4 ]
+        name: R_TRACK_AGX
+        sprocketNames: [ R_TRACK_WHEEL1 ]
+        rollerNames: [ R_TRACK_TOP_ROLLER ]
+        guideNames: [ R_TRACK_BOTTOM_GUIDE ]
+        idlerNames: [ R_TRACK_WHEEL2 ]
         upAxis: [ 0, 0, 1 ]
         <<: [ *MAIN_BELT_SPEC, *COMMON_BELT_SPEC ]
 
   - # Left Main Belt Drive Pully
-    name: B0005_2505_1
+    name: L_TRACK_WHEEL1
     parent: CHASSIS
     translation: [ 0.234, 0.146, 0.062 ]
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
-    jointId: 6
     material: *WHEEL_MATERIAL
     elements:
       Transform:
@@ -142,12 +139,11 @@ links:
         elements: { <<: *COMMON_RESOURCE, node: B0005_2505 }
 
   - # Left Main Belt Driven Pulley
-    name: B0005_2505_3
+    name: L_TRACK_WHEEL2
     parent: CHASSIS
     translation: [ -0.234, 0.146, 0.062 ]
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
-    jointId: 7
     material: *WHEEL_MATERIAL
     elements:
       Transform:
@@ -155,7 +151,7 @@ links:
         elements: { <<: *COMMON_RESOURCE, node: B0005_2505 }
 
   - # Left Main Belt Bottom Roller Guide
-    name: B0006_2606_GUIDE_L
+    name: L_TRACK_BOTTOM_GUIDE
     parent: CHASSIS
     translation: [ 0.00050, 0.14150, 0.00105 ]
     jointType: fixed
@@ -163,7 +159,7 @@ links:
     elements: { <<: *COMMON_RESOURCE, node: B0006_2606_GUIDE }
 
   - # Left Main Belt Top Roller
-    name: B0013_3301_1
+    name: L_TRACK_TOP_ROLLER
     parent: CHASSIS
     translation: [ 0, 0.133, 0.151 ]
     jointType: fixed
@@ -172,7 +168,7 @@ links:
     elements: { <<: *COMMON_RESOURCE, node: B0013_3301_CAPSULE }
 
   - # Left Main Belt
-    name: MAIN_BELT_2
+    name: L_TRACK
     parent: CHASSIS
     translation: [ -0.234, 0.146, 0.062 ]
     jointType: fixed
@@ -184,16 +180,16 @@ links:
         elements: *MAIN_BELT_elements
       -
         type: AGXVehicleContinuousTrackDevice
-        name: MAIN_BELT_2_AGX
-        sprocketNames: [ B0005_2505_1 ]
-        rollerNames: [ B0013_3301_1 ]
-        guideNames:  [ B0006_2606_GUIDE_L ]
-        idlerNames: [ B0005_2505_3 ]
+        name: L_TRACK_AGX
+        sprocketNames: [ L_TRACK_WHEEL1 ]
+        rollerNames: [ L_TRACK_TOP_ROLLER ]
+        guideNames:  [ L_TRACK_BOTTOM_GUIDE ]
+        idlerNames: [ L_TRACK_WHEEL2 ]
         upAxis: [ 0, 0, 1 ]
         <<: [ *MAIN_BELT_SPEC, *COMMON_BELT_SPEC ]
 
   - # Front Right Flipper
-    name: B0007_1
+    name: FR_FLIPPER
     parent: CHASSIS
     translation: [ 0.234, -0.22350, 0.062 ]
     jointType: revolute
@@ -203,36 +199,34 @@ links:
     elements: { <<: *COMMON_RESOURCE, node: B0007_1 }
 
   - # Front Right Sub Belt Drive Pully
-    name: B0007_1_B0007_2705_1
+    name: FR_SUB_TRACK_WHEEL1
     parent: CHASSIS
     translation: [ 0.234, -0.22350, 0.062 ]
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
-    jointId: 8
     material: *WHEEL_MATERIAL
     elements: { <<: *COMMON_RESOURCE, node: B0007_2705 }
 
   - # Front Right Sub Belt Driven Pully
-    name: B0007_1_B0007_2708
-    parent: B0007_1
+    name: FR_SUB_TRACK_WHEEL2
+    parent: FR_FLIPPER
     translation: [ 0.29450, 0, 0 ]
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
-    jointId: 9
     material: *WHEEL_MATERIAL
     elements: { <<: *COMMON_RESOURCE, node: B0007_2708 }
 
   - # Front Right Sub Belt Bottom Roller Guide
-    name: B0007_1_B0007_27110_GUIDE
-    parent: B0007_1
+    name: FR_SUB_TRACK_BOTTOM_GUIDE
+    parent: FR_FLIPPER
     translation: [ 0.15, 0, -0.043936 ]
     jointType: fixed
     material: *WHEEL_MATERIAL
     elements: { <<: *COMMON_RESOURCE, node: B0007_27110_GUIDE }
 
   - # Front Right Sub Belt
-    name: SUB_BELT_1
-    parent: B0007_1
+    name: FR_SUB_TRACK
+    parent: FR_FLIPPER
     jointType: fixed
     elements:
       -
@@ -249,15 +243,15 @@ links:
             0.00000027152,  0,              0.00376228509 ]
       -
         type: AGXVehicleContinuousTrackDevice
-        name: SUB_BELT_1_AGX
-        sprocketNames: [ B0007_1_B0007_2705_1 ]
-        guideNames: [ B0007_1_B0007_27110_GUIDE ]
-        idlerNames: [ B0007_1_B0007_2708 ]
+        name: FR_SUB_TRACK_AGX
+        sprocketNames: [ FR_SUB_TRACK_WHEEL1 ]
+        guideNames: [ FR_SUB_TRACK_BOTTOM_GUIDE ]
+        idlerNames: [ FR_SUB_TRACK_WHEEL2 ]
         upAxis: [ 0, 0, 1 ]
         <<: [ *SUB_BELT_SPEC, *COMMON_BELT_SPEC ]
 
   - # Front Left Flipper
-    name: B0007_2
+    name: FL_FLIPPER
     parent: CHASSIS
     translation: [ 0.234, 0.22350, 0.062 ]
     jointType: revolute
@@ -267,36 +261,34 @@ links:
     elements: { <<: *COMMON_RESOURCE, node: B0007_1 }
 
   - # Front Left Sub Belt Drive Pully
-    name: B0007_2_B0007_2705_1
+    name: FL_SUB_TRACK_WHEEL1
     parent: CHASSIS
     translation: [ 0.234, 0.22350, 0.062 ]
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
-    jointId: 10
     material: *WHEEL_MATERIAL
     elements: { <<: *COMMON_RESOURCE, node: B0007_2705 }
 
   - # Front Left Sub Belt Driven Pully
-    name: B0007_2_B0007_2708
-    parent: B0007_2
+    name: FL_SUB_TRACK_WHEEL2
+    parent: FL_FLIPPER
     translation: [ 0.29450, 0, 0 ]
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
-    jointId: 11
     material: *WHEEL_MATERIAL
     elements: { <<: *COMMON_RESOURCE, node: B0007_2708 }
 
   - # Front Left Sub Belt Bottom Roller Guide
-    name: B0007_2_B0007_27110_GUIDE
-    parent: B0007_2
+    name: FL_SUB_TRACK_BOTTOM_GUIDE
+    parent: FL_FLIPPER
     translation: [ 0.15, 0, -0.043936 ]
     jointType: fixed
     material: *WHEEL_MATERIAL
     elements: { <<: *COMMON_RESOURCE, node: B0007_27110_GUIDE }
 
   - # Front Left Sub Belt
-    name: SUB_BELT_2
-    parent: B0007_2
+    name: FL_SUB_TRACK
+    parent: FL_FLIPPER
     jointType: fixed
     elements:
       -
@@ -305,15 +297,15 @@ links:
         elements: *SUB_BELT_elements
       -
         type: AGXVehicleContinuousTrackDevice
-        name: SUB_BELT_2_AGX
-        sprocketNames: [ B0007_2_B0007_2705_1 ]
-        guideNames: [ B0007_2_B0007_27110_GUIDE ]
-        idlerNames: [ B0007_2_B0007_2708 ]
+        name: FL_SUB_TRACK_AGX
+        sprocketNames: [ FL_SUB_TRACK_WHEEL1 ]
+        guideNames: [ FL_SUB_TRACK_BOTTOM_GUIDE ]
+        idlerNames: [ FL_SUB_TRACK_WHEEL2 ]
         upAxis: [ 0, 0, 1 ]
         <<: [ *SUB_BELT_SPEC, *COMMON_BELT_SPEC ]
 
   - # Back Right Flipper
-    name: B0007_3
+    name: BR_FLIPPER
     parent: CHASSIS
     translation: [ -0.234, -0.22350, 0.062 ]
     jointType: revolute
@@ -327,28 +319,26 @@ links:
 
 
   - # Back Right Sub Belt Drive Pully
-    name: B0007_3_B0007_2705_1
+    name: BR_SUB_TRACK_WHEEL1
     parent: CHASSIS
     translation: [ -0.234, -0.22350, 0.062 ]
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
-    jointId: 12
     material: *WHEEL_MATERIAL
     elements: { <<: *COMMON_RESOURCE, node: B0007_2705 }
 
   - # Back Right Sub Belt Driven Pully
-    name: B0007_3_B0007_2708
-    parent: B0007_3
+    name: BR_SUB_TRACK_WHEEL2
+    parent: BR_FLIPPER
     translation: [ -0.29450, 0, 0 ]
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
-    jointId: 13
     material: *WHEEL_MATERIAL
     elements: { <<: *COMMON_RESOURCE, node: B0007_2708 }
 
   - # Back Right Sub Belt Bottom Roller Guide
-    name: B0007_3_B0007_27110_GUIDE
-    parent: B0007_3
+    name: BR_SUB_TRACK_BOTTOM_GUIDE
+    parent: BR_FLIPPER
     translation: [ -0.15, 0, -0.043936 ]
     jointType: fixed
     material: *WHEEL_MATERIAL
@@ -358,22 +348,22 @@ links:
         elements: { <<: *COMMON_RESOURCE, node: B0007_27110_GUIDE }
 
   - # Back Right Sub Belt
-    name: SUB_BELT_3
-    parent: B0007_3
+    name: BR_SUB_TRACK
+    parent: BR_FLIPPER
     jointType: fixed
     elements:
       - *SUB_BELT_elements
       -
         type: AGXVehicleContinuousTrackDevice
-        name: SUB_BELT_3_AGX
-        sprocketNames: [ B0007_3_B0007_2705_1 ] 
-        guideNames: [ B0007_3_B0007_27110_GUIDE ]
-        idlerNames: [ B0007_3_B0007_2708 ]
+        name: BR_SUB_TRACK_AGX
+        sprocketNames: [ BR_SUB_TRACK_WHEEL1 ] 
+        guideNames: [ BR_SUB_TRACK_BOTTOM_GUIDE ]
+        idlerNames: [ BR_SUB_TRACK_WHEEL2 ]
         upAxis: [ 0, 0, 1 ]
         <<: [ *SUB_BELT_SPEC, *COMMON_BELT_SPEC ]
 
   - # Back Left Flipper
-    name: B0007_4
+    name: BL_FLIPPER
     parent: CHASSIS
     translation: [ -0.234, 0.22350, 0.062 ]
     jointType: revolute
@@ -386,28 +376,26 @@ links:
         elements: { <<: *COMMON_RESOURCE, node: B0007_1 }
 
   - # Back Left Sub Belt Drive Pully
-    name: B0007_4_B0007_2705_1
+    name: BL_SUB_TRACK_WHEEL1
     parent: CHASSIS
     translation: [ -0.234, 0.22350, 0.062 ]
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
-    jointId: 14
     material: *WHEEL_MATERIAL
     elements: { <<: *COMMON_RESOURCE, node: B0007_2705 }
 
   - # Back Left Sub Belt Driven Pully
-    name: B0007_4_B0007_2708
-    parent: B0007_4
+    name: BL_SUB_TRACK_WHEEL2
+    parent: BL_FLIPPER
     translation: [ -0.29450, 0, 0 ]
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
-    jointId: 15
     material: *WHEEL_MATERIAL
     elements: { <<: *COMMON_RESOURCE, node: B0007_2708 }
 
   - # Back Left Sub Belt Bottom Roller Guide
-    name: B0007_4_B0007_27110_GUIDE
-    parent: B0007_4
+    name: BL_SUB_TRACK_BOTTOM_GUIDE
+    parent: BL_FLIPPER
     translation: [ -0.15, 0, -0.043936 ]
     jointType: fixed
     material: *WHEEL_MATERIAL
@@ -417,16 +405,16 @@ links:
         elements: { <<: *COMMON_RESOURCE, node: B0007_27110_GUIDE }
 
   - # Back Left Sub Belt
-    name: SUB_BELT_4
-    parent: B0007_4
+    name: BL_SUB_TRACK
+    parent: BL_FLIPPER
     jointType: fixed
     elements:
       - *SUB_BELT_elements
       -
         type: AGXVehicleContinuousTrackDevice
-        name: SUB_BELT_4_AGX
-        sprocketNames: [ B0007_4_B0007_2705_1 ]
-        guideNames: [ B0007_4_B0007_27110_GUIDE ]
-        idlerNames: [ B0007_4_B0007_2708 ]
+        name: BL_SUB_TRACK_AGX
+        sprocketNames: [ BL_SUB_TRACK_WHEEL1 ]
+        guideNames: [ BL_SUB_TRACK_BOTTOM_GUIDE ]
+        idlerNames: [ BL_SUB_TRACK_WHEEL2 ]
         upAxis: [ 0, 0, 1 ]
         <<: [ *SUB_BELT_SPEC, *COMMON_BELT_SPEC ]
