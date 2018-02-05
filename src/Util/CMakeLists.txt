@@ -61,6 +61,7 @@ set(sources
   VRMLSceneLoader.cpp
   GettextWrapper.cpp
   GettextUtil.cpp
+  Joystick.cpp
   ExtJoystick.cpp
   CnoidUtil.cpp # This file must be placed at the last position
   )

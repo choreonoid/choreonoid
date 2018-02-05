@@ -57,6 +57,7 @@ public:
     int numButtons() const;
     bool readCurrentState();
     double getPosition(int axis) const;
+    double getPosition(int axis, double threshold) const;
     bool getButtonState(int button) const;
 
 #ifdef __linux__
