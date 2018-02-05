@@ -211,24 +211,27 @@ void AizuSpiderController::controlTracks()
 
 void AizuSpiderController::updateFlipperTargetPositions()
 {
-    const double BUTTON_GAIN = 0.002;
-    const double TRIGGER_GAIN = 0.0005;
-    
-    if(joystick.getButtonState(Joystick::R_BUTTON)){
-        jointInfos[FR_FLIPPER].qref += BUTTON_GAIN;
-        jointInfos[FL_FLIPPER].qref += BUTTON_GAIN;
-    }
-    double rtp = 1.0 + joystick.getPosition(Joystick::R_TRIGGER_AXIS);
-    jointInfos[FR_FLIPPER].qref -= TRIGGER_GAIN * rtp;
-    jointInfos[FL_FLIPPER].qref -= TRIGGER_GAIN * rtp;
+    static const double FLIPPER_GAIN = 0.0005;
 
-    if(joystick.getButtonState(Joystick::L_BUTTON)){
-        jointInfos[BR_FLIPPER].qref += BUTTON_GAIN;
-        jointInfos[BL_FLIPPER].qref += BUTTON_GAIN;
+    double dq = FLIPPER_GAIN * joystick.getPosition(Joystick::R_STICK_V_AXIS, 0.2);
+
+    if(joystick.getPosition(Joystick::L_TRIGGER_AXIS, 0.2) > 0.0){
+        // Front mode
+        jointInfos[FR_FLIPPER].qref += dq;
+        jointInfos[FL_FLIPPER].qref += dq;
+
+    } else if(joystick.getButtonState(Joystick::L_BUTTON)){
+        // Back mode
+        jointInfos[BR_FLIPPER].qref += dq;
+        jointInfos[BL_FLIPPER].qref += dq;
+        
+    } else {
+        // Synchronize mode
+        jointInfos[FR_FLIPPER].qref += dq;
+        jointInfos[FL_FLIPPER].qref += dq;
+        jointInfos[BR_FLIPPER].qref += dq;
+        jointInfos[BL_FLIPPER].qref += dq;
     }
-    double ltp = 1.0 + joystick.getPosition(Joystick::L_TRIGGER_AXIS);
-    jointInfos[BR_FLIPPER].qref -= TRIGGER_GAIN * ltp;
-    jointInfos[BL_FLIPPER].qref -= TRIGGER_GAIN * ltp;
 }
 
 

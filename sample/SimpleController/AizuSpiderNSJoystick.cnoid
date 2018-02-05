@@ -27,19 +27,31 @@ items:
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            jointPositions: [  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000 ]
+            jointPositions: [  0.000000,  0.000000,  0.000000,  0.000000 ]
             initialRootPosition: [ -2, -0.5, 0.035 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            initialJointPositions: [  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000 ]
+            initialJointPositions: [  0.000000,  0.000000,  0.000000,  0.000000 ]
             zmp: [ 0, 0, 0 ]
             collisionDetection: true
             selfCollisionDetection: false
             isEditable: true
+          children: 
+            - 
+              id: 3
+              name: "AizuSpiderController"
+              plugin: Body
+              class: SimpleControllerItem
+              data: 
+                isNoDelayMode: true
+                controllerOptions: ""
+                controller: "AizuSpiderController.so"
+                baseDirectory: "Controller directory"
+                reloading: true
         - 
-          id: 3
+          id: 4
           name: "Labo1"
           plugin: Body
           class: BodyItem
@@ -62,7 +74,7 @@ items:
             selfCollisionDetection: false
             isEditable: false
         - 
-          id: 4
+          id: 5
           name: "AISTSimulator"
           plugin: Body
           class: AISTSimulatorItem
@@ -102,9 +114,9 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      selected: [ 2 ]
-      checked: [ 1, 2, 3 ]
-      expanded: [ 1 ]
+      selected: [ 3 ]
+      checked: [ 1, 2, 4 ]
+      expanded: [ 1, 2 ]
   - 
     id: 2
     plugin: Base
@@ -332,7 +344,7 @@ Body:
         showPpcom: false
         showZmp: false
       - 
-        bodyItem: 3
+        bodyItem: 4
         showCenterOfMass: false
         showPpcom: false
         showZmp: false
@@ -372,7 +384,7 @@ viewAreas:
             - 
               type: pane
               views: [ 0, 8 ]
-              current: 8
+              current: 0
         - 
           type: splitter
           orientation: vertical
