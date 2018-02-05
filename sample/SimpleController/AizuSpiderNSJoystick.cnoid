@@ -79,6 +79,7 @@ items:
           plugin: Body
           class: AISTSimulatorItem
           data: 
+            timestep: 0.001
             realtimeSync: true
             recording: "off"
             timeRangeMode: "Unlimited"
@@ -114,7 +115,7 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      selected: [ 3 ]
+      selected: [ 5 ]
       checked: [ 1, 2, 4 ]
       expanded: [ 1, 2 ]
   - 
@@ -277,6 +278,10 @@ views:
     state: 
       listingMode: "Link Tree"
       currentBodyItem: 2
+  - 
+    id: 9
+    plugin: Python
+    class: PythonConsoleView
 toolbars: 
   "TimeBar": 
     minTime: 0
@@ -296,10 +301,10 @@ toolbars:
     snapDistance: 0.025
     penetrationBlockDepth: 0.0005
     lazyCollisionDetectionMode: true
-  "BodyBar": 
-    current: 2
   "LeggedBodyBar": 
     stanceWidth: 0.15
+  "BodyBar": 
+    current: 2
   "BodyMotionGenerationBar": 
     autoGenerationForNewBody: true
     balancer: false
@@ -370,12 +375,12 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 456, 1942 ]
+      sizes: [ 601, 2557 ]
       children: 
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 765, 764 ]
+          sizes: [ 710, 709 ]
           children: 
             - 
               type: pane
@@ -388,12 +393,12 @@ viewAreas:
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 1094, 435 ]
+          sizes: [ 1015, 404 ]
           children: 
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 907, 1029 ]
+              sizes: [ 1196, 1357 ]
               children: 
                 - 
                   type: pane
@@ -406,7 +411,7 @@ viewAreas:
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 1166, 770 ]
+              sizes: [ 1538, 1015 ]
               children: 
                 - 
                   type: pane

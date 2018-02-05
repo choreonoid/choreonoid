@@ -14,6 +14,8 @@ class AizuSpiderController : public cnoid::SimpleController
     Link::ActuationMode mainActuationMode;
 
     vector<Link*> tracks;
+    Link::ActuationMode trackActuationMode;
+    double trackGain;
 
     struct JointInfo {
         Link* joint;
@@ -44,8 +46,8 @@ class AizuSpiderController : public cnoid::SimpleController
 
 public:
     virtual bool initialize(SimpleControllerIO* io) override;
-    bool initializePseudoContinuousTracks(SimpleControllerIO* io);
-    bool initializeContinuousTracks(SimpleControllerIO* io);
+    bool initializeTracks(SimpleControllerIO* io);
+    bool initializeTracks(SimpleControllerIO* io, vector<string>& names);
     bool initializeFlipperJoints(SimpleControllerIO* io);
     bool initializeJoints(SimpleControllerIO* io, vector<JointSpec>& specs);
     virtual bool control() override;
@@ -71,7 +73,7 @@ bool AizuSpiderController::initialize(SimpleControllerIO* io)
         mainActuationMode = Link::ActuationMode::JOINT_TORQUE;
     }
 
-    if(!initializePseudoContinuousTracks(io) && !initializeContinuousTracks(io)){
+    if(!initializeTracks(io)){
         return false;
     }
 
@@ -85,31 +87,51 @@ bool AizuSpiderController::initialize(SimpleControllerIO* io)
 }
 
 
-bool AizuSpiderController::initializePseudoContinuousTracks(SimpleControllerIO* io)
+bool AizuSpiderController::initializeTracks(SimpleControllerIO* io)
 {
     tracks.clear();
     
-    vector<string> names = {
+    vector<string> trackNames = {
         "L_MAIN_TRACK", "R_MAIN_TRACK", "FL_SUB_TRACK", "FR_SUB_TRACK", "BL_SUB_TRACK", "BR_SUB_TRACK" };
 
-    for(auto& name : names){
-        auto track = body->link(name);
-        if(!track){
-            io->os() << format("%1% of %2% is not found") % name % body->name() << endl;
-            return false;
+    vector<string> wheelNames = {
+        "L_TRACK_WHEEL1", "R_TRACK_WHEEL1",
+        "FL_SUB_TRACK_WHEEL1", "FR_SUB_TRACK_WHEEL1", "BL_SUB_TRACK_WHEEL1", "BR_SUB_TRACK_WHEEL1" };
+
+    bool result;
+    
+    if(body->link(wheelNames[0])){
+        if(mainActuationMode == Link::JOINT_TORQUE){
+            trackActuationMode = Link::JOINT_TORQUE;
+            trackGain = 0.1;
+        } else {
+            trackActuationMode = Link::JOINT_VELOCITY;
+            trackGain = 2.0;
         }
-        track->setActuationMode(Link::JOINT_SURFACE_VELOCITY);
-        io->enableOutput(track);
-        tracks.push_back(track);
+        result = initializeTracks(io, wheelNames);
+    } else {
+        trackActuationMode = Link::JOINT_SURFACE_VELOCITY;
+        trackGain = 1.0;
+        result = initializeTracks(io, trackNames);
     }
 
-    return true;
+    return result;
 }
 
 
-bool AizuSpiderController::initializeContinuousTracks(SimpleControllerIO* io)
+bool AizuSpiderController::initializeTracks(SimpleControllerIO* io, vector<string>& names)
 {
-    return false;
+    for(auto& name : names){
+        auto link = body->link(name);
+        if(!link){
+            io->os() << format("%1% of %2% is not found") % name % body->name() << endl;
+            return false;
+        }
+        link->setActuationMode(trackActuationMode);
+        io->enableOutput(link);
+        tracks.push_back(link);
+    }
+    return true;
 }
 
 
@@ -117,8 +139,7 @@ bool AizuSpiderController::initializeFlipperJoints(SimpleControllerIO* io)
 {
     const double FLIPPER_P_GAIN_TORQUE = 1000.0;
     const double FLIPPER_D_GAIN_TORQUE = 10.0;
-    const double FLIPPER_P_GAIN_VELOCITY = 1.0;
-
+    const double FLIPPER_P_GAIN_VELOCITY = 0.5;
     
     vector<JointSpec> specs(NUM_FLIPPERS);
 
@@ -146,11 +167,11 @@ bool AizuSpiderController::initializeJoints(SimpleControllerIO* io, vector<Joint
 
         info.joint = joint;
 
-        if(mainActuationMode == Link::JOINT_TORQUE){
+        if(mainActuationMode == Link::JOINT_VELOCITY){
+            info.pgain = spec.pgain_velocity;
+        } else if(mainActuationMode == Link::JOINT_TORQUE){
             info.pgain = spec.pgain_torque;
             info.dgain = spec.dgain_torque;
-        } else if(mainActuationMode == Link::JOINT_VELOCITY){
-            info.pgain = spec.pgain_velocity;
         }
         
         jointInfos.push_back(info);
@@ -192,28 +213,39 @@ void AizuSpiderController::controlTracks()
     
     double pos[2];
     for(int i=0; i < 2; ++i){
-        pos[i] = joystick.getPosition(stickAxes[i]);
-        if(fabs(pos[i]) < 0.2){
-            pos[i] = 0.0;
-        }
+        pos[i] = joystick.getPosition(stickAxes[i], 0.2);
     }
     
-    // set the velocity of each track
-    double leftVelocity  = -2.0 * pos[1] + pos[0];
-    double rightVelocity = -2.0 * pos[1] - pos[0];
+    double left  = trackGain * (-2.0 * pos[1] + pos[0]);
+    double right = trackGain * (-2.0 * pos[1] - pos[0]);
 
-    for(int i=0; i < 3; ++i){
-        tracks[i*2  ]->dq() = leftVelocity;
-        tracks[i*2+1]->dq() = rightVelocity;
+    switch(trackActuationMode){
+    case Link::JOINT_VELOCITY:
+    case Link::JOINT_SURFACE_VELOCITY:
+        for(int i=0; i < 3; ++i){
+            tracks[i*2  ]->dq() = left;
+            tracks[i*2+1]->dq() = right;
+        }
+        break;
+
+    case Link::JOINT_TORQUE:
+        for(int i=0; i < 3; ++i){
+            tracks[i*2  ]->u() = left;
+            tracks[i*2+1]->u() = right;
+        }
+        break;
+
+    default:
+        break;
     }
 }
 
 
 void AizuSpiderController::updateFlipperTargetPositions()
 {
-    static const double FLIPPER_GAIN = 0.0005;
+    static const double FLIPPER_GAIN = 0.4;
 
-    double dq = FLIPPER_GAIN * joystick.getPosition(Joystick::R_STICK_V_AXIS, 0.2);
+    double dq = dt * FLIPPER_GAIN * joystick.getPosition(Joystick::R_STICK_V_AXIS, 0.2);
 
     if(joystick.getPosition(Joystick::L_TRIGGER_AXIS, 0.2) > 0.0){
         // Front mode
@@ -241,7 +273,7 @@ void AizuSpiderController::controlJointsWithTorque()
         auto joint = info.joint;
         double q = joint->q();
         double dq = (q - info.qold) / dt;
-        joint->u() = (info.qref - q) * info.pgain + (0.0 - dq) * info.dgain;
+        joint->u() = info.pgain * (info.qref - q) + info.dgain * (0.0 - dq);
         info.qold = q;
     }
 }
@@ -252,7 +284,7 @@ void AizuSpiderController::controlJointsWithVelocity()
     for(auto& info : jointInfos){
         auto joint = info.joint;
         double q = joint->q();
-        joint->dq() = (info.qref - q) * info.pgain;
+        joint->dq() = info.pgain * (info.qref - q) / dt;
     }
 }
 
