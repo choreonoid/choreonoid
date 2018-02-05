@@ -53,6 +53,7 @@ configure_file(DoubleArmV7AJoystick.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPY
 # AizuSpider sample
 add_cnoid_simple_controller(AizuSpiderController AizuSpiderController.cpp)
 configure_file(AizuSpiderNSJoystick.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+configure_file(AizuSpiderNAJoystick.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 
 # Other samples
 add_cnoid_simple_controller(ConveyorController ConveyorController.cpp)

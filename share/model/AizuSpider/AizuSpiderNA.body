@@ -2,7 +2,11 @@ format: ChoreonoidBody
 formatVersion: 1.0
 angleUnit: degree
 name: AizuSpiderNA
-rootLink: B0001
+rootLink: CHASSIS
+
+COMMON_RESOURCE: &COMMON_RESOURCE
+  type: Resource
+  uri: "resource/AizuSpiderCommon.yaml"
 
 MAIN_BELT_SPEC: &MAIN_BELT_SPEC
   numberOfNodes: 80
@@ -45,14 +49,14 @@ WHEEL_MATERIAL: &WHEEL_MATERIAL SpiderWheel
   
 links:
   - 
-    name: B0001
+    name: CHASSIS
     translation: [ 0, 0, 0.03503 ]
     jointType: free
-    elements: { type: Resource, uri: SpiderCommon.yaml, node: B0001 }
+    elements: { <<: *COMMON_RESOURCE, node: CHASSIS }
 
   - # Right Main Belt Drive Pully
     name: B0005_2505_2
-    parent: B0001
+    parent: CHASSIS
     translation: [ 0.234, -0.146, 0.062 ]
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
@@ -64,11 +68,11 @@ links:
         # the relative position with respect to the belt. (The shifted position is compensated by the
         # relative coordinate from the parent link.)
         translation: [ 0, 0.02025, 0 ] 
-        elements: { type: Resource, uri: SpiderCommon.yaml, node: B0005_2505 }
+        elements: { <<: *COMMON_RESOURCE, node: B0005_2505 }
 
   - # Right Main Belt Driven Pulley
     name: B0005_2505_4
-    parent: B0001
+    parent: CHASSIS
     translation: [ -0.234, -0.146, 0.062 ]
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
@@ -77,28 +81,28 @@ links:
     elements:
       Transform:
         translation: [ 0, 0.02025, 0 ]
-        elements: { type: Resource, uri: SpiderCommon.yaml, node: B0005_2505 }
+        elements: { <<: *COMMON_RESOURCE, node: B0005_2505 }
 
   - # Right Main Belt Bottom Roller Guide
     name: B0006_2606_GUIDE_R
-    parent: B0001
+    parent: CHASSIS
     translation: [ 0.00050, -0.14150, 0.00105 ]
     jointType: fixed
     material: *WHEEL_MATERIAL
-    elements: { type: Resource, uri: SpiderCommon.yaml, node: B0006_2606_GUIDE }
+    elements: { <<: *COMMON_RESOURCE, node: B0006_2606_GUIDE }
 
   - # Right Main Belt Top Roller
     name: B0013_3301_2
-    parent: B0001
+    parent: CHASSIS
     translation: [ 0, -0.133, 0.151 ]
     jointType: fixed
     jointAxis: [ 0, 1, 0 ]
     material: *WHEEL_MATERIAL
-    elements: { type: Resource, uri: SpiderCommon.yaml, node: B0013_3301_CAPSULE }
+    elements: { <<: *COMMON_RESOURCE, node: B0013_3301_CAPSULE }
 
   - # Right Main Belt
     name: MAIN_BELT_1
-    parent: B0001
+    parent: CHASSIS
     translation: [ 0.234, -0.146, 0.062 ]
     jointType: fixed
     elements:
@@ -126,7 +130,7 @@ links:
 
   - # Left Main Belt Drive Pully
     name: B0005_2505_1
-    parent: B0001
+    parent: CHASSIS
     translation: [ 0.234, 0.146, 0.062 ]
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
@@ -135,11 +139,11 @@ links:
     elements:
       Transform:
         translation: [ 0, -0.02025, 0 ]
-        elements: { type: Resource, uri: SpiderCommon.yaml, node: B0005_2505 }
+        elements: { <<: *COMMON_RESOURCE, node: B0005_2505 }
 
   - # Left Main Belt Driven Pulley
     name: B0005_2505_3
-    parent: B0001
+    parent: CHASSIS
     translation: [ -0.234, 0.146, 0.062 ]
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
@@ -148,28 +152,28 @@ links:
     elements:
       Transform:
         translation: [ 0, -0.02025, 0 ]
-        elements: { type: Resource, uri: SpiderCommon.yaml, node: B0005_2505 }
+        elements: { <<: *COMMON_RESOURCE, node: B0005_2505 }
 
   - # Left Main Belt Bottom Roller Guide
     name: B0006_2606_GUIDE_L
-    parent: B0001
+    parent: CHASSIS
     translation: [ 0.00050, 0.14150, 0.00105 ]
     jointType: fixed
     material: *WHEEL_MATERIAL
-    elements: { type: Resource, uri: SpiderCommon.yaml, node: B0006_2606_GUIDE }
+    elements: { <<: *COMMON_RESOURCE, node: B0006_2606_GUIDE }
 
   - # Left Main Belt Top Roller
     name: B0013_3301_1
-    parent: B0001
+    parent: CHASSIS
     translation: [ 0, 0.133, 0.151 ]
     jointType: fixed
     jointAxis: [ 0, 1, 0 ]
     material: *WHEEL_MATERIAL
-    elements: { type: Resource, uri: SpiderCommon.yaml, node: B0013_3301_CAPSULE }
+    elements: { <<: *COMMON_RESOURCE, node: B0013_3301_CAPSULE }
 
   - # Left Main Belt
     name: MAIN_BELT_2
-    parent: B0001
+    parent: CHASSIS
     translation: [ -0.234, 0.146, 0.062 ]
     jointType: fixed
     elements:
@@ -190,23 +194,23 @@ links:
 
   - # Front Right Flipper
     name: B0007_1
-    parent: B0001
+    parent: CHASSIS
     translation: [ 0.234, -0.22350, 0.062 ]
     jointType: revolute
     jointAxis: [ 0, -1, 0 ]
     jointId: 0
     gearRatio: 2090
-    elements: { type: Resource, uri: SpiderCommon.yaml, node: B0007_1 }
+    elements: { <<: *COMMON_RESOURCE, node: B0007_1 }
 
   - # Front Right Sub Belt Drive Pully
     name: B0007_1_B0007_2705_1
-    parent: B0001
+    parent: CHASSIS
     translation: [ 0.234, -0.22350, 0.062 ]
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
     jointId: 8
     material: *WHEEL_MATERIAL
-    elements: { type: Resource, uri: SpiderCommon.yaml, node: B0007_2705 }
+    elements: { <<: *COMMON_RESOURCE, node: B0007_2705 }
 
   - # Front Right Sub Belt Driven Pully
     name: B0007_1_B0007_2708
@@ -216,7 +220,7 @@ links:
     jointAxis: [ 0, 1, 0 ]
     jointId: 9
     material: *WHEEL_MATERIAL
-    elements: { type: Resource, uri: SpiderCommon.yaml, node: B0007_2708 }
+    elements: { <<: *COMMON_RESOURCE, node: B0007_2708 }
 
   - # Front Right Sub Belt Bottom Roller Guide
     name: B0007_1_B0007_27110_GUIDE
@@ -224,7 +228,7 @@ links:
     translation: [ 0.15, 0, -0.043936 ]
     jointType: fixed
     material: *WHEEL_MATERIAL
-    elements: { type: Resource, uri: SpiderCommon.yaml, node: B0007_27110_GUIDE }
+    elements: { <<: *COMMON_RESOURCE, node: B0007_27110_GUIDE }
 
   - # Front Right Sub Belt
     name: SUB_BELT_1
@@ -254,23 +258,23 @@ links:
 
   - # Front Left Flipper
     name: B0007_2
-    parent: B0001
+    parent: CHASSIS
     translation: [ 0.234, 0.22350, 0.062 ]
     jointType: revolute
     jointAxis: [ 0, -1, 0 ]
     jointId: 1
     gearRatio: 2090
-    elements: { type: Resource, uri: SpiderCommon.yaml, node: B0007_1 }
+    elements: { <<: *COMMON_RESOURCE, node: B0007_1 }
 
   - # Front Left Sub Belt Drive Pully
     name: B0007_2_B0007_2705_1
-    parent: B0001
+    parent: CHASSIS
     translation: [ 0.234, 0.22350, 0.062 ]
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
     jointId: 10
     material: *WHEEL_MATERIAL
-    elements: { type: Resource, uri: SpiderCommon.yaml, node: B0007_2705 }
+    elements: { <<: *COMMON_RESOURCE, node: B0007_2705 }
 
   - # Front Left Sub Belt Driven Pully
     name: B0007_2_B0007_2708
@@ -280,7 +284,7 @@ links:
     jointAxis: [ 0, 1, 0 ]
     jointId: 11
     material: *WHEEL_MATERIAL
-    elements: { type: Resource, uri: SpiderCommon.yaml, node: B0007_2708 }
+    elements: { <<: *COMMON_RESOURCE, node: B0007_2708 }
 
   - # Front Left Sub Belt Bottom Roller Guide
     name: B0007_2_B0007_27110_GUIDE
@@ -288,7 +292,7 @@ links:
     translation: [ 0.15, 0, -0.043936 ]
     jointType: fixed
     material: *WHEEL_MATERIAL
-    elements: { type: Resource, uri: SpiderCommon.yaml, node: B0007_27110_GUIDE }
+    elements: { <<: *COMMON_RESOURCE, node: B0007_27110_GUIDE }
 
   - # Front Left Sub Belt
     name: SUB_BELT_2
@@ -310,7 +314,7 @@ links:
 
   - # Back Right Flipper
     name: B0007_3
-    parent: B0001
+    parent: CHASSIS
     translation: [ -0.234, -0.22350, 0.062 ]
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
@@ -319,18 +323,18 @@ links:
     elements:
       Transform:
         rotation: [ 0, 0, 1, 180 ]
-        elements: { type: Resource, uri: SpiderCommon.yaml, node: B0007_1 }
+        elements: { <<: *COMMON_RESOURCE, node: B0007_1 }
 
 
   - # Back Right Sub Belt Drive Pully
     name: B0007_3_B0007_2705_1
-    parent: B0001
+    parent: CHASSIS
     translation: [ -0.234, -0.22350, 0.062 ]
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
     jointId: 12
     material: *WHEEL_MATERIAL
-    elements: { type: Resource, uri: SpiderCommon.yaml, node: B0007_2705 }
+    elements: { <<: *COMMON_RESOURCE, node: B0007_2705 }
 
   - # Back Right Sub Belt Driven Pully
     name: B0007_3_B0007_2708
@@ -340,7 +344,7 @@ links:
     jointAxis: [ 0, 1, 0 ]
     jointId: 13
     material: *WHEEL_MATERIAL
-    elements: { type: Resource, uri: SpiderCommon.yaml, node: B0007_2708 }
+    elements: { <<: *COMMON_RESOURCE, node: B0007_2708 }
 
   - # Back Right Sub Belt Bottom Roller Guide
     name: B0007_3_B0007_27110_GUIDE
@@ -351,7 +355,7 @@ links:
     elements:
       Transform:
         rotation: [ 0, 0, 1, 180 ]
-        elements: { type: Resource, uri: SpiderCommon.yaml, node: B0007_27110_GUIDE }
+        elements: { <<: *COMMON_RESOURCE, node: B0007_27110_GUIDE }
 
   - # Back Right Sub Belt
     name: SUB_BELT_3
@@ -370,7 +374,7 @@ links:
 
   - # Back Left Flipper
     name: B0007_4
-    parent: B0001
+    parent: CHASSIS
     translation: [ -0.234, 0.22350, 0.062 ]
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
@@ -379,17 +383,17 @@ links:
     elements:
       Transform:
         rotation: [ 0, 0, 1, 180 ]
-        elements: { type: Resource, uri: SpiderCommon.yaml, node: B0007_1 }
+        elements: { <<: *COMMON_RESOURCE, node: B0007_1 }
 
   - # Back Left Sub Belt Drive Pully
     name: B0007_4_B0007_2705_1
-    parent: B0001
+    parent: CHASSIS
     translation: [ -0.234, 0.22350, 0.062 ]
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
     jointId: 14
     material: *WHEEL_MATERIAL
-    elements: { type: Resource, uri: SpiderCommon.yaml, node: B0007_2705 }
+    elements: { <<: *COMMON_RESOURCE, node: B0007_2705 }
 
   - # Back Left Sub Belt Driven Pully
     name: B0007_4_B0007_2708
@@ -399,7 +403,7 @@ links:
     jointAxis: [ 0, 1, 0 ]
     jointId: 15
     material: *WHEEL_MATERIAL
-    elements: { type: Resource, uri: SpiderCommon.yaml, node: B0007_2708 }
+    elements: { <<: *COMMON_RESOURCE, node: B0007_2708 }
 
   - # Back Left Sub Belt Bottom Roller Guide
     name: B0007_4_B0007_27110_GUIDE
@@ -410,7 +414,7 @@ links:
     elements:
       Transform:
         rotation: [ 0, 0, 1, 180 ]
-        elements: { type: Resource, uri: SpiderCommon.yaml, node: B0007_27110_GUIDE }
+        elements: { <<: *COMMON_RESOURCE, node: B0007_27110_GUIDE }
 
   - # Back Left Sub Belt
     name: SUB_BELT_4
