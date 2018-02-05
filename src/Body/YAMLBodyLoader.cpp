@@ -646,7 +646,7 @@ bool YAMLBodyLoaderImpl::readTopNode(Body* body, Mapping* topNode)
             result = loadAnotherFormatBodyFile(topNode);
         }
         if(result){
-            body->resetInfo(topNode);
+            body->info()->insert(topNode);
         }
         
     } catch(const ValueNode::Exception& ex){
@@ -1815,6 +1815,8 @@ void YAMLBodyLoaderImpl::addSubBodyLinks(BodyPtr subBody, Mapping* node)
     if(!node->read("parent", linkInfo->parent)){
         node->throwException("parent must be specified.");
     }
+
+    body->info()->insert(subBody->info());
 
     linkInfos.push_back(linkInfo);
 }
