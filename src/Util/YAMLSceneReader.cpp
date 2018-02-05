@@ -1123,9 +1123,9 @@ ResourceInfo* YAMLSceneReaderImpl::getOrCreateResourceInfo(Mapping& resourceNode
     if(ext == ".yaml" || ext == ".yml"){
         auto yaml = new YAMLReader;
         if(!yaml->load(filename)){
-            os() << yaml->errorMessage() << endl;
             resourceNode.throwException(
-                str(format(_("YAML resource \"%1%\" cannot be loaded")) % uri));
+                str(format(_("YAML resource \"%1%\" cannot be loaded (%2%)"))
+                    % uri % yaml->errorMessage()));
         }
         info->yaml.reset(yaml);
 
