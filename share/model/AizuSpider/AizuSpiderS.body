@@ -1,7 +1,7 @@
 format: ChoreonoidBody
 formatVersion: 1.0
 angleUnit: degree
-name: AizuSpiderNS
+name: AizuSpiderS
 rootLink: CHASSIS
 
 COMMON_RESOURCE: &COMMON_RESOURCE
@@ -69,7 +69,7 @@ links:
         { <<: *COMMON_RESOURCE, node: B0007_2705, translation: [ -0.234, 0.22350, 0.062 ] }
 
   - # Right Main Belt
-    name: R_MAIN_TRACK
+    name: R_TRACK
     parent: CHASSIS
     translation: [ 0.234, -0.146, 0.062 ]
     jointType: fixed
@@ -78,7 +78,7 @@ links:
     elements: { <<: *COMMON_RESOURCE, node: MAIN_BELT, rotation: [ [ 0, 0, 1, 180 ], [ 1, 0, 0, 90 ] ] }
 
   - # Left Main Belt
-    name: L_MAIN_TRACK
+    name: L_TRACK
     parent: CHASSIS
     translation: [ -0.234, 0.146, 0.062 ]
     jointType: fixed
@@ -178,7 +178,7 @@ links:
 
 collisionDetection:
   excludeLinkGroups:
-    - links: [ FR_FLIPPER, FL_FLIPPER, BR_FLIPPER, BL_FLIPPER, R_MAIN_TRACK, L_MAIN_TRACK, FR_SUB_TRACK, BR_SUB_TRACK, BL_SUB_TRACK ]
-    - links: [ FR_FLIPPER, FL_FLIPPER, BR_FLIPPER, BL_FLIPPER, R_MAIN_TRACK, L_MAIN_TRACK, FL_SUB_TRACK, BR_SUB_TRACK, BL_SUB_TRACK ]
-    - links: [ FR_FLIPPER, FL_FLIPPER, BR_FLIPPER, BL_FLIPPER, R_MAIN_TRACK, L_MAIN_TRACK, FR_SUB_TRACK, FL_SUB_TRACK, BR_SUB_TRACK ]
-    - links: [ FR_FLIPPER, FL_FLIPPER, BR_FLIPPER, BL_FLIPPER, R_MAIN_TRACK, L_MAIN_TRACK, FR_SUB_TRACK, FL_SUB_TRACK, BL_SUB_TRACK ]
+    - links: [ FR_FLIPPER, FL_FLIPPER, BR_FLIPPER, BL_FLIPPER, R_TRACK, L_TRACK, FR_SUB_TRACK, BR_SUB_TRACK, BL_SUB_TRACK ]
+    - links: [ FR_FLIPPER, FL_FLIPPER, BR_FLIPPER, BL_FLIPPER, R_TRACK, L_TRACK, FL_SUB_TRACK, BR_SUB_TRACK, BL_SUB_TRACK ]
+    - links: [ FR_FLIPPER, FL_FLIPPER, BR_FLIPPER, BL_FLIPPER, R_TRACK, L_TRACK, FR_SUB_TRACK, FL_SUB_TRACK, BR_SUB_TRACK ]
+    - links: [ FR_FLIPPER, FL_FLIPPER, BR_FLIPPER, BL_FLIPPER, R_TRACK, L_TRACK, FR_SUB_TRACK, FL_SUB_TRACK, BL_SUB_TRACK ]

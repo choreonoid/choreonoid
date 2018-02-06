@@ -92,7 +92,7 @@ bool AizuSpiderController::initializeTracks(SimpleControllerIO* io)
     tracks.clear();
     
     vector<string> trackNames = {
-        "L_MAIN_TRACK", "R_MAIN_TRACK", "FL_SUB_TRACK", "FR_SUB_TRACK", "BL_SUB_TRACK", "BR_SUB_TRACK" };
+        "L_TRACK", "R_TRACK", "FL_SUB_TRACK", "FR_SUB_TRACK", "BL_SUB_TRACK", "BR_SUB_TRACK" };
 
     vector<string> wheelNames = {
         "L_TRACK_WHEEL1", "R_TRACK_WHEEL1",

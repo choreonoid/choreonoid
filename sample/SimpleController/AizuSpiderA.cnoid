@@ -16,20 +16,20 @@ items:
       children: 
         - 
           id: 2
-          name: "AizuSpiderNA"
+          name: "AizuSpiderA"
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/AizuSpider/AizuSpiderNA.body"
+            modelFile: "${SHARE}/model/AizuSpider/AizuSpiderA.body"
             currentBaseLink: "CHASSIS"
-            rootPosition: [ -2.00275919, -0.50191852, 0.0354895377 ]
+            rootPosition: [ -2, -0.5, 0.035 ]
             rootAttitude: [ 
-              0.999983394, 0.00111806176, -0.00565345912, 
-              -0.00111832602, 0.999999374, -4.35816444e-05, 
-              0.00565340685, 4.99033311e-05, 0.999984018 ]
+              1, 0, 0, 
+              0, 1, 0, 
+              0, 0, 1 ]
             jointPositions: [ 
-               0.123918,  0.113446, -0.472984,  0.094248,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000, 
-               0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000 ]
+               0.000000,  0.000000,  0.000000,  0.000000,  15.363550,  15.782297, -9.256445, -8.875742,  32.963028,  15.363549, 
+              -9.561105, -9.256446,  28.323594,  15.363550, -14.635380, -9.256446 ]
             initialRootPosition: [ -2, -0.5, 0.035 ]
             initialRootAttitude: [ 
               1, 0, 0, 
@@ -93,7 +93,7 @@ items:
             recordCollisionData: false
             controllerOptions: ""
             Gravity: [ 0, 0, -9.80665 ]
-            NumThreads: 1
+            NumThreads: 4
             ContactReduction: true
             ContactReductionBinResolution: 3
             ContactReductionThreshhold: 12
@@ -112,9 +112,8 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      selected: [ 3 ]
       checked: [ 1, 2, 4 ]
-      expanded: [ 1, 2 ]
+      expanded: [ 1, 2, 3 ]
   - 
     id: 2
     plugin: Base
@@ -167,9 +166,9 @@ views:
           fieldOfView: 0.6978
           near: 0.01
           far: 10000
-          eye: [ -3.46802179, -1.04970478, 1.65439392 ]
-          direction: [ 0.792257756, 0.207100178, -0.57396617 ]
-          up: [ 0.555306881, 0.145160023, 0.818879012 ]
+          eye: [ -4.77935049, -2.40422017, 2.04822921 ]
+          direction: [ 0.808278938, 0.490772455, -0.325311475 ]
+          up: [ 0.278067354, 0.168837503, 0.945606919 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
@@ -275,18 +274,14 @@ views:
     state: 
       listingMode: "Link Tree"
       currentBodyItem: 2
-  - 
-    id: 9
-    plugin: Python
-    class: PythonConsoleView
 toolbars: 
   "TimeBar": 
     minTime: 0
-    maxTime: 5.725
+    maxTime: 66.705
     frameRate: 1000
     playbackFrameRate: 100
     idleLoopDrivenMode: false
-    currentTime: 5.725
+    currentTime: 66.705
     speedScale: 1
     syncToOngoingUpdates: true
     autoExpansion: true
@@ -372,12 +367,12 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 601, 2557 ]
+      sizes: [ 456, 1942 ]
       children: 
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 710, 709 ]
+          sizes: [ 765, 764 ]
           children: 
             - 
               type: pane
@@ -390,12 +385,12 @@ viewAreas:
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 1015, 404 ]
+          sizes: [ 1094, 435 ]
           children: 
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 1196, 1357 ]
+              sizes: [ 907, 1029 ]
               children: 
                 - 
                   type: pane
@@ -408,7 +403,7 @@ viewAreas:
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 1538, 1015 ]
+              sizes: [ 1166, 770 ]
               children: 
                 - 
                   type: pane
