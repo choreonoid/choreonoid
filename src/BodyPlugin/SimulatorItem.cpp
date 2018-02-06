@@ -1088,43 +1088,44 @@ SimulatorItemImpl::SimulatorItemImpl(SimulatorItem* self)
       postDynamicsFunctions(this),
       recordingMode(SimulatorItem::N_RECORDING_MODES, CNOID_GETTEXT_DOMAIN_NAME),
       timeRangeMode(SimulatorItem::N_TIME_RANGE_MODES, CNOID_GETTEXT_DOMAIN_NAME),
-      mv(MessageView::mainInstance()),
-      os(mv->cout()),
-      itemTreeView(ItemTreeView::instance())
+      mv(MessageView::instance()),
+      os(mv->cout())
 {
-    worldItem = 0;
-
+    worldItem = nullptr;
+    
     temporalResolutionType.setSymbol(RESOLUTION_TIMESTEP, N_("Timestep"));
     temporalResolutionType.setSymbol(RESOLUTION_FRAMERATE, N_("Framerate"));
     temporalResolutionType.setSymbol(RESOLUTION_TIMEBAR, N_("Time bar"));
     timeStepProperty = 0.001;
     frameRateProperty = 1000;
 
+    currentFrame = 0;
+    worldFrameRate = 1.0;
+    worldTimeStep_ = 1.0;
+    frameAtLastBufferWriting = 0;
     flushTimer.sigTimeout().connect(std::bind(&SimulatorItemImpl::flushResults, this));
-
-    timeBar = TimeBar::instance();
-    isDoingSimulationLoop = false;
-    isRealtimeSyncMode = true;
 
     recordingMode.setSymbol(SimulatorItem::REC_FULL, N_("full"));
     recordingMode.setSymbol(SimulatorItem::REC_TAIL, N_("tail"));
     recordingMode.setSymbol(SimulatorItem::REC_NONE, N_("off"));
     recordingMode.select(SimulatorItem::REC_FULL);
-    
+
     timeRangeMode.setSymbol(SimulatorItem::TR_UNLIMITED, N_("Unlimited"));
     timeRangeMode.setSymbol(SimulatorItem::TR_ACTIVE_CONTROL, N_("Active control period"));
     timeRangeMode.setSymbol(SimulatorItem::TR_SPECIFIED, N_("Specified time"));
     timeRangeMode.setSymbol(SimulatorItem::TR_TIMEBAR, N_("Time bar range"));
     timeRangeMode.select(SimulatorItem::TR_UNLIMITED);
+
     specifiedTimeLength = 180.0; // 3 min.
     useControllerThreadsProperty = true;
     isAllLinkPositionOutputMode = false;
     isDeviceStateOutputEnabled = true;
+    isDoingSimulationLoop = false;
+    isRealtimeSyncMode = true;
     recordCollisionData = false;
 
-    currentFrame = 0;
-    frameAtLastBufferWriting = 0;
-    worldFrameRate = 1.0;
+    timeBar = TimeBar::instance();
+    itemTreeView = ItemTreeView::instance();
 }
 
 
@@ -1138,17 +1139,20 @@ SimulatorItem::SimulatorItem(const SimulatorItem& org)
 SimulatorItemImpl::SimulatorItemImpl(SimulatorItem* self, const SimulatorItemImpl& org)
     : SimulatorItemImpl(self)
 {
-    worldItem = 0;
     temporalResolutionType = org.temporalResolutionType;
     timeStepProperty = org.timeStepProperty;
     frameRateProperty = org.frameRateProperty;
-    isRealtimeSyncMode = org.isRealtimeSyncMode;
-    isAllLinkPositionOutputMode = org.isAllLinkPositionOutputMode;
-    isDeviceStateOutputEnabled = org.isDeviceStateOutputEnabled;
+
     recordingMode = org.recordingMode;
     timeRangeMode = org.timeRangeMode;
+
+    specifiedTimeLength = org.specifiedTimeLength;
     useControllerThreadsProperty = org.useControllerThreadsProperty;
+    isAllLinkPositionOutputMode = org.isAllLinkPositionOutputMode;
+    isDeviceStateOutputEnabled = org.isDeviceStateOutputEnabled;
+    isRealtimeSyncMode = org.isRealtimeSyncMode;
     recordCollisionData = org.recordCollisionData;
+    controllerOptionString_ = org.controllerOptionString_;
 }
     
 
