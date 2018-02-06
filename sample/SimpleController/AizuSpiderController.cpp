@@ -198,7 +198,9 @@ bool AizuSpiderController::control()
 
     controlTracks();
 
-    updateFlipperTargetPositions();
+    if(!joystick.getButtonState(Joystick::R_BUTTON)){
+        updateFlipperTargetPositions();
+    }
 
     switch(mainActuationMode){
     case Link::JOINT_TORQUE:
@@ -220,13 +222,17 @@ bool AizuSpiderController::control()
 
 void AizuSpiderController::controlTracks()
 {
-    double hpos =
-        joystick.getPosition(Joystick::L_STICK_H_AXIS, STICK_THRESH) +
-        0.8 * joystick.getPosition(Joystick::DIRECTIONAL_PAD_H_AXIS);
-
-    double vpos = -(
-        joystick.getPosition(Joystick::L_STICK_V_AXIS, STICK_THRESH) +
-        0.8 * joystick.getPosition(Joystick::DIRECTIONAL_PAD_V_AXIS));
+    double hpos = 0.0;
+    double vpos = 0.0;
+    
+    if(!joystick.getButtonState(Joystick::R_BUTTON)){
+        hpos =
+            joystick.getPosition(Joystick::L_STICK_H_AXIS, STICK_THRESH) +
+            0.8 * joystick.getPosition(Joystick::DIRECTIONAL_PAD_H_AXIS);
+        vpos = -(
+            joystick.getPosition(Joystick::L_STICK_V_AXIS, STICK_THRESH) +
+            0.8 * joystick.getPosition(Joystick::DIRECTIONAL_PAD_V_AXIS));
+    }
     
     double dq_L = trackVelocityRatio * (vpos + 0.4 * hpos);
     double dq_R = trackVelocityRatio * (vpos - 0.4 * hpos);

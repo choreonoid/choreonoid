@@ -2,12 +2,12 @@ format: ChoreonoidBody
 formatVersion: 1.0
 angleUnit: degree
 name: AizuSpiderSS
-rootLink: B0001
+rootLink: CHASSIS
 
 links:
   - # Main body
     type: SubBody
-    uri: AizuSpiderNS.body
+    uri: AizuSpiderS.body
     translation: [ 0, 0, 0.03503 ]
     jointType: free
 
@@ -15,7 +15,7 @@ links:
     type: SubBody
     uri: "../JACO2/JACO2.body"
     prefix: ARM1_
-    parent: B0001
+    parent: CHASSIS
     translation: [ -0.06320, -0.094, 0.5150 ]
     rotation: [ 0, 1, 0, 90 ]
     jointType: fixed
