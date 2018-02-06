@@ -50,6 +50,9 @@ add_cnoid_simple_controller(DoubleArmV7Controller DoubleArmV7Controller.cpp)
 configure_file(DoubleArmV7SJoystick.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 configure_file(DoubleArmV7AJoystick.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 
+# Jaco2 sample
+add_cnoid_simple_controller(Jaco2Controller Jaco2Controller.cpp)
+
 # AizuSpider sample
 add_cnoid_simple_controller(AizuSpiderController AizuSpiderController.cpp)
 configure_file(AizuSpiderS.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
