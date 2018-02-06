@@ -1118,7 +1118,7 @@ SimulatorItemImpl::SimulatorItemImpl(SimulatorItem* self)
 
     specifiedTimeLength = 180.0; // 3 min.
     useControllerThreadsProperty = true;
-    isAllLinkPositionOutputMode = false;
+    isAllLinkPositionOutputMode = true;
     isDeviceStateOutputEnabled = true;
     isDoingSimulationLoop = false;
     isRealtimeSyncMode = true;
