@@ -49,7 +49,7 @@ items:
               class: SimpleControllerItem
               data: 
                 isNoDelayMode: true
-                controllerOptions: "velocity"
+                controllerOptions: ""
                 controller: "AizuSpiderController.so"
                 baseDirectory: "Controller directory"
                 reloading: true
@@ -78,7 +78,7 @@ items:
             isEditable: false
         - 
           id: 5
-          name: "AGXSimulator"
+          name: "AGXSimulator-Velocity"
           plugin: AGXDynamics
           class: AGXSimulatorItem
           data: 
@@ -91,7 +91,31 @@ items:
             deviceStateOutput: true
             controllerThreads: true
             recordCollisionData: false
-            controllerOptions: ""
+            controllerOptions: "velocity"
+            Gravity: [ 0, 0, -9.80665 ]
+            NumThreads: 4
+            ContactReduction: true
+            ContactReductionBinResolution: 3
+            ContactReductionThreshhold: 12
+            ContactWarmstarting: false
+            AutoSleep: false
+            SaveToAGXFileOnStart: false
+        - 
+          id: 6
+          name: "AGXSimulator-Torque"
+          plugin: AGXDynamics
+          class: AGXSimulatorItem
+          data: 
+            timestep: 0.005
+            realtimeSync: true
+            recording: "full"
+            timeRangeMode: "Unlimited"
+            timeLength: 180
+            allLinkPositionOutputMode: true
+            deviceStateOutput: true
+            controllerThreads: true
+            recordCollisionData: false
+            controllerOptions: "torque"
             Gravity: [ 0, 0, -9.80665 ]
             NumThreads: 4
             ContactReduction: true
@@ -112,7 +136,7 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      selected: [ 2 ]
+      selected: [ 5 ]
       checked: [ 1, 2, 4 ]
       expanded: [ 1, 2, 3 ]
   - 
@@ -222,7 +246,7 @@ toolbars:
     frameRate: 1000
     playbackFrameRate: 100
     idleLoopDrivenMode: false
-    currentTime: 66.705
+    currentTime: 0
     speedScale: 1
     syncToOngoingUpdates: true
     autoExpansion: true
@@ -313,7 +337,7 @@ viewAreas:
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 765, 764 ]
+          sizes: [ 719, 810 ]
           children: 
             - 
               type: pane

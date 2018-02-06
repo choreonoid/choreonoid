@@ -75,20 +75,50 @@ items:
             isEditable: false
         - 
           id: 5
-          name: "AISTSimulator"
+          name: "AISTSimulator-Position"
+          plugin: Body
+          class: AISTSimulatorItem
+          data: 
+            timestep: 0.005
+            realtimeSync: true
+            recording: "full"
+            timeRangeMode: "Unlimited"
+            timeLength: 60
+            allLinkPositionOutputMode: true
+            deviceStateOutput: true
+            controllerThreads: true
+            recordCollisionData: false
+            controllerOptions: "position"
+            dynamicsMode: "Forward dynamics"
+            integrationMode: "Runge Kutta"
+            gravity: [ 0, 0, -9.80665 ]
+            staticFriction: 0.5
+            dynamicFriction: 0.5
+            cullingThresh: 0.01
+            contactCullingDepth: 0.05
+            errorCriterion: 0.001
+            maxNumIterations: 1000
+            contactCorrectionDepth: 0.0001
+            contactCorrectionVelocityRatio: 30
+            kinematicWalking: false
+            2Dmode: false
+            oldAccelSensorMode: false
+        - 
+          id: 6
+          name: "AISTSimulator-Torque"
           plugin: Body
           class: AISTSimulatorItem
           data: 
             timestep: 0.001
             realtimeSync: true
-            recording: "off"
+            recording: "full"
             timeRangeMode: "Unlimited"
             timeLength: 60
-            allLinkPositionOutputMode: false
+            allLinkPositionOutputMode: true
             deviceStateOutput: true
             controllerThreads: true
             recordCollisionData: false
-            controllerOptions: ""
+            controllerOptions: "torque"
             dynamicsMode: "Forward dynamics"
             integrationMode: "Runge Kutta"
             gravity: [ 0, 0, -9.80665 ]
@@ -117,7 +147,7 @@ views:
     state: 
       selected: [ 5 ]
       checked: [ 1, 2, 4 ]
-      expanded: [ 1, 2 ]
+      expanded: [ 1, 2, 3 ]
   - 
     id: 2
     plugin: Base
@@ -221,7 +251,7 @@ views:
 toolbars: 
   "TimeBar": 
     minTime: 0
-    maxTime: 5
+    maxTime: 25.032
     frameRate: 1000
     playbackFrameRate: 100
     idleLoopDrivenMode: false
@@ -316,7 +346,7 @@ viewAreas:
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 765, 764 ]
+          sizes: [ 554, 975 ]
           children: 
             - 
               type: pane
