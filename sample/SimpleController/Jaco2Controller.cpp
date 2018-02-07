@@ -93,18 +93,18 @@ bool Jaco2Controller::initialize(SimpleControllerIO* io)
     vector<JointSpec> specs(NUM_JOINTS);
 
     //                                    P      D      P (vel)
-    specs[SHOULDER    ] = { "SHOULDER",   100.0, 10.0,  P_GAIN_VELOCITY };
-    specs[ARM         ] = { "ARM",        100.0, 10.0,  P_GAIN_VELOCITY };
-    specs[FOREARM     ] = { "FOREARM",     50.0,  5.0,  P_GAIN_VELOCITY };
-    specs[WRIST1      ] = { "WRIST1",      20.0,  2.0,  P_GAIN_VELOCITY };
-    specs[WRIST2      ] = { "WRIST2",      20.0,  2.0,  P_GAIN_VELOCITY };
-    specs[HAND        ] = { "HAND",        10.0,  1.0,  P_GAIN_VELOCITY };
-    specs[FINGER1     ] = { "FINGER1",     10.0,  1.0,  P_GAIN_VELOCITY };
-    specs[FINGER1_TIP ] = { "FINGER1_TIP", 10.0,  1.0,  P_GAIN_VELOCITY };
-    specs[FINGER2     ] = { "FINGER2",     10.0,  1.0,  P_GAIN_VELOCITY };
-    specs[FINGER2_TIP ] = { "FINGER2_TIP", 10.0,  1.0,  P_GAIN_VELOCITY };
-    specs[FINGER3     ] = { "FINGER3",     10.0,  1.0,  P_GAIN_VELOCITY };
-    specs[FINGER3_TIP ] = { "FINGER3_TIP", 10.0,  1.0,  P_GAIN_VELOCITY };
+    specs[SHOULDER    ] = { "SHOULDER",  1000.0, 100.0,  P_GAIN_VELOCITY };
+    specs[ARM         ] = { "ARM",       1000.0, 100.0,  P_GAIN_VELOCITY };
+    specs[FOREARM     ] = { "FOREARM",    600.0,  60.0,  P_GAIN_VELOCITY };
+    specs[WRIST1      ] = { "WRIST1",     300.0,  30.0,  P_GAIN_VELOCITY };
+    specs[WRIST2      ] = { "WRIST2",     300.0,  30.0,  P_GAIN_VELOCITY };
+    specs[HAND        ] = { "HAND",       250.0,  25.0,  P_GAIN_VELOCITY };
+    specs[FINGER1     ] = { "FINGER1",     50.0,  10.0,  P_GAIN_VELOCITY };
+    specs[FINGER1_TIP ] = { "FINGER1_TIP", 30.0,   5.0,  P_GAIN_VELOCITY };
+    specs[FINGER2     ] = { "FINGER2",     50.0,  10.0,  P_GAIN_VELOCITY };
+    specs[FINGER2_TIP ] = { "FINGER2_TIP", 30.0,   5.0,  P_GAIN_VELOCITY };
+    specs[FINGER3     ] = { "FINGER3",     50.0,  10.0,  P_GAIN_VELOCITY };
+    specs[FINGER3_TIP ] = { "FINGER3_TIP", 30.0,   5.0,  P_GAIN_VELOCITY };
     
     if(!initializeJoints(io, specs, prefix)){
         return false;
@@ -173,7 +173,7 @@ bool Jaco2Controller::control()
 
 void Jaco2Controller::updateTargetJointAngles()
 {
-    static const double K = 0.6;
+    static const double K = 0.8;
 
     setTargetJointAngle(SHOULDER, Joystick::L_STICK_H_AXIS, -K);
     setTargetJointAngle(ARM,      Joystick::L_STICK_V_AXIS,  K);
@@ -181,7 +181,7 @@ void Jaco2Controller::updateTargetJointAngles()
     setTargetJointAngle(WRIST1,   Joystick::R_STICK_H_AXIS, -K);
     
     setTargetJointAngle(WRIST2, Joystick::B_BUTTON, Joystick::A_BUTTON, K);
-    setTargetJointAngle(HAND,   Joystick::R_BUTTON, Joystick::L_BUTTON, K);
+    setTargetJointAngle(HAND,   Joystick::R_BUTTON, Joystick::L_BUTTON, 1.2 * K);
 
     double dq_finger = 0.0;
     double lt = joystick->getPosition(targetMode, Joystick::L_TRIGGER_AXIS);
