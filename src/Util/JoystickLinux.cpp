@@ -80,7 +80,7 @@ enum ButtonID {
     
 };
 
-const int INVALID_BUTTON = 1;
+const int INVALID_BUTTON = -1;
 
 
 const int PS4_Axes[] = {
