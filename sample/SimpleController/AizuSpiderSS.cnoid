@@ -54,17 +54,18 @@ items:
                 controller: "AizuSpiderController.so"
                 baseDirectory: "Controller directory"
                 reloading: true
-            - 
-              id: 4
-              name: "Jaco2Controller"
-              plugin: Body
-              class: SimpleControllerItem
-              data: 
-                isNoDelayMode: true
-                controllerOptions: "ARM1_"
-                controller: "Jaco2Controller.so"
-                baseDirectory: "Controller directory"
-                reloading: true
+              children: 
+                - 
+                  id: 4
+                  name: "Jaco2Controller"
+                  plugin: Body
+                  class: SimpleControllerItem
+                  data: 
+                    isNoDelayMode: true
+                    controllerOptions: "ARM1_"
+                    controller: "Jaco2Controller.so"
+                    baseDirectory: "Controller directory"
+                    reloading: true
         - 
           id: 5
           name: "Labo1"
@@ -130,9 +131,8 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      selected: [ 4 ]
       checked: [ 1, 2, 5 ]
-      expanded: [ 1, 2 ]
+      expanded: [ 1, 2, 3 ]
   - 
     id: 2
     plugin: Base

@@ -1,12 +1,12 @@
+#include "SharedJoystick.h"
 #include <cnoid/SimpleController>
-#include <cnoid/Joystick>
 #include <boost/format.hpp>
 
 using namespace std;
 using namespace cnoid;
 using boost::format;
 
-class Jaco2Controller : public cnoid::SimpleController
+class Jaco2Controller : public SimpleController
 {
     Body* body;
     double dt;
@@ -46,7 +46,8 @@ class Jaco2Controller : public cnoid::SimpleController
         NUM_JOINTS
     };
 
-    Joystick joystick;
+    SharedJoystickPtr joystick;
+    int targetMode;
 
 public:
     virtual bool initialize(SimpleControllerIO* io) override;
@@ -54,6 +55,7 @@ public:
     virtual bool control() override;
     void updateTargetJointAngles();
     void setTargetJointAngle(int jointID, Joystick::AxisID stickID, double k);
+    void setTargetJointAngle(int jointID, Joystick::ButtonID button1, Joystick::ButtonID button2, double k);
     void controlJointsWithTorque();
     void controlJointsWithVelocity();
     void controlJointsWithPosition();
@@ -104,7 +106,14 @@ bool Jaco2Controller::initialize(SimpleControllerIO* io)
     specs[FINGER3     ] = { "FINGER3",     10.0,  1.0,  P_GAIN_VELOCITY };
     specs[FINGER3_TIP ] = { "FINGER3_TIP", 10.0,  1.0,  P_GAIN_VELOCITY };
     
-    return initializeJoints(io, specs, prefix);
+    if(!initializeJoints(io, specs, prefix)){
+        return false;
+    }
+
+    joystick = io->getOrCreateSharedObject<SharedJoystick>("joystick");
+    targetMode = joystick->addMode(Joystick::LOGO_BUTTON);
+
+    return true;
 }
 
 
@@ -140,9 +149,11 @@ bool Jaco2Controller::initializeJoints(SimpleControllerIO* io, vector<JointSpec>
 
 bool Jaco2Controller::control()
 {
-    joystick.readCurrentState();
+    joystick->updateState();
 
-    updateTargetJointAngles();
+    if(joystick->currentMode(Joystick::LOGO_BUTTON) == targetMode){
+        updateTargetJointAngles();
+    }
 
     switch(mainActuationMode){
     case Link::JOINT_TORQUE:
@@ -164,25 +175,22 @@ bool Jaco2Controller::control()
 
 void Jaco2Controller::updateTargetJointAngles()
 {
-    if(!joystick.getButtonState(Joystick::R_BUTTON)){
-        return;
-    }
-    
     static const double K = 0.6;
 
-    setTargetJointAngle(SHOULDER, Joystick::DIRECTIONAL_PAD_H_AXIS, K * 0.8);
-    setTargetJointAngle(ARM,      Joystick::DIRECTIONAL_PAD_V_AXIS, K * 0.8);
-    setTargetJointAngle(FOREARM,  Joystick::L_STICK_H_AXIS,         K);
-    setTargetJointAngle(WRIST1,   Joystick::L_STICK_V_AXIS,         K);
-    setTargetJointAngle(WRIST2,   Joystick::R_STICK_H_AXIS,         K);
-    setTargetJointAngle(HAND,     Joystick::R_STICK_V_AXIS,         K);
+    setTargetJointAngle(SHOULDER, Joystick::L_STICK_H_AXIS, -K);
+    setTargetJointAngle(ARM,      Joystick::L_STICK_V_AXIS,  K);
+    setTargetJointAngle(FOREARM,  Joystick::R_STICK_V_AXIS, -K);
+    setTargetJointAngle(WRIST1,   Joystick::R_STICK_H_AXIS, -K);
+    
+    setTargetJointAngle(WRIST2, Joystick::B_BUTTON, Joystick::A_BUTTON, K);
+    setTargetJointAngle(HAND,   Joystick::R_BUTTON, Joystick::L_BUTTON, K);
 
     double dq_finger = 0.0;
-    double lt = joystick.getPosition(Joystick::L_TRIGGER_AXIS);
+    double lt = joystick->getPosition(Joystick::L_TRIGGER_AXIS);
     if(lt > -0.9){
         dq_finger += dt * 0.2 * (lt + 1.0);
     }
-    double rt = joystick.getPosition(Joystick::R_TRIGGER_AXIS);
+    double rt = joystick->getPosition(Joystick::R_TRIGGER_AXIS);
     if(rt > -0.9){
         dq_finger -= dt * 0.2 * (rt + 1.0);
     }
@@ -194,7 +202,20 @@ void Jaco2Controller::updateTargetJointAngles()
 
 void Jaco2Controller::setTargetJointAngle(int jointID, Joystick::AxisID stickID, double k)
 {
-    jointInfos[jointID].qref += dt * k * joystick.getPosition(stickID, 0.1);
+    jointInfos[jointID].qref += dt * k * joystick->getPosition(stickID, 0.1);
+}
+
+
+void Jaco2Controller::setTargetJointAngle(int jointID, Joystick::ButtonID button1, Joystick::ButtonID button2, double k)
+{
+    double dq = 0.0;
+    if(joystick->getButtonState(button1)){
+        dq -= dt * k;
+    }
+    if(joystick->getButtonState(button2)){
+        dq += dt * k;
+    }
+    jointInfos[jointID].qref += dq;
 }
 
 
