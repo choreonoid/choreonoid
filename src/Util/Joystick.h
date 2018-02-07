@@ -55,6 +55,8 @@ public:
     int numAxes() const;
     void setAxisEnabled(int axis, bool on);
     int numButtons() const;
+    double getDefaultPosition(int axis) const;
+
     bool readCurrentState();
     double getPosition(int axis) const;
     double getPosition(int axis, double threshold) const;

@@ -68,10 +68,10 @@ enum ButtonID {
     R_BUTTON = Joystick::R_BUTTON,
     SELECT_BUTTON = Joystick::SELECT_BUTTON,
     START_BUTTON = Joystick::START_BUTTON,
-    LOGO_BUTTON = Joystick::LOGO_BUTTON,
     L_STICK_BUTTON = Joystick::L_STICK_BUTTON,
     R_STICK_BUTTON = Joystick::R_STICK_BUTTON,
-    NUM_BUTTONS,
+    LOGO_BUTTON = Joystick::LOGO_BUTTON,
+    NUM_BUTTONS = Joystick::NUM_STD_BUTTONS,
 
     DIRECTIONAL_PAD_LEFT_BUTTON = 200,
     DIRECTIONAL_PAD_RIGHT_BUTTON = 201,
@@ -463,7 +463,14 @@ bool JoystickImpl::readEvent()
         if(id != INVALID_BUTTON){
             bool isPressed = (pos > 0.0);
 
-            if(id >= DIRECTIONAL_PAD_LEFT_BUTTON){
+            if(id < DIRECTIONAL_PAD_LEFT_BUTTON){
+                buttons[id] = isPressed;
+                sigButton(id, isPressed);
+                if(isPressed){
+                    buttonDownTime[id] = chrono::system_clock::now();
+                    buttonHoldValid[id] = false;
+                }
+            } else {
                 double p = isPressed ? 1.0 : 0.0;
                 switch(id){
                 case DIRECTIONAL_PAD_LEFT_BUTTON:
@@ -480,13 +487,6 @@ bool JoystickImpl::readEvent()
                     break;
                 defaut:
                     break;
-                }
-            } else {
-                buttons[id] = isPressed;
-                sigButton(id, isPressed);
-                if(isPressed){
-                    buttonDownTime[id] = chrono::system_clock::now();
-                    buttonHoldValid[id] = false;
                 }
             }
         }
