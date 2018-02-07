@@ -1,4 +1,4 @@
-#include "AGXSimconstructormpl.h"
+#include "AGXSimulatorItemImpl.h"
 #include "AGXSimulatorItem.h"
 #include <cnoid/EigenUtil>
 #include <cnoid/WorldItem>
