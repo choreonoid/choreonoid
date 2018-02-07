@@ -1,4 +1,4 @@
-#include "AGXSimulatorItemImpl.h"
+#include "AGXSimconstructormpl.h"
 #include "AGXSimulatorItem.h"
 #include <cnoid/EigenUtil>
 #include <cnoid/WorldItem>
@@ -58,9 +58,17 @@ AGXSimulatorItemImpl::AGXSimulatorItemImpl(AGXSimulatorItem* self)
 AGXSimulatorItemImpl::AGXSimulatorItemImpl(AGXSimulatorItem* self, const AGXSimulatorItemImpl& org)
     : AGXSimulatorItemImpl(self)
 {
-    (void) org;
     initialize();
+    m_p_gravity                       =  org.m_p_gravity                      ;
+    m_p_numThreads                    =  org.m_p_numThreads                   ;
+    m_p_enableContactReduction        =  org.m_p_enableContactReduction       ;
+    m_p_contactReductionBinResolution =  org.m_p_contactReductionBinResolution;
+    m_p_contactReductionThreshhold    =  org.m_p_contactReductionThreshhold   ;
+    m_p_enableContactWarmstarting     =  org.m_p_enableContactWarmstarting    ;
+    m_p_enableAutoSleep               =  org.m_p_enableAutoSleep              ;
+    m_p_saveToAGXFileOnStart          =  org.m_p_saveToAGXFileOnStart         ;
 }
+
 AGXSimulatorItemImpl::~AGXSimulatorItemImpl(){}
 
 void AGXSimulatorItemImpl::initialize(){}
