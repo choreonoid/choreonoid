@@ -267,6 +267,7 @@ public:
 
     unique_ptr<YAMLBodyLoader> subLoader;
     map<string, BodyPtr> subBodyMap;
+    vector<BodyPtr> subBodies;
     bool isSubLoader;
 
     ostream* os_;
@@ -585,6 +586,7 @@ bool YAMLBodyLoaderImpl::clear()
     validJointIdSet.clear();
     numValidJointIds = 0;
     subBodyMap.clear();
+    subBodies.clear();
     return true;
 }    
 
@@ -646,7 +648,10 @@ bool YAMLBodyLoaderImpl::readTopNode(Body* body, Mapping* topNode)
             result = loadAnotherFormatBodyFile(topNode);
         }
         if(result){
-            body->info()->insert(topNode);
+            for(auto& subBody : subBodies){
+                topNode->insert(subBody->info());
+            }
+            body->resetInfo(topNode);
         }
         
     } catch(const ValueNode::Exception& ex){
@@ -1763,6 +1768,7 @@ void YAMLBodyLoaderImpl::readSubBodyNode(Mapping* node)
 
     if(subBody){
         addSubBodyLinks(subBody->clone(), node);
+        subBodies.push_back(subBody);
     }
 }
 
@@ -1815,8 +1821,6 @@ void YAMLBodyLoaderImpl::addSubBodyLinks(BodyPtr subBody, Mapping* node)
     if(!node->read("parent", linkInfo->parent)){
         node->throwException("parent must be specified.");
     }
-
-    body->info()->insert(subBody->info());
 
     linkInfos.push_back(linkInfo);
 }
