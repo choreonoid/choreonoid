@@ -1,4 +1,4 @@
-#include "SharedJoystick.h"
+#include "ModeJoystick.h"
 #include <cnoid/SimpleController>
 #include <boost/format.hpp>
 
@@ -47,7 +47,7 @@ class AizuSpiderController : public SimpleController
 
     enum { FR_FLIPPER, FL_FLIPPER, BR_FLIPPER, BL_FLIPPER, NUM_FLIPPERS };
 
-    SharedJoystickPtr joystick;
+    ModeJoystickPtr joystick;
     int targetMode;
 
 public:
@@ -57,7 +57,7 @@ public:
     bool initializeFlipperJoints(SimpleControllerIO* io);
     bool initializeJoints(SimpleControllerIO* io, vector<JointSpec>& specs);
     virtual bool control() override;
-    void controlTracks(bool doInput);
+    void controlTracks();
     void setTrackTorque(int id, double dq_target, double kd);
     void updateFlipperTargetPositions();
     void controlJointsWithTorque();
@@ -93,8 +93,8 @@ bool AizuSpiderController::initialize(SimpleControllerIO* io)
         return false;
     }
 
-    joystick = io->getOrCreateSharedObject<SharedJoystick>("joystick");
-    targetMode = joystick->addMode(Joystick::LOGO_BUTTON);
+    joystick = io->getOrCreateSharedObject<ModeJoystick>("joystick");
+    targetMode = joystick->addMode();
 
     return true;
 }
@@ -202,14 +202,11 @@ bool AizuSpiderController::initializeJoints(SimpleControllerIO* io, vector<Joint
 
 bool AizuSpiderController::control()
 {
-    joystick->updateState();
-    bool doInput = joystick->currentMode(Joystick::LOGO_BUTTON) == targetMode;
+    joystick->updateState(targetMode);
 
-    controlTracks(doInput);
+    controlTracks();
 
-    if(doInput){
-        updateFlipperTargetPositions();
-    }
+    updateFlipperTargetPositions();
 
     switch(mainActuationMode){
     case Link::JOINT_TORQUE:
@@ -229,19 +226,15 @@ bool AizuSpiderController::control()
 }
 
 
-void AizuSpiderController::controlTracks(bool doInput)
+void AizuSpiderController::controlTracks()
 {
-    double hpos = 0.0;
-    double vpos = 0.0;
-    
-    if(doInput){
-        hpos =
-            joystick->getPosition(Joystick::L_STICK_H_AXIS, STICK_THRESH) +
-            0.8 * joystick->getPosition(Joystick::DIRECTIONAL_PAD_H_AXIS);
-        vpos = -(
-            joystick->getPosition(Joystick::L_STICK_V_AXIS, STICK_THRESH) +
-            0.8 * joystick->getPosition(Joystick::DIRECTIONAL_PAD_V_AXIS));
-    }
+    double hpos =
+        joystick->getPosition(targetMode, Joystick::L_STICK_H_AXIS, STICK_THRESH) +
+        0.8 * joystick->getPosition(Joystick::DIRECTIONAL_PAD_H_AXIS);
+
+    double vpos = -(
+        joystick->getPosition(targetMode, Joystick::L_STICK_V_AXIS, STICK_THRESH) +
+        0.8 * joystick->getPosition(Joystick::DIRECTIONAL_PAD_V_AXIS));
     
     double dq_L = trackVelocityRatio * (vpos + 0.4 * hpos);
     double dq_R = trackVelocityRatio * (vpos - 0.4 * hpos);
@@ -284,14 +277,15 @@ void AizuSpiderController::updateFlipperTargetPositions()
 {
     static const double FLIPPER_GAIN = 0.5;
 
-    double dq = dt * FLIPPER_GAIN * joystick->getPosition(Joystick::R_STICK_V_AXIS, STICK_THRESH);
+    double pos = joystick->getPosition(targetMode, Joystick::R_STICK_V_AXIS, STICK_THRESH);
+    double dq = dt * FLIPPER_GAIN * pos;
 
-    if(joystick->getPosition(Joystick::L_TRIGGER_AXIS, STICK_THRESH) > 0.0){
+    if(joystick->getPosition(targetMode, Joystick::L_TRIGGER_AXIS, STICK_THRESH) > 0.0){
         // Front mode
         jointInfos[FR_FLIPPER].qref += dq;
         jointInfos[FL_FLIPPER].qref += dq;
 
-    } else if(joystick->getButtonState(Joystick::L_BUTTON)){
+    } else if(joystick->getButtonState(targetMode, Joystick::L_BUTTON)){
         // Back mode
         jointInfos[BR_FLIPPER].qref += dq;
         jointInfos[BL_FLIPPER].qref += dq;

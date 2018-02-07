@@ -1,4 +1,4 @@
-#include "SharedJoystick.h"
+#include "ModeJoystick.h"
 #include <cnoid/SimpleController>
 #include <boost/format.hpp>
 
@@ -46,7 +46,7 @@ class Jaco2Controller : public SimpleController
         NUM_JOINTS
     };
 
-    SharedJoystickPtr joystick;
+    ModeJoystickPtr joystick;
     int targetMode;
 
 public:
@@ -110,8 +110,8 @@ bool Jaco2Controller::initialize(SimpleControllerIO* io)
         return false;
     }
 
-    joystick = io->getOrCreateSharedObject<SharedJoystick>("joystick");
-    targetMode = joystick->addMode(Joystick::LOGO_BUTTON);
+    joystick = io->getOrCreateSharedObject<ModeJoystick>("joystick");
+    targetMode = joystick->addMode();
 
     return true;
 }
@@ -149,11 +149,9 @@ bool Jaco2Controller::initializeJoints(SimpleControllerIO* io, vector<JointSpec>
 
 bool Jaco2Controller::control()
 {
-    joystick->updateState();
+    joystick->updateState(targetMode);
 
-    if(joystick->currentMode(Joystick::LOGO_BUTTON) == targetMode){
-        updateTargetJointAngles();
-    }
+    updateTargetJointAngles();
 
     switch(mainActuationMode){
     case Link::JOINT_TORQUE:
@@ -186,11 +184,11 @@ void Jaco2Controller::updateTargetJointAngles()
     setTargetJointAngle(HAND,   Joystick::R_BUTTON, Joystick::L_BUTTON, K);
 
     double dq_finger = 0.0;
-    double lt = joystick->getPosition(Joystick::L_TRIGGER_AXIS);
+    double lt = joystick->getPosition(targetMode, Joystick::L_TRIGGER_AXIS);
     if(lt > -0.9){
         dq_finger += dt * 0.2 * (lt + 1.0);
     }
-    double rt = joystick->getPosition(Joystick::R_TRIGGER_AXIS);
+    double rt = joystick->getPosition(targetMode, Joystick::R_TRIGGER_AXIS);
     if(rt > -0.9){
         dq_finger -= dt * 0.2 * (rt + 1.0);
     }
@@ -202,17 +200,17 @@ void Jaco2Controller::updateTargetJointAngles()
 
 void Jaco2Controller::setTargetJointAngle(int jointID, Joystick::AxisID stickID, double k)
 {
-    jointInfos[jointID].qref += dt * k * joystick->getPosition(stickID, 0.1);
+    jointInfos[jointID].qref += dt * k * joystick->getPosition(targetMode, stickID, 0.1);
 }
 
 
 void Jaco2Controller::setTargetJointAngle(int jointID, Joystick::ButtonID button1, Joystick::ButtonID button2, double k)
 {
     double dq = 0.0;
-    if(joystick->getButtonState(button1)){
+    if(joystick->getButtonState(targetMode, button1)){
         dq -= dt * k;
     }
-    if(joystick->getButtonState(button2)){
+    if(joystick->getButtonState(targetMode, button2)){
         dq += dt * k;
     }
     jointInfos[jointID].qref += dq;
