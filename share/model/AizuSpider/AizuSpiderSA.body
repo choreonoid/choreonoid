@@ -7,7 +7,7 @@ rootLink: CHASSIS
 links:
   - # Main body
     type: SubBody
-    uri: AizuSpiderA.body
+    uri: "AizuSpiderNA.body"
     translation: [ 0, 0, 0.03503 ]
     jointType: free
 

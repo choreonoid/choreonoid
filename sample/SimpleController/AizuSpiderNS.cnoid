@@ -16,27 +16,24 @@ items:
       children: 
         - 
           id: 2
-          name: "AizuSpiderA"
+          name: "AizuSpiderS"
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/AizuSpider/AizuSpiderA.body"
+            modelFile: "${SHARE}/model/AizuSpider/AizuSpiderNS.body"
             currentBaseLink: "CHASSIS"
             rootPosition: [ -2, -0.5, 0.035 ]
             rootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            jointPositions: [ 
-               0.000000,  0.000000,  0.000000,  0.000000,  15.363550,  15.782297, -9.256445, -8.875742,  32.963028,  15.363549, 
-              -9.561105, -9.256446,  28.323594,  15.363550, -14.635380, -9.256446 ]
+            jointPositions: [  0.000000,  0.000000,  0.000000,  0.000000 ]
             initialRootPosition: [ -2, -0.5, 0.035 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            initialJointPositions: [ 
-               0.000000,  0.000000,  0.000000,  0.000000 ]
+            initialJointPositions: [  0.000000,  0.000000,  0.000000,  0.000000 ]
             zmp: [ 0, 0, 0 ]
             collisionDetection: true
             selfCollisionDetection: false
@@ -78,52 +75,64 @@ items:
             isEditable: false
         - 
           id: 5
-          name: "AGXSimulator-Velocity"
-          plugin: AGXDynamics
-          class: AGXSimulatorItem
+          name: "AISTSimulator-Position"
+          plugin: Body
+          class: AISTSimulatorItem
           data: 
             timestep: 0.005
             realtimeSync: true
             recording: "full"
             timeRangeMode: "Unlimited"
-            timeLength: 180
+            timeLength: 60
             allLinkPositionOutputMode: true
             deviceStateOutput: true
             controllerThreads: true
             recordCollisionData: false
-            controllerOptions: "velocity"
-            Gravity: [ 0, 0, -9.80665 ]
-            NumThreads: 4
-            ContactReduction: true
-            ContactReductionBinResolution: 3
-            ContactReductionThreshhold: 12
-            ContactWarmstarting: false
-            AutoSleep: false
-            SaveToAGXFileOnStart: false
+            controllerOptions: "position"
+            dynamicsMode: "Forward dynamics"
+            integrationMode: "Runge Kutta"
+            gravity: [ 0, 0, -9.80665 ]
+            staticFriction: 0.5
+            dynamicFriction: 0.5
+            cullingThresh: 0.01
+            contactCullingDepth: 0.05
+            errorCriterion: 0.001
+            maxNumIterations: 1000
+            contactCorrectionDepth: 0.0001
+            contactCorrectionVelocityRatio: 30
+            kinematicWalking: false
+            2Dmode: false
+            oldAccelSensorMode: false
         - 
           id: 6
-          name: "AGXSimulator-Torque"
-          plugin: AGXDynamics
-          class: AGXSimulatorItem
+          name: "AISTSimulator-Torque"
+          plugin: Body
+          class: AISTSimulatorItem
           data: 
-            timestep: 0.005
+            timestep: 0.001
             realtimeSync: true
             recording: "full"
             timeRangeMode: "Unlimited"
-            timeLength: 180
+            timeLength: 60
             allLinkPositionOutputMode: true
             deviceStateOutput: true
             controllerThreads: true
             recordCollisionData: false
             controllerOptions: "torque"
-            Gravity: [ 0, 0, -9.80665 ]
-            NumThreads: 4
-            ContactReduction: true
-            ContactReductionBinResolution: 3
-            ContactReductionThreshhold: 12
-            ContactWarmstarting: false
-            AutoSleep: false
-            SaveToAGXFileOnStart: false
+            dynamicsMode: "Forward dynamics"
+            integrationMode: "Runge Kutta"
+            gravity: [ 0, 0, -9.80665 ]
+            staticFriction: 0.5
+            dynamicFriction: 0.5
+            cullingThresh: 0.01
+            contactCullingDepth: 0.05
+            errorCriterion: 0.001
+            maxNumIterations: 1000
+            contactCorrectionDepth: 0.0001
+            contactCorrectionVelocityRatio: 30
+            kinematicWalking: false
+            2Dmode: false
+            oldAccelSensorMode: false
 views: 
   - 
     id: 0
@@ -191,9 +200,9 @@ views:
           fieldOfView: 0.6978
           near: 0.01
           far: 10000
-          eye: [ -4.77935049, -2.40422017, 2.04822921 ]
-          direction: [ 0.808278938, 0.490772455, -0.325311475 ]
-          up: [ 0.278067354, 0.168837503, 0.945606918 ]
+          eye: [ -6.16765966, -2.60436794, 1.94581295 ]
+          direction: [ 0.856454124, 0.441191141, -0.268023711 ]
+          up: [ 0.238267675, 0.122740477, 0.963412316 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
@@ -242,7 +251,7 @@ views:
 toolbars: 
   "TimeBar": 
     minTime: 0
-    maxTime: 66.705
+    maxTime: 25.032
     frameRate: 1000
     playbackFrameRate: 100
     idleLoopDrivenMode: false
@@ -337,7 +346,7 @@ viewAreas:
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 719, 810 ]
+          sizes: [ 554, 975 ]
           children: 
             - 
               type: pane

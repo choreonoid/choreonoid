@@ -55,9 +55,12 @@ add_cnoid_simple_controller(Jaco2Controller Jaco2Controller.cpp)
 
 # AizuSpider sample
 add_cnoid_simple_controller(AizuSpiderController AizuSpiderController.cpp)
-configure_file(AizuSpiderS.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
-configure_file(AizuSpiderA.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+configure_file(AizuSpiderNS.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+configure_file(AizuSpiderNA.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 configure_file(AizuSpiderSS.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+configure_file(AizuSpiderSA.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+configure_file(AizuSpiderDS.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+configure_file(AizuSpiderDA.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 
 # Other samples
 add_cnoid_simple_controller(ConveyorController ConveyorController.cpp)
