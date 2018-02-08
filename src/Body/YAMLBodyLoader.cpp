@@ -267,6 +267,7 @@ public:
 
     unique_ptr<YAMLBodyLoader> subLoader;
     map<string, BodyPtr> subBodyMap;
+    vector<BodyPtr> subBodies;
     bool isSubLoader;
 
     ostream* os_;
@@ -588,6 +589,7 @@ bool YAMLBodyLoaderImpl::clear()
     validJointIdSet.clear();
     numValidJointIds = 0;
     subBodyMap.clear();
+    subBodies.clear();
     return true;
 }    
 
@@ -649,6 +651,9 @@ bool YAMLBodyLoaderImpl::readTopNode(Body* body, Mapping* topNode)
             result = loadAnotherFormatBodyFile(topNode);
         }
         if(result){
+            for(auto& subBody : subBodies){
+                topNode->insert(subBody->info());
+            }
             body->resetInfo(topNode);
         }
         
@@ -1798,6 +1803,7 @@ void YAMLBodyLoaderImpl::readSubBodyNode(Mapping* node)
 
     if(subBody){
         addSubBodyLinks(subBody->clone(), node);
+        subBodies.push_back(subBody);
     }
 }
 

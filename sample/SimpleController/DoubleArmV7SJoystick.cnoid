@@ -52,7 +52,7 @@ items:
               class: SimpleControllerItem
               data: 
                 isNoDelayMode: true
-                controllerOptions: "velocity"
+                controllerOptions: ""
                 controller: "DoubleArmV7Controller"
                 baseDirectory: "Controller directory"
                 reloading: true

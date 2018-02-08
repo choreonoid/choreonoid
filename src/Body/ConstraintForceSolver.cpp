@@ -757,9 +757,6 @@ void CFSImpl::solve()
     globalNumFrictionVectors = 0;
     areThereImpacts = false;
 
-    for(auto linkPair : constrainedLinkPairs){
-        linkPair->constraintPoints.clear();
-    }
     constrainedLinkPairs.clear();
 
     setConstraintPoints();
@@ -872,6 +869,7 @@ void CFSImpl::extractConstraintPoints(const CollisionPair& collisionPair)
 
     if(p != geometryPairToLinkPairMap.end()){
         pLinkPair = &p->second;
+        pLinkPair->constraintPoints.clear();
     } else {
         LinkPair& linkPair = geometryPairToLinkPairMap.insert(make_pair(idPair, LinkPair())).first->second;
         int material[2];
