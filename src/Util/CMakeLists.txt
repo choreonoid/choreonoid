@@ -4,6 +4,7 @@
 configure_file(Config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/Config.h)
 
 set(sources
+  Referenced.cpp
   ConnectionSet.cpp
   Selection.cpp
   DataMap.cpp
@@ -76,6 +77,7 @@ elseif(APPLE)
 endif()
 
 set(headers
+  Referenced.h
   EasyScanner.h
   GaussianFilter.h
   UniformCubicBSpline.h
@@ -93,7 +95,6 @@ set(headers
   NullOut.h
   PlainSeqFileLoader.h
   RangeLimiter.h
-  Referenced.h
   Seq.h
   AbstractSeq.h
   Timeval.h
