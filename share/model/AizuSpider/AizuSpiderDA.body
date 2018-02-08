@@ -1,13 +1,13 @@
 format: ChoreonoidBody
 formatVersion: 1.0
 angleUnit: degree
-name: AizuSpiderDS
+name: AizuSpiderDA
 rootLink: CHASSIS
 
 links:
-  - # Chassis
+  - # Main body
     type: SubBody
-    uri: AizuSpiderS.body
+    uri: AizuSpiderA.body
     translation: [ 0, 0, 0.03503 ]
     jointType: free
 
