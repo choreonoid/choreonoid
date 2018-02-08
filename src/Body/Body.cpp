@@ -331,7 +331,7 @@ Device* Body::findDeviceSub(const std::string& name) const
     if(p != impl->deviceNameMap.end()){
         return p->second;
     }
-    return 0;
+    return nullptr;
 }
 
 
@@ -341,7 +341,7 @@ Referenced* Body::findCacheSub(const std::string& name)
     if(p != impl->cacheMap.end()){
         return p->second;
     }
-    return 0;
+    return nullptr;
 }
 
 
@@ -351,7 +351,7 @@ const Referenced* Body::findCacheSub(const std::string& name) const
     if(p != impl->cacheMap.end()){
         return p->second;
     }
-    return 0;
+    return nullptr;
 }
 
 
