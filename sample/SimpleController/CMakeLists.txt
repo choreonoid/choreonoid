@@ -62,6 +62,10 @@ configure_file(AizuSpiderSA.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 configure_file(AizuSpiderDS.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 configure_file(AizuSpiderDA.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 
+# AizuWheel sample
+add_cnoid_simple_controller(AizuWheelController AizuWheelController.cpp)
+configure_file(AizuWheel.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+
 # Other samples
 add_cnoid_simple_controller(ConveyorController ConveyorController.cpp)
 configure_file(ConveyorSample.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
