@@ -108,7 +108,7 @@ links:
         type: Transform
         rotation: [ [ 0, 0, 1, 180 ], [ 1, 0, 0, 90 ] ]
         # cad coordinate
-        elements: &MAIN_BELT_elements
+        elements: &MAIN_BELT_ELEMENTS
           RigidBody:
             centerOfMass: [ 0.234, 0.00252, 0.00176 ]
             mass: 0.72034
@@ -177,7 +177,7 @@ links:
         type: Transform
         rotation: [ 1, 0, 0, 90 ]
         # cad coordinate
-        elements: *MAIN_BELT_elements
+        elements: *MAIN_BELT_ELEMENTS
       -
         type: AGXVehicleContinuousTrackDevice
         name: L_TRACK_AGX
@@ -233,7 +233,7 @@ links:
         type: Transform
         rotation: [ 0, 0, 1, 180 ]
         # cad coordinate
-        elements: &SUB_BELT_elements
+        elements: &SUB_BELT_ELEMENTS
           type: RigidBody
           centerOfMass: [ -0.11852, 0, 0 ]
           mass: 0.21549
@@ -294,7 +294,7 @@ links:
       -
         type: Transform
         rotation: [ 0, 0, 1, 180 ]
-        elements: *SUB_BELT_elements
+        elements: *SUB_BELT_ELEMENTS
       -
         type: AGXVehicleContinuousTrackDevice
         name: FL_SUB_TRACK_AGX
@@ -352,7 +352,7 @@ links:
     parent: BR_FLIPPER
     jointType: fixed
     elements:
-      - *SUB_BELT_elements
+      - *SUB_BELT_ELEMENTS
       -
         type: AGXVehicleContinuousTrackDevice
         name: BR_SUB_TRACK_AGX
@@ -409,7 +409,7 @@ links:
     parent: BL_FLIPPER
     jointType: fixed
     elements:
-      - *SUB_BELT_elements
+      - *SUB_BELT_ELEMENTS
       -
         type: AGXVehicleContinuousTrackDevice
         name: BL_SUB_TRACK_AGX
