@@ -28,7 +28,7 @@ items:
               0, 1, 0, 
               0, 0, 1 ]
             jointPositions: [ 
-               0.000000,  0.000000,  4.712389, -0.618370, -2.583087, -1.570796,  0.000000,  0.000000, -0.872665,  0.000000, 
+               0.000000,  0.000000, -1.570796, -0.618370, -2.583087, -1.570796,  0.000000,  0.000000, -0.872665,  0.000000, 
               -0.872665,  0.000000, -0.872665,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000 ]
             initialRootPosition: [ -2, -0.5, 0.06 ]
             initialRootAttitude: [ 
@@ -36,7 +36,7 @@ items:
               0, 1, 0, 
               0, 0, 1 ]
             initialJointPositions: [ 
-               0.000000,  0.000000,  4.712389, -0.618370, -2.583087, -1.570796,  0.000000,  0.000000, -0.872665,  0.000000, 
+               0.000000,  0.000000, -1.570796, -0.618370, -2.583087, -1.570796,  0.000000,  0.000000, -0.872665,  0.000000, 
               -0.872665,  0.000000, -0.872665,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000 ]
             zmp: [ 0, 0, 0 ]
             collisionDetection: true
@@ -188,6 +188,54 @@ items:
             kinematicWalking: false
             2Dmode: false
             oldAccelSensorMode: false
+        - 
+          id: 10
+          name: "AGXSimulator-Velocity"
+          plugin: AGXDynamics
+          class: AGXSimulatorItem
+          data: 
+            timestep: 0.005
+            realtimeSync: true
+            recording: "full"
+            timeRangeMode: "Unlimited"
+            timeLength: 180
+            allLinkPositionOutputMode: true
+            deviceStateOutput: true
+            controllerThreads: true
+            recordCollisionData: false
+            controllerOptions: "velocity"
+            Gravity: [ 0, 0, -9.80665 ]
+            NumThreads: 4
+            ContactReduction: true
+            ContactReductionBinResolution: 3
+            ContactReductionThreshhold: 12
+            ContactWarmstarting: false
+            AutoSleep: false
+            SaveToAGXFileOnStart: false
+        - 
+          id: 11
+          name: "AGXSimulator-Torque"
+          plugin: AGXDynamics
+          class: AGXSimulatorItem
+          data: 
+            timestep: 0.005
+            realtimeSync: true
+            recording: "full"
+            timeRangeMode: "Unlimited"
+            timeLength: 180
+            allLinkPositionOutputMode: true
+            deviceStateOutput: true
+            controllerThreads: true
+            recordCollisionData: false
+            controllerOptions: "torque"
+            Gravity: [ 0, 0, -9.80665 ]
+            NumThreads: 4
+            ContactReduction: true
+            ContactReductionBinResolution: 3
+            ContactReductionThreshhold: 12
+            ContactWarmstarting: false
+            AutoSleep: false
+            SaveToAGXFileOnStart: false
 views: 
   - 
     id: 0
