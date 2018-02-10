@@ -158,7 +158,7 @@ standardPose: [
   # Caster yaw joints
   0, 0,
   # Arm Joints
-  270, -35.43, -148, -90, 0,
+  -90, -35.43, -148, -90, 0,
   # Finger joints
   0, -50, 0, -50, 0, -50, 0
 ]
