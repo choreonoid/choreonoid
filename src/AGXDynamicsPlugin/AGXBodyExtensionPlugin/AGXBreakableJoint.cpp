@@ -302,12 +302,12 @@ AGXBreakableJoint::AGXBreakableJoint(AGXBreakableJointDevice* device, AGXBody* a
 
     AGXElementaryConstraint base, range, lock;
     jointDeviceInfo.read("jointCompliance", base.compliance);
-    jointDeviceInfo.read("jointDamping", base.spookDamping);
+    jointDeviceInfo.read("jointSpookDamping", base.spookDamping);
     jointDeviceInfo.read("jointRangeCompliance", range.compliance);
-    jointDeviceInfo.read("jointRangeDamping", range.spookDamping);
+    jointDeviceInfo.read("jointRangeSpookDamping", range.spookDamping);
     jointDeviceInfo.read("jointLock", lock.enable);
     jointDeviceInfo.read("jointLockCompliance", lock.compliance);
-    jointDeviceInfo.read("jointLockDamping", lock.spookDamping);
+    jointDeviceInfo.read("jointLockSpookDamping", lock.spookDamping);
     Vector2 baseForceRange, rangeForceRange, lockForceRange;
     if(agxConvert::setVector(jointDeviceInfo.find("jointForceRange"), baseForceRange)){
         base.forceRange = agx::RangeReal(baseForceRange(0), baseForceRange(1));

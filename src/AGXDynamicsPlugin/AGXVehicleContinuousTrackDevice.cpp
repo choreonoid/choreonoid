@@ -72,7 +72,7 @@ bool readAGXVehicleContinuousTrackDevice(YAMLBodyLoader& loader, Mapping& node)
     NODE_READ(nodeThickerThickness);
     NODE_READ(useThickerNodeEvery);
     NODE_READ(hingeCompliance);
-    node.read("hingeDamping", desc.hingeSpookDamping);
+    node.read("hingeSpookDamping", desc.hingeSpookDamping);
     NODE_READ(minStabilizingHingeNormalForce);
     NODE_READ(stabilizingHingeFrictionParameter);
     NODE_READ(nodesToWheelsMergeThreshold);
@@ -82,7 +82,7 @@ bool readAGXVehicleContinuousTrackDevice(YAMLBodyLoader& loader, Mapping& node)
     NODE_READ(contactReduction);
     NODE_READ(enableLockToReachMergeCondition);
     NODE_READ(lockToReachMergeConditionCompliance);
-    node.read("lockToReachMergeConditionDamping", desc.lockToReachMergeConditionSpookDamping);
+    node.read("lockToReachMergeConditionSpookDamping", desc.lockToReachMergeConditionSpookDamping);
     NODE_READ(maxAngleMergeCondition);
     node.read("material", desc.materialName);
 

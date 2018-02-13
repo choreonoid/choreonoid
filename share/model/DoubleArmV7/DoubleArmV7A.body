@@ -33,7 +33,7 @@ links:
         useThickerNodeEvery: 2
         nodeDistanceTension: 1.0E-4
         hingeCompliance: 1.0E-8
-        hingeDamping: 0.01
+        hingeSpookDamping: 0.01
         minStabilizingHingeNormalForce: 1000
         stabilizingHingeFrictionParameter: 1e-2
         #nodesToWheelsMergeThreshold: -0.01
@@ -43,7 +43,7 @@ links:
         contactReduction: 3
         enableLockToReachMergeCondition: false
         lockToReachMergeConditionCompliance: 0.1
-        lockToReachMergeConditionDamping: 0.01
+        lockToReachMergeConditionSpookDamping: 0.01
         material: DoubleArmV7ATracks
       -
         type: AGXVehicleContinuousTrackDevice
@@ -59,7 +59,7 @@ links:
         useThickerNodeEvery: 2
         nodeDistanceTension: 1.0E-4
         hingeCompliance: 1.0E-8
-        hingeDamping: 0.01
+        hingeSpookDamping: 0.01
         minStabilizingHingeNormalForce: 1000
         stabilizingHingeFrictionParameter: 1e-2
         #nodesToWheelsMergeThreshold: -0.01
@@ -69,7 +69,7 @@ links:
         contactReduction: 3
         enableLockToReachMergeCondition: false
         lockToReachMergeConditionCompliance: 0.1
-        lockToReachMergeConditionDamping: 0.01
+        lockToReachMergeConditionSpookDamping: 0.01
         material: DoubleArmV7ATracks
   -
     name: WHEEL_L0

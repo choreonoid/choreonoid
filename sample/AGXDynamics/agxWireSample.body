@@ -31,9 +31,9 @@ links:
         selfCollision: true
         materialName: Wire
         #wireYoungsModulusStretch: 6E10
-        #wireDampingStretch: 0.075
+        #wireSpookDampingStretch: 0.075
         #wireYoungsModulusBend: 6E10
-        #wireDampingBend: 0.075
+        #wireSpookDampingBend: 0.075
         Winch:
             linkName: Drum
             position: [ 0.0, 0.0, 0.27 ]

@@ -490,7 +490,7 @@ links:
         nodeThickerThickness: 0.02
         useThickerNodeEvery: 0
         hingeCompliance: 9.0E-10
-        hingeDamping: 0.01
+        hingeSpookDamping: 0.01
         minStabilizingHingeNormalForce: 100
         stabilizingHingeFrictionParameter: 1e-6
         nodesToWheelsMergeThreshold: -0.01
@@ -500,7 +500,7 @@ links:
         contactReduction: 3
         enableLockToReachMergeCondition: true
         lockToReachMergeConditionCompliance: 0.1
-        lockToReachMergeConditionDamping: 0.01
+        lockToReachMergeConditionSpookDamping: 0.01
         #maxAngleMergeCondition: 1.0E-5
         material: TankTracks
       -
@@ -690,7 +690,7 @@ links:
         nodeThickerThickness: 0.02
         useThickerNodeEvery: 0
         hingeCompliance: 9.0E-10
-        hingeDamping: 0.01
+        hingeSpookDamping: 0.01
         minStabilizingHingeNormalForce: 100
         stabilizingHingeFrictionParameter: 1e-6
         nodesToWheelsMergeThreshold: -0.01
@@ -700,7 +700,7 @@ links:
         contactReduction: 3
         enableLockToReachMergeCondition: true
         lockToReachMergeConditionCompliance: 1.0E-10
-        lockToReachMergeConditionDamping: 0.01
+        lockToReachMergeConditionSpookDamping: 0.01
         #maxAngleMergeCondition: 1.0E-5
         material: TankTracks
       -

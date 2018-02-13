@@ -257,7 +257,7 @@ AGXMagneticJoint::AGXMagneticJoint(AGXMagneticJointDevice* device, AGXBody* agxB
 
     AGXElementaryConstraint base;
     jointDeviceInfo.read("jointCompliance", base.compliance);
-    jointDeviceInfo.read("jointDamping", base.spookDamping);
+    jointDeviceInfo.read("jointSpookDamping", base.spookDamping);
 
     // Create magnetic joint
     AGXLink* const agxLink1 = getAGXBody()->getAGXLink(jp.link1Name);

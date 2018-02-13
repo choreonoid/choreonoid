@@ -83,7 +83,7 @@ void AGXScene::printContactMaterialTable()
         std::cout << "[" << mat->getMaterial1()->getName() << " " << mat->getMaterial2()->getName() << "]" << std::endl;
         PRINT_MATERIAL(youngsModulus, mat->getYoungsModulus());
         PRINT_MATERIAL(restitution, mat->getRestitution());
-        PRINT_MATERIAL(damping, mat->getDamping());
+        PRINT_MATERIAL(spookDamping, mat->getDamping());
         PRINT_MATERIAL(friction, mat->getFrictionCoefficient());
         PRINT_MATERIAL(surfaceViscosity, mat->getSurfaceViscosity());
         PRINT_MATERIAL(enableSurfaceFriction, mat->getSurfaceFrictionEnabled());

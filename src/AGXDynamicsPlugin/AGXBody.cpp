@@ -533,15 +533,15 @@ agx::ConstraintRef AGXLink::createAGXConstraint()
 
     AGXElementaryConstraint base, motor, range, lock;
     map->read("jointCompliance", base.compliance);
-    map->read("jointDamping", base.spookDamping);
+    map->read("jointSpookDamping", base.spookDamping);
     map->read("jointMotor", motor.enable);
     map->read("jointMotorCompliance", motor.compliance);
-    map->read("jointMotorDamping", motor.spookDamping);
+    map->read("jointMotorSpookDamping", motor.spookDamping);
     map->read("jointRangeCompliance", range.compliance);
-    map->read("jointRangeDamping", range.spookDamping);
+    map->read("jointRangeSpookDamping", range.spookDamping);
     map->read("jointLock", lock.enable);
     map->read("jointLockCompliance",  lock.compliance);
-    map->read("jointLockDamping",  lock.spookDamping);
+    map->read("jointLockSpookDamping",  lock.spookDamping);
 
     Vector2 baseForceRange, motorForceRange, rangeForceRange, lockForceRange;
     if(agxConvert::setVector(map->find("jointForceRange"), baseForceRange)){

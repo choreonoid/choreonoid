@@ -762,10 +762,10 @@ links:
     jointRange: [ -51, 148 ]
     maxJointVelocity: 1E6
     jointLockCompliance: 1e-4
-    jointLockDamping: 0.1
+    jointLockSpookDamping: 0.1
     jointLockForceRange: [ -1000, 1000 ]
     jointMotorCompliacne: 1e-1
-    jointMotorDamping: 0.1
+    jointMotorSpookDamping: 0.1
     jointMotorForceRange: [ -1000, 1000 ]
     mass: 2.4001
     centerOfMass: [ -0.00771, -0.01238, -0.09652 ]
@@ -931,10 +931,10 @@ links:
     jointRange: [ -107, 107 ]
     maxJointVelocity: 1E6
     jointLockCompliance: 1e-4
-    jointLockDamping: 0.1
+    jointLockSpookDamping: 0.1
     jointLockForceRange: [ -1000, 1000 ]
     jointMotorCompliacne: 1e-1
-    jointMotorDamping: 0.1
+    jointMotorSpookDamping: 0.1
     jointMotorForceRange: [ -1000, 1000 ]
     mass: 8.64
     centerOfMass: [ -1e-05, 0.00091, -0.07045 ]
@@ -1006,10 +1006,10 @@ links:
     jointRange: unlimited
     maxJointVelocity: 1E6
     jointLockCompliance: 1e-4
-    jointLockDamping: 0.1
+    jointLockSpookDamping: 0.1
     jointLockForceRange: [ -1000, 1000 ]
     jointMotorCompliacne: 1e-1
-    jointMotorDamping: 0.1
+    jointMotorSpookDamping: 0.1
     jointMotorForceRange: [ -1000, 1000 ]
     mass: 1.72
     centerOfMass: [ 0.0199, -0.01113, -0.02905 ]
@@ -1091,10 +1091,10 @@ links:
     jointRange: [ -163, 38 ]
     maxJointVelocity: 1E6
     jointLockCompliance: 1e-4
-    jointLockDamping: 0.1
+    jointLockSpookDamping: 0.1
     jointLockForceRange: [ -1000, 1000 ]
     jointMotorCompliacne: 1e-1
-    jointMotorDamping: 0.1
+    jointMotorSpookDamping: 0.1
     jointMotorForceRange: [ -1000, 1000 ]
     mass: 5.72
     centerOfMass: [ -0.02134, -0.00027, -0.06496 ]
@@ -1186,10 +1186,10 @@ links:
     jointRange: unlimited
     maxJointVelocity: 1E6
     jointLockCompliance: 1e-4
-    jointLockDamping: 0.1
+    jointLockSpookDamping: 0.1
     jointLockForceRange: [ -1000, 1000 ]
     jointMotorCompliacne: 1e-1
-    jointMotorDamping: 0.1
+    jointMotorSpookDamping: 0.1
     jointMotorForceRange: [ -1000, 1000 ]
     mass: 1.16
     centerOfMass: [ 0.0, -0.00909, -0.02873 ]
@@ -1283,10 +1283,10 @@ links:
     jointRange: [ -93, 93 ]
     maxJointVelocity: 1E6
     jointLockCompliance: 1e-4
-    jointLockDamping: 0.1
+    jointLockSpookDamping: 0.1
     jointLockForceRange: [ -1000, 1000 ]
     jointMotorCompliacne: 1e-1
-    jointMotorDamping: 0.1
+    jointMotorSpookDamping: 0.1
     jointMotorForceRange: [ -1000, 1000 ]
     mass: 5.06
     centerOfMass: [ 0.00215, 0.0017, -0.07672 ]
@@ -1379,10 +1379,10 @@ links:
     jointRange: [ -106, 106 ]
     maxJointVelocity: 1E6
     jointLockCompliance: 1e-4
-    jointLockDamping: 0.1
+    jointLockSpookDamping: 0.1
     jointLockForceRange: [ -1000, 1000 ]
     jointMotorCompliacne: 1e-1
-    jointMotorDamping: 0.1
+    jointMotorSpookDamping: 0.1
     jointMotorForceRange: [ -1000, 1000 ]
     mass: 0.82
     centerOfMass: [ -0.01007, 0.0, -0.02816 ]
@@ -1584,10 +1584,10 @@ links:
     jointRange: [ -148, 51 ]
     maxJointVelocity: 1E6
     jointLockCompliance: 1e-4
-    jointLockDamping: 0.1
+    jointLockSpookDamping: 0.1
     jointLockForceRange: [ -1000, 1000 ]
     jointMotorCompliacne: 1e-1
-    jointMotorDamping: 0.1
+    jointMotorSpookDamping: 0.1
     jointMotorForceRange: [ -1000, 1000 ]
     mass: 2.4001
     centerOfMass: [ -0.00771, 0.01238, -0.09652 ]
@@ -1749,10 +1749,10 @@ links:
     jointRange: [ -107, 107 ]
     maxJointVelocity: 1E6
     jointLockCompliance: 1e-4
-    jointLockDamping: 0.1
+    jointLockSpookDamping: 0.1
     jointLockForceRange: [ -1000, 1000 ]
     jointMotorCompliacne: 1e-1
-    jointMotorDamping: 0.1
+    jointMotorSpookDamping: 0.1
     jointMotorForceRange: [ -1000, 1000 ]
     mass: 8.64
     centerOfMass: [ 1e-05, -0.00091, -0.07045 ]
@@ -1818,10 +1818,10 @@ links:
     jointRange: unlimited
     maxJointVelocity: 1E6
     jointLockCompliance: 1e-4
-    jointLockDamping: 0.1
+    jointLockSpookDamping: 0.1
     jointLockForceRange: [ -1000, 1000 ]
     jointMotorCompliacne: 1e-1
-    jointMotorDamping: 0.1
+    jointMotorSpookDamping: 0.1
     jointMotorForceRange: [ -1000, 1000 ]
     mass: 1.72
     centerOfMass: [ 0.01991, 0.01113, -0.02905 ]
@@ -1899,10 +1899,10 @@ links:
     jointRange: [ -163, 38 ]
     maxJointVelocity: 1E6
     jointLockCompliance: 1e-4
-    jointLockDamping: 0.1
+    jointLockSpookDamping: 0.1
     jointLockForceRange: [ -1000, 1000 ]
     jointMotorCompliacne: 1e-1
-    jointMotorDamping: 0.1
+    jointMotorSpookDamping: 0.1
     jointMotorForceRange: [ -1000, 1000 ]
     mass: 5.72
     centerOfMass: [ -0.02128, 0.00026, -0.06497 ]
@@ -1985,10 +1985,10 @@ links:
     jointRange: unlimited
     maxJointVelocity: 1E6
     jointLockCompliance: 1e-4
-    jointLockDamping: 0.1
+    jointLockSpookDamping: 0.1
     jointLockForceRange: [ -1000, 1000 ]
     jointMotorCompliacne: 1e-1
-    jointMotorDamping: 0.1
+    jointMotorSpookDamping: 0.1
     jointMotorForceRange: [ -1000, 1000 ]
     mass: 1.16
     centerOfMass: [ 0.0, 0.00909, -0.02873 ]
@@ -2079,10 +2079,10 @@ links:
     jointRange: [ -93, 93 ]
     maxJointVelocity: 1E6
     jointLockCompliance: 1e-4
-    jointLockDamping: 0.1
+    jointLockSpookDamping: 0.1
     jointLockForceRange: [ -1000, 1000 ]
     jointMotorCompliacne: 1e-1
-    jointMotorDamping: 0.1
+    jointMotorSpookDamping: 0.1
     jointMotorForceRange: [ -1000, 1000 ]
     mass: 5.06
     centerOfMass: [ 0.00215, -0.00173, -0.07672 ]
@@ -2169,10 +2169,10 @@ links:
     jointRange: [ -106, 106 ]
     maxJointVelocity: 1E6
     jointLockCompliance: 1e-4
-    jointLockDamping: 0.1
+    jointLockSpookDamping: 0.1
     jointLockForceRange: [ -1000, 1000 ]
     jointMotorCompliacne: 1e-1
-    jointMotorDamping: 0.1
+    jointMotorSpookDamping: 0.1
     jointMotorForceRange: [ -1000, 1000 ]
     mass: 0.82
     centerOfMass: [ -0.01007, 0.0, -0.02816 ]
@@ -2323,10 +2323,10 @@ links:
     jointRange: [ -148, 51 ]
     maxJointVelocity: 1E6
     jointLockCompliance: 1e-4
-    jointLockDamping: 0.1
+    jointLockSpookDamping: 0.1
     jointLockForceRange: [ -1000, 1000 ]
     jointMotorCompliacne: 1e-1
-    jointMotorDamping: 0.1
+    jointMotorSpookDamping: 0.1
     jointMotorForceRange: [ -1000, 1000 ]
     mass: 2.4001
     centerOfMass: [ -0.00771, -0.01238, 0.09652 ]
@@ -2348,10 +2348,10 @@ links:
     jointRange: [ -107, 107 ]
     maxJointVelocity: 1E6
     jointLockCompliance: 1e-4
-    jointLockDamping: 0.1
+    jointLockSpookDamping: 0.1
     jointLockForceRange: [ -1000, 1000 ]
     jointMotorCompliacne: 1e-1
-    jointMotorDamping: 0.1
+    jointMotorSpookDamping: 0.1
     jointMotorForceRange: [ -1000, 1000 ]
     mass: 8.64
     centerOfMass: [ 1e-05, 0.00091, 0.07045 ]
@@ -2373,10 +2373,10 @@ links:
     jointRange: unlimited
     maxJointVelocity: 1E6
     jointLockCompliance: 1e-4
-    jointLockDamping: 0.1
+    jointLockSpookDamping: 0.1
     jointLockForceRange: [ -1000, 1000 ]
     jointMotorCompliacne: 1e-1
-    jointMotorDamping: 0.1
+    jointMotorSpookDamping: 0.1
     jointMotorForceRange: [ -1000, 1000 ]
     mass: 1.72
     centerOfMass: [ 0.01991, -0.01113, 0.02905 ]
@@ -2398,10 +2398,10 @@ links:
     jointRange: [ -28, 163 ]
     maxJointVelocity: 1E6
     jointLockCompliance: 1e-4
-    jointLockDamping: 0.1
+    jointLockSpookDamping: 0.1
     jointLockForceRange: [ -1000, 1000 ]
     jointMotorCompliacne: 1e-1
-    jointMotorDamping: 0.1
+    jointMotorSpookDamping: 0.1
     jointMotorForceRange: [ -1000, 1000 ]
     mass: 5.72
     centerOfMass: [ -0.02128, -0.00026, 0.06497 ]
@@ -2423,10 +2423,10 @@ links:
     jointRange: unlimited
     maxJointVelocity: 1E6
     jointLockCompliance: 1e-4
-    jointLockDamping: 0.1
+    jointLockSpookDamping: 0.1
     jointLockForceRange: [ -1000, 1000 ]
     jointMotorCompliacne: 1e-1
-    jointMotorDamping: 0.1
+    jointMotorSpookDamping: 0.1
     jointMotorForceRange: [ -1000, 1000 ]
     mass: 1.16
     centerOfMass: [ 0.0, -0.00909, 0.02873 ]
@@ -2448,10 +2448,10 @@ links:
     jointRange: [ -93, 93 ]
     maxJointVelocity: 1E6
     jointLockCompliance: 1e-4
-    jointLockDamping: 0.1
+    jointLockSpookDamping: 0.1
     jointLockForceRange: [ -1000, 1000 ]
     jointMotorCompliacne: 1e-1
-    jointMotorDamping: 0.1
+    jointMotorSpookDamping: 0.1
     jointMotorForceRange: [ -1000, 1000 ]
     mass: 5.06
     centerOfMass: [ 0.00215, 0.00173, 0.07672 ]
@@ -2473,10 +2473,10 @@ links:
     jointRange: [ -106, 106 ]
     maxJointVelocity: 1E6
     jointLockCompliance: 1e-4
-    jointLockDamping: 0.1
+    jointLockSpookDamping: 0.1
     jointLockForceRange: [ -1000, 1000 ]
     jointMotorCompliacne: 1e-1
-    jointMotorDamping: 0.1
+    jointMotorSpookDamping: 0.1
     jointMotorForceRange: [ -1000, 1000 ]
     mass: 0.82
     centerOfMass: [ -0.01007, 0.0, 0.02816 ]
@@ -2531,10 +2531,10 @@ links:
     jointRange: [ -51, 148 ]
     maxJointVelocity: 1E6
     jointLockCompliance: 1e-4
-    jointLockDamping: 0.1
+    jointLockSpookDamping: 0.1
     jointLockForceRange: [ -1000, 1000 ]
     jointMotorCompliacne: 1e-1
-    jointMotorDamping: 0.1
+    jointMotorSpookDamping: 0.1
     jointMotorForceRange: [ -1000, 1000 ]
     mass: 2.4001
     centerOfMass: [ -0.00771, 0.01238, 0.09652 ]
@@ -2556,10 +2556,10 @@ links:
     jointRange: [ -107, 107 ]
     maxJointVelocity: 1E6
     jointLockCompliance: 1e-4
-    jointLockDamping: 0.1
+    jointLockSpookDamping: 0.1
     jointLockForceRange: [ -1000, 1000 ]
     jointMotorCompliacne: 1e-1
-    jointMotorDamping: 0.1
+    jointMotorSpookDamping: 0.1
     jointMotorForceRange: [ -1000, 1000 ]
     mass: 8.64
     centerOfMass: [ -1e-05, -0.00091, 0.07045 ]
@@ -2581,10 +2581,10 @@ links:
     jointRange: unlimited
     maxJointVelocity: 1E6
     jointLockCompliance: 1e-4
-    jointLockDamping: 0.1
+    jointLockSpookDamping: 0.1
     jointLockForceRange: [ -1000, 1000 ]
     jointMotorCompliacne: 1e-1
-    jointMotorDamping: 0.1
+    jointMotorSpookDamping: 0.1
     jointMotorForceRange: [ -1000, 1000 ]
     mass: 1.72
     centerOfMass: [ 0.0199, 0.01113, 0.02905 ]
@@ -2606,10 +2606,10 @@ links:
     jointRange: [ -38, 163 ]
     maxJointVelocity: 1E6
     jointLockCompliance: 1e-4
-    jointLockDamping: 0.1
+    jointLockSpookDamping: 0.1
     jointLockForceRange: [ -1000, 1000 ]
     jointMotorCompliacne: 1e-1
-    jointMotorDamping: 0.1
+    jointMotorSpookDamping: 0.1
     jointMotorForceRange: [ -1000, 1000 ]
     mass: 5.72
     centerOfMass: [ -0.02134, 0.00027, 0.06496 ]
@@ -2631,10 +2631,10 @@ links:
     jointRange: unlimited
     maxJointVelocity: 1E6
     jointLockCompliance: 1e-4
-    jointLockDamping: 0.1
+    jointLockSpookDamping: 0.1
     jointLockForceRange: [ -1000, 1000 ]
     jointMotorCompliacne: 1e-1
-    jointMotorDamping: 0.1
+    jointMotorSpookDamping: 0.1
     jointMotorForceRange: [ -1000, 1000 ]
     mass: 1.16
     centerOfMass: [ 0.0, 0.00909, 0.02873 ]
@@ -2656,10 +2656,10 @@ links:
     jointRange: [ -93, 93 ]
     maxJointVelocity: 1E6
     jointLockCompliance: 1e-4
-    jointLockDamping: 0.1
+    jointLockSpookDamping: 0.1
     jointLockForceRange: [ -1000, 1000 ]
     jointMotorCompliacne: 1e-1
-    jointMotorDamping: 0.1
+    jointMotorSpookDamping: 0.1
     jointMotorForceRange: [ -1000, 1000 ]
     mass: 5.06
     centerOfMass: [ 0.00215, -0.0017, 0.07672 ]
@@ -2681,10 +2681,10 @@ links:
     jointRange: [ -106, 106 ]
     maxJointVelocity: 1E6
     jointLockCompliance: 1e-4
-    jointLockDamping: 0.1
+    jointLockSpookDamping: 0.1
     jointLockForceRange: [ -1000, 1000 ]
     jointMotorCompliacne: 1e-1
-    jointMotorDamping: 0.1
+    jointMotorSpookDamping: 0.1
     jointMotorForceRange: [ -1000, 1000 ]
     mass: 0.82
     centerOfMass: [ -0.01007, 0.0, 0.02816 ]

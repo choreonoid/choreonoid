@@ -40,7 +40,7 @@ contactMaterials:
     materials: [ Ground, agxMat5 ]
     youngsModulus: 1.0E5
     restitution: 0.1
-    damping: 0.08
+    spookDamping: 0.08
     friction: 0.416667
     surfaceViscosity: 1.0E-8
     adhesionForce: 100

@@ -48,6 +48,6 @@ links:
         connectAxis1: [ 0, 1, 0 ]
         connectAxis2: [ 0, 0, 1 ]
         jointCompliance: 1e-6
-        jointDamping: 1.0
+        jointSpookDamping: 1.0
         validDistance: 1.0
         validAngle: 20
