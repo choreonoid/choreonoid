@@ -234,7 +234,9 @@ void AGXSimulatorItemImpl::setAdditionalAGXMaterialParam()
         [&](int id1, int id2, ContactMaterial* mat){
             agx::Material* mat1 = mgr->getMaterial(Material::name(id1));
             agx::Material* mat2 = mgr->getMaterial(Material::name(id2));
+            if(!mat1 || !mat2) return;
             agx::ContactMaterial* cmat = mgr->getOrCreateContactMaterial(mat1, mat2);
+            if(!cmat) return;
             string cmatName = "[" + mat1->getName() + " " + mat2->getName() + "]";
             std::cout << "AGXDynamicsPlugin:INFO " << "contact material " << cmatName  << std::endl;
             auto cnfobfm = dynamic_cast<agx::ConstantNormalForceOrientedBoxFrictionModel*>(cmat->getFrictionModel());
