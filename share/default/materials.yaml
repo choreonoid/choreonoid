@@ -79,10 +79,11 @@ contactMaterials:
   -
     materials: [ Ground, TankTracks]
     youngsModulus: 1e10
-    friction: 1.0
+    friction: 0.7
+    secondaryfriction: 0.5
     restitution: 0.0
-    surfaceViscosity: 1e-2
-    secondarySurfaceViscosity: 4e-2
+    surfaceViscosity: 1e-7
+    secondarySurfaceViscosity: 1e-7
     primaryDirection: [ 1, 0, 0 ]
     frictionModel: [ orientedBox, direct ]
     referenceBodyName: Tank

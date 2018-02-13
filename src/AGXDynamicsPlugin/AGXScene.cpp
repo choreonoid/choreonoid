@@ -85,7 +85,9 @@ void AGXScene::printContactMaterialTable()
         PRINT_MATERIAL(restitution, mat->getRestitution());
         PRINT_MATERIAL(spookDamping, mat->getDamping());
         PRINT_MATERIAL(friction, mat->getFrictionCoefficient());
+        PRINT_MATERIAL(secondaryFriction, mat->getFrictionCoefficient(agx::ContactMaterial::SECONDARY_DIRECTION));
         PRINT_MATERIAL(surfaceViscosity, mat->getSurfaceViscosity());
+        PRINT_MATERIAL(secondarySurfaceViscosity, mat->getSurfaceViscosity(agx::ContactMaterial::SECONDARY_DIRECTION));
         PRINT_MATERIAL(enableSurfaceFriction, mat->getSurfaceFrictionEnabled());
         PRINT_MATERIAL(adhesionForce, mat->getAdhesion());
         PRINT_MATERIAL(adhesivOverLap, mat->getAdhesiveOverlap());
