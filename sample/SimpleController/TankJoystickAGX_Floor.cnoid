@@ -12,51 +12,16 @@ items:
       data: 
         collisionDetection: false
         collisionDetector: AISTCollisionDetector
+        materialTableFile: "${SHARE}/default/materials.yaml"
       children: 
         - 
           id: 2
-          name: "Tank"
-          plugin: Body
-          class: BodyItem
-          data: 
-            modelFile: "${SHARE}/model/tank/tank_agx.body"
-            currentBaseLink: ""
-            rootPosition: [ -2, -0.5, 0.1 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            jointPositions: [  0.000000,  0.000000,  0.000000,  0.000000, -2.134810,  0.939983,  0.546190,  0.960524 ]
-            initialRootPosition: [ -2, -0.5, 0.1 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            initialJointPositions: [  0.000000,  0.000000,  0.000000,  0.000000 ]
-            zmp: [ 0, 0, 0 ]
-            collisionDetection: true
-            selfCollisionDetection: false
-            isEditable: true
-          children: 
-            - 
-              id: 3
-              name: "JoystickController"
-              plugin: Body
-              class: SimpleControllerItem
-              data: 
-                isImmediateMode: true
-                controllerOptions: "wheels velocity"
-                controller: "TankJoystickController"
-                reloading: true
-                RelativePathBase: "Controller directory"
-        - 
-          id: 4
           name: "Floor"
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/misc/floor.wrl"
-            currentBaseLink: "BASE"
+            modelFile: "${SHARE}/model/misc/floor.body"
+            currentBaseLink: "Floor"
             rootPosition: [ 0, 0, -0.1 ]
             rootAttitude: [ 
               1, 0, 0, 
@@ -72,6 +37,42 @@ items:
             collisionDetection: true
             selfCollisionDetection: false
             isEditable: false
+        - 
+          id: 3
+          name: "Tank"
+          plugin: Body
+          class: BodyItem
+          data: 
+            modelFile: "${SHARE}/model/tank/tank_agx.body"
+            currentBaseLink: ""
+            rootPosition: [ -2, -0.5, 0.2 ]
+            rootAttitude: [ 
+              1, 0, 0, 
+              0, 1, 0, 
+              0, 0, 1 ]
+            jointPositions: [  0.000000,  0.000000,  0.000000,  0.000000, -2.134810,  0.939983,  0.546190,  0.960524 ]
+            initialRootPosition: [ -2, -0.5, 0.2 ]
+            initialRootAttitude: [ 
+              1, 0, 0, 
+              0, 1, 0, 
+              0, 0, 1 ]
+            initialJointPositions: [  0.000000,  0.000000,  0.000000,  0.000000, -2.134810,  0.939983,  0.546190,  0.960524 ]
+            zmp: [ 0, 0, 0 ]
+            collisionDetection: true
+            selfCollisionDetection: false
+            isEditable: true
+          children: 
+            - 
+              id: 4
+              name: "JoystickController"
+              plugin: Body
+              class: SimpleControllerItem
+              data: 
+                isNoDelayMode: true
+                controllerOptions: "wheels velocity"
+                controller: "TankJoystickController"
+                baseDirectory: "Controller directory"
+                reloading: true
         - 
           id: 5
           name: "Simulator"
@@ -91,10 +92,17 @@ items:
                 timeLength: 180
                 allLinkPositionOutputMode: true
                 deviceStateOutput: true
-                selfCollision: false
                 controllerThreads: true
                 recordCollisionData: false
                 controllerOptions: ""
+                Gravity: [ 0, 0, -9.80665 ]
+                NumThreads: 1
+                ContactReduction: true
+                ContactReductionBinResolution: 3
+                ContactReductionThreshhold: 12
+                ContactWarmstarting: false
+                AutoSleep: false
+                SaveToAGXFileOnStart: false
             - 
               id: 7
               name: "AGXSimulator200Hz"
@@ -108,10 +116,17 @@ items:
                 timeLength: 180
                 allLinkPositionOutputMode: true
                 deviceStateOutput: true
-                selfCollision: false
                 controllerThreads: true
                 recordCollisionData: false
                 controllerOptions: ""
+                Gravity: [ 0, 0, -9.80665 ]
+                NumThreads: 1
+                ContactReduction: true
+                ContactReductionBinResolution: 3
+                ContactReductionThreshhold: 12
+                ContactWarmstarting: false
+                AutoSleep: false
+                SaveToAGXFileOnStart: false
 views: 
   - 
     id: 0
@@ -125,8 +140,8 @@ views:
     mounted: true
     state: 
       selected: [ 7 ]
-      checked: [ 1, 2, 4 ]
-      expanded: [ 1, 2, 3, 5 ]
+      checked: [ 1, 2, 3 ]
+      expanded: [ 1, 3, 4, 5 ]
   - 
     id: 2
     plugin: Base
@@ -179,9 +194,9 @@ views:
           fieldOfView: 0.6978
           near: 0.01
           far: 10000
-          eye: [ -2.93716454, -2.8653206, 0.457947384 ]
-          direction: [ 0.51107714, 0.835946618, -0.199983522 ]
-          up: [ 0.104314231, 0.170622244, 0.979799261 ]
+          eye: [ -4.15193416, -1.80705081, 1.00280019 ]
+          direction: [ 0.805481537, 0.507304675, -0.306335537 ]
+          up: [ 0.259209478, 0.16325412, 0.951923599 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
@@ -280,7 +295,7 @@ views:
       spinBox: true
       slider: true
       labelOnLeft: true
-      currentBodyItem: 4
+      currentBodyItem: 3
   - 
     id: 8
     plugin: Body
@@ -288,10 +303,10 @@ views:
     mounted: true
     state: 
       listingMode: "Link List"
-      currentBodyItem: 4
+      currentBodyItem: 3
       bodyItems: 
         - 
-          id: 2
+          id: 3
           selectedLinks: [ 0 ]
   - 
     id: 9
@@ -317,6 +332,8 @@ toolbars:
     snapDistance: 0.025
     penetrationBlockDepth: 0.0005
     lazyCollisionDetectionMode: true
+  "BodyBar": 
+    current: 3
   "LeggedBodyBar": 
     stanceWidth: 0.15
   "BodyMotionGenerationBar": 
@@ -363,7 +380,7 @@ Body:
         showPpcom: false
         showZmp: false
       - 
-        bodyItem: 4
+        bodyItem: 3
         showCenterOfMass: false
         showPpcom: false
         showZmp: false
@@ -377,6 +394,11 @@ Body:
     targetJoints: all
     checkSelfCollisions: true
     onlyTimeBarRange: false
+  "SplineFilterDialog": 
+    isInputFrameRateSpecified: false
+    inputFrameRate: 200
+    isOutputFrameRateSpecified: false
+    outputFrameRate: 200
 viewAreas: 
   - 
     type: embedded
@@ -384,7 +406,7 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 340, 1449 ]
+      sizes: [ 334, 1426 ]
       children: 
         - 
           type: splitter
@@ -407,12 +429,12 @@ viewAreas:
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 166, 1277 ]
+              sizes: [ 515, 905 ]
               children: 
                 - 
                   type: pane
                   views: [ 6, 7, 4 ]
-                  current: 4
+                  current: 6
                 - 
                   type: pane
                   views: [ 3 ]
@@ -420,7 +442,7 @@ viewAreas:
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 869, 574 ]
+              sizes: [ 855, 565 ]
               children: 
                 - 
                   type: pane
