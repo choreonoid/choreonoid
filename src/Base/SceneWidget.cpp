@@ -1395,6 +1395,47 @@ void SceneWidgetImpl::mouseMoveEvent(QMouseEvent* event)
 }
 
 
+static void findObjectNameFromChildren(SgObject* object, string& name)
+{
+    int n = object->numChildObjects();
+    for(int i=0; i < n; ++i){
+        SgObject* child = object->childObject(i);
+        if(!child->name().empty()){
+            name = child->name();
+        } else {
+            findObjectNameFromChildren(child, name);
+        }
+        if(!name.empty()){
+            break;
+        }
+    }
+}
+
+
+static string findObjectNameFromNodePath(const SgNodePath& path)
+{
+    string name;
+
+    if(!path.empty()){
+        SgNode* node = path.back();
+        if(node->name().empty()){
+            findObjectNameFromChildren(node, name);
+        }
+        if(name.empty()){
+            for(auto iter = path.rbegin(); iter != path.rend(); ++iter){
+                SgNode* node = *iter;
+                if(!node->name().empty()){
+                    name = node->name();
+                    break;
+                }
+            }
+        }
+    }
+
+    return name;
+}
+
+
 void SceneWidgetImpl::updatePointerPosition()
 {
     if(TRACE_FUNCTIONS){
@@ -1404,9 +1445,16 @@ void SceneWidgetImpl::updatePointerPosition()
     updateLatestEventPath();
     
     if(!isEditMode){
-        static boost::format f(_("Global Position = (%.3f %.3f %.3f)"));
+        static boost::format f1(_("Global Position: (%1$.3f %2$.3f %3$.3f)"));
+        static boost::format f2(_("Object: %1%, Global Position: (%2$.3f %3$.3f %4$.3f)"));
         const Vector3& p = latestEvent.point();
-        updateIndicator(str(f % p.x() % p.y() % p.z()));
+        string name = findObjectNameFromNodePath(latestEvent.nodePath());
+        if(name.empty()){
+            updateIndicator(str(f1 % p.x() % p.y() % p.z()));
+        } else {
+            updateIndicator(str(f2 % name % p.x() % p.y() % p.z()));
+        }
+        
     } else {
         SceneWidgetEditable* mouseMovedEditable = applyFunction(
             pointedEditablePath,
