@@ -243,7 +243,7 @@ public:
     bool installCustomizer(BodyCustomizerInterface* customizerInterface);
 
     bool hasVirtualJointForces() const;
-    void setVirtualJointForces();
+    void setVirtualJointForces(double timeStep = 0.0);
 
     static void addCustomizerDirectory(const std::string& path);
     static BodyInterface* bodyInterface();
