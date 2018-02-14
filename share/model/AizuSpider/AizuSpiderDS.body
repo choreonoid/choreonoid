@@ -29,13 +29,13 @@ links:
     translation: [ -0.060, 0.094, 0.47130 ]
     rotation: [ 0, 0, 1, 90 ]
     jointType: fixed
-    jointIdOffset: 16
+    jointIdOffset: 13
 
 standardPose: [
   # Flippers
   0, 0, 0, 0,
   # Arm 1
-  -90, -30, -150, -90, 0, 0, 0, 0, 0, 0, 0, 0,
+  -90, 151, 27, -93, 6, 100, 0, 0, 0,
   # Arm 2
-  -90, -30, -150, -90, 0, 0, 0, 0, 0, 0, 0, 0
+  -90, 151, 27, -93, 6, 100, 0, 0, 0
   ]
