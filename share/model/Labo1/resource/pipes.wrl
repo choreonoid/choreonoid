@@ -13360,7 +13360,7 @@ Group {
 	      appearance
 		Appearance {
 		  material
-		    DEF _148 Material {
+		    DEF Valve1Material Material {
 		      ambientIntensity 0.270269
 		      diffuseColor 0.37 0.37 0.37
 		      shininess 0.129998
@@ -13384,7 +13384,7 @@ Group {
 	      appearance
 		Appearance {
 		  material
-		    USE _148
+		    USE Valve1Material
 		}
 	      geometry
 		Cylinder {
@@ -13403,7 +13403,7 @@ Group {
 	      appearance
 		Appearance {
 		  material
-		    USE _148
+		    USE Valve1Material
 		}
 	      geometry
 		Cylinder {
@@ -13422,7 +13422,7 @@ Group {
 	      appearance
 		Appearance {
 		  material
-		    USE _148
+		    USE Valve1Material
 		}
 	      geometry
 		Cylinder {
@@ -13441,7 +13441,7 @@ Group {
 	      appearance
 		Appearance {
 		  material
-		    USE _148
+		    USE Valve1Material
 		}
 	      geometry
 		Cylinder {
@@ -13460,7 +13460,7 @@ Group {
 	      appearance
 		Appearance {
 		  material
-		    USE _148
+		    USE Valve1Material
 		}
 	      geometry
 		Sphere {
@@ -13478,7 +13478,7 @@ Group {
 	      appearance
 		Appearance {
 		  material
-		    USE _148
+		    USE Valve1Material
 		}
 	      geometry
 		Cylinder {
@@ -13493,11 +13493,11 @@ Group {
 	  scaleOrientation -0.112286 -0.112552 -0.987281 0.805751
 	  translation 2.3297 0.989696 -0.519339
 	  children [
-	    Shape {
+	    DEF Valve1Shaft Shape {
 	      appearance
 		Appearance {
 		  material
-		    USE _148
+		    USE Valve1Material
 		}
 	      geometry
 		Cylinder {
@@ -13512,7 +13512,7 @@ Group {
 	  scaleOrientation -0.0845954 -0.216556 -0.972598 0.492206
 	  translation 2.3297 0.989696 -0.441011
 	  children [
-	    Shape {
+	    DEF Valve1Handle Shape {
 	      appearance
 		Appearance {
 		  material
@@ -13806,7 +13806,7 @@ Group {
 	      appearance
 		Appearance {
 		  material
-		    USE _148
+		    USE Valve1Material
 		}
 	      geometry
 		Cylinder {
