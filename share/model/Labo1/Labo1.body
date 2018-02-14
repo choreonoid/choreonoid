@@ -94,7 +94,7 @@ links:
         uri: "resource/pipes.wrl"
         exclude: [ Valve1Handle, Valve1Shaft ]
   -
-    name: Valve1
+    name: Valve1Handle
     parent: Pipes
     translation: [ 1.085, 0.32, 0.848 ]
     rotation: [ 0, 0, 1, -132.5 ]
