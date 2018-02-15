@@ -36,7 +36,9 @@ using namespace std::placeholders;
 using namespace cnoid;
 
 namespace {
+
 static const double sliderResolution = 1000000.0;
+
 Action* useQuaternionCheck;
 
 void onUseQuaternionToggled(bool on)
@@ -44,7 +46,9 @@ void onUseQuaternionToggled(bool on)
     AppConfig::archive()->openMapping("Body")->openMapping("Link View")->write("useQuaternion", on);
     BodyLinkView::instance()->switchRpyQuat(on);
 }
+
 BodyLinkView* bodyLinkView = 0;
+
 }
 
 namespace cnoid {
@@ -603,13 +607,13 @@ void BodyLinkViewImpl::updateRotationalJointState()
     qSpin.setRange(-9999.9, 9999.9); // Limit over values should be shown
     qSpin.setSingleStep(0.1);
 
-    if(qmin <= -std::numeric_limits<double>::max()){
-        qmin = -1080.0;
+    if(qmin < -360.0){
+        qmin = -360.0;
     }
-    if(qmax >= std::numeric_limits<double>::max()){
-        qmax = 1080.0;
+    if(qmax > 360.0){
+        qmax = 360.0;
     }
-    
+
     qSlider.setRange(qmin * sliderResolution, qmax * sliderResolution);
     qSlider.setSingleStep(0.1 * sliderResolution);
     

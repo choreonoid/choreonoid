@@ -28,7 +28,7 @@ namespace {
 class SliderUnit;
 
 // slider resolution
-const double r = 1000000.0;
+const double resolution = 1000000.0;
 }
 
 namespace cnoid {
@@ -122,7 +122,7 @@ public:
         spin.setAlignment(Qt::AlignCenter);
         spin.sigValueChanged().connect([&](double v){ onSpinValueChanged(v); });
             
-        slider.setSingleStep(0.1 * r);
+        slider.setSingleStep(0.1 * resolution);
         slider.setProperty("JointSliderIndex", index);
         slider.installEventFilter(viewImpl);
         slider.sigValueChanged().connect([&](double v){ onSliderValueChanged(v); });
@@ -176,21 +176,17 @@ public:
             if(viewImpl->degreeRadio.isChecked()){
                 unitConversionRatio = 180.0 / PI;
             }
-            max = unitConversionRatio * 2.0 * PI;
+            max = 2.0 * PI;
         } else { // SLIDE_JOINT
             max = std::numeric_limits<double>::max();
         }
-        double lower =
-            joint->q_lower() == -std::numeric_limits<double>::max() ?
-            -max : unitConversionRatio * joint->q_lower();
-        double upper =
-            joint->q_upper() ==  std::numeric_limits<double>::max() ?
-             max : unitConversionRatio * joint->q_upper();
+        double lower = unitConversionRatio * (joint->q_lower() < -max ? -max : joint->q_lower());
+        double upper = unitConversionRatio * (joint->q_upper() > max ? max : joint->q_upper());
 
         slider.blockSignals(true);
         spin.blockSignals(true);
 
-        slider.setRange(lower * r, upper * r);
+        slider.setRange(lower * resolution, upper * resolution);
 
         if(unitConversionRatio != 1.0){ // degree mode
             spin.setDecimals(1);
@@ -220,7 +216,7 @@ public:
             slider.blockSignals(true);
             spin.blockSignals(true);
             spin.setValue(v);
-            slider.setValue(v * r);
+            slider.setValue(v * resolution);
             spin.blockSignals(false);
             slider.blockSignals(false);
         }
@@ -228,14 +224,14 @@ public:
 
     void onSliderValueChanged(double value){
         spin.blockSignals(true);
-        spin.setValue(value / r);
+        spin.setValue(value / resolution);
         spin.blockSignals(false);
         viewImpl->onJointSliderChanged(index);
     }
 
     void onSpinValueChanged(double value){
         slider.blockSignals(true);
-        slider.setValue(value * r);
+        slider.setValue(value * resolution);
         slider.blockSignals(false);
         viewImpl->onJointSliderChanged(index);
     }
