@@ -386,6 +386,7 @@ SgNode* VRMLToSGConverterImpl::convertShapeNode(VRMLShape* vshape)
             }
             
             if(mesh){
+                mesh->setName(vrmlGeometry->defName);
                 vrmlGeometryToSgMeshMap[vrmlGeometry] = mesh;
             }
         }
@@ -413,8 +414,7 @@ SgNode* VRMLToSGConverterImpl::convertShapeNode(VRMLShape* vshape)
                 SgTextureTransformPtr textureTransform;
                 if(vshape->appearance->textureTransform){
                     VRMLTextureTransform* vtt = vshape->appearance->textureTransform.get();
-                    VRMLTextureTransformToSgTextureTransformMap::iterator pp =
-                        vrmlTextureTransformToSgTextureTransformMap.find(vtt);
+                    auto pp = vrmlTextureTransformToSgTextureTransformMap.find(vtt);
                     if(pp != vrmlTextureTransformToSgTextureTransformMap.end()){
                         textureTransform = pp->second;
                     } else {
@@ -460,7 +460,7 @@ SgNode* VRMLToSGConverterImpl::convertShapeNode(VRMLShape* vshape)
 SgMeshPtr VRMLToSGConverterImpl::createMeshFromIndexedFaceSet(VRMLIndexedFaceSet* vface)
 {
     if(!vface->coord || vface->coord->point.empty() || vface->coordIndex.empty()){
-        return SgMeshPtr(); // null
+        return nullptr;
     }
     
     SgMeshPtr mesh = new SgMesh;
@@ -655,15 +655,15 @@ SgPolygonMeshPtr VRMLToSGConverterImpl::createPolygonMeshFromIndexedFaceSet(VRML
     //if(!vface->coord || vface->coord->point.empty() || vface->coordIndex.empty()){
     if(!vface->coord){
         putMessage("VRMLIndexedFaceSet: The coord field is not defined." );
-        return  SgPolygonMeshPtr(); // null
+        return nullptr;
     }
     if(vface->coord->point.empty()){
         putMessage("VRMLIndexedFaceSet: The point field is empty." );
-        return  SgPolygonMeshPtr(); // null
+        return nullptr;
     }
     if(vface->coordIndex.empty()){
         putMessage("VRMLIndexedFaceSet: The coordIndex field is empty." );
-        return SgPolygonMeshPtr(); // null
+        return nullptr;
     }
     
     SgPolygonMeshPtr mesh = new SgPolygonMesh;
@@ -1175,6 +1175,7 @@ void VRMLToSGConverterImpl::setDefaultTextureCoordinateForExtrusion(const SgMesh
 SgMaterial* VRMLToSGConverterImpl::createMaterial(VRMLMaterial* vm)
 {
     SgMaterial* material = new SgMaterial;
+    material->setName(vm->defName);
     material->setDiffuseColor(vm->diffuseColor);
     material->setAmbientIntensity(vm->ambientIntensity);
     material->setEmissiveColor(vm->emissiveColor);
@@ -1188,6 +1189,7 @@ SgMaterial* VRMLToSGConverterImpl::createMaterial(VRMLMaterial* vm)
 SgTextureTransform* VRMLToSGConverterImpl::createTextureTransform(VRMLTextureTransform* tt)
 {
     SgTextureTransform* textureTransform = new SgTextureTransform;
+    textureTransform->setName(tt->defName);
     textureTransform->setCenter(tt->center);
     textureTransform->setRotation(tt->rotation);
     textureTransform->setScale(tt->scale);
@@ -1259,6 +1261,10 @@ SgTexture* VRMLToSGConverterImpl::createTexture(VRMLTexture* vt)
         }
     } else {
         putMessage("MovieTextureNode is not supported");
+    }
+
+    if(texture){
+        texture->setName(vt->defName);
     }
 
     return texture;

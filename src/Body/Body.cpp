@@ -506,14 +506,28 @@ BodyCustomizerInterface* Body::customizerInterface() const
 
 bool Body::hasVirtualJointForces() const
 {
-    return (impl->customizerInterface && impl->customizerInterface->setVirtualJointForces);
+    if(impl->customizerInterface){
+        if(impl->customizerInterface->setVirtualJointForces){
+            return true;
+        }
+        if(impl->customizerInterface->version >= 2 &&
+           impl->customizerInterface->setVirtualJointForces2){
+            return true;
+        }
+    }
+    return false;
 }
 
 
-void Body::setVirtualJointForces()
+void Body::setVirtualJointForces(double timeStep)
 {
-    if(impl->customizerInterface && impl->customizerInterface->setVirtualJointForces){
-        impl->customizerInterface->setVirtualJointForces(impl->customizerHandle);
+    auto customizer = impl->customizerInterface;
+    if(customizer){
+        if(customizer->version >= 2 && customizer->setVirtualJointForces2){
+            customizer->setVirtualJointForces2(impl->customizerHandle, timeStep);
+        } else if(customizer->setVirtualJointForces){
+            customizer->setVirtualJointForces(impl->customizerHandle);
+        }
     }
 }
 
