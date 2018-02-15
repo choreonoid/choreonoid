@@ -1,4 +1,5 @@
 #include "AGXObjectFactory.h"
+#include <agx/version.h>
 
 namespace cnoid{
 
@@ -376,9 +377,18 @@ agxVehicle::TrackRef AGXObjectFactory::createVehicleTrack(const AGXVehicleTrackD
     return track;
 }
 
+////////////////////////////////////////////////////////////
+// AGXWireDesc
+const agx::Name AGXWireDesc::globalCollisionGroupName = "AGXGlobalWireCollisionGroup";
+
+////////////////////////////////////////////////////////////
+// AGXWire
 agxWire::WireRef AGXObjectFactory::createWire(const AGXWireDesc& desc)
 {
     agxWire::WireRef wire = new agxWire::Wire(desc.radius, desc.resolutionPerUnitLength, desc.enableCollisions);
+#if AGX_VERSION_GREATER_OR_EQUAL(2 ,21, 3, 0)
+    wire->addGroup(AGXWireDesc::globalCollisionGroupName);
+#endif
     return wire;
 }
 

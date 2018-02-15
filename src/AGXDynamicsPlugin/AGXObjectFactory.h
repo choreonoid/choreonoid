@@ -384,6 +384,7 @@ struct AGXWireDesc
         resolutionPerUnitLength = 1.0;
         enableCollisions = true;
     }
+    static const agx::Name globalCollisionGroupName;
     agx::Real radius;
     agx::Real resolutionPerUnitLength;
     agx::Bool enableCollisions;

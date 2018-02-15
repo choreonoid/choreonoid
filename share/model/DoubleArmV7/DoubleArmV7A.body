@@ -245,3 +245,5 @@ links:
 
 collisionDetection:
   excludeLinksDynamic: [ WIRE_GUARD_L, WIRE_GUARD_R ]
+  #excludeLinksWireCollision: [ WIRE_GUARD_L, WIRE_GUARD_R, TFRAME,
+  #  WHEEL_L0, WHEEL_L1, WHEEL_L2, WHEEL_L3, WHEEL_R0, WHEEL_R1, WHEEL_R2, WHEEL_R3 ]

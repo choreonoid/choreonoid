@@ -52,6 +52,7 @@ public:
     agxCollide::Geometry*   getAGXGeometry() const;
     void                    setAGXConstraint(agx::Constraint* const constraint);
     agx::Constraint*        getAGXConstraint() const;
+    agx::Name               getCollisionGroupName() const;
     void printDebugInfo();
 
 private:
@@ -62,6 +63,7 @@ private:
     agx::RigidBodyRef       _rigid;
     agxCollide::GeometryRef _geometry;
     agx::ConstraintRef      _constraint;
+    agx::Name               _collisionGroupName;
     AGXBody*                getAGXBody();
     agx::RigidBodyRef       createAGXRigidBody();
     agxCollide::GeometryRef createAGXGeometry();
@@ -89,6 +91,7 @@ public:
     void setCollisionExcludeTreeDepth(const Mapping& cdMapping);
     void setCollisionExcludeLinkGroups(const Mapping& cdMapping);
     void setCollisionExcludeSelfCollisionLinks(const Mapping& cdMapping);
+    void setCollisionExcludeLinksWireCollision(const Mapping& cdMapping);
     std::string getCollisionGroupName() const;
     void enableExternalCollision(const bool& bOn);
     void enableAGXWireContact(const bool& bOn);

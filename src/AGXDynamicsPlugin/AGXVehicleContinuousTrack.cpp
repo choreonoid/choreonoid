@@ -136,6 +136,8 @@ AGXVehicleContinuousTrack::AGXVehicleContinuousTrack(AGXVehicleContinuousTrackDe
     trackDesc.maxAngleMergeCondition = desc.maxAngleMergeCondition;
     m_track = AGXObjectFactory::createVehicleTrack(trackDesc);
     if(!m_track) return;
+    AGXLink* agxLink = agxBody->getAGXLink(m_device->link()->name());
+    m_track->addGroup(agxLink->getCollisionGroupName());
 
     AGXScene* agxScene = getAGXBody()->getAGXScene();
     // Set material
