@@ -489,10 +489,10 @@ links:
         nodeThickerThickness: 0.02
         useThickerNodeEvery: 3
         material: TankTracks
-        nodeDistanceTension: 2.0E-4
+        nodeDistanceTension: 2.0e-4
         stabilizingHingeFrictionParameter: 1e-6
         minStabilizingHingeNormalForce: 100
-        hingeCompliance: 9.0E-10
+        hingeCompliance: 9.0e-10
         hingeSpookDamping: 0.01
         nodesToWheelsMergeThreshold: -0.01
         nodesToWheelsSplitThreshold: -0.009
@@ -502,8 +502,7 @@ links:
 #        enableLockToReachMergeCondition: true
 #        lockToReachMergeConditionCompliance: 0.1
 #        lockToReachMergeConditionSpookDamping: 0.01
-#        #maxAngleMergeCondition: 1.0E-5
-
+#        #maxAngleMergeCondition: 1.0e-5
       -
         type: Visual
         elements:
@@ -690,10 +689,10 @@ links:
         nodeThickerThickness: 0.02
         useThickerNodeEvery: 3
         material: TankTracks
-        nodeDistanceTension: 2.0E-4
+        nodeDistanceTension: 2.0e-4
         stabilizingHingeFrictionParameter: 1e-6
         minStabilizingHingeNormalForce: 100
-        hingeCompliance: 9.0E-10
+        hingeCompliance: 9.0e-10
         hingeSpookDamping: 0.01
         nodesToWheelsMergeThreshold: -0.01
         nodesToWheelsSplitThreshold: -0.009
@@ -703,7 +702,7 @@ links:
 #        enableLockToReachMergeCondition: true
 #        lockToReachMergeConditionCompliance: 0.1
 #        lockToReachMergeConditionSpookDamping: 0.01
-#        #maxAngleMergeCondition: 1.0E-5
+#        #maxAngleMergeCondition: 1.0e-5
       -
         type: Visual
         elements:

@@ -83,7 +83,7 @@ contactMaterials:
     secondaryfriction: 0.5
     restitution: 0.0
     surfaceViscosity: 1e-7
-    secondarySurfaceViscosity: 1e-7
+    secondarySurfaceViscosity: 1e-5
     primaryDirection: [ 1, 0, 0 ]
     frictionModel: [ orientedBox, direct ]
     referenceBodyName: Tank
