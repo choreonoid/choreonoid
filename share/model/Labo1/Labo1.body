@@ -101,6 +101,12 @@ links:
     jointType: revolute
     jointId: 0
     jointAxis: X
+
+    # For the friction for AGX
+    jointMotor: true
+    jointMotorCompliacne: 0.9
+    actuationMode: jointVelocity
+
     elements:
       Resource:
         uri: "resource/valves.yaml"
