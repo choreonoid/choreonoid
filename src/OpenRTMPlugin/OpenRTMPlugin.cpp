@@ -56,6 +56,8 @@ public:
   virtual void operator()(RTC::UniqueId ec_id, RTC::ReturnCode_t ret) { }
 };
 
+SettingDialog* settingInstance = 0;
+
 class OpenRTMPlugin : public Plugin {
   MessageView* mv;
   Action* deleteRTCsOnSimulationStartCheck;
@@ -169,6 +171,14 @@ virtual bool initialize() {
   deleteRTCsOnSimulationStartCheck->sigToggled().connect(
       std::bind(&OpenRTMPlugin::onDeleteRTCsOnSimulationStartToggled, this, _1));
         
+  if (!settingInstance) {
+    settingInstance = new SettingDialog();
+
+    menuManager().setPath("/Tools/OpenRTM");
+    menuManager().addItem(_("Preferences"))
+      ->sigTriggered().connect([]() { settingInstance->show(); });
+  }
+
   setProjectArchiver(
     std::bind(&OpenRTMPlugin::store, this, _1),
     std::bind(&OpenRTMPlugin::restore, this, _1));
@@ -442,7 +452,6 @@ bool cnoid::isManagedRTC(RTC::RTObject_ptr rtc) {
 	}
 	return false;
 }
-
 
 namespace cnoid {
     

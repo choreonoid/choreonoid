@@ -99,9 +99,6 @@ RTC::ReturnCode_t ChoreonoidPeriodicExecutionContext::deactivate_component(RTC::
 		RTC::ReturnCode_t ret = ExecutionContextBase::deactivateComponent(comp);
 		invokeWorkerPreDo();
 
-		//rtobj->goTo(RTC::INACTIVE_STATE);
-    //rtobj->workerDo();
-
     if (!(rtobj->isCurrentState(RTC::INACTIVE_STATE))) {
     	return RTC::RTC_OK;
     }

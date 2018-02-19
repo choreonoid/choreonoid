@@ -13,6 +13,18 @@ using namespace RTC;
 
 namespace cnoid {
 
+bool ProfileHandler::getRtsProfileInfo(std::string targetFile, std::string& vendorName, std::string& version) {
+  RtsProfile profile;
+  if (parseProfile(targetFile, profile) == false) return false;
+  ///
+  QString strId = QString::fromStdString(profile.id);
+  QStringList elems = strId.split(":");
+  if (elems.size() < 4) return false;
+  vendorName = elems.at(1).toStdString();
+  version = elems.at(3).toStdString();
+  return true;
+}
+
 bool ProfileHandler::restoreRtsProfile(std::string targetFile, RTSystemItem* impl) {
 	DDEBUG("ProfileHandler::restoreRtsProfile");
 	RtsProfile profile;
@@ -22,7 +34,6 @@ bool ProfileHandler::restoreRtsProfile(std::string targetFile, RTSystemItem* imp
   QStringList elems = strId.split(":");
   if (elems.size() < 4) return false;
   impl->vendorName = elems.at(1).toStdString();
-  impl->systemName = elems.at(2).toStdString();
   impl->version = elems.at(3).toStdString();
   ///
 	for (int index = 0; index < profile.compList.size(); index++) {

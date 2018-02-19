@@ -7,6 +7,8 @@
 #define CNOID_OPENRTM_PLUGIN_RTS_DIAGRAM_VIEW_H_INCLUDED
 
 #include <cnoid/View>
+#include <cnoid/Dialog>
+#include <QLineEdit>
 
 using namespace cnoid;
 
@@ -33,10 +35,26 @@ protected:
   virtual void onDeactivated() override;
   virtual bool storeState(Archive& archive) override;
   virtual bool restoreState(const Archive& archive) override;
-    
+  
 private :
 	RTSDiagramViewImpl* impl;
 
+};
+
+class SettingDialog : public Dialog {
+  Q_OBJECT
+public:
+  SettingDialog();
+
+private Q_SLOTS:
+  void oKClicked();
+  void rejected();
+
+private:
+  QLineEdit* leName;
+  QLineEdit* leVersion;
+  QLineEdit* lePoling;
+  QLineEdit* leHeartBeat;
 };
 
 }

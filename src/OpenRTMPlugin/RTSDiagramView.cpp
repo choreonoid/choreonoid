@@ -19,6 +19,7 @@
 #include <cnoid/ItemTreeView>
 #include <cnoid/RootItem>
 #include <cnoid/SimulatorItem>
+#include <cnoid/AppConfig>
 
 #include "ConnectorCreaterDialog.h"
 
@@ -34,6 +35,7 @@ using namespace cnoid;
 using namespace std;
 using namespace std::placeholders;
 using namespace RTC;
+using boost::format;
 
 namespace cnoid {
 
@@ -1186,11 +1188,13 @@ void RTSDiagramViewImpl::onTime() {
 }
 
 void RTSDiagramViewImpl::setCurrentRTSItem(RTSystemItem* item) {
-    currentRTSItem = item;
-    connectionOfRTSystemItemDetachedFromRoot.reset(
-        item->sigDetachedFromRoot().connect(
-            [&](){ onRTSystemItemDetachedFromRoot(); }));
-    updateView();
+  timer.setInterval(item->pollingCycle);
+
+  currentRTSItem = item;
+  connectionOfRTSystemItemDetachedFromRoot.reset(
+      item->sigDetachedFromRoot().connect(
+          [&](){ onRTSystemItemDetachedFromRoot(); }));
+  updateView();
 }
 
 void RTSDiagramViewImpl::updateView() {
@@ -1396,6 +1400,70 @@ bool RTSDiagramView::restoreState(const Archive& archive) {
 void RTSDiagramView::initializeClass(ExtensionManager* ext) {
 	ext->viewManager().registerClass<RTSDiagramView>(
 		"RTSDiagramView", N_("RTC Diagram"), ViewManager::SINGLE_OPTIONAL);
+}
+////////////////////
+SettingDialog::SettingDialog() {
+  QLabel* lblName = new QLabel(_("VendorName:"));
+  leName = new QLineEdit;
+  QLabel* lblVersion = new QLabel(_("Version:"));
+  leVersion = new QLineEdit;
+  QLabel* lblPolling = new QLabel(_("Polling Cycle:"));
+  lePoling = new QLineEdit;
+  QLabel* lblUnit = new QLabel("ms");
+  QLabel* lblHeartBeat = new QLabel(_("Heartbeat Period:"));
+  leHeartBeat = new QLineEdit;
+  QLabel* lblUnitHb = new QLabel("ms");
+
+  QFrame* frmDetail = new QFrame;
+  QGridLayout* gridSubLayout = new QGridLayout(frmDetail);
+  gridSubLayout->addWidget(lblName, 0, 0, 1, 1);
+  gridSubLayout->addWidget(leName, 0, 1, 1, 1);
+  gridSubLayout->addWidget(lblVersion, 1, 0, 1, 1);
+  gridSubLayout->addWidget(leVersion, 1, 1, 1, 1);
+  gridSubLayout->addWidget(lblPolling, 2, 0, 1, 1);
+  gridSubLayout->addWidget(lePoling, 2, 1, 1, 1);
+  gridSubLayout->addWidget(lblUnit, 2, 2, 1, 1);
+  gridSubLayout->addWidget(lblHeartBeat, 3, 0, 1, 1);
+  gridSubLayout->addWidget(leHeartBeat, 3, 1, 1, 1);
+  gridSubLayout->addWidget(lblUnitHb, 3, 2, 1, 1);
+  //
+  QFrame* frmButton = new QFrame;
+  QPushButton* okButton = new QPushButton(_("&OK"));
+  okButton->setDefault(true);
+  QPushButton* cancelButton = new QPushButton(_("&Cancel"));
+  QHBoxLayout* buttonBotLayout = new QHBoxLayout(frmButton);
+  buttonBotLayout->addWidget(cancelButton);
+  buttonBotLayout->addStretch();
+  buttonBotLayout->addWidget(okButton);
+
+  QVBoxLayout* mainLayout = new QVBoxLayout;
+  mainLayout->addWidget(frmDetail);
+  mainLayout->addWidget(frmButton);
+  setLayout(mainLayout);
+
+  connect(okButton, SIGNAL(clicked()), this, SLOT(oKClicked()));
+  connect(cancelButton, SIGNAL(clicked()), this, SLOT(rejected()));
+  connect(this, SIGNAL(rejected()), this, SLOT(rejected()));
+
+  setWindowTitle(_("OpenRTM Preferences"));
+  /////
+  MappingPtr appVars = AppConfig::archive()->openMapping("OpenRTM");
+  leName->setText(QString::fromStdString(appVars->get("defaultVendor", "AIST")));
+  leVersion->setText(QString::fromStdString(appVars->get("defaultVersion", "1.0.0")));
+  lePoling->setText(QString::number(appVars->get("pollingCycle", 500)));
+  leHeartBeat->setText(QString::number(appVars->get("heartBeatPeriod", 500)));
+}
+
+void SettingDialog::oKClicked() {
+  AppConfig::archive()->openMapping("OpenRTM")->write("defaultVendor", leName->text().toStdString(), DOUBLE_QUOTED);
+  AppConfig::archive()->openMapping("OpenRTM")->write("defaultVersion", leVersion->text().toStdString(), DOUBLE_QUOTED);
+  AppConfig::archive()->openMapping("OpenRTM")->write("pollingCycle", lePoling->text().toInt());
+  AppConfig::archive()->openMapping("OpenRTM")->write("heartBeatPeriod", leHeartBeat->text().toInt());
+  close();
+}
+
+void SettingDialog::rejected() {
+  close();
 }
 
 }

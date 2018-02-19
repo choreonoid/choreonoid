@@ -130,6 +130,7 @@ public:
 	~ProfileHandler() {};
 
 	static bool restoreRtsProfile(std::string targetFile, RTSystemItem* impl);
+  static bool getRtsProfileInfo(std::string targetFile, std::string& vendorName, std::string& version);
 
 	static void saveRtsProfile(std::string& targetFile,
 														 std::string& systemId, std::string& hostName,

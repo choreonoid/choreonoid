@@ -369,8 +369,9 @@ bool ControllerRTCItemImpl::createRTCmain() {
           str(format("instance_name=%1%&exec_cxt.periodic.type=%2%&exec_cxt.periodic.rate=%3%")
                 % rtcInstanceName % execContextType.selectedSymbol() % periodicRate);
 #else
-          str(format("instance_name=%1%&execution_contexts=ChoreonoidExecutionContext(),OpenHRPExecutionContext()&exec_cxt.periodic.type=%2%&exec_cxt.periodic.rate=%3%&exec_cxt.sync_activation=NO&exec_cxt.sync_deactivation=NO")
+          str(format("instance_name=%1%&execution_contexts=ChoreonoidExecutionContext(),ChoreonoidPeriodicExecutionContext(),ExtTrigExecutionContext(),OpenHRPExecutionContext(),PeriodicExecutionContext(),SimulatorExecutionContext()&exec_cxt.periodic.type=%2%&exec_cxt.periodic.rate=%3%&exec_cxt.sync_activation=NO&exec_cxt.sync_deactivation=NO")
             % rtcInstanceName % execContextType.selectedSymbol() % periodicRate);
+        DDEBUG("New Parameter 02");
 #endif
     } else {
         periodicRate = 0;
@@ -379,8 +380,9 @@ bool ControllerRTCItemImpl::createRTCmain() {
           str(format("instance_name=%1%&exec_cxt.periodic.type=%2%")
                 % rtcInstanceName % execContextType.selectedSymbol());
 #else
-          str(format("instance_name=%1%&execution_contexts=ChoreonoidExecutionContext(),OpenHRPExecutionContext()&exec_cxt.periodic.type=%2%&exec_cxt.sync_activation=NO&exec_cxt.sync_deactivation=NO")
+          str(format("instance_name=%1%&execution_contexts=ChoreonoidExecutionContext(),ChoreonoidPeriodicExecutionContext(),ExtTrigExecutionContext(),OpenHRPExecutionContext(),PeriodicExecutionContext(),SimulatorExecutionContext()&exec_cxt.periodic.type=%2%&exec_cxt.sync_activation=NO&exec_cxt.sync_deactivation=NO")
             % rtcInstanceName % execContextType.selectedSymbol());
+        DDEBUG("New Parameter 03");
 #endif
     }
     rtc = createManagedRTC((moduleName + "?" + option).c_str());

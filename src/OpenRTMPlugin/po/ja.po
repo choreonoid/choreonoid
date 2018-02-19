@@ -166,6 +166,10 @@ msgstr "RTコンポーネントのプロセス \"%1%\" を起動しました。"
 msgid "The unmanaged RT components have been deleted."
 msgstr "非管理下RTコンポーネントを削除しました。"
 
+#: OpenRTMPlugin.cpp:178
+msgid "Preferences"
+msgstr "設定画面"
+
 #: RTCItem.cpp:38
 msgid "RTCItem"
 msgstr "RTCアイテム"
@@ -264,6 +268,26 @@ msgstr ""
 msgid "&Cancel"
 msgstr ""
 
+#: RTSDiagramView.cpp:1405
+msgid "VendorName:"
+msgstr "ベンダ名:"
+
+#: RTSDiagramView.cpp:1407
+msgid "Version:"
+msgstr "バージョン番号:"
+
+#: RTSDiagramView.cpp:1409
+msgid "Polling Cycle:"
+msgstr "ポーリング周期:"
+
+#: RTSDiagramView.cpp:1412
+msgid "Heartbeat Period:"
+msgstr "ハートビート周期:"
+
+#: RTSDiagramView.cpp:1443
+msgid "OpenRTM Preferences"
+msgstr "OpenRTM設定画面"
+
 #: RTSItem.cpp:377
 msgid "RTSystemItem"
 msgstr "RTシステムアイテム"
@@ -272,10 +296,6 @@ msgstr "RTシステムアイテム"
 msgid "Auto Connection"
 msgstr "自動接続"
 
-#: RTSItem.cpp:802
-msgid "System Name"
-msgstr "システム名"
-
 #: RTSItem.cpp:803
 msgid "Vendor Name"
 msgstr "ベンダ名"
@@ -283,10 +303,6 @@ msgstr "ベンダ名"
 #: RTSItem.cpp:805
 msgid "Profile Path"
 msgstr "プロファイル保存先"
-
-#: RTSItem.cpp:822
-msgid "System name is not set."
-msgstr "システム名が設定されていません"
 
 #: RTSItem.cpp:826
 msgid "Vendor is not set."
