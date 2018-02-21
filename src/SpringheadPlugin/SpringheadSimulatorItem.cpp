@@ -4,6 +4,8 @@
 */
 
 #include "SpringheadSimulatorItem.h"
+#include <cnoid/WorldItem>
+#include <cnoid/MaterialTable>
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
 #include <cnoid/EigenUtil>
@@ -271,6 +273,20 @@ void SpringheadLink::createLinkBody(SpringheadSimulatorItemImpl* simImpl, Spring
 		}
 	}
 
+	// apply materials
+	string matName = link->materialName();
+	WorldItem*     worldItem;
+	MaterialTable* matTable ;
+	Material*      mat;
+	worldItem = simImpl->self->findOwnerItem<WorldItem>();
+    if(worldItem) 
+		matTable = worldItem->materialTable();
+	if(matTable)
+		mat = matTable->material(link->materialId());
+	if(mat){
+		int hoge = 0;
+	}
+		
 }
 
 void SpringheadLink::createGeometry(SpringheadBody* sprBody)
