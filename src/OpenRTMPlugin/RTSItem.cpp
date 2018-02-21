@@ -457,6 +457,7 @@ void RTSystemItem::initialize(ExtensionManager* ext) {
 }
 
 RTSystemItem::RTSystemItem() {
+  DDEBUG("RTSystemItem::RTSystemItem");
 	impl = new RTSystemItemImpl(this);
 	autoConnection = true;
 
@@ -467,6 +468,7 @@ RTSystemItem::RTSystemItem() {
 #ifndef OPENRTM_VERSION110
   heartBeatPeriod = config->get("heartBeatPeriod", 500);
 #endif
+  DDEBUG("RTSystemItem::RTSystemItem End");
 }
 
 
@@ -893,7 +895,8 @@ void RTSystemItemImpl::restoreRTSystem(const Archive& archive) {
 	string targetFile;
   targetFile = archive.resolveRelocatablePath(self->profileFileName);
 	DDEBUG_V("targetFile:%s", targetFile.c_str());
-  if (0 < targetFile.length()) {
+  DDEBUG_V("profileFileName:%s", self->profileFileName.c_str());
+  if (0 < self->profileFileName.length()) {
 		if (ProfileHandler::restoreRtsProfile(targetFile, self) == false) return;
 
 	} else {
