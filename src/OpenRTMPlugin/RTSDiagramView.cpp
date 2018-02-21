@@ -1410,7 +1410,7 @@ SettingDialog::SettingDialog() {
   QLabel* lblPolling = new QLabel(_("Polling Cycle:"));
   lePoling = new QLineEdit;
   QLabel* lblUnit = new QLabel("ms");
-#ifndef OPENRTM_VERSION110
+#ifndef OPENRTM_VERSION11
   QLabel* lblHeartBeat = new QLabel(_("Heartbeat Period:"));
   leHeartBeat = new QLineEdit;
   QLabel* lblUnitHb = new QLabel("ms");
@@ -1425,7 +1425,7 @@ SettingDialog::SettingDialog() {
   gridSubLayout->addWidget(lblPolling, 2, 0, 1, 1);
   gridSubLayout->addWidget(lePoling, 2, 1, 1, 1);
   gridSubLayout->addWidget(lblUnit, 2, 2, 1, 1);
-#ifndef OPENRTM_VERSION110
+#ifndef OPENRTM_VERSION11
   gridSubLayout->addWidget(lblHeartBeat, 3, 0, 1, 1);
   gridSubLayout->addWidget(leHeartBeat, 3, 1, 1, 1);
   gridSubLayout->addWidget(lblUnitHb, 3, 2, 1, 1);
@@ -1455,7 +1455,7 @@ SettingDialog::SettingDialog() {
   leName->setText(QString::fromStdString(appVars->get("defaultVendor", "AIST")));
   leVersion->setText(QString::fromStdString(appVars->get("defaultVersion", "1.0.0")));
   lePoling->setText(QString::number(appVars->get("pollingCycle", 500)));
-#ifndef OPENRTM_VERSION110
+#ifndef OPENRTM_VERSION11
   leHeartBeat->setText(QString::number(appVars->get("heartBeatPeriod", 500)));
 #endif
 }
@@ -1464,7 +1464,7 @@ void SettingDialog::oKClicked() {
   AppConfig::archive()->openMapping("OpenRTM")->write("defaultVendor", leName->text().toStdString(), DOUBLE_QUOTED);
   AppConfig::archive()->openMapping("OpenRTM")->write("defaultVersion", leVersion->text().toStdString(), DOUBLE_QUOTED);
   AppConfig::archive()->openMapping("OpenRTM")->write("pollingCycle", lePoling->text().toInt());
-#ifndef OPENRTM_VERSION110
+#ifndef OPENRTM_VERSION11
   AppConfig::archive()->openMapping("OpenRTM")->write("heartBeatPeriod", leHeartBeat->text().toInt());
 #endif
   close();

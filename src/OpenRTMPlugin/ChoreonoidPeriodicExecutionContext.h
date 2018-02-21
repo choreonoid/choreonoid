@@ -22,7 +22,7 @@ namespace cnoid
   OpenHRPExecutionContext is redefined as this class in the OpenRTM plugin.
   See post 02356 to the openrtm-users mailing list.
 */
-#ifdef OPENRTM_VERSION110
+#ifdef OPENRTM_VERSION11
   class ChoreonoidPeriodicExecutionContext : public virtual RTC::PeriodicExecutionContext
 #else
   class ChoreonoidPeriodicExecutionContext : public virtual RTC_exp::PeriodicExecutionContext
@@ -32,7 +32,7 @@ public:
     ChoreonoidPeriodicExecutionContext();
     virtual ~ChoreonoidPeriodicExecutionContext(void);
 
-		//virtual RTC::ReturnCode_t activate_component(RTC::LightweightRTObject_ptr comp) throw (CORBA::SystemException);
+		virtual RTC::ReturnCode_t activate_component(RTC::LightweightRTObject_ptr comp) throw (CORBA::SystemException);
 		virtual RTC::ReturnCode_t deactivate_component(RTC::LightweightRTObject_ptr comp) throw (CORBA::SystemException);
 		virtual RTC::ReturnCode_t	reset_component(RTC::LightweightRTObject_ptr comp) throw (CORBA::SystemException);
 	};

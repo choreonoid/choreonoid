@@ -5,7 +5,7 @@
 
 #include "ChoreonoidPeriodicExecutionContext.h"
 #include <rtm/ECFactory.h>
-#ifndef OPENRTM_VERSION110
+#ifndef OPENRTM_VERSION11
   #include <rtm/RTObjectStateMachine.h>
 #endif
 #include "LoggerUtil.h"
@@ -22,47 +22,47 @@ ChoreonoidPeriodicExecutionContext::~ChoreonoidPeriodicExecutionContext() {
 }
 
 
-//RTC::ReturnCode_t ChoreonoidPeriodicExecutionContext::activate_component(RTC::LightweightRTObject_ptr comp) throw (CORBA::SystemException) {
-//	DDEBUG("ChoreonoidPeriodicExecutionContext::activate_component");
-//#ifdef OPENRTM_VERSION110
-//	CompItr it = std::find_if(m_comps.begin(), m_comps.end(),
-//		find_comp(comp));
-//	if (it == m_comps.end())
-//		return RTC::BAD_PARAMETER;
-//
-//	if (!(it->_sm.m_sm.isIn(RTC::INACTIVE_STATE)))
-//		return RTC::PRECONDITION_NOT_MET;
-//
-//	it->_sm.m_sm.goTo(RTC::ACTIVE_STATE);
-//
-//	it->_sm.worker();
-//
-//	if ((it->_sm.m_sm.isIn(RTC::ACTIVE_STATE)))
-//		return RTC::RTC_OK;
-//
-//	return RTC::RTC_ERROR;
-//#else
-//	RTC_impl::RTObjectStateMachine* rtobj = m_worker.findComponent(comp);
-//
-//	if (rtobj == NULL) {
-//		return RTC::BAD_PARAMETER;
-//	}
-//	if (!(rtobj->isCurrentState(RTC::INACTIVE_STATE))) {
-//		return RTC::PRECONDITION_NOT_MET;
-//	}
-//	m_syncActivation = false;
-//
-//	RTC::ReturnCode_t ret = ExecutionContextBase::activateComponent(comp);
-//	invokeWorkerPreDo();
-//	if ((rtobj->isCurrentState(RTC::ACTIVE_STATE))) {
-//		return RTC::RTC_OK;
-//	}
-//	return RTC::RTC_ERROR;
-//#endif
-//	}
+RTC::ReturnCode_t ChoreonoidPeriodicExecutionContext::activate_component(RTC::LightweightRTObject_ptr comp) throw (CORBA::SystemException) {
+	DDEBUG("ChoreonoidPeriodicExecutionContext::activate_component");
+#ifdef OPENRTM_VERSION11
+	CompItr it = std::find_if(m_comps.begin(), m_comps.end(),
+		find_comp(comp));
+	if (it == m_comps.end())
+		return RTC::BAD_PARAMETER;
+
+	if (!(it->_sm.m_sm.isIn(RTC::INACTIVE_STATE)))
+		return RTC::PRECONDITION_NOT_MET;
+
+	it->_sm.m_sm.goTo(RTC::ACTIVE_STATE);
+
+	it->_sm.worker();
+
+	if ((it->_sm.m_sm.isIn(RTC::ACTIVE_STATE)))
+		return RTC::RTC_OK;
+
+	return RTC::RTC_ERROR;
+#else
+	RTC_impl::RTObjectStateMachine* rtobj = m_worker.findComponent(comp);
+
+	if (rtobj == NULL) {
+		return RTC::BAD_PARAMETER;
+	}
+	if (!(rtobj->isCurrentState(RTC::INACTIVE_STATE))) {
+		return RTC::PRECONDITION_NOT_MET;
+	}
+	m_syncActivation = false;
+
+	RTC::ReturnCode_t ret = ExecutionContextBase::activateComponent(comp);
+	invokeWorkerPreDo();
+	if ((rtobj->isCurrentState(RTC::ACTIVE_STATE))) {
+		return RTC::RTC_OK;
+	}
+	return RTC::RTC_ERROR;
+#endif
+	}
 
 RTC::ReturnCode_t ChoreonoidPeriodicExecutionContext::deactivate_component(RTC::LightweightRTObject_ptr comp) throw (CORBA::SystemException) {
-#ifdef OPENRTM_VERSION110
+#ifdef OPENRTM_VERSION11
     RTC_TRACE(("deactivate_component()"));
 
     CompItr it = std::find_if(m_comps.begin(), m_comps.end(), find_comp(comp));
@@ -107,7 +107,7 @@ RTC::ReturnCode_t ChoreonoidPeriodicExecutionContext::deactivate_component(RTC::
 }
 
 RTC::ReturnCode_t ChoreonoidPeriodicExecutionContext::reset_component(RTC::LightweightRTObject_ptr comp) throw (CORBA::SystemException) {
-#ifdef OPENRTM_VERSION110
+#ifdef OPENRTM_VERSION11
 	CompItr it = std::find_if(m_comps.begin(), m_comps.end(), find_comp(comp));
 	if (it == m_comps.end())
 		return RTC::BAD_PARAMETER;

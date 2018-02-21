@@ -115,7 +115,7 @@ virtual bool initialize() {
   if(CORBA::is_nil(servantRef)){
     manager->servant()->createINSManager();
   }
-#ifdef OPENRTM_VERSION110
+#ifdef OPENRTM_VERSION11
   if(manager->registerECFactory("ChoreonoidExecutionContext",
                                 RTC::ECCreate<cnoid::ChoreonoidExecutionContext>,
                                 RTC::ECDelete<cnoid::ChoreonoidExecutionContext>)){
@@ -129,7 +129,7 @@ virtual bool initialize() {
 	} else {
 		mv->putln(MessageView::WARNING, _("Failed to register ChoreonoidExecutionContext."));
 	}
-#ifdef OPENRTM_VERSION110
+#ifdef OPENRTM_VERSION11
   if(manager->registerECFactory("ChoreonoidPeriodicExecutionContext",
                                 RTC::ECCreate<cnoid::ChoreonoidPeriodicExecutionContext>,
                                 RTC::ECDelete<cnoid::ChoreonoidPeriodicExecutionContext>)){
@@ -336,7 +336,7 @@ CNOID_EXPORT int cnoid::deleteUnmanagedRTCs() {
     }
   }
 
-#ifdef OPENRTM_VERSION110
+#ifdef OPENRTM_VERSION11
   for(size_t i=0; i < rtcs.size(); ++i){
     RTC::RTObject_impl* rtc = rtcs[i];
     if(managedComponents.find(rtc) == managedComponents.end()){
@@ -409,7 +409,7 @@ bool cnoid::deleteRTC(RTC::RtcBase* rtc) {
     for(CORBA::ULong i=0; i < eclist->length(); ++i) {
     	if(!CORBA::is_nil(eclist[i])){
     		eclist[i]->remove_component(rtc->getObjRef());
-#ifndef OPENRTM_VERSION110
+#ifndef OPENRTM_VERSION11
     		OpenRTM::ExtTrigExecutionContextService_var execContext = OpenRTM::ExtTrigExecutionContextService::_narrow(eclist[i]);
     		if(!CORBA::is_nil(execContext))
     			execContext->tick();
@@ -418,7 +418,7 @@ bool cnoid::deleteRTC(RTC::RtcBase* rtc) {
 		}
     RTC::ExecutionContextList_var myEClist = rtc->get_owned_contexts();
     if(myEClist->length() > 0 && !CORBA::is_nil(myEClist[0])){
-#ifdef OPENRTM_VERSION110
+#ifdef OPENRTM_VERSION11
     OpenRTM::ExtTrigExecutionContextService_var myEC = OpenRTM::ExtTrigExecutionContextService::_narrow(myEClist[0]);
     RTC::RTCList rtcs = myEC->get_profile()->participants;
     for(size_t i=0; i < rtcs.length(); ++i){

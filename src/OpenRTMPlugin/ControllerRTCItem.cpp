@@ -365,7 +365,7 @@ bool ControllerRTCItemImpl::createRTCmain() {
     if(periodicRateProperty > 0){
         periodicRate = periodicRateProperty;
         option = 
-#if defined(OPENRTM_VERSION110)
+#if defined(OPENRTM_VERSION11)
           str(format("instance_name=%1%&exec_cxt.periodic.type=%2%&exec_cxt.periodic.rate=%3%")
                 % rtcInstanceName % execContextType.selectedSymbol() % periodicRate);
 #else
@@ -376,7 +376,7 @@ bool ControllerRTCItemImpl::createRTCmain() {
     } else {
         periodicRate = 0;
         option = 
-#if defined(OPENRTM_VERSION110)
+#if defined(OPENRTM_VERSION11)
           str(format("instance_name=%1%&exec_cxt.periodic.type=%2%")
                 % rtcInstanceName % execContextType.selectedSymbol());
 #else
@@ -478,9 +478,6 @@ bool ControllerRTCItemImpl::start()
             }
             if(result == RTC::RTC_OK){
                 result = execContext->activate_component(rtc->getObjRef());
-								if (!CORBA::is_nil(execContextExt)) {
-									execContextExt->tick();
-								}
             }
             if(result == RTC::RTC_OK){
                 isReady = true;

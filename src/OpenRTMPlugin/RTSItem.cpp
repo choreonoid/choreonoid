@@ -465,7 +465,7 @@ RTSystemItem::RTSystemItem() {
   vendorName = config->get("defaultVendor", "AIST");
   version = config->get("defaultVersion", "1.0.0");
   pollingCycle = config->get("pollingCycle", 500);
-#ifndef OPENRTM_VERSION110
+#ifndef OPENRTM_VERSION11
   heartBeatPeriod = config->get("heartBeatPeriod", 500);
 #endif
   DDEBUG("RTSystemItem::RTSystemItem End");
@@ -813,7 +813,7 @@ void RTSystemItem::doPutProperties(PutPropertyFunction& putProperty) {
   putProperty(_("Version"), version, changeProperty(version));
   putProperty(_("Profile Path"), profileFileName, changeProperty(profileFileName));
   putProperty(_("Polling Cycle"), pollingCycle, changeProperty(pollingCycle));
-#ifndef OPENRTM_VERSION110
+#ifndef OPENRTM_VERSION11
   putProperty(_("HeartBeat Period"), heartBeatPeriod, changeProperty(heartBeatPeriod));
 #endif
 }
@@ -857,7 +857,7 @@ bool RTSystemItem::store(Archive& archive) {
 
   archive.write("AutoConnection", autoConnection);
   archive.write("PollingCycle", pollingCycle);
-#ifndef OPENRTM_VERSION110
+#ifndef OPENRTM_VERSION11
   archive.write("HeartBeatPeriod", heartBeatPeriod);
 #endif
 
@@ -875,7 +875,7 @@ bool RTSystemItem::restore(const Archive& archive) {
 
 	archive.read("AutoConnection", autoConnection);
   archive.read("PollingCycle", pollingCycle);
-#ifndef OPENRTM_VERSION110
+#ifndef OPENRTM_VERSION11
   archive.read("HeartBeatPeriod", heartBeatPeriod);
 #endif
   archive.read("filename", profileFileName);
