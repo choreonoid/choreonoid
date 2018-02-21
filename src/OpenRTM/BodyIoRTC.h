@@ -23,21 +23,50 @@ public:
     ~BodyIoRTC();
 
     /**
+       This function is called when the BodyIoRTC is created by a BodyIoRTCItem.
+       If there is an associated BodyItem, its body object can be obtained from the io object
+       and a set of ports corresponding to the body model can dynamically be created in
+       this function.
+       
        \note The io object is dedicated to this function and must not be sotred and used
        in other virtual functions called by the system.
     */
     virtual bool initializeIO(ControllerIO* io);
 
     /**
+       This function is called when the simulation is initialized.
+       
        \note The io object given to this function is the object managed by a simulator item.
        It is different from the object given to the initializeIO function, which is not
        managed by the simulator item.
     */
     virtual bool initializeSimulation(ControllerIO* io);
-    
+
+    /**
+       This function is called when the simulation is started.
+
+       \note The simulation is first initialized, and then
+       it is started if the initialization is successfull.
+    */
     virtual bool startSimulation();
+
+    /**
+       This function is called just before every step of the simulation.
+       The process of outputting the states corresponding to the out-ports
+       is implemented in this function.
+    */
     virtual void inputFromSimulator();
+    
+    /**
+       This function is called just after every step of the simulation.
+       The process of applying the commands that are input from the in-ports
+       is implemented in this function.
+    */
     virtual void outputToSimulator();
+
+    /**
+       This function is called when the simulation is stopped.
+    */
     virtual void stopSimulation();
 
     /**
