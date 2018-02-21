@@ -460,10 +460,13 @@ RTSystemItem::RTSystemItem() {
 	impl = new RTSystemItemImpl(this);
 	autoConnection = true;
 
-  vendorName = AppConfig::archive()->openMapping("OpenRTM")->get("defaultVendor");
-  version = AppConfig::archive()->openMapping("OpenRTM")->get("defaultVersion");
-  pollingCycle = AppConfig::archive()->openMapping("OpenRTM")->get("pollingCycle").toInt();
-  heartBeatPeriod = AppConfig::archive()->openMapping("OpenRTM")->get("heartBeatPeriod").toInt();
+  Mapping* config = AppConfig::archive()->openMapping("OpenRTM");
+  vendorName = config->get("defaultVendor", "AIST");
+  version = config->get("defaultVersion", "1.0.0");
+  pollingCycle = config->get("pollingCycle", 500);
+#ifndef OPENRTM_VERSION110
+  heartBeatPeriod = config->get("heartBeatPeriod", 500);
+#endif
 }
 
 
@@ -808,7 +811,9 @@ void RTSystemItem::doPutProperties(PutPropertyFunction& putProperty) {
   putProperty(_("Version"), version, changeProperty(version));
   putProperty(_("Profile Path"), profileFileName, changeProperty(profileFileName));
   putProperty(_("Polling Cycle"), pollingCycle, changeProperty(pollingCycle));
+#ifndef OPENRTM_VERSION110
   putProperty(_("HeartBeat Period"), heartBeatPeriod, changeProperty(heartBeatPeriod));
+#endif
 }
 
 struct ConnectorPropComparator {
@@ -850,7 +855,9 @@ bool RTSystemItem::store(Archive& archive) {
 
   archive.write("AutoConnection", autoConnection);
   archive.write("PollingCycle", pollingCycle);
+#ifndef OPENRTM_VERSION110
   archive.write("HeartBeatPeriod", heartBeatPeriod);
+#endif
 
   archive.writeRelocatablePath("filename", profileFileName);
   string systemId = "RTSystem:" + vendorName + ":" + name() + ":" + version;
@@ -866,7 +873,9 @@ bool RTSystemItem::restore(const Archive& archive) {
 
 	archive.read("AutoConnection", autoConnection);
   archive.read("PollingCycle", pollingCycle);
+#ifndef OPENRTM_VERSION110
   archive.read("HeartBeatPeriod", heartBeatPeriod);
+#endif
   archive.read("filename", profileFileName);
   string targetFile;
   targetFile = archive.resolveRelocatablePath(profileFileName);

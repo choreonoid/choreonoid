@@ -54,7 +54,9 @@ private:
   QLineEdit* leName;
   QLineEdit* leVersion;
   QLineEdit* lePoling;
+#ifndef OPENRTM_VERSION110
   QLineEdit* leHeartBeat;
+#endif
 };
 
 }

@@ -191,7 +191,9 @@ public:
     std::string version;
     std::string profileFileName;
     int pollingCycle;
+#ifndef OPENRTM_VERSION110
     int heartBeatPeriod;
+#endif
 
 protected :
     virtual Item* doDuplicate() const;
