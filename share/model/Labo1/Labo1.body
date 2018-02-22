@@ -15,6 +15,7 @@ links:
     name: Ground
     parent: Floor
     jointType: fixed
+    material: Ground
     elements:
       Shape:
         translation: [ 0, 0, -0.1 ]
@@ -27,6 +28,7 @@ links:
     name: Floor
     jointType: fixed
     parent: Root
+    material: Ground
     elements:
       Shape:
         translation: [ 0, 0, -0.05 ]
@@ -104,8 +106,7 @@ links:
 
     # For the friction for AGX
     jointMotor: true
-    jointMotorCompliacne: 0.9
-    actuationMode: jointVelocity
+    jointMotorCompliance: 0.9
 
     elements:
       Resource:
