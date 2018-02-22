@@ -38,7 +38,7 @@ SUB_BELT_SPEC: &SUB_BELT_SPEC
   numNodesPerMergeSegment: 6
 
 COMMON_BELT_SPEC: &COMMON_BELT_SPEC
-  material: SpiderTracks
+  material: AizuSpiderSATracks
   contactReduction: 3
   enableMerge: true
   enableLockToReachMergeCondition: true
