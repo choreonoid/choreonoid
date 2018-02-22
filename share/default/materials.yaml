@@ -35,7 +35,7 @@ materials:
     roughness: 1.0
     viscosity: 0.3
   -
-    name: AizuSpiderSATracks
+    name: AizuSpiderTracks
     youngsModulus: 1e10
     roughness: 1.0
     viscosity: 0.3
@@ -115,7 +115,7 @@ contactMaterials:
     friction: 0.0
     restitution: 0.0
   -
-    materials: [ Ground, AizuSpiderSATracks ]
+    materials: [ Ground, AizuSpiderTracks ]
     youngsModulus: 1e10
     friction: 0.7
     restitution: 0.0
@@ -123,10 +123,10 @@ contactMaterials:
     secondarySurfaceViscosity: 2e-2
     primaryDirection: [ 1, 0, 0 ]
     frictionModel: [ orientedBox, direct ]
-    referenceBodyName: AizuSpiderSA
+    referenceBodyName: AizuSpider
     referenceLinkName: CHASSIS
   -
-    materials: [ SpiderWheel, AizuSpiderSATracks ]
+    materials: [ SpiderWheel, AizuSpiderTracks ]
     youngsModulus: 1e10
     friction: 0.0
     restitution: 0.0

@@ -1,7 +1,7 @@
 format: ChoreonoidBody
 formatVersion: 1.0
 angleUnit: degree
-name: AizuSpiderNA
+name: AizuSpider
 rootLink: CHASSIS
 
 COMMON_RESOURCE: &COMMON_RESOURCE
@@ -38,7 +38,7 @@ SUB_BELT_SPEC: &SUB_BELT_SPEC
   numNodesPerMergeSegment: 6
 
 COMMON_BELT_SPEC: &COMMON_BELT_SPEC
-  material: AizuSpiderSATracks
+  material: AizuSpiderTracks
   contactReduction: 3
   enableMerge: true
   enableLockToReachMergeCondition: true

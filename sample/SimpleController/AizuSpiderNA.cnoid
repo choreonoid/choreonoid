@@ -16,7 +16,7 @@ items:
       children: 
         - 
           id: 2
-          name: "AizuSpiderA"
+          name: "AizuSpider"
           plugin: Body
           class: BodyItem
           data: 
@@ -36,7 +36,8 @@ items:
               0, 1, 0, 
               0, 0, 1 ]
             initialJointPositions: [ 
-               0.000000,  0.000000,  0.000000,  0.000000 ]
+               0.000000,  0.000000,  0.000000,  0.000000,  15.363550,  15.782297, -9.256445, -8.875742,  32.963028,  15.363549, 
+              -9.561105, -9.256446,  28.323594,  15.363550, -14.635380, -9.256446 ]
             zmp: [ 0, 0, 0 ]
             collisionDetection: true
             selfCollisionDetection: false
@@ -66,7 +67,7 @@ items:
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            jointPositions: [  ]
+            jointPositions: [  0.000000 ]
             initialRootPosition: [ 0, 0, 0 ]
             initialRootAttitude: [ 
               1, 0, 0, 

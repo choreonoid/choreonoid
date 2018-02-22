@@ -16,7 +16,7 @@ items:
       children: 
         - 
           id: 2
-          name: "AizuSpiderS"
+          name: "AizuSpider"
           plugin: Body
           class: BodyItem
           data: 
@@ -63,7 +63,7 @@ items:
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            jointPositions: [  ]
+            jointPositions: [  0.000000 ]
             initialRootPosition: [ 0, 0, 0 ]
             initialRootAttitude: [ 
               1, 0, 0, 
@@ -200,7 +200,7 @@ views:
           fieldOfView: 0.6978
           near: 0.01
           far: 10000
-          eye: [ -6.16765966, -2.60436794, 1.94581295 ]
+          eye: [ -5.41653313, -2.53115986, 2.2575238 ]
           direction: [ 0.856454124, 0.441191141, -0.268023711 ]
           up: [ 0.238267675, 0.122740477, 0.963412316 ]
         - 
