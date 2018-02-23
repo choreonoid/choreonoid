@@ -22,10 +22,58 @@ if(UNIX AND NOT APPLE)
   set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-Bsymbolic")
 endif()
 
+
+set(OPENRTM_DIR ${OPENRTM_DIR} CACHE PATH "set the top directory of OpenRTM-aist")
+if(UNIX)
+  if(NOT OPENRTM_DIR)
+    pkg_check_modules(OPENRTM REQUIRED openrtm-aist)
+    message(STATUS "OPENRTM VERSION ${OPENRTM_VERSION}" )
+    execute_process(
+      COMMAND pkg-config --variable=prefix openrtm-aist
+      OUTPUT_VARIABLE OPENRTM_DIR
+      RESULT_VARIABLE RESULT
+      OUTPUT_STRIP_TRAILING_WHITESPACE)
+    message(STATUS "OPENRTM_DIR=${OPENRTM_DIR}")
+    if(OPENRTM_VERSION STRLESS "1.2.0")
+      set(OPENRTM_DEFINITIONS -DOPENRTM_VERSION11)
+    endif()
+  endif()
+
+  if(OPENRTM_DIR)
+    if(EXISTS "${OPENRTM_DIR}/lib/x86_64-linux-gnu/openrtm-1.1/cmake/OpenRTMConfig.cmake")
+      include(${OPENRTM_DIR}/lib/x86_64-linux-gnu/openrtm-1.1/cmake/OpenRTMConfig.cmake)
+    elseif(EXISTS "${OPENRTM_DIR}/lib/i386-linux-gnu/openrtm-1.1/cmake/OpenRTMConfig.cmake")
+      include(${OPENRTM_DIR}/lib/i386-linux-gnu/openrtm-1.1/cmake/OpenRTMConfig.cmake)
+    else()
+      include(${OPENRTM_DIR}/lib/openrtm-1.1/cmake/OpenRTMConfig.cmake)
+    endif()
+    set(OPENRTM_LIBRARY_DIRS ${OPENRTM_DIR}/lib)
+    if(OPENRTM_VERSION STRLESS "1.2.0")
+      set(OPENRTM_DEFINITIONS -DOPENRTM_VERSION11)
+    endif()
+  endif()
+
+  set(OPENRTM_PREFIX ${OPENRTM_DIR})
+
+  set(OPENRTM_INCLUDE_DIRS
+    ${OPENRTM_DIR}/include 
+    ${OPENRTM_DIR}/include/coil-${OPENRTM_VERSION_MAJOR}.${OPENRTM_VERSION_MINOR}
+    ${OPENRTM_DIR}/include/openrtm-${OPENRTM_VERSION_MAJOR}.${OPENRTM_VERSION_MINOR}
+    ${OPENRTM_DIR}/include/openrtm-${OPENRTM_VERSION_MAJOR}.${OPENRTM_VERSION_MINOR}/rtm/idl
+    ${OPENRTM_DIR}/include/openrtm-${OPENRTM_VERSION_MAJOR}.${OPENRTM_VERSION_MINOR}/rtm/ext
+    ${OPENRTM_DIR}/rtm # for the Windows installer version
+    ${OPENRTM_DIR}/rtm/idl # for the Windows installer version
+    ${OPENRTM_DIR}
+    )
+else()
+  set(OPENRTM_PREFIX ${OPENRTM_DIR})
+endif()
+
 include_directories(${OPENRTM_INCLUDE_DIRS})
 
+
 set(IDL_INCLUDE_DIRS 
-  ${OPENRTM_PREFIX}/include/openrtm-1.1/rtm/idl
+  ${OPENRTM_PREFIX}/include/openrtm-${OPENRTM_VERSION_MAJOR}.${OPENRTM_VERSION_MINOR}/rtm/idl
   ${OPENRTM_PREFIX}/rtm/idl # for the Windows installer version
   )
 
