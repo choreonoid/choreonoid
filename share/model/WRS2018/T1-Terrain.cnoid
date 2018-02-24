@@ -16,12 +16,12 @@ items:
       children: 
         - 
           id: 2
-          name: "RoadSurface20m"
+          name: "RoadSurface40m"
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/WRS2018/RoadSurface20m.body"
-            currentBaseLink: "Base"
+            modelFile: "${SHARE}/model/WRS2018/RoadSurface40m.body"
+            currentBaseLink: ""
             rootPosition: [ 0, 0, 0 ]
             rootAttitude: [ 
               1, 0, 0, 
@@ -39,12 +39,12 @@ items:
             isEditable: false
         - 
           id: 3
-          name: "TunnelWall20m"
+          name: "TunnelWall40m"
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/WRS2018/TunnelWall20m.body"
-            currentBaseLink: "Base"
+            modelFile: "${SHARE}/model/WRS2018/TunnelWall40m.body"
+            currentBaseLink: ""
             rootPosition: [ 0, 0, 0 ]
             rootAttitude: [ 
               1, 0, 0, 
@@ -67,11 +67,11 @@ items:
           class: BodyItem
           data: 
             modelFile: "${SHARE}/model/WRS2018/TerrainA.body"
-            currentBaseLink: "Root"
-            rootPosition: [ 8, -2.4, 0 ]
+            currentBaseLink: ""
+            rootPosition: [ 22, -2.4, 0 ]
             rootAttitude: [ 
               6.123234e-17, -1, 0, 
-              1, 6.123234e-17, 0, 
+              1, 6.123234e-17, -0, 
               0, 0, 1 ]
             jointPositions: [  ]
             initialRootPosition: [ 8, -2.4, 0 ]
@@ -90,10 +90,10 @@ items:
           class: BodyItem
           data: 
             modelFile: "${SHARE}/model/WRS2018/TerrainB.body"
-            currentBaseLink: "Root"
-            rootPosition: [ 8, 2.4, 0 ]
+            currentBaseLink: ""
+            rootPosition: [ 22, 2.4, 0 ]
             rootAttitude: [ 
-              6.123234e-17, 1, 0, 
+              6.123234e-17, 1, -0, 
               -1, 6.123234e-17, 0, 
               0, 0, 1 ]
             jointPositions: [  ]
@@ -102,6 +102,52 @@ items:
               2.22044605e-16, 1, 0, 
               -1, 2.22044605e-16, -0, 
               -0, 0, 1 ]
+            zmp: [ 0, 0, 0 ]
+            collisionDetection: true
+            selfCollisionDetection: false
+            isEditable: false
+        - 
+          id: 6
+          name: "ChocoTerrain"
+          plugin: Body
+          class: BodyItem
+          data: 
+            modelFile: "${SHARE}/model/WRS2018/ChocoTerrain.body"
+            currentBaseLink: "Base"
+            rootPosition: [ 4, 0, 0 ]
+            rootAttitude: [ 
+              1, 0, 0, 
+              0, 1, 0, 
+              0, 0, 1 ]
+            jointPositions: [  ]
+            initialRootPosition: [ 0, 0, 0 ]
+            initialRootAttitude: [ 
+              1, 0, 0, 
+              0, 1, 0, 
+              0, 0, 1 ]
+            zmp: [ 0, 0, 0 ]
+            collisionDetection: true
+            selfCollisionDetection: false
+            isEditable: false
+        - 
+          id: 7
+          name: "WaffleTerrain"
+          plugin: Body
+          class: BodyItem
+          data: 
+            modelFile: "${SHARE}/model/WRS2018/WaffleTerrain.body"
+            currentBaseLink: "Base"
+            rootPosition: [ 10, 0, 0 ]
+            rootAttitude: [ 
+              1, 0, 0, 
+              0, 1, 0, 
+              0, 0, 1 ]
+            jointPositions: [  ]
+            initialRootPosition: [ 0, 0, 0 ]
+            initialRootAttitude: [ 
+              1, 0, 0, 
+              0, 1, 0, 
+              0, 0, 1 ]
             zmp: [ 0, 0, 0 ]
             collisionDetection: true
             selfCollisionDetection: false
@@ -118,7 +164,7 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      checked: [ 2, 3, 4, 5 ]
+      checked: [ 2, 3, 4, 5, 6, 7 ]
       expanded: [ 1 ]
   - 
     id: 2
@@ -169,9 +215,9 @@ views:
           fieldOfView: 0.698132
           near: 0.01
           far: 100
-          eye: [ -5.46768439, -2.83592754, 3.07361993 ]
-          direction: [ 0.947176335, 0.292995968, -0.130423741 ]
-          up: [ 0.124598559, 0.03854285, 0.991458344 ]
+          eye: [ -1.87756194, -3.59761819, 3.70643868 ]
+          direction: [ 0.89224569, 0.377235417, -0.248175481 ]
+          up: [ 0.228584756, 0.0966440822, 0.968715093 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 54.3656
@@ -234,39 +280,6 @@ toolbars:
     current: 5
   "LeggedBodyBar": 
     stanceWidth: 0.15
-  "BodyMotionGenerationBar": 
-    autoGenerationForNewBody: true
-    balancer: false
-    autoGeneration: false
-    timeScaleRatio: 1
-    preInitialDuration: 1
-    postFinalDuration: 1
-    onlyTimeBarRange: false
-    makeNewBodyItem: true
-    stealthyStepMode: true
-    stealthyHeightRatioThresh: 2
-    flatLiftingHeight: 0.005
-    flatLandingHeight: 0.005
-    impactReductionHeight: 0.005
-    impactReductionTime: 0.04
-    autoZmp: true
-    minZmpTransitionTime: 0.1
-    zmpCenteringTimeThresh: 0.03
-    zmpTimeMarginBeforeLiftingSpin: 0
-    zmpMaxDistanceFromCenter: 0.02
-    allLinkPositions: false
-    lipSyncMix: false
-    timeToStartBalancer: 0
-    balancerIterations: 2
-    plainBalancerMode: false
-    boundaryConditionType: position
-    boundarySmootherType: quintic
-    boundarySmootherTime: 0.5
-    boundaryCmAdjustment: false
-    boundaryCmAdjustmentTime: 1
-    waistHeightRelaxation: false
-    gravity: 9.8
-    dynamicsTimeRatio: 1
 Body: 
   "BodyMotionEngine": 
     updateJointVelocities: false
@@ -292,6 +305,16 @@ Body:
         showCenterOfMass: false
         showPpcom: false
         showZmp: false
+      - 
+        bodyItem: 6
+        showCenterOfMass: false
+        showPpcom: false
+        showZmp: false
+      - 
+        bodyItem: 7
+        showCenterOfMass: false
+        showPpcom: false
+        showZmp: false
     staticModelEditing: true
   "KinematicFaultChecker": 
     checkJointPositions: true
@@ -314,12 +337,12 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 408, 1990 ]
+      sizes: [ 326, 1588 ]
       children: 
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 765, 764 ]
+          sizes: [ 470, 470 ]
           children: 
             - 
               type: pane
@@ -332,12 +355,12 @@ viewAreas:
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 1092, 437 ]
+          sizes: [ 671, 269 ]
           children: 
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 862, 1122 ]
+              sizes: [ 687, 895 ]
               children: 
                 - 
                   type: pane
@@ -362,4 +385,3 @@ layoutOfToolBars:
       - { name: "SimulationBar", x: 1577, priority: 0 }
       - { name: "BodyBar", x: 1774, priority: 0 }
       - { name: "KinematicsBar", x: 2034, priority: 0 }
-      - { name: "BodyMotionGenerationBar", x: 2268, priority: 0 }

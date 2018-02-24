@@ -8,5 +8,6 @@ links:
     name: Base
     jointType: fixed
     material: Ground
+    convexRecompostiion: true
     elements:
       Resource: { uri: "resource/TerrainA.dae" }
