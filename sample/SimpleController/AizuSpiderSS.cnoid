@@ -16,7 +16,7 @@ items:
       children: 
         - 
           id: 2
-          name: "AizuSpiderSS"
+          name: "AizuSpider"
           plugin: Body
           class: BodyItem
           data: 
@@ -28,16 +28,16 @@ items:
               0, 1, 0, 
               0, 0, 1 ]
             jointPositions: [ 
-               0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  2.617994,  2.617994,  0.000000,  0.000000,  0.000000, 
-               0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000 ]
+               0.000000,  0.000000,  0.000000,  0.000000, -1.570796,  2.635447,  0.471239, -1.623156,  0.104720,  1.745329, 
+               0.000000,  0.000000,  0.000000 ]
             initialRootPosition: [ -2, -0.5, 0.035 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
             initialJointPositions: [ 
-               0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  2.617994,  2.617994,  0.000000,  0.000000,  0.000000, 
-               0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000 ]
+               0.000000,  0.000000,  0.000000,  0.000000, -1.570796,  2.635447,  0.471239, -1.623156,  0.104720,  1.745329, 
+               0.000000,  0.000000,  0.000000 ]
             zmp: [ 0, 0, 0 ]
             collisionDetection: true
             selfCollisionDetection: false
@@ -88,7 +88,7 @@ items:
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            jointPositions: [  ]
+            jointPositions: [  0.000000 ]
             initialRootPosition: [ 0, 0, 0 ]
             initialRootAttitude: [ 
               1, 0, 0, 
@@ -380,7 +380,7 @@ views:
       spinBox: true
       slider: true
       labelOnLeft: true
-      currentBodyItem: 6
+      currentBodyItem: 2
   - 
     id: 8
     plugin: Body
@@ -388,15 +388,11 @@ views:
     mounted: true
     state: 
       listingMode: "Link Tree"
-      currentBodyItem: 6
+      currentBodyItem: 2
       bodyItems: 
         - 
           id: 6
           selectedLinks: [ 1 ]
-  - 
-    id: 9
-    plugin: Python
-    class: PythonConsoleView
 toolbars: 
   "TimeBar": 
     minTime: 0
@@ -417,7 +413,7 @@ toolbars:
     penetrationBlockDepth: 0.0005
     lazyCollisionDetectionMode: true
   "BodyBar": 
-    current: 6
+    current: 2
   "LeggedBodyBar": 
     stanceWidth: 0.15
   "BodyMotionGenerationBar": 
@@ -490,12 +486,12 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 601, 2557 ]
+      sizes: [ 456, 1942 ]
       children: 
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 710, 709 ]
+          sizes: [ 765, 764 ]
           children: 
             - 
               type: pane
@@ -508,12 +504,12 @@ viewAreas:
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 1015, 404 ]
+          sizes: [ 1094, 435 ]
           children: 
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 1196, 1357 ]
+              sizes: [ 907, 1029 ]
               children: 
                 - 
                   type: pane
@@ -526,7 +522,7 @@ viewAreas:
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 1538, 1015 ]
+              sizes: [ 1166, 770 ]
               children: 
                 - 
                   type: pane
