@@ -295,6 +295,13 @@ agx::PlaneJointRef AGXObjectFactory::createConstraintPlaneJoint(const AGXPlaneJo
     return new agx::PlaneJoint(desc.rigidBodyA, desc.frameA, desc.rigidBodyB, desc.frameB);
 }
 
+agx::VirtualConstraintInertiaRef AGXObjectFactory::createVirtualConstraintInertia(agx::Constraint* const constraint,
+    const agx::Real& rb1TI, const agx::Real& rb1RI,
+    const agx::Real& rb2TI, const agx::Real& rb2RI)
+{
+    return new agx::VirtualConstraintInertia(constraint, rb1TI, rb1RI, rb2TI, rb2RI);
+}
+
 void AGXObjectFactory::setMotor1DParam(agx::Motor1D* controller, const AGXMotor1DDesc& desc)
 {
     controller->setEnable(desc.enable);

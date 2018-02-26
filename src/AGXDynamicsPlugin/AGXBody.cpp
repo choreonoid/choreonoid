@@ -567,6 +567,11 @@ agx::ConstraintRef AGXLink::createAGXConstraint()
         lock.forceRange = agx::RangeReal(lockForceRange(0),lockForceRange(1));
     }
 
+    // rotor inertia
+    double rotorInertia = orgLink->Jm2();
+    if(!rotorInertia)
+        rotorInertia = orgLink->info("rotorInertia", 0.0);
+
     agx::ConstraintRef constraint = nullptr;
     switch(orgLink->jointType()){
         case Link::REVOLUTE_JOINT :{
@@ -599,8 +604,13 @@ agx::ConstraintRef AGXLink::createAGXConstraint()
                 desc.motor.enable = false;
                 desc.lock.enable = true;
             }
-
             constraint = AGXObjectFactory::createConstraint(desc);
+            // add rotor inertia
+            getAGXBody()->getAGXScene()->getSimulation()->add(
+                AGXObjectFactory::createVirtualConstraintInertia(constraint,
+                0.0, rotorInertia,
+                0.0, rotorInertia)
+            );
             break;
         }
         case Link::PRISMATIC_JOINT :{
@@ -635,6 +645,12 @@ agx::ConstraintRef AGXLink::createAGXConstraint()
             }
 
             constraint = AGXObjectFactory::createConstraint(desc);
+            // add rotor inertia
+            getAGXBody()->getAGXScene()->getSimulation()->add(
+                AGXObjectFactory::createVirtualConstraintInertia(constraint,
+                rotorInertia, 0.0,
+                rotorInertia, 0.0)
+            );
             break;
         }
         case Link::FIXED_JOINT :

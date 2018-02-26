@@ -430,6 +430,9 @@ public:
     static agx::PrismaticRef createConstraintPrismatic(const AGXPrismaticDesc& desc);
     static agx::BallJointRef createConstraintBallJoint(const AGXBallJointDesc& desc);
     static agx::PlaneJointRef createConstraintPlaneJoint(const AGXPlaneJointDesc& desc);
+    static agx::VirtualConstraintInertiaRef createVirtualConstraintInertia(agx::Constraint* const constraint,
+        const agx::Real& rb1TI, const agx::Real& rb1RI,
+        const agx::Real& rb2TI, const agx::Real& rb2RI);
 private:
     static void setMotor1DParam(agx::Motor1D* motor, const AGXMotor1DDesc& desc);
     static void setLock1DParam(agx::Lock1D* controller, const AGXLock1DDesc& desc);

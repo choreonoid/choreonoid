@@ -33,6 +33,7 @@
 #include <agx/LockJoint.h>
 #include <agx/BallJoint.h>
 #include <agx/PlaneJoint.h>
+#include <agx/VirtualConstraintInertia.h>
 
 // Friction models
 #include <agx/OrientedFrictionModels.h>
