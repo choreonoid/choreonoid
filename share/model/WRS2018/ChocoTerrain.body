@@ -1,0 +1,61 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: ChocoTerrain
+
+STEP: &STEP
+  type: Resource
+  uri: "resource/ChocoStepP1.dae"
+
+links:
+  -
+    name: Base
+    jointType: fixed
+    material: Ground
+    convexRecompostiion: true
+    elements:
+      Transform:
+        translation: [ 0, -0.5, 0 ]
+        elements:
+          -
+            <<: *STEP
+            translation: [ 0, -1.8, 0 ]
+          -
+            <<: *STEP
+            translation: [ 0, -0.6, 0 ]
+          -
+            <<: *STEP
+            translation: [ 0, 0.6, 0 ]
+          -
+            <<: *STEP
+            translation: [ 0, 1.8, 0 ]
+          -
+            <<: *STEP
+            translation: [ 1.2, -1.2, 0 ]
+          -
+            <<: *STEP
+            translation: [ 1.2, 0, 0 ]
+          -
+            <<: *STEP
+            translation: [ 1.2, 1.2, 0 ]
+          -
+            <<: *STEP
+            translation: [ 2.4, -1.8, 0 ]
+          -
+            <<: *STEP
+            translation: [ 2.4, -0.6, 0 ]
+          -
+            <<: *STEP
+            translation: [ 2.4, 0.6, 0 ]
+          -
+            <<: *STEP
+            translation: [ 2.4, 1.8, 0 ]
+          -
+            <<: *STEP
+            translation: [ 3.6, -1.2, 0 ]
+          -
+            <<: *STEP
+            translation: [ 3.6, 0, 0 ]
+          -
+            <<: *STEP
+            translation: [ 3.6, 1.2, 0 ]

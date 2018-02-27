@@ -1,0 +1,102 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: Car
+
+links:
+  -
+    name: BODY
+    jointType: fixed
+    elements:
+      Resource:
+        rotation: [ 0, 0, 1, 90 ]
+        translation: [ 2.3, -0.877, 0 ]
+        uri: "resource/CarBody.dae"
+  -
+    name: FR_DOOR
+    parent: BODY
+    translation: [ 0.878, -0.8175, 0.3306 ]
+    jointType: revolute
+    jointAxis: Z
+    jointId: 0
+    jointRange: [ 0, 70 ]
+    mass: 15.0
+    inertia: [ 1, 0, 0,
+               0, 1, 0,
+               0, 0, 1 ]
+
+    # For the friction for AGX
+    jointMotor: true
+    jointMotorCompliance: 0.9
+
+    elements:
+      Resource:
+        rotation: [ 0, 0, 1, 90 ]
+        translation: [ -1.14, 0, 0 ]
+        uri: "resource/CarDoorFR.dae"
+  -
+    name: FL_DOOR
+    parent: BODY
+    translation: [ 0.878, 0.692, 0.3306 ]
+    jointType: revolute
+    jointAxis: Z
+    jointId: 1
+    jointRange: [ -70, 0 ]
+    mass: 15.0
+    inertia: [ 1, 0, 0,
+               0, 1, 0,
+               0, 0, 1 ]
+
+    # For the friction for AGX
+    jointMotor: true
+    jointMotorCompliance: 0.9
+
+    elements:
+      Resource:
+        rotation: [ 0, 0, 1, 90 ]
+        translation: [ -1.14, 0, 0.0016 ]
+        uri: "resource/CarDoorFL.dae"
+  -
+    name: BR_DOOR
+    parent: BODY
+    translation: [ -0.423, -0.8175, 0.2531 ]
+    jointType: revolute
+    jointAxis: Z
+    jointId: 2
+    jointRange: [ 0, 70 ]
+    mass: 10.0
+    inertia: [ 1, 0, 0,
+               0, 1, 0,
+               0, 0, 1 ]
+
+    # For the friction for AGX
+    jointMotor: true
+    jointMotorCompliance: 0.9
+
+    elements:
+      Resource:
+        rotation: [ 0, 0, 1, 90 ]
+        translation: [ -0.5, 0, 0 ]
+        uri: "resource/CarDoorBR.dae"
+  -
+    name: BL_DOOR
+    parent: BODY
+    translation: [ -0.423, 0.673, 0.2531 ]
+    jointType: revolute
+    jointAxis: Z
+    jointId: 3
+    jointRange: [ -70, 0 ]
+    mass: 10.0
+    inertia: [ 1, 0, 0,
+               0, 1, 0,
+               0, 0, 1 ]
+
+    # For the friction for AGX
+    jointMotor: true
+    jointMotorCompliance: 0.9
+
+    elements:
+      Resource:
+        rotation: [ 0, 0, 1, 90 ]
+        translation: [ -0.5, 0, 0 ]
+        uri: "resource/CarDoorBL.dae"
