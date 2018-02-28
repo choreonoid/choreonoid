@@ -387,7 +387,7 @@ links:
         frameRate: *CAMERA_SPEC_frameRate
         on: true
         nearClipDistance: 0.02
-        farClipDistance: 3.5
+        #farClipDistance: 3.5
   -
     name: FINGER1
     parent: HAND
