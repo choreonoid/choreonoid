@@ -1,0 +1,27 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: Debris-S
+
+links:
+  -
+      name: BASE
+      translation: [ 0.0, 0.0, 0.02 ]
+      jointType: free
+      massType: density
+      density: 8000
+      mass: 1
+      inertia: [
+        2,  0, 0,
+        0,  1, 0,
+        0,  0, 2 ]
+      material: Default
+      autoSleep: true
+      elements:
+        Shape:
+          geometry: { type: Box, size: [ 0.4, 0.04, 0.04 ] }
+          appearance:
+            material:
+              diffuseColor: [ 0.1, 1.0, 0.0 ]
+
+
