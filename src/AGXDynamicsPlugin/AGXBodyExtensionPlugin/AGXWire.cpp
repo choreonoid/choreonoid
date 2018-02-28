@@ -359,7 +359,7 @@ AGXWire::AGXWire(AGXWireDevice* device, AGXBody* agxBody) :
 
         Vector3 positionInBodyFrame;
         agxConvert::setVector(wireWinchInfo.find("position"), positionInBodyFrame);
-        winchDesc.positionInBodyFrame = agxConvert::toAGX(attitude* positionInBodyFrame);   // link coord
+        winchDesc.positionInBodyFrame = agxConvert::toAGX(positionInBodyFrame);   // link coord
 
         Vector3 normalInBodyFrame;
         agxConvert::setVector(wireWinchInfo.find("normal"), normalInBodyFrame);
