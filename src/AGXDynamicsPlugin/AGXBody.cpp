@@ -49,6 +49,10 @@ AGXLink::AGXLink(Link* const link, AGXLink* const parent, const Vector3& parentO
     _origin(parentOrigin + link->b())
 {
     agxBody->addAGXLink(this);
+    std::stringstream ss;
+    ss << agx::UuidGenerator().generate().str() << link->name() << std::flush;
+    _collisionGroupName = ss.str();
+
     const Link::ActuationMode& actuationMode = link->actuationMode();
     if(actuationMode == Link::ActuationMode::NO_ACTUATION){
     }else if(actuationMode == Link::ActuationMode::LINK_POSITION){
@@ -68,6 +72,7 @@ void AGXLink::constructAGXLink()
     _rigid = createAGXRigidBody();
     _geometry = createAGXGeometry();
     _rigid->add(_geometry);
+    _geometry->addGroup(getCollisionGroupName());
     createAGXShape();
     setAGXMaterial();
     _constraint = createAGXConstraint();
@@ -329,6 +334,11 @@ agx::Constraint* AGXLink::getAGXConstraint() const
     return _constraint;
 }
 
+agx::Name AGXLink::getCollisionGroupName() const
+{
+    return _collisionGroupName;
+}
+
 AGXBody* AGXLink::getAGXBody()
 {
     return _agxBody;
@@ -533,19 +543,15 @@ agx::ConstraintRef AGXLink::createAGXConstraint()
 
     AGXElementaryConstraint base, motor, range, lock;
     map->read("jointCompliance", base.compliance);
-    map->read("jointDamping", base.damping);
-    map->read("jointElasticity", base.elasticity);
+    map->read("jointSpookDamping", base.spookDamping);
     map->read("jointMotor", motor.enable);
     map->read("jointMotorCompliance", motor.compliance);
-    map->read("jointMotorDamping", motor.damping);
-    map->read("jointMotorElasticity", motor.elasticity);
+    map->read("jointMotorSpookDamping", motor.spookDamping);
     map->read("jointRangeCompliance", range.compliance);
-    map->read("jointRangeDamping", range.damping);
-    map->read("jointRangeElasticity", range.elasticity);
+    map->read("jointRangeSpookDamping", range.spookDamping);
     map->read("jointLock", lock.enable);
     map->read("jointLockCompliance",  lock.compliance);
-    map->read("jointLockDamping",  lock.damping);
-    map->read("jointLockElasticity",  lock.elasticity);
+    map->read("jointLockSpookDamping",  lock.spookDamping);
 
     Vector2 baseForceRange, motorForceRange, rangeForceRange, lockForceRange;
     if(agxConvert::setVector(map->find("jointForceRange"), baseForceRange)){
@@ -567,14 +573,11 @@ agx::ConstraintRef AGXLink::createAGXConstraint()
             AGXHingeDesc desc;
             const Vector3& a = orgLink->a();
             const Vector3& p = getOrigin();
+            desc.set(base);
             desc.frameAxis.set(a(0),a(1),a(2));
             desc.frameCenter.set(p(0),p(1),p(2));
             desc.rigidBodyA = getAGXRigidBody();
             desc.rigidBodyB = agxParentLink->getAGXRigidBody();
-            desc.compliance = base.compliance;
-            desc.damping = base.damping;
-            desc.forceRange = base.forceRange;
-            desc.elasticity = base.elasticity;
 
             // motor
             desc.motor.set(motor);
@@ -604,13 +607,11 @@ agx::ConstraintRef AGXLink::createAGXConstraint()
             AGXPrismaticDesc desc;
             const Vector3& a = orgLink->a();
             const Vector3& p = getOrigin();
+            desc.set(base);
             desc.frameAxis.set(a(0),a(1),a(2));
             desc.framePoint.set(p(0),p(1),p(2));
             desc.rigidBodyA = getAGXRigidBody();
             desc.rigidBodyB = agxParentLink->getAGXRigidBody();
-            desc.compliance = base.compliance;
-            desc.damping = base.damping;
-            desc.forceRange = base.forceRange;
 
             // motor
             desc.motor.set(motor);
@@ -640,11 +641,9 @@ agx::ConstraintRef AGXLink::createAGXConstraint()
         case Link::PSEUDO_CONTINUOUS_TRACK :    // deprecated
         {
             AGXLockJointDesc desc;
+            desc.set(base);
             desc.rigidBodyA = getAGXRigidBody();
             desc.rigidBodyB = agxParentLink->getAGXRigidBody();
-            desc.compliance = base.compliance;
-            desc.damping = base.damping;
-            desc.forceRange = base.forceRange;
             constraint = AGXObjectFactory::createConstraint(desc);
             break;
         }
@@ -667,7 +666,9 @@ void AGXLink::setTorqueToAGX()
             joint1DOF->getElectricMotorController()->setEnable(true);
             joint1DOF->getElectricMotorController()->setTorqueConstant(orgLink->u());
 #else
-            joint1DOF->getMotor1D()->setSpeed( orgLink->u() < 0 ? -1.0e12 : 1.0e12);
+            double dq_l = std::max(-1.0E12, orgLink->dq_lower());
+            double dq_u = std::min(1.0E12, orgLink->dq_upper());
+            joint1DOF->getMotor1D()->setSpeed( orgLink->u() < 0 ? dq_l : dq_u);
             joint1DOF->getMotor1D()->setForceRange( agx::RangeReal(orgLink->u()));
 #endif
             break;
@@ -814,6 +815,7 @@ void AGXBody::setCollisionExclude(){
     setCollisionExcludeTreeDepth(cdMapping);
     setCollisionExcludeLinkGroups(cdMapping);
     setCollisionExcludeSelfCollisionLinks(cdMapping);
+    setCollisionExcludeLinksWireCollision(cdMapping);
 }
 
 void AGXBody::setCollisionExcludeLinks(const Mapping& cdMapping){
@@ -826,12 +828,10 @@ void AGXBody::setCollisionExcludeLinks(const Mapping& cdMapping){
 void AGXBody::setCollisionExcludeLinksDynamic(const Mapping& cdMapping){
     const Listing& excludeLinksDynamic = *cdMapping.findListing("excludeLinksDynamic");
     for(auto linkName : excludeLinksDynamic){
-        stringstream ss;
-        ss << "AGXExcludeLinkDynamic_" << agx::UuidGenerator().generate().str() << std::endl;
         if(AGXLink* agxLink = getAGXLink(linkName->toString())){
-            agxLink->getAGXGeometry()->addGroup(ss.str());
+            agxLink->getAGXGeometry()->removeGroup(AGXGeometryDesc::globalCollisionGroupName);
+            getAGXScene()->setCollisionPair(agxLink->getCollisionGroupName(), AGXGeometryDesc::globalCollisionGroupName, false);
         }
-        getAGXScene()->setCollisionPair(ss.str(), AGXGeometryDesc::globalCollisionGroupName, false);
     }
 }
 
@@ -916,6 +916,21 @@ void AGXBody::setCollisionExcludeSelfCollisionLinks(const Mapping& cdMapping)
         if(AGXLink* agxLink = getAGXLink(linkName)){
             if(agxCollide::Geometry* geometry = agxLink->getAGXGeometry())
                 geometry->addGroup(ss.str());
+        }
+    }
+}
+
+void AGXBody::setCollisionExcludeLinksWireCollision(const Mapping& cdMapping)
+{
+    const ValueNodePtr& excludeLinksWireNode = cdMapping.find("excludeLinksWireCollision");
+    if(!excludeLinksWireNode->isValid())   return;
+    if(!excludeLinksWireNode->isListing()) return;
+
+    vector<string> linkNames;
+    if(!agxConvert::setVector(excludeLinksWireNode->toListing(), linkNames)) return;
+    for(auto linkName : linkNames){
+        if(AGXLink* agxLink = getAGXLink(linkName)){
+            getAGXScene()->setCollisionPair(agxLink->getCollisionGroupName(), AGXWireDesc::globalCollisionGroupName, false);
         }
     }
 }

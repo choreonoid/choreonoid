@@ -3,6 +3,10 @@ formatVersion: 1.0
 angleUnit: degree
 name: Labo1
 
+GLOBAL_OFFSET: &GLOBAL_OFFSET
+  translation: [ -0.86, 1.5, 0 ]
+  rotation: [ 1, 0, 0, 90 ]
+
 links:
   -
     name: Root
@@ -11,6 +15,7 @@ links:
     name: Ground
     parent: Floor
     jointType: fixed
+    material: Ground
     elements:
       Shape:
         translation: [ 0, 0, -0.1 ]
@@ -23,71 +28,87 @@ links:
     name: Floor
     jointType: fixed
     parent: Root
-    translation: [ -0.86, 1.5, 0 ]
+    material: Ground
     elements:
-      Transform:
-        translation: [ 0.86, -1.5, -0.05 ]
-        elements:
-          Shape:
-            geometry: { type: Box, size: [ 5.2, 3.0, 0.1 ] }
-            appearance:
-              material:
-                diffuseColor: [ 1, 0.56, 0.34 ]
-                shininess: 0.05
-                specularColor: [ 0.8, 0.4, 0.25 ] 
+      Shape:
+        translation: [ 0, 0, -0.05 ]
+        geometry: { type: Box, size: [ 5.4, 3.0, 0.1 ] }
+        appearance:
+          material:
+            diffuseColor: [ 1, 0.56, 0.34 ]
+            shininess: 0.05
+            specularColor: [ 0.8, 0.4, 0.25 ] 
   -
     name: Wall1
     parent: Floor
     jointType: fixed
     elements: 
       Resource: 
-        rotation: [ 1, 0, 0, 90 ]
-        uri: "wall1.wrl"
+        <<: *GLOBAL_OFFSET
+        uri: "resource/wall1.wrl"
   -
     name: Wall2
     parent: Floor
     jointType: fixed
     elements:
       Resource: 
-        rotation: [ 1, 0, 0, 90 ]
-        uri: "wall2.wrl"
+        <<: *GLOBAL_OFFSET
+        uri: "resource/wall2.wrl"
   -
     name: Rack1
     parent: Floor
     jointType: fixed
     elements:
       Resource:
-        rotation: [ 1, 0, 0, 90 ]
-        uri: "rack1.wrl"
+        <<: *GLOBAL_OFFSET
+        uri: "resource/rack1.wrl"
   -
     name: Rack2
     parent: Floor
     jointType: fixed
     elements:
       Resource: 
-        rotation: [ 1, 0, 0, 90 ]
-        uri: "rack2.wrl"
+        <<: *GLOBAL_OFFSET
+        uri: "resource/rack2.wrl"
   -
     name: Rack3
     parent: Floor
     jointType: fixed
     elements:
       Resource:
-        rotation: [ 1, 0, 0, 90 ]
-        uri: "rack3.wrl"
+        <<: *GLOBAL_OFFSET
+        uri: "resource/rack3.wrl"
   -
     name: Tank
     parent: Floor
     jointType: fixed
     elements: 
       Resource: 
-        rotation: [ 1, 0, 0, 90 ]
-        uri: "tank.wrl"
+        <<: *GLOBAL_OFFSET
+        uri: "resource/tank.wrl"
   -
     name: Pipes
     parent: Floor
     jointType: fixed
     elements: 
       Resource: 
-        rotation: [ 1, 0, 0, 90 ]
-        uri: "pipes.wrl"
+        <<: *GLOBAL_OFFSET
+        uri: "resource/pipes.wrl"
+        exclude: [ Valve1Handle, Valve1Shaft ]
+  -
+    name: Valve1Handle
+    parent: Pipes
+    translation: [ 1.085, 0.32, 0.848 ]
+    rotation: [ 0, 0, 1, -132.5 ]
+    jointType: revolute
+    jointId: 0
+    jointAxis: X
+
+    # For the friction for AGX
+    jointMotor: true
+    jointMotorCompliance: 0.9
+
+    elements:
+      Resource:
+        uri: "resource/valves.yaml"
+        node: VALVE_HANDLE_213

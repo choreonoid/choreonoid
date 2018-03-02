@@ -48,7 +48,7 @@ links:
     jointId: 0
     jointType: revolute
     jointAxis: Z
-    jointRange: [ -2.618, 0.524 ]
+    jointRange: [ -150, 30 ]
     centerOfMass: [ 0.0098738158196746834, 0.0019351632042820921, -0.010641978258911932 ]
     mass: 0.01075
     inertia: [
@@ -66,7 +66,7 @@ links:
     jointId: 1
     jointType: revolute
     jointAxis: -X
-    jointRange: [ -1.571, 1.571 ]
+    jointRange: [ -90, 90 ]
     centerOfMass: [ 0.013202756254495145, 5.5007249363651409e-05, -0.0093736922025596577 ]
     mass: 0.06587
     inertia: [
@@ -84,7 +84,7 @@ links:
     jointId: 2
     jointType: revolute
     jointAxis: -Y
-    jointRange: [ -0.698, 2.094 ]
+    jointRange: [ -40, 120 ]
     centerOfMass: [ 0.012315059064213048, -0.0026831832924373755, -0.036400277402077907 ]
     mass: 0.04249
     inertia: [
@@ -102,7 +102,7 @@ links:
     jointId: 3
     jointType: revolute
     jointAxis: -Y
-    jointRange: [ -2.269, 0 ]
+    jointRange: [ -130, 0 ]
     centerOfMass: [ 0.0054334208830912611, -0.0045557250577152588, -0.022327982304852591 ]
     mass: 0.01307
     inertia: [
@@ -120,7 +120,7 @@ links:
     jointId: 4
     jointType: revolute
     jointAxis: Y
-    jointRange: [ -1.658, 1.047 ]
+    jointRange: [ -95, 60 ]
     centerOfMass: [ -0.010514983772173681, -0.00092494740382487032, 0.006396772110621252 ]
     mass: 0.0656
     inertia: [
@@ -138,7 +138,7 @@ links:
     jointId: 5
     jointType: revolute
     jointAxis: X
-    jointRange: [ -0.785, 1.571 ]
+    jointRange: [ -45, 90 ]
     centerOfMass: [ -0.012299329345648103, -0.011256454634381104, -0.018194268448920348 ]
     mass: 0.01792
     inertia: [
@@ -156,7 +156,7 @@ links:
     jointId: 6
     jointType: revolute
     jointAxis: Z
-    jointRange: [ -0.524, 2.618 ]
+    jointRange: [ -30, 150 ]
     centerOfMass: [ 0.0098738158196747094, -0.0019351632042820964, -0.008641978258911916 ]
     mass: 0.01075
     inertia: [
@@ -174,7 +174,7 @@ links:
     jointId: 7
     jointType: revolute
     jointAxis: -X
-    jointRange: [ -1.571, 1.571 ]
+    jointRange: [ -90, 90 ]
     centerOfMass: [ 0.013202756254495143, -5.5007249363677958e-05, -0.0093736922025596525 ]
     mass: 0.06587
     inertia: [
@@ -192,7 +192,7 @@ links:
     jointId: 8
     jointType: revolute
     jointAxis: Y
-    jointRange: [ -2.094, 0.698 ]
+    jointRange: [ -120, 40 ]
     centerOfMass: [ 0.012315059064213051, 0.0026831832924373968, -0.036400277402077907 ]
     mass: 0.04249
     inertia: [
@@ -210,7 +210,7 @@ links:
     jointId: 9
     jointType: revolute
     jointAxis: Y
-    jointRange: [ 0, 2.269 ]
+    jointRange: [ 0, 130 ]
     centerOfMass: [ 0.0050944529332231933, 0.0052148671697826937, -0.022550612186734664 ]
     mass: 0.01307
     inertia: [
@@ -228,7 +228,7 @@ links:
     jointId: 10
     jointType: revolute
     jointAxis: -Y
-    jointRange: [ -1.047, 1.658 ]
+    jointRange: [ -60, 95 ]
     centerOfMass: [ -0.010514983772173688, 0.0009249473053786659, 0.0063967712285226755 ]
     mass: 0.0656
     inertia: [
@@ -246,7 +246,7 @@ links:
     jointId: 11
     jointType: revolute
     jointAxis: X
-    jointRange: [ -1.571, 0.785 ]
+    jointRange: [ -90, 45 ]
     centerOfMass: [ -0.012299329345648083, 0.011256454634381099, -0.018194268448920352 ]
     mass: 0.01792
     inertia: [
@@ -264,7 +264,7 @@ links:
     jointId: 12
     jointType: revolute
     jointAxis: -Y
-    jointRange: [ -1.658, 0.0 ]
+    jointRange: [ -95, 0.0 ]
     centerOfMass: [ -0.020730842888781902, 0.00025411885296551366, 0.042966477725380772 ]
     mass: 0.12824 
     inertia: [
@@ -282,7 +282,7 @@ links:
     jointId: 13
     jointType: revolute
     jointAxis: -Z
-    jointRange: [ -0.872, 0.872 ]
+    jointRange: [ -50, 50 ]
     centerOfMass: [ 2.2786043818985748E-5, 5.3290705182007515E-18, 0.008215358964843369 ]
     mass: 0.00527
     inertia: [
@@ -300,7 +300,7 @@ links:
     jointId: 14
     jointType: revolute
     jointAxis: Y
-    jointRange: [ -2.618, 2.618 ]
+    jointRange: [ -150, 150 ]
     centerOfMass: [ -0.0013812847067215142, -0.010516066209780376, -0.0029935461211070872 ]
     mass: 0.00975
     inertia: [
@@ -318,7 +318,7 @@ links:
     jointId: 15
     jointType: revolute
     jointAxis: X
-    jointRange: [ -2.618, 0.698]
+    jointRange: [ -150, 40 ]
     centerOfMass: [ -0.0035468902411903828, -0.0015567363057332911, -0.014437898304582529 ]
     mass: 0.03686
     inertia: [
@@ -336,7 +336,7 @@ links:
     jointId: 16
     jointType: revolute
     jointAxis: Y
-    jointRange: [ -2.269, 0.873 ]
+    jointRange: [ -130, 50 ]
     centerOfMass: [ 0.0015461746197517063, 0.00033795855263700454, -0.015625257449077206 ]
     mass: 0.02905
     inertia: [
@@ -354,7 +354,7 @@ links:
     jointId: 17
     jointType: revolute
     jointAxis: -Y
-    jointRange: [ -2.618, 2.618 ]
+    jointRange: [ -150, 150 ]
     centerOfMass: [ -0.0013812821724981078, 0.010516052694166637, -0.0029935523353056348 ]
     mass: 0.00975
     inertia: [
@@ -372,7 +372,7 @@ links:
     jointId: 18
     jointType: revolute
     jointAxis: X
-    jointRange: [ -0.698, 2.618 ]
+    jointRange: [ -40, 150 ]
     centerOfMass: [ -0.0035468902411903828, 0.0015567363057332922, -0.014437898304582539 ]
     mass: 0.03686 
     inertia: [
@@ -390,7 +390,7 @@ links:
     jointId: 19
     jointType: revolute
     jointAxis: -Y
-    jointRange: [ -0.873, 2.269 ]
+    jointRange: [ -50, 130 ]
     centerOfMass: [ 0.0015461746197516959, -0.00033796007273481838, -0.015625257207349728 ]
     mass: 0.02905
     inertia: [

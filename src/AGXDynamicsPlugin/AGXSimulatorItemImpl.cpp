@@ -58,9 +58,17 @@ AGXSimulatorItemImpl::AGXSimulatorItemImpl(AGXSimulatorItem* self)
 AGXSimulatorItemImpl::AGXSimulatorItemImpl(AGXSimulatorItem* self, const AGXSimulatorItemImpl& org)
     : AGXSimulatorItemImpl(self)
 {
-    (void) org;
     initialize();
+    m_p_gravity                       =  org.m_p_gravity                      ;
+    m_p_numThreads                    =  org.m_p_numThreads                   ;
+    m_p_enableContactReduction        =  org.m_p_enableContactReduction       ;
+    m_p_contactReductionBinResolution =  org.m_p_contactReductionBinResolution;
+    m_p_contactReductionThreshhold    =  org.m_p_contactReductionThreshhold   ;
+    m_p_enableContactWarmstarting     =  org.m_p_enableContactWarmstarting    ;
+    m_p_enableAutoSleep               =  org.m_p_enableAutoSleep              ;
+    m_p_saveToAGXFileOnStart          =  org.m_p_saveToAGXFileOnStart         ;
 }
+
 AGXSimulatorItemImpl::~AGXSimulatorItemImpl(){}
 
 void AGXSimulatorItemImpl::initialize(){}
@@ -155,15 +163,15 @@ void AGXSimulatorItemImpl::createAGXMaterialTable()
             SET_AGXMATERIAL_FIELD(youngsModulus);
             SET_AGXMATERIAL_FIELD(poissonRatio);
             desc.viscosity = mat->viscosity();
-            SET_AGXMATERIAL_FIELD(damping);
+            desc.spookDamping = mat->info<double>("spookDamping", desc.spookDamping);
             desc.roughness = mat->roughness();
             SET_AGXMATERIAL_FIELD(surfaceViscosity);
             SET_AGXMATERIAL_FIELD(adhesionForce);
             SET_AGXMATERIAL_FIELD(adhesivOverlap);
             SET_AGXMATERIAL_FIELD(wireYoungsModulusStretch);
-            SET_AGXMATERIAL_FIELD(wireDampingStretch);
+            desc.wireSpookDampingStretch = mat->info<double>("wireSpookDampingStretch", desc.wireSpookDampingStretch);
             SET_AGXMATERIAL_FIELD(wireYoungsModulusBend);
-            SET_AGXMATERIAL_FIELD(wireDampingBend);
+            desc.wireSpookDampingBend = mat->info<double>("wireSpookDampingBend", desc.wireSpookDampingBend);
             getAGXScene()->createMaterial(desc);
         });
 
@@ -184,7 +192,7 @@ void AGXSimulatorItemImpl::createAGXContactMaterial(int id1, int id2, ContactMat
     desc.nameB = Material::name(id2);
     SET_AGXMATERIAL_FIELD(youngsModulus);
     desc.restitution = mat->restitution();
-    SET_AGXMATERIAL_FIELD(damping);
+    desc.spookDamping = mat->info<double>("spookDamping", desc.spookDamping);
     desc.friction = mat->friction();
     SET_AGXMATERIAL_FIELD(secondaryFriction);
     SET_AGXMATERIAL_FIELD(surfaceViscosity);
@@ -226,7 +234,9 @@ void AGXSimulatorItemImpl::setAdditionalAGXMaterialParam()
         [&](int id1, int id2, ContactMaterial* mat){
             agx::Material* mat1 = mgr->getMaterial(Material::name(id1));
             agx::Material* mat2 = mgr->getMaterial(Material::name(id2));
+            if(!mat1 || !mat2) return;
             agx::ContactMaterial* cmat = mgr->getOrCreateContactMaterial(mat1, mat2);
+            if(!cmat) return;
             string cmatName = "[" + mat1->getName() + " " + mat2->getName() + "]";
             std::cout << "AGXDynamicsPlugin:INFO " << "contact material " << cmatName  << std::endl;
             auto cnfobfm = dynamic_cast<agx::ConstantNormalForceOrientedBoxFrictionModel*>(cmat->getFrictionModel());

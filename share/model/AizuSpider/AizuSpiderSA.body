@@ -1,0 +1,29 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: AizuSpider
+rootLink: CHASSIS
+
+links:
+  - # Main body
+    type: SubBody
+    uri: "AizuSpiderNA.body"
+    translation: [ 0, 0, 0.03503 ]
+    jointType: free
+
+  - # Arm 1
+    type: SubBody
+    uri: "../JACO2/JACO2.body"
+    prefix: ARM1_
+    parent: CHASSIS
+    translation: [ -0.06320, -0.094, 0.5150 ]
+    rotation: [ [ 0, 1, 0, 90 ], [ 0, 0, 1, 90 ] ]
+    jointType: fixed
+    jointIdOffset: 4
+
+standardPose: [
+  # Flippers
+  0, 0, 0, 0,
+  # Arm 1
+  -90, 151, 27, -93, 6, 100, 0, 0, 0
+  ]

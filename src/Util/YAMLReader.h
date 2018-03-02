@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_UTIL_YAML_READER_H_INCLUDED
-#define CNOID_UTIL_YAML_READER_H_INCLUDED
+#ifndef CNOID_UTIL_YAML_READER_H
+#define CNOID_UTIL_YAML_READER_H
 
 #include "ValueTree.h"
 #include "exportdecl.h"
@@ -39,7 +39,7 @@ public:
     void expectRegularMultiSequence() { expectRegularMultiListing(); }
     bool load_string(const std::string& yamlstring) { return parse(yamlstring); }
 #endif
-        
+
     bool load(const std::string& filename);
     bool parse(const std::string& yamlstring);
 
@@ -47,6 +47,8 @@ public:
 
     int numDocuments();
     ValueNode* document(int index = 0);
+
+    ValueNode* findAnchoredNode(const std::string& anchor);
 
     void clearDocuments();
 

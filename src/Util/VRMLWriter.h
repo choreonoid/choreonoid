@@ -16,12 +16,24 @@ namespace cnoid {
 class VRMLWriter;
 
 struct TIndent {
-    void clear() { n = 0; spaces.resize(n); }
-    inline TIndent& operator++() { n += 2; spaces.resize(n, ' '); return *this; }
-    inline TIndent& operator--() {
+    void clear() { n = 0; spaces.clear(); }
+    TIndent& operator++() {
+        n += 2;
+        updateSpaces();
+        return *this;
+    }
+    TIndent& operator--() {
         n -= 2;
         if(n < 0) { n = 0; }
-        spaces.resize(n, ' '); return *this;
+        updateSpaces();
+        return *this;
+    }
+    void updateSpaces(){
+        int numTabs = n / 8;
+        int numSpaces = n % 8;
+        spaces.clear();
+        spaces.insert(0, numTabs, '\t');
+        spaces.insert(numTabs, numSpaces, ' ');
     }
     std::string spaces;
     int n;
@@ -78,9 +90,10 @@ public:
 protected:
     std::ostream& out;
     std::string ofname;
-
     TIndent indent;
-
+    typedef std::map<std::string, VRMLNodePtr> NodeMap;
+    NodeMap defNodeMap;
+    
     void registerNodeMethodMap();
     void registerNodeMethod(const std::type_info& t, VRMLWriterNodeMethod method);
     VRMLWriterNodeMethod getNodeMethod(VRMLNodePtr node);
@@ -108,7 +121,7 @@ protected:
     void writeMFInt32(MFInt32& values, int maxColumns = 10);
     void writeMFInt32SeparatedByMinusValue(MFInt32& values);
     void writeNodeIter(VRMLNodePtr node);
-    void beginNode(const char* nodename, VRMLNodePtr node);
+    bool beginNode(const char* nodename, VRMLNodePtr node);
     void endNode();
     void writeGroupNode(VRMLNodePtr node);
     void writeGroupFields(VRMLGroupPtr group);

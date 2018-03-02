@@ -3,94 +3,131 @@ formatVersion: 1.0
 angleUnit: degree
 name: agxMaterialSample
 
+BOX: &BOX
+  parent: floor
+  translation: [ 1.0, -5.0, 1.5 ]
+  jointType: free
+  massType: density
+  density: 1.0
+  material: agxMat1
+  elements: &boxShape
+    -
+      type: Shape
+      geometry: &box { type: Box, size: [ 0.5, 0.5, 0.5 ] }
+      appearance: &boxColor { material: { diffuseColor: [ 0, 1, 0 ] }}
+
 links:
   -
     name: floor
-    translation: [ 0, 0, -0.1 ]
     rotation: [1, 0, 0, -30 ]
     jointType: fixed
     material: Ground
     elements:
       -
-        type: Shape
-        geometry: { type: Box, size: [ 10.0, 10.0, 0.2 ] }
-        appearance: { material: { diffuseColor: [ 0, 0, 1 ] }}
+        type: Transform
+        translation: [ 10, 0.0, -0.1 ]
+        elements:
+          -
+            type: Shape
+            geometry: { type: Box, size: [ 20.0, 50.0, 0.2 ] }
+            appearance: { material: { diffuseColor: [ 0, 0, 1 ] }}
   -
-    name: box1
-    parent: floor
-    translation: [ -4.0, -5.0, 1.5 ]
-    jointType: free
-    massType: density
-    density: 1.0
-    material: agxMat1
-    elements: &boxShape
-      -
-        type: Shape
-        geometry: &box { type: Box, size: [ 0.5, 0.5, 0.5 ] }
-        appearance: &boxColor { material: { diffuseColor: [ 0, 1, 0 ] }}
+    name: box10
+    <<: *BOX
+    translation: [ 1.0, 0.0, 1.5 ]
+    material: agxMat10
   -
-    name: box2
-    parent: floor
-    translation: [ -3.0, -5.0, 1.5 ]
-    jointType: free
-    massType: density
-    material: agxMat2
-    elements: *boxShape
+    name: box20
+    <<: *BOX
+    translation: [ 2.0, 0.0, 1.5 ]
+    material: agxMat20
   -
-    name: box3
-    parent: floor
-    translation: [ -2.0, -5.0, 1.5 ]
-    jointType: free
-    massType: density
-    material: agxMat3
-    elements: *boxShape
+    name: box30
+    <<: *BOX
+    translation: [ 3.0, 0.0, 1.5 ]
+    material: agxMat30
   -
-    name: box4
-    parent: floor
-    translation: [ -1.0, -5.0, 1.5 ]
-    jointType: free
-    massType: density
-    material: agxMat4
-    elements: *boxShape
+    name: box40
+    <<: *BOX
+    translation: [ 4.0, 0.0, 1.5 ]
+    material: agxMat40
   -
-    name: box5
-    parent: floor
-    translation: [ 0.0, -5.0, 1.5 ]
-    jointType: free
-    massType: density
-    material: agxMat5
-    elements: *boxShape
+    name: box50
+    <<: *BOX
+    translation: [ 5.0, 0.0, 1.5 ]
+    material: agxMat50
   -
-    name: box6
-    parent: floor
-    translation: [ 1.0, -5.0, 1.5 ]
+    name: box60
+    <<: *BOX
+    translation: [ 6.0, 0.0, 1.5 ]
+    material: agxMat60
+  -
+    name: box70
+    <<: *BOX
+    translation: [ 7.0, 0.0, 1.5 ]
+    material: agxMat70
+  -
+    name: box80
+    <<: *BOX
+    translation: [ 8.0, 0.0, 1.5 ]
+    material: agxMat80
+  -
+    name: box90
+    <<: *BOX
+    translation: [ 9.0, 0.0, 1.5 ]
     jointType: free
-    massType: density
-    elements: *boxShape
-    density: 100
-    youngsModulus: 1.0E5
-    poissonRatio: 1.0
-    viscosity: 0.1
-    roughness: 1.0
-    surfaceViscosity: 1.0E-8
-    adhesionForce: 1000
-    adhesivOverlap: 0.2
+    material: agxMat90
+  -
+    name: box21
+    <<: *BOX
+    translation: [ 2.0, -4.0, 1.5 ]
+    material: agxMat21
+  -
+    name: box31
+    <<: *BOX
+    translation: [ 3.0, -4.0, 1.5 ]
+    material: agxMat31
+  -
+    name: box41
+    <<: *BOX
+    translation: [ 4.0, -4.0, 1.5 ]
+    material: agxMat41
+  -
+    name: box51
+    <<: *BOX
+    translation: [ 5.0, -4.0, 1.5 ]
+    material: agxMat51
+  -
+    name: box61
+    <<: *BOX
+    translation: [ 6.0, -4.0, 1.5 ]
+    material: agxMat61
+  -
+    name: box71
+    <<: *BOX
+    translation: [ 7.0, -4.0, 1.5 ]
+    material: agxMat71
+  -
+    name: box81
+    <<: *BOX
+    translation: [ 8.0, -4.0, 1.5 ]
+    material: agxMat81
+  -
+    name: box91
+    <<: *BOX
+    translation: [ 9.0, -4.0, 1.5 ]
+    jointType: free
+    material: agxMat91
   -
     name: box98
-    parent: floor
-    translation: [ 2.0, -5.0, 1.5 ]
-    jointType: free
-    massType: density
-    material: agxMat1
-    elements: *boxShape
+    <<: *BOX
+    translation: [ 10.0, 0.0, 1.5 ]
+    material: agxMat10
   -
     name: box99
-    parent: floor
-    translation: [ 3.0, -5.0, 1.5 ]
-    jointType: free
-    massType: density
-    material: agxMat1
-    elements: *boxShape
+    <<: *BOX
+    translation: [ 11.0, 0.0, 1.5 ]
+    material: agxMat10
 
 collisionDetection:
     excludeLinks: [ box98 ]

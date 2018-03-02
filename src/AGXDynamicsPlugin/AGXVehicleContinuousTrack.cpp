@@ -102,7 +102,7 @@ AGXVehicleContinuousTrack::AGXVehicleContinuousTrack(AGXVehicleContinuousTrackDe
     trackDesc.nodeThickerThickness = desc.nodeThickerThickness;
     trackDesc.useThickerNodeEvery = desc.useThickerNodeEvery;
     trackDesc.hingeCompliance = desc.hingeCompliance;
-    trackDesc.hingeDamping= desc.hingeDamping;
+    trackDesc.hingeSpookDamping= desc.hingeSpookDamping;
     trackDesc.minStabilizingHingeNormalForce = desc.minStabilizingHingeNormalForce;
     trackDesc.stabilizingHingeFrictionParameter = desc.stabilizingHingeFrictionParameter;
     trackDesc.nodesToWheelsMergeThreshold = desc.nodesToWheelsMergeThreshold;
@@ -132,10 +132,12 @@ AGXVehicleContinuousTrack::AGXVehicleContinuousTrack(AGXVehicleContinuousTrackDe
     }
     trackDesc.enableLockToReachMergeCondition = desc.enableLockToReachMergeCondition;
     trackDesc.lockToReachMergeConditionCompliance = desc.lockToReachMergeConditionCompliance;
-    trackDesc.lockToReachMergeConditionDamping = desc.lockToReachMergeConditionDamping;
+    trackDesc.lockToReachMergeConditionSpookDamping = desc.lockToReachMergeConditionSpookDamping;
     trackDesc.maxAngleMergeCondition = desc.maxAngleMergeCondition;
     m_track = AGXObjectFactory::createVehicleTrack(trackDesc);
     if(!m_track) return;
+    AGXLink* agxLink = agxBody->getAGXLink(m_device->link()->name());
+    m_track->addGroup(agxLink->getCollisionGroupName());
 
     AGXScene* agxScene = getAGXBody()->getAGXScene();
     // Set material
@@ -146,22 +148,23 @@ AGXVehicleContinuousTrack::AGXVehicleContinuousTrack(AGXVehicleContinuousTrackDe
     agxScene->getSimulation()->add(new TrackListener(this));
 
     /* Set collision Group*/
-    // 1. All links(except tracks) are member of body's collision group
-    // 2. Collision b/w tracks and links(except wheels) are not need -> create new group trackCollision
-    // 3. Collision b/w wheels, guides andtracks needs collision -> remove wheels from trackCollision
-    std::stringstream trackCollision;
+    // BodyCollisionGroup(bodies, wheels, guides)
+    // trackCollisionGroup(tracks)
+    // disableTrackCollisionGroup(bodies)
+    std::stringstream trackCollision, disableTrackCollision;
     trackCollision << "trackCollision" << agx::UuidGenerator().generate().str() << std::endl;
+    disableTrackCollision << "trackCollision" << agx::UuidGenerator().generate().str() << std::endl;
     m_track->addGroup(trackCollision.str());
-    getAGXBody()->addCollisionGroupNameToAllLink(trackCollision.str());
-    getAGXBody()->addCollisionGroupNameToDisableCollision(trackCollision.str());
+    getAGXBody()->addCollisionGroupNameToAllLink(disableTrackCollision.str());
+    getAGXBody()->getAGXScene()->setCollisionPair(trackCollision.str(), disableTrackCollision.str(), false);
     for(auto wheel : trackDesc.trackWheelRefs){
         agxCollide::GeometryRef geometry = wheel->getRigidBody()->getGeometries().front();
-        geometry->removeGroup(trackCollision.str());
+        geometry->removeGroup(disableTrackCollision.str());
     }
     for(auto guide : desc.guideNames){
         if(agx::RigidBody* rigid = getAGXBody()->getAGXRigidBody(guide)){
             if(agxCollide::GeometryRef geometry = rigid->getGeometries().front()){
-                geometry->removeGroup(trackCollision.str());
+                geometry->removeGroup(disableTrackCollision.str());
             }
         }
     }
@@ -203,7 +206,7 @@ void AGXVehicleContinuousTrack::printParameters(const AGXVehicleTrackDesc& desc)
     PRINT_PARAMETER(desc.nodeThickerThickness);
     PRINT_PARAMETER(desc.useThickerNodeEvery);
     PRINT_PARAMETER(desc.hingeCompliance);
-    PRINT_PARAMETER(desc.hingeDamping);
+    PRINT_PARAMETER(desc.hingeSpookDamping);
     PRINT_PARAMETER(desc.minStabilizingHingeNormalForce);
     PRINT_PARAMETER(desc.stabilizingHingeFrictionParameter);
     PRINT_PARAMETER(desc.enableMerge);
@@ -211,7 +214,7 @@ void AGXVehicleContinuousTrack::printParameters(const AGXVehicleTrackDesc& desc)
     PRINT_PARAMETER(desc.contactReduction);
     PRINT_PARAMETER(desc.enableLockToReachMergeCondition);
     PRINT_PARAMETER(desc.lockToReachMergeConditionCompliance);
-    PRINT_PARAMETER(desc.lockToReachMergeConditionDamping);
+    PRINT_PARAMETER(desc.lockToReachMergeConditionSpookDamping);
     PRINT_PARAMETER(desc.maxAngleMergeCondition);
     cout << m_track->getInternalMergeProperties()->getEnableMerge() << endl;
     cout << m_track->getInternalMergeProperties()->getEnableLockToReachMergeCondition() << endl;

@@ -1,0 +1,486 @@
+CHASSIS: &CHASSIS
+  Visual: { resource: { uri: "body.wrl" } }
+  Collision:
+    elements:
+      # Base
+      - 
+        type: Shape
+        geometry: { type: Box, size: [ 0.440, 0.160, 0.31188 ] }
+
+      # Left Tire House
+      - 
+        type: Transform
+        translation: [ 0.300, 0.080, 0.0 ]
+        elements:
+          Shape:
+            translation: [ -0.150, -0.0075, -0.012385 ]
+            geometry: { type: Box, size: [ 0.300, 0.015, 0.02477 ] }
+      -
+        type: Transform
+        translation: [ 0.29898, 0.080, -0.02477 ]
+        elements:
+          Shape:
+            translation: [ -0.150, -0.009, -0.012385 ]
+            geometry: { type: Box, size: [ 0.300, 0.018, 0.02477 ] }
+      -
+        type: Transform
+        translation: [ 0.29489, 0.080, -0.04921 ]
+        elements:
+          Shape:
+            translation: [ -0.150, -0.01383, -0.012385 ]
+            geometry: { type: Box, size: [ 0.300, 0.02766, 0.02477 ] }
+      -
+        type: Transform
+        translation: [ 0.29082, 0.080, -0.07365 ]
+        elements:
+          Shape:
+            translation: [ -0.150, -0.022665, -0.012385 ]
+            geometry: { type: Box, size: [ 0.300, 0.04533, 0.02477 ] }
+      -
+        type: Transform
+        translation: [ 0.28277, 0.080, -0.09708 ]
+        elements:
+          Shape:
+            translation: [ -0.150, -0.04082, -0.012385 ]
+            geometry: { type: Box, size: [ 0.300, 0.08164, 0.02477 ] }
+      -
+        type: Transform
+        translation: [ 0.27473, 0.080, -0.12051 ]
+        elements:
+          Shape:
+            translation: [ -0.150, -0.08, -0.012385 ]
+            geometry: { type: Box, size: [ 0.300, 0.160, 0.02477 ] }
+      -
+        type: Transform
+        translation: [ 0.26294, 0.080, -0.13931 ]
+        elements:
+          Shape:
+            translation: [ -0.100, -0.08, -0.012385 ]
+            geometry: { type: Box, size: [ 0.200, 0.160, 0.02477 ] }
+      -
+        type: Transform
+        translation: [ 0.300, 0.080, 0.0 ]
+        elements:
+          Shape:
+            translation: [ -0.150, -0.0075, 0.012385 ]
+            geometry: { type: Box, size: [ 0.300, 0.015, 0.02477 ] }
+      -
+        type: Transform
+        translation: [ 0.29898, 0.080, 0.02477 ]
+        elements:
+          Shape:
+            translation: [ -0.150, -0.009, 0.012385 ]
+            geometry: { type: Box, size: [ 0.300, 0.018, 0.02477 ] }
+      -
+        type: Transform
+        translation: [ 0.29489, 0.080, 0.04921 ]
+        elements:
+          Shape:
+            translation: [ -0.150, -0.01383, 0.012385 ]
+            geometry: { type: Box, size: [ 0.300, 0.02766, 0.02477 ] }
+      -
+        type: Transform
+        translation: [ 0.29082, 0.080, 0.07365 ]
+        elements:
+          Shape:
+            translation: [ -0.150, -0.022665, 0.012385 ]
+            geometry: { type: Box, size: [ 0.300, 0.04533, 0.02477 ] }
+      -
+        type: Transform
+        translation: [ 0.28277, 0.080, 0.09708 ]
+        elements:
+          Shape:
+            translation: [ -0.150, -0.04082, 0.012385 ]
+            geometry: { type: Box, size: [ 0.300, 0.08164, 0.02477 ] }
+      -
+        type: Transform
+        translation: [ 0.27473, 0.080, 0.12051 ]
+        elements:
+          Shape:
+            translation: [ -0.150, -0.08, 0.012385 ]
+            geometry: { type: Box, size: [ 0.300, 0.160, 0.02477 ] }
+      -
+        type: Transform
+        translation: [ 0.26294, 0.080, 0.13931 ]
+        elements:
+          Shape:
+            translation: [ -0.100, -0.08, 0.012385 ]
+            geometry: { type: Box, size: [ 0.200, 0.160, 0.02477 ] }
+
+      # Back Tire House
+      -
+        type: Transform
+        translation: [ 0.25115, 0, -0.16408 ]
+        rotation: [ 0, 1, 0, 37.89 ]
+        elements: &CHASSIS_SHAPE1
+          Shape:
+            translation: [ -0.150, 0, -0.024775 ]
+            geometry: { type: Box, size: [ 0.300, 0.160, 0.04955 ] }
+      -
+        type: Transform
+        translation: [ 0.22072, 0, -0.20318 ]
+        rotation: [ 0, 1, 0, 47.37 ]
+        elements: *CHASSIS_SHAPE1
+      -
+        type: Transform
+        translation: [ 0.18426, 0, -0.23674 ]
+        rotation: [ 0, 1, 0, 56.84 ]
+        elements: *CHASSIS_SHAPE1
+      -
+        type: Transform
+        translation: [ 0.14278, 0, -0.26384 ]
+        rotation: [ 0, 1, 0, 65.13 ]
+        elements: &CHASSIS_SHAPE2
+          Shape:
+            translation: [ -0.013065, 0, -0.01254 ]
+            geometry: { type: Box, size: [ 0.02613, 0.160, 0.02508 ] }
+      -
+        type: Transform
+        translation: [ -0.12003, 0, -0.27439 ]
+        rotation: [ 0, 1, 0, 114.87 ]
+        elements: *CHASSIS_SHAPE2
+      -
+        type: Transform
+        translation: [ -0.14278, 0, -0.26384 ]
+        rotation: [ 0, 1, 0, 123.16 ]
+        elements: *CHASSIS_SHAPE1
+      -
+        type: Transform
+        translation: [ -0.18426, 0, -0.23674 ]
+        rotation: [ 0, 1, 0, 132.63 ]
+        elements: *CHASSIS_SHAPE1
+      -
+        type: Transform
+        translation: [ -0.22072, 0, -0.20318 ]
+        rotation: [ 0, 1, 0, 142.11 ]
+        elements: *CHASSIS_SHAPE1
+
+      # Right Tire House
+      -
+        type: Transform
+        translation: [ -0.300, 0.080, 0.0 ]
+        elements:
+          Shape:
+            translation: [ 0.150, -0.0075, -0.012385 ]
+            geometry: { type: Box, size: [ 0.300, 0.015, 0.02477 ] }
+      -
+        type: Transform
+        translation: [ -0.29898, 0.080, -0.02477 ]
+        elements:
+          Shape:
+            translation: [ 0.150, -0.009, -0.012385 ]
+            geometry: { type: Box, size: [ 0.300, 0.018, 0.02477 ] }
+      -
+        type: Transform
+        translation: [ -0.29489, 0.080, -0.04921 ]
+        elements:
+          Shape:
+            translation: [ 0.150, -0.01383, -0.012385 ]
+            geometry: { type: Box, size: [ 0.300, 0.02766, 0.02477 ] }
+      -
+        type: Transform
+        translation: [ -0.29082, 0.080, -0.07365 ]
+        elements:
+          Shape:
+            translation: [ 0.150, -0.022665, -0.012385 ]
+            geometry: { type: Box, size: [ 0.300, 0.04533, 0.02477 ] }
+      -
+        type: Transform
+        translation: [ -0.28277, 0.080, -0.09708 ]
+        elements:
+          Shape:
+            translation: [ 0.150, -0.04082, -0.012385 ]
+            geometry: { type: Box, size: [ 0.300, 0.08164, 0.02477 ] }
+      -
+        type: Transform
+        translation: [ -0.27473, 0.080, -0.12051 ]
+        elements:
+          Shape:
+            translation: [ 0.150, -0.08, -0.012385 ]
+            geometry: { type: Box, size: [ 0.300, 0.160, 0.02477 ] }
+      -
+        type: Transform
+        translation: [ -0.26294, 0.080, -0.13931 ]
+        elements:
+          Shape:
+            translation: [ 0.100, -0.08, -0.012385 ]
+            geometry: { type: Box, size: [ 0.200, 0.160, 0.02477 ] }
+      -
+        type: Transform
+        translation: [ -0.300, 0.080, 0.0 ]
+        elements:
+          Shape:
+            translation: [ 0.150, -0.0075, 0.012385 ]
+            geometry: { type: Box, size: [ 0.300, 0.015, 0.02477 ] }
+      -
+        type: Transform
+        translation: [ -0.29898, 0.080, 0.02477 ]
+        elements:
+          Shape:
+            translation: [ 0.150, -0.009, 0.012385 ]
+            geometry: { type: Box, size: [ 0.300, 0.018, 0.02477 ] }
+      -
+        type: Transform
+        translation: [ -0.29489, 0.080, 0.04921 ]
+        elements:
+          Shape:
+            translation: [ 0.150, -0.01383, 0.012385 ]
+            geometry: { type: Box, size: [ 0.300, 0.02766, 0.02477 ] }
+      -
+        type: Transform
+        translation: [ -0.29082, 0.080, 0.07365 ]
+        elements:
+          Shape:
+            translation: [ 0.150, -0.022665, 0.012385 ]
+            geometry: { type: Box, size: [ 0.300, 0.04533, 0.02477 ] }
+      -
+        type: Transform
+        translation: [ -0.28277, 0.080, 0.09708 ]
+        elements:
+          Shape:
+            translation: [ 0.150, -0.04082, 0.012385 ]
+            geometry: { type: Box, size: [ 0.300, 0.08164, 0.02477 ] }
+      -
+        type: Transform
+        translation: [ -0.27473, 0.080, 0.12051 ]
+        elements:
+          Shape:
+            translation: [ 0.150, -0.08, 0.012385 ]
+            geometry: { type: Box, size: [ 0.300, 0.160, 0.02477 ] }
+      -
+        type: Transform
+        translation: [ -0.26294, 0.080, 0.13931 ]
+        elements:
+          Shape:
+            translation: [ 0.100, -0.08, 0.012385 ]
+            geometry: { type: Box, size: [ 0.200, 0.160, 0.02477 ] }
+
+      # Front Caster House
+      -
+        type: Transform
+        translation: [ -0.25115, 0, 0.16408 ]
+        rotation: [ 0, 1, 0, 217.89 ]
+        elements: *CHASSIS_SHAPE1
+      -
+        type: Transform
+        translation: [ -0.22072, 0, 0.20318 ]
+        rotation: [ 0, 1, 0, 227.37 ]
+        elements: *CHASSIS_SHAPE1
+      -
+        type: Transform
+        translation: [ -0.18426, 0, 0.23674 ]
+        rotation: [ 0, 1, 0, 236.84 ]
+        elements: *CHASSIS_SHAPE1
+      -
+        type: Transform
+        translation: [ -0.14278, 0, 0.26384 ]
+        rotation: [ 0, 1, 0, 246.32 ]
+        elements: *CHASSIS_SHAPE2
+      -
+        type: Transform
+        translation: [ 0.12003, 0, 0.27439 ]
+        rotation: [ 0, 1, 0, 294.87 ]
+        elements: *CHASSIS_SHAPE2
+      -
+        type: Transform
+        translation: [ 0.14278, 0, 0.26384 ]
+        rotation: [ 0, 1, 0, 303.16 ]
+        elements: *CHASSIS_SHAPE1
+      -
+        type: Transform
+        translation: [ 0.18426, 0, 0.23674 ]
+        rotation: [ 0, 1, 0, 312.63 ]
+        elements: *CHASSIS_SHAPE1
+      -
+        type: Transform
+        translation: [ 0.22072, 0, 0.20318 ]
+        rotation: [ 0, 1, 0, 322.11 ]
+        elements: *CHASSIS_SHAPE1
+
+      # Back Caster Movave Area
+      -
+        type: Transform
+        translation: [ 0.14278, 0.080, -0.26384 ]
+        rotation: [ 0, 1, 0, 66.32 ]
+        elements: &CHASSIS_SHAPE5
+          Shape:
+            translation: [ -0.150, -0.025, -0.024775 ]
+            geometry: { type: Box, size: [ 0.300, 0.050, 0.04955 ] }
+      -
+        type: Transform
+        translation: [ 0.09741, 0.080, -0.28375 ]
+        rotation: [ 0, 1, 0, 75.79 ]
+        elements: *CHASSIS_SHAPE5
+      -
+        type: Transform
+        translation: [ 0.04938, 0.080, -0.29591 ]
+        rotation: [ 0, 1, 0, 85.26 ]
+        elements: *CHASSIS_SHAPE5
+      -
+        type: Transform
+        translation: [ 0.0, 0.080, -0.300 ]
+        rotation: [ 0, 1, 0, 94.74 ]
+        elements: *CHASSIS_SHAPE5
+      -
+        type: Transform
+        translation: [ -0.04938, 0.080, -0.29591 ]
+        rotation: [ 0, 1, 0, 104.21 ]
+        elements: *CHASSIS_SHAPE5
+      -
+        type: Transform
+        translation: [ -0.09741, 0.080, -0.28375 ]
+        rotation: [ 0, 1, 0, 113.68 ]
+        elements: *CHASSIS_SHAPE5
+
+      # Inside the Caster House
+      -
+        type: Transform
+        translation: [ 0.10907, 0, -0.25075 ]
+        rotation: [ 0, -1, 0, 15.01 ]
+        elements: &CHASSIS_SHAPE3
+          Shape:
+            translation: [ 0.035, 0, 0.014365 ]
+            geometry: { type: Box, size: [ 0.070, 0.160, 0.040 ] }
+      -
+        type: Transform
+        translation: [ 0.10166, 0, -0.22298 ]
+        rotation: [ 0, -1, 0, 30.02 ]
+        elements: *CHASSIS_SHAPE3
+      -
+        type: Transform
+        translation: [ 0.08731, 0, -0.19809 ]
+        rotation: [ 0, -1, 0, 45.03 ]
+        elements: *CHASSIS_SHAPE3
+      -
+        type: Transform
+        translation: [ 0.067, 0, -0.17776 ]
+        rotation: [ 0, -1, 0, 60.04 ]
+        elements: *CHASSIS_SHAPE3
+      -
+        type: Transform
+        translation: [ 0.04212, 0, -0.16338 ]
+        rotation: [ 0, -1, 0, 75.05 ]
+        elements: *CHASSIS_SHAPE3
+      #-
+      #  type: Transform
+      #  translation: [ 0.01437, 0, -0.15594 ]
+      #  rotation: [ 0, -1, 0, 90.06 ]
+      #  elements_: *CHASSIS_SHAPE3
+      -
+        type: Transform
+        translation: [ -0.01437, 0, -0.15594 ]
+        rotation: [ 0, -1, 0, 105.07 ]
+        elements: *CHASSIS_SHAPE3
+      -
+        type: Transform
+        translation: [ -0.04212, 0, -0.16338 ]
+        rotation: [ 0, -1, 0, 120.08 ]
+        elements: *CHASSIS_SHAPE3
+      -
+        type: Transform
+        translation: [ -0.067, 0, -0.17776 ]
+        rotation: [ 0, -1, 0, 135.09 ]
+        elements: *CHASSIS_SHAPE3
+      -
+        type: Transform
+        translation: [ -0.08731, 0, -0.19809 ]
+        rotation: [ 0, -1, 0, 150.10 ]
+        elements: *CHASSIS_SHAPE3
+      -
+        type: Transform
+        translation: [ -0.10166, 0, -0.22298 ]
+        rotation: [ 0, -1, 0, 165.11 ]
+        elements: *CHASSIS_SHAPE3
+
+      # Front Caster Movave Area
+      -
+        type: Transform
+        translation: [ 0.14278, 0.080, 0.26384 ]
+        rotation: [ 0, 1, 0, -66.32 ]
+        elements: &CHASSIS_SHAPE6
+          Shape:
+            translation: [ -0.150, -0.025, 0.024775 ]
+            geometry: { type: Box, size: [ 0.300, 0.050, 0.04955 ] }
+      -
+        type: Transform
+        translation: [ 0.09741, 0.080, 0.28375 ]
+        rotation: [ 0, 1, 0, -75.79 ]
+        elements: *CHASSIS_SHAPE6
+      -
+        type: Transform
+        translation: [ 0.04938, 0.080, 0.29591 ]
+        rotation: [ 0, 1, 0, -85.26 ]
+        elements: *CHASSIS_SHAPE6
+      -
+        type: Transform
+        translation: [ 0.0, 0.080, 0.300 ]
+        rotation: [ 0, 1, 0, -94.74 ]
+        elements: *CHASSIS_SHAPE6
+      -
+        type: Transform
+        translation: [ -0.04938, 0.080, 0.29591 ]
+        rotation: [ 0, 1, 0, -104.21 ]
+        elements: *CHASSIS_SHAPE6
+      -
+        type: Transform
+        translation: [ -0.09741, 0.080, 0.28375 ]
+        rotation: [ 0, 1, 0, -113.68 ]
+        elements: *CHASSIS_SHAPE6
+      -
+        type: Transform
+        translation: [ 0.10907, 0, 0.25075 ]
+        rotation: [ 0, 1, 0, 15.01 ]
+        elements: &CHASSIS_SHAPE4
+          Shape:
+            translation: [ 0.035, 0, -0.014365 ]
+            geometry: { type: Box, size: [ 0.070, 0.160, 0.040 ] }
+      -
+        type: Transform
+        translation: [ 0.10166, 0, 0.22298 ]
+        rotation: [ 0, 1, 0, 30.02 ]
+        elements: *CHASSIS_SHAPE4
+      -
+        type: Transform
+        translation: [ 0.08731, 0, 0.19809 ]
+        rotation: [ 0, 1, 0, 45.03 ]
+        elements: *CHASSIS_SHAPE4
+      -
+        type: Transform
+        translation: [ 0.067, 0, 0.17776 ]
+        rotation: [ 0, 1, 0, 60.04 ]
+        elements: *CHASSIS_SHAPE4
+      -
+        type: Transform
+        translation: [ 0.04212, 0, 0.16338 ]
+        rotation: [ 0, 1, 0, 75.05 ]
+        elements: *CHASSIS_SHAPE4
+      #-
+      #  type: Transform
+      #  translation: [ 0.01437, 0, 0.15594 ]
+      #  rotation: [ 0, 1, 0, 90.06 ]
+      #  elements: *CHASSIS_SHAPE4
+      -
+        type: Transform
+        translation: [ -0.01437, 0, 0.15594 ]
+        rotation: [ 0, 1, 0, 105.07 ]
+        elements: *CHASSIS_SHAPE4
+      -
+        type: Transform
+        translation: [ -0.04212, 0, 0.16338 ]
+        rotation: [ 0, 1, 0, 120.08 ]
+        elements: *CHASSIS_SHAPE4
+      -
+        type: Transform
+        translation: [ -0.067, 0, 0.17776 ]
+        rotation: [ 0, 1, 0, 135.09 ]
+        elements: *CHASSIS_SHAPE4
+      -
+        type: Transform
+        translation: [ -0.08731, 0, 0.19809 ]
+        rotation: [ 0, 1, 0, 150.10 ]
+        elements: *CHASSIS_SHAPE4
+      -
+        type: Transform
+        translation: [ -0.10166, 0, 0.22298 ]
+        rotation: [ 0, 1, 0, 165.11 ]
+        elements: *CHASSIS_SHAPE4

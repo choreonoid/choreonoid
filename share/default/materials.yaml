@@ -35,6 +35,11 @@ materials:
     roughness: 1.0
     viscosity: 0.3
   -
+    name: AizuSpiderTracks
+    youngsModulus: 1e10
+    roughness: 1.0
+    viscosity: 0.3
+  -
     name: SpiderWheel
     youngsModulus: 1e10
     roughness: 0.0
@@ -79,10 +84,11 @@ contactMaterials:
   -
     materials: [ Ground, TankTracks]
     youngsModulus: 1e10
-    friction: 1.0
+    friction: 0.7
+    secondaryfriction: 0.5
     restitution: 0.0
-    surfaceViscosity: 1e-2
-    secondarySurfaceViscosity: 4e-2
+    surfaceViscosity: 1e-7
+    secondarySurfaceViscosity: 1e-5
     primaryDirection: [ 1, 0, 0 ]
     frictionModel: [ orientedBox, direct ]
     referenceBodyName: Tank
@@ -105,6 +111,22 @@ contactMaterials:
     referenceLinkName: B0001
   -
     materials: [ SpiderWheel, SpiderTracks ]
+    youngsModulus: 1e10
+    friction: 0.0
+    restitution: 0.0
+  -
+    materials: [ Ground, AizuSpiderTracks ]
+    youngsModulus: 1e10
+    friction: 0.7
+    restitution: 0.0
+    surfaceViscosity: 1e-2
+    secondarySurfaceViscosity: 2e-2
+    primaryDirection: [ 1, 0, 0 ]
+    frictionModel: [ orientedBox, direct ]
+    referenceBodyName: AizuSpider
+    referenceLinkName: CHASSIS
+  -
+    materials: [ SpiderWheel, AizuSpiderTracks ]
     youngsModulus: 1e10
     friction: 0.0
     restitution: 0.0

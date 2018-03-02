@@ -871,7 +871,7 @@ msgstr "複数数値列のプレインフォーマット"
 
 #: ParametricPathProcessor.cpp:231
 msgid "%1% of \"%2%\" cannot be expanded !"
-msgstr "\"%2\"の%1は展開できません！"
+msgstr "\"%2%\"の%1%は展開できません！"
 
 #: PathVariableEditor.cpp:58 ProjectManager.cpp:126
 msgid "Project File Options"

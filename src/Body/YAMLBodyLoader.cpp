@@ -267,6 +267,7 @@ public:
 
     unique_ptr<YAMLBodyLoader> subLoader;
     map<string, BodyPtr> subBodyMap;
+    vector<BodyPtr> subBodies;
     bool isSubLoader;
 
     ostream* os_;
@@ -287,6 +288,7 @@ public:
     bool readBody(Mapping* topNode);
     void readNodeInLinks(Mapping* linkNode, const string& nodeType);
     void readLinkNode(Mapping* linkNode);
+    void setLinkName(Link* link, const string& name, ValueNode* node);
     LinkPtr readLinkContents(Mapping* linkNode);
     void setJointId(Link* link, int id);
     void readJointContents(Link* link, Mapping* node);
@@ -310,6 +312,7 @@ public:
     bool readTransform(Mapping& node);
     bool readRigidBody(Mapping& node);
     bool readVisualOrCollision(Mapping& node, bool isVisual);
+    bool readResource(Mapping& node);
     bool readDevice(Device* device, Mapping& node);
     bool readForceSensor(Mapping& node);
     bool readRateGyroSensor(Mapping& node);
@@ -472,6 +475,7 @@ YAMLBodyLoaderImpl::YAMLBodyLoaderImpl(YAMLBodyLoader* self)
     nodeFunctions["RigidBody"].setTE([&](Mapping& node){ return readRigidBody(node); });
     nodeFunctions["Visual"].setT([&](Mapping& node){ return readVisualOrCollision(node, true); });
     nodeFunctions["Collision"].setT([&](Mapping& node){ return readVisualOrCollision(node, false); });
+    nodeFunctions["Resource"].set([&](Mapping& node){ return readResource(node); });
     nodeFunctions["ForceSensor"].setTE([&](Mapping& node){ return readForceSensor(node); });
     nodeFunctions["RateGyroSensor"].setTE([&](Mapping& node){ return readRateGyroSensor(node); });
     nodeFunctions["AccelerationSensor"].setTE([&](Mapping& node){ return readAccelerationSensor(node); });
@@ -585,6 +589,7 @@ bool YAMLBodyLoaderImpl::clear()
     validJointIdSet.clear();
     numValidJointIds = 0;
     subBodyMap.clear();
+    subBodies.clear();
     return true;
 }    
 
@@ -646,6 +651,9 @@ bool YAMLBodyLoaderImpl::readTopNode(Body* body, Mapping* topNode)
             result = loadAnotherFormatBodyFile(topNode);
         }
         if(result){
+            for(auto& subBody : subBodies){
+                topNode->insert(subBody->info());
+            }
             body->resetInfo(topNode);
         }
         
@@ -787,6 +795,10 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
         }
     }
 
+    if(linkInfos.empty()){
+        topNode->throwException(_("There is no link defined."));
+    }
+
     auto rootLinkNode = topNode->extract("rootLink");
     if(rootLinkNode){
         string rootLinkName = rootLinkNode->toString();
@@ -796,6 +808,9 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
                 str(format(_("Link \"%1%\" specified in \"rootLink\" is not defined.")) % rootLinkName));
         }
         rootLink = p->second;
+
+    } else {
+        rootLink = linkInfos[0]->link;
     }
 
     // construct a link tree
@@ -819,10 +834,6 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
             }
         }
     }        
-
-    if(!rootLink){
-        topNode->throwException(_("There is no link defined."));
-    }
 
     body->setRootLink(rootLink);
 
@@ -881,12 +892,18 @@ void YAMLBodyLoaderImpl::readLinkNode(Mapping* linkNode)
 {
     LinkInfoPtr info = new LinkInfo;
     extract(linkNode, "parent", info->parent);
-    Link* link = readLinkContents(linkNode);
-    info->link = link;
+    info->link = readLinkContents(linkNode);
     info->node = linkNode;
     linkInfos.push_back(info);
-    if(!rootLink){
-        rootLink = link;
+}
+
+
+void YAMLBodyLoaderImpl::setLinkName(Link* link, const string& name, ValueNode* node)
+{
+    link->setName(name);
+    
+    if(!linkMap.insert(make_pair(link->name(), link)).second){
+        node->throwException(str(format(_("Duplicated link name \"%1%\"")) % link->name()));
     }
 }
 
@@ -897,10 +914,7 @@ LinkPtr YAMLBodyLoaderImpl::readLinkContents(Mapping* node)
 
     auto nameNode = node->extract("name");
     if(nameNode){
-        link->setName(nameNode->toString());
-        if(!linkMap.insert(make_pair(link->name(), link)).second){
-            nameNode->throwException(str(format(_("Duplicated link name \"%1%\"")) % link->name()));
-        }
+        setLinkName(link, nameNode->toString(), nameNode);
     }
 
     if(extractEigen(node, "translation", v)){
@@ -1275,6 +1289,8 @@ bool YAMLBodyLoaderImpl::readElementContents(ValueNode& elements)
                 ++p;
             }
         }
+    } else {
+        elements.throwException(_("A value of the \"elements\" key must be a sequence or a mapping."));
     }
 
     return isSceneNodeAdded;
@@ -1478,12 +1494,9 @@ bool YAMLBodyLoaderImpl::readVisualOrCollision(Mapping& node, bool isVisual)
     bool isSceneNodeAdded = readElements(node);
 
     if(isShapeLoadingEnabled){
-        auto resource = node.findMapping("resource");
-        if(resource->isValid()){
-            if(auto scene = sceneReader.readNode(*resource, "Resource")){
-                addScene(scene);
-                isSceneNodeAdded = true;
-            }
+        auto resourceNode = node.findMapping("resource");
+        if(resourceNode->isValid()){
+            isSceneNodeAdded = readResource(*resourceNode);
         }
         auto shape = node.findMapping("shape");
         if(shape->isValid()){
@@ -1499,6 +1512,35 @@ bool YAMLBodyLoaderImpl::readVisualOrCollision(Mapping& node, bool isVisual)
     }
 
     currentModelType = prevModelType;
+
+    return isSceneNodeAdded;
+}
+
+
+bool YAMLBodyLoaderImpl::readResource(Mapping& node)
+{
+    bool isSceneNodeAdded = false;
+    
+    auto resource = sceneReader.readResourceNode(node);
+
+    if(resource.scene){
+        addScene(resource.scene);
+        isSceneNodeAdded = true;
+
+    } else if(resource.node){
+        string orgBaseDirectory = sceneReader.baseDirectory();
+        sceneReader.setBaseDirectory(resource.directory);
+
+        //isSceneNodeAdded = readElementContents(*resource.node);
+        ValueNodePtr resourceNode = resource.node;
+        isSceneNodeAdded = readTransformContents(
+            node,
+            [this, resourceNode](Mapping&){
+                return readElementContents(*resourceNode); },
+            false);
+
+        sceneReader.setBaseDirectory(orgBaseDirectory);
+    }
 
     return isSceneNodeAdded;
 }
@@ -1704,10 +1746,8 @@ void YAMLBodyLoaderImpl::readContinuousTrackNode(Mapping* node)
 
 void YAMLBodyLoaderImpl::addTrackLink(int index, LinkPtr link, Mapping* node, string& io_parent, double initialAngle)
 {
-    link->setName(str(format("%1%%2%") % link->name() % index));
-    if(!linkMap.insert(make_pair(link->name(), link)).second){
-        node->throwException(str(format(_("Duplicated link name \"%1%\"")) % link->name()));
-    }
+    setLinkName(link, str(format("%1%%2%") % link->name() % index), node);
+
     link->setInitialJointAngle(initialAngle);
 
     LinkInfoPtr info = new LinkInfo;
@@ -1763,6 +1803,7 @@ void YAMLBodyLoaderImpl::readSubBodyNode(Mapping* node)
 
     if(subBody){
         addSubBodyLinks(subBody->clone(), node);
+        subBodies.push_back(subBody);
     }
 }
 
@@ -1776,10 +1817,7 @@ void YAMLBodyLoaderImpl::addSubBodyLinks(BodyPtr subBody, Mapping* node)
 
     for(int i=0; i < subBody->numLinks(); ++i){
         Link* link = subBody->link(i);
-        link->setName(prefix + link->name());
-        if(!linkMap.insert(make_pair(link->name(), link)).second){
-            node->throwException(str(format(_("Duplicated link name \"%1%\"")) % link->name()));
-        }
+        setLinkName(link, prefix + link->name(), node);
         if(link->jointId() >= 0){
             setJointId(link, link->jointId() + jointIdOffset);
         }
@@ -1811,11 +1849,7 @@ void YAMLBodyLoaderImpl::addSubBodyLinks(BodyPtr subBody, Mapping* node)
     LinkInfoPtr linkInfo = new LinkInfo;
     linkInfo->link = rootLink;
     linkInfo->node = node;
-
-    if(!node->read("parent", linkInfo->parent)){
-        node->throwException("parent must be specified.");
-    }
-
+    node->read("parent", linkInfo->parent);
     linkInfos.push_back(linkInfo);
 }
 

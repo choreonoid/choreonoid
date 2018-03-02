@@ -1,4 +1,5 @@
 #include "AGXObjectFactory.h"
+#include <agx/version.h>
 
 namespace cnoid{
 
@@ -59,16 +60,16 @@ agx::MaterialRef AGXObjectFactory::createMaterial(const AGXMaterialDesc & desc)
 
     // Below are overried when ContactMaterials are used.
     m->getBulkMaterial()->setViscosity(desc.viscosity);
-    m->getBulkMaterial()->setDamping(desc.damping);
+    m->getBulkMaterial()->setDamping(desc.spookDamping);
     m->getSurfaceMaterial()->setRoughness(desc.roughness);
     m->getSurfaceMaterial()->setViscosity(desc.surfaceViscosity);
     m->getSurfaceMaterial()->setAdhesion(desc.adhesionForce, desc.adhesivOverlap);
 
     // WireMaterial
     m->getWireMaterial()->setYoungsModulusBend(desc.wireYoungsModulusBend);
-    m->getWireMaterial()->setDampingBend(desc.wireDampingBend);
+    m->getWireMaterial()->setDampingBend(desc.wireSpookDampingBend);
     m->getWireMaterial()->setYoungsModulusStretch(desc.wireYoungsModulusStretch);
-    m->getWireMaterial()->setDampingStretch(desc.wireDampingStretch);
+    m->getWireMaterial()->setDampingStretch(desc.wireSpookDampingStretch);
 
     return m;
 }
@@ -170,9 +171,8 @@ agx::ConstraintRef AGXObjectFactory::createConstraint(const AGXConstraintDesc& d
             break;
     }
     constraint->setCompliance(desc.compliance);
-    constraint->setDamping(desc.damping);
+    constraint->setDamping(desc.spookDamping);
     constraint->setForceRange(desc.forceRange);
-    constraint->setElasticity(desc.elasticity);
     return constraint;
 }
 
@@ -191,7 +191,7 @@ agx::Bool AGXObjectFactory::setContactMaterialParam(agx::ContactMaterial* const 
     if(!cm) return false;
     cm->setYoungsModulus(desc.youngsModulus);
     cm->setRestitution(desc.restitution);
-    cm->setDamping(desc.damping);
+    cm->setDamping(desc.spookDamping);
     if(desc.secondaryFriction >= 0.0){
         cm->setFrictionCoefficient(desc.friction, agx::ContactMaterial::PRIMARY_DIRECTION);
         cm->setFrictionCoefficient(desc.secondaryFriction, agx::ContactMaterial::SECONDARY_DIRECTION);
@@ -301,18 +301,16 @@ void AGXObjectFactory::setMotor1DParam(agx::Motor1D* controller, const AGXMotor1
     controller->setLocked(desc.enableLock);
     controller->setLockedAtZeroSpeed(desc.enableLockAtZeroSpeed);
     controller->setCompliance(desc.compliance);
-    controller->setDamping(desc.damping);
+    controller->setDamping(desc.spookDamping);
     controller->setForceRange(desc.forceRange);
-    controller->setElasticity(desc.elasticity);
 }
 
 void AGXObjectFactory::setLock1DParam(agx::Lock1D* controller, const AGXLock1DDesc& desc)
 {
     controller->setEnable(desc.enable);
     controller->setCompliance(desc.compliance);
-    controller->setDamping(desc.damping);
+    controller->setDamping(desc.spookDamping);
     controller->setForceRange(desc.forceRange);
-    controller->setElasticity(desc.elasticity);
 }
 
 void AGXObjectFactory::setRange1DParam(agx::Range1D* controller, const AGXRange1DDesc& desc)
@@ -320,9 +318,8 @@ void AGXObjectFactory::setRange1DParam(agx::Range1D* controller, const AGXRange1
     controller->setEnable(desc.enable);
     controller->setRange(desc.range);
     controller->setCompliance(desc.compliance);
-    controller->setDamping(desc.damping);
+    controller->setDamping(desc.spookDamping);
     controller->setForceRange(desc.forceRange);
-    controller->setElasticity(desc.elasticity);
 }
 
 agx::LockJointRef AGXObjectFactory::createConstraintLockJoint(const AGXLockJointDesc & desc)
@@ -343,7 +340,7 @@ agxVehicle::TrackRef AGXObjectFactory::createVehicleTrack(const AGXVehicleTrackD
         track->add(desc.trackWheelRefs[i]);
     }
     track->getProperties()->setHingeCompliance(desc.hingeCompliance);
-    track->getProperties()->setHingeDamping(desc.hingeDamping);
+    track->getProperties()->setHingeDamping(desc.hingeSpookDamping);
     track->getProperties()->setMinStabilizingHingeNormalForce(desc.minStabilizingHingeNormalForce);
     track->getProperties()->setStabilizingHingeFrictionParameter(desc.stabilizingHingeFrictionParameter);
     track->getProperties()->setNodesToWheelsMergeThreshold(desc.nodesToWheelsMergeThreshold);
@@ -352,7 +349,7 @@ agxVehicle::TrackRef AGXObjectFactory::createVehicleTrack(const AGXVehicleTrackD
     track->getInternalMergeProperties()->setNumNodesPerMergeSegment(desc.numNodesPerMergeSegment);
     track->getInternalMergeProperties()->setEnableLockToReachMergeCondition(desc.enableLockToReachMergeCondition);
     track->getInternalMergeProperties()->setLockToReachMergeConditionCompliance(desc.lockToReachMergeConditionCompliance);
-    track->getInternalMergeProperties()->setLockToReachMergeConditionDamping(desc.lockToReachMergeConditionDamping);
+    track->getInternalMergeProperties()->setLockToReachMergeConditionDamping(desc.lockToReachMergeConditionSpookDamping);
     track->getInternalMergeProperties()->setMaxAngleMergeCondition(desc.maxAngleMergeCondition);
     track->getInternalMergeProperties()->setContactReduction(desc.contactReduction);
 
@@ -380,9 +377,18 @@ agxVehicle::TrackRef AGXObjectFactory::createVehicleTrack(const AGXVehicleTrackD
     return track;
 }
 
+////////////////////////////////////////////////////////////
+// AGXWireDesc
+const agx::Name AGXWireDesc::globalCollisionGroupName = "AGXGlobalWireCollisionGroup";
+
+////////////////////////////////////////////////////////////
+// AGXWire
 agxWire::WireRef AGXObjectFactory::createWire(const AGXWireDesc& desc)
 {
     agxWire::WireRef wire = new agxWire::Wire(desc.radius, desc.resolutionPerUnitLength, desc.enableCollisions);
+#if AGX_VERSION_GREATER_OR_EQUAL(2 ,21, 3, 0)
+    wire->addGroup(AGXWireDesc::globalCollisionGroupName);
+#endif
     return wire;
 }
 

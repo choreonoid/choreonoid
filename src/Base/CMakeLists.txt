@@ -83,6 +83,7 @@ set(sources
   ShaderPrograms.cpp
   GLSLSceneRenderer.cpp
   SceneWidget.cpp
+  SceneWidgetEvent.cpp
   SceneWidgetEditable.cpp
   InteractiveCameraTransform.cpp
   SceneProjector.cpp

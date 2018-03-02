@@ -4,6 +4,7 @@
 configure_file(Config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/Config.h)
 
 set(sources
+  Referenced.cpp
   ConnectionSet.cpp
   Selection.cpp
   DataMap.cpp
@@ -61,6 +62,7 @@ set(sources
   VRMLSceneLoader.cpp
   GettextWrapper.cpp
   GettextUtil.cpp
+  Joystick.cpp
   ExtJoystick.cpp
   CnoidUtil.cpp # This file must be placed at the last position
   )
@@ -75,6 +77,7 @@ elseif(APPLE)
 endif()
 
 set(headers
+  Referenced.h
   EasyScanner.h
   GaussianFilter.h
   UniformCubicBSpline.h
@@ -92,7 +95,6 @@ set(headers
   NullOut.h
   PlainSeqFileLoader.h
   RangeLimiter.h
-  Referenced.h
   Seq.h
   AbstractSeq.h
   Timeval.h

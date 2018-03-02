@@ -254,6 +254,14 @@ SimpleController* SimpleControllerItem::controller()
 
 void SimpleControllerItemImpl::unloadController(bool doNotify)
 {
+    /** The following code is necessary to clear the ioBody object that may have the reference
+        to the objects defined in the controller DLL. When the controller DLL is unloaded,
+        the definition is removed from the process, and the process may crash if the object is
+        deleted later. To avoid the crash, the objects must be deleted before the controller DLL
+        is unloaded.
+    */
+    sharedInfo.reset();
+    
     if(controller){
         delete controller;
         controller = 0;
@@ -805,14 +813,14 @@ void SimpleControllerItemImpl::output()
 
 void SimpleControllerItem::stop()
 {
+    for(auto iter = impl->childControllerItems.rbegin(); iter != impl->childControllerItems.rend(); ++iter){
+        (*iter)->stop();
+    }
+    impl->childControllerItems.clear();
+
     if(impl->doReloading || !findRootItem()){
         impl->unloadController(true);
     }
-
-    for(size_t i=0; i < impl->childControllerItems.size(); ++i){
-        impl->childControllerItems[i]->stop();
-    }
-    impl->childControllerItems.clear();
 
     impl->io = 0;
 }

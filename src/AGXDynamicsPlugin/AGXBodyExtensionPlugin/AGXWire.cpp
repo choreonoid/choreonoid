@@ -333,13 +333,13 @@ AGXWire::AGXWire(AGXWireDevice* device, AGXBody* agxBody) :
         if(wireDeviceInfo.read("wireYoungsModulusStretch", tmpMatValue)){
             mat->getWireMaterial()->setYoungsModulusStretch(tmpMatValue);
         }
-        if(wireDeviceInfo.read("wireDampingStretch", tmpMatValue)){
+        if(wireDeviceInfo.read("wireSpookDampingStretch", tmpMatValue)){
             mat->getWireMaterial()->setDampingStretch(tmpMatValue);
         }
         if(wireDeviceInfo.read("wireYoungsModulusBend", tmpMatValue)){
             mat->getWireMaterial()->setYoungsModulusBend(tmpMatValue);
         }
-        if(wireDeviceInfo.read("wireDampingBend", tmpMatValue)){
+        if(wireDeviceInfo.read("wireSpookDampingBend", tmpMatValue)){
             mat->getWireMaterial()->setDampingBend(tmpMatValue);
         }
         m_wire->setMaterial(mat);
