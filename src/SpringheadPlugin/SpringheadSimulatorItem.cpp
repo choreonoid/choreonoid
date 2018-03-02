@@ -284,7 +284,13 @@ void SpringheadLink::createLinkBody(SpringheadSimulatorItemImpl* simImpl, Spring
 	if(matTable)
 		mat = matTable->material(link->materialId());
 	if(mat){
-		int hoge = 0;
+		double torqueLimit = 0.0;
+		torqueLimit = mat->info<double>("torqueLimit", torqueLimit);
+		
+		if(phJoint1D){
+			phJoint1D->SetMaxForce(torqueLimit);
+			printf("torque limit for %s set to %f\n", link->name().c_str(), torqueLimit);
+		}
 	}
 		
 }
