@@ -1,7 +1,7 @@
 format: ChoreonoidBody
 formatVersion: 1.0
 angleUnit: degree
-name: FireCabinet
+name: FireCabinetAGX
 
 links:
   -
@@ -148,7 +148,7 @@ links:
           position: [ -0.094, -0.17, 0.226]
           normal: [ 0, 0, 1 ]
           pulledInLength: 100
-          haulForceRange: [ -50, 50 ]
+          haulForceRange: [ -30, 30 ]
         Nodes:
           -
             type: free
