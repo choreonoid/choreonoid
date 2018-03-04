@@ -50,12 +50,14 @@ RTCItem::RTCItem()
     mv = MessageView::instance();
 
 		periodicRate = 1000;
-		periodicType.setSymbol(PERIODIC_EXECUTION_CONTEXT, N_("PeriodicExecutionContext"));
-		periodicType.setSymbol(SYNCH_EXT_TRIGGER, N_("SynchExtTriggerEC"));
+    periodicType.setSymbol(PERIODIC_EXECUTION_CONTEXT, N_("PeriodicExecutionContext"));
+#ifdef OPENRTM_VERSION11
+    periodicType.setSymbol(SYNCH_EXT_TRIGGER, N_("SynchExtTriggerEC"));
 		periodicType.setSymbol(EXT_TRIG_EXECUTION_CONTEXT, N_("ExtTrigExecutionContext"));
 		periodicType.setSymbol(CHOREONOID_EXECUTION_CONTEXT, N_("ChoreonoidExecutionContext"));
 		periodicType.select(PERIODIC_EXECUTION_CONTEXT);
-		oldPeriodicType = periodicType.which();
+#endif
+    oldPeriodicType = periodicType.which();
 
 		properties.clear();
 		properties.insert(make_pair(string("exec_cxt.periodic.type"), periodicType.selectedSymbol()));

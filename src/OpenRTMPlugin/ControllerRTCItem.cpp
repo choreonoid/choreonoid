@@ -53,11 +53,19 @@ public:
 
     filesystem::path rtcDirectory;
 
+#ifdef OPENRTM_VERSION11
     enum ExecContextType {
         PERIODIC_EXECUTION_CONTEXT,
         CHOREONOID_EXECUTION_CONTEXT,
         N_EXEC_CONTEXT_TYPES
     };
+#else
+    enum ExecContextType {
+      CHOREONOID_EXECUTION_CONTEXT,
+      CHOREONOID_PERIODIC_EXECUTION_CONTEXT,
+      N_EXEC_CONTEXT_TYPES
+    };
+#endif
     Selection execContextType;
     bool useOnlyChoreonoidExecutionContext = false;
 
@@ -110,8 +118,13 @@ ControllerRTCItemImpl::ControllerRTCItemImpl(ControllerRTCItem* self)
 
     rtcDirectory = filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "rtc";
 
+#ifdef OPENRTM_VERSION11
     execContextType.setSymbol(PERIODIC_EXECUTION_CONTEXT,  N_("PeriodicExecutionContext"));
     execContextType.setSymbol(CHOREONOID_EXECUTION_CONTEXT,  N_("ChoreonoidExecutionContext"));
+#else
+    execContextType.setSymbol(CHOREONOID_EXECUTION_CONTEXT, N_("ChoreonoidExecutionContext"));
+    execContextType.setSymbol(CHOREONOID_PERIODIC_EXECUTION_CONTEXT, N_("ChoreonoidPeriodicExecutionContext"));
+#endif
     execContextType.select(CHOREONOID_EXECUTION_CONTEXT);
 
     periodicRateProperty = 0;
@@ -211,10 +224,26 @@ void ControllerRTCItem::setRTCInstanceName(const std::string& name)
 
 void ControllerRTCItem::setExecContextType(int which) {
   DDEBUG_V("ControllerRTCItem::setExecContextType %d", which);
-    if(which != impl->execContextType.which()){
-        impl->execContextType.select(which);
-        createRTC();
+  if (which != impl->execContextType.which()) {
+    impl->execContextType.select(which);
+#ifdef OPENRTM_VERSION11
+    createRTC();
+#else
+    RTC::ReturnCode_t ret = impl->execContext->stop();
+    DDEBUG_V("ControllerRTCItem::setExecContextType stop %d", ret);
+    RTC::ExecutionContextList_var eclist = impl->rtc->get_owned_contexts();
+    for (CORBA::ULong index = 0; index < eclist->length(); ++index) {
+      RTC::ExecutionContextService_var execContext = RTC::ExecutionContextService::_narrow(eclist[index]);
+      if (!CORBA::is_nil(eclist[index])) {
+        if (which == index) {
+          impl->execContext = execContext;
+          impl->execContext->start();
+          DDEBUG_V("ControllerRTCItem::setExecContextType start %d", index);
+        }
+      }
     }
+#endif
+  }
 }
 
 
@@ -369,7 +398,7 @@ bool ControllerRTCItemImpl::createRTCmain() {
           str(format("instance_name=%1%&exec_cxt.periodic.type=%2%&exec_cxt.periodic.rate=%3%")
                 % rtcInstanceName % execContextType.selectedSymbol() % periodicRate);
 #else
-          str(format("instance_name=%1%&execution_contexts=ChoreonoidExecutionContext(),ChoreonoidPeriodicExecutionContext(),ExtTrigExecutionContext(),OpenHRPExecutionContext(),PeriodicExecutionContext(),SimulatorExecutionContext()&exec_cxt.periodic.type=%2%&exec_cxt.periodic.rate=%3%&exec_cxt.sync_activation=NO&exec_cxt.sync_deactivation=NO")
+          str(format("instance_name=%1%&execution_contexts=ChoreonoidExecutionContext(),ChoreonoidPeriodicExecutionContext()&exec_cxt.periodic.type=%2%&exec_cxt.periodic.rate=%3%&exec_cxt.sync_activation=NO&exec_cxt.sync_deactivation=NO")
             % rtcInstanceName % execContextType.selectedSymbol() % periodicRate);
         DDEBUG("New Parameter 02");
 #endif
@@ -380,9 +409,8 @@ bool ControllerRTCItemImpl::createRTCmain() {
           str(format("instance_name=%1%&exec_cxt.periodic.type=%2%")
                 % rtcInstanceName % execContextType.selectedSymbol());
 #else
-          str(format("instance_name=%1%&execution_contexts=ChoreonoidExecutionContext(),ChoreonoidPeriodicExecutionContext(),ExtTrigExecutionContext(),OpenHRPExecutionContext(),PeriodicExecutionContext(),SimulatorExecutionContext()&exec_cxt.periodic.type=%2%&exec_cxt.sync_activation=NO&exec_cxt.sync_deactivation=NO")
+          str(format("instance_name=%1%&execution_contexts=ChoreonoidExecutionContext(),ChoreonoidPeriodicExecutionContext()&exec_cxt.periodic.type=%2%&exec_cxt.sync_activation=NO&exec_cxt.sync_deactivation=NO")
             % rtcInstanceName % execContextType.selectedSymbol());
-        DDEBUG("New Parameter 03");
 #endif
     }
     rtc = createManagedRTC((moduleName + "?" + option).c_str());
@@ -404,6 +432,18 @@ bool ControllerRTCItemImpl::createRTCmain() {
     execContext = RTC::ExecutionContextService::_nil();
     isChoreonoidExecutionContext = false; 
     RTC::ExecutionContextList_var eclist = rtc->get_owned_contexts();
+#ifndef OPENRTM_VERSION11
+    int selected = execContextType.index(execContextType.selectedSymbol());
+    for (CORBA::ULong index = 0; index < eclist->length(); ++index) {
+      if (!CORBA::is_nil(eclist[index])) {
+        execContext = RTC::ExecutionContextService::_narrow(eclist[index]);
+        if (selected != index) {
+          RTC::ReturnCode_t ret = execContext->stop();
+          DDEBUG_V("EC STOP %d", ret);
+        }
+      }
+    }
+#endif
     for(CORBA::ULong i=0; i < eclist->length(); ++i){
         if(!CORBA::is_nil(eclist[i])){
             execContext = RTC::ExecutionContextService::_narrow(eclist[i]);

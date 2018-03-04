@@ -193,7 +193,7 @@ void BodyRTCItem::createRTC(BodyPtr body) {
 #if defined(OPENRTM_VERSION11)
     format param("VirtualRobot?instance_name=%1%&exec_cxt.periodic.type=ChoreonoidExecutionContext&exec_cxt.periodic.rate=1000000");
 #else
-    format param("VirtualRobot?instance_name=%1%&execution_contexts=ChoreonoidExecutionContext(),ChoreonoidPeriodicExecutionContext(),ExtTrigExecutionContext(),OpenHRPExecutionContext(),PeriodicExecutionContext(),SimulatorExecutionContext()&exec_cxt.periodic.type=ChoreonoidExecutionContext&exec_cxt.periodic.rate=1000000&exec_cxt.sync_activation=NO&exec_cxt.sync_deactivation=NO");
+    format param("VirtualRobot?instance_name=%1%&execution_contexts=ChoreonoidExecutionContext()&exec_cxt.periodic.type=ChoreonoidExecutionContext&exec_cxt.periodic.rate=1000000&exec_cxt.sync_activation=NO&exec_cxt.sync_deactivation=NO");
     DDEBUG("New Parameter 01");
 #endif
     RtcBase* rtc = createManagedRTC(str(param % instanceName).c_str());

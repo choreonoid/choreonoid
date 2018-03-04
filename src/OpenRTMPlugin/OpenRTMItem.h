@@ -20,11 +20,12 @@ enum RTC_STATUS { RTC_UNKNOWN, RTC_INACTIVE, RTC_ACTIVE, RTC_ERROR, RTC_FINALIZE
 
 class RTCWrapper {
 public:
-	RTCWrapper() : rtc_(0), ownedExeContList_(0){};
+	RTCWrapper() : rtc_(0), ownedExeContList_(0), activeIndex_(0){};
 	~RTCWrapper() {};
 
 	RTC::RTObject_ptr rtc_;
 	RTC::ExecutionContextList_var ownedExeContList_;
+  int activeIndex_;
 	SDOPackage::Configuration_ptr configuration_;
 
 	RTC_STATUS getRTCState();
