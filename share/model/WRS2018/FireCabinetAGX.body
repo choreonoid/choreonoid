@@ -145,19 +145,11 @@ links:
         materialName: Wire
         Winch:
           linkName: HOSE_REEL
-          position: [ -0.094, -0.17, 0.226]
-          normal: [ 0, 0, 1 ]
-          pulledInLength: 100
+          position: [ -0.094, -0.20, 0.37 ]
+          normal: [ 0, -1, 0 ]
+          pulledInLength: 50
           haulForceRange: [ -30, 30 ]
         Nodes:
-          -
-            type: free
-            linkName: HOSE_REEL
-            position: [ -0.094, -0.17, 0.37 ]
-          -
-            type: free
-            linkName: HOSE_REEL
-            position: [ -0.094, -0.20, 0.37 ]
           -
             type: link
             linkName: HOSE_ADAPTER
@@ -168,7 +160,7 @@ links:
   -
     name: HOSE_ADAPTER
     parent: HOSE_REEL
-    translation: [ -0.094, -0.30, 0.37 ]
+    translation: [ -0.094, -0.50, 0.37 ]
     jointType: free
     mass: 1.0
     inertia: [ 1, 0, 0,
@@ -298,5 +290,5 @@ links:
         connectAxis2: [ -1, 0, 0 ]
         jointCompliance: 1e-6
         jointSpookDamping: 0.2
-        validDistance: 10
-        validAngle: 180
+        validDistance: 0.05
+        validAngle: 20
