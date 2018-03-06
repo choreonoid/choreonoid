@@ -94,18 +94,18 @@ bool Jaco2Controller::initialize(SimpleControllerIO* io)
 
     if(io->timeStep() < 0.002){
         //                                     P      D      P (vel)
-        specs[SHOULDER    ] = { "SHOULDER",  1000.0, 100.0,  P_GAIN_VELOCITY };
-        specs[ARM         ] = { "ARM",       1000.0, 100.0,  P_GAIN_VELOCITY };
-        specs[FOREARM     ] = { "FOREARM",    600.0,  60.0,  P_GAIN_VELOCITY };
-        specs[WRIST1      ] = { "WRIST1",     300.0,  30.0,  P_GAIN_VELOCITY };
-        specs[WRIST2      ] = { "WRIST2",     300.0,  30.0,  P_GAIN_VELOCITY };
-        specs[HAND        ] = { "HAND",       250.0,  25.0,  P_GAIN_VELOCITY };
-        specs[FINGER1     ] = { "FINGER1",     50.0,  10.0,  P_GAIN_VELOCITY };
-        specs[FINGER1_TIP ] = { "FINGER1_TIP", 30.0,   5.0,  P_GAIN_VELOCITY };
-        specs[FINGER2     ] = { "FINGER2",     50.0,  10.0,  P_GAIN_VELOCITY };
-        specs[FINGER2_TIP ] = { "FINGER2_TIP", 30.0,   5.0,  P_GAIN_VELOCITY };
-        specs[FINGER3     ] = { "FINGER3",     50.0,  10.0,  P_GAIN_VELOCITY };
-        specs[FINGER3_TIP ] = { "FINGER3_TIP", 30.0,   5.0,  P_GAIN_VELOCITY };
+        specs[SHOULDER    ] = { "SHOULDER",  1000.0, 100,  P_GAIN_VELOCITY };
+        specs[ARM         ] = { "ARM",       1000.0, 100,  P_GAIN_VELOCITY };
+        specs[FOREARM     ] = { "FOREARM",   600.0,   60,  P_GAIN_VELOCITY };
+        specs[WRIST1      ] = { "WRIST1",    300.0,   30,  P_GAIN_VELOCITY };
+        specs[WRIST2      ] = { "WRIST2",    300.0,   30,  P_GAIN_VELOCITY };
+        specs[HAND        ] = { "HAND",      250.0,   25,  P_GAIN_VELOCITY };
+        specs[FINGER1     ] = { "FINGER1",     30,     3,  P_GAIN_VELOCITY };
+        specs[FINGER1_TIP ] = { "FINGER1_TIP", 20,     2,  P_GAIN_VELOCITY };
+        specs[FINGER2     ] = { "FINGER2",     30,     3,  P_GAIN_VELOCITY };
+        specs[FINGER2_TIP ] = { "FINGER2_TIP", 20,     2,  P_GAIN_VELOCITY };
+        specs[FINGER3     ] = { "FINGER3",     30,     3,  P_GAIN_VELOCITY };
+        specs[FINGER3_TIP ] = { "FINGER3_TIP", 20,     2,  P_GAIN_VELOCITY };
     } else {
         //                                     P      D      P (vel)
         specs[SHOULDER    ] = { "SHOULDER",   400.0, 30.0,  P_GAIN_VELOCITY };
@@ -114,12 +114,12 @@ bool Jaco2Controller::initialize(SimpleControllerIO* io)
         specs[WRIST1      ] = { "WRIST1",      60.0,  5.0,  P_GAIN_VELOCITY };
         specs[WRIST2      ] = { "WRIST2",      60.0,  5.0,  P_GAIN_VELOCITY };
         specs[HAND        ] = { "HAND",        60.0,  5.0,  P_GAIN_VELOCITY };
-        specs[FINGER1     ] = { "FINGER1",     20.0,  1.0,  P_GAIN_VELOCITY };
-        specs[FINGER1_TIP ] = { "FINGER1_TIP", 10.0,  1.0,  P_GAIN_VELOCITY };
-        specs[FINGER2     ] = { "FINGER2",     20.0,  2.0,  P_GAIN_VELOCITY };
-        specs[FINGER2_TIP ] = { "FINGER2_TIP", 10.0,  1.0,  P_GAIN_VELOCITY };
-        specs[FINGER3     ] = { "FINGER3",     20.0,  2.0,  P_GAIN_VELOCITY };
-        specs[FINGER3_TIP ] = { "FINGER3_TIP", 10.0,  1.0,  P_GAIN_VELOCITY };
+        specs[FINGER1     ] = { "FINGER1",     5.0,  0.5,  P_GAIN_VELOCITY };
+        specs[FINGER1_TIP ] = { "FINGER1_TIP", 3.0,  0.3,  P_GAIN_VELOCITY };
+        specs[FINGER2     ] = { "FINGER2",     5.0,  0.5,  P_GAIN_VELOCITY };
+        specs[FINGER2_TIP ] = { "FINGER2_TIP", 3.0,  0.3,  P_GAIN_VELOCITY };
+        specs[FINGER3     ] = { "FINGER3",     5.0,  0.5,  P_GAIN_VELOCITY };
+        specs[FINGER3_TIP ] = { "FINGER3_TIP", 3.0,  0.3,  P_GAIN_VELOCITY };
     }
     
     if(!initializeJoints(io, specs, prefix)){
