@@ -77,6 +77,7 @@ links:
       0,        0.007932, 0,
       0,        0,        0.000598
     ]
+    rotorInertia: 0.2
     elements:
       -
         type: Visual
@@ -127,6 +128,7 @@ links:
       0,        0.010502, 0,
       0,        0,        0.000792
     ]
+    rotorInertia: 0.2
     elements:
       -
         type: Visual
@@ -176,6 +178,7 @@ links:
       0,       0.00142, 0,
       0,       0,       0.000304
     ]
+    rotorInertia: 0.1
     elements:
       -
         type: Visual
@@ -217,6 +220,7 @@ links:
     jointLockForceRange: [ -6.8, 6.8 ]
     jointVelocityRange: [ -90.0, 90.0 ]
     jointId: 3
+    rotorInertia: 0.05
     elements: &WRIST_elements
       RigidBody:
         centerOfMass: [ 0, 0.037, 0.0642 ]
@@ -274,6 +278,7 @@ links:
     jointLockForceRange: [ -6.8, 6.8 ]
     jointVelocityRange: [ -90.0, 90.0 ]
     jointId: 4
+    rotorInertia: 0.05
     elements: *WRIST_elements
   -
     name: HAND
@@ -295,6 +300,7 @@ links:
       0,           0.000345324, 0,
       0,           0,           0.000582
     ]
+    rotorInertia: 0.05
     elements:
       -
         type: Visual
@@ -402,6 +408,7 @@ links:
     jointLockForceRange: [ -0.96, 0.96 ]
     jointVelocityRange: [ -95.0, 95.0 ]
     jointId: 6
+    rotorInertia: 0.005
     elements: &FINGER_elements
       RigidBody:
         centerOfMass: [ 0, 0, 0.022 ]
@@ -474,6 +481,9 @@ links:
     parent: FINGER1
     translation: [ -0.003, 0, 0.044 ]
     jointType: fixed
+    jointAxis: [ 0, 1, 0 ]
+    jointRange: [ 0, 115 ]
+    rotorInertia: 0.005
     elements: &FINGER_TIP_elements
       RigidBody:
         centerOfMass: [ 0, 0, 0.022 ]
@@ -574,12 +584,16 @@ links:
     jointLockForceRange: [ -0.96, 0.96 ]
     jointVelocityRange: [ -95.0, 95.0 ]
     jointId: 7
+    rotorInertia: 0.005
     elements: *FINGER_elements
   -
     name: FINGER2_TIP
     parent: FINGER2
     translation: [ -0.003, 0, 0.044 ]
     jointType: fixed
+    jointAxis: [ 0, 1, 0 ]
+    jointRange: [ 0, 115 ]
+    rotorInertia: 0.005
     elements: *FINGER_TIP_elements
   -
     name: FINGER3
@@ -595,12 +609,16 @@ links:
     jointLockForceRange: [ -0.96, 0.96 ]
     jointVelocityRange: [ -95.0, 95.0 ]
     jointId: 8
+    rotorInertia: 0.005
     elements: *FINGER_elements
   -
     name: FINGER3_TIP
     parent: FINGER3
     translation: [ -0.003, 0, 0.044 ]
     jointType: fixed
+    jointAxis: [ 0, 1, 0 ]
+    jointRange: [ 0, 115 ]
+    rotorInertia: 0.005
     elements: *FINGER_TIP_elements
 
 standardPose: [
