@@ -44,7 +44,11 @@ links:
         elements:
           -
             type: Shape
-            geometry: { type: Resource, uri: "parts/BASE.stl" }
+            geometry: { type: Resource, uri: "parts/BASE_LOWER.stl" }
+            appearance: *RING_APPEARANCE
+          -
+            type: Shape
+            geometry: { type: Resource, uri: "parts/BASE_UPPER.stl" }
             appearance: *MAIN_APPEARANCE
           -
             type: Shape
@@ -66,7 +70,7 @@ links:
     jointAxis: [ 0, 0, -1 ]
     jointRange: [ -10000, 10000 ]
     jointLockCompliance: 0.00096963
-    jointLockDamping: 0.1
+    jointLockSpookDamping: 0.1
     jointLockForceRange: [ -18.0, 18.0 ]
     jointVelocityRange: [ -42.0, 42.0 ]
     jointId: 0
@@ -117,7 +121,7 @@ links:
     jointRange: [ 50, 310 ]
     jointAngle: 180
     jointLockCompliance: 0.00047171
-    jointLockDamping: 0.1
+    jointLockSpookDamping: 0.1
     jointLockForceRange: [ -37.0, 37.0 ]
     jointVelocityRange: [ -56.4, 56.4 ]
     jointId: 1
@@ -167,7 +171,7 @@ links:
     jointRange: [ 19, 341 ]
     jointAngle: 180
     jointLockCompliance: 0.00096963
-    jointLockDamping: 0.1
+    jointLockSpookDamping: 0.1
     jointLockForceRange: [ -18.0, 18.0 ]
     jointVelocityRange: [ -42.0, 42.0 ]
     jointId: 2
@@ -216,7 +220,7 @@ links:
     jointAxis: [ 0, 0, -1 ]
     jointRange: [ -10000, 10000 ]
     jointLockCompliance: 0.00256666
-    jointLockDamping: 0.1
+    jointLockSpookDamping: 0.1
     jointLockForceRange: [ -6.8, 6.8 ]
     jointVelocityRange: [ -90.0, 90.0 ]
     jointId: 3
@@ -274,7 +278,7 @@ links:
     jointAxis: [ 0, 0, -1 ]
     jointRange: [ -10000, 10000 ]
     jointLockCompliance: 0.00256666
-    jointLockDamping: 0.1
+    jointLockSpookDamping: 0.1
     jointLockForceRange: [ -6.8, 6.8 ]
     jointVelocityRange: [ -90.0, 90.0 ]
     jointId: 4
@@ -289,7 +293,7 @@ links:
     jointAxis: [ 0, 0, -1 ]
     jointRange: [ -10000, 10000 ]
     jointLockCompliance: 0.00256666
-    jointLockDamping: 0.1
+    jointLockSpookDamping: 0.1
     jointLockForceRange: [ -6.8, 6.8 ]
     jointVelocityRange: [ -90.0, 90.0 ]
     jointId: 5
@@ -309,6 +313,14 @@ links:
             type: Shape
             geometry: { type: Resource, uri: "parts/HAND.stl" }
             appearance: *MAIN_APPEARANCE
+          -
+            type: Shape
+            geometry: { type: Resource, uri: "parts/PALM.stl" }
+            appearance: *FINGER_APPEARANCE
+          -
+            type: Shape
+            geometry: { type: Resource, uri: "parts/FINGER_BASE.stl" }
+            appearance: *FINGER_APPEARANCE
       -
         type: Collision
         elements:
@@ -404,7 +416,7 @@ links:
     jointRange: [ 0, 115 ]
     jointAngle: 55
     jointLockCompliance: 0.636318
-    jointLockDamping: 0.1
+    jointLockSpookDamping: 0.1
     jointLockForceRange: [ -0.96, 0.96 ]
     jointVelocityRange: [ -95.0, 95.0 ]
     jointId: 6
@@ -580,7 +592,7 @@ links:
     jointRange: [ 0, 115 ]
     jointAngle: 55
     jointLockCompliance: 0.636318
-    jointLockDamping: 0.1
+    jointLockSpookDamping: 0.1
     jointLockForceRange: [ -0.96, 0.96 ]
     jointVelocityRange: [ -95.0, 95.0 ]
     jointId: 7
@@ -605,7 +617,7 @@ links:
     jointRange: [ 0, 115 ]
     jointAngle: 55
     jointLockCompliance: 0.636318
-    jointLockDamping: 0.1
+    jointLockSpookDamping: 0.1
     jointLockForceRange: [ -0.96, 0.96 ]
     jointVelocityRange: [ -95.0, 95.0 ]
     jointId: 8
@@ -622,10 +634,10 @@ links:
     elements: *FINGER_TIP_elements
 
 standardPose: [
-  270,      # SHOULDER
+  276,      # SHOULDER
   168,      # ARM
   58,       # FOREARM
-  -119,     # WRIST1
+  241,      # WRIST1
   83,       # WRIST2
   76,       # HAND
   0,        # FINGER1
