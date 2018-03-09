@@ -1,0 +1,209 @@
+items: 
+  id: 0
+  name: "Root"
+  plugin: Base
+  class: RootItem
+  children: 
+    - 
+      id: 1
+      name: "DoubleArmV7"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/model/DoubleArmV7/DoubleArmV7S.body"
+        currentBaseLink: "TFRAME"
+        rootPosition: [ 1, 0.0037, 0.5376 ]
+        rootAttitude: [ 
+          -0.999948147, 0.00052335579, -0.0101699709, 
+          -0.0101699455, 5.11842633e-05, 0.999948283, 
+          0.000523849266, 0.999999862, -4.58589129e-05 ]
+        jointPositions: [ 
+          0.000000,  0.000000,  0.000000,  0.000000, -1.221730,  2.617994,  0.000000,  0.000000,  0.000000,  0.000000, 
+          0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000, 
+          0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000 ]
+        initialRootPosition: [ 1, 0.0037, 0.5376 ]
+        initialRootAttitude: [ 
+          -0.999948147, 0.000523355781, -0.0101699709, 
+          -0.0101699455, 5.11835545e-05, 0.999948283, 
+          0.000523849249, 0.999999862, -4.58582042e-05 ]
+        initialJointPositions: [ 
+          0.000000,  0.000000,  0.000000,  0.000000, -1.221730,  2.617994,  0.000000,  0.000000,  0.000000,  0.000000, 
+          0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000, 
+          0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: false
+        isEditable: true
+      children: 
+        - 
+          id: 2
+          name: "DoubleArmV7Controller"
+          plugin: Body
+          class: SimpleControllerItem
+          data: 
+            isNoDelayMode: true
+            controllerOptions: ""
+            controller: "DoubleArmV7Controller"
+            baseDirectory: "Controller directory"
+            reloading: true
+        - 
+          id: 3
+          name: "BodyTrackingCamera"
+          plugin: Body
+          class: BodyTrackingCameraItem
+          data: 
+            keepRelativeAttitude: false
+            nearClipDistance: 0.01
+            farClipDistance: 100
+views: 
+  - 
+    id: 1
+    plugin: Base
+    class: ItemTreeView
+    mounted: true
+    state: 
+      checked: [ 1, 3 ]
+      expanded: [ 1 ]
+  - 
+    id: 3
+    plugin: Base
+    class: SceneView
+    mounted: true
+    state: 
+      editMode: false
+      viewpointControlMode: thirdPerson
+      collisionLines: false
+      polygonMode: fill
+      defaultHeadLight: true
+      defaultHeadLightIntensity: 0.75
+      headLightLightingFromBack: false
+      worldLight: true
+      worldLightIntensity: 0.5
+      worldLightAmbient: 0.3
+      additionalLights: true
+      fog: true
+      floorGrid: false
+      floorGridSpan: 10
+      floorGridInterval: 0.5
+      xzGridSpan: 10
+      xzGridInterval: 0.5
+      xzGrid: false
+      yzGridSpan: 10
+      yzGridInterval: 0.5
+      texture: true
+      lineWidth: 1
+      pointSize: 1
+      normalVisualization: false
+      normalLength: 0.01
+      coordinateAxes: true
+      fpsTestIteration: 1
+      showFPS: false
+      enableNewDisplayListDoubleRendering: false
+      useBufferForPicking: true
+      upsideDown: false
+      cameras: 
+        - 
+          camera: [ System, Perspective ]
+          fieldOfView: 0.698132
+          near: 0.01
+          far: 100
+          eye: [ 4, 2, 1.5 ]
+          direction: [ -0.888888889, -0.444444444, -0.111111111 ]
+          up: [ -0.099380799, -0.0496903995, 0.99380799 ]
+        - 
+          camera: [ System, Orthographic ]
+          orthoHeight: 20
+          near: 0.01
+          far: 100
+        - 
+          camera: BodyTrackingCamera (Perspective)
+          isCurrent: true
+          fieldOfView: 0.785398
+          near: 0.01
+          far: 100
+          eye: [ -2.89440846, -1.59655533, 2.17302872 ]
+          direction: [ 0.933350306, 0.298977769, -0.198669326 ]
+          up: [ 0.189199469, 0.0606057925, 0.980066579 ]
+        - 
+          camera: BodyTrackingCamera (Orthographic)
+          orthoHeight: 2
+          near: 0.01
+          far: 100
+      backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
+      gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
+      xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
+      yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
+      dedicatedItemTreeViewChecks: false
+  - 
+    id: 4
+    name: "Camera Scene"
+    plugin: Base
+    class: SceneView
+    mounted: true
+    state: 
+      editMode: true
+      viewpointControlMode: thirdPerson
+      collisionLines: false
+      polygonMode: fill
+      defaultHeadLight: true
+      defaultHeadLightIntensity: 0.8
+      headLightLightingFromBack: false
+      worldLight: true
+      worldLightIntensity: 0.7
+      worldLightAmbient: 0.3
+      additionalLights: false
+      fog: true
+      floorGrid: false
+      floorGridSpan: 10
+      floorGridInterval: 0.5
+      xzGridSpan: 10
+      xzGridInterval: 0.5
+      xzGrid: false
+      yzGridSpan: 10
+      yzGridInterval: 0.5
+      texture: true
+      lineWidth: 1
+      pointSize: 1
+      normalVisualization: false
+      normalLength: 0.01
+      coordinateAxes: true
+      fpsTestIteration: 1
+      showFPS: false
+      enableNewDisplayListDoubleRendering: false
+      useBufferForPicking: true
+      upsideDown: false
+      cameras: 
+        - 
+          camera: [ System, Perspective ]
+          fieldOfView: 0.698132
+          near: 0.01
+          far: 100
+          eye: [ -5.70561679, -1.23665242, 3.31145986 ]
+          direction: [ 0.953750871, 0.205334582, -0.219538117 ]
+          up: [ 0.21462057, 0.0462060132, 0.975603923 ]
+        - 
+          camera: [ System, Orthographic ]
+          orthoHeight: 20
+          near: 0.01
+          far: 100
+        - 
+          camera: [ DoubleArmV7, FRAME_FRONT_CAMERA ]
+          isCurrent: true
+        - 
+          camera: BodyTrackingCamera (Perspective)
+          fieldOfView: 0.785398
+          near: 0.01
+          far: 100
+          eye: [ -2.89440846, -1.59655533, 2.17302872 ]
+          direction: [ 0.933350306, 0.298977769, -0.198669326 ]
+          up: [ 0.189199469, 0.0606057925, 0.980066579 ]
+        - 
+          camera: BodyTrackingCamera (Orthographic)
+          orthoHeight: 2
+          near: 0.01
+          far: 100
+      backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
+      gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
+      xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
+      yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
+      dedicatedItemTreeViewChecks: false
