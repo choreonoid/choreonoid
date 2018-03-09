@@ -88,22 +88,9 @@ links:
                   Visual: { resource: { uri: "resource/casters_body.wrl" } }
                   Collision:
                     elements:
-                      -
-                        type: Shape
-                        translation: [ 0, 0, -0.01604 ]
-                        geometry: { type: Box, size: [ 0.044, 0.13, 0.02792 ] }
-                      -
-                        type: Shape
-                        translation: [ 0, 0.03204, 0.016 ]
-                        geometry: { type: Box, size: [ 0.044, 0.06592, 0.092 ] }
-                      -
-                        type: Shape
-                        translation: [ 0.016, -0.03296, 0.02996 ]
-                        geometry: { type: Box, size: [ 0.012, 0.06408, 0.06408 ] }
-                      -
-                        type: Shape
-                        translation: [ -0.016, -0.03296, 0.02996 ]
-                        geometry: { type: Box, size: [ 0.012, 0.06408, 0.06408 ] }
+                      Shape:
+                        translation: [ 0, 0, 0.016 ]
+                        geometry: { type: Box, size: [ 0.044, 0.130, 0.092 ] }
   -
     name: FRONT_CASTER
     parent: FRONT_CASTER_YAW
