@@ -7,6 +7,7 @@
 // Simulation
 #include <agxSDK/Simulation.h>
 #include <agxSDK/Assembly.h>
+#include <agxSDK/MergeSplitHandler.h>
 
 // Threads
 #include <agx/Thread.h>

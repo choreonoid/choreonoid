@@ -16,6 +16,7 @@ void AGXSimulatorItem::initializeClass(ExtensionManager* ext)
 AGXSimulatorItem::AGXSimulatorItem()
 {
     impl = new AGXSimulatorItemImpl(this);
+    setName("AGXSimulator");
 }
 
 AGXSimulatorItem::AGXSimulatorItem(const AGXSimulatorItem& org): SimulatorItem(org)
@@ -36,6 +37,11 @@ bool AGXSimulatorItem::saveSimulationToAGXFile()
 Vector3 AGXSimulatorItem::getGravity() const
 {
     return impl->getGravity();
+}
+
+void AGXSimulatorItem::setEnableAMOR(bool bOn)
+{
+    impl->setEnableAMOR(bOn);
 }
 
 Item* AGXSimulatorItem::doDuplicate() const

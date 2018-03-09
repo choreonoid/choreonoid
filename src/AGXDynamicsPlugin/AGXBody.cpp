@@ -79,6 +79,9 @@ void AGXLink::constructAGXLink()
 
     agxSDK::SimulationRef sim =  getAGXBody()->getAGXScene()->getSimulation();
     sim->add(_rigid);
+    bool enableAMOR = false;
+    enableAMOR = getOrgLink()->info("AMOR", enableAMOR);
+    sim->getMergeSplitHandler()->getOrCreateProperties(_rigid)->setEnableMergeSplit(enableAMOR);
     sim->add(_constraint);
     //printDebugInfo();
 }

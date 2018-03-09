@@ -18,6 +18,7 @@ struct AGXSimulationDesc
         contactReductionBinResolution = 3;
         contactReductionThreshhold = 12;
         enableContactWarmstarting = false;
+        enableAMOR = false;
         enableAutoSleep = false;
     }
     agx::Int   numThreads;
@@ -27,6 +28,7 @@ struct AGXSimulationDesc
     agx::UInt8 contactReductionBinResolution;
     agx::UInt  contactReductionThreshhold;
     agx::Bool  enableContactWarmstarting;
+    agx::Bool  enableAMOR;
     agx::Bool  enableAutoSleep;
 };
 
