@@ -17,6 +17,7 @@ void exportPyItemTreeView(py::module m);
 void exportPySceneTypes(py::module m);
 void exportPyLazyCaller(py::module m);
 void exportPyPluginManager(py::module m);
+void exportPyProjectManager(py::module m);
 
 }
 
@@ -38,4 +39,5 @@ PYBIND11_MODULE(Base, m)
     exportPySceneTypes(m);
     exportPyLazyCaller(m);
     exportPyPluginManager(m);
+    exportPyProjectManager(m);
 }

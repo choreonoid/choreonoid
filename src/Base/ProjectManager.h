@@ -20,7 +20,9 @@ class CNOID_EXPORT ProjectManager
 public:
     static ProjectManager* instance();
         
-    void loadProject(const std::string& filename);
+    ~ProjectManager();
+    
+    void loadProject(const std::string& filename, Item* parentItem = nullptr);
     void saveProject(const std::string& filename);
     void overwriteCurrentProject();
     std::string currentProjectFile() const;
@@ -30,7 +32,6 @@ public:
 
 private:
     ProjectManager(ExtensionManager* em);
-    ~ProjectManager();
 
     ProjectManagerImpl* impl;
 

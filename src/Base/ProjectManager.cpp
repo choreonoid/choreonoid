@@ -49,7 +49,7 @@ public:
     bool restoreObjectStates(
         Archive* projectArchive, Archive* states, const vector<TObject*>& objects, const char* nameSuffix);
         
-    void loadProject(const string& filename, bool isInvokingApplication);
+    void loadProject(const string& filename, Item* parentItem, bool isInvokingApplication);
 
     template<class TObject>
     bool storeObjects(Archive& parentArchive, const char* key, vector<TObject*> objects);
@@ -185,13 +185,13 @@ bool ProjectManagerImpl::restoreObjectStates
 }
 
 
-void ProjectManager::loadProject(const std::string& filename)
+void ProjectManager::loadProject(const std::string& filename, Item* parentItem)
 {
-    impl->loadProject(filename, false);
+    impl->loadProject(filename, parentItem, false);
 }
 
 
-void ProjectManagerImpl::loadProject(const std::string& filename, bool isInvokingApplication)
+void ProjectManagerImpl::loadProject(const std::string& filename, Item* parentItem, bool isInvokingApplication)
 {
     bool loaded = false;
     YAMLReader reader;
@@ -471,7 +471,7 @@ void ProjectManagerImpl::onSigOptionsParsed(boost::program_options::variables_ma
     if(v.count("project")){
         vector<string> projectFileNames = v["project"].as< vector<string> >();
         for(size_t i=0; i < projectFileNames.size(); ++i){
-            loadProject(toActualPathName(projectFileNames[i]), true);
+            loadProject(toActualPathName(projectFileNames[i]), nullptr, true);
         }
     }
 }
@@ -496,7 +496,8 @@ void ProjectManagerImpl::openDialogToLoadProject()
     
     if(dialog.exec()){
         AppConfig::archive()->writePath("currentFileDialogDirectory", dialog.directory().absolutePath().toStdString());
-        loadProject(getNativePathString(filesystem::path(dialog.selectedFiles().front().toStdString())), false);
+        string filename = getNativePathString(filesystem::path(dialog.selectedFiles().front().toStdString()));
+        loadProject(filename, nullptr, false);
     }
 }
 
