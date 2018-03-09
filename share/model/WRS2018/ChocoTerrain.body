@@ -12,7 +12,7 @@ links:
     name: Base
     jointType: fixed
     material: Ground
-    convexRecompostiion: true
+    convexDecomposition: true
     elements:
       Transform:
         translation: [ 0, -0.5, 0 ]

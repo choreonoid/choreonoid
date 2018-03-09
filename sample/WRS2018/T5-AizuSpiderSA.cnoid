@@ -110,7 +110,6 @@ items:
                   class: SimpleControllerItem
                   data: 
                     isNoDelayMode: true
-                    controllerOptions: "ARM1_"
                     controller: "Jaco2Controller.so"
                     baseDirectory: "Controller directory"
                     reloading: true

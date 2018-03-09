@@ -31,11 +31,13 @@ materials:
     viscosity: 0.0
   -
     name: SpiderTracks
+    density: 1e3
     youngsModulus: 1e10
     roughness: 1.0
     viscosity: 0.3
   -
     name: AizuSpiderTracks
+    density: 1e3
     youngsModulus: 1e10
     roughness: 1.0
     viscosity: 0.3

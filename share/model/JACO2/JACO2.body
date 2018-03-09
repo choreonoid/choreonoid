@@ -421,6 +421,7 @@ links:
     jointVelocityRange: [ -95.0, 95.0 ]
     jointId: 6
     rotorInertia: 0.005
+    material: Hand
     elements: &FINGER_elements
       RigidBody:
         centerOfMass: [ 0, 0, 0.022 ]
@@ -496,6 +497,7 @@ links:
     jointAxis: [ 0, 1, 0 ]
     jointRange: [ 0, 115 ]
     rotorInertia: 0.005
+    material: Hand
     elements: &FINGER_TIP_elements
       RigidBody:
         centerOfMass: [ 0, 0, 0.022 ]
@@ -597,6 +599,7 @@ links:
     jointVelocityRange: [ -95.0, 95.0 ]
     jointId: 7
     rotorInertia: 0.005
+    material: Hand
     elements: *FINGER_elements
   -
     name: FINGER2_TIP
@@ -606,6 +609,7 @@ links:
     jointAxis: [ 0, 1, 0 ]
     jointRange: [ 0, 115 ]
     rotorInertia: 0.005
+    material: Hand
     elements: *FINGER_TIP_elements
   -
     name: FINGER3
@@ -622,6 +626,7 @@ links:
     jointVelocityRange: [ -95.0, 95.0 ]
     jointId: 8
     rotorInertia: 0.005
+    material: Hand
     elements: *FINGER_elements
   -
     name: FINGER3_TIP
@@ -631,6 +636,7 @@ links:
     jointAxis: [ 0, 1, 0 ]
     jointRange: [ 0, 115 ]
     rotorInertia: 0.005
+    material: Hand
     elements: *FINGER_TIP_elements
 
 standardPose: [
