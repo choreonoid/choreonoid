@@ -19,6 +19,7 @@ links:
     rotation: [ [ 0, 1, 0, 90 ], [ 0, 0, 1, 90 ] ]
     jointType: fixed
     jointIdOffset: 4
+    devicePrefix: ARM_
 
 standardPose: [
   # Flippers
