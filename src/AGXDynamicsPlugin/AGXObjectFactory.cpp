@@ -47,6 +47,7 @@ agxSDK::SimulationRef AGXObjectFactory::createSimulation(const AGXSimulationDesc
     sim->getSpace()->setContactReductionBinResolution(desc.contactReductionBinResolution);
     sim->getSpace()->setContactReductionThreshold(desc.contactReductionThreshhold);
     sim->getDynamicsSystem()->setEnableContactWarmstarting(desc.enableContactWarmstarting);
+    sim->getMergeSplitHandler()->setEnable(desc.enableAMOR);
     sim->getDynamicsSystem()->getAutoSleep()->setEnable(desc.enableAutoSleep);
     return sim;
 }
