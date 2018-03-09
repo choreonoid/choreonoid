@@ -138,7 +138,7 @@ ProjectManagerImpl::ProjectManagerImpl(ExtensionManager* em)
 
     OptionManager& om = em->optionManager();
     om.addOption("project", boost::program_options::value< vector<string> >(), "load a project file");
-    om.addPositionalOption("project", 1);
+    om.addPositionalOption("project", -1);
     om.sigOptionsParsed().connect(std::bind(&ProjectManagerImpl::onSigOptionsParsed, this, _1));
 
     isLoadingProject = false;
@@ -298,7 +298,12 @@ void ProjectManagerImpl::loadProject(const std::string& filename, Item* parentIt
             Archive* items = archive->findSubArchive("items");
             if(items->isValid()){
                 items->inheritSharedInfoFrom(*archive);
-                itemTreeArchiver.restore(items, RootItem::mainInstance(), optionalPlugins);
+
+                if(!parentItem){
+                    parentItem = RootItem::instance();
+                }
+                itemTreeArchiver.restore(items, parentItem, optionalPlugins);
+                
                 numArchivedItems = itemTreeArchiver.numArchivedItems();
                 numRestoredItems = itemTreeArchiver.numRestoredItems();
                 messageView->putln(format(_("%1% / %2% item(s) are loaded.")) % numRestoredItems % numArchivedItems);
