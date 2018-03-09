@@ -330,6 +330,11 @@ Vector3 AGXSimulatorItemImpl::getGravity() const
     return Vector3(g.x(), g.y(), g.z());
 }
 
+void AGXSimulatorItemImpl::setEnableAMOR(bool bOn)
+{
+    m_p_enableAMOR = bOn;
+}
+
 bool AGXSimulatorItemImpl::saveSimulationToAGXFile()
 {
     return agxScene->saveSceneToAGXFile();

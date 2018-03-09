@@ -19,6 +19,7 @@ public:
     bool saveSimulationToAGXFile();
 
     virtual Vector3 getGravity() const override;
+    void setEnableAMOR(bool bOn);
     
 protected:
     virtual Item* doDuplicate() const;
@@ -40,7 +41,7 @@ private:
     AGXSimulatorItemImplPtr impl;
 //    friend class AGXSimulatorItemImpl;
 };
-
+typedef ref_ptr<AGXSimulatorItem> AGXSimulatorItemPtr;
 
 }
 

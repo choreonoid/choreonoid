@@ -35,6 +35,7 @@ public:
 
     void setGravity(const Vector3& g);
     Vector3 getGravity() const;
+    void setEnableAMOR(bool bOn);
     bool saveSimulationToAGXFile();
 
 private:
