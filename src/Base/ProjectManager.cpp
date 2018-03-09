@@ -69,6 +69,7 @@ public:
         std::function<bool(Archive&)> storeFunction,
         std::function<void(const Archive&)> restoreFunction);
 
+    bool isLoadingProject;
     ItemTreeArchiver itemTreeArchiver;
     MainWindow* mainWindow;
     MessageView* messageView;
@@ -122,7 +123,6 @@ ProjectManagerImpl::ProjectManagerImpl(ExtensionManager* em)
     mm.addItem(_("Save Project As"))
         ->sigTriggered().connect(std::bind(&ProjectManagerImpl::openDialogToSaveProject, this));
 
-
     mm.setPath(N_("Project File Options"));
 
     perspectiveCheck = mm.addCheckItem(_("Perspective"));
@@ -141,6 +141,7 @@ ProjectManagerImpl::ProjectManagerImpl(ExtensionManager* em)
     om.addPositionalOption("project", 1);
     om.sigOptionsParsed().connect(std::bind(&ProjectManagerImpl::onSigOptionsParsed, this, _1));
 
+    isLoadingProject = false;
     mainWindow = MainWindow::instance();
     messageView = MessageView::mainInstance();
 }
@@ -185,6 +186,12 @@ bool ProjectManagerImpl::restoreObjectStates
 }
 
 
+bool ProjectManager::isLoadingProject() const
+{
+    return impl->isLoadingProject;
+}
+        
+
 void ProjectManager::loadProject(const std::string& filename, Item* parentItem)
 {
     impl->loadProject(filename, parentItem, false);
@@ -193,6 +200,8 @@ void ProjectManager::loadProject(const std::string& filename, Item* parentItem)
 
 void ProjectManagerImpl::loadProject(const std::string& filename, Item* parentItem, bool isInvokingApplication)
 {
+    isLoadingProject = true;
+    
     bool loaded = false;
     YAMLReader reader;
     reader.setMappingClass<Archive>();
@@ -322,6 +331,8 @@ void ProjectManagerImpl::loadProject(const std::string& filename, Item* parentIt
         messageView->put(ex.message());
     }
 
+    isLoadingProject = false;
+    
     if(!loaded){                
         messageView->notify(format(_("Project \"%1%\" cannot be loaded.")) % filename);
         lastAccessedProjectFile.clear();
@@ -353,7 +364,7 @@ template<class TObject> bool ProjectManagerImpl::storeObjects
             result = true;
         }
     }
-    
+
     return result;
 }
 

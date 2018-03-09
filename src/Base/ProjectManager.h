@@ -27,6 +27,7 @@ public:
     void overwriteCurrentProject();
     std::string currentProjectFile() const;
     std::string currentProjectDirectory() const;
+    bool isLoadingProject() const;
 
     static void initialize(ExtensionManager* em);
 
