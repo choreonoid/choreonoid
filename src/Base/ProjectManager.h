@@ -28,6 +28,7 @@ public:
     std::string currentProjectFile() const;
     std::string currentProjectDirectory() const;
     bool isLoadingProject() const;
+    void setCurrentProjectName(const std::string& filename);
 
     static void initialize(ExtensionManager* em);
 

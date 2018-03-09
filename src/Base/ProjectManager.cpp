@@ -42,7 +42,7 @@ namespace cnoid {
 class ProjectManagerImpl
 {
 public:
-    ProjectManagerImpl(ExtensionManager* em);
+    ProjectManagerImpl(ProjectManager* self, ExtensionManager* em);
     ~ProjectManagerImpl();
         
     template <class TObject>
@@ -69,10 +69,12 @@ public:
         std::function<bool(Archive&)> storeFunction,
         std::function<void(const Archive&)> restoreFunction);
 
+    ProjectManager* self;
     bool isLoadingProject;
     ItemTreeArchiver itemTreeArchiver;
     MainWindow* mainWindow;
     MessageView* messageView;
+    string currentProjectName;
     string lastAccessedProjectFile;
     Action* perspectiveCheck;
     Action* homeRelativeCheck;
@@ -85,6 +87,7 @@ public:
     typedef map<string, ArchiverMap> ArchiverMapMap;
     ArchiverMapMap archivers;
 };
+
 }
 
 
@@ -104,11 +107,12 @@ void ProjectManager::initialize(ExtensionManager* em)
 
 ProjectManager::ProjectManager(ExtensionManager* em)
 {
-    impl = new ProjectManagerImpl(em);
+    impl = new ProjectManagerImpl(this, em);
 }
 
 
-ProjectManagerImpl::ProjectManagerImpl(ExtensionManager* em)
+ProjectManagerImpl::ProjectManagerImpl(ProjectManager* self, ExtensionManager* em)
+    : self(self)
 {
     MappingPtr config = AppConfig::archive()->openMapping("ProjectManager");
     
@@ -318,7 +322,7 @@ void ProjectManagerImpl::loadProject(const std::string& filename, Item* parentIt
             }
 
             if(loaded){
-                mainWindow->setProjectTitle(getBasename(filename));
+                self->setCurrentProjectName(getBasename(filename));
                 lastAccessedProjectFile = filename;
 
                 messageView->flush();
@@ -344,6 +348,13 @@ void ProjectManagerImpl::loadProject(const std::string& filename, Item* parentIt
     }
 }
 
+
+void ProjectManager::setCurrentProjectName(const std::string& name)
+{
+    impl->currentProjectName = name;
+    impl->mainWindow->setProjectTitle(name);
+}
+        
 
 template<class TObject> bool ProjectManagerImpl::storeObjects
 (Archive& parentArchive, const char* key, vector<TObject*> objects)
@@ -534,6 +545,9 @@ void ProjectManagerImpl::openDialogToSaveProject()
     dialog.setNameFilters(filters);
 
     dialog.setDirectory(AppConfig::archive()->get("currentFileDialogDirectory", shareDirectory()).c_str());
+    if(!currentProjectName.empty()){
+        dialog.selectFile(currentProjectName.c_str());
+    }
 
     if(dialog.exec()){
         AppConfig::archive()->writePath("currentFileDialogDirectory", dialog.directory().absolutePath().toStdString());        

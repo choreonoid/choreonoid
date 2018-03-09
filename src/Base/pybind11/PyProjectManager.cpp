@@ -19,6 +19,7 @@ void exportPyProjectManager(py::module m)
         .def("loadProject", [](ProjectManager& self, string filename){ self.loadProject(filename); } )
         .def("loadProject", [](ProjectManager& self, string filename, Item* parentItem){
                 self.loadProject(filename, parentItem); })
+        .def("setCurrentProjectName", &ProjectManager::setCurrentProjectName)
         ;
 }
 
