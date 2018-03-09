@@ -158,8 +158,8 @@ bool AizuSpiderController::initializeFlipperJoints(SimpleControllerIO* io)
     
     vector<JointSpec> specs(NUM_FLIPPERS);
 
-    const double FLIPPER_P_GAIN_TORQUE = 1000.0;
-    const double FLIPPER_D_GAIN_TORQUE = 10.0;
+    const double FLIPPER_P_GAIN_TORQUE = 800.0;
+    const double FLIPPER_D_GAIN_TORQUE = 20.0;
     const double FLIPPER_P_GAIN_VELOCITY = 0.5;
     
     specs[FR_FLIPPER] = { "FR_FLIPPER", FLIPPER_P_GAIN_TORQUE, FLIPPER_D_GAIN_TORQUE, FLIPPER_P_GAIN_VELOCITY };
