@@ -22,19 +22,88 @@ items:
           children: 
             - 
               id: 3
+              name: "RoadSurface20m"
+              plugin: Body
+              class: BodyItem
+              data: 
+                modelFile: "${SHARE}/model/WRS2018/RoadSurface20m.body"
+                currentBaseLink: "Base"
+                rootPosition: [ 0, 0, 0 ]
+                rootAttitude: [ 
+                  1, 0, 0, 
+                  0, 1, 0, 
+                  0, 0, 1 ]
+                jointPositions: [  ]
+                initialRootPosition: [ 0, 0, 0 ]
+                initialRootAttitude: [ 
+                  1, 0, 0, 
+                  0, 1, 0, 
+                  0, 0, 1 ]
+                zmp: [ 0, 0, 0 ]
+                collisionDetection: true
+                selfCollisionDetection: false
+                isEditable: false
+            - 
+              id: 4
+              name: "TunnelWall20m"
+              plugin: Body
+              class: BodyItem
+              data: 
+                modelFile: "${SHARE}/model/WRS2018/TunnelWall20m.body"
+                currentBaseLink: "Base"
+                rootPosition: [ 0, 0, 0 ]
+                rootAttitude: [ 
+                  1, 0, 0, 
+                  0, 1, 0, 
+                  0, 0, 1 ]
+                jointPositions: [  ]
+                initialRootPosition: [ 0, 0, 0 ]
+                initialRootAttitude: [ 
+                  1, 0, 0, 
+                  0, 1, 0, 
+                  0, 0, 1 ]
+                zmp: [ 0, 0, 0 ]
+                collisionDetection: true
+                selfCollisionDetection: false
+                isEditable: false
+            - 
+              id: 5
+              name: "Debris-L"
+              plugin: Body
+              class: BodyItem
+              data: 
+                modelFile: "${SHARE}/model/WRS2018/DebrisL.body"
+                currentBaseLink: "body"
+                rootPosition: [ 7.1036, 1.0038, 0.25 ]
+                rootAttitude: [ 
+                  0.260242958, -1.87024057e-09, -0.965543166, 
+                  -0.965543166, -4.1983732e-09, -0.26024296, 
+                  -1.87024057e-09, 1, -4.1983732e-09 ]
+                jointPositions: [  ]
+                initialRootPosition: [ 7.1036, 1.0038, 0.25 ]
+                initialRootAttitude: [ 
+                  0.260242954, -3.98276667e-09, -0.965543168, 
+                  -0.965543168, -8.26061419e-09, -0.260242957, 
+                  -3.98276667e-09, 1, -8.26061419e-09 ]
+                zmp: [ 0, 0, 0 ]
+                collisionDetection: true
+                selfCollisionDetection: false
+                isEditable: true
+            - 
+              id: 6
               name: "Debris-S"
               plugin: Body
               class: BodyItem
               data: 
                 modelFile: "${SHARE}/model/WRS2018/DebrisS.body"
                 currentBaseLink: "BASE"
-                rootPosition: [ 15.6658309, -1.82262193, 0.02 ]
+                rootPosition: [ 5.6658, -1.6226, 0.02 ]
                 rootAttitude: [ 
-                  0.404691069, -0.914453464, 0, 
-                  0.914453464, 0.404691069, 0, 
+                  0.40469107, -0.914453464, 0, 
+                  0.914453464, 0.40469107, 0, 
                   0, 0, 1 ]
                 jointPositions: [  ]
-                initialRootPosition: [ 15.6658309, -1.82262193, 0.02 ]
+                initialRootPosition: [ 5.6658, -1.6226, 0.02 ]
                 initialRootAttitude: [ 
                   0.40469107, -0.914453464, 0, 
                   0.914453464, 0.40469107, 0, 
@@ -44,20 +113,20 @@ items:
                 selfCollisionDetection: false
                 isEditable: true
             - 
-              id: 4
+              id: 7
               name: "Debris-S"
               plugin: Body
               class: BodyItem
               data: 
                 modelFile: "${SHARE}/model/WRS2018/DebrisS.body"
                 currentBaseLink: "BASE"
-                rootPosition: [ 15.9168753, -0.794940254, 0.02 ]
+                rootPosition: [ 5.9169, -0.5949, 0.02 ]
                 rootAttitude: [ 
                   0.853699662, 0.520765673, 0, 
                   -0.520765673, 0.853699662, 0, 
                   0, 0, 1 ]
                 jointPositions: [  ]
-                initialRootPosition: [ 15.9168753, -0.794940254, 0.02 ]
+                initialRootPosition: [ 5.9169, -0.5949, 0.02 ]
                 initialRootAttitude: [ 
                   0.853699662, 0.520765673, 0, 
                   -0.520765673, 0.853699662, -0, 
@@ -67,20 +136,20 @@ items:
                 selfCollisionDetection: false
                 isEditable: true
             - 
-              id: 5
+              id: 8
               name: "Rod"
               plugin: Body
               class: BodyItem
               data: 
                 modelFile: "${SHARE}/model/misc/rod.body"
                 currentBaseLink: "rod"
-                rootPosition: [ 18.5701327, -1.75584461, 0.0681125685 ]
+                rootPosition: [ 8.5701, -1.5558, 0.0681 ]
                 rootAttitude: [ 
                   0.383368851, 0.923595325, 0, 
                   -0.923595325, 0.383368851, -0, 
                   -0, 0, 1 ]
                 jointPositions: [  ]
-                initialRootPosition: [ 18.5701327, -1.75584461, 0.0681125685 ]
+                initialRootPosition: [ 8.5701, -1.5558, 0.0681 ]
                 initialRootAttitude: [ 
                   0.383368851, 0.923595325, 0, 
                   -0.923595325, 0.383368851, -0, 
@@ -89,190 +158,6 @@ items:
                 collisionDetection: true
                 selfCollisionDetection: false
                 isEditable: true
-            - 
-              id: 6
-              name: "Debris-L"
-              plugin: Body
-              class: BodyItem
-              data: 
-                modelFile: "${SHARE}/model/WRS2018/DebrisL.body"
-                currentBaseLink: "body"
-                rootPosition: [ 17.1036366, 0.803841975, 0.25 ]
-                rootAttitude: [ 
-                  0.260242958, -1.87024057e-09, -0.965543166, 
-                  -0.965543166, -4.1983732e-09, -0.26024296, 
-                  -1.87024057e-09, 1, -4.1983732e-09 ]
-                jointPositions: [  ]
-                initialRootPosition: [ 17.1036366, 0.803841975, 0.25 ]
-                initialRootAttitude: [ 
-                  0.260242905, -3.58870518e-08, -0.9655432, 
-                  -0.9655432, -7.39778721e-08, -0.260242932, 
-                  -3.58870518e-08, 1.00000003, -7.39778721e-08 ]
-                zmp: [ 0, 0, 0 ]
-                collisionDetection: true
-                selfCollisionDetection: false
-                isEditable: true
-            - 
-              id: 7
-              name: "WaffleTerrain"
-              plugin: Body
-              class: BodyItem
-              data: 
-                modelFile: "${SHARE}/model/WRS2018/WaffleTerrain.body"
-                currentBaseLink: "Base"
-                rootPosition: [ 10, 0, 0 ]
-                rootAttitude: [ 
-                  1, 0, 0, 
-                  0, 1, 0, 
-                  0, 0, 1 ]
-                jointPositions: [  ]
-                initialRootPosition: [ 10, 0, 0 ]
-                initialRootAttitude: [ 
-                  1, 0, 0, 
-                  0, 1, 0, 
-                  0, 0, 1 ]
-                zmp: [ 0, 0, 0 ]
-                collisionDetection: true
-                selfCollisionDetection: false
-                isEditable: false
-            - 
-              id: 8
-              name: "ChocoTerrain"
-              plugin: Body
-              class: BodyItem
-              data: 
-                modelFile: "${SHARE}/model/WRS2018/ChocoTerrain.body"
-                currentBaseLink: "Base"
-                rootPosition: [ 4, 0, 0 ]
-                rootAttitude: [ 
-                  1, 0, 0, 
-                  0, 1, 0, 
-                  0, 0, 1 ]
-                jointPositions: [  ]
-                initialRootPosition: [ 4, 0, 0 ]
-                initialRootAttitude: [ 
-                  1, 0, 0, 
-                  0, 1, 0, 
-                  0, 0, 1 ]
-                zmp: [ 0, 0, 0 ]
-                collisionDetection: true
-                selfCollisionDetection: false
-                isEditable: false
-            - 
-              id: 9
-              name: "TerrainB"
-              plugin: Body
-              class: BodyItem
-              data: 
-                modelFile: "${SHARE}/model/WRS2018/TerrainB.body"
-                currentBaseLink: ""
-                rootPosition: [ 24, 2.4, 0 ]
-                rootAttitude: [ 
-                  2.22044605e-16, 1, -0, 
-                  -1, 2.22044605e-16, 0, 
-                  0, 0, 1 ]
-                jointPositions: [  ]
-                initialRootPosition: [ 24, 2.4, 0 ]
-                initialRootAttitude: [ 
-                  2.22044605e-16, 1, -0, 
-                  -1, 2.22044605e-16, 0, 
-                  0, 0, 1 ]
-                zmp: [ 0, 0, 0 ]
-                collisionDetection: true
-                selfCollisionDetection: false
-                isEditable: false
-            - 
-              id: 10
-              name: "TerrainA"
-              plugin: Body
-              class: BodyItem
-              data: 
-                modelFile: "${SHARE}/model/WRS2018/TerrainA.body"
-                currentBaseLink: ""
-                rootPosition: [ 24, -2.4, 0 ]
-                rootAttitude: [ 
-                  2.22044605e-16, -1, 0, 
-                  1, 2.22044605e-16, 0, 
-                  0, 0, 1 ]
-                jointPositions: [  ]
-                initialRootPosition: [ 24, -2.4, 0 ]
-                initialRootAttitude: [ 
-                  2.22044605e-16, -1, 0, 
-                  1, 2.22044605e-16, 0, 
-                  0, 0, 1 ]
-                zmp: [ 0, 0, 0 ]
-                collisionDetection: true
-                selfCollisionDetection: false
-                isEditable: false
-            - 
-              id: 11
-              name: "TunnelWall40m"
-              plugin: Body
-              class: BodyItem
-              data: 
-                modelFile: "${SHARE}/model/WRS2018/TunnelWall40m.body"
-                currentBaseLink: ""
-                rootPosition: [ 0, 0, 0 ]
-                rootAttitude: [ 
-                  1, 0, 0, 
-                  0, 1, 0, 
-                  0, 0, 1 ]
-                jointPositions: [  ]
-                initialRootPosition: [ 0, 0, 0 ]
-                initialRootAttitude: [ 
-                  1, 0, 0, 
-                  0, 1, 0, 
-                  0, 0, 1 ]
-                zmp: [ 0, 0, 0 ]
-                collisionDetection: true
-                selfCollisionDetection: false
-                isEditable: false
-            - 
-              id: 12
-              name: "RoadSurface20m"
-              plugin: Body
-              class: BodyItem
-              data: 
-                modelFile: "${SHARE}/model/WRS2018/RoadSurface20m.body"
-                currentBaseLink: "Base"
-                rootPosition: [ 20, 0, 0 ]
-                rootAttitude: [ 
-                  1, 0, 0, 
-                  0, 1, 0, 
-                  0, 0, 1 ]
-                jointPositions: [  ]
-                initialRootPosition: [ 20, 0, 0 ]
-                initialRootAttitude: [ 
-                  1, 0, 0, 
-                  0, 1, 0, 
-                  0, 0, 1 ]
-                zmp: [ 0, 0, 0 ]
-                collisionDetection: true
-                selfCollisionDetection: false
-                isEditable: false
-            - 
-              id: 13
-              name: "RoadSurface20m"
-              plugin: Body
-              class: BodyItem
-              data: 
-                modelFile: "${SHARE}/model/WRS2018/RoadSurface20m.body"
-                currentBaseLink: "Base"
-                rootPosition: [ 0, 0, 0 ]
-                rootAttitude: [ 
-                  1, 0, 0, 
-                  0, 1, 0, 
-                  0, 0, 1 ]
-                jointPositions: [  ]
-                initialRootPosition: [ 0, 0, 0 ]
-                initialRootAttitude: [ 
-                  1, 0, 0, 
-                  0, 1, 0, 
-                  0, 0, 1 ]
-                zmp: [ 0, 0, 0 ]
-                collisionDetection: true
-                selfCollisionDetection: false
-                isEditable: false
 views: 
   - 
     id: 0
@@ -285,8 +170,9 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      checked: [ 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 ]
-      expanded: [ 1, 5, 6 ]
+      selected: [ 1 ]
+      checked: [ 3, 4, 5, 6, 7, 8 ]
+      expanded: [ 1, 5, 6, 8 ]
   - 
     id: 2
     plugin: Base
@@ -336,9 +222,9 @@ views:
           fieldOfView: 0.698132
           near: 0.01
           far: 100
-          eye: [ -0.586912597, -0.656016255, 0.898826995 ]
-          direction: [ 0.937891553, 0.209730762, -0.276355643 ]
-          up: [ 0.269694767, 0.0603089871, 0.96105544 ]
+          eye: [ -8.57460318, -2.66127395, 4.91694173 ]
+          direction: [ 0.940941449, 0.250310689, -0.227977519 ]
+          up: [ 0.22031519, 0.0586085852, 0.973666396 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 5.73009
@@ -394,9 +280,9 @@ views:
           fieldOfView: 0.698132
           near: 0.01
           far: 100
-          eye: [ -5.70561679, -1.23665242, 3.31145986 ]
-          direction: [ 0.953750871, 0.205334582, -0.219538117 ]
-          up: [ 0.21462057, 0.0462060135, 0.975603923 ]
+          eye: [ -2.9852766, 0.135515917, 1.00369799 ]
+          direction: [ 0.999009817, 0.0220366298, 0.0386493531 ]
+          up: [ -0.0386399536, -0.000852338323, 0.999252835 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
@@ -427,7 +313,7 @@ views:
       spinBox: true
       slider: true
       labelOnLeft: true
-      currentBodyItem: 13
+      currentBodyItem: 8
   - 
     id: 7
     plugin: Body
@@ -435,21 +321,13 @@ views:
     mounted: true
     state: 
       listingMode: "Link List"
-      currentBodyItem: 13
+      currentBodyItem: 8
       bodyItems: 
         - 
-          id: 13
+          id: 3
           selectedLinks: [ 0 ]
   - 
     id: 8
-    plugin: Multicopter
-    class: MulticopterMonitorView
-  - 
-    id: 9
-    plugin: OpenRTM
-    class: RTSNameServerView
-  - 
-    id: 10
     plugin: Python
     class: PythonConsoleView
 toolbars: 
@@ -472,42 +350,9 @@ toolbars:
     penetrationBlockDepth: 0.0005
     lazyCollisionDetectionMode: true
   "BodyBar": 
-    current: 13
+    current: 8
   "LeggedBodyBar": 
     stanceWidth: 0.15
-  "BodyMotionGenerationBar": 
-    autoGenerationForNewBody: true
-    balancer: false
-    autoGeneration: false
-    timeScaleRatio: 1
-    preInitialDuration: 1
-    postFinalDuration: 1
-    onlyTimeBarRange: false
-    makeNewBodyItem: true
-    stealthyStepMode: true
-    stealthyHeightRatioThresh: 2
-    flatLiftingHeight: 0.005
-    flatLandingHeight: 0.005
-    impactReductionHeight: 0.005
-    impactReductionTime: 0.04
-    autoZmp: true
-    minZmpTransitionTime: 0.1
-    zmpCenteringTimeThresh: 0.03
-    zmpTimeMarginBeforeLiftingSpin: 0
-    zmpMaxDistanceFromCenter: 0.02
-    allLinkPositions: false
-    lipSyncMix: false
-    timeToStartBalancer: 0
-    balancerIterations: 2
-    plainBalancerMode: false
-    boundaryConditionType: position
-    boundarySmootherType: quintic
-    boundarySmootherTime: 0.5
-    boundaryCmAdjustment: false
-    boundaryCmAdjustmentTime: 1
-    waistHeightRelaxation: false
-    gravity: 9.8
-    dynamicsTimeRatio: 1
 Body: 
   "BodyMotionEngine": 
     updateJointVelocities: false
@@ -543,31 +388,6 @@ Body:
         showCenterOfMass: false
         showPpcom: false
         showZmp: false
-      - 
-        bodyItem: 9
-        showCenterOfMass: false
-        showPpcom: false
-        showZmp: false
-      - 
-        bodyItem: 10
-        showCenterOfMass: false
-        showPpcom: false
-        showZmp: false
-      - 
-        bodyItem: 11
-        showCenterOfMass: false
-        showPpcom: false
-        showZmp: false
-      - 
-        bodyItem: 12
-        showCenterOfMass: false
-        showPpcom: false
-        showZmp: false
-      - 
-        bodyItem: 13
-        showCenterOfMass: false
-        showPpcom: false
-        showZmp: false
     staticModelEditing: true
   "KinematicFaultChecker": 
     checkJointPositions: true
@@ -583,11 +403,6 @@ Body:
     inputFrameRate: 200
     isOutputFrameRateSpecified: false
     outputFrameRate: 200
-Media: 
-  "PulseAudioManager": 
-    keepStreamConnection: false
-OpenRTM: 
-  "deleteUnmanagedRTCsOnStartingSimulation": false
 viewAreas: 
   - 
     type: embedded
