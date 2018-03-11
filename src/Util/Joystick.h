@@ -38,10 +38,10 @@ public:
     };
 
     enum ButtonID {
-        A_BUTTON,
-        B_BUTTON,
-        X_BUTTON,
-        Y_BUTTON,
+        A_BUTTON, // Cross
+        B_BUTTON, // Circle
+        X_BUTTON, // Square
+        Y_BUTTON, // Triangle
         L_BUTTON,
         R_BUTTON,
         SELECT_BUTTON,
