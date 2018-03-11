@@ -1,2 +1,2 @@
 import WRSUtil
-WRSUtil.loadProject("T1", "AISTSimulator", "DoubleArmV7A")
+WRSUtil.loadProject("T1", "AGXSimulator", "DoubleArmV7A")
