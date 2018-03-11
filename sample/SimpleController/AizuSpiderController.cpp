@@ -277,25 +277,51 @@ void AizuSpiderController::updateFlipperTargetPositions()
 {
     static const double FLIPPER_GAIN = 0.5;
 
-    double pos = joystick->getPosition(targetMode, Joystick::R_STICK_V_AXIS, STICK_THRESH);
-    double dq = dt * FLIPPER_GAIN * pos;
-
-    if(joystick->getPosition(targetMode, Joystick::L_TRIGGER_AXIS, STICK_THRESH) > 0.0){
-        // Front mode
-        jointInfos[FR_FLIPPER].qref += dq;
-        jointInfos[FL_FLIPPER].qref += dq;
-
-    } else if(joystick->getButtonState(targetMode, Joystick::L_BUTTON)){
-        // Back mode
-        jointInfos[BR_FLIPPER].qref += dq;
-        jointInfos[BL_FLIPPER].qref += dq;
-        
+    // Arrange all the flippers to the same position
+    if(joystick->getButtonState(targetMode, Joystick::R_STICK_BUTTON)){
+        double qa = 0.0;
+        for(int i=0; i < NUM_FLIPPERS; ++i){
+            qa += jointInfos[i].qref;
+        }
+        qa /= NUM_FLIPPERS;
+        double dqmax = dt * 0.5;
+        for(int i=0; i < NUM_FLIPPERS; ++i){
+            double dq = qa - jointInfos[i].qref;
+            if(dq > dqmax){
+                dq = dqmax;
+            } else if(dq < -dqmax){
+                dq = -dqmax;
+            }
+            jointInfos[i].qref += dq;
+        }
     } else {
-        // Synchronize mode
-        jointInfos[FR_FLIPPER].qref += dq;
-        jointInfos[FL_FLIPPER].qref += dq;
-        jointInfos[BR_FLIPPER].qref += dq;
-        jointInfos[BL_FLIPPER].qref += dq;
+        double pos = joystick->getPosition(targetMode, Joystick::R_STICK_V_AXIS, STICK_THRESH);
+        double dq = dt * FLIPPER_GAIN * pos;
+        bool FL = joystick->getPosition(targetMode, Joystick::L_TRIGGER_AXIS, STICK_THRESH) > 0.0;
+        bool FR = joystick->getPosition(targetMode, Joystick::R_TRIGGER_AXIS, STICK_THRESH) > 0.0;
+        bool BL = joystick->getButtonState(targetMode, Joystick::L_BUTTON);
+        bool BR = joystick->getButtonState(targetMode, Joystick::R_BUTTON);
+        
+        if(!FL && !FR && !BL && !BR){
+            // Synchronize mode
+            jointInfos[FR_FLIPPER].qref += dq;
+            jointInfos[FL_FLIPPER].qref += dq;
+            jointInfos[BR_FLIPPER].qref += dq;
+            jointInfos[BL_FLIPPER].qref += dq;
+        } else {
+            if(FL){
+                jointInfos[FL_FLIPPER].qref += dq;
+            }
+            if(FR){
+                jointInfos[FR_FLIPPER].qref += dq;
+            }
+            if(BL){
+                jointInfos[BL_FLIPPER].qref += dq;
+            }
+            if(BR){
+                jointInfos[BR_FLIPPER].qref += dq;
+            }
+        }
     }
 }
 

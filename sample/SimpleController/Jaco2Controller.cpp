@@ -192,21 +192,21 @@ void Jaco2Controller::updateTargetJointAngles()
     static const double K = 0.8;
 
     setTargetJointAngle(SHOULDER, Joystick::L_STICK_H_AXIS, -K);
-    setTargetJointAngle(ARM,      Joystick::L_STICK_V_AXIS,  K);
-    setTargetJointAngle(FOREARM,  Joystick::R_STICK_V_AXIS, -K);
+    setTargetJointAngle(ARM,      Joystick::L_STICK_V_AXIS, -K);
+    setTargetJointAngle(FOREARM,  Joystick::R_STICK_V_AXIS,  K);
     setTargetJointAngle(WRIST1,   Joystick::R_STICK_H_AXIS, -K);
     
-    setTargetJointAngle(WRIST2, Joystick::B_BUTTON, Joystick::A_BUTTON, K);
+    setTargetJointAngle(WRIST2, Joystick::B_BUTTON, Joystick::X_BUTTON, K);
     setTargetJointAngle(HAND,   Joystick::R_BUTTON, Joystick::L_BUTTON, 1.2 * K);
 
     double dq_finger = 0.0;
     double lt = joystick->getPosition(targetMode, Joystick::L_TRIGGER_AXIS);
     if(lt > -0.9){
-        dq_finger += dt * 0.2 * (lt + 1.0);
+        dq_finger -= dt * 0.2 * (lt + 1.0);
     }
     double rt = joystick->getPosition(targetMode, Joystick::R_TRIGGER_AXIS);
     if(rt > -0.9){
-        dq_finger -= dt * 0.2 * (rt + 1.0);
+        dq_finger += dt * 0.2 * (rt + 1.0);
     }
     for(int i = FINGER1; i <= FINGER3_TIP; ++i){
         jointInfos[i].qref += dq_finger;
