@@ -8,13 +8,40 @@ if(NOT BUILD_WRS2018_SAMPLES)
 endif()
 
 set(project_files
-  T1-T4-DoubleArmV7A.cnoid
-  T1-T4-AizuSpiderSA.cnoid
-  T2-DoubleArmV7A.cnoid
-  T2-AizuSpiderSA.cnoid
-  T3-DoubleArmV7A.cnoid
-  T5-AizuSpiderSA.cnoid
-  T5-DoubleArmV7A.cnoid
+  T1.cnoid
+  T2.cnoid
+  T3.cnoid
+  T4.cnoid
+  T5.cnoid
+  DoubleArmV7S.cnoid
+  DoubleArmV7A.cnoid
+  AizuSpiderSS.cnoid
+  AizuSpiderSA.cnoid
+  AISTSimulator.cnoid
+  AGXSimulator.cnoid
+
+  WRSUtil.py
+    
+  T1-AizuSpiderSA.py
+  T1-AizuSpiderSS.py  
+  T1-DoubleArmV7A.py
+  T1-DoubleArmV7S.py
+  T2-DoubleArmV7S.py
+  T2-DoubleArmV7A.py
+  T2-AizuSpiderSS.py 
+  T2-AizuSpiderSA.py
+  T3-DoubleArmV7S.py
+  T3-DoubleArmV7A.py
+  T3-AizuSpiderSS.py 
+  T3-AizuSpiderSA.py
+  T4-DoubleArmV7S.py
+  T4-DoubleArmV7A.py
+  T4-AizuSpiderSS.py
+  T4-AizuSpiderSA.py
+  T5-DoubleArmV7S.py
+  T5-DoubleArmV7A.py
+  T5-AizuSpiderSA.py
+  T5-AizuSpiderSS.py 
   )
 
 install(FILES ${project_files} DESTINATION ${CNOID_SHARE_SUBDIR}/project/WRS2018)
