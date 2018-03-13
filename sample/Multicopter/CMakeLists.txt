@@ -41,4 +41,4 @@ install(TARGETS ${target1}
 set(target2 MulticopterIoRTC)
 add_cnoid_body_io_rtc(${target2} MulticopterIoRTC.cpp)
 
-configure_file(OpenRTM-MulticopterSampleAIST.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+configure_file(OpenRTM-MulticopterJoystick.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)

@@ -1,3 +1,5 @@
+optionalPlugins: [ AGXDynamics ]
+
 items: 
   id: 0
   name: "Root"
@@ -204,6 +206,15 @@ items:
                     isServicePort: false
             RTSConnections: 
               - 
+                name: Multicopter.cameraImage_VisionSensorSample.cameraImage
+                sourceRtcName: Multicopter
+                sourcePortName: Multicopter.cameraImage
+                targetRtcName: VisionSensorSample
+                targetPortName: VisionSensorSample.cameraImage
+                dataflow: push
+                subscription: flush
+                position: [ -478, -131, -473, -131, -370, -131, -370, -131, -267, -131, -262, -131 ]
+              - 
                 name: Multicopter-MulticopterIoRTC.zrpy_MulticopterControllerRTC.zrpy
                 sourceRtcName: Multicopter-MulticopterIoRTC
                 sourcePortName: Multicopter-MulticopterIoRTC.zrpy
@@ -212,33 +223,6 @@ items:
                 dataflow: push
                 subscription: flush
                 position: [ -158, -318, -108, -318, -108, -233, -415, -233, -415, -300, -397, -300 ]
-              - 
-                name: MulticopterControllerRTC.force_Multicopter-MulticopterIoRTC.force
-                sourceRtcName: MulticopterControllerRTC
-                sourcePortName: MulticopterControllerRTC.force
-                targetRtcName: Multicopter-MulticopterIoRTC
-                targetPortName: Multicopter-MulticopterIoRTC.force
-                dataflow: push
-                subscription: flush
-                position: [ -337, -354, -332, -354, -278.5, -354, -278.5, -354, -223, -354, -218, -354 ]
-              - 
-                name: MulticopterControllerRTC.buttons_JoystickRTC.buttons
-                sourceRtcName: MulticopterControllerRTC
-                sourcePortName: MulticopterControllerRTC.buttons
-                targetRtcName: JoystickRTC
-                targetPortName: JoystickRTC.buttons
-                dataflow: push
-                subscription: flush
-                position: [ -397, -336, -402, -336, -451, -336, -451, -294, -517, -294, -522, -294 ]
-              - 
-                name: Multicopter-MulticopterIoRTC.q_MulticopterControllerRTC.q
-                sourceRtcName: Multicopter-MulticopterIoRTC
-                sourcePortName: Multicopter-MulticopterIoRTC.q
-                targetRtcName: MulticopterControllerRTC
-                targetPortName: MulticopterControllerRTC.q
-                dataflow: push
-                subscription: flush
-                position: [ -158, -336, -72, -336, -72, -205, -443, -205, -443, -318, -397, -318 ]
               - 
                 name: MulticopterControllerRTC.u_Multicopter-MulticopterIoRTC.u
                 sourceRtcName: MulticopterControllerRTC
@@ -249,6 +233,33 @@ items:
                 subscription: flush
                 position: [ -337, -318, -332, -318, -278.5, -318, -278.5, -318, -223, -318, -218, -318 ]
               - 
+                name: JoystickRTC.axes_MulticopterControllerRTC.axes
+                sourceRtcName: JoystickRTC
+                sourcePortName: JoystickRTC.axes
+                targetRtcName: MulticopterControllerRTC
+                targetPortName: MulticopterControllerRTC.axes
+                dataflow: push
+                subscription: flush
+                position: [ -522, -312, -517, -312, -459.5, -312, -459.5, -354, -402, -354, -397, -354 ]
+              - 
+                name: MulticopterControllerRTC.buttons_JoystickRTC.buttons
+                sourceRtcName: MulticopterControllerRTC
+                sourcePortName: MulticopterControllerRTC.buttons
+                targetRtcName: JoystickRTC
+                targetPortName: JoystickRTC.buttons
+                dataflow: push
+                subscription: flush
+                position: [ -397, -336, -402, -336, -451, -336, -451, -294, -517, -294, -522, -294 ]
+              - 
+                name: MulticopterControllerRTC.force_Multicopter-MulticopterIoRTC.force
+                sourceRtcName: MulticopterControllerRTC
+                sourcePortName: MulticopterControllerRTC.force
+                targetRtcName: Multicopter-MulticopterIoRTC
+                targetPortName: Multicopter-MulticopterIoRTC.force
+                dataflow: push
+                subscription: flush
+                position: [ -337, -354, -332, -354, -278.5, -354, -278.5, -354, -223, -354, -218, -354 ]
+              - 
                 name: Multicopter-MulticopterIoRTC.torque_MulticopterControllerRTC.torque
                 sourceRtcName: Multicopter-MulticopterIoRTC
                 sourcePortName: Multicopter-MulticopterIoRTC.torque
@@ -258,28 +269,19 @@ items:
                 subscription: flush
                 position: [ -218, -336, -223, -336, -278.5, -336, -278.5, -336, -332, -336, -337, -336 ]
               - 
-                name: Multicopter.cameraImage_VisionSensorSample.cameraImage
-                sourceRtcName: Multicopter
-                sourcePortName: Multicopter.cameraImage
-                targetRtcName: VisionSensorSample
-                targetPortName: VisionSensorSample.cameraImage
-                dataflow: push
-                subscription: flush
-                position: [ -478, -131, -473, -131, -370, -131, -370, -131, -267, -131, -262, -131 ]
-              - 
-                name: JoystickRTC.axes_MulticopterControllerRTC.axes
-                sourceRtcName: JoystickRTC
-                sourcePortName: JoystickRTC.axes
+                name: Multicopter-MulticopterIoRTC.q_MulticopterControllerRTC.q
+                sourceRtcName: Multicopter-MulticopterIoRTC
+                sourcePortName: Multicopter-MulticopterIoRTC.q
                 targetRtcName: MulticopterControllerRTC
-                targetPortName: MulticopterControllerRTC.axes
+                targetPortName: MulticopterControllerRTC.q
                 dataflow: push
                 subscription: flush
-                position: [ -522, -312, -517, -312, -459.5, -312, -459.5, -354, -402, -354, -397, -354 ]
+                position: [ -158, -336, -72, -336, -72, -205, -443, -205, -443, -318, -397, -318 ]
         - 
           id: 9
-          name: "AGXSimulator"
-          plugin: AGXDynamics
-          class: AGXSimulatorItem
+          name: "AISTSimulator"
+          plugin: Body
+          class: AISTSimulatorItem
           data: 
             timestep: 0.005
             realtimeSync: true
@@ -291,14 +293,20 @@ items:
             controllerThreads: true
             recordCollisionData: false
             controllerOptions: ""
-            Gravity: [ 0, 0, -9.80665 ]
-            NumThreads: 1
-            ContactReduction: true
-            ContactReductionBinResolution: 3
-            ContactReductionThreshhold: 12
-            ContactWarmstarting: false
-            AutoSleep: false
-            SaveToAGXFileOnStart: false
+            dynamicsMode: "Forward dynamics"
+            integrationMode: "Runge Kutta"
+            gravity: [ 0, 0, -9.80665 ]
+            staticFriction: 1
+            dynamicFriction: 1
+            cullingThresh: 0.005
+            contactCullingDepth: 0.05
+            errorCriterion: 0.001
+            maxNumIterations: 1000
+            contactCorrectionDepth: 0.0001
+            contactCorrectionVelocityRatio: 1
+            kinematicWalking: false
+            2Dmode: false
+            oldAccelSensorMode: false
           children: 
             - 
               id: 10
@@ -332,6 +340,63 @@ items:
                 Ground Effect: false
                 Output Parameter: false
                 Output Time Step[s]: 1
+        - 
+          id: 12
+          name: "AGXSimulator"
+          plugin: AGXDynamics
+          class: AGXSimulatorItem
+          data: 
+            timestep: 0.005
+            realtimeSync: true
+            recording: "full"
+            timeRangeMode: "Unlimited"
+            timeLength: 180
+            allLinkPositionOutputMode: true
+            deviceStateOutput: true
+            controllerThreads: true
+            recordCollisionData: false
+            controllerOptions: ""
+            Gravity: [ 0, 0, -9.80665 ]
+            NumThreads: 1
+            ContactReduction: true
+            ContactReductionBinResolution: 3
+            ContactReductionThreshhold: 12
+            ContactWarmstarting: false
+            AutoSleep: false
+            SaveToAGXFileOnStart: false
+          children: 
+            - 
+              id: 13
+              name: "GLVisionSimulator"
+              plugin: Body
+              class: GLVisionSimulatorItem
+              data: 
+                enabled: true
+                maxFrameRate: 1000
+                maxLatency: 1
+                recordVisionData: false
+                threadMode: Sensor
+                bestEffort: false
+                allSceneObjects: false
+                rangeSensorPrecisionRatio: 2
+                depthError: 0
+                enableHeadLight: true
+                enableAdditionalLights: true
+            - 
+              id: 14
+              name: "MulticopterSimulator"
+              plugin: Multicopter
+              class: MulticopterSimulatorItem
+              data: 
+                enabled: true
+                Fluid Density[kg/m^3]: 1.293
+                Viscosity[Pa･s]: 1.7e-05
+                Fluid Velocity[m/s]: [ 0, 0, 0 ]
+                Air Definition File: 
+                Wall Effect: false
+                Ground Effect: false
+                Output Parameter: false
+                Output Time Step[s]: 1
 views: 
   - 
     id: 0
@@ -350,9 +415,9 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      selected: [ 1 ]
+      selected: [ 9 ]
       checked: [ 1, 2, 7 ]
-      expanded: [ 1, 2, 9 ]
+      expanded: [ 1, 2, 9, 12 ]
   - 
     id: 3
     plugin: Base
