@@ -20,12 +20,12 @@ script:
     - if [[ "$TARGET_ENVIRONMENT" == "ubuntu-xenial-clang" ]]; then docker build --rm -t ${TARGET_ENVIRONMENT} -f misc/docker/Dockerfile-${TARGET_ENVIRONMENT} . ; fi
 
 after_success:
-    - ${TRAVIS_BUILD_DIR}/misc/ci-scripts/travis-ci/packaging.sh
+    - ${TRAVIS_BUILD_DIR}/misc/ci-scripts/packaging.sh
 
 deploy:
     provider: script
     skip_cleanup: true
     on:
-        all_branches: all
+        all_branches: true
     script:
-        - cat ${TRAVIS_BUILD_DIR}/misc/ci-scripts/travis-ci/deploy-launchpad.sh
+        - cat ${TRAVIS_BUILD_DIR}/misc/ci-scripts/deploy-launchpad.sh

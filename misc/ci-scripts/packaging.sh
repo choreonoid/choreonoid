@@ -1,36 +1,66 @@
 #!/bin/bash
 
-set -e
+## Usage: packaging.sh [CI_SERVICE]
+##
+##	CI_SERVICE: travis or circle
+##		    if not specified, try to detect automatically.
 
+set -e
 SCRIPT_DIR=$(cd $(dirname $0); pwd)
+source ${SCRIPT_DIR}/defs.sh
+
+[ $# -ge 1 ] && CI_SERVICE="$1" || CI_SERVICE=""
+case "${CI_SERVICE}" in
+	"travis" ) print_info "Travis CI specified";;
+	"circle" ) print_info "Circle CI specified";;
+	* )
+		[ ! -z "${CI_SERVICE}" ] &&
+			print_wran "Warning: unkown CI service specified"
+
+		if [ ! -z "${TRAVIS_BRANCH}" ]; then
+			CI_SERVICE="travis"
+			print_info "Travis CI detected"
+		elif [ ! -z "${CIRCLE_BRANCH}" ]; then
+			CI_SERVICE="circle"
+			print_info "Circle CI detected"
+		else
+			print_err "could not detect CI service"
+			exit 1
+		fi
+esac
 
 ## if there is the config file, environment variables are overridden with
 ## setthing values in the file.  if you do not prepare config file, you
-## need to specify the necessary environment variables on Travis CI
-## (Web interface or .travis.yml).
+## need to specify the necessary environment variables on CI service
+## (Web interface or .travis.yml/circle.yml).
 if [ -r ${SCRIPT_DIR}/config ]; then
 	source ${SCRIPT_DIR}/config
 fi
 
-source ${SCRIPT_DIR}/defs.sh
+source ${SCRIPT_DIR}/${CI_SERVICE}/environment.sh
 
-print_debug "branch: ${TRAVIS_BRANCH}"
+print_debug "branch: ${GIT_BRANCH}"
 
-## it expects that the name of stable branches are
-## "release-VERSION_NUM".
-RELEASE_VERSION=$(echo ${TRAVIS_BRANCH} | sed -e "s/^release-//")
-PACKAGE_NAME="${PACKAGE_NAME}-${RELEASE_VERSION}"
+PACKAGE_NAME="${PACKAGE_NAME}-${VERSION_NAME}"
 
 print_debug "var PACKAGE_NAME: ${PACKAGE_NAME}"
 print_debug "var PPA: ${PPA}"
 print_debug "var TARGET_DISTROS: ${TARGET_DISTROS}"
 
 ## decrypt secret files.
-ENCRYPTED_FILE=${SCRIPT_DIR}/secret.tar.enc
-ENCRYPT_KEY=$(eval echo \${encrypted_${ENCRYPT_ENV_HASH}_key})
-ENCRYPT_IV=$(eval echo \${encrypted_${ENCRYPT_ENV_HASH}_iv})
-openssl aes-256-cbc -K ${ENCRYPT_KEY} -iv ${ENCRYPT_IV} \
-	-in ${ENCRYPTED_FILE} -out /tmp/secret.tar -d
+[ -r ${SCRIPT_DIR}/${CI_SERVICE}/secret.tar.enc ] &&
+	ENCRYPTED_FILE=${SCRIPT_DIR}/${CI_SERVICE}/secret.tar.enc ||
+	ENCRYPTED_FILE=${SCRIPT_DIR}/secret.tar.enc
+
+if [ "${CI_SERVICE}" = "travis" ] && [ ! -z "${TRAVIS_ENCRYPT_HASH}" ]; then
+	ENCRYPT_KEY=$(eval echo \${encrypted_${TRAVIS_ENCRYPT_HASH}_key})
+	ENCRYPT_IV=$(eval echo \${encrypted_${TRAVIS_ENCRYPT_HASH}_iv})
+	openssl aes-256-cbc -K ${ENCRYPT_KEY} -iv ${ENCRYPT_IV} \
+		-in ${ENCRYPTED_FILE} -out /tmp/secret.tar -d
+else
+	openssl aes-256-cbc -md sha256 -k ${ENCRYPT_KEY} \
+		-in ${ENCRYPTED_FILE} -out /tmp/secret.tar -d
+fi
 tar xvf /tmp/secret.tar -C /tmp/
 
 ## prepare passphrase file.
@@ -60,15 +90,15 @@ if [ -z "${GPG_KEYID}" ]; then
 	print_err "failed to get GPG user ID"; exit 1
 fi
 
-cd ${TRAVIS_BUILD_DIR}
+cd ${BUILD_DIR}
 ## get latest git log infomations for version name and changelog.
 GIT_SRCREV=$(git rev-parse HEAD)
 GIT_COMMIT_MSG=$(git log -1 --pretty=format:"%s" HEAD)
 GIT_DATE_RFC=$(git log -1 --date=rfc --pretty=format:"%cd" HEAD)
 GIT_DATE=$(git log -1 --date=format:"%Y%m%d%H%M" --pretty=format:"%cd" HEAD)
 
-if [ -d ${TRAVIS_BUILD_DIR}/debian ]; then
-	PREPARED_DEBDIR=${TRAVIS_BUILD_DIR}/debian
+if [ -d ${BUILD_DIR}/debian ]; then
+	PREPARED_DEBDIR=${BUILD_DIR}/debian
 	DEB_IS_READY=true
 else
 	PREPARED_DEBDIR=${SCRIPT_DIR}/debian
@@ -84,18 +114,17 @@ for DISTRO in ${TARGET_DISTROS}; do
 	VERSION="${GIT_DATE}~${DISTRO}"
 	print_info "Package: ${PACKAGE_NAME}_${VERSION}"
 
-	cd ${TRAVIS_BUILD_DIR}
+	cd ${BUILD_DIR}
 
-	PACKAGING_DIR=${TRAVIS_BUILD_DIR}/packaging-${DISTRO}
+	PACKAGING_DIR=${BUILD_DIR}/packaging-${DISTRO}
 	SRCDIR=${PACKAGING_DIR}/${PACKAGE_NAME}
 	mkdir -p ${SRCDIR}
 
 	print_info "Exporting sources to ${SRCDIR}"
 	git archive --format=tar HEAD | tar -x -C ${SRCDIR} -f -
 	if [ ${REMOVE_SCRIPTS:-0} -ne 0 ]; then
-		rm -rf ${SRCDIR}/.travis.yml \
-			$(echo ${SCRIPT_DIR} | \
-			  sed -e "s|${TRAVIS_BUILD_DIR}|${SRCDIR}|")
+		rm -rf ${SRCDIR}/.travis.yml
+		rm -rf ${SRCDIR}/circle.yml
 	fi
 
 	if ! ${DEB_IS_READY}; then
@@ -125,7 +154,7 @@ for DISTRO in ${TARGET_DISTROS}; do
 	print_info "Replacing the version contained in the package name"
 	## it is necessary to write placeholdor "%VERSION%" in debian/control
 	## beforehand
-	sed -ie "s/%VERSION%/-${RELEASE_VERSION}/" ${SRCDIR}/debian/control
+	sed -ie "s/%VERSION%/-${VERSION_NAME}/" ${SRCDIR}/debian/control
 
 	print_info "Building source package"
 	debuild -k${GPG_KEYID} -p"gpg --no-tty --batch --passphrase-fd 0" -S \
