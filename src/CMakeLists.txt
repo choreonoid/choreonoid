@@ -35,6 +35,7 @@ if(ENABLE_GUI)
   add_subdirectory(OpenRTMPlugin)
   add_subdirectory(OpenHRPPlugin)
   add_subdirectory(Hrpsys31Plugin)
+  add_subdirectory(TrafficControlPlugin)
   
   add_subdirectory(PythonPlugin)
   add_subdirectory(PythonSimScriptPlugin)
