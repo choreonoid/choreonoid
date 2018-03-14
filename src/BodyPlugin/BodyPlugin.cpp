@@ -117,15 +117,14 @@ public:
         static std::string text =
             str(format("Body Plugin Version %1%\n") % CNOID_FULL_VERSION_STRING) +
             "\n" +
-            _("Copyrigh (c) 2018 Shin'ichiro Nakaoka and Choreonoid Development Team, AIST.\n"
-              "\n") +
+            "Copyrigh (c) 2018 Shin'ichiro Nakaoka and Choreonoid Development Team, AIST.\n"
+            "\n" +
             MITLicenseText() +
             "\n" +
             _("The Collision deteciton module used in this plugin is implemented using "
               "the OPCODE library (http://www.codercorner.com/Opcode.htm).\n");
-        
+
         return text.c_str();
-        
     }
 };
 
