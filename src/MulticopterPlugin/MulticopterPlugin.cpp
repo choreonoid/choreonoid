@@ -6,8 +6,8 @@
 
 using namespace std;
 using namespace cnoid;
-using namespace boost;
 using namespace Multicopter;
+using boost::format;
 
 class MulticopterPlugin : public Plugin
 {
@@ -17,7 +17,7 @@ public:
         require("Body");
     }
 
-    virtual bool initialize(){
+    virtual bool initialize() override {
         
         bool ret;
 
@@ -41,12 +41,20 @@ public:
         return true;
     }
 
-    virtual bool finalize(){
+    virtual bool finalize() override {
         return Plugin::finalize();
     }
 
-private:
-
+    virtual const char* description() const override
+    {
+        static std::string text =
+            str(format("Multicoper Plugin Version %1%\n") % CNOID_FULL_VERSION_STRING) +
+            "\n" +
+            "Copyrigh (c) 2018 Japan Atomic Energy Agency.\n"
+            "\n" +
+            MITLicenseText();
+        return text.c_str();
+    }
 };
 
 CNOID_IMPLEMENT_PLUGIN_ENTRY(MulticopterPlugin);
