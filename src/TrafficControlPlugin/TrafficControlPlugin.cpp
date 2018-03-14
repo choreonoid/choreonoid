@@ -2,8 +2,11 @@
    @author Japan Atomic Energy Agency
 */
 
-#include "TrafficControlPluginHeader.h"
-#include "DynamicTrafficControlPluginHeader.h"
+#include "TrafficControlShare.h"
+#include "TCSimulatorItem.h"
+#include "DynamicTCSimulatorItem.h"
+#include <cnoid/Plugin>
+#include <boost/format.hpp>
 
 using namespace std;
 using namespace cnoid;
@@ -24,8 +27,8 @@ public:
             return false;
         }
 
-        TrafficControlSimulatorItem::initializeClass(this);
-        DynamicTrafficControlSimulatorItem::initializeClass(this);
+        TCSimulatorItem::initializeClass(this);
+        DynamicTCSimulatorItem::initializeClass(this);
 
         return true;
     }

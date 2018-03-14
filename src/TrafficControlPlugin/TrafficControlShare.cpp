@@ -2,7 +2,7 @@
    @author Japan Atomic Energy Agency
 */
 
-#include <TrafficControlPluginHeader.h>
+#include "TrafficControlShare.h"
 
 using namespace std;
 using namespace cnoid;
@@ -40,12 +40,12 @@ TrafficControlShare::finalize()
 
 }
 
-void TrafficControlShare::setTcsInstance(TrafficControlSimulatorItem* value)
+void TrafficControlShare::setTcsInstance(TCSimulatorItem* value)
 {
     _val = value;
 }
 
-TrafficControlSimulatorItem* TrafficControlShare::getTcsInstance() const
+TCSimulatorItem* TrafficControlShare::getTcsInstance() const
 {
     return _val;
 }

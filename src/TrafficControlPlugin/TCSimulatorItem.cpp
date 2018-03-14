@@ -2,7 +2,13 @@
    @author Japan Atomic Energy Agency
 */
 
-#include <TrafficControlPluginHeader.h>
+#include "TCSimulatorItem.h"
+#include "TrafficControlShare.h"
+#include <cnoid/ItemManager>
+#include <cnoid/MessageView>
+#include <cnoid/SimulatorItem>
+#include <cnoid/Archive>
+#include <dirent.h>
 #include "gettext.h"
 
 using namespace std;
@@ -11,14 +17,14 @@ using namespace cnoid;
 using boost::format;
 
 void
-TrafficControlSimulatorItem::initializeClass(ExtensionManager* ext)
+TCSimulatorItem::initializeClass(ExtensionManager* ext)
 {
     ItemManager& im = ext->itemManager();
-    im.registerClass<TrafficControlSimulatorItem>("TrafficControlSimulatorItem");
-    im.addCreationPanel<TrafficControlSimulatorItem>();
+    im.registerClass<TCSimulatorItem>("TCSimulatorItem");
+    im.addCreationPanel<TCSimulatorItem>();
 }
 
-TrafficControlSimulatorItem::TrafficControlSimulatorItem()
+TCSimulatorItem::TCSimulatorItem()
 {
     _curSimItem = nullptr;
     _preFuncId = _midFuncId = _postFuncId = -1;
@@ -89,16 +95,16 @@ TrafficControlSimulatorItem::TrafficControlSimulatorItem()
                     _pair[n1] = n2;
                 } else {
                     if(rc1==false) {
-                        MessageView::mainInstance()->putln(MessageView::ERROR,"TrafficControlSimulatorItem::TrafficControlSimulatorItem "+n1+" does not exist in this computer. Please check configure file="+_config);
+                        MessageView::mainInstance()->putln(MessageView::ERROR,"TCSimulatorItem::TCSimulatorItem "+n1+" does not exist in this computer. Please check configure file="+_config);
                     }
                     if(rc2==false) {
-                        MessageView::mainInstance()->putln(MessageView::ERROR,"TrafficControlSimulatorItem::TrafficControlSimulatorItem "+n2+" does not exist in this computer. Please check configure file="+_config);
+                        MessageView::mainInstance()->putln(MessageView::ERROR,"TCSimulatorItem::TCSimulatorItem "+n2+" does not exist in this computer. Please check configure file="+_config);
                     }
                     if(rc3==false) {
-                        MessageView::mainInstance()->putln(MessageView::ERROR,"TrafficControlSimulatorItem::TrafficControlSimulatorItem "+n1+" is already defined(duplicated). Please check configure file="+_config);
+                        MessageView::mainInstance()->putln(MessageView::ERROR,"TCSimulatorItem::TCSimulatorItem "+n1+" is already defined(duplicated). Please check configure file="+_config);
                     }
                     if(rc4==false) {
-                        MessageView::mainInstance()->putln(MessageView::ERROR,"TrafficControlSimulatorItem::TrafficControlSimulatorItem "+n2+" is already defined(duplicated). Please check configure file="+_config);
+                        MessageView::mainInstance()->putln(MessageView::ERROR,"TCSimulatorItem::TCSimulatorItem "+n2+" is already defined(duplicated). Please check configure file="+_config);
                     }
                 }
             }
@@ -107,7 +113,7 @@ TrafficControlSimulatorItem::TrafficControlSimulatorItem()
         fclose(fp);
     }
     else {
-        MessageView::mainInstance()->putln(MessageView::ERROR,"TrafficControlSimulatorItem::TrafficControlSimulatorItem Configure file="+_config+" does not exist.");
+        MessageView::mainInstance()->putln(MessageView::ERROR,"TCSimulatorItem::TCSimulatorItem Configure file="+_config+" does not exist.");
     }
 
     cnt = 0;
@@ -119,7 +125,7 @@ TrafficControlSimulatorItem::TrafficControlSimulatorItem()
             cnt++;
         }
         else {
-            MessageView::mainInstance()->putln(MessageView::ERROR,"TrafficControlSimulatorItem::TrafficControlSimulatorItem NIC_MAX=="+std::to_string(NIC_MAX)+", so "+eth+" is not available. Please redefine NIC_MAX value more larger.");
+            MessageView::mainInstance()->putln(MessageView::ERROR,"TCSimulatorItem::TCSimulatorItem NIC_MAX=="+std::to_string(NIC_MAX)+", so "+eth+" is not available. Please redefine NIC_MAX value more larger.");
         }
     }
 
@@ -127,7 +133,7 @@ TrafficControlSimulatorItem::TrafficControlSimulatorItem()
         _communicationPort.resize(cnt);
     }
     else {
-        MessageView::mainInstance()->putln(MessageView::ERROR,"TrafficControlSimulatorItem::TrafficControlSimulatorItem Configure file="+_config+" is invalid. Effective Port is nothing.");
+        MessageView::mainInstance()->putln(MessageView::ERROR,"TCSimulatorItem::TCSimulatorItem Configure file="+_config+" is invalid. Effective Port is nothing.");
         string eth="No valid port exists.";
         _ethName[cnt]=eth;
         _communicationPort.setSymbol(0,eth);
@@ -160,7 +166,7 @@ TrafficControlSimulatorItem::TrafficControlSimulatorItem()
     }
 }
 
-TrafficControlSimulatorItem::TrafficControlSimulatorItem(const TrafficControlSimulatorItem& org) : SubSimulatorItem(org)
+TCSimulatorItem::TCSimulatorItem(const TCSimulatorItem& org) : SubSimulatorItem(org)
 {
     _enableTrafficControl=org._enableTrafficControl;
     _communicationPort=org._communicationPort;
@@ -190,19 +196,19 @@ TrafficControlSimulatorItem::TrafficControlSimulatorItem(const TrafficControlSim
     _pair=org._pair;
 }
 
-TrafficControlSimulatorItem::~TrafficControlSimulatorItem()
+TCSimulatorItem::~TCSimulatorItem()
 {
 
 }
 
 Item*
-TrafficControlSimulatorItem::doDuplicate() const
+TCSimulatorItem::doDuplicate() const
 {
-    return new TrafficControlSimulatorItem(*this);
+    return new TCSimulatorItem(*this);
 }
 
 bool
-TrafficControlSimulatorItem::initializeSimulation(SimulatorItem* simulatorItem)
+TCSimulatorItem::initializeSimulation(SimulatorItem* simulatorItem)
 {
     setVirNIC();
 
@@ -212,8 +218,8 @@ TrafficControlSimulatorItem::initializeSimulation(SimulatorItem* simulatorItem)
     _curSimItem = simulatorItem;
 
     if(_setSignal==false) {
-        simulatorItem->sigSimulationPaused().connect(boost::bind(&TrafficControlSimulatorItem::onPaused, this));
-        simulatorItem->sigSimulationResumed().connect(boost::bind(&TrafficControlSimulatorItem::onResumed, this));
+        simulatorItem->sigSimulationPaused().connect(std::bind(&TCSimulatorItem::onPaused, this));
+        simulatorItem->sigSimulationResumed().connect(std::bind(&TCSimulatorItem::onResumed, this));
         _setSignal = true;
     }
 
@@ -238,7 +244,7 @@ TrafficControlSimulatorItem::initializeSimulation(SimulatorItem* simulatorItem)
 }
 
 void
-TrafficControlSimulatorItem::resetTC() {
+TCSimulatorItem::resetTC() {
     TrafficControlShare* _share = TrafficControlShare::instance();
     _share->setTcsRunning(true);
 
@@ -292,7 +298,7 @@ TrafficControlSimulatorItem::resetTC() {
 }
 
 void
-TrafficControlSimulatorItem::finalizeSimulation()
+TCSimulatorItem::finalizeSimulation()
 {
     resetTC();
 
@@ -305,7 +311,7 @@ TrafficControlSimulatorItem::finalizeSimulation()
 }
 
 void
-TrafficControlSimulatorItem::onPaused() {
+TCSimulatorItem::onPaused() {
     resetTC();
 
     TrafficControlShare* _share = TrafficControlShare::instance();
@@ -313,7 +319,7 @@ TrafficControlSimulatorItem::onPaused() {
 }
 
 void
-TrafficControlSimulatorItem::onResumed() {
+TCSimulatorItem::onResumed() {
 
     TrafficControlShare* _share = TrafficControlShare::instance();
     _share->setTcsRunning(true);
@@ -326,25 +332,25 @@ TrafficControlSimulatorItem::onResumed() {
 }
 
 void
-TrafficControlSimulatorItem::onPreDynamicFunction()
+TCSimulatorItem::onPreDynamicFunction()
 {
 
 }
 
 void
-TrafficControlSimulatorItem::onMidDynamicFunction()
+TCSimulatorItem::onMidDynamicFunction()
 {
 
 }
 
 void
-TrafficControlSimulatorItem::onPostDynamicFunction()
+TCSimulatorItem::onPostDynamicFunction()
 {
 
 }
 
 void
-TrafficControlSimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
+TCSimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     SubSimulatorItem::doPutProperties(putProperty);
 
@@ -416,8 +422,8 @@ TrafficControlSimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
             bool rc = chkIPMask(_ipAddressC[_idxCur]);
 
             if(rc==false) {
-                MessageView::mainInstance()->putln(MessageView::ERROR,"TrafficControlSimulatorItem::doPutProperties IP Address/Mask = \""+_ipAddressC[_idxCur]+"\" is an invalid string.");
-                MessageView::mainInstance()->putln(MessageView::ERROR,"TrafficControlSimulatorItem::doPutProperties Please specify empty string or 192.168.0.1/24 format string.");
+                MessageView::mainInstance()->putln(MessageView::ERROR,"TCSimulatorItem::doPutProperties IP Address/Mask = \""+_ipAddressC[_idxCur]+"\" is an invalid string.");
+                MessageView::mainInstance()->putln(MessageView::ERROR,"TCSimulatorItem::doPutProperties Please specify empty string or 192.168.0.1/24 format string.");
 
                 _ipAddressC[_idxCur] = _ipAddressP[_idxCur];
                 putProperty(_("IP Address"), _ipAddressC[_idxCur], changeProperty(_ipAddressC[_idxCur]));
@@ -432,7 +438,7 @@ TrafficControlSimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
 }
 
 bool
-TrafficControlSimulatorItem::store(Archive& archive)
+TCSimulatorItem::store(Archive& archive)
 {
     SubSimulatorItem::store(archive);
 
@@ -458,13 +464,13 @@ TrafficControlSimulatorItem::store(Archive& archive)
 }
 
 string
-TrafficControlSimulatorItem::rangeStr(const int &min,const int &max) {
+TCSimulatorItem::rangeStr(const int &min,const int &max) {
     string rc="("+std::to_string(min)+"-"+std::to_string(max)+")";
     return rc;
 }
 
 bool
-TrafficControlSimulatorItem::findNIC(const std::string &nic) {
+TCSimulatorItem::findNIC(const std::string &nic) {
     bool find=false;
 
     for(int j=0;j<_allNIC.size();j++) {
@@ -479,7 +485,7 @@ TrafficControlSimulatorItem::findNIC(const std::string &nic) {
 
 
 bool
-TrafficControlSimulatorItem::restore(const Archive& archive)
+TCSimulatorItem::restore(const Archive& archive)
 {
     SubSimulatorItem::restore(archive);
 
@@ -501,10 +507,10 @@ TrafficControlSimulatorItem::restore(const Archive& archive)
                 bool rc1=findNIC(tmp);
                 bool rc2=_pair.count(tmp)==1;
                 if(rc1==false) {
-                    MessageView::mainInstance()->putln(MessageView::ERROR,"TrafficControlSimulatorItem::restore "+tmp+" does not exist in this computer.");
+                    MessageView::mainInstance()->putln(MessageView::ERROR,"TCSimulatorItem::restore "+tmp+" does not exist in this computer.");
                 }
                 else if(rc2==false) {
-                    MessageView::mainInstance()->putln(MessageView::ERROR,"TrafficControlSimulatorItem::restore "+tmp+" does not defined in configure file="+_config);
+                    MessageView::mainInstance()->putln(MessageView::ERROR,"TCSimulatorItem::restore "+tmp+" does not defined in configure file="+_config);
                 }
 
                 if(rc1&&rc2) {
@@ -518,47 +524,47 @@ TrafficControlSimulatorItem::restore(const Archive& archive)
                     archive.read(portName+"InboundLoss", _InboundLoss[cnt]);
                     archive.read(portName+"IPAddress", _ipAddressC[cnt]);
                     if(_OutboundDelay[cnt]<ZERO||_OutboundDelay[cnt]>DELAY_MAX) {
-                        MessageView::mainInstance()->putln(MessageView::ERROR,"TrafficControlSimulatorItem::restore "+tmp+":OutboundDelay value="+std::to_string(_OutboundDelay[cnt])+" is out of range."+rangeStr(ZERO,DELAY_MAX));
+                        MessageView::mainInstance()->putln(MessageView::ERROR,"TCSimulatorItem::restore "+tmp+":OutboundDelay value="+std::to_string(_OutboundDelay[cnt])+" is out of range."+rangeStr(ZERO,DELAY_MAX));
                         _OutboundDelay[cnt] = 0;
                     }
                     if(_OutboundBandWidth[cnt]<ZERO||_OutboundBandWidth[cnt]>BAND_MAX) {
-                        MessageView::mainInstance()->putln(MessageView::ERROR,"TrafficControlSimulatorItem::restore "+tmp+":OutboundBandWidth value="+std::to_string(_OutboundBandWidth[cnt])+" is out of range."+rangeStr(ZERO,BAND_MAX));
+                        MessageView::mainInstance()->putln(MessageView::ERROR,"TCSimulatorItem::restore "+tmp+":OutboundBandWidth value="+std::to_string(_OutboundBandWidth[cnt])+" is out of range."+rangeStr(ZERO,BAND_MAX));
                         _OutboundBandWidth[cnt] = 0;
                     }
                     if(_OutboundLoss[cnt]<ZERO||_OutboundLoss[cnt]>LOSS_MAX) {
-                        MessageView::mainInstance()->putln(MessageView::ERROR,"TrafficControlSimulatorItem::restore "+tmp+":OutboundLoss value="+std::to_string(_OutboundLoss[cnt])+" is out of range."+rangeStr(ZERO,LOSS_MAX));
+                        MessageView::mainInstance()->putln(MessageView::ERROR,"TCSimulatorItem::restore "+tmp+":OutboundLoss value="+std::to_string(_OutboundLoss[cnt])+" is out of range."+rangeStr(ZERO,LOSS_MAX));
                         _OutboundLoss[cnt] = 0;
                     }
                     if(_InboundDelay[cnt]<ZERO||_InboundDelay[cnt]>DELAY_MAX) {
-                        MessageView::mainInstance()->putln(MessageView::ERROR,"TrafficControlSimulatorItem::restore "+tmp+":InboundDelay value="+std::to_string(_InboundDelay[cnt])+" is out of range."+rangeStr(ZERO,DELAY_MAX));
+                        MessageView::mainInstance()->putln(MessageView::ERROR,"TCSimulatorItem::restore "+tmp+":InboundDelay value="+std::to_string(_InboundDelay[cnt])+" is out of range."+rangeStr(ZERO,DELAY_MAX));
                         _InboundDelay[cnt] = 0;
                     }
                     if(_InboundBandWidth[cnt]<ZERO||_InboundBandWidth[cnt]>BAND_MAX) {
-                        MessageView::mainInstance()->putln(MessageView::ERROR,"TrafficControlSimulatorItem::restore "+tmp+":InboundBandWidth value="+std::to_string(_InboundBandWidth[cnt])+" is out of range."+rangeStr(ZERO,BAND_MAX));
+                        MessageView::mainInstance()->putln(MessageView::ERROR,"TCSimulatorItem::restore "+tmp+":InboundBandWidth value="+std::to_string(_InboundBandWidth[cnt])+" is out of range."+rangeStr(ZERO,BAND_MAX));
                         _InboundBandWidth[cnt] = 0;
                     }
                     if(_InboundLoss[cnt]<ZERO||_InboundLoss[cnt]>LOSS_MAX) {
-                        MessageView::mainInstance()->putln(MessageView::ERROR,"TrafficControlSimulatorItem::restore "+tmp+":InboundLoss value="+std::to_string(_InboundLoss[cnt])+" is out of range."+rangeStr(ZERO,LOSS_MAX));
+                        MessageView::mainInstance()->putln(MessageView::ERROR,"TCSimulatorItem::restore "+tmp+":InboundLoss value="+std::to_string(_InboundLoss[cnt])+" is out of range."+rangeStr(ZERO,LOSS_MAX));
                         _InboundLoss[cnt] = 0;
                     }
 
                     bool rc = chkIPMask(_ipAddressC[cnt]);
                     if(rc==false) {
-                        MessageView::mainInstance()->putln(MessageView::ERROR,"TrafficControlSimulatorItem::restore "+tmp+":IP Address/Mask = \""+_ipAddressC[cnt]+"\" is an invalid string.");
-                        MessageView::mainInstance()->putln(MessageView::ERROR,"TrafficControlSimulatorItem::restore "+tmp+":Please specify empty string or 192.168.0.1/24 format string.");
+                        MessageView::mainInstance()->putln(MessageView::ERROR,"TCSimulatorItem::restore "+tmp+":IP Address/Mask = \""+_ipAddressC[cnt]+"\" is an invalid string.");
+                        MessageView::mainInstance()->putln(MessageView::ERROR,"TCSimulatorItem::restore "+tmp+":Please specify empty string or 192.168.0.1/24 format string.");
                         _ipAddressC[cnt] = "";
                     }
                     cnt++;
                 }
             } else {
-                MessageView::mainInstance()->putln(MessageView::ERROR,"TrafficControlSimulatorItem::restore NIC_MAX=="+std::to_string(NIC_MAX)+", Properties of "+tmp+" can not be restored. Please redefine NIC_MAX value more larger.");
+                MessageView::mainInstance()->putln(MessageView::ERROR,"TCSimulatorItem::restore NIC_MAX=="+std::to_string(NIC_MAX)+", Properties of "+tmp+" can not be restored. Please redefine NIC_MAX value more larger.");
             }
         }
         if(cnt>0) {
             _communicationPort.resize(cnt);
         }
         else {
-            MessageView::mainInstance()->putln(MessageView::ERROR,"TrafficControlSimulatorItem::restore This Project file is invalid. Effective Port is nothing.");
+            MessageView::mainInstance()->putln(MessageView::ERROR,"TCSimulatorItem::restore This Project file is invalid. Effective Port is nothing.");
             cnt=0;
             for(auto itr = _pair.begin(); itr!=_pair.end();++itr) {
                 string eth=itr->first;
@@ -568,14 +574,14 @@ TrafficControlSimulatorItem::restore(const Archive& archive)
                     cnt++;
                 }
                 else {
-                    MessageView::mainInstance()->putln(MessageView::ERROR,"TrafficControlSimulatorItem::restore NIC_MAX=="+std::to_string(NIC_MAX)+", so "+eth+" is not available. Please redefine NIC_MAX value more larger.");
+                    MessageView::mainInstance()->putln(MessageView::ERROR,"TCSimulatorItem::restore NIC_MAX=="+std::to_string(NIC_MAX)+", so "+eth+" is not available. Please redefine NIC_MAX value more larger.");
                 }
             }
             if(cnt>0) {
                 _communicationPort.resize(cnt);
             }
             else {
-                MessageView::mainInstance()->putln(MessageView::ERROR,"TrafficControlSimulatorItem::restore This Project file is invalid and Configure file="+_config+" is invalid too.");
+                MessageView::mainInstance()->putln(MessageView::ERROR,"TCSimulatorItem::restore This Project file is invalid and Configure file="+_config+" is invalid too.");
                 string eth="No valid port exists.";
                 _ethName[cnt]=eth;
                 _communicationPort.setSymbol(0,eth);
@@ -588,7 +594,7 @@ TrafficControlSimulatorItem::restore(const Archive& archive)
 }
 
 void
-TrafficControlSimulatorItem::sysCall(const std::string& cmdStr) {
+TCSimulatorItem::sysCall(const std::string& cmdStr) {
 
     int len=cmdStr.length()+5;
     char cmd[len+1];
@@ -596,12 +602,12 @@ TrafficControlSimulatorItem::sysCall(const std::string& cmdStr) {
 
     int ret=system(cmd);
     if(ret!=0) {
-        MessageView::mainInstance()->putln(MessageView::ERROR,"TrafficControlSimulatorItem::sysCall SystemCall error occurred, cmd=\""+cmdStr+"\" rc="+std::to_string(ret));
+        MessageView::mainInstance()->putln(MessageView::ERROR,"TCSimulatorItem::sysCall SystemCall error occurred, cmd=\""+cmdStr+"\" rc="+std::to_string(ret));
     }
 }
 
 void
-TrafficControlSimulatorItem::sysCall2(const std::string& cmdStr,const std::string& nic,const char *num) {
+TCSimulatorItem::sysCall2(const std::string& cmdStr,const std::string& nic,const char *num) {
     char pre[256];
     sprintf(pre,"tc qdisc show dev %s",nic.c_str());
 
@@ -627,7 +633,7 @@ TrafficControlSimulatorItem::sysCall2(const std::string& cmdStr,const std::strin
 }
 
 void
-TrafficControlSimulatorItem::sysCall3(const std::string& cmdStr,const std::string& nic,const char *num) {
+TCSimulatorItem::sysCall3(const std::string& cmdStr,const std::string& nic,const char *num) {
     char pre[256];
     sprintf(pre,"tc qdisc show dev %s",nic.c_str());
 
@@ -653,7 +659,7 @@ TrafficControlSimulatorItem::sysCall3(const std::string& cmdStr,const std::strin
 }
 
 int
-TrafficControlSimulatorItem::listEther(const char *base_path) {
+TCSimulatorItem::listEther(const char *base_path) {
     DIR *dir=opendir(base_path);
     if (dir == NULL) {
         perror(base_path);
@@ -672,7 +678,7 @@ TrafficControlSimulatorItem::listEther(const char *base_path) {
 }
 
 bool
-TrafficControlSimulatorItem::chkIPMask(const std::string& ip) {
+TCSimulatorItem::chkIPMask(const std::string& ip) {
     if(ip.compare("")==0) {
         return true;
     }
@@ -761,7 +767,7 @@ TrafficControlSimulatorItem::chkIPMask(const std::string& ip) {
 }
 
 bool
-TrafficControlSimulatorItem::chkDigits(const char *p) {
+TCSimulatorItem::chkDigits(const char *p) {
     bool rc = true;
 
     while(*p!='\0') {
@@ -779,7 +785,7 @@ TrafficControlSimulatorItem::chkDigits(const char *p) {
 }
 
 void
-TrafficControlSimulatorItem::setVirNIC() {
+TCSimulatorItem::setVirNIC() {
     int portCount=_communicationPort.size();
     for(int i=0;i<portCount;i++) {
         _ethName[i] = _communicationPort.symbol(i);
@@ -788,7 +794,7 @@ TrafficControlSimulatorItem::setVirNIC() {
 }
 
 void
-TrafficControlSimulatorItem::doTC() {
+TCSimulatorItem::doTC() {
     if(_enableTrafficControl==false) return;
 
     TrafficControlShare* _share = TrafficControlShare::instance();
@@ -801,7 +807,7 @@ TrafficControlSimulatorItem::doTC() {
 }
 
 void
-TrafficControlSimulatorItem::initTC() {
+TCSimulatorItem::initTC() {
     for(auto itr = _pair.begin(); itr!=_pair.end();++itr) {
         string cmd;
         string eth=itr->first;
@@ -844,7 +850,7 @@ TrafficControlSimulatorItem::initTC() {
 }
 
 void
-TrafficControlSimulatorItem::doTC(const int& ethIdxNo) {
+TCSimulatorItem::doTC(const int& ethIdxNo) {
     if(_ipAddressC[ethIdxNo].compare(_ipAddressT[ethIdxNo])==0) {
         doTC2S(ethIdxNo);
     }
@@ -884,20 +890,20 @@ TrafficControlSimulatorItem::doTC(const int& ethIdxNo) {
 }
 
 void
-TrafficControlSimulatorItem::doTC2com(const int& ethIdxNo,const int *p1,const int *p2,const double *p3,const int *p4,const int *p5,const double *p6) {
+TCSimulatorItem::doTC2com(const int& ethIdxNo,const int *p1,const int *p2,const double *p3,const int *p4,const int *p5,const double *p6) {
 
     bool rc1=true;
 
     if(p1[ethIdxNo]<ZERO||p1[ethIdxNo]>DELAY_MAX) {
-        MessageView::mainInstance()->putln(MessageView::ERROR,"TrafficControlSimulatorItem::doTC2com OutboundDelay value="+std::to_string(p1[ethIdxNo])+" is out of range."+rangeStr(ZERO,DELAY_MAX));
+        MessageView::mainInstance()->putln(MessageView::ERROR,"TCSimulatorItem::doTC2com OutboundDelay value="+std::to_string(p1[ethIdxNo])+" is out of range."+rangeStr(ZERO,DELAY_MAX));
         rc1=false;
     }
     if(p2[ethIdxNo]<ZERO||p2[ethIdxNo]>BAND_MAX) {
-        MessageView::mainInstance()->putln(MessageView::ERROR,"TrafficControlSimulatorItem::doTC2com OutboundBandWidth value="+std::to_string(p2[ethIdxNo])+" is out of range."+rangeStr(ZERO,BAND_MAX));
+        MessageView::mainInstance()->putln(MessageView::ERROR,"TCSimulatorItem::doTC2com OutboundBandWidth value="+std::to_string(p2[ethIdxNo])+" is out of range."+rangeStr(ZERO,BAND_MAX));
         rc1=false;
     }
     if(p3[ethIdxNo]<ZERO||p3[ethIdxNo]>LOSS_MAX) {
-        MessageView::mainInstance()->putln(MessageView::ERROR,"TrafficControlSimulatorItem::doTC2com OutboundLoss value="+std::to_string(p3[ethIdxNo])+" is out of range."+rangeStr(ZERO,LOSS_MAX));
+        MessageView::mainInstance()->putln(MessageView::ERROR,"TCSimulatorItem::doTC2com OutboundLoss value="+std::to_string(p3[ethIdxNo])+" is out of range."+rangeStr(ZERO,LOSS_MAX));
         rc1=false;
     }
     if(rc1) {
@@ -908,15 +914,15 @@ TrafficControlSimulatorItem::doTC2com(const int& ethIdxNo,const int *p1,const in
     bool rc2=true;
 
     if(p4[ethIdxNo]<ZERO||p4[ethIdxNo]>DELAY_MAX) {
-        MessageView::mainInstance()->putln(MessageView::ERROR,"TrafficControlSimulatorItem::doTC2com InboundDelay value="+std::to_string(p4[ethIdxNo])+" is out of range."+rangeStr(ZERO,DELAY_MAX));
+        MessageView::mainInstance()->putln(MessageView::ERROR,"TCSimulatorItem::doTC2com InboundDelay value="+std::to_string(p4[ethIdxNo])+" is out of range."+rangeStr(ZERO,DELAY_MAX));
         rc2=false;
     }
     if(p5[ethIdxNo]<ZERO||p5[ethIdxNo]>BAND_MAX) {
-        MessageView::mainInstance()->putln(MessageView::ERROR,"TrafficControlSimulatorItem::doTC2com InboundBandWidth value="+std::to_string(p5[ethIdxNo])+" is out of range."+rangeStr(ZERO,BAND_MAX));
+        MessageView::mainInstance()->putln(MessageView::ERROR,"TCSimulatorItem::doTC2com InboundBandWidth value="+std::to_string(p5[ethIdxNo])+" is out of range."+rangeStr(ZERO,BAND_MAX));
         rc2=false;
     }
     if(p6[ethIdxNo]<ZERO||p6[ethIdxNo]>LOSS_MAX) {
-        MessageView::mainInstance()->putln(MessageView::ERROR,"TrafficControlSimulatorItem::doTC2com InboundLoss value="+std::to_string(p6[ethIdxNo])+" is out of range."+rangeStr(ZERO,LOSS_MAX));
+        MessageView::mainInstance()->putln(MessageView::ERROR,"TCSimulatorItem::doTC2com InboundLoss value="+std::to_string(p6[ethIdxNo])+" is out of range."+rangeStr(ZERO,LOSS_MAX));
         rc2=false;
     }
     if(rc2) {
@@ -926,17 +932,17 @@ TrafficControlSimulatorItem::doTC2com(const int& ethIdxNo,const int *p1,const in
 }
 
 void
-TrafficControlSimulatorItem::doTC2S(const int& ethIdxNo) {
+TCSimulatorItem::doTC2S(const int& ethIdxNo) {
     doTC2com(ethIdxNo,_OutboundDelay,_OutboundBandWidth,_OutboundLoss,_InboundDelay,_InboundBandWidth,_InboundLoss);
 }
 
 void
-TrafficControlSimulatorItem::doTC2D(const int& ethIdxNo) {
+TCSimulatorItem::doTC2D(const int& ethIdxNo) {
     doTC2com(ethIdxNo,_OutboundDelayD,_OutboundBandWidthD,_OutboundLossD,_InboundDelayD,_InboundBandWidthD,_InboundLossD);
 }
 
 vector<string>
-TrafficControlSimulatorItem::split(const string &str,const char& delim) {
+TCSimulatorItem::split(const string &str,const char& delim) {
     vector<string> elems;
     stringstream ss(str);
     string item;
@@ -949,7 +955,7 @@ TrafficControlSimulatorItem::split(const string &str,const char& delim) {
 }
 
 int
-TrafficControlSimulatorItem::getEthIndexNo(const string &ethName) {
+TCSimulatorItem::getEthIndexNo(const string &ethName) {
     int idx=-1;
 
     int portCount=_communicationPort.size();
@@ -965,7 +971,7 @@ TrafficControlSimulatorItem::getEthIndexNo(const string &ethName) {
 }
 
 void
-TrafficControlSimulatorItem::bridgeInit() {
+TCSimulatorItem::bridgeInit() {
     int portCount=_communicationPort.size();
 
     for(int i=0;i<portCount;i++) {
@@ -985,7 +991,7 @@ TrafficControlSimulatorItem::bridgeInit() {
 }
 
 void
-TrafficControlSimulatorItem::bridgeTC(const int& ethIdxNo,const double& distance,const double& upDelay, const double& upRate, const double& upLoss, const double& dnDelay, const double& dnRate, const double& dnLoss){
+TCSimulatorItem::bridgeTC(const int& ethIdxNo,const double& distance,const double& upDelay, const double& upRate, const double& upLoss, const double& dnDelay, const double& dnRate, const double& dnLoss){
 
     if(ethIdxNo==-1||ethIdxNo>=NIC_MAX) return;
 

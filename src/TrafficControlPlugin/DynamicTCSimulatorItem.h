@@ -4,7 +4,10 @@
 
 #pragma once
 
-#include <cnoid/BodyItem>
+#include "TCSimulatorItem.h"
+#include <cnoid/SubSimulatorItem>
+#include <cnoid/Body>
+#include <map>
 
 #ifndef NIC_MAX
 #define NIC_MAX (50)
@@ -38,15 +41,15 @@
 #define TC_CONF_FILE "/usr/local/share/cnoid-conf/tc.conf"
 #endif
 
-class DynamicTrafficControlSimulatorItem : public cnoid::SubSimulatorItem
+class DynamicTCSimulatorItem : public cnoid::SubSimulatorItem
 {
 public:
 
-    DynamicTrafficControlSimulatorItem();
+    DynamicTCSimulatorItem();
 
-    DynamicTrafficControlSimulatorItem(const DynamicTrafficControlSimulatorItem& org);
+    DynamicTCSimulatorItem(const DynamicTCSimulatorItem& org);
 
-    ~DynamicTrafficControlSimulatorItem();
+    ~DynamicTCSimulatorItem();
 
     static void initializeClass(cnoid::ExtensionManager* extMgr);
 
@@ -103,11 +106,11 @@ private:
 
     bool _portChanged = false;
 
-    TrafficControlSimulatorItem *_tcs = nullptr;
+    TCSimulatorItem *_tcs = nullptr;
 
     cnoid::SimulatorItem* _curSimItem = nullptr;
 
     bool _setSignal = false;
 };
 
-typedef cnoid::ref_ptr<DynamicTrafficControlSimulatorItem> DynamicTrafficControlSimulatorItemPtr;
+typedef cnoid::ref_ptr<DynamicTCSimulatorItem> DynamicTCSimulatorItemPtr;

@@ -2,7 +2,15 @@
    @author Japan Atomic Energy Agency
 */
 
-#include <DynamicTrafficControlPluginHeader.h>
+#include "DynamicTCSimulatorItem.h"
+#include "TrafficControlShare.h"
+#include <cnoid/SimulatorItem>
+#include <cnoid/ItemManager>
+#include <cnoid/MessageView>
+#include <cnoid/Archive>
+#include <cnoid/EigenUtil>
+#include <cnoid/EigenArchive>
+#include <dirent.h>
 #include "gettext.h"
 
 using namespace std;
@@ -11,14 +19,14 @@ using namespace cnoid;
 using boost::format;
 
 void
-DynamicTrafficControlSimulatorItem::initializeClass(ExtensionManager* ext)
+DynamicTCSimulatorItem::initializeClass(ExtensionManager* ext)
 {
     ItemManager& im = ext->itemManager();
-    im.registerClass<DynamicTrafficControlSimulatorItem>("DynamicTrafficControlSimulatorItem");
-    im.addCreationPanel<DynamicTrafficControlSimulatorItem>();
+    im.registerClass<DynamicTCSimulatorItem>("DynamicTCSimulatorItem");
+    im.addCreationPanel<DynamicTCSimulatorItem>();
 }
 
-DynamicTrafficControlSimulatorItem::DynamicTrafficControlSimulatorItem()
+DynamicTCSimulatorItem::DynamicTCSimulatorItem()
 {
     _curSimItem = nullptr;
     _preFuncId = _midFuncId = _postFuncId = -1;
@@ -82,16 +90,16 @@ DynamicTrafficControlSimulatorItem::DynamicTrafficControlSimulatorItem()
                     _pair[n1] = n2;
                 } else {
                     if(rc1==false) {
-                        MessageView::mainInstance()->putln(MessageView::ERROR,"DynamicTrafficControlSimulatorItem::DynamicTrafficControlSimulatorItem "+n1+" does not exist in this computer. Please check configure file="+_config);
+                        MessageView::mainInstance()->putln(MessageView::ERROR,"DynamicTCSimulatorItem::DynamicTCSimulatorItem "+n1+" does not exist in this computer. Please check configure file="+_config);
                     }
                     if(rc2==false) {
-                        MessageView::mainInstance()->putln(MessageView::ERROR,"DynamicTrafficControlSimulatorItem::DynamicTrafficControlSimulatorItem "+n2+" does not exist in this computer. Please check configure file="+_config);
+                        MessageView::mainInstance()->putln(MessageView::ERROR,"DynamicTCSimulatorItem::DynamicTCSimulatorItem "+n2+" does not exist in this computer. Please check configure file="+_config);
                     }
                     if(rc3==false) {
-                        MessageView::mainInstance()->putln(MessageView::ERROR,"DynamicTrafficControlSimulatorItem::DynamicTrafficControlSimulatorItem "+n1+" is already defined(duplicated). Please check configure file="+_config);
+                        MessageView::mainInstance()->putln(MessageView::ERROR,"DynamicTCSimulatorItem::DynamicTCSimulatorItem "+n1+" is already defined(duplicated). Please check configure file="+_config);
                     }
                     if(rc4==false) {
-                        MessageView::mainInstance()->putln(MessageView::ERROR,"DynamicTrafficControlSimulatorItem::DynamicTrafficControlSimulatorItem "+n2+" is already defined(duplicated). Please check configure file="+_config);
+                        MessageView::mainInstance()->putln(MessageView::ERROR,"DynamicTCSimulatorItem::DynamicTCSimulatorItem "+n2+" is already defined(duplicated). Please check configure file="+_config);
                     }
                 }
             }
@@ -100,7 +108,7 @@ DynamicTrafficControlSimulatorItem::DynamicTrafficControlSimulatorItem()
         fclose(fp);
     }
     else {
-        MessageView::mainInstance()->putln(MessageView::ERROR,"DynamicTrafficControlSimulatorItem::DynamicTrafficControlSimulatorItem Configure file="+_config+" does not exist.");
+        MessageView::mainInstance()->putln(MessageView::ERROR,"DynamicTCSimulatorItem::DynamicTCSimulatorItem Configure file="+_config+" does not exist.");
     }
 
     cnt = 0;
@@ -112,7 +120,7 @@ DynamicTrafficControlSimulatorItem::DynamicTrafficControlSimulatorItem()
             cnt++;
         }
         else {
-            MessageView::mainInstance()->putln(MessageView::ERROR,"DynamicTrafficControlSimulatorItem::DynamicTrafficControlSimulatorItem NIC_MAX=="+std::to_string(NIC_MAX)+", so "+eth+" is not available. Please redefine NIC_MAX value more larger.");
+            MessageView::mainInstance()->putln(MessageView::ERROR,"DynamicTCSimulatorItem::DynamicTCSimulatorItem NIC_MAX=="+std::to_string(NIC_MAX)+", so "+eth+" is not available. Please redefine NIC_MAX value more larger.");
         }
     }
 
@@ -120,7 +128,7 @@ DynamicTrafficControlSimulatorItem::DynamicTrafficControlSimulatorItem()
         _communicationPort.resize(cnt);
     }
     else {
-        MessageView::mainInstance()->putln(MessageView::ERROR,"DynamicTrafficControlSimulatorItem::DynamicTrafficControlSimulatorItem Configure file="+_config+" is invalid. Effective Port is nothing.");
+        MessageView::mainInstance()->putln(MessageView::ERROR,"DynamicTCSimulatorItem::DynamicTCSimulatorItem Configure file="+_config+" is invalid. Effective Port is nothing.");
         string eth="No valid port exists.";
         _ethName[cnt]=eth;
         _communicationPort.setSymbol(0,eth);
@@ -138,7 +146,7 @@ DynamicTrafficControlSimulatorItem::DynamicTrafficControlSimulatorItem()
     }
 }
 
-DynamicTrafficControlSimulatorItem::DynamicTrafficControlSimulatorItem(const DynamicTrafficControlSimulatorItem& org) : SubSimulatorItem(org)
+DynamicTCSimulatorItem::DynamicTCSimulatorItem(const DynamicTCSimulatorItem& org) : SubSimulatorItem(org)
 {
     _communicationPort = org._communicationPort;
     for(int i=0;i<NIC_MAX;i++) {
@@ -154,19 +162,19 @@ DynamicTrafficControlSimulatorItem::DynamicTrafficControlSimulatorItem(const Dyn
     _allNIC=org._allNIC;
 }
 
-DynamicTrafficControlSimulatorItem::~DynamicTrafficControlSimulatorItem()
+DynamicTCSimulatorItem::~DynamicTCSimulatorItem()
 {
 
 }
 
 Item*
-DynamicTrafficControlSimulatorItem::doDuplicate() const
+DynamicTCSimulatorItem::doDuplicate() const
 {
-    return new DynamicTrafficControlSimulatorItem(*this);
+    return new DynamicTCSimulatorItem(*this);
 }
 
 void
-DynamicTrafficControlSimulatorItem::checkBodyItem() {
+DynamicTCSimulatorItem::checkBodyItem() {
     const std::vector<SimulationBody*>& simBodyAry = _curSimItem->simulationBodies();
     list<Body*> trgBdList;
     for(auto it = begin(simBodyAry) ; it != end(simBodyAry) ; ++it){
@@ -192,7 +200,7 @@ DynamicTrafficControlSimulatorItem::checkBodyItem() {
             }
 
             if(find==false) {
-                MessageView::mainInstance()->putln(MessageView::ERROR,"DynamicTrafficControlSimulatorItem::checkBodyItem TargetBody = \""+_targetBody[i]+"\" does not exist in this project.");
+                MessageView::mainInstance()->putln(MessageView::ERROR,"DynamicTCSimulatorItem::checkBodyItem TargetBody = \""+_targetBody[i]+"\" does not exist in this project.");
                 _dTCFlagC[i]=false;
             }
         }
@@ -200,7 +208,7 @@ DynamicTrafficControlSimulatorItem::checkBodyItem() {
 }
 
 bool
-DynamicTrafficControlSimulatorItem::chkEnables() {
+DynamicTCSimulatorItem::chkEnables() {
     bool rc = false;
     int cnt = _communicationPort.size();
     for(int i=0;i<cnt;i++) {
@@ -213,7 +221,7 @@ DynamicTrafficControlSimulatorItem::chkEnables() {
 }
 
 bool
-DynamicTrafficControlSimulatorItem::initializeSimulation(SimulatorItem* simulatorItem)
+DynamicTCSimulatorItem::initializeSimulation(SimulatorItem* simulatorItem)
 {
     if(chkEnables()==false) return false;
 
@@ -227,11 +235,11 @@ DynamicTrafficControlSimulatorItem::initializeSimulation(SimulatorItem* simulato
 
     checkBodyItem();
 
-    _midFuncId = simulatorItem->addMidDynamicsFunction(boost::bind(&DynamicTrafficControlSimulatorItem::onMidDynamicFunction, this));
+    _midFuncId = simulatorItem->addMidDynamicsFunction(std::bind(&DynamicTCSimulatorItem::onMidDynamicFunction, this));
 
     if(_setSignal==false) {
-        simulatorItem->sigSimulationPaused().connect(boost::bind(&DynamicTrafficControlSimulatorItem::onPaused, this));
-        simulatorItem->sigSimulationResumed().connect(boost::bind(&DynamicTrafficControlSimulatorItem::onResumed, this));
+        simulatorItem->sigSimulationPaused().connect(std::bind(&DynamicTCSimulatorItem::onPaused, this));
+        simulatorItem->sigSimulationResumed().connect(std::bind(&DynamicTCSimulatorItem::onResumed, this));
         _setSignal = true;
     }
 
@@ -239,7 +247,7 @@ DynamicTrafficControlSimulatorItem::initializeSimulation(SimulatorItem* simulato
 }
 
 void
-DynamicTrafficControlSimulatorItem::finalizeSimulation()
+DynamicTCSimulatorItem::finalizeSimulation()
 {
     if(chkEnables()==false) return;
 
@@ -249,12 +257,12 @@ DynamicTrafficControlSimulatorItem::finalizeSimulation()
 }
 
 void
-DynamicTrafficControlSimulatorItem::onPaused() {
+DynamicTCSimulatorItem::onPaused() {
     if(chkEnables()==false) return;
 }
 
 void
-DynamicTrafficControlSimulatorItem::onResumed() {
+DynamicTCSimulatorItem::onResumed() {
     if(chkEnables()==false) return;
 
     checkBodyItem();
@@ -265,13 +273,13 @@ DynamicTrafficControlSimulatorItem::onResumed() {
 }
 
 void
-DynamicTrafficControlSimulatorItem::onPreDynamicFunction()
+DynamicTCSimulatorItem::onPreDynamicFunction()
 {
 
 }
 
 void
-DynamicTrafficControlSimulatorItem::onMidDynamicFunction()
+DynamicTCSimulatorItem::onMidDynamicFunction()
 {
     if(chkEnables()==false) return;
 
@@ -298,13 +306,13 @@ DynamicTrafficControlSimulatorItem::onMidDynamicFunction()
 }
 
 void
-DynamicTrafficControlSimulatorItem::onPostDynamicFunction()
+DynamicTCSimulatorItem::onPostDynamicFunction()
 {
 
 }
 
 void
-DynamicTrafficControlSimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
+DynamicTCSimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
 {
 
     SubSimulatorItem::doPutProperties(putProperty);
@@ -326,9 +334,9 @@ DynamicTrafficControlSimulatorItem::doPutProperties(PutPropertyFunction& putProp
     else {
         if(_dTCFlagC[_idxCur]==true&&_targetBody[_idxCur].compare("")==0) {
             if(_dTCFlagP[_idxCur]==true) {
-                MessageView::mainInstance()->putln(MessageView::ERROR,"DynamicTrafficControlSimulatorItem::doPutProperties TargetBody became empty, So EnableDynamicTrafficControl is changed to false automatically!");
+                MessageView::mainInstance()->putln(MessageView::ERROR,"DynamicTCSimulatorItem::doPutProperties TargetBody became empty, So EnableDynamicTrafficControl is changed to false automatically!");
             } else {
-                MessageView::mainInstance()->putln(MessageView::ERROR,"DynamicTrafficControlSimulatorItem::doPutProperties When EnableDynamicTrafficControl is changed to true, You must define TargetBody at first!");
+                MessageView::mainInstance()->putln(MessageView::ERROR,"DynamicTCSimulatorItem::doPutProperties When EnableDynamicTrafficControl is changed to true, You must define TargetBody at first!");
             }
             _dTCFlagC[_idxCur] = false;
         }
@@ -343,7 +351,7 @@ DynamicTrafficControlSimulatorItem::doPutProperties(PutPropertyFunction& putProp
         else {
             _referencePointC[_idxCur] = _referencePointP[_idxCur];
             char buf[1024];
-            sprintf(buf,"DynamicTrafficControlSimulatorItem::doPutProperties RefferencePoint=(%f %f %f) has an error value. Each value must be between %f and %f.",x,y,z,REF_MIN,REF_MAX);
+            sprintf(buf,"DynamicTCSimulatorItem::doPutProperties RefferencePoint=(%f %f %f) has an error value. Each value must be between %f and %f.",x,y,z,REF_MIN,REF_MAX);
             MessageView::mainInstance()->putln(MessageView::ERROR,std::string(buf));
         }
 
@@ -360,7 +368,7 @@ DynamicTrafficControlSimulatorItem::doPutProperties(PutPropertyFunction& putProp
 }
 
 bool
-DynamicTrafficControlSimulatorItem::store(Archive& archive)
+DynamicTCSimulatorItem::store(Archive& archive)
 {
     SubSimulatorItem::store(archive);
 
@@ -381,7 +389,7 @@ DynamicTrafficControlSimulatorItem::store(Archive& archive)
 }
 
 bool
-DynamicTrafficControlSimulatorItem::restore(const Archive& archive)
+DynamicTCSimulatorItem::restore(const Archive& archive)
 {
     SubSimulatorItem::restore(archive);
 
@@ -401,10 +409,10 @@ DynamicTrafficControlSimulatorItem::restore(const Archive& archive)
                 bool rc1=findNIC(tmp);
                 bool rc2=_pair.count(tmp)==1;
                 if(rc1==false) {
-                    MessageView::mainInstance()->putln(MessageView::ERROR,"DynamicTrafficControlSimulatorItem::restore "+tmp+" does not exist in this computer.");
+                    MessageView::mainInstance()->putln(MessageView::ERROR,"DynamicTCSimulatorItem::restore "+tmp+" does not exist in this computer.");
                 }
                 else if(rc2==false) {
-                    MessageView::mainInstance()->putln(MessageView::ERROR,"DynamicTrafficControlSimulatorItem::restore "+tmp+" does not defined in configure file="+_config);
+                    MessageView::mainInstance()->putln(MessageView::ERROR,"DynamicTCSimulatorItem::restore "+tmp+" does not defined in configure file="+_config);
                 }
 
                 if(rc1&&rc2) {
@@ -417,7 +425,7 @@ DynamicTrafficControlSimulatorItem::restore(const Archive& archive)
 
                     if(_dTCFlagC[cnt]==true&&_targetBody[cnt].compare("")==0) {
                         _dTCFlagC[cnt] = false;
-                        MessageView::mainInstance()->putln(MessageView::ERROR,"DynamicTrafficControlSimulatorItem::restore When "+tmp+":EnableDynamicTrafficControl is changed to true, You must define TargetBody at first!");
+                        MessageView::mainInstance()->putln(MessageView::ERROR,"DynamicTCSimulatorItem::restore When "+tmp+":EnableDynamicTrafficControl is changed to true, You must define TargetBody at first!");
                     }
 
                     double x = _referencePointC[cnt].x();
@@ -427,12 +435,12 @@ DynamicTrafficControlSimulatorItem::restore(const Archive& archive)
 
                     }
                     else {
-                        MessageView::mainInstance()->putln(MessageView::ERROR,"DynamicTrafficControlSimulatorItem::restore "+tmp+":RefferencePoint("+std::to_string(x)+" "+std::to_string(y)+" "+std::to_string(z)+") has an error value. Each value must be between "+std::to_string(REF_MIN)+" and "+std::to_string(REF_MAX)+" .");
+                        MessageView::mainInstance()->putln(MessageView::ERROR,"DynamicTCSimulatorItem::restore "+tmp+":RefferencePoint("+std::to_string(x)+" "+std::to_string(y)+" "+std::to_string(z)+") has an error value. Each value must be between "+std::to_string(REF_MIN)+" and "+std::to_string(REF_MAX)+" .");
                         _referencePointC[cnt] = Vector3(0,0,0);
                     }
 
                     if(_timeStep[cnt]<TSTEP_MIN||_timeStep[cnt]>TSTEP_MAX) {
-                        MessageView::mainInstance()->putln(MessageView::ERROR,"DynamicTrafficControlSimulatorItem::restore "+tmp+":TimeStep value="+std::to_string(_timeStep[cnt])+" is out of range.(between "+std::to_string(TSTEP_MIN)+" and "+std::to_string(TSTEP_MAX)+")");
+                        MessageView::mainInstance()->putln(MessageView::ERROR,"DynamicTCSimulatorItem::restore "+tmp+":TimeStep value="+std::to_string(_timeStep[cnt])+" is out of range.(between "+std::to_string(TSTEP_MIN)+" and "+std::to_string(TSTEP_MAX)+")");
                         _timeStep[cnt] = TSTEP_DEFAULT;
                     }
 
@@ -440,14 +448,14 @@ DynamicTrafficControlSimulatorItem::restore(const Archive& archive)
                 }
             }
             else {
-                MessageView::mainInstance()->putln(MessageView::ERROR,"DynamicTrafficControlSimulatorItem::restore NIC_MAX=="+std::to_string(NIC_MAX)+", Properties of "+tmp+" can not be restored. Please redefine NIC_MAX value more larger.");
+                MessageView::mainInstance()->putln(MessageView::ERROR,"DynamicTCSimulatorItem::restore NIC_MAX=="+std::to_string(NIC_MAX)+", Properties of "+tmp+" can not be restored. Please redefine NIC_MAX value more larger.");
             }
         }
         if(cnt>0) {
             _communicationPort.resize(cnt);
         }
         else {
-            MessageView::mainInstance()->putln(MessageView::ERROR,"DynamicTrafficControlSimulatorItem::restore This Project file is invalid. Effective Port is nothing.");
+            MessageView::mainInstance()->putln(MessageView::ERROR,"DynamicTCSimulatorItem::restore This Project file is invalid. Effective Port is nothing.");
             cnt=0;
             for(auto itr = _pair.begin(); itr!=_pair.end();++itr) {
                 string eth=itr->first;
@@ -457,14 +465,14 @@ DynamicTrafficControlSimulatorItem::restore(const Archive& archive)
                     cnt++;
                 }
                 else {
-                    MessageView::mainInstance()->putln(MessageView::ERROR,"DynamicTrafficControlSimulatorItem::restore NIC_MAX=="+std::to_string(NIC_MAX)+", so "+eth+" is not available. Please redefine NIC_MAX value more larger.");
+                    MessageView::mainInstance()->putln(MessageView::ERROR,"DynamicTCSimulatorItem::restore NIC_MAX=="+std::to_string(NIC_MAX)+", so "+eth+" is not available. Please redefine NIC_MAX value more larger.");
                 }
             }
             if(cnt>0) {
                 _communicationPort.resize(cnt);
             }
             else {
-                MessageView::mainInstance()->putln(MessageView::ERROR,"DynamicTrafficControlSimulatorItem::restore This Project file is invalid and Configure file="+_config+" is invalid too.");
+                MessageView::mainInstance()->putln(MessageView::ERROR,"DynamicTCSimulatorItem::restore This Project file is invalid and Configure file="+_config+" is invalid too.");
                 string eth="No valid port exists.";
                 _ethName[cnt]=eth;
                 _communicationPort.setSymbol(0,eth);
@@ -477,7 +485,7 @@ DynamicTrafficControlSimulatorItem::restore(const Archive& archive)
 }
 
 int
-DynamicTrafficControlSimulatorItem::listEther(const char *base_path) {
+DynamicTCSimulatorItem::listEther(const char *base_path) {
     DIR *dir=opendir(base_path);
     if (dir == NULL) {
         perror(base_path);
@@ -496,7 +504,7 @@ DynamicTrafficControlSimulatorItem::listEther(const char *base_path) {
 }
 
 double
-DynamicTrafficControlSimulatorItem::calcDistance(const cnoid::Vector3 &p1, const cnoid::Vector3 &p2) {
+DynamicTCSimulatorItem::calcDistance(const cnoid::Vector3 &p1, const cnoid::Vector3 &p2) {
     double d;
 
     d = pow(p1.x()-p2.x(),2.0)+pow(p1.y()-p2.y(),2.0)+pow(p1.z()-p2.z(),2.0);
@@ -505,7 +513,7 @@ DynamicTrafficControlSimulatorItem::calcDistance(const cnoid::Vector3 &p1, const
 }
 
 bool
-DynamicTrafficControlSimulatorItem::checkTcsInstance(){
+DynamicTCSimulatorItem::checkTcsInstance(){
     TrafficControlShare* _share = TrafficControlShare::instance();
     if(_tcs==nullptr||_tcs!=_share->getTcsInstance()) {
         _tcs = _share->getTcsInstance();
@@ -514,17 +522,17 @@ DynamicTrafficControlSimulatorItem::checkTcsInstance(){
     }
 
     if(_tcs==nullptr) {
-        MessageView::mainInstance()->putln(MessageView::ERROR,"DynamicTrafficControlSimulatorItem::checkTcsInstance TrafficControlSimulator does not exist in this project.");
+        MessageView::mainInstance()->putln(MessageView::ERROR,"DynamicTCSimulatorItem::checkTcsInstance TCSimulator does not exist in this project.");
         return false;
     }
 
     if(_tcs->isEnableTrafficControl()) {
-        MessageView::mainInstance()->putln(MessageView::ERROR,"DynamicTrafficControlSimulatorItem::checkTcsInstance EnableTrafficControl of TrafficControlSimulator is true. Please turn off to false at first!");
+        MessageView::mainInstance()->putln(MessageView::ERROR,"DynamicTCSimulatorItem::checkTcsInstance EnableTrafficControl of TCSimulator is true. Please turn off to false at first!");
         return false;
     }
 
     if(_share->getTcsRunning()==false) {
-        MessageView::mainInstance()->putln(MessageView::ERROR,"DynamicTrafficControlSimulatorItem::checkTcsInstance TrafficControlSimulator does not exist in this project or it is not running.");
+        MessageView::mainInstance()->putln(MessageView::ERROR,"DynamicTCSimulatorItem::checkTcsInstance TCSimulator does not exist in this project or it is not running.");
         return false;
     }
 
@@ -532,7 +540,7 @@ DynamicTrafficControlSimulatorItem::checkTcsInstance(){
     for(int i=0;i<portCount;i++) {
         _staticEthIndex[i] = _tcs->getEthIndexNo(_communicationPort.symbol(i));
         if(_staticEthIndex[i]==-1) {
-            MessageView::mainInstance()->putln(MessageView::ERROR,"DynamicTrafficControlSimulatorItem::checkTcsInstance "+_communicationPort.symbol(i)+" does not exist in TrafficControlSimulator.");
+            MessageView::mainInstance()->putln(MessageView::ERROR,"DynamicTCSimulatorItem::checkTcsInstance "+_communicationPort.symbol(i)+" does not exist in TCSimulator.");
         } else {
             _staticEthName[_staticEthIndex[i]]=_communicationPort.symbol(i);
         }
@@ -544,7 +552,7 @@ DynamicTrafficControlSimulatorItem::checkTcsInstance(){
 }
 
 bool
-DynamicTrafficControlSimulatorItem::findNIC(const std::string &nic) {
+DynamicTCSimulatorItem::findNIC(const std::string &nic) {
     bool find=false;
 
     for(int j=0;j<_allNIC.size();j++) {
@@ -558,7 +566,7 @@ DynamicTrafficControlSimulatorItem::findNIC(const std::string &nic) {
 }
 
 void
-DynamicTrafficControlSimulatorItem::bridgeTC(const int& ethIdxNo, const double &distance) {
+DynamicTCSimulatorItem::bridgeTC(const int& ethIdxNo, const double &distance) {
     if(_tcs==nullptr ) {
         return;
     }

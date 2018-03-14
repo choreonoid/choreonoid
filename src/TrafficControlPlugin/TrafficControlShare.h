@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "TCSimulatorItem.h"
 #include "exportdecl.h"
 
 class CNOID_EXPORT TrafficControlShare
@@ -16,9 +17,9 @@ public:
 
     static TrafficControlShare* instance();
 
-    TrafficControlSimulatorItem* getTcsInstance() const;
+    TCSimulatorItem* getTcsInstance() const;
 
-    void setTcsInstance(TrafficControlSimulatorItem* value);
+    void setTcsInstance(TCSimulatorItem* value);
 
     bool getTcsRunning() const;
 
@@ -33,7 +34,7 @@ private:
 private:
 
     static TrafficControlShare* _inst;
-    TrafficControlSimulatorItem *_val=nullptr;
+    TCSimulatorItem *_val=nullptr;
     bool _isRunning=false;
 
 };

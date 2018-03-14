@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <cnoid/SubSimulatorItem>
+#include <map>
 #include "exportdecl.h"
 
 #ifndef NIC_MAX
@@ -38,15 +40,15 @@
 #define IP_SEPARATOR ','
 #endif
 
-class CNOID_EXPORT TrafficControlSimulatorItem : public cnoid::SubSimulatorItem
+class CNOID_EXPORT TCSimulatorItem : public cnoid::SubSimulatorItem
 {
 public:
 
-    TrafficControlSimulatorItem();
+    TCSimulatorItem();
 
-    TrafficControlSimulatorItem(const TrafficControlSimulatorItem& org);
+    TCSimulatorItem(const TCSimulatorItem& org);
 
-    ~TrafficControlSimulatorItem();
+    ~TCSimulatorItem();
 
     static void initializeClass(cnoid::ExtensionManager* extMgr);
 
@@ -136,4 +138,4 @@ private:
     bool _monitorDynamicTC = false;
 };
 
-typedef cnoid::ref_ptr<TrafficControlSimulatorItem> TrafficControlSimulatorItemPtr;
+typedef cnoid::ref_ptr<TCSimulatorItem> TCSimulatorItemPtr;
