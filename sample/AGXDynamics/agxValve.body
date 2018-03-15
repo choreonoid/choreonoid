@@ -1,0 +1,100 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: agxValve
+
+links:
+  - name: BASE
+    translation: [ 0, 0, 0 ]
+    jointType: fixed
+    density: 1.0
+    elements:
+      -
+        type: Shape
+        geometry: { type: Box, size: [1.0, 1.0, 0.2 ]}
+  -
+    name: HANDLE
+    parent: BASE
+    translation: [ 0, 0, 0.5 ]
+    jointType: revolute
+    jointAxis: [ 0, 0, 1 ]
+    jointRange: [ 0.0, inf ]
+    jointMotor: true
+    jointMotorCompliance: 0.9
+    density: 55.6
+    mass: 1.0
+    inertia: [
+      0.6, 0,   0,
+      0,   0.6, 0,
+      0,   0,   0.6 ]
+    elements:
+      - # center
+        type: Shape
+        translation: [ 0.0, 0.0, -0.2 ]
+        rotation: [ 1, 0, 0, 90 ]
+        geometry: { type: Cylinder, radius: 0.05, height: 0.5}
+      - # 1
+        type: Shape
+        translation: [ 0.255, 0.105, 0.0 ]
+        rotation: [ 0, 0, 1, 22.5 ]
+        geometry: &capsule { type: Capsule, radius: 0.05, height: 0.228}
+      - # 2
+        type: Shape
+        translation: [ 0.105, 0.255, 0.0 ]
+        rotation: [ 0, 0, 1, 67.5 ]
+        geometry: *capsule
+      - # 3
+        type: Shape
+        translation: [ -0.105, 0.255, 0.0 ]
+        rotation: [ 0, 0, -1, 67.5 ]
+        geometry: *capsule
+      - # 4
+        type: Shape
+        translation: [ -0.255, 0.105, 0.0 ]
+        rotation: [ 0, 0, -1, 22.5 ]
+        geometry: *capsule
+      - # 5
+        type: Shape
+        translation: [ -0.255, -0.105, 0.0 ]
+        rotation: [ 0, 0, 1, 22.5 ]
+        geometry: *capsule
+      - # 6
+        type: Shape
+        translation: [ -0.105, -0.255, 0.0 ]
+        rotation: [ 0, 0, 1, 67.5 ]
+        geometry: *capsule
+      - # 7
+        type: Shape
+        translation: [ 0.105, -0.255, 0.0 ]
+        rotation: [ 0, 0, -1, 67.5 ]
+        geometry: *capsule
+      - # 8
+        type: Shape
+        translation: [ 0.255, -0.105, 0.0 ]
+        rotation: [ 0, 0, -1, 22.5 ]
+        geometry: *capsule
+      - # cross1
+        type: Shape
+        translation: [ 0.105, 0.105, 0.0 ]
+        rotation: [ 0, 0, -1, 45 ]
+        geometry: *capsule
+      - # cross1
+        type: Shape
+        translation: [ 0.105, 0.105, 0.0 ]
+        rotation: [ 0, 0, -1, 45 ]
+        geometry: *capsule
+      - # cross2
+        type: Shape
+        translation: [ -0.105, 0.105, 0.0 ]
+        rotation: [ 0, 0, -1, -45]
+        geometry: *capsule
+      - # cross3
+        type: Shape
+        translation: [ -0.105, -0.105, 0.0 ]
+        rotation: [ 0, 0, -1, 45]
+        geometry: *capsule
+      - # cross4
+        type: Shape
+        translation: [ 0.105, -0.105, 0.0 ]
+        rotation: [ 0, 0, -1, -45]
+        geometry: *capsule

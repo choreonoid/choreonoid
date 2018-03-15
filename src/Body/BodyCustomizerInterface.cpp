@@ -54,16 +54,10 @@ set<string> customizerDirectories;
 
 static bool checkInterface(BodyCustomizerInterface* customizerInterface)
 {
-    bool qualified = true
-        && (customizerInterface->version == BODY_CUSTOMIZER_INTERFACE_VERSION)
-        && customizerInterface->getTargetModelNames
-        && customizerInterface->create
-        && customizerInterface->destroy;
-    //&& customizerInterface->initializeAnalyticIk
-    //&& customizerInterface->calcAnalyticIk
-    //&& customizerInterface->setVirtualJointForces;
-
-    return qualified;
+    return (customizerInterface->version <= BODY_CUSTOMIZER_INTERFACE_VERSION) &&
+        customizerInterface->getTargetModelNames &&
+        customizerInterface->create &&
+        customizerInterface->destroy;
 }
 
 

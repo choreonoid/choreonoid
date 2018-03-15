@@ -1,0 +1,79 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: FireCabinet
+
+links:
+  -
+    name: BASE
+    jointType: fixed
+    elements:
+      Resource:
+        rotation: [ 0, 0, 1, 90 ]
+        translation: [ 0, -0.37, 0 ]
+        uri: "resource/FireCabinetBase.dae"
+  -
+    name: DOOR
+    parent: BASE
+    translation: [ 0.23, -0.345, 0.025 ]
+    jointType: revolute
+    jointAxis: Z
+    jointId: 0
+    jointRange: [ -160, 0 ]
+    mass: 2.0
+    inertia: [ 1, 0, 0,
+               0, 1, 0,
+               0, 0, 1 ]
+
+    # For the friction for AGX
+    jointMotor: true
+    jointMotorCompliance: 0.9
+
+    elements:
+      Resource:
+        rotation: [ 0, 0, 1, 180 ]
+        translation: [ 0, 0.7, 0 ]
+        uri: "resource/FireCabinetDoor.dae"
+  -
+    name: HOSE_REEL
+    parent: BASE
+    translation: [ 0.171, 0.34, 0.29 ]
+    jointType: revolute
+    jointAxis: Z
+    jointId: 1
+    jointRange: [ 0, 90 ]
+    mass: 10.0
+    inertia: [ 1, 0, 0,
+               0, 1, 0,
+               0, 0, 1 ]
+
+    # For the friction for AGX
+    jointMotor: true
+    jointMotorCompliance: 0.9
+
+    elements:
+      Resource:
+        translation: [ -0.1485, -0.561, -0.01 ]
+        uri: "resource/FireCabinetHoseReel.dae"
+  -
+    name: VALVE
+    parent: BASE
+    translation: [ 0.19, 0.262, 0.8065 ]
+    jointType: revolute
+    jointAxis: X
+    jointId: 2
+    jointRange: [ unlimited, unlimited ]
+    mass: 10.0
+    inertia: [ 1, 0, 0,
+               0, 1, 0,
+               0, 0, 1 ]
+
+    # For the friction for AGX
+    jointMotor: true
+    jointMotorCompliance: 0.9
+
+    elements:
+      Resource:
+        translation: [ 0, -0.059, -0.059 ]
+        rotation: [ 0, 0, 1, 90 ]
+        uri: "resource/FireCabinetValve.dae"

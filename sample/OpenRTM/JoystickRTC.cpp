@@ -19,7 +19,7 @@ static const char* joystick_spec[] =
     "language",          "C++",
     "lang_type",         "compile",
     // Configuration variables
-    "conf.default.device", "/dev/input/js0",
+    "conf.default.device", "",
     "conf.default.debugLevel", "0",
     ""
 };
@@ -46,7 +46,7 @@ JoystickRTC::~JoystickRTC()
 RTC::ReturnCode_t JoystickRTC::onInitialize()
 {
     // Bind variables and configuration variable
-    bindParameter("device", m_device, "/dev/input/js0");
+    bindParameter("device", m_device, "");
     bindParameter("debugLevel", m_debugLevel, "0");
 
     // Set OutPort buffer

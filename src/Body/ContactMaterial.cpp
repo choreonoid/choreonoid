@@ -10,6 +10,7 @@ using namespace cnoid;
 
 ContactMaterial::ContactMaterial()
 {
+    init();
     info_ = new Mapping;
 }
 
@@ -26,6 +27,7 @@ ContactMaterial::ContactMaterial(const ContactMaterial& org)
 
 ContactMaterial::ContactMaterial(const Mapping* info)
 {
+    init();
     info_ = info->cloneMapping();
 
     double mu;
@@ -42,6 +44,13 @@ ContactMaterial::ContactMaterial(const Mapping* info)
 ContactMaterial::~ContactMaterial()
 {
 
+}
+
+void ContactMaterial::init()
+{
+    staticFriction_ = 0.5;
+    dynamicFriction_ = 0.5;
+    restitution_ = 0.0;
 }
 
 

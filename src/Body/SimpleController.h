@@ -13,7 +13,6 @@ namespace cnoid {
 class CNOID_EXPORT SimpleControllerIO : public ControllerIO
 {
   public:
-
     enum StateType {
         JOINT_ANGLE = 1 << 0,
         JOINT_DISPLACEMENT = 1 << 0,
@@ -30,16 +29,21 @@ class CNOID_EXPORT SimpleControllerIO : public ControllerIO
     virtual void enableInput(Link* link, int stateTypes) = 0;
     virtual void enableOutput(Link* link) = 0;
     virtual void enableInput(Device* device) = 0;
-    
+
+    template<class T> T* getOrCreateSharedObject(const std::string& name) {
+        return body()->getOrCreateCache<T>(name);
+    }
+
+    template<class T> T* findSharedObject(const std::string& name){
+        return body()->findCache<T>(name);
+    }
+
     //! \deprecated Use enableInput for all links
     virtual void setJointInput(int stateTypes);
-
     //! \deprecated Use enableOutput and Link::setActuationMode for all links
     virtual void setJointOutput(int stateTypes);
-
     //! \deprecated Use enableInput for the link
     virtual void setLinkInput(Link* link, int stateTypes);
-    
     //! \deprecated Use enableOutput and Link::setActuationMode for the link
     virtual void setLinkOutput(Link* link, int stateTypes);
 };

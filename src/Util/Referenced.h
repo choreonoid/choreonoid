@@ -14,6 +14,8 @@
 #include <memory>
 #endif
 
+#include "exportdecl.h"
+
 namespace cnoid {
 
 class Referenced;
@@ -56,10 +58,7 @@ private:
 };
 
     
-/**
-   \todo Make this thread safe
-*/
-class Referenced
+class CNOID_EXPORT Referenced
 {
     friend class WeakCounter;
     template<class Y> friend class weak_ref_ptr;
@@ -97,11 +96,7 @@ protected:
     int refCount() const { return refCount_.load(std::memory_order_relaxed); }
     
 public:
-    virtual ~Referenced() {
-        if(weakCounter_){
-            weakCounter_->setDestructed();
-        }
-    }
+    virtual ~Referenced();
 };
 
     

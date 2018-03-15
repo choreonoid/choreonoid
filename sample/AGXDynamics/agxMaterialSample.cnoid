@@ -22,18 +22,22 @@ items:
           data: 
             modelFile: "${PROJECT_DIR}/agxMaterialSample.body"
             currentBaseLink: "floor"
-            rootPosition: [ 0, 0, -0.1 ]
+            rootPosition: [ 0, 0, 0 ]
             rootAttitude: [ 
               1, -0, 0, 
               0, 0.866025404, 0.5, 
               -0, -0.5, 0.866025404 ]
-            jointPositions: [  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000 ]
-            initialRootPosition: [ 0, 0, -0.1 ]
+            jointPositions: [ 
+               0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000, 
+               0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000 ]
+            initialRootPosition: [ 0, 0, 0 ]
             initialRootAttitude: [ 
               1, -0, 0, 
               0, 0.866025404, 0.5, 
               -0, -0.5, 0.866025404 ]
-            initialJointPositions: [  0.000000,  0.000000,  0.000000,  0.000000,  0.000000 ]
+            initialJointPositions: [ 
+               0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000, 
+               0.000000 ]
             zmp: [ 0, 0, 0 ]
             collisionDetection: true
             selfCollisionDetection: true
@@ -51,10 +55,17 @@ items:
             timeLength: 180
             allLinkPositionOutputMode: true
             deviceStateOutput: true
-            selfCollision: false
             controllerThreads: true
             recordCollisionData: false
             controllerOptions: ""
+            Gravity: [ 0, 0, -9.80665 ]
+            NumThreads: 1
+            ContactReduction: true
+            ContactReductionBinResolution: 3
+            ContactReductionThreshhold: 12
+            ContactWarmstarting: false
+            AutoSleep: false
+            SaveToAGXFileOnStart: false
 views: 
   - 
     id: 0
@@ -67,7 +78,7 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      selected: [ 3 ]
+      selected: [ 2, 3 ]
       checked: [ 2 ]
       expanded: [ 1, 2 ]
   - 
@@ -93,7 +104,7 @@ views:
       worldLightAmbient: 0.3
       additionalLights: true
       fog: true
-      floorGrid: true
+      floorGrid: false
       floorGridSpan: 10
       floorGridInterval: 0.5
       xzGridSpan: 10
@@ -119,9 +130,9 @@ views:
           fieldOfView: 0.698132
           near: 0.01
           far: 100
-          eye: [ 18.1701263, 11.3604882, 6.49267153 ]
-          direction: [ -0.870599471, -0.435299736, -0.229283016 ]
-          up: [ -0.205076964, -0.102538482, 0.973359799 ]
+          eye: [ 13.8516041, 19.7929676, 0.423176348 ]
+          direction: [ -0.506585778, -0.850603458, -0.140870883 ]
+          up: [ -0.0720819891, -0.121032196, 0.990027977 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
@@ -134,13 +145,77 @@ views:
       dedicatedItemTreeViewChecks: false
   - 
     id: 4
+    name: "Scene 2"
+    plugin: Base
+    class: SceneView
+    state: 
+      editMode: false
+      viewpointControlMode: thirdPerson
+      collisionLines: false
+      polygonMode: fill
+      defaultHeadLight: true
+      defaultHeadLightIntensity: 0.75
+      headLightLightingFromBack: false
+      worldLight: true
+      worldLightIntensity: 0.5
+      worldLightAmbient: 0.3
+      additionalLights: true
+      shadowLights: 
+        - 0
+      fog: true
+      floorGrid: false
+      floorGridSpan: 10
+      floorGridInterval: 0.5
+      xzGridSpan: 10
+      xzGridInterval: 0.5
+      xzGrid: false
+      yzGridSpan: 10
+      yzGridInterval: 0.5
+      texture: true
+      lineWidth: 1
+      pointSize: 1
+      normalVisualization: false
+      normalLength: 0.01
+      coordinateAxes: true
+      fpsTestIteration: 1
+      showFPS: false
+      enableNewDisplayListDoubleRendering: false
+      useBufferForPicking: true
+      upsideDown: false
+      cameras: 
+        - 
+          camera: [ System, Perspective ]
+          isCurrent: true
+          fieldOfView: 0.6978
+          near: 0.01
+          far: 100
+          eye: [ -5.29126118, -5.01169376, 3.84184278 ]
+          direction: [ 0.756596254, 0.487150344, -0.43617273 ]
+          up: [ 0.3667299, 0.236126726, 0.899862962 ]
+        - 
+          camera: [ System, Orthographic ]
+          orthoHeight: 20
+          near: 0.01
+          far: 100
+      backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
+      gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
+      xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
+      yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
+      dedicatedItemTreeViewChecks: false
+  - 
+    id: 5
+    name: "Joystick"
+    plugin: Base
+    class: VirtualJoystickView
+  - 
+    id: 6
     plugin: Body
     class: BodyLinkView
     mounted: true
     state: 
       showRotationMatrix: false
   - 
-    id: 5
+    id: 7
     plugin: Body
     class: JointSliderView
     mounted: true
@@ -154,7 +229,7 @@ views:
       labelOnLeft: true
       currentBodyItem: 2
   - 
-    id: 6
+    id: 8
     plugin: Body
     class: LinkSelectionView
     mounted: true
@@ -162,7 +237,7 @@ views:
       listingMode: "Link List"
       currentBodyItem: 2
   - 
-    id: 7
+    id: 9
     plugin: Python
     class: PythonConsoleView
     mounted: true
@@ -242,6 +317,11 @@ Body:
     targetJoints: all
     checkSelfCollisions: true
     onlyTimeBarRange: false
+  "SplineFilterDialog": 
+    isInputFrameRateSpecified: false
+    inputFrameRate: 200
+    isOutputFrameRateSpecified: false
+    outputFrameRate: 200
 viewAreas: 
   - 
     type: embedded
@@ -249,12 +329,12 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 315, 1536 ]
+      sizes: [ 300, 1460 ]
       children: 
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 466, 465 ]
+          sizes: [ 437, 437 ]
           children: 
             - 
               type: pane
@@ -262,29 +342,29 @@ viewAreas:
               current: 1
             - 
               type: pane
-              views: [ 0, 6 ]
+              views: [ 0, 8 ]
               current: 0
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 665, 266 ]
+          sizes: [ 624, 250 ]
           children: 
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 665, 865 ]
+              sizes: [ 243, 1211 ]
               children: 
                 - 
                   type: pane
-                  views: [ 4, 5 ]
-                  current: 4
+                  views: [ 6, 7 ]
+                  current: 6
                 - 
                   type: pane
                   views: [ 3 ]
                   current: 3
             - 
               type: pane
-              views: [ 2, 7 ]
+              views: [ 2, 9 ]
               current: 2
 layoutOfToolBars: 
   rows: 

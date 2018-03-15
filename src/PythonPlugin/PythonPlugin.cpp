@@ -235,6 +235,8 @@ bool PythonPlugin::initializeInterpreter()
 #endif
 
     sysModule = python::module::import("sys");
+
+    sysModule.attr("dont_write_bytecode") = true;
     
     // set the choreonoid default python script path
     filesystem::path scriptPath = filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "python";

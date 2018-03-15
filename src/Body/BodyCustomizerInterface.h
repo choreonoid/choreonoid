@@ -45,10 +45,11 @@ typedef int  (*BodyCustomizerInitializeAnalyticIkFunc) (BodyCustomizerHandle cus
 */
 typedef bool (*BodyCustomizerCalcAnalyticIkFunc)       (BodyCustomizerHandle customizerHandle, int ikPathId, const Vector3& p, const Matrix3& R);
 	
-typedef void (*BodyCustomizerSetVirtualJointForcesFunc)(BodyCustomizerHandle customizerHandle);
+typedef void (*BodyCustomizerSetVirtualJointForcesFunc) (BodyCustomizerHandle customizerHandle);
+typedef void (*BodyCustomizerSetVirtualJointForces2Func)(BodyCustomizerHandle customizerHandle, double timeStep);
 	
 
-static const int BODY_CUSTOMIZER_INTERFACE_VERSION = 1;
+static const int BODY_CUSTOMIZER_INTERFACE_VERSION = 2;
 
 struct BodyCustomizerInterface
 {
@@ -60,6 +61,17 @@ struct BodyCustomizerInterface
     BodyCustomizerInitializeAnalyticIkFunc initializeAnalyticIk;
     BodyCustomizerCalcAnalyticIkFunc calcAnalyticIk;
     BodyCustomizerSetVirtualJointForcesFunc setVirtualJointForces;
+    BodyCustomizerSetVirtualJointForces2Func setVirtualJointForces2; // since version 2
+
+    BodyCustomizerInterface() :
+        getTargetModelNames(nullptr),
+        create(nullptr),
+        destroy(nullptr),
+        initializeAnalyticIk(nullptr),
+        calcAnalyticIk(nullptr),
+        setVirtualJointForces(nullptr),
+        setVirtualJointForces2(nullptr)
+        { }
 };
 
 typedef BodyCustomizerInterface* (*GetBodyCustomizerInterfaceFunc)(BodyInterface* bodyInterface);

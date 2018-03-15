@@ -8,10 +8,11 @@
 #include <iostream>
 #include <yaml.h>
 #include <boost/format.hpp>
+#include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
+using boost::format;
 
 namespace {
 const bool debugTrace = false;
@@ -30,8 +31,8 @@ public:
     bool load(const std::string& filename);
     bool parse(const std::string& yamlstring);
     bool parse();
-    void popNode();
-    void addNode(ValueNode* node);
+    void popNode(yaml_event_t& event);
+    void addNode(ValueNode* node, yaml_event_t& event);
     void setAnchor(ValueNode* node, yaml_char_t* anchor, const yaml_mark_t& mark);
     void onDocumentStart(yaml_event_t& event);
     void onDocumentEnd(yaml_event_t& event);
@@ -170,7 +171,7 @@ bool YAMLReaderImpl::load(const std::string& filename)
             result = parse();
         }
         catch(const ValueNode::Exception& ex){
-            errorMessage = str(format("%1% at line %2%, column %3%")
+            errorMessage = str(format(_("%1% at line %2%, column %3%"))
                                % ex.message() % ex.line() % ex.column());
         }
         fclose(file);
@@ -202,7 +203,7 @@ bool YAMLReaderImpl::parse(const std::string& yamlstring)
         result = parse();
     }
     catch(const ValueNode::Exception& ex){
-        errorMessage = str(format("%1% at line %2%, column %3%")
+        errorMessage = str(format(_("%1% at line %2%, column %3%"))
                            % ex.message() % ex.line() % ex.column());
     }
 
@@ -286,29 +287,58 @@ error:
 }
 
 
-void YAMLReaderImpl::popNode()
+void YAMLReaderImpl::popNode(yaml_event_t& event)
 {
     ValueNodePtr current = nodeStack.top().node;
     nodeStack.pop();
     if(nodeStack.empty()){
         documents.push_back(current);
     } else {
-        addNode(current.get());
+        addNode(current, event);
     }
 }
 
 
-void YAMLReaderImpl::addNode(ValueNode* node)
+void YAMLReaderImpl::addNode(ValueNode* node, yaml_event_t& event)
 {
     NodeInfo& info = nodeStack.top();
-    ValueNode* parent = info.node.get();
-    if(parent->isMapping()){
-        Mapping* mapping = static_cast<Mapping*>(parent);
-        mapping->insert(info.key, node);
-        info.key.clear();
-    } else if(parent->isListing()){
+    ValueNode* parent = info.node;
+
+    if(parent->isListing()){
         Listing* listing = static_cast<Listing*>(parent);
         listing->append(node);
+
+    } else if(parent->isMapping()){
+
+        Mapping* mapping = static_cast<Mapping*>(parent);
+
+        if(info.key == "<<"){
+            if(node->isMapping()){
+                mapping->insert(static_cast<Mapping*>(node));
+            } else if(node->isListing()){
+                Listing* listing = static_cast<Listing*>(node);
+                for(auto& element : *listing){
+                    if(element->isMapping()){
+                        mapping->insert(static_cast<Mapping*>(element.get()));
+                    } else {
+                        ValueNode::SyntaxException ex;
+                        ex.setMessage(_("An element to merge by the \"<<\" key must be a mapping"));
+                        const yaml_mark_t& start_mark = event.start_mark;
+                        ex.setPosition(start_mark.line, start_mark.column);
+                        throw ex;
+                    }
+                }
+            } else {
+                ValueNode::SyntaxException ex;
+                ex.setMessage(_("A value to merge by the \"<<\" key must be mapping or listing"));
+                const yaml_mark_t& start_mark = event.start_mark;
+                ex.setPosition(start_mark.line, start_mark.column);
+                throw ex;
+            }
+        }
+        
+        mapping->insert(info.key, node);
+        info.key.clear();
     }
 }
 
@@ -319,7 +349,7 @@ void YAMLReaderImpl::setAnchor(ValueNode* node, yaml_char_t* anchor, const yaml_
         anchorMap.insert(AnchorMap::value_type((char*)anchor, node));
     if(!inserted.second){
         ValueNode::Exception ex;
-        ex.setMessage(str(format("Anchor \"%1%\" is duplicated") % (char*)anchor));
+        ex.setMessage(str(format(_("Anchor \"%1%\" is duplicated")) % (char*)anchor));
         ex.setPosition(mark.line, mark.column);
         throw ex;
     }
@@ -362,13 +392,13 @@ void YAMLReaderImpl::onMappingStart(yaml_event_t& event)
 }
 
 
-void YAMLReaderImpl::onMappingEnd(yaml_event_t&)
+void YAMLReaderImpl::onMappingEnd(yaml_event_t& event)
 {
     if(debugTrace){
         cout << "YAMLReaderImpl::onMappingEnd()" << endl;
     }
 
-    popNode();
+    popNode(event);
 }
 
 
@@ -404,7 +434,7 @@ void YAMLReaderImpl::onListingStart(yaml_event_t& event)
 }
 
 
-void YAMLReaderImpl::onListingEnd(yaml_event_t&)
+void YAMLReaderImpl::onListingEnd(yaml_event_t& event)
 {
     if(debugTrace){
         cout << "YAMLReaderImpl::onListingEnd()" << endl;
@@ -416,7 +446,7 @@ void YAMLReaderImpl::onListingEnd(yaml_event_t&)
         expectedListingSizes[level] = listing->size();
     }
     
-    popNode();
+    popNode(event);
 }
 
 
@@ -431,7 +461,7 @@ void YAMLReaderImpl::onScalar(yaml_event_t& event)
 
     if(nodeStack.empty()){
         ValueNode::SyntaxException ex;
-        ex.setMessage("Scalar value cannot be put on the top-level text position");
+        ex.setMessage(_("Scalar value cannot be put on the top-level text position"));
         const yaml_mark_t& start_mark = event.start_mark;
         ex.setPosition(start_mark.line, start_mark.column);
         throw ex;
@@ -447,7 +477,7 @@ void YAMLReaderImpl::onScalar(yaml_event_t& event)
             info.key = string((char*)value, length);
             if(info.key.empty()){
                 ValueNode::SyntaxException ex;
-                ex.setMessage("empty key");
+                ex.setMessage(_("empty key"));
                 const yaml_mark_t& start_mark = event.start_mark;
                 ex.setPosition(start_mark.line, start_mark.column);
                 throw ex;
@@ -459,7 +489,7 @@ void YAMLReaderImpl::onScalar(yaml_event_t& event)
         scalar = createScalar(event);
     }
     if(scalar){
-        addNode(scalar);
+        addNode(scalar, event);
         if(event.data.scalar.anchor){
             setAnchor(scalar, event.data.scalar.anchor, event.start_mark);
         }
@@ -509,13 +539,13 @@ void YAMLReaderImpl::onAlias(yaml_event_t& event)
 
     if(p == anchorMap.end()){
         ValueNode::Exception ex;
-        ex.setMessage(str(format("Anchor \"%1%\" is not defined") % (char*)event.data.alias.anchor));
+        ex.setMessage(str(format(_("Anchor \"%1%\" is not defined")) % (char*)event.data.alias.anchor));
         const yaml_mark_t& mark = event.start_mark;
         ex.setPosition(mark.line, mark.column);
         throw ex;
     }
     
-    addNode(p->second);
+    addNode(p->second, event);
 }
 
 
@@ -530,15 +560,16 @@ ValueNode* YAMLReader::document(int index)
     if(index >= static_cast<int>(impl->documents.size())){
         ValueNode::DocumentNotFoundException ex;
         if(index == 0){
-            ex.setMessage("The yaml file does not contains any documents.");
+            ex.setMessage(_("The yaml file does not contains any documents."));
         } else {
-            ex.setMessage(str(format("The yaml file does not contains %1%-th document.") % index));
+            ex.setMessage(
+                str(format(_("The yaml file does not contains %1%-th document.")) % index));
         }
         ex.setPosition(-1, -1);
         throw ex;
     }
     
-    return impl->documents[index].get();
+    return impl->documents[index];
 }
 
 
@@ -553,7 +584,17 @@ ValueNode* YAMLReader::loadDocument(const std::string& filename)
     return document();
 }
 
-        
+
+ValueNode* YAMLReader::findAnchoredNode(const std::string& anchor)
+{
+    auto iter = impl->anchorMap.find(anchor);
+    if(iter != impl->anchorMap.end()){
+        return iter->second;
+    }
+    return nullptr;
+}
+
+
 const std::string& YAMLReader::errorMessage()
 {
     return impl->errorMessage;

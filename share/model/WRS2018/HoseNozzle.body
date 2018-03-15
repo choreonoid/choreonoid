@@ -1,0 +1,18 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: HoseNozzle
+
+links:
+  -
+    name: BASE
+    jointType: free
+    mass: 2.0
+    centerOfMass: [ 0.2, 0, 0 ]
+    inertia: [ 1, 0, 0,
+               0, 1, 0,
+               0, 0, 1 ]
+    elements:
+      Resource:
+        translation: [ 0, -0.0425, -0.03 ]
+        uri: "resource/HoseNozzle.dae"

@@ -18,26 +18,27 @@ using namespace cnoid;
 
 namespace {
 
+typedef CollisionDetector::GeometryHandle GeometryHandle;
+
 const btScalar DEFAULT_COLLISION_MARGIN = 0.0001;
 const bool useHACD = true;
-
-CollisionDetector* factory()
-{
-    return new BulletCollisionDetector;
-}
 
 struct FactoryRegistration
 {
     FactoryRegistration(){
-        CollisionDetector::registerFactory("BulletCollisionDetector", factory);
+        CollisionDetector::registerFactory(
+                "BulletCollisionDetector",
+                [](){ return new BulletCollisionDetector; });
     }
 } factoryRegistration;
 
-class GeometryEx
+class GeometryInfo : public Referenced
 {
 public :
-    GeometryEx();
-    ~GeometryEx();
+    GeometryInfo();
+    ~GeometryInfo();
+    GeometryHandle geometryHandle;
+    ReferencedPtr object;
     btCollisionObject* collisionObject;
     btCollisionShape* collisionShape;
     vector<btScalar> vertices;
@@ -46,10 +47,11 @@ public :
     btTriangleMesh* trimesh;
     bool isStatic;
 };
-typedef std::shared_ptr<GeometryEx> GeometryExPtr;
+typedef ref_ptr<GeometryInfo> GeometryInfoPtr;
 
-GeometryEx::GeometryEx()
+GeometryInfo::GeometryInfo()
 {
+    geometryHandle = 0;
     collisionObject = 0;
     collisionShape = 0;
     vertices.clear();
@@ -59,7 +61,7 @@ GeometryEx::GeometryEx()
     isStatic = false;
 }
 
-GeometryEx::~GeometryEx()
+GeometryInfo::~GeometryInfo()
 {
     btCompoundShape* compoundShape = dynamic_cast<btCompoundShape*>(collisionShape);
     if(compoundShape){
@@ -87,25 +89,26 @@ namespace cnoid {
 class BulletCollisionDetectorImpl
 {
 public:
-    BulletCollisionDetectorImpl();
-    ~BulletCollisionDetectorImpl();
-
-    vector<GeometryExPtr> models;
+    vector<GeometryInfoPtr> geometryInfos;
     btDefaultCollisionConfiguration* collisionConfiguration;
     btCollisionDispatcher* dispatcher;
     btBroadphaseInterface* broadphase;
     btCollisionWorld* collisionWorld;
-    MeshExtractor* meshExtractor;
 
-    typedef set< IdPair<> > IdPairSet;
-    IdPairSet modelPairs;
-    IdPairSet nonInterfarencePairs;
+    MeshExtractor meshExtractor;
+    typedef set<pair<GeometryHandle, GeometryHandle>> GeometryHandlePairSet;
+    GeometryHandlePairSet nonInterfarencePairs;
+    GeometryHandlePairSet interfarencePairs;
+    std::function<void(const CollisionPair&)> callbackOnCollisionDetected;
 
-    int addGeometry(SgNode* geometry);
-    void addMesh(GeometryEx* model);
+    BulletCollisionDetectorImpl();
+    ~BulletCollisionDetectorImpl();
+    boost::optional<GeometryHandle> addGeometry(SgNode* geometry);
+    void addMesh(GeometryInfo* model);
+    void setNonInterfarenceGeometyrPair(GeometryHandle geometry1, GeometryHandle geometry2);
     bool makeReady();
-    void updatePosition(int geometryId, const Position& _position);
-    void detectCollisions(std::function<void(const CollisionPair&)> callback);
+    void setGeometryPosition(GeometryInfo* ginfo, const Position& position);
+    void detectCollisions();
     void detectObjectCollisions(btCollisionObject* object1, btCollisionObject* object2, CollisionPair& collisionPair);
 };
 }
@@ -142,8 +145,6 @@ BulletCollisionDetectorImpl::BulletCollisionDetectorImpl()
     broadphase = new btDbvtBroadphase();
     collisionWorld = new btCollisionWorld(dispatcher,broadphase,collisionConfiguration);
     btGImpactCollisionAlgorithm::registerAlgorithm(dispatcher);
-
-    meshExtractor = new MeshExtractor;
 }
 
 
@@ -157,92 +158,91 @@ BulletCollisionDetectorImpl::~BulletCollisionDetectorImpl()
         delete collisionConfiguration;	
     if(broadphase)
         delete broadphase;
-
-    delete meshExtractor;
 }
 
 
 void BulletCollisionDetector::clearGeometries()
 {
-    impl->models.clear();
+    impl->geometryInfos.clear();
     impl->nonInterfarencePairs.clear();
-    impl->modelPairs.clear();
+    impl->interfarencePairs.clear();
 }
 
 
 int BulletCollisionDetector::numGeometries() const
 {
-    return impl->models.size();
+    return impl->geometryInfos.size();
 }
 
 
-int BulletCollisionDetector::addGeometry(SgNode* geometry)
+boost::optional<GeometryHandle> BulletCollisionDetector::addGeometry(SgNode* geometry)
 {
     return impl->addGeometry(geometry);
 }
 
 
-int BulletCollisionDetectorImpl::addGeometry(SgNode* geometry)
+boost::optional<GeometryHandle> BulletCollisionDetectorImpl::addGeometry(SgNode* geometry)
 {
-    const int index = models.size();
-
     if(geometry){
-        GeometryExPtr model =  std::make_shared<GeometryEx>();
-        if(meshExtractor->extract(geometry, std::bind(&BulletCollisionDetectorImpl::addMesh, this, model.get()))){
+        GeometryHandle handle = geometryInfos.size();
+        GeometryInfoPtr ginfo = new GeometryInfo;
+        ginfo->geometryHandle = handle;
+        if(meshExtractor.extract(geometry,  [this, ginfo](){ addMesh(ginfo.get()); })){
             if(!useHACD){
-                if(!model->vertices.empty()){
-                    model->meshData = new btTriangleIndexVertexArray( model->triangles.size()/3, &model->triangles[0], sizeof(int)*3,
-                                                                      model->vertices.size()/3, &model->vertices[0], sizeof(btScalar)*3);
-                    btGImpactMeshShape* meshShape = new btGImpactMeshShape(model->meshData);
+                if(!ginfo->vertices.empty()){
+                    ginfo->meshData = new btTriangleIndexVertexArray( ginfo->triangles.size()/3, &ginfo->triangles[0], sizeof(int)*3,
+                            ginfo->vertices.size()/3, &ginfo->vertices[0], sizeof(btScalar)*3);
+                    btGImpactMeshShape* meshShape = new btGImpactMeshShape(ginfo->meshData);
                     meshShape->setLocalScaling(btVector3(1.f,1.f,1.f));
                     meshShape->setMargin(DEFAULT_COLLISION_MARGIN);
                     meshShape->updateBound();
-                    btCompoundShape* compoundShape = dynamic_cast<btCompoundShape*>(model->collisionShape);
+                    btCompoundShape* compoundShape = dynamic_cast<btCompoundShape*>(ginfo->collisionShape);
                     if(compoundShape){
                         btTransform T;
                         T.setIdentity();
                         compoundShape->addChildShape(T, meshShape);
                     }else
-                        model->collisionShape = meshShape;
+                        ginfo->collisionShape = meshShape;
                 }
             }else{
-                if(!model->vertices.empty()){
-                    model->trimesh = new btTriangleMesh();
-                    for (size_t i=0; i<model->triangles.size()/3; i++){
-                        int index0 = model->triangles[i*3];
-                        int index1 = model->triangles[i*3+1];
-                        int index2 = model->triangles[i*3+2];
-                        vector<btScalar>& vertices = model->vertices;
+                if(!ginfo->vertices.empty()){
+                    ginfo->trimesh = new btTriangleMesh();
+                    for (size_t i=0; i<ginfo->triangles.size()/3; i++){
+                        int index0 = ginfo->triangles[i*3];
+                        int index1 = ginfo->triangles[i*3+1];
+                        int index2 = ginfo->triangles[i*3+2];
+                        vector<btScalar>& vertices = ginfo->vertices;
                         btVector3 vertex0(vertices[index0*3], vertices[index0*3+1], vertices[index0*3+2]);
                         btVector3 vertex1(vertices[index1*3], vertices[index1*3+1], vertices[index1*3+2]);
                         btVector3 vertex2(vertices[index2*3], vertices[index2*3+1], vertices[index2*3+2]);
-                        model->trimesh->addTriangle(vertex0,vertex1,vertex2);
+                        ginfo->trimesh->addTriangle(vertex0,vertex1,vertex2);
                     }
-                    btBvhTriangleMeshShape* concaveShape = new btBvhTriangleMeshShape(model->trimesh, true);
+                    btBvhTriangleMeshShape* concaveShape = new btBvhTriangleMeshShape(ginfo->trimesh, true);
                     concaveShape->setMargin(DEFAULT_COLLISION_MARGIN);
-                    btCompoundShape* compoundShape = dynamic_cast<btCompoundShape*>(model->collisionShape);
+                    btCompoundShape* compoundShape = dynamic_cast<btCompoundShape*>(ginfo->collisionShape);
                     if(compoundShape){
                         btTransform T;
                         T.setIdentity();
                         compoundShape->addChildShape(T, concaveShape);
                     }else
-                        model->collisionShape = concaveShape;
+                        ginfo->collisionShape = concaveShape;
                 }
             }
-            model->collisionObject = new btCollisionObject();
-            model->collisionObject->setCollisionShape(model->collisionShape);
-            models.push_back(model);
+            ginfo->collisionObject = new btCollisionObject();
+            ginfo->collisionObject->setCollisionShape(ginfo->collisionShape);
+            geometryInfos.push_back(ginfo);
+            return handle;
         }
     }
 
-    return index;
+    return boost::none;
 }
 
 
-void BulletCollisionDetectorImpl::addMesh(GeometryEx* model)
+void BulletCollisionDetectorImpl::addMesh(GeometryInfo* ginfo)
 {
-    SgMesh* mesh = meshExtractor->currentMesh();
-    const Affine3& T = meshExtractor->currentTransform();
+    SgMesh* mesh = meshExtractor.currentMesh();
+    const Affine3& T = meshExtractor.currentTransform();
 
     bool meshAdded = false;
     
@@ -250,12 +250,12 @@ void BulletCollisionDetectorImpl::addMesh(GeometryEx* model)
         bool doAddPrimitive = false;
         Vector3 scale;
         boost::optional<Vector3> translation;
-        if(!meshExtractor->isCurrentScaled()){
+        if(!meshExtractor.isCurrentScaled()){
             scale.setOnes();
             doAddPrimitive = true;
         } else {
-            Affine3 S = meshExtractor->currentTransformWithoutScaling().inverse() *
-                meshExtractor->currentTransform();
+            Affine3 S = meshExtractor.currentTransformWithoutScaling().inverse() *
+                meshExtractor.currentTransform();
 
             if(S.linear().isDiagonal()){
                 if(!S.translation().isZero()){
@@ -317,13 +317,13 @@ void BulletCollisionDetectorImpl::addMesh(GeometryEx* model)
             }
             if(created){
                 primitiveShape->setMargin(DEFAULT_COLLISION_MARGIN);
-                btCompoundShape* compoundShape = dynamic_cast<btCompoundShape*>(model->collisionShape);
+                btCompoundShape* compoundShape = dynamic_cast<btCompoundShape*>(ginfo->collisionShape);
                 if(!compoundShape){
-                    model->collisionShape = new btCompoundShape();
-                    model->collisionShape->setLocalScaling(btVector3(1.f,1.f,1.f));
-                    compoundShape = dynamic_cast<btCompoundShape*>(model->collisionShape);
+                    ginfo->collisionShape = new btCompoundShape();
+                    ginfo->collisionShape->setLocalScaling(btVector3(1.f,1.f,1.f));
+                    compoundShape = dynamic_cast<btCompoundShape*>(ginfo->collisionShape);
                 }
-                Affine3 T_ = meshExtractor->currentTransformWithoutScaling();
+                Affine3 T_ = meshExtractor.currentTransformWithoutScaling();
                 if(translation){
                     T_ *= Translation3(*translation);
                 }
@@ -339,27 +339,27 @@ void BulletCollisionDetectorImpl::addMesh(GeometryEx* model)
     }
 
     if(!meshAdded){
-        if(!useHACD || model->isStatic){
-            const int vertexIndexTop = model->vertices.size() / 3;
+        if(!useHACD || ginfo->isStatic){
+            const int vertexIndexTop = ginfo->vertices.size() / 3;
 
             const SgVertexArray& vertices_ = *mesh->vertices();
             const int numVertices = vertices_.size();
             for(int i=0; i < numVertices; ++i){
                 const Vector3 v = T * vertices_[i].cast<Position::Scalar>();
-                model->vertices.push_back((btScalar)v.x());
-                model->vertices.push_back((btScalar)v.y());
-                model->vertices.push_back((btScalar)v.z());
+                ginfo->vertices.push_back((btScalar)v.x());
+                ginfo->vertices.push_back((btScalar)v.y());
+                ginfo->vertices.push_back((btScalar)v.z());
             }
 
             const int numTriangles = mesh->numTriangles();
             for(int i=0; i < numTriangles; ++i){
                 SgMesh::TriangleRef tri = mesh->triangle(i);
-                model->triangles.push_back(vertexIndexTop + tri[0]);
-                model->triangles.push_back(vertexIndexTop + tri[1]);
-                model->triangles.push_back(vertexIndexTop + tri[2]);
+                ginfo->triangles.push_back(vertexIndexTop + tri[0]);
+                ginfo->triangles.push_back(vertexIndexTop + tri[1]);
+                ginfo->triangles.push_back(vertexIndexTop + tri[2]);
             }
         }else{
-            btConvexHullShape* convexHullShape = dynamic_cast<btConvexHullShape*>(model->collisionShape);
+            btConvexHullShape* convexHullShape = dynamic_cast<btConvexHullShape*>(ginfo->collisionShape);
             if(convexHullShape){
                 btCompoundShape* compoundShape = new btCompoundShape();
                 compoundShape->setLocalScaling(btVector3(1.f,1.f,1.f));
@@ -367,7 +367,7 @@ void BulletCollisionDetectorImpl::addMesh(GeometryEx* model)
                 btTransform T;
                 T.setIdentity();
                 compoundShape->addChildShape(T, convexHullShape);
-                model->collisionShape = compoundShape;
+                ginfo->collisionShape = compoundShape;
             }
 
             std::vector< HACD::Vec3<HACD::Real> > points;
@@ -416,10 +416,10 @@ void BulletCollisionDetectorImpl::addMesh(GeometryEx* model)
 
             nClusters = hacd.GetNClusters();
             if(nClusters>1){
-                btCompoundShape* compoundShape = dynamic_cast<btCompoundShape*>(model->collisionShape);
+                btCompoundShape* compoundShape = dynamic_cast<btCompoundShape*>(ginfo->collisionShape);
                 if(!compoundShape){
-                    model->collisionShape = new btCompoundShape();
-                    model->collisionShape->setLocalScaling(btVector3(1.f,1.f,1.f));
+                    ginfo->collisionShape = new btCompoundShape();
+                    ginfo->collisionShape->setLocalScaling(btVector3(1.f,1.f,1.f));
                 }
             }
 
@@ -464,26 +464,37 @@ void BulletCollisionDetectorImpl::addMesh(GeometryEx* model)
                 */
                 btConvexHullShape* convexHullShape_ = new btConvexHullShape(&(newVertices_[0].getX()), newVertices_.size());
                 convexHullShape_->setMargin(DEFAULT_COLLISION_MARGIN);
-                btCompoundShape* compoundShape = dynamic_cast<btCompoundShape*>(model->collisionShape);
+                btCompoundShape* compoundShape = dynamic_cast<btCompoundShape*>(ginfo->collisionShape);
                 if(compoundShape)
                     compoundShape->addChildShape(T, convexHullShape_);
                 else
-                    model->collisionShape = convexHullShape_;
+                    ginfo->collisionShape = convexHullShape_;
             }
         }
     }
 }
 
 
-void BulletCollisionDetector::setGeometryStatic(int geometryId, bool isStatic)
+void BulletCollisionDetector::setCustomObject(GeometryHandle geometry, Referenced* object)
 {
-    impl->models[geometryId]->isStatic = isStatic;
+    GeometryInfo* ginfo = impl->geometryInfos[geometry];
+    if(ginfo){
+        ginfo->object = object;
+    }
+}
+
+void BulletCollisionDetector::setGeometryStatic(GeometryHandle geometry, bool isStatic)
+{
+    GeometryInfo* ginfo = impl->geometryInfos[geometry];
+    if(ginfo){
+        ginfo->isStatic = isStatic;
+    }
 }
 
 
-void BulletCollisionDetector::setNonInterfarenceGeometyrPair(int geometryId1, int geometryId2)
+void BulletCollisionDetector::setNonInterfarenceGeometyrPair(GeometryHandle geometry1, GeometryHandle geometry2)
 {
-    impl->nonInterfarencePairs.insert(IdPair<>(geometryId1, geometryId2));
+    impl->nonInterfarencePairs.insert(make_pair(geometry1, geometry2));
 }
 
 
@@ -495,18 +506,18 @@ bool BulletCollisionDetector::makeReady()
 
 bool BulletCollisionDetectorImpl::makeReady()
 {
-    modelPairs.clear();
+    interfarencePairs.clear();
 
-    const int n = models.size();
+    const int n = geometryInfos.size();
     for(int i=0; i < n; ++i){
-        GeometryExPtr& model1 = models[i];
-        if(model1){
+        GeometryInfo* info1 = geometryInfos[i];
+        if(info1){
             for(int j = i+1; j < n; ++j){
-                GeometryExPtr& model2 = models[j];
-                if(model2){
-                    if(!model1->isStatic || !model2->isStatic){
-                        if(nonInterfarencePairs.find(IdPair<>(i, j)) == nonInterfarencePairs.end()){
-                            modelPairs.insert(IdPair<>(i,j));
+                GeometryInfo* info2 = geometryInfos[j];
+                if(info2){
+                    if(!info1->isStatic || !info2->isStatic){
+                        if(nonInterfarencePairs.find(make_pair(i, j)) == nonInterfarencePairs.end()){
+                            interfarencePairs.insert(make_pair(i,j));
                         }
                     }
                 }
@@ -517,16 +528,31 @@ bool BulletCollisionDetectorImpl::makeReady()
 }
 
 
-void BulletCollisionDetector::updatePosition(int geometryId, const Position& position)
+void BulletCollisionDetector::updatePosition(GeometryHandle geometry, const Position& position)
 {
-    impl->updatePosition(geometryId, position);
+    GeometryInfo* ginfo = impl->geometryInfos[geometry];
+    if(ginfo){
+        impl->setGeometryPosition(ginfo, position);
+    }
 }
 
 
-void BulletCollisionDetectorImpl::updatePosition(int geometryId, const Position& position)
+void BulletCollisionDetector::updatePositions
+(std::function<void(Referenced* object, Position*& out_Position)> positionQuery)
 {
-    GeometryExPtr& model = models[geometryId];
-    if(model){
+    for(auto& info : impl->geometryInfos){
+        if(info){
+            Position* T;
+            positionQuery(info->object, T);
+            impl->setGeometryPosition(info, *T);
+        }
+    }
+}
+
+
+void BulletCollisionDetectorImpl::setGeometryPosition(GeometryInfo* ginfo, const Position& position)
+{
+    if(ginfo){
         btVector3 p(position(0,3), position(1,3), position(2,3));
         btMatrix3x3 R(position(0,0), position(0,1), position(0,2),
                       position(1,0), position(1,1), position(1,2),
@@ -534,44 +560,41 @@ void BulletCollisionDetectorImpl::updatePosition(int geometryId, const Position&
         btTransform transform;
         transform.setBasis(R);
         transform.setOrigin(p);
-        if(model->collisionObject)
-            model->collisionObject->setWorldTransform(transform);
+        if(ginfo->collisionObject)
+            ginfo->collisionObject->setWorldTransform(transform);
     }
 }
 
 
 void BulletCollisionDetector::detectCollisions(std::function<void(const CollisionPair&)> callback)
 {
-    impl->detectCollisions(callback);
+    impl->callbackOnCollisionDetected = callback;
+    impl->detectCollisions();
 }
 
 
-void BulletCollisionDetectorImpl::detectCollisions(std::function<void(const CollisionPair&)> callback)
+void BulletCollisionDetectorImpl::detectCollisions()
 {
-    CollisionPair collisionPair;
-    vector<Collision>& collisions = collisionPair.collisions;
-    
-    for(IdPairSet::iterator it = modelPairs.begin(); it!=modelPairs.end(); it++){
-        GeometryExPtr& model1 = models[(*it)(0)];
-        GeometryExPtr& model2 = models[(*it)(1)];
-        collisions.clear();
+    for(auto& interfarencePair : interfarencePairs){
+        GeometryInfo* ginfo1 = geometryInfos[interfarencePair.first];
+        GeometryInfo* ginfo2 = geometryInfos[interfarencePair.second];
 
-        if(model1->collisionObject && model2->collisionObject)
-            detectObjectCollisions(model1->collisionObject, model2->collisionObject, collisionPair);
+        if(ginfo1->collisionObject && ginfo2->collisionObject){
+            CollisionPair collisionPair(
+                    ginfo1->geometryHandle, ginfo1->object, ginfo2->geometryHandle, ginfo2->object);
+            detectObjectCollisions(ginfo1->collisionObject, ginfo2->collisionObject, collisionPair);
 
-        if(!collisions.empty()){
-            collisionPair.geometryId[0] = (*it)(0);
-            collisionPair.geometryId[1] = (*it)(1);
-            callback(collisionPair);
+            if(!collisionPair.collisions().empty()){
+                callbackOnCollisionDetected(collisionPair);
+            }
         }
     }
-
 }
 
 
 void BulletCollisionDetectorImpl::detectObjectCollisions(btCollisionObject* object1, btCollisionObject* object2, CollisionPair& collisionPair)
 {
-    vector<Collision>& collisions = collisionPair.collisions;
+    CollisionArray& collisions = collisionPair.collisions();
     #ifdef BT_VER_GT_281
     btCollisionObjectWrapper objectWrapper1(0, object1->getCollisionShape(), object1, object1->getWorldTransform(), -1, -1);
     btCollisionObjectWrapper objectWrapper2(0, object2->getCollisionShape(), object2, object2->getWorldTransform(), -1, -1);
@@ -580,7 +603,12 @@ void BulletCollisionDetectorImpl::detectObjectCollisions(btCollisionObject* obje
     btCollisionObjectWrapper objectWrapper2(0, object2->getCollisionShape(), object2, object2->getWorldTransform());
     #endif
 
+#ifdef BT_VER_GT_286
+    btCollisionAlgorithm* algo = collisionWorld->getDispatcher()->findAlgorithm(&objectWrapper1, &objectWrapper2, 0, BT_CONTACT_POINT_ALGORITHMS);
+#else
     btCollisionAlgorithm* algo = collisionWorld->getDispatcher()->findAlgorithm(&objectWrapper1, &objectWrapper2);
+#endif
+
     if (algo){
         btManifoldResult contactPointResult(&objectWrapper1, &objectWrapper2);
         algo->processCollision(&objectWrapper1, &objectWrapper2, collisionWorld->getDispatchInfo(), &contactPointResult);

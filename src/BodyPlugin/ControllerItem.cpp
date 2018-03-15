@@ -18,7 +18,8 @@ ControllerItem::ControllerItem()
 
 
 ControllerItem::ControllerItem(const ControllerItem& org)
-    : Item(org)
+    : Item(org),
+      optionString_(org.optionString_)
 {
     isNoDelayMode_ = org.isNoDelayMode_;
 }

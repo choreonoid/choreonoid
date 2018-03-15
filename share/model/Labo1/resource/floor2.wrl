@@ -1,0 +1,39 @@
+#VRML V2.0 utf8
+
+Transform {
+  translation 0.91469 1.195 1.4475
+  children [
+    DEF wall1 Shape {
+      appearance
+	Appearance {
+	  material
+	    Material {
+	      diffuseColor 0.5 0.5 0.5
+	      specularColor 0.2 0.2 0.2
+	    }
+	}
+      geometry
+	DEF _101 IndexedFaceSet {
+	  coord
+	    Coordinate {
+	      point
+		[
+		  -2.67 1.295 2.5 
+		  -2.67 -1.295 2.5 
+		  2.67 1.295 2.5 
+		  2.67 -1.295 2.5 
+		  2.67 1.295 -1.5 
+		  2.67 -1.295 -1.5 
+		  -2.67 1.295 -1.5 
+		  -2.67 -1.295 -1.5 
+		]
+	    }
+	  coordIndex
+	    [
+	      3 5 7 1 -1 
+	    ]
+	  creaseAngle 0.5
+	}
+    }
+  ]
+}
