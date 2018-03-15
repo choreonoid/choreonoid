@@ -22,28 +22,7 @@ if(UNIX AND NOT APPLE)
   set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-Bsymbolic")
 endif()
 
-if(UNIX)
-  if(NOT OPENRTM_DIR)
-    pkg_check_modules(OPENRTM REQUIRED openrtm-aist)
-    execute_process(
-      COMMAND pkg-config --variable=prefix openrtm-aist
-      OUTPUT_VARIABLE OPENRTM_DIR
-      RESULT_VARIABLE RESULT
-      OUTPUT_STRIP_TRAILING_WHITESPACE)
-  endif()
-
-  set(OPENRTM_INCLUDE_DIRS
-    ${OPENRTM_DIR}/include/coil-${OPENRTM_VERSION_MAJOR}.${OPENRTM_VERSION_MINOR}
-    ${OPENRTM_DIR}/include/openrtm-${OPENRTM_VERSION_MAJOR}.${OPENRTM_VERSION_MINOR}
-    ${OPENRTM_DIR}/include/openrtm-${OPENRTM_VERSION_MAJOR}.${OPENRTM_VERSION_MINOR}/rtm/idl
-    )
-endif()
-
 include_directories(${OPENRTM_INCLUDE_DIRS})
-set(IDL_INCLUDE_DIRS 
-  ${OPENRTM_DIR}/include/openrtm-${OPENRTM_VERSION_MAJOR}.${OPENRTM_VERSION_MINOR}/rtm/idl
-  ${OPENRTM_DIR}/rtm/idl
-  )
 link_directories(${OPENRTM_LIBRARY_DIRS})
 
 foreach(version ${versions})
