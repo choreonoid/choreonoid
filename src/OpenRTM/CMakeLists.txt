@@ -24,6 +24,10 @@ if(OPENRTM_DIR)
     ${OPENRTM_DIR}
     )
   set(OPENRTM_INCLUDE_DIRS ${OPENRTM_INCLUDE_DIRS} PARENT_SCOPE)
+  set(OPENRTM_VERSION ${OPENRTM_VERSION} PARENT_SCOPE)
+  if(OPENRTM_VERSION STRLESS "1.2.0")
+    list(APPEND OPENRTM_DEFINITIONS -DOPENRTM_VERSION11)
+  endif()
 endif()
 
 # Make the following variables accessible from other directories
