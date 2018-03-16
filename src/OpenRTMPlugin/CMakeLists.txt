@@ -75,13 +75,15 @@ if(MSVC)
 add_definitions(-D__WIN32__ -D__x86__ -D__NT__ -D__OSVERSION__=4 -D_CRT_SECURE_NO_DEPRECATE -D_WIN32_WINNT=0x0500 -DRTC_CORBA_CXXMAPPING11)
 endif()
 
+idl_compile_cpp(idl_cpp_files idl_h_files deprecated/corba PointCloud LOCAL)
+
 make_gettext_mofiles(${plugin} mofiles)
 
 include_directories(${OPENRTM_INCLUDE_DIRS})
 link_directories(${OPENRTM_LIBRARY_DIRS})
 add_definitions(${OPENRTM_DEFINITIONS})
 
-add_cnoid_plugin(${plugin} SHARED ${plugin_sources} ${plugin_headers} ${mofiles} ${RC_SRCS})
+add_cnoid_plugin(${plugin} SHARED ${plugin_sources} ${plugin_headers} ${idl_cpp_files} ${idl_h_files} ${mofiles} ${RC_SRCS})
 
 target_link_libraries(${plugin} CnoidBodyPlugin CnoidCorbaPlugin CnoidBodyIoRTC ${OPENRTM_LIBRARIES})
 apply_common_setting_for_plugin(${plugin} "${plugin_headers}")

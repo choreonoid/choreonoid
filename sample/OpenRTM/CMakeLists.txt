@@ -5,45 +5,6 @@ elseif(NOT BUILD_OPENRTM_PLUGIN)
   message(FATAL_ERROR "OpenRTM samples need to build OpenRTMPlugin.")
 endif()
 
-message(STATUS "sample/OpenRTM Build" )
-
-if(UNIX)
-  if(NOT OPENRTM_DIR)
-    pkg_check_modules(OPENRTM REQUIRED openrtm-aist)
-    message(STATUS "OPENRTM VERSION ${OPENRTM_VERSION}" )
-    execute_process(
-      COMMAND pkg-config --variable=prefix openrtm-aist
-      OUTPUT_VARIABLE OPENRTM_DIR
-      RESULT_VARIABLE RESULT
-      OUTPUT_STRIP_TRAILING_WHITESPACE)
-    message(STATUS "OPENRTM_DIR=${OPENRTM_DIR}")
-    if(OPENRTM_VERSION STRLESS "1.2.0")
-      set(OPENRTM_DEFINITIONS -DOPENRTM_VERSION11)
-    endif()
-  endif()
-elseif(MSVC)
-  if(NOT OPENRTM_DIR)
-    message(FATAL_ERROR "Please specify the directory of OpenRTM-aist to OPENRTM_DIR.")
-  endif()
-endif()
-
-if(UNIX)
-  if(OPENRTM_VERSION STRLESS "1.2.0")
-    set(OPENRTM_INCLUDE_DIRS
-      ${OPENRTM_DIR}/include 
-      ${OPENRTM_DIR}/include/coil-1.1
-      ${OPENRTM_DIR}/include/openrtm-1.1 
-      ${OPENRTM_DIR}/include/openrtm-1.1/rtm/idl
-      ${OPENRTM_DIR}/include/openrtm-1.1/rtm/ext
-      ${OPENRTM_DIR}/rtm # for the Windows installer version
-      ${OPENRTM_DIR}/rtm/idl # for the Windows installer version
-      ${OPENRTM_DIR}
-      )
-    message(STATUS "OPENRTM INCLUDE DIRS ${OPENRTM_INCLUDE_DIRS}" )
-  endif()
-endif()
-
-
 include_directories(${OPENRTM_INCLUDE_DIRS})
 link_directories(${OPENRTM_LIBRARY_DIRS})
 if(WIN32)

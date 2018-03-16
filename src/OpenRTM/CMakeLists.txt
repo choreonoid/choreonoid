@@ -2,8 +2,6 @@ if(NOT BUILD_OPENRTM_PLUGIN)
   return()
 endif()
 
-message(STATUS "src/OpenRTM Build" )
-
 if(UNIX)
   if(NOT OPENRTM_DIR)
     pkg_check_modules(OPENRTM REQUIRED openrtm-aist)
@@ -13,21 +11,29 @@ if(UNIX)
       RESULT_VARIABLE RESULT
       OUTPUT_STRIP_TRAILING_WHITESPACE)
   endif()
+else()
+  find_package(OpenRTM)
 endif()
 
 if(OPENRTM_DIR)
-  set(OPENRTM_INCLUDE_DIRS
-    ${OPENRTM_DIR}/include/coil-${OPENRTM_VERSION_MAJOR}.${OPENRTM_VERSION_MINOR}
-    ${OPENRTM_DIR}/include/openrtm-${OPENRTM_VERSION_MAJOR}.${OPENRTM_VERSION_MINOR}
-    ${OPENRTM_DIR}/include/openrtm-${OPENRTM_VERSION_MAJOR}.${OPENRTM_VERSION_MINOR}/rtm/idl
-    ${OPENRTM_DIR}/rtm/idl
-    ${OPENRTM_DIR}
-    )
+  if(MSVC)
+    set(OPENRTM_INCLUDE_DIRS
+      ${OPENRTM_DIR}/include/coil-${OPENRTM_VERSION_MAJOR}.${OPENRTM_VERSION_MINOR}
+      ${OPENRTM_DIR}/include/openrtm-${OPENRTM_VERSION_MAJOR}.${OPENRTM_VERSION_MINOR}
+      ${OPENRTM_DIR}/include/openrtm-${OPENRTM_VERSION_MAJOR}.${OPENRTM_VERSION_MINOR}/rtm/idl
+      ${OPENRTM_DIR}/rtm/idl
+      ${OPENRTM_DIR}
+      )
+  else()
+    set(OPENRTM_LIBRARY_DIRS ${OPENRTM_DIR}/lib)
+  endif()
+    
   set(OPENRTM_INCLUDE_DIRS ${OPENRTM_INCLUDE_DIRS} PARENT_SCOPE)
   set(OPENRTM_VERSION ${OPENRTM_VERSION} PARENT_SCOPE)
   if(OPENRTM_VERSION STRLESS "1.2.0")
     list(APPEND OPENRTM_DEFINITIONS -DOPENRTM_VERSION11)
   endif()
+  set(OPENRTM_LIBRARIES ${OPENRTM_LIBRARIES} rtmCamera)
 endif()
 
 # Make the following variables accessible from other directories
@@ -35,7 +41,6 @@ set(OPENRTM_DEFINITIONS ${OPENRTM_DEFINITIONS} PARENT_SCOPE)
 add_definitions(${OPENRTM_DEFINITIONS})
 include_directories(${OPENRTM_INCLUDE_DIRS})
 link_directories(${OPENRTM_LIBRARY_DIRS})
-
 
 # Port data type stubs
 set(IDL_INCLUDE_DIRS
@@ -57,9 +62,7 @@ add_cnoid_library(${target2} SHARED ${sources} ${headers})
 target_link_libraries(${target2} CnoidBody CnoidCorba ${OPENRTM_LIBRARIES})
 apply_common_setting_for_library(${target2} "${headers}")
 
-
 function(add_cnoid_body_io_rtc)
-
   set(target ${ARGV0})
   list(REMOVE_AT ARGV 0)
 
@@ -80,5 +83,4 @@ function(add_cnoid_body_io_rtc)
   install(TARGETS ${target}
     RUNTIME DESTINATION ${CNOID_PLUGIN_SUBDIR}/rtc CONFIGURATIONS Release Debug
     LIBRARY DESTINATION ${CNOID_PLUGIN_SUBDIR}/rtc CONFIGURATIONS Release Debug)
-
 endfunction()
