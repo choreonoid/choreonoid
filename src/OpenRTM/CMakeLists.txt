@@ -23,6 +23,7 @@ if(OPENRTM_DIR)
     ${OPENRTM_DIR}/rtm/idl
     ${OPENRTM_DIR}
     )
+  set(OPENRTM_INCLUDE_DIRS ${OPENRTM_INCLUDE_DIRS} PARENT_SCOPE)
 endif()
 
 # Make the following variables accessible from other directories
@@ -33,10 +34,11 @@ link_directories(${OPENRTM_LIBRARY_DIRS})
 
 
 # Port data type stubs
-set(IDL_INCLUDE_DIRS 
+set(IDL_INCLUDE_DIRS
   ${OPENRTM_DIR}/include/openrtm-${OPENRTM_VERSION_MAJOR}.${OPENRTM_VERSION_MINOR}/rtm/idl
   ${OPENRTM_DIR}/rtm/idl # for the Windows installer version
   )
+set(IDL_INCLUDE_DIRS ${IDL_INCLUDE_DIRS} PARENT_SCOPE)
 
 # BodyIoRTC
 set(target2 CnoidBodyIoRTC)
