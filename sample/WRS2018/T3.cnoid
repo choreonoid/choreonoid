@@ -137,6 +137,29 @@ items:
             collisionDetection: true
             selfCollisionDetection: false
             isEditable: true
+        - 
+          id: 7
+          name: "Spreader"
+          plugin: Body
+          class: BodyItem
+          data: 
+            modelFile: "${SHARE}/model/WRS2018/Spreader.body"
+            currentBaseLink: "BASE"
+            rootPosition: [ 4, 1.5, 0.085 ]
+            rootAttitude: [ 
+              5.86497126e-17, -1, 1.7595757e-17, 
+              0.957822495, 6.123234e-17, 0.28736052, 
+              -0.28736052, 0, 0.957822495 ]
+            jointPositions: [  ]
+            initialRootPosition: [ 4, 1.5, 0.085 ]
+            initialRootAttitude: [ 
+              -9.77344872e-11, -1, 5.55111512e-17, 
+              0.957822495, -9.77344872e-11, 0.28736052, 
+              -0.28736052, -5.55111512e-17, 0.957822495 ]
+            zmp: [ 0, 0, 0 ]
+            collisionDetection: true
+            selfCollisionDetection: false
+            isEditable: true
 views: 
   - 
     id: 0
@@ -149,7 +172,7 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      checked: [ 2, 3, 4, 5, 6 ]
+      checked: [ 2, 3, 4, 5, 6, 7 ]
       expanded: [ 1, 5 ]
   - 
     id: 2
@@ -200,12 +223,12 @@ views:
           fieldOfView: 0.698132
           near: 0.01
           far: 100
-          eye: [ -5.73348237, -2.15252948, 3.08173248 ]
-          direction: [ 0.958956058, 0.265398885, -0.0998334144 ]
-          up: [ 0.0962165394, 0.0266287095, 0.995004166 ]
+          eye: [ -3.2933426, -2.05504427, 1.5519535 ]
+          direction: [ 0.966539557, 0.246798062, -0.0699428458 ]
+          up: [ 0.0677684922, 0.0173041366, 0.997551 ]
         - 
           camera: [ System, Orthographic ]
-          orthoHeight: 5.73009
+          orthoHeight: 4.4626
           near: 0.01
           far: 100
       backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
@@ -258,9 +281,9 @@ views:
           fieldOfView: 0.698132
           near: 0.01
           far: 100
-          eye: [ -5.70561679, -1.23665242, 3.31145986 ]
-          direction: [ 0.953750871, 0.205334582, -0.219538117 ]
-          up: [ 0.21462057, 0.0462060135, 0.975603923 ]
+          eye: [ -3.37925466, 0.670975868, 1.03565703 ]
+          direction: [ 0.997551, -1.0997106e-12, 0.0699428458 ]
+          up: [ -0.0699428458, 7.71057208e-14, 0.997551 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
@@ -291,6 +314,7 @@ views:
       spinBox: true
       slider: true
       labelOnLeft: true
+      currentBodyItem: 7
   - 
     id: 7
     plugin: Body
@@ -298,16 +322,9 @@ views:
     mounted: true
     state: 
       listingMode: "Link List"
+      currentBodyItem: 7
   - 
     id: 8
-    plugin: Multicopter
-    class: MulticopterMonitorView
-  - 
-    id: 9
-    plugin: OpenRTM
-    class: RTSNameServerView
-  - 
-    id: 10
     plugin: Python
     class: PythonConsoleView
 toolbars: 
@@ -324,11 +341,13 @@ toolbars:
   "KinematicsBar": 
     mode: AUTO
     enablePositionDragger: true
-    penetrationBlock: false
+    penetrationBlock: true
     collisionLinkHighlight: false
     snapDistance: 0.025
     penetrationBlockDepth: 0.0005
     lazyCollisionDetectionMode: true
+  "BodyBar": 
+    current: 7
   "LeggedBodyBar": 
     stanceWidth: 0.15
   "BodyMotionGenerationBar": 
@@ -394,6 +413,11 @@ Body:
         showCenterOfMass: false
         showPpcom: false
         showZmp: false
+      - 
+        bodyItem: 7
+        showCenterOfMass: false
+        showPpcom: false
+        showZmp: false
     staticModelEditing: true
   "KinematicFaultChecker": 
     checkJointPositions: true
@@ -409,11 +433,6 @@ Body:
     inputFrameRate: 200
     isOutputFrameRateSpecified: false
     outputFrameRate: 200
-Media: 
-  "PulseAudioManager": 
-    keepStreamConnection: false
-OpenRTM: 
-  "deleteUnmanagedRTCsOnStartingSimulation": false
 viewAreas: 
   - 
     type: embedded
@@ -421,12 +440,12 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 326, 1588 ]
+      sizes: [ 435, 2119 ]
       children: 
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 470, 470 ]
+          sizes: [ 646, 645 ]
           children: 
             - 
               type: pane
@@ -439,12 +458,12 @@ viewAreas:
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 671, 269 ]
+          sizes: [ 922, 369 ]
           children: 
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 687, 895 ]
+              sizes: [ 918, 1195 ]
               children: 
                 - 
                   type: pane
