@@ -47,20 +47,20 @@ override_dh_auto_build-indep:
 override_dh_auto_install:
 	dh_auto_install -- # Install files in prefix.
 	# Install IDL related headers
-	mkdir -p debian/libcnoid-dev/usr/include/choreonoid-1.6/cnoid
-	cp -r include/cnoid/corba debian/libcnoid-dev/usr/include/choreonoid-1.6/cnoid
+	mkdir -p debian/choreonoid%VERSION%-dev/usr/include/choreonoid-1.7/cnoid
+	cp -r include/cnoid/corba debian/choreonoid%VERSION%-dev/usr/include/choreonoid-1.7/cnoid
 	# Install desktop file
-	mkdir -p debian/choreonoid/usr/share/applications/
+	mkdir -p debian/choreonoid%VERSION%/usr/share/applications/
 	install -m 644 ./debian/choreonoid.desktop \
-	 debian/choreonoid/usr/share/applications/
+	 debian/choreonoid%VERSION%/usr/share/applications/
 	# Install icons.
-	mkdir -p debian/choreonoid/usr/share/icons/hicolor/scalable/apps/
+	mkdir -p debian/choreonoid%VERSION%/usr/share/icons/hicolor/scalable/apps/
 	install -m 644 ./src/Choreonoid/icon/choreonoid.svg \
-	 debian/choreonoid/usr/share/icons/hicolor/scalable/apps/choreonoid.svg
+	 debian/choreonoid%VERSION%/usr/share/icons/hicolor/scalable/apps/choreonoid.svg
 	for s in 16 24 32 48 64 256; do \
-	 mkdir -p "debian/choreonoid/usr/share/icons/hicolor/$$s""x$$s/apps/"; \
+	 mkdir -p "debian/choreonoid%VERSION%/usr/share/icons/hicolor/$$s""x$$s/apps/"; \
 	 install -m 644 "./src/Choreonoid/icon/choreonoid$$s.png" \
-	  "debian/choreonoid/usr/share/icons/hicolor/$$s""x$$s/apps/choreonoid.png"; \
+	  "debian/choreonoid%VERSION%/usr/share/icons/hicolor/$$s""x$$s/apps/choreonoid.png"; \
 	done
 
 %:

@@ -134,6 +134,9 @@ for DISTRO in ${TARGET_DISTROS}; do
 
 	cd ${SRCDIR}
 
+	## replacing package name
+	${SCRIPT_DIR}/rename-debfiles.sh ${SRCDIR}/debian ${VERSION_NAME}
+
 	CHANGELOG=${SRCDIR}/debian/changelog
 	print_info "Creating changelog from the latest git log"
 	## package infomation
@@ -150,11 +153,6 @@ for DISTRO in ${TARGET_DISTROS}; do
 		echo >> ${CHANGELOG}
 		cat ${PREPARED_DEBDIR}/changelog >> ${CHANGELOG}
 	fi
-
-	print_info "Replacing the version contained in the package name"
-	## it is necessary to write placeholdor "%VERSION%" in debian/control
-	## beforehand
-	sed -ie "s/%VERSION%/-${VERSION_NAME}/" ${SRCDIR}/debian/control
 
 	print_info "Building source package"
 	debuild -k${GPG_KEYID} -p"gpg --no-tty --batch --passphrase-fd 0" -S \
