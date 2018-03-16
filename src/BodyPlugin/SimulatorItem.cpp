@@ -1264,12 +1264,15 @@ bool SimulatorItem::isDeviceStateOutputEnabled() const
     return impl->isDeviceStateOutputEnabled;
 }
 
+void SimulatorItem::setSpecifiedRecordingTimeLength(double length)
+{
+    impl->setSpecifiedRecordingTimeLength(length);
+}
 
 void SimulatorItemImpl::setSpecifiedRecordingTimeLength(double length)
 {
     specifiedTimeLength = length;
 }
-
 
 CollisionDetector* SimulatorItem::getOrCreateCollisionDetector()
 {
