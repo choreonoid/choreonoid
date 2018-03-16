@@ -40,7 +40,8 @@ enum ModelID {
     PS4v2,   // new hid-sony driver (kernel version 4.10 or later)
     PS3,     // old hid-sony driver (kernel version 4.9 or earlier)
     PS3v2,   // new hid-sony driver (kernel version 4.10 or later)
-    XBOX, F310, F310_DirectInput,
+    XBOX,
+    F310,
     UNSUPPORTED,
     NUM_MODELS
 };
