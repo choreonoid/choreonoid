@@ -4,16 +4,21 @@
 
 
 #include "MulticopterControllerRTC.h"
+#include <cnoid/Joystick>
 #include <cmath>
 
 using namespace std;
+using namespace cnoid;
 
 namespace {
 
 const double timeStep = 0.005;
-const int rotorAxis[] = { 1, 2, 5, 0 };
-const int cameraAxis = 7;
-const int powerButton = 1;
+const int rotorAxis[] = {
+    Joystick::L_STICK_V_AXIS,
+    Joystick::R_STICK_H_AXIS, Joystick::R_STICK_V_AXIS,
+    Joystick::L_STICK_H_AXIS };
+const int cameraAxis = Joystick::DIRECTIONAL_PAD_V_AXIS;
+const int powerButton = Joystick::A_BUTTON;
 
 const double sign[4][4] = {
     { 1.0, -1.0, -1.0,  1.0 },
