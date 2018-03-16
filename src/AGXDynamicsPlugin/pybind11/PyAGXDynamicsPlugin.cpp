@@ -18,6 +18,11 @@ PYBIND11_MODULE(AGXDynamicsPlugin, m)
     agxSimulatorItemScope
         .def(py::init<>())
         .def("getGravity", (Vector3 (AGXSimulatorItem::*)()) &AGXSimulatorItem::getGravity)
+        .def("setNumThreads", &AGXSimulatorItem::setNumThreads)
+        .def("setEnableContactReduction", &AGXSimulatorItem::setEnableContactReduction)
+        .def("setContactReductionBinResolution", &AGXSimulatorItem::setContactReductionBinResolution)
+        .def("setContactReductionThreshhold", &AGXSimulatorItem::setContactReductionThreshhold)
+        .def("setEnableContactWarmstarting", &AGXSimulatorItem::setEnableContactWarmstarting)
         .def("setEnableAMOR", &AGXSimulatorItem::setEnableAMOR)
         ;
 
