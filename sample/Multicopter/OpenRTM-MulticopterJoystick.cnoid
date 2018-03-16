@@ -94,6 +94,15 @@ items:
                 instanceName: ""
                 executionContext: "ChoreonoidExecutionContext"
                 periodicRate: 0
+            - 
+              id: 20
+              name: "BodyTrackingCamera"
+              plugin: Body
+              class: BodyTrackingCameraItem
+              data: 
+                keepRelativeAttitude: false
+                nearClipDistance: 0.01
+                farClipDistance: 100
         - 
           id: 7
           name: "Floor"
@@ -416,7 +425,7 @@ views:
     mounted: true
     state: 
       selected: [ 9 ]
-      checked: [ 1, 2, 7 ]
+      checked: [ 1, 2, 7, 20 ]
       expanded: [ 1, 2, 9, 12 ]
   - 
     id: 3
@@ -463,16 +472,29 @@ views:
       cameras: 
         - 
           camera: [ System, Perspective ]
-          isCurrent: true
           fieldOfView: 0.698132
           near: 0.01
           far: 100
-          eye: [ -1.40751644, -1.19235961, 1.23928615 ]
+          eye: [ -2.34089605, -1.31751451, 1.42974889 ]
           direction: [ 0.818052366, 0.438501061, -0.372165483 ]
           up: [ 0.328013227, 0.175825111, 0.928166393 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
+          near: 0.01
+          far: 100
+        - 
+          camera: BodyTrackingCamera (Perspective)
+          isCurrent: true
+          fieldOfView: 0.785398
+          near: 0.01
+          far: 100
+          eye: [ -1.67825154, -0.931463669, 0.951585248 ]
+          direction: [ 0.818052366, 0.438501061, -0.372165483 ]
+          up: [ 0.328013227, 0.175825111, 0.928166393 ]
+        - 
+          camera: BodyTrackingCamera (Orthographic)
+          orthoHeight: 2
           near: 0.01
           far: 100
       backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
