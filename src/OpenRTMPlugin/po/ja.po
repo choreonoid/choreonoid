@@ -284,6 +284,10 @@ msgstr "ポーリング周期:"
 msgid "Heartbeat Period:"
 msgstr "ハートビート周期:"
 
+#: RTSDiagramView.cpp:1418
+msgid "Log Output"
+msgstr "ログ出力"
+
 #: RTSDiagramView.cpp:1443
 msgid "OpenRTM Preferences"
 msgstr "OpenRTM設定画面"

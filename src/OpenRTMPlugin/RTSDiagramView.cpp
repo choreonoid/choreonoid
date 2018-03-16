@@ -1415,20 +1415,22 @@ SettingDialog::SettingDialog() {
   leHeartBeat = new QLineEdit;
   QLabel* lblUnitHb = new QLabel("ms");
 #endif
+  chkLog = new QCheckBox(_("Log Output"));
 
   QFrame* frmDetail = new QFrame;
   QGridLayout* gridSubLayout = new QGridLayout(frmDetail);
-  gridSubLayout->addWidget(lblName, 0, 0, 1, 1);
-  gridSubLayout->addWidget(leName, 0, 1, 1, 1);
-  gridSubLayout->addWidget(lblVersion, 1, 0, 1, 1);
-  gridSubLayout->addWidget(leVersion, 1, 1, 1, 1);
-  gridSubLayout->addWidget(lblPolling, 2, 0, 1, 1);
-  gridSubLayout->addWidget(lePoling, 2, 1, 1, 1);
-  gridSubLayout->addWidget(lblUnit, 2, 2, 1, 1);
+  gridSubLayout->addWidget(chkLog, 0, 0, 1, 1);
+  gridSubLayout->addWidget(lblName, 1, 0, 1, 1);
+  gridSubLayout->addWidget(leName, 1, 1, 1, 1);
+  gridSubLayout->addWidget(lblVersion, 2, 0, 1, 1);
+  gridSubLayout->addWidget(leVersion, 2, 1, 1, 1);
+  gridSubLayout->addWidget(lblPolling, 3, 0, 1, 1);
+  gridSubLayout->addWidget(lePoling, 3, 1, 1, 1);
+  gridSubLayout->addWidget(lblUnit, 3, 2, 1, 1);
 #ifndef OPENRTM_VERSION11
-  gridSubLayout->addWidget(lblHeartBeat, 3, 0, 1, 1);
-  gridSubLayout->addWidget(leHeartBeat, 3, 1, 1, 1);
-  gridSubLayout->addWidget(lblUnitHb, 3, 2, 1, 1);
+  gridSubLayout->addWidget(lblHeartBeat, 4, 0, 1, 1);
+  gridSubLayout->addWidget(leHeartBeat, 4, 1, 1, 1);
+  gridSubLayout->addWidget(lblUnitHb, 4, 2, 1, 1);
 #endif
   //
   QFrame* frmButton = new QFrame;
@@ -1458,6 +1460,7 @@ SettingDialog::SettingDialog() {
 #ifndef OPENRTM_VERSION11
   leHeartBeat->setText(QString::number(appVars->get("heartBeatPeriod", 500)));
 #endif
+  chkLog->setChecked(appVars->get("outputLog", false));
 }
 
 void SettingDialog::oKClicked() {
@@ -1467,6 +1470,7 @@ void SettingDialog::oKClicked() {
 #ifndef OPENRTM_VERSION11
   AppConfig::archive()->openMapping("OpenRTM")->write("heartBeatPeriod", leHeartBeat->text().toInt());
 #endif
+  AppConfig::archive()->openMapping("OpenRTM")->write("outputLog", chkLog->isChecked());
   close();
 }
 

@@ -24,6 +24,7 @@
 #include <cnoid/SimulationBar>
 #include <cnoid/Sleep>
 #include <QTcpSocket>
+#include <cnoid/AppConfig>
 #include <rtm/ComponentActionListener.h>
 
 #include "LoggerUtil.h"
@@ -73,20 +74,20 @@ OpenRTMPlugin() : Plugin("OpenRTM") {
 }
     
 virtual bool initialize() {
-        
+
   const char* argv[] = {
       "choreonoid",
       "-f", "./rtc.conf.choreonoid",
       "-o", "manager.shutdown_on_nortcs: NO",
       "-o", "manager.shutdown_auto: NO",
       "-o", "naming.formats: %n.rtc",
+      "-o", "logger.enable: NO",
 #ifdef Q_OS_WIN32
       // To reduce the startup time on Windows
       "-o", "corba.args: -ORBclientCallTimeOutPeriod 100",
 #endif
-			"-o", "logger.enable: YES",
-			"-o", "logger.log_level: TRACE",
-			//"-o", "corba.nameservers: localhost",
+      "-o", "logger.log_level: TRACE",
+      //"-o", "corba.nameservers: localhost",
       //"-o", "exec_cxt.periodic.type: SynchExtTriggerEC",
       //"-o", "exec_cxt.periodic.rate: 1000000",
       //"-o", "manager.is_master: YES"
@@ -94,7 +95,13 @@ virtual bool initialize() {
       //"-o", "logger.file_name: stdout",
       //"-o", "corba.args: -ORBendPoint giop:tcp::2809 -ORBpoaUniquePersistentSystemIds 1"
   };
-        
+
+  MappingPtr appVars = AppConfig::archive()->openMapping("OpenRTM");
+  bool outputLog = appVars->get("outputLog", false);
+  if (outputLog) {
+    argv[10] = "logger.enable: YES";
+  }
+
 #ifdef Q_OS_WIN32
   int numArgs = 11;
 #else
