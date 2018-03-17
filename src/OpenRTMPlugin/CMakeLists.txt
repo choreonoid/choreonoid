@@ -8,8 +8,6 @@ else()
   endif()
 endif()
 
-message(STATUS "src/OpenRTMPlugin Build" )
-
 # Plugin
 set(plugin CnoidOpenRTMPlugin)
 

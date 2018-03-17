@@ -3,51 +3,51 @@ if(NOT BUILD_OPENRTM_PLUGIN)
 endif()
 
 if(UNIX)
-  if(NOT OPENRTM_DIR)
-    pkg_check_modules(OPENRTM REQUIRED openrtm-aist)
-    execute_process(
-      COMMAND pkg-config --variable=prefix openrtm-aist
-      OUTPUT_VARIABLE OPENRTM_DIR
-      RESULT_VARIABLE RESULT
-      OUTPUT_STRIP_TRAILING_WHITESPACE)
-  endif()
+  pkg_check_modules(OPENRTM REQUIRED openrtm-aist)
+  
+  execute_process(
+    COMMAND pkg-config --variable=prefix openrtm-aist
+    OUTPUT_VARIABLE OPENRTM_DIR
+    RESULT_VARIABLE RESULT
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+  
+  execute_process(
+    COMMAND pkg-config --variable=rtm_idldir openrtm-aist
+    OUTPUT_VARIABLE OPENRTM_IDL_DIRS
+    RESULT_VARIABLE RESULT
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+  set(OPENRTM_LIBRARY_DIRS ${OPENRTM_DIR}/lib)
 else()
   find_package(OpenRTM)
+  set(OPENRTM_INCLUDE_DIRS
+    ${OPENRTM_DIR}/include/coil-${OPENRTM_VERSION_MAJOR}.${OPENRTM_VERSION_MINOR}
+    ${OPENRTM_DIR}/include/openrtm-${OPENRTM_VERSION_MAJOR}.${OPENRTM_VERSION_MINOR}
+    ${OPENRTM_DIR}/include/openrtm-${OPENRTM_VERSION_MAJOR}.${OPENRTM_VERSION_MINOR}/rtm/idl
+    ${OPENRTM_DIR}/rtm/idl
+    ${OPENRTM_DIR}
+    )
+  set(OPENRTM_IDL_DIRS
+    ${OPENRTM_DIR}/include/openrtm-${OPENRTM_VERSION_MAJOR}.${OPENRTM_VERSION_MINOR}/rtm/idl
+    ${OPENRTM_DIR}/rtm/idl # for the Windows installer version
+    )
+endif()
+  
+if(NOT OPENRTM_DIR)
+  message(FATAL_ERROR "Could not find OpenRTM")
 endif()
 
-if(OPENRTM_DIR)
-  if(MSVC)
-    set(OPENRTM_INCLUDE_DIRS
-      ${OPENRTM_DIR}/include/coil-${OPENRTM_VERSION_MAJOR}.${OPENRTM_VERSION_MINOR}
-      ${OPENRTM_DIR}/include/openrtm-${OPENRTM_VERSION_MAJOR}.${OPENRTM_VERSION_MINOR}
-      ${OPENRTM_DIR}/include/openrtm-${OPENRTM_VERSION_MAJOR}.${OPENRTM_VERSION_MINOR}/rtm/idl
-      ${OPENRTM_DIR}/rtm/idl
-      ${OPENRTM_DIR}
-      )
-  else()
-    set(OPENRTM_LIBRARY_DIRS ${OPENRTM_DIR}/lib)
-  endif()
-    
-  set(OPENRTM_INCLUDE_DIRS ${OPENRTM_INCLUDE_DIRS} PARENT_SCOPE)
-  set(OPENRTM_VERSION ${OPENRTM_VERSION} PARENT_SCOPE)
-  if(OPENRTM_VERSION STRLESS "1.2.0")
-    list(APPEND OPENRTM_DEFINITIONS -DOPENRTM_VERSION11)
-  endif()
-  set(OPENRTM_LIBRARIES ${OPENRTM_LIBRARIES} rtmCamera)
+set(OPENRTM_VERSION ${OPENRTM_VERSION} PARENT_SCOPE)
+if(OPENRTM_VERSION STRLESS "1.2.0")
+  list(APPEND OPENRTM_DEFINITIONS -DOPENRTM_VERSION11)
 endif()
-
-# Make the following variables accessible from other directories
 set(OPENRTM_DEFINITIONS ${OPENRTM_DEFINITIONS} PARENT_SCOPE)
+set(OPENRTM_INCLUDE_DIRS ${OPENRTM_INCLUDE_DIRS} PARENT_SCOPE)
+set(IDL_INCLUDE_DIRS ${IDL_INCLUDE_DIRS} ${OPENRTM_IDL_DIRS} PARENT_SCOPE)
+set(OPENRTM_LIBRARIES ${OPENRTM_LIBRARIES} rtmCamera)
+
 add_definitions(${OPENRTM_DEFINITIONS})
 include_directories(${OPENRTM_INCLUDE_DIRS})
 link_directories(${OPENRTM_LIBRARY_DIRS})
-
-# Port data type stubs
-set(IDL_INCLUDE_DIRS
-  ${OPENRTM_DIR}/include/openrtm-${OPENRTM_VERSION_MAJOR}.${OPENRTM_VERSION_MINOR}/rtm/idl
-  ${OPENRTM_DIR}/rtm/idl # for the Windows installer version
-  )
-set(IDL_INCLUDE_DIRS ${IDL_INCLUDE_DIRS} PARENT_SCOPE)
 
 # BodyIoRTC
 set(target2 CnoidBodyIoRTC)
