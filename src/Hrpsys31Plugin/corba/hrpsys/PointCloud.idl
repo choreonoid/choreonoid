@@ -1,0 +1,114 @@
+/* RTC:OpenNI
+ *
+ * Copyright (C) 2011
+ *     Geoffrey Biggs
+ *     RT-Synthesis Research Group
+ *     Intelligent Systems Research Institute,
+ *     National Institute of Advanced Industrial Science and Technology (AIST),
+ *     Japan
+ *     All rights reserved.
+ * Licensed under the Eclipse Public License -v 1.0 (EPL)
+ * http://www.opensource.org/licenses/eclipse-1.0.txt
+ *
+ * Point cloud data type.
+ */
+
+
+#ifndef POINTCLOUD_IDL__
+#define POINTCLOUD_IDL__
+
+module PointCloudTypes
+{
+    // These data structures store clouds of N-dimensional points. Each point
+    // can contain information such as normals, intensity, colour data, etc.
+    // The point data is stored as a binary blob, with the layout of each point
+    // in the cloud described in a "fields" array.
+
+    // The point cloud data may be organised in 2D (like an image) or 1D
+    // (unordered cloud). Point clouds organised in 2D are typically produced
+    // by camera depth sensors such as stereo cameras or time-of-flight
+    // cameras.
+
+    // These data structures are compatible with the PointCloud2 message from
+    // ROS Diamondback.
+
+    // Time stamp
+    struct Time
+    {
+        unsigned long sec;
+        unsigned long nsec;
+    };
+
+    // Possible data types that can be used in point fields.
+    enum DataType
+    {
+        INT8,
+        UINT8,
+        INT16,
+        UINT16,
+        INT32,
+        UINT32,
+        FLOAT32,
+        FLOAT64
+    };
+
+    // Specifies the data type of a field in a point.
+    // e.g. XYZRGB points would be stored as six fields:
+    // "x": offset 0, float32, 4 bytes length
+    // "y": offset 4, float32, 4 bytes length
+    // "z": offset 8, float32, 4 bytes length
+    // "r": offset 12, uint8, 1 byte length
+    // "g": offset 13, uint8, 1 byte length
+    // "b": offset 14, uint8, 1 byte length
+    struct PointField
+    {
+        // Name of the field
+        string name;
+        // Offset into a point of the field's data
+        unsigned long offset;
+        // Data type used by the field
+        DataType data_type;
+        // Number of bytes in the field
+        unsigned long count;
+    };
+    typedef sequence<PointField> PointFieldList;
+
+    // Stores a complete point cloud.
+    struct PointCloud
+    {
+        // Time stamp.
+        Time tm;
+        // Sequence stamp
+        unsigned long seq;
+
+        // 2D structure of the cloud.
+        // If the cloud is unordered, height should be 1
+        // and width is the number of points in the cloud.
+        unsigned long height;
+        unsigned long width;
+
+        // Name of the point type
+        string type;
+        // Data channels present in each point.
+        PointFieldList fields;
+
+        // Is the data big-endian?
+        boolean is_bigendian;
+        // Length of a point in bytes.
+        unsigned long point_step;
+        // Length of a row in bytes.
+        unsigned long row_step;
+        // Raw point data. Size is (row_step * height).
+#ifdef TARGET_IS_DDS
+        sequence<octet, 10485760> data;
+#else
+        sequence<octet> data;
+#endif // TARGET_IS_DDS
+
+        // True if there are no invalid points.
+        boolean is_dense;
+    };
+}; // module RTC
+
+#endif // POINTCLOUD_IDL__
+

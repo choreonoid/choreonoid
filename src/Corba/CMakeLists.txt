@@ -22,7 +22,7 @@ apply_common_setting_for_library(${target} "${headers}")
 
 # name server
 set(target cnoid-nameserver)
-idl_compile_cpp(idl_cpp_files idl_h_files corba Naming)
+idl_compile_cpp(idl_cpp_files idl_h_files corba Naming LOCAL)
 add_cnoid_executable(${target} NameServer.cpp CosNaming_impl.cpp ${idl_cpp_files})
 target_link_libraries(${target} ${OMNIORB_LIBRARIES} ${Boost_SYSTEM_LIBRARY} ${Boost_THREAD_LIBRARY})
 
