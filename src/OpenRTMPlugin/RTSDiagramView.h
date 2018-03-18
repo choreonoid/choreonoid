@@ -9,6 +9,7 @@
 #include <cnoid/View>
 #include <cnoid/Dialog>
 #include <QLineEdit>
+#include <QCheckBox>
 
 using namespace cnoid;
 
@@ -57,6 +58,7 @@ private:
 #ifndef OPENRTM_VERSION110
   QLineEdit* leHeartBeat;
 #endif
+  QCheckBox* chkLog;
 };
 
 }
