@@ -55,6 +55,9 @@ add_cnoid_body_io_rtc(TankVisionSensorIoRTC TankVisionSensorIoRTC.cpp)
 add_cnoid_sample_rtc(JoystickRTC JoystickRTC.cpp)
 target_link_libraries(JoystickRTC CnoidUtil)
 
+add_cnoid_sample_rtc(RemoteJoystickRTC RemoteJoystickRTC.cpp)
+target_link_libraries(RemoteJoystickRTC CnoidUtil)
+
 # Tank Joystick Controller
 set(target TankJoystickControllerRTC)
 add_cnoid_sample_rtc(${target} TankJoystickControllerRTC.cpp)

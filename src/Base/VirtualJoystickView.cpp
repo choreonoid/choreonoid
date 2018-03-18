@@ -94,8 +94,8 @@ public:
     virtual double getPosition(int axis) const;
     virtual bool getButtonState(int button) const;
     virtual bool isActive() const;
-    virtual SignalProxy<void(int id, bool isPressed)> sigButton();
     virtual SignalProxy<void(int id, double position)> sigAxis();
+    virtual SignalProxy<void(int id, bool isPressed)> sigButton();
 };
 
 }
