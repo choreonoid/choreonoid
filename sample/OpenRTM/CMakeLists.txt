@@ -60,3 +60,8 @@ set(target TankJoystickControllerRTC)
 add_cnoid_sample_rtc(${target} TankJoystickControllerRTC.cpp)
 configure_file(OpenRTM-TankJoystick.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 configure_file(OpenRTM-TankVisionSensors.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+
+configure_file(OpenRTM-TankVisionSensors-OldIDL.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+configure_file(TankSystem.xml ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+configure_file(TankVisionSensorOut.conf
+  ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}/rtc/TankVisionSensorOut.conf COPYONLY)
