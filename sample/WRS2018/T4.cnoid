@@ -45,11 +45,11 @@ items:
                 isEditable: false
             - 
               id: 4
-              name: "TunnelWall20m"
+              name: "TunnelWall20m-L"
               plugin: Body
               class: BodyItem
               data: 
-                modelFile: "${SHARE}/model/WRS2018/TunnelWall20m.body"
+                modelFile: "${SHARE}/model/WRS2018/TunnelWall20m-L.body"
                 currentBaseLink: "Base"
                 rootPosition: [ 0, 0, 0 ]
                 rootAttitude: [ 
@@ -68,6 +68,29 @@ items:
                 isEditable: false
             - 
               id: 5
+              name: "TunnelWall20m-R"
+              plugin: Body
+              class: BodyItem
+              data: 
+                modelFile: "${SHARE}/model/WRS2018/TunnelWall20m-R.body"
+                currentBaseLink: "Base"
+                rootPosition: [ 0, 0, 0 ]
+                rootAttitude: [ 
+                  1, 0, 0, 
+                  0, 1, 0, 
+                  0, 0, 1 ]
+                jointPositions: [  ]
+                initialRootPosition: [ 0, 0, 0 ]
+                initialRootAttitude: [ 
+                  1, 0, 0, 
+                  0, 1, 0, 
+                  0, 0, 1 ]
+                zmp: [ 0, 0, 0 ]
+                collisionDetection: true
+                selfCollisionDetection: false
+                isEditable: false
+            - 
+              id: 6
               name: "Debris-L"
               plugin: Body
               class: BodyItem
@@ -82,15 +105,15 @@ items:
                 jointPositions: [  ]
                 initialRootPosition: [ 7.1036, 1.0038, 0.25 ]
                 initialRootAttitude: [ 
-                  0.260242954, -3.98276667e-09, -0.965543168, 
-                  -0.965543168, -8.26061419e-09, -0.260242957, 
-                  -3.98276667e-09, 1, -8.26061419e-09 ]
+                  0.260242947, -7.47815676e-09, -0.965543171, 
+                  -0.965543171, -1.47951513e-08, -0.260242952, 
+                  -7.47815676e-09, 1.00000001, -1.47951513e-08 ]
                 zmp: [ 0, 0, 0 ]
                 collisionDetection: true
                 selfCollisionDetection: false
                 isEditable: true
             - 
-              id: 6
+              id: 7
               name: "Debris-S"
               plugin: Body
               class: BodyItem
@@ -113,7 +136,7 @@ items:
                 selfCollisionDetection: false
                 isEditable: true
             - 
-              id: 7
+              id: 8
               name: "Debris-S"
               plugin: Body
               class: BodyItem
@@ -136,7 +159,7 @@ items:
                 selfCollisionDetection: false
                 isEditable: true
             - 
-              id: 8
+              id: 9
               name: "Rod"
               plugin: Body
               class: BodyItem
@@ -170,9 +193,9 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      selected: [ 1 ]
-      checked: [ 3, 4, 5, 6, 7, 8 ]
-      expanded: [ 1, 5, 6, 8 ]
+      selected: [ 6 ]
+      checked: [ 3, 4, 6, 7, 8, 9 ]
+      expanded: [ 1, 6, 7, 9 ]
   - 
     id: 2
     plugin: Base
@@ -222,9 +245,9 @@ views:
           fieldOfView: 0.698132
           near: 0.01
           far: 100
-          eye: [ -8.57460318, -2.66127395, 4.91694173 ]
+          eye: [ -8.42897636, -2.89015717, 5.26668847 ]
           direction: [ 0.940941449, 0.250310689, -0.227977519 ]
-          up: [ 0.22031519, 0.0586085852, 0.973666396 ]
+          up: [ 0.22031519, 0.0586085851, 0.973666396 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 5.73009
@@ -292,7 +315,8 @@ views:
       gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      dedicatedItemTreeViewChecks: false
+      dedicatedItemTreeViewChecks: true
+      checked: [ 3, 4, 5, 6, 7, 8, 9 ]
   - 
     id: 5
     plugin: Body
@@ -313,7 +337,7 @@ views:
       spinBox: true
       slider: true
       labelOnLeft: true
-      currentBodyItem: 8
+      currentBodyItem: 6
   - 
     id: 7
     plugin: Body
@@ -321,13 +345,17 @@ views:
     mounted: true
     state: 
       listingMode: "Link List"
-      currentBodyItem: 8
+      currentBodyItem: 6
       bodyItems: 
         - 
           id: 3
           selectedLinks: [ 0 ]
   - 
     id: 8
+    plugin: Multicopter
+    class: MulticopterMonitorView
+  - 
+    id: 9
     plugin: Python
     class: PythonConsoleView
 toolbars: 
@@ -350,7 +378,7 @@ toolbars:
     penetrationBlockDepth: 0.0005
     lazyCollisionDetectionMode: true
   "BodyBar": 
-    current: 8
+    current: 6
   "LeggedBodyBar": 
     stanceWidth: 0.15
 Body: 
@@ -385,6 +413,11 @@ Body:
         showZmp: false
       - 
         bodyItem: 8
+        showCenterOfMass: false
+        showPpcom: false
+        showZmp: false
+      - 
+        bodyItem: 9
         showCenterOfMass: false
         showPpcom: false
         showZmp: false

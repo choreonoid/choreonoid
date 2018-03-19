@@ -1,7 +1,7 @@
 format: ChoreonoidBody
 formatVersion: 1.0
 angleUnit: degree
-name: TunnelWall20m
+name: TunnelWall20m-L
 
 links:
   -
@@ -11,7 +11,7 @@ links:
     elements:
       -
         type: Visual
-        resource: {  uri: "resource/TunnelWall20m.dae" }
+        resource: {  uri: "resource/TunnelWall20m-L.dae" }
       -
         type: Collision
         elements:
@@ -51,40 +51,4 @@ links:
             type: Transform
             translation: [ 10.0, 0.7, 6.35 ]
             rotation: [ 1, 0, 0, 171 ]
-            elements: *BOX1
-          -
-            name: BOX7
-            type: Transform
-            translation: [ 10.0, -0.7, 6.35 ]
-            rotation: [ 1, 0, 0, 9 ]
-            elements: *BOX1
-          -
-            name: BOX8
-            type: Transform
-            translation: [ 10.0, -2.07, 5.9 ]
-            rotation: [ 1, 0, 0, 28 ]
-            elements: *BOX1
-          -
-            name: BOX9
-            type: Transform
-            translation: [ 10.0, -3.27, 5.02 ]
-            rotation: [ 1, 0, 0, 46 ]
-            elements: *BOX1
-          -
-            name: BOX10
-            type: Transform
-            translation: [ 10.0, -4.11, 3.87 ]
-            rotation: [ 1, 0, 0, 63 ]
-            elements: *BOX1
-          -
-            name: BOX11
-            type: Transform
-            translation: [ 10.0, -4.555, 2.47 ]
-            rotation: [ 1, 0, 0, 82 ]
-            elements: *BOX1
-          -
-            name: BOX12
-            type: Transform
-            translation: [ 10.0, -4.535, 1.0 ]
-            rotation: [ 1, 0, 0, 100 ]
             elements: *BOX1

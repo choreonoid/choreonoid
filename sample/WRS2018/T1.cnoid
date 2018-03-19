@@ -45,11 +45,11 @@ items:
                 isEditable: false
             - 
               id: 4
-              name: "TunnelWall60m"
+              name: "TunnelWall60m-L"
               plugin: Body
               class: BodyItem
               data: 
-                modelFile: "${SHARE}/model/WRS2018/TunnelWall60m.body"
+                modelFile: "${SHARE}/model/WRS2018/TunnelWall60m-L.body"
                 currentBaseLink: "1_Base"
                 rootPosition: [ 0, 0, 0 ]
                 rootAttitude: [ 
@@ -68,6 +68,29 @@ items:
                 isEditable: false
             - 
               id: 5
+              name: "TunnelWall60m-R"
+              plugin: Body
+              class: BodyItem
+              data: 
+                modelFile: "${SHARE}/model/WRS2018/TunnelWall60m-R.body"
+                currentBaseLink: "1_Base"
+                rootPosition: [ 0, 0, 0 ]
+                rootAttitude: [ 
+                  1, 0, 0, 
+                  0, 1, 0, 
+                  0, 0, 1 ]
+                jointPositions: [  ]
+                initialRootPosition: [ 0, 0, 0 ]
+                initialRootAttitude: [ 
+                  1, 0, 0, 
+                  0, 1, 0, 
+                  0, 0, 1 ]
+                zmp: [ 0, 0, 0 ]
+                collisionDetection: true
+                selfCollisionDetection: false
+                isEditable: false
+            - 
+              id: 6
               name: "ChocoTerrain"
               plugin: Body
               class: BodyItem
@@ -90,7 +113,7 @@ items:
                 selfCollisionDetection: false
                 isEditable: false
             - 
-              id: 6
+              id: 7
               name: "WaffleTerrain"
               plugin: Body
               class: BodyItem
@@ -113,7 +136,7 @@ items:
                 selfCollisionDetection: false
                 isEditable: false
             - 
-              id: 7
+              id: 8
               name: "TerrainA"
               plugin: Body
               class: BodyItem
@@ -136,7 +159,7 @@ items:
                 selfCollisionDetection: false
                 isEditable: false
             - 
-              id: 8
+              id: 9
               name: "TerrainB"
               plugin: Body
               class: BodyItem
@@ -159,7 +182,7 @@ items:
                 selfCollisionDetection: false
                 isEditable: false
             - 
-              id: 9
+              id: 10
               name: "JungleGym"
               plugin: Body
               class: BodyItem
@@ -193,8 +216,9 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      checked: [ 3, 4, 5, 6, 7, 8, 9 ]
-      expanded: [ 1, 8 ]
+      selected: [ 5 ]
+      checked: [ 3, 4, 6, 7, 8, 9, 10 ]
+      expanded: [ 1, 9 ]
   - 
     id: 2
     plugin: Base
@@ -244,9 +268,9 @@ views:
           fieldOfView: 0.698132
           near: 0.01
           far: 100
-          eye: [ -5.64728843, -3.22170205, 2.82890201 ]
-          direction: [ 0.976270988, 0.20808478, -0.0599640057 ]
-          up: [ 0.0586466514, 0.0125000904, 0.99820054 ]
+          eye: [ -4.09528877, -2.94094309, 3.94279932 ]
+          direction: [ 0.923962342, 0.326839546, -0.198669327 ]
+          up: [ 0.187296435, 0.0662536547, 0.980066579 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 5.73009
@@ -302,9 +326,9 @@ views:
           fieldOfView: 0.698132
           near: 0.01
           far: 100
-          eye: [ 0.550726547, 0.111096944, 0.942054356 ]
-          direction: [ 0.999823815, 0.00205453627, 0.0186578995 ]
-          up: [ -0.0186578601, -3.83400052e-05, 0.999825926 ]
+          eye: [ 0.557785169, 0.122295663, 0.936497809 ]
+          direction: [ 0.999719321, 0.0220522803, 0.00865887422 ]
+          up: [ -0.00865676838, -0.00019095508, 0.999962511 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
@@ -314,7 +338,8 @@ views:
       gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      dedicatedItemTreeViewChecks: false
+      dedicatedItemTreeViewChecks: true
+      checked: [ 3, 4, 5, 6, 7, 8, 9, 10 ]
   - 
     id: 5
     plugin: Body
@@ -335,6 +360,7 @@ views:
       spinBox: true
       slider: true
       labelOnLeft: true
+      currentBodyItem: 5
   - 
     id: 7
     plugin: Body
@@ -342,8 +368,13 @@ views:
     mounted: true
     state: 
       listingMode: "Link List"
+      currentBodyItem: 5
   - 
     id: 8
+    plugin: Multicopter
+    class: MulticopterMonitorView
+  - 
+    id: 9
     plugin: Python
     class: PythonConsoleView
 toolbars: 
@@ -365,6 +396,8 @@ toolbars:
     snapDistance: 0.025
     penetrationBlockDepth: 0.0005
     lazyCollisionDetectionMode: true
+  "BodyBar": 
+    current: 5
   "LeggedBodyBar": 
     stanceWidth: 0.15
 Body: 
@@ -404,6 +437,11 @@ Body:
         showZmp: false
       - 
         bodyItem: 9
+        showCenterOfMass: false
+        showPpcom: false
+        showZmp: false
+      - 
+        bodyItem: 10
         showCenterOfMass: false
         showPpcom: false
         showZmp: false
