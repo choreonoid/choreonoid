@@ -6,6 +6,7 @@
 #ifndef CNOID_UTIL_JOYSTICK_H
 #define CNOID_UTIL_JOYSTICK_H
 
+#include "JoystickInterface.h"
 #include "Signal.h"
 #include "exportdecl.h"
 
@@ -13,7 +14,7 @@ namespace cnoid {
 
 class JoystickImpl;
 
-class CNOID_EXPORT Joystick
+class CNOID_EXPORT Joystick : public JoystickInterface
 {
 public:
     Joystick();
@@ -52,15 +53,16 @@ public:
         NUM_STD_BUTTONS
     };
 
-    int numAxes() const;
+    virtual int numAxes() const override;
+    virtual int numButtons() const override;
+    virtual bool readCurrentState() override;
+    virtual double getPosition(int axis) const override;
+    virtual bool getButtonState(int button) const override;
+    
     void setAxisEnabled(int axis, bool on);
-    int numButtons() const;
-    double getDefaultPosition(int axis) const;
 
-    bool readCurrentState();
-    double getPosition(int axis) const;
-    double getPosition(int axis, double threshold) const;
-    bool getButtonState(int button) const;
+    //! \deprecated
+    //double getDefaultPosition(int axis) const;
 
 #ifdef __linux__
     bool getButtonDown(int button) const;

@@ -62,7 +62,6 @@ set(sources
   VRMLSceneLoader.cpp
   GettextWrapper.cpp
   GettextUtil.cpp
-  Joystick.cpp
   ExtJoystick.cpp
   CnoidUtil.cpp # This file must be placed at the last position
   )
@@ -150,8 +149,10 @@ set(headers
   GettextUtil.h
   Selection.h
   DataMap.h
+  JoystickInterface.h
   Joystick.h
   ExtJoystick.h
+  SharedJoystick.h
   JoystickGamepad.h
   Task.h
   AbstractTaskSequencer.h

@@ -486,7 +486,7 @@ bool JoystickImpl::readEvent()
                 case DIRECTIONAL_PAD_DOWN_BUTTON:
                     setAxisState(DIRECTIONAL_PAD_V_AXIS, p);
                     break;
-                defaut:
+                default:
                     break;
                 }
             }
@@ -494,19 +494,18 @@ bool JoystickImpl::readEvent()
     } else if(event.type & JS_EVENT_AXIS){ // axis
         if(currentModel.id != UNSUPPORTED){
             id = currentModel.axisMap[id];
+            if(id == L_TRIGGER_AXIS || id == R_TRIGGER_AXIS){
+                pos = (pos + 1.0) / 2.0;
+            }
         }
         if(id != INVALID_AXIS && axisEnabled[id]){
             // normalize value (-1.0 to 1.0)
-            pos = nearbyint(pos * 10.0) / 10.0;
+            //pos = nearbyint(pos * 10.0) / 10.0;
 
             if(currentModel.doIgnoreInitialState){
                 if(!record_init_pos[id]){
                     initial_pos[id] = pos;
-                    if(id == L_TRIGGER_AXIS || id == R_TRIGGER_AXIS){
-                        pos = -1.0;
-                    } else {
-                        pos = 0.0;
-                    }
+                    pos = 0.0;
                     record_init_pos[id] = true;
                     initialized[id] = false;
                 } else {

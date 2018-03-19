@@ -1,5 +1,5 @@
-#include "ModeJoystick.h"
 #include <cnoid/SimpleController>
+#include <cnoid/SharedJoystick>
 #include <boost/format.hpp>
 
 using namespace std;
@@ -46,7 +46,7 @@ class Jaco2Controller : public SimpleController
         NUM_JOINTS
     };
 
-    ModeJoystickPtr joystick;
+    SharedJoystickPtr joystick;
     int targetMode;
 
 public:
@@ -126,7 +126,7 @@ bool Jaco2Controller::initialize(SimpleControllerIO* io)
         return false;
     }
 
-    joystick = io->getOrCreateSharedObject<ModeJoystick>("joystick");
+    joystick = io->getOrCreateSharedObject<SharedJoystick>("joystick");
     targetMode = joystick->addMode();
 
     return true;
@@ -201,13 +201,14 @@ void Jaco2Controller::updateTargetJointAngles()
 
     double dq_finger = 0.0;
     double lt = joystick->getPosition(targetMode, Joystick::L_TRIGGER_AXIS);
-    if(lt > -0.9){
-        dq_finger -= dt * 0.2 * (lt + 1.0);
+    if(lt > 0.1){
+        dq_finger -= dt * 0.4 * lt;
     }
     double rt = joystick->getPosition(targetMode, Joystick::R_TRIGGER_AXIS);
-    if(rt > -0.9){
-        dq_finger += dt * 0.2 * (rt + 1.0);
+    if(rt > 0.1){
+        dq_finger += dt * 0.4 * rt;
     }
+    
     for(int i = FINGER1; i <= FINGER3_TIP; ++i){
         jointInfos[i].qref += dq_finger;
     }

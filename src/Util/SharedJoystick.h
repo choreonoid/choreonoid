@@ -1,17 +1,30 @@
+/*!
+  @file
+  @author Shin'ichiro Nakaoka
+*/
+
+#ifndef CNOID_UTIL_SHARED_JOYSTICK_H
+#define CNOID_UTIL_SHARED_JOYSTICK_H
+
 #include <cnoid/Referenced>
 #include <cnoid/Joystick>
 
 namespace cnoid {
 
-class ModeJoystick : public Referenced
+class SharedJoystick : public Referenced
 {
 public:
     static const Joystick::ButtonID MODE_BUTTON = Joystick::LOGO_BUTTON;
 
-    ModeJoystick(){
+    SharedJoystick(){
+        joystick = &defaultJoystick;
         mode_ = 0;
         numModes_ = 0;
         prevButtonState = false;
+    }
+
+    void setJoystick(JoystickInterface* joystick){
+        this->joystick = joystick;
     }
     
     int addMode(){
@@ -21,8 +34,8 @@ public:
         
     void updateState(int targetMode){
         if(targetMode == 0){
-            joystick_.readCurrentState();
-            bool state = joystick_.getButtonState(MODE_BUTTON);
+            joystick->readCurrentState();
+            bool state = joystick->getButtonState(MODE_BUTTON);
             if(!prevButtonState && state){
                 ++mode_;
                 if(mode_ >= numModes_){
@@ -46,30 +59,32 @@ public:
     }
 
     double getPosition(int axis, double threshold = 0.0) const {
-        return joystick_.getPosition(axis, threshold);
+        double pos = joystick->getPosition(axis);
+        return (fabs(pos) >= threshold) ? pos : 0.0;
     }
 
     double getPosition(int targetMode, int axis, double threshold = 0.0) const {
-        return isMode(targetMode) ? joystick_.getPosition(axis, threshold) : joystick_.getDefaultPosition(axis);
+        return isMode(targetMode) ? getPosition(axis, threshold) : 0.0;
     }
     
     bool getButtonState(int button) const {
-        return joystick_.getButtonState(button);
+        return joystick->getButtonState(button);
     }
 
     bool getButtonState(int targetMode, int button) const {
-        return isMode(targetMode) ? joystick_.getButtonState(button) : false;
+        return isMode(targetMode) ? joystick->getButtonState(button) : false;
     }
 
-    Joystick* joystick() { return &joystick_; }
-
 private:
-    Joystick joystick_;
+    JoystickInterface* joystick;
+    Joystick defaultJoystick;
     int mode_;
     int numModes_;
     bool prevButtonState;
 };
 
-typedef ref_ptr<ModeJoystick> ModeJoystickPtr;
+typedef ref_ptr<SharedJoystick> SharedJoystickPtr;
 
 }
+
+#endif
