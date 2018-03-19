@@ -13,11 +13,16 @@ addons:
 matrix:
     include:
         - os: linux
-          env: TARGET_ENVIRONMENT=ubuntu-xenial-gcc
+          env:
+              - TARGET_DISTROS=xenial
+              - TARGET_ENVIRONMENT=ubuntu-xenial
+        - os: linux
+          env:
+              - TARGET_DISTROS=trusty
+              - TARGET_ENVIRONMENT=ubuntu-trusty
 
 script:
-    - if [[ "$TARGET_ENVIRONMENT" == "ubuntu-xenial-gcc"   ]]; then docker build --rm -t ${TARGET_ENVIRONMENT} -f misc/docker/Dockerfile-${TARGET_ENVIRONMENT} . ; fi
-    - if [[ "$TARGET_ENVIRONMENT" == "ubuntu-xenial-clang" ]]; then docker build --rm -t ${TARGET_ENVIRONMENT} -f misc/docker/Dockerfile-${TARGET_ENVIRONMENT} . ; fi
+    - docker build --rm -t ${TARGET_ENVIRONMENT}-gcc -f misc/docker/Dockerfile-${TARGET_ENVIRONMENT}-gcc .
 
 after_success:
     - ${TRAVIS_BUILD_DIR}/misc/ci-scripts/packaging.sh

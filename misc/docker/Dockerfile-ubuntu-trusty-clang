@@ -1,6 +1,6 @@
 FROM ubuntu:trusty
 
-ENV CLANG_VERSION 4.0
+ENV CLANG_VERSION 3.8
 
 # we have to install llvm-dev package as well due to -flto option
 # see: https://bugs.launchpad.net/ubuntu/+source/llvm-toolchain-snapshot/+bug/1254970
