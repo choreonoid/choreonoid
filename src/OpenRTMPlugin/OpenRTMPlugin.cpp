@@ -292,9 +292,9 @@ RTM::Manager_ptr cnoid::getRTCManagerServant()
 }
 
 
-RTC::RTObject_impl* cnoid::createManagedRTC(const char* comp_args)
+RTC::RTObject_impl* cnoid::createManagedRTC(const std::string& comp_args)
 {
-    RTC::RTObject_impl* rtc = manager->createComponent(comp_args);
+    RTC::RTObject_impl* rtc = manager->createComponent(comp_args.c_str());
     if(rtc){
         managedComponents.insert(rtc);
         //rtc->addPostComponentActionListener(POST_ON_SHUTDOWN, new PostComponentShutdownListenr(rtc));
