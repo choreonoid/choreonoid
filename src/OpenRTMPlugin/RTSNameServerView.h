@@ -39,6 +39,10 @@ public:
     void setSelection(std::string RTCname);
     void updateView();
 
+protected:
+    virtual bool storeState(Archive& archive) override;
+    virtual bool restoreState(const Archive& archive) override;
+
 private:
     RTSNameServerViewImpl* impl;
 };

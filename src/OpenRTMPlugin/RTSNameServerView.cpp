@@ -18,6 +18,8 @@
 
 #undef _HOST_CXT_VERSION
 
+using namespace std;
+
 namespace cnoid {
 
 class RTSVItem : public QTreeWidgetItem
@@ -78,6 +80,7 @@ void RTSNameServerView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<RTSNameServerView>(
         "RTSNameServerView", N_("RTC List"), ViewManager::SINGLE_DEFAULT);
+    
 }
 
 
@@ -304,3 +307,27 @@ void RTSNameServerViewImpl::extendDiagram(const NamingContextHelper::ObjectInfo&
 
 }
 #endif
+
+
+bool RTSNameServerView::storeState(Archive& archive)
+{
+    archive.write("host", impl->ncHelper.host());
+    archive.write("port", impl->ncHelper.port());
+    return true;
+}
+
+
+bool RTSNameServerView::restoreState(const Archive& archive)
+{
+    string host;
+    if(archive.read("host", host)){
+        impl->hostAddressBox.setText(host.c_str());
+    }
+    int port;
+    if(archive.read("port", port)){
+        impl->portNumberSpin.setValue(port);
+    }
+    archive.addPostProcess([&](){ impl->updateObjectList(true); });
+
+    return true;
+}
