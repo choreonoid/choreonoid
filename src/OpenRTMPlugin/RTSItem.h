@@ -153,6 +153,9 @@ public :
     void setRtc(RTC::RTObject_ptr rtc);
 
     RTSPort* nameToRTSPort(const std::string& name);
+
+private:
+  std::string getComponentPath(RTC::PortService_ptr source);
 };
 typedef ref_ptr<RTSComp> RTSCompPtr;
 

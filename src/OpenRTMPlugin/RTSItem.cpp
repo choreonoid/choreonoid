@@ -339,12 +339,13 @@ bool RTSComp::connectionCheckSub(RTSPort* rtsPort) {
             PortService_ptr connectedPortRef = connectedPorts[j];
             PortProfile_var connectedPortProfile = connectedPortRef->get_port_profile();
             string portName = string(connectedPortProfile->name);
-            DDEBUG_V("RTSComp::connectionCheckSub portName:%s", portName.c_str());
             vector<string> target;
             RTCCommonUtil::splitPortName(portName, target);
             if(target[0] == name)
                 continue;
-						RTSComp* targetRTC = impl->nameToRTSComp("/" + target[0] + ".rtc");
+
+            string rtcPath = getComponentPath(connectedPortRef);
+            RTSComp* targetRTC = impl->nameToRTSComp("/" + rtcPath);
             if(targetRTC){
               //DDEBUG("targetRTC Found");
                 RTSPort* targetPort = targetRTC->nameToRTSPort(portName);
@@ -390,6 +391,20 @@ bool RTSComp::connectionCheck()
         modified |= connectionCheckSub(*it);
 
     return modified;
+}
+
+std::string RTSComp::getComponentPath(RTC::PortService_ptr source) {
+  NVList properties = source->get_port_profile()->owner->get_component_profile()->properties;
+  const char* nvValue;
+  for (int index = 0; index < properties.length(); index++) {
+    string strName(properties[index].name._ptr);
+    if (strName == "naming.names") {
+      properties[index].value >>= nvValue;
+      break;
+    }
+  }
+  string result(nvValue);
+  return result;
 }
 
 void RTSComp::setRtc(RTObject_ptr rtc) {
