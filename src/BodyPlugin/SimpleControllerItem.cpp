@@ -88,15 +88,14 @@ public:
         N_BASE_DIRECTORY_TYPES
     };
 
-    Signal<void()> sigControllerChanged;
-
     SimpleControllerItemImpl(SimpleControllerItem* self);
     SimpleControllerItemImpl(SimpleControllerItem* self, const SimpleControllerItemImpl& org);
     ~SimpleControllerItemImpl();
     void setController(const std::string& name);
     bool loadController();
-    void unloadController(bool doNotify);
+    void unloadController();
     void initializeIoBody();
+    void resetConfigurations();
     void updateInputEnabledDevices();
     SimpleController* initialize(ControllerIO* io, SharedInfo* info);
     void updateIOStateTypes();
@@ -157,10 +156,10 @@ SimpleControllerItemImpl::SimpleControllerItemImpl(SimpleControllerItem* self)
     : self(self),
       baseDirectoryType(N_BASE_DIRECTORY_TYPES, CNOID_GETTEXT_DOMAIN_NAME)
 {
-    controller = 0;
-    io = 0;
+    controller = nullptr;
+    io = nullptr;
     mv = MessageView::instance();
-    doReloading = true;
+    doReloading = false;
 
     controllerDirectory = filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "simplecontroller";
 
@@ -184,8 +183,8 @@ SimpleControllerItemImpl::SimpleControllerItemImpl(SimpleControllerItem* self, c
       controllerDirectory(org.controllerDirectory),
       baseDirectoryType(org.baseDirectoryType)
 {
-    controller = 0;
-    io = 0;
+    controller = nullptr;
+    io = nullptr;
     mv = MessageView::instance();
     doReloading = org.doReloading;
 }
@@ -199,7 +198,7 @@ SimpleControllerItem::~SimpleControllerItem()
 
 SimpleControllerItemImpl::~SimpleControllerItemImpl()
 {
-    unloadController(false);
+    unloadController();
     outputDeviceStateConnections.disconnect();
 }
 
@@ -207,7 +206,7 @@ SimpleControllerItemImpl::~SimpleControllerItemImpl()
 void SimpleControllerItem::onDisconnectedFromRoot()
 {
     if(!isActive()){
-        impl->unloadController(false);
+        impl->unloadController();
     }
     impl->childControllerItems.clear();
 }
@@ -233,7 +232,7 @@ void SimpleControllerItem::setController(const std::string& name)
 
 void SimpleControllerItemImpl::setController(const std::string& name)
 {
-    unloadController(true);
+    unloadController();
 
     filesystem::path modulePath(name);
     if(modulePath.is_absolute()){
@@ -252,7 +251,9 @@ void SimpleControllerItemImpl::setController(const std::string& name)
     controllerModuleName = modulePath.string();
     controllerModuleFilename.clear();
 
-    loadController();
+    if(!doReloading){
+        loadController();
+    }
 }
 
 
@@ -309,11 +310,9 @@ bool SimpleControllerItemImpl::loadController()
     controller = factory();
     if(!controller){
         mv->putln(MessageView::ERROR, _("The factory failed to create a controller instance."));
-        unloadController(false);
+        unloadController();
         return false;
     }
-
-    sigControllerChanged();
 
     if(!controller->configure(this)){
         mv->putln(MessageView::ERROR, _("Failed to configure the controller"));
@@ -325,7 +324,7 @@ bool SimpleControllerItemImpl::loadController()
 }
 
 
-void SimpleControllerItemImpl::unloadController(bool doNotify)
+void SimpleControllerItemImpl::unloadController()
 {
     /** The following code is necessary to clear the ioBody object that may have the reference
         to the objects defined in the controller DLL. When the controller DLL is unloaded,
@@ -337,11 +336,7 @@ void SimpleControllerItemImpl::unloadController(bool doNotify)
     
     if(controller){
         delete controller;
-        controller = 0;
-
-        if(doNotify){
-            sigControllerChanged();
-        }
+        controller = nullptr;
     }
 
     if(controllerModule.unload()){
@@ -351,9 +346,23 @@ void SimpleControllerItemImpl::unloadController(bool doNotify)
 }
 
 
-SignalProxy<void()> SimpleControllerItem::sigControllerChanged()
+void SimpleControllerItemImpl::updateInputEnabledDevices()
 {
-    return impl->sigControllerChanged;
+    const DeviceList<>& devices = simulationBody->devices();
+    sharedInfo->inputDeviceStateChangeFlag.resize(devices.size());
+    sharedInfo->inputDeviceStateChangeFlag.reset();
+    sharedInfo->inputDeviceStateConnections.disconnect();
+
+    const boost::dynamic_bitset<>& flag = sharedInfo->inputEnabledDeviceFlag;
+    for(size_t i=0; i < devices.size(); ++i){
+        if(flag[i]){
+            sharedInfo->inputDeviceStateConnections.add(
+                devices[i]->sigStateChanged().connect(
+                    [this, i](){ onInputDeviceStateChanged(i); }));
+        } else {
+            sharedInfo->inputDeviceStateConnections.add(Connection()); // null connection
+        }
+    }
 }
 
 
@@ -378,23 +387,12 @@ void SimpleControllerItemImpl::initializeIoBody()
 }
 
 
-void SimpleControllerItemImpl::updateInputEnabledDevices()
+void SimpleControllerItemImpl::resetConfigurations()
 {
-    const DeviceList<>& devices = simulationBody->devices();
-    sharedInfo->inputDeviceStateChangeFlag.resize(devices.size());
-    sharedInfo->inputDeviceStateChangeFlag.reset();
-    sharedInfo->inputDeviceStateConnections.disconnect();
-
-    const boost::dynamic_bitset<>& flag = sharedInfo->inputEnabledDeviceFlag;
-    for(size_t i=0; i < devices.size(); ++i){
-        if(flag[i]){
-            sharedInfo->inputDeviceStateConnections.add(
-                devices[i]->sigStateChanged().connect(
-                    [this, i](){ onInputDeviceStateChanged(i); }));
-        } else {
-            sharedInfo->inputDeviceStateConnections.add(Connection()); // null connection
-        }
-    }
+    inputLinkIndices.clear();
+    inputStateTypes.clear();
+    outputLinkFlags.clear();
+    childControllerItems.clear();
 }
 
 
@@ -410,51 +408,43 @@ bool SimpleControllerItem::initialize(ControllerIO* io)
 
 SimpleController* SimpleControllerItemImpl::initialize(ControllerIO* io, SharedInfo* info)
 {
+    if(doReloading){
+        unloadController();
+    }
+    if(!controller){
+        if(!loadController()){
+            return nullptr;
+        }
+    }
+
     this->io = io;
     simulationBody = io->body();
     sharedInfo = info;
-    
-    bool result = false;
 
-    if(!controller){
-        if(!loadController()){
-            return 0;
-        }
+    if(!sharedInfo->ioBody){
+        initializeIoBody();
+    } else {
+        ioBody = sharedInfo->ioBody;
     }
 
-    childControllerItems.clear();
+    resetConfigurations();
 
-    if(controller){
-        if(!sharedInfo->ioBody){
-            initializeIoBody();
-        } else {
-            ioBody = sharedInfo->ioBody;
-        }
-        
-        inputLinkIndices.clear();
-        inputStateTypes.clear();
-        outputLinkFlags.clear();
-        
-        result = controller->initialize(this);
+    if(!controller->initialize(this)){
+        mv->putln(MessageView::ERROR, fmt(_("%1%'s initialize method failed.")) % self->name());
+        sharedInfo.reset();
+        return nullptr;
+    }
 
-        if(!result){
-            mv->putln(MessageView::ERROR, fmt(_("%1%'s initialize method failed.")) % self->name());
-            if(doReloading){
-                self->stop();
+    for(Item* child = self->childItem(); child; child = child->nextItem()){
+        SimpleControllerItem* childControllerItem = dynamic_cast<SimpleControllerItem*>(child);
+        if(childControllerItem){
+            SimpleController* childController = childControllerItem->impl->initialize(io, sharedInfo);
+            if(childController){
+                childControllerItems.push_back(childControllerItem);
             }
-        } else {
-            for(Item* child = self->childItem(); child; child = child->nextItem()){
-                SimpleControllerItem* childControllerItem = dynamic_cast<SimpleControllerItem*>(child);
-                if(childControllerItem){
-                    SimpleController* childController = childControllerItem->impl->initialize(io, sharedInfo);
-                    if(childController){
-                        childControllerItems.push_back(childControllerItem);
-                    }
-                }
-            }
-            updateIOStateTypes();
         }
     }
+    updateIOStateTypes();
 
     return controller;
 }
@@ -688,14 +678,21 @@ void SimpleControllerItemImpl::setImmediateMode(bool on)
 
 bool SimpleControllerItem::start()
 {
-    if(impl->controller->start()){
+    bool result = true;
+    if(!impl->controller->start()){
+        result = false;
+    } else {
         for(size_t i=0; i < impl->childControllerItems.size(); ++i){
             if(!impl->childControllerItems[i]->start()){
-                return false;
+                result = false;
+                break;
             }
         }
     }
-    return true;
+    if(!result){
+        impl->sharedInfo.reset();
+    }
+    return result;
 }
 
 
@@ -842,16 +839,16 @@ void SimpleControllerItem::stop()
     for(auto iter = impl->childControllerItems.rbegin(); iter != impl->childControllerItems.rend(); ++iter){
         (*iter)->stop();
     }
-
     impl->controller->stop();
-    
-    impl->childControllerItems.clear();
+
+    impl->resetConfigurations();
 
     if(impl->doReloading || !findRootItem()){
-        impl->unloadController(true);
+        impl->unloadController();
+    } else {
+        impl->sharedInfo.reset();
     }
-
-    impl->io = 0;
+    impl->io = nullptr;
 }
 
 
@@ -928,7 +925,9 @@ bool SimpleControllerItemImpl::restore(const Archive& archive)
 
     if(archive.read("controller", value)){
         controllerModuleName = archive.expandPathVariables(value);
-        loadController();
+        if(!doReloading){
+            loadController();
+        }
     }
 
     return true;
