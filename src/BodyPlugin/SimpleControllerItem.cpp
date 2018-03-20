@@ -94,6 +94,7 @@ public:
     SimpleControllerItemImpl(SimpleControllerItem* self, const SimpleControllerItemImpl& org);
     ~SimpleControllerItemImpl();
     void setController(const std::string& name);
+    bool loadController();
     void unloadController(bool doNotify);
     void initializeIoBody();
     void updateInputEnabledDevices();
@@ -118,6 +119,7 @@ public:
     virtual bool setNoDelayMode(bool on);
 
     // virtual functions of SimpleControllerIO
+    virtual std::string name() const override;
     virtual void enableIO(Link* link) override;
     virtual void enableInput(Link* link) override;
     virtual void enableInput(Link* link, int stateTypes) override;
@@ -217,6 +219,12 @@ Item* SimpleControllerItem::doDuplicate() const
 }
 
 
+SimpleController* SimpleControllerItem::controller()
+{
+    return impl->controller;
+}
+
+
 void SimpleControllerItem::setController(const std::string& name)
 {
     impl->setController(name);
@@ -243,12 +251,77 @@ void SimpleControllerItemImpl::setController(const std::string& name)
     }
     controllerModuleName = modulePath.string();
     controllerModuleFilename.clear();
+
+    loadController();
 }
 
 
-SimpleController* SimpleControllerItem::controller()
+bool SimpleControllerItemImpl::loadController()
 {
-    return impl->controller;
+    filesystem::path modulePath(controllerModuleName);
+    if(!modulePath.is_absolute()){
+        if(baseDirectoryType.is(CONTROLLER_DIRECTORY)){
+            modulePath = controllerDirectory / modulePath;
+        } else if(baseDirectoryType.is(PROJECT_DIRECTORY)){
+            string projectDir = ProjectManager::instance()->currentProjectDirectory();
+            if(!projectDir.empty()){
+                modulePath = filesystem::path(projectDir) / modulePath;
+            } else {
+                mv->putln(MessageView::ERROR,
+                          format(_("Controller module \"%1%\" of %2% is specified as a relative "
+                                   "path from the project directory, but the project directory "
+                                   "has not been determined yet."))
+                          % controllerModuleName % self->name());
+                return false;
+            }
+        }
+    }
+
+    controllerModuleFilename = modulePath.make_preferred().string();
+    controllerModule.setFileName(controllerModuleFilename.c_str());
+        
+    if(controllerModule.isLoaded()){
+        mv->putln(fmt(_("The controller module of %1% has already been loaded.")) % self->name());
+            
+        // This should be called to make the reference to the DLL.
+        // Otherwise, QLibrary::unload() unloads the DLL without considering this instance.
+        controllerModule.load();
+            
+    } else {
+        mv->put(fmt(_("Loading the controller module \"%2%\" of %1% ... "))
+                % self->name() % controllerModuleFilename);
+        if(!controllerModule.load()){
+            mv->put(_("Failed.\n"));
+            mv->putln(MessageView::ERROR, controllerModule.errorString());
+            return false;
+        }
+        mv->putln(_("OK!"));
+    }
+        
+    SimpleController::Factory factory =
+        (SimpleController::Factory)controllerModule.resolve("createSimpleController");
+    if(!factory){
+        mv->putln(MessageView::ERROR,
+                  _("The factory function \"createSimpleController()\" is not found in the controller module."));
+        return false;
+    }
+
+    controller = factory();
+    if(!controller){
+        mv->putln(MessageView::ERROR, _("The factory failed to create a controller instance."));
+        unloadController(false);
+        return false;
+    }
+
+    sigControllerChanged();
+
+    if(!controller->configure(this)){
+        mv->putln(MessageView::ERROR, _("Failed to configure the controller"));
+        return false;
+    }
+
+    mv->putln(_("A controller instance has successfully been created."));
+    return true;
 }
 
 
@@ -344,61 +417,8 @@ SimpleController* SimpleControllerItemImpl::initialize(ControllerIO* io, SharedI
     bool result = false;
 
     if(!controller){
-
-        filesystem::path modulePath(controllerModuleName);
-        if(!modulePath.is_absolute()){
-            if(baseDirectoryType.is(CONTROLLER_DIRECTORY)){
-                modulePath = controllerDirectory / modulePath;
-            } else if(baseDirectoryType.is(PROJECT_DIRECTORY)){
-                string projectDir = ProjectManager::instance()->currentProjectDirectory();
-                if(!projectDir.empty()){
-                    modulePath = filesystem::path(projectDir) / modulePath;
-                } else {
-                    mv->putln(MessageView::ERROR,
-                              format(_("Controller module \"%1%\" of %2% is specified as a relative "
-                                       "path from the project directory, but the project directory "
-                                       "has not been determined yet."))
-                              % controllerModuleName % self->name());
-                    return 0;
-                }
-            }
-        }
-        controllerModuleFilename = modulePath.make_preferred().string();
-        controllerModule.setFileName(controllerModuleFilename.c_str());
-        
-        if(controllerModule.isLoaded()){
-            mv->putln(fmt(_("The controller module of %1% has already been loaded.")) % self->name());
-            
-            // This should be called to make the reference to the DLL.
-            // Otherwise, QLibrary::unload() unloads the DLL without considering this instance.
-            controllerModule.load();
-            
-        } else {
-            mv->put(fmt(_("Loading the controller module \"%2%\" of %1% ... "))
-                    % self->name() % controllerModuleFilename);
-            if(!controllerModule.load()){
-                mv->put(_("Failed.\n"));
-                mv->putln(MessageView::ERROR, controllerModule.errorString());
-            } else {                
-                mv->putln(_("OK!"));
-            }
-        }
-        
-        if(controllerModule.isLoaded()){
-            SimpleController::Factory factory =
-                (SimpleController::Factory)controllerModule.resolve("createSimpleController");
-            if(!factory){
-                mv->putln(MessageView::ERROR,
-                          _("The factory function \"createSimpleController()\" is not found in the controller module."));
-            } else {
-                controller = factory();
-                if(!controller){
-                    mv->putln(MessageView::ERROR, _("The factory failed to create a controller instance."));
-                } else {
-                    mv->putln(_("A controller instance has successfully been created."));
-                    sigControllerChanged();
-                }
-            }
+        if(!loadController()){
+            return 0;
         }
     }
 
@@ -530,6 +550,12 @@ std::ostream& SimpleControllerItemImpl::os() const
     return mv->cout();
 }
 
+
+std::string SimpleControllerItemImpl::name() const
+{
+    return self->name();
+}
+        
 
 void SimpleControllerItemImpl::enableIO(Link* link)
 {
@@ -816,6 +842,9 @@ void SimpleControllerItem::stop()
     for(auto iter = impl->childControllerItems.rbegin(); iter != impl->childControllerItems.rend(); ++iter){
         (*iter)->stop();
     }
+
+    impl->controller->stop();
+    
     impl->childControllerItems.clear();
 
     if(impl->doReloading || !findRootItem()){
@@ -890,17 +919,17 @@ bool SimpleControllerItem::restore(const Archive& archive)
 bool SimpleControllerItemImpl::restore(const Archive& archive)
 {
     string value;
-    if(archive.read("controller", value)){
-        controllerModuleName = archive.expandPathVariables(value);
-    }
-    
     baseDirectoryType.select(CONTROLLER_DIRECTORY);
     if(archive.read("baseDirectory", value) ||
        archive.read("RelativePathBase", value) /* for the backward compatibility */){
         baseDirectoryType.select(value);
     }
-
     archive.read("reloading", doReloading);
+
+    if(archive.read("controller", value)){
+        controllerModuleName = archive.expandPathVariables(value);
+        loadController();
+    }
 
     return true;
 }
