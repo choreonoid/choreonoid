@@ -4,9 +4,9 @@
 */
 
 #include <cnoid/ExtJoystick>
-#include <rtm/idl/BasicDataTypeSkel.h>
 #include <rtm/DataFlowComponentBase.h>
 #include <rtm/DataInPort.h>
+#include <rtm/idl/BasicDataTypeSkel.h>
 
 using namespace cnoid;
 
