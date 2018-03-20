@@ -12,6 +12,7 @@
 #include "AppConfig.h"
 #include "Archive.h"
 #include "TreeWidget.h"
+#include "AppUtil.h"
 #include <cnoid/ConnectionSet>
 #include <QBoxLayout>
 #include <QMouseEvent>
@@ -96,6 +97,7 @@ public:
     ItemTreeViewImpl(ItemTreeView* self, RootItem* rootItem);
     ~ItemTreeViewImpl();
 
+    void clearAllItemLists();
     int addCheckColumn();
     void initializeCheckState(QTreeWidgetItem* item, int column);
     void updateCheckColumnToolTipIter(QTreeWidgetItem* item, int column, const QString& tooltip);
@@ -362,6 +364,8 @@ ItemTreeViewImpl::ItemTreeViewImpl(ItemTreeView* self, RootItem* rootItem)
     if(config->read("fontZoom", storedFontPointSizeDiff)){
         zoomFontSize(storedFontPointSizeDiff);
     }
+
+    cnoid::sigAboutToQuit().connect([&](){ clearAllItemLists(); });
 }
 
 
@@ -374,6 +378,14 @@ ItemTreeView::~ItemTreeView()
 ItemTreeViewImpl::~ItemTreeViewImpl()
 {
 
+}
+
+
+void ItemTreeViewImpl::clearAllItemLists()
+{
+    emptyItemList.clear();
+    selectedItemList.clear();
+    copiedItemList.clear();
 }
 
 

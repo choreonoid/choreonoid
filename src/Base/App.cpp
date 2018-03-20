@@ -325,6 +325,10 @@ int AppImpl::exec()
         result = qapplication->exec();
     }
 
+    for(Item* item = RootItem::instance()->childItem(); item; item = item->nextItem()){
+        item->detachFromParentItem();
+    }
+
     PluginManager::finalize();
     delete ext;
     delete mainWindow;
