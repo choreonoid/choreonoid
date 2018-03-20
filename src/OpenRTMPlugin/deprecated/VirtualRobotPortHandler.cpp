@@ -556,6 +556,7 @@ void CameraRangeOutPortHandler::onCameraStateChanged()
                 }
             }
             //value.row_step = value.point_step * value.width;
+            //value.is_dense = rangeCamera->isDense();
             //size_t length = points.size() * value.point_step;
             //value.data.length(length);
             //unsigned char* dis = (unsigned char*)value.data.get_buffer();

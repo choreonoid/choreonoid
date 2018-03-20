@@ -97,6 +97,7 @@ bool RTSPort::connectedWith(RTSPort* target) {
 
 
 bool RTSPort::checkConnectablePort(RTSPort* target) {
+  DDEBUG("RTSPort::checkConnectablePort");
 	if (rtsComp == target->rtsComp) return false;
 	if (!port || !target->port) return false;
 
@@ -118,7 +119,7 @@ bool RTSPort::checkConnectablePort(RTSPort* target) {
 
 
 RTSPort* RTSComp::nameToRTSPort(const string& name) {
-	DDEBUG_V("RTSComp::nameToRTSPort %s", name.c_str());
+	//DDEBUG_V("RTSComp::nameToRTSPort %s", name.c_str());
 	vector<RTSPortPtr>::iterator it = find_if( inPorts.begin(), inPorts.end(), RTSPortComparator(name));
 	if (it != inPorts.end())
 		return (*it);
@@ -330,6 +331,7 @@ bool RTSComp::connectionCheckSub(RTSPort* rtsPort) {
 
     PortProfile_var portprofile = rtsPort->port->get_port_profile();
     ConnectorProfileList connectorProfiles = portprofile->connector_profiles;
+    //DDEBUG_V("connectorProfiles:%d", connectorProfiles.length());
     for(CORBA::ULong i = 0; i < connectorProfiles.length(); i++){
         ConnectorProfile& connectorProfile = connectorProfiles[i];
         PortServiceList& connectedPorts = connectorProfile.ports;
@@ -337,12 +339,14 @@ bool RTSComp::connectionCheckSub(RTSPort* rtsPort) {
             PortService_ptr connectedPortRef = connectedPorts[j];
             PortProfile_var connectedPortProfile = connectedPortRef->get_port_profile();
             string portName = string(connectedPortProfile->name);
+            DDEBUG_V("RTSComp::connectionCheckSub portName:%s", portName.c_str());
             vector<string> target;
             RTCCommonUtil::splitPortName(portName, target);
             if(target[0] == name)
                 continue;
-						RTSComp* targetRTC = impl->nameToRTSComp(target[0] + "|rtc::");
+						RTSComp* targetRTC = impl->nameToRTSComp("/" + target[0] + ".rtc");
             if(targetRTC){
+              //DDEBUG("targetRTC Found");
                 RTSPort* targetPort = targetRTC->nameToRTSPort(portName);
                 if(targetPort){
                     RTSystemItem::RTSConnectionMap::iterator itr =
@@ -378,6 +382,7 @@ bool RTSComp::connectionCheckSub(RTSPort* rtsPort) {
 
 bool RTSComp::connectionCheck()
 {
+  //DDEBUG("RTSComp::connectionCheck");
     bool modified = false;
     for(vector<RTSPortPtr>::iterator it = inPorts.begin(); it != inPorts.end(); it++)
         modified |= connectionCheckSub(*it);
@@ -452,7 +457,8 @@ void RTSComp::setRtc(RTObject_ptr rtc) {
 }
 /////////////////////////////////////////////////////////////////
 void RTSystemItem::initialize(ExtensionManager* ext) {
-	ext->itemManager().registerClass<RTSystemItem>(N_("RTSystemItem"));
+  DDEBUG("RTSystemItem::initialize");
+  ext->itemManager().registerClass<RTSystemItem>(N_("RTSystemItem"));
 	ext->itemManager().addCreationPanel<RTSystemItem>();
 }
 
@@ -503,7 +509,8 @@ Item* RTSystemItem::doDuplicate() const {
 }
 
 void RTSystemItemImpl::initialize() {
-	RTSNameServerView* nsView = RTSNameServerView::instance();
+  DDEBUG("RTSystemItemImpl::initialize");
+  RTSNameServerView* nsView = RTSNameServerView::instance();
 	if (nsView) {
 		if (!locationChangedConnection.connected()) {
 			locationChangedConnection = nsView->sigLocationChanged().connect(
@@ -512,6 +519,14 @@ void RTSystemItemImpl::initialize() {
 		}
 	}
 	connectionNo = 0;
+  //
+  Mapping* config = AppConfig::archive()->openMapping("OpenRTM");
+  self->vendorName = config->get("defaultVendor", "AIST");
+  self->version = config->get("defaultVersion", "1.0.0");
+  self->pollingCycle = config->get("pollingCycle", 500);
+#ifndef OPENRTM_VERSION11
+  self->heartBeatPeriod = config->get("heartBeatPeriod", 500);
+#endif
 }
 
 void RTSystemItemImpl::onLocationChanged(string host, int port) {
@@ -523,7 +538,7 @@ RTSComp* RTSystemItem::nameToRTSComp(const string& name) {
 }
 
 RTSComp* RTSystemItemImpl::nameToRTSComp(const string& name) {
-	//DDEBUG_V("RTSystemItemImpl::nameToRTSComp:%s", name.c_str());
+	DDEBUG_V("RTSystemItemImpl::nameToRTSComp:%s", name.c_str());
     map<string, RTSCompPtr>::iterator it = rtsComps.find(name);
     if(it==rtsComps.end())
         return 0;

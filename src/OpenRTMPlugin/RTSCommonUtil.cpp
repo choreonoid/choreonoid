@@ -181,6 +181,7 @@ vector<string> RTCCommonUtil::getAllowList(vector<string>& source, vector<string
 
 	bool isAllowAny_Source = isExistAny(source);
 	bool isAllowAny_Target = isExistAny(target);
+  DDEBUG_V("Any Source:%d, target:%d", isAllowAny_Source, isAllowAny_Target);
 	//
   vector<string> resultTmp;
 	for (int index = 0; index < source.size(); index++) {
@@ -210,9 +211,11 @@ vector<string> RTCCommonUtil::getAllowList(vector<string>& source, vector<string
         string type2 = resultTmp[idx02];
         match = comparer.match(type1, type2);
         if (0 < match.length()) {
-          resultTmp.push_back(match);
           break;
 				}
+      }
+      if (match.length() == 0) {
+        resultTmp.push_back(type1);
       }
 		}
 	}

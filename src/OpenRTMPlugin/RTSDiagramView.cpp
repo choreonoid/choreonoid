@@ -1131,6 +1131,7 @@ void RTSDiagramViewImpl::deleteSelectedRTSItem() {
 
 void RTSDiagramViewImpl::createConnectionGItem(RTSConnection* rtsConnection,
         RTSPortGItem* sourcePort, RTSPortGItem* targetPort) {
+  DDEBUG("RTSDiagramViewImpl::createConnectionGItem");
     RTSConnectionGItemPtr gItem = new RTSConnectionGItem(rtsConnection,
             rtsConnection->sourcePort->isInPort,
             sourcePort->pos,
@@ -1198,6 +1199,7 @@ void RTSDiagramViewImpl::setCurrentRTSItem(RTSystemItem* item) {
 }
 
 void RTSDiagramViewImpl::updateView() {
+  DDEBUG("RTSDiagramViewImpl::updateView");
     timeOutConnection.block();
     rtsComps.clear();
     rtsConnections.clear();
@@ -1211,6 +1213,7 @@ void RTSDiagramViewImpl::updateView() {
         RTSystemItem::RTSConnectionMap& connections = currentRTSItem->rtsConnections();
         for(RTSystemItem::RTSConnectionMap::iterator itr = connections.begin();
                 itr != connections.end(); itr++){
+          DDEBUG("RTSDiagramViewImpl::updateView find connection")
             if(rtsConnections.find(itr->second->id)==rtsConnections.end()){
                 RTSConnection* rtsConnection = itr->second.get();
                 RTSPortGItem* source = rtsPortMap.find(rtsConnection->sourcePort)->second;

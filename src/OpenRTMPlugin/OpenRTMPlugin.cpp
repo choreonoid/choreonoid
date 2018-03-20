@@ -83,23 +83,25 @@ virtual bool initialize() {
       "-o", "naming.formats: %n.rtc",
       "-o", "logger.enable: NO",
 #ifdef Q_OS_WIN32
-      // To reduce the startup time on Windows
-      "-o", "corba.args: -ORBclientCallTimeOutPeriod 100",
+    // To reduce the startup time on Windows
+    "-o", "corba.args: -ORBclientCallTimeOutPeriod 100",
 #endif
-      "-o", "logger.log_level: TRACE",
-      //"-o", "corba.nameservers: localhost",
-      //"-o", "exec_cxt.periodic.type: SynchExtTriggerEC",
-      //"-o", "exec_cxt.periodic.rate: 1000000",
-      //"-o", "manager.is_master: YES"
-      //"-o", "logger.enable: YES",
-      //"-o", "logger.file_name: stdout",
-      //"-o", "corba.args: -ORBendPoint giop:tcp::2809 -ORBpoaUniquePersistentSystemIds 1"
+    "-o", "logger.log_level: TRACE",
+    //"-o", "corba.nameservers: localhost",
+    //"-o", "exec_cxt.periodic.type: SynchExtTriggerEC",
+    //"-o", "exec_cxt.periodic.rate: 1000000",
+    //"-o", "manager.is_master: YES"
+    //"-o", "logger.enable: YES",
+    //"-o", "logger.file_name: stdout",
+    //"-o", "corba.args: -ORBendPoint giop:tcp::2809 -ORBpoaUniquePersistentSystemIds 1"
   };
 
   MappingPtr appVars = AppConfig::archive()->openMapping("OpenRTM");
-  bool outputLog = appVars->get("outputLog", false);
-  if (outputLog) {
-    argv[10] = "logger.enable: YES";
+  if (appVars) {
+    bool outputLog = appVars->get("outputLog", false);
+    if (outputLog) {
+      argv[10] = "logger.enable: YES";
+    }
   }
 
 #ifdef Q_OS_WIN32
