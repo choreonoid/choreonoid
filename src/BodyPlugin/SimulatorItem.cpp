@@ -1557,7 +1557,7 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
             maxFrame = std::numeric_limits<int>::max();
         }
 
-        subSimulatorItems.extractChildItems(self);
+        subSimulatorItems.extractAssociatedItems(self);
         ItemList<SubSimulatorItem>::iterator p = subSimulatorItems.begin();
         while(p != subSimulatorItems.end()){
             SubSimulatorItem* item = *p;
