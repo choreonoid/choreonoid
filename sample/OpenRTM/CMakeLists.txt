@@ -32,8 +32,9 @@ function(add_cnoid_sample_rtc)
 
 endfunction()
 
-# Robot IO
+# General BodyIoRTCs
 add_cnoid_body_io_rtc(RobotIoRTC RobotIoRTC.cpp)
+add_cnoid_body_io_rtc(VisionSensorIoRTC VisionSensorIoRTC.cpp)
 
 # SR1 walk
 add_cnoid_sample_rtc(SR1WalkControllerRTC SR1WalkControllerRTC.cpp)
