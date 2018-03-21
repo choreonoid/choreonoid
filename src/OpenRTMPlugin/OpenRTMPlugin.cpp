@@ -12,6 +12,7 @@
 #include "RTSNameServerView.h"
 #include "RTSPropertiesView.h"
 #include "RTSDiagramView.h"
+#include "RTMImageView.h"
 #include "RTSItem.h"
 #include "deprecated/BodyRTCItem.h"
 #include <cnoid/Plugin>
@@ -21,8 +22,6 @@
 #include <cnoid/MenuManager>
 #include <cnoid/CorbaPlugin>
 #include <cnoid/SimulationBar>
-#include <cnoid/Sleep>
-#include <QTcpSocket>
 #include <rtm/ComponentActionListener.h>
 #include <thread>
 #include "gettext.h"
@@ -46,6 +45,7 @@ ManagerEx* manager;
 
 std::set<RTC::RTObject_impl*> managedComponents;
 
+Signal<void()> sigAboutToFinalizeRTM_;
 
 class PostComponentShutdownListenr : public RTC::PostComponentActionListener
 {
@@ -118,9 +118,10 @@ public:
             manager->servant()->createINSManager();
         }
 #ifdef OPENRTM_VERSION110
-        if(manager->registerECFactory("ChoreonoidExecutionContext",
-                                      RTC::ECCreate<cnoid::ChoreonoidExecutionContext>,
-                                      RTC::ECDelete<cnoid::ChoreonoidExecutionContext>)){
+        if(manager->registerECFactory(
+               "ChoreonoidExecutionContext",
+               RTC::ECCreate<cnoid::ChoreonoidExecutionContext>,
+               RTC::ECDelete<cnoid::ChoreonoidExecutionContext>)){
 #else
         if(RTC::ExecutionContextFactory::instance().addFactory(
                "ChoreonoidExecutionContext",
@@ -130,13 +131,15 @@ public:
             mv->putln(_("ChoreonoidExecutionContext has been registered."));
         }
 #ifdef OPENRTM_VERSION110
-        if(manager->registerECFactory("ChoreonoidPeriodicExecutionContext",
-                                      RTC::ECCreate<cnoid::ChoreonoidPeriodicExecutionContext>,
-                                      RTC::ECDelete<cnoid::ChoreonoidPeriodicExecutionContext>)){
+        if(manager->registerECFactory(
+               "ChoreonoidPeriodicExecutionContext",
+               RTC::ECCreate<cnoid::ChoreonoidPeriodicExecutionContext>,
+               RTC::ECDelete<cnoid::ChoreonoidPeriodicExecutionContext>)){
 #else
-        if(RTC::ExecutionContextFactory::instance().addFactory("ChoreonoidPeriodicExecutionContext",
-                ::coil::Creator< ::RTC::ExecutionContextBase, ::cnoid::ChoreonoidPeriodicExecutionContext>,
-                ::coil::Destructor< ::RTC::ExecutionContextBase, ::cnoid::ChoreonoidPeriodicExecutionContext>)){
+        if(RTC::ExecutionContextFactory::instance().addFactory(
+               "ChoreonoidPeriodicExecutionContext",
+               ::coil::Creator< ::RTC::ExecutionContextBase, ::cnoid::ChoreonoidPeriodicExecutionContext>,
+               ::coil::Destructor< ::RTC::ExecutionContextBase, ::cnoid::ChoreonoidPeriodicExecutionContext>)){
 #endif
             mv->putln(_("ChoreonoidPeriodicExecutionContext has been registered."));
         }
@@ -146,7 +149,7 @@ public:
 #ifdef Q_OS_WIN32
         omniORB::setClientCallTimeout(0); // reset the global timeout setting?
 #endif
-                
+        
         if(!cnoid::takeOverCorbaPluginInitialization(manager->getORB())){
             return false;
         }
@@ -170,14 +173,14 @@ public:
             std::bind(&OpenRTMPlugin::onDeleteRTCsOnSimulationStartToggled, this, _1));
         
         setProjectArchiver(
-
-        std::bind(&OpenRTMPlugin::store, this, _1),
-        std::bind(&OpenRTMPlugin::restore, this, _1));
+            std::bind(&OpenRTMPlugin::store, this, _1),
+            std::bind(&OpenRTMPlugin::restore, this, _1));
         
         RTSNameServerView::initializeClass(this);
         RTSystemItem::initialize(this);
         RTSPropertiesView::initializeClass(this);
         RTSDiagramView::initializeClass(this);
+        RTMImageView::initializeClass(this);
         
         return true;
     }
@@ -251,8 +254,10 @@ public:
         
     virtual bool finalize()
     {
-        connectionToSigSimulaionAboutToStart.disconnect();
+        sigAboutToFinalizeRTM_();
         
+        connectionToSigSimulaionAboutToStart.disconnect();
+
         std::vector<RTC::RTObject_impl*> rtcs = manager->getComponents();
         for(size_t i=0; i < rtcs.size(); ++i){
             RTC::RTObject_impl* rtc = rtcs[i];
@@ -286,6 +291,12 @@ public:
 CNOID_IMPLEMENT_PLUGIN_ENTRY(OpenRTMPlugin);
 
 
+SignalProxy<void()> cnoid::sigAboutToFinalizeRTM()
+{
+    return sigAboutToFinalizeRTM_;
+}
+
+            
 RTM::Manager_ptr cnoid::getRTCManagerServant()
 {
     return RTM::Manager::_duplicate(manager->servant()->getObjRef());
