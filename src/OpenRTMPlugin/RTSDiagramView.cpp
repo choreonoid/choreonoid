@@ -1406,6 +1406,19 @@ void RTSDiagramView::initializeClass(ExtensionManager* ext) {
 }
 ////////////////////
 SettingDialog::SettingDialog() {
+  chkLog = new QCheckBox(_("Log Output"));
+  QLabel* lblLevel = new QLabel(_("Log Level:"));
+  cmbLogLevel = new QComboBox();
+  cmbLogLevel->addItem("SILENT");
+  cmbLogLevel->addItem("FATAL");
+  cmbLogLevel->addItem("ERROR");
+  cmbLogLevel->addItem("WARN");
+  cmbLogLevel->addItem("INFO");
+  cmbLogLevel->addItem("DEBUG");
+  cmbLogLevel->addItem("TRACE");
+  cmbLogLevel->addItem("VERBOSE");
+  cmbLogLevel->addItem("PARANOID");
+
   QLabel* lblName = new QLabel(_("VendorName:"));
   leName = new QLineEdit;
   QLabel* lblVersion = new QLabel(_("Version:"));
@@ -1418,22 +1431,23 @@ SettingDialog::SettingDialog() {
   leHeartBeat = new QLineEdit;
   QLabel* lblUnitHb = new QLabel("ms");
 #endif
-  chkLog = new QCheckBox(_("Log Output"));
 
   QFrame* frmDetail = new QFrame;
   QGridLayout* gridSubLayout = new QGridLayout(frmDetail);
   gridSubLayout->addWidget(chkLog, 0, 0, 1, 1);
+  gridSubLayout->addWidget(lblLevel, 0, 1, 1, 1);
+  gridSubLayout->addWidget(cmbLogLevel, 0, 2, 1, 1);
   gridSubLayout->addWidget(lblName, 1, 0, 1, 1);
-  gridSubLayout->addWidget(leName, 1, 1, 1, 1);
+  gridSubLayout->addWidget(leName, 1, 1, 1, 2);
   gridSubLayout->addWidget(lblVersion, 2, 0, 1, 1);
-  gridSubLayout->addWidget(leVersion, 2, 1, 1, 1);
+  gridSubLayout->addWidget(leVersion, 2, 1, 1, 2);
   gridSubLayout->addWidget(lblPolling, 3, 0, 1, 1);
-  gridSubLayout->addWidget(lePoling, 3, 1, 1, 1);
-  gridSubLayout->addWidget(lblUnit, 3, 2, 1, 1);
+  gridSubLayout->addWidget(lePoling, 3, 1, 1, 2);
+  gridSubLayout->addWidget(lblUnit, 3, 3, 1, 1);
 #ifndef OPENRTM_VERSION11
   gridSubLayout->addWidget(lblHeartBeat, 4, 0, 1, 1);
-  gridSubLayout->addWidget(leHeartBeat, 4, 1, 1, 1);
-  gridSubLayout->addWidget(lblUnitHb, 4, 2, 1, 1);
+  gridSubLayout->addWidget(leHeartBeat, 4, 1, 1, 2);
+  gridSubLayout->addWidget(lblUnitHb, 4, 3, 1, 1);
 #endif
   //
   QFrame* frmButton = new QFrame;
@@ -1453,6 +1467,7 @@ SettingDialog::SettingDialog() {
   connect(okButton, SIGNAL(clicked()), this, SLOT(oKClicked()));
   connect(cancelButton, SIGNAL(clicked()), this, SLOT(rejected()));
   connect(this, SIGNAL(rejected()), this, SLOT(rejected()));
+  connect(chkLog, SIGNAL(clicked(bool)), this, SLOT(logChanged(bool)));
 
   setWindowTitle(_("OpenRTM Preferences"));
   /////
@@ -1464,6 +1479,12 @@ SettingDialog::SettingDialog() {
   leHeartBeat->setText(QString::number(appVars->get("heartBeatPeriod", 500)));
 #endif
   chkLog->setChecked(appVars->get("outputLog", false));
+  cmbLogLevel->setCurrentText(QString::fromStdString(appVars->get("logLevel", "INFO")));
+  cmbLogLevel->setEnabled(chkLog->isChecked());
+}
+
+void SettingDialog::logChanged(bool state) {
+  cmbLogLevel->setEnabled(chkLog->isChecked());
 }
 
 void SettingDialog::oKClicked() {
@@ -1474,6 +1495,7 @@ void SettingDialog::oKClicked() {
   AppConfig::archive()->openMapping("OpenRTM")->write("heartBeatPeriod", leHeartBeat->text().toInt());
 #endif
   AppConfig::archive()->openMapping("OpenRTM")->write("outputLog", chkLog->isChecked());
+  AppConfig::archive()->openMapping("OpenRTM")->write("logLevel", cmbLogLevel->currentText().toStdString());
   close();
 }
 

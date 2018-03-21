@@ -288,6 +288,10 @@ msgstr "ハートビート周期:"
 msgid "Log Output"
 msgstr "ログ出力"
 
+#: RTSDiagramView.cpp:1410
+msgid "Log Level:"
+msgstr "ログレベル:"
+
 #: RTSDiagramView.cpp:1443
 msgid "OpenRTM Preferences"
 msgstr "OpenRTM設定画面"

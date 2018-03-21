@@ -10,6 +10,7 @@
 #include <cnoid/Dialog>
 #include <QLineEdit>
 #include <QCheckBox>
+#include <QComboBox>
 
 using namespace cnoid;
 
@@ -50,6 +51,7 @@ public:
 private Q_SLOTS:
   void oKClicked();
   void rejected();
+  void logChanged(bool state);
 
 private:
   QLineEdit* leName;
@@ -59,6 +61,7 @@ private:
   QLineEdit* leHeartBeat;
 #endif
   QCheckBox* chkLog;
+  QComboBox* cmbLogLevel;
 };
 
 }

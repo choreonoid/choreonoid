@@ -74,19 +74,21 @@ OpenRTMPlugin() : Plugin("OpenRTM") {
 }
     
 virtual bool initialize() {
+  const int log_output_item = 8;
+  const int log_level_item = 10;
 
   const char* argv[] = {
       "choreonoid",
       "-f", "./rtc.conf.choreonoid",
       "-o", "manager.shutdown_on_nortcs: NO",
       "-o", "manager.shutdown_auto: NO",
-      "-o", "naming.formats: %n.rtc",
       "-o", "logger.enable: NO",
+      "-o", "logger.log_level: WARN",
+      "-o", "naming.formats: %n.rtc",
 #ifdef Q_OS_WIN32
     // To reduce the startup time on Windows
     "-o", "corba.args: -ORBclientCallTimeOutPeriod 100",
 #endif
-    "-o", "logger.log_level: TRACE",
     //"-o", "corba.nameservers: localhost",
     //"-o", "exec_cxt.periodic.type: SynchExtTriggerEC",
     //"-o", "exec_cxt.periodic.rate: 1000000",
@@ -100,7 +102,10 @@ virtual bool initialize() {
   if (appVars) {
     bool outputLog = appVars->get("outputLog", false);
     if (outputLog) {
-      argv[10] = "logger.enable: YES";
+      argv[log_output_item] = "logger.enable: YES";
+      string logLevel = "logger.log_level:" + appVars->get("logLevel", "INFO");
+      DDEBUG_V("Log Level:%s", logLevel.c_str());
+      argv[log_level_item] = logLevel.c_str();
     }
   }
 
