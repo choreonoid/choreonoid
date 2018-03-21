@@ -137,6 +137,7 @@ bool ProfileHandler::restoreRtsProfile(std::string targetFile, RTSystemItem* imp
 		vector<NamedValuePtr> propList;
 		for (int idxProp = 0; idxProp < dataConProf.propertyList.size(); idxProp++) {
 			Property propPro = dataConProf.propertyList[idxProp];
+      if (propPro.name == "dataport.corba_cdr.inport_ior") continue;
 			NamedValuePtr param(new NamedValue(propPro.name, propPro.value));
 			propList.push_back(param);
 		}
