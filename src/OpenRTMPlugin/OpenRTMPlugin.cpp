@@ -27,7 +27,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 using boost::format;
 
@@ -164,17 +163,17 @@ public:
         rtcManagerMainLoopThread = std::thread(rtcManagerMainLoop);
         
         menuManager().setPath("/Tools/OpenRTM").addItem(_("Delete unmanaged RT components"))
-            ->sigTriggered().connect(std::bind(&OpenRTMPlugin::deleteUnmanagedRTCs, this, true));
+            ->sigTriggered().connect([&](){ deleteUnmanagedRTCs(true); });
         
         deleteRTCsOnSimulationStartCheck =
             menuManager().setPath("/Options/OpenRTM").addCheckItem(
                 _("Delete unmanaged RT components on starting a simulation"));
         deleteRTCsOnSimulationStartCheck->sigToggled().connect(
-            std::bind(&OpenRTMPlugin::onDeleteRTCsOnSimulationStartToggled, this, _1));
+            [&](bool on){ onDeleteRTCsOnSimulationStartToggled(on); });
         
         setProjectArchiver(
-            std::bind(&OpenRTMPlugin::store, this, _1),
-            std::bind(&OpenRTMPlugin::restore, this, _1));
+            [&](Archive& archive){ return store(archive); },
+            [&](const Archive& archive){ restore(archive); });
         
         RTSNameServerView::initializeClass(this);
         RTSystemItem::initialize(this);
@@ -213,7 +212,7 @@ public:
         if(on){
             connectionToSigSimulaionAboutToStart = 
                 SimulationBar::instance()->sigSimulationAboutToStart().connect(
-                    std::bind(&OpenRTMPlugin::deleteUnmanagedRTCs, this, false));
+                    [&](SimulatorItem*){ deleteUnmanagedRTCs(false); });
         }
     }
     
