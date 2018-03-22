@@ -9,6 +9,12 @@ set -e
 SCRIPT_DIR=$(cd $(dirname $0); pwd)
 source ${SCRIPT_DIR}/defs.sh
 
+if [ ${WITHOUT_PACKAGING:-0} -ne 0 ]; then
+	print_info "WITHOUT_PACKAGING=${WITHOUT_PACKAGING}"
+	print_info "exit without building and uploading package."
+	exit 0
+fi
+
 [ $# -ge 1 ] && CI_SERVICE="$1" || CI_SERVICE=""
 case "${CI_SERVICE}" in
 	"travis" ) print_info "Travis CI specified";;
@@ -160,7 +166,10 @@ for DISTRO in ${TARGET_DISTROS}; do
 
 	print_info "Append dput entry to script for launchpad deployment"
 	CHANGES_FILE=${PACKAGE_NAME}_${VERSION}_source.changes
-	echo "dput ${PPA} ${PACKAGING_DIR}/${CHANGES_FILE}" >> \
+	DEPLOY_CMD="dput"
+	## in debug, only do upload simulation with dput.
+	[ ${DEBUG:-0} -ne 0 ] && DEPLOY_CMD="${DEPLOY_CMD} -s"
+	echo "${DEPLOY_CMD} ${PPA} ${PACKAGING_DIR}/${CHANGES_FILE}" >> \
 		${DEPLOY_LAUNCHPAD}
 done
 

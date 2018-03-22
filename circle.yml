@@ -21,4 +21,4 @@ deployment:
         branch: /.*?/
         commands:
             - misc/ci-scripts/packaging.sh
-            - cat misc/ci-scripts/deploy-launchpad.sh
+            - if [[ -r misc/ci-scripts/deploy-launchpad.sh ]]; then sh misc/ci-scripts/deploy-launchpad.sh; fi

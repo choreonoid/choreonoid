@@ -16,13 +16,21 @@ matrix:
           env:
               - TARGET_DISTROS=xenial
               - TARGET_ENVIRONMENT=ubuntu-xenial
+              - TARGET_CC=gcc
+        - os: linux
+          env:
+              - TARGET_DISTROS=xenial
+              - TARGET_ENVIRONMENT=ubuntu-xenial
+              - TARGET_CC=clang
+              - WITHOUT_PACKAGING=1
         - os: linux
           env:
               - TARGET_DISTROS=trusty
               - TARGET_ENVIRONMENT=ubuntu-trusty
+              - TARGET_CC=gcc
 
 script:
-    - docker build --rm -t ${TARGET_ENVIRONMENT}-gcc -f misc/docker/Dockerfile-${TARGET_ENVIRONMENT}-gcc .
+    - docker build --rm -t ${TARGET_ENVIRONMENT}-${TARGET_CC} -f misc/docker/Dockerfile-${TARGET_ENVIRONMENT}-${TARGET_CC} .
 
 after_success:
     - ${TRAVIS_BUILD_DIR}/misc/ci-scripts/packaging.sh
@@ -32,5 +40,6 @@ deploy:
     skip_cleanup: true
     on:
         all_branches: true
+        condition: -r ${TRAVIS_BUILD_DIR}/misc/ci-scripts/deploy-launchpad.sh
     script:
-        - cat ${TRAVIS_BUILD_DIR}/misc/ci-scripts/deploy-launchpad.sh
+        - sh ${TRAVIS_BUILD_DIR}/misc/ci-scripts/deploy-launchpad.sh
