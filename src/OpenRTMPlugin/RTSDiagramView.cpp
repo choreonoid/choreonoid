@@ -1322,10 +1322,11 @@ void RTSDiagramViewImpl::onTime()
 
 void RTSDiagramViewImpl::onActivated(bool on)
 {
-    if(on)
+    if(on){
         timer.start();
-    else
+    } else {
         timer.stop();
+    }
 }
 
 

@@ -205,7 +205,7 @@ void RTSNameServerViewImpl::updateObjectList(bool force)
         // Clear information update to all views.
         //clearDiagram();
         
-        if(ncHelper.isAlive()){
+        if(ncHelper.updateConnection()){
             NamingContextHelper::ObjectInfoList objects = ncHelper.getObjectList();
             updateObjectList(objects, NULL);
             treeWidget.expandAll();
