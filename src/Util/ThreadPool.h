@@ -75,6 +75,11 @@ public:
             }
         }
     }
+
+    bool isRunning() {
+        std::lock_guard<std::mutex> guard(mutex);
+        return numActiveThreads > 0;
+    }
     
 private:
     void run() {
