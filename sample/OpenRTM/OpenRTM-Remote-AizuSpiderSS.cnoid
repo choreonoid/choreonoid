@@ -79,6 +79,18 @@ items:
                     reloading: false
             - 
               id: 6
+              name: "VisionIoSensorRTC"
+              plugin: OpenRTM
+              class: BodyIoRTCItem
+              data: 
+                isNoDelayMode: true
+                controllerOptions: ""
+                module: "VisionSensorIoRTC.so"
+                baseDirectory: "RTC directory"
+                instanceName: ""
+                periodicRate: 0
+            - 
+              id: 7
               name: "BodyTrackingCamera"
               plugin: Body
               class: BodyTrackingCameraItem
@@ -87,7 +99,7 @@ items:
                 nearClipDistance: 0.01
                 farClipDistance: 100
         - 
-          id: 7
+          id: 8
           name: "Labo1"
           plugin: Body
           class: BodyItem
@@ -110,95 +122,113 @@ items:
             selfCollisionDetection: false
             isEditable: false
         - 
-          id: 8
-          name: "AISTSimulator-Position"
-          plugin: Body
-          class: AISTSimulatorItem
-          data: 
-            timestep: 0.005
-            realtimeSync: true
-            recording: "full"
-            timeRangeMode: "Unlimited"
-            timeLength: 60
-            allLinkPositionOutputMode: true
-            deviceStateOutput: true
-            controllerThreads: true
-            recordCollisionData: false
-            controllerOptions: "position"
-            dynamicsMode: "Forward dynamics"
-            integrationMode: "Runge Kutta"
-            gravity: [ 0, 0, -9.80665 ]
-            staticFriction: 0.5
-            dynamicFriction: 0.5
-            cullingThresh: 0.01
-            contactCullingDepth: 0.05
-            errorCriterion: 0.001
-            maxNumIterations: 1000
-            contactCorrectionDepth: 0.0001
-            contactCorrectionVelocityRatio: 30
-            kinematicWalking: false
-            2Dmode: false
-            oldAccelSensorMode: false
-        - 
           id: 9
-          name: "AISTSimulator-Velocity"
+          name: "GLVisionSimulator"
           plugin: Body
-          class: AISTSimulatorItem
+          class: GLVisionSimulatorItem
           data: 
-            timestep: 0.005
-            realtimeSync: true
-            recording: "full"
-            timeRangeMode: "Unlimited"
-            timeLength: 60
-            allLinkPositionOutputMode: true
-            deviceStateOutput: true
-            controllerThreads: true
-            recordCollisionData: false
-            controllerOptions: "velocity"
-            dynamicsMode: "Forward dynamics"
-            integrationMode: "Runge Kutta"
-            gravity: [ 0, 0, -9.80665 ]
-            staticFriction: 0.5
-            dynamicFriction: 0.5
-            cullingThresh: 0.01
-            contactCullingDepth: 0.05
-            errorCriterion: 0.001
-            maxNumIterations: 1000
-            contactCorrectionDepth: 0.0001
-            contactCorrectionVelocityRatio: 30
-            kinematicWalking: false
-            2Dmode: false
-            oldAccelSensorMode: false
-        - 
-          id: 10
-          name: "AISTSimulator-Torque"
-          plugin: Body
-          class: AISTSimulatorItem
-          data: 
-            timestep: 0.001
-            realtimeSync: true
-            recording: "full"
-            timeRangeMode: "Unlimited"
-            timeLength: 60
-            allLinkPositionOutputMode: true
-            deviceStateOutput: true
-            controllerThreads: true
-            recordCollisionData: false
-            controllerOptions: "torque"
-            dynamicsMode: "Forward dynamics"
-            integrationMode: "Runge Kutta"
-            gravity: [ 0, 0, -9.80665 ]
-            staticFriction: 0.5
-            dynamicFriction: 0.5
-            cullingThresh: 0.01
-            contactCullingDepth: 0.05
-            errorCriterion: 0.001
-            maxNumIterations: 1000
-            contactCorrectionDepth: 0.0001
-            contactCorrectionVelocityRatio: 30
-            kinematicWalking: false
-            2Dmode: false
-            oldAccelSensorMode: false
+            enabled: true
+            maxFrameRate: 1000
+            maxLatency: 1
+            recordVisionData: false
+            threadMode: Sensor
+            bestEffort: false
+            allSceneObjects: false
+            rangeSensorPrecisionRatio: 2
+            depthError: 0
+            enableHeadLight: true
+            enableAdditionalLights: true
+          children: 
+            - 
+              id: 10
+              name: "AISTSimulator-Position"
+              plugin: Body
+              class: AISTSimulatorItem
+              data: 
+                timestep: 0.005
+                realtimeSync: true
+                recording: "full"
+                timeRangeMode: "Unlimited"
+                timeLength: 60
+                allLinkPositionOutputMode: true
+                deviceStateOutput: true
+                controllerThreads: true
+                recordCollisionData: false
+                controllerOptions: "position"
+                dynamicsMode: "Forward dynamics"
+                integrationMode: "Runge Kutta"
+                gravity: [ 0, 0, -9.80665 ]
+                staticFriction: 0.5
+                dynamicFriction: 0.5
+                cullingThresh: 0.01
+                contactCullingDepth: 0.05
+                errorCriterion: 0.001
+                maxNumIterations: 1000
+                contactCorrectionDepth: 0.0001
+                contactCorrectionVelocityRatio: 30
+                kinematicWalking: false
+                2Dmode: false
+                oldAccelSensorMode: false
+            - 
+              id: 11
+              name: "AISTSimulator-Velocity"
+              plugin: Body
+              class: AISTSimulatorItem
+              data: 
+                timestep: 0.005
+                realtimeSync: true
+                recording: "full"
+                timeRangeMode: "Unlimited"
+                timeLength: 60
+                allLinkPositionOutputMode: true
+                deviceStateOutput: true
+                controllerThreads: true
+                recordCollisionData: false
+                controllerOptions: "velocity"
+                dynamicsMode: "Forward dynamics"
+                integrationMode: "Runge Kutta"
+                gravity: [ 0, 0, -9.80665 ]
+                staticFriction: 0.5
+                dynamicFriction: 0.5
+                cullingThresh: 0.01
+                contactCullingDepth: 0.05
+                errorCriterion: 0.001
+                maxNumIterations: 1000
+                contactCorrectionDepth: 0.0001
+                contactCorrectionVelocityRatio: 30
+                kinematicWalking: false
+                2Dmode: false
+                oldAccelSensorMode: false
+            - 
+              id: 12
+              name: "AISTSimulator-Torque"
+              plugin: Body
+              class: AISTSimulatorItem
+              data: 
+                timestep: 0.001
+                realtimeSync: true
+                recording: "full"
+                timeRangeMode: "Unlimited"
+                timeLength: 60
+                allLinkPositionOutputMode: true
+                deviceStateOutput: true
+                controllerThreads: true
+                recordCollisionData: false
+                controllerOptions: "torque"
+                dynamicsMode: "Forward dynamics"
+                integrationMode: "Runge Kutta"
+                gravity: [ 0, 0, -9.80665 ]
+                staticFriction: 0.5
+                dynamicFriction: 0.5
+                cullingThresh: 0.01
+                contactCullingDepth: 0.05
+                errorCriterion: 0.001
+                maxNumIterations: 1000
+                contactCorrectionDepth: 0.0001
+                contactCorrectionVelocityRatio: 30
+                kinematicWalking: false
+                2Dmode: false
+                oldAccelSensorMode: false
 views: 
   - 
     id: 0
@@ -211,9 +241,9 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      selected: [ 8 ]
-      checked: [ 1, 2, 6, 7 ]
-      expanded: [ 1, 2, 3, 7 ]
+      selected: [ 12 ]
+      checked: [ 1, 2, 7, 8 ]
+      expanded: [ 1, 2, 3, 8, 9 ]
   - 
     id: 2
     plugin: Base
@@ -328,7 +358,7 @@ views:
       currentBodyItem: 2
       bodyItems: 
         - 
-          id: 7
+          id: 8
           selectedLinks: [ 1 ]
   - 
     id: 8
@@ -341,6 +371,9 @@ views:
     plugin: OpenRTM
     class: RTSNameServerView
     mounted: true
+    state: 
+      host: localhost
+      port: 2809
   - 
     id: 10
     plugin: Python
@@ -412,7 +445,7 @@ Body:
         showPpcom: false
         showZmp: false
       - 
-        bodyItem: 7
+        bodyItem: 8
         showCenterOfMass: false
         showPpcom: false
         showZmp: false
