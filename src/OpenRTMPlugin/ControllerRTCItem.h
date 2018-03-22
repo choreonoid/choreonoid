@@ -41,7 +41,7 @@ public:
 
 protected:
     void useOnlyChoreonoidExecutionContext();
-    bool createRTCmain();
+    bool createRTCmain(bool isBodyIORTC = false);
 
     virtual void onConnectedToRoot() override;
     virtual void onDisconnectedFromRoot() override;

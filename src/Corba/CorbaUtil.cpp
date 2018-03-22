@@ -144,7 +144,8 @@ CORBA::Object_ptr NamingContextHelper::findObjectSub(std::vector<ObjectPath>& pa
 			fullName = fullName + pathList[index].id;
 		}
 
-		try {
+    omniORB::setClientCallTimeout(500);
+    try {
 			obj = namingContext->resolve(ncName);
 
 		} catch (const CosNaming::NamingContext::NotFound &ex) {
@@ -173,7 +174,8 @@ CORBA::Object_ptr NamingContextHelper::findObjectSub(std::vector<ObjectPath>& pa
 		} catch (const CORBA::TRANSIENT &) {
 			errorMessage_ = str(format("Resolving \"%1% \" failed with the TRANSIENT exception.") % fullName);
 		}
-	}
+    omniORB::setClientCallTimeout(0); // reset the global timeout setting?
+  }
 
 	return obj;
 }

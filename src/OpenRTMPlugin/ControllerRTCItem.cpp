@@ -76,7 +76,7 @@ public:
     void setBaseDirectoryType(int type);
     void setRTCModule(const std::string& name);
     std::string getModuleFilename();
-    bool createRTCmain();
+    bool createRTCmain(bool isBodyIORTC = false);
     void deleteRTC(bool waitToBeDeleted);
     bool start();
     void stop();
@@ -342,14 +342,14 @@ bool ControllerRTCItem::createRTC()
 }
 
 
-bool ControllerRTCItem::createRTCmain()
+bool ControllerRTCItem::createRTCmain(bool isBodyIORTC)
 {
-    return impl->createRTCmain();
+    return impl->createRTCmain(isBodyIORTC);
 }
 
 
-bool ControllerRTCItemImpl::createRTCmain() {
-  DDEBUG("ControllerRTCItemImpl::createRTCmain");
+bool ControllerRTCItemImpl::createRTCmain(bool isBodyIORTC) {
+  DDEBUG_V("ControllerRTCItemImpl::createRTCmain:%d", isBodyIORTC);
     if(rtc){
         self->deleteRTC(true);
     }
@@ -393,24 +393,37 @@ bool ControllerRTCItemImpl::createRTCmain() {
     string option;
     if(periodicRateProperty > 0){
         periodicRate = periodicRateProperty;
-        option = 
 #if defined(OPENRTM_VERSION11)
+        option =
           str(format("instance_name=%1%&exec_cxt.periodic.type=%2%&exec_cxt.periodic.rate=%3%")
                 % rtcInstanceName % execContextType.selectedSymbol() % periodicRate);
 #else
-          str(format("instance_name=%1%&execution_contexts=ChoreonoidExecutionContext(),ChoreonoidPeriodicExecutionContext()&exec_cxt.periodic.type=%2%&exec_cxt.periodic.rate=%3%&exec_cxt.sync_activation=NO&exec_cxt.sync_deactivation=NO")
-            % rtcInstanceName % execContextType.selectedSymbol() % periodicRate);
-        DDEBUG("New Parameter 02");
+          if (isBodyIORTC) {
+            option =
+              str(format("instance_name=%1%&execution_contexts=ChoreonoidExecutionContext()&exec_cxt.periodic.type=%2%&exec_cxt.periodic.rate=%3%&exec_cxt.sync_activation=NO&exec_cxt.sync_deactivation=NO")
+                % rtcInstanceName % execContextType.selectedSymbol() % periodicRate);
+          } else {
+            option =
+              str(format("instance_name=%1%&execution_contexts=ChoreonoidExecutionContext(),ChoreonoidPeriodicExecutionContext()&exec_cxt.periodic.type=%2%&exec_cxt.periodic.rate=%3%&exec_cxt.sync_activation=NO&exec_cxt.sync_deactivation=NO")
+                % rtcInstanceName % execContextType.selectedSymbol() % periodicRate);
+          }
 #endif
     } else {
         periodicRate = 0;
-        option = 
 #if defined(OPENRTM_VERSION11)
+          option =
           str(format("instance_name=%1%&exec_cxt.periodic.type=%2%")
                 % rtcInstanceName % execContextType.selectedSymbol());
 #else
-          str(format("instance_name=%1%&execution_contexts=ChoreonoidExecutionContext(),ChoreonoidPeriodicExecutionContext()&exec_cxt.periodic.type=%2%&exec_cxt.sync_activation=NO&exec_cxt.sync_deactivation=NO")
-            % rtcInstanceName % execContextType.selectedSymbol());
+        if (isBodyIORTC) {
+          option =
+            str(format("instance_name=%1%&execution_contexts=ChoreonoidExecutionContext()&exec_cxt.periodic.type=%2%&exec_cxt.sync_activation=NO&exec_cxt.sync_deactivation=NO")
+              % rtcInstanceName % execContextType.selectedSymbol());
+        } else {
+          option =
+            str(format("instance_name=%1%&execution_contexts=ChoreonoidExecutionContext(),ChoreonoidPeriodicExecutionContext()&exec_cxt.periodic.type=%2%&exec_cxt.sync_activation=NO&exec_cxt.sync_deactivation=NO")
+              % rtcInstanceName % execContextType.selectedSymbol());
+        }
 #endif
     }
     rtc = createManagedRTC((moduleName + "?" + option).c_str());
@@ -439,7 +452,6 @@ bool ControllerRTCItemImpl::createRTCmain() {
         execContext = RTC::ExecutionContextService::_narrow(eclist[index]);
         if (selected != index) {
           RTC::ReturnCode_t ret = execContext->stop();
-          DDEBUG_V("EC STOP %d", ret);
         }
       }
     }
@@ -650,6 +662,7 @@ bool ControllerRTCItem::restore(const Archive& archive)
 
 bool ControllerRTCItemImpl::restore(const Archive& archive)
 {
+  DDEBUG("ControllerRTCItemImpl::restore");
     string value;
     if(archive.read("module", value) || archive.read("moduleName", value)){
         filesystem::path path(archive.expandPathVariables(value));
