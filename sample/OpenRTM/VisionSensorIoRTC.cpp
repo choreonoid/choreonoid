@@ -7,6 +7,7 @@
 #include <cnoid/RangeSensor>
 #include <cnoid/RangeCamera>
 #include <cnoid/ConnectionSet>
+#include <cnoid/ThreadPool>
 #include <cnoid/corba/PointCloud.hh>
 #include <cnoid/corba/CameraImage.hh>
 #include <rtm/idl/BasicDataTypeSkel.h>
@@ -35,51 +36,58 @@ typedef ref_ptr<DeviceIo> DeviceIoPtr;
 
 class CameraIo : public DeviceIo
 {
+    ThreadPool threadPool;
 public:
     CameraPtr modelCamera;
     CameraPtr camera;
     Img::TimedCameraImage cameraImage;
     RTC::OutPort<Img::TimedCameraImage> cameraImageOut;
-    std::shared_ptr<const Image> prevImage;
+    std::shared_ptr<const Image> lastImage;
 
     CameraIo(Camera* camera);
     virtual void setPorts(BodyIoRTC* rtc) override;
     virtual bool initializeSimulation(Body* body) override;
     virtual void onStateChanged() override;
+    void outputImage();
     virtual void clearSimulationDevice() override;
 };
 
 
 class RangeCameraIo : public CameraIo
 {
+    ThreadPool threadPool;
 public:
     RangeCameraPtr modelRangeCamera;
     RangeCameraPtr rangeCamera;
     PointCloudTypes::PointCloud pointCloud;
     RTC::OutPort<PointCloudTypes::PointCloud> pointCloudOut;
-    std::shared_ptr<const RangeCamera::PointData> prevPoints;
+    std::shared_ptr<const RangeCamera::PointData> lastPoints;
+    std::shared_ptr<const Image> lastImage;
 
     RangeCameraIo(RangeCamera* rangeCamera);
     virtual void setPorts(BodyIoRTC* rtc) override;
     virtual bool initializeSimulation(Body* body) override;
     virtual void onStateChanged() override;
+    void outputPointCloud();
     virtual void clearSimulationDevice() override;
 };    
 
 
 class RangeSensorIo : public DeviceIo
 {
+    ThreadPool threadPool;
 public:
     RangeSensorPtr modelRangeSensor;
     RangeSensorPtr rangeSensor;
     RTC::RangeData rangeData;
     RTC::OutPort<RTC::RangeData> rangeDataOut;
-    std::shared_ptr<const RangeSensor::RangeData> prevRangeData;
+    std::shared_ptr<const RangeSensor::RangeData> lastRangeData;
 
     RangeSensorIo(RangeSensor* sensor);
     virtual void setPorts(BodyIoRTC* rtc) override;
     virtual bool initializeSimulation(Body* body) override;
     virtual void onStateChanged() override;
+    void outputRangeData();
     virtual void clearSimulationDevice() override;
 };    
     
@@ -253,33 +261,41 @@ bool CameraIo::initializeSimulation(Body* body)
 
 void CameraIo::onStateChanged()
 {
-    if(camera->sharedImage() != prevImage){
-        const Image& image = camera->constImage();
-        if(!image.empty()){
-            int width,height;
-            cameraImage.data.image.height = height = image.height();
-            cameraImage.data.image.width = width = image.width();
-
-            switch(camera->imageType()){
-            case Camera::GRAYSCALE_IMAGE:
-                cameraImage.data.image.format = Img::CF_GRAY;
-                break;
-            case Camera::COLOR_IMAGE:
-                cameraImage.data.image.format = Img::CF_RGB;
-                break;
-            default:
-                cameraImage.data.image.format = Img::CF_UNKNOWN;
-                break;
+    if(!threadPool.isRunning()){ // Skip if writing to the outport is not finished
+        if(camera->sharedImage() != lastImage){
+            lastImage = camera->sharedImage();
+            if(!lastImage->empty()){
+                threadPool.start([&](){ outputImage(); });
             }
-            size_t length = width * height * image.numComponents() * sizeof(unsigned char);
-            cameraImage.data.image.raw_data.length(length);
-            void* src = (void*)image.pixels();
-            void* dis = (void*)cameraImage.data.image.raw_data.get_buffer();
-            memcpy(dis, src, length);
         }
-        prevImage = camera->sharedImage();
-        cameraImageOut.write();
     }
+}
+
+
+void CameraIo::outputImage()
+{
+    int width,height;
+    cameraImage.data.image.height = height = lastImage->height();
+    cameraImage.data.image.width = width = lastImage->width();
+
+    switch(camera->imageType()){
+    case Camera::GRAYSCALE_IMAGE:
+        cameraImage.data.image.format = Img::CF_GRAY;
+        break;
+    case Camera::COLOR_IMAGE:
+        cameraImage.data.image.format = Img::CF_RGB;
+        break;
+    default:
+        cameraImage.data.image.format = Img::CF_UNKNOWN;
+        break;
+    }
+    size_t length = width * height * lastImage->numComponents() * sizeof(unsigned char);
+    cameraImage.data.image.raw_data.length(length);
+    void* src = (void*)lastImage->pixels();
+    void* dis = (void*)cameraImage.data.image.raw_data.get_buffer();
+    memcpy(dis, src, length);
+
+    cameraImageOut.write();
 }
 
 
@@ -371,47 +387,57 @@ bool RangeCameraIo::initializeSimulation(Body* body)
 void RangeCameraIo::onStateChanged()
 {
     CameraIo::onStateChanged();
-    
-    if(rangeCamera->sharedPoints() != prevPoints){
-        const vector<Vector3f>& points = rangeCamera->constPoints();
-        const Image& image = rangeCamera->constImage();
 
-        if(!points.empty()){
-            if(!image.empty()){
-                pointCloud.height = image.height();
-                pointCloud.width = image.width();
-            }else{
-                if(rangeCamera->isOrganized()){
-                    pointCloud.height = rangeCamera->resolutionY();
-                    pointCloud.width = rangeCamera->resolutionX();
-                }else{
-                    pointCloud.height = 1;
-                    pointCloud.width = rangeCamera->numPoints();
+    if(!threadPool.isRunning()){
+        if(rangeCamera->sharedPoints() != lastPoints){
+            lastPoints = rangeCamera->sharedPoints();
+            lastImage = rangeCamera->sharedImage();
+            if(!lastPoints->empty()){
+                if(!lastImage->empty()){
+                    pointCloud.height = lastImage->height();
+                    pointCloud.width = lastImage->width();
+                } else {
+                    if(rangeCamera->isOrganized()){
+                        pointCloud.height = rangeCamera->resolutionY();
+                        pointCloud.width = rangeCamera->resolutionX();
+                    } else {
+                        pointCloud.height = 1;
+                        pointCloud.width = rangeCamera->numPoints();
+                    }
                 }
-            }
-            pointCloud.row_step = pointCloud.point_step * pointCloud.width;
-            size_t length = points.size() * pointCloud.point_step;
-            pointCloud.data.length(length);
-            unsigned char* dis = (unsigned char*)pointCloud.data.get_buffer();
-            const unsigned char* pixels = 0;
-            if(!image.empty())
-                pixels = image.pixels();
-            for(size_t i=0; i < points.size(); i++, dis += pointCloud.point_step){
-                memcpy(&dis[0], &points[i].x(), 4);
-                memcpy(&dis[4], &points[i].y(), 4);
-                memcpy(&dis[8], &points[i].z(), 4);
-                if(pixels){
-                    dis[12] = *pixels++;
-                    dis[13] = *pixels++;
-                    dis[14] = *pixels++;
-                    dis[15] = 0;
-                }
+                threadPool.start([&](){ outputPointCloud(); });
             }
         }
-
-        prevPoints = rangeCamera->sharedPoints();
-        pointCloudOut.write();
     }
+}
+
+
+void RangeCameraIo::outputPointCloud()
+{
+    const vector<Vector3f>& points = *lastPoints;
+    const Image& image = *lastImage;
+
+    pointCloud.row_step = pointCloud.point_step * pointCloud.width;
+    size_t length = points.size() * pointCloud.point_step;
+    pointCloud.data.length(length);
+    unsigned char* dis = (unsigned char*)pointCloud.data.get_buffer();
+    const unsigned char* pixels = 0;
+    if(!image.empty()){
+        pixels = image.pixels();
+    }
+    for(size_t i=0; i < points.size(); i++, dis += pointCloud.point_step){
+        memcpy(&dis[0], &points[i].x(), 4);
+        memcpy(&dis[4], &points[i].y(), 4);
+        memcpy(&dis[8], &points[i].z(), 4);
+        if(pixels){
+            dis[12] = *pixels++;
+            dis[13] = *pixels++;
+            dis[14] = *pixels++;
+            dis[15] = 0;
+        }
+    }
+
+    pointCloudOut.write();
 }
 
 
@@ -472,15 +498,23 @@ bool RangeSensorIo::initializeSimulation(Body* body)
 
 void RangeSensorIo::onStateChanged()
 {
-    if(rangeSensor->sharedRangeData() != prevRangeData){
-        const RangeSensor::RangeData& src = rangeSensor->constRangeData();
-        rangeData.ranges.length(src.size());
-        for(size_t i=0; i < src.size(); i++)
-            rangeData.ranges[i] = src[i];
-
-        prevRangeData = rangeSensor->sharedRangeData();
-        rangeDataOut.write();
+    if(!threadPool.isRunning()){
+        if(rangeSensor->sharedRangeData() != lastRangeData){
+            lastRangeData = rangeSensor->sharedRangeData();
+            threadPool.start([&](){ outputRangeData(); });
+        }
     }
+}
+
+
+void RangeSensorIo::outputRangeData()
+{
+    const RangeSensor::RangeData& src = *lastRangeData;
+    rangeData.ranges.length(src.size());
+    for(size_t i=0; i < src.size(); i++){
+        rangeData.ranges[i] = src[i];
+    }
+    rangeDataOut.write();
 }
 
 
