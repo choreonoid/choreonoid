@@ -242,7 +242,7 @@ public :
     ComboBox* subscriptionCombo;
 };
 
-#define STATE_CHECK_TIME 500  //msec
+#define STATE_CHECK_TIME 1000  //msec
 
 class RTSDiagramViewImpl : public QGraphicsView
 {
@@ -1305,10 +1305,10 @@ void RTSDiagramViewImpl::onTime()
                 }
             }
         }
-        
+
         if(currentRTSItem->connectionCheck())
             modified = true;
-        
+
         if(modified)
             updateView();
     }
