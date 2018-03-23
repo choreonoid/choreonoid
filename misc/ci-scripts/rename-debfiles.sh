@@ -42,6 +42,10 @@ for package in ${PACKAGES}; do
 	TARGET_FILES=$(ls -1 ${SOURCE}.*)
 	for target in ${TARGET_FILES}; do
 		destfile=$(echo ${target} | sed -e "s/^${SOURCE}/${DEST}/")
+		if [ -r ${destfile} ]; then
+			print_info "${destfile} already exists"
+			continue
+		fi
 		print_info "rename ${target} with ${destfile}"
 		cp ${target} ${destfile}
 	done
