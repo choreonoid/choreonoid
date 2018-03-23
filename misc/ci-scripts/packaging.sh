@@ -168,7 +168,7 @@ for DISTRO in ${TARGET_DISTROS}; do
 	CHANGES_FILE=${PACKAGE_NAME}_${VERSION}_source.changes
 	DEPLOY_CMD="dput"
 	## in debug, only do upload simulation with dput.
-	[ ${DEBUG:-0} -ne 0 ] && DEPLOY_CMD="${DEPLOY_CMD} -s"
+	[ ${SIMULATE_UPLOAD:-0} -ne 0 ] && DEPLOY_CMD="${DEPLOY_CMD} -s"
 	echo "${DEPLOY_CMD} ${PPA} ${PACKAGING_DIR}/${CHANGES_FILE}" >> \
 		${DEPLOY_LAUNCHPAD}
 done
