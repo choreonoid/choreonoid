@@ -22,7 +22,7 @@ PACKAGE_NAME="choreonoid"
 ##
 ## Default value is None, so you need to set it.
 ##
-PPA="ppa:to-be-determined"
+PPA="ppa:choreonoid.org/choreonoid"
 
 ## TRAVIS_ENCRYPT_HASH: Hash part of environment variable name indicating
 ##                      encryption keys in Travis CI
