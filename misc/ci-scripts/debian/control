@@ -9,24 +9,24 @@ Build-Depends: debhelper (>= 9), cmake,
 	       libz-dev,
 	       libjpeg-dev,
 	       libpng-dev,
-         libglew-dev,
-         libxfixes-dev,
+	       libglew-dev,
+	       libxfixes-dev,
 	       libyaml-dev,
 	       libqt4-opengl-dev,
 	       qt4-dev-tools,
 	       qt4-qtconfig,
-         libode-dev,
-         libomniorb4-dev,
-         libcos4-dev,
-         omniidl,
-         omniorb-nameserver,
-         python-omniorb,
-         omniidl-python,
-         python2.7-dev,
-         python3-dev,
-         uuid-dev,
-         openrtm-aist,
-         openrtm-aist-dev,
+	       libode-dev,
+	       libomniorb4-dev,
+	       libcos4-dev,
+	       omniidl,
+	       omniorb-nameserver,
+	       python-omniorb,
+	       omniidl-python,
+	       python2.7-dev,
+	       python3-dev,
+	       uuid-dev,
+	       openrtm-aist,
+	       openrtm-aist-dev,
 	       gettext
 Standards-Version: 3.9.4
 Section: science
@@ -35,23 +35,9 @@ Vcs-Browser: http://anonscm.debian.org/gitweb/?p=debian-science/packages/choreon
 Vcs-Git: git://anonscm.debian.org/debian-science/packages/choreonoid.git
 XS-Testsuite: autopkgtest
 
-Package: choreonoid%VERSION%-data
-Architecture: all
-Depends: ${misc:Depends}
-Multi-Arch: foreign
-Description: Integrated robotics GUI environment - shared data
- Choreonoid is an integrated robotics GUI environment, which allows
- users to add their own functions on the basis of various basic
- robotics functions.
- .
- This package contains architecture independent files for the
- choreonoid packages.
-
 Package: choreonoid%VERSION%
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends},
-	 libcnoid1%VERSION% (= ${binary:Version}),
-	 choreonoid%VERSION%-data (= ${source:Version})
 Suggests: choreonoid%VERSION%-doc
 Multi-Arch: foreign
 Description: Integrated robotics GUI environment
@@ -59,29 +45,16 @@ Description: Integrated robotics GUI environment
  users to add their own functions on the basis of various basic
  robotics functions.
 
-Package: libcnoid1%VERSION%
-Architecture: any
-Section: libs
-Pre-Depends: ${misc:Pre-Depends}
-Depends: ${shlibs:Depends}, ${misc:Depends}
-Multi-Arch: same
-Description: Integrated robotics GUI environment - shared library
- Choreonoid is an integrated robotics GUI environment, which allows
- users to add their own functions on the basis of various basic
- robotics functions.
- .
- This package gathers choreonoid shared libraries.
-
-Package: libcnoid%VERSION%-dev
+Package: choreonoid%VERSION%-dev
 Architecture: any
 Section: libdevel
-Depends: libcnoid1%VERSION% (= ${binary:Version}), ${misc:Depends},
+Depends: choreonoid%VERSION% (= ${binary:Version}), ${misc:Depends},
 	 libboost-all-dev,
 	 libeigen3-dev,
 	 libz-dev,
 	 libjpeg-dev,
 	 libpng-dev,
-   libglew-dev,
+	 libglew-dev,
 	 libyaml-dev,
 	 libqt4-opengl-dev,
 	 pkg-config
@@ -91,8 +64,21 @@ Description: Integrated robotics GUI environment - development files
  users to add their own functions on the basis of various basic
  robotics functions.
  .
- This package gathers development files required to compile Choreonoid
- plug-ins.
+ This package gathers header files required to compile Choreonoid.
+
+Package: choreonoid%VERSION%-openrtm-plugin
+Architecture: any
+Section: libs
+Depends: choreonoid%VERSION% (= ${binary:Version}),
+	 ${shlibs:Depends}, ${misc:Depends},
+	 openrtm-aist
+Multi-Arch: same
+Description: Integrated robotics GUI environment - OpenRTM Plugin
+ Choreonoid is an integrated robotics GUI environment, which allows
+ users to add their own functions on the basis of various basic
+ robotics functions.
+ .
+ This package provides OpenRTM Plugin for Choreonoid.
 
 Package: choreonoid%VERSION%-doc
 Architecture: all
