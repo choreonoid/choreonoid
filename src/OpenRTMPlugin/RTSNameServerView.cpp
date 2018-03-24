@@ -491,7 +491,7 @@ void RTSNameServerViewImpl::updateObjectList(bool force) {
 		// Clear information update to all views.
 		//clearDiagram();
 
-		if (ncHelper.isAlive()) {
+    if (ncHelper.updateConnection()) {
 			NamingContextHelper::ObjectInfoList objects = ncHelper.getObjectList();
 			vector<NamingContextHelper::ObjectPath> pathList;
 			updateObjectList(objects, topElem, pathList);
@@ -563,7 +563,7 @@ void RTSNameServerViewImpl::updateObjectList(const NamingContextHelper::ObjectIn
 		}
 		pathList.push_back(pathSub);
 
-		if (ncHelper.isAlive()) {
+    if (ncHelper.updateConnection()) {
 			NamingContextHelper::ObjectInfoList objects = ncHelper.getObjectList(pathList);
 			updateObjectList(objects, item, pathList);
 		}
@@ -616,4 +616,24 @@ void RTSNameServerViewImpl::setSelection(std::string RTCName, std::string RTCful
 
 NamingContextHelper RTSNameServerView::getNCHelper() {
 	return impl->ncHelper;
-};
+}
+
+bool RTSNameServerView::storeState(Archive& archive) {
+  archive.write("host", impl->ncHelper.host());
+  archive.write("port", impl->ncHelper.port());
+  return true;
+}
+
+bool RTSNameServerView::restoreState(const Archive& archive) {
+  string host;
+  if (archive.read("host", host)) {
+    impl->hostAddressBox.setText(host.c_str());
+  }
+  int port;
+  if (archive.read("port", port)) {
+    impl->portNumberSpin.setValue(port);
+  }
+  archive.addPostProcess([&]() { impl->updateObjectList(true); });
+
+  return true;
+}

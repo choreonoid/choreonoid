@@ -2,8 +2,8 @@
 @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_CORBAPLUGIN_CORBA_UTIL_H_INCLUDED
-#define CNOID_CORBAPLUGIN_CORBA_UTIL_H_INCLUDED
+#ifndef CNOID_CORBA_CORBA_UTIL_H
+#define CNOID_CORBA_CORBA_UTIL_H
 
 #include <vector>
 #include <string>
@@ -27,6 +27,8 @@ namespace cnoid {
 		NamingContextHelper(const std::string& host, int port);
 
 		void setLocation(const std::string& host, int port);
+
+    bool updateConnection();
 
 		struct ObjectPath {
 			std::string id;
@@ -133,7 +135,8 @@ namespace cnoid {
 		std::string namingContextLocation;
 		std::string host_;
 		int port_;
-	};
+    bool failedInLastAccessToNamingContext;
+  };
 
 	CNOID_EXPORT NamingContextHelper* getDefaultNamingContextHelper();
 }

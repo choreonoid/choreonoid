@@ -27,6 +27,7 @@ NamingContextHelper* cnoid::getDefaultNamingContextHelper() {
 }
 
 NamingContextHelper::NamingContextHelper() {
+  failedInLastAccessToNamingContext = false;
 }
 
 void cnoid::initializeCorbaUtil(bool activatePOAManager, int listeningPort) {
@@ -74,18 +75,28 @@ void cnoid::initializeCorbaUtil(CORBA::ORB_ptr orb_, bool activatePOAManager) {
 }
 
 
-NamingContextHelper::NamingContextHelper(const std::string& host, int port) {
+NamingContextHelper::NamingContextHelper(const std::string& host, int port)
+  : NamingContextHelper() {
 	setLocation(host, port);
 }
 
 
 void NamingContextHelper::setLocation(const std::string& host, int port) {
-	host_ = host;
+  if (failedInLastAccessToNamingContext) {
+    if (host != host_ || port != port_) {
+      failedInLastAccessToNamingContext = false;
+    }
+  }
+  host_ = host;
 	port_ = port;
 	namingContextLocation = str(format("corbaloc:iiop:%1%:%2%/NameService") % host % port);
 	namingContext = CosNaming::NamingContext::_nil();
 }
 
+bool NamingContextHelper::updateConnection() {
+  failedInLastAccessToNamingContext = false;
+  return checkOrUpdateNamingContext();
+}
 
 bool NamingContextHelper::isAlive(bool doRescan) {
 	if (doRescan) {
@@ -102,7 +113,10 @@ const std::string& NamingContextHelper::errorMessage() {
 
 
 bool NamingContextHelper::checkOrUpdateNamingContext() {
-	if (!CORBA::is_nil(namingContext)) {
+  if (failedInLastAccessToNamingContext) {
+    return false;
+  }
+  if (!CORBA::is_nil(namingContext)) {
 		return true;
 	}
 
@@ -116,11 +130,13 @@ bool NamingContextHelper::checkOrUpdateNamingContext() {
 
 		if (CORBA::is_nil(namingContext)) {
 			errorMessage_ = str(format("The object at %1% is not a NamingContext object.") % namingContextLocation);
-		}
+      failedInLastAccessToNamingContext = true;
+    }
 	} catch (CORBA::SystemException& ex) {
 		errorMessage_ = str(format("A NameService doesn't exist at \"%1%\".") % namingContextLocation);
 		namingContext = CosNaming::NamingContext::_nil();
-	}
+    failedInLastAccessToNamingContext = true;
+  }
 
 	omniORB::setClientCallTimeout(0); // reset the global timeout setting?
 

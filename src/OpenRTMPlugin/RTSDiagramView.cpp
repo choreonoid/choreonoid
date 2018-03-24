@@ -570,8 +570,6 @@ void RTSCompGItem::setStatus(RTC_STATUS status) {
 	}
 }
 ////////////////////
-#define STATE_CHECK_TIME 500  //msec
-
 class RTSDiagramViewImpl : public QGraphicsView {
 
 public:
@@ -655,7 +653,9 @@ RTSDiagramViewImpl::RTSDiagramViewImpl(RTSDiagramView* self)
 	}
 
 	timer.setSingleShot(false);
-	timer.setInterval(STATE_CHECK_TIME);
+  MappingPtr appVars = AppConfig::archive()->openMapping("OpenRTM");
+  long cycle = appVars->get("pollingCycle", 500);
+	timer.setInterval(cycle);
 	timeOutConnection.reset(
 		timer.sigTimeout().connect(
 			std::bind(&RTSDiagramViewImpl::onTime, this)));
@@ -979,10 +979,11 @@ void RTSDiagramViewImpl::onRTSCompPositionChanged(const RTSCompGItem* rtsCompGIt
 }
 
 void RTSDiagramViewImpl::onActivated(bool on) {
-	if (on)
-		timer.start();
-	else
-		timer.stop();
+  if (on) {
+    timer.start();
+  } else {
+    timer.stop();
+  }
 }
 
 

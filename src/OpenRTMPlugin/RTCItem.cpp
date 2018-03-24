@@ -71,6 +71,8 @@ RTCItem::RTCItem()
 		oldBaseDirectoryType = baseDirectoryType.which();
 
 		rtcDirectory = filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "rtc";
+
+    isActivationEnabled_ = false;
 }
 
 
@@ -88,6 +90,7 @@ RTCItem::RTCItem(const RTCItem& org)
 	oldPeriodicType = org.oldPeriodicType;
 	properties = org.properties;
 	oldBaseDirectoryType = org.oldBaseDirectoryType;
+  isActivationEnabled_ = org.isActivationEnabled_;
 }
 
 RTCItem::~RTCItem()
@@ -95,23 +98,36 @@ RTCItem::~RTCItem()
     
 }
 
+void RTCItem::deleteRTCInstance() {
+  if (rtcomp) {
+    rtcomp->deleteRTC();
+    delete rtcomp;
+    rtcomp = 0;
+  }
+}
+
+void RTCItem::updateRTCInstance(bool forceUpdate) {
+  if (rtcomp && forceUpdate) {
+    deleteRTCInstance();
+  }
+  if (!rtcomp) {
+    if (convertAbsolutePath()) {
+      rtcomp = new RTComponent(modulePath, properties);
+      if (isActivationEnabled_) {
+        rtcomp->activate();
+      }
+    }
+  }
+}
 
 void RTCItem::onPositionChanged() {
-  DDEBUG("RTCItem::onPositionChanged");
-    if(!rtcomp){
-        if(convertAbsolutePath())
-            rtcomp = new RTComponent(modulePath, properties);
-    }
+  updateRTCInstance(false);
 }
 
 
 void RTCItem::onDisconnectedFromRoot()
 {
-    if(rtcomp){
-        rtcomp->deleteRTC();
-        delete rtcomp;
-        rtcomp = 0;
-    }
+  deleteRTCInstance();
 }
 
 
@@ -123,14 +139,10 @@ Item* RTCItem::doDuplicate() const
 
 void RTCItem::setModuleName(const std::string& name) {
   DDEBUG_V("RTCItem::setModuleName %s", name.c_str());
-  if(moduleName!=name){
-        moduleName = name;
-        if(rtcomp){
-            delete rtcomp;
-        }
-        if (convertAbsolutePath())
-            rtcomp = new RTComponent(modulePath, properties);
-    }
+  if (moduleName != name) {
+    moduleName = name;
+    updateRTCInstance();
+  }
 }
 
 
@@ -139,11 +151,7 @@ void RTCItem::setPeriodicType(int type) {
 	if (oldPeriodicType != type) {
 		oldPeriodicType = type;
 		properties["exec_cxt.periodic.type"] = periodicType.symbol(type);
-    if(rtcomp){
-      delete rtcomp;
-    }
-    if (convertAbsolutePath())
-      rtcomp = new RTComponent(modulePath, properties);
+    updateRTCInstance();
   }
 }
 
@@ -155,11 +163,7 @@ void RTCItem::setPeriodicRate(int rate) {
         stringstream ss;
         ss << periodicRate;
         properties["exec_cxt.periodic.rate"] = ss.str();
-        if(rtcomp){
-            delete rtcomp;
-        }
-        if (convertAbsolutePath())
-            rtcomp = new RTComponent(modulePath, properties);
+        updateRTCInstance();
     }
 }
 
@@ -169,14 +173,18 @@ void RTCItem::setBaseDirectoryType(int base) {
   baseDirectoryType.select(base);
 	if (oldBaseDirectoryType != base) {
 		oldBaseDirectoryType = base;
-		if (rtcomp) {
-			delete rtcomp;
-		}
-		if (convertAbsolutePath())
-			rtcomp = new RTComponent(modulePath, properties);
+    updateRTCInstance();
 	}
 }
 
+void RTCItem::setActivationEnabled(bool on) {
+  if (on != isActivationEnabled_) {
+    isActivationEnabled_ = on;
+    if (on && rtcomp) {
+      rtcomp->activate();
+    }
+  }
+}
 
 void RTCItem::doPutProperties(PutPropertyFunction& putProperty)
 {
@@ -202,6 +210,8 @@ void RTCItem::doPutProperties(PutPropertyFunction& putProperty)
 	setPeriodicType(periodicType.selectedIndex());
 	putProperty(_("Periodic rate"), periodicRate,
 		[&](int rate) { setPeriodicRate(rate); return true; });
+  putProperty(_("Activation"), isActivationEnabled_,
+    [&](bool on) { setActivationEnabled(on); return true; });
 }
 
 
@@ -214,7 +224,8 @@ bool RTCItem::store(Archive& archive)
 		archive.write("baseDirectory", baseDirectoryType.selectedSymbol(), DOUBLE_QUOTED);
 		archive.write("periodicType", periodicType.selectedSymbol());
 		archive.write("periodicRate", periodicRate);
-		return true;
+    archive.write("activation", isActivationEnabled_);
+    return true;
 }
 
 
@@ -244,6 +255,7 @@ bool RTCItem::restore(const Archive& archive) {
 		ss << periodicRate;
 		properties["exec_cxt.periodic.rate"] = ss.str();
 	}
+  archive.read("activation", isActivationEnabled_);
 
 	return true;
 }
@@ -437,4 +449,17 @@ void RTComponent::deleteRTC()
     if(TRACE_FUNCTIONS){
         cout << "End of BodyRTCItem::deleteModule()" << endl;
     }
+}
+
+void RTComponent::activate() {
+  if (rtc_) {
+    RTC::ExecutionContextList_var eclist = rtc_->get_owned_contexts();
+    for (CORBA::ULong i = 0; i < eclist->length(); ++i) {
+      if (!CORBA::is_nil(eclist[i])) {
+        OpenRTM::ExtTrigExecutionContextService::_narrow(eclist[i])
+          ->activate_component(rtc_->getObjRef());
+        break;
+      }
+    }
+  }
 }

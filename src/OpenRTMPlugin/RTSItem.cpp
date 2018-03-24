@@ -329,11 +329,15 @@ bool RTSComp::connectionCheckSub(RTSPort* rtsPort) {
     if(!rtsPort->port || CORBA::is_nil(rtsPort->port) || rtsPort->port->_non_existent())
         return add;
 
-    PortProfile_var portprofile = rtsPort->port->get_port_profile();
-    ConnectorProfileList connectorProfiles = portprofile->connector_profiles;
-    //DDEBUG_V("connectorProfiles:%d", connectorProfiles.length());
-    for(CORBA::ULong i = 0; i < connectorProfiles.length(); i++){
-        ConnectorProfile& connectorProfile = connectorProfiles[i];
+    /**
+    The get_port_profile() function should not be used here because
+    it takes much time when the port has large data and its owner RTC is in a remote host.
+    The get_connector_profiles() function does not seem to cause such a problem.
+    */
+    ConnectorProfileList_var connectorProfiles = rtsPort->port->get_connector_profiles();
+
+    for (CORBA::ULong i = 0; i < connectorProfiles->length(); i++) {
+      ConnectorProfile& connectorProfile = connectorProfiles[i];
         PortServiceList& connectedPorts = connectorProfile.ports;
         for(CORBA::ULong j=0; j < connectedPorts.length(); ++j){
             PortService_ptr connectedPortRef = connectedPorts[j];
@@ -356,7 +360,7 @@ bool RTSComp::connectionCheckSub(RTSPort* rtsPort) {
                         continue;
                     RTSConnectionPtr rtsConnection = new RTSConnection(
                         string(connectorProfile.connector_id), string(connectorProfile.name),
-                        name, string(portprofile->name),
+                        name, rtsPort->name,
                         target[0], portName);
                     coil::Properties properties = NVUtil::toProperties(connectorProfile.properties);
 										vector<NamedValuePtr> propList;
@@ -860,6 +864,17 @@ struct ConnectorPropComparator {
 };
 ///////////
 bool RTSystemItem::store(Archive& archive) {
+  //if (overwrite()) {
+  //    archive.writeRelocatablePath("filename", profileFileName);
+  //    string systemId = "RTSystem:" + vendorName + ":" + name() + ":" + version;
+  //    string hostName = impl->ncHelper.host();
+  //    string targetFile = archive.resolveRelocatablePath(profileFileName);
+  //    ProfileHandler::saveRtsProfile(targetFile, systemId, hostName,
+  //      impl->rtsComps, impl->rtsConnections);
+  //  return true;
+  //}
+  //return false;
+
   if (vendorName.length() == 0) {
     MessageView::instance()->putln(MessageView::ERROR, _("Vendor is not set."));
     return false;

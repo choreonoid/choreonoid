@@ -21,7 +21,8 @@ public:
     RTC::RtcBase* rtc() { return rtc_; };
     bool isValid() const;
     const std::string& name() const { return componentName; }
-        
+    void activate();
+
 private:
     RTC::RTObject_var rtcRef;
     RTC::RtcBase* rtc_;
@@ -66,6 +67,8 @@ public:
     void setPeriodicType(int type);
     void setPeriodicRate(int rate);
     void setBaseDirectoryType(int base);
+    void setActivationEnabled(bool on);
+    bool isActivationEnabled() const { return isActivationEnabled_; }
 
 protected:
     virtual void onPositionChanged();
@@ -88,7 +91,10 @@ private:
     int oldBaseDirectoryType;
     boost::filesystem::path rtcDirectory;
     boost::filesystem::path modulePath;
+    bool isActivationEnabled_;
 
+    void deleteRTCInstance();
+    void updateRTCInstance(bool forceUpdate = true);
     bool convertAbsolutePath();
 };
         

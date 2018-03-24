@@ -74,17 +74,17 @@ OpenRTMPlugin() : Plugin("OpenRTM") {
 }
     
 virtual bool initialize() {
-  const int log_output_item = 8;
-  const int log_level_item = 10;
+  const int log_output_item =10;
+  const int log_level_item = 12;
 
   const char* argv[] = {
       "choreonoid",
       "-f", "./rtc.conf.choreonoid",
       "-o", "manager.shutdown_on_nortcs: NO",
       "-o", "manager.shutdown_auto: NO",
+      "-o", "naming.formats: %n.rtc",
       "-o", "logger.enable: NO",
       "-o", "logger.log_level: WARN",
-      "-o", "naming.formats: %n.rtc",
 #ifdef Q_OS_WIN32
     // To reduce the startup time on Windows
     "-o", "corba.args: -ORBclientCallTimeOutPeriod 100",
@@ -301,10 +301,10 @@ RTM::Manager_ptr cnoid::getRTCManagerServant() {
   return RTM::Manager::_duplicate(manager->servant()->getObjRef());
 }
 
-RTC::RTObject_impl* cnoid::createManagedRTC(const char* comp_args) {
+RTC::RTObject_impl* cnoid::createManagedRTC(const std::string& comp_args) {
 	DDEBUG("createManagedRTC");
 
-	RTC::RTObject_impl* rtc = manager->createComponent(comp_args);
+  RTC::RTObject_impl* rtc = manager->createComponent(comp_args.c_str());
   if(rtc){
       managedComponents.insert(rtc);
       //rtc->addPostComponentActionListener(POST_ON_SHUTDOWN, new PostComponentShutdownListenr(rtc));

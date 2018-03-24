@@ -44,6 +44,10 @@ namespace cnoid {
 		void setSelection(std::string RTCname, std::string RTCfullPath);
 		NamingContextHelper getNCHelper();
 
+  protected:
+    virtual bool storeState(Archive& archive) override;
+    virtual bool restoreState(const Archive& archive) override;
+
 	private:
 		RTSNameServerViewImpl * impl;
 	};

@@ -397,15 +397,18 @@ bool ControllerRTCItemImpl::createRTCmain(bool isBodyIORTC) {
         option =
           str(format("instance_name=%1%&exec_cxt.periodic.type=%2%&exec_cxt.periodic.rate=%3%")
                 % rtcInstanceName % execContextType.selectedSymbol() % periodicRate);
+        DDEBUG("ControllerRTCItemImpl::createRTCmain OPENRTM_VERSION11");
 #else
           if (isBodyIORTC) {
             option =
               str(format("instance_name=%1%&execution_contexts=ChoreonoidExecutionContext()&exec_cxt.periodic.type=%2%&exec_cxt.periodic.rate=%3%&exec_cxt.sync_activation=NO&exec_cxt.sync_deactivation=NO")
                 % rtcInstanceName % execContextType.selectedSymbol() % periodicRate);
+            DDEBUG("ControllerRTCItemImpl::createRTCmain isBodyIORTC=TRUE");
           } else {
             option =
               str(format("instance_name=%1%&execution_contexts=ChoreonoidExecutionContext(),ChoreonoidPeriodicExecutionContext()&exec_cxt.periodic.type=%2%&exec_cxt.periodic.rate=%3%&exec_cxt.sync_activation=NO&exec_cxt.sync_deactivation=NO")
                 % rtcInstanceName % execContextType.selectedSymbol() % periodicRate);
+            DDEBUG("ControllerRTCItemImpl::createRTCmain isBodyIORTC=FALSE");
           }
 #endif
     } else {
@@ -414,19 +417,22 @@ bool ControllerRTCItemImpl::createRTCmain(bool isBodyIORTC) {
           option =
           str(format("instance_name=%1%&exec_cxt.periodic.type=%2%")
                 % rtcInstanceName % execContextType.selectedSymbol());
+          DDEBUG("ControllerRTCItemImpl::createRTCmain OPENRTM_VERSION11");
 #else
         if (isBodyIORTC) {
           option =
             str(format("instance_name=%1%&execution_contexts=ChoreonoidExecutionContext()&exec_cxt.periodic.type=%2%&exec_cxt.sync_activation=NO&exec_cxt.sync_deactivation=NO")
               % rtcInstanceName % execContextType.selectedSymbol());
+          DDEBUG("ControllerRTCItemImpl::createRTCmain isBodyIORTC=TRUE");
         } else {
           option =
             str(format("instance_name=%1%&execution_contexts=ChoreonoidExecutionContext(),ChoreonoidPeriodicExecutionContext()&exec_cxt.periodic.type=%2%&exec_cxt.sync_activation=NO&exec_cxt.sync_deactivation=NO")
               % rtcInstanceName % execContextType.selectedSymbol());
+          DDEBUG("ControllerRTCItemImpl::createRTCmain isBodyIORTC=FALSE");
         }
 #endif
     }
-    rtc = createManagedRTC((moduleName + "?" + option).c_str());
+    rtc = createManagedRTC(moduleName + "?" + option);
 
     if(!rtc){
         mv->putln(MessageView::ERROR,

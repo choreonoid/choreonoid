@@ -88,21 +88,22 @@ if(UNIX)
       RESULT_VARIABLE RESULT
       OUTPUT_STRIP_TRAILING_WHITESPACE)
     message(STATUS "OPENRTM_DIR=${OPENRTM_DIR}")
-    if(OPENRTM_VERSION STRLESS "1.2.0")
-      set(OPENRTM_DEFINITIONS -DOPENRTM_VERSION11)
-      set(OPENRTM_INCLUDE_DIRS
-        ${OPENRTM_DIR}/include 
-        ${OPENRTM_DIR}/include/coil-1.1
-        ${OPENRTM_DIR}/include/openrtm-1.1 
-        ${OPENRTM_DIR}/include/openrtm-1.1/rtm/idl
-        ${OPENRTM_DIR}/include/openrtm-1.1/rtm/ext
-        ${OPENRTM_DIR}/rtm # for the Windows installer version
-        ${OPENRTM_DIR}/rtm/idl # for the Windows installer version
-        ${OPENRTM_DIR}
-        )
-      set(OPENRTM_INCLUDE_DIRS ${OPENRTM_INCLUDE_DIRS} CACHE INTERNAL "OpenRTM's include directories")
-    endif()
   endif()
+endif()
+
+if(OPENRTM_VERSION STRLESS "1.2.0")
+  set(OPENRTM_DEFINITIONS -DOPENRTM_VERSION11)
+  set(OPENRTM_INCLUDE_DIRS
+    ${OPENRTM_DIR}/include 
+    ${OPENRTM_DIR}/include/coil-1.1
+    ${OPENRTM_DIR}/include/openrtm-1.1 
+    ${OPENRTM_DIR}/include/openrtm-1.1/rtm/idl
+    ${OPENRTM_DIR}/include/openrtm-1.1/rtm/ext
+    ${OPENRTM_DIR}/rtm # for the Windows installer version
+    ${OPENRTM_DIR}/rtm/idl # for the Windows installer version
+    ${OPENRTM_DIR}
+    )
+  set(OPENRTM_INCLUDE_DIRS ${OPENRTM_INCLUDE_DIRS} CACHE INTERNAL "OpenRTM's include directories")
 endif()
 ######
 include_directories(${OPENRTM_INCLUDE_DIRS})

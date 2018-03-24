@@ -602,7 +602,8 @@ bool BodyRTCItem::store(Archive& archive)
 
 bool BodyRTCItem::restore(const Archive& archive)
 {
-    if(!ControllerItem::restore(archive)){
+  DDEBUG("BodyRTCItem::restore");
+  if(!ControllerItem::restore(archive)){
         return false;
     }
     string value;
