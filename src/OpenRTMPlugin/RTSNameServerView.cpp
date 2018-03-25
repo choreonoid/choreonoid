@@ -121,14 +121,14 @@ RTSNameServerViewImpl::RTSNameServerViewImpl(RTSNameServerView* self)
     QVBoxLayout* vbox = new QVBoxLayout();
 
     QHBoxLayout* hbox = new QHBoxLayout();
-    hostAddressBox.setText("localhost");
+    hostAddressBox.setText(ncHelper.host());
     hostAddressBox.sigEditingFinished().connect
         (std::bind(
             static_cast<void(RTSNameServerViewImpl::*)(bool)>(&RTSNameServerViewImpl::updateObjectList), this, false));
     hbox->addWidget(&hostAddressBox);
 
     portNumberSpin.setRange(0, 65535);
-    portNumberSpin.setValue(2809);
+    portNumberSpin.setValue(ncHelper.port());
     portNumberSpin.sigEditingFinished().connect
         (std::bind(
             static_cast<void(RTSNameServerViewImpl::*)(bool)>(&RTSNameServerViewImpl::updateObjectList), this, false));

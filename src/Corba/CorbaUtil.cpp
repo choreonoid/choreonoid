@@ -31,6 +31,8 @@ NamingContextHelper* cnoid::getDefaultNamingContextHelper()
 
 NamingContextHelper::NamingContextHelper()
 {
+    host_ = "localhost";
+    port_ = 2809;
     failedInLastAccessToNamingContext = false;
 }
 
