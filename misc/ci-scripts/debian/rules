@@ -63,5 +63,15 @@ override_dh_auto_install:
 	  "debian/choreonoid%VERSION%/usr/share/icons/hicolor/$$s""x$$s/apps/choreonoid.png"; \
 	done
 
+# Files specified using wildcard in choreonoid.install contain files related
+# to OpenRTM.  If you list full filenames in choreonoid.install, this file
+# need to be fix each time build configuration is changed.  By removing files
+# specified in choreonoid-openrtm-plugin.install from the install directory
+# for choreonoid package here, reduce theneed to fix choreonoid.install.
+override_dh_install:
+	dh_install
+	rm -f $$(cat debian/choreonoid%VERSION%-openrtm-plugin.install | \
+		sed -e 's/^\(.\+\)$$/debian\/choreonoid%VERSION%\/\1/')
+
 %:
 	dh  $@ --parallel --with pkgkde-symbolshelper

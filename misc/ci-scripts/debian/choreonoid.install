@@ -1,13 +1,8 @@
 usr/bin/*
 usr/lib/lib*.so.*
-usr/lib/choreonoid-*/libCnoidBalancerPlugin.so
-usr/lib/choreonoid-*/libCnoidBodyPlugin.so
-usr/lib/choreonoid-*/libCnoidCorbaPlugin.so
-usr/lib/choreonoid-*/libCnoidGRobotPlugin.so
-usr/lib/choreonoid-*/libCnoidPoseSeqPlugin.so
-usr/lib/choreonoid-*/libCnoidPythonPlugin.so
-usr/lib/choreonoid-*/libCnoidPythonSimScriptPlugin.so
+usr/lib/*/lib*.so
 usr/lib/*/simplecontroller/*.so
 usr/lib/*/python/cnoid/*
+usr/lib/*/customizer/
 usr/share/choreonoid-*/
 usr/share/locale/
