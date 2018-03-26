@@ -121,7 +121,7 @@ contactMaterials:
     youngsModulus: 1e10
     friction: 0.7
     restitution: 0.0
-    surfaceViscosity: 1e-2
+    surfaceViscosity: 1e-3 # 1e-2
     secondarySurfaceViscosity: 2e-2
     primaryDirection: [ 1, 0, 0 ]
     frictionModel: [ orientedBox, direct ]
