@@ -778,7 +778,8 @@ SgMesh* YAMLSceneReaderImpl::readIndexedFaceSet(Mapping& node)
         }
     }
 
-    double creaseAngle = node.get("creaseAngle", 0.0);
+    double creaseAngle = 0.0;
+    self->readAngle(node, "creaseAngle", creaseAngle);
     normalGenerator.generateNormals(mesh, creaseAngle);
 
     return mesh;
@@ -986,6 +987,17 @@ YAMLSceneReader::Resource YAMLSceneReaderImpl::readResourceNode(Mapping& node)
 
     if(resource.scene){
         resource.scene = readTransformParameters(node, resource.scene);
+
+        double creaseAngle = 0.0;
+        self->readAngle(node, "creaseAngle", creaseAngle);
+        if(creaseAngle){
+            SgShape* shape = dynamic_cast<SgShape*>(resource.scene.get());
+            if(shape){
+                normalGenerator.setOverwritingEnabled(true);
+                normalGenerator.generateNormals(shape->mesh(), creaseAngle);
+                normalGenerator.setOverwritingEnabled(false);
+            }
+        }
     }
 
     return resource;

@@ -27,8 +27,9 @@ public:
 
     MeshNormalGeneratorImpl();
     MeshNormalGeneratorImpl(const MeshNormalGeneratorImpl& org);
+    void removeSameVertex(SgMesh* mesh);
     void calculateFaceNormals(SgMesh* mesh);
-    void setVertexNormals(SgMesh* mesh, float creaseAngle);        
+    void setVertexNormals(SgMesh* mesh, float creaseAngle);
 };
 }
 
@@ -97,10 +98,62 @@ bool MeshNormalGenerator::generateNormals(SgMesh* mesh, float creaseAngle)
     if(!impl->faceNormals){
         impl->faceNormals = new SgNormalArray;
     }
+    impl->removeSameVertex(mesh);
     impl->calculateFaceNormals(mesh);
     impl->setVertexNormals(mesh, creaseAngle);
 
     return true;
+}
+
+
+void MeshNormalGeneratorImpl::removeSameVertex(SgMesh* mesh)
+{
+    const SgVertexArray& orgVertices = *mesh->vertices();
+    const int numVertices = orgVertices.size();
+    SgVertexArrayPtr newVerticesptr = new SgVertexArray();
+    SgVertexArray& newVertices = *newVerticesptr;
+    vector<int> indexMap(numVertices);
+
+    for(int i=0; i<numVertices; i++){
+        bool found = false;
+        for(int j=0; j<newVertices.size(); j++){
+            if(orgVertices[i].isApprox(newVertices[j])){
+                indexMap[i] = j;
+                found = true;
+                break;
+            }
+        }
+        if(!found){
+            indexMap[i] = newVertices.size();
+            newVertices.push_back(orgVertices[i]);
+        }
+    }
+
+    if(newVertices.size()==numVertices)
+        return;
+
+    mesh->setVertices(newVerticesptr);
+
+    if(mesh->hasNormals()){
+        if(mesh->normalIndices().empty()){
+            mesh->normalIndices() = mesh->triangleVertices();
+        }
+    }
+
+    if(mesh->hasTexCoords()){
+        if(mesh->texCoordIndices().empty()){
+            mesh->texCoordIndices() = mesh->triangleVertices();
+        }
+    }
+
+    const int numTriangles = mesh->numTriangles();
+    for(int i=0; i < numTriangles; i++){
+        SgMesh::TriangleRef triangle = mesh->triangle(i);
+        for(int j=0; j<3; j++){
+            triangle[j] = indexMap[triangle[j]];
+        }
+    }
+
 }
 
 
