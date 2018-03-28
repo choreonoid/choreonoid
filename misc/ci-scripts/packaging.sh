@@ -135,7 +135,9 @@ for DISTRO in ${TARGET_DISTROS}; do
 
 	if ! ${DEB_IS_READY}; then
 		print_info "Copying debian directory to ${SRCDIR}"
-		cp -r ${SCRIPT_DIR}/debian ${SRCDIR}
+		[ -d ${SCRIPT_DIR}/debian-${DISTRO} ] && \
+			PREPARED_DEBDIR=${SCRIPT_DIR}/debian-${DISTRO}
+		cp -r ${PREPARED_DEBDIR} ${SRCDIR}/debian
 	fi
 
 	cd ${SRCDIR}
