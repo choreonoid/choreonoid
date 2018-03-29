@@ -27,6 +27,10 @@ definitions:
     height: &CAMERA_SPEC_height 480
     frameRate: &CAMERA_SPEC_frameRate 30
 
+STL: &STL
+  type: Resource
+  removeRedundantVertices: true
+
 links:
   -
     name: BASE
@@ -44,16 +48,16 @@ links:
         elements:
           -
             type: Shape
-            geometry: { type: Resource, uri: "parts/BASE_LOWER.stl" }
+            geometry: { <<: *STL, uri: "parts/BASE_LOWER.stl", creaseAngle: 40 }
             appearance: *RING_APPEARANCE
           -
             type: Shape
-            geometry: { type: Resource, uri: "parts/BASE_UPPER.stl" }
+            geometry: { <<: *STL, uri: "parts/BASE_UPPER.stl", creaseAngle: 40 }
             appearance: *MAIN_APPEARANCE
           -
             type: Shape
             translation: [ 0, 0, 0.1565 ]
-            geometry: { type: Resource, uri: "parts/RING_BIG.stl" }
+            geometry: { <<: *STL, uri: "parts/RING_BIG.stl", creaseAngle: 40 }
             appearance: *RING_APPEARANCE
       -
         type: Collision
@@ -88,13 +92,13 @@ links:
         elements:
           -
             type: Shape
-            geometry: { type: Resource, uri: "parts/SHOULDER.stl" }
+            geometry: { <<: *STL, uri: "parts/SHOULDER.stl", creaseAngle: 40 }
             appearance: *MAIN_APPEARANCE
           -
             type: Shape
             translation: [ 0, 0.0015, 0.119 ]
             rotation: [ 1, 0, 0, 90 ]
-            geometry: { type: Resource, uri: "parts/RING_BIG.stl" }
+            geometry: { <<: *STL, uri: "parts/RING_BIG.stl", creaseAngle: 40 }
             appearance: *RING_APPEARANCE
       -
         type: Collision
@@ -139,13 +143,13 @@ links:
         elements:
           -
             type: Shape
-            geometry: { type: Resource, uri: "parts/ARM.stl" }
+            geometry: { <<: *STL, uri: "parts/ARM.stl", creaseAngle: 40 }
             appearance: *MAIN_APPEARANCE
           -
             type: Shape
             translation: [ 0, 0, -0.410 ]
             rotation: [ 1, 0, 0, 90 ]
-            geometry: { type: Resource, uri: "parts/RING_BIG.stl" }
+            geometry: { <<: *STL, uri: "parts/RING_BIG.stl", creaseAngle: 40 }
             appearance: *RING_APPEARANCE
       -
         type: Collision
@@ -189,12 +193,12 @@ links:
         elements:
           -
             type: Shape
-            geometry: { type: Resource, uri: "parts/FOREARM.stl" }
+            geometry: { <<: *STL, uri: "parts/FOREARM.stl", creaseAngle: 40 }
             appearance: *MAIN_APPEARANCE
           -
             type: Shape
             translation: [ 0, -0.01125, 0.207 ]
-            geometry: { type: Resource, uri: "parts/RING_SMALL.stl" }
+            geometry: { <<: *STL, uri: "parts/RING_SMALL.stl", creaseAngle: 40 }
             appearance: *RING_APPEARANCE
       -
         type: Collision
@@ -240,13 +244,13 @@ links:
             elements:
               -
                 type: Shape
-                geometry: { type: Resource, uri: "parts/WRIST.stl" }
+                geometry: { <<: *STL, uri: "parts/WRIST.stl", creaseAngle: 40 }
                 appearance: *MAIN_APPEARANCE
               -
                 type: Shape
                 translation: [ 0, 0.03725, 0.06401 ]
                 rotation: [ -1, 0, 0, 60 ]
-                geometry: { type: Resource, uri: "parts/RING_SMALL.stl" }
+                geometry: { <<: *STL, uri: "parts/RING_SMALL.stl", creaseAngle: 40 }
                 appearance: *RING_APPEARANCE
           -
             type: Collision
@@ -311,15 +315,15 @@ links:
         elements:
           -
             type: Shape
-            geometry: { type: Resource, uri: "parts/HAND.stl" }
+            geometry: { <<: *STL, uri: "parts/HAND.stl", creaseAngle: 40 }
             appearance: *MAIN_APPEARANCE
           -
             type: Shape
-            geometry: { type: Resource, uri: "parts/PALM.stl" }
+            geometry: { <<: *STL, uri: "parts/PALM.stl", creaseAngle: 40 }
             appearance: *FINGER_APPEARANCE
           -
             type: Shape
-            geometry: { type: Resource, uri: "parts/FINGER_BASE.stl" }
+            geometry: { <<: *STL, uri: "parts/FINGER_BASE.stl", creaseAngle: 40 }
             appearance: *FINGER_APPEARANCE
       -
         type: Collision
@@ -436,7 +440,7 @@ links:
             type: Visual
             elements:
               Shape:
-                geometry: { type: Resource, uri: "parts/FINGER.stl" }
+                geometry: { <<: *STL, uri: "parts/FINGER.stl", creaseAngle: 15 }
                 appearance: *FINGER_APPEARANCE
           -
             type: Collision
@@ -512,7 +516,7 @@ links:
             type: Visual
             elements:
               Shape:
-                geometry: { type: Resource, uri: "parts/FINGER_TIP.stl" }
+                geometry: { <<: *STL, uri: "parts/FINGER_TIP.stl", creaseAngle: 15 }
                 appearance: *FINGER_APPEARANCE
           -
             type: Collision
