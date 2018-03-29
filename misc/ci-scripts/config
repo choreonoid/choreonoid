@@ -24,26 +24,6 @@ PACKAGE_NAME="choreonoid"
 ##
 PPA="ppa:choreonoid.org/choreonoid"
 
-## TRAVIS_ENCRYPT_HASH: Hash part of environment variable name indicating
-##                      encryption keys in Travis CI
-##
-## Specify the hash part of the name of environment variables storing
-## secret keys when encrypting files with "travis encrypt-file" command.
-## If the decryption command instructed when executing the command is as
-## follow, specify "0a6446eb3ae3".
-##
-##	openssl aes-256-cbc -K $encrypted_0a6446eb3ae3_key
-##	-iv $encrypted_0a6446eb3ae3_iv -in secret.tar.enc -out secret.tar -d
-##
-## TRAVIS_ENCRYPT_HASH is used when decrypting files encrypted with travis
-## CLI.  To manually use files encrypted with openssl, set the passphrase
-## to the environment variable ENCRYPT_KEY in Travis CI / Circle CI Web
-## interface.  If both TRAVIS_ENCRYPT_HASH and ENCRYPT_KEY are set, decrypt
-## with TRAVIS_ENCRYPT_HASH in Travis CI.  In Circle CI, it is ignored.
-## Default value is None.
-##
-TRAVIS_ENCRYPT_HASH="d48b4d03c2cb"
-
 ## TARGET_DISTROS: Distro names of target Ubuntu version
 ##
 ## Default value is "xenial and trusty".
@@ -58,3 +38,28 @@ TRAVIS_ENCRYPT_HASH="d48b4d03c2cb"
 ## Default value is medium.
 ##
 #URGENCY="medium"
+
+## TRAVIS_ENCRYPT_HASH: Hash part of environment variable name indicating
+##                      encryption keys in Travis CI
+##
+## Specify the hash part of the name of environment variables storing
+## secret keys when encrypting files with "travis encrypt-file" command.
+## If the decryption command instructed when executing the command is as
+## follow, specify "0a6446eb3ae3".
+##
+##	openssl aes-256-cbc -K $encrypted_0a6446eb3ae3_key
+##	-iv $encrypted_0a6446eb3ae3_iv -in secret.tar.enc -out secret.tar -d
+##
+## TRAVIS_ENCRYPT_HASH is used when decrypting files encrypted with travis
+## CLI.  Default value is None.
+##
+## Note:
+## The file encrypted (and will be decrypted using TRAVIS_ENCRYPT_HASH
+## variable) in this method can only be used in Travis CI.
+## It is simpler to use the file encrypted using openssl command manually.
+## To use files encrypted with openssl, set the passphrase to the
+## environment variable ENCRYPT_KEY in Travis CI / Circle CI Web interface.
+## In that case, DO NOT set ENCRYPT_KEY in here, and DO NOT set
+## TRAVIS_ENCRYPT_HASH.
+##
+#TRAVIS_ENCRYPT_HASH="d48b4d03c2cb"
