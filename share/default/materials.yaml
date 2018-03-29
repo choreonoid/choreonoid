@@ -16,6 +16,10 @@ materials:
     roughness: 0.1
     viscosity: 0.0
   -
+    name: Sole
+    roughness: 0.5
+    viscosity: 0.0
+  -
     name: Hand
     roughness: 0.5
     viscosity: 0.0
@@ -69,6 +73,11 @@ contactMaterials:
     materials: [ Ground, Default ]
     friction: 0.5
     restitution: 0.4
+  -
+    materials: [ Ground, Sole ]
+    friction: 1.0
+    restitution: 0.0
+    frictionModel: [ cone, direct ]
   -
     materials: [ Ground, Tracks ]
     friction: 0.5
