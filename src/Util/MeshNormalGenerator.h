@@ -24,7 +24,7 @@ public:
     void setMinCreaseAngle(float angle);
     void setMaxCreaseAngle(float angle);
 
-    bool generateNormals(SgMesh* mesh, float creaseAngle = 3.14159f);
+    bool generateNormals(SgMesh* mesh, float creaseAngle = 3.14159f, bool removeRedundantVertices = false);
 
 private:
     MeshNormalGeneratorImpl* impl;

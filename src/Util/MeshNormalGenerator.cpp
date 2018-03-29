@@ -27,7 +27,7 @@ public:
 
     MeshNormalGeneratorImpl();
     MeshNormalGeneratorImpl(const MeshNormalGeneratorImpl& org);
-    void removeSameVertex(SgMesh* mesh);
+    void removeRedundantVertices(SgMesh* mesh);
     void calculateFaceNormals(SgMesh* mesh);
     void setVertexNormals(SgMesh* mesh, float creaseAngle);
 };
@@ -86,7 +86,7 @@ void MeshNormalGenerator::setMaxCreaseAngle(float angle)
 }
 
 
-bool MeshNormalGenerator::generateNormals(SgMesh* mesh, float creaseAngle)
+bool MeshNormalGenerator::generateNormals(SgMesh* mesh, float creaseAngle, bool removeRedundantVertices)
 {
     if(!mesh->vertices() || mesh->triangleVertices().empty()){
         return false;
@@ -98,7 +98,9 @@ bool MeshNormalGenerator::generateNormals(SgMesh* mesh, float creaseAngle)
     if(!impl->faceNormals){
         impl->faceNormals = new SgNormalArray;
     }
-    impl->removeSameVertex(mesh);
+    if(removeRedundantVertices){
+        impl->removeRedundantVertices(mesh);
+    }
     impl->calculateFaceNormals(mesh);
     impl->setVertexNormals(mesh, creaseAngle);
 
@@ -106,7 +108,7 @@ bool MeshNormalGenerator::generateNormals(SgMesh* mesh, float creaseAngle)
 }
 
 
-void MeshNormalGeneratorImpl::removeSameVertex(SgMesh* mesh)
+void MeshNormalGeneratorImpl::removeRedundantVertices(SgMesh* mesh)
 {
     const SgVertexArray& orgVertices = *mesh->vertices();
     const int numVertices = orgVertices.size();

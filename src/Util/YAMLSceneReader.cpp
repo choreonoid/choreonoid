@@ -794,14 +794,21 @@ SgMesh* YAMLSceneReaderImpl::readResourceAsGeometry(Mapping& node)
         if(!shape){
             node.throwException(_("A resouce specified as a geometry must be a single mesh"));
         }
-        if(generateTexCoord){
+        double creaseAngle;
+        if(readAngle(node, "creaseAngle", creaseAngle)){
+            normalGenerator.setOverwritingEnabled(true);
+            bool removeRedundantVertices = node.get("removeRedundantVertices", false);
+            normalGenerator.generateNormals(shape->mesh(), creaseAngle, removeRedundantVertices);
+            normalGenerator.setOverwritingEnabled(false);
+        }
+        if(!generateTexCoord){
+            return shape->mesh();
+        } else {
             SgMesh* mesh = shape->mesh();
             if(mesh && !mesh->hasTexCoords()){
                 meshGenerator.generateTextureCoordinateForIndexedFaceSet(mesh);
             }
             return mesh;
-        }else{
-            return shape->mesh();
         }
     }
     return 0;
@@ -987,17 +994,6 @@ YAMLSceneReader::Resource YAMLSceneReaderImpl::readResourceNode(Mapping& node)
 
     if(resource.scene){
         resource.scene = readTransformParameters(node, resource.scene);
-
-        double creaseAngle = 0.0;
-        self->readAngle(node, "creaseAngle", creaseAngle);
-        if(creaseAngle){
-            SgShape* shape = dynamic_cast<SgShape*>(resource.scene.get());
-            if(shape){
-                normalGenerator.setOverwritingEnabled(true);
-                normalGenerator.generateNormals(shape->mesh(), creaseAngle);
-                normalGenerator.setOverwritingEnabled(false);
-            }
-        }
     }
 
     return resource;
