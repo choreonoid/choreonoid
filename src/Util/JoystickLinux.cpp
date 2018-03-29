@@ -153,13 +153,13 @@ struct ModelInfo {
 };
 
 const map<string, ModelID> modelIdMap = {
-    // CUH-ZCT1J or CUH-ZCT2J
-    { "Sony Computer Entertainment Wireless Controller",    PS4 },
+    { "Sony Computer Entertainment Wireless Controller", PS4 },
     { "Sony Interactive Entertainment Wireless Controller", PS4 },
-    { "Sony PLAYSTATION(R)3 Controller",                    PS3 },
-    { "Microsoft X-Box 360 pad",                            XBOX },
-    { "Microsoft X-Box One pad",                            XBOX },
-    { "Logitech Gamepad F310",                              F310 }
+    { "Sony Interactive Entertainment DUALSHOCK®4 USB Wireless Adaptor", PS4 },
+    { "Sony PLAYSTATION(R)3 Controller", PS3 },
+    { "Microsoft X-Box 360 pad", XBOX },
+    { "Microsoft X-Box One pad", XBOX },
+    { "Logitech Gamepad F310", F310 }
 };
 
 const vector<ModelInfo> modelInfos = {

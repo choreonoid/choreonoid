@@ -13,6 +13,116 @@ links:
                0, 1, 0,
                0, 0, 1 ]
     elements:
-      Resource:
-        translation: [ 0, -0.0425, -0.03 ]
-        uri: "resource/HoseNozzle.dae"
+      -
+        type: Visual
+        elements:
+          Resource:
+            translation: [ 0, -0.0425, -0.03 ]
+            uri: "resource/HoseNozzle.dae"
+      -
+        type: Collision
+        elements:
+          -
+            name: CYLINDER1
+            type: Transform
+            translation: [ 0.033, 0.0, 0.0 ]
+            rotation: [ 0, 0, 1, 90 ]
+            elements:
+              Shape: { geometry: { type: Cylinder, radius: 0.03, height: 0.066 } }
+          -
+            name: CYLINDER2
+            type: Transform
+            translation: [ 0.1125, 0.0, 0.0 ]
+            rotation: [ 0, 0, 1, 90 ]
+            elements:
+              Shape: { geometry: { type: Cylinder, radius: 0.022, height: 0.094 } }
+          -
+            name: CYLINDER3
+            type: Transform
+            translation: [ 0.1705, 0.0, 0.0 ]
+            rotation: [ 0, 0, 1, 90 ]
+            elements:
+              Shape: { geometry: { type: Cylinder, radius: 0.021, height: 0.021 } }
+          -
+            name: CYLINDER4
+            type: Transform
+            translation: [ 0.1964, 0.0013, -0.0008 ]
+            rotation: [ 0, 0, 1, 90 ]
+            elements:
+              Shape: { geometry: { type: Cylinder, radius: 0.019, height: 0.03 } }
+          -
+            name: CYLINDER4
+            type: Transform
+            translation: [ 0.29, 0.00128, -0.0007 ]
+            rotation: [ 0, 0, 1, 90 ]
+            elements:
+              Shape: { geometry: { type: Cylinder, radius: 0.0158, height: 0.158 } }
+          -
+            name: CYLINDER5
+            type: Transform
+            translation: [ 0.3735, 0.0014, -0.0015 ]
+            rotation: [ 0, 0, 1, 90 ]
+            elements:
+              Shape: { geometry: { type: Cylinder, radius: 0.019, height: 0.009 } }
+          -
+            name: CYLINDER6
+            type: Transform
+            translation: [ 0.3735, 0.0014, -0.0015 ]
+            rotation: [ 0, 0, 1, 90 ]
+            elements:
+              Shape: { geometry: { type: Cylinder, radius: 0.019, height: 0.009 } }
+          -
+            name: CYLINDER7
+            type: Transform
+            translation: [ 0.3962, 0.00145, -0.0015 ]
+            rotation: [ 0, 0, 1, 90 ]
+            elements:
+              Shape: { geometry: { type: Cylinder, radius: 0.023, height: 0.0362 } }
+          -
+            name: CYLINDER8
+            type: Transform
+            translation: [ 0.0955, -0.00015, 0.0019 ]
+            elements:
+              Shape: { geometry: { type: Cylinder, radius: 0.023, height: 0.0605 } }
+          -
+            name: CYLINDER9
+            type: Transform
+            translation: [ 0.0941, -0.00143, 0.056 ]
+            elements:
+              Shape: { geometry: { type: Cylinder, radius: 0.0078, height: 0.08 } }
+          -
+            name: CYLINDER10
+            type: Transform
+            translation: [ 0.0943, -0.04195, 0.0088 ]
+            elements:
+              Shape: { geometry: { type: Cylinder, radius: 0.0045, height: 0.0011 } }
+          -
+            name: CYLINDER11
+            type: Transform
+            translation: [ 0.0941, 0.03915, 0.00855 ]
+            elements:
+              Shape: { geometry: { type: Cylinder, radius: 0.0045, height: 0.0013 } }
+          -
+            name: BOX1
+            type: Transform
+            translation: [ 0.0941, 0.03334, 0.0263 ]
+            elements:
+              Shape: { geometry: { type: Box, size: [ 0.0095, 0.0103, 0.0445 ] } }
+          -
+            name: BOX2
+            type: Transform
+            translation: [ 0.0941, -0.0359, 0.02645 ]
+            elements:
+              Shape: { geometry: { type: Box, size: [ 0.0095, 0.011, 0.0443 ] } }
+          -
+            name: BOX3
+            type: Transform
+            translation: [ 0.0941, 0.03334, 0.0263 ]
+            elements:
+              Shape: { geometry: { type: Box, size: [ 0.0095, 0.0103, 0.0445 ] } }
+          -
+            name: BOX4
+            type: Transform
+            translation: [ 0.0941, -0.00143, 0.049 ]
+            elements:
+              Shape: { geometry: { type: Box, size: [ 0.0095, 0.08, 0.0015 ] } }

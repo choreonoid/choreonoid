@@ -28,6 +28,10 @@ if(WIN32)
 endif()
 
 # Multicopter Controller
+add_cnoid_simple_controller(MulticopterController MulticopterController.cpp)
+configure_file(MulticopterJoystick.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+
+# Multicopter Controller
 set(target1 MulticopterControllerRTC)
 add_library(${target1} SHARED MulticopterControllerRTC.cpp)
 target_link_libraries(${target1} CnoidBodyIoRTC)
