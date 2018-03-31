@@ -622,6 +622,7 @@ public:
   void onRTSystemItemDetachedFromRoot();
   void setCurrentRTSItem(RTSystemItem* item);
   void updateView();
+  void updateSetting();
 
 private:
 	void activateComponent();
@@ -630,10 +631,12 @@ private:
 	void finalizeComponent();
 	void startExecutionContext();
 	void stopExecutionContext();
+
+  int pollingPeriod;
 };
 
 RTSDiagramViewImpl::RTSDiagramViewImpl(RTSDiagramView* self)
-	:self(self), sourcePort(0) {
+	:self(self), sourcePort(0), pollingPeriod(500) {
 	self->setDefaultLayoutArea(View::CENTER);
 
 	QVBoxLayout* vbox = new QVBoxLayout();
@@ -654,8 +657,8 @@ RTSDiagramViewImpl::RTSDiagramViewImpl(RTSDiagramView* self)
 
 	timer.setSingleShot(false);
   MappingPtr appVars = AppConfig::archive()->openMapping("OpenRTM");
-  long cycle = appVars->get("pollingCycle", 500);
-	timer.setInterval(cycle);
+  pollingPeriod = appVars->get("pollingCycle", 500);
+	timer.setInterval(pollingPeriod);
 	timeOutConnection.reset(
 		timer.sigTimeout().connect(
 			std::bind(&RTSDiagramViewImpl::onTime, this)));
@@ -1229,6 +1232,19 @@ void RTSDiagramViewImpl::updateView() {
     }
     timeOutConnection.unblock();
 }
+
+void RTSDiagramViewImpl::updateSetting() {
+  DDEBUG("RTSDiagramViewImpl::updateSetting");
+
+  MappingPtr appVars = AppConfig::archive()->openMapping("OpenRTM");
+  int pPeriod = appVars->get("pollingCycle", 500);
+  if (pollingPeriod != pPeriod) {
+    timer.stop();
+    timer.setInterval(pPeriod);
+    pPeriod = pollingPeriod;
+    timer.start();
+  }
+}
 /////
 void RTSDiagramViewImpl::activateComponent() {
 	RTSCompGItem* target = selectionRTCs.front();
@@ -1386,6 +1402,10 @@ void RTSDiagramView::updateView() {
 	impl->updateView();
 }
 
+void RTSDiagramView::updateSetting() {
+  impl->updateSetting();
+}
+
 bool RTSDiagramView::storeState(Archive& archive) {
   if(impl->currentRTSItem){
     archive.writeItemId("currentRTSItem", impl->currentRTSItem);
@@ -1497,6 +1517,8 @@ void SettingDialog::oKClicked() {
 #endif
   AppConfig::archive()->openMapping("OpenRTM")->write("outputLog", chkLog->isChecked());
   AppConfig::archive()->openMapping("OpenRTM")->write("logLevel", cmbLogLevel->currentText().toStdString());
+  //
+  RTSDiagramView::instance()->updateSetting();
   close();
 }
 
