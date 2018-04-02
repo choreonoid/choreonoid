@@ -1,0 +1,5 @@
+<ProgId Id="choreonoid.file" Description="choreonoid file">
+  <Extension Id="cnoid">
+    <Verb Id="open" Command="Open" TargetFile="%File.Id%" Argument='"%1"' />
+  </Extension>
+</ProgId>

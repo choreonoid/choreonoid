@@ -5,18 +5,22 @@
 @rem Environment vairables required
 @rem
 @rem ARCH: x86_64
-@rem VC_VERSION: 14(=VC2015), 141(=VC2017) 
+@rem VC_VERSION: 14(=VC2015) 
 @rem PYTHON_DIR: c:\Python27
 @rem BUILD_OPTION: 01(Base)
 @rem               02(OpenRTM)
 @rem               03(Python2)
-@rem               04(Python3)
-@rem               09(ODE),     10(ODE+SDK)
-@rem               11(SceneEffects),  12(SceneEffects+SDK)
+@rem
+@rem Please copy this bat file directly under the choreonoid and 
+@rem execute it.
+@rem   Example:
+@rem   cd choreonoid
+@rem   copy misd\build\build.bat .
+@rem   call build.bat 01
 @rem ============================================================
 
 @if "%1" == "" (
-  echo error: Argument [01-12] is missing.
+  echo error: Argument [01-03] is missing.
   exit /b
 )
 @set BUILD_OPTION=CMAKE_OP_%1
@@ -58,9 +62,9 @@ if %ARCH% == x86_64    set DLL_ARCH=_x64
 @rem ============================================================
 @rem make build dir 
 @rem ============================================================
-if exist ..\build_%BUILD_OPTION%_%ARCH% rmdir /s/q ..\build_%BUILD_OPTION%_%ARCH%
-mkdir ..\build_%BUILD_OPTION%_%ARCH%
-cd ..\build_%BUILD_OPTION%_%ARCH%
+if exist build_%BUILD_OPTION%_%ARCH% rmdir /s/q build_%BUILD_OPTION%_%ARCH%
+mkdir build_%BUILD_OPTION%_%ARCH%
+cd build_%BUILD_OPTION%_%ARCH%
 
 @rem ============================================================
 @rem CMake common option
