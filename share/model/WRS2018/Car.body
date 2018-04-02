@@ -54,8 +54,7 @@ links:
     elements:
       Resource:
         rotation: [ 0, 0, 1, 90 ]
-        #translation: [ -1.14, 0, 0.0016 ]
-        translation: [ -1.026, 0.065, 0.0016 ]
+        translation: [ -1.14, 0.0, 0.0016 ]
         uri: "resource/CarDoorFL.dae"
   -
     name: BR_DOOR
