@@ -216,15 +216,15 @@ void BodyTrackingCameraItem::doPutProperties(PutPropertyFunction& putProperty)
 
 void BodyTrackingCameraItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
-    putProperty("Keep relative attitude", cameraTransform->isConstantRelativeAttitudeMode(),
+    putProperty(_("Keep relative attitude"), cameraTransform->isConstantRelativeAttitudeMode(),
                 [&](bool on){ return onKeepRelativeAttitudeChanged(on); } );
-    putProperty("Camera type", cameraType,
+    putProperty(_("Camera type"), cameraType,
                 [&](int index){ return setCameraType(index); });
-    putProperty("Near clip distance", persCamera->nearClipDistance(),
+    putProperty(_("Near clip distance"), persCamera->nearClipDistance(),
                 [&](double nearDistance){ return setClipDistances( nearDistance, persCamera->farClipDistance()); } );
-    putProperty("Far clip distance", persCamera->farClipDistance(),
+    putProperty(_("Far clip distance"), persCamera->farClipDistance(),
                 [&](double farDistance){ return setClipDistances(persCamera->nearClipDistance(), farDistance); } );
-    putProperty("field Of View", degree(persCamera->fieldOfView()),
+    putProperty(_("field Of View"), degree(persCamera->fieldOfView()),
                 [&](double fov){ return setFieldOfView(radian(fov)); } );
 }
 
