@@ -557,7 +557,7 @@ RTSComp* RTSystemItem::nameToRTSComp(const string& name) {
 }
 
 RTSComp* RTSystemItemImpl::nameToRTSComp(const string& name) {
-	DDEBUG_V("RTSystemItemImpl::nameToRTSComp:%s", name.c_str());
+	//DDEBUG_V("RTSystemItemImpl::nameToRTSComp:%s", name.c_str());
     map<string, RTSCompPtr>::iterator it = rtsComps.find(name);
     if(it==rtsComps.end())
         return 0;

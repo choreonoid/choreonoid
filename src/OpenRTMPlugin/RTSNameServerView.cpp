@@ -231,21 +231,16 @@ namespace cnoid {
           ->sigTriggered().connect(std::bind(&RTSNameTreeWidget::showIOR, this));
 
         RTSVItem* targetItem = (RTSVItem*)this->currentItem();
-        if (RTSNameServerView::instance()->getNCHelper().isObjectAlive(targetItem->rtc_) == false) {
+        if (targetItem->kind_ == KIND_SERVER) {
+          menuManager.addItem(_("Delete from View"))
+            ->sigTriggered().connect(std::bind(&RTSNameTreeWidget::deleteFromView, this));
+        } else {
           menuManager.addItem(_("Delete from Name Service"))
             ->sigTriggered().connect(std::bind(&RTSNameTreeWidget::deleteFromNameService, this));
-
-        } else {
-          if (targetItem->kind_ == KIND_SERVER) {
-            menuManager.addItem(_("Delete from View"))
-              ->sigTriggered().connect(std::bind(&RTSNameTreeWidget::deleteFromView, this));
-          }
-          else {
-            menuManager.addItem(_("Delete from Name Service"))
-              ->sigTriggered().connect(std::bind(&RTSNameTreeWidget::deleteFromNameService, this));
-          }
-
-          if (targetItem->kind_ == KIND_RTC) {
+        }
+        //
+        if (targetItem->kind_ == KIND_RTC) {
+          if (RTSNameServerView::instance()->getNCHelper().isObjectAlive(targetItem->rtc_)) {
             menuManager.addSeparator();
             menuManager.addItem("Activate")
               ->sigTriggered().connect(std::bind(&RTSNameTreeWidget::activateComponent, this));
@@ -262,15 +257,13 @@ namespace cnoid {
               ->sigTriggered().connect(std::bind(&RTSNameTreeWidget::startExecutionContext, this));
             menuManager.addItem("Stop")
               ->sigTriggered().connect(std::bind(&RTSNameTreeWidget::stopExecutionContext, this));
-
           }
-          else {
-            if (targetItem->kind_ != KIND_OTHER) {
-              menuManager.addItem(_("Add Context"))
-                ->sigTriggered().connect(std::bind(&RTSNameTreeWidget::addContext, this));
-              menuManager.addItem(_("Add Object"))
-                ->sigTriggered().connect(std::bind(&RTSNameTreeWidget::addObject, this));
-            }
+        } else {
+          if (targetItem->kind_ != KIND_OTHER) {
+            menuManager.addItem(_("Add Context"))
+              ->sigTriggered().connect(std::bind(&RTSNameTreeWidget::addContext, this));
+            menuManager.addItem(_("Add Object"))
+              ->sigTriggered().connect(std::bind(&RTSNameTreeWidget::addObject, this));
           }
         }
 
