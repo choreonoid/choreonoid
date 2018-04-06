@@ -1,5 +1,5 @@
-#include "ModeJoystick.h"
 #include <cnoid/SimpleController>
+#include <cnoid/SharedJoystick>
 #include <boost/format.hpp>
 
 using namespace std;
@@ -46,7 +46,7 @@ class Jaco2Controller : public SimpleController
         NUM_JOINTS
     };
 
-    ModeJoystickPtr joystick;
+    SharedJoystickPtr joystick;
     int targetMode;
 
 public:
@@ -94,18 +94,18 @@ bool Jaco2Controller::initialize(SimpleControllerIO* io)
 
     if(io->timeStep() < 0.002){
         //                                     P      D      P (vel)
-        specs[SHOULDER    ] = { "SHOULDER",  1000.0, 100.0,  P_GAIN_VELOCITY };
-        specs[ARM         ] = { "ARM",       1000.0, 100.0,  P_GAIN_VELOCITY };
-        specs[FOREARM     ] = { "FOREARM",    600.0,  60.0,  P_GAIN_VELOCITY };
-        specs[WRIST1      ] = { "WRIST1",     300.0,  30.0,  P_GAIN_VELOCITY };
-        specs[WRIST2      ] = { "WRIST2",     300.0,  30.0,  P_GAIN_VELOCITY };
-        specs[HAND        ] = { "HAND",       250.0,  25.0,  P_GAIN_VELOCITY };
-        specs[FINGER1     ] = { "FINGER1",     50.0,  10.0,  P_GAIN_VELOCITY };
-        specs[FINGER1_TIP ] = { "FINGER1_TIP", 30.0,   5.0,  P_GAIN_VELOCITY };
-        specs[FINGER2     ] = { "FINGER2",     50.0,  10.0,  P_GAIN_VELOCITY };
-        specs[FINGER2_TIP ] = { "FINGER2_TIP", 30.0,   5.0,  P_GAIN_VELOCITY };
-        specs[FINGER3     ] = { "FINGER3",     50.0,  10.0,  P_GAIN_VELOCITY };
-        specs[FINGER3_TIP ] = { "FINGER3_TIP", 30.0,   5.0,  P_GAIN_VELOCITY };
+        specs[SHOULDER    ] = { "SHOULDER",  1000.0, 100,  P_GAIN_VELOCITY };
+        specs[ARM         ] = { "ARM",       1000.0, 100,  P_GAIN_VELOCITY };
+        specs[FOREARM     ] = { "FOREARM",   600.0,   60,  P_GAIN_VELOCITY };
+        specs[WRIST1      ] = { "WRIST1",    300.0,   30,  P_GAIN_VELOCITY };
+        specs[WRIST2      ] = { "WRIST2",    300.0,   30,  P_GAIN_VELOCITY };
+        specs[HAND        ] = { "HAND",      250.0,   25,  P_GAIN_VELOCITY };
+        specs[FINGER1     ] = { "FINGER1",     30,     3,  P_GAIN_VELOCITY };
+        specs[FINGER1_TIP ] = { "FINGER1_TIP", 20,     2,  P_GAIN_VELOCITY };
+        specs[FINGER2     ] = { "FINGER2",     30,     3,  P_GAIN_VELOCITY };
+        specs[FINGER2_TIP ] = { "FINGER2_TIP", 20,     2,  P_GAIN_VELOCITY };
+        specs[FINGER3     ] = { "FINGER3",     30,     3,  P_GAIN_VELOCITY };
+        specs[FINGER3_TIP ] = { "FINGER3_TIP", 20,     2,  P_GAIN_VELOCITY };
     } else {
         //                                     P      D      P (vel)
         specs[SHOULDER    ] = { "SHOULDER",   400.0, 30.0,  P_GAIN_VELOCITY };
@@ -114,19 +114,19 @@ bool Jaco2Controller::initialize(SimpleControllerIO* io)
         specs[WRIST1      ] = { "WRIST1",      60.0,  5.0,  P_GAIN_VELOCITY };
         specs[WRIST2      ] = { "WRIST2",      60.0,  5.0,  P_GAIN_VELOCITY };
         specs[HAND        ] = { "HAND",        60.0,  5.0,  P_GAIN_VELOCITY };
-        specs[FINGER1     ] = { "FINGER1",     20.0,  1.0,  P_GAIN_VELOCITY };
-        specs[FINGER1_TIP ] = { "FINGER1_TIP", 10.0,  1.0,  P_GAIN_VELOCITY };
-        specs[FINGER2     ] = { "FINGER2",     20.0,  2.0,  P_GAIN_VELOCITY };
-        specs[FINGER2_TIP ] = { "FINGER2_TIP", 10.0,  1.0,  P_GAIN_VELOCITY };
-        specs[FINGER3     ] = { "FINGER3",     20.0,  2.0,  P_GAIN_VELOCITY };
-        specs[FINGER3_TIP ] = { "FINGER3_TIP", 10.0,  1.0,  P_GAIN_VELOCITY };
+        specs[FINGER1     ] = { "FINGER1",     5.0,  0.5,  P_GAIN_VELOCITY };
+        specs[FINGER1_TIP ] = { "FINGER1_TIP", 3.0,  0.3,  P_GAIN_VELOCITY };
+        specs[FINGER2     ] = { "FINGER2",     5.0,  0.5,  P_GAIN_VELOCITY };
+        specs[FINGER2_TIP ] = { "FINGER2_TIP", 3.0,  0.3,  P_GAIN_VELOCITY };
+        specs[FINGER3     ] = { "FINGER3",     5.0,  0.5,  P_GAIN_VELOCITY };
+        specs[FINGER3_TIP ] = { "FINGER3_TIP", 3.0,  0.3,  P_GAIN_VELOCITY };
     }
     
     if(!initializeJoints(io, specs, prefix)){
         return false;
     }
 
-    joystick = io->getOrCreateSharedObject<ModeJoystick>("joystick");
+    joystick = io->getOrCreateSharedObject<SharedJoystick>("joystick");
     targetMode = joystick->addMode();
 
     return true;
@@ -192,22 +192,23 @@ void Jaco2Controller::updateTargetJointAngles()
     static const double K = 0.8;
 
     setTargetJointAngle(SHOULDER, Joystick::L_STICK_H_AXIS, -K);
-    setTargetJointAngle(ARM,      Joystick::L_STICK_V_AXIS,  K);
-    setTargetJointAngle(FOREARM,  Joystick::R_STICK_V_AXIS, -K);
+    setTargetJointAngle(ARM,      Joystick::L_STICK_V_AXIS, -K);
+    setTargetJointAngle(FOREARM,  Joystick::R_STICK_V_AXIS,  K);
     setTargetJointAngle(WRIST1,   Joystick::R_STICK_H_AXIS, -K);
     
-    setTargetJointAngle(WRIST2, Joystick::B_BUTTON, Joystick::A_BUTTON, K);
+    setTargetJointAngle(WRIST2, Joystick::B_BUTTON, Joystick::X_BUTTON, K);
     setTargetJointAngle(HAND,   Joystick::R_BUTTON, Joystick::L_BUTTON, 1.2 * K);
 
     double dq_finger = 0.0;
     double lt = joystick->getPosition(targetMode, Joystick::L_TRIGGER_AXIS);
-    if(lt > -0.9){
-        dq_finger += dt * 0.2 * (lt + 1.0);
+    if(lt > 0.1){
+        dq_finger -= dt * 0.4 * lt;
     }
     double rt = joystick->getPosition(targetMode, Joystick::R_TRIGGER_AXIS);
-    if(rt > -0.9){
-        dq_finger -= dt * 0.2 * (rt + 1.0);
+    if(rt > 0.1){
+        dq_finger += dt * 0.4 * rt;
     }
+    
     for(int i = FINGER1; i <= FINGER3_TIP; ++i){
         jointInfos[i].qref += dq_finger;
     }

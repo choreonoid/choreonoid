@@ -1,0 +1,230 @@
+WIDTH: &WIDTH 0.1
+HALF_WIDTH: &HALF_WIDTH 0.05
+
+APP: &APP
+  material:
+    diffuseColor: [ 0.6, 0.6, 0.6 ]
+    specularColor: [ 0, 0, 0 ]
+    shinines: 0.6
+
+L6: &L6 6
+L6H: &L6H 3
+
+FRAME_6M: &FRAME_6M
+  -
+    type: Shape
+    translation: [ 0, 0, *L6H ]
+    geometry: { type: Box, size: [ *WIDTH, *WIDTH, *L6 ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ 0, *L6, *L6H ]
+    geometry: { type: Box, size: [ *WIDTH, *WIDTH, *L6 ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L6, 0, *L6H ]
+    geometry: { type: Box, size: [ *WIDTH, *WIDTH, *L6 ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L6, *L6, *L6H ]
+    geometry: { type: Box, size: [ *WIDTH, *WIDTH, *L6 ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L6H, 0, *L6 ]
+    geometry: { type: Box, size: [ *L6, *WIDTH, *WIDTH ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L6H, *L6, *L6 ]
+    geometry: { type: Box, size: [ *L6, *WIDTH, *WIDTH ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ 0, *L6H, *L6 ]
+    geometry: { type: Box, size: [ *WIDTH, *L6, *WIDTH ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L6, *L6H, *L6 ]
+    geometry: { type: Box, size: [ *WIDTH, *L6, *WIDTH ] }
+    appearance: *APP
+
+L4_2: &L4_2 4.2
+L4_2H: &L4_2H 2.1
+
+FRAME_4_2M: &FRAME_4_2M
+  -
+    type: Shape
+    translation: [ 0, 0, *L4_2H ]
+    geometry: { type: Box, size: [ *WIDTH, *WIDTH, *L4_2 ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ 0, *L4_2, *L4_2H ]
+    geometry: { type: Box, size: [ *WIDTH, *WIDTH, *L4_2 ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L4_2, 0, *L4_2H ]
+    geometry: { type: Box, size: [ *WIDTH, *WIDTH, *L4_2 ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L4_2, *L4_2, *L4_2H ]
+    geometry: { type: Box, size: [ *WIDTH, *WIDTH, *L4_2 ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L4_2H, 0, *L4_2 ]
+    geometry: { type: Box, size: [ *L4_2, *WIDTH, *WIDTH ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L4_2H, *L4_2, *L4_2 ]
+    geometry: { type: Box, size: [ *L4_2, *WIDTH, *WIDTH ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ 0, *L4_2H, *L4_2 ]
+    geometry: { type: Box, size: [ *WIDTH, *L4_2, *WIDTH ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L4_2, *L4_2H, *L4_2 ]
+    geometry: { type: Box, size: [ *WIDTH, *L4_2, *WIDTH ] }
+    appearance: *APP
+
+L3: &L3 3
+L3H: &L3H 1.5
+
+FRAME_3M: &FRAME_3M
+  -
+    type: Shape
+    translation: [ 0, 0, *L3H ]
+    geometry: { type: Box, size: [ *WIDTH, *WIDTH, *L3 ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ 0, *L3, *L3H ]
+    geometry: { type: Box, size: [ *WIDTH, *WIDTH, *L3 ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L3, 0, *L3H ]
+    geometry: { type: Box, size: [ *WIDTH, *WIDTH, *L3 ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L3, *L3, *L3H ]
+    geometry: { type: Box, size: [ *WIDTH, *WIDTH, *L3 ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L3H, 0, *L3 ]
+    geometry: { type: Box, size: [ *L3, *WIDTH, *WIDTH ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L3H, *L3, *L3 ]
+    geometry: { type: Box, size: [ *L3, *WIDTH, *WIDTH ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ 0, *L3H, *L3 ]
+    geometry: { type: Box, size: [ *WIDTH, *L3, *WIDTH ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L3, *L3H, *L3 ]
+    geometry: { type: Box, size: [ *WIDTH, *L3, *WIDTH ] }
+    appearance: *APP
+
+L2_1: &L2_1 2.1
+L2_1H: &L2_1H 1.05
+
+FRAME_2_1_3M: &FRAME_2_1_3M
+  -
+    type: Shape
+    translation: [ 0, 0, *L3H ]
+    geometry: { type: Box, size: [ *WIDTH, *WIDTH, *L3 ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ 0, *L2_1, *L3H ]
+    geometry: { type: Box, size: [ *WIDTH, *WIDTH, *L3 ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L2_1, 0, *L3H ]
+    geometry: { type: Box, size: [ *WIDTH, *WIDTH, *L3 ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L2_1, *L2_1, *L3H ]
+    geometry: { type: Box, size: [ *WIDTH, *WIDTH, *L3 ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L2_1H, 0, *L3 ]
+    geometry: { type: Box, size: [ *L2_1, *WIDTH, *WIDTH ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L2_1H, *L2_1, *L3 ]
+    geometry: { type: Box, size: [ *L2_1, *WIDTH, *WIDTH ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ 0, *L2_1H, *L3 ]
+    geometry: { type: Box, size: [ *WIDTH, *L2_1, *WIDTH ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L2_1, *L2_1H, *L3 ]
+    geometry: { type: Box, size: [ *WIDTH, *L2_1, *WIDTH ] }
+    appearance: *APP
+
+FRAME_2_1M: &FRAME_2_1M
+  -
+    type: Shape
+    translation: [ 0, 0, *L2_1H ]
+    geometry: { type: Box, size: [ *WIDTH, *WIDTH, *L2_1 ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ 0, *L2_1, *L2_1H ]
+    geometry: { type: Box, size: [ *WIDTH, *WIDTH, *L2_1 ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L2_1, 0, *L2_1H ]
+    geometry: { type: Box, size: [ *WIDTH, *WIDTH, *L2_1 ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L2_1, *L2_1, *L2_1H ]
+    geometry: { type: Box, size: [ *WIDTH, *WIDTH, *L2_1 ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L2_1H, 0, *L2_1 ]
+    geometry: { type: Box, size: [ *L2_1, *WIDTH, *WIDTH ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L2_1H, *L2_1, *L2_1 ]
+    geometry: { type: Box, size: [ *L2_1, *WIDTH, *WIDTH ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ 0, *L2_1H, *L2_1 ]
+    geometry: { type: Box, size: [ *WIDTH, *L2_1, *WIDTH ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L2_1, *L2_1H, *L2_1 ]
+    geometry: { type: Box, size: [ *WIDTH, *L2_1, *WIDTH ] }
+    appearance: *APP

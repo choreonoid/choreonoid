@@ -47,6 +47,7 @@ agxSDK::SimulationRef AGXObjectFactory::createSimulation(const AGXSimulationDesc
     sim->getSpace()->setContactReductionBinResolution(desc.contactReductionBinResolution);
     sim->getSpace()->setContactReductionThreshold(desc.contactReductionThreshhold);
     sim->getDynamicsSystem()->setEnableContactWarmstarting(desc.enableContactWarmstarting);
+    sim->getMergeSplitHandler()->setEnable(desc.enableAMOR);
     sim->getDynamicsSystem()->getAutoSleep()->setEnable(desc.enableAutoSleep);
     return sim;
 }
@@ -209,7 +210,7 @@ agx::Bool AGXObjectFactory::setContactMaterialParam(agx::ContactMaterial* const 
     cm->setContactReductionBinResolution(desc.contactReductionBinResolution);
 
     // Create friction model
-    if(desc.frictionModelType != AGXFrictionModelType::DEFAULT){
+    if(desc.frictionModelType != AGXFrictionModelType::DEFAULT || desc.solveType != agx::FrictionModel::SolveType::SPLIT){
         agx::FrictionModelRef fm = nullptr;
         switch (desc.frictionModelType){
             case AGXFrictionModelType::BOX :
@@ -222,12 +223,13 @@ agx::Bool AGXObjectFactory::setContactMaterialParam(agx::ContactMaterial* const 
                 fm = new agx::ConstantNormalForceOrientedBoxFrictionModel(agx::Real(0.0), nullptr, agx::Vec3(), desc.solveType);
                 break;
             case AGXFrictionModelType::ITERATIVE_PROJECTED_CONE :
+            case AGXFrictionModelType::DEFAULT:
                 fm = new agx::IterativeProjectedConeFriction();
                 break;
-            case AGXFrictionModelType::DEFAULT:
             default:
                 break;
         }
+        if(!fm) return false;
         fm->setSolveType(desc.solveType);
         cm->setFrictionModel(fm);
     }
@@ -293,6 +295,13 @@ agx::BallJointRef AGXObjectFactory::createConstraintBallJoint(const AGXBallJoint
 agx::PlaneJointRef AGXObjectFactory::createConstraintPlaneJoint(const AGXPlaneJointDesc & desc)
 {
     return new agx::PlaneJoint(desc.rigidBodyA, desc.frameA, desc.rigidBodyB, desc.frameB);
+}
+
+agx::VirtualConstraintInertiaRef AGXObjectFactory::createVirtualConstraintInertia(agx::Constraint* const constraint,
+    const agx::Real& rb1TI, const agx::Real& rb1RI,
+    const agx::Real& rb2TI, const agx::Real& rb2RI)
+{
+    return new agx::VirtualConstraintInertia(constraint, rb1TI, rb1RI, rb2TI, rb2RI);
 }
 
 void AGXObjectFactory::setMotor1DParam(agx::Motor1D* controller, const AGXMotor1DDesc& desc)

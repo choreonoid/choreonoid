@@ -411,6 +411,13 @@ void SceneBarImpl::onCameraComboCurrentIndexChanged(int index)
     rendererStateConnections.unblock();
 }
 
+void SceneBar::sceneWidget(vector<SceneWidget*>& widget)
+{
+    for(auto it=impl->sceneWidgetInfos.begin(); it!=impl->sceneWidgetInfos.end(); it++){
+        widget.push_back(it->first);
+    }
+}
+
 
 namespace {
 

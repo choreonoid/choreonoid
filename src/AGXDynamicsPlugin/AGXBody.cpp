@@ -42,7 +42,7 @@ bool createAGXVehicleContinousTrack(AGXBody* agxBody)
 ////////////////////////////////////////////////////////////
 // AGXLink
 AGXLink::AGXLink(Link* const link) : _orgLink(link){}
-AGXLink::AGXLink(Link* const link, AGXLink* const parent, const Vector3& parentOrigin, AGXBody* const agxBody) :
+AGXLink::AGXLink(Link* const link, AGXLink* const parent, const Vector3& parentOrigin, AGXBody* const agxBody, bool makeStatic) :
     _agxBody(agxBody),
     _orgLink(link),
     _agxParentLink(parent),
@@ -61,13 +61,17 @@ AGXLink::AGXLink(Link* const link, AGXLink* const parent, const Vector3& parentO
         agxBody->addControllableLink(this);
     }
 
-    constructAGXLink();
+    if(link->jointType() != Link::FIXED_JOINT){
+        makeStatic = false;
+    }
+
+    constructAGXLink(makeStatic);
     for(Link* child = link->child(); child; child = child->sibling()){
-        new AGXLink(child, this, getOrigin(), agxBody);
+        new AGXLink(child, this, getOrigin(), agxBody, makeStatic);
     }
 }
 
-void AGXLink::constructAGXLink()
+void AGXLink::constructAGXLink(const bool& makeStatic)
 {
     _rigid = createAGXRigidBody();
     _geometry = createAGXGeometry();
@@ -75,10 +79,17 @@ void AGXLink::constructAGXLink()
     _geometry->addGroup(getCollisionGroupName());
     createAGXShape();
     setAGXMaterial();
-    _constraint = createAGXConstraint();
+    if(makeStatic){
+        _rigid->setMotionControl(agx::RigidBody::STATIC);
+    }else{
+        _constraint = createAGXConstraint();
+    }
 
     agxSDK::SimulationRef sim =  getAGXBody()->getAGXScene()->getSimulation();
     sim->add(_rigid);
+    bool enableAMOR = false;
+    enableAMOR = getOrgLink()->info("AMOR", enableAMOR);
+    sim->getMergeSplitHandler()->getOrCreateProperties(_rigid)->setEnableMergeSplit(enableAMOR);
     sim->add(_constraint);
     //printDebugInfo();
 }
@@ -567,6 +578,11 @@ agx::ConstraintRef AGXLink::createAGXConstraint()
         lock.forceRange = agx::RangeReal(lockForceRange(0),lockForceRange(1));
     }
 
+    // rotor inertia
+    double rotorInertia = orgLink->Jm2();
+    if(!rotorInertia)
+        rotorInertia = orgLink->info("rotorInertia", 0.0);
+
     agx::ConstraintRef constraint = nullptr;
     switch(orgLink->jointType()){
         case Link::REVOLUTE_JOINT :{
@@ -599,8 +615,13 @@ agx::ConstraintRef AGXLink::createAGXConstraint()
                 desc.motor.enable = false;
                 desc.lock.enable = true;
             }
-
             constraint = AGXObjectFactory::createConstraint(desc);
+            // add rotor inertia
+            getAGXBody()->getAGXScene()->getSimulation()->add(
+                AGXObjectFactory::createVirtualConstraintInertia(constraint,
+                0.0, rotorInertia,
+                0.0, rotorInertia)
+            );
             break;
         }
         case Link::PRISMATIC_JOINT :{
@@ -635,6 +656,12 @@ agx::ConstraintRef AGXLink::createAGXConstraint()
             }
 
             constraint = AGXObjectFactory::createConstraint(desc);
+            // add rotor inertia
+            getAGXBody()->getAGXScene()->getSimulation()->add(
+                AGXObjectFactory::createVirtualConstraintInertia(constraint,
+                rotorInertia, 0.0,
+                rotorInertia, 0.0)
+            );
             break;
         }
         case Link::FIXED_JOINT :
@@ -785,7 +812,11 @@ void AGXBody::createBody(AGXScene* agxScene)
     initialize();
     _agxScene = agxScene;
     // Create AGXLink following child link.
-    new AGXLink(body()->rootLink(), nullptr, Vector3::Zero(), this);
+    bool makeStatic = true;
+    if(body()->rootLink()->jointType() != Link::FIXED_JOINT){
+        makeStatic = false;
+    }
+    new AGXLink(body()->rootLink(), nullptr, Vector3::Zero(), this, makeStatic);
     setLinkStateToAGX();
     createExtraJoint();
     callExtensionFuncs();

@@ -31,8 +31,8 @@ class CNOID_EXPORT AGXLink : public Referenced
 {
 public:
     AGXLink(Link* const link);
-    AGXLink(Link* const link, AGXLink* const parent, const Vector3& parentOrigin, AGXBody* const agxBody);
-    void constructAGXLink();
+    AGXLink(Link* const link, AGXLink* const parent, const Vector3& parentOrigin, AGXBody* const agxBody, bool makeStatic);
+    void constructAGXLink(const bool& makeStatic);
     void setAGXMaterial();
     bool setAGXMaterialFromName(const std::string& materialName);
     void setAGXMaterialFromLinkInfo();

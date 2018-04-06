@@ -176,6 +176,7 @@ public:
     std::shared_ptr<Image> tmpImage;
     std::shared_ptr<RangeCamera::PointData> tmpPoints;
     std::shared_ptr<RangeSensor::RangeData> tmpRangeData;
+    bool isDense;
 
     SensorScreenRenderer(GLVisionSimulatorItemImpl* simImpl, Device* device, Device* deviceForRendering);
     ~SensorScreenRenderer();
@@ -1326,6 +1327,7 @@ void SensorRenderer::copyVisionData()
             }
             if(rangeCamera){
                 rangeCamera->setPoints(screen->tmpPoints);
+                rangeCamera->setDense(screen->isDense);
             }
             camera->setDelay(delay);
 
@@ -1432,6 +1434,8 @@ bool SensorScreenRenderer::getRangeCameraData(Image& image, vector<Vector3f>& po
     points.clear();
     points.reserve(pixelWidth * pixelHeight);
     unsigned char* colorSrc = 0;
+
+    isDense = true;
     
     for(int y = pixelHeight - 1; y >= 0; --y){
         int srcpos = y * pixelWidth;
@@ -1481,6 +1485,7 @@ bool SensorScreenRenderer::getRangeCameraData(Image& image, vector<Vector3f>& po
                     pixels[2] = colorSrc[2];
                     pixels += 3;
                 }
+                isDense = false;
             }
             colorSrc += 3;
         }

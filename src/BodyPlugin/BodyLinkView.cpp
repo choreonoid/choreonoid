@@ -68,6 +68,7 @@ public:
     QLabel jointIdLabel;
     QLabel jointTypeLabel;
     QLabel jointAxisLabel;
+    QLabel materialLabel;
 
     QGroupBox qBox;
     DoubleSpinBox qSpin;
@@ -248,10 +249,13 @@ void BodyLinkViewImpl::setupWidgets()
     grid->addWidget(&jointIdLabel, 0, 3);
     grid->addWidget(new QLabel(_("Joint Type:")), 1, 0);
     jointTypeLabel.setTextInteractionFlags(Qt::TextSelectableByMouse);
-    grid->addWidget(&jointTypeLabel, 1, 1, 1, 3);
-    grid->addWidget(new QLabel(_("Joint Axis:")), 2, 0);
+    grid->addWidget(&jointTypeLabel, 1, 1);
+    grid->addWidget(new QLabel(_("Joint Axis:")), 1, 2);
     jointAxisLabel.setTextInteractionFlags(Qt::TextSelectableByMouse);
-    grid->addWidget(&jointAxisLabel, 2, 1, 1, 3);
+    grid->addWidget(&jointAxisLabel, 1, 3);
+    grid->addWidget(new QLabel(_("Material:")), 2, 0);
+    materialLabel.setTextInteractionFlags(Qt::TextSelectableByMouse);
+    grid->addWidget(&materialLabel, 2, 1);
     frame->setLayout(grid);
 
     topVBox->addSpacing(4);
@@ -587,6 +591,8 @@ void BodyLinkViewImpl::updateLink()
         dqBox.hide();
         jointTypeLabel.setText(currentLink->jointTypeString().c_str());
     }
+
+    materialLabel.setText(currentLink->materialName().c_str());
 }
 
 

@@ -28,8 +28,8 @@ public:
     virtual double getPosition(int axis) const = 0;
     virtual bool getButtonState(int button) const = 0;
     virtual bool isActive() const = 0;
-    virtual SignalProxy<void(int id, bool isPressed)> sigButton() = 0;
     virtual SignalProxy<void(int id, double position)> sigAxis() = 0;
+    virtual SignalProxy<void(int id, bool isPressed)> sigButton() = 0;
 };
 
 }

@@ -27,6 +27,10 @@ definitions:
     height: &CAMERA_SPEC_height 480
     frameRate: &CAMERA_SPEC_frameRate 30
 
+STL: &STL
+  type: Resource
+  removeRedundantVertices: true
+
 links:
   -
     name: BASE
@@ -44,12 +48,16 @@ links:
         elements:
           -
             type: Shape
-            geometry: { type: Resource, uri: "parts/BASE.stl" }
+            geometry: { <<: *STL, uri: "parts/BASE_LOWER.stl", creaseAngle: 40 }
+            appearance: *RING_APPEARANCE
+          -
+            type: Shape
+            geometry: { <<: *STL, uri: "parts/BASE_UPPER.stl", creaseAngle: 40 }
             appearance: *MAIN_APPEARANCE
           -
             type: Shape
             translation: [ 0, 0, 0.1565 ]
-            geometry: { type: Resource, uri: "parts/RING_BIG.stl" }
+            geometry: { <<: *STL, uri: "parts/RING_BIG.stl", creaseAngle: 40 }
             appearance: *RING_APPEARANCE
       -
         type: Collision
@@ -66,7 +74,7 @@ links:
     jointAxis: [ 0, 0, -1 ]
     jointRange: [ -10000, 10000 ]
     jointLockCompliance: 0.00096963
-    jointLockDamping: 0.1
+    jointLockSpookDamping: 0.1
     jointLockForceRange: [ -18.0, 18.0 ]
     jointVelocityRange: [ -42.0, 42.0 ]
     jointId: 0
@@ -77,19 +85,20 @@ links:
       0,        0.007932, 0,
       0,        0,        0.000598
     ]
+    rotorInertia: 0.2
     elements:
       -
         type: Visual
         elements:
           -
             type: Shape
-            geometry: { type: Resource, uri: "parts/SHOULDER.stl" }
+            geometry: { <<: *STL, uri: "parts/SHOULDER.stl", creaseAngle: 40 }
             appearance: *MAIN_APPEARANCE
           -
             type: Shape
             translation: [ 0, 0.0015, 0.119 ]
             rotation: [ 1, 0, 0, 90 ]
-            geometry: { type: Resource, uri: "parts/RING_BIG.stl" }
+            geometry: { <<: *STL, uri: "parts/RING_BIG.stl", creaseAngle: 40 }
             appearance: *RING_APPEARANCE
       -
         type: Collision
@@ -116,7 +125,7 @@ links:
     jointRange: [ 50, 310 ]
     jointAngle: 180
     jointLockCompliance: 0.00047171
-    jointLockDamping: 0.1
+    jointLockSpookDamping: 0.1
     jointLockForceRange: [ -37.0, 37.0 ]
     jointVelocityRange: [ -56.4, 56.4 ]
     jointId: 1
@@ -127,19 +136,20 @@ links:
       0,        0.010502, 0,
       0,        0,        0.000792
     ]
+    rotorInertia: 0.2
     elements:
       -
         type: Visual
         elements:
           -
             type: Shape
-            geometry: { type: Resource, uri: "parts/ARM.stl" }
+            geometry: { <<: *STL, uri: "parts/ARM.stl", creaseAngle: 40 }
             appearance: *MAIN_APPEARANCE
           -
             type: Shape
             translation: [ 0, 0, -0.410 ]
             rotation: [ 1, 0, 0, 90 ]
-            geometry: { type: Resource, uri: "parts/RING_BIG.stl" }
+            geometry: { <<: *STL, uri: "parts/RING_BIG.stl", creaseAngle: 40 }
             appearance: *RING_APPEARANCE
       -
         type: Collision
@@ -165,7 +175,7 @@ links:
     jointRange: [ 19, 341 ]
     jointAngle: 180
     jointLockCompliance: 0.00096963
-    jointLockDamping: 0.1
+    jointLockSpookDamping: 0.1
     jointLockForceRange: [ -18.0, 18.0 ]
     jointVelocityRange: [ -42.0, 42.0 ]
     jointId: 2
@@ -176,18 +186,19 @@ links:
       0,       0.00142, 0,
       0,       0,       0.000304
     ]
+    rotorInertia: 0.1
     elements:
       -
         type: Visual
         elements:
           -
             type: Shape
-            geometry: { type: Resource, uri: "parts/FOREARM.stl" }
+            geometry: { <<: *STL, uri: "parts/FOREARM.stl", creaseAngle: 40 }
             appearance: *MAIN_APPEARANCE
           -
             type: Shape
             translation: [ 0, -0.01125, 0.207 ]
-            geometry: { type: Resource, uri: "parts/RING_SMALL.stl" }
+            geometry: { <<: *STL, uri: "parts/RING_SMALL.stl", creaseAngle: 40 }
             appearance: *RING_APPEARANCE
       -
         type: Collision
@@ -213,10 +224,11 @@ links:
     jointAxis: [ 0, 0, -1 ]
     jointRange: [ -10000, 10000 ]
     jointLockCompliance: 0.00256666
-    jointLockDamping: 0.1
+    jointLockSpookDamping: 0.1
     jointLockForceRange: [ -6.8, 6.8 ]
     jointVelocityRange: [ -90.0, 90.0 ]
     jointId: 3
+    rotorInertia: 0.05
     elements: &WRIST_elements
       RigidBody:
         centerOfMass: [ 0, 0.037, 0.0642 ]
@@ -232,13 +244,13 @@ links:
             elements:
               -
                 type: Shape
-                geometry: { type: Resource, uri: "parts/WRIST.stl" }
+                geometry: { <<: *STL, uri: "parts/WRIST.stl", creaseAngle: 40 }
                 appearance: *MAIN_APPEARANCE
               -
                 type: Shape
                 translation: [ 0, 0.03725, 0.06401 ]
                 rotation: [ -1, 0, 0, 60 ]
-                geometry: { type: Resource, uri: "parts/RING_SMALL.stl" }
+                geometry: { <<: *STL, uri: "parts/RING_SMALL.stl", creaseAngle: 40 }
                 appearance: *RING_APPEARANCE
           -
             type: Collision
@@ -270,10 +282,11 @@ links:
     jointAxis: [ 0, 0, -1 ]
     jointRange: [ -10000, 10000 ]
     jointLockCompliance: 0.00256666
-    jointLockDamping: 0.1
+    jointLockSpookDamping: 0.1
     jointLockForceRange: [ -6.8, 6.8 ]
     jointVelocityRange: [ -90.0, 90.0 ]
     jointId: 4
+    rotorInertia: 0.05
     elements: *WRIST_elements
   -
     name: HAND
@@ -284,7 +297,7 @@ links:
     jointAxis: [ 0, 0, -1 ]
     jointRange: [ -10000, 10000 ]
     jointLockCompliance: 0.00256666
-    jointLockDamping: 0.1
+    jointLockSpookDamping: 0.1
     jointLockForceRange: [ -6.8, 6.8 ]
     jointVelocityRange: [ -90.0, 90.0 ]
     jointId: 5
@@ -295,14 +308,23 @@ links:
       0,           0.000345324, 0,
       0,           0,           0.000582
     ]
+    rotorInertia: 0.05
     elements:
       -
         type: Visual
         elements:
           -
             type: Shape
-            geometry: { type: Resource, uri: "parts/HAND.stl" }
+            geometry: { <<: *STL, uri: "parts/HAND.stl", creaseAngle: 40 }
             appearance: *MAIN_APPEARANCE
+          -
+            type: Shape
+            geometry: { <<: *STL, uri: "parts/PALM.stl", creaseAngle: 40 }
+            appearance: *FINGER_APPEARANCE
+          -
+            type: Shape
+            geometry: { <<: *STL, uri: "parts/FINGER_BASE.stl", creaseAngle: 40 }
+            appearance: *FINGER_APPEARANCE
       -
         type: Collision
         elements:
@@ -387,7 +409,7 @@ links:
         frameRate: *CAMERA_SPEC_frameRate
         on: true
         nearClipDistance: 0.02
-        farClipDistance: 3.5
+        #farClipDistance: 3.5
   -
     name: FINGER1
     parent: HAND
@@ -398,10 +420,12 @@ links:
     jointRange: [ 0, 115 ]
     jointAngle: 55
     jointLockCompliance: 0.636318
-    jointLockDamping: 0.1
+    jointLockSpookDamping: 0.1
     jointLockForceRange: [ -0.96, 0.96 ]
     jointVelocityRange: [ -95.0, 95.0 ]
     jointId: 6
+    rotorInertia: 0.005
+    material: Hand
     elements: &FINGER_elements
       RigidBody:
         centerOfMass: [ 0, 0, 0.022 ]
@@ -416,7 +440,7 @@ links:
             type: Visual
             elements:
               Shape:
-                geometry: { type: Resource, uri: "parts/FINGER.stl" }
+                geometry: { <<: *STL, uri: "parts/FINGER.stl", creaseAngle: 15 }
                 appearance: *FINGER_APPEARANCE
           -
             type: Collision
@@ -474,6 +498,10 @@ links:
     parent: FINGER1
     translation: [ -0.003, 0, 0.044 ]
     jointType: fixed
+    jointAxis: [ 0, 1, 0 ]
+    jointRange: [ 0, 115 ]
+    rotorInertia: 0.005
+    material: Hand
     elements: &FINGER_TIP_elements
       RigidBody:
         centerOfMass: [ 0, 0, 0.022 ]
@@ -488,7 +516,7 @@ links:
             type: Visual
             elements:
               Shape:
-                geometry: { type: Resource, uri: "parts/FINGER_TIP.stl" }
+                geometry: { <<: *STL, uri: "parts/FINGER_TIP.stl", creaseAngle: 15 }
                 appearance: *FINGER_APPEARANCE
           -
             type: Collision
@@ -570,16 +598,22 @@ links:
     jointRange: [ 0, 115 ]
     jointAngle: 55
     jointLockCompliance: 0.636318
-    jointLockDamping: 0.1
+    jointLockSpookDamping: 0.1
     jointLockForceRange: [ -0.96, 0.96 ]
     jointVelocityRange: [ -95.0, 95.0 ]
     jointId: 7
+    rotorInertia: 0.005
+    material: Hand
     elements: *FINGER_elements
   -
     name: FINGER2_TIP
     parent: FINGER2
     translation: [ -0.003, 0, 0.044 ]
     jointType: fixed
+    jointAxis: [ 0, 1, 0 ]
+    jointRange: [ 0, 115 ]
+    rotorInertia: 0.005
+    material: Hand
     elements: *FINGER_TIP_elements
   -
     name: FINGER3
@@ -591,23 +625,29 @@ links:
     jointRange: [ 0, 115 ]
     jointAngle: 55
     jointLockCompliance: 0.636318
-    jointLockDamping: 0.1
+    jointLockSpookDamping: 0.1
     jointLockForceRange: [ -0.96, 0.96 ]
     jointVelocityRange: [ -95.0, 95.0 ]
     jointId: 8
+    rotorInertia: 0.005
+    material: Hand
     elements: *FINGER_elements
   -
     name: FINGER3_TIP
     parent: FINGER3
     translation: [ -0.003, 0, 0.044 ]
     jointType: fixed
+    jointAxis: [ 0, 1, 0 ]
+    jointRange: [ 0, 115 ]
+    rotorInertia: 0.005
+    material: Hand
     elements: *FINGER_TIP_elements
 
 standardPose: [
-  270,      # SHOULDER
+  276,      # SHOULDER
   168,      # ARM
   58,       # FOREARM
-  -119,     # WRIST1
+  241,      # WRIST1
   83,       # WRIST2
   76,       # HAND
   0,        # FINGER1

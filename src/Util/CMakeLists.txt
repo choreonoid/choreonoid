@@ -1,5 +1,5 @@
 #set(CMAKE_BUILD_TYPE Debug)
-#set_source_files_properties(Image.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
+#set_source_files_properties(JoystickLinux.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
 
 configure_file(Config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/Config.h)
 
@@ -62,7 +62,6 @@ set(sources
   VRMLSceneLoader.cpp
   GettextWrapper.cpp
   GettextUtil.cpp
-  Joystick.cpp
   ExtJoystick.cpp
   CnoidUtil.cpp # This file must be placed at the last position
   )
@@ -150,9 +149,11 @@ set(headers
   GettextUtil.h
   Selection.h
   DataMap.h
+  JoystickInterface.h
   Joystick.h
-  JoystickGamepad.h
   ExtJoystick.h
+  SharedJoystick.h
+  JoystickGamepad.h
   Task.h
   AbstractTaskSequencer.h
   Exception.h

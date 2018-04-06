@@ -1,0 +1,48 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: Spreader
+
+links:
+  -
+    name: BASE
+    jointType: free
+    mass: 5.0
+    centerOfMass: [ -0.04, 0, 0.04 ]
+    inertia: [ 0.1, 0, 0,
+               0, 0.1, 0,
+               0, 0, 0.1 ]
+    elements:
+      Resource:
+        rotation: [ 0, 0, 1, 90 ]
+        uri: "resource/SpreaderBody.dae"
+  -
+    name: END_L
+    parent: BASE
+    translation: [ 0.155, 0, 0.035 ]
+    jointType: fixed
+    mass: 1.0
+    centerOfMass: [ 0.06, 0.024, 0 ]
+    inertia: [ 0.001, 0, 0,
+               0, 0.001, 0,
+               0, 0, 0.001 ]
+    elements:
+      Resource:
+        rotation: [ 0, 0, 1, 90 ]
+        translation: [ -0.155, 0, -0.035 ]
+        uri: "resource/SpreaderEndL.dae"
+  -
+    name: END_R
+    parent: BASE
+    translation: [ 0.155, 0, 0.035 ]
+    jointType: fixed
+    mass: 1.0
+    centerOfMass: [ 0.06, -0.024, 0 ]
+    inertia: [ 0.001, 0, 0,
+               0, 0.001, 0,
+               0, 0, 0.001 ]
+    elements:
+      Resource:
+        rotation: [ 0, 0, 1, 90 ]
+        translation: [ -0.155, 0, -0.035 ]
+        uri: "resource/SpreaderEndR.dae"

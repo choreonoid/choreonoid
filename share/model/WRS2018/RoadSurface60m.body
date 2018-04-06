@@ -1,0 +1,25 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: RoadSurface60m
+
+links:
+  -
+    type: SubBody
+    uri: RoadSurface20m.body
+    jointType: fixed
+    prefix: 1_
+  -
+    type: SubBody
+    translation: [ 20, 0, 0 ]
+    uri: RoadSurface20m.body
+    parent: 1_Base
+    jointType: fixed
+    prefix: 2_
+  -
+    type: SubBody
+    translation: [ 40, 0, 0 ]
+    uri: RoadSurface20m.body
+    parent: 1_Base
+    jointType: fixed
+    prefix: 3_

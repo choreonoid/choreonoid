@@ -12,9 +12,10 @@
 //#include "PoseSeqView.h"
 #include "PoseRollView.h"
 #include "FcpFileLoader.h"
-#include "gettext.h"
+#include <boost/format.hpp>
 
 using namespace cnoid;
+using boost::format;
 
 namespace {
   
@@ -39,16 +40,16 @@ public:
 
     virtual const char* description() const override {
         static std::string text =
-            str(fmt(_("PoseSeq Plugin Version %1%\n")) % CNOID_FULL_VERSION_STRING) +
+            str(format("PoseSeq Plugin Version %1%\n") % CNOID_FULL_VERSION_STRING) +
             "\n" +
-            _("This plugin has been developed by Shin'ichiro Nakaoka and Choreonoid Development Team, AIST, "
-              "and is distributed as a part of the Choreonoid package.\n"
-              "\n") +
-            LGPLtext();
-
+            "Copyright (c) 2018 Shin'ichiro Nakaoka and Choreonoid Development Team, AIST.\n"
+            "\n" +
+            MITLicenseText();
+    
         return text.c_str();
     }
 };
+
 }
 
 CNOID_IMPLEMENT_PLUGIN_ENTRY(PoseSeqPlugin);

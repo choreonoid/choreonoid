@@ -9,7 +9,7 @@ COMMON_RESOURCE: &COMMON_RESOURCE
   uri: "resource/AizuSpiderCommon.yaml"
 
 links:
-  - 
+  -
     name: CHASSIS
     translation: [ 0, 0, 0.03503 ]
     jointType: free
@@ -19,16 +19,16 @@ links:
         { <<: *COMMON_RESOURCE, node: CHASSIS }
 
       - # Right Main Belt Drive Pulley
-        { <<: *COMMON_RESOURCE, node: B0005_2505, translation: [ 0.234, -0.12575, 0.062 ] }
-        
+        { <<: *COMMON_RESOURCE, node: TRACK_WHEEL_VISUAL, translation: [ 0.234, -0.12575, 0.062 ] }
+
       - # Right Main Belt Driven Pulley
-        { <<: *COMMON_RESOURCE, node: B0005_2505, translation: [ -0.234, -0.12575, 0.062 ] }
+        { <<: *COMMON_RESOURCE, node: TRACK_WHEEL_VISUAL, translation: [ -0.234, -0.12575, 0.062 ] }
 
       - # Right Bottom Rollers
         &MAIN_TRACK_BOTTOM_ROLLERS
         type: Transform
         translation: [ 0, -0.14150, -0.012 ]
-        MAIN_TRACK_BOTTOM_ROLLER: &MAIN_TRACK_BOTTOM_ROLLER { <<: *COMMON_RESOURCE, node: B0006_2606 }
+        MAIN_TRACK_BOTTOM_ROLLER: &MAIN_TRACK_BOTTOM_ROLLER { <<: *COMMON_RESOURCE, node: TRACK_BOTTOM_ROLLER_VISUAL }
         elements:
           - { <<: *MAIN_TRACK_BOTTOM_ROLLER, translation: [ 0.1535,  0, 0 ] }
           - { <<: *MAIN_TRACK_BOTTOM_ROLLER, translation: [  0.116,  0, 0 ] }
@@ -42,49 +42,49 @@ links:
           - { <<: *MAIN_TRACK_BOTTOM_ROLLER, translation: [ -0.1525, 0, 0 ] }
 
       - # Right Top Roller
-        { <<: *COMMON_RESOURCE, node: B0013_3301, translation: [ 0, -0.133, 0.151 ] }
+        { <<: *COMMON_RESOURCE, node: TRACK_TOP_ROLLER_VISUAL, translation: [ 0, -0.133, 0.151 ] }
 
       - # Left Main Belt Drive Pulley
-        { <<: *COMMON_RESOURCE, node: B0005_2505, translation: [ 0.234, 0.12575, 0.062 ] }
+        { <<: *COMMON_RESOURCE, node: TRACK_WHEEL_VISUAL, translation: [ 0.234, 0.12575, 0.062 ] }
 
       - # Left Main Belt Driven Pulley
-        { <<: *COMMON_RESOURCE, node: B0005_2505, translation: [ -0.234, 0.12575, 0.062 ] }
+        { <<: *COMMON_RESOURCE, node: TRACK_WHEEL_VISUAL, translation: [ -0.234, 0.12575, 0.062 ] }
 
       - # Left Bottom Rollers
         { <<: *MAIN_TRACK_BOTTOM_ROLLERS, translation: [ 0, 0.1415, -0.012 ] }
 
       - # Left Top Roller
-        { <<: *COMMON_RESOURCE, node: B0013_3301, translation: [ 0, 0.133, 0.151 ] }
+        { <<: *COMMON_RESOURCE, node: TRACK_TOP_ROLLER_VISUAL, translation: [ 0, 0.133, 0.151 ] }
 
       - # Front Right Sub Belt Drive Pulley
-        { <<: *COMMON_RESOURCE, node: B0007_2705, translation: [ 0.234, -0.22350, 0.062 ] }
+        { <<: *COMMON_RESOURCE, node: SUB_TRACK_WHEEL1_VISUAL, translation: [ 0.234, -0.22350, 0.062 ] }
 
       - # Front Left Sub Belt Drive Pulley
-        { <<: *COMMON_RESOURCE, node: B0007_2705, translation: [ 0.234, 0.22350, 0.062 ] }
+        { <<: *COMMON_RESOURCE, node: SUB_TRACK_WHEEL1_VISUAL, translation: [ 0.234, 0.22350, 0.062 ] }
 
       - # Back Right Sub Belt Drive Pulley
-        { <<: *COMMON_RESOURCE, node: B0007_2705, translation: [ -0.234, -0.22350, 0.062 ] }
+        { <<: *COMMON_RESOURCE, node: SUB_TRACK_WHEEL1_VISUAL, translation: [ -0.234, -0.22350, 0.062 ] }
 
       - # Back Left Sub Belt Drive Pulley
-        { <<: *COMMON_RESOURCE, node: B0007_2705, translation: [ -0.234, 0.22350, 0.062 ] }
+        { <<: *COMMON_RESOURCE, node: SUB_TRACK_WHEEL1_VISUAL, translation: [ -0.234, 0.22350, 0.062 ] }
 
   - # Right Main Belt
     name: R_TRACK
     parent: CHASSIS
-    translation: [ 0.234, -0.146, 0.062 ]
+    translation: [ 0, -0.146, 0.062 ]
     jointType: fixed
     jointAxis: [ 0, 1, 0 ]
     actuationMode: jointSurfaceVelocity
-    elements: { <<: *COMMON_RESOURCE, node: MAIN_BELT, rotation: [ [ 0, 0, 1, 180 ], [ 1, 0, 0, 90 ] ] }
+    elements: { <<: *COMMON_RESOURCE, node: MAIN_BELT, rotation: [ 0, 0, 1, 180 ] }
 
   - # Left Main Belt
     name: L_TRACK
     parent: CHASSIS
-    translation: [ -0.234, 0.146, 0.062 ]
+    translation: [ 0, 0.146, 0.062 ]
     jointType: fixed
     jointAxis: [ 0, 1, 0 ]
     actuationMode: jointSurfaceVelocity
-    elements: { <<: *COMMON_RESOURCE, node: MAIN_BELT, rotation: [ 1, 0, 0, 90 ] }
+    elements: { <<: *COMMON_RESOURCE, node: MAIN_BELT }
 
   - # Front Right Flipper
     name: FR_FLIPPER
@@ -95,18 +95,19 @@ links:
     jointId: 0
     gearRatio: 2090
     elements: &FLIPPER_ELEMENTS
+
       - # Flipper Body
-        { <<: *COMMON_RESOURCE, node: B0007_1 }
+        { <<: *COMMON_RESOURCE, node: FLIPPER }
 
       - # Belt Driven Pulley
-        { <<: *COMMON_RESOURCE, node: B0007_2708, translation: [ 0.29450, 0, 0 ] }
+        { <<: *COMMON_RESOURCE, node: SUB_TRACK_WHEEL2_VISUAL, translation: [ 0.29450, 0, 0 ] }
 
         # Bottom Rollers
-      - { <<: *COMMON_RESOURCE, node: B0007_27110, translation: [ 0.080, 0, -0.05363 ] }
-      - { <<: *COMMON_RESOURCE, node: B0007_27110, translation: [ 0.115, 0, -0.04833 ] }
-      - { <<: *COMMON_RESOURCE, node: B0007_27110, translation: [ 0.150, 0, -0.04404 ] }
-      - { <<: *COMMON_RESOURCE, node: B0007_27110, translation: [ 0.185, 0, -0.03924 ] }
-      - { <<: *COMMON_RESOURCE, node: B0007_27110, translation: [ 0.220, 0, -0.03444 ] }
+      - { <<: *COMMON_RESOURCE, node: SUB_TRACK_BOTTOM_ROLLER_VISUAL, translation: [ 0.080, 0, -0.05363 ] }
+      - { <<: *COMMON_RESOURCE, node: SUB_TRACK_BOTTOM_ROLLER_VISUAL, translation: [ 0.115, 0, -0.04833 ] }
+      - { <<: *COMMON_RESOURCE, node: SUB_TRACK_BOTTOM_ROLLER_VISUAL, translation: [ 0.150, 0, -0.04404 ] }
+      - { <<: *COMMON_RESOURCE, node: SUB_TRACK_BOTTOM_ROLLER_VISUAL, translation: [ 0.185, 0, -0.03924 ] }
+      - { <<: *COMMON_RESOURCE, node: SUB_TRACK_BOTTOM_ROLLER_VISUAL, translation: [ 0.220, 0, -0.03444 ] }
 
   - # Front Right Sub Belt
     name: FR_SUB_TRACK
@@ -114,7 +115,7 @@ links:
     jointType: fixed
     jointAxis: [ 0, 1, 0 ]
     actuationMode: jointSurfaceVelocity
-    elements: { <<: *COMMON_RESOURCE, node: SUB_BELT, rotation: [ 0, 0, 1, 180 ] }
+    elements: { <<: *COMMON_RESOURCE, node: SUB_BELT }
 
   - # Front Left Flipper
     name: FL_FLIPPER
@@ -132,7 +133,7 @@ links:
     jointType: fixed
     jointAxis: [ 0, 1, 0 ]
     actuationMode: jointSurfaceVelocity
-    elements: { <<: *COMMON_RESOURCE, node: SUB_BELT, rotation: [ 0, 0, 1, 180 ] }
+    elements: { <<: *COMMON_RESOURCE, node: SUB_BELT }
 
   - # Back Right Flipper
     name: BR_FLIPPER
@@ -153,7 +154,7 @@ links:
     jointType: fixed
     jointAxis: [ 0, 1, 0 ]
     actuationMode: jointSurfaceVelocity
-    elements: { <<: *COMMON_RESOURCE, node: SUB_BELT }
+    elements: { <<: *COMMON_RESOURCE, node: SUB_BELT, rotation: [ 0, 0, 1, 180.0 ] }
 
   - # Back Left Flipper
     name: BL_FLIPPER
@@ -174,11 +175,4 @@ links:
     jointType: fixed
     jointAxis: [ 0, 1, 0 ]
     actuationMode: jointSurfaceVelocity
-    elements: { <<: *COMMON_RESOURCE, node: SUB_BELT }
-
-collisionDetection:
-  excludeLinkGroups:
-    - links: [ FR_FLIPPER, FL_FLIPPER, BR_FLIPPER, BL_FLIPPER, R_TRACK, L_TRACK, FR_SUB_TRACK, BR_SUB_TRACK, BL_SUB_TRACK ]
-    - links: [ FR_FLIPPER, FL_FLIPPER, BR_FLIPPER, BL_FLIPPER, R_TRACK, L_TRACK, FL_SUB_TRACK, BR_SUB_TRACK, BL_SUB_TRACK ]
-    - links: [ FR_FLIPPER, FL_FLIPPER, BR_FLIPPER, BL_FLIPPER, R_TRACK, L_TRACK, FR_SUB_TRACK, FL_SUB_TRACK, BR_SUB_TRACK ]
-    - links: [ FR_FLIPPER, FL_FLIPPER, BR_FLIPPER, BL_FLIPPER, R_TRACK, L_TRACK, FR_SUB_TRACK, FL_SUB_TRACK, BL_SUB_TRACK ]
+    elements: { <<: *COMMON_RESOURCE, node: SUB_BELT, rotation: [ 0, 0, 1, 180.0 ] }
