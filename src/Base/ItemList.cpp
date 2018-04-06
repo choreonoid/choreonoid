@@ -14,8 +14,12 @@ bool ItemListBase::extractChildItemsSub(Item* item)
         if(push_back_if_type_matches(item)){
             extracted = true;
         }
-        extractChildItemsSub(item->childItem());
-        extractChildItemsSub(item->nextItem());
+        if(extractChildItemsSub(item->childItem())){
+            extracted = true;
+        }
+        if(extractChildItemsSub(item->nextItem())){
+            extracted = true;
+        }
     }
     return extracted;
 }
