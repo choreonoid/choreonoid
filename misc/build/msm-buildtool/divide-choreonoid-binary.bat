@@ -43,7 +43,7 @@ mkdir %TARGET_BASE%
 mkdir %TARGET_RTM%
 mkdir %TARGET_PY2%
 
-echo ---- bin コピー
+echo ---- bin copy
 xcopy /s/i/y/q %BASE_BINARY%\%SUBDIR% %TARGET_BASE%
 xcopy /f %BASE_WXSCTRL%\*.wxsctrl %TARGET_BASE%
 xcopy /s/i/y/q %OPENRTM_BINARY%\%SUBDIR%\cnoid-nameserver.exe %TARGET_RTM%
@@ -66,7 +66,7 @@ mkdir %TARGET_BASE%
 mkdir %TARGET_RTM%
 mkdir %TARGET_PY2%
 
-echo ---- include コピー
+echo ---- include copy
 xcopy /s/i/y/q %BASE_BINARY%\%SUBDIR% %TARGET_BASE%
 xcopy /s/i/y/q %OPENRTM_BINARY%\%SUBDIR%\cnoid\src\Corba %TARGET_RTM%
 xcopy /s/i/y/q %OPENRTM_BINARY%\%SUBDIR%\cnoid\src\CorbaPlugin %TARGET_RTM%
@@ -87,7 +87,7 @@ mkdir %TARGET_BASE%
 mkdir %TARGET_RTM%
 mkdir %TARGET_PY2%
 
-echo ---- lib コピー
+echo ---- lib copy
 xcopy /s/i/y/q %BASE_BINARY%\%SUBDIR% %TARGET_BASE%
 xcopy /s/i/y/q %OPENRTM_BINARY%\%SUBDIR%\*Corba* %TARGET_RTM%
 xcopy /s/i/y/q %OPENRTM_BINARY%\%SUBDIR%\*OpenRTM* %TARGET_RTM%
@@ -110,7 +110,7 @@ mkdir %TARGET_BASE%
 mkdir %TARGET_RTM%
 mkdir %TARGET_PY2%
 
-echo ---- share コピー
+echo ---- share copy
 xcopy /s/i/y/q %BASE_BINARY%\%SUBDIR% %TARGET_BASE%
 xcopy /s/i/y/q %OPENRTM_BINARY%\%SUBDIR%\locale\ja\LC_MESSAGES\*Corba* %TARGET_RTM%
 xcopy /s/i/y/q %OPENRTM_BINARY%\%SUBDIR%\locale\ja\LC_MESSAGES\*OpenRTM* %TARGET_RTM%

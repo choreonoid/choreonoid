@@ -168,7 +168,7 @@ cmake %DEFALUT_OPT_OFF% ^
       -D BUILD_ODE_PLUGIN:BOOL=ON ^
       -D ODE_DIR:PATH=%ODE_DIR% ^
       -D BUILD_SCENE_EFFECTS_PLUGIN:BOOL=ON ^
-      .. -G %VC_NAME%
+      ../../.. -G %VC_NAME%
 exit /b
 
 :CMAKE_OP_02
@@ -179,7 +179,7 @@ cmake %DEFALUT_OPT_OFF% ^
       -D BUILD_OPENRTM_SAMPLES:BOOL=ON ^
       -D BUILD_CORBA_PLUGIN:BOOL=ON ^
       -D ENABLE_CORBA:BOOL=ON ^
-      .. -G %VC_NAME%
+      ../../.. -G %VC_NAME%
 exit /b
 
 :CMAKE_OP_03
@@ -191,7 +191,7 @@ cmake %DEFALUT_OPT_OFF% ^
       -D ENABLE_PYTHON:BOOL=ON ^
       -D USE_PYBIND11:BOOL=ON ^
       -D USE_PYTHON3:BOOL=OFF ^
-      .. -G %VC_NAME%
+      ../../.. -G %VC_NAME%
 exit /b
 
 :CMAKE_OP_04

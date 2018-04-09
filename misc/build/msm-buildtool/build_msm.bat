@@ -11,22 +11,20 @@
 @rem      choreonoid170_python2_x86_64_vc*.msm
 @rem ================================================================
 
-@if "%1" == "" exit/b
-@if "%2" == "" exit/b
-@set SVN_USER=%1
-@set SVN_USER_PASSWD=%2
-
 if not defined CHOREONOID_VERSION set CHOREONOID_VERSION=1.7.0
 if not defined ARCH       set ARCH=x86_64
 if not defined VC_VERSION set VC_VERSION=14
 if not defined PYTHON_DIR set PYTHON_DIR=c:\Python27
+if not defined TARGET_SCRIPT set TARGET_SCRIPT=c:\Jenkins-job-scripts\scripts
 
 @set CNOID_SHORT_VER=%CHOREONOID_VERSION:.=%
 @set INSTALL_VERSION=%CHOREONOID_VERSION%
 
 @rem ------------------------------------------------------------
 @rem preparing choreonoid binary
-call prepare_choreonoid.bat
+set BASE_BINARY=..\Choreonoid_CMAKE_OP_01_%ARCH%
+set OPENRTM_BINARY=..\Choreonoid_CMAKE_OP_02_%ARCH%
+set PYTHON2_BINARY=..\Choreonoid_CMAKE_OP_03_%ARCH%
 
 @rem ------------------------------------------------------------
 @rem set GUID file path
@@ -34,9 +32,8 @@ call prepare_choreonoid.bat
 @set GUIDS_FILE=%PWD%\Choreonoid_guids.txt
 
 @rem ------------------------------------------------------------
-@rem  downloading common scripts 
-@set URL=https://openrtm.org/svn/msi-buildtool/trunk/scripts
-@C:\Cygwin64\bin\svn.exe co --username %SVN_USER% --password %SVN_USER_PASSWD% %URL% scripts
+@rem  copy common scripts 
+xcopy /s/i/y/q %TARGET_SCRIPT% scripts
 
 @rem ------------------------------------------------------------
 @rem copy choreonoid files to specific directories
