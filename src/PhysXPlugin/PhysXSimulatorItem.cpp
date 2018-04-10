@@ -26,6 +26,13 @@ using std::isfinite;
 #endif
 #include <PxPhysicsAPI.h>
 
+#if PX_PHYSICS_VERSION_MAJOR >=3 && PX_PHYSICS_VERSION_MINOR >=3
+#define VERSION_3_3_LATER
+#if PX_PHYSICS_VERSION_MAJOR ==3 && PX_PHYSICS_VERSION_MINOR ==3
+#define PX_FOUNDATION_VERSION PX_PHYSICS_VERSION
+#endif
+#endif
+
 using namespace std;
 using namespace cnoid;
 using namespace physx;
@@ -85,6 +92,14 @@ public:
     void setControlValToPhysX();
 };
     
+    PxDefaultErrorCallback pxDefaultErrorCallback;
+    PxDefaultAllocator pxDefaultAllocatorCallback;
+    int numOfinstance = 0;
+    PxFoundation* pxFoundation = 0;
+#ifndef VERSION_3_3_LATER
+    PxProfileZoneManager* pxProfileZoneManager = 0;
+#endif
+    PxCooking* pxCooking = 0;
 }
 
 
@@ -95,13 +110,6 @@ class PhysXSimulatorItemImpl : public PxSimulationEventCallback, PxContactModify
 public:
     PhysXSimulatorItem* self;
     MessageView* mv;
-
-    static int numOfinstance;
-    static PxDefaultErrorCallback pxDefaultErrorCallback;
-    static PxDefaultAllocator pxDefaultAllocatorCallback;
-    static PxFoundation* pxFoundation;
-    static PxProfileZoneManager* pxProfileZoneManager;
-    static PxCooking* pxCooking;
 
     PxPhysics* pxPhysics;
     PxDefaultCpuDispatcher* pxDispatcher;
@@ -134,14 +142,10 @@ public:
     virtual void onWake(PxActor** , PxU32 ) {}
     virtual void onSleep(PxActor** , PxU32 ){}
     virtual void onContactModify(PxContactModifyPair* const pairs, PxU32 count);
+#ifdef VERSION_3_3_LATER
+    virtual void onAdvance(const PxRigidBody* const *  bodyBuffer, const PxTransform* poseBuffer, const PxU32 count ) {}
+#endif
 };
-
-int PhysXSimulatorItemImpl::numOfinstance = 0;
-PxDefaultErrorCallback PhysXSimulatorItemImpl::pxDefaultErrorCallback;
-PxDefaultAllocator PhysXSimulatorItemImpl::pxDefaultAllocatorCallback;
-PxFoundation* PhysXSimulatorItemImpl::pxFoundation = 0;
-PxProfileZoneManager* PhysXSimulatorItemImpl::pxProfileZoneManager = 0;
-PxCooking* PhysXSimulatorItemImpl::pxCooking = 0;
 
 PxFilterFlags customFilterShader(
     PxFilterObjectAttributes attributes0, PxFilterData filterData0,
@@ -235,7 +239,11 @@ void PhysXLink::createLinkBody(bool isStatic, PhysXLink* parent, const Vector3& 
                 R0.column1 = PxVec3(0.0, -1.0, 0.0);
                 R0.column2 = PxVec3(0.0, 0.0, 1.0);
             }else
+#ifdef VERSION_3_3_LATER
+                R0 = PxMat33(PxIdentity);
+#else
             	R0 = PxMat33::createIdentity();
+#endif
         } else {
             ty.normalized();
             Vector3 tz = a.cross(ty).normalized();
@@ -275,7 +283,11 @@ void PhysXLink::createLinkBody(bool isStatic, PhysXLink* parent, const Vector3& 
         		R0.column1 = PxVec3(0.0, -1.0, 0.0);
         		R0.column2 = PxVec3(0.0, 0.0, 1.0);
         	}else
-        		R0 = PxMat33::createIdentity();
+#ifdef VERSION_3_3_LATER
+                R0 = PxMat33(PxIdentity);
+#else
+                R0 = PxMat33::createIdentity();
+#endif
         } else {
             ty.normalized();
             Vector3 tz = d.cross(ty).normalized();
@@ -326,7 +338,11 @@ void PhysXLink::createGeometry(PhysXBody* physXBody)
         MeshExtractor* extractor = new MeshExtractor;
         if(extractor->extract(link->collisionShape(), std::bind(&PhysXLink::addMesh, this, extractor, physXBody))){
             if(!vertices.empty()){
+#ifdef VERSION_3_3_LATER
+                if(pxRigidActor->getType() == PxActorType::eRIGID_STATIC){
+#else
                 if(pxRigidActor->isRigidStatic()){
+#endif
                     PxTriangleMesh* triangleMesh = createTriangleMesh();
                     if(triangleMesh){
                         PxShape* pxShape = pxRigidActor->createShape(PxTriangleMeshGeometry(triangleMesh), *simImpl->pxMaterial);
@@ -453,7 +469,7 @@ PxTriangleMesh* PhysXLink::createTriangleMesh()
     meshDesc.triangles.data         = &triangles[0];
 
     PxDefaultMemoryOutputStream writeBuffer;
-    bool status = simImpl->pxCooking->cookTriangleMesh(meshDesc, writeBuffer);
+    bool status = pxCooking->cookTriangleMesh(meshDesc, writeBuffer);
     if(!status)
         return 0;
     PxDefaultMemoryInputData readBuffer(writeBuffer.getData(), writeBuffer.getSize());
@@ -473,10 +489,10 @@ PxConvexMesh* PhysXLink::createConvexMeshSafe()
     bool aabbCreated = false;
 
     PxDefaultMemoryOutputStream buf;
-    bool retVal = simImpl->pxCooking->cookConvexMesh(convexDesc, buf);
+    bool retVal = pxCooking->cookConvexMesh(convexDesc, buf);
     if(!retVal){
         convexDesc.flags |= PxConvexFlag::eINFLATE_CONVEX;
-        retVal = simImpl->pxCooking->cookConvexMesh(convexDesc, buf);
+        retVal = pxCooking->cookConvexMesh(convexDesc, buf);
     }
     if(!retVal){
         // create AABB
@@ -501,7 +517,7 @@ PxConvexMesh* PhysXLink::createConvexMeshSafe()
         convexDesc.points.data   = &aabbVerts[0];
         convexDesc.flags         = PxConvexFlag::eCOMPUTE_CONVEX;
 
-        retVal = simImpl->pxCooking->cookConvexMesh(convexDesc, buf);
+        retVal = pxCooking->cookConvexMesh(convexDesc, buf);
 
         aabbCreated = true;
     }
@@ -529,7 +545,7 @@ PxConvexMesh* PhysXLink::createConvexMeshSafe()
                 mesh = 0;
 
                 PxDefaultMemoryOutputStream buf2;
-                retVal = simImpl->pxCooking->cookConvexMesh(convexDesc, buf2);
+                retVal = pxCooking->cookConvexMesh(convexDesc, buf2);
                 if(retVal){
                     PxDefaultMemoryInputData input2(buf2.getData(), buf2.getSize());
                     mesh = simImpl->pxPhysics->createConvexMesh(input2);
@@ -565,12 +581,22 @@ void PhysXLink::setKinematicStateToPhysX()
               PxVec4(T(0,3), T(1,3), T(2,3), T(3,3)));
     PxTransform pose(m);
     pxRigidActor->setGlobalPose(pose);
+#ifdef VERSION_3_3_LATER
+    if(pxRigidActor->getType()==PxActorType::eRIGID_DYNAMIC){
+        PxRigidDynamic* actor = reinterpret_cast<PxRigidDynamic*>(pxRigidActor);
+        const Vector3& w = link->w();
+        const Vector3& v = link->v();
+        actor->setLinearVelocity(PxVec3(v.x(), v.y(), v.z()));
+        actor->setAngularVelocity(PxVec3(w.x(), w.y(), w.z()));
+    }
+#else
     if(pxRigidActor->isRigidDynamic()){
         const Vector3& w = link->w();
         const Vector3& v = link->v();
         pxRigidActor->isRigidDynamic()->setLinearVelocity(PxVec3(v.x(), v.y(), v.z()));
         pxRigidActor->isRigidDynamic()->setAngularVelocity(PxVec3(w.x(), w.y(), w.z()));
     }
+#endif
 }
 
 
@@ -595,29 +621,68 @@ void PhysXLink::getKinematicStateFromPhysX()
     link->R() << R(0,0), R(0,1), R(0,2),
         R(1,0), R(1,1), R(1,2),
         R(2,0), R(2,1), R(2,2);
+
+#ifdef VERSION_3_3_LATER
+    if(pxRigidActor->getType()==PxActorType::eRIGID_DYNAMIC){
+        PxRigidDynamic* actor = reinterpret_cast<PxRigidDynamic*>(pxRigidActor);
+        PxVec3 v = actor->getLinearVelocity();
+        PxVec3 w = actor->getAngularVelocity();
+#else
     if(pxRigidActor->isRigidDynamic()){
         PxVec3 v = pxRigidActor->isRigidDynamic()->getLinearVelocity();
         PxVec3 w = pxRigidActor->isRigidDynamic()->getAngularVelocity();
+#endif
         link->w() = Vector3(w[0], w[1], w[2]);
         link->v() = Vector3(v[0], v[1], v[2]);
     }
+
 }
 
 
 void PhysXLink::setTorqueToPhysX()
 {
+#ifdef VERSION_3_3_LATER
+    PxRigidDynamic* actor = 0;
+    PxRigidDynamic* pactor = 0;
+    if(pxRigidActor->getType()==PxActorType::eRIGID_DYNAMIC){
+        actor = reinterpret_cast<PxRigidDynamic*>(pxRigidActor);
+    }
+    if(parent->pxRigidActor->getType()==PxActorType::eRIGID_DYNAMIC){
+        pactor = reinterpret_cast<PxRigidDynamic*>(parent->pxRigidActor);
+    }
+#endif
+
     if(link->isRotationalJoint()){
         const Vector3 u = link->u() * link->a();
         const Vector3 uu = link->R() * u;
         PxVec3 torque(uu(0), uu(1), uu(2));
+#ifdef VERSION_3_3_LATER
+        if(actor){
+            actor->addTorque(torque);
+        }
+        if(pactor){
+            pactor->addTorque(-torque);
+        }
+#else
         pxRigidActor->isRigidDynamic()->addTorque(torque);
         PxRigidDynamic* actor = parent->pxRigidActor->isRigidDynamic();
         if(actor)
             actor->addTorque(-torque);
+#endif
     } else if(link->isSlideJoint()){
         const Vector3 u = link->u() * link->d();
         const Vector3 uu = link->R() * u;
         const PxVec3 force(uu(0), uu(1), uu(2));
+#ifdef VERSION_3_3_LATER
+        if(actor){
+            PxRigidBodyExt::addForceAtLocalPos(*actor, force, PxVec3(0,0,0));
+        }
+        if(pactor){
+            const Vector3& b = link->b();
+            PxVec3 pos(b(0), b(1), b(2));
+            PxRigidBodyExt::addForceAtLocalPos(*pactor, -force, pos);
+        }
+#else
         PxRigidBodyExt::addForceAtLocalPos(*pxRigidActor->isRigidDynamic(), force, PxVec3(0,0,0));
         PxRigidDynamic* actor = parent->pxRigidActor->isRigidDynamic();
         if(actor){
@@ -625,6 +690,7 @@ void PhysXLink::setTorqueToPhysX()
             PxVec3 pos(b(0), b(1), b(2));
             PxRigidBodyExt::addForceAtLocalPos(*actor, -force, pos);
         }
+#endif
     }
 }
 
@@ -678,7 +744,11 @@ void PhysXBody::createBody(PhysXSimulatorItemImpl* _simImpl)
     else
         simImpl->pxScene->addActor(*physXLinks[0]->pxRigidActor);
 
+#ifdef VERSION_3_3_LATER
+    if(rootLink->link->jointType() == Link::FIXED_JOINT && rootLink->pxRigidActor->getType()==PxActorType::eRIGID_DYNAMIC){
+#else
     if(rootLink->link->jointType() == Link::FIXED_JOINT && rootLink->pxRigidActor->isRigidDynamic()){
+#endif
         PxFixedJoint* joint = PxFixedJointCreate(*simImpl->pxPhysics,
                                                  0, PxTransform(PxIdentity), rootLink->pxRigidActor, rootLink->pxRigidActor->getGlobalPose().getInverse());
         rootLink->pxJoint = joint;
@@ -690,8 +760,10 @@ void PhysXBody::createBody(PhysXSimulatorItemImpl* _simImpl)
 
     sensorHelper.initialize(body(), simImpl->timeStep, simImpl->gravity);
     const DeviceList<ForceSensor>& forceSensors = sensorHelper.forceSensors();
+#ifndef VERSION_3_3_LATER
     for(size_t i=0; i < forceSensors.size(); ++i)
         physXLinks[forceSensors[i]->link()->index()]->pxJoint->setConstraintFlag(PxConstraintFlag::eREPORTING, true);
+#endif
 
 }
 
@@ -730,7 +802,11 @@ void PhysXBody::setExtraJoints()
                 Vector3 ty = a.cross(u);
                 PxMat33 R0;
                 if(ty.norm() == 0){
+#ifdef VERSION_3_3_LATER
+                    R0 = PxMat33(PxIdentity);
+#else
                     R0 = PxMat33::createIdentity();
+#endif
                 } else {
                     ty.normalized();
                     Vector3 tz = a.cross(ty).normalized();
@@ -868,12 +944,22 @@ void PhysXSimulatorItemImpl::initialize()
     mv = MessageView::instance();
 
     if(!pxFoundation)
+#ifdef VERSION_3_3_LATER
+        pxFoundation = PxCreateFoundation(PX_FOUNDATION_VERSION, pxDefaultAllocatorCallback, pxDefaultErrorCallback);
+#else
         pxFoundation = PxCreateFoundation(PX_PHYSICS_VERSION, pxDefaultAllocatorCallback, pxDefaultErrorCallback);
-    if(!pxProfileZoneManager)
-        pxProfileZoneManager = &PxProfileZoneManager::createProfileZoneManager(PhysXSimulatorItemImpl::pxFoundation);
+#endif
     if(!pxCooking)
         pxCooking = PxCreateCooking(PX_PHYSICS_VERSION, *pxFoundation, PxCookingParams((PxTolerancesScale())));
+
+#ifdef VERSION_3_3_LATER
+    pxPhysics = PxCreatePhysics(PX_PHYSICS_VERSION, *pxFoundation, PxTolerancesScale(), true);
+#else
+    if(!pxProfileZoneManager)
+        pxProfileZoneManager = &PxProfileZoneManager::createProfileZoneManager(pxFoundation);
     pxPhysics = PxCreatePhysics(PX_PHYSICS_VERSION, *pxFoundation, PxTolerancesScale(), true, pxProfileZoneManager);
+#endif
+
     if(!pxPhysics)
         mv->putln("PxCreatePhysics failed!");
 
@@ -885,8 +971,10 @@ void PhysXSimulatorItemImpl::initialize()
 
 void PhysXSimulatorItemImpl::finalize()
 {
+#ifndef VERSION_3_3_LATER
     if(pxProfileZoneManager)
         pxProfileZoneManager->release();
+#endif
     if(pxCooking)
         pxCooking->release();
     if(pxFoundation)
