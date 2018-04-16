@@ -21,7 +21,7 @@ links:
           material:
             diffuseColor: [ 1, 1, 1 ]
           texture:
-            url: "resource/NewAsphalt.jpg" 
+            url: "resource/Asphalt_New.jpg" 
             repeatS: true
             repeatT: true
           textureTransform:
