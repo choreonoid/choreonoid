@@ -220,8 +220,8 @@ items:
                 jointPositions: [  ]
                 initialRootPosition: [ 8.4703062, 1.39354147, 1.47373301 ]
                 initialRootAttitude: [ 
-                  -2.22044605e-16, -0.992153354, -0.125026882, 
-                  0.999549026, 0.00375444053, -0.0297934388, 
+                  3.65610209e-10, -0.992153354, -0.125026882, 
+                  0.999549026, 0.0037544409, -0.0297934389, 
                   0.0300290663, -0.124970498, 0.991705919 ]
                 zmp: [ 0, 0, 0 ]
                 collisionDetection: true
@@ -243,9 +243,9 @@ items:
                 jointPositions: [  ]
                 initialRootPosition: [ 13.4196692, 1.96242562, 1.59328166 ]
                 initialRootAttitude: [ 
-                  0.00307819409, 0.999960435, -0.00834583938, 
-                  -0.966597955, 0.000836403062, -0.256296106, 
-                  -0.256278986, 0.00885600045, 0.966562286 ]
+                  0.0030781939, 0.999960435, -0.00834583899, 
+                  -0.966597955, 0.000836402979, -0.256296106, 
+                  -0.256278986, 0.00885600002, 0.966562286 ]
                 zmp: [ 0, 0, 0 ]
                 collisionDetection: true
                 selfCollisionDetection: false
@@ -272,9 +272,9 @@ items:
                     jointPositions: [  ]
                     initialRootPosition: [ 9.18989803, 2.3771534, 1.4574778 ]
                     initialRootAttitude: [ 
-                      -0.00523596371, 0.989512225, -0.144354222, 
-                      -0.999986292, -0.00518112113, 0.000755843743, 
-                      -9.78522124e-11, 0.144356201, 0.989525789 ]
+                      -0.00523596358, 0.989512225, -0.144354222, 
+                      -0.999986292, -0.00518112102, 0.000755843634, 
+                      -1.90663318e-10, 0.144356201, 0.989525789 ]
                     zmp: [ 0, 0, 0 ]
                     staticModel: true
                     collisionDetection: true
@@ -296,9 +296,9 @@ items:
                     jointPositions: [  ]
                     initialRootPosition: [ 9.92426653, 2.5951114, 1.19103625 ]
                     initialRootAttitude: [ 
-                      -0.00523596424, 0.921430738, 0.388507375, 
-                      -0.999986292, -0.00482464463, -0.00203423834, 
-                      2.50123144e-10, -0.388512701, 0.921443368 ]
+                      -0.00523596466, 0.921430738, 0.388507375, 
+                      -0.999986292, -0.00482464512, -0.00203423825, 
+                      5.20924082e-10, -0.388512701, 0.921443368 ]
                     zmp: [ 0, 0, 0 ]
                     staticModel: true
                     collisionDetection: true
@@ -320,9 +320,9 @@ items:
                     jointPositions: [  ]
                     initialRootPosition: [ 10.4854216, 1.97177024, 1.24199026 ]
                     initialRootAttitude: [ 
-                      -0.00523596314, 0.99997137, -0.00546287669, 
-                      -0.999986292, -0.00523588501, 2.86038183e-05, 
-                      3.38539526e-12, 0.00546295157, 0.999985078 ]
+                      -0.00523596245, 0.99997137, -0.00546287669, 
+                      -0.999986292, -0.00523588431, 2.86038188e-05, 
+                      7.67639511e-12, 0.00546295157, 0.999985078 ]
                     zmp: [ 0, 0, 0 ]
                     staticModel: true
                     collisionDetection: true
@@ -344,9 +344,9 @@ items:
                     jointPositions: [  ]
                     initialRootPosition: [ 11.1667329, 1.9238602, 1.17508043 ]
                     initialRootAttitude: [ 
-                      -0.0052359642, 0.966201253, -0.257735765, 
-                      -0.999986292, -0.00505906453, 0.00134951368, 
-                      -1.28281274e-11, 0.257739298, 0.966214497 ]
+                      -0.00523596458, 0.966201253, -0.257735765, 
+                      -0.999986292, -0.0050590649, 0.00134951374, 
+                      -4.78928841e-11, 0.257739298, 0.966214497 ]
                     zmp: [ 0, 0, 0 ]
                     collisionDetection: true
                     selfCollisionDetection: false
@@ -367,9 +367,9 @@ items:
                     jointPositions: [  ]
                     initialRootPosition: [ 11.0109869, 2.51854234, 1.73830591 ]
                     initialRootAttitude: [ 
-                      -0.00336994296, -0.999994321, -2.94658118e-05, 
-                      0.966325282, -0.00324889789, -0.257303118, 
-                      0.257301561, -0.000895570397, 0.966330743 ]
+                      -0.00336994284, -0.999994321, -2.94657665e-05, 
+                      0.966325282, -0.00324889778, -0.257303118, 
+                      0.257301561, -0.000895570323, 0.966330743 ]
                     zmp: [ 0, 0, 0 ]
                     staticModel: true
                     collisionDetection: true
@@ -391,9 +391,9 @@ items:
                     jointPositions: [  ]
                     initialRootPosition: [ 12.2161312, 1.97570529, 1.58712745 ]
                     initialRootAttitude: [ 
-                      0.00663415132, 0.999943166, -0.00834583968, 
-                      -0.966588869, 0.0042737335, -0.256296106, 
-                      -0.256245872, 0.00976730294, 0.966562286 ]
+                      0.00663415088, 0.999943166, -0.00834583961, 
+                      -0.966588869, 0.00427373308, -0.256296106, 
+                      -0.256245872, 0.00976730275, 0.966562286 ]
                     zmp: [ 0, 0, 0 ]
                     staticModel: true
                     collisionDetection: true
@@ -415,9 +415,9 @@ items:
                     jointPositions: [  ]
                     initialRootPosition: [ 14.2529205, 2.01486049, 1.44191574 ]
                     initialRootAttitude: [ 
-                      0.00663415114, 0.999976076, 0.00195867285, 
-                      -0.966588869, 0.00691454937, -0.256238459, 
-                      -0.256245872, -0.000193306612, 0.966611616 ]
+                      0.00663415051, 0.999976076, 0.00195867278, 
+                      -0.966588869, 0.00691454874, -0.256238459, 
+                      -0.256245872, -0.000193306709, 0.966611616 ]
                     zmp: [ 0, 0, 0 ]
                     staticModel: true
                     collisionDetection: true
@@ -509,9 +509,9 @@ items:
                     jointPositions: [  ]
                     initialRootPosition: [ 16.2838278, 1.41468494, 1.29533525 ]
                     initialRootAttitude: [ 
-                      -0.00458398814, 0.999986176, -0.00257575095, 
-                      -0.966493275, -0.00509150852, -0.256641435, 
-                      -0.256651002, 0.00131300467, 0.966503254 ]
+                      -0.00458398795, 0.999986176, -0.00257575077, 
+                      -0.966493275, -0.00509150828, -0.256641435, 
+                      -0.256651002, 0.00131300454, 0.966503254 ]
                     zmp: [ 0, 0, 0 ]
                     collisionDetection: true
                     selfCollisionDetection: false
@@ -524,17 +524,17 @@ items:
                   data: 
                     modelFile: "${SHARE}/model/WRS2018/CollapsedCeiling5.body"
                     currentBaseLink: "body"
-                    rootPosition: [ 15.825026, 1.77936943, 1.64212838 ]
+                    rootPosition: [ 15.1554369, 1.63211378, 1.46385791 ]
                     rootAttitude: [ 
-                      -0.0830915887, 0.865744825, 0.493539954, 
-                      -0.985639049, 0.0016629317, -0.168857634, 
-                      -0.147008346, -0.5004829, 0.85317373 ]
+                      -0.0829057791, 0.865762638, 0.493539954, 
+                      -0.985638669, 0.00187447123, -0.168857634, 
+                      -0.147115757, -0.500451337, 0.85317373 ]
                     jointPositions: [  ]
-                    initialRootPosition: [ 15.825026, 1.77936943, 1.64212838 ]
+                    initialRootPosition: [ 15.1554369, 1.63211378, 1.46385791 ]
                     initialRootAttitude: [ 
-                      -0.0830915892, 0.865744825, 0.493539954, 
-                      -0.985639049, 0.00166293112, -0.168857634, 
-                      -0.147008346, -0.5004829, 0.85317373 ]
+                      -0.0829057788, 0.865762638, 0.493539954, 
+                      -0.985638669, 0.00187447147, -0.168857634, 
+                      -0.147115757, -0.500451337, 0.85317373 ]
                     zmp: [ 0, 0, 0 ]
                     collisionDetection: true
                     selfCollisionDetection: false
@@ -555,8 +555,8 @@ items:
                     jointPositions: [  ]
                     initialRootPosition: [ 17.0568236, 2.08185763, 1.70347089 ]
                     initialRootAttitude: [ 
-                      0.0175034355, 0.961376269, -0.274680358, 
-                      -0.963333354, 0.0897796655, 0.252840783, 
+                      0.0175034352, 0.961376269, -0.274680358, 
+                      -0.963333354, 0.0897796653, 0.252840783, 
                       0.267735839, 0.260183168, 0.927697278 ]
                     zmp: [ 0, 0, 0 ]
                     collisionDetection: true
@@ -578,8 +578,8 @@ items:
                     jointPositions: [  ]
                     initialRootPosition: [ 17.0930299, 2.24057746, 2.11704225 ]
                     initialRootAttitude: [ 
-                      -0.00542057571, 0.941429182, 0.337167187, 
-                      -0.965306823, -0.0929503087, 0.244014298, 
+                      -0.0054205755, 0.941429182, 0.337167187, 
+                      -0.965306823, -0.0929503085, 0.244014298, 
                       0.261061975, -0.324147088, 0.909271857 ]
                     zmp: [ 0, 0, 0 ]
                     collisionDetection: true
@@ -648,12 +648,12 @@ views:
           fieldOfView: 0.698132
           near: 0.01
           far: 100
-          eye: [ -3.28964984, -4.86508008, 4.58496434 ]
-          direction: [ 0.838269102, 0.480847695, -0.257080546 ]
-          up: [ 0.222997634, 0.127915842, 0.96638998 ]
+          eye: [ -5.77858209, -17.6513275, 9.66076804 ]
+          direction: [ 0.690823538, 0.663519219, -0.287236984 ]
+          up: [ 0.20715988, 0.19897203, 0.957859549 ]
         - 
           camera: [ System, Orthographic ]
-          orthoHeight: 9.44732
+          orthoHeight: 20
           near: 0.01
           far: 100
       backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
@@ -748,7 +748,6 @@ views:
       spinBox: true
       slider: true
       labelOnLeft: true
-      currentBodyItem: 9
   - 
     id: 9
     plugin: Body
@@ -756,16 +755,15 @@ views:
     mounted: true
     state: 
       listingMode: "Link List"
-      currentBodyItem: 9
       bodyItems: 
-        - 
-          id: 25
-          selectedLinks: [ 0 ]
         - 
           id: 18
           selectedLinks: [ 0 ]
         - 
           id: 16
+          selectedLinks: [ 0 ]
+        - 
+          id: 25
           selectedLinks: [ 0 ]
   - 
     id: 10
@@ -791,15 +789,13 @@ toolbars:
     syncToOngoingUpdates: true
     autoExpansion: true
   "KinematicsBar": 
-    mode: IK
+    mode: AUTO
     enablePositionDragger: true
     penetrationBlock: false
     collisionLinkHighlight: false
     snapDistance: 0.025
     penetrationBlockDepth: 0.0005
     lazyCollisionDetectionMode: true
-  "BodyBar": 
-    current: 9
   "LeggedBodyBar": 
     stanceWidth: 0.15
   "BodyMotionGenerationBar": 
@@ -992,7 +988,7 @@ viewAreas:
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 865, 498 ]
+          sizes: [ 682, 681 ]
           children: 
             - 
               type: pane
@@ -1010,7 +1006,7 @@ viewAreas:
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 505, 1336 ]
+              sizes: [ 414, 1427 ]
               children: 
                 - 
                   type: pane
