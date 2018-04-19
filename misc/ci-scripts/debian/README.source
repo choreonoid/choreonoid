@@ -1,0 +1,5 @@
+The original release has been purged from:
+- proprietary plug-in: the stabilizer plug-in only comes
+   as a prebuilt binary and is not DFSG compatible.
+- 3rd-party dependencies: some of them were targeting other
+   platforms and bundled with SCM-related files.

@@ -1,4 +1,4 @@
-FROM ubuntu:xenial
+FROM ubuntu:trusty
 
 RUN apt-get update && \
     apt-get install -y sudo software-properties-common && \
@@ -16,7 +16,7 @@ RUN apt-get update && \
 ADD . /choreonoid
 
 RUN cd /choreonoid && \
-    echo "y" | ./misc/script/install-requisites-ubuntu-16.04.sh && \
+    echo "y" | ./misc/script/install-requisites-ubuntu-14.04.sh && \
     cmake . \
         -DCMAKE_BUILD_TYPE=Release       \
         -DINSTALL_SDK:BOOL=TRUE          \
