@@ -120,6 +120,9 @@ public:
     Timer waitTimer;
     Signal<void()> sigBusyStateChanged;
 
+    vector<string> taskSerialization;
+    int currentIndexInTaskSerialization;
+
     ScopedConnectionSet menuConnections;
     MenuManager menuManager;
     struct MenuItem {
@@ -243,11 +246,14 @@ TaskViewImpl::TaskViewImpl(TaskView* self)
     waitTimer.setSingleShot(true);
     waitTimer.sigTimeout().connect([&](){ onWaitTimeout(); });
 
+    currentIndexInTaskSerialization = 0;
+
     taskCombo.setToolTip(_("Select a task type"));
     taskCombo.addItem("  ----------  ");
     taskCombo.sigCurrentIndexChanged().connect(
         [&](int index){
             setCurrentTask(index, true);
+            currentIndexInTaskSerialization = 0;
         });
 
     menuButton.setText("*");
@@ -694,6 +700,12 @@ void TaskView::setAutoMode(bool on)
 SignalProxy<void(bool isAutoMode)> TaskView::sigAutoModeToggled()
 {
     return impl->autoModeToggle.sigToggled();
+}
+
+
+void TaskView::serializeTasks(const std::vector<std::string>& tasks)
+{
+
 }
 
 
