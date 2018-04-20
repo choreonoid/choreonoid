@@ -271,6 +271,7 @@ void exportPyTaskTypes(py::module& m)
         .def("setCommandLinkAutomatic", [](TaskCommand &self){ self.setCommandLinkAutomatic(); })
         .def("setLevel", &TaskCommand::setLevel)
         .def("level", &TaskCommand::level)
+        .def("linkToNextTask", &TaskCommand::linkToNextTask)
         ;
 
     py::class_<TaskPhase, TaskPhasePtr, Referenced>(m, "TaskPhase")
@@ -387,6 +388,7 @@ void exportPyTaskTypes(py::module& m)
         .def("isAutoMode", &AbstractTaskSequencer::isAutoMode)
         .def("setAutoMode", &AbstractTaskSequencer::setAutoMode)
         .def("sigAutoModeToggled", &AbstractTaskSequencer::sigAutoModeToggled)
+        .def("serializeTasks", &AbstractTaskSequencer::serializeTasks)
         ;
 }
 

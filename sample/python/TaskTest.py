@@ -48,7 +48,7 @@ class TestTask(Task):
 
         self.addPhase("Phase 3")
         self.addCommand("Command 3-1").setFunction(doCommand3_1).linkToNextCommand()
-        self.addCommand("Command 3-2").setFunction(doCommand3_2).linkToNextPhase()
+        self.addCommand("Command 3-2").setFunction(doCommand3_2).linkToNextTask()
         
 class TestTask2(Task):
 
@@ -85,6 +85,6 @@ taskView = cnoid.Base.TaskView.instance()
 taskView.updateTask(TestTask())
 taskView.updateTask(TestTask2())
 
-#taskView.serializeTasks(["TestTask", "TestTask2"])
+taskView.serializeTasks(["TestTask", "TestTask2"])
 
 taskView.activate(True)
