@@ -1220,12 +1220,19 @@ void TaskViewImpl::goToNextTask()
         return;
     }
     
+    setBusyState(false);
+
     for(int i=currentIndexInSerializedTasks; i < serializedTasks.size(); ++i){
         if(serializedTasks[i] == currentTask->name()){
             int nextIndex = i + 1;
             if(nextIndex < serializedTasks.size()){
-                if(setCurrentTaskByName(serializedTasks[nextIndex], true)){
+                const auto& nextTask = serializedTasks[nextIndex];
+                if(setCurrentTaskByName(nextTask, true)){
                     ++currentIndexInSerializedTasks;
+                } else {
+                    mv->putln(MessageView::WARNING,
+                              format(_("Next task \"%1%\" is not found."))
+                              % nextTask);
                 }
             }
             break;
