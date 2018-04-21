@@ -81,6 +81,7 @@ bool TaskProc_waitForCommandToFinish3(TaskProc& self, Connection connectionToDis
     return ret;
 }
 
+
 /**
    \todo Currently boost::python::object is used for storing the callback function object,
    but this generates a circular reference between the task object and the function object
@@ -216,6 +217,10 @@ TaskCommandPtr TaskCommand_setCommandLinkAutomatic2(TaskCommand& self, bool on) 
 
 TaskCommandPtr TaskCommand_setLevel(TaskCommand& self, int level){
     return self.setLevel(level);
+}
+
+TaskCommandPtr TaskCommand_linkToNextTask(TaskCommand& self) {
+    return self.linkToNextTask();
 }
 
 TaskPhasePtr TaskPhase_clone1(TaskPhase& self){
@@ -522,7 +527,6 @@ void AbstractTaskSequencer_addTask(AbstractTaskSequencer& self, py::object pyTas
     }
 }
 
-
 bool AbstractTaskSequencer_updateTask(AbstractTaskSequencer& self, py::object pyTask)
 {
     if(TaskPtr task = registerTask(&self, pyTask)){
@@ -531,10 +535,18 @@ bool AbstractTaskSequencer_updateTask(AbstractTaskSequencer& self, py::object py
     return false;
 }
 
-
 TaskPtr AbstractTaskSequencer_task(AbstractTaskSequencer& self, int index)
 {
     return self.task(index);
+}
+
+void AbstractTaskSequencer_serializeTasks(AbstractTaskSequencer& self, py::list taskList)
+{
+    std::vector<std::string> tasks(py::len(taskList));
+    for(size_t i=0; i < tasks.size(); ++i){
+        tasks[i] = py::extract<string>(taskList[i]);
+    }
+    self.serializeTasks(tasks);
 }
 
 }
@@ -604,6 +616,7 @@ void exportPyTaskTypes()
         .def("setCommandLinkAutomatic", TaskCommand_setCommandLinkAutomatic2)
         .def("setLevel", TaskCommand_setLevel)
         .def("level", &TaskCommand::level)
+        .def("linkToNextTask", TaskCommand_linkToNextTask)
         ;
     
     py::implicitly_convertible<TaskCommandPtr, ReferencedPtr>();
@@ -713,6 +726,7 @@ void exportPyTaskTypes()
         .def("isAutoMode", &AbstractTaskSequencer::isAutoMode)
         .def("setAutoMode", &AbstractTaskSequencer::setAutoMode)
         .def("sigAutoModeToggled", &AbstractTaskSequencer::sigAutoModeToggled)
+        .def("serializeTasks", AbstractTaskSequencer_serializeTasks)
         ;
 }
 
