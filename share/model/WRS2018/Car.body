@@ -34,6 +34,7 @@ links:
         rotation: [ 0, 0, 1, 90 ]
         translation: [ -1.14, 0, 0 ]
         uri: "resource/CarDoorFR.dae"
+        #exclude: ID7
   -
     name: FL_DOOR
     parent: BODY
@@ -56,6 +57,7 @@ links:
         rotation: [ 0, 0, 1, 90 ]
         translation: [ -1.14, 0.0, 0.0016 ]
         uri: "resource/CarDoorFL.dae"
+        #exclude: ID7
   -
     name: BR_DOOR
     parent: BODY
@@ -78,6 +80,7 @@ links:
         rotation: [ 0, 0, 1, 90 ]
         translation: [ -0.5, 0, 0 ]
         uri: "resource/CarDoorBR.dae"
+        #exclude: ID6
   -
     name: BL_DOOR
     parent: BODY
@@ -100,3 +103,4 @@ links:
         rotation: [ 0, 0, 1, 90 ]
         translation: [ -0.5, 0, 0 ]
         uri: "resource/CarDoorBL.dae"
+        #exclude: ID6
