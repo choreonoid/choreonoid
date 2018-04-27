@@ -23,10 +23,12 @@ void exportPyEigenTypes(py::module& m)
     m.def("angleAxis44", [](double angle, const Vector3& axis){ return Affine3(AngleAxis(angle, axis)); });
     m.def("normalized", [](const Vector3& v){ return v.normalized(); });
     m.attr("UnitX") = Vector3::UnitX();
-    m.def("getUnitX", Vector3::UnitX);
     m.attr("UnitY") = Vector3::UnitY();
-    m.def("getUnitY", Vector3::UnitY);
     m.attr("UnitZ") = Vector3::UnitZ();
+
+    // deprecated
+    m.def("getUnitX", Vector3::UnitX);
+    m.def("getUnitY", Vector3::UnitY);
     m.def("getUnitZ", Vector3::UnitZ);
 
     PySignal<void(const Vector3&)>(m, "Vector33Signal");

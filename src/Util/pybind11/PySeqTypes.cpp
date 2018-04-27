@@ -42,13 +42,15 @@ void exportPySeqTypes(py::module& m)
         .def("setTimeLength",[](AbstractSeq& self, double length){ self.setTimeLength(length); })
         .def("setTimeLength",[](AbstractSeq& self, double length, bool clearNewElements){ self.setTimeLength(length, clearNewElements); })
         .def_property("seqContentName", &AbstractSeq::seqContentName, &AbstractSeq::setSeqContentName)
-        .def("getSeqContentName", &AbstractSeq::seqContentName)
         .def("setSeqContentName", &AbstractSeq::setSeqContentName)
         .def("readSeq", &AbstractSeq::readSeq)
         .def("writeSeq", &AbstractSeq::writeSeq)
         .def_property_readonly("seqMessage", &AbstractSeq::seqMessage)
-        .def("getSeqMessage", &AbstractSeq::seqMessage)
         .def_property_readonly("defaultFrameRate", &AbstractSeq::defaultFrameRate)
+
+        // deprecated
+        .def("getSeqContentName", &AbstractSeq::seqContentName)
+        .def("getSeqMessage", &AbstractSeq::seqMessage)
         .def("getDefaultFrameRate", &AbstractSeq::defaultFrameRate)
         ;
 
@@ -63,8 +65,10 @@ void exportPySeqTypes(py::module& m)
                 self.setNumParts(numParts, clearNewElements); })
         .def("getNumParts", &AbstractMultiSeq::getNumParts)
         .def("partIndex", &AbstractMultiSeq::partIndex)
-        .def("getPartIndex", &AbstractMultiSeq::partIndex)
         .def("partLabel", &AbstractMultiSeq::partLabel)
+
+        // deprecated
+        .def("getPartIndex", &AbstractMultiSeq::partIndex)
         .def("getPartLabel", &AbstractMultiSeq::partLabel)
         ;
 
@@ -72,15 +76,16 @@ void exportPySeqTypes(py::module& m)
     
     py::class_<Deque2DDouble::Row>(m, "Deque2DDouble_Row")
         .def_property_readonly("size", &Deque2DDouble::Row::size)
-        .def("getSize", &Deque2DDouble::Row::size)
         .def("at", &Deque2DDouble::Row::at, py::return_value_policy::reference_internal)
         .def("__getitem__", [](Deque2DDouble::Row& self, int i){ return self[i]; })
         .def("__setitem__", [](Deque2DDouble::Row& self, int i, double x){ self[i] = x; })
+
+        // deprecated
+        .def("getSize", &Deque2DDouble::Row::size)
         ;
 
     py::class_<MultiValueSeq, AbstractMultiSeq>(m, "MultiValueSeq")
         .def_property_readonly("empty", &MultiValueSeq::empty)
-        .def("isEmpty", &MultiValueSeq::empty)
         .def("resize", &MultiValueSeq::resize)
         .def("clear", &MultiValueSeq::clear)
         .def("at", (MultiValueSeq::Element& (MultiValueSeq::*)(int, int)) &MultiValueSeq::at, py::return_value_policy::reference_internal)
@@ -88,24 +93,19 @@ void exportPySeqTypes(py::module& m)
         .def("pop_back", &MultiValueSeq::pop_back)
         .def("pop_front", (void (MultiValueSeq::*)(int)) &MultiValueSeq::pop_front)
         .def("pop_front", (void (MultiValueSeq::*)()) &MultiValueSeq::pop_front)
-        
-        //.def("resizeColumn", &MultiValueSeq::resizeColumn)
-        //.def("rowSize", &MultiValueSeq::rowSize)
-        //.def("resizeRow", &MultiValueSeq::resizeRow)
-        //.def("colSize", &MultiValueSeq::colSize)
-        //.def("row", (MultiValueSeq::Row (MultiValueSeq::*)(int)) &MultiValueSeq::row)
-        //.def("column", (MultiValueSeq::Column (MultiValueSeq::*)(int)) &MultiValueSeq::column)
-
         .def("copySeqProperties", &MultiValueSeq::copySeqProperties)
         .def("clampFrameIndex", &MultiValueSeq::clampFrameIndex)
         .def("getClampFrameIndex", &MultiValueSeq::clampFrameIndex)
         .def("frame", (MultiValueSeq::Frame (MultiValueSeq::*)(int)) &MultiValueSeq::frame)
-        .def("getFrame", (MultiValueSeq::Frame (MultiValueSeq::*)(int)) &MultiValueSeq::frame)
         .def("part", (MultiValueSeq::Part (MultiValueSeq::*)(int)) &MultiValueSeq::part)
-        .def("getPart", (MultiValueSeq::Part (MultiValueSeq::*)(int)) &MultiValueSeq::part)
-
         .def("loadPlainFormat", &MultiValueSeq::loadPlainFormat)
-        .def("saveAsPlainFormat", &MultiValueSeq::saveAsPlainFormat);
+        .def("saveAsPlainFormat", &MultiValueSeq::saveAsPlainFormat)
+
+        // deprecated
+        .def("isEmpty", &MultiValueSeq::empty)
+        .def("getFrame", (MultiValueSeq::Frame (MultiValueSeq::*)(int)) &MultiValueSeq::frame)
+        .def("getPart", (MultiValueSeq::Part (MultiValueSeq::*)(int)) &MultiValueSeq::part)
+        ;
 }
 
 }

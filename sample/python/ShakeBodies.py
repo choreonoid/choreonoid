@@ -16,13 +16,13 @@ class ShakeBodies:
         self.dp = array([0.0, 0.0, 0.01])
         self.connections = ScopedConnectionSet()
         self.connections.add(
-            ItemTreeView.getInstance().sigSelectionChanged().connect(self.onSelectionChanged))
+            ItemTreeView.getInstance().getSigSelectionChanged().connect(self.onSelectionChanged))
         self.timer = Timer()
         self.connections.add(
             self.timer.timeout.connect(self.onTimeout))
 
     def onButtonToggled(self, on):
-        self.onSelectionChanged(ItemTreeView.getInstance().selectedItems())
+        self.onSelectionChanged(ItemTreeView.getInstance().getSelectedItems())
 
     def onSelectionChanged(self, items):
         self.bodyItems = BodyItemList(items)

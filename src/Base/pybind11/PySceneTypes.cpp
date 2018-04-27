@@ -20,14 +20,18 @@ void exportPySceneTypes(py::module m)
         .def("setContainerMode", &SceneDragger::setContainerMode)
         .def("isDragging", &SceneDragger::isDragging)
         .def_property_readonly("draggedPosition", &SceneDragger::draggedPosition)
+
+        // deprecated
         .def("getDraggedPosition", &SceneDragger::draggedPosition)
         ;
 
     py::object positionDraggerClass =
         py::class_<PositionDragger, PositionDraggerPtr, SceneDragger>(m, "PositionDragger")
         .def_property("draggableAxes", &PositionDragger::draggableAxes, &PositionDragger::setDraggableAxes)
-        .def("getDraggableAxes", &PositionDragger::draggableAxes)
         .def("setDraggableAxes", &PositionDragger::setDraggableAxes)
+
+        // deprecated
+        .def("getDraggableAxes", &PositionDragger::draggableAxes)
         ;
 
     positionDraggerClass.attr("TX") = (int)PositionDragger::TX;

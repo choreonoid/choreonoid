@@ -34,7 +34,7 @@ worldItem.addChildItem(robotItem)
 ItemTreeView.getInstance().checkItem(robotItem)
 
 floorItem = BodyItem()
-floorItem.load(shareDirectory() + "/model/misc/floor.body")
+floorItem.load(getShareDirectory() + "/model/misc/floor.body")
 worldItem.addChildItem(floorItem)
 
 simulatorItem = AISTSimulatorItem()

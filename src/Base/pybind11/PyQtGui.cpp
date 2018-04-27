@@ -34,25 +34,17 @@ PYBIND11_MODULE(QtGui, m)
                       &QWidget::parentWidget,
                       (void (QWidget::*)(QWidget* parent)) &QWidget::setParent,
                       py::return_value_policy::reference)
-        .def("getParentWidget", &QWidget::parentWidget, py::return_value_policy::reference)
         .def("setParent",  (void (QWidget::*)(QWidget* parent)) &QWidget::setParent)
         .def_property("toolTip", &QWidget::toolTip, &QWidget::setToolTip)
-        .def("getToolTip", &QWidget::toolTip)
         .def("setToolTip", &QWidget::setToolTip)
         .def_property("whatsThis", &QWidget::whatsThis, &QWidget::setWhatsThis)
-        .def("getWhatsThis", &QWidget::whatsThis)
         .def("setWhatsThis", &QWidget::setWhatsThis)
         .def_property("windowIconText", &QWidget::windowIconText, &QWidget::setWindowIconText)
-        .def("getWindowIconText", &QWidget::windowIconText)
         .def("setWindowIconText", &QWidget::setWindowIconText)
         .def_property_readonly("window", &QWidget::window, py::return_value_policy::reference)
-        .def("getWindow", &QWidget::window, py::return_value_policy::reference)
         .def_property_readonly("windowFilePath", &QWidget::windowFilePath)
-        .def("getWindowFilePath", &QWidget::windowFilePath)
         .def_property_readonly("windowRole", &QWidget::windowRole)
-        .def("getWindowRole", &QWidget::windowRole)
         .def_property_readonly("windowTitle", &QWidget::windowTitle)
-        .def("getWindowTitle", &QWidget::windowTitle)
 
         .def("close", &QWidget::close)
         .def("hide", &QWidget::hide)
@@ -72,22 +64,28 @@ PYBIND11_MODULE(QtGui, m)
         .def("showMinimized", &QWidget::showMinimized)
         .def("showNormal", &QWidget::showNormal)
         .def("update",  (void (QWidget::*)()) &QWidget::update)
+
+        // deprecated
+        .def("getParentWidget", &QWidget::parentWidget, py::return_value_policy::reference)
+        .def("getToolTip", &QWidget::toolTip)
+        .def("getWhatsThis", &QWidget::whatsThis)
+        .def("getWindowIconText", &QWidget::windowIconText)
+        .def("getWindow", &QWidget::window, py::return_value_policy::reference)
+        .def("getWindowFilePath", &QWidget::windowFilePath)
+        .def("getWindowRole", &QWidget::windowRole)
+        .def("getWindowTitle", &QWidget::windowTitle)
         ;
 
     py::class_<QMainWindow, QWidget>(m, "QMainWindow");
 
     py::class_<QAbstractButton, QWidget>(m, "QAbstractButton")
         .def_property_readonly("autoExclusive", &QAbstractButton::autoExclusive)
-        .def("getAutoExclusive", &QAbstractButton::autoExclusive)
         .def("setAutoExclusive", &QAbstractButton::setAutoExclusive)
         .def_property("autoRepeat", &QAbstractButton::autoRepeat, &QAbstractButton::setAutoRepeat)
-        .def("getAutoRepeat", &QAbstractButton::autoRepeat)
         .def("setAutoRepeat", &QAbstractButton::setAutoRepeat)
         .def_property("autoRepeatDelay", &QAbstractButton::autoRepeatDelay, &QAbstractButton::setAutoRepeatDelay)
-        .def("getAutoRepeatDelay", &QAbstractButton::autoRepeatDelay)
         .def("setAutoRepeatDelay", &QAbstractButton::setAutoRepeatDelay)
         .def_property("autoRepeatInterval", &QAbstractButton::autoRepeatInterval, &QAbstractButton::setAutoRepeatInterval)
-        .def("getAutoRepeatInterval", &QAbstractButton::autoRepeatInterval)
         .def("setAutoRepeatInterval", &QAbstractButton::setAutoRepeatInterval)
         //.def("group", &QAbstractButton::group)
         //.def("icon", &QAbstractButton::icon)
@@ -108,10 +106,19 @@ PYBIND11_MODULE(QtGui, m)
         .def("click", &QAbstractButton::click)
         .def("setChecked", &QAbstractButton::setChecked)
         //.def("setIconSize", QAbstractButton::setIconSize)
-        .def("toggle", &QAbstractButton::toggle);
+        .def("toggle", &QAbstractButton::toggle)
+        
+        // deprecated
+        .def("getAutoExclusive", &QAbstractButton::autoExclusive)
+        .def("getAutoRepeat", &QAbstractButton::autoRepeat)
+        .def("getAutoRepeatDelay", &QAbstractButton::autoRepeatDelay)
+        .def("getAutoRepeatInterval", &QAbstractButton::autoRepeatInterval)
+        ;
     
     py::class_<QToolButton, QAbstractButton>(m, "QToolButton")
         .def_property_readonly("autoRaise", &QToolButton::autoRaise)
+
+        // deprecated
         .def("getAutoRaise", &QToolButton::autoRaise)
         ;
 }

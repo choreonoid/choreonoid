@@ -19,28 +19,29 @@ PYBIND11_MODULE(QtCore, m)
         .def("isWidgetType", &QObject::isWidgetType)
         .def("killTimer", &QObject::killTimer)
         .def_property("objectName", &QObject::objectName, &QObject::setObjectName)
-        .def("getObjectName", &QObject::objectName)
         .def_property_readonly("setObjectName", &QObject::setObjectName)
         .def_property("parent", &QObject::parent, &QObject::setParent, py::return_value_policy::reference)
-        .def("getParent", &QObject::parent, py::return_value_policy::reference)
         .def("setParent", &QObject::setParent)
         .def("deleteLater", &QObject::deleteLater)
+        
 #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
         .def("startTimer", &QObject::startTimer)
 #else
         .def("startTimer", (int (QObject::*)(int, Qt::TimerType)) &QObject::startTimer)
 #endif
+
+        // deprecated
+        .def("getObjectName", &QObject::objectName)
+        .def("getParent", &QObject::parent, py::return_value_policy::reference)
         ;
 
     py::class_<QTimer>(m, "QTimer")
-                 .def_property("interval", &QTimer::interval, (void (QTimer::*)(int)) &QTimer::setInterval)
-        .def("getInterval", &QTimer::interval)
+        .def_property("interval", &QTimer::interval, (void (QTimer::*)(int)) &QTimer::setInterval)
         .def("setInterval", (void (QTimer::*)(int)) &QTimer::setInterval)
         .def("isActive", &QTimer::isActive)
         .def("isSingleShot", &QTimer::isSingleShot)
         .def("setSingleShot", &QTimer::setSingleShot)
         .def_property_readonly("timerId", &QTimer::timerId)
-        .def("getTimerId", &QTimer::timerId)
         .def("start", (void (QTimer::*)()) &QTimer::start)
         .def("start", (void (QTimer::*)(int)) &QTimer::start)
         .def("stop", &QTimer::stop)
@@ -49,5 +50,8 @@ PYBIND11_MODULE(QtCore, m)
 #else
         .def_static("singleShot", (void(*)(int, const QObject*, const char*)) &QTimer::singleShot)
 #endif
+        // deprecated
+        .def("getInterval", &QTimer::interval)
+        .def("getTimerId", &QTimer::timerId)
         ;
 }

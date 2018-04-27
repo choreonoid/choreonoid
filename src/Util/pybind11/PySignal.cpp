@@ -40,29 +40,35 @@ void exportPySignalTypes(py::module& m)
         .def(py::init<>())
         .def(py::init<const ConnectionSet&>())
         .def_property_readonly("empty", &ConnectionSet::empty)
-        .def("isEmpty", &ConnectionSet::empty)
         .def_property_readonly("numConnections", &ConnectionSet::numConnections)
-        .def("getNumConnections", &ConnectionSet::numConnections)
         .def("add", (void (ConnectionSet::*)(const Connection&)) &ConnectionSet::add)
         .def("add", (void (ConnectionSet::*)(const ConnectionSet&)) &ConnectionSet::add)
         .def("block", (void (ConnectionSet::*)()) &ConnectionSet::block)
         .def("block", (void (ConnectionSet::*)(int)) &ConnectionSet::block)
         .def("unblock", (void (ConnectionSet::*)()) &ConnectionSet::unblock)
         .def("unblock", (void (ConnectionSet::*)(int)) &ConnectionSet::unblock)
-        .def("disconnect", &ConnectionSet::disconnect);
+        .def("disconnect", &ConnectionSet::disconnect)
+
+        // deprecated
+        .def("isEmpty", &ConnectionSet::empty)
+        .def("getNumConnections", &ConnectionSet::numConnections)
+        ;
 
     py::class_<ScopedConnectionSet>(m, "ScopedConnectionSet")
         .def(py::init<>())
         .def_property_readonly("empty", &ScopedConnectionSet::empty)
-        .def("isEmpty", &ScopedConnectionSet::empty)
         .def_property_readonly("numConnections", &ScopedConnectionSet::numConnections)
-        .def("getNumConnections", &ScopedConnectionSet::numConnections)
         .def("add", &ScopedConnectionSet::add)
         .def("block", (void (ScopedConnectionSet::*)()) &ScopedConnectionSet::block)
         .def("block", (void (ScopedConnectionSet::*)(int)) &ScopedConnectionSet::block)
         .def("unblock", (void (ScopedConnectionSet::*)()) &ScopedConnectionSet::unblock)
         .def("unblock", (void (ScopedConnectionSet::*)(int)) &ScopedConnectionSet::unblock)
-        .def("disconnect", &ScopedConnectionSet::disconnect);
+        .def("disconnect", &ScopedConnectionSet::disconnect)
+
+        // deprecated
+        .def("isEmpty", &ScopedConnectionSet::empty)
+        .def("getNumConnections", &ScopedConnectionSet::numConnections)
+        ;
 }
 
 }

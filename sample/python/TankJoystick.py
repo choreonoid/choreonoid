@@ -4,7 +4,7 @@ from cnoid.Body import *
 from cnoid.BodyPlugin import *
 import math;
 
-sceneWidget = SceneView.getInstance().sceneWidget()
+sceneWidget = SceneView.getInstance().getSceneWidget()
 sceneWidget.setHeadLightEnabled(False)
 sceneWidget.setFloorGrid(False)
 sceneWidget.setWorldLightIntensity(0.1)
@@ -23,15 +23,15 @@ worldItem = WorldItem()
 RootItem.getInstance().addChildItem(worldItem)
 
 laboItem = BodyItem()
-laboItem.load(shareDirectory() + "/model/Labo1/Labo1.body")
+laboItem.load(getShareDirectory() + "/model/Labo1/Labo1.body")
 worldItem.addChildItem(laboItem)
-ItemTreeView.instance().checkItem(laboItem)
+ItemTreeView.getInstance().checkItem(laboItem)
 
 tankItem = BodyItem()
-tankItem.load(shareDirectory() + "/model/tank/tank.body")
+tankItem.load(getShareDirectory() + "/model/tank/tank.body")
 tank = tankItem.getBody()
-tank.rootLink().setTranslation([-0.8, 2.4, 0.1])
-tank.rootLink().setRotation(rotFromRpy([0, 0, math.radians(-90.0)]))
+tank.getRootLink().setTranslation([-0.8, 2.4, 0.1])
+tank.getRootLink().setRotation(rotFromRpy([0, 0, math.radians(-90.0)]))
 tank.calcForwardKinematics()
 tankItem.storeInitialState()
 worldItem.addChildItem(tankItem)

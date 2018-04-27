@@ -38,12 +38,14 @@ PYBIND11_MODULE(Util, m)
     exportPyTaskTypes(m);
 
     m.attr("shareDirectory") = shareDirectory();
-    m.def("getShareDirectory", &cnoid::shareDirectory);
     m.attr("executablePath") = executablePath();
-    m.def("getExecutablePath", &cnoid::executablePath);
     m.attr("executableBasename") = executableBasename();
-    m.def("getExecutableBasename", &cnoid::executableBasename);
     m.attr("executableTopDirectory") = cnoid::executableTopDirectory();
+
+    // deprecated
+    m.def("getShareDirectory", &cnoid::shareDirectory);
+    m.def("getExecutablePath", &cnoid::executablePath);
+    m.def("getExecutableBasename", &cnoid::executableBasename);
     m.def("getExecutableTopDirectory", &cnoid::executableTopDirectory);
 
     py::class_<FloatingNumberString>(m, "FloatingNumberString")
@@ -52,5 +54,8 @@ PYBIND11_MODULE(Util, m)
         .def("setPositiveValue", &FloatingNumberString::setPositiveValue)
         .def("setNonNegativeValue", &FloatingNumberString::setNonNegativeValue)
         .def_property_readonly("value", &FloatingNumberString::value)
-        .def("getValue", &FloatingNumberString::value);
+
+        // deprecated
+        .def("getValue", &FloatingNumberString::value)
+        ;
 }
