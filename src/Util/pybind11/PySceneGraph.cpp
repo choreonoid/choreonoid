@@ -19,7 +19,8 @@ void exportPySceneGraph(py::module& m)
     sgUpdate
         .def(py::init<>())
         .def(py::init<int>())
-        .def("action", &SgUpdate::action)
+        .def_property("action", &SgUpdate::action, &SgUpdate::setAction)
+        .def("getAction", &SgUpdate::action)
         .def("setAction", &SgUpdate::setAction)
         ;
 
@@ -40,7 +41,8 @@ void exportPySceneGraph(py::module& m)
         ;
 
     py::class_<SgObject, SgObjectPtr, Referenced>(m, "SgObject")
-        .def("name", &SgObject::name)
+        .def_property("name", &SgObject::name, &SgObject::setName)
+        .def("getName", &SgObject::name)
         .def("setName", &SgObject::setName)
         .def("notifyUpdate",(void(SgObject::*)(SgUpdate&)) &SgObject::notifyUpdate)
         .def("notifyUpdate",(void(SgObject::*)(int)) &SgObject::notifyUpdate)
@@ -55,11 +57,14 @@ void exportPySceneGraph(py::module& m)
     py::class_<SgGroup, SgGroupPtr, SgNode>(m, "SgGroup")
         .def(py::init<>())
         .def(py::init<const SgGroup&>())
-        .def("empty", &SgGroup::empty)
-        .def("numChildren", &SgGroup::numChildren)
+        .def_property_readonly("empty", &SgGroup::empty)
+        .def("isEmpty", &SgGroup::empty)
+        .def_property_readonly("numChildren", &SgGroup::numChildren)
+        .def("getNumChildren", &SgGroup::numChildren)
         .def("clearChildren", &SgGroup::clearChildren)
         .def("clearChildren", [](SgGroup& self){ self.clearChildren(); })
-        .def("child", (SgNode*(SgGroup::*)(int)) &SgGroup::child)
+        .def_property_readonly("child", (SgNode*(SgGroup::*)(int)) &SgGroup::child)
+        .def("getChild", (SgNode*(SgGroup::*)(int)) &SgGroup::child)
         .def("addChild", &SgGroup::addChild)
         .def("addChild", [](SgGroup& self, SgNode* node){ self.addChild(node); })
         ;
@@ -69,11 +74,20 @@ void exportPySceneGraph(py::module& m)
     py::class_<SgPosTransform, SgPosTransformPtr, SgTransform>(m, "SgPosTransform")
         .def(py::init<>())
         .def(py::init<const SgPosTransform&>())
-        .def("position", (Affine3& (SgPosTransform::*)()) &SgPosTransform::position)
+        .def_property("position",
+                      (Affine3& (SgPosTransform::*)()) &SgPosTransform::position,
+                      [](SgPosTransform& self, const Affine3& T) { self.setPosition(T); })
+        .def("getPosition", (Affine3& (SgPosTransform::*)()) &SgPosTransform::position)
         .def("setPosition", [](SgPosTransform& self, const Affine3& T) { self.setPosition(T); })
-        .def("translation", (Affine3::TranslationPart (SgPosTransform::*)()) &SgPosTransform::translation)
+        .def_property("translation",
+                      (Affine3::TranslationPart (SgPosTransform::*)()) &SgPosTransform::translation,
+                      [](SgPosTransform& self, const Vector3& p){ self.setTranslation(p); })
+        .def("getTranslation", (Affine3::TranslationPart (SgPosTransform::*)()) &SgPosTransform::translation)
         .def("setTranslation", [](SgPosTransform& self, const Vector3& p){ self.setTranslation(p); })
-        .def("rotation", (Affine3::LinearPart (SgPosTransform::*)()) &SgPosTransform::rotation)
+        .def_property("rotation",
+                      (Affine3::LinearPart (SgPosTransform::*)()) &SgPosTransform::rotation,
+                      [](SgPosTransform& self, const Matrix3& R) { self.setRotation(R); })
+        .def("getRotation", (Affine3::LinearPart (SgPosTransform::*)()) &SgPosTransform::rotation)
         .def("setRotation", [](SgPosTransform& self, const Matrix3& R) { self.setRotation(R); })
         .def_property("T",
                       (const Affine3& (SgPosTransform::*)() const ) &SgPosTransform::T,

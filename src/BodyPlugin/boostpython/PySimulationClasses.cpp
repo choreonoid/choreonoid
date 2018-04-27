@@ -38,7 +38,9 @@ void exportSimulationClasses()
 {
     class_<SimulationBody, SimulationBodyPtr, bases<Referenced>, boost::noncopyable>("SimulationBody", no_init)
         .def("bodyItem", SimulationBody_bodyItem)
-        .def("body", SimulationBody_body);
+        .def("getBodyItem", SimulationBody_bodyItem)
+        .def("body", SimulationBody_body)
+        .def("getBody", SimulationBody_body);
 
     implicitly_convertible<SimulationBodyPtr, ReferencedPtr>();
 
@@ -51,6 +53,7 @@ void exportSimulationClasses()
     simulatorItemClass
         .def("findActiveSimulatorItemFor", SimulatorItem_findActiveSimulatorItemFor).staticmethod("findActiveSimulatorItemFor")
         .def("worldTimeStep", &SimulatorItem::worldTimeStep)
+        .def("getWorldTimeStep", &SimulatorItem::worldTimeStep)
         .def("setTimeStep", &SimulatorItem::setTimeStep)
         .def("startSimulation", &SimulatorItem::startSimulation, SimulatorItem_startSimulation_overloads())
         .def("stopSimulation", &SimulatorItem::stopSimulation)
@@ -58,10 +61,14 @@ void exportSimulationClasses()
         .def("restartSimulation", &SimulatorItem::restartSimulation)
         .def("isRunning", &SimulatorItem::isRunning)
         .def("currentFrame", &SimulatorItem::currentFrame)
+        .def("getCurrentFrame", &SimulatorItem::currentFrame)
         .def("currentTime", &SimulatorItem::currentTime)
+        .def("getCurrentTime", &SimulatorItem::currentTime)
         .def("sigSimulationFinished", &SimulatorItem::sigSimulationFinished)
+        .def("getSigSimulationFinished", &SimulatorItem::sigSimulationFinished)
         .def("setRecordingMode", &SimulatorItem::setRecordingMode)
         .def("recordingMode", &SimulatorItem::recordingMode)
+        .def("getRecordingMode", &SimulatorItem::recordingMode)
         .def("setTimeRangeMode", &SimulatorItem::setTimeRangeMode)
         .def("setRealtimeSyncMode", &SimulatorItem::setRealtimeSyncMode)
         .def("setDeviceStateOutputEnabled", &SimulatorItem::setDeviceStateOutputEnabled)
@@ -192,6 +199,7 @@ void exportSimulationClasses()
     
     class_<SimulationBar, SimulationBar*, boost::noncopyable>("SimulationBar", no_init)
         .def("instance", &SimulationBar::instance, return_value_policy<reference_existing_object>()).staticmethod("instance")
+        .def("getInstance", &SimulationBar::instance, return_value_policy<reference_existing_object>()).staticmethod("getInstance")
         .def("startSimulation", SimulationBar_startSimulation1)
         .def("startSimulation", SimulationBar_startSimulation2)
         .def("stopSimulation", &SimulationBar::stopSimulation)

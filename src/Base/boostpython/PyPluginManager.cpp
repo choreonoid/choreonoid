@@ -20,6 +20,7 @@ void exportPyPluginManager()
 {
     class_<PluginManager, PluginManager*, boost::noncopyable>("PluginManager", no_init)
         .def("instance", &PluginManager::instance, return_value_policy<reference_existing_object>()).staticmethod("instance")
+        .def("getInstance", &PluginManager::instance, return_value_policy<reference_existing_object>()).staticmethod("getInstance")
         .def("unloadPlugin", PluginManager_unloadPlugin2)
         .def("reloadPlugin", &PluginManager::reloadPlugin)
         ;

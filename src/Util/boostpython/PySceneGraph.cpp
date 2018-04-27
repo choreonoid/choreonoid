@@ -41,6 +41,7 @@ void exportPySceneGraph()
         scope sgObjectScope = 
             class_< SgUpdate >("SgUpdate")
             .def("action", &SgUpdate::action)
+            .def("getAction", &SgUpdate::action)
             .def("setAction", &SgUpdate::setAction)
             ;
 
@@ -55,6 +56,7 @@ void exportPySceneGraph()
         
     class_< SgObject, SgObjectPtr, bases<Referenced>, boost::noncopyable >("SgObject", no_init)
         .def("name", &SgObject::name, return_value_policy<return_by_value>())
+        .def("getName", &SgObject::name, return_value_policy<return_by_value>())
         .def("setName", &SgObject::setName)
         .def("notifyUpdate", SgObject_notifyUpdate1)
         .def("notifyUpdate", SgObject_notifyUpdate2)
@@ -70,9 +72,12 @@ void exportPySceneGraph()
     
     class_< SgGroup, SgGroupPtr, bases<SgNode> >("SgGroup")
         .def("empty", &SgGroup::empty)
+        .def("isEmpty", &SgGroup::empty)
         .def("numChildren", &SgGroup::numChildren)
+        .def("getNumChildren", &SgGroup::numChildren)
         .def("clearChildren", &SgGroup::clearChildren, SgGroup_clearChildren())
         .def("child", SgGroup_child)
+        .def("getChild", SgGroup_child)
         .def("addChild", &SgGroup::addChild, SgGroup_addChild());
 
     implicitly_convertible<SgGroupPtr, SgNodePtr>();
@@ -83,11 +88,14 @@ void exportPySceneGraph()
 
     class_< SgPosTransform, SgPosTransformPtr, bases<SgTransform>, boost::noncopyable >("SgPosTransform")
         .def("position", SgPosTransform_get_position)
+        .def("getPosition", SgPosTransform_get_position)
         .def("setPosition", SgPosTransform_set_position)
         .add_property("T", SgPosTransform_get_position, SgPosTransform_set_position)
         .def("translation", SgPosTransform_get_translation)
+        .def("getTranslation", SgPosTransform_get_translation)
         .def("setTranslation", SgPosTransform_set_translation)        
         .def("rotation", SgPosTransform_get_rotation)
+        .def("getRotation", SgPosTransform_get_rotation)
         .def("setRotation", SgPosTransform_set_rotation)
         ;
     implicitly_convertible<SgPosTransformPtr, SgTransformPtr>();
