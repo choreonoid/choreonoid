@@ -57,7 +57,8 @@ void exportPyViews(py::module m)
         .export_values();
 
     py::class_<MessageView, View>(m, "MessageView")
-        .def_property_readonly_static("instance", &MessageView::instance, py::return_value_policy::reference)
+        .def_property_readonly_static(
+            "instance", [](py::object){ return MessageView::instance(); }, py::return_value_policy::reference)
         .def("put", (void (MessageView::*)(const std::string&)) &MessageView::put)
         .def("putln", (void (MessageView::*)(const std::string&)) &MessageView::putln)
         .def("notify", (void (MessageView::*)(const std::string&)) &MessageView::notify)
@@ -69,7 +70,8 @@ void exportPyViews(py::module m)
         .def_property_readonly_static("sigFlushFinished", &MessageView::sigFlushFinished)
 
         // deprecated
-        .def_static("getInstance", &MessageView::instance, py::return_value_policy::reference)
+        .def_static(
+            "getInstance", [](py::object){ return MessageView::instance(); }, py::return_value_policy::reference)
         .def_static("getSigFlushFinished", &MessageView::sigFlushFinished)
         ;
 
@@ -110,19 +112,23 @@ void exportPyViews(py::module m)
         ;
 
     py::class_<SceneView, View>(m, "SceneView")
-        .def_property_readonly_static("instance", &SceneView::instance, py::return_value_policy::reference)
+        .def_property_readonly_static(
+            "instance", [](py::object){ return SceneView::instance(); }, py::return_value_policy::reference)
         .def_property_readonly("sceneWidget", &SceneView::sceneWidget, py::return_value_policy::reference)
 
         // deprecated
-        .def_static("getInstance", &SceneView::instance, py::return_value_policy::reference)
+        .def_static(
+            "getInstance", [](py::object){ return SceneView::instance(); }, py::return_value_policy::reference)
         .def("getSceneWidget", &SceneView::sceneWidget, py::return_value_policy::reference)
         ;
 
     py::class_<TaskView, View, AbstractTaskSequencer>(m, "TaskView")
-        .def_property_readonly_static("instance", &TaskView::instance, py::return_value_policy::reference)
+        .def_property_readonly_static(
+            "instance", [](py::object){ return TaskView::instance(); }, py::return_value_policy::reference)
 
         // deprecated
-        .def_static("getInstance", &TaskView::instance, py::return_value_policy::reference)
+        .def_static(
+            "getInstance", [](py::object){ return TaskView::instance(); }, py::return_value_policy::reference)
         ;
 
     py::class_<ViewManager>(m, "ViewManager")

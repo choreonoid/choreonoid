@@ -32,12 +32,12 @@ void exportSimulationClasses(py::module m)
         .def("pauseSimulation", &SimulatorItem::pauseSimulation)
         .def("restartSimulation", &SimulatorItem::restartSimulation)
         .def("isRunning", &SimulatorItem::isRunning)
+        .def_property_readonly("sigSimulationStarted", &SimulatorItem::sigSimulationStarted)
+        .def_property_readonly("sigSimulationPaused", &SimulatorItem::sigSimulationPaused)
+        .def_property_readonly("sigSimulationResumed", &SimulatorItem::sigSimulationResumed)
+        .def_property_readonly("sigSimulationFinished", &SimulatorItem::sigSimulationFinished)
         .def_property_readonly("currentFrame", &SimulatorItem::currentFrame)
         .def_property_readonly("currentTime", &SimulatorItem::currentTime)
-        .def("sigSimulationStarted", &SimulatorItem::sigSimulationStarted)
-        .def("sigSimulationPaused", &SimulatorItem::sigSimulationPaused)
-        .def("sigSimulationResumed", &SimulatorItem::sigSimulationResumed)
-        .def("sigSimulationFinished", &SimulatorItem::sigSimulationFinished)
         .def("setRecordingMode", &SimulatorItem::setRecordingMode)
         .def_property_readonly("recordingMode", &SimulatorItem::recordingMode)
         .def("setTimeRangeMode", &SimulatorItem::setTimeRangeMode)
@@ -61,6 +61,11 @@ void exportSimulationClasses(py::module m)
         .def("getCurrentFrame", &SimulatorItem::currentFrame)
         .def("getCurrentTime", &SimulatorItem::currentTime)
         .def("getRecordingMode", &SimulatorItem::recordingMode)
+        .def("getSigSimulationStarted", &SimulatorItem::sigSimulationStarted)
+        .def("getSigSimulationPaused", &SimulatorItem::sigSimulationPaused)
+        .def("getSigSimulationResumed", &SimulatorItem::sigSimulationResumed)
+        .def("getSigSimulationFinished", &SimulatorItem::sigSimulationFinished)
+
         ;
 
     py::enum_<SimulatorItem::RecordingMode>(simulatorItemClass, "RecordingMode")
@@ -171,14 +176,16 @@ void exportSimulationClasses(py::module m)
     //PyItemList<SimulationScriptItem>("SimulationScriptItemList");
 
     py::class_<SimulationBar, ToolBar>(m, "SimulationBar")
-        .def_property_readonly_static("instance", &SimulationBar::instance, py::return_value_policy::reference)
+        .def_property_readonly_static(
+            "instance", [](py::object){ return SimulationBar::instance(); }, py::return_value_policy::reference)
         .def("startSimulation", (void (SimulationBar::*)(SimulatorItem*, bool)) &SimulationBar::startSimulation)
         .def("startSimulation", (void (SimulationBar::*)(bool)) &SimulationBar::startSimulation)
         .def("stopSimulation", &SimulationBar::stopSimulation)
         .def("pauseSimulation", &SimulationBar::pauseSimulation)
 
         // deprecated
-        .def_static("getInstance", &SimulationBar::instance, py::return_value_policy::reference)
+        .def_static(
+            "getInstance", [](py::object){ return SimulationBar::instance(); }, py::return_value_policy::reference)
         ;
 
     py::class_<SimpleControllerItem, SimpleControllerItemPtr, Item>(m, "SimpleControllerItem")

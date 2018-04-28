@@ -20,7 +20,8 @@ void exportPyItemTreeView(py::module m)
     PySignal<void(Item* item, bool isChecked)>(m, "ItemBoolSignal");
     
     py::class_<ItemTreeView, View>(m, "ItemTreeView")
-        .def_property_readonly_static("instance", &ItemTreeView::instance, py::return_value_policy::reference)
+        .def_property_readonly_static(
+            "instance", [](py::object){ return ItemTreeView::instance(); }, py::return_value_policy::reference)
         .def_property_readonly("rootItem", &ItemTreeView::rootItem)
         .def("selectedItems", &ItemTreeView::selectedItems<Item>)
         .def("selectedItems", [](ItemTreeView& self, py::object itemClass){
@@ -53,7 +54,8 @@ void exportPyItemTreeView(py::module m)
         .def("cutSelectedItems", &ItemTreeView::cutSelectedItems)
 
         // deprecated
-        .def_static("getInstance", &ItemTreeView::instance, py::return_value_policy::reference)
+        .def_static(
+            "getInstance", [](py::object){ return ItemTreeView::instance(); }, py::return_value_policy::reference)
         .def("getRootItem", &ItemTreeView::rootItem)
         .def("getSelectedItems", &ItemTreeView::selectedItems<Item>)
         .def("getSigSelectionChanged", &ItemTreeView::sigSelectionChanged)

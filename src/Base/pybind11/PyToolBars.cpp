@@ -51,7 +51,8 @@ void exportPyToolBars(py::module m)
         ;
 
     py::class_<TimeBar>(m, "TimeBar")
-        .def_property_readonly_static("instance", &TimeBar::instance, py::return_value_policy::reference)
+        .def_property_readonly_static(
+            "instance", [](py::object){ return TimeBar::instance(); }, py::return_value_policy::reference)
         .def_property_readonly("sigPlaybackInitialized", &TimeBar::sigPlaybackInitialized)
         .def_property_readonly("sigPlaybackStarted", &TimeBar::sigPlaybackStarted)
         .def_property_readonly("sigTimeChanged", &TimeBar::sigTimeChanged)
@@ -81,7 +82,8 @@ void exportPyToolBars(py::module m)
         .def("setFillLevelSync", &TimeBar::setFillLevelSync)
 
         // deprecated
-        .def_static("getInstance", &TimeBar::instance, py::return_value_policy::reference)
+        .def_static(
+            "getInstance", [](py::object){ return TimeBar::instance(); }, py::return_value_policy::reference)
         .def("getSigPlaybackInitialized", &TimeBar::sigPlaybackInitialized)
         .def("getSigPlaybackStarted", &TimeBar::sigPlaybackStarted)
         .def("getSigTimeChanged", &TimeBar::sigTimeChanged)
