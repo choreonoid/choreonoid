@@ -5,13 +5,13 @@ from cnoid.BodyPlugin import *
 import math;
 
 worldItem = WorldItem()
-RootItem.getInstance().addChildItem(worldItem)
+RootItem.instance.addChildItem(worldItem)
 
 robotItem = BodyItem()
-robotItem.load(getShareDirectory() + "/model/SR1/SR1.body")
+robotItem.load(shareDirectory + "/model/SR1/SR1.body")
 
-robot = robotItem.getBody()
-robot.getRootLink().setTranslation( [0.0, 0.0, 0.7135] )
+robot = robotItem.body
+robot.rootLink.setTranslation([0.0, 0.0, 0.7135])
 
 q = [ 0.0, -2.1, 0.0,   4.5, -2.4, 0.0,
      10.0, -0.2, 0.0, -90.0,  0.0, 0.0, 0.0,
@@ -19,8 +19,8 @@ q = [ 0.0, -2.1, 0.0,   4.5, -2.4, 0.0,
      10.0, -0.2, 0.0, -90.0,  0.0, 0.0, 0.0,
       0.0,  0.0, 0.0 ]
 
-for i in range(robot.getNumJoints()):
-    robot.getJoint(i).q = math.radians(q[i])
+for i in range(robot.numJoints):
+    robot.joint(i).q = math.radians(q[i])
 
 robot.calcForwardKinematics()
 robotItem.storeInitialState()
@@ -31,16 +31,16 @@ robotItem.addChildItem(controllerItem)
 
 worldItem.addChildItem(robotItem)
 
-ItemTreeView.getInstance().checkItem(robotItem)
+ItemTreeView.instance.checkItem(robotItem)
 
 floorItem = BodyItem()
-floorItem.load(getShareDirectory() + "/model/misc/floor.body")
+floorItem.load(shareDirectory + "/model/misc/floor.body")
 worldItem.addChildItem(floorItem)
 
 simulatorItem = AISTSimulatorItem()
 simulatorItem.setTimeStep(0.002)
 simulatorItem.setTimeRangeMode(SimulatorItem.TimeRangeMode.ACTIVE_CONTROL)
 worldItem.addChildItem(simulatorItem)
-ItemTreeView.getInstance().selectItem(simulatorItem)
+ItemTreeView.instance.selectItem(simulatorItem)
 
 simulatorItem.startSimulation()

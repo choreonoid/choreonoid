@@ -10,19 +10,19 @@ class ShakeBodies:
         self.button = toolBar.addToggleButton("Shake")
         self.button.setChecked(True)
         self.button.toggled.connect(self.onButtonToggled)
-        MainWindow.getInstance().addToolBar(toolBar)
+        MainWindow.instance.addToolBar(toolBar)
 
         self.bodyItems = []
         self.dp = array([0.0, 0.0, 0.01])
         self.connections = ScopedConnectionSet()
         self.connections.add(
-            ItemTreeView.getInstance().getSigSelectionChanged().connect(self.onSelectionChanged))
+            ItemTreeView.instance.sigSelectionChanged.connect(self.onSelectionChanged))
         self.timer = Timer()
         self.connections.add(
             self.timer.timeout.connect(self.onTimeout))
 
     def onButtonToggled(self, on):
-        self.onSelectionChanged(ItemTreeView.getInstance().getSelectedItems())
+        self.onSelectionChanged(ItemTreeView.instance.getSelectedItems())
 
     def onSelectionChanged(self, items):
         self.bodyItems = BodyItemList(items)
@@ -33,8 +33,8 @@ class ShakeBodies:
 
     def onTimeout(self):
         for bodyItem in self.bodyItems:
-            body = bodyItem.getBody()
-            body.getRootLink().p += self.dp
+            body = bodyItem.body
+            body.rootLink.p += self.dp
             body.calcForwardKinematics()
             bodyItem.notifyKinematicStateChange()
         self.dp = -self.dp
