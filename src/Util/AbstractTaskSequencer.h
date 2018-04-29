@@ -46,7 +46,9 @@ public:
     virtual SignalProxy<void()> sigCurrentCommandCanceled() = 0;
     virtual bool isAutoMode() const = 0;
     virtual void setAutoMode(bool on) = 0;
-    virtual SignalProxy<void(bool isAutoMode)> sigAutoModeToggled() =0;
+    virtual SignalProxy<void(bool isAutoMode)> sigAutoModeToggled() = 0;
+
+    virtual void serializeTasks(const std::vector<std::string>& tasks) = 0;
 };
 
 }

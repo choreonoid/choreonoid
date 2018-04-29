@@ -11,12 +11,8 @@
 #include <cnoid/Camera>
 #include <cnoid/RangeCamera>
 #include <cnoid/RangeSensor>
-#include <rtm/idl/InterfaceDataTypes.hh>
-#ifdef WIN32
-#include <rtm/idl/CameraCommonInterface.hh>
-#else
-#include <rtm/ext/CameraCommonInterface.hh>
-#endif
+#include <cnoid/corba/CameraImage.hh>
+#include <cnoid/corba/PointCloud.hh>
 #include <rtm/idl/BasicDataType.hh>
 #include <rtm/idl/ExtendedDataTypes.hh>
 #include <rtm/idl/InterfaceDataTypes.hh>
@@ -208,9 +204,9 @@ public:
     void onCameraStateChanged();
     void initialize(Body* simulationBody);
 private:
-	RTC::PointCloud value;
+    PointCloudTypes::PointCloud value;
 public:
-    RTC::OutPort<RTC::PointCloud> outPort;
+    RTC::OutPort<PointCloudTypes::PointCloud> outPort;
 private:
     std::mutex mtx;
     RangeCamera* rangeCamera;

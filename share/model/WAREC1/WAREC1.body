@@ -218,11 +218,6 @@ links:
 #                                   0.27, -0.143    ]
 #                  spine: [ 0.003, 0, 0, 0, 0, 0 ]
 #                  scale: [ 1.0, 1.0 ]
-      -
-        type: Transform
-        name: base_upper_link
-        translation: [ 0, 0, 0.2729 ]
-        elements:
   -
     type: Skip
     name: UPPER_FRAME
@@ -766,6 +761,12 @@ links:
     jointId: 0
     jointRange: [ -51, 148 ]
     maxJointVelocity: 1E6
+    jointLockCompliance: 1e-4
+    jointLockSpookDamping: 0.1
+    jointLockForceRange: [ -1000, 1000 ]
+    jointMotorCompliacne: 1e-1
+    jointMotorSpookDamping: 0.1
+    jointMotorForceRange: [ -1000, 1000 ]
     mass: 2.4001
     centerOfMass: [ -0.00771, -0.01238, -0.09652 ]
     inertia: [
@@ -929,6 +930,12 @@ links:
     jointId: 1
     jointRange: [ -107, 107 ]
     maxJointVelocity: 1E6
+    jointLockCompliance: 1e-4
+    jointLockSpookDamping: 0.1
+    jointLockForceRange: [ -1000, 1000 ]
+    jointMotorCompliacne: 1e-1
+    jointMotorSpookDamping: 0.1
+    jointMotorForceRange: [ -1000, 1000 ]
     mass: 8.64
     centerOfMass: [ -1e-05, 0.00091, -0.07045 ]
     inertia: [
@@ -936,7 +943,7 @@ links:
       -5.01e-06, 0.08623435, 0.00027574,
       -6.22e-06, 0.00027574, 0.02298262 ]
     elements: &LHIP_PITCH_SHAPE
-      - 
+      -
         type: Visual
         elements:
           Shape:
@@ -945,48 +952,48 @@ links:
       -
         type: Collision
         elements:
-          - 
+          -
             type: Shape
             translation: [ 0.0, 0.0, -0.092 ]
             geometry: { type: Box, size: [ 0.12, 0.13, 0.06 ] }
-          - 
+          -
             type: Shape
             translation: [ 0.0, 0.0815, -0.065 ]
             rotation: [ 0, 1, 0, 90 ]
             geometry: { type: Box, size: [ 0.19, 0.029, 0.058 ] }
-          - 
+          -
             type: Transform
             translation: [ 0.0, 0.0, 0.0 ]
             rotation: [ 0, 1, 0, 90 ]
             elements: &HIP_P_CYLI1
               Shape: { geometry: { type: Cylinder, radius: 0.061, height: 0.045} }
-          - 
+          -
             type: Transform
             translation: [ 0.0, -0.038, 0.0 ]
             rotation: [ 0, 1, 0, 90 ]
             elements: &HIP_P_CYLI2
               Shape: { geometry: { type: Cylinder, radius: 0.078, height: 0.052} }
-          - 
+          -
             type: Transform
             translation: [ 0.0, 0.045, 0.0 ]
             rotation: [ 0, 1, 0, 90 ]
             elements: &HIP_P_CYLI3
               Shape: { geometry: { type: Cylinder, radius: 0.078, height: 0.038} }
-          - 
+          -
             type: Transform
             translation: [ 0.0, 0.0, -0.138 ]
-            rotation: [ 1, 0, 0, 90 ]	
+            rotation: [ 1, 0, 0, 90 ]
             elements: &HIP_P_CYLI4
               Shape: { geometry: { type: Cylinder, radius: 0.061, height: 0.042} }
-          - 
+          -
             type: Transform
             translation: [ 0.0, 0.0, -0.222 ]
-            rotation: [ 1, 0, 0, 90 ]	
+            rotation: [ 1, 0, 0, 90 ]
             elements: *HIP_P_CYLI4
-          - 
+          -
             type: Transform
             translation: [ 0.0, 0.0, -0.178 ]
-            rotation: [ 1, 0, 0, 90 ]	
+            rotation: [ 1, 0, 0, 90 ]
             elements: &HIP_P_CYLI5
               Shape: { geometry: { type: Cylinder, radius: 0.045, height: 0.05} }
   -
@@ -998,6 +1005,12 @@ links:
     jointId: 2
     jointRange: unlimited
     maxJointVelocity: 1E6
+    jointLockCompliance: 1e-4
+    jointLockSpookDamping: 0.1
+    jointLockForceRange: [ -1000, 1000 ]
+    jointMotorCompliacne: 1e-1
+    jointMotorSpookDamping: 0.1
+    jointMotorForceRange: [ -1000, 1000 ]
     mass: 1.72
     centerOfMass: [ 0.0199, -0.01113, -0.02905 ]
     inertia: [
@@ -1005,7 +1018,7 @@ links:
       -0.00039465, 0.00651989, 0.00083342,
       -0.00167025, 0.00083342, 0.00534558 ]
     elements: &LHIP_YAW_SHAPE
-      - 
+      -
         type: Visual
         elements:
           Shape:
@@ -1077,6 +1090,12 @@ links:
     jointId: 3
     jointRange: [ -163, 38 ]
     maxJointVelocity: 1E6
+    jointLockCompliance: 1e-4
+    jointLockSpookDamping: 0.1
+    jointLockForceRange: [ -1000, 1000 ]
+    jointMotorCompliacne: 1e-1
+    jointMotorSpookDamping: 0.1
+    jointMotorForceRange: [ -1000, 1000 ]
     mass: 5.72
     centerOfMass: [ -0.02134, -0.00027, -0.06496 ]
     inertia: [
@@ -1086,7 +1105,7 @@ links:
     elements: &LKN_PITCH_SHAPE
       -
         type: Visual
-        elements: 
+        elements:
           Shape:
             geometry: { type: Resource, uri: "meshes/04_LKN_Pitch.stl" }
             appearance: *DarkGrayAppearance
@@ -1113,45 +1132,45 @@ links:
             translation: [ -0.047, 0.071, -0.118 ]
             rotation: [ 1, 0, 0, -11 ]
             geometry: { type: Box, size: [ 0.03, 0.016, 0.058 ] }
-          -  
+          -
             type: Transform
             translation: [ 0.0, -0.05025, 0.0 ]
             elements: &KN_P_CYLI1
               Shape: { geometry: { type: Cylinder, radius: 0.061, height: 0.03} }
-          -  
+          -
             type: Transform
             translation: [ 0.0, -0.02925, 0.0 ]
             elements: &KN_P_CYLI2
               Shape: { geometry: { type: Cylinder, radius: 0.057, height: 0.013} }
-          -  
+          -
             type: Transform
             translation: [ 0.0, -0.004, 0.0 ]
             elements: &KN_P_CYLI3
               Shape: { geometry: { type: Cylinder, radius: 0.045, height: 0.068} }
-          -  
+          -
             type: Transform
             translation: [ 0.0, 0.048, 0.0 ]
             elements: &KN_P_CYLI4
               Shape: { geometry: { type: Cylinder, radius: 0.061, height: 0.036} }
-          -  
+          -
             type: Transform
             translation: [ -0.044, 0.0, -0.1284 ]
             rotation: [ 1, 0, 0, 90 ]
             elements: &KN_P_CYLI5
               Shape: { geometry: { type: Cylinder, radius: 0.061, height: 0.036} }
-          -  
+          -
             type: Transform
             translation: [ -0.046, 0.0, -0.16184 ]
             rotation: [ 1, 0, 0, 90 ]
             elements: &KN_P_CYLI6
               Shape: { geometry: { type: Cylinder, radius: 0.039, height: 0.033} }
-          -  
+          -
             type: Transform
             translation: [ -0.046, 0.0, -0.1844 ]
             rotation: [ 1, 0, 0, 90 ]
             elements: &KN_P_CYLI7
               Shape: { geometry: { type: Cylinder, radius: 0.046, height: 0.013} }
-          -  
+          -
             type: Transform
             translation: [ -0.046, 0.0, -0.2024 ]
             rotation: [ 1, 0, 0, 90 ]
@@ -1166,6 +1185,12 @@ links:
     jointId: 4
     jointRange: unlimited
     maxJointVelocity: 1E6
+    jointLockCompliance: 1e-4
+    jointLockSpookDamping: 0.1
+    jointLockForceRange: [ -1000, 1000 ]
+    jointMotorCompliacne: 1e-1
+    jointMotorSpookDamping: 0.1
+    jointMotorForceRange: [ -1000, 1000 ]
     mass: 1.16
     centerOfMass: [ 0.0, -0.00909, -0.02873 ]
     inertia: [
@@ -1257,6 +1282,12 @@ links:
     jointId: 5
     jointRange: [ -93, 93 ]
     maxJointVelocity: 1E6
+    jointLockCompliance: 1e-4
+    jointLockSpookDamping: 0.1
+    jointLockForceRange: [ -1000, 1000 ]
+    jointMotorCompliacne: 1e-1
+    jointMotorSpookDamping: 0.1
+    jointMotorForceRange: [ -1000, 1000 ]
     mass: 5.06
     centerOfMass: [ 0.00215, 0.0017, -0.07672 ]
     inertia: [
@@ -1347,6 +1378,12 @@ links:
     jointId: 6
     jointRange: [ -106, 106 ]
     maxJointVelocity: 1E6
+    jointLockCompliance: 1e-4
+    jointLockSpookDamping: 0.1
+    jointLockForceRange: [ -1000, 1000 ]
+    jointMotorCompliacne: 1e-1
+    jointMotorSpookDamping: 0.1
+    jointMotorForceRange: [ -1000, 1000 ]
     mass: 0.82
     centerOfMass: [ -0.01007, 0.0, -0.02816 ]
     inertia: [
@@ -1408,7 +1445,7 @@ links:
             rotation: [ 0, 0, 1, 90 ]
             elements: &AK_R_CILI2
               Shape: { geometry: { type: Cylinder, radius: 0.028, height: 0.006 } }
-  - 
+  -
     name: RL_HOOK
     parent: RL_ANKLE_R
     jointType: fixed
@@ -1546,6 +1583,12 @@ links:
     jointId: 7
     jointRange: [ -148, 51 ]
     maxJointVelocity: 1E6
+    jointLockCompliance: 1e-4
+    jointLockSpookDamping: 0.1
+    jointLockForceRange: [ -1000, 1000 ]
+    jointMotorCompliacne: 1e-1
+    jointMotorSpookDamping: 0.1
+    jointMotorForceRange: [ -1000, 1000 ]
     mass: 2.4001
     centerOfMass: [ -0.00771, 0.01238, -0.09652 ]
     inertia: [
@@ -1705,6 +1748,12 @@ links:
     jointId: 8
     jointRange: [ -107, 107 ]
     maxJointVelocity: 1E6
+    jointLockCompliance: 1e-4
+    jointLockSpookDamping: 0.1
+    jointLockForceRange: [ -1000, 1000 ]
+    jointMotorCompliacne: 1e-1
+    jointMotorSpookDamping: 0.1
+    jointMotorForceRange: [ -1000, 1000 ]
     mass: 8.64
     centerOfMass: [ 1e-05, -0.00091, -0.07045 ]
     inertia: [
@@ -1712,7 +1761,7 @@ links:
       -5.01e-06, 0.08623435, -0.00027574,
       -6.22e-06, -0.00027574, 0.02298262 ]
     elements: &RHIP_PITCH_SHAPE
-      - 
+      -
         type: Visual
         shape:
           geometry: { type: Resource, uri: "meshes/02_RHIP_Pitch.stl" }
@@ -1724,40 +1773,40 @@ links:
             type: Shape
             translation: [ 0.0, 0.0, -0.092 ]
             geometry: { type: Box, size: [ 0.12, 0.13, 0.06 ] }
-          - 
+          -
             type: Shape
             translation: [ 0.0, 0.0815, -0.065 ]
             rotation: [ 0, 1, 0, 90 ]
             geometry: { type: Box, size: [ 0.19, 0.029, 0.058 ] }
-          - 
+          -
             type: Transform
             translation: [ 0.0, 0.0, 0.0 ]
             rotation: [ 0, 1, 0, 90 ]
             elements: *HIP_P_CYLI1
-          - 
+          -
             type: Transform
             translation: [ 0.0, -0.038, 0.0 ]
             rotation: [ 0, 1, 0, 90 ]
             elements: *HIP_P_CYLI2
-          - 
+          -
             type: Transform
             translation: [ 0.0, 0.045, 0.0 ]
             rotation: [ 0, 1, 0, 90 ]
             elements: *HIP_P_CYLI3
-          - 
+          -
             type: Transform
             translation: [ 0.0, 0.0, -0.138 ]
-            rotation: [ 1, 0, 0, 90 ]	
+            rotation: [ 1, 0, 0, 90 ]
             elements: *HIP_P_CYLI4
-          - 
+          -
             type: Transform
             translation: [ 0.0, 0.0, -0.222 ]
-            rotation: [ 1, 0, 0, 90 ]	
+            rotation: [ 1, 0, 0, 90 ]
             elements: *HIP_P_CYLI4
-          - 
+          -
             type: Transform
             translation: [ 0.0, 0.0, -0.178 ]
-            rotation: [ 1, 0, 0, 90 ]	
+            rotation: [ 1, 0, 0, 90 ]
             elements: *HIP_P_CYLI5
   -
     name: RR_HIP_Y
@@ -1768,6 +1817,12 @@ links:
     jointId: 9
     jointRange: unlimited
     maxJointVelocity: 1E6
+    jointLockCompliance: 1e-4
+    jointLockSpookDamping: 0.1
+    jointLockForceRange: [ -1000, 1000 ]
+    jointMotorCompliacne: 1e-1
+    jointMotorSpookDamping: 0.1
+    jointMotorForceRange: [ -1000, 1000 ]
     mass: 1.72
     centerOfMass: [ 0.01991, 0.01113, -0.02905 ]
     inertia: [
@@ -1775,7 +1830,7 @@ links:
       0.00039402, 0.00652026, -0.00083341,
       -0.00167061, -0.00083341, 0.00534599 ]
     elements: &RHIP_YAW_SHAPE
-      - 
+      -
         type: Visual
         shape:
           geometry: { type: Resource, uri: "meshes/03_RHIP_Yaw.stl" }
@@ -1843,6 +1898,12 @@ links:
     jointId: 10
     jointRange: [ -163, 38 ]
     maxJointVelocity: 1E6
+    jointLockCompliance: 1e-4
+    jointLockSpookDamping: 0.1
+    jointLockForceRange: [ -1000, 1000 ]
+    jointMotorCompliacne: 1e-1
+    jointMotorSpookDamping: 0.1
+    jointMotorForceRange: [ -1000, 1000 ]
     mass: 5.72
     centerOfMass: [ -0.02128, 0.00026, -0.06497 ]
     inertia: [
@@ -1878,38 +1939,38 @@ links:
             translation: [ -0.047, -0.071, -0.118 ]
             rotation: [ 1, 0, 0, 11 ]
             geometry: { type: Box, size: [ 0.03, 0.016, 0.058 ] }
-          -  
+          -
             type: Transform
             translation: [ 0.0, 0.05, 0.0 ]
             elements: *KN_P_CYLI1
-          -  
+          -
             type: Transform
             translation: [ 0.0, 0.0285, 0.0 ]
             elements: *KN_P_CYLI2
-          -  
+          -
             type: Transform
             translation: [ 0.0, -0.01225, 0.0 ]
             elements: *KN_P_CYLI3
-          -  
+          -
             type: Transform
             translation: [ 0.0, -0.04725, 0.0 ]
             elements: *KN_P_CYLI4
-          -  
+          -
             type: Transform
             translation: [ -0.044, 0.0, -0.1284 ]
             rotation: [ 1, 0, 0, 90 ]
             elements: *KN_P_CYLI5
-          -  
+          -
             type: Transform
             translation: [ -0.046, 0.0, -0.16184 ]
             rotation: [ 1, 0, 0, 90 ]
             elements: *KN_P_CYLI6
-          -  
+          -
             type: Transform
             translation: [ -0.046, 0.0, -0.1844 ]
             rotation: [ 1, 0, 0, 90 ]
             elements: *KN_P_CYLI7
-          -  
+          -
             type: Transform
             translation: [ -0.046, 0.0, -0.2024 ]
             rotation: [ 1, 0, 0, 90 ]
@@ -1923,6 +1984,12 @@ links:
     jointId: 11
     jointRange: unlimited
     maxJointVelocity: 1E6
+    jointLockCompliance: 1e-4
+    jointLockSpookDamping: 0.1
+    jointLockForceRange: [ -1000, 1000 ]
+    jointMotorCompliacne: 1e-1
+    jointMotorSpookDamping: 0.1
+    jointMotorForceRange: [ -1000, 1000 ]
     mass: 1.16
     centerOfMass: [ 0.0, 0.00909, -0.02873 ]
     inertia: [
@@ -2011,6 +2078,12 @@ links:
     jointId: 12
     jointRange: [ -93, 93 ]
     maxJointVelocity: 1E6
+    jointLockCompliance: 1e-4
+    jointLockSpookDamping: 0.1
+    jointLockForceRange: [ -1000, 1000 ]
+    jointMotorCompliacne: 1e-1
+    jointMotorSpookDamping: 0.1
+    jointMotorForceRange: [ -1000, 1000 ]
     mass: 5.06
     centerOfMass: [ 0.00215, -0.00173, -0.07672 ]
     inertia: [
@@ -2093,8 +2166,14 @@ links:
     jointType: revolute
     jointAxis: X
     jointId: 13
-    jointRange: [ -1.850049005, 1.850049005 ]
+    jointRange: [ -106, 106 ]
     maxJointVelocity: 1E6
+    jointLockCompliance: 1e-4
+    jointLockSpookDamping: 0.1
+    jointLockForceRange: [ -1000, 1000 ]
+    jointMotorCompliacne: 1e-1
+    jointMotorSpookDamping: 0.1
+    jointMotorForceRange: [ -1000, 1000 ]
     mass: 0.82
     centerOfMass: [ -0.01007, 0.0, -0.02816 ]
     inertia: [
@@ -2102,13 +2181,13 @@ links:
       -2.8e-07,     0.00261108,   -1.2e-07,
       -0.00019601,  -1.2e-07,     0.00200116 ]
     elements: &RAK_ROLL_SHAPE
-      - 
+      -
         type: Visual
         shape:
           geometry: { type: Resource, uri: "meshes/07_RAK_Roll.stl" }
           appearance: *RedAppearance
       - *AK_ROLL_COLLISION_SHAPE
-  - 
+  -
     name: RR_HOOK
     parent: RR_ANKLE_R
     jointType: fixed
@@ -2243,6 +2322,12 @@ links:
     jointId: 14
     jointRange: [ -148, 51 ]
     maxJointVelocity: 1E6
+    jointLockCompliance: 1e-4
+    jointLockSpookDamping: 0.1
+    jointLockForceRange: [ -1000, 1000 ]
+    jointMotorCompliacne: 1e-1
+    jointMotorSpookDamping: 0.1
+    jointMotorForceRange: [ -1000, 1000 ]
     mass: 2.4001
     centerOfMass: [ -0.00771, -0.01238, 0.09652 ]
     inertia: [
@@ -2262,6 +2347,12 @@ links:
     jointId: 15
     jointRange: [ -107, 107 ]
     maxJointVelocity: 1E6
+    jointLockCompliance: 1e-4
+    jointLockSpookDamping: 0.1
+    jointLockForceRange: [ -1000, 1000 ]
+    jointMotorCompliacne: 1e-1
+    jointMotorSpookDamping: 0.1
+    jointMotorForceRange: [ -1000, 1000 ]
     mass: 8.64
     centerOfMass: [ 1e-05, 0.00091, 0.07045 ]
     inertia: [
@@ -2281,6 +2372,12 @@ links:
     jointId: 16
     jointRange: unlimited
     maxJointVelocity: 1E6
+    jointLockCompliance: 1e-4
+    jointLockSpookDamping: 0.1
+    jointLockForceRange: [ -1000, 1000 ]
+    jointMotorCompliacne: 1e-1
+    jointMotorSpookDamping: 0.1
+    jointMotorForceRange: [ -1000, 1000 ]
     mass: 1.72
     centerOfMass: [ 0.01991, -0.01113, 0.02905 ]
     inertia: [
@@ -2300,6 +2397,12 @@ links:
     jointId: 17
     jointRange: [ -28, 163 ]
     maxJointVelocity: 1E6
+    jointLockCompliance: 1e-4
+    jointLockSpookDamping: 0.1
+    jointLockForceRange: [ -1000, 1000 ]
+    jointMotorCompliacne: 1e-1
+    jointMotorSpookDamping: 0.1
+    jointMotorForceRange: [ -1000, 1000 ]
     mass: 5.72
     centerOfMass: [ -0.02128, -0.00026, 0.06497 ]
     inertia: [
@@ -2319,6 +2422,12 @@ links:
     jointId: 18
     jointRange: unlimited
     maxJointVelocity: 1E6
+    jointLockCompliance: 1e-4
+    jointLockSpookDamping: 0.1
+    jointLockForceRange: [ -1000, 1000 ]
+    jointMotorCompliacne: 1e-1
+    jointMotorSpookDamping: 0.1
+    jointMotorForceRange: [ -1000, 1000 ]
     mass: 1.16
     centerOfMass: [ 0.0, -0.00909, 0.02873 ]
     inertia: [
@@ -2338,6 +2447,12 @@ links:
     jointId: 19
     jointRange: [ -93, 93 ]
     maxJointVelocity: 1E6
+    jointLockCompliance: 1e-4
+    jointLockSpookDamping: 0.1
+    jointLockForceRange: [ -1000, 1000 ]
+    jointMotorCompliacne: 1e-1
+    jointMotorSpookDamping: 0.1
+    jointMotorForceRange: [ -1000, 1000 ]
     mass: 5.06
     centerOfMass: [ 0.00215, 0.00173, 0.07672 ]
     inertia: [
@@ -2357,6 +2472,12 @@ links:
     jointId: 20
     jointRange: [ -106, 106 ]
     maxJointVelocity: 1E6
+    jointLockCompliance: 1e-4
+    jointLockSpookDamping: 0.1
+    jointLockForceRange: [ -1000, 1000 ]
+    jointMotorCompliacne: 1e-1
+    jointMotorSpookDamping: 0.1
+    jointMotorForceRange: [ -1000, 1000 ]
     mass: 0.82
     centerOfMass: [ -0.01007, 0.0, 0.02816 ]
     inertia: [
@@ -2409,6 +2530,12 @@ links:
     jointId: 21
     jointRange: [ -51, 148 ]
     maxJointVelocity: 1E6
+    jointLockCompliance: 1e-4
+    jointLockSpookDamping: 0.1
+    jointLockForceRange: [ -1000, 1000 ]
+    jointMotorCompliacne: 1e-1
+    jointMotorSpookDamping: 0.1
+    jointMotorForceRange: [ -1000, 1000 ]
     mass: 2.4001
     centerOfMass: [ -0.00771, 0.01238, 0.09652 ]
     inertia: [
@@ -2428,6 +2555,12 @@ links:
     jointId: 22
     jointRange: [ -107, 107 ]
     maxJointVelocity: 1E6
+    jointLockCompliance: 1e-4
+    jointLockSpookDamping: 0.1
+    jointLockForceRange: [ -1000, 1000 ]
+    jointMotorCompliacne: 1e-1
+    jointMotorSpookDamping: 0.1
+    jointMotorForceRange: [ -1000, 1000 ]
     mass: 8.64
     centerOfMass: [ -1e-05, -0.00091, 0.07045 ]
     inertia: [
@@ -2447,6 +2580,12 @@ links:
     jointId: 23
     jointRange: unlimited
     maxJointVelocity: 1E6
+    jointLockCompliance: 1e-4
+    jointLockSpookDamping: 0.1
+    jointLockForceRange: [ -1000, 1000 ]
+    jointMotorCompliacne: 1e-1
+    jointMotorSpookDamping: 0.1
+    jointMotorForceRange: [ -1000, 1000 ]
     mass: 1.72
     centerOfMass: [ 0.0199, 0.01113, 0.02905 ]
     inertia: [
@@ -2466,6 +2605,12 @@ links:
     jointId: 24
     jointRange: [ -38, 163 ]
     maxJointVelocity: 1E6
+    jointLockCompliance: 1e-4
+    jointLockSpookDamping: 0.1
+    jointLockForceRange: [ -1000, 1000 ]
+    jointMotorCompliacne: 1e-1
+    jointMotorSpookDamping: 0.1
+    jointMotorForceRange: [ -1000, 1000 ]
     mass: 5.72
     centerOfMass: [ -0.02134, 0.00027, 0.06496 ]
     inertia: [
@@ -2485,6 +2630,12 @@ links:
     jointId: 25
     jointRange: unlimited
     maxJointVelocity: 1E6
+    jointLockCompliance: 1e-4
+    jointLockSpookDamping: 0.1
+    jointLockForceRange: [ -1000, 1000 ]
+    jointMotorCompliacne: 1e-1
+    jointMotorSpookDamping: 0.1
+    jointMotorForceRange: [ -1000, 1000 ]
     mass: 1.16
     centerOfMass: [ 0.0, 0.00909, 0.02873 ]
     inertia: [
@@ -2504,6 +2655,12 @@ links:
     jointId: 26
     jointRange: [ -93, 93 ]
     maxJointVelocity: 1E6
+    jointLockCompliance: 1e-4
+    jointLockSpookDamping: 0.1
+    jointLockForceRange: [ -1000, 1000 ]
+    jointMotorCompliacne: 1e-1
+    jointMotorSpookDamping: 0.1
+    jointMotorForceRange: [ -1000, 1000 ]
     mass: 5.06
     centerOfMass: [ 0.00215, -0.0017, 0.07672 ]
     inertia: [
@@ -2523,6 +2680,12 @@ links:
     jointId: 27
     jointRange: [ -106, 106 ]
     maxJointVelocity: 1E6
+    jointLockCompliance: 1e-4
+    jointLockSpookDamping: 0.1
+    jointLockForceRange: [ -1000, 1000 ]
+    jointMotorCompliacne: 1e-1
+    jointMotorSpookDamping: 0.1
+    jointMotorForceRange: [ -1000, 1000 ]
     mass: 0.82
     centerOfMass: [ -0.01007, 0.0, 0.02816 ]
     inertia: [
@@ -2530,11 +2693,11 @@ links:
       2.8e-07,     0.00261108,   -1.2e-07,
       0.00019601,  -1.2e-07,     0.00200116 ]
     elements:
-      -              
+      -
         type: Transform
         rotation: [ 1, 0, 0, 180 ]
         elements: *LAK_ROLL_SHAPE
-  - 
+  -
     name: FR_HOOK
     parent: FR_ANKLE_R
     jointType: fixed
@@ -2566,3 +2729,8 @@ links:
           Transform:
             rotation: [ 1, 0, 0, 180 ]
             elements: *LEE_SHAPE
+
+
+collisionDetection:
+  excludeTreeDepth: 1
+  excludeLinks: [ ]

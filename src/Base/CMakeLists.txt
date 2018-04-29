@@ -22,6 +22,7 @@ set(sources
   ItemManager.cpp
   Item.cpp
   RootItem.cpp
+  ItemList.cpp
   ItemPath.cpp
   ItemTreeView.cpp
   ItemPropertyView.cpp
@@ -83,6 +84,7 @@ set(sources
   ShaderPrograms.cpp
   GLSLSceneRenderer.cpp
   SceneWidget.cpp
+  SceneWidgetEvent.cpp
   SceneWidgetEditable.cpp
   InteractiveCameraTransform.cpp
   SceneProjector.cpp

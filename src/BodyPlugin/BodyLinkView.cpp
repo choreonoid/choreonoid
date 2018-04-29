@@ -36,7 +36,9 @@ using namespace std::placeholders;
 using namespace cnoid;
 
 namespace {
+
 static const double sliderResolution = 1000000.0;
+
 Action* useQuaternionCheck;
 
 void onUseQuaternionToggled(bool on)
@@ -44,7 +46,9 @@ void onUseQuaternionToggled(bool on)
     AppConfig::archive()->openMapping("Body")->openMapping("Link View")->write("useQuaternion", on);
     BodyLinkView::instance()->switchRpyQuat(on);
 }
+
 BodyLinkView* bodyLinkView = 0;
+
 }
 
 namespace cnoid {
@@ -64,6 +68,7 @@ public:
     QLabel jointIdLabel;
     QLabel jointTypeLabel;
     QLabel jointAxisLabel;
+    QLabel materialLabel;
 
     QGroupBox qBox;
     DoubleSpinBox qSpin;
@@ -244,10 +249,13 @@ void BodyLinkViewImpl::setupWidgets()
     grid->addWidget(&jointIdLabel, 0, 3);
     grid->addWidget(new QLabel(_("Joint Type:")), 1, 0);
     jointTypeLabel.setTextInteractionFlags(Qt::TextSelectableByMouse);
-    grid->addWidget(&jointTypeLabel, 1, 1, 1, 3);
-    grid->addWidget(new QLabel(_("Joint Axis:")), 2, 0);
+    grid->addWidget(&jointTypeLabel, 1, 1);
+    grid->addWidget(new QLabel(_("Joint Axis:")), 1, 2);
     jointAxisLabel.setTextInteractionFlags(Qt::TextSelectableByMouse);
-    grid->addWidget(&jointAxisLabel, 2, 1, 1, 3);
+    grid->addWidget(&jointAxisLabel, 1, 3);
+    grid->addWidget(new QLabel(_("Material:")), 2, 0);
+    materialLabel.setTextInteractionFlags(Qt::TextSelectableByMouse);
+    grid->addWidget(&materialLabel, 2, 1);
     frame->setLayout(grid);
 
     topVBox->addSpacing(4);
@@ -583,6 +591,8 @@ void BodyLinkViewImpl::updateLink()
         dqBox.hide();
         jointTypeLabel.setText(currentLink->jointTypeString().c_str());
     }
+
+    materialLabel.setText(currentLink->materialName().c_str());
 }
 
 
@@ -603,13 +613,13 @@ void BodyLinkViewImpl::updateRotationalJointState()
     qSpin.setRange(-9999.9, 9999.9); // Limit over values should be shown
     qSpin.setSingleStep(0.1);
 
-    if(qmin <= -std::numeric_limits<double>::max()){
-        qmin = -1080.0;
+    if(qmin < -360.0){
+        qmin = -360.0;
     }
-    if(qmax >= std::numeric_limits<double>::max()){
-        qmax = 1080.0;
+    if(qmax > 360.0){
+        qmax = 360.0;
     }
-    
+
     qSlider.setRange(qmin * sliderResolution, qmax * sliderResolution);
     qSlider.setSingleStep(0.1 * sliderResolution);
     

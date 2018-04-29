@@ -1,0 +1,154 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: AizuWheel
+rootLink: CHASSIS
+
+links:
+  -
+    name: CHASSIS
+    translation: [ 0, 0, 0.06 ]
+    jointType: free
+    # object coordinate
+    elements:
+      Transform:
+        translation: [ 0, 0, 0.08 ]
+        # choreonoid coordinate
+        elements:
+          Transform:
+            rotation: [ [ 0, 0, 1, 90 ], [ 1, 0, 0, 90 ] ]
+            # cad coordinate
+            elements:
+              RigidBody:
+                centerOfMass: [ 0, 0.00551, 0 ]
+                mass: 36.59264
+                inertia: [
+                  0.79312416825,  0,              0,
+                  0,              1.47195848599,  -0.00000018785,
+                  0,              -0.00000018785, 0.84157208706  ]
+                elements:
+                  Resource:
+                    uri: resource/AizuWheelCommon.yaml
+                    node: CHASSIS
+  -
+    name: R_WHEEL
+    parent: CHASSIS
+    translation: [ 0, -0.260, 0.04 ]
+    jointType: revolute
+    jointAxis: [ 0, 1, 0 ]
+    elements: &TIRE
+      # cad coordinate
+      RigidBody:
+        rotation: [ 0, 0, 1, 90 ]
+        centerOfMass: [ 0, 0, 0 ]
+        mass: 1.5708
+        inertia: [
+          0.00785398163,  0,              0,
+          0,              0.00425424005,  0,
+          0,              0,              0.00425424005 ]
+        elements:
+          Visual: { resource: { uri: "resource/tire.wrl" } }
+          Collision:
+            shape:
+              rotation: [ [ 0, 1, 0, 90 ], [ 1, 0, 0, 90 ] ]
+              geometry: { type: Cylinder, height: 0.05, radius: 0.1 }
+  -
+    name: L_WHEEL
+    parent: CHASSIS
+    translation: [ 0, 0.260, 0.04 ]
+    jointType: revolute
+    jointAxis: [ 0, 1, 0 ]
+    elements: *TIRE
+
+  -
+    name: FRONT_CASTER_YAW
+    parent: CHASSIS
+    translation: [ 0.265, 0, 0.11 ]
+    jointType: revolute
+    jointAxis: [ 0, 0, -1 ]
+    jointId: 0
+    # object coordinate
+    elements: &CASTER_YAW
+      Transform:
+        translation: [ 0, 0, -0.065 ]
+        # choreonoid coordinate
+        elements:
+          Transform:
+            rotation: [ [ 0, -1, 0, 90 ], [ 0, 0, -1, 90 ] ]
+            # cad coordinate
+            elements:
+              RigidBody:
+                centerOfMass: [ 0, 0.00568, 0.0133 ]
+                mass: 1.21899
+                inertia: [
+                  0.00250807229,  0,              0,
+                  0,              0.00109167101,  0.00012326053,
+                  0,              0.00012326053,  0.00185870970 ]
+                elements:
+                  Visual: { resource: { uri: "resource/casters_body.wrl" } }
+                  Collision:
+                    elements:
+                      Shape:
+                        translation: [ 0, 0, 0.016 ]
+                        geometry: { type: Box, size: [ 0.044, 0.130, 0.092 ] }
+  -
+    name: FRONT_CASTER
+    parent: FRONT_CASTER_YAW
+    translation: [ -0.052, 0, -0.12 ]
+    jointType: revolute
+    jointAxis: [ 0, 1, 0 ]
+    # object coordinate
+    elements: &CASTER
+      Transform:
+        rotation: [ 0, 0, -1, 90 ]
+        # cad coordinate
+        elements:
+          RigidBody:
+            centerOfMass: [ 0, 0, 0 ]
+            mass: 0.15708
+            inertia: [
+              0.00019634954,  0,              0,
+              0,              0.00010341076,  0,
+              0,              0,              0.00010341076 ]
+            elements:
+              Visual: { resource: { uri: "resource/casters_wheel.wrl" } }
+              Collision:
+                shape:
+                  rotation: [ 0, 0, 1, 90 ]
+                  geometry: { type: Cylinder, height: 0.02, radius: 0.05 }
+  -
+    name: BACK_CASTER_YAW
+    parent: CHASSIS
+    translation: [ -0.265, 0, 0.11 ]
+    jointType: revolute
+    jointAxis: [ 0, 0, -1 ]
+    jointId: 1
+    elements: *CASTER_YAW
+  -
+    name: BACK_CASTER
+    parent: BACK_CASTER_YAW
+    translation: [ -0.052, 0, -0.12 ]
+    jointType: revolute
+    jointAxis: [ 0, 1, 0 ]
+    elements: *CASTER
+  -
+    type: SubBody
+    uri: "../JACO2/JACO2.body"
+    prefix: ARM_
+    parent: CHASSIS
+    translation: [ 0.25, 0, 0.16 ]
+    rotation: [ 0, 0, 1, 90 ]
+    jointType: fixed
+    jointIdOffset: 2
+
+standardPose: [
+  # Caster yaw joints
+  0, 0,
+  # Arm Joints
+  -90, 151, 27, -93, 6, 100,
+  # Finger joints
+  0, 0, 0
+]
+
+collisionDetection:
+  excludeTreeDepth: 1

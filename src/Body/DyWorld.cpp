@@ -125,7 +125,7 @@ void WorldBase::setVirtualJointForces()
     for(size_t i=0; i < bodyInfoArray.size(); ++i){
         BodyInfo& info = bodyInfoArray[i];
         if(info.hasVirtualJointForces){
-            info.body->setVirtualJointForces();
+            info.body->setVirtualJointForces(timeStep_);
         }
     }
 }

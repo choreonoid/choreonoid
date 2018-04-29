@@ -1,0 +1,16 @@
+
+#ifndef CNOID_CORBA_MESSAGE_VIEW_IDL_INCLUDED
+#define CNOID_CORBA_MESSAGE_VIEW_IDL_INCLUDED
+
+module cnoid {
+module Corba {
+
+interface MessageView
+{
+  void put(in string message);
+};
+
+};
+};
+
+#endif

@@ -23,7 +23,7 @@ class CNOID_EXPORT RootItem : public Item
 public:
     static void initializeClass(ExtensionManager* ext);
     static RootItem* instance();
-    static RootItem* mainInstance(); // obsolete
+    static RootItem* mainInstance(); // deprecated
 
     RootItem();
     RootItem(const RootItem& org);

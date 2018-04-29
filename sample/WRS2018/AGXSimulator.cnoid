@@ -1,0 +1,39 @@
+items: 
+  id: 0
+  name: "Root"
+  plugin: Base
+  class: RootItem
+  children: 
+    - 
+      id: 1
+      name: "AGXSimulator"
+      plugin: AGXDynamics
+      class: AGXSimulatorItem
+      data: 
+        timestep: 0.005
+        realtimeSync: true
+        recording: "full"
+        timeRangeMode: "Unlimited"
+        timeLength: 180
+        allLinkPositionOutputMode: true
+        deviceStateOutput: true
+        controllerThreads: true
+        recordCollisionData: false
+        controllerOptions: "velocity"
+        Gravity: [ 0, 0, -9.80665 ]
+        NumThreads: 4
+        ContactReduction: true
+        ContactReductionBinResolution: 3
+        ContactReductionThreshhold: 12
+        ContactWarmstarting: true
+        AutoSleep: false
+        SaveToAGXFileOnStart: false
+views: 
+  - 
+    id: 1
+    plugin: Base
+    class: ItemTreeView
+    mounted: true
+    state: 
+      selected: [ 1 ]
+      expanded: [ 1 ]

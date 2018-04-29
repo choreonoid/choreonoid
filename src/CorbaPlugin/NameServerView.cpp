@@ -96,7 +96,7 @@ void NameServerViewImpl::updateObjectList()
 
     ncHelper.setLocation(hostAddressBox.string(), portNumberSpin.value());
     
-    if (ncHelper.updateConnection()) {
+    if(ncHelper.updateConnection()){
 
         NamingContextHelper::ObjectInfoList objects = ncHelper.getObjectList();
 

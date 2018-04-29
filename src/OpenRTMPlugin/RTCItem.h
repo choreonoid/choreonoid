@@ -22,7 +22,7 @@ public:
     bool isValid() const;
     const std::string& name() const { return componentName; }
     void activate();
-
+        
 private:
     RTC::RTObject_var rtcRef;
     RTC::RtcBase* rtc_;

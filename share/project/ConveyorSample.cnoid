@@ -1,0 +1,420 @@
+optionalPlugins: [ ODE, Bullet ]
+
+items: 
+  id: 0
+  name: "Root"
+  plugin: Base
+  class: RootItem
+  children: 
+    - 
+      id: 1
+      name: "World"
+      plugin: Body
+      class: WorldItem
+      data: 
+        collisionDetection: false
+        collisionDetector: AISTCollisionDetector
+      children: 
+        - 
+          id: 2
+          name: "Floor"
+          plugin: Body
+          class: BodyItem
+          data: 
+            modelFile: "${SHARE}/model/misc/floor.body"
+            currentBaseLink: "BASE"
+            rootPosition: [  0.000000,  0.000000, -0.100000 ]
+            rootAttitude: [ 
+               1.000000,  0.000000,  0.000000, 
+               0.000000,  1.000000,  0.000000, 
+               0.000000,  0.000000,  1.000000 ]
+            jointPositions: [  ]
+            initialRootPosition: [  0.000000,  0.000000, -0.100000 ]
+            initialRootAttitude: [ 
+               1.000000,  0.000000,  0.000000, 
+               0.000000,  1.000000,  0.000000, 
+               0.000000,  0.000000,  1.000000 ]
+            zmp: [  0.000000,  0.000000,  0.000000 ]
+            selfCollisionDetection: false
+        - 
+          id: 3
+          name: "AISTSimulator"
+          plugin: Body
+          class: AISTSimulatorItem
+          data: 
+            realtimeSync: true
+            recordingMode: TimeBar range
+            onlyActiveControlPeriod: false
+            timeLength: 3
+            allLinkPositionOutputMode: false
+            deviceStateRecording: true
+            dynamicsMode: Forward dynamics
+            integrationMode: Runge Kutta
+            gravity: [ 0, 0, -9.80665 ]
+            staticFriction: 0.5
+            slipFriction: 0.5
+            cullingThresh: 0.01
+            errorCriterion: 0.001
+            maxNumIterations: 1000
+            contactCorrectionDepth: 0.0001
+            contactCorrectionVelocityRatio: 30
+            2Dmode: false
+        - 
+          id: 4
+          name: "ODESimulator"
+          plugin: ODE
+          class: ODESimulatorItem
+          data: 
+            realtimeSync: true
+            recordingMode: TimeBar range
+            onlyActiveControlPeriod: true
+            timeLength: 3
+            allLinkPositionOutputMode: true
+            deviceStateRecording: true
+            stepMode: Iterative (quick step)
+            gravity: [ 0, 0, -9.80665 ]
+            friction: 1
+            jointLimitMode: false
+            globalERP: 0.4
+            globalCFM: 1e-10
+            numIterations: 50
+            overRelaxation: 1.3
+            limitCorrectingVel: true
+            maxCorrectingVel: 1.0e-3
+            2Dmode: false
+            UseWorldItem'sCollisionDetector: false
+        - 
+          id: 5
+          name: "BulletSimulator"
+          plugin: Bullet
+          class: BulletSimulatorItem
+          data: 
+            realtimeSync: true
+            recordingMode: TimeBar range
+            onlyActiveControlPeriod: true
+            timeLength: 3
+            allLinkPositionOutputMode: true
+            deviceStateRecording: true
+            ErrorReductionParameter: 0.2
+            NumIterations: 10
+            Restitution: 0
+            Friction: 1
+            ERP2: 0
+            SplitImpulsePenetrationThreshold: -0.0001
+            useHACD: false
+            CollisionMargin: 0.0001
+            velocityMode: false
+            usefeatherstoneAlgorithm: false
+        - 
+          id: 6
+          name: "Conveyor"
+          plugin: Body
+          class: BodyItem
+          data: 
+            modelFile: "${SHARE}/model/misc/conveyor.body"
+            currentBaseLink: "BASE"
+            rootPosition: [  0.000000,  0.000000,  0.050000 ]
+            rootAttitude: [ 
+               1.000000,  0.000000,  0.000000, 
+               0.000000,  1.000000,  0.000000, 
+               0.000000,  0.000000,  1.000000 ]
+            jointPositions: [  0.000000 ]
+            initialRootPosition: [  0.000000,  0.000000,  0.050000 ]
+            initialRootAttitude: [ 
+               1.000000,  0.000000,  0.000000, 
+               0.000000,  1.000000,  0.000000, 
+               0.000000,  0.000000,  1.000000 ]
+            zmp: [  0.000000,  0.000000,  0.000000 ]
+            selfCollisionDetection: false
+          children: 
+            - 
+              id: 7
+              name: "ConveyorController"
+              plugin: SimpleController
+              class: SimpleControllerItem
+              data: 
+                isImmediateMode: false
+                controller: "ConveyorController"
+                reloading: true
+                inputLinkPositions: false
+        - 
+          id: 8
+          name: "Ellipsoid1"
+          plugin: Body
+          class: BodyItem
+          data: 
+            modelFile: "${SHARE}/model/misc/ellipsoid1.body"
+            currentBaseLink: "BASE"
+            rootPosition: [  2.000000,  0.000000,  0.390000 ]
+            rootAttitude: [ 
+               1.000000,  0.000000,  0.000000, 
+               0.000000,  1.000000,  0.000000, 
+               0.000000,  0.000000,  1.000000 ]
+            jointPositions: [  ]
+            initialRootPosition: [  2.000000,  0.000000,  0.390000 ]
+            initialRootAttitude: [ 
+               1.000000,  0.000000,  0.000000, 
+               0.000000,  1.000000,  0.000000, 
+               0.000000,  0.000000,  1.000000 ]
+            zmp: [  0.000000,  0.000000,  0.000000 ]
+            selfCollisionDetection: false
+views: 
+  "Items": 
+    selected: [ 3 ]
+    checked: [ 1, 2, 6, 8 ]
+    expanded: [ 1, 6, 7, 8 ]
+  "Scene": 
+    viewpointControlMode: thirdPerson
+    collisionLines: false
+    polygonMode: fill
+    defaultHeadLight: true
+    defaultHeadLightIntensity: 0.75
+    headLightLightingFromBack: false
+    worldLight: true
+    worldLightIntensity: 0.5
+    worldLightAmbient: 0.3
+    additionalLights: true
+    floorGrid: false
+    floorGridSpan: 10
+    floorGridInterval: 0.5
+    lineWidth: 1
+    pointSize: 1
+    normalVisualization: false
+    normalLength: 0.01
+    coordinateAxes: true
+    showFPS: false
+    useBufferForPicking: true
+    camera: 
+      current: [ CameraTransform, Perspective ]
+      eye: [ 7.90831, 4.17984, 3.45814 ]
+      direction: [ -0.939956, -0.18433, -0.287237 ]
+      up: [ -0.281869, -0.0552757, 0.95786 ]
+      fieldOfView: 0.6978
+      near: 0.01
+      far: 10000
+      orthoHeight: 20
+    backgroundColor: [ 0.1, 0.1, 0.3 ]
+    gridColor: [ 0.9, 0.9, 0.9, 1 ]
+  "Multi Value Seq": 
+    mode: view
+    editMode: freeLine
+    original: true
+    velocity: false
+    acceleration: false
+    limits: true
+    grid: true
+    gridWidth: 0.2
+    gridHeight: 0.2
+    lineWidth: 1
+    rulers: false
+    sync: true
+    controlPointStep: 1
+    controlPointOffset: 0
+    controlPointHeighlight: false
+    scrollMode: continuous
+    lower: -10
+    upper: 10
+  "Multi SE3 Seq": 
+    mode: view
+    editMode: freeLine
+    original: true
+    velocity: false
+    acceleration: false
+    limits: true
+    grid: true
+    gridWidth: 0.2
+    gridHeight: 0.2
+    lineWidth: 1
+    rulers: false
+    sync: true
+    controlPointStep: 1
+    controlPointOffset: 0
+    controlPointHeighlight: false
+    scrollMode: continuous
+    lower: -10
+    upper: 10
+    visibleElements: [ 0, 1, 2 ]
+  "Links": 
+    listingMode: "Link List"
+    currentBodyItem: 6
+    bodyItems: 
+      - 
+        id: 8
+        selectedLinks: [ 0 ]
+  "Body / Link": 
+    showRotationMatrix: false
+  "Joint Sliders": 
+    showAllJoints: true
+    jointId: true
+    name: true
+    numColumns: 1
+    spinBox: true
+    slider: true
+    labelOnLeft: true
+    currentBodyItem: 6
+  "Joint Trajectories": 
+    mode: view
+    editMode: freeLine
+    original: true
+    velocity: false
+    acceleration: false
+    limits: true
+    grid: true
+    gridWidth: 0.2
+    gridHeight: 0.2
+    lineWidth: 1
+    rulers: false
+    sync: true
+    controlPointStep: 1
+    controlPointOffset: 0
+    controlPointHeighlight: false
+    scrollMode: continuous
+    lower: -10
+    upper: 10
+  "Multi Affine3 Seq": 
+    mode: view
+    editMode: freeLine
+    original: true
+    velocity: false
+    acceleration: false
+    limits: true
+    grid: true
+    gridWidth: 0.2
+    gridHeight: 0.2
+    lineWidth: 1
+    rulers: false
+    sync: true
+    controlPointStep: 1
+    controlPointOffset: 0
+    controlPointHeighlight: false
+    scrollMode: continuous
+    lower: -10
+    upper: 10
+    visibleElements: [ 0, 1, 2 ]
+  "Pose Roll": 
+    defaultTransitionTime: 0
+    updateAll: true
+    autoUpdate: false
+    timeSync: true
+    listingMode: "Part Tree"
+    timeLength: 10
+    showLipSync: false
+    gridInterval: 1
+toolbars: 
+  "TimeBar": 
+    minTime: 0
+    maxTime: 10.002
+    frameRate: 1000
+    playbackFrameRate: 100
+    idleLoopDrivenMode: false
+    currentTime: 0
+    speedScale: 1
+    syncToOngoingUpdates: true
+    autoExpansion: true
+  "BodyBar": 
+    current: 6
+    stanceWidth: 0.15
+  "KinematicsBar": 
+    mode: FK
+    attitude: false
+    penetrationBlock: true
+    collisionLinkHighlight: false
+    snapDistance: 0.025
+    penetrationBlockDepth: 0.0005
+    lazyCollisionDetectionMode: true
+  "BodyMotionGenerationBar": 
+    balancer: false
+    autoGeneration: false
+    timeScaleRatio: 1
+    preInitialDuration: 1
+    postFinalDuration: 1
+    onlyTimeBarRange: false
+    makeNewBodyItem: true
+    stealthyStepMode: true
+    stealthyHeightRatioThresh: 2
+    flatLiftingHeight: 0.005
+    flatLandingHeight: 0.005
+    impactReductionHeight: 0.005
+    impactReductionTime: 0.04
+    autoZmp: true
+    minZmpTransitionTime: 0.1
+    zmpCenteringTimeThresh: 0.03
+    zmpTimeMarginBeforeLiftingSpin: 0
+    zmpMaxDistanceFromCenter: 0.02
+    allLinkPositions: false
+    lipSyncMix: false
+Body: 
+  "BodyMotionEngine": 
+    updateJointVelocities: false
+  "KinematicFaultChecker": 
+    checkJointPositions: true
+    angleMargin: 0
+    translationMargin: 0
+    checkJointVelocities: true
+    velocityLimitRatio: 100
+    targetJoints: all
+    checkSelfCollisions: true
+    onlyTimeBarRange: false
+layoutOfViews: 
+  type: splitter
+  orientation: horizontal
+  sizes: 
+    - 486
+    - 2068
+  children: 
+    - 
+      type: splitter
+      orientation: vertical
+      sizes: 
+        - 623
+        - 622
+      children: 
+        - 
+          type: pane
+          views: [ "Items", "Scene Graph" ]
+          current: "Items"
+        - 
+          type: pane
+          views: [ "Property", "Links", "Nameserver", "Scene Graph Property" ]
+          current: "Property"
+    - 
+      type: splitter
+      orientation: vertical
+      sizes: 
+        - 889
+        - 356
+      children: 
+        - 
+          type: splitter
+          orientation: horizontal
+          sizes: 
+            - 0
+            - 2062
+          children: 
+            - 
+              type: pane
+              views: [ "Text Editor", "Body / Link", "Joint Sliders", "Joint State" ]
+              current: "Body / Link"
+            - 
+              type: pane
+              views: [ "Scene" ]
+              current: "Scene"
+        - 
+          type: pane
+          views: [ "Message", "Multi Value Seq", "Multi SE3 Seq", "Body State", "Joint Trajectories", "Multi Affine3 Seq", "Pose Roll" ]
+          current: "Message"
+layoutOfToolBars: 
+  rows: 
+    - 
+      - { name: "FileBar", x: 0, priority: 0 }
+      - { name: "TimeBar", x: 48, priority: 0 }
+      - { name: "ScriptBar", x: 1262, priority: 0 }
+      - { name: "SceneBar", x: 1332, priority: 0 }
+      - { name: "GraphBar", x: 1597, priority: 0 }
+      - { name: "CaptureBar", x: 1707, priority: 0 }
+      - { name: "BodyBar", x: 1755, priority: 0 }
+      - { name: "KinematicsBar", x: 2320, priority: 0 }
+    - 
+      - { name: "SimulationBar", x: 0, priority: 0 }
+      - { name: "BodyMotionGenerationBar", x: 172, priority: 0 }
+      - { name: "RobotAccessBar", x: 313, priority: 0 }

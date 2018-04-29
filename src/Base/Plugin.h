@@ -78,6 +78,7 @@ protected:
     void depend(const char* pluginName);
 #endif
 
+    static const char* MITLicenseText();
     static const char* LGPLtext();
 
 private:

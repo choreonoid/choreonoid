@@ -1,0 +1,13 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: TerrainB
+
+links:
+  -
+    name: Base
+    jointType: fixed
+    material: Ground
+    convexRecompostiion: true
+    elements:
+      Resource: { uri: "resource/TerrainB.dae" }

@@ -137,7 +137,8 @@ bool BodyCollisionDetectorImpl::addBody(Body* body, bool isSelfCollisionDetectio
             auto groupInfo = excludeLinkGroupList[i].toMapping();
             if(groupInfo->isValid()){
                 vector<int> excludeLinkGroup;
-                string groupName = groupInfo->get<string>("name");
+                //string groupName;
+                //groupInfo->read("name",groupName);
                 auto& excludeLinks = *groupInfo->findListing("links");
                 for(size_t j=0; j < excludeLinks.size(); ++j){
                     Link* link = body->link(excludeLinks[j].toString());

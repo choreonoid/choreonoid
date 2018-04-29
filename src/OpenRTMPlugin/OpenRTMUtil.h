@@ -5,6 +5,7 @@
 #ifndef CNOID_OPENRTM_PLUGIN_OPENRTM_UTIL_H
 #define CNOID_OPENRTM_PLUGIN_OPENRTM_UTIL_H
 
+#include <cnoid/Signal>
 #include <rtm/Manager.h>
 #include <rtm/ManagerServant.h>
 #include "exportdecl.h"
@@ -22,7 +23,7 @@ CNOID_EXPORT RTC::RTObject_impl* createManagedRTC(const std::string& comp_args);
 
 CNOID_EXPORT int numUnmanagedRTCs();
 CNOID_EXPORT int deleteUnmanagedRTCs();
-    
+
 bool isManagedRTC(RTC::RTObject_ptr rtc);
 
 template<class ServiceType>
@@ -35,6 +36,9 @@ typename ServiceType::_ptr_type findRTCService(RTC::RTObject_ptr rtc, const std:
 template<> CNOID_EXPORT CORBA::Object::_ptr_type findRTCService<CORBA::Object>(RTC::RTObject_ptr rtc, const std::string& name);
 
 CNOID_EXPORT bool deleteRTC(RTC::RtcBase* rtc);
+
+CNOID_EXPORT SignalProxy<void()> sigAboutToFinalizeRTM();
+
 }
 
 #endif

@@ -12,6 +12,7 @@
 #include <iostream>
 #include <boost/format.hpp>
 #include <errno.h>
+#include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
@@ -293,10 +294,10 @@ void EasyScanner::loadFile(const string& filename)
         string message;
         switch(errno){
         case ENOENT:
-            message = filename + " cannot be found.";
+            message = str(format(_("\"%1%\" is not found.")) % filename);
             break;
         default:
-            message = string("I/O error in accessing ") + filename;
+            message = str(format(_("I/O error in accessing \"%1%\".")) % filename);
             break;
         }
         throwException(message.c_str());

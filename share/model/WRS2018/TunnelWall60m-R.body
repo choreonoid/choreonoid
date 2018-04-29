@@ -1,0 +1,25 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: TunnelWall60m-R
+
+links:
+  -
+    type: SubBody
+    uri: TunnelWall20m-R.body
+    jointType: fixed
+    prefix: 1_
+  -
+    type: SubBody
+    translation: [ 20, 0, 0 ]
+    uri: TunnelWall20m-R.body
+    parent: 1_Base
+    jointType: fixed
+    prefix: 2_
+  -
+    type: SubBody
+    translation: [ 40, 0, 0 ]
+    uri: TunnelWall20m-R.body
+    parent: 1_Base
+    jointType: fixed
+    prefix: 3_

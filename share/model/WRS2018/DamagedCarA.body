@@ -1,0 +1,17 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+name: DamagedCarA
+
+links:
+  -
+    name: body
+    jointType: fixed
+    mass: 100.0
+    inertia: [
+      50, 0, 0,
+      0, 50, 0,
+      0, 0, 50 ]
+    elements:
+      Resource:
+        translation: [ -1.325, 0.835, 0 ]
+        uri: resource/DamagedCarA.dae

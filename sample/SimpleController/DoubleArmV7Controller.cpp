@@ -26,15 +26,19 @@ class DoubleArmV7Controller : public cnoid::SimpleController
         AxisType type;
         int id;
         double ratio;
-        double offset;
+        int shift;
+        OperationAxis(Link* joint, AxisType type, int id, double ratio, int shift = 0)
+            : joint(joint), type(type), id(id), ratio(ratio), shift(shift) { }
     };
 
     vector<vector<OperationAxis>> operationAxes;
     int operationSetIndex;
     bool prevSelectButtonState;
 
-    const int SHIFT_BUTTON_ID = 5;
-    const int SELECT_BUTTON_ID = 10;
+    const int SHIFT_BUTTON = Joystick::L_BUTTON;
+    int shiftState;
+    
+    const int SELECT_BUTTON_ID = Joystick::LOGO_BUTTON;
     
     Link* trackL;
     Link* trackR;
@@ -182,29 +186,35 @@ void DoubleArmV7Controller::initPDGain()
 void DoubleArmV7Controller::initJoystickKeyBind()
 {
     operationAxes = {
-    {
-    { link("MFRAME"),       STICK,  0, -1.0, 0.0 },
-    { link("BLOCK"),        STICK,  2, -1.0, 0.0 },
-    { link("BOOM"),         STICK,  1, -1.0, 0.0 },
-    { link("ARM"),          STICK,  3,  1.0, 0.0 },
-    { link("TOHKU_PITCH"),  STICK,  5,  1.0, 0.0 },
-    { link("TOHKU_ROLL"),   STICK,  6,  1.0, 1.0 },
-    { link("TOHKU_ROLL"),   STICK,  7, -1.0, 1.0 },
-    { link("TOHKU_TIP_01"), BUTTON, 1,  1.0, 0.0 },
-    { link("TOHKU_TIP_02"), BUTTON, 1,  1.0, 0.0 },
-    { link("TOHKU_TIP_01"), BUTTON, 2, -1.0, 0.0 },
-    { link("TOHKU_TIP_02"), BUTTON, 2, -1.0, 0.0 } },
-    {
-    { link("UFRAME"),       STICK,  0, -1.0, 0.0 },
-    { link("MNP_SWING"),    STICK,  2, -1.0, 0.0 },
-    { link("MANIBOOM"),     STICK,  1, -1.0, 0.0 },
-    { link("MANIARM"),      STICK,  3,  1.0, 0.0 },
-    { link("MANIELBOW"),    STICK,  5,  1.0, 0.0 },
-    { link("YAWJOINT"),     STICK,  4, -1.0, 0.0 },
-    { link("HANDBASE"),     STICK,  6, -1.0, 1.0 },
-    { link("HANDBASE"),     STICK,  7,  1.0, 1.0 },
-    { link("PUSHROD"),      BUTTON, 1,  0.1, 0.0 },
-    { link("PUSHROD"),      BUTTON, 2, -0.1, 0.0 } } };
+        {
+            { link("MFRAME"),       STICK,  Joystick::L_STICK_H_AXIS, -0.6 },
+            { link("BLOCK"),        STICK,  Joystick::R_STICK_H_AXIS, -0.6 },
+            { link("BOOM"),         STICK,  Joystick::L_STICK_V_AXIS, -0.6 },
+            { link("ARM"),          STICK,  Joystick::R_STICK_V_AXIS,  0.6 },
+            { link("TOHKU_PITCH"),  BUTTON, Joystick::A_BUTTON,        0.6 },
+            { link("TOHKU_PITCH"),  BUTTON, Joystick::Y_BUTTON,       -0.6 },
+            { link("TOHKU_ROLL"),   BUTTON, Joystick::X_BUTTON,        1.0 },
+            { link("TOHKU_ROLL"),   BUTTON, Joystick::B_BUTTON,       -1.0 },
+            { link("TOHKU_TIP_01"), STICK,  Joystick::R_TRIGGER_AXIS, -0.6 },
+            { link("TOHKU_TIP_02"), STICK,  Joystick::R_TRIGGER_AXIS, -0.6 },
+            { link("TOHKU_TIP_01"), BUTTON, Joystick::R_BUTTON,        0.5 },
+            { link("TOHKU_TIP_02"), BUTTON, Joystick::R_BUTTON,        0.5 }
+        },
+        {
+            { link("UFRAME"),       STICK,  Joystick::L_STICK_H_AXIS, -0.6 },
+            { link("MNP_SWING"),    STICK,  Joystick::R_STICK_H_AXIS, -0.6 },
+            { link("MANIBOOM"),     STICK,  Joystick::L_STICK_V_AXIS, -0.6 },
+            { link("MANIARM"),      STICK,  Joystick::R_STICK_V_AXIS,  0.6 },
+            { link("MANIELBOW"),    BUTTON, Joystick::A_BUTTON,        0.6 },
+            { link("MANIELBOW"),    BUTTON, Joystick::Y_BUTTON,       -0.6 },
+            { link("YAWJOINT"),     BUTTON, Joystick::X_BUTTON,        1.0, 1 },
+            { link("YAWJOINT"),     BUTTON, Joystick::B_BUTTON,       -1.0, 1 },
+            { link("HANDBASE"),     BUTTON, Joystick::X_BUTTON,       -1.0, 0 },
+            { link("HANDBASE"),     BUTTON, Joystick::B_BUTTON,        1.0, 0 },
+            { link("PUSHROD"),      STICK,  Joystick::R_TRIGGER_AXIS, -0.04 },
+            { link("PUSHROD"),      BUTTON, Joystick::R_BUTTON,        0.04 },
+        }
+    };
 
     operationSetIndex = 0;
     prevSelectButtonState = false;
@@ -213,6 +223,8 @@ void DoubleArmV7Controller::initJoystickKeyBind()
 bool DoubleArmV7Controller::control()
 {
     joystick.readCurrentState();
+
+    shiftState = joystick.getButtonState(SHIFT_BUTTON) ? 1 : 0;
 
     bool selectButtonState = joystick.getButtonState(SELECT_BUTTON_ID);
     if(!prevSelectButtonState && selectButtonState){
@@ -224,11 +236,8 @@ bool DoubleArmV7Controller::control()
     trackL->dq() = 0.0;
     trackR->u() = 0.0;
     trackR->dq() = 0.0;
-    if(joystick.getButtonState(SHIFT_BUTTON_ID)){
-        controlTracks();
-    }else{
-        setTargetArmPositions();
-    }
+    controlTracks();
+    setTargetArmPositions();
     controlArms();
 
     return true;
@@ -237,12 +246,28 @@ bool DoubleArmV7Controller::control()
 void DoubleArmV7Controller::controlTracks()
 {
     double pos[2];
+
+    const double k1 = 0.4;
+    const double k2 = 0.6;
+
+    pos[0] = k1 * joystick.getPosition(Joystick::DIRECTIONAL_PAD_H_AXIS);
+    pos[1] = k1 * joystick.getPosition(Joystick::DIRECTIONAL_PAD_V_AXIS);
+    
+    if(shiftState == 1){
+        pos[0] += k2 * (
+            joystick.getPosition(Joystick::L_STICK_H_AXIS) +
+            joystick.getPosition(Joystick::R_STICK_H_AXIS));
+        pos[1] += k2 * (
+            joystick.getPosition(Joystick::L_STICK_V_AXIS) +
+            joystick.getPosition(Joystick::R_STICK_V_AXIS));
+    }
+    
     for(int i=0; i < 2; ++i){
-        pos[i] = joystick.getPosition(i);
         if(fabs(pos[i]) < 0.2){
             pos[i] = 0.0;
         }
     }
+
     // set the velocity of each track
     if(hasPseudoContinuousTracks || mainActuationMode == Link::ActuationMode::JOINT_VELOCITY
         || mainActuationMode == Link::ActuationMode::JOINT_ANGLE){
@@ -259,22 +284,23 @@ void DoubleArmV7Controller::setTargetArmPositions()
     const vector<OperationAxis>& axes = operationAxes[operationSetIndex];
 
     for(auto& axis : axes){
-        Link* joint = axis.joint;
-        double& q = qref[armJointIdMap[joint->jointId()]];
-        if(axis.type == BUTTON){
-            if(joystick.getButtonState(axis.id)){
-                q += axis.ratio * dt;
-            }
-        } else if(axis.type == STICK){
+        if(axis.shift < 0 || axis.shift == shiftState){
+            Link* joint = axis.joint;
+            double& q = qref[armJointIdMap[joint->jointId()]];
+            if(axis.type == BUTTON){
+                if(joystick.getButtonState(axis.id)){
+                    q += axis.ratio * dt;
+                }
+            } else if(axis.type == STICK){
                 double pos = joystick.getPosition(axis.id);
-                pos += axis.offset;
                 q += axis.ratio * pos * dt;
             }
-        if(q > joint->q_upper()){
-            q = joint->q_upper();
-        } else if(q < joint->q_lower()){
+            if(q > joint->q_upper()){
+                q = joint->q_upper();
+            } else if(q < joint->q_lower()){
                 q = joint->q_lower();
             }
+        }
     }
 }
 

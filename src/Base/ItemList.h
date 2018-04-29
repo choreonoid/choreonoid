@@ -7,11 +7,23 @@
 
 #include "Item.h"
 #include <cnoid/PolymorphicPointerArray>
+#include "exportdecl.h"
 
 namespace cnoid {
 
+class CNOID_EXPORT ItemListBase
+{
+public:
+    virtual bool push_back_if_type_matches(Item* item) = 0;
+    bool extractChildItemsSub(Item* item);
+    bool extractParentItemsSub(Item* item);
+    bool extractAssociatedItemsSub(Item* item);
+    bool extractSubItemsSub(Item* item);
+};
+    
+
 template<class ItemType = Item>
-class ItemList : public PolymorphicPointerArray<ItemType, ref_ptr<ItemType> >
+class ItemList : public PolymorphicPointerArray<ItemType, ref_ptr<ItemType>>, public ItemListBase
 {
     typedef PolymorphicPointerArray<ItemType, ref_ptr<ItemType> > ArrayBase;
 
@@ -27,28 +39,24 @@ public:
 
     ItemType* get(int index) const { return ArrayBase::operator[](index).get(); }
 
-    bool extractChildItems(ItemPtr item) {
-        ArrayBase::clear();
-        extractChildItemsSub(item->childItem());
-        return !ArrayBase::empty();
-    }
-        
     ItemType* toSingle(bool allowFromMultiElements = false) const {
         return (ArrayBase::size() == 1 || (allowFromMultiElements && !ArrayBase::empty())) ?
             ArrayBase::front().get() : 0;
     }
 
-    bool extractSubItems(ItemPtr item){
+    bool extractChildItems(Item* item){ 
         ArrayBase::clear();
-        for(Item* child = item->childItem(); child; child = child->nextItem()){
-            if(child->isSubItem()){
-                ItemType* targetItem = dynamic_cast<ItemType*>(child);
-                if(targetItem){
-                    ArrayBase::push_back(targetItem);
-                }
-            }
-        }
-        return !ArrayBase::empty();
+        return ItemListBase::extractChildItemsSub(item);
+    }
+
+    bool extractAssociatedItems(Item* item){
+        ArrayBase::clear();
+        return ItemListBase::extractAssociatedItemsSub(item);
+    }
+        
+    bool extractSubItems(Item* item){
+        ArrayBase::clear();
+        return ItemListBase::extractSubItemsSub(item);
     }
 
     ItemType* find(const std::string& name){
@@ -61,15 +69,12 @@ public:
     }
 
 private:
-    void extractChildItemsSub(Item* item){
-        if(item){
-            ItemType* targetItem = dynamic_cast<ItemType*>(item);
-            if(targetItem){
-                ArrayBase::push_back(targetItem);
-            }
-            extractChildItemsSub(item->childItem());
-            extractChildItemsSub(item->nextItem());
+    virtual bool push_back_if_type_matches(Item* item) override {
+        if(ItemType* casted = dynamic_cast<ItemType*>(item)){
+            ArrayBase::push_back(casted);
+            return true;
         }
+        return false;
     }
 };
 

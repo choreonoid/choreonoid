@@ -31,8 +31,7 @@ add_definitions(-D__WIN32__ -D__x86__ -D__NT__ -D__OSVERSION__=4 -D_CRT_SECURE_N
 endif()
 
 if(MSVC)
-#  target_link_libraries(${target} CnoidBodyPlugin CnoidCorbaPlugin ${OPENRTM_LIBRARIES} optimized CnoidOpenRTMPlugin debug  CnoidOpenRTMd)
-  target_link_libraries(${target} CnoidBodyPlugin CnoidCorbaPlugin ${OPENRTM_LIBRARIES} optimized CnoidOpenRTMPlugin)
+  target_link_libraries(${target} CnoidBodyPlugin CnoidCorbaPlugin ${OPENRTM_LIBRARIES} optimized CnoidOpenRTMPlugin debug  CnoidOpenRTMd)
 else()
   target_link_libraries(${target} CnoidBodyPlugin CnoidCorbaPlugin ${OPENRTM_LIBRARIES} CnoidOpenRTMPlugin)
 endif()

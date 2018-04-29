@@ -1,6 +1,11 @@
 #include "AGXObjectFactory.h"
+#include <agx/version.h>
 
 namespace cnoid{
+
+////////////////////////////////////////////////////////////
+// AGXGeometryDesc
+const agx::Name AGXGeometryDesc::globalCollisionGroupName = "AGXGlobalCollisionGroup";
 
 ////////////////////////////////////////////////////////////
 // AGXPseudoContinuousTrackGeometry
@@ -42,6 +47,7 @@ agxSDK::SimulationRef AGXObjectFactory::createSimulation(const AGXSimulationDesc
     sim->getSpace()->setContactReductionBinResolution(desc.contactReductionBinResolution);
     sim->getSpace()->setContactReductionThreshold(desc.contactReductionThreshhold);
     sim->getDynamicsSystem()->setEnableContactWarmstarting(desc.enableContactWarmstarting);
+    sim->getMergeSplitHandler()->setEnable(desc.enableAMOR);
     sim->getDynamicsSystem()->getAutoSleep()->setEnable(desc.enableAutoSleep);
     return sim;
 }
@@ -55,16 +61,16 @@ agx::MaterialRef AGXObjectFactory::createMaterial(const AGXMaterialDesc & desc)
 
     // Below are overried when ContactMaterials are used.
     m->getBulkMaterial()->setViscosity(desc.viscosity);
-    m->getBulkMaterial()->setDamping(desc.damping);
+    m->getBulkMaterial()->setDamping(desc.spookDamping);
     m->getSurfaceMaterial()->setRoughness(desc.roughness);
     m->getSurfaceMaterial()->setViscosity(desc.surfaceViscosity);
     m->getSurfaceMaterial()->setAdhesion(desc.adhesionForce, desc.adhesivOverlap);
 
     // WireMaterial
     m->getWireMaterial()->setYoungsModulusBend(desc.wireYoungsModulusBend);
-    m->getWireMaterial()->setDampingBend(desc.wireDampingBend);
+    m->getWireMaterial()->setDampingBend(desc.wireSpookDampingBend);
     m->getWireMaterial()->setYoungsModulusStretch(desc.wireYoungsModulusStretch);
-    m->getWireMaterial()->setDampingStretch(desc.wireDampingStretch);
+    m->getWireMaterial()->setDampingStretch(desc.wireSpookDampingStretch);
 
     return m;
 }
@@ -111,7 +117,8 @@ agxCollide::GeometryRef AGXObjectFactory::createGeometry(const AGXGeometryDesc& 
     }else{
         geometry = new agxCollide::Geometry();
     }
-    geometry->addGroup(desc.selfCollsionGroupName);
+    geometry->addGroup(desc.globalCollisionGroupName);
+    geometry->addGroup(desc.selfCollisionGroupName);
     return geometry;
 }
 
@@ -164,6 +171,9 @@ agx::ConstraintRef AGXObjectFactory::createConstraint(const AGXConstraintDesc& d
         default :
             break;
     }
+    constraint->setCompliance(desc.compliance);
+    constraint->setDamping(desc.spookDamping);
+    constraint->setForceRange(desc.forceRange);
     return constraint;
 }
 
@@ -182,7 +192,7 @@ agx::Bool AGXObjectFactory::setContactMaterialParam(agx::ContactMaterial* const 
     if(!cm) return false;
     cm->setYoungsModulus(desc.youngsModulus);
     cm->setRestitution(desc.restitution);
-    cm->setDamping(desc.damping);
+    cm->setDamping(desc.spookDamping);
     if(desc.secondaryFriction >= 0.0){
         cm->setFrictionCoefficient(desc.friction, agx::ContactMaterial::PRIMARY_DIRECTION);
         cm->setFrictionCoefficient(desc.secondaryFriction, agx::ContactMaterial::SECONDARY_DIRECTION);
@@ -200,7 +210,7 @@ agx::Bool AGXObjectFactory::setContactMaterialParam(agx::ContactMaterial* const 
     cm->setContactReductionBinResolution(desc.contactReductionBinResolution);
 
     // Create friction model
-    if(desc.frictionModelType != AGXFrictionModelType::DEFAULT){
+    if(desc.frictionModelType != AGXFrictionModelType::DEFAULT || desc.solveType != agx::FrictionModel::SolveType::SPLIT){
         agx::FrictionModelRef fm = nullptr;
         switch (desc.frictionModelType){
             case AGXFrictionModelType::BOX :
@@ -213,12 +223,13 @@ agx::Bool AGXObjectFactory::setContactMaterialParam(agx::ContactMaterial* const 
                 fm = new agx::ConstantNormalForceOrientedBoxFrictionModel(agx::Real(0.0), nullptr, agx::Vec3(), desc.solveType);
                 break;
             case AGXFrictionModelType::ITERATIVE_PROJECTED_CONE :
+            case AGXFrictionModelType::DEFAULT:
                 fm = new agx::IterativeProjectedConeFriction();
                 break;
-            case AGXFrictionModelType::DEFAULT:
             default:
                 break;
         }
+        if(!fm) return false;
         fm->setSolveType(desc.solveType);
         cm->setFrictionModel(fm);
     }
@@ -286,20 +297,29 @@ agx::PlaneJointRef AGXObjectFactory::createConstraintPlaneJoint(const AGXPlaneJo
     return new agx::PlaneJoint(desc.rigidBodyA, desc.frameA, desc.rigidBodyB, desc.frameB);
 }
 
+agx::VirtualConstraintInertiaRef AGXObjectFactory::createVirtualConstraintInertia(agx::Constraint* const constraint,
+    const agx::Real& rb1TI, const agx::Real& rb1RI,
+    const agx::Real& rb2TI, const agx::Real& rb2RI)
+{
+    return new agx::VirtualConstraintInertia(constraint, rb1TI, rb1RI, rb2TI, rb2RI);
+}
+
 void AGXObjectFactory::setMotor1DParam(agx::Motor1D* controller, const AGXMotor1DDesc& desc)
 {
     controller->setEnable(desc.enable);
     controller->setLocked(desc.enableLock);
     controller->setLockedAtZeroSpeed(desc.enableLockAtZeroSpeed);
     controller->setCompliance(desc.compliance);
-    controller->setDamping(desc.damping);
+    controller->setDamping(desc.spookDamping);
+    controller->setForceRange(desc.forceRange);
 }
 
 void AGXObjectFactory::setLock1DParam(agx::Lock1D* controller, const AGXLock1DDesc& desc)
 {
     controller->setEnable(desc.enable);
     controller->setCompliance(desc.compliance);
-    controller->setDamping(desc.damping);
+    controller->setDamping(desc.spookDamping);
+    controller->setForceRange(desc.forceRange);
 }
 
 void AGXObjectFactory::setRange1DParam(agx::Range1D* controller, const AGXRange1DDesc& desc)
@@ -307,11 +327,13 @@ void AGXObjectFactory::setRange1DParam(agx::Range1D* controller, const AGXRange1
     controller->setEnable(desc.enable);
     controller->setRange(desc.range);
     controller->setCompliance(desc.compliance);
-    controller->setDamping(desc.damping);
+    controller->setDamping(desc.spookDamping);
+    controller->setForceRange(desc.forceRange);
 }
 
 agx::LockJointRef AGXObjectFactory::createConstraintLockJoint(const AGXLockJointDesc & desc)
 {
+    agx::LockJointRef lock;
     return new agx::LockJoint(desc.rigidBodyA, desc.rigidBodyB);
 }
 
@@ -327,7 +349,7 @@ agxVehicle::TrackRef AGXObjectFactory::createVehicleTrack(const AGXVehicleTrackD
         track->add(desc.trackWheelRefs[i]);
     }
     track->getProperties()->setHingeCompliance(desc.hingeCompliance);
-    track->getProperties()->setHingeDamping(desc.hingeDamping);
+    track->getProperties()->setHingeDamping(desc.hingeSpookDamping);
     track->getProperties()->setMinStabilizingHingeNormalForce(desc.minStabilizingHingeNormalForce);
     track->getProperties()->setStabilizingHingeFrictionParameter(desc.stabilizingHingeFrictionParameter);
     track->getProperties()->setNodesToWheelsMergeThreshold(desc.nodesToWheelsMergeThreshold);
@@ -336,7 +358,7 @@ agxVehicle::TrackRef AGXObjectFactory::createVehicleTrack(const AGXVehicleTrackD
     track->getInternalMergeProperties()->setNumNodesPerMergeSegment(desc.numNodesPerMergeSegment);
     track->getInternalMergeProperties()->setEnableLockToReachMergeCondition(desc.enableLockToReachMergeCondition);
     track->getInternalMergeProperties()->setLockToReachMergeConditionCompliance(desc.lockToReachMergeConditionCompliance);
-    track->getInternalMergeProperties()->setLockToReachMergeConditionDamping(desc.lockToReachMergeConditionDamping);
+    track->getInternalMergeProperties()->setLockToReachMergeConditionDamping(desc.lockToReachMergeConditionSpookDamping);
     track->getInternalMergeProperties()->setMaxAngleMergeCondition(desc.maxAngleMergeCondition);
     track->getInternalMergeProperties()->setContactReduction(desc.contactReduction);
 
@@ -360,12 +382,22 @@ agxVehicle::TrackRef AGXObjectFactory::createVehicleTrack(const AGXVehicleTrackD
         agx::AffineMatrix4x4::translate( heightOffset, 0, node.getHalfExtents().z() ) );
         }
     );
+    track->addGroup(AGXGeometryDesc::globalCollisionGroupName);
     return track;
 }
 
+////////////////////////////////////////////////////////////
+// AGXWireDesc
+const agx::Name AGXWireDesc::globalCollisionGroupName = "AGXGlobalWireCollisionGroup";
+
+////////////////////////////////////////////////////////////
+// AGXWire
 agxWire::WireRef AGXObjectFactory::createWire(const AGXWireDesc& desc)
 {
     agxWire::WireRef wire = new agxWire::Wire(desc.radius, desc.resolutionPerUnitLength, desc.enableCollisions);
+#if AGX_VERSION_GREATER_OR_EQUAL(2 ,21, 3, 0)
+    wire->addGroup(AGXWireDesc::globalCollisionGroupName);
+#endif
     return wire;
 }
 

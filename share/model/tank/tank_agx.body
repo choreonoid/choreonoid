@@ -486,23 +486,23 @@ links:
         numberOfNodes: 42
         nodeThickness: 0.01
         nodeWidth:  0.09
-        nodeDistanceTension: 2.0E-4
         nodeThickerThickness: 0.02
-        useThickerNodeEvery: 0
-        hingeCompliance: 9.0E-10
-        hingeDamping: 0.01
-        minStabilizingHingeNormalForce: 100
+        useThickerNodeEvery: 3
+        material: TankTracks
+        nodeDistanceTension: 2.0e-4
         stabilizingHingeFrictionParameter: 1e-6
+        minStabilizingHingeNormalForce: 100
+        hingeCompliance: 9.0e-10
+        hingeSpookDamping: 0.01
         nodesToWheelsMergeThreshold: -0.01
         nodesToWheelsSplitThreshold: -0.009
-        enableMerge: false
-        numNodesPerMergeSegment: 3
-        contactReduction: 3
-        enableLockToReachMergeCondition: true
-        lockToReachMergeConditionCompliance: 0.1
-        lockToReachMergeConditionDamping: 0.01
-        #maxAngleMergeCondition: 1.0E-5
-        material: TankTracks
+#        enableMerge: false
+#        numNodesPerMergeSegment: 3
+#        contactReduction: 3
+#        enableLockToReachMergeCondition: true
+#        lockToReachMergeConditionCompliance: 0.1
+#        lockToReachMergeConditionSpookDamping: 0.01
+#        #maxAngleMergeCondition: 1.0e-5
       -
         type: Visual
         elements:
@@ -686,23 +686,23 @@ links:
         numberOfNodes: 42
         nodeThickness: 0.01
         nodeWidth:  0.09
-        nodeDistanceTension: 2.0E-4
         nodeThickerThickness: 0.02
-        useThickerNodeEvery: 0
-        hingeCompliance: 9.0E-10
-        hingeDamping: 0.01
-        minStabilizingHingeNormalForce: 100
+        useThickerNodeEvery: 3
+        material: TankTracks
+        nodeDistanceTension: 2.0e-4
         stabilizingHingeFrictionParameter: 1e-6
+        minStabilizingHingeNormalForce: 100
+        hingeCompliance: 9.0e-10
+        hingeSpookDamping: 0.01
         nodesToWheelsMergeThreshold: -0.01
         nodesToWheelsSplitThreshold: -0.009
-        enableMerge: false
-        numNodesPerMergeSegment: 3
-        contactReduction: 3
-        enableLockToReachMergeCondition: true
-        lockToReachMergeConditionCompliance: 1.0E-10
-        lockToReachMergeConditionDamping: 0.01
-        #maxAngleMergeCondition: 1.0E-5
-        material: TankTracks
+#        enableMerge: false
+#        numNodesPerMergeSegment: 3
+#        contactReduction: 3
+#        enableLockToReachMergeCondition: true
+#        lockToReachMergeConditionCompliance: 0.1
+#        lockToReachMergeConditionSpookDamping: 0.01
+#        #maxAngleMergeCondition: 1.0e-5
       -
         type: Visual
         elements:

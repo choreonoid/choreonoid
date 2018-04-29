@@ -170,6 +170,12 @@ const char* Plugin::description() const
 }
 
 
+const char* Plugin::MITLicenseText()
+{
+    return cnoid::MITLicenseText();
+}
+
+
 const char* Plugin::LGPLtext()
 {
     return cnoid::LGPLtext();

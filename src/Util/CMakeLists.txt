@@ -1,9 +1,10 @@
 #set(CMAKE_BUILD_TYPE Debug)
-#set_source_files_properties(Image.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
+#set_source_files_properties(JoystickLinux.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
 
 configure_file(Config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/Config.h)
 
 set(sources
+  Referenced.cpp
   ConnectionSet.cpp
   Selection.cpp
   DataMap.cpp
@@ -75,6 +76,7 @@ elseif(APPLE)
 endif()
 
 set(headers
+  Referenced.h
   EasyScanner.h
   GaussianFilter.h
   UniformCubicBSpline.h
@@ -92,7 +94,6 @@ set(headers
   NullOut.h
   PlainSeqFileLoader.h
   RangeLimiter.h
-  Referenced.h
   Seq.h
   AbstractSeq.h
   Timeval.h
@@ -148,9 +149,11 @@ set(headers
   GettextUtil.h
   Selection.h
   DataMap.h
+  JoystickInterface.h
   Joystick.h
-  JoystickGamepad.h
   ExtJoystick.h
+  SharedJoystick.h
+  JoystickGamepad.h
   Task.h
   AbstractTaskSequencer.h
   Exception.h

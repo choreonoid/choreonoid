@@ -8,12 +8,8 @@
 #include <cnoid/RangeSensor>
 #include <cnoid/RangeCamera>
 #include <cnoid/ConnectionSet>
-#include <rtm/idl/InterfaceDataTypes.hh>
-#ifdef _WIN32
-#include <rtm/idl/CameraCommonInterface.hh>
-#else
-#include <rtm/ext/CameraCommonInterface.hh>
-#endif
+#include <cnoid/corba/PointCloud.hh>
+#include <cnoid/corba/CameraImage.hh>
 #include <rtm/idl/BasicDataTypeSkel.h>
 #include <rtm/idl/InterfaceDataTypes.hh>
 #include <rtm/DataInPort.h>
@@ -70,8 +66,8 @@ public:
     CameraPtr camera;
     std::shared_ptr<const Image> prevImage;
 
-		RTC::PointCloud pointCloud;
-    RTC::OutPort<RTC::PointCloud> pointCloudOut;
+    PointCloudTypes::PointCloud pointCloud;
+    RTC::OutPort<PointCloudTypes::PointCloud> pointCloudOut;
     RangeCameraPtr rangeCamera;
     std::shared_ptr<const RangeCamera::PointData> prevPoints;
 
@@ -268,43 +264,43 @@ void TankVisionSensorIoRTC::initializeRangeCamera()
         format = "xyz";
         break;
     }
-    //pointCloud.type = CORBA::string_dup(format.c_str());
+    pointCloud.type = CORBA::string_dup(format.c_str());
 
     if (format == "xyz"){
-        //pointCloud.fields.length(3);
+        pointCloud.fields.length(3);
     }else if (format == "xyzrgb"){
-        //pointCloud.fields.length(6);
+        pointCloud.fields.length(6);
     }
-    //pointCloud.fields[0].name = "x";
-    //pointCloud.fields[0].offset = 0;
-    //pointCloud.fields[0].data_type = PointCloudTypes::FLOAT32;
-    //pointCloud.fields[0].count = 4;
-    //pointCloud.fields[1].name = "y";
-    //pointCloud.fields[1].offset = 4;
-    //pointCloud.fields[1].data_type = PointCloudTypes::FLOAT32;
-    //pointCloud.fields[1].count = 4;
-    //pointCloud.fields[2].name = "z";
-    //pointCloud.fields[2].offset = 8;
-    //pointCloud.fields[2].data_type = PointCloudTypes::FLOAT32;
-    //pointCloud.fields[2].count = 4;
-    //pointCloud.point_step = 12;
+    pointCloud.fields[0].name = "x";
+    pointCloud.fields[0].offset = 0;
+    pointCloud.fields[0].data_type = PointCloudTypes::FLOAT32;
+    pointCloud.fields[0].count = 4;
+    pointCloud.fields[1].name = "y";
+    pointCloud.fields[1].offset = 4;
+    pointCloud.fields[1].data_type = PointCloudTypes::FLOAT32;
+    pointCloud.fields[1].count = 4;
+    pointCloud.fields[2].name = "z";
+    pointCloud.fields[2].offset = 8;
+    pointCloud.fields[2].data_type = PointCloudTypes::FLOAT32;
+    pointCloud.fields[2].count = 4;
+    pointCloud.point_step = 12;
     if (format == "xyzrgb"){
-        //pointCloud.fields[3].name = "r";
-        //pointCloud.fields[3].offset = 12;
-        //pointCloud.fields[3].data_type = PointCloudTypes::UINT8;
-        //pointCloud.fields[3].count = 1;
-        //pointCloud.fields[4].name = "g";
-        //pointCloud.fields[4].offset = 13;
-        //pointCloud.fields[4].data_type = PointCloudTypes::UINT8;
-        //pointCloud.fields[4].count = 1;
-        //pointCloud.fields[5].name = "b";
-        //pointCloud.fields[5].offset = 14;
-        //pointCloud.fields[5].data_type = PointCloudTypes::UINT8;
-        //pointCloud.fields[5].count = 1;
-        //pointCloud.point_step = 16;
+        pointCloud.fields[3].name = "r";
+        pointCloud.fields[3].offset = 12;
+        pointCloud.fields[3].data_type = PointCloudTypes::UINT8;
+        pointCloud.fields[3].count = 1;
+        pointCloud.fields[4].name = "g";
+        pointCloud.fields[4].offset = 13;
+        pointCloud.fields[4].data_type = PointCloudTypes::UINT8;
+        pointCloud.fields[4].count = 1;
+        pointCloud.fields[5].name = "b";
+        pointCloud.fields[5].offset = 14;
+        pointCloud.fields[5].data_type = PointCloudTypes::UINT8;
+        pointCloud.fields[5].count = 1;
+        pointCloud.point_step = 16;
     }
-    //pointCloud.is_bigendian = false;
-    //pointCloud.is_dense = true;
+    pointCloud.is_bigendian = false;
+    pointCloud.is_dense = true;
 
     connections.add(rangeCamera->sigStateChanged().connect(
             [&](){ onRangeCameraStateChanged(); }));
@@ -319,35 +315,35 @@ void TankVisionSensorIoRTC::onRangeCameraStateChanged()
 
         if(!points.empty()){
             if(!image.empty()){
-                //pointCloud.height = image.height();
-                //pointCloud.width = image.width();
+                pointCloud.height = image.height();
+                pointCloud.width = image.width();
             }else{
                 if(rangeCamera->isOrganized()){
-                    //pointCloud.height = rangeCamera->resolutionY();
-                    //pointCloud.width = rangeCamera->resolutionX();
+                    pointCloud.height = rangeCamera->resolutionY();
+                    pointCloud.width = rangeCamera->resolutionX();
                 }else{
-                    //pointCloud.height = 1;
-                    //pointCloud.width = rangeCamera->numPoints();
+                    pointCloud.height = 1;
+                    pointCloud.width = rangeCamera->numPoints();
                 }
             }
-            //pointCloud.row_step = pointCloud.point_step * pointCloud.width;
-            //size_t length = points.size() * pointCloud.point_step;
-            //pointCloud.data.length(length);
-            //unsigned char* dis = (unsigned char*)pointCloud.data.get_buffer();
+            pointCloud.row_step = pointCloud.point_step * pointCloud.width;
+            size_t length = points.size() * pointCloud.point_step;
+            pointCloud.data.length(length);
+            unsigned char* dis = (unsigned char*)pointCloud.data.get_buffer();
             const unsigned char* pixels = 0;
             if(!image.empty())
                 pixels = image.pixels();
-            //for(size_t i=0; i < points.size(); i++, dis += pointCloud.point_step){
-            //    memcpy(&dis[0], &points[i].x(), 4);
-            //    memcpy(&dis[4], &points[i].y(), 4);
-            //    memcpy(&dis[8], &points[i].z(), 4);
-            //    if(pixels){
-            //        dis[12] = *pixels++;
-            //        dis[13] = *pixels++;
-            //        dis[14] = *pixels++;
-            //        dis[15] = 0;
-            //    }
-            //}
+            for(size_t i=0; i < points.size(); i++, dis += pointCloud.point_step){
+                memcpy(&dis[0], &points[i].x(), 4);
+                memcpy(&dis[4], &points[i].y(), 4);
+                memcpy(&dis[8], &points[i].z(), 4);
+                if(pixels){
+                    dis[12] = *pixels++;
+                    dis[13] = *pixels++;
+                    dis[14] = *pixels++;
+                    dis[15] = 0;
+                }
+            }
         }
 
         prevPoints = rangeCamera->sharedPoints();
