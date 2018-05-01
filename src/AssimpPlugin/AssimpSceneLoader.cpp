@@ -17,18 +17,6 @@
 using namespace std;
 using namespace cnoid;
 
-namespace {
-
-struct Registration {
-    Registration() {
-        SceneLoader::registerLoader(
-            "dae;blend;x;obj;dxf",
-            []() -> shared_ptr<AbstractSceneLoader> { return std::make_shared<AssimpSceneLoader>(); });
-    }
-} registration;
-
-}
-
 namespace cnoid {
 
 class AssimpSceneLoaderImpl
@@ -62,6 +50,14 @@ public:
 
 }
 
+
+void AssimpSceneLoader::initializeClass()
+{
+    SceneLoader::registerLoader(
+        "dae;blend;x;obj;dxf",
+        []() -> shared_ptr<AbstractSceneLoader> { return std::make_shared<AssimpSceneLoader>(); });
+}
+    
 
 AssimpSceneLoader::AssimpSceneLoader()
 {

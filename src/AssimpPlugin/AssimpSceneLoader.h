@@ -16,6 +16,8 @@ class AssimpSceneLoaderImpl;
 class CNOID_EXPORT AssimpSceneLoader : public AbstractSceneLoader
 {
 public:
+    static void initializeClass();
+    
     AssimpSceneLoader();
     ~AssimpSceneLoader();
     void setMessageSink(std::ostream& os) override;
