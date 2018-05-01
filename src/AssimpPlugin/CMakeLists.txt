@@ -44,9 +44,9 @@ add_cnoid_library(CnoidAssimpSceneLoader SHARED AssimpSceneLoader.cpp)
 target_link_libraries(CnoidAssimpSceneLoader CnoidUtil ${ASSIMP_LIBRARIES})
 apply_common_setting_for_library(CnoidAssimpSceneLoader)
 
-add_cnoid_plugin(CnoidAssimPlugin SHARED AssimpPlugin)
-target_link_libraries(CnoidAssimPlugin CnoidBase CnoidAssimpSceneLoader)
-apply_common_setting_for_plugin(CnoidAssimPlugin)
+add_cnoid_plugin(CnoidAssimpPlugin SHARED AssimpPlugin)
+target_link_libraries(CnoidAssimpPlugin CnoidBase CnoidAssimpSceneLoader)
+apply_common_setting_for_plugin(CnoidAssimpPlugin)
 
 if(MSVC)
   if(INSTALL_RUNTIME_DEPENDENCIES)
