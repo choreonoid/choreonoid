@@ -127,38 +127,60 @@ SgNode* AssimpSceneLoaderImpl::load(const std::string& filename)
 
 SgTransform* AssimpSceneLoaderImpl::convertAiNode(aiNode* node)
 {
-    const aiMatrix4x4& T = node->mTransformation;
-    Affine3 M;
-    M.translation() << T[0][3], T[1][3], T[2][3];
-    M.linear() << 
-        T[0][0], T[0][1], T[0][2],
-        T[1][0], T[1][1], T[1][2],
-        T[2][0], T[2][1], T[2][2];
+    static const bool USE_AFFINE_TRANSFORM = false;
+    
+    const aiMatrix4x4& S = node->mTransformation;
+    Affine3 T;
+    T.translation() << S[0][3], S[1][3], S[2][3];
+    T.linear() << 
+        S[0][0], S[0][1], S[0][2],
+        S[1][0], S[1][1], S[1][2],
+        S[2][0], S[2][1], S[2][2];
 
     SgTransformPtr transform;
-    if(M.linear().isUnitary(1.0e-6)){
-        transform = new SgPosTransform(M);
+    SgTransform* transformToAddChildren = nullptr;
+    
+    if(T.linear().isUnitary(1.0e-6)){
+        transform = new SgPosTransform(T);
     } else {
-        transform = new SgAffineTransform(M);
-    }
-    transform->setName(node->mName.C_Str());
- 
-    for(unsigned int i=0; i < node->mNumMeshes; ++i){
-        SgNode* shape = convertAiMesh(node->mMeshes[i]);
-        if(shape){
-            transform->addChild(shape);
+        if(USE_AFFINE_TRANSFORM){
+            transform = new SgAffineTransform(T);
+        } else {
+            Vector3 scale;
+            for(int i=0; i < 3; ++i){
+                double s = T.linear().col(i).norm();
+                scale[i] = s;
+                T.linear().col(i) /= s;
+            }
+            transform = new SgScaleTransform(scale);
+
+            if(!T.isApprox(Affine3::Identity())){
+                transformToAddChildren = new SgPosTransform(T);
+                transform->addChild(transformToAddChildren);
+            }
         }
     }
 
+    transform->setName(node->mName.C_Str());
+ 
+    if(!transformToAddChildren){
+        transformToAddChildren = transform;
+    }
+    for(unsigned int i=0; i < node->mNumMeshes; ++i){
+        SgNode* shape = convertAiMesh(node->mMeshes[i]);
+        if(shape){
+            transformToAddChildren->addChild(shape);
+        }
+    }
     for(unsigned int i=0; i < node->mNumChildren; ++i){
         SgTransform* child = convertAiNode(node->mChildren[i]);
         if(child){
-            transform->addChild(child);
+            transformToAddChildren->addChild(child);
         }
     }
 
     if(transform->empty()){
-        transform = 0;
+        transform = nullptr;
     }
 
     return transform.retn();
@@ -296,7 +318,7 @@ SgNode* AssimpSceneLoaderImpl::convertAiMeshFaces(aiMesh* srcMesh)
     }
 
     if(group->empty()){
-        return 0;
+        return nullptr;
     } else if(group->numChildren() == 1){
         SgNodePtr node = group->child(0);
         node->setName(group->name());
