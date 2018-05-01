@@ -16,14 +16,16 @@ namespace cnoid {
 class VRMLWriter;
 
 struct TIndent {
+    TIndent() { size = 2; }
+    void setSize(int s) { size = s; }
     void clear() { n = 0; spaces.clear(); }
     TIndent& operator++() {
-        n += 2;
+        n += size;
         updateSpaces();
         return *this;
     }
     TIndent& operator--() {
-        n -= 2;
+        n -= size;
         if(n < 0) { n = 0; }
         updateSpaces();
         return *this;
@@ -37,6 +39,7 @@ struct TIndent {
     }
     std::string spaces;
     int n;
+    int size;
 };
 
 inline std::ostream& operator<<(std::ostream& out, TIndent& indent)
@@ -81,9 +84,9 @@ class CNOID_EXPORT VRMLWriter
 public:
     VRMLWriter(std::ostream& out);
 
-    void setOutFileName(const std::string& ofname) {
-        this->ofname = ofname;
-    };
+    void setOutFileName(const std::string& ofname);
+    void setIndentSize(int s);
+    void setNumOneLineElements(int n);
     void writeHeader();
     bool writeNode(VRMLNodePtr node);
 
@@ -93,6 +96,7 @@ protected:
     TIndent indent;
     typedef std::map<std::string, VRMLNodePtr> NodeMap;
     NodeMap defNodeMap;
+    int numOneLineElements;
     
     void registerNodeMethodMap();
     void registerNodeMethod(const std::type_info& t, VRMLWriterNodeMethod method);
@@ -119,7 +123,7 @@ protected:
         --indent;
     };
     void writeMFInt32(MFInt32& values, int maxColumns = 10);
-    void writeMFInt32SeparatedByMinusValue(MFInt32& values);
+    void writeMFInt32SeparatedByMinusValue(MFInt32& values, int maxColumns);
     void writeNodeIter(VRMLNodePtr node);
     bool beginNode(const char* nodename, VRMLNodePtr node);
     void endNode();

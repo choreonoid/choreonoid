@@ -49,21 +49,29 @@ void VRMLWriter::writeMFInt32(MFInt32& values, int maxColumns)
 }
 
 
-void VRMLWriter::writeMFInt32SeparatedByMinusValue(MFInt32& values)
+void VRMLWriter::writeMFInt32SeparatedByMinusValue(MFInt32& values, int maxColumns)
 {
     out << ++indent << "[\n";
     ++indent;
 
     out << indent;
+    int col = 0;
     int n = values.size();
     for(int i=0; i < n; i++){
         out << values[i] << " ";
         if(values[i] < 0){
-            out << "\n";
-            if(i < n-1){
-                out << indent;
+            ++col;
+            if(col == maxColumns){
+                col = 0;
+                out << "\n";
+                if(i < n-1){
+                    out << indent;
+                }
             }
         }
+    }
+    if(col < maxColumns){
+        cout << "\n";
     }
   
     out << --indent << "]\n";
@@ -76,6 +84,7 @@ VRMLWriter::VRMLWriter(std::ostream& out) : out(out), ofname()
     if(nodeMethodMap.empty()){
         registerNodeMethodMap();
     }
+    numOneLineElements = 1;
 }
 
 
@@ -103,6 +112,25 @@ void VRMLWriter::registerNodeMethodMap()
     registerNodeMethod(typeid(VRMLCylinder),       &VRMLWriter::writeCylinderNode);
     registerNodeMethod(typeid(VRMLSphere),         &VRMLWriter::writeSphereNode);
 }
+
+
+void VRMLWriter::setOutFileName(const std::string& ofname)
+{
+    this->ofname = ofname;
+}
+
+
+void VRMLWriter::setIndentSize(int s)
+{
+    indent.setSize(s);
+}
+
+
+void VRMLWriter::setNumOneLineElements(int n)
+{
+    numOneLineElements = n;
+}
+
 
 void VRMLWriter::writeHeader()
 {
@@ -441,7 +469,7 @@ void VRMLWriter::writeIndexedFaceSetNode(VRMLNodePtr node)
         }
         if(!faceset->coordIndex.empty()){
             out << indent << "coordIndex\n";
-            writeMFInt32SeparatedByMinusValue(faceset->coordIndex);
+            writeMFInt32SeparatedByMinusValue(faceset->coordIndex, numOneLineElements);
         }
         
         bool hasNormals = false;
@@ -497,7 +525,7 @@ void VRMLWriter::writeCoordinateNode(VRMLCoordinatePtr coord)
     if(beginNode("Coordinate", coord)){
         if(!coord->point.empty()){
             out << indent << "point\n";
-            writeMFValues(coord->point, 1);
+            writeMFValues(coord->point, numOneLineElements);
         }
         endNode();
     }
@@ -508,8 +536,8 @@ void VRMLWriter::writeNormalNode(VRMLNormalPtr normal)
 {
     if(beginNode("Normal", normal)){
         if(!normal->vector.empty()){
-            out << indent << "normal\n";
-            writeMFValues(normal->vector, 1);
+            out << indent << "vector\n";
+            writeMFValues(normal->vector, numOneLineElements);
         }
         endNode();
     }
@@ -521,7 +549,7 @@ void VRMLWriter::writeColorNode(VRMLColorPtr color)
     if(beginNode("Color", color)){
         if(!color->color.empty()){
             out << indent << "color\n";
-            writeMFValues(color->color, 1);
+            writeMFValues(color->color, numOneLineElements);
         }
         endNode();
     }
