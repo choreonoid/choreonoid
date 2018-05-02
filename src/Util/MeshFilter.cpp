@@ -3,7 +3,7 @@
   @author Shin'ichiro Nakaoka
 */
 
-#include "MeshNormalGenerator.h"
+#include "MeshFilter.h"
 #include "SceneDrawables.h"
 
 using namespace std;
@@ -15,7 +15,7 @@ const float PI = 3.14159265358979323846f;
 
 namespace cnoid {
 
-class MeshNormalGeneratorImpl
+class MeshFilterImpl
 {
 public:
     float minCreaseAngle;
@@ -23,10 +23,10 @@ public:
     SgNormalArrayPtr faceNormals;
     vector< vector<int> > vertexIndexToTriangleIndicesMap;
     vector< vector<int> > vertexIndexToNormalIndicesMap;
-    bool isOverwritingEnabled;
+    bool isNormalOverwritingEnabled;
 
-    MeshNormalGeneratorImpl();
-    MeshNormalGeneratorImpl(const MeshNormalGeneratorImpl& org);
+    MeshFilterImpl();
+    MeshFilterImpl(const MeshFilterImpl& org);
     void removeRedundantVertices(SgMesh* mesh);
     void calculateFaceNormals(SgMesh* mesh);
     void setVertexNormals(SgMesh* mesh, float creaseAngle);
@@ -34,64 +34,70 @@ public:
 }
 
 
-MeshNormalGenerator::MeshNormalGenerator()
+MeshFilter::MeshFilter()
 {
-    impl = new MeshNormalGeneratorImpl();
+    impl = new MeshFilterImpl();
 }
 
 
-MeshNormalGeneratorImpl::MeshNormalGeneratorImpl()
+MeshFilterImpl::MeshFilterImpl()
 {
-    isOverwritingEnabled = false;
+    isNormalOverwritingEnabled = false;
     minCreaseAngle = 0.0f;
     maxCreaseAngle = PI;
 }
 
 
-MeshNormalGenerator::MeshNormalGenerator(const MeshNormalGenerator& org)
+MeshFilter::MeshFilter(const MeshFilter& org)
 {
-    impl = new MeshNormalGeneratorImpl(*org.impl);
+    impl = new MeshFilterImpl(*org.impl);
 }
 
 
-MeshNormalGeneratorImpl::MeshNormalGeneratorImpl(const MeshNormalGeneratorImpl& org)
+MeshFilterImpl::MeshFilterImpl(const MeshFilterImpl& org)
 {
-    isOverwritingEnabled = org.isOverwritingEnabled;
+    isNormalOverwritingEnabled = org.isNormalOverwritingEnabled;
     minCreaseAngle = org.minCreaseAngle;
     maxCreaseAngle = org.maxCreaseAngle;
 }
 
 
-MeshNormalGenerator::~MeshNormalGenerator()
+MeshFilter::~MeshFilter()
 {
     delete impl;
 }
 
 
-void MeshNormalGenerator::setOverwritingEnabled(bool on)
+void MeshFilter::setNormalOverwritingEnabled(bool on)
 {
-    impl->isOverwritingEnabled = on;
+    impl->isNormalOverwritingEnabled = on;
 }
 
 
-void MeshNormalGenerator::setMinCreaseAngle(float angle)
+void MeshFilter::setOverwritingEnabled(bool on)
+{
+    setNormalOverwritingEnabled(on);
+}
+
+
+void MeshFilter::setMinCreaseAngle(float angle)
 {
     impl->minCreaseAngle = angle;
 }
 
 
-void MeshNormalGenerator::setMaxCreaseAngle(float angle)
+void MeshFilter::setMaxCreaseAngle(float angle)
 {
     impl->maxCreaseAngle = angle;
 }
 
 
-bool MeshNormalGenerator::generateNormals(SgMesh* mesh, float creaseAngle, bool removeRedundantVertices)
+bool MeshFilter::generateNormals(SgMesh* mesh, float creaseAngle, bool removeRedundantVertices)
 {
     if(!mesh->vertices() || mesh->triangleVertices().empty()){
         return false;
     }
-    if(!impl->isOverwritingEnabled && mesh->normals() && !mesh->normals()->empty()){
+    if(!impl->isNormalOverwritingEnabled && mesh->normals() && !mesh->normals()->empty()){
         return false;
     }
 
@@ -108,7 +114,19 @@ bool MeshNormalGenerator::generateNormals(SgMesh* mesh, float creaseAngle, bool 
 }
 
 
-void MeshNormalGeneratorImpl::removeRedundantVertices(SgMesh* mesh)
+void MeshFilter::removeRedundantVertices(SgNode* node)
+{
+
+}
+
+
+void MeshFilter::removeRedundantVertices(SgMesh* mesh)
+{
+    impl->removeRedundantVertices(mesh);
+}
+
+
+void MeshFilterImpl::removeRedundantVertices(SgMesh* mesh)
 {
     const SgVertexArray& orgVertices = *mesh->vertices();
     const int numVertices = orgVertices.size();
@@ -116,9 +134,9 @@ void MeshNormalGeneratorImpl::removeRedundantVertices(SgMesh* mesh)
     SgVertexArray& newVertices = *newVerticesptr;
     vector<int> indexMap(numVertices);
 
-    for(int i=0; i<numVertices; i++){
+    for(int i=0; i< numVertices; ++i){
         bool found = false;
-        for(int j=0; j<newVertices.size(); j++){
+        for(int j=0; j < newVertices.size(); ++j){
             if(orgVertices[i].isApprox(newVertices[j])){
                 indexMap[i] = j;
                 found = true;
@@ -131,8 +149,9 @@ void MeshNormalGeneratorImpl::removeRedundantVertices(SgMesh* mesh)
         }
     }
 
-    if(newVertices.size()==numVertices)
+    if(newVertices.size() == numVertices){
         return;
+    }
 
     mesh->setVertices(newVerticesptr);
 
@@ -155,11 +174,10 @@ void MeshNormalGeneratorImpl::removeRedundantVertices(SgMesh* mesh)
             triangle[j] = indexMap[triangle[j]];
         }
     }
-
 }
 
 
-void MeshNormalGeneratorImpl::calculateFaceNormals(SgMesh* mesh)
+void MeshFilterImpl::calculateFaceNormals(SgMesh* mesh)
 {
     const SgVertexArray& vertices = *mesh->vertices();
     const int numVertices = vertices.size();
@@ -210,7 +228,7 @@ void MeshNormalGeneratorImpl::calculateFaceNormals(SgMesh* mesh)
 }
     
 
-void MeshNormalGeneratorImpl::setVertexNormals(SgMesh* mesh, float givenCreaseAngle)
+void MeshFilterImpl::setVertexNormals(SgMesh* mesh, float givenCreaseAngle)
 {
     const float creaseAngle = std::max(minCreaseAngle, std::min(maxCreaseAngle, givenCreaseAngle));
     
