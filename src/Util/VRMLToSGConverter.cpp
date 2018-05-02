@@ -652,7 +652,6 @@ bool VRMLToSGConverterImpl::convertIndicesForTriangles
 
 SgPolygonMeshPtr VRMLToSGConverterImpl::createPolygonMeshFromIndexedFaceSet(VRMLIndexedFaceSet* vface)
 {
-    //if(!vface->coord || vface->coord->point.empty() || vface->coordIndex.empty()){
     if(!vface->coord){
         putMessage("VRMLIndexedFaceSet: The coord field is not defined." );
         return nullptr;

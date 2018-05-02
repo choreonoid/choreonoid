@@ -324,11 +324,14 @@ public:
         triangleVertices_[i+2] = v2;
     }
 
-    TriangleRef addTriangle(){
+    TriangleRef newTriangle(){
         const size_t s = triangleVertices_.size();
         triangleVertices_.resize(s + 3);
         return TriangleRef(&triangleVertices_[s]);
     }
+
+    // deprecated
+    TriangleRef addTriangle(){ return newTriangle(); }
 
     void addTriangle(int v0, int v1, int v2){
         triangleVertices_.push_back(v0);

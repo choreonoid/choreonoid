@@ -26,12 +26,15 @@ public:
     void setMaxCreaseAngle(float angle);
     bool generateNormals(SgMesh* mesh, float creaseAngle = 3.14159f, bool removeRedundantVertices = false);
 
-    void removeRedundantVertices(SgNode* node);
+    void removeRedundantVertices(SgNode* scene);
     void removeRedundantVertices(SgMesh* mesh);
-    
-    void removeRedundantFaces(SgNode* node);
-    void removeRedundantFaces(SgMesh* mesh);
 
+    /**
+       The following functions can be applied to the meshes that do not have redundant vertices
+    */
+    void removeRedundantFaces(SgNode* scene);
+    void removeRedundantFaces(SgMesh* mesh);
+    
     // Deprecated. Use enableNormalOverwriting()
     void setOverwritingEnabled(bool on);
 

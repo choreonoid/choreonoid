@@ -4,14 +4,39 @@
 */
 
 #include "MeshFilter.h"
+#include "MeshExtractor.h"
 #include "SceneDrawables.h"
+#include <unordered_set>
+#include <functional>
 
 using namespace std;
 using namespace cnoid;
 
 namespace {
+
 const float PI = 3.14159265358979323846f;
+
 }
+
+namespace std {
+
+template<> struct hash<Array3i>
+{
+    void hash_combine(std::size_t& seed, int v) const {
+        std::hash<int> hasher;
+        seed ^= hasher(v) + 0x9e3779b9 + (seed<<6) + (seed>>2);
+    }
+    std::size_t operator()(const Array3i& value) const {
+        std::size_t seed = 0;
+        hash_combine(seed, value[0]);
+        hash_combine(seed, value[1]);
+        hash_combine(seed, value[2]);
+        return seed;
+    }
+};
+
+}
+
 
 namespace cnoid {
 
@@ -21,16 +46,20 @@ public:
     float minCreaseAngle;
     float maxCreaseAngle;
     SgNormalArrayPtr faceNormals;
-    vector< vector<int> > vertexIndexToTriangleIndicesMap;
-    vector< vector<int> > vertexIndexToNormalIndicesMap;
+    vector<vector<int>> vertexIndexToTriangleIndicesMap;
+    vector<vector<int>> vertexIndexToNormalIndicesMap;
+    unique_ptr<MeshExtractor> meshExtractor;
     bool isNormalOverwritingEnabled;
 
     MeshFilterImpl();
     MeshFilterImpl(const MeshFilterImpl& org);
+    void forAllMeshes(SgNode* node, function<void(SgMesh* mesh)> callback);
     void removeRedundantVertices(SgMesh* mesh);
+    void removeRedundantFaces(SgMesh* mesh);
     void calculateFaceNormals(SgMesh* mesh);
     void setVertexNormals(SgMesh* mesh, float creaseAngle);
 };
+
 }
 
 
@@ -92,6 +121,15 @@ void MeshFilter::setMaxCreaseAngle(float angle)
 }
 
 
+void MeshFilterImpl::forAllMeshes(SgNode* node, function<void(SgMesh* mesh)> callback)
+{
+    if(!meshExtractor){
+        meshExtractor.reset(new MeshExtractor);
+    }
+    meshExtractor->extract(node, callback);
+}
+
+
 bool MeshFilter::generateNormals(SgMesh* mesh, float creaseAngle, bool removeRedundantVertices)
 {
     if(!mesh->vertices() || mesh->triangleVertices().empty()){
@@ -114,9 +152,9 @@ bool MeshFilter::generateNormals(SgMesh* mesh, float creaseAngle, bool removeRed
 }
 
 
-void MeshFilter::removeRedundantVertices(SgNode* node)
+void MeshFilter::removeRedundantVertices(SgNode* scene)
 {
-
+    impl->forAllMeshes(scene, [&](SgMesh* mesh){ impl->removeRedundantVertices(mesh); });
 }
 
 
@@ -168,11 +206,45 @@ void MeshFilterImpl::removeRedundantVertices(SgMesh* mesh)
     }
 
     const int numTriangles = mesh->numTriangles();
-    for(int i=0; i < numTriangles; i++){
+    for(int i=0; i < numTriangles; ++i){
         SgMesh::TriangleRef triangle = mesh->triangle(i);
-        for(int j=0; j<3; j++){
+        for(int j=0; j < 3; ++j){
             triangle[j] = indexMap[triangle[j]];
         }
+    }
+}
+
+
+void MeshFilter::removeRedundantFaces(SgNode* scene)
+{
+    impl->forAllMeshes(scene, [&](SgMesh* mesh){ impl->removeRedundantFaces(mesh); });
+}
+
+
+void MeshFilter::removeRedundantFaces(SgMesh* mesh)
+{
+    impl->removeRedundantFaces(mesh);
+}
+
+
+void MeshFilterImpl::removeRedundantFaces(SgMesh* mesh)
+{
+    unordered_set<Array3i> existingFaces;
+
+    const auto orgTriangles = mesh->triangleVertices();
+    auto& triangles = mesh->triangleVertices();
+    triangles.clear();
+    for(size_t i=0; i < orgTriangles.size(); ++i){
+        Array3i triangle(orgTriangles[i * 3]);
+
+        // sort triangle elements
+
+        /*
+        auto result = existingFaces.insert(triangle);
+        if(result.second){
+            mesh->newTriangle() = triangle;
+        }
+        */
     }
 }
 
