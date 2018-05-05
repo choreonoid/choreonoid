@@ -13,6 +13,7 @@ namespace cnoid {
 
 template<class T = int> class IdPair
 {
+protected:
     T id[2];
 
 public:
