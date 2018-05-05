@@ -214,6 +214,45 @@ bool MeshFilter::generateNormals(SgMesh* mesh, float creaseAngle, bool removeRed
 }
 
 
+void MeshFilter::integrateMeshes(SgMesh* mesh1, SgMesh* mesh2)
+{
+    if(!mesh1 || !mesh2 || !mesh2->hasVertices()){
+        return;
+    }
+    auto& vertices = *mesh1->getOrCreateVertices();
+    const int vertexOffset = vertices.size();
+    const auto& vertices2 = *mesh2->vertices();
+    vertices.resize(vertexOffset + vertices2.size());
+    std::copy(vertices2.begin(), vertices2.end(), vertices.begin() + vertexOffset);
+
+    auto& triangles = mesh1->triangleVertices();
+    const auto& triangles2 = mesh2->triangleVertices();
+    triangles.reserve(triangles.size() + triangles2.size());
+    for(const auto& index : triangles2){
+        triangles.push_back(index + vertexOffset);
+    }
+
+    if(mesh2->hasNormals() && (mesh1->hasNormals() || vertexOffset == 0)){
+        auto& normals = *mesh1->getOrCreateNormals();
+        const int normalOffset = normals.size();
+        const auto& normals2 = *mesh2->normals();
+        normals.resize(normalOffset + normals2.size());
+        std::copy(normals2.begin(), normals2.end(), normals.begin() + normalOffset);
+
+        auto& normalIndices = mesh1->normalIndices();
+        auto& normalIndices2 = mesh2->normalIndices();
+        normalIndices.reserve(normalIndices.size() + normalIndices2.size());
+        for(const auto& index : normalIndices2){
+            normalIndices.push_back(index + normalOffset);
+        }
+    }
+
+    //! \todo Integrate colors and texCoords, too
+
+    mesh1->setPrimitive(SgMesh::MESH);
+}
+
+
 void MeshFilter::removeRedundantVertices(SgNode* scene)
 {
     impl->forAllMeshes(scene, [&](SgMesh* mesh){ impl->removeRedundantVertices(mesh); });
