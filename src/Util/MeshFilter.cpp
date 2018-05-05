@@ -21,7 +21,7 @@ const float PI = 3.14159265358979323846f;
 typedef array<int, 3> FaceId;
 
 template<class Triangle>
-FaceId faceId(Triangle& triangle)
+FaceId getFaceId(Triangle& triangle)
 {
     FaceId id = { triangle[0], triangle[1], triangle[2] };
     std::sort(id.begin(), id.end());
@@ -31,12 +31,37 @@ FaceId faceId(Triangle& triangle)
 typedef vector<int> FaceSet; // Set of triangle indices
 typedef unordered_map<FaceId, FaceSet> IdenticalFaceSetMap;
 
-typedef IdPair<int> EdgeId;
-
-EdgeId edgeId(SgMesh::TriangleRef triangle, int index)
+struct EdgeId : public IdPair<int>
 {
-    static const int offsets[][2] = { { 0, 1 }, { 1, 2 }, { 2, 0 } };
-    return EdgeId(triangle[offsets[index][0]], triangle[offsets[index][1]]);
+    int localIndex;
+    
+    EdgeId(SgMesh::TriangleRef triangle, int index)
+        : localIndex(index) {
+        static const int offsets[][2] = { { 0, 1 }, { 1, 2 }, { 0, 2 } };
+        set(triangle[offsets[index][0]], triangle[offsets[index][1]]);
+    }
+
+    int oppositeVertex(SgMesh::TriangleRef triangle){
+        if(localIndex == 0){
+            return triangle[2];
+        } else if(localIndex == 1){
+            return triangle[0];
+        } else {
+            return triangle[1];
+        }
+    }
+};
+    
+
+int getOppositeVertexOffset(int edgeIndex)
+{
+    if(edgeIndex == 0){
+        return 2;
+    } else if(edgeIndex == 1){
+        return 0;
+    } else {
+        return 1;
+    }
 }
 
 }
@@ -55,6 +80,13 @@ template<> struct hash<FaceId>
         hash_combine(seed, id[1]);
         hash_combine(seed, id[2]);
         return seed;
+    }
+};
+
+template<> struct hash<EdgeId>
+{
+    std::size_t operator()(const EdgeId& id) const {
+        return std::hash<IdPair<int>>()(id);
     }
 };
 
@@ -82,10 +114,10 @@ public:
     MeshFilterImpl(const MeshFilterImpl& org);
     void forAllMeshes(SgNode* node, function<void(SgMesh* mesh)> callback);
     void removeRedundantVertices(SgMesh* mesh);
-    void determineFaceSideToRemain(SgMesh* mesh, const SgIndexArray& orgTriangles);
     void removeRedundantFaces(SgMesh* mesh);
-    void determineFaceSideToRemain(SgMesh* mesh);
-    void determineFaceSideToRemainIter(SgMesh* mesh, vector<bool>& traversed, int faceIndex, int prevFaceIndex);
+    void determineAllFaceSides(SgMesh* mesh);
+    void determineFaceSideIter(SgMesh* mesh, vector<bool>& determined, int faceIndex);
+    bool determineFaceSide(SgMesh* mesh, int faceIndex, int adjacentFaceIndex, EdgeId edgeId);
     void makeFacesOfEdgeMap(SgMesh* mesh);
     void calculateFaceNormals(SgMesh* mesh);
     void makeFacesOfVertexMap(SgMesh* mesh, bool removeSameNormalFaces = false);
@@ -274,7 +306,7 @@ void MeshFilterImpl::removeRedundantFaces(SgMesh* mesh)
     
     for(int i=0; i < numOrgTriangles; ++i){
         SgMesh::ConstTriangleRef triangle(&orgTriangles[i*3]);
-        auto inserted = identicalFaceSetMap.insert(make_pair(faceId(triangle), FaceSet()));
+        auto inserted = identicalFaceSetMap.insert(make_pair(getFaceId(triangle), FaceSet()));
         if(inserted.second){
             mesh->newTriangle() = triangle;
         }
@@ -283,47 +315,93 @@ void MeshFilterImpl::removeRedundantFaces(SgMesh* mesh)
     }
 
     if(mesh->numTriangles() != numOrgTriangles){
-        determineFaceSideToRemain(mesh);
+        determineAllFaceSides(mesh);
     }
 }
 
 
-void MeshFilterImpl::determineFaceSideToRemain(SgMesh* mesh)
+void MeshFilterImpl::determineAllFaceSides(SgMesh* mesh)
 {
     makeFacesOfEdgeMap(mesh);
-    vector<bool> traversed(mesh->numTriangles(), false);
-    determineFaceSideToRemainIter(mesh, traversed, 0, 0);
+    vector<bool> determined(mesh->numTriangles(), false);
+
+    // determine the face side of the first triangle
+    auto triangle = mesh->triangle(0);
+    identicalFaceSetMap[getFaceId(triangle)].resize(1);
+    determined[0] = true;
+    
+    determineFaceSideIter(mesh, determined, 0);
 }
 
 
-void MeshFilterImpl::determineFaceSideToRemainIter
-(SgMesh* mesh, vector<bool>& traversed, int faceIndex, int prevFaceIndex)
+void MeshFilterImpl::determineFaceSideIter(SgMesh* mesh, vector<bool>& determined, int faceIndex)
 {
-    if(traversed[faceIndex]){
-        return;
-    }
-    traversed[faceIndex] = true;
-
     auto triangle = mesh->triangle(faceIndex);
-    auto& faces = identicalFaceSetMap[faceId(triangle)];
-    
-    if(faces.size() >= 2){
-        if(faceIndex == prevFaceIndex){
-            faces.resize(1);
-        } else {
-
-        }
-    }
-
     for(int i=0; i < 3; ++i){
-        auto& facesOfEdge = facesOfEdgeMap[edgeId(triangle, i)];
+        EdgeId edgeId(triangle, i);
+        auto& facesOfEdge = facesOfEdgeMap[edgeId];
         for(auto& adjacentFaceIndex : facesOfEdge){
-            if(adjacentFaceIndex != faceIndex){
-                determineFaceSideToRemainIter(
-                    mesh, traversed, adjacentFaceIndex, faceIndex);
+            if(adjacentFaceIndex != faceIndex && !determined[faceIndex]){
+                if(determineFaceSide(mesh, adjacentFaceIndex, faceIndex, edgeId)){
+                    determined[faceIndex] = true;
+                    determineFaceSideIter(mesh, determined, adjacentFaceIndex);
+                }
             }
         }
     }
+}
+
+
+bool MeshFilterImpl::determineFaceSide(SgMesh* mesh, int faceIndex, int adjacentFaceIndex, EdgeId edgeId)
+{
+    auto triangle = mesh->triangle(faceIndex);
+    auto& faces = identicalFaceSetMap[getFaceId(triangle)];
+
+    if(faces.size() <= 1){
+        return true;
+    }
+
+    auto& vertices = *mesh->vertices();
+    auto e0 = vertices[edgeId[0]];
+    auto e = (vertices[edgeId[1]] - e0).normalized();
+
+    auto adjacentTriangle = mesh->triangle(adjacentFaceIndex);
+    auto o0 = vertices[edgeId.oppositeVertex(adjacentTriangle)];
+    auto s0 = o0 - (o0 - e0).dot(e) * e + e0;
+
+    auto o1 = vertices[edgeId.oppositeVertex(triangle)];
+    auto s1 = o1 - (o1 - e0).dot(e) * e + e0;
+    double a = s0.dot(s1);
+    auto& n0 = faceNormals[adjacentFaceIndex];
+
+    bool determined = false;
+    int sideIndex = 0;
+    for(sideIndex = 0; sideIndex < 3; ++sideIndex){
+        auto& n1 = faceNormals[faces[sideIndex]];
+        double b = n0.dot(n1);
+        if(a <= 0){
+            if(b >= 0){
+                determined = true;
+                break;
+            }
+        } else {
+            if(b < 0){
+                determined = true;
+                break;
+            }
+        }
+    }
+
+    if(determined){
+        if(sideIndex > 0){
+            int orgTriangleIndex = faces[sideIndex];
+            SgIndexArray::value_type* flipped = &orgTriangles[orgTriangleIndex * 3];
+            mesh->setTriangle(faceIndex, flipped[0], flipped[1], flipped[2]);
+        }
+        faces.resize(1);
+    }
+
+    return determined;
 }
 
 
@@ -335,7 +413,7 @@ void MeshFilterImpl::makeFacesOfEdgeMap(SgMesh* mesh)
     for(int i=0; i < numTriangles; ++i){
         SgMesh::TriangleRef triangle = mesh->triangle(i);
         for(int j=0; j < 3; ++j){
-            facesOfEdgeMap[edgeId(triangle, j)].push_back(i);
+            facesOfEdgeMap[EdgeId(triangle, j)].push_back(i);
         }
     }
 }
