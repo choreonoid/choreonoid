@@ -60,10 +60,8 @@ target_link_libraries(JoystickRTC CnoidUtil)
 add_cnoid_sample_rtc(RemoteJoystickRTC RemoteJoystickRTC.cpp)
 target_link_libraries(RemoteJoystickRTC CnoidUtil)
 
-if(UNIX)
-  add_cnoid_simple_controller(RemoteJoystickInputController RemoteJoystickInputController.cpp)
-  target_link_libraries(RemoteJoystickInputController CnoidBody ${OPENRTM_LIBRARIES})
-endif()
+add_cnoid_simple_controller(RemoteJoystickInputController RemoteJoystickInputController.cpp)
+target_link_libraries(RemoteJoystickInputController CnoidBody CnoidOpenRTMPlugin ${OPENRTM_LIBRARIES})
 
 # Tank Joystick Controller
 set(target TankJoystickControllerRTC)

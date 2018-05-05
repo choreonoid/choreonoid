@@ -95,13 +95,6 @@ namespace {
         // To reduce the startup time on Windows
         "-o", "corba.args: -ORBclientCallTimeOutPeriod 100",
   #endif
-        //"-o", "corba.nameservers: localhost",
-        //"-o", "exec_cxt.periodic.type: SynchExtTriggerEC",
-        //"-o", "exec_cxt.periodic.rate: 1000000",
-        //"-o", "manager.is_master: YES"
-        //"-o", "logger.enable: YES",
-        //"-o", "logger.file_name: stdout",
-        //"-o", "corba.args: -ORBendPoint giop:tcp::2809 -ORBpoaUniquePersistentSystemIds 1"
       };
 
       MappingPtr appVars = AppConfig::archive()->openMapping("OpenRTM");
@@ -326,12 +319,6 @@ SignalProxy<void()> cnoid::sigAboutToFinalizeRTM()
     return sigAboutToFinalizeRTM_;
 }
 
-            
-RTM::Manager_ptr cnoid::getRTCManagerServant() {
-  return RTM::Manager::_duplicate(manager->servant()->getObjRef());
-}
-
-
 RTC::RTObject_impl* cnoid::createManagedRTC(const std::string& comp_args)
 {
     RTC::RTObject_impl* rtc = manager->createComponent(comp_args.c_str());
@@ -343,7 +330,7 @@ RTC::RTObject_impl* cnoid::createManagedRTC(const std::string& comp_args)
 }
 
 
-CNOID_EXPORT int cnoid::numUnmanagedRTCs()
+int cnoid::numUnmanagedRTCs()
 {
     int n = 0;
     std::vector<RTC::RTObject_impl*> rtcs = manager->getComponents();
@@ -357,7 +344,7 @@ CNOID_EXPORT int cnoid::numUnmanagedRTCs()
 }
 
 
-CNOID_EXPORT int cnoid::deleteUnmanagedRTCs()
+int cnoid::deleteUnmanagedRTCs()
 {
     int numDeleted = 0;
     
@@ -500,42 +487,45 @@ bool cnoid::isManagedRTC(RTC::RTObject_ptr rtc) {
   return false;
 }
 
+//RTM::Manager_ptr cnoid::getRTCManagerServant() {
+//  return RTM::Manager::_duplicate(manager->servant()->getObjRef());
+//}
 
-namespace cnoid {
-    
-  template<> CORBA::Object::_ptr_type findRTCService<CORBA::Object>(RTC::RTObject_ptr rtc, const std::string& name) {
-    CORBA::Object_ptr service = CORBA::Object::_nil();
-
-    RTC::PortServiceList ports;
-    ports = *(rtc->get_ports());
-
-    RTC::ComponentProfile* cprof;
-    cprof = rtc->get_component_profile();
-    std::string portname = std::string(cprof->instance_name) + "." + name;
-
-    for (unsigned int i = 0; i < ports.length(); i++) {
-      RTC::PortService_var port = ports[i];
-      RTC::PortProfile* prof = port->get_port_profile();
-      if (std::string(prof->name) == portname) {
-        RTC::ConnectorProfile connProfile;
-        connProfile.name = "noname";
-        connProfile.connector_id = "";
-        connProfile.ports.length(1);
-        connProfile.ports[0] = port;
-        connProfile.properties = 0;
-        port->connect(connProfile);
-
-        const char* ior = 0;
-        connProfile.properties[0].value >>= ior;
-        if (ior) {
-          service = getORB()->string_to_object(ior);
-        }
-        port->disconnect(connProfile.connector_id);
-        break;
-      }
-    }
-
-    return service;
-  }
-
-}
+//namespace cnoid {
+//    
+//  template<> CORBA::Object::_ptr_type findRTCService<CORBA::Object>(RTC::RTObject_ptr rtc, const std::string& name) {
+//    CORBA::Object_ptr service = CORBA::Object::_nil();
+//
+//    RTC::PortServiceList ports;
+//    ports = *(rtc->get_ports());
+//
+//    RTC::ComponentProfile* cprof;
+//    cprof = rtc->get_component_profile();
+//    std::string portname = std::string(cprof->instance_name) + "." + name;
+//
+//    for (unsigned int i = 0; i < ports.length(); i++) {
+//      RTC::PortService_var port = ports[i];
+//      RTC::PortProfile* prof = port->get_port_profile();
+//      if (std::string(prof->name) == portname) {
+//        RTC::ConnectorProfile connProfile;
+//        connProfile.name = "noname";
+//        connProfile.connector_id = "";
+//        connProfile.ports.length(1);
+//        connProfile.ports[0] = port;
+//        connProfile.properties = 0;
+//        port->connect(connProfile);
+//
+//        const char* ior = 0;
+//        connProfile.properties[0].value >>= ior;
+//        if (ior) {
+//          service = getORB()->string_to_object(ior);
+//        }
+//        port->disconnect(connProfile.connector_id);
+//        break;
+//      }
+//    }
+//
+//    return service;
+//  }
+//
+//}
