@@ -8,7 +8,7 @@
 #include "SceneDrawables.h"
 #include "IdPair.h"
 #include <unordered_map>
-#include <functional>
+#include <unordered_set>
 #include <array>
 
 using namespace std;
@@ -27,9 +27,6 @@ FaceId getFaceId(Triangle& triangle)
     std::sort(id.begin(), id.end());
     return id;
 }
-
-typedef vector<int> FaceSet; // Set of triangle indices
-typedef unordered_map<FaceId, FaceSet> IdenticalFaceSetMap;
 
 struct EdgeId : public IdPair<int>
 {
@@ -96,13 +93,9 @@ class MeshFilterImpl
 public:
     unique_ptr<MeshExtractor> meshExtractor;
     vector<Vector3f> faceNormals;
-    vector<FaceSet> facesOfVertexMap;
+    vector<vector<int>> facesOfVertexMap;
+    unordered_map<EdgeId, vector<int>> facesOfEdgeMap;
     vector<vector<int>> normalsOfVertexMap;
-
-    SgIndexArray orgTriangles;
-    IdenticalFaceSetMap identicalFaceSetMap;
-    unordered_map<EdgeId, FaceSet> facesOfEdgeMap;
-    
     float minCreaseAngle;
     float maxCreaseAngle;
     bool isNormalOverwritingEnabled;
@@ -112,12 +105,9 @@ public:
     void forAllMeshes(SgNode* node, function<void(SgMesh* mesh)> callback);
     void removeRedundantVertices(SgMesh* mesh);
     void removeRedundantFaces(SgMesh* mesh);
-    void determineAllFaceSides(SgMesh* mesh);
-    void determineFaceSideIter(SgMesh* mesh, vector<bool>& determined, int faceIndex);
-    bool determineFaceSide(SgMesh* mesh, int faceIndex, int adjacentFaceIndex, EdgeId edgeId);
-    void makeFacesOfEdgeMap(SgMesh* mesh);
     void calculateFaceNormals(SgMesh* mesh, bool ignoreZeroNormals);
     void makeFacesOfVertexMap(SgMesh* mesh, bool removeSameNormalFaces = false);
+    void makeFacesOfEdgeMap(SgMesh* mesh);
     void setVertexNormals(SgMesh* mesh, float creaseAngle);
 };
 
@@ -188,26 +178,6 @@ void MeshFilterImpl::forAllMeshes(SgNode* node, function<void(SgMesh* mesh)> cal
         meshExtractor.reset(new MeshExtractor);
     }
     meshExtractor->extract(node, callback);
-}
-
-
-bool MeshFilter::generateNormals(SgMesh* mesh, float creaseAngle, bool removeRedundantVertices)
-{
-    if(!mesh->vertices() || mesh->triangleVertices().empty()){
-        return false;
-    }
-    if(!impl->isNormalOverwritingEnabled && mesh->normals() && !mesh->normals()->empty()){
-        return false;
-    }
-
-    if(removeRedundantVertices){
-        impl->removeRedundantVertices(mesh);
-    }
-    impl->calculateFaceNormals(mesh, false);
-    impl->makeFacesOfVertexMap(mesh, true);
-    impl->setVertexNormals(mesh, creaseAngle);
-
-    return true;
 }
 
 
@@ -332,139 +302,38 @@ void MeshFilterImpl::removeRedundantFaces(SgMesh* mesh)
         return;
     }
 
-    calculateFaceNormals(mesh, true);
-
-    orgTriangles = mesh->triangleVertices();
-    identicalFaceSetMap.clear();
-    identicalFaceSetMap.reserve(numOrgTriangles);
+    SgIndexArray orgTriangles = mesh->triangleVertices();
+    unordered_set<FaceId> existingFaces;
+    existingFaces.reserve(numOrgTriangles);
     auto& triangles = mesh->triangleVertices();
     triangles.clear();
     
     for(int i=0; i < numOrgTriangles; ++i){
         SgMesh::ConstTriangleRef triangle(&orgTriangles[i*3]);
-        auto inserted = identicalFaceSetMap.insert(make_pair(getFaceId(triangle), FaceSet()));
-        if(inserted.second){
+        if(existingFaces.insert(getFaceId(triangle)).second){
             mesh->newTriangle() = triangle;
-        }
-        auto iter = inserted.first;
-        iter->second.push_back(i);
-    }
-
-    if(mesh->numTriangles() != numOrgTriangles){
-        determineAllFaceSides(mesh);
+        }            
     }
 }
 
 
-void MeshFilterImpl::determineAllFaceSides(SgMesh* mesh)
+bool MeshFilter::generateNormals(SgMesh* mesh, float creaseAngle, bool removeRedundantVertices)
 {
-    makeFacesOfEdgeMap(mesh);
-    vector<bool> traversed(mesh->numTriangles(), false);
-
-    // determine the face side of the first triangle
-    auto triangle = mesh->triangle(0);
-    identicalFaceSetMap[getFaceId(triangle)].resize(1);
-    traversed[0] = true;
-    
-    determineFaceSideIter(mesh, traversed, 0);
-}
-
-
-void MeshFilterImpl::makeFacesOfEdgeMap(SgMesh* mesh)
-{
-    facesOfEdgeMap.clear();
-    facesOfEdgeMap.reserve(mesh->vertices()->size());
-    const int numTriangles = mesh->numTriangles();
-    for(int i=0; i < numTriangles; ++i){
-        SgMesh::TriangleRef triangle = mesh->triangle(i);
-        for(int j=0; j < 3; ++j){
-            facesOfEdgeMap[EdgeId(triangle, j)].push_back(i);
-        }
+    if(!mesh->vertices() || mesh->triangleVertices().empty()){
+        return false;
     }
-}
-    
-
-void MeshFilterImpl::determineFaceSideIter(SgMesh* mesh, vector<bool>& traversed, int faceIndex)
-{
-    auto triangle = mesh->triangle(faceIndex);
-    for(int i=0; i < 3; ++i){
-        EdgeId edgeId(triangle, i);
-        auto& facesOfEdge = facesOfEdgeMap[edgeId];
-        for(auto& adjacentFaceIndex : facesOfEdge){
-            if((adjacentFaceIndex != faceIndex) && !traversed[adjacentFaceIndex]){
-                traversed[adjacentFaceIndex] = true;
-                if(!determineFaceSide(mesh, adjacentFaceIndex, faceIndex, edgeId)){
-                    determineFaceSideIter(mesh, traversed, adjacentFaceIndex);
-                }
-            }
-        }
-    }
-}
-
-
-bool MeshFilterImpl::determineFaceSide(SgMesh* mesh, int faceIndex, int adjacentFaceIndex, EdgeId edgeId)
-{
-    const auto triangle = mesh->triangle(faceIndex);
-    auto& o_sides = identicalFaceSetMap[getFaceId(triangle)];
-
-    if(o_sides.size() <= 1){
+    if(!impl->isNormalOverwritingEnabled && mesh->normals() && !mesh->normals()->empty()){
         return false;
     }
 
-    const auto adjacentTriangle = mesh->triangle(adjacentFaceIndex);
-    const auto& o_adjacentFaceSides = identicalFaceSetMap[getFaceId(adjacentTriangle)];
-    const auto& n0 = faceNormals[o_adjacentFaceSides[0]];
-
-    if(!n0.squaredNorm()){
-        return true;
+    if(removeRedundantVertices){
+        impl->removeRedundantVertices(mesh);
     }
+    impl->calculateFaceNormals(mesh, false);
+    impl->makeFacesOfVertexMap(mesh, true);
+    impl->setVertexNormals(mesh, creaseAngle);
 
-    const auto& vertices = *mesh->vertices();
-    const auto& e0 = vertices[edgeId[0]];
-    const Vector3f e = (vertices[edgeId[1]] - e0).normalized();
-
-    const auto& o0 = vertices[edgeId.oppositeVertexIndex(adjacentTriangle)];
-    const Vector3f s0 = o0 - ((o0 - e0).dot(e) * e + e0);
-    const auto& o1 = vertices[edgeId.oppositeVertexIndex(triangle)];
-    const Vector3f s1 = o1 - ((o1 - e0).dot(e) * e + e0);
-
-    if(s0.isApprox(Vector3f::Zero()) || s1.isApprox(Vector3f::Zero())){
-        return true;
-    }
-    
-    const double a = s0.dot(s1);
-
-    int localFaceSide = 0;
-    for(int i = 0; i < o_sides.size(); ++i){
-        const auto& n1 = faceNormals[o_sides[i]];
-        if(!n1.squaredNorm()){
-            continue;
-        }
-        double b = n0.dot(n1);
-        if(a <= 0){
-            if(b >= 0){
-                localFaceSide = i;
-                break;
-            }
-        } else {
-            if(b < 0){
-                localFaceSide = i;
-                break;
-            }
-        }
-    }
-
-    bool isFlipped = false;
-    if(localFaceSide > 0){
-        int o_faceIndex = o_sides[localFaceSide];
-        SgIndexArray::value_type* flipped = &orgTriangles[o_faceIndex * 3];
-        mesh->setTriangle(faceIndex, flipped[0], flipped[1], flipped[2]);
-        o_sides[0] = o_faceIndex;
-        isFlipped = true;
-    }
-    o_sides.resize(1);
-
-    return isFlipped;
+    return true;
 }
 
 
@@ -531,6 +400,20 @@ void MeshFilterImpl::makeFacesOfVertexMap(SgMesh* mesh, bool removeSameNormalFac
     }
 }
     
+
+void MeshFilterImpl::makeFacesOfEdgeMap(SgMesh* mesh)
+{
+    facesOfEdgeMap.clear();
+    facesOfEdgeMap.reserve(mesh->vertices()->size());
+    const int numTriangles = mesh->numTriangles();
+    for(int i=0; i < numTriangles; ++i){
+        SgMesh::TriangleRef triangle = mesh->triangle(i);
+        for(int j=0; j < 3; ++j){
+            facesOfEdgeMap[EdgeId(triangle, j)].push_back(i);
+        }
+    }
+}
+   
 
 void MeshFilterImpl::setVertexNormals(SgMesh* mesh, float givenCreaseAngle)
 {
