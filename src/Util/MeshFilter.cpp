@@ -236,7 +236,6 @@ void MeshFilterImpl::removeRedundantVertices(SgMesh* mesh)
             ++index;
         }
         indexMap[i] = index;
-
         if(!found){
             vertices.push_back(vertex);
         }
@@ -247,12 +246,12 @@ void MeshFilterImpl::removeRedundantVertices(SgMesh* mesh)
         return;
     }
 
-    const int numOrgTriangles = mesh->numTriangles();
+    const int numTriangles = mesh->numTriangles();
 
-    if(mesh->hasNormals() && mesh->normalIndices().empty()){
+    if(mesh->hasNormals() && !mesh->hasNormalIndices()){
         // Set normal indices
         auto& normalIndices = mesh->normalIndices();
-        for(int i=0; i < numOrgTriangles; ++i){
+        for(int i=0; i < numTriangles; ++i){
             SgMesh::TriangleRef triangle = mesh->triangle(i);
             for(int j=0; j < 3; ++j){
                 normalIndices.push_back(triangle[j]);
@@ -265,7 +264,7 @@ void MeshFilterImpl::removeRedundantVertices(SgMesh* mesh)
 
     }
 
-    for(int i=0; i < numOrgTriangles; ++i){
+    for(int i=0; i < numTriangles; ++i){
         SgMesh::TriangleRef triangle = mesh->triangle(i);
         for(int j=0; j < 3; ++j){
             triangle[j] = indexMap[triangle[j]];
@@ -355,8 +354,54 @@ void MeshFilter::removeRedundantNormals(SgMesh* mesh)
 
 void MeshFilterImpl::removeRedundantNormals(SgMesh* mesh)
 {
+    if(!mesh->hasNormals()){
+        return;
+    }
 
+    auto& normalIndices = mesh->normalIndices();
 
+    if(normalIndices.empty()){
+        // Set normal indices for the original normals
+        const int n = mesh->numTriangles();
+        for(int i=0; i < n; ++i){
+            SgMesh::TriangleRef triangle = mesh->triangle(i);
+            for(int j=0; j < 3; ++j){
+                normalIndices.push_back(triangle[j]);
+            }
+        }
+    }
+
+    const SgVertexArrayPtr pOrgNormals = new SgVertexArray(*mesh->normals());
+    const int numOrgNormals = pOrgNormals->size();
+    SgVertexArray& normals = *mesh->normals();
+    normals.clear();
+    vector<int> indexMap(numOrgNormals);
+
+    for(int i=0; i< numOrgNormals; ++i){
+        const auto& normal = pOrgNormals->at(i);
+        bool found = false;
+        int index = 0;
+        while(index < normals.size()){
+            if(normal.isApprox(normals[index])){
+                found = true;
+                break;
+            }
+            ++index;
+        }
+        indexMap[i] = index;
+        if(!found){
+            normals.push_back(normal);
+        }
+    }
+    normals.shrink_to_fit();
+
+    if(normals.size() == numOrgNormals){
+        return;
+    }
+
+    for(int i=0; i < normalIndices.size(); ++i){
+        normalIndices[i] = indexMap[normalIndices[i]];
+    }
 }
 
 

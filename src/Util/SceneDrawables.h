@@ -262,12 +262,15 @@ public:
     /**
        Normals are assinged for vertices in triangles.
     */
+    bool hasNormalIndices() const { return !normalIndices_.empty(); }
     const SgIndexArray& normalIndices() const { return normalIndices_; }
     SgIndexArray& normalIndices() { return normalIndices_; }
 
+    bool hasColorIndices() const { return !colorIndices_.empty(); }
     const SgIndexArray& colorIndices() const { return colorIndices_; }
     SgIndexArray& colorIndices() { return colorIndices_; }
 
+    bool hasTexCoordIndices() const { return !texCoordIndices_.empty(); }
     const SgIndexArray& texCoordIndices() const { return texCoordIndices_; }
     SgIndexArray& texCoordIndices() { return texCoordIndices_; }
 
