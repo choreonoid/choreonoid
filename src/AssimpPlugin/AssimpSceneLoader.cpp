@@ -5,6 +5,7 @@
 #include "AssimpSceneLoader.h"
 #include <cnoid/SceneLoader>
 #include <cnoid/SceneDrawables>
+#include <cnoid/MeshFilter>
 #include <cnoid/ImageIO>
 #include <cnoid/FileUtil>
 #include <cnoid/Exception>
@@ -38,6 +39,8 @@ public:
     typedef map<string, SgImagePtr> ImagePathToSgImageMap;
     ImagePathToSgImageMap imagePathToSgImageMap;
 
+    MeshFilter meshFilter;
+
     AssimpSceneLoaderImpl();
     void clear();
     SgNode* load(const std::string& filename);
@@ -61,8 +64,18 @@ void AssimpSceneLoader::initializeClass()
 
 AssimpSceneLoader::AssimpSceneLoader()
 {
-    impl = new AssimpSceneLoaderImpl();
+    impl = nullptr;
 }
+
+
+AssimpSceneLoaderImpl* AssimpSceneLoader::getOrCreateImpl()
+{
+    if(!impl){
+        impl = new AssimpSceneLoaderImpl;
+    }
+    return impl;
+}
+
 
 
 AssimpSceneLoaderImpl::AssimpSceneLoaderImpl()
@@ -78,13 +91,15 @@ AssimpSceneLoaderImpl::AssimpSceneLoaderImpl()
 
 AssimpSceneLoader::~AssimpSceneLoader()
 {
-    delete impl;
+    if(impl){
+        delete impl;
+    }
 }
 
 
 void AssimpSceneLoader::setMessageSink(std::ostream& os)
 {
-    impl->os_ = &os;
+    getOrCreateImpl()->os_ = &os;
 }
 
 
@@ -99,7 +114,7 @@ void AssimpSceneLoaderImpl::clear()
 
 SgNode* AssimpSceneLoader::load(const std::string& filename)
 {
-    return impl->load(filename);
+    return getOrCreateImpl()->load(filename);
 }
 
 
@@ -107,7 +122,9 @@ SgNode* AssimpSceneLoaderImpl::load(const std::string& filename)
 {
     clear();
 
-    scene = importer.ReadFile(filename, aiProcess_Triangulate | aiProcess_GenNormals);
+    scene = importer.ReadFile(
+        filename,
+        aiProcess_Triangulate | aiProcess_JoinIdenticalVertices);
 
     if(!scene){
         os() << importer.GetErrorString() << endl;
@@ -152,11 +169,14 @@ SgTransform* AssimpSceneLoaderImpl::convertAiNode(aiNode* node)
                 scale[i] = s;
                 T.linear().col(i) /= s;
             }
-            transform = new SgScaleTransform(scale);
+            SgScaleTransformPtr scaleTransform = new SgScaleTransform(scale);
 
-            if(!T.isApprox(Affine3::Identity())){
-                transformToAddChildren = new SgPosTransform(T);
-                transform->addChild(transformToAddChildren);
+            if(T.isApprox(Affine3::Identity())){
+                transform = scaleTransform;
+            } else {
+                transform = new SgPosTransform(T);
+                transform->addChild(scaleTransform);
+                transformToAddChildren = scaleTransform;
             }
         }
     }
@@ -310,6 +330,13 @@ SgNode* AssimpSceneLoaderImpl::convertAiMeshFaces(aiMesh* srcMesh)
         SgTexture* texture = convertAiTexture(srcMesh->mMaterialIndex);
         if(texture){
             shape->setTexture(texture);
+        }
+
+        meshFilter.removeRedundantVertices(mesh);
+        if(normals){
+            meshFilter.removeRedundantNormals(mesh);
+        } else {
+            meshFilter.generateNormals(mesh);
         }
 
         mesh->updateBoundingBox();

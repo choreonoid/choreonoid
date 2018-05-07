@@ -25,6 +25,7 @@ public:
 
 private:
     AssimpSceneLoaderImpl* impl;
+    AssimpSceneLoaderImpl* getOrCreateImpl();
 };
 
 };
