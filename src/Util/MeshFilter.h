@@ -21,11 +21,8 @@ public:
     MeshFilter(const MeshFilter& org);
     ~MeshFilter();
 
-    void setNormalOverwritingEnabled(bool on);
-    void setMinCreaseAngle(float angle);
-    void setMaxCreaseAngle(float angle);
-    bool generateNormals(SgMesh* mesh, float creaseAngle = 3.14159f, bool removeRedundantVertices = false);
     void integrateMeshes(SgMesh* mesh1, SgMesh* mesh2);
+
     void removeRedundantVertices(SgNode* scene);
     void removeRedundantVertices(SgMesh* mesh);
 
@@ -34,6 +31,14 @@ public:
     */
     void removeRedundantFaces(SgNode* scene);
     void removeRedundantFaces(SgMesh* mesh);
+    
+    void removeRedundantNormals(SgNode* scene);
+    void removeRedundantNormals(SgMesh* mesh);
+
+    bool generateNormals(SgMesh* mesh, float creaseAngle = 3.14159f, bool removeRedundantVertices = false);
+    void setNormalOverwritingEnabled(bool on);
+    void setMinCreaseAngle(float angle);
+    void setMaxCreaseAngle(float angle);
     
     // Deprecated. Use enableNormalOverwriting()
     void setOverwritingEnabled(bool on);
