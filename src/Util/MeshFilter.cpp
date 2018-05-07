@@ -11,6 +11,8 @@
 #include <unordered_set>
 #include <array>
 
+#include <iostream>
+
 using namespace std;
 using namespace cnoid;
 
@@ -105,6 +107,7 @@ public:
     void forAllMeshes(SgNode* node, function<void(SgMesh* mesh)> callback);
     void removeRedundantVertices(SgMesh* mesh);
     void removeRedundantFaces(SgMesh* mesh);
+    void removeNormalsOfRedundantFaces(SgMesh* mesh, vector<int> redundantFaceIndices);
     void calculateFaceNormals(SgMesh* mesh, bool ignoreZeroNormals);
     void makeFacesOfVertexMap(SgMesh* mesh, bool removeSameNormalFaces = false);
     void makeFacesOfEdgeMap(SgMesh* mesh);
@@ -234,43 +237,49 @@ void MeshFilter::removeRedundantVertices(SgMesh* mesh)
 
 void MeshFilterImpl::removeRedundantVertices(SgMesh* mesh)
 {
-    const SgVertexArray& orgVertices = *mesh->vertices();
-    const int numVertices = orgVertices.size();
-    SgVertexArrayPtr newVerticesptr = new SgVertexArray();
-    SgVertexArray& newVertices = *newVerticesptr;
-    vector<int> indexMap(numVertices);
+    if(!mesh->hasVertices()){
+        return;
+    }
+    
+    const SgVertexArrayPtr pOrgVertices = new SgVertexArray(*mesh->vertices());
+    const int numOrgVertices = pOrgVertices->size();
+    SgVertexArray& vertices = *mesh->vertices();
+    vertices.clear();
+    vector<int> indexMap(numOrgVertices);
 
-    for(int i=0; i< numVertices; ++i){
+    bool doNormalConversion = (mesh->hasNormals() && mesh->normalIndices().empty());
+    bool doTexCoordConversion = (mesh->hasTexCoords() && mesh->texCoordIndices().empty());
+
+    vector<bool> uniqueVertexFlags;
+    if(doNormalConversion || doTexCoordConversion){
+        uniqueVertexFlags.resize(numOrgVertices);
+    }
+
+    for(int i=0; i< numOrgVertices; ++i){
+        const auto& vertex = pOrgVertices->at(i);
         bool found = false;
-        for(int j=0; j < newVertices.size(); ++j){
-            if(orgVertices[i].isApprox(newVertices[j])){
-                indexMap[i] = j;
+        int index = 0;
+        while(index < vertices.size()){
+            if(vertex.isApprox(vertices[index])){
                 found = true;
                 break;
             }
+            ++index;
         }
+        indexMap[i] = index;
+
         if(!found){
-            indexMap[i] = newVertices.size();
-            newVertices.push_back(orgVertices[i]);
+            vertices.push_back(vertex);
+        }
+        if(!uniqueVertexFlags.empty()){
+            uniqueVertexFlags[i] = !found;
         }
     }
 
-    if(newVertices.size() == numVertices){
+    vertices.shrink_to_fit();
+
+    if(vertices.size() == numOrgVertices){
         return;
-    }
-
-    mesh->setVertices(newVerticesptr);
-
-    if(mesh->hasNormals()){
-        if(mesh->normalIndices().empty()){
-            mesh->normalIndices() = mesh->triangleVertices();
-        }
-    }
-
-    if(mesh->hasTexCoords()){
-        if(mesh->texCoordIndices().empty()){
-            mesh->texCoordIndices() = mesh->triangleVertices();
-        }
     }
 
     const int numTriangles = mesh->numTriangles();
@@ -279,6 +288,21 @@ void MeshFilterImpl::removeRedundantVertices(SgMesh* mesh)
         for(int j=0; j < 3; ++j){
             triangle[j] = indexMap[triangle[j]];
         }
+    }
+
+    if(doNormalConversion){
+        const SgVertexArrayPtr pOrgNormals = new SgVertexArray(*mesh->normals());
+        SgVertexArray& normals = *mesh->normals();
+        normals.clear();
+        for(int i=0; i < pOrgNormals->size(); ++i){
+            if(uniqueVertexFlags[i]){
+                normals.push_back(pOrgNormals->at(i));
+            }
+        }
+    }
+
+    if(doTexCoordConversion){
+
     }
 }
 
@@ -307,22 +331,65 @@ void MeshFilterImpl::removeRedundantFaces(SgMesh* mesh)
     existingFaces.reserve(numOrgTriangles);
     auto& triangles = mesh->triangleVertices();
     triangles.clear();
-    
+
+    bool recordRedundantFaceIndices = false;
+    vector<int> redundantFaceIndices;
+    if(mesh->hasNormals() || mesh->hasColors() || mesh->hasTexCoords()){
+        recordRedundantFaceIndices = true;
+        redundantFaceIndices.reserve(numOrgTriangles / 2);
+    }
+
     for(int i=0; i < numOrgTriangles; ++i){
         SgMesh::ConstTriangleRef triangle(&orgTriangles[i*3]);
         if(existingFaces.insert(getFaceId(triangle)).second){
             mesh->newTriangle() = triangle;
-        }            
+        } else if(recordRedundantFaceIndices){
+            redundantFaceIndices.push_back(i);
+        }
+    }
+
+    if(!redundantFaceIndices.empty()){
+        if(mesh->hasNormals()){
+            removeNormalsOfRedundantFaces(mesh, redundantFaceIndices);
+        }
+    }
+}
+
+
+void MeshFilterImpl::removeNormalsOfRedundantFaces(SgMesh* mesh, vector<int> redundantFaceIndices)
+{
+    auto& normalIndices = mesh->normalIndices();
+
+    if(!normalIndices.empty()){
+        const SgIndexArray orgNormalIndices = normalIndices;
+        const int numOrgFaces = orgNormalIndices.size() / 3;
+        normalIndices.clear();
+        int redundantFaceIndicesIndex = 0;
+        int nextRedundantFaceIndex = redundantFaceIndices[redundantFaceIndicesIndex];
+        for(size_t i=0; i < numOrgFaces; ++i){
+            if(i != nextRedundantFaceIndex){
+                int orgFaceIndex = i*3;
+                normalIndices.push_back(orgNormalIndices[orgFaceIndex]);
+                normalIndices.push_back(orgNormalIndices[orgFaceIndex+1]);
+                normalIndices.push_back(orgNormalIndices[orgFaceIndex+2]);
+            } else {
+                ++redundantFaceIndicesIndex;
+                if(redundantFaceIndicesIndex < redundantFaceIndices.size()){
+                    nextRedundantFaceIndex = redundantFaceIndices[redundantFaceIndicesIndex];
+                }
+            }
+        }
+        normalIndices.shrink_to_fit();
     }
 }
 
 
 bool MeshFilter::generateNormals(SgMesh* mesh, float creaseAngle, bool removeRedundantVertices)
 {
-    if(!mesh->vertices() || mesh->triangleVertices().empty()){
+    if(!mesh->hasVertices() || mesh->triangleVertices().empty()){
         return false;
     }
-    if(!impl->isNormalOverwritingEnabled && mesh->normals() && !mesh->normals()->empty()){
+    if(!impl->isNormalOverwritingEnabled && mesh->hasNormals()){
         return false;
     }
 

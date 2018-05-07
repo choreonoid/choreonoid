@@ -202,6 +202,7 @@ public:
     iterator erase(iterator p) { return values.erase(p); }
     iterator erase(iterator first, iterator last) { return values.erase(first, last); }
     void clear() { values.clear(); }
+    void shrink_to_fit() { values.shrink_to_fit(); }
 
 private:
     Container values;
