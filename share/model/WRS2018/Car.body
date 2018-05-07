@@ -11,11 +11,11 @@ links:
       Resource:
         rotation: [ 0, 0, 1, 90 ]
         translation: [ 2.3, -0.877, 0 ]
-        uri: "resource/CarBody.dae"
+        uri: "resource/CarBody.wrl"
   -
     name: FR_DOOR
     parent: BODY
-    translation: [ 0.878, -0.8175, 0.3306 ]
+    translation: [ 0.873, -0.8175, 0.3306 ]
     jointType: revolute
     jointAxis: Z
     jointId: 0
@@ -33,7 +33,7 @@ links:
       Resource:
         rotation: [ 0, 0, 1, 90 ]
         translation: [ -1.14, 0, 0 ]
-        uri: "resource/CarDoorFR.dae"
+        uri: "resource/CarDoorFR.wrl"
         #exclude: ID7
   -
     name: FL_DOOR
@@ -56,7 +56,7 @@ links:
       Resource:
         rotation: [ 0, 0, 1, 90 ]
         translation: [ -1.14, 0.0, 0.0016 ]
-        uri: "resource/CarDoorFL.dae"
+        uri: "resource/CarDoorFL.wrl"
         #exclude: ID7
   -
     name: BR_DOOR
@@ -79,7 +79,7 @@ links:
       Resource:
         rotation: [ 0, 0, 1, 90 ]
         translation: [ -0.5, 0, 0 ]
-        uri: "resource/CarDoorBR.dae"
+        uri: "resource/CarDoorBR.wrl"
         #exclude: ID6
   -
     name: BL_DOOR
@@ -102,5 +102,5 @@ links:
       Resource:
         rotation: [ 0, 0, 1, 90 ]
         translation: [ -0.5, 0, 0 ]
-        uri: "resource/CarDoorBL.dae"
+        uri: "resource/CarDoorBL.wrl"
         #exclude: ID6
