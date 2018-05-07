@@ -11,8 +11,6 @@
 #include <unordered_set>
 #include <array>
 
-#include <iostream>
-
 using namespace std;
 using namespace cnoid;
 
@@ -223,8 +221,17 @@ void MeshFilterImpl::removeRedundantVertices(SgMesh* mesh)
     SgVertexArray& vertices = *mesh->vertices();
     vertices.clear();
     vector<int> indexMap(numOrgVertices);
+    auto& triangleVertices = mesh->triangleVertices();
+
+    vector<bool> usedVertexFlags(numOrgVertices, false);
+    for(int i=0; i < triangleVertices.size(); ++i){
+        usedVertexFlags[triangleVertices[i]] = true;
+    }
 
     for(int i=0; i< numOrgVertices; ++i){
+        if(!usedVertexFlags[i]){
+            continue;
+        }
         const auto& vertex = pOrgVertices->at(i);
         bool found = false;
         int index = 0;
@@ -246,16 +253,11 @@ void MeshFilterImpl::removeRedundantVertices(SgMesh* mesh)
         return;
     }
 
-    const int numTriangles = mesh->numTriangles();
-
     if(mesh->hasNormals() && !mesh->hasNormalIndices()){
         // Set normal indices
         auto& normalIndices = mesh->normalIndices();
-        for(int i=0; i < numTriangles; ++i){
-            SgMesh::TriangleRef triangle = mesh->triangle(i);
-            for(int j=0; j < 3; ++j){
-                normalIndices.push_back(triangle[j]);
-            }
+        for(int i=0; i < triangleVertices.size(); ++i){
+            normalIndices.push_back(triangleVertices[i]);
         }
     }
 
@@ -264,11 +266,8 @@ void MeshFilterImpl::removeRedundantVertices(SgMesh* mesh)
 
     }
 
-    for(int i=0; i < numTriangles; ++i){
-        SgMesh::TriangleRef triangle = mesh->triangle(i);
-        for(int j=0; j < 3; ++j){
-            triangle[j] = indexMap[triangle[j]];
-        }
+    for(int i=0; i < triangleVertices.size(); ++i){
+        triangleVertices[i] = indexMap[triangleVertices[i]];
     }
 }
 
@@ -358,26 +357,30 @@ void MeshFilterImpl::removeRedundantNormals(SgMesh* mesh)
         return;
     }
 
+    const SgVertexArrayPtr pOrgNormals = new SgVertexArray(*mesh->normals());
+    const int numOrgNormals = pOrgNormals->size();
     auto& normalIndices = mesh->normalIndices();
 
     if(normalIndices.empty()){
-        // Set normal indices for the original normals
-        const int n = mesh->numTriangles();
-        for(int i=0; i < n; ++i){
-            SgMesh::TriangleRef triangle = mesh->triangle(i);
-            for(int j=0; j < 3; ++j){
-                normalIndices.push_back(triangle[j]);
-            }
+        auto& triangleVertices = mesh->triangleVertices();
+        for(size_t i=0; i < triangleVertices.size(); ++i){
+            normalIndices.push_back(triangleVertices[i]);
         }
     }
 
-    const SgVertexArrayPtr pOrgNormals = new SgVertexArray(*mesh->normals());
-    const int numOrgNormals = pOrgNormals->size();
+    vector<bool> usedNormalFlags(numOrgNormals, false);
+    for(size_t i=0; i < normalIndices.size(); ++i){
+        usedNormalFlags[normalIndices[i]] = true;
+    }
+
     SgVertexArray& normals = *mesh->normals();
     normals.clear();
     vector<int> indexMap(numOrgNormals);
 
     for(int i=0; i< numOrgNormals; ++i){
+        if(!usedNormalFlags[i]){
+            continue;
+        }
         const auto& normal = pOrgNormals->at(i);
         bool found = false;
         int index = 0;
