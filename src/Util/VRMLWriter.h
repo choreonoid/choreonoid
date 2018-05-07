@@ -21,7 +21,8 @@ public:
     ~VRMLWriter();
     void setOutFileName(const std::string& ofname);
     void setIndentSize(int s);
-    void setNumOneLineElements(int n);
+    void setNumOneLineScalarElements(int n);
+    void setNumOneLineVectorElements(int n);
     void setNumOneLineFaceElements(int n);
     void writeHeader();
     bool writeNode(VRMLNode* node);

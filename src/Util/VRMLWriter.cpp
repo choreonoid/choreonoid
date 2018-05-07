@@ -94,7 +94,8 @@ public:
     TIndent indent;
     typedef std::map<std::string, VRMLNodePtr> NodeMap;
     NodeMap defNodeMap;
-    int numOneLineElements;
+    int numOneLineScalarElements;
+    int numOneLineVectorElements;
     int numOneLineFaceElements;
     
     VRMLWriterImpl(std::ostream& out);
@@ -145,7 +146,8 @@ VRMLWriterImpl::VRMLWriterImpl(std::ostream& out)
     if(nodeMethodMap.empty()){
         registerNodeMethodMap();
     }
-    numOneLineElements = 1;
+    numOneLineScalarElements = 10;
+    numOneLineVectorElements = 1;
     numOneLineFaceElements = 1;
 }
 
@@ -286,9 +288,15 @@ void VRMLWriter::setIndentSize(int s)
 }
 
 
-void VRMLWriter::setNumOneLineElements(int n)
+void VRMLWriter::setNumOneLineScalarElements(int n)
 {
-    impl->numOneLineElements = n;
+    impl->numOneLineScalarElements = n;
+}
+
+
+void VRMLWriter::setNumOneLineVectorElements(int n)
+{
+    impl->numOneLineVectorElements = n;
 }
 
 
@@ -651,7 +659,11 @@ void VRMLWriterImpl::writeIndexedFaceSetNode(VRMLNodePtr node)
             
             if(!faceset->normalIndex.empty()){
                 out << indent << "normalIndex ";
-                writeMFInt32(faceset->normalIndex);
+                if(faceset->normalPerVertex){
+                    writeMFInt32SeparatedByMinusValue(faceset->normalIndex, numOneLineFaceElements);
+                } else {
+                    writeMFInt32(faceset->normalIndex, numOneLineScalarElements);
+                }
             }
             hasNormals = true;
         }
@@ -663,7 +675,11 @@ void VRMLWriterImpl::writeIndexedFaceSetNode(VRMLNodePtr node)
             
             if(!faceset->colorIndex.empty()){
                 out << indent << "colorIndex ";
-                writeMFInt32(faceset->colorIndex);
+                if(faceset->colorPerVertex){
+                    writeMFInt32SeparatedByMinusValue(faceset->colorIndex, numOneLineFaceElements);
+                } else {
+                    writeMFInt32(faceset->colorIndex, numOneLineScalarElements);
+                }
             }
             hasColors = true;
         }
@@ -697,7 +713,7 @@ void VRMLWriterImpl::writeCoordinateNode(VRMLCoordinatePtr coord)
     if(beginNode("Coordinate", coord, false)){
         if(!coord->point.empty()){
             out << indent << "point ";
-            writeMFValues(coord->point, numOneLineElements);
+            writeMFValues(coord->point, numOneLineVectorElements);
         }
         endNode();
     }
@@ -709,7 +725,7 @@ void VRMLWriterImpl::writeNormalNode(VRMLNormalPtr normal)
     if(beginNode("Normal", normal, false)){
         if(!normal->vector.empty()){
             out << indent << "vector ";
-            writeMFValues(normal->vector, numOneLineElements);
+            writeMFValues(normal->vector, numOneLineVectorElements);
         }
         endNode();
     }
@@ -721,7 +737,7 @@ void VRMLWriterImpl::writeColorNode(VRMLColorPtr color)
     if(beginNode("Color", color, false)){
         if(!color->color.empty()){
             out << indent << "color ";
-            writeMFValues(color->color, numOneLineElements);
+            writeMFValues(color->color, numOneLineVectorElements);
         }
         endNode();
     }
