@@ -19,6 +19,7 @@ public:
     PolymorphicFunctionSet<SgNode> functions;
     std::function<void()> callback;
     SgMesh* currentMesh;
+    SgShape* currentShape;
     Affine3 currentTransform;
     Affine3 currentTransformWithoutScaling;
     bool isCurrentScaled;
@@ -105,8 +106,10 @@ void MeshExtractorImpl::visitShape(SgShape* shape)
     if(mesh && mesh->vertices() && !mesh->vertices()->empty() && !mesh->triangleVertices().empty()){
         meshFound = true;
         currentMesh = mesh;
+        currentShape = shape;
         callback();
         currentMesh = 0;
+        currentShape = 0;
     }
 }
 
@@ -114,6 +117,12 @@ void MeshExtractorImpl::visitShape(SgShape* shape)
 SgMesh* MeshExtractor::currentMesh() const
 {
     return impl->currentMesh;
+}
+
+
+SgShape* MeshExtractor::currentShape() const
+{
+    return impl->currentShape;
 }
 
 
@@ -139,6 +148,7 @@ bool MeshExtractor::extract(SgNode* node, std::function<void()> callback)
 {
     impl->callback = callback;
     impl->currentMesh = 0;
+    impl->currentShape = 0;
     impl->currentTransform.setIdentity();
     impl->currentTransformWithoutScaling.setIdentity();
     impl->isCurrentScaled = false;

@@ -518,6 +518,7 @@ void VRMLBodyLoaderImpl::checkJointProto(VRMLProto* proto)
     addField<MFFloat>(proto, "ulimit");
     addField<MFFloat>(proto, "lvlimit");
     addField<MFFloat>(proto, "uvlimit");
+    addField<MFFloat>(proto, "climit");
     addField<SFRotation>(proto, "limitOrientation");
     addField<SFString>(proto, "name");
 
@@ -632,6 +633,10 @@ void VRMLBodyLoaderImpl::readHumanoidNode(VRMLProtoInstance* humanoidNode)
     } else if(nodes.size() > 1){
         throw invalid_argument(_("The Humanoid node must have a unique Joint node in its \"humanoidBody\" field."));
     } 
+
+    string info;
+    readVRMLfield(humanoidNode->fields["info"], info);
+    body->info()->write( "humanoid info", info );
 
     if(nodes[0]->isCategoryOf(PROTO_INSTANCE_NODE)){
         VRMLProtoInstance* jointNode = dynamic_cast<VRMLProtoInstance*>(nodes[0].get());
@@ -864,6 +869,9 @@ Link* VRMLBodyLoaderImpl::createLink(VRMLProtoInstance* jointNode, const Matrix3
     link->setJointVelocityRange(
         getLimitValue(jf["lvlimit"], -maxlimit),
         getLimitValue(jf["uvlimit"], +maxlimit));
+
+    double climit = getLimitValue(jf["climit"], +maxlimit);
+    link->setInfo("climit", climit);
 
     return link;
 }    
