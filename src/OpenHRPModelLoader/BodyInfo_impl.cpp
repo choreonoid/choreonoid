@@ -138,16 +138,13 @@ void BodyInfo_impl::loadModelFile(const std::string& url)
     url_ = url;
     name_ = body->modelName();
 
-    ValueNode& node = *body->info()->find("humanoid info");
-    if(node.isString()){
-        const string& stringInfo = node.toString();
+    string stringInfo;
+    if(body->info()->read("humanoid info", stringInfo)){
         vector<string> infos;
         boost::split(infos, stringInfo, boost::is_any_of("\n"));
         info_.length(infos.size());
         for(int i=0; i<infos.size(); i++){
-            if(!infos[i].empty()){
-                info_[i] = CORBA::string_dup( infos[i].c_str() );
-            }
+            info_[i] = CORBA::string_dup( infos[i].c_str() );
         }
     }
 
@@ -244,20 +241,25 @@ void BodyInfo_impl::setLink(LinkInfo& linkInfo, Link& link)
     linkInfo.uvlimit[0] = link.dq_upper();
     linkInfo.lvlimit.length(CORBA::ULong(1));
     linkInfo.lvlimit[0] = link.dq_lower();
-    double climit = link.info<double>("climit");
-    if(climit == numeric_limits<double>::max()){
-        linkInfo.climit.length(CORBA::ULong(0));
+
+    double w;
+    if(link.info()->read("climit", w)){
+        if(w == numeric_limits<double>::max()){
+            linkInfo.climit.length(CORBA::ULong(0));
+        }else{
+            linkInfo.climit.length(CORBA::ULong(1));
+            linkInfo.climit[0] = w;
+        }
     }else{
-        linkInfo.climit.length(CORBA::ULong(1));
-        linkInfo.climit[0] = climit;
+        linkInfo.climit.length(CORBA::ULong(0));
     }
 
-    linkInfo.gearRatio = link.info<double>("gearRatio");
-    linkInfo.rotorInertia = link.info<double>("rotorInertia");
-    linkInfo.rotorResistor = link.info<double>("rotorResistor");
-    linkInfo.torqueConst = link.info<double>("torqueConst");
-    linkInfo.encoderPulse = link.info<double>("encoderPulse");
-    linkInfo.rotorInertia = link.info<double>("rotorInertia");
+    linkInfo.gearRatio = link.info("gearRatio", 1.0);
+    linkInfo.rotorInertia = link.info("rotorInertia", 0.0);
+    linkInfo.rotorResistor = link.info("rotorResistor", 1.0);
+    linkInfo.torqueConst = link.info("torqueConst", 0.0);
+    linkInfo.encoderPulse = link.info("encoderPulse", 1.0);
+
     linkInfo.jointValue = 0.0; //Choreonoid Body has no setting corresponding to jointValue field in Link node
 
     setShapeIndices(link.visualShape(), linkInfo.shapeIndices);
@@ -280,7 +282,7 @@ void BodyInfo_impl::setSegment(LinkInfo& linkInfo, Link& link)
     TransformedShapeIndexSequence& shapeIndices = linkInfo.shapeIndices;
     segmentInfo.shapeIndices.length(shapeIndices.length());
     for(int i=0; i<shapeIndices.length(); i++){
-        segmentInfo.shapeIndices[i] = linkInfo.shapeIndices[i].shapeIndex;
+        segmentInfo.shapeIndices[i] = i;
     }
     setTransformMatrix(Position::Identity(), segmentInfo.transformMatrix);
     //
