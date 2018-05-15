@@ -13,9 +13,85 @@ links:
                0, 0.1, 0,
                0, 0, 0.1 ]
     elements:
-      Resource:
-        rotation: [ 0, 0, 1, 90 ]
-        uri: "resource/SpreaderBody.dae"
+      Visual : { resource: { rotation: [ 0, 0, 1, 90 ],
+                             uri: "resource/SpreaderBody.dae" } }
+      Collision :
+        elements:
+          -
+            type: Shape
+            translation: [ -0.260795, 0.0, -0.1280215 ]
+            geometry: { type: Box, size: [ 0.11, 0.09, 0.05 ] }
+          -
+            type: Shape
+            rotation: [ [ 1, 0, 0, -90 ], [ 0, 0, 1, 15 ] ]
+            translation: [ -0.270387, 0.0, -0.05284138 ]
+            geometry: { type: Cylinder, height: 0.12, radius: 0.03 }
+          - 
+            type: Shape
+            rotation: [ 0, 0, 1, 90 ]
+            translation: [ -0.11, 0.0, 0.0365294 ]
+            geometry: { type: Cylinder, height: 0.45, radius: 0.043 }
+          -
+            type: Shape
+            translation: [ 0.135, 0.0, 0.03652939 ]
+            geometry: { type: Box, size: [ 0.04, 0.15, 0.09 ] }
+          - 
+            type: Shape
+            rotation: [ 0, 0, 1, 90 ]
+            translation: [ -0.162, 0.0, 0.138 ]
+            geometry: { type: Capsule, height: 0.133, radius: 0.015 }
+          - 
+            type: Shape
+            rotation: [ [ 0, 0, 1, 90 ], [ 1, 0, 0, -43.3 ] ]
+            translation: [ -0.256, 0.0, 0.113 ]
+            geometry: { type: Capsule, height: 0.071, radius: 0.015 }
+          - 
+            type: Shape
+            rotation: [ 1, 0, 0, 90 ]
+            translation: [ -0.283, 0.0, 0.07 ]
+            geometry: { type: Capsule, height: 0.03, radius: 0.015 }
+          - 
+            type: Transform
+            translation: [ 0.0277, 0.0, 0.0 ]
+            elements: 
+              -
+                type: Shape
+                translation: [ 0.0, 0.0, 0.12645 ]
+                geometry: { type: Capsule, height: 0.09, radius: 0.015 }
+              -
+                type: Shape
+                translation: [ 0.0, 0.065, 0.115 ]
+                rotation: [ 1, 0, 0, -30 ]
+                geometry: { type: Capsule, height: 0.044, radius: 0.015 }
+              -
+                type: Shape
+                translation: [ 0.0, 0.084, 0.0815 ]
+                rotation: [ 1, 0, 0, 90 ]
+                geometry: { type: Capsule, height: 0.045, radius: 0.015 }
+              -
+                type: Shape
+                translation: [ 0.0, 0.065, 0.048 ]
+                rotation: [ 1, 0, 0, 30 ]
+                geometry: { type: Capsule, height: 0.044, radius: 0.015 }
+              -
+                type: Shape
+                translation: [ 0.0, -0.065, 0.115 ]
+                rotation: [ 1, 0, 0, 30 ]
+                geometry: { type: Capsule, height: 0.044, radius: 0.015 }
+              -
+                type: Shape
+                translation: [ 0.0, -0.084, 0.0815 ]
+                rotation: [ 1, 0, 0, 90 ]
+                geometry: { type: Capsule, height: 0.045, radius: 0.015 }
+              -
+                type: Shape
+                translation: [ 0.0, -0.065, 0.048 ]
+                rotation: [ 1, 0, 0, -30 ]
+                geometry: { type: Capsule, height: 0.044, radius: 0.015 }
+              -
+                type: Shape
+                translation: [ 0.0, 0.0, 0.0365 ]
+                geometry: { type: Capsule, height: 0.09, radius: 0.015 }
   -
     name: END_L
     parent: BASE
@@ -27,10 +103,80 @@ links:
                0, 0.001, 0,
                0, 0, 0.001 ]
     elements:
-      Resource:
-        rotation: [ 0, 0, 1, 90 ]
-        translation: [ -0.155, 0, -0.035 ]
-        uri: "resource/SpreaderEndL.dae"
+      Visual : { resource: { rotation: [ 0, 0, 1, 90 ],
+                             translation: [ -0.155, 0, -0.035 ],
+                             uri: "resource/SpreaderEndL.dae" } }
+      Collision : 
+        elements:
+          - 
+            type: Transform
+            translation: [ 0.0, -0.0015, 0.00153 ]
+            elements: &END_SHAPE
+              -
+                type: Shape
+                translation: [ 0.02, 0.03, 0.0 ]
+                geometry: { type: Box, size: [ 0.04, 0.06, 0.05 ] }
+              -
+                type: Shape
+                translation: [ 0.10925, 0.03009, 0.0 ]
+                rotation: [ 0, 0, 1, -21.8 ]
+                geometry: { type: Box, size: [ 0.1508, 0.004, 0.05 ] }
+              -
+                type: Shape
+                translation: [ 0.11, 0.002, 0.0 ]
+                geometry: { type: Box, size: [ 0.14, 0.004, 0.05 ] }
+              -
+                type: Shape
+                translation: [ 0.1045, 0.006, 0.0 ]
+                geometry: { type: Box, size: [ 0.1292, 0.004, 0.05 ] }
+              -
+                type: Shape
+                translation: [ 0.0995, 0.01, 0.0 ]
+                geometry: { type: Box, size: [ 0.1192, 0.004, 0.05 ] }
+              -
+                type: Shape
+                translation: [ 0.0945, 0.014, 0.0 ]
+                geometry: { type: Box, size: [ 0.1092, 0.004, 0.05 ] }
+              -
+                type: Shape
+                translation: [ 0.0895, 0.018, 0.0 ]
+                geometry: { type: Box, size: [ 0.0992, 0.004, 0.05 ] }
+              -
+                type: Shape
+                translation: [ 0.0845, 0.022, 0.0 ]
+                geometry: { type: Box, size: [ 0.0892, 0.004, 0.05 ] }
+              -
+                type: Shape
+                translation: [ 0.0795, 0.026, 0.0 ]
+                geometry: { type: Box, size: [ 0.0792, 0.004, 0.05 ] }
+              -
+                type: Shape
+                translation: [ 0.0745, 0.03, 0.0 ]
+                geometry: { type: Box, size: [ 0.0692, 0.004, 0.05 ] }
+              -
+                type: Shape
+                translation: [ 0.0695, 0.034, 0.0 ]
+                geometry: { type: Box, size: [ 0.0592, 0.004, 0.05 ] }
+              -
+                type: Shape
+                translation: [ 0.0645, 0.038, 0.0 ]
+                geometry: { type: Box, size: [ 0.0492, 0.004, 0.05 ] }
+              -
+                type: Shape
+                translation: [ 0.0595, 0.042, 0.0 ]
+                geometry: { type: Box, size: [ 0.0392, 0.004, 0.05 ] }
+              -
+                type: Shape
+                translation: [ 0.0545, 0.046, 0.0 ]
+                geometry: { type: Box, size: [ 0.0292, 0.004, 0.05 ] }
+              -
+                type: Shape
+                translation: [ 0.0495, 0.05, 0.0 ]
+                geometry: { type: Box, size: [ 0.0192, 0.004, 0.05 ] }
+              -
+                type: Shape
+                translation: [ 0.0445, 0.054, 0.0 ]
+                geometry: { type: Box, size: [ 0.0092, 0.004, 0.05 ] }
   -
     name: END_R
     parent: BASE
@@ -42,7 +188,13 @@ links:
                0, 0.001, 0,
                0, 0, 0.001 ]
     elements:
-      Resource:
-        rotation: [ 0, 0, 1, 90 ]
-        translation: [ -0.155, 0, -0.035 ]
-        uri: "resource/SpreaderEndR.dae"
+      Visual : { resource: { rotation: [ 0, 0, 1, 90 ],
+                             translation: [ -0.155, 0, -0.035 ],
+                             uri: "resource/SpreaderEndR.dae" } }
+      Collision : 
+        elements:
+          - 
+            type: Transform
+            translation: [ 0.0, -0.0015, 0.00153 ]
+            rotation: [ 1, 0, 0, 180 ]
+            elements: *END_SHAPE

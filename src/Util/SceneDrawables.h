@@ -202,6 +202,7 @@ public:
     iterator erase(iterator p) { return values.erase(p); }
     iterator erase(iterator first, iterator last) { return values.erase(first, last); }
     void clear() { values.clear(); }
+    void shrink_to_fit() { values.shrink_to_fit(); }
 
 private:
     Container values;
@@ -261,12 +262,15 @@ public:
     /**
        Normals are assinged for vertices in triangles.
     */
+    bool hasNormalIndices() const { return !normalIndices_.empty(); }
     const SgIndexArray& normalIndices() const { return normalIndices_; }
     SgIndexArray& normalIndices() { return normalIndices_; }
 
+    bool hasColorIndices() const { return !colorIndices_.empty(); }
     const SgIndexArray& colorIndices() const { return colorIndices_; }
     SgIndexArray& colorIndices() { return colorIndices_; }
 
+    bool hasTexCoordIndices() const { return !texCoordIndices_.empty(); }
     const SgIndexArray& texCoordIndices() const { return texCoordIndices_; }
     SgIndexArray& texCoordIndices() { return texCoordIndices_; }
 
@@ -324,11 +328,14 @@ public:
         triangleVertices_[i+2] = v2;
     }
 
-    TriangleRef addTriangle(){
+    TriangleRef newTriangle(){
         const size_t s = triangleVertices_.size();
         triangleVertices_.resize(s + 3);
         return TriangleRef(&triangleVertices_[s]);
     }
+
+    // deprecated
+    TriangleRef addTriangle(){ return newTriangle(); }
 
     void addTriangle(int v0, int v1, int v2){
         triangleVertices_.push_back(v0);

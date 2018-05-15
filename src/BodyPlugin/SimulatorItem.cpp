@@ -2248,14 +2248,13 @@ void SimulatorItemImpl::onSimulationLoopStopped()
         timeBar->stopFillLevelUpdate(fillLevelId);
     }
 
-    sigSimulationFinished();
-
-    clearSimulation();
-
     mv->notify(format(_("Simulation by %1% has finished at %2% [s].")) % self->name() % finishTime);
     mv->putln(format(_("Computation time is %1% [s], computation time / simulation time = %2%."))
               % actualSimulationTime % (actualSimulationTime / finishTime));
 
+    clearSimulation();
+
+    sigSimulationFinished();
 }
 
 

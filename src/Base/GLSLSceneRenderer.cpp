@@ -13,6 +13,7 @@
 #include <cnoid/NullOut>
 #include <Eigen/StdVector>
 #include <GL/glu.h>
+#include <boost/optional.hpp>
 #include <unordered_map>
 #include <mutex>
 #include <iostream>
@@ -276,17 +277,6 @@ public:
     float normalVisualizationLength;
     SgMaterialPtr normalVisualizationMaterial;
 
-    GLdouble pickX;
-    GLdouble pickY;
-    typedef std::shared_ptr<SgNodePath> SgNodePathPtr;
-    SgNodePath currentNodePath;
-    vector<SgNodePathPtr> pickingNodePathList;
-    SgNodePath pickedNodePath;
-    Vector3 pickedPoint;
-
-    ostream* os_;
-    ostream& os() { return *os_; }
-
     // OpenGL states
     enum StateFlag {
         COLOR_MATERIAL,
@@ -303,8 +293,21 @@ public:
 
     vector<bool> stateFlag;
 
+    boost::optional<bool> isCullFaceEnabled;
+
     float pointSize;
     float lineWidth;
+
+    GLdouble pickX;
+    GLdouble pickY;
+    typedef std::shared_ptr<SgNodePath> SgNodePathPtr;
+    SgNodePath currentNodePath;
+    vector<SgNodePathPtr> pickingNodePathList;
+    SgNodePath pickedNodePath;
+    Vector3 pickedPoint;
+
+    ostream* os_;
+    ostream& os() { return *os_; }
 
     bool isUpsideDownEnabled;
 
@@ -594,7 +597,9 @@ bool GLSLSceneRendererImpl::initializeGL()
 
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_DITHER);
-    glDisable(GL_CULL_FACE);
+
+    glEnable(GL_CULL_FACE);
+    isCullFaceEnabled = true;
 
     glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
@@ -1292,10 +1297,10 @@ void GLSLSceneRendererImpl::renderShape(SgShape* shape)
 void GLSLSceneRendererImpl::renderShapeMain
 (SgShape* shape, VertexResource* resource, const Affine3& position, unsigned int pickId)
 {
+    SgMesh* mesh = shape->mesh();
     if(isPicking){
         setPickColor(pickId);
     } else {
-        SgMesh* mesh = shape->mesh();
         renderMaterial(shape->material());
         if(currentLightingProgram == &phongShadowProgram){
             bool hasTexture;
@@ -1307,6 +1312,15 @@ void GLSLSceneRendererImpl::renderShapeMain
             phongShadowProgram.setTextureEnabled(hasTexture);
             phongShadowProgram.setVertexColorEnabled(mesh->hasColors());
         }
+    }
+    bool doCullFace = mesh->isSolid();
+    if(!isCullFaceEnabled || *isCullFaceEnabled != doCullFace){
+        if(doCullFace){
+            glEnable(GL_CULL_FACE);
+        } else {
+            glDisable(GL_CULL_FACE);
+        }
+        isCullFaceEnabled = doCullFace;
     }
     drawVertexResource(resource, GL_TRIANGLES, position);
 }
@@ -1887,6 +1901,8 @@ void GLSLSceneRendererImpl::clearGLState()
     specularColor << 0.0f, 0.0f, 0.0f, 0.0f;
     shininess = 0.0f;
     alpha = 1.0f;
+
+    isCullFaceEnabled = boost::none;
 
     pointSize = defaultPointSize;    
     lineWidth = defaultLineWidth;
