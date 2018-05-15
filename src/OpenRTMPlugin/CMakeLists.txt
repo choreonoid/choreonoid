@@ -25,6 +25,7 @@ set(plugin_sources
   RTSPropertiesView.cpp
   RTSItem.cpp
   RTSDiagramView.cpp
+  RTMImageView.cpp
   RTSCommonUtil.cpp
   RTSConfigurationView.cpp
 

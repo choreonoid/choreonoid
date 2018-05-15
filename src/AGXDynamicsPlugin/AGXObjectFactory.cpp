@@ -210,7 +210,7 @@ agx::Bool AGXObjectFactory::setContactMaterialParam(agx::ContactMaterial* const 
     cm->setContactReductionBinResolution(desc.contactReductionBinResolution);
 
     // Create friction model
-    if(desc.frictionModelType != AGXFrictionModelType::DEFAULT){
+    if(desc.frictionModelType != AGXFrictionModelType::DEFAULT || desc.solveType != agx::FrictionModel::SolveType::SPLIT){
         agx::FrictionModelRef fm = nullptr;
         switch (desc.frictionModelType){
             case AGXFrictionModelType::BOX :
@@ -223,12 +223,13 @@ agx::Bool AGXObjectFactory::setContactMaterialParam(agx::ContactMaterial* const 
                 fm = new agx::ConstantNormalForceOrientedBoxFrictionModel(agx::Real(0.0), nullptr, agx::Vec3(), desc.solveType);
                 break;
             case AGXFrictionModelType::ITERATIVE_PROJECTED_CONE :
+            case AGXFrictionModelType::DEFAULT:
                 fm = new agx::IterativeProjectedConeFriction();
                 break;
-            case AGXFrictionModelType::DEFAULT:
             default:
                 break;
         }
+        if(!fm) return false;
         fm->setSolveType(desc.solveType);
         cm->setFrictionModel(fm);
     }

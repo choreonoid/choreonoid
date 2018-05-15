@@ -28,14 +28,14 @@ SUB_BELT_SPEC: &SUB_BELT_SPEC
   numberOfNodes: 50
   nodeThickness: 0.00671
   nodeWidth: 0.03810
-  nodeDistanceTension: 5.0E-4
+  nodeDistanceTension: 5.0E-3
   nodeThickerThickness: 0.01114
   useThickerNodeEvery: 6
   hingeCompliance: 5.0E-6
   hingeSpookDamping: 15.0E-3
   minStabilizingHingeNormalForce: 40
-  stabilizingHingeFrictionParameter: 4.0E-9
-  numNodesPerMergeSegment: 6
+  stabilizingHingeFrictionParameter: 4.0E-8
+  numNodesPerMergeSegment: 5
 
 COMMON_BELT_SPEC: &COMMON_BELT_SPEC
   massType: density

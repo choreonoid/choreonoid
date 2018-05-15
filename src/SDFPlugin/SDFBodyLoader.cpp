@@ -1416,12 +1416,14 @@ void SDFBodyLoaderImpl::readRay(sdf::ElementPtr el, SensorInfo* sensorInfo)
 
             if(scan->HasElement("horizontal")){
                sdf::ElementPtr horizontal = scan->GetElement("horizontal");
+               unsigned int samples = 640;
+               double resolution = 1;
 
                if( horizontal->HasElement("samples")){
-                   int samples = horizontal->Get<int>("samples");
+                   samples = horizontal->Get<unsigned int>("samples");
                }
                if(horizontal->HasElement("resolution")){
-                   rsensor->setYawResolution(horizontal->Get<int>("resolution"));
+                   resolution = horizontal->Get<double>("resolution");
                }
 
                double min_angle, max_angle, angle;
@@ -1436,16 +1438,22 @@ void SDFBodyLoaderImpl::readRay(sdf::ElementPtr el, SensorInfo* sensorInfo)
                        rsensor->yawRange(), sensorInfo->name)) {
                    rsensor->setYawRange(angle);
                }
+
+               int num_points = static_cast<int>(samples * resolution);
+               double yawStep = (num_points > 1) ? angle / (num_points - 1) : 0;
+               rsensor->setYawStep(yawStep);
             }
 
             if(scan->HasElement("vertical")){
                 sdf::ElementPtr vertical = scan->GetElement("vertical");
+                unsigned int samples = 1;
+                double resolution = 1;
 
                 if( vertical->HasElement("samples")){
-                    int samples = vertical->Get<int>("samples");
+                    samples = vertical->Get<unsigned int>("samples");
                 }
                 if(vertical->HasElement("resolution")){
-                    rsensor->setPitchResolution(vertical->Get<int>("resolution"));
+                    resolution = vertical->Get<double>("resolution");
                 }
 
                 double min_angle, max_angle, angle;
@@ -1460,6 +1468,10 @@ void SDFBodyLoaderImpl::readRay(sdf::ElementPtr el, SensorInfo* sensorInfo)
                         rsensor->yawRange(), sensorInfo->name)) {
                     rsensor->setPitchRange(angle);
                 }
+
+                int num_points = static_cast<int>(samples * resolution);
+                double pitchStep = (num_points > 1) ? angle / (num_points - 1) : 0;
+                rsensor->setPitchStep(pitchStep);
             }
 
         }
@@ -1474,7 +1486,7 @@ void SDFBodyLoaderImpl::readRay(sdf::ElementPtr el, SensorInfo* sensorInfo)
                 rsensor->setMaxDistance( range->Get<double>("max") );
             }
             if( range->HasElement("resolution")){
-                double resolution = range->Get<int>("resolution");
+                double resolution = range->Get<double>("resolution");
             }
         }
     }

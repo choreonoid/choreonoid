@@ -404,7 +404,7 @@ void AGXLink::createAGXShape()
     if(!orgLink->collisionShape()) return;
     MeshExtractor* extractor = new MeshExtractor;
     AGXTrimeshDesc td;
-    if(extractor->extract(orgLink->collisionShape(), std::bind(&AGXLink::detectPrimitiveShape, this, extractor, std::ref(td)))){
+    if(extractor->extract(orgLink->collisionShape(), [&](){ detectPrimitiveShape(extractor, td); })){
         if(td.vertices.empty()) goto EXIT;
         // if vertices have values, it will be trimesh
         size_t numConvex = 0;

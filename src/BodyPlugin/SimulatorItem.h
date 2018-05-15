@@ -127,7 +127,9 @@ public:
 
     bool isRecordingEnabled() const;
     bool isDeviceStateOutputEnabled() const;
-        
+
+    void setSpecifiedRecordingTimeLength(double length);
+
     bool isAllLinkPositionOutputMode();
     virtual void setAllLinkPositionOutputMode(bool on);
 

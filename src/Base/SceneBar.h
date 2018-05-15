@@ -20,6 +20,7 @@ public:
     static SceneBar* instance();
 
     SceneWidget* targetSceneWidget();
+    void sceneWidget(std::vector<SceneWidget*>& widget);
 
     bool isCollisionVisualizationButtonSetVisible() const;
     void setCollisionVisualizationButtonSetVisible(bool on);

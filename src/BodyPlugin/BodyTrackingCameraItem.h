@@ -19,6 +19,8 @@ class CNOID_EXPORT BodyTrackingCameraItem : public Item, public SceneProvider
 public:
     static void initializeClass(ExtensionManager* ext);
     
+    enum CameraType { PERSPECTIVE = 0, ORTHOGRAPHIC, N_CAMERA_TYPE  };
+
     BodyTrackingCameraItem();
     BodyTrackingCameraItem(const BodyTrackingCameraItem& org);
 

@@ -21,6 +21,7 @@ class CNOID_EXPORT MeshExtractor
 public:
     MeshExtractor();
     bool extract(SgNode* node, std::function<void()> callback);
+    bool extract(SgNode* node, std::function<void(SgMesh* mesh)> callback);
     SgMesh* integrate(SgNode* node);
 
     SgMesh* currentMesh() const;

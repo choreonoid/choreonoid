@@ -5,7 +5,7 @@ def loadProject(worldProject, simulatorProject, robotProject):
 
     directory = os.path.dirname(os.path.realpath(__file__))
     
-    pm = cnoid.Base.ProjectManager.instance()
+    pm = cnoid.Base.ProjectManager.instance
 
     pm.loadProject(os.path.join(directory, worldProject + ".cnoid"))
 

@@ -58,7 +58,8 @@ public:
     bool makeValuePutReady();
     bool startValuePut();
     void endValuePut();
-    template<class StringType> void putString(const StringType& value);
+    void putString(const std::string& value);
+    void putString(const char* value);
     template<class StringType> void putSingleQuotedString(const StringType& value);
     template<class StringType> void putDoubleQuotedString(const StringType& value);
     void putBlockStyleString(const std::string& value, bool isLiteral);
@@ -284,10 +285,27 @@ void YAMLWriterImpl::endValuePut()
 }
 
 
-template<class StringType> void YAMLWriterImpl::putString(const StringType& value)
+void YAMLWriterImpl::putString(const std::string& value)
 {
     if(startValuePut()){
-        os << value;
+        if(value.empty()){
+            os << "\"\"";
+        } else {
+            os << value;
+        }
+        endValuePut();
+    }
+}
+
+
+void YAMLWriterImpl::putString(const char* value)
+{
+    if(startValuePut()){
+        if(value[0] == '\0'){
+            os << "\"\"";
+        } else {
+            os << value;
+        }
         endValuePut();
     }
 }

@@ -16,6 +16,10 @@ materials:
     roughness: 0.1
     viscosity: 0.0
   -
+    name: Sole
+    roughness: 0.5
+    viscosity: 0.0
+  -
     name: Hand
     roughness: 0.5
     viscosity: 0.0
@@ -70,6 +74,11 @@ contactMaterials:
     friction: 0.5
     restitution: 0.4
   -
+    materials: [ Ground, Sole ]
+    friction: 1.0
+    restitution: 0.0
+    frictionModel: [ cone, direct ]
+  -
     materials: [ Ground, Tracks ]
     friction: 0.5
     restitution: 0.0
@@ -121,7 +130,7 @@ contactMaterials:
     youngsModulus: 1e10
     friction: 0.7
     restitution: 0.0
-    surfaceViscosity: 1e-2
+    surfaceViscosity: 1e-3 # 1e-2
     secondarySurfaceViscosity: 2e-2
     primaryDirection: [ 1, 0, 0 ]
     frictionModel: [ orientedBox, direct ]

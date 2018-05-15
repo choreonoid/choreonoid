@@ -16,74 +16,126 @@ items:
       children: 
         - 
           id: 2
-          name: "RoadSurface20m"
-          plugin: Body
-          class: BodyItem
-          data: 
-            modelFile: "${SHARE}/model/WRS2018/RoadSurface20m.body"
-            currentBaseLink: "Base"
-            rootPosition: [ 0, 0, 0 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            jointPositions: [  ]
-            initialRootPosition: [ 0, 0, 0 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            zmp: [ 0, 0, 0 ]
-            collisionDetection: true
-            selfCollisionDetection: false
-            isEditable: false
-        - 
-          id: 3
-          name: "TunnelWall20m"
-          plugin: Body
-          class: BodyItem
-          data: 
-            modelFile: "${SHARE}/model/WRS2018/TunnelWall20m.body"
-            currentBaseLink: ""
-            rootPosition: [ 0, 0, 0 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            jointPositions: [  ]
-            initialRootPosition: [ 0, 0, 0 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            zmp: [ 0, 0, 0 ]
-            collisionDetection: true
-            selfCollisionDetection: false
-            isEditable: false
-        - 
-          id: 4
-          name: "FireCabinet"
-          plugin: Body
-          class: BodyItem
-          data: 
-            modelFile: "${SHARE}/model/WRS2018/FireCabinet.body"
-            currentBaseLink: "BASE"
-            rootPosition: [ 5, 4.21, 0.256 ]
-            rootAttitude: [ 
-              6.123234e-17, 1, 0, 
-              -1, 6.123234e-17, 0, 
-              0, 0, 1 ]
-            jointPositions: [ -0.401426,  0.000000,  0.000000 ]
-            initialRootPosition: [ 5, 4.21, 0.256 ]
-            initialRootAttitude: [ 
-              2.22044605e-16, 1, 0, 
-              -1, 2.22044605e-16, -0, 
-              -0, 0, 1 ]
-            initialJointPositions: [ -0.401426,  0.000000,  0.000000 ]
-            zmp: [ 0, 0, 0 ]
-            collisionDetection: true
-            selfCollisionDetection: false
-            isEditable: true
+          name: "Environment"
+          plugin: Base
+          class: FolderItem
+          children: 
+            - 
+              id: 3
+              name: "RoadSurface20m"
+              plugin: Body
+              class: BodyItem
+              data: 
+                modelFile: "${SHARE}/model/WRS2018/RoadSurface20m.body"
+                currentBaseLink: "Base"
+                rootPosition: [ 0, 0, 0 ]
+                rootAttitude: [ 
+                  1, 0, 0, 
+                  0, 1, 0, 
+                  0, 0, 1 ]
+                jointPositions: [  ]
+                initialRootPosition: [ 0, 0, 0 ]
+                initialRootAttitude: [ 
+                  1, 0, 0, 
+                  0, 1, 0, 
+                  0, 0, 1 ]
+                zmp: [ 0, 0, 0 ]
+                collisionDetection: true
+                selfCollisionDetection: false
+                isEditable: false
+            - 
+              id: 4
+              name: "TunnelWall20m-L"
+              plugin: Body
+              class: BodyItem
+              data: 
+                modelFile: "${SHARE}/model/WRS2018/TunnelWall20m-L.body"
+                currentBaseLink: "Base"
+                rootPosition: [ 0, 0, 0 ]
+                rootAttitude: [ 
+                  1, 0, 0, 
+                  0, 1, 0, 
+                  0, 0, 1 ]
+                jointPositions: [  ]
+                initialRootPosition: [ 0, 0, 0 ]
+                initialRootAttitude: [ 
+                  1, 0, 0, 
+                  0, 1, 0, 
+                  0, 0, 1 ]
+                zmp: [ 0, 0, 0 ]
+                collisionDetection: true
+                selfCollisionDetection: false
+                isEditable: false
+            - 
+              id: 5
+              name: "TunnelWall20m-R"
+              plugin: Body
+              class: BodyItem
+              data: 
+                modelFile: "${SHARE}/model/WRS2018/TunnelWall20m-R.body"
+                currentBaseLink: "Base"
+                rootPosition: [ 0, 0, 0 ]
+                rootAttitude: [ 
+                  1, 0, 0, 
+                  0, 1, 0, 
+                  0, 0, 1 ]
+                jointPositions: [  ]
+                initialRootPosition: [ 0, 0, 0 ]
+                initialRootAttitude: [ 
+                  1, 0, 0, 
+                  0, 1, 0, 
+                  0, 0, 1 ]
+                zmp: [ 0, 0, 0 ]
+                collisionDetection: true
+                selfCollisionDetection: false
+                isEditable: false
+            - 
+              id: 6
+              name: "FireCabinet"
+              plugin: Body
+              class: BodyItem
+              data: 
+                modelFile: "${SHARE}/model/WRS2018/FireCabinet.body"
+                currentBaseLink: "BASE"
+                rootPosition: [ 5, 4.21, 0.256 ]
+                rootAttitude: [ 
+                  2.22044605e-16, 1, 0, 
+                  -1, 2.22044605e-16, -0, 
+                  -0, 0, 1 ]
+                jointPositions: [ -0.715676,  0.000000,  0.000000 ]
+                initialRootPosition: [ 5, 4.21, 0.256 ]
+                initialRootAttitude: [ 
+                  2.22044605e-16, 1, 0, 
+                  -1, 2.22044605e-16, -0, 
+                  -0, 0, 1 ]
+                initialJointPositions: [ -0.401426,  0.000000,  0.000000 ]
+                zmp: [ 0, 0, 0 ]
+                collisionDetection: true
+                selfCollisionDetection: false
+                isEditable: true
+            - 
+              id: 7
+              name: "HoseNozzle"
+              plugin: Body
+              class: BodyItem
+              data: 
+                modelFile: "${SHARE}/model/WRS2018/HoseNozzle.body"
+                currentBaseLink: "BASE"
+                rootPosition: [ 4.67934738, 4.1405342, 1.06499852 ]
+                rootAttitude: [ 
+                  1, 0, 0, 
+                  0, 1, 0, 
+                  0, 0, 1 ]
+                jointPositions: [  ]
+                initialRootPosition: [ 4.67934738, 4.1405342, 1.06499852 ]
+                initialRootAttitude: [ 
+                  1, 0, 0, 
+                  0, 1, 0, 
+                  0, 0, 1 ]
+                zmp: [ 0, 0, 0 ]
+                collisionDetection: true
+                selfCollisionDetection: false
+                isEditable: true
 views: 
   - 
     id: 0
@@ -96,8 +148,8 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      checked: [ 2, 3, 4 ]
-      expanded: [ 1, 4 ]
+      checked: [ 3, 4, 6, 7 ]
+      expanded: [ 1, 6 ]
   - 
     id: 2
     plugin: Base
@@ -147,9 +199,9 @@ views:
           fieldOfView: 0.698132
           near: 0.01
           far: 100
-          eye: [ -8.30490252, -1.93201184, 5.20108619 ]
-          direction: [ 0.964232323, 0.175460898, -0.198669326 ]
-          up: [ 0.195459564, 0.0355676841, 0.980066579 ]
+          eye: [ -3.90815276, -3.33358774, 2.81867908 ]
+          direction: [ 0.892427443, 0.377312262, -0.247403953 ]
+          up: [ 0.227874132, 0.0963436354, 0.968912423 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 5.73009
@@ -205,9 +257,9 @@ views:
           fieldOfView: 0.698132
           near: 0.01
           far: 100
-          eye: [ -5.70561679, -1.23665242, 3.31145986 ]
-          direction: [ 0.953750871, 0.205334582, -0.219538117 ]
-          up: [ 0.21462057, 0.0462060135, 0.975603923 ]
+          eye: [ -5.75368023, 0.232171657, 2.52296107 ]
+          direction: [ 0.996943901, 0.0319678818, -0.0712805157 ]
+          up: [ 0.0712438979, 0.00228449816, 0.997456309 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
@@ -217,7 +269,8 @@ views:
       gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      dedicatedItemTreeViewChecks: false
+      dedicatedItemTreeViewChecks: true
+      checked: [ 3, 4, 5, 6 ]
   - 
     id: 5
     plugin: Body
@@ -238,6 +291,7 @@ views:
       spinBox: true
       slider: true
       labelOnLeft: true
+      currentBodyItem: 7
   - 
     id: 7
     plugin: Body
@@ -245,6 +299,7 @@ views:
     mounted: true
     state: 
       listingMode: "Link List"
+      currentBodyItem: 7
   - 
     id: 8
     plugin: Multicopter
@@ -253,6 +308,9 @@ views:
     id: 9
     plugin: OpenRTM
     class: RTSNameServerView
+    state: 
+      host: localhost
+      port: 2809
   - 
     id: 10
     plugin: Python
@@ -276,6 +334,8 @@ toolbars:
     snapDistance: 0.025
     penetrationBlockDepth: 0.0005
     lazyCollisionDetectionMode: true
+  "BodyBar": 
+    current: 7
   "LeggedBodyBar": 
     stanceWidth: 0.15
   "BodyMotionGenerationBar": 
@@ -317,17 +377,27 @@ Body:
   "EditableSceneBody": 
     editableSceneBodies: 
       - 
-        bodyItem: 2
-        showCenterOfMass: false
-        showPpcom: false
-        showZmp: false
-      - 
         bodyItem: 3
         showCenterOfMass: false
         showPpcom: false
         showZmp: false
       - 
         bodyItem: 4
+        showCenterOfMass: false
+        showPpcom: false
+        showZmp: false
+      - 
+        bodyItem: 5
+        showCenterOfMass: false
+        showPpcom: false
+        showZmp: false
+      - 
+        bodyItem: 6
+        showCenterOfMass: false
+        showPpcom: false
+        showZmp: false
+      - 
+        bodyItem: 7
         showCenterOfMass: false
         showPpcom: false
         showZmp: false
@@ -346,9 +416,6 @@ Body:
     inputFrameRate: 200
     isOutputFrameRateSpecified: false
     outputFrameRate: 200
-Media: 
-  "PulseAudioManager": 
-    keepStreamConnection: false
 OpenRTM: 
   "deleteUnmanagedRTCsOnStartingSimulation": false
 viewAreas: 
@@ -358,12 +425,12 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 326, 1588 ]
+      sizes: [ 366, 1784 ]
       children: 
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 470, 470 ]
+          sizes: [ 645, 644 ]
           children: 
             - 
               type: pane
@@ -376,12 +443,12 @@ viewAreas:
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 671, 269 ]
+          sizes: [ 920, 369 ]
           children: 
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 687, 895 ]
+              sizes: [ 772, 1006 ]
               children: 
                 - 
                   type: pane

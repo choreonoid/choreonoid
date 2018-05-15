@@ -71,6 +71,8 @@ RTCItem::RTCItem()
 		oldBaseDirectoryType = baseDirectoryType.which();
 
 		rtcDirectory = filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "rtc";
+
+                isActivationEnabled_ = false;
 }
 
 
@@ -88,6 +90,7 @@ RTCItem::RTCItem(const RTCItem& org)
 	oldPeriodicType = org.oldPeriodicType;
 	properties = org.properties;
 	oldBaseDirectoryType = org.oldBaseDirectoryType;
+        isActivationEnabled_ = org.isActivationEnabled_;
 }
 
 RTCItem::~RTCItem()
@@ -96,22 +99,42 @@ RTCItem::~RTCItem()
 }
 
 
-void RTCItem::onPositionChanged() {
-  DDEBUG("RTCItem::onPositionChanged");
-    if(!rtcomp){
-        if(convertAbsolutePath())
-            rtcomp = new RTComponent(modulePath, properties);
-    }
-}
-
-
-void RTCItem::onDisconnectedFromRoot()
+void RTCItem::deleteRTCInstance()
 {
     if(rtcomp){
         rtcomp->deleteRTC();
         delete rtcomp;
         rtcomp = 0;
     }
+}
+
+
+void RTCItem::updateRTCInstance(bool forceUpdate)
+{
+    if(rtcomp && forceUpdate){
+        deleteRTCInstance();
+    }
+    if(!rtcomp){
+        if(convertAbsolutePath()){
+            rtcomp = new RTComponent(modulePath, properties);
+            if(isActivationEnabled_){
+                rtcomp->activate();
+            }
+        }
+    }
+}
+        
+        
+void RTCItem::onPositionChanged()
+{
+    DDEBUG("RTCItem::onPositionChanged");
+    updateRTCInstance(false);
+}
+
+
+void RTCItem::onDisconnectedFromRoot()
+{
+    deleteRTCInstance();
 }
 
 
@@ -125,22 +148,18 @@ void RTCItem::setModuleName(const std::string& name) {
   DDEBUG_V("RTCItem::setModuleName %s", name.c_str());
   if(moduleName!=name){
         moduleName = name;
-        if(rtcomp){
-            delete rtcomp;
-        }
-        if (convertAbsolutePath())
-            rtcomp = new RTComponent(modulePath, properties);
+        updateRTCInstance();
     }
 }
 
 
-void RTCItem::setPeriodicType(int type) {
-  DDEBUG_V("RTCItem::setPeriodicType %d", type);
-	if (oldPeriodicType != type) {
-		oldPeriodicType = type;
-		properties["exec_cxt.periodic.type"] = periodicType.symbol(type);
-    if(rtcomp){
-      delete rtcomp;
+void RTCItem::setPeriodicType(int type)
+{
+    DDEBUG_V("RTCItem::setPeriodicType %d", type);
+    if(oldPeriodicType != type){
+        oldPeriodicType = type;
+        properties["exec_cxt.periodic.type"] = periodicType.symbol(type);
+        updateRTCInstance();
     }
     if (convertAbsolutePath())
       rtcomp = new RTComponent(modulePath, properties);
@@ -155,53 +174,58 @@ void RTCItem::setPeriodicRate(int rate) {
         stringstream ss;
         ss << periodicRate;
         properties["exec_cxt.periodic.rate"] = ss.str();
-        if(rtcomp){
-            delete rtcomp;
-        }
-        if (convertAbsolutePath())
-            rtcomp = new RTComponent(modulePath, properties);
+        updateRTCInstance();
     }
 }
 
 
-void RTCItem::setBaseDirectoryType(int base) {
-  DDEBUG_V("RTCItem::setBaseDirectoryType %d", base);
-  baseDirectoryType.select(base);
-	if (oldBaseDirectoryType != base) {
-		oldBaseDirectoryType = base;
-		if (rtcomp) {
-			delete rtcomp;
-		}
-		if (convertAbsolutePath())
-			rtcomp = new RTComponent(modulePath, properties);
-	}
+void RTCItem::setBaseDirectoryType(int base)
+{
+    DDEBUG_V("RTCItem::setBaseDirectoryType %d", base);
+    baseDirectoryType.select(base);
+    if (oldBaseDirectoryType != base){
+        oldBaseDirectoryType = base;
+        updateRTCInstance();
+    }
+}
+
+
+void RTCItem::setActivationEnabled(bool on)
+{
+    if(on != isActivationEnabled_){
+        isActivationEnabled_ = on;
+        if(on && rtcomp){
+            rtcomp->activate();
+        }
+    }
 }
 
 
 void RTCItem::doPutProperties(PutPropertyFunction& putProperty)
 {
-	Item::doPutProperties(putProperty);
+    Item::doPutProperties(putProperty);
 
-	FilePathProperty moduleProperty(
-		moduleName,
-		{ str(format(_("RT-Component module (*%1%)")) % DLL_SUFFIX) });
+    FilePathProperty moduleProperty(
+        moduleName,
+        { str(format(_("RT-Component module (*%1%)")) % DLL_SUFFIX) });
 
-	if (baseDirectoryType.is(RTC_DIRECTORY)) {
-		moduleProperty.setBaseDirectory(rtcDirectory.string());
-	} else if (baseDirectoryType.is(PROJECT_DIRECTORY)) {
-		moduleProperty.setBaseDirectory(ProjectManager::instance()->currentProjectDirectory());
-	}
+    if(baseDirectoryType.is(RTC_DIRECTORY)){
+        moduleProperty.setBaseDirectory(rtcDirectory.string());
+    } else if(baseDirectoryType.is(PROJECT_DIRECTORY)){
+        moduleProperty.setBaseDirectory(ProjectManager::instance()->currentProjectDirectory());
+    }
+    
+    putProperty(_("RTC module"), moduleProperty,
+                [&](const string& name){ setModuleName(name); return true; });
+    putProperty(_("Base directory"), baseDirectoryType,
+                [&](int which){ setBaseDirectoryType(which); return true; });
 
-	putProperty(_("RTC module"), moduleProperty,
-		[&](const string& name) { setModuleName(name); return true; });
-	putProperty(_("Base directory"), baseDirectoryType,
-		[&](int which) { setBaseDirectoryType(which); return true; });
-
-	putProperty(_("Execution context"), periodicType,
-		[&](int which) { return periodicType.select(which); });
-	setPeriodicType(periodicType.selectedIndex());
-	putProperty(_("Periodic rate"), periodicRate,
-		[&](int rate) { setPeriodicRate(rate); return true; });
+    putProperty(_("Execution context"), periodicType,
+                [&](int which){ return periodicType.select(which); });
+    setPeriodicType(periodicType.selectedIndex());
+    putProperty(_("Periodic rate"), periodicRate,
+                [&](int rate){ setPeriodicRate(rate); return true; });
+    putProperty(_("Activation"), isActivationEnabled_, [&](bool on){ setActivationEnabled(on); return true; });
 }
 
 
@@ -210,42 +234,45 @@ bool RTCItem::store(Archive& archive)
     if(!Item::store(archive)){
         return false;
     }
-		archive.writeRelocatablePath("module", moduleName);
-		archive.write("baseDirectory", baseDirectoryType.selectedSymbol(), DOUBLE_QUOTED);
-		archive.write("periodicType", periodicType.selectedSymbol());
-		archive.write("periodicRate", periodicRate);
-		return true;
+    archive.writeRelocatablePath("module", moduleName);
+    archive.write("baseDirectory", baseDirectoryType.selectedSymbol(), DOUBLE_QUOTED);
+    archive.write("periodicType", periodicType.selectedSymbol());
+    archive.write("periodicRate", periodicRate);
+    archive.write("activation", isActivationEnabled_);
+    return true;
 }
 
 
-bool RTCItem::restore(const Archive& archive) {
-	DDEBUG("RTCItem::restore");
+bool RTCItem::restore(const Archive& archive)
+{
+    DDEBUG("RTCItem::restore");
+    
+    if(!Item::restore(archive)){
+        return false;
+    }
+    string value;
+    if(archive.read("module", value) || archive.read("moduleName", value)){
+        filesystem::path path(archive.expandPathVariables(value));
+        moduleName = path.make_preferred().string();
+    }
+    if(archive.read("baseDirectory", value) || archive.read("RelativePathBase", value)){
+        baseDirectoryType.select(value);
+        oldBaseDirectoryType = baseDirectoryType.selectedIndex();
+    }
+    
+    if(archive.read("periodicType", value)){
+        periodicType.select(value);
+        oldPeriodicType = periodicType.selectedIndex();
+        properties["exec_cxt.periodic.type"] = value;
+    }
+    if(archive.read("periodicRate", periodicRate)){
+        stringstream ss;
+        ss << periodicRate;
+        properties["exec_cxt.periodic.rate"] = ss.str();
+    }
+    archive.read("activation", isActivationEnabled_);
 
-	if (!Item::restore(archive)) {
-		return false;
-	}
-	string value;
-	if (archive.read("module", value) || archive.read("moduleName", value)) {
-		filesystem::path path(archive.expandPathVariables(value));
-		moduleName = path.make_preferred().string();
-	}
-	if (archive.read("baseDirectory", value) || archive.read("RelativePathBase", value)) {
-		baseDirectoryType.select(value);
-		oldBaseDirectoryType = baseDirectoryType.selectedIndex();
-	}
-
-	if (archive.read("periodicType", value)) {
-		periodicType.select(value);
-		oldPeriodicType = periodicType.selectedIndex();
-		properties["exec_cxt.periodic.type"] = value;
-	}
-	if (archive.read("periodicRate", periodicRate)) {
-		stringstream ss;
-		ss << periodicRate;
-		properties["exec_cxt.periodic.rate"] = ss.str();
-	}
-
-	return true;
+    return true;
 }
 
 
@@ -436,5 +463,20 @@ void RTComponent::deleteRTC()
    
     if(TRACE_FUNCTIONS){
         cout << "End of BodyRTCItem::deleteModule()" << endl;
+    }
+}
+
+
+void RTComponent::activate()
+{
+    if(rtc_){
+        RTC::ExecutionContextList_var eclist = rtc_->get_owned_contexts();
+        for(CORBA::ULong i=0; i < eclist->length(); ++i){
+            if(!CORBA::is_nil(eclist[i])){
+                OpenRTM::ExtTrigExecutionContextService::_narrow(eclist[i])
+                    ->activate_component(rtc_->getObjRef());
+                break;
+            }
+        }
     }
 }

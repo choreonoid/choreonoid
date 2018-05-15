@@ -1,0 +1,24 @@
+machine:
+    timezone: Asia/Tokyo
+    services: docker
+
+dependencies:
+    pre:
+        - sudo apt-get update
+        - sudo apt-get install ubuntu-dev-tools
+        - sudo apt-get install dput
+        - sudo apt-get install debhelper
+        - sudo apt-get install fakeroot
+        - sudo apt-get install pkg-kde-tools
+
+test:
+    override:
+        - docker build -t ubuntu-xenial-gcc -f misc/docker/Dockerfile-ubuntu-xenial-gcc .
+        - docker build -t ubuntu-trusty-gcc -f misc/docker/Dockerfile-ubuntu-trusty-gcc .
+
+deployment:
+    dput_ppa:
+        branch: /.*?/
+        commands:
+            - misc/ci-scripts/packaging.sh
+            - if [[ -r misc/ci-scripts/deploy-launchpad.sh ]]; then sh misc/ci-scripts/deploy-launchpad.sh; fi

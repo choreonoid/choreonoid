@@ -13,19 +13,14 @@ namespace cnoid {
 
 template<class T = int> class IdPair
 {
+protected:
     T id[2];
 
 public:
     IdPair(){ }
 
     IdPair(T id0, T id1){
-        if(id0 <= id1){
-            id[0] = id0;
-            id[1] = id1;
-        } else {
-            id[0] = id1;
-            id[1] = id0;
-        }
+        set(id0, id1);
     }
 
     IdPair(const T* src){
@@ -37,6 +32,16 @@ public:
             id[1] = src[0];
         }
     }
+
+    void set(T id0, T id1){
+        if(id0 <= id1){
+            id[0] = id0;
+            id[1] = id1;
+        } else {
+            id[0] = id1;
+            id[1] = id0;
+        }
+    }        
 
     T operator()(int which) const { return id[which]; }
 

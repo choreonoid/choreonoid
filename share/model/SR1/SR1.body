@@ -528,6 +528,7 @@ links:
       1, 0, 0,
       0, 1, 0,
       0, 0, 1 ]
+    material: Sole
     elements:
       -
         type: ForceSensor
@@ -632,6 +633,7 @@ links:
       1, 0, 0,
       0, 1, 0,
       0, 0, 1 ]
+    material: Sole
     elements:
       -
         type: ForceSensor

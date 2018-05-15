@@ -152,7 +152,10 @@ void SceneBarImpl::initialize()
     self->addWidget(cameraCombo);
 
     self->addButton(QIcon(":/Base/icons/viewfitting.png"), _("Move the camera to look at the objects"))
-        ->sigClicked().connect([&](){ targetSceneWidget->viewAll(); });
+        ->sigClicked().connect([&](){
+                targetSceneWidget->viewAll();
+                targetSceneWidget->setViewpointControlMode(SceneWidget::THIRD_PERSON_MODE);
+            });
 
     wireframeToggle = self->addToggleButton(
         QIcon(":/Base/icons/wireframe.png"), _("Toggle the wireframe mode"));
@@ -409,6 +412,13 @@ void SceneBarImpl::onCameraComboCurrentIndexChanged(int index)
     rendererStateConnections.block();
     targetRenderer->setCurrentCamera(index);
     rendererStateConnections.unblock();
+}
+
+void SceneBar::sceneWidget(vector<SceneWidget*>& widget)
+{
+    for(auto it=impl->sceneWidgetInfos.begin(); it!=impl->sceneWidgetInfos.end(); it++){
+        widget.push_back(it->first);
+    }
 }
 
 

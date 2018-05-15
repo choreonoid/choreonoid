@@ -1,0 +1,77 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+
+# Hardening.
+export DEB_BUILD_MAINT_OPTIONS=hardening=+all,-pie,+fortify
+
+CPPFLAGS:=$(shell dpkg-buildflags --get CPPFLAGS)
+CFLAGS:=$(shell dpkg-buildflags --get CFLAGS)
+CXXFLAGS:=$(shell dpkg-buildflags --get CXXFLAGS)
+LDFLAGS:=$(shell dpkg-buildflags --get LDFLAGS) -Wl,--as-needed
+
+CFLAGS+=$(CPPFLAGS)
+CXXFLAGS+=$(CPPFLAGS)
+
+.PHONY: override_dh_auto_clean		\
+	override_dh_auto_configure	\
+	override_dh_auto_build-indep
+
+override_dh_auto_clean:
+	dh_auto_clean
+	rm -f Doxyfile				\
+	      src/Base/gettext.h 		\
+	      src/BodyPlugin/gettext.h 		\
+	      src/PoseSeqPlugin/gettext.h 	\
+	      src/Util/Config.h
+	rm -Rf html
+
+override_dh_auto_configure:
+	dh_auto_configure --				\
+		-DCMAKE_BUILD_TYPE=Release		\
+		-DINSTALL_SDK:BOOL=TRUE			\
+		-DINSTALL_DEPENDENCIES:BOOL=TRUE	\
+		-DCNOID_ENABLE_GETTEXT:BOOL=TRUE	\
+		-DUSE_EXTERNAL_EIGEN:BOOL=TRUE		\
+		-DUSE_EXTERNAL_YAML:BOOL=TRUE		\
+		-DENABLE_CORBA:BOOL=TRUE		\
+		-DBUILD_CORBA_PLUGIN:BOOL=TRUE		\
+		-DBUILD_OPENRTM_PLUGIN:BOOL=TRUE	\
+		-DBUILD_GROBOT_PLUGIN:BOOL=TRUE		\
+		-DBUILD_ASSIMP_PLUGIN:BOOL=FALSE	\
+		-DBUILD_PYTHON_PLUGIN:BOOL=TRUE		\
+		-DOPENRTM_DIR=/usr
+
+override_dh_auto_build-indep:
+	doxygen Doxyfile # Generate documentation.
+
+override_dh_auto_install:
+	dh_auto_install -- # Install files in prefix.
+	# Install IDL related headers
+	mkdir -p debian/choreonoid%VERSION%-dev/usr/include/choreonoid-1.7/cnoid
+	cp -r include/cnoid/corba debian/choreonoid%VERSION%-dev/usr/include/choreonoid-1.7/cnoid
+	# Install desktop file
+	mkdir -p debian/choreonoid%VERSION%/usr/share/applications/
+	install -m 644 ./debian/choreonoid.desktop \
+	 debian/choreonoid%VERSION%/usr/share/applications/
+	# Install icons.
+	mkdir -p debian/choreonoid%VERSION%/usr/share/icons/hicolor/scalable/apps/
+	install -m 644 ./src/Choreonoid/icon/choreonoid.svg \
+	 debian/choreonoid%VERSION%/usr/share/icons/hicolor/scalable/apps/choreonoid.svg
+	for s in 16 24 32 48 64 256; do \
+	 mkdir -p "debian/choreonoid%VERSION%/usr/share/icons/hicolor/$$s""x$$s/apps/"; \
+	 install -m 644 "./src/Choreonoid/icon/choreonoid$$s.png" \
+	  "debian/choreonoid%VERSION%/usr/share/icons/hicolor/$$s""x$$s/apps/choreonoid.png"; \
+	done
+
+# Files specified using wildcard in choreonoid.install contain files related
+# to OpenRTM.  If you list full filenames in choreonoid.install, this file
+# need to be fix each time build configuration is changed.  By removing files
+# specified in choreonoid-openrtm-plugin.install from the install directory
+# for choreonoid package here, reduce theneed to fix choreonoid.install.
+override_dh_install:
+	dh_install
+	rm -f $$(cat debian/choreonoid%VERSION%-openrtm-plugin.install | \
+		sed -e 's/^\(.\+\)$$/debian\/choreonoid%VERSION%\/\1/')
+
+%:
+	dh  $@ --parallel --with pkgkde-symbolshelper

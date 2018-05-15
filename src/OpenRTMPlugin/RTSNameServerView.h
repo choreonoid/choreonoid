@@ -112,7 +112,6 @@ namespace cnoid {
 		QLineEdit* kindEdit_;
 		QTextEdit* iorText_;
 	};
-
 }
 
 #endif

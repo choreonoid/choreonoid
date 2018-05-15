@@ -1,5 +1,5 @@
-#include "ModeJoystick.h"
 #include <cnoid/SimpleController>
+#include <cnoid/SharedJoystick>
 #include <boost/format.hpp>
 
 using namespace std;
@@ -20,7 +20,7 @@ class AizuWheelController : public SimpleController
     enum { L_WHEEL, R_WHEEL, NUM_WHEELS };
     vector<Link*> wheels;
     vector<double> qprev;
-    ModeJoystickPtr joystick;
+    SharedJoystickPtr joystick;
     int targetMode;
 
 public:
@@ -53,7 +53,7 @@ bool AizuWheelController::initialize(SimpleControllerIO* io)
         return false;
     }
 
-    joystick = io->getOrCreateSharedObject<ModeJoystick>("joystick");
+    joystick = io->getOrCreateSharedObject<SharedJoystick>("joystick");
     targetMode = joystick->addMode();
 
     return true;

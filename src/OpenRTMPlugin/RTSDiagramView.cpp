@@ -570,7 +570,7 @@ void RTSCompGItem::setStatus(RTC_STATUS status) {
 	}
 }
 ////////////////////
-#define STATE_CHECK_TIME 500  //msec
+#define STATE_CHECK_TIME 1000  //msec
 
 class RTSDiagramViewImpl : public QGraphicsView {
 

@@ -26,10 +26,9 @@ class DoubleArmV7Controller : public cnoid::SimpleController
         AxisType type;
         int id;
         double ratio;
-        double offset;
         int shift;
-        OperationAxis(Link* joint, AxisType type, int id, double ratio, double offset, int shift = 0)
-            : joint(joint), type(type), id(id), ratio(ratio), offset(offset), shift(shift) { }
+        OperationAxis(Link* joint, AxisType type, int id, double ratio, int shift = 0)
+            : joint(joint), type(type), id(id), ratio(ratio), shift(shift) { }
     };
 
     vector<vector<OperationAxis>> operationAxes;
@@ -188,32 +187,32 @@ void DoubleArmV7Controller::initJoystickKeyBind()
 {
     operationAxes = {
         {
-            { link("MFRAME"),       STICK,  Joystick::L_STICK_H_AXIS, -0.6, 0.0 },
-            { link("BLOCK"),        STICK,  Joystick::R_STICK_H_AXIS, -0.6, 0.0 },
-            { link("BOOM"),         STICK,  Joystick::L_STICK_V_AXIS, -0.6, 0.0 },
-            { link("ARM"),          STICK,  Joystick::R_STICK_V_AXIS,  0.6, 0.0 },
-            { link("TOHKU_PITCH"),  BUTTON, Joystick::A_BUTTON,        0.6, 0.0 },
-            { link("TOHKU_PITCH"),  BUTTON, Joystick::Y_BUTTON,       -0.6, 0.0 },
-            { link("TOHKU_ROLL"),   BUTTON, Joystick::X_BUTTON,        1.0, 0.0 },
-            { link("TOHKU_ROLL"),   BUTTON, Joystick::B_BUTTON,       -1.0, 0.0 },
-            { link("TOHKU_TIP_01"), STICK,  Joystick::R_TRIGGER_AXIS, -0.6, 1.0 },
-            { link("TOHKU_TIP_02"), STICK,  Joystick::R_TRIGGER_AXIS, -0.6, 1.0 },
-            { link("TOHKU_TIP_01"), BUTTON, Joystick::R_BUTTON,        0.5, 0.0 },
-            { link("TOHKU_TIP_02"), BUTTON, Joystick::R_BUTTON,        0.5, 0.0 }
+            { link("MFRAME"),       STICK,  Joystick::L_STICK_H_AXIS, -0.6 },
+            { link("BLOCK"),        STICK,  Joystick::R_STICK_H_AXIS, -0.6 },
+            { link("BOOM"),         STICK,  Joystick::L_STICK_V_AXIS, -0.6 },
+            { link("ARM"),          STICK,  Joystick::R_STICK_V_AXIS,  0.6 },
+            { link("TOHKU_PITCH"),  BUTTON, Joystick::A_BUTTON,        0.6 },
+            { link("TOHKU_PITCH"),  BUTTON, Joystick::Y_BUTTON,       -0.6 },
+            { link("TOHKU_ROLL"),   BUTTON, Joystick::X_BUTTON,        1.0 },
+            { link("TOHKU_ROLL"),   BUTTON, Joystick::B_BUTTON,       -1.0 },
+            { link("TOHKU_TIP_01"), STICK,  Joystick::R_TRIGGER_AXIS, -0.6 },
+            { link("TOHKU_TIP_02"), STICK,  Joystick::R_TRIGGER_AXIS, -0.6 },
+            { link("TOHKU_TIP_01"), BUTTON, Joystick::R_BUTTON,        0.5 },
+            { link("TOHKU_TIP_02"), BUTTON, Joystick::R_BUTTON,        0.5 }
         },
         {
-            { link("UFRAME"),       STICK,  Joystick::L_STICK_H_AXIS, -0.6, 0.0 },
-            { link("MNP_SWING"),    STICK,  Joystick::R_STICK_H_AXIS, -0.6, 0.0 },
-            { link("MANIBOOM"),     STICK,  Joystick::L_STICK_V_AXIS, -0.6, 0.0 },
-            { link("MANIARM"),      STICK,  Joystick::R_STICK_V_AXIS,  0.6, 0.0 },
-            { link("MANIELBOW"),    BUTTON, Joystick::A_BUTTON,        0.6, 0.0 },
-            { link("MANIELBOW"),    BUTTON, Joystick::Y_BUTTON,       -0.6, 0.0 },
-            { link("YAWJOINT"),     BUTTON, Joystick::X_BUTTON,        1.0, 0.0, 1 },
-            { link("YAWJOINT"),     BUTTON, Joystick::B_BUTTON,       -1.0, 0.0, 1 },
-            { link("HANDBASE"),     BUTTON, Joystick::X_BUTTON,       -1.0, 0.0, 0 },
-            { link("HANDBASE"),     BUTTON, Joystick::B_BUTTON,        1.0, 0.0, 0 },
-            { link("PUSHROD"),      STICK,  Joystick::R_TRIGGER_AXIS, -0.04, 1.0 },
-            { link("PUSHROD"),      BUTTON, Joystick::R_BUTTON,        0.04, 0.0 },
+            { link("UFRAME"),       STICK,  Joystick::L_STICK_H_AXIS, -0.6 },
+            { link("MNP_SWING"),    STICK,  Joystick::R_STICK_H_AXIS, -0.6 },
+            { link("MANIBOOM"),     STICK,  Joystick::L_STICK_V_AXIS, -0.6 },
+            { link("MANIARM"),      STICK,  Joystick::R_STICK_V_AXIS,  0.6 },
+            { link("MANIELBOW"),    BUTTON, Joystick::A_BUTTON,        0.6 },
+            { link("MANIELBOW"),    BUTTON, Joystick::Y_BUTTON,       -0.6 },
+            { link("YAWJOINT"),     BUTTON, Joystick::X_BUTTON,        1.0, 1 },
+            { link("YAWJOINT"),     BUTTON, Joystick::B_BUTTON,       -1.0, 1 },
+            { link("HANDBASE"),     BUTTON, Joystick::X_BUTTON,       -1.0, 0 },
+            { link("HANDBASE"),     BUTTON, Joystick::B_BUTTON,        1.0, 0 },
+            { link("PUSHROD"),      STICK,  Joystick::R_TRIGGER_AXIS, -0.04 },
+            { link("PUSHROD"),      BUTTON, Joystick::R_BUTTON,        0.04 },
         }
     };
 
@@ -294,7 +293,6 @@ void DoubleArmV7Controller::setTargetArmPositions()
                 }
             } else if(axis.type == STICK){
                 double pos = joystick.getPosition(axis.id);
-                pos += axis.offset;
                 q += axis.ratio * pos * dt;
             }
             if(q > joint->q_upper()){

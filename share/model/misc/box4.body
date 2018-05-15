@@ -7,6 +7,7 @@ links:
   -
     name: WAIST
     jointType: free
+    AMOR: true
     elements:
       -
         type: RigidBody

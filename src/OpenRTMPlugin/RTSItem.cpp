@@ -328,9 +328,14 @@ bool RTSComp::connectionCheckSub(RTSPort* rtsPort) {
     if(!rtsPort->port || CORBA::is_nil(rtsPort->port) || rtsPort->port->_non_existent())
         return add;
 
-    PortProfile_var portprofile = rtsPort->port->get_port_profile();
-    ConnectorProfileList connectorProfiles = portprofile->connector_profiles;
-    for(CORBA::ULong i = 0; i < connectorProfiles.length(); i++){
+    /**
+       The get_port_profile() function should not be used here because
+       it takes much time when the port has large data and its owner RTC is in a remote host.
+       The get_connector_profiles() function does not seem to cause such a problem.
+    */
+    ConnectorProfileList_var connectorProfiles = rtsPort->port->get_connector_profiles();
+    
+    for(CORBA::ULong i = 0; i < connectorProfiles->length(); i++){
         ConnectorProfile& connectorProfile = connectorProfiles[i];
         PortServiceList& connectedPorts = connectorProfile.ports;
         for(CORBA::ULong j=0; j < connectedPorts.length(); ++j){
@@ -349,9 +354,10 @@ bool RTSComp::connectionCheckSub(RTSPort* rtsPort) {
                         impl->rtsConnections.find(RTSystemItem::RTSPortPair(rtsPort,targetPort));
                     if(itr!=impl->rtsConnections.end())
                         continue;
+                    
                     RTSConnectionPtr rtsConnection = new RTSConnection(
                         string(connectorProfile.connector_id), string(connectorProfile.name),
-                        name, string(portprofile->name),
+                        name, rtsPort->name,
                         target[0], portName);
                     coil::Properties properties = NVUtil::toProperties(connectorProfile.properties);
 										vector<NamedValuePtr> propList;

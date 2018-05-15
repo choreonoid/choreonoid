@@ -3,6 +3,7 @@
   @author Shizuko Hattori, Shin'ichiro Nakaoka
 */
 
+#include "AssimpSceneLoader.h"
 #include <cnoid/Plugin>
 
 using namespace std;
@@ -20,6 +21,7 @@ public:
         
     virtual bool initialize()
     {
+        AssimpSceneLoader::initializeClass();
         return true;
     }
         

@@ -18,6 +18,9 @@
 
 #include "gettext.h"
 
+using namespace std;
+
+
 namespace cnoid {
 
 	RTSVItem::RTSVItem() {
@@ -380,6 +383,7 @@ namespace cnoid {
 	};
 
 }
+
 /////
 void RTSNameServerView::initializeClass(ExtensionManager* ext) {
 	ext->viewManager().registerClass<RTSNameServerView>(
@@ -406,45 +410,48 @@ std::list<NamingContextHelper::ObjectInfo> RTSNameServerView::getSelection() {
 	return impl->selectedItemList;
 }
 
-RTSNameServerViewImpl::RTSNameServerViewImpl(RTSNameServerView* self) {
-	self->setDefaultLayoutArea(View::LEFT_BOTTOM);
-	this->self_ = self;
+RTSNameServerViewImpl::RTSNameServerViewImpl(RTSNameServerView* self)
+{
+    this->self_ = self;
+    
+    self->setDefaultLayoutArea(View::LEFT_BOTTOM);
 
-	QVBoxLayout* vbox = new QVBoxLayout();
+    QVBoxLayout* vbox = new QVBoxLayout();
 
-	QHBoxLayout* hbox = new QHBoxLayout();
-	hostAddressBox.setText("localhost");
-	hostAddressBox.sigEditingFinished().connect
-	(std::bind(
-		static_cast<void(RTSNameServerViewImpl::*)(bool)>(&RTSNameServerViewImpl::updateObjectList), this, false));
-	hbox->addWidget(&hostAddressBox);
+    QHBoxLayout* hbox = new QHBoxLayout();
+    hostAddressBox.setText(ncHelper.host());
+    hostAddressBox.sigEditingFinished().connect
+        (std::bind(
+            static_cast<void(RTSNameServerViewImpl::*)(bool)>(&RTSNameServerViewImpl::updateObjectList), this, false));
+    hbox->addWidget(&hostAddressBox);
 
-	portNumberSpin.setRange(0, 65535);
-	portNumberSpin.setValue(2809);
-	portNumberSpin.sigEditingFinished().connect
-	(std::bind(
-		static_cast<void(RTSNameServerViewImpl::*)(bool)>(&RTSNameServerViewImpl::updateObjectList), this, false));
-	hbox->addWidget(&portNumberSpin);
+    portNumberSpin.setRange(0, 65535);
+    portNumberSpin.setValue(ncHelper.port());
+    portNumberSpin.sigEditingFinished().connect
+        (std::bind(
+            static_cast<void(RTSNameServerViewImpl::*)(bool)>(&RTSNameServerViewImpl::updateObjectList), this, false));
+    hbox->addWidget(&portNumberSpin);
 
-	auto updateButton = new ToolButton(_(" Update "));
-	updateButton->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-	updateButton->sigClicked().connect(
-		std::bind(
-			static_cast<void(RTSNameServerViewImpl::*)(bool)>(&RTSNameServerViewImpl::updateObjectList), this, true));
-	hbox->addWidget(updateButton);
+    auto updateButton = new ToolButton(_(" Update "));
+    updateButton->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    updateButton->sigClicked().connect(
+        std::bind(
+            static_cast<void(RTSNameServerViewImpl::*)(bool)>(&RTSNameServerViewImpl::updateObjectList), this, true));
+    hbox->addWidget(updateButton);
 
-	vbox->addLayout(hbox, 0);
+    vbox->addLayout(hbox, 0);
 
-	treeWidget.setHeaderLabel(_("Object Name"));
-	treeWidget.setDragEnabled(true);
-	treeWidget.setDropIndicatorShown(true);
+    treeWidget.setHeaderLabel(_("Object Name"));
+    treeWidget.setDragEnabled(true);
+    treeWidget.setDropIndicatorShown(true);
 
-	treeWidget.sigItemSelectionChanged().connect(std::bind(&RTSNameServerViewImpl::onSelectionChanged, this));
-	treeWidget.setSelectionMode(QAbstractItemView::ExtendedSelection);
-	treeWidget.header()->close();
+    //treeWidget.sigItemClicked().connect(std::bind(&RTSNameServerViewImpl::selectedItem, this));
+    treeWidget.sigItemSelectionChanged().connect(std::bind(&RTSNameServerViewImpl::onSelectionChanged, this));
+    treeWidget.setSelectionMode(QAbstractItemView::ExtendedSelection);
+    treeWidget.header()->close();
 
-	vbox->addWidget(&treeWidget, 1);
-	self->setLayout(vbox);
+    vbox->addWidget(&treeWidget, 1);
+    self->setLayout(vbox);
 }
 
 RTSNameServerView::~RTSNameServerView() {
@@ -491,7 +498,7 @@ void RTSNameServerViewImpl::updateObjectList(bool force) {
 		// Clear information update to all views.
 		//clearDiagram();
 
-		if (ncHelper.isAlive()) {
+                if(ncHelper.updateConnection()){
 			NamingContextHelper::ObjectInfoList objects = ncHelper.getObjectList();
 			vector<NamingContextHelper::ObjectPath> pathList;
 			updateObjectList(objects, topElem, pathList);
@@ -617,3 +624,26 @@ void RTSNameServerViewImpl::setSelection(std::string RTCName, std::string RTCful
 NamingContextHelper RTSNameServerView::getNCHelper() {
 	return impl->ncHelper;
 };
+
+bool RTSNameServerView::storeState(Archive& archive)
+{
+    archive.write("host", impl->ncHelper.host());
+    archive.write("port", impl->ncHelper.port());
+    return true;
+}
+
+
+bool RTSNameServerView::restoreState(const Archive& archive)
+{
+    string host;
+    if(archive.read("host", host)){
+        impl->hostAddressBox.setText(host.c_str());
+    }
+    int port;
+    if(archive.read("port", port)){
+        impl->portNumberSpin.setValue(port);
+    }
+    archive.addPostProcess([&](){ impl->updateObjectList(true); });
+
+    return true;
+}

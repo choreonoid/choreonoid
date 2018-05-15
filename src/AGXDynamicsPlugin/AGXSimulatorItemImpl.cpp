@@ -330,6 +330,30 @@ Vector3 AGXSimulatorItemImpl::getGravity() const
     return Vector3(g.x(), g.y(), g.z());
 }
 
+void AGXSimulatorItemImpl::setNumThreads(unsigned int num)
+{
+    m_p_numThreads = num;
+}
+
+void AGXSimulatorItemImpl::setEnableContactReduction(bool bOn)
+{
+    m_p_enableContactReduction = bOn;
+}
+
+void AGXSimulatorItemImpl::setContactReductionBinResolution(int r)
+{
+    m_p_contactReductionBinResolution = r;
+}
+
+void AGXSimulatorItemImpl::setContactReductionThreshhold(int t)
+{
+    m_p_contactReductionThreshhold = t;
+}
+void AGXSimulatorItemImpl::setEnableContactWarmstarting(bool bOn)
+{
+    m_p_enableContactWarmstarting = bOn;
+}
+
 void AGXSimulatorItemImpl::setEnableAMOR(bool bOn)
 {
     m_p_enableAMOR = bOn;

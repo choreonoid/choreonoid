@@ -125,12 +125,17 @@ void exportPyItems()
     itemClass
         .def("find", Item_find).staticmethod("find")
         .def("name", &Item::name, py::return_value_policy<py::copy_const_reference>())
+        .def("getName", &Item::name, py::return_value_policy<py::copy_const_reference>())
         .def("setName", &Item::setName)
         .def("hasAttribute", &Item::hasAttribute)
         .def("childItem", Item_childItem)
+        .def("getChildItem", Item_childItem)
         .def("prevItem", Item_prevItem)
+        .def("getPrevItem", Item_prevItem)
         .def("nextItem", Item_nextItem)
+        .def("getNextItem", Item_nextItem)
         .def("parentItem", Item_parentItem)
+        .def("getParentItem", Item_parentItem)
         .def("addChildItem", &Item::addChildItem, Item_addChildItem_overloads())
         .def("addSubItem", &Item::addSubItem)
         .def("isSubItem", &Item::isSubItem)
@@ -145,6 +150,7 @@ void exportPyItems()
         .def("findChildItem", Item_findChildItem)
         .def("findSubItem", Item_findSubItem)
         .def("headItem", Item_headItem)
+        .def("getHeadItem", Item_headItem)
         .def("getDescendantItems", Item_getDescendantItems1)
         .def("getDescendantItems", Item_getDescendantItems2)
         .def("duplicate", Item_duplicate)
@@ -155,15 +161,22 @@ void exportPyItems()
         .def("save", &Item::save, Item_save())
         .def("overwrite", &Item::overwrite, Item_overwrite())
         .def("filePath", &Item::filePath, py::return_value_policy<py::copy_const_reference>())
+        .def("getFilePath", &Item::filePath, py::return_value_policy<py::copy_const_reference>())
         .def("fileFormat", &Item::fileFormat, py::return_value_policy<py::copy_const_reference>())
+        .def("getFileFormat", &Item::fileFormat, py::return_value_policy<py::copy_const_reference>())
         .def("clearFileInformation", &Item::clearFileInformation)
         .def("suggestFileUpdate", &Item::suggestFileUpdate)
         .def("notifyUpdate", &Item::notifyUpdate)
         .def("sigNameChanged", &Item::sigNameChanged)
+        .def("getSigNameChanged", &Item::sigNameChanged)
         .def("sigUpdated", &Item::sigUpdated)
+        .def("getSigUpdated", &Item::sigUpdated)
         .def("sigPositionChanged", &Item::sigPositionChanged)
+        .def("getSigPositionChanged", &Item::sigPositionChanged)
         .def("sigDisconnectedFromRoot", &Item::sigDisconnectedFromRoot)
-        .def("sigSubTreeChanged", &Item::sigSubTreeChanged);
+        .def("getSigDisconnectedFromRoot", &Item::sigDisconnectedFromRoot)
+        .def("sigSubTreeChanged", &Item::sigSubTreeChanged)
+        .def("getSigSubTreeChanged", &Item::sigSubTreeChanged);
     
     {
         py::scope itemScope = itemClass;
@@ -179,7 +192,8 @@ void exportPyItems()
     PyItemList<Item>("ItemList");
 
     py::class_<RootItem, RootItemPtr, py::bases<Item>>("RootItem")
-        .def("instance", RootItem_Instance).staticmethod("instance");
+        .def("instance", RootItem_Instance).staticmethod("instance")
+        .def("getInstance", RootItem_Instance).staticmethod("getInstance");
 
     py::implicitly_convertible<RootItemPtr, ItemPtr>();
     PyItemList<RootItem>("RootItemList");
@@ -191,7 +205,8 @@ void exportPyItems()
 
     py::class_< AbstractTextItem, AbstractTextItemPtr, py::bases<Item>, boost::noncopyable >
         ("AbstractTextItem", py::no_init)
-        .def("textFilename", &AbstractTextItem::textFilename, py::return_value_policy<py::copy_const_reference>());
+        .def("textFilename", &AbstractTextItem::textFilename, py::return_value_policy<py::copy_const_reference>())
+        .def("getTextFilename", &AbstractTextItem::textFilename, py::return_value_policy<py::copy_const_reference>());
             
     py::implicitly_convertible<AbstractTextItemPtr, ItemPtr>();
     //PyItemList<AbstractTextItem>("AbstractTextItemList");
@@ -199,14 +214,18 @@ void exportPyItems()
     py::class_<ScriptItem, ScriptItemPtr, py::bases<AbstractTextItem>, boost::noncopyable>
         ("ScriptItem", py::no_init)
         .def("scriptFilename", &ScriptItem::scriptFilename, py::return_value_policy<py::copy_const_reference>())
+        .def("getScriptFilename", &ScriptItem::scriptFilename, py::return_value_policy<py::copy_const_reference>())
         .def("identityName", &ScriptItem::identityName)
+        .def("getIdentityName", &ScriptItem::identityName)
         .def("setBackgroundMode", &ScriptItem::setBackgroundMode)
         .def("isBackgroundMode", &ScriptItem::isBackgroundMode)
         .def("isRunning", &ScriptItem::isRunning)
         .def("execute", &ScriptItem::execute)
         .def("waitToFinish", &ScriptItem::waitToFinish, ScriptItem_waitToFinish())
         .def("resultString", &ScriptItem::resultString)
+        .def("getResultString", &ScriptItem::resultString)
         .def("sigScriptFinished", &ScriptItem::sigScriptFinished)
+        .def("getSigScriptFinished", &ScriptItem::sigScriptFinished)
         .def("terminate", &ScriptItem::terminate)
         ;
 
@@ -216,6 +235,7 @@ void exportPyItems()
     py::class_<ExtCommandItem, ExtCommandItemPtr, py::bases<Item>>("ExtCommandItem")
         .def("setCommand", &ExtCommandItem::setCommand)
         .def("command", &ExtCommandItem::command, py::return_value_policy<py::copy_const_reference>())
+        .def("getCommand", &ExtCommandItem::command, py::return_value_policy<py::copy_const_reference>())
         .def("waitingTimeAfterStarted", &ExtCommandItem::waitingTimeAfterStarted)
         .def("setWaitingTimeAfterStarted", &ExtCommandItem::setWaitingTimeAfterStarted)
         .def("execute", &ExtCommandItem::execute)
@@ -227,13 +247,16 @@ void exportPyItems()
     // seq items
     py::class_<AbstractSeqItem, AbstractSeqItemPtr, py::bases<Item>, boost::noncopyable >
         abstractSeqItemClass("AbstractSeqItem", py::no_init);
-    abstractSeqItemClass.def("abstractSeq", &AbstractSeqItem::abstractSeq);
+    abstractSeqItemClass
+        .def("abstractSeq", &AbstractSeqItem::abstractSeq)
+        .def("getAbstractSeq", &AbstractSeqItem::abstractSeq);
 
     py::implicitly_convertible<AbstractSeqItemPtr, ItemPtr>();    
     PyItemList<AbstractSeqItem>("AbstractSeqItemList", abstractSeqItemClass);
 
     py::class_<Vector3SeqItem, Vector3SeqItemPtr, py::bases<AbstractSeqItem>>("Vector3SeqItem")
-        .def("seq", &Vector3SeqItem::seq);
+        .def("seq", &Vector3SeqItem::seq)
+        .def("getSeq", &Vector3SeqItem::seq);
     
     py::implicitly_convertible<Vector3SeqItemPtr, AbstractSeqItemPtr>();
     PyItemList<Vector3SeqItem>("Vector3SeqItemList");
@@ -241,34 +264,43 @@ void exportPyItems()
     // multi seq items
     py::class_<AbstractMultiSeqItem, AbstractMultiSeqItemPtr, py::bases<AbstractSeqItem>, boost::noncopyable>
         abstractMultiSeqItemClass("AbstractMultiSeqItem", py::no_init);
-    abstractMultiSeqItemClass.def("abstractMultiSeq", &AbstractMultiSeqItem::abstractMultiSeq);
+    abstractMultiSeqItemClass
+        .def("abstractMultiSeq", &AbstractMultiSeqItem::abstractMultiSeq)
+        .def("getAbstractMultiSeq", &AbstractMultiSeqItem::abstractMultiSeq);
 
     py::implicitly_convertible<AbstractMultiSeqItemPtr, AbstractSeqItemPtr>();
     //PyItemList<AbstractMultiSeqItem>("AbstractMultiSeqItemList", abstractMultiSeqItemClass);
     
     py::class_<MultiValueSeqItem, MultiValueSeqItemPtr, py::bases<AbstractMultiSeqItem>>("MultiValueSeqItem")
         .def("abstractMultiSeq", &MultiValueSeqItem::abstractMultiSeq)
-        .def("seq", &MultiValueSeqItem::seq);
+        .def("getAbstractMultiSeq", &MultiValueSeqItem::abstractMultiSeq)
+        .def("seq", &MultiValueSeqItem::seq)
+        .def("getSeq", &MultiValueSeqItem::seq);
 
     py::implicitly_convertible<MultiValueSeqItemPtr, AbstractMultiSeqItemPtr>();
     PyItemList<MultiValueSeqItem>("MultiValueSeqItemList");
 
     py::class_<MultiSE3MatrixSeqItem, MultiSE3MatrixSeqItemPtr, py::bases<AbstractMultiSeqItem>>("MultiSE3MatrixSeqItem")
         .def("abstractMultiSeq", &MultiSE3MatrixSeqItem::abstractMultiSeq)
-        .def("seq", &MultiSE3MatrixSeqItem::seq);
+        .def("getAbstractMultiSeq", &MultiSE3MatrixSeqItem::abstractMultiSeq)
+        .def("seq", &MultiSE3MatrixSeqItem::seq)
+        .def("getSeq", &MultiSE3MatrixSeqItem::seq);
 
     py::implicitly_convertible<MultiSE3MatrixSeqItemPtr, AbstractMultiSeqItemPtr>();
     PyItemList<MultiSE3MatrixSeqItem>("MultiSE3MatrixSeqItemList");
 
     py::class_<MultiSE3SeqItem, MultiSE3SeqItemPtr, py::bases<AbstractMultiSeqItem>>("MultiSE3SeqItem")
         .def("abstractMultiSeq", &MultiSE3SeqItem::abstractMultiSeq)
-        .def("seq", &MultiSE3SeqItem::seq);
+        .def("getAbstractMultiSeq", &MultiSE3SeqItem::abstractMultiSeq)
+        .def("seq", &MultiSE3SeqItem::seq)
+        .def("getSeq", &MultiSE3SeqItem::seq);
     
     py::implicitly_convertible<MultiSE3SeqItemPtr, AbstractMultiSeqItemPtr>();
     PyItemList<MultiSE3SeqItem>("MultiSE3SeqItemList");
 
     py::class_<SceneItem, SceneItemPtr, py::bases<Item, SceneProvider>>("SceneItem")
         .def("topNode", SceneItem_topNode)
+        .def("getTopNode", SceneItem_topNode)
         ;
 
     py::implicitly_convertible<SceneItemPtr, ItemPtr>();
@@ -276,14 +308,19 @@ void exportPyItems()
 
     py::class_<PointSetItem, PointSetItemPtr, py::bases<Item, SceneProvider>>("PointSetItem")
         .def("offsetTransform", PointSetItem_offsetTransform)
+        .def("getOffsetTransform", PointSetItem_offsetTransform)
         .def("setOffsetTransform", &PointSetItem::setOffsetTransform)
         .def("sigOffsetTransformChanged", &PointSetItem::sigOffsetTransformChanged)
+        .def("getSigOffsetTransformChanged", &PointSetItem::sigOffsetTransformChanged)
         .def("notifyOffsetTransformChange", &PointSetItem::notifyOffsetTransformChange)
         .def("numAttentionPoints", &PointSetItem::numAttentionPoints)
+        .def("getNumAttentionPoints", &PointSetItem::numAttentionPoints)
         .def("attentionPoint", PointSetItem_attentionPoint)
+        .def("getAttentionPoint", PointSetItem_attentionPoint)
         .def("clearAttentionPoints", &PointSetItem::clearAttentionPoints)
         .def("addAttentionPoint", &PointSetItem::addAttentionPoint)
         .def("sigAttentionPointsChanged", &PointSetItem::sigAttentionPointsChanged)
+        .def("getSigAttentionPointsChanged", &PointSetItem::sigAttentionPointsChanged)
         .def("notifyAttentionPointChange", &PointSetItem::notifyAttentionPointChange)
         ;
 
@@ -293,22 +330,34 @@ void exportPyItems()
 
     py::class_<MultiPointSetItem, MultiPointSetItemPtr, py::bases<PointSetItem, SceneProvider>>("MultiPointSetItem")
         .def("numPointSetItems", &MultiPointSetItem::numPointSetItems)
+        .def("getNumPointSetItems", &MultiPointSetItem::numPointSetItems)
         .def("pointSetItem", MultiPointSetItem_pointSetItem)
+        .def("getPointSetItem", MultiPointSetItem_pointSetItem)
         .def("numActivePointSetItems", &MultiPointSetItem::numActivePointSetItems)
+        .def("getNumActivePointSetItems", &MultiPointSetItem::numActivePointSetItems)
         .def("activePointSetItem", MultiPointSetItem_activePointSetItem)
+        .def("getActivePointSetItem", MultiPointSetItem_activePointSetItem)
         .def("sigPointSetItemAdded", &MultiPointSetItem::sigPointSetItemAdded)
+        .def("getSigPointSetItemAdded", &MultiPointSetItem::sigPointSetItemAdded)
         .def("sigPointSetUpdated", &MultiPointSetItem::sigPointSetUpdated)
+        .def("getSigPointSetUpdated", &MultiPointSetItem::sigPointSetUpdated)
         .def("topOffsetTransform", &MultiPointSetItem::topOffsetTransform, py::return_value_policy<py::copy_const_reference>())
+        .def("getTopOffsetTransform", &MultiPointSetItem::topOffsetTransform, py::return_value_policy<py::copy_const_reference>())
         .def("setTopOffsetTransform", &MultiPointSetItem::setTopOffsetTransform)
         .def("sigTopOffsetTransformChanged", &MultiPointSetItem::sigTopOffsetTransformChanged)
+        .def("getSigTopOffsetTransformChanged", &MultiPointSetItem::sigTopOffsetTransformChanged)
         .def("notifyTopOffsetTransformChange", &MultiPointSetItem::notifyTopOffsetTransformChange)
         .def("offsetTransform", &MultiPointSetItem::offsetTransform)
+        .def("getOffsetTransform", &MultiPointSetItem::offsetTransform)
         .def("getTransformedPointSet", &MultiPointSetItem::getTransformedPointSet)
         .def("numAttentionPoints", &MultiPointSetItem::numAttentionPoints)
+        .def("getNumAttentionPoints", &MultiPointSetItem::numAttentionPoints)
         .def("attentionPoint", &MultiPointSetItem::attentionPoint)
+        .def("getAttentionPoint", &MultiPointSetItem::attentionPoint)
         .def("clearAttentionPoints", &MultiPointSetItem::clearAttentionPoints)
         .def("addAttentionPoint", &MultiPointSetItem::addAttentionPoint)
         .def("sigAttentionPointsChanged", &MultiPointSetItem::sigAttentionPointsChanged)
+        .def("getSigAttentionPointsChanged", &MultiPointSetItem::sigAttentionPointsChanged)
         .def("notifyAttentionPointChange", &MultiPointSetItem::notifyAttentionPointChange)
         .def("startAutomaticSave", &MultiPointSetItem::startAutomaticSave)
         .def("stopAutomaticSave", &MultiPointSetItem::stopAutomaticSave);

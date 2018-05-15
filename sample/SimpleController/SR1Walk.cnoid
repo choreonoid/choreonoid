@@ -1,4 +1,4 @@
-optionalPlugins: [ ODE, Bullet, PhysX, AgX ]
+optionalPlugins: [ ODE, Bullet, PhysX, AGXDynamics ]
 
 items: 
   id: 0
@@ -91,6 +91,7 @@ items:
               plugin: Body
               class: AISTSimulatorItem
               data: 
+                timestep: 0.002
                 realtimeSync: true
                 recording: "full"
                 timeRangeMode: "Active control period"
@@ -119,6 +120,7 @@ items:
               plugin: Body
               class: AISTSimulatorItem
               data: 
+                timestep: 0.002
                 realtimeSync: true
                 recording: "full"
                 timeRangeMode: "Active control period"
@@ -147,6 +149,7 @@ items:
               plugin: Body
               class: AISTSimulatorItem
               data: 
+                timestep: 0.002
                 realtimeSync: true
                 recording: "full"
                 timeRangeMode: "Active control period"
@@ -175,6 +178,7 @@ items:
               plugin: ODE
               class: ODESimulatorItem
               data: 
+                timestep: 0.002
                 realtimeSync: true
                 recording: "full"
                 timeRangeMode: "Active control period"
@@ -199,10 +203,59 @@ items:
                 velocityMode: false
             - 
               id: 10
+              name: "AGXSimulator"
+              plugin: AGXDynamics
+              class: AGXSimulatorItem
+              data: 
+                timestep: 0.002
+                realtimeSync: true
+                recording: "full"
+                timeRangeMode: "Active control period"
+                timeLength: 180
+                allLinkPositionOutputMode: true
+                deviceStateOutput: true
+                controllerThreads: true
+                recordCollisionData: false
+                controllerOptions: ""
+                Gravity: [ 0, 0, -9.80665 ]
+                NumThreads: 1
+                ContactReduction: true
+                ContactReductionBinResolution: 3
+                ContactReductionThreshhold: 12
+                ContactWarmstarting: false
+                AutoSleep: false
+                SaveToAGXFileOnStart: false
+            - 
+              id: 11
+              name: "AGXSimulator-Velocity"
+              plugin: AGXDynamics
+              class: AGXSimulatorItem
+              data: 
+                timestep: 0.002
+                realtimeSync: true
+                recording: "full"
+                timeRangeMode: "Active control period"
+                timeLength: 180
+                allLinkPositionOutputMode: true
+                deviceStateOutput: true
+                controllerThreads: true
+                recordCollisionData: false
+                controllerOptions: "velocity"
+                Gravity: [ 0, 0, -9.80665 ]
+                NumThreads: 1
+                ContactReduction: true
+                ContactReductionBinResolution: 3
+                ContactReductionThreshhold: 12
+                ContactWarmstarting: false
+                AutoSleep: false
+                SaveToAGXFileOnStart: false
+            - 
+              id: 12
               name: "BulletSimulator"
               plugin: Bullet
               class: BulletSimulatorItem
               data: 
+                timestep: 0.002
                 realtimeSync: true
                 recording: "full"
                 timeRangeMode: "Active control period"
@@ -211,7 +264,6 @@ items:
                 deviceStateOutput: true
                 controllerThreads: true
                 recordCollisionData: false
-                controllerOptions: 
                 ErrorReductionParameter: 0.5
                 NumIterations: 10
                 Restitution: 0
@@ -219,11 +271,12 @@ items:
                 ERP2: 0
                 SplitImpulsePenetrationThreshold: -0.0001
             - 
-              id: 11
+              id: 13
               name: "PhysXSimulator"
               plugin: PhysX
               class: PhysXSimulatorItem
               data: 
+                timestep: 0.002
                 realtimeSync: true
                 recording: "full"
                 timeRangeMode: "Active control period"
@@ -232,61 +285,10 @@ items:
                 deviceStateOutput: true
                 controllerThreads: true
                 recordCollisionData: false
-                controllerOptions: 
                 staticFriction: 0.5
                 dynamicFriction: 0.8
                 Restitution: 0.1
                 jointLimitMode: false
-            - 
-              id: 12
-              name: "AgXSimulator"
-              plugin: AgX
-              class: AgXSimulatorItem
-              data: 
-                realtimeSync: true
-                recording: "full"
-                timeRangeMode: "Active control period"
-                timeLength: 60
-                allLinkPositionOutputMode: false
-                deviceStateOutput: true
-                controllerThreads: true
-                recordCollisionData: false
-                controllerOptions: 
-                dynamicsMode: Forward dynamics
-                gravity: [ 0, 0, -9.80665 ]
-                friction: 0.5
-                restitution: 0.1
-                frictionModelType: Iterative Projected
-                frictionSolveType: Direct
-                numThreads: 1
-                contactReductionMode: Geometry
-                contactReductionBinResolution: 2
-                contactReductionThreshold: 4
-            - 
-              id: 13
-              name: "AgXSimulator-Velocity"
-              plugin: AgX
-              class: AgXSimulatorItem
-              data: 
-                realtimeSync: true
-                recording: "full"
-                timeRangeMode: "Active control period"
-                timeLength: 180
-                allLinkPositionOutputMode: false
-                deviceStateOutput: true
-                controllerThreads: true
-                recordCollisionData: false
-                controllerOptions: velocity
-                dynamicsMode: "High-gain dynamics"
-                gravity: [ 0, 0, -9.80665 ]
-                friction: 0.5
-                restitution: 0.1
-                frictionModelType: Iterative Projected
-                frictionSolveType: Direct
-                numThreads: 1
-                contactReductionMode: Geometry
-                contactReductionBinResolution: 2
-                contactReductionThreshold: 4
 views: 
   "Items": 
     selected: [ 6 ]

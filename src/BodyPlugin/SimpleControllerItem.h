@@ -25,7 +25,6 @@ public:
         
     void setController(const std::string& name);
     SimpleController* controller();
-    SignalProxy<void()> sigControllerChanged();
 
     virtual bool initialize(ControllerIO* io) override;
     virtual bool start() override;

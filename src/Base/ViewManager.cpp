@@ -474,7 +474,7 @@ ViewManagerImpl::ViewManagerImpl(ExtensionManager* ext)
 ViewManager::~ViewManager()
 {
     // This must be done before deleting impl because
-    // ViewManager's functions may be callsed when a view is destroyed.
+    // ViewManager's functions may be called when a view is destroyed.
     while(!impl->instances.empty()){
         InstanceInfoPtr& instance = *(impl->instances.rbegin());
         instance->remove();

@@ -1,5 +1,5 @@
-#include "ModeJoystick.h"
 #include <cnoid/SimpleController>
+#include <cnoid/SharedJoystick>
 #include <boost/format.hpp>
 
 using namespace std;
@@ -47,7 +47,7 @@ class AizuSpiderController : public SimpleController
 
     enum { FR_FLIPPER, FL_FLIPPER, BR_FLIPPER, BL_FLIPPER, NUM_FLIPPERS };
 
-    ModeJoystickPtr joystick;
+    SharedJoystickPtr joystick;
     int targetMode;
 
 public:
@@ -93,7 +93,7 @@ bool AizuSpiderController::initialize(SimpleControllerIO* io)
         return false;
     }
 
-    joystick = io->getOrCreateSharedObject<ModeJoystick>("joystick");
+    joystick = io->getOrCreateSharedObject<SharedJoystick>("joystick");
     targetMode = joystick->addMode();
 
     return true;

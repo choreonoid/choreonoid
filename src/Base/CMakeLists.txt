@@ -22,6 +22,7 @@ set(sources
   ItemManager.cpp
   Item.cpp
   RootItem.cpp
+  ItemList.cpp
   ItemPath.cpp
   ItemTreeView.cpp
   ItemPropertyView.cpp
