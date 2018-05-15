@@ -87,7 +87,6 @@ NamingContextHelper::NamingContextHelper(const std::string& host, int port)
 }
 
 
-<<<<<<< HEAD
 void NamingContextHelper::setLocation(const std::string& host, int port)
 {
     if(failedInLastAccessToNamingContext){
@@ -234,6 +233,28 @@ NamingContextHelper::ObjectInfoList NamingContextHelper::getObjectList(std::vect
     }
 
     return objects;
+}
+
+
+NamingContextHelper::ObjectInfoList NamingContextHelper::getObjectList() {
+	ObjectInfoList objects;
+
+	if (checkOrUpdateNamingContext()) {
+		CosNaming::BindingList_var bList;
+		CosNaming::BindingIterator_var bIter;
+		const CORBA::ULong batchSize = 100;
+
+		namingContext->list(batchSize, bList, bIter);
+
+		appendBindingList(bList, objects);
+
+		if (!CORBA::is_nil(bIter) && isObjectAlive(bIter)) {
+			while (bIter->next_n(batchSize, bList)) {
+				appendBindingList(bList, objects);
+			}
+		}
+	}
+	return objects;
 }
 
 

@@ -162,8 +162,7 @@ void RTCItem::setPeriodicType(int type)
         updateRTCInstance();
     }
     if (convertAbsolutePath())
-      rtcomp = new RTComponent(modulePath, properties);
-  }
+        rtcomp = new RTComponent(modulePath, properties);
 }
 
 

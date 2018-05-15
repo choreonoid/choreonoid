@@ -623,7 +623,7 @@ void RTSNameServerViewImpl::setSelection(std::string RTCName, std::string RTCful
 
 NamingContextHelper RTSNameServerView::getNCHelper() {
 	return impl->ncHelper;
-};
+}
 
 bool RTSNameServerView::storeState(Archive& archive)
 {
