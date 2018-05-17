@@ -6,9 +6,16 @@ Changes since 1.6.0:
 * texture description in a body files
 * Fix the warec-1 model
 * Improve the sensor visualization
+* Naming rules of the Python wrappers are modified.
+ * Functions to get member object xxx are changed to getXxx()
+ * Member object xxx can be obtained by using property xxx
+* WRS2018 Tunnel models
+* Multicopter Plugin
+* TrafficControl Plugin
+* Aizu Spider model
+* Aizu Wheel model
 
-
-Choreonoid 1.6.0 released on October 31, 2016
+Choreonoid 1.6.0 released on October 31, 2017
 =============================================
 
 Changes since 1.5.0:

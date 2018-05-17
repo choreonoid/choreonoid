@@ -1,0 +1,78 @@
+choreonoid (1.6.0+dfsg-6.1ubuntu1) UNRELEASED; urgency=medium
+
+  * Bump version to 1.6
+
+ -- Fumio KANEHIRO <f-kanehiro@aist.go.jp>  Tue, 16 Aug 2016 13:03:09 +0900
+
+choreonoid (1.5.0+dfsg-6.1ubuntu1) UNRELEASED; urgency=medium
+
+  * Bump version to 1.5
+
+ -- Yosuke Matsusaka <yosuke.matsusaka@gmail.com>  Tue, 20 Jan 2015 15:27:56 +0900
+
+choreonoid (1.1.0+dfsg-6.1build1) utopic; urgency=high
+
+  * No change rebuild against boost1.55.
+
+ -- Dimitri John Ledkov <xnox@ubuntu.com>  Tue, 29 Apr 2014 22:10:37 +0100
+
+choreonoid (1.1.0+dfsg-6.1) unstable; urgency=low
+
+  * Non-maintainer upload.  Closes: #718377.
+  * Install binary and libraries also when CMAKE_BUILD_TYPE=None,
+    as used by new dh.  Closes: #735891.
+
+ -- Rebecca Palmer <R.Palmer@bham.ac.uk>  Sun, 02 Feb 2014 22:23:06 +0000
+
+choreonoid (1.1.0+dfsg-6) unstable; urgency=low
+
+  * Remove debian/libcnoid1.symbols (Closes: #708991, #713355)
+  * Add patch to fix OpenScene Graph compilation issues
+    (Closes: #719387, #719387)
+
+ -- Thomas Moulard <thomas.moulard@gmail.com>  Wed, 25 Sep 2013 14:36:11 +0900
+
+choreonoid (1.1.0+dfsg-5) unstable; urgency=low
+
+  * Fix patch fixing opcode portability issue (Closes: #711003).
+  * Fix patch porting to Boost.Filesystem v3.
+  * Update symbols for amd64, i386, kfreebsd-i386 and kfreebsd-amd64
+    architectures.
+  * Add autopkgtest support and simple test case.
+
+ -- Thomas Moulard <thomas.moulard@gmail.com>  Thu, 13 Jun 2013 13:46:59 +0900
+
+choreonoid (1.1.0+dfsg-4) unstable; urgency=low
+
+  * Add patch to use Boost Filesystem v3 to fix compilation on Ubuntu.
+  * Add patch to fix opcode portability issue (Closes: #711003).
+  * Update symbols for non-amd64 architectures (Closes: #708991).
+  * debian/changelog: Refer to git.debian.org in Vcs-* fields.
+
+ -- Thomas Moulard <thomas.moulard@gmail.com>  Wed, 29 May 2013 17:18:35 +0900
+
+choreonoid (1.1.0+dfsg-3) unstable; urgency=low
+
+  * Update symbols for amd64 armhf i386 kfreebsd-amd64
+    kfreebsd-i386 mipsel powerpc s390 sparc architectures (Closes: #708991).
+
+ -- Thomas Moulard <thomas.moulard@gmail.com>  Sun, 26 May 2013 21:36:56 +0900
+
+choreonoid (1.1.0+dfsg-2) unstable; urgency=low
+
+  * Fix section. Initial upload was put in contrib/ by mistake.
+  * Update symbols using pkgkde-getbuildlogs and pkgkde-symbolshelper.
+  * Install pkg-config files in lib/arch (Closes: #708964).
+  * Add debian/menu file.
+  * Install desktop file and associated icons (png and svg files).
+
+ -- Thomas Moulard <thomas.moulard@gmail.com>  Mon, 20 May 2013 12:52:05 +0900
+
+choreonoid (1.1.0+dfsg-1) unstable; urgency=low
+
+  * Add man page for choreonoid binary.
+  * Add desktop entry for choreonoid binary.
+  * Add lintian override file for choreonoid package.
+  * Import new upstream version 1.1.0 (closes: #695190).
+
+ -- Thomas Moulard <thomas.moulard@gmail.com>  Tue, 20 Nov 2012 15:21:16 +0900

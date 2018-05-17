@@ -37,15 +37,25 @@ PYBIND11_MODULE(Util, m)
     exportPyGeometryTypes(m);
     exportPyTaskTypes(m);
 
-    m.def("shareDirectory", &cnoid::shareDirectory);
-    m.def("executablePath", &cnoid::executablePath);
-    m.def("executableBasename", &cnoid::executableBasename);
-    m.def("executableTopDirectory", &cnoid::executableTopDirectory);
+    m.attr("shareDirectory") = shareDirectory();
+    m.attr("executablePath") = executablePath();
+    m.attr("executableBasename") = executableBasename();
+    m.attr("executableTopDirectory") = cnoid::executableTopDirectory();
+
+    // deprecated
+    m.def("getShareDirectory", &cnoid::shareDirectory);
+    m.def("getExecutablePath", &cnoid::executablePath);
+    m.def("getExecutableBasename", &cnoid::executableBasename);
+    m.def("getExecutableTopDirectory", &cnoid::executableTopDirectory);
 
     py::class_<FloatingNumberString>(m, "FloatingNumberString")
         .def(py::init<const std::string&>())
         .def("set", &FloatingNumberString::set)
         .def("setPositiveValue", &FloatingNumberString::setPositiveValue)
         .def("setNonNegativeValue", &FloatingNumberString::setNonNegativeValue)
-        .def("value", &FloatingNumberString::value);
+        .def_property_readonly("value", &FloatingNumberString::value)
+
+        // deprecated
+        .def("getValue", &FloatingNumberString::value)
+        ;
 }

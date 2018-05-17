@@ -154,7 +154,7 @@ LinkManager::mesh(const Link* link, vector<Triangle3d>& triAry)
     vtxAry.reserve(VERTEX_NUMBER_RESERVE_SIZE);
     triIdxAry.reserve(TRIANGLE_NUMBER_RESERVE_SIZE);
 
-    bool ret = meshExtractor->extract(shape, boost::bind(&LinkManager::onMeshFound, this, meshExtractor, link, &vtxAry, &triIdxAry));
+    bool ret = meshExtractor->extract(shape, [&](){ onMeshFound(meshExtractor, link, &vtxAry, &triIdxAry); });
 
     delete meshExtractor;
 

@@ -8,7 +8,7 @@
 #include <cnoid/SceneLights>
 #include <cnoid/MeshGenerator>
 #include <cnoid/PolygonMeshTriangulator>
-#include <cnoid/MeshNormalGenerator>
+#include <cnoid/MeshFilter>
 #include <cnoid/SceneLoader>
 #include <cnoid/EigenArchive>
 #include <cnoid/YAMLReader>
@@ -88,7 +88,7 @@ public:
     
     MeshGenerator meshGenerator;
     PolygonMeshTriangulator polygonMeshTriangulator;
-    MeshNormalGenerator normalGenerator;
+    MeshFilter meshFilter;
     SgMaterialPtr defaultMaterial;
     ImageIO imageIO;
 
@@ -780,7 +780,7 @@ SgMesh* YAMLSceneReaderImpl::readIndexedFaceSet(Mapping& node)
 
     double creaseAngle = 0.0;
     self->readAngle(node, "creaseAngle", creaseAngle);
-    normalGenerator.generateNormals(mesh, creaseAngle);
+    meshFilter.generateNormals(mesh, creaseAngle);
 
     return mesh;
 }
@@ -796,10 +796,10 @@ SgMesh* YAMLSceneReaderImpl::readResourceAsGeometry(Mapping& node)
         }
         double creaseAngle;
         if(readAngle(node, "creaseAngle", creaseAngle)){
-            normalGenerator.setOverwritingEnabled(true);
+            meshFilter.setNormalOverwritingEnabled(true);
             bool removeRedundantVertices = node.get("removeRedundantVertices", false);
-            normalGenerator.generateNormals(shape->mesh(), creaseAngle, removeRedundantVertices);
-            normalGenerator.setOverwritingEnabled(false);
+            meshFilter.generateNormals(shape->mesh(), creaseAngle, removeRedundantVertices);
+            meshFilter.setNormalOverwritingEnabled(false);
         }
         if(!generateTexCoord){
             return shape->mesh();

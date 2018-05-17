@@ -8,7 +8,7 @@
 #include "SceneEffects.h"
 #include "Triangulator.h"
 #include "PolygonMeshTriangulator.h"
-#include "MeshNormalGenerator.h"
+#include "MeshFilter.h"
 #include "MeshGenerator.h"
 #include "ImageIO.h"
 #include "SceneLoader.h"
@@ -50,7 +50,7 @@ public:
 
     vector<int> newColorPosToOrgColorPosMap;
 
-    MeshNormalGenerator normalGenerator;
+    MeshFilter meshFilter;
     MeshGenerator meshGenerator;
 
     ImageIO imageIO;
@@ -169,19 +169,19 @@ int VRMLToSGConverter::divisionNumber() const
 void VRMLToSGConverter::setNormalGenerationEnabled(bool on, bool doOverwrite)
 {
     impl->isNormalGenerationEnabled = on;
-    impl->normalGenerator.setOverwritingEnabled(doOverwrite);
+    impl->meshFilter.setNormalOverwritingEnabled(doOverwrite);
 }
 
 
 void VRMLToSGConverter::setMinCreaseAngle(double angle)
 {
-    impl->normalGenerator.setMinCreaseAngle(angle);
+    impl->meshFilter.setMinCreaseAngle(angle);
 }
 
 
 void VRMLToSGConverter::setMaxCreaseAngle(double angle)
 {
-    impl->normalGenerator.setMaxCreaseAngle(angle);
+    impl->meshFilter.setMaxCreaseAngle(angle);
 }
 
 
@@ -351,7 +351,7 @@ SgNode* VRMLToSGConverterImpl::convertShapeNode(VRMLShape* vshape)
                     }
                 }
                 if(mesh && isNormalGenerationEnabled){
-                    normalGenerator.generateNormals(mesh, faceSet->creaseAngle);
+                    meshFilter.generateNormals(mesh, faceSet->creaseAngle);
                 }
                     
             } else if(VRMLBox* box = dynamic_cast<VRMLBox*>(vrmlGeometry)){
@@ -652,7 +652,6 @@ bool VRMLToSGConverterImpl::convertIndicesForTriangles
 
 SgPolygonMeshPtr VRMLToSGConverterImpl::createPolygonMeshFromIndexedFaceSet(VRMLIndexedFaceSet* vface)
 {
-    //if(!vface->coord || vface->coord->point.empty() || vface->coordIndex.empty()){
     if(!vface->coord){
         putMessage("VRMLIndexedFaceSet: The coord field is not defined." );
         return nullptr;
@@ -829,7 +828,7 @@ SgMeshPtr VRMLToSGConverterImpl::createMeshFromElevationGrid(VRMLElevationGrid* 
     mesh->setSolid(grid->solid);
 
     if(isNormalGenerationEnabled){
-        normalGenerator.generateNormals(mesh, grid->creaseAngle);
+        meshFilter.generateNormals(mesh, grid->creaseAngle);
     }
 
     if(grid->color){
@@ -1061,7 +1060,7 @@ SgMeshPtr VRMLToSGConverterImpl::createMeshFromExtrusion(VRMLExtrusion* extrusio
     mesh->setSolid(extrusion->solid);
 
     if(isNormalGenerationEnabled){
-        normalGenerator.generateNormals(mesh, extrusion->creaseAngle);
+        meshFilter.generateNormals(mesh, extrusion->creaseAngle);
     }
 
     mesh->updateBoundingBox();

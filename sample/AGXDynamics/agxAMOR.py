@@ -11,7 +11,7 @@ import math
 
 pi = math.pi
 
-sceneWidget = SceneView.instance().sceneWidget()
+sceneWidget = SceneView.instance.sceneWidget()
 sceneWidget.setCameraPosition(
     [ 18.761382, 6.07919682, 8.55293262 ],
     [ -0.943178266, -0.285207267, -0.170503879 ],
@@ -19,12 +19,12 @@ sceneWidget.setCameraPosition(
 
 
 worldItem = WorldItem()
-RootItem.instance().addChildItem(worldItem)
+RootItem.instance.addChildItem(worldItem)
 
 floorItem = BodyItem()
-floorItem.load(shareDirectory() + "/model/misc/floor.body")
+floorItem.load(shareDirectory + "/model/misc/floor.body")
 worldItem.addChildItem(floorItem)
-ItemTreeView.instance().checkItem(floorItem)
+ItemTreeView.instance.checkItem(floorItem)
 
 
 random.seed( 32 )
@@ -42,14 +42,14 @@ def random_rotation():
 num_bodies = 200
 for i in range(0, num_bodies):
     rodItem = BodyItem()
-    rodItem.load(shareDirectory() + "/model/misc/rod.body")
+    rodItem.load(shareDirectory + "/model/misc/rod.body")
     rodItem.setName(rodItem.name()+str(i))
-    rod = rodItem.body()
-    rod.rootLink().setTranslation(random_translation())
-    rod.rootLink().setRotation(rotFromRpy(random_rotation()))
+    rod = rodItem.body
+    rod.rootLink.setTranslation(random_translation())
+    rod.rootLink.setRotation(rotFromRpy(random_rotation()))
     rodItem.storeInitialState()
     worldItem.addChildItem(rodItem)
-    ItemTreeView.instance().checkItem(rodItem)
+    ItemTreeView.instance.checkItem(rodItem)
 
 
 simulatorItem = AGXSimulatorItem()
@@ -58,6 +58,6 @@ simulatorItem.setEnableAMOR(True)
 simulatorItem.setRealtimeSyncMode(True)
 simulatorItem.setTimeRangeMode(SimulatorItem.TimeRangeMode.TR_UNLIMITED)
 worldItem.addChildItem(simulatorItem)
-ItemTreeView.instance().selectItem(simulatorItem)
+ItemTreeView.instance.selectItem(simulatorItem)
 
 #simulatorItem.startSimulation()

@@ -99,16 +99,39 @@ items:
                 currentBaseLink: "BASE"
                 rootPosition: [ 5, 4.21, 0.256 ]
                 rootAttitude: [ 
-                  6.123234e-17, 1, 0, 
-                  -1, 6.123234e-17, 0, 
-                  0, 0, 1 ]
-                jointPositions: [ -0.401426,  0.000000,  0.000000 ]
+                  2.22044605e-16, 1, 0, 
+                  -1, 2.22044605e-16, -0, 
+                  -0, 0, 1 ]
+                jointPositions: [ -0.715676,  0.000000,  0.000000 ]
                 initialRootPosition: [ 5, 4.21, 0.256 ]
                 initialRootAttitude: [ 
                   2.22044605e-16, 1, 0, 
                   -1, 2.22044605e-16, -0, 
                   -0, 0, 1 ]
                 initialJointPositions: [ -0.401426,  0.000000,  0.000000 ]
+                zmp: [ 0, 0, 0 ]
+                collisionDetection: true
+                selfCollisionDetection: false
+                isEditable: true
+            - 
+              id: 7
+              name: "HoseNozzle"
+              plugin: Body
+              class: BodyItem
+              data: 
+                modelFile: "${SHARE}/model/WRS2018/HoseNozzle.body"
+                currentBaseLink: "BASE"
+                rootPosition: [ 4.67934738, 4.1405342, 1.06499852 ]
+                rootAttitude: [ 
+                  1, 0, 0, 
+                  0, 1, 0, 
+                  0, 0, 1 ]
+                jointPositions: [  ]
+                initialRootPosition: [ 4.67934738, 4.1405342, 1.06499852 ]
+                initialRootAttitude: [ 
+                  1, 0, 0, 
+                  0, 1, 0, 
+                  0, 0, 1 ]
                 zmp: [ 0, 0, 0 ]
                 collisionDetection: true
                 selfCollisionDetection: false
@@ -125,7 +148,7 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      checked: [ 3, 4, 6 ]
+      checked: [ 3, 4, 6, 7 ]
       expanded: [ 1, 6 ]
   - 
     id: 2
@@ -176,9 +199,9 @@ views:
           fieldOfView: 0.698132
           near: 0.01
           far: 100
-          eye: [ -8.30490252, -1.93201184, 5.20108619 ]
-          direction: [ 0.964232323, 0.175460898, -0.198669326 ]
-          up: [ 0.195459563, 0.035567684, 0.980066579 ]
+          eye: [ -3.90815276, -3.33358774, 2.81867908 ]
+          direction: [ 0.892427443, 0.377312262, -0.247403953 ]
+          up: [ 0.227874132, 0.0963436354, 0.968912423 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 5.73009
@@ -268,7 +291,7 @@ views:
       spinBox: true
       slider: true
       labelOnLeft: true
-      currentBodyItem: 6
+      currentBodyItem: 7
   - 
     id: 7
     plugin: Body
@@ -276,13 +299,20 @@ views:
     mounted: true
     state: 
       listingMode: "Link List"
-      currentBodyItem: 6
+      currentBodyItem: 7
   - 
     id: 8
     plugin: Multicopter
     class: MulticopterMonitorView
   - 
     id: 9
+    plugin: OpenRTM
+    class: RTSNameServerView
+    state: 
+      host: localhost
+      port: 2809
+  - 
+    id: 10
     plugin: Python
     class: PythonConsoleView
 toolbars: 
@@ -305,9 +335,42 @@ toolbars:
     penetrationBlockDepth: 0.0005
     lazyCollisionDetectionMode: true
   "BodyBar": 
-    current: 6
+    current: 7
   "LeggedBodyBar": 
     stanceWidth: 0.15
+  "BodyMotionGenerationBar": 
+    autoGenerationForNewBody: true
+    balancer: false
+    autoGeneration: false
+    timeScaleRatio: 1
+    preInitialDuration: 1
+    postFinalDuration: 1
+    onlyTimeBarRange: false
+    makeNewBodyItem: true
+    stealthyStepMode: true
+    stealthyHeightRatioThresh: 2
+    flatLiftingHeight: 0.005
+    flatLandingHeight: 0.005
+    impactReductionHeight: 0.005
+    impactReductionTime: 0.04
+    autoZmp: true
+    minZmpTransitionTime: 0.1
+    zmpCenteringTimeThresh: 0.03
+    zmpTimeMarginBeforeLiftingSpin: 0
+    zmpMaxDistanceFromCenter: 0.02
+    allLinkPositions: false
+    lipSyncMix: false
+    timeToStartBalancer: 0
+    balancerIterations: 2
+    plainBalancerMode: false
+    boundaryConditionType: position
+    boundarySmootherType: quintic
+    boundarySmootherTime: 0.5
+    boundaryCmAdjustment: false
+    boundaryCmAdjustmentTime: 1
+    waistHeightRelaxation: false
+    gravity: 9.8
+    dynamicsTimeRatio: 1
 Body: 
   "BodyMotionEngine": 
     updateJointVelocities: false
@@ -333,6 +396,11 @@ Body:
         showCenterOfMass: false
         showPpcom: false
         showZmp: false
+      - 
+        bodyItem: 7
+        showCenterOfMass: false
+        showPpcom: false
+        showZmp: false
     staticModelEditing: true
   "KinematicFaultChecker": 
     checkJointPositions: true
@@ -348,6 +416,8 @@ Body:
     inputFrameRate: 200
     isOutputFrameRateSpecified: false
     outputFrameRate: 200
+OpenRTM: 
+  "deleteUnmanagedRTCsOnStartingSimulation": false
 viewAreas: 
   - 
     type: embedded
@@ -355,12 +425,12 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 326, 1588 ]
+      sizes: [ 366, 1784 ]
       children: 
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 470, 470 ]
+          sizes: [ 645, 644 ]
           children: 
             - 
               type: pane
@@ -373,12 +443,12 @@ viewAreas:
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 671, 269 ]
+          sizes: [ 920, 369 ]
           children: 
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 687, 895 ]
+              sizes: [ 772, 1006 ]
               children: 
                 - 
                   type: pane

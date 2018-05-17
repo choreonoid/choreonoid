@@ -1,26 +1,45 @@
 language: c
-
+compiler: gcc
 sudo: required
-
-services:
-  - docker
+addons:
+    apt:
+        packages:
+            - ubuntu-dev-tools
+            - dput
+            - debhelper
+            - fakeroot
+            - pkg-kde-tools
 
 matrix:
     include:
         - os: linux
-          env: TARGET_ENVIRONMENT=ubuntu-xenial-gcc
+          env:
+              - TARGET_DISTROS=xenial
+              - TARGET_ENVIRONMENT=ubuntu-xenial
+              - TARGET_CC=gcc
         - os: linux
-          env: TARGET_ENVIRONMENT=ubuntu-xenial-clang
+          env:
+              - TARGET_DISTROS=xenial
+              - TARGET_ENVIRONMENT=ubuntu-xenial
+              - TARGET_CC=clang
+              - WITHOUT_PACKAGING=1
         - os: linux
-          env: TARGET_ENVIRONMENT=ubuntu-artful-gcc
-        - os: linux
-          env: TARGET_ENVIRONMENT=ubuntu-artful-clang
-        - os: osx
-          env: TARGET_ENVIRONMENT=osx-macports
+          env:
+              - TARGET_DISTROS=trusty
+              - TARGET_ENVIRONMENT=ubuntu-trusty
+              - TARGET_CC=gcc
 
 script:
-  - if [[ "$TARGET_ENVIRONMENT" == "ubuntu-xenial-gcc"   ]]; then docker build --rm -t ${TARGET_ENVIRONMENT} -f misc/docker/Dockerfile-${TARGET_ENVIRONMENT} . ; fi
-  - if [[ "$TARGET_ENVIRONMENT" == "ubuntu-xenial-clang" ]]; then docker build --rm -t ${TARGET_ENVIRONMENT} -f misc/docker/Dockerfile-${TARGET_ENVIRONMENT} . ; fi
-  - if [[ "$TARGET_ENVIRONMENT" == "ubuntu-artful-gcc"   ]]; then docker build --rm -t ${TARGET_ENVIRONMENT} -f misc/docker/Dockerfile-${TARGET_ENVIRONMENT} . ; fi
-  - if [[ "$TARGET_ENVIRONMENT" == "ubuntu-artful-clang" ]]; then docker build --rm -t ${TARGET_ENVIRONMENT} -f misc/docker/Dockerfile-${TARGET_ENVIRONMENT} . ; fi
-  - if [[ "$TARGET_ENVIRONMENT" == "osx-macports"        ]]; then ./.travis-osx-macports.sh ; fi
+    - docker build --rm -t ${TARGET_ENVIRONMENT}-${TARGET_CC} -f misc/docker/Dockerfile-${TARGET_ENVIRONMENT}-${TARGET_CC} .
+
+after_success:
+    - ${TRAVIS_BUILD_DIR}/misc/ci-scripts/packaging.sh
+
+deploy:
+    provider: script
+    skip_cleanup: true
+    on:
+        all_branches: true
+        condition: -r ${TRAVIS_BUILD_DIR}/misc/ci-scripts/deploy-launchpad.sh
+    script:
+        - sh ${TRAVIS_BUILD_DIR}/misc/ci-scripts/deploy-launchpad.sh
