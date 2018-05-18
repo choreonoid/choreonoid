@@ -22,12 +22,12 @@ items:
           data: 
             modelFile: "${SHARE}/model/tank/tank.body"
             currentBaseLink: ""
-            rootPosition: [ -2, -0.499999997, 0.105900007 ]
+            rootPosition: [ -2, -0.5, 0.1 ]
             rootAttitude: [ 
-              1, 2.71619129e-09, 1.06922069e-09, 
-              -2.71619129e-09, 1, -7.84993094e-10, 
-              -1.06922069e-09, 7.84993091e-10, 1 ]
-            jointPositions: [ -0.000000, -0.009806 ]
+              1, 0, 0, 
+              0, 1, 0, 
+              0, 0, 1 ]
+            jointPositions: [  0.000000,  0.000000 ]
             initialRootPosition: [ -2, -0.5, 0.1 ]
             initialRootAttitude: [ 
               1, 0, 0, 
@@ -41,7 +41,7 @@ items:
           children: 
             - 
               id: 3
-              name: "BodyIO"
+              name: "BodyIoRTC"
               plugin: OpenRTM
               class: BodyIoRTCItem
               data: 
@@ -81,16 +81,27 @@ items:
                 periodicRate: 0
             - 
               id: 6
-              name: "VisionSensorIn"
-              plugin: Hrpsys31
-              class: RTMPointCloudIOItem
+              name: "Joystick"
+              plugin: OpenRTM
+              class: ControllerRTCItem
               data: 
-                componentName: VisionSensorIn
-                pointCloudPortNames: [ Camera_range ]
-                rangeSensorPortNames: [ VelodyneVLP-16 ]
-                cameraPortNames: [ Camera_image ]
+                isNoDelayMode: true
+                controllerOptions: ""
+                module: "JoystickRTC"
+                baseDirectory: "RTC directory"
+                instanceName: ""
+                executionContext: "PeriodicExecutionContext"
+                periodicRate: 30
             - 
               id: 7
+              name: "PointCloudIn"
+              plugin: OpenRTM
+              class: OldRTMPointCloudIOItem
+              data: 
+                componentName: PointCloudIn
+                pointCloudPortNames: [ Camera ]
+            - 
+              id: 8
               name: "SensorVisualizer"
               plugin: Body
               class: SensorVisualizer
@@ -114,7 +125,7 @@ items:
                     class: CameraImageVisualizer
                     name: Camera_Image
         - 
-          id: 8
+          id: 9
           name: "Labo1"
           plugin: Body
           class: BodyItem
@@ -136,16 +147,6 @@ items:
             collisionDetection: true
             selfCollisionDetection: false
             isEditable: false
-        - 
-          id: 9
-          name: "JoystickRTC"
-          plugin: OpenRTM
-          class: RTCItem
-          data: 
-            module: "JoystickRTC"
-            baseDirectory: "RTC directory"
-            periodicType: PeriodicExecutionContext
-            periodicRate: 500
         - 
           id: 10
           name: "AISTSimulator"
@@ -183,6 +184,7 @@ items:
               class: GLVisionSimulatorItem
               data: 
                 enabled: true
+                targetSensors: [ Camera ]
                 maxFrameRate: 1000
                 maxLatency: 1
                 recordVisionData: false
@@ -210,7 +212,7 @@ views:
     class: ImageView
     mounted: true
     state: 
-      ImageProviderItem: [ 7, "Camera_Image" ]
+      ImageProviderItem: [ 8, "Camera_Image" ]
   - 
     id: 1
     plugin: Base
@@ -222,9 +224,8 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      selected: [ 7 ]
-      checked: [ 1, 2, [ 7, "Camera" ], [ 7, "VelodyneVLP-16" ], 8 ]
-      expanded: [ 1, 2, 7, 10 ]
+      checked: [ 1, 2, [ 8, "Camera" ], [ 8, "VelodyneVLP-16" ], 9 ]
+      expanded: [ 1, 2, 5, 8, 10 ]
   - 
     id: 3
     plugin: Base
@@ -377,7 +378,7 @@ views:
       spinBox: true
       slider: true
       labelOnLeft: true
-      currentBodyItem: 8
+      currentBodyItem: 2
   - 
     id: 9
     plugin: Body
@@ -385,7 +386,7 @@ views:
     mounted: true
     state: 
       listingMode: "Link List"
-      currentBodyItem: 8
+      currentBodyItem: 2
       bodyItems: 
         - 
           id: 2
@@ -403,6 +404,9 @@ views:
     plugin: OpenRTM
     class: RTSNameServerView
     mounted: true
+    state: 
+      host: localhost
+      port: 2809
   - 
     id: 12
     name: "RTC Properties"
@@ -421,7 +425,7 @@ toolbars:
     frameRate: 1000
     playbackFrameRate: 100
     idleLoopDrivenMode: false
-    currentTime: 41.625
+    currentTime: 0
     speedScale: 1
     syncToOngoingUpdates: true
     autoExpansion: true
@@ -433,6 +437,8 @@ toolbars:
     snapDistance: 0.025
     penetrationBlockDepth: 0.0005
     lazyCollisionDetectionMode: true
+  "BodyBar": 
+    current: 2
   "LeggedBodyBar": 
     stanceWidth: 0.15
   "BodyMotionGenerationBar": 
@@ -479,7 +485,7 @@ Body:
         showPpcom: false
         showZmp: false
       - 
-        bodyItem: 8
+        bodyItem: 9
         showCenterOfMass: false
         showPpcom: false
         showZmp: false
@@ -507,12 +513,12 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 369, 1545 ]
+      sizes: [ 539, 1375 ]
       children: 
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 470, 470 ]
+          sizes: [ 530, 530 ]
           children: 
             - 
               type: pane
@@ -521,21 +527,21 @@ viewAreas:
             - 
               type: pane
               views: [ 1, 9, 11 ]
-              current: 1
+              current: 11
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 687, 253 ]
+          sizes: [ 775, 285 ]
           children: 
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 659, 880 ]
+              sizes: [ 586, 783 ]
               children: 
                 - 
                   type: splitter
                   orientation: vertical
-                  sizes: [ 332, 349 ]
+                  sizes: [ 375, 394 ]
                   children: 
                     - 
                       type: pane
@@ -552,7 +558,7 @@ viewAreas:
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 770, 769 ]
+              sizes: [ 685, 684 ]
               children: 
                 - 
                   type: pane

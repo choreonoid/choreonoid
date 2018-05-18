@@ -25,7 +25,7 @@ set(plugin_sources
   RTSPropertiesView.cpp
   RTSItem.cpp
   RTSDiagramView.cpp
-  #RTMImageView.cpp
+  RTMImageView.cpp
   RTSCommonUtil.cpp
   RTSConfigurationView.cpp
 
@@ -35,6 +35,7 @@ set(plugin_sources
   deprecated/VirtualRobotRTC.cpp
   deprecated/VirtualRobotPortHandler.cpp
   deprecated/BridgeConf.cpp
+  deprecated/OldRTMPointCloudIOItem.cpp
 
   LoggerUtil.cpp
   )

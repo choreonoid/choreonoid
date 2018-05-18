@@ -13,6 +13,10 @@
 #include <cnoid/Camera>
 #include <cnoid/RangeCamera>
 #include <cnoid/RangeSensor>
+#include <rtm/RTC.h>
+#include <rtm/PortBase.h>
+#include <rtm/OutPort.h>
+#include <rtm/InPort.h>
 
 #include <rtm/idl/InterfaceDataTypes.hh>
 #ifdef WIN32
@@ -20,14 +24,9 @@
 #else
 #include <rtm/ext/CameraCommonInterface.hh>
 #endif
-
 #include <rtm/idl/BasicDataType.hh>
 #include <rtm/idl/ExtendedDataTypes.hh>
-#include <rtm/idl/InterfaceDataTypes.hh>
-#include <rtm/RTC.h>
-#include <rtm/PortBase.h>
-#include <rtm/OutPort.h>
-#include <rtm/InPort.h>
+
 #include <mutex>
 
 namespace cnoid {

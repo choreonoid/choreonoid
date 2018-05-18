@@ -7,9 +7,13 @@
 #include <cnoid/ImageWidget>
 #include <cnoid/ViewManager>
 #include <cnoid/LazyCaller>
-#include <cnoid/corba/CameraImage.hh>
 #include <rtm/DataFlowComponentBase.h>
 #include <rtm/DataInPort.h>
+#ifdef WIN32
+#include <rtm/idl/CameraCommonInterface.hh>
+#else
+#include <rtm/ext/CameraCommonInterface.hh>
+#endif
 #include <QBoxLayout>
 #include <boost/format.hpp>
 #include "gettext.h"
