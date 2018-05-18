@@ -58,6 +58,7 @@ RTCItem::RTCItem()
   periodicType.setSymbol(CHOREONOID_EXECUTION_CONTEXT, N_("ChoreonoidExecutionContext"));
   periodicType.select(PERIODIC_EXECUTION_CONTEXT);
 #endif
+
   oldPeriodicType = periodicType.which();
 
   properties.clear();
@@ -122,7 +123,9 @@ void RTCItem::updateRTCInstance(bool forceUpdate) {
 }
         
 void RTCItem::onPositionChanged() {
+    DDEBUG("RTCItem::onPositionChanged");
   updateRTCInstance(false);
+    updateRTCInstance(false);
 }
 
 
@@ -152,6 +155,8 @@ void RTCItem::setPeriodicType(int type) {
     properties["exec_cxt.periodic.type"] = periodicType.symbol(type);
     updateRTCInstance();
   }
+  if (convertAbsolutePath())
+      rtcomp = new RTComponent(modulePath, properties);
 }
 
 void RTCItem::setPeriodicRate(int rate) {
@@ -176,10 +181,10 @@ void RTCItem::setBaseDirectoryType(int base) {
 
 void RTCItem::setActivationEnabled(bool on) {
   if (on != isActivationEnabled_) {
-    isActivationEnabled_ = on;
-    if (on && rtcomp) {
-      rtcomp->activate();
-    }
+      isActivationEnabled_ = on;
+      if (on && rtcomp) {
+          rtcomp->activate();
+      }
   }
 }
 
@@ -225,33 +230,36 @@ bool RTCItem::store(Archive& archive)
 }
 
 
-bool RTCItem::restore(const Archive& archive) {
-  if (!Item::restore(archive)) {
-    return false;
-  }
-  string value;
-  if (archive.read("module", value) || archive.read("moduleName", value)) {
-    filesystem::path path(archive.expandPathVariables(value));
-    moduleName = path.make_preferred().string();
-  }
-  if (archive.read("baseDirectory", value) || archive.read("RelativePathBase", value)) {
-    baseDirectoryType.select(value);
-    oldBaseDirectoryType = baseDirectoryType.selectedIndex();
-  }
+bool RTCItem::restore(const Archive& archive)
+{
+    DDEBUG("RTCItem::restore");
+    
+    if(!Item::restore(archive)){
+        return false;
+    }
+    string value;
+    if(archive.read("module", value) || archive.read("moduleName", value)){
+        filesystem::path path(archive.expandPathVariables(value));
+        moduleName = path.make_preferred().string();
+    }
+    if(archive.read("baseDirectory", value) || archive.read("RelativePathBase", value)){
+        baseDirectoryType.select(value);
+        oldBaseDirectoryType = baseDirectoryType.selectedIndex();
+    }
+    
+    if(archive.read("periodicType", value)){
+        periodicType.select(value);
+        oldPeriodicType = periodicType.selectedIndex();
+        properties["exec_cxt.periodic.type"] = value;
+    }
+    if(archive.read("periodicRate", periodicRate)){
+        stringstream ss;
+        ss << periodicRate;
+        properties["exec_cxt.periodic.rate"] = ss.str();
+    }
+    archive.read("activation", isActivationEnabled_);
 
-  if (archive.read("periodicType", value)) {
-    periodicType.select(value);
-    oldPeriodicType = periodicType.selectedIndex();
-    properties["exec_cxt.periodic.type"] = value;
-  }
-  if (archive.read("periodicRate", periodicRate)) {
-    stringstream ss;
-    ss << periodicRate;
-    properties["exec_cxt.periodic.rate"] = ss.str();
-  }
-  archive.read("activation", isActivationEnabled_);
-
-  return true;
+    return true;
 }
 
 

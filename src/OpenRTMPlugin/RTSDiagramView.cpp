@@ -182,106 +182,106 @@ private:
 typedef ref_ptr<RTSConnectionGItem> RTSConnectionGItemPtr;
 
 RTSConnectionGItem::RTSConnectionGItem(RTSConnection* rtsConnection, bool sIsLeft, QPointF s,
-  bool tIsLeft, QPointF t) :
-  rtsConnection(rtsConnection), _sIsLeft(sIsLeft), _tIsLeft(tIsLeft) {
-  effect = new QGraphicsOpacityEffect;
-  effect->setOpacity(0.3);
-  setGraphicsEffect(effect);
-  if (rtsConnection->isAlive())
-    effect->setEnabled(false);
-  else
-    effect->setEnabled(true);
+ 	bool tIsLeft, QPointF t) :
+	rtsConnection(rtsConnection), _sIsLeft(sIsLeft), _tIsLeft(tIsLeft) {
+	effect = new QGraphicsOpacityEffect;
+	effect->setOpacity(0.3);
+	setGraphicsEffect(effect);
+	if (rtsConnection->isAlive())
+		effect->setEnabled(false);
+	else
+		effect->setEnabled(true);
 
-  if (rtsConnection->setPos) {
-    Vector2& p0s = rtsConnection->position[0];
-    Vector2& p0e = rtsConnection->position[1];
-    line[0] = new RTSConnectionLineItem(p0e(0), p0e(1), p0s(0), p0s(1));
-    addToGroup(line[0]);
-    Vector2& p1s = rtsConnection->position[4];
-    Vector2& p1e = rtsConnection->position[5];
-    line[1] = new RTSConnectionLineItem(p1s(0), p1s(1), p1e(0), p1e(1));
-    addToGroup(line[1]);
-    for (int i = 2; i<5; i++) {
-      Vector2& p0 = rtsConnection->position[i - 1];
-      Vector2& p1 = rtsConnection->position[i];
-      line[i] = new RTSConnectionLineItem(p0(0), p0(1), p1(0), p1(1));
-      addToGroup(line[i]);
-    }
-    if (line[3]->x1 == line[3]->x2) {
-      type = THREEPARTS_TYPE;
-      marker[0] = new RTSConnectionMarkerItem(line[0]->x2, line[0]->y2, RTSConnectionMarkerItem::UNMOVABLE);
-      marker[1] = new RTSConnectionMarkerItem(line[1]->x2, line[1]->y2, RTSConnectionMarkerItem::UNMOVABLE);
-      marker[2] = new RTSConnectionMarkerItem(line[3]->cx, line[3]->cy, RTSConnectionMarkerItem::HORIZONTAL);
-      signalConnections.add(marker[2]->sigPositionChanged.connect(
-        std::bind(&RTSConnectionGItem::lineMove, this, _1)));
-      marker[3] = marker[4] = 0;
-    } else {
-      type = FIVEPARTS_TYPE;
-      marker[0] = new RTSConnectionMarkerItem(line[0]->x2, line[0]->y2, RTSConnectionMarkerItem::UNMOVABLE);
-      marker[1] = new RTSConnectionMarkerItem(line[1]->x2, line[1]->y2, RTSConnectionMarkerItem::UNMOVABLE);
-      marker[2] = new RTSConnectionMarkerItem(line[2]->cx, line[2]->cy, RTSConnectionMarkerItem::HORIZONTAL);
-      marker[3] = new RTSConnectionMarkerItem(line[3]->cx, line[3]->cy, RTSConnectionMarkerItem::VERTIAL);
-      marker[4] = new RTSConnectionMarkerItem(line[4]->cx, line[4]->cy, RTSConnectionMarkerItem::HORIZONTAL);
-      signalConnections.add(marker[2]->sigPositionChanged.connect(
-        std::bind(&RTSConnectionGItem::lineMove, this, _1)));
-      signalConnections.add(marker[3]->sigPositionChanged.connect(
-        std::bind(&RTSConnectionGItem::lineMove, this, _1)));
-      signalConnections.add(marker[4]->sigPositionChanged.connect(
-        std::bind(&RTSConnectionGItem::lineMove, this, _1)));
-    }
-  } else {
-    qreal sx, tx;
-    sx = firstLineX(s.x());
-    tx = endLineX(t.x());
-    type = getType(sx, tx);
+	if (rtsConnection->setPos) {
+		Vector2& p0s = rtsConnection->position[0];
+		Vector2& p0e = rtsConnection->position[1];
+		line[0] = new RTSConnectionLineItem(p0e(0), p0e(1), p0s(0), p0s(1));
+		addToGroup(line[0]);
+		Vector2& p1s = rtsConnection->position[4];
+		Vector2& p1e = rtsConnection->position[5];
+		line[1] = new RTSConnectionLineItem(p1s(0), p1s(1), p1e(0), p1e(1));
+		addToGroup(line[1]);
+		for (int i = 2; i<5; i++) {
+			Vector2& p0 = rtsConnection->position[i - 1];
+			Vector2& p1 = rtsConnection->position[i];
+			line[i] = new RTSConnectionLineItem(p0(0), p0(1), p1(0), p1(1));
+			addToGroup(line[i]);
+		}
+		if (line[3]->x1 == line[3]->x2) {
+			type = THREEPARTS_TYPE;
+			marker[0] = new RTSConnectionMarkerItem(line[0]->x2, line[0]->y2, RTSConnectionMarkerItem::UNMOVABLE);
+			marker[1] = new RTSConnectionMarkerItem(line[1]->x2, line[1]->y2, RTSConnectionMarkerItem::UNMOVABLE);
+			marker[2] = new RTSConnectionMarkerItem(line[3]->cx, line[3]->cy, RTSConnectionMarkerItem::HORIZONTAL);
+			signalConnections.add(marker[2]->sigPositionChanged.connect(
+				std::bind(&RTSConnectionGItem::lineMove, this, _1)));
+			marker[3] = marker[4] = 0;
+		} else {
+			type = FIVEPARTS_TYPE;
+			marker[0] = new RTSConnectionMarkerItem(line[0]->x2, line[0]->y2, RTSConnectionMarkerItem::UNMOVABLE);
+			marker[1] = new RTSConnectionMarkerItem(line[1]->x2, line[1]->y2, RTSConnectionMarkerItem::UNMOVABLE);
+			marker[2] = new RTSConnectionMarkerItem(line[2]->cx, line[2]->cy, RTSConnectionMarkerItem::HORIZONTAL);
+			marker[3] = new RTSConnectionMarkerItem(line[3]->cx, line[3]->cy, RTSConnectionMarkerItem::VERTIAL);
+			marker[4] = new RTSConnectionMarkerItem(line[4]->cx, line[4]->cy, RTSConnectionMarkerItem::HORIZONTAL);
+			signalConnections.add(marker[2]->sigPositionChanged.connect(
+				std::bind(&RTSConnectionGItem::lineMove, this, _1)));
+			signalConnections.add(marker[3]->sigPositionChanged.connect(
+				std::bind(&RTSConnectionGItem::lineMove, this, _1)));
+			signalConnections.add(marker[4]->sigPositionChanged.connect(
+				std::bind(&RTSConnectionGItem::lineMove, this, _1)));
+		}
+	} else {
+		qreal sx, tx;
+		sx = firstLineX(s.x());
+		tx = endLineX(t.x());
+		type = getType(sx, tx);
 
-    line[0] = new RTSConnectionLineItem(sx, s.y(), s.x(), s.y());
-    addToGroup(line[0]);
+		line[0] = new RTSConnectionLineItem(sx, s.y(), s.x(), s.y());
+		addToGroup(line[0]);
 
-    line[1] = new RTSConnectionLineItem(tx, t.y(), t.x(), t.y());
-    addToGroup(line[1]);
+		line[1] = new RTSConnectionLineItem(tx, t.y(), t.x(), t.y());
+		addToGroup(line[1]);
 
-    qreal centerX = (sx + tx) / 2.0;
-    qreal centerY = (s.y() + t.y()) / 2.0;
-    if (type == THREEPARTS_TYPE) {
-      line[2] = new RTSConnectionLineItem(sx, s.y(), centerX, s.y());
-      addToGroup(line[2]);
-      line[3] = new RTSConnectionLineItem(centerX, s.y(), centerX, t.y());
-      addToGroup(line[3]);
-      line[4] = new RTSConnectionLineItem(centerX, t.y(), tx, t.y());
-      addToGroup(line[4]);
-      marker[0] = new RTSConnectionMarkerItem(line[0]->x2, line[0]->y2, RTSConnectionMarkerItem::UNMOVABLE);
-      marker[1] = new RTSConnectionMarkerItem(line[1]->x2, line[1]->y2, RTSConnectionMarkerItem::UNMOVABLE);
-      marker[2] = new RTSConnectionMarkerItem(line[3]->cx, line[3]->cy, RTSConnectionMarkerItem::HORIZONTAL);
-      signalConnections.add(marker[2]->sigPositionChanged.connect(
-        std::bind(&RTSConnectionGItem::lineMove, this, _1)));
-      marker[3] = marker[4] = 0;
-    } else {
-      line[2] = new RTSConnectionLineItem(sx, s.y(), sx, centerY);
-      addToGroup(line[2]);
-      line[3] = new RTSConnectionLineItem(sx, centerY, tx, centerY);
-      addToGroup(line[3]);
-      line[4] = new RTSConnectionLineItem(tx, centerY, tx, t.y());
-      addToGroup(line[4]);
-      marker[0] = new RTSConnectionMarkerItem(line[0]->x2, line[0]->y2, RTSConnectionMarkerItem::UNMOVABLE);
-      marker[1] = new RTSConnectionMarkerItem(line[1]->x2, line[1]->y2, RTSConnectionMarkerItem::UNMOVABLE);
-      marker[2] = new RTSConnectionMarkerItem(line[2]->cx, line[2]->cy, RTSConnectionMarkerItem::HORIZONTAL);
-      marker[3] = new RTSConnectionMarkerItem(line[3]->cx, line[3]->cy, RTSConnectionMarkerItem::VERTIAL);
-      marker[4] = new RTSConnectionMarkerItem(line[4]->cx, line[4]->cy, RTSConnectionMarkerItem::HORIZONTAL);
-      signalConnections.add(marker[2]->sigPositionChanged.connect(
-        std::bind(&RTSConnectionGItem::lineMove, this, _1)));
-      signalConnections.add(marker[3]->sigPositionChanged.connect(
-        std::bind(&RTSConnectionGItem::lineMove, this, _1)));
-      signalConnections.add(marker[4]->sigPositionChanged.connect(
-        std::bind(&RTSConnectionGItem::lineMove, this, _1)));
-    }
+		qreal centerX = (sx + tx) / 2.0;
+		qreal centerY = (s.y() + t.y()) / 2.0;
+		if (type == THREEPARTS_TYPE) {
+			line[2] = new RTSConnectionLineItem(sx, s.y(), centerX, s.y());
+			addToGroup(line[2]);
+			line[3] = new RTSConnectionLineItem(centerX, s.y(), centerX, t.y());
+			addToGroup(line[3]);
+			line[4] = new RTSConnectionLineItem(centerX, t.y(), tx, t.y());
+			addToGroup(line[4]);
+			marker[0] = new RTSConnectionMarkerItem(line[0]->x2, line[0]->y2, RTSConnectionMarkerItem::UNMOVABLE);
+			marker[1] = new RTSConnectionMarkerItem(line[1]->x2, line[1]->y2, RTSConnectionMarkerItem::UNMOVABLE);
+			marker[2] = new RTSConnectionMarkerItem(line[3]->cx, line[3]->cy, RTSConnectionMarkerItem::HORIZONTAL);
+			signalConnections.add(marker[2]->sigPositionChanged.connect(
+				std::bind(&RTSConnectionGItem::lineMove, this, _1)));
+			marker[3] = marker[4] = 0;
+		} else {
+			line[2] = new RTSConnectionLineItem(sx, s.y(), sx, centerY);
+			addToGroup(line[2]);
+			line[3] = new RTSConnectionLineItem(sx, centerY, tx, centerY);
+			addToGroup(line[3]);
+			line[4] = new RTSConnectionLineItem(tx, centerY, tx, t.y());
+			addToGroup(line[4]);
+			marker[0] = new RTSConnectionMarkerItem(line[0]->x2, line[0]->y2, RTSConnectionMarkerItem::UNMOVABLE);
+			marker[1] = new RTSConnectionMarkerItem(line[1]->x2, line[1]->y2, RTSConnectionMarkerItem::UNMOVABLE);
+			marker[2] = new RTSConnectionMarkerItem(line[2]->cx, line[2]->cy, RTSConnectionMarkerItem::HORIZONTAL);
+			marker[3] = new RTSConnectionMarkerItem(line[3]->cx, line[3]->cy, RTSConnectionMarkerItem::VERTIAL);
+			marker[4] = new RTSConnectionMarkerItem(line[4]->cx, line[4]->cy, RTSConnectionMarkerItem::HORIZONTAL);
+			signalConnections.add(marker[2]->sigPositionChanged.connect(
+				std::bind(&RTSConnectionGItem::lineMove, this, _1)));
+			signalConnections.add(marker[3]->sigPositionChanged.connect(
+				std::bind(&RTSConnectionGItem::lineMove, this, _1)));
+			signalConnections.add(marker[4]->sigPositionChanged.connect(
+				std::bind(&RTSConnectionGItem::lineMove, this, _1)));
+		}
 
-    Vector2 pos[6];
-    getLinePosition(pos);
-    rtsConnection->setPosition(pos);
-  }
+		Vector2 pos[6];
+		getLinePosition(pos);
+		rtsConnection->setPosition(pos);
+	}
 
-  setFlags(QGraphicsItem::ItemIsSelectable);
+	setFlags(QGraphicsItem::ItemIsSelectable);
 }
 
 RTSConnectionGItem::~RTSConnectionGItem() {
@@ -578,6 +578,9 @@ void RTSCompGItem::setStatus(RTC_STATUS status) {
     rect->setBrush(QBrush(QColor("red")));
   }
 }
+
+////////////////////
+#define STATE_CHECK_TIME 1000  //msec
 
 void RTSCompGItem::checkCandidate(RTSPortGItem* sourcePort) {
   if (!sourcePort->rtsPort) return;
@@ -1245,34 +1248,34 @@ void RTSDiagramViewImpl::setCurrentRTSItem(RTSystemItem* item) {
 }
 
 void RTSDiagramViewImpl::updateView() {
-  DDEBUG("RTSDiagramViewImpl::updateView");
-  timeOutConnection.block();
-  rtsComps.clear();
-  rtsConnections.clear();
-  rtsPortMap.clear();
-  if (currentRTSItem) {
-    setBackgroundBrush(QBrush(Qt::white));
-    map<string, RTSCompPtr>& comps = currentRTSItem->rtsComps();
-    for (map<string, RTSCompPtr>::iterator itr = comps.begin(); itr != comps.end(); itr++) {
-      addRTSComp(itr->second.get());
-    }
-    RTSystemItem::RTSConnectionMap& connections = currentRTSItem->rtsConnections();
-    for (RTSystemItem::RTSConnectionMap::iterator itr = connections.begin();
-      itr != connections.end(); itr++) {
-      DDEBUG("RTSDiagramViewImpl::updateView find connection")
-        if (rtsConnections.find(itr->second->id) == rtsConnections.end()) {
-          RTSConnection* rtsConnection = itr->second.get();
-          RTSPortGItem* source = rtsPortMap.find(rtsConnection->sourcePort)->second;
-          RTSPortGItem* target = rtsPortMap.find(rtsConnection->targetPort)->second;
-          createConnectionGItem(rtsConnection, source, target);
+    DDEBUG("RTSDiagramViewImpl::updateView");
+    timeOutConnection.block();
+    rtsComps.clear();
+    rtsConnections.clear();
+    rtsPortMap.clear();
+    if(currentRTSItem){
+        setBackgroundBrush(QBrush(Qt::white));
+        map<string, RTSCompPtr>& comps = currentRTSItem->rtsComps();
+        for(map<string, RTSCompPtr>::iterator itr = comps.begin(); itr != comps.end(); itr++){
+            addRTSComp(itr->second.get());
         }
+        RTSystemItem::RTSConnectionMap& connections = currentRTSItem->rtsConnections();
+        for(RTSystemItem::RTSConnectionMap::iterator itr = connections.begin();
+                itr != connections.end(); itr++){
+            DDEBUG("RTSDiagramViewImpl::updateView find connection")
+            if(rtsConnections.find(itr->second->id)==rtsConnections.end()){
+                RTSConnection* rtsConnection = itr->second.get();
+                RTSPortGItem* source = rtsPortMap.find(rtsConnection->sourcePort)->second;
+                RTSPortGItem* target = rtsPortMap.find(rtsConnection->targetPort)->second;
+                createConnectionGItem(rtsConnection, source, target);
+            }
+        }
+        setAcceptDrops(true);
+    }else{
+        setBackgroundBrush(QBrush(Qt::gray));
+        setAcceptDrops(false);
     }
-    setAcceptDrops(true);
-  } else {
-    setBackgroundBrush(QBrush(Qt::gray));
-    setAcceptDrops(false);
-  }
-  timeOutConnection.unblock();
+    timeOutConnection.unblock();
 }
 
 void RTSDiagramViewImpl::updateSetting() {

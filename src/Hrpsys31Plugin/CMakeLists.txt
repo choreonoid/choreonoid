@@ -31,6 +31,8 @@ set(headers
 idl_compile_cpp(idl_cpp_files idl_h_files corba/hrpsys
   RobotHardwareService
   StateHolderService
+  PointCloud
+  LOCAL
   )
 
 include_directories(${OPENRTM_INCLUDE_DIRS})

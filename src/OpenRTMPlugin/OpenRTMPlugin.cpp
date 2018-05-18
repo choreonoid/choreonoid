@@ -13,7 +13,7 @@
 #include "RTSPropertiesView.h"
 #include "RTSDiagramView.h"
 #include "RTSConfigurationView.h"
-#include "RTMImageView.h"
+//#include "RTMImageView.h"
 #include "RTSItem.h"
 #include "deprecated/BodyRTCItem.h"
 #include <cnoid/Plugin>
@@ -39,272 +39,276 @@ using boost::format;
 
 namespace {
 
-  class ManagerEx : public RTC::Manager {
-  public:
+class ManagerEx : public RTC::Manager {
+public:
     RTM::ManagerServant* servant() {
-      return m_mgrservant;
+        return m_mgrservant;
     }
-  };
+};
 
-  ManagerEx* manager;
+ManagerEx* manager;
 
-  std::set<RTC::RTObject_impl*> managedComponents;
+std::set<RTC::RTObject_impl*> managedComponents;
 
-  Signal<void()> sigAboutToFinalizeRTM_;
+Signal<void()> sigAboutToFinalizeRTM_;
 
-  class PostComponentShutdownListenr : public RTC::PostComponentActionListener {
+class PostComponentShutdownListenr : public RTC::PostComponentActionListener {
     RTC::RTObject_impl* rtc;
-  public:
+public:
     PostComponentShutdownListenr(RTC::RTObject_impl* rtc) : rtc(rtc) {}
     virtual void operator()(RTC::UniqueId ec_id, RTC::ReturnCode_t ret) {}
-  };
+};
 
-  SettingDialog* settingInstance = 0;
+SettingDialog* settingInstance = 0;
 
-  class OpenRTMPlugin : public Plugin {
+class OpenRTMPlugin : public Plugin {
     MessageView* mv;
     Action* deleteRTCsOnSimulationStartCheck;
     Connection connectionToSigSimulaionAboutToStart;
-
-  public:
+    
+public:
     OpenRTMPlugin() : Plugin("OpenRTM") {
-      require("Body");
-      require("Corba");
-      precede("Corba");
-
-      LoggerUtil::startLog(LogLevel::LOG_DEBUG, "Log");
+        require("Body");
+        require("Corba");
+        precede("Corba");
+        
+        LoggerUtil::startLog(LogLevel::LOG_DEBUG, "Log");
     }
 
     virtual bool initialize() {
-      DDEBUG("initialize");
-      const int log_output_item = 8;
-      const int log_level_item = 10;
-
-      const char* argv[] = {
-        "choreonoid",
-        "-o", "manager.shutdown_on_nortcs: NO",
-        "-o", "manager.shutdown_auto: NO",
-        "-o", "naming.formats: %n.rtc",
-        "-o", "logger.enable: NO",
-        "-o", "logger.log_level: WARN",
-        "-f", "./rtc.conf.choreonoid",
+        DDEBUG("initialize");
+        const int log_output_item = 8;
+        const int log_level_item = 10;
+        
+        const char* argv[] = {
+            "choreonoid",
+            "-o", "manager.shutdown_on_nortcs: NO",
+            "-o", "manager.shutdown_auto: NO",
+            "-o", "naming.formats: %n.rtc",
+            "-o", "logger.enable: NO",
+            "-o", "logger.log_level: WARN",
+            "-f", "./rtc.conf.choreonoid",
 #ifndef OPENRTM_VERSION11
-        "-i",
+            "-i",
 #endif
 #ifdef Q_OS_WIN32
-        // To reduce the startup time on Windows
-        "-o", "corba.args: -ORBclientCallTimeOutPeriod 100",
-  #endif
-      };
+            // To reduce the startup time on Windows
+            "-o", "corba.args: -ORBclientCallTimeOutPeriod 100",
+#endif
+        };
 
-      MappingPtr appVars = AppConfig::archive()->openMapping("OpenRTM");
-      if (appVars) {
-        bool outputLog = appVars->get("outputLog", false);
-        if (outputLog) {
-          argv[log_output_item] = "logger.enable: YES";
-          string logLevel = "logger.log_level:" + appVars->get("logLevel", "INFO");
-          DDEBUG_V("Log Level:%s", logLevel.c_str());
-          argv[log_level_item] = logLevel.c_str();
+        MappingPtr appVars = AppConfig::archive()->openMapping("OpenRTM");
+        if (appVars) {
+            bool outputLog = appVars->get("outputLog", false);
+            if (outputLog) {
+                argv[log_output_item] = "logger.enable: YES";
+                string logLevel = "logger.log_level:" + appVars->get("logLevel", "INFO");
+                DDEBUG_V("Log Level:%s", logLevel.c_str());
+                argv[log_level_item] = logLevel.c_str();
+            }
         }
-      }
-
+        
 #ifdef Q_OS_WIN32
 #ifdef OPENRTM_VERSION11
-      int numArgs = 11;
+        int numArgs = 11;
 #else
-      int numArgs = 12;
+        int numArgs = 12;
 #endif
 #else
-      int numArgs = 9;
+        int numArgs = 9;
 #endif
-      bool FORCE_DISABLE_LOG = true;
-      if (FORCE_DISABLE_LOG) {
-        numArgs += 2;
+        
+        bool FORCE_DISABLE_LOG = true;
+        if(FORCE_DISABLE_LOG){
+            numArgs += 2;
+        }
+        
+        mv = MessageView::mainInstance();
+        
+        cnoid::checkOrInvokeCorbaNameServer();
+        
+        manager = static_cast<ManagerEx*>(RTC::Manager::init(numArgs, const_cast<char**>(argv)));
+        
+        RTM::Manager_ptr servantRef = manager->servant()->getObjRef();
+        if(CORBA::is_nil(servantRef)){
+            manager->servant()->createINSManager();
+        }
+#ifdef OPENRTM_VERSION110
+        if(manager->registerECFactory(
+               "ChoreonoidExecutionContext",
+               RTC::ECCreate<cnoid::ChoreonoidExecutionContext>,
+               RTC::ECDelete<cnoid::ChoreonoidExecutionContext>)){
+#else
+        if (RTC::ExecutionContextFactory::instance().addFactory(
+                "ChoreonoidExecutionContext",
+                ::coil::Creator< ::RTC::ExecutionContextBase, ::cnoid::ChoreonoidExecutionContext>,
+                ::coil::Destructor< ::RTC::ExecutionContextBase, ::cnoid::ChoreonoidExecutionContext>) == 0) {
+#endif
+            mv->putln(_("ChoreonoidExecutionContext has been registered."));
+        } else {
+            mv->putln(MessageView::WARNING, _("Failed to register ChoreonoidExecutionContext."));
+        }
+
+#ifdef OPENRTM_VERSION110
+        if(manager->registerECFactory(
+               "ChoreonoidPeriodicExecutionContext",
+               RTC::ECCreate<cnoid::ChoreonoidPeriodicExecutionContext>,
+               RTC::ECDelete<cnoid::ChoreonoidPeriodicExecutionContext>)){
+#else
+        if(RTC::ExecutionContextFactory::instance().addFactory(
+               "ChoreonoidPeriodicExecutionContext",
+               ::coil::Creator< ::RTC::ExecutionContextBase, ::cnoid::ChoreonoidPeriodicExecutionContext>,
+               ::coil::Destructor< ::RTC::ExecutionContextBase, ::cnoid::ChoreonoidPeriodicExecutionContext>) == 0){
+#endif
+            mv->putln(_("ChoreonoidPeriodicExecutionContext has been registered."));
+        } else {
+            mv->putln(MessageView::WARNING, _("Failed to register ChoreonoidPeriodicExecutionContext."));
+        }
+        
+        manager->activateManager();
+
+#ifdef Q_OS_WIN32
+        omniORB::setClientCallTimeout(0); // reset the global timeout setting?
+#endif
+
+        if(!cnoid::takeOverCorbaPluginInitialization(manager->getORB())){
+            return false;
+        }
+        
+        BodyIoRTCItem::initialize(this);
+        ControllerRTCItem::initialize(this);
+        RTCItem::initialize(this);
+        BodyRTCItem::initialize(this);
+        
+        VirtualRobotRTC::registerFactory(manager, "VirtualRobot");
+        
+        manager->runManager(true);
+        
+        menuManager().setPath("/Tools/OpenRTM").addItem(_("Delete unmanaged RT components"))
+            ->sigTriggered().connect([&](){ deleteUnmanagedRTCs(true); });
+        
+        deleteRTCsOnSimulationStartCheck =
+            menuManager().setPath("/Options/OpenRTM").addCheckItem(
+                _("Delete unmanaged RT components on starting a simulation"));
+        deleteRTCsOnSimulationStartCheck->sigToggled().connect(
+            [&](bool on){ onDeleteRTCsOnSimulationStartToggled(on); });
+        
+        if (!settingInstance) {
+            settingInstance = new SettingDialog();
+            
+            menuManager().setPath("/Tools/OpenRTM");
+            menuManager().addItem(_("Preferences"))
+                ->sigTriggered().connect([]() { settingInstance->show(); });
+        }
+        
+        setProjectArchiver(
+            [&](Archive& archive){ return store(archive); },
+            [&](const Archive& archive){ restore(archive); });
+        
+        RTSNameServerView::initializeClass(this);
+        RTSystemItem::initialize(this);
+        RTSPropertiesView::initializeClass(this);
+        RTSDiagramView::initializeClass(this);
+        RTSConfigurationView::initializeClass(this);
+        //RTMImageView::initializeClass(this);
+        
+        DDEBUG("initialize Finished");
+        
+        return true;
     }
-
-      mv = MessageView::mainInstance();
-
-      cnoid::checkOrInvokeCorbaNameServer();
-
-      //DDEBUG_V("numArgs:%d", numArgs);
-      //for (int index = 0; index < numArgs; index++) {
-      //  DDEBUG_V("%d=%s", index, argv[index]);
-      //}
-
-      manager = static_cast<ManagerEx*>(RTC::Manager::init(numArgs, const_cast<char**>(argv)));
-
-      RTM::Manager_ptr servantRef = manager->servant()->getObjRef();
-      if (CORBA::is_nil(servantRef)) {
-        manager->servant()->createINSManager();
-      }
-#ifdef OPENRTM_VERSION11
-      if (manager->registerECFactory("ChoreonoidExecutionContext",
-        RTC::ECCreate<cnoid::ChoreonoidExecutionContext>,
-        RTC::ECDelete<cnoid::ChoreonoidExecutionContext>)) {
-#else
-      if (RTC::ExecutionContextFactory::instance().addFactory(
-        "ChoreonoidExecutionContext",
-        ::coil::Creator< ::RTC::ExecutionContextBase, ::cnoid::ChoreonoidExecutionContext>,
-        ::coil::Destructor< ::RTC::ExecutionContextBase, ::cnoid::ChoreonoidExecutionContext>) == 0) {
-#endif
-        mv->putln(_("ChoreonoidExecutionContext has been registered."));
-      } else {
-        mv->putln(MessageView::WARNING, _("Failed to register ChoreonoidExecutionContext."));
-      }
-#ifdef OPENRTM_VERSION11
-      if (manager->registerECFactory("ChoreonoidPeriodicExecutionContext",
-        RTC::ECCreate<cnoid::ChoreonoidPeriodicExecutionContext>,
-        RTC::ECDelete<cnoid::ChoreonoidPeriodicExecutionContext>)) {
-#else
-      if (RTC::ExecutionContextFactory::instance().addFactory("ChoreonoidPeriodicExecutionContext",
-        ::coil::Creator< ::RTC::ExecutionContextBase, ::cnoid::ChoreonoidPeriodicExecutionContext>,
-        ::coil::Destructor< ::RTC::ExecutionContextBase, ::cnoid::ChoreonoidPeriodicExecutionContext>) == 0) {
-#endif
-        mv->putln(_("ChoreonoidPeriodicExecutionContext has been registered."));
-      } else {
-        mv->putln(MessageView::WARNING, _("Failed to register ChoreonoidPeriodicExecutionContext."));
-      }
-
-      manager->activateManager();
-
-#ifdef Q_OS_WIN32
-      omniORB::setClientCallTimeout(0); // reset the global timeout setting?
-#endif
-
-      if (!cnoid::takeOverCorbaPluginInitialization(manager->getORB())) {
-        return false;
-      }
-
-      BodyIoRTCItem::initialize(this);
-      ControllerRTCItem::initialize(this);
-      RTCItem::initialize(this);
-      BodyRTCItem::initialize(this);
-
-      VirtualRobotRTC::registerFactory(manager, "VirtualRobot");
-
-      manager->runManager(true);
-
-      menuManager().setPath("/Tools/OpenRTM").addItem(_("Delete unmanaged RT components"))
-        ->sigTriggered().connect([&]() { deleteUnmanagedRTCs(true); });
-
-      deleteRTCsOnSimulationStartCheck =
-        menuManager().setPath("/Options/OpenRTM").addCheckItem(
-          _("Delete unmanaged RT components on starting a simulation"));
-      deleteRTCsOnSimulationStartCheck->sigToggled().connect(
-        [&](bool on) { onDeleteRTCsOnSimulationStartToggled(on); });
-
-      if (!settingInstance) {
-        settingInstance = new SettingDialog();
-
-        menuManager().setPath("/Tools/OpenRTM");
-        menuManager().addItem(_("Preferences"))
-          ->sigTriggered().connect([]() { settingInstance->show(); });
-      }
-
-      setProjectArchiver(
-        [&](Archive& archive) { return store(archive); },
-        [&](const Archive& archive) { restore(archive); });
-
-      RTSNameServerView::initializeClass(this);
-      RTSystemItem::initialize(this);
-      RTSPropertiesView::initializeClass(this);
-      RTSDiagramView::initializeClass(this);
-      RTSConfigurationView::initializeClass(this);
-      RTMImageView::initializeClass(this);
-
-      DDEBUG("initialize Finished");
-      return true;
-  }
 
 
     bool store(Archive& archive) {
-      archive.write("deleteUnmanagedRTCsOnStartingSimulation", deleteRTCsOnSimulationStartCheck->isChecked());
-      return true;
+        archive.write("deleteUnmanagedRTCsOnStartingSimulation", deleteRTCsOnSimulationStartCheck->isChecked());
+        return true;
     }
 
 
     void restore(const Archive& archive) {
-      bool checked = deleteRTCsOnSimulationStartCheck->isChecked();
-      if (!archive.read("deleteUnmanagedRTCsOnStartingSimulation", checked)) {
-        // for reading the old version format
-        const Archive& oldNode = *archive.findSubArchive("OpenRTMPlugin");
-        if (oldNode.isValid()) {
-          oldNode.read("deleteUnmanagedRTCsOnStartingSimulation", checked);
+        bool checked = deleteRTCsOnSimulationStartCheck->isChecked();
+        if (!archive.read("deleteUnmanagedRTCsOnStartingSimulation", checked)) {
+            // for reading the old version format
+            const Archive& oldNode = *archive.findSubArchive("OpenRTMPlugin");
+            if (oldNode.isValid()) {
+                oldNode.read("deleteUnmanagedRTCsOnStartingSimulation", checked);
+            }
         }
-      }
-      deleteRTCsOnSimulationStartCheck->setChecked(checked);
+        deleteRTCsOnSimulationStartCheck->setChecked(checked);
     }
+        
 
-
-    void onDeleteRTCsOnSimulationStartToggled(bool on) {
-      connectionToSigSimulaionAboutToStart.disconnect();
-      if (on) {
-        connectionToSigSimulaionAboutToStart =
-          SimulationBar::instance()->sigSimulationAboutToStart().connect(
-            [&](SimulatorItem*) { deleteUnmanagedRTCs(false); });
-      }
+    void onDeleteRTCsOnSimulationStartToggled(bool on)
+    {
+        connectionToSigSimulaionAboutToStart.disconnect();
+        if(on){
+            connectionToSigSimulaionAboutToStart = 
+                SimulationBar::instance()->sigSimulationAboutToStart().connect(
+                    [&](SimulatorItem*){ deleteUnmanagedRTCs(false); });
+        }
     }
-
+    
 
     void onSimulationAboutToStart() {
-      if (deleteUnmanagedRTCs(false) > 0) {
-        mv->flush();
-      }
+        if(deleteUnmanagedRTCs(false) > 0){
+            mv->flush();
+        }
     }
+    
 
     int deleteUnmanagedRTCs(bool doPutMessageWhenNoUnmanagedComponents) {
-      int n = cnoid::numUnmanagedRTCs();
-
-      if (n == 0) {
-        if (doPutMessageWhenNoUnmanagedComponents) {
-          mv->notify("There are no RT components which are not managed by Choreonoid.");
-        }
-      } else {
-        if (n == 1) {
-          mv->notify(_("An RT component which is not managed by Choreonoid is being deleted."));
+        int n = cnoid::numUnmanagedRTCs();
+        
+        if (n == 0) {
+            if (doPutMessageWhenNoUnmanagedComponents) {
+                mv->notify("There are no RT components which are not managed by Choreonoid.");
+            }
         } else {
-          mv->notify(format(_("%1% RT components which are not managed by Choreonoid are being deleted.")) % n);
+            if (n == 1) {
+                mv->notify(_("An RT component which is not managed by Choreonoid is being deleted."));
+            } else {
+                mv->notify(format(_("%1% RT components which are not managed by Choreonoid are being deleted.")) % n);
+            }
+            mv->flush();
+            cnoid::deleteUnmanagedRTCs();
+            if (n == 1) {
+                mv->notify(_("The unmanaged RT component has been deleted."));
+            } else {
+                mv->notify(_("The unmanaged RT components have been deleted."));
+            }
         }
-        mv->flush();
-        cnoid::deleteUnmanagedRTCs();
-        if (n == 1) {
-          mv->notify(_("The unmanaged RT component has been deleted."));
-        } else {
-          mv->notify(_("The unmanaged RT components have been deleted."));
-        }
-      }
-
-      return n;
+        
+        return n;
     }
 
 
-    virtual bool finalize() {
-      sigAboutToFinalizeRTM_();
-
-      connectionToSigSimulaionAboutToStart.disconnect();
-
-      std::vector<RTC::RTObject_impl*> rtcs = manager->getComponents();
-      for (size_t i = 0; i < rtcs.size(); ++i) {
-        RTC::RTObject_impl* rtc = rtcs[i];
-        RTC::ExecutionContextList_var eclist = rtc->get_participating_contexts();
-        if (eclist->length() > 0) {
-          for (CORBA::ULong j = 0; j < eclist->length(); ++j) {
-            if (!CORBA::is_nil(eclist[j])) {
-              eclist[j]->remove_component(rtc->getObjRef());
+    virtual bool finalize()
+    {
+        sigAboutToFinalizeRTM_();
+        
+        connectionToSigSimulaionAboutToStart.disconnect();
+        
+        std::vector<RTC::RTObject_impl*> rtcs = manager->getComponents();
+        for(size_t i=0; i < rtcs.size(); ++i){
+            RTC::RTObject_impl* rtc = rtcs[i];
+            RTC::ExecutionContextList_var eclist = rtc->get_participating_contexts();
+            if(eclist->length() > 0){
+                for(CORBA::ULong j=0; j < eclist->length(); ++j){
+                    if(!CORBA::is_nil(eclist[j])){
+                        eclist[j]->remove_component(rtc->getObjRef());
+                    }
+                }
             }
-          }
         }
-      }
-
-      // delete all the components owned by exisiting BodyRTCItems
-      itemManager().detachAllManagedTypeItemsFromRoot();
-
-      cnoid::deleteUnmanagedRTCs();
-
-      manager->shutdown();
-      manager->unloadAll();
-
-      return true;
+        
+        // delete all the components owned by exisiting BodyRTCItems
+        itemManager().detachAllManagedTypeItemsFromRoot();
+        
+        cnoid::deleteUnmanagedRTCs();
+        
+        manager->shutdown();
+        manager->unloadAll();
+        
+        return true;
     }
 
 };
@@ -319,8 +323,18 @@ SignalProxy<void()> cnoid::sigAboutToFinalizeRTM()
     return sigAboutToFinalizeRTM_;
 }
 
+
+/*
+RTM::Manager_ptr cnoid::getRTCManagerServant()
+{
+    return RTM::Manager::_duplicate(manager->servant()->getObjRef());
+}
+*/
+
+
 RTC::RTObject_impl* cnoid::createManagedRTC(const std::string& comp_args)
 {
+    DDEBUG("createManagedRTC");
     RTC::RTObject_impl* rtc = manager->createComponent(comp_args.c_str());
     if(rtc){
         managedComponents.insert(rtc);
@@ -330,7 +344,7 @@ RTC::RTObject_impl* cnoid::createManagedRTC(const std::string& comp_args)
 }
 
 
-int cnoid::numUnmanagedRTCs()
+CNOID_EXPORT int cnoid::numUnmanagedRTCs()
 {
     int n = 0;
     std::vector<RTC::RTObject_impl*> rtcs = manager->getComponents();
@@ -344,7 +358,7 @@ int cnoid::numUnmanagedRTCs()
 }
 
 
-int cnoid::deleteUnmanagedRTCs()
+CNOID_EXPORT int cnoid::deleteUnmanagedRTCs()
 {
     int numDeleted = 0;
     
@@ -370,14 +384,14 @@ int cnoid::deleteUnmanagedRTCs()
         }
     }
 
-#ifdef OPENRTM_VERSION11
+#ifdef OPENRTM_VERSION110
     for(size_t i=0; i < rtcs.size(); ++i){
         RTC::RTObject_impl* rtc = rtcs[i];
         if(managedComponents.find(rtc) == managedComponents.end()){
             RTC::ExecutionContextList_var eclist = rtc->get_participating_contexts();
             for(CORBA::ULong j=0; j < eclist->length(); ++j){
-               if(!CORBA::is_nil(eclist[j])){
-                       eclist[j]->remove_component(rtc->getObjRef());
+                if(!CORBA::is_nil(eclist[j])){
+                    eclist[j]->remove_component(rtc->getObjRef());
                 }
             }
             RTC::PortServiceList_var ports = rtc->get_ports();
@@ -437,13 +451,14 @@ int cnoid::deleteUnmanagedRTCs()
     return numDeleted;
 }
 
+    
 bool cnoid::deleteRTC(RTC::RtcBase* rtc) {
   if (rtc) {
     RTC::ExecutionContextList_var eclist = rtc->get_participating_contexts();
     for (CORBA::ULong i = 0; i < eclist->length(); ++i) {
       if (!CORBA::is_nil(eclist[i])) {
         eclist[i]->remove_component(rtc->getObjRef());
-#ifndef OPENRTM_VERSION11
+#ifndef OPENRTM_VERSION110
         OpenRTM::ExtTrigExecutionContextService_var execContext = OpenRTM::ExtTrigExecutionContextService::_narrow(eclist[i]);
         if (!CORBA::is_nil(execContext))
           execContext->tick();
@@ -452,7 +467,7 @@ bool cnoid::deleteRTC(RTC::RtcBase* rtc) {
     }
     RTC::ExecutionContextList_var myEClist = rtc->get_owned_contexts();
     if (myEClist->length() > 0 && !CORBA::is_nil(myEClist[0])) {
-#ifdef OPENRTM_VERSION11
+#ifdef OPENRTM_VERSION110
       OpenRTM::ExtTrigExecutionContextService_var myEC = OpenRTM::ExtTrigExecutionContextService::_narrow(myEClist[0]);
       RTC::RTCList rtcs = myEC->get_profile()->participants;
       for (size_t i = 0; i < rtcs.length(); ++i) {
@@ -478,6 +493,7 @@ bool cnoid::deleteRTC(RTC::RtcBase* rtc) {
   return false;
 }
 
+    
 bool cnoid::isManagedRTC(RTC::RTObject_ptr rtc) {
   for (auto itr = managedComponents.begin(); itr != managedComponents.end(); ++itr) {
     if (rtc->_is_equivalent((*itr)->getObjRef())) {
@@ -487,45 +503,41 @@ bool cnoid::isManagedRTC(RTC::RTObject_ptr rtc) {
   return false;
 }
 
-//RTM::Manager_ptr cnoid::getRTCManagerServant() {
-//  return RTM::Manager::_duplicate(manager->servant()->getObjRef());
-//}
+namespace cnoid {
+   
+ template<> CORBA::Object::_ptr_type findRTCService<CORBA::Object>(RTC::RTObject_ptr rtc, const std::string& name) {
+   CORBA::Object_ptr service = CORBA::Object::_nil();
 
-//namespace cnoid {
-//    
-//  template<> CORBA::Object::_ptr_type findRTCService<CORBA::Object>(RTC::RTObject_ptr rtc, const std::string& name) {
-//    CORBA::Object_ptr service = CORBA::Object::_nil();
-//
-//    RTC::PortServiceList ports;
-//    ports = *(rtc->get_ports());
-//
-//    RTC::ComponentProfile* cprof;
-//    cprof = rtc->get_component_profile();
-//    std::string portname = std::string(cprof->instance_name) + "." + name;
-//
-//    for (unsigned int i = 0; i < ports.length(); i++) {
-//      RTC::PortService_var port = ports[i];
-//      RTC::PortProfile* prof = port->get_port_profile();
-//      if (std::string(prof->name) == portname) {
-//        RTC::ConnectorProfile connProfile;
-//        connProfile.name = "noname";
-//        connProfile.connector_id = "";
-//        connProfile.ports.length(1);
-//        connProfile.ports[0] = port;
-//        connProfile.properties = 0;
-//        port->connect(connProfile);
-//
-//        const char* ior = 0;
-//        connProfile.properties[0].value >>= ior;
-//        if (ior) {
-//          service = getORB()->string_to_object(ior);
-//        }
-//        port->disconnect(connProfile.connector_id);
-//        break;
-//      }
-//    }
-//
-//    return service;
-//  }
-//
-//}
+   RTC::PortServiceList ports;
+   ports = *(rtc->get_ports());
+
+   RTC::ComponentProfile* cprof;
+   cprof = rtc->get_component_profile();
+   std::string portname = std::string(cprof->instance_name) + "." + name;
+
+   for (unsigned int i = 0; i < ports.length(); i++) {
+     RTC::PortService_var port = ports[i];
+     RTC::PortProfile* prof = port->get_port_profile();
+     if (std::string(prof->name) == portname) {
+       RTC::ConnectorProfile connProfile;
+       connProfile.name = "noname";
+       connProfile.connector_id = "";
+       connProfile.ports.length(1);
+       connProfile.ports[0] = port;
+       connProfile.properties = 0;
+       port->connect(connProfile);
+
+       const char* ior = 0;
+       connProfile.properties[0].value >>= ior;
+       if (ior) {
+         service = getORB()->string_to_object(ior);
+       }
+       port->disconnect(connProfile.connector_id);
+       break;
+     }
+   }
+
+   return service;
+ }
+
+}

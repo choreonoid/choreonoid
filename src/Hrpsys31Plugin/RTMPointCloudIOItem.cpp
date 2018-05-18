@@ -3,6 +3,7 @@
 */
 
 #include "RTMPointCloudIOItem.h"
+#include "corba/hrpsys/PointCloud.hh"
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
 #include <cnoid/Config>
@@ -12,13 +13,16 @@
 #include <cnoid/OpenRTMUtil>
 #include <cnoid/PointSetItem>
 #include <cnoid/LazyCaller>
-#include <cnoid/corba/PointCloud.hh>
-#include <cnoid/corba/CameraImage.hh>
 #include <rtm/DataFlowComponentBase.h>
 #include <rtm/idl/BasicDataTypeSkel.h>
 #include <rtm/idl/InterfaceDataTypes.hh>
 #include <rtm/DataInPort.h>
 #include <rtm/DataOutPort.h>
+#ifdef WIN32
+#include <rtm/idl/CameraCommonInterface.hh>
+#else
+#include <rtm/ext/CameraCommonInterface.hh>
+#endif
 #include "gettext.h"
 
 using namespace std;

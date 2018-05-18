@@ -28,7 +28,7 @@ namespace cnoid {
 
 		void setLocation(const std::string& host, int port);
 
-    bool updateConnection();
+                bool updateConnection();
 
 		struct ObjectPath {
 			std::string id;
@@ -135,8 +135,8 @@ namespace cnoid {
 		std::string namingContextLocation;
 		std::string host_;
 		int port_;
-    bool failedInLastAccessToNamingContext;
-  };
+                bool failedInLastAccessToNamingContext;
+	};
 
 	CNOID_EXPORT NamingContextHelper* getDefaultNamingContextHelper();
 }

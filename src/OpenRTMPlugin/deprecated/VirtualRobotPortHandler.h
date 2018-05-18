@@ -6,13 +6,21 @@
 #ifndef CNOID_OPENRTM_PLUGIN_VIRTUAL_ROBOT_PORT_HANDLER_H
 #define CNOID_OPENRTM_PLUGIN_VIRTUAL_ROBOT_PORT_HANDLER_H
 
+#include "BridgeConf.h"
+#include "corba/PointCloud.hh"
 #include <cnoid/Body>
 #include <cnoid/BasicSensors>
 #include <cnoid/Camera>
 #include <cnoid/RangeCamera>
 #include <cnoid/RangeSensor>
-#include <cnoid/corba/CameraImage.hh>
-#include <cnoid/corba/PointCloud.hh>
+
+#include <rtm/idl/InterfaceDataTypes.hh>
+#ifdef WIN32
+#include <rtm/idl/CameraCommonInterface.hh>
+#else
+#include <rtm/ext/CameraCommonInterface.hh>
+#endif
+
 #include <rtm/idl/BasicDataType.hh>
 #include <rtm/idl/ExtendedDataTypes.hh>
 #include <rtm/idl/InterfaceDataTypes.hh>
@@ -21,7 +29,6 @@
 #include <rtm/OutPort.h>
 #include <rtm/InPort.h>
 #include <mutex>
-#include "BridgeConf.h"
 
 namespace cnoid {
     

@@ -26,11 +26,14 @@ NamingContextHelper* cnoid::getDefaultNamingContextHelper() {
 	return &namingContextHelper;
 }
 
-NamingContextHelper::NamingContextHelper() {
-  host_ = "localhost";
-  port_ = 2809;
-  failedInLastAccessToNamingContext = false;
+
+NamingContextHelper::NamingContextHelper()
+{
+    host_ = "localhost";
+    port_ = 2809;
+    failedInLastAccessToNamingContext = false;
 }
+
 
 void cnoid::initializeCorbaUtil(bool activatePOAManager, int listeningPort) {
 	if (orb) {
@@ -78,47 +81,53 @@ void cnoid::initializeCorbaUtil(CORBA::ORB_ptr orb_, bool activatePOAManager) {
 
 
 NamingContextHelper::NamingContextHelper(const std::string& host, int port)
-  : NamingContextHelper() {
-	setLocation(host, port);
+    : NamingContextHelper()
+{
+    setLocation(host, port);
 }
 
 
-void NamingContextHelper::setLocation(const std::string& host, int port) {
-  if (failedInLastAccessToNamingContext) {
-    if (host != host_ || port != port_) {
-      failedInLastAccessToNamingContext = false;
+void NamingContextHelper::setLocation(const std::string& host, int port)
+{
+    if(failedInLastAccessToNamingContext){
+        if(host != host_ || port != port_){
+            failedInLastAccessToNamingContext = false;
+        }
     }
-  }
-  host_ = host;
-	port_ = port;
-	namingContextLocation = str(format("corbaloc:iiop:%1%:%2%/NameService") % host % port);
-	namingContext = CosNaming::NamingContext::_nil();
-}
-
-bool NamingContextHelper::updateConnection() {
-  failedInLastAccessToNamingContext = false;
-  return checkOrUpdateNamingContext();
-}
-
-bool NamingContextHelper::isAlive(bool doRescan) {
-	if (doRescan) {
-		return checkOrUpdateNamingContext();
-	} else {
-		return !CORBA::is_nil(namingContext);
-	}
+    host_ = host;
+    port_ = port;
+    namingContextLocation = str(format("corbaloc:iiop:%1%:%2%/NameService") % host % port);
+    namingContext = CosNaming::NamingContext::_nil();
 }
 
 
+bool NamingContextHelper::updateConnection()
+{
+    failedInLastAccessToNamingContext = false;
+    return checkOrUpdateNamingContext();
+}
+        
+
+bool NamingContextHelper::isAlive(bool doRescan)
+{
+    if(doRescan){
+        return checkOrUpdateNamingContext();
+    } else {
+        return !CORBA::is_nil(namingContext);
+    }
+}
+
+    
 const std::string& NamingContextHelper::errorMessage() {
 	return errorMessage_;
 }
 
 
 bool NamingContextHelper::checkOrUpdateNamingContext() {
-  if (failedInLastAccessToNamingContext) {
-    return false;
-  }
-  if (!CORBA::is_nil(namingContext)) {
+    if(failedInLastAccessToNamingContext){
+        return false;
+    }
+	if (!CORBA::is_nil(namingContext)) {
 		return true;
 	}
 
@@ -132,18 +141,19 @@ bool NamingContextHelper::checkOrUpdateNamingContext() {
 
 		if (CORBA::is_nil(namingContext)) {
 			errorMessage_ = str(format("The object at %1% is not a NamingContext object.") % namingContextLocation);
-      failedInLastAccessToNamingContext = true;
-    }
+                        failedInLastAccessToNamingContext = true;
+		}
 	} catch (CORBA::SystemException& ex) {
 		errorMessage_ = str(format("A NameService doesn't exist at \"%1%\".") % namingContextLocation);
 		namingContext = CosNaming::NamingContext::_nil();
-    failedInLastAccessToNamingContext = true;
-  }
+                failedInLastAccessToNamingContext = true;
+	}
 
-	omniORB::setClientCallTimeout(0); // reset the global timeout setting?
+        omniORB::setClientCallTimeout(0); // reset the global timeout setting?
 
 	return (!CORBA::is_nil(namingContext));
 }
+
 
 CORBA::Object_ptr NamingContextHelper::findObjectSub(std::vector<ObjectPath>& pathList) {
 	CORBA::Object_ptr obj = CORBA::Object::_nil();
@@ -162,8 +172,7 @@ CORBA::Object_ptr NamingContextHelper::findObjectSub(std::vector<ObjectPath>& pa
 			fullName = fullName + pathList[index].id;
 		}
 
-    omniORB::setClientCallTimeout(500);
-    try {
+		try {
 			obj = namingContext->resolve(ncName);
 
 		} catch (const CosNaming::NamingContext::NotFound &ex) {
@@ -192,38 +201,38 @@ CORBA::Object_ptr NamingContextHelper::findObjectSub(std::vector<ObjectPath>& pa
 		} catch (const CORBA::TRANSIENT &) {
 			errorMessage_ = str(format("Resolving \"%1% \" failed with the TRANSIENT exception.") % fullName);
 		}
-    omniORB::setClientCallTimeout(0); // reset the global timeout setting?
-  }
+	}
 
 	return obj;
 }
 
 
-NamingContextHelper::ObjectInfoList NamingContextHelper::getObjectList(std::vector<ObjectPath>& pathList) {
-	ObjectInfoList objects;
+NamingContextHelper::ObjectInfoList NamingContextHelper::getObjectList(std::vector<ObjectPath>& pathList)
+{
+    ObjectInfoList objects;
 
-	if (checkOrUpdateNamingContext()) {
+    if (checkOrUpdateNamingContext()) {
 
-		CORBA::Object_var obj = findObjectSub(pathList);
-		CosNaming::NamingContext_ptr new_context = CosNaming::NamingContext::_narrow(obj);
+        CORBA::Object_var obj = findObjectSub(pathList);
+        CosNaming::NamingContext_ptr new_context = CosNaming::NamingContext::_narrow(obj);
+        
+        CosNaming::BindingList_var bList;
+        CosNaming::BindingIterator_var bIter;
+        const CORBA::ULong batchSize = 100;
+        
+        new_context->list(batchSize, bList, bIter);
 
-		CosNaming::BindingList_var bList;
-		CosNaming::BindingIterator_var bIter;
-		const CORBA::ULong batchSize = 100;
+        appendBindingList(bList, pathList, objects);
 
-		new_context->list(batchSize, bList, bIter);
+        if (!CORBA::is_nil(bIter) && isObjectAlive(bIter)) {
+            while (bIter->next_n(batchSize, bList)) {
+                appendBindingList(bList, pathList, objects);
+            }
+        }
+        if (!CORBA::is_nil(obj)) CORBA::release(obj);
+    }
 
-		appendBindingList(bList, pathList, objects);
-
-		if (!CORBA::is_nil(bIter) && isObjectAlive(bIter)) {
-			while (bIter->next_n(batchSize, bList)) {
-				appendBindingList(bList, pathList, objects);
-			}
-		}
-		if (!CORBA::is_nil(obj)) CORBA::release(obj);
-	}
-
-	return objects;
+    return objects;
 }
 
 
@@ -385,4 +394,3 @@ bool NamingContextHelper::bind_new_context(std::vector<ObjectPath>& pathList) {
 std::string NamingContextHelper::getRootIOR() {
 	return namingContext->_toString(namingContext);
 }
-

@@ -48,7 +48,7 @@ items:
               data: 
                 isImmediateMode: true
                 controller: "TankJoystickController"
-                controllerOptions: wheels
+                controllerOptions: "wheels velocity"
                 reloading: true
                 inputLinkPositions: false
         - 
@@ -90,7 +90,7 @@ items:
           plugin: AGXDynamics
           class: AGXSimulatorItem
           data: 
-            timestep: 0.001
+            timestep: 0.005
             realtimeSync: true
             recording: "full"
             timeRangeMode: "Unlimited"

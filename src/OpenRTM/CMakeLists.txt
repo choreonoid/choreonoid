@@ -2,59 +2,29 @@ if(NOT BUILD_OPENRTM_PLUGIN)
   return()
 endif()
 
-set(OPENRTM_DIR ${OPENRTM_DIR} CACHE PATH "set the top directory of OpenRTM-aist")
 if(UNIX)
-  if(NOT OPENRTM_DIR)
-    pkg_check_modules(OPENRTM REQUIRED openrtm-aist)
-    message(STATUS "OPENRTM VERSION ${OPENRTM_VERSION}" )
-    execute_process(
-      COMMAND pkg-config --variable=prefix openrtm-aist
-      OUTPUT_VARIABLE OPENRTM_DIR
-      RESULT_VARIABLE RESULT
-      OUTPUT_STRIP_TRAILING_WHITESPACE)
-    message(STATUS "OPENRTM_DIR=${OPENRTM_DIR}")
-    if(OPENRTM_VERSION STRLESS "1.2.0")
-      set(OPENRTM_DEFINITIONS -DOPENRTM_VERSION11)
-    endif()
-  endif()
+  pkg_check_modules(OPENRTM REQUIRED openrtm-aist)
+  
+  execute_process(
+    COMMAND pkg-config --variable=prefix openrtm-aist
+    OUTPUT_VARIABLE OPENRTM_DIR
+    RESULT_VARIABLE RESULT
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+  
+  execute_process(
+    COMMAND pkg-config --variable=rtm_idldir openrtm-aist
+    OUTPUT_VARIABLE OPENRTM_IDL_DIRS
+    RESULT_VARIABLE RESULT
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+  set(OPENRTM_LIBRARY_DIRS ${OPENRTM_DIR}/lib)
+
 elseif(MSVC)
+  set(OPENRTM_DIR ${OPENRTM_DIR} CACHE PATH "set the top directory of OpenRTM-aist")
+  
   if(NOT OPENRTM_DIR)
-    message(FATAL_ERROR "Please specify the directory of OpenRTM-aist to OPENRTM_DIR.")
+    find_package(OpenRTM)
   endif()
-endif()
-
-if(OPENRTM_DIR)
-  if(MSVC)
-    set(OPENRTM_DIR_BACK ${OPENRTM_DIR})
-    include(${OPENRTM_DIR}/cmake/OpenRTMConfig.cmake)
-
-
-#    set(OPENRTM_EXT_LIBRARIES 
-#      optimized rtmCamera${OPENRTM_SHORT_VERSION}_$ENV{RTM_VC_VERSION}_x64 debug rtmCamera${OPENRTM_SHORT_VERSION}_$ENV{RTM_VC_VERSION}_x64d
-#    )
-
-    set(OPENRTM_LIBRARIES ${OPENRTM_LIBRARIES} ${OPENRTM_EXT_LIBRARIES})
-    if(OPENRTM_VERSION STRLESS "1.2.0")
-      set(OPENRTM_DEFINITIONS -DOPENRTM_VERSION11)
-    endif()
-
-
-  else()
-    if(EXISTS "${OPENRTM_DIR}/lib/x86_64-linux-gnu/openrtm-1.1/cmake/OpenRTMConfig.cmake")
-      include(${OPENRTM_DIR}/lib/x86_64-linux-gnu/openrtm-1.1/cmake/OpenRTMConfig.cmake)
-    elseif(EXISTS "${OPENRTM_DIR}/lib/i386-linux-gnu/openrtm-1.1/cmake/OpenRTMConfig.cmake")
-      include(${OPENRTM_DIR}/lib/i386-linux-gnu/openrtm-1.1/cmake/OpenRTMConfig.cmake)
-    else()
-      include(${OPENRTM_DIR}/lib/openrtm-1.1/cmake/OpenRTMConfig.cmake)
-    endif()
-    set(OPENRTM_LIBRARY_DIRS ${OPENRTM_DIR}/lib)
-    if(NOT (EXISTS "${OPENRTM_DIR}/include/openrtm-1.1/rtm/RTObjectStateMachine.h"))
-      set(OPENRTM_DEFINITIONS -DOPENRTM_VERSION11)
-    endif()
-  endif()
-  message(STATUS "OPENRTM VERSION ${OPENRTM_VERSION}" )
-
-  set(OPENRTM_PREFIX ${OPENRTM_DIR})
 
   set(OPENRTM_INCLUDE_DIRS
     ${OPENRTM_DIR}/include 
@@ -62,40 +32,34 @@ if(OPENRTM_DIR)
     ${OPENRTM_DIR}/include/openrtm-${OPENRTM_VERSION_MAJOR}.${OPENRTM_VERSION_MINOR}
     ${OPENRTM_DIR}/include/openrtm-${OPENRTM_VERSION_MAJOR}.${OPENRTM_VERSION_MINOR}/rtm/idl
     ${OPENRTM_DIR}/include/openrtm-${OPENRTM_VERSION_MAJOR}.${OPENRTM_VERSION_MINOR}/rtm/ext
-    ${OPENRTM_DIR}/rtm # for the Windows installer version
     ${OPENRTM_DIR}/rtm/idl # for the Windows installer version
+    ${OPENRTM_DIR}/rtm # for the Windows installer version
     ${OPENRTM_DIR}
     )
-
-  if(UNIX)
-    set(OPENRTM_LIBRARIES RTC coil)
-  elseif(MSVC)
-    message(STATUS "bin dir = ${OPENRTM_DIR}/bin, lib dir = ${OPENRTM_LIBRARY_DIRS}, rtm libs = ${OPENRTM_LIBRARIES}")
-    install_external_libraries(${OPENRTM_LIBRARY_DIRS} ${OPENRTM_LIBRARY_DIRS} ${OPENRTM_LIBRARIES})
-  endif()
+  set(OPENRTM_IDL_DIRS
+    ${OPENRTM_DIR}/include/openrtm-${OPENRTM_VERSION_MAJOR}.${OPENRTM_VERSION_MINOR}/rtm/idl
+    ${OPENRTM_DIR}/rtm/idl # for the Windows installer version
+    )
 endif()
 
-# Make the following variables accessible from other directories
-set(OPENRTM_INCLUDE_DIRS ${OPENRTM_INCLUDE_DIRS} CACHE INTERNAL "OpenRTM's include directories")
-set(OPENRTM_LIBRARY_DIRS ${OPENRTM_LIBRARY_DIRS} CACHE INTERNAL "OpenRTM's library directories")
-set(OPENRTM_LIBRARIES ${OPENRTM_LIBRARIES} CACHE INTERNAL "OpenRTM's library files")
+if(NOT OPENRTM_DIR)
+  message(FATAL_ERROR "Could not find OpenRTM")
+endif()
+
+set(OPENRTM_VERSION ${OPENRTM_VERSION} PARENT_SCOPE)
+if(OPENRTM_VERSION STRLESS "1.2.0")
+  list(APPEND OPENRTM_DEFINITIONS -DOPENRTM_VERSION110)
+  list(APPEND OPENRTM_DEFINITIONS -DOPENRTM_VERSION11)
+endif()
 
 set(OPENRTM_DEFINITIONS ${OPENRTM_DEFINITIONS} PARENT_SCOPE)
+set(OPENRTM_INCLUDE_DIRS ${OPENRTM_INCLUDE_DIRS} PARENT_SCOPE)
+set(IDL_INCLUDE_DIRS ${IDL_INCLUDE_DIRS} ${OPENRTM_IDL_DIRS} PARENT_SCOPE)
+set(OPENRTM_LIBRARIES ${OPENRTM_LIBRARIES} rtmCamera)
+
 add_definitions(${OPENRTM_DEFINITIONS})
 include_directories(${OPENRTM_INCLUDE_DIRS})
 link_directories(${OPENRTM_LIBRARY_DIRS})
-
-
-# Port data type stubs
-set(target1 CnoidOpenRTM)
-set(IDL_INCLUDE_DIRS 
-  ${OPENRTM_PREFIX}/include/openrtm-${OPENRTM_VERSION_MAJOR}.${OPENRTM_VERSION_MINOR}/rtm/idl
-  ${OPENRTM_PREFIX}/rtm/idl # for the Windows installer version
-  )
-idl_compile_cpp(idl_cpp_files idl_h_files corba CameraImage PointCloud)
-add_cnoid_library(${target1} STATIC ${idl_cpp_files} ${idl_h_files})
-apply_common_setting_for_library(${target1} "")
-message(STATUS "idl_cpp_files=${idl_cpp_files}" )
 
 # BodyIoRTC
 set(target2 CnoidBodyIoRTC)
@@ -107,13 +71,10 @@ if(MSVC)
 endif()
 
 add_cnoid_library(${target2} SHARED ${sources} ${headers})
-#target_link_libraries(${target2} CnoidBody CnoidCorba ${OPENRTM_LIBRARIES})
-target_link_libraries(${target2} CnoidBody CnoidOpenRTM CnoidCorba ${OPENRTM_LIBRARIES})
+target_link_libraries(${target2} CnoidBody CnoidCorba ${OPENRTM_LIBRARIES})
 apply_common_setting_for_library(${target2} "${headers}")
 
-
 function(add_cnoid_body_io_rtc)
-
   set(target ${ARGV0})
   list(REMOVE_AT ARGV 0)
 
@@ -134,5 +95,4 @@ function(add_cnoid_body_io_rtc)
   install(TARGETS ${target}
     RUNTIME DESTINATION ${CNOID_PLUGIN_SUBDIR}/rtc CONFIGURATIONS Release Debug
     LIBRARY DESTINATION ${CNOID_PLUGIN_SUBDIR}/rtc CONFIGURATIONS Release Debug)
-
 endfunction()
