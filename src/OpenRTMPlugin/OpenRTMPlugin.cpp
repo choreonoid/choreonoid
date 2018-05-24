@@ -15,8 +15,9 @@
 #include "RTSConfigurationView.h"
 #include "RTMImageView.h"
 #include "RTSItem.h"
+#include "VisionSensorSubscriberRTCItem.h"
 #include "deprecated/BodyRTCItem.h"
-#include "deprecated/OldRTMPointCloudIOItem.h"
+#include "deprecated/PointCloudSubscriberRTCItem.h"
 #include <cnoid/Plugin>
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
@@ -180,7 +181,6 @@ public:
         ControllerRTCItem::initialize(this);
         RTCItem::initialize(this);
         BodyRTCItem::initialize(this);
-        OldRTMPointCloudIOItem::initializeClass(this);
         
         VirtualRobotRTC::registerFactory(manager, "VirtualRobot");
         
@@ -213,6 +213,9 @@ public:
         RTSDiagramView::initializeClass(this);
         RTSConfigurationView::initializeClass(this);
         RTMImageView::initializeClass(this);
+
+        VisionSensorSubscriberRTCItem::initializeClass(this);
+        PointCloudSubscriberRTCItem::initializeClass(this);
         
         DDEBUG("initialize Finished");
         

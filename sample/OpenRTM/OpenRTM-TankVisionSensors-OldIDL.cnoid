@@ -41,7 +41,7 @@ items:
           children: 
             - 
               id: 3
-              name: "BodyIoRTC"
+              name: "BodyIo"
               plugin: OpenRTM
               class: BodyIoRTCItem
               data: 
@@ -94,14 +94,23 @@ items:
                 periodicRate: 30
             - 
               id: 7
-              name: "PointCloudIn"
+              name: "PointCloudSubscriber"
               plugin: OpenRTM
-              class: OldRTMPointCloudIOItem
+              class: PointCloudSubscriberRTCItem
               data: 
-                componentName: PointCloudIn
+                componentName: PointCloudSubscriber
                 pointCloudPortNames: [ Camera ]
             - 
               id: 8
+              name: "VisionSensorSubscriber"
+              plugin: OpenRTM
+              class: VisionSensorSubscriberRTCItem
+              data: 
+                componentName: VisionSensorSubscriber
+                rangeSensorPortNames: [ VelodyneVLP-16 ]
+                cameraPortNames: [ Camera_image ]
+            - 
+              id: 9
               name: "SensorVisualizer"
               plugin: Body
               class: SensorVisualizer
@@ -125,7 +134,7 @@ items:
                     class: CameraImageVisualizer
                     name: Camera_Image
         - 
-          id: 9
+          id: 10
           name: "Labo1"
           plugin: Body
           class: BodyItem
@@ -148,7 +157,7 @@ items:
             selfCollisionDetection: false
             isEditable: false
         - 
-          id: 10
+          id: 11
           name: "AISTSimulator"
           plugin: Body
           class: AISTSimulatorItem
@@ -178,13 +187,12 @@ items:
             oldAccelSensorMode: false
           children: 
             - 
-              id: 11
+              id: 12
               name: "GLVisionSimulator"
               plugin: Body
               class: GLVisionSimulatorItem
               data: 
                 enabled: true
-                targetSensors: [ Camera ]
                 maxFrameRate: 1000
                 maxLatency: 1
                 recordVisionData: false
@@ -196,7 +204,7 @@ items:
                 enableHeadLight: true
                 enableAdditionalLights: true
     - 
-      id: 12
+      id: 13
       name: "TankSystem"
       plugin: OpenRTM
       class: RTSystemItem
@@ -207,32 +215,24 @@ items:
 views: 
   - 
     id: 0
-    name: "Camera"
-    plugin: Base
-    class: ImageView
-    mounted: true
-    state: 
-      ImageProviderItem: [ 8, "Camera_Image" ]
-  - 
-    id: 1
     plugin: Base
     class: ItemPropertyView
     mounted: true
   - 
-    id: 2
+    id: 1
     plugin: Base
     class: ItemTreeView
     mounted: true
     state: 
-      checked: [ 1, 2, [ 8, "Camera" ], [ 8, "VelodyneVLP-16" ], 9 ]
-      expanded: [ 1, 2, 5, 8, 10 ]
+      checked: [ 1, 2, [ 9, "Camera" ], [ 9, "VelodyneVLP-16" ], 10 ]
+      expanded: [ 1, 2, 5, 9, 11 ]
   - 
-    id: 3
+    id: 2
     plugin: Base
     class: MessageView
     mounted: true
   - 
-    id: 4
+    id: 3
     plugin: Base
     class: SceneView
     mounted: true
@@ -292,7 +292,7 @@ views:
       yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       dedicatedItemTreeViewChecks: false
   - 
-    id: 5
+    id: 4
     name: "Scene 2"
     plugin: Base
     class: SceneView
@@ -353,20 +353,20 @@ views:
       yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       dedicatedItemTreeViewChecks: false
   - 
-    id: 6
+    id: 5
     name: "Virtual Joystick"
     plugin: Base
     class: VirtualJoystickView
     mounted: true
   - 
-    id: 7
+    id: 6
     plugin: Body
     class: BodyLinkView
     mounted: true
     state: 
       showRotationMatrix: false
   - 
-    id: 8
+    id: 7
     plugin: Body
     class: JointSliderView
     mounted: true
@@ -380,7 +380,7 @@ views:
       labelOnLeft: true
       currentBodyItem: 2
   - 
-    id: 9
+    id: 8
     plugin: Body
     class: LinkSelectionView
     mounted: true
@@ -392,13 +392,19 @@ views:
           id: 2
           selectedLinks: [ 0 ]
   - 
+    id: 9
+    name: "RTM-Image"
+    plugin: OpenRTM
+    class: RTMImageView
+    mounted: true
+  - 
     id: 10
     name: "RTC Diagram"
     plugin: OpenRTM
     class: RTSDiagramView
     mounted: true
     state: 
-      currentRTSItem: 12
+      currentRTSItem: 13
   - 
     id: 11
     plugin: OpenRTM
@@ -485,7 +491,7 @@ Body:
         showPpcom: false
         showZmp: false
       - 
-        bodyItem: 9
+        bodyItem: 10
         showCenterOfMass: false
         showPpcom: false
         showZmp: false
@@ -513,61 +519,61 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 539, 1375 ]
+      sizes: [ 626, 1597 ]
       children: 
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 530, 530 ]
+          sizes: [ 688, 688 ]
           children: 
             - 
               type: pane
-              views: [ 2 ]
-              current: 2
+              views: [ 1 ]
+              current: 1
             - 
               type: pane
-              views: [ 1, 9, 11 ]
-              current: 11
+              views: [ 0, 8, 11 ]
+              current: 0
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 775, 285 ]
+          sizes: [ 1006, 370 ]
           children: 
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 586, 783 ]
+              sizes: [ 681, 910 ]
               children: 
                 - 
                   type: splitter
                   orientation: vertical
-                  sizes: [ 375, 394 ]
+                  sizes: [ 488, 512 ]
                   children: 
                     - 
                       type: pane
-                      views: [ 7, 8, 10 ]
+                      views: [ 6, 7, 10 ]
                       current: 10
                     - 
                       type: pane
-                      views: [ 12, 0 ]
-                      current: 0
+                      views: [ 12, 9 ]
+                      current: 9
                 - 
                   type: pane
-                  views: [ 4 ]
-                  current: 4
+                  views: [ 3 ]
+                  current: 3
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 685, 684 ]
+              sizes: [ 796, 795 ]
               children: 
                 - 
                   type: pane
-                  views: [ 3, 13 ]
-                  current: 3
+                  views: [ 2, 13 ]
+                  current: 2
                 - 
                   type: pane
-                  views: [ 6 ]
-                  current: 6
+                  views: [ 5 ]
+                  current: 5
 layoutOfToolBars: 
   rows: 
     - 

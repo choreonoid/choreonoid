@@ -28,6 +28,7 @@ set(plugin_sources
   RTMImageView.cpp
   RTSCommonUtil.cpp
   RTSConfigurationView.cpp
+  VisionSensorSubscriberRTCItem.cpp
 
   pugixml/pugixml.cpp
 
@@ -35,7 +36,7 @@ set(plugin_sources
   deprecated/VirtualRobotRTC.cpp
   deprecated/VirtualRobotPortHandler.cpp
   deprecated/BridgeConf.cpp
-  deprecated/OldRTMPointCloudIOItem.cpp
+  deprecated/PointCloudSubscriberRTCItem.cpp
 
   LoggerUtil.cpp
   )

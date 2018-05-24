@@ -1,35 +1,31 @@
 /**
-   @author Shizuko Hattori
+   \author Shizuko Hattori
+   \author Shin'ichiro Nakaoka
 */
 
-#include "OldRTMPointCloudIOItem.h"
+#include "PointCloudSubscriberRTCItem.h"
 #include "corba/PointCloud.hh"
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
 #include <cnoid/Config>
-#include <cnoid/RangeSensor>
 #include <cnoid/RangeCamera>
+#include <cnoid/RangeSensor>
 #include <cnoid/MessageView>
 #include <cnoid/OpenRTMUtil>
-#include <cnoid/PointSetItem>
 #include <cnoid/LazyCaller>
 #include <rtm/DataFlowComponentBase.h>
-#include <rtm/idl/BasicDataTypeSkel.h>
-#include <rtm/idl/InterfaceDataTypes.hh>
 #include <rtm/DataInPort.h>
-#include <rtm/DataOutPort.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using namespace RTC;
 
 namespace {
 
 class PointCloudInPort
 {
 public:
-    InPort<PointCloudTypes::PointCloud> inPort;
+    RTC::InPort<PointCloudTypes::PointCloud> inPort;
     PointCloudTypes::PointCloud timedPointCloud;
     string portName;
     RangeCameraPtr rangeCamera;
@@ -42,7 +38,7 @@ public:
 typedef std::shared_ptr<PointCloudInPort> PointCloudInPortPtr;
 
 
-class PointCloudIORTC : public DataFlowComponentBase {
+class SubscriberRTC : public RTC::DataFlowComponentBase {
 public:
 
     typedef map<string, PointCloudInPortPtr> PointCloudInPortMap;
@@ -57,24 +53,24 @@ public:
 
     static void registerFactory(RTC::Manager* manager, const char* componentTypeName);
 
-    PointCloudIORTC(RTC::Manager* manager);
-    ~PointCloudIORTC(){ };
+    SubscriberRTC(RTC::Manager* manager);
+    ~SubscriberRTC(){ };
 
     bool createPort(DeviceList<RangeCamera> rangeCameras, vector<string> pointCloudPortNames);
     float readFloatPointCloudData(unsigned char* src, PointCloudField& fe, bool is_bigendian);
 
-    virtual ReturnCode_t onInitialize();
-    virtual ReturnCode_t onActivated(UniqueId ec_id);
-    virtual ReturnCode_t onDeactivated(UniqueId ec_id);
-    virtual ReturnCode_t onExecute(UniqueId ec_id);
+    virtual RTC::ReturnCode_t onInitialize();
+    virtual RTC::ReturnCode_t onActivated(RTC::UniqueId ec_id);
+    virtual RTC::ReturnCode_t onDeactivated(RTC::UniqueId ec_id);
+    virtual RTC::ReturnCode_t onExecute(RTC::UniqueId ec_id);
 };
 
 
-void PointCloudIORTC::registerFactory(RTC::Manager* manager, const char* componentTypeName)
+void SubscriberRTC::registerFactory(RTC::Manager* manager, const char* componentTypeName)
 {
   static const char* pointCloudIORTC_spec[] = {
-    "implementation_id", "OldPointCloudIO",
-    "type_name",         "OldPointCloudIO",
+    "implementation_id", "PointCloudSubscriber",
+    "type_name",         "PointCloudSubscriber",
     "description",       "This component is the pointCloud visualization component.",
     "version",           CNOID_VERSION_STRING,
     "vendor",            "AIST",
@@ -90,12 +86,12 @@ void PointCloudIORTC::registerFactory(RTC::Manager* manager, const char* compone
   RTC::Properties profile(pointCloudIORTC_spec);
   profile.setDefault("type_name", componentTypeName);
   manager->registerFactory(profile,
-                           RTC::Create<PointCloudIORTC>,
-                           RTC::Delete<PointCloudIORTC>);
+                           RTC::Create<SubscriberRTC>,
+                           RTC::Delete<SubscriberRTC>);
 }
 
 
-PointCloudIORTC::PointCloudIORTC(Manager* manager)
+SubscriberRTC::SubscriberRTC(RTC::Manager* manager)
     : DataFlowComponentBase(manager)
 {
     pointCloudField.clear();
@@ -120,7 +116,7 @@ PointCloudIORTC::PointCloudIORTC(Manager* manager)
 }
 
 
-bool PointCloudIORTC::createPort(DeviceList<RangeCamera> rangeCameras, vector<string> pointCloudPortNames)
+bool SubscriberRTC::createPort(DeviceList<RangeCamera> rangeCameras, vector<string> pointCloudPortNames)
 {
     bool ret = true;
 
@@ -137,24 +133,24 @@ bool PointCloudIORTC::createPort(DeviceList<RangeCamera> rangeCameras, vector<st
 }
 
 
-ReturnCode_t PointCloudIORTC::onInitialize()
+RTC::ReturnCode_t SubscriberRTC::onInitialize()
 {
-    return RTC_OK;
+    return RTC::RTC_OK;
 }
 
 
-ReturnCode_t PointCloudIORTC::onActivated(UniqueId ec_id)
+RTC::ReturnCode_t SubscriberRTC::onActivated(RTC::UniqueId ec_id)
 {
-     return RTC_OK;
+     return RTC::RTC_OK;
 }
 
-ReturnCode_t PointCloudIORTC::onDeactivated(UniqueId ec_id)
+RTC::ReturnCode_t SubscriberRTC::onDeactivated(RTC::UniqueId ec_id)
 {
-    return RTC_OK;
+    return RTC::RTC_OK;
 }
 
 
-float PointCloudIORTC::readFloatPointCloudData(unsigned char* src, PointCloudField& fe, bool is_bigendian)
+float SubscriberRTC::readFloatPointCloudData(unsigned char* src, PointCloudField& fe, bool is_bigendian)
 {
     unsigned char* src_;
     unsigned char buf[8];
@@ -181,11 +177,11 @@ float PointCloudIORTC::readFloatPointCloudData(unsigned char* src, PointCloudFie
 }
 
 
-ReturnCode_t PointCloudIORTC::onExecute(UniqueId ec_id)
+RTC::ReturnCode_t SubscriberRTC::onExecute(RTC::UniqueId ec_id)
 {
     for(PointCloudInPortMap::iterator it = pointCloudInPorts.begin();
             it != pointCloudInPorts.end(); it++){
-        InPort<PointCloudTypes::PointCloud>& inport_ = it->second->inPort;
+        RTC::InPort<PointCloudTypes::PointCloud>& inport_ = it->second->inPort;
         if(inport_.isNew()){
             do {
                 inport_.read();
@@ -255,27 +251,23 @@ ReturnCode_t PointCloudIORTC::onExecute(UniqueId ec_id)
 
 namespace cnoid {
 
-class OldRTMPointCloudIOItemImpl
+class PointCloudSubscriberRTCItemImpl
 {
 public:
-    OldRTMPointCloudIOItem* self;
+    PointCloudSubscriberRTCItem* self;
     MessageView* mv;
     OpenRTM::ExtTrigExecutionContextService_var execContext;
     bool isChoreonoidExecutionContext;
 
     Body* body;
     DeviceList<RangeCamera> rangeCameras;
-    //DeviceList<Camera> cameras;
-    //DeviceList<RangeSensor> rangeSensors;
-    PointCloudIORTC* pointCloudIORTC;
+    SubscriberRTC* pointCloudIORTC;
     string componentName;
     vector<string> pointCloudPortNames;
-    //vector<string> rangeSensorPortNames;
-    //vector<string> cameraPortNames;
 
-    OldRTMPointCloudIOItemImpl(OldRTMPointCloudIOItem* self);
-    OldRTMPointCloudIOItemImpl(OldRTMPointCloudIOItem* self, const OldRTMPointCloudIOItemImpl& org);
-    ~OldRTMPointCloudIOItemImpl();
+    PointCloudSubscriberRTCItemImpl(PointCloudSubscriberRTCItem* self);
+    PointCloudSubscriberRTCItemImpl(PointCloudSubscriberRTCItem* self, const PointCloudSubscriberRTCItemImpl& org);
+    ~PointCloudSubscriberRTCItemImpl();
 
     bool onComponentNamePropertyChanged(const string& name);
     bool onPointCloudPortNamePropertyChanged(int i, const string& name);
@@ -294,21 +286,21 @@ public:
 }
 
 
-void OldRTMPointCloudIOItem::initializeClass(ExtensionManager* ext)
+void PointCloudSubscriberRTCItem::initializeClass(ExtensionManager* ext)
 {
-    ext->itemManager().registerClass<OldRTMPointCloudIOItem>(N_("OldRTMPointCloudIOItem"));
-    ext->itemManager().addCreationPanel<OldRTMPointCloudIOItem>();
+    ext->itemManager().registerClass<PointCloudSubscriberRTCItem>(N_("PointCloudSubscriberRTCItem"));
+    ext->itemManager().addCreationPanel<PointCloudSubscriberRTCItem>();
 }
 
 
-OldRTMPointCloudIOItem::OldRTMPointCloudIOItem()
+PointCloudSubscriberRTCItem::PointCloudSubscriberRTCItem()
 {
-    impl = new OldRTMPointCloudIOItemImpl(this);
+    impl = new PointCloudSubscriberRTCItemImpl(this);
     bodyItem = 0;
 }
 
 
-OldRTMPointCloudIOItemImpl::OldRTMPointCloudIOItemImpl(OldRTMPointCloudIOItem* self)
+PointCloudSubscriberRTCItemImpl::PointCloudSubscriberRTCItemImpl(PointCloudSubscriberRTCItem* self)
     : self(self),
       mv(MessageView::instance())
 {
@@ -317,35 +309,35 @@ OldRTMPointCloudIOItemImpl::OldRTMPointCloudIOItemImpl(OldRTMPointCloudIOItem* s
 }
 
 
-OldRTMPointCloudIOItem::OldRTMPointCloudIOItem(const OldRTMPointCloudIOItem& org)
+PointCloudSubscriberRTCItem::PointCloudSubscriberRTCItem(const PointCloudSubscriberRTCItem& org)
     : ControllerItem(org)
 {
-    impl = new OldRTMPointCloudIOItemImpl(this, *org.impl);
+    impl = new PointCloudSubscriberRTCItemImpl(this, *org.impl);
     bodyItem = 0;
 }
 
 
-OldRTMPointCloudIOItemImpl::OldRTMPointCloudIOItemImpl(OldRTMPointCloudIOItem* self, const OldRTMPointCloudIOItemImpl& org)
-    : OldRTMPointCloudIOItemImpl(self)
+PointCloudSubscriberRTCItemImpl::PointCloudSubscriberRTCItemImpl(PointCloudSubscriberRTCItem* self, const PointCloudSubscriberRTCItemImpl& org)
+    : PointCloudSubscriberRTCItemImpl(self)
 {
     pointCloudIORTC = 0;
     body = 0;
 }
 
 
-OldRTMPointCloudIOItem::~OldRTMPointCloudIOItem()
+PointCloudSubscriberRTCItem::~PointCloudSubscriberRTCItem()
 {
     delete impl;
 }
 
 
-OldRTMPointCloudIOItemImpl::~OldRTMPointCloudIOItemImpl()
+PointCloudSubscriberRTCItemImpl::~PointCloudSubscriberRTCItemImpl()
 {
     deleteRTC();
 }
 
 
-void OldRTMPointCloudIOItem::onPositionChanged()
+void PointCloudSubscriberRTCItem::onPositionChanged()
 {
     BodyItem* ownerBodyItem = findOwnerItem<BodyItem>();
     if(ownerBodyItem){
@@ -361,7 +353,7 @@ void OldRTMPointCloudIOItem::onPositionChanged()
 }
 
 
-void OldRTMPointCloudIOItemImpl::changeOwnerBodyItem(BodyItem* bodyItem)
+void PointCloudSubscriberRTCItemImpl::changeOwnerBodyItem(BodyItem* bodyItem)
 {
     if(componentName.empty()){
         componentName = self->name();
@@ -382,19 +374,19 @@ void OldRTMPointCloudIOItemImpl::changeOwnerBodyItem(BodyItem* bodyItem)
 }
 
 
-void OldRTMPointCloudIOItem::onDisconnectedFromRoot()
+void PointCloudSubscriberRTCItem::onDisconnectedFromRoot()
 {
     impl->deleteRTC();
 }
 
 
-bool OldRTMPointCloudIOItemImpl::createRTC()
+bool PointCloudSubscriberRTCItemImpl::createRTC()
 {
     RTC::Manager* rtcManager = &RTC::Manager::instance();
-    PointCloudIORTC::registerFactory(rtcManager, componentName.c_str());
+    SubscriberRTC::registerFactory(rtcManager, componentName.c_str());
 
     boost::format param(
-        "OldPointCloudIO?"
+        "PointCloudSubscriber?"
         "instance_name=%1%&"
         "exec_cxt.periodic.type=ChoreonoidExecutionContext&"
         "exec_cxt.periodic.rate=1000000");
@@ -406,7 +398,7 @@ bool OldRTMPointCloudIOItemImpl::createRTC()
     }
     MessageView::instance()->putln(fmt(_("RTC \"%1%\" has been created.")) % componentName);
 
-    pointCloudIORTC = dynamic_cast<PointCloudIORTC*>(rtc);
+    pointCloudIORTC = dynamic_cast<SubscriberRTC*>(rtc);
     pointCloudIORTC->createPort(rangeCameras, pointCloudPortNames);
 
     execContext = OpenRTM::ExtTrigExecutionContextService::_nil();
@@ -423,7 +415,7 @@ bool OldRTMPointCloudIOItemImpl::createRTC()
 }
 
 
-void OldRTMPointCloudIOItemImpl::deleteRTC()
+void PointCloudSubscriberRTCItemImpl::deleteRTC()
 {
     if(pointCloudIORTC){
         pointCloudIORTC->exit();
@@ -433,7 +425,7 @@ void OldRTMPointCloudIOItemImpl::deleteRTC()
 }
 
 
-bool OldRTMPointCloudIOItemImpl::recreateRTC()
+bool PointCloudSubscriberRTCItemImpl::recreateRTC()
 {
     if(body){
         deleteRTC();
@@ -444,19 +436,19 @@ bool OldRTMPointCloudIOItemImpl::recreateRTC()
 }
 
 
-Item* OldRTMPointCloudIOItem::doDuplicate() const
+Item* PointCloudSubscriberRTCItem::doDuplicate() const
 {
-    return new OldRTMPointCloudIOItem(*this);
+    return new PointCloudSubscriberRTCItem(*this);
 }
 
 
-void OldRTMPointCloudIOItem::doPutProperties(PutPropertyFunction& putProperty)
+void PointCloudSubscriberRTCItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     impl->doPutProperties(putProperty);
 }
 
 
-void OldRTMPointCloudIOItemImpl::doPutProperties(PutPropertyFunction& putProperty)
+void PointCloudSubscriberRTCItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("ComponentName"), componentName,
             [this](const string& name){ return onComponentNamePropertyChanged(name); });
@@ -468,7 +460,7 @@ void OldRTMPointCloudIOItemImpl::doPutProperties(PutPropertyFunction& putPropert
 }
 
 
-bool OldRTMPointCloudIOItemImpl::onComponentNamePropertyChanged(const string& name)
+bool PointCloudSubscriberRTCItemImpl::onComponentNamePropertyChanged(const string& name)
 {
     componentName = name;
 
@@ -477,7 +469,7 @@ bool OldRTMPointCloudIOItemImpl::onComponentNamePropertyChanged(const string& na
 }
 
 
-bool OldRTMPointCloudIOItemImpl::onPointCloudPortNamePropertyChanged(int i, const string& name)
+bool PointCloudSubscriberRTCItemImpl::onPointCloudPortNamePropertyChanged(int i, const string& name)
 {
     pointCloudPortNames[i] = name;
 
@@ -487,14 +479,14 @@ bool OldRTMPointCloudIOItemImpl::onPointCloudPortNamePropertyChanged(int i, cons
 }
 
 
-bool OldRTMPointCloudIOItem::store(Archive& archive)
+bool PointCloudSubscriberRTCItem::store(Archive& archive)
 {
     impl->store(archive);
     return true;
 }
 
 
-void OldRTMPointCloudIOItemImpl::store(Archive& archive)
+void PointCloudSubscriberRTCItemImpl::store(Archive& archive)
 {
     archive.write("componentName", componentName);
 
@@ -505,14 +497,14 @@ void OldRTMPointCloudIOItemImpl::store(Archive& archive)
 }
 
 
-bool OldRTMPointCloudIOItem::restore(const Archive& archive)
+bool PointCloudSubscriberRTCItem::restore(const Archive& archive)
 {
     impl->restore(archive);
     return true;
 }
 
 
-void OldRTMPointCloudIOItemImpl::restore(const Archive& archive)
+void PointCloudSubscriberRTCItemImpl::restore(const Archive& archive)
 {
     archive.read("componentName", componentName);
 
@@ -525,13 +517,13 @@ void OldRTMPointCloudIOItemImpl::restore(const Archive& archive)
 }
 
 
-bool OldRTMPointCloudIOItem::start()
+bool PointCloudSubscriberRTCItem::start()
 {
     return impl->start();
 }
 
 
-bool OldRTMPointCloudIOItemImpl::start()
+bool PointCloudSubscriberRTCItemImpl::start()
 {
     bool isReady = false;
 
@@ -560,19 +552,19 @@ bool OldRTMPointCloudIOItemImpl::start()
 }
 
 
-double OldRTMPointCloudIOItem::timeStep() const
+double PointCloudSubscriberRTCItem::timeStep() const
 {
     return 0.0;
 }
 
 
-void OldRTMPointCloudIOItem::input()
+void PointCloudSubscriberRTCItem::input()
 {
 
 }
 
 
-bool OldRTMPointCloudIOItem::control()
+bool PointCloudSubscriberRTCItem::control()
 {
     if(impl->isChoreonoidExecutionContext){
         impl->execContext->tick();
@@ -581,19 +573,19 @@ bool OldRTMPointCloudIOItem::control()
 }
 
 
-void OldRTMPointCloudIOItem::output()
+void PointCloudSubscriberRTCItem::output()
 {
 
 }
 
 
-void OldRTMPointCloudIOItem::stop()
+void PointCloudSubscriberRTCItem::stop()
 {
     impl->stop();
 }
 
 
-void OldRTMPointCloudIOItemImpl::stop()
+void PointCloudSubscriberRTCItemImpl::stop()
 {
     RTC::LifeCycleState state = execContext->get_component_state(pointCloudIORTC->getObjRef());
     if(state == RTC::ERROR_STATE){

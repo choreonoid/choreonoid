@@ -19,7 +19,6 @@ set(target CnoidHrpsys31Plugin)
 set(sources
   Hrpsys31Plugin.cpp
   Hrpsys31Item.cpp
-  # RTMVisionIOItem.cpp
   )
 
 set(headers
