@@ -202,7 +202,7 @@ items:
       class: RTSystemItem
       data: 
         AutoConnection: true
-        PollingCycle: 19999456
+        PollingCycle: 500
         filename: "${PROJECT_DIR}/TankSystem.xml"
 views: 
   - 
