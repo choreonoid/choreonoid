@@ -79,23 +79,23 @@ public:
 
     virtual bool initialize() {
         DDEBUG("initialize");
-        const int log_output_item = 8;
-        const int log_level_item = 10;
+        const int log_output_item = 10;
+        const int log_level_item = 12;
         
         const char* argv[] = {
             "choreonoid",
+            "-f", "./rtc.conf.choreonoid",
             "-o", "manager.shutdown_on_nortcs: NO",
             "-o", "manager.shutdown_auto: NO",
             "-o", "naming.formats: %n.rtc",
             "-o", "logger.enable: NO",
             "-o", "logger.log_level: WARN",
-            "-f", "./rtc.conf.choreonoid",
-#ifndef OPENRTM_VERSION11
-            "-i",
-#endif
 #ifdef Q_OS_WIN32
             // To reduce the startup time on Windows
             "-o", "corba.args: -ORBclientCallTimeOutPeriod 100",
+#endif
+#ifndef OPENRTM_VERSION11
+            "-i",
 #endif
         };
 
@@ -112,18 +112,13 @@ public:
         
 #ifdef Q_OS_WIN32
 #ifdef OPENRTM_VERSION11
-        int numArgs = 11;
+        int numArgs = 16;
 #else
-        int numArgs = 12;
+        int numArgs = 15;
 #endif
 #else
-        int numArgs = 9;
+        int numArgs = 13;
 #endif
-        
-        bool FORCE_DISABLE_LOG = true;
-        if(FORCE_DISABLE_LOG){
-            numArgs += 2;
-        }
         
         mv = MessageView::mainInstance();
         
