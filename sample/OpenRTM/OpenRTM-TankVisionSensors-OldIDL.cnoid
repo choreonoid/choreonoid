@@ -205,13 +205,13 @@ items:
                 enableAdditionalLights: true
     - 
       id: 13
-      name: "TankSystem"
+      name: "TankVisionSystem"
       plugin: OpenRTM
       class: RTSystemItem
       data: 
         AutoConnection: true
         PollingCycle: 500
-        filename: "${PROJECT_DIR}/TankSystem.xml"
+        filename: "${PROJECT_DIR}/OldTankVisionSystem.xml"
 views: 
   - 
     id: 0
@@ -533,7 +533,7 @@ viewAreas:
             - 
               type: pane
               views: [ 0, 8, 11 ]
-              current: 0
+              current: 11
         - 
           type: splitter
           orientation: vertical

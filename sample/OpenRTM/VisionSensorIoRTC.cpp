@@ -8,11 +8,16 @@
 #include <cnoid/RangeCamera>
 #include <cnoid/ConnectionSet>
 #include <cnoid/ThreadPool>
-#include <cnoid/corba/PointCloud.hh>
-#include <cnoid/corba/CameraImage.hh>
+#include <rtm/DataOutPort.h>
 #include <rtm/idl/BasicDataTypeSkel.h>
 #include <rtm/idl/InterfaceDataTypes.hh>
-#include <rtm/DataOutPort.h>
+#ifdef WIN32
+#include <rtm/idl/CameraCommonInterface.hh>
+#else
+#include <rtm/ext/CameraCommonInterface.hh>
+#endif
+//#include <cnoid/corba/PointCloud.hh>
+
 
 using namespace std;
 using namespace cnoid;
@@ -59,8 +64,8 @@ class RangeCameraIo : public CameraIo
 public:
     RangeCameraPtr modelRangeCamera;
     RangeCameraPtr rangeCamera;
-    PointCloudTypes::PointCloud pointCloud;
-    RTC::OutPort<PointCloudTypes::PointCloud> pointCloudOut;
+    //PointCloudTypes::PointCloud pointCloud;
+    //RTC::OutPort<PointCloudTypes::PointCloud> pointCloudOut;
     std::shared_ptr<const RangeCamera::PointData> lastPoints;
     std::shared_ptr<const Image> lastImage;
 
@@ -68,7 +73,7 @@ public:
     virtual void setPorts(BodyIoRTC* rtc) override;
     virtual bool initializeSimulation(Body* body) override;
     virtual void onStateChanged() override;
-    void outputPointCloud();
+    void outputRangeData();
     virtual void clearSimulationDevice() override;
 };    
 
@@ -307,8 +312,8 @@ void CameraIo::clearSimulationDevice()
 
 RangeCameraIo::RangeCameraIo(RangeCamera* rangeCamera)
     : CameraIo(rangeCamera),
-      modelRangeCamera(rangeCamera),
-      pointCloudOut(rangeCamera->name().c_str(), pointCloud)
+      modelRangeCamera(rangeCamera)
+      //pointCloudOut(rangeCamera->name().c_str(), pointCloud)
 {
 
 }
@@ -317,7 +322,7 @@ RangeCameraIo::RangeCameraIo(RangeCamera* rangeCamera)
 void RangeCameraIo::setPorts(BodyIoRTC* rtc)
 {
     CameraIo::setPorts(rtc);
-    rtc->addOutPort((modelRangeCamera->name() + "-depth").c_str(), pointCloudOut);
+    //rtc->addOutPort((modelRangeCamera->name() + "-depth").c_str(), pointCloudOut);
 }
 
 
@@ -330,7 +335,8 @@ bool RangeCameraIo::initializeSimulation(Body* body)
     if(!rangeCamera){
         return false;
     }
-    
+
+    /*
     string format;
     switch(rangeCamera->imageType()){
     case Camera::COLOR_IMAGE:
@@ -379,7 +385,8 @@ bool RangeCameraIo::initializeSimulation(Body* body)
     }
     pointCloud.is_bigendian = false;
     pointCloud.is_dense = true;
-
+    */
+    
     return true;
 }
 
@@ -394,29 +401,30 @@ void RangeCameraIo::onStateChanged()
             lastImage = rangeCamera->sharedImage();
             if(!lastPoints->empty()){
                 if(!lastImage->empty()){
-                    pointCloud.height = lastImage->height();
-                    pointCloud.width = lastImage->width();
+                    //pointCloud.height = lastImage->height();
+                    //pointCloud.width = lastImage->width();
                 } else {
                     if(rangeCamera->isOrganized()){
-                        pointCloud.height = rangeCamera->resolutionY();
-                        pointCloud.width = rangeCamera->resolutionX();
+                        //pointCloud.height = rangeCamera->resolutionY();
+                        //pointCloud.width = rangeCamera->resolutionX();
                     } else {
-                        pointCloud.height = 1;
-                        pointCloud.width = rangeCamera->numPoints();
+                        //pointCloud.height = 1;
+                        //pointCloud.width = rangeCamera->numPoints();
                     }
                 }
-                threadPool.start([&](){ outputPointCloud(); });
+                threadPool.start([&](){ outputRangeData(); });
             }
         }
     }
 }
 
 
-void RangeCameraIo::outputPointCloud()
+void RangeCameraIo::outputRangeData()
 {
     const vector<Vector3f>& points = *lastPoints;
     const Image& image = *lastImage;
 
+    /*
     pointCloud.row_step = pointCloud.point_step * pointCloud.width;
     size_t length = points.size() * pointCloud.point_step;
     pointCloud.data.length(length);
@@ -438,6 +446,7 @@ void RangeCameraIo::outputPointCloud()
     }
 
     pointCloudOut.write();
+    */
 }
 
 
