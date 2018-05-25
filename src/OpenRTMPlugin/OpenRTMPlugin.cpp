@@ -6,6 +6,8 @@
 #include "RTCItem.h"
 #include "ControllerRTCItem.h"
 #include "BodyIoRTCItem.h"
+#include "SimulationExecutionContext.h"
+#include "SimulationPeriodicExecutionContext.h"
 #include "ChoreonoidExecutionContext.h"
 #include "ChoreonoidPeriodicExecutionContext.h"
 #include "OpenRTMUtil.h"
@@ -77,6 +79,27 @@ public:
         LoggerUtil::startLog(LogLevel::LOG_DEBUG, "Log");
     }
 
+    template<typename ExecutionContextType>
+    void registerExecutionContext(const char* name){
+#ifdef OPENRTM_VERSION110
+        if(manager->registerECFactory(
+               name,
+               RTC::ECCreate<ExecutionContextType>,
+               RTC::ECDelete<ExecutionContextType>)){
+#else
+        if(RTC::ExecutionContextFactory::instance().addFactory(
+               name,
+               ::coil::Creator<::RTC::ExecutionContextBase, ExecutionContextType>,
+               ::coil::Destructor<::RTC::ExecutionContextBase, ExecutionContextType>) == 0) {
+#endif
+            mv->putln(format(_("%1% has been registered.")) % name);
+        } else {
+            mv->putln(
+                MessageView::WARNING,
+                format(_("Failed to register %1%.")) % name);
+        }
+    }
+        
     virtual bool initialize() {
         DDEBUG("initialize");
         const int log_output_item = 10;
@@ -130,37 +153,11 @@ public:
         if(CORBA::is_nil(servantRef)){
             manager->servant()->createINSManager();
         }
-#ifdef OPENRTM_VERSION110
-        if(manager->registerECFactory(
-               "ChoreonoidExecutionContext",
-               RTC::ECCreate<cnoid::ChoreonoidExecutionContext>,
-               RTC::ECDelete<cnoid::ChoreonoidExecutionContext>)){
-#else
-        if (RTC::ExecutionContextFactory::instance().addFactory(
-                "ChoreonoidExecutionContext",
-                ::coil::Creator< ::RTC::ExecutionContextBase, ::cnoid::ChoreonoidExecutionContext>,
-                ::coil::Destructor< ::RTC::ExecutionContextBase, ::cnoid::ChoreonoidExecutionContext>) == 0) {
-#endif
-            mv->putln(_("ChoreonoidExecutionContext has been registered."));
-        } else {
-            mv->putln(MessageView::WARNING, _("Failed to register ChoreonoidExecutionContext."));
-        }
 
-#ifdef OPENRTM_VERSION110
-        if(manager->registerECFactory(
-               "ChoreonoidPeriodicExecutionContext",
-               RTC::ECCreate<cnoid::ChoreonoidPeriodicExecutionContext>,
-               RTC::ECDelete<cnoid::ChoreonoidPeriodicExecutionContext>)){
-#else
-        if(RTC::ExecutionContextFactory::instance().addFactory(
-               "ChoreonoidPeriodicExecutionContext",
-               ::coil::Creator< ::RTC::ExecutionContextBase, ::cnoid::ChoreonoidPeriodicExecutionContext>,
-               ::coil::Destructor< ::RTC::ExecutionContextBase, ::cnoid::ChoreonoidPeriodicExecutionContext>) == 0){
-#endif
-            mv->putln(_("ChoreonoidPeriodicExecutionContext has been registered."));
-        } else {
-            mv->putln(MessageView::WARNING, _("Failed to register ChoreonoidPeriodicExecutionContext."));
-        }
+        registerExecutionContext<SimulationExecutionContext>("SimulationExecutionContext");
+        registerExecutionContext<SimulationPeriodicExecutionContext>("SimulationPeriodicExecutionContext");
+        registerExecutionContext<ChoreonoidExecutionContext>("ChoreonoidExecutionContext");
+        registerExecutionContext<ChoreonoidPeriodicExecutionContext>("ChoreonoidPeriodicExecutionContext");
         
         manager->activateManager();
 

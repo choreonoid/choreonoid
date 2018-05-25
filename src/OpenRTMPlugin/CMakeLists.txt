@@ -18,6 +18,8 @@ set(plugin_sources
   BodyIoRTCItem.cpp
   OpenRTMItem.cpp
   RTCItem.cpp
+  SimulationExecutionContext.cpp
+  SimulationPeriodicExecutionContext.cpp
   ChoreonoidExecutionContext.cpp
   ChoreonoidPeriodicExecutionContext.cpp
   ProfileHandler.cpp
