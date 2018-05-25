@@ -691,6 +691,7 @@ if(ENABLE_CORBA)
     endforeach()
 
     if(args_LOCAL)
+      unset(idl_files)
       foreach(idl_name ${idl_names})
 	set(idl_files ${idl_files} ${corba_src_dir}/${idl_name}.idl)
 	set(idl_cpp_files ${idl_cpp_files} ${subdir}/${idl_name}Sk.cpp ${subdir}/${idl_name}DynSk.cpp)

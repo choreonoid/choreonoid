@@ -60,7 +60,17 @@ if(MSVC)
 add_definitions(-D__WIN32__ -D__x86__ -D__NT__ -D__OSVERSION__=4 -D_CRT_SECURE_NO_DEPRECATE -D_WIN32_WINNT=0x0500 -DRTC_CORBA_CXXMAPPING11)
 endif()
 
-idl_compile_cpp(idl_cpp_files idl_h_files deprecated/corba PointCloud LOCAL)
+set(idl_files PointCloud)
+
+option(USE_BUILTIN_CAMERA_IMAGE_IDL "Enable this option when you run hrpsys-base on Choreonoid" OFF)
+if(USE_BUILTIN_CAMERA_IMAGE_IDL)
+  list(APPEND OPENRTM_DEFINITIONS -DUSE_BUILTIN_CAMERA_IMAGE_IDL)
+  set(idl_files ${idl_files} CameraImage)
+else()
+  set(OPENRTM_LIBRARIES ${OPENRTM_LIBRARIES} rtmCamera)
+endif()
+
+idl_compile_cpp(idl_cpp_files idl_h_files deprecated/corba ${idl_files} LOCAL)
 
 make_gettext_mofiles(${plugin} mofiles)
 
@@ -84,4 +94,3 @@ endif()
 file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}/rtc)
 install(DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}/rtc DESTINATION ${CNOID_PLUGIN_SUBDIR}/rtc
   FILES_MATCHING PATTERN "*" EXCLUDE)
-

@@ -15,11 +15,17 @@
 #include <rtm/DataFlowComponentBase.h>
 #include <rtm/DataInPort.h>
 #include <rtm/idl/InterfaceDataTypes.hh>
-#ifdef WIN32
-#include <rtm/idl/CameraCommonInterface.hh>
+
+#ifdef USE_BUILTIN_CAMERA_IMAGE_IDL
+# include "deprecated/corba/CameraImage.hh"
 #else
-#include <rtm/ext/CameraCommonInterface.hh>
+# ifdef WIN32
+#  include <rtm/idl/CameraCommonInterface.hh>
+# else
+#  include <rtm/ext/CameraCommonInterface.hh>
+# endif
 #endif
+
 #include "gettext.h"
 
 using namespace std;
