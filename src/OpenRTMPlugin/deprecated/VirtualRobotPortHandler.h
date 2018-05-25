@@ -19,13 +19,18 @@
 #include <rtm/InPort.h>
 
 #include <rtm/idl/InterfaceDataTypes.hh>
-#ifdef WIN32
-#include <rtm/idl/CameraCommonInterface.hh>
-#else
-#include <rtm/ext/CameraCommonInterface.hh>
-#endif
 #include <rtm/idl/BasicDataType.hh>
 #include <rtm/idl/ExtendedDataTypes.hh>
+
+#ifdef USE_BUILTIN_CAMERA_IMAGE_IDL
+# include "corba/CameraImage.hh"
+#else
+# ifdef WIN32
+#  include <rtm/idl/CameraCommonInterface.hh>
+# else
+#  include <rtm/ext/CameraCommonInterface.hh>
+# endif
+#endif
 
 #include <mutex>
 
