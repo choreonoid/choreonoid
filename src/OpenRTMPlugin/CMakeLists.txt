@@ -35,7 +35,8 @@ set(plugin_sources
   deprecated/BodyRTCItem.cpp
   deprecated/VirtualRobotRTC.cpp
   deprecated/VirtualRobotPortHandler.cpp
-  deprecated/BodyRTCExecutionContext.cpp
+  deprecated/ChoreonoidExecutionContext.cpp
+  deprecated/ChoreonoidPeriodicExecutionContext.cpp
   deprecated/BridgeConf.cpp
   deprecated/PointCloudSubscriberRTCItem.cpp
   )

@@ -1,52 +1,30 @@
 /*!
-  @file BodyRTCExecutionContext.cpp
-  @author Shin'ichiro Nakaoka
-*/
+ * @file ChoreonoidPeriodicExecutionContext.cpp
+ *  @author  hattori
+ */
 
-#include "BodyRTCExecutionContext.h"
+#include "ChoreonoidPeriodicExecutionContext.h"
 #include <rtm/ECFactory.h>
-
 #ifndef OPENRTM_VERSION110
  #include <rtm/RTObjectStateMachine.h>
 #endif
 
 using namespace cnoid;
 
-#if defined(OPENRTM_VERSION110)
-  BodyRTCExecutionContext::BodyRTCExecutionContext()
-      : PeriodicExecutionContext()
-#else
-  BodyRTCExecutionContext::BodyRTCExecutionContext()
-      : OpenHRPExecutionContext()
-#endif
+ChoreonoidPeriodicExecutionContext::ChoreonoidPeriodicExecutionContext()
+    : PeriodicExecutionContext()
 {
 
 }
 
 
-BodyRTCExecutionContext::~BodyRTCExecutionContext()
+ChoreonoidPeriodicExecutionContext::~ChoreonoidPeriodicExecutionContext()
 {
 
 }
 
 
-void BodyRTCExecutionContext::tick() throw (CORBA::SystemException)
-{
-#ifdef OPENRTM_VERSION110
-    std::for_each(m_comps.begin(), m_comps.end(), invoke_worker());
-#else
-    invokeWorker();
-#endif
-}
-
-
-int BodyRTCExecutionContext::svc(void)
-{
-    return 0;
-}
-
-
-RTC::ReturnCode_t BodyRTCExecutionContext::deactivate_component(RTC::LightweightRTObject_ptr comp)
+RTC::ReturnCode_t ChoreonoidPeriodicExecutionContext::deactivate_component(RTC::LightweightRTObject_ptr comp)
     throw (CORBA::SystemException)
 {
 #ifdef OPENRTM_VERSION110
@@ -59,18 +37,19 @@ RTC::ReturnCode_t BodyRTCExecutionContext::deactivate_component(RTC::Lightweight
     if(!(it->_sm.m_sm.isIn(RTC::ACTIVE_STATE))){
         return RTC::PRECONDITION_NOT_MET;
     }
-    
+
     it->_sm.m_sm.goTo(RTC::INACTIVE_STATE);
 
-    tick();
-    
+    it->_sm.worker();
+
     if(it->_sm.m_sm.isIn(RTC::INACTIVE_STATE)){
-        RTC_TRACE(("The component has been properly deactivated."));
-        return RTC::RTC_OK;
+    	RTC_TRACE(("The component has been properly deactivated."));
+    	return RTC::RTC_OK;
     }
-    
+
     RTC_ERROR(("The component could not be deactivated."));
     return RTC::RTC_ERROR;
+
 #else
     RTC_impl::RTObjectStateMachine* rtobj = m_worker.findComponent(comp);
 
@@ -82,15 +61,15 @@ RTC::ReturnCode_t BodyRTCExecutionContext::deactivate_component(RTC::Lightweight
     {
         return RTC::PRECONDITION_NOT_MET;
     }
+
     rtobj->goTo(RTC::INACTIVE_STATE);
 
-    tick();
+    rtobj->workerDo();
 
     if (!(rtobj->isCurrentState(RTC::INACTIVE_STATE)))
     {
-        return RTC::RTC_OK;
+    	return RTC::RTC_OK;
     }
-
     return RTC::RTC_ERROR;
 #endif
-}    
+}

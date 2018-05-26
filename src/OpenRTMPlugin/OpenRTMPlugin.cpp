@@ -17,7 +17,8 @@
 #include "RTSItem.h"
 #include "VisionSensorSubscriberRTCItem.h"
 #include "deprecated/BodyRTCItem.h"
-#include "deprecated/BodyRTCExecutionContext.h"
+#include "deprecated/ChoreonoidExecutionContext.h"
+#include "deprecated/ChoreonoidPeriodicExecutionContext.h"
 #include "deprecated/PointCloudSubscriberRTCItem.h"
 #include <cnoid/Plugin>
 #include <cnoid/ItemManager>
@@ -155,7 +156,10 @@ public:
 
         registerExecutionContext<SimulationExecutionContext>("SimulationExecutionContext");
         registerExecutionContext<SimulationPeriodicExecutionContext>("SimulationPeriodicExecutionContext");
-        registerExecutionContext<BodyRTCExecutionContext>("BodyRTCExecutionContext");
+
+        // Deprecated
+        registerExecutionContext<ChoreonoidExecutionContext>("ChoreonoidExecutionContext");
+        registerExecutionContext<ChoreonoidPeriodicExecutionContext>("ChoreonoidPeriodicExecutionContext");
         
         manager->activateManager();
 
