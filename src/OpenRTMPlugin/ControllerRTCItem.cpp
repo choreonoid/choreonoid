@@ -30,7 +30,7 @@ public:
     RTC::RtcBase* rtc = 0;
 		RTC::ExecutionContextService_var execContext;
 		OpenRTM::ExtTrigExecutionContextService_var execContextExt;
-    bool isChoreonoidExecutionContext;
+    bool isSimulationExecutionContext;
 
     int periodicRateProperty;
     int periodicRate;
@@ -55,19 +55,19 @@ public:
 
 #ifdef OPENRTM_VERSION11
     enum ExecContextType {
+        SIMULATION_EXECUTION_CONTEXT,
         PERIODIC_EXECUTION_CONTEXT,
-        CHOREONOID_EXECUTION_CONTEXT,
         N_EXEC_CONTEXT_TYPES
     };
 #else
     enum ExecContextType {
-      CHOREONOID_EXECUTION_CONTEXT,
-      CHOREONOID_PERIODIC_EXECUTION_CONTEXT,
+      SIMULATION_EXECUTION_CONTEXT,
+      SIMULATION_PERIODIC_EXECUTION_CONTEXT,
       N_EXEC_CONTEXT_TYPES
     };
 #endif
     Selection execContextType;
-    bool useOnlyChoreonoidExecutionContext = false;
+    bool useOnlySimulationExecutionContext = false;
 
     MessageView* mv;
     
@@ -118,14 +118,15 @@ ControllerRTCItemImpl::ControllerRTCItemImpl(ControllerRTCItem* self)
 
     rtcDirectory = filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "rtc";
 
+    execContextType.setSymbol(SIMULATION_EXECUTION_CONTEXT,  N_("SimulationExecutionContext"));
+    
 #ifdef OPENRTM_VERSION11
     execContextType.setSymbol(PERIODIC_EXECUTION_CONTEXT,  N_("PeriodicExecutionContext"));
-    execContextType.setSymbol(CHOREONOID_EXECUTION_CONTEXT,  N_("ChoreonoidExecutionContext"));
 #else
-    execContextType.setSymbol(CHOREONOID_EXECUTION_CONTEXT, N_("ChoreonoidExecutionContext"));
-    execContextType.setSymbol(CHOREONOID_PERIODIC_EXECUTION_CONTEXT, N_("ChoreonoidPeriodicExecutionContext"));
+    execContextType.setSymbol(SIMULATION_PERIODIC_EXECUTION_CONTEXT, N_("SimulationPeriodicExecutionContext"));
 #endif
-    execContextType.select(CHOREONOID_EXECUTION_CONTEXT);
+
+    execContextType.select(SIMULATION_EXECUTION_CONTEXT);
 
     periodicRateProperty = 0;
 }
@@ -147,7 +148,7 @@ ControllerRTCItemImpl::ControllerRTCItemImpl(ControllerRTCItem* self, const Cont
     rtcInstanceNameProperty = org.rtcInstanceNameProperty;
     periodicRateProperty = org.periodicRateProperty;
     execContextType = org.execContextType;
-    useOnlyChoreonoidExecutionContext = org.useOnlyChoreonoidExecutionContext;
+    useOnlySimulationExecutionContext = org.useOnlySimulationExecutionContext;
 }
 
 
@@ -274,10 +275,10 @@ std::string ControllerRTCItem::rtcInstanceName() const
 }
 
 
-void ControllerRTCItem::useOnlyChoreonoidExecutionContext()
+void ControllerRTCItem::useOnlySimulationExecutionContext()
 {
-    impl->useOnlyChoreonoidExecutionContext = true;
-    setExecContextType(ControllerRTCItemImpl::CHOREONOID_EXECUTION_CONTEXT);
+    impl->useOnlySimulationExecutionContext = true;
+    setExecContextType(ControllerRTCItemImpl::SIMULATION_EXECUTION_CONTEXT);
 }
 
 
@@ -401,12 +402,12 @@ bool ControllerRTCItemImpl::createRTCmain(bool isBodyIORTC) {
 #else
           if (isBodyIORTC) {
             option =
-              str(format("instance_name=%1%&execution_contexts=ChoreonoidExecutionContext()&exec_cxt.periodic.type=%2%&exec_cxt.periodic.rate=%3%&exec_cxt.sync_activation=NO&exec_cxt.sync_deactivation=NO")
+              str(format("instance_name=%1%&execution_contexts=SimulationExecutionContext()&exec_cxt.periodic.type=%2%&exec_cxt.periodic.rate=%3%&exec_cxt.sync_activation=NO&exec_cxt.sync_deactivation=NO")
                 % rtcInstanceName % execContextType.selectedSymbol() % periodicRate);
             DDEBUG("ControllerRTCItemImpl::createRTCmain isBodyIORTC=TRUE");
           } else {
             option =
-              str(format("instance_name=%1%&execution_contexts=ChoreonoidExecutionContext(),ChoreonoidPeriodicExecutionContext()&exec_cxt.periodic.type=%2%&exec_cxt.periodic.rate=%3%&exec_cxt.sync_activation=NO&exec_cxt.sync_deactivation=NO")
+              str(format("instance_name=%1%&execution_contexts=SimulationExecutionContext(),SimulationPeriodicExecutionContext()&exec_cxt.periodic.type=%2%&exec_cxt.periodic.rate=%3%&exec_cxt.sync_activation=NO&exec_cxt.sync_deactivation=NO")
                 % rtcInstanceName % execContextType.selectedSymbol() % periodicRate);
             DDEBUG("ControllerRTCItemImpl::createRTCmain isBodyIORTC=FALSE");
           }
@@ -421,12 +422,12 @@ bool ControllerRTCItemImpl::createRTCmain(bool isBodyIORTC) {
 #else
         if (isBodyIORTC) {
           option =
-            str(format("instance_name=%1%&execution_contexts=ChoreonoidExecutionContext()&exec_cxt.periodic.type=%2%&exec_cxt.sync_activation=NO&exec_cxt.sync_deactivation=NO")
+            str(format("instance_name=%1%&execution_contexts=SimulationExecutionContext()&exec_cxt.periodic.type=%2%&exec_cxt.sync_activation=NO&exec_cxt.sync_deactivation=NO")
               % rtcInstanceName % execContextType.selectedSymbol());
           DDEBUG("ControllerRTCItemImpl::createRTCmain isBodyIORTC=TRUE");
         } else {
           option =
-            str(format("instance_name=%1%&execution_contexts=ChoreonoidExecutionContext(),ChoreonoidPeriodicExecutionContext()&exec_cxt.periodic.type=%2%&exec_cxt.sync_activation=NO&exec_cxt.sync_deactivation=NO")
+            str(format("instance_name=%1%&execution_contexts=SimulationExecutionContext(),SimulationPeriodicExecutionContext()&exec_cxt.periodic.type=%2%&exec_cxt.sync_activation=NO&exec_cxt.sync_deactivation=NO")
               % rtcInstanceName % execContextType.selectedSymbol());
           DDEBUG("ControllerRTCItemImpl::createRTCmain isBodyIORTC=FALSE");
         }
@@ -449,7 +450,7 @@ bool ControllerRTCItemImpl::createRTCmain(bool isBodyIORTC) {
     }
 
     execContext = RTC::ExecutionContextService::_nil();
-    isChoreonoidExecutionContext = false; 
+    isSimulationExecutionContext = false; 
     RTC::ExecutionContextList_var eclist = rtc->get_owned_contexts();
 #ifndef OPENRTM_VERSION11
     int selected = execContextType.index(execContextType.selectedSymbol());
@@ -465,7 +466,7 @@ bool ControllerRTCItemImpl::createRTCmain(bool isBodyIORTC) {
     for(CORBA::ULong i=0; i < eclist->length(); ++i){
         if(!CORBA::is_nil(eclist[i])){
             execContext = RTC::ExecutionContextService::_narrow(eclist[i]);
-            isChoreonoidExecutionContext = execContextType.is(CHOREONOID_EXECUTION_CONTEXT);
+            isSimulationExecutionContext = execContextType.is(SIMULATION_EXECUTION_CONTEXT);
             break;
         }
     }
@@ -561,7 +562,7 @@ void ControllerRTCItem::input()
 
 bool ControllerRTCItem::control()
 {
-    if(impl->isChoreonoidExecutionContext){
+    if(impl->isSimulationExecutionContext){
 			if (!CORBA::is_nil(impl->execContext)) {
 				if (CORBA::is_nil(impl->execContextExt)) {
 					impl->execContextExt = OpenRTM::ExtTrigExecutionContextService::_narrow(impl->execContext);
@@ -631,7 +632,7 @@ void ControllerRTCItemImpl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("RTC Instance name"), rtcInstanceNameProperty,
                 [&](const string& name) { self->setRTCInstanceName(name); return true; });
 
-    if(!useOnlyChoreonoidExecutionContext){
+    if(!useOnlySimulationExecutionContext){
         putProperty(_("Execution context"), execContextType,
                     [&](int which){ self->setExecContextType(which); return true; });
     }
@@ -652,7 +653,7 @@ bool ControllerRTCItemImpl::store(Archive& archive)
     archive.writeRelocatablePath("module", moduleNameProperty);
     archive.write("baseDirectory", baseDirectoryType.selectedSymbol(), DOUBLE_QUOTED);
     archive.write("instanceName", rtcInstanceNameProperty, DOUBLE_QUOTED);
-    if(!useOnlyChoreonoidExecutionContext){
+    if(!useOnlySimulationExecutionContext){
         archive.write("executionContext", execContextType.selectedSymbol(), DOUBLE_QUOTED);
     }
     archive.write("periodicRate", periodicRateProperty);
@@ -679,9 +680,14 @@ bool ControllerRTCItemImpl::restore(const Archive& archive)
     }
     archive.read("instanceName", rtcInstanceNameProperty);
 
-    if(!useOnlyChoreonoidExecutionContext){
+    if(!useOnlySimulationExecutionContext){
         if(archive.read("executionContext", value)){
-            execContextType.select(value);
+            if(!execContextType.select(value)){
+                // For the backward compatibility
+                if(value == "ChoreonoidExecutionContext"){
+                    execContextType.select(SIMULATION_EXECUTION_CONTEXT);
+                }
+            }
         }
     }
     archive.read("periodicRate", periodicRateProperty);

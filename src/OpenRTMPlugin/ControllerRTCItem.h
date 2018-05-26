@@ -40,7 +40,7 @@ public:
     virtual void stop() override;
 
 protected:
-    void useOnlyChoreonoidExecutionContext();
+    void useOnlySimulationExecutionContext();
     bool createRTCmain(bool isBodyIORTC = false);
 
     virtual void onConnectedToRoot() override;

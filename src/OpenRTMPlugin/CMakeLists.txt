@@ -20,8 +20,6 @@ set(plugin_sources
   RTCItem.cpp
   SimulationExecutionContext.cpp
   SimulationPeriodicExecutionContext.cpp
-  ChoreonoidExecutionContext.cpp
-  ChoreonoidPeriodicExecutionContext.cpp
   ProfileHandler.cpp
   RTSNameServerView.cpp
   RTSPropertiesView.cpp
@@ -31,16 +29,15 @@ set(plugin_sources
   RTSCommonUtil.cpp
   RTSConfigurationView.cpp
   VisionSensorSubscriberRTCItem.cpp
-
+  LoggerUtil.cpp
   pugixml/pugixml.cpp
 
   deprecated/BodyRTCItem.cpp
   deprecated/VirtualRobotRTC.cpp
   deprecated/VirtualRobotPortHandler.cpp
+  deprecated/BodyRTCExecutionContext.cpp
   deprecated/BridgeConf.cpp
   deprecated/PointCloudSubscriberRTCItem.cpp
-
-  LoggerUtil.cpp
   )
 
 set(plugin_headers

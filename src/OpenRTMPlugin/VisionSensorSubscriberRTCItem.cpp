@@ -238,7 +238,7 @@ public:
     VisionSensorSubscriberRTCItem* self;
     MessageView* mv;
     OpenRTM::ExtTrigExecutionContextService_var execContext;
-    bool isChoreonoidExecutionContext;
+    bool isSimulationExecutionContext;
 
     Body* body;
     DeviceList<Camera> cameras;
@@ -385,7 +385,7 @@ bool VisionSensorSubscriberRTCItemImpl::createRTC()
     boost::format param(
         "VisionSensorSubscriber?"
         "instance_name=%1%&"
-        "exec_cxt.periodic.type=ChoreonoidExecutionContext&"
+        "exec_cxt.periodic.type=SimulationExecutionContext&"
         "exec_cxt.periodic.rate=1000000");
     
     RTC::RtcBase* rtc = createManagedRTC(str(param % componentName).c_str());
@@ -399,7 +399,7 @@ bool VisionSensorSubscriberRTCItemImpl::createRTC()
     subscriberRTC->createPort(rangeSensors, rangeSensorPortNames, cameras, cameraPortNames );
 
     execContext = OpenRTM::ExtTrigExecutionContextService::_nil();
-    isChoreonoidExecutionContext = true;
+    isSimulationExecutionContext = true;
     RTC::ExecutionContextList_var eclist = rtc->get_owned_contexts();
     for(CORBA::ULong i=0; i < eclist->length(); ++i){
         if(!CORBA::is_nil(eclist[i])){
@@ -588,7 +588,7 @@ void VisionSensorSubscriberRTCItem::input()
 
 bool VisionSensorSubscriberRTCItem::control()
 {
-    if(impl->isChoreonoidExecutionContext){
+    if(impl->isSimulationExecutionContext){
         impl->execContext->tick();
     }
     return true;

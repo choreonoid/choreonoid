@@ -257,7 +257,7 @@ public:
     PointCloudSubscriberRTCItem* self;
     MessageView* mv;
     OpenRTM::ExtTrigExecutionContextService_var execContext;
-    bool isChoreonoidExecutionContext;
+    bool isSimulationExecutionContext;
 
     Body* body;
     DeviceList<RangeCamera> rangeCameras;
@@ -388,7 +388,7 @@ bool PointCloudSubscriberRTCItemImpl::createRTC()
     boost::format param(
         "PointCloudSubscriber?"
         "instance_name=%1%&"
-        "exec_cxt.periodic.type=ChoreonoidExecutionContext&"
+        "exec_cxt.periodic.type=SimulationExecutionContext&"
         "exec_cxt.periodic.rate=1000000");
     
     RTC::RtcBase* rtc = createManagedRTC(str(param % componentName).c_str());
@@ -402,7 +402,7 @@ bool PointCloudSubscriberRTCItemImpl::createRTC()
     pointCloudIORTC->createPort(rangeCameras, pointCloudPortNames);
 
     execContext = OpenRTM::ExtTrigExecutionContextService::_nil();
-    isChoreonoidExecutionContext = true;
+    isSimulationExecutionContext = true;
     RTC::ExecutionContextList_var eclist = rtc->get_owned_contexts();
     for(CORBA::ULong i=0; i < eclist->length(); ++i){
         if(!CORBA::is_nil(eclist[i])){
@@ -566,7 +566,7 @@ void PointCloudSubscriberRTCItem::input()
 
 bool PointCloudSubscriberRTCItem::control()
 {
-    if(impl->isChoreonoidExecutionContext){
+    if(impl->isSimulationExecutionContext){
         impl->execContext->tick();
     }
     return true;

@@ -53,7 +53,7 @@ void BodyIoRTCItem::initialize(ExtensionManager* ext)
 BodyIoRTCItem::BodyIoRTCItem()
 {
     impl = new BodyIoRTCItemImpl(this);
-    useOnlyChoreonoidExecutionContext();
+    useOnlySimulationExecutionContext();
 }
 
 
@@ -69,7 +69,7 @@ BodyIoRTCItem::BodyIoRTCItem(const BodyIoRTCItem& org)
     : ControllerRTCItem(org)
 {
     impl = new BodyIoRTCItemImpl(this, *org.impl);
-    useOnlyChoreonoidExecutionContext();
+    useOnlySimulationExecutionContext();
 }
 
 

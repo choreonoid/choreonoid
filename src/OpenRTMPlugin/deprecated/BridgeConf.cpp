@@ -357,9 +357,9 @@ void BridgeConf::setupModules() {
     RTC::Manager& rtcManager = RTC::Manager::instance();
     ModuleInfoList::iterator moduleInfo = moduleInfoList.begin();
 #if defined(OPENRTM_VERSION11)
-    format param("%1%?exec_cxt.periodic.type=ChoreonoidExecutionContext&exec_cxt.periodic.rate=1000000");
+    format param("%1%?exec_cxt.periodic.type=BodyRTCExecutionContext&exec_cxt.periodic.rate=1000000");
 #else
-    format param("%1%?execution_contexts=ChoreonoidExecutionContext(),OpenHRPExecutionContext()&exec_cxt.periodic.type=ChoreonoidExecutionContext&exec_cxt.periodic.rate=1000000&exec_cxt.sync_activation=NO&exec_cxt.sync_deactivation=NO");
+    format param("%1%?execution_contexts=BodyRTCExecutionContext(),OpenHRPExecutionContext()&exec_cxt.periodic.type=BodyRTCExecutionContext&exec_cxt.periodic.rate=1000000&exec_cxt.sync_activation=NO&exec_cxt.sync_deactivation=NO");
 #endif
     while(moduleInfo != moduleInfoList.end()){
         if(!moduleInfo->isLoaded){

@@ -1,18 +1,19 @@
 /*!
-  @file ChoreonoidExecutionContext.h
+  @file BodyRTCExecutionContext.h
   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_OPENRTM_PLUGIN_CHOREONOID_EXECUTION_CONTEXT_H
-#define CNOID_OPENRTM_PLUGIN_CHOREONOID_EXECUTION_CONTEXT_H
+#ifndef CNOID_OPENRTM_PLUGIN_BODYRTC_EXECUTION_CONTEXT_H
+#define CNOID_OPENRTM_PLUGIN_BODYRTC_EXECUTION_CONTEXT_H
 
 #include <rtm/RTC.h>
 #include <coil/Task.h>
 #include <rtm/Manager.h>
+
 #if defined(OPENRTM_VERSION110)
-  #include <rtm/PeriodicExecutionContext.h>
+ #include <rtm/PeriodicExecutionContext.h>
 #else
-  #include <rtm/OpenHRPExecutionContext.h>
+ #include <rtm/OpenHRPExecutionContext.h>
 #endif
 
 #ifdef WIN32
@@ -27,18 +28,19 @@ namespace cnoid
   See post 02356 to the openrtm-users mailing list.
 */
 #ifdef OPENRTM_VERSION110
-  class ChoreonoidExecutionContext : public virtual RTC::PeriodicExecutionContext
+  class BodyRTCExecutionContext : public virtual RTC::PeriodicExecutionContext
 #else
-  class ChoreonoidExecutionContext : public RTC::OpenHRPExecutionContext
+  class BodyRTCExecutionContext : public RTC::OpenHRPExecutionContext
 #endif
 {
 public:
-    ChoreonoidExecutionContext();
-    virtual ~ChoreonoidExecutionContext(void);
+    BodyRTCExecutionContext();
+    virtual ~BodyRTCExecutionContext(void);
     virtual void tick(void) throw (CORBA::SystemException);
     virtual int svc(void);
     virtual RTC::ReturnCode_t deactivate_component(RTC::LightweightRTObject_ptr comp) throw (CORBA::SystemException);
 };
-};
+
+}
 
 #endif

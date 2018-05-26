@@ -8,8 +8,6 @@
 #include "BodyIoRTCItem.h"
 #include "SimulationExecutionContext.h"
 #include "SimulationPeriodicExecutionContext.h"
-#include "ChoreonoidExecutionContext.h"
-#include "ChoreonoidPeriodicExecutionContext.h"
 #include "OpenRTMUtil.h"
 #include "RTSNameServerView.h"
 #include "RTSPropertiesView.h"
@@ -19,6 +17,7 @@
 #include "RTSItem.h"
 #include "VisionSensorSubscriberRTCItem.h"
 #include "deprecated/BodyRTCItem.h"
+#include "deprecated/BodyRTCExecutionContext.h"
 #include "deprecated/PointCloudSubscriberRTCItem.h"
 #include <cnoid/Plugin>
 #include <cnoid/ItemManager>
@@ -156,8 +155,7 @@ public:
 
         registerExecutionContext<SimulationExecutionContext>("SimulationExecutionContext");
         registerExecutionContext<SimulationPeriodicExecutionContext>("SimulationPeriodicExecutionContext");
-        registerExecutionContext<ChoreonoidExecutionContext>("ChoreonoidExecutionContext");
-        registerExecutionContext<ChoreonoidPeriodicExecutionContext>("ChoreonoidPeriodicExecutionContext");
+        registerExecutionContext<BodyRTCExecutionContext>("BodyRTCExecutionContext");
         
         manager->activateManager();
 
