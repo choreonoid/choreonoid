@@ -52,7 +52,10 @@ namespace cnoid {
 			if (CORBA::is_nil(obj)) {
 				return T::_nil();
 			} else {
-				typename T::_ptr_type narrowed = T::_narrow(obj);
+                typename T::_ptr_type narrowed = T::_nil();
+                if(isObjectAlive(obj)){
+                    narrowed = T::_narrow(obj);
+                }
 				CORBA::release(obj);
 				return narrowed;
 			}
@@ -63,7 +66,10 @@ namespace cnoid {
 			if (CORBA::is_nil(obj)) {
 				return T::_nil();
 			} else {
-				typename T::_ptr_type narrowed = T::_narrow(obj);
+                typename T::_ptr_type narrowed = T::_nil();
+                if(isObjectAlive(obj)){
+                    narrowed = T::_narrow(obj);
+                }
 				CORBA::release(obj);
 				return narrowed;
 			}

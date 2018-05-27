@@ -214,22 +214,25 @@ NamingContextHelper::ObjectInfoList NamingContextHelper::getObjectList(std::vect
     if (checkOrUpdateNamingContext()) {
 
         CORBA::Object_var obj = findObjectSub(pathList);
-        CosNaming::NamingContext_ptr new_context = CosNaming::NamingContext::_narrow(obj);
-        
-        CosNaming::BindingList_var bList;
-        CosNaming::BindingIterator_var bIter;
-        const CORBA::ULong batchSize = 100;
-        
-        new_context->list(batchSize, bList, bIter);
 
-        appendBindingList(bList, pathList, objects);
+        if(isObjectAlive(obj)){
+        
+            CosNaming::NamingContext_var new_context = CosNaming::NamingContext::_narrow(obj);
+        
+            CosNaming::BindingList_var bList;
+            CosNaming::BindingIterator_var bIter;
+            const CORBA::ULong batchSize = 100;
+        
+            new_context->list(batchSize, bList, bIter);
 
-        if (!CORBA::is_nil(bIter) && isObjectAlive(bIter)) {
-            while (bIter->next_n(batchSize, bList)) {
-                appendBindingList(bList, pathList, objects);
+            appendBindingList(bList, pathList, objects);
+
+            if (!CORBA::is_nil(bIter) && isObjectAlive(bIter)) {
+                while (bIter->next_n(batchSize, bList)) {
+                    appendBindingList(bList, pathList, objects);
+                }
             }
         }
-        if (!CORBA::is_nil(obj)) CORBA::release(obj);
     }
 
     return objects;
@@ -325,7 +328,7 @@ bool NamingContextHelper::bindObject(std::vector<ObjectPath>& pathList, std::str
 	if (isAlive() == false) return false;
 
 	try {
-		CORBA::Object_ptr object = getORB()->string_to_object(ior.c_str());
+		CORBA::Object_var object = getORB()->string_to_object(ior.c_str());
 		if (CORBA::is_nil(object)) return false;
 
 		CosNaming::Name ncName;
