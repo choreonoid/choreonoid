@@ -45,6 +45,7 @@ namespace cnoid {
 		NamingContextHelper getNCHelper();
 
     protected:
+        virtual void onActivated() override;
         virtual bool storeState(Archive& archive) override;
         virtual bool restoreState(const Archive& archive) override;
 

@@ -368,9 +368,10 @@ namespace cnoid {
 		RTSNameTreeWidget treeWidget;
 		LineEdit hostAddressBox;
 		SpinBox portNumberSpin;
-
 		NamingContextHelper ncHelper;
 		std::list<NamingContextHelper::ObjectInfo> selectedItemList;
+        bool isObjectListUpdateRequested;
+
 	private:
 		RTSNameServerView * self_;
 	};
@@ -432,6 +433,8 @@ RTSNameServerViewImpl::RTSNameServerViewImpl(RTSNameServerView* self)
             static_cast<void(RTSNameServerViewImpl::*)(bool)>(&RTSNameServerViewImpl::updateObjectList), this, true));
     hbox->addWidget(updateButton);
 
+    isObjectListUpdateRequested = false;    
+
     vbox->addLayout(hbox, 0);
 
     treeWidget.setHeaderLabel(_("Object Name"));
@@ -466,7 +469,22 @@ void RTSNameServerView::updateView() {
 	impl->updateObjectList(true);
 }
 
+
+void RTSNameServerView::onActivated()
+{
+    if(impl->isObjectListUpdateRequested){
+        impl->updateObjectList(true);
+    }
+}
+
+
 void RTSNameServerViewImpl::updateObjectList(bool force) {
+
+    if(isObjectListUpdateRequested){
+        force = true;
+        isObjectListUpdateRequested = false;
+    }
+    
 	if (ncHelper.host() == hostAddressBox.string() && ncHelper.port() == portNumberSpin.value() && !force) {
 		treeWidget.expandAll();
 		return;
@@ -633,7 +651,7 @@ bool RTSNameServerView::restoreState(const Archive& archive) {
   if (archive.read("port", port)) {
     impl->portNumberSpin.setValue(port);
   }
-  archive.addPostProcess([&]() { impl->updateObjectList(true); });
+  impl->isObjectListUpdateRequested = true;
 
   return true;
 }
