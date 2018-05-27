@@ -263,15 +263,17 @@ void NamingContextHelper::appendBindingList(CosNaming::BindingList_var& bList, O
 		ObjectInfo info;
 		info.id = bList[i].binding_name[0].id;
 		info.kind = bList[i].binding_name[0].kind;
-		info.isContext = true;
-
+		info.isContext = false;
 		CORBA::Object_ptr obj = findObject(info.id, info.kind);
-		CosNaming::NamingContext_ptr check = CosNaming::NamingContext::_narrow(obj);
-		if (check == CosNaming::NamingContext::_nil()) {
-			info.isContext = false;
-		}
-
 		info.isAlive = isObjectAlive(obj);
+        
+        if(info.isAlive){
+            CosNaming::NamingContext_var check = CosNaming::NamingContext::_narrow(obj);
+            if(check != CosNaming::NamingContext::_nil()){
+                info.isContext = true;
+            }
+        }
+        
 		info.ior = orb->object_to_string(obj);
 
 		ObjectPath path(info.id, info.kind);
