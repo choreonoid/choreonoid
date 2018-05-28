@@ -226,7 +226,6 @@ public:
     void RTSCompToConnectionList(const RTSComp* rtsComp,
             list<RTSConnection*>& rtsConnectionList, int mode);
     void restoreRTSystem( const Archive& archive);
-		void diagramViewUpdate();
     void restoreRTSComp(const string& name, const Vector2& pos,
             const vector<pair<string, bool>>& inPorts, const vector<pair<string, bool>>& outPorts);
     string getConnectionNumber();
@@ -934,14 +933,15 @@ bool RTSystemItem::restore(const Archive& archive) {
   return true;
 }
 
-void RTSystemItemImpl::restoreRTSystem(const Archive& archive) {
+void RTSystemItemImpl::restoreRTSystem(const Archive& archive)
+{
 	DDEBUG("RTSystemItemImpl::restoreRTSystem");
 
 	string targetFile;
-  targetFile = archive.resolveRelocatablePath(self->profileFileName);
+    targetFile = archive.resolveRelocatablePath(self->profileFileName);
 	DDEBUG_V("targetFile:%s", targetFile.c_str());
-  DDEBUG_V("profileFileName:%s", self->profileFileName.c_str());
-  if (0 < self->profileFileName.length()) {
+    DDEBUG_V("profileFileName:%s", self->profileFileName.c_str());
+    if (0 < self->profileFileName.length()) {
 		if (ProfileHandler::restoreRtsProfile(targetFile, self) == false) return;
 
 	} else {
@@ -1011,8 +1011,11 @@ void RTSystemItemImpl::restoreRTSystem(const Archive& archive) {
 		}
 	}
 
-  diagramViewUpdate();
+    if(RTSDiagramView* diagramView = RTSDiagramView::instance()){
+        diagramView->updateView();
+    }
 }
+
 
 void RTSystemItemImpl::restoreRTSComp(const string& name, const Vector2& pos,
         const vector<pair<string, bool>>& inPorts, const vector<pair<string, bool>>& outPorts) {
@@ -1037,17 +1040,4 @@ void RTSystemItemImpl::restoreRTSComp(const string& name, const Vector2& pos,
 		}
 	}
 	DDEBUG("RTSystemItemImpl::restoreRTSComp End");
-}
-
-
-void RTSystemItemImpl::diagramViewUpdate()
-{
-    RTSNameServerView* nsView = RTSNameServerView::instance();
-    if(nsView){
-        nsView->updateView();
-    }
-    RTSDiagramView* diagramView = RTSDiagramView::instance();
-    if(diagramView){
-        diagramView->updateView();
-    }
 }

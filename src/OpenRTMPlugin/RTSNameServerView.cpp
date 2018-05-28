@@ -642,16 +642,24 @@ bool RTSNameServerView::storeState(Archive& archive) {
   return true;
 }
 
-bool RTSNameServerView::restoreState(const Archive& archive) {
-  string host;
-  if (archive.read("host", host)) {
-    impl->hostAddressBox.setText(host.c_str());
-  }
-  int port;
-  if (archive.read("port", port)) {
-    impl->portNumberSpin.setValue(port);
-  }
-  impl->isObjectListUpdateRequested = true;
+bool RTSNameServerView::restoreState(const Archive& archive)
+{
+    string host;
+    if (archive.read("host", host)) {
+        impl->hostAddressBox.setText(host.c_str());
+    }
+    int port;
+    if (archive.read("port", port)) {
+        impl->portNumberSpin.setValue(port);
+    }
 
-  return true;
+    archive.addPostProcess([&](){
+            if(isActive()){
+                impl->updateObjectList(true);
+            } else {
+                // impl->isObjectListUpdateRequested = true;
+            }
+        });
+
+    return true;
 }
