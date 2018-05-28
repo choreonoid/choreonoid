@@ -1,6 +1,5 @@
 /*!
   @file SimulationExecutionContext.h
-  @author Shin'ichiro Nakaoka
 */
 
 #ifndef CNOID_OPENRTM_PLUGIN_SIMULATION_EXECUTION_CONTEXT_H

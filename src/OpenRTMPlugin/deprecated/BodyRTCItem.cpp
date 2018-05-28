@@ -98,8 +98,9 @@ BodyRTCItem::~BodyRTCItem()
 }
 
 
-void BodyRTCItem::createRTC(BodyPtr body) {
-  DDEBUG("BodyRTCItem::createRTC");
+void BodyRTCItem::createRTC(BodyPtr body)
+{
+    DDEBUG("BodyRTCItem::createRTC");
 
     bridgeConf = new BridgeConf();
 
@@ -129,16 +130,17 @@ void BodyRTCItem::createRTC(BodyPtr body) {
                 }
             }
             std::string confFileName0 = getNativePathString(confPath);
-						try {
-							if(bridgeConf->loadConfigFile(confFileName0.c_str())){
-									mv->putln(fmt(_("Config File \"%1%\" has been loaded.")) % confFileName0);
-							} else {
-									mv->putln(fmt(_("Cannot find or open \"%1%\".")) % confFileName0);
-							}
-						} catch (...) {
-							mv->putln(MessageView::ERROR, fmt(_("Cannot find or open \"%1%\".")) % confFileName0);
-						}
-				}
+            try {
+                if(bridgeConf->loadConfigFile(confFileName0.c_str())){
+                    mv->putln(fmt(_("Config File \"%1%\" has been loaded.")) % confFileName0);
+                } else {
+                    mv->putln(fmt(_("Cannot find or open \"%1%\".")) % confFileName0);
+                }
+            }
+            catch (...) {
+                mv->putln(MessageView::ERROR, fmt(_("Cannot find or open \"%1%\".")) % confFileName0);
+            }
+        }
     }
 
     ModuleInfoList& moduleInfoList = bridgeConf->moduleInfoList;
@@ -201,12 +203,12 @@ void BodyRTCItem::createRTC(BodyPtr body) {
     virtualRobotRTC = dynamic_cast<VirtualRobotRTC*>(rtc);
     virtualRobotRTC->createPorts(bridgeConf);
 
-		virtualRobotExtEC = OpenRTM::ExtTrigExecutionContextService::_nil();
-		virtualRobotEC = RTC::ExecutionContextService::_nil();
+    virtualRobotExtEC = OpenRTM::ExtTrigExecutionContextService::_nil();
+    virtualRobotEC = RTC::ExecutionContextService::_nil();
     RTC::ExecutionContextList_var eclist = virtualRobotRTC->get_owned_contexts();
     for(CORBA::ULong i=0; i < eclist->length(); ++i){
         if(!CORBA::is_nil(eclist[i])){
-					virtualRobotEC = RTC::ExecutionContextService::_narrow(eclist[i]);
+            virtualRobotEC = RTC::ExecutionContextService::_narrow(eclist[i]);
             break;
         }
     }
@@ -376,31 +378,31 @@ void BodyRTCItem::input()
 
 bool BodyRTCItem::control()
 {
-  // tick the execution context of the connected RTCs
-  virtualRobotRTC->writeDataToOutPorts(controlTime_, timeStep_);
+    // tick the execution context of the connected RTCs
+    virtualRobotRTC->writeDataToOutPorts(controlTime_, timeStep_);
 
-  if(!CORBA::is_nil(virtualRobotEC)){
-    executionCycleCounter += timeStep_;
-    if(executionCycleCounter + timeStep_ / 2.0 > executionCycle){
-
-#ifdef ENABLE_SIMULATION_PROFILING
-			timer.begin();
-#endif
-
-			if (CORBA::is_nil(virtualRobotExtEC)) {
-				virtualRobotExtEC = OpenRTM::ExtTrigExecutionContextService::_narrow(virtualRobotEC);
-			}
-			if (!CORBA::is_nil(virtualRobotExtEC)) {
-				virtualRobotExtEC->tick();
-			}
+    if(!CORBA::is_nil(virtualRobotEC)){
+        executionCycleCounter += timeStep_;
+        if(executionCycleCounter + timeStep_ / 2.0 > executionCycle){
 
 #ifdef ENABLE_SIMULATION_PROFILING
-		  bodyRTCTime = timer.measure();
+            timer.begin();
 #endif
 
-	    executionCycleCounter -= executionCycle;
-		}
-	}
+            if(CORBA::is_nil(virtualRobotExtEC)){
+                virtualRobotExtEC = OpenRTM::ExtTrigExecutionContextService::_narrow(virtualRobotEC);
+            }
+            if(!CORBA::is_nil(virtualRobotExtEC)){
+                virtualRobotExtEC->tick();
+            }
+
+#ifdef ENABLE_SIMULATION_PROFILING
+            bodyRTCTime = timer.measure();
+#endif
+
+            executionCycleCounter -= executionCycle;
+        }
+    }
 
 #ifdef ENABLE_SIMULATION_PROFILING
     timer.begin();
@@ -411,13 +413,13 @@ bool BodyRTCItem::control()
         if(!CORBA::is_nil(rtcInfo->execContext)){
             rtcInfo->timeRateCounter += rtcInfo->timeRate;
             if(rtcInfo->timeRateCounter + rtcInfo->timeRate/2.0 > 1.0){
-							if (CORBA::is_nil(rtcInfo->execContextExt)) {
-								rtcInfo->execContextExt = OpenRTM::ExtTrigExecutionContextService::_narrow(rtcInfo->execContext);
-							}
-							if (!CORBA::is_nil(rtcInfo->execContextExt)) {
-								rtcInfo->execContextExt->tick();
-								rtcInfo->timeRateCounter -= 1.0;
-							}
+                if (CORBA::is_nil(rtcInfo->execContextExt)) {
+                    rtcInfo->execContextExt = OpenRTM::ExtTrigExecutionContextService::_narrow(rtcInfo->execContext);
+                }
+                if (!CORBA::is_nil(rtcInfo->execContextExt)) {
+                    rtcInfo->execContextExt->tick();
+                    rtcInfo->timeRateCounter -= 1.0;
+                }
             }
         }
     }
@@ -602,8 +604,9 @@ bool BodyRTCItem::store(Archive& archive)
 
 bool BodyRTCItem::restore(const Archive& archive)
 {
-  DDEBUG("BodyRTCItem::restore");
-  if(!ControllerItem::restore(archive)){
+    DDEBUG("BodyRTCItem::restore");
+
+    if(!ControllerItem::restore(archive)){
         return false;
     }
     string value;
@@ -827,7 +830,7 @@ void BodyRTCItem::deactivateComponents()
     RTC::ExecutionContextList_var eclist = virtualRobotRTC->get_owned_contexts();
     for(CORBA::ULong i=0; i < eclist->length(); ++i){
         if(!CORBA::is_nil(eclist[i])){
-					RTC::ExecutionContextService_var execContext = RTC::ExecutionContextService::_narrow(eclist[i]);
+            RTC::ExecutionContextService_var execContext = RTC::ExecutionContextService::_narrow(eclist[i]);
             if(!CORBA::is_nil(execContext)){
                 execContext->deactivate_component(virtualRobotRTC->getObjRef());
                 vecExecContext.push_back(execContext);
@@ -836,13 +839,13 @@ void BodyRTCItem::deactivateComponents()
         }
     }
 
-    for( std::vector<RTC::ExecutionContextService_var>::iterator ite = vecExecContext.begin();
-         ite != vecExecContext.end();   ++ite   ){
-        if(!CORBA::is_nil( *ite )){
-					OpenRTM::ExtTrigExecutionContextService_var extEC = OpenRTM::ExtTrigExecutionContextService::_narrow(*ite);
-					if (!CORBA::is_nil(extEC)) {
-						extEC->tick();
-					}
+    for(std::vector<RTC::ExecutionContextService_var>::iterator iter = vecExecContext.begin();
+        iter != vecExecContext.end(); ++iter){
+        if(!CORBA::is_nil(*iter)){
+            OpenRTM::ExtTrigExecutionContextService_var extEC = OpenRTM::ExtTrigExecutionContextService::_narrow(*iter);
+            if(!CORBA::is_nil(extEC)){
+                extEC->tick();
+            }
         }
     }
 }

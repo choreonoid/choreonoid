@@ -1,6 +1,5 @@
 /*!
   @file SimulationExecutionContext.cpp
-  @author Shin'ichiro Nakaoka
 */
 
 #include "SimulationExecutionContext.h"
