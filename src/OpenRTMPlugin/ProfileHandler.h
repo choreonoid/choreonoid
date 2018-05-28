@@ -8,8 +8,7 @@
 #include <cnoid/Referenced>
 #include <cnoid/IdPair>
 #include <rtm/idl/SDOPackage.hh>
-
-#include "pugixml/pugixml.hpp"
+#include <pugixml.hpp>
 
 namespace cnoid {
 

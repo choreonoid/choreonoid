@@ -30,8 +30,6 @@ set(plugin_sources
   RTSConfigurationView.cpp
   VisionSensorSubscriberRTCItem.cpp
   LoggerUtil.cpp
-  pugixml/pugixml.cpp
-
   deprecated/BodyRTCItem.cpp
   deprecated/VirtualRobotRTC.cpp
   deprecated/VirtualRobotPortHandler.cpp
@@ -78,7 +76,7 @@ add_definitions(${OPENRTM_DEFINITIONS})
 
 add_cnoid_plugin(${plugin} SHARED ${plugin_sources} ${plugin_headers} ${idl_cpp_files} ${idl_h_files} ${mofiles} ${RC_SRCS})
 
-target_link_libraries(${plugin} CnoidBodyPlugin CnoidCorbaPlugin CnoidBodyIoRTC ${OPENRTM_LIBRARIES})
+target_link_libraries(${plugin} CnoidBodyPlugin CnoidCorbaPlugin CnoidBodyIoRTC ${OPENRTM_LIBRARIES} pugixml)
 apply_common_setting_for_plugin(${plugin} "${plugin_headers}")
 
 if(ENABLE_PYTHON)

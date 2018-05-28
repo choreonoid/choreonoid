@@ -1313,6 +1313,10 @@ else()
   include_directories(${PROJECT_SOURCE_DIR}/thirdparty/yaml-0.1.7/include)
 endif()
 
+# pugixml
+add_subdirectory(thirdparty/pugixml-1.9)
+include_directories(${PROJECT_SOURCE_DIR}/thirdparty/pugixml-1.9/src)
+
 if(UNIX)
   # png
   find_package(PNG REQUIRED)
@@ -1353,8 +1357,6 @@ if(ENABLE_EXT)
     endforeach()
   endif()
 endif()
-
-
 
 configure_file(Doxyfile.in ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile @ONLY)
 
