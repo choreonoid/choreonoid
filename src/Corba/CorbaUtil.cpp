@@ -26,6 +26,27 @@ NamingContextHelper* cnoid::getDefaultNamingContextHelper() {
 	return &namingContextHelper;
 }
 
+bool cnoid::isObjectAlive(CORBA::Object_ptr obj)
+{
+	bool isAlive = false;
+
+	if(obj && !CORBA::is_nil(obj)){
+		omniORB::setClientCallTimeout(obj, 150);
+		try {
+			if (!obj->_non_existent()) {
+				isAlive = true;
+			}
+		}
+        catch (const CORBA::TRANSIENT &) {
+		}
+        catch (...) {
+		}
+		omniORB::setClientCallTimeout(obj, 0);
+	}
+    
+	return isAlive;
+}
+
 
 NamingContextHelper::NamingContextHelper()
 {
@@ -304,24 +325,6 @@ void NamingContextHelper::appendBindingList(CosNaming::BindingList_var& bList, s
 		CORBA::release(obj);
 		objects.push_back(info);
 	}
-}
-
-bool NamingContextHelper::isObjectAlive(CORBA::Object_ptr obj) {
-	bool isAlive = false;
-
-	if (obj && !CORBA::is_nil(obj)) {
-		omniORB::setClientCallTimeout(obj, 150);
-		try {
-			if (!obj->_non_existent()) {
-				isAlive = true;
-			}
-		} catch (const CORBA::TRANSIENT &) {
-		} catch (...) {
-		}
-		omniORB::setClientCallTimeout(obj, 0);
-	}
-
-	return isAlive;
 }
 
 bool NamingContextHelper::bindObject(std::vector<ObjectPath>& pathList, std::string& ior) {

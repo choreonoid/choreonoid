@@ -19,6 +19,8 @@ namespace cnoid {
 	*/
 	CNOID_EXPORT void initializeCorbaUtil(CORBA::ORB_ptr orb, bool activatePOAManager = false);
 
+    CNOID_EXPORT bool isObjectAlive(CORBA::Object_ptr obj);
+
 	CNOID_EXPORT CORBA::ORB_ptr getORB();
 
 	class CNOID_EXPORT NamingContextHelper {
@@ -93,7 +95,12 @@ namespace cnoid {
 
 		bool isAlive(bool doRescan = true);
 
-		static bool isObjectAlive(CORBA::Object_ptr obj);
+        /**
+           \deprecated Use the cnoid::isObjectAlive function.
+        */
+		static bool isObjectAlive(CORBA::Object_ptr obj) {
+            return cnoid::isObjectAlive(obj);
+        }
 
 		struct ObjectInfo {
 			std::string id;

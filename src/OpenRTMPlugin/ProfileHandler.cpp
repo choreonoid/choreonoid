@@ -291,6 +291,12 @@ void ProfileHandler::saveRtsProfile(string& targetFile, string& systemId, string
 
 	for (map<string, RTSCompPtr>::iterator it = comps.begin(); it != comps.end(); it++) {
 		RTSComp* comp = it->second.get();
+
+        if(!isObjectAlive(comp->rtc_)){
+            //! \todo put a warning message here
+            continue;
+        }
+        
 		Component compProf;
 		ComponentProfile* compRaw = comp->rtc_->get_component_profile();
 		compProf.id = "RTC:" + string(compRaw->vendor) + ":" + string(compRaw->category) + ":" + string(compRaw->instance_name) + ":" + string(compRaw->version);
@@ -354,6 +360,11 @@ void ProfileHandler::saveRtsProfile(string& targetFile, string& systemId, string
 	for (RTSConnectionMap::iterator it = connections.begin(); it != connections.end(); it++) {
 		RTSConnection* connect = it->second.get();
 
+        if(!isObjectAlive(connect->sourcePort->port)){
+            //! \todo put a warning message here
+            continue;
+        }
+        
 		if (connect->sourcePort->isServicePort) {
 			ServicePortConnector conProf;
 			ConnectorProfileList_var connectorProfiles = connect->sourcePort->port->get_connector_profiles();
