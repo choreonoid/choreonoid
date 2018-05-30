@@ -796,7 +796,6 @@ Group {
 		    }
 		  geometry
 		    DEF _14 IndexedFaceSet {
-		      solid FALSE
 		      coord
 			Coordinate {
 			  point
@@ -1419,7 +1418,6 @@ Group {
 			}
 		      geometry
 			DEF _18 IndexedFaceSet {
-			  solid FALSE
 			  coord
 			    Coordinate {
 			      point
@@ -1930,7 +1928,6 @@ Group {
 		    }
 		  geometry
 		    DEF _20 IndexedFaceSet {
-		      solid FALSE
 		      coord
 			Coordinate {
 			  point
@@ -5465,7 +5462,6 @@ Group {
 			}
 		      geometry
 			DEF _86 IndexedFaceSet {
-			  solid FALSE
 			  coord
 			    Coordinate {
 			      point
@@ -7612,7 +7608,6 @@ Group {
 		    }
 		  geometry
 		    DEF _105 IndexedFaceSet {
-		      solid FALSE
 		      coord
 			Coordinate {
 			  point
@@ -8033,7 +8028,6 @@ Group {
 			}
 		      geometry
 			DEF _106 IndexedFaceSet {
-			  solid FALSE
 			  coord
 			    Coordinate {
 			      point
@@ -8534,7 +8528,6 @@ Group {
 			}
 		      geometry
 			DEF _108 IndexedFaceSet {
-			  solid FALSE
 			  coord
 			    Coordinate {
 			      point
@@ -9092,7 +9085,6 @@ Group {
 			}
 		      geometry
 			DEF _110 IndexedFaceSet {
-			  solid FALSE
 			  coord
 			    Coordinate {
 			      point
@@ -10475,7 +10467,6 @@ Group {
 		}
 	      geometry
 		DEF _118 IndexedFaceSet {
-		  solid FALSE
 		  coord
 		    Coordinate {
 		      point
@@ -24436,7 +24427,6 @@ Group {
 		}
 	      geometry
 		DEF _245 IndexedFaceSet {
-		  solid FALSE
 		  coord
 		    Coordinate {
 		      point
@@ -26305,7 +26295,6 @@ Transform {
 	}
       geometry
 	DEF _0_0 IndexedFaceSet {
-	  solid FALSE
 	  coord
 	    Coordinate {
 	      point
@@ -26730,7 +26719,6 @@ Transform {
 	}
       geometry
 	DEF _1_0 IndexedFaceSet {
-	  solid FALSE
 	  coord
 	    Coordinate {
 	      point
@@ -27203,7 +27191,6 @@ Transform {
 	}
       geometry
 	DEF _0_1 IndexedFaceSet {
-	  solid FALSE
 	  coord
 	    Coordinate {
 	      point
@@ -27629,7 +27616,6 @@ Transform {
 	}
       geometry
 	DEF _1_1 IndexedFaceSet {
-	  solid FALSE
 	  coord
 	    Coordinate {
 	      point
@@ -28108,7 +28094,6 @@ DEF _@PATCH_NAME_F2_4 Transform {
 	}
       geometry
 	IndexedFaceSet {
-	  solid FALSE
 	  coord
 	    Coordinate {
 	      point
@@ -28406,7 +28391,6 @@ DEF _@PATCH_NAME_F2_3 Transform {
 	}
       geometry
 	IndexedFaceSet {
-	  solid FALSE
 	  coord
 	    Coordinate {
 	      point
@@ -29231,7 +29215,6 @@ DEF _@PATCH_NAME_F1_4 Transform {
 	}
       geometry
 	IndexedFaceSet {
-	  solid FALSE
 	  coord
 	    Coordinate {
 	      point
@@ -29518,7 +29501,6 @@ DEF _@PATCH_NAME_F1_2 Transform {
 	}
       geometry
 	IndexedFaceSet {
-	  solid FALSE
 	  coord
 	    Coordinate {
 	      point
@@ -29975,7 +29957,6 @@ DEF _@PATCH_NAME_E7_3 Transform {
 	}
       geometry
 	DEF _0_2 IndexedFaceSet {
-	  solid FALSE
 	  coord
 	    Coordinate {
 	      point
@@ -30406,7 +30387,6 @@ DEF _@PATCH_NAME_E7_1 Transform {
 	}
       geometry
 	DEF _1_2 IndexedFaceSet {
-	  solid FALSE
 	  coord
 	    Coordinate {
 	      point
@@ -30838,7 +30818,6 @@ DEF _@PATCH_NAME_E6_3 Transform {
 	}
       geometry
 	DEF _2_0 IndexedFaceSet {
-	  solid FALSE
 	  coord
 	    Coordinate {
 	      point
@@ -31269,7 +31248,6 @@ DEF _@PATCH_NAME_E6_1 Transform {
 	}
       geometry
 	DEF _3_0 IndexedFaceSet {
-	  solid FALSE
 	  coord
 	    Coordinate {
 	      point
@@ -31700,7 +31678,6 @@ DEF _@PATCH_NAME_E4_4 Transform {
 	}
       geometry
 	DEF _4_0 IndexedFaceSet {
-	  solid FALSE
 	  coord
 	    Coordinate {
 	      point
@@ -32107,7 +32084,6 @@ DEF _@PATCH_NAME_E4_2 Transform {
 	}
       geometry
 	DEF _5_0 IndexedFaceSet {
-	  solid FALSE
 	  coord
 	    Coordinate {
 	      point
@@ -32563,7 +32539,6 @@ DEF _@PATCH_NAME_E3_2 Transform {
 	}
       geometry
 	DEF _6_0 IndexedFaceSet {
-	  solid FALSE
 	  coord
 	    Coordinate {
 	      point
@@ -32994,7 +32969,6 @@ DEF _@PATCH_NAME_E2_2 Transform {
 	}
       geometry
 	DEF _7_0 IndexedFaceSet {
-	  solid FALSE
 	  coord
 	    Coordinate {
 	      point
@@ -33450,7 +33424,6 @@ DEF _@PATCH_NAME_E1_4 Transform {
 	}
       geometry
 	DEF _8_0 IndexedFaceSet {
-	  solid FALSE
 	  coord
 	    Coordinate {
 	      point
@@ -33880,7 +33853,6 @@ DEF _@PATCH_NAME_E1_2 Transform {
 	}
       geometry
 	DEF _9_0 IndexedFaceSet {
-	  solid FALSE
 	  coord
 	    Coordinate {
 	      point
@@ -34336,7 +34308,6 @@ DEF _@PATCH_NAME_D5_2 Transform {
 	}
       geometry
 	DEF _0_3 IndexedFaceSet {
-	  solid FALSE
 	  coord
 	    Coordinate {
 	      point
@@ -34623,7 +34594,6 @@ DEF _@PATCH_NAME_D4_5 Transform {
 	}
       geometry
 	DEF _1_3 IndexedFaceSet {
-	  solid FALSE
 	  coord
 	    Coordinate {
 	      point
@@ -35054,7 +35024,6 @@ DEF _@PATCH_NAME_D4_3 Transform {
 	}
       geometry
 	DEF _2_1 IndexedFaceSet {
-	  solid FALSE
 	  coord
 	    Coordinate {
 	      point
@@ -35460,7 +35429,6 @@ DEF _@PATCH_NAME_D4_2 Transform {
 	}
       geometry
 	DEF _3_1 IndexedFaceSet {
-	  solid FALSE
 	  coord
 	    Coordinate {
 	      point
@@ -35722,7 +35690,6 @@ DEF _@PATCH_NAME_D3_5 Transform {
 	}
       geometry
 	DEF _4_1 IndexedFaceSet {
-	  solid FALSE
 	  coord
 	    Coordinate {
 	      point
@@ -36035,7 +36002,6 @@ DEF _@PATCH_NAME_D3_3 Transform {
 	}
       geometry
 	DEF _5_1 IndexedFaceSet {
-	  solid FALSE
 	  coord
 	    Coordinate {
 	      point
@@ -36491,7 +36457,6 @@ DEF _@PATCH_NAME_D2_5 Transform {
 	}
       geometry
 	DEF _6_1 IndexedFaceSet {
-	  solid FALSE
 	  coord
 	    Coordinate {
 	      point
@@ -36923,7 +36888,6 @@ DEF _@PATCH_NAME_D2_3 Transform {
 	}
       geometry
 	DEF _7_1 IndexedFaceSet {
-	  solid FALSE
 	  coord
 	    Coordinate {
 	      point
@@ -37354,7 +37318,6 @@ DEF _@PATCH_NAME_D2_1 Transform {
 	}
       geometry
 	DEF _8_1 IndexedFaceSet {
-	  solid FALSE
 	  coord
 	    Coordinate {
 	      point
@@ -37761,7 +37724,6 @@ DEF _@PATCH_NAME_D1_5 Transform {
 	}
       geometry
 	DEF _9_1 IndexedFaceSet {
-	  solid FALSE
 	  coord
 	    Coordinate {
 	      point
@@ -38218,7 +38180,6 @@ DEF _@PATCH_NAME_D1_3 Transform {
 	}
       geometry
 	DEF _10_0 IndexedFaceSet {
-	  solid FALSE
 	  coord
 	    Coordinate {
 	      point
@@ -38700,7 +38661,6 @@ DEF _@PATCH_NAME_C5_5 Transform {
 	}
       geometry
 	DEF _0_4 IndexedFaceSet {
-	  solid FALSE
 	  coord
 	    Coordinate {
 	      point
@@ -39132,7 +39092,6 @@ DEF _@PATCH_NAME_C5_3 Transform {
 	}
       geometry
 	DEF _1_4 IndexedFaceSet {
-	  solid FALSE
 	  coord
 	    Coordinate {
 	      point
@@ -39563,7 +39522,6 @@ DEF _@PATCH_NAME_C5_1 Transform {
 	}
       geometry
 	DEF _2_2 IndexedFaceSet {
-	  solid FALSE
 	  coord
 	    Coordinate {
 	      point
@@ -40019,7 +39977,6 @@ DEF _@PATCH_NAME_C3_1 Transform {
 	}
       geometry
 	DEF _3_2 IndexedFaceSet {
-	  solid FALSE
 	  coord
 	    Coordinate {
 	      point
@@ -40451,7 +40408,6 @@ DEF _@PATCH_NAME_C2_4 Transform {
 	}
       geometry
 	DEF _4_2 IndexedFaceSet {
-	  solid FALSE
 	  coord
 	    Coordinate {
 	      point
@@ -41056,7 +41012,6 @@ DEF _@PATCH_NAME_B6_3 Transform {
 	}
       geometry
 	DEF _0_5 IndexedFaceSet {
-	  solid FALSE
 	  coord
 	    Coordinate {
 	      point
@@ -41463,7 +41418,6 @@ DEF _@PATCH_NAME_B6_2 Transform {
 	}
       geometry
 	DEF _1_5 IndexedFaceSet {
-	  solid FALSE
 	  coord
 	    Coordinate {
 	      point
@@ -41996,7 +41950,6 @@ DEF _@PATCH_NAME_B4_5 Transform {
 	}
       geometry
 	DEF _2_3 IndexedFaceSet {
-	  solid FALSE
 	  coord
 	    Coordinate {
 	      point
@@ -42527,7 +42480,6 @@ DEF _@PATCH_NAME_B3_4 Transform {
 	}
       geometry
 	DEF _3_3 IndexedFaceSet {
-	  solid FALSE
 	  coord
 	    Coordinate {
 	      point
@@ -42958,7 +42910,6 @@ DEF _@PATCH_NAME_B3_2 Transform {
 	}
       geometry
 	DEF _4_3 IndexedFaceSet {
-	  solid FALSE
 	  coord
 	    Coordinate {
 	      point
@@ -43389,7 +43340,6 @@ DEF _@PATCH_NAME_B2_8 Transform {
 	}
       geometry
 	DEF _5_2 IndexedFaceSet {
-	  solid FALSE
 	  coord
 	    Coordinate {
 	      point
@@ -43819,7 +43769,6 @@ DEF _@PATCH_NAME_B2_6 Transform {
 	}
       geometry
 	DEF _6_2 IndexedFaceSet {
-	  solid FALSE
 	  coord
 	    Coordinate {
 	      point
@@ -44225,7 +44174,6 @@ DEF _@PATCH_NAME_B2_5 Transform {
 	}
       geometry
 	DEF _7_2 IndexedFaceSet {
-	  solid FALSE
 	  coord
 	    Coordinate {
 	      point
@@ -44881,7 +44829,6 @@ DEF _@PATCH_NAME_A7_3 Transform {
 	}
       geometry
 	DEF _0_6 IndexedFaceSet {
-	  solid FALSE
 	  coord
 	    Coordinate {
 	      point
@@ -45310,7 +45257,6 @@ DEF _@PATCH_NAME_A7_1 Transform {
 	}
       geometry
 	DEF _1_6 IndexedFaceSet {
-	  solid FALSE
 	  coord
 	    Coordinate {
 	      point
@@ -46026,7 +45972,6 @@ DEF _@PATCH_NAME_A6_2 Transform {
 	}
       geometry
 	DEF _3_4 IndexedFaceSet {
-	  solid FALSE
 	  coord
 	    Coordinate {
 	      point
@@ -46504,7 +46449,6 @@ DEF _@PATCH_NAME_A4_2 Transform {
 	}
       geometry
 	DEF _4_4 IndexedFaceSet {
-	  solid FALSE
 	  coord
 	    Coordinate {
 	      point
@@ -46960,7 +46904,6 @@ DEF _@PATCH_NAME_A3_1 Transform {
 	}
       geometry
 	DEF _5_3 IndexedFaceSet {
-	  solid FALSE
 	  coord
 	    Coordinate {
 	      point
@@ -47391,7 +47334,6 @@ DEF _@PATCH_NAME_A2_1 Transform {
 	}
       geometry
 	DEF _6_3 IndexedFaceSet {
-	  solid FALSE
 	  coord
 	    Coordinate {
 	      point

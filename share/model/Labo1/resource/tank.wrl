@@ -116,8 +116,6 @@ Group {
 		    }
 		  geometry
 		    DEF _23 IndexedFaceSet {
-		      solid FALSE
-		      creaseAngle 0.785
 		      coord
 			Coordinate {
 			  point
@@ -672,7 +670,6 @@ Group {
 			}
 		      geometry
 			DEF _27 IndexedFaceSet {
-			  solid FALSE
 			  coord
 			    Coordinate {
 			      point
@@ -776,7 +773,6 @@ Group {
 			}
 		      geometry
 			DEF _28 IndexedFaceSet {
-			  solid FALSE
 			  coord
 			    Coordinate {
 			      point
@@ -1348,7 +1344,6 @@ Group {
 		    }
 		  geometry
 		    DEF _31 IndexedFaceSet {
-		      solid FALSE
 		      coord
 			Coordinate {
 			  point
@@ -3569,7 +3564,6 @@ Group {
 			}
 		      geometry
 			DEF _42 IndexedFaceSet {
-			  solid FALSE
 			  coord
 			    Coordinate {
 			      point
@@ -4775,7 +4769,6 @@ Group {
 		    }
 		  geometry
 		    DEF _57 IndexedFaceSet {
-		      solid FALSE
 		      coord
 			Coordinate {
 			  point
@@ -5309,7 +5302,6 @@ Group {
 		}
 	      geometry
 		DEF _260 IndexedFaceSet {
-		  solid FALSE
 		  coord
 		    Coordinate {
 		      point
@@ -5656,7 +5648,6 @@ Group {
 		}
 	      geometry
 		DEF _262 IndexedFaceSet {
-		  solid FALSE
 		  coord
 		    Coordinate {
 		      point
@@ -6355,7 +6346,6 @@ Group {
 		}
 	      geometry
 		DEF _266 IndexedFaceSet {
-		  solid FALSE
 		  coord
 		    Coordinate {
 		      point
@@ -6847,7 +6837,6 @@ Group {
 		}
 	      geometry
 		DEF _268 IndexedFaceSet {
-		  solid FALSE
 		  coord
 		    Coordinate {
 		      point

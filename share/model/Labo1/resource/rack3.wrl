@@ -114,7 +114,6 @@ Transform {
 	    }
 	  geometry
 	    DEF _272 IndexedFaceSet {
-	      ccw FALSE
 	      coord
 		Coordinate {
 		  point
@@ -174,7 +173,6 @@ Transform {
 	    }
 	  geometry
 	    DEF _273 IndexedFaceSet {
-	      ccw FALSE
 	      coord
 		Coordinate {
 		  point
@@ -237,7 +235,6 @@ Transform {
 	    }
 	  geometry
 	    DEF _274 IndexedFaceSet {
-	      ccw FALSE
 	      coord
 		Coordinate {
 		  point
