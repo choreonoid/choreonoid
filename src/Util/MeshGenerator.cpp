@@ -4,7 +4,7 @@
 */
 
 #include "MeshGenerator.h"
-#include "MeshNormalGenerator.h"
+#include "MeshFilter.h"
 #include "MeshExtractor.h"
 #include "Triangulator.h"
 
@@ -21,15 +21,15 @@ const int defaultDivisionNumber = 20;
 MeshGenerator::MeshGenerator()
 {
     isNormalGenerationEnabled_ = true;
-    normalGenerator = 0;
+    meshFilter = nullptr;
     divisionNumber_ = ::defaultDivisionNumber;
 }
 
 
 MeshGenerator::~MeshGenerator()
 {
-    if(normalGenerator){
-        delete normalGenerator;
+    if(meshFilter){
+        delete meshFilter;
     }
 }
 
@@ -71,10 +71,10 @@ bool MeshGenerator::isNormalGenerationEnabled() const
 void MeshGenerator::generateNormals(SgMesh* mesh, double creaseAngle)
 {
     if(isNormalGenerationEnabled_){
-        if(!normalGenerator){
-            normalGenerator = new MeshNormalGenerator;
+        if(!meshFilter){
+            meshFilter = new MeshFilter;
         }
-        normalGenerator->generateNormals(mesh, creaseAngle);
+        meshFilter->generateNormals(mesh, creaseAngle);
     }
 }
 

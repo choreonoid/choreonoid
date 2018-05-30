@@ -16,6 +16,10 @@ materials:
     roughness: 0.1
     viscosity: 0.0
   -
+    name: Sole
+    roughness: 0.5
+    viscosity: 0.0
+  -
     name: Hand
     roughness: 0.5
     viscosity: 0.0
@@ -31,6 +35,13 @@ materials:
     viscosity: 0.0
   -
     name: SpiderTracks
+    density: 1e3
+    youngsModulus: 1e10
+    roughness: 1.0
+    viscosity: 0.3
+  -
+    name: AizuSpiderTracks
+    density: 1e3
     youngsModulus: 1e10
     roughness: 1.0
     viscosity: 0.3
@@ -49,6 +60,9 @@ materials:
     youngsModulus: 1e10
     roughness: 0.0
     viscosity: 0.0
+  -
+    name: Wire
+    wireYoungsModulusBend: 1e7
 
 contactMaterials:
   -
@@ -59,6 +73,11 @@ contactMaterials:
     materials: [ Ground, Default ]
     friction: 0.5
     restitution: 0.4
+  -
+    materials: [ Ground, Sole ]
+    friction: 1.0
+    restitution: 0.0
+    frictionModel: [ cone, direct ]
   -
     materials: [ Ground, Tracks ]
     friction: 0.5
@@ -76,10 +95,11 @@ contactMaterials:
   -
     materials: [ Ground, TankTracks]
     youngsModulus: 1e10
-    friction: 1.0
+    friction: 0.7
+    secondaryfriction: 0.5
     restitution: 0.0
-    surfaceViscosity: 1e-2
-    secondarySurfaceViscosity: 4e-2
+    surfaceViscosity: 1e-7
+    secondarySurfaceViscosity: 1e-5
     primaryDirection: [ 1, 0, 0 ]
     frictionModel: [ orientedBox, direct ]
     referenceBodyName: Tank
@@ -92,16 +112,32 @@ contactMaterials:
   -
     materials: [ Ground, SpiderTracks ]
     youngsModulus: 1e10
-    friction: 0.5
+    friction: 0.7
     restitution: 0.0
     surfaceViscosity: 1e-2
-    secondarySurfaceViscosity: 4e-2
+    secondarySurfaceViscosity: 2e-2
     primaryDirection: [ 1, 0, 0 ]
     frictionModel: [ orientedBox, direct ]
     referenceBodyName: ARM_SPIDER
     referenceLinkName: B0001
   -
     materials: [ SpiderWheel, SpiderTracks ]
+    youngsModulus: 1e10
+    friction: 0.0
+    restitution: 0.0
+  -
+    materials: [ Ground, AizuSpiderTracks ]
+    youngsModulus: 1e10
+    friction: 0.7
+    restitution: 0.0
+    surfaceViscosity: 1e-3 # 1e-2
+    secondarySurfaceViscosity: 2e-2
+    primaryDirection: [ 1, 0, 0 ]
+    frictionModel: [ orientedBox, direct ]
+    referenceBodyName: AizuSpider
+    referenceLinkName: CHASSIS
+  -
+    materials: [ SpiderWheel, AizuSpiderTracks ]
     youngsModulus: 1e10
     friction: 0.0
     restitution: 0.0
@@ -121,4 +157,12 @@ contactMaterials:
     materials: [ DoubleArmV7AWheel, DoubleArmV7ATracks ]
     youngsModulus: 1e10
     friction: 0.0
+    restitution: 0.0
+  -
+    materials: [ Wire, Default ]
+    friction: 0.5
+    restitution: 0.0
+  -
+    materials: [ Wire, Ground ]
+    friction: 0.5
     restitution: 0.0

@@ -8,6 +8,7 @@
 
 #include "Seq.h"
 #include "EigenUtil.h"
+#include "NullOut.h"
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -16,6 +17,7 @@ class CNOID_EXPORT Vector3Seq : public Seq<Vector3>
 {
 public:
     typedef Seq<Vector3> BaseSeqType;
+    typedef typename BaseSeqType::value_type value_type;
             
     Vector3Seq(int nFrames = 0);
     Vector3Seq(const Vector3Seq& org);
@@ -24,14 +26,15 @@ public:
     using BaseSeqType::operator=;
     virtual AbstractSeqPtr cloneSeq() const;
         
-    virtual bool loadPlainFormat(const std::string& filename);
-    virtual bool saveAsPlainFormat(const std::string& filename);
+    bool loadPlainFormat(const std::string& filename, std::ostream& os = nullout());
+    bool saveAsPlainFormat(const std::string& filename, std::ostream& os = nullout());
 
 protected:
-    virtual Vector3 defaultValue() const { return Vector3::Zero(); }
-
-    virtual bool doWriteSeq(YAMLWriter& writer);
-    virtual bool doReadSeq(const Mapping& archive);
+    virtual Vector3 defaultValue() const override;
+    virtual bool doReadSeq(const Mapping* archive, std::ostream& os) override;
+    virtual bool doWriteSeq(YAMLWriter& writer) override;
+    bool writeVector3SeqHeaders(YAMLWriter& writer);
+    bool writeVector3SeqFrames(YAMLWriter& writer);
 };
 
 typedef std::shared_ptr<Vector3Seq> Vector3SeqPtr;

@@ -13,6 +13,7 @@ RangeCamera::RangeCamera()
     setImageType(NO_IMAGE);
     points_ = std::make_shared<PointData>();
     isOrganized_ = false;
+    isDense_ = false;
 }
 
 
@@ -42,6 +43,7 @@ void RangeCamera::copyStateFrom(const RangeCamera& other)
 void RangeCamera::copyRangeCameraStateFrom(const RangeCamera& other)
 {
     isOrganized_ = other.isOrganized_;
+    isDense_ = other.isDense_;
 }
 
 

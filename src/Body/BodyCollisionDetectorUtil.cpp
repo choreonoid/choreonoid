@@ -36,7 +36,7 @@ int cnoid::addBodyToCollisionDetector(Body& body, CollisionDetector& detector, b
     int excludeTreeDepth = 1;
     boost::dynamic_bitset<> exclusions(numLinks);
     boost::dynamic_bitset<> staticFlags(numLinks);
-    vector< vector<int> > excludeLinkGroups;
+    vector<vector<int>> excludeLinkGroups;
     
     const Mapping& cdInfo = *body.info()->findMapping("collisionDetection");
     if(cdInfo.isValid()){
@@ -74,9 +74,9 @@ int cnoid::addBodyToCollisionDetector(Body& body, CollisionDetector& detector, b
         if(exclusions[i]){
             detector.addGeometry(0);
         } else {
-            int id = detector.addGeometry(body.link(i)->collisionShape());
-            if(staticFlags[i]){
-                detector.setGeometryStatic(id);
+            auto handle = detector.addGeometry(body.link(i)->collisionShape());
+            if(handle && staticFlags[i]){
+                detector.setGeometryStatic(*handle);
             }
         }
     }

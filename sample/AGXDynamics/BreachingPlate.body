@@ -1,0 +1,156 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: BreachingPlate
+
+
+jointCompliance: &BJJointCompliance 1e-5
+#breakType: &BJBreakType force
+breakType: &BJBreakType impulse
+breakLimitImpulse: &BJBreakLimitImpulse 5e4
+breakLimitForce: &BJBreakLimitForce 100
+offsetForce: &BJOffsetForce 1000
+period: &BJPeriod 4
+validAxis: &BJValidAxis [ 0, 0, 1]
+
+links:
+  -
+    name: Plate
+    jointType: fixed
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 8.0
+    inertia: [
+      0.1, 0,   0,
+      0,   0.1, 0,
+      0,   0,   0.5 ]
+    material: Ground
+    elements:
+      -
+        type: Transform
+        translation: [ 0.0, 0.0, -0.1 ]
+        elements:
+          -
+            type: Shape
+            translation: [ -0.4, 0.0, 0.0 ]
+            geometry: &cuboidLong { type: Box, size: [ 0.4, 1.2, 0.2 ]}
+            appearance: &BodyAppearance
+              material: { diffuseColor: [ 0, 0.6, 0 ], specularColor: [ 0.2, 0.8, 0.2 ], shinines: 0.6 }
+          -
+            type: Shape
+            translation: [ 0.4, 0.0, 0.0 ]
+            geometry: *cuboidLong
+            appearance: *BodyAppearance
+          -
+            type: Shape
+            translation: [ 0.0, 0.4, 0.0 ]
+            geometry: &cuboidShort { type: Box, size: [ 0.4, 0.4, 0.2 ]}
+            appearance: *BodyAppearance
+          -
+            type: Shape
+            translation: [ 0.0, -0.4, 0.0 ]
+            geometry: *cuboidShort
+            appearance: *BodyAppearance
+  -
+    name: PlatePiece
+    parent: Plate
+    jointType: free
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 8.0
+    inertia: [
+      0.1, 0,   0,
+      0,   0.1, 0,
+      0,   0,   0.1 ]
+    material: Ground
+    elements:
+      -
+        type: Transform
+        translation: [ 0.0, 0.0, -0.1 ]
+        elements:
+          -
+            type: Shape
+            geometry: { type: Box, size: [ 0.4, 0.4, 0.2 ]}
+            appearance:
+              material: { diffuseColor: [ 1.0, 0, 0 ], specularColor: [ 0.2, 0.8, 0.2 ], shinines: 0.6 }
+      -
+        type: AGXBreakableJointDevice
+        link1Name: Plate
+        link2Name: PlatePiece
+        jointType: fixed
+        jointCompliance: *BJJointCompliance
+        breakType: *BJBreakType
+        breakLimitImpulse: *BJBreakLimitImpulse
+        breakLimitForce: *BJBreakLimitForce
+        offsetForce: *BJOffsetForce
+        period: *BJPeriod
+        validAxis: *BJValidAxis
+  -
+    name: Plate2
+    parent: Plate
+    translation: [ 0.0, 1.6, 0.0 ]
+    jointType: fixed
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 8.0
+    inertia: [
+      0.1, 0,   0,
+      0,   0.1, 0,
+      0,   0,   0.5 ]
+    material: Ground
+    elements:
+      -
+        type: Transform
+        translation: [ 0.0, 0.0, -0.1 ]
+        elements:
+          -
+            type: Shape
+            translation: [ -0.35, 0.0, 0.0 ]
+            geometry: &cuboidLong2 { type: Box, size: [ 0.495, 1.2, 0.2 ]}
+            appearance: &BodyAppearance2
+              material: { diffuseColor: [ 0, 0.6, 0 ], specularColor: [ 0.2, 0.8, 0.2 ], shinines: 0.6 }
+          -
+            type: Shape
+            translation: [ 0.35, 0.0, 0.0 ]
+            geometry: *cuboidLong2
+            appearance: *BodyAppearance2
+          -
+            type: Shape
+            translation: [ 0.0, 0.35, 0.0 ]
+            geometry: &cuboidShort2 { type: Box, size: [ 0.21, 0.495, 0.2 ]}
+            appearance: *BodyAppearance2
+          -
+            type: Shape
+            translation: [ 0.0, -0.35, 0.0 ]
+            geometry: *cuboidShort2
+            appearance: *BodyAppearance2
+  -
+    name: PlatePiece2
+    parent: Plate2
+    jointType: free
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 8.0
+    inertia: [
+      0.1, 0,   0,
+      0,   0.1, 0,
+      0,   0,   0.1 ]
+    material: Ground
+    elements:
+      -
+        type: Transform
+        translation: [ 0.0, 0.0, -0.1 ]
+        elements:
+          -
+            type: Shape
+            geometry: { type: Box, size: [ 0.21, 0.21, 0.2 ]}
+            appearance:
+              material: { diffuseColor: [ 1.0, 0, 0 ], specularColor: [ 0.2, 0.8, 0.2 ], shinines: 0.6 }
+      -
+        type: AGXBreakableJointDevice
+        link1Name: Plate2
+        link2Name: PlatePiece2
+        jointType: fixed
+        jointCompliance: *BJJointCompliance
+        breakType: *BJBreakType
+        breakLimitImpulse: *BJBreakLimitImpulse
+        breakLimitForce: *BJBreakLimitForce
+        offsetForce: *BJOffsetForce
+        period: *BJPeriod
+        validAxis: *BJValidAxis

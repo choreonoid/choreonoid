@@ -10,10 +10,12 @@
 #include <cnoid/SceneCameras>
 #include <cnoid/SceneView>
 #include <cnoid/BodyItem>
+#include <cnoid/SceneRenderer>
+#include <cnoid/SceneBar>
+#include <cnoid/EigenUtil>
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 
 namespace {
@@ -73,8 +75,7 @@ class BodyTrackingCameraTransform : public InteractiveCameraTransform
             connection.disconnect();
             if(bodyItem){
                 connection.reset(
-                    bodyItem->sigKinematicStateChanged().connect(
-                        std::bind(&BodyTrackingCameraTransform::onBodyMoved, this)));
+                    bodyItem->sigKinematicStateChanged().connect( [&](){ onBodyMoved(); } ));
                 updateRelativePosition();
             }
         }
@@ -125,10 +126,13 @@ public:
     SgPerspectiveCameraPtr persCamera;
     SgOrthographicCameraPtr orthoCamera;
     SgUpdate update;
+    Selection cameraType;
     BodyTrackingCameraItemImpl();
     void doPutProperties(PutPropertyFunction& putProperty);    
     bool onKeepRelativeAttitudeChanged(bool on);
     bool setClipDistances(double nearDistance, double farDistance);
+    bool setFieldOfView(double fov);
+    bool setCameraType(int index);
 };
 
 }
@@ -157,7 +161,12 @@ BodyTrackingCameraItem::BodyTrackingCameraItem(const BodyTrackingCameraItem& org
 
 
 BodyTrackingCameraItemImpl::BodyTrackingCameraItemImpl()
+    : cameraType(BodyTrackingCameraItem::N_CAMERA_TYPE, CNOID_GETTEXT_DOMAIN_NAME)
 {
+    cameraType.setSymbol(BodyTrackingCameraItem::PERSPECTIVE,  N_("Perspective"));
+    cameraType.setSymbol(BodyTrackingCameraItem::ORTHOGRAPHIC, N_("Orthographic"));
+    cameraType.select(BodyTrackingCameraItem::PERSPECTIVE);
+
     cameraTransform = new BodyTrackingCameraTransform();
     cameraTransform->setPosition(
         SceneView::instance()->sceneWidget()->builtinCameraTransform()->position());
@@ -166,7 +175,7 @@ BodyTrackingCameraItemImpl::BodyTrackingCameraItemImpl()
     cameraTransform->addChild(persCamera);
 
     orthoCamera = new SgOrthographicCamera();
-    cameraTransform->addChild(orthoCamera);
+    //cameraTransform->addChild(orthoCamera);
 }
 
 
@@ -174,9 +183,9 @@ void BodyTrackingCameraItem::setName(const std::string& name)
 {
     Item::setName(name);
     
-    impl->persCamera->setName(name + " (Perspective)");
+    impl->persCamera->setName(name);
     impl->persCamera->notifyUpdate(impl->update);
-    impl->orthoCamera->setName(name + " (Orthographic)");
+    impl->orthoCamera->setName(name);
     impl->orthoCamera->notifyUpdate(impl->update);
 }
 
@@ -207,12 +216,16 @@ void BodyTrackingCameraItem::doPutProperties(PutPropertyFunction& putProperty)
 
 void BodyTrackingCameraItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
-    putProperty("Keep relative attitude", cameraTransform->isConstantRelativeAttitudeMode(),
-                std::bind(&BodyTrackingCameraItemImpl::onKeepRelativeAttitudeChanged, this, _1));
-    putProperty("Near clip distance", persCamera->nearClipDistance(),
-                std::bind(&BodyTrackingCameraItemImpl::setClipDistances, this, _1, persCamera->farClipDistance()));
-    putProperty("Far clip distance", persCamera->farClipDistance(),
-                std::bind(&BodyTrackingCameraItemImpl::setClipDistances, this, persCamera->nearClipDistance(), _1));
+    putProperty(_("Keep relative attitude"), cameraTransform->isConstantRelativeAttitudeMode(),
+                [&](bool on){ return onKeepRelativeAttitudeChanged(on); } );
+    putProperty(_("Camera type"), cameraType,
+                [&](int index){ return setCameraType(index); });
+    putProperty(_("Near clip distance"), persCamera->nearClipDistance(),
+                [&](double nearDistance){ return setClipDistances( nearDistance, persCamera->farClipDistance()); } );
+    putProperty(_("Far clip distance"), persCamera->farClipDistance(),
+                [&](double farDistance){ return setClipDistances(persCamera->nearClipDistance(), farDistance); } );
+    putProperty(_("field Of View"), degree(persCamera->fieldOfView()),
+                [&](double fov){ return setFieldOfView(radian(fov)); } );
 }
 
 
@@ -237,11 +250,62 @@ bool BodyTrackingCameraItemImpl::setClipDistances(double nearDistance, double fa
 }
 
 
+bool BodyTrackingCameraItemImpl::setFieldOfView(double fov)
+{
+    persCamera->setFieldOfView(fov);
+    persCamera->notifyUpdate(update);
+    return true;
+}
+
+
+bool BodyTrackingCameraItemImpl::setCameraType(int index)
+{
+    if(cameraType.selectedIndex() == index){
+        return true;
+    }
+
+    cameraType.select(index);
+
+    SgCamera* newCamera;
+    SgCamera* removeCamera;
+    if(cameraType.is(BodyTrackingCameraItem::PERSPECTIVE)){
+        newCamera = persCamera;
+        removeCamera = orthoCamera;
+    }else if(cameraType.is(BodyTrackingCameraItem::ORTHOGRAPHIC)){
+        newCamera = orthoCamera;
+        removeCamera = persCamera;
+    }
+
+    vector<SceneWidget*> sceneWidgets;
+    SceneBar::instance()->sceneWidget(sceneWidgets);
+    vector<SceneRenderer*> renderers;
+    for(auto sceneWidget : sceneWidgets){
+        renderers.push_back(sceneWidget->renderer());
+    }
+
+    cameraTransform->addChild(newCamera, true);
+    for(auto renderer : renderers){
+        if(renderer->currentCamera() == removeCamera){
+            renderer->extractPreprocessedNodes();
+            renderer->setCurrentCamera(newCamera);
+        }
+    }
+    cameraTransform->removeChild(removeCamera, true);
+    for(auto renderer : renderers){
+        renderer->extractPreprocessedNodes();
+    }
+
+    return true;
+}
+
+
 bool BodyTrackingCameraItem::store(Archive& archive)
 {
-    archive.write("keepRelativeAttitude", impl->cameraTransform->isConstantRelativeAttitudeMode());    
+    archive.write("keepRelativeAttitude", impl->cameraTransform->isConstantRelativeAttitudeMode());
+    archive.write("cameraType", impl->cameraType.selectedSymbol(), DOUBLE_QUOTED);
     archive.write("nearClipDistance", impl->persCamera->nearClipDistance());    
-    archive.write("farClipDistance", impl->persCamera->farClipDistance());    
+    archive.write("farClipDistance", impl->persCamera->farClipDistance());
+    archive.write("fieldOfView", impl->persCamera->fieldOfView());
     return true;
 }
 
@@ -250,8 +314,14 @@ bool BodyTrackingCameraItem::restore(const Archive& archive)
 {
     impl->cameraTransform->setConstantRelativeAttitudeMode(
         archive.get("keepRelativeAttitude", false));
+    string symbol;
+    if(archive.read("cameraType", symbol)){
+        int index = impl->cameraType.index(symbol);
+        impl->setCameraType(index);
+    }
     double nearDistance = archive.get("nearClipDistance", impl->persCamera->nearClipDistance());
     double farDistance = archive.get("farClipDistance", impl->persCamera->farClipDistance());
     impl->setClipDistances(nearDistance, farDistance);
+    impl->setFieldOfView( archive.get("fieldOfView", impl->persCamera->fieldOfView()) );
     return true;
 }

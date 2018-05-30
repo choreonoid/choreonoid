@@ -12,18 +12,18 @@
 
 namespace cnoid {
 
-class CNOID_EXPORT ColdetModelPair
+class CNOID_EXPORT ColdetModelPair : public Referenced
 {
 public:
     ColdetModelPair();
-    ColdetModelPair(const ColdetModelPtr& model0, const ColdetModelPtr& model1, double tolerance = 0.0);
+    ColdetModelPair(ColdetModel* model0, ColdetModel* model1, double tolerance = 0.0);
     ColdetModelPair(const ColdetModelPair& org);
 
     virtual ~ColdetModelPair();
 
-    void set(const ColdetModelPtr& model0, const ColdetModelPtr& model1);
+    void set(ColdetModel* model0, ColdetModel* model1);
 
-    const ColdetModelPtr& model(int index) { return models[index]; }
+    ColdetModel* model(int index) { return models[index]; }
 
     std::vector<collision_data>& detectCollisions() {
         return detectCollisionsSub(true);
@@ -41,6 +41,7 @@ public:
         return !detectCollisionsSub(false).empty();
     }
 
+    static double computeDistance(ColdetModel* model0, ColdetModel* model1, double* point0, double* point1);
     double computeDistance(double* point0, double* point1);
 
     /**
@@ -89,7 +90,7 @@ private:
     int triTestsCount;
 };
 
-typedef std::shared_ptr<ColdetModelPair> ColdetModelPairPtr;
+typedef ref_ptr<ColdetModelPair> ColdetModelPairPtr;
 
 }
 

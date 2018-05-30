@@ -21,6 +21,7 @@ public:
     BulletSimulatorItem();
     BulletSimulatorItem(const BulletSimulatorItem& org);
     virtual ~BulletSimulatorItem();
+    virtual Vector3 getGravity() const override;
 
 //    virtual void setAllLinkPositionOutputMode(bool on);
 

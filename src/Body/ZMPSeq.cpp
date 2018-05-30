@@ -79,20 +79,22 @@ void ZMPSeq::setRootRelative(bool on)
 
 bool ZMPSeq::doWriteSeq(YAMLWriter& writer)
 {
-    if(Vector3Seq::doWriteSeq(writer)){
-        if(isRootRelative_){
-            writer.putKeyValue("isRootRelative", true);
-        }
-        return true;
+    if(!Vector3Seq::writeVector3SeqHeaders(writer)){
+        return false;
     }
-    return false;
+    
+    if(isRootRelative_){
+        writer.putKeyValue("isRootRelative", true);
+    }
+
+    return Vector3Seq::writeVector3SeqFrames(writer);
 }
 
 
-bool ZMPSeq::doReadSeq(const Mapping& archive)
+bool ZMPSeq::doReadSeq(const Mapping* archive, std::ostream& os)
 {
-    if(Vector3Seq::doReadSeq(archive)){
-        archive.read("isRootRelative", isRootRelative_);
+    if(Vector3Seq::doReadSeq(archive, os)){
+        archive->read("isRootRelative", isRootRelative_);
         return true;
     }
     return false;

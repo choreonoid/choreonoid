@@ -6,11 +6,18 @@
 #include "AbstractSeq.h"
 #include "YAMLWriter.h"
 #include <boost/format.hpp>
+#include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
 
 using boost::format;
+
+namespace {
+
+string dummySeqMessage;
+
+}
 
 
 AbstractSeq::AbstractSeq(const char* seqType)
@@ -22,7 +29,7 @@ AbstractSeq::AbstractSeq(const char* seqType)
 
 AbstractSeq::AbstractSeq(const AbstractSeq& org)
     : seqType_(org.seqType_),
-      content(org.content)
+      contentName_(org.contentName_)
 {
 
 }
@@ -31,7 +38,7 @@ AbstractSeq::AbstractSeq(const AbstractSeq& org)
 AbstractSeq& AbstractSeq::operator=(const AbstractSeq& rhs)
 {
     seqType_ = rhs.seqType_;
-    content = rhs.content;
+    contentName_ = rhs.contentName_;
     return *this;
 }
 
@@ -39,7 +46,7 @@ AbstractSeq& AbstractSeq::operator=(const AbstractSeq& rhs)
 void AbstractSeq::copySeqProperties(const AbstractSeq& source)
 {
     seqType_ = source.seqType_;
-    content = source.content;
+    contentName_ = source.contentName_;
 }
 
 
@@ -49,112 +56,137 @@ AbstractSeq::~AbstractSeq()
 }
 
 
+double AbstractSeq::defaultFrameRate()
+{
+    return 100.0;
+}
+
+double AbstractSeq::getTimeStep() const
+{
+    double r = getFrameRate();
+    return (r > 0.0) ? 1.0 / r : 0.0;
+}
+    
+
+void AbstractSeq::setTimeStep(double timeStep)
+{
+    if(timeStep > 0.0){
+        setFrameRate(1.0 / timeStep);
+    } else {
+        setFrameRate(0.0);
+    }
+}
+
+
 double AbstractSeq::getTimeOfFrame(int frame) const
 {
-    return (frame + getOffsetTimeFrame()) / getFrameRate();
+    double r = getFrameRate();
+    return (r > 0.0) ? (frame / r) + getOffsetTime() : getOffsetTime();
 }
 
 
 int AbstractSeq::getFrameOfTime(double time) const
 {
-    return static_cast<int>(time * getFrameRate()) - getOffsetTimeFrame();
+    return static_cast<int>(time - getOffsetTime()) * getFrameRate();
 }
 
 
 int AbstractSeq::getOffsetTimeFrame() const
 {
-    return 0;
+    return static_cast<int>(getOffsetTime() * getFrameRate());
 }
 
 
-bool AbstractSeq::setOffsetTimeFrame(int offset)
+double AbstractSeq::getTimeLength() const
 {
-    return (offset == 0);
+    double r = getFrameRate();
+    return (r > 0.0) ? (getNumFrames() / r) : 0.0;
 }
 
 
-bool AbstractSeq::readSeq(const Mapping& archive)
+bool AbstractSeq::readSeq(const Mapping* archive, std::ostream& os)
 {
+    bool result = false;
+    
     try {
-        if(content.empty()){
-            if(!archive.read("content", content)){
-                archive.read("purpose", content); // old version
-            }
-        }
-        setFrameRate(archive["frameRate"].toDouble());
-
-        return doReadSeq(archive);
-
-    } catch (ValueNode::Exception& ex) {
-        addSeqMessage(ex.message());
-        return false;
+        result = doReadSeq(archive, os);
     }
-}
-
-
-bool AbstractSeq::doReadSeq(const Mapping&)
-{
-    return true;
-}
-
-
-bool AbstractSeq::checkSeqContent(const Mapping& archive, const std::string contentName, bool throwEx)
-{
-    string content_;
-    if(!archive.read("content", content_)){
-        archive.read("purpose", content_); // old version
+    catch (ValueNode::Exception& ex) {
+        os << ex.message();
     }
-    bool result = (content_ == contentName);
 
-    if(!result){
-        string message;
-
-        if(content_.empty()){
-            message =
-                str(format("Content of %1% should be \"%2%\" but it is not specified.")
-                    % seqType() % contentName);
-        } else {
-            message =
-                str(format("Content \"%1%\" of %2% is different from the required content \"%3%\".")
-                    % content_ % seqType() % contentName);
-        }
-        if(throwEx){
-            archive.throwException(message);
-        } else {
-            addSeqMessage(message);
-        }
-    }
     return result;
+}
+
+
+bool AbstractSeq::doReadSeq(const Mapping*, std::ostream& os)
+{
+    os << format(_("The function to read %1% is not implemented.")) % seqType() << endl;
+    return false;
 }
 
 
 bool AbstractSeq::writeSeq(YAMLWriter& writer)
 {
-    bool result = false;
-    
-    if(seqType().empty()){
-        addSeqMessage("setType() is empty.");
-
-    } else {
-        writer.startMapping();
+    writer.startMapping();
         
-        writer.putKeyValue("type", seqType());
-        writer.putKeyValue("content", seqContentName());
-        writer.putKeyValue("frameRate", getFrameRate());
-        writer.putKeyValue("numFrames", getNumFrames());
-
-        result = doWriteSeq(writer);
-
-        writer.endMapping();
-    }
+    bool result = doWriteSeq(writer);
+    
+    writer.endMapping();
     
     return result;
 }
 
 
-bool AbstractSeq::doWriteSeq(YAMLWriter& /* writer */)
+bool AbstractSeq::doWriteSeq(YAMLWriter& writer)
 {
+    writer.putMessage(str(format(_("The function to write %1% is not implemented.\n")) % seqType()));
+    return false;
+}
+
+
+bool AbstractSeq::writeSeqHeaders(YAMLWriter& writer)
+{
+    if(seqType_.empty()){
+        if(contentName_.empty()){
+            writer.putMessage(_("The type of the sequence to write is unknown.\n"));
+        } else {
+            writer.putMessage(str(format(_("The type of the %1% sequence to write is unknown.\n")) % contentName_));
+        }
+        return false;
+    }
+
+    const double frameRate = getFrameRate();
+    if(frameRate <= 0.0){
+        writer.putMessage(
+            str(format(_("Frame rate %1% of %2% is invalid.\n"))
+                % frameRate % (contentName_.empty() ? seqType_ : contentName_)));
+        return false;
+    }
+
+    writer.putKeyValue("type", seqType_);
+    if(!contentName_.empty()){
+        writer.putKeyValue("content", contentName_);
+    }
+
+    if(auto multiSeq = dynamic_cast<AbstractMultiSeq*>(this)){
+        writer.putKeyValue("numParts", multiSeq->getNumParts());
+    }
+
+    double version = writer.info("formatVersion", 0.0);
+    if(version == 0.0 || !writer.info("isComponent", false)){
+        writer.putKeyValue("formatVersion", version == 0.0 ? 2.0 : version);
+    }
+    writer.putKeyValue("frameRate", frameRate);
+    writer.putKeyValue("numFrames", getNumFrames());
+    
     return true;
+}
+
+
+const std::string& AbstractSeq::seqMessage() const
+{
+    return dummySeqMessage;
 }
 
 
@@ -206,23 +238,24 @@ const std::string& AbstractMultiSeq::partLabel(int /* partIndex */) const
 
 bool AbstractMultiSeq::doWriteSeq(YAMLWriter& writer)
 {
-    writer.putKeyValue("numParts", getNumParts());
-    return true;
+    if(AbstractSeq::doWriteSeq(writer)){
+        writer.putKeyValue("numParts", getNumParts());
+        return true;
+    }
+    return false;
 }
 
 
-bool AbstractMultiSeq::readSeqPartLabels(const Mapping& archive, SetPartLabelFunction setPartLabel)
+std::vector<std::string> AbstractMultiSeq::readSeqPartLabels(const Mapping& archive)
 {
+    vector<string> labelStrings;
     const Listing& labels = *archive.findListing("partLabels");
     if(labels.isValid()){
         for(int i=0; i < labels.size(); ++i){
-            setPartLabel(labels[i].toString(), i);
+            labelStrings.push_back(labels[i].toString());
         }
-        return true;
-    } else {
-        addSeqMessage("\"partLabels\" is not valid.");
     }
-    return false;
+    return labelStrings;
 }
 
 

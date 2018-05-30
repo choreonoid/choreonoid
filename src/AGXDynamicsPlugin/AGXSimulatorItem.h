@@ -18,11 +18,19 @@ public:
     virtual ~AGXSimulatorItem();
     bool saveSimulationToAGXFile();
 
+    virtual Vector3 getGravity() const override;
+    void setNumThreads(unsigned int num);
+    void setEnableContactReduction(bool bOn);
+    void setContactReductionBinResolution(int r);
+    void setContactReductionThreshhold(int t);
+    void setEnableContactWarmstarting(bool bOn);
+    void setEnableAMOR(bool bOn);
+    
 protected:
     virtual Item* doDuplicate() const;
     void doPutProperties(PutPropertyFunction& putProperty);
-    //virtual bool store(Archive& archive);
-    //virtual bool restore(const Archive& archive);
+    virtual bool store(Archive& archive);
+    virtual bool restore(const Archive& archive);
     virtual SimulationBody* createSimulationBody(Body* orgBody);
     virtual bool initializeSimulation(const std::vector<SimulationBody*>& simBodies);
 //    virtual void initializeSimulationThread();
@@ -38,7 +46,7 @@ private:
     AGXSimulatorItemImplPtr impl;
 //    friend class AGXSimulatorItemImpl;
 };
-
+typedef ref_ptr<AGXSimulatorItem> AGXSimulatorItemPtr;
 
 }
 

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Chorenoid
+Name[ja]=コレオノイド
+Exec=/usr/bin/choreonoid
+Terminal=false
+X-MultipleArgs=false
+Type=Application
+Icon=choreonoid
+Categories=Development;Science;Engineering;
+StartupNotify=true

@@ -1,0 +1,53 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: agxMagneticJoint
+
+links:
+  - name: Socket
+    translation: [ 0, 0, 0 ]
+    jointType: fixed
+    density: 1.0
+    elements: &shapeSocket
+      -
+        type: Shape
+        geometry: { type: Box, size: [0.1, 0.3, 0.1 ]}
+      -
+        type: Shape
+        translation: [ 0.0, 0.2, 0.0 ]
+        geometry: { type: Box, size: [0.3, 0.1, 0.3 ]}
+        appearance: { material: { diffuseColor: [ 1.0, 0, 0 ] }}
+  -
+    name: Plug
+    parent: Socket
+    translation: [ 0, 0.7, 0.0 ]
+    #rotation: [ 0, 0, 1, 180 ]
+    jointType: free
+    density: 55.6
+    mass: 1.0
+    inertia: [
+      0.6, 0,   0,
+      0,   0.6, 0,
+      0,   0,   0.6 ]
+    centerOfMass: [ 0, 0.2, 0 ]
+    elements:
+      -
+        type: Shape
+        geometry: { type: Box, size: [0.3, 0.3, 0.1 ]}
+        appearance: { material: { diffuseColor: [ 0.53, 0.7, 0.87 ] }}
+      -
+        type: Shape
+        translation: [ 0.0, 0.0, 0.2 ]
+        geometry: { type: Box, size: [0.1, 0.1, 0.3 ]}
+      -
+        type: AGXMagneticJointDevice
+        link1Name: Socket
+        link2Name: Plug
+        position1: [ 0, 0.25, 0 ]
+        position2: [ 0, 0, -0.05 ]
+        connectAxis1: [ 0, 1, 0 ]
+        connectAxis2: [ 0, 0, 1 ]
+        jointCompliance: 1e-6
+        jointSpookDamping: 1.0
+        validDistance: 1.0
+        validAngle: 20

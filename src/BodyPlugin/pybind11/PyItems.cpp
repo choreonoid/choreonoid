@@ -21,22 +21,33 @@ void exportItems(py::module m)
         .def("updateCollisionDetectorLater", &WorldItem::updateCollisionDetectorLater)
         .def("updateCollisionDetector", &WorldItem::updateCollisionDetector)
         .def("updateCollisions", &WorldItem::updateCollisions)
-        .def("sigCollisionsUpdated", &WorldItem::sigCollisionsUpdated)
+        .def_property_readonly("sigCollisionsUpdated", &WorldItem::sigCollisionsUpdated)
+
+        // deprecated
+        .def("getSigCollisionsUpdated", &WorldItem::sigCollisionsUpdated)
         ;
 
     PyItemList<WorldItem>(m, "WorldItemList");
     
-    py::class_<BodyMotionItem, BodyMotionItemPtr, AbstractMultiSeqItem>(m, "BodyMotionItem")
+    py::class_<BodyMotionItem, BodyMotionItemPtr, AbstractSeqItem>(m, "BodyMotionItem")
         .def(py::init<>())
-        .def("motion", (BodyMotionPtr(BodyMotionItem::*)()) &BodyMotionItem::motion)
-        .def("jointPosSeqItem", (MultiValueSeqItem*(BodyMotionItem::*)())&BodyMotionItem::jointPosSeqItem)
-        .def("jointPosSeq", &BodyMotionItem::jointPosSeq)
-        .def("linkPosSeqItem", (MultiSE3SeqItem*(BodyMotionItem::*)())&BodyMotionItem::linkPosSeqItem)
-        .def("linkPosSeq", &BodyMotionItem::linkPosSeq)
-        .def("numExtraSeqItems", &BodyMotionItem::numExtraSeqItems)
+        .def_property_readonly("motion", (BodyMotionPtr(BodyMotionItem::*)()) &BodyMotionItem::motion)
+        .def_property_readonly("jointPosSeqItem", (MultiValueSeqItem*(BodyMotionItem::*)())&BodyMotionItem::jointPosSeqItem)
+        .def_property_readonly("jointPosSeq", &BodyMotionItem::jointPosSeq)
+        .def_property_readonly("linkPosSeqItem", (MultiSE3SeqItem*(BodyMotionItem::*)())&BodyMotionItem::linkPosSeqItem)
+        .def_property_readonly("linkPosSeq", &BodyMotionItem::linkPosSeq)
+        .def_property_readonly("numExtraSeqItems", &BodyMotionItem::numExtraSeqItems)
         .def("extraSeqKey", &BodyMotionItem::extraSeqKey)
         .def("extraSeqItem", (AbstractSeqItem*(BodyMotionItem::*)(int))&BodyMotionItem::extraSeqItem)
         .def("updateExtraSeqItems", &BodyMotionItem::updateExtraSeqItems)
+
+        // deprecated
+        .def("getMotion", (BodyMotionPtr(BodyMotionItem::*)()) &BodyMotionItem::motion)
+        .def("getJointPosSeqItem", (MultiValueSeqItem*(BodyMotionItem::*)())&BodyMotionItem::jointPosSeqItem)
+        .def("getJointPosSeq", &BodyMotionItem::jointPosSeq)
+        .def("getLinkPosSeqItem", (MultiSE3SeqItem*(BodyMotionItem::*)())&BodyMotionItem::linkPosSeqItem)
+        .def("getLinkPosSeq", &BodyMotionItem::linkPosSeq)
+        .def("getNumExtraSeqItems", &BodyMotionItem::numExtraSeqItems)
         ;
 
     PyItemList<BodyMotionItem>(m, "BodyMotionItemList");

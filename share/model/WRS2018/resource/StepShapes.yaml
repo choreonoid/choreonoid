@@ -1,0 +1,66 @@
+WAFFLE_STEP_P1: &WAFFLE_STEP_P1
+  Visual:
+    resource: { uri: "WaffleStepP1.dae" } 
+  Collision:
+    elements:
+      -
+        type: Transform
+        translation: [ 0.05, 0.55, 0.05 ]
+        elements: &BOX1
+          Shape: { geometry: { type: Box, size: [ 0.1, 1.1, 0.1 ] } }
+      -
+        type: Transform
+        translation: [ 0.55, 1.15, 0.05 ]
+        rotation: [ 0, 0, 1, 90 ]
+        elements: *BOX1
+      -
+        type: Transform
+        translation: [ 1.15, 0.65, 0.05 ]
+        elements: *BOX1
+      -
+        type: Transform
+        translation: [ 0.65, 0.05, 0.05 ]
+        rotation: [ 0, 0, 1, 90 ]
+        elements: *BOX1
+      -
+        type: Transform
+        translation: [ 0.1005, 0.6, 0.044 ]
+        rotation: [ 0, 1, 0, -27 ]
+        elements: &BOX2
+          Shape: { geometry: { type: Box, size: [ 0.05, 1.0076, 0.1 ] } }
+      -
+        type: Transform
+        translation: [ 0.106, 0.6, 0.033 ]
+        rotation: [ 0, 1, 0, -27 ]
+        elements: *BOX2
+      -
+        type: Transform
+        translation: [ 0.6, 1.0995, 0.044 ]
+        rotation: [ [ 0, 0, 1, -90 ], [ 0, 1, 0, -27 ] ]
+        elements: *BOX2
+      -
+        type: Transform
+        translation: [ 0.6, 1.094, 0.033 ]
+        rotation: [ [ 0, 0, 1, -90 ], [ 0, 1, 0, -27 ] ]
+        elements: &BOX3
+          Shape: { geometry: { type: Box, size: [ 0.05, 1.1, 0.1 ] } }
+      -
+        type: Transform
+        translation: [ 1.0995, 0.6, 0.044 ]
+        rotation: [ 0, 1, 0, 27 ]
+        elements: *BOX2
+      -
+        type: Transform
+        translation: [ 1.0935, 0.6, 0.033 ]
+        rotation: [ 0, 1, 0, 27 ]
+        elements: *BOX2
+      -
+        type: Transform
+        translation: [ 0.6, 0.1005, 0.044 ]
+        rotation: [ [ 0, 0, 1, -90 ], [ 0, 1, 0, 27 ] ]
+        elements: *BOX2
+      -
+        type: Transform
+        translation: [ 0.6, 0.1065, 0.033 ]
+        rotation: [ [ 0, 0, 1, -90 ], [ 0, 1, 0, 27 ] ]
+        elements: *BOX3

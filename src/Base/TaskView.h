@@ -50,6 +50,7 @@ public:
     virtual bool isAutoMode() const;
     virtual void setAutoMode(bool on);
     virtual SignalProxy<void(bool isAutoMode)> sigAutoModeToggled();
+    virtual void serializeTasks(const std::vector<std::string>& tasks);
     
     void setNoExecutionMode(bool on);
     bool isNoExecutionMode() const;

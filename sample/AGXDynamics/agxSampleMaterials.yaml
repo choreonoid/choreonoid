@@ -4,47 +4,144 @@ materials:
     roughness: 0.5
     viscosity: 0.0
   -
-    name: agxMat1
+    name: agxMat10
     density: 1.0
   -
-    name: agxMat2
+    name: agxMat11
     density: 1.0
   -
-    name: agxMat3
+    name: agxMat20
     density: 1.0
   -
-    name: agxMat4
+    name: agxMat21
     density: 1.0
   -
-    name: agxMat5
+    name: agxMat30
     density: 1.0
+  -
+    name: agxMat31
+    density: 1.0
+  -
+    name: agxMat40
+    density: 1.0
+  -
+    name: agxMat41
+    density: 1.0
+  -
+    name: agxMat50
+    density: 1.0
+  -
+    name: agxMat51
+    density: 1.0
+  -
+    name: agxMat60
+    density: 1.0
+  -
+    name: agxMat61
+    density: 1.0
+  -
+    name: agxMat70
+    density: 1.0
+  -
+    name: agxMat71
+    density: 1.0
+  -
+    name: agxMat80
+    density: 1.0
+  -
+    name: agxMat81
+    density: 1.0
+  -
+    name: agxMat90
+    density: 1.0
+  -
+    name: agxMat91
+    density: 1.0
+
+
+DEFAULT_CONTACT_MATERIAL: &DEFAULT_CONTACT_MATERIAL
+  youngsModulus: 2.0e8
+  restitution: 0.0
+  spookDamping: 0.075
+  friction: 0.5
+  secondaryFriction: -1.0
+  surfaceViscosity: 1.0e-8
+  secondarySurfaceViscosity: -1.0
+  adhesionForce: 0.0
+  adhesivOverlap: 0.0
+  frictionModel: [ cone, split ]          # default
+  contactReductionMode: reduceGeometry    # default
+  contactReductionBinResolution: 0
 
 contactMaterials:
   -
-    materials: [ Ground, agxMat1 ]
-    friction: 1.0
+    materials: [ Ground, agxMat10 ]
+    <<: *DEFAULT_CONTACT_MATERIAL
+  -
+    materials: [ Ground, agxMat20 ]
+    <<: *DEFAULT_CONTACT_MATERIAL
+    youngsModulus: 3.0e4
+  -
+    materials: [ Ground, agxMat21 ]
+    <<: *DEFAULT_CONTACT_MATERIAL
+    youngsModulus: 2.0e20
+  -
+    materials: [ Ground, agxMat30 ]
+    <<: *DEFAULT_CONTACT_MATERIAL
     restitution: 0.0
   -
-    materials: [ Ground, agxMat2 ]
-    friction: 0.5
-    restitution: 0.0
-  -
-    materials: [ Ground, agxMat3 ]
-    friction: 0.3
-    restitution: 0.0
-  -
-    materials: [ Ground, agxMat4 ]
-    friction: 0.5
+    materials: [ Ground, agxMat31 ]
+    <<: *DEFAULT_CONTACT_MATERIAL
     restitution: 1.0
   -
-    materials: [ Ground, agxMat5 ]
-    youngsModulus: 1.0E5
-    restitution: 0.1
-    damping: 0.08
-    friction: 0.416667
-    surfaceViscosity: 1.0E-8
-    adhesionForce: 100
-    adhesivOverlap: 0.2
+    materials: [ Ground, agxMat40 ]
+    <<: *DEFAULT_CONTACT_MATERIAL
+    spookDamping: 0.001
+  -
+    materials: [ Ground, agxMat41 ]
+    <<: *DEFAULT_CONTACT_MATERIAL
+    spookDamping: 100
+  -
+    materials: [ Ground, agxMat50 ]
+    <<: *DEFAULT_CONTACT_MATERIAL
+    friction: 0.0
+  -
+    materials: [ Ground, agxMat51 ]
+    <<: *DEFAULT_CONTACT_MATERIAL
+    friction: 1.0
+  -
+    materials: [ Ground, agxMat60 ]
+    <<: *DEFAULT_CONTACT_MATERIAL
+    surfaceViscosity: 1.0e-30
+  -
+    materials: [ Ground, agxMat61 ]
+    <<: *DEFAULT_CONTACT_MATERIAL
+    surfaceViscosity: 1.0
+  -
+    materials: [ Ground, agxMat70 ]
+    <<: *DEFAULT_CONTACT_MATERIAL
+    adhesionForce: 10
+    adhesivOverlap: 0.1
+  -
+    materials: [ Ground, agxMat71 ]
+    <<: *DEFAULT_CONTACT_MATERIAL
+    adhesionForce: 10
+    adhesivOverlap: 0.5
+  -
+    materials: [ Ground, agxMat80 ]
+    <<: *DEFAULT_CONTACT_MATERIAL
     frictionModel: [ cone, direct ]
-    contactReductionMode: reduceGeometry
-    contactReductionBinResolution: 3
+  -
+    materials: [ Ground, agxMat81 ]
+    <<: *DEFAULT_CONTACT_MATERIAL
+    frictionModel: [ box, direct ]
+  -
+    materials: [ Ground, agxMat90 ]
+    <<: *DEFAULT_CONTACT_MATERIAL
+    contactReductionMode: reduceGeometry    # default
+    contactReductionBinResolution: 1
+  -
+    materials: [ Ground, agxMat91 ]
+    <<: *DEFAULT_CONTACT_MATERIAL
+    contactReductionMode: reduceGeometry    # default
+    contactReductionBinResolution: 10

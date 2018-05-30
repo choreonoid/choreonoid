@@ -49,7 +49,19 @@ SimpleController::~SimpleController()
 }
 
 
+bool SimpleController::configure(SimpleControllerIO* io)
+{
+    return true;
+}
+
+
 bool SimpleController::start()
 {
     return true;
+}
+
+
+void SimpleController::stop()
+{
+
 }

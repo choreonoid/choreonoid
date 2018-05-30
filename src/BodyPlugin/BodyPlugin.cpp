@@ -15,8 +15,8 @@
 #include "WorldLogFileItem.h"
 #include "SensorVisualizerItem.h"
 #include "BodyTrackingCameraItem.h"
-//#include "FilterDialogs.h"
 #include "KinematicFaultChecker.h"
+#include "SplineFilterDialog.h"
 #include "BodyBar.h"
 #include "LeggedBodyBar.h"
 #include "LinkSelectionView.h"
@@ -43,6 +43,7 @@
 #include "gettext.h"
 
 using namespace cnoid;
+using boost::format;
 
 namespace {
   
@@ -79,8 +80,8 @@ public:
 
         BodyMotionEngine::initialize(this);
         CollisionSeqEngine::initialize(this);
-        //initializeFilterDialogs(*this);
         KinematicFaultChecker::initialize(this);
+        initializeSplineFilterDialog(this);
 
         // This should be after the initialization of BodyMotionEngine
         ZMPSeqItem::initializeClass(this); 
@@ -114,18 +115,16 @@ public:
     virtual const char* description() const override
     {
         static std::string text =
-            str(fmt(_("Body Plugin Version %1%\n")) % CNOID_FULL_VERSION_STRING) +
+            str(format("Body Plugin Version %1%\n") % CNOID_FULL_VERSION_STRING) +
             "\n" +
-            _("This plugin has been developed by Shin'ichiro Nakaoka and Choreonoid Development Team, AIST, "
-              "and is distributed as a part of the Choreonoid package.\n"
-              "\n") +
-            LGPLtext() +
+            "Copyrigh (c) 2018 Shin'ichiro Nakaoka and Choreonoid Development Team, AIST.\n"
+            "\n" +
+            MITLicenseText() +
             "\n" +
             _("The Collision deteciton module used in this plugin is implemented using "
               "the OPCODE library (http://www.codercorner.com/Opcode.htm).\n");
-        
+
         return text.c_str();
-        
     }
 };
 

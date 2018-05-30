@@ -19,19 +19,16 @@
 #include <QGridLayout>
 #include <QScrollArea>
 #include <QKeyEvent>
-#include <boost/format.hpp>
-#include <boost/lexical_cast.hpp>
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 
 namespace {
 class SliderUnit;
 
 // slider resolution
-const double r = 1000000.0;
+const double resolution = 1000000.0;
 }
 
 namespace cnoid {
@@ -123,14 +120,13 @@ public:
         upperLimitLabel.setAlignment(Qt::AlignCenter);
             
         spin.setAlignment(Qt::AlignCenter);
-        spin.sigValueChanged().connect(std::bind(&SliderUnit::onSpinValueChanged, this, _1));
+        spin.sigValueChanged().connect([&](double v){ onSpinValueChanged(v); });
             
-        slider.setSingleStep(0.1 * r);
+        slider.setSingleStep(0.1 * resolution);
         slider.setProperty("JointSliderIndex", index);
         slider.installEventFilter(viewImpl);
-        slider.sigValueChanged().connect(std::bind(&SliderUnit::onSliderValueChanged, this, _1));
+        slider.sigValueChanged().connect([&](double v){ onSliderValueChanged(v); });
     }
-
 
     void setRangeLabelValues(double lower, double upper, int precision){
         if(fabs(lower) > 10000.0){
@@ -180,21 +176,17 @@ public:
             if(viewImpl->degreeRadio.isChecked()){
                 unitConversionRatio = 180.0 / PI;
             }
-            max = unitConversionRatio * 2.0 * PI;
+            max = 2.0 * PI;
         } else { // SLIDE_JOINT
             max = std::numeric_limits<double>::max();
         }
-        double lower =
-            joint->q_lower() == -std::numeric_limits<double>::max() ?
-            -max : unitConversionRatio * joint->q_lower();
-        double upper =
-            joint->q_upper() ==  std::numeric_limits<double>::max() ?
-             max : unitConversionRatio * joint->q_upper();
+        double lower = unitConversionRatio * (joint->q_lower() < -max ? -max : joint->q_lower());
+        double upper = unitConversionRatio * (joint->q_upper() > max ? max : joint->q_upper());
 
         slider.blockSignals(true);
         spin.blockSignals(true);
 
-        slider.setRange(lower * r, upper * r);
+        slider.setRange(lower * resolution, upper * resolution);
 
         if(unitConversionRatio != 1.0){ // degree mode
             spin.setDecimals(1);
@@ -224,7 +216,7 @@ public:
             slider.blockSignals(true);
             spin.blockSignals(true);
             spin.setValue(v);
-            slider.setValue(v * r);
+            slider.setValue(v * resolution);
             spin.blockSignals(false);
             slider.blockSignals(false);
         }
@@ -232,14 +224,14 @@ public:
 
     void onSliderValueChanged(double value){
         spin.blockSignals(true);
-        spin.setValue(value / r);
+        spin.setValue(value / resolution);
         spin.blockSignals(false);
         viewImpl->onJointSliderChanged(index);
     }
 
     void onSpinValueChanged(double value){
         slider.blockSignals(true);
-        slider.setValue(value * r);
+        slider.setValue(value * resolution);
         slider.blockSignals(false);
         viewImpl->onJointSliderChanged(index);
     }
@@ -285,42 +277,42 @@ JointSliderViewImpl::JointSliderViewImpl(JointSliderView* self) :
     showAllToggle.setText(_("All"));
     showAllToggle.setToolTip(_("Show all the joints including unselected ones"));
     showAllToggle.setChecked(true);
-    showAllToggle.sigToggled().connect(std::bind(&JointSliderViewImpl::updateSliderGrid, this));
+    showAllToggle.sigToggled().connect([&](bool){ updateSliderGrid(); });
     hbox->addWidget(&showAllToggle);
 
     jointIdToggle.setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
     jointIdToggle.setText(_("ID"));
     jointIdToggle.setToolTip(_("Show joint IDs"));
     jointIdToggle.setChecked(false);
-    jointIdToggle.sigToggled().connect(std::bind(&JointSliderViewImpl::updateSliderGrid, this));
+    jointIdToggle.sigToggled().connect([&](bool){ updateSliderGrid(); });
     hbox->addWidget(&jointIdToggle);
 
     nameToggle.setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
     nameToggle.setText(_("Name"));
     nameToggle.setToolTip(_("Show joint names"));
     nameToggle.setChecked(true);
-    nameToggle.sigToggled().connect(std::bind(&JointSliderViewImpl::updateSliderGrid, this));
+    nameToggle.sigToggled().connect([&](bool){ updateSliderGrid(); });
     hbox->addWidget(&nameToggle);
     
     putSpinEntryCheck.setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
     putSpinEntryCheck.setText(_("Entry"));
     putSpinEntryCheck.setToolTip(_("Show spin entries for numerical input"));
     putSpinEntryCheck.setChecked(true);
-    putSpinEntryCheck.sigToggled().connect(std::bind(&JointSliderViewImpl::updateSliderGrid, this));
+    putSpinEntryCheck.sigToggled().connect([&](bool){ updateSliderGrid(); });
     hbox->addWidget(&putSpinEntryCheck);
 
     putSliderCheck.setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
     putSliderCheck.setText(_("Slider"));
     putSliderCheck.setToolTip(_("Show sliders for chaning joint positions"));
     putSliderCheck.setChecked(true);
-    putSliderCheck.sigToggled().connect(std::bind(&JointSliderViewImpl::updateSliderGrid, this));
+    putSliderCheck.sigToggled().connect([&](bool){ updateSliderGrid(); });
     hbox->addWidget(&putSliderCheck);
     
     labelOnLeftToggle.setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
     labelOnLeftToggle.setText(_("IL"));
     labelOnLeftToggle.setToolTip(_("Put all the components for each joint in-line"));
     labelOnLeftToggle.setChecked(true);
-    labelOnLeftToggle.sigToggled().connect(std::bind(&JointSliderViewImpl::updateSliderGrid, this));
+    labelOnLeftToggle.sigToggled().connect([&](bool){ updateSliderGrid(); });
     hbox->addWidget(&labelOnLeftToggle);
 
     hbox->addSpacing(4);
@@ -331,8 +323,7 @@ JointSliderViewImpl::JointSliderViewImpl(JointSliderView* self) :
     numColumnsSpin.setToolTip(_("The number of columns"));
     numColumnsSpin.setRange(1, 9);
     numColumnsSpin.setValue(1);
-    numColumnsSpin.sigValueChanged().connect(
-        std::bind(&JointSliderViewImpl::onNumColumnsChanged, this, _1));
+    numColumnsSpin.sigValueChanged().connect([&](int n){ onNumColumnsChanged(n);});
     hbox->addWidget(&numColumnsSpin);
 
     hbox->addSpacing(4);
@@ -343,13 +334,13 @@ JointSliderViewImpl::JointSliderViewImpl(JointSliderView* self) :
     degreeRadio.setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
     degreeRadio.setText(_("Deg."));
     degreeRadio.setChecked(true);
-    degreeRadio.sigToggled().connect(std::bind(&JointSliderViewImpl::onUnitChanged, this));
+    degreeRadio.sigToggled().connect([&](bool){ onUnitChanged(); });
     hbox->addWidget(&degreeRadio);
 
     unitRadioGroup.addButton(&radianRadio);
     radianRadio.setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
     radianRadio.setText(_("Rad."));
-    radianRadio.sigToggled().connect(std::bind(&JointSliderViewImpl::onUnitChanged, this));
+    radianRadio.sigToggled().connect([&](bool){ onUnitChanged(); });
     hbox->addWidget(&radianRadio);
 
     hbox->addStretch();
@@ -371,15 +362,15 @@ JointSliderViewImpl::JointSliderViewImpl(JointSliderView* self) :
 
     updateSliderGrid();
 
-    updateJointPositionsLater.setFunction(std::bind(&JointSliderViewImpl::updateJointPositions, this));
+    updateJointPositionsLater.setFunction([&](){ updateJointPositions(); });
     updateJointPositionsLater.setPriority(LazyCaller::PRIORITY_LOW);
 
     connectionOfCurrentBodyItemChanged = 
         BodyBar::instance()->sigCurrentBodyItemChanged().connect(
-            std::bind(&JointSliderViewImpl::onCurrentBodyItemChanged, this, _1));
+            [&](BodyItem* item){ onCurrentBodyItemChanged(item); });
 
-    self->sigActivated().connect(std::bind(&JointSliderViewImpl::enableConnectionToSigKinematicStateChanged, this, true));
-    self->sigDeactivated().connect(std::bind(&JointSliderViewImpl::enableConnectionToSigKinematicStateChanged, this, false));
+    self->sigActivated().connect([&](){ enableConnectionToSigKinematicStateChanged(true); });
+    self->sigDeactivated().connect([&](){ enableConnectionToSigKinematicStateChanged(false); });
 }
 
 
@@ -507,7 +498,7 @@ void JointSliderViewImpl::initializeSliders(int num)
 
 void JointSliderViewImpl::onNumColumnsChanged(int n)
 {
-    callLater(std::bind(&JointSliderViewImpl::updateSliderGrid, this));
+    callLater([&](){ updateSliderGrid(); });
 }
 
 
@@ -595,8 +586,8 @@ void JointSliderViewImpl::onCurrentBodyItemChanged(BodyItem* bodyItem)
 
     if(currentBodyItem){
         connectionOfLinkSelectionChanged =
-            LinkSelectionView::mainInstance()->sigSelectionChanged(bodyItem).connect
-            (std::bind(&JointSliderViewImpl::updateSliderGrid, this));
+            LinkSelectionView::mainInstance()->sigSelectionChanged(bodyItem).connect(
+                [&](){ updateSliderGrid(); });
     }
     
     updateSliderGrid();
@@ -610,9 +601,9 @@ void JointSliderViewImpl::enableConnectionToSigKinematicStateChanged(bool on)
     connectionOfKinematicStateChanged.disconnect();
 
     if(on && self->isActive() && currentBodyItem){
-        connectionOfKinematicStateChanged = currentBodyItem->sigKinematicStateChanged().connect(
-            //bind(&JointSliderViewImpl::updateJointPositions, this));
-            std::bind(updateJointPositionsLater));
+        connectionOfKinematicStateChanged =
+            currentBodyItem->sigKinematicStateChanged().connect(
+                updateJointPositionsLater);
         updateJointPositions();
     }
 }
@@ -655,7 +646,7 @@ bool JointSliderViewImpl::restoreState(const Archive& archive)
     labelOnLeftToggle.setChecked(archive.get("labelOnLeft", true));
 
     archive.addPostProcess(
-        std::bind(&JointSliderViewImpl::restoreCurrentBodyItem, this, std::ref(archive)));
+        [&](){ restoreCurrentBodyItem(archive); });
 
     return true;
 }

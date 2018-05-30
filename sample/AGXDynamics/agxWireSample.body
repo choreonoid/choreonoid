@@ -1,0 +1,93 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: agxWireSample
+
+links:
+  -
+    name: Root
+    translation: [0.0, 0.0, 0.0 ]
+    jointType: fixed
+    elements:
+      -
+        type: Shape
+        geometry: { type: Box, size: [ 0.5, 0.5, 0.5 ] }
+        appearance: { material: { diffuseColor: [ 0.0, 1.0, 0 ] }}
+  -
+    name: Drum
+    parent: Root
+    translation: [ -1.0, 0.0, -3.0 ]
+    jointType: fixed
+    elements:
+      -
+        type: Shape
+        geometry: { type: Cylinder, radius: 0.25, height: 0.2 }
+        appearance: { material: { diffuseColor: [ 1.0, 0, 0 ] }}
+      -
+        type: AGXWireDevice
+        radius: 0.02
+        resolutionPerUnitLength: 5
+        collision: true
+        selfCollision: true
+        materialName: Wire
+        #wireYoungsModulusStretch: 6E10
+        #wireSpookDampingStretch: 0.075
+        #wireYoungsModulusBend: 6E10
+        #wireSpookDampingBend: 0.075
+        Winch:
+            linkName: Drum
+            position: [ 0.0, 0.0, 0.27 ]
+            normal: [1.0 , 0.0, 0.0 ]
+            pulledInLength: 50
+            haulForceRange: [ -50, 50 ]
+        Nodes:
+          -
+            type: free
+            linkName: Root
+            position: [ -0.27, 0.0, 0.27]
+          -
+            type: free
+            linkName: Root
+            position: [ 0.27, 0.0, 0.27]
+          -
+            type: link
+            linkName: Sphere
+            position: [ 0.0, 0.0, 0.1]
+  -
+    name: Sphere
+    parent: Root
+    translation: [ 1.0, 0.0, 0.0 ]
+    jointType: free
+    mass: 1.0
+    elements:
+      -
+        type: Shape
+        geometry: { type: Sphere, radius: 0.1 }
+        appearance: { material: { diffuseColor: [ 0.0, 1.0, 0 ] }}
+      -
+        type: AGXWireDevice
+        radius: 0.04
+        resolutionPerUnitLength: 5
+        collision: true
+        selfCollision: true
+        materialName: Wire
+        Nodes:
+          -
+            type: link
+            linkName: Sphere
+            position: [ 0.0, 0.0, -0.1]
+          -
+            type: fixed
+            linkName: Box
+            position: [ 0.0, 0.0, 0.1 ]
+  -
+    name: Box
+    parent: Sphere
+    translation: [ 0.0, 0.0, -2.0 ]
+    jointType: free
+    mass: 5
+    elements:
+      -
+        type: Shape
+        geometry: { type: Box, size: [ 0.2, 0.2, 0.2] }
+        appearance: { material: { diffuseColor: [ 0.0, 1.0, 0 ] }}

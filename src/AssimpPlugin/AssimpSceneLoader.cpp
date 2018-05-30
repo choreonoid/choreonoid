@@ -5,6 +5,7 @@
 #include "AssimpSceneLoader.h"
 #include <cnoid/SceneLoader>
 #include <cnoid/SceneDrawables>
+#include <cnoid/MeshFilter>
 #include <cnoid/ImageIO>
 #include <cnoid/FileUtil>
 #include <cnoid/Exception>
@@ -12,22 +13,11 @@
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
+#include <boost/optional.hpp>
 #include <map>
 
 using namespace std;
 using namespace cnoid;
-
-namespace {
-
-struct Registration {
-    Registration() {
-        SceneLoader::registerLoader(
-            "dae;blend;x;obj;dxf",
-            []() -> shared_ptr<AbstractSceneLoader> { return std::make_shared<AssimpSceneLoader>(); });
-    }
-} registration;
-
-}
 
 namespace cnoid {
 
@@ -41,6 +31,8 @@ public:
     boost::filesystem::path directoryPath;
     ImageIO imageIO;
 
+    boost::optional<Affine3f> T_local;
+    
     typedef map<unsigned int, SgNodePtr> AiIndexToSgShapeMap;
     AiIndexToSgShapeMap aiIndexToSgShapeMap;
     typedef map<unsigned int, SgMaterialPtr> AiIndexToSgMaterialMap;
@@ -50,10 +42,12 @@ public:
     typedef map<string, SgImagePtr> ImagePathToSgImageMap;
     ImagePathToSgImageMap imagePathToSgImageMap;
 
+    MeshFilter meshFilter;
+
     AssimpSceneLoaderImpl();
     void clear();
     SgNode* load(const std::string& filename);
-    SgTransform* convertAiNode(aiNode* node);
+    SgGroup* convertAiNode(aiNode* node);
     SgNode* convertAiMesh(unsigned int);
     SgNode* convertAiMeshFaces(aiMesh* srcMesh);
     SgMaterial* convertAiMaterial(unsigned int);
@@ -63,10 +57,28 @@ public:
 }
 
 
+void AssimpSceneLoader::initializeClass()
+{
+    SceneLoader::registerLoader(
+        "dae;blend;x;obj;dxf",
+        []() -> shared_ptr<AbstractSceneLoader> { return std::make_shared<AssimpSceneLoader>(); });
+}
+    
+
 AssimpSceneLoader::AssimpSceneLoader()
 {
-    impl = new AssimpSceneLoaderImpl();
+    impl = nullptr;
 }
+
+
+AssimpSceneLoaderImpl* AssimpSceneLoader::getOrCreateImpl()
+{
+    if(!impl){
+        impl = new AssimpSceneLoaderImpl;
+    }
+    return impl;
+}
+
 
 
 AssimpSceneLoaderImpl::AssimpSceneLoaderImpl()
@@ -82,13 +94,15 @@ AssimpSceneLoaderImpl::AssimpSceneLoaderImpl()
 
 AssimpSceneLoader::~AssimpSceneLoader()
 {
-    delete impl;
+    if(impl){
+        delete impl;
+    }
 }
 
 
 void AssimpSceneLoader::setMessageSink(std::ostream& os)
 {
-    impl->os_ = &os;
+    getOrCreateImpl()->os_ = &os;
 }
 
 
@@ -103,7 +117,7 @@ void AssimpSceneLoaderImpl::clear()
 
 SgNode* AssimpSceneLoader::load(const std::string& filename)
 {
-    return impl->load(filename);
+    return getOrCreateImpl()->load(filename);
 }
 
 
@@ -111,7 +125,9 @@ SgNode* AssimpSceneLoaderImpl::load(const std::string& filename)
 {
     clear();
 
-    scene = importer.ReadFile(filename, aiProcess_Triangulate | aiProcess_GenNormals);
+    scene = importer.ReadFile(
+        filename,
+        aiProcess_Triangulate | aiProcess_JoinIdenticalVertices);
 
     if(!scene){
         os() << importer.GetErrorString() << endl;
@@ -121,6 +137,8 @@ SgNode* AssimpSceneLoaderImpl::load(const std::string& filename)
     boost::filesystem::path path(filename);
     directoryPath = path.remove_filename();
 
+    T_local = boost::none;
+
     SgNode* node = convertAiNode(scene->mRootNode);
 
     importer.FreeScene();
@@ -129,43 +147,87 @@ SgNode* AssimpSceneLoaderImpl::load(const std::string& filename)
 }
 
 
-SgTransform* AssimpSceneLoaderImpl::convertAiNode(aiNode* node)
+SgGroup* AssimpSceneLoaderImpl::convertAiNode(aiNode* node)
 {
-    const aiMatrix4x4& T = node->mTransformation;
-    Affine3 M;
-    M.translation() << T[0][3], T[1][3], T[2][3];
-    M.linear() << 
-        T[0][0], T[0][1], T[0][2],
-        T[1][0], T[1][1], T[1][2],
-        T[2][0], T[2][1], T[2][2];
+    static const bool USE_AFFINE_TRANSFORM = false;
+    
+    const aiMatrix4x4& S = node->mTransformation;
+    Affine3 T;
+    T.translation() << S[0][3], S[1][3], S[2][3];
+    T.linear() << 
+        S[0][0], S[0][1], S[0][2],
+        S[1][0], S[1][1], S[1][2],
+        S[2][0], S[2][1], S[2][2];
 
-    SgTransformPtr transform;
-    if(M.linear().isUnitary(1.0e-6)){
-        transform = new SgPosTransform(M);
-    } else {
-        transform = new SgAffineTransform(M);
+    boost::optional<Affine3f> prev_T_local = T_local;
+    
+    double d = T.linear().determinant();
+    if(T_local || d < 0){ // include coordinate reflection
+        if(T_local){
+            T_local = (*T_local) * T.cast<Matrix3f::Scalar>();
+        } else {
+            T_local = T.cast<Matrix3f::Scalar>();
+        }
+        T.setIdentity();
     }
-    transform->setName(node->mName.C_Str());
+
+    SgGroupPtr group;
+    SgGroup* groupToAddChildren = nullptr;
+
+    if(T.isApprox(Affine3::Identity())){
+        group = new SgGroup;
+
+    } else if(T.linear().isUnitary(1.0e-6)){
+        group = new SgPosTransform(T);
+
+    } else {
+        if(USE_AFFINE_TRANSFORM){
+            group = new SgAffineTransform(T);
+        } else {
+            Vector3 scale;
+            for(int i=0; i < 3; ++i){
+                double s = T.linear().col(i).norm();
+                scale[i] = s;
+                T.linear().col(i) /= s;
+            }
+            SgScaleTransformPtr scaleTransform = new SgScaleTransform(scale);
+
+            if(T.isApprox(Affine3::Identity())){
+                group = scaleTransform;
+            } else {
+                group = new SgPosTransform(T);
+                group->addChild(scaleTransform);
+                groupToAddChildren = scaleTransform;
+            }
+        }
+    }
+
+    group->setName(node->mName.C_Str());
  
+    if(!groupToAddChildren){
+        groupToAddChildren = group;
+    }
     for(unsigned int i=0; i < node->mNumMeshes; ++i){
         SgNode* shape = convertAiMesh(node->mMeshes[i]);
         if(shape){
-            transform->addChild(shape);
+            groupToAddChildren->addChild(shape);
         }
     }
 
     for(unsigned int i=0; i < node->mNumChildren; ++i){
-        SgTransform* child = convertAiNode(node->mChildren[i]);
+        SgGroup* child = convertAiNode(node->mChildren[i]);
         if(child){
-            transform->addChild(child);
+            groupToAddChildren->addChild(child);
         }
     }
 
-    if(transform->empty()){
-        transform = 0;
+    T_local = prev_T_local;
+    
+    if(group->empty()){
+        group = nullptr;
     }
 
-    return transform.retn();
+    return group.retn();
 }
 
 
@@ -201,6 +263,11 @@ SgNode* AssimpSceneLoaderImpl::convertAiMeshFaces(aiMesh* srcMesh)
         const auto& v = srcVertices[i];
         vertices->at(i) << v.x, v.y, v.z;
     }
+    if(T_local){
+        for(auto& v : *vertices){
+            v = (*T_local) * v;
+        }
+    }
 
     SgNormalArrayPtr normals;
     if(srcMesh->HasNormals()){
@@ -210,6 +277,12 @@ SgNode* AssimpSceneLoaderImpl::convertAiMeshFaces(aiMesh* srcMesh)
         for(unsigned int i=0; i < numVertices; ++i){
             const auto& n = srcNormals[i];
             normals->at(i) << n.x, n.y, n.z;
+        }
+        if(T_local){
+            const Matrix3f R = (*T_local).linear();
+            for(auto& n : *normals){
+                n = R * n;
+            }
         }
     }
 
@@ -294,13 +367,20 @@ SgNode* AssimpSceneLoaderImpl::convertAiMeshFaces(aiMesh* srcMesh)
             shape->setTexture(texture);
         }
 
+        meshFilter.removeRedundantVertices(mesh);
+        if(normals){
+            meshFilter.removeRedundantNormals(mesh);
+        } else {
+            meshFilter.generateNormals(mesh);
+        }
+
         mesh->updateBoundingBox();
 
         group->addChild(shape);
     }
 
     if(group->empty()){
-        return 0;
+        return nullptr;
     } else if(group->numChildren() == 1){
         SgNodePtr node = group->child(0);
         node->setName(group->name());

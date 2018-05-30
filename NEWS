@@ -2,9 +2,20 @@
 Changes since 1.6.0:
 
 * Supported wide viewing angle range sensors
+* pkg-config
+* texture description in a body files
+* Fix the warec-1 model
+* Improve the sensor visualization
+* Naming rules of the Python wrappers are modified.
+ * Functions to get member object xxx are changed to getXxx()
+ * Member object xxx can be obtained by using property xxx
+* WRS2018 Tunnel models
+* Multicopter Plugin
+* TrafficControl Plugin
+* Aizu Spider model
+* Aizu Wheel model
 
-
-Choreonoid 1.6.0 released on October 31, 2016
+Choreonoid 1.6.0 released on October 31, 2017
 =============================================
 
 Changes since 1.5.0:
@@ -23,6 +34,7 @@ Changes since 1.5.0:
 * A beta version of RokiPlugin to enable the Roki library to be used as a physics engine for simulation
 * Added sample models and projects
 * Other minor improvements and bug fixes
+
 
 Choreonoid 1.5.0 released on July 13, 2016
 ==========================================
@@ -45,6 +57,7 @@ Changes since 1.4.0:
 * Supported both Qt4 and Qt5
 * The license was changed from LGPL to the MIT license
 * Other minor improvements and bug fixes
+
 
 Choreonoid 1.4.0 released on August 29, 2013
 ============================================

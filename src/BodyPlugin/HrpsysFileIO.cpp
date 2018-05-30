@@ -10,10 +10,10 @@
 #include <cnoid/ItemManager>
 #include <cnoid/BodyMotionUtil>
 #include <cnoid/ZMPSeq>
+#include <cnoid/Config>
 #include <QMessageBox>
 #include <boost/tokenizer.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/regex.hpp>
 #include <boost/format.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
 #ifndef _WINDOWS
@@ -25,10 +25,21 @@
 #include <list>
 #include <vector>
 #include <map>
+
+#ifdef CNOID_USE_BOOST_REGEX
+#include <boost/regex.hpp>
+using boost::regex;
+using boost::regex_match;
+using boost::smatch;
+#else
+#include <regex>
+#endif
+
+#include <iostream>
+
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 namespace filesystem = boost::filesystem;
 using boost::format;
@@ -37,8 +48,6 @@ namespace {
 
 map<string,int> labelToTypeMap;
 
-boost::regex labelPattern("^(JA|JV|TQ|F|M|A|W|zmp|waist|R|P|Y)([XYZRP]?)(\\d*)$");
-    
 class HrpsysLogLoader
 {
 public:
@@ -68,8 +77,12 @@ public:
     int numComponents[NUM_DATA_TYPES];
     
     std::list< std::vector<double> > frames;
+
+    regex labelPattern;
     
-    HrpsysLogLoader() {
+    HrpsysLogLoader()
+        : labelPattern("^(JA|JV|TQ|F|M|A|W|zmp|waist|R|P|Y)([XYZRP]?)(\\d*)$")
+    {
         if(labelToTypeMap.empty()){
             labelToTypeMap["JA"] = JOINT_POS;
             labelToTypeMap["JV"] = JOINT_VEL;
@@ -86,8 +99,8 @@ public:
         }
     }
 
-    bool loadLogFile(BodyMotionItem* item, const std::string& filename, std::ostream& os){
-
+    bool loadLogFile(BodyMotionItem* item, const std::string& filename, std::ostream& os)
+    {
         boost::iostreams::filtering_istream is;
 
 #ifndef _WINDOWS
@@ -178,9 +191,9 @@ public:
         return true;
     }
 
-    void readHeader(Tokenizer::iterator it, Tokenizer::iterator end){
-        
-        boost::smatch match;
+    void readHeader(Tokenizer::iterator it, Tokenizer::iterator end)
+    {
+        smatch match;
 
         for(int i=0; i < NUM_DATA_TYPES; ++i){
             numComponents[i] = 0;
@@ -316,7 +329,12 @@ void cnoid::initializeHrpsysFileIO(ExtensionManager* ext)
     
     im.addLoaderAndSaver<BodyMotionItem>(
         _("HRPSYS Sequence File Set"), "HRPSYS-SEQ-FILE-SET", "pos;vel;acc;hip;waist;gsens;zmp",
-        std::bind(importHrpsysSeqFileSet, _1, _2, _3), std::bind(exportHrpsysSeqFileSet, _1, _2, _3),
+        [](BodyMotionItem* item, const std::string& filename, std::ostream& os, Item* /* parentItem */){
+            return importHrpsysSeqFileSet(item, filename, os);
+        },
+        [](BodyMotionItem* item, const std::string& filename, std::ostream& os, Item* /* parentItem */){
+            return exportHrpsysSeqFileSet(item, filename, os);
+        },
         ItemManager::PRIORITY_CONVERSION);
 
     im.addLoader<BodyMotionItem>(

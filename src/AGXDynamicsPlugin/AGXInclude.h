@@ -7,6 +7,7 @@
 // Simulation
 #include <agxSDK/Simulation.h>
 #include <agxSDK/Assembly.h>
+#include <agxSDK/MergeSplitHandler.h>
 
 // Threads
 #include <agx/Thread.h>
@@ -33,6 +34,7 @@
 #include <agx/LockJoint.h>
 #include <agx/BallJoint.h>
 #include <agx/PlaneJoint.h>
+#include <agx/VirtualConstraintInertia.h>
 
 // Friction models
 #include <agx/OrientedFrictionModels.h>
@@ -40,6 +42,12 @@
 // agxVehicle
 #include <agxVehicle/Track.h>
 
+// agxWire
+#include <agxWire/Wire.h>
+#include <agxWire/Link.h>
+#include <agxWire/WireController.h>
+
+// etc
 #include <agxCollide/ConvexBuilder.h>
 
 #endif

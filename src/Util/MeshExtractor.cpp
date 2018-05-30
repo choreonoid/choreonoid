@@ -17,7 +17,8 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     PolymorphicFunctionSet<SgNode> functions;
-    std::function<void()> callback;
+    std::function<void()> callback1;
+    std::function<void(SgMesh* mesh)> callback2;
     SgMesh* currentMesh;
     Affine3 currentTransform;
     Affine3 currentTransformWithoutScaling;
@@ -30,6 +31,7 @@ public:
     void visitTransform(SgTransform* transform);
     void visitPosTransform(SgPosTransform* transform);
     void visitShape(SgShape* shape);
+    bool extract(SgNode* node);
 };
 
 }
@@ -105,7 +107,11 @@ void MeshExtractorImpl::visitShape(SgShape* shape)
     if(mesh && mesh->vertices() && !mesh->vertices()->empty() && !mesh->triangleVertices().empty()){
         meshFound = true;
         currentMesh = mesh;
-        callback();
+        if(callback1){
+            callback1();
+        } else {
+            callback2(mesh);
+        }
         currentMesh = 0;
     }
 }
@@ -137,14 +143,29 @@ bool MeshExtractor::isCurrentScaled() const
 
 bool MeshExtractor::extract(SgNode* node, std::function<void()> callback)
 {
-    impl->callback = callback;
-    impl->currentMesh = 0;
-    impl->currentTransform.setIdentity();
-    impl->currentTransformWithoutScaling.setIdentity();
-    impl->isCurrentScaled = false;
-    impl->meshFound = false;
-    impl->functions.dispatch(node);
-    return impl->meshFound;
+    impl->callback1 = callback;
+    impl->callback2 = nullptr;
+    return impl->extract(node);
+}
+
+
+bool MeshExtractor::extract(SgNode* node, std::function<void(SgMesh* mesh)> callback)
+{
+    impl->callback1 = nullptr;
+    impl->callback2 = callback;
+    return impl->extract(node);
+}
+
+
+bool MeshExtractorImpl::extract(SgNode* node)
+{
+    currentMesh = 0;
+    currentTransform.setIdentity();
+    currentTransformWithoutScaling.setIdentity();
+    isCurrentScaled = false;
+    meshFound = false;
+    functions.dispatch(node);
+    return meshFound;
 }
 
 
@@ -202,7 +223,7 @@ static void integrateMesh(MeshExtractor* extractor, SgMesh* mesh)
 */
 SgMesh* MeshExtractor::integrate(SgNode* node)
 {
-    SgMesh* mesh = new SgMesh;
-    extract(node, std::bind(integrateMesh, this, mesh));
-    return mesh;
+    SgMesh* integrated = new SgMesh;
+    extract(node, [&](){ integrateMesh(this, integrated); });
+    return integrated;
 }

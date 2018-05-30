@@ -10,10 +10,12 @@
 #include <cnoid/MultiSE3Seq>
 
 namespace cnoid {
+
 typedef MultiSeqItem<MultiSE3Seq> MultiSE3SeqItem;
 typedef MultiSE3SeqItem::Ptr MultiSE3SeqItemPtr;
 
 template<> void MultiSeqItem<MultiSE3Seq>::initializeClass(ExtensionManager* ext);
+
 }
 
 #endif

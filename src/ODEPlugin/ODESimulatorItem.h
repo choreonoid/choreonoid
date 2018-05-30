@@ -26,8 +26,6 @@ public:
     ODESimulatorItem(const ODESimulatorItem& org);
     virtual ~ODESimulatorItem();
 
-    virtual void setAllLinkPositionOutputMode(bool on);
-
     enum StepMode { STEP_ITERATIVE, STEP_BIG_MATRIX, NUM_STEP_MODES };
 
     void setStepMode(int value);
@@ -44,18 +42,20 @@ public:
     void setSurfaceLayerDepth(double value);
     void useWorldCollisionDetector(bool on);
 
-protected:
-        
-    virtual SimulationBody* createSimulationBody(Body* orgBody);
-    virtual bool initializeSimulation(const std::vector<SimulationBody*>& simBodies);
-    virtual void initializeSimulationThread();
-    virtual bool stepSimulation(const std::vector<SimulationBody*>& activeSimBodies);
-    virtual void finalizeSimulation();
+    virtual void setAllLinkPositionOutputMode(bool on) override;
+    virtual Vector3 getGravity() const override;
 
-    virtual Item* doDuplicate() const;
-    virtual void doPutProperties(PutPropertyFunction& putProperty);
-    virtual bool store(Archive& archive);
-    virtual bool restore(const Archive& archive);
+protected:
+    virtual SimulationBody* createSimulationBody(Body* orgBody) override;
+    virtual bool initializeSimulation(const std::vector<SimulationBody*>& simBodies) override;
+    virtual void initializeSimulationThread() override;
+    virtual bool stepSimulation(const std::vector<SimulationBody*>& activeSimBodies) override;
+    virtual void finalizeSimulation() override;
+
+    virtual Item* doDuplicate() const override;
+    virtual void doPutProperties(PutPropertyFunction& putProperty) override;
+    virtual bool store(Archive& archive) override;
+    virtual bool restore(const Archive& archive) override;
 
 private:
     ODESimulatorItemImpl* impl;
@@ -63,6 +63,7 @@ private:
 };
 
 typedef ref_ptr<ODESimulatorItem> ODESimulatorItemPtr;
+
 }
 
 #endif

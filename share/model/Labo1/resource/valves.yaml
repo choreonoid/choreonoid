@@ -1,0 +1,196 @@
+VALVE_HANDLE_213: &VALVE_HANDLE_213
+  RigidBody:
+    mass: 4.0
+    inertia: [
+      0.1, 0.0, 0.0,
+      0.0, 0.1, 0.0,
+      0.0, 0.0, 0.1 ]
+    centerOfMass: [ -0.03, 0, 0 ]
+    elements:
+      - # Shaft
+        type: Shape
+        rotation: [ 0, 0, 1, 90 ]
+        translation: [ -0.03, 0, 0 ]
+        geometry: { type: Cylinder, height: 0.1, radius: 0.006 }
+        appearance:
+          material:
+            ambientIntensity: 0.270269
+            diffuseColor: [ 0.37, 0.37, 0.37 ]
+            shininess: 0.13
+            specularColor: [ 0.9, 0.9, 0.9 ]
+
+      -
+        type: Transform
+        rotation: [ 0, 1, 0, 90 ]
+        elements:
+          Visual:
+            resource: { uri: "valve_handle_213.dae" }
+          Collision:
+            elements:
+              -
+                type: Transform
+                translation: [ 0.0, 0.0, -0.0065 ]
+                rotation: [ 0, 0, 1, 30 ]
+                elements: &handle_box1
+                  Shape:
+                    geometry: { type: Box, size: [ 0.2, 0.0159, 0.017 ] }
+              -
+                type: Transform
+                translation: [ 0.0, 0.0, -0.0065 ]
+                rotation: [ 0, 0, 1, 90 ]
+                elements: *handle_box1
+              -
+                type: Transform
+                translation: [ 0.0, 0.0, -0.0065 ]
+                rotation: [ 0, 0, 1, 150 ]
+                elements: *handle_box1
+              -
+                type: Transform
+                translation: [ 0.0, 0.0, -0.0065 ]
+                rotation: [ 1, 0, 0, 90 ]
+                elements:
+                  Shape:
+                    geometry: { type: Cylinder, radius: 0.0195, height: 0.017 }
+              -
+                type: Transform
+                translation: [ 0.0, 0.0, 0.0086 ]
+                rotation: [ 0, 0, 1, 30 ]
+                elements: &handle_box4
+                  Shape:
+                    geometry: { type: Box, size: [ 0.0232, 0.0136, 0.013 ] }
+              -
+                type: Transform
+                translation: [ 0.0, 0.0, 0.0086 ]
+                rotation: [ 0, 0, 1, 90 ]
+                elements: *handle_box4
+              -
+                type: Transform
+                translation: [ 0.0, 0.0, 0.0086 ]
+                rotation: [ 0, 0, 1, 150 ]
+                elements: *handle_box4
+          
+              # Right half part
+              -
+                type: Transform
+                translation: [ -0.013, -0.0966, -0.0065 ]
+                rotation: [ 0, 0, 1, -7.5 ]
+                elements: &handle_box7
+                  Shape:
+                    geometry: { type: Box, size: [ 0.028, 0.016, 0.017 ] }
+              -
+                type: Transform
+                translation: [ -0.0377, -0.0899, -0.0065 ]
+                rotation: [ 0, 0, 1, -22.5 ]
+                elements: *handle_box7
+              -
+                type: Transform
+                translation: [ -0.0597, -0.0772, -0.0065 ]
+                rotation: [ 0, 0, 1, -37.5 ]
+                elements: *handle_box7
+              -
+                type: Transform
+                translation: [ -0.0777, -0.0592, -0.0065 ]
+                rotation: [ 0, 0, 1, -52.5 ]
+                elements: *handle_box7
+              -
+                type: Transform
+                translation: [ -0.0902, -0.0372, -0.0065 ]
+                rotation: [ 0, 0, 1, -67.5 ]
+                elements: *handle_box7
+              -
+                type: Transform
+                translation: [ -0.0967, -0.0127, -0.0065 ]
+                rotation: [ 0, 0, 1, -82.5 ]
+                elements: *handle_box7
+              -
+                type: Transform
+                translation: [ -0.0967, 0.0127, -0.0065 ]
+                rotation: [ 0, 0, 1, -97.5 ]
+                elements: *handle_box7
+              -
+                type: Transform
+                translation: [ -0.0902, 0.0372, -0.0065 ]
+                rotation: [ 0, 0, 1, -112.5 ]
+                elements: *handle_box7
+              -
+                type: Transform
+                translation: [ -0.0777, 0.0592, -0.0065 ]
+                rotation: [ 0, 0, 1, -127.5 ]
+                elements: *handle_box7
+              -
+                type: Transform
+                translation: [ -0.0597, 0.0772, -0.0065 ]
+                rotation: [ 0, 0, 1, -142.5 ]
+                elements: *handle_box7
+              -
+                type: Transform
+                translation: [ -0.0377, 0.0899, -0.0065 ]
+                rotation: [ 0, 0, 1, -157.5 ]
+                elements: *handle_box7
+              -
+                type: Transform
+                translation: [ -0.013, 0.0966, -0.0065 ]
+                rotation: [ 0, 0, 1, -172.5 ]
+                elements: *handle_box7
+
+              # Left half part
+              -
+                type: Transform
+                translation: [ 0.013, -0.0966, -0.0065 ]
+                rotation: [ 0, 0, 1, 7.5 ]
+                elements: *handle_box7
+              -
+                type: Transform
+                translation: [ 0.0377, -0.0899, -0.0065 ]
+                rotation: [ 0, 0, 1, 22.5 ]
+                elements: *handle_box7
+              -
+                type: Transform
+                translation: [ 0.0597, -0.0772, -0.0065 ]
+                rotation: [ 0, 0, 1, 37.5 ]
+                elements: *handle_box7
+              -
+                type: Transform
+                translation: [ 0.0777, -0.0592, -0.0065 ]
+                rotation: [ 0, 0, 1, 52.5 ]
+                elements: *handle_box7
+              -
+                type: Transform
+                translation: [ 0.0902, -0.0372, -0.0065 ]
+                rotation: [ 0, 0, 1, 67.5 ]
+                elements: *handle_box7
+              -
+                type: Transform
+                translation: [ 0.0967, -0.0127, -0.0065 ]
+                rotation: [ 0, 0, 1, 82.5 ]
+                elements: *handle_box7
+              -
+                type: Transform
+                translation: [ 0.0967, 0.0127, -0.0065 ]
+                rotation: [ 0, 0, 1, 97.5 ]
+                elements: *handle_box7
+              -
+                type: Transform
+                translation: [ 0.0902, 0.0372, -0.0065 ]
+                rotation: [ 0, 0, 1, 112.5 ]
+                elements: *handle_box7
+              -
+                type: Transform
+                translation: [ 0.0777, 0.0592, -0.0065 ]
+                rotation: [ 0, 0, 1, 127.5 ]
+                elements: *handle_box7
+              -
+                type: Transform
+                translation: [ 0.0597, 0.0772, -0.0065 ]
+                rotation: [ 0, 0, 1, 142.5 ]
+                elements: *handle_box7
+              -
+                type: Transform
+                translation: [ 0.0377, 0.0899, -0.0065 ]
+                rotation: [ 0, 0, 1, 157.5 ]
+                elements: *handle_box7
+              -
+                type: Transform
+                translation: [ 0.013, 0.0966, -0.0065 ]
+                rotation: [ 0, 0, 1, 172.5 ]
+                elements: *handle_box7

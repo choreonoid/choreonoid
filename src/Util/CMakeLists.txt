@@ -1,9 +1,10 @@
 #set(CMAKE_BUILD_TYPE Debug)
-#set_source_files_properties(Image.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
+#set_source_files_properties(JoystickLinux.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
 
 configure_file(Config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/Config.h)
 
 set(sources
+  Referenced.cpp
   ConnectionSet.cpp
   Selection.cpp
   DataMap.cpp
@@ -20,10 +21,11 @@ set(sources
   AbstractSeq.cpp
   Vector3Seq.cpp
   MultiSE3Seq.cpp
-  MultiAffine3Seq.cpp
+  MultiSE3MatrixSeq.cpp
   MultiValueSeq.cpp
   MultiVector3Seq.cpp
-  PlainSeqFormatLoader.cpp
+  GeneralSeqReader.cpp
+  PlainSeqFileLoader.cpp
   Task.cpp
   AbstractTaskSequencer.cpp
   CollisionDetector.cpp
@@ -38,7 +40,7 @@ set(sources
   SceneProvider.cpp
   SceneUtil.cpp
   MeshGenerator.cpp
-  MeshNormalGenerator.cpp
+  MeshFilter.cpp
   MeshExtractor.cpp
   SceneMarkers.cpp
   CoordinateAxesOverlay.cpp
@@ -74,6 +76,7 @@ elseif(APPLE)
 endif()
 
 set(headers
+  Referenced.h
   EasyScanner.h
   GaussianFilter.h
   UniformCubicBSpline.h
@@ -84,14 +87,13 @@ set(headers
   PolymorphicPointerArray.h
   PolymorphicFunctionSet.h
   MultiSE3Seq.h
-  MultiAffine3Seq.h
+  MultiSE3MatrixSeq.h
   MultiSeq.h
   MultiValueSeq.h
   MultiVector3Seq.h
   NullOut.h
-  PlainSeqFormatLoader.h
+  PlainSeqFileLoader.h
   RangeLimiter.h
-  Referenced.h
   Seq.h
   AbstractSeq.h
   Timeval.h
@@ -112,7 +114,7 @@ set(headers
   AbstractSceneLoader.h
   SceneLoader.h
   MeshGenerator.h
-  MeshNormalGenerator.h
+  MeshFilter.h
   MeshExtractor.h
   SceneMarkers.h
   CoordinateAxesOverlay.h
@@ -147,9 +149,11 @@ set(headers
   GettextUtil.h
   Selection.h
   DataMap.h
+  JoystickInterface.h
   Joystick.h
-  JoystickGamepad.h
   ExtJoystick.h
+  SharedJoystick.h
+  JoystickGamepad.h
   Task.h
   AbstractTaskSequencer.h
   Exception.h
@@ -166,9 +170,13 @@ if(UNIX)
   set(libraries 
     yaml ${PNG_LIBRARY} ${JPEG_LIBRARY}
     ${CMAKE_THREAD_LIBS_INIT}
-    ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_THREAD_LIBRARY}
+    ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY}
     ${GETTEXT_LIBRARIES}
     m)
+
+  if(CNOID_USE_BOOST_REGEX)
+    set(libraries ${libraries} ${Boost_REGEX_LIBRARY})
+  endif()
 
   if(APPLE)
     target_link_libraries(${target} ${libraries} "-framework IOKit -framework Foundation")

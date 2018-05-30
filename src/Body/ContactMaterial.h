@@ -19,6 +19,7 @@ class CNOID_EXPORT ContactMaterial : public Referenced
     ContactMaterial(const ContactMaterial& org);
     ~ContactMaterial();
 
+    void init();
     int materialId(int which) const;
 
     double friction() const { return staticFriction_; }

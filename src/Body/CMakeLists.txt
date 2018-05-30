@@ -36,6 +36,7 @@ set(sources
   PinDragIK.cpp
   LinkGroup.cpp
   LeggedBodyHelper.cpp
+  BodyCollisionDetector.cpp
   BodyCollisionDetectorUtil.cpp
   BodyMotion.cpp
   BodyMotionPoseProvider.cpp
@@ -55,7 +56,6 @@ set(sources
   BodyLoader.cpp
   YAMLBodyLoader.cpp
   VRMLBodyLoader.cpp
-  VRMLBodyWriter.cpp
   PoseProviderToBodyMotionConverter.cpp
   BodyMotionUtil.cpp
   ControllerIO.cpp
@@ -70,7 +70,6 @@ set(headers
   AbstractBodyLoader.h
   VRMLBodyLoader.h
   BodyLoader.h
-  VRMLBodyWriter.h
   ZMPSeq.h
   Link.h
   LinkTraverse.h
@@ -80,6 +79,7 @@ set(headers
   Material.h
   ContactMaterial.h
   MaterialTable.h
+  BodyCollisionDetector.h
   BodyCollisionDetectorUtil.h
   MultiDeviceStateSeq.h
   Device.h
@@ -199,8 +199,6 @@ install(
   DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}/simplecontroller
   DESTINATION ${CNOID_PLUGIN_SUBDIR}/simplecontroller
   FILES_MATCHING PATTERN "*" EXCLUDE)
-
-install_external_libraries(${Boost_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS})
 
 if(ENABLE_PYTHON)
   if(USE_PYBIND11)

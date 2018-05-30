@@ -20,6 +20,7 @@ void exportPySceneTypes()
         .def("setContainerMode", &SceneDragger::setContainerMode)
         .def("isDragging", &SceneDragger::isDragging)
         .def("draggedPosition", &SceneDragger::draggedPosition)
+        .def("getDraggedPosition", &SceneDragger::draggedPosition)
         ;
 
     implicitly_convertible<SceneDraggerPtr, SgPosTransformPtr>();
@@ -28,6 +29,7 @@ void exportPySceneTypes()
         class_<PositionDragger, PositionDraggerPtr, bases<SceneDragger>, boost::noncopyable>("PositionDragger")
         .def("setDraggableAxes", &PositionDragger::setDraggableAxes)
         .def("draggableAxes", &PositionDragger::draggableAxes)
+        .def("getDraggableAxes", &PositionDragger::draggableAxes)
         ;
 
     positionDraggerClass.attr("TX") = (int)PositionDragger::TX;

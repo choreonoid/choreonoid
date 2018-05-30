@@ -18,6 +18,7 @@ struct AGXSimulationDesc
         contactReductionBinResolution = 3;
         contactReductionThreshhold = 12;
         enableContactWarmstarting = false;
+        enableAMOR = false;
         enableAutoSleep = false;
     }
     agx::Int   numThreads;
@@ -27,6 +28,7 @@ struct AGXSimulationDesc
     agx::UInt8 contactReductionBinResolution;
     agx::UInt  contactReductionThreshhold;
     agx::Bool  enableContactWarmstarting;
+    agx::Bool  enableAMOR;
     agx::Bool  enableAutoSleep;
 };
 
@@ -38,11 +40,13 @@ struct AGXMaterialDesc
         youngsModulus = 4.0E8;
         poissonRatio = 0.3;
         viscosity = 0.5;
-        damping = 0.075;
+        spookDamping = 0.075;
         roughness = 0.416667;
         surfaceViscosity = 5E-09;
         adhesionForce = 0.0;
         adhesivOverlap = 0.0;
+        wireYoungsModulusStretch = wireYoungsModulusBend = 6E10;
+        wireSpookDampingStretch = wireSpookDampingBend = 0.075;
     }
     static agx::String default_name()
     {
@@ -53,13 +57,19 @@ struct AGXMaterialDesc
     agx::Real youngsModulus;        // stiffness[Pa]
     agx::Real poissonRatio;
 
-    // Below are overried when ContactMaterials are used.
+    // Below are override when ContactMaterials are used.
     agx::Real viscosity;            // relation to restitution. compliace.
-    agx::Real damping;              // relax time of penetration
+    agx::Real spookDamping;              // relax time of penetration
     agx::Real roughness;            // relation to friction
     agx::Real surfaceViscosity;     // wetness
     agx::Real adhesionForce;        // attracive force[N]
     agx::Real adhesivOverlap;       // range[m]
+
+    // WireMaterial
+    agx::Real wireYoungsModulusStretch;
+    agx::Real wireSpookDampingStretch;
+    agx::Real wireYoungsModulusBend;
+    agx::Real wireSpookDampingBend;
 };
 
 enum AGXFrictionModelType
@@ -78,7 +88,7 @@ struct AGXContactMaterialDesc
         nameB = "default";
         youngsModulus = 2.0E8;
         restitution = 0.5;
-        damping = 0.075;
+        spookDamping = 0.075;
         friction = 0.416667;
         secondaryFriction = -1.0;
         surfaceViscosity = 1.0E-8;
@@ -94,7 +104,7 @@ struct AGXContactMaterialDesc
     agx::String nameB;
     agx::Real youngsModulus;        // stiffness[Pa], (m1.ym * m2.ym)/(m1.ym + m2.ym)
     agx::Real restitution;          // 0:perfectly inelastic collision, 1:perfectly elastic collision, sqrt((1-m1.visco) * (1-m2.vico))
-    agx::Real damping;              // relax time of penetration(loop count?)
+    agx::Real spookDamping;              // relax time of penetration(loop count?)
     agx::Real friction;             // sqrt(m1.rough * m2.rough)
     agx::Real secondaryFriction;    // value < 0 : disable
     agx::Real surfaceViscosity;     // m1.svisco + m2.svisco
@@ -129,9 +139,10 @@ struct AGXGeometryDesc
     AGXGeometryDesc(){
         isPseudoContinuousTrack = false;
     };
+    static const agx::Name globalCollisionGroupName;
     bool isPseudoContinuousTrack;
     agx::Vec3 axis;
-    agx::Name selfCollsionGroupName;
+    agx::Name selfCollisionGroupName;
 };
 
 class AGXPseudoContinuousTrackGeometry : public agxCollide::Geometry
@@ -217,7 +228,24 @@ enum AGXConstraintType
     AGXPLANEJOINT
 };
 
-struct AGXConstraintDesc
+struct AGXElementaryConstraint
+{
+    AGXElementaryConstraint(){
+        enable = false;
+        compliance = 1e-08;
+        spookDamping = 0.0333333;
+        forceRange = agx::RangeReal(agx::Infinity);
+    }
+    void set(const AGXElementaryConstraint& org){
+        *this = org;
+    }
+    agx::Bool enable;
+    agx::Real compliance;
+    agx::Real spookDamping;
+    agx::RangeReal forceRange;
+};
+
+struct AGXConstraintDesc : public AGXElementaryConstraint
 {
     AGXConstraintDesc(AGXConstraintType type) : constraintType(type){}
     const AGXConstraintType constraintType;
@@ -225,20 +253,8 @@ struct AGXConstraintDesc
     agx::RigidBodyRef rigidBodyB;
 };
 
-struct AGXElementaryConstraint {
-    AGXElementaryConstraint(){
-        enable = false;
-        compliance = 1e-08;
-        damping = 0.0333333;
-        forceRange = agx::RangeReal(agx::Infinity);
-    }
-    agx::Bool enable;
-    agx::Real compliance;
-    agx::Real damping;
-    agx::RangeReal forceRange;
-};
-
-struct AGXMotor1DDesc : public AGXElementaryConstraint{
+struct AGXMotor1DDesc : public AGXElementaryConstraint
+{
     AGXMotor1DDesc(){
         enableLock = false;
         enableLockAtZeroSpeed = false;
@@ -247,11 +263,13 @@ struct AGXMotor1DDesc : public AGXElementaryConstraint{
     agx::Bool enableLockAtZeroSpeed;
 };
 
-struct AGXLock1DDesc : public AGXElementaryConstraint{
+struct AGXLock1DDesc : public AGXElementaryConstraint
+{
     AGXLock1DDesc(){}
 };
 
-struct AGXRange1DDesc : public AGXElementaryConstraint{
+struct AGXRange1DDesc : public AGXElementaryConstraint
+{
     AGXRange1DDesc() {
         range = agx::RangeReal(agx::Infinity);
     } 
@@ -298,7 +316,8 @@ struct AGXPlaneJointDesc : public AGXConstraintDesc
     agx::FrameRef frameB;
 };
 
-struct AGXVehicleTrackWheelDesc{
+struct AGXVehicleTrackWheelDesc
+{
     AGXVehicleTrackWheelDesc(){
         model = agxVehicle::TrackWheel::Model::SPROCKET;
         radius = 1.0;
@@ -311,7 +330,8 @@ struct AGXVehicleTrackWheelDesc{
     agx::AffineMatrix4x4 rbRelTransform;
 };
 
-struct AGXVehicleTrackDesc{
+struct AGXVehicleTrackDesc
+{
     AGXVehicleTrackDesc() {
         numberOfNodes = 50;
         nodeThickness = 0.075;
@@ -320,7 +340,7 @@ struct AGXVehicleTrackDesc{
         nodeThickerThickness = 0.09;
         useThickerNodeEvery = 0;
         hingeCompliance = 1.0E-10;
-        hingeDamping = 0.0333;
+        hingeSpookDamping = 0.0333;
         minStabilizingHingeNormalForce = 100;
         stabilizingHingeFrictionParameter = 1.5;
         nodesToWheelsMergeThreshold = -0.1;
@@ -330,7 +350,7 @@ struct AGXVehicleTrackDesc{
         contactReduction = agxVehicle::TrackInternalMergeProperties::ContactReduction::MINIMAL;
         enableLockToReachMergeCondition = true;
         lockToReachMergeConditionCompliance = 1.0E-11;
-        lockToReachMergeConditionDamping = 3/ 60;
+        lockToReachMergeConditionSpookDamping = 3/ 60;
         maxAngleMergeCondition = 1.0E-5;
         trackWheelRefs.clear();
     }
@@ -344,7 +364,7 @@ struct AGXVehicleTrackDesc{
     agx::Real nodeThickerThickness;
     agx::UInt useThickerNodeEvery;
     agx::Real hingeCompliance;
-    agx::Real hingeDamping;
+    agx::Real hingeSpookDamping;
     agx::Real minStabilizingHingeNormalForce;
     agx::Real stabilizingHingeFrictionParameter;
     agx::Real nodesToWheelsMergeThreshold;
@@ -354,9 +374,34 @@ struct AGXVehicleTrackDesc{
     agxVehicle::TrackInternalMergeProperties::ContactReduction contactReduction;
     agx::Bool enableLockToReachMergeCondition;
     agx::Real lockToReachMergeConditionCompliance;
-    agx::Real lockToReachMergeConditionDamping;
+    agx::Real lockToReachMergeConditionSpookDamping;
     agx::Real maxAngleMergeCondition;
     std::vector<agxVehicle::TrackWheelRef> trackWheelRefs;
+};
+
+struct AGXWireDesc
+{
+    AGXWireDesc(){
+        radius = 0.1;
+        resolutionPerUnitLength = 1.0;
+        enableCollisions = true;
+    }
+    static const agx::Name globalCollisionGroupName;
+    agx::Real radius;
+    agx::Real resolutionPerUnitLength;
+    agx::Bool enableCollisions;
+};
+
+struct AGXWireWinchControllerDesc
+{
+    AGXWireWinchControllerDesc(){
+        rigidBody = nullptr;
+        pulledInLength = agx::Real(0);
+    }
+    agx::RigidBody* rigidBody;
+    agx::Vec3 positionInBodyFrame;  // position of this winch on body
+    agx::Vec3 normalInBodyFrame;    // direction of this winch
+    agx::Real pulledInLength;       // pulled in length in this winch
 };
 
 class CNOID_EXPORT AGXObjectFactory
@@ -387,6 +432,9 @@ public:
     static agx::PrismaticRef createConstraintPrismatic(const AGXPrismaticDesc& desc);
     static agx::BallJointRef createConstraintBallJoint(const AGXBallJointDesc& desc);
     static agx::PlaneJointRef createConstraintPlaneJoint(const AGXPlaneJointDesc& desc);
+    static agx::VirtualConstraintInertiaRef createVirtualConstraintInertia(agx::Constraint* const constraint,
+        const agx::Real& rb1TI, const agx::Real& rb1RI,
+        const agx::Real& rb2TI, const agx::Real& rb2RI);
 private:
     static void setMotor1DParam(agx::Motor1D* motor, const AGXMotor1DDesc& desc);
     static void setLock1DParam(agx::Lock1D* controller, const AGXLock1DDesc& desc);
@@ -394,6 +442,11 @@ private:
 public:
     static agxVehicle::TrackWheelRef createVehicleTrackWheel(const AGXVehicleTrackWheelDesc& desc);
     static agxVehicle::TrackRef createVehicleTrack(const AGXVehicleTrackDesc& desc);
+    static agxWire::WireRef createWire(const AGXWireDesc& desc);
+    static agxWire::FreeNodeRef createWireFreeNode(const agx::Vec3& pos);
+    static agxWire::BodyFixedNodeRef createWireBodyFixedNode(agx::RigidBody* rigid, const agx::Vec3& pos);
+    static agxWire::WireWinchControllerRef createWinchController(const AGXWireWinchControllerDesc& desc);
+    static agxWire::LinkRef createWireLink(agx::RigidBody* rigid);
     static agxCollide::ConvexBuilderRef createConvexBuilder();
 };
 

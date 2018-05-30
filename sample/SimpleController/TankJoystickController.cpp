@@ -20,7 +20,7 @@ const int buttonID[] = { 0, 2, 3 };
 class TankJoystickController : public SimpleController
 {
     bool usePseudoContinousTrackMode;
-    Link::ActuationMode turretAcutuationMode;
+    Link::ActuationMode turretActuationMode;
     Link* trackL;
     Link* trackR;
     Link* turretJoint[2];
@@ -40,13 +40,13 @@ public:
         Body* body = io->body();
 
         usePseudoContinousTrackMode = true;
-        turretAcutuationMode = Link::ActuationMode::JOINT_TORQUE;
+        turretActuationMode = Link::ActuationMode::JOINT_TORQUE;
         for(auto opt : io->options()){
             if(opt == "wheels"){
                 usePseudoContinousTrackMode = false;
             }
             if(opt == "velocity"){
-                turretAcutuationMode = Link::ActuationMode::JOINT_VELOCITY;
+                turretActuationMode = Link::ActuationMode::JOINT_VELOCITY;
             }
         }
 
@@ -83,7 +83,7 @@ public:
                 return false;
             }
             qref[i] = qprev[i] = joint->q();
-            joint->setActuationMode(turretAcutuationMode);
+            joint->setActuationMode(turretActuationMode);
             io->enableIO(joint);
         }
 
@@ -136,18 +136,26 @@ public:
         static const double D = 50.0;
 
         for(int i=0; i < 2; ++i){
+
             Link* joint = turretJoint[i];
-            double q = joint->q();
-            double dq = (q - qprev[i]) / dt;
-            double dqref = 0.0;
             double pos = joystick.getPosition(axisID[i + 2]);
-            if(fabs(pos) > 0.25){
+            if(fabs(pos) < 0.15){
+                pos = 0.0;
+            }
+
+            if(turretActuationMode == Link::JOINT_VELOCITY){
+                joint->dq() = pos;
+
+            } else if(turretActuationMode == Link::JOINT_TORQUE){
+                double q = joint->q();
+                double dq = (q - qprev[i]) / dt;
+                double dqref = 0.0;
                 double deltaq = 0.002 * pos;
                 qref[i] += deltaq;
                 dqref = deltaq / dt;
+                joint->u() = P * (qref[i] - q) + D * (dqref - dq);
+                qprev[i] = q;
             }
-            joint->u() = P * (qref[i] - q) + D * (dqref - dq);
-            qprev[i] = q;
         }
 
         if(light){

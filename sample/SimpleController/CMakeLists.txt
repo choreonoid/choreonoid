@@ -13,8 +13,6 @@ configure_file(SR1Minimum.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 
 add_cnoid_simple_controller(SR1WalkPatternController SR1WalkPatternController.cpp)
 configure_file(SR1Walk.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
-configure_file(SR1WalkPush.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
-configure_file(SR1WalkPush.py ${CNOID_SOURCE_SHARE_DIR}/script COPYONLY)
 configure_file(SR1Walk2D.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 
 add_cnoid_simple_controller(SR1LiftupController SR1LiftupController.cpp)
@@ -51,6 +49,22 @@ add_cnoid_simple_controller(DoubleArmV7Controller DoubleArmV7Controller.cpp)
 configure_file(DoubleArmV7SJoystick.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 configure_file(DoubleArmV7AJoystick.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 
+# Jaco2 sample
+add_cnoid_simple_controller(Jaco2Controller Jaco2Controller.cpp)
+
+# AizuSpider sample
+add_cnoid_simple_controller(AizuSpiderController AizuSpiderController.cpp)
+configure_file(AizuSpiderNS.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+configure_file(AizuSpiderNA.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+configure_file(AizuSpiderSS.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+configure_file(AizuSpiderSA.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+configure_file(AizuSpiderDS.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+configure_file(AizuSpiderDA.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+
+# AizuWheel sample
+add_cnoid_simple_controller(AizuWheelController AizuWheelController.cpp)
+configure_file(AizuWheel.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+
 # Other samples
 add_cnoid_simple_controller(ConveyorController ConveyorController.cpp)
 configure_file(ConveyorSample.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
@@ -62,3 +76,6 @@ configure_file(FourWheelCarJoystick.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPY
 
 add_cnoid_simple_controller(LinkPositionController LinkPositionController.cpp)
 configure_file(LinkPositionControl.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+
+add_cnoid_simple_controller(HandyRockDrillController HandyRockDrillController.cpp)
+configure_file(HandyRockDrill.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)

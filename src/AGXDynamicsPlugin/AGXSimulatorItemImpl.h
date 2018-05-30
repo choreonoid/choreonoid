@@ -35,18 +35,26 @@ public:
 
     void setGravity(const Vector3& g);
     Vector3 getGravity() const;
+    void setNumThreads(unsigned int num);
+    void setEnableContactReduction(bool bOn);
+    void setContactReductionBinResolution(int r);
+    void setContactReductionThreshhold(int t);
+    void setEnableContactWarmstarting(bool bOn);
+    void setEnableAMOR(bool bOn);
     bool saveSimulationToAGXFile();
 
 private:
     ref_ptr<AGXSimulatorItem> self;
     AGXSceneRef agxScene = nullptr;
-    Vector3 _p_gravity;
-    int     _p_numThreads;
-    bool    _p_enableContactReduction;
-    int     _p_contactReductionBinResolution;
-    int     _p_contactReductionThreshhold;
-    bool    _p_enableContactWarmstarting;
-    bool    _p_enableAutoSleep;
+    Vector3 m_p_gravity;
+    int     m_p_numThreads;
+    bool    m_p_enableContactReduction;
+    int     m_p_contactReductionBinResolution;
+    int     m_p_contactReductionThreshhold;
+    bool    m_p_enableContactWarmstarting;
+    bool    m_p_enableAMOR;
+    bool    m_p_enableAutoSleep;
+    bool    m_p_saveToAGXFileOnStart;
     AGXScene* getAGXScene();
 };
 }

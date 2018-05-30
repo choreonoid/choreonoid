@@ -20,8 +20,9 @@ void exportPyItemTreeView(py::module m)
     PySignal<void(Item* item, bool isChecked)>(m, "ItemBoolSignal");
     
     py::class_<ItemTreeView, View>(m, "ItemTreeView")
-        .def_static("instance", &ItemTreeView::instance, py::return_value_policy::reference)
-        .def("rootItem", &ItemTreeView::rootItem)
+        .def_property_readonly_static(
+            "instance", [](py::object){ return ItemTreeView::instance(); }, py::return_value_policy::reference)
+        .def_property_readonly("rootItem", &ItemTreeView::rootItem)
         .def("selectedItems", &ItemTreeView::selectedItems<Item>)
         .def("selectedItems", [](ItemTreeView& self, py::object itemClass){
                 return getPyNarrowedItemList(self.selectedItems(), itemClass); })
@@ -43,13 +44,25 @@ void exportPyItemTreeView(py::module m)
         .def("checkItem",[](ItemTreeView& self, Item* item){ return self.checkItem(item); })
         .def("checkItem",[](ItemTreeView& self, Item* item, bool check){ return self.checkItem(item, check); })
         .def("checkItem",[](ItemTreeView& self, Item* item, bool check, int id){ return self.checkItem(item, check, id); })
-        .def("sigSelectionChanged", &ItemTreeView::sigSelectionChanged)
-        .def("sigSelectionOrTreeChanged", &ItemTreeView::sigSelectionOrTreeChanged)
-        .def("sigCheckToggled", [](ItemTreeView& self){ return self.sigCheckToggled(); })
-        .def("sigCheckToggled", [](ItemTreeView& self, int id){ return self.sigCheckToggled(id); })
-        .def("sigCheckToggled", [](ItemTreeView& self, Item* item){ return self.sigCheckToggled(item); })
-        .def("sigCheckToggled", [](ItemTreeView& self, Item* item, int id){ return self.sigCheckToggled(item, id); })
+        .def_property_readonly("sigSelectionChanged", &ItemTreeView::sigSelectionChanged)
+        .def_property_readonly("sigSelectionOrTreeChanged", &ItemTreeView::sigSelectionOrTreeChanged)
+        .def_property_readonly("sigCheckToggled", [](ItemTreeView& self){ return self.sigCheckToggled(); })
+        .def("getSigCheckToggled", [](ItemTreeView& self){ return self.sigCheckToggled(); })
+        .def("getSigCheckToggled", [](ItemTreeView& self, int id){ return self.sigCheckToggled(id); })
+        .def("getSigCheckToggled", [](ItemTreeView& self, Item* item){ return self.sigCheckToggled(item); })
+        .def("getSigCheckToggled", [](ItemTreeView& self, Item* item, int id){ return self.sigCheckToggled(item, id); })
         .def("cutSelectedItems", &ItemTreeView::cutSelectedItems)
+
+        // deprecated
+        .def_static(
+            "getInstance", [](py::object){ return ItemTreeView::instance(); }, py::return_value_policy::reference)
+        .def("getRootItem", &ItemTreeView::rootItem)
+        .def("getSelectedItems", &ItemTreeView::selectedItems<Item>)
+        .def("getSigSelectionChanged", &ItemTreeView::sigSelectionChanged)
+        .def("getSigSelectionOrTreeChanged", &ItemTreeView::sigSelectionOrTreeChanged)
+        .def_property_readonly("sigCheckToggled", [](ItemTreeView& self, int id){ return self.sigCheckToggled(id); })
+        .def_property_readonly("sigCheckToggled", [](ItemTreeView& self, Item* item){ return self.sigCheckToggled(item); })
+        .def_property_readonly("sigCheckToggled", [](ItemTreeView& self, Item* item, int id){ return self.sigCheckToggled(item, id); })
         ;
 }
 

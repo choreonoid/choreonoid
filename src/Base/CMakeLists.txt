@@ -22,6 +22,7 @@ set(sources
   ItemManager.cpp
   Item.cpp
   RootItem.cpp
+  ItemList.cpp
   ItemPath.cpp
   ItemTreeView.cpp
   ItemPropertyView.cpp
@@ -65,7 +66,7 @@ set(sources
   AbstractSeqItem.cpp
   MultiValueSeqItem.cpp
   MultiSE3SeqItem.cpp
-  MultiAffine3SeqItem.cpp
+  MultiSE3MatrixSeqItem.cpp
   Vector3SeqItem.cpp
   ExtCommandItem.cpp
   AbstractTextItem.cpp
@@ -83,6 +84,7 @@ set(sources
   ShaderPrograms.cpp
   GLSLSceneRenderer.cpp
   SceneWidget.cpp
+  SceneWidgetEvent.cpp
   SceneWidgetEditable.cpp
   InteractiveCameraTransform.cpp
   SceneProjector.cpp
@@ -165,7 +167,7 @@ set(headers
   MultiSeqItem.h
   MultiValueSeqItem.h
   MultiSE3SeqItem.h
-  MultiAffine3SeqItem.h
+  MultiSE3MatrixSeqItem.h
   Vector3SeqItem.h
   ExtCommandItem.h
   AbstractTextItem.h

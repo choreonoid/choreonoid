@@ -37,7 +37,7 @@
 #include "MultiSE3SeqGraphView.h"
 #include "MultiValueSeqItem.h"
 #include "MultiSE3SeqItem.h"
-#include "MultiAffine3SeqItem.h"
+#include "MultiSE3MatrixSeqItem.h"
 #include "Vector3SeqItem.h"
 #include "PathVariableEditor.h"
 #include "Licenses.h"
@@ -220,7 +220,7 @@ void AppImpl::initialize( const char* appName, const char* vendorName, const QIc
     ExtCommandItem::initializeClass(ext);
     MultiValueSeqItem::initializeClass(ext);
     MultiSE3SeqItem::initializeClass(ext);
-    MultiAffine3SeqItem::initializeClass(ext);
+    MultiSE3MatrixSeqItem::initializeClass(ext);
     Vector3SeqItem::initializeClass(ext);
     SceneItem::initializeClass(ext);
     PointSetItem::initializeClass(ext);
@@ -323,6 +323,10 @@ int AppImpl::exec()
         MessageView::instance()->flush();
     } else {
         result = qapplication->exec();
+    }
+
+    for(Item* item = RootItem::instance()->childItem(); item; item = item->nextItem()){
+        item->detachFromParentItem();
     }
 
     PluginManager::finalize();

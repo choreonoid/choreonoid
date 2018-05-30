@@ -42,14 +42,14 @@ namespace cnoid {
 class ProjectManagerImpl
 {
 public:
-    ProjectManagerImpl(ExtensionManager* em);
+    ProjectManagerImpl(ProjectManager* self, ExtensionManager* em);
     ~ProjectManagerImpl();
         
     template <class TObject>
     bool restoreObjectStates(
         Archive* projectArchive, Archive* states, const vector<TObject*>& objects, const char* nameSuffix);
         
-    void loadProject(const string& filename, bool isInvokingApplication);
+    void loadProject(const string& filename, Item* parentItem, bool isInvokingApplication);
 
     template<class TObject>
     bool storeObjects(Archive& parentArchive, const char* key, vector<TObject*> objects);
@@ -69,9 +69,12 @@ public:
         std::function<bool(Archive&)> storeFunction,
         std::function<void(const Archive&)> restoreFunction);
 
+    ProjectManager* self;
+    bool isLoadingProject;
     ItemTreeArchiver itemTreeArchiver;
     MainWindow* mainWindow;
     MessageView* messageView;
+    string currentProjectName;
     string lastAccessedProjectFile;
     Action* perspectiveCheck;
     Action* homeRelativeCheck;
@@ -84,6 +87,7 @@ public:
     typedef map<string, ArchiverMap> ArchiverMapMap;
     ArchiverMapMap archivers;
 };
+
 }
 
 
@@ -103,11 +107,12 @@ void ProjectManager::initialize(ExtensionManager* em)
 
 ProjectManager::ProjectManager(ExtensionManager* em)
 {
-    impl = new ProjectManagerImpl(em);
+    impl = new ProjectManagerImpl(this, em);
 }
 
 
-ProjectManagerImpl::ProjectManagerImpl(ExtensionManager* em)
+ProjectManagerImpl::ProjectManagerImpl(ProjectManager* self, ExtensionManager* em)
+    : self(self)
 {
     MappingPtr config = AppConfig::archive()->openMapping("ProjectManager");
     
@@ -121,7 +126,6 @@ ProjectManagerImpl::ProjectManagerImpl(ExtensionManager* em)
         ->sigTriggered().connect(std::bind(&ProjectManagerImpl::overwriteCurrentProject, this));
     mm.addItem(_("Save Project As"))
         ->sigTriggered().connect(std::bind(&ProjectManagerImpl::openDialogToSaveProject, this));
-
 
     mm.setPath(N_("Project File Options"));
 
@@ -138,9 +142,10 @@ ProjectManagerImpl::ProjectManagerImpl(ExtensionManager* em)
 
     OptionManager& om = em->optionManager();
     om.addOption("project", boost::program_options::value< vector<string> >(), "load a project file");
-    om.addPositionalOption("project", 1);
+    om.addPositionalOption("project", -1);
     om.sigOptionsParsed().connect(std::bind(&ProjectManagerImpl::onSigOptionsParsed, this, _1));
 
+    isLoadingProject = false;
     mainWindow = MainWindow::instance();
     messageView = MessageView::mainInstance();
 }
@@ -185,22 +190,29 @@ bool ProjectManagerImpl::restoreObjectStates
 }
 
 
-void ProjectManager::loadProject(const std::string& filename)
+bool ProjectManager::isLoadingProject() const
 {
-    impl->loadProject(filename, false);
+    return impl->isLoadingProject;
+}
+        
+
+void ProjectManager::loadProject(const std::string& filename, Item* parentItem)
+{
+    impl->loadProject(filename, parentItem, false);
 }
 
 
-void ProjectManagerImpl::loadProject(const std::string& filename, bool isInvokingApplication)
+void ProjectManagerImpl::loadProject(const std::string& filename, Item* parentItem, bool isInvokingApplication)
 {
+    isLoadingProject = true;
+    
     bool loaded = false;
     YAMLReader reader;
     reader.setMappingClass<Archive>();
 
     try {
         messageView->putln();
-        messageView->notify(str(fmt(_("Loading project file \"%1%\" ...")) % filename));
-
+        messageView->notify(format(_("Loading project file \"%1%\" ...")) % filename);
         if(!isInvokingApplication){
             messageView->flush();
         }
@@ -290,7 +302,12 @@ void ProjectManagerImpl::loadProject(const std::string& filename, bool isInvokin
             Archive* items = archive->findSubArchive("items");
             if(items->isValid()){
                 items->inheritSharedInfoFrom(*archive);
-                itemTreeArchiver.restore(items, RootItem::mainInstance(), optionalPlugins);
+
+                if(!parentItem){
+                    parentItem = RootItem::instance();
+                }
+                itemTreeArchiver.restore(items, parentItem, optionalPlugins);
+                
                 numArchivedItems = itemTreeArchiver.numArchivedItems();
                 numRestoredItems = itemTreeArchiver.numRestoredItems();
                 messageView->putln(format(_("%1% / %2% item(s) are loaded.")) % numRestoredItems % numArchivedItems);
@@ -305,7 +322,7 @@ void ProjectManagerImpl::loadProject(const std::string& filename, bool isInvokin
             }
 
             if(loaded){
-                mainWindow->setProjectTitle(getBasename(filename));
+                self->setCurrentProjectName(getBasename(filename));
                 lastAccessedProjectFile = filename;
 
                 messageView->flush();
@@ -313,9 +330,9 @@ void ProjectManagerImpl::loadProject(const std::string& filename, bool isInvokin
                 archive->callPostProcesses();
 
                 if(numRestoredItems == numArchivedItems){
-                    messageView->notify(str(fmt(_("Project \"%1%\" has successfully been loaded.")) % filename));
+                    messageView->notify(format(_("Project \"%1%\" has successfully been loaded.")) % filename);
                 } else {
-                    messageView->notify(str(fmt(_("Project \"%1%\" has been loaded.")) % filename));
+                    messageView->notify(format(_("Project \"%1%\" has been loaded.")) % filename);
                 }
             }
         }
@@ -323,12 +340,21 @@ void ProjectManagerImpl::loadProject(const std::string& filename, bool isInvokin
         messageView->put(ex.message());
     }
 
+    isLoadingProject = false;
+    
     if(!loaded){                
-        messageView->notify(str(fmt(_("Project \"%1%\" cannot be loaded.")) % filename));
+        messageView->notify(format(_("Project \"%1%\" cannot be loaded.")) % filename);
         lastAccessedProjectFile.clear();
     }
 }
 
+
+void ProjectManager::setCurrentProjectName(const std::string& name)
+{
+    impl->currentProjectName = name;
+    impl->mainWindow->setProjectTitle(name);
+}
+        
 
 template<class TObject> bool ProjectManagerImpl::storeObjects
 (Archive& parentArchive, const char* key, vector<TObject*> objects)
@@ -354,7 +380,7 @@ template<class TObject> bool ProjectManagerImpl::storeObjects
             result = true;
         }
     }
-    
+
     return result;
 }
 
@@ -369,12 +395,14 @@ void ProjectManagerImpl::saveProject(const string& filename)
 {
     YAMLWriter writer(filename);
     if(!writer.isOpen()){
-        messageView->put(MessageView::ERROR, str(fmt(_("Can't open file \"%1%\" for writing.\n")) % filename));
+        messageView->put(
+            MessageView::ERROR,
+            format(_("Can't open file \"%1%\" for writing.\n")) % filename);
         return;
     }
 
     messageView->putln();
-    messageView->notify(str(fmt(_("Saving a project to \"%1%\" ...\n")) % filename));
+    messageView->notify(format(_("Saving a project to \"%1%\" ...")) % filename);
     messageView->flush();
     
     itemTreeArchiver.reset();
@@ -439,11 +467,11 @@ void ProjectManagerImpl::saveProject(const string& filename)
     if(stored){
         writer.setKeyOrderPreservationMode(true);
         writer.putNode(archive);
-        messageView->notify(_("Saving a project file has been finished.\n"));
+        messageView->notify(_("Saving a project file has been finished."));
         mainWindow->setProjectTitle(getBasename(filename));
         lastAccessedProjectFile = filename;
     } else {
-        messageView->notify(_("Saving a project file failed.\n"));
+        messageView->notify(_("Saving a project file failed."));
         lastAccessedProjectFile.clear();
     }
 }
@@ -470,7 +498,7 @@ void ProjectManagerImpl::onSigOptionsParsed(boost::program_options::variables_ma
     if(v.count("project")){
         vector<string> projectFileNames = v["project"].as< vector<string> >();
         for(size_t i=0; i < projectFileNames.size(); ++i){
-            loadProject(toActualPathName(projectFileNames[i]), true);
+            loadProject(toActualPathName(projectFileNames[i]), nullptr, true);
         }
     }
 }
@@ -495,7 +523,8 @@ void ProjectManagerImpl::openDialogToLoadProject()
     
     if(dialog.exec()){
         AppConfig::archive()->writePath("currentFileDialogDirectory", dialog.directory().absolutePath().toStdString());
-        loadProject(getNativePathString(filesystem::path(dialog.selectedFiles().front().toStdString())), false);
+        string filename = getNativePathString(filesystem::path(dialog.selectedFiles().front().toStdString()));
+        loadProject(filename, nullptr, false);
     }
 }
 
@@ -516,6 +545,9 @@ void ProjectManagerImpl::openDialogToSaveProject()
     dialog.setNameFilters(filters);
 
     dialog.setDirectory(AppConfig::archive()->get("currentFileDialogDirectory", shareDirectory()).c_str());
+    if(!currentProjectName.empty()){
+        dialog.selectFile(currentProjectName.c_str());
+    }
 
     if(dialog.exec()){
         AppConfig::archive()->writePath("currentFileDialogDirectory", dialog.directory().absolutePath().toStdString());        

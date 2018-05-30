@@ -18,6 +18,8 @@
 
 #undef _HOST_CXT_VERSION
 
+using namespace std;
+
 namespace cnoid {
 
 class RTSVItem : public QTreeWidgetItem
@@ -78,6 +80,7 @@ void RTSNameServerView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<RTSNameServerView>(
         "RTSNameServerView", N_("RTC List"), ViewManager::SINGLE_DEFAULT);
+    
 }
 
 
@@ -118,14 +121,14 @@ RTSNameServerViewImpl::RTSNameServerViewImpl(RTSNameServerView* self)
     QVBoxLayout* vbox = new QVBoxLayout();
 
     QHBoxLayout* hbox = new QHBoxLayout();
-    hostAddressBox.setText("localhost");
+    hostAddressBox.setText(ncHelper.host());
     hostAddressBox.sigEditingFinished().connect
         (std::bind(
             static_cast<void(RTSNameServerViewImpl::*)(bool)>(&RTSNameServerViewImpl::updateObjectList), this, false));
     hbox->addWidget(&hostAddressBox);
 
     portNumberSpin.setRange(0, 65535);
-    portNumberSpin.setValue(2809);
+    portNumberSpin.setValue(ncHelper.port());
     portNumberSpin.sigEditingFinished().connect
         (std::bind(
             static_cast<void(RTSNameServerViewImpl::*)(bool)>(&RTSNameServerViewImpl::updateObjectList), this, false));
@@ -202,7 +205,7 @@ void RTSNameServerViewImpl::updateObjectList(bool force)
         // Clear information update to all views.
         //clearDiagram();
         
-        if(ncHelper.isAlive()){
+        if(ncHelper.updateConnection()){
             NamingContextHelper::ObjectInfoList objects = ncHelper.getObjectList();
             updateObjectList(objects, NULL);
             treeWidget.expandAll();
@@ -304,3 +307,27 @@ void RTSNameServerViewImpl::extendDiagram(const NamingContextHelper::ObjectInfo&
 
 }
 #endif
+
+
+bool RTSNameServerView::storeState(Archive& archive)
+{
+    archive.write("host", impl->ncHelper.host());
+    archive.write("port", impl->ncHelper.port());
+    return true;
+}
+
+
+bool RTSNameServerView::restoreState(const Archive& archive)
+{
+    string host;
+    if(archive.read("host", host)){
+        impl->hostAddressBox.setText(host.c_str());
+    }
+    int port;
+    if(archive.read("port", port)){
+        impl->portNumberSpin.setValue(port);
+    }
+    archive.addPostProcess([&](){ impl->updateObjectList(true); });
+
+    return true;
+}

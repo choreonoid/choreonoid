@@ -31,8 +31,8 @@ class CNOID_EXPORT AGXLink : public Referenced
 {
 public:
     AGXLink(Link* const link);
-    AGXLink(Link* const link, AGXLink* const parent, const Vector3& parentOrigin, AGXBody* const agxBody);
-    void constructAGXLink();
+    AGXLink(Link* const link, AGXLink* const parent, const Vector3& parentOrigin, AGXBody* const agxBody, bool makeStatic);
+    void constructAGXLink(const bool& makeStatic);
     void setAGXMaterial();
     bool setAGXMaterialFromName(const std::string& materialName);
     void setAGXMaterialFromLinkInfo();
@@ -41,6 +41,7 @@ public:
     bool setInertiaFromLinkInfo();
     void enableExternalCollision(const bool& bOn);
     void setControlInputToAGX();
+    void addForceTorqueToAGX();
     void setLinkStateToAGX();
     void setLinkStateToCnoid();
     int getIndex() const;
@@ -51,6 +52,7 @@ public:
     agxCollide::Geometry*   getAGXGeometry() const;
     void                    setAGXConstraint(agx::Constraint* const constraint);
     agx::Constraint*        getAGXConstraint() const;
+    agx::Name               getCollisionGroupName() const;
     void printDebugInfo();
 
 private:
@@ -61,6 +63,7 @@ private:
     agx::RigidBodyRef       _rigid;
     agxCollide::GeometryRef _geometry;
     agx::ConstraintRef      _constraint;
+    agx::Name               _collisionGroupName;
     AGXBody*                getAGXBody();
     agx::RigidBodyRef       createAGXRigidBody();
     agxCollide::GeometryRef createAGXGeometry();
@@ -84,16 +87,20 @@ public:
     void setCollision();
     void setCollisionExclude();
     void setCollisionExcludeLinks(const Mapping& cdMapping);
+    void setCollisionExcludeLinksDynamic(const Mapping& cdMapping);
     void setCollisionExcludeTreeDepth(const Mapping& cdMapping);
     void setCollisionExcludeLinkGroups(const Mapping& cdMapping);
     void setCollisionExcludeSelfCollisionLinks(const Mapping& cdMapping);
+    void setCollisionExcludeLinksWireCollision(const Mapping& cdMapping);
     std::string getCollisionGroupName() const;
     void enableExternalCollision(const bool& bOn);
+    void enableAGXWireContact(const bool& bOn);
     void addCollisionGroupNameToDisableCollision(const std::string& name);
     const std::vector<std::string>& getCollisionGroupNamesToDisableCollision() const;
     void addCollisionGroupNameToAllLink(const std::string& name);
     void setAGXMaterial(const int& index, agx::Material* const mat);
     void setControlInputToAGX();
+    void addForceTorqueToAGX();
     void setLinkStateToAGX();
     void setLinkStateToCnoid();
     bool hasForceSensors() const;

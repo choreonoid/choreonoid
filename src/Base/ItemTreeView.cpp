@@ -5,12 +5,14 @@
 #include "ItemTreeView.h"
 #include "Item.h"
 #include "RootItem.h"
+#include "ProjectManager.h"
 #include "ItemManager.h"
 #include "ViewManager.h"
 #include "MenuManager.h"
 #include "AppConfig.h"
 #include "Archive.h"
 #include "TreeWidget.h"
+#include "AppUtil.h"
 #include <cnoid/ConnectionSet>
 #include <QBoxLayout>
 #include <QMouseEvent>
@@ -68,6 +70,7 @@ class ItemTreeViewImpl : public TreeWidget
 public:
     ItemTreeView* self;
     RootItemPtr rootItem;
+    ProjectManager* projectManager;
 
     unordered_map<Item*, ItvItem*> itemToItvItemMap;
 
@@ -94,6 +97,7 @@ public:
     ItemTreeViewImpl(ItemTreeView* self, RootItem* rootItem);
     ~ItemTreeViewImpl();
 
+    void clearAllItemLists();
     int addCheckColumn();
     void initializeCheckState(QTreeWidgetItem* item, int column);
     void updateCheckColumnToolTipIter(QTreeWidgetItem* item, int column, const QString& tooltip);
@@ -281,7 +285,8 @@ void ItemTreeView::construct(RootItem* rootItem)
 
 ItemTreeViewImpl::ItemTreeViewImpl(ItemTreeView* self, RootItem* rootItem)
     : self(self),
-      rootItem(rootItem)
+      rootItem(rootItem),
+      projectManager(ProjectManager::instance())
 {
     isProceccingSlotForRootItemSignals = 0;
     isDropping = false;
@@ -359,6 +364,8 @@ ItemTreeViewImpl::ItemTreeViewImpl(ItemTreeView* self, RootItem* rootItem)
     if(config->read("fontZoom", storedFontPointSizeDiff)){
         zoomFontSize(storedFontPointSizeDiff);
     }
+
+    cnoid::sigAboutToQuit().connect([&](){ clearAllItemLists(); });
 }
 
 
@@ -371,6 +378,14 @@ ItemTreeView::~ItemTreeView()
 ItemTreeViewImpl::~ItemTreeViewImpl()
 {
 
+}
+
+
+void ItemTreeViewImpl::clearAllItemLists()
+{
+    emptyItemList.clear();
+    selectedItemList.clear();
+    copiedItemList.clear();
 }
 
 
@@ -603,9 +618,9 @@ void ItemTreeViewImpl::insertItem(QTreeWidgetItem* parentTwItem, Item* item, Ite
     if(!inserted){
         parentTwItem->addChild(itvItem);
     }
-        
-    if(!parentTwItem->isExpanded()){
-        if(!item->isSubItem()){
+
+    if(!projectManager->isLoadingProject()){
+        if(!parentTwItem->isExpanded() && !item->isSubItem()){
             parentTwItem->setExpanded(true);
         }
     }
@@ -1230,7 +1245,6 @@ void ItemTreeViewImpl::restoreExpandedItems(const Archive& archive)
 {
     const Listing& expanded = *archive.findListing("expanded");
     if(expanded.isValid()){
-        collapseAll();
         for(int i=0; i < expanded.size(); ++i){
             Item* item = archive.findItem(expanded.at(i));
             if(item){

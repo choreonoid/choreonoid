@@ -198,7 +198,7 @@ void PoseSeqItem::onPositionChanged()
         }
 
         interpolator_->setLipSyncShapes(*ownerBodyItem->body()->info()->findMapping("lipSyncShapes"));
-        bodyMotionItem_->motion()->setNumParts(interpolator_->body()->numJoints());
+        bodyMotionItem_->motion()->setNumJoints(interpolator_->body()->numJoints());
 
         if(generationBar->isAutoGenerationForNewBodyEnabled()){
             updateTrajectory(true);

@@ -1,0 +1,386 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+name: Ragdoll
+
+links:
+  -
+    name: WAIST
+    jointType: free
+    mass: 10.01
+    inertia: [
+      0.044377667, 0,       0,
+      0,       0.0605605, 0,
+      0,       0,       0.044377667 ]
+    elements:
+      -
+        type: Shape
+        geometry: { type: Capsule, radius: 0.11, height: 0.13 }
+        appearance: &bodyColor
+          material:
+            diffuseColor: [ 1.0, 1.0, 0.0 ]
+  -
+    name: STOMACH_JOINT
+    parent: WAIST
+    jointType: revolute
+    jointAxis: [ 0, 0, 1 ]
+    jointRange: [ -45, 45 ]
+    mass: 0.001
+    inertia: [
+      0.001, 0,       0,
+      0,       0.001, 0,
+      0,       0,     0.001 ]
+    translation: [ 0.0, 0.0, 0.11 ]
+  -
+    name: STOMACH
+    parent: STOMACH_JOINT  #WAIST
+    jointType: revolute
+    jointAxis: [ 0, 1, 0 ]
+    jointRange: [ 0.0, 100 ]
+    mass: 10.01
+    inertia: [
+      0.044377667, 0,       0,
+      0,       0.0605605, 0,
+      0,       0,       0.044377667 ]
+    #translation: [ 0.0, 0.0, 0.11 ]
+    elements:
+      -
+        type: Shape
+        translation: [ 0.0, 0.0, 0.11 ]
+        geometry: { type: Capsule, radius: 0.11, height: 0.13 }
+        appearance: *bodyColor
+  -
+    name: CHEST
+    parent: STOMACH
+    jointType: revolute
+    jointAxis: [ 0, 1, 0 ]
+    jointRange: [ 0.0, 100 ]
+    mass: 10.01
+    inertia: [
+      0.044377667, 0,       0,
+      0,       0.0605605, 0,
+      0,       0,       0.044377667 ]
+    translation: [ 0.0, 0.0, 0.22 ]
+    elements:
+      -
+        type: Shape
+        translation: [ 0.0, 0.0, 0.11 ]
+        geometry: { type: Capsule, radius: 0.11, height: 0.13 }
+        appearance: *bodyColor
+  -
+    name: HEAD
+    parent: CHEST
+    jointType: revolute
+    jointAxis: [ 0, 0, 1 ]
+    jointRange: [ -70, 70 ]
+    mass: 4.9
+    inertia: [
+      0.023716, 0,       0,
+      0,       0.023716, 0,
+      0,       0,       0.023716 ]
+    translation: [ 0.0, 0.0, 0.22 ]
+    elements:
+      -
+        type: Shape
+        translation: [ 0.0, 0.0, 0.11 ]
+        geometry: { type: Capsule, radius: 0.11, height: 0.01 }
+        appearance: *bodyColor
+  -
+    name: THIGH_JOINT_R
+    parent: WAIST
+    jointType: revolute
+    jointAxis: [ 0, 0, -1 ]
+    jointRange: [ -10, 90 ]
+    mass: 0.001
+    inertia: [
+      0.001, 0,       0,
+      0,       0.001, 0,
+      0,       0,     0.001 ]
+    translation: [ 0.0, -0.07, -0.11 ]
+  -
+    name: THIGH_R
+    parent: THIGH_JOINT_R
+    jointType: revolute
+    jointAxis: [ 0, -1, 0 ]
+    jointRange: [ -20, 100 ]
+    mass: 7.98
+    inertia: [
+      0.029792, 0,       0,
+      0,       0.029792, 0,
+      0,       0,       0.025536 ]
+    #translation: [ 0.0, -0.07, -0.11 ]
+    elements:
+      -
+        type: Shape
+        translation: [ 0.0, 0.0, -0.16 ]
+        rotation: [ 1, 0, 0, 90 ]
+        geometry: { type: Capsule, radius: 0.08, height: 0.16 }
+        appearance: *bodyColor
+  -
+    name: KEE_R
+    parent: THIGH_R
+    jointType: revolute
+    jointAxis: [ 0, 1, 0 ]
+    jointRange: [ 0.0, 145 ]
+    mass: 3.71
+    inertia: [
+      0.010604417, 0,       0,
+      0,       0.010604417, 0,
+      0,       0,       0.0090895 ]
+    translation: [ 0.0, 0.0, -0.32 ]
+    elements:
+      -
+        type: Shape
+        translation: [ 0.0, 0.0, -0.14 ]
+        rotation: [ 1, 0, 0, 90 ]
+        geometry: { type: Capsule, radius: 0.07, height: 0.14 }
+        appearance: *bodyColor
+  -
+    name: FOOT_R
+    parent: KEE_R
+    jointType: revolute
+    jointAxis: [ 0, -1, 0 ]
+    jointRange: [ -45, 10 ]
+    mass: 1.26
+    inertia: [
+      0.00189, 0,       0,
+      0,       0.006833333, 0,
+      0,       0,       0.007733333 ]
+    translation: [ 0.0, 0.0, -0.28 ]
+    elements:
+      -
+        type: Shape
+        translation: [ 0.08, 0.0, -0.03 ]
+        geometry: { type: Box, size: [ 0.28, 0.12, 0.06 ] }
+        appearance: *bodyColor
+  -
+    name: THIGH_JOINT_L
+    parent: WAIST
+    jointType: revolute
+    jointAxis: [ 0, 0, 1 ]
+    jointRange: [ -10, 90 ]
+    mass: 0.001
+    inertia: [
+      0.001, 0,       0,
+      0,       0.001, 0,
+      0,       0,     0.001 ]
+    translation: [ 0.0, 0.07, -0.11 ]
+  -
+    name: THIGH_L
+    parent: THIGH_JOINT_L  #WAIST
+    jointType: revolute
+    jointAxis: [ 0, -1, 0 ]
+    jointRange: [ -20, 100 ]
+    mass: 7.98
+    inertia: [
+      0.029792, 0,       0,
+      0,       0.029792, 0,
+      0,       0,       0.025536 ]
+    #translation: [ 0.0, 0.07, -0.11 ]
+    elements:
+      -
+        type: Shape
+        translation: [ 0.0, 0.0, -0.16 ]
+        rotation: [ 1, 0, 0, 90 ]
+        geometry: { type: Capsule, radius: 0.08, height: 0.16 }
+        appearance: *bodyColor
+  -
+    name: KEE_L
+    parent: THIGH_L
+    jointType: revolute
+    jointAxis: [ 0, 1, 0 ]
+    jointRange: [ 0.0, 145 ]
+    mass: 3.71
+    inertia: [
+      0.010604417, 0,       0,
+      0,       0.010604417, 0,
+      0,       0,       0.0090895 ]
+    translation: [ 0.0, 0.0, -0.32 ]
+    elements:
+      -
+        type: Shape
+        translation: [ 0.0, 0.0, -0.14 ]
+        rotation: [ 1, 0, 0, 90 ]
+        geometry: { type: Capsule, radius: 0.07, height: 0.14 }
+        appearance: *bodyColor
+  -
+    name: FOOT_L
+    parent: KEE_L
+    jointType: revolute
+    jointAxis: [ 0, -1, 0 ]
+    jointRange: [ -45, 10 ]
+    mass: 1.26
+    inertia: [
+      0.00189, 0,       0,
+      0,       0.006833333, 0,
+      0,       0,       0.007733333 ]
+    translation: [ 0.0, 0.0, -0.28 ]
+    elements:
+      -
+        type: Shape
+        translation: [ 0.08, 0.0, -0.03 ]
+        geometry: { type: Box, size: [ 0.28, 0.12, 0.06 ] }
+        appearance: *bodyColor
+  -
+    name: ARM_JOINT_TWIST_R
+    parent: CHEST
+    jointType: revolute
+    jointAxis: [ 0, -1, 0 ]
+    jointRange: [ -180, 45 ]
+    mass: 0.001
+    inertia: [
+      0.001, 0,       0,
+      0,       0.001, 0,
+      0,       0,     0.001 ]
+    translation: [ 0.0, -0.175, 0.11]
+  -
+    name: ARM_JOINT_R
+    parent: ARM_JOINT_TWIST_R
+    jointType: revolute
+    jointAxis: [ 1, 0, 0 ]
+    jointRange: [ -90, 90 ]
+    mass: 0.001
+    inertia: [
+      0.001, 0,       0,
+      0,       0.001, 0,
+      0,       0,     0.001 ]
+  -
+    name: ARM_R
+    parent: ARM_JOINT_R  #CHEST
+    jointType: revolute
+    jointAxis: [ 0, 0, 1 ]
+    jointRange: [ -5, 100 ]
+    mass: 2.38
+    inertia: [
+      0.006029333, 0,       0,
+      0,       0.004284, 0,
+      0,       0,       0.006029333 ]
+    #translation: [ 0.0, -0.175, 0.11]
+    elements:
+      -
+        type: Shape
+        translation: [ 0.0, -0.13, 0.0 ]
+        geometry: { type: Capsule, radius: 0.06, height: 0.14 }
+        appearance: *bodyColor
+  -
+    name: FOREARM_R
+    parent: ARM_R
+    jointType: revolute
+    jointAxis: [ 0, 0, 1 ]
+    jointRange: [ 0.0, 160 ]
+    mass: 1.61
+    inertia: [
+      0.004440917, 0,       0,
+      0,       0.0020125, 0,
+      0,       0,       0.004440917 ]
+    translation: [ 0.0, -0.26, 0.0]
+    elements:
+      -
+        type: Shape
+        translation: [ 0.0, -0.13, 0.0]
+        geometry: { type: Capsule, radius: 0.05, height: 0.16 }
+        appearance: *bodyColor
+  -
+    name: HAND_R
+    parent: FOREARM_R
+    jointType: revolute
+    jointAxis: [ 0, 0, 1 ]
+    jointRange: [ -45, 90 ]
+    mass: 0.56
+    inertia: [
+      0.00189, 0,       0,
+      0,       0.000883333, 0,
+      0,       0,       0.002908333 ]
+    translation: [ 0.0, -0.26, 0.0]
+    elements:
+      -
+        type: Shape
+        translation: [ 0.0, -0.09, 0.0]
+        geometry: { type: Box, size: [0.05, 0.18, 0.09] }
+        appearance: *bodyColor
+  -
+    name: ARM_JOINT_TWIST_L
+    parent: CHEST
+    jointType: revolute
+    jointAxis: [ 0, -1, 0 ]
+    jointRange: [ -180, 45 ]
+    mass: 0.001
+    inertia: [
+      0.001, 0,       0,
+      0,       0.001, 0,
+      0,       0,     0.001 ]
+    translation: [ 0.0, 0.175, 0.11]
+  -
+    name: ARM_JOINT_L
+    parent: ARM_JOINT_TWIST_L
+    jointType: revolute
+    jointAxis: [ 1, 0, 0 ]
+    jointRange: [ -90, 90 ]
+    mass: 0.001
+    inertia: [
+      0.001, 0,       0,
+      0,       0.001, 0,
+      0,       0,     0.001 ]
+  -
+    name: ARM_L
+    parent: ARM_JOINT_L  #CHEST
+    jointType: revolute
+    jointAxis: [ 0, 0, -1 ]
+    jointRange: [ -5, 100 ]
+    mass: 2.38
+    inertia: [
+      0.006029333, 0,       0,
+      0,       0.004284, 0,
+      0,       0,       0.006029333 ]
+    #translation: [ 0.0, 0.175, 0.11]
+    elements:
+      -
+        type: Shape
+        translation: [ 0.0, 0.13, 0.0 ]
+        geometry: { type: Capsule, radius: 0.06, height: 0.14 }
+        appearance: *bodyColor
+  -
+    name: FOREARM_L
+    parent: ARM_L
+    jointType: revolute
+    jointAxis: [ 0, 0, -1 ]
+    jointRange: [ 0.0, 160 ]
+    mass: 1.61
+    inertia: [
+      0.004440917, 0,       0,
+      0,       0.0020125, 0,
+      0,       0,       0.004440917 ]
+    translation: [ 0.0, 0.26, 0.0]
+    elements:
+      -
+        type: Shape
+        translation: [ 0.0, 0.13, 0.0]
+        geometry: { type: Capsule, radius: 0.05, height: 0.16 }
+        appearance: *bodyColor
+  -
+    name: HAND_L
+    parent: FOREARM_L
+    jointType: revolute
+    jointAxis: [ 0, 0, -1 ]
+    jointRange: [ -45, 90 ]
+    mass: 0.56
+    inertia: [
+      0.00189, 0,       0,
+      0,       0.000883333, 0,
+      0,       0,       0.002908333 ]
+    translation: [ 0.0, 0.26, 0.0]
+    elements:
+      -
+        type: Shape
+        translation: [ 0.0, 0.09, 0.0]
+        geometry: { type: Box, size: [0.05, 0.18, 0.09] }
+        appearance: *bodyColor
+
+collisionDetection:
+  excludeTreeDepth: 2
+  excludeLinkGroups:
+    -
+      name: groupA
+      links: [ CHEST, ARM_R, ARM_L ]
+    -
+      name: groupB
+      links: [ WAIST, THIGH_L, THIGH_R ]

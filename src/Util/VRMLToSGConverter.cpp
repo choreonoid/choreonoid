@@ -8,7 +8,7 @@
 #include "SceneEffects.h"
 #include "Triangulator.h"
 #include "PolygonMeshTriangulator.h"
-#include "MeshNormalGenerator.h"
+#include "MeshFilter.h"
 #include "MeshGenerator.h"
 #include "ImageIO.h"
 #include "SceneLoader.h"
@@ -50,7 +50,7 @@ public:
 
     vector<int> newColorPosToOrgColorPosMap;
 
-    MeshNormalGenerator normalGenerator;
+    MeshFilter meshFilter;
     MeshGenerator meshGenerator;
 
     ImageIO imageIO;
@@ -169,19 +169,19 @@ int VRMLToSGConverter::divisionNumber() const
 void VRMLToSGConverter::setNormalGenerationEnabled(bool on, bool doOverwrite)
 {
     impl->isNormalGenerationEnabled = on;
-    impl->normalGenerator.setOverwritingEnabled(doOverwrite);
+    impl->meshFilter.setNormalOverwritingEnabled(doOverwrite);
 }
 
 
 void VRMLToSGConverter::setMinCreaseAngle(double angle)
 {
-    impl->normalGenerator.setMinCreaseAngle(angle);
+    impl->meshFilter.setMinCreaseAngle(angle);
 }
 
 
 void VRMLToSGConverter::setMaxCreaseAngle(double angle)
 {
-    impl->normalGenerator.setMaxCreaseAngle(angle);
+    impl->meshFilter.setMaxCreaseAngle(angle);
 }
 
 
@@ -351,7 +351,7 @@ SgNode* VRMLToSGConverterImpl::convertShapeNode(VRMLShape* vshape)
                     }
                 }
                 if(mesh && isNormalGenerationEnabled){
-                    normalGenerator.generateNormals(mesh, faceSet->creaseAngle);
+                    meshFilter.generateNormals(mesh, faceSet->creaseAngle);
                 }
                     
             } else if(VRMLBox* box = dynamic_cast<VRMLBox*>(vrmlGeometry)){
@@ -386,6 +386,7 @@ SgNode* VRMLToSGConverterImpl::convertShapeNode(VRMLShape* vshape)
             }
             
             if(mesh){
+                mesh->setName(vrmlGeometry->defName);
                 vrmlGeometryToSgMeshMap[vrmlGeometry] = mesh;
             }
         }
@@ -413,8 +414,7 @@ SgNode* VRMLToSGConverterImpl::convertShapeNode(VRMLShape* vshape)
                 SgTextureTransformPtr textureTransform;
                 if(vshape->appearance->textureTransform){
                     VRMLTextureTransform* vtt = vshape->appearance->textureTransform.get();
-                    VRMLTextureTransformToSgTextureTransformMap::iterator pp =
-                        vrmlTextureTransformToSgTextureTransformMap.find(vtt);
+                    auto pp = vrmlTextureTransformToSgTextureTransformMap.find(vtt);
                     if(pp != vrmlTextureTransformToSgTextureTransformMap.end()){
                         textureTransform = pp->second;
                     } else {
@@ -460,7 +460,7 @@ SgNode* VRMLToSGConverterImpl::convertShapeNode(VRMLShape* vshape)
 SgMeshPtr VRMLToSGConverterImpl::createMeshFromIndexedFaceSet(VRMLIndexedFaceSet* vface)
 {
     if(!vface->coord || vface->coord->point.empty() || vface->coordIndex.empty()){
-        return SgMeshPtr(); // null
+        return nullptr;
     }
     
     SgMeshPtr mesh = new SgMesh;
@@ -652,18 +652,17 @@ bool VRMLToSGConverterImpl::convertIndicesForTriangles
 
 SgPolygonMeshPtr VRMLToSGConverterImpl::createPolygonMeshFromIndexedFaceSet(VRMLIndexedFaceSet* vface)
 {
-    //if(!vface->coord || vface->coord->point.empty() || vface->coordIndex.empty()){
     if(!vface->coord){
         putMessage("VRMLIndexedFaceSet: The coord field is not defined." );
-        return  SgPolygonMeshPtr(); // null
+        return nullptr;
     }
     if(vface->coord->point.empty()){
         putMessage("VRMLIndexedFaceSet: The point field is empty." );
-        return  SgPolygonMeshPtr(); // null
+        return nullptr;
     }
     if(vface->coordIndex.empty()){
         putMessage("VRMLIndexedFaceSet: The coordIndex field is empty." );
-        return SgPolygonMeshPtr(); // null
+        return nullptr;
     }
     
     SgPolygonMeshPtr mesh = new SgPolygonMesh;
@@ -829,7 +828,7 @@ SgMeshPtr VRMLToSGConverterImpl::createMeshFromElevationGrid(VRMLElevationGrid* 
     mesh->setSolid(grid->solid);
 
     if(isNormalGenerationEnabled){
-        normalGenerator.generateNormals(mesh, grid->creaseAngle);
+        meshFilter.generateNormals(mesh, grid->creaseAngle);
     }
 
     if(grid->color){
@@ -1061,7 +1060,7 @@ SgMeshPtr VRMLToSGConverterImpl::createMeshFromExtrusion(VRMLExtrusion* extrusio
     mesh->setSolid(extrusion->solid);
 
     if(isNormalGenerationEnabled){
-        normalGenerator.generateNormals(mesh, extrusion->creaseAngle);
+        meshFilter.generateNormals(mesh, extrusion->creaseAngle);
     }
 
     mesh->updateBoundingBox();
@@ -1175,6 +1174,7 @@ void VRMLToSGConverterImpl::setDefaultTextureCoordinateForExtrusion(const SgMesh
 SgMaterial* VRMLToSGConverterImpl::createMaterial(VRMLMaterial* vm)
 {
     SgMaterial* material = new SgMaterial;
+    material->setName(vm->defName);
     material->setDiffuseColor(vm->diffuseColor);
     material->setAmbientIntensity(vm->ambientIntensity);
     material->setEmissiveColor(vm->emissiveColor);
@@ -1188,6 +1188,7 @@ SgMaterial* VRMLToSGConverterImpl::createMaterial(VRMLMaterial* vm)
 SgTextureTransform* VRMLToSGConverterImpl::createTextureTransform(VRMLTextureTransform* tt)
 {
     SgTextureTransform* textureTransform = new SgTextureTransform;
+    textureTransform->setName(tt->defName);
     textureTransform->setCenter(tt->center);
     textureTransform->setRotation(tt->rotation);
     textureTransform->setScale(tt->scale);
@@ -1259,6 +1260,10 @@ SgTexture* VRMLToSGConverterImpl::createTexture(VRMLTexture* vt)
         }
     } else {
         putMessage("MovieTextureNode is not supported");
+    }
+
+    if(texture){
+        texture->setName(vt->defName);
     }
 
     return texture;
