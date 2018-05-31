@@ -1053,7 +1053,7 @@ bool RTSystemItem::store(Archive& archive)
     return true;
 }
 
-/////
+
 bool RTSystemItem::restore(const Archive& archive)
 {
     DDEBUG("RTSystemItemImpl::restore");
@@ -1065,15 +1065,21 @@ bool RTSystemItem::restore(const Archive& archive)
     archive.read("HeartBeatPeriod", impl->heartBeatPeriod);
 #endif
 
+    /**
+       The contents of RTSystemItem must be loaded after all the items are restored
+       so that the states of the RTCs created by other items can be loaded.
+    */
     std::string filename, formatId;
     if(archive.readRelocatablePath("filename", filename)){
         if(archive.read("format", formatId)){
-            return load(filename, formatId);
+            archive.addPostProcess(
+                [this, filename, formatId](){ load(filename, formatId); });
         }
+    } else {
+        // old format data contained in a project file
+        archive.addPostProcess( [&](){ impl->restoreRTSystem(archive); });
     }
-
-    // old format data contained in a project file
-    impl->restoreRTSystem(archive);
+    
     return true;
 }
 
