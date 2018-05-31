@@ -1,198 +1,89 @@
 #VRML V2.0 utf8
 
-Group {
+Transform {
+  translation 3.58219 1.7497 1.3
   children [
-    Group {
-      children [
-	Transform {
-	  rotation 0.905747 -0.299685 -0.299685 4.61355
-	  translation 2.80956 2.1175 1.33734
-	  children [
-	    Transform {
-	      scale 1e-06 1e-06 1e-06
-	      children [
-		Shape {
-		  appearance
-		    Appearance {
-		      material
-			DEF _7 Material {
-			  diffuseColor 0.449999 0.449999 0.449999
-			  specularColor 0.5 0.5 0.5
-			}
-		    }
-		  geometry
-		    DEF _10 IndexedFaceSet {
-		      coord
-			Coordinate {
-			  point
-			    [
-			      0 0 0 
-			      1 0.746819 0 
-			      2 0.317999 0 
-			      3 0.1 0 
-			      4 0.317999 0 
-			      5 0.1 0 
-			      6 0.317999 0 
-			    ]
-			}
-		      coordIndex
-			[
-			  0 0 0 -1 
-			  1 1 1 -1 
-			  2 2 2 -1 
-			  3 3 3 -1 
-			  4 4 4 -1 
-			  5 5 5 -1 
-			  6 6 6 			]
-		    }
-		}
-	      ]
-	    }
+    DEF Wall3 Shape {
+      appearance
+      Appearance {
+	material
+	Material {
+	  diffuseColor 0.6 0.5 0.3
+	  specularColor 0.209996 0.209996 0.209996
+	}
+      }
+      geometry DEF _67 IndexedFaceSet {
+	coord Coordinate {
+	  point [
+	   -0.05 -0.1 0.204089 
+	   0.00249963 -0.1 0.00408926 
+	   -0.05 0.1 0.00408926 
+	   -0.05 -0.1 0.00408926 
+	   0.00249993 0.0999999 0.00408926 
+	   0.00249993 0.0999999 -1.3 
+	   0.00249993 -1.7497 -1.3 
+	   -0.0500001 0.0999999 -1.3 
+	   -0.0500001 -1.7497 -1.3 
+	   -0.0500001 -1.7497 0.204089 
+	   0.00249993 -0.1 0.204089 
+	   0.00249993 -1.7497 0.204089 
+	   0.00249993 -1.7497 0.00408926 
+	   -0.0500001 -1.7497 0.00408926 
 	  ]
 	}
-	Transform {
-	  rotation -5.34846e-13 1 -2.21543e-13 0.785395
-	  translation 2.492 1.83025 0.91
-	  children [
-	    Transform {
-	      scale 1e-06 1e-06 1e-06
-	      children [
-		Shape {
-		  appearance
-		    Appearance {
-		      material
-			USE _7
-		    }
-		  geometry
-		    DEF _11 IndexedFaceSet {
-		      coord
-			Coordinate {
-			  point
-			    [
-			      0 0 0 
-			      1 0.2565 0 
-			      2 0.317999 0 
-			      3 0.1 0 
-			      4 0.317999 0 
-			      5 0.1 0 
-			      6 0.317999 0 
-			    ]
-			}
-		      coordIndex
-			[
-			  0 0 0 -1 
-			  1 1 1 -1 
-			  2 2 2 -1 
-			  3 3 3 -1 
-			  4 4 4 -1 
-			  5 5 5 -1 
-			  6 6 6 			]
-		    }
-		}
-	      ]
-	    }
-	  ]
-	}
-      ]
+	coordIndex [
+	 2 3 0 -1 
+	 5 6 8 7 -1 
+	 9 13 12 11 -1 
+	 6 5 4 12 -1 
+	 13 8 6 12 -1 
+	 10 11 12 1 -1 
+	 9 11 10 0 -1 
+	 4 5 7 2 -1 
+	 7 8 13 2 -1 
+	 10 1 4 -1 
+	 2 0 10 4 -1 
+	 13 9 0 3 -1 
+	]
+	creaseAngle 0.5
+      }
     }
-    Group {
-      children [
-	Transform {
-	  translation 3.58219 1.7497 1.3
-	  children [
-	    DEF Wall3 Shape {
-	      appearance
-		Appearance {
-		  material
-		    Material {
-		      diffuseColor 0.6 0.5 0.3
-		      specularColor 0.209996 0.209996 0.209996
-		    }
-		}
-	      geometry
-		DEF _67 IndexedFaceSet {
-		  coord
-		    Coordinate {
-		      point
-			[
-			  -0.05 -0.1 0.204089 
-			  0.00249963 -0.1 0.00408926 
-			  -0.05 0.1 0.00408926 
-			  -0.05 -0.1 0.00408926 
-			  0.00249993 0.0999999 0.00408926 
-			  0.00249993 0.0999999 -1.3 
-			  0.00249993 -1.7497 -1.3 
-			  -0.0500001 0.0999999 -1.3 
-			  -0.0500001 -1.7497 -1.3 
-			  -0.0500001 -1.7497 0.204089 
-			  0.00249993 -0.1 0.204089 
-			  0.00249993 -1.7497 0.204089 
-			  0.00249993 -1.7497 0.00408926 
-			  -0.0500001 -1.7497 0.00408926 
-			]
-		    }
-		  coordIndex
-		    [
-		      2 3 0 -1 
-		      5 6 8 7 -1 
-		      9 13 12 11 -1 
-		      6 5 4 12 -1 
-		      13 8 6 12 -1 
-		      10 11 12 1 -1 
-		      9 11 10 0 -1 
-		      4 5 7 2 -1 
-		      7 8 13 2 -1 
-		      10 1 4 -1 
-		      2 0 10 4 -1 
-		      13 9 0 3 -1 
-		    ]
-		  creaseAngle 0.5
-		}
-	    }
-	  ]
+  ]
+}
+
+Transform {
+  translation 3.55844 1.8537 1.17505
+  children [
+    Shape {
+      appearance Appearance {
+	material Material {
+	  ambientIntensity 0
+	  diffuseColor 0.75 0.75 0.75
+	  specularColor 0.5 0.5 0.5
 	}
-	Transform {
-	  translation 3.55844 1.8537 1.17505
-	  children [
-	    Shape {
-	      appearance
-		Appearance {
-		  material
-		    Material {
-		      ambientIntensity 0
-		      diffuseColor 0.75 0.75 0.75
-		      specularColor 0.5 0.5 0.5
-		    }
-		}
-	      geometry
-		Box {
-		  size 0.0525 0.008 0.159997
-		}
-	    }
-	  ]
+      }
+      geometry Box {
+	size 0.0525 0.008 0.159997
+      }
+    }
+  ]
+}
+
+Transform {
+  translation 3.55844 1.8617 1.17505
+  children [
+    Shape {
+      appearance Appearance {
+	material Material {
+	  ambientIntensity 0.270269
+	  diffuseColor 0.37 0.37 0.37
+	  shininess 0.129997
+	  specularColor 0.889998 0.889998 0.889998
 	}
-	Transform {
-	  translation 3.55844 1.8617 1.17505
-	  children [
-	    Shape {
-	      appearance
-		Appearance {
-		  material
-		    DEF _100 Material {
-		      ambientIntensity 0.270269
-		      diffuseColor 0.37 0.37 0.37
-		      shininess 0.129997
-		      specularColor 0.889998 0.889998 0.889998
-		    }
-		}
-	      geometry
-		Box {
-		  size 0.0525 0.008 0.159997
-		}
-	    }
-	  ]
-	}
-      ]
+      }
+      geometry Box {
+	size 0.0525 0.008 0.159997
+      }
     }
   ]
 }
