@@ -428,8 +428,8 @@ links:
                 format: COLOR
                 lensType: DOUBLE_FISHEYE
                 fieldOfView: 180
-                width: 640
-                height: 320
+                width: 1280
+                height: 640
                 frameRate: 30
               -
                 type: RangeSensor
