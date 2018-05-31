@@ -1,8 +1,3 @@
-/*!
- * @brief  This is a definition of RTSystemEditorPlugin.
- * @author Hisashi Ikari
- * @file
- */
 #ifndef CNOID_OPENRTM_PLUGIN_RTS_ITEM_H
 #define CNOID_OPENRTM_PLUGIN_RTS_ITEM_H
 
@@ -162,47 +157,48 @@ typedef ref_ptr<RTSComp> RTSCompPtr;
 /*!
  * @brief This is the RTSystem item.
  */
-class CNOID_EXPORT RTSystemItem : public Item {
+class CNOID_EXPORT RTSystemItem : public Item
+{
 public:
     typedef cnoid::IdPair<RTSPort*> RTSPortPair;
     typedef std::map<RTSPortPair, RTSConnectionPtr> RTSConnectionMap;
     RTSystemItem();
     RTSystemItem(const RTSystemItem& org);
     virtual ~RTSystemItem();
-    static void initialize(ExtensionManager* ext);
+    static void initializeClass(ExtensionManager* ext);
 
     RTSComp* addRTSComp(const std::string& name, const QPointF& pos);
-		RTSComp* addRTSComp(const NamingContextHelper::ObjectInfo& info, const QPointF& pos);
-		void deleteRTSComp(const std::string& name);
+    RTSComp* addRTSComp(const NamingContextHelper::ObjectInfo& info, const QPointF& pos);
+    void deleteRTSComp(const std::string& name);
     bool compIsAlive(RTSComp* rtsComp);
     RTSComp* nameToRTSComp(const std::string& name);
     //RTSConnection* addRTSConnection(const std::string& id, const std::string& name,
     //        RTSPort* sourcePort, RTSPort* targetPort, const std::string& dataflow, const std::string& subscription);
-		RTSConnection* addRTSConnection(const std::string& id, const std::string& name,
-						RTSPort* sourcePort, RTSPort* targetPort, const std::vector<NamedValuePtr>& propList);
-		bool connectionCheck();
-    void RTSCompToConnectionList(const RTSComp* rtsComp,
-                                 std::list<RTSConnection*>& rtsConnectionList, int mode=0);
+    RTSConnection* addRTSConnection(
+        const std::string& id, const std::string& name,
+        RTSPort* sourcePort, RTSPort* targetPort, const std::vector<NamedValuePtr>& propList);
+    bool connectionCheck();
+    void RTSCompToConnectionList(
+        const RTSComp* rtsComp, std::list<RTSConnection*>& rtsConnectionList, int mode=0);
     RTSConnectionMap& rtsConnections();
-   // std::map<std::string, RTSConnectionPtr>& deletedRtsConnections();
+
+    bool loadRtsProfile(const std::string& filename);
+    bool saveRtsProfile(const std::string& filename);
+
+    int pollingCycle() const;
+    
+    void setVendorName(const std::string& name);
+    void setVersion(const std::string& version);
+
+// std::map<std::string, RTSConnectionPtr>& deletedRtsConnections();
     void deleteRtsConnection(const RTSConnection* connection);
     std::map<std::string, RTSCompPtr>& rtsComps();
 
-    bool autoConnection;
-
-    std::string vendorName;
-    std::string version;
-    std::string profileFileName;
-    int pollingCycle;
-#ifndef OPENRTM_VERSION110
-    int heartBeatPeriod;
-#endif
-
 protected :
-    virtual Item* doDuplicate() const;
-    virtual void doPutProperties(PutPropertyFunction& putProperty);
-    virtual bool store(Archive& archive);
-    virtual bool restore(const Archive& archive);
+    virtual Item* doDuplicate() const override;
+    virtual void doPutProperties(PutPropertyFunction& putProperty) override;
+    virtual bool store(Archive& archive) override;
+    virtual bool restore(const Archive& archive) override;
 
 private:
     RTSystemItemImpl* impl;

@@ -1,9 +1,3 @@
-/*!
- * @brief  This is a definition of RTSystemEditorPlugin.
-
- * @author Hisashi Ikari 
- * @file
- */
 #include "RTSItem.h"
 #include "RTSNameServerView.h"
 #include "RTSCommonUtil.h"
@@ -192,15 +186,22 @@ vector<string> RTSPort::getProperty(const string& key) {
 //	return true;
 //}
 /////
-class RTSystemItemImpl {
+class RTSystemItemImpl
+{
 public:
     RTSystemItem* self;
     NamingContextHelper ncHelper;
     Connection locationChangedConnection;
     map<string, RTSCompPtr> rtsComps;
-
     RTSystemItem::RTSConnectionMap rtsConnections;
     int connectionNo;
+    bool autoConnection;
+    std::string vendorName;
+    std::string version;
+    int pollingCycle;
+#ifndef OPENRTM_VERSION110
+    int heartBeatPeriod;
+#endif
 
     RTSystemItemImpl(RTSystemItem* self);
     RTSystemItemImpl(RTSystemItem* self, const RTSystemItemImpl& org);
@@ -209,28 +210,34 @@ public:
     void initialize();
     void onLocationChanged(std::string host, int port);
     RTSComp* addRTSComp(const string& name, const QPointF& pos);
-		RTSComp* addRTSComp(const NamingContextHelper::ObjectInfo& info, const QPointF& pos);
-		void deleteRTSComp(const string& name);
+    RTSComp* addRTSComp(const NamingContextHelper::ObjectInfo& info, const QPointF& pos);
+    void deleteRTSComp(const string& name);
     RTSComp* nameToRTSComp(const string& name);
     bool compIsAlive(RTSComp* rtsComp);
-		RTSConnection* addRTSConnection(const string& id, const string& name,
-						RTSPort* sourcePort, RTSPort* targetPort, const std::vector<NamedValuePtr>& propList,
-						const bool setPos, const Vector2 pos[]);
-		RTSConnection* addRTSConnectionName(const string& id, const string& name,
-            const string& sourceComp, const string& sourcePort,
-            const string& targetComp, const string& targetPort,
-            const string& dataflow, const string& subscription,
-            const bool setPos, const Vector2 pos[] );
+    RTSConnection* addRTSConnection(
+        const string& id, const string& name,
+        RTSPort* sourcePort, RTSPort* targetPort, const std::vector<NamedValuePtr>& propList,
+        const bool setPos, const Vector2 pos[]);
+    RTSConnection* addRTSConnectionName(
+        const string& id, const string& name,
+        const string& sourceComp, const string& sourcePort,
+        const string& targetComp, const string& targetPort,
+        const string& dataflow, const string& subscription,
+        const bool setPos, const Vector2 pos[] );
     void deleteRTSConnection(const RTSConnection* connection);
     bool connectionCheck();
-    void RTSCompToConnectionList(const RTSComp* rtsComp,
-            list<RTSConnection*>& rtsConnectionList, int mode);
+    void RTSCompToConnectionList(
+        const RTSComp* rtsComp, list<RTSConnection*>& rtsConnectionList, int mode);
+
+    void doPutProperties(PutPropertyFunction& putProperty);
+    bool saveRtsProfile(const string& filename);
     void restoreRTSystem( const Archive& archive);
     void restoreRTSComp(const string& name, const Vector2& pos,
             const vector<pair<string, bool>>& inPorts, const vector<pair<string, bool>>& outPorts);
     string getConnectionNumber();
+
 private:
-//	ComponentObserverImpl* observer_;
+    //ComponentObserverImpl* observer_;
 };
 
 }
@@ -473,78 +480,91 @@ void RTSComp::setRtc(RTObject_ptr rtc) {
     connectionCheck();
 		DDEBUG("RTSComp::setRtc End");
 }
-/////////////////////////////////////////////////////////////////
-void RTSystemItem::initialize(ExtensionManager* ext) {
-  DDEBUG("RTSystemItem::initialize");
-  ext->itemManager().registerClass<RTSystemItem>(N_("RTSystemItem"));
-	ext->itemManager().addCreationPanel<RTSystemItem>();
+
+
+void RTSystemItem::initializeClass(ExtensionManager* ext)
+{
+    DDEBUG("RTSystemItem::initializeClass");
+    ItemManager& im = ext->itemManager();
+    im.registerClass<RTSystemItem>(N_("RTSystemItem"));
+    im.addCreationPanel<RTSystemItem>();
+    im.addLoaderAndSaver<RTSystemItem>(
+        _("RT-System"), "RTS-PROFILE-XML", "xml",
+        [](RTSystemItem* item, const std::string& filename, std::ostream&, Item*){
+            return item->loadRtsProfile(filename);
+        },
+        [](RTSystemItem* item, const std::string& filename, std::ostream&, Item*){
+            return item->saveRtsProfile(filename);
+        });
 }
 
-RTSystemItem::RTSystemItem() {
-  DDEBUG("RTSystemItem::RTSystemItem");
-	impl = new RTSystemItemImpl(this);
-	autoConnection = true;
 
-  Mapping* config = AppConfig::archive()->openMapping("OpenRTM");
-  vendorName = config->get("defaultVendor", "AIST");
-  version = config->get("defaultVersion", "1.0.0");
-  pollingCycle = config->get("pollingCycle", 500);
-#ifndef OPENRTM_VERSION11
-  heartBeatPeriod = config->get("heartBeatPeriod", 500);
-#endif
-  DDEBUG("RTSystemItem::RTSystemItem End");
+RTSystemItem::RTSystemItem()
+{
+    DDEBUG("RTSystemItem::RTSystemItem");
+    impl = new RTSystemItemImpl(this);
 }
 
 
 RTSystemItemImpl::RTSystemItemImpl(RTSystemItem* self)
-	: self(self) {
-	initialize();
+    : self(self)
+{
+    initialize();
+    autoConnection = true;
 }
 
 
 RTSystemItem::RTSystemItem(const RTSystemItem& org)
-	: Item(org) {
-	impl = new RTSystemItemImpl(this, *org.impl);
-	autoConnection = org.autoConnection;
+    : Item(org)
+{
+    impl = new RTSystemItemImpl(this, *org.impl);
 }
 
 
 RTSystemItemImpl::RTSystemItemImpl(RTSystemItem* self, const RTSystemItemImpl& org)
-	: self(self) {
-	initialize();
+    : self(self)
+{
+    initialize();
+    autoConnection = org.autoConnection;
 }
 
-RTSystemItem::~RTSystemItem() {
-	delete impl;
+void RTSystemItemImpl::initialize()
+{
+    DDEBUG("RTSystemItemImpl::initialize");
+
+    RTSNameServerView* nsView = RTSNameServerView::instance();
+    if(nsView){
+        if(!locationChangedConnection.connected()){
+            locationChangedConnection = nsView->sigLocationChanged().connect(
+                std::bind(&RTSystemItemImpl::onLocationChanged, this, _1, _2));
+            ncHelper.setLocation(nsView->getHost(), nsView->getPort());
+        }
+    }
+    connectionNo = 0;
+
+    Mapping* config = AppConfig::archive()->openMapping("OpenRTM");
+    vendorName = config->get("defaultVendor", "AIST");
+    version = config->get("defaultVersion", "1.0.0");
+    pollingCycle = config->get("pollingCycle", 500);
+
+#ifndef OPENRTM_VERSION11
+    heartBeatPeriod = config->get("heartBeatPeriod", 500);
+#endif
 }
 
-RTSystemItemImpl::~RTSystemItemImpl() {
-	locationChangedConnection.disconnect();
+RTSystemItem::~RTSystemItem()
+{
+    delete impl;
 }
+
+RTSystemItemImpl::~RTSystemItemImpl()
+{
+    locationChangedConnection.disconnect();
+}
+
 
 Item* RTSystemItem::doDuplicate() const {
 	return new RTSystemItem(*this);
-}
-
-void RTSystemItemImpl::initialize() {
-  DDEBUG("RTSystemItemImpl::initialize");
-  RTSNameServerView* nsView = RTSNameServerView::instance();
-	if (nsView) {
-		if (!locationChangedConnection.connected()) {
-			locationChangedConnection = nsView->sigLocationChanged().connect(
-				std::bind(&RTSystemItemImpl::onLocationChanged, this, _1, _2));
-			ncHelper.setLocation(nsView->getHost(), nsView->getPort());
-		}
-	}
-	connectionNo = 0;
-  //
-  Mapping* config = AppConfig::archive()->openMapping("OpenRTM");
-  self->vendorName = config->get("defaultVendor", "AIST");
-  self->version = config->get("defaultVersion", "1.0.0");
-  self->pollingCycle = config->get("pollingCycle", 500);
-#ifndef OPENRTM_VERSION11
-  self->heartBeatPeriod = config->get("heartBeatPeriod", 500);
-#endif
 }
 
 void RTSystemItemImpl::onLocationChanged(string host, int port) {
@@ -643,7 +663,7 @@ bool RTSystemItemImpl::compIsAlive(RTSComp* rtsComp)
             for(list<RTSConnection*>::iterator it = rtsConnectionList.begin();
                     it != rtsConnectionList.end(); it++){
                 RTSConnection& connection = *(*it);
-                if(self->autoConnection){
+                if(autoConnection){
                     connection.connect();
                 }
             }
@@ -839,17 +859,77 @@ void RTSystemItemImpl::deleteRTSConnection(const RTSConnection* connection)
 }
 
 
-void RTSystemItem::doPutProperties(PutPropertyFunction& putProperty) {
-  DDEBUG("RTSystemItem::doPutProperties");
-  putProperty(_("Auto Connection"), autoConnection, changeProperty(autoConnection));
-  putProperty(_("Vendor Name"), vendorName, changeProperty(vendorName));
-  putProperty(_("Version"), version, changeProperty(version));
-  putProperty(_("Profile Path"), profileFileName, changeProperty(profileFileName));
-  putProperty(_("Polling Cycle"), pollingCycle, changeProperty(pollingCycle));
+void RTSystemItem::doPutProperties(PutPropertyFunction& putProperty)
+{
+    impl->doPutProperties(putProperty);
+}
+
+
+void RTSystemItemImpl::doPutProperties(PutPropertyFunction& putProperty)
+{
+    DDEBUG("RTSystemItem::doPutProperties");
+    putProperty(_("Auto Connection"), autoConnection, changeProperty(autoConnection));
+    putProperty(_("Vendor Name"), vendorName, changeProperty(vendorName));
+    putProperty(_("Version"), version, changeProperty(version));
+    putProperty(_("Polling Cycle"), pollingCycle, changeProperty(pollingCycle));
+
 #ifndef OPENRTM_VERSION11
-  putProperty(_("HeartBeat Period"), heartBeatPeriod, changeProperty(heartBeatPeriod));
+    putProperty(_("HeartBeat Period"), heartBeatPeriod, changeProperty(heartBeatPeriod));
 #endif
 }
+
+
+bool RTSystemItem::loadRtsProfile(const string& filename)
+{
+    ProfileHandler::getRtsProfileInfo(filename, impl->vendorName, impl->version);
+    if(ProfileHandler::restoreRtsProfile(filename, this)){
+        RTSDiagramView::instance()->updateView();
+        return true;
+    }
+    return false;
+}
+
+
+bool RTSystemItem::saveRtsProfile(const string& filename)
+{
+    return impl->saveRtsProfile(filename);
+}
+
+
+bool RTSystemItemImpl::saveRtsProfile(const string& filename)
+{
+    if(vendorName.empty()){
+        vendorName = "Choreonoid";
+    }
+    if(version.empty()){
+        version = "1.0.0";
+    }
+    string systemId = "RTSystem:" + vendorName + ":" + self->name() + ":" + version;
+    string hostname = ncHelper.host();
+
+    ProfileHandler::saveRtsProfile(filename, systemId, hostname, rtsComps, rtsConnections);
+
+    return true;
+}
+
+
+int RTSystemItem::pollingCycle() const
+{
+    return impl->pollingCycle;
+}
+
+
+void RTSystemItem::setVendorName(const std::string& name)
+{
+    impl->vendorName = name;
+}
+
+
+void RTSystemItem::setVersion(const std::string& version)
+{
+    impl->version = version;
+}
+
 
 struct ConnectorPropComparator {
 	string target_;
@@ -861,159 +941,121 @@ struct ConnectorPropComparator {
 		return (target_ == elem->name_);
 	}
 };
+
 ///////////
-bool RTSystemItem::store(Archive& archive) {
-  //if (overwrite()) {
-  //    archive.writeRelocatablePath("filename", profileFileName);
-  //    string systemId = "RTSystem:" + vendorName + ":" + name() + ":" + version;
-  //    string hostName = impl->ncHelper.host();
-  //    string targetFile = archive.resolveRelocatablePath(profileFileName);
-  //    ProfileHandler::saveRtsProfile(targetFile, systemId, hostName,
-  //      impl->rtsComps, impl->rtsConnections);
-  //  return true;
-  //}
-  //return false;
+bool RTSystemItem::store(Archive& archive)
+{
+    if(overwrite()){
+        archive.writeRelocatablePath("filename", filePath());
+        archive.write("format", fileFormat());
 
-  if (vendorName.length() == 0) {
-    MessageView::instance()->putln(MessageView::ERROR, _("Vendor is not set."));
-    return false;
-  }
-  if (version.length() == 0) {
-    MessageView::instance()->putln(MessageView::ERROR, _("Version is not set."));
-    return false;
-  }
-  if (profileFileName.length() == 0) {
-    QString selFilter;
-    QString fileName = QFileDialog::getSaveFileName(
-      MainWindow::instance(),
-      _("Save RtsProfile as"),
-      "",
-      _("XML file(*.xml);;"),
-      &selFilter,
-      QFileDialog::DontUseCustomDirectoryIcons
-    );
-    if (fileName.isEmpty()) {
-      MessageView::instance()->putln(MessageView::ERROR, _("RtsProfile file name is not set."));
-      return false;
+        archive.write("AutoConnection", impl->autoConnection);
+        archive.write("PollingCycle", impl->pollingCycle);
+
+#ifndef OPENRTM_VERSION11
+        archive.write("HeartBeatPeriod", impl->heartBeatPeriod);
+#endif
+        return true;
     }
-    profileFileName = fileName.toStdString();
-  }
 
-  archive.write("AutoConnection", autoConnection);
-  archive.write("PollingCycle", pollingCycle);
-#ifndef OPENRTM_VERSION11
-  archive.write("HeartBeatPeriod", heartBeatPeriod);
-#endif
-
-  archive.writeRelocatablePath("filename", profileFileName);
-  string systemId = "RTSystem:" + vendorName + ":" + name() + ":" + version;
-  string hostName = impl->ncHelper.host();
-  string targetFile = archive.resolveRelocatablePath(profileFileName);
-  ProfileHandler::saveRtsProfile(targetFile, systemId, hostName,
-    impl->rtsComps, impl->rtsConnections);
-  return true;
+    return true;
 }
+
 /////
-bool RTSystemItem::restore(const Archive& archive) {
-	DDEBUG("RTSystemItemImpl::restore");
+bool RTSystemItem::restore(const Archive& archive)
+{
+    DDEBUG("RTSystemItemImpl::restore");
 
-	archive.read("AutoConnection", autoConnection);
-  archive.read("PollingCycle", pollingCycle);
+    archive.read("AutoConnection", impl->autoConnection);
+    archive.read("PollingCycle", impl->pollingCycle);
+
 #ifndef OPENRTM_VERSION11
-  archive.read("HeartBeatPeriod", heartBeatPeriod);
+    archive.read("HeartBeatPeriod", impl->heartBeatPeriod);
 #endif
-  archive.read("filename", profileFileName);
-  string targetFile;
-  targetFile = archive.resolveRelocatablePath(profileFileName);
-  ProfileHandler::getRtsProfileInfo(targetFile, vendorName, version);
 
-  archive.addPostProcess(
-          std::bind(&RTSystemItemImpl::restoreRTSystem, impl, std::ref(archive)));
+    std::string filename, formatId;
+    if(archive.readRelocatablePath("filename", filename)){
+        if(archive.read("format", formatId)){
+            return load(filename, formatId);
+        }
+    }
 
-  return true;
+    // old format data contained in a project file
+    impl->restoreRTSystem(archive);
+    return true;
 }
+
 
 void RTSystemItemImpl::restoreRTSystem(const Archive& archive)
 {
-	DDEBUG("RTSystemItemImpl::restoreRTSystem");
+    DDEBUG("RTSystemItemImpl::restoreRTSystem");
 
-	string targetFile;
-    targetFile = archive.resolveRelocatablePath(self->profileFileName);
-	DDEBUG_V("targetFile:%s", targetFile.c_str());
-    DDEBUG_V("profileFileName:%s", self->profileFileName.c_str());
-    if (0 < self->profileFileName.length()) {
-		if (ProfileHandler::restoreRtsProfile(targetFile, self) == false) return;
+    const Listing& compListing = *archive.findListing("RTSComps");
+    if (compListing.isValid()) {
+        for (int i = 0; i < compListing.size(); i++) {
+            const Mapping& compMap = *compListing[i].toMapping();
+            string name;
+            Vector2 pos;
+            compMap.read("name", name);
+            read(compMap, "pos", pos);
 
-	} else {
-		const Listing& compListing = *archive.findListing("RTSComps");
-		if (compListing.isValid()) {
-			for (int i = 0; i < compListing.size(); i++) {
-				const Mapping& compMap = *compListing[i].toMapping();
-				string name;
-				Vector2 pos;
-				compMap.read("name", name);
-				read(compMap, "pos", pos);
-
-				vector<pair<string, bool>> inPorts;
-				vector<pair<string, bool>> outPorts;
-				const Listing& inportListing = *compMap.findListing("InPorts");
-				if (inportListing.isValid()) {
-					for (int i = 0; i < inportListing.size(); i++) {
-						const Mapping& inMap = *inportListing[i].toMapping();
-						string portName;
-						bool isServicePort;
-						inMap.read("name", portName);
-						inMap.read("isServicePort", isServicePort);
-						inPorts.push_back(make_pair(portName, isServicePort));
-					}
-				}
-				const Listing& outportListing = *compMap.findListing("OutPorts");
-				if (outportListing.isValid()) {
-					for (int i = 0; i < outportListing.size(); i++) {
-						const Mapping& outMap = *outportListing[i].toMapping();
-						string portName;
-						bool isServicePort;
-						outMap.read("name", portName);
-						outMap.read("isServicePort", isServicePort);
-						outPorts.push_back(make_pair(portName, isServicePort));
-					}
-				}
-				restoreRTSComp(name, pos, inPorts, outPorts);
-			}
-		}
-
-		if (self->autoConnection) {
-			const Listing& connectionListing = *archive.findListing("RTSConnections");
-			if (connectionListing.isValid()) {
-				for (int i = 0; i < connectionListing.size(); i++) {
-					const Mapping& connectMap = *connectionListing[i].toMapping();
-					string name, sR, sP, tR, tP, dataflow, subscription;
-					connectMap.read("name", name);
-					connectMap.read("sourceRtcName", sR);
-					connectMap.read("sourcePortName", sP);
-					connectMap.read("targetRtcName", tR);
-					connectMap.read("targetPortName", tP);
-					connectMap.read("dataflow", dataflow);
-					connectMap.read("subscription", subscription);
-					VectorXd p(12);
-					bool readPos = false;
-					Vector2 pos[6];
-					if (read(connectMap, "position", p)) {
-						readPos = true;
-						for (int i = 0; i < 6; i++) {
-							pos[i] << p(2 * i), p(2 * i + 1);
-						}
-					}
-
-					addRTSConnectionName("", name, sR, sP, tR, tP, dataflow, subscription, readPos, pos);
-				}
-			}
-		}
-	}
-
-    if(RTSDiagramView* diagramView = RTSDiagramView::instance()){
-        diagramView->updateView();
+            vector<pair<string, bool>> inPorts;
+            vector<pair<string, bool>> outPorts;
+            const Listing& inportListing = *compMap.findListing("InPorts");
+            if (inportListing.isValid()) {
+                for (int i = 0; i < inportListing.size(); i++) {
+                    const Mapping& inMap = *inportListing[i].toMapping();
+                    string portName;
+                    bool isServicePort;
+                    inMap.read("name", portName);
+                    inMap.read("isServicePort", isServicePort);
+                    inPorts.push_back(make_pair(portName, isServicePort));
+                }
+            }
+            const Listing& outportListing = *compMap.findListing("OutPorts");
+            if (outportListing.isValid()) {
+                for (int i = 0; i < outportListing.size(); i++) {
+                    const Mapping& outMap = *outportListing[i].toMapping();
+                    string portName;
+                    bool isServicePort;
+                    outMap.read("name", portName);
+                    outMap.read("isServicePort", isServicePort);
+                    outPorts.push_back(make_pair(portName, isServicePort));
+                }
+            }
+            restoreRTSComp(name, pos, inPorts, outPorts);
+        }
     }
+
+    if (autoConnection) {
+        const Listing& connectionListing = *archive.findListing("RTSConnections");
+        if (connectionListing.isValid()) {
+            for (int i = 0; i < connectionListing.size(); i++) {
+                const Mapping& connectMap = *connectionListing[i].toMapping();
+                string name, sR, sP, tR, tP, dataflow, subscription;
+                connectMap.read("name", name);
+                connectMap.read("sourceRtcName", sR);
+                connectMap.read("sourcePortName", sP);
+                connectMap.read("targetRtcName", tR);
+                connectMap.read("targetPortName", tP);
+                connectMap.read("dataflow", dataflow);
+                connectMap.read("subscription", subscription);
+                VectorXd p(12);
+                bool readPos = false;
+                Vector2 pos[6];
+                if (read(connectMap, "position", p)) {
+                    readPos = true;
+                    for (int i = 0; i < 6; i++) {
+                        pos[i] << p(2 * i), p(2 * i + 1);
+                    }
+                }
+                
+                addRTSConnectionName("", name, sR, sP, tR, tP, dataflow, subscription, readPos, pos);
+            }
+        }
+    }
+
+    RTSDiagramView::instance()->updateView();
 }
 
 

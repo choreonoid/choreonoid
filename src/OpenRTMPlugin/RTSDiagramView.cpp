@@ -1237,8 +1237,9 @@ void RTSDiagramViewImpl::onTime() {
   }
 }
 
-void RTSDiagramViewImpl::setCurrentRTSItem(RTSystemItem* item) {
-  timer.setInterval(item->pollingCycle);
+void RTSDiagramViewImpl::setCurrentRTSItem(RTSystemItem* item)
+{
+    timer.setInterval(item->pollingCycle());
 
   currentRTSItem = item;
   connectionOfRTSystemItemDetachedFromRoot.reset(

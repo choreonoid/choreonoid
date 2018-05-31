@@ -25,7 +25,7 @@ bool ProfileHandler::getRtsProfileInfo(std::string targetFile, std::string& vend
   return true;
 }
 
-bool ProfileHandler::restoreRtsProfile(std::string targetFile, RTSystemItem* impl) {
+bool ProfileHandler::restoreRtsProfile(std::string targetFile, RTSystemItem* rts) {
 	DDEBUG("ProfileHandler::restoreRtsProfile");
 	RtsProfile profile;
 	if (parseProfile(targetFile, profile) == false) return false;
@@ -33,8 +33,8 @@ bool ProfileHandler::restoreRtsProfile(std::string targetFile, RTSystemItem* imp
   QString strId = QString::fromStdString(profile.id);
   QStringList elems = strId.split(":");
   if (elems.size() < 4) return false;
-  impl->vendorName = elems.at(1).toStdString();
-  impl->version = elems.at(3).toStdString();
+  rts->setVendorName(elems.at(1).toStdString());
+  rts->setVersion(elems.at(3).toStdString());
   ///
 	for (int index = 0; index < profile.compList.size(); index++) {
 		Component compProf = profile.compList[index];
@@ -56,7 +56,7 @@ bool ProfileHandler::restoreRtsProfile(std::string targetFile, RTSystemItem* imp
 		pos.x() = compProf.posX;
 		pos.y() = compProf.posY;
 
-		RTSComp* comp = impl->addRTSComp(info, QPointF(pos(0), pos(1)));
+		RTSComp* comp = rts->addRTSComp(info, QPointF(pos(0), pos(1)));
 		if (comp == 0) continue;
 		if (!comp->rtc_) {
 			comp->inPorts.clear();
@@ -128,8 +128,8 @@ bool ProfileHandler::restoreRtsProfile(std::string targetFile, RTSystemItem* imp
 	/////
 	for (int idxData = 0; idxData < profile.dataConnList.size(); idxData++) {
 		DataPortConnector dataConProf = profile.dataConnList[idxData];
-		RTSPort* sourcePort = getTargetPort(dataConProf.source.pathId, dataConProf.source.portName, impl);
-		RTSPort* targetPort = getTargetPort(dataConProf.target.pathId, dataConProf.target.portName, impl);
+		RTSPort* sourcePort = getTargetPort(dataConProf.source.pathId, dataConProf.source.portName, rts);
+		RTSPort* targetPort = getTargetPort(dataConProf.target.pathId, dataConProf.target.portName, rts);
 
 		string id = "";
 		string name = dataConProf.name;
@@ -143,13 +143,13 @@ bool ProfileHandler::restoreRtsProfile(std::string targetFile, RTSystemItem* imp
 		}
 
 		if (sourcePort && targetPort) {
-			impl->addRTSConnection(id, name, sourcePort, targetPort, propList);
+			rts->addRTSConnection(id, name, sourcePort, targetPort, propList);
 		}
 	}
 	for (int idxService = 0; idxService < profile.serviceConnList.size(); idxService++) {
 		ServicePortConnector serviceConProf = profile.serviceConnList[idxService];
-		RTSPort* sourcePort = getTargetPort(serviceConProf.source.pathId, serviceConProf.source.portName, impl);
-		RTSPort* targetPort = getTargetPort(serviceConProf.target.pathId, serviceConProf.target.portName, impl);
+		RTSPort* sourcePort = getTargetPort(serviceConProf.source.pathId, serviceConProf.source.portName, rts);
+		RTSPort* targetPort = getTargetPort(serviceConProf.target.pathId, serviceConProf.target.portName, rts);
 
 		string id = "";
 		string name = serviceConProf.name;
@@ -162,21 +162,21 @@ bool ProfileHandler::restoreRtsProfile(std::string targetFile, RTSystemItem* imp
 		}
 
 		if (sourcePort && targetPort) {
-			impl->addRTSConnection(id, name, sourcePort, targetPort, propList);
+			rts->addRTSConnection(id, name, sourcePort, targetPort, propList);
 		}
 	}
 
 	return true;
 }
 
-RTSPort* ProfileHandler::getTargetPort(std::string& sourceRtc, std::string& sourcePort, RTSystemItem* impl) {
+RTSPort* ProfileHandler::getTargetPort(std::string& sourceRtc, std::string& sourcePort, RTSystemItem* rts) {
 	RTSPort* result = 0;
 
 	QString sourcePath = QString::fromStdString(sourceRtc);
 	QStringList sourcePathList = sourcePath.split("/");
 	sourcePathList.removeAt(0);
 	QString sourceId = "/" + sourcePathList.join("/");
-	RTSComp* rtc = impl->nameToRTSComp(sourceId.toStdString());
+	RTSComp* rtc = rts->nameToRTSComp(sourceId.toStdString());
 	if (rtc) {
 		result = rtc->nameToRTSPort(sourcePort);
 	}
@@ -285,7 +285,9 @@ TargetPort ProfileHandler::parseTargetPort(const pugi::xml_node& targetPort) {
 	return result;
 }
 //////////
-void ProfileHandler::saveRtsProfile(string& targetFile, string& systemId, string& hostName, map<string, RTSCompPtr>& comps, RTSConnectionMap& connections) {
+void ProfileHandler::saveRtsProfile
+(const string& targetFile, string& systemId, string& hostName, map<string, RTSCompPtr>& comps, RTSConnectionMap& connections)
+{
 	RtsProfile profile;
 	profile.id = systemId;
 
@@ -454,7 +456,8 @@ void ProfileHandler::copyNVListToProperty(NVList& source, vector<Property>& targ
 	}
 }
 
-bool ProfileHandler::writeProfile(std::string& targetFile, RtsProfile& profile) {
+bool ProfileHandler::writeProfile(const std::string& targetFile, RtsProfile& profile)
+{
 	xml_document doc;
 	xml_node profileNode = doc.append_child("rts:RtsProfile");
 

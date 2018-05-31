@@ -202,7 +202,7 @@ public:
             [&](const Archive& archive){ restore(archive); });
         
         RTSNameServerView::initializeClass(this);
-        RTSystemItem::initialize(this);
+        RTSystemItem::initializeClass(this);
         RTSPropertiesView::initializeClass(this);
         RTSDiagramView::initializeClass(this);
         RTSConfigurationView::initializeClass(this);

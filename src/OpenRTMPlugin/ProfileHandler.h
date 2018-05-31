@@ -131,11 +131,10 @@ public:
 	static bool restoreRtsProfile(std::string targetFile, RTSystemItem* impl);
   static bool getRtsProfileInfo(std::string targetFile, std::string& vendorName, std::string& version);
 
-	static void saveRtsProfile(std::string& targetFile,
-														 std::string& systemId, std::string& hostName,
-														 std::map<std::string, cnoid::RTSCompPtr>& comps,
-														 RTSConnectionMap& connections);
-
+	static void saveRtsProfile(
+            const std::string& targetFile, std::string& systemId, std::string& hostName,
+            std::map<std::string, cnoid::RTSCompPtr>& comps, RTSConnectionMap& connections);
+    
 private:
 	static bool parseProfile(std::string targetFile, RtsProfile& profile);
 	static void parseConfigurationSet(pugi::xml_node& comp, Component& proComp);
@@ -143,7 +142,7 @@ private:
 
 	static RTSPort* getTargetPort(std::string& sourceRtc, std::string& sourcePort, RTSystemItem* impl);
 	/////
-	static bool writeProfile(std::string& targetFile, RtsProfile& profile);
+	static bool writeProfile(const std::string& targetFile, RtsProfile& profile);
 	static void writeComponent(std::vector<Component>& compList, pugi::xml_node& parent);
 	static void writeDataPort(std::vector<DataPort>& portList, pugi::xml_node& parent);
 	static void writeServicePort(std::vector<ServicePort>& portList, pugi::xml_node& parent);
