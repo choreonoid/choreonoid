@@ -494,8 +494,9 @@ void RTSPortGItem::create(int rectX, const QPointF& pos, int i, portType type) {
   }
 }
 
-void RTSPortGItem::stateCheck() {
-  polygon->setBrush(QBrush(QColor(rtsPort->connected() ? "lightgreen" : (rtsPort->isServicePort ? "lightblue" : "blue"))));
+void RTSPortGItem::stateCheck()
+{
+    polygon->setBrush(QBrush(QColor(rtsPort->isConnected() ? "lightgreen" : (rtsPort->isServicePort ? "lightblue" : "blue"))));
 }
 
 void RTSPortGItem::setCandidate(bool isCand) {
@@ -532,20 +533,19 @@ private:
 };
 typedef ref_ptr<RTSCompGItem> RTSCompGItemPtr;
 
-QVariant RTSCompGItem::itemChange(GraphicsItemChange change, const QVariant & value) {
-  if (change == ItemPositionChange) {
-    rtsComp->pos += value.value<QPointF>() - pos();
-    for (map<string, RTSPortGItemPtr>::iterator it = inPorts.begin();
-      it != inPorts.end(); it++) {
-      it->second->pos += value.value<QPointF>() - pos();
+QVariant RTSCompGItem::itemChange(GraphicsItemChange change, const QVariant & value)
+{
+    if(change == ItemPositionChange){
+        rtsComp->setPos(rtsComp->pos() + value.value<QPointF>() - pos());
+        for(auto it = inPorts.begin(); it != inPorts.end(); ++it){
+            it->second->pos += value.value<QPointF>() - pos();
+        }
+        for(auto it = outPorts.begin(); it != outPorts.end(); ++it){
+            it->second->pos += value.value<QPointF>() - pos();
+        }
+        sigPositionChanged(this);
     }
-    for (map<string, RTSPortGItemPtr>::iterator it = outPorts.begin();
-      it != outPorts.end(); it++) {
-      it->second->pos += value.value<QPointF>() - pos();
-    }
-    sigPositionChanged(this);
-  }
-  return QGraphicsItem::itemChange(change, value);
+    return QGraphicsItem::itemChange(change, value);
 }
 
 int RTSCompGItem::correctTextY() {
@@ -884,7 +884,7 @@ void RTSDiagramViewImpl::mouseReleaseEvent(QMouseEvent *event) {
     RTSPortGItem* targetPort = findTargetRTSPort(pos);
 
     if (targetPort && sourcePort->rtsPort->checkConnectablePort(targetPort->rtsPort)) {
-      if (sourcePort->rtsPort->connectedWith(targetPort->rtsPort)) {
+      if (sourcePort->rtsPort->isConnectedWith(targetPort->rtsPort)) {
         MessageView::instance()->putln(_("These are already connected."));
 
       } else {
@@ -1104,7 +1104,7 @@ void RTSDiagramViewImpl::setNewRTSItemDetector() {
 
 void RTSDiagramViewImpl::addRTSComp(NamingContextHelper::ObjectInfo& info, const QPointF& pos) {
   timeOutConnection.block();
-  RTSComp* rtsComp = currentRTSItem->addRTSComp(info, pos);
+ RTSComp* rtsComp = currentRTSItem->addRTSComp(info, pos);
   if (rtsComp) {
     RTSCompGItemPtr rtsCompGItem = new RTSCompGItem(rtsComp, this, pos);
     rtsComps[info.getFullPath()] = rtsCompGItem;
@@ -1126,7 +1126,7 @@ void RTSDiagramViewImpl::addRTSComp(NamingContextHelper::ObjectInfo& info, const
 
 void RTSDiagramViewImpl::addRTSComp(RTSComp* rtsComp) {
   timeOutConnection.block();
-  RTSCompGItemPtr rtsCompGItem = new RTSCompGItem(rtsComp, this, rtsComp->pos);
+  RTSCompGItemPtr rtsCompGItem = new RTSCompGItem(rtsComp, this, rtsComp->pos());
   rtsComps[rtsComp->fullPath] = rtsCompGItem;
   scene.addItem(rtsCompGItem);
   timeOutConnection.unblock();
@@ -1152,15 +1152,17 @@ void RTSDiagramViewImpl::deleteRTSComp(RTSCompGItem* rtsCompGItem) {
   timeOutConnection.unblock();
 }
 
-void RTSDiagramViewImpl::deleteRTSConnection(RTSConnectionGItem* rtsConnectionGItem) {
-  timeOutConnection.block();
 
-  rtsConnectionGItem->rtsConnection->disConnect();
-  currentRTSItem->deleteRtsConnection(rtsConnectionGItem->rtsConnection);
+void RTSDiagramViewImpl::deleteRTSConnection(RTSConnectionGItem* rtsConnectionGItem)
+{
+    timeOutConnection.block();
 
-  rtsConnections.erase(rtsConnectionGItem->rtsConnection->id);
-  timeOutConnection.unblock();
+    currentRTSItem->disconnectAndRemoveConnection(rtsConnectionGItem->rtsConnection);
+
+    rtsConnections.erase(rtsConnectionGItem->rtsConnection->id);
+    timeOutConnection.unblock();
 }
+
 
 void RTSDiagramViewImpl::deleteSelectedRTSItem() {
   disconnect(&scene, SIGNAL(selectionChanged()), self, SLOT(onRTSCompSelectionChange()));

@@ -305,8 +305,8 @@ void ProfileHandler::saveRtsProfile
 		compProf.instanceName = compRaw->instance_name;
 		compProf.pathUri = hostName + comp->fullPath;
 		compProf.activeConfigurationSet = comp->rtc_->get_configuration()->get_active_configuration_set()->id;
-		compProf.posX = comp->pos.x();
-		compProf.posY = comp->pos.y();
+		compProf.posX = comp->pos().x();
+		compProf.posY = comp->pos().y();
 
 		PortProfileList portList = compRaw->port_profiles;
 		for (vector<RTSPortPtr>::iterator p0 = comp->inPorts.begin(); p0 != comp->inPorts.end(); p0++) {
