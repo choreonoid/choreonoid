@@ -211,7 +211,8 @@ items:
       data: 
         AutoConnection: true
         PollingCycle: 500
-        filename: "${PROJECT_DIR}/OldTankVisionSystem.xml"
+        filename: OldTankVisionSystem.xml
+        format: RTS-PROFILE-XML
 views: 
   - 
     id: 0
