@@ -4,8 +4,8 @@
 */
 
 #include "Hrpsys31Item.h"
-#include <cnoid/corba/hrpsys/RobotHardwareService.hh>
-#include <cnoid/corba/hrpsys/StateHolderService.hh>
+#include "corba/hrpsys/RobotHardwareService.hh"
+#include "corba/hrpsys/StateHolderService.hh"
 #include <cnoid/ItemManager>
 #include <cnoid/RootItem>
 #include <cnoid/MessageView>

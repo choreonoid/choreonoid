@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Fragment>
+    <UI Id="CustomLicenseUI">
+      <!-- Define CustomDialog -->
+      <Dialog Id="CustomLicenseAgreementDlg" Width="370" Height="270"
+              Title="!(loc.CustomLicenseAgreementDlg_Title)" NoMinimize="yes">
+
+        <!-- TitleText -->
+        <Control Id="Title" Type="Text" X="15" Y="6" Width="230" Height="15" Transparent="yes" NoPrefix="yes">
+          <Text>{\WixUI_Font_Title}!(loc.CustomLicenseAgreementDlgTitle)</Text>
+        </Control>
+
+        <!-- Top message text -->
+        <Control Id="Description" Type="Text" X="25" Y="23" Width="280" Height="15" Transparent="yes" NoPrefix="yes">
+          <Text>!(loc.CustomLicenseAgreementDlgDescription)</Text>
+        </Control>
+
+        <!-- Banner bitmap -->
+        <Control Id="BannerBitmap" Type="Bitmap" X="0" Y="0" Width="370" Height="44" TabSkip="no" Text="[BannerBitmap]" />
+
+        <!-- Banner Line -->
+        <Control Id="BannerLine" Type="Line" X="0" Y="44" Width="374" Height="0" />
+
+        <!-- ExtDescription Text -->
+        <Control Id="ExtDescriptionText" Type="Text" X="20" Y="50" Width="370" Height="40">
+            <Text>!(wix.ExtDescription)</Text>
+        </Control>
+
+        <!-- Title Text -->
+        <Control Id="FirstTitleText" Type="Text" X="30" Y="90" Width="370" Height="10" Text="{\WixUI_Font_Title}!(loc.CustomLicenseAgreementDlgLicenses)" />
+
+        <!-- LicenseAgreement text -->
+        <Control Id="LicenseText" Type="ScrollableText" X="20" Y="105" Width="330" Height="100" Sunken="yes" TabSkip="no">
+          <Text SourceFile="!(wix.LicenseRtf)" />
+        </Control>
+
+        <!-- Check Button Control -->
+        <Control Id="LicenseCheck" Type="CheckBox" X="20" Y="213" Width="330" Height="17" Property="IAgree" CheckBoxValue="1" >
+          <Text>{\WixUI_Font_Normal}!(loc.CustomLicenseAgreementDlgLicenseAcceptedCheckBox)</Text>
+        </Control>
+
+        <!-- Bottom Line -->
+        <Control Id="BottomLine" Type="Line" X="0" Y="234" Width="370" Height="0" />
+
+        <!-- Print Button Control -->
+        <Control Id="Print" Type="PushButton" X="120" Y="243" Width="56" Height="17" Text="Print">
+          <Publish Event="DoAction" Value="WixUIPrintEula">1</Publish>
+        </Control>
+
+        <!-- Back Button Control -->
+        <Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17" Text="!(loc.WixUIBack)">
+          <Publish Event="NewDialog" Value="WelcomeDlg">1</Publish>
+        </Control>
+
+        <!-- Next Button Control (When user check 'I agree', this button will be enable -->
+        <Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" Text="!(loc.WixUINext)">
+          <Condition Action="disable"> <![CDATA[IAgree <> 1]]> </Condition>
+          <Condition Action="enable"> IAgree = 1 </Condition>
+        </Control>
+
+        <!-- Cancel Button Control -->
+        <Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17" Cancel="yes" Text="!(loc.WixUICancel)">
+          <Publish Event="SpawnDialog" Value="CancelDlg">1</Publish>
+        </Control>
+
+      </Dialog>
+
+    </UI>
+  </Fragment>
+</Wix>

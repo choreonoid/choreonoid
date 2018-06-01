@@ -1,0 +1,17 @@
+Language,    lg-cy,     LANG,   CODE
+Chinese,     zh-tw,     1028,   950
+Czech,       cs-cz,     1029,   1250
+Danish,      da-dk,     1030,   1252
+Dutch,       nl-nl,     1043,   1252
+English,     en-us,     1033,   1252
+French,      fr-fr,     1036,   1252
+German,      de-de,     1031,   1252
+Hungarian,   hu-hu,     1038,   1250
+Italian,     it-it,     1040,   1252
+Japanese,    ja-jp,     1041,   932
+Korea,       ko-kr,     1042,   949
+Polish,      pl-pl,     1045,   1250
+Russian,     ru-ru,     1049,   1251
+Spanish,     es-es,     3082,   1252
+Ukrainian,   uk-ua,     1058,   1251
+

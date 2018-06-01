@@ -7,9 +7,19 @@
 #include <cnoid/ImageWidget>
 #include <cnoid/ViewManager>
 #include <cnoid/LazyCaller>
-#include <cnoid/corba/CameraImage.hh>
 #include <rtm/DataFlowComponentBase.h>
 #include <rtm/DataInPort.h>
+
+#ifdef USE_BUILTIN_CAMERA_IMAGE_IDL
+# include "deprecated/corba/CameraImage.hh"
+#else
+# ifdef WIN32
+#  include <rtm/idl/CameraCommonInterface.hh>
+# else
+#  include <rtm/ext/CameraCommonInterface.hh>
+# endif
+#endif
+
 #include <QBoxLayout>
 #include <boost/format.hpp>
 #include "gettext.h"

@@ -1,0 +1,6 @@
+<Shortcut Id="choreonoid.exe_$(env.VC_VERSION)" Directory="AppMenuFolder"
+      Name="Choreonoid" Show="normal"
+      WorkingDirectory="%Directory.Id%"
+      Icon="choreonoid.ico" IconIndex="0" >
+  <Icon Id="choreonoid.ico" SourceFile="Bitmaps\choreonoid.ico"/>
+</Shortcut>

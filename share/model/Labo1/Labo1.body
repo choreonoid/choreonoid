@@ -17,13 +17,23 @@ links:
     jointType: fixed
     material: Ground
     elements:
-      Shape:
+      -
+        type: Shape
         translation: [ 0, 0, -0.1 ]
         geometry: { type: Box, size: [ 20, 20, 0.1 ] }
         appearance:
           material:
             diffuseColor: [ 0.5, 0.5, 0.5 ]
             specularColor: [ 0.2, 0.2, 0.2 ]
+      -
+        type: Transform
+        translation: [ 0, -0.5, 2.5 ]
+        elements:
+          type: SpotLight
+          intensity: 0.9
+          beamWidth: 100
+          cutOffAngle: 80
+          
   -
     name: Floor
     jointType: fixed

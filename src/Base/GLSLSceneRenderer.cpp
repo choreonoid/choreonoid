@@ -23,6 +23,15 @@ using namespace cnoid;
 
 namespace {
 
+/*
+  If the following value is true, the isSolid flag of a mesh is
+  reflected in the rendering.
+  In the current implementation, this is achieved using glEnable(GL_CULL_FACE).
+  However, this implementation does not render the scene correctly when the
+  shadow is enabled.
+*/
+const bool ENABLE_IS_SOLID = false;
+
 const bool USE_FBO_FOR_PICKING = true;
 const bool SHOW_IMAGE_FOR_PICKING = false;
 
@@ -598,8 +607,12 @@ bool GLSLSceneRendererImpl::initializeGL()
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_DITHER);
 
-    glEnable(GL_CULL_FACE);
-    isCullFaceEnabled = true;
+    if(ENABLE_IS_SOLID){
+        glEnable(GL_CULL_FACE);
+        isCullFaceEnabled = true;
+    } else {
+        glDisable(GL_CULL_FACE);
+    }
 
     glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
@@ -1313,14 +1326,16 @@ void GLSLSceneRendererImpl::renderShapeMain
             phongShadowProgram.setVertexColorEnabled(mesh->hasColors());
         }
     }
-    bool doCullFace = mesh->isSolid();
-    if(!isCullFaceEnabled || *isCullFaceEnabled != doCullFace){
-        if(doCullFace){
-            glEnable(GL_CULL_FACE);
-        } else {
-            glDisable(GL_CULL_FACE);
+    if(ENABLE_IS_SOLID){
+        bool doCullFace = mesh->isSolid();
+        if(!isCullFaceEnabled || *isCullFaceEnabled != doCullFace){
+            if(doCullFace){
+                glEnable(GL_CULL_FACE);
+            } else {
+                glDisable(GL_CULL_FACE);
+            }
+            isCullFaceEnabled = doCullFace;
         }
-        isCullFaceEnabled = doCullFace;
     }
     drawVertexResource(resource, GL_TRIANGLES, position);
 }
