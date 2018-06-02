@@ -3,17 +3,16 @@
  * @author Hisashi Ikari 
  * @file
  */
-#ifndef CNOID_OPENRTM_PLUGIN_CONNECTOR_CREATOR_DIALOG_H_INCLUDED
-#define CNOID_OPENRTM_PLUGIN_CONNECTOR_CREATOR_DIALOG_H_INCLUDED
+#ifndef CNOID_OPENRTM_PLUGIN_CONNECTOR_CREATOR_DIALOG_H
+#define CNOID_OPENRTM_PLUGIN_CONNECTOR_CREATOR_DIALOG_H
 
+#include "RTSItem.h"
 #include <cnoid/Dialog>
 #include <cnoid/ComboBox>
 #include <cnoid/CheckBox>
 #include <QLineEdit>
 #include <QTableWidget>
 #include <QSplitter>
-
-#include "RTSItem.h"
 
 using namespace cnoid;
 

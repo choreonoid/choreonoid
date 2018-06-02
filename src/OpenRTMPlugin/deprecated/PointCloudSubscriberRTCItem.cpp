@@ -15,7 +15,7 @@
 #include <cnoid/LazyCaller>
 #include <rtm/DataFlowComponentBase.h>
 #include <rtm/DataInPort.h>
-#include "gettext.h"
+#include "../gettext.h"
 
 using namespace std;
 using namespace cnoid;

@@ -1,11 +1,11 @@
+
+#include "RTSItem.h"
 #include "ProfileHandler.h"
+#include "LoggerUtil.h"
+#include <rtm/idl/RTC.hh>
 #include <QDateTime>
 #include <QString>
-
-#include <rtm/idl/RTC.hh>
-#include "RTSItem.h"
-
-#include "LoggerUtil.h"
+#include <QStringList>
 
 using namespace pugi;
 using namespace std;
