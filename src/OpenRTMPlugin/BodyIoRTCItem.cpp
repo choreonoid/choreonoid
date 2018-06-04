@@ -9,6 +9,8 @@
 #include <cnoid/MessageView>
 #include "gettext.h"
 
+#include "LoggerUtil.h"
+
 using namespace std;
 using namespace cnoid;
 using boost::format;
@@ -51,7 +53,7 @@ void BodyIoRTCItem::initialize(ExtensionManager* ext)
 BodyIoRTCItem::BodyIoRTCItem()
 {
     impl = new BodyIoRTCItemImpl(this);
-    useOnlyChoreonoidExecutionContext();
+    useOnlySimulationExecutionContext();
 }
 
 
@@ -67,7 +69,7 @@ BodyIoRTCItem::BodyIoRTCItem(const BodyIoRTCItem& org)
     : ControllerRTCItem(org)
 {
     impl = new BodyIoRTCItemImpl(this, *org.impl);
-    useOnlyChoreonoidExecutionContext();
+    useOnlySimulationExecutionContext();
 }
 
 
@@ -140,12 +142,13 @@ bool BodyIoRTCItem::createRTC()
 
 bool BodyIoRTCItemImpl::createBodyIoRTC()
 {
+  DDEBUG("BodyIoRTCItemImpl::createBodyIoRTC");
     if(!bodyItem){
         self->deleteRTC(true);
         return false;
     }
     
-    if(self->createRTCmain()){
+    if(self->createRTCmain(true)){
 
         bodyIoRTC = dynamic_cast<BodyIoRTC*>(self->rtc());
         if(!bodyIoRTC){

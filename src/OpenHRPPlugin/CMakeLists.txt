@@ -23,12 +23,6 @@ if(UNIX AND NOT APPLE)
 endif()
 
 include_directories(${OPENRTM_INCLUDE_DIRS})
-
-set(IDL_INCLUDE_DIRS 
-  ${OPENRTM_PREFIX}/include/openrtm-1.1/rtm/idl
-  ${OPENRTM_PREFIX}/rtm/idl # for the Windows installer version
-  )
-
 link_directories(${OPENRTM_LIBRARY_DIRS})
 
 foreach(version ${versions})

@@ -5,8 +5,9 @@
 
 #include "ChoreonoidExecutionContext.h"
 #include <rtm/ECFactory.h>
+
 #ifndef OPENRTM_VERSION110
-  #include <rtm/RTObjectStateMachine.h>
+ #include <rtm/RTObjectStateMachine.h>
 #endif
 
 using namespace cnoid;
@@ -45,7 +46,8 @@ int ChoreonoidExecutionContext::svc(void)
 }
 
 
-RTC::ReturnCode_t ChoreonoidExecutionContext::deactivate_component(RTC::LightweightRTObject_ptr comp) throw (CORBA::SystemException)
+RTC::ReturnCode_t ChoreonoidExecutionContext::deactivate_component(RTC::LightweightRTObject_ptr comp)
+    throw (CORBA::SystemException)
 {
 #ifdef OPENRTM_VERSION110
     RTC_TRACE(("deactivate_component()"));

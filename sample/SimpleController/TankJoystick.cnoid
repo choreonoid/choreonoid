@@ -184,13 +184,13 @@ views:
       collisionLines: false
       polygonMode: fill
       defaultHeadLight: true
-      defaultHeadLightIntensity: 0.4
+      defaultHeadLightIntensity: 0.5
       headLightLightingFromBack: false
-      worldLight: true
+      worldLight: false
       worldLightIntensity: 0.1
       worldLightAmbient: 0
       additionalLights: true
-      shadowLights: [ 0, 1 ]
+      shadowLights: [ 1, 2 ]
       fog: true
       floorGrid: false
       floorGridSpan: 10
@@ -236,13 +236,13 @@ views:
       collisionLines: false
       polygonMode: fill
       defaultHeadLight: true
-      defaultHeadLightIntensity: 0.75
+      defaultHeadLightIntensity: 0.5
       headLightLightingFromBack: false
-      worldLight: true
+      worldLight: false
       worldLightIntensity: 0.5
       worldLightAmbient: 0.3
       additionalLights: true
-      shadowLights: [ 0 ]
+      shadowLights: [ 1, 2 ]
       fog: true
       floorGrid: false
       floorGridSpan: 10

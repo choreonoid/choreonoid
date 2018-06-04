@@ -24,7 +24,7 @@ VALVE_HANDLE_213: &VALVE_HANDLE_213
         rotation: [ 0, 1, 0, 90 ]
         elements:
           Visual:
-            resource: { uri: "valve_handle_213.dae" }
+            resource: { uri: "valvehandle213.wrl" }
           Collision:
             elements:
               -

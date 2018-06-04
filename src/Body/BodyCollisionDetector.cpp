@@ -117,7 +117,10 @@ void BodyCollisionDetector::addBody
 bool BodyCollisionDetectorImpl::addBody(Body* body, bool isSelfCollisionDetectionEnabled)
 {
     const int numLinks = body->numLinks();
-    int excludeTreeDepth = 0;
+
+    // Self-collision detection does not apply to pairs of adjacent links by default
+    int excludeTreeDepth = 1;
+    
     vector<bool> exclusions(numLinks);
     vector<vector<int>> excludeLinkGroups;
     

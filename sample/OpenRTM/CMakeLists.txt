@@ -32,9 +32,10 @@ function(add_cnoid_sample_rtc)
 
 endfunction()
 
+message(STATUS "idl_cpp_files=${idl_cpp_files}" )
+
 # General BodyIoRTCs
 add_cnoid_body_io_rtc(RobotIoRTC RobotIoRTC.cpp)
-add_cnoid_body_io_rtc(VisionSensorIoRTC VisionSensorIoRTC.cpp)
 
 # SR1 walk
 add_cnoid_sample_rtc(SR1WalkControllerRTC SR1WalkControllerRTC.cpp)
@@ -50,7 +51,6 @@ configure_file(OpenRTM-PA10Pickup.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYON
 
 # Tank IO
 add_cnoid_body_io_rtc(TankIoRTC TankIoRTC.cpp)
-add_cnoid_body_io_rtc(TankVisionSensorIoRTC TankVisionSensorIoRTC.cpp)
 
 # Joystick
 add_cnoid_sample_rtc(JoystickRTC JoystickRTC.cpp)
@@ -59,10 +59,20 @@ add_cnoid_sample_rtc(RemoteJoystickRTC RemoteJoystickRTC.cpp)
 target_link_libraries(RemoteJoystickRTC CnoidUtil)
 
 add_cnoid_simple_controller(RemoteJoystickInputController RemoteJoystickInputController.cpp)
-target_link_libraries(RemoteJoystickInputController CnoidBody ${OPENRTM_LIBRARIES})
+target_link_libraries(RemoteJoystickInputController CnoidBody CnoidOpenRTMPlugin ${OPENRTM_LIBRARIES})
 
 # Tank Joystick Controller
 set(target TankJoystickControllerRTC)
 add_cnoid_sample_rtc(${target} TankJoystickControllerRTC.cpp)
 configure_file(OpenRTM-TankJoystick.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
-configure_file(OpenRTM-TankVisionSensors.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+
+if(NOT USE_BUILTIN_CAMERA_IMAGE_IDL)
+  add_cnoid_body_io_rtc(VisionSensorIoRTC VisionSensorIoRTC.cpp)
+  configure_file(OpenRTM-TankVisionSensors.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+  configure_file(TankVisionSystem.xml ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+endif()
+
+configure_file(OpenRTM-TankVisionSensors-OldIDL.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+configure_file(OldTankVisionSystem.xml ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+configure_file(TankVisionSensorOut.conf
+  ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}/rtc/TankVisionSensorOut.conf COPYONLY)

@@ -9,10 +9,11 @@
 #include <rtm/RTC.h>
 #include <coil/Task.h>
 #include <rtm/Manager.h>
+
 #if defined(OPENRTM_VERSION110)
-  #include <rtm/PeriodicExecutionContext.h>
+ #include <rtm/PeriodicExecutionContext.h>
 #else
-  #include <rtm/OpenHRPExecutionContext.h>
+ #include <rtm/OpenHRPExecutionContext.h>
 #endif
 
 #ifdef WIN32
@@ -27,9 +28,9 @@ namespace cnoid
   See post 02356 to the openrtm-users mailing list.
 */
 #ifdef OPENRTM_VERSION110
-  class ChoreonoidExecutionContext : public virtual RTC::PeriodicExecutionContext
+class ChoreonoidExecutionContext : public virtual RTC::PeriodicExecutionContext
 #else
-  class ChoreonoidExecutionContext : public RTC::OpenHRPExecutionContext
+class ChoreonoidExecutionContext : public RTC::OpenHRPExecutionContext
 #endif
 {
 public:
@@ -39,6 +40,7 @@ public:
     virtual int svc(void);
     virtual RTC::ReturnCode_t deactivate_component(RTC::LightweightRTObject_ptr comp) throw (CORBA::SystemException);
 };
-};
+
+}
 
 #endif
