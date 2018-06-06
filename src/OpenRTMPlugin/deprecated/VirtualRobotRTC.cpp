@@ -328,8 +328,8 @@ void VirtualRobotRTC::addConnectedRtcs(RTC::PortService_ptr portRef, RTC::RTCLis
                     for(CORBA::ULong k=0; k < execServices->length(); k++) {
                         RTC::ExecutionContext_var execContext = execServices[k];
 
-                        OpenRTM::ExtTrigExecutionContextService_var extTrigExecContext =
-                            OpenRTM::ExtTrigExecutionContextService::_narrow(execContext);
+												RTC::ExecutionContextService_var extTrigExecContext =
+													RTC::ExecutionContextService::_narrow(execContext);
 
                         if(!CORBA::is_nil(extTrigExecContext)){
                             CORBA::ULong n = rtcList.length();

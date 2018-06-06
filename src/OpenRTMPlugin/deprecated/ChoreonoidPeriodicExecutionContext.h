@@ -23,9 +23,9 @@ namespace cnoid
   See post 02356 to the openrtm-users mailing list.
 */
 #ifdef OPENRTM_VERSION110
-  class ChoreonoidPeriodicExecutionContext : public virtual RTC::PeriodicExecutionContext
+class ChoreonoidPeriodicExecutionContext : public virtual RTC::PeriodicExecutionContext
 #else
-  class ChoreonoidPeriodicExecutionContext : public virtual RTC_exp::PeriodicExecutionContext
+class ChoreonoidPeriodicExecutionContext : public virtual RTC_exp::PeriodicExecutionContext
 #endif
 {
 public:
@@ -33,7 +33,7 @@ public:
     virtual ~ChoreonoidPeriodicExecutionContext(void);
     virtual RTC::ReturnCode_t deactivate_component(RTC::LightweightRTObject_ptr comp) throw (CORBA::SystemException);
 };
-};
+
+}
 
 #endif
-

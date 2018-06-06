@@ -6,13 +6,13 @@
 #include "ChoreonoidPeriodicExecutionContext.h"
 #include <rtm/ECFactory.h>
 #ifndef OPENRTM_VERSION110
-  #include <rtm/RTObjectStateMachine.h>
+ #include <rtm/RTObjectStateMachine.h>
 #endif
 
 using namespace cnoid;
 
- ChoreonoidPeriodicExecutionContext::ChoreonoidPeriodicExecutionContext()
-      : PeriodicExecutionContext()
+ChoreonoidPeriodicExecutionContext::ChoreonoidPeriodicExecutionContext()
+    : PeriodicExecutionContext()
 {
 
 }
@@ -24,7 +24,8 @@ ChoreonoidPeriodicExecutionContext::~ChoreonoidPeriodicExecutionContext()
 }
 
 
-RTC::ReturnCode_t ChoreonoidPeriodicExecutionContext::deactivate_component(RTC::LightweightRTObject_ptr comp) throw (CORBA::SystemException)
+RTC::ReturnCode_t ChoreonoidPeriodicExecutionContext::deactivate_component(RTC::LightweightRTObject_ptr comp)
+    throw (CORBA::SystemException)
 {
 #ifdef OPENRTM_VERSION110
     RTC_TRACE(("deactivate_component()"));
@@ -72,6 +73,3 @@ RTC::ReturnCode_t ChoreonoidPeriodicExecutionContext::deactivate_component(RTC::
     return RTC::RTC_ERROR;
 #endif
 }
-
-
-

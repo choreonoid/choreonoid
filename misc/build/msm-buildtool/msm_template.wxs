@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Module Id="$(env.MSM_VER)" Language="1041" Codepage="932"
+          Version="$(env.TARGET_VERSION)">
+    <Package Id="$(env.MSM_GUID)" InstallerVersion="300"
+             Languages="1041" Manufacturer="AIST" SummaryCodepage="932"
+             AdminImage="no" />
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <?include $(env.TARGET_NAME)_$(env.PKG_NAME)_files.wxs ?>
+
+      <!-- Program Folder -->
+      <?include $(env.MENU_WXS) ?>
+
+    </Directory>
+  </Module>
+
+</Wix>

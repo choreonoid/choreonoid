@@ -1,29 +1,29 @@
 /**
    \file
    \author Shizuko Hattori
+   \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_HRPSYS31_PLUGIN_RTMPOINTCLOUDIO_ITEM_H_INCLUDED
-#define CNOID_HRPSYS31_PLUGIN_RTMPOINTCLOUDIO_ITEM_H_INCLUDED
+#ifndef CNOID_OPENRTM_PLUGIN_VISION_SENSOR_SUBSCRIBER_RTC_ITEM_H
+#define CNOID_OPENRTM_PLUGIN_VISION_SENSOR_SUBSCRIBER_RTC_ITEM_H
 
 #include <cnoid/Item>
 #include <cnoid/BodyItem>
-#include <cnoid/SceneProvider>
 #include <cnoid/ControllerItem>
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class RTMPointCloudIOItemImpl;
+class VisionSensorSubscriberRTCItemImpl;
 
-class CNOID_EXPORT RTMPointCloudIOItem : public ControllerItem
+class CNOID_EXPORT VisionSensorSubscriberRTCItem : public ControllerItem
 {
 public:
     static void initializeClass(ExtensionManager* ext);
 
-    RTMPointCloudIOItem();
-    RTMPointCloudIOItem(const RTMPointCloudIOItem& org);
-    ~RTMPointCloudIOItem();
+    VisionSensorSubscriberRTCItem();
+    VisionSensorSubscriberRTCItem(const VisionSensorSubscriberRTCItem& org);
+    ~VisionSensorSubscriberRTCItem();
 
     virtual void onPositionChanged();
     virtual void onDisconnectedFromRoot();
@@ -40,12 +40,12 @@ public:
     virtual void stop() override;
 
 private:
-    RTMPointCloudIOItemImpl* impl;
+    VisionSensorSubscriberRTCItemImpl* impl;
     BodyItem* bodyItem;
 };
 
-typedef ref_ptr<RTMPointCloudIOItem> RTMPointCloudIOItemPtr;
+typedef ref_ptr<VisionSensorSubscriberRTCItem> VisionSensorSubscriberRTCItemPtr;
 
 }
 
-#endif /* CNOID_HRPSYS31_PLUGIN_RTMPOINTCLOUDIO_ITEM_H_INCLUDED */
+#endif

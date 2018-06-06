@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+  <Include>
+    <!-- Program Folder -->
+    <Directory Id="ProgramMenuFolder">
+      <Directory Id="AppMenuFolder" Name="Choreonoid $(env.INSTALL_VERSION) $(env.ARCH)" />
+    </Directory>
+    <Directory Id="DesktopFolder" />
+  </Include>
