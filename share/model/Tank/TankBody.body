@@ -435,7 +435,7 @@ links:
                 rotation: [ [ 1, 0, 0, 90 ], [ 0, 1, 0, -90 ] ]
                 translation: [ 0, 0, 0.1 ]
                 format: COLOR
-                lensType: DOUBLE_FISHEYE
+                lensType: DUAL_FISHEYE
                 fieldOfView: 180
                 width: 720
                 height: 480

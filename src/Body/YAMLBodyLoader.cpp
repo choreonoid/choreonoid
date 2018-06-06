@@ -1636,7 +1636,19 @@ bool YAMLBodyLoaderImpl::readCamera(Mapping& node)
             camera = new Camera;
         }
     }
-        
+
+    if(node.read("lensType", symbol)){
+        if(symbol == "NORMAL"){
+            camera->setLensType(Camera::NORMAL_LENS);
+        } else if(symbol == "FISHEYE"){
+            camera->setLensType(Camera::FISHEYE_LENS);
+            //  throwException    ImageType must be COLOR
+        } else if(symbol == "DUAL_FISHEYE"){
+            camera->setLensType(Camera::DUAL_FISHEYE_LENS);
+            //  throwException    ImageType must be COLOR
+        }
+    }
+
     if(node.read("on", on)) camera->on(on);
     if(node.read("width", value)) camera->setResolutionX(value);
     if(node.read("height", value)) camera->setResolutionY(value);
@@ -1644,17 +1656,6 @@ bool YAMLBodyLoaderImpl::readCamera(Mapping& node)
     if(node.read("nearClipDistance", value)) camera->setNearClipDistance(value);
     if(node.read("farClipDistance", value)) camera->setFarClipDistance(value);
     if(node.read("frameRate", value)) camera->setFrameRate(value);
-    if(node.read("lensType", symbol)){
-        if(symbol == "NORMAL"){
-            camera->setLensType(Camera::NORMAL);
-        }else if(symbol == "FISHEYE"){
-            camera->setLensType(Camera::FISHEYE);
-            //  throwException    ImageType must be COLOR
-        }else if(symbol == "DOUBLE_FISHEYE"){
-            camera->setLensType(Camera::DOUBLE_FISHEYE);
-            //  throwException    ImageType must be COLOR
-        }
-    }
     
     return readDevice(camera, node);
 }

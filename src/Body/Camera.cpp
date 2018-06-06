@@ -18,6 +18,7 @@ Camera::Camera()
 {
     on_ = true;
     imageType_ = COLOR_IMAGE;
+    lensType_ = NORMAL_LENS;
     isImageStateClonable_ = false;
     resolutionX_ = 640;
     resolutionY_ = 480;
@@ -27,7 +28,6 @@ Camera::Camera()
     frameRate_ = 30.0;
     delay_ = 0.0;
     image_ = std::make_shared<Image>();
-    lensType_ = NORMAL;
 }
 
 
@@ -52,6 +52,7 @@ void Camera::copyCameraStateFrom(const Camera& other)
     on_ = other.on_;
     isImageStateClonable_ = other.isImageStateClonable_;
     imageType_ = other.imageType_;
+    lensType_ = other.lensType_;
     resolutionX_ = other.resolutionX_;
     resolutionY_ = other.resolutionY_;
     fieldOfView_ = other.fieldOfView_;
@@ -59,7 +60,6 @@ void Camera::copyCameraStateFrom(const Camera& other)
     farClipDistance_ = other.farClipDistance_;
     frameRate_ = other.frameRate_;
     delay_ = other.delay_;
-    lensType_ = other.lensType_;
 }
 
 
