@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<rts:RtsProfile rts:updateDate="2018-05-24T21:15:23" rts:creationDate="2018-05-24T21:15:23" rts:version="0.2" rts:id="RTSystem:AIST:TankVisionSystem:1.0.0" xmlns:rts="http://www.openrtp.org/namespaces/rts" xmlns:rtsExt="http://www.openrtp.org/namespaces/rts_ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<rts:RtsProfile rts:updateDate="2018-06-06T21:31:57" rts:creationDate="2018-06-06T21:31:57" rts:version="0.2" rts:id="RTSystem:AIST:TankVisionSystem:1.0.0" xmlns:rts="http://www.openrtp.org/namespaces/rts" xmlns:rtsExt="http://www.openrtp.org/namespaces/rts_ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 	<rts:Components xsi:type="rtsExt:component_ext" rts:isRequired="false" rts:compositeType="None" rts:activeConfigurationSet="default" rts:instanceName="JoystickRTC" rts:pathUri="localhost/JoystickRTC.rtc" rts:id="RTC:AIST:HumanInterfaceDevice:JoystickRTC:1.0.0">
 		<rts:DataPorts xsi:type="rtsExt:dataport_ext" rts:name="JoystickRTC.axes">
 			<rtsExt:Properties rtsExt:value="DataOutPort" rtsExt:name="port.port_type" />
@@ -46,7 +46,7 @@
 		<rtsExt:Properties rtsExt:value="4.13.0-43-generic" rtsExt:name="os.release" />
 		<rtsExt:Properties rtsExt:value="#48~16.04.1-Ubuntu SMP Thu May 17 12:56:46 UTC 2018" rtsExt:name="os.version" />
 		<rtsExt:Properties rtsExt:value="x86_64" rtsExt:name="os.arch" />
-		<rtsExt:Properties rtsExt:value="vstrom2" rtsExt:name="os.hostname" />
+		<rtsExt:Properties rtsExt:value="sv7" rtsExt:name="os.hostname" />
 		<rtsExt:Properties rtsExt:value="" rtsExt:name="corba.endpoint" />
 		<rtsExt:Properties rtsExt:value="omniORB" rtsExt:name="corba.id" />
 		<rtsExt:Properties rtsExt:value="PeriodicExecutionContext" rtsExt:name="exec_cxt.periodic.type" />
@@ -65,7 +65,7 @@
 		<rtsExt:Properties rtsExt:value="" rtsExt:name="IOR" />
 	</rts:Components>
 	<rts:Components xsi:type="rtsExt:component_ext" rts:isRequired="false" rts:compositeType="None" rts:activeConfigurationSet="default" rts:instanceName="PointCloudSubscriber" rts:pathUri="localhost/PointCloudSubscriber.rtc" rts:id="RTC:AIST:choreonoid:PointCloudSubscriber:1.7">
-		<rts:DataPorts xsi:type="rtsExt:dataport_ext" rts:name="PointCloudSubscriber.Camera">
+		<rts:DataPorts xsi:type="rtsExt:dataport_ext" rts:name="PointCloudSubscriber.Kinect">
 			<rtsExt:Properties rtsExt:value="DataInPort" rtsExt:name="port.port_type" />
 			<rtsExt:Properties rtsExt:value="IDL:PointCloudTypes/PointCloud:1.0" rtsExt:name="dataport.data_type" />
 			<rtsExt:Properties rtsExt:value="Any" rtsExt:name="dataport.subscription_type" />
@@ -76,7 +76,7 @@
 			<rts:ConfigurationData rts:data="0" rts:name="debugLevel" />
 		</rts:ConfigurationSets>
 		<rts:ExecutionContexts xsi:type="rtsExt:execution_context_ext" rts:id="0" rts:rate="1000000" rts:kind="PERIODIC" />
-		<rtsExt:Location rtsExt:direction="RIGHT" rtsExt:width="-1" rtsExt:height="-1" rtsExt:x="-105" rtsExt:y="213" />
+		<rtsExt:Location rtsExt:direction="RIGHT" rtsExt:width="-1" rtsExt:height="-1" rtsExt:x="-67" rtsExt:y="181" />
 		<rtsExt:Properties rtsExt:value="PointCloudSubscriber" rtsExt:name="implementation_id" />
 		<rtsExt:Properties rtsExt:value="PointCloudSubscriber" rtsExt:name="type_name" />
 		<rtsExt:Properties rtsExt:value="This component is the pointCloud visualization component." rtsExt:name="description" />
@@ -100,10 +100,10 @@
 		<rtsExt:Properties rtsExt:value="4.13.0-43-generic" rtsExt:name="os.release" />
 		<rtsExt:Properties rtsExt:value="#48~16.04.1-Ubuntu SMP Thu May 17 12:56:46 UTC 2018" rtsExt:name="os.version" />
 		<rtsExt:Properties rtsExt:value="x86_64" rtsExt:name="os.arch" />
-		<rtsExt:Properties rtsExt:value="vstrom2" rtsExt:name="os.hostname" />
+		<rtsExt:Properties rtsExt:value="sv7" rtsExt:name="os.hostname" />
 		<rtsExt:Properties rtsExt:value="" rtsExt:name="corba.endpoint" />
 		<rtsExt:Properties rtsExt:value="omniORB" rtsExt:name="corba.id" />
-		<rtsExt:Properties rtsExt:value="ChoreonoidExecutionContext" rtsExt:name="exec_cxt.periodic.type" />
+		<rtsExt:Properties rtsExt:value="SimulationExecutionContext" rtsExt:name="exec_cxt.periodic.type" />
 		<rtsExt:Properties rtsExt:value="1000000" rtsExt:name="exec_cxt.periodic.rate" />
 		<rtsExt:Properties rtsExt:value="EventDrivenExecutionContext" rtsExt:name="exec_cxt.evdriven.type" />
 		<rtsExt:Properties rtsExt:value=" NO" rtsExt:name="logger.enable" />
@@ -114,7 +114,7 @@
 		<rtsExt:Properties rtsExt:value="PointCloudSubscriber.rtc" rtsExt:name="naming.names" />
 		<rtsExt:Properties rtsExt:value="" rtsExt:name="config_file" />
 		<rtsExt:Properties rtsExt:value="" rtsExt:name="port.inport.dataport" />
-		<rtsExt:Properties rtsExt:value="" rtsExt:name="port.inport.Camera" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="port.inport.Kinect" />
 		<rtsExt:Properties rtsExt:value="" rtsExt:name="IOR" />
 	</rts:Components>
 	<rts:Components xsi:type="rtsExt:component_ext" rts:isRequired="false" rts:compositeType="None" rts:activeConfigurationSet="default" rts:instanceName="RTM-Image" rts:pathUri="localhost/RTM-Image.rtc" rts:id="RTC:Choreonoid:Choreonoid:RTM-Image:1.0.0">
@@ -127,7 +127,7 @@
 		</rts:DataPorts>
 		<rts:ConfigurationSets rts:id="default" />
 		<rts:ExecutionContexts xsi:type="rtsExt:execution_context_ext" rts:id="0" rts:rate="30" rts:kind="PERIODIC" />
-		<rtsExt:Location rtsExt:direction="RIGHT" rtsExt:width="-1" rtsExt:height="-1" rtsExt:x="-19" rtsExt:y="128" />
+		<rtsExt:Location rtsExt:direction="RIGHT" rtsExt:width="-1" rtsExt:height="-1" rtsExt:x="-31" rtsExt:y="125" />
 		<rtsExt:Properties rtsExt:value="ImageView" rtsExt:name="implementation_id" />
 		<rtsExt:Properties rtsExt:value="ImageView" rtsExt:name="type_name" />
 		<rtsExt:Properties rtsExt:value="Choreonoid View for Showing an Image." rtsExt:name="description" />
@@ -151,7 +151,7 @@
 		<rtsExt:Properties rtsExt:value="4.13.0-43-generic" rtsExt:name="os.release" />
 		<rtsExt:Properties rtsExt:value="#48~16.04.1-Ubuntu SMP Thu May 17 12:56:46 UTC 2018" rtsExt:name="os.version" />
 		<rtsExt:Properties rtsExt:value="x86_64" rtsExt:name="os.arch" />
-		<rtsExt:Properties rtsExt:value="vstrom2" rtsExt:name="os.hostname" />
+		<rtsExt:Properties rtsExt:value="sv7" rtsExt:name="os.hostname" />
 		<rtsExt:Properties rtsExt:value="" rtsExt:name="corba.endpoint" />
 		<rtsExt:Properties rtsExt:value="omniORB" rtsExt:name="corba.id" />
 		<rtsExt:Properties rtsExt:value="PeriodicExecutionContext" rtsExt:name="exec_cxt.periodic.type" />
@@ -223,10 +223,10 @@
 		<rtsExt:Properties rtsExt:value="4.13.0-43-generic" rtsExt:name="os.release" />
 		<rtsExt:Properties rtsExt:value="#48~16.04.1-Ubuntu SMP Thu May 17 12:56:46 UTC 2018" rtsExt:name="os.version" />
 		<rtsExt:Properties rtsExt:value="x86_64" rtsExt:name="os.arch" />
-		<rtsExt:Properties rtsExt:value="vstrom2" rtsExt:name="os.hostname" />
+		<rtsExt:Properties rtsExt:value="sv7" rtsExt:name="os.hostname" />
 		<rtsExt:Properties rtsExt:value="" rtsExt:name="corba.endpoint" />
 		<rtsExt:Properties rtsExt:value="omniORB" rtsExt:name="corba.id" />
-		<rtsExt:Properties rtsExt:value="ChoreonoidExecutionContext" rtsExt:name="exec_cxt.periodic.type" />
+		<rtsExt:Properties rtsExt:value="SimulationExecutionContext" rtsExt:name="exec_cxt.periodic.type" />
 		<rtsExt:Properties rtsExt:value="1000" rtsExt:name="exec_cxt.periodic.rate" />
 		<rtsExt:Properties rtsExt:value="EventDrivenExecutionContext" rtsExt:name="exec_cxt.evdriven.type" />
 		<rtsExt:Properties rtsExt:value=" NO" rtsExt:name="logger.enable" />
@@ -313,10 +313,10 @@
 		<rtsExt:Properties rtsExt:value="4.13.0-43-generic" rtsExt:name="os.release" />
 		<rtsExt:Properties rtsExt:value="#48~16.04.1-Ubuntu SMP Thu May 17 12:56:46 UTC 2018" rtsExt:name="os.version" />
 		<rtsExt:Properties rtsExt:value="x86_64" rtsExt:name="os.arch" />
-		<rtsExt:Properties rtsExt:value="vstrom2" rtsExt:name="os.hostname" />
+		<rtsExt:Properties rtsExt:value="sv7" rtsExt:name="os.hostname" />
 		<rtsExt:Properties rtsExt:value="" rtsExt:name="corba.endpoint" />
 		<rtsExt:Properties rtsExt:value="omniORB" rtsExt:name="corba.id" />
-		<rtsExt:Properties rtsExt:value="ChoreonoidExecutionContext" rtsExt:name="exec_cxt.periodic.type" />
+		<rtsExt:Properties rtsExt:value="SimulationExecutionContext" rtsExt:name="exec_cxt.periodic.type" />
 		<rtsExt:Properties rtsExt:value="1000" rtsExt:name="exec_cxt.periodic.rate" />
 		<rtsExt:Properties rtsExt:value="EventDrivenExecutionContext" rtsExt:name="exec_cxt.evdriven.type" />
 		<rtsExt:Properties rtsExt:value=" NO" rtsExt:name="logger.enable" />
@@ -384,7 +384,7 @@
 		<rtsExt:Properties rtsExt:value="4.13.0-43-generic" rtsExt:name="os.release" />
 		<rtsExt:Properties rtsExt:value="#48~16.04.1-Ubuntu SMP Thu May 17 12:56:46 UTC 2018" rtsExt:name="os.version" />
 		<rtsExt:Properties rtsExt:value="x86_64" rtsExt:name="os.arch" />
-		<rtsExt:Properties rtsExt:value="vstrom2" rtsExt:name="os.hostname" />
+		<rtsExt:Properties rtsExt:value="sv7" rtsExt:name="os.hostname" />
 		<rtsExt:Properties rtsExt:value="" rtsExt:name="corba.endpoint" />
 		<rtsExt:Properties rtsExt:value="omniORB" rtsExt:name="corba.id" />
 		<rtsExt:Properties rtsExt:value="ChoreonoidExecutionContext" rtsExt:name="exec_cxt.periodic.type" />
@@ -404,14 +404,21 @@
 		<rtsExt:Properties rtsExt:value="" rtsExt:name="IOR" />
 	</rts:Components>
 	<rts:Components xsi:type="rtsExt:component_ext" rts:isRequired="false" rts:compositeType="None" rts:activeConfigurationSet="default" rts:instanceName="VisionSensorSubscriber" rts:pathUri="localhost/VisionSensorSubscriber.rtc" rts:id="RTC:AIST:choreonoid:VisionSensorSubscriber:1.7">
-		<rts:DataPorts xsi:type="rtsExt:dataport_ext" rts:name="VisionSensorSubscriber.VelodyneVLP-16">
+		<rts:DataPorts xsi:type="rtsExt:dataport_ext" rts:name="VisionSensorSubscriber.VLP-16">
 			<rtsExt:Properties rtsExt:value="DataInPort" rtsExt:name="port.port_type" />
 			<rtsExt:Properties rtsExt:value="IDL:RTC/RangeData:1.0" rtsExt:name="dataport.data_type" />
 			<rtsExt:Properties rtsExt:value="Any" rtsExt:name="dataport.subscription_type" />
 			<rtsExt:Properties rtsExt:value="push,pull" rtsExt:name="dataport.dataflow_type" />
 			<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
 		</rts:DataPorts>
-		<rts:DataPorts xsi:type="rtsExt:dataport_ext" rts:name="VisionSensorSubscriber.Camera_image">
+		<rts:DataPorts xsi:type="rtsExt:dataport_ext" rts:name="VisionSensorSubscriber.Kinect">
+			<rtsExt:Properties rtsExt:value="DataInPort" rtsExt:name="port.port_type" />
+			<rtsExt:Properties rtsExt:value="IDL:Img/TimedCameraImage:1.0" rtsExt:name="dataport.data_type" />
+			<rtsExt:Properties rtsExt:value="Any" rtsExt:name="dataport.subscription_type" />
+			<rtsExt:Properties rtsExt:value="push,pull" rtsExt:name="dataport.dataflow_type" />
+			<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
+		</rts:DataPorts>
+		<rts:DataPorts xsi:type="rtsExt:dataport_ext" rts:name="VisionSensorSubscriber.Theta">
 			<rtsExt:Properties rtsExt:value="DataInPort" rtsExt:name="port.port_type" />
 			<rtsExt:Properties rtsExt:value="IDL:Img/TimedCameraImage:1.0" rtsExt:name="dataport.data_type" />
 			<rtsExt:Properties rtsExt:value="Any" rtsExt:name="dataport.subscription_type" />
@@ -422,7 +429,7 @@
 			<rts:ConfigurationData rts:data="0" rts:name="debugLevel" />
 		</rts:ConfigurationSets>
 		<rts:ExecutionContexts xsi:type="rtsExt:execution_context_ext" rts:id="0" rts:rate="1000000" rts:kind="PERIODIC" />
-		<rtsExt:Location rtsExt:direction="RIGHT" rtsExt:width="-1" rtsExt:height="-1" rtsExt:x="-200" rtsExt:y="261" />
+		<rtsExt:Location rtsExt:direction="RIGHT" rtsExt:width="-1" rtsExt:height="-1" rtsExt:x="-124" rtsExt:y="236" />
 		<rtsExt:Properties rtsExt:value="VisionSensorSubscriber" rtsExt:name="implementation_id" />
 		<rtsExt:Properties rtsExt:value="VisionSensorSubscriber" rtsExt:name="type_name" />
 		<rtsExt:Properties rtsExt:value="This component is the pointCloud visualization component." rtsExt:name="description" />
@@ -446,10 +453,10 @@
 		<rtsExt:Properties rtsExt:value="4.13.0-43-generic" rtsExt:name="os.release" />
 		<rtsExt:Properties rtsExt:value="#48~16.04.1-Ubuntu SMP Thu May 17 12:56:46 UTC 2018" rtsExt:name="os.version" />
 		<rtsExt:Properties rtsExt:value="x86_64" rtsExt:name="os.arch" />
-		<rtsExt:Properties rtsExt:value="vstrom2" rtsExt:name="os.hostname" />
+		<rtsExt:Properties rtsExt:value="sv7" rtsExt:name="os.hostname" />
 		<rtsExt:Properties rtsExt:value="" rtsExt:name="corba.endpoint" />
 		<rtsExt:Properties rtsExt:value="omniORB" rtsExt:name="corba.id" />
-		<rtsExt:Properties rtsExt:value="ChoreonoidExecutionContext" rtsExt:name="exec_cxt.periodic.type" />
+		<rtsExt:Properties rtsExt:value="SimulationExecutionContext" rtsExt:name="exec_cxt.periodic.type" />
 		<rtsExt:Properties rtsExt:value="1000000" rtsExt:name="exec_cxt.periodic.rate" />
 		<rtsExt:Properties rtsExt:value="EventDrivenExecutionContext" rtsExt:name="exec_cxt.evdriven.type" />
 		<rtsExt:Properties rtsExt:value=" NO" rtsExt:name="logger.enable" />
@@ -460,39 +467,12 @@
 		<rtsExt:Properties rtsExt:value="VisionSensorSubscriber.rtc" rtsExt:name="naming.names" />
 		<rtsExt:Properties rtsExt:value="" rtsExt:name="config_file" />
 		<rtsExt:Properties rtsExt:value="" rtsExt:name="port.inport.dataport" />
-		<rtsExt:Properties rtsExt:value="" rtsExt:name="port.inport.VelodyneVLP-16" />
-		<rtsExt:Properties rtsExt:value="" rtsExt:name="port.inport.Camera_image" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="port.inport.VLP-16" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="port.inport.Kinect" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="port.inport.Theta" />
 		<rtsExt:Properties rtsExt:value="" rtsExt:name="IOR" />
 	</rts:Components>
-	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="e81a0a22-38af-4307-8385-c3ef5aae20af" rts:name="TankJoystickControllerRTC.u_Tank-TankIoRTC.u" rts:dataType="IDL:RTC/TimedDoubleSeq:1.0" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush" rts:pushInterval="4.6847644455831336e-316">
-		<rts:sourceDataPort xsi:type="rtsExt:target_port_ext" rts:portName="TankJoystickControllerRTC.u" rts:instanceName="TankJoystickControllerRTC" rts:componentId="RTC:AIST:Generic:TankJoystickControllerRTC:1.0">
-			<rtsExt:Properties rtsExt:value="localhost/TankJoystickControllerRTC.rtc" rtsExt:name="COMPONENT_PATH_ID" />
-		</rts:sourceDataPort>
-		<rts:targetDataPort xsi:type="rtsExt:target_port_ext" rts:portName="Tank-TankIoRTC.u" rts:instanceName="Tank-TankIoRTC" rts:componentId="RTC:AIST:Generic:Tank-TankIoRTC:1.0">
-			<rtsExt:Properties rtsExt:value="localhost/Tank-TankIoRTC.rtc" rtsExt:name="COMPONENT_PATH_ID" />
-		</rts:targetDataPort>
-		<rtsExt:Properties rtsExt:value="IDL:RTC/TimedDoubleSeq:1.0" rtsExt:name="dataport.data_type" />
-		<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
-		<rtsExt:Properties rtsExt:value="push" rtsExt:name="dataport.dataflow_type" />
-		<rtsExt:Properties rtsExt:value="flush" rtsExt:name="dataport.subscription_type" />
-		<rtsExt:Properties rtsExt:value="little,big" rtsExt:name="dataport.serializer.cdr.endian" />
-		<rtsExt:Properties rtsExt:value="IOR:010000001a00000049444c3a4f70656e52544d2f496e506f72744364723a312e30000000010000000000000064000000010102000e0000003135302e32392e3134352e383500cb950e000000febcac065b0000592f000000002e00000200000000000000080000000100000000545441010000001c00000001000000010001000100000001000105090101000100000009010100" rtsExt:name="dataport.corba_cdr.inport_ior" />
-	</rts:DataPortConnectors>
-	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="1f5b868f-1861-4cbd-a47c-18b6725ee007" rts:name="VisionSensorOut.cameraRange_PointCloudSubscriber.Camera" rts:dataType="IDL:PointCloudTypes/PointCloud:1.0" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush" rts:pushInterval="4.6847644455831336e-316">
-		<rts:sourceDataPort xsi:type="rtsExt:target_port_ext" rts:portName="VisionSensorOut.cameraRange" rts:instanceName="VisionSensorOut" rts:componentId="RTC:AIST:Choreonoid:VisionSensorOut:1.7">
-			<rtsExt:Properties rtsExt:value="localhost/VisionSensorOut.rtc" rtsExt:name="COMPONENT_PATH_ID" />
-		</rts:sourceDataPort>
-		<rts:targetDataPort xsi:type="rtsExt:target_port_ext" rts:portName="PointCloudSubscriber.Camera" rts:instanceName="PointCloudSubscriber" rts:componentId="RTC:AIST:choreonoid:PointCloudSubscriber:1.7">
-			<rtsExt:Properties rtsExt:value="localhost/PointCloudSubscriber.rtc" rtsExt:name="COMPONENT_PATH_ID" />
-		</rts:targetDataPort>
-		<rtsExt:Properties rtsExt:value="IDL:PointCloudTypes/PointCloud:1.0" rtsExt:name="dataport.data_type" />
-		<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
-		<rtsExt:Properties rtsExt:value="push" rtsExt:name="dataport.dataflow_type" />
-		<rtsExt:Properties rtsExt:value="flush" rtsExt:name="dataport.subscription_type" />
-		<rtsExt:Properties rtsExt:value="little,big" rtsExt:name="dataport.serializer.cdr.endian" />
-		<rtsExt:Properties rtsExt:value="IOR:010000001a00000049444c3a4f70656e52544d2f496e506f72744364723a312e30000000010000000000000064000000010102000e0000003135302e32392e3134352e383500cb950e000000febcac065b0000592f000000002a00000200000000000000080000000100000000545441010000001c00000001000000010001000100000001000105090101000100000009010100" rtsExt:name="dataport.corba_cdr.inport_ior" />
-	</rts:DataPortConnectors>
-	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="7602dea8-f2c7-4355-aa75-9e09a202549e" rts:name="JoystickRTC.axes_TankJoystickControllerRTC.axes" rts:dataType="IDL:RTC/TimedFloatSeq:1.0" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush" rts:pushInterval="4.6847644455831336e-316">
+	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="2f280dc1-a491-4446-b1d6-c6880ecf0c05" rts:name="JoystickRTC.axes_TankJoystickControllerRTC.axes" rts:dataType="IDL:RTC/TimedFloatSeq:1.0" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush" rts:pushInterval="4.7325465223237322e-316">
 		<rts:sourceDataPort xsi:type="rtsExt:target_port_ext" rts:portName="JoystickRTC.axes" rts:instanceName="JoystickRTC" rts:componentId="RTC:AIST:HumanInterfaceDevice:JoystickRTC:1.0.0">
 			<rtsExt:Properties rtsExt:value="localhost/JoystickRTC.rtc" rtsExt:name="COMPONENT_PATH_ID" />
 		</rts:sourceDataPort>
@@ -504,41 +484,27 @@
 		<rtsExt:Properties rtsExt:value="push" rtsExt:name="dataport.dataflow_type" />
 		<rtsExt:Properties rtsExt:value="flush" rtsExt:name="dataport.subscription_type" />
 		<rtsExt:Properties rtsExt:value="little,big" rtsExt:name="dataport.serializer.cdr.endian" />
-		<rtsExt:Properties rtsExt:value="IOR:010000001a00000049444c3a4f70656e52544d2f496e506f72744364723a312e30000000010000000000000064000000010102000e0000003135302e32392e3134352e383500cb950e000000febcac065b0000592f000000002900000200000000000000080000000100000000545441010000001c00000001000000010001000100000001000105090101000100000009010100" rtsExt:name="dataport.corba_cdr.inport_ior" />
+		<rtsExt:Properties rtsExt:value="IOR:010000001a00000049444c3a4f70656e52544d2f496e506f72744364723a312e30000000010000000000000068000000010102000f0000003139322e3136382e34322e3233320000f1a000000e000000fe26d4175b000049b0000000002d00000200000000000000080000000100000000545441010000001c00000001000000010001000100000001000105090101000100000009010100" rtsExt:name="dataport.corba_cdr.inport_ior" />
 	</rts:DataPortConnectors>
-	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="522c1860-484d-49e8-8bb9-5e4d369a4701" rts:name="VisionSensorOut.cameraImage_RTM-Image.cameraImage" rts:dataType="IDL:Img/TimedCameraImage:1.0" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush" rts:pushInterval="4.6847644455831336e-316">
-		<rts:sourceDataPort xsi:type="rtsExt:target_port_ext" rts:portName="VisionSensorOut.cameraImage" rts:instanceName="VisionSensorOut" rts:componentId="RTC:AIST:Choreonoid:VisionSensorOut:1.7">
+	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="4f7e8007-c6c8-47f6-af46-5133efd13f50" rts:name="VisionSensorOut.cameraRange_PointCloudSubscriber.Kinect" rts:dataType="IDL:PointCloudTypes/PointCloud:1.0" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush" rts:pushInterval="4.7325465223237322e-316">
+		<rts:sourceDataPort xsi:type="rtsExt:target_port_ext" rts:portName="VisionSensorOut.cameraRange" rts:instanceName="VisionSensorOut" rts:componentId="RTC:AIST:Choreonoid:VisionSensorOut:1.7">
 			<rtsExt:Properties rtsExt:value="localhost/VisionSensorOut.rtc" rtsExt:name="COMPONENT_PATH_ID" />
 		</rts:sourceDataPort>
-		<rts:targetDataPort xsi:type="rtsExt:target_port_ext" rts:portName="RTM-Image.cameraImage" rts:instanceName="RTM-Image" rts:componentId="RTC:Choreonoid:Choreonoid:RTM-Image:1.0.0">
-			<rtsExt:Properties rtsExt:value="localhost/RTM-Image.rtc" rtsExt:name="COMPONENT_PATH_ID" />
+		<rts:targetDataPort xsi:type="rtsExt:target_port_ext" rts:portName="PointCloudSubscriber.Kinect" rts:instanceName="PointCloudSubscriber" rts:componentId="RTC:AIST:choreonoid:PointCloudSubscriber:1.7">
+			<rtsExt:Properties rtsExt:value="localhost/PointCloudSubscriber.rtc" rtsExt:name="COMPONENT_PATH_ID" />
 		</rts:targetDataPort>
-		<rtsExt:Properties rtsExt:value="IDL:Img/TimedCameraImage:1.0" rtsExt:name="dataport.data_type" />
+		<rtsExt:Properties rtsExt:value="IDL:PointCloudTypes/PointCloud:1.0" rtsExt:name="dataport.data_type" />
 		<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
 		<rtsExt:Properties rtsExt:value="push" rtsExt:name="dataport.dataflow_type" />
 		<rtsExt:Properties rtsExt:value="flush" rtsExt:name="dataport.subscription_type" />
 		<rtsExt:Properties rtsExt:value="little,big" rtsExt:name="dataport.serializer.cdr.endian" />
-		<rtsExt:Properties rtsExt:value="IOR:010000001a00000049444c3a4f70656e52544d2f496e506f72744364723a312e30000000010000000000000064000000010102000e0000003135302e32392e3134352e383500cb950e000000febcac065b0000592f000000002c00000200000000000000080000000100000000545441010000001c00000001000000010001000100000001000105090101000100000009010100" rtsExt:name="dataport.corba_cdr.inport_ior" />
+		<rtsExt:Properties rtsExt:value="IOR:010000001a00000049444c3a4f70656e52544d2f496e506f72744364723a312e30000000010000000000000068000000010102000f0000003139322e3136382e34322e3233320000f1a000000e000000fe26d4175b000049b0000000002c00000200000000000000080000000100000000545441010000001c00000001000000010001000100000001000105090101000100000009010100" rtsExt:name="dataport.corba_cdr.inport_ior" />
 	</rts:DataPortConnectors>
-	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="7c4b213c-abac-48fe-b18f-74591e0669ee" rts:name="JoystickRTC.buttons_TankJoystickControllerRTC.buttons" rts:dataType="IDL:RTC/TimedBooleanSeq:1.0" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush" rts:pushInterval="4.6847644455831336e-316">
-		<rts:sourceDataPort xsi:type="rtsExt:target_port_ext" rts:portName="JoystickRTC.buttons" rts:instanceName="JoystickRTC" rts:componentId="RTC:AIST:HumanInterfaceDevice:JoystickRTC:1.0.0">
-			<rtsExt:Properties rtsExt:value="localhost/JoystickRTC.rtc" rtsExt:name="COMPONENT_PATH_ID" />
-		</rts:sourceDataPort>
-		<rts:targetDataPort xsi:type="rtsExt:target_port_ext" rts:portName="TankJoystickControllerRTC.buttons" rts:instanceName="TankJoystickControllerRTC" rts:componentId="RTC:AIST:Generic:TankJoystickControllerRTC:1.0">
-			<rtsExt:Properties rtsExt:value="localhost/TankJoystickControllerRTC.rtc" rtsExt:name="COMPONENT_PATH_ID" />
-		</rts:targetDataPort>
-		<rtsExt:Properties rtsExt:value="IDL:RTC/TimedBooleanSeq:1.0" rtsExt:name="dataport.data_type" />
-		<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
-		<rtsExt:Properties rtsExt:value="push" rtsExt:name="dataport.dataflow_type" />
-		<rtsExt:Properties rtsExt:value="flush" rtsExt:name="dataport.subscription_type" />
-		<rtsExt:Properties rtsExt:value="little,big" rtsExt:name="dataport.serializer.cdr.endian" />
-		<rtsExt:Properties rtsExt:value="IOR:010000001a00000049444c3a4f70656e52544d2f496e506f72744364723a312e30000000010000000000000064000000010102000e0000003135302e32392e3134352e383500cb950e000000febcac065b0000592f000000002b00000200000000000000080000000100000000545441010000001c00000001000000010001000100000001000105090101000100000009010100" rtsExt:name="dataport.corba_cdr.inport_ior" />
-	</rts:DataPortConnectors>
-	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="6158520e-e9e3-4eb6-b998-e367fb7b2030" rts:name="VisionSensorOut.rangeSensor_VisionSensorSubscriber.VelodyneVLP-16" rts:dataType="IDL:RTC/RangeData:1.0" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush" rts:pushInterval="4.6847644455831336e-316">
+	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="ed844ecd-147a-423e-8207-830d11b71b8e" rts:name="VisionSensorOut.rangeSensor_VisionSensorSubscriber.VLP-16" rts:dataType="IDL:RTC/RangeData:1.0" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush" rts:pushInterval="4.7325465223237322e-316">
 		<rts:sourceDataPort xsi:type="rtsExt:target_port_ext" rts:portName="VisionSensorOut.rangeSensor" rts:instanceName="VisionSensorOut" rts:componentId="RTC:AIST:Choreonoid:VisionSensorOut:1.7">
 			<rtsExt:Properties rtsExt:value="localhost/VisionSensorOut.rtc" rtsExt:name="COMPONENT_PATH_ID" />
 		</rts:sourceDataPort>
-		<rts:targetDataPort xsi:type="rtsExt:target_port_ext" rts:portName="VisionSensorSubscriber.VelodyneVLP-16" rts:instanceName="VisionSensorSubscriber" rts:componentId="RTC:AIST:choreonoid:VisionSensorSubscriber:1.7">
+		<rts:targetDataPort xsi:type="rtsExt:target_port_ext" rts:portName="VisionSensorSubscriber.VLP-16" rts:instanceName="VisionSensorSubscriber" rts:componentId="RTC:AIST:choreonoid:VisionSensorSubscriber:1.7">
 			<rtsExt:Properties rtsExt:value="localhost/VisionSensorSubscriber.rtc" rtsExt:name="COMPONENT_PATH_ID" />
 		</rts:targetDataPort>
 		<rtsExt:Properties rtsExt:value="IDL:RTC/RangeData:1.0" rtsExt:name="dataport.data_type" />
@@ -546,13 +512,13 @@
 		<rtsExt:Properties rtsExt:value="push" rtsExt:name="dataport.dataflow_type" />
 		<rtsExt:Properties rtsExt:value="flush" rtsExt:name="dataport.subscription_type" />
 		<rtsExt:Properties rtsExt:value="little,big" rtsExt:name="dataport.serializer.cdr.endian" />
-		<rtsExt:Properties rtsExt:value="IOR:010000001a00000049444c3a4f70656e52544d2f496e506f72744364723a312e30000000010000000000000064000000010102000e0000003135302e32392e3134352e383500cb950e000000febcac065b0000592f000000002f00000200000000000000080000000100000000545441010000001c00000001000000010001000100000001000105090101000100000009010100" rtsExt:name="dataport.corba_cdr.inport_ior" />
+		<rtsExt:Properties rtsExt:value="IOR:010000001a00000049444c3a4f70656e52544d2f496e506f72744364723a312e30000000010000000000000068000000010102000f0000003139322e3136382e34322e3233320000f1a000000e000000fe26d4175b000049b0000000003200000200000000000000080000000100000000545441010000001c00000001000000010001000100000001000105090101000100000009010100" rtsExt:name="dataport.corba_cdr.inport_ior" />
 	</rts:DataPortConnectors>
-	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="776ab1d6-abf4-4996-8fba-a3af09754936" rts:name="TankJoystickControllerRTC.dq_Tank-TankIoRTC.dq" rts:dataType="IDL:RTC/TimedDoubleSeq:1.0" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush" rts:pushInterval="4.6847644455831336e-316">
-		<rts:sourceDataPort xsi:type="rtsExt:target_port_ext" rts:portName="TankJoystickControllerRTC.dq" rts:instanceName="TankJoystickControllerRTC" rts:componentId="RTC:AIST:Generic:TankJoystickControllerRTC:1.0">
+	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="2d3ffd8c-f69d-49b5-a4b1-63839addd1f6" rts:name="TankJoystickControllerRTC.u_Tank-TankIoRTC.u" rts:dataType="IDL:RTC/TimedDoubleSeq:1.0" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush" rts:pushInterval="4.7325465223237322e-316">
+		<rts:sourceDataPort xsi:type="rtsExt:target_port_ext" rts:portName="TankJoystickControllerRTC.u" rts:instanceName="TankJoystickControllerRTC" rts:componentId="RTC:AIST:Generic:TankJoystickControllerRTC:1.0">
 			<rtsExt:Properties rtsExt:value="localhost/TankJoystickControllerRTC.rtc" rtsExt:name="COMPONENT_PATH_ID" />
 		</rts:sourceDataPort>
-		<rts:targetDataPort xsi:type="rtsExt:target_port_ext" rts:portName="Tank-TankIoRTC.dq" rts:instanceName="Tank-TankIoRTC" rts:componentId="RTC:AIST:Generic:Tank-TankIoRTC:1.0">
+		<rts:targetDataPort xsi:type="rtsExt:target_port_ext" rts:portName="Tank-TankIoRTC.u" rts:instanceName="Tank-TankIoRTC" rts:componentId="RTC:AIST:Generic:Tank-TankIoRTC:1.0">
 			<rtsExt:Properties rtsExt:value="localhost/Tank-TankIoRTC.rtc" rtsExt:name="COMPONENT_PATH_ID" />
 		</rts:targetDataPort>
 		<rtsExt:Properties rtsExt:value="IDL:RTC/TimedDoubleSeq:1.0" rtsExt:name="dataport.data_type" />
@@ -560,9 +526,9 @@
 		<rtsExt:Properties rtsExt:value="push" rtsExt:name="dataport.dataflow_type" />
 		<rtsExt:Properties rtsExt:value="flush" rtsExt:name="dataport.subscription_type" />
 		<rtsExt:Properties rtsExt:value="little,big" rtsExt:name="dataport.serializer.cdr.endian" />
-		<rtsExt:Properties rtsExt:value="IOR:010000001a00000049444c3a4f70656e52544d2f496e506f72744364723a312e30000000010000000000000064000000010102000e0000003135302e32392e3134352e383500cb950e000000febcac065b0000592f000000002d00000200000000000000080000000100000000545441010000001c00000001000000010001000100000001000105090101000100000009010100" rtsExt:name="dataport.corba_cdr.inport_ior" />
+		<rtsExt:Properties rtsExt:value="IOR:010000001a00000049444c3a4f70656e52544d2f496e506f72744364723a312e30000000010000000000000068000000010102000f0000003139322e3136382e34322e3233320000f1a000000e000000fe26d4175b000049b0000000003100000200000000000000080000000100000000545441010000001c00000001000000010001000100000001000105090101000100000009010100" rtsExt:name="dataport.corba_cdr.inport_ior" />
 	</rts:DataPortConnectors>
-	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="b26add3a-7ac4-407a-9cd6-a9c9ff6a6659" rts:name="TankJoystickControllerRTC.light_Tank-TankIoRTC.light" rts:dataType="IDL:RTC/TimedBooleanSeq:1.0" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush" rts:pushInterval="4.6847644455831336e-316">
+	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="dc2a677d-7ecc-493c-9bdd-82414487e73b" rts:name="TankJoystickControllerRTC.light_Tank-TankIoRTC.light" rts:dataType="IDL:RTC/TimedBooleanSeq:1.0" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush" rts:pushInterval="4.7325465223237322e-316">
 		<rts:sourceDataPort xsi:type="rtsExt:target_port_ext" rts:portName="TankJoystickControllerRTC.light" rts:instanceName="TankJoystickControllerRTC" rts:componentId="RTC:AIST:Generic:TankJoystickControllerRTC:1.0">
 			<rtsExt:Properties rtsExt:value="localhost/TankJoystickControllerRTC.rtc" rtsExt:name="COMPONENT_PATH_ID" />
 		</rts:sourceDataPort>
@@ -574,9 +540,51 @@
 		<rtsExt:Properties rtsExt:value="push" rtsExt:name="dataport.dataflow_type" />
 		<rtsExt:Properties rtsExt:value="flush" rtsExt:name="dataport.subscription_type" />
 		<rtsExt:Properties rtsExt:value="little,big" rtsExt:name="dataport.serializer.cdr.endian" />
-		<rtsExt:Properties rtsExt:value="IOR:010000001a00000049444c3a4f70656e52544d2f496e506f72744364723a312e30000000010000000000000064000000010102000e0000003135302e32392e3134352e383500cb950e000000febcac065b0000592f000000003000000200000000000000080000000100000000545441010000001c00000001000000010001000100000001000105090101000100000009010100" rtsExt:name="dataport.corba_cdr.inport_ior" />
+		<rtsExt:Properties rtsExt:value="IOR:010000001a00000049444c3a4f70656e52544d2f496e506f72744364723a312e30000000010000000000000068000000010102000f0000003139322e3136382e34322e3233320000f1a000000e000000fe26d4175b000049b0000000002f00000200000000000000080000000100000000545441010000001c00000001000000010001000100000001000105090101000100000009010100" rtsExt:name="dataport.corba_cdr.inport_ior" />
 	</rts:DataPortConnectors>
-	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="00000000-0000-0000-0000-000000000000" rts:name="Tank-TankIoRTC.q_TankJoystickControllerRTC.q" rts:dataType="IDL:RTC/TimedDoubleSeq:1.0" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush" rts:pushInterval="4.6847644455831336e-316">
+	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="be7cbd5e-e9b1-4d1f-a6af-8bc8d67d016a" rts:name="JoystickRTC.buttons_TankJoystickControllerRTC.buttons" rts:dataType="IDL:RTC/TimedBooleanSeq:1.0" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush" rts:pushInterval="4.7325465223237322e-316">
+		<rts:sourceDataPort xsi:type="rtsExt:target_port_ext" rts:portName="JoystickRTC.buttons" rts:instanceName="JoystickRTC" rts:componentId="RTC:AIST:HumanInterfaceDevice:JoystickRTC:1.0.0">
+			<rtsExt:Properties rtsExt:value="localhost/JoystickRTC.rtc" rtsExt:name="COMPONENT_PATH_ID" />
+		</rts:sourceDataPort>
+		<rts:targetDataPort xsi:type="rtsExt:target_port_ext" rts:portName="TankJoystickControllerRTC.buttons" rts:instanceName="TankJoystickControllerRTC" rts:componentId="RTC:AIST:Generic:TankJoystickControllerRTC:1.0">
+			<rtsExt:Properties rtsExt:value="localhost/TankJoystickControllerRTC.rtc" rtsExt:name="COMPONENT_PATH_ID" />
+		</rts:targetDataPort>
+		<rtsExt:Properties rtsExt:value="IDL:RTC/TimedBooleanSeq:1.0" rtsExt:name="dataport.data_type" />
+		<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
+		<rtsExt:Properties rtsExt:value="push" rtsExt:name="dataport.dataflow_type" />
+		<rtsExt:Properties rtsExt:value="flush" rtsExt:name="dataport.subscription_type" />
+		<rtsExt:Properties rtsExt:value="little,big" rtsExt:name="dataport.serializer.cdr.endian" />
+		<rtsExt:Properties rtsExt:value="IOR:010000001a00000049444c3a4f70656e52544d2f496e506f72744364723a312e30000000010000000000000068000000010102000f0000003139322e3136382e34322e3233320000f1a000000e000000fe26d4175b000049b0000000002a00000200000000000000080000000100000000545441010000001c00000001000000010001000100000001000105090101000100000009010100" rtsExt:name="dataport.corba_cdr.inport_ior" />
+	</rts:DataPortConnectors>
+	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="828fcb30-b723-4324-88b8-343afb4684fd" rts:name="TankJoystickControllerRTC.dq_Tank-TankIoRTC.dq" rts:dataType="IDL:RTC/TimedDoubleSeq:1.0" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush" rts:pushInterval="4.7325465223237322e-316">
+		<rts:sourceDataPort xsi:type="rtsExt:target_port_ext" rts:portName="TankJoystickControllerRTC.dq" rts:instanceName="TankJoystickControllerRTC" rts:componentId="RTC:AIST:Generic:TankJoystickControllerRTC:1.0">
+			<rtsExt:Properties rtsExt:value="localhost/TankJoystickControllerRTC.rtc" rtsExt:name="COMPONENT_PATH_ID" />
+		</rts:sourceDataPort>
+		<rts:targetDataPort xsi:type="rtsExt:target_port_ext" rts:portName="Tank-TankIoRTC.dq" rts:instanceName="Tank-TankIoRTC" rts:componentId="RTC:AIST:Generic:Tank-TankIoRTC:1.0">
+			<rtsExt:Properties rtsExt:value="localhost/Tank-TankIoRTC.rtc" rtsExt:name="COMPONENT_PATH_ID" />
+		</rts:targetDataPort>
+		<rtsExt:Properties rtsExt:value="IDL:RTC/TimedDoubleSeq:1.0" rtsExt:name="dataport.data_type" />
+		<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
+		<rtsExt:Properties rtsExt:value="push" rtsExt:name="dataport.dataflow_type" />
+		<rtsExt:Properties rtsExt:value="flush" rtsExt:name="dataport.subscription_type" />
+		<rtsExt:Properties rtsExt:value="little,big" rtsExt:name="dataport.serializer.cdr.endian" />
+		<rtsExt:Properties rtsExt:value="IOR:010000001a00000049444c3a4f70656e52544d2f496e506f72744364723a312e30000000010000000000000068000000010102000f0000003139322e3136382e34322e3233320000f1a000000e000000fe26d4175b000049b0000000002e00000200000000000000080000000100000000545441010000001c00000001000000010001000100000001000105090101000100000009010100" rtsExt:name="dataport.corba_cdr.inport_ior" />
+	</rts:DataPortConnectors>
+	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="72c7d6be-ca58-4851-a41c-9c746b50e17c" rts:name="VisionSensorOut.cameraImage_RTM-Image.cameraImage" rts:dataType="IDL:Img/TimedCameraImage:1.0" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush" rts:pushInterval="4.7325465223237322e-316">
+		<rts:sourceDataPort xsi:type="rtsExt:target_port_ext" rts:portName="VisionSensorOut.cameraImage" rts:instanceName="VisionSensorOut" rts:componentId="RTC:AIST:Choreonoid:VisionSensorOut:1.7">
+			<rtsExt:Properties rtsExt:value="localhost/VisionSensorOut.rtc" rtsExt:name="COMPONENT_PATH_ID" />
+		</rts:sourceDataPort>
+		<rts:targetDataPort xsi:type="rtsExt:target_port_ext" rts:portName="RTM-Image.cameraImage" rts:instanceName="RTM-Image" rts:componentId="RTC:Choreonoid:Choreonoid:RTM-Image:1.0.0">
+			<rtsExt:Properties rtsExt:value="localhost/RTM-Image.rtc" rtsExt:name="COMPONENT_PATH_ID" />
+		</rts:targetDataPort>
+		<rtsExt:Properties rtsExt:value="IDL:Img/TimedCameraImage:1.0" rtsExt:name="dataport.data_type" />
+		<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
+		<rtsExt:Properties rtsExt:value="push" rtsExt:name="dataport.dataflow_type" />
+		<rtsExt:Properties rtsExt:value="flush" rtsExt:name="dataport.subscription_type" />
+		<rtsExt:Properties rtsExt:value="little,big" rtsExt:name="dataport.serializer.cdr.endian" />
+		<rtsExt:Properties rtsExt:value="IOR:010000001a00000049444c3a4f70656e52544d2f496e506f72744364723a312e30000000010000000000000068000000010102000f0000003139322e3136382e34322e3233320000f1a000000e000000fe26d4175b000049b0000000002b00000200000000000000080000000100000000545441010000001c00000001000000010001000100000001000105090101000100000009010100" rtsExt:name="dataport.corba_cdr.inport_ior" />
+	</rts:DataPortConnectors>
+	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="47f91b2b-44a4-406f-bb8b-0c3d7e47abec" rts:name="Tank-TankIoRTC.q_TankJoystickControllerRTC.q" rts:dataType="IDL:RTC/TimedDoubleSeq:1.0" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush" rts:pushInterval="4.7325465223237322e-316">
 		<rts:sourceDataPort xsi:type="rtsExt:target_port_ext" rts:portName="Tank-TankIoRTC.q" rts:instanceName="Tank-TankIoRTC" rts:componentId="RTC:AIST:Generic:Tank-TankIoRTC:1.0">
 			<rtsExt:Properties rtsExt:value="localhost/Tank-TankIoRTC.rtc" rtsExt:name="COMPONENT_PATH_ID" />
 		</rts:sourceDataPort>
@@ -588,6 +596,6 @@
 		<rtsExt:Properties rtsExt:value="push" rtsExt:name="dataport.dataflow_type" />
 		<rtsExt:Properties rtsExt:value="flush" rtsExt:name="dataport.subscription_type" />
 		<rtsExt:Properties rtsExt:value="little,big" rtsExt:name="dataport.serializer.cdr.endian" />
-		<rtsExt:Properties rtsExt:value="IOR:010000001a00000049444c3a4f70656e52544d2f496e506f72744364723a312e30000000010000000000000064000000010102000e0000003135302e32392e3134352e383500cb950e000000febcac065b0000592f000000003100000200000000000000080000000100000000545441010000001c00000001000000010001000100000001000105090101000100000009010100" rtsExt:name="dataport.corba_cdr.inport_ior" />
+		<rtsExt:Properties rtsExt:value="IOR:010000001a00000049444c3a4f70656e52544d2f496e506f72744364723a312e30000000010000000000000068000000010102000f0000003139322e3136382e34322e3233320000f1a000000e000000fe26d4175b000049b0000000003000000200000000000000080000000100000000545441010000001c00000001000000010001000100000001000105090101000100000009010100" rtsExt:name="dataport.corba_cdr.inport_ior" />
 	</rts:DataPortConnectors>
 </rts:RtsProfile>
