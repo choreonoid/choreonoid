@@ -10,13 +10,12 @@
 #include <cnoid/Item>
 #include <cnoid/BodyItem>
 #include <cnoid/ControllerItem>
-#include "exportdecl.h"
 
 namespace cnoid {
 
 class PointCloudSubscriberRTCItemImpl;
 
-class CNOID_EXPORT PointCloudSubscriberRTCItem : public ControllerItem
+class PointCloudSubscriberRTCItem : public ControllerItem
 {
 public:
     static void initializeClass(ExtensionManager* ext);

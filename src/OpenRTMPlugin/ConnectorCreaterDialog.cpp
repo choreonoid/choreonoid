@@ -3,23 +3,15 @@
  * @file
  */
 #include "ConnectorCreaterDialog.h"
-
+#include "RTSCommonUtil.h"
+#include "LoggerUtil.h"
 #include <QLabel>
 #include <QPushButton>
 #include <QMessageBox>
 #include <QGroupBox>
 #include <QVBoxLayout>
 #include <QHeaderView>
-
-#include "RTSCommonUtil.h"
-
-#include "LoggerUtil.h"
-
 #include "gettext.h"
-
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-#define USE_QT5
-#endif
 
 using namespace cnoid;
 using namespace std;
