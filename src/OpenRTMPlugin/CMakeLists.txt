@@ -45,7 +45,6 @@ set(plugin_headers
 QTX_ADD_RESOURCES(RC_SRCS OpenRTMPlugin.qrc)
 QTX_WRAP_CPP(
   qtsources
-  PortConnectionDialog.h
   RTSNameServerView.h
   RTSDiagramView.h
   RTSConfigurationView.h

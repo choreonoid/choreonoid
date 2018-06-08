@@ -1,12 +1,8 @@
-/*!
- * @author Shizuko Hattori
- * @file
- */
 #include "PortConnectionDialog.h"
 #include "RTSCommonUtil.h"
 #include "LoggerUtil.h"
+#include <cnoid/Buttons>
 #include <QLabel>
-#include <QPushButton>
 #include <QMessageBox>
 #include <QGroupBox>
 #include <QVBoxLayout>
@@ -22,8 +18,11 @@ PortConnectionDialogBase::PortConnectionDialogBase()
     nameLineEdit = new QLineEdit();
 
     detailCheck = new CheckBox((_("Detail")));
-    detailCheck->sigStateChanged().connect(
-        [&](bool state) { detailCheckToggled(state); });
+    detailCheck->sigToggled().connect(
+        [&](bool on) { enableDetails(on); });
+
+    frmDetail = new QFrame;
+    QGridLayout* gridSubLayout = new QGridLayout(frmDetail);
 
     lstDetail = new QTableWidget(0, 2);
     lstDetail->setSelectionBehavior(QAbstractItemView::SelectRows);
@@ -33,35 +32,33 @@ PortConnectionDialogBase::PortConnectionDialogBase()
     lstDetail->setColumnWidth(1, 300);
     lstDetail->setRowCount(0);
     lstDetail->setHorizontalHeaderLabels(QStringList() << "Name" << "Value");
-
-    QPushButton* btnAdd = new QPushButton(_("Add"));
-    QPushButton* btnDelete = new QPushButton(_("Delete"));
-
-    frmDetail = new QFrame;
-    QGridLayout* gridSubLayout = new QGridLayout(frmDetail);
     gridSubLayout->addWidget(lstDetail, 0, 0, 5, 1);
-    gridSubLayout->addWidget(btnAdd, 0, 1, 1, 1);
-    gridSubLayout->addWidget(btnDelete, 1, 1, 1, 1);
 
-    frmButton = new QFrame;
-    QPushButton* okButton = new QPushButton(_("&OK"));
-    okButton->setDefault(true);
-    QPushButton* cancelButton = new QPushButton(_("&Cancel"));
-    QHBoxLayout* buttonBotLayout = new QHBoxLayout(frmButton);
+    PushButton* addButton = new PushButton(_("Add"));
+    addButton->sigClicked().connect([&](){ onAddButtonClicked(); });
+    gridSubLayout->addWidget(addButton, 0, 1, 1, 1);
+
+    PushButton* deleteButton = new PushButton(_("Delete"));
+    deleteButton->sigClicked().connect([&](){ onDeleteButtonClicked(); });
+    gridSubLayout->addWidget(deleteButton, 1, 1, 1, 1);
+    
+    buttonFrame = new QFrame;
+    QHBoxLayout* buttonBotLayout = new QHBoxLayout(buttonFrame);
+
+    PushButton* cancelButton = new PushButton(_("&Cancel"));
+    cancelButton->sigClicked().connect([&](){ reject(); });
     buttonBotLayout->addWidget(cancelButton);
-    buttonBotLayout->addWidget(okButton);
-    //
-    connect(btnAdd, SIGNAL(clicked()), this, SLOT(addClicked()));
-    connect(btnDelete, SIGNAL(clicked()), this, SLOT(deleteClicked()));
 
-    connect(okButton, SIGNAL(clicked()), this, SLOT(okClicked()));
-    connect(cancelButton, SIGNAL(clicked()), this, SLOT(reject()));
+    PushButton* okButton = new PushButton(_("&OK"));
+    okButton->setDefault(true);
+    okButton->sigClicked().connect([&](){ onOkButtonClicked(); });
+    buttonBotLayout->addWidget(okButton);
 }
 
 
-void PortConnectionDialogBase::addClicked()
+void PortConnectionDialogBase::onAddButtonClicked()
 {
-    DDEBUG("PortConnectionDialogBase::addClicked");
+    DDEBUG("PortConnectionDialogBase::onAddButtonClicked");
 
     int row = lstDetail->rowCount();
     lstDetail->insertRow(row);
@@ -76,9 +73,9 @@ void PortConnectionDialogBase::addClicked()
 }
 
 
-void PortConnectionDialogBase::deleteClicked()
+void PortConnectionDialogBase::onDeleteButtonClicked()
 {
-    DDEBUG("PortConnectionDialogBase::deleteClicked");
+    DDEBUG("PortConnectionDialogBase::onDeleteButtonClicked");
 
     int currRow = lstDetail->currentRow();
     lstDetail->removeRow(currRow);
@@ -86,16 +83,8 @@ void PortConnectionDialogBase::deleteClicked()
 }
 
 
-void PortConnectionDialogBase::okClicked()
+void PortConnectionDialogBase::enableDetails(bool on)
 {
-    DDEBUG("PortConnectionDialogBase::okClicked");
-    actionOkClicked();
-}
-
-
-void PortConnectionDialogBase::detailCheckToggled(bool target)
-{
-    bool on = detailCheck->isChecked();
     frmEditSub->setVisible(on);
     frmEditSub->setEnabled(on);
     adjustSize();
@@ -270,7 +259,7 @@ DataPortConnectionDialog::DataPortConnectionDialog()
     QVBoxLayout* mainLayout = new QVBoxLayout;
     mainLayout->addWidget(frmEditMain);
     mainLayout->addWidget(frmEditSub);
-    mainLayout->addWidget(frmButton);
+    mainLayout->addWidget(buttonFrame);
     setLayout(mainLayout);
 
     setMinimumWidth(800);
@@ -354,9 +343,9 @@ void DataPortConnectionDialog::pushpolicyComboSelectionChanged(int target)
 }
 
 
-void DataPortConnectionDialog::actionOkClicked()
+void DataPortConnectionDialog::onOkButtonClicked()
 {
-    DDEBUG("DataPortConnectionDialog::actionOkClicked");
+    DDEBUG("DataPortConnectionDialog::onOkButtonClicked");
 
     QList<QString> keyList;
     propList.clear();
@@ -439,7 +428,10 @@ ServicePortConnectionDialog::ServicePortConnectionDialog()
     editMainLayout->addWidget(label01, 0, 0, 1, 1);
     editMainLayout->addWidget(nameLineEdit, 0, 1, 1, 1);
     editMainLayout->addWidget(detailCheck, 1, 0, 1, 1);
-    //
+
+    QFrame* frmGridIF = new QFrame;
+    QGridLayout* gridIFLayout = new QGridLayout(frmGridIF);
+    
     lstInterface = new QTableWidget(0, 2);
     lstInterface->setSelectionBehavior(QAbstractItemView::SelectRows);
     lstInterface->setSelectionMode(QAbstractItemView::SingleSelection);
@@ -448,15 +440,15 @@ ServicePortConnectionDialog::ServicePortConnectionDialog()
     lstInterface->setColumnWidth(1, 400);
     lstInterface->setRowCount(0);
     lstInterface->setHorizontalHeaderLabels(QStringList() << "Consumer" << "Provider");
-
-    QPushButton* btnAdd_IF = new QPushButton(_("Add"));
-    QPushButton* btnDelete_IF = new QPushButton(_("Delete"));
-
-    QFrame* frmGridIF = new QFrame;
-    QGridLayout* gridIFLayout = new QGridLayout(frmGridIF);
     gridIFLayout->addWidget(lstInterface, 0, 0, 5, 1);
-    gridIFLayout->addWidget(btnAdd_IF, 0, 1, 1, 1);
-    gridIFLayout->addWidget(btnDelete_IF, 1, 1, 1, 1);
+
+    PushButton* addButton_IF = new PushButton(_("Add"));
+    addButton_IF->sigClicked().connect([&](){ addIF(); });
+    gridIFLayout->addWidget(addButton_IF, 0, 1, 1, 1);
+
+    PushButton* deleteButton_IF = new PushButton(_("Delete"));
+    deleteButton_IF->sigClicked().connect([&](){ deleteIF(); });
+    gridIFLayout->addWidget(deleteButton_IF, 1, 1, 1, 1);
 
     frmEditSub = new QFrame;
     QVBoxLayout* editSubLayout = new QVBoxLayout(frmEditSub);
@@ -468,11 +460,8 @@ ServicePortConnectionDialog::ServicePortConnectionDialog()
     QVBoxLayout* mainLayout = new QVBoxLayout;
     mainLayout->addWidget(frmEditMain);
     mainLayout->addWidget(frmEditSub);
-    mainLayout->addWidget(frmButton);
+    mainLayout->addWidget(buttonFrame);
     setLayout(mainLayout);
-
-    connect(btnAdd_IF, SIGNAL(clicked()), this, SLOT(addIFClicked()));
-    connect(btnDelete_IF, SIGNAL(clicked()), this, SLOT(deleteIFClicked()));
 
     setMinimumWidth(1000);
 }
@@ -523,9 +512,9 @@ void ServicePortConnectionDialog::registInterfaceMap(RTSPort* port)
 }
 
 
-void ServicePortConnectionDialog::addIFClicked()
+void ServicePortConnectionDialog::addIF()
 {
-    DDEBUG("ServicePortConnectionDialog::addIFClicked");
+    DDEBUG("ServicePortConnectionDialog::addIF");
 
     int row = lstInterface->rowCount();
     lstInterface->insertRow(row);
@@ -543,7 +532,7 @@ void ServicePortConnectionDialog::addIFClicked()
 }
 
 
-void ServicePortConnectionDialog::deleteIFClicked()
+void ServicePortConnectionDialog::deleteIF()
 {
     int currRow = lstInterface->currentRow();
     lstInterface->removeRow(currRow);
@@ -551,9 +540,9 @@ void ServicePortConnectionDialog::deleteIFClicked()
 }
 
 
-void ServicePortConnectionDialog::actionOkClicked()
+void ServicePortConnectionDialog::onOkButtonClicked()
 {
-    DDEBUG("ServicePortConnectionDialog::actionOkClicked");
+    DDEBUG("ServicePortConnectionDialog::onOkButtonClicked");
 
     QList<QString> keyList;
     propList.clear();

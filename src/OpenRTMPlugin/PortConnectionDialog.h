@@ -12,30 +12,26 @@ namespace cnoid {
 
 class PortConnectionDialogBase : public Dialog
 {
-    Q_OBJECT
 public:
-    PortConnectionDialogBase();
-
     QLineEdit* nameLineEdit;
-    bool isAccepted;
     std::vector<NamedValuePtr> propList;
-
-private Q_SLOTS:
-    void addClicked();
-    void deleteClicked();
-    void okClicked();
+    bool isAccepted;
 
 protected:
     CheckBox* detailCheck;
     QFrame* frmEditSub;
     QTableWidget* lstDetail;
-
     QFrame* frmDetail;
-    QFrame* frmButton;
+    QFrame* buttonFrame;
 
-    void detailCheckToggled(bool target);
+    PortConnectionDialogBase();
     void addProperty(std::string name, std::string value);
-    virtual void actionOkClicked() = 0;
+    virtual void onOkButtonClicked() = 0;
+
+private:
+    void onAddButtonClicked();
+    void onDeleteButtonClicked();
+    void enableDetails(bool on);
 };
 
 class DataPortConnectionDialog : public PortConnectionDialogBase
@@ -67,19 +63,14 @@ private:
 
     void subscriptionComboSelectionChanged(int target);
     void pushpolicyComboSelectionChanged(int target);
-    void actionOkClicked() override;
+    void onOkButtonClicked() override;
 };
 
 class ServicePortConnectionDialog : public PortConnectionDialogBase
 {
-    Q_OBJECT
 public:
     ServicePortConnectionDialog();
     void setDisp(RTSPort* source, RTSPort* target);
-
-private Q_SLOTS:
-    void addIFClicked();
-    void deleteIFClicked();
 
 private:
     QTableWidget* lstInterface;
@@ -88,8 +79,10 @@ private:
     std::vector<std::string> providerLabelList;
     std::vector<std::string> providerConList;
 
-    void actionOkClicked() override;
     void registInterfaceMap(RTSPort* port);
+    void addIF();
+    void deleteIF();
+    void onOkButtonClicked() override;
 };
 
 }
