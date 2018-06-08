@@ -7,7 +7,6 @@
 #include <cnoid/CheckBox>
 #include <QLineEdit>
 #include <QTableWidget>
-#include <QSplitter>
 
 namespace cnoid {
 
@@ -30,8 +29,6 @@ protected:
     CheckBox* detailCheck;
     QFrame* frmEditSub;
     QTableWidget* lstDetail;
-
-    QSplitter* detailSplitter;
 
     QFrame* frmDetail;
     QFrame* frmButton;

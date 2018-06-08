@@ -95,7 +95,10 @@ void PortConnectionDialogBase::okClicked()
 
 void PortConnectionDialogBase::detailCheckToggled(bool target)
 {
-    frmEditSub->setEnabled(detailCheck->isChecked());
+    bool on = detailCheck->isChecked();
+    frmEditSub->setVisible(on);
+    frmEditSub->setEnabled(on);
+    adjustSize();
 }
 
 
@@ -255,21 +258,18 @@ DataPortConnectionDialog::DataPortConnectionDialog()
     inSubLayout->addWidget(inEmptyCombo, 3, 1, 1, 1);
     inSubLayout->addWidget(labelSI05, 4, 0, 1, 1);
     inSubLayout->addWidget(inReadTimeoutEdit, 4, 1, 1, 1);
-    //
+
     frmEditSub = new QFrame;
     QGridLayout* editSubLayout = new QGridLayout(frmEditSub);
     editSubLayout->addWidget(outGroup, 0, 0, 1, 1);
     editSubLayout->addWidget(inGroup, 0, 1, 1, 1);
     editSubLayout->addWidget(frmDetail, 1, 0, 1, 2);
-
-    detailSplitter = new QSplitter(Qt::Orientation::Vertical);
-    detailSplitter->addWidget(frmEditMain);
-    detailSplitter->addWidget(frmEditSub);
-    detailSplitter->handle(1)->setDisabled(true);
+    frmEditSub->setVisible(false);
     frmEditSub->setEnabled(false);
 
     QVBoxLayout* mainLayout = new QVBoxLayout;
-    mainLayout->addWidget(detailSplitter);
+    mainLayout->addWidget(frmEditMain);
+    mainLayout->addWidget(frmEditSub);
     mainLayout->addWidget(frmButton);
     setLayout(mainLayout);
 
@@ -457,20 +457,17 @@ ServicePortConnectionDialog::ServicePortConnectionDialog()
     gridIFLayout->addWidget(lstInterface, 0, 0, 5, 1);
     gridIFLayout->addWidget(btnAdd_IF, 0, 1, 1, 1);
     gridIFLayout->addWidget(btnDelete_IF, 1, 1, 1, 1);
-    //
+
     frmEditSub = new QFrame;
     QVBoxLayout* editSubLayout = new QVBoxLayout(frmEditSub);
     editSubLayout->addWidget(frmGridIF);
     editSubLayout->addWidget(frmDetail);
-    //
-    detailSplitter = new QSplitter(Qt::Orientation::Vertical);
-    detailSplitter->addWidget(frmEditMain);
-    detailSplitter->addWidget(frmEditSub);
-    detailSplitter->handle(1)->setDisabled(true);
+    frmEditSub->setVisible(false);
     frmEditSub->setEnabled(false);
 
     QVBoxLayout* mainLayout = new QVBoxLayout;
-    mainLayout->addWidget(detailSplitter);
+    mainLayout->addWidget(frmEditMain);
+    mainLayout->addWidget(frmEditSub);
     mainLayout->addWidget(frmButton);
     setLayout(mainLayout);
 
