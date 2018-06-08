@@ -6,6 +6,7 @@
 #include "GLVisionSimulatorItem.h"
 #include "SimulatorItem.h"
 #include "WorldItem.h"
+#include "FisheyeLensConverter.h"
 #include <cnoid/ItemManager>
 #include <cnoid/MessageView>
 #include <cnoid/Archive>
@@ -31,7 +32,6 @@
 #include <iostream>
 
 static const bool DEBUG_MESSAGE = false;
-static const bool DEBUG_MESSAGE2 = false;
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 #define USE_QT5_OPENGL 1
@@ -55,23 +55,17 @@ using boost::format;
 
 namespace {
 
-//enum ScreenId { NONE = -1, FRONT, LEFT, RIGHT, TOP, BOTTOM, BACK } screenId;
 enum ScreenId {
-    NO_SCREEN = -1,
-    FRONT_SCREEN,
-    LEFT_SCREEN,
-    RIGHT_SCREEN,
-    TOP_SCREEN,
-    BOTTOM_SCREEN,
-    BACK_SCREEN
+    NO_SCREEN = FisheyeLensConverter::NO_SCREEN,
+    FRONT_SCREEN = FisheyeLensConverter::FRONT_SCREEN,
+    LEFT_SCREEN = FisheyeLensConverter::LEFT_SCREEN,
+    RIGHT_SCREEN = FisheyeLensConverter::RIGHT_SCREEN,
+    TOP_SCREEN = FisheyeLensConverter::TOP_SCREEN,
+    BOTTOM_SCREEN = FisheyeLensConverter::BOTTOM_SCREEN,
+    BACK_SCREEN = FisheyeLensConverter::BACK_SCREEN
 };
 
-inline int clamp(int i, int min, int max)
-{
-    return i < min ? min : i < max ? i : max - 1;
-}
-
-inline double myNearByInt(double x)
+double myNearByInt(double x)
 {
 #ifdef Q_OS_WIN32
     double u = ceil(x);
@@ -193,7 +187,7 @@ public:
     std::shared_ptr<Image> tmpImage;
     std::shared_ptr<RangeCamera::PointData> tmpPoints;
     std::shared_ptr<RangeSensor::RangeData> tmpRangeData;
-    ScreenId screenId;
+    int screenId;
     bool isDense;
 
     SensorScreenRenderer(GLVisionSimulatorItemImpl* simImpl, Device* device, Device* deviceForRendering);
@@ -215,160 +209,6 @@ public:
     bool getRangeSensorData(vector<double>& rangeData);
 };
 typedef ref_ptr<SensorScreenRenderer> SensorScreenRendererPtr;
-
-class FisheyeLensConverter
-{
-public:
-    int width;
-    int height;
-    double fov;
-    int screenWidth;
-    vector<SensorScreenRenderer*> screens;
-    bool rotateOutputDirection;
-
-    struct ScreenIndex{
-        ScreenId sid;
-        int ix;
-        int iy;
-    };
-    vector<vector<ScreenIndex>> fisheyeLensMap;
-
-    // for Interpolation
-    ScreenId screenId[4];
-    int npx[4],npy[4];
-    struct ScreenIndex4 {
-        ScreenIndex screenIndex[4];
-        double bias[4];
-    };
-    vector<vector<ScreenIndex4>> fisheyeLensInterpolationMap;
-
-
-    FisheyeLensConverter(){
-        rotateOutputDirection = false;
-    };
-    void initialize(int width, int height, double fov,
-            int screenWidth, vector<SensorScreenRendererPtr>& screens);
-    void convertImage(Image* image);
-    void convertImageInterpolation(Image* image);
-    void setRotateOutputDirection(bool on){
-        if(rotateOutputDirection!=on){
-            fisheyeLensMap.clear();
-            fisheyeLensInterpolationMap.clear();
-            rotateOutputDirection = on;
-        }
-    };
-
-    enum Corner { FRONT_UR, FRONT_UL, FRONT_DR, FRONT_DL, LEFT_UR, LEFT_UL, LEFT_DR, LEFT_DL,
-        RIGHT_UR, RIGHT_UL, RIGHT_DR, RIGHT_DL, BOTTOM_UR, BOTTOM_UL, BOTTOM_DR, BOTTOM_DL,
-        TOP_UR, TOP_UL, TOP_DR, TOP_DL, BACK_UR, BACK_UL, BACK_DR, BACK_DL};
-    void setCornerPoint(int i, Corner corner){
-            switch(corner){
-            case FRONT_UR:
-            case FRONT_UL:
-            case FRONT_DR:
-            case FRONT_DL:
-                screenId[i] = FRONT_SCREEN;
-                break;
-            case LEFT_UR:
-            case LEFT_UL:
-            case LEFT_DR:
-            case LEFT_DL:
-                screenId[i] = LEFT_SCREEN;
-                break;
-            case RIGHT_UR:
-            case RIGHT_UL:
-            case RIGHT_DR:
-            case RIGHT_DL:
-                screenId[i] = RIGHT_SCREEN;
-                break;
-            case BOTTOM_UR:
-            case BOTTOM_UL:
-            case BOTTOM_DR:
-            case BOTTOM_DL:
-                screenId[i] = BOTTOM_SCREEN;
-                break;
-            case TOP_UR:
-            case TOP_UL:
-            case TOP_DR:
-            case TOP_DL:
-                screenId[i] = TOP_SCREEN;
-                break;
-            case BACK_UR:
-            case BACK_UL:
-            case BACK_DR:
-            case BACK_DL:
-                screenId[i] = BACK_SCREEN;
-                break;
-            }
-            switch(corner){
-            case FRONT_UL:
-            case LEFT_UL:
-            case RIGHT_UL:
-            case BOTTOM_UL:
-            case TOP_UL:
-            case BACK_UL:
-                npx[i] = npy[i] = 0;
-                break;
-            case FRONT_UR:
-            case LEFT_UR:
-            case RIGHT_UR:
-            case BOTTOM_UR:
-            case TOP_UR:
-            case BACK_UR:
-                npx[i] = screenWidth - 1;
-                npy[i] = 0;
-                break;
-            case FRONT_DL:
-            case LEFT_DL:
-            case RIGHT_DL:
-            case BOTTOM_DL:
-            case TOP_DL:
-            case BACK_DL:
-                npx[i] = 0;
-                npy[i] = screenWidth - 1;
-                break;
-            case FRONT_DR:
-            case LEFT_DR:
-            case RIGHT_DR:
-            case BOTTOM_DR:
-            case TOP_DR:
-            case BACK_DR:
-                npx[i] = screenWidth - 1;
-                npy[i] = screenWidth - 1;
-                break;
-            }
-    };
-    void setCubeCorner(Corner corner0, Corner corner1, Corner corner2, Corner corner3 ){
-        setCornerPoint(0, corner0);
-        setCornerPoint(1, corner1);
-        setCornerPoint(2, corner2);
-        setCornerPoint(3, corner3);
-    };
-    void setCenter(ScreenId id, double sx, double sy){
-        screenId[0] = screenId[1] = screenId[2] = screenId[3] = id;
-        npx[0] = sx;              npy[0] = sy;
-        npx[1] = npx[0]+1;        npy[1] = npy[0];
-        npx[2] = npx[0];          npy[2] = npy[0]+1;
-        npx[3] = npx[1];          npy[3] = npy[2];
-    };
-    void setVerticalBorder(ScreenId id0, ScreenId id1, double sy){
-        screenId[0] = screenId[2] = id0;
-        screenId[1] = screenId[3] = id1;
-        npx[0] = screenWidth - 1;  npy[0] = sy;
-        npx[1] = 0;                npy[1] = npy[0];
-        npx[2] = screenWidth - 1;  npy[2] = npy[0]+1;
-        npx[3] = 0;                npy[3] = npy[2];
-    };
-    void setHorizontalBorder(ScreenId id0, ScreenId id1, double sx){
-        screenId[0] = screenId[1] = id0;
-        screenId[2] = screenId[3] = id1;
-        npx[0] = sx;              npy[0] = screenWidth - 1;
-        npx[1] = npx[0]+1;        npy[1] = screenWidth - 1;
-        npx[2] = npx[0];          npy[2] = 0;
-        npx[3] = npx[1];          npy[3] = 0;
-    }
-};
-
 
 class SensorRenderer : public Referenced
 {
@@ -452,8 +292,7 @@ public:
     double maxFrameRate;
     double maxLatency;
     SgCloneMap cloneMap;
-    bool rotateOutputDirection;  // for FishEyeLens
-    bool enableInterpolation;
+    bool isAntiAliasingEnabled;
         
     GLVisionSimulatorItemImpl(GLVisionSimulatorItem* self);
     GLVisionSimulatorItemImpl(GLVisionSimulatorItem* self, const GLVisionSimulatorItemImpl& org);
@@ -517,8 +356,7 @@ GLVisionSimulatorItemImpl::GLVisionSimulatorItemImpl(GLVisionSimulatorItem* self
     threadMode.setSymbol(GLVisionSimulatorItem::SCREEN_THREAD_MODE, N_("Screen"));
     threadMode.select(GLVisionSimulatorItem::SENSOR_THREAD_MODE);
 
-    rotateOutputDirection = false;
-    enableInterpolation = false;
+    isAntiAliasingEnabled = false;
 }
 
 
@@ -550,8 +388,7 @@ GLVisionSimulatorItemImpl::GLVisionSimulatorItemImpl(GLVisionSimulatorItem* self
     areAdditionalLightsEnabled = org.areAdditionalLightsEnabled;
     maxFrameRate = org.maxFrameRate;
     maxLatency = org.maxLatency;
-    rotateOutputDirection = org.rotateOutputDirection;
-    enableInterpolation = org.enableInterpolation;
+    isAntiAliasingEnabled = org.isAntiAliasingEnabled;
 }
 
 
@@ -796,9 +633,12 @@ SensorRenderer::SensorRenderer(GLVisionSimulatorItemImpl* simImpl, Device* devic
     rangeSensor = dynamic_cast<RangeSensor*>(device);
     
     if(camera){
-        if(camera->lensType() == Camera::NORMAL_LENS){
+        auto lensType = camera->lensType();
+
+        if(lensType == Camera::NORMAL_LENS){
             screens.push_back(new SensorScreenRenderer(simImpl, device, deviceForRendering));
-        } else {
+
+        } else if(lensType == Camera::FISHEYE_LENS || lensType ==  Camera::DUAL_FISHEYE_LENS){
             int numScreens = 5;
             double fov = camera->fieldOfView();
             if(fov <= radian(90)){
@@ -829,17 +669,23 @@ SensorRenderer::SensorRenderer(GLVisionSimulatorItemImpl* simImpl, Device* devic
                     R[BACK_SCREEN] = R[FRONT_SCREEN] * AngleAxis(radian(180.0), Vector3::UnitY());
                 }
             }
+
+            fisheyeLensConverter.initialize(width, height, fov, resolution);
+            fisheyeLensConverter.setImageRotationEnabled(camera->lensType() == Camera::DUAL_FISHEYE_LENS);
+            fisheyeLensConverter.setAntiAliasingEnabled(simImpl->isAntiAliasingEnabled);
+            
             for(int i=0; i < numScreens; ++i){
                 auto cameraForRendering = new Camera(*camera);
                 auto screen = new SensorScreenRenderer(simImpl, device, cameraForRendering);
-                screen->screenId = static_cast<ScreenId>(i);
+                screen->screenId = i;
                 cameraForRendering->setLocalRotation(R[i]);
                 cameraForRendering->setResolution(resolution,resolution);
+
+                screen->tmpImage = std::make_shared<Image>();
+                fisheyeLensConverter.addScreenImage(screen->tmpImage);
+
                 screens.push_back(screen);
             }
-
-            fisheyeLensConverter.initialize(width, height, fov, resolution, screens);
-            fisheyeLensConverter.setRotateOutputDirection(simImpl->rotateOutputDirection);
         }
     } else if(rangeSensor){
 
@@ -1027,14 +873,15 @@ SgCamera* SensorScreenRenderer::initializeCamera(int bodyIndex)
     SgCamera* sceneCamera = nullptr;
 
     if(camera){
-        if(camera->lensType() == Camera::NORMAL_LENS){
+        auto lensType = camera->lensType();
+        if(lensType == Camera::NORMAL_LENS){
             auto sceneDevice = sceneBody->getSceneDevice(camera);
             if(sceneDevice){
                 sceneCamera = sceneDevice->findNodeOfType<SgCamera>();
                 pixelWidth = camera->resolutionX();
                 pixelHeight = camera->resolutionY();
             }
-        }else{
+        } else if(lensType == Camera::FISHEYE_LENS || lensType == Camera::DUAL_FISHEYE_LENS){
             auto sceneLink = sceneBody->sceneLink(camera->link()->index());
             if(sceneLink){
                 auto persCamera = new SgPerspectiveCamera;
@@ -1584,7 +1431,8 @@ void SensorRenderer::copyVisionData()
     if(hasUpdatedData){
         double delay = simImpl->currentTime - onsetTime;
         if(camera){
-            if(camera->lensType()==Camera::NORMAL_LENS){
+            auto lensType = camera->lensType();
+            if(lensType == Camera::NORMAL_LENS){
                 auto& screen = screens[0];
                 if(!screen->tmpImage->empty()){
                     camera->setImage(screen->tmpImage);
@@ -1593,14 +1441,10 @@ void SensorRenderer::copyVisionData()
                     rangeCamera->setPoints(screen->tmpPoints);
                     rangeCamera->setDense(screen->isDense);
                 }
-            }else{
+            } else if(lensType == Camera::FISHEYE_LENS || lensType == Camera::DUAL_FISHEYE_LENS){
                 std::shared_ptr<Image> image = std::make_shared<Image>();
-                if(simImpl->enableInterpolation){
-                    fisheyeLensConverter.convertImageInterpolation(image.get());
-                }else{
-                    fisheyeLensConverter.convertImage(image.get());
-                }
-                camera->setImage( image );
+                fisheyeLensConverter.convertImage(image.get());
+                camera->setImage(image);
             }
             camera->setDelay(delay);
         } else if(rangeSensor){
@@ -1644,725 +1488,6 @@ void SensorRenderer::copyVisionData()
 
         for(auto& screen : screens){
             screen->hasUpdatedData = false;
-        }
-    }
-}
-
-
-void FisheyeLensConverter::initialize(int width_, int height_, double fov_,
-        int screenWidth_, vector<SensorScreenRendererPtr>& screens_)
-{
-    width = width_;
-    height = height_;
-    fov = fov_;
-    screenWidth = screenWidth_;
-    for(auto& screen : screens_){
-        screens.push_back(screen);
-    }
-    fisheyeLensMap.clear();
-    fisheyeLensInterpolationMap.clear();
-}
-
-
-void  FisheyeLensConverter::convertImage(Image* image)
-{
-    image->setSize(width, height, 3);
-    unsigned char* pixels = image->pixels();
-
-    if(fisheyeLensMap.empty()){
-        fisheyeLensMap.resize(height);
-        for(int i=0; i<height; i++){
-            fisheyeLensMap[i].resize(width);
-        }
-
-        double height2 = height/2.0;
-        double screenWidth2 = screenWidth / 2.0;
-        double sw22 = screenWidth2 * screenWidth2;
-        double r = fov / height;
-
-        for(int j=0; j<height; j++){
-            double y = j - height2 + 0.5;
-            for(int i=0; i<width; i++){
-                bool picked = false;
-
-                ScreenId screenId;
-                int ii,jj;
-                if(i<height){
-                    double x = i - height2 + 0.5;;
-                    double l = sqrt(x*x+y*y);
-
-                    if(l<=height2){
-                        double tanTheta;
-                        if(l==0){
-                            tanTheta = 0.0;
-                        } else {
-                            tanTheta = screenWidth2 / l * tan(l*r);
-                        }
-                        double xx = x*tanTheta;
-                        double yy = y*tanTheta;
-                        ii = myNearByInt(xx + screenWidth2-0.5);
-                        jj = myNearByInt(yy + screenWidth2-0.5);
-                        if(0<=ii && ii<screenWidth && 0<=jj && jj<screenWidth){
-                            screenId = FRONT_SCREEN;
-                            picked = true;
-                        }else if(ii >= screenWidth){  //right
-                            double xx_ = sw22 / xx;
-                            double yy_ = screenWidth2 * yy / xx;
-                            int iir = myNearByInt(-xx_ + screenWidth2-0.5);
-                            int jjr = myNearByInt(yy_ + screenWidth2-0.5);
-                            if( 0 <= jjr && jjr < screenWidth){
-                                screenId = RIGHT_SCREEN;
-                                ii = clamp(iir, 0, screenWidth);
-                                jj = jjr;
-                                picked = true;
-                            }
-                        }else if(ii < 0){    //left
-                            double xx_ = sw22 / -xx;
-                            double yy_ = screenWidth2 * yy / -xx;
-                            int iil = myNearByInt(xx_ +screenWidth2-0.5);
-                            int jjl = myNearByInt(yy_ + screenWidth2-0.5);
-                            if( 0 <= jjl && jjl < screenWidth){
-                                screenId = LEFT_SCREEN;
-                                ii = clamp(iil, 0, screenWidth);
-                                jj = jjl;
-                                picked = true;
-                            }
-                        }
-                        if(!picked && jj >= screenWidth){    //bottom
-                            double xx_ = screenWidth2 * xx / yy;
-                            double yy_ = sw22 / yy;
-                            int iib = myNearByInt(xx_ + screenWidth2-0.5);
-                            int jjb = myNearByInt(-yy_ + screenWidth2-0.5);
-                            screenId = BOTTOM_SCREEN;
-                            ii = clamp(iib, 0, screenWidth);
-                            jj = clamp(jjb, 0, screenWidth);
-                            picked = true;
-                        }else if(!picked && jj < 0){    //top
-                            double xx_ = screenWidth2 * xx / -yy;
-                            double yy_ = sw22 / -yy;
-                            int iit = myNearByInt(xx_ + screenWidth2-0.5);
-                            int jjt = myNearByInt(yy_ + screenWidth2-0.5);
-                            screenId = TOP_SCREEN;
-                            ii = clamp(iit, 0, screenWidth);
-                            jj = clamp(jjt, 0, screenWidth);
-                            picked = true;
-                        }
-                        if(DEBUG_MESSAGE2 && !picked){
-                            cout << "Could not pick it up. " << i << " " << j << endl;
-                        }
-                    }
-                }else{
-                    double x = i - height - height2 +0.5;
-                    double l = sqrt(x*x+y*y);
-                    if(l<=height2){
-                        double tanTheta;
-                        if(l==0){
-                            tanTheta = 0.0;
-                        } else {
-                            tanTheta = screenWidth2 / l * tan(l*r);
-                        }
-                        double xx = x*tanTheta;
-                        double yy = y*tanTheta;
-                        ii = myNearByInt(xx + screenWidth2-0.5);
-                        jj = myNearByInt(yy + screenWidth2-0.5);
-                        if(0<=ii && ii<screenWidth && 0<=jj && jj<screenWidth){
-                            screenId = BACK_SCREEN;
-                            picked = true;
-                        }else if(ii >= screenWidth){
-                            double xx_ = sw22 / xx;
-                            double yy_ = screenWidth2 * yy / xx;
-                            int iir = myNearByInt(-xx_ + screenWidth2-0.5);
-                            int jjr = myNearByInt(yy_ + screenWidth2-0.5);
-                            if( 0 <= jjr && jjr < screenWidth){
-                                screenId = LEFT_SCREEN;
-                                ii = clamp(iir, 0, screenWidth);
-                                jj = jjr;
-                                picked = true;
-                            }
-                        }else if(ii < 0){
-                            double xx_ = sw22 / -xx;
-                            double yy_ = screenWidth2 * yy / -xx;
-                            int iil = myNearByInt(xx_ +screenWidth2-0.5);
-                            int jjl = myNearByInt(yy_ + screenWidth2-0.5);
-                            if( 0 <= jjl && jjl < screenWidth){
-                                screenId = RIGHT_SCREEN;
-                                ii = clamp(iil, 0, screenWidth);
-                                jj = jjl;
-                                picked = true;
-                            }
-                        }
-                        if(!picked && jj >= screenWidth){
-                            double xx_ = screenWidth2 * xx / yy;
-                            double yy_ = sw22 / yy;
-                            int iib = myNearByInt(-xx_ + screenWidth2-0.5);
-                            int jjb = myNearByInt(yy_ + screenWidth2-0.5);
-                            screenId = BOTTOM_SCREEN;
-                            ii = clamp(iib, 0, screenWidth);
-                            jj = clamp(jjb, 0, screenWidth);
-                            picked = true;
-                        }else if(!picked && jj < 0){
-                            double xx_ = screenWidth2 * xx / -yy;
-                            double yy_ = sw22 / -yy;
-                            int iit = myNearByInt(-xx_ + screenWidth2-0.5);
-                            int jjt = myNearByInt(-yy_ + screenWidth2-0.5);
-                            screenId = TOP_SCREEN;
-                            ii = clamp(iit, 0, screenWidth);
-                            jj = clamp(jjt, 0, screenWidth);
-                            picked = true;
-                        }
-                        if(DEBUG_MESSAGE2 && !picked){
-                            cout << "Could not pick it up. " << i << " " << j << endl;
-                        }
-                    }
-                }
-
-                int i_, j_;
-                if(!rotateOutputDirection){
-                    i_ = i;
-                    j_ = j;
-                }else{
-                    if(i<height){
-                        i_ = j;
-                        j_ = height - 1 - i;
-                    }else{
-                        i_ = height - 1 - j + height;
-                        j_ = i - height;
-                    }
-                }
-                unsigned char* pix = &pixels[(i_+j_*width)*3];
-                if(picked){
-                    unsigned char* tempPixels = screens[screenId]->tmpImage->pixels();
-                    unsigned char* tempPix = &tempPixels[(int)((ii + jj * screenWidth) * 3)];
-                    pix[0] = tempPix[0];
-                    pix[1] = tempPix[1];
-                    pix[2] = tempPix[2];
-                    fisheyeLensMap[j_][i_].sid = screenId;
-                    fisheyeLensMap[j_][i_].ix = ii;
-                    fisheyeLensMap[j_][i_].iy = jj;
-                }else{
-                    pix[0] = pix[1] = pix[2] = 0;
-                    fisheyeLensMap[j_][i_].sid = NO_SCREEN;
-                }
-            }
-        }
-    }else{
-        for(int j=0; j<height; j++){
-            for(int i=0; i<width; i++){
-                unsigned char* pix = &pixels[(i+j*width)*3];
-                ScreenIndex& screenIndex = fisheyeLensMap[j][i];
-                if(screenIndex.sid != NO_SCREEN){
-                    unsigned char* tempPixels = screens[screenIndex.sid]->tmpImage->pixels();
-                    unsigned char* tempPix = &tempPixels[(int)((screenIndex.ix + screenIndex.iy * screenWidth) * 3)];
-                    pix[0] = tempPix[0];
-                    pix[1] = tempPix[1];
-                    pix[2] = tempPix[2];
-                }else{
-                    pix[0] = pix[1] = pix[2] = 0;
-                }
-            }
-        }
-    }
-}
-
-
-void  FisheyeLensConverter::convertImageInterpolation(Image* image)
-{
-    image->setSize(width, height, 3);
-    unsigned char* pixels = image->pixels();
-
-    if(fisheyeLensInterpolationMap.empty()){
-        fisheyeLensInterpolationMap.resize(height);
-        for(int i=0; i<height; i++){
-            fisheyeLensInterpolationMap[i].resize(width);
-        }
-
-        double height2 = height/2.0;
-        double screenWidth2 = screenWidth / 2.0;
-        double sw22 = screenWidth2 * screenWidth2;
-        double r = fov / height;
-
-        for(int j=0; j<height; j++){
-            double y = j - height2 +0.5;
-            for(int i=0; i<width; i++){
-                bool picked = false;
-                double sx,sy;
-                int ii,jj;
-                if(i<height){  //front
-                    double x = i - height2+0.5;
-                    double l = sqrt(x*x+y*y);
-
-                    if(l<=height2){
-                        double tanTheta;
-                        if(l==0){
-                            tanTheta = 0.0;
-                        } else {
-                            tanTheta = screenWidth2 / l * tan(l*r);
-                        }
-                        double xx = x*tanTheta;
-                        double yy = y*tanTheta;
-                        ii = myNearByInt(xx + screenWidth2-0.5);
-                        jj = myNearByInt(yy + screenWidth2-0.5);
-                        if(0<=ii && ii<screenWidth && 0<=jj && jj<screenWidth){  //center
-                            sx = xx + screenWidth2-0.5;
-                            sy = yy + screenWidth2-0.5;
-                            if(sx<0){
-                                if(sy<0){
-                                    setCubeCorner(TOP_DL, TOP_DL, LEFT_UR, FRONT_UL);
-                                }else if(sy>=screenWidth-1){
-                                    setCubeCorner(LEFT_DR, FRONT_DL, BOTTOM_UL, BOTTOM_UL);
-                                }else{
-                                    setVerticalBorder(LEFT_SCREEN, FRONT_SCREEN, sy);
-                                }
-                            }else if(sx>=screenWidth-1){
-                                if(sy<0){
-                                    setCubeCorner(TOP_DR, TOP_DR, FRONT_UR, RIGHT_UL);
-                                }else if(sy>=screenWidth-1){
-                                    setCubeCorner(FRONT_DR, RIGHT_DL, BOTTOM_UR, BOTTOM_UR);
-                                }else{
-                                    setVerticalBorder(FRONT_SCREEN, RIGHT_SCREEN, sy);
-                                  }
-                            }else{
-                                if(sy<0){
-                                    setHorizontalBorder(TOP_SCREEN, FRONT_SCREEN, sx);
-                                }else if(sy>=screenWidth-1){
-                                    setHorizontalBorder(FRONT_SCREEN, BOTTOM_SCREEN, sx);
-                                }else{
-                                    setCenter(FRONT_SCREEN, sx, sy);
-                                }
-                            }
-                            picked = true;
-                        }else if(ii >= screenWidth){  //right
-                            double xx_ = sw22 / xx;
-                            double yy_ = screenWidth2 * yy / xx;
-                            int iir = myNearByInt(-xx_ + screenWidth2-0.5);
-                            int jjr = myNearByInt(yy_ + screenWidth2-0.5);
-                            if( 0 <= jjr && jjr < screenWidth){
-                                sx = -xx_ + screenWidth2-0.5;
-                                sy = yy_ + screenWidth2-0.5;
-                                if(sx<0){
-                                    if(sy<0){
-                                        setCubeCorner(TOP_DR, TOP_DR, FRONT_UR, RIGHT_UL);
-                                    }else if(sy>=screenWidth-1){
-                                        setCubeCorner(FRONT_DR, RIGHT_DL, BOTTOM_UR, BOTTOM_UR);
-                                    }else{
-                                        setVerticalBorder(FRONT_SCREEN, RIGHT_SCREEN, sy);
-                                    }
-                                }else{
-                                    if(sy<0){
-                                        screenId[0] = screenId[1] = TOP_SCREEN;
-                                        screenId[2] = screenId[3] = RIGHT_SCREEN;
-                                        npx[0] = screenWidth - 1;    npy[0] = screenWidth - 1 - (int)sx;
-                                        npx[1] = screenWidth - 1;    npy[1] = npy[0] - 1;
-                                        npx[2] = sx;                 npy[2] = 0;
-                                        npx[3] = npx[2]+1;           npy[3] = 0;
-                                    }else if(sy>=screenWidth-1){
-                                        screenId[0] = screenId[1] = RIGHT_SCREEN;
-                                        screenId[2] = screenId[3] = BOTTOM_SCREEN;
-                                        npx[0] = sx;                 npy[0] = screenWidth - 1;
-                                        npx[1] = npx[0]+1;           npy[1] = screenWidth - 1;
-                                        npx[2] = screenWidth - 1;    npy[2] = sx;
-                                        npx[3] = screenWidth - 1;    npy[3] = npy[2] + 1;
-                                    }else{
-                                        setCenter(RIGHT_SCREEN, sx, sy);
-                                    }
-                                }
-                                picked = true;
-                            }
-                        }else if(ii < 0){    //left
-                            double xx_ = sw22 / -xx;
-                            double yy_ = screenWidth2 * yy / -xx;
-                            int iil = myNearByInt(xx_ +screenWidth2-0.5);
-                            int jjl = myNearByInt(yy_ + screenWidth2-0.5);
-                            if( 0 <= jjl && jjl < screenWidth){
-                                sx = xx_ + screenWidth2-0.5;
-                                sy = yy_ + screenWidth2-0.5;
-                                if(sx>=screenWidth-1){
-                                    if(sy<0){
-                                        setCubeCorner(TOP_DL, TOP_DL, LEFT_UR, FRONT_UL);
-                                    }else if(sy>=screenWidth-1){
-                                        setCubeCorner(LEFT_DR, FRONT_DL, BOTTOM_UL, BOTTOM_UL);
-                                    }else{
-                                        setVerticalBorder(LEFT_SCREEN, FRONT_SCREEN, sy);
-                                    }
-                                }else{
-                                    if(sy<0){
-                                        screenId[0] = screenId[1] = TOP_SCREEN;
-                                        screenId[2] = screenId[3] = LEFT_SCREEN;
-                                        npx[0] = 0;    npy[0] = sx;
-                                        npx[1] = 0;    npy[1] = npy[0] + 1;
-                                        npx[2] = sx;                 npy[2] = 0;
-                                        npx[3] = npx[2]+1;           npy[3] = 0;
-                                    }else if(sy>=screenWidth-1){
-                                        screenId[0] = screenId[1] = LEFT_SCREEN;
-                                        screenId[2] = screenId[3] = BOTTOM_SCREEN;
-                                        npx[0] = sx;                 npy[0] = screenWidth - 1;
-                                        npx[1] = npx[0]+1;           npy[1] = screenWidth - 1;
-                                        npx[2] = 0;                  npy[2] = screenWidth - 1 - (int)sx;
-                                        npx[3] = 0;                  npy[3] = npy[2] - 1;
-                                    }else{
-                                        setCenter(LEFT_SCREEN, sx, sy);
-                                    }
-                                }
-                                picked = true;
-                            }
-                        }
-                        if(!picked && jj >= screenWidth){    //bottom
-                            double xx_ = screenWidth2 * xx / yy;
-                            double yy_ = sw22 / yy;
-                            sx = xx_ + screenWidth2-0.5;
-                            sy = -yy_ + screenWidth2-0.5;
-                            if(sy<0){
-                                if(sx<0){
-                                    setCubeCorner(FRONT_DL, FRONT_DL, LEFT_DR, BOTTOM_UL);
-                                }else if(sx>=screenWidth-1){
-                                    setCubeCorner(FRONT_DR, FRONT_DR, BOTTOM_UR, RIGHT_DL);
-                                }else{
-                                    setHorizontalBorder(FRONT_SCREEN, BOTTOM_SCREEN, sx);
-                                }
-                            }else{
-                                if(sx<0){
-                                    screenId[0] = screenId[2] = LEFT_SCREEN;
-                                    screenId[1] = screenId[3] = BOTTOM_SCREEN;
-                                    npx[0] = screenWidth - 1 -(int)sy;   npy[0] = screenWidth - 1;
-                                    npx[1] = 0;                          npy[1] = sy;
-                                    npx[2] = npx[0] - 1;                 npy[2] = screenWidth - 1;
-                                    npx[3] = 0;                          npy[3] = npy[1]+1;
-                                }else if(sx>=screenWidth-1){
-                                    screenId[0] = screenId[2] = BOTTOM_SCREEN;
-                                    screenId[1] = screenId[3] = RIGHT_SCREEN;
-                                    npx[0] = screenWidth-1;     npy[0] = sy;
-                                    npx[1] = sy;                npy[1] = screenWidth - 1;
-                                    npx[2] = screenWidth - 1;   npy[2] = npy[0] + 1;
-                                    npx[3] = npx[1] + 1;        npy[3] = screenWidth - 1;
-                                }else{
-                                    setCenter(BOTTOM_SCREEN, sx, sy);
-                                }
-                            }
-                            picked = true;
-                        }
-                        if(!picked && jj < 0){    //top
-                            double xx_ = screenWidth2 * xx / -yy;
-                            double yy_ = sw22 / -yy;
-                            sx = xx_ + screenWidth2-0.5;
-                            sy = yy_ + screenWidth2-0.5;
-                            if(sy>=screenWidth-1){
-                                if(sx<0){
-                                    setCubeCorner(LEFT_UR, TOP_DL, FRONT_UL, FRONT_UL);
-                                }else if(sx>=screenWidth-1){
-                                    setCubeCorner(TOP_DR, RIGHT_UL, FRONT_UR, FRONT_UR);
-                                }else{
-                                    setHorizontalBorder(TOP_SCREEN, FRONT_SCREEN, sx);
-                                }
-                            }else{
-                                if(sx<0){
-                                    screenId[0] = screenId[2] = LEFT_SCREEN;
-                                    screenId[1] = screenId[3] = TOP_SCREEN;
-                                    npx[0] = sy;           npy[0] = 0;
-                                    npx[1] = 0;            npy[1] = sy;
-                                    npx[2] = npx[0] + 1;   npy[2] = 0;
-                                    npx[3] = 0;            npy[3] = npy[1] + 1;
-                                }else if(sx>=screenWidth-1){
-                                    screenId[0] = screenId[2] = TOP_SCREEN;
-                                    screenId[1] = screenId[3] = RIGHT_SCREEN;
-                                    npx[0] = screenWidth - 1;            npy[0] = sy;
-                                    npx[1] = screenWidth - 1 - (int)sy;  npy[1] = 0;
-                                    npx[2] = screenWidth - 1;            npy[2] = npy[0] + 1;
-                                    npx[3] = npx[1] - 1;                 npy[3] = 0;
-                                }else{
-                                    setCenter(TOP_SCREEN, sx, sy);
-                                }
-                            }
-                            picked = true;
-                        }
-                        if(DEBUG_MESSAGE2 && !picked){
-                            cout << "Could not pick it up. " << i << " " << j << endl;
-                        }
-                    }
-                }else{  //back
-                    double x = i - height - height2 + 0.5;
-                    double l = sqrt(x*x+y*y);
-                    if(l<=height2){
-                        double tanTheta;
-                        if(l==0){
-                            tanTheta = 0.0;
-                        } else {
-                            tanTheta = screenWidth2 / l * tan(l*r);
-                        }
-                        double xx = x*tanTheta;
-                        double yy = y*tanTheta;
-                        ii = myNearByInt(xx + screenWidth2-0.5);
-                        jj = myNearByInt(yy + screenWidth2-0.5);
-                        if(0<=ii && ii<screenWidth && 0<=jj && jj<screenWidth){  // center
-                            sx = xx + screenWidth2-0.5;
-                            sy = yy + screenWidth2-0.5;
-                            if(sx<0){
-                                if(sy<0){
-                                    setCubeCorner(TOP_UR, TOP_UR, RIGHT_UR, BACK_UL);
-                                }else if(sy>=screenWidth-1){
-                                    setCubeCorner(RIGHT_DR, BACK_DL, BOTTOM_DR, BOTTOM_DR);
-                                }else{
-                                    setVerticalBorder(RIGHT_SCREEN, BACK_SCREEN, sy);
-                                }
-                            }else if(sx>=screenWidth-1){
-                                if(sy<0){
-                                    setCubeCorner(TOP_UL, TOP_UL, BACK_UR, LEFT_UL);
-                                }else if(sy>=screenWidth-1){
-                                    setCubeCorner(BACK_DR, LEFT_DL, BOTTOM_DL, BOTTOM_DL);
-                                }else{
-                                    setVerticalBorder(BACK_SCREEN, LEFT_SCREEN, sy);
-                                }
-                            }else{
-                                if(sy<0){
-                                    screenId[0] = screenId[1] = TOP_SCREEN;
-                                    screenId[2] = screenId[3] = BACK_SCREEN;
-                                    npx[0] = screenWidth - 1 -(int)sx;    npy[0] = 0;
-                                    npx[1] = npx[0] - 1;                  npy[1] = 0;
-                                    npx[2] = sx;                          npy[2] = 0;
-                                    npx[3] = npx[2] + 1;                  npy[3] = 0;
-                                }else if(sy>=screenWidth-1){
-                                    screenId[0] = screenId[1] = BACK_SCREEN;
-                                    screenId[2] = screenId[3] = BOTTOM_SCREEN;
-                                    npx[0] = sx;                          npy[0] = screenWidth - 1;
-                                    npx[1] = npx[0] + 1;                  npy[1] = screenWidth - 1;
-                                    npx[2] = screenWidth - 1 -(int)sx;;   npy[2] = screenWidth - 1;
-                                    npx[3] = npx[2] - 1;                  npy[3] = screenWidth - 1;
-                                }else{
-                                    setCenter(BACK_SCREEN, sx, sy);
-                                }
-                            }
-                            picked = true;
-                        }else if(ii >= screenWidth){  //right
-                            double xx_ = sw22 / xx;
-                            double yy_ = screenWidth2 * yy / xx;
-                            int iir = myNearByInt(-xx_ + screenWidth2-0.5);
-                            int jjr = myNearByInt(yy_ + screenWidth2-0.5);
-                            if( 0 <= jjr && jjr < screenWidth){
-                                sx = -xx_ + screenWidth2-0.5;
-                                sy = yy_ + screenWidth2-0.5;
-                                if(sx<0){
-                                    if(sy<0){
-                                        setCubeCorner(TOP_UL, TOP_UL, BACK_UR, LEFT_UL);
-                                    }else if(sy>=screenWidth-1){
-                                        setCubeCorner(BACK_DR, LEFT_DL, BOTTOM_DL, BOTTOM_DL);
-                                    }else{
-                                        setVerticalBorder(BACK_SCREEN, LEFT_SCREEN, sy);
-                                    }
-                                }else{
-                                    if(sy<0){
-                                        screenId[0] = screenId[1] = TOP_SCREEN;
-                                        screenId[2] = screenId[3] = LEFT_SCREEN;
-                                        npx[0] = 0;                  npy[0] = sx;
-                                        npx[1] = 0;                  npy[1] = npy[0] + 1;
-                                        npx[2] = sx;                 npy[2] = 0;
-                                        npx[3] = npx[2] + 1;         npy[3] = 0;
-                                    }else if(sy>=screenWidth-1){
-                                        screenId[0] = screenId[1] = LEFT_SCREEN;
-                                        screenId[2] = screenId[3] = BOTTOM_SCREEN;
-                                        npx[0] = sx;                 npy[0] = screenWidth - 1;
-                                        npx[1] = npx[0]+1;           npy[1] = screenWidth - 1;
-                                        npx[2] = 0;                  npy[2] = screenWidth - 1 - (int)sx;
-                                        npx[3] = 0;                  npy[3] = npy[2] - 1;
-                                    }else{
-                                        setCenter(LEFT_SCREEN, sx, sy);
-                                    }
-                                }
-                                picked = true;
-                            }
-                        }else if(ii < 0){   //left
-                            double xx_ = sw22 / -xx;
-                            double yy_ = screenWidth2 * yy / -xx;
-                            int iil = myNearByInt(xx_ + screenWidth2-0.5);
-                            int jjl = myNearByInt(yy_ + screenWidth2-0.5);
-                            if( 0 <= jjl && jjl < screenWidth){
-                                sx = xx_ + screenWidth2-0.5;
-                                sy = yy_ + screenWidth2-0.5;
-                                if(sx>=screenWidth-1){
-                                    if(sy<0){
-                                        setCubeCorner(TOP_UR, TOP_UR, RIGHT_UR, BACK_UL);
-                                    }else if(sy>=screenWidth-1){
-                                        setCubeCorner(RIGHT_DR, BACK_DL, BOTTOM_DR, BOTTOM_DR);
-                                    }else{
-                                        setVerticalBorder(RIGHT_SCREEN, BACK_SCREEN, sy);
-                                    }
-                                }else{
-                                    if(sy<0){
-                                        screenId[0] = screenId[1] = TOP_SCREEN;
-                                        screenId[2] = screenId[3] = RIGHT_SCREEN;
-                                        npx[0] = screenWidth - 1;    npy[0] = screenWidth - 1 - (int)sx;
-                                        npx[1] = screenWidth - 1;    npy[1] = npy[0] - 1;
-                                        npx[2] = sx;                 npy[2] = 0;
-                                        npx[3] = npx[2]+1;           npy[3] = 0;
-                                    }else if(sy>=screenWidth-1){
-                                        screenId[0] = screenId[1] = RIGHT_SCREEN;
-                                        screenId[2] = screenId[3] = BOTTOM_SCREEN;
-                                        npx[0] = sx;                 npy[0] = screenWidth - 1;
-                                        npx[1] = npx[0]+1;           npy[1] = screenWidth - 1;
-                                        npx[2] = screenWidth - 1;    npy[2] = sx;
-                                        npx[3] = screenWidth - 1;    npy[3] = npy[2] + 1;
-                                    }else{
-                                        setCenter(RIGHT_SCREEN, sx, sy);
-                                    }
-                                }
-                                picked = true;
-                            }
-                        }
-                        if(!picked && jj >= screenWidth){    //bottom
-                            double xx_ = screenWidth2 * xx / yy;
-                            double yy_ = sw22 / yy;
-                            sx = -xx_ + screenWidth2-0.5;
-                            sy = yy_ + screenWidth2-0.5;
-                            if(sy>=screenWidth-1){
-                                if(sx<0){
-                                    setCubeCorner(LEFT_DL, BOTTOM_DL, BACK_DR, BACK_DR);
-                                }else if(sx>=screenWidth-1){
-                                    setCubeCorner(BOTTOM_DR, RIGHT_DR, BACK_DL, BACK_DL);
-                                }else{
-                                    screenId[0] = screenId[1] = BOTTOM_SCREEN;
-                                    screenId[2] = screenId[3] = BACK_SCREEN;
-                                    npx[0] = sx;                         npy[0] = screenWidth - 1;
-                                    npx[1] = npx[0]+1;                   npy[1] = screenWidth - 1;
-                                    npx[2] = screenWidth - 1 - (int)sx;  npy[2] = screenWidth - 1;
-                                    npx[3] = npx[2] - 1;                 npy[3] = screenWidth - 1;
-                                }
-                            }else{
-                                if(sx<0){
-                                    screenId[0] = screenId[2] = LEFT_SCREEN;
-                                    screenId[1] = screenId[3] = BOTTOM_SCREEN;
-                                    npx[0] = screenWidth - 1 -(int)sy;   npy[0] = screenWidth - 1;
-                                    npx[1] = 0;                          npy[1] = sy;
-                                    npx[2] = npx[0] - 1;                 npy[2] = screenWidth - 1;
-                                    npx[3] = 0;                          npy[3] = npy[1]+1;
-                                }else if(sx>=screenWidth-1){
-                                    screenId[0] = screenId[2] = BOTTOM_SCREEN;
-                                    screenId[1] = screenId[3] = RIGHT_SCREEN;
-                                    npx[0] = screenWidth-1;     npy[0] = sy;
-                                    npx[1] = sy;                npy[1] = screenWidth - 1;
-                                    npx[2] = screenWidth - 1;   npy[2] = npy[0] + 1;
-                                    npx[3] = npx[1] + 1;        npy[3] = screenWidth - 1;
-                                }else{
-                                    setCenter(BOTTOM_SCREEN, sx, sy);
-                                }
-                            }
-                            picked = true;
-                        }else if(!picked && jj < 0){   //top
-                            double xx_ = screenWidth2 * xx / -yy;
-                            double yy_ = sw22 / -yy;
-                            sx = -xx_ + screenWidth2-0.5;
-                            sy = -yy_ + screenWidth2-0.5;
-                            if(sy<0){
-                                if(sx<0){
-                                    setCubeCorner(BACK_UR, BACK_UR, LEFT_UL, TOP_UL);
-                                }else if(sx>=screenWidth-1){
-                                    setCubeCorner(BACK_UL, BACK_UL, TOP_UR, TOP_UR);
-                                }else{
-                                    screenId[0] = screenId[1] = BACK_SCREEN;
-                                    screenId[2] = screenId[3] = TOP_SCREEN;
-                                    npx[0] = screenWidth - 1 - (int)sx;     npy[0] = 0;
-                                    npx[1] = npx[0] - 1;                    npy[1] = 0;
-                                    npx[2] = sx;                            npy[2] = 0;
-                                    npx[3] = npx[2] + 1;                    npy[3] = 0;
-                                }
-                            }else{
-                                if(sx<0){
-                                    screenId[0] = screenId[2] = LEFT_SCREEN;
-                                    screenId[1] = screenId[3] = TOP_SCREEN;
-                                    npx[0] = sy;           npy[0] = 0;
-                                    npx[1] = 0;            npy[1] = sy;
-                                    npx[2] = npx[0] + 1;   npy[2] = 0;
-                                    npx[3] = 0;            npy[3] = npy[1] + 1;
-                                }else if(sx>=screenWidth-1){
-                                    screenId[0] = screenId[2] = TOP_SCREEN;
-                                    screenId[1] = screenId[3] = RIGHT_SCREEN;
-                                    npx[0] = screenWidth - 1;            npy[0] = sy;
-                                    npx[1] = screenWidth - 1 - (int)sy;  npy[1] = 0;
-                                    npx[2] = screenWidth - 1;            npy[2] = npy[0] + 1;
-                                    npx[3] = npx[1]-1;                   npy[3] = 0;
-                                }else{
-                                    setCenter(TOP_SCREEN, sx, sy);
-                                }
-                            }
-                            picked = true;
-                        }
-                        if(DEBUG_MESSAGE2 && !picked){
-                            cout << "Could not pick it up. " << i << " " << j << endl;
-                        }
-                    }
-                }
-
-                int i_, j_;
-                if(!rotateOutputDirection){
-                    i_ = i;
-                    j_ = j;
-                }else{
-                    if(i<height){
-                        i_ = j;
-                        j_ = height - 1 - i;
-                    }else{
-                        i_ = height - 1 - j + height;
-                        j_ = i - height;
-                    }
-                }
-                unsigned char* pix = &pixels[(i_+j_*width)*3];
-                ScreenIndex4& map = fisheyeLensInterpolationMap[j_][i_];
-                if(picked){
-                    double dx, dy;
-                    if(sx<0){
-                        dx = sx + 1;
-                    }else{
-                        dx = sx - (int)sx;
-                    }
-                    if(sy<0){
-                        dy = sy + 1;
-                    }else{
-                        dy = sy - (int)sy;
-                    }
-                    double bias[4];
-                    bias[0] = (1.0-dx)*(1.0-dy);
-                    bias[1] = dx*(1.0-dy);
-                    bias[2] = (1.0-dx)*dy;
-                    bias[3] = dx*dy;
-                    double pixd[3] = {0.0,0.0,0.0};
-                    for(int k=0; k<4; k++){
-                        unsigned char* tempPixels = screens[screenId[k]]->tmpImage->pixels();
-                        unsigned char* tempPix = &tempPixels[(int)((npx[k] + npy[k] * screenWidth) * 3)];
-                        for(int kk=0; kk<3; kk++){
-                            pixd[kk] += bias[k] * tempPix[kk];
-                        }
-                        map.screenIndex[k].sid = screenId[k];
-                        map.screenIndex[k].ix = npx[k];
-                        map.screenIndex[k].iy = npy[k];
-                        map.bias[k] = bias[k];
-                    }
-                    for(int kk=0; kk<3; kk++){
-                        pix[kk] = myNearByInt(pixd[kk]);
-                    }
-                }else{
-                    pix[0] = pix[1] = pix[2] = 0;
-                    map.screenIndex[0].sid = NO_SCREEN;
-                }
-            }
-        }
-    }else{
-        for(int j=0; j<height; j++){
-            for(int i=0; i<width; i++){
-                unsigned char* pix = &pixels[(i+j*width)*3];
-                ScreenIndex4& map = fisheyeLensInterpolationMap[j][i];
-                if(map.screenIndex[0].sid != NO_SCREEN){
-                    double pixd[3] = {0.0,0.0,0.0};
-                    for(int k=0; k<4; k++){
-                        unsigned char* tempPixels = screens[map.screenIndex[k].sid]->tmpImage->pixels();
-                        unsigned char* tempPix = &tempPixels[(int)((map.screenIndex[k].ix + map.screenIndex[k].iy * screenWidth) * 3)];
-                        for(int kk=0; kk<3; kk++){
-                            pixd[kk] += map.bias[k] * tempPix[kk];
-                        }
-                    }
-                    for(int kk=0; kk<3; kk++){
-                        pix[kk] = myNearByInt(pixd[kk]);
-                    }
-                }else{
-                    pix[0] = pix[1] = pix[2] = 0;
-                }
-            }
         }
     }
 }
@@ -2696,8 +1821,7 @@ void GLVisionSimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty
     putProperty.reset()(_("Depth error"), depthError, changeProperty(depthError));
     putProperty.reset()(_("Head light"), isHeadLightEnabled, changeProperty(isHeadLightEnabled));
     putProperty.reset()(_("Additional lights"), areAdditionalLightsEnabled, changeProperty(areAdditionalLightsEnabled));
-    putProperty(_("Rotate fisheye lens output direction"), rotateOutputDirection, changeProperty(rotateOutputDirection));
-    putProperty(_("Enable Interpolation"), enableInterpolation, changeProperty(enableInterpolation));
+    putProperty(_("Anti-aliasing"), isAntiAliasingEnabled, changeProperty(isAntiAliasingEnabled));
 }
 
 
@@ -2722,8 +1846,7 @@ bool GLVisionSimulatorItemImpl::store(Archive& archive)
     archive.write("depthError", depthError);
     archive.write("enableHeadLight", isHeadLightEnabled);    
     archive.write("enableAdditionalLights", areAdditionalLightsEnabled);
-    archive.write("rotateOutputDirection", rotateOutputDirection);
-    archive.write("enableInterpolation", enableInterpolation);
+    archive.write("antiAliasing", isAntiAliasingEnabled);
     return true;
 }
 
@@ -2751,8 +1874,7 @@ bool GLVisionSimulatorItemImpl::restore(const Archive& archive)
     archive.read("depthError", depthError);
     archive.read("enableHeadLight", isHeadLightEnabled);
     archive.read("enableAdditionalLights", areAdditionalLightsEnabled);
-    archive.read("rotateOutputDirection", rotateOutputDirection);
-    archive.read("enableInterpolation", enableInterpolation);
+    archive.read("antiAliasing", isAntiAliasingEnabled);
 
     string symbol;
     if(archive.read("threadMode", symbol)){
