@@ -1355,7 +1355,8 @@ void RTSDiagramViewImpl::onTime()
                     // it->second->effect->setEnabled(true);
                     modified = true;
                 } else {
-                    deleteRTSComp(it->second);
+                    //The following code is disabled to keep management of non-live RTCs
+                    //deleteRTSComp(it->second);
                 }
             } else {
                 if (it->second->effect->isEnabled()){
