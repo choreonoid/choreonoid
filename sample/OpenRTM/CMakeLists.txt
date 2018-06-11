@@ -64,7 +64,7 @@ target_link_libraries(RemoteJoystickInputController CnoidBody CnoidOpenRTMPlugin
 # Tank Joystick Controller
 set(target TankJoystickControllerRTC)
 add_cnoid_sample_rtc(${target} TankJoystickControllerRTC.cpp)
-configure_file(OpenRTM-TankJoystick.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+configure_file(OpenRTM-Tank.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 
 if(NOT USE_BUILTIN_CAMERA_IMAGE_IDL)
   add_cnoid_body_io_rtc(VisionSensorIoRTC VisionSensorIoRTC.cpp)

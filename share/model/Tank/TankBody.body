@@ -1,7 +1,7 @@
 format: ChoreonoidBody
 formatVersion: 1.0
 angleUnit: degree
-name: Tank
+name: TankBody
 
 links:
   -
@@ -422,16 +422,27 @@ links:
                 elements: *Camera_Main5
               -
                 type: Camera
-                name: Camera
+                name: Kinect
                 rotation: [ [ 1, 0, 0, 90 ], [ 0, 1, 0, -90 ] ]
                 format: COLOR_DEPTH
-                fieldOfView: 65
+                fieldOfView: 62
                 width: 320
                 height: 240
                 frameRate: 30
               -
+                type: Camera
+                name: Theta
+                rotation: [ [ 1, 0, 0, 90 ], [ 0, 1, 0, -90 ] ]
+                translation: [ 0, 0, 0.1 ]
+                format: COLOR
+                lensType: DUAL_FISHEYE
+                fieldOfView: 180
+                width: 720
+                height: 480
+                frameRate: 30
+              -
                 type: RangeSensor
-                name: VelodyneVLP-16
+                name: VLP-16
                 translation: [ 0, 0, 0.1 ]
                 rotation: [ [ 1, 0, 0, 90 ], [ 0, 1, 0, -90 ] ]
                 yawRange: 360.0
@@ -463,201 +474,3 @@ links:
                     cutOffAngle: 40
                     cutOffExponent: 6
                     attenuation: [ 1, 0, 0.01 ]
-  -
-    name: TRACK_L
-    parent: CHASSIS
-    translation: [ 0, 0.22, -0.026 ]
-    jointType: fixed
-    jointAxis: Y
-    actuationMode: jointSurfaceVelocity
-    centerOfMass: [ 0, 0, 0 ]
-    mass: 1.0
-    inertia: [
-      0.02, 0,    0,
-      0,    0.02, 0,
-      0,    0,    0.02 ]
-    elements:
-      -
-        type: Visual
-        elements:
-          -
-            type: Resource
-            uri: "resource/tank.dae"
-            node: CRAWLER_L
-          -
-            type: Transform
-            translation: [ 0.0, -0.06, 0.0 ]
-            elements:
-              Resource:
-                uri: "resource/tank.dae"
-                node: INNER_PLATE_L
-          -
-            type: Transform
-            translation: [ 0.0, 0.045, 0.0 ]
-            elements:
-              Resource:
-                uri: "resource/tank.dae"
-                node: OUTER_PLATE_L
-      -
-        type: Collision
-        elements:
-          -
-            type: Transform
-            translation: [ 0.0, 0.0, 0.0 ]
-            elements: &Crawler
-              Shape:
-                geometry: { type: Box, size: [ 0.52, 0.1, 0.16 ] }
-          -
-            type: Transform
-            translation: [ 0.26, 0.0, 0.0 ]
-            elements: &Crawler_Baf
-              Shape:
-                geometry: { type: Cylinder, radius: 0.08, height: 0.1 }
-          -
-            type: Transform
-            translation: [ -0.26, 0.0, 0.0 ]
-            elements: *Crawler_Baf
-      -
-        type: RigidBody
-        name: WHEEL_L0
-        translation: [ 0.25, 0.0, 0.0 ]
-        centerOfMass: [ 0, 0, 0 ]
-        mass: 2.0
-        inertia: [
-          0.02, 0,    0,
-          0,    0.02, 0,
-          0,    0,    0.02 ]
-        elements:
-          -
-            type: Visual
-            resource:
-              uri: "resource/tank.dae"
-              node: WHEEL_L0
-      -
-        type: RigidBody
-        name: WHEEL_L1
-        centerOfMass: [ 0, 0, 0 ]
-        mass: 2.0
-        inertia: [
-          0.02, 0,    0,
-          0,    0.02, 0,
-          0,    0,    0.02 ]
-        elements:
-          -
-            type: Visual
-            resource:
-              uri: "resource/tank.dae"
-              node: WHEEL_L1
-      -
-        type: RigidBody
-        name: WHEEL_L2
-        translation: [ -0.25, 0.0, 0.0 ]
-        centerOfMass: [ 0, 0, 0 ]
-        mass: 2.0
-        inertia: [
-          0.02, 0,    0,
-          0,    0.02, 0,
-          0,    0,    0.02 ]
-        elements:
-          -
-            type: Visual
-            resource:
-              uri: "resource/tank.dae"
-              node: WHEEL_L2
-  -
-    name: TRACK_R
-    parent: CHASSIS
-    translation: [ 0, -0.22, -0.026 ]
-    jointType: fixed
-    jointAxis: Y
-    actuationMode: jointSurfaceVelocity
-    centerOfMass: [ 0, 0, 0 ]
-    mass: 1.0
-    inertia: [
-      0.02, 0,    0,
-      0,    0.02, 0,
-      0,    0,    0.02 ]
-    elements:
-      -
-        type: Visual
-        elements:
-          -
-            type: Resource
-            uri: "resource/tank.dae"
-            node: CRAWLER_R
-          -
-            type: Transform
-            translation: [ 0.0, 0.06, 0.0 ]
-            elements:
-              Resource:
-                uri: "resource/tank.dae"
-                node: INNER_PLATE_R
-          -
-            type: Transform
-            translation: [ 0.0, -0.045, 0.0 ]
-            elements:
-              Resource:
-                uri: "resource/tank.dae"
-                node: OUTER_PLATE_R
-      -
-        type: Collision
-        elements:
-          -
-            type: Transform
-            translation: [ 0.0, 0.0, 0.0 ]
-            elements: *Crawler
-          -
-            type: Transform
-            translation: [ 0.26, 0.0, 0.0 ]
-            elements: *Crawler_Baf
-          -
-            type: Transform
-            translation: [ -0.26, 0.0, 0.0 ]
-            elements: *Crawler_Baf       
-      -
-        type: RigidBody
-        name: WHEEL_R0
-        translation: [ 0.25, 0.0, 0.0 ]
-        centerOfMass: [ 0, 0, 0 ]
-        mass: 2.0
-        inertia: [
-          0.02, 0,    0,
-          0,    0.02, 0,
-          0,    0,    0.02 ]
-        elements:
-          -
-            type: Visual
-            resource:
-              uri: "resource/tank.dae"
-              node: WHEEL_R0
-      -
-        type: RigidBody
-        name: WHEEL_R1
-        centerOfMass: [ 0, 0, 0 ]
-        mass: 2.0
-        inertia: [
-          0.02, 0,    0,
-          0,    0.02, 0,
-          0,    0,    0.02 ]
-        elements:
-          -
-            type: Visual
-            resource:
-              uri: "resource/tank.dae"
-              node: WHEEL_R1
-      -
-        type: RigidBody
-        name: WHEEL_R2
-        translation: [ -0.25, 0.0, 0.0 ]
-        centerOfMass: [ 0, 0, 0 ]
-        mass: 2.0
-        inertia: [
-          0.02, 0,    0,
-          0,    0.02, 0,
-          0,    0,    0.02 ]
-        elements:
-          -
-            type: Visual
-            resource:
-              uri: "resource/tank.dae"
-              node: WHEEL_R2

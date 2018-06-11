@@ -36,12 +36,9 @@ configure_file(SampleCrawlerSlope.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYON
 
 # Tank samples
 add_cnoid_simple_controller(TankJoystickController TankJoystickController.cpp)
-configure_file(TankJoystick.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
-configure_file(TankJoystickAGX.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
-configure_file(TankJoystickAGX_Floor.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+configure_file(Tank.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 configure_file(TankVisionSensors.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
-add_cnoid_simple_controller(LightBlinkController LightBlinkController.cpp)
-configure_file(TankJoystickLightBlink.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+configure_file(AgxTank.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 
 # DoubleArmV7 sample
 add_cnoid_simple_controller(DoubleArmV7Controller DoubleArmV7Controller.cpp)

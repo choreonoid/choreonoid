@@ -34,8 +34,13 @@ public:
     bool isImageStateClonable() const { return isImageStateClonable_; }
 
     enum ImageType { NO_IMAGE, COLOR_IMAGE, GRAYSCALE_IMAGE };
+    enum LensType { NORMAL_LENS, FISHEYE_LENS, DUAL_FISHEYE_LENS };
+
     ImageType imageType() const { return imageType_; }
     void setImageType(ImageType type) { imageType_ = type; }
+
+    LensType lensType() const { return lensType_; }
+    void setLensType(LensType type) { lensType_ = type; }
 
     bool on() const { return on_; }
     void on(bool on) { on_ = on; }
@@ -91,6 +96,7 @@ private:
     bool on_;
     bool isImageStateClonable_;
     ImageType imageType_;
+    LensType lensType_;
     int resolutionX_;
     int resolutionY_;
     double nearClipDistance_;
