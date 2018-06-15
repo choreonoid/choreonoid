@@ -20,14 +20,14 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/tank/tank.body"
+            modelFile: "${SHARE}/model/Tank/Tank.body"
             currentBaseLink: ""
             rootPosition: [ -2, -0.499999997, 0.1059 ]
             rootAttitude: [ 
               1, 2.80052647e-09, -8.56766596e-10, 
               -2.80052647e-09, 1, -5.40907594e-10, 
               8.56766595e-10, 5.40907597e-10, 1 ]
-            jointPositions: [ -0.000000, -0.009806 ]
+            jointPositions: [  0.000000,  0.000000 ]
             initialRootPosition: [ -2, -0.5, 0.1 ]
             initialRootAttitude: [ 
               1, 0, 0, 
@@ -74,7 +74,7 @@ items:
                 module: "TankJoystickControllerRTC"
                 baseDirectory: "RTC directory"
                 instanceName: ""
-                executionContext: "ChoreonoidExecutionContext"
+                executionContext: "SimulationExecutionContext"
                 periodicRate: 0
             - 
               id: 6
@@ -83,8 +83,8 @@ items:
               class: VisionSensorSubscriberRTCItem
               data: 
                 componentName: VisionSensorSubscriber
-                rangeSensorPortNames: [ VelodyneVLP-16 ]
-                cameraPortNames: [ Camera_image ]
+                rangeSensorPortNames: [ VLP-16 ]
+                cameraPortNames: [ Kinect_image, Theta_image ]
             - 
               id: 7
               name: "Joystick"
@@ -107,21 +107,24 @@ items:
                 subItems: 
                   - 
                     class: PointCloudVisualizer
-                    name: Camera
+                    name: Kinect
                     renderingMode: Point
                     pointSize: 0
                     voxelSize: 0.01
                     isEditable: false
                   - 
                     class: RangeSensorVisualizer
-                    name: VelodyneVLP-16
+                    name: VLP-16
                     renderingMode: Point
                     pointSize: 0
                     voxelSize: 0.01
                     isEditable: false
                   - 
                     class: CameraImageVisualizer
-                    name: Camera_Image
+                    name: Kinect_Image
+                  - 
+                    class: CameraImageVisualizer
+                    name: Theta
         - 
           id: 9
           name: "Labo1"
@@ -186,22 +189,24 @@ items:
                 maxLatency: 1
                 recordVisionData: false
                 threadMode: Sensor
-                bestEffort: false
+                bestEffort: true
                 allSceneObjects: false
                 rangeSensorPrecisionRatio: 4
                 depthError: 0
                 enableHeadLight: true
                 enableAdditionalLights: true
+                rotateOutputDirection: false
+                enableInterpolation: false
         - 
           id: 12
           name: "TankVisionSystem"
           plugin: OpenRTM
           class: RTSystemItem
           data: 
+            filename: "${PROJECT_DIR}/TankVisionSystem.xml"
+            format: RTS-PROFILE-XML
             AutoConnection: true
             PollingCycle: 500
-            filename: TankVisionSystem.xml
-            format: RTS-PROFILE-XML
 views: 
   - 
     id: 0
@@ -214,7 +219,7 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      checked: [ 1, 2, [ 8, "Camera" ], [ 8, "VelodyneVLP-16" ] ]
+      checked: [ 1, 2, [ 8, "Kinect" ], [ 8, "VLP-16" ] ]
       expanded: [ 1, 2, 8, 10 ]
   - 
     id: 2
@@ -283,80 +288,19 @@ views:
       dedicatedItemTreeViewChecks: false
   - 
     id: 4
-    name: "Scene 2"
-    plugin: Base
-    class: SceneView
-    state: 
-      editMode: true
-      viewpointControlMode: thirdPerson
-      collisionLines: false
-      polygonMode: fill
-      defaultHeadLight: true
-      defaultHeadLightIntensity: 0.75
-      headLightLightingFromBack: false
-      worldLight: true
-      worldLightIntensity: 0.5
-      worldLightAmbient: 0.3
-      additionalLights: true
-      shadowLights: 
-        - 0
-      fog: true
-      floorGrid: false
-      floorGridSpan: 10
-      floorGridInterval: 0.5
-      xzGridSpan: 10
-      xzGridInterval: 0.5
-      xzGrid: false
-      yzGridSpan: 10
-      yzGridInterval: 0.5
-      texture: true
-      lineWidth: 1
-      pointSize: 1
-      normalVisualization: false
-      normalLength: 0.01
-      coordinateAxes: true
-      fpsTestIteration: 1
-      showFPS: false
-      enableNewDisplayListDoubleRendering: false
-      useBufferForPicking: true
-      upsideDown: false
-      cameras: 
-        - 
-          camera: [ System, Perspective ]
-          fieldOfView: 0.6978
-          near: 0.01
-          far: 100
-          eye: [ -5.29126118, -5.01169376, 3.84184278 ]
-          direction: [ 0.756596254, 0.487150344, -0.43617273 ]
-          up: [ 0.3667299, 0.236126726, 0.899862962 ]
-        - 
-          camera: [ System, Orthographic ]
-          orthoHeight: 20
-          near: 0.01
-          far: 100
-        - 
-          camera: [ Tank, Camera ]
-          isCurrent: true
-      backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
-      gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      dedicatedItemTreeViewChecks: false
-  - 
-    id: 5
     name: "Virtual Joystick"
     plugin: Base
     class: VirtualJoystickView
     mounted: true
   - 
-    id: 6
+    id: 5
     plugin: Body
     class: BodyLinkView
     mounted: true
     state: 
       showRotationMatrix: false
   - 
-    id: 7
+    id: 6
     plugin: Body
     class: JointSliderView
     mounted: true
@@ -370,7 +314,7 @@ views:
       labelOnLeft: true
       currentBodyItem: 2
   - 
-    id: 8
+    id: 7
     plugin: Body
     class: LinkSelectionView
     mounted: true
@@ -382,13 +326,13 @@ views:
           id: 2
           selectedLinks: [ 0 ]
   - 
-    id: 9
+    id: 8
     name: "CameraImageView"
     plugin: OpenRTM
     class: RTMImageView
     mounted: true
   - 
-    id: 10
+    id: 9
     name: "RTC Diagram"
     plugin: OpenRTM
     class: RTSDiagramView
@@ -396,7 +340,7 @@ views:
     state: 
       currentRTSItem: 12
   - 
-    id: 11
+    id: 10
     plugin: OpenRTM
     class: RTSNameServerView
     mounted: true
@@ -404,13 +348,13 @@ views:
       host: localhost
       port: 2809
   - 
-    id: 12
+    id: 11
     name: "RTC Properties"
     plugin: OpenRTM
     class: RTSPropertiesView
     mounted: true
   - 
-    id: 13
+    id: 12
     plugin: Python
     class: PythonConsoleView
     mounted: true
@@ -509,12 +453,12 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 428, 1795 ]
+      sizes: [ 369, 1545 ]
       children: 
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 689, 687 ]
+          sizes: [ 531, 529 ]
           children: 
             - 
               type: pane
@@ -522,31 +466,31 @@ viewAreas:
               current: 1
             - 
               type: pane
-              views: [ 0, 8, 11 ]
-              current: 11
+              views: [ 0, 7, 10 ]
+              current: 10
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 1005, 371 ]
+          sizes: [ 774, 286 ]
           children: 
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 766, 1023 ]
+              sizes: [ 659, 880 ]
               children: 
                 - 
                   type: splitter
                   orientation: vertical
-                  sizes: [ 487, 512 ]
+                  sizes: [ 374, 394 ]
                   children: 
                     - 
                       type: pane
-                      views: [ 6, 7, 10 ]
-                      current: 10
+                      views: [ 5, 6, 9 ]
+                      current: 9
                     - 
                       type: pane
-                      views: [ 12, 9 ]
-                      current: 9
+                      views: [ 11, 8 ]
+                      current: 8
                 - 
                   type: pane
                   views: [ 3 ]
@@ -554,16 +498,16 @@ viewAreas:
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 895, 894 ]
+              sizes: [ 770, 769 ]
               children: 
                 - 
                   type: pane
-                  views: [ 2, 13 ]
+                  views: [ 2, 12 ]
                   current: 2
                 - 
                   type: pane
-                  views: [ 5 ]
-                  current: 5
+                  views: [ 4 ]
+                  current: 4
 layoutOfToolBars: 
   rows: 
     - 
@@ -571,5 +515,4 @@ layoutOfToolBars:
       - { name: "ScriptBar", x: 48, priority: 0 }
       - { name: "SimulationBar", x: 95, priority: 1 }
       - { name: "TimeBar", x: 96, priority: 0 }
-      - { name: "SceneBar", x: 1336, priority: 2 }
-      - { name: "ImageViewBar", x: 1705, priority: 0 }
+      - { name: "SceneBar", x: 1652, priority: 2 }

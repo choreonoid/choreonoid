@@ -1,3 +1,5 @@
+optionalPlugins: [ ODE, Bullet, PhysX, AGXDynamics ]
+
 items: 
   id: 0
   name: "Root"
@@ -12,23 +14,58 @@ items:
       data: 
         collisionDetection: false
         collisionDetector: AISTCollisionDetector
-        materialTableFile: "${SHARE}/default/materials.yaml"
       children: 
         - 
           id: 2
-          name: "Floor"
+          name: "Tank"
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/misc/floor.body"
-            currentBaseLink: "Floor"
-            rootPosition: [ 0, 0, -0.1 ]
+            modelFile: "${SHARE}/model/Tank/TankAgx.body"
+            currentBaseLink: ""
+            rootPosition: [ -2, -0.5 ]
+            rootAttitude: [ 
+              1, 0, 0,
+              0, 1, 0,
+              0, 0, 1 ]
+            jointPositions: [  0.000000,  0.000000,  0.000000,  0.000000 ]
+            initialRootPosition: [ -2, -0.5 ]
+            initialRootAttitude: [ 
+              1, 0, 0,
+              0, 1, 0,
+              0, 0, 1 ]
+            initialJointPositions: [  0.000000,  0.000000,  0.000000, 0.000000 ]
+            zmp: [ 0, 0, 0 ]
+            collisionDetection: true
+            selfCollisionDetection: false
+            isEditable: true
+          children: 
+            - 
+              id: 3
+              name: "JoystickController"
+              plugin: SimpleController
+              class: SimpleControllerItem
+              data: 
+                isImmediateMode: true
+                controller: "TankJoystickController"
+                controllerOptions: "wheels velocity"
+                reloading: true
+                inputLinkPositions: false
+        - 
+          id: 4
+          name: "Labo1"
+          plugin: Body
+          class: BodyItem
+          data: 
+            modelFile: "${SHARE}/model/Labo1/Labo1.body"
+            currentBaseLink: "Base"
+            rootPosition: [ 0, 0, 0 ]
             rootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
             jointPositions: [  ]
-            initialRootPosition: [ 0, 0, -0.1 ]
+            initialRootPosition: [ 0, 0, 0 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
@@ -38,95 +75,32 @@ items:
             selfCollisionDetection: false
             isEditable: false
         - 
-          id: 3
-          name: "Tank"
-          plugin: Body
-          class: BodyItem
+          id: 10
+          name: "fog"
+          plugin: Base
+          class: SceneItem
           data: 
-            modelFile: "${SHARE}/model/tank/tank_agx.body"
-            currentBaseLink: ""
-            rootPosition: [ -2, -0.5, 0.2 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            jointPositions: [  0.000000,  0.000000,  0.000000,  0.000000, -2.134810,  0.939983,  0.546190,  0.960524 ]
-            initialRootPosition: [ -2, -0.5, 0.2 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            initialJointPositions: [  0.000000,  0.000000,  0.000000,  0.000000, -2.134810,  0.939983,  0.546190,  0.960524 ]
-            zmp: [ 0, 0, 0 ]
-            collisionDetection: true
-            selfCollisionDetection: false
-            isEditable: true
-          children: 
-            - 
-              id: 4
-              name: "JoystickController"
-              plugin: Body
-              class: SimpleControllerItem
-              data: 
-                isNoDelayMode: true
-                controllerOptions: "wheels velocity"
-                controller: "TankJoystickController"
-                baseDirectory: "Controller directory"
-                reloading: true
+            file: "${SHARE}/model/misc/fog.wrl"
+            format: VRML-FILE
+            translation: [ 0, 0, 0 ]
+            rotation: [ 1, 0, 0, 0 ]
         - 
           id: 5
-          name: "Simulator"
-          plugin: Base
-          class: FolderItem
-          children: 
-            - 
-              id: 6
-              name: "AGXSimulator100Hz"
-              plugin: AGXDynamics
-              class: AGXSimulatorItem
-              data: 
-                timestep: 0.01
-                realtimeSync: true
-                recording: "full"
-                timeRangeMode: "Unlimited"
-                timeLength: 180
-                allLinkPositionOutputMode: true
-                deviceStateOutput: true
-                controllerThreads: true
-                recordCollisionData: false
-                controllerOptions: ""
-                Gravity: [ 0, 0, -9.80665 ]
-                NumThreads: 1
-                ContactReduction: true
-                ContactReductionBinResolution: 3
-                ContactReductionThreshhold: 12
-                ContactWarmstarting: false
-                AutoSleep: false
-                SaveToAGXFileOnStart: false
-            - 
-              id: 7
-              name: "AGXSimulator200Hz"
-              plugin: AGXDynamics
-              class: AGXSimulatorItem
-              data: 
-                timestep: 0.005
-                realtimeSync: true
-                recording: "full"
-                timeRangeMode: "Unlimited"
-                timeLength: 180
-                allLinkPositionOutputMode: true
-                deviceStateOutput: true
-                controllerThreads: true
-                recordCollisionData: false
-                controllerOptions: ""
-                Gravity: [ 0, 0, -9.80665 ]
-                NumThreads: 1
-                ContactReduction: true
-                ContactReductionBinResolution: 3
-                ContactReductionThreshhold: 12
-                ContactWarmstarting: false
-                AutoSleep: false
-                SaveToAGXFileOnStart: false
+          name: "AGXSimulator"
+          plugin: AGXDynamics
+          class: AGXSimulatorItem
+          data: 
+            timestep: 0.005
+            realtimeSync: true
+            recording: "full"
+            timeRangeMode: "Unlimited"
+            timeLength: 180
+            allLinkPositionOutputMode: false
+            deviceStateOutput: true
+            selfCollision: false
+            controllerThreads: true
+            recordCollisionData: false
+            controllerOptions: ""
 views: 
   - 
     id: 0
@@ -139,9 +113,9 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      selected: [ 7 ]
-      checked: [ 1, 2, 3 ]
-      expanded: [ 1, 3, 4, 5 ]
+      selected: [ 5 ]
+      checked: [ 1, 2, 4 ]
+      expanded: [ 1, 2 ]
   - 
     id: 2
     plugin: Base
@@ -158,15 +132,13 @@ views:
       collisionLines: false
       polygonMode: fill
       defaultHeadLight: true
-      defaultHeadLightIntensity: 0.75
+      defaultHeadLightIntensity: 0.4
       headLightLightingFromBack: false
       worldLight: true
-      worldLightIntensity: 0.5
+      worldLightIntensity: 0.1
       worldLightAmbient: 0
       additionalLights: true
-      shadowLights: 
-        - 0
-        - 1
+      shadowLights: [ 0, 1 ]
       fog: true
       floorGrid: false
       floorGridSpan: 10
@@ -182,11 +154,9 @@ views:
       normalVisualization: false
       normalLength: 0.01
       coordinateAxes: true
-      fpsTestIteration: 1
       showFPS: false
       enableNewDisplayListDoubleRendering: false
       useBufferForPicking: true
-      upsideDown: false
       cameras: 
         - 
           camera: [ System, Perspective ]
@@ -194,19 +164,14 @@ views:
           fieldOfView: 0.6978
           near: 0.01
           far: 10000
-          eye: [ -4.15193416, -1.80705081, 1.00280019 ]
-          direction: [ 0.805481537, 0.507304675, -0.306335537 ]
-          up: [ 0.259209478, 0.16325412, 0.951923599 ]
+          eye: [ -6.44723288, -3.30408906, 3.23335936 ]
+          direction: [ 0.819988251, 0.45015162, -0.353529047 ]
+          up: [ 0.309902039, 0.170127932, 0.935423547 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
           near: 0.01
           far: 10000
-      backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
-      gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      dedicatedItemTreeViewChecks: false
   - 
     id: 4
     name: "Scene 2"
@@ -225,8 +190,7 @@ views:
       worldLightIntensity: 0.5
       worldLightAmbient: 0.3
       additionalLights: true
-      shadowLights: 
-        - 0
+      shadowLights: [ 0 ]
       fog: true
       floorGrid: false
       floorGridSpan: 10
@@ -242,11 +206,9 @@ views:
       normalVisualization: false
       normalLength: 0.01
       coordinateAxes: true
-      fpsTestIteration: 1
       showFPS: false
       enableNewDisplayListDoubleRendering: false
       useBufferForPicking: true
-      upsideDown: false
       cameras: 
         - 
           camera: [ System, Perspective ]
@@ -262,7 +224,7 @@ views:
           near: 0.01
           far: 100
         - 
-          camera: [ Tank, Camera ]
+          camera: [ Tank, Kinect ]
           isCurrent: true
       backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
       gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
@@ -295,7 +257,7 @@ views:
       spinBox: true
       slider: true
       labelOnLeft: true
-      currentBodyItem: 3
+      currentBodyItem: 4
   - 
     id: 8
     plugin: Body
@@ -303,10 +265,10 @@ views:
     mounted: true
     state: 
       listingMode: "Link List"
-      currentBodyItem: 3
+      currentBodyItem: 4
       bodyItems: 
         - 
-          id: 3
+          id: 2
           selectedLinks: [ 0 ]
   - 
     id: 9
@@ -316,7 +278,7 @@ views:
 toolbars: 
   "TimeBar": 
     minTime: 0
-    maxTime: 17.603
+    maxTime: 5
     frameRate: 1000
     playbackFrameRate: 100
     idleLoopDrivenMode: false
@@ -324,51 +286,6 @@ toolbars:
     speedScale: 1
     syncToOngoingUpdates: true
     autoExpansion: true
-  "KinematicsBar": 
-    mode: AUTO
-    enablePositionDragger: true
-    penetrationBlock: false
-    collisionLinkHighlight: false
-    snapDistance: 0.025
-    penetrationBlockDepth: 0.0005
-    lazyCollisionDetectionMode: true
-  "BodyBar": 
-    current: 3
-  "LeggedBodyBar": 
-    stanceWidth: 0.15
-  "BodyMotionGenerationBar": 
-    autoGenerationForNewBody: true
-    balancer: false
-    autoGeneration: false
-    timeScaleRatio: 1
-    preInitialDuration: 1
-    postFinalDuration: 1
-    onlyTimeBarRange: false
-    makeNewBodyItem: true
-    stealthyStepMode: true
-    stealthyHeightRatioThresh: 2
-    flatLiftingHeight: 0.005
-    flatLandingHeight: 0.005
-    impactReductionHeight: 0.005
-    impactReductionTime: 0.04
-    autoZmp: true
-    minZmpTransitionTime: 0.1
-    zmpCenteringTimeThresh: 0.03
-    zmpTimeMarginBeforeLiftingSpin: 0
-    zmpMaxDistanceFromCenter: 0.02
-    allLinkPositions: false
-    lipSyncMix: false
-    timeToStartBalancer: 0
-    balancerIterations: 2
-    plainBalancerMode: false
-    boundaryConditionType: position
-    boundarySmootherType: quintic
-    boundarySmootherTime: 0.5
-    boundaryCmAdjustment: false
-    boundaryCmAdjustmentTime: 1
-    waistHeightRelaxation: false
-    gravity: 9.8
-    dynamicsTimeRatio: 1
 Body: 
   "BodyMotionEngine": 
     updateJointVelocities: false
@@ -380,25 +297,11 @@ Body:
         showPpcom: false
         showZmp: false
       - 
-        bodyItem: 3
+        bodyItem: 4
         showCenterOfMass: false
         showPpcom: false
         showZmp: false
     staticModelEditing: true
-  "KinematicFaultChecker": 
-    checkJointPositions: true
-    angleMargin: 0
-    translationMargin: 0
-    checkJointVelocities: true
-    velocityLimitRatio: 100
-    targetJoints: all
-    checkSelfCollisions: true
-    onlyTimeBarRange: false
-  "SplineFilterDialog": 
-    isInputFrameRateSpecified: false
-    inputFrameRate: 200
-    isOutputFrameRateSpecified: false
-    outputFrameRate: 200
 viewAreas: 
   - 
     type: embedded
@@ -406,12 +309,12 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 334, 1426 ]
+      sizes: [ 303, 1291 ]
       children: 
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 455, 454 ]
+          sizes: [ 381, 381 ]
           children: 
             - 
               type: pane
@@ -424,17 +327,17 @@ viewAreas:
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 650, 259 ]
+          sizes: [ 545, 217 ]
           children: 
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 515, 905 ]
+              sizes: [ 602, 683 ]
               children: 
                 - 
                   type: pane
                   views: [ 6, 7, 4 ]
-                  current: 6
+                  current: 4
                 - 
                   type: pane
                   views: [ 3 ]
@@ -442,7 +345,7 @@ viewAreas:
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 855, 565 ]
+              sizes: [ 774, 511 ]
               children: 
                 - 
                   type: pane

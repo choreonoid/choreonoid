@@ -20,6 +20,7 @@ set(sources
   SimulationScriptItem.cpp
   AISTSimulatorItem.cpp
   GLVisionSimulatorItem.cpp
+  FisheyeLensConverter.cpp
   SensorVisualizerItem.cpp
   BodyTrackingCameraItem.cpp
   BodyMotionEngine.cpp

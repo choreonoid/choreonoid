@@ -1636,7 +1636,19 @@ bool YAMLBodyLoaderImpl::readCamera(Mapping& node)
             camera = new Camera;
         }
     }
-        
+
+    if(node.read("lensType", symbol)){
+        if(symbol == "NORMAL"){
+            camera->setLensType(Camera::NORMAL_LENS);
+        } else if(symbol == "FISHEYE"){
+            camera->setLensType(Camera::FISHEYE_LENS);
+            //  throwException    ImageType must be COLOR
+        } else if(symbol == "DUAL_FISHEYE"){
+            camera->setLensType(Camera::DUAL_FISHEYE_LENS);
+            //  throwException    ImageType must be COLOR
+        }
+    }
+
     if(node.read("on", on)) camera->on(on);
     if(node.read("width", value)) camera->setResolutionX(value);
     if(node.read("height", value)) camera->setResolutionY(value);

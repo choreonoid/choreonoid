@@ -47,6 +47,19 @@ DOOR_KNOB: &DOOR_KNOB
           translation: [ 0.038, 0, -0.095 ]
           geometry: { type: Cylinder, radius: 0.0125, height: 0.008 }
           appearance: *KNOB_APP
+        -
+          type: Shape
+          translation: [ -0.0105, 0, 0.0 ]
+          rotation: [ 0, 0, 1, -90 ]
+          geometry: { type: Cylinder, radius: 0.005, height: 0.025 }
+        -
+          type: Shape
+          translation: [ -0.0205, 0.015, 0.0 ]
+          geometry: { type: Box, size: [ 0.005, 0.03, 0.01 ] }
+        -
+          type: Shape
+          translation: [ -0.0155, 0.0055, 0.0 ]
+          geometry: { type: Box, size: [ 0.005, 0.011, 0.01 ] }
 
 links:
   -
@@ -110,21 +123,24 @@ links:
             translation: [ 0.09409, -0.2914, 0.7688 ]
             elements: &BASE_BOX8
               Shape: { geometry: { type: Box, size: [ 0.01, 0.025, 0.03 ] } }
-          -
-            name: BASE_BOX9
-            type: Transform
-            translation: [ 0.0243, -0.0931, 0.8038 ]
-            elements: *BASE_BOX6
-          -
-            name: BASE_BOX7
-            type: Transform
-            translation: [ 0.0505, -0.0931, 0.7663 ]
-            elements: *BASE_BOX7
-          -
-            name: BASE_BOX8
-            type: Transform
-            translation: [ 0.09409, -0.0931, 0.7688 ]
-            elements: *BASE_BOX8
+          - type: Transform
+            translation: [ -0.0005, 0.0499, 0.014 ]
+            elements:
+              -
+                name: BASE_BOX9
+                type: Transform
+                translation: [ 0.0243, -0.0931, 0.8038 ]
+                elements: *BASE_BOX6
+              -
+                name: BASE_BOX7
+                type: Transform
+                translation: [ 0.0505, -0.0931, 0.7663 ]
+                elements: *BASE_BOX7
+              -
+                name: BASE_BOX8
+                type: Transform
+                translation: [ 0.09409, -0.0931, 0.7688 ]
+                elements: *BASE_BOX8
           -
             name: VALVE_1
             type: Transform
@@ -239,10 +255,52 @@ links:
             rotation: [ 0, 0, 1, 180 ]
             translation: [ 0, 0.7, 0 ]
             uri: "resource/FireCabinetDoor.dae"
-
-  #-
-  #  <<: *DOOR_KNOB
-
+      -
+        type: Collision
+        elements:
+          -
+            name: COOR1
+            type: Shape
+            translation: [ -0.005, 0.323, 0.4375 ]
+            geometry: { type: Box, size: [ 0.01, 0.646, 0.875 ] }
+          -
+            name: DOOR2
+            type: Shape
+            translation: [ -0.01, 0.648, 0.4375 ]
+            geometry: { type: Box, size: [ 0.02, 0.005, 0.875 ] }
+          -
+            name: COOR3
+            type: Shape
+            translation: [ -0.0175, 0.673, 0.4375 ]
+            geometry: { type: Box, size: [ 0.005, 0.054, 0.875 ] }
+          -
+            name: COOR4
+            type: Shape
+            translation: [ -0.0025, 0.65, 0.4375 ]
+            geometry: { type: Box, size: [ 0.005, 0.01, 0.875 ] }
+          -
+            name: COOR4
+            type: Shape
+            translation: [ -0.01, 0.6975, 0.4375 ]
+            geometry: { type: Box, size: [ 0.02, 0.005, 0.875 ] }
+          -
+            name: COOR4
+            type: Shape
+            translation: [ -0.0105, 0.679, 0.4375 ]
+            rotation: [ 0, 0, 1, -24 ]
+            geometry: { type: Box, size: [ 0.002, 0.04, 0.875 ] }
+          -
+            name: COOR5
+            type: Shape
+            translation: [ -0.0105, 0.6725, 0.8725 ]
+            geometry: { type: Box, size: [ 0.02, 0.054, 0.005 ] }
+          -
+            name: COOR6
+            type: Shape
+            translation: [ -0.0105, 0.6725, 0.0025 ]
+            geometry: { type: Box, size: [ 0.02, 0.054, 0.005 ] }
+  -
+    *DOOR_KNOB
   -
     name: HOSE_REEL
     parent: BASE
@@ -267,6 +325,115 @@ links:
           Resource:
             translation: [ -0.1485, -0.561, -0.01 ]
             uri: "resource/FireCabinetHoseReel.dae"
+            #exclude: [ ID37, ID50, ID44 ]
+      -
+        type: Collision
+        elements:
+          -
+            type: Shape
+            translation: [ 0, 0, 0.055 ]
+            rotation: [ 1, 0, 0, 90 ]
+            geometry: { type: Cylinder, radius: 0.015, height: 0.11 }
+          -
+            type: Shape
+            translation: [ 0, -0.15, 0.05 ]
+            geometry: { type: Box, size: [ 0.02, 0.3, 0.1 ] }
+          -
+            type: Shape
+            translation: [ 0, -0.311, 0.07 ]
+            rotation: [ 1, 0, 0, 90 ]
+            geometry: { type: Cylinder, radius: 0.02, height: 0.2 }
+          - 
+            type: Transform
+            translation: [ -0.05, -0.311, 0.17 ]
+            elements:
+              -
+                type: Transform
+                elements: &REEL_GRIP
+                  Shape: { translation: [ 0, 0, 0.05 ],
+                           rotation: [ 0, 0, 1, 90 ],
+                           geometry: { type: Cylinder, radius: 0.02, height: 0.0075 } }
+              -
+                type: Transform
+                rotation: [ 0, 1, 0, 6 ]
+                elements: *REEL_GRIP
+              -
+                type: Transform
+                rotation: [ 0, 1, 0, 12 ]
+                elements: *REEL_GRIP
+              -
+                type: Transform
+                rotation: [ 0, 1, 0, 18 ]
+                elements: *REEL_GRIP
+              -
+                type: Transform
+                rotation: [ 0, 1, 0, 24 ]
+                elements: *REEL_GRIP
+              -
+                type: Transform
+                rotation: [ 0, 1, 0, 30 ]
+                elements: *REEL_GRIP
+              -
+                type: Transform
+                rotation: [ 0, 1, 0, 36 ]
+                elements: *REEL_GRIP
+              -
+                type: Transform
+                rotation: [ 0, 1, 0, 42 ]
+                elements: *REEL_GRIP
+              -
+                type: Transform
+                rotation: [ 0, 1, 0, 48 ]
+                elements: *REEL_GRIP
+              -
+                type: Transform
+                rotation: [ 0, 1, 0, 54 ]
+                elements: *REEL_GRIP
+              -
+                type: Transform
+                rotation: [ 0, 1, 0, 60 ]
+                elements: *REEL_GRIP
+              -
+                type: Transform
+                rotation: [ 0, 1, 0, 66 ]
+                elements: *REEL_GRIP
+              -
+                type: Transform
+                rotation: [ 0, 1, 0, 72 ]
+                elements: *REEL_GRIP
+              -
+                type: Transform
+                rotation: [ 0, 1, 0, 78 ]
+                elements: *REEL_GRIP
+              -
+                type: Transform
+                rotation: [ 0, 1, 0, 84 ]
+                elements: *REEL_GRIP
+              -
+                type: Transform
+                rotation: [ 0, 1, 0, 90 ]
+                elements: *REEL_GRIP
+          -
+            type: Transform
+            translation: [ -0.0335, -0.311, 0.22 ]
+            elements:
+              -
+                type: Transform
+                name: REEL_DISK1
+                elements: &REEL_DISK
+                  Shape : { rotation: [ 0, 0, 1, 90 ],
+                            geometry: { type: Cylinder, radius: 0.25, height: 0.01 } }
+              -
+                type: Transform
+                name: REEL_DISK2
+                translation: [ -0.11, 0, 0 ]
+                elements: *REEL_DISK
+              -
+                type: Shape
+                name: REEL_DISK3
+                translation: [ -0.05, 0, 0 ]
+                rotation: [ 0, 0, 1, 90 ]
+                geometry: { type: Cylinder, radius: 0.225, height: 0.1 }
   -
     name: VALVE
     parent: BASE
@@ -295,35 +462,107 @@ links:
       -
         type: Collision
         elements:
-          -
-            name: HANDLE_1
-            type: Transform
-            translation: [ -0.0053, 0.0, 0.0 ]
-            rotation: [ 0, 0, 1, 90 ]
+          - type: Transform
+            translation: [ -0.005291, 0.0, 0.0 ]
+            rotation: [ [ 0, 0, 1, -0.283 ], [ 0, 1, 0, -0.029 ] ]
             elements:
-              Shape: { geometry: { type: Cylinder, radius: 0.011, height: 0.01 } }
-          -
-            name: HANDLE_2
-            type: Transform
-            translation: [ -0.0053, 0.0145, 0.026 ]
-            rotation: [ 1, 0, 0, -29.2 ]
-            elements: &HANDLE_2
-              Shape: { geometry: { type: Box, size: [ 0.01, 0.0078, 0.04 ] } }
-          -
-            name: HANDLE_3
-            type: Transform
-            translation: [ -0.0053, 0.03005, 0.00032 ]
-            rotation: [ 1, 0, 0, -89.2 ]
-            elements: *HANDLE_2
-          -
-            name: HANDLE_4
-            type: Transform
-            translation: [ -0.0053, 0.01465, -0.0248 ]
-            rotation: [ 1, 0, 0, -149.2 ]
-            elements: *HANDLE_2
-          -
-            name: HANDLE_5
-            type: Transform
-            translation: [ -0.0054, -0.01387, -0.0248 ]
-            rotation: [ 1, 0, 0, 150.8 ]
-            elements: *HANDLE_2
+              -
+                name: HANDLE_1
+                type: Transform
+                translation: [ 0.0, 0.0, 0.0 ]
+                rotation: [ 0, 0, 1, 90 ]
+                elements:
+                  Shape: { geometry: { type: Cylinder, radius: 0.011, height: 0.01 } }
+              -
+                name: HANDLE_2
+                type: Transform
+                translation: [ 0.0, 0.0145, 0.026 ]
+                rotation: [ 1, 0, 0, -29.2 ]
+                elements: &HANDLE_2
+                  Shape: { geometry: { type: Box, size: [ 0.01, 0.0078, 0.04 ] } }
+              -
+                name: HANDLE_3
+                type: Transform
+                translation: [ 0.0, 0.03005, 0.00032 ]
+                rotation: [ 1, 0, 0, -89.2 ]
+                elements: *HANDLE_2
+              -
+                name: HANDLE_4
+                type: Transform
+                translation: [ 0.0, 0.01465, -0.0248 ]
+                rotation: [ 1, 0, 0, -149.2 ]
+                elements: *HANDLE_2
+              -
+                name: HANDLE_5
+                type: Transform
+                translation: [ 0.0, -0.01387, -0.0248 ]
+                rotation: [ 1, 0, 0, 150.8 ]
+                elements: *HANDLE_2
+              -
+                name: HANDLE_6
+                type: Transform
+                translation: [ 0.0, -0.03005, -0.0006 ]
+                rotation: [ 1, 0, 0, -89.2 ]
+                elements: *HANDLE_2
+              -
+                name: HANDLE_7
+                type: Transform
+                translation: [ 0.0, -0.0157, 0.026 ]
+                rotation: [ 1, 0, 0, 30.5 ]
+                elements: *HANDLE_2
+              -
+                type: Transform
+                name: HANDLE_RING1
+                elements: &HANDLRING_PARTS
+                  -
+                    type: Shape
+                    translation: [ 0.0, 0.0061, 0.05292 ]
+                    rotation: [ 1, 0, 0, -6.7 ]
+                    geometry: &HANDLERING1
+                      type: Box
+                      size: [ 0.01, 0.0155, 0.01 ]
+                  -
+                    type: Shape
+                    translation: [ 0.0, 0.0195, 0.04955 ]
+                    rotation: [ 1, 0, 0, -21.7 ]
+                    geometry: *HANDLERING1
+                  -
+                    type: Shape
+                    translation: [ 0.0, 0.03182, 0.0427 ]
+                    rotation: [ 1, 0, 0, -36.7 ]
+                    geometry: *HANDLERING1
+              -
+                type: Transform
+                name: HANDLE_RING2
+                rotation: [ 1, 0, 0, 45 ]
+                elements: *HANDLRING_PARTS
+              -
+                type: Transform
+                name: HANDLE_RING3
+                rotation: [ 1, 0, 0, 90 ]
+                elements: *HANDLRING_PARTS
+              -
+                type: Transform
+                name: HANDLE_RING4
+                rotation: [ 1, 0, 0, 135 ]
+                elements: *HANDLRING_PARTS
+              -
+                type: Transform
+                name: HANDLE_RING5
+                rotation: [ 1, 0, 0, 180 ]
+                elements: *HANDLRING_PARTS
+              -
+                type: Transform
+                name: HANDLE_RING6
+                rotation: [ 1, 0, 0, -45 ]
+                elements: *HANDLRING_PARTS
+              -
+                type: Transform
+                name: HANDLE_RING7
+                rotation: [ 1, 0, 0, -90 ]
+                elements: *HANDLRING_PARTS
+              -
+                type: Transform
+                name: HANDLE_RING8
+                rotation: [ 1, 0, 0, -135 ]
+                elements: *HANDLRING_PARTS
