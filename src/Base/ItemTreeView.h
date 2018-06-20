@@ -79,6 +79,8 @@ public:
     bool restoreCheckColumnState(int id, const Archive& archive);
     void releaseCheckColumn(int id);
 
+    enum { ID_ANY = -1 };
+
     /**
        This functions returns the specific type items that are checked in the ItemTreeView
     */
