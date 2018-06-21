@@ -170,7 +170,8 @@ int SpringheadCollisionDetectorImpl::addGeometry(SgNode* geometry)
         GeometryExPtr model = std::make_shared<GeometryEx>();
 		model->phSolid = phScene->CreateSolid();
 
-        if( meshExtractor->extract(geometry, std::bind(&SpringheadCollisionDetectorImpl::addMesh, this, model.get())) ){
+
+		if (meshExtractor->extract(geometry, [this, model]() { addMesh(model.get()); } )){
 			phSolidMap.insert( make_pair(model->phSolid, index) );
 			for(int i = 0; i < model->cdShapes.size(); i++){
 				cdShapeMap.insert( make_pair(model->cdShapes[i], index) );
@@ -183,9 +184,8 @@ int SpringheadCollisionDetectorImpl::addGeometry(SgNode* geometry)
     if(!isValid){
         models.push_back(GeometryExPtr());
     }
-    
-    return index;
 
+    return index;
 }
 
 void SpringheadCollisionDetector::setCustomObject(GeometryHandle geometry, Referenced* object){

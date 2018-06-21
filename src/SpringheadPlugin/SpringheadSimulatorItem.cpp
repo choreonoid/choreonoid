@@ -284,7 +284,7 @@ void SpringheadLink::createLinkBody(SpringheadSimulatorItemImpl* simImpl, Spring
 	if(matTable)
 		mat = matTable->material(link->materialId());
 	if(mat){
-		double torqueLimit = 0.0;
+		double torqueLimit = FLT_MAX;
 		torqueLimit = mat->info<double>("torqueLimit", torqueLimit);
 		
 		if(phJoint1D){
@@ -299,7 +299,7 @@ void SpringheadLink::createGeometry(SpringheadBody* sprBody)
 {
     if(link->shape()){
         MeshExtractor* extractor = new MeshExtractor;
-        extractor->extract(link->shape(), std::bind(&SpringheadLink::addMesh, this, extractor, sprBody));
+		extractor->extract( link->collisionShape(), [&](){ addMesh(extractor, sprBody); } );
         delete extractor;
     }
 }
