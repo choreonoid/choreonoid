@@ -118,6 +118,7 @@ void ParticlesProgramBase::render
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, textureId);
+    glBindSampler(0, 0);
     
     glUniform1i(particleTexLocation, 0);
 
