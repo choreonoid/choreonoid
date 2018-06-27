@@ -41,30 +41,27 @@ struct Registration {
 SceneFire::SceneFire()
     : SceneParticles(findPolymorphicId<SceneFire>())
 {
-    lifeTime_ = 2.5f;
-    acceleration_ << 0.0f, 0.0f, 0.1f;
-    initialSpeedAverage_ = 0.15f;
-    initialSpeedVariation_ = 0.1f;
-    initialVelocityAngleRange_ = PI / 3.0f;
-    setParticleSize(0.15f);
     setTexture(":/SceneEffectsPlugin/texture/fire.png");
 }
 
 
 SceneFire::SceneFire(const SceneFire& org)
-    : SceneParticles(org)
+    : SceneParticles(org),
+      particleSystem_(org.particleSystem_)
 {
-    lifeTime_ = org.lifeTime_;
-    acceleration_ = org.acceleration_;
-    initialSpeedAverage_ = org.initialSpeedAverage_;
-    initialSpeedVariation_ = org.initialSpeedVariation_;
-    initialVelocityAngleRange_ = org.initialVelocityAngleRange_;
+
 }
 
 
 SgObject* SceneFire::clone(SgCloneMap& cloneMap) const
 {
     return new SceneFire(*this);
+}
+
+
+ParticleSystem* SceneFire::getParticleSystem()
+{
+    return &particleSystem_;
 }
 
 
@@ -84,23 +81,22 @@ bool FireProgram::initializeRendering(SceneParticles* particles)
     if(!ParticlesProgramBase::initializeRendering(particles)){
         return false;
     }
-    SceneFire* fire = static_cast<SceneFire*>(particles);
 
-    nParticles = 500;
+    auto& ps = static_cast<SceneFire*>(particles)->particleSystem();
 
     // Fill the first velocity buffer with random velocities
     Vector3f v;
     float speed, theta, phi;
-    vector<GLfloat> data(nParticles * 3);
-    for(GLuint i = 0; i < nParticles; ++i) {
-        theta = fire->initialVelocityAngleRange() * random();
+    vector<GLfloat> data(ps.numParticles() * 3);
+    for(GLuint i = 0; i < ps.numParticles(); ++i) {
+        theta = ps.emissionRange() * random();
         phi = 2.0 * PI * random();
 
         v.x() = sinf(theta) * cosf(phi);
         v.y() = sinf(theta) * sinf(phi);
         v.z() = cosf(theta);
 
-        speed = std::max(0.0f, fire->initialSpeedAverage() + fire->initialSpeedVariation() * random());
+        speed = std::max(0.0f, ps.initialSpeedAverage() + ps.initialSpeedVariation() * random());
         v = v.normalized() * speed;
 
         data[3*i]   = v.x();
@@ -112,10 +108,10 @@ bool FireProgram::initializeRendering(SceneParticles* particles)
     glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(GLfloat), &data.front(), GL_STATIC_DRAW);
     
     // Fill the offset time buffer
-    data.resize(nParticles);
-    float rate = fire->lifeTime() / nParticles;
+    data.resize(ps.numParticles());
+    float rate = ps.lifeTime() / ps.numParticles();
     float time = 0.0f;
-    for(GLuint i = 0; i < nParticles; ++i) {
+    for(GLuint i = 0; i < ps.numParticles(); ++i) {
         data[i] = time;
         time += rate;
     }
@@ -143,9 +139,11 @@ bool FireProgram::initializeRendering(SceneParticles* particles)
 
 void FireProgram::render(SceneFire* fire)
 {
-    setTime(fire->time());
-    glUniform1f(lifeTimeLocation, fire->lifeTime());
-    Vector3f accel = globalAttitude().transpose() * fire->acceleration();
+    auto& ps = fire->particleSystem();
+    
+    setTime(fire->time() + ps.offsetTime());
+    glUniform1f(lifeTimeLocation, ps.lifeTime());
+    Vector3f accel = globalAttitude().transpose() * ps.acceleration();
     glUniform3fv(accelLocation, 1, accel.data());
     GLint blendSrc, blendDst;
     glGetIntegerv(GL_BLEND_SRC_ALPHA, &blendSrc);
@@ -153,7 +151,7 @@ void FireProgram::render(SceneFire* fire)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE);
     
     glBindVertexArray(vertexArray);
-    glDrawArrays(GL_POINTS, 0, nParticles);
+    glDrawArrays(GL_POINTS, 0, ps.numParticles());
 
     glBlendFunc(blendSrc, blendDst);
 }

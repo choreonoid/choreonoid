@@ -63,11 +63,16 @@ SceneRainSnowBase::SceneRainSnowBase(const SceneRainSnowBase& org)
 }
 
 
+ParticleSystem* SceneRainSnowBase::getParticleSystem()
+{
+    return &particleSystem_;
+}
+
+
 SceneRain::SceneRain()
     : SceneRainSnowBase(findPolymorphicId<SceneRain>())
 {
     setVelocity(Vector3f(0.0f, 0.0f, -5.0f));
-    setParticleSize(0.02f);
     setTexture(":/SceneEffectsPlugin/texture/rain.png");
 }
 
@@ -89,7 +94,6 @@ SceneSnow::SceneSnow()
     : SceneRainSnowBase(findPolymorphicId<SceneSnow>())
 {
     setVelocity(Vector3f(0.0f, 0.0f, -0.3f));
-    setParticleSize(0.025f);
     setTexture(":/SceneEffectsPlugin/texture/snow.png");
 }
 
@@ -125,14 +129,14 @@ bool RainSnowProgram::initializeRendering(SceneParticles* particles)
         return false;
     }
 
-    numParticles = 8000;
-    SceneSnow* snow = static_cast<SceneSnow*>(particles);
+    auto rs = static_cast<SceneRainSnowBase*>(particles);
+    auto& ps = rs->particleSystem();
 
     // Initial position buffer
-    vector<GLfloat> data(numParticles * 3);
-    const float r = snow->radius();
+    vector<GLfloat> data(ps.numParticles() * 3);
+    const float r = rs->radius();
     const float r2 = r * 4;
-    for(GLuint i = 0; i < numParticles; ++i) {
+    for(GLuint i = 0; i < ps.numParticles(); ++i) {
         float x, y;
         while(true){
             x = 2.0 * r * random() - r;
@@ -143,18 +147,18 @@ bool RainSnowProgram::initializeRendering(SceneParticles* particles)
         }
         data[3*i]     = x;
         data[3*i + 1] = y;
-        data[3*i + 2] = snow->top();
+        data[3*i + 2] = rs->top();
     }
     glGenBuffers(1, &initPosBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, initPosBuffer);
     glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(float), &data.front(), GL_STATIC_DRAW);
 
     // Offset time buffer
-    data.resize(numParticles);
-    lifeTime = fabsf((snow->top() - snow->bottom()) / snow->velocity().z());
-    float rate = lifeTime / numParticles;
+    data.resize(ps.numParticles());
+    lifeTime = fabsf((rs->top() - rs->bottom()) / rs->velocity().z());
+    float rate = lifeTime / ps.numParticles();
     float time = 0.0f;
-    for(GLuint i = 0; i < numParticles; ++i) {
+    for(GLuint i = 0; i < ps.numParticles(); ++i) {
         data[i] = time;
         time += rate;
     }
@@ -183,11 +187,13 @@ bool RainSnowProgram::initializeRendering(SceneParticles* particles)
 
 void RainSnowProgram::render(SceneRainSnowBase* particles)
 {
-    setTime(particles->time());
+    auto& ps = particles->particleSystem();
+
+    setTime(particles->time() + ps.offsetTime());
 
     glUniform1f(lifeTimeLocation, lifeTime);
     glUniform3fv(velocityLocation, 1, particles->velocity().data());
 
     glBindVertexArray(vertexArray);
-    glDrawArrays(GL_POINTS, 0, numParticles);
+    glDrawArrays(GL_POINTS, 0, ps.numParticles());
 }
