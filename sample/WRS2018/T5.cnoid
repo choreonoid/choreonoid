@@ -136,6 +136,29 @@ items:
                 collisionDetection: true
                 selfCollisionDetection: false
                 isEditable: true
+        - 
+          id: 5
+          name: "Fire"
+          plugin: Body
+          class: BodyItem
+          data: 
+            modelFile: "T5-Fire.body"
+            currentBaseLink: "Base"
+            rootPosition: [ 14, -1, 0.2 ]
+            rootAttitude: [ 
+              1, 0, 0, 
+              0, 1, 0, 
+              0, 0, 1 ]
+            jointPositions: [  ]
+            initialRootPosition: [ 14, -1, 0.2 ]
+            initialRootAttitude: [ 
+              1, 0, 0, 
+              0, 1, 0, 
+              0, 0, 1 ]
+            zmp: [ 0, 0, 0 ]
+            collisionDetection: true
+            selfCollisionDetection: false
+            isEditable: false
 views: 
   - 
     id: 0
@@ -148,7 +171,7 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      checked: [ 3, 4, 6, 7 ]
+      checked: [ 3, 4, 5, 6, 7 ]
       expanded: [ 1, 6 ]
   - 
     id: 2
