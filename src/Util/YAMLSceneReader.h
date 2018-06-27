@@ -39,8 +39,13 @@ public:
     double toRadian(double angle) const {
         return isDegreeMode_ ? radian(angle) : angle;
     }
-    bool readAngle(Mapping& node, const char* key, double& angle);
-    bool readRotation(Mapping& node, Matrix3& out_R, bool doExtract);
+    float toRadian(float angle) const {
+        return isDegreeMode_ ? radian(angle) : angle;
+    }
+    bool readAngle(const Mapping& node, const char* key, double& angle) const;
+    bool readAngle(const Mapping& node, const char* key, float& angle) const;
+    bool readRotation(const Mapping& node, Matrix3& out_R) const;
+    bool extractRotation(Mapping& node, Matrix3& out_R) const;
     SgNode* readNode(Mapping& node);
     SgNode* readNode(Mapping& node, const std::string& type);
     SgNode* readNodeList(ValueNode& node);
@@ -62,7 +67,8 @@ private:
     YAMLSceneReaderImpl* impl;
     friend class YAMLSceneReaderImpl;
     bool isDegreeMode_;
-    AngleAxis readAngleAxis(const Listing& rotation);
+    bool readRotation(const ValueNode* value, Matrix3& out_R) const;
+    AngleAxis readAngleAxis(const Listing& rotation) const;
 };
 
 }

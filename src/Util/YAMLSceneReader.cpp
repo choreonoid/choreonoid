@@ -104,7 +104,9 @@ public:
     YAMLSceneReaderImpl(YAMLSceneReader* self);
     ~YAMLSceneReaderImpl();
 
-    bool readAngle(Mapping& node, const char* key, double& angle) { return self->readAngle(node, key, angle); }
+    bool readAngle(const Mapping& node, const char* key, double& angle) const{
+        return self->readAngle(node, key, angle);
+    }
 
     SgNode* readNode(Mapping& node);
     SgNode* readNode(Mapping& node, const string& type);
@@ -267,7 +269,7 @@ void YAMLSceneReader::setAngleUnit(AngleUnit unit)
 }
 
 
-bool YAMLSceneReader::readAngle(Mapping& node, const char* key, double& angle)
+bool YAMLSceneReader::readAngle(const Mapping& node, const char* key, double& angle) const
 {
     if(node.read(key, angle)){
         angle = toRadian(angle);
@@ -277,7 +279,17 @@ bool YAMLSceneReader::readAngle(Mapping& node, const char* key, double& angle)
 }
 
 
-AngleAxis YAMLSceneReader::readAngleAxis(const Listing& rotation)
+bool YAMLSceneReader::readAngle(const Mapping& node, const char* key, float& angle) const
+{
+    if(node.read(key, angle)){
+        angle = toRadian(angle);
+        return true;
+    }
+    return false;
+}
+
+
+AngleAxis YAMLSceneReader::readAngleAxis(const Listing& rotation) const
 {
     Vector4 r;
     cnoid::read(rotation, r);
@@ -290,15 +302,8 @@ AngleAxis YAMLSceneReader::readAngleAxis(const Listing& rotation)
     return AngleAxis(toRadian(r[3]), axis);
 }
 
-        
-bool YAMLSceneReader::readRotation(Mapping& node, Matrix3& out_R, bool doExtract)
+bool YAMLSceneReader::readRotation(const ValueNode* value, Matrix3& out_R) const
 {
-    ValueNodePtr value;
-    if(doExtract){
-        value = node.extract("rotation");
-    } else {
-        value = node.find("rotation");
-    }
     if(!value || !value->isValid()){
         return false;
     }
@@ -314,6 +319,19 @@ bool YAMLSceneReader::readRotation(Mapping& node, Matrix3& out_R, bool doExtract
         }
     }
     return true;
+}
+
+        
+bool YAMLSceneReader::readRotation(const Mapping& node, Matrix3& out_R) const
+{
+    return readRotation(node.find("rotation"), out_R);
+}
+
+
+bool YAMLSceneReader::extractRotation(Mapping& node, Matrix3& out_R) const
+{
+    ValueNodePtr value = node.extract("rotation");
+    return readRotation(value, out_R);
 }
 
 
@@ -446,7 +464,7 @@ SgNode* YAMLSceneReaderImpl::readTransform(Mapping& node)
         group = posTransform;
     }
     Matrix3 R;
-    if(self->readRotation(node, R, false)){
+    if(self->readRotation(node, R)){
         posTransform->setRotation(R);
         if(!group){
             group = posTransform;
@@ -480,7 +498,7 @@ SgNode* YAMLSceneReaderImpl::readTransform(Mapping& node)
 SgNode* YAMLSceneReaderImpl::readTransformParameters(Mapping& node, SgNode* scene)
 {
     Matrix3 R;
-    bool isRotated = self->readRotation(node, R, false);
+    bool isRotated = self->readRotation(node, R);
     Vector3 p;
     bool isTranslated = read(node, "translation", p);
     if(isRotated || isTranslated){
