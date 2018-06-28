@@ -97,46 +97,161 @@ items:
               data: 
                 modelFile: "${SHARE}/model/WRS2018/DebrisL.body"
                 currentBaseLink: "body"
-                rootPosition: [ 7.1036, 1.0038, 0.25 ]
+                rootPosition: [ 9.47075589, 0.513031463, 0.25608102 ]
                 rootAttitude: [ 
-                  0.260242958, -1.87024057e-09, -0.965543166, 
-                  -0.965543166, -4.1983732e-09, -0.26024296, 
-                  -1.87024057e-09, 1, -4.1983732e-09 ]
+                  0.583190384, 3.16285444e-17, 0.812335507, 
+                  0.812335507, -5.24312372e-17, -0.583190384, 
+                  2.41462927e-17, 1, -5.6270383e-17 ]
                 jointPositions: [  ]
-                initialRootPosition: [ 7.1036, 1.0038, 0.25 ]
+                initialRootPosition: [ 9.47075589, 0.513031463, 0.25608102 ]
                 initialRootAttitude: [ 
-                  0.260242947, -7.47815676e-09, -0.965543171, 
-                  -0.965543171, -1.47951513e-08, -0.260242952, 
-                  -7.47815676e-09, 1.00000001, -1.47951513e-08 ]
+                  0.583190384, 0, 0.812335507, 
+                  0.812335507, 1.11022302e-16, -0.583190384, 
+                  0, 1, 1.11022302e-16 ]
                 zmp: [ 0, 0, 0 ]
                 collisionDetection: true
                 selfCollisionDetection: false
                 isEditable: true
             - 
               id: 7
-              name: "Debris-S"
+              name: "Debris-L"
               plugin: Body
               class: BodyItem
               data: 
-                modelFile: "${SHARE}/model/WRS2018/DebrisS.body"
-                currentBaseLink: "BASE"
-                rootPosition: [ 5.6658, -1.6226, 0.02 ]
+                modelFile: "${SHARE}/model/WRS2018/DebrisL.body"
+                currentBaseLink: "body"
+                rootPosition: [ 7.01787004, 1.32187192, 0.250000001 ]
                 rootAttitude: [ 
-                  0.40469107, -0.914453464, 0, 
-                  0.914453464, 0.40469107, 0, 
-                  0, 0, 1 ]
+                  0.260242958, -1.87024057e-09, -0.965543166, 
+                  -0.965543166, -4.1983732e-09, -0.26024296, 
+                  -1.87024057e-09, 1, -4.1983732e-09 ]
                 jointPositions: [  ]
-                initialRootPosition: [ 5.6658, -1.6226, 0.02 ]
+                initialRootPosition: [ 7.01787004, 1.32187192, 0.250000001 ]
                 initialRootAttitude: [ 
-                  0.40469107, -0.914453464, 0, 
-                  0.914453464, 0.40469107, 0, 
-                  0, 0, 1 ]
+                  0.260242954, -3.98276667e-09, -0.965543168, 
+                  -0.965543168, -8.26061419e-09, -0.260242957, 
+                  -3.98276667e-09, 1, -8.26061419e-09 ]
                 zmp: [ 0, 0, 0 ]
                 collisionDetection: true
                 selfCollisionDetection: false
                 isEditable: true
             - 
               id: 8
+              name: "Debris-M"
+              plugin: Body
+              class: BodyItem
+              data: 
+                modelFile: "${SHARE}/model/WRS2018/DebrisM.body"
+                currentBaseLink: "BASE"
+                rootPosition: [ 7.94944003, -1.55280379, 0.177740919 ]
+                rootAttitude: [ 
+                  -0.993341324, -0.0468294995, -0.105261637, 
+                  0.04777417, -0.99883721, -0.00646969421, 
+                  -0.104836267, -0.0114554019, 0.994423517 ]
+                jointPositions: [  ]
+                initialRootPosition: [ 7.94944003, -1.55280379, 0.177740919 ]
+                initialRootAttitude: [ 
+                  -0.993341324, -0.0468294995, -0.105261637, 
+                  0.04777417, -0.99883721, -0.00646969421, 
+                  -0.104836267, -0.0114554019, 0.994423517 ]
+                zmp: [ 0, 0, 0 ]
+                collisionDetection: true
+                selfCollisionDetection: false
+                isEditable: true
+            - 
+              id: 9
+              name: "Debris-M"
+              plugin: Body
+              class: BodyItem
+              data: 
+                modelFile: "${SHARE}/model/WRS2018/DebrisM.body"
+                currentBaseLink: "BASE"
+                rootPosition: [ 6.73213403, 2.18335389, 0.503758563 ]
+                rootAttitude: [ 
+                  0.165945371, 0.934393322, -0.315232063, 
+                  -0.807295591, 0.312305183, 0.500738756, 
+                  0.566335557, 0.171390176, 0.806157209 ]
+                jointPositions: [  ]
+                initialRootPosition: [ 6.73213403, 2.18335389, 0.503758563 ]
+                initialRootAttitude: [ 
+                  0.165945371, 0.934393322, -0.315232063, 
+                  -0.807295591, 0.312305183, 0.500738756, 
+                  0.566335557, 0.171390176, 0.806157209 ]
+                zmp: [ 0, 0, 0 ]
+                collisionDetection: true
+                selfCollisionDetection: false
+                isEditable: true
+            - 
+              id: 10
+              name: "Debris-M"
+              plugin: Body
+              class: BodyItem
+              data: 
+                modelFile: "${SHARE}/model/WRS2018/DebrisM.body"
+                currentBaseLink: "BASE"
+                rootPosition: [ 8.57039268, -1.55567851, 0.0681 ]
+                rootAttitude: [ 
+                  0.383368851, 0.923595325, 0, 
+                  -0.923595325, 0.383368851, 0, 
+                  0, 0, 1 ]
+                jointPositions: [  ]
+                initialRootPosition: [ 8.57039268, -1.55567851, 0.0681 ]
+                initialRootAttitude: [ 
+                  0.383368851, 0.923595325, 0, 
+                  -0.923595325, 0.383368851, -0, 
+                  -0, 0, 1 ]
+                zmp: [ 0, 0, 0 ]
+                collisionDetection: true
+                selfCollisionDetection: false
+                isEditable: true
+            - 
+              id: 11
+              name: "Debris-M"
+              plugin: Body
+              class: BodyItem
+              data: 
+                modelFile: "${SHARE}/model/WRS2018/DebrisM.body"
+                currentBaseLink: "BASE"
+                rootPosition: [ 6.41167512, -2.45172578, 0.0681 ]
+                rootAttitude: [ 
+                  0.383368851, 0.923595325, 0, 
+                  -0.923595325, 0.383368851, 0, 
+                  0, 0, 1 ]
+                jointPositions: [  ]
+                initialRootPosition: [ 6.41167512, -2.45172578, 0.0681 ]
+                initialRootAttitude: [ 
+                  0.383368851, 0.923595325, 0, 
+                  -0.923595325, 0.383368851, -0, 
+                  -0, 0, 1 ]
+                zmp: [ 0, 0, 0 ]
+                collisionDetection: true
+                selfCollisionDetection: false
+                isEditable: true
+            - 
+              id: 12
+              name: "Debris-M"
+              plugin: Body
+              class: BodyItem
+              data: 
+                modelFile: "${SHARE}/model/WRS2018/DebrisM.body"
+                currentBaseLink: "BASE"
+                rootPosition: [ 7.23346951, -0.00938020074, 0.360080571 ]
+                rootAttitude: [ 
+                  -0.0557230537, -0.997704845, -0.0384705524, 
+                  0.920168027, -0.0363609894, -0.389831604, 
+                  0.387538053, -0.0571219798, 0.920082245 ]
+                jointPositions: [  ]
+                initialRootPosition: [ 7.23346951, -0.00938020074, 0.360080571 ]
+                initialRootAttitude: [ 
+                  -0.0557230537, -0.997704845, -0.0384705524, 
+                  0.920168027, -0.0363609894, -0.389831604, 
+                  0.387538053, -0.0571219798, 0.920082245 ]
+                zmp: [ 0, 0, 0 ]
+                collisionDetection: true
+                selfCollisionDetection: false
+                isEditable: true
+            - 
+              id: 13
               name: "Debris-S"
               plugin: Body
               class: BodyItem
@@ -159,24 +274,24 @@ items:
                 selfCollisionDetection: false
                 isEditable: true
             - 
-              id: 9
-              name: "Rod"
+              id: 14
+              name: "Debris-S"
               plugin: Body
               class: BodyItem
               data: 
-                modelFile: "${SHARE}/model/misc/rod.body"
-                currentBaseLink: "rod"
-                rootPosition: [ 8.5701, -1.5558, 0.0681 ]
+                modelFile: "${SHARE}/model/WRS2018/DebrisS.body"
+                currentBaseLink: "BASE"
+                rootPosition: [ 5.6658, -1.6226, 0.02 ]
                 rootAttitude: [ 
-                  0.383368851, 0.923595325, 0, 
-                  -0.923595325, 0.383368851, -0, 
-                  -0, 0, 1 ]
+                  0.40469107, -0.914453464, 0, 
+                  0.914453464, 0.40469107, 0, 
+                  0, 0, 1 ]
                 jointPositions: [  ]
-                initialRootPosition: [ 8.5701, -1.5558, 0.0681 ]
+                initialRootPosition: [ 5.6658, -1.6226, 0.02 ]
                 initialRootAttitude: [ 
-                  0.383368851, 0.923595325, 0, 
-                  -0.923595325, 0.383368851, -0, 
-                  -0, 0, 1 ]
+                  0.40469107, -0.914453464, 0, 
+                  0.914453464, 0.40469107, 0, 
+                  0, 0, 1 ]
                 zmp: [ 0, 0, 0 ]
                 collisionDetection: true
                 selfCollisionDetection: false
@@ -194,7 +309,7 @@ views:
     mounted: true
     state: 
       selected: [ 6 ]
-      checked: [ 3, 4, 6, 7, 8, 9 ]
+      checked: [ 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14 ]
       expanded: [ 1, 6, 7, 9 ]
   - 
     id: 2
@@ -253,7 +368,7 @@ views:
           orthoHeight: 5.73009
           near: 0.01
           far: 100
-      backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
+      backgroundColor: [ 0, 0, 0 ]
       gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
@@ -311,12 +426,12 @@ views:
           orthoHeight: 20
           near: 0.01
           far: 100
-      backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
+      backgroundColor: [ 0, 0, 0 ]
       gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       dedicatedItemTreeViewChecks: true
-      checked: [ 3, 4, 5, 6, 7, 8, 9 ]
+      checked: [ 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 ]
   - 
     id: 5
     plugin: Body
