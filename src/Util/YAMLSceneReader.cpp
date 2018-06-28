@@ -381,6 +381,10 @@ SgNode* YAMLSceneReaderImpl::readNode(Mapping& node, const string& type)
 {
     NodeFunctionMap::iterator q = nodeFunctionMap.find(type);
     if(q == nodeFunctionMap.end()){
+        if(node.get("isOptional", false)){
+            os() << format(_("Warning: the node type \"%1%\" is not defined. Reading this node has been skipped.")) % type << endl;
+            return nullptr;
+        }
         node.throwException(str(format(_("The node type \"%1%\" is not defined.")) % type));
     }
 
