@@ -90,7 +90,7 @@ MessageLogItemImpl::MessageLogItemImpl(MessageLogItem* self, const MessageLogIte
       fileMode(org.fileMode),
       skipEscapeSequence(org.skipEscapeSequence)
 {
-    filename = shareDirectory() + "/" + self->name() + ".log";
+    filename = self->name() + ".log";
 }
 
 
