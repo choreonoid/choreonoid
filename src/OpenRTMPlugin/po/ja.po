@@ -125,13 +125,21 @@ msgstr "実行コンテキスト"
 msgid "Periodic rate"
 msgstr "実行周波数"
 
-#: OpenRTMPlugin.cpp:131
+#: OpenRTMPlugin.cpp:129
 msgid "ChoreonoidExecutionContext has been registered."
 msgstr "ChoreonoidExecutionContextを登録しました。"
+
+#: OpenRTMPlugin.cpp:131
+msgid "Failed to register ChoreonoidExecutionContext."
+msgstr "ChoreonoidExecutionContextの登録に失敗しました。"
 
 #: OpenRTMPlugin.cpp:142
 msgid "ChoreonoidPeriodicExecutionContext has been registered."
 msgstr "ChoreonoidPeriodicExecutionContextを登録しました。"
+
+#: OpenRTMPlugin.cpp:14４
+msgid "Failed to register ChoreonoidPeriodicExecutionContext."
+msgstr "ChoreonoidPeriodicExecutionContextの登録に失敗しました。"
 
 #: OpenRTMPlugin.cpp:165
 msgid "Delete unmanaged RT components"
@@ -157,6 +165,10 @@ msgstr "RTコンポーネントのプロセス \"%1%\" を起動しました。"
 #: OpenRTMPlugin.cpp:246
 msgid "The unmanaged RT components have been deleted."
 msgstr "非管理下RTコンポーネントを削除しました。"
+
+#: OpenRTMPlugin.cpp:178
+msgid "Preferences"
+msgstr "設定画面"
 
 #: RTCItem.cpp:38
 msgid "RTCItem"
@@ -256,6 +268,34 @@ msgstr ""
 msgid "&Cancel"
 msgstr ""
 
+#: RTSDiagramView.cpp:1405
+msgid "VendorName:"
+msgstr "ベンダ名:"
+
+#: RTSDiagramView.cpp:1407
+msgid "Version:"
+msgstr "バージョン番号:"
+
+#: RTSDiagramView.cpp:1409
+msgid "Polling Cycle:"
+msgstr "ポーリング周期:"
+
+#: RTSDiagramView.cpp:1412
+msgid "Heartbeat Period:"
+msgstr "ハートビート周期:"
+
+#: RTSDiagramView.cpp:1418
+msgid "Log Output"
+msgstr "ログ出力"
+
+#: RTSDiagramView.cpp:1410
+msgid "Log Level:"
+msgstr "ログレベル:"
+
+#: RTSDiagramView.cpp:1443
+msgid "OpenRTM Preferences"
+msgstr "OpenRTM設定画面"
+
 #: RTSItem.cpp:377
 msgid "RTSystemItem"
 msgstr "RTシステムアイテム"
@@ -263,6 +303,26 @@ msgstr "RTシステムアイテム"
 #: RTSItem.cpp:700
 msgid "Auto Connection"
 msgstr "自動接続"
+
+#: RTSItem.cpp:803
+msgid "Vendor Name"
+msgstr "ベンダ名"
+
+#: RTSItem.cpp:805
+msgid "Profile Path"
+msgstr "プロファイル保存先"
+
+#: RTSItem.cpp:826
+msgid "Vendor is not set."
+msgstr "ベンダ名が設定されていません"
+
+#: RTSItem.cpp:830
+msgid "Version is not set."
+msgstr "バージョン番号が設定されていません"
+
+#: RTSItem.cpp:834
+msgid "RtsProfile file name is not set."
+msgstr "RtsProfileのファイル名が設定されていません"
 
 #: RTSNameServerView.cpp:80
 msgid "RTC List"
@@ -545,4 +605,69 @@ msgstr "本シミュレーションではOpenHRPクロックジェネレータ�
 #: deprecated/VirtualRobotRTC.cpp:324
 msgid "detected RTC: %1%  Port connection: %2% <--> %3%"
 msgstr "RTCを検出： %1%　ポート接続：　%2% <--> %3%"
+
+#: RTSConfigurationView.cpp:149
+msgid "Apply"
+msgstr "適用"
+
+#: RTSConfigurationView.cpp:150
+msgid "Cancel"
+msgstr "キャンセル"
+
+#: RTSConfigurationView.cpp:472
+msgid "Configuration"
+msgstr "RTCコンフィギュレーション"
+
+#: RTSConfigurationView.cpp:93
+msgid "Detail"
+msgstr "詳細表示"
+
+#: RTSConfigurationView.cpp:94
+msgid "Copy"
+msgstr "複製"
+
+#: RTSConfigurationView.cpp:95
+msgid "Add"
+msgstr "追加"
+
+#: RTSConfigurationView.cpp:96
+msgid "Delete"
+msgstr "削除"
+
+#: RTSNameServiceView.cpp:99
+msgid "Show IOR"
+msgstr "IOR 表示"
+
+#: RTSNameServiceView.cpp:121
+msgid "Delete from View"
+msgstr "ビューから削除"
+
+#: RTSNameServiceView.cpp:106
+msgid "Delete from Name Service"
+msgstr "ネームサービスから削除"
+
+#: RTSNameServiceView.cpp:147
+msgid "Confirm"
+msgstr "確認"
+
+#: RTSNameServiceView.cpp:147
+msgid "Are you sure you want to delete?"
+msgstr "本当に削除しても良いですか？"
+
+#: RTSNameServiceView.cpp:129
+msgid "Add Context"
+msgstr "コンテキストを追加"
+
+#: RTSNameServiceView.cpp:131
+msgid "Add Object"
+msgstr "オブジェクトを追加"
+
+#: RTSNameServiceView.cpp:637
+msgid "Failed to add context."
+msgstr "コンテキストの追加に失敗しました"
+
+#: RTSNameServiceView.cpp:653
+msgid "Failed to add object."
+msgstr "オブジェクトの追加に失敗しました"
+
 

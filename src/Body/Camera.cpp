@@ -18,6 +18,7 @@ Camera::Camera()
 {
     on_ = true;
     imageType_ = COLOR_IMAGE;
+    lensType_ = NORMAL_LENS;
     isImageStateClonable_ = false;
     resolutionX_ = 640;
     resolutionY_ = 480;
@@ -51,6 +52,7 @@ void Camera::copyCameraStateFrom(const Camera& other)
     on_ = other.on_;
     isImageStateClonable_ = other.isImageStateClonable_;
     imageType_ = other.imageType_;
+    lensType_ = other.lensType_;
     resolutionX_ = other.resolutionX_;
     resolutionY_ = other.resolutionY_;
     fieldOfView_ = other.fieldOfView_;

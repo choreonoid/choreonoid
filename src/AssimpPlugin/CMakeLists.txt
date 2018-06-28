@@ -37,22 +37,16 @@ if(NOT ASSIMP_FOUND )
     set(ASSIMP_LIBRARY_DIRS ${ASSIMP_DIR}/lib)
 endif()
 
-set(target CnoidAssimpPlugin)
-
 include_directories(${ASSIMP_INCLUDE_DIRS})
 link_directories(${ASSIMP_LIBRARY_DIRS})
 
-set(sources
-  AssimpPlugin.cpp
-  AssimpSceneLoader.cpp
-)
+add_cnoid_library(CnoidAssimpSceneLoader SHARED AssimpSceneLoader.cpp)
+target_link_libraries(CnoidAssimpSceneLoader CnoidUtil ${ASSIMP_LIBRARIES})
+apply_common_setting_for_library(CnoidAssimpSceneLoader)
 
-set(headers )
-
-make_gettext_mofiles(${target} mofiles) 
-add_cnoid_plugin(${target} SHARED ${sources} ${headers} ${mofiles})
-target_link_libraries(${target} CnoidBase ${ASSIMP_LIBRARIES})
-apply_common_setting_for_plugin(${target} "${headers}")
+add_cnoid_plugin(CnoidAssimpPlugin SHARED AssimpPlugin)
+target_link_libraries(CnoidAssimpPlugin CnoidBase CnoidAssimpSceneLoader)
+apply_common_setting_for_plugin(CnoidAssimpPlugin)
 
 if(MSVC)
   if(INSTALL_RUNTIME_DEPENDENCIES)

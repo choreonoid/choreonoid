@@ -673,68 +673,97 @@ if(ENABLE_CORBA)
     message(FATAL_ERROR "CORBA-related modules require the omniORB library but the library is not found.")
   endif()
 
-  function(idl_compile_cpp out_cpp_files out_header_files subdir)
-  
+  function(idl_compile_cpp)
+
+    set(options LOCAL)
+    cmake_parse_arguments(args LOCAL "" "" ${ARGN})
+    list(GET args_UNPARSED_ARGUMENTS 0 out_cpp_files)
+    list(GET args_UNPARSED_ARGUMENTS 1 out_header_files)
+    list(GET args_UNPARSED_ARGUMENTS 2 subdir)
+    set(idl_names ${args_UNPARSED_ARGUMENTS})
+    list(REMOVE_AT idl_names 0 1 2)
+
     set(corba_src_dir ${CMAKE_CURRENT_SOURCE_DIR}/${subdir})
     set(corba_dir ${PROJECT_SOURCE_DIR}/include/cnoid/${subdir})
-
-    set(idl_names ${ARGV})
-    list(REMOVE_AT idl_names 0 1 2)
-    
     set(idl_flags -C ${corba_src_dir} -bcxx -Wbh=.hh -Wbs=Sk.cpp -Wba -Wbd=DynSk.cpp -Wbkeep_inc_path -I${PROJECT_SOURCE_DIR}/include)
-
     foreach(idl_include_dir ${IDL_INCLUDE_DIRS})
       set(idl_flags ${idl_flags} -I${idl_include_dir})
     endforeach()
-    
-    # copy idl files to the system include directory
-    file(MAKE_DIRECTORY ${corba_dir})
-    foreach(idl_name ${idl_names})
-      set(idl_file ${corba_src_dir}/${idl_name}.idl)
-      if(UNIX)
-	add_custom_command(
-	  OUTPUT ${corba_dir}/${idl_name}.idl
-	  COMMAND cp ${idl_file} ${corba_dir}
-	  DEPENDS ${idl_file}
-	  COMMENT "Copying ${idl_name}.idl to ${corba_dir}"
-	  )
-      elseif(MSVC)
-	file(TO_NATIVE_PATH ${corba_src_dir}/${idl_name}.idl src)
-	file(TO_NATIVE_PATH ${corba_dir} dest)
-	add_custom_command(
-	  OUTPUT ${corba_dir}/${idl_name}.idl
-	  COMMAND copy ${src} ${dest}
-	  DEPENDS ${idl_file}
-	  COMMENT "Copying ${idl_name}.idl to ${corba_dir}")
-      endif()
-      set(idl_files ${idl_files} ${corba_dir}/${idl_name}.idl)
-      set(idl_cpp_files ${idl_cpp_files} ${subdir}/${idl_name}Sk.cpp ${subdir}/${idl_name}DynSk.cpp)
-      set(idl_h_files ${idl_h_files} ${PROJECT_SOURCE_DIR}/include/cnoid/${subdir}/${idl_name}.hh)
-    endforeach()
 
-    # idl compile
-    foreach(idl_name ${idl_names})
-      if(UNIX)
-	add_custom_command(
-	  OUTPUT ${corba_src_dir}/${idl_name}.hh ${corba_dir}/${idl_name}.hh ${corba_src_dir}/${idl_name}DynSk.cpp ${corba_src_dir}/${idl_name}Sk.cpp
-	  COMMAND omniidl ${idl_flags} ${corba_dir}/${idl_name}.idl
-	  COMMAND cp ${corba_src_dir}/${idl_name}.hh ${corba_dir}
-	  DEPENDS ${idl_files}
-	  COMMENT "Generating the C++ stubs and skeletons of ${idl_name}.idl"
-	  )
-      elseif(MSVC)
-	file(TO_NATIVE_PATH ${corba_src_dir}/${idl_name}.hh src)
-	file(TO_NATIVE_PATH ${corba_dir} dest)
-	add_custom_command(
-	  OUTPUT ${corba_src_dir}/${idl_name}.hh ${corba_dir}/${idl_name}.hh ${corba_src_dir}/${idl_name}Sk.cpp ${corba_src_dir}/${idl_name}DynSk.cpp
-	  COMMAND for %%A in \("${OMNIORB_DIR}/bin/x86_win32"\) do %%~sA\\omniidl ${idl_flags} ${corba_dir}/${idl_name}.idl
-	  COMMAND copy ${src} ${dest}
-	  DEPENDS ${idl_files}
-	  COMMENT "Generating the C++ stubs and skeletons of ${idl_name}.idl"
-	  )
-      endif()
-    endforeach()
-    
+    if(args_LOCAL)
+      unset(idl_files)
+      foreach(idl_name ${idl_names})
+	set(idl_files ${idl_files} ${corba_src_dir}/${idl_name}.idl)
+	set(idl_cpp_files ${idl_cpp_files} ${subdir}/${idl_name}Sk.cpp ${subdir}/${idl_name}DynSk.cpp)
+	set(idl_h_files ${idl_h_files} ${subdir}/${idl_name}.hh)
+      endforeach()
+      foreach(idl_name ${idl_names})
+	if(UNIX)
+	  add_custom_command(
+	    OUTPUT ${corba_src_dir}/${idl_name}.hh ${corba_src_dir}/${idl_name}DynSk.cpp ${corba_src_dir}/${idl_name}Sk.cpp
+	    COMMAND omniidl ${idl_flags} ${corba_src_dir}/${idl_name}.idl
+	    DEPENDS ${idl_files}
+	    COMMENT "Generating the C++ stubs and skeletons of ${idl_name}.idl"
+	    )
+	elseif(MSVC)
+	  file(TO_NATIVE_PATH ${corba_src_dir}/${idl_name}.hh src)
+	  add_custom_command(
+	    OUTPUT ${corba_src_dir}/${idl_name}.hh ${corba_src_dir}/${idl_name}Sk.cpp ${corba_src_dir}/${idl_name}DynSk.cpp
+	    COMMAND for %%A in \("${OMNIORB_DIR}/bin/x86_win32"\) do %%~sA\\omniidl ${idl_flags} ${corba_src_dir}/${idl_name}.idl
+	    DEPENDS ${idl_files}
+	    COMMENT "Generating the C++ stubs and skeletons of ${idl_name}.idl"
+	    )
+	endif()
+      endforeach()
+    else() # Make public
+      # copy idl files to the system include directory
+      file(MAKE_DIRECTORY ${corba_dir})
+      foreach(idl_name ${idl_names})
+	set(idl_file ${corba_src_dir}/${idl_name}.idl)
+	if(UNIX)
+	  add_custom_command(
+	    OUTPUT ${corba_dir}/${idl_name}.idl
+	    COMMAND cp ${idl_file} ${corba_dir}
+	    DEPENDS ${idl_file}
+	    COMMENT "Copying ${idl_name}.idl to ${corba_dir}"
+	    )
+	elseif(MSVC)
+	  file(TO_NATIVE_PATH ${corba_src_dir}/${idl_name}.idl src)
+	  file(TO_NATIVE_PATH ${corba_dir} dest)
+	  add_custom_command(
+	    OUTPUT ${corba_dir}/${idl_name}.idl
+	    COMMAND copy ${src} ${dest}
+	    DEPENDS ${idl_file}
+	    COMMENT "Copying ${idl_name}.idl to ${corba_dir}")
+	endif()
+	set(idl_files ${idl_files} ${corba_dir}/${idl_name}.idl)
+	set(idl_cpp_files ${idl_cpp_files} ${subdir}/${idl_name}Sk.cpp ${subdir}/${idl_name}DynSk.cpp)
+	set(idl_h_files ${idl_h_files} ${PROJECT_SOURCE_DIR}/include/cnoid/${subdir}/${idl_name}.hh)
+      endforeach()
+      # idl compile
+      foreach(idl_name ${idl_names})
+	if(UNIX)
+	  add_custom_command(
+	    OUTPUT ${corba_src_dir}/${idl_name}.hh ${corba_dir}/${idl_name}.hh ${corba_src_dir}/${idl_name}DynSk.cpp ${corba_src_dir}/${idl_name}Sk.cpp
+            COMMAND omniidl ${idl_flags} ${corba_dir}/${idl_name}.idl
+            COMMAND cp ${corba_src_dir}/${idl_name}.hh ${corba_dir}
+            DEPENDS ${idl_files}
+            COMMENT "Generating the C++ stubs and skeletons of ${idl_name}.idl"
+            )
+	elseif(MSVC)
+	  file(TO_NATIVE_PATH ${corba_src_dir}/${idl_name}.hh src)
+	  file(TO_NATIVE_PATH ${corba_dir} dest)
+	  add_custom_command(
+            OUTPUT ${corba_src_dir}/${idl_name}.hh ${corba_dir}/${idl_name}.hh ${corba_src_dir}/${idl_name}Sk.cpp ${corba_src_dir}/${idl_name}DynSk.cpp
+            COMMAND for %%A in \("${OMNIORB_DIR}/bin/x86_win32"\) do %%~sA\\omniidl ${idl_flags} ${corba_dir}/${idl_name}.idl
+            COMMAND copy ${src} ${dest}
+            DEPENDS ${idl_files}
+            COMMENT "Generating the C++ stubs and skeletons of ${idl_name}.idl"
+            )
+	endif()
+      endforeach()
+    endif()
+
     set(${out_cpp_files} ${idl_cpp_files} PARENT_SCOPE)
     set(${out_header_files} ${idl_h_files} PARENT_SCOPE)
 
@@ -1284,6 +1313,10 @@ else()
   include_directories(${PROJECT_SOURCE_DIR}/thirdparty/yaml-0.1.7/include)
 endif()
 
+# pugixml
+add_subdirectory(thirdparty/pugixml-1.9)
+include_directories(${PROJECT_SOURCE_DIR}/thirdparty/pugixml-1.9/src)
+
 if(UNIX)
   # png
   find_package(PNG REQUIRED)
@@ -1324,8 +1357,6 @@ if(ENABLE_EXT)
     endforeach()
   endif()
 endif()
-
-
 
 configure_file(Doxyfile.in ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile @ONLY)
 

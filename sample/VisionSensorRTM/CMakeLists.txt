@@ -30,11 +30,7 @@ if(MSVC)
 add_definitions(-D__WIN32__ -D__x86__ -D__NT__ -D__OSVERSION__=4 -D_CRT_SECURE_NO_DEPRECATE -D_WIN32_WINNT=0x0500 -DRTC_CORBA_CXXMAPPING11)
 endif()
 
-if(MSVC)
-  target_link_libraries(${target} CnoidBodyPlugin CnoidCorbaPlugin ${OPENRTM_LIBRARIES} optimized CnoidOpenRTMPlugin debug  CnoidOpenRTMd)
-else()
-  target_link_libraries(${target} CnoidBodyPlugin CnoidCorbaPlugin ${OPENRTM_LIBRARIES} CnoidOpenRTMPlugin)
-endif()
+target_link_libraries(${target} CnoidBodyPlugin CnoidCorbaPlugin CnoidOpenRTMPlugin)
 apply_common_setting_for_plugin(${target})
 
 configure_file(OpenRTM-TankJoystickVisionSensors.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)

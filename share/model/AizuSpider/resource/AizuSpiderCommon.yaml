@@ -31,6 +31,7 @@ LRF_UTM-30LX: &LRF_UTM-30LX
   maxDistance: 30
   elements:
     RigidBody:
+      translation: [ 0, 0, 0.03 ]
       centerOfMass: [ 0, 0.05544, 0.09464 ]
       mass: 5.29071
       inertia: [
@@ -190,7 +191,7 @@ CHASSIS: &CHASSIS
         <<: *LRF_UTM-30LX
         name: LRF
         id: 0
-        translation: [ 0.20415, 0, 0.19750 ]
+        translation: [ 0.23415, 0, 0.19750 ]
         rotation: [ [ 0, 0, 1, -90 ], [ 1, 0, 0, 90 ] ]
       - # B0010_3101<1>
         <<: *CAMERA_MCM-4350FISH

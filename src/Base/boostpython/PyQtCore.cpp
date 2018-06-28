@@ -56,7 +56,9 @@ BOOST_PYTHON_MODULE(QtCore)
         .def("isWidgetType", &QObject::isWidgetType)
         .def("killTimer", &QObject::killTimer)
         .def("objectName", &QObject::objectName)
+        .def("getObjectName", &QObject::objectName)
         .def("parent", &QObject::parent, return_value_policy<reference_existing_object>())
+        .def("getParent", &QObject::parent, return_value_policy<reference_existing_object>())
         .def("setObjectName", &QObject::setObjectName)
         .def("setParent", &QObject::setParent)
         .def("deleteLater", &QObject::deleteLater)
@@ -73,6 +75,7 @@ BOOST_PYTHON_MODULE(QtCore)
 
     class_<QTimer, QTimer*, boost::noncopyable>("QTimer")
         .def("interval", &QTimer::interval)
+        .def("getInterval", &QTimer::interval)
         .def("isActive", &QTimer::isActive)
         .def("isSingleShot", &QTimer::isSingleShot)
         .def("setInterval", (void (QTimer::*)(int)) &QTimer::setInterval)
@@ -88,4 +91,3 @@ BOOST_PYTHON_MODULE(QtCore)
 #endif
         .staticmethod("singleShot");
 }
-

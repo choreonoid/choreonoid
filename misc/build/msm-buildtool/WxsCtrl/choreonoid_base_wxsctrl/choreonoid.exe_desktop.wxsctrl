@@ -1,0 +1,6 @@
+<Shortcut Id="choreonoid.exe_desktop" Directory="DesktopFolder"
+      Name="Choreonoid" Show="normal"
+      WorkingDirectory="%Directory.Id%"
+      Icon="choreonoid.ico" IconIndex="0" >
+  <Icon Id="choreonoid2.ico" SourceFile="Bitmaps\choreonoid.ico"/>
+</Shortcut>

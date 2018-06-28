@@ -356,12 +356,16 @@ public:
         return 0.0;
     }
 
-    bool readAngle(Mapping& node, const char* key, double& angle){
+    bool readAngle(const Mapping& node, const char* key, double& angle) const {
         return sceneReader.readAngle(node, key, angle);
     }
 
-    bool readRotation(Mapping& node, Matrix3& out_R, bool doExtract){
-        return sceneReader.readRotation(node, out_R, doExtract);
+    bool readRotation(const Mapping& node, Matrix3& out_R) const {
+        return sceneReader.readRotation(node, out_R);
+    }
+    
+    bool extractRotation(Mapping& node, Matrix3& out_R) const {
+        return sceneReader.extractRotation(node, out_R);
     }
 };
 
@@ -552,6 +556,18 @@ void YAMLBodyLoaderImpl::updateCustomNodeFunctions()
 }
 
 
+YAMLSceneReader& YAMLBodyLoader::sceneReader()
+{
+    return impl->sceneReader;
+}
+
+
+const YAMLSceneReader& YAMLBodyLoader::sceneReader() const
+{
+    return impl->sceneReader;
+}
+
+
 bool YAMLBodyLoader::isDegreeMode() const
 {
     return impl->isDegreeMode();
@@ -564,15 +580,15 @@ double YAMLBodyLoader::toRadian(double angle) const
 }
 
 
-bool YAMLBodyLoader::readAngle(Mapping& node, const char* key, double& angle)
+bool YAMLBodyLoader::readAngle(const Mapping& node, const char* key, double& angle) const
 {
     return impl->readAngle(node, key, angle);
 }
 
 
-bool YAMLBodyLoader::readRotation(Mapping& node, Matrix3& out_R)
+bool YAMLBodyLoader::readRotation(const Mapping& node, Matrix3& out_R) const
 {
-    return impl->readRotation(node, out_R, false);
+    return impl->readRotation(node, out_R);
 }
 
 
@@ -921,7 +937,7 @@ LinkPtr YAMLBodyLoaderImpl::readLinkContents(Mapping* node)
         link->setOffsetTranslation(v);
     }
     Matrix3 R;
-    if(readRotation(*node, R, true)){
+    if(extractRotation(*node, R)){
         link->setOffsetRotation(R);
     }
 
@@ -1370,7 +1386,7 @@ bool YAMLBodyLoaderImpl::readTransformContents(Mapping& node, NodeFunction nodeF
         T.translation() = v;
         hasPosTransform = true;
     }
-    if(readRotation(node, M, false)){
+    if(readRotation(node, M)){
         T.linear() = M;
         hasPosTransform = true;
     }
@@ -1636,7 +1652,19 @@ bool YAMLBodyLoaderImpl::readCamera(Mapping& node)
             camera = new Camera;
         }
     }
-        
+
+    if(node.read("lensType", symbol)){
+        if(symbol == "NORMAL"){
+            camera->setLensType(Camera::NORMAL_LENS);
+        } else if(symbol == "FISHEYE"){
+            camera->setLensType(Camera::FISHEYE_LENS);
+            //  throwException    ImageType must be COLOR
+        } else if(symbol == "DUAL_FISHEYE"){
+            camera->setLensType(Camera::DUAL_FISHEYE_LENS);
+            //  throwException    ImageType must be COLOR
+        }
+    }
+
     if(node.read("on", on)) camera->on(on);
     if(node.read("width", value)) camera->setResolutionX(value);
     if(node.read("height", value)) camera->setResolutionY(value);
@@ -1846,7 +1874,7 @@ void YAMLBodyLoaderImpl::addSubBodyLinks(BodyPtr subBody, Mapping* node)
         rootLink->setOffsetTranslation(v);
     }
     Matrix3 R;
-    if(readRotation(*node, R, true)){
+    if(extractRotation(*node, R)){
         rootLink->setOffsetRotation(R);
     }
 

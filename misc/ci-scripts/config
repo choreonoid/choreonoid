@@ -1,0 +1,65 @@
+## configuration of Launchpad deployment
+
+## PACKAGE_NAME: Package name prefix
+##
+## If target is release version branch, the version name is appended
+## after the PACKAGE_NAME.  Assuming the branch name is
+## release-VERSION_NUM, get the version number.  Default value is None,
+## so you need to set it.
+##
+PACKAGE_NAME="choreonoid"
+
+## VERSION_NAME: Package name suffix
+##
+## If VERSION_NAME is set, package name will be PACKAGENAME-VERSION_NAME.
+## Default value is the character string following "release-" of the
+## branch name.  If the branch name does not start with "release-", use
+## the name as it is.
+##
+#VERSION_NAME="1.6"
+
+## PPA: Destination PPA to upload source packages with dput
+##
+## Default value is None, so you need to set it.
+##
+PPA="ppa:choreonoid.org/choreonoid"
+
+## TARGET_DISTROS: Distro names of target Ubuntu version
+##
+## Default value is "xenial and trusty".
+##
+#TARGET_DISTROS="\
+#	xenial \
+#	trusty \
+#"
+
+## URGENCY: Urgency of debian package
+##
+## Default value is medium.
+##
+#URGENCY="medium"
+
+## TRAVIS_ENCRYPT_HASH: Hash part of environment variable name indicating
+##                      encryption keys in Travis CI
+##
+## Specify the hash part of the name of environment variables storing
+## secret keys when encrypting files with "travis encrypt-file" command.
+## If the decryption command instructed when executing the command is as
+## follow, specify "0a6446eb3ae3".
+##
+##	openssl aes-256-cbc -K $encrypted_0a6446eb3ae3_key
+##	-iv $encrypted_0a6446eb3ae3_iv -in secret.tar.enc -out secret.tar -d
+##
+## TRAVIS_ENCRYPT_HASH is used when decrypting files encrypted with travis
+## CLI.  Default value is None.
+##
+## Note:
+## The file encrypted (and will be decrypted using TRAVIS_ENCRYPT_HASH
+## variable) in this method can only be used in Travis CI.
+## It is simpler to use the file encrypted using openssl command manually.
+## To use files encrypted with openssl, set the passphrase to the
+## environment variable ENCRYPT_KEY in Travis CI / Circle CI Web interface.
+## In that case, DO NOT set ENCRYPT_KEY in here, and DO NOT set
+## TRAVIS_ENCRYPT_HASH.
+##
+#TRAVIS_ENCRYPT_HASH="d48b4d03c2cb"

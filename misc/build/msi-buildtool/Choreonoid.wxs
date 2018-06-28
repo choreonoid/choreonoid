@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Product Id="$(env.GUID)" Name="$(env.CNOID_MSI_VER)" 
+           Language="1041" Codepage="932" Version="$(env.CHOREONOID_VERSION)" 
+           Manufacturer="AIST" UpgradeCode="$(env.UPGRADE_GUID)">
+    <Package Id="*" Keywords="Installer" Description="Choreonoid Installer"
+             InstallerVersion="405" Languages="1041" Compressed="yes"
+             SummaryCodepage="932" />
+    <Media Id="1" Cabinet="Choreonoid.cab" EmbedCab="yes"/>
+
+    <!-- Check for Python 2.7 being installed -->
+    <Property Id="PYTHON27DIR">
+      <RegistrySearch Id="Python27DirKey"
+        Root="HKLM"
+        Key="SOFTWARE\Python\PythonCore\2.7\InstallPath"
+        Type="raw"
+        Win64="$(env.REGISTRY_WIN64)"
+        />
+    </Property>
+    <SetProperty Id="PYTHON27DIRKEY" After="AppSearch" Value="[PYTHON27DIR]" />
+
+    <InstallUISequence>
+      <Show Dialog="PY27WarningDlg" After="AppSearch">
+        NOT Installed AND NOT PYTHON27DIR
+      </Show>
+    </InstallUISequence>
+
+    <!-- Check for OpenRTM-aist being installed -->
+    <Property Id="OPENRTMDIR">
+      <RegistrySearch Id="OpenRTMDirKey"
+        Root="HKLM"
+        Key="SYSTEM\CurrentControlSet\Control\Session Manager\Environment"
+        Name="RTM_ROOT"
+        Type="raw"
+        Win64="$(env.REGISTRY_WIN64)"
+        />
+    </Property>
+    <SetProperty Id="OPENRTMDIRKEY" After="AppSearch" Value="[OPENRTMDIR]" /> 
+
+    <InstallUISequence>
+      <Show Dialog="RTMWarningDlg" After="AppSearch">
+        NOT Installed AND NOT OPENRTMDIR
+      </Show>
+    </InstallUISequence>
+
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="$(env.PROGRAM_FOLDER)">
+        <Directory Id="INSTALLLOCATION" Name="Choreonoid">
+          <?include Directory_choreonoid_inc.wxs ?>
+        </Directory>
+      </Directory>
+    </Directory>
+
+    <!-- Tree view for mentenance -->
+    <Feature Id="CNOID_BASE" Level="1"  Display="hidden">
+      <MergeRef Id="Msi_CNOID_base_$(env.ARCH)_vc14"/>
+    </Feature>
+
+    <Feature Id="OPENRTM" Level="1" Title="OpenRTM Plugin" ConfigurableDirectory="INSTALLLOCATION">
+      <MergeRef Id="Msi_CNOID_rtm_$(env.ARCH)_vc14"/>
+    </Feature>
+    <Feature Id="PYTHON_2" Level="1" Title="Python2 Plugin" ConfigurableDirectory="INSTALLLOCATION">
+      <MergeRef Id="Msi_CNOID_py2_$(env.ARCH)_vc14"/>
+    </Feature>
+
+    <CustomActionRef Id="WixBroadcastSettingChange" />
+    <CustomActionRef Id="WixBroadcastEnvironmentChange" />
+
+    <WixVariable Id="WixUIBannerBmp" Value="Bitmaps/bannrbmp.bmp" />
+    <WixVariable Id="WixUIDialogBmp" Value="Bitmaps/dlgbmp.bmp" />
+    <WixVariable Id="WixUICostingPopupOptOut" Value="1" Overridable="no" />
+
+    <Binary Id="bannerbmp" SourceFile="!(wix.WixUIBannerBmp)" />
+    <Property Id="BannerBitmap">bannerbmp</Property>
+
+    <WixVariable Id="ExtDescription" Value="
+      Choreonoid is software released under MIT license.
+      " />
+    <WixVariable Id="LicenseRtf" Value="LICENSE.rtf" />
+
+    <UIRef Id="WixUI_Mondo_CNOID" />
+    <MajorUpgrade AllowDowngrades="yes" Schedule="afterInstallValidate" />
+    <Property Id="SELFFOUND" Secure="yes" />
+    <Property Id="WIXUI_INSTALLDIR" Value="INSTALLLOCATION" />
+    <Upgrade Id="$(env.UPGRADE_GUID)">
+      <UpgradeVersion Minimum="$(env.CHOREONOID_VERSION)" Property="SELFFOUND" OnlyDetect="yes" IncludeMinimum="yes" />
+    </Upgrade>
+  </Product>
+</Wix>

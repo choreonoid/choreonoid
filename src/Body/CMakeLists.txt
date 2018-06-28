@@ -56,7 +56,6 @@ set(sources
   BodyLoader.cpp
   YAMLBodyLoader.cpp
   VRMLBodyLoader.cpp
-  VRMLBodyWriter.cpp
   PoseProviderToBodyMotionConverter.cpp
   BodyMotionUtil.cpp
   ControllerIO.cpp
@@ -71,7 +70,6 @@ set(headers
   AbstractBodyLoader.h
   VRMLBodyLoader.h
   BodyLoader.h
-  VRMLBodyWriter.h
   ZMPSeq.h
   Link.h
   LinkTraverse.h

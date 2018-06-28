@@ -8,7 +8,7 @@
 #include <cnoid/SceneLights>
 #include <cnoid/MeshGenerator>
 #include <cnoid/PolygonMeshTriangulator>
-#include <cnoid/MeshNormalGenerator>
+#include <cnoid/MeshFilter>
 #include <cnoid/SceneLoader>
 #include <cnoid/EigenArchive>
 #include <cnoid/YAMLReader>
@@ -88,7 +88,7 @@ public:
     
     MeshGenerator meshGenerator;
     PolygonMeshTriangulator polygonMeshTriangulator;
-    MeshNormalGenerator normalGenerator;
+    MeshFilter meshFilter;
     SgMaterialPtr defaultMaterial;
     ImageIO imageIO;
 
@@ -104,7 +104,9 @@ public:
     YAMLSceneReaderImpl(YAMLSceneReader* self);
     ~YAMLSceneReaderImpl();
 
-    bool readAngle(Mapping& node, const char* key, double& angle) { return self->readAngle(node, key, angle); }
+    bool readAngle(const Mapping& node, const char* key, double& angle) const{
+        return self->readAngle(node, key, angle);
+    }
 
     SgNode* readNode(Mapping& node);
     SgNode* readNode(Mapping& node, const string& type);
@@ -267,7 +269,7 @@ void YAMLSceneReader::setAngleUnit(AngleUnit unit)
 }
 
 
-bool YAMLSceneReader::readAngle(Mapping& node, const char* key, double& angle)
+bool YAMLSceneReader::readAngle(const Mapping& node, const char* key, double& angle) const
 {
     if(node.read(key, angle)){
         angle = toRadian(angle);
@@ -277,7 +279,17 @@ bool YAMLSceneReader::readAngle(Mapping& node, const char* key, double& angle)
 }
 
 
-AngleAxis YAMLSceneReader::readAngleAxis(const Listing& rotation)
+bool YAMLSceneReader::readAngle(const Mapping& node, const char* key, float& angle) const
+{
+    if(node.read(key, angle)){
+        angle = toRadian(angle);
+        return true;
+    }
+    return false;
+}
+
+
+AngleAxis YAMLSceneReader::readAngleAxis(const Listing& rotation) const
 {
     Vector4 r;
     cnoid::read(rotation, r);
@@ -290,15 +302,8 @@ AngleAxis YAMLSceneReader::readAngleAxis(const Listing& rotation)
     return AngleAxis(toRadian(r[3]), axis);
 }
 
-        
-bool YAMLSceneReader::readRotation(Mapping& node, Matrix3& out_R, bool doExtract)
+bool YAMLSceneReader::readRotation(const ValueNode* value, Matrix3& out_R) const
 {
-    ValueNodePtr value;
-    if(doExtract){
-        value = node.extract("rotation");
-    } else {
-        value = node.find("rotation");
-    }
     if(!value || !value->isValid()){
         return false;
     }
@@ -314,6 +319,19 @@ bool YAMLSceneReader::readRotation(Mapping& node, Matrix3& out_R, bool doExtract
         }
     }
     return true;
+}
+
+        
+bool YAMLSceneReader::readRotation(const Mapping& node, Matrix3& out_R) const
+{
+    return readRotation(node.find("rotation"), out_R);
+}
+
+
+bool YAMLSceneReader::extractRotation(Mapping& node, Matrix3& out_R) const
+{
+    ValueNodePtr value = node.extract("rotation");
+    return readRotation(value, out_R);
 }
 
 
@@ -363,6 +381,10 @@ SgNode* YAMLSceneReaderImpl::readNode(Mapping& node, const string& type)
 {
     NodeFunctionMap::iterator q = nodeFunctionMap.find(type);
     if(q == nodeFunctionMap.end()){
+        if(node.get("isOptional", false)){
+            os() << format(_("Warning: the node type \"%1%\" is not defined. Reading this node has been skipped.")) % type << endl;
+            return nullptr;
+        }
         node.throwException(str(format(_("The node type \"%1%\" is not defined.")) % type));
     }
 
@@ -446,7 +468,7 @@ SgNode* YAMLSceneReaderImpl::readTransform(Mapping& node)
         group = posTransform;
     }
     Matrix3 R;
-    if(self->readRotation(node, R, false)){
+    if(self->readRotation(node, R)){
         posTransform->setRotation(R);
         if(!group){
             group = posTransform;
@@ -480,7 +502,7 @@ SgNode* YAMLSceneReaderImpl::readTransform(Mapping& node)
 SgNode* YAMLSceneReaderImpl::readTransformParameters(Mapping& node, SgNode* scene)
 {
     Matrix3 R;
-    bool isRotated = self->readRotation(node, R, false);
+    bool isRotated = self->readRotation(node, R);
     Vector3 p;
     bool isTranslated = read(node, "translation", p);
     if(isRotated || isTranslated){
@@ -780,7 +802,7 @@ SgMesh* YAMLSceneReaderImpl::readIndexedFaceSet(Mapping& node)
 
     double creaseAngle = 0.0;
     self->readAngle(node, "creaseAngle", creaseAngle);
-    normalGenerator.generateNormals(mesh, creaseAngle);
+    meshFilter.generateNormals(mesh, creaseAngle);
 
     return mesh;
 }
@@ -796,10 +818,10 @@ SgMesh* YAMLSceneReaderImpl::readResourceAsGeometry(Mapping& node)
         }
         double creaseAngle;
         if(readAngle(node, "creaseAngle", creaseAngle)){
-            normalGenerator.setOverwritingEnabled(true);
+            meshFilter.setNormalOverwritingEnabled(true);
             bool removeRedundantVertices = node.get("removeRedundantVertices", false);
-            normalGenerator.generateNormals(shape->mesh(), creaseAngle, removeRedundantVertices);
-            normalGenerator.setOverwritingEnabled(false);
+            meshFilter.generateNormals(shape->mesh(), creaseAngle, removeRedundantVertices);
+            meshFilter.setNormalOverwritingEnabled(false);
         }
         if(!generateTexCoord){
             return shape->mesh();

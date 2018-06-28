@@ -10,22 +10,22 @@ import math
 
 pi = math.pi
 
-sceneWidget = SceneView.instance().sceneWidget()
+sceneWidget = SceneView.instance.sceneWidget()
 sceneWidget.setCameraPosition(
     [ 3.80973835, -7.39332055, 7.71594622 ],
     [ -0.00358733323, 0.807228766, -0.590227795 ],
     [ -0.0026229527, 0.590221967, 0.807236737 ])
 
 worldItem = WorldItem()
-RootItem.instance().addChildItem(worldItem)
+RootItem.instance.addChildItem(worldItem)
 
 floorItem = BodyItem()
-floorItem.load(shareDirectory() + "/model/misc/floor.body")
-floorBody = floorItem.body()
-floorBody.rootLink().setTranslation([4, 4, 0.0])
+floorItem.load(shareDirectory + "/model/misc/floor.body")
+floorBody = floorItem.body
+floorBody.rootLink.setTranslation([4, 4, 0.0])
 floorItem.storeInitialState()
 worldItem.addChildItem(floorItem)
-ItemTreeView.instance().checkItem(floorItem)
+ItemTreeView.instance.checkItem(floorItem)
 
 width = 10
 height = 10
@@ -42,10 +42,10 @@ def generate_id():
 
 def create_body():
     bodyItem = BodyItem()
-    bodyItem.load(shareDirectory() + "/model/misc/box4.body")
-    bodyItem.setName(bodyItem.name()+"_"+str(generate_id()))
+    bodyItem.load(shareDirectory + "/model/misc/box4.body")
+    bodyItem.setName(bodyItem.name+"_"+str(generate_id()))
     worldItem.addChildItem(bodyItem)
-    ItemTreeView.instance().checkItem(bodyItem)
+    ItemTreeView.instance.checkItem(bodyItem)
     return bodyItem
 
 def create_bodies(length):
@@ -53,7 +53,7 @@ def create_bodies(length):
     for i in range(0, length):
         for j in range(0, length):
             bodyItem = create_body()
-            bodyItem.body().rootLink().setTranslation([px, py, pz])
+            bodyItem.body.rootLink.setTranslation([px, py, pz])
             bodyItem.storeInitialState()
             bodyItem.restoreInitialState(True)
             py += offset
@@ -75,6 +75,6 @@ simulatorItem.setRealtimeSyncMode(True)
 simulatorItem.setTimeRangeMode(simulatorItem.TimeRangeMode.SPECIFIED)
 simulatorItem.setSpecifiedRecordingTimeLength(5.0)
 worldItem.addChildItem(simulatorItem)
-ItemTreeView.instance().selectItem(simulatorItem)
+ItemTreeView.instance.selectItem(simulatorItem)
 
 simulatorItem.startSimulation()

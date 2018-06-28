@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Include xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Merge Id="Msi_CNOID_base_$(env.ARCH)_vc14" Language="1041"
+           SourceFile="..\MergeModules\choreonoid$(env.CNOID_SHORT_VER)_base_$(env.ARCH)_vc14.msm" DiskId="1" />
+  <Merge Id="Msi_CNOID_rtm_$(env.ARCH)_vc14" Language="1041"
+           SourceFile="..\MergeModules\choreonoid$(env.CNOID_SHORT_VER)_openrtm_$(env.ARCH)_vc14.msm" DiskId="1" />
+  <Merge Id="Msi_CNOID_py2_$(env.ARCH)_vc14" Language="1041"
+           SourceFile="..\MergeModules\choreonoid$(env.CNOID_SHORT_VER)_python2_$(env.ARCH)_vc14.msm" DiskId="1" />
+</Include>

@@ -2,9 +2,10 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_PHENOMENON_PLUGIN_SCENE_PARTICLES_H
-#define CNOID_PHENOMENON_PLUGIN_SCENE_PARTICLES_H
+#ifndef CNOID_SCENE_EFFECTS_PLUGIN_SCENE_PARTICLES_H
+#define CNOID_SCENE_EFFECTS_PLUGIN_SCENE_PARTICLES_H
 
+#include "ParticleSystem.h"
 #include <cnoid/SceneGraph>
 
 namespace cnoid {
@@ -17,16 +18,15 @@ protected:
 
 public:
     float time() const { return time_; }
-    float particleSize() const { return particleSize_; }
-    const std::string& texture() const { return texture_; }
-
     void setTime(float t) { time_ = t; }
-    void setParticleSize(float s) { particleSize_ = s; }
+
+    virtual ParticleSystem* getParticleSystem() = 0;
+    
+    const std::string& texture() const { return texture_; }
     void setTexture(const std::string& file) { texture_ = file; }
 
 private:
     float time_;
-    float particleSize_;
     std::string texture_;
 };
 

@@ -40,7 +40,7 @@ set(sources
   SceneProvider.cpp
   SceneUtil.cpp
   MeshGenerator.cpp
-  MeshNormalGenerator.cpp
+  MeshFilter.cpp
   MeshExtractor.cpp
   SceneMarkers.cpp
   CoordinateAxesOverlay.cpp
@@ -114,7 +114,7 @@ set(headers
   AbstractSceneLoader.h
   SceneLoader.h
   MeshGenerator.h
-  MeshNormalGenerator.h
+  MeshFilter.h
   MeshExtractor.h
   SceneMarkers.h
   CoordinateAxesOverlay.h
