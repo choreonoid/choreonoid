@@ -91,7 +91,7 @@ bool FountainProgram::initializeRendering(SceneParticles* particles)
     vector<GLfloat> data(ps->numParticles() * 3);
     for(GLuint i = 0; i < ps->numParticles(); ++i) {
         
-        theta = ps->emissionRange() * random();
+        theta = ps->emissionRange() / 2.0f * random();
         phi = 2.0 * PI * random();
 
         v.x() = sinf(theta) * cosf(phi);

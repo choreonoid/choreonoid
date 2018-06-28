@@ -62,7 +62,7 @@ FountainDevice::FountainDevice()
     ps.setParticleSize(0.06f);
     ps.setNumParticles(10000);
     ps.setAcceleration(Vector3f(0.0f, 0.0f, -0.2f));
-    ps.setEmissionRange(PI / 12.0f);
+    ps.setEmissionRange(radian(30.0f));
 }
 
 

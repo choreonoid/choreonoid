@@ -61,7 +61,8 @@ SmokeDevice::SmokeDevice()
     ps.setLifeTime(5.0f);
     ps.setParticleSize(0.06f);
     ps.setNumParticles(2000);
-    ps.setEmissionRange(PI / 3.0f);
+    ps.setAcceleration(Vector3f(0.0f, 0.0f, 0.04f));
+    ps.setEmissionRange(radian(120.0f));
 }
 
 

@@ -16,7 +16,7 @@ FireParticleSystem::FireParticleSystem()
     setParticleSize(0.15f);
     setNumParticles(500);
     setAcceleration(Vector3f(0.0f, 0.0f, 0.1f));
-    setEmissionRange(PI / 3.0f);
+    setEmissionRange(radian(120.0f));
 
     initialSpeedAverage_ = 0.15f;
     initialSpeedVariation_ = 0.1f;
