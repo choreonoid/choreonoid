@@ -324,6 +324,10 @@ void OpenHRPOnlineViewerItemImpl::loadsub(string name, string url)
     for(size_t i=0; i < bodyItems.size(); ++i){
         BodyItemPtr bodyItem = bodyItems[i];
         if(bodyItem->name() == name && bodyItem->filePath() == filepath){
+            if(!bodyItem->load(filepath)){
+                mv->putln(fmt(_("OnlineViewer: Loading \"%1%\" failed.")) % name);
+                return;
+            }
             registerBodyItem(bodyItem);
             return;
         }

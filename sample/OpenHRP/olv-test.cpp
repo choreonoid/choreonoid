@@ -26,7 +26,7 @@ int main(int argc, char* argv[])
     if(argc >= 2){
         filepath = getAbsolutePathString(boost::filesystem::path(argv[1]));
     } else {
-        filepath = shareDirectory() + "/model/SR1/SR1.yaml";
+        filepath = shareDirectory() + "/model/SR1/SR1.body";
     }
     
     initializeCorbaUtil();
@@ -43,6 +43,7 @@ int main(int argc, char* argv[])
     OpenHRP::OnlineViewer_var viewer =
         getDefaultNamingContextHelper()->findObject<OpenHRP::OnlineViewer>("OnlineViewer");
 
+    viewer->clearData();
     viewer->load(body->modelName().c_str(), filepath.c_str());
 
     WorldState world;
