@@ -174,8 +174,18 @@ void MessageLogItemImpl::onMessageOut(const std::string& text)
     if(ofs.is_open()){
         // skip escapeSequence
         if( skipEscapeSequence && text.find( "\e", 0 ) != string::npos ){
+
+// Actually I'd like to use std :: regex,
+// but since I can not compile with version of Ubuntu 14.04, I implemented it with Qt library
+#if 1
+            QString qtext(text.c_str());
+            qtext.replace(QRegExp("\\\e\\[[0-9;]*[A-z]"), "");
+            ofs << qtext.toStdString();
+#else
             regex  escapePattern("\\\e\\[[0-9;]*[A-z]");
             ofs << regex_replace(text, escapePattern, "");
+#endif
+
         }else{
             ofs << text;
         }
