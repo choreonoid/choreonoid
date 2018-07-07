@@ -1,33 +1,71 @@
 <?xml version="1.0"?>
-<package>
+<package format="2">
   <name>choreonoid</name>
-  <version>1.6.0</version>
-  <description>Choreonoid is an integrated graphical robotics software framework.</description>
-
-  <maintainer email="s.nakaoka@aist.go.jp">Shin'ichiro Nakaoka</maintainer>
-
+  <version>1.7.0</version>
+  <description>
+  Choreonoid is integrated graphical robotics software based on functions to simulate robots
+  </description>
+  <maintainer email="s.nakaoka@gmail.com">Shin'ichiro Nakaoka</maintainer>
   <license>MIT</license>
 
+  <author email="s.nakaoka@gmail.com">Shin'ichiro Nakaoka</author>
+  <author>Choreonoid Development Team, AIST</author>
   <url type="website">http://choreonoid.org/</url>
   <url type="repository">https://github.com/s-nakaoka/choreonoid/</url>
-
-  <author email="s.nakaoka@aist.go.jp">Shin'ichiro Nakaoka</author>
-  <author>Choreonoid Development Team, AIST</author>
+  <url type="bugtracker">https://github.com/s-nakaoka/choreonoid/issues</url>
 
   <buildtool_depend>cmake</buildtool_depend>
   <buildtool_depend>pkg-config</buildtool_depend>
 
-  <!-- The *_depend tags are used to specify dependencies -->
-  <!-- Dependencies can be catkin packages or system dependencies -->
-  <!-- Examples: -->
-  <!-- Use build_depend for packages you need at compile time: -->
-  <!--   <build_depend>message_generation</build_depend> -->
-  <!-- Use buildtool_depend for build tool packages: -->
-  <!--   <buildtool_depend>catkin</buildtool_depend> -->
-  <!-- Use run_depend for packages you need at runtime: -->
-  <!--   <run_depend>message_runtime</run_depend> -->
-  <!-- Use test_depend for packages you need only for testing: -->
-  <!--   <test_depend>gtest</test_depend> -->
+  <build_depend>boost</build_depend>
+  <build_depend>yaml</build_depend>
+  <build_depend>zlib</build_depend>
+  <build_depend>libjpeg</build_depend>
+  <build_depend>libpng12-dev</build_depend>
+  <build_depend>eigen</build_depend>
+  <build_depend>assimp-dev</build_depend>
+  <build_depend>qtbase5-dev</build_depend>
+  <build_depend>libqt5-opengl-dev</build_depend>
+  <build_depend>libqt5x11extras5-dev</build_depend>
+  <build_depend>python</build_depend>
+  <build_depend>omniorb</build_depend>
+  <build_depend>uuid</build_depend>
+  <build_depend>libpulse-dev</build_depend>
+  <build_depend>libsndfile1-dev</build_depend>
+  <build_depend>libgstreamer1.0-dev</build_depend>
+  <build_depend>libgstreamer-plugins-base1.0-dev</build_depend>
+
+  <!-- build_depend>opende</build_depend -->
+  <!-- build_depend>bullet</build_depend -->
+  <!-- build_depend>sdformat</build_depend -->
+  <!-- build_depend>lua5.3-dev</build_depend -->
+
+  <build_export_depend>boost</build_export_depend>
+  <build_export_depend>eigen</build_export_depend>
+
+  <exec_depend>boost</exec_depend>
+  <exec_depend>yaml</exec_depend>
+  <exec_depend>zlib</exec_depend>
+  <exec_depend>libjpeg</exec_depend>
+  <exec_depend>eigen</exec_depend>
+  <exec_depend>assimp</exec_depend>
+  <exec_depend>libqt5-core</exec_depend>
+  <exec_depend>libqt5-gui</exec_depend>
+  <exec_depend>libqt5-widgets</exec_depend>
+  <exec_depend>libqt5-network</exec_depend>
+  <exec_depend>libqt5-opengl</exec_depend>
+  <exec_depend>opengl</exec_depend>
+  <exec_depend>python</exec_depend>
+  <exec_depend>python-numpy</exec_depend>
+  <exec_depend>python-omniorb</exec_depend>
+  <exec_depend>omniorb</exec_depend>
+  <exec_depend>uuid</exec_depend>
+  <exec_depend>gstreamer1.0</exec_depend>
+  <exec_depend>gstreamer1.0-plugins-base</exec_depend>
+
+  <!-- exec_depend>opende</exec_depend -->
+  <!-- exec_depend>bullet</exec_depend -->
+  <!-- exec_depend>sdformat</exec_depend -->
 
   <export>
     <build_type>cmake</build_type>
