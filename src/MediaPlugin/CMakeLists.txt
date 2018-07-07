@@ -60,8 +60,6 @@ set(headers
   AudioItem.h
   )
 
-make_headers_public(${headers})
-
 set(target CnoidMediaPlugin)
 make_gettext_mofiles(${target} mofiles)
 add_cnoid_plugin(${target} SHARED ${sources} ${headers} ${mofiles})

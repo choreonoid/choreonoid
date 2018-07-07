@@ -1,4 +1,4 @@
-optionalPlugins: [ ODE, Bullet, PhysX, AgX ]
+optionalPlugins: [ ODE, Bullet, PhysX ]
 
 items: 
   id: 0
@@ -203,98 +203,11 @@ items:
                 dynamicFriction: 0.8
                 Restitution: 0.1
                 jointLimitMode: false
-            - 
-              id: 11
-              name: "AgXSimulator"
-              plugin: AgX
-              class: AgXSimulatorItem
-              data: 
-                realtimeSync: true
-                recording: "full"
-                timeRangeMode: "Active control period"
-                timeLength: 60
-                allLinkPositionOutputMode: false
-                deviceStateOutput: true
-                controllerThreads: true
-                recordCollisionData: false
-                controllerOptions: 
-                dynamicsMode: Forward dynamics
-                gravity: [ 0, 0, -9.80665 ]
-                friction: 0.5
-                restitution: 0.1
-                frictionModelType: Iterative Projected
-                frictionSolveType: Direct
-                numThreads: 1
-                contactReductionMode: Geometry
-                contactReductionBinResolution: 2
-                contactReductionThreshold: 4
-            - 
-              id: 12
-              name: "AgXSimulator-Velocity"
-              plugin: AgX
-              class: AgXSimulatorItem
-              data: 
-                realtimeSync: true
-                recording: "full"
-                timeRangeMode: "Active control period"
-                timeLength: 180
-                allLinkPositionOutputMode: false
-                deviceStateOutput: true
-                controllerThreads: true
-                recordCollisionData: false
-                controllerOptions: "velocity"
-                dynamicsMode: "High-gain dynamics"
-                gravity: [ 0, 0, -9.80665 ]
-                friction: 0.5
-                restitution: 0.1
-                frictionModelType: Iterative Projected
-                frictionSolveType: Direct
-                numThreads: 1
-                contactReductionMode: Geometry
-                contactReductionBinResolution: 2
-                contactReductionThreshold: 4
-              children: 
-                - 
-                  id: 13
-                  name: "AgXsetContactMaterial.py"
-                  plugin: PythonSimScript
-                  class: PythonSimScriptItem
-                  data: 
-                    timing: Before init.
-                    delay: 0
-                    simulationOnly: true
-                    backgroundExecution: false
-                    file: "${SHARE}/script/AgXsetContactMaterial.py"
-            - 
-              id: 14
-              name: "AgXSimulator-Velocity-TorqueSensor"
-              plugin: AgX
-              class: AgXSimulatorItem
-              data: 
-                realtimeSync: true
-                recording: "full"
-                timeRangeMode: "Active control period"
-                timeLength: 180
-                allLinkPositionOutputMode: false
-                deviceStateOutput: true
-                controllerThreads: true
-                recordCollisionData: false
-                controllerOptions: "velocity torque_sensor"
-                dynamicsMode: "High-gain dynamics"
-                gravity: [ 0, 0, -9.80665 ]
-                friction: 0.5
-                restitution: 0.1
-                frictionModelType: Iterative Projected
-                frictionSolveType: Direct
-                numThreads: 1
-                contactReductionMode: Geometry
-                contactReductionBinResolution: 2
-                contactReductionThreshold: 4
 views: 
   "Items": 
     selected: [ 7 ]
-    checked: [ 1, 2, 4, 13 ]
-    expanded: [ 1, 2, 3, 6, 12 ]
+    checked: [ 1, 2, 4 ]
+    expanded: [ 1, 2, 3, 6 ]
   "Scene": 
     viewpointControlMode: thirdPerson
     collisionLines: false

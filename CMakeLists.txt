@@ -58,6 +58,11 @@ set(CNOID_SHARE_DIR "${CNOID_DIR}/${CNOID_SHARE_SUBDIR}")
 
 set(CNOID_SOURCE_SHARE_DIR "${PROJECT_SOURCE_DIR}/share")
 
+if(PROJECT_BINARY_DIR STREQUAL PROJECT_SOURCE_DIR)
+  set(CNOID_BINARY_SHARE_DIR ${CNOID_SOURCE_SHARE_DIR})
+else()
+  set(CNOID_BINARY_SHARE_DIR "${PROJECT_BINARY_DIR}/${CNOID_SHARE_SUBDIR}")
+endif()
 
 option(ENABLE_GUI "Enable GUI components" ON)
 
@@ -76,6 +81,16 @@ option(INSTALL_SDK_WITH_EXTLIBS "The SDK installation includes the external libr
 if(MSVC AND CMAKE_CL_64)
    add_definitions(-D_WIN64)
 endif()
+
+if(NOT PROJECT_BINARY_DIR STREQUAL PROJECT_SOURCE_DIR)
+  include_directories(${PROJECT_BINARY_DIR})
+  include_directories(${PROJECT_BINARY_DIR}/include)
+endif()
+include_directories(${PROJECT_SOURCE_DIR})
+include_directories(${PROJECT_SOURCE_DIR}/include)
+
+link_directories(${PROJECT_BINARY_DIR}/lib)
+link_directories(${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR})
 
 function(install_external_libraries dll_dir lib_dir)
 
@@ -120,7 +135,6 @@ function(install_external_libraries dll_dir lib_dir)
   endif()
 
 endfunction()
-
 
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -209,7 +223,6 @@ if(CNOID_ENABLE_BACKWARD_COMPATIBILITY)
   set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS CNOID_BACKWARD_COMPATIBILITY)
 endif()
 
-
 # commands
 if(UNIX)
   set(RMDIR rm -fr)
@@ -225,17 +238,12 @@ if(UNIX)
   endif()
 endif()
 
-
 # gettext
 option(CNOID_ENABLE_GETTEXT "Enable the gettext library and translation messages for the internationalization" ON)
 
 if(CNOID_ENABLE_GETTEXT)
   if(WIN32)
-#    if(CMAKE_CL_64)
-#      FIND_PROGRAM(GETTEXT_MSGFMT_EXECUTABLE msgfmt ${PROJECT_SOURCE_DIR}/thirdparty/windows64/bin)
-#    else()
-      FIND_PROGRAM(GETTEXT_MSGFMT_EXECUTABLE msgfmt ${PROJECT_SOURCE_DIR}/thirdparty/windows/bin)
-#    endif()
+    FIND_PROGRAM(GETTEXT_MSGFMT_EXECUTABLE msgfmt ${PROJECT_SOURCE_DIR}/thirdparty/windows/bin)
   else()
     FIND_PROGRAM(GETTEXT_MSGFMT_EXECUTABLE msgfmt)
   endif()
@@ -256,16 +264,10 @@ if(CNOID_ENABLE_GETTEXT)
     set(GETTEXT_LIBRARIES intl)
   elseif(APPLE)
     set(GETTEXT_LIBRARIES intl)
-    #set(GETTEXT_STATIC_LIBRARIES
-    #  ${GETTEXT_LIBRARY_DIR}/libintl.a 
-    #  ${GETTEXT_LIBRARY_DIR}/libiconv.a
-    #  System.B 
-    #  /System/Library/Frameworks/CoreFoundation.framework)
   else()
     set(GETTEXT_LIBRARIES "")
   endif()
   if(MSVC)
-    #install_external_libraries(${GETTEXT_BINARY_DIR} ${GETTEXT_LIBRARY_DIR} ${GETTEXT_LIBRARIES})
     if(CMAKE_CL_64)
       install(FILES thirdparty/windows64/bin/libintl-8.dll DESTINATION bin)
     else()
@@ -356,7 +358,6 @@ if(ENABLE_LUA)
 endif()
 
 # boost
-
 set(Boost_USE_STATIC_LIBS OFF)
 set(Boost_ADDITIONAL_VERSIONS "1.56" "1.57" "1.58" "1.59" "1.60" "1.61" "1.62" "1.63" "1.64" "1.65")
 
@@ -443,7 +444,6 @@ else()
 endif()
 
 set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS EIGEN_NO_DEBUG)
-#set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS EIGEN_NO_DEBUG EIGEN_DONT_ALIGN)
 
 if(MSVC AND INSTALL_SDK_WITH_EXTLIBS)
   foreach(dir ${EIGEN_INCLUDE_DIRS})
@@ -464,7 +464,6 @@ macro(setup_qt4)
   find_package(Qt4 4.7.0 REQUIRED)
   set(QT_USE_QTOPENGL TRUE)
   set(QT_USE_QTNETWORK TRUE)
-  #set(QT_USE_QTTEST TRUE)
   include(${QT_USE_FILE})
   add_definitions(-DQT_NO_KEYWORDS)
   set(QT5 FALSE)
@@ -605,7 +604,6 @@ if(ENABLE_CORBA)
 
   if(UNIX)
     if(NOT OMNIORB_DIR)
-      #pkg_check_modules(OMNIORB omniORB4)
       pkg_check_modules(OMNIORB omniDynamic4)
       if(OMNIORB_FOUND)
 	set(OMNIORB_DIR ${OMNIORB_PREFIX})
@@ -684,8 +682,10 @@ if(ENABLE_CORBA)
     list(REMOVE_AT idl_names 0 1 2)
 
     set(corba_src_dir ${CMAKE_CURRENT_SOURCE_DIR}/${subdir})
-    set(corba_dir ${PROJECT_SOURCE_DIR}/include/cnoid/${subdir})
-    set(idl_flags -C ${corba_src_dir} -bcxx -Wbh=.hh -Wbs=Sk.cpp -Wba -Wbd=DynSk.cpp -Wbkeep_inc_path -I${PROJECT_SOURCE_DIR}/include)
+    set(corba_binary_dir ${CMAKE_CURRENT_BINARY_DIR}/${subdir})
+    file(MAKE_DIRECTORY ${corba_binary_dir})
+    set(idl_flags -C ${corba_binary_dir} -bcxx -Wbh=.hh -Wbs=Sk.cpp -Wba -Wbd=DynSk.cpp -Wbkeep_inc_path
+      -I${PROJECT_SOURCE_DIR}/include -I${PROJECT_BINARY_DIR}/include)
     foreach(idl_include_dir ${IDL_INCLUDE_DIRS})
       set(idl_flags ${idl_flags} -I${idl_include_dir})
     endforeach()
@@ -694,21 +694,20 @@ if(ENABLE_CORBA)
       unset(idl_files)
       foreach(idl_name ${idl_names})
 	set(idl_files ${idl_files} ${corba_src_dir}/${idl_name}.idl)
-	set(idl_cpp_files ${idl_cpp_files} ${subdir}/${idl_name}Sk.cpp ${subdir}/${idl_name}DynSk.cpp)
-	set(idl_h_files ${idl_h_files} ${subdir}/${idl_name}.hh)
+	set(idl_cpp_files ${idl_cpp_files} ${corba_binary_dir}/${idl_name}Sk.cpp ${corba_binary_dir}/${idl_name}DynSk.cpp)
+	set(idl_h_files ${idl_h_files} ${corba_binary_dir}/${idl_name}.hh)
       endforeach()
       foreach(idl_name ${idl_names})
 	if(UNIX)
 	  add_custom_command(
-	    OUTPUT ${corba_src_dir}/${idl_name}.hh ${corba_src_dir}/${idl_name}DynSk.cpp ${corba_src_dir}/${idl_name}Sk.cpp
+	    OUTPUT ${corba_binary_dir}/${idl_name}.hh ${corba_binary_dir}/${idl_name}DynSk.cpp ${corba_binary_dir}/${idl_name}Sk.cpp
 	    COMMAND omniidl ${idl_flags} ${corba_src_dir}/${idl_name}.idl
 	    DEPENDS ${idl_files}
 	    COMMENT "Generating the C++ stubs and skeletons of ${idl_name}.idl"
 	    )
 	elseif(MSVC)
-	  file(TO_NATIVE_PATH ${corba_src_dir}/${idl_name}.hh src)
 	  add_custom_command(
-	    OUTPUT ${corba_src_dir}/${idl_name}.hh ${corba_src_dir}/${idl_name}Sk.cpp ${corba_src_dir}/${idl_name}DynSk.cpp
+	    OUTPUT ${corba_binary_dir}/${idl_name}.hh ${corba_binary_dir}/${idl_name}Sk.cpp ${corba_binary_dir}/${idl_name}DynSk.cpp
 	    COMMAND for %%A in \("${OMNIORB_DIR}/bin/x86_win32"\) do %%~sA\\omniidl ${idl_flags} ${corba_src_dir}/${idl_name}.idl
 	    DEPENDS ${idl_files}
 	    COMMENT "Generating the C++ stubs and skeletons of ${idl_name}.idl"
@@ -717,6 +716,7 @@ if(ENABLE_CORBA)
       endforeach()
     else() # Make public
       # copy idl files to the system include directory
+      set(corba_dir ${PROJECT_BINARY_DIR}/include/cnoid/${subdir})
       file(MAKE_DIRECTORY ${corba_dir})
       foreach(idl_name ${idl_names})
 	set(idl_file ${corba_src_dir}/${idl_name}.idl)
@@ -737,24 +737,24 @@ if(ENABLE_CORBA)
 	    COMMENT "Copying ${idl_name}.idl to ${corba_dir}")
 	endif()
 	set(idl_files ${idl_files} ${corba_dir}/${idl_name}.idl)
-	set(idl_cpp_files ${idl_cpp_files} ${subdir}/${idl_name}Sk.cpp ${subdir}/${idl_name}DynSk.cpp)
-	set(idl_h_files ${idl_h_files} ${PROJECT_SOURCE_DIR}/include/cnoid/${subdir}/${idl_name}.hh)
+	set(idl_cpp_files ${idl_cpp_files} ${corba_binary_dir}/${idl_name}Sk.cpp ${corba_binary_dir}/${idl_name}DynSk.cpp)
+	set(idl_h_files ${idl_h_files} ${corba_dir}/${idl_name}.hh)
       endforeach()
       # idl compile
       foreach(idl_name ${idl_names})
 	if(UNIX)
 	  add_custom_command(
-	    OUTPUT ${corba_src_dir}/${idl_name}.hh ${corba_dir}/${idl_name}.hh ${corba_src_dir}/${idl_name}DynSk.cpp ${corba_src_dir}/${idl_name}Sk.cpp
+	    OUTPUT ${corba_binary_dir}/${idl_name}.hh ${corba_dir}/${idl_name}.hh ${corba_binary_dir}/${idl_name}DynSk.cpp ${corba_binary_dir}/${idl_name}Sk.cpp
             COMMAND omniidl ${idl_flags} ${corba_dir}/${idl_name}.idl
-            COMMAND cp ${corba_src_dir}/${idl_name}.hh ${corba_dir}
+            COMMAND cp ${corba_binary_dir}/${idl_name}.hh ${corba_dir}
             DEPENDS ${idl_files}
             COMMENT "Generating the C++ stubs and skeletons of ${idl_name}.idl"
             )
 	elseif(MSVC)
-	  file(TO_NATIVE_PATH ${corba_src_dir}/${idl_name}.hh src)
+	  file(TO_NATIVE_PATH ${corba_binary_dir}/${idl_name}.hh src)
 	  file(TO_NATIVE_PATH ${corba_dir} dest)
 	  add_custom_command(
-            OUTPUT ${corba_src_dir}/${idl_name}.hh ${corba_dir}/${idl_name}.hh ${corba_src_dir}/${idl_name}Sk.cpp ${corba_src_dir}/${idl_name}DynSk.cpp
+            OUTPUT ${corba_binary_dir}/${idl_name}.hh ${corba_dir}/${idl_name}.hh ${corba_binary_dir}/${idl_name}Sk.cpp ${corba_binary_dir}/${idl_name}DynSk.cpp
             COMMAND for %%A in \("${OMNIORB_DIR}/bin/x86_win32"\) do %%~sA\\omniidl ${idl_flags} ${corba_dir}/${idl_name}.idl
             COMMAND copy ${src} ${dest}
             DEPENDS ${idl_files}
@@ -762,6 +762,7 @@ if(ENABLE_CORBA)
             )
 	endif()
       endforeach()
+      install(FILES ${idl_files} ${idl_h_files} DESTINATION ${CNOID_HEADER_SUBDIR}/cnoid/${subdir})
     endif()
 
     set(${out_cpp_files} ${idl_cpp_files} PARENT_SCOPE)
@@ -850,10 +851,6 @@ if(ENABLE_CORBA)
 
 endif(ENABLE_CORBA)
 
-
-# doxygen
-# find_package(Doxygen)
-
 set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS $<$<CONFIG:Debug>:CNOID_DEBUG>)
 
 if(UNIX)
@@ -877,7 +874,6 @@ if(UNIX)
     endif()
   endif()
 
-
   # The RTTI such as dynamic_cast cannot work well with this option in the older GCC like that of Ubuntu 10.04.
   # So currently this option should be only enabled for modules which may cause symbol conficts
   #set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-Bsymbolic") 
@@ -885,14 +881,7 @@ if(UNIX)
 elseif(MSVC)
   set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS _CRT_SECURE_NO_WARNINGS)
   set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS NOMINMAX _USE_MATH_DEFINES)
-  #list(APPEND CMAKE_CXX_FLAGS "/wd4250 /wd4251 /wd4275")
 endif()
-
-include_directories(${PROJECT_SOURCE_DIR})
-include_directories(${PROJECT_SOURCE_DIR}/include)
-
-link_directories(${PROJECT_BINARY_DIR}/lib)
-link_directories(${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR})
 
 #Simulation profiling
 option(ENABLE_SIMULATION_PROFILING "Enable simulation plofiling" OFF)
@@ -904,6 +893,10 @@ endif()
 install(FILES NEWS DESTINATION ${CNOID_DOC_SUBDIR})
 install(FILES LICENSE DESTINATION ${CNOID_DOC_SUBDIR})
 
+option(BUILD_DOCUMENTS "Build the API reference manual" OFF)
+if(BUILD_DOCUMENTS)
+  add_subdirectory(doc)
+endif()
 
 if(MSVC)
   if(CMAKE_CL_64)
@@ -914,27 +907,6 @@ if(MSVC)
     link_directories(${PROJECT_SOURCE_DIR}/thirdparty/windows/lib)
   endif()
 endif()
-
-
-function(make_header_public)
-  set(header_file ${ARGV0})
-  if(ARGC EQUAL 1)
-    get_filename_component(header ${header_file} NAME_WE)
-  else()
-    set(header ${ARGV1})
-  endif()
-  file(RELATIVE_PATH header_path ${PROJECT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/${header_file})
-  file(WRITE
-    "${PROJECT_SOURCE_DIR}/include/cnoid/${header}"
-    "#include \"${header_path}\"\n")
-endfunction()
-
-function(make_headers_public)
-  foreach(header_file ${ARGV})
-    make_header_public(${header_file})
-  endforeach()
-endfunction()
-
 
 function(add_cnoid_library)
 
@@ -1041,7 +1013,6 @@ function(apply_common_setting_for_target target)
       if(headers)
         source_group("Header Files" FILES ${headers})
       endif()
-      #set_target_properties(${target} PROPERTIES PREFIX "../" IMPORT_PREFIX "../")
     endif()
 
     get_target_property(existing_compile_flags ${target} COMPILE_FLAGS)
@@ -1163,7 +1134,6 @@ if(ENABLE_PYTHON)
 	    set(existing_link_flags "")
 	  endif()
 	  set_target_properties(${target} PROPERTIES LINK_FLAGS "${existing_link_flags} ${link_lto_flags}")
-
           #add_custom_command(TARGET ${target} POST_BUILD COMMAND strip $<TARGET_FILE:${target}>)
 	endif()
       endif()
@@ -1257,30 +1227,19 @@ if(ENABLE_LUA)
       endif()
     endif()
   endfunction()
-    
-
 endif()
 
-#function(make_gettext_mofiles out_mofiles)
 function(make_gettext_mofiles target out_mofiles)
-
-  configure_file(${PROJECT_SOURCE_DIR}/src/Util/gettext.h.in ${CMAKE_CURRENT_SOURCE_DIR}/gettext.h)
- 
-  set(${out_mofiles} "")
-
+  set(${out_mofiles} "" PARENT_SCOPE)
   if(NOT CNOID_ENABLE_GETTEXT)
     return()
   endif()
-
   file(GLOB pofiles ${CMAKE_CURRENT_SOURCE_DIR}/po/*.po)
-
   foreach(pofile ${pofiles})
     get_filename_component(lang ${pofile} NAME_WE)
     set(message_location share/locale/${lang}/LC_MESSAGES)
-    #file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/${message_location})
-    #set(mofile ${PROJECT_BINARY_DIR}/${message_location}/${target}-${CNOID_VERSION}.mo)
-    file(MAKE_DIRECTORY ${PROJECT_SOURCE_DIR}/${message_location})
-    set(mofile ${PROJECT_SOURCE_DIR}/${message_location}/${target}-${CNOID_VERSION}.mo)
+    file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/${message_location})
+    set(mofile ${PROJECT_BINARY_DIR}/${message_location}/${target}-${CNOID_VERSION}.mo)
     add_custom_command(
       OUTPUT ${mofile}
       COMMAND ${GETTEXT_MSGFMT_EXECUTABLE} -o ${mofile} ${pofile}
@@ -1289,9 +1248,7 @@ function(make_gettext_mofiles target out_mofiles)
     list(APPEND mofiles ${mofile})
     install(FILES ${mofile} DESTINATION "share/locale/${lang}/LC_MESSAGES")
   endforeach()
-
   set(${out_mofiles} ${mofiles} PARENT_SCOPE)
-
 endfunction()
 
 # libyaml
@@ -1338,6 +1295,7 @@ endif()
 
 add_subdirectory(src)
 add_subdirectory(include)
+add_subdirectory(share)
 
 option(ENABLE_SAMPLES "Enable samples in the sample directory" ON)
 if(ENABLE_SAMPLES)
@@ -1358,28 +1316,11 @@ if(ENABLE_EXT)
   endif()
 endif()
 
-configure_file(Doxyfile.in ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile @ONLY)
-
 if(EXISTS ${PROJECT_SOURCE_DIR}/test)
   if(EXISTS ${PROJECT_SOURCE_DIR}/test/CMakeLists.txt)
     add_subdirectory(test)
   endif()
 endif()
-
-
-# installing share directory files
-# This must be written not in share directory but in this top CMakeLists.txt
-# to prevent the share directory from being created in the binary directory
-
-set(subdirs model project motion script default)
-foreach(subdir ${subdirs})
-  get_filename_component(path share/${subdir} ABSOLUTE)
-  if((EXISTS ${path}) AND (IS_DIRECTORY ${path}))
-    install(DIRECTORY share/${subdir} DESTINATION ${CNOID_SHARE_SUBDIR})
-  endif()
-endforeach()
-
-
 
 # CPack
 include(InstallRequiredSystemLibraries)
