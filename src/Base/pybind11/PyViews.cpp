@@ -70,8 +70,7 @@ void exportPyViews(py::module m)
         .def_property_readonly_static("sigFlushFinished", &MessageView::sigFlushFinished)
 
         // deprecated
-        .def_static(
-            "getInstance", [](py::object){ return MessageView::instance(); }, py::return_value_policy::reference)
+        .def_static("getInstance", &MessageView::instance, py::return_value_policy::reference)
         .def_static("getSigFlushFinished", &MessageView::sigFlushFinished)
         ;
 
@@ -117,8 +116,7 @@ void exportPyViews(py::module m)
         .def_property_readonly("sceneWidget", &SceneView::sceneWidget, py::return_value_policy::reference)
 
         // deprecated
-        .def_static(
-            "getInstance", [](py::object){ return SceneView::instance(); }, py::return_value_policy::reference)
+        .def_static("getInstance", &SceneView::instance, py::return_value_policy::reference)
         .def("getSceneWidget", &SceneView::sceneWidget, py::return_value_policy::reference)
         ;
 
@@ -127,8 +125,7 @@ void exportPyViews(py::module m)
             "instance", [](py::object){ return TaskView::instance(); }, py::return_value_policy::reference)
 
         // deprecated
-        .def_static(
-            "getInstance", [](py::object){ return TaskView::instance(); }, py::return_value_policy::reference)
+        .def_static("getInstance", &TaskView::instance, py::return_value_policy::reference)
         ;
 
     py::class_<ViewManager>(m, "ViewManager")

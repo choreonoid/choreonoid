@@ -54,8 +54,7 @@ void exportPyItemTreeView(py::module m)
         .def("cutSelectedItems", &ItemTreeView::cutSelectedItems)
 
         // deprecated
-        .def_static(
-            "getInstance", [](py::object){ return ItemTreeView::instance(); }, py::return_value_policy::reference)
+        .def_static("getInstance", &ItemTreeView::instance, py::return_value_policy::reference)
         .def("getRootItem", &ItemTreeView::rootItem)
         .def("getSelectedItems", &ItemTreeView::selectedItems<Item>)
         .def("getSigSelectionChanged", &ItemTreeView::sigSelectionChanged)
