@@ -112,7 +112,7 @@ void exportPyItems(py::module m)
         .def_property_readonly_static("instance", [](py::object){ return RootItem::instance(); })
 
         // deprecated
-        .def_static("getInstance",  [](py::object){ return RootItem::instance(); })
+        .def_static("getInstance", &RootItem::instance)
         ;
 
     PyItemList<RootItem>(m, "RootItemList");

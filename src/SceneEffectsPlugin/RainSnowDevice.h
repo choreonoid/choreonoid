@@ -3,9 +3,10 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_PHENOMENON_PLUGIN_RAIN_SNOW_DEVICE_H
-#define CNOID_PHENOMENON_PLUGIN_RAIN_SNOW_DEVICE_H
+#ifndef CNOID_SCENE_EFFECTS_PLUGIN_RAIN_SNOW_DEVICE_H
+#define CNOID_SCENE_EFFECTS_PLUGIN_RAIN_SNOW_DEVICE_H
 
+#include "ParticleSystem.h"
 #include <cnoid/Device>
 
 namespace cnoid {
@@ -26,8 +27,12 @@ public:
     bool on() const { return on_; }
     void on(bool on) { on_ = on; }
         
+    ParticleSystem& particleSystem() { return particleSystem_; }
+    const ParticleSystem& particleSystem() const { return particleSystem_; }
+
 private:
     bool on_;
+    ParticleSystem particleSystem_;
 };
 
 

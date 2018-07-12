@@ -34,6 +34,7 @@ public:
         
     SgUpdate() : action_(MODIFIED) { path_.reserve(16); }
     SgUpdate(int action) : action_(action) { path_.reserve(16); }
+    SgUpdate(const SgUpdate& org) : action_(org.action_), path_(org.path_) { }
     virtual ~SgUpdate();
     int action() const { return action_; }
     bool isModified() const { return (action_ & MODIFIED); }

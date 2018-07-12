@@ -25,8 +25,7 @@ void exportPyMainWindow(py::module m)
         .def("addToolBar", &MainWindow::addToolBar)
 
         // deprecated
-        .def_static(
-            "getInstance", [](py::object){ return MainWindow::instance(); }, py::return_value_policy::reference)
+        .def_static("getInstance", &MainWindow::instance, py::return_value_policy::reference)
         .def("getToolBarArea", &MainWindow::toolBarArea)
         .def("getViewArea", &MainWindow::viewArea, py::return_value_policy::reference)
         ;

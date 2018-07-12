@@ -105,6 +105,7 @@ set(sources
   TextEdit.cpp
   TaskView.cpp
   VirtualJoystickView.cpp
+  MessageLogItem.cpp
   gl_core_3_3.c
   #gl_core_4_0.c
   #gl_core_4_4.c
@@ -206,6 +207,7 @@ set(headers
   JoystickCapture.h
   TextEdit.h
   TaskView.h
+  MessageLogItem.h
   exportdecl.h
   )
 

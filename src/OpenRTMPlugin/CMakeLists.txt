@@ -13,7 +13,7 @@ set(plugin CnoidOpenRTMPlugin)
 
 set(plugin_sources
   OpenRTMPlugin.cpp
-  ConnectorCreaterDialog.cpp
+  PortConnectionDialog.cpp
   ControllerRTCItem.cpp
   BodyIoRTCItem.cpp
   OpenRTMItem.cpp
@@ -45,7 +45,6 @@ set(plugin_headers
 QTX_ADD_RESOURCES(RC_SRCS OpenRTMPlugin.qrc)
 QTX_WRAP_CPP(
   qtsources
-  ConnectorCreaterDialog.h
   RTSNameServerView.h
   RTSDiagramView.h
   RTSConfigurationView.h

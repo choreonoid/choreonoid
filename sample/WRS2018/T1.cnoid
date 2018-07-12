@@ -204,6 +204,52 @@ items:
                 collisionDetection: true
                 selfCollisionDetection: false
                 isEditable: false
+        - 
+          id: 11
+          name: "Smoke"
+          plugin: Body
+          class: BodyItem
+          data: 
+            modelFile: "T1-Smoke.body"
+            currentBaseLink: "Base"
+            rootPosition: [ 27, 0, 0 ]
+            rootAttitude: [ 
+              1, 0, 0, 
+              0, 1, 0, 
+              0, 0, 1 ]
+            jointPositions: [  ]
+            initialRootPosition: [ 27, 0, 0 ]
+            initialRootAttitude: [ 
+              1, 0, 0, 
+              0, 1, 0, 
+              0, 0, 1 ]
+            zmp: [ 0, 0, 0 ]
+            collisionDetection: true
+            selfCollisionDetection: false
+            isEditable: false
+        - 
+          id: 12
+          name: "Smoke"
+          plugin: Body
+          class: BodyItem
+          data: 
+            modelFile: "T1-Smoke.body"
+            currentBaseLink: "Base"
+            rootPosition: [ 9, 0, 0 ]
+            rootAttitude: [ 
+              1, 0, 0, 
+              0, 1, 0, 
+              0, 0, 1 ]
+            jointPositions: [  ]
+            initialRootPosition: [ 9, 0, 0 ]
+            initialRootAttitude: [ 
+              1, 0, 0, 
+              0, 1, 0, 
+              0, 0, 1 ]
+            zmp: [ 0, 0, 0 ]
+            collisionDetection: true
+            selfCollisionDetection: false
+            isEditable: false
 views: 
   - 
     id: 0
@@ -217,7 +263,7 @@ views:
     mounted: true
     state: 
       selected: [ 5 ]
-      checked: [ 3, 4, 6, 7, 8, 9, 10 ]
+      checked: [ 3, 4, 6, 7, 8, 9, 10, 11, 12 ]
       expanded: [ 1, 9 ]
   - 
     id: 2
@@ -276,7 +322,7 @@ views:
           orthoHeight: 5.73009
           near: 0.01
           far: 100
-      backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
+      backgroundColor: [ 0, 0, 0 ]
       gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
@@ -334,12 +380,12 @@ views:
           orthoHeight: 20
           near: 0.01
           far: 100
-      backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
+      backgroundColor: [ 0, 0, 0 ]
       gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       dedicatedItemTreeViewChecks: true
-      checked: [ 3, 4, 5, 6, 7, 8, 9, 10 ]
+      checked: [ 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 ]
   - 
     id: 5
     plugin: Body

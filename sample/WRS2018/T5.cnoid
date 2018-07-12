@@ -95,7 +95,7 @@ items:
               plugin: Body
               class: BodyItem
               data: 
-                modelFile: "${SHARE}/model/WRS2018/FireCabinet.body"
+                modelFile: "${SHARE}/model/WRS2018/FireCabinetWithHose.body"
                 currentBaseLink: "BASE"
                 rootPosition: [ 5, 4.21, 0.256 ]
                 rootAttitude: [ 
@@ -136,6 +136,29 @@ items:
                 collisionDetection: true
                 selfCollisionDetection: false
                 isEditable: true
+        - 
+          id: 5
+          name: "Fire"
+          plugin: Body
+          class: BodyItem
+          data: 
+            modelFile: "T5-Fire.body"
+            currentBaseLink: "Base"
+            rootPosition: [ 14, -1, 0.2 ]
+            rootAttitude: [ 
+              1, 0, 0, 
+              0, 1, 0, 
+              0, 0, 1 ]
+            jointPositions: [  ]
+            initialRootPosition: [ 14, -1, 0.2 ]
+            initialRootAttitude: [ 
+              1, 0, 0, 
+              0, 1, 0, 
+              0, 0, 1 ]
+            zmp: [ 0, 0, 0 ]
+            collisionDetection: true
+            selfCollisionDetection: false
+            isEditable: false
 views: 
   - 
     id: 0
@@ -148,7 +171,7 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      checked: [ 3, 4, 6, 7 ]
+      checked: [ 3, 4, 5, 6, 7 ]
       expanded: [ 1, 6 ]
   - 
     id: 2
@@ -207,7 +230,7 @@ views:
           orthoHeight: 5.73009
           near: 0.01
           far: 100
-      backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
+      backgroundColor: [ 0, 0, 0 ]
       gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
@@ -265,7 +288,7 @@ views:
           orthoHeight: 20
           near: 0.01
           far: 100
-      backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
+      backgroundColor: [ 0, 0, 0 ]
       gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]

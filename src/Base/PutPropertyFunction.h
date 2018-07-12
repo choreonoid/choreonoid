@@ -17,6 +17,7 @@ class FilePathProperty
     std::string baseDirectory_;
     std::vector<std::string> filters_;
     bool isFullpathDisplayMode_ = false;
+    bool isExistingFileMode_ = true;
 
 public:
     FilePathProperty() { }
@@ -27,10 +28,12 @@ public:
     void setBaseDirectory(const std::string& dir) { baseDirectory_ = dir; }
     void setFilters(const std::vector<std::string>& filters) { filters_ = filters; }
     void setFullpathDisplayMode(bool on);
+    void setExistingFileMode(bool on) { isExistingFileMode_ = on; }
     const std::string& filename() const { return filename_; };
     const std::string& baseDirectory() const { return baseDirectory_; };
     const std::vector<std::string>& filters() const { return filters_; }
     bool isFullpathDisplayMode() const { return isFullpathDisplayMode_; }
+    bool isExistingFileMode() const { return isExistingFileMode_; }
 };
 
 

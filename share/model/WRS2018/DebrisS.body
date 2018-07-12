@@ -5,23 +5,19 @@ name: Debris-S
 
 links:
   -
-      name: BASE
-      translation: [ 0.0, 0.0, 0.02 ]
-      jointType: free
-      massType: density
-      density: 8000
-      mass: 1
-      inertia: [
-        0.00027, 0,      0,
-        0,       0.0135, 0,
-        0,       0,      0.0135 ]
-      material: Default
-      autoSleep: true
-      elements:
-        Shape:
-          geometry: { type: Box, size: [ 0.4, 0.04, 0.04 ] }
-          appearance:
-            material:
-              diffuseColor: [ 0.1, 1.0, 0.0 ]
-
-
+    name: BASE
+    translation: [ 0.0, 0.0, 0.02 ]
+    jointType: free
+    massType: density
+    density: 8000
+    mass: 1
+    inertia: [
+      0.00027, 0,      0,
+      0,       0.0135, 0,
+      0,       0,      0.0135 ]
+    material: Default
+    autoSleep: true
+    elements:
+      Shape:
+        geometry: { type: Box, size: [ 0.4, 0.04, 0.04 ] }
+        appearance: { material: { diffuseColor: [ 1.0, 0.5, 0.2 ] } }

@@ -404,7 +404,7 @@ SgNode* ForceSensorVisualizerItem::getScene()
 
 void ForceSensorVisualizerItemImpl::onSensorPositionsChanged()
 {
-    if(!ItemTreeView::instance()->isItemChecked(self))
+    if(!ItemTreeView::instance()->isItemChecked(self), ItemTreeView::ID_ANY)
         return;
 
     for(size_t i=0; i < forceSensors.size(); ++i){
@@ -417,7 +417,7 @@ void ForceSensorVisualizerItemImpl::onSensorPositionsChanged()
 
 void ForceSensorVisualizerItemImpl::updateSensorState()
 {
-    if(!ItemTreeView::instance()->isItemChecked(self))
+    if(!ItemTreeView::instance()->isItemChecked(self, ItemTreeView::ID_ANY))
         return;
 
     for(size_t i=0; i < forceSensors.size(); ++i){
@@ -526,7 +526,7 @@ void PointCloudVisualizerItemImpl::setBodyItem(BodyItem* bodyItem, RangeCamera* 
 
 void PointCloudVisualizerItemImpl::onSensorPositionsChanged()
 {
-    if(!ItemTreeView::instance()->isItemChecked(self))
+    if(!ItemTreeView::instance()->isItemChecked(self, ItemTreeView::ID_ANY))
         return;
 
     const Affine3 T =  (rangeCamera->link()->T() * rangeCamera->T_local());
@@ -536,7 +536,7 @@ void PointCloudVisualizerItemImpl::onSensorPositionsChanged()
 
 void PointCloudVisualizerItemImpl::updateRangeCameraState()
 {
-    if(!ItemTreeView::instance()->isItemChecked(self))
+    if(!ItemTreeView::instance()->isItemChecked(self, ItemTreeView::ID_ANY))
         return;
 
     const vector<Vector3f>& src = rangeCamera->constPoints();
@@ -622,7 +622,7 @@ void RangeSensorVisualizerItemImpl::setBodyItem(BodyItem* bodyItem, RangeSensor*
 
 void RangeSensorVisualizerItemImpl::onSensorPositionsChanged()
 {
-    if(!ItemTreeView::instance()->isItemChecked(self))
+    if(!ItemTreeView::instance()->isItemChecked(self, ItemTreeView::ID_ANY))
         return;
 
     const Affine3 T = (rangeSensor->link()->T() * rangeSensor->T_local());
@@ -632,7 +632,7 @@ void RangeSensorVisualizerItemImpl::onSensorPositionsChanged()
 
 void RangeSensorVisualizerItemImpl::updateRangeSensorState()
 {
-    if(!ItemTreeView::instance()->isItemChecked(self)){
+    if(!ItemTreeView::instance()->isItemChecked(self, ItemTreeView::ID_ANY)){
         return;
     }
 

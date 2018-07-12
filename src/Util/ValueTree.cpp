@@ -197,6 +197,20 @@ bool ValueNode::read(double& out_value) const
 }
 
 
+bool ValueNode::read(float& out_value) const
+{
+    if(isScalar()){
+        const char* nptr = &(static_cast<const ScalarNode* const>(this)->stringValue_[0]);
+        char* endptr;
+        out_value = strtof(nptr, &endptr);
+        if(endptr > nptr){
+            return true;
+        }
+    }
+    return false;
+}
+
+
 double ValueNode::toDouble() const
 {
     if(!isScalar()){
@@ -755,6 +769,17 @@ bool Mapping::read(const std::string &key, double &out_value) const
     }
     return false;
 }
+
+
+bool Mapping::read(const std::string &key, float &out_value) const
+{
+    ValueNode* node = find(key);
+    if(node->isValid()){
+        return node->read(out_value);
+    }
+    return false;
+}
+
 
 void Mapping::write(const std::string &key, const std::string& value, StringStyle stringStyle)
 {

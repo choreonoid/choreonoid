@@ -90,6 +90,7 @@ public:
 
     bool read(int &out_value) const;
     bool read(double &out_value) const;
+    bool read(float &out_value) const;
     bool read(bool &out_value) const;
     bool read(std::string &out_value) const;
 
@@ -308,6 +309,7 @@ public:
     bool read(const std::string& key, bool& out_value) const;
     bool read(const std::string& key, int& out_value) const;
     bool read(const std::string& key, double& out_value) const;
+    bool read(const std::string& key, float& out_value) const;
 
     template <class T> T get(const std::string& key) const {
         T value;

@@ -7,7 +7,7 @@
 #include "RTSPropertiesView.h"
 #include "RTSCommonUtil.h"
 #include "OpenRTMUtil.h"
-#include "ConnectorCreaterDialog.h"
+#include "PortConnectionDialog.h"
 #include "LoggerUtil.h"
 #include <cnoid/ViewManager>
 #include <cnoid/MessageView>
@@ -1002,21 +1002,21 @@ void RTSDiagramViewImpl::mouseReleaseEvent(QMouseEvent *event)
                 vector<NamedValuePtr> propList;
                 if(sourcePort->rtsPort->isServicePort && targetPort->rtsPort->isServicePort){
                     DDEBUG("ServicePort Connect");
-                    ServiceConnectorCreaterDialog createDialog;
-                    createDialog.setDisp(sourcePort->rtsPort, targetPort->rtsPort);
-                    createDialog.exec();
-                    isAccepted = createDialog.isAccepted;
-                    name = createDialog.nameLineEdit->text().toStdString();
-                    propList = createDialog.propList;
+                    ServicePortConnectionDialog dialog;
+                    dialog.setDisp(sourcePort->rtsPort, targetPort->rtsPort);
+                    dialog.exec();
+                    isAccepted = dialog.isAccepted;
+                    name = dialog.nameLineEdit->text().toStdString();
+                    propList = dialog.propList;
 
                 } else {
                     DDEBUG("DataPort Connect");
-                    DataConnectorCreaterDialog createDialog;
-                    createDialog.setDisp(sourcePort->rtsPort, targetPort->rtsPort);
-                    createDialog.exec();
-                    isAccepted = createDialog.isAccepted;
-                    name = createDialog.nameLineEdit->text().toStdString();
-                    propList = createDialog.propList;
+                    DataPortConnectionDialog dialog;
+                    dialog.setDisp(sourcePort->rtsPort, targetPort->rtsPort);
+                    dialog.exec();
+                    isAccepted = dialog.isAccepted;
+                    name = dialog.nameLineEdit->text().toStdString();
+                    propList = dialog.propList;
                 }
 
                 if(isAccepted){
@@ -1355,7 +1355,8 @@ void RTSDiagramViewImpl::onTime()
                     // it->second->effect->setEnabled(true);
                     modified = true;
                 } else {
-                    deleteRTSComp(it->second);
+                    //The following code is disabled to keep management of non-live RTCs
+                    //deleteRTSComp(it->second);
                 }
             } else {
                 if (it->second->effect->isEnabled()){

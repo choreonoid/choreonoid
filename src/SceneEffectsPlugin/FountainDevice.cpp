@@ -7,23 +7,24 @@
 #include "SceneFountain.h"
 #include <cnoid/YAMLBodyLoader>
 #include <cnoid/SceneDevice>
+#include <cnoid/EigenUtil>
 
 using namespace std;
 using namespace cnoid;
 
 namespace {
 
-bool readFountainDevice(YAMLBodyLoader& loader, Mapping& node)
-{
-    FountainDevicePtr fountain = new FountainDevice;
-    return loader.readDevice(fountain, node);
-}
-
-
 SceneDevice* createSceneFountainDevice(Device* device)
 {
+    auto fountainDevice = static_cast<FountainDevice*>(device);
     auto sceneFountain = new SceneFountain;
     auto sceneDevice = new SceneDevice(device, sceneFountain);
+
+    sceneDevice->setFunctionOnStateChanged(
+        [sceneFountain, fountainDevice](){
+            sceneFountain->particleSystem() = fountainDevice->particleSystem();
+            sceneFountain->notifyUpdate();
+        });
 
     sceneDevice->setFunctionOnTimeChanged(
         [sceneFountain](double time){
@@ -37,7 +38,14 @@ SceneDevice* createSceneFountainDevice(Device* device)
 struct TypeRegistration
 {
     TypeRegistration() {
-        YAMLBodyLoader::addNodeType("FountainDevice", readFountainDevice);
+        YAMLBodyLoader::addNodeType(
+            "FountainDevice",
+            [](YAMLBodyLoader& loader, Mapping& node){
+                FountainDevicePtr fountain = new FountainDevice;
+                fountain->particleSystem().readParameters(loader.sceneReader(), node);
+                return loader.readDevice(fountain, node);
+            });
+
         SceneDevice::registerSceneDeviceFactory<FountainDevice>(createSceneFountainDevice);
     }
 } registration;
@@ -48,13 +56,22 @@ struct TypeRegistration
 FountainDevice::FountainDevice()
 {
     on_ = true;
+
+    auto& ps = particleSystem_;
+    ps.setLifeTime(3.0f);
+    ps.setParticleSize(0.06f);
+    ps.setNumParticles(10000);
+    ps.setAcceleration(Vector3f(0.0f, 0.0f, -0.2f));
+    ps.setEmissionRange(radian(30.0f));
 }
 
 
 FountainDevice::FountainDevice(const FountainDevice& org, bool copyStateOnly)
-    : Device(org, copyStateOnly)
+    : Device(org, copyStateOnly),
+      on_(org.on_),
+      particleSystem_(org.particleSystem_)
 {
-    copyStateFrom(org);
+
 }
 
 
@@ -67,6 +84,7 @@ const char* FountainDevice::typeName()
 void FountainDevice::copyStateFrom(const FountainDevice& other)
 {
     on_ = other.on_;
+    particleSystem_ = other.particleSystem_;
 }
 
 
@@ -101,19 +119,35 @@ void FountainDevice::forEachActualType(std::function<bool(const std::type_info& 
 
 int FountainDevice::stateSize() const
 {
-    return 1;
+    return 6;
 }
 
 
 const double* FountainDevice::readState(const double* buf)
 {
-    on_ = buf[0];
-    return buf + 1;
+    int i = 0;
+    auto& ps = particleSystem_;
+
+    on_ = buf[i++];
+    ps.setNumParticles(buf[i++]);
+    ps.setAcceleration(Vector3f(buf[i++], buf[i++], buf[i++]));
+    ps.setEmissionRange(buf[i++]);
+    
+    return buf + i;
 }
 
 
 double* FountainDevice::writeState(double* out_buf) const
 {
-    out_buf[0] = on_ ? 1.0 : 0.0;
-    return out_buf + 1;
+    int i = 0;
+    auto& ps = particleSystem_;
+    
+    out_buf[i++] = on_ ? 1.0 : 0.0;
+    out_buf[i++] = ps.numParticles();
+    out_buf[i++] = ps.acceleration()[0];
+    out_buf[i++] = ps.acceleration()[1];
+    out_buf[i++] = ps.acceleration()[2];
+    out_buf[i++] = ps.emissionRange();
+
+    return out_buf + i;
 }
