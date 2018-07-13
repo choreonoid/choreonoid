@@ -5,10 +5,15 @@ elseif(NOT BUILD_OPENRTM_PLUGIN)
   message(FATAL_ERROR "OpenRTM samples need to build OpenRTMPlugin.")
 endif()
 
+add_definitions(${OPENRTM_DEFINITIONS})
 include_directories(${OPENRTM_INCLUDE_DIRS})
 link_directories(${OPENRTM_LIBRARY_DIRS})
-if(WIN32)
-  add_definitions(-D__WIN32__ -D__x86__ -D__NT__ -D__OSVERSION__=4 -D_CRT_SECURE_NO_DEPRECATE -D_WIN32_WINNT=0x0500 -DRTC_CORBA_CXXMAPPING11)
+
+if(MSVC)
+  add_compile_options(${OPENRTM_CFLAGS})
+  add_definitions(
+    -D__WIN32__ -D__x86__ -D__NT__ -D__OSVERSION__=4
+    -D_CRT_SECURE_NO_DEPRECATE -D_WIN32_WINNT=0x0500 -DRTC_CORBA_CXXMAPPING11)
 endif()
 
 function(add_cnoid_sample_rtc)
