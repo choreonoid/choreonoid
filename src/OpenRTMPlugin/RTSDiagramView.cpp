@@ -302,6 +302,7 @@ public:
     void setCurrentRTSItem(RTSystemItem* item);
     void updateView();
     void updateSetting();
+    void updateRestoredView();
     void activateComponent();
     void deactivateComponent();
     void resetComponent();
@@ -1425,6 +1426,17 @@ void RTSDiagramViewImpl::updateView()
     timeOutConnection.unblock();
 }
 
+void RTSDiagramViewImpl::updateRestoredView()
+{
+    //Ú‘±ü‚ðÄ•`‰æ‚·‚é‚½‚ß
+    if(currentRTSItem){
+        for(auto it = rtsComps.begin(); it != rtsComps.end(); it++){
+          QPointF pos = it->second->pos();
+          pos.setX(pos.x() + 1);
+          it->second->setPos(pos);
+        }
+    }
+}
 
 void RTSDiagramViewImpl::updateSetting()
 {
@@ -1626,6 +1638,10 @@ void RTSDiagramView::updateView()
     impl->updateView();
 }
 
+void RTSDiagramView::updateRestoredView()
+{
+    impl->updateRestoredView();
+}
 
 void RTSDiagramView::updateSetting()
 {

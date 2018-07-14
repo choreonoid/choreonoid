@@ -29,6 +29,7 @@ public:
 
   void updateView();
   void updateSetting();
+  void updateRestoredView();
 
 public Q_SLOTS:
   void onRTSCompSelectionChange();
