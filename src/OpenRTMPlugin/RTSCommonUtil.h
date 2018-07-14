@@ -7,7 +7,7 @@
 #define CNOID_OPENRTM_PLUGIN_RTS_COMMON_UTIL_H_INCLUDED
 
 #include <vector>
-#include "RTSItem.h"
+#include "RTSystemItem.h"
 
 namespace cnoid {
 

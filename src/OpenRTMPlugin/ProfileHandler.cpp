@@ -1,5 +1,5 @@
 
-#include "RTSItem.h"
+#include "RTSystemItem.h"
 #include "ProfileHandler.h"
 #include "LoggerUtil.h"
 #include <rtm/idl/RTC.hh>

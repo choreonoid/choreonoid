@@ -1,4 +1,4 @@
-#include "RTSItem.h"
+#include "RTSystemItem.h"
 #include "RTSNameServerView.h"
 #include "RTSCommonUtil.h"
 #include "RTSDiagramView.h"
@@ -1154,6 +1154,7 @@ void RTSystemItemImpl::restoreRTSystem(const Archive& archive)
     }
 
     RTSDiagramView::instance()->updateView();
+    RTSDiagramView::instance()->updateRestoredView();
 }
 
 
