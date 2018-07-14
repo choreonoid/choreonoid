@@ -482,7 +482,7 @@ void ServicePortConnectionDialog::registInterfaceMap(RTSPort* port)
     string portName = "unknown";
     //
     string name = port->name;
-    if(0<name.length()){
+    if(name.empty()==false){
         vector<string> names = RTCCommonUtil::split(name, '.');
         if(names.size() < 2){
             if(port->rtsComp!=0){

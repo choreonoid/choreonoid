@@ -36,7 +36,7 @@ string DataTypeComparer::match(string type1, string type2) {
 		ifrType = type2;
 		oldType = type1;
 	}
-	if (ifrType.length() == 0) {
+	if(ifrType.empty()) {
 		return "";
 	}
 	vector<string> ifr = RTCCommonUtil::split(ifrType, ':');
@@ -195,7 +195,7 @@ vector<string> RTCCommonUtil::getAllowList(vector<string>& source, vector<string
 				string type2 = target[idx02];
 				match = comparer.match(type1, type2);
 				DDEBUG_V("type01:%s, type02:%s, match:%s", type1.c_str(), type2.c_str(), match.c_str());
-				if (0 < match.length()) {
+				if(match.empty() == false) {
 					resultTmp.push_back(match);
 					break;
 				}
@@ -210,11 +210,11 @@ vector<string> RTCCommonUtil::getAllowList(vector<string>& source, vector<string
       for (int idx02 = 0; idx02 < resultTmp.size(); idx02++) {
         string type2 = resultTmp[idx02];
         match = comparer.match(type1, type2);
-        if (0 < match.length()) {
+        if(match.empty()==false) {
           break;
 				}
       }
-      if (match.length() == 0) {
+      if(match.empty()) {
         resultTmp.push_back(type1);
       }
 		}
@@ -255,7 +255,7 @@ bool RTCCommonUtil::isExistAny(vector<string> target) {
 }
 
 bool RTCCommonUtil::isIFR(string type) {
-	if (type.length() == 0) return false;
+	if(type.empty()) return false;
 	vector<string> ifr = split(type, ':');
 	if (ifr.size() == 3 && ifr[0] == "IDL") {
 		return true;
