@@ -21,7 +21,7 @@
 #  define CNOID_ASSIMPPLUGIN_DLLAPI
 #  define CNOID_ASSIMPPLUGIN_LOCAL
 # else
-#  ifdef CnoidAssimpPlugin_EXPORTS
+#  if defined(CnoidAssimpPlugin_EXPORTS) || defined(CnoidAssimpSceneLoader_EXPORTS)
 #   define CNOID_ASSIMPPLUGIN_DLLAPI CNOID_ASSIMPPLUGIN_DLLEXPORT
 #  else
 #   define CNOID_ASSIMPPLUGIN_DLLAPI CNOID_ASSIMPPLUGIN_DLLIMPORT

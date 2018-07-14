@@ -23,7 +23,7 @@ set(plugin_sources
   ProfileHandler.cpp
   RTSNameServerView.cpp
   RTSPropertiesView.cpp
-  RTSItem.cpp
+  RTSystemItem.cpp
   RTSDiagramView.cpp
   RTMImageView.cpp
   RTSCommonUtil.cpp
@@ -68,6 +68,12 @@ endif()
 idl_compile_cpp(idl_cpp_files idl_h_files deprecated/corba ${idl_files} LOCAL)
 
 make_gettext_mofiles(${plugin} mofiles)
+
+if(MSVC)
+  if(NOT OPENRTM_DIR)
+    find_package(OpenRTM)
+  endif()
+endif()
 
 include_directories(${OPENRTM_INCLUDE_DIRS})
 link_directories(${OPENRTM_LIBRARY_DIRS})

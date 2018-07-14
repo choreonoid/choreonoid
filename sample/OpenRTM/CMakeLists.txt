@@ -5,6 +5,12 @@ elseif(NOT BUILD_OPENRTM_PLUGIN)
   message(FATAL_ERROR "OpenRTM samples need to build OpenRTMPlugin.")
 endif()
 
+if(MSVC)
+  if(NOT OPENRTM_DIR)
+    find_package(OpenRTM)
+  endif()
+endif()
+
 include_directories(${OPENRTM_INCLUDE_DIRS})
 link_directories(${OPENRTM_LIBRARY_DIRS})
 if(WIN32)
