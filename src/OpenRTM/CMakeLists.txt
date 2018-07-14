@@ -1,3 +1,4 @@
+option(BUILD_OPENRTM_PLUGIN "Building OpenRTMPlugin" OFF)
 if(NOT BUILD_OPENRTM_PLUGIN)
   return()
 elseif(NOT (ENABLE_CORBA AND BUILD_CORBA_PLUGIN))
@@ -10,7 +11,6 @@ link_directories(${OPENRTM_LIBRARY_DIRS})
 
 if(MSVC)
   add_compile_options(${OPENRTM_CFLAGS})
-  add_definitions(-DRTC_CORBA_CXXMAPPING11)
 endif()
 
 # BodyIoRTC
@@ -30,7 +30,7 @@ function(add_cnoid_body_io_rtc)
   target_link_libraries(${target} CnoidBodyIoRTC)
   
   if(MSVC)
-    add_definitions(-DRTC_CORBA_CXXMAPPING11)
+    add_compile_options(${OPENRTM_CFLAGS})
   endif()
 
   set_target_properties(${target} PROPERTIES

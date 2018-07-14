@@ -1,4 +1,3 @@
-option(BUILD_OPENRTM_PLUGIN "Building OpenRTMPlugin" OFF)
 if(NOT BUILD_OPENRTM_PLUGIN)
   return()
 endif()
@@ -52,7 +51,12 @@ if(USE_BUILTIN_CAMERA_IMAGE_IDL)
   list(APPEND OPENRTM_DEFINITIONS -DUSE_BUILTIN_CAMERA_IMAGE_IDL)
   set(idl_files ${idl_files} CameraImage)
 else()
-  set(OPENRTM_LIBRARIES ${OPENRTM_LIBRARIES} rtmCamera)
+  if(MSVC)
+    set(OPENRTM_CAMERA_LIBRARY optimized;rtmCamera112_vc14_x64 debug;rtmCamera112_vc14_x64d)
+  else()
+    set(OPENRTM_CAMERA_LIBRARY rtmCamera)
+  endif()
+  set(OPENRTM_LIBRARIES ${OPENRTM_LIBRARIES} ${OPENRTM_CAMERA_LIBRARY})
 endif()
 
 idl_compile_cpp(idl_cpp_files idl_h_files deprecated/corba ${idl_files} LOCAL)
@@ -64,9 +68,6 @@ add_definitions(${OPENRTM_DEFINITIONS})
 
 if(MSVC)
   add_compile_options(${OPENRTM_CFLAGS})
-  add_definitions(
-    -D__WIN32__ -D__x86__ -D__NT__ -D__OSVERSION__=4
-    -D_CRT_SECURE_NO_DEPRECATE -D_WIN32_WINNT=0x0500 -DRTC_CORBA_CXXMAPPING11)
 endif()
 
 add_cnoid_plugin(${plugin} SHARED
