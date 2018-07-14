@@ -14,7 +14,7 @@
 #include "RTSDiagramView.h"
 #include "RTSConfigurationView.h"
 #include "RTMImageView.h"
-#include "RTSItem.h"
+#include "RTSystemItem.h"
 #include "VisionSensorSubscriberRTCItem.h"
 #include "deprecated/BodyRTCItem.h"
 #include "deprecated/ChoreonoidExecutionContext.h"
@@ -76,7 +76,9 @@ public:
         require("Corba");
         precede("Corba");
         
+#ifdef LOG_OUT
         LoggerUtil::startLog(LogLevel::LOG_DEBUG, "Log");
+#endif
     }
 
     template<typename ExecutionContextType>
@@ -137,7 +139,10 @@ public:
 #ifdef OPENRTM_VERSION11
         int numArgs = 16;
 #else
-        int numArgs = 15;
+//TODO GA
+//        int numArgs = 15;
+        int numArgs = 16;
+//TODO GA
 #endif
 #else
         int numArgs = 13;
