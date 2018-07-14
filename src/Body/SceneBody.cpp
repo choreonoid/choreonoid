@@ -18,6 +18,7 @@ class LinkShapeGroup : public SgGroup
 public:
     SgNodePtr visualShape;
     SgNodePtr collisionShape;
+    ScopedConnection collisionShapeUpdateConnection;
     bool isVisible;
     bool hasClone;
     
@@ -29,6 +30,7 @@ public:
             addChild(visualShape);
         }
         collisionShape = link->collisionShape();
+        resetCollisionShapeUpdateConnection();
 
         isVisible = true;
         hasClone = false;
@@ -55,8 +57,23 @@ public:
                     collisionShape = collisionShape->cloneNode(cloneMap);
                 }
             }
+            resetCollisionShapeUpdateConnection();
             hasClone = true;
             notifyUpdate(SgUpdate::REMOVED | SgUpdate::ADDED);
+        }
+    }
+
+    void resetCollisionShapeUpdateConnection()
+    {
+        if(collisionShape && collisionShape != visualShape){
+            collisionShapeUpdateConnection.reset(
+                collisionShape->sigUpdated().connect(
+                    [this](const SgUpdate& u){
+                        SgUpdate update(u);
+                        notifyUpdate(update);
+                    }));
+        } else {
+            collisionShapeUpdateConnection.disconnect();
         }
     }
 

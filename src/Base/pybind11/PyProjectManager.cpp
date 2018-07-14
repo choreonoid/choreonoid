@@ -23,8 +23,7 @@ void exportPyProjectManager(py::module m)
         .def("setCurrentProjectName", &ProjectManager::setCurrentProjectName)
 
         // deprecated
-        .def_static(
-            "getInstance", [](py::object){ return ProjectManager::instance(); }, py::return_value_policy::reference)
+        .def_static("getInstance", &ProjectManager::instance, py::return_value_policy::reference)
         ;
 }
 

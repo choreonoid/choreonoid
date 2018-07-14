@@ -82,8 +82,7 @@ void exportPyToolBars(py::module m)
         .def("setFillLevelSync", &TimeBar::setFillLevelSync)
 
         // deprecated
-        .def_static(
-            "getInstance", [](py::object){ return TimeBar::instance(); }, py::return_value_policy::reference)
+        .def_static("getInstance", &TimeBar::instance, py::return_value_policy::reference)
         .def("getSigPlaybackInitialized", &TimeBar::sigPlaybackInitialized)
         .def("getSigPlaybackStarted", &TimeBar::sigPlaybackStarted)
         .def("getSigTimeChanged", &TimeBar::sigTimeChanged)

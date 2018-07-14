@@ -19,8 +19,7 @@ void exportPyPluginManager(py::module m)
         .def("reloadPlugin", &PluginManager::reloadPlugin)
 
         // deprecated
-        .def_static(
-            "getInstance", [](py::object){ return PluginManager::instance(); }, py::return_value_policy::reference)
+        .def_static("getInstance", &PluginManager::instance, py::return_value_policy::reference)
         ;
 }
 

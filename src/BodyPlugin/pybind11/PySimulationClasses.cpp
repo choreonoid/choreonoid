@@ -184,8 +184,7 @@ void exportSimulationClasses(py::module m)
         .def("pauseSimulation", &SimulationBar::pauseSimulation)
 
         // deprecated
-        .def_static(
-            "getInstance", [](py::object){ return SimulationBar::instance(); }, py::return_value_policy::reference)
+        .def_static("getInstance", &SimulationBar::instance, py::return_value_policy::reference)
         ;
 
     py::class_<SimpleControllerItem, SimpleControllerItemPtr, Item>(m, "SimpleControllerItem")

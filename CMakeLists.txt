@@ -851,6 +851,24 @@ if(ENABLE_CORBA)
 
 endif(ENABLE_CORBA)
 
+# OpenRTM
+if(BUILD_OPENRTM_PLUGIN)
+  find_package(OpenRTM REQUIRED CONFIG)
+  # Remove extra "-I" from elements of OPENRTM_INCLUDE_DIRS
+  set(dirs ${OPENRTM_INCLUDE_DIRS})
+  unset(OPENRTM_INCLUDE_DIRS)
+  foreach(dir ${dirs})
+    string(REGEX REPLACE "^-I" "" stripped ${dir})
+    list(APPEND OPENRTM_INCLUDE_DIRS ${stripped})
+  endforeach()
+  set(IDL_INCLUDE_DIRS ${IDL_INCLUDE_DIRS} ${OPENRTM_INCLUDE_DIRS})
+  # Check version
+  if(OPENRTM_VERSION STRLESS "1.2.0")
+    list(APPEND OPENRTM_DEFINITIONS -DOPENRTM_VERSION110)
+    list(APPEND OPENRTM_DEFINITIONS -DOPENRTM_VERSION11)
+  endif()
+endif()
+
 set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS $<$<CONFIG:Debug>:CNOID_DEBUG>)
 
 if(UNIX)

@@ -137,6 +137,10 @@ public:
     SgNode* readResource(Mapping& node);
     YAMLSceneReader::Resource readResourceNode(Mapping& node);
     YAMLSceneReader::Resource loadResource(Mapping& resourceNode, const string& uri);
+    void extractNamedYamlNodes(
+        Mapping& resourceNode, ResourceInfo* info, vector<string>& names, const string& uri, YAMLSceneReader::Resource& resource);
+    void extractNamedSceneNodes(
+        Mapping& resourceNode, ResourceInfo* info, vector<string>& names, const string& uri, YAMLSceneReader::Resource& resource);
     void decoupleResourceNode(Mapping& resourceNode, const string& uri, const string& nodeName);
     ResourceInfo* getOrCreateResourceInfo(Mapping& resourceNode, const string& uri);
     filesystem::path findFileInPackage(const string& file);
@@ -1024,17 +1028,25 @@ YAMLSceneReader::Resource YAMLSceneReaderImpl::readResourceNode(Mapping& node)
 
 YAMLSceneReader::Resource YAMLSceneReaderImpl::loadResource(Mapping& resourceNode, const string& uri)
 {
+    vector<string> names;
+    auto node = resourceNode.find("node");
+    if(node->isValid()){
+        if(node->isString()){
+            names.push_back(node->toString());
+        } else if(node->isListing()){
+            auto nodes = node->toListing();
+            for(auto& nodei : *nodes){
+                names.push_back(nodei->toString());
+            }
+        }
+    }
+    
     YAMLSceneReader::Resource resource;
-    
-    string name;
-    resourceNode.read("node", name);
-    
     ResourceInfo* resourceInfo = getOrCreateResourceInfo(resourceNode, uri);
     if(resourceInfo){
         resource.directory = resourceInfo->directory;
-        
         bool isYamlResouce = (resourceInfo->yaml != nullptr);
-        if(name.empty()){
+        if(names.empty()){
             if(isYamlResouce){
                 resource.node = resourceInfo->yaml->document();
             } else {
@@ -1042,34 +1054,73 @@ YAMLSceneReader::Resource YAMLSceneReaderImpl::loadResource(Mapping& resourceNod
             }
         } else {
             if(isYamlResouce){
-                resource.node = resourceInfo->yaml->findAnchoredNode(name);
-                if(!resource.node){
-                    resourceNode.throwException(
-                        str(format(_("Node \"%1%\" is not found in \"%2%\".")) % name % uri));
-                }
+                extractNamedYamlNodes(resourceNode, resourceInfo, names, uri, resource);
             } else {
-                unique_ptr<SceneNodeMap>& nodeMap = resourceInfo->sceneNodeMap;
-                if(!nodeMap){
-                    makeSceneNodeMap(resourceInfo);
-                }
-                auto iter = nodeMap->find(name);
-                if(iter == nodeMap->end()){
-                    resourceNode.throwException(
-                        str(format(_("Node \"%1%\" is not found in \"%2%\".")) % name % uri));
-                } else {
-                    SceneNodeInfo& nodeInfo = iter->second;
-                    if(nodeInfo.parent){
-                        nodeInfo.parent->removeChild(nodeInfo.node);
-                        nodeInfo.parent = 0;
-                        adjustNodeCoordinate(nodeInfo);
-                    }
-                    resource.scene = nodeInfo.node;
-                }
+                extractNamedSceneNodes(resourceNode, resourceInfo, names, uri, resource);
             }
         }
     }
     
     return resource;
+}
+
+
+void YAMLSceneReaderImpl::extractNamedYamlNodes
+(Mapping& resourceNode, ResourceInfo* info, vector<string>& names, const string& uri, YAMLSceneReader::Resource& resource)
+{
+    Listing* group = nullptr;
+    if(names.size() >= 2){
+        group = new Listing;
+        resource.node = group;
+    }
+    for(auto& name : names){
+        auto node = info->yaml->findAnchoredNode(name);
+        if(!node){
+            resourceNode.throwException(
+                str(format(_("Node \"%1%\" is not found in \"%2%\".")) % name % uri));
+        }
+        if(group){
+            group->append(node);
+        } else {
+            resource.node = node;
+        }
+    }
+}
+
+
+void YAMLSceneReaderImpl::extractNamedSceneNodes
+(Mapping& resourceNode, ResourceInfo* info, vector<string>& names, const string& uri, YAMLSceneReader::Resource& resource)
+{
+    unique_ptr<SceneNodeMap>& nodeMap = info->sceneNodeMap;
+    if(!nodeMap){
+        makeSceneNodeMap(info);
+    }
+
+    SgGroupPtr group;
+    if(names.size() >= 2){
+        group = new SgGroup;
+        resource.scene = group;
+    }
+
+    for(auto& name : names){
+        auto iter = nodeMap->find(name);
+        if(iter == nodeMap->end()){
+            resourceNode.throwException(
+                str(format(_("Node \"%1%\" is not found in \"%2%\".")) % name % uri));
+        } else {
+            SceneNodeInfo& nodeInfo = iter->second;
+            if(nodeInfo.parent){
+                nodeInfo.parent->removeChild(nodeInfo.node);
+                nodeInfo.parent = 0;
+                adjustNodeCoordinate(nodeInfo);
+            }
+            if(group){
+                group->addChild(nodeInfo.node);
+            } else {
+                resource.scene = nodeInfo.node;
+            }
+        }
+    }
 }
 
 
