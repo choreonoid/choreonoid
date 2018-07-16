@@ -1,4 +1,9 @@
-cmake_minimum_required(VERSION 2.8.12)
+if(MSVC)
+  cmake_minimum_required(VERSION 3.1.0) # Qt5 requies this version or later
+else()
+  cmake_minimum_required(VERSION 2.8.12)
+endif()
+
 cmake_policy(SET CMP0003 NEW)
 set(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS true)
 
@@ -359,11 +364,7 @@ endif()
 
 # boost
 set(Boost_USE_STATIC_LIBS OFF)
-set(Boost_ADDITIONAL_VERSIONS "1.56" "1.57" "1.58" "1.59" "1.60" "1.61" "1.62" "1.63" "1.64" "1.65")
-
-if(MSVC)
-  find_package(Boost 1.54.0 QUIET OPTIONAL_COMPONENTS bzip2 zlib)
-endif()
+set(Boost_ADDITIONAL_VERSIONS "1.56" "1.57" "1.58" "1.59" "1.60" "1.61" "1.62" "1.63" "1.64" "1.65" "1.66" "1.67")
 
 set(boost_packages system filesystem program_options iostreams)
 
@@ -374,21 +375,22 @@ endif()
 # Old GCC does not implement the regex library correctly
 if(CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.9.3)
   set(CNOID_USE_BOOST_REGEX ON)
+  set(boost_packages ${boost_packages} regex)
 else()
   set(CNOID_USE_BOOST_REGEX OFF)
 endif()
 
-if(CNOID_USE_BOOST_REGEX)
-  set(boost_packages ${boost_packages} regex)
+if(MSVC)
+  find_package(Boost 1.54.0 REQUIRED COMPONENTS ${boost_packages} OPTIONAL_COMPONENTS bzip2 zlib)
+else()
+  find_package(Boost 1.54.0 REQUIRED COMPONENTS ${boost_packages})
 endif()
 
-find_package(Boost 1.54.0 REQUIRED COMPONENTS ${boost_packages})
-
-if(NOT Boost_FOUND)
-  set(BOOST_ROOT ${BOOST_ROOT} CACHE PATH "set the directory of the boost root")
-  set(BOOST_LIBRARYDIR ${BOOST_LIBRARYDIR} CACHE PATH "set the directory of the boost library")
-  message(FATAL_ERROR "Boost cannot be found. Please specify the boost top directory to BOOST_ROOT.")
-endif()
+#if(NOT Boost_FOUND)
+#  set(BOOST_ROOT ${BOOST_ROOT} CACHE PATH "set the directory of the boost root")
+#  set(BOOST_LIBRARYDIR ${BOOST_LIBRARYDIR} CACHE PATH "set the directory of the boost library")
+#  message(FATAL_ERROR "Boost cannot be found. Please specify the boost top directory to BOOST_ROOT.")
+#endif()
 
 include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
@@ -421,25 +423,29 @@ endif()
 
 # eigen
 if(NOT EIGEN_DIR)
-  if(UNIX)
+  if(MSVC)
+    file(GLOB eigen_dirs "c:/local/eigen-?.?.?")
+    if(eigen_dirs)
+      list(GET eigen_dirs 0 eigen_dir)
+      message(STATUS "Found the Eigen directory: ${eigen_dir}")
+      set(EIGEN_DIR ${eigen_dir})
+    endif()
+  else(UNIX)
     pkg_check_modules(EIGEN eigen3>=3.2.7) # pybind11 requries Eigen version 3.2.7 or higher
     if(EIGEN_FOUND)
       set(EIGEN_DIR ${EIGEN_INCLUDE_DIRS})
     else()
       message(STATUS "Set Eigen 3.3.4 included in the thirdparty directory to EIGEN_DIR")
       set(EIGEN_DIR ${PROJECT_SOURCE_DIR}/thirdparty/eigen)
-      set(EIGEN_INCLUDE_DIRS ${EIGEN_DIR})
     endif()
   endif()
-else()
-  set(EIGEN_INCLUDE_DIRS ${EIGEN_DIR})
 endif()
 
 set(EIGEN_DIR ${EIGEN_DIR} CACHE PATH "The directory of the Eigen library")
-
-if(NOT EIGEN_INCLUDE_DIRS)
+if(NOT EIGEN_DIR)
   message(FATAL_ERROR "Please specify the Eigen directory to EIGEN_DIR.")
 else()
+  set(EIGEN_INCLUDE_DIRS ${EIGEN_DIR})
   include_directories(${EIGEN_INCLUDE_DIRS})
 endif()
 
@@ -455,7 +461,6 @@ if(MSVC AND INSTALL_SDK_WITH_EXTLIBS)
     endif()
   endforeach()
 endif()
-
 
 ###############
 #  Setup Qt4  #
@@ -500,10 +505,11 @@ macro(setup_qt5)
     endif()
   endif()
 
-  find_package(Qt5Core)
-  find_package(Qt5Widgets)
-  find_package(Qt5OpenGL)
-  find_package(Qt5Network)
+  file(GLOB qt_cmake_dirs "c:/Qt/5.??.?/msvc20??_??/lib/cmake")
+  find_package(Qt5Core HINTS ${qt_cmake_dirs})
+  find_package(Qt5Widgets HINTS ${qt_cmake_dirs})
+  find_package(Qt5OpenGL HINTS ${qt_cmake_dirs})
+  find_package(Qt5Network HINTS ${qt_cmake_dirs})
   if(UNIX)
     find_package(Qt5X11Extras)
     set(QT_LIBRARIES Qt5::Core Qt5::Widgets Qt5::OpenGL Qt5::Network Qt5::X11Extras)

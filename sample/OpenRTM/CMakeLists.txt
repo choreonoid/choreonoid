@@ -71,7 +71,7 @@ set(target TankJoystickControllerRTC)
 add_cnoid_sample_rtc(${target} TankJoystickControllerRTC.cpp)
 list(APPEND project_files OpenRTM-Tank.cnoid)
 
-if(NOT USE_BUILTIN_CAMERA_IMAGE_IDL)
+if(NOT MSVC AND NOT USE_BUILTIN_CAMERA_IMAGE_IDL)
   add_cnoid_body_io_rtc(VisionSensorIoRTC VisionSensorIoRTC.cpp)
   list(APPEND project_files OpenRTM-TankVisionSensors.cnoid TankVisionSystem.xml)
 endif()
