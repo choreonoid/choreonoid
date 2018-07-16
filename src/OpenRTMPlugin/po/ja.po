@@ -670,4 +670,12 @@ msgstr "コンテキストの追加に失敗しました"
 msgid "Failed to add object."
 msgstr "オブジェクトの追加に失敗しました"
 
+#: RTSystemItem.cpp:987
+msgid "State Check"
+msgstr "状態検知方法"
+
+#: RTSDiagramView.cpp:943
+msgid "Update"
+msgstr "状態更新"
+
 

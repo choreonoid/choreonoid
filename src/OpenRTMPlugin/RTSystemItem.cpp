@@ -42,6 +42,7 @@ public:
     RTSystemItem::RTSConnectionMap rtsConnections;
     int connectionNo;
     bool autoConnection;
+
     std::string vendorName;
     std::string version;
     int pollingCycle;
@@ -49,6 +50,16 @@ public:
 #ifndef OPENRTM_VERSION110
     int heartBeatPeriod;
 #endif
+
+    enum State_Detection {
+        POLLING_CHECK = 0,
+        MANUAL_CHECK,
+#ifndef OPENRTM_VERSION110
+        OBSERVER_CHECK,
+#endif
+        N_STATE_DETECTION
+    };
+    Selection stateCheck;
 
     RTSystemItemImpl(RTSystemItem* self);
     RTSystemItemImpl(RTSystemItem* self, const RTSystemItemImpl& org);
@@ -80,6 +91,11 @@ public:
     void restoreRTSComp(const string& name, const Vector2& pos,
             const vector<pair<string, bool>>& inPorts, const vector<pair<string, bool>>& outPorts);
     string getConnectionNumber();
+    void setStateCheckMethodByString(const string& value);
+
+private:
+    void setStateCheckMethod(int value);
+    void changeStateCheck();
 };
 
 }
@@ -597,6 +613,11 @@ void RTSystemItemImpl::initialize()
     vendorName = config->get("defaultVendor", "AIST");
     version = config->get("defaultVersion", "1.0.0");
     pollingCycle = config->get("pollingCycle", 500);
+    stateCheck.setSymbol(POLLING_CHECK, "Polling");
+    stateCheck.setSymbol(MANUAL_CHECK, "Manual");
+#ifndef OPENRTM_VERSION110
+    stateCheck.setSymbol(OBSERVER_CHECK, "Observer");
+#endif
 
 #ifndef OPENRTM_VERSION11
     heartBeatPeriod = config->get("heartBeatPeriod", 500);
@@ -959,10 +980,12 @@ void RTSystemItem::doPutProperties(PutPropertyFunction& putProperty)
 
 void RTSystemItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
-    DDEBUG("RTSystemItem::doPutProperties");
+    DDEBUG("RTSystemItemImpl::doPutProperties");
     putProperty(_("Auto Connection"), autoConnection, changeProperty(autoConnection));
     putProperty(_("Vendor Name"), vendorName, changeProperty(vendorName));
     putProperty(_("Version"), version, changeProperty(version));
+    putProperty(_("State Check"), stateCheck,
+                [&](int value){ setStateCheckMethod(value); return true; });
     putProperty(_("Polling Cycle"), pollingCycle, changeProperty(pollingCycle));
 
 #ifndef OPENRTM_VERSION11
@@ -970,6 +993,39 @@ void RTSystemItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 #endif
 }
 
+void RTSystemItemImpl::setStateCheckMethod(int value)
+{
+    DDEBUG_V("RTSystemItemImpl::setStateCheckMethod=%d",value);
+    stateCheck.selectIndex(value);
+    changeStateCheck();
+}
+
+void RTSystemItemImpl::setStateCheckMethodByString(const string& value)
+{
+    DDEBUG_V("RTSystemItemImpl::setStateCheckMethodByString=%s",value.c_str());
+    stateCheck.select(value);
+    DDEBUG_V("RTSystemItemImpl::setStateCheckMethodByString=%d",stateCheck.selectedIndex());
+    changeStateCheck();
+}
+
+void RTSystemItemImpl::changeStateCheck()
+{
+    int state = stateCheck.selectedIndex();
+    DDEBUG_V("RTSystemItemImpl::changeStateCheck=%d", state);
+    switch(state)
+    {
+        case MANUAL_CHECK:
+            RTSDiagramView::instance()->timerActivated(false);
+            break;
+#ifndef OPENRTM_VERSION110
+        case OBSERVER_CHECK:
+            break;
+#endif
+        default:
+            RTSDiagramView::instance()->timerActivated(true);
+            break;
+    }
+}
 
 bool RTSystemItem::loadRtsProfile(const string& filename)
 {
@@ -1022,6 +1078,10 @@ void RTSystemItem::setVersion(const std::string& version)
     impl->version = version;
 }
 
+int RTSystemItem::stateCheck() const
+{
+    return impl->stateCheck.selectedIndex();
+}
 
 struct ConnectorPropComparator {
 	string target_;
@@ -1043,6 +1103,7 @@ bool RTSystemItem::store(Archive& archive)
 
         archive.write("AutoConnection", impl->autoConnection);
         archive.write("PollingCycle", impl->pollingCycle);
+        archive.write("StateCheck", impl->stateCheck.selectedSymbol());
 
 #ifndef OPENRTM_VERSION11
         archive.write("HeartBeatPeriod", impl->heartBeatPeriod);
@@ -1080,6 +1141,13 @@ bool RTSystemItem::restore(const Archive& archive)
         archive.addPostProcess( [&](){ impl->restoreRTSystem(archive); });
     }
     
+    string stateCheck;
+    if(archive.read("StateCheck", stateCheck)) {
+        DDEBUG_V("StateCheck:%s", stateCheck.c_str());
+        impl->setStateCheckMethodByString(stateCheck);
+        //archive.addPostProcess( [this, stateCheck](){ impl->setStateCheckMethodByString(stateCheck); });
+    }
+
     return true;
 }
 

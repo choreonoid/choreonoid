@@ -186,6 +186,7 @@ public:
     int pollingCycle() const;
     void setVendorName(const std::string& name);
     void setVersion(const std::string& version);
+    int stateCheck() const;
 
 protected :
     virtual Item* doDuplicate() const override;

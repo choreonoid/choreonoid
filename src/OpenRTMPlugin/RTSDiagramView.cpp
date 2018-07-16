@@ -897,6 +897,9 @@ void RTSDiagramViewImpl::mousePressEvent(QMouseEvent* event)
                 return;
             }
         } else {
+            for( QGraphicsItem* item : scene.items() ) {
+              item->setSelected(false);
+            }
             setDragMode(DragMode::ScrollHandDrag);
         }
         QGraphicsView::mousePressEvent(event);
@@ -934,6 +937,16 @@ void RTSDiagramViewImpl::mousePressEvent(QMouseEvent* event)
                 ->sigTriggered().connect(std::bind(&RTSDiagramViewImpl::deleteSelectedRTSItem, this));
 
             menuManager.popupMenu()->popup(event->globalPos());
+
+        } else {
+          if(currentRTSItem->stateCheck()==1)
+          {
+            menuManager.setNewPopupMenu(this);
+            menuManager.addItem(_("Update"))
+                ->sigTriggered().connect(std::bind(&RTSDiagramViewImpl::onTime, this));
+
+            menuManager.popupMenu()->popup(event->globalPos());
+          }
         }
     }
 }
@@ -1333,6 +1346,7 @@ void RTSDiagramViewImpl::createConnectionGItem
 
 void RTSDiagramViewImpl::onTime()
 {
+    DDEBUG("RTSDiagramViewImpl::onTime");
     if(!currentRTSItem){
         return;
     }
@@ -1648,6 +1662,10 @@ void RTSDiagramView::updateSetting()
     impl->updateSetting();
 }
 
+void RTSDiagramView::timerActivated(bool on)
+{
+    impl->onActivated(on);
+}
 
 bool RTSDiagramView::storeState(Archive& archive)
 {
