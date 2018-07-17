@@ -54,7 +54,6 @@ foreach(version ${versions})
   set(headers
     OpenHRPControllerBase.h
     )
-  make_headers_public(OpenHRPControllerBase.h)
 
   set(target CnoidOpenHRP${version})
 

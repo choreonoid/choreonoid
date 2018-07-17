@@ -1,4 +1,3 @@
-
 if(NOT ENABLE_GUI)
   return()
 endif()
@@ -12,4 +11,4 @@ if(BUILD_HELLO_WORLD_SAMPLE)
   apply_common_setting_for_plugin(${target})
 endif()
 
-install_sample_source(HelloWorldPlugin.cpp)
+#install_sample_source(HelloWorldPlugin.cpp)

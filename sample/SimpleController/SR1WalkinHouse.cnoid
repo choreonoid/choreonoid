@@ -1,4 +1,4 @@
-optionalPlugins: [ ODE, Bullet, PhysX, AgX ]
+optionalPlugins: [ ODE, Bullet, PhysX ]
 
 items: 
   id: 0
@@ -155,31 +155,6 @@ items:
                 2Dmode: false
                 UseWorldItem'sCollisionDetector: false
                 velocityMode: false
-            - 
-              id: 10
-              name: "AgXSimulator"
-              plugin: AgX
-              class: AgXSimulatorItem
-              data: 
-                realtimeSync: true
-                recording: "full"
-                timeRangeMode: "Time bar range"
-                timeLength: 27
-                allLinkPositionOutputMode: false
-                deviceStateOutput: true
-                controllerThreads: true
-                recordCollisionData: false
-                controllerOptions: ""
-                dynamicsMode: Forward dynamics
-                gravity: [ 0, 0, -9.80665 ]
-                friction: 0.5
-                restitution: 0.1
-                frictionModelType: Iterative Projected
-                frictionSolveType: Direct
-                numThreads: 1
-                contactReductionMode: Geometry
-                contactReductionBinResolution: 2
-                contactReductionThreshold: 4
     - 
       id: 11
       name: "vase"

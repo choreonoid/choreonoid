@@ -34,7 +34,6 @@ set(headers
   PoseSeqItem.h
   BodyMotionGenerationBar.h
   exportdecl.h
-  gettext.h
   )
 
 QTX_ADD_RESOURCES(RC_SRCS PoseSeqPlugin.qrc)

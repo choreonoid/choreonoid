@@ -76,7 +76,7 @@ public:
         require("Corba");
         precede("Corba");
         
-        LoggerUtil::startLog(LogLevel::LOG_DEBUG, "Log");
+        //LoggerUtil::startLog(LogLevel::LOG_DEBUG, "Log");
     }
 
     template<typename ExecutionContextType>

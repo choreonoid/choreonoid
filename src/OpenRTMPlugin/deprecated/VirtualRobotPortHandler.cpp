@@ -5,6 +5,19 @@
 
 #include "VirtualRobotPortHandler.h"
 #include "BodyRTCItem.h"
+
+#include <deprecated/corba/PointCloud.hh>
+
+#ifdef USE_BUILTIN_CAMERA_IMAGE_IDL
+# include <deprecated/corba/CameraImage.hh>
+#else
+# ifdef WIN32
+#  include <rtm/idl/CameraCommonInterface.hh>
+# else
+#  include <rtm/ext/CameraCommonInterface.hh>
+# endif
+#endif
+
 #include <cnoid/EigenUtil>
 #include <cnoid/DyBody>
 #include <cnoid/Light>
@@ -13,19 +26,40 @@ using namespace std;
 using namespace RTC;
 using namespace cnoid;
 
+
+PortHandler::PortHandler(PortInfo& info)
+    : portName(info.portName)
+{
+
+} 
+
+
 PortHandler::~PortHandler()
 {
 
 }
 
 
-SensorStateOutPortHandler::SensorStateOutPortHandler(PortInfo& info) : 
-    OutPortHandler(info), 
-    outPort(info.portName.c_str(), values)
+OutPortHandler::OutPortHandler(PortInfo& info, bool synchContorller) 
+    : PortHandler(info), synchController(synchContorller)
 {
-    dataTypeId = info.dataTypeId;
     stepTime = info.stepTime;
 }
+
+
+SensorStateOutPortHandler::SensorStateOutPortHandler(PortInfo& info)
+    : OutPortHandler(info), 
+      outPort(info.portName.c_str(), values)
+{
+    dataTypeId = info.dataTypeId;
+}
+
+
+RTC::OutPortBase& SensorStateOutPortHandler::getOutPort()
+{
+    return outPort;
+}
+
 
 void SensorStateOutPortHandler::inputDataFromSimulator(BodyRTCItem* bodyRTC)
 {
@@ -94,19 +128,25 @@ void SensorStateOutPortHandler::inputDataFromSimulator(BodyRTCItem* bodyRTC)
     setTime(values, bodyRTC->controlTime());
 }
 
+
 void SensorStateOutPortHandler::writeDataToPort()
 {
     outPort.write();
 }
 
 
-LinkDataOutPortHandler::LinkDataOutPortHandler(PortInfo& info) :
-    OutPortHandler(info),
-    outPort(info.portName.c_str(), value),
-    linkNames(info.dataOwnerNames)
+LinkDataOutPortHandler::LinkDataOutPortHandler(PortInfo& info)
+    : OutPortHandler(info),
+      outPort(info.portName.c_str(), value),
+      linkNames(info.dataOwnerNames)
 {
     linkDataType = info.dataTypeId;
-    stepTime = info.stepTime;
+}
+
+
+RTC::OutPortBase& LinkDataOutPortHandler::getOutPort()
+{
+    return outPort;
 }
 
 
@@ -210,18 +250,25 @@ void LinkDataOutPortHandler::inputDataFromSimulator(BodyRTCItem* bodyRTC)
     setTime(value, bodyRTC->controlTime());
 }
 
+
 void LinkDataOutPortHandler::writeDataToPort()
 {
     outPort.write();
 }
 
-AbsTransformOutPortHandler::AbsTransformOutPortHandler(PortInfo& info) :
-    OutPortHandler(info),
-    outPort(info.portName.c_str(), value),
-    linkNames(info.dataOwnerNames)
+
+AbsTransformOutPortHandler::AbsTransformOutPortHandler(PortInfo& info)
+    : OutPortHandler(info),
+      outPort(info.portName.c_str(), value),
+      linkNames(info.dataOwnerNames)
 {
     linkDataType = info.dataTypeId;
-    stepTime = info.stepTime;
+}
+
+
+RTC::OutPortBase& AbsTransformOutPortHandler::getOutPort()
+{
+    return outPort;
 }
 
 
@@ -246,12 +293,18 @@ void AbsTransformOutPortHandler::writeDataToPort()
 }
 
 
-SensorDataOutPortHandler::SensorDataOutPortHandler(PortInfo& info) :
-    OutPortHandler(info),
-    outPort(info.portName.c_str(), value),
-    sensorNames(info.dataOwnerNames)
+SensorDataOutPortHandler::SensorDataOutPortHandler(PortInfo& info)
+    : OutPortHandler(info),
+      outPort(info.portName.c_str(), value),
+      sensorNames(info.dataOwnerNames)
 {
-    stepTime = info.stepTime;
+
+}
+
+
+RTC::OutPortBase& SensorDataOutPortHandler::getOutPort()
+{
+    return outPort;
 }
 
 
@@ -274,18 +327,25 @@ void SensorDataOutPortHandler::inputDataFromSimulator(BodyRTCItem* bodyRTC)
     setTime(value, bodyRTC->controlTime());
 }
 
+
 void SensorDataOutPortHandler::writeDataToPort()
 {
     outPort.write();
 }
 
 
-GyroSensorOutPortHandler::GyroSensorOutPortHandler(PortInfo& info) :
-    OutPortHandler(info),
-    outPort(info.portName.c_str(), value),
-    sensorNames(info.dataOwnerNames)
+GyroSensorOutPortHandler::GyroSensorOutPortHandler(PortInfo& info)
+    : OutPortHandler(info),
+      outPort(info.portName.c_str(), value),
+      sensorNames(info.dataOwnerNames)
 {
-    stepTime = info.stepTime;
+
+}
+
+
+RTC::OutPortBase& GyroSensorOutPortHandler::getOutPort()
+{
+    return outPort;
 }
 
 
@@ -308,12 +368,18 @@ void GyroSensorOutPortHandler::writeDataToPort()
 }
 
 
-AccelerationSensorOutPortHandler::AccelerationSensorOutPortHandler(PortInfo& info) :
-    OutPortHandler(info),
-    outPort(info.portName.c_str(), value),
-    sensorNames(info.dataOwnerNames)
+AccelerationSensorOutPortHandler::AccelerationSensorOutPortHandler(PortInfo& info)
+    : OutPortHandler(info),
+      outPort(info.portName.c_str(), value),
+      sensorNames(info.dataOwnerNames)
 {
-    stepTime = info.stepTime;
+
+}
+
+
+RTC::OutPortBase& AccelerationSensorOutPortHandler::getOutPort()
+{
+    return outPort;
 }
 
 
@@ -336,12 +402,18 @@ void AccelerationSensorOutPortHandler::writeDataToPort()
 }
 
 
-LightOnOutPortHandler::LightOnOutPortHandler(PortInfo& info) :
-    OutPortHandler(info),
-    outPort(info.portName.c_str(), value),
-    lightNames(info.dataOwnerNames)
+LightOnOutPortHandler::LightOnOutPortHandler(PortInfo& info)
+    : OutPortHandler(info),
+      outPort(info.portName.c_str(), value),
+      lightNames(info.dataOwnerNames)
 {
-    stepTime = info.stepTime;
+
+}
+
+
+RTC::OutPortBase& LightOnOutPortHandler::getOutPort()
+{
+    return outPort;
 }
 
 
@@ -358,27 +430,68 @@ void LightOnOutPortHandler::inputDataFromSimulator(BodyRTCItem* bodyRTC)
     setTime(value, bodyRTC->controlTime());
 }
 
+
 void LightOnOutPortHandler::writeDataToPort()
 {
     outPort.write();
 }
 
 
-CameraImageOutPortHandler::CameraImageOutPortHandler(PortInfo& info, bool synchController) :
-    OutPortHandler(info),
-    outPort(info.portName.c_str(), value)
-{
-    stepTime = info.stepTime;
-    if(!info.dataOwnerNames.empty())
-        cameraName = info.dataOwnerNames.at(0);
-    else
-        cameraName.clear();
+namespace cnoid {
 
+class CameraImageOutPortHandlerImpl
+{
+public:
+    CameraImageOutPortHandler* self;
+    Img::TimedCameraImage value;
+    RTC::OutPort<Img::TimedCameraImage> outPort;
+    std::mutex mtx;
+    Camera* camera;
+    std::string cameraName;
+    std::shared_ptr<const Image> prevImage;
+    double controlTime;
+
+    CameraImageOutPortHandlerImpl(CameraImageOutPortHandler* self, PortInfo& info, bool synchController);
+    void initialize(Body* simBody);
+    void onCameraStateChanged();
+};
+
+}
+
+
+CameraImageOutPortHandler::CameraImageOutPortHandler(PortInfo& info, bool synchController)
+    : OutPortHandler(info)
+{
+    impl = new CameraImageOutPortHandlerImpl(this, info, synchController);
+}
+
+
+CameraImageOutPortHandlerImpl::CameraImageOutPortHandlerImpl(CameraImageOutPortHandler* self, PortInfo& info, bool synchController)
+    : self(self),
+      outPort(info.portName.c_str(), value)
+{
+    if(!info.dataOwnerNames.empty()){
+        cameraName = info.dataOwnerNames.at(0);
+    } else {
+        cameraName.clear();
+    }
     value.data.image.format = Img::CF_UNKNOWN;
 }
 
 
+RTC::OutPortBase& CameraImageOutPortHandler::getOutPort()
+{
+    return impl->outPort;
+}
+
+
 void CameraImageOutPortHandler::initialize(Body* simBody)
+{
+    impl->initialize(simBody);
+}
+
+
+void CameraImageOutPortHandlerImpl::initialize(Body* simBody)
 {
     camera = 0;
     if(!cameraName.empty()){
@@ -411,12 +524,12 @@ void CameraImageOutPortHandler::initialize(Body* simBody)
             for(int j=0; j<4; j++)
                 value.data.extrinsic[i][j] = i==j? 1.0: 0.0;
 
-        camera->sigStateChanged().connect(std::bind(&CameraImageOutPortHandler::onCameraStateChanged, this));
+        camera->sigStateChanged().connect(std::bind(&CameraImageOutPortHandlerImpl::onCameraStateChanged, this));
     }
 }
 
 
-void CameraImageOutPortHandler::onCameraStateChanged()
+void CameraImageOutPortHandlerImpl::onCameraStateChanged()
 {
     if(camera->sharedImage() != prevImage){
         const Image& image = camera->constImage();
@@ -440,7 +553,7 @@ void CameraImageOutPortHandler::onCameraStateChanged()
         }
         prevImage = camera->sharedImage();
         std::lock_guard<std::mutex> lock(mtx);
-        setTime(value, controlTime - camera->delay());
+        self->setTime(value, controlTime - camera->delay());
         outPort.write();
     }
 }
@@ -448,8 +561,8 @@ void CameraImageOutPortHandler::onCameraStateChanged()
 
 void CameraImageOutPortHandler::inputDataFromSimulator(BodyRTCItem* bodyRTC)
 {
-    std::lock_guard<std::mutex> lock(mtx);
-    controlTime = bodyRTC->controlTime();
+    std::lock_guard<std::mutex> lock(impl->mtx);
+    impl->controlTime = bodyRTC->controlTime();
 }
 
 
@@ -459,20 +572,71 @@ void CameraImageOutPortHandler::writeDataToPort()
 }
 
 
-CameraRangeOutPortHandler::CameraRangeOutPortHandler(PortInfo& info, bool synchController) :
-    OutPortHandler(info),
-    outPort(info.portName.c_str(), value)
+namespace cnoid {
+
+class CameraRangeOutPortHandlerImpl
 {
-    stepTime = info.stepTime;
-    if(!info.dataOwnerNames.empty())
-        rangeCameraName = info.dataOwnerNames.at(0);
-    else
-        rangeCameraName.clear();
+public:
+    CameraRangeOutPortHandler* self;
+    PointCloudTypes::PointCloud value;
+    RTC::OutPort<PointCloudTypes::PointCloud> outPort;
+    std::mutex mtx;
+    RangeCamera* rangeCamera;
+    std::string rangeCameraName;
+    std::shared_ptr<const RangeCamera::PointData> prevPoints;
+    std::shared_ptr<const Image> image;
+    std::string format;
+    double controlTime;
+
+    CameraRangeOutPortHandlerImpl(CameraRangeOutPortHandler* self, PortInfo& info, bool synchController);
+    void initialize(Body* simBody);
+    void onCameraStateChanged();
+};
+
 }
+
+
+CameraRangeOutPortHandler::CameraRangeOutPortHandler(PortInfo& info, bool synchController)
+    : OutPortHandler(info)
+{
+    impl = new CameraRangeOutPortHandlerImpl(this, info, synchController);
+}
+
+
+CameraRangeOutPortHandlerImpl::CameraRangeOutPortHandlerImpl
+(CameraRangeOutPortHandler* self, PortInfo& info, bool synchController)
+    : self(self),
+      outPort(info.portName.c_str(), value)
+{
+    if(!info.dataOwnerNames.empty()){
+        rangeCameraName = info.dataOwnerNames.at(0);
+    } else { 
+        rangeCameraName.clear();
+    }
+}
+
+
+CameraRangeOutPortHandler::~CameraRangeOutPortHandler()
+{
+    delete impl;
+}
+
+
+RTC::OutPortBase& CameraRangeOutPortHandler::getOutPort()
+{
+    return impl->outPort;
+}
+
 
 void CameraRangeOutPortHandler::initialize(Body* simBody)
 {
-    rangeCamera = 0;
+    impl->initialize(simBody);
+}
+
+
+void CameraRangeOutPortHandlerImpl::initialize(Body* simBody)
+{
+    rangeCamera = nullptr;
     if(!rangeCameraName.empty()){
         rangeCamera = simBody->findDevice<RangeCamera>(rangeCameraName);
     }else{
@@ -530,13 +694,12 @@ void CameraRangeOutPortHandler::initialize(Body* simBody)
         value.is_bigendian = false;
         value.is_dense = true;
         
-        rangeCamera->sigStateChanged().connect(std::bind(&CameraRangeOutPortHandler::onCameraStateChanged, this));
+        rangeCamera->sigStateChanged().connect(std::bind(&CameraRangeOutPortHandlerImpl::onCameraStateChanged, this));
     }
-
 }
 
 
-void CameraRangeOutPortHandler::onCameraStateChanged()
+void CameraRangeOutPortHandlerImpl::onCameraStateChanged()
 {
     if(rangeCamera->sharedPoints() != prevPoints){
         const vector<Vector3f>& points = rangeCamera->constPoints(); 
@@ -578,7 +741,7 @@ void CameraRangeOutPortHandler::onCameraStateChanged()
 
         prevPoints = rangeCamera->sharedPoints();
         std::lock_guard<std::mutex> lock(mtx);
-        setTime(value, controlTime - rangeCamera->delay());
+        self->setTime(value, controlTime - rangeCamera->delay());
         outPort.write();
     }
 }
@@ -586,9 +749,10 @@ void CameraRangeOutPortHandler::onCameraStateChanged()
 
 void CameraRangeOutPortHandler::inputDataFromSimulator(BodyRTCItem* bodyRTC)
 {
-    std::lock_guard<std::mutex> lock(mtx);
-    controlTime = bodyRTC->controlTime();
+    std::lock_guard<std::mutex> lock(impl->mtx);
+    impl->controlTime = bodyRTC->controlTime();
 }
+
 
 void CameraRangeOutPortHandler::writeDataToPort()
 {
@@ -600,11 +764,16 @@ RangeSensorOutPortHandler::RangeSensorOutPortHandler(PortInfo& info, bool synchC
     OutPortHandler(info),
     outPort(info.portName.c_str(), value)
 {
-    stepTime = info.stepTime;
     if(!info.dataOwnerNames.empty())
         rangeSensorName = info.dataOwnerNames.at(0);
     else
         rangeSensorName.clear();
+}
+
+
+RTC::OutPortBase& RangeSensorOutPortHandler::getOutPort()
+{
+    return outPort;
 }
 
 
