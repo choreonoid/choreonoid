@@ -26,11 +26,4 @@ qrc_*.cxx
 /share/icon/
 /share/locale
 /Doxyfile
-gettext.h
 messages.pot
-
-
-
-
-
-
