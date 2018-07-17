@@ -5,11 +5,7 @@ endif()
 add_cnoid_simple_controller(Arm2dofController Arm2dofController.cpp)
 
 set(models
-  arm_2dof.yaml
-  arm_2dof.wrl
   arm_2dof.body
-  breakWall.yaml
-  breakWall.wrl
   breakWall.body
   )
 
