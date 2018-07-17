@@ -51,7 +51,7 @@ items:
               data: 
                 isNoDelayMode: true
                 controllerOptions: ""
-                controller: "AizuSpiderController.so"
+                controller: "AizuSpiderController"
                 baseDirectory: "Controller directory"
                 reloading: true
               children: 
@@ -63,7 +63,7 @@ items:
                   data: 
                     isNoDelayMode: true
                     controllerOptions: ""
-                    controller: "Jaco2Controller.so"
+                    controller: "Jaco2Controller"
                     baseDirectory: "Controller directory"
                     reloading: true
                 - 
@@ -74,7 +74,7 @@ items:
                   data: 
                     isNoDelayMode: true
                     controllerOptions: ""
-                    controller: "RemoteJoystickInputController.so"
+                    controller: "RemoteJoystickInputController"
                     baseDirectory: "Controller directory"
                     reloading: false
             - 
@@ -85,7 +85,7 @@ items:
               data: 
                 isNoDelayMode: true
                 controllerOptions: ""
-                module: "VisionSensorIoRTC.so"
+                module: "VisionSensorIoRTC"
                 baseDirectory: "RTC directory"
                 instanceName: ""
                 periodicRate: 0

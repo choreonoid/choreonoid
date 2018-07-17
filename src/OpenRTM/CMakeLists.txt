@@ -27,7 +27,7 @@ function(add_cnoid_body_io_rtc)
   list(REMOVE_AT ARGV 0)
 
   add_library(${target} SHARED ${ARGV})
-  target_link_libraries(${target} CnoidBodyIoRTC)
+  target_link_libraries(${target} CnoidBodyIoRTC ${OPENRTM_CAMERA_LIBRARY})
   
   if(MSVC)
     add_compile_options(${OPENRTM_CFLAGS})

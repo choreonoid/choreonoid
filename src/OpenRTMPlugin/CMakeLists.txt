@@ -46,16 +46,9 @@ set(plugin_sources ${plugin_sources} ${qtsources})
 
 set(idl_files PointCloud)
 
-option(USE_BUILTIN_CAMERA_IMAGE_IDL "Enable this option when you run hrpsys-base on Choreonoid" OFF)
 if(USE_BUILTIN_CAMERA_IMAGE_IDL)
-  list(APPEND OPENRTM_DEFINITIONS -DUSE_BUILTIN_CAMERA_IMAGE_IDL)
   set(idl_files ${idl_files} CameraImage)
 else()
-  if(MSVC)
-    set(OPENRTM_CAMERA_LIBRARY optimized;rtmCamera112_vc14_x64 debug;rtmCamera112_vc14_x64d)
-  else()
-    set(OPENRTM_CAMERA_LIBRARY rtmCamera)
-  endif()
   set(OPENRTM_LIBRARIES ${OPENRTM_LIBRARIES} ${OPENRTM_CAMERA_LIBRARY})
 endif()
 
