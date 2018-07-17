@@ -602,6 +602,22 @@ if(ENABLE_GUI)
 
 endif()
 
+# Assimp
+if(MSVC AND (NOT DEFINED ENABLE_ASSIMP))
+  file(GLOB assimp_dirs "c:/local/assimp-?.?/lib/cmake/assimp-?.?")
+  find_package(ASSIMP 3.2 HINTS ${assimp_dirs})
+else()
+  find_package(ASSIMP 3.2)
+endif()
+option(ENABLE_ASSIMP "Enable Assimp functions" ${ASSIMP_FOUND})
+if(NOT ASSIMP_FOUND)
+  message(FATAL_ERROR "Please specify the directory of the ASSIMP library to ASSIMP_DIR.")
+endif()
+if(MSVC)
+  if(INSTALL_RUNTIME_DEPENDENCIES)
+    install(PROGRAMS  ${ASSIMP_DIR}/bin/${ASSIMP_LIBRARIES}.dll DESTINATION bin CONFIGURATIONS Release Debug)
+  endif()
+endif()
 
 # CORBA, omniORB
 option(ENABLE_CORBA "Enable CORBA related modules / plugins" OFF)
