@@ -1,4 +1,4 @@
-optionalPlugins: [ ODE, Bullet, PhysX, AgX ]
+optionalPlugins: [ ODE, Bullet, PhysX ]
 
 items: 
   id: 0

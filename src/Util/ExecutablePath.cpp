@@ -5,7 +5,6 @@
 
 #include "ExecutablePath.h"
 #include "FileUtil.h"
-#include "Config.h"
 
 #ifdef _WIN32
 #include <windows.h>

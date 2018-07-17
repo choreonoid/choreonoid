@@ -1,1 +1,1 @@
-#include "src/AssimpPlugin/AssimpSceneLoader.h"
+#include "src/AssimpSceneLoader/AssimpSceneLoader.h"

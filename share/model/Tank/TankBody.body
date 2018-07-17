@@ -18,7 +18,7 @@ links:
       -
         type: Visual
         resource:
-          uri: "resource/tank.dae"
+          uri: "resource/tank.wrl"
           node: CHASSIS 
       -
         type: Collision
@@ -75,7 +75,7 @@ links:
       -
         type: Visual
         resource:
-          uri: "resource/tank.dae"
+          uri: "resource/tank.wrl"
           node: TURRET_Y
       -
         type: Collision
@@ -215,7 +215,7 @@ links:
       -
         type: Visual
         resource:
-          uri: "resource/tank.dae"
+          uri: "resource/tank.wrl"
           node: TURRET_P
       -
         type: Collision

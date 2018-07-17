@@ -19,7 +19,7 @@ links:
         elements:
           -
             type: Shape
-            translation: [ -0.260795, 0.0, -0.1280215 ]
+            translation: [ -0.260795, 0.0, -0.128032 ]
             geometry: { type: Box, size: [ 0.11, 0.09, 0.05 ] }
           -
             type: Shape
@@ -30,7 +30,7 @@ links:
             type: Shape
             rotation: [ 0, 0, 1, 90 ]
             translation: [ -0.11, 0.0, 0.0365294 ]
-            geometry: { type: Cylinder, height: 0.45, radius: 0.043 }
+            geometry: { type: Cylinder, height: 0.45, radius: 0.045 }
           -
             type: Shape
             translation: [ 0.135, 0.0, 0.03652939 ]
@@ -38,60 +38,62 @@ links:
           - 
             type: Shape
             rotation: [ 0, 0, 1, 90 ]
-            translation: [ -0.162, 0.0, 0.138 ]
-            geometry: { type: Capsule, height: 0.133, radius: 0.015 }
+            translation: [ -0.08004, 0.0, 0.1715 ]
+            geometry: { type: Cylinder, height: 0.03, radius: 0.015 }
           - 
             type: Shape
-            rotation: [ [ 0, 0, 1, 90 ], [ 1, 0, 0, -43.3 ] ]
-            translation: [ -0.256, 0.0, 0.113 ]
-            geometry: { type: Capsule, height: 0.071, radius: 0.015 }
+            rotation: [ 0, 0, 1, 90 ]
+            translation: [ -0.148, 0.0, 0.1715 ]
+            geometry: { type: Capsule, height: 0.136, radius: 0.015 }
+          - 
+            type: Shape
+            rotation: [ [ 0, 0, 1, 90 ], [ 1, 0, 0, -30 ] ]
+            translation: [ -0.247, 0.0, 0.1531]
+            geometry: { type:  Capsule, height: 0.0744, radius: 0.015 }
           - 
             type: Shape
             rotation: [ 1, 0, 0, 90 ]
-            translation: [ -0.283, 0.0, 0.07 ]
-            geometry: { type: Capsule, height: 0.03, radius: 0.015 }
+            translation: [ -0.28, 0.0, 0.104 ]
+            geometry: { type: Capsule, height: 0.06, radius: 0.015 }
           - 
             type: Transform
-            translation: [ 0.0277, 0.0, 0.0 ]
+            translation: [ 0.06, 0.0, 0.00 ]
             elements: 
               -
                 type: Shape
-                translation: [ 0.0, 0.0, 0.12645 ]
-                geometry: { type: Capsule, height: 0.09, radius: 0.015 }
+                translation: [ 0.0, -0.0005, 0.16925 ]
+                geometry: { type: Capsule, height: 0.077, radius: 0.015 }
               -
                 type: Shape
-                translation: [ 0.0, 0.065, 0.115 ]
-                rotation: [ 1, 0, 0, -30 ]
-                geometry: { type: Capsule, height: 0.044, radius: 0.015 }
+                translation: [ 0.0, 0.065, 0.1502 ]
+                rotation: [ 1, 0, 0, -35 ]
+                geometry: { type: Capsule, height: 0.065, radius: 0.015 }
               -
                 type: Shape
-                translation: [ 0.0, 0.084, 0.0815 ]
+                translation: [ 0.0, 0.0919, 0.1045 ]
                 rotation: [ 1, 0, 0, 90 ]
-                geometry: { type: Capsule, height: 0.045, radius: 0.015 }
+                geometry: { type: Capsule, height: 0.054, radius: 0.015 }
               -
                 type: Shape
-                translation: [ 0.0, 0.065, 0.048 ]
-                rotation: [ 1, 0, 0, 30 ]
-                geometry: { type: Capsule, height: 0.044, radius: 0.015 }
+                translation: [ 0.0, 0.065, 0.0589 ]
+                rotation: [ 1, 0, 0, 35 ]
+                geometry: { type: Capsule, height: 0.065, radius: 0.015 }
               -
                 type: Shape
-                translation: [ 0.0, -0.065, 0.115 ]
-                rotation: [ 1, 0, 0, 30 ]
-                geometry: { type: Capsule, height: 0.044, radius: 0.015 }
+                translation: [ 0.0, -0.066, 0.1502 ]
+                rotation: [ 1, 0, 0, 35 ]
+                geometry: { type: Capsule, height: 0.065, radius: 0.015 }
               -
                 type: Shape
-                translation: [ 0.0, -0.084, 0.0815 ]
+                translation: [ 0.0, -0.0929, 0.1045 ]
                 rotation: [ 1, 0, 0, 90 ]
-                geometry: { type: Capsule, height: 0.045, radius: 0.015 }
+                geometry: { type: Capsule, height: 0.054, radius: 0.015 }
               -
                 type: Shape
-                translation: [ 0.0, -0.065, 0.048 ]
-                rotation: [ 1, 0, 0, -30 ]
-                geometry: { type: Capsule, height: 0.044, radius: 0.015 }
-              -
-                type: Shape
-                translation: [ 0.0, 0.0, 0.0365 ]
-                geometry: { type: Capsule, height: 0.09, radius: 0.015 }
+                translation: [ 0.0, -0.066, 0.0589 ]
+                rotation: [ 1, 0, 0, -35 ]
+                geometry: { type: Capsule, height: 0.065, radius: 0.015 }
+             
   -
     name: END_L
     parent: BASE

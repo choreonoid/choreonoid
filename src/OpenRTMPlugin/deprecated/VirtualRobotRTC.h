@@ -58,7 +58,7 @@ private:
     bool registerOutPortHandler(TOutPortHandler* handler) {
         const std::string& name = handler->portName;
         if(!getOutPortHandler(name)){
-            if (!addOutPort(name.c_str(), handler->outPort)) return false;
+            if (!addOutPort(name.c_str(), handler->getOutPort())) return false;
             outPortHandlers.insert(std::make_pair(name, OutPortHandlerPtr(handler)));
         }
         return true;

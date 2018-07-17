@@ -8,13 +8,12 @@
 
 #include <cnoid/SubSimulatorItem>
 #include <cnoid/BodyItem>
-#include "exportdecl.h"
 
 namespace cnoid {
 
 class Light;
 
-class CNOID_EXPORT SubmersibleSimulatorItem : public SubSimulatorItem
+class SubmersibleSimulatorItem : public SubSimulatorItem
 {
 public:
     static void initializeClass(ExtensionManager* ext);

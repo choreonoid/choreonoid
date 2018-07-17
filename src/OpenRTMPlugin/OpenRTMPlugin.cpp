@@ -76,9 +76,13 @@ public:
         require("Corba");
         precede("Corba");
         
+<<<<<<< HEAD
 #ifdef LOG_OUT
         LoggerUtil::startLog(LogLevel::LOG_DEBUG, "Log");
 #endif
+=======
+        //LoggerUtil::startLog(LogLevel::LOG_DEBUG, "Log");
+>>>>>>> master
     }
 
     template<typename ExecutionContextType>

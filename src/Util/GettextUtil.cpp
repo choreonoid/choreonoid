@@ -6,12 +6,27 @@
 #include "GettextUtil.h"
 #include <cnoid/ExecutablePath>
 #include <cnoid/FileUtil>
-#include "gettext.h"
+#include "exportdecl.h"
 
-using namespace boost;
-using namespace cnoid;
+namespace filesystem = boost::filesystem;
 
-void cnoid::bindGettextDomain(const char* domainname)
+namespace cnoid {
+
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
+# if CNOID_ENABLE_GETTEXT
+const char* getText(const char* domainname, const char* msgid)
+{
+    return dgettext(domainname, msgid);
+}
+# else
+const char* getText(const char* domainname, const char* msgid)
+{
+    return msgid;
+}
+# endif
+#endif
+
+void bindGettextDomain(const char* domainname)
 {
 #if CNOID_ENABLE_GETTEXT
     filesystem::path localePath = filesystem::path(executableTopDirectory()) / "share" / "locale";
@@ -24,4 +39,6 @@ void cnoid::bindGettextDomain(const char* domainname)
         }
     }
 #endif
+}
+
 }

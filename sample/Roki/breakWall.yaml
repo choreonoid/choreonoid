@@ -1,9 +1,0 @@
-modelFile: breakWall.wrl
-
-RokiJointParameters:
-  - name: link1
-    break: [ 200.0, 200.0 ]
-  - name: link2
-    break: [ 10.0, 10.0 ]
-  - name: link3
-    break: [ 10.0, 10.0 ]

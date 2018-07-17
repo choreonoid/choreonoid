@@ -1,4 +1,3 @@
-
 if(NOT ENABLE_GUI)
   return()
 endif()
@@ -13,4 +12,4 @@ if(BUILD_GL_GEARS_SAMPLE)
   apply_common_setting_for_plugin(${target})
 endif()
 
-install_sample_source(${sources})
+#install_sample_source(${sources})

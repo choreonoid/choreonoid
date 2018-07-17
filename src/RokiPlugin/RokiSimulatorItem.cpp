@@ -519,7 +519,7 @@ void RokiLink::createGeometry()
 {
     if(link->collisionShape()){
         MeshExtractor* extractor = new MeshExtractor;
-        if(extractor->extract(link->collisionShape(), std::bind(&RokiLink::addMesh, this, extractor))){
+        if(extractor->extract(link->collisionShape(), [&](){  addMesh(extractor); } )){
             if(!vertices.empty()){
                 zShape3D* sp = zAlloc( zShape3D, 1 );
                 zShape3DInit(sp);

@@ -3,8 +3,8 @@
   @author Shizuko Hattori, Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_ASSIMP_ASSIMP_SCENE_LOADER_H
-#define CNOID_ASSIMP_ASSIMP_SCENE_LOADER_H
+#ifndef CNOID_ASSIMP_SCENE_LOADER_H
+#define CNOID_ASSIMP_SCENE_LOADER_H
 
 #include <cnoid/AbstractSceneLoader>
 #include "exportdecl.h"
