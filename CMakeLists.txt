@@ -860,12 +860,18 @@ endif(ENABLE_CORBA)
 # OpenRTM
 if(BUILD_OPENRTM_PLUGIN)
   find_package(OpenRTM REQUIRED CONFIG)
-  # Remove extra "-I" from elements of OPENRTM_INCLUDE_DIRS
-  set(dirs ${OPENRTM_INCLUDE_DIRS})
+  # Remove extra "-I" and "-L" from elements of OPENRTM_INCLUDE_DIRS and OPENRTM_LIBRARY_DIRS
+  set(include_dirs ${OPENRTM_INCLUDE_DIRS})
   unset(OPENRTM_INCLUDE_DIRS)
-  foreach(dir ${dirs})
+  foreach(dir ${include_dirs})
     string(REGEX REPLACE "^-I" "" stripped ${dir})
     list(APPEND OPENRTM_INCLUDE_DIRS ${stripped})
+  endforeach()
+  set(library_dirs ${OPENRTM_LIBRARY_DIRS})
+  unset(OPENRTM_LIBRARY_DIRS)
+  foreach(dir ${library_dirs})
+    string(REGEX REPLACE "^-L" "" stripped ${dir})
+    list(APPEND OPENRTM_LIBRARY_DIRS ${stripped})
   endforeach()
   set(IDL_INCLUDE_DIRS ${IDL_INCLUDE_DIRS} ${OPENRTM_INCLUDE_DIRS})
   # Check version
