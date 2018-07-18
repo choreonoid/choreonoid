@@ -87,6 +87,10 @@ if(MSVC AND CMAKE_CL_64)
    add_definitions(-D_WIN64)
 endif()
 
+# The following option is not necessary.
+# Instead of this, use include_directories(${CMAKE_CURRENT_BINARY_DIR}) where necessary.
+# set(CMAKE_INCLUDE_CURRENT_DIR ON)
+
 if(NOT PROJECT_BINARY_DIR STREQUAL PROJECT_SOURCE_DIR)
   include_directories(${PROJECT_BINARY_DIR})
   include_directories(${PROJECT_BINARY_DIR}/include)
@@ -520,7 +524,6 @@ macro(setup_qt5)
 
   add_definitions(-DQT_NO_KEYWORDS -DQT_NO_OPENGL_ES_2)
   set(CMAKE_AUTOMOC OFF)
-  set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
   if(MSVC)
     list(APPEND QT_INST_LIBRARIES 
