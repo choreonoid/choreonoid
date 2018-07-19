@@ -81,4 +81,9 @@ file(COPY TankVisionSensorOut.conf DESTINATION ${PROJECT_BINARY_DIR}/${CNOID_PLU
 install(FILES TankVisionSensorOut.conf DESTINATION ${CNOID_PLUGIN_SUBDIR}/rtc)
 list(APPEND project_files OpenRTM-TankVisionSensors-OldIDL.cnoid OldTankVisionSystem.xml)
 
+# Teleoperation samples
+list(APPEND project_files
+  OpenRTM-AizuSpiderSS-Remote.cnoid
+  OpenRTM-AizuSpider-Terminal.cnoid)
+
 install(FILES ${project_files} DESTINATION ${CNOID_SHARE_SUBDIR}/project)

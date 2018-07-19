@@ -35,14 +35,14 @@ items:
                 name: AizuSpider-VisionSensorIoRTC.RIGHT_CAMERA
                 isServicePort: false
           - 
-            name: AizuSpiderJoystickInput
+            name: AizuSpider-JoystickInput
             pos: [ 174, 13 ]
             InPorts: 
               - 
-                name: AizuSpiderJoystickInput.axes
+                name: AizuSpider-JoystickInput.axes
                 isServicePort: false
               - 
-                name: AizuSpiderJoystickInput.buttons
+                name: AizuSpider-JoystickInput.buttons
                 isServicePort: false
           - 
             name: CameraImage
@@ -63,20 +63,20 @@ items:
                 isServicePort: false
         RTSConnections: 
           - 
-            name: JoystickRTC0.axes_AizuSpiderJoystickInput.axes
+            name: JoystickRTC0.axes_AizuSpider-JoystickInput.axes
             sourceRtcName: JoystickRTC0
             sourcePortName: JoystickRTC0.axes
-            targetRtcName: AizuSpiderJoystickInput
-            targetPortName: AizuSpiderJoystickInput.axes
+            targetRtcName: AizuSpider-JoystickInput
+            targetPortName: AizuSpider-JoystickInput.axes
             dataflow: push
             subscription: flush
             position: [ 13, 30, 18, 30, 123.5, 30, 123.5, 32, 229, 32, 234, 32 ]
           - 
-            name: JoystickRTC0.buttons_AizuSpiderJoystickInput.buttons
+            name: JoystickRTC0.buttons_AizuSpider-JoystickInput.buttons
             sourceRtcName: JoystickRTC0
             sourcePortName: JoystickRTC0.buttons
-            targetRtcName: AizuSpiderJoystickInput
-            targetPortName: AizuSpiderJoystickInput.buttons
+            targetRtcName: AizuSpider-JoystickInput
+            targetPortName: AizuSpider-JoystickInput.buttons
             dataflow: push
             subscription: flush
             position: [ 13, 48, 18, 48, 123.5, 48, 123.5, 50, 229, 50, 234, 50 ]
@@ -234,7 +234,7 @@ views:
     class: RTSNameServerView
     mounted: true
     state: 
-      host: 192.168.11.8
+      host: localhost
       port: 2809
   - 
     id: 12

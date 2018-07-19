@@ -68,7 +68,7 @@ items:
                     reloading: true
                 - 
                   id: 5
-                  name: "AizuSpiderJoystickInput"
+                  name: "AizuSpider-JoystickInput"
                   plugin: Body
                   class: SimpleControllerItem
                   data: 
