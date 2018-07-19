@@ -187,7 +187,12 @@ void exportSimulationClasses(py::module m)
         .def_static("getInstance", &SimulationBar::instance, py::return_value_policy::reference)
         ;
 
-    py::class_<SimpleControllerItem, SimpleControllerItemPtr, Item>(m, "SimpleControllerItem")
+    py::class_<ControllerItem, ControllerItemPtr, Item>(m, "ControllerItem")
+        .def("isNoDelayMode", &ControllerItem::isNoDelayMode)
+        .def("setNoDelayMode", &ControllerItem::setNoDelayMode)
+        ;
+    
+    py::class_<SimpleControllerItem, SimpleControllerItemPtr, ControllerItem>(m, "SimpleControllerItem")
         .def(py::init<>())
         .def("setController", &SimpleControllerItem::setController)
         ;
