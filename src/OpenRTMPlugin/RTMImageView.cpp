@@ -221,7 +221,11 @@ ReturnCode_t ImageViewRTC::onExecute(UniqueId ec_id)
         case Img::CF_RGB :
             numComponents = 3;
             break;
+#ifdef USE_BUILTIN_CAMERA_IMAGE_IDL
+        case Img::CF_RGB_JPEG :
+#else
         case Img::CF_JPEG :
+#endif
             numComponents = 3;
             jpegCompression = true;
             break;
