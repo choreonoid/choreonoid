@@ -1,0 +1,15 @@
+#VRML V2.0 utf8
+
+Transform {
+  translation 0 0 5
+  children [
+    DirectionalLight {
+      ambientIntensity  0.2
+      color 1 1 1
+      direction 0 0 -1
+      intensity 0.7
+      on TRUE 
+    }
+  ]
+}
+

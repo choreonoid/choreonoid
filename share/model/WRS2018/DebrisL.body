@@ -7,11 +7,11 @@ links:
     name: body
     translation: [ 0, 0, 0.25 ]
     jointType: free
-    mass: 20.0  
+    mass: 100.0  
     inertia: [
-      10, 0, 0,
-      0, 10, 0,
-      0, 0, 10 ]
+      50, 0, 0,
+      0, 70, 0,
+      0, 0, 70 ]
     autoSleep: true
     elements:
       -

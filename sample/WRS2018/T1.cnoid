@@ -97,13 +97,13 @@ items:
               data: 
                 modelFile: "${SHARE}/model/WRS2018/ChocoTerrain.body"
                 currentBaseLink: "Base"
-                rootPosition: [ 4, 0, 0 ]
+                rootPosition: [ 4, -0.51, 0 ]
                 rootAttitude: [ 
                   1, 0, 0, 
                   0, 1, 0, 
                   0, 0, 1 ]
                 jointPositions: [  ]
-                initialRootPosition: [ 4, 0, 0 ]
+                initialRootPosition: [ 4, -0.51, 0 ]
                 initialRootAttitude: [ 
                   1, 0, 0, 
                   0, 1, 0, 
@@ -120,13 +120,13 @@ items:
               data: 
                 modelFile: "${SHARE}/model/WRS2018/WaffleTerrain.body"
                 currentBaseLink: "Base"
-                rootPosition: [ 10, 0, 0 ]
+                rootPosition: [ 10, -0.6, 0 ]
                 rootAttitude: [ 
                   1, 0, 0, 
                   0, 1, 0, 
                   0, 0, 1 ]
                 jointPositions: [  ]
-                initialRootPosition: [ 10, 0, 0 ]
+                initialRootPosition: [ 10, -0.6, 0 ]
                 initialRootAttitude: [ 
                   1, 0, 0, 
                   0, 1, 0, 

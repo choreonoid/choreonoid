@@ -3,6 +3,11 @@ from cnoid.Base import *
 from cnoid.BodyPlugin import *
 from cnoid.OpenRTMPlugin import *
 
+try:
+    from cnoid.AGXDynamicsPlugin import *
+except:
+    pass
+
 def loadProject(
     worldProject, simulatorProject, robotProject,
     enableVisionSimulator = False, targetVisionSensors = "", isRemote = False):
