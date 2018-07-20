@@ -329,25 +329,27 @@ void ProfileHandler::saveRtsProfile
 		}
 		//
 		RTC::ExecutionContextList_var eclist = comp->ownedExeContList_;
-		for (int index = 0; index < eclist->length(); ++index) {      
-			RTC::ExecutionContextService_var ec = RTC::ExecutionContextService::_narrow(eclist[index]);
-			ExecutionContext ecProf;
-			ecProf.id = to_string(index);
-			RTC::ExecutionKind ecKind = ec->get_profile()->kind;
-			switch (ecKind) {
-			case PERIODIC:
-				ecProf.kind = "PERIODIC";
-				break;
-			case EVENT_DRIVEN:
-				ecProf.kind = "EVENT_DRIVEN";
-				break;
-			case OTHER:
-				ecProf.kind = "OTHER";
-				break;
-			}
-			ecProf.rate = ec->get_profile()->rate;
-			copyNVListToProperty(ec->get_profile()->properties, ecProf.propertyList);
-			compProf.ecList.push_back(ecProf);
+		for (int index = 0; index < eclist->length(); ++index) {
+      if(isObjectAlive(eclist[index])) {
+			    RTC::ExecutionContextService_var ec = RTC::ExecutionContextService::_narrow(eclist[index]);
+			    ExecutionContext ecProf;
+			    ecProf.id = to_string(index);
+			    RTC::ExecutionKind ecKind = ec->get_profile()->kind;
+			    switch (ecKind) {
+			    case PERIODIC:
+				    ecProf.kind = "PERIODIC";
+				    break;
+			    case EVENT_DRIVEN:
+				    ecProf.kind = "EVENT_DRIVEN";
+				    break;
+			    case OTHER:
+				    ecProf.kind = "OTHER";
+				    break;
+			    }
+			    ecProf.rate = ec->get_profile()->rate;
+			    copyNVListToProperty(ec->get_profile()->properties, ecProf.propertyList);
+			    compProf.ecList.push_back(ecProf);
+      }
 		}
 		//
 		copyNVListToProperty(compRaw->properties, compProf.propertyList);

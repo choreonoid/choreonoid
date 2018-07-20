@@ -141,7 +141,7 @@ RTSPort::RTSPort(const string& name_, PortService_var port_, RTSComp* parent)
 
 bool RTSPort::isConnected()
 {
-    if (!port || !NamingContextHelper::isObjectAlive(port)){
+    if (!port || !isObjectAlive(port)){
         return false;
     }
     ConnectorProfileList_var connectorProfiles = port->get_connector_profiles();
@@ -358,7 +358,7 @@ void RTSComp::setRtc(RTObject_ptr rtc)
 
     setRTObject(rtc);
 
-    if(!NamingContextHelper::isObjectAlive(rtc)){
+    if(!isObjectAlive(rtc)){
         participatingExeContList = 0;
         for(auto it = inPorts.begin(); it != inPorts.end(); ++it){
             RTSPort* port = *it;
@@ -704,7 +704,7 @@ RTSComp* RTSystemItemImpl::addRTSComp(const NamingContextHelper::ObjectInfo& inf
         if(rtc == RTC::RTObject::_nil()){
             return nullptr;
         }
-        if(!ncHelper.isObjectAlive(rtc)){
+        if(!isObjectAlive(rtc)){
             return nullptr;
         }
 
@@ -742,7 +742,7 @@ bool RTSystemItem::compIsAlive(RTSComp* rtsComp)
 bool RTSystemItemImpl::compIsAlive(RTSComp* rtsComp)
 {
     if(rtsComp->rtc_){
-        if(ncHelper.isObjectAlive(rtsComp->rtc_)){
+        if(isObjectAlive(rtsComp->rtc_)){
             return true;
         } else {
             rtsComp->setRtc(0);
@@ -750,7 +750,7 @@ bool RTSystemItemImpl::compIsAlive(RTSComp* rtsComp)
         }
     } else {
         RTC::RTObject_ptr rtc = ncHelper.findObject<RTC::RTObject>(rtsComp->name, "rtc");
-        if(!ncHelper.isObjectAlive(rtc)){
+        if(!isObjectAlive(rtc)){
             return false;
         } else {
             rtsComp->setRtc(rtc);

@@ -165,7 +165,7 @@ void RTSPropertiesViewImpl::showProperties()
 
     if(currentItem.id!="" && currentItem.isAlive){
         RTC::RTObject_ptr rtc = ncHelper.findObject<RTC::RTObject>(currentItem.id, "rtc");
-        if(!ncHelper.isObjectAlive(rtc))
+        if(!isObjectAlive(rtc))
                 return;
         ComponentProfile_var cprofile = rtc->get_component_profile();
         QTreeWidgetItem *item = new QTreeWidgetItem;

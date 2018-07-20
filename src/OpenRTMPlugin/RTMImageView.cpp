@@ -7,6 +7,7 @@
 #include <cnoid/ImageWidget>
 #include <cnoid/ViewManager>
 #include <cnoid/LazyCaller>
+#include <cnoid/CorbaUtil>
 #include <rtm/DataFlowComponentBase.h>
 #include <rtm/DataInPort.h>
 
@@ -152,7 +153,7 @@ void RTMImageViewImpl::createRTC(const std::string& name)
         rtc->setImageWidget(imageWidget);
         RTC::ExecutionContextList_var eclist = rtc->get_owned_contexts();
         for(CORBA::ULong i=0; i < eclist->length(); ++i){
-            if(!CORBA::is_nil(eclist[i])){
+            if(isObjectAlive(eclist[i])){
                 execContext = OpenRTM::ExtTrigExecutionContextService::_narrow(eclist[i]);
                 break;
             }

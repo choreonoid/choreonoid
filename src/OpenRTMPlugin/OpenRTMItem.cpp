@@ -34,14 +34,14 @@ bool RTCWrapper::getConfiguration(NamingContextHelper::ObjectInfo& target, std::
     rtc_ = ncHelper_.findObject<RTC::RTObject>(target.id, "rtc");
 	} else {
     CORBA::Object::_ptr_type obj = ncHelper_.findObject(target.fullPath);
-		if (CORBA::is_nil(obj)) {
-      rtc_ = RTC::RTObject::_nil();
-		} else {
+		if (isObjectAlive(obj)) {
       rtc_ = RTC::RTObject::_narrow(obj);
 			CORBA::release(obj);
+		} else {
+      rtc_ = RTC::RTObject::_nil();
 		}
 	}
-  if (!ncHelper_.isObjectAlive(rtc_)) return false;
+  if (isObjectAlive(rtc_)==false) return false;
 
   compProfile_ = rtc_->get_component_profile();
   configuration_ = rtc_->get_configuration();
@@ -133,7 +133,7 @@ void RTCWrapper::setRTObject(RTC::RTObject_ptr target) {
 	DDEBUG("RTSComp::setRTObject");
 	rtc_ = 0;
 
-	if (!NamingContextHelper::isObjectAlive(target)) {
+	if (!isObjectAlive(target)) {
 		ownedExeContList_ = 0;
 		return;
 	}

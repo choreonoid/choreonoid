@@ -11,6 +11,7 @@
 #include <cnoid/Sleep>
 #include <cnoid/ExecutablePath>
 #include <cnoid/FileUtil>
+#include <cnoid/CorbaUtil>
 
 #include "LoggerUtil.h"
 
@@ -223,7 +224,8 @@ void ControllerRTCItem::setRTCInstanceName(const std::string& name)
 }
 
 
-void ControllerRTCItem::setExecContextType(int which) {
+void ControllerRTCItem::setExecContextType(int which)
+{
   DDEBUG_V("ControllerRTCItem::setExecContextType %d", which);
   if (which != impl->execContextType.which()) {
     impl->execContextType.select(which);
@@ -234,14 +236,16 @@ void ControllerRTCItem::setExecContextType(int which) {
     DDEBUG_V("ControllerRTCItem::setExecContextType stop %d", ret);
     RTC::ExecutionContextList_var eclist = impl->rtc->get_owned_contexts();
     for (CORBA::ULong index = 0; index < eclist->length(); ++index) {
-      RTC::ExecutionContextService_var execContext = RTC::ExecutionContextService::_narrow(eclist[index]);
-      if (!CORBA::is_nil(eclist[index])) {
-        if (which == index) {
-          impl->execContext = execContext;
-          impl->execContext->start();
-          DDEBUG_V("ControllerRTCItem::setExecContextType start %d", index);
-        }
-      }
+        if( isObjectAlive(eclist[index])) {
+            RTC::ExecutionContextService_var execContext = RTC::ExecutionContextService::_narrow(eclist[index]);
+            if (!CORBA::is_nil(eclist[index])) {
+                if (which == index) {
+                    impl->execContext = execContext;
+                    impl->execContext->start();
+                    DDEBUG_V("ControllerRTCItem::setExecContextType start %d", index);
+                }
+            }
+         }
     }
 #endif
   }

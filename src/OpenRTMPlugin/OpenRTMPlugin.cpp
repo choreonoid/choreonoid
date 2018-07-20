@@ -376,14 +376,14 @@ CNOID_EXPORT int cnoid::deleteUnmanagedRTCs()
         RTC::RTObject_impl* rtc = rtcs[i];
         if(managedComponents.find(rtc) == managedComponents.end()){
         	RTC::ExecutionContextList_var eclist = rtc->get_owned_contexts();
-        	if(eclist->length() > 0 && !CORBA::is_nil(eclist[0])){
+        	if(eclist->length() > 0 && isObjectAlive(eclist[0])){
         		eclist[0]->deactivate_component(rtc->getObjRef());
         		OpenRTM::ExtTrigExecutionContextService_var execContext = OpenRTM::ExtTrigExecutionContextService::_narrow(eclist[0]);
         		if(!CORBA::is_nil(execContext))
         			execContext->tick();
         	}
         	eclist = rtc->get_participating_contexts();
-            if(eclist->length() > 0 && !CORBA::is_nil(eclist[0])){
+            if(eclist->length() > 0 && isObjectAlive(eclist[0])){
             	eclist[0]->deactivate_component(rtc->getObjRef());
             	OpenRTM::ExtTrigExecutionContextService_var execContext = OpenRTM::ExtTrigExecutionContextService::_narrow(eclist[0]);
             	if(!CORBA::is_nil(execContext))
@@ -398,7 +398,7 @@ CNOID_EXPORT int cnoid::deleteUnmanagedRTCs()
         if(managedComponents.find(rtc) == managedComponents.end()){
             RTC::ExecutionContextList_var eclist = rtc->get_participating_contexts();
             for(CORBA::ULong j=0; j < eclist->length(); ++j){
-                if(!CORBA::is_nil(eclist[j])){
+                if(isObjectAlive(eclist[j])){
                     eclist[j]->remove_component(rtc->getObjRef());
                 }
             }
@@ -407,7 +407,7 @@ CNOID_EXPORT int cnoid::deleteUnmanagedRTCs()
             	ports[j]->disconnect_all();
             }
             RTC::ExecutionContextList_var myEClist = rtc->get_owned_contexts();
-            if(myEClist->length() > 0 && !CORBA::is_nil(myEClist[0])){
+            if(myEClist->length() > 0 && isObjectAlive(myEClist[0])){
             	OpenRTM::ExtTrigExecutionContextService_var myEC = OpenRTM::ExtTrigExecutionContextService::_narrow(myEClist[0]);
                 RTC::RTCList rtcs = myEC->get_profile()->participants;
             	for(size_t i=0; i < rtcs.length(); ++i){
@@ -423,7 +423,7 @@ CNOID_EXPORT int cnoid::deleteUnmanagedRTCs()
         RTC::RTObject_impl* rtc = rtcs[i];
     	RTC::ExecutionContextList_var eclist = rtc->get_participating_contexts();
     	for(CORBA::ULong j=0; j < eclist->length(); ++j){
-    		if(!CORBA::is_nil(eclist[j])){
+    		if(isObjectAlive(eclist[j])){
     			RTC::ExecutionContextService_var execContext = RTC::ExecutionContextService::_narrow(eclist[j]);
     			RemoveMap::iterator it = removeMap.find(execContext);
     			if(it==removeMap.end()){
@@ -441,9 +441,11 @@ CNOID_EXPORT int cnoid::deleteUnmanagedRTCs()
     	for(std::set<RTC::RTObject_impl*>::iterator it = removeRTCs.begin(); it != removeRTCs.end(); it++){
     		ec->remove_component((*it)->getObjRef());
     	}
-    	OpenRTM::ExtTrigExecutionContextService_var execContext = OpenRTM::ExtTrigExecutionContextService::_narrow(ec);
-    	if(!CORBA::is_nil(execContext))
-    		execContext->tick();
+      if(isObjectAlive(ec)) {
+    	    OpenRTM::ExtTrigExecutionContextService_var execContext = OpenRTM::ExtTrigExecutionContextService::_narrow(ec);
+    	    if(!CORBA::is_nil(execContext))
+    		       execContext->tick();
+      }
     }
 #endif
 
@@ -464,32 +466,34 @@ bool cnoid::deleteRTC(RTC::RtcBase* rtc) {
   if (rtc) {
     RTC::ExecutionContextList_var eclist = rtc->get_participating_contexts();
     for (CORBA::ULong i = 0; i < eclist->length(); ++i) {
-      if (!CORBA::is_nil(eclist[i])) {
+      if (isObjectAlive(eclist[i])) {
         eclist[i]->remove_component(rtc->getObjRef());
 #ifndef OPENRTM_VERSION110
         OpenRTM::ExtTrigExecutionContextService_var execContext = OpenRTM::ExtTrigExecutionContextService::_narrow(eclist[i]);
-        if (!CORBA::is_nil(execContext))
+        if (isObjectAlive(execContext))
           execContext->tick();
 #endif
       }
     }
     RTC::ExecutionContextList_var myEClist = rtc->get_owned_contexts();
-    if (myEClist->length() > 0 && !CORBA::is_nil(myEClist[0])) {
+    if (myEClist->length() > 0 && isObjectAlive(myEClist[0])) {
 #ifdef OPENRTM_VERSION110
-      OpenRTM::ExtTrigExecutionContextService_var myEC = OpenRTM::ExtTrigExecutionContextService::_narrow(myEClist[0]);
-      RTC::RTCList rtcs = myEC->get_profile()->participants;
-      for (size_t i = 0; i < rtcs.length(); ++i) {
-        myEC->remove_component(rtcs[i]);
-      }
+        OpenRTM::ExtTrigExecutionContextService_var myEC = OpenRTM::ExtTrigExecutionContextService::_narrow(myEClist[0]);
+        RTC::RTCList rtcs = myEC->get_profile()->participants;
+        for (size_t i = 0; i < rtcs.length(); ++i) {
+            myEC->remove_component(rtcs[i]);
+        }
 #else
       RTC::ExecutionContextService_var myEC = RTC::ExecutionContextService::_narrow(myEClist[0]);
       RTC::RTCList rtcs = myEC->get_profile()->participants;
       for (int i = 0; i < rtcs.length(); ++i) {
         myEC->remove_component(rtcs[i]);
       }
-      OpenRTM::ExtTrigExecutionContextService_var execContext = OpenRTM::ExtTrigExecutionContextService::_narrow(myEC);
-      if (!CORBA::is_nil(execContext))
-        execContext->tick();
+      if( isObjectAlive(myEC) ) {
+          OpenRTM::ExtTrigExecutionContextService_var execContext = OpenRTM::ExtTrigExecutionContextService::_narrow(myEC);
+          if (!CORBA::is_nil(execContext))
+            execContext->tick();
+      }
 #endif
     }
 

@@ -456,7 +456,7 @@ void RTSNameTreeWidget::mousePressEvent(QMouseEvent* event)
             }
 
             if(targetItem->kind_ == KIND_RTC){
-                if(RTSNameServerView::instance()->getNCHelper().isObjectAlive(targetItem->rtc_)){
+                if(isObjectAlive(targetItem->rtc_)){
                     menuManager.addSeparator();
                     menuManager.addItem("Activate")
                         ->sigTriggered().connect(std::bind(&RTSNameTreeWidget::activateComponent, this));

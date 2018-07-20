@@ -15,6 +15,7 @@
 #include <cnoid/MessageView>
 #include <cnoid/Sleep>
 #include <cnoid/ProjectManager>
+#include <cnoid/CorbaUtil>
 #include <rtm/RTObject.h>
 #include <rtm/CorbaNaming.h>
 #include <boost/format.hpp>
@@ -455,14 +456,14 @@ void RTComponent::deleteRTC()
 }
 
 void RTComponent::activate() {
-  if (rtc_) {
-    RTC::ExecutionContextList_var eclist = rtc_->get_owned_contexts();
-    for (CORBA::ULong i = 0; i < eclist->length(); ++i) {
-      if (!CORBA::is_nil(eclist[i])) {
-        OpenRTM::ExtTrigExecutionContextService::_narrow(eclist[i])
-          ->activate_component(rtc_->getObjRef());
-        break;
-      }
-    }
-  }
+    if (rtc_) {
+        RTC::ExecutionContextList_var eclist = rtc_->get_owned_contexts();
+        for (CORBA::ULong i = 0; i < eclist->length(); ++i) {
+            if (isObjectAlive(eclist[i])) {
+                OpenRTM::ExtTrigExecutionContextService::_narrow(eclist[i])
+                    ->activate_component(rtc_->getObjRef());
+                break;
+            }
+         }
+     }
 }
