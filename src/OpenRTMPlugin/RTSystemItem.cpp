@@ -47,14 +47,14 @@ public:
     std::string version;
     int pollingCycle;
 
-#ifndef OPENRTM_VERSION110
+#if defined(OPENRTM_VERSION12)
     int heartBeatPeriod;
 #endif
 
     enum State_Detection {
         POLLING_CHECK = 0,
         MANUAL_CHECK,
-#ifndef OPENRTM_VERSION110
+#if defined(OPENRTM_VERSION12)
         OBSERVER_CHECK,
 #endif
         N_STATE_DETECTION
@@ -615,11 +615,9 @@ void RTSystemItemImpl::initialize()
     pollingCycle = config->get("pollingCycle", 500);
     stateCheck.setSymbol(POLLING_CHECK, "Polling");
     stateCheck.setSymbol(MANUAL_CHECK, "Manual");
-#ifndef OPENRTM_VERSION110
+#if defined(OPENRTM_VERSION12)
     stateCheck.setSymbol(OBSERVER_CHECK, "Observer");
-#endif
 
-#ifndef OPENRTM_VERSION11
     heartBeatPeriod = config->get("heartBeatPeriod", 500);
 #endif
 }
@@ -988,7 +986,7 @@ void RTSystemItemImpl::doPutProperties(PutPropertyFunction& putProperty)
                 [&](int value){ setStateCheckMethod(value); return true; });
     putProperty(_("Polling Cycle"), pollingCycle, changeProperty(pollingCycle));
 
-#ifndef OPENRTM_VERSION11
+#if defined(OPENRTM_VERSION12)
     putProperty(_("HeartBeat Period"), heartBeatPeriod, changeProperty(heartBeatPeriod));
 #endif
 }
@@ -1017,7 +1015,7 @@ void RTSystemItemImpl::changeStateCheck()
         case MANUAL_CHECK:
             RTSDiagramView::instance()->timerActivated(false);
             break;
-#ifndef OPENRTM_VERSION110
+#if defined(OPENRTM_VERSION12)
         case OBSERVER_CHECK:
             break;
 #endif
@@ -1105,7 +1103,7 @@ bool RTSystemItem::store(Archive& archive)
         archive.write("PollingCycle", impl->pollingCycle);
         archive.write("StateCheck", impl->stateCheck.selectedSymbol());
 
-#ifndef OPENRTM_VERSION11
+#if defined(OPENRTM_VERSION12)
         archive.write("HeartBeatPeriod", impl->heartBeatPeriod);
 #endif
         return true;
@@ -1122,7 +1120,7 @@ bool RTSystemItem::restore(const Archive& archive)
     archive.read("AutoConnection", impl->autoConnection);
     archive.read("PollingCycle", impl->pollingCycle);
 
-#ifndef OPENRTM_VERSION11
+#if defined(OPENRTM_VERSION12)
     archive.read("HeartBeatPeriod", impl->heartBeatPeriod);
 #endif
 

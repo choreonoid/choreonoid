@@ -8,7 +8,7 @@
 #include "LoggerUtil.h"
 #include <rtm/ECFactory.h>
 
-#ifndef OPENRTM_VERSION11
+#if defined(OPENRTM_VERSION12)
  #include <rtm/RTObjectStateMachine.h>
 #endif
 
@@ -32,7 +32,7 @@ RTC::ReturnCode_t SimulationPeriodicExecutionContext::activate_component(RTC::Li
 {
 	DDEBUG("SimulationPeriodicExecutionContext::activate_component");
 
-#ifdef OPENRTM_VERSION11
+#if defined(OPENRTM_VERSION11)
 	CompItr it = std::find_if(m_comps.begin(), m_comps.end(), find_comp(comp));
 	if(it == m_comps.end()){
 		return RTC::BAD_PARAMETER;
@@ -49,7 +49,7 @@ RTC::ReturnCode_t SimulationPeriodicExecutionContext::activate_component(RTC::Li
 
 	return RTC::RTC_ERROR;
     
-#else
+#elif defined(OPENRTM_VERSION12)
     
 	RTC_impl::RTObjectStateMachine* rtobj = m_worker.findComponent(comp);
 
@@ -77,7 +77,7 @@ RTC::ReturnCode_t SimulationPeriodicExecutionContext::deactivate_component(RTC::
 {
     RTC_TRACE(("deactivate_component()"));
 
-#ifdef OPENRTM_VERSION11
+#if defined(OPENRTM_VERSION11)
 
     CompItr it = std::find_if(m_comps.begin(), m_comps.end(), find_comp(comp));
     if(it == m_comps.end()) {
@@ -98,7 +98,7 @@ RTC::ReturnCode_t SimulationPeriodicExecutionContext::deactivate_component(RTC::
     RTC_ERROR(("The component could not be deactivated."));
     return RTC::RTC_ERROR;
 
-#else
+#elif defined(OPENRTM_VERSION12)
     
     RTC_impl::RTObjectStateMachine* rtobj = m_worker.findComponent(comp);
 
@@ -126,7 +126,7 @@ RTC::ReturnCode_t SimulationPeriodicExecutionContext::deactivate_component(RTC::
 RTC::ReturnCode_t SimulationPeriodicExecutionContext::reset_component(RTC::LightweightRTObject_ptr comp)
     throw (CORBA::SystemException)
 {
-#ifdef OPENRTM_VERSION11
+#if defined(OPENRTM_VERSION11)
 	CompItr it = std::find_if(m_comps.begin(), m_comps.end(), find_comp(comp));
 	if (it == m_comps.end()){
 		return RTC::BAD_PARAMETER;
@@ -145,7 +145,7 @@ RTC::ReturnCode_t SimulationPeriodicExecutionContext::reset_component(RTC::Light
 
 	return RTC::RTC_ERROR;
 
-#else
+#elif defined(OPENRTM_VERSION12)
 
 	RTC_impl::RTObjectStateMachine* rtobj = m_worker.findComponent(comp);
 

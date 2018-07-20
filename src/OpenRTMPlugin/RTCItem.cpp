@@ -54,7 +54,7 @@ RTCItem::RTCItem()
   periodicRate = 1000;
   periodicType.setSymbol(PERIODIC_EXECUTION_CONTEXT, N_("PeriodicExecutionContext"));
 
-#ifdef OPENRTM_VERSION11
+#if defined(OPENRTM_VERSION11)
   periodicType.setSymbol(SYNCH_EXT_TRIGGER, N_("SynchExtTriggerEC"));
   periodicType.setSymbol(EXT_TRIG_EXECUTION_CONTEXT, N_("ExtTrigExecutionContext"));
   periodicType.setSymbol(SIMULATION_EXECUTION_CONTEXT, N_("SimulationExecutionContext"));

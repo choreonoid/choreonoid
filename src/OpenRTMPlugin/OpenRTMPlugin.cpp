@@ -87,12 +87,12 @@ public:
 
     template<typename ExecutionContextType>
     void registerExecutionContext(const char* name){
-#ifdef OPENRTM_VERSION110
+#if defined(OPENRTM_VERSION11)
         if(manager->registerECFactory(
                name,
                RTC::ECCreate<ExecutionContextType>,
                RTC::ECDelete<ExecutionContextType>)){
-#else
+#elif defined(OPENRTM_VERSION12)
         if(RTC::ExecutionContextFactory::instance().addFactory(
                name,
                ::coil::Creator<::RTC::ExecutionContextBase, ExecutionContextType>,
@@ -123,7 +123,7 @@ public:
             // To reduce the startup time on Windows
             "-o", "corba.args: -ORBclientCallTimeOutPeriod 100",
 #endif
-#ifndef OPENRTM_VERSION11
+#if defined(OPENRTM_VERSION12)
             "-i",
 #endif
         };
@@ -140,13 +140,10 @@ public:
         }
         
 #ifdef Q_OS_WIN32
-#ifdef OPENRTM_VERSION11
+#if defined(OPENRTM_VERSION11)
+        int numArgs = 15;
+#elif defined(OPENRTM_VERSION12)
         int numArgs = 16;
-#else
-//TODO GA
-//        int numArgs = 15;
-        int numArgs = 16;
-//TODO GA
 #endif
 #else
         int numArgs = 13;
@@ -392,7 +389,7 @@ CNOID_EXPORT int cnoid::deleteUnmanagedRTCs()
         }
     }
 
-#ifdef OPENRTM_VERSION110
+#if defined(OPENRTM_VERSION11)
     for(size_t i=0; i < rtcs.size(); ++i){
         RTC::RTObject_impl* rtc = rtcs[i];
         if(managedComponents.find(rtc) == managedComponents.end()){
@@ -416,7 +413,7 @@ CNOID_EXPORT int cnoid::deleteUnmanagedRTCs()
             }
         }
     }
-#else
+#elif defined(OPENRTM_VERSION12)
     typedef std::map<RTC::ExecutionContextService_var, std::set<RTC::RTObject_impl*> > RemoveMap;
     RemoveMap removeMap;
     for(int i=0; i < rtcs.size(); ++i){
@@ -468,7 +465,7 @@ bool cnoid::deleteRTC(RTC::RtcBase* rtc) {
     for (CORBA::ULong i = 0; i < eclist->length(); ++i) {
       if (isObjectAlive(eclist[i])) {
         eclist[i]->remove_component(rtc->getObjRef());
-#ifndef OPENRTM_VERSION110
+#if defined(OPENRTM_VERSION12)
         OpenRTM::ExtTrigExecutionContextService_var execContext = OpenRTM::ExtTrigExecutionContextService::_narrow(eclist[i]);
         if (isObjectAlive(execContext))
           execContext->tick();
@@ -477,13 +474,13 @@ bool cnoid::deleteRTC(RTC::RtcBase* rtc) {
     }
     RTC::ExecutionContextList_var myEClist = rtc->get_owned_contexts();
     if (myEClist->length() > 0 && isObjectAlive(myEClist[0])) {
-#ifdef OPENRTM_VERSION110
+#if defined(OPENRTM_VERSION11)
         OpenRTM::ExtTrigExecutionContextService_var myEC = OpenRTM::ExtTrigExecutionContextService::_narrow(myEClist[0]);
         RTC::RTCList rtcs = myEC->get_profile()->participants;
         for (size_t i = 0; i < rtcs.length(); ++i) {
             myEC->remove_component(rtcs[i]);
         }
-#else
+#elif defined(OPENRTM_VERSION12)
       RTC::ExecutionContextService_var myEC = RTC::ExecutionContextService::_narrow(myEClist[0]);
       RTC::RTCList rtcs = myEC->get_profile()->participants;
       for (int i = 0; i < rtcs.length(); ++i) {

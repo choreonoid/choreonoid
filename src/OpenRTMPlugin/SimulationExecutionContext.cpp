@@ -5,7 +5,7 @@
 #include "SimulationExecutionContext.h"
 #include <rtm/ECFactory.h>
 
-#ifndef OPENRTM_VERSION11
+#if defined(OPENRTM_VERSION12)
  #include <rtm/RTObjectStateMachine.h>
 #endif
 
@@ -14,7 +14,7 @@ using namespace cnoid;
 #if defined(OPENRTM_VERSION11)
 SimulationExecutionContext::SimulationExecutionContext()
     : PeriodicExecutionContext()
-#else
+#elif defined(OPENRTM_VERSION12)
 SimulationExecutionContext::SimulationExecutionContext()
     : OpenHRPExecutionContext()
 #endif
@@ -31,9 +31,9 @@ SimulationExecutionContext::~SimulationExecutionContext()
 
 void SimulationExecutionContext::tick() throw (CORBA::SystemException)
 {
-#ifdef OPENRTM_VERSION11
+#if defined(OPENRTM_VERSION11)
     std::for_each(m_comps.begin(), m_comps.end(), invoke_worker());
-#else
+#elif defined(OPENRTM_VERSION12)
     invokeWorker();
 #endif
 }
@@ -48,7 +48,7 @@ int SimulationExecutionContext::svc(void)
 RTC::ReturnCode_t SimulationExecutionContext::activate_component(RTC::LightweightRTObject_ptr comp)
     throw (CORBA::SystemException)
 {
-#ifdef OPENRTM_VERSION11
+#if defined(OPENRTM_VERSION11)
 
 	CompItr it = std::find_if(m_comps.begin(), m_comps.end(), find_comp(comp));
 	if(it == m_comps.end()){
@@ -69,7 +69,7 @@ RTC::ReturnCode_t SimulationExecutionContext::activate_component(RTC::Lightweigh
 
 	return RTC::RTC_ERROR;
     
-#else
+#elif defined(OPENRTM_VERSION12)
     
 	RTC_impl::RTObjectStateMachine* rtobj = m_worker.findComponent(comp);
 
@@ -95,7 +95,7 @@ RTC::ReturnCode_t SimulationExecutionContext::activate_component(RTC::Lightweigh
 RTC::ReturnCode_t SimulationExecutionContext::deactivate_component(RTC::LightweightRTObject_ptr comp)
     throw (CORBA::SystemException)
 {
-#ifdef OPENRTM_VERSION11
+#if defined(OPENRTM_VERSION11)
     
     RTC_TRACE(("deactivate_component()"));
 
@@ -120,7 +120,7 @@ RTC::ReturnCode_t SimulationExecutionContext::deactivate_component(RTC::Lightwei
     RTC_ERROR(("The component could not be deactivated."));
     return RTC::RTC_ERROR;
     
-#else
+#elif defined(OPENRTM_VERSION12)
     
     RTC_impl::RTObjectStateMachine* rtobj = m_worker.findComponent(comp);
 
@@ -148,7 +148,7 @@ RTC::ReturnCode_t SimulationExecutionContext::deactivate_component(RTC::Lightwei
 RTC::ReturnCode_t SimulationExecutionContext::reset_component(RTC::LightweightRTObject_ptr comp)
     throw (CORBA::SystemException)
 {
-#ifdef OPENRTM_VERSION11
+#if defined(OPENRTM_VERSION11)
 
 	CompItr it = std::find_if(m_comps.begin(), m_comps.end(), find_comp(comp));
 	if(it == m_comps.end()){
@@ -169,7 +169,7 @@ RTC::ReturnCode_t SimulationExecutionContext::reset_component(RTC::LightweightRT
 
 	return RTC::RTC_ERROR;
 
-#else
+#elif defined(OPENRTM_VERSION12)
 
 	RTC_impl::RTObjectStateMachine* rtobj = m_worker.findComponent(comp);
 

@@ -1346,7 +1346,7 @@ void RTSDiagramViewImpl::createConnectionGItem
 
 void RTSDiagramViewImpl::onTime()
 {
-    DDEBUG("RTSDiagramViewImpl::onTime");
+    //DDEBUG("RTSDiagramViewImpl::onTime");
     if(!currentRTSItem){
         return;
     }
@@ -1716,7 +1716,7 @@ SettingDialog::SettingDialog()
     lePoling = new QLineEdit;
     QLabel* lblUnit = new QLabel("ms");
 
-#ifndef OPENRTM_VERSION11
+#if defined(OPENRTM_VERSION12)
     QLabel* lblHeartBeat = new QLabel(_("Heartbeat Period:"));
     leHeartBeat = new QLineEdit;
     QLabel* lblUnitHb = new QLabel("ms");
@@ -1735,7 +1735,7 @@ SettingDialog::SettingDialog()
     gridSubLayout->addWidget(lePoling, 3, 1, 1, 2);
     gridSubLayout->addWidget(lblUnit, 3, 3, 1, 1);
 
-#ifndef OPENRTM_VERSION11
+#if defined(OPENRTM_VERSION12)
     gridSubLayout->addWidget(lblHeartBeat, 4, 0, 1, 1);
     gridSubLayout->addWidget(leHeartBeat, 4, 1, 1, 2);
     gridSubLayout->addWidget(lblUnitHb, 4, 3, 1, 1);
@@ -1768,7 +1768,7 @@ SettingDialog::SettingDialog()
     leVersion->setText(QString::fromStdString(appVars->get("defaultVersion", "1.0.0")));
     lePoling->setText(QString::number(appVars->get("pollingCycle", 500)));
 
-#ifndef OPENRTM_VERSION11
+#if defined(OPENRTM_VERSION12)
     leHeartBeat->setText(QString::number(appVars->get("heartBeatPeriod", 500)));
 #endif
 
@@ -1803,7 +1803,7 @@ void SettingDialog::oKClicked()
     AppConfig::archive()->openMapping("OpenRTM")->write("defaultVersion", leVersion->text().toStdString(), DOUBLE_QUOTED);
     AppConfig::archive()->openMapping("OpenRTM")->write("pollingCycle", lePoling->text().toInt());
 
-#ifndef OPENRTM_VERSION11
+#if defined(OPENRTM_VERSION12)
     AppConfig::archive()->openMapping("OpenRTM")->write("heartBeatPeriod", leHeartBeat->text().toInt());
 #endif
 
