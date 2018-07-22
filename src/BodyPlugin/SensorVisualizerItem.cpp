@@ -382,6 +382,7 @@ void ForceSensorVisualizerItemImpl::setBodyItem(BodyItem* bodyItem)
     Body* body = bodyItem->body();
     forceSensors = body->devices<ForceSensor>();
     scene->clearChildren();
+    forceSensorArrows.clear();
     for(size_t i=0; i < forceSensors.size(); ++i){
         ArrowPtr arrow = new Arrow(cylinder, cone);
         forceSensorArrows.push_back(arrow);
@@ -404,9 +405,9 @@ SgNode* ForceSensorVisualizerItem::getScene()
 
 void ForceSensorVisualizerItemImpl::onSensorPositionsChanged()
 {
-    if(!ItemTreeView::instance()->isItemChecked(self), ItemTreeView::ID_ANY)
+    if(!ItemTreeView::instance()->isItemChecked(self, ItemTreeView::ID_ANY)){
         return;
-
+    }
     for(size_t i=0; i < forceSensors.size(); ++i){
         ForceSensor* sensor = forceSensors[i];
         Vector3 p = sensor->link()->T() * sensor->localTranslation();
@@ -417,9 +418,9 @@ void ForceSensorVisualizerItemImpl::onSensorPositionsChanged()
 
 void ForceSensorVisualizerItemImpl::updateSensorState()
 {
-    if(!ItemTreeView::instance()->isItemChecked(self, ItemTreeView::ID_ANY))
+    if(!ItemTreeView::instance()->isItemChecked(self, ItemTreeView::ID_ANY)){
         return;
-
+    }
     for(size_t i=0; i < forceSensors.size(); ++i){
         updateForceSensorState(i);
     }
