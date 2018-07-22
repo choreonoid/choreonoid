@@ -1,8 +1,11 @@
 import os
 from cnoid.Base import *
 from cnoid.BodyPlugin import *
-from cnoid.OpenRTMPlugin import *
 
+try:
+    from cnoid.OpenRTMPlugin import *
+except:
+    pass
 try:
     from cnoid.AGXDynamicsPlugin import *
 except:
