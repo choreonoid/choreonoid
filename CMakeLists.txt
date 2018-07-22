@@ -1,7 +1,7 @@
 if(MSVC)
   cmake_minimum_required(VERSION 3.1.0) # Qt5 requies this version or later
 else()
-  cmake_minimum_required(VERSION 2.8.12)
+  cmake_minimum_required(VERSION 2.8.12) # Default version on Ubuntu 14.04
 endif()
 
 cmake_policy(SET CMP0003 NEW)
@@ -608,9 +608,9 @@ endif()
 # Assimp
 if(MSVC AND (NOT DEFINED ENABLE_ASSIMP))
   file(GLOB assimp_dirs "c:/local/Assimp*/lib/cmake/assimp-*")
-  find_package(ASSIMP 3.2 QUIET HINTS ${assimp_dirs})
+  find_package(ASSIMP QUIET HINTS ${assimp_dirs})
 else()
-  find_package(ASSIMP 3.2 QUIET)
+  find_package(ASSIMP QUIET)
 endif()
 if(ASSIMP_FOUND)
   set(is_assimp_enabled ON)
