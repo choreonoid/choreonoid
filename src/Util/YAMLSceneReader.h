@@ -13,6 +13,7 @@
 
 namespace cnoid {
 
+class YAMLReader;
 class YAMLSceneReaderImpl;
   
 class CNOID_EXPORT YAMLSceneReader
@@ -26,6 +27,7 @@ public:
     int defaultDivisionNumber() const;
     void setBaseDirectory(const std::string& directory);
     std::string baseDirectory();
+    void setYAMLReader(YAMLReader* reader);
 
     void clear();
 

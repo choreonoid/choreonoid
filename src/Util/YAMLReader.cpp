@@ -64,6 +64,7 @@ public:
 
     typedef map<string, ValueNodePtr> AnchorMap;
     AnchorMap anchorMap;
+    AnchorMap importedAnchorMap;
 
     bool isRegularMultiListingExpected;
     vector<int> expectedListingSizes;
@@ -81,7 +82,6 @@ YAMLReader::YAMLReader()
 
 YAMLReaderImpl::YAMLReaderImpl()
 {
-    yaml_parser_initialize(&parser);
     file = 0;
     mappingFactory = new YAMLReader::MappingFactory<Mapping>();
     currentDocumentIndex = 0;
@@ -151,7 +151,10 @@ bool YAMLReader::load(const std::string& filename)
 
 bool YAMLReaderImpl::load(const std::string& filename)
 {
+    yaml_parser_initialize(&parser);
     clearDocuments();
+
+    anchorMap.insert(importedAnchorMap.begin(), importedAnchorMap.end());
 
     if(isRegularMultiListingExpected){
         expectedListingSizes.clear();
@@ -188,6 +191,7 @@ bool YAMLReader::parse(const std::string& yamlstring)
 
 bool YAMLReaderImpl::parse(const std::string& yamlstring)
 {
+    yaml_parser_initialize(&parser);
     clearDocuments();
 
     if(isRegularMultiListingExpected){
@@ -592,6 +596,13 @@ ValueNode* YAMLReader::findAnchoredNode(const std::string& anchor)
         return iter->second;
     }
     return nullptr;
+}
+
+
+void YAMLReader::importAnchors(const YAMLReader& anotherReader)
+{
+    auto& mapToImport = anotherReader.impl->anchorMap;
+    impl->importedAnchorMap.insert(mapToImport.begin(), mapToImport.end());
 }
 
 

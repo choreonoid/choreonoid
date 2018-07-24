@@ -57,7 +57,7 @@ struct ResourceInfo : public Referenced
 {
     SgNodePtr scene;
     unique_ptr<SceneNodeMap> sceneNodeMap;
-    unique_ptr<YAMLReader> yaml;
+    unique_ptr<YAMLReader> yamlReader;
     string directory;
 };
 typedef ref_ptr<ResourceInfo> ResourceInfoPtr;
@@ -77,6 +77,8 @@ public:
 
     ostream* os_;
     ostream& os() { return *os_; }
+
+    YAMLReader* mainYamlReader;
 
     // temporary variables for reading values
     double value;
@@ -239,6 +241,12 @@ void YAMLSceneReader::setBaseDirectory(const std::string& directory)
 std::string YAMLSceneReader::baseDirectory()
 {
     return impl->baseDirectory.string();
+}
+
+
+void YAMLSceneReader::setYAMLReader(YAMLReader* reader)
+{
+    impl->mainYamlReader = reader;
 }
 
 
@@ -1045,10 +1053,10 @@ YAMLSceneReader::Resource YAMLSceneReaderImpl::loadResource(Mapping& resourceNod
     ResourceInfo* resourceInfo = getOrCreateResourceInfo(resourceNode, uri);
     if(resourceInfo){
         resource.directory = resourceInfo->directory;
-        bool isYamlResouce = (resourceInfo->yaml != nullptr);
+        bool isYamlResouce = (resourceInfo->yamlReader != nullptr);
         if(names.empty()){
             if(isYamlResouce){
-                resource.node = resourceInfo->yaml->document();
+                resource.node = resourceInfo->yamlReader->document();
             } else {
                 resource.scene = resourceInfo->scene;
             }
@@ -1074,7 +1082,7 @@ void YAMLSceneReaderImpl::extractNamedYamlNodes
         resource.node = group;
     }
     for(auto& name : names){
-        auto node = info->yaml->findAnchoredNode(name);
+        auto node = info->yamlReader->findAnchoredNode(name);
         if(!node){
             resourceNode.throwException(
                 str(format(_("Node \"%1%\" is not found in \"%2%\".")) % name % uri));
@@ -1202,13 +1210,14 @@ ResourceInfo* YAMLSceneReaderImpl::getOrCreateResourceInfo(Mapping& resourceNode
     std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 
     if(ext == ".yaml" || ext == ".yml"){
-        auto yaml = new YAMLReader;
-        if(!yaml->load(filename)){
+        auto reader = new YAMLReader;
+        reader->importAnchors(*mainYamlReader);
+        if(!reader->load(filename)){
             resourceNode.throwException(
                 str(format(_("YAML resource \"%1%\" cannot be loaded (%2%)"))
-                    % uri % yaml->errorMessage()));
+                    % uri % reader->errorMessage()));
         }
-        info->yaml.reset(yaml);
+        info->yamlReader.reset(reader);
 
     } else {
         SgNodePtr scene = sceneLoader.load(filename);

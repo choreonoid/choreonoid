@@ -49,6 +49,7 @@ public:
     ValueNode* document(int index = 0);
 
     ValueNode* findAnchoredNode(const std::string& anchor);
+    void importAnchors(const YAMLReader& anotherReader);
 
     void clearDocuments();
 
