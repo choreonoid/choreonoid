@@ -52,6 +52,7 @@ links:
     jointType: fixed
     translation: [ 0, 0.1, 0 ]
     material: Ground
+    convexDecomposition: true
     elements: *LINE1
   -
     name: S2

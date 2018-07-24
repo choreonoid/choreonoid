@@ -143,16 +143,16 @@ items:
               data: 
                 modelFile: "${SHARE}/model/WRS2018/TerrainA.body"
                 currentBaseLink: ""
-                rootPosition: [ 20, -2.4, 0 ]
+                rootPosition: [ 16, 0, 0 ]
                 rootAttitude: [ 
-                  2.22044605e-16, -1, 0, 
-                  1, 2.22044605e-16, -0, 
+                  1, 0, 0, 
+                  0, 1, 0, 
                   0, 0, 1 ]
                 jointPositions: [  ]
-                initialRootPosition: [ 20, -2.4, 0 ]
+                initialRootPosition: [ 16, 0, 0 ]
                 initialRootAttitude: [ 
-                  2.22044605e-16, -1, 0, 
-                  1, 2.22044605e-16, 0, 
+                  1, 0, 0, 
+                  0, 1, 0, 
                   0, 0, 1 ]
                 zmp: [ 0, 0, 0 ]
                 collisionDetection: true
@@ -627,16 +627,16 @@ items:
               data: 
                 modelFile: "${SHARE}/model/WRS2018/TerrainA.body"
                 currentBaseLink: "Base"
-                rootPosition: [ 46.4287947, -2.5, 0 ]
+                rootPosition: [ 43.5, 0, 0 ]
                 rootAttitude: [ 
-                  6.123234e-17, -1, 0, 
-                  1, 6.123234e-17, 0, 
+                  1, 0, 0, 
+                  0, 1, 0, 
                   0, 0, 1 ]
                 jointPositions: [  ]
-                initialRootPosition: [ 46.4287947, -2.5, 0 ]
+                initialRootPosition: [ 43.5, 0, 0 ]
                 initialRootAttitude: [ 
-                  2.22044605e-16, -1, 0, 
-                  1, 2.22044605e-16, 0, 
+                  1, 0, 0, 
+                  0, 1, 0, 
                   0, 0, 1 ]
                 zmp: [ 0, 0, 0 ]
                 collisionDetection: true
