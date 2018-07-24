@@ -149,7 +149,7 @@ RTC::ReturnCode_t JoystickRTC::onExecute(RTC::UniqueId ec_id)
 
 extern "C"
 {
-    void JoystickRTCInit(RTC::Manager* manager)
+    DLL_EXPORT void JoystickRTCInit(RTC::Manager* manager)
     {
         static const char* spec[] = {
             "implementation_id", "JoystickRTC",
