@@ -11,11 +11,15 @@
 #include <rtm/DataOutPort.h>
 #include <rtm/idl/BasicDataTypeSkel.h>
 #include <rtm/idl/InterfaceDataTypes.hh>
-#include <jpeglib.h>
 #ifdef WIN32
 #include <rtm/idl/CameraCommonInterface.hh>
+extern "C" {
+#define XMD_H
+#include <jpeglib.h>
+}
 #else
 #include <rtm/ext/CameraCommonInterface.hh>
+#include <jpeglib.h>
 #endif
 //#include <cnoid/corba/PointCloud.hh>
 
