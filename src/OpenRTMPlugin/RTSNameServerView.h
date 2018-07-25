@@ -67,10 +67,13 @@ private:
     void finalizeComponent();
     void startExecutionContext();
     void stopExecutionContext();
+
+    void restartManager();
+    void shutdownManager();
 };
 
 
-enum CORBA_KIND { KIND_CATEGORY, KIND_HOST, KIND_MANAGER, KIND_MODULE, KIND_SERVER, KIND_RTC, KIND_FOLDER, KIND_OTHER };
+enum CORBA_KIND { KIND_CATEGORY, KIND_HOST, KIND_MANAGER, KIND_RTC_MANAGER, KIND_MODULE, KIND_SERVER, KIND_RTC, KIND_FOLDER, KIND_OTHER };
 
 
 class RTSVItem : public QTreeWidgetItem, public RTCWrapper

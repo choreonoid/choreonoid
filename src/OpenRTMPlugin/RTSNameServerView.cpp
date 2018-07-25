@@ -221,6 +221,8 @@ void RTSNameServerView::onActivated()
 
 void RTSNameServerViewImpl::updateObjectList(bool force)
 {
+    DDEBUG("RTSNameServerViewImpl::updateObjectList");
+
     if(isObjectListUpdateRequested){
         force = true;
         isObjectListUpdateRequested = false;
@@ -270,6 +272,7 @@ void RTSNameServerViewImpl::updateObjectList(bool force)
 void RTSNameServerViewImpl::updateObjectList
 (const NamingContextHelper::ObjectInfoList& objects, QTreeWidgetItem* parent, vector<NamingContextHelper::ObjectPath> pathList)
 {
+    DDEBUG("RTSNameServerViewImpl::updateObjectList Path");
     for(size_t i = 0; i < objects.size(); ++i){
         const NamingContextHelper::ObjectInfo& info = objects[i];
         DDEBUG_V("%s=%s, %s", info.id.c_str(), info.kind.c_str(), info.ior.c_str());
@@ -319,18 +322,25 @@ void RTSNameServerViewImpl::updateObjectList
             item->setIcon(0, QIcon(":/Corba/icons/RT.png"));
             item->kind_ = KIND_SERVER;
 
+        } else if(RTCCommonUtil::compareIgnoreCase(info.kind, "mgr")){
+            item->setIcon(0, QIcon(":/Corba/icons/RTCManager.png"));
+            item->kind_ = KIND_RTC_MANAGER;
+
         } else {
             item->setIcon(0, QIcon(":/Corba/icons/Folder.png"));
             item->kind_ = KIND_FOLDER;
         }
         pathList.push_back(pathSub);
 
-        if(ncHelper.updateConnection()){
-            NamingContextHelper::ObjectInfoList objects = ncHelper.getObjectList(pathList);
-            updateObjectList(objects, item, pathList);
+        if( item->kind_ != KIND_RTC_MANAGER ) {
+            if(ncHelper.updateConnection()){
+                NamingContextHelper::ObjectInfoList objects = ncHelper.getObjectList(pathList);
+                updateObjectList(objects, item, pathList);
+            }
         }
         pathList.pop_back();
     }
+    DDEBUG("RTSNameServerViewImpl::updateObjectList Path End");
 }
 
 
@@ -474,6 +484,8 @@ void RTSNameTreeWidget::mousePressEvent(QMouseEvent* event)
                     menuManager.addItem("Stop")
                         ->sigTriggered().connect(std::bind(&RTSNameTreeWidget::stopExecutionContext, this));
                 }
+            } else if(targetItem->kind_ == KIND_RTC_MANAGER){
+
             } else {
                 if(targetItem->kind_ != KIND_OTHER){
                     menuManager.addItem(_("Add Context"))
