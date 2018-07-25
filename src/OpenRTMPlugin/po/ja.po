@@ -678,4 +678,13 @@ msgstr "状態検知方法"
 msgid "Update"
 msgstr "状態更新"
 
+#: RTSDiagramView.cpp:1711
+msgid "Setting:"
+msgstr "設定ファイル:"
+
+#: RTSDiagramView.cpp:1829
+msgid "The specified setting becomes valid after RESTART."
+msgstr "指定した設定は再起動後に有効となります"
+
+
 

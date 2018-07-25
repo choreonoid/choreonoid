@@ -57,14 +57,17 @@ private Q_SLOTS:
   void logChanged(bool state);
 
 private:
+  QCheckBox* chkLog;
+  QComboBox* cmbLogLevel;
+
+  QLineEdit* leSetting;
+
   QLineEdit* leName;
   QLineEdit* leVersion;
   QLineEdit* lePoling;
 #ifndef OPENRTM_VERSION110
   QLineEdit* leHeartBeat;
 #endif
-  QCheckBox* chkLog;
-  QComboBox* cmbLogLevel;
 };
 
 }

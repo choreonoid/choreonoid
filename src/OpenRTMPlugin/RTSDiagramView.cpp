@@ -1708,6 +1708,9 @@ SettingDialog::SettingDialog()
     cmbLogLevel->addItem("VERBOSE");
     cmbLogLevel->addItem("PARANOID");
 
+    QLabel* lblSetting = new QLabel(_("Setting:"));
+    leSetting = new QLineEdit;
+
     QLabel* lblName = new QLabel(_("VendorName:"));
     leName = new QLineEdit;
     QLabel* lblVersion = new QLabel(_("Version:"));
@@ -1727,20 +1730,23 @@ SettingDialog::SettingDialog()
     gridSubLayout->addWidget(chkLog, 0, 0, 1, 1);
     gridSubLayout->addWidget(lblLevel, 0, 1, 1, 1);
     gridSubLayout->addWidget(cmbLogLevel, 0, 2, 1, 1);
-    gridSubLayout->addWidget(lblName, 1, 0, 1, 1);
-    gridSubLayout->addWidget(leName, 1, 1, 1, 2);
-    gridSubLayout->addWidget(lblVersion, 2, 0, 1, 1);
-    gridSubLayout->addWidget(leVersion, 2, 1, 1, 2);
-    gridSubLayout->addWidget(lblPolling, 3, 0, 1, 1);
-    gridSubLayout->addWidget(lePoling, 3, 1, 1, 2);
-    gridSubLayout->addWidget(lblUnit, 3, 3, 1, 1);
+
+    gridSubLayout->addWidget(lblSetting, 1, 0, 1, 1);
+    gridSubLayout->addWidget(leSetting, 1, 1, 1, 2);
+
+    gridSubLayout->addWidget(lblName, 2, 0, 1, 1);
+    gridSubLayout->addWidget(leName, 2, 1, 1, 2);
+    gridSubLayout->addWidget(lblVersion, 3, 0, 1, 1);
+    gridSubLayout->addWidget(leVersion, 3, 1, 1, 2);
+    gridSubLayout->addWidget(lblPolling, 4, 0, 1, 1);
+    gridSubLayout->addWidget(lePoling, 4, 1, 1, 2);
+    gridSubLayout->addWidget(lblUnit, 4, 3, 1, 1);
 
 #if defined(OPENRTM_VERSION12)
-    gridSubLayout->addWidget(lblHeartBeat, 4, 0, 1, 1);
-    gridSubLayout->addWidget(leHeartBeat, 4, 1, 1, 2);
-    gridSubLayout->addWidget(lblUnitHb, 4, 3, 1, 1);
+    gridSubLayout->addWidget(lblHeartBeat, 5, 0, 1, 1);
+    gridSubLayout->addWidget(leHeartBeat, 5, 1, 1, 2);
+    gridSubLayout->addWidget(lblUnitHb, 5, 3, 1, 1);
 #endif
-
 
     QFrame* frmButton = new QFrame;
     QPushButton* okButton = new QPushButton(_("&OK"));
@@ -1764,6 +1770,7 @@ SettingDialog::SettingDialog()
     setWindowTitle(_("OpenRTM Preferences"));
 
     MappingPtr appVars = AppConfig::archive()->openMapping("OpenRTM");
+    leSetting->setText(QString::fromStdString(appVars->get("defaultSetting", "./choreonoid.rtc.conf")));
     leName->setText(QString::fromStdString(appVars->get("defaultVendor", "AIST")));
     leVersion->setText(QString::fromStdString(appVars->get("defaultVersion", "1.0.0")));
     lePoling->setText(QString::number(appVars->get("pollingCycle", 500)));
@@ -1799,18 +1806,37 @@ void SettingDialog::logChanged(bool state)
 
 void SettingDialog::oKClicked()
 {
-    AppConfig::archive()->openMapping("OpenRTM")->write("defaultVendor", leName->text().toStdString(), DOUBLE_QUOTED);
-    AppConfig::archive()->openMapping("OpenRTM")->write("defaultVersion", leVersion->text().toStdString(), DOUBLE_QUOTED);
-    AppConfig::archive()->openMapping("OpenRTM")->write("pollingCycle", lePoling->text().toInt());
+    DDEBUG("SettingDialog::oKClicked");
+    MappingPtr appVars = AppConfig::archive()->openMapping("OpenRTM");
+
+    QString orgSetting = QString::fromStdString(appVars->get("defaultSetting", "./choreonoid.rtc.conf"));
+    QString newSetting = leSetting->text();
+    bool orgLog = appVars->get("outputLog", false);
+    bool newLog = chkLog->isChecked();
+    QString orgLevel = QString::fromStdString(appVars->get("logLevel", "INFO"));
+    QString newLevel = cmbLogLevel->currentText();
+    bool isRestart = (orgSetting != newSetting) || (orgLog != newLog) || (orgLevel != newLevel);
+
+    appVars->write("defaultSetting", leSetting->text().toStdString(), DOUBLE_QUOTED);
+    appVars->write("defaultVendor", leName->text().toStdString(), DOUBLE_QUOTED);
+    appVars->write("defaultVersion", leVersion->text().toStdString(), DOUBLE_QUOTED);
+    appVars->write("pollingCycle", lePoling->text().toInt());
 
 #if defined(OPENRTM_VERSION12)
-    AppConfig::archive()->openMapping("OpenRTM")->write("heartBeatPeriod", leHeartBeat->text().toInt());
+    appVars->write("heartBeatPeriod", leHeartBeat->text().toInt());
 #endif
 
-    AppConfig::archive()->openMapping("OpenRTM")->write("outputLog", chkLog->isChecked());
-    AppConfig::archive()->openMapping("OpenRTM")->write("logLevel", cmbLogLevel->currentText().toStdString());
+    appVars->write("outputLog", chkLog->isChecked());
+    appVars->write("logLevel", cmbLogLevel->currentText().toStdString());
 
-    RTSDiagramView::instance()->updateSetting();
+    RTSDiagramView* view = RTSDiagramView::instance();
+    if(view) {
+        view->updateSetting();
+    }
+
+    if(isRestart) {
+        QMessageBox::warning(this, _("OpenRTM Preferences"), _("The specified setting becomes valid after RESTART."));
+    }
     close();
 }
 

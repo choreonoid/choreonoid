@@ -76,13 +76,9 @@ public:
         require("Corba");
         precede("Corba");
         
-<<<<<<< HEAD
 #ifdef LOG_OUT
         LoggerUtil::startLog(LogLevel::LOG_DEBUG, "Log");
 #endif
-=======
-        //LoggerUtil::startLog(LogLevel::LOG_DEBUG, "Log");
->>>>>>> master
     }
 
     template<typename ExecutionContextType>
@@ -108,17 +104,28 @@ public:
         
     virtual bool initialize() {
         DDEBUG("initialize");
-        const int log_output_item = 10;
-        const int log_level_item = 12;
-        
+        string configFile = "./choreonoid.rtc.conf";
+        string loggerEnable = "logger.enable: NO";
+        string logLeval = "logger.log_level: WARN";
+        MappingPtr appVars = AppConfig::archive()->openMapping("OpenRTM");
+        if (appVars) {
+            bool outputLog = appVars->get("outputLog", false);
+            if (outputLog) {
+                loggerEnable = "logger.enable: YES";
+                logLeval = "logger.log_level:" + appVars->get("logLevel", "INFO");
+            }
+            //
+            configFile = appVars->get("defaultSetting", "./choreonoid.rtc.conf");
+        }
+
         const char* argv[] = {
             "choreonoid",
-            "-f", "./rtc.conf.choreonoid",
+            "-f", configFile.c_str(),
             "-o", "manager.shutdown_on_nortcs: NO",
             "-o", "manager.shutdown_auto: NO",
             "-o", "naming.formats: %n.rtc",
-            "-o", "logger.enable: NO",
-            "-o", "logger.log_level: WARN",
+            "-o", loggerEnable.c_str(),
+            "-o", logLeval.c_str(),
 #ifdef Q_OS_WIN32
             // To reduce the startup time on Windows
             "-o", "corba.args: -ORBclientCallTimeOutPeriod 100",
@@ -128,17 +135,6 @@ public:
 #endif
         };
 
-        MappingPtr appVars = AppConfig::archive()->openMapping("OpenRTM");
-        if (appVars) {
-            bool outputLog = appVars->get("outputLog", false);
-            if (outputLog) {
-                argv[log_output_item] = "logger.enable: YES";
-                string logLevel = "logger.log_level:" + appVars->get("logLevel", "INFO");
-                DDEBUG_V("Log Level:%s", logLevel.c_str());
-                argv[log_level_item] = logLevel.c_str();
-            }
-        }
-        
 #ifdef Q_OS_WIN32
 #if defined(OPENRTM_VERSION11)
         int numArgs = 15;
@@ -153,6 +149,10 @@ public:
         
         cnoid::checkOrInvokeCorbaNameServer();
         
+        for(unsigned int index=0; index<numArgs; index++) {
+          DDEBUG_V("argv[%d]=%s", index, argv[index]);
+        }
+
         manager = static_cast<ManagerEx*>(RTC::Manager::init(numArgs, const_cast<char**>(argv)));
         
         RTM::Manager_ptr servantRef = manager->servant()->getObjRef();
@@ -261,6 +261,7 @@ public:
     
 
     int deleteUnmanagedRTCs(bool doPutMessageWhenNoUnmanagedComponents) {
+        DDEBUG("deleteUnmanagedRTCs");
         int n = cnoid::numUnmanagedRTCs();
         
         if (n == 0) {
@@ -288,6 +289,7 @@ public:
 
     virtual bool finalize()
     {
+        DDEBUG("finalize");
         sigAboutToFinalizeRTM_();
         
         connectionToSigSimulaionAboutToStart.disconnect();
@@ -365,6 +367,7 @@ CNOID_EXPORT int cnoid::numUnmanagedRTCs()
 
 CNOID_EXPORT int cnoid::deleteUnmanagedRTCs()
 {
+    DDEBUG("deleteUnmanagedRTCs");
     int numDeleted = 0;
     
     std::vector<RTC::RTObject_impl*> rtcs = manager->getComponents();
@@ -460,46 +463,54 @@ CNOID_EXPORT int cnoid::deleteUnmanagedRTCs()
 
     
 bool cnoid::deleteRTC(RTC::RtcBase* rtc) {
-  if (rtc) {
-    RTC::ExecutionContextList_var eclist = rtc->get_participating_contexts();
-    for (CORBA::ULong i = 0; i < eclist->length(); ++i) {
-      if (isObjectAlive(eclist[i])) {
-        eclist[i]->remove_component(rtc->getObjRef());
+    DDEBUG("deleteRTC");
+    if (rtc) {
+        try {
+            if (isObjectAlive(rtc->getObjRef())) {
+                RTC::ExecutionContextList_var eclist = rtc->get_participating_contexts();
+                for (CORBA::ULong i = 0; i < eclist->length(); ++i) {
+                    if (isObjectAlive(eclist[i])) {
+                        eclist[i]->remove_component(rtc->getObjRef());
 #if defined(OPENRTM_VERSION12)
-        OpenRTM::ExtTrigExecutionContextService_var execContext = OpenRTM::ExtTrigExecutionContextService::_narrow(eclist[i]);
-        if (isObjectAlive(execContext))
-          execContext->tick();
+                        OpenRTM::ExtTrigExecutionContextService_var execContext = OpenRTM::ExtTrigExecutionContextService::_narrow(eclist[i]);
+                        if (isObjectAlive(execContext))
+                            execContext->tick();
 #endif
-      }
-    }
-    RTC::ExecutionContextList_var myEClist = rtc->get_owned_contexts();
-    if (myEClist->length() > 0 && isObjectAlive(myEClist[0])) {
+                    }
+                }
+                RTC::ExecutionContextList_var myEClist = rtc->get_owned_contexts();
+                if (myEClist->length() > 0 && isObjectAlive(myEClist[0])) {
 #if defined(OPENRTM_VERSION11)
-        OpenRTM::ExtTrigExecutionContextService_var myEC = OpenRTM::ExtTrigExecutionContextService::_narrow(myEClist[0]);
-        RTC::RTCList rtcs = myEC->get_profile()->participants;
-        for (size_t i = 0; i < rtcs.length(); ++i) {
-            myEC->remove_component(rtcs[i]);
-        }
+                    OpenRTM::ExtTrigExecutionContextService_var myEC = OpenRTM::ExtTrigExecutionContextService::_narrow(myEClist[0]);
+                    RTC::RTCList rtcs = myEC->get_profile()->participants;
+                    for (size_t i = 0; i < rtcs.length(); ++i) {
+                        myEC->remove_component(rtcs[i]);
+                    }
 #elif defined(OPENRTM_VERSION12)
-      RTC::ExecutionContextService_var myEC = RTC::ExecutionContextService::_narrow(myEClist[0]);
-      RTC::RTCList rtcs = myEC->get_profile()->participants;
-      for (int i = 0; i < rtcs.length(); ++i) {
-        myEC->remove_component(rtcs[i]);
-      }
-      if( isObjectAlive(myEC) ) {
-          OpenRTM::ExtTrigExecutionContextService_var execContext = OpenRTM::ExtTrigExecutionContextService::_narrow(myEC);
-          if (!CORBA::is_nil(execContext))
-            execContext->tick();
-      }
+                    RTC::ExecutionContextService_var myEC = RTC::ExecutionContextService::_narrow(myEClist[0]);
+                    RTC::RTCList rtcs = myEC->get_profile()->participants;
+                    for (int i = 0; i < rtcs.length(); ++i) {
+                        myEC->remove_component(rtcs[i]);
+                    }
+                    if( isObjectAlive(myEC) ) {
+                        OpenRTM::ExtTrigExecutionContextService_var execContext = OpenRTM::ExtTrigExecutionContextService::_narrow(myEC);
+                        if (!CORBA::is_nil(execContext))
+                            execContext->tick();
+                    }
 #endif
-    }
+                }
+            }
 
-    rtc->exit();
-    manager->cleanupComponents();
-    managedComponents.erase(rtc);
-    return true;
-  }
-  return false;
+            rtc->exit();
+            manager->cleanupComponents();
+            managedComponents.erase(rtc);
+            DDEBUG("deleteRTC End");
+            return true;
+        } catch (CORBA::OBJECT_NOT_EXIST& ex) {
+        }
+    }
+    DDEBUG("deleteRTC End");
+    return false;
 }
 
     
