@@ -16,6 +16,8 @@
 #include <rtm/idl/RTC.hh>
 #include <rtm/NVUtil.h>
 #include <coil/Properties.h>
+
+#include "LoggerUtil.h"
 #include "gettext.h"
 
 using namespace RTC;
@@ -140,6 +142,7 @@ RTSPropertiesViewImpl::~RTSPropertiesViewImpl()
 
 void RTSPropertiesViewImpl::onItemSelectionChanged(const list<NamingContextHelper::ObjectInfo>& items)
 {
+    DDEBUG("RTSPropertiesViewImpl::onItemSelectionChanged");
     if(items.size()!=1)
         return;
 
@@ -148,6 +151,7 @@ void RTSPropertiesViewImpl::onItemSelectionChanged(const list<NamingContextHelpe
         currentItem.id = item.id;
         currentItem.isAlive = item.isAlive;
         currentItem.kind = item.kind;
+        currentItem.fullPath = item.fullPath;
         showProperties();
     }
 }
@@ -161,10 +165,11 @@ void RTSPropertiesViewImpl::onLocationChanged(string host, int port)
 
 void RTSPropertiesViewImpl::showProperties()
 {
+    DDEBUG("RTSPropertiesViewImpl::showProperties");
     treeWidget.clear();
 
     if(currentItem.id!="" && currentItem.isAlive){
-        RTC::RTObject_ptr rtc = ncHelper.findObject<RTC::RTObject>(currentItem.id, "rtc");
+        RTC::RTObject_ptr rtc = ncHelper.findObject<RTC::RTObject>(currentItem.fullPath);
         if(!isObjectAlive(rtc))
                 return;
         ComponentProfile_var cprofile = rtc->get_component_profile();
