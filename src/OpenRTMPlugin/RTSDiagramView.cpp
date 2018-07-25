@@ -908,6 +908,7 @@ void RTSDiagramViewImpl::mousePressEvent(QMouseEvent* event)
     if(event->button() == Qt::RightButton){
         if(!selectionRTCs.empty()){
             if(selectionRTCs.size() == 1){
+                if(!selectionRTCs.front()->rtsComp->rtc_) return;
                 menuManager.setNewPopupMenu(this);
                 menuManager.addItem("Activate")
                     ->sigTriggered().connect(std::bind(&RTSDiagramViewImpl::activateComponent, this));

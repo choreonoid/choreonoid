@@ -56,6 +56,7 @@ bool ProfileHandler::restoreRtsProfile(std::string targetFile, RTSystemItem* rts
 		pos.x() = compProf.posX;
 		pos.y() = compProf.posY;
 
+  	DDEBUG_V("addRTSComp: %s, %s", info.id.c_str(), info.getFullPath().c_str());
 		RTSComp* comp = rts->addRTSComp(info, QPointF(pos(0), pos(1)));
 		if (comp == 0) continue;
 		if (!comp->rtc_) {
@@ -82,48 +83,50 @@ bool ProfileHandler::restoreRtsProfile(std::string targetFile, RTSystemItem* rts
 			}
 		}
 		/////
-		string activeConfig = compProf.activeConfigurationSet;
-		DDEBUG_V("activeConfig:%s", activeConfig.c_str());
-		vector<ConfigurationSet> configList = compProf.configList;
-		SDOPackage::Configuration_ptr configuration = comp->rtc_->get_configuration();
-		SDOPackage::ConfigurationSetList_var confSet = configuration->get_configuration_sets();
-		for (int idxSet = 0; idxSet < configList.size(); idxSet++) {
-			ConfigurationSet configSetProf = configList[idxSet];
-			bool isExist = false;
-			SDOPackage::ConfigurationSet confRaw;
-			for (int idxConf = 0; idxConf < confSet->length(); idxConf++) {
-				string rawId = string(confSet[idxConf].id);
-				if (configSetProf.id == rawId) {
-					isExist = true;
-					confRaw = confSet[idxConf];
-					break;
-				}
-			}
-			if (isExist) {
-				DDEBUG("Cinfiguration UPDATE");
-				NVList configList;
-				for (int idxDetail = 0; idxDetail < configSetProf.dataList.size(); idxDetail++) {
-					string name = configSetProf.dataList[idxDetail].name;
-					string value = configSetProf.dataList[idxDetail].value;
-					CORBA_SeqUtil::push_back(configList, NVUtil::newNV(name.c_str(), value.c_str()));
-				}
-				confRaw.configuration_data = configList;
-				configuration->set_configuration_set_values(confRaw);
+    if(isObjectAlive(comp->rtc_)) {
+		    string activeConfig = compProf.activeConfigurationSet;
+		    DDEBUG_V("activeConfig:%s", activeConfig.c_str());
+		    vector<ConfigurationSet> configList = compProf.configList;
+		    SDOPackage::Configuration_ptr configuration = comp->rtc_->get_configuration();
+		    SDOPackage::ConfigurationSetList_var confSet = configuration->get_configuration_sets();
+		    for (int idxSet = 0; idxSet < configList.size(); idxSet++) {
+			    ConfigurationSet configSetProf = configList[idxSet];
+			    bool isExist = false;
+			    SDOPackage::ConfigurationSet confRaw;
+			    for (int idxConf = 0; idxConf < confSet->length(); idxConf++) {
+				    string rawId = string(confSet[idxConf].id);
+				    if (configSetProf.id == rawId) {
+					    isExist = true;
+					    confRaw = confSet[idxConf];
+					    break;
+				    }
+			    }
+			    if (isExist) {
+				    DDEBUG("Cinfiguration UPDATE");
+				    NVList configList;
+				    for (int idxDetail = 0; idxDetail < configSetProf.dataList.size(); idxDetail++) {
+					    string name = configSetProf.dataList[idxDetail].name;
+					    string value = configSetProf.dataList[idxDetail].value;
+					    CORBA_SeqUtil::push_back(configList, NVUtil::newNV(name.c_str(), value.c_str()));
+				    }
+				    confRaw.configuration_data = configList;
+				    configuration->set_configuration_set_values(confRaw);
 
-			} else {
-				DDEBUG("Cinfiguration INSERT");
-				SDOPackage::ConfigurationSet newSet;
-				newSet.id = CORBA::string_dup(configSetProf.id.c_str());
-				NVList configList;
-				for (int idxDetail = 0; idxDetail < configSetProf.dataList.size(); idxDetail++) {
-					CORBA_SeqUtil::push_back(configList,
-						NVUtil::newNV(configSetProf.dataList[idxDetail].name.c_str(), configSetProf.dataList[idxDetail].value.c_str()));
-				}
-				newSet.configuration_data = configList;
-				configuration->add_configuration_set(newSet);
-			}
-		}
-		configuration->activate_configuration_set(activeConfig.c_str());
+			    } else {
+				    DDEBUG("Cinfiguration INSERT");
+				    SDOPackage::ConfigurationSet newSet;
+				    newSet.id = CORBA::string_dup(configSetProf.id.c_str());
+				    NVList configList;
+				    for (int idxDetail = 0; idxDetail < configSetProf.dataList.size(); idxDetail++) {
+					    CORBA_SeqUtil::push_back(configList,
+						    NVUtil::newNV(configSetProf.dataList[idxDetail].name.c_str(), configSetProf.dataList[idxDetail].value.c_str()));
+				    }
+				    newSet.configuration_data = configList;
+				    configuration->add_configuration_set(newSet);
+			    }
+        }
+		    configuration->activate_configuration_set(activeConfig.c_str());
+    }
 	}
 	/////
 	for (int idxData = 0; idxData < profile.dataConnList.size(); idxData++) {

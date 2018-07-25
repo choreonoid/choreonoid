@@ -135,6 +135,7 @@ void RTCWrapper::setRTObject(RTC::RTObject_ptr target) {
 
 	if (!isObjectAlive(target)) {
 		ownedExeContList_ = 0;
+  	DDEBUG("RTSComp::setRTObject NULL");
 		return;
 	}
 	rtc_ = target;

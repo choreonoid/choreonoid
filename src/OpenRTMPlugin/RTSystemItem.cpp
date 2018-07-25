@@ -109,31 +109,33 @@ RTSPort::RTSPort(const string& name_, PortService_var port_, RTSComp* parent)
     name = name_;
     port = port_;
     //
-    RTC::PortProfile* profile = port->get_port_profile();
-    if(profile){
-        RTC::PortInterfaceProfileList interfaceList = profile->interfaces;
-        for (CORBA::ULong index = 0; index < interfaceList.length(); ++index){
-            RTC::PortInterfaceProfile ifProfile = interfaceList[index];
-            PortInterfacePtr portIf(new PortInterface());
-            if(parent){
-                portIf->rtc_name = parent->name;
+    if(port) {
+        RTC::PortProfile* profile = port->get_port_profile();
+        if(profile){
+            RTC::PortInterfaceProfileList interfaceList = profile->interfaces;
+            for (CORBA::ULong index = 0; index < interfaceList.length(); ++index){
+                RTC::PortInterfaceProfile ifProfile = interfaceList[index];
+                PortInterfacePtr portIf(new PortInterface());
+                if(parent){
+                    portIf->rtc_name = parent->name;
+                }
+                const char* port_name;
+                port_name = (const char*)profile->name;
+                portIf->port_name = port_name;
+                if(ifProfile.polarity == PortInterfacePolarity::REQUIRED){
+                    portIf->if_polarity = "required";
+                } else {
+                    portIf->if_polarity = "provided";
+                }
+                const char* if_iname;
+                const char* if_tname;
+                if_iname = (const char*)ifProfile.instance_name;
+                if_tname = (const char*)ifProfile.type_name;
+                DDEBUG_V("name: %s, IF name: %s, instance_name: %s, type_name: %s", name_.c_str(), portIf->port_name.c_str(), if_iname, if_tname);
+                portIf->if_tname = if_tname;
+                portIf->if_iname = if_iname;
+                interList.push_back(portIf);
             }
-            const char* port_name;
-            port_name = (const char*)profile->name;
-            portIf->port_name = port_name;
-            if(ifProfile.polarity == PortInterfacePolarity::REQUIRED){
-                portIf->if_polarity = "required";
-            } else {
-                portIf->if_polarity = "provided";
-            }
-            const char* if_iname;
-            const char* if_tname;
-            if_iname = (const char*)ifProfile.instance_name;
-            if_tname = (const char*)ifProfile.type_name;
-            DDEBUG_V("name: %s, IF name: %s, instance_name: %s, type_name: %s", name_.c_str(), portIf->port_name.c_str(), if_iname, if_tname);
-            portIf->if_tname = if_tname;
-            portIf->if_iname = if_iname;
-            interList.push_back(portIf);
         }
     }
 }
@@ -353,6 +355,7 @@ RTSComp::RTSComp(const string& name, const std::string& fullPath, RTC::RTObject_
 void RTSComp::setRtc(RTObject_ptr rtc)
 {
     DDEBUG("RTSComp::setRtc");
+    rtc_ = 0;
 
     rts_->suggestFileUpdate();
 
@@ -414,7 +417,6 @@ void RTSComp::setRtc(RTObject_ptr rtc)
     }
 
     connectionCheck();
-    
     DDEBUG("RTSComp::setRtc End");
 }
 
@@ -700,10 +702,10 @@ RTSComp* RTSystemItemImpl::addRTSComp(const NamingContextHelper::ObjectInfo& inf
         std::vector<NamingContextHelper::ObjectPath> target = info.fullPath;
         RTC::RTObject_ptr rtc = ncHelper.findObject<RTC::RTObject>(target);
         if(rtc == RTC::RTObject::_nil()){
-            return nullptr;
+            rtc = 0;
         }
         if(!isObjectAlive(rtc)){
-            return nullptr;
+            rtc = 0;
         }
 
         RTSCompPtr rtsComp = new RTSComp(info.id, fullPath, rtc, self, pos);
