@@ -32,7 +32,7 @@ bool
 SimulationManager::initialize(ExtensionManager* extMgr)
 {
 
-    extMgr->viewManager().registerClass<MulticopterMonitorView>("MulticopterMonitorView",_("MultiCopterMonitor"), ViewManager::SINGLE_DEFAULT);
+    extMgr->viewManager().registerClass<MulticopterMonitorView>("MulticopterMonitorView",_("MultiCopterMonitor"), ViewManager::SINGLE_OPTIONAL);
     _multicopterMonitorView = extMgr->viewManager().findView<MulticopterMonitorView>();
 
     _gravity << 0.0, 0.0, -DEFAULT_GRAVITY_ACCELERATION;
