@@ -36,6 +36,8 @@ namespace {
 
 const bool TRACE_FUNCTIONS = false;
 
+const double DEFAULT_FRAME_RATE = 1000.0;
+
 // The following value shoud be same as the display refresh rate to make the animation smooth
 const double DEFAULT_PLAYBACK_FRAMERATE = 60.0;
     
@@ -292,7 +294,7 @@ TimeBarImpl::TimeBarImpl(TimeBar* self)
     self->setStretchable(true);
     
     self->time_ = 0.0;
-    self->frameRate_ = 100.0;
+    self->frameRate_ = DEFAULT_FRAME_RATE;
     decimals = 2;
     minTime = 0.0;
     maxTime = 30.0;

@@ -2516,10 +2516,10 @@ void SimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
                 [&](int index){ return temporalResolutionType.select(index); });
 
     if(temporalResolutionType.is(RESOLUTION_TIMESTEP)){
-        putProperty(_("Timestep"), timeStepProperty,
+        putProperty(_("Time step"), timeStepProperty,
                     [&](const std::string& s){ return timeStepProperty.setPositiveValue(s); });
     } else if(temporalResolutionType.is(RESOLUTION_FRAMERATE)){
-        putProperty.min(1)(_("Framerate"), frameRateProperty, changeProperty(frameRateProperty));
+        putProperty.min(1)(_("Frame rate"), frameRateProperty, changeProperty(frameRateProperty));
         putProperty.reset();
     }
 
@@ -2553,9 +2553,9 @@ bool SimulatorItem::store(Archive& archive)
 bool SimulatorItemImpl::store(Archive& archive)
 {
     if(temporalResolutionType.is(RESOLUTION_TIMESTEP)){
-        archive.write("timestep", timeStepProperty.string());
+        archive.write("timeStep", timeStepProperty.string());
     } else if(temporalResolutionType.is(RESOLUTION_FRAMERATE)){
-        archive.write("framerate", frameRateProperty);
+        archive.write("frameRate", frameRateProperty);
     }
     archive.write("realtimeSync", isRealtimeSyncMode);
     archive.write("recording", recordingMode.selectedSymbol(), DOUBLE_QUOTED);
@@ -2602,10 +2602,10 @@ bool SimulatorItemImpl::restore(const Archive& archive)
     bool boolValue;
     string symbol;
 
-    if(archive.read("timestep", symbol)){
+    if(archive.read("timeStep", symbol) || archive.read("timestep", symbol)){
         timeStepProperty = symbol;
         temporalResolutionType.select(RESOLUTION_TIMESTEP);
-    } else if(archive.read("framerate", frameRateProperty)){
+    } else if(archive.read("frameRate", frameRateProperty) || archive.read("framerate", frameRateProperty)){
         temporalResolutionType.select(RESOLUTION_FRAMERATE);
     } else {
         temporalResolutionType.select(RESOLUTION_TIMEBAR);
