@@ -64,11 +64,12 @@ links:
             linkName: HOSE_ROOT
             position: [ 5.0, 0.0, -0.75 ]
           -
-            type: link
+            #type: link
+            type: fixed
             linkName: HOSE_ADAPTER
             position: [ 0, 0, 0]
-            twistStiffness: 1e8
-            bendStiffness: 1e8
+            #twistStiffness: 1e6
+            #bendStiffness: 1e6
             superBendReplacedWithBend: true
   -
     name: HOSE_ADAPTER
@@ -76,7 +77,7 @@ links:
     translation: [ 5.0, 0.0, -0.75 ]
     rotation: [ 1, 0, 0, 90 ]
     jointType: free
-    density: 1.0
+    density: 3.0
     elements:
       -
         name: Attachment
