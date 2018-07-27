@@ -15,11 +15,18 @@
 #include "CheckBox.h"
 #include "Dialog.h"
 #include <QDialogButtonBox>
-#include <QTime>
 #include <boost/lexical_cast.hpp>
 #include <cmath>
 #include <limits>
 #include <iostream>
+
+#if QT_VERSION >= 0x040700
+#include <QElapsedTimer>
+#else
+#include <QTime>
+typedef QTime QElapsedTimer;
+#endif
+
 #include "gettext.h"
 
 using namespace std;
@@ -78,7 +85,7 @@ public:
         hbox->addWidget(new QLabel(_("Playback frame rate")));
         playbackFrameRateSpin.setAlignment(Qt::AlignCenter);
         playbackFrameRateSpin.setRange(0, 1000);
-        playbackFrameRateSpin.setValue(50);
+        playbackFrameRateSpin.setValue(60);
         hbox->addWidget(&playbackFrameRateSpin);
         hbox->addStretch();
         vbox->addLayout(hbox);
@@ -221,7 +228,7 @@ public:
     double playbackFrameRate;
     double animationTimeOffset;
     int timerId;
-    QTime timer;
+    QElapsedTimer elapsedTimer;
     bool repeatMode;
     bool isDoingPlayback;
     map<int, double> fillLevelMap;
@@ -655,12 +662,12 @@ void TimeBarImpl::startPlayback()
             stopResumeButton->setIcon(stopIcon);
             stopResumeButton->setToolTip(tip);
             if(config.idleLoopDrivenCheck.isChecked()){
-                timerId = startTimer(0);
+                timerId = startTimer(0, Qt::PreciseTimer);
             } else {
-                timerId = startTimer((int)myNearByInt(1000.0 / playbackFrameRate));
+                timerId = startTimer((int)myNearByInt(1000.0 / playbackFrameRate), Qt::PreciseTimer);
             }
             
-            timer.start();
+            elapsedTimer.start();
         }
     }
 }
@@ -781,7 +788,7 @@ void TimeBar::startPlaybackFromFillLevel()
 double TimeBar::realPlaybackTime() const
 {
     if(impl->isDoingPlayback){
-        return impl->animationTimeOffset + impl->playbackSpeedScale * (impl->timer.elapsed() / 1000.0);
+        return impl->animationTimeOffset + impl->playbackSpeedScale * (impl->elapsedTimer.elapsed() / 1000.0);
     } else {
         return time_;
     }
@@ -790,7 +797,7 @@ double TimeBar::realPlaybackTime() const
 
 void TimeBarImpl::timerEvent(QTimerEvent*)
 {
-    double time = animationTimeOffset + playbackSpeedScale * (timer.elapsed() / 1000.0);
+    double time = animationTimeOffset + playbackSpeedScale * (elapsedTimer.elapsed() / 1000.0);
 
     bool doStopAtLastFillLevel = false;
     if(isFillLevelActive){
