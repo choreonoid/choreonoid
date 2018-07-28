@@ -5,6 +5,7 @@
 #include <vector>
 #include <map>
 #include <memory>
+#include <ostream>
 #include <cnoid/Referenced>
 #include <cnoid/IdPair>
 #include <rtm/idl/SDOPackage.hh>
@@ -135,7 +136,8 @@ public:
 
 	static void saveRtsProfile(
             const std::string& targetFile, std::string& systemId, std::string& hostName,
-            std::map<std::string, cnoid::RTSCompPtr>& comps, RTSConnectionMap& connections);
+            std::map<std::string, cnoid::RTSCompPtr>& comps, RTSConnectionMap& connections,
+            std::ostream& os);
     
 private:
 	static bool parseProfile(std::string targetFile, RtsProfile& profile);
@@ -144,7 +146,7 @@ private:
 
 	static RTSPort* getTargetPort(std::string& sourceRtc, std::string& sourcePort, RTSystemItem* impl);
 	/////
-	static bool writeProfile(const std::string& targetFile, RtsProfile& profile);
+	static bool writeProfile(const std::string& targetFile, RtsProfile& profile, std::ostream& os);
 	static void writeComponent(std::vector<Component>& compList, pugi::xml_node& parent);
 	static void writeDataPort(std::vector<DataPort>& portList, pugi::xml_node& parent);
 	static void writeServicePort(std::vector<ServicePort>& portList, pugi::xml_node& parent);

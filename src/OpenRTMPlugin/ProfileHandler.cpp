@@ -3,7 +3,6 @@
 #include "ProfileHandler.h"
 #include "LoggerUtil.h"
 #include <rtm/idl/RTC.hh>
-#include <cnoid/MessageView>
 #include <QDateTime>
 #include <QString>
 #include <QStringList>
@@ -318,7 +317,7 @@ TargetPort ProfileHandler::parseTargetPort(const pugi::xml_node& targetPort) {
 }
 //////////
 void ProfileHandler::saveRtsProfile
-(const string& targetFile, string& systemId, string& hostName, map<string, RTSCompPtr>& comps, RTSConnectionMap& connections)
+(const string& targetFile, string& systemId, string& hostName, map<string, RTSCompPtr>& comps, RTSConnectionMap& connections, std::ostream& os)
 {
     RtsProfile profile;
     profile.id = systemId;
@@ -344,7 +343,7 @@ void ProfileHandler::saveRtsProfile
 		    RTSComp* comp = it->second.get();
 
         if(!isObjectAlive(comp->rtc_)){
-            MessageView::instance()->putln(MessageView::WARNING, comp->name + "is NOT ALIVE.");
+            os << "\033[31mWarning: " << comp->name << "is NOT ALIVE.\033[0m" << endl;
             continue;
         }
         
@@ -410,7 +409,7 @@ void ProfileHandler::saveRtsProfile
 
 		        profile.compList.push_back(compProf);
         } catch (...) {
-            MessageView::instance()->putln(MessageView::WARNING, "Failed to acquire [" + comp->name + "] information.");
+            os << "\033[31mWarning: " << "Failed to acquire [" << comp->name << "] information.\033[0m" << endl;
         }
   	}
   	//
@@ -418,8 +417,7 @@ void ProfileHandler::saveRtsProfile
 		    RTSConnection* connect = it->second.get();
 
         if(!isObjectAlive(connect->sourcePort->port)){
-            MessageView::instance()->putln(MessageView::WARNING,
-              "The connection between " + connect->sourcePort->name + " and " + connect->targetPort->name + " is NOT ALIVE.");
+            os << "\033[31mWarning: " << "The connection between " << connect->sourcePort->name << " and " << connect->targetPort->name << " is NOT ALIVE.\033[0m" << endl;
             continue;
         }
         
@@ -468,11 +466,10 @@ void ProfileHandler::saveRtsProfile
   		      }
 
         } catch(...) {
-            MessageView::instance()->putln(MessageView::WARNING,
-              "Failed to acquire connection information between " + connect->sourcePort->name + " and " + connect->targetPort->name + ".");
+            os << "\033[31mWarning: " << "Failed to acquire connection information between " << connect->sourcePort->name << " and " << connect->targetPort->name << ".\033[0m" << endl;
         }
 	  }
-	  writeProfile(targetFile, profile);
+	  writeProfile(targetFile, profile, os);
 }
 
 void ProfileHandler::buildPosition(const RTSConnection* connect, int offsetX, int offsetY, std::vector<Property>& propList) {
@@ -565,7 +562,7 @@ void ProfileHandler::appendStringValue(std::vector<Property>& target, std::strin
     }
 }
 
-bool ProfileHandler::writeProfile(const std::string& targetFile, RtsProfile& profile)
+bool ProfileHandler::writeProfile(const std::string& targetFile, RtsProfile& profile, std::ostream& os)
 {
 	  xml_document doc;
 	  xml_node profileNode = doc.append_child("rts:RtsProfile");
@@ -589,7 +586,7 @@ bool ProfileHandler::writeProfile(const std::string& targetFile, RtsProfile& pro
     try {
         ret = doc.save_file(targetFile.c_str());
     } catch(...) {
-        MessageView::instance()->putln(MessageView::WARNING, "Failed to save [" + targetFile + "].");
+        os << "\033[31mWarning: " << "Failed to save [" << targetFile << "].\033[0m" << endl;
     }
 	  return ret;
 }

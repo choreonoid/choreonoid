@@ -1049,6 +1049,7 @@ bool RTSystemItem::loadRtsProfile(const string& filename)
     ProfileHandler::getRtsProfileInfo(filename, impl->vendorName, impl->version);
     if(ProfileHandler::restoreRtsProfile(filename, this)){
         RTSDiagramView::instance()->updateView();
+        RTSDiagramView::instance()->updateRestoredView();
         return true;
     }
     return false;
@@ -1072,7 +1073,7 @@ bool RTSystemItemImpl::saveRtsProfile(const string& filename)
     string systemId = "RTSystem:" + vendorName + ":" + self->name() + ":" + version;
     string hostname = ncHelper.host();
 
-    ProfileHandler::saveRtsProfile(filename, systemId, hostname, rtsComps, rtsConnections);
+    ProfileHandler::saveRtsProfile(filename, systemId, hostname, rtsComps, rtsConnections, MessageView::mainInstance()->cout());
 
     return true;
 }
