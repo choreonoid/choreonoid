@@ -87,6 +87,7 @@ bool ProfileHandler::restoreRtsProfile(std::string targetFile, RTSystemItem* rts
 				rtsPort->isInPort = false;
 				comp->outPorts.push_back(rtsPort);
 			}
+      comp->profile = compProf;
 		}
 		/////
     if(isObjectAlive(comp->rtc_)) {
@@ -152,7 +153,8 @@ bool ProfileHandler::restoreRtsProfile(std::string targetFile, RTSystemItem* rts
 		}
 
 		if (sourcePort && targetPort) {
-			rts->addRTSConnection(id, name, sourcePort, targetPort, propList, dataConProf.pos);
+			RTSConnection* conn = rts->addRTSConnection(id, name, sourcePort, targetPort, propList, dataConProf.pos);
+      conn->dataProfile = dataConProf;
 		}
 	}
 	for (int idxService = 0; idxService < profile.serviceConnList.size(); idxService++) {
@@ -171,7 +173,8 @@ bool ProfileHandler::restoreRtsProfile(std::string targetFile, RTSystemItem* rts
 		}
 
 		if (sourcePort && targetPort) {
-			rts->addRTSConnection(id, name, sourcePort, targetPort, propList, serviceConProf.pos);
+			RTSConnection* conn = rts->addRTSConnection(id, name, sourcePort, targetPort, propList, serviceConProf.pos);
+      conn->serviceProfile = serviceConProf;
 		}
 	}
 
@@ -344,6 +347,7 @@ void ProfileHandler::saveRtsProfile
 
         if(!isObjectAlive(comp->rtc_)){
             os << "\033[31mWarning: " << comp->name << "is NOT ALIVE.\033[0m" << endl;
+            profile.compList.push_back(comp->profile);
             continue;
         }
         
@@ -418,6 +422,11 @@ void ProfileHandler::saveRtsProfile
 
         if(!isObjectAlive(connect->sourcePort->port)){
             os << "\033[31mWarning: " << "The connection between " << connect->sourcePort->name << " and " << connect->targetPort->name << " is NOT ALIVE.\033[0m" << endl;
+		        if (connect->sourcePort->isServicePort) {
+				        profile.serviceConnList.push_back(connect->serviceProfile);
+            } else {
+				        profile.dataConnList.push_back(connect->dataProfile);
+            }
             continue;
         }
         

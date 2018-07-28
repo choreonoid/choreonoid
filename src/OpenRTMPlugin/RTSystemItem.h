@@ -98,6 +98,9 @@ public:
     Vector2 position[6];
     bool setPos;
 
+    DataPortConnector dataProfile;
+    ServicePortConnector serviceProfile;
+
     RTSConnection(
         const std::string& id, const std::string& name, const std::string& sourceRtcName,
         const std::string& sourcePortName, const std::string& targetRtcName, const std::string& targetPortName);
@@ -129,6 +132,8 @@ public:
     std::string fullPath;
     std::vector<RTSPortPtr> inPorts;
     std::vector<RTSPortPtr> outPorts;
+
+    Component profile;
 
     RTSComp(const std::string& name, RTC::RTObject_ptr rtc, RTSystemItem* rts, const QPointF& pos);
     RTSComp(const std::string& name, const std::string& fullPath, RTC::RTObject_ptr rtc, RTSystemItem* rts, const QPointF& pos);
