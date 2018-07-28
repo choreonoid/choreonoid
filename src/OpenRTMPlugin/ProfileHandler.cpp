@@ -43,13 +43,19 @@ bool ProfileHandler::restoreRtsProfile(std::string targetFile, RTSystemItem* rts
 		QStringList nameList = name.split("/");
 		nameList.removeAt(0);
 
+    bool isSkip = false;
 		NamingContextHelper::ObjectInfo info;
 		for (int index = 0; index < nameList.count(); index++) {
 			QString elem = nameList[index];
 			QStringList elemList = elem.split(".");
+      if(elemList.size() != 2) {
+        isSkip = true;
+        break;
+      }
 			NamingContextHelper::ObjectPath path(elemList[0].toStdString(), elemList[1].toStdString());
 			info.fullPath.push_back(path);
 		}
+    if(isSkip) continue;
 		info.id = compProf.instanceName;
 
 		Vector2 pos;

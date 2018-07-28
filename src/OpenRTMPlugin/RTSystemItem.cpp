@@ -741,6 +741,7 @@ bool RTSystemItem::compIsAlive(RTSComp* rtsComp)
 
 bool RTSystemItemImpl::compIsAlive(RTSComp* rtsComp)
 {
+    //DDEBUG("RTSystemItemImpl::compIsAlive");
     if(rtsComp->rtc_){
         if(isObjectAlive(rtsComp->rtc_)){
             return true;
@@ -749,10 +750,24 @@ bool RTSystemItemImpl::compIsAlive(RTSComp* rtsComp)
             return false;
         }
     } else {
-        RTC::RTObject_ptr rtc = ncHelper.findObject<RTC::RTObject>(rtsComp->name, "rtc");
+        //DDEBUG_V("Full Path = %s", rtsComp->fullPath.c_str());
+    		QStringList nameList = QString::fromStdString(rtsComp->fullPath).split("/");
+        std::vector<NamingContextHelper::ObjectPath> pathList;
+        for (int index = 0; index < nameList.count(); index++) {
+    			QString elem = nameList[index];
+          if(elem.length()==0) continue;
+    			QStringList elemList = elem.split(".");
+          if(elemList.size() != 2) return false;
+    			NamingContextHelper::ObjectPath path(elemList[0].toStdString(), elemList[1].toStdString());
+    			pathList.push_back(path);
+    		}
+
+        RTC::RTObject_ptr rtc = ncHelper.findObject<RTC::RTObject>(pathList);
         if(!isObjectAlive(rtc)){
+            //DDEBUG("RTSystemItemImpl::compIsAlive NOT Alive");
             return false;
         } else {
+            //DDEBUG("RTSystemItemImpl::compIsAlive Alive");
             rtsComp->setRtc(rtc);
             if(autoConnection){
                 list<RTSConnection*> rtsConnectionList;
