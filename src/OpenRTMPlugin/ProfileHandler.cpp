@@ -3,6 +3,7 @@
 #include "ProfileHandler.h"
 #include "LoggerUtil.h"
 #include <rtm/idl/RTC.hh>
+#include <cnoid/MessageView>
 #include <QDateTime>
 #include <QString>
 #include <QStringList>
@@ -152,7 +153,7 @@ bool ProfileHandler::restoreRtsProfile(std::string targetFile, RTSystemItem* rts
 		}
 
 		if (sourcePort && targetPort) {
-			rts->addRTSConnection(id, name, sourcePort, targetPort, propList);
+			rts->addRTSConnection(id, name, sourcePort, targetPort, propList, dataConProf.pos);
 		}
 	}
 	for (int idxService = 0; idxService < profile.serviceConnList.size(); idxService++) {
@@ -171,7 +172,7 @@ bool ProfileHandler::restoreRtsProfile(std::string targetFile, RTSystemItem* rts
 		}
 
 		if (sourcePort && targetPort) {
-			rts->addRTSConnection(id, name, sourcePort, targetPort, propList);
+			rts->addRTSConnection(id, name, sourcePort, targetPort, propList, serviceConProf.pos);
 		}
 	}
 
@@ -244,6 +245,17 @@ bool ProfileHandler::parseProfile(std::string targetFile, RtsProfile& profile) {
 			propPro.name = prop.attribute("rtsExt:name").as_string();
 			propPro.value = prop.attribute("rtsExt:value").as_string();
 			dataConProf.propertyList.push_back(propPro);
+      if(propPro.name == "POSITION") {
+          float posX[6], posY[6];
+          sscanf(propPro.value.c_str(),
+            "{1:(%f,%f),2:(%f,%f),3:(%f,%f),4:(%f,%f),5:(%f,%f),6:(%f,%f)}",
+            &posX[0], &posY[0], &posX[1], &posY[1], &posX[2], &posY[2], &posX[3], &posY[3], &posX[4], &posY[4], &posX[5], &posY[5]);
+          DDEBUG_V("Value: (%f, %f), (%f, %f), (%f, %f), (%f, %f), (%f, %f), (%f, %f) ",
+            posX[0], posY[0], posX[1], posY[1], posX[2], posY[2], posX[3], posY[3], posX[4], posY[4], posX[5], posY[5]);
+          for(int idxPos=0; idxPos<6; idxPos++) {
+            dataConProf.pos[idxPos] << posX[idxPos], posY[idxPos];
+          }
+      }
 		}
 		profile.dataConnList.push_back(dataConProf);
 	}
@@ -259,6 +271,17 @@ bool ProfileHandler::parseProfile(std::string targetFile, RtsProfile& profile) {
 			propPro.name = prop.attribute("rtsExt:name").as_string();
 			propPro.value = prop.attribute("rtsExt:value").as_string();
 			serviceConProf.propertyList.push_back(propPro);
+      if(propPro.name == "POSITION") {
+          float posX[6], posY[6];
+          sscanf(propPro.value.c_str(),
+            "{1:(%f,%f),2:(%f,%f),3:(%f,%f),4:(%f,%f),5:(%f,%f),6:(%f,%f)}",
+            &posX[0], &posY[0], &posX[1], &posY[1], &posX[2], &posY[2], &posX[3], &posY[3], &posX[4], &posY[4], &posX[5], &posY[5]);
+          DDEBUG_V("Value: (%f, %f), (%f, %f), (%f, %f), (%f, %f), (%f, %f), (%f, %f) ",
+            posX[0], posY[0], posX[1], posY[1], posX[2], posY[2], posX[3], posY[3], posX[4], posY[4], posX[5], posY[5]);
+          for(int idxPos=0; idxPos<6; idxPos++) {
+            serviceConProf.pos[idxPos] << posX[idxPos], posY[idxPos];
+          }
+      }
 		}
 		profile.serviceConnList.push_back(serviceConProf);
 	}
@@ -297,125 +320,183 @@ TargetPort ProfileHandler::parseTargetPort(const pugi::xml_node& targetPort) {
 void ProfileHandler::saveRtsProfile
 (const string& targetFile, string& systemId, string& hostName, map<string, RTSCompPtr>& comps, RTSConnectionMap& connections)
 {
-	RtsProfile profile;
-	profile.id = systemId;
+    RtsProfile profile;
+    profile.id = systemId;
 
-	for (map<string, RTSCompPtr>::iterator it = comps.begin(); it != comps.end(); it++) {
-		RTSComp* comp = it->second.get();
+    int offsetX = 0;
+    int offsetY = 0;
+	  for (map<string, RTSCompPtr>::iterator it = comps.begin(); it != comps.end(); it++) {
+		    RTSComp* comp = it->second.get();
+        if(comp->pos().x() < offsetX) offsetX = comp->pos().x();
+        if(comp->pos().y() < offsetY) offsetY = comp->pos().y();
+    }
+	  for (RTSConnectionMap::iterator it = connections.begin(); it != connections.end(); it++) {
+		    RTSConnection* connect = it->second.get();
+        for(int idxPos=0; idxPos<6; idxPos++) {
+            if(connect->position[idxPos](0) < offsetX) offsetX = connect->position[idxPos](0);
+            if(connect->position[idxPos](1) < offsetY) offsetY = connect->position[idxPos](1);
+        }
+    }
+    if(offsetX < 0) offsetX = -offsetX;
+    if(offsetY < 0) offsetY = -offsetY;
+
+	  for (map<string, RTSCompPtr>::iterator it = comps.begin(); it != comps.end(); it++) {
+		    RTSComp* comp = it->second.get();
 
         if(!isObjectAlive(comp->rtc_)){
-            //! \todo put a warning message here
+            MessageView::instance()->putln(MessageView::WARNING, comp->name + "is NOT ALIVE.");
             continue;
         }
         
-		Component compProf;
-		ComponentProfile* compRaw = comp->rtc_->get_component_profile();
-		compProf.id = "RTC:" + string(compRaw->vendor) + ":" + string(compRaw->category) + ":" + string(compRaw->instance_name) + ":" + string(compRaw->version);
-		compProf.instanceName = compRaw->instance_name;
-		compProf.pathUri = hostName + comp->fullPath;
-		compProf.activeConfigurationSet = comp->rtc_->get_configuration()->get_active_configuration_set()->id;
-		compProf.posX = comp->pos().x();
-		compProf.posY = comp->pos().y();
+        try {
+		        Component compProf;
+		        ComponentProfile* compRaw = comp->rtc_->get_component_profile();
+		        compProf.id = "RTC:" + string(compRaw->vendor) + ":" + string(compRaw->category) + ":" + string(compRaw->instance_name) + ":" + string(compRaw->version);
+		        compProf.instanceName = compRaw->instance_name;
+		        compProf.pathUri = hostName + comp->fullPath;
+		        compProf.activeConfigurationSet = comp->rtc_->get_configuration()->get_active_configuration_set()->id;
+		        compProf.posX = comp->pos().x() + offsetX;
+		        compProf.posY = comp->pos().y() + offsetY;
 
-		PortProfileList portList = compRaw->port_profiles;
-		for (vector<RTSPortPtr>::iterator p0 = comp->inPorts.begin(); p0 != comp->inPorts.end(); p0++) {
-			RTSPort* in = *p0;
-			buildPortInfo(in, compProf, "DataInPort");
-		}
-		for (vector<RTSPortPtr>::iterator p0 = comp->outPorts.begin(); p0 != comp->outPorts.end(); p0++) {
-			RTSPort* out = *p0;
-			buildPortInfo(out, compProf, "DataOutPort");
-		}
-		//
-		SDOPackage::Configuration_ptr config = comp->rtc_->get_configuration();
-		SDOPackage::ConfigurationSetList_var confSet = config->get_configuration_sets();
-		for (int index = 0; index < confSet->length(); index++) {
-			SDOPackage::ConfigurationSet conf = confSet[index];
-			ConfigurationSet configSetProf;
-			configSetProf.id = conf.id;
-			copyNVListToProperty(conf.configuration_data, configSetProf.dataList);
-			compProf.configList.push_back(configSetProf);
-		}
-		//
-		RTC::ExecutionContextList_var eclist = comp->ownedExeContList_;
-		for (int index = 0; index < eclist->length(); ++index) {
-      if(isObjectAlive(eclist[index])) {
-			    RTC::ExecutionContextService_var ec = RTC::ExecutionContextService::_narrow(eclist[index]);
-			    ExecutionContext ecProf;
-			    ecProf.id = to_string(index);
-			    RTC::ExecutionKind ecKind = ec->get_profile()->kind;
-			    switch (ecKind) {
-			    case PERIODIC:
-				    ecProf.kind = "PERIODIC";
-				    break;
-			    case EVENT_DRIVEN:
-				    ecProf.kind = "EVENT_DRIVEN";
-				    break;
-			    case OTHER:
-				    ecProf.kind = "OTHER";
-				    break;
-			    }
-			    ecProf.rate = ec->get_profile()->rate;
-			    copyNVListToProperty(ec->get_profile()->properties, ecProf.propertyList);
-			    compProf.ecList.push_back(ecProf);
-      }
-		}
-		//
-		copyNVListToProperty(compRaw->properties, compProf.propertyList);
-		Property prop;
-		prop.name = "IOR";
-		prop.value = comp->getIOR();
-		compProf.propertyList.push_back(prop);
+		        PortProfileList portList = compRaw->port_profiles;
+		        for (vector<RTSPortPtr>::iterator p0 = comp->inPorts.begin(); p0 != comp->inPorts.end(); p0++) {
+			          RTSPort* in = *p0;
+			          buildPortInfo(in, compProf, "DataInPort");
+		        }
+		        for (vector<RTSPortPtr>::iterator p0 = comp->outPorts.begin(); p0 != comp->outPorts.end(); p0++) {
+			          RTSPort* out = *p0;
+			          buildPortInfo(out, compProf, "DataOutPort");
+		        }
+		        //
+		        SDOPackage::Configuration_ptr config = comp->rtc_->get_configuration();
+		        SDOPackage::ConfigurationSetList_var confSet = config->get_configuration_sets();
+		        for (int index = 0; index < confSet->length(); index++) {
+			          SDOPackage::ConfigurationSet conf = confSet[index];
+			          ConfigurationSet configSetProf;
+			          configSetProf.id = conf.id;
+			          copyNVListToProperty(conf.configuration_data, configSetProf.dataList);
+			          compProf.configList.push_back(configSetProf);
+		        }
+		        //
+		        RTC::ExecutionContextList_var eclist = comp->ownedExeContList_;
+		        for (int index = 0; index < eclist->length(); ++index) {
+                if(isObjectAlive(eclist[index])) {
+			                RTC::ExecutionContextService_var ec = RTC::ExecutionContextService::_narrow(eclist[index]);
+			                ExecutionContext ecProf;
+			                ecProf.id = to_string(index);
+			                RTC::ExecutionKind ecKind = ec->get_profile()->kind;
+			                switch (ecKind) {
+			                case PERIODIC:
+				                  ecProf.kind = "PERIODIC";
+				                  break;
+			                case EVENT_DRIVEN:
+				                  ecProf.kind = "EVENT_DRIVEN";
+				                  break;
+			                case OTHER:
+				                  ecProf.kind = "OTHER";
+				                  break;
+			                }
+			                ecProf.rate = ec->get_profile()->rate;
+			                copyNVListToProperty(ec->get_profile()->properties, ecProf.propertyList);
+			                compProf.ecList.push_back(ecProf);
+                }
+		        }
+		        //
+		        copyNVListToProperty(compRaw->properties, compProf.propertyList);
+		        Property prop;
+		        prop.name = "IOR";
+		        prop.value = comp->getIOR();
+		        compProf.propertyList.push_back(prop);
 
-		profile.compList.push_back(compProf);
-	}
-	//
-	for (RTSConnectionMap::iterator it = connections.begin(); it != connections.end(); it++) {
-		RTSConnection* connect = it->second.get();
+		        profile.compList.push_back(compProf);
+        } catch (...) {
+            MessageView::instance()->putln(MessageView::WARNING, "Failed to acquire [" + comp->name + "] information.");
+        }
+  	}
+  	//
+	  for (RTSConnectionMap::iterator it = connections.begin(); it != connections.end(); it++) {
+		    RTSConnection* connect = it->second.get();
 
         if(!isObjectAlive(connect->sourcePort->port)){
-            //! \todo put a warning message here
+            MessageView::instance()->putln(MessageView::WARNING,
+              "The connection between " + connect->sourcePort->name + " and " + connect->targetPort->name + " is NOT ALIVE.");
             continue;
         }
         
-		if (connect->sourcePort->isServicePort) {
-			ServicePortConnector conProf;
-			ConnectorProfileList_var connectorProfiles = connect->sourcePort->port->get_connector_profiles();
-			if (0 < connectorProfiles->length()) {
-				ConnectorProfile& connectorProfile = connectorProfiles[0];
-				conProf.connectorId = connectorProfile.connector_id;
-				conProf.name = connectorProfile.name;
-				copyNVListToProperty(connectorProfile.properties, conProf.propertyList);
-				conProf.source = buildTargetPortInfo(connect->sourcePort, hostName);
-				conProf.target = buildTargetPortInfo(connect->targetPort, hostName);
+        try {
+		        if (connect->sourcePort->isServicePort) {
+			          ServicePortConnector conProf;
+			          ConnectorProfileList_var connectorProfiles = connect->sourcePort->port->get_connector_profiles();
+			          if (0 < connectorProfiles->length()) {
+				            ConnectorProfile& connectorProfile = connectorProfiles[0];
+				            conProf.connectorId = connectorProfile.connector_id;
+				            conProf.name = connectorProfile.name;
 
-				profile.serviceConnList.push_back(conProf);
-			}
+                    copyNVListToProperty(connectorProfile.properties, conProf.propertyList);
+				            conProf.source = buildTargetPortInfo(connect->sourcePort, hostName);
+				            conProf.target = buildTargetPortInfo(connect->targetPort, hostName);
 
-		} else {
-			DataPortConnector conProf;
-			ConnectorProfileList_var connectorProfiles = connect->sourcePort->port->get_connector_profiles();
-			if (0 < connectorProfiles->length()) {
-				ConnectorProfile& connectorProfile = connectorProfiles[0];
-				conProf.connectorId = connectorProfile.connector_id;
-				conProf.name = connectorProfile.name;
-				conProf.dataType = NVUtil::toString(connectorProfile.properties, "dataport.data_type");
-				conProf.interfaceType = NVUtil::toString(connectorProfile.properties, "dataport.interface_type");
-				conProf.dataflowType = NVUtil::toString(connectorProfile.properties, "dataport.dataflow_type");
-				conProf.subscriptionType = NVUtil::toString(connectorProfile.properties, "dataport.subscription_type");
-				string pushInterval = NVUtil::toString(connectorProfile.properties, "dataport.push_interval");
-				if (0 < pushInterval.length()) {
-					conProf.pushInterval = std::stof(pushInterval);
-				}
-				copyNVListToProperty(connectorProfile.properties, conProf.propertyList);
-				conProf.source = buildTargetPortInfo(connect->sourcePort, hostName);
-				conProf.target = buildTargetPortInfo(connect->targetPort, hostName);
+                    buildPosition(connect, offsetX, offsetY, conProf.propertyList);
 
-				profile.dataConnList.push_back(conProf);
-			}
-		}
-	}
-	writeProfile(targetFile, profile);
+				            profile.serviceConnList.push_back(conProf);
+			          }
+
+		        } else {
+			          DataPortConnector conProf;
+			          ConnectorProfileList_var connectorProfiles = connect->sourcePort->port->get_connector_profiles();
+			          if (0 < connectorProfiles->length()) {
+				            ConnectorProfile& connectorProfile = connectorProfiles[0];
+				            conProf.connectorId = connectorProfile.connector_id;
+				            conProf.name = connectorProfile.name;
+				            conProf.dataType = NVUtil::toString(connectorProfile.properties, "dataport.data_type");
+				            conProf.interfaceType = NVUtil::toString(connectorProfile.properties, "dataport.interface_type");
+				            conProf.dataflowType = NVUtil::toString(connectorProfile.properties, "dataport.dataflow_type");
+				            conProf.subscriptionType = NVUtil::toString(connectorProfile.properties, "dataport.subscription_type");
+				            string pushInterval = NVUtil::toString(connectorProfile.properties, "dataport.push_interval");
+				            if (0 < pushInterval.length()) {
+					              conProf.pushInterval = std::stof(pushInterval);
+				            }
+
+				            copyNVListToProperty(connectorProfile.properties, conProf.propertyList);
+				            conProf.source = buildTargetPortInfo(connect->sourcePort, hostName);
+				            conProf.target = buildTargetPortInfo(connect->targetPort, hostName);
+
+                    buildPosition(connect, offsetX, offsetY, conProf.propertyList);
+
+				            profile.dataConnList.push_back(conProf);
+			          }
+  		      }
+
+        } catch(...) {
+            MessageView::instance()->putln(MessageView::WARNING,
+              "Failed to acquire connection information between " + connect->sourcePort->name + " and " + connect->targetPort->name + ".");
+        }
+	  }
+	  writeProfile(targetFile, profile);
+}
+
+void ProfileHandler::buildPosition(const RTSConnection* connect, int offsetX, int offsetY, std::vector<Property>& propList) {
+    //QString posX1 = QString::number( (connect->position[1](0) + connect->position[2](0))/2 + offsetX );
+    //QString posY1 = QString::number( (connect->position[1](1) + connect->position[2](1))/2 + offsetY );
+    //QString posX2 = QString::number( (connect->position[2](0) + connect->position[3](0))/2 + offsetX );
+    //QString posY2 = QString::number( (connect->position[2](1) + connect->position[3](1))/2 + offsetY );
+    //QString posX3 = QString::number( (connect->position[3](0) + connect->position[4](0))/2 + offsetX );
+    //QString posY3 = QString::number( (connect->position[3](1) + connect->position[4](1))/2 + offsetY );
+
+    QString position = "{";
+    for(int idxPos=0; idxPos<6; idxPos++) {
+      if(0<idxPos) position.append(",");
+      position.append(QString::number(idxPos+1)).append(":(");
+      position.append(QString::number(connect->position[idxPos](0) + offsetX )).append(",");
+      position.append(QString::number(connect->position[idxPos](1) + offsetY )).append(")");
+    }
+    position.append("}");
+
+    //string bendPoint = "{1:(" + posX1.toStdString() + "," + posY1.toStdString() + "),"
+    //                  + "2:(" + posX2.toStdString() + "," + posY2.toStdString() + "),"
+    //                  + "3:(" + posX3.toStdString() + "," + posY3.toStdString() + ")}";
+    string positionName = "POSITION";
+    appendStringValue(propList, positionName, position.toStdString());
 }
 
 TargetPort ProfileHandler::buildTargetPortInfo(RTSPort* sourcePort, std::string& hostName) {
@@ -467,27 +548,50 @@ void ProfileHandler::copyNVListToProperty(NVList& source, vector<Property>& targ
 	}
 }
 
+void ProfileHandler::appendStringValue(std::vector<Property>& target, std::string& name, std::string& value) {
+    bool isExist = false;
+    for(Property prop : target) {
+        if(prop.name==name) {
+            prop.value = value;
+            isExist = true;
+            break;
+        }
+    }
+    if(isExist==false) {
+      Property newProp;
+      newProp.name = name;
+      newProp.value = value;
+      target.push_back(newProp);
+    }
+}
+
 bool ProfileHandler::writeProfile(const std::string& targetFile, RtsProfile& profile)
 {
-	xml_document doc;
-	xml_node profileNode = doc.append_child("rts:RtsProfile");
+	  xml_document doc;
+	  xml_node profileNode = doc.append_child("rts:RtsProfile");
 
-	QDateTime dt = QDateTime::currentDateTime();
-	QString str = dt.toString("yyyy-MM-ddTHH:mm:ss");
+	  QDateTime dt = QDateTime::currentDateTime();
+	  QString str = dt.toString("yyyy-MM-ddTHH:mm:ss");
 
-	profileNode.append_attribute("rts:updateDate") = str.toStdString().c_str();
-	profileNode.append_attribute("rts:creationDate") = str.toStdString().c_str();
-	profileNode.append_attribute("rts:version") = "0.2";
-	profileNode.append_attribute("rts:id") = profile.id.c_str();
-	profileNode.append_attribute("xmlns:rts") = "http://www.openrtp.org/namespaces/rts";
-	profileNode.append_attribute("xmlns:rtsExt") = "http://www.openrtp.org/namespaces/rts_ext";
-	profileNode.append_attribute("xmlns:xsi") = "http://www.w3.org/2001/XMLSchema-instance";
+	  profileNode.append_attribute("rts:updateDate") = str.toStdString().c_str();
+	  profileNode.append_attribute("rts:creationDate") = str.toStdString().c_str();
+	  profileNode.append_attribute("rts:version") = "0.2";
+	  profileNode.append_attribute("rts:id") = profile.id.c_str();
+	  profileNode.append_attribute("xmlns:rts") = "http://www.openrtp.org/namespaces/rts";
+	  profileNode.append_attribute("xmlns:rtsExt") = "http://www.openrtp.org/namespaces/rts_ext";
+	  profileNode.append_attribute("xmlns:xsi") = "http://www.w3.org/2001/XMLSchema-instance";
 
-	writeComponent(profile.compList, profileNode);
-	writeDataConnector(profile.dataConnList, profileNode);
-	writeServiceConnector(profile.serviceConnList, profileNode);
+	  writeComponent(profile.compList, profileNode);
+	  writeDataConnector(profile.dataConnList, profileNode);
+	  writeServiceConnector(profile.serviceConnList, profileNode);
 
-	return doc.save_file(targetFile.c_str());
+    bool ret = false;
+    try {
+        ret = doc.save_file(targetFile.c_str());
+    } catch(...) {
+        MessageView::instance()->putln(MessageView::WARNING, "Failed to save [" + targetFile + "].");
+    }
+	  return ret;
 }
 
 void ProfileHandler::writeComponent(std::vector<Component>& compList, xml_node& parent) {

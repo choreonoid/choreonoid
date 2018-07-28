@@ -1040,7 +1040,7 @@ void RTSDiagramViewImpl::mouseReleaseEvent(QMouseEvent *event)
                     timeOutConnection.block();
                     RTSConnection* rtsConnection =
                         currentRTSItem->addRTSConnection(
-                            id, name, sourcePort->rtsPort, targetPort->rtsPort, propList);
+                            id, name, sourcePort->rtsPort, targetPort->rtsPort, propList, 0);
                     if(rtsConnection){
                         createConnectionGItem(rtsConnection, sourcePort, targetPort);
                     }

@@ -88,6 +88,7 @@ public:
 	std::string subscriptionType;
 	double pushInterval;
 	std::vector<Property> propertyList;
+  Vector2 pos[6];
 
 	TargetPort source;
 	TargetPort target;
@@ -99,6 +100,7 @@ public:
 	std::string name;
 	std::string transMethod;
 	std::vector<Property> propertyList;
+  Vector2 pos[6];
 
 	TargetPort source;
 	TargetPort target;
@@ -158,6 +160,9 @@ private:
 	static void copyNVListToProperty(SDOPackage::NVList& source, std::vector<Property>& target);
 	static void buildPortInfo(RTSPort* port, Component& compProf, std::string direction);
 	static TargetPort buildTargetPortInfo(RTSPort* sourcePort, std::string& hostName);
+  static void buildPosition(const RTSConnection* connect, int offsetX, int offsetY, std::vector<Property>& propList);
+
+  static void appendStringValue(std::vector<Property>& target, std::string& name, std::string& value);
 };
 
 }

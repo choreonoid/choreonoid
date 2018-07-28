@@ -793,9 +793,11 @@ string RTSystemItemImpl::getConnectionNumber()
 
 
 RTSConnection* RTSystemItem::addRTSConnection
-(const std::string& id, const std::string& name, RTSPort* sourcePort, RTSPort* targetPort, const std::vector<NamedValuePtr>& propList)
+(const std::string& id, const std::string& name, RTSPort* sourcePort, RTSPort* targetPort, const std::vector<NamedValuePtr>& propList, const Vector2 pos[])
 {
-    return impl->addRTSConnection(id, name, sourcePort, targetPort, propList, false, 0);
+    bool setPos = true;
+    if(!pos) setPos = false;
+    return impl->addRTSConnection(id, name, sourcePort, targetPort, propList, setPos, pos);
 }
 
 

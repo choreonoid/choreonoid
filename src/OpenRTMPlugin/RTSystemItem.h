@@ -174,7 +174,8 @@ public:
 
     RTSConnection* addRTSConnection(
         const std::string& id, const std::string& name,
-        RTSPort* sourcePort, RTSPort* targetPort, const std::vector<NamedValuePtr>& propList);
+        RTSPort* sourcePort, RTSPort* targetPort, const std::vector<NamedValuePtr>& propList,
+        const Vector2 pos[]);
     bool connectionCheck();
     void RTSCompToConnectionList(const RTSComp* rtsComp, std::list<RTSConnection*>& rtsConnectionList, int mode = 0);
     RTSConnectionMap& rtsConnections();
