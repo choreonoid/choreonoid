@@ -665,12 +665,17 @@ void TimeBarImpl::startPlayback()
             const static QString tip(_("Stop animation"));
             stopResumeButton->setIcon(stopIcon);
             stopResumeButton->setToolTip(tip);
+            int interval;
             if(config.idleLoopDrivenCheck.isChecked()){
-                timerId = startTimer(0, Qt::PreciseTimer);
+                interval = 0;
             } else {
-                timerId = startTimer((int)myNearByInt(1000.0 / playbackFrameRate), Qt::PreciseTimer);
+                interval = myNearByInt(1000.0 / playbackFrameRate);
             }
-            
+#if QT_VERSION >= 0x050000
+            timerId = startTimer(interval, Qt::PreciseTimer);
+#else
+            timerId = startTimer(interval);
+#endif
             elapsedTimer.start();
         }
     }
