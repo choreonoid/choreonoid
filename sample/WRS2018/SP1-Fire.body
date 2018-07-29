@@ -1,0 +1,17 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: Fire
+links:
+  -
+    name: Base
+    jointType: fixed
+    elements:
+      FireDevice:
+        offsetTime: 5
+        lifeTime: 4
+        acceleration: [ 0, 0, 0.1 ]
+        numParticles: 600
+        particleSize: 0.5
+        emissionRange: 180
+        initialSpeedAverage: 0.3

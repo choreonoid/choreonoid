@@ -92,7 +92,8 @@ items:
           plugin: Body
           class: AISTSimulatorItem
           data: 
-            realtimeSync: false
+            timeStep: 0.01
+            realtimeSync: true
             recording: "full"
             timeRangeMode: "Active control period"
             timeLength: 60
@@ -146,45 +147,6 @@ views:
       orthoHeight: 0.323817
     backgroundColor: [ 0.1, 0.1, 0.3 ]
     gridColor: [ 0.9, 0.9, 0.9, 1 ]
-  "Multi Value Seq": 
-    mode: view
-    editMode: freeLine
-    original: true
-    velocity: false
-    acceleration: false
-    limits: true
-    grid: true
-    gridWidth: 0.2
-    gridHeight: 0.2
-    lineWidth: 1
-    rulers: false
-    sync: true
-    controlPointStep: 1
-    controlPointOffset: 0
-    controlPointHeighlight: false
-    scrollMode: continuous
-    lower: -10
-    upper: 10
-  "Multi SE3 Seq": 
-    mode: view
-    editMode: freeLine
-    original: true
-    velocity: false
-    acceleration: false
-    limits: true
-    grid: true
-    gridWidth: 0.2
-    gridHeight: 0.2
-    lineWidth: 1
-    rulers: false
-    sync: true
-    controlPointStep: 1
-    controlPointOffset: 0
-    controlPointHeighlight: false
-    scrollMode: continuous
-    lower: -10
-    upper: 10
-    visibleElements: [ 0, 1, 2 ]
   "Links": 
     listingMode: "Link List"
     currentBodyItem: 3
@@ -203,45 +165,6 @@ views:
     slider: true
     labelOnLeft: true
     currentBodyItem: 3
-  "Joint Trajectories": 
-    mode: view
-    editMode: freeLine
-    original: true
-    velocity: false
-    acceleration: false
-    limits: true
-    grid: true
-    gridWidth: 0.2
-    gridHeight: 0.2
-    lineWidth: 1
-    rulers: false
-    sync: true
-    controlPointStep: 1
-    controlPointOffset: 0
-    controlPointHeighlight: false
-    scrollMode: continuous
-    lower: -10
-    upper: 10
-  "Multi Affine3 Seq": 
-    mode: view
-    editMode: freeLine
-    original: true
-    velocity: false
-    acceleration: false
-    limits: true
-    grid: true
-    gridWidth: 0.2
-    gridHeight: 0.2
-    lineWidth: 1
-    rulers: false
-    sync: true
-    controlPointStep: 1
-    controlPointOffset: 0
-    controlPointHeighlight: false
-    scrollMode: continuous
-    lower: -10
-    upper: 10
-    visibleElements: [ 0, 1, 2 ]
   "Pose Roll": 
     currentPoseSeqItem: 5
     defaultTransitionTime: 0
@@ -261,21 +184,6 @@ toolbars:
     minTime: 0
     maxTime: 15
     frameRate: 100
-    playbackFrameRate: 100
-    currentTime: 0
-    speedScale: 1
-    syncToOngoingUpdates: false
-  "BodyBar": 
-    current: 3
-    stanceWidth: 0.15
-  "KinematicsBar": 
-    mode: AUTO
-    attitude: true
-    penetrationBlock: true
-    collisionLinkHighlight: true
-    snapDistance: 0.025
-    penetrationBlockDepth: 0.0001
-    lazyCollisionDetectionMode: true
   "BodyMotionGenerationBar":
     autoGenerationForNewBody: true
     balancer: true
@@ -309,15 +217,3 @@ toolbars:
     waistHeightRelaxation: false
     gravity: 9.8
     dynamicsTimeRatio: 1
-Body: 
-  "BodyMotionEngine": 
-    updateJointVelocities: false
-  "KinematicFaultChecker": 
-    checkJointPositions: true
-    angleMargin: 0
-    translationMargin: 0
-    checkJointVelocities: true
-    velocityLimitRatio: 100
-    targetJoints: all
-    checkSelfCollisions: true
-    onlyTimeBarRange: false

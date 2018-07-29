@@ -8,54 +8,73 @@ STEP: &STEP
   uri: "resource/StepShapes.yaml"
   node: WAFFLE_STEP_P1
 
+LINE1: &LINE1
+  -
+    <<: *STEP
+    translation: [ 0, -3.0, 0 ]
+  -
+    <<: *STEP
+    translation: [ 0, -1.8, 0 ]
+  -
+    <<: *STEP
+    translation: [ 0, -0.6, 0 ]
+  -
+    <<: *STEP
+    translation: [ 0, 0.6, 0 ]
+  -
+    <<: *STEP
+    translation: [ 0, 1.8, 0 ]
+  -
+    <<: *STEP
+    translation: [ 0, 3.0, 0 ]
+
+LINE2: &LINE2
+  -
+    <<: *STEP
+    translation: [ 0, -2.4, 0 ]
+  -
+    <<: *STEP
+    translation: [ 0, -1.2, 0 ]
+  -
+    <<: *STEP
+    translation: [ 0, 0, 0 ]
+  -
+    <<: *STEP
+    translation: [ 0, 1.2, 0 ]
+  -
+    <<: *STEP
+    translation: [ 0, 2.4, 0 ]
+
+
 links:
   -
-    name: Base
+    name: BASE
     jointType: fixed
+    translation: [ 0, 0.1, 0 ]
     material: Ground
-    elements:
-      Transform:
-        translation: [ 0, -0.5, 0 ]
-        elements:
-          -
-            <<: *STEP
-            translation: [ 0, -1.8, 0 ]
-          -
-            <<: *STEP
-            translation: [ 0, -0.6, 0 ]
-          -
-            <<: *STEP
-            translation: [ 0, 0.6, 0 ]
-          -
-            <<: *STEP
-            translation: [ 0, 1.8, 0 ]
-          -
-            <<: *STEP
-            translation: [ 1.2, -1.2, 0 ]
-          -
-            <<: *STEP
-            translation: [ 1.2, 0, 0 ]
-          -
-            <<: *STEP
-            translation: [ 1.2, 1.2, 0 ]
-          -
-            <<: *STEP
-            translation: [ 2.4, -1.8, 0 ]
-          -
-            <<: *STEP
-            translation: [ 2.4, -0.6, 0 ]
-          -
-            <<: *STEP
-            translation: [ 2.4, 0.6, 0 ]
-          -
-            <<: *STEP
-            translation: [ 2.4, 1.8, 0 ]
-          -
-            <<: *STEP
-            translation: [ 3.6, -1.2, 0 ]
-          -
-            <<: *STEP
-            translation: [ 3.6, 0, 0 ]
-          -
-            <<: *STEP
-            translation: [ 3.6, 1.2, 0 ]
+    convexDecomposition: true
+    elements: *LINE1
+  -
+    name: S2
+    parent: BASE
+    jointType: fixed
+    translation: [ 1.2, 0, 0 ]
+    material: Ground
+    convexDecomposition: true
+    elements: *LINE2
+  -
+    name: S3
+    parent: BASE
+    jointType: fixed
+    translation: [ 2.4, 0, 0 ]
+    material: Ground
+    convexDecomposition: true
+    elements: *LINE1
+  -
+    name: S4
+    parent: BASE
+    jointType: fixed
+    translation: [ 3.6, 0, 0 ]
+    material: Ground
+    convexDecomposition: true
+    elements: *LINE2

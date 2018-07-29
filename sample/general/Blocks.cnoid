@@ -1,5 +1,3 @@
-optionalPlugins: [ ODE, Bullet, PhysX, AgX ]
-
 items: 
   id: 0
   name: "Root"
@@ -14,6 +12,7 @@ items:
       data: 
         collisionDetection: false
         collisionDetector: AISTCollisionDetector
+        materialTableFile: "${SHARE}/default/materials.yaml"
       children: 
         - 
           id: 2
@@ -22,18 +21,20 @@ items:
           class: BodyItem
           data: 
             modelFile: "${SHARE}/model/misc/floor.body"
-            currentBaseLink: "BASE"
+            currentBaseLink: ""
             rootPosition: [ 0, 0, -0.1 ]
             rootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
+            jointPositions: [  ]
             initialRootPosition: [ 0, 0, -0.1 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
             zmp: [ 0, 0, 0 ]
+            collisionDetection: true
             selfCollisionDetection: false
             isEditable: true
         - 
@@ -49,12 +50,14 @@ items:
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
+            jointPositions: [  ]
             initialRootPosition: [ 0, 0, 0.15 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
             zmp: [ 0, 0, 0 ]
+            collisionDetection: true
             selfCollisionDetection: false
             isEditable: true
         - 
@@ -70,12 +73,14 @@ items:
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
+            jointPositions: [  ]
             initialRootPosition: [ 0, 0.3, 0.15 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
             zmp: [ 0, 0, 0 ]
+            collisionDetection: true
             selfCollisionDetection: false
             isEditable: true
         - 
@@ -91,12 +96,14 @@ items:
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
+            jointPositions: [  ]
             initialRootPosition: [ 0, 0.6, 0.15 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
             zmp: [ 0, 0, 0 ]
+            collisionDetection: true
             selfCollisionDetection: false
             isEditable: true
         - 
@@ -112,12 +119,14 @@ items:
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
+            jointPositions: [  ]
             initialRootPosition: [ 0, 0.9, 0.15 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
             zmp: [ 0, 0, 0 ]
+            collisionDetection: true
             selfCollisionDetection: false
             isEditable: true
         - 
@@ -133,12 +142,14 @@ items:
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
+            jointPositions: [  ]
             initialRootPosition: [ 0, 1.2, 0.15 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
             zmp: [ 0, 0, 0 ]
+            collisionDetection: true
             selfCollisionDetection: false
             isEditable: true
         - 
@@ -154,12 +165,14 @@ items:
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
+            jointPositions: [  ]
             initialRootPosition: [ 0, 1.5, 0.15 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
             zmp: [ 0, 0, 0 ]
+            collisionDetection: true
             selfCollisionDetection: false
             isEditable: true
         - 
@@ -175,12 +188,14 @@ items:
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
+            jointPositions: [  ]
             initialRootPosition: [ 0, 0.15, 0.45 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
             zmp: [ 0, 0, 0 ]
+            collisionDetection: true
             selfCollisionDetection: false
             isEditable: true
         - 
@@ -196,12 +211,14 @@ items:
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
+            jointPositions: [  ]
             initialRootPosition: [ 0, 0.45, 0.45 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
             zmp: [ 0, 0, 0 ]
+            collisionDetection: true
             selfCollisionDetection: false
             isEditable: true
         - 
@@ -217,12 +234,14 @@ items:
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
+            jointPositions: [  ]
             initialRootPosition: [ 0, 0.75, 0.45 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
             zmp: [ 0, 0, 0 ]
+            collisionDetection: true
             selfCollisionDetection: false
             isEditable: true
         - 
@@ -238,12 +257,14 @@ items:
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
+            jointPositions: [  ]
             initialRootPosition: [ 0, 1.05, 0.45 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
             zmp: [ 0, 0, 0 ]
+            collisionDetection: true
             selfCollisionDetection: false
             isEditable: true
         - 
@@ -259,12 +280,14 @@ items:
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
+            jointPositions: [  ]
             initialRootPosition: [ 0, 1.35, 0.45 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
             zmp: [ 0, 0, 0 ]
+            collisionDetection: true
             selfCollisionDetection: false
             isEditable: true
         - 
@@ -280,12 +303,14 @@ items:
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
+            jointPositions: [  ]
             initialRootPosition: [ 0, 0.3, 0.75 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
             zmp: [ 0, 0, 0 ]
+            collisionDetection: true
             selfCollisionDetection: false
             isEditable: true
         - 
@@ -301,12 +326,14 @@ items:
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
+            jointPositions: [  ]
             initialRootPosition: [ 0, 0.6, 0.75 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
             zmp: [ 0, 0, 0 ]
+            collisionDetection: true
             selfCollisionDetection: false
             isEditable: true
         - 
@@ -322,12 +349,14 @@ items:
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
+            jointPositions: [  ]
             initialRootPosition: [ 0, 0.9, 0.75 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
             zmp: [ 0, 0, 0 ]
+            collisionDetection: true
             selfCollisionDetection: false
             isEditable: true
         - 
@@ -343,12 +372,14 @@ items:
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
+            jointPositions: [  ]
             initialRootPosition: [ 0, 1.2, 0.75 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
             zmp: [ 0, 0, 0 ]
+            collisionDetection: true
             selfCollisionDetection: false
             isEditable: true
         - 
@@ -364,12 +395,14 @@ items:
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
+            jointPositions: [  ]
             initialRootPosition: [ 0, 0.45, 1.05 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
             zmp: [ 0, 0, 0 ]
+            collisionDetection: true
             selfCollisionDetection: false
             isEditable: true
         - 
@@ -385,12 +418,14 @@ items:
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
+            jointPositions: [  ]
             initialRootPosition: [ 0, 0.75, 1.05 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
             zmp: [ 0, 0, 0 ]
+            collisionDetection: true
             selfCollisionDetection: false
             isEditable: true
         - 
@@ -406,12 +441,14 @@ items:
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
+            jointPositions: [  ]
             initialRootPosition: [ 0, 1.05, 1.05 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
             zmp: [ 0, 0, 0 ]
+            collisionDetection: true
             selfCollisionDetection: false
             isEditable: true
         - 
@@ -427,12 +464,14 @@ items:
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
+            jointPositions: [  ]
             initialRootPosition: [ 0, 0.6, 1.35 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
             zmp: [ 0, 0, 0 ]
+            collisionDetection: true
             selfCollisionDetection: false
             isEditable: true
         - 
@@ -448,12 +487,14 @@ items:
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
+            jointPositions: [  ]
             initialRootPosition: [ 0, 0.9, 1.35 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
             zmp: [ 0, 0, 0 ]
+            collisionDetection: true
             selfCollisionDetection: false
             isEditable: true
         - 
@@ -469,12 +510,14 @@ items:
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
+            jointPositions: [  ]
             initialRootPosition: [ 0, 0.75, 2 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
             zmp: [ 0, 0, 0 ]
+            collisionDetection: true
             selfCollisionDetection: false
             isEditable: true
         - 
@@ -483,19 +526,21 @@ items:
           plugin: Body
           class: AISTSimulatorItem
           data: 
+            timestep: 0.001
             realtimeSync: false
-            recording: full
-            timeRangeMode: TimeBar range
-            onlyActiveControlPeriod: true
+            recording: "full"
+            timeRangeMode: "Time bar range"
             timeLength: 60
             allLinkPositionOutputMode: false
             deviceStateOutput: true
             controllerThreads: true
-            dynamicsMode: Forward dynamics
-            integrationMode: Runge Kutta
+            recordCollisionData: false
+            controllerOptions: ""
+            dynamicsMode: "Forward dynamics"
+            integrationMode: "Runge Kutta"
             gravity: [ 0, 0, -9.80665 ]
             staticFriction: 1
-            slipFriction: 1
+            dynamicFriction: 1
             cullingThresh: 0.005
             contactCullingDepth: 0.05
             errorCriterion: 0.001
@@ -504,20 +549,23 @@ items:
             contactCorrectionVelocityRatio: 1
             kinematicWalking: false
             2Dmode: false
+            oldAccelSensorMode: false
         - 
           id: 25
           name: "ODESimulator"
           plugin: ODE
           class: ODESimulatorItem
           data: 
+            timestep: 0.001
             realtimeSync: true
             recording: "full"
-            timeRangeMode: "Active control period"
+            timeRangeMode: "Time bar range"
             timeLength: 60
             allLinkPositionOutputMode: true
             deviceStateOutput: true
             controllerThreads: true
             recordCollisionData: false
+            controllerOptions: ""
             stepMode: Iterative (quick step)
             gravity: [ 0, 0, -9.8 ]
             friction: 0.5
@@ -529,77 +577,8 @@ items:
             limitCorrectingVel: true
             maxCorrectingVel: 1.0e-3
             2Dmode: false
-            UseWorldItem'sCollisionDetector: false
-            velocityMode: false
-        - 
-          id: 26
-          name: "BulletSimulator"
-          plugin: Bullet
-          class: BulletSimulatorItem
-          data: 
-            realtimeSync: true
-            recording: "full"
-            timeRangeMode: "Active control period"
-            timeLength: 60
-            allLinkPositionOutputMode: false
-            deviceStateOutput: true
-            controllerThreads: true
-            recordCollisionData: false
-            ErrorReductionParameter: 0.5
-            NumIterations: 10
-            Restitution: 0
-            Friction: 0.7
-            ERP2: 0
-            SplitImpulsePenetrationThreshold: -0.0001
-        - 
-          id: 27
-          name: "PhysXSimulator"
-          plugin: PhysX
-          class: PhysXSimulatorItem
-          data: 
-            realtimeSync: true
-            recording: "full"
-            timeRangeMode: "Active control period"
-            timeLength: 60
-            allLinkPositionOutputMode: false
-            deviceStateOutput: true
-            controllerThreads: true
-            recordCollisionData: false
-            staticFriction: 0.5
-            dynamicFriction: 0.8
-            Restitution: 0.1
-            jointLimitMode: false
-        - 
-          id: 28
-          name: "AgXSimulator"
-          plugin: AgX
-          class: AgXSimulatorItem
-          data: 
-            realtimeSync: true
-            recording: "full"
-            timeRangeMode: "Active control period"
-            timeLength: 60
-            allLinkPositionOutputMode: false
-            deviceStateOutput: true
-            controllerThreads: true
-            recordCollisionData: false
-            dynamicsMode: Forward dynamics
-            gravity: [ 0, 0, -9.80665 ]
-            friction: 0.5
-            restitution: 0.1
-            frictionModelType: Iterative Projected
-            frictionSolveType: Direct
-            numThreads: 1
-            contactReductionMode: Geometry
-            contactReductionBinResolution: 2
-            contactReductionThreshold: 4
-            
+            useWorldCollisionDetector: false
 views: 
-  - 
-    id: 0
-    name: "CameraImage"
-    plugin: Base
-    class: ImageView
   - 
     id: 1
     plugin: Base
@@ -625,6 +604,7 @@ views:
     class: SceneView
     mounted: true
     state: 
+      editMode: false
       viewpointControlMode: thirdPerson
       collisionLines: false
       polygonMode: fill
@@ -635,29 +615,45 @@ views:
       worldLightIntensity: 0.5
       worldLightAmbient: 0.3
       additionalLights: true
+      fog: true
       floorGrid: false
       floorGridSpan: 10
       floorGridInterval: 0.5
+      xzGridSpan: 10
+      xzGridInterval: 0.5
+      xzGrid: false
+      yzGridSpan: 10
+      yzGridInterval: 0.5
       texture: true
       lineWidth: 1
       pointSize: 1
       normalVisualization: false
       normalLength: 0.01
       coordinateAxes: true
+      fpsTestIteration: 1
       showFPS: false
       enableNewDisplayListDoubleRendering: false
       useBufferForPicking: true
-      camera: 
-        current: Perspective
-        eye: [ 4.05226487, 2.79696515, 1.22373011 ]
-        direction: [ -0.900894541, -0.428144959, -0.0712805792 ]
-        up: [ -0.0643800479, -0.0305962482, 0.997456304 ]
-        fieldOfView: 0.6978
-        near: 0.01
-        far: 10000
-        orthoHeight: 20
+      upsideDown: false
+      cameras: 
+        - 
+          camera: [ System, Perspective ]
+          isCurrent: true
+          fieldOfView: 0.6978
+          near: 0.01
+          far: 10000
+          eye: [ 4.05226487, 2.79696515, 1.22373011 ]
+          direction: [ -0.900894541, -0.428144959, -0.0712805792 ]
+          up: [ -0.0643800479, -0.0305962482, 0.997456304 ]
+        - 
+          camera: [ System, Orthographic ]
+          orthoHeight: 20
+          near: 0.01
+          far: 10000
       backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
       gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
+      xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
+      yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       dedicatedItemTreeViewChecks: false
   - 
     id: 5
@@ -687,161 +683,14 @@ views:
     state: 
       listingMode: "Link List"
       currentBodyItem: 4
+  - 
+    id: 9
+    plugin: Python
+    class: PythonConsoleView
 toolbars: 
   "TimeBar": 
     minTime: 0
     maxTime: 5
-    frameRate: 1000
-    playbackFrameRate: 100
-    idleLoopDrivenMode: false
-    currentTime: 0
-    speedScale: 1
-    syncToOngoingUpdates: false
-    autoExpansion: true
-  "KinematicsBar": 
-    mode: FK
-    attitude: false
-    penetrationBlock: true
-    collisionLinkHighlight: false
-    snapDistance: 0.025
-    penetrationBlockDepth: 0.0005
-    lazyCollisionDetectionMode: true
-  "BodyBar": 
-    stanceWidth: 0.15
-  "BodyMotionGenerationBar": 
-    balancer: false
-    autoGeneration: false
-    timeScaleRatio: 1
-    preInitialDuration: 1
-    postFinalDuration: 1
-    onlyTimeBarRange: false
-    makeNewBodyItem: true
-    stealthyStepMode: true
-    stealthyHeightRatioThresh: 2
-    flatLiftingHeight: 0.005
-    flatLandingHeight: 0.005
-    impactReductionHeight: 0.005
-    impactReductionTime: 0.04
-    autoZmp: true
-    minZmpTransitionTime: 0.1
-    zmpCenteringTimeThresh: 0.03
-    zmpTimeMarginBeforeLiftingSpin: 0
-    zmpMaxDistanceFromCenter: 0.02
-    allLinkPositions: false
-    lipSyncMix: false
-    timeToStartBalancer: 0
-    balancerIterations: 2
-    plainBalancerMode: false
-    boundaryConditionType: position
-    boundarySmootherType: off
-    boundarySmootherTime: 0.5
-    boundaryCmAdjustment: false
-    boundaryCmAdjustmentTime: 1
-    waistHeightRelaxation: false
-    gravity: 9.8
-    dynamicsTimeRatio: 1
-Body: 
-  "BodyMotionEngine": 
-    updateJointVelocities: false
-  "EditableSceneBody": 
-    editableSceneBodies: 
-      - 
-        bodyItem: 2
-        showCenterOfMass: false
-        showZmp: false
-      - 
-        bodyItem: 3
-        showCenterOfMass: false
-        showZmp: false
-      - 
-        bodyItem: 4
-        showCenterOfMass: false
-        showZmp: false
-      - 
-        bodyItem: 5
-        showCenterOfMass: false
-        showZmp: false
-      - 
-        bodyItem: 6
-        showCenterOfMass: false
-        showZmp: false
-      - 
-        bodyItem: 7
-        showCenterOfMass: false
-        showZmp: false
-      - 
-        bodyItem: 8
-        showCenterOfMass: false
-        showZmp: false
-      - 
-        bodyItem: 9
-        showCenterOfMass: false
-        showZmp: false
-      - 
-        bodyItem: 10
-        showCenterOfMass: false
-        showZmp: false
-      - 
-        bodyItem: 11
-        showCenterOfMass: false
-        showZmp: false
-      - 
-        bodyItem: 12
-        showCenterOfMass: false
-        showZmp: false
-      - 
-        bodyItem: 13
-        showCenterOfMass: false
-        showZmp: false
-      - 
-        bodyItem: 14
-        showCenterOfMass: false
-        showZmp: false
-      - 
-        bodyItem: 15
-        showCenterOfMass: false
-        showZmp: false
-      - 
-        bodyItem: 16
-        showCenterOfMass: false
-        showZmp: false
-      - 
-        bodyItem: 17
-        showCenterOfMass: false
-        showZmp: false
-      - 
-        bodyItem: 18
-        showCenterOfMass: false
-        showZmp: false
-      - 
-        bodyItem: 19
-        showCenterOfMass: false
-        showZmp: false
-      - 
-        bodyItem: 20
-        showCenterOfMass: false
-        showZmp: false
-      - 
-        bodyItem: 21
-        showCenterOfMass: false
-        showZmp: false
-      - 
-        bodyItem: 22
-        showCenterOfMass: false
-        showZmp: false
-      - 
-        bodyItem: 23
-        showCenterOfMass: false
-        showZmp: false
-  "KinematicFaultChecker": 
-    checkJointPositions: true
-    angleMargin: 0
-    translationMargin: 0
-    checkJointVelocities: true
-    velocityLimitRatio: 100
-    targetJoints: all
-    checkSelfCollisions: true
-    onlyTimeBarRange: false
 viewAreas: 
   - 
     type: embedded
@@ -849,12 +698,12 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 303, 1477 ]
+      sizes: [ 345, 1682 ]
       children: 
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 479, 479 ]
+          sizes: [ 660, 658 ]
           children: 
             - 
               type: pane
@@ -867,12 +716,12 @@ viewAreas:
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 684, 274 ]
+          sizes: [ 941, 377 ]
           children: 
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 454, 1017 ]
+              sizes: [ 517, 1159 ]
               children: 
                 - 
                   type: pane

@@ -9,8 +9,8 @@ links:
     elements:
       SmokeDevice:
         offsetTime: 30
-        lifeTime: 30
-        acceleration: [ 0, 0, 0.001 ]
-        numParticles: 1000
+        lifeTime: 35
+        acceleration: [ 0, 0, 0.0005 ]
+        numParticles: 800
         particleSize: 0.5
         emissionRange: 180

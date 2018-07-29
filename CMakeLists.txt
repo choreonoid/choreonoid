@@ -1,7 +1,7 @@
 if(MSVC)
   cmake_minimum_required(VERSION 3.1.0) # Qt5 requies this version or later
 else()
-  cmake_minimum_required(VERSION 2.8.12)
+  cmake_minimum_required(VERSION 2.8.12) # Default version on Ubuntu 14.04
 endif()
 
 cmake_policy(SET CMP0003 NEW)
@@ -86,6 +86,10 @@ option(INSTALL_SDK_WITH_EXTLIBS "The SDK installation includes the external libr
 if(MSVC AND CMAKE_CL_64)
    add_definitions(-D_WIN64)
 endif()
+
+# The following option is not necessary.
+# Instead of this, use include_directories(${CMAKE_CURRENT_BINARY_DIR}) where necessary.
+# set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 if(NOT PROJECT_BINARY_DIR STREQUAL PROJECT_SOURCE_DIR)
   include_directories(${PROJECT_BINARY_DIR})
@@ -179,7 +183,7 @@ if(MSVC)
   endif()
   set(ext_linker_options "")
 
-  option(MSVC_ENABLE_GLOBAL_OPTIMIZATION "Global optimization with compiler option /GL and linker option /LTCG" ON)
+  option(MSVC_ENABLE_GLOBAL_OPTIMIZATION "Global optimization with compiler option /GL and linker option /LTCG" OFF)
   if(MSVC_ENABLE_GLOBAL_OPTIMIZATION)
     set(ext_compiler_options "${ext_compiler_options} /GL")
     set(ext_linker_options "${ext_linker_options} /LTCG")
@@ -520,7 +524,6 @@ macro(setup_qt5)
 
   add_definitions(-DQT_NO_KEYWORDS -DQT_NO_OPENGL_ES_2)
   set(CMAKE_AUTOMOC OFF)
-  set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
   if(MSVC)
     list(APPEND QT_INST_LIBRARIES 
@@ -605,9 +608,9 @@ endif()
 # Assimp
 if(MSVC AND (NOT DEFINED ENABLE_ASSIMP))
   file(GLOB assimp_dirs "c:/local/Assimp*/lib/cmake/assimp-*")
-  find_package(ASSIMP 3.2 QUIET HINTS ${assimp_dirs})
+  find_package(ASSIMP QUIET HINTS ${assimp_dirs})
 else()
-  find_package(ASSIMP 3.2 QUIET)
+  find_package(ASSIMP QUIET)
 endif()
 if(ASSIMP_FOUND)
   set(is_assimp_enabled ON)
@@ -883,20 +886,25 @@ endif(ENABLE_CORBA)
 # OpenRTM
 if(BUILD_OPENRTM_PLUGIN)
   find_package(OpenRTM REQUIRED CONFIG)
-  # Remove extra "-I" and "-L" from elements of OPENRTM_INCLUDE_DIRS and OPENRTM_LIBRARY_DIRS
-  set(include_dirs ${OPENRTM_INCLUDE_DIRS})
-  unset(OPENRTM_INCLUDE_DIRS)
-  foreach(dir ${include_dirs})
+
+  # Remove extra "-I" from the elements of OPENRTM_INCLUDE_DIRS
+  unset(include_dirs)
+  foreach(dir ${OPENRTM_INCLUDE_DIRS})
     string(REGEX REPLACE "^-I" "" stripped ${dir})
-    list(APPEND OPENRTM_INCLUDE_DIRS ${stripped})
+    list(APPEND include_dirs ${stripped})
   endforeach()
-  set(library_dirs ${OPENRTM_LIBRARY_DIRS})
-  unset(OPENRTM_LIBRARY_DIRS)
-  foreach(dir ${library_dirs})
+  set(OPENRTM_INCLUDE_DIRS ${include_dirs})
+
+  # Remove extra "-L" from the elements of OPENRTM_LIBRARY_DIRS
+  unset(library_dirs)
+  foreach(dir ${OPENRTM_LIBRARY_DIRS})
     string(REGEX REPLACE "^-L" "" stripped ${dir})
-    list(APPEND OPENRTM_LIBRARY_DIRS ${stripped})
+    list(APPEND library_dirs ${stripped})
   endforeach()
+  set(OPENRTM_LIBRARY_DIRS ${library_dirs})
+
   set(IDL_INCLUDE_DIRS ${IDL_INCLUDE_DIRS} ${OPENRTM_INCLUDE_DIRS})
+
   # Check version
   if(OPENRTM_VERSION STREQUAL "1.1.2")
     list(APPEND OPENRTM_DEFINITIONS -DOPENRTM_VERSION11)
@@ -904,6 +912,27 @@ if(BUILD_OPENRTM_PLUGIN)
     list(APPEND OPENRTM_DEFINITIONS -DOPENRTM_VERSION12)
   else()
     message(FATAL_ERROR "OpenRTM version is INVALID.")
+  endif()
+  option(USE_BUILTIN_CAMERA_IMAGE_IDL "Enable this option when you run hrpsys-base on Choreonoid" OFF)
+  if(USE_BUILTIN_CAMERA_IMAGE_IDL)
+    list(APPEND OPENRTM_DEFINITIONS -DUSE_BUILTIN_CAMERA_IMAGE_IDL)
+  else()
+    if(MSVC)
+      unset(camera_library)
+      foreach(dir ${OPENRTM_LIBRARY_DIRS})
+        file(GLOB libs "${dir}/rtmCamera*.lib")
+        foreach(lib ${libs})
+          if(lib MATCHES "(rtmCamera.*d)\\.lib$")
+            list(APPEND camera_library debug;${CMAKE_MATCH_1})
+          elseif(lib MATCHES "(rtmCamera.*)\\.lib$")
+            list(APPEND camera_library optimized;${CMAKE_MATCH_1})
+          endif()
+        endforeach()
+      endforeach()
+      set(OPENRTM_CAMERA_LIBRARY ${camera_library})
+    else()
+      set(OPENRTM_CAMERA_LIBRARY rtmCamera)
+    endif()
   endif()
 endif()
 
@@ -1342,10 +1371,10 @@ elseif(MSVC)
   set(PNG_LIBRARY libpng)
   set(JPEG_LIBRARY jpeg)
   include_directories(${PROJECT_SOURCE_DIR}/thirdparty/lpng1232)
-  include_directories(${PROJECT_SOURCE_DIR}/thirdparty/Jpeg-6b)
+  include_directories(${PROJECT_SOURCE_DIR}/thirdparty/Jpeg-9c)
   include_directories(${PROJECT_SOURCE_DIR}/thirdparty/zlib123)
   add_subdirectory(thirdparty/lpng1232)
-  add_subdirectory(thirdparty/Jpeg-6b)
+  add_subdirectory(thirdparty/Jpeg-9c)
   add_subdirectory(thirdparty/zlib123)
 endif()
 

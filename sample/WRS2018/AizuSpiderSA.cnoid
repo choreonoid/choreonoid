@@ -89,9 +89,6 @@ views:
       defaultHeadLight: true
       defaultHeadLightIntensity: 0.8
       headLightLightingFromBack: false
-      worldLight: true
-      worldLightIntensity: 0.7
-      worldLightAmbient: 0.3
       additionalLights: true
       fog: true
       floorGrid: false
@@ -155,9 +152,6 @@ views:
       defaultHeadLight: true
       defaultHeadLightIntensity: 0.8
       headLightLightingFromBack: false
-      worldLight: true
-      worldLightIntensity: 0.7
-      worldLightAmbient: 0.3
       additionalLights: true
       fog: true
       floorGrid: false

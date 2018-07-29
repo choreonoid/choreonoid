@@ -1,0 +1,373 @@
+<?xml version="1.0"?>
+<rts:RtsProfile rts:updateDate="2018-07-21T00:20:04" rts:creationDate="2018-07-21T00:20:04" rts:version="0.2" rts:id="RTSystem:AIST:RTSystem:1.0.0" xmlns:rts="http://www.openrtp.org/namespaces/rts" xmlns:rtsExt="http://www.openrtp.org/namespaces/rts_ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<rts:Components xsi:type="rtsExt:component_ext" rts:isRequired="false" rts:compositeType="None" rts:activeConfigurationSet="default" rts:instanceName="AizuSpider-JoystickInput" rts:pathUri="localhost/AizuSpider-JoystickInput.rtc" rts:id="RTC:AIST:HumanInterfaceDevice:AizuSpider-JoystickInput:1.0.0">
+		<rts:DataPorts xsi:type="rtsExt:dataport_ext" rts:name="AizuSpider-JoystickInput.axes">
+			<rtsExt:Properties rtsExt:value="DataInPort" rtsExt:name="port.port_type" />
+			<rtsExt:Properties rtsExt:value="IDL:RTC/TimedFloatSeq:1.0" rtsExt:name="dataport.data_type" />
+			<rtsExt:Properties rtsExt:value="Any" rtsExt:name="dataport.subscription_type" />
+			<rtsExt:Properties rtsExt:value="push,pull" rtsExt:name="dataport.dataflow_type" />
+			<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
+		</rts:DataPorts>
+		<rts:DataPorts xsi:type="rtsExt:dataport_ext" rts:name="AizuSpider-JoystickInput.buttons">
+			<rtsExt:Properties rtsExt:value="DataInPort" rtsExt:name="port.port_type" />
+			<rtsExt:Properties rtsExt:value="IDL:RTC/TimedBooleanSeq:1.0" rtsExt:name="dataport.data_type" />
+			<rtsExt:Properties rtsExt:value="Any" rtsExt:name="dataport.subscription_type" />
+			<rtsExt:Properties rtsExt:value="push,pull" rtsExt:name="dataport.dataflow_type" />
+			<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
+		</rts:DataPorts>
+		<rts:ConfigurationSets rts:id="default" />
+		<rts:ExecutionContexts xsi:type="rtsExt:execution_context_ext" rts:id="0" rts:rate="1000" rts:kind="PERIODIC" />
+		<rtsExt:Location rtsExt:direction="RIGHT" rtsExt:width="-1" rtsExt:height="-1" rtsExt:x="174" rtsExt:y="13" />
+		<rtsExt:Properties rtsExt:value="JoystickInput" rtsExt:name="implementation_id" />
+		<rtsExt:Properties rtsExt:value="JoystickInput" rtsExt:name="type_name" />
+		<rtsExt:Properties rtsExt:value="RTC for inputting joystick state via RTC" rtsExt:name="description" />
+		<rtsExt:Properties rtsExt:value="1.0.0" rtsExt:name="version" />
+		<rtsExt:Properties rtsExt:value="AIST" rtsExt:name="vendor" />
+		<rtsExt:Properties rtsExt:value="HumanInterfaceDevice" rtsExt:name="category" />
+		<rtsExt:Properties rtsExt:value="PERIODIC" rtsExt:name="activity_type" />
+		<rtsExt:Properties rtsExt:value="1" rtsExt:name="max_instance" />
+		<rtsExt:Properties rtsExt:value="C++" rtsExt:name="language" />
+		<rtsExt:Properties rtsExt:value="compile" rtsExt:name="lang_type" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="conf" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="sdo.service.provider.enabled_services" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="sdo.service.provider.available_services" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="sdo.service.consumer.enabled_services" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="sdo.service.consumer.available_services" />
+		<rtsExt:Properties rtsExt:value="DataFlowComponent" rtsExt:name="kind" />
+		<rtsExt:Properties rtsExt:value="AizuSpider-JoystickInput" rtsExt:name="instance_name" />
+		<rtsExt:Properties rtsExt:value="1.1.2" rtsExt:name="config.version" />
+		<rtsExt:Properties rtsExt:value="OpenRTM-aist-1.1.2" rtsExt:name="openrtm.name" />
+		<rtsExt:Properties rtsExt:value="1.1.2" rtsExt:name="openrtm.version" />
+		<rtsExt:Properties rtsExt:value="Linux" rtsExt:name="os.name" />
+		<rtsExt:Properties rtsExt:value="4.13.0-45-generic" rtsExt:name="os.release" />
+		<rtsExt:Properties rtsExt:value="#50~16.04.1-Ubuntu SMP Wed May 30 11:18:27 UTC 2018" rtsExt:name="os.version" />
+		<rtsExt:Properties rtsExt:value="x86_64" rtsExt:name="os.arch" />
+		<rtsExt:Properties rtsExt:value="vstrom2" rtsExt:name="os.hostname" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="corba.endpoint" />
+		<rtsExt:Properties rtsExt:value="omniORB" rtsExt:name="corba.id" />
+		<rtsExt:Properties rtsExt:value="ChoreonoidExecutionContext" rtsExt:name="exec_cxt.periodic.type" />
+		<rtsExt:Properties rtsExt:value="1000" rtsExt:name="exec_cxt.periodic.rate" />
+		<rtsExt:Properties rtsExt:value="EventDrivenExecutionContext" rtsExt:name="exec_cxt.evdriven.type" />
+		<rtsExt:Properties rtsExt:value=" NO" rtsExt:name="logger.enable" />
+		<rtsExt:Properties rtsExt:value=" WARN" rtsExt:name="logger.log_level" />
+		<rtsExt:Properties rtsExt:value="YES" rtsExt:name="naming.enable" />
+		<rtsExt:Properties rtsExt:value="corba" rtsExt:name="naming.type" />
+		<rtsExt:Properties rtsExt:value="%n.rtc" rtsExt:name="naming.formats" />
+		<rtsExt:Properties rtsExt:value="AizuSpider-JoystickInput.rtc" rtsExt:name="naming.names" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="config_file" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="port.inport.dataport" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="port.inport.axes" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="port.inport.buttons" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="IOR" />
+	</rts:Components>
+	<rts:Components xsi:type="rtsExt:component_ext" rts:isRequired="false" rts:compositeType="None" rts:activeConfigurationSet="default" rts:instanceName="AizuSpider-VisionSensorIoRTC" rts:pathUri="localhost/AizuSpider-VisionSensorIoRTC.rtc" rts:id="RTC:Choreonoid:Generic:AizuSpider-VisionSensorIoRTC:1.0.0">
+		<rts:DataPorts xsi:type="rtsExt:dataport_ext" rts:name="AizuSpider-VisionSensorIoRTC.LRF">
+			<rtsExt:Properties rtsExt:value="DataOutPort" rtsExt:name="port.port_type" />
+			<rtsExt:Properties rtsExt:value="IDL:RTC/RangeData:1.0" rtsExt:name="dataport.data_type" />
+			<rtsExt:Properties rtsExt:value="flush,new,periodic" rtsExt:name="dataport.subscription_type" />
+			<rtsExt:Properties rtsExt:value="push,pull" rtsExt:name="dataport.dataflow_type" />
+			<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
+		</rts:DataPorts>
+		<rts:DataPorts xsi:type="rtsExt:dataport_ext" rts:name="AizuSpider-VisionSensorIoRTC.FRONT_CAMERA">
+			<rtsExt:Properties rtsExt:value="DataOutPort" rtsExt:name="port.port_type" />
+			<rtsExt:Properties rtsExt:value="IDL:Img/TimedCameraImage:1.0" rtsExt:name="dataport.data_type" />
+			<rtsExt:Properties rtsExt:value="flush,new,periodic" rtsExt:name="dataport.subscription_type" />
+			<rtsExt:Properties rtsExt:value="push,pull" rtsExt:name="dataport.dataflow_type" />
+			<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
+		</rts:DataPorts>
+		<rts:DataPorts xsi:type="rtsExt:dataport_ext" rts:name="AizuSpider-VisionSensorIoRTC.LEFT_CAMERA">
+			<rtsExt:Properties rtsExt:value="DataOutPort" rtsExt:name="port.port_type" />
+			<rtsExt:Properties rtsExt:value="IDL:Img/TimedCameraImage:1.0" rtsExt:name="dataport.data_type" />
+			<rtsExt:Properties rtsExt:value="flush,new,periodic" rtsExt:name="dataport.subscription_type" />
+			<rtsExt:Properties rtsExt:value="push,pull" rtsExt:name="dataport.dataflow_type" />
+			<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
+		</rts:DataPorts>
+		<rts:DataPorts xsi:type="rtsExt:dataport_ext" rts:name="AizuSpider-VisionSensorIoRTC.RIGHT_CAMERA">
+			<rtsExt:Properties rtsExt:value="DataOutPort" rtsExt:name="port.port_type" />
+			<rtsExt:Properties rtsExt:value="IDL:Img/TimedCameraImage:1.0" rtsExt:name="dataport.data_type" />
+			<rtsExt:Properties rtsExt:value="flush,new,periodic" rtsExt:name="dataport.subscription_type" />
+			<rtsExt:Properties rtsExt:value="push,pull" rtsExt:name="dataport.dataflow_type" />
+			<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
+		</rts:DataPorts>
+		<rts:DataPorts xsi:type="rtsExt:dataport_ext" rts:name="AizuSpider-VisionSensorIoRTC.BACK_CAMERA">
+			<rtsExt:Properties rtsExt:value="DataOutPort" rtsExt:name="port.port_type" />
+			<rtsExt:Properties rtsExt:value="IDL:Img/TimedCameraImage:1.0" rtsExt:name="dataport.data_type" />
+			<rtsExt:Properties rtsExt:value="flush,new,periodic" rtsExt:name="dataport.subscription_type" />
+			<rtsExt:Properties rtsExt:value="push,pull" rtsExt:name="dataport.dataflow_type" />
+			<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
+		</rts:DataPorts>
+		<rts:DataPorts xsi:type="rtsExt:dataport_ext" rts:name="AizuSpider-VisionSensorIoRTC.ARM_CAMERA">
+			<rtsExt:Properties rtsExt:value="DataOutPort" rtsExt:name="port.port_type" />
+			<rtsExt:Properties rtsExt:value="IDL:Img/TimedCameraImage:1.0" rtsExt:name="dataport.data_type" />
+			<rtsExt:Properties rtsExt:value="flush,new,periodic" rtsExt:name="dataport.subscription_type" />
+			<rtsExt:Properties rtsExt:value="push,pull" rtsExt:name="dataport.dataflow_type" />
+			<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
+		</rts:DataPorts>
+		<rts:ConfigurationSets rts:id="default" />
+		<rts:ExecutionContexts xsi:type="rtsExt:execution_context_ext" rts:id="0" rts:rate="1000" rts:kind="PERIODIC" />
+		<rtsExt:Location rtsExt:direction="RIGHT" rtsExt:width="-1" rtsExt:height="-1" rtsExt:x="-67" rtsExt:y="98" />
+		<rtsExt:Properties rtsExt:value="VisionSensorIoRTC" rtsExt:name="implementation_id" />
+		<rtsExt:Properties rtsExt:value="VisionSensorIoRTC" rtsExt:name="type_name" />
+		<rtsExt:Properties rtsExt:value="Vision sensor I/O" rtsExt:name="description" />
+		<rtsExt:Properties rtsExt:value="1.0.0" rtsExt:name="version" />
+		<rtsExt:Properties rtsExt:value="Choreonoid" rtsExt:name="vendor" />
+		<rtsExt:Properties rtsExt:value="Generic" rtsExt:name="category" />
+		<rtsExt:Properties rtsExt:value="DataFlowComponent" rtsExt:name="activity_type" />
+		<rtsExt:Properties rtsExt:value="10" rtsExt:name="max_instance" />
+		<rtsExt:Properties rtsExt:value="C++" rtsExt:name="language" />
+		<rtsExt:Properties rtsExt:value="compile" rtsExt:name="lang_type" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="conf" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="sdo.service.provider.enabled_services" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="sdo.service.provider.available_services" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="sdo.service.consumer.enabled_services" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="sdo.service.consumer.available_services" />
+		<rtsExt:Properties rtsExt:value="AizuSpider-VisionSensorIoRTC" rtsExt:name="instance_name" />
+		<rtsExt:Properties rtsExt:value="1.1.2" rtsExt:name="config.version" />
+		<rtsExt:Properties rtsExt:value="OpenRTM-aist-1.1.2" rtsExt:name="openrtm.name" />
+		<rtsExt:Properties rtsExt:value="1.1.2" rtsExt:name="openrtm.version" />
+		<rtsExt:Properties rtsExt:value="Linux" rtsExt:name="os.name" />
+		<rtsExt:Properties rtsExt:value="4.13.0-45-generic" rtsExt:name="os.release" />
+		<rtsExt:Properties rtsExt:value="#50~16.04.1-Ubuntu SMP Wed May 30 11:18:27 UTC 2018" rtsExt:name="os.version" />
+		<rtsExt:Properties rtsExt:value="x86_64" rtsExt:name="os.arch" />
+		<rtsExt:Properties rtsExt:value="vstrom2" rtsExt:name="os.hostname" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="corba.endpoint" />
+		<rtsExt:Properties rtsExt:value="omniORB" rtsExt:name="corba.id" />
+		<rtsExt:Properties rtsExt:value="SimulationExecutionContext" rtsExt:name="exec_cxt.periodic.type" />
+		<rtsExt:Properties rtsExt:value="1000" rtsExt:name="exec_cxt.periodic.rate" />
+		<rtsExt:Properties rtsExt:value="EventDrivenExecutionContext" rtsExt:name="exec_cxt.evdriven.type" />
+		<rtsExt:Properties rtsExt:value=" NO" rtsExt:name="logger.enable" />
+		<rtsExt:Properties rtsExt:value=" WARN" rtsExt:name="logger.log_level" />
+		<rtsExt:Properties rtsExt:value="YES" rtsExt:name="naming.enable" />
+		<rtsExt:Properties rtsExt:value="corba" rtsExt:name="naming.type" />
+		<rtsExt:Properties rtsExt:value="%n.rtc" rtsExt:name="naming.formats" />
+		<rtsExt:Properties rtsExt:value="AizuSpider-VisionSensorIoRTC.rtc" rtsExt:name="naming.names" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="config_file" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="port.outport.dataport" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="port.outport.LRF" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="port.outport.FRONT_CAMERA" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="port.outport.LEFT_CAMERA" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="port.outport.RIGHT_CAMERA" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="port.outport.BACK_CAMERA" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="port.outport.ARM_CAMERA" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="IOR" />
+	</rts:Components>
+	<rts:Components xsi:type="rtsExt:component_ext" rts:isRequired="false" rts:compositeType="None" rts:activeConfigurationSet="default" rts:instanceName="ArmCameraView" rts:pathUri="localhost/ArmCameraView.rtc" rts:id="RTC:Choreonoid:Choreonoid:ArmCameraView:1.0.0">
+		<rts:DataPorts xsi:type="rtsExt:dataport_ext" rts:name="ArmCameraView.cameraImage">
+			<rtsExt:Properties rtsExt:value="DataInPort" rtsExt:name="port.port_type" />
+			<rtsExt:Properties rtsExt:value="IDL:Img/TimedCameraImage:1.0" rtsExt:name="dataport.data_type" />
+			<rtsExt:Properties rtsExt:value="Any" rtsExt:name="dataport.subscription_type" />
+			<rtsExt:Properties rtsExt:value="push,pull" rtsExt:name="dataport.dataflow_type" />
+			<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
+		</rts:DataPorts>
+		<rts:ConfigurationSets rts:id="default" />
+		<rts:ExecutionContexts xsi:type="rtsExt:execution_context_ext" rts:id="0" rts:rate="30" rts:kind="PERIODIC" />
+		<rtsExt:Location rtsExt:direction="RIGHT" rtsExt:width="-1" rtsExt:height="-1" rtsExt:x="359" rtsExt:y="201" />
+		<rtsExt:Properties rtsExt:value="ImageView" rtsExt:name="implementation_id" />
+		<rtsExt:Properties rtsExt:value="ImageView" rtsExt:name="type_name" />
+		<rtsExt:Properties rtsExt:value="Choreonoid View for Showing an Image." rtsExt:name="description" />
+		<rtsExt:Properties rtsExt:value="1.0.0" rtsExt:name="version" />
+		<rtsExt:Properties rtsExt:value="Choreonoid" rtsExt:name="vendor" />
+		<rtsExt:Properties rtsExt:value="Choreonoid" rtsExt:name="category" />
+		<rtsExt:Properties rtsExt:value="DataFlowComponent" rtsExt:name="activity_type" />
+		<rtsExt:Properties rtsExt:value="100" rtsExt:name="max_instance" />
+		<rtsExt:Properties rtsExt:value="C++" rtsExt:name="language" />
+		<rtsExt:Properties rtsExt:value="compile" rtsExt:name="lang_type" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="conf" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="sdo.service.provider.enabled_services" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="sdo.service.provider.available_services" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="sdo.service.consumer.enabled_services" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="sdo.service.consumer.available_services" />
+		<rtsExt:Properties rtsExt:value="ArmCameraView" rtsExt:name="instance_name" />
+		<rtsExt:Properties rtsExt:value="1.1.2" rtsExt:name="config.version" />
+		<rtsExt:Properties rtsExt:value="OpenRTM-aist-1.1.2" rtsExt:name="openrtm.name" />
+		<rtsExt:Properties rtsExt:value="1.1.2" rtsExt:name="openrtm.version" />
+		<rtsExt:Properties rtsExt:value="Linux" rtsExt:name="os.name" />
+		<rtsExt:Properties rtsExt:value="4.13.0-45-generic" rtsExt:name="os.release" />
+		<rtsExt:Properties rtsExt:value="#50~16.04.1-Ubuntu SMP Wed May 30 11:18:27 UTC 2018" rtsExt:name="os.version" />
+		<rtsExt:Properties rtsExt:value="x86_64" rtsExt:name="os.arch" />
+		<rtsExt:Properties rtsExt:value="vstrom2" rtsExt:name="os.hostname" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="corba.endpoint" />
+		<rtsExt:Properties rtsExt:value="omniORB" rtsExt:name="corba.id" />
+		<rtsExt:Properties rtsExt:value="PeriodicExecutionContext" rtsExt:name="exec_cxt.periodic.type" />
+		<rtsExt:Properties rtsExt:value="30" rtsExt:name="exec_cxt.periodic.rate" />
+		<rtsExt:Properties rtsExt:value="EventDrivenExecutionContext" rtsExt:name="exec_cxt.evdriven.type" />
+		<rtsExt:Properties rtsExt:value=" NO" rtsExt:name="logger.enable" />
+		<rtsExt:Properties rtsExt:value=" WARN" rtsExt:name="logger.log_level" />
+		<rtsExt:Properties rtsExt:value="YES" rtsExt:name="naming.enable" />
+		<rtsExt:Properties rtsExt:value="corba" rtsExt:name="naming.type" />
+		<rtsExt:Properties rtsExt:value="%n.rtc" rtsExt:name="naming.formats" />
+		<rtsExt:Properties rtsExt:value="ArmCameraView.rtc" rtsExt:name="naming.names" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="config_file" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="port.inport.dataport" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="port.inport.cameraImage" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="IOR" />
+	</rts:Components>
+	<rts:Components xsi:type="rtsExt:component_ext" rts:isRequired="false" rts:compositeType="None" rts:activeConfigurationSet="default" rts:instanceName="CameraImage" rts:pathUri="localhost/CameraImage.rtc" rts:id="RTC:Choreonoid:Choreonoid:CameraImage:1.0.0">
+		<rts:DataPorts xsi:type="rtsExt:dataport_ext" rts:name="CameraImage.cameraImage">
+			<rtsExt:Properties rtsExt:value="DataInPort" rtsExt:name="port.port_type" />
+			<rtsExt:Properties rtsExt:value="IDL:Img/TimedCameraImage:1.0" rtsExt:name="dataport.data_type" />
+			<rtsExt:Properties rtsExt:value="Any" rtsExt:name="dataport.subscription_type" />
+			<rtsExt:Properties rtsExt:value="push,pull" rtsExt:name="dataport.dataflow_type" />
+			<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
+		</rts:DataPorts>
+		<rts:ConfigurationSets rts:id="default" />
+		<rts:ExecutionContexts xsi:type="rtsExt:execution_context_ext" rts:id="0" rts:rate="30" rts:kind="PERIODIC" />
+		<rtsExt:Location rtsExt:direction="RIGHT" rtsExt:width="-1" rtsExt:height="-1" rtsExt:x="354" rtsExt:y="125" />
+		<rtsExt:Properties rtsExt:value="ImageView" rtsExt:name="implementation_id" />
+		<rtsExt:Properties rtsExt:value="ImageView" rtsExt:name="type_name" />
+		<rtsExt:Properties rtsExt:value="Choreonoid View for Showing an Image." rtsExt:name="description" />
+		<rtsExt:Properties rtsExt:value="1.0.0" rtsExt:name="version" />
+		<rtsExt:Properties rtsExt:value="Choreonoid" rtsExt:name="vendor" />
+		<rtsExt:Properties rtsExt:value="Choreonoid" rtsExt:name="category" />
+		<rtsExt:Properties rtsExt:value="DataFlowComponent" rtsExt:name="activity_type" />
+		<rtsExt:Properties rtsExt:value="100" rtsExt:name="max_instance" />
+		<rtsExt:Properties rtsExt:value="C++" rtsExt:name="language" />
+		<rtsExt:Properties rtsExt:value="compile" rtsExt:name="lang_type" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="conf" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="sdo.service.provider.enabled_services" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="sdo.service.provider.available_services" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="sdo.service.consumer.enabled_services" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="sdo.service.consumer.available_services" />
+		<rtsExt:Properties rtsExt:value="CameraImage" rtsExt:name="instance_name" />
+		<rtsExt:Properties rtsExt:value="1.1.2" rtsExt:name="config.version" />
+		<rtsExt:Properties rtsExt:value="OpenRTM-aist-1.1.2" rtsExt:name="openrtm.name" />
+		<rtsExt:Properties rtsExt:value="1.1.2" rtsExt:name="openrtm.version" />
+		<rtsExt:Properties rtsExt:value="Linux" rtsExt:name="os.name" />
+		<rtsExt:Properties rtsExt:value="4.13.0-45-generic" rtsExt:name="os.release" />
+		<rtsExt:Properties rtsExt:value="#50~16.04.1-Ubuntu SMP Wed May 30 11:18:27 UTC 2018" rtsExt:name="os.version" />
+		<rtsExt:Properties rtsExt:value="x86_64" rtsExt:name="os.arch" />
+		<rtsExt:Properties rtsExt:value="vstrom2" rtsExt:name="os.hostname" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="corba.endpoint" />
+		<rtsExt:Properties rtsExt:value="omniORB" rtsExt:name="corba.id" />
+		<rtsExt:Properties rtsExt:value="PeriodicExecutionContext" rtsExt:name="exec_cxt.periodic.type" />
+		<rtsExt:Properties rtsExt:value="30" rtsExt:name="exec_cxt.periodic.rate" />
+		<rtsExt:Properties rtsExt:value="EventDrivenExecutionContext" rtsExt:name="exec_cxt.evdriven.type" />
+		<rtsExt:Properties rtsExt:value=" NO" rtsExt:name="logger.enable" />
+		<rtsExt:Properties rtsExt:value=" WARN" rtsExt:name="logger.log_level" />
+		<rtsExt:Properties rtsExt:value="YES" rtsExt:name="naming.enable" />
+		<rtsExt:Properties rtsExt:value="corba" rtsExt:name="naming.type" />
+		<rtsExt:Properties rtsExt:value="%n.rtc" rtsExt:name="naming.formats" />
+		<rtsExt:Properties rtsExt:value="CameraImage.rtc" rtsExt:name="naming.names" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="config_file" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="port.inport.dataport" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="port.inport.cameraImage" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="IOR" />
+	</rts:Components>
+	<rts:Components xsi:type="rtsExt:component_ext" rts:isRequired="false" rts:compositeType="None" rts:activeConfigurationSet="default" rts:instanceName="JoystickRTC0" rts:pathUri="localhost/JoystickRTC0.rtc" rts:id="RTC:AIST:HumanInterfaceDevice:JoystickRTC0:1.0.0">
+		<rts:DataPorts xsi:type="rtsExt:dataport_ext" rts:name="JoystickRTC0.axes">
+			<rtsExt:Properties rtsExt:value="DataOutPort" rtsExt:name="port.port_type" />
+			<rtsExt:Properties rtsExt:value="IDL:RTC/TimedFloatSeq:1.0" rtsExt:name="dataport.data_type" />
+			<rtsExt:Properties rtsExt:value="flush,new,periodic" rtsExt:name="dataport.subscription_type" />
+			<rtsExt:Properties rtsExt:value="push,pull" rtsExt:name="dataport.dataflow_type" />
+			<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
+		</rts:DataPorts>
+		<rts:DataPorts xsi:type="rtsExt:dataport_ext" rts:name="JoystickRTC0.buttons">
+			<rtsExt:Properties rtsExt:value="DataOutPort" rtsExt:name="port.port_type" />
+			<rtsExt:Properties rtsExt:value="IDL:RTC/TimedBooleanSeq:1.0" rtsExt:name="dataport.data_type" />
+			<rtsExt:Properties rtsExt:value="flush,new,periodic" rtsExt:name="dataport.subscription_type" />
+			<rtsExt:Properties rtsExt:value="push,pull" rtsExt:name="dataport.dataflow_type" />
+			<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
+		</rts:DataPorts>
+		<rts:ConfigurationSets rts:id="default">
+			<rts:ConfigurationData rts:data="" rts:name="device" />
+			<rts:ConfigurationData rts:data="0" rts:name="debugLevel" />
+		</rts:ConfigurationSets>
+		<rts:ExecutionContexts xsi:type="rtsExt:execution_context_ext" rts:id="0" rts:rate="1000" rts:kind="PERIODIC" />
+		<rtsExt:Location rtsExt:direction="RIGHT" rtsExt:width="-1" rtsExt:height="-1" rtsExt:x="-71" rtsExt:y="11" />
+		<rtsExt:Properties rtsExt:value="JoystickRTC" rtsExt:name="implementation_id" />
+		<rtsExt:Properties rtsExt:value="JoystickRTC" rtsExt:name="type_name" />
+		<rtsExt:Properties rtsExt:value="Access a joystick control device." rtsExt:name="description" />
+		<rtsExt:Properties rtsExt:value="1.0.0" rtsExt:name="version" />
+		<rtsExt:Properties rtsExt:value="AIST" rtsExt:name="vendor" />
+		<rtsExt:Properties rtsExt:value="HumanInterfaceDevice" rtsExt:name="category" />
+		<rtsExt:Properties rtsExt:value="PERIODIC" rtsExt:name="activity_type" />
+		<rtsExt:Properties rtsExt:value="1" rtsExt:name="max_instance" />
+		<rtsExt:Properties rtsExt:value="C++" rtsExt:name="language" />
+		<rtsExt:Properties rtsExt:value="compile" rtsExt:name="lang_type" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="conf.default.device" />
+		<rtsExt:Properties rtsExt:value="0" rtsExt:name="conf.default.debugLevel" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="sdo.service.provider.enabled_services" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="sdo.service.provider.available_services" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="sdo.service.consumer.enabled_services" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="sdo.service.consumer.available_services" />
+		<rtsExt:Properties rtsExt:value="DataFlowComponent" rtsExt:name="kind" />
+		<rtsExt:Properties rtsExt:value="JoystickRTC0" rtsExt:name="instance_name" />
+		<rtsExt:Properties rtsExt:value="1.1.2" rtsExt:name="config.version" />
+		<rtsExt:Properties rtsExt:value="OpenRTM-aist-1.1.2" rtsExt:name="openrtm.name" />
+		<rtsExt:Properties rtsExt:value="1.1.2" rtsExt:name="openrtm.version" />
+		<rtsExt:Properties rtsExt:value="Linux" rtsExt:name="os.name" />
+		<rtsExt:Properties rtsExt:value="4.13.0-45-generic" rtsExt:name="os.release" />
+		<rtsExt:Properties rtsExt:value="#50~16.04.1-Ubuntu SMP Wed May 30 11:18:27 UTC 2018" rtsExt:name="os.version" />
+		<rtsExt:Properties rtsExt:value="x86_64" rtsExt:name="os.arch" />
+		<rtsExt:Properties rtsExt:value="vstrom2" rtsExt:name="os.hostname" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="corba.endpoint" />
+		<rtsExt:Properties rtsExt:value="omniORB" rtsExt:name="corba.id" />
+		<rtsExt:Properties rtsExt:value="PeriodicExecutionContext" rtsExt:name="exec_cxt.periodic.type" />
+		<rtsExt:Properties rtsExt:value="1000" rtsExt:name="exec_cxt.periodic.rate" />
+		<rtsExt:Properties rtsExt:value="EventDrivenExecutionContext" rtsExt:name="exec_cxt.evdriven.type" />
+		<rtsExt:Properties rtsExt:value=" NO" rtsExt:name="logger.enable" />
+		<rtsExt:Properties rtsExt:value=" WARN" rtsExt:name="logger.log_level" />
+		<rtsExt:Properties rtsExt:value="YES" rtsExt:name="naming.enable" />
+		<rtsExt:Properties rtsExt:value="corba" rtsExt:name="naming.type" />
+		<rtsExt:Properties rtsExt:value="%n.rtc" rtsExt:name="naming.formats" />
+		<rtsExt:Properties rtsExt:value="JoystickRTC0.rtc" rtsExt:name="naming.names" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="config_file" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="port.outport.dataport" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="port.outport.axes" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="port.outport.buttons" />
+		<rtsExt:Properties rtsExt:value="" rtsExt:name="IOR" />
+	</rts:Components>
+	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="36658a90-a85d-4f38-a0da-3eb4dba39bf5" rts:name="JoystickRTC0.buttons_AizuSpider-JoystickInput.buttons" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush">
+		<rts:sourceDataPort xsi:type="rtsExt:target_port_ext" rts:portName="JoystickRTC0.buttons" rts:instanceName="JoystickRTC0" rts:componentId="RTC:AIST:HumanInterfaceDevice:JoystickRTC0:1.0.0">
+			<rtsExt:Properties rtsExt:value="localhost/JoystickRTC0.rtc" rtsExt:name="COMPONENT_PATH_ID" />
+		</rts:sourceDataPort>
+		<rts:targetDataPort xsi:type="rtsExt:target_port_ext" rts:portName="AizuSpider-JoystickInput.buttons" rts:instanceName="AizuSpider-JoystickInput" rts:componentId="RTC:AIST:HumanInterfaceDevice:AizuSpider-JoystickInput:1.0.0">
+			<rtsExt:Properties rtsExt:value="localhost/AizuSpider-JoystickInput.rtc" rtsExt:name="COMPONENT_PATH_ID" />
+		</rts:targetDataPort>
+		<rtsExt:Properties rtsExt:value="push" rtsExt:name="dataport.dataflow_type" />
+		<rtsExt:Properties rtsExt:value="flush" rtsExt:name="dataport.subscription_type" />
+		<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
+		<rtsExt:Properties rtsExt:value="little,big" rtsExt:name="dataport.serializer.cdr.endian" />
+		<rtsExt:Properties rtsExt:value="IOR:010000001a00000049444c3a4f70656e52544d2f496e506f72744364723a312e30000000010000000000000064000000010102000e0000003135302e32392e3134352e363000bfa10e000000fe07fd515b00008535000000001000000200000000000000080000000100000000545441010000001c00000001000000010001000100000001000105090101000100000009010100" rtsExt:name="dataport.corba_cdr.inport_ior" />
+	</rts:DataPortConnectors>
+	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="8165bfba-943b-496f-bc19-4f53b0c56c11" rts:name="JoystickRTC0.axes_AizuSpider-JoystickInput.axes" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush">
+		<rts:sourceDataPort xsi:type="rtsExt:target_port_ext" rts:portName="JoystickRTC0.axes" rts:instanceName="JoystickRTC0" rts:componentId="RTC:AIST:HumanInterfaceDevice:JoystickRTC0:1.0.0">
+			<rtsExt:Properties rtsExt:value="localhost/JoystickRTC0.rtc" rtsExt:name="COMPONENT_PATH_ID" />
+		</rts:sourceDataPort>
+		<rts:targetDataPort xsi:type="rtsExt:target_port_ext" rts:portName="AizuSpider-JoystickInput.axes" rts:instanceName="AizuSpider-JoystickInput" rts:componentId="RTC:AIST:HumanInterfaceDevice:AizuSpider-JoystickInput:1.0.0">
+			<rtsExt:Properties rtsExt:value="localhost/AizuSpider-JoystickInput.rtc" rtsExt:name="COMPONENT_PATH_ID" />
+		</rts:targetDataPort>
+		<rtsExt:Properties rtsExt:value="push" rtsExt:name="dataport.dataflow_type" />
+		<rtsExt:Properties rtsExt:value="flush" rtsExt:name="dataport.subscription_type" />
+		<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
+		<rtsExt:Properties rtsExt:value="little,big" rtsExt:name="dataport.serializer.cdr.endian" />
+		<rtsExt:Properties rtsExt:value="IOR:010000001a00000049444c3a4f70656e52544d2f496e506f72744364723a312e30000000010000000000000064000000010102000e0000003135302e32392e3134352e363000bfa10e000000fe07fd515b00008535000000000f00000200000000000000080000000100000000545441010000001c00000001000000010001000100000001000105090101000100000009010100" rtsExt:name="dataport.corba_cdr.inport_ior" />
+	</rts:DataPortConnectors>
+	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="2ac9ccd7-51ce-41ec-859b-6a25659f6e94" rts:name="AizuSpider-VisionSensorIoRTC.FRONT_CAMERA_CameraImage.cameraImage" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush">
+		<rts:sourceDataPort xsi:type="rtsExt:target_port_ext" rts:portName="AizuSpider-VisionSensorIoRTC.FRONT_CAMERA" rts:instanceName="AizuSpider-VisionSensorIoRTC" rts:componentId="RTC:Choreonoid:Generic:AizuSpider-VisionSensorIoRTC:1.0.0">
+			<rtsExt:Properties rtsExt:value="localhost/AizuSpider-VisionSensorIoRTC.rtc" rtsExt:name="COMPONENT_PATH_ID" />
+		</rts:sourceDataPort>
+		<rts:targetDataPort xsi:type="rtsExt:target_port_ext" rts:portName="CameraImage.cameraImage" rts:instanceName="CameraImage" rts:componentId="RTC:Choreonoid:Choreonoid:CameraImage:1.0.0">
+			<rtsExt:Properties rtsExt:value="localhost/CameraImage.rtc" rtsExt:name="COMPONENT_PATH_ID" />
+		</rts:targetDataPort>
+		<rtsExt:Properties rtsExt:value="push" rtsExt:name="dataport.dataflow_type" />
+		<rtsExt:Properties rtsExt:value="flush" rtsExt:name="dataport.subscription_type" />
+		<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
+		<rtsExt:Properties rtsExt:value="little,big" rtsExt:name="dataport.serializer.cdr.endian" />
+		<rtsExt:Properties rtsExt:value="IOR:010000001a00000049444c3a4f70656e52544d2f496e506f72744364723a312e30000000010000000000000064000000010102000e0000003135302e32392e3134352e36300081bd0e000000fe0cfd515b0000854c000000000a00000200000000000000080000000100000000545441010000001c00000001000000010001000100000001000105090101000100000009010100" rtsExt:name="dataport.corba_cdr.inport_ior" />
+	</rts:DataPortConnectors>
+	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="9b9373bb-8588-4735-9795-77cc289f82df" rts:name="AizuSpider-VisionSensorIoRTC.ARM_CAMERA_ArmCameraView.cameraImage" rts:dataType="IDL:Img/TimedCameraImage:1.0" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush">
+		<rts:sourceDataPort xsi:type="rtsExt:target_port_ext" rts:portName="AizuSpider-VisionSensorIoRTC.ARM_CAMERA" rts:instanceName="AizuSpider-VisionSensorIoRTC" rts:componentId="RTC:Choreonoid:Generic:AizuSpider-VisionSensorIoRTC:1.0.0">
+			<rtsExt:Properties rtsExt:value="localhost/AizuSpider-VisionSensorIoRTC.rtc" rtsExt:name="COMPONENT_PATH_ID" />
+		</rts:sourceDataPort>
+		<rts:targetDataPort xsi:type="rtsExt:target_port_ext" rts:portName="ArmCameraView.cameraImage" rts:instanceName="ArmCameraView" rts:componentId="RTC:Choreonoid:Choreonoid:ArmCameraView:1.0.0">
+			<rtsExt:Properties rtsExt:value="localhost/ArmCameraView.rtc" rtsExt:name="COMPONENT_PATH_ID" />
+		</rts:targetDataPort>
+		<rtsExt:Properties rtsExt:value="IDL:Img/TimedCameraImage:1.0" rtsExt:name="dataport.data_type" />
+		<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
+		<rtsExt:Properties rtsExt:value="push" rtsExt:name="dataport.dataflow_type" />
+		<rtsExt:Properties rtsExt:value="flush" rtsExt:name="dataport.subscription_type" />
+		<rtsExt:Properties rtsExt:value="little,big" rtsExt:name="dataport.serializer.cdr.endian" />
+		<rtsExt:Properties rtsExt:value="IOR:010000001a00000049444c3a4f70656e52544d2f496e506f72744364723a312e30000000010000000000000064000000010102000e0000003135302e32392e3134352e36300081bd0e000000fe0cfd515b0000854c000000001400000200000000000000080000000100000000545441010000001c00000001000000010001000100000001000105090101000100000009010100" rtsExt:name="dataport.corba_cdr.inport_ior" />
+	</rts:DataPortConnectors>
+</rts:RtsProfile>

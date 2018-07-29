@@ -13,8 +13,13 @@
 #include <rtm/idl/InterfaceDataTypes.hh>
 #ifdef WIN32
 #include <rtm/idl/CameraCommonInterface.hh>
+extern "C" {
+#define XMD_H
+#include <jpeglib.h>
+}
 #else
 #include <rtm/ext/CameraCommonInterface.hh>
+#include <jpeglib.h>
 #endif
 //#include <cnoid/corba/PointCloud.hh>
 
@@ -48,6 +53,7 @@ public:
     Img::TimedCameraImage cameraImage;
     RTC::OutPort<Img::TimedCameraImage> cameraImageOut;
     std::shared_ptr<const Image> lastImage;
+    bool jpegCompression;
 
     CameraIo(Camera* camera);
     virtual void setPorts(BodyIoRTC* rtc) override;
@@ -211,7 +217,8 @@ void DeviceIo::stopSimulation()
 
 CameraIo::CameraIo(Camera* camera)
     : modelCamera(camera),
-      cameraImageOut(camera->name().c_str(), cameraImage)
+      cameraImageOut(camera->name().c_str(), cameraImage),
+      jpegCompression(true)
 {
 
 }
@@ -283,22 +290,65 @@ void CameraIo::outputImage()
     cameraImage.data.image.height = height = lastImage->height();
     cameraImage.data.image.width = width = lastImage->width();
 
-    switch(camera->imageType()){
-    case Camera::GRAYSCALE_IMAGE:
-        cameraImage.data.image.format = Img::CF_GRAY;
-        break;
-    case Camera::COLOR_IMAGE:
-        cameraImage.data.image.format = Img::CF_RGB;
-        break;
-    default:
-        cameraImage.data.image.format = Img::CF_UNKNOWN;
-        break;
+    if(jpegCompression){
+
+        cameraImage.data.image.format = Img::CF_JPEG;
+        struct jpeg_compress_struct cinfo;
+        struct jpeg_error_mgr jerr;
+        cinfo.err = jpeg_std_error(&jerr);
+        jpeg_create_compress(&cinfo);
+
+        unsigned char* outbuffer = 0;
+        unsigned long writtenSize = 0;
+        jpeg_mem_dest(&cinfo, &outbuffer, &writtenSize);
+
+        cinfo.image_width = width;
+        cinfo.image_height = height;
+        int numComponents = lastImage->numComponents();
+        cinfo.input_components = numComponents;
+        if(camera->imageType()==Camera::COLOR_IMAGE){
+            cinfo.in_color_space = JCS_RGB;
+        }else if(camera->imageType()==Camera::GRAYSCALE_IMAGE){
+            cinfo.in_color_space = JCS_GRAYSCALE;
+        }
+        jpeg_set_defaults(&cinfo);
+        jpeg_start_compress(&cinfo, TRUE);
+
+        unsigned char* src = (unsigned char*)lastImage->pixels();
+        JSAMPARRAY row_pointers;
+        row_pointers = (JSAMPARRAY)malloc( sizeof( JSAMPROW ) * height );
+        for (int i = 0; i < height; i++ ){
+            row_pointers[i] = &(src[i * numComponents * width]);
+        }
+        jpeg_write_scanlines(&cinfo, row_pointers, height);
+
+        jpeg_finish_compress(&cinfo);
+        jpeg_destroy_compress(&cinfo);
+
+        cameraImage.data.image.raw_data.length(writtenSize);
+        void* dis = (void*)cameraImage.data.image.raw_data.get_buffer();
+        memcpy(dis, outbuffer, writtenSize);
+
+    }else{
+
+        switch(camera->imageType()){
+        case Camera::GRAYSCALE_IMAGE:
+            cameraImage.data.image.format = Img::CF_GRAY;
+            break;
+        case Camera::COLOR_IMAGE:
+            cameraImage.data.image.format = Img::CF_RGB;
+            break;
+        default:
+            cameraImage.data.image.format = Img::CF_UNKNOWN;
+            break;
+        }
+
+        size_t length = width * height * lastImage->numComponents() * sizeof(unsigned char);
+        cameraImage.data.image.raw_data.length(length);
+        void* src = (void*)lastImage->pixels();
+        void* dis = (void*)cameraImage.data.image.raw_data.get_buffer();
+        memcpy(dis, src, length);
     }
-    size_t length = width * height * lastImage->numComponents() * sizeof(unsigned char);
-    cameraImage.data.image.raw_data.length(length);
-    void* src = (void*)lastImage->pixels();
-    void* dis = (void*)cameraImage.data.image.raw_data.get_buffer();
-    memcpy(dis, src, length);
 
     cameraImageOut.write();
 }

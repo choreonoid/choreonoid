@@ -32,8 +32,8 @@ public:
     ItemTreeArchiverImpl();
     ArchivePtr store(Archive& parentArchive, Item* item);
     ArchivePtr storeIter(Archive& parentArchive, Item* item, bool& isComplete);
-    bool restore(Archive& archive, Item* parentItem, const std::set<std::string>& optionalPlugins);
-    void restoreItemIter(Archive& archive, Item* parentItem, const std::set<std::string>& optionalPlugins);
+    ItemList<> restore(Archive& archive, Item* parentItem, const std::set<std::string>& optionalPlugins);
+    void restoreItemIter(Archive& archive, Item* parentItem, ItemList<>& restoredItems, const std::set<std::string>& optionalPlugins);
 };
 
 }
@@ -167,32 +167,34 @@ ArchivePtr ItemTreeArchiverImpl::storeIter(Archive& parentArchive, Item* item, b
 }
 
 
-bool ItemTreeArchiver::restore(Archive* archive, Item* parentItem, const std::set<std::string>& optionalPlugins)
+ItemList<> ItemTreeArchiver::restore(Archive* archive, Item* parentItem, const std::set<std::string>& optionalPlugins)
 {
     return impl->restore(*archive, parentItem, optionalPlugins);
 }
 
 
-bool ItemTreeArchiverImpl::restore(Archive& archive, Item* parentItem, const std::set<std::string>& optionalPlugins)
+ItemList<> ItemTreeArchiverImpl::restore(Archive& archive, Item* parentItem, const std::set<std::string>& optionalPlugins)
 {
     numArchivedItems = 0;
     numRestoredItems = 0;
+    ItemList<> restoredItems;
 
     archive.setCurrentParentItem(0);
     try {
-        restoreItemIter(archive, parentItem, optionalPlugins);
+        restoreItemIter(archive, parentItem, restoredItems, optionalPlugins);
     } catch (const ValueNode::Exception& ex){
         os << ex.message();
     }
     archive.setCurrentParentItem(0);
     nonExistentPlugins.clear();
 
-    return (numRestoredItems > 0);
+    numRestoredItems = restoredItems.size();
+    return restoredItems;
 }
 
 
 void ItemTreeArchiverImpl::restoreItemIter
-(Archive& archive, Item* parentItem, const std::set<std::string>& optionalPlugins)
+(Archive& archive, Item* parentItem, ItemList<>& restoredItems, const std::set<std::string>& optionalPlugins)
 {
     string name;
     if(!archive.read("name", name)){
@@ -272,7 +274,7 @@ void ItemTreeArchiverImpl::restoreItemIter
                 }
                 if(item){
                     parentItem->addChildItem(item);
-                    ++numRestoredItems;
+                    restoredItems.push_back(item);
                 }
             }
         }
@@ -292,7 +294,7 @@ void ItemTreeArchiverImpl::restoreItemIter
             for(int i=0; i < children->size(); ++i){
                 Archive* childArchive = dynamic_cast<Archive*>(children->at(i)->toMapping());
                 childArchive->inheritSharedInfoFrom(archive);
-                restoreItemIter(*childArchive, item, optionalPlugins);
+                restoreItemIter(*childArchive, item, restoredItems, optionalPlugins);
             }
         }
     }

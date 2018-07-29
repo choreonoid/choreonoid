@@ -45,21 +45,13 @@ QTX_WRAP_CPP(
 set(plugin_sources ${plugin_sources} ${qtsources})
 
 set(idl_files PointCloud)
-
-option(USE_BUILTIN_CAMERA_IMAGE_IDL "Enable this option when you run hrpsys-base on Choreonoid" OFF)
 if(USE_BUILTIN_CAMERA_IMAGE_IDL)
-  list(APPEND OPENRTM_DEFINITIONS -DUSE_BUILTIN_CAMERA_IMAGE_IDL)
   set(idl_files ${idl_files} CameraImage)
 else()
-  if(MSVC)
-    set(OPENRTM_CAMERA_LIBRARY optimized;rtmCamera${OPENRTM_SHORT_VERSION}_${RTM_VC_VER}_x64 debug;rtmCamera${OPENRTM_SHORT_VERSION}_${RTM_VC_VER}_x64d)
-  else()
-    set(OPENRTM_CAMERA_LIBRARY rtmCamera)
-  endif()
   set(OPENRTM_LIBRARIES ${OPENRTM_LIBRARIES} ${OPENRTM_CAMERA_LIBRARY})
 endif()
-
 idl_compile_cpp(idl_cpp_files idl_h_files deprecated/corba ${idl_files} LOCAL)
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 make_gettext_mofiles(${plugin} mofiles)
 include_directories(${OPENRTM_INCLUDE_DIRS})

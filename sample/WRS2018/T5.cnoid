@@ -22,12 +22,12 @@ items:
           children: 
             - 
               id: 3
-              name: "RoadSurface20m"
+              name: "RoadSurface40m"
               plugin: Body
               class: BodyItem
               data: 
-                modelFile: "${SHARE}/model/WRS2018/RoadSurface20m.body"
-                currentBaseLink: "Base"
+                modelFile: "${SHARE}/model/WRS2018/RoadSurface40m.body"
+                currentBaseLink: ""
                 rootPosition: [ 0, 0, 0 ]
                 rootAttitude: [ 
                   1, 0, 0, 
@@ -45,12 +45,12 @@ items:
                 isEditable: false
             - 
               id: 4
-              name: "TunnelWall20m-L"
+              name: "TunnelWall40m-L"
               plugin: Body
               class: BodyItem
               data: 
-                modelFile: "${SHARE}/model/WRS2018/TunnelWall20m-L.body"
-                currentBaseLink: "Base"
+                modelFile: "${SHARE}/model/WRS2018/TunnelWall40m-L.body"
+                currentBaseLink: ""
                 rootPosition: [ 0, 0, 0 ]
                 rootAttitude: [ 
                   1, 0, 0, 
@@ -68,12 +68,12 @@ items:
                 isEditable: false
             - 
               id: 5
-              name: "TunnelWall20m-R"
+              name: "TunnelWall40m-R"
               plugin: Body
               class: BodyItem
               data: 
-                modelFile: "${SHARE}/model/WRS2018/TunnelWall20m-R.body"
-                currentBaseLink: "Base"
+                modelFile: "${SHARE}/model/WRS2018/TunnelWall40m-R.body"
+                currentBaseLink: ""
                 rootPosition: [ 0, 0, 0 ]
                 rootAttitude: [ 
                   1, 0, 0, 
@@ -91,43 +91,274 @@ items:
                 isEditable: false
             - 
               id: 6
+              name: "Flag1L"
+              plugin: Body
+              class: BodyItem
+              data: 
+                modelFile: "${SHARE}/model/WRS2018/Flag1L.body"
+                currentBaseLink: "BASE"
+                rootPosition: [ 3, -1.5, 0 ]
+                rootAttitude: [ 
+                  1, 0, 0, 
+                  0, 1, 0, 
+                  0, 0, 1 ]
+                jointPositions: [  ]
+                initialRootPosition: [ 3, -1.5, 0 ]
+                initialRootAttitude: [ 
+                  1, 0, 0, 
+                  0, 1, 0, 
+                  0, 0, 1 ]
+                zmp: [ 0, 0, 0 ]
+                collisionDetection: true
+                selfCollisionDetection: false
+                isEditable: false
+            - 
+              id: 7
+              name: "Flag1R"
+              plugin: Body
+              class: BodyItem
+              data: 
+                modelFile: "${SHARE}/model/WRS2018/Flag1R.body"
+                currentBaseLink: "BASE"
+                rootPosition: [ 3, 1.5, 0 ]
+                rootAttitude: [ 
+                  1, 0, 0, 
+                  0, 1, 0, 
+                  0, 0, 1 ]
+                jointPositions: [  ]
+                initialRootPosition: [ 3, 1.5, 0 ]
+                initialRootAttitude: [ 
+                  1, 0, 0, 
+                  0, 1, 0, 
+                  0, 0, 1 ]
+                zmp: [ 0, 0, 0 ]
+                collisionDetection: true
+                selfCollisionDetection: false
+                isEditable: false
+            - 
+              id: 8
+              name: "Flag2L"
+              plugin: Body
+              class: BodyItem
+              data: 
+                modelFile: "${SHARE}/model/WRS2018/Flag2L.body"
+                currentBaseLink: "BASE"
+                rootPosition: [ 21, -1.5, 0 ]
+                rootAttitude: [ 
+                  1, 0, 0, 
+                  0, 1, 0, 
+                  0, 0, 1 ]
+                jointPositions: [  ]
+                initialRootPosition: [ 21, -1.5, 0 ]
+                initialRootAttitude: [ 
+                  1, 0, 0, 
+                  0, 1, 0, 
+                  0, 0, 1 ]
+                zmp: [ 0, 0, 0 ]
+                collisionDetection: true
+                selfCollisionDetection: false
+                isEditable: false
+            - 
+              id: 9
+              name: "Flag2R"
+              plugin: Body
+              class: BodyItem
+              data: 
+                modelFile: "${SHARE}/model/WRS2018/Flag2R.body"
+                currentBaseLink: "BASE"
+                rootPosition: [ 21, 1.5, 0 ]
+                rootAttitude: [ 
+                  1, 0, 0, 
+                  0, 1, 0, 
+                  0, 0, 1 ]
+                jointPositions: [  ]
+                initialRootPosition: [ 21, 1.5, 0 ]
+                initialRootAttitude: [ 
+                  1, 0, 0, 
+                  0, 1, 0, 
+                  0, 0, 1 ]
+                zmp: [ 0, 0, 0 ]
+                collisionDetection: true
+                selfCollisionDetection: false
+                isEditable: false
+            - 
+              id: 10
               name: "FireCabinet"
               plugin: Body
               class: BodyItem
               data: 
                 modelFile: "${SHARE}/model/WRS2018/FireCabinetWithHose.body"
                 currentBaseLink: "BASE"
-                rootPosition: [ 5, 4.21, 0.256 ]
+                rootPosition: [ 7, 4.21, 0.256 ]
                 rootAttitude: [ 
                   2.22044605e-16, 1, 0, 
                   -1, 2.22044605e-16, -0, 
                   -0, 0, 1 ]
-                jointPositions: [ -0.715676,  0.000000,  0.000000 ]
-                initialRootPosition: [ 5, 4.21, 0.256 ]
+                jointPositions: [ -0.715676,  0.000000,  0.000000,  0.000000,  0.000000 ]
+                initialRootPosition: [ 7, 4.21, 0.256 ]
                 initialRootAttitude: [ 
                   2.22044605e-16, 1, 0, 
                   -1, 2.22044605e-16, -0, 
                   -0, 0, 1 ]
-                initialJointPositions: [ -0.401426,  0.000000,  0.000000 ]
+                initialJointPositions: [ -0.715676,  0.000000,  0.000000,  0.000000,  0.000000 ]
                 zmp: [ 0, 0, 0 ]
                 collisionDetection: true
                 selfCollisionDetection: false
                 isEditable: true
             - 
-              id: 7
+              id: 11
               name: "HoseNozzle"
               plugin: Body
               class: BodyItem
               data: 
                 modelFile: "${SHARE}/model/WRS2018/HoseNozzle.body"
                 currentBaseLink: "BASE"
-                rootPosition: [ 4.67934738, 4.1405342, 1.06499852 ]
+                rootPosition: [ 6.67934738, 4.1405342, 1.06499852 ]
+                rootAttitude: [ 
+                  1, 0, 0, 
+                  0, 1, 0, 
+                  0, 0, 1 ]
+                jointPositions: [  0.000000 ]
+                initialRootPosition: [ 6.67934738, 4.1405342, 1.06499852 ]
+                initialRootAttitude: [ 
+                  1, 0, 0, 
+                  0, 1, 0, 
+                  0, 0, 1 ]
+                initialJointPositions: [  0.000000 ]
+                zmp: [ 0, 0, 0 ]
+                collisionDetection: true
+                selfCollisionDetection: false
+                isEditable: true
+            - 
+              id: 12
+              name: "Debris-M"
+              plugin: Body
+              class: BodyItem
+              data: 
+                modelFile: "${SHARE}/model/WRS2018/DebrisM.body"
+                currentBaseLink: "BASE"
+                rootPosition: [ 14.5, -1, 0.1778 ]
+                rootAttitude: [ 
+                  -0.993341324, -0.0468294996, -0.105261637, 
+                  0.04777417, -0.99883721, -0.00646969417, 
+                  -0.104836267, -0.0114554019, 0.994423517 ]
+                jointPositions: [  ]
+                initialRootPosition: [ 14.5, -1, 0.1778 ]
+                initialRootAttitude: [ 
+                  -0.993341324, -0.0468294996, -0.105261637, 
+                  0.04777417, -0.99883721, -0.00646969417, 
+                  -0.104836267, -0.0114554019, 0.994423517 ]
+                zmp: [ 0, 0, 0 ]
+                collisionDetection: true
+                selfCollisionDetection: false
+                isEditable: true
+            - 
+              id: 13
+              name: "Debris-M"
+              plugin: Body
+              class: BodyItem
+              data: 
+                modelFile: "${SHARE}/model/WRS2018/DebrisM.body"
+                currentBaseLink: "BASE"
+                rootPosition: [ 15.1209527, -1.00287472, 0.068159081 ]
+                rootAttitude: [ 
+                  0.383368851, 0.923595325, 8.32667268e-17, 
+                  -0.923595325, 0.383368851, -1.04083409e-17, 
+                  -4.15349643e-17, -7.2914526e-17, 1 ]
+                jointPositions: [  ]
+                initialRootPosition: [ 15.1209527, -1.00287472, 0.068159081 ]
+                initialRootAttitude: [ 
+                  0.383368851, 0.923595325, 8.32667268e-17, 
+                  -0.923595325, 0.383368851, -1.04083409e-17, 
+                  -4.15349643e-17, -7.2914526e-17, 1 ]
+                zmp: [ 0, 0, 0 ]
+                collisionDetection: true
+                selfCollisionDetection: false
+                isEditable: true
+            - 
+              id: 14
+              name: "Debris-M"
+              plugin: Body
+              class: BodyItem
+              data: 
+                modelFile: "${SHARE}/model/WRS2018/DebrisM.body"
+                currentBaseLink: "BASE"
+                rootPosition: [ 13, 2.1833, 0.075 ]
+                rootAttitude: [ 
+                  0.201077921, 0.97957525, 0, 
+                  -0.97957525, 0.201077921, -0, 
+                  -0, 0, 1 ]
+                jointPositions: [  ]
+                initialRootPosition: [ 13, 2.1833, 0.075 ]
+                initialRootAttitude: [ 
+                  0.201077921, 0.97957525, 0, 
+                  -0.97957525, 0.201077921, -0, 
+                  -0, 0, 1 ]
+                zmp: [ 0, 0, 0 ]
+                collisionDetection: true
+                selfCollisionDetection: false
+                isEditable: true
+            - 
+              id: 15
+              name: "Debris-M"
+              plugin: Body
+              class: BodyItem
+              data: 
+                modelFile: "${SHARE}/model/WRS2018/DebrisM.body"
+                currentBaseLink: "BASE"
+                rootPosition: [ 12.6795192, -2.45175724, 0.06811898 ]
+                rootAttitude: [ 
+                  0.383368851, 0.923595325, -3.08148791e-32, 
+                  -0.923595325, 0.383368851, 1.84889275e-32, 
+                  2.88897518e-32, 2.13723994e-32, 1 ]
+                jointPositions: [  ]
+                initialRootPosition: [ 12.6795192, -2.45175724, 0.06811898 ]
+                initialRootAttitude: [ 
+                  0.383368851, 0.923595325, -3.08148791e-32, 
+                  -0.923595325, 0.383368851, 1.84889275e-32, 
+                  2.88897518e-32, 2.13723994e-32, 1 ]
+                zmp: [ 0, 0, 0 ]
+                collisionDetection: true
+                selfCollisionDetection: false
+                isEditable: true
+            - 
+              id: 16
+              name: "Debris-M"
+              plugin: Body
+              class: BodyItem
+              data: 
+                modelFile: "${SHARE}/model/WRS2018/DebrisM.body"
+                currentBaseLink: "BASE"
+                rootPosition: [ 13.5013, -0.0094, 0.0764 ]
+                rootAttitude: [ 
+                  0.778243149, -0.627963058, 0, 
+                  0.627963058, 0.778243149, -0, 
+                  0, 0, 1 ]
+                jointPositions: [  ]
+                initialRootPosition: [ 13.5013, -0.0094, 0.0764 ]
+                initialRootAttitude: [ 
+                  0.778243149, -0.627963058, 0, 
+                  0.627963058, 0.778243149, 0, 
+                  0, 0, 1 ]
+                zmp: [ 0, 0, 0 ]
+                collisionDetection: true
+                selfCollisionDetection: false
+                isEditable: true
+            - 
+              id: 17
+              name: "Fire"
+              plugin: Body
+              class: BodyItem
+              data: 
+                modelFile: "${PROJECT_DIR}/T5-Fire.body"
+                currentBaseLink: "Base"
+                rootPosition: [ 15, -1, 0.2 ]
                 rootAttitude: [ 
                   1, 0, 0, 
                   0, 1, 0, 
                   0, 0, 1 ]
                 jointPositions: [  ]
-                initialRootPosition: [ 4.67934738, 4.1405342, 1.06499852 ]
+                initialRootPosition: [ 15, -1, 0.2 ]
                 initialRootAttitude: [ 
                   1, 0, 0, 
                   0, 1, 0, 
@@ -135,30 +366,7 @@ items:
                 zmp: [ 0, 0, 0 ]
                 collisionDetection: true
                 selfCollisionDetection: false
-                isEditable: true
-        - 
-          id: 5
-          name: "Fire"
-          plugin: Body
-          class: BodyItem
-          data: 
-            modelFile: "T5-Fire.body"
-            currentBaseLink: "Base"
-            rootPosition: [ 14, -1, 0.2 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            jointPositions: [  ]
-            initialRootPosition: [ 14, -1, 0.2 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            zmp: [ 0, 0, 0 ]
-            collisionDetection: true
-            selfCollisionDetection: false
-            isEditable: false
+                isEditable: false
 views: 
   - 
     id: 0
@@ -171,8 +379,8 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      checked: [ 3, 4, 5, 6, 7 ]
-      expanded: [ 1, 6 ]
+      checked: [ 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17 ]
+      expanded: [ 1, 10 ]
   - 
     id: 2
     plugin: Base
@@ -221,15 +429,15 @@ views:
           isCurrent: true
           fieldOfView: 0.698132
           near: 0.01
-          far: 100
-          eye: [ -3.90815276, -3.33358774, 2.81867908 ]
-          direction: [ 0.892427443, 0.377312262, -0.247403953 ]
-          up: [ 0.227874132, 0.0963436354, 0.968912423 ]
+          far: 300
+          eye: [ -8.55168085, -2.54920393, 3.83625631 ]
+          direction: [ 0.969778187, 0.206700889, -0.12963414 ]
+          up: [ 0.126786196, 0.0270235192, 0.991561894 ]
         - 
           camera: [ System, Orthographic ]
-          orthoHeight: 5.73009
+          orthoHeight: 15.576
           near: 0.01
-          far: 100
+          far: 300
       backgroundColor: [ 0, 0, 0 ]
       gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
@@ -279,21 +487,21 @@ views:
           isCurrent: true
           fieldOfView: 0.698132
           near: 0.01
-          far: 100
-          eye: [ -5.75368023, 0.232171657, 2.52296107 ]
-          direction: [ 0.996943901, 0.0319678818, -0.0712805157 ]
-          up: [ 0.0712438979, 0.00228449816, 0.997456309 ]
+          far: 200
+          eye: [ -5.80036612, 0.288608513, 2.40759848 ]
+          direction: [ 0.998439461, 0.0220240486, -0.0513184643 ]
+          up: [ 0.0513059837, 0.00113173159, 0.998682339 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
           near: 0.01
-          far: 100
+          far: 200
       backgroundColor: [ 0, 0, 0 ]
       gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       dedicatedItemTreeViewChecks: true
-      checked: [ 3, 4, 5, 6 ]
+      checked: [ 3, 4, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17 ]
   - 
     id: 5
     plugin: Body
@@ -314,7 +522,7 @@ views:
       spinBox: true
       slider: true
       labelOnLeft: true
-      currentBodyItem: 7
+      currentBodyItem: 14
   - 
     id: 7
     plugin: Body
@@ -322,125 +530,15 @@ views:
     mounted: true
     state: 
       listingMode: "Link List"
-      currentBodyItem: 7
-  - 
-    id: 8
-    plugin: Multicopter
-    class: MulticopterMonitorView
-  - 
-    id: 9
-    plugin: OpenRTM
-    class: RTSNameServerView
-    state: 
-      host: localhost
-      port: 2809
+      currentBodyItem: 14
+      bodyItems: 
+        - 
+          id: 15
+          selectedLinks: [ 0 ]
   - 
     id: 10
     plugin: Python
     class: PythonConsoleView
-toolbars: 
-  "TimeBar": 
-    minTime: 0
-    maxTime: 30
-    frameRate: 100
-    playbackFrameRate: 50
-    idleLoopDrivenMode: false
-    currentTime: 0
-    speedScale: 1
-    syncToOngoingUpdates: true
-    autoExpansion: true
-  "KinematicsBar": 
-    mode: AUTO
-    enablePositionDragger: true
-    penetrationBlock: false
-    collisionLinkHighlight: false
-    snapDistance: 0.025
-    penetrationBlockDepth: 0.0005
-    lazyCollisionDetectionMode: true
-  "BodyBar": 
-    current: 7
-  "LeggedBodyBar": 
-    stanceWidth: 0.15
-  "BodyMotionGenerationBar": 
-    autoGenerationForNewBody: true
-    balancer: false
-    autoGeneration: false
-    timeScaleRatio: 1
-    preInitialDuration: 1
-    postFinalDuration: 1
-    onlyTimeBarRange: false
-    makeNewBodyItem: true
-    stealthyStepMode: true
-    stealthyHeightRatioThresh: 2
-    flatLiftingHeight: 0.005
-    flatLandingHeight: 0.005
-    impactReductionHeight: 0.005
-    impactReductionTime: 0.04
-    autoZmp: true
-    minZmpTransitionTime: 0.1
-    zmpCenteringTimeThresh: 0.03
-    zmpTimeMarginBeforeLiftingSpin: 0
-    zmpMaxDistanceFromCenter: 0.02
-    allLinkPositions: false
-    lipSyncMix: false
-    timeToStartBalancer: 0
-    balancerIterations: 2
-    plainBalancerMode: false
-    boundaryConditionType: position
-    boundarySmootherType: quintic
-    boundarySmootherTime: 0.5
-    boundaryCmAdjustment: false
-    boundaryCmAdjustmentTime: 1
-    waistHeightRelaxation: false
-    gravity: 9.8
-    dynamicsTimeRatio: 1
-Body: 
-  "BodyMotionEngine": 
-    updateJointVelocities: false
-  "EditableSceneBody": 
-    editableSceneBodies: 
-      - 
-        bodyItem: 3
-        showCenterOfMass: false
-        showPpcom: false
-        showZmp: false
-      - 
-        bodyItem: 4
-        showCenterOfMass: false
-        showPpcom: false
-        showZmp: false
-      - 
-        bodyItem: 5
-        showCenterOfMass: false
-        showPpcom: false
-        showZmp: false
-      - 
-        bodyItem: 6
-        showCenterOfMass: false
-        showPpcom: false
-        showZmp: false
-      - 
-        bodyItem: 7
-        showCenterOfMass: false
-        showPpcom: false
-        showZmp: false
-    staticModelEditing: true
-  "KinematicFaultChecker": 
-    checkJointPositions: true
-    angleMargin: 0
-    translationMargin: 0
-    checkJointVelocities: true
-    velocityLimitRatio: 100
-    targetJoints: all
-    checkSelfCollisions: true
-    onlyTimeBarRange: false
-  "SplineFilterDialog": 
-    isInputFrameRateSpecified: false
-    inputFrameRate: 200
-    isOutputFrameRateSpecified: false
-    outputFrameRate: 200
-OpenRTM: 
-  "deleteUnmanagedRTCsOnStartingSimulation": false
 viewAreas: 
   - 
     type: embedded
@@ -448,12 +546,12 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 366, 1784 ]
+      sizes: [ 653, 3181 ]
       children: 
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 645, 644 ]
+          sizes: [ 1006, 1005 ]
           children: 
             - 
               type: pane
@@ -462,16 +560,16 @@ viewAreas:
             - 
               type: pane
               views: [ 0, 7 ]
-              current: 0
+              current: 7
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 920, 369 ]
+          sizes: [ 1435, 576 ]
           children: 
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 772, 1006 ]
+              sizes: [ 1379, 1796 ]
               children: 
                 - 
                   type: pane

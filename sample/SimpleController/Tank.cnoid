@@ -88,6 +88,7 @@ items:
           plugin: Body
           class: AISTSimulatorItem
           data: 
+            timeStep: 0.001
             realtimeSync: true
             recording: off
             timeRangeMode: Unlimited
@@ -116,6 +117,7 @@ items:
           plugin: ODE
           class: ODESimulatorItem
           data: 
+            timeStep: 0.001
             realtimeSync: true
             recordingMode: Direct
             onlyActiveControlPeriod: true
@@ -139,6 +141,7 @@ items:
           plugin: Bullet
           class: BulletSimulatorItem
           data: 
+            timeStep: 0.001
             realtimeSync: true
             recordingMode: Direct
             onlyActiveControlPeriod: true
@@ -330,29 +333,6 @@ toolbars:
   "TimeBar": 
     minTime: 0
     maxTime: 5
-    frameRate: 1000
-    playbackFrameRate: 100
-    idleLoopDrivenMode: false
-    currentTime: 0
-    speedScale: 1
-    syncToOngoingUpdates: true
-    autoExpansion: true
-Body: 
-  "BodyMotionEngine": 
-    updateJointVelocities: false
-  "EditableSceneBody": 
-    editableSceneBodies: 
-      - 
-        bodyItem: 2
-        showCenterOfMass: false
-        showPpcom: false
-        showZmp: false
-      - 
-        bodyItem: 4
-        showCenterOfMass: false
-        showPpcom: false
-        showZmp: false
-    staticModelEditing: true
 viewAreas: 
   - 
     type: embedded

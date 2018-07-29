@@ -16,6 +16,7 @@ Changes since 1.6.0:
 * Aizu Spider model
 * Aizu Wheel model
 * Complete out-of-source build
+* The target link of BodyTrackingCameraItem can be specified
 
 Choreonoid 1.6.0 released on October 31, 2017
 =============================================

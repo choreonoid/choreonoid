@@ -71,13 +71,19 @@ set(target TankJoystickControllerRTC)
 add_cnoid_sample_rtc(${target} TankJoystickControllerRTC.cpp)
 list(APPEND project_files OpenRTM-Tank.cnoid)
 
-if(NOT MSVC AND NOT USE_BUILTIN_CAMERA_IMAGE_IDL)
+if(NOT USE_BUILTIN_CAMERA_IMAGE_IDL)
   add_cnoid_body_io_rtc(VisionSensorIoRTC VisionSensorIoRTC.cpp)
+  target_link_libraries(VisionSensorIoRTC ${OPENRTM_CAMERA_LIBRARY})
   list(APPEND project_files OpenRTM-TankVisionSensors.cnoid TankVisionSystem.xml)
 endif()
 
 file(COPY TankVisionSensorOut.conf DESTINATION ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}/rtc)
 install(FILES TankVisionSensorOut.conf DESTINATION ${CNOID_PLUGIN_SUBDIR}/rtc)
 list(APPEND project_files OpenRTM-TankVisionSensors-OldIDL.cnoid OldTankVisionSystem.xml)
+
+# Teleoperation samples
+list(APPEND project_files
+  OpenRTM-AizuSpiderSS-Remote.cnoid
+  OpenRTM-AizuSpider-Terminal.cnoid)
 
 install(FILES ${project_files} DESTINATION ${CNOID_SHARE_SUBDIR}/project)
