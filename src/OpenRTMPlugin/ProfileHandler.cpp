@@ -13,6 +13,17 @@ using namespace RTC;
 
 namespace cnoid {
 
+struct PropertyValueComparator {
+    QString target_;
+
+    PropertyValueComparator(string value) {
+        target_ = QString::fromStdString(value);
+    }
+    bool operator()(const Property elem) const {
+        return (QString::fromStdString(elem.name).startsWith(target_));
+    }
+};
+
 bool ProfileHandler::getRtsProfileInfo(std::string targetFile, std::string& vendorName, std::string& version) {
   RtsProfile profile;
   if (parseProfile(targetFile, profile) == false) return false;
@@ -406,10 +417,6 @@ void ProfileHandler::saveRtsProfile
 		        }
 		        //
 		        copyNVListToProperty(compRaw->properties, compProf.propertyList);
-		        Property prop;
-		        prop.name = "IOR";
-		        prop.value = comp->getIOR();
-		        compProf.propertyList.push_back(prop);
 
 		        profile.compList.push_back(compProf);
         } catch (...) {
@@ -571,16 +578,15 @@ void ProfileHandler::appendStringValue(std::vector<Property>& target, std::strin
     }
 }
 
+void ProfileHandler::removePropertyByValue(std::vector<Property>& target, const std::string& name) {
+    target.erase(remove_if(target.begin(), target.end(), PropertyValueComparator(name)), target.end());
+}
+
 bool ProfileHandler::writeProfile(const std::string& targetFile, RtsProfile& profile, std::ostream& os)
 {
 	  xml_document doc;
 	  xml_node profileNode = doc.append_child("rts:RtsProfile");
 
-	  QDateTime dt = QDateTime::currentDateTime();
-	  QString str = dt.toString("yyyy-MM-ddTHH:mm:ss");
-
-	  profileNode.append_attribute("rts:updateDate") = str.toStdString().c_str();
-	  profileNode.append_attribute("rts:creationDate") = str.toStdString().c_str();
 	  profileNode.append_attribute("rts:version") = "0.2";
 	  profileNode.append_attribute("rts:id") = profile.id.c_str();
 	  profileNode.append_attribute("xmlns:rts") = "http://www.openrtp.org/namespaces/rts";
@@ -621,8 +627,6 @@ void ProfileHandler::writeComponent(std::vector<Component>& compList, xml_node& 
 		writeExecutionContext(target.ecList, compNode);
 		//Location
 		writeLocation(target, compNode);
-		//Proprty
-		writeProperty(target.propertyList, compNode);
 	}
 }
 
@@ -734,6 +738,8 @@ void ProfileHandler::writeTargetPort(TargetPort& target, std::string tag, xml_no
 void ProfileHandler::writeProperty(std::vector<Property>& propList, xml_node& parent) {
 	for (int idxProp = 0; idxProp < propList.size(); idxProp++) {
 		Property prop = propList[idxProp];
+    if(QString::fromStdString(prop.value).startsWith("IOR:")) continue;
+
 		xml_node propertyNode = parent.append_child("rtsExt:Properties");
 		propertyNode.append_attribute("rtsExt:value") = prop.value.c_str();
 		propertyNode.append_attribute("rtsExt:name") = prop.name.c_str();

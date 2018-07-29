@@ -335,6 +335,7 @@ void RTSConnection::setPosition(const Vector2 pos[])
         position[i] = pos[i];
     }
     setPos = true;
+    srcRTC->rts()->suggestFileUpdate();
 }
 
 

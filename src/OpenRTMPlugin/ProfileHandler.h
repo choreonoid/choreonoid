@@ -165,6 +165,7 @@ private:
   static void buildPosition(const RTSConnection* connect, int offsetX, int offsetY, std::vector<Property>& propList);
 
   static void appendStringValue(std::vector<Property>& target, std::string& name, std::string& value);
+  static void removePropertyByValue(std::vector<Property>& target, const std::string& name);
 };
 
 }
