@@ -518,12 +518,10 @@ macro(setup_qt5)
     find_package(Qt5Network ${version} HINTS ${qt_cmake_dirs})
     set(QT_LIBRARIES Qt5::Core Qt5::Widgets Qt5::OpenGL Qt5::Network)
   elseif(UNIX)
-    find_package(Qt5Core)
-    find_package(Qt5Widgets)
-    find_package(Qt5OpenGL)
-    find_package(Qt5Network)
-    find_package(Qt5X11Extras)
-    set(QT_LIBRARIES Qt5::Core Qt5::Widgets Qt5::OpenGL Qt5::Network Qt5::X11Extras)
+    find_package(Qt5 COMPONENTS Core Widgets OpenGL Network X11Extras)
+    set(QT_LIBRARIES
+      ${Qt5Core_LIBRARIES} ${Qt5Widgets_LIBRARIES} ${Qt5OpenGL_LIBRARIES} ${Qt5Network_LIBRARIES}
+      ${Qt5X11Extras_LIBRARIES})
   endif()
   set(QT5 TRUE)
 

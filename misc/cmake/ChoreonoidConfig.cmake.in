@@ -1,0 +1,37 @@
+# Use the following variables to compile and link against Choreonoid:
+# CHOREONOID_FOUND            - True if Choreonoid was found on your system
+# CHOREONOID_VERSION_STRING   - A human-readable string containing the version
+# CHOREONOID_VERSION_MAJOR    - The major version of Choreonoid
+# CHOREONOID_VERSION_MINOR    - The minor version of Choreonoid
+# CHOREONOID_VERSION_PATCH    - The patch version of Choreonoid
+# CHOREONOID_ROOT_DIR         - The base directory of Choreonoid
+# CHOREONOID_DEFINITIONS      - Definitions needed to build with Choreonoid
+# CHOREONOID_INCLUDE_DIRS     - List of directories of Choreonoid and it's dependencies
+# CHOREONOID_LIBRARY_DIRS     - List of directories of Choreonoid and it's dependencies
+# CHOREONOID_LIBRARIES        - List of directories of Choreonoid and it's dependencies
+
+set(CHOREONOID_ROOT_DIR "@CNOID_DIR@")
+
+set(CHOREONOID_VERSION_STRING "@CNOID_FULL_VERSION@")
+set(CHOREONOID_VERSION_MAJOR "@CNOID_MAJOR_VERSION@")
+set(CHOREONOID_VERSION_MINOR "@CNOID_MINOR_VERSION@")
+set(CHOREONOID_VERSION_PATCH "@CNOID_PATCH_VERSION@")
+
+set(CHOREONOID_DEFINITIONS @definitions@)
+set(CHOREONOID_INCLUDE_DIRS @include_dirs@)
+set(CHOREONOID_LIBRARY_DIRS @library_dirs@)
+set(CHOREONOID_UTIL_LIBRARIES CnoidUtil)
+set(CHOREONOID_BASE_LIBRARIES ${CHOREONOID_UTIL_LIBRARIES} CnoidBase)
+set(CHOREONOID_BODY_LIBRARIES ${CHOREONOID_UTIL_LIBRARIES} CnoidBody)
+set(CHOREONOID_BODY_PLUGIN_LIBRARIES ${CHOREONOID_BASE_LIBRARIES} CnoidBody CnoidBodyPlugin)
+set(CHOREONOID_LIBRARIES ${CNOD_BODY_LIBRARIES} ${CHOREONOID_BODY_PLUGIN_LIBRARIES})
+
+MARK_AS_ADVANCED(
+  CHOREONOID_ROOT_DIR
+  CHOREONOID_INCLUDE_DIRS
+  CHOREONOID_LIBRARIES
+  CHOREONOID_Boost_VERSION
+  CHOREONOID_CFLAGS_OTHER
+  CHOREONOID_LDFLAGS_OTHER
+  CHOREONOID_LIBRARY_SUFFIX
+)
