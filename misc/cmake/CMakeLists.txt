@@ -17,5 +17,5 @@ set(definitions -DQT_NO_KEYWORDS -DQT_NO_OPENGL_ES_2)
 
 configure_file(ChoreonoidConfig.cmake.in ChoreonoidConfig.cmake @ONLY)
 if(INSTALL_SDK)
-  install(FILES ChoreonoidConfig.cmake DESTINATION lib/cmake/Choreonoid)
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/ChoreonoidConfig.cmake DESTINATION lib/cmake/Choreonoid)
 endif()
