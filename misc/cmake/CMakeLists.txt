@@ -15,7 +15,7 @@ list(REMOVE_DUPLICATES library_dirs)
 
 set(definitions -DQT_NO_KEYWORDS -DQT_NO_OPENGL_ES_2)
 
-configure_file(ChoreonoidConfig.cmake.in ChoreonoidConfig.cmake @ONLY)
+configure_file(choreonoid-config.cmake.in choreonoid-config.cmake @ONLY)
 if(INSTALL_SDK)
-  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/ChoreonoidConfig.cmake DESTINATION lib/cmake/Choreonoid)
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/choreonoid-config.cmake DESTINATION lib/choreonoid-${CNOID_VERSION}/cmake)
 endif()
