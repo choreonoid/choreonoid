@@ -39,12 +39,12 @@ public:
     ~GLSLProgram();
 
     void release();
-    void loadVertexShader(const char* filename) throw (Exception);
-    void loadFragmentShader(const char* filename) throw (Exception);
-    void loadShader(const char* filename, int shaderType) throw(Exception);
-    void link() throw (Exception);
-    void validate() throw(Exception);
-    void use() throw (Exception);
+    void loadVertexShader(const char* filename);
+    void loadFragmentShader(const char* filename);
+    void loadShader(const char* filename, int shaderType);
+    void link();
+    void validate();
+    void use();
     
     GLint handle() const { return programHandle; }
     bool isLinked() const { return isLinked_; }

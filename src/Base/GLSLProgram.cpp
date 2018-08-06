@@ -48,19 +48,19 @@ void GLSLProgram::release()
 }
 
 
-void GLSLProgram::loadVertexShader(const char* filename) throw (GLSLProgram::Exception)
+void GLSLProgram::loadVertexShader(const char* filename)
 {
     loadShader(filename, GL_VERTEX_SHADER);
 }
 
 
-void GLSLProgram::loadFragmentShader(const char* filename) throw (GLSLProgram::Exception)
+void GLSLProgram::loadFragmentShader(const char* filename)
 {
     loadShader(filename, GL_FRAGMENT_SHADER);
 }
 
 
-void GLSLProgram::loadShader(const char* filename, int shaderType) throw(GLSLProgram::Exception)
+void GLSLProgram::loadShader(const char* filename, int shaderType)
 {
     QFile file(filename);
 
@@ -107,7 +107,7 @@ void GLSLProgram::loadShader(const char* filename, int shaderType) throw(GLSLPro
 }
 
 
-void GLSLProgram::link() throw(GLSLProgram::Exception)
+void GLSLProgram::link()
 {
     if(isLinked_){
         return;
@@ -142,7 +142,7 @@ void GLSLProgram::link() throw(GLSLProgram::Exception)
 }
 
 
-void GLSLProgram::validate() throw(GLSLProgram::Exception)
+void GLSLProgram::validate()
 {
     if(!programHandle || !isLinked_){
         throw Exception(_("Program is not linked"));
@@ -168,7 +168,7 @@ void GLSLProgram::validate() throw(GLSLProgram::Exception)
 }
 
 
-void GLSLProgram::use() throw(GLSLProgram::Exception)
+void GLSLProgram::use()
 {
     if(!programHandle || !isLinked_){
         throw Exception(_("Shader has not been linked."));
