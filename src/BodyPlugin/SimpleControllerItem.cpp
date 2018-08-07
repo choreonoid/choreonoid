@@ -4,6 +4,7 @@
 
 #include "SimpleControllerItem.h"
 #include <cnoid/SimpleController>
+#include <cnoid/BodyItem>
 #include <cnoid/Body>
 #include <cnoid/Link>
 #include <cnoid/Archive>
@@ -160,6 +161,7 @@ SimpleControllerItemImpl::SimpleControllerItemImpl(SimpleControllerItem* self)
       baseDirectoryType(N_BASE_DIRECTORY_TYPES, CNOID_GETTEXT_DOMAIN_NAME)
 {
     controller = nullptr;
+    ioBody = nullptr;
     io = nullptr;
     mv = MessageView::instance();
     doReloading = false;
@@ -188,6 +190,7 @@ SimpleControllerItemImpl::SimpleControllerItemImpl(SimpleControllerItem* self, c
       baseDirectoryType(org.baseDirectoryType)
 {
     controller = nullptr;
+    ioBody = nullptr;
     io = nullptr;
     mv = MessageView::instance();
     doReloading = org.doReloading;
@@ -517,7 +520,14 @@ std::string SimpleControllerItemImpl::optionString() const
 
 Body* SimpleControllerItemImpl::body()
 {
-    return ioBody;
+    if(ioBody){
+        return ioBody;
+    } else {
+        if(auto bodyItem = self->findOwnerItem<BodyItem>()){
+            return bodyItem->body();
+        }
+    }
+    return nullptr;
 }
 
 
@@ -853,6 +863,7 @@ void SimpleControllerItem::stop()
         impl->sharedInfo.reset();
     }
     impl->io = nullptr;
+    impl->ioBody = nullptr;
 }
 
 
