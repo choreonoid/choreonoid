@@ -74,6 +74,8 @@ public:
         
     MessageView* mv;
 
+    SimpleControllerConfig config;
+
     std::string controllerModuleName;
     std::string controllerModuleFilename;
     filesystem::path controllerDirectory;
@@ -95,7 +97,7 @@ public:
     bool loadController();
     void unloadController();
     void initializeIoBody();
-    void resetConfigurations();
+    void clearIoTargets();
     void updateInputEnabledDevices();
     SimpleController* initialize(ControllerIO* io, SharedInfo* info);
     void updateIOStateTypes();
@@ -118,7 +120,7 @@ public:
     virtual bool setNoDelayMode(bool on);
 
     // virtual functions of SimpleControllerIO
-    virtual std::string name() const override;
+    virtual std::string controllerName() const override;
     virtual void enableIO(Link* link) override;
     virtual void enableInput(Link* link) override;
     virtual void enableInput(Link* link, int stateTypes) override;
@@ -154,6 +156,7 @@ SimpleControllerItem::SimpleControllerItem()
 
 SimpleControllerItemImpl::SimpleControllerItemImpl(SimpleControllerItem* self)
     : self(self),
+      config(this),
       baseDirectoryType(N_BASE_DIRECTORY_TYPES, CNOID_GETTEXT_DOMAIN_NAME)
 {
     controller = nullptr;
@@ -179,6 +182,7 @@ SimpleControllerItem::SimpleControllerItem(const SimpleControllerItem& org)
 
 SimpleControllerItemImpl::SimpleControllerItemImpl(SimpleControllerItem* self, const SimpleControllerItemImpl& org)
     : self(self),
+      config(this),
       controllerModuleName(org.controllerModuleName),
       controllerDirectory(org.controllerDirectory),
       baseDirectoryType(org.baseDirectoryType)
@@ -314,7 +318,7 @@ bool SimpleControllerItemImpl::loadController()
         return false;
     }
 
-    if(!controller->configure(this)){
+    if(!controller->configure(&config)){
         mv->putln(MessageView::ERROR, _("Failed to configure the controller"));
         return false;
     }
@@ -387,7 +391,7 @@ void SimpleControllerItemImpl::initializeIoBody()
 }
 
 
-void SimpleControllerItemImpl::resetConfigurations()
+void SimpleControllerItemImpl::clearIoTargets()
 {
     inputLinkIndices.clear();
     inputStateTypes.clear();
@@ -427,7 +431,7 @@ SimpleController* SimpleControllerItemImpl::initialize(ControllerIO* io, SharedI
         ioBody = sharedInfo->ioBody;
     }
 
-    resetConfigurations();
+    clearIoTargets();
 
     if(!controller->initialize(this)){
         mv->putln(MessageView::ERROR, fmt(_("%1%'s initialize method failed.")) % self->name());
@@ -541,7 +545,7 @@ std::ostream& SimpleControllerItemImpl::os() const
 }
 
 
-std::string SimpleControllerItemImpl::name() const
+std::string SimpleControllerItemImpl::controllerName() const
 {
     return self->name();
 }
@@ -841,7 +845,7 @@ void SimpleControllerItem::stop()
     }
     impl->controller->stop();
 
-    impl->resetConfigurations();
+    impl->clearIoTargets();
 
     if(impl->doReloading || !findRootItem()){
         impl->unloadController();
