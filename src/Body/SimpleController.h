@@ -71,7 +71,7 @@ class CNOID_EXPORT SimpleControllerConfig
 public:
     SimpleControllerConfig(SimpleControllerIO* io);
     
-    virtual std::string name() const;
+    virtual std::string controllerName() const;
     virtual Body* body();
     virtual std::string optionString() const;
     std::vector<std::string> options() const;

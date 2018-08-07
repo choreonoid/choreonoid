@@ -44,9 +44,9 @@ SimpleControllerConfig::SimpleControllerConfig(SimpleControllerIO* io)
 
 }
 
-std::string SimpleControllerConfig::name() const
+std::string SimpleControllerConfig::controllerName() const
 {
-    return io->name();
+    return io->controllerName();
 }
 
 Body* SimpleControllerConfig::body()
