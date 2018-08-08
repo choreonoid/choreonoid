@@ -47,7 +47,7 @@ items:
               data: 
                 isNoDelayMode: true
                 controllerOptions: ""
-                module: "TankIoRTC.so"
+                module: "TankIoRTC"
                 baseDirectory: "RTC directory"
                 instanceName: ""
                 periodicRate: 0
@@ -59,7 +59,7 @@ items:
               data: 
                 isNoDelayMode: true
                 controllerOptions: ""
-                module: "VisionSensorIoRTC.so"
+                module: "VisionSensorIoRTC"
                 baseDirectory: "RTC directory"
                 instanceName: ""
                 periodicRate: 0

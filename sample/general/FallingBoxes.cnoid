@@ -1,0 +1,264 @@
+optionalPlugins: [ ODE, Bullet, PhysX ]
+
+items: 
+  id: 0
+  name: "Root"
+  plugin: Base
+  class: RootItem
+  children: 
+    - 
+      id: 1
+      name: "World"
+      plugin: Body
+      class: WorldItem
+      data: 
+        collisionDetection: false
+        collisionDetector: AISTCollisionDetector
+      children: 
+        - 
+          id: 2
+          name: "Floor"
+          plugin: Body
+          class: BodyItem
+          data: 
+            modelFile: "${SHARE}/model/misc/floor.body"
+            currentBaseLink: "BASE"
+            rootPosition: [ 0, 0, -0.1 ]
+            rootAttitude: [ 
+              1, 0, 0, 
+              0, 1, 0, 
+              0, 0, 1 ]
+            jointPositions: [  ]
+            initialRootPosition: [ 0, 0, -0.1 ]
+            initialRootAttitude: [ 
+              1, 0, 0, 
+              0, 1, 0, 
+              0, 0, 1 ]
+            zmp: [ 0, 0, 0 ]
+            selfCollisionDetection: false
+            isEditable: true
+        - 
+          id: 3
+          name: "box1"
+          plugin: Body
+          class: BodyItem
+          data: 
+            modelFile: "${SHARE}/model/misc/box1.body"
+            currentBaseLink: "WAIST"
+            rootPosition: [ 0.0375, 0.15, 1.4159 ]
+            rootAttitude: [ 
+              0.820303, 0.536269, 0.198792, 
+              -0.547074, 0.837084, -0.000678, 
+              -0.166769, -0.108198, 0.980041 ]
+            jointPositions: [  ]
+            initialRootPosition: [ 0.0375, 0.15, 1.4159 ]
+            initialRootAttitude: [ 
+              0.820303398, 0.536268628, 0.198791956, 
+              -0.547074372, 0.837083702, -0.000677909207, 
+              -0.166769044, -0.108197909, 0.980041475 ]
+            zmp: [ 0, 0, 0 ]
+            selfCollisionDetection: false
+            isEditable: true
+        - 
+          id: 4
+          name: "box1"
+          plugin: Body
+          class: BodyItem
+          data: 
+            modelFile: "${SHARE}/model/misc/box1.body"
+            currentBaseLink: "WAIST"
+            rootPosition: [ 0.0108, 0.2371, 1.0699 ]
+            rootAttitude: [ 
+              0.790431, -0.579651, 0.198048, 
+              0.591318, 0.806439, 0.000289, 
+              -0.159881, 0.116881, 0.980192 ]
+            jointPositions: [  ]
+            initialRootPosition: [ 0.0108, 0.2371, 1.0699 ]
+            initialRootAttitude: [ 
+              0.790431146, -0.579651269, 0.198047985, 
+              0.591317731, 0.806438623, 0.000288917343, 
+              -0.159881015, 0.116880917, 0.980192283 ]
+            zmp: [ 0, 0, 0 ]
+            selfCollisionDetection: false
+            isEditable: true
+        - 
+          id: 5
+          name: "box1"
+          plugin: Body
+          class: BodyItem
+          data: 
+            modelFile: "${SHARE}/model/misc/box1.body"
+            currentBaseLink: "WAIST"
+            rootPosition: [ -0.0123, 0.15, 0.6871 ]
+            rootAttitude: [ 
+              0.979672, 0.030711, 0.198239, 
+              0.022232, 0.965503, -0.259442, 
+              -0.199368, 0.258576, 0.945194 ]
+            jointPositions: [  ]
+            initialRootPosition: [ -0.0123, 0.15, 0.6871 ]
+            initialRootAttitude: [ 
+              0.979672466, 0.0307109713, 0.198238994, 
+              0.0222319713, 0.965502689, -0.259442289, 
+              -0.199368006, 0.258575711, 0.945193634 ]
+            zmp: [ 0, 0, 0 ]
+            selfCollisionDetection: false
+            isEditable: true
+        - 
+          id: 6
+          name: "box1"
+          plugin: Body
+          class: BodyItem
+          data: 
+            modelFile: "${SHARE}/model/misc/box1.body"
+            currentBaseLink: "WAIST"
+            rootPosition: [ 0.0631, 0.159, 2.1828 ]
+            rootAttitude: [ 
+              0.980271, 0.197647, 0.00207, 
+              -0, 0.010473, -0.999945, 
+              -0.197657, 0.980217, 0.010266 ]
+            jointPositions: [  ]
+            initialRootPosition: [ 0.0631, 0.159, 2.1828 ]
+            initialRootAttitude: [ 
+              0.98027115, 0.197646598, 0.00206956734, 
+              -4.02309285e-007, 0.0104727458, -0.999944884, 
+              -0.197657433, 0.980217116, 0.0102662155 ]
+            zmp: [ 0, 0, 0 ]
+            selfCollisionDetection: false
+            isEditable: true
+        - 
+          id: 7
+          name: "AISTSimulator"
+          plugin: Body
+          class: AISTSimulatorItem
+          data:
+            timestep: 0.001
+            realtimeSync: true
+            recording: "full"
+            timeRangeMode: "Time bar range"
+            timeLength: 60
+            allLinkPositionOutputMode: false
+            deviceStateOutput: false
+            controllerThreads: false
+            recordCollisionData: false
+            dynamicsMode: Forward dynamics
+            integrationMode: Runge Kutta
+            gravity: [ 0, 0, -9.80665 ]
+            staticFriction: 0.5
+            slipFriction: 0.5
+            cullingThresh: 0.01
+            contactCullingDepth: 0.05
+            errorCriterion: 0.001
+            maxNumIterations: 1000
+            contactCorrectionDepth: 0.0001
+            contactCorrectionVelocityRatio: 30
+            kinematicWalking: false
+            2Dmode: false
+        - 
+          id: 8
+          name: "ODESimulator"
+          plugin: ODE
+          class: ODESimulatorItem
+          data: 
+            timestep: 0.001
+            realtimeSync: true
+            recording: "full"
+            timeRangeMode: "Time bar range"
+            timeLength: 60
+            allLinkPositionOutputMode: false
+            deviceStateOutput: false
+            controllerThreads: false
+            recordCollisionData: false
+            stepMode: Iterative (quick step)
+            gravity: [ 0, 0, -9.80665 ]
+            friction: 1
+            jointLimitMode: false
+            globalERP: 0.4
+            globalCFM: 1e-10
+            numIterations: 50
+            overRelaxation: 1.3
+            limitCorrectingVel: true
+            maxCorrectingVel: 1.0e-3
+            2Dmode: false
+            UseWorldItem'sCollisionDetector: false
+        - 
+          id: 9
+          name: "BulletSimulator"
+          plugin: Bullet
+          class: BulletSimulatorItem
+          data: 
+            timestep: 0.001
+            realtimeSync: true
+            recording: "full"
+            timeRangeMode: "Time bar range"
+            timeLength: 60
+            allLinkPositionOutputMode: false
+            deviceStateOutput: false
+            controllerThreads: false
+            recordCollisionData: false
+            ErrorReductionParameter: 0.2
+            NumIterations: 10
+            Restitution: 0
+            Friction: 0.7
+            ERP2: 0
+            SplitImpulsePenetrationThreshold: -0.0001
+        - 
+          id: 10
+          name: "PhysXSimulator"
+          plugin: PhysX
+          class: PhysXSimulatorItem
+          data: 
+            timestep: 0.001
+            realtimeSync: true
+            recording: "full"
+            timeRangeMode: "Time bar range"
+            timeLength: 60
+            allLinkPositionOutputMode: false
+            deviceStateOutput: false
+            controllerThreads: false
+            recordCollisionData: false
+            staticFriction: 0.5
+            dynamicFriction: 0.5
+            Restitution: 0.1
+            jointLimitMode: false
+views: 
+  "Items": 
+    selected: [ 7 ]
+    checked: [ 1, 2, 3, 4, 5, 6 ]
+    expanded: [ 1, 3, 4, 5, 6 ]
+  "Scene": 
+    viewpointControlMode: thirdPerson
+    collisionLines: false
+    polygonMode: fill
+    defaultHeadLight: true
+    defaultHeadLightIntensity: 0.75
+    headLightLightingFromBack: false
+    worldLight: true
+    worldLightIntensity: 0.5
+    worldLightAmbient: 0.3
+    additionalLights: true
+    floorGrid: false
+    floorGridSpan: 10
+    floorGridInterval: 0.5
+    texture: true
+    lineWidth: 1
+    pointSize: 1
+    normalVisualization: false
+    normalLength: 0.01
+    coordinateAxes: true
+    showFPS: false
+    useBufferForPicking: true
+    camera: 
+      current: Perspective
+      eye: [ 4.14723015, 1.86573005, 1.83317995 ]
+      direction: [ -0.916706264, -0.370027095, -0.150764033 ]
+      up: [ -0.139804274, -0.0564319044, 0.988569856 ]
+      fieldOfView: 0.6978
+      near: 0.01
+      far: 10000
+      orthoHeight: 20
+    backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
+    gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
+toolbars: 
+  "TimeBar": 
+    minTime: 0
+    maxTime: 5

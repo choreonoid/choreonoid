@@ -29,21 +29,21 @@ links:
         elements:
           -
             type: Resource
-            uri: "resource/tank.dae"
+            uri: "resource/tank.wrl"
             node: CRAWLER_L
           -
             type: Transform
             translation: [ 0.0, -0.06, 0.0 ]
             elements:
               Resource:
-                uri: "resource/tank.dae"
+                uri: "resource/tank.wrl"
                 node: INNER_PLATE_L
           -
             type: Transform
             translation: [ 0.0, 0.045, 0.0 ]
             elements:
               Resource:
-                uri: "resource/tank.dae"
+                uri: "resource/tank.wrl"
                 node: OUTER_PLATE_L
       -
         type: Collision
@@ -78,7 +78,7 @@ links:
           -
             type: Visual
             resource:
-              uri: "resource/tank.dae"
+              uri: "resource/tank.wrl"
               node: WHEEL_L0
       -
         type: RigidBody
@@ -93,7 +93,7 @@ links:
           -
             type: Visual
             resource:
-              uri: "resource/tank.dae"
+              uri: "resource/tank.wrl"
               node: WHEEL_L1
       -
         type: RigidBody
@@ -109,7 +109,7 @@ links:
           -
             type: Visual
             resource:
-              uri: "resource/tank.dae"
+              uri: "resource/tank.wrl"
               node: WHEEL_L2
   -
     name: TRACK_R
@@ -130,21 +130,21 @@ links:
         elements:
           -
             type: Resource
-            uri: "resource/tank.dae"
+            uri: "resource/tank.wrl"
             node: CRAWLER_R
           -
             type: Transform
             translation: [ 0.0, 0.06, 0.0 ]
             elements:
               Resource:
-                uri: "resource/tank.dae"
+                uri: "resource/tank.wrl"
                 node: INNER_PLATE_R
           -
             type: Transform
             translation: [ 0.0, -0.045, 0.0 ]
             elements:
               Resource:
-                uri: "resource/tank.dae"
+                uri: "resource/tank.wrl"
                 node: OUTER_PLATE_R
       -
         type: Collision
@@ -175,7 +175,7 @@ links:
           -
             type: Visual
             resource:
-              uri: "resource/tank.dae"
+              uri: "resource/tank.wrl"
               node: WHEEL_R0
       -
         type: RigidBody
@@ -190,7 +190,7 @@ links:
           -
             type: Visual
             resource:
-              uri: "resource/tank.dae"
+              uri: "resource/tank.wrl"
               node: WHEEL_R1
       -
         type: RigidBody
@@ -206,5 +206,5 @@ links:
           -
             type: Visual
             resource:
-              uri: "resource/tank.dae"
+              uri: "resource/tank.wrl"
               node: WHEEL_R2

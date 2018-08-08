@@ -54,12 +54,12 @@ links:
         elements:
           -
             type: Resource
-            uri: "resource/tank.dae"
+            uri: "resource/tank.wrl"
             node: INNER_PLATE_L
           -
             type: Resource
             translation: [ 0, 0.105, 0.0 ]
-            uri: "resource/tank.dae"
+            uri: "resource/tank.wrl"
             node: OUTER_PLATE_L
       -
         type: Collision
@@ -157,7 +157,7 @@ links:
       -
         type: Visual
         resource:
-          uri: "resource/tank.dae"
+          uri: "resource/tank.wrl"
           node: WHEEL_L0
       -
         type: Collision
@@ -182,7 +182,7 @@ links:
       -
         type: Visual
         resource:
-          uri: "resource/tank.dae"
+          uri: "resource/tank.wrl"
           node: WHEEL_L1
       -
         type: Collision
@@ -205,7 +205,7 @@ links:
       -
         type: Visual
         resource:
-          uri: "resource/tank.dae"
+          uri: "resource/tank.wrl"
           node: WHEEL_L2
       -
         type: Collision
@@ -254,12 +254,12 @@ links:
         elements:
           -
             type: Resource
-            uri: "resource/tank.dae"
+            uri: "resource/tank.wrl"
             node: INNER_PLATE_R
           -
             type: Resource
             translation: [ 0.0, -0.105, 0.0 ]
-            uri: "resource/tank.dae"
+            uri: "resource/tank.wrl"
             node: OUTER_PLATE_R
       -
         type: Collision
@@ -345,7 +345,7 @@ links:
       -
         type: Visual
         resource:
-          uri: "resource/tank.dae"
+          uri: "resource/tank.wrl"
           node: WHEEL_R0
       -
         type: Collision
@@ -368,7 +368,7 @@ links:
       -
         type: Visual
         resource:
-          uri: "resource/tank.dae"
+          uri: "resource/tank.wrl"
           node: WHEEL_R1
       -
         type: Collision
@@ -391,7 +391,7 @@ links:
       -
         type: Visual
         resource:
-          uri: "resource/tank.dae"
+          uri: "resource/tank.wrl"
           node: WHEEL_R2
       -
         type: Collision

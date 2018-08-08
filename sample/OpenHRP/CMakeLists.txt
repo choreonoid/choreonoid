@@ -52,7 +52,9 @@ foreach(version ${versions})
   
 endforeach()
 
-configure_file(OpenHRP-SR1Walk.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
-configure_file(OpenHRP-SR1Liftup.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
-configure_file(OpenHRP-PA10Pickup.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
-configure_file(OpenHRP-OnlineViewer.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+install(FILES 
+  OpenHRP-SR1Walk.cnoid
+  OpenHRP-SR1Liftup.cnoid
+  OpenHRP-PA10Pickup.cnoid
+  OpenHRP-OnlineViewer.cnoid
+  DESTINATION ${CNOID_SHARE_SUBDIR}/project)

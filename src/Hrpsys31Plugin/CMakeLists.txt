@@ -31,9 +31,8 @@ idl_compile_cpp(idl_cpp_files idl_h_files corba/hrpsys
   LOCAL
   )
 
-include_directories(${OPENRTM_INCLUDE_DIRS})
+include_directories(${CMAKE_CURRENT_BINARY_DIR} ${OPENRTM_INCLUDE_DIRS})
 link_directories(${OPENRTM_LIBRARY_DIRS})
-
 make_gettext_mofiles(${target} mofiles)
 add_cnoid_plugin(${target} SHARED ${sources} ${headers} ${idl_cpp_files} ${mofiles})
 target_link_libraries(${target} CnoidRobotAccessPlugin CnoidOpenRTMPlugin)

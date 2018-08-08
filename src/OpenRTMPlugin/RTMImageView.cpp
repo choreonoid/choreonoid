@@ -212,6 +212,8 @@ ReturnCode_t ImageViewRTC::onExecute(UniqueId ec_id)
         } while(imageInPort.isNew());
             
         int numComponents;
+        bool jpegCompression=false;
+
         switch(timedCameraImage.data.image.format){
         case Img::CF_GRAY :
             numComponents = 1;
@@ -219,18 +221,36 @@ ReturnCode_t ImageViewRTC::onExecute(UniqueId ec_id)
         case Img::CF_RGB :
             numComponents = 3;
             break;
+#ifdef USE_BUILTIN_CAMERA_IMAGE_IDL
+        case Img::CF_RGB_JPEG :
+#else
+        case Img::CF_JPEG :
+#endif
+            numComponents = 3;
+            jpegCompression = true;
+            break;
         case Img::CF_UNKNOWN :
         default :
             numComponents = 0;
             break;
         }
 
-        Image image;
-        image.setSize(timedCameraImage.data.image.width, timedCameraImage.data.image.height, numComponents);
-        size_t length = timedCameraImage.data.image.raw_data.length();
-        memcpy(image.pixels(), timedCameraImage.data.image.raw_data.get_buffer(), length);
-        
-        callLater([&, image](){ imageWidget->setImage(image); });
+        if(jpegCompression){
+            int size = timedCameraImage.data.image.raw_data.length();
+            const unsigned char* src = timedCameraImage.data.image.raw_data.get_buffer();
+            const char *format = "JPG";
+            QImage qImage = QImage::fromData( src, size, format);
+
+            callLater([&, qImage](){ imageWidget->setImage(qImage); });
+        }else{
+            Image image;
+            image.setSize(timedCameraImage.data.image.width, timedCameraImage.data.image.height, numComponents);
+            size_t length = timedCameraImage.data.image.raw_data.length();
+            memcpy(image.pixels(), timedCameraImage.data.image.raw_data.get_buffer(), length);
+
+            callLater([&, image](){ imageWidget->setImage(image); });
+        }
+
     }
 
     return RTC::RTC_OK;

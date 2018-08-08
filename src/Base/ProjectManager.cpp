@@ -49,7 +49,7 @@ public:
     bool restoreObjectStates(
         Archive* projectArchive, Archive* states, const vector<TObject*>& objects, const char* nameSuffix);
         
-    void loadProject(const string& filename, Item* parentItem, bool isInvokingApplication);
+    ItemList<> loadProject(const string& filename, Item* parentItem, bool isInvokingApplication);
 
     template<class TObject>
     bool storeObjects(Archive& parentArchive, const char* key, vector<TObject*> objects);
@@ -196,14 +196,16 @@ bool ProjectManager::isLoadingProject() const
 }
         
 
-void ProjectManager::loadProject(const std::string& filename, Item* parentItem)
+ItemList<> ProjectManager::loadProject(const std::string& filename, Item* parentItem)
 {
-    impl->loadProject(filename, parentItem, false);
+    return impl->loadProject(filename, parentItem, false);
 }
 
 
-void ProjectManagerImpl::loadProject(const std::string& filename, Item* parentItem, bool isInvokingApplication)
+ItemList<> ProjectManagerImpl::loadProject(const std::string& filename, Item* parentItem, bool isInvokingApplication)
 {
+    ItemList<> loadedItems;
+    
     isLoadingProject = true;
     
     bool loaded = false;
@@ -306,7 +308,7 @@ void ProjectManagerImpl::loadProject(const std::string& filename, Item* parentIt
                 if(!parentItem){
                     parentItem = RootItem::instance();
                 }
-                itemTreeArchiver.restore(items, parentItem, optionalPlugins);
+                loadedItems = itemTreeArchiver.restore(items, parentItem, optionalPlugins);
                 
                 numArchivedItems = itemTreeArchiver.numArchivedItems();
                 numRestoredItems = itemTreeArchiver.numRestoredItems();
@@ -346,6 +348,8 @@ void ProjectManagerImpl::loadProject(const std::string& filename, Item* parentIt
         messageView->notify(format(_("Project \"%1%\" cannot be loaded.")) % filename);
         lastAccessedProjectFile.clear();
     }
+
+    return loadedItems;
 }
 
 

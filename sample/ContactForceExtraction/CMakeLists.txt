@@ -1,6 +1,3 @@
-
-#set(CMAKE_BUILD_TYPE Debug)
-
 if(NOT ENABLE_GUI)
   return()
 endif()
@@ -10,13 +7,9 @@ if(NOT BUILD_CONTACT_FORCE_EXTRACTION_SAMPLE)
   return()
 endif()
 
-set(sources
-  ContactForceExtractionSamplePlugin.cpp
-)
-
 set(target CnoidContactForceExtractionSamplePlugin)
-add_cnoid_plugin(${target} SHARED ${sources})
+add_cnoid_plugin(${target} SHARED ContactForceExtractionSamplePlugin.cpp)
 target_link_libraries(${target} CnoidBodyPlugin)
 apply_common_setting_for_plugin(${target})
 
-configure_file(SR1Liftup-ContactForceExtraction.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+install(FILES SR1Liftup-ContactForceExtraction.cnoid DESTINATION ${CNOID_SHARE_SUBDIR}/project)

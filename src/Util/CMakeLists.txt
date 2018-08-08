@@ -1,7 +1,8 @@
 #set(CMAKE_BUILD_TYPE Debug)
 #set_source_files_properties(JoystickLinux.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
 
-configure_file(Config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/Config.h)
+configure_file(Config.h.in Config.h)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/Config.h DESTINATION ${CNOID_HEADER_SUBDIR}/src/Util/)
 
 set(sources
   Referenced.cpp
@@ -60,7 +61,6 @@ set(sources
   VRMLWriter.cpp
   VRMLToSGConverter.cpp
   VRMLSceneLoader.cpp
-  GettextWrapper.cpp
   GettextUtil.cpp
   ExtJoystick.cpp
   CnoidUtil.cpp # This file must be placed at the last position
@@ -158,7 +158,6 @@ set(headers
   AbstractTaskSequencer.h
   Exception.h
   exportdecl.h
-  Config.h
   CnoidUtil.h
   )
 
@@ -196,20 +195,6 @@ elseif(MSVC)
 endif()
 
 apply_common_setting_for_library(${target} "${headers}")
-
-# Adding some headers with old filenames for the backward compatibility
-if(CNOID_ENABLE_BACKWARD_COMPATIBILITY)
-  if(UNIX AND NOT APPLE)
-    make_header_public(VRML.h VRMLNodes)
-    make_header_public(VRML.h VrmlNodes)
-    make_header_public(VRMLParser.h VrmlParser)
-    make_header_public(VRMLWriter.h VrmlWriter)
-    make_header_public(YAMLReader.h YamlReader)
-    make_header_public(YAMLWriter.h YamlWriter)
-  endif()
-  make_header_public(ValueTree.h YamlNodes)
-  make_header_public(EigenArchive.h EigenYaml)
-endif()
 
 if(ENABLE_PYTHON)
   if(USE_PYBIND11)

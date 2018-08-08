@@ -5,6 +5,5 @@ archive_base_name=choreonoid-@CNOID_FULL_VERSION@
 rm -fr ${archive_base_name}
 rm -fr ${archive_base_name}-$1.tar.gz
 cp -fr @CMAKE_INSTALL_PREFIX@  ${archive_base_name}
-cp ../pkglist/install-requisities-$1.sh ${archive_base_name}/bin/install-choreonoid-requisities.sh
 tar -czf ${archive_base_name}-$1.tar.gz ${archive_base_name}
 rm -fr ${archive_base_name}

@@ -5,10 +5,15 @@ elseif(NOT BUILD_OPENRTM_PLUGIN)
   message(FATAL_ERROR "OpenRTM samples need to build OpenRTMPlugin.")
 endif()
 
+add_definitions(${OPENRTM_DEFINITIONS})
 include_directories(${OPENRTM_INCLUDE_DIRS})
 link_directories(${OPENRTM_LIBRARY_DIRS})
-if(WIN32)
-  add_definitions(-D__WIN32__ -D__x86__ -D__NT__ -D__OSVERSION__=4 -D_CRT_SECURE_NO_DEPRECATE -D_WIN32_WINNT=0x0500 -DRTC_CORBA_CXXMAPPING11)
+
+if(MSVC)
+  add_compile_options(${OPENRTM_CFLAGS})
+  add_definitions(
+    -D__WIN32__ -D__x86__ -D__NT__ -D__OSVERSION__=4
+    -D_CRT_SECURE_NO_DEPRECATE -D_WIN32_WINNT=0x0500 -DRTC_CORBA_CXXMAPPING11)
 endif()
 
 function(add_cnoid_sample_rtc)
@@ -32,22 +37,22 @@ function(add_cnoid_sample_rtc)
 
 endfunction()
 
-message(STATUS "idl_cpp_files=${idl_cpp_files}" )
+set(project_files "")
 
 # General BodyIoRTCs
 add_cnoid_body_io_rtc(RobotIoRTC RobotIoRTC.cpp)
 
 # SR1 walk
 add_cnoid_sample_rtc(SR1WalkControllerRTC SR1WalkControllerRTC.cpp)
-configure_file(OpenRTM-SR1Walk.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+list(APPEND project_files OpenRTM-SR1Walk.cnoid)
   
 # SR1 lifting up
 add_cnoid_sample_rtc(SR1LiftupControllerRTC SR1LiftupControllerRTC.cpp)
-configure_file(OpenRTM-SR1Liftup.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+list(APPEND project_files OpenRTM-SR1Liftup.cnoid)
 
 # PA10 Pickup
 add_cnoid_sample_rtc(PA10PickupControllerRTC PA10PickupControllerRTC.cpp)
-configure_file(OpenRTM-PA10Pickup.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+list(APPEND project_files OpenRTM-PA10Pickup.cnoid)
 
 # Tank IO
 add_cnoid_body_io_rtc(TankIoRTC TankIoRTC.cpp)
@@ -64,15 +69,21 @@ target_link_libraries(RemoteJoystickInputController CnoidBody CnoidOpenRTMPlugin
 # Tank Joystick Controller
 set(target TankJoystickControllerRTC)
 add_cnoid_sample_rtc(${target} TankJoystickControllerRTC.cpp)
-configure_file(OpenRTM-Tank.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+list(APPEND project_files OpenRTM-Tank.cnoid)
 
 if(NOT USE_BUILTIN_CAMERA_IMAGE_IDL)
   add_cnoid_body_io_rtc(VisionSensorIoRTC VisionSensorIoRTC.cpp)
-  configure_file(OpenRTM-TankVisionSensors.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
-  configure_file(TankVisionSystem.xml ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+  target_link_libraries(VisionSensorIoRTC ${OPENRTM_CAMERA_LIBRARY})
+  list(APPEND project_files OpenRTM-TankVisionSensors.cnoid TankVisionSystem.xml)
 endif()
 
-configure_file(OpenRTM-TankVisionSensors-OldIDL.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
-configure_file(OldTankVisionSystem.xml ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
-configure_file(TankVisionSensorOut.conf
-  ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}/rtc/TankVisionSensorOut.conf COPYONLY)
+file(COPY TankVisionSensorOut.conf DESTINATION ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}/rtc)
+install(FILES TankVisionSensorOut.conf DESTINATION ${CNOID_PLUGIN_SUBDIR}/rtc)
+list(APPEND project_files OpenRTM-TankVisionSensors-OldIDL.cnoid OldTankVisionSystem.xml)
+
+# Teleoperation samples
+list(APPEND project_files
+  OpenRTM-AizuSpiderSS-Remote.cnoid
+  OpenRTM-AizuSpider-Terminal.cnoid)
+
+install(FILES ${project_files} DESTINATION ${CNOID_SHARE_SUBDIR}/project)

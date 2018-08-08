@@ -473,6 +473,8 @@ YAMLBodyLoader::YAMLBodyLoader()
 YAMLBodyLoaderImpl::YAMLBodyLoaderImpl(YAMLBodyLoader* self)
     : self(self)
 {
+    sceneReader.setYAMLReader(&reader);
+    
     nodeFunctions["Skip"].set([&](Mapping& node){ return readSkipNode(node); });
     nodeFunctions["Group"].set([&](Mapping& node){ return readGroup(node); });
     nodeFunctions["Transform"].set([&](Mapping& node){ return readTransform(node); });
@@ -623,7 +625,6 @@ bool YAMLBodyLoaderImpl::load(Body* body, const std::string& filename)
     bool result = false;
 
     try {
-        YAMLReader reader;
         MappingPtr data = reader.loadDocument(filename)->toMapping();
         if(data){
             result = readTopNode(body, data);
@@ -639,6 +640,8 @@ bool YAMLBodyLoaderImpl::load(Body* body, const std::string& filename)
 
     os().flush();
 
+    reader.clearDocuments();
+    
     return result;
 }
 
@@ -652,7 +655,7 @@ bool YAMLBodyLoader::read(Body* body, Mapping* topNode)
 bool YAMLBodyLoaderImpl::readTopNode(Body* body, Mapping* topNode)
 {
     clear();
-    
+
     updateCustomNodeFunctions();
     
     bool result = false;

@@ -28,13 +28,13 @@ items:
               data: 
                 modelFile: "${SHARE}/model/WRS2018/Car.body"
                 currentBaseLink: "BODY"
-                rootPosition: [ 7, 1.6, 0 ]
+                rootPosition: [ 10, 1.4, 0 ]
                 rootAttitude: [ 
                   1, 0, 0, 
                   0, 1, 0, 
                   0, 0, 1 ]
                 jointPositions: [  0.324631,  0.000000,  0.200713,  0.000000 ]
-                initialRootPosition: [ 7, 1.6, 0 ]
+                initialRootPosition: [ 10, 1.4, 0 ]
                 initialRootAttitude: [ 
                   1, 0, 0, 
                   0, 1, 0, 
@@ -113,6 +113,98 @@ items:
                 collisionDetection: true
                 selfCollisionDetection: false
                 isEditable: false
+            - 
+              id: 7
+              name: "Flag1L"
+              plugin: Body
+              class: BodyItem
+              data: 
+                modelFile: "${SHARE}/model/WRS2018/Flag1L.body"
+                currentBaseLink: "BASE"
+                rootPosition: [ 3, -1.5, 0 ]
+                rootAttitude: [ 
+                  1, 0, 0, 
+                  0, 1, 0, 
+                  0, 0, 1 ]
+                jointPositions: [  ]
+                initialRootPosition: [ 3, -1.5, 0 ]
+                initialRootAttitude: [ 
+                  1, 0, 0, 
+                  0, 1, 0, 
+                  0, 0, 1 ]
+                zmp: [ 0, 0, 0 ]
+                collisionDetection: true
+                selfCollisionDetection: false
+                isEditable: false
+            - 
+              id: 8
+              name: "Flag1R"
+              plugin: Body
+              class: BodyItem
+              data: 
+                modelFile: "${SHARE}/model/WRS2018/Flag1R.body"
+                currentBaseLink: "BASE"
+                rootPosition: [ 3, 1.5, 0 ]
+                rootAttitude: [ 
+                  1, 0, 0, 
+                  0, 1, 0, 
+                  0, 0, 1 ]
+                jointPositions: [  ]
+                initialRootPosition: [ 3, 1.5, 0 ]
+                initialRootAttitude: [ 
+                  1, 0, 0, 
+                  0, 1, 0, 
+                  0, 0, 1 ]
+                zmp: [ 0, 0, 0 ]
+                collisionDetection: true
+                selfCollisionDetection: false
+                isEditable: false
+            - 
+              id: 9
+              name: "Flag2L"
+              plugin: Body
+              class: BodyItem
+              data: 
+                modelFile: "${SHARE}/model/WRS2018/Flag2L.body"
+                currentBaseLink: "BASE"
+                rootPosition: [ 18, -1.5, 0 ]
+                rootAttitude: [ 
+                  1, 0, 0, 
+                  0, 1, 0, 
+                  0, 0, 1 ]
+                jointPositions: [  ]
+                initialRootPosition: [ 18, -1.5, 0 ]
+                initialRootAttitude: [ 
+                  1, 0, 0, 
+                  0, 1, 0, 
+                  0, 0, 1 ]
+                zmp: [ 0, 0, 0 ]
+                collisionDetection: true
+                selfCollisionDetection: false
+                isEditable: false
+            - 
+              id: 10
+              name: "Flag2R"
+              plugin: Body
+              class: BodyItem
+              data: 
+                modelFile: "${SHARE}/model/WRS2018/Flag2R.body"
+                currentBaseLink: "BASE"
+                rootPosition: [ 18, 1.5, 0 ]
+                rootAttitude: [ 
+                  1, 0, 0, 
+                  0, 1, 0, 
+                  0, 0, 1 ]
+                jointPositions: [  ]
+                initialRootPosition: [ 18, 1.5, 0 ]
+                initialRootAttitude: [ 
+                  1, 0, 0, 
+                  0, 1, 0, 
+                  0, 0, 1 ]
+                zmp: [ 0, 0, 0 ]
+                collisionDetection: true
+                selfCollisionDetection: false
+                isEditable: false
 views: 
   - 
     id: 0
@@ -125,7 +217,7 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      checked: [ 3, 5, 6 ]
+      checked: [ 3, 5, 6, 7, 8, 9, 10 ]
       expanded: [ 1 ]
   - 
     id: 2
@@ -175,15 +267,15 @@ views:
           isCurrent: true
           fieldOfView: 0.698132
           near: 0.01
-          far: 100
-          eye: [ -6.23778336, -2.81901482, 4.55009354 ]
-          direction: [ 0.932310446, 0.28839741, -0.218229619 ]
-          up: [ 0.208482718, 0.0644912607, 0.97589745 ]
+          far: 300
+          eye: [ -3.75043418, -4.96900585, 3.63423333 ]
+          direction: [ 0.907775809, 0.352092787, -0.227977519 ]
+          up: [ 0.212549676, 0.0824401873, 0.973666396 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 5.73009
           near: 0.01
-          far: 100
+          far: 300
       backgroundColor: [ 0, 0, 0 ]
       gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
@@ -233,21 +325,21 @@ views:
           isCurrent: true
           fieldOfView: 0.698132
           near: 0.01
-          far: 100
+          far: 200
           eye: [ -6.23310554, 0.584623357, 2.50618133 ]
           direction: [ 0.998609776, 0.0120387193, -0.0513184642 ]
-          up: [ 0.0513147355, 0.000618623723, 0.998682339 ]
+          up: [ 0.0513147354, 0.000618623722, 0.99868234 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
           near: 0.01
-          far: 100
+          far: 200
       backgroundColor: [ 0, 0, 0 ]
       gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       dedicatedItemTreeViewChecks: true
-      checked: [ 3, 4, 5, 6 ]
+      checked: [ 3, 4, 5, 6, 7, 8, 9, 10 ]
   - 
     id: 5
     plugin: Body
@@ -268,7 +360,7 @@ views:
       spinBox: true
       slider: true
       labelOnLeft: true
-      currentBodyItem: 6
+      currentBodyItem: 3
   - 
     id: 7
     plugin: Body
@@ -276,78 +368,11 @@ views:
     mounted: true
     state: 
       listingMode: "Link List"
-      currentBodyItem: 6
+      currentBodyItem: 3
   - 
-    id: 8
-    plugin: Multicopter
-    class: MulticopterMonitorView
-  - 
-    id: 9
+    id: 10
     plugin: Python
     class: PythonConsoleView
-toolbars: 
-  "TimeBar": 
-    minTime: 0
-    maxTime: 30
-    frameRate: 100
-    playbackFrameRate: 50
-    idleLoopDrivenMode: false
-    currentTime: 0
-    speedScale: 1
-    syncToOngoingUpdates: true
-    autoExpansion: true
-  "KinematicsBar": 
-    mode: AUTO
-    enablePositionDragger: true
-    penetrationBlock: false
-    collisionLinkHighlight: false
-    snapDistance: 0.025
-    penetrationBlockDepth: 0.0005
-    lazyCollisionDetectionMode: true
-  "BodyBar": 
-    current: 6
-  "LeggedBodyBar": 
-    stanceWidth: 0.15
-Body: 
-  "BodyMotionEngine": 
-    updateJointVelocities: false
-  "EditableSceneBody": 
-    editableSceneBodies: 
-      - 
-        bodyItem: 3
-        showCenterOfMass: false
-        showPpcom: false
-        showZmp: false
-      - 
-        bodyItem: 4
-        showCenterOfMass: false
-        showPpcom: false
-        showZmp: false
-      - 
-        bodyItem: 5
-        showCenterOfMass: false
-        showPpcom: false
-        showZmp: false
-      - 
-        bodyItem: 6
-        showCenterOfMass: false
-        showPpcom: false
-        showZmp: false
-    staticModelEditing: true
-  "KinematicFaultChecker": 
-    checkJointPositions: true
-    angleMargin: 0
-    translationMargin: 0
-    checkJointVelocities: true
-    velocityLimitRatio: 100
-    targetJoints: all
-    checkSelfCollisions: true
-    onlyTimeBarRange: false
-  "SplineFilterDialog": 
-    isInputFrameRateSpecified: false
-    inputFrameRate: 200
-    isOutputFrameRateSpecified: false
-    outputFrameRate: 200
 viewAreas: 
   - 
     type: embedded
@@ -355,12 +380,12 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 326, 1588 ]
+      sizes: [ 653, 3181 ]
       children: 
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 470, 470 ]
+          sizes: [ 1006, 1005 ]
           children: 
             - 
               type: pane
@@ -373,12 +398,12 @@ viewAreas:
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 723, 217 ]
+          sizes: [ 1547, 464 ]
           children: 
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 687, 895 ]
+              sizes: [ 1379, 1796 ]
               children: 
                 - 
                   type: pane

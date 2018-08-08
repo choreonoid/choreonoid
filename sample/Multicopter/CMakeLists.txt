@@ -29,7 +29,7 @@ endif()
 
 # Multicopter Controller
 add_cnoid_simple_controller(MulticopterController MulticopterController.cpp)
-configure_file(MulticopterJoystick.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+install(FILES MulticopterJoystick.cnoid DESTINATION ${CNOID_SHARE_SUBDIR}/project)
 
 # Multicopter Controller
 set(target1 MulticopterControllerRTC)
@@ -45,4 +45,4 @@ install(TARGETS ${target1}
 set(target2 MulticopterIoRTC)
 add_cnoid_body_io_rtc(${target2} MulticopterIoRTC.cpp)
 
-configure_file(OpenRTM-MulticopterJoystick.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+install(FILES OpenRTM-MulticopterJoystick.cnoid DESTINATION ${CNOID_SHARE_SUBDIR}/project)

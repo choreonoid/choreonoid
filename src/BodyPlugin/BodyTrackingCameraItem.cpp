@@ -26,6 +26,8 @@ class BodyTrackingCameraTransform : public InteractiveCameraTransform
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
     
     BodyItem* bodyItem;
+    string targetLinkName;
+    Link* targetLink;
     ScopedConnection connection;
     Vector3 relativeTranslationFromBody;
     Affine3 relativePositionFromBody;
@@ -72,11 +74,29 @@ class BodyTrackingCameraTransform : public InteractiveCameraTransform
     void setBodyItem(BodyItem* bodyItem) {
         if(bodyItem != this->bodyItem){
             this->bodyItem = bodyItem;
+            updateTargetLink();
             connection.disconnect();
             if(bodyItem){
                 connection.reset(
                     bodyItem->sigKinematicStateChanged().connect( [&](){ onBodyMoved(); } ));
                 updateRelativePosition();
+            }
+        }
+    }
+
+    void setTargetLink(const string& name){
+        targetLinkName = name;
+        updateTargetLink();
+    }
+
+    void updateTargetLink(){
+        targetLink = nullptr;
+        if(bodyItem){
+            if(!targetLinkName.empty()){
+                targetLink = bodyItem->body()->link(targetLinkName);
+            }
+            if(!targetLink){
+                targetLink = bodyItem->body()->rootLink();
             }
         }
     }
@@ -92,19 +112,17 @@ class BodyTrackingCameraTransform : public InteractiveCameraTransform
     
     void updateRelativePosition(){
         if(bodyItem){
-            Link* rootLink = bodyItem->body()->rootLink();
-            relativeTranslationFromBody = translation() - rootLink->translation();
-            relativePositionFromBody = rootLink->position().inverse() * position();
+            relativeTranslationFromBody = translation() - targetLink->translation();
+            relativePositionFromBody = targetLink->position().inverse() * position();
         }
     }
 
     void onBodyMoved(){
         if(bodyItem){
-            Link* rootLink = bodyItem->body()->rootLink();
             if(isConstantRelativeAttitudeMode_){
-                setPosition(rootLink->position() * relativePositionFromBody);
+                setPosition(targetLink->position() * relativePositionFromBody);
             } else {
-                setTranslation(rootLink->translation() + relativeTranslationFromBody);
+                setTranslation(targetLink->translation() + relativeTranslationFromBody);
             }
             isSigUpdatedEmittedBySelf = true;
             notifyUpdate();
@@ -127,8 +145,10 @@ public:
     SgOrthographicCameraPtr orthoCamera;
     SgUpdate update;
     Selection cameraType;
+    
     BodyTrackingCameraItemImpl();
-    void doPutProperties(PutPropertyFunction& putProperty);    
+    BodyTrackingCameraItemImpl(const BodyTrackingCameraItemImpl& org);
+    void doPutProperties(PutPropertyFunction& putProperty);
     bool onKeepRelativeAttitudeChanged(bool on);
     bool setClipDistances(double nearDistance, double farDistance);
     bool setFieldOfView(double fov);
@@ -179,6 +199,14 @@ BodyTrackingCameraItemImpl::BodyTrackingCameraItemImpl()
 }
 
 
+BodyTrackingCameraItemImpl::BodyTrackingCameraItemImpl(const BodyTrackingCameraItemImpl& org)
+    : BodyTrackingCameraItemImpl()
+{
+    cameraType = org.cameraType;
+    cameraTransform->targetLinkName = org.cameraTransform->targetLinkName;
+}
+
+
 void BodyTrackingCameraItem::setName(const std::string& name)
 {
     Item::setName(name);
@@ -216,6 +244,8 @@ void BodyTrackingCameraItem::doPutProperties(PutPropertyFunction& putProperty)
 
 void BodyTrackingCameraItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
+    putProperty(_("Target link"), cameraTransform->targetLinkName,
+                [&](const string& name){ cameraTransform->setTargetLink(name); return true; });
     putProperty(_("Keep relative attitude"), cameraTransform->isConstantRelativeAttitudeMode(),
                 [&](bool on){ return onKeepRelativeAttitudeChanged(on); } );
     putProperty(_("Camera type"), cameraType,
@@ -301,6 +331,7 @@ bool BodyTrackingCameraItemImpl::setCameraType(int index)
 
 bool BodyTrackingCameraItem::store(Archive& archive)
 {
+    archive.write("targetLink", impl->cameraTransform->targetLinkName, DOUBLE_QUOTED);
     archive.write("keepRelativeAttitude", impl->cameraTransform->isConstantRelativeAttitudeMode());
     archive.write("cameraType", impl->cameraType.selectedSymbol(), DOUBLE_QUOTED);
     archive.write("nearClipDistance", impl->persCamera->nearClipDistance());    
@@ -312,9 +343,13 @@ bool BodyTrackingCameraItem::store(Archive& archive)
 
 bool BodyTrackingCameraItem::restore(const Archive& archive)
 {
+    string symbol;
+    if(archive.read("targetLink", symbol)){
+        impl->cameraTransform->setTargetLink(symbol);
+    }
     impl->cameraTransform->setConstantRelativeAttitudeMode(
         archive.get("keepRelativeAttitude", false));
-    string symbol;
+
     if(archive.read("cameraType", symbol)){
         int index = impl->cameraType.index(symbol);
         impl->setCameraType(index);
@@ -323,5 +358,6 @@ bool BodyTrackingCameraItem::restore(const Archive& archive)
     double farDistance = archive.get("farClipDistance", impl->persCamera->farClipDistance());
     impl->setClipDistances(nearDistance, farDistance);
     impl->setFieldOfView( archive.get("fieldOfView", impl->persCamera->fieldOfView()) );
+
     return true;
 }

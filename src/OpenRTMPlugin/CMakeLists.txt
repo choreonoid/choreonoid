@@ -1,14 +1,7 @@
-option(BUILD_OPENRTM_PLUGIN "Building OpenRTMPlugin" OFF)
-
 if(NOT BUILD_OPENRTM_PLUGIN)
   return()
-else()
-  if(NOT BUILD_CORBA_PLUGIN)
-    message(FATAL_ERROR "OpenRTM Plugin requires CorbaPlugin.")
-  endif()
 endif()
 
-# Plugin
 set(plugin CnoidOpenRTMPlugin)
 
 set(plugin_sources
@@ -51,30 +44,26 @@ QTX_WRAP_CPP(
   )
 set(plugin_sources ${plugin_sources} ${qtsources})
 
-if(MSVC)
-add_definitions(-D__WIN32__ -D__x86__ -D__NT__ -D__OSVERSION__=4 -D_CRT_SECURE_NO_DEPRECATE -D_WIN32_WINNT=0x0500 -DRTC_CORBA_CXXMAPPING11)
-endif()
-
 set(idl_files PointCloud)
-
-option(USE_BUILTIN_CAMERA_IMAGE_IDL "Enable this option when you run hrpsys-base on Choreonoid" OFF)
 if(USE_BUILTIN_CAMERA_IMAGE_IDL)
-  list(APPEND OPENRTM_DEFINITIONS -DUSE_BUILTIN_CAMERA_IMAGE_IDL)
   set(idl_files ${idl_files} CameraImage)
 else()
-  set(OPENRTM_LIBRARIES ${OPENRTM_LIBRARIES} rtmCamera)
+  set(OPENRTM_LIBRARIES ${OPENRTM_LIBRARIES} ${OPENRTM_CAMERA_LIBRARY})
 endif()
-
 idl_compile_cpp(idl_cpp_files idl_h_files deprecated/corba ${idl_files} LOCAL)
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 make_gettext_mofiles(${plugin} mofiles)
-
 include_directories(${OPENRTM_INCLUDE_DIRS})
 link_directories(${OPENRTM_LIBRARY_DIRS})
 add_definitions(${OPENRTM_DEFINITIONS})
 
-add_cnoid_plugin(${plugin} SHARED ${plugin_sources} ${plugin_headers} ${idl_cpp_files} ${idl_h_files} ${mofiles} ${RC_SRCS})
+if(MSVC)
+  add_compile_options(${OPENRTM_CFLAGS})
+endif()
 
+add_cnoid_plugin(${plugin} SHARED
+  ${plugin_sources} ${plugin_headers} ${idl_cpp_files} ${idl_h_files} ${mofiles} ${RC_SRCS})
 target_link_libraries(${plugin} CnoidBodyPlugin CnoidCorbaPlugin CnoidBodyIoRTC ${OPENRTM_LIBRARIES} pugixml)
 apply_common_setting_for_plugin(${plugin} "${plugin_headers}")
 
