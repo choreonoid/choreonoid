@@ -5,7 +5,7 @@ if(NOT BUILD_AGX_DYNAMICS_PLUGIN)
   return()
 endif()
 
-if("$ENV{AGX_DIR}"  STREQUAL "")
+if(NOT DEFINED ENV{AGX_DIR})
   MESSAGE(WARNING "\n*** AGXDynamicsPlugin: The environment initialization file setup_env.bat/bash has not been executed\n*** Errors might occur during runtime!")
 endif()
 
@@ -25,7 +25,7 @@ if(MSVC)
 endif(MSVC)
 
 if(NOT EXISTS ${AGX_DIR})
-  if($ENV{AGX_DIR})
+  if(DEFINED ENV{AGX_DIR})
     set(agx_dir $ENV{AGX_DIR})
   elseif(MSVC)
     file(GLOB agx_dir "c:/Program Files/Algoryx/AGX-?.*.?.?")
