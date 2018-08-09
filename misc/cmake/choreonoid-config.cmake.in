@@ -38,6 +38,21 @@ MARK_AS_ADVANCED(
   CHOREONOID_LIBRARY_SUFFIX
   )
 
+function(add_cnoid_plugin)
+  set(target ${ARGV0})
+  add_library(${ARGV})
+  get_target_property(compile_flags ${target} COMPILE_FLAGS)
+  if(compile_flags)
+    set_target_properties(${target} PROPERTIES COMPILE_FLAGS "${compile_flags} -fvisibility=hidden")
+  else()
+    set_target_properties(${target} PROPERTIES COMPILE_FLAGS "-fvisibility=hidden")
+  endif()
+  set_target_properties(${target} PROPERTIES
+    LIBRARY_OUTPUT_DIRECTORY ${CHOREONOID_PLUGIN_SUBDIR}
+    ARCHIVE_OUTPUT_DIRECTORY ${CHOREONOID_PLUGIN_SUBDIR}
+    RUNTIME_OUTPUT_DIRECTORY ${CHOREONOID_PLUGIN_SUBDIR})
+endfunction()
+
 function(cnoid_make_gettext_mofiles target out_mofiles)
   set(${out_mofiles} "" PARENT_SCOPE)
   file(GLOB pofiles ${CMAKE_CURRENT_SOURCE_DIR}/po/*.po)
