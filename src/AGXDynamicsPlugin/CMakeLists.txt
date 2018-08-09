@@ -5,18 +5,43 @@ if(NOT BUILD_AGX_DYNAMICS_PLUGIN)
   return()
 endif()
 
-if("$ENV{AGX_DIR}"  STREQUAL "")
-  MESSAGE(WARNING "\n*** The environment initialization file setup_env.bat/bash has not been executed\n*** Errors might occur during runtime!")
+if(NOT DEFINED ENV{AGX_DIR})
+  MESSAGE(WARNING "\n*** AGXDynamicsPlugin: The environment initialization file setup_env.bat/bash has not been executed\n*** Errors might occur during runtime!")
+endif()
+
+# Check for architecture
+set(AGX_BUILD_ARCHITECTURE "")
+if(CMAKE_SIZEOF_VOID_P MATCHES "8")
+   set(AGX_64BIT_ARCHITECTURE 1)
+else()
+endif()
+
+if(MSVC)
+  if(AGX_64BIT_ARCHITECTURE)
+    set(AGX_BUILD_ARCHITECTURE x64)
+  else()
+    set(AGX_BUILD_ARCHITECTURE x86)
+  endif()
+endif(MSVC)
+
+if(NOT EXISTS ${AGX_DIR})
+  if(DEFINED ENV{AGX_DIR})
+    set(agx_dir $ENV{AGX_DIR})
+  elseif(MSVC)
+    file(GLOB agx_dir "c:/Program Files/Algoryx/AGX-?.*.?.?")
+  endif()
+  if(agx_dir)
+    set(AGX_DIR ${agx_dir} CACHE PATH "set the top directory of the AGX Dynamics library" FORCE)
+  endif()
 endif()
 
 if(NOT EXISTS ${AGX_DIR})
-  set(AGX_DIR $ENV{AGX_DIR} CACHE PATH "set the top directory of the AGX Dynamics library" FORCE)
+  MESSAGE(FATAL_ERROR "AGX_DIR must be set to build AGXDynamicsPlugin.")
 endif()
 
 set(CMAKE_MODULE_PATH "${AGX_DIR}/CMakeModules;${CMAKE_MODULE_PATH}")
 include(AGXUtils)
 include(AGX${CMAKE_SYSTEM_NAME}Specific)
-
 include(AGXCompilerFlags )
 
 # Now locate AgX
@@ -27,7 +52,6 @@ if(NOT AGX_FOUND)
 endif()
 
 
-#add_definitions(${AGX_CFLAGS})
 include_directories(${AGX_INCLUDE_DIR})
 link_directories(${AGX_LIBRARY_DIR})
 
