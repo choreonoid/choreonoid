@@ -21,4 +21,3 @@ add_cnoid_python_module(PyUtil
   )
 
 target_link_libraries(PyUtil CnoidUtil CnoidPyUtil)
-apply_common_setting_for_python_module(PyUtil)

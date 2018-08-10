@@ -1249,20 +1249,6 @@ if(ENABLE_PYTHON)
       LIBRARY DESTINATION ${CNOID_PYTHON_SUBDIR}/cnoid CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
   endfunction()
 
-  function(apply_common_setting_for_python_module target)
-    set(headers ${ARGV1})
-    apply_common_setting_for_target(${target} "${headers}")
-    if(INSTALL_SDK)
-      if(MSVC)
-	install(TARGETS ${target}
-	  ARCHIVE DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
-      endif()
-      if(headers)
-	file(RELATIVE_PATH rel_src_dir ${PROJECT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
-	install(FILES ${headers} DESTINATION ${CNOID_HEADER_SUBDIR}/cnoid/${rel_src_dir})
-      endif()
-    endif()
-  endfunction()
 endif()
 
 
