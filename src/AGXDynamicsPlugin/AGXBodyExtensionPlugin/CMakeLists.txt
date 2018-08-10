@@ -38,7 +38,7 @@ get_target_property(compile_flags ${target} COMPILE_FLAGS)
 if(NOT compile_flags)
   set(compile_flags "")
 endif()
-set_target_properties(${target} PROPERTIES COMPILE_FLAGS "${compile_flags} -std=c++11 -msse3")
+set_target_properties(${target} PROPERTIES COMPILE_FLAGS "${compile_flags} -msse3")
 
 apply_common_setting_for_plugin(${target})
 
