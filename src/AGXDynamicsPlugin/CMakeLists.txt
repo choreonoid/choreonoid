@@ -39,6 +39,9 @@ if(NOT EXISTS ${AGX_DIR})
   MESSAGE(FATAL_ERROR "AGX_DIR must be set to build AGXDynamicsPlugin.")
 endif()
 
+set(AGX_DEBUG_POSTFIX "d")
+set(CMAKE_DEBUG_POSTFIX ${AGX_DEBUG_POSTFIX})
+
 set(CMAKE_MODULE_PATH "${AGX_DIR}/CMakeModules;${CMAKE_MODULE_PATH}")
 include(AGXUtils)
 include(AGX${CMAKE_SYSTEM_NAME}Specific)
