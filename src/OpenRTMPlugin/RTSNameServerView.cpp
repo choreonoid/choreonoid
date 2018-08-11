@@ -7,6 +7,7 @@
 #include <cnoid/Buttons>
 #include <cnoid/SpinBox>
 #include <cnoid/LineEdit>
+#include <cnoid/CheckBox>
 #include <cnoid/MessageView>
 #include <rtm/CORBA_IORUtil.h>
 #include <QLabel>
@@ -32,9 +33,32 @@ public:
 
 namespace cnoid {
 
+class ConnectDialog : public Dialog
+{
+public:
+    ConnectDialog();
+
+    bool isOK_;
+    string hostAddress_;
+    int portNum_;
+    bool isManager_;
+
+private:
+    LineEdit* hostAddressBox_;
+    SpinBox* portNumberSpin_;
+    CheckBox* chkRTM_;
+
+    void chkCanged();
+    void okClicked();
+    void cancelClicked();
+};
+
 class RTSNameServerViewImpl
 {
 public:
+    string hostAddress_;
+    int portNum_;
+
     RTSNameServerViewImpl(RTSNameServerView* self);
     ~RTSNameServerViewImpl();
     void updateObjectList(bool force = false);
@@ -48,11 +72,11 @@ public:
     Signal<void(const std::list<NamingContextHelper::ObjectInfo>&)> sigSelectionChanged;
     Signal<void(std::string, int)> sigLocationChanged;
     RTSNameTreeWidget treeWidget;
-    LineEdit hostAddressBox;
-    SpinBox portNumberSpin;
     NamingContextHelper ncHelper;
     std::list<NamingContextHelper::ObjectInfo> selectedItemList;
     bool isObjectListUpdateRequested;
+
+    void connectNameServer();
 };
 
 }
@@ -121,29 +145,37 @@ RTSNameServerViewImpl::RTSNameServerViewImpl(RTSNameServerView* self)
     this->self_ = self;
 
     self->setDefaultLayoutArea(View::LEFT_BOTTOM);
+    hostAddress_ = ncHelper.host();
+    portNum_ = ncHelper.port();
+
 
     QVBoxLayout* vbox = new QVBoxLayout();
 
     QHBoxLayout* hbox = new QHBoxLayout();
-    hostAddressBox.setText(ncHelper.host());
-    hostAddressBox.sigEditingFinished().connect
-        (std::bind(
-            static_cast<void(RTSNameServerViewImpl::*)(bool)>(&RTSNameServerViewImpl::updateObjectList), this, false));
-    hbox->addWidget(&hostAddressBox);
+    auto connectButton = new PushButton("Add");
+    connectButton->setIcon(QIcon(":/Corba/icons/Connect.png"));
+    connectButton->setToolTip(_("Add Name Server"));
+    connectButton->sigClicked().connect(
+        std::bind(
+            static_cast<void(RTSNameServerViewImpl::*)(void)>(&RTSNameServerViewImpl::connectNameServer), this));
+    hbox->addWidget(connectButton);
+    hbox->addStretch();
 
-    portNumberSpin.setRange(0, 65535);
-    portNumberSpin.setValue(ncHelper.port());
-    portNumberSpin.sigEditingFinished().connect
-        (std::bind(
-            static_cast<void(RTSNameServerViewImpl::*)(bool)>(&RTSNameServerViewImpl::updateObjectList), this, false));
-    hbox->addWidget(&portNumberSpin);
-
-    auto updateButton = new ToolButton(_(" Update "));
-    updateButton->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    auto updateButton = new PushButton(_(" Update "));
+    updateButton->setIcon(QIcon(":/Corba/icons/Refresh.png"));
+    updateButton->setToolTip(_(" Update "));
     updateButton->sigClicked().connect(
         std::bind(
             static_cast<void(RTSNameServerViewImpl::*)(bool)>(&RTSNameServerViewImpl::updateObjectList), this, true));
     hbox->addWidget(updateButton);
+
+    auto clearZombeeButton = new PushButton();
+    clearZombeeButton->setIcon(QIcon(":/Corba/icons/KillZombie.png"));
+    clearZombeeButton->setToolTip(_("Kill All Zombies"));
+    clearZombeeButton->sigClicked().connect(
+        std::bind(
+            static_cast<void(RTSNameServerViewImpl::*)(bool)>(&RTSNameServerViewImpl::updateObjectList), this, true));
+    hbox->addWidget(clearZombeeButton);
 
     isObjectListUpdateRequested = false;
 
@@ -195,13 +227,13 @@ std::list<NamingContextHelper::ObjectInfo> RTSNameServerView::getSelection()
 
 const std::string RTSNameServerView::getHost()
 {
-    return impl->hostAddressBox.string();
+    return impl->hostAddress_;
 }
 
 
 int RTSNameServerView::getPort()
 {
-    return impl->portNumberSpin.value();
+    return impl->portNum_;
 }
 
 
@@ -228,7 +260,7 @@ void RTSNameServerViewImpl::updateObjectList(bool force)
         isObjectListUpdateRequested = false;
     }
 
-    if(ncHelper.host() == hostAddressBox.string() && ncHelper.port() == portNumberSpin.value() && !force){
+    if(ncHelper.host() == hostAddress_ && ncHelper.port() == portNum_ && !force){
         treeWidget.expandAll();
         return;
     }
@@ -237,13 +269,13 @@ void RTSNameServerViewImpl::updateObjectList(bool force)
         treeWidget.clear();
 
         // Update to connect information
-        ncHelper.setLocation(hostAddressBox.string(), portNumberSpin.value());
+        ncHelper.setLocation(hostAddress_, portNum_);
 
         // Connection information updates to all views.
-        sigLocationChanged(hostAddressBox.string(), portNumberSpin.value());
+        sigLocationChanged(hostAddress_, portNum_);
 
         RTSVItem* topElem = new RTSVItem();
-        QString hostName = QString::fromStdString(hostAddressBox.string()) + ":" + QString::number(portNumberSpin.value());
+        QString hostName = QString::fromStdString(hostAddress_) + ":" + QString::number(portNum_);
         topElem->setText(0, hostName);
         topElem->setIcon(0, QIcon(":/Corba/icons/RT.png"));
         topElem->kind_ = KIND_SERVER;
@@ -396,6 +428,26 @@ void RTSNameServerViewImpl::setSelection(std::string RTCName, std::string RTCful
     }
 }
 
+void RTSNameServerViewImpl::connectNameServer() {
+    DDEBUG("RTSNameServerViewImpl::connectNameServer");
+
+    ConnectDialog dialog;
+    dialog.exec();
+
+    if(dialog.isOK_==false) return;
+
+    if( dialog.isManager_ ) {
+        ManagerInfo info = RTCCommonUtil::getManagerAddress();
+        if(info.hostAddress.empty()) return;
+        hostAddress_ = info.hostAddress;
+        portNum_ = info.portNum;
+    } else {
+        hostAddress_ = dialog.hostAddress_;
+        portNum_ = dialog.portNum_;
+    }
+    updateObjectList(true);
+}
+
 
 NamingContextHelper RTSNameServerView::getNCHelper()
 {
@@ -415,11 +467,11 @@ bool RTSNameServerView::restoreState(const Archive& archive)
 {
     string host;
     if (archive.read("host", host)) {
-        impl->hostAddressBox.setText(host.c_str());
+        impl->hostAddress_ = host;
     }
     int port;
     if (archive.read("port", port)) {
-        impl->portNumberSpin.setValue(port);
+        impl->portNum_ = port;
     }
 
     archive.addPostProcess(
@@ -764,5 +816,73 @@ void AddObjectDialog::okClicked()
         QMessageBox::information(this, _("Add Object"), _("Failed to add object."));
         return;
     }
+    close();
+}
+
+ConnectDialog::ConnectDialog() : isOK_(false), hostAddress_(""), portNum_(2809), isManager_(false) {
+    NamingContextHelper ncHelper = RTSNameServerView::instance()->getNCHelper();
+
+    QFrame* frmBase = new QFrame;
+    QGridLayout* baseLayout = new QGridLayout();
+    baseLayout->setContentsMargins(2, 0, 2, 0);
+    frmBase->setLayout(baseLayout);
+
+    QLabel* lblhostAddress = new QLabel("Address:");
+    hostAddressBox_ = new LineEdit();
+    hostAddressBox_->setText(ncHelper.host());
+
+    QLabel* lblportNumbers = new QLabel("Port:");
+    portNumberSpin_ = new SpinBox();
+    portNumberSpin_->setRange(0, 65535);
+    portNumberSpin_->setValue(ncHelper.port());
+
+    chkRTM_ = new CheckBox(_("Name server set in OpenRTM"));
+    chkRTM_->sigToggled().connect(
+        std::bind(
+            static_cast<void(ConnectDialog::*)(void)>(&ConnectDialog::chkCanged), this));
+
+    baseLayout->addWidget(lblhostAddress, 0, 0, 1, 1);
+    baseLayout->addWidget(hostAddressBox_, 0, 1, 1, 1);
+    baseLayout->addWidget(lblportNumbers, 0, 2, 1, 1);
+    baseLayout->addWidget(portNumberSpin_, 0, 3, 1, 1);
+    baseLayout->addWidget(chkRTM_, 1, 0, 1, 4);
+
+    QFrame* frmButtons = new QFrame;
+	  PushButton* btnOK = new PushButton(_("OK"));
+    btnOK->sigClicked().connect(
+        std::bind(
+            static_cast<void(ConnectDialog::*)(void)>(&ConnectDialog::okClicked), this));
+    PushButton* btnCancel = new PushButton(_("Cancel"));
+    btnCancel->sigClicked().connect(
+        std::bind(
+            static_cast<void(ConnectDialog::*)(void)>(&ConnectDialog::cancelClicked), this));
+
+    QHBoxLayout* buttonLayout = new QHBoxLayout(frmButtons);
+    buttonLayout->setContentsMargins(2, 2, 2, 2);
+	  buttonLayout->addWidget(btnOK);
+    buttonLayout->addStretch();
+    buttonLayout->addWidget(btnCancel);
+
+    QVBoxLayout* mainLayout = new QVBoxLayout;
+    mainLayout->addWidget(frmBase);
+    mainLayout->addWidget(frmButtons);
+    setLayout(mainLayout);
+}
+
+void ConnectDialog::chkCanged() {
+    hostAddressBox_->setEnabled(!chkRTM_->isChecked());
+    portNumberSpin_->setEnabled(!chkRTM_->isChecked());
+}
+
+void ConnectDialog::cancelClicked() {
+    isOK_ = false;
+    close();
+}
+
+void ConnectDialog::okClicked() {
+    isOK_ = true;
+    hostAddress_ = hostAddressBox_->string();
+    portNum_ = portNumberSpin_->value();
+    isManager_ = chkRTM_->isChecked();
     close();
 }

@@ -686,5 +686,16 @@ msgstr "設定ファイル:"
 msgid "The specified setting becomes valid after RESTART."
 msgstr "指定した設定は再起動後に有効となります"
 
+#: RTSDiagramView.cpp:1829
+msgid "Kill All Zombies"
+msgstr "ゾンビをクリア"
+
+#: RTSDiagramView.cpp:1829
+msgid "Add Name Server"
+msgstr "ネームサーバを追加"
+
+#: RTSDiagramView.cpp:1829
+msgid "Name server set in OpenRTM"
+msgstr "OpenRTMで設定されているネームサーバ"
 
 

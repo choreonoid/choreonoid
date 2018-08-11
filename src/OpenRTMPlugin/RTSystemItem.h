@@ -134,6 +134,7 @@ public:
     std::vector<RTSPortPtr> outPorts;
 
     Component profile;
+    bool isAlive_;
 
     RTSComp(const std::string& name, RTC::RTObject_ptr rtc, RTSystemItem* rts, const QPointF& pos);
     RTSComp(const std::string& name, const std::string& fullPath, RTC::RTObject_ptr rtc, RTSystemItem* rts, const QPointF& pos);
@@ -193,6 +194,8 @@ public:
     void setVendorName(const std::string& name);
     void setVersion(const std::string& version);
     int stateCheck() const;
+
+    bool checkStatus();
 
 protected :
     virtual Item* doDuplicate() const override;

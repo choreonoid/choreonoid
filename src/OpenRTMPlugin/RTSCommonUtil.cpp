@@ -41,7 +41,7 @@ string DataTypeComparer::match(string type1, string type2) {
 	}
 	vector<string> ifr = RTCCommonUtil::split(ifrType, ':');
 	vector<string> ifrSeg = RTCCommonUtil::split(ifr[1], '/');
-	vector<string> oldSeg = RTCCommonUtil::split(oldType, '::');
+	vector<string> oldSeg = RTCCommonUtil::split(oldType, ':');
 	if (oldSeg.size() > ifrSeg.size()) {
 		return "";
 	}
@@ -268,6 +268,26 @@ bool RTCCommonUtil::compareIgnoreCase(const string& lhs, const string& rhs) {
   QString right = QString::fromStdString(rhs);
 
   return QString::compare(left, right, Qt::CaseInsensitive) == 0;
+}
+
+ManagerInfo RTCCommonUtil::getManagerAddress() {
+    ManagerInfo result;
+
+    RTC::Manager* rtcManager = &RTC::Manager::instance();
+    if(!rtcManager) return result;
+
+    coil::Properties prop = rtcManager->getConfig();
+    std::string val = prop.getProperty("corba.nameservers");
+    DDEBUG_V("RTCCommonUtil::getManagerAddress: %s", val.c_str());
+    vector<string> elems = RTCCommonUtil::split(val, ':');
+    if(elems.size() == 0) return result;
+    result.hostAddress = elems[0];
+    result.portNum = 2809;
+    if(1 < elems.size()) {
+      result.portNum = QString::fromStdString(elems[1]).toInt();
+    }
+
+    return result;
 }
 
 }

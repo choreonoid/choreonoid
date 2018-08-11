@@ -26,8 +26,6 @@
 #include <QBoxLayout>
 #include <QDragEnterEvent>
 #include <QMessageBox>
-#include <QLabel>
-#include <QPushButton>
 #include "gettext.h"
 
 using namespace cnoid;
@@ -227,7 +225,6 @@ public:
     QVariant itemChange(GraphicsItemChange change, const QVariant & value);
     void create(const QPointF& pos);
     void stateCheck();
-    void setStatus(RTC_STATUS status);
     void checkCandidate(RTSPortGItem* sourcePort);
     void clearCandidate();
     int correctTextY();
@@ -707,7 +704,14 @@ int RTSCompGItem::correctTextY()
 
 void RTSCompGItem::stateCheck()
 {
-    setStatus(rtsComp->getRTCState());
+    RTC_STATUS status = rtsComp->getRTCState();
+    if(status == RTC_STATUS::RTC_INACTIVE){
+        rect->setBrush(QBrush(QColor("blue")));
+    } else if (status == RTC_STATUS::RTC_ACTIVE) {
+        rect->setBrush(QBrush(QColor("lightgreen")));
+    } else if (status == RTC_STATUS::RTC_ERROR) {
+        rect->setBrush(QBrush(QColor("red")));
+    }
 
     for(map<string, RTSPortGItemPtr>::iterator it = inPorts.begin(); it != inPorts.end(); it++){
         it->second->stateCheck();
@@ -715,18 +719,6 @@ void RTSCompGItem::stateCheck()
 
     for(map<string, RTSPortGItemPtr>::iterator it = outPorts.begin(); it != outPorts.end(); it++){
         it->second->stateCheck();
-    }
-}
-
-
-void RTSCompGItem::setStatus(RTC_STATUS status)
-{
-    if(status == RTC_STATUS::RTC_INACTIVE){
-        rect->setBrush(QBrush(QColor("blue")));
-    } else if (status == RTC_STATUS::RTC_ACTIVE) {
-        rect->setBrush(QBrush(QColor("lightgreen")));
-    } else if (status == RTC_STATUS::RTC_ERROR) {
-        rect->setBrush(QBrush(QColor("red")));
     }
 }
 
@@ -1342,6 +1334,7 @@ void RTSDiagramViewImpl::createConnectionGItem
 
     scene.addItem(gItem);
     rtsConnections[rtsConnection->id] = gItem;
+    DDEBUG("RTSDiagramViewImpl::createConnectionGItem End");
 }
 
 
@@ -1364,28 +1357,30 @@ void RTSDiagramViewImpl::onTime()
     }
 
     if(doConnectionCheck){
-        bool modified = false;
-        for(auto it = rtsComps.begin(); it != rtsComps.end(); it++){
-            if(!currentRTSItem->compIsAlive(it->second->rtsComp)){
-                if(!it->second->effect->isEnabled()){
-                    // it->second->effect->setEnabled(true);
-                    modified = true;
-                } else {
-                    //The following code is disabled to keep management of non-live RTCs
-                    //deleteRTSComp(it->second);
-                }
-            } else {
-                if (it->second->effect->isEnabled()){
-                    //  it->second->effect->setEnabled(false);
-                    modified = true;
-                }
-            }
-        }
+        bool modified = currentRTSItem->checkStatus();
+        //bool modified = false;
+        //for(auto it = rtsComps.begin(); it != rtsComps.end(); it++){
+        //    if(!currentRTSItem->compIsAlive(it->second->rtsComp)){
+        //        if(!it->second->effect->isEnabled()){
+        //            // it->second->effect->setEnabled(true);
+        //            modified = true;
+        //        } else {
+        //            //The following code is disabled to keep management of non-live RTCs
+        //            //deleteRTSComp(it->second);
+        //        }
+        //    } else {
+        //        if (it->second->effect->isEnabled()){
+        //            //  it->second->effect->setEnabled(false);
+        //            modified = true;
+        //        }
+        //    }
+        //}
 
-        if(currentRTSItem->connectionCheck()){
-            modified = true;
-        }
+        //if(currentRTSItem->connectionCheck()){
+        //    modified = true;
+        //}
 
+        //DDEBUG_V("checkStatus End : %d", modified);
         if(modified){
             updateView();
         }
@@ -1439,11 +1434,12 @@ void RTSDiagramViewImpl::updateView()
         setAcceptDrops(false);
     }
     timeOutConnection.unblock();
+    DDEBUG("RTSDiagramViewImpl::updateView End");
 }
 
 void RTSDiagramViewImpl::updateRestoredView()
 {
-    //Ú‘±ü‚ðÄ•`‰æ‚·‚é‚½‚ß
+    //To redraw the connection line
     if(currentRTSItem){
         for(auto it = rtsComps.begin(); it != rtsComps.end(); it++){
           QPointF pos = it->second->pos();
@@ -1526,12 +1522,15 @@ void RTSDiagramViewImpl::stopExecutionContext()
 RTSCompGItem::RTSCompGItem(RTSComp* rtsComp, RTSDiagramViewImpl* impl, const QPointF& pos)
     : impl(impl), rtsComp(rtsComp)
 {
+    DDEBUG("RTSCompGItem::RTSCompGItem(RTSComp");
     effect = new QGraphicsOpacityEffect;
     effect->setOpacity(0.3);
     setGraphicsEffect(effect);
     if(rtsComp->rtc_){
+        rtsComp->isAlive_ = true;
         effect->setEnabled(false);
     } else {
+        rtsComp->isAlive_ = false;
         effect->setEnabled(true);
     }
 
@@ -1694,155 +1693,3 @@ void RTSDiagramView::initializeClass(ExtensionManager* ext)
 }
 
 
-SettingDialog::SettingDialog()
-{
-    chkLog = new QCheckBox(_("Log Output"));
-    QLabel* lblLevel = new QLabel(_("Log Level:"));
-    cmbLogLevel = new QComboBox();
-    cmbLogLevel->addItem("SILENT");
-    cmbLogLevel->addItem("FATAL");
-    cmbLogLevel->addItem("ERROR");
-    cmbLogLevel->addItem("WARN");
-    cmbLogLevel->addItem("INFO");
-    cmbLogLevel->addItem("DEBUG");
-    cmbLogLevel->addItem("TRACE");
-    cmbLogLevel->addItem("VERBOSE");
-    cmbLogLevel->addItem("PARANOID");
-
-    QLabel* lblSetting = new QLabel(_("Setting:"));
-    leSetting = new QLineEdit;
-
-    QLabel* lblName = new QLabel(_("VendorName:"));
-    leName = new QLineEdit;
-    QLabel* lblVersion = new QLabel(_("Version:"));
-    leVersion = new QLineEdit;
-    QLabel* lblPolling = new QLabel(_("Polling Cycle:"));
-    lePoling = new QLineEdit;
-    QLabel* lblUnit = new QLabel("ms");
-
-#if defined(OPENRTM_VERSION12)
-    QLabel* lblHeartBeat = new QLabel(_("Heartbeat Period:"));
-    leHeartBeat = new QLineEdit;
-    QLabel* lblUnitHb = new QLabel("ms");
-#endif
-
-    QFrame* frmDetail = new QFrame;
-    QGridLayout* gridSubLayout = new QGridLayout(frmDetail);
-    gridSubLayout->addWidget(chkLog, 0, 0, 1, 1);
-    gridSubLayout->addWidget(lblLevel, 0, 1, 1, 1);
-    gridSubLayout->addWidget(cmbLogLevel, 0, 2, 1, 1);
-
-    gridSubLayout->addWidget(lblSetting, 1, 0, 1, 1);
-    gridSubLayout->addWidget(leSetting, 1, 1, 1, 2);
-
-    gridSubLayout->addWidget(lblName, 2, 0, 1, 1);
-    gridSubLayout->addWidget(leName, 2, 1, 1, 2);
-    gridSubLayout->addWidget(lblVersion, 3, 0, 1, 1);
-    gridSubLayout->addWidget(leVersion, 3, 1, 1, 2);
-    gridSubLayout->addWidget(lblPolling, 4, 0, 1, 1);
-    gridSubLayout->addWidget(lePoling, 4, 1, 1, 2);
-    gridSubLayout->addWidget(lblUnit, 4, 3, 1, 1);
-
-#if defined(OPENRTM_VERSION12)
-    gridSubLayout->addWidget(lblHeartBeat, 5, 0, 1, 1);
-    gridSubLayout->addWidget(leHeartBeat, 5, 1, 1, 2);
-    gridSubLayout->addWidget(lblUnitHb, 5, 3, 1, 1);
-#endif
-
-    QFrame* frmButton = new QFrame;
-    QPushButton* okButton = new QPushButton(_("&OK"));
-    okButton->setDefault(true);
-    QPushButton* cancelButton = new QPushButton(_("&Cancel"));
-    QHBoxLayout* buttonBotLayout = new QHBoxLayout(frmButton);
-    buttonBotLayout->addWidget(cancelButton);
-    buttonBotLayout->addStretch();
-    buttonBotLayout->addWidget(okButton);
-
-    QVBoxLayout* mainLayout = new QVBoxLayout;
-    mainLayout->addWidget(frmDetail);
-    mainLayout->addWidget(frmButton);
-    setLayout(mainLayout);
-
-    connect(okButton, SIGNAL(clicked()), this, SLOT(oKClicked()));
-    connect(cancelButton, SIGNAL(clicked()), this, SLOT(rejected()));
-    connect(this, SIGNAL(rejected()), this, SLOT(rejected()));
-    connect(chkLog, SIGNAL(clicked(bool)), this, SLOT(logChanged(bool)));
-
-    setWindowTitle(_("OpenRTM Preferences"));
-
-    MappingPtr appVars = AppConfig::archive()->openMapping("OpenRTM");
-    leSetting->setText(QString::fromStdString(appVars->get("defaultSetting", "./choreonoid.rtc.conf")));
-    leName->setText(QString::fromStdString(appVars->get("defaultVendor", "AIST")));
-    leVersion->setText(QString::fromStdString(appVars->get("defaultVersion", "1.0.0")));
-    lePoling->setText(QString::number(appVars->get("pollingCycle", 500)));
-
-#if defined(OPENRTM_VERSION12)
-    leHeartBeat->setText(QString::number(appVars->get("heartBeatPeriod", 500)));
-#endif
-
-    chkLog->setChecked(appVars->get("outputLog", false));
-
-    QString level = QString::fromStdString(appVars->get("logLevel", "INFO"));
-
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-    cmbLogLevel->setCurrentText(level);
-#else
-    for(int i=0; i < cmbLogLevel->count(); ++i){
-        if(cmbLogLevel->itemText(i) == level){
-            cmbLogLevel->setCurrentIndex(i);
-            break;
-        }
-    }
-#endif
-
-    cmbLogLevel->setEnabled(chkLog->isChecked());
-}
-
-
-void SettingDialog::logChanged(bool state)
-{
-    cmbLogLevel->setEnabled(chkLog->isChecked());
-}
-
-
-void SettingDialog::oKClicked()
-{
-    DDEBUG("SettingDialog::oKClicked");
-    MappingPtr appVars = AppConfig::archive()->openMapping("OpenRTM");
-
-    QString orgSetting = QString::fromStdString(appVars->get("defaultSetting", "./choreonoid.rtc.conf"));
-    QString newSetting = leSetting->text();
-    bool orgLog = appVars->get("outputLog", false);
-    bool newLog = chkLog->isChecked();
-    QString orgLevel = QString::fromStdString(appVars->get("logLevel", "INFO"));
-    QString newLevel = cmbLogLevel->currentText();
-    bool isRestart = (orgSetting != newSetting) || (orgLog != newLog) || (orgLevel != newLevel);
-
-    appVars->write("defaultSetting", leSetting->text().toStdString(), DOUBLE_QUOTED);
-    appVars->write("defaultVendor", leName->text().toStdString(), DOUBLE_QUOTED);
-    appVars->write("defaultVersion", leVersion->text().toStdString(), DOUBLE_QUOTED);
-    appVars->write("pollingCycle", lePoling->text().toInt());
-
-#if defined(OPENRTM_VERSION12)
-    appVars->write("heartBeatPeriod", leHeartBeat->text().toInt());
-#endif
-
-    appVars->write("outputLog", chkLog->isChecked());
-    appVars->write("logLevel", cmbLogLevel->currentText().toStdString());
-
-    RTSDiagramView* view = RTSDiagramView::instance();
-    if(view) {
-        view->updateSetting();
-    }
-
-    if(isRestart) {
-        QMessageBox::warning(this, _("OpenRTM Preferences"), _("The specified setting becomes valid after RESTART."));
-    }
-    close();
-}
-
-
-void SettingDialog::rejected()
-{
-    close();
-}

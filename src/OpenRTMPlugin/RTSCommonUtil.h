@@ -29,6 +29,16 @@ public:
 	std::string match(std::string type1, std::string type2);
 };
 
+struct ManagerInfo {
+    std::string hostAddress;
+    int portNum;
+
+    ManagerInfo() {
+        this->hostAddress = "";
+        this->portNum = -1;
+    };
+};
+
 class RTCCommonUtil {
 public:
   static void splitPortName(std::string& value);
@@ -44,6 +54,8 @@ public:
 
 	static bool isIFR(std::string type);
   static bool compareIgnoreCase(const std::string& lhs, const std::string& rhs);
+
+  static ManagerInfo getManagerAddress();
 
 private:
 	static std::vector<std::string> getAllowList(std::vector<std::string>& source, std::vector<std::string>& target, TypeComparer& comparer);

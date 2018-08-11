@@ -9,6 +9,9 @@
 #include "RTSNameServerView.h"
 #include <cnoid/View>
 #include <rtm/idl/RTC.hh>
+#include <QLineEdit>
+#include <QCheckBox>
+#include <QComboBox>
 //#include <boost/shared_ptr.hpp>
 
 namespace cnoid 
@@ -33,6 +36,30 @@ public:
 
 private:
     RTSPropertiesViewImpl* impl;
+};
+
+class SettingDialog : public Dialog {
+  Q_OBJECT
+public:
+  SettingDialog();
+
+private Q_SLOTS:
+  void oKClicked();
+  void rejected();
+  void logChanged(bool state);
+
+private:
+  QCheckBox* chkLog;
+  QComboBox* cmbLogLevel;
+
+  QLineEdit* leSetting;
+
+  QLineEdit* leName;
+  QLineEdit* leVersion;
+  QLineEdit* lePoling;
+#ifndef OPENRTM_VERSION110
+  QLineEdit* leHeartBeat;
+#endif
 };
 
 };

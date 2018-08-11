@@ -92,6 +92,7 @@ public:
             const vector<pair<string, bool>>& inPorts, const vector<pair<string, bool>>& outPorts);
     string getConnectionNumber();
     void setStateCheckMethodByString(const string& value);
+    bool checkStatus();
 
 private:
     void setStateCheckMethod(int value);
@@ -272,6 +273,7 @@ bool RTSConnection::connect()
     if(!sourcePort->port || !targetPort->port ||
        CORBA::is_nil(sourcePort->port) || sourcePort->port->_non_existent() ||
        CORBA::is_nil(targetPort->port) || targetPort->port->_non_existent()){
+        DDEBUG("RTSConnection::connect False");
         return false;
     }
 
@@ -361,6 +363,12 @@ void RTSComp::setRtc(RTObject_ptr rtc)
     rts_->suggestFileUpdate();
 
     setRTObject(rtc);
+
+    //if(rtc_) {
+    //    isAlive_ = true;
+    //} else {
+    //    isAlive_ = false;
+    //}
 
     if(!isObjectAlive(rtc)){
         participatingExeContList = 0;
@@ -768,7 +776,7 @@ bool RTSystemItemImpl::compIsAlive(RTSComp* rtsComp)
             //DDEBUG("RTSystemItemImpl::compIsAlive NOT Alive");
             return false;
         } else {
-            //DDEBUG("RTSystemItemImpl::compIsAlive Alive");
+            DDEBUG("RTSystemItemImpl::compIsAlive Alive");
             rtsComp->setRtc(rtc);
             if(autoConnection){
                 list<RTSConnection*> rtsConnectionList;
@@ -777,6 +785,7 @@ bool RTSystemItemImpl::compIsAlive(RTSComp* rtsComp)
                     auto connection = *it;
                     connection->connect();
                 }
+                DDEBUG("autoConnection End");
             }
             return true;
         }
@@ -904,6 +913,7 @@ bool RTSystemItem::connectionCheck()
 
 bool RTSystemItemImpl::connectionCheck()
 {
+    //DDEBUG("RTSystemItemImpl::connectionCheck");
     bool updated = false;
     
     for(auto it= rtsConnections.begin(); it != rtsConnections.end(); it++){
@@ -927,6 +937,7 @@ bool RTSystemItemImpl::connectionCheck()
         }
     }
 
+    //DDEBUG("RTSystemItemImpl::connectionCheck End");
     return updated;
 }
 
@@ -1100,6 +1111,34 @@ void RTSystemItem::setVersion(const std::string& version)
 int RTSystemItem::stateCheck() const
 {
     return impl->stateCheck.selectedIndex();
+}
+
+bool RTSystemItem::checkStatus() {
+    return impl->checkStatus();
+}
+
+bool RTSystemItemImpl::checkStatus() {
+    bool modified = false;
+
+    for(auto it = rtsComps.begin(); it != rtsComps.end(); it++){
+        if(compIsAlive(it->second)) {
+            if(it->second->isAlive_==false) {
+                modified = true;
+            }
+            it->second->isAlive_ = true;
+        } else {
+            if(it->second->isAlive_) {
+                modified = true;
+            }
+            it->second->isAlive_ = false;
+        }
+    }
+    //
+    if(connectionCheck() ) {
+        modified = true;
+    }
+
+    return modified;
 }
 
 struct ConnectorPropComparator {

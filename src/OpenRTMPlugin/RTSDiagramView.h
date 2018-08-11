@@ -8,9 +8,6 @@
 
 #include <cnoid/View>
 #include <cnoid/Dialog>
-#include <QLineEdit>
-#include <QCheckBox>
-#include <QComboBox>
 
 using namespace cnoid;
 
@@ -44,30 +41,6 @@ protected:
 private :
 	RTSDiagramViewImpl* impl;
 
-};
-
-class SettingDialog : public Dialog {
-  Q_OBJECT
-public:
-  SettingDialog();
-
-private Q_SLOTS:
-  void oKClicked();
-  void rejected();
-  void logChanged(bool state);
-
-private:
-  QCheckBox* chkLog;
-  QComboBox* cmbLogLevel;
-
-  QLineEdit* leSetting;
-
-  QLineEdit* leName;
-  QLineEdit* leVersion;
-  QLineEdit* lePoling;
-#ifndef OPENRTM_VERSION110
-  QLineEdit* leHeartBeat;
-#endif
 };
 
 }
