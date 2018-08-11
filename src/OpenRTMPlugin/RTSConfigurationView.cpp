@@ -262,13 +262,6 @@ RTSConfigurationViewImpl::RTSConfigurationViewImpl(RTSConfigurationView* self)
             selectionChangedConnection = nsView->sigSelectionChanged().connect(
                 std::bind(&RTSConfigurationViewImpl::onItemSelectionChanged, this, _1));
         }
-        if(!locationChangedConnection.connected()){
-            locationChangedConnection = nsView->sigLocationChanged().connect(
-                std::bind(&RTSConfigurationViewImpl::onLocationChanged, this, _1, _2));
-            if (currentRtc_) {
-                currentRtc_->setLocation(nsView->getHost(), nsView->getPort());
-            }
-        }
     }
 
     connect(lstConfigSet_, SIGNAL(itemSelectionChanged()), this, SLOT(configSetSelectionChanged()));
@@ -294,21 +287,12 @@ RTSConfigurationView::~RTSConfigurationView()
 RTSConfigurationViewImpl::~RTSConfigurationViewImpl()
 {
     selectionChangedConnection.disconnect();
-    locationChangedConnection.disconnect();
 }
 
 
 void RTSConfigurationView::updateConfigurationSet()
 {
     impl->updateConfigurationSet();
-}
-
-
-void RTSConfigurationViewImpl::onLocationChanged(string host, int port)
-{
-    if(currentRtc_){
-        currentRtc_->setLocation(host, port);
-    }
 }
 
 

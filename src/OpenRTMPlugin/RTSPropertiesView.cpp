@@ -54,10 +54,8 @@ public:
 
     RTSPropertiesView* self;
     Connection selectionChangedConnection;
-    Connection locationChangedConnection;
 
     void onItemSelectionChanged(const list<NamingContextHelper::ObjectInfo>& items);
-    void onLocationChanged(std::string host, int port);
     void showProperties();
     void showPort(ComponentProfile_var cprofile, QTreeWidgetItem* item);
     void showPortConcrete(PortProfile* portprofile, QTreeWidgetItem* item);
@@ -68,7 +66,6 @@ public:
     void showConnection(PortService_var port, string id, QTreeWidgetItem* item);
 
     RTSPropertyTreeWidget  treeWidget;
-    NamingContextHelper ncHelper;
 
 private:
     NamingContextHelper::ObjectInfo currentItem;
@@ -129,11 +126,6 @@ RTSPropertiesViewImpl::RTSPropertiesViewImpl(RTSPropertiesView* self)
             selectionChangedConnection = nsView->sigSelectionChanged().connect(
                 std::bind(&RTSPropertiesViewImpl::onItemSelectionChanged, this, _1));
         }
-        if(!locationChangedConnection.connected()){
-            locationChangedConnection = nsView->sigLocationChanged().connect(
-                std::bind(&RTSPropertiesViewImpl::onLocationChanged, this, _1, _2));
-            ncHelper.setLocation(nsView->getHost(), nsView->getPort());
-        }
     }
 }
 
@@ -141,7 +133,6 @@ RTSPropertiesViewImpl::RTSPropertiesViewImpl(RTSPropertiesView* self)
 RTSPropertiesViewImpl::~RTSPropertiesViewImpl()
 {
     selectionChangedConnection.disconnect();
-    locationChangedConnection.disconnect();
 }
 
 
@@ -162,18 +153,13 @@ void RTSPropertiesViewImpl::onItemSelectionChanged(const list<NamingContextHelpe
 }
 
 
-void RTSPropertiesViewImpl::onLocationChanged(string host, int port)
-{
-    ncHelper.setLocation(host, port);
-}
-
-
 void RTSPropertiesViewImpl::showProperties()
 {
     DDEBUG("RTSPropertiesViewImpl::showProperties");
     treeWidget.clear();
 
     if(currentItem.id!="" && currentItem.isAlive){
+        NamingContextHelper ncHelper = RTSNameServerView::instance()->getNCHelper();
         RTC::RTObject_ptr rtc = ncHelper.findObject<RTC::RTObject>(currentItem.fullPath);
         if(!isObjectAlive(rtc))
                 return;

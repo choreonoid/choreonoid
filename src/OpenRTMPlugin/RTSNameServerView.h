@@ -30,8 +30,6 @@ public:
     std::list<NamingContextHelper::ObjectInfo> getSelection();
 
     //Proxy to RTSNameServerViewImpl
-    const std::string getHost();
-    int getPort();
     void updateView();
     void setSelection(std::string RTCname, std::string RTCfullPath);
     NamingContextHelper getNCHelper();

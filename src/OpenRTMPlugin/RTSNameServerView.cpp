@@ -225,18 +225,6 @@ std::list<NamingContextHelper::ObjectInfo> RTSNameServerView::getSelection()
 }
 
 
-const std::string RTSNameServerView::getHost()
-{
-    return impl->hostAddress_;
-}
-
-
-int RTSNameServerView::getPort()
-{
-    return impl->portNum_;
-}
-
-
 void RTSNameServerView::updateView()
 {
     impl->updateObjectList(true);
@@ -465,6 +453,7 @@ bool RTSNameServerView::storeState(Archive& archive)
 
 bool RTSNameServerView::restoreState(const Archive& archive)
 {
+    DDEBUG("RTSNameServerView::restoreState");
     string host;
     if (archive.read("host", host)) {
         impl->hostAddress_ = host;
@@ -473,6 +462,7 @@ bool RTSNameServerView::restoreState(const Archive& archive)
     if (archive.read("port", port)) {
         impl->portNum_ = port;
     }
+    impl->ncHelper.setLocation(impl->hostAddress_, impl->portNum_);
 
     archive.addPostProcess(
         [&](){

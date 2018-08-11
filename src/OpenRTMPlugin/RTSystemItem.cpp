@@ -615,7 +615,7 @@ void RTSystemItemImpl::initialize()
         if(!locationChangedConnection.connected()){
             locationChangedConnection = nsView->sigLocationChanged().connect(
                 std::bind(&RTSystemItemImpl::onLocationChanged, this, _1, _2));
-            ncHelper.setLocation(nsView->getHost(), nsView->getPort());
+            ncHelper.setLocation(nsView->getNCHelper().host(), nsView->getNCHelper().port());
         }
     }
     connectionNo = 0;
@@ -676,7 +676,11 @@ RTSComp* RTSystemItemImpl::addRTSComp(const string& name, const QPointF& pos)
     DDEBUG_V("RTSystemItemImpl::addRTSComp:%s", name.c_str());
 
     if(!nameToRTSComp("/" + name + ".rtc")){
-        RTC::RTObject_ptr rtc = ncHelper.findObject<RTC::RTObject>(name, "rtc");
+        std::vector<NamingContextHelper::ObjectPath> pathList;
+        NamingContextHelper::ObjectPath path(name, "rtc");
+        pathList.push_back(path);
+        RTC::RTObject_ptr rtc = ncHelper.findObject<RTC::RTObject>(pathList);
+        DDEBUG_V("ncHelper host:%s, port:%d", ncHelper.host().c_str(), ncHelper.port());
         if(rtc == RTC::RTObject::_nil()){
             DDEBUG("RTSystemItemImpl::addRTSComp Failed");
             return nullptr;

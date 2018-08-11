@@ -34,10 +34,6 @@ public:
 	inline std::string getIOR() const { return this->ior_; }
 	inline void setIOR(std::string value) { this->ior_ = value; }
 
-	void setLocation(const std::string& host, int port) {
-		ncHelper_.setLocation(host, port);
-	};
-
 	bool activateComponent();
 	bool deactivateComponent();
 	bool resetComponent();
@@ -54,7 +50,6 @@ protected:
 private:
 	std::string ior_;
 	RTC::ComponentProfile_var compProfile_;
-	NamingContextHelper ncHelper_;
 
 };
 typedef std::shared_ptr<RTCWrapper> RTCWrapperPtr;

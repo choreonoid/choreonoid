@@ -10,8 +10,6 @@
 #include <rtm/CORBA_SeqUtil.h>
 #include <coil/Properties.h>
 
-#include <cnoid/CorbaUtil>
-
 #include "RTSNameServerView.h"
 #include "RTSConfigurationView.h"
 
@@ -26,20 +24,24 @@ namespace cnoid {
 bool RTCWrapper::getConfiguration(NamingContextHelper::ObjectInfo& target, std::vector<ConfigurationSetParamPtr>& configSetList) {
   DDEBUG("RTCWrapper::getConfiguration");
  
-  RTSNameServerView* nsView = RTSNameServerView::instance();
-  ncHelper_.setLocation(nsView->getHost(), nsView->getPort());
+  NamingContextHelper ncHelper = RTSNameServerView::instance()->getNCHelper();
 
 	RTCWrapper result;
+  std::vector<NamingContextHelper::ObjectPath> pathList;
+
   if (target.fullPath.size() == 0) {
-    rtc_ = ncHelper_.findObject<RTC::RTObject>(target.id, "rtc");
+    NamingContextHelper::ObjectPath path(target.id, "rtc");
+    pathList.push_back(path);
 	} else {
-    CORBA::Object::_ptr_type obj = ncHelper_.findObject(target.fullPath);
-		if (isObjectAlive(obj)) {
-      rtc_ = RTC::RTObject::_narrow(obj);
-			CORBA::release(obj);
-		} else {
-      rtc_ = RTC::RTObject::_nil();
-		}
+    pathList = target.fullPath;
+  }
+
+  CORBA::Object::_ptr_type obj = ncHelper.findObject(pathList);
+	if (isObjectAlive(obj)) {
+    rtc_ = RTC::RTObject::_narrow(obj);
+		CORBA::release(obj);
+	} else {
+    rtc_ = RTC::RTObject::_nil();
 	}
   if (isObjectAlive(rtc_)==false) return false;
 

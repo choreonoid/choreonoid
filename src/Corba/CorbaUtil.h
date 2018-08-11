@@ -46,23 +46,6 @@ namespace cnoid {
 			};
 		};
 
-		template <class T> typename T::_ptr_type findObject(const std::string& name, const std::string& kind = "") {
-			ObjectPath path(name, kind);
-			std::vector<ObjectPath> pathList;
-			pathList.push_back(path);
-			CORBA::Object_ptr obj = findObjectSub(pathList);
-			if (CORBA::is_nil(obj)) {
-				return T::_nil();
-			} else {
-                typename T::_ptr_type narrowed = T::_nil();
-                if(isObjectAlive(obj)){
-                    narrowed = T::_narrow(obj);
-                }
-				CORBA::release(obj);
-				return narrowed;
-			}
-		}
-
 		template <class T> typename T::_ptr_type findObject(std::vector<ObjectPath>& pathList) {
 			CORBA::Object_ptr obj = findObjectSub(pathList);
 			if (CORBA::is_nil(obj)) {

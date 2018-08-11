@@ -170,10 +170,8 @@ public:
 
 	RTSConfigurationView* self;
 	Connection selectionChangedConnection;
-	Connection locationChangedConnection;
 
 	void onItemSelectionChanged(const std::list<NamingContextHelper::ObjectInfo>& items);
-	void onLocationChanged(std::string host, int port);
 
 	void updateConfigSet();
 	void updateDetail();
