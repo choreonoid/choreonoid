@@ -416,7 +416,7 @@ AGXWire::AGXWire(AGXWireDevice* device, AGXBody* agxBody) :
                 m_wire->add(wireLink, agxConvert::toAGX(pos));
                 agxWire::ILinkNodeRef iLinkNode = wireLink->getConnectingNode(m_wire);
                 if(iLinkNode){
-                    auto getILinkNodeValue = [&](string key, auto defaultValue){
+                    auto getILinkNodeValue = [&](string key, double defaultValue){
                         return wireNodeInfo.get(key, defaultValue);
                     };
                     agxWire::ILinkNode::ConnectionProperties* cp = iLinkNode->getConnectionProperties();
