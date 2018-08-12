@@ -46,9 +46,9 @@ def loadProject(
         
         elif remoteType == "ROS":
             joystickInput.setController("JoyTopicSubscriberController")
-            # bodyPublisher = BodyPublisherItem()
-            # bodyPublisher.name = "BodyPublisher"
-            # robot.addChildItem(bodyPublisher)
+            bodyPublisher = BodyPublisherItem()
+            bodyPublisher.name = "BodyPublisher"
+            robot.addChildItem(bodyPublisher)
 
     if enableVisionSimulator:
         visionSimulator = GLVisionSimulatorItem()
