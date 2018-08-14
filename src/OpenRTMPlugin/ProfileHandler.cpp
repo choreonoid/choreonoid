@@ -509,7 +509,8 @@ void ProfileHandler::buildPosition(const RTSConnection* connect, int offsetX, in
     //                  + "2:(" + posX2.toStdString() + "," + posY2.toStdString() + "),"
     //                  + "3:(" + posX3.toStdString() + "," + posY3.toStdString() + ")}";
     string positionName = "POSITION";
-    appendStringValue(propList, positionName, position.toStdString());
+    string value = position.toStdString();
+    appendStringValue(propList, positionName, value);
 }
 
 TargetPort ProfileHandler::buildTargetPortInfo(RTSPort* sourcePort, std::string& hostName) {
