@@ -16,7 +16,7 @@ except:
     pass
 
 def loadProject(
-    worldProject, simulatorProject, robotProject,
+    worldProject, simulatorProjects, robotProject,
     enableVisionSimulator = False, targetVisionSensors = "", remoteType = ""):
 
     directory = os.path.dirname(os.path.realpath(__file__))
@@ -27,7 +27,10 @@ def loadProject(
 
     world = Item.find("World")
 
-    pm.loadProject(os.path.join(directory, simulatorProject + ".cnoid"), world)
+    if not isinstance(simulatorProjects, list):
+        simulatorProjects = [ simulatorProjects ]
+    for project in simulatorProjects:
+        pm.loadProject(os.path.join(directory, project + ".cnoid"), world)
 
     robot = pm.loadProject(os.path.join(directory, robotProject + ".cnoid"), world)[0]
 
