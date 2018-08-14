@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-07-27 14:00+0900\n"
+"POT-Creation-Date: 2018-08-10 22:29+0900\n"
 "PO-Revision-Date: 2011-11-12 14:46+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Language =\n"
@@ -404,7 +404,7 @@ msgstr "干渉データ"
 msgid "No delay mode"
 msgstr "無遅延モード"
 
-#: ControllerItem.cpp:92 SimulatorItem.cpp:2542
+#: ControllerItem.cpp:92 SimulatorItem.cpp:2544
 msgid "Controller options"
 msgstr "コントローラオプション"
 
@@ -1054,45 +1054,46 @@ msgstr "レンジセンサビジュアライザ"
 msgid "CameraImageVisualizer"
 msgstr "カメラ画像ビジュアライザ"
 
-#: SimpleControllerItem.cpp:143
+#: SimpleControllerItem.cpp:147
 msgid "SimpleControllerItem"
 msgstr "シンプルコントローラアイテム"
 
-#: SimpleControllerItem.cpp:166
+#: SimpleControllerItem.cpp:172
 msgid "None"
 msgstr "なし"
 
-#: SimpleControllerItem.cpp:167
+#: SimpleControllerItem.cpp:173
 msgid "Controller directory"
 msgstr "コントローラディレクトリ"
 
-#: SimpleControllerItem.cpp:168
+#: SimpleControllerItem.cpp:174
 msgid "Project directory"
 msgstr "プロジェクトディレクトリ"
 
-#: SimpleControllerItem.cpp:272
+#: SimpleControllerItem.cpp:280
 msgid ""
 "Controller module \"%1%\" of %2% is specified as a relative path from the "
 "project directory, but the project directory has not been determined yet."
-msgstr ""
+msgstr "%2%のコントローラモジュール\"%1%\"はプロジェクトディレクトリからの相対パスで指定されていますが、"
+"プロジェクトディレクトリはまだ決まっていません。"
 
-#: SimpleControllerItem.cpp:285
+#: SimpleControllerItem.cpp:293
 msgid "The controller module of %1% has already been loaded."
 msgstr "%1%のコントローラモジュールは既にロードされています。"
 
-#: SimpleControllerItem.cpp:292
+#: SimpleControllerItem.cpp:300
 msgid "Loading the controller module \"%2%\" of %1% ... "
 msgstr "%1%のコントローラモジュール\"%2%\"をロード中･･･"
 
-#: SimpleControllerItem.cpp:295
+#: SimpleControllerItem.cpp:303
 msgid "Failed.\n"
 msgstr "失敗。\n"
 
-#: SimpleControllerItem.cpp:299
+#: SimpleControllerItem.cpp:307
 msgid "OK!"
 msgstr ""
 
-#: SimpleControllerItem.cpp:306
+#: SimpleControllerItem.cpp:314
 msgid ""
 "The factory function \"createSimpleController()\" is not found in the "
 "controller module."
@@ -1100,39 +1101,43 @@ msgstr ""
 "ファクトリ関数\"createSimpleController()\"がコントローラモジュール内に見つか"
 "りません。"
 
-#: SimpleControllerItem.cpp:312
-msgid "The factory failed to create a controller instance."
-msgstr "ファクトリはコントローラインスタンスの生成に失敗しました。"
+#: SimpleControllerItem.cpp:321
+msgid "The controller factory of %1% failed to create a controller instance."
+msgstr "%1%のコントローラファクトリはコントローラインスタンスの生成に失敗しました。"
 
-#: SimpleControllerItem.cpp:318
-msgid "Failed to configure the controller"
-msgstr ""
+#: SimpleControllerItem.cpp:329
+msgid "%1% failed to configure the controller"
+msgstr "%1%はコントローラインスタンスの生成に失敗しました。"
 
-#: SimpleControllerItem.cpp:322
+#: SimpleControllerItem.cpp:333
 msgid "A controller instance has successfully been created."
 msgstr "コントローラインスタンスを生成しました。"
 
-#: SimpleControllerItem.cpp:343
+#: SimpleControllerItem.cpp:354
 msgid "The controller module \"%2%\" of %1% has been unloaded."
 msgstr "%1%のコントローラモジュール\"%2%\"をアンロードしました。"
 
-#: SimpleControllerItem.cpp:433
+#: SimpleControllerItem.cpp:444
 msgid "%1%'s initialize method failed."
 msgstr "%1%のinitializeメソッドが失敗しました。"
 
-#: SimpleControllerItem.cpp:873
+#: SimpleControllerItem.cpp:708 SimpleControllerItem.cpp:714
+msgid "%1% failed to start"
+msgstr "%1%を稼働できませんでした。"
+
+#: SimpleControllerItem.cpp:902
 msgid "Simple Controller Module (*.%1%)"
 msgstr "シンプルコントローラモジュール (*.%1%)"
 
-#: SimpleControllerItem.cpp:881
+#: SimpleControllerItem.cpp:910
 msgid "Controller module"
 msgstr "コントローラモジュール"
 
-#: SimpleControllerItem.cpp:883
+#: SimpleControllerItem.cpp:912
 msgid "Base directory"
 msgstr "ベースディレクトリ"
 
-#: SimpleControllerItem.cpp:885
+#: SimpleControllerItem.cpp:914
 msgid "Reloading"
 msgstr "再読込"
 
@@ -1219,51 +1224,51 @@ msgstr "遅延"
 msgid "Simulation only"
 msgstr "シミュレーション用に限定"
 
-#: SimulatorItem.cpp:1084
+#: SimulatorItem.cpp:1082
 msgid "Timestep"
 msgstr "タイムステップ"
 
-#: SimulatorItem.cpp:1085
+#: SimulatorItem.cpp:1083
 msgid "Framerate"
 msgstr "フレームレート"
 
-#: SimulatorItem.cpp:1086
+#: SimulatorItem.cpp:1084
 msgid "Time bar"
 msgstr "タイムバー"
 
-#: SimulatorItem.cpp:1096
+#: SimulatorItem.cpp:1094
 msgid "full"
 msgstr "全て"
 
-#: SimulatorItem.cpp:1097
+#: SimulatorItem.cpp:1095
 msgid "tail"
 msgstr "末尾"
 
-#: SimulatorItem.cpp:1098
+#: SimulatorItem.cpp:1096
 msgid "off"
 msgstr "オフ"
 
-#: SimulatorItem.cpp:1101
+#: SimulatorItem.cpp:1099
 msgid "Unlimited"
 msgstr "無制限"
 
-#: SimulatorItem.cpp:1102
+#: SimulatorItem.cpp:1100
 msgid "Active control period"
 msgstr "能動制御期間"
 
-#: SimulatorItem.cpp:1103
+#: SimulatorItem.cpp:1101
 msgid "Specified time"
 msgstr "指定時間"
 
-#: SimulatorItem.cpp:1104
+#: SimulatorItem.cpp:1102
 msgid "Time bar range"
 msgstr "タイムバー範囲"
 
-#: SimulatorItem.cpp:1450
+#: SimulatorItem.cpp:1449
 msgid "%1% must be in a WorldItem to do simulation."
 msgstr "%1%はシミュレーションを行うワールドである必要があります。"
 
-#: SimulatorItem.cpp:1566
+#: SimulatorItem.cpp:1565
 msgid "SubSimulatorItem \"%1%\" has been detected."
 msgstr "サブシミュレータアイテム\"%1%\"が検出されました。"
 
@@ -1275,15 +1280,15 @@ msgstr "\"%1%\"の初期化に失敗しました。"
 msgid "SubSimulatorItem \"%1%\" is disabled."
 msgstr "サブシミュレータアイテム\"%1%\"は無効化されています。"
 
-#: SimulatorItem.cpp:1594
-msgid "%1% for %2% failed to initialize."
-msgstr "%2%用の%1%の初期化に失敗しました。"
+#: SimulatorItem.cpp:1595
+msgid "%1% for %2% failed to start."
+msgstr "%2%用の%1%を稼働できませんでした。"
 
-#: SimulatorItem.cpp:1600
-msgid "%1% failed to initialize."
-msgstr "%1%の初期化に失敗しました。"
+#: SimulatorItem.cpp:1602
+msgid "%1% failed to start."
+msgstr "%1%を稼働できませんでした。"
 
-#: SimulatorItem.cpp:1641
+#: SimulatorItem.cpp:1642
 msgid ""
 "WorldLogFileItem \"%1%\" has been detected. A simulation result is recoreded "
 "to \"%2%\"."
@@ -1291,69 +1296,69 @@ msgstr ""
 "ワールドログファイルアイテム \"%1%\" が検出されました。シミュレーション結果は"
 "\"%1%\" に記録されます。"
 
-#: SimulatorItem.cpp:1698
+#: SimulatorItem.cpp:1700
 msgid "Simulation by %1% has started."
 msgstr "%1%によるシミュレーションを開始しました。"
 
-#: SimulatorItem.cpp:2251
+#: SimulatorItem.cpp:2253
 msgid "Simulation by %1% has finished at %2% [s]."
 msgstr "%1%によるシミュレーションが%2%秒時点で終了しました。"
 
-#: SimulatorItem.cpp:2252
+#: SimulatorItem.cpp:2254
 msgid "Computation time is %1% [s], computation time / simulation time = %2%."
 msgstr "計算時間: %1% [s], 計算時間 / シミュレーション時間 = %2%"
 
-#: SimulatorItem.cpp:2515
+#: SimulatorItem.cpp:2517
 msgid "Temporal resolution type"
 msgstr "時間分解能タイプ"
 
-#: SimulatorItem.cpp:2519
+#: SimulatorItem.cpp:2521
 msgid "Time step"
 msgstr "タイムステップ"
 
-#: SimulatorItem.cpp:2522
+#: SimulatorItem.cpp:2524
 msgid "Frame rate"
 msgstr "フレームレート"
 
-#: SimulatorItem.cpp:2526
+#: SimulatorItem.cpp:2528
 msgid "Sync with realtime"
 msgstr "実時間同期"
 
-#: SimulatorItem.cpp:2528
+#: SimulatorItem.cpp:2530
 msgid "Time range"
 msgstr "時間範囲"
 
-#: SimulatorItem.cpp:2530
+#: SimulatorItem.cpp:2532
 msgid "Time length"
 msgstr "時間長"
 
-#: SimulatorItem.cpp:2532
+#: SimulatorItem.cpp:2534
 msgid "Recording"
 msgstr "記録モード"
 
-#: SimulatorItem.cpp:2534
+#: SimulatorItem.cpp:2536
 msgid "All link positions"
 msgstr "全リンク位置姿勢出力"
 
-#: SimulatorItem.cpp:2536
+#: SimulatorItem.cpp:2538
 msgid "Device state output"
 msgstr "デバイス状態の記録"
 
-#: SimulatorItem.cpp:2538
+#: SimulatorItem.cpp:2540
 msgid "Record collision data"
 msgstr "干渉データの記録"
 
-#: SimulatorItem.cpp:2540
+#: SimulatorItem.cpp:2542
 msgid "Controller Threads"
 msgstr "コントローラスレッド"
 
 #: SplineFilterDialog.cpp:223
 msgid "Spline filter"
-msgstr ""
+msgstr "スプラインフィルタ"
 
 #: SplineFilterDialog.cpp:236
 msgid "Spline Filter"
-msgstr ""
+msgstr "スプラインフィルタ"
 
 #: SplineFilterDialog.cpp:242
 msgid "Input frame rate"
@@ -1372,7 +1377,9 @@ msgstr "時間長比率"
 msgid ""
 "Applying B-Spline filter to %1%: input frame rate = %2%, output frame rate = "
 "%3%"
-msgstr "B-Splineフィルタを%1%に適用中: 入力フレームレート = %2%, 出力フレームレート = %3%"
+msgstr ""
+"B-Splineフィルタを%1%に適用中: 入力フレームレート = %2%, 出力フレームレート "
+"= %3%"
 
 #: SubSimulatorItem.cpp:53
 msgid "Enabled"

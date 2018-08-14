@@ -20,7 +20,7 @@ public:
         if(PyUnicode_Check(source)){
             Py_ssize_t len;
 #if PY_MAJOR_VERSION >= 3
-            char* data = PyUnicode_AsUTF8AndSize(source, &len);
+            const char* data = PyUnicode_AsUTF8AndSize(source, &len);
 #else
             char* data = PyString_AsString(PyUnicode_AsUTF8String(source));
 #endif
