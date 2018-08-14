@@ -2,8 +2,8 @@ if(NOT ENABLE_GUI)
   return()
 endif()
 
-option(BUILD_MULTICOPTER_SAMPLE "Building Multicopter samples" OFF)
-if(NOT BUILD_MULTICOPTER_SAMPLE)
+option(BUILD_MULTICOPTER_SAMPLES "Building Multicopter samples" OFF)
+if(NOT BUILD_MULTICOPTER_SAMPLES)
   return()
 endif()
 
