@@ -698,4 +698,8 @@ msgstr "ネームサーバを追加"
 msgid "Name server set in OpenRTM"
 msgstr "OpenRTMで設定されているネームサーバ"
 
+#: RTSystemItem.cpp:1020
+msgid "CheckAtLoading"
+msgstr "読込時に状態チェック"
+
 

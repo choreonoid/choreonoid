@@ -295,10 +295,12 @@ public:
     void onRTSCompPositionChanged(const RTSCompGItem*);
     void onTime();
     void onActivated(bool on);
+    void timerPeriodUpdate(int value);
     void onItemTreeViewSelectionChanged(const ItemList<RTSystemItem>& items);
     void onRTSystemItemDetachedFromRoot();
     void setCurrentRTSItem(RTSystemItem* item);
     void updateView();
+    void checkStatus();
     void updateSetting();
     void updateRestoredView();
     void activateComponent();
@@ -1161,6 +1163,14 @@ void RTSDiagramViewImpl::onActivated(bool on)
     }
 }
 
+void RTSDiagramViewImpl::timerPeriodUpdate(int value)
+{
+    if (pollingPeriod != value){
+        timer.stop();
+        timer.setInterval(value);
+        timer.start();
+    }
+}
 
 void RTSDiagramViewImpl::onItemTreeViewSelectionChanged(const ItemList<RTSystemItem>& items)
 {
@@ -1358,38 +1368,12 @@ void RTSDiagramViewImpl::onTime()
     }
 
     if(doConnectionCheck){
-        bool modified = currentRTSItem->checkStatus();
-        //bool modified = false;
-        //for(auto it = rtsComps.begin(); it != rtsComps.end(); it++){
-        //    if(!currentRTSItem->compIsAlive(it->second->rtsComp)){
-        //        if(!it->second->effect->isEnabled()){
-        //            // it->second->effect->setEnabled(true);
-        //            modified = true;
-        //        } else {
-        //            //The following code is disabled to keep management of non-live RTCs
-        //            //deleteRTSComp(it->second);
-        //        }
-        //    } else {
-        //        if (it->second->effect->isEnabled()){
-        //            //  it->second->effect->setEnabled(false);
-        //            modified = true;
-        //        }
-        //    }
-        //}
-
-        //if(currentRTSItem->connectionCheck()){
-        //    modified = true;
-        //}
-
-        //DDEBUG_V("checkStatus End : %d", modified);
-        if(modified){
+        if(currentRTSItem->checkStatus()){
             updateView();
         }
     }
 
-    for(auto it = rtsComps.begin();it != rtsComps.end(); it++){
-        it->second->stateCheck();
-    }
+    checkStatus();
 }
 
 
@@ -1404,6 +1388,12 @@ void RTSDiagramViewImpl::setCurrentRTSItem(RTSystemItem* item)
     updateView();
 }
 
+
+void RTSDiagramViewImpl::checkStatus() {
+    for(auto it = rtsComps.begin();it != rtsComps.end(); it++){
+        it->second->stateCheck();
+    }
+}
 
 void RTSDiagramViewImpl::updateView()
 {
@@ -1456,12 +1446,8 @@ void RTSDiagramViewImpl::updateSetting()
 
     MappingPtr appVars = AppConfig::archive()->openMapping("OpenRTM");
     int pPeriod = appVars->get("pollingCycle", 500);
-    if (pollingPeriod != pPeriod){
-        timer.stop();
-        timer.setInterval(pPeriod);
-        pPeriod = pollingPeriod;
-        timer.start();
-    }
+    timerPeriodUpdate(pPeriod);
+    pPeriod = pollingPeriod;
 }
 
 
@@ -1654,6 +1640,11 @@ void RTSDiagramView::updateView()
     impl->updateView();
 }
 
+void RTSDiagramView::checkStatus()
+{
+    impl->checkStatus();
+}
+
 void RTSDiagramView::updateRestoredView()
 {
     impl->updateRestoredView();
@@ -1667,6 +1658,11 @@ void RTSDiagramView::updateSetting()
 void RTSDiagramView::timerActivated(bool on)
 {
     impl->onActivated(on);
+}
+
+void RTSDiagramView::setTimerPeriod(int value)
+{
+    impl->timerPeriodUpdate(value);
 }
 
 bool RTSDiagramView::storeState(Archive& archive)
