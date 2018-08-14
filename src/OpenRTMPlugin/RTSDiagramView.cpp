@@ -34,6 +34,7 @@ using namespace std::placeholders;
 using namespace RTC;
 
 #define STATE_CHECK_TIME 1000  //msec
+#define OPACITY 0.5
 
 namespace {
 
@@ -316,7 +317,7 @@ RTSConnectionGItem::RTSConnectionGItem
     : rtsConnection(rtsConnection), _sIsLeft(sIsLeft), _tIsLeft(tIsLeft)
 {
     effect = new QGraphicsOpacityEffect;
-    effect->setOpacity(0.3);
+    effect->setOpacity(OPACITY);
     setGraphicsEffect(effect);
 
     if(rtsConnection->isAlive()){
@@ -1524,7 +1525,7 @@ RTSCompGItem::RTSCompGItem(RTSComp* rtsComp, RTSDiagramViewImpl* impl, const QPo
 {
     DDEBUG("RTSCompGItem::RTSCompGItem(RTSComp");
     effect = new QGraphicsOpacityEffect;
-    effect->setOpacity(0.3);
+    effect->setOpacity(OPACITY);
     setGraphicsEffect(effect);
     if(rtsComp->rtc_){
         rtsComp->isAlive_ = true;
@@ -1563,6 +1564,7 @@ void RTSCompGItem::create(const QPointF& pos)
     int rectX = (text->boundingRect().width() / 2 - 50 / 2) - 5;
     rect->setPos(rectX + pos.x(), pos.y());
     rect->setPen(QPen(QColor("darkgray")));
+    rect->setBrush(QBrush(QColor("black")));
     addToGroup(rect);
     setFlags(QGraphicsItem::ItemIsMovable | QGraphicsItem::ItemIsSelectable | QGraphicsItem::ItemSendsScenePositionChanges);
 
