@@ -12,9 +12,7 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
-using boost::optional;
 
 namespace {
 
@@ -171,9 +169,11 @@ void WaistBalancer::setBoundarySmoother(int type, double smoothingTime)
 {
     boundarySmootherType_ = type;
     if(type == CUBIC_SMOOTHER){
-        boundarySmootherFunction = std::bind(&WaistBalancer::applyCubicBoundarySmoother, this, _1, _2);
+        boundarySmootherFunction =
+            [&](int begin, int direction){ applyCubicBoundarySmoother(begin, direction); };
     } else if(type == QUINTIC_SMOOTHER){
-        boundarySmootherFunction = std::bind(&WaistBalancer::applyQuinticBoundarySmoother, this, _1, _2);
+        boundarySmootherFunction =
+            [&](int begin, int direction){ applyQuinticBoundarySmoother(begin, direction); };
     } else {
         boundarySmootherType_ = NO_SMOOTHER;
     }
@@ -421,7 +421,7 @@ bool WaistBalancer::calcWaistTranslationWithCmAboveZmp
         provider->getJointPositions(jointPositions);
         for(int j=0; j < n; ++j){
             Link* joint = body_->joint(j);
-            const optional<double>& q = jointPositions[j];
+            const boost::optional<double>& q = jointPositions[j];
             joint->q() = q ? *q : 0.0;
         }
         fkTraverse.calcForwardKinematics(true);
@@ -463,7 +463,7 @@ void WaistBalancer::initBodyKinematics(int frame, const Vector3& cmTranslation)
     provider->getJointPositions(jointPositions);
     for(int i=0; i < n; ++i){
         Link* joint = body_->joint(i);
-        const optional<double>& q = jointPositions[i];
+        const boost::optional<double>& q = jointPositions[i];
         joint->q() = q ? *q : 0.0;
         joint->dq() = 0.0;
     }
@@ -551,7 +551,7 @@ bool WaistBalancer::updateBodyKinematics1(int frame)
             provider->getJointPositions(jointPositions);
             for(int i=0; i < n; ++i){
                 Link* joint = body_->joint(i);
-                const optional<double>& q = jointPositions[i];
+                const boost::optional<double>& q = jointPositions[i];
                 if(q){
                     joint->dq() = (*q - joint->q()) / dt;
                 } else {
@@ -573,7 +573,7 @@ void WaistBalancer::updateBodyKinematics2()
     provider->getJointPositions(jointPositions);
     for(int i=0; i < n; ++i){
         Link* joint = body_->joint(i);
-        const optional<double>& q = jointPositions[i];
+        const boost::optional<double>& q = jointPositions[i];
         if(q){
             joint->q() = *q;
         }

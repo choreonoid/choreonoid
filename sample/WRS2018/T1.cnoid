@@ -344,11 +344,11 @@ items:
                 isEditable: false
             - 
               id: 17
-              name: "Smoke"
+              name: "Smoke1"
               plugin: Body
               class: BodyItem
               data: 
-                modelFile: "${PROJECT_DIR}/T1-Smoke.body"
+                modelFile: "${SHARE}/model/WRS2018/Smoke1.body"
                 currentBaseLink: "Base"
                 rootPosition: [ 9, 0, 0 ]
                 rootAttitude: [ 
@@ -367,11 +367,11 @@ items:
                 isEditable: false
             - 
               id: 18
-              name: "Smoke"
+              name: "Smoke1"
               plugin: Body
               class: BodyItem
               data: 
-                modelFile: "${PROJECT_DIR}/T1-Smoke.body"
+                modelFile: "${SHARE}/model/WRS2018/Smoke1.body"
                 currentBaseLink: "Base"
                 rootPosition: [ 27, 0, 0 ]
                 rootAttitude: [ 

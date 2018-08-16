@@ -8,6 +8,10 @@ set(include_dirs
   ${Qt5Network_INCLUDE_DIRS}
   )
 
+if(ENABLE_PYTHON AND USE_PYBIND11)
+  list(APPEND include_dirs ${PYBIND11_DIR}/include ${PYTHON_INCLUDE_PATH})
+endif()
+
 list(REMOVE_DUPLICATES include_dirs)
 
 set(library_dirs ${CNOID_DIR}/lib ${CNOID_DIR}/${CNOID_PLUGIN_SUBDIR})

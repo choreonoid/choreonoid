@@ -1,6 +1,7 @@
 # @author Shin'ichiro Nakaoka
 
 set(headers
+  PyBase.h
   PyItemList.h
   PyQString.h
   exportdecl.h

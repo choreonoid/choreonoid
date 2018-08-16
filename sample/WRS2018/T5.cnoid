@@ -346,11 +346,11 @@ items:
                 isEditable: true
             - 
               id: 17
-              name: "Fire"
+              name: "Fire1"
               plugin: Body
               class: BodyItem
               data: 
-                modelFile: "${PROJECT_DIR}/T5-Fire.body"
+                modelFile: "${SHARE}/model/WRS2018/Fire1.body"
                 currentBaseLink: "Base"
                 rootPosition: [ 15, -1, 0.2 ]
                 rootAttitude: [ 

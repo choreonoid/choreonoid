@@ -30,22 +30,31 @@ set(CNOID_DIR ${CMAKE_INSTALL_PREFIX})
 set(CNOID_SUBDIR choreonoid-${CNOID_VERSION})
 set(CNOID_PLUGIN_SUBDIR lib/${CNOID_SUBDIR})
 
+set(CMAKE_CXX_STANDARD 11)
+#set(CMAKE_CXX_EXTENSIONS OFF)
+
 if(UNIX)
-  set(cpp_standard "-std=c++11")
   include(CheckCXXCompilerFlag OPTIONAL RESULT_VARIABLE included)
   if(included)
-    check_cxx_compiler_flag("-std=c++14" has_cpp14)
-    if(has_cpp14)
-      set(cpp_standard "-std=c++14")
-    endif()
-  endif()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${cpp_standard}")
+    # For Ubuntu 16.04, alghouth the c++17 option is available,
+    # CMake gets an error when 17 is set to CMAKE_CXX_STANDARD.
+    # Therefore c++17 is currently disabled.
+    #check_cxx_compiler_flag("-std=c++17" has_cpp17)
 
+    check_cxx_compiler_flag("-std=c++14" has_cpp14)
+  endif()
+  if(has_cpp17)
+    set(CMAKE_CXX_STANDARD 17)
+  elseif(has_cpp14)
+    set(CMAKE_CXX_STANDARD 14)
+  endif()
+  if(CMAKE_VERSION VERSION_LESS "3.1.0")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++${CMAKE_CXX_STANDARD}")
+  endif()
   if(CMAKE_COMPILER_IS_GNUCC)
     # To allow for reloading a controller shared library
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --no-gnu-unique")
   endif()
-  
   add_definitions("-pthread")
 endif()
 
@@ -1249,20 +1258,6 @@ if(ENABLE_PYTHON)
       LIBRARY DESTINATION ${CNOID_PYTHON_SUBDIR}/cnoid CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
   endfunction()
 
-  function(apply_common_setting_for_python_module target)
-    set(headers ${ARGV1})
-    apply_common_setting_for_target(${target} "${headers}")
-    if(INSTALL_SDK)
-      if(MSVC)
-	install(TARGETS ${target}
-	  ARCHIVE DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
-      endif()
-      if(headers)
-	file(RELATIVE_PATH rel_src_dir ${PROJECT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
-	install(FILES ${headers} DESTINATION ${CNOID_HEADER_SUBDIR}/cnoid/${rel_src_dir})
-      endif()
-    endif()
-  endfunction()
 endif()
 
 

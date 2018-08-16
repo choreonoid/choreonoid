@@ -241,7 +241,6 @@ public:
     double actualSimulationTime;
     double finishTime;
     MessageView* mv;
-    ostream& os;
 
     bool doReset;
     bool isWaitingForSimulationToStop;
@@ -1076,8 +1075,7 @@ SimulatorItemImpl::SimulatorItemImpl(SimulatorItem* self)
       postDynamicsFunctions(this),
       recordingMode(SimulatorItem::N_RECORDING_MODES, CNOID_GETTEXT_DOMAIN_NAME),
       timeRangeMode(SimulatorItem::N_TIME_RANGE_MODES, CNOID_GETTEXT_DOMAIN_NAME),
-      mv(MessageView::instance()),
-      os(mv->cout())
+      mv(MessageView::instance())
 {
     worldItem = nullptr;
     
@@ -1447,7 +1445,8 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
     stopSimulation(true);
 
     if(!worldItem){
-        os << (fmt(_("%1% must be in a WorldItem to do simulation.")) % self->name()) << endl;
+        mv->putln(MessageView::ERROR,
+                  format(_("%1% must be in a WorldItem to do simulation.")) % self->name());
         return false;
     }
 
@@ -1563,14 +1562,15 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
             SubSimulatorItem* item = *p;
             bool initialized = false;
             if(item->isEnabled()){
-                os << (fmt(_("SubSimulatorItem \"%1%\" has been detected.")) % item->name()) << endl;
+                mv->putln(format(_("SubSimulatorItem \"%1%\" has been detected.")) % item->name());
                 if(item->initializeSimulation(self)){
                     initialized = true;
                 } else {
-                    os << (fmt(_("The initialization of \"%1%\" failed.")) % item->name()) << endl;
+                    mv->putln(MessageView::WARNING,
+                              format(_("The initialization of \"%1%\" failed.")) % item->name());
                 }
             } else {
-                os << (fmt(_("SubSimulatorItem \"%1%\" is disabled.")) % item->name()) << endl;
+                mv->putln(format(_("SubSimulatorItem \"%1%\" is disabled.")) % item->name());
             }
             if(initialized){
                 ++p;
@@ -1591,14 +1591,15 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
                 if(body){
                     ready = controller->start();
                     if(!ready){
-                        os << (fmt(_("%1% for %2% failed to initialize."))
-                               % controller->name() % simBodyImpl->bodyItem->name()) << endl;
+                        mv->putln(MessageView::WARNING,
+                                  format(_("%1% for %2% failed to start."))
+                                  % controller->name() % simBodyImpl->bodyItem->name());
                     }
                 } else {
                     ready = controller->start();
                     if(!ready){
-                        os << (fmt(_("%1% failed to initialize."))
-                               % controller->name()) << endl;
+                        mv->putln(MessageView::WARNING,
+                                  format(_("%1% failed to start.")) % controller->name());
                     }
                 }
                 if(ready){
@@ -1607,7 +1608,7 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
                     controller->setSimulatorItem(0);
                     string message = controller->getMessage();
                     if(!message.empty()){
-                        os << message << endl;
+                        mv->putln(message);
                     }
                     iter = controllers.erase(iter);
                 }
@@ -1638,8 +1639,9 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
             if(worldLogFileItem->logFileName().empty()){
                 worldLogFileItem = 0;
             } else {
-                os << (fmt(_("WorldLogFileItem \"%1%\" has been detected. A simulation result is recoreded to \"%2%\"."))
-                       % worldLogFileItem->name() % worldLogFileItem->logFileName()) << endl;
+                mv->putln(format(_("WorldLogFileItem \"%1%\" has been detected. "
+                                   "A simulation result is recoreded to \"%2%\"."))
+                          % worldLogFileItem->name() % worldLogFileItem->logFileName());
 
                 worldLogFileItem->clearOutput();
                 worldLogFileItem->beginHeaderOutput();

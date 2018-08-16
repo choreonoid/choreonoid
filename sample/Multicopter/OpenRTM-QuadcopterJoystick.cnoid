@@ -18,11 +18,11 @@ items:
       children: 
         - 
           id: 2
-          name: "Multicopter"
+          name: "quadcopter"
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/multicopter/multicopter.body"
+            modelFile: "${SHARE}/model/multicopter/quadcopter.body"
             currentBaseLink: "BODY"
             rootPosition: [ 0, 0, 0.2 ]
             rootAttitude: [ 

@@ -1,7 +1,7 @@
 format: ChoreonoidBody
 formatVersion: 1.0
 angleUnit: degree
-name: Multicopter
+name: Quadcopter
 
 MultiCopterTargetBody:
   cutoffDistance: -1

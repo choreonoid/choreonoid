@@ -102,6 +102,7 @@ public:
     void updateInputEnabledDevices();
     SimpleController* initialize(ControllerIO* io, SharedInfo* info);
     void updateIOStateTypes();
+    bool start();
     void input();
     void onInputDeviceStateChanged(int deviceIndex);
     void onOutputDeviceStateChanged(int deviceIndex);
@@ -316,13 +317,16 @@ bool SimpleControllerItemImpl::loadController()
 
     controller = factory();
     if(!controller){
-        mv->putln(MessageView::ERROR, _("The factory failed to create a controller instance."));
+        mv->putln(MessageView::ERROR,
+                  format(_("The controller factory of %1% failed to create a controller instance."))
+                  % self->name());
         unloadController();
         return false;
     }
 
     if(!controller->configure(&config)){
-        mv->putln(MessageView::ERROR, _("Failed to configure the controller"));
+        mv->putln(MessageView::ERROR,
+                  format(_("%1% failed to configure the controller")) % self->name());
         return false;
     }
 
@@ -442,8 +446,8 @@ SimpleController* SimpleControllerItemImpl::initialize(ControllerIO* io, SharedI
         return nullptr;
     }
 
-    for(Item* child = self->childItem(); child; child = child->nextItem()){
-        SimpleControllerItem* childControllerItem = dynamic_cast<SimpleControllerItem*>(child);
+    for(Item* child = self->childItem(); child; child = child->nextItem()){ 
+       SimpleControllerItem* childControllerItem = dynamic_cast<SimpleControllerItem*>(child);
         if(childControllerItem){
             SimpleController* childController = childControllerItem->impl->initialize(io, sharedInfo);
             if(childController){
@@ -692,19 +696,27 @@ void SimpleControllerItemImpl::setImmediateMode(bool on)
 
 bool SimpleControllerItem::start()
 {
+    return impl->start();
+}
+
+
+bool SimpleControllerItemImpl::start()
+{
     bool result = true;
-    if(!impl->controller->start()){
+    if(!controller->start()){
+        mv->putln(MessageView::WARNING,
+                  format(_("%1% failed to start")) % self->name());
         result = false;
     } else {
-        for(size_t i=0; i < impl->childControllerItems.size(); ++i){
-            if(!impl->childControllerItems[i]->start()){
+        for(auto& childController : childControllerItems){
+            if(!childController->start()){
                 result = false;
                 break;
             }
         }
     }
     if(!result){
-        impl->sharedInfo.reset();
+        sharedInfo.reset();
     }
     return result;
 }
