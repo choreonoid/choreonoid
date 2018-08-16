@@ -3,13 +3,20 @@ from cnoid.Base import *
 from cnoid.BodyPlugin import *
 
 try:
+    from cnoid.MulticopterPlugin import *
+except:
+    pass
+
+try:
     from cnoid.OpenRTMPlugin import *
 except:
     pass
+
 try:
     from cnoid.AGXDynamicsPlugin import *
 except:
     pass
+
 try:
     from cnoid.ROSPlugin import *
 except:
@@ -17,7 +24,7 @@ except:
 
 def loadProject(
     worldProject, simulatorProjects, robotProject,
-    enableVisionSimulator = False, targetVisionSensors = "", remoteType = ""):
+    enableMulticopterSimulation = False, enableVisionSimulation = False, targetVisionSensors = "", remoteType = ""):
 
     directory = os.path.dirname(os.path.realpath(__file__))
     
@@ -31,6 +38,12 @@ def loadProject(
         simulatorProjects = [ simulatorProjects ]
     for project in simulatorProjects:
         pm.loadProject(os.path.join(directory, project + ".cnoid"), world)
+
+    # select only the first simulator item
+    itv = ItemTreeView.instance
+    selectedSimulatorItems = SimulatorItemList(itv.getSelectedItems())
+    for i in range(1, len(selectedSimulatorItems)):
+        itv.selectItem(selectedSimulatorItems[i], False)
 
     robot = pm.loadProject(os.path.join(directory, robotProject + ".cnoid"), world)[0]
 
@@ -53,7 +66,13 @@ def loadProject(
             bodyPublisher.name = "BodyPublisher"
             robot.addChildItem(bodyPublisher)
 
-    if enableVisionSimulator:
+    if enableMulticopterSimulation:
+        multicopterSimulator = MulticopterSimulatorItem()
+        simulators = world.getDescendantItems(SimulatorItem)
+        for simulator in simulators:
+            simulator.addChildItem(multicopterSimulator.duplicate())
+
+    if enableVisionSimulation:
         visionSimulator = GLVisionSimulatorItem()
         visionSimulator.setTargetSensors(targetVisionSensors)
         simulators = world.getDescendantItems(SimulatorItem)
