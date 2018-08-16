@@ -44,6 +44,7 @@ links:
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
     jointId: 26
+    jointRange: [ -90, 90 ]
     centerOfMass: [ 0, 0, -0.1 ]
     mass: 6.0
     inertia: [
@@ -62,6 +63,7 @@ links:
     jointType: revolute
     jointAxis: [ 1, 0, 0 ]
     jointId: 27
+    jointRange: [ -60, 60 ]
     childLinks: [ CHEST ]
     centerOfMass: [ 0.11, 0, 0.25 ]
     mass: 30.0
@@ -91,6 +93,7 @@ links:
     parent: WAIST_R
     jointType: revolute
     jointId: 28
+    jointRange: [ -90, 90 ]
     translation: [ 0, 0, 0.35 ]
     centerOfMass: [ 0, 0, 0 ]
     mass: 13.0
@@ -161,6 +164,7 @@ links:
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
     jointId: 19
+    jointRange: [ -180, 180 ]
     translation: [ 0, 0.21, 0 ]
     centerOfMass: [ 0.1, 0, 0 ]
     mass: 3.0
@@ -180,6 +184,7 @@ links:
     jointType: revolute
     jointAxis: [ 1, 0, 0 ]
     jointId: 20
+    jointRange: [ -45, 180 ]
     centerOfMass: [ 0, 0, -0.1 ]
     mass: 0.6
     inertia: [
@@ -208,6 +213,7 @@ links:
     parent: LARM_SHOULDER_R
     jointType: revolute
     jointId: 21
+    jointRange: [ -90, 90 ]
     translation: [ 0, 0, -0.263 ]
     centerOfMass: [ 0, 0, 0 ]
     mass: 1.0
@@ -228,6 +234,7 @@ links:
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
     jointId: 22
+    jointRange: [ -150, 0 ]
     centerOfMass: [ 0, 0, -0.3 ]
     mass: 0.6
     inertia: [
@@ -254,6 +261,7 @@ links:
     jointType: revolute
     jointAxis: [ 0, 0, 1 ]
     jointId: 23
+    jointRange: [ -90, 90 ]
     translation: [ 0, 0, -0.247 ]
     centerOfMass: [ 0, 0, 0.1 ]
     mass: 0.4
@@ -274,6 +282,7 @@ links:
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
     jointId:  24
+    jointRange: [ -90, 90 ]
     centerOfMass: [ -0.1, 0, 0 ]
     mass: 0.4
     inertia: [
@@ -289,6 +298,7 @@ links:
     jointType: revolute
     jointAxis: [ 1, 0, 0 ]
     jointId:  25
+    jointRange: [ -90, 90 ]
     centerOfMass: [ 0, 0, -0.1 ]
     mass: 0.4
     inertia: [
@@ -319,6 +329,7 @@ links:
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
     jointId: 6
+    jointRange: [ -180, 180 ]
     translation: [ 0, -0.21, 0 ]
     centerOfMass: [ 0.1, 0, 0 ]
     mass: 3.0
@@ -336,6 +347,7 @@ links:
     jointType: revolute
     jointAxis: [ 1, 0, 0 ]
     jointId: 7
+    jointRange: [ -180, 45 ]
     centerOfMass: [ 0, 0, -0.1 ]
     mass: 0.6
     inertia: [
@@ -348,6 +360,7 @@ links:
     parent: RARM_SHOULDER_R
     jointType: revolute
     jointId:  8
+    jointRange: [ -90, 90 ]
     translation: [ 0, 0, -0.263 ]
     centerOfMass: [ 0, 0, 0 ]
     mass: 1.0
@@ -362,6 +375,7 @@ links:
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
     jointId: 9
+    jointRange: [ -150, 0 ]
     centerOfMass: [ 0, 0, -0.3 ]
     mass: 0.6
     inertia: [
@@ -375,6 +389,7 @@ links:
     jointType: revolute
     jointAxis: [ 0, 0, 1 ]
     jointId:  10
+    jointRange: [ -90, 90 ]
     translation: [ 0, 0, -0.247 ]
     centerOfMass: [ 0, 0, 0.1 ]
     mass: 0.4
@@ -389,6 +404,7 @@ links:
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
     jointId:  11
+    jointRange: [ -90, 90 ]
     centerOfMass: [ -0.1, 0, 0 ]
     mass: 0.4
     inertia: [
@@ -402,6 +418,7 @@ links:
     jointType: revolute
     jointAxis: [ 1, 0, 0 ]
     jointId:  12
+    jointRange: [ -90, 90 ]
     centerOfMass: [ 0, 0, -0.1 ]
     mass: 0.4
     inertia: [
@@ -416,6 +433,7 @@ links:
     jointType: revolute
     jointAxis: [ 1, 0, 0 ]
     jointId: 13
+    jointRange: [ -45, 45 ]
     translation: [ 0, 0.09, 0 ]
     centerOfMass: [ 0, 0.1, 0 ]
     mass: 2.5
@@ -435,6 +453,7 @@ links:
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
     jointId: 14
+    jointRange: [ -90, 90 ]
     centerOfMass: 0 0 -0.15
     mass: 2.0
     inertia: [
@@ -449,6 +468,7 @@ links:
     parent: LLEG_HIP_P
     jointType: revolute
     jointId: 15
+    jointRange: [ -60, 60 ]
     translation: [ 0, 0, -0.3535 ]
     centerOfMass: [ 0, 0.04, 0 ]
     mass: 5.1
@@ -480,6 +500,7 @@ links:
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
     jointId: 16
+    jointRange: [ 0, 90 ]
     centerOfMass: [ 0, 0, -0.3 ]
     mass: 7.0
     inertia: [
@@ -506,6 +527,7 @@ links:
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
     jointId: 17
+    jointRange: [ -45, 45 ]
     translation: [ 0, 0, -0.3 ]
     centerOfMass: [ -0.15, 0, 0 ]
     mass: 2.5
@@ -522,6 +544,7 @@ links:
     jointType: revolute
     jointAxis: [ 1, 0, 0 ]
     jointId: 18
+    jointRange: [ -45, 45 ]
     centerOfMass: [ 0.28, 0, -0.2 ]
     mass: 1.9
     inertia: [
@@ -560,6 +583,7 @@ links:
     jointType: revolute
     jointAxis: [ 1, 0, 0 ]
     jointId: 0
+    jointRange: [ -45, 45 ]
     translation: [ 0, -0.09, 0 ]
     centerOfMass: [ 0, -0.1, 0 ]
     mass: 2.5
@@ -574,6 +598,7 @@ links:
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
     jointId: 1
+    jointRange: [ -90, 90 ]
     centerOfMass: 0 0 -0.15
     mass: 2.0
     inertia: [
@@ -586,6 +611,7 @@ links:
     parent: RLEG_HIP_P
     jointType: revolute
     jointId: 2
+    jointRange: [ -60, 60 ]
     translation: [ 0, 0, -0.3535 ]
     centerOfMass: [ 0, -0.04, 0 ]
     mass: 5.1
@@ -600,6 +626,7 @@ links:
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
     jointId: 3
+    jointRange: [ 0, 90 ]
     centerOfMass: [ 0, 0, -0.3 ]
     mass: 7.0
     inertia: [
@@ -613,6 +640,7 @@ links:
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
     jointId: 4
+    jointRange: [ -45, 45 ]
     translation: [ 0, 0, -0.3 ]
     centerOfMass: [ -0.15, 0, 0 ]
     mass: 2.5
@@ -627,6 +655,7 @@ links:
     jointType: revolute
     jointAxis: [ 1, 0, 0 ]
     jointId: 5
+    jointRange: [ -45, 45 ]
     centerOfMass: [ 0.28, 0, -0.2 ]
     mass: 1.9
     inertia: [
