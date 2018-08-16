@@ -49,7 +49,7 @@ items:
               data: 
                 isNoDelayMode: true
                 controllerOptions: ""
-                module: "MulticopterIoRTC.so"
+                module: "QuadcopterIoRTC.so"
                 baseDirectory: "RTC directory"
                 instanceName: ""
                 periodicRate: 0
@@ -61,7 +61,7 @@ items:
               data: 
                 isNoDelayMode: true
                 controllerOptions: ""
-                module: "MulticopterControllerRTC.so"
+                module: "QuadcopterControllerRTC.so"
                 baseDirectory: "RTC directory"
                 instanceName: ""
                 executionContext: "ChoreonoidExecutionContext"
@@ -74,11 +74,11 @@ items:
               data: 
                 isNoDelayMode: true
                 controllerOptions: ""
-                moduleName: "MulticopterControllerRTC.so"
-                confFileName: "${PROJECT_DIR}/MulticopterVisionSensors_Noconnection.conf"
+                moduleName: "QuadcopterControllerRTC.so"
+                confFileName: "${PROJECT_DIR}/QuadcopterVisionSensors_Noconnection.conf"
                 configurationMode: "Use Configuration File"
                 AutoConnect: false
-                InstanceName: "Multicopter"
+                InstanceName: "Quadcopter"
                 bodyPeriodicRate: 0
                 baseDirectory: "RTC directory"
             - 
@@ -145,57 +145,57 @@ items:
                     name: JoystickRTC.buttons
                     isServicePort: false
               - 
-                name: Multicopter
+                name: Quadcopter
                 pos: [ -557, -150 ]
                 OutPorts: 
                   - 
-                    name: Multicopter.cameraImage
+                    name: Quadcopter.cameraImage
                     isServicePort: false
               - 
-                name: Multicopter-MulticopterIoRTC
+                name: Quadcopter-QuadcopterIoRTC
                 pos: [ -298, -373 ]
                 InPorts: 
                   - 
-                    name: Multicopter-MulticopterIoRTC.force
+                    name: Quadcopter-QuadcopterIoRTC.force
                     isServicePort: false
                   - 
-                    name: Multicopter-MulticopterIoRTC.torque
+                    name: Quadcopter-QuadcopterIoRTC.torque
                     isServicePort: false
                   - 
-                    name: Multicopter-MulticopterIoRTC.u
+                    name: Quadcopter-QuadcopterIoRTC.u
                     isServicePort: false
                 OutPorts: 
                   - 
-                    name: Multicopter-MulticopterIoRTC.q
+                    name: Quadcopter-QuadcopterIoRTC.q
                     isServicePort: false
                   - 
-                    name: Multicopter-MulticopterIoRTC.zrpy
+                    name: Quadcopter-QuadcopterIoRTC.zrpy
                     isServicePort: false
               - 
-                name: MulticopterControllerRTC
+                name: QuadcopterControllerRTC
                 pos: [ -464, -373 ]
                 InPorts: 
                   - 
-                    name: MulticopterControllerRTC.axes
+                    name: QuadcopterControllerRTC.axes
                     isServicePort: false
                   - 
-                    name: MulticopterControllerRTC.buttons
+                    name: QuadcopterControllerRTC.buttons
                     isServicePort: false
                   - 
-                    name: MulticopterControllerRTC.q
+                    name: QuadcopterControllerRTC.q
                     isServicePort: false
                   - 
-                    name: MulticopterControllerRTC.zrpy
+                    name: QuadcopterControllerRTC.zrpy
                     isServicePort: false
                 OutPorts: 
                   - 
-                    name: MulticopterControllerRTC.force
+                    name: QuadcopterControllerRTC.force
                     isServicePort: false
                   - 
-                    name: MulticopterControllerRTC.torque
+                    name: QuadcopterControllerRTC.torque
                     isServicePort: false
                   - 
-                    name: MulticopterControllerRTC.u
+                    name: QuadcopterControllerRTC.u
                     isServicePort: false
               - 
                 name: VisionSensorSample
@@ -215,74 +215,74 @@ items:
                     isServicePort: false
             RTSConnections: 
               - 
-                name: Multicopter.cameraImage_VisionSensorSample.cameraImage
-                sourceRtcName: Multicopter
-                sourcePortName: Multicopter.cameraImage
+                name: Quadcopter.cameraImage_VisionSensorSample.cameraImage
+                sourceRtcName: Quadcopter
+                sourcePortName: Quadcopter.cameraImage
                 targetRtcName: VisionSensorSample
                 targetPortName: VisionSensorSample.cameraImage
                 dataflow: push
                 subscription: flush
                 position: [ -478, -131, -473, -131, -370, -131, -370, -131, -267, -131, -262, -131 ]
               - 
-                name: Multicopter-MulticopterIoRTC.zrpy_MulticopterControllerRTC.zrpy
-                sourceRtcName: Multicopter-MulticopterIoRTC
-                sourcePortName: Multicopter-MulticopterIoRTC.zrpy
-                targetRtcName: MulticopterControllerRTC
-                targetPortName: MulticopterControllerRTC.zrpy
+                name: Quadcopter-QuadcopterIoRTC.zrpy_QuadcopterControllerRTC.zrpy
+                sourceRtcName: Quadcopter-QuadcopterIoRTC
+                sourcePortName: Quadcopter-QuadcopterIoRTC.zrpy
+                targetRtcName: QuadcopterControllerRTC
+                targetPortName: QuadcopterControllerRTC.zrpy
                 dataflow: push
                 subscription: flush
                 position: [ -158, -318, -108, -318, -108, -233, -415, -233, -415, -300, -397, -300 ]
               - 
-                name: MulticopterControllerRTC.u_Multicopter-MulticopterIoRTC.u
-                sourceRtcName: MulticopterControllerRTC
-                sourcePortName: MulticopterControllerRTC.u
-                targetRtcName: Multicopter-MulticopterIoRTC
-                targetPortName: Multicopter-MulticopterIoRTC.u
+                name: QuadcopterControllerRTC.u_Quadcopter-QuadcopterIoRTC.u
+                sourceRtcName: QuadcopterControllerRTC
+                sourcePortName: QuadcopterControllerRTC.u
+                targetRtcName: Quadcopter-QuadcopterIoRTC
+                targetPortName: Quadcopter-QuadcopterIoRTC.u
                 dataflow: push
                 subscription: flush
                 position: [ -337, -318, -332, -318, -278.5, -318, -278.5, -318, -223, -318, -218, -318 ]
               - 
-                name: JoystickRTC.axes_MulticopterControllerRTC.axes
+                name: JoystickRTC.axes_QuadcopterControllerRTC.axes
                 sourceRtcName: JoystickRTC
                 sourcePortName: JoystickRTC.axes
-                targetRtcName: MulticopterControllerRTC
-                targetPortName: MulticopterControllerRTC.axes
+                targetRtcName: QuadcopterControllerRTC
+                targetPortName: QuadcopterControllerRTC.axes
                 dataflow: push
                 subscription: flush
                 position: [ -522, -312, -517, -312, -459.5, -312, -459.5, -354, -402, -354, -397, -354 ]
               - 
-                name: MulticopterControllerRTC.buttons_JoystickRTC.buttons
-                sourceRtcName: MulticopterControllerRTC
-                sourcePortName: MulticopterControllerRTC.buttons
+                name: QuadcopterControllerRTC.buttons_JoystickRTC.buttons
+                sourceRtcName: QuadcopterControllerRTC
+                sourcePortName: QuadcopterControllerRTC.buttons
                 targetRtcName: JoystickRTC
                 targetPortName: JoystickRTC.buttons
                 dataflow: push
                 subscription: flush
                 position: [ -397, -336, -402, -336, -451, -336, -451, -294, -517, -294, -522, -294 ]
               - 
-                name: MulticopterControllerRTC.force_Multicopter-MulticopterIoRTC.force
-                sourceRtcName: MulticopterControllerRTC
-                sourcePortName: MulticopterControllerRTC.force
-                targetRtcName: Multicopter-MulticopterIoRTC
-                targetPortName: Multicopter-MulticopterIoRTC.force
+                name: QuadcopterControllerRTC.force_Quadcopter-QuadcopterIoRTC.force
+                sourceRtcName: QuadcopterControllerRTC
+                sourcePortName: QuadcopterControllerRTC.force
+                targetRtcName: Quadcopter-QuadcopterIoRTC
+                targetPortName: Quadcopter-QuadcopterIoRTC.force
                 dataflow: push
                 subscription: flush
                 position: [ -337, -354, -332, -354, -278.5, -354, -278.5, -354, -223, -354, -218, -354 ]
               - 
-                name: Multicopter-MulticopterIoRTC.torque_MulticopterControllerRTC.torque
-                sourceRtcName: Multicopter-MulticopterIoRTC
-                sourcePortName: Multicopter-MulticopterIoRTC.torque
-                targetRtcName: MulticopterControllerRTC
-                targetPortName: MulticopterControllerRTC.torque
+                name: Quadcopter-QuadcopterIoRTC.torque_QuadcopterControllerRTC.torque
+                sourceRtcName: Quadcopter-QuadcopterIoRTC
+                sourcePortName: Quadcopter-QuadcopterIoRTC.torque
+                targetRtcName: QuadcopterControllerRTC
+                targetPortName: QuadcopterControllerRTC.torque
                 dataflow: push
                 subscription: flush
                 position: [ -218, -336, -223, -336, -278.5, -336, -278.5, -336, -332, -336, -337, -336 ]
               - 
-                name: Multicopter-MulticopterIoRTC.q_MulticopterControllerRTC.q
-                sourceRtcName: Multicopter-MulticopterIoRTC
-                sourcePortName: Multicopter-MulticopterIoRTC.q
-                targetRtcName: MulticopterControllerRTC
-                targetPortName: MulticopterControllerRTC.q
+                name: Quadcopter-QuadcopterIoRTC.q_QuadcopterControllerRTC.q
+                sourceRtcName: Quadcopter-QuadcopterIoRTC
+                sourcePortName: Quadcopter-QuadcopterIoRTC.q
+                targetRtcName: QuadcopterControllerRTC
+                targetPortName: QuadcopterControllerRTC.q
                 dataflow: push
                 subscription: flush
                 position: [ -158, -336, -72, -336, -72, -205, -443, -205, -443, -318, -397, -318 ]
@@ -336,9 +336,9 @@ items:
                 enableAdditionalLights: true
             - 
               id: 11
-              name: "MulticopterSimulator"
-              plugin: Multicopter
-              class: MulticopterSimulatorItem
+              name: "QuadcopterSimulator"
+              plugin: Quadcopter
+              class: QuadcopterSimulatorItem
               data: 
                 enabled: true
                 Fluid Density[kg/m^3]: 1.293
@@ -393,9 +393,9 @@ items:
                 enableAdditionalLights: true
             - 
               id: 14
-              name: "MulticopterSimulator"
-              plugin: Multicopter
-              class: MulticopterSimulatorItem
+              name: "QuadcopterSimulator"
+              plugin: Quadcopter
+              class: QuadcopterSimulatorItem
               data: 
                 enabled: true
                 Fluid Density[kg/m^3]: 1.293

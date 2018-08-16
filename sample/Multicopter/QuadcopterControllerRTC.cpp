@@ -3,7 +3,7 @@
 */
 
 
-#include "MulticopterControllerRTC.h"
+#include "QuadcopterControllerRTC.h"
 #include <cnoid/Joystick>
 #include <cmath>
 
@@ -36,8 +36,8 @@ const double RATE[] = { -1.0, 0.1, -0.1, -0.5 };
 
 static const char* multicoptercontrollerrtc_spec[] =
   {
-    "implementation_id", "MulticopterControllerRTC",
-    "type_name",         "MulticopterControllerRTC",
+    "implementation_id", "QuadcopterControllerRTC",
+    "type_name",         "QuadcopterControllerRTC",
     "description",       "ModuleDescription",
     "version",           "1.0.0",
     "vendor",            "JAEA",
@@ -50,7 +50,7 @@ static const char* multicoptercontrollerrtc_spec[] =
     ""
   };
 
-MulticopterControllerRTC::MulticopterControllerRTC(RTC::Manager* manager)
+QuadcopterControllerRTC::QuadcopterControllerRTC(RTC::Manager* manager)
     // <rtc-template block="initializer">
   : RTC::DataFlowComponentBase(manager),
     m_axesIn("axes", m_axes),
@@ -64,13 +64,13 @@ MulticopterControllerRTC::MulticopterControllerRTC(RTC::Manager* manager)
 {
 }
 
-MulticopterControllerRTC::~MulticopterControllerRTC()
+QuadcopterControllerRTC::~QuadcopterControllerRTC()
 {
 }
 
 
 
-RTC::ReturnCode_t MulticopterControllerRTC::onInitialize()
+RTC::ReturnCode_t QuadcopterControllerRTC::onInitialize()
 {
   addInPort("axes", m_axesIn);
   addInPort("buttons", m_buttonsIn);
@@ -85,7 +85,7 @@ RTC::ReturnCode_t MulticopterControllerRTC::onInitialize()
   return RTC::RTC_OK;
 }
 
-RTC::ReturnCode_t MulticopterControllerRTC::onActivated(RTC::UniqueId ec_id)
+RTC::ReturnCode_t QuadcopterControllerRTC::onActivated(RTC::UniqueId ec_id)
 {
     if(m_zrpyIn.isNew()) {
         m_zrpyIn.read();
@@ -127,13 +127,13 @@ RTC::ReturnCode_t MulticopterControllerRTC::onActivated(RTC::UniqueId ec_id)
 }
 
 
-RTC::ReturnCode_t MulticopterControllerRTC::onDeactivated(RTC::UniqueId ec_id)
+RTC::ReturnCode_t QuadcopterControllerRTC::onDeactivated(RTC::UniqueId ec_id)
 {
   return RTC::RTC_OK;
 }
 
 
-RTC::ReturnCode_t MulticopterControllerRTC::onExecute(RTC::UniqueId ec_id)
+RTC::ReturnCode_t QuadcopterControllerRTC::onExecute(RTC::UniqueId ec_id)
 {
     if(m_axesIn.isNew()) {
         m_axesIn.read();
@@ -256,12 +256,12 @@ RTC::ReturnCode_t MulticopterControllerRTC::onExecute(RTC::UniqueId ec_id)
 extern "C"
 {
  
-  void MulticopterControllerRTCInit(RTC::Manager* manager)
+  void QuadcopterControllerRTCInit(RTC::Manager* manager)
   {
     coil::Properties profile(multicoptercontrollerrtc_spec);
     manager->registerFactory(profile,
-                             RTC::Create<MulticopterControllerRTC>,
-                             RTC::Delete<MulticopterControllerRTC>);
+                             RTC::Create<QuadcopterControllerRTC>,
+                             RTC::Delete<QuadcopterControllerRTC>);
   }
   
 };

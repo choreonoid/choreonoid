@@ -41,13 +41,13 @@ items:
           children: 
             - 
               id: 3
-              name: "MulticopterController"
+              name: "QuadcopterController"
               plugin: Body
               class: SimpleControllerItem
               data: 
                 isNoDelayMode: true
                 controllerOptions: ""
-                controller: "MulticopterController.so"
+                controller: "QuadcopterController.so"
                 baseDirectory: "Controller directory"
                 reloading: false
             - 
@@ -308,7 +308,7 @@ views:
           near: 0.01
           far: 100
         - 
-          camera: [ Multicopter, Camera ]
+          camera: [ Quadcopter, Camera ]
           isCurrent: true
         - 
           camera: BodyTrackingCamera

@@ -44,7 +44,7 @@ const double KPX[] = { 0.4, 0.4 };
 const double KDX[] = { 0.4, 0.4 };
 const double RATEX[] = { -1.0, -1.0 };
 
-class MulticopterController : public SimpleController
+class QuadcopterController : public SimpleController
 {
 public:
     SharedJoystickPtr joystick;
@@ -84,7 +84,7 @@ public:
 }
 
 
-bool MulticopterController::initialize(SimpleControllerIO* io)
+bool QuadcopterController::initialize(SimpleControllerIO* io)
 {
     ioBody = io->body();
     os = &io->os();
@@ -125,7 +125,7 @@ bool MulticopterController::initialize(SimpleControllerIO* io)
 }
 
 
-Vector4 MulticopterController::getZRPY()
+Vector4 QuadcopterController::getZRPY()
 {
     auto T = ioBody->rootLink()->position();
     double z = T.translation().z();
@@ -134,7 +134,7 @@ Vector4 MulticopterController::getZRPY()
 }
     
 
-Vector2 MulticopterController::getXY()
+Vector2 QuadcopterController::getXY()
 {
     auto T = ioBody->rootLink()->position();
     double x = T.translation().x();
@@ -143,7 +143,7 @@ Vector2 MulticopterController::getXY()
 }
 
 
-bool MulticopterController::control()
+bool QuadcopterController::control()
 {
     joystick->updateState(targetMode);
 
@@ -269,4 +269,4 @@ bool MulticopterController::control()
 }
 
 
-CNOID_IMPLEMENT_SIMPLE_CONTROLLER_FACTORY(MulticopterController)
+CNOID_IMPLEMENT_SIMPLE_CONTROLLER_FACTORY(QuadcopterController)

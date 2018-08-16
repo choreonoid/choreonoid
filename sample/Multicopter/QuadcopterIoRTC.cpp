@@ -22,11 +22,11 @@ const std::string rotorname[] = { "RotorDevice0", "RotorDevice1", "RotorDevice2"
 
 namespace {
 
-class MulticopterIoRTC : public BodyIoRTC
+class QuadcopterIoRTC : public BodyIoRTC
 {
 public:
-    MulticopterIoRTC(RTC::Manager* manager);
-    ~MulticopterIoRTC();
+    QuadcopterIoRTC(RTC::Manager* manager);
+    ~QuadcopterIoRTC();
 
     virtual bool initializeIO(ControllerIO* io) override;
     virtual bool initializeSimulation(ControllerIO* io) override;
@@ -59,9 +59,9 @@ public:
 
 const char* spec[] =
 {
-    "implementation_id", "MulticopterIoRTC",
-    "type_name",         "MulticopterIoRTC",
-    "description",       "Multicopter I/O",
+    "implementation_id", "QuadcopterIoRTC",
+    "type_name",         "QuadcopterIoRTC",
+    "description",       "Quadcopter I/O",
     "version",           "1.0",
     "vendor",            "JAEA",
     "category",          "Generic",
@@ -74,7 +74,7 @@ const char* spec[] =
 
 }
 
-MulticopterIoRTC::MulticopterIoRTC(RTC::Manager* manager)
+QuadcopterIoRTC::QuadcopterIoRTC(RTC::Manager* manager)
     : BodyIoRTC(manager),
       m_uIn("u", m_u),
       m_torqueIn("torque", m_torque),
@@ -86,13 +86,13 @@ MulticopterIoRTC::MulticopterIoRTC(RTC::Manager* manager)
 }
 
 
-MulticopterIoRTC::~MulticopterIoRTC()
+QuadcopterIoRTC::~QuadcopterIoRTC()
 {
     connections.disconnect();
 }
 
 
-bool MulticopterIoRTC::initializeIO(ControllerIO* io)
+bool QuadcopterIoRTC::initializeIO(ControllerIO* io)
 {
     addInPort("u", m_uIn);
     addInPort("torque", m_torqueIn);
@@ -107,7 +107,7 @@ bool MulticopterIoRTC::initializeIO(ControllerIO* io)
 }
 
 
-bool MulticopterIoRTC::initializeSimulation(ControllerIO* io)
+bool QuadcopterIoRTC::initializeSimulation(ControllerIO* io)
 {
     ioBody = io->body();
 
@@ -126,7 +126,7 @@ bool MulticopterIoRTC::initializeSimulation(ControllerIO* io)
 }
 
 
-void MulticopterIoRTC::inputFromSimulator()
+void QuadcopterIoRTC::inputFromSimulator()
 {
     m_q.data[0] = cameraT->q();
     m_qOut.write();
@@ -146,7 +146,7 @@ void MulticopterIoRTC::inputFromSimulator()
 }
 
 
-void MulticopterIoRTC::outputToSimulator()
+void QuadcopterIoRTC::outputToSimulator()
 {
     if(m_uIn.isNew()){
         m_uIn.read();
@@ -181,10 +181,10 @@ void MulticopterIoRTC::outputToSimulator()
 
 extern "C"
 {
-    DLL_EXPORT void MulticopterIoRTCInit(RTC::Manager* manager)
+    DLL_EXPORT void QuadcopterIoRTCInit(RTC::Manager* manager)
     {
         coil::Properties profile(spec);
         manager->registerFactory(
-            profile, RTC::Create<MulticopterIoRTC>, RTC::Delete<MulticopterIoRTC>);
+            profile, RTC::Create<QuadcopterIoRTC>, RTC::Delete<QuadcopterIoRTC>);
     }
 };
