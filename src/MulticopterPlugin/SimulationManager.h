@@ -4,11 +4,14 @@
 
 #pragma once
 
+namespace cnoid {
+class MulticopterSimulatorItem;
+}
+
 namespace Multicopter {
 
 class FluidEnvironment;
 class FluidValue;
-class MulticopterSimulatorItem;
 class MulticopterMonitorView;
 
 class SimulationManager
@@ -25,15 +28,15 @@ public:
     FluidEnvironment* fluidEnvironment();
     FluidEnvironment* fluidEnvironmentSim();
 
-    bool initializeSimulation(cnoid::SimulatorItem* simItem, MulticopterSimulatorItem* fluidSimItem);
+    bool initializeSimulation(cnoid::SimulatorItem* simItem, cnoid::MulticopterSimulatorItem* fluidSimItem);
 
-    void finalizeSimulation(cnoid::SimulatorItem* simItem, MulticopterSimulatorItem* fluidSimItem);
+    void finalizeSimulation(cnoid::SimulatorItem* simItem, cnoid::MulticopterSimulatorItem* fluidSimItem);
 
-    void preDynamicFunction(cnoid::SimulatorItem* simItem, MulticopterSimulatorItem* fluidSimItem);
+    void preDynamicFunction(cnoid::SimulatorItem* simItem, cnoid::MulticopterSimulatorItem* fluidSimItem);
 
-    void midDynamicFunction(cnoid::SimulatorItem* simItem, MulticopterSimulatorItem* fluidSimItem);
+    void midDynamicFunction(cnoid::SimulatorItem* simItem, cnoid::MulticopterSimulatorItem* fluidSimItem);
 
-    void postDynamicFunction(cnoid::SimulatorItem* simItem, MulticopterSimulatorItem* fluidSimItem);
+    void postDynamicFunction(cnoid::SimulatorItem* simItem, cnoid::MulticopterSimulatorItem* fluidSimItem);
 
     bool isLinkForceSyncDumpEnabled() const;
 
@@ -117,7 +120,7 @@ protected:
 
     const std::vector<LinkTriangleAttribute>& linkPolygon(const cnoid::Link* link) const;
 
-    void logProc(cnoid::SimulatorItem* simItem, MulticopterSimulatorItem* fluidSimItem);
+    void logProc(cnoid::SimulatorItem* simItem, cnoid::MulticopterSimulatorItem* fluidSimItem);
 
     void onSimulationStartEnd(bool flg, double time, cnoid::SimulatorItem* simItem, cnoid::SubSimulatorItem* subSimItem);
 
@@ -134,7 +137,7 @@ protected:
     void calcCuttoffCoef (const FFCalc::CutoffCoef& cutoffCalc, const FFCalc::GaussTriangle3d& tri, const std::vector<FFCalc::GaussTriangle3d>& trgTriAry,double coefs[]);
 
     std::unique_ptr<FFCalc::LinkForce>
-    midDynamicFunctionLink(cnoid::SimulatorItem* simItem, MulticopterSimulatorItem* fluidSimItem, cnoid::Link& link, const FFCalc::LinkState& linkState,std::map<int,std::tuple<double,cnoid::Vector3>> effectMap,bool calFlag);
+    midDynamicFunctionLink(cnoid::SimulatorItem* simItem, cnoid::MulticopterSimulatorItem* fluidSimItem, cnoid::Link& link, const FFCalc::LinkState& linkState,std::map<int,std::tuple<double,cnoid::Vector3>> effectMap,bool calFlag);
 
     std::list<RotorDevice*> targetRotorDevices() const;
     std::list<RotorDevice*> targetRotorDevices(cnoid::Link* link) const;

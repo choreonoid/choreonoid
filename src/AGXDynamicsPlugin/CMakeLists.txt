@@ -111,11 +111,6 @@ apply_common_setting_for_plugin(${target} "${headers}")
 #add_subdirectory(AGXSubSimulator)
 add_subdirectory(AGXBodyExtensionPlugin)
 
-if(ENABLE_PYTHON)
-  if(USE_PYBIND11)
-    add_subdirectory(pybind11)
-  #elseif(USE_BOOST_PYTHON)
-  #  add_subdirectory(boostpython)
-  endif()
+if(ENABLE_PYTHON AND USE_PYBIND11)
+  add_subdirectory(pybind11)
 endif()
-

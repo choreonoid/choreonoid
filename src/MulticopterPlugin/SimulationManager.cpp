@@ -3,11 +3,10 @@
 */
 
 #include "MulticopterPluginHeader.h"
-
+#include "MulticopterSimulatorItem.h"
+#include <cnoid/YAMLBodyLoader>
 #include <cmath>
 #include <random>
-
-#include <cnoid/YAMLBodyLoader>
 
 using namespace std;
 using namespace cnoid;

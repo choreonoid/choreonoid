@@ -40,3 +40,7 @@ make_gettext_mofiles(${target} mofiles)
 add_cnoid_plugin(${target} SHARED ${headers} ${sources} ${qtsources} ${qtforms} ${mofiles})
 target_link_libraries(${target} CnoidBodyPlugin)
 apply_common_setting_for_plugin(${target} "${headers}")
+
+if(ENABLE_PYTHON AND USE_PYBIND11)
+  add_subdirectory(pybind11)
+endif()
