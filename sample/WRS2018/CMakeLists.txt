@@ -43,6 +43,4 @@ install(FILES
   T5-AizuSpiderSA.py
   T5-AizuSpiderSS.py
   T6-DoubleArmV7A.py
-  T1-Smoke.body
-  T5-Fire.body
   DESTINATION ${CNOID_SHARE_SUBDIR}/project/WRS2018)

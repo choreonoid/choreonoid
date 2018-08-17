@@ -16,11 +16,11 @@ items:
       children: 
         - 
           id: 2
-          name: "Multicopter"
+          name: "quadcopter"
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/multicopter/multicopter.body"
+            modelFile: "${SHARE}/model/multicopter/quadcopter.body"
             currentBaseLink: "BODY"
             rootPosition: [ -1.55410793e-07, -1.00120746e-07, 0.114890723 ]
             rootAttitude: [ 
@@ -41,13 +41,13 @@ items:
           children: 
             - 
               id: 3
-              name: "MulticopterController"
+              name: "QuadcopterController"
               plugin: Body
               class: SimpleControllerItem
               data: 
                 isNoDelayMode: true
                 controllerOptions: ""
-                controller: "MulticopterController.so"
+                controller: "QuadcopterController.so"
                 baseDirectory: "Controller directory"
                 reloading: false
             - 
@@ -208,7 +208,7 @@ views:
       worldLightAmbient: 0.3
       additionalLights: true
       fog: true
-      floorGrid: true
+      floorGrid: false
       floorGridSpan: 10
       floorGridInterval: 0.5
       xzGridSpan: 10
@@ -242,7 +242,7 @@ views:
           near: 0.01
           far: 100
         - 
-          camera: BodyTrackingCamera (Perspective)
+          camera: BodyTrackingCamera
           isCurrent: true
           fieldOfView: 0.785398
           near: 0.01
@@ -250,11 +250,6 @@ views:
           eye: [ -1.6848272, -0.934988438, 0.850591599 ]
           direction: [ 0.821291541, 0.440237358, -0.362865366 ]
           up: [ 0.319816439, 0.171431382, 0.931841578 ]
-        - 
-          camera: BodyTrackingCamera (Orthographic)
-          orthoHeight: 2
-          near: 0.01
-          far: 100
       backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
       gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
@@ -279,7 +274,7 @@ views:
       worldLightAmbient: 0.3
       additionalLights: true
       fog: true
-      floorGrid: true
+      floorGrid: false
       floorGridSpan: 10
       floorGridInterval: 0.5
       xzGridSpan: 10
@@ -313,21 +308,16 @@ views:
           near: 0.01
           far: 100
         - 
-          camera: [ Multicopter, Camera ]
+          camera: [ Quadcopter, Camera ]
           isCurrent: true
         - 
-          camera: BodyTrackingCamera (Perspective)
+          camera: BodyTrackingCamera
           fieldOfView: 0.785398
           near: 0.01
           far: 100
           eye: [ -1.6848272, -0.934988438, 0.850591599 ]
           direction: [ 0.821291541, 0.440237358, -0.362865366 ]
           up: [ 0.319816439, 0.171431382, 0.931841578 ]
-        - 
-          camera: BodyTrackingCamera (Orthographic)
-          orthoHeight: 2
-          near: 0.01
-          far: 100
       backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
       gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
@@ -368,12 +358,6 @@ views:
     state: 
       listingMode: "Link List"
       currentBodyItem: 5
-  - 
-    id: 9
-    plugin: Multicopter
-    class: MulticopterMonitorView
-    mounted: true
-      port: 2809
   - 
     id: 11
     plugin: Python
@@ -426,7 +410,7 @@ viewAreas:
               children: 
                 - 
                   type: pane
-                  views: [ 2, 9, 11 ]
+                  views: [ 2, 11 ]
                   current: 2
                 - 
                   type: pane

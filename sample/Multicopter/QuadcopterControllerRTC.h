@@ -18,12 +18,12 @@
 
 using namespace RTC;
 
-class MulticopterControllerRTC
+class QuadcopterControllerRTC
   : public RTC::DataFlowComponentBase
 {
  public:
-  MulticopterControllerRTC(RTC::Manager* manager);
-  ~MulticopterControllerRTC();
+  QuadcopterControllerRTC(RTC::Manager* manager);
+  ~QuadcopterControllerRTC();
 
    virtual RTC::ReturnCode_t onInitialize();
    virtual RTC::ReturnCode_t onActivated(RTC::UniqueId ec_id);
@@ -72,7 +72,7 @@ class MulticopterControllerRTC
 
 extern "C"
 {
-  DLL_EXPORT void MulticopterControllerRTCInit(RTC::Manager* manager);
+  DLL_EXPORT void QuadcopterControllerRTCInit(RTC::Manager* manager);
 };
 
 #endif

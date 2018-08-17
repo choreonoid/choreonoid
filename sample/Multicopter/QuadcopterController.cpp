@@ -39,8 +39,12 @@ static const double KP[] = { 0.4, 0.4, 0.4, 1.0 };
 static const double KD[] = { 0.02, 1.0, 1.0, 0.05 };
 const double RATE[] = { -1.0, 0.1, -0.1, -0.5 };
 
+// For the stable mode
+const double KPX[] = { 0.4, 0.4 };
+const double KDX[] = { 0.4, 0.4 };
+const double RATEX[] = { -1.0, -1.0 };
 
-class MulticopterController : public SimpleController
+class QuadcopterController : public SimpleController
 {
 public:
     SharedJoystickPtr joystick;
@@ -51,10 +55,20 @@ public:
     Multicopter::RotorDevice* rotor[4];
     Link* cameraT;
     double timeStep;
+
     Vector4 zrpyref;
     Vector4 zrpyprev;
     Vector4 dzrpyref;
     Vector4 dzrpyprev;
+
+    // For the stable mode
+    bool isStableMode;
+    bool prevModeButtonState;
+    Vector2 xyref;
+    Vector2 xyprev;
+    Vector2 dxyref;
+    Vector2 dxyprev;
+    
     double qref;
     double qprev;
     bool power;
@@ -63,13 +77,14 @@ public:
 
     virtual bool initialize(SimpleControllerIO* io) override;
     Vector4 getZRPY();
+    Vector2 getXY();
     virtual bool control() override;
 };
 
 }
 
 
-bool MulticopterController::initialize(SimpleControllerIO* io)
+bool QuadcopterController::initialize(SimpleControllerIO* io)
 {
     ioBody = io->body();
     os = &io->os();
@@ -94,6 +109,12 @@ bool MulticopterController::initialize(SimpleControllerIO* io)
 
     zrpyref = zrpyprev = getZRPY();
     dzrpyref = dzrpyprev = Vector4::Zero();
+
+    isStableMode = false;
+    prevModeButtonState = false;
+    xyref = xyprev = getXY();
+    dxyref = dxyprev = Vector2::Zero();
+
     power = powerprev = false;
 
     joystick = io->getOrCreateSharedObject<SharedJoystick>("joystick");
@@ -104,7 +125,7 @@ bool MulticopterController::initialize(SimpleControllerIO* io)
 }
 
 
-Vector4 MulticopterController::getZRPY()
+Vector4 QuadcopterController::getZRPY()
 {
     auto T = ioBody->rootLink()->position();
     double z = T.translation().z();
@@ -113,12 +134,22 @@ Vector4 MulticopterController::getZRPY()
 }
     
 
-bool MulticopterController::control()
+Vector2 QuadcopterController::getXY()
+{
+    auto T = ioBody->rootLink()->position();
+    double x = T.translation().x();
+    double y = T.translation().y();
+    return Vector2(y, x);
+}
+
+
+bool QuadcopterController::control()
 {
     joystick->updateState(targetMode);
 
     //control rotors
     Vector4 zrpy = getZRPY();
+    Vector2 xy = getXY();
     double cc = cos(zrpy[1]) * cos(zrpy[2]);
     double gfcoef = 1.0 * 9.80665 / 4 / cc ;
     Vector4 force = Vector4::Zero();
@@ -131,6 +162,14 @@ bool MulticopterController::control()
         rotorswitch = !rotorswitch;
         powerprev = true;
     }
+
+    bool modeButtonState = joystick->getButtonState(Joystick::R_STICK_BUTTON);
+    if(modeButtonState){
+        if(!prevModeButtonState){
+            isStableMode = !isStableMode;
+        }
+    }
+    prevModeButtonState = modeButtonState;
 
     if(rotorswitch) {
         Vector4 f;
@@ -149,11 +188,32 @@ bool MulticopterController::control()
                     dzrpyref[i] = 0.0;
                 }
                 f[i] = KP[i] * (dzrpyref[i] - dzrpy) + KD[i] * (0.0 - ddzrpy);
+
             } else {
-                if(fabs(pos) > 0.25) {
-                    zrpyref[i] = RATE[i] * pos;
-                } else {
-                    zrpyref[i] = 0.0;
+
+                if(isStableMode){
+                    if(fabs(pos) > 0.25) {
+                        dxyref[i - 1] = RATEX[i - 1] * pos;
+                    } else {
+                        dxyref[i - 1] = 0.0;
+                    }
+
+                    double dxy = (xy[i - 1] - xyprev[i - 1]) /timeStep;
+                    double ddxy = (dxy - dxyprev[i - 1]) /timeStep;
+                    
+                    zrpyref[i] = KPX[i - 1] * (dxyref[i - 1] - dxy) + KDX[i - 1] * (0.0 - ddxy);
+                    if(i == 1) {
+                        zrpyref[i] *= -1.0;
+                    }
+                    xyprev[i - 1] = xy[i - 1];
+                    dxyprev[i - 1] = dxy;
+
+                } else {                    
+                    if(fabs(pos) > 0.25) {
+                        zrpyref[i] = RATE[i] * pos;
+                    } else {
+                        zrpyref[i] = 0.0;
+                    }
                 }
                 f[i] = KP[i] * (zrpyref[i] - zrpy[i]) + KD[i] * (0.0 - dzrpy);
             }
@@ -209,4 +269,4 @@ bool MulticopterController::control()
 }
 
 
-CNOID_IMPLEMENT_SIMPLE_CONTROLLER_FACTORY(MulticopterController)
+CNOID_IMPLEMENT_SIMPLE_CONTROLLER_FACTORY(QuadcopterController)

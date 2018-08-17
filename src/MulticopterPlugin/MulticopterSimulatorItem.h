@@ -4,11 +4,13 @@
 
 #pragma once
 
-#include <cnoid/BodyItem>
+#include <cnoid/SubSimulatorItem>
+#include <cnoid/EigenTypes>
+#include "exportdecl.h"
 
-namespace Multicopter{
+namespace cnoid {
 
-class MulticopterSimulatorItem : public cnoid::SubSimulatorItem
+class CNOID_EXPORT MulticopterSimulatorItem : public SubSimulatorItem
 {
 public:
 
@@ -28,9 +30,9 @@ public:
 
 protected:
     virtual cnoid::Item* doDuplicate() const;
-    virtual void doPutProperties(cnoid::PutPropertyFunction& putProperty);
-    virtual bool store(cnoid::Archive& archive);
-    virtual bool restore(const cnoid::Archive& archive);
+    virtual void doPutProperties(PutPropertyFunction& putProperty);
+    virtual bool store(Archive& archive);
+    virtual bool restore(const Archive& archive);
 
     void onPreDynamicFunction();
     void onMidDynamicFunction();
@@ -41,7 +43,7 @@ private:
 
     double _fluidDensity;
     double  _viscosity;
-    cnoid::Vector3 _fluidVelocity;
+    Vector3 _fluidVelocity;
     std::string _airDefinitionFileName;
     std::string _airDefinitionFileNameP;
     bool _wallEffect;
@@ -49,7 +51,7 @@ private:
     bool _outputParam;
     double _timeStep;
 
-    cnoid::SimulatorItem* _curSimItem;
+    SimulatorItem* _curSimItem;
 };
 
 typedef cnoid::ref_ptr<MulticopterSimulatorItem> MulticopterSimulatorItemPtr;

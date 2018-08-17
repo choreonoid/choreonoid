@@ -275,11 +275,11 @@ items:
                 isEditable: true
             - 
               id: 14
-              name: "Smoke"
+              name: "Smoke1"
               plugin: Body
               class: BodyItem
               data: 
-                modelFile: "${PROJECT_DIR}/T1-Smoke.body"
+                modelFile: "${SHARE}/model/WRS2018/Smoke1.body"
                 currentBaseLink: "Base"
                 rootPosition: [ 27, 0, -0.4 ]
                 rootAttitude: [ 
@@ -298,11 +298,11 @@ items:
                 isEditable: false
             - 
               id: 15
-              name: "Smoke"
+              name: "Smoke1"
               plugin: Body
               class: BodyItem
               data: 
-                modelFile: "${PROJECT_DIR}/T1-Smoke.body"
+                modelFile: "${SHARE}/model/WRS2018/Smoke1.body"
                 currentBaseLink: "Base"
                 rootPosition: [ 9, 0, -0.4 ]
                 rootAttitude: [ 
@@ -321,11 +321,11 @@ items:
                 isEditable: false
             - 
               id: 16
-              name: "Fire"
+              name: "Fire2"
               plugin: Body
               class: BodyItem
               data: 
-                modelFile: "${PROJECT_DIR}/SP1-Fire.body"
+                modelFile: "${SHARE}/model/WRS2018/Fire2.body"
                 currentBaseLink: "Base"
                 rootPosition: [ 31.4, -3.6, 0.5 ]
                 rootAttitude: [ 

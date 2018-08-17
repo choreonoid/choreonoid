@@ -306,17 +306,17 @@ bool AGXSimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& ac
 
 void AGXSimulatorItemImpl::stopSimulation()
 {
-    cout << "stopSimulation" << endl;
+    //cout << "stopSimulation" << endl;
 }
 
 void AGXSimulatorItemImpl::pauseSimulation()
 {
-    cout << "pauseSimulation" << endl;
+    //cout << "pauseSimulation" << endl;
 }
 
 void AGXSimulatorItemImpl::restartSimulation()
 {
-    cout << "restartSimulation" << endl;
+    //cout << "restartSimulation" << endl;
 }
 
 void AGXSimulatorItemImpl::setGravity(const Vector3& g)

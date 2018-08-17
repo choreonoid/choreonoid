@@ -8,9 +8,7 @@ using namespace std;
 using namespace std::placeholders;
 using namespace cnoid;
 using namespace Multicopter;
-
 using boost::format;
-
 
 
 void MulticopterSimulatorItem::initializeClass(ExtensionManager* ext)
@@ -23,6 +21,8 @@ void MulticopterSimulatorItem::initializeClass(ExtensionManager* ext)
 
 MulticopterSimulatorItem::MulticopterSimulatorItem()
 {
+    setName("MulticopterSimulator");
+
     _curSimItem = nullptr;
     _preFuncId = _midFuncId = _postFuncId = -1;
     _fluidDensity=1.293;

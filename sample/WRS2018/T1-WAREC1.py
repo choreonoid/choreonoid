@@ -1,2 +1,2 @@
 import WRSUtil
-WRSUtil.loadProject("T1", "AGXSimulator", "WAREC1")
+WRSUtil.loadProject("SingleSceneView", "T1", [ "AGXSimulator", "AISTSimulator" ], "WAREC1")
