@@ -1,2 +1,2 @@
 import WRSUtil
-WRSUtil.loadProject("T5-WaterDischargeTest", "AGXSimulator", "DoubleArmV7A")
+WRSUtil.loadProject("MultiSceneViews", "T5-WaterDischargeTest", "AGXSimulator", "DoubleArmV7A")

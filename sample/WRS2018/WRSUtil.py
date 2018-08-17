@@ -23,12 +23,14 @@ except:
     pass
 
 def loadProject(
-    worldProject, simulatorProjects, robotProject,
+    viewProject, worldProject, simulatorProjects, robotProject,
     enableMulticopterSimulation = False, enableVisionSimulation = False, targetVisionSensors = "", remoteType = ""):
 
     directory = os.path.dirname(os.path.realpath(__file__))
     
     pm = ProjectManager.instance
+
+    pm.loadProject(os.path.join(directory, viewProject + ".cnoid"))
 
     pm.loadProject(os.path.join(directory, worldProject + ".cnoid"))
 

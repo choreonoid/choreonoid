@@ -1,2 +1,2 @@
 import WRSUtil
-WRSUtil.loadProject("T1", [ "AGXSimulator", "AISTSimulator" ], "Quadcopter", enableMulticopterSimulation = True)
+WRSUtil.loadProject("MultiSceneViews", "T1", [ "AGXSimulator", "AISTSimulator" ], "Quadcopter", enableMulticopterSimulation = True)
