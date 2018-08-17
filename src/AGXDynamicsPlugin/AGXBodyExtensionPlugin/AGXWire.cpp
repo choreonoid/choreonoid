@@ -325,7 +325,11 @@ AGXWire::AGXWire(AGXWireDevice* device, AGXBody* agxBody) :
     m_wire = AGXObjectFactory::createWire(wireDesc);
 
     {   // set Material
-        agx::Material*mat = sim->getMaterialManager()->getMaterial(wireDeviceInfo.read<string>("materialName"));
+		string matName = "";
+		agx::Material* mat = nullptr;
+		if(wireDeviceInfo.read("materialName", matName)){
+            mat = sim->getMaterialManager()->getMaterial(matName);	
+		}
         if(mat == nullptr){
             mat = sim->getMaterialManager()->getMaterial(Material::name(0));
         }
