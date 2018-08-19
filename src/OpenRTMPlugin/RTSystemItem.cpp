@@ -1,7 +1,6 @@
 #include "RTSystemItem.h"
 #include "RTSNameServerView.h"
 #include "RTSCommonUtil.h"
-#include "RTSDiagramView.h"
 #include <cnoid/MessageView>
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
@@ -94,6 +93,10 @@ public:
     string getConnectionNumber();
     void setStateCheckMethodByString(const string& value);
     bool checkStatus();
+
+    Signal<void(int)> sigTimerPeriodChanged;
+    Signal<void(bool)> sigTimerChanged;
+    Signal<void(bool)> sigLoadedRTSystem;
 
 private:
     void setStateCheckMethod(int value);
@@ -1029,7 +1032,7 @@ void RTSystemItemImpl::changePollingPeriod(int value)
     DDEBUG_V("RTSystemItemImpl::changePollingPeriod=%d",value);
     if(pollingCycle != value) {
       pollingCycle = value;
-      RTSDiagramView::instance()->setTimerPeriod(value);
+      sigTimerPeriodChanged(value);
     }
 }
 
@@ -1055,24 +1058,24 @@ void RTSystemItemImpl::changeStateCheck()
     switch(state)
     {
         case MANUAL_CHECK:
-            RTSDiagramView::instance()->timerActivated(false);
+            sigTimerChanged(false);
             break;
 #if defined(OPENRTM_VERSION12)
         case OBSERVER_CHECK:
             break;
 #endif
         default:
-            RTSDiagramView::instance()->timerActivated(true);
+            sigTimerChanged(true);
             break;
     }
 }
 
 bool RTSystemItem::loadRtsProfile(const string& filename)
 {
+    DDEBUG_V("RTSystemItem::loadRtsProfile=%s", filename.c_str());
     ProfileHandler::getRtsProfileInfo(filename, impl->vendorName, impl->version);
     if(ProfileHandler::restoreRtsProfile(filename, this)){
-        RTSDiagramView::instance()->updateView();
-        RTSDiagramView::instance()->updateRestoredView();
+        impl->sigLoadedRTSystem(false);
         return true;
     }
     return false;
@@ -1294,11 +1297,9 @@ void RTSystemItemImpl::restoreRTSystem(const Archive& archive)
     if(checkAtLoading) {
         checkStatus();
     }
-    RTSDiagramView::instance()->updateView();
-    if(checkAtLoading) {
-        RTSDiagramView::instance()->checkStatus();
-    }
-    RTSDiagramView::instance()->updateRestoredView();
+
+    sigLoadedRTSystem(true);
+    DDEBUG("RTSystemItemImpl::restoreRTSystem End");
 }
 
 
@@ -1325,4 +1326,16 @@ void RTSystemItemImpl::restoreRTSComp(const string& name, const Vector2& pos,
 		}
 	}
 	DDEBUG("RTSystemItemImpl::restoreRTSComp End");
+}
+
+SignalProxy<void(int)> RTSystemItem::sigTimerPeriodChanged() {
+    return impl->sigTimerPeriodChanged;
+}
+
+SignalProxy<void(bool)> RTSystemItem::sigTimerChanged() {
+    return impl->sigTimerChanged;
+}
+
+SignalProxy<void(bool)> RTSystemItem::sigLoadedRTSystem() {
+    return impl->sigLoadedRTSystem;
 }

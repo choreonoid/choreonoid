@@ -257,6 +257,11 @@ public:
     ScopedConnection itemTreeViewSelectionChangedConnection;
     ScopedConnection connectionOfRTSystemItemDetachedFromRoot;
     ScopedConnection timeOutConnection;
+
+    ScopedConnection timerPeriodChangedConnection;
+    ScopedConnection timerChangedConnection;
+    ScopedConnection rtsLoadedConnection;
+
     map<string, RTSCompGItemPtr> rtsComps;
     map<string, RTSConnectionGItemPtr> rtsConnections;
     map<RTSPort*, RTSPortGItem*> rtsPortMap;
@@ -309,6 +314,8 @@ public:
     void finalizeComponent();
     void startExecutionContext();
     void stopExecutionContext();
+
+    void onLoadedRTSystem(bool value);
 };
 
 }
@@ -1156,6 +1163,7 @@ void RTSDiagramViewImpl::onRTSCompPositionChanged(const RTSCompGItem* rtsCompGIt
 
 void RTSDiagramViewImpl::onActivated(bool on)
 {
+    DDEBUG_V("RTSDiagramViewImpl::onActivated : %d", on);
     if(on){
         timer.start();
     } else {
@@ -1165,6 +1173,7 @@ void RTSDiagramViewImpl::onActivated(bool on)
 
 void RTSDiagramViewImpl::timerPeriodUpdate(int value)
 {
+    DDEBUG_V("RTSDiagramViewImpl::timerPeriodUpdate : %d", value);
     if (pollingPeriod != value){
         timer.stop();
         timer.setInterval(value);
@@ -1385,6 +1394,16 @@ void RTSDiagramViewImpl::setCurrentRTSItem(RTSystemItem* item)
     connectionOfRTSystemItemDetachedFromRoot.reset(
         item->sigDetachedFromRoot().connect(
             [&]() { onRTSystemItemDetachedFromRoot(); }));
+    timerPeriodChangedConnection.reset(
+            currentRTSItem->sigTimerPeriodChanged().connect(
+                std::bind(&RTSDiagramViewImpl::timerPeriodUpdate, this, _1)));
+    timerChangedConnection.reset(
+            currentRTSItem->sigTimerChanged().connect(
+                std::bind(&RTSDiagramViewImpl::onActivated, this, _1)));
+    rtsLoadedConnection.reset(
+            currentRTSItem->sigLoadedRTSystem().connect(
+                std::bind(&RTSDiagramViewImpl::onLoadedRTSystem, this, _1)));
+
     updateView();
 }
 
@@ -1430,6 +1449,7 @@ void RTSDiagramViewImpl::updateView()
 
 void RTSDiagramViewImpl::updateRestoredView()
 {
+    DDEBUG("RTSDiagramViewImpl::updateRestoredView");
     //To redraw the connection line
     if(currentRTSItem){
         for(auto it = rtsComps.begin(); it != rtsComps.end(); it++){
@@ -1635,34 +1655,9 @@ void RTSDiagramView::onRTSCompSelectionChange()
 }
 
 
-void RTSDiagramView::updateView()
-{
-    impl->updateView();
-}
-
-void RTSDiagramView::checkStatus()
-{
-    impl->checkStatus();
-}
-
-void RTSDiagramView::updateRestoredView()
-{
-    impl->updateRestoredView();
-}
-
 void RTSDiagramView::updateSetting()
 {
     impl->updateSetting();
-}
-
-void RTSDiagramView::timerActivated(bool on)
-{
-    impl->onActivated(on);
-}
-
-void RTSDiagramView::setTimerPeriod(int value)
-{
-    impl->timerPeriodUpdate(value);
 }
 
 bool RTSDiagramView::storeState(Archive& archive)
@@ -1690,4 +1685,12 @@ void RTSDiagramView::initializeClass(ExtensionManager* ext)
         "RTSDiagramView", N_("RTC Diagram"), ViewManager::SINGLE_OPTIONAL);
 }
 
-
+void RTSDiagramViewImpl::onLoadedRTSystem(bool value)
+{
+    DDEBUG_V("RTSDiagramViewImpl::onLoadedRTSystem : %d", value);
+    updateView();
+    if(value) {
+        checkStatus();
+    }
+    updateRestoredView();
+}

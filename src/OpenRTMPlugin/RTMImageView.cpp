@@ -174,7 +174,9 @@ void RTMImageViewImpl::deleteRTC()
 
 void RTMImageView::onActivated()
 {
-    impl->execContext->activate_component(impl->rtc->getObjRef());
+    if(isObjectAlive(impl->execContext)) {
+        impl->execContext->activate_component(impl->rtc->getObjRef());
+    }
 }
 
 

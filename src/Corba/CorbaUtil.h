@@ -19,7 +19,8 @@ namespace cnoid {
 	*/
 	CNOID_EXPORT void initializeCorbaUtil(CORBA::ORB_ptr orb, bool activatePOAManager = false);
 
-    CNOID_EXPORT bool isObjectAlive(CORBA::Object_ptr obj);
+  CNOID_EXPORT bool isObjectAlive(CORBA::Object_ptr obj);
+  CNOID_EXPORT bool isObjectAlive(std::string ior);
 
 	CNOID_EXPORT CORBA::ORB_ptr getORB();
 

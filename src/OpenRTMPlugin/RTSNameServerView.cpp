@@ -58,25 +58,32 @@ class RTSNameServerViewImpl
 public:
     string hostAddress_;
     int portNum_;
+    bool isObjectListUpdateRequested;
+    NamingContextHelper ncHelper;
 
     RTSNameServerViewImpl(RTSNameServerView* self);
     ~RTSNameServerViewImpl();
+
+    Signal<void(std::string, int)> sigLocationChanged;
+    Signal<void(const std::list<NamingContextHelper::ObjectInfo>&)> sigSelectionChanged;
+
+    std::list<NamingContextHelper::ObjectInfo> selectedItemList;
+
     void updateObjectList(bool force = false);
+    void setSelection(std::string RTCName, std::string RTCfullPath);
+
+private:
+    RTSNameServerView * self_;
+    RTSNameTreeWidget treeWidget;
+
     void updateObjectList(
         const NamingContextHelper::ObjectInfoList& objects, QTreeWidgetItem* parent,
         vector<NamingContextHelper::ObjectPath> pathList);
     void onSelectionChanged();
-    void setSelection(std::string RTCName, std::string RTCfullPath);
-
-    RTSNameServerView * self_;
-    Signal<void(const std::list<NamingContextHelper::ObjectInfo>&)> sigSelectionChanged;
-    Signal<void(std::string, int)> sigLocationChanged;
-    RTSNameTreeWidget treeWidget;
-    NamingContextHelper ncHelper;
-    std::list<NamingContextHelper::ObjectInfo> selectedItemList;
-    bool isObjectListUpdateRequested;
 
     void connectNameServer();
+    void cleatZombee();
+    void checkZombee(RTSVItem* parent);
 };
 
 }
@@ -174,7 +181,7 @@ RTSNameServerViewImpl::RTSNameServerViewImpl(RTSNameServerView* self)
     clearZombeeButton->setToolTip(_("Kill All Zombies"));
     clearZombeeButton->sigClicked().connect(
         std::bind(
-            static_cast<void(RTSNameServerViewImpl::*)(bool)>(&RTSNameServerViewImpl::updateObjectList), this, true));
+            static_cast<void(RTSNameServerViewImpl::*)(void)>(&RTSNameServerViewImpl::cleatZombee), this));
     hbox->addWidget(clearZombeeButton);
 
     isObjectListUpdateRequested = false;
@@ -436,6 +443,41 @@ void RTSNameServerViewImpl::connectNameServer() {
     updateObjectList(true);
 }
 
+void RTSNameServerViewImpl::cleatZombee()
+{
+    DDEBUG("RTSNameServerViewImpl::cleatZombee");
+    int topNum = treeWidget.topLevelItemCount();
+    for(int index=0; index<topNum; index++) {
+        RTSVItem* topItem = (RTSVItem*)treeWidget.topLevelItem(index);
+        DDEBUG_V("topItem Name : %s", topItem->text(0).toStdString().c_str());
+        checkZombee(topItem);
+    }
+    //updateTreeView_();
+}
+
+void RTSNameServerViewImpl::checkZombee(RTSVItem* parent)
+{
+    int childCount = parent->childCount();
+    vector<RTSVItem*> removeList;
+    for(int idxChild=0; idxChild<childCount; idxChild++) {
+        RTSVItem* childItem = (RTSVItem*)parent->child(idxChild);
+        DDEBUG_V("childItem Name : %s", childItem->text(0).toStdString().c_str());
+        if(isObjectAlive(childItem->info_.ior)==false) {
+            DDEBUG("RTSNameServerViewImpl::cleatZombee INACTIVE");
+            childItem->removing_ = true;
+            removeList.push_back(childItem);
+            continue;
+        }
+        DDEBUG("RTSNameServerViewImpl::cleatZombee ACTIVE");
+        checkZombee(childItem);
+    }
+    //
+    for (auto it = removeList.begin(); it != removeList.end(); ++it) {
+        parent->removeChild(*it);
+    }
+
+}
+
 
 NamingContextHelper RTSNameServerView::getNCHelper()
 {
@@ -648,13 +690,13 @@ void RTSNameTreeWidget::stopExecutionContext()
 }
 
 
-RTSVItem::RTSVItem()
+RTSVItem::RTSVItem() : removing_(false)
 {
 
 }
 
 
-RTSVItem::RTSVItem(const NamingContextHelper::ObjectInfo& info, RTC::RTObject_ptr rtc)
+RTSVItem::RTSVItem(const NamingContextHelper::ObjectInfo& info, RTC::RTObject_ptr rtc) : removing_(false)
 {
     info_ = info;
     QString name = info_.id.c_str();

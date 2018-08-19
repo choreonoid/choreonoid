@@ -197,6 +197,10 @@ public:
 
     bool checkStatus();
 
+    SignalProxy<void(int)> sigTimerPeriodChanged();
+    SignalProxy<void(bool)> sigTimerChanged();
+    SignalProxy<void(bool)> sigLoadedRTSystem();
+
 protected :
     virtual Item* doDuplicate() const override;
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;

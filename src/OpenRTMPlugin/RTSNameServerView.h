@@ -82,6 +82,7 @@ public:
 
     NamingContextHelper::ObjectInfo info_;
     CORBA_KIND kind_;
+    bool removing_;
 };
 
 

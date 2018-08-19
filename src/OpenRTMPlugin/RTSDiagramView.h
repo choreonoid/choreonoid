@@ -24,12 +24,7 @@ public:
 	RTSDiagramView();
   virtual ~RTSDiagramView();
 
-  void updateView();
   void updateSetting();
-  void updateRestoredView();
-  void checkStatus();
-  void timerActivated(bool on);
-  void setTimerPeriod(int value);
 
 public Q_SLOTS:
   void onRTSCompSelectionChange();

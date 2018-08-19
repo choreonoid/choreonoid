@@ -47,6 +47,16 @@ bool cnoid::isObjectAlive(CORBA::Object_ptr obj)
 	return isAlive;
 }
 
+bool cnoid::isObjectAlive(std::string ior)
+{
+  	try {
+		    CORBA::Object_ptr object = getORB()->string_to_object(ior.c_str());
+        return isObjectAlive(object);
+	  } catch (...) {
+  		  return false;
+	  }
+}
+
 
 NamingContextHelper::NamingContextHelper()
 {

@@ -126,7 +126,6 @@ void RTCItem::updateRTCInstance(bool forceUpdate) {
         
 void RTCItem::onPositionChanged() {
     DDEBUG("RTCItem::onPositionChanged");
-  updateRTCInstance(false);
     updateRTCInstance(false);
 }
 
