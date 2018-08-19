@@ -15,6 +15,7 @@
 #include "RTSConfigurationView.h"
 #include "RTMImageView.h"
 #include "RTSystemItem.h"
+#include "RTSCommonUtil.h"
 #include "VisionSensorSubscriberRTCItem.h"
 #include "deprecated/BodyRTCItem.h"
 #include "deprecated/ChoreonoidExecutionContext.h"
@@ -207,6 +208,12 @@ public:
             [&](Archive& archive){ return store(archive); },
             [&](const Archive& archive){ restore(archive); });
         
+        ManagerInfo info = RTCCommonUtil::getManagerAddress();
+        if(info.hostAddress.empty() == false) {
+            NameServerManager::instance()->getNCHelper()->setLocation(info.hostAddress, info.portNum);
+            DDEBUG_V("Init ncHelper host:%s, port:%d", info.hostAddress.c_str(), info.hostAddress);
+        }
+
         RTSNameServerView::initializeClass(this);
         RTSystemItem::initializeClass(this);
         RTSPropertiesView::initializeClass(this);
@@ -217,8 +224,9 @@ public:
         VisionSensorSubscriberRTCItem::initializeClass(this);
         PointCloudSubscriberRTCItem::initializeClass(this);
         
+
         DDEBUG("initialize Finished");
-        
+
         return true;
     }
 

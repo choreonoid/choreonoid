@@ -65,6 +65,29 @@ private:
 
 };
 
+class NameServerManager {
+public:
+    static NameServerManager* instance();
+	  ~NameServerManager() {
+        if(handler) {
+            delete handler;
+        }
+        delete ncHelper;
+    };
+
+    NamingContextHelper* getNCHelper() {
+        return ncHelper;
+    }
+
+private:
+    static NameServerManager* handler;
+	  NameServerManager() {
+        ncHelper = new NamingContextHelper();
+    };
+
+    NamingContextHelper* ncHelper;
+};
+
 };
 
 #endif

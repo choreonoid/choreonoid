@@ -290,5 +290,14 @@ ManagerInfo RTCCommonUtil::getManagerAddress() {
     return result;
 }
 
+NameServerManager *NameServerManager::handler = NULL;
+
+NameServerManager* NameServerManager::instance() {
+  if(!handler) {
+      handler = new NameServerManager();
+  }
+  return handler;
+}
+
 }
 

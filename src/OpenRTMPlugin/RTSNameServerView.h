@@ -25,14 +25,12 @@ public:
     virtual ~RTSNameServerView();
 
     SignalProxy<void(const std::list<NamingContextHelper::ObjectInfo>&)> sigSelectionChanged();
-    SignalProxy<void(std::string, int)> sigLocationChanged();
 
     std::list<NamingContextHelper::ObjectInfo> getSelection();
 
     //Proxy to RTSNameServerViewImpl
     void updateView();
     void setSelection(std::string RTCname, std::string RTCfullPath);
-    NamingContextHelper getNCHelper();
 
 protected:
     virtual void onActivated() override;

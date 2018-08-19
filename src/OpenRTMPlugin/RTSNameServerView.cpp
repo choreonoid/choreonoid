@@ -59,7 +59,6 @@ public:
     string hostAddress_;
     int portNum_;
     bool isObjectListUpdateRequested;
-    NamingContextHelper ncHelper;
 
     RTSNameServerViewImpl(RTSNameServerView* self);
     ~RTSNameServerViewImpl();
@@ -152,8 +151,9 @@ RTSNameServerViewImpl::RTSNameServerViewImpl(RTSNameServerView* self)
     this->self_ = self;
 
     self->setDefaultLayoutArea(View::LEFT_BOTTOM);
-    hostAddress_ = ncHelper.host();
-    portNum_ = ncHelper.port();
+    NamingContextHelper* ncHelper = NameServerManager::instance()->getNCHelper();
+    hostAddress_ = ncHelper->host();
+    portNum_ = ncHelper->port();
 
 
     QVBoxLayout* vbox = new QVBoxLayout();
@@ -220,12 +220,6 @@ SignalProxy<void(const std::list<NamingContextHelper::ObjectInfo>&)> RTSNameServ
 }
 
 
-SignalProxy<void(std::string, int)> RTSNameServerView::sigLocationChanged()
-{
-    return impl->sigLocationChanged;
-}
-
-
 std::list<NamingContextHelper::ObjectInfo> RTSNameServerView::getSelection()
 {
     return impl->selectedItemList;
@@ -255,7 +249,8 @@ void RTSNameServerViewImpl::updateObjectList(bool force)
         isObjectListUpdateRequested = false;
     }
 
-    if(ncHelper.host() == hostAddress_ && ncHelper.port() == portNum_ && !force){
+    NamingContextHelper* ncHelper = NameServerManager::instance()->getNCHelper();
+    if(ncHelper->host() == hostAddress_ && ncHelper->port() == portNum_ && !force){
         treeWidget.expandAll();
         return;
     }
@@ -264,7 +259,7 @@ void RTSNameServerViewImpl::updateObjectList(bool force)
         treeWidget.clear();
 
         // Update to connect information
-        ncHelper.setLocation(hostAddress_, portNum_);
+        NameServerManager::instance()->getNCHelper()->setLocation(hostAddress_, portNum_);
 
         // Connection information updates to all views.
         sigLocationChanged(hostAddress_, portNum_);
@@ -279,19 +274,19 @@ void RTSNameServerViewImpl::updateObjectList(bool force)
         // Clear information update to all views.
         //clearDiagram();
 
-        if(ncHelper.updateConnection()){
-            NamingContextHelper::ObjectInfoList objects = ncHelper.getObjectList();
+        if(NameServerManager::instance()->getNCHelper()->updateConnection()){
+            NamingContextHelper::ObjectInfoList objects = NameServerManager::instance()->getNCHelper()->getObjectList();
             vector<NamingContextHelper::ObjectPath> pathList;
             updateObjectList(objects, topElem, pathList);
             treeWidget.expandAll();
         } else {
-            showWarningDialog(ncHelper.errorMessage());
+            showWarningDialog(NameServerManager::instance()->getNCHelper()->errorMessage());
         }
-        topElem->setIOR(string(ncHelper.getRootIOR()));
+        topElem->setIOR(string(NameServerManager::instance()->getNCHelper()->getRootIOR()));
     }
     catch (...) {
         // ignore the exception for non crash.
-        DDEBUG_V("RTSNameServerViewImpl::updateObjectList Error:%s", ncHelper.errorMessage().c_str());
+        DDEBUG_V("RTSNameServerViewImpl::updateObjectList Error:%s", NameServerManager::instance()->getNCHelper()->errorMessage().c_str());
     }
 }
 
@@ -306,7 +301,7 @@ void RTSNameServerViewImpl::updateObjectList
 
         NamingContextHelper::ObjectPath path(info.id, info.kind);
         pathList.push_back(path);
-        RTC::RTObject_ptr rtc = ncHelper.findObject<RTC::RTObject>(pathList);
+        RTC::RTObject_ptr rtc = NameServerManager::instance()->getNCHelper()->findObject<RTC::RTObject>(pathList);
         pathList.pop_back();
         if(CORBA::is_nil(rtc) == false){
             RTSVItem* item = new RTSVItem(info, rtc);
@@ -360,8 +355,9 @@ void RTSNameServerViewImpl::updateObjectList
         pathList.push_back(pathSub);
 
         if( item->kind_ != KIND_RTC_MANAGER ) {
-            if(ncHelper.updateConnection()){
-                NamingContextHelper::ObjectInfoList objects = ncHelper.getObjectList(pathList);
+            NamingContextHelper* ncHelper = NameServerManager::instance()->getNCHelper();
+            if(ncHelper->updateConnection()){
+                NamingContextHelper::ObjectInfoList objects = ncHelper->getObjectList(pathList);
                 updateObjectList(objects, item, pathList);
             }
         }
@@ -478,17 +474,11 @@ void RTSNameServerViewImpl::checkZombee(RTSVItem* parent)
 
 }
 
-
-NamingContextHelper RTSNameServerView::getNCHelper()
-{
-    return impl->ncHelper;
-}
-
-
 bool RTSNameServerView::storeState(Archive& archive)
 {
-    archive.write("host", impl->ncHelper.host());
-    archive.write("port", impl->ncHelper.port());
+    NamingContextHelper* ncHelper = NameServerManager::instance()->getNCHelper();
+    archive.write("host", ncHelper->host());
+    archive.write("port", ncHelper->port());
     return true;
 }
 
@@ -504,7 +494,7 @@ bool RTSNameServerView::restoreState(const Archive& archive)
     if (archive.read("port", port)) {
         impl->portNum_ = port;
     }
-    impl->ncHelper.setLocation(impl->hostAddress_, impl->portNum_);
+    NameServerManager::instance()->getNCHelper()->setLocation(impl->hostAddress_, impl->portNum_);
 
     archive.addPostProcess(
         [&](){
@@ -607,12 +597,12 @@ void RTSNameTreeWidget::deleteFromNameService()
         return;
     }
 
-    if(RTSNameServerView::instance()->getNCHelper().isAlive() == false){
+    if(NameServerManager::instance()->getNCHelper()->isAlive() == false){
         return;
     }
 
     RTSVItem* item = (RTSVItem*)this->currentItem();
-    RTSNameServerView::instance()->getNCHelper().unbind(item->info_.fullPath);
+    NameServerManager::instance()->getNCHelper()->unbind(item->info_.fullPath);
     RTSNameServerView::instance()->updateView();
 }
 
@@ -761,7 +751,7 @@ AddContextDialog::AddContextDialog(RTSVItem* target)
 
 void AddContextDialog::okClicked()
 {
-    if(RTSNameServerView::instance()->getNCHelper().isAlive() == false){
+    if(NameServerManager::instance()->getNCHelper()->isAlive() == false){
         close();
         return;
     }
@@ -772,7 +762,7 @@ void AddContextDialog::okClicked()
 
     NamingContextHelper::ObjectPath path(name.toStdString(), kind.toStdString());
     pathList.push_back(path);
-    if(RTSNameServerView::instance()->getNCHelper().bind_new_context(pathList) == false){
+    if(NameServerManager::instance()->getNCHelper()->bind_new_context(pathList) == false){
         QMessageBox::information(this, _("Add Context"), _("Failed to add context."));
         nameEdit_->setFocus();
         nameEdit_->selectAll();
@@ -832,7 +822,7 @@ AddObjectDialog::AddObjectDialog(RTSVItem* target)
 
 void AddObjectDialog::okClicked()
 {
-    if(RTSNameServerView::instance()->getNCHelper().isAlive() == false){
+    if(NameServerManager::instance()->getNCHelper()->isAlive() == false){
         close();
         return;
     }
@@ -844,7 +834,7 @@ void AddObjectDialog::okClicked()
     NamingContextHelper::ObjectPath path(name.toStdString(), kind.toStdString());
     pathList.push_back(path);
     string strIor = ior.toStdString();
-    if(RTSNameServerView::instance()->getNCHelper().bindObject(pathList, strIor) == false){
+    if(NameServerManager::instance()->getNCHelper()->bindObject(pathList, strIor) == false){
         QMessageBox::information(this, _("Add Object"), _("Failed to add object."));
         return;
     }
@@ -852,7 +842,7 @@ void AddObjectDialog::okClicked()
 }
 
 ConnectDialog::ConnectDialog() : isOK_(false), hostAddress_(""), portNum_(2809), isManager_(false) {
-    NamingContextHelper ncHelper = RTSNameServerView::instance()->getNCHelper();
+    NamingContextHelper* ncHelper = NameServerManager::instance()->getNCHelper();
 
     QFrame* frmBase = new QFrame;
     QGridLayout* baseLayout = new QGridLayout();
@@ -861,12 +851,12 @@ ConnectDialog::ConnectDialog() : isOK_(false), hostAddress_(""), portNum_(2809),
 
     QLabel* lblhostAddress = new QLabel("Address:");
     hostAddressBox_ = new LineEdit();
-    hostAddressBox_->setText(ncHelper.host());
+    hostAddressBox_->setText(ncHelper->host());
 
     QLabel* lblportNumbers = new QLabel("Port:");
     portNumberSpin_ = new SpinBox();
     portNumberSpin_->setRange(0, 65535);
-    portNumberSpin_->setValue(ncHelper.port());
+    portNumberSpin_->setValue(ncHelper->port());
 
     chkRTM_ = new CheckBox(_("Name server set in OpenRTM"));
     chkRTM_->sigToggled().connect(

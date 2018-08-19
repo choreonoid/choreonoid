@@ -10,8 +10,8 @@
 #include <rtm/CORBA_SeqUtil.h>
 #include <coil/Properties.h>
 
-#include "RTSNameServerView.h"
 #include "RTSConfigurationView.h"
+#include "RTSCommonUtil.h"
 
 #include "LoggerUtil.h"
 
@@ -24,7 +24,7 @@ namespace cnoid {
 bool RTCWrapper::getConfiguration(NamingContextHelper::ObjectInfo& target, std::vector<ConfigurationSetParamPtr>& configSetList) {
   DDEBUG("RTCWrapper::getConfiguration");
  
-  NamingContextHelper ncHelper = RTSNameServerView::instance()->getNCHelper();
+  NamingContextHelper* ncHelper = NameServerManager::instance()->getNCHelper();
 
 	RTCWrapper result;
   std::vector<NamingContextHelper::ObjectPath> pathList;
@@ -36,7 +36,7 @@ bool RTCWrapper::getConfiguration(NamingContextHelper::ObjectInfo& target, std::
     pathList = target.fullPath;
   }
 
-  CORBA::Object::_ptr_type obj = ncHelper.findObject(pathList);
+  CORBA::Object::_ptr_type obj = ncHelper->findObject(pathList);
 	if (isObjectAlive(obj)) {
     rtc_ = RTC::RTObject::_narrow(obj);
 		CORBA::release(obj);

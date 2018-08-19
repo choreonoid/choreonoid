@@ -1,12 +1,9 @@
 #include "RTSystemItem.h"
-#include "RTSNameServerView.h"
 #include "RTSCommonUtil.h"
 #include <cnoid/MessageView>
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
-#include <cnoid/CorbaUtil>
 #include <cnoid/EigenArchive>
-#include <cnoid/MainWindow>
 #include <cnoid/AppConfig>
 #include "LoggerUtil.h"
 
@@ -35,7 +32,6 @@ class RTSystemItemImpl
 {
 public:
     RTSystemItem* self;
-    NamingContextHelper ncHelper;
     Connection locationChangedConnection;
     map<string, RTSCompPtr> rtsComps;
     RTSystemItem::RTSConnectionMap rtsConnections;
@@ -608,15 +604,6 @@ RTSystemItemImpl::RTSystemItemImpl(RTSystemItem* self, const RTSystemItemImpl& o
 void RTSystemItemImpl::initialize()
 {
     DDEBUG("RTSystemItemImpl::initialize");
-
-    RTSNameServerView* nsView = RTSNameServerView::instance();
-    if(nsView){
-        if(!locationChangedConnection.connected()){
-            locationChangedConnection = nsView->sigLocationChanged().connect(
-                std::bind(&RTSystemItemImpl::onLocationChanged, this, _1, _2));
-            ncHelper.setLocation(nsView->getNCHelper().host(), nsView->getNCHelper().port());
-        }
-    }
     connectionNo = 0;
 
     Mapping* config = AppConfig::archive()->openMapping("OpenRTM");
@@ -648,7 +635,7 @@ Item* RTSystemItem::doDuplicate() const {
 }
 
 void RTSystemItemImpl::onLocationChanged(string host, int port) {
-	ncHelper.setLocation(host, port);
+  NameServerManager::instance()->getNCHelper()->setLocation(host, port);
 }
 
 RTSComp* RTSystemItem::nameToRTSComp(const string& name) {
@@ -678,8 +665,9 @@ RTSComp* RTSystemItemImpl::addRTSComp(const string& name, const QPointF& pos)
         std::vector<NamingContextHelper::ObjectPath> pathList;
         NamingContextHelper::ObjectPath path(name, "rtc");
         pathList.push_back(path);
-        RTC::RTObject_ptr rtc = ncHelper.findObject<RTC::RTObject>(pathList);
-        DDEBUG_V("ncHelper host:%s, port:%d", ncHelper.host().c_str(), ncHelper.port());
+        NamingContextHelper* ncHelper = NameServerManager::instance()->getNCHelper();
+        RTC::RTObject_ptr rtc = ncHelper->findObject<RTC::RTObject>(pathList);
+        DDEBUG_V("ncHelper host:%s, port:%d", ncHelper->host().c_str(), ncHelper->port());
         if(rtc == RTC::RTObject::_nil()){
             DDEBUG("RTSystemItemImpl::addRTSComp Failed");
             return nullptr;
@@ -712,7 +700,7 @@ RTSComp* RTSystemItemImpl::addRTSComp(const NamingContextHelper::ObjectInfo& inf
 
     if(!nameToRTSComp(fullPath)){
         std::vector<NamingContextHelper::ObjectPath> target = info.fullPath;
-        RTC::RTObject_ptr rtc = ncHelper.findObject<RTC::RTObject>(target);
+        RTC::RTObject_ptr rtc = NameServerManager::instance()->getNCHelper()->findObject<RTC::RTObject>(target);
         if(rtc == RTC::RTObject::_nil()){
             rtc = 0;
         }
@@ -774,7 +762,7 @@ bool RTSystemItemImpl::compIsAlive(RTSComp* rtsComp)
     			pathList.push_back(path);
     		}
 
-        RTC::RTObject_ptr rtc = ncHelper.findObject<RTC::RTObject>(pathList);
+        RTC::RTObject_ptr rtc = NameServerManager::instance()->getNCHelper()->findObject<RTC::RTObject>(pathList);
         if(!isObjectAlive(rtc)){
             //DDEBUG("RTSystemItemImpl::compIsAlive NOT Alive");
             return false;
@@ -1097,7 +1085,7 @@ bool RTSystemItemImpl::saveRtsProfile(const string& filename)
         version = "1.0.0";
     }
     string systemId = "RTSystem:" + vendorName + ":" + self->name() + ":" + version;
-    string hostname = ncHelper.host();
+    string hostname = NameServerManager::instance()->getNCHelper()->host();
 
     ProfileHandler::saveRtsProfile(filename, systemId, hostname, rtsComps, rtsConnections, MessageView::mainInstance()->cout());
 
