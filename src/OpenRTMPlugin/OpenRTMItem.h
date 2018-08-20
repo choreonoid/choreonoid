@@ -5,11 +5,9 @@
 #ifndef CNOID_OPENRTM_PLUGIN_OPENRTM_ITEM_H
 #define CNOID_OPENRTM_PLUGIN_OPENRTM_ITEM_H
 
-#include <string>
 #include <memory>
 #include <cnoid/CorbaUtil>
 #include <rtm/idl/RTC.hh>
-#include <rtm/CORBA_IORUtil.h>
 
 namespace cnoid {
 
@@ -45,11 +43,13 @@ public:
 	void updateConfiguration(std::vector<ConfigurationSetParamPtr>& configList);
 
 protected:
-	void setRTObject(RTC::RTObject_ptr target);
+	  void setRTObject(RTC::RTObject_ptr target);
 
 private:
-	std::string ior_;
-	RTC::ComponentProfile_var compProfile_;
+	  std::string ior_;
+	  RTC::ComponentProfile_var compProfile_;
+
+    bool searchActiveEC();
 
 };
 typedef std::shared_ptr<RTCWrapper> RTCWrapperPtr;

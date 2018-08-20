@@ -466,9 +466,7 @@ bool RTSComp::connectionCheckSub(RTSPort* rtsPort)
 {
     bool updated = false;
 
-    if(!rtsPort->port || CORBA::is_nil(rtsPort->port) || rtsPort->port->_non_existent()){
-        return updated;
-    }
+    if( isObjectAlive(rtsPort->port)==false ) return updated;
 
     /**
        The get_port_profile() function should not be used here because
@@ -482,13 +480,12 @@ bool RTSComp::connectionCheckSub(RTSPort* rtsPort)
         PortServiceList& connectedPorts = connectorProfile.ports;
         for(CORBA::ULong j=0; j < connectedPorts.length(); ++j){
             PortService_ptr connectedPortRef = connectedPorts[j];
+            if( isObjectAlive(connectedPortRef)==false ) continue;
             PortProfile_var connectedPortProfile = connectedPortRef->get_port_profile();
             string portName = string(connectedPortProfile->name);
             vector<string> target;
             RTCCommonUtil::splitPortName(portName, target);
-            if(target[0] == name){
-                continue;
-            }
+            if(target[0] == name) continue;
 
             string rtcPath = getComponentPath(connectedPortRef);
             RTSComp* targetRTC = rts_->impl->nameToRTSComp("/" + rtcPath);
@@ -754,12 +751,12 @@ bool RTSystemItemImpl::compIsAlive(RTSComp* rtsComp)
     		QStringList nameList = QString::fromStdString(rtsComp->fullPath).split("/");
         std::vector<NamingContextHelper::ObjectPath> pathList;
         for (int index = 0; index < nameList.count(); index++) {
-    			QString elem = nameList[index];
-          if(elem.length()==0) continue;
-    			QStringList elemList = elem.split(".");
-          if(elemList.size() != 2) return false;
-    			NamingContextHelper::ObjectPath path(elemList[0].toStdString(), elemList[1].toStdString());
-    			pathList.push_back(path);
+    			  QString elem = nameList[index];
+            if(elem.length()==0) continue;
+    			  QStringList elemList = elem.split(".");
+            if(elemList.size() != 2) return false;
+    			  NamingContextHelper::ObjectPath path(elemList[0].toStdString(), elemList[1].toStdString());
+    			  pathList.push_back(path);
     		}
 
         RTC::RTObject_ptr rtc = NameServerManager::instance()->getNCHelper()->findObject<RTC::RTObject>(pathList);

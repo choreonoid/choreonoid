@@ -86,7 +86,7 @@ RTC::ReturnCode_t ChoreonoidExecutionContext::deactivate_component(RTC::Lightwei
 
     tick();
 
-    if (!(rtobj->isCurrentState(RTC::INACTIVE_STATE)))
+    if (rtobj->isCurrentState(RTC::INACTIVE_STATE))
     {
         return RTC::RTC_OK;
     }
