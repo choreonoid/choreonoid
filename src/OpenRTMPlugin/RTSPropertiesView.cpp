@@ -11,6 +11,7 @@
 #include <cnoid/TreeWidget>
 #include <cnoid/ConnectionSet>
 #include <cnoid/AppConfig>
+#include <cnoid/Buttons>
 #include <QVBoxLayout>
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
@@ -19,7 +20,6 @@
 #include <coil/Properties.h>
 
 #include <QLabel>
-#include <QPushButton>
 #include <QMessageBox>
 
 #include "LoggerUtil.h"
@@ -439,9 +439,13 @@ void RTSPropertiesViewImpl::showConnection(PortService_var port, string id, QTre
 //////////
 SettingDialog::SettingDialog()
 {
-    chkLog = new QCheckBox(_("Log Output"));
+    chkLog = new CheckBox(_("Log Output"));
+    chkLog->sigToggled().connect(
+        std::bind(
+            static_cast<void(SettingDialog::*)(bool)>(&SettingDialog::logChanged), this, _1));
+
     QLabel* lblLevel = new QLabel(_("Log Level:"));
-    cmbLogLevel = new QComboBox();
+    cmbLogLevel = new ComboBox();
     cmbLogLevel->addItem("SILENT");
     cmbLogLevel->addItem("FATAL");
     cmbLogLevel->addItem("ERROR");
@@ -453,19 +457,19 @@ SettingDialog::SettingDialog()
     cmbLogLevel->addItem("PARANOID");
 
     QLabel* lblSetting = new QLabel(_("Setting:"));
-    leSetting = new QLineEdit;
+    leSetting = new LineEdit;
 
     QLabel* lblName = new QLabel(_("VendorName:"));
-    leName = new QLineEdit;
+    leName = new LineEdit;
     QLabel* lblVersion = new QLabel(_("Version:"));
-    leVersion = new QLineEdit;
+    leVersion = new LineEdit;
     QLabel* lblPolling = new QLabel(_("Polling Cycle:"));
-    lePoling = new QLineEdit;
+    lePoling = new LineEdit;
     QLabel* lblUnit = new QLabel("ms");
 
 #if defined(OPENRTM_VERSION12)
     QLabel* lblHeartBeat = new QLabel(_("Heartbeat Period:"));
-    leHeartBeat = new QLineEdit;
+    leHeartBeat = new LineEdit;
     QLabel* lblUnitHb = new QLabel("ms");
 #endif
 
@@ -493,9 +497,18 @@ SettingDialog::SettingDialog()
 #endif
 
     QFrame* frmButton = new QFrame;
-    QPushButton* okButton = new QPushButton(_("&OK"));
+
+    auto okButton = new PushButton(_("&OK"));
     okButton->setDefault(true);
-    QPushButton* cancelButton = new QPushButton(_("&Cancel"));
+    okButton->sigClicked().connect(
+        std::bind(
+            static_cast<void(SettingDialog::*)(void)>(&SettingDialog::oKClicked), this));
+
+    auto cancelButton = new PushButton(_("&Cancel"));
+    cancelButton->sigClicked().connect(
+        std::bind(
+            static_cast<void(SettingDialog::*)(void)>(&SettingDialog::rejected), this));
+
     QHBoxLayout* buttonBotLayout = new QHBoxLayout(frmButton);
     buttonBotLayout->addWidget(cancelButton);
     buttonBotLayout->addStretch();
@@ -505,11 +518,6 @@ SettingDialog::SettingDialog()
     mainLayout->addWidget(frmDetail);
     mainLayout->addWidget(frmButton);
     setLayout(mainLayout);
-
-    connect(okButton, SIGNAL(clicked()), this, SLOT(oKClicked()));
-    connect(cancelButton, SIGNAL(clicked()), this, SLOT(rejected()));
-    connect(this, SIGNAL(rejected()), this, SLOT(rejected()));
-    connect(chkLog, SIGNAL(clicked(bool)), this, SLOT(logChanged(bool)));
 
     setWindowTitle(_("OpenRTM Preferences"));
 

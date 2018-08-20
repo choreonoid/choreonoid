@@ -4,10 +4,12 @@
 #include "OpenRTMUtil.h"
 #include "LoggerUtil.h"
 #include <cnoid/ViewManager>
+#include <cnoid/Dialog>
 #include <cnoid/Buttons>
 #include <cnoid/SpinBox>
 #include <cnoid/LineEdit>
 #include <cnoid/CheckBox>
+#include <cnoid/ComboBox>
 #include <cnoid/MessageView>
 #include <rtm/CORBA_IORUtil.h>
 #include <QLabel>
@@ -16,6 +18,7 @@
 #include <QDrag>
 #include <QMouseEvent>
 #include <QMessageBox>
+#include <QTextEdit>
 #include "gettext.h"
 
 using namespace std;
@@ -51,6 +54,35 @@ private:
     void chkCanged();
     void okClicked();
     void cancelClicked();
+};
+
+class AddContextDialog : public Dialog
+{
+public:
+    AddContextDialog(RTSVItem* target);
+
+private:
+    RTSVItem * target_;
+
+    LineEdit* nameEdit_;
+    ComboBox* kindCombo_;
+
+    void okClicked();
+};
+
+class AddObjectDialog : public Dialog
+{
+public:
+    AddObjectDialog(RTSVItem* target);
+
+private:
+    RTSVItem * target_;
+
+    LineEdit* nameEdit_;
+    LineEdit* kindEdit_;
+    QTextEdit* iorText_;
+
+    void okClicked();
 };
 
 class RTSNameServerViewImpl
@@ -714,16 +746,16 @@ RTSVItem::RTSVItem(const NamingContextHelper::ObjectInfo& info, RTC::RTObject_pt
     }
 }
 
-
+//////////
 AddContextDialog::AddContextDialog(RTSVItem* target)
 {
     this->target_ = target;
 
     QLabel* label01 = new QLabel(_("Name : "));
-    nameEdit_ = new QLineEdit;
+    nameEdit_ = new LineEdit;
 
     QLabel* label02 = new QLabel(_("Kind : "));
-    kindCombo_ = new QComboBox;
+    kindCombo_ = new ComboBox;
     kindCombo_->addItem("");
     kindCombo_->addItem("host_cxt");
     kindCombo_->addItem("mgr_cxt");
@@ -741,10 +773,18 @@ AddContextDialog::AddContextDialog(RTSVItem* target)
     dispLayout->addWidget(kindCombo_, 1, 1, 1, 1);
 
     QFrame* frmButton = new QFrame;
-    QPushButton* okButton = new QPushButton(_("&OK"));
+    PushButton* okButton = new PushButton(_("&OK"));
     okButton->setAutoDefault(true);
-    QPushButton* cancelButton = new QPushButton(_("&Cancel"));
+    okButton->sigClicked().connect(
+        std::bind(
+            static_cast<void(AddContextDialog::*)(void)>(&AddContextDialog::okClicked), this));
+
+    PushButton* cancelButton = new PushButton(_("&Cancel"));
     cancelButton->setAutoDefault(false);
+    cancelButton->sigClicked().connect(
+        std::bind(
+            static_cast<void(AddContextDialog::*)(void)>(&AddContextDialog::reject), this));
+
     QHBoxLayout* buttonBotLayout = new QHBoxLayout(frmButton);
     buttonBotLayout->setContentsMargins(2, 2, 2, 2);
     buttonBotLayout->addWidget(cancelButton);
@@ -756,9 +796,6 @@ AddContextDialog::AddContextDialog(RTSVItem* target)
     mainLayout->addWidget(frmDisp);
     mainLayout->addWidget(frmButton);
     setLayout(mainLayout);
-
-    connect(okButton, SIGNAL(clicked()), this, SLOT(okClicked()));
-    connect(cancelButton, SIGNAL(clicked()), this, SLOT(reject()));
 
     setMinimumWidth(300);
 }
@@ -792,10 +829,10 @@ AddObjectDialog::AddObjectDialog(RTSVItem* target)
     this->target_ = target;
 
     QLabel* label01 = new QLabel(_("Name : "));
-    nameEdit_ = new QLineEdit;
+    nameEdit_ = new LineEdit;
 
     QLabel* label02 = new QLabel(_("Kind : "));
-    kindEdit_ = new QLineEdit;
+    kindEdit_ = new LineEdit;
 
     QLabel* label03 = new QLabel(_("IOR : "));
     iorText_ = new QTextEdit;
@@ -812,10 +849,18 @@ AddObjectDialog::AddObjectDialog(RTSVItem* target)
     dispLayout->addWidget(iorText_, 2, 1, 1, 1);
 
     QFrame* frmButton = new QFrame;
-    QPushButton* okButton = new QPushButton(_("&OK"));
+    PushButton* okButton = new PushButton(_("&OK"));
     okButton->setAutoDefault(true);
-    QPushButton* cancelButton = new QPushButton(_("&Cancel"));
+    okButton->sigClicked().connect(
+        std::bind(
+            static_cast<void(AddObjectDialog::*)(void)>(&AddObjectDialog::okClicked), this));
+
+    PushButton* cancelButton = new PushButton(_("&Cancel"));
     cancelButton->setAutoDefault(false);
+    cancelButton->sigClicked().connect(
+        std::bind(
+            static_cast<void(AddObjectDialog::*)(void)>(&AddObjectDialog::reject), this));
+
     QHBoxLayout* buttonBotLayout = new QHBoxLayout(frmButton);
     buttonBotLayout->setContentsMargins(2, 2, 2, 2);
     buttonBotLayout->addWidget(cancelButton);
@@ -828,8 +873,8 @@ AddObjectDialog::AddObjectDialog(RTSVItem* target)
     mainLayout->addWidget(frmButton);
     setLayout(mainLayout);
 
-    connect(okButton, SIGNAL(clicked()), this, SLOT(okClicked()));
-    connect(cancelButton, SIGNAL(clicked()), this, SLOT(reject()));
+    //connect(okButton, SIGNAL(clicked()), this, SLOT(okClicked()));
+    //connect(cancelButton, SIGNAL(clicked()), this, SLOT(reject()));
 
     setMinimumWidth(350);
 }
