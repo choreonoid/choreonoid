@@ -138,18 +138,23 @@ RTSPropertiesViewImpl::~RTSPropertiesViewImpl()
 
 void RTSPropertiesViewImpl::onItemSelectionChanged(const list<NamingContextHelper::ObjectInfo>& items)
 {
-    DDEBUG("RTSPropertiesViewImpl::onItemSelectionChanged");
+    DDEBUG_V("RTSPropertiesViewImpl::onItemSelectionChanged : %d", items.size());
     if(items.size()!=1)
         return;
 
     const NamingContextHelper::ObjectInfo& item = items.front();
-    if(item.id != currentItem.id){
-        currentItem.id = item.id;
-        currentItem.isAlive = item.isAlive;
-        currentItem.kind = item.kind;
-        currentItem.fullPath = item.fullPath;
-        showProperties();
+    if(item.id_ == currentItem.id_
+        && item.hostAddress_ == currentItem.hostAddress_
+        && item.portNo_ == currentItem.portNo_) {
+          return;
     }
+    currentItem.id_ = item.id_;
+    currentItem.isAlive_ = item.isAlive_;
+    currentItem.kind_ = item.kind_;
+    currentItem.fullPath_ = item.fullPath_;
+    currentItem.hostAddress_= item.hostAddress_;
+    currentItem.portNo_= item.portNo_;
+    showProperties();
 }
 
 
@@ -158,9 +163,10 @@ void RTSPropertiesViewImpl::showProperties()
     DDEBUG("RTSPropertiesViewImpl::showProperties");
     treeWidget.clear();
 
-    if(currentItem.id!="" && currentItem.isAlive){
+    if(currentItem.id_!="" && currentItem.isAlive_){
         NamingContextHelper* ncHelper = NameServerManager::instance()->getNCHelper();
-        RTC::RTObject_ptr rtc = ncHelper->findObject<RTC::RTObject>(currentItem.fullPath);
+        ncHelper->setLocation(currentItem.hostAddress_, currentItem.portNo_);
+        RTC::RTObject_ptr rtc = ncHelper->findObject<RTC::RTObject>(currentItem.fullPath_);
         if(!isObjectAlive(rtc))
                 return;
         ComponentProfile_var cprofile = rtc->get_component_profile();
@@ -178,7 +184,7 @@ void RTSPropertiesViewImpl::showProperties()
 
 void RTSPropertiesViewImpl::showConnectionProperties(PortService_var port, string id)
 {
-    currentItem.id = "";
+    currentItem.id_ = "";
 
     treeWidget.clear();
     QTreeWidgetItem *item = new QTreeWidgetItem;

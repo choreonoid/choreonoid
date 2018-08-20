@@ -87,17 +87,20 @@ namespace cnoid {
         }
 
 		struct ObjectInfo {
-			std::string id;
-			std::string kind;
-			bool isAlive;
-			bool isContext;
-			std::string ior;
-			std::vector<ObjectPath> fullPath;
+			std::string id_;
+			std::string kind_;
+			bool isAlive_;
+			bool isContext_;
+			std::string ior_;
+			std::vector<ObjectPath> fullPath_;
+
+      std::string hostAddress_;
+      int portNo_;
 
 			const std::string getFullPath() const {
 				std::string result;
-				for (int index = 0; index < fullPath.size(); index++) {
-					ObjectPath path = fullPath[index];
+				for (int index = 0; index < fullPath_.size(); index++) {
+					ObjectPath path = fullPath_[index];
 					result = result + "/" + path.id + "." + path.kind;
 				}
 				return result;

@@ -295,23 +295,26 @@ NamingContextHelper::ObjectInfoList NamingContextHelper::getObjectList() {
 void NamingContextHelper::appendBindingList(CosNaming::BindingList_var& bList, ObjectInfoList& objects) {
 	for (CORBA::ULong i = 0; i < bList->length(); ++i) {
 		ObjectInfo info;
-		info.id = bList[i].binding_name[0].id;
-		info.kind = bList[i].binding_name[0].kind;
-		info.isContext = false;
-		CORBA::Object_ptr obj = findObject(info.id, info.kind);
-		info.isAlive = isObjectAlive(obj);
+		info.id_ = bList[i].binding_name[0].id;
+		info.kind_ = bList[i].binding_name[0].kind;
+		info.isContext_ = false;
+    info.hostAddress_ = host_;
+    info.portNo_ = port_;
+
+		CORBA::Object_ptr obj = findObject(info.id_, info.kind_);
+		info.isAlive_ = isObjectAlive(obj);
         
-        if(info.isAlive){
+        if(info.isAlive_){
             CosNaming::NamingContext_var check = CosNaming::NamingContext::_narrow(obj);
             if(check != CosNaming::NamingContext::_nil()){
-                info.isContext = true;
+                info.isContext_ = true;
             }
         }
         
-		info.ior = orb->object_to_string(obj);
+		info.ior_ = orb->object_to_string(obj);
 
-		ObjectPath path(info.id, info.kind);
-		info.fullPath.push_back(path);
+		ObjectPath path(info.id_, info.kind_);
+		info.fullPath_.push_back(path);
 
 		CORBA::release(obj);
 		objects.push_back(info);
@@ -321,16 +324,18 @@ void NamingContextHelper::appendBindingList(CosNaming::BindingList_var& bList, O
 void NamingContextHelper::appendBindingList(CosNaming::BindingList_var& bList, std::vector<ObjectPath> pathList, ObjectInfoList& objects) {
 	for (CORBA::ULong i = 0; i < bList->length(); ++i) {
 		ObjectInfo info;
-		info.id = bList[i].binding_name[0].id;
-		info.kind = bList[i].binding_name[0].kind;
+		info.id_ = bList[i].binding_name[0].id;
+		info.kind_ = bList[i].binding_name[0].kind;
+    info.hostAddress_ = host_;
+    info.portNo_ = port_;
 
-		ObjectPath path(info.id, info.kind);
+		ObjectPath path(info.id_, info.kind_);
 		pathList.push_back(path);
 
 		CORBA::Object_ptr obj = findObjectSub(pathList);
-		info.isAlive = isObjectAlive(obj);
-		info.ior = orb->object_to_string(obj);
-		copy(pathList.begin(), pathList.end(), std::back_inserter(info.fullPath));
+		info.isAlive_ = isObjectAlive(obj);
+		info.ior_ = orb->object_to_string(obj);
+		copy(pathList.begin(), pathList.end(), std::back_inserter(info.fullPath_));
 		pathList.pop_back();
 		CORBA::release(obj);
 		objects.push_back(info);

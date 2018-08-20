@@ -208,9 +208,9 @@ public:
             [&](Archive& archive){ return store(archive); },
             [&](const Archive& archive){ restore(archive); });
         
-        ManagerInfo info = RTCCommonUtil::getManagerAddress();
+        NameServerInfo info = RTCCommonUtil::getManagerAddress();
         if(info.hostAddress.empty() == false) {
-            NameServerManager::instance()->getNCHelper()->setLocation(info.hostAddress, info.portNum);
+            NameServerManager::instance()->getNCHelper()->setLocation(info.hostAddress, info.portNo);
             DDEBUG_V("Init ncHelper host:%s, port:%d", info.hostAddress.c_str(), info.hostAddress);
         }
 

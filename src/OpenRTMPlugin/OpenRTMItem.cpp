@@ -23,11 +23,11 @@ bool RTCWrapper::getConfiguration(NamingContextHelper::ObjectInfo& target, std::
 	  RTCWrapper result;
     std::vector<NamingContextHelper::ObjectPath> pathList;
 
-    if (target.fullPath.size() == 0) {
-        NamingContextHelper::ObjectPath path(target.id, "rtc");
+    if (target.fullPath_.size() == 0) {
+        NamingContextHelper::ObjectPath path(target.id_, "rtc");
         pathList.push_back(path);
 	  } else {
-        pathList = target.fullPath;
+        pathList = target.fullPath_;
     }
 
     CORBA::Object::_ptr_type obj = NameServerManager::instance()->getNCHelper()->findObject(pathList);

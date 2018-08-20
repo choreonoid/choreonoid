@@ -312,10 +312,12 @@ void RTSConfigurationViewImpl::onItemSelectionChanged(const list<NamingContextHe
     }
 
     const NamingContextHelper::ObjectInfo& item = items.front();
-    currentItem_.id = item.id;
-    currentItem_.isAlive = item.isAlive;
-    currentItem_.kind = item.kind;
-    currentItem_.fullPath = item.fullPath;
+    currentItem_.id_ = item.id_;
+    currentItem_.isAlive_ = item.isAlive_;
+    currentItem_.kind_ = item.kind_;
+    currentItem_.fullPath_ = item.fullPath_;
+    currentItem_.hostAddress_ = item.hostAddress_;
+    currentItem_.portNo_ = item.portNo_;
     updateConfigurationSet();
 }
 
@@ -448,7 +450,7 @@ void RTSConfigurationViewImpl::updateConfigurationSet()
 {
     DDEBUG("RTSConfigurationViewImpl::updateConfigurationSet");
 
-    if (currentItem_.id != "" && currentItem_.isAlive) {
+    if (currentItem_.id_ != "" && currentItem_.isAlive_) {
         getConfigurationSet();
         showConfigurationSetView();
     }

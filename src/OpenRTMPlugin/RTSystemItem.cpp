@@ -342,15 +342,8 @@ void RTSConnection::setPosition(const Vector2 pos[])
 }
 
 
-RTSComp::RTSComp(const string& name, RTC::RTObject_ptr rtc, RTSystemItem* rts, const QPointF& pos)
-    : rts_(rts), pos_(pos), name(name), fullPath(name)
-{
-    setRtc(rtc);
-}
-
-
-RTSComp::RTSComp(const string& name, const std::string& fullPath, RTC::RTObject_ptr rtc, RTSystemItem* rts, const QPointF& pos)
-    : rts_(rts), pos_(pos), name(name), fullPath(fullPath)
+RTSComp::RTSComp(const string& name, const std::string& fullPath, RTC::RTObject_ptr rtc, RTSystemItem* rts, const QPointF& pos, const string& host, int port)
+    : rts_(rts), pos_(pos), name(name), fullPath(fullPath), hostAddress(host), portNo(port)
 {
     setRtc(rtc);
 }
@@ -609,6 +602,7 @@ void RTSystemItemImpl::initialize()
     pollingCycle = config->get("pollingCycle", 500);
     stateCheck.setSymbol(POLLING_CHECK, "Polling");
     stateCheck.setSymbol(MANUAL_CHECK, "Manual");
+    checkAtLoading = true;
 #if defined(OPENRTM_VERSION12)
     stateCheck.setSymbol(OBSERVER_CHECK, "Observer");
 
@@ -671,7 +665,7 @@ RTSComp* RTSystemItemImpl::addRTSComp(const string& name, const QPointF& pos)
         }
 
         string fullPath = "/" + name + ".rtc";
-        RTSCompPtr rtsComp = new RTSComp(name, fullPath, rtc, self, pos);
+        RTSCompPtr rtsComp = new RTSComp(name, fullPath, rtc, self, pos, ncHelper->host().c_str(), ncHelper->port());
         rtsComps[fullPath] = rtsComp;
 
         self->suggestFileUpdate();
@@ -696,7 +690,8 @@ RTSComp* RTSystemItemImpl::addRTSComp(const NamingContextHelper::ObjectInfo& inf
     string fullPath = info.getFullPath();
 
     if(!nameToRTSComp(fullPath)){
-        std::vector<NamingContextHelper::ObjectPath> target = info.fullPath;
+        std::vector<NamingContextHelper::ObjectPath> target = info.fullPath_;
+        NameServerManager::instance()->getNCHelper()->setLocation(info.hostAddress_, info.portNo_);
         RTC::RTObject_ptr rtc = NameServerManager::instance()->getNCHelper()->findObject<RTC::RTObject>(target);
         if(rtc == RTC::RTObject::_nil()){
             rtc = 0;
@@ -705,7 +700,7 @@ RTSComp* RTSystemItemImpl::addRTSComp(const NamingContextHelper::ObjectInfo& inf
             rtc = 0;
         }
 
-        RTSCompPtr rtsComp = new RTSComp(info.id, fullPath, rtc, self, pos);
+        RTSCompPtr rtsComp = new RTSComp(info.id_, fullPath, rtc, self, pos, info.hostAddress_, info.portNo_);
         rtsComps[fullPath] = rtsComp;
 
         self->suggestFileUpdate();
@@ -1082,9 +1077,7 @@ bool RTSystemItemImpl::saveRtsProfile(const string& filename)
         version = "1.0.0";
     }
     string systemId = "RTSystem:" + vendorName + ":" + self->name() + ":" + version;
-    string hostname = NameServerManager::instance()->getNCHelper()->host();
-
-    ProfileHandler::saveRtsProfile(filename, systemId, hostname, rtsComps, rtsConnections, MessageView::mainInstance()->cout());
+    ProfileHandler::saveRtsProfile(filename, systemId, rtsComps, rtsConnections, MessageView::mainInstance()->cout());
 
     return true;
 }

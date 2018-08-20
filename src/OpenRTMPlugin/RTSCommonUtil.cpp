@@ -270,8 +270,8 @@ bool RTCCommonUtil::compareIgnoreCase(const string& lhs, const string& rhs) {
   return QString::compare(left, right, Qt::CaseInsensitive) == 0;
 }
 
-ManagerInfo RTCCommonUtil::getManagerAddress() {
-    ManagerInfo result;
+NameServerInfo RTCCommonUtil::getManagerAddress() {
+    NameServerInfo result;
 
     RTC::Manager* rtcManager = &RTC::Manager::instance();
     if(!rtcManager) return result;
@@ -282,9 +282,9 @@ ManagerInfo RTCCommonUtil::getManagerAddress() {
     vector<string> elems = RTCCommonUtil::split(val, ':');
     if(elems.size() == 0) return result;
     result.hostAddress = elems[0];
-    result.portNum = 2809;
+    result.portNo = 2809;
     if(1 < elems.size()) {
-      result.portNum = QString::fromStdString(elems[1]).toInt();
+      result.portNo = QString::fromStdString(elems[1]).toInt();
     }
 
     return result;
@@ -297,6 +297,23 @@ NameServerManager* NameServerManager::instance() {
       handler = new NameServerManager();
   }
   return handler;
+}
+
+bool NameServerManager::addServer(string hostAddress, int portNo) {
+    DDEBUG_V("NameServerManager::addServer %s, %d", hostAddress.c_str(), portNo);
+    vector<NameServerInfo>::iterator serverItr = find_if( serverList.begin(), serverList.end(), ServerComparator(hostAddress, portNo));
+    if( serverItr!=serverList.end() ) return false;
+
+    NameServerInfo server;
+    server.hostAddress = hostAddress;
+    server.portNo = portNo;
+    serverList.push_back(server);
+}
+
+bool NameServerManager::isExistServer(string hostAddress, int portNo) {
+    vector<NameServerInfo>::iterator serverItr = find_if( serverList.begin(), serverList.end(), ServerComparator(hostAddress, portNo));
+    if( serverItr!=serverList.end() ) return true;
+    return false;
 }
 
 }
