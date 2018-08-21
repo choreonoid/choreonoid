@@ -159,6 +159,7 @@ public:
 
     // Following functions are defined in the ControllerIO class
     virtual Body* body() override;
+    std::ostream& os() const;
     virtual double timeStep() const override;
     virtual double currentTime() const override;
     virtual std::string optionString() const override;
@@ -324,9 +325,10 @@ public:
 
     // Functions defined in the ControllerIO class
     virtual Body* body() override;
+    virtual std::string optionString() const override;
+    virtual std::ostream& os() const override;
     virtual double timeStep() const override;
     virtual double currentTime() const override;
-    virtual std::string optionString() const override;
 };
 
 
@@ -1043,6 +1045,18 @@ Body* SimulationBodyImpl::body()
 }
 
 
+std::string SimulationBodyImpl::optionString() const
+{
+    return simImpl->controllerOptionString_;
+}
+
+
+std::ostream& SimulationBodyImpl::os() const
+{
+    return simImpl->mv->cout();
+}
+
+
 double SimulationBodyImpl::timeStep() const
 {
     return simImpl->worldTimeStep_;
@@ -1052,12 +1066,6 @@ double SimulationBodyImpl::timeStep() const
 double SimulationBodyImpl::currentTime() const
 {
     return simImpl->currentTime();
-}
-
-
-std::string SimulationBodyImpl::optionString() const
-{
-    return simImpl->controllerOptionString_;
 }
 
 
@@ -2325,6 +2333,12 @@ Body* SimulatorItemImpl::body()
 std::string SimulatorItemImpl::optionString() const
 {
     return controllerOptionString_;
+}
+
+
+std::ostream& SimulatorItemImpl::os() const
+{
+    return mv->cout();
 }
 
 
