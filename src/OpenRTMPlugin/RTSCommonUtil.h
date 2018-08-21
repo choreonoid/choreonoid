@@ -9,6 +9,8 @@
 #include <vector>
 #include "RTSystemItem.h"
 
+using namespace std;
+
 namespace cnoid {
 
 /*!
@@ -29,13 +31,13 @@ public:
 	std::string match(std::string type1, std::string type2);
 };
 
-struct ManagerInfo {
+struct NameServerInfo {
     std::string hostAddress;
-    int portNum;
+    int portNo;
 
-    ManagerInfo() {
+    NameServerInfo() {
         this->hostAddress = "";
-        this->portNum = -1;
+        this->portNo = -1;
     };
 };
 
@@ -55,7 +57,7 @@ public:
 	static bool isIFR(std::string type);
   static bool compareIgnoreCase(const std::string& lhs, const std::string& rhs);
 
-  static ManagerInfo getManagerAddress();
+  static NameServerInfo getManagerAddress();
 
 private:
 	static std::vector<std::string> getAllowList(std::vector<std::string>& source, std::vector<std::string>& target, TypeComparer& comparer);
@@ -63,6 +65,49 @@ private:
 	static bool isExistAny(std::vector<std::string> target);
 
 
+};
+
+struct ServerComparator {
+    string hostAddress_;
+    int portNo_;
+
+  ServerComparator(string hostAddress, int portNo) {
+    hostAddress_ = hostAddress;
+    portNo_ = portNo;
+  }
+  bool operator()(const NameServerInfo elem) const {
+    return (hostAddress_ == elem.hostAddress && portNo_ == elem.portNo);
+  }
+};
+
+class NameServerManager {
+public:
+    static NameServerManager* instance();
+	  ~NameServerManager() {
+        if(handler) {
+            delete handler;
+        }
+        delete ncHelper;
+    };
+
+    inline NamingContextHelper* getNCHelper() {
+        return ncHelper;
+    }
+
+    inline std::vector<NameServerInfo> getServerList() {
+        return serverList;
+    }
+    bool addServer(string hostAddress, int portNo);
+    bool isExistServer(string hostAddress, int portNo);
+
+private:
+    static NameServerManager* handler;
+	  NameServerManager() {
+        ncHelper = new NamingContextHelper();
+    };
+
+    NamingContextHelper* ncHelper;
+    std::vector<NameServerInfo> serverList;
 };
 
 };

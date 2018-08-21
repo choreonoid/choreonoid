@@ -5,10 +5,7 @@
 #include <cnoid/CorbaUtil>
 #include <cnoid/TreeWidget>
 #include <cnoid/MenuManager>
-#include <cnoid/Dialog>
 #include <cnoid/View>
-#include <QComboBox>
-#include <QTextEdit>
 
 namespace cnoid {
 
@@ -25,14 +22,12 @@ public:
     virtual ~RTSNameServerView();
 
     SignalProxy<void(const std::list<NamingContextHelper::ObjectInfo>&)> sigSelectionChanged();
-    SignalProxy<void(std::string, int)> sigLocationChanged();
 
     std::list<NamingContextHelper::ObjectInfo> getSelection();
 
     //Proxy to RTSNameServerViewImpl
     void updateView();
     void setSelection(std::string RTCname, std::string RTCfullPath);
-    NamingContextHelper& getNCHelper();
 
 protected:
     virtual void onActivated() override;
@@ -82,41 +77,7 @@ public:
 
     NamingContextHelper::ObjectInfo info_;
     CORBA_KIND kind_;
-};
-
-
-class AddContextDialog : public Dialog
-{
-    Q_OBJECT
-public:
-    AddContextDialog(RTSVItem* target);
-
-private Q_SLOTS:
-    void okClicked();
-
-private:
-    RTSVItem * target_;
-
-    QLineEdit* nameEdit_;
-    QComboBox* kindCombo_;
-};
-
-
-class AddObjectDialog : public Dialog
-{
-    Q_OBJECT
-public:
-    AddObjectDialog(RTSVItem* target);
-
-private Q_SLOTS:
-    void okClicked();
-
-private:
-    RTSVItem * target_;
-
-    QLineEdit* nameEdit_;
-    QLineEdit* kindEdit_;
-    QTextEdit* iorText_;
+    bool removing_;
 };
 
 }

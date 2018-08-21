@@ -41,7 +41,6 @@ QTX_WRAP_CPP(
   RTSNameServerView.h
   RTSDiagramView.h
   RTSConfigurationView.h
-  RTSPropertiesView.h
   )
 set(plugin_sources ${plugin_sources} ${qtsources})
 

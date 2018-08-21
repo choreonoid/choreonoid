@@ -11,6 +11,7 @@
 #include <cnoid/TreeWidget>
 #include <cnoid/ConnectionSet>
 #include <cnoid/AppConfig>
+#include <cnoid/Buttons>
 #include <QVBoxLayout>
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
@@ -19,7 +20,6 @@
 #include <coil/Properties.h>
 
 #include <QLabel>
-#include <QPushButton>
 #include <QMessageBox>
 
 #include "LoggerUtil.h"
@@ -138,18 +138,23 @@ RTSPropertiesViewImpl::~RTSPropertiesViewImpl()
 
 void RTSPropertiesViewImpl::onItemSelectionChanged(const list<NamingContextHelper::ObjectInfo>& items)
 {
-    DDEBUG("RTSPropertiesViewImpl::onItemSelectionChanged");
+    DDEBUG_V("RTSPropertiesViewImpl::onItemSelectionChanged : %d", items.size());
     if(items.size()!=1)
         return;
 
     const NamingContextHelper::ObjectInfo& item = items.front();
-    if(item.id != currentItem.id){
-        currentItem.id = item.id;
-        currentItem.isAlive = item.isAlive;
-        currentItem.kind = item.kind;
-        currentItem.fullPath = item.fullPath;
-        showProperties();
+    if(item.id_ == currentItem.id_
+        && item.hostAddress_ == currentItem.hostAddress_
+        && item.portNo_ == currentItem.portNo_) {
+          return;
     }
+    currentItem.id_ = item.id_;
+    currentItem.isAlive_ = item.isAlive_;
+    currentItem.kind_ = item.kind_;
+    currentItem.fullPath_ = item.fullPath_;
+    currentItem.hostAddress_= item.hostAddress_;
+    currentItem.portNo_= item.portNo_;
+    showProperties();
 }
 
 
@@ -158,12 +163,20 @@ void RTSPropertiesViewImpl::showProperties()
     DDEBUG("RTSPropertiesViewImpl::showProperties");
     treeWidget.clear();
 
-    if(currentItem.id!="" && currentItem.isAlive){
-        auto& ncHelper = RTSNameServerView::instance()->getNCHelper();
-        RTC::RTObject_ptr rtc = ncHelper.findObject<RTC::RTObject>(currentItem.fullPath);
-        if(!isObjectAlive(rtc))
-                return;
-        ComponentProfile_var cprofile = rtc->get_component_profile();
+    if(currentItem.id_!="" && currentItem.isAlive_){
+        NamingContextHelper* ncHelper = NameServerManager::instance()->getNCHelper();
+        ncHelper->setLocation(currentItem.hostAddress_, currentItem.portNo_);
+        RTC::RTObject_var rtc = ncHelper->findObject<RTC::RTObject>(currentItem.fullPath_);
+
+        ComponentProfile_var cprofile;
+        try {
+            cprofile = rtc->get_component_profile();
+        }
+        catch(CORBA::SystemException& ex){
+            ncHelper->putExceptionMessage(ex);
+            return;
+        }
+        
         QTreeWidgetItem *item = new QTreeWidgetItem;
 
         showProfile(cprofile, item);
@@ -178,7 +191,7 @@ void RTSPropertiesViewImpl::showProperties()
 
 void RTSPropertiesViewImpl::showConnectionProperties(PortService_var port, string id)
 {
-    currentItem.id = "";
+    currentItem.id_ = "";
 
     treeWidget.clear();
     QTreeWidgetItem *item = new QTreeWidgetItem;
@@ -433,9 +446,13 @@ void RTSPropertiesViewImpl::showConnection(PortService_var port, string id, QTre
 //////////
 SettingDialog::SettingDialog()
 {
-    chkLog = new QCheckBox(_("Log Output"));
+    chkLog = new CheckBox(_("Log Output"));
+    chkLog->sigToggled().connect(
+        std::bind(
+            static_cast<void(SettingDialog::*)(bool)>(&SettingDialog::logChanged), this, _1));
+
     QLabel* lblLevel = new QLabel(_("Log Level:"));
-    cmbLogLevel = new QComboBox();
+    cmbLogLevel = new ComboBox();
     cmbLogLevel->addItem("SILENT");
     cmbLogLevel->addItem("FATAL");
     cmbLogLevel->addItem("ERROR");
@@ -447,19 +464,19 @@ SettingDialog::SettingDialog()
     cmbLogLevel->addItem("PARANOID");
 
     QLabel* lblSetting = new QLabel(_("Setting:"));
-    leSetting = new QLineEdit;
+    leSetting = new LineEdit;
 
     QLabel* lblName = new QLabel(_("VendorName:"));
-    leName = new QLineEdit;
+    leName = new LineEdit;
     QLabel* lblVersion = new QLabel(_("Version:"));
-    leVersion = new QLineEdit;
+    leVersion = new LineEdit;
     QLabel* lblPolling = new QLabel(_("Polling Cycle:"));
-    lePoling = new QLineEdit;
+    lePoling = new LineEdit;
     QLabel* lblUnit = new QLabel("ms");
 
 #if defined(OPENRTM_VERSION12)
     QLabel* lblHeartBeat = new QLabel(_("Heartbeat Period:"));
-    leHeartBeat = new QLineEdit;
+    leHeartBeat = new LineEdit;
     QLabel* lblUnitHb = new QLabel("ms");
 #endif
 
@@ -487,9 +504,18 @@ SettingDialog::SettingDialog()
 #endif
 
     QFrame* frmButton = new QFrame;
-    QPushButton* okButton = new QPushButton(_("&OK"));
+
+    auto okButton = new PushButton(_("&OK"));
     okButton->setDefault(true);
-    QPushButton* cancelButton = new QPushButton(_("&Cancel"));
+    okButton->sigClicked().connect(
+        std::bind(
+            static_cast<void(SettingDialog::*)(void)>(&SettingDialog::oKClicked), this));
+
+    auto cancelButton = new PushButton(_("&Cancel"));
+    cancelButton->sigClicked().connect(
+        std::bind(
+            static_cast<void(SettingDialog::*)(void)>(&SettingDialog::rejected), this));
+
     QHBoxLayout* buttonBotLayout = new QHBoxLayout(frmButton);
     buttonBotLayout->addWidget(cancelButton);
     buttonBotLayout->addStretch();
@@ -499,11 +525,6 @@ SettingDialog::SettingDialog()
     mainLayout->addWidget(frmDetail);
     mainLayout->addWidget(frmButton);
     setLayout(mainLayout);
-
-    connect(okButton, SIGNAL(clicked()), this, SLOT(oKClicked()));
-    connect(cancelButton, SIGNAL(clicked()), this, SLOT(rejected()));
-    connect(this, SIGNAL(rejected()), this, SLOT(rejected()));
-    connect(chkLog, SIGNAL(clicked(bool)), this, SLOT(logChanged(bool)));
 
     setWindowTitle(_("OpenRTM Preferences"));
 

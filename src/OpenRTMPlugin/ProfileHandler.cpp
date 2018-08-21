@@ -52,6 +52,7 @@ bool ProfileHandler::restoreRtsProfile(std::string targetFile, RTSystemItem* rts
 
 		QString name = QString::fromStdString(compProf.pathUri);
 		QStringList nameList = name.split("/");
+    QString hostName = nameList[0];
 		nameList.removeAt(0);
 
     bool isSkip = false;
@@ -64,16 +65,18 @@ bool ProfileHandler::restoreRtsProfile(std::string targetFile, RTSystemItem* rts
         break;
       }
 			NamingContextHelper::ObjectPath path(elemList[0].toStdString(), elemList[1].toStdString());
-			info.fullPath.push_back(path);
+			info.fullPath_.push_back(path);
 		}
     if(isSkip) continue;
-		info.id = compProf.instanceName;
+		info.id_ = compProf.instanceName;
+    info.hostAddress_ = hostName.toStdString();
+    info.portNo_ = 2809;
 
 		Vector2 pos;
 		pos.x() = compProf.posX;
 		pos.y() = compProf.posY;
 
-  	DDEBUG_V("addRTSComp: %s, %s", info.id.c_str(), info.getFullPath().c_str());
+  	DDEBUG_V("addRTSComp: %s, %s, host=%s, port=%d", info.id_.c_str(), info.getFullPath().c_str(), info.hostAddress_.c_str(), info.portNo_);
 		RTSComp* comp = rts->addRTSComp(info, QPointF(pos(0), pos(1)));
 		if (comp == 0) continue;
 		if (!comp->rtc_) {
@@ -331,7 +334,7 @@ TargetPort ProfileHandler::parseTargetPort(const pugi::xml_node& targetPort) {
 }
 //////////
 void ProfileHandler::saveRtsProfile
-(const string& targetFile, string& systemId, string& hostName, map<string, RTSCompPtr>& comps, RTSConnectionMap& connections, std::ostream& os)
+(const string& targetFile, string& systemId, map<string, RTSCompPtr>& comps, RTSConnectionMap& connections, std::ostream& os)
 {
     RtsProfile profile;
     profile.id = systemId;
@@ -367,7 +370,7 @@ void ProfileHandler::saveRtsProfile
 		        ComponentProfile* compRaw = comp->rtc_->get_component_profile();
 		        compProf.id = "RTC:" + string(compRaw->vendor) + ":" + string(compRaw->category) + ":" + string(compRaw->instance_name) + ":" + string(compRaw->version);
 		        compProf.instanceName = compRaw->instance_name;
-		        compProf.pathUri = hostName + comp->fullPath;
+		        compProf.pathUri = comp->hostAddress + comp->fullPath;
 		        compProf.activeConfigurationSet = comp->rtc_->get_configuration()->get_active_configuration_set()->id;
 		        compProf.posX = comp->pos().x() + offsetX;
 		        compProf.posY = comp->pos().y() + offsetY;
@@ -447,8 +450,8 @@ void ProfileHandler::saveRtsProfile
 				            conProf.name = connectorProfile.name;
 
                     copyNVListToProperty(connectorProfile.properties, conProf.propertyList);
-				            conProf.source = buildTargetPortInfo(connect->sourcePort, hostName);
-				            conProf.target = buildTargetPortInfo(connect->targetPort, hostName);
+				            conProf.source = buildTargetPortInfo(connect->sourcePort);
+				            conProf.target = buildTargetPortInfo(connect->targetPort);
 
                     buildPosition(connect, offsetX, offsetY, conProf.propertyList);
 
@@ -472,8 +475,8 @@ void ProfileHandler::saveRtsProfile
 				            }
 
 				            copyNVListToProperty(connectorProfile.properties, conProf.propertyList);
-				            conProf.source = buildTargetPortInfo(connect->sourcePort, hostName);
-				            conProf.target = buildTargetPortInfo(connect->targetPort, hostName);
+				            conProf.source = buildTargetPortInfo(connect->sourcePort);
+				            conProf.target = buildTargetPortInfo(connect->targetPort);
 
                     buildPosition(connect, offsetX, offsetY, conProf.propertyList);
 
@@ -513,7 +516,7 @@ void ProfileHandler::buildPosition(const RTSConnection* connect, int offsetX, in
     appendStringValue(propList, positionName, value);
 }
 
-TargetPort ProfileHandler::buildTargetPortInfo(RTSPort* sourcePort, std::string& hostName) {
+TargetPort ProfileHandler::buildTargetPortInfo(RTSPort* sourcePort) {
 	TargetPort result;
 
 	result.portName = sourcePort->port->get_port_profile()->name;
@@ -523,7 +526,7 @@ TargetPort ProfileHandler::buildTargetPortInfo(RTSPort* sourcePort, std::string&
 
 	Property prop;
 	prop.name = "COMPONENT_PATH_ID";
-	prop.value = hostName + sourcePort->rtsComp->fullPath;
+	prop.value = sourcePort->rtsComp->hostAddress + sourcePort->rtsComp->fullPath;
 	result.propertyList.push_back(prop);
 
 	return result;

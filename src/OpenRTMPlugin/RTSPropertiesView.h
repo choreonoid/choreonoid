@@ -6,12 +6,13 @@
 #ifndef CNOID_OPENRTM_PLUGIN_RTS_ROPERTIES_VIEW_H_INCLUDED
 #define CNOID_OPENRTM_PLUGIN_RTS_ROPERTIES_VIEW_H_INCLUDED
 
-#include "RTSNameServerView.h"
 #include <cnoid/View>
 #include <rtm/idl/RTC.hh>
-#include <QLineEdit>
-#include <QCheckBox>
-#include <QComboBox>
+
+#include <cnoid/Dialog>
+#include <cnoid/CheckBox>
+#include <cnoid/ComboBox>
+#include <cnoid/LineEdit>
 //#include <boost/shared_ptr.hpp>
 
 namespace cnoid 
@@ -39,27 +40,25 @@ private:
 };
 
 class SettingDialog : public Dialog {
-  Q_OBJECT
 public:
   SettingDialog();
 
-private Q_SLOTS:
+private:
+  CheckBox* chkLog;
+  ComboBox* cmbLogLevel;
+
+  LineEdit* leSetting;
+
+  LineEdit* leName;
+  LineEdit* leVersion;
+  LineEdit* lePoling;
+#ifndef OPENRTM_VERSION110
+  LineEdit* leHeartBeat;
+#endif
+
   void oKClicked();
   void rejected();
   void logChanged(bool state);
-
-private:
-  QCheckBox* chkLog;
-  QComboBox* cmbLogLevel;
-
-  QLineEdit* leSetting;
-
-  QLineEdit* leName;
-  QLineEdit* leVersion;
-  QLineEdit* lePoling;
-#ifndef OPENRTM_VERSION110
-  QLineEdit* leHeartBeat;
-#endif
 };
 
 };

@@ -43,7 +43,7 @@ RTC::ReturnCode_t SimulationPeriodicExecutionContext::activate_component(RTC::Li
 	it->_sm.m_sm.goTo(RTC::ACTIVE_STATE);
 	it->_sm.worker();
 
-	if ((it->_sm.m_sm.isIn(RTC::ACTIVE_STATE))){
+	if (it->_sm.m_sm.isIn(RTC::ACTIVE_STATE)){
 		return RTC::RTC_OK;
     }
 
@@ -63,7 +63,7 @@ RTC::ReturnCode_t SimulationPeriodicExecutionContext::activate_component(RTC::Li
 
 	RTC::ReturnCode_t ret = ExecutionContextBase::activateComponent(comp);
 	invokeWorkerPreDo();
-	if((rtobj->isCurrentState(RTC::ACTIVE_STATE))){
+	if(rtobj->isCurrentState(RTC::ACTIVE_STATE)){
 		return RTC::RTC_OK;
 	}
 	return RTC::RTC_ERROR;
@@ -113,7 +113,7 @@ RTC::ReturnCode_t SimulationPeriodicExecutionContext::deactivate_component(RTC::
     RTC::ReturnCode_t ret = ExecutionContextBase::deactivateComponent(comp);
     invokeWorkerPreDo();
 
-    if(!(rtobj->isCurrentState(RTC::INACTIVE_STATE))){
+    if(rtobj->isCurrentState(RTC::INACTIVE_STATE)){
     	return RTC::RTC_OK;
     }
     
@@ -139,7 +139,7 @@ RTC::ReturnCode_t SimulationPeriodicExecutionContext::reset_component(RTC::Light
 	it->_sm.m_sm.goTo(RTC::INACTIVE_STATE);
 	it->_sm.worker();
 
-	if ((it->_sm.m_sm.isIn(RTC::INACTIVE_STATE))){
+	if (it->_sm.m_sm.isIn(RTC::INACTIVE_STATE)){
 		return RTC::RTC_OK;
     }
 
@@ -159,7 +159,7 @@ RTC::ReturnCode_t SimulationPeriodicExecutionContext::reset_component(RTC::Light
 	RTC::ReturnCode_t ret = ExecutionContextBase::resetComponent(comp);
 	invokeWorkerPreDo();
 
-	if((rtobj->isCurrentState(RTC::INACTIVE_STATE))){
+	if(rtobj->isCurrentState(RTC::INACTIVE_STATE)){
 		return RTC::RTC_OK;
 	}
 	return RTC::RTC_ERROR;

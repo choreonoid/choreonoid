@@ -174,13 +174,17 @@ void RTMImageViewImpl::deleteRTC()
 
 void RTMImageView::onActivated()
 {
-    impl->execContext->activate_component(impl->rtc->getObjRef());
+    if(!CORBA::is_nil(impl->execContext)){
+        impl->execContext->activate_component(impl->rtc->getObjRef());
+    }
 }
 
 
 void RTMImageView::onDeactivated()
 {
-    impl->execContext->deactivate_component(impl->rtc->getObjRef());
+    if(!CORBA::is_nil(impl->execContext)){
+        impl->execContext->deactivate_component(impl->rtc->getObjRef());
+    }
 }
 
 

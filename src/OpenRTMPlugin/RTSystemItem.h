@@ -130,14 +130,15 @@ class RTSComp : public Referenced, public RTCWrapper
 public:
     std::string name;
     std::string fullPath;
+    std::string hostAddress;
+    int portNo;
     std::vector<RTSPortPtr> inPorts;
     std::vector<RTSPortPtr> outPorts;
 
     Component profile;
     bool isAlive_;
 
-    RTSComp(const std::string& name, RTC::RTObject_ptr rtc, RTSystemItem* rts, const QPointF& pos);
-    RTSComp(const std::string& name, const std::string& fullPath, RTC::RTObject_ptr rtc, RTSystemItem* rts, const QPointF& pos);
+    RTSComp(const std::string& name, const std::string& fullPath, RTC::RTObject_ptr rtc, RTSystemItem* rts, const QPointF& pos, const std::string& host, int port);
     RTSystemItem* rts() { return rts_; }
     RTSPort* nameToRTSPort(const std::string& name);
     const QPointF& pos() const { return pos_; }
@@ -196,6 +197,10 @@ public:
     int stateCheck() const;
 
     bool checkStatus();
+
+    SignalProxy<void(int)> sigTimerPeriodChanged();
+    SignalProxy<void(bool)> sigTimerChanged();
+    SignalProxy<void(bool)> sigLoadedRTSystem();
 
 protected :
     virtual Item* doDuplicate() const override;

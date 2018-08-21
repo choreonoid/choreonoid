@@ -107,9 +107,9 @@ void NameServerViewImpl::updateObjectList()
             if(true){
 
                 QTreeWidgetItem* item = new QTreeWidgetItem();
-                QString name = info.id.c_str();
-                if(!info.kind.empty()){
-                    name += QString("(%1)").arg(QString::fromStdString(info.kind));
+                QString name = info.id_.c_str();
+                if(!info.kind_.empty()){
+                    name += QString("(%1)").arg(QString::fromStdString(info.kind_));
                 }
                 item->setText(0, name);
                 treeWidget.addTopLevelItem(item);

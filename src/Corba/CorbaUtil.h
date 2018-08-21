@@ -20,6 +20,7 @@ CNOID_EXPORT void initializeCorbaUtil(bool activatePOAManager = false, int liste
 CNOID_EXPORT void initializeCorbaUtil(CORBA::ORB_ptr orb, bool activatePOAManager = false);
 
 CNOID_EXPORT bool isObjectAlive(CORBA::Object_ptr obj);
+CNOID_EXPORT bool isObjectAlive(std::string ior);
 
 CNOID_EXPORT CORBA::ORB_ptr getORB();
 
@@ -43,13 +44,12 @@ public:
         ObjectPath(std::string strId) {
             this->id = strId;
         };
-
         ObjectPath(std::string strId, std::string strKind) {
             this->id = strId;
             this->kind = strKind;
         };
     };
-
+    
     template <class T> typename T::_ptr_type findObject(std::vector<ObjectPath>& pathList) {
         CORBA::Object_ptr obj = findObjectSub(pathList);
         if (CORBA::is_nil(obj)) {
@@ -92,17 +92,19 @@ public:
     }
 
     struct ObjectInfo {
-        std::string id;
-        std::string kind;
-        bool isAlive;
-        bool isContext;
-        std::string ior;
-        std::vector<ObjectPath> fullPath;
+        std::string id_;
+        std::string kind_;
+        bool isAlive_;
+        bool isContext_;
+        std::string ior_;
+        std::vector<ObjectPath> fullPath_;
+        std::string hostAddress_;
+        int portNo_;
 
         const std::string getFullPath() const {
             std::string result;
-            for (int index = 0; index < fullPath.size(); index++) {
-                ObjectPath path = fullPath[index];
+            for (int index = 0; index < fullPath_.size(); index++) {
+                ObjectPath path = fullPath_[index];
                 result = result + "/" + path.id + "." + path.kind;
             }
             return result;
