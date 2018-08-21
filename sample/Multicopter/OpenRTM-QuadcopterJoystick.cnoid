@@ -1,5 +1,3 @@
-optionalPlugins: [ AGXDynamics ]
-
 items: 
   id: 0
   name: "Root"
@@ -64,25 +62,10 @@ items:
                 module: "QuadcopterControllerRTC.so"
                 baseDirectory: "RTC directory"
                 instanceName: ""
-                executionContext: "ChoreonoidExecutionContext"
+                executionContext: "SimulationExecutionContext"
                 periodicRate: 0
             - 
               id: 5
-              name: "BodyRTC"
-              plugin: OpenRTM
-              class: BodyRTCItem
-              data: 
-                isNoDelayMode: true
-                controllerOptions: ""
-                moduleName: "QuadcopterControllerRTC.so"
-                confFileName: "${PROJECT_DIR}/QuadcopterVisionSensors_Noconnection.conf"
-                configurationMode: "Use Configuration File"
-                AutoConnect: false
-                InstanceName: "Quadcopter"
-                bodyPeriodicRate: 0
-                baseDirectory: "RTC directory"
-            - 
-              id: 6
               name: "JoystickRTC"
               plugin: OpenRTM
               class: ControllerRTCItem
@@ -92,17 +75,20 @@ items:
                 module: "JoystickRTC.so"
                 baseDirectory: "RTC directory"
                 instanceName: ""
-                executionContext: "ChoreonoidExecutionContext"
+                executionContext: "SimulationExecutionContext"
                 periodicRate: 0
             - 
-              id: 20
+              id: 6
               name: "BodyTrackingCamera"
               plugin: Body
               class: BodyTrackingCameraItem
               data: 
+                targetLink: ""
                 keepRelativeAttitude: false
+                cameraType: "Perspective"
                 nearClipDistance: 0.01
                 farClipDistance: 100
+                fieldOfView: 0.785398
         - 
           id: 7
           name: "Floor"
@@ -128,171 +114,21 @@ items:
             isEditable: false
         - 
           id: 8
-          name: "RTSystem"
+          name: "QuadcopterSystem"
           plugin: OpenRTM
           class: RTSystemItem
           data: 
+            filename: "${PROJECT_DIR}/QuadcopterSystem.xml"
+            format: RTS-PROFILE-XML
             AutoConnection: true
-            RTSComps: 
-              - 
-                name: JoystickRTC
-                pos: [ -601, -331 ]
-                OutPorts: 
-                  - 
-                    name: JoystickRTC.axes
-                    isServicePort: false
-                  - 
-                    name: JoystickRTC.buttons
-                    isServicePort: false
-              - 
-                name: Quadcopter
-                pos: [ -557, -150 ]
-                OutPorts: 
-                  - 
-                    name: Quadcopter.cameraImage
-                    isServicePort: false
-              - 
-                name: Quadcopter-QuadcopterIoRTC
-                pos: [ -298, -373 ]
-                InPorts: 
-                  - 
-                    name: Quadcopter-QuadcopterIoRTC.force
-                    isServicePort: false
-                  - 
-                    name: Quadcopter-QuadcopterIoRTC.torque
-                    isServicePort: false
-                  - 
-                    name: Quadcopter-QuadcopterIoRTC.u
-                    isServicePort: false
-                OutPorts: 
-                  - 
-                    name: Quadcopter-QuadcopterIoRTC.q
-                    isServicePort: false
-                  - 
-                    name: Quadcopter-QuadcopterIoRTC.zrpy
-                    isServicePort: false
-              - 
-                name: QuadcopterControllerRTC
-                pos: [ -464, -373 ]
-                InPorts: 
-                  - 
-                    name: QuadcopterControllerRTC.axes
-                    isServicePort: false
-                  - 
-                    name: QuadcopterControllerRTC.buttons
-                    isServicePort: false
-                  - 
-                    name: QuadcopterControllerRTC.q
-                    isServicePort: false
-                  - 
-                    name: QuadcopterControllerRTC.zrpy
-                    isServicePort: false
-                OutPorts: 
-                  - 
-                    name: QuadcopterControllerRTC.force
-                    isServicePort: false
-                  - 
-                    name: QuadcopterControllerRTC.torque
-                    isServicePort: false
-                  - 
-                    name: QuadcopterControllerRTC.u
-                    isServicePort: false
-              - 
-                name: VisionSensorSample
-                pos: [ -309, -150 ]
-                InPorts: 
-                  - 
-                    name: VisionSensorSample.cameraImage
-                    isServicePort: false
-                  - 
-                    name: VisionSensorSample.cameraRange
-                    isServicePort: false
-                  - 
-                    name: VisionSensorSample.cameraTrans
-                    isServicePort: false
-                  - 
-                    name: VisionSensorSample.rangeSensor
-                    isServicePort: false
-            RTSConnections: 
-              - 
-                name: Quadcopter.cameraImage_VisionSensorSample.cameraImage
-                sourceRtcName: Quadcopter
-                sourcePortName: Quadcopter.cameraImage
-                targetRtcName: VisionSensorSample
-                targetPortName: VisionSensorSample.cameraImage
-                dataflow: push
-                subscription: flush
-                position: [ -478, -131, -473, -131, -370, -131, -370, -131, -267, -131, -262, -131 ]
-              - 
-                name: Quadcopter-QuadcopterIoRTC.zrpy_QuadcopterControllerRTC.zrpy
-                sourceRtcName: Quadcopter-QuadcopterIoRTC
-                sourcePortName: Quadcopter-QuadcopterIoRTC.zrpy
-                targetRtcName: QuadcopterControllerRTC
-                targetPortName: QuadcopterControllerRTC.zrpy
-                dataflow: push
-                subscription: flush
-                position: [ -158, -318, -108, -318, -108, -233, -415, -233, -415, -300, -397, -300 ]
-              - 
-                name: QuadcopterControllerRTC.u_Quadcopter-QuadcopterIoRTC.u
-                sourceRtcName: QuadcopterControllerRTC
-                sourcePortName: QuadcopterControllerRTC.u
-                targetRtcName: Quadcopter-QuadcopterIoRTC
-                targetPortName: Quadcopter-QuadcopterIoRTC.u
-                dataflow: push
-                subscription: flush
-                position: [ -337, -318, -332, -318, -278.5, -318, -278.5, -318, -223, -318, -218, -318 ]
-              - 
-                name: JoystickRTC.axes_QuadcopterControllerRTC.axes
-                sourceRtcName: JoystickRTC
-                sourcePortName: JoystickRTC.axes
-                targetRtcName: QuadcopterControllerRTC
-                targetPortName: QuadcopterControllerRTC.axes
-                dataflow: push
-                subscription: flush
-                position: [ -522, -312, -517, -312, -459.5, -312, -459.5, -354, -402, -354, -397, -354 ]
-              - 
-                name: QuadcopterControllerRTC.buttons_JoystickRTC.buttons
-                sourceRtcName: QuadcopterControllerRTC
-                sourcePortName: QuadcopterControllerRTC.buttons
-                targetRtcName: JoystickRTC
-                targetPortName: JoystickRTC.buttons
-                dataflow: push
-                subscription: flush
-                position: [ -397, -336, -402, -336, -451, -336, -451, -294, -517, -294, -522, -294 ]
-              - 
-                name: QuadcopterControllerRTC.force_Quadcopter-QuadcopterIoRTC.force
-                sourceRtcName: QuadcopterControllerRTC
-                sourcePortName: QuadcopterControllerRTC.force
-                targetRtcName: Quadcopter-QuadcopterIoRTC
-                targetPortName: Quadcopter-QuadcopterIoRTC.force
-                dataflow: push
-                subscription: flush
-                position: [ -337, -354, -332, -354, -278.5, -354, -278.5, -354, -223, -354, -218, -354 ]
-              - 
-                name: Quadcopter-QuadcopterIoRTC.torque_QuadcopterControllerRTC.torque
-                sourceRtcName: Quadcopter-QuadcopterIoRTC
-                sourcePortName: Quadcopter-QuadcopterIoRTC.torque
-                targetRtcName: QuadcopterControllerRTC
-                targetPortName: QuadcopterControllerRTC.torque
-                dataflow: push
-                subscription: flush
-                position: [ -218, -336, -223, -336, -278.5, -336, -278.5, -336, -332, -336, -337, -336 ]
-              - 
-                name: Quadcopter-QuadcopterIoRTC.q_QuadcopterControllerRTC.q
-                sourceRtcName: Quadcopter-QuadcopterIoRTC
-                sourcePortName: Quadcopter-QuadcopterIoRTC.q
-                targetRtcName: QuadcopterControllerRTC
-                targetPortName: QuadcopterControllerRTC.q
-                dataflow: push
-                subscription: flush
-                position: [ -158, -336, -72, -336, -72, -205, -443, -205, -443, -318, -397, -318 ]
+            PollingCycle: 500
         - 
           id: 9
           name: "AISTSimulator"
           plugin: Body
           class: AISTSimulatorItem
           data: 
-            timestep: 0.005
+            timeStep: 0.005
             realtimeSync: true
             recording: "full"
             timeRangeMode: "Unlimited"
@@ -303,7 +139,7 @@ items:
             recordCollisionData: false
             controllerOptions: ""
             dynamicsMode: "Forward dynamics"
-            integrationMode: Euler
+            integrationMode: "Euler"
             gravity: [ 0, 0, -9.80665 ]
             staticFriction: 1
             dynamicFriction: 1
@@ -334,17 +170,18 @@ items:
                 depthError: 0
                 enableHeadLight: true
                 enableAdditionalLights: true
+                antiAliasing: false
             - 
               id: 11
               name: "QuadcopterSimulator"
-              plugin: Quadcopter
-              class: QuadcopterSimulatorItem
+              plugin: Multicopter
+              class: MulticopterSimulatorItem
               data: 
                 enabled: true
                 Fluid Density[kg/m^3]: 1.293
                 Viscosity[Pa･s]: 1.7e-05
                 Fluid Velocity[m/s]: [ 0, 0, 0 ]
-                Air Definition File: 
+                Air Definition File: ""
                 Wall Effect: false
                 Ground Effect: false
                 Output Parameter: false
@@ -355,7 +192,7 @@ items:
           plugin: AGXDynamics
           class: AGXSimulatorItem
           data: 
-            timestep: 0.005
+            timeStep: 0.005
             realtimeSync: true
             recording: "full"
             timeRangeMode: "Unlimited"
@@ -391,17 +228,18 @@ items:
                 depthError: 0
                 enableHeadLight: true
                 enableAdditionalLights: true
+                antiAliasing: false
             - 
               id: 14
               name: "QuadcopterSimulator"
-              plugin: Quadcopter
-              class: QuadcopterSimulatorItem
+              plugin: Multicopter
+              class: MulticopterSimulatorItem
               data: 
                 enabled: true
                 Fluid Density[kg/m^3]: 1.293
                 Viscosity[Pa･s]: 1.7e-05
                 Fluid Velocity[m/s]: [ 0, 0, 0 ]
-                Air Definition File: 
+                Air Definition File: ""
                 Wall Effect: false
                 Ground Effect: false
                 Output Parameter: false
@@ -425,7 +263,7 @@ views:
     mounted: true
     state: 
       selected: [ 9 ]
-      checked: [ 1, 2, 7, 20 ]
+      checked: [ 1, 2, 6, 7 ]
       expanded: [ 1, 2, 9, 12 ]
   - 
     id: 3
@@ -472,6 +310,7 @@ views:
       cameras: 
         - 
           camera: [ System, Perspective ]
+          isCurrent: true
           fieldOfView: 0.698132
           near: 0.01
           far: 100
@@ -484,19 +323,13 @@ views:
           near: 0.01
           far: 100
         - 
-          camera: BodyTrackingCamera (Perspective)
-          isCurrent: true
+          camera: BodyTrackingCamera
           fieldOfView: 0.785398
           near: 0.01
           far: 100
-          eye: [ -1.67825154, -0.931463669, 0.951585248 ]
-          direction: [ 0.818052366, 0.438501061, -0.372165483 ]
-          up: [ 0.328013227, 0.175825111, 0.928166393 ]
-        - 
-          camera: BodyTrackingCamera (Orthographic)
-          orthoHeight: 2
-          near: 0.01
-          far: 100
+          eye: [ 4, 2, 1.5 ]
+          direction: [ -0.888888889, -0.444444444, -0.111111111 ]
+          up: [ -0.099380799, -0.0496903995, 0.99380799 ]
       backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
       gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
@@ -539,6 +372,7 @@ views:
       currentBodyItem: 2
   - 
     id: 9
+    name: "MultiCopterMonitor"
     plugin: Multicopter
     class: MulticopterMonitorView
     mounted: true
@@ -555,11 +389,103 @@ views:
     plugin: OpenRTM
     class: RTSNameServerView
     mounted: true
+    state: 
+      host: localhost
+      port: 2809
   - 
     id: 12
     plugin: Python
     class: PythonConsoleView
     mounted: true
+toolbars: 
+  "TimeBar": 
+    minTime: 0
+    maxTime: 30
+    frameRate: 1000
+    playbackFrameRate: 60
+    idleLoopDrivenMode: false
+    currentTime: 0
+    speedScale: 1
+    syncToOngoingUpdates: true
+    autoExpansion: true
+  "KinematicsBar": 
+    mode: AUTO
+    enablePositionDragger: true
+    penetrationBlock: false
+    collisionLinkHighlight: false
+    snapDistance: 0.025
+    penetrationBlockDepth: 0.0005
+    lazyCollisionDetectionMode: true
+  "LeggedBodyBar": 
+    stanceWidth: 0.15
+  "BodyMotionGenerationBar": 
+    autoGenerationForNewBody: true
+    balancer: false
+    autoGeneration: false
+    timeScaleRatio: 1
+    preInitialDuration: 1
+    postFinalDuration: 1
+    onlyTimeBarRange: false
+    makeNewBodyItem: true
+    stealthyStepMode: true
+    stealthyHeightRatioThresh: 2
+    flatLiftingHeight: 0.005
+    flatLandingHeight: 0.005
+    impactReductionHeight: 0.005
+    impactReductionTime: 0.04
+    autoZmp: true
+    minZmpTransitionTime: 0.1
+    zmpCenteringTimeThresh: 0.03
+    zmpTimeMarginBeforeLiftingSpin: 0
+    zmpMaxDistanceFromCenter: 0.02
+    allLinkPositions: false
+    lipSyncMix: false
+    timeToStartBalancer: 0
+    balancerIterations: 2
+    plainBalancerMode: false
+    boundaryConditionType: position
+    boundarySmootherType: quintic
+    boundarySmootherTime: 0.5
+    boundaryCmAdjustment: false
+    boundaryCmAdjustmentTime: 1
+    waistHeightRelaxation: false
+    gravity: 9.8
+    dynamicsTimeRatio: 1
+Body: 
+  "BodyMotionEngine": 
+    updateJointVelocities: false
+  "EditableSceneBody": 
+    editableSceneBodies: 
+      - 
+        bodyItem: 2
+        showCenterOfMass: false
+        showPpcom: false
+        showZmp: false
+      - 
+        bodyItem: 7
+        showCenterOfMass: false
+        showPpcom: false
+        showZmp: false
+    staticModelEditing: true
+  "KinematicFaultChecker": 
+    checkJointPositions: true
+    angleMargin: 0
+    translationMargin: 0
+    checkJointVelocities: true
+    velocityLimitRatio: 100
+    targetJoints: all
+    checkSelfCollisions: true
+    onlyTimeBarRange: false
+  "SplineFilterDialog": 
+    isInputFrameRateSpecified: false
+    inputFrameRate: 200
+    isOutputFrameRateSpecified: false
+    outputFrameRate: 200
+Media: 
+  "PulseAudioManager": 
+    keepStreamConnection: false
+OpenRTM: 
+  "deleteUnmanagedRTCsOnStartingSimulation": false
 viewAreas: 
   - 
     type: embedded
@@ -567,12 +493,12 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 305, 1492 ]
+      sizes: [ 318, 1557 ]
       children: 
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 412, 410 ]
+          sizes: [ 609, 607 ]
           children: 
             - 
               type: pane
@@ -585,12 +511,12 @@ viewAreas:
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 587, 235 ]
+          sizes: [ 868, 348 ]
           children: 
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 646, 840 ]
+              sizes: [ 674, 877 ]
               children: 
                 - 
                   type: pane
@@ -603,7 +529,7 @@ viewAreas:
             - 
               type: pane
               views: [ 3, 9, 12, 5 ]
-              current: 5
+              current: 3
 layoutOfToolBars: 
   rows: 
     - 
