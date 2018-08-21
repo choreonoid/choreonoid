@@ -159,7 +159,7 @@ void RTSPropertiesViewImpl::showProperties()
     treeWidget.clear();
 
     if(currentItem.id!="" && currentItem.isAlive){
-        NamingContextHelper ncHelper = RTSNameServerView::instance()->getNCHelper();
+        auto& ncHelper = RTSNameServerView::instance()->getNCHelper();
         RTC::RTObject_ptr rtc = ncHelper.findObject<RTC::RTObject>(currentItem.fullPath);
         if(!isObjectAlive(rtc))
                 return;

@@ -145,6 +145,7 @@ RTSNameServerViewImpl::RTSNameServerViewImpl(RTSNameServerView* self)
     this->self_ = self;
 
     self->setDefaultLayoutArea(View::LEFT_BOTTOM);
+    ncHelper.setMessageSink(mvout());
     hostAddress_ = ncHelper.host();
     portNum_ = ncHelper.port();
 
@@ -437,7 +438,7 @@ void RTSNameServerViewImpl::connectNameServer() {
 }
 
 
-NamingContextHelper RTSNameServerView::getNCHelper()
+NamingContextHelper& RTSNameServerView::getNCHelper()
 {
     return impl->ncHelper;
 }
@@ -810,7 +811,7 @@ void AddObjectDialog::okClicked()
 }
 
 ConnectDialog::ConnectDialog() : isOK_(false), hostAddress_(""), portNum_(2809), isManager_(false) {
-    NamingContextHelper ncHelper = RTSNameServerView::instance()->getNCHelper();
+    auto& ncHelper = RTSNameServerView::instance()->getNCHelper();
 
     QFrame* frmBase = new QFrame;
     QGridLayout* baseLayout = new QGridLayout();

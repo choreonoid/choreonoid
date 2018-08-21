@@ -21,29 +21,27 @@ using namespace RTC;
 
 namespace cnoid { 
 
-bool RTCWrapper::getConfiguration(NamingContextHelper::ObjectInfo& target, std::vector<ConfigurationSetParamPtr>& configSetList) {
-  DDEBUG("RTCWrapper::getConfiguration");
+bool RTCWrapper::getConfiguration(NamingContextHelper::ObjectInfo& target, std::vector<ConfigurationSetParamPtr>& configSetList)
+{
+    DDEBUG("RTCWrapper::getConfiguration");
  
-  NamingContextHelper ncHelper = RTSNameServerView::instance()->getNCHelper();
+    auto& ncHelper = RTSNameServerView::instance()->getNCHelper();
 
-	RTCWrapper result;
-  std::vector<NamingContextHelper::ObjectPath> pathList;
+    RTCWrapper result;
+    std::vector<NamingContextHelper::ObjectPath> pathList;
 
-  if (target.fullPath.size() == 0) {
-    NamingContextHelper::ObjectPath path(target.id, "rtc");
-    pathList.push_back(path);
-	} else {
-    pathList = target.fullPath;
-  }
+    if(target.fullPath.size() == 0){
+        NamingContextHelper::ObjectPath path(target.id, "rtc");
+        pathList.push_back(path);
+    } else {
+        pathList = target.fullPath;
+    }
 
-  CORBA::Object::_ptr_type obj = ncHelper.findObject(pathList);
-	if (isObjectAlive(obj)) {
-    rtc_ = RTC::RTObject::_narrow(obj);
-		CORBA::release(obj);
-	} else {
-    rtc_ = RTC::RTObject::_nil();
-	}
-  if (isObjectAlive(rtc_)==false) return false;
+    rtc_ = ncHelper.findObject<RTC::RTObject>(pathList);
+
+    if(CORBA::is_nil(rtc_)){
+        return false;
+    }
 
   compProfile_ = rtc_->get_component_profile();
   configuration_ = rtc_->get_configuration();
@@ -133,7 +131,7 @@ void RTCWrapper::updateConfiguration(std::vector<ConfigurationSetParamPtr>& conf
 
 void RTCWrapper::setRTObject(RTC::RTObject_ptr target) {
 	DDEBUG("RTSComp::setRTObject");
-	rtc_ = 0;
+	rtc_ = RTC::RTObject::_nil();
 
 	if (!isObjectAlive(target)) {
 		ownedExeContList_ = 0;
@@ -145,7 +143,7 @@ void RTCWrapper::setRTObject(RTC::RTObject_ptr target) {
 }
 
 bool RTCWrapper::activateComponent() {
-	if (rtc_ == 0) return false;
+    if(CORBA::is_nil(rtc_)) return false;
 	if (ownedExeContList_->length() == 0) return false;
 
   for (CORBA::ULong index = 0; index < ownedExeContList_->length(); ++index) {
@@ -161,7 +159,7 @@ bool RTCWrapper::activateComponent() {
 }
 
 bool RTCWrapper::deactivateComponent() {
-	if (rtc_ == 0) return false;
+    if (CORBA::is_nil(rtc_)) return false;
 	if (ownedExeContList_->length() == 0) return false;
 
   for (CORBA::ULong index = 0; index < ownedExeContList_->length(); ++index) {
@@ -177,7 +175,7 @@ bool RTCWrapper::deactivateComponent() {
 }
 
 bool RTCWrapper::resetComponent() {
-	if (rtc_ == 0) return false;
+    if (CORBA::is_nil(rtc_)) return false;
 	if (ownedExeContList_->length() == 0) return false;
 
   for (CORBA::ULong index = 0; index < ownedExeContList_->length(); ++index) {
@@ -193,7 +191,7 @@ bool RTCWrapper::resetComponent() {
 }
 
 bool RTCWrapper::finalizeComponent() {
-	if (rtc_ == 0) return false;
+    if (CORBA::is_nil(rtc_)) return false;
 
 	RTC::ReturnCode_t ret = rtc_->exit();
 	if (ret != RTC::ReturnCode_t::RTC_OK) return false;

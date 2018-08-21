@@ -153,7 +153,7 @@ void RTMImageViewImpl::createRTC(const std::string& name)
         rtc->setImageWidget(imageWidget);
         RTC::ExecutionContextList_var eclist = rtc->get_owned_contexts();
         for(CORBA::ULong i=0; i < eclist->length(); ++i){
-            if(isObjectAlive(eclist[i])){
+            if(!CORBA::is_nil(eclist[i])){
                 execContext = OpenRTM::ExtTrigExecutionContextService::_narrow(eclist[i]);
                 break;
             }

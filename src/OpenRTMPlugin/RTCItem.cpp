@@ -455,15 +455,18 @@ void RTComponent::deleteRTC()
     }
 }
 
-void RTComponent::activate() {
-    if (rtc_) {
+void RTComponent::activate()
+{
+    if(rtc_){
         RTC::ExecutionContextList_var eclist = rtc_->get_owned_contexts();
-        for (CORBA::ULong i = 0; i < eclist->length(); ++i) {
-            if (isObjectAlive(eclist[i])) {
-                OpenRTM::ExtTrigExecutionContextService::_narrow(eclist[i])
-                    ->activate_component(rtc_->getObjRef());
-                break;
+        for(CORBA::ULong i = 0; i < eclist->length(); ++i){
+            if(!CORBA::is_nil(eclist[i])){
+                OpenRTM::ExtTrigExecutionContextService_var ec = OpenRTM::ExtTrigExecutionContextService::_narrow(eclist[i]);
+                if(!CORBA::is_nil(ec)){
+                    ec->activate_component(rtc_->getObjRef());
+                    break;
+                }
             }
-         }
-     }
+        }
+    }
 }

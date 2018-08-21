@@ -59,6 +59,7 @@ NamingContextHelper::NamingContextHelper()
     host_ = "localhost";
     port_ = 2809;
     failedInLastAccessToNamingContext = false;
+    os_ = &cout;
 }
 
 
@@ -113,6 +114,7 @@ NamingContextHelper::NamingContextHelper(const std::string& host, int port)
     : NamingContextHelper()
 {
     setLocation(host, port);
+    os_ = &cout;
 }
 
 
@@ -127,6 +129,12 @@ void NamingContextHelper::setLocation(const std::string& host, int port)
     port_ = port;
     namingContextLocation = str(format("corbaloc:iiop:%1%:%2%/NameService") % host % port);
     namingContext = CosNaming::NamingContext::_nil();
+}
+
+
+void NamingContextHelper::setMessageSink(std::ostream& os)
+{
+    os_ = &os;
 }
 
 
@@ -428,4 +436,10 @@ bool NamingContextHelper::bind_new_context(std::vector<ObjectPath>& pathList)
 std::string NamingContextHelper::getRootIOR()
 {
     return namingContext->_toString(namingContext);
+}
+
+
+void NamingContextHelper::putExceptionMessage(CORBA::SystemException& ex)
+{
+    os() << format("CORBA %1% (%2%), %3%.") %  ex._name() % ex._rep_id() % ex.NP_minorString() << endl;
 }

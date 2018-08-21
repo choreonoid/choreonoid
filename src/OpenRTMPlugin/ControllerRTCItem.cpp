@@ -226,30 +226,38 @@ void ControllerRTCItem::setRTCInstanceName(const std::string& name)
 
 void ControllerRTCItem::setExecContextType(int which)
 {
-  DDEBUG_V("ControllerRTCItem::setExecContextType %d", which);
-  if (which != impl->execContextType.which()) {
-    impl->execContextType.select(which);
-#if defined(OPENRTM_VERSION11)
-    createRTC();
-#elif defined(OPENRTM_VERSION12)
-    if(isObjectAlive(impl->execContext)==false) return;
+    DDEBUG_V("ControllerRTCItem::setExecContextType %d", which);
 
-    RTC::ReturnCode_t ret = impl->execContext->stop();
-    DDEBUG_V("ControllerRTCItem::setExecContextType stop %d", ret);
-    RTC::ExecutionContextList_var eclist = impl->rtc->get_owned_contexts();
-    for (CORBA::ULong index = 0; index < eclist->length(); ++index) {
-        if( isObjectAlive(eclist[index])) {
-            RTC::ExecutionContextService_var execContext = RTC::ExecutionContextService::_narrow(eclist[index]);
-            if (isObjectAlive(eclist[index])==false) continue;
-            if (which == index) {
-                impl->execContext = execContext;
-                impl->execContext->start();
-                DDEBUG_V("ControllerRTCItem::setExecContextType start %d", index);
+    if(which != impl->execContextType.which()){
+        impl->execContextType.select(which);
+
+#if defined(OPENRTM_VERSION11)
+        createRTC();
+
+#elif defined(OPENRTM_VERSION12)
+        
+        if(CORBA::is_nil(impl->execContext)){ // Is this check valid?
+            return;
+        }
+
+        RTC::ReturnCode_t ret = impl->execContext->stop();
+        DDEBUG_V("ControllerRTCItem::setExecContextType stop %d", ret);
+        RTC::ExecutionContextList_var eclist = impl->rtc->get_owned_contexts();
+        for(CORBA::ULong index = 0; index < eclist->length(); ++index){
+            if(!CORBA::is_nil(eclist[index])){
+                RTC::ExecutionContextService_var execContext = RTC::ExecutionContextService::_narrow(eclist[index]);
+                if(!CORBA::is_nil(execContext)){
+                    // Why is the following condition checked???
+                    if(which == index){
+                        impl->execContext = execContext; // Is this direct assignment valid?
+                        impl->execContext->start();
+                        DDEBUG_V("ControllerRTCItem::setExecContextType start %d", index);
+                    }
+                }
             }
-         }
-    }
+        }
 #endif
-  }
+    }
 }
 
 
@@ -460,16 +468,16 @@ bool ControllerRTCItemImpl::createRTCmain(bool isBodyIORTC) {
 #if defined(OPENRTM_VERSION11)
     int selected = execContextType.index(execContextType.selectedSymbol());
     for (CORBA::ULong index = 0; index < eclist->length(); ++index) {
-      if (isObjectAlive(eclist[index])) {
-        execContext = RTC::ExecutionContextService::_narrow(eclist[index]);
-        if (selected != index) {
-          RTC::ReturnCode_t ret = execContext->stop();
+        if (!CORBA::is_nil(eclist[index])) {
+            execContext = RTC::ExecutionContextService::_narrow(eclist[index]);
+            if (selected != index) {
+                RTC::ReturnCode_t ret = execContext->stop();
+            }
         }
-      }
     }
 #endif
     for(CORBA::ULong i=0; i < eclist->length(); ++i){
-        if(isObjectAlive(eclist[i])){
+        if(!CORBA::is_nil(eclist[i])){
             execContext = RTC::ExecutionContextService::_narrow(eclist[i]);
             isSimulationExecutionContext = execContextType.is(SIMULATION_EXECUTION_CONTEXT);
             break;
@@ -521,31 +529,31 @@ bool ControllerRTCItemImpl::start()
 {
     bool isReady = false;
     
-    if(!rtc) return isReady;
-    if(isObjectAlive(execContext)==false || isObjectAlive(rtc->getObjRef())==false) return isReady;
+    if(rtc && !CORBA::is_nil(execContext)){
 
-    RTC::ReturnCode_t result = RTC::RTC_OK;
-    RTC::LifeCycleState state = execContext->get_component_state(rtc->getObjRef());
-		if (isObjectAlive(execContextExt)==false) {
-			execContextExt = OpenRTM::ExtTrigExecutionContextService::_narrow(execContext);
-		}
+        RTC::ReturnCode_t result = RTC::RTC_OK;
+        RTC::LifeCycleState state = execContext->get_component_state(rtc->getObjRef());
+        if(CORBA::is_nil(execContextExt)){
+            execContextExt = OpenRTM::ExtTrigExecutionContextService::_narrow(execContext);
+        }
 
-    if(state == RTC::ERROR_STATE){
-        result = execContext->reset_component(rtc->getObjRef());
-				if (isObjectAlive(execContextExt)) {
-					execContextExt->tick();
-				}
-    } else if(state == RTC::ACTIVE_STATE){
-        result = execContext->deactivate_component(rtc->getObjRef());
-				if (isObjectAlive(execContextExt)) {
-					execContextExt->tick();
-				}
-    }
-    if(result == RTC::RTC_OK){
-        result = execContext->activate_component(rtc->getObjRef());
-    }
-    if(result == RTC::RTC_OK){
-        isReady = true;
+        if(state == RTC::ERROR_STATE){
+            result = execContext->reset_component(rtc->getObjRef());
+            if(!CORBA::is_nil(execContextExt)){
+                execContextExt->tick();
+            }
+        } else if(state == RTC::ACTIVE_STATE){
+            result = execContext->deactivate_component(rtc->getObjRef());
+            if(!CORBA::is_nil(execContextExt)){
+                execContextExt->tick();
+            }
+        }
+        if(result == RTC::RTC_OK){
+            result = execContext->activate_component(rtc->getObjRef());
+        }
+        if(result == RTC::RTC_OK){
+            isReady = true;
+        }
     }
     
     return isReady;
@@ -567,14 +575,9 @@ void ControllerRTCItem::input()
 bool ControllerRTCItem::control()
 {
     if(impl->isSimulationExecutionContext){
-			if (isObjectAlive(impl->execContext)) {
-				if (isObjectAlive(impl->execContextExt)==false) {
-					impl->execContextExt = OpenRTM::ExtTrigExecutionContextService::_narrow(impl->execContext);
-				}
-				if (isObjectAlive(impl->execContextExt)) {
-					impl->execContextExt->tick();
-				}
-			}
+        if(!CORBA::is_nil(impl->execContextExt)){
+            impl->execContextExt->tick();
+        }
     }
     return true;
 }
@@ -594,19 +597,17 @@ void ControllerRTCItem::stop()
 
 void ControllerRTCItemImpl::stop()
 {
-    if(isObjectAlive(execContext)==false || isObjectAlive(rtc->getObjRef())==false) return;
-    RTC::LifeCycleState state = execContext->get_component_state(rtc->getObjRef());
-    if(state == RTC::ERROR_STATE){
-        execContext->reset_component(rtc->getObjRef());
-    } else {
-        execContext->deactivate_component(rtc->getObjRef());
+    if(!CORBA::is_nil(execContext)){
+        RTC::LifeCycleState state = execContext->get_component_state(rtc->getObjRef());
+        if(state == RTC::ERROR_STATE){
+            execContext->reset_component(rtc->getObjRef());
+        } else {
+            execContext->deactivate_component(rtc->getObjRef());
+        }
+        if(!CORBA::is_nil(execContextExt)){
+            execContextExt->tick();
+        }
     }
-		if (isObjectAlive(execContextExt)==false) {
-			execContextExt = OpenRTM::ExtTrigExecutionContextService::_narrow(execContext);
-		}
-		if (isObjectAlive(execContextExt)) {
-			execContextExt->tick();
-		}
 }
 
 

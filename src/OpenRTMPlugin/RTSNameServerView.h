@@ -32,7 +32,7 @@ public:
     //Proxy to RTSNameServerViewImpl
     void updateView();
     void setSelection(std::string RTCname, std::string RTCfullPath);
-    NamingContextHelper getNCHelper();
+    NamingContextHelper& getNCHelper();
 
 protected:
     virtual void onActivated() override;

@@ -29,8 +29,11 @@ public:
     NamingContextHelper();
     NamingContextHelper(const std::string& host, int port);
 
+    NamingContextHelper(const NamingContextHelper&) = delete;
+    NamingContextHelper& operator=(const NamingContextHelper&) = delete;
+    
     void setLocation(const std::string& host, int port);
-
+    void setMessageSink(std::ostream& os);
     bool updateConnection();
 
     struct ObjectPath {
@@ -53,8 +56,11 @@ public:
             return T::_nil();
         } else {
             typename T::_ptr_type narrowed = T::_nil();
-            if(isObjectAlive(obj)){
+            try {
                 narrowed = T::_narrow(obj);
+            }
+            catch(CORBA::SystemException& ex){
+                putExceptionMessage(ex);
             }
             CORBA::release(obj);
             return narrowed;
@@ -65,7 +71,6 @@ public:
         ObjectPath path(name, kind);
         std::vector<ObjectPath> pathList;
         pathList.push_back(path);
-
         return findObjectSub(pathList);
     }
 
@@ -119,6 +124,8 @@ public:
 
     std::string getRootIOR();
 
+    void putExceptionMessage(CORBA::SystemException& ex);
+
 private:
     bool checkOrUpdateNamingContext();
     CORBA::Object_ptr findObjectSub(std::vector<ObjectPath>& pathList);
@@ -130,6 +137,8 @@ private:
     std::string namingContextLocation;
     std::string host_;
     int port_;
+    std::ostream* os_;
+    std::ostream& os() { return *os_; }
     bool failedInLastAccessToNamingContext;
 };
 

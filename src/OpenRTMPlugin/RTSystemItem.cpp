@@ -710,13 +710,9 @@ RTSComp* RTSystemItemImpl::addRTSComp(const NamingContextHelper::ObjectInfo& inf
     if(!nameToRTSComp(fullPath)){
         std::vector<NamingContextHelper::ObjectPath> target = info.fullPath;
         RTC::RTObject_ptr rtc = ncHelper.findObject<RTC::RTObject>(target);
-        if(rtc == RTC::RTObject::_nil()){
-            rtc = 0;
-        }
         if(!isObjectAlive(rtc)){
             rtc = 0;
         }
-
         RTSCompPtr rtsComp = new RTSComp(info.id, fullPath, rtc, self, pos);
         rtsComps[fullPath] = rtsComp;
 

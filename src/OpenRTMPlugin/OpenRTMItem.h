@@ -23,7 +23,7 @@ public:
 	RTCWrapper() : rtc_(0), ownedExeContList_(0), activeIndex_(0){};
 	~RTCWrapper() {};
 
-	RTC::RTObject_ptr rtc_;
+	RTC::RTObject_var rtc_;
 	RTC::ExecutionContextList_var ownedExeContList_;
   int activeIndex_;
 	SDOPackage::Configuration_ptr configuration_;
