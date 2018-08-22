@@ -177,6 +177,7 @@ RTSNameServerView::RTSNameServerView()
 
 RTSNameServerViewImpl::RTSNameServerViewImpl(RTSNameServerView* self)
 {
+    DDEBUG("RTSNameServerViewImpl::RTSNameServerViewImpl");
     this->self_ = self;
 
     self->setDefaultLayoutArea(View::LEFT_BOTTOM);
@@ -211,7 +212,7 @@ RTSNameServerViewImpl::RTSNameServerViewImpl(RTSNameServerView* self)
             static_cast<void(RTSNameServerViewImpl::*)(void)>(&RTSNameServerViewImpl::cleatZombee), this));
     hbox->addWidget(clearZombeeButton);
 
-    isObjectListUpdateRequested = false;
+    isObjectListUpdateRequested = true;
 
     vbox->addLayout(hbox, 0);
 
