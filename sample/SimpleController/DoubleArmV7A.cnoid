@@ -83,7 +83,7 @@ items:
                   plugin: Body
                   class: SimpleControllerItem
                   data: 
-                    isNoDelayMode: true
+                    isNoDelayMode: false
                     controllerOptions: "position"
                     controller: "DoubleArmV7Controller"
                     baseDirectory: "Controller directory"

@@ -45,7 +45,7 @@ items:
               plugin: OpenRTM
               class: BodyIoRTCItem
               data: 
-                isNoDelayMode: true
+                isNoDelayMode: false
                 controllerOptions: ""
                 module: "TankIoRTC"
                 baseDirectory: "RTC directory"
@@ -57,7 +57,7 @@ items:
               plugin: OpenRTM
               class: BodyIoRTCItem
               data: 
-                isNoDelayMode: true
+                isNoDelayMode: false
                 controllerOptions: ""
                 module: "VisionSensorIoRTC"
                 baseDirectory: "RTC directory"
@@ -69,7 +69,7 @@ items:
               plugin: OpenRTM
               class: ControllerRTCItem
               data: 
-                isNoDelayMode: true
+                isNoDelayMode: false
                 controllerOptions: ""
                 module: "TankJoystickControllerRTC"
                 baseDirectory: "RTC directory"
@@ -91,7 +91,7 @@ items:
               plugin: OpenRTM
               class: ControllerRTCItem
               data: 
-                isNoDelayMode: true
+                isNoDelayMode: false
                 controllerOptions: ""
                 module: "JoystickRTC"
                 baseDirectory: "RTC directory"

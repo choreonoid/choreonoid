@@ -53,7 +53,7 @@ items:
               plugin: OpenRTM
               class: BodyIoRTCItem
               data: 
-                isNoDelayMode: true
+                isNoDelayMode: false
                 controllerOptions: ""
                 module: "RobotIoRTC"
                 baseDirectory: "RTC directory"
@@ -65,7 +65,7 @@ items:
               plugin: OpenRTM
               class: ControllerRTCItem
               data: 
-                isNoDelayMode: true
+                isNoDelayMode: false
                 controllerOptions: ""
                 module: "SR1WalkControllerRTC"
                 baseDirectory: "RTC directory"

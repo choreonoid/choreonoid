@@ -35,7 +35,7 @@ list(APPEND project_files Tank.cnoid TankVisionSensors.cnoid AgxTank.cnoid)
 
 # DoubleArmV7 sample
 add_cnoid_simple_controller(DoubleArmV7Controller DoubleArmV7Controller.cpp)
-list(APPEND project_files DoubleArmV7SJoystick.cnoid DoubleArmV7AJoystick.cnoid)
+list(APPEND project_files DoubleArmV7S.cnoid DoubleArmV7A.cnoid)
 
 # Jaco2 sample
 add_cnoid_simple_controller(Jaco2Controller Jaco2Controller.cpp)
