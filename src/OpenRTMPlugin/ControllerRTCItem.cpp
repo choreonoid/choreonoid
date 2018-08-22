@@ -57,7 +57,7 @@ public:
 #if defined(OPENRTM_VERSION11)
     enum ExecContextType {
         SIMULATION_EXECUTION_CONTEXT,
-        PERIODIC_EXECUTION_CONTEXT,
+        SIMULATION_PERIODIC_EXECUTION_CONTEXT,
         N_EXEC_CONTEXT_TYPES
     };
 #elif defined(OPENRTM_VERSION12)
@@ -120,12 +120,7 @@ ControllerRTCItemImpl::ControllerRTCItemImpl(ControllerRTCItem* self)
     rtcDirectory = filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "rtc";
 
     execContextType.setSymbol(SIMULATION_EXECUTION_CONTEXT,  N_("SimulationExecutionContext"));
-    
-#if defined(OPENRTM_VERSION11)
-    execContextType.setSymbol(PERIODIC_EXECUTION_CONTEXT,  N_("PeriodicExecutionContext"));
-#elif defined(OPENRTM_VERSION12)
     execContextType.setSymbol(SIMULATION_PERIODIC_EXECUTION_CONTEXT, N_("SimulationPeriodicExecutionContext"));
-#endif
 
     execContextType.select(SIMULATION_EXECUTION_CONTEXT);
 
