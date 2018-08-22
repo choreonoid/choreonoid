@@ -1,6 +1,6 @@
 /*!
  * @brief  This is a definition of RTSystemEditorPlugin.
- * @author Hisashi Ikari 
+ * @author Hisashi Ikari
  * @file
  */
 #ifndef CNOID_OPENRTM_PLUGIN_RTS_ROPERTIES_VIEW_H_INCLUDED
@@ -13,10 +13,9 @@
 #include <cnoid/CheckBox>
 #include <cnoid/ComboBox>
 #include <cnoid/LineEdit>
-//#include <boost/shared_ptr.hpp>
+ //#include <boost/shared_ptr.hpp>
 
-namespace cnoid 
-{
+namespace cnoid {
 class   RTSPropertiesViewImpl;
 
 class RTSPropertiesView : public cnoid::View
@@ -39,26 +38,27 @@ private:
     RTSPropertiesViewImpl* impl;
 };
 
-class SettingDialog : public Dialog {
+class SettingDialog : public Dialog
+{
 public:
-  SettingDialog();
+    SettingDialog();
 
 private:
-  CheckBox* chkLog;
-  ComboBox* cmbLogLevel;
+    CheckBox* chkLog;
+    ComboBox* cmbLogLevel;
 
-  LineEdit* leSetting;
+    LineEdit* leSetting;
 
-  LineEdit* leName;
-  LineEdit* leVersion;
-  LineEdit* lePoling;
+    LineEdit* leName;
+    LineEdit* leVersion;
+    LineEdit* lePoling;
 #ifndef OPENRTM_VERSION110
-  LineEdit* leHeartBeat;
+    LineEdit* leHeartBeat;
 #endif
 
-  void oKClicked();
-  void rejected();
-  void logChanged(bool state);
+    void oKClicked();
+    void rejected();
+    void logChanged(bool state);
 };
 
 };

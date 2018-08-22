@@ -38,9 +38,9 @@ void RTCItem::initialize(ExtensionManager* ext)
 
 
 RTCItem::RTCItem()
-  : os(MessageView::instance()->cout()),
-  periodicType(N_PERIODIC_TYPE, CNOID_GETTEXT_DOMAIN_NAME),
-  baseDirectoryType(N_BASE_DIRECTORY_TYPES, CNOID_GETTEXT_DOMAIN_NAME)
+    : os(MessageView::instance()->cout()),
+    periodicType(N_PERIODIC_TYPE, CNOID_GETTEXT_DOMAIN_NAME),
+    baseDirectoryType(N_BASE_DIRECTORY_TYPES, CNOID_GETTEXT_DOMAIN_NAME)
 {
     rtcomp = 0;
     moduleName.clear();
@@ -77,10 +77,10 @@ RTCItem::RTCItem()
 
 RTCItem::RTCItem(const RTCItem& org)
     : Item(org),
-      os(MessageView::instance()->cout()),
-      periodicType(org.periodicType),
-      baseDirectoryType(org.baseDirectoryType),
-      rtcDirectory(org.rtcDirectory)
+    os(MessageView::instance()->cout()),
+    periodicType(org.periodicType),
+    baseDirectoryType(org.baseDirectoryType),
+    rtcDirectory(org.rtcDirectory)
 {
     rtcomp = org.rtcomp;
     moduleName = org.moduleName;
@@ -94,7 +94,7 @@ RTCItem::RTCItem(const RTCItem& org)
 
 RTCItem::~RTCItem()
 {
-    
+
 }
 
 void RTCItem::deleteRTCInstance()
@@ -120,7 +120,7 @@ void RTCItem::updateRTCInstance(bool forceUpdate)
         }
     }
 }
-        
+
 void RTCItem::onPositionChanged()
 {
     DDEBUG("RTCItem::onPositionChanged");
@@ -199,29 +199,29 @@ void RTCItem::doPutProperties(PutPropertyFunction& putProperty)
         moduleName,
         { str(format(_("RT-Component module (*%1%)")) % DLL_SUFFIX) });
 
-    if(baseDirectoryType.is(RTC_DIRECTORY)){
+    if (baseDirectoryType.is(RTC_DIRECTORY)) {
         moduleProperty.setBaseDirectory(rtcDirectory.string());
-    } else if(baseDirectoryType.is(PROJECT_DIRECTORY)){
+    } else if (baseDirectoryType.is(PROJECT_DIRECTORY)) {
         moduleProperty.setBaseDirectory(ProjectManager::instance()->currentProjectDirectory());
     }
-    
+
     putProperty(_("RTC module"), moduleProperty,
-                [&](const string& name){ setModuleName(name); return true; });
+                [&](const string& name) { setModuleName(name); return true; });
     putProperty(_("Base directory"), baseDirectoryType,
-                [&](int which){ setBaseDirectoryType(which); return true; });
+                [&](int which) { setBaseDirectoryType(which); return true; });
 
     putProperty(_("Execution context"), periodicType,
-                [&](int which){ return periodicType.select(which); });
+                [&](int which) { return periodicType.select(which); });
     setPeriodicType(periodicType.selectedIndex());
     putProperty(_("Periodic rate"), periodicRate,
-                [&](int rate){ setPeriodicRate(rate); return true; });
-    putProperty(_("Activation"), isActivationEnabled_, [&](bool on){ setActivationEnabled(on); return true; });
+                [&](int rate) { setPeriodicRate(rate); return true; });
+    putProperty(_("Activation"), isActivationEnabled_, [&](bool on) { setActivationEnabled(on); return true; });
 }
 
 
 bool RTCItem::store(Archive& archive)
 {
-    if(!Item::store(archive)){
+    if (!Item::store(archive)) {
         return false;
     }
     archive.writeRelocatablePath("module", moduleName);
@@ -236,26 +236,26 @@ bool RTCItem::store(Archive& archive)
 bool RTCItem::restore(const Archive& archive)
 {
     DDEBUG("RTCItem::restore");
-    
-    if(!Item::restore(archive)){
+
+    if (!Item::restore(archive)) {
         return false;
     }
     string value;
-    if(archive.read("module", value) || archive.read("moduleName", value)){
+    if (archive.read("module", value) || archive.read("moduleName", value)) {
         filesystem::path path(archive.expandPathVariables(value));
         moduleName = path.make_preferred().string();
     }
-    if(archive.read("baseDirectory", value) || archive.read("RelativePathBase", value)){
+    if (archive.read("baseDirectory", value) || archive.read("RelativePathBase", value)) {
         baseDirectoryType.select(value);
         oldBaseDirectoryType = baseDirectoryType.selectedIndex();
     }
-    
-    if(archive.read("periodicType", value)){
+
+    if (archive.read("periodicType", value)) {
         periodicType.select(value);
         oldPeriodicType = periodicType.selectedIndex();
         properties["exec_cxt.periodic.type"] = value;
     }
-    if(archive.read("periodicRate", periodicRate)){
+    if (archive.read("periodicRate", periodicRate)) {
         stringstream ss;
         ss << periodicRate;
         properties["exec_cxt.periodic.rate"] = ss.str();
@@ -269,12 +269,12 @@ bool RTCItem::restore(const Archive& archive)
 bool RTCItem::convertAbsolutePath()
 {
     modulePath = moduleName;
-    if(!modulePath.is_absolute()){
-        if(baseDirectoryType.is(RTC_DIRECTORY)){
+    if (!modulePath.is_absolute()) {
+        if (baseDirectoryType.is(RTC_DIRECTORY)) {
             modulePath = rtcDirectory / modulePath;
-        } else if(baseDirectoryType.is(PROJECT_DIRECTORY)){
+        } else if (baseDirectoryType.is(PROJECT_DIRECTORY)) {
             string projectDir = ProjectManager::instance()->currentProjectDirectory();
-            if(projectDir.empty()){
+            if (projectDir.empty()) {
                 mv->putln(_("Please save the project."));
                 return false;
             } else {
@@ -381,9 +381,9 @@ void RTComponent::setupModules(string& fileName, string& initFuncName, string& c
 
     if (!rtc_) {
         mv->putln(fmt(_("RTC \"%1%\" cannot be created by the RTC manager.\n"
-          " RTC module file: \"%2%\"\n"
-          " Init function: %3%\n"
-          " option: %4%"))
+            " RTC module file: \"%2%\"\n"
+            " Init function: %3%\n"
+            " option: %4%"))
           % componentName % fileName % initFuncName % option);
     }
 }
@@ -418,11 +418,11 @@ void RTComponent::createProcess(string& command, PropertyMap& prop)
         rtcProcess.kill();
         rtcProcess.waitForFinished(100);
     }
-  #ifdef _WIN32
+#ifdef _WIN32
     rtcProcess.start(QString("\"") + command.c_str() + "\"", argv);
-  #else
+#else
     rtcProcess.start(command.c_str(), argv);
-  #endif
+#endif
     if (!rtcProcess.waitForStarted()) {
         mv->putln(fmt(_("RT Component process \"%1%\" cannot be executed.")) % command);
     } else {
@@ -435,44 +435,43 @@ void RTComponent::createProcess(string& command, PropertyMap& prop)
 
 void RTComponent::deleteRTC()
 {
-    if(TRACE_FUNCTIONS){
+    if (TRACE_FUNCTIONS) {
         cout << "BodyRTComponent::deleteRTC()" << endl;
     }
-    
-    if(rtc_){
+
+    if (rtc_) {
         string rtcName(rtc_->getInstanceName());
         mv->putln(fmt(_("delete %1%")) % rtcName);
-        if(!cnoid::deleteRTC(rtc_)){
+        if (!cnoid::deleteRTC(rtc_)) {
             mv->putln(fmt(_("%1% cannot be deleted.")) % rtcName);
         }
         rtc_ = nullptr;
 
-    } else if(rtcProcess.state() != QProcess::NotRunning){
+    } else if (rtcProcess.state() != QProcess::NotRunning) {
         mv->putln(fmt(_("delete %1%")) % componentName);
         rtcProcess.kill();
         rtcProcess.waitForFinished(100);
     }
-   
-    if(TRACE_FUNCTIONS){
+
+    if (TRACE_FUNCTIONS) {
         cout << "End of BodyRTCItem::deleteModule()" << endl;
     }
 }
 
 void RTComponent::activate()
 {
-    if(rtc_){
+    if (rtc_) {
         RTC::ExecutionContextList_var eclist = rtc_->get_owned_contexts();
-        for(CORBA::ULong i = 0; i < eclist->length(); ++i){
-            if(!CORBA::is_nil(eclist[i])){
+        for (CORBA::ULong i = 0; i < eclist->length(); ++i) {
+            if (!CORBA::is_nil(eclist[i])) {
                 try {
                     // for 1.2.0
                     OpenRTM::ExtTrigExecutionContextService_var ec = OpenRTM::ExtTrigExecutionContextService::_narrow(eclist[i]);
-                    if(!CORBA::is_nil(ec)){
+                    if (!CORBA::is_nil(ec)) {
                         ec->activate_component(rtc_->getObjRef());
                         break;
                     }
-                }
-                catch(CORBA::SystemException& ex){
+                } catch (CORBA::SystemException& ex) {
                     break;
                 }
             }

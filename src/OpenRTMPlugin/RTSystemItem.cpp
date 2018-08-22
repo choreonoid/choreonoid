@@ -20,10 +20,12 @@ struct RTSPortComparator
 {
     std::string name_;
 
-    RTSPortComparator(std::string value){
+    RTSPortComparator(std::string value)
+    {
         name_ = value;
     }
-    bool operator()(const RTSPortPtr elem) const {
+    bool operator()(const RTSPortPtr elem) const
+    {
         return (name_ == elem->name);
     }
 };
@@ -47,7 +49,8 @@ public:
     int heartBeatPeriod;
 #endif
 
-    enum State_Detection {
+    enum State_Detection
+    {
         POLLING_CHECK = 0,
         MANUAL_CHECK,
 #if defined(OPENRTM_VERSION12)
@@ -77,13 +80,13 @@ public:
         const string& sourceComp, const string& sourcePort,
         const string& targetComp, const string& targetPort,
         const string& dataflow, const string& subscription,
-        const bool setPos, const Vector2 pos[] );
+        const bool setPos, const Vector2 pos[]);
     bool connectionCheck();
     void RTSCompToConnectionList(const RTSComp* rtsComp, list<RTSConnection*>& rtsConnectionList, int mode);
     void removeConnection(RTSConnection* connection);
     void doPutProperties(PutPropertyFunction& putProperty);
     bool saveRtsProfile(const string& filename);
-    void restoreRTSystem( const Archive& archive);
+    void restoreRTSystem(const Archive& archive);
     void restoreRTSComp(const string& name, const Vector2& pos,
             const vector<pair<string, bool>>& inPorts, const vector<pair<string, bool>>& outPorts);
     string getConnectionNumber();
@@ -111,20 +114,20 @@ RTSPort::RTSPort(const string& name_, PortService_var port_, RTSComp* parent)
     name = name_;
     port = port_;
     //
-    if(port) {
+    if (port) {
         RTC::PortProfile* profile = port->get_port_profile();
-        if(profile){
+        if (profile) {
             RTC::PortInterfaceProfileList interfaceList = profile->interfaces;
-            for (CORBA::ULong index = 0; index < interfaceList.length(); ++index){
+            for (CORBA::ULong index = 0; index < interfaceList.length(); ++index) {
                 RTC::PortInterfaceProfile ifProfile = interfaceList[index];
                 PortInterfacePtr portIf(new PortInterface());
-                if(parent){
+                if (parent) {
                     portIf->rtc_name = parent->name;
                 }
                 const char* port_name;
                 port_name = (const char*)profile->name;
                 portIf->port_name = port_name;
-                if(ifProfile.polarity == PortInterfacePolarity::REQUIRED){
+                if (ifProfile.polarity == PortInterfacePolarity::REQUIRED) {
                     portIf->if_polarity = "required";
                 } else {
                     portIf->if_polarity = "provided";
@@ -145,7 +148,7 @@ RTSPort::RTSPort(const string& name_, PortService_var port_, RTSComp* parent)
 
 bool RTSPort::isConnected()
 {
-    if (!port || !isObjectAlive(port)){
+    if (!port || !isObjectAlive(port)) {
         return false;
     }
     ConnectorProfileList_var connectorProfiles = port->get_connector_profiles();
@@ -155,20 +158,20 @@ bool RTSPort::isConnected()
 
 bool RTSPort::isConnectedWith(RTSPort* target)
 {
-    if(!port || !target->port ||
+    if (!port || !target->port ||
        CORBA::is_nil(port) || port->_non_existent() ||
-       CORBA::is_nil(target->port) || target->port->_non_existent()){
+       CORBA::is_nil(target->port) || target->port->_non_existent()) {
         return false;
     }
 
     ConnectorProfileList_var connectorProfiles = port->get_connector_profiles();
 
-    for(CORBA::ULong i = 0; i < connectorProfiles->length(); ++i){
+    for (CORBA::ULong i = 0; i < connectorProfiles->length(); ++i) {
         ConnectorProfile& connectorProfile = connectorProfiles[i];
         PortServiceList& connectedPorts = connectorProfile.ports;
-        for(CORBA::ULong j = 0; j < connectedPorts.length(); ++j){
+        for (CORBA::ULong j = 0; j < connectedPorts.length(); ++j) {
             PortService_ptr connectedPortRef = connectedPorts[j];
-            if(connectedPortRef->_is_equivalent(target->port)){
+            if (connectedPortRef->_is_equivalent(target->port)) {
                 return true;
             }
         }
@@ -181,17 +184,17 @@ bool RTSPort::isConnectedWith(RTSPort* target)
 bool RTSPort::checkConnectablePort(RTSPort* target)
 {
     DDEBUG("RTSPort::checkConnectablePort");
-    if(rtsComp == target->rtsComp){
+    if (rtsComp == target->rtsComp) {
         return false;
     }
-    if(!port || !target->port){
+    if (!port || !target->port) {
         return false;
     }
 
-    if((isInPort && target->isInPort) ||
-       (isInPort && target->isServicePort) ||
-       (!isInPort && !isServicePort && !target->isInPort) ||
-       (isServicePort && !target->isServicePort)){
+    if ((isInPort && target->isInPort) ||
+        (isInPort && target->isServicePort) ||
+        (!isInPort && !isServicePort && !target->isInPort) ||
+        (isServicePort && !target->isServicePort)) {
         return false;
     }
 
@@ -200,7 +203,7 @@ bool RTSPort::checkConnectablePort(RTSPort* target)
         vector<string> dataTypes = RTCCommonUtil::getAllowDataTypes(this, target);
         vector<string> ifTypes = RTCCommonUtil::getAllowInterfaceTypes(this, target);
         vector<string> subTypes = RTCCommonUtil::getAllowSubscriptionTypes(this, target);
-        if(dataTypes.size() == 0 || ifTypes.size() == 0 || subTypes.size() == 0){
+        if (dataTypes.size() == 0 || ifTypes.size() == 0 || subTypes.size() == 0) {
             return false;
         }
     }
@@ -238,9 +241,9 @@ vector<string> RTSPort::getProperty(const string& key)
     vector<string> result;
 
     NVList properties = port->get_port_profile()->properties;
-    for(int index = 0; index < properties.length(); ++index){
+    for (int index = 0; index < properties.length(); ++index) {
         string strName(properties[index].name._ptr);
-        if(strName == key){
+        if (strName == key) {
             const char* nvValue;
             properties[index].value >>= nvValue;
             string strValue(nvValue);
@@ -254,10 +257,10 @@ vector<string> RTSPort::getProperty(const string& key)
 
 
 RTSConnection::RTSConnection(const string& id, const string& name,
-        const string& sourceRtcName,const string& sourcePortName,
+        const string& sourceRtcName, const string& sourcePortName,
         const string& targetRtcName, const string& targetPortName)
     : id(id), name(name), sourceRtcName(sourceRtcName), sourcePortName(sourcePortName),
-      targetRtcName(targetRtcName), targetPortName(targetPortName), setPos(false)
+    targetRtcName(targetRtcName), targetPortName(targetPortName), setPos(false)
 {
     isAlive_ = false;
 }
@@ -267,18 +270,18 @@ bool RTSConnection::connect()
 {
     DDEBUG("RTSConnection::connect");
 
-    if(!sourcePort || !targetPort){
+    if (!sourcePort || !targetPort) {
         return false;
     }
 
-    if(!sourcePort->port || !targetPort->port ||
+    if (!sourcePort->port || !targetPort->port ||
        CORBA::is_nil(sourcePort->port) || sourcePort->port->_non_existent() ||
-       CORBA::is_nil(targetPort->port) || targetPort->port->_non_existent()){
+       CORBA::is_nil(targetPort->port) || targetPort->port->_non_existent()) {
         DDEBUG("RTSConnection::connect False");
         return false;
     }
 
-    if(sourcePort->isConnectedWith(targetPort)){
+    if (sourcePort->isConnectedWith(targetPort)) {
         return false;
     }
 
@@ -289,22 +292,22 @@ bool RTSConnection::connect()
     cprof.ports[0] = PortService::_duplicate(sourcePort->port);
     cprof.ports[1] = PortService::_duplicate(targetPort->port);
 
-    for(int index = 0; index < propList.size(); index++){
+    for (int index = 0; index < propList.size(); index++) {
         NamedValuePtr param = propList[index];
         CORBA_SeqUtil::push_back(
             cprof.properties, NVUtil::newNV(param->name_.c_str(), param->value_.c_str()));
     }
 
     RTC::ReturnCode_t result = sourcePort->port->connect(cprof);
-    if(result == RTC::RTC_OK){
+    if (result == RTC::RTC_OK) {
         PortProfile_var portprofile = sourcePort->port->get_port_profile();
         ConnectorProfileList connections = portprofile->connector_profiles;
-        for(CORBA::ULong i = 0; i < connections.length(); i++){
+        for (CORBA::ULong i = 0; i < connections.length(); i++) {
             ConnectorProfile& connector = connections[i];
             PortServiceList& connectedPorts = connector.ports;
-            for(CORBA::ULong j=0; j < connectedPorts.length(); ++j){
+            for (CORBA::ULong j = 0; j < connectedPorts.length(); ++j) {
                 PortService_ptr connectedPortRef = connectedPorts[j];
-                if(connectedPortRef->_is_equivalent(targetPort->port)){
+                if (connectedPortRef->_is_equivalent(targetPort->port)) {
                     id = string(connector.connector_id);
                     isAlive_ = true;
                     DDEBUG("RTSConnection::connect End");
@@ -324,7 +327,7 @@ bool RTSConnection::disconnect()
 {
     isAlive_ = false;
 
-    if(CORBA::is_nil(sourcePort->port) || sourcePort->port->_non_existent()){
+    if (CORBA::is_nil(sourcePort->port) || sourcePort->port->_non_existent()) {
         return false;
     }
 
@@ -334,7 +337,7 @@ bool RTSConnection::disconnect()
 
 void RTSConnection::setPosition(const Vector2 pos[])
 {
-    for(int i=0; i < 6; ++i){
+    for (int i = 0; i < 6; ++i) {
         position[i] = pos[i];
     }
     setPos = true;
@@ -358,13 +361,13 @@ void RTSComp::setRtc(RTObject_ptr rtc)
 
     setRTObject(rtc);
 
-    if(!isObjectAlive(rtc)){
+    if (!isObjectAlive(rtc)) {
         participatingExeContList = 0;
-        for(auto it = inPorts.begin(); it != inPorts.end(); ++it){
+        for (auto it = inPorts.begin(); it != inPorts.end(); ++it) {
             RTSPort* port = *it;
             port->port = 0;
         }
-        for(auto it = outPorts.begin(); it != outPorts.end(); ++it){
+        for (auto it = outPorts.begin(); it != outPorts.end(); ++it) {
             RTSPort* port = *it;
             port->port = 0;
         }
@@ -379,18 +382,18 @@ void RTSComp::setRtc(RTObject_ptr rtc)
     outPorts.clear();
 
     PortServiceList_var portlist = rtc_->get_ports();
-    for(CORBA::ULong i = 0; i < portlist->length(); ++i){
+    for (CORBA::ULong i = 0; i < portlist->length(); ++i) {
         PortProfile_var portprofile = portlist[i]->get_port_profile();
         coil::Properties pproperties = NVUtil::toProperties(portprofile->properties);
         string portType = pproperties["port.port_type"];
         RTSPortPtr rtsPort = new RTSPort(string(portprofile->name), portlist[i], this);
-        if (RTCCommonUtil::compareIgnoreCase(portType, "CorbaPort")){
+        if (RTCCommonUtil::compareIgnoreCase(portType, "CorbaPort")) {
             rtsPort->isServicePort = true;
             rtsPort->isInPort = false;
             outPorts.push_back(rtsPort);
         } else {
             rtsPort->isServicePort = false;
-            if (RTCCommonUtil::compareIgnoreCase(portType, "DataInPort")){
+            if (RTCCommonUtil::compareIgnoreCase(portType, "DataInPort")) {
                 inPorts.push_back(rtsPort);
             } else {
                 rtsPort->isInPort = false;
@@ -401,12 +404,12 @@ void RTSComp::setRtc(RTObject_ptr rtc)
 
     list<RTSConnection*> rtsConnectionList;
     rts_->impl->RTSCompToConnectionList(this, rtsConnectionList, 0);
-    for(auto it = rtsConnectionList.begin(); it != rtsConnectionList.end(); ++it){
+    for (auto it = rtsConnectionList.begin(); it != rtsConnectionList.end(); ++it) {
         RTSConnectionPtr connection = (*it);
         rts_->impl->removeConnection(*it);
         RTSPort* sourcePort = connection->srcRTC->nameToRTSPort(connection->sourcePortName);
         RTSPort* targetPort = connection->targetRTC->nameToRTSPort(connection->targetPortName);
-        if(sourcePort && targetPort){
+        if (sourcePort && targetPort) {
             connection->sourcePort = sourcePort;
             connection->targetPort = targetPort;
             rts_->impl->rtsConnections[RTSystemItem::RTSPortPair(sourcePort, targetPort)] = connection;
@@ -421,13 +424,13 @@ void RTSComp::setRtc(RTObject_ptr rtc)
 RTSPort* RTSComp::nameToRTSPort(const string& name)
 {
     //DDEBUG_V("RTSComp::nameToRTSPort %s", name.c_str());
-    
-    auto it = find_if( inPorts.begin(), inPorts.end(), RTSPortComparator(name));
-    if(it != inPorts.end()){
+
+    auto it = find_if(inPorts.begin(), inPorts.end(), RTSPortComparator(name));
+    if (it != inPorts.end()) {
         return *it;
     }
     it = find_if(outPorts.begin(), outPorts.end(), RTSPortComparator(name));
-    if(it != outPorts.end()){
+    if (it != outPorts.end()) {
         return *it;
     }
     return nullptr;
@@ -440,13 +443,13 @@ bool RTSComp::connectionCheck()
 
     bool updated = false;
 
-    for(auto it = inPorts.begin(); it != inPorts.end(); ++it){
-        if(connectionCheckSub(*it)){
+    for (auto it = inPorts.begin(); it != inPorts.end(); ++it) {
+        if (connectionCheckSub(*it)) {
             updated = true;
         }
     }
-    for(auto it = outPorts.begin(); it != outPorts.end(); it++){
-        if(connectionCheckSub(*it)){
+    for (auto it = outPorts.begin(); it != outPorts.end(); it++) {
+        if (connectionCheckSub(*it)) {
             updated = true;
         }
     }
@@ -459,7 +462,7 @@ bool RTSComp::connectionCheckSub(RTSPort* rtsPort)
 {
     bool updated = false;
 
-    if( isObjectAlive(rtsPort->port)==false ) return updated;
+    if (isObjectAlive(rtsPort->port) == false) return updated;
 
     /**
        The get_port_profile() function should not be used here because
@@ -468,26 +471,26 @@ bool RTSComp::connectionCheckSub(RTSPort* rtsPort)
     */
     ConnectorProfileList_var connectorProfiles = rtsPort->port->get_connector_profiles();
 
-    for(CORBA::ULong i = 0; i < connectorProfiles->length(); ++i){
+    for (CORBA::ULong i = 0; i < connectorProfiles->length(); ++i) {
         ConnectorProfile& connectorProfile = connectorProfiles[i];
         PortServiceList& connectedPorts = connectorProfile.ports;
-        for(CORBA::ULong j=0; j < connectedPorts.length(); ++j){
+        for (CORBA::ULong j = 0; j < connectedPorts.length(); ++j) {
             PortService_ptr connectedPortRef = connectedPorts[j];
-            if( isObjectAlive(connectedPortRef)==false ) continue;
+            if (isObjectAlive(connectedPortRef) == false) continue;
             PortProfile_var connectedPortProfile = connectedPortRef->get_port_profile();
             string portName = string(connectedPortProfile->name);
             vector<string> target;
             RTCCommonUtil::splitPortName(portName, target);
-            if(target[0] == name) continue;
+            if (target[0] == name) continue;
 
             string rtcPath = getComponentPath(connectedPortRef);
             RTSComp* targetRTC = rts_->impl->nameToRTSComp("/" + rtcPath);
-            if(targetRTC){
+            if (targetRTC) {
                 //DDEBUG("targetRTC Found");
                 RTSPort* targetPort = targetRTC->nameToRTSPort(portName);
-                if(targetPort){
-                    auto itr = rts_->impl->rtsConnections.find(RTSystemItem::RTSPortPair(rtsPort,targetPort));
-                    if(itr != rts_->impl->rtsConnections.end()){
+                if (targetPort) {
+                    auto itr = rts_->impl->rtsConnections.find(RTSystemItem::RTSPortPair(rtsPort, targetPort));
+                    if (itr != rts_->impl->rtsConnections.end()) {
                         continue;
                     }
                     RTSConnectionPtr rtsConnection = new RTSConnection(
@@ -506,10 +509,10 @@ bool RTSComp::connectionCheckSub(RTSPort* rtsPort)
                     rtsConnection->targetRTC = targetRTC;
                     rtsConnection->targetPort = targetRTC->nameToRTSPort(rtsConnection->targetPortName);
                     rtsConnection->isAlive_ = true;
-                    rts_->impl->rtsConnections[RTSystemItem::RTSPortPair(rtsPort,targetPort)] = rtsConnection;
+                    rts_->impl->rtsConnections[RTSystemItem::RTSPortPair(rtsPort, targetPort)] = rtsConnection;
 
                     rts_->suggestFileUpdate();
-                    
+
                     updated = true;
                 }
             }
@@ -524,9 +527,9 @@ std::string RTSComp::getComponentPath(RTC::PortService_ptr source)
 {
     NVList properties = source->get_port_profile()->owner->get_component_profile()->properties;
     const char* nvValue;
-    for(int index = 0; index < properties.length(); index++){
+    for (int index = 0; index < properties.length(); index++) {
         string strName(properties[index].name._ptr);
-        if(strName == "naming.names"){
+        if (strName == "naming.names") {
             properties[index].value >>= nvValue;
             break;
         }
@@ -538,7 +541,7 @@ std::string RTSComp::getComponentPath(RTC::PortService_ptr source)
 
 void RTSComp::setPos(const QPointF& p)
 {
-    if(p != pos_){
+    if (p != pos_) {
         pos_ = p;
         rts_->suggestFileUpdate();
     }
@@ -553,12 +556,12 @@ void RTSystemItem::initializeClass(ExtensionManager* ext)
     im.addCreationPanel<RTSystemItem>();
     im.addLoaderAndSaver<RTSystemItem>(
         _("RT-System"), "RTS-PROFILE-XML", "xml",
-        [](RTSystemItem* item, const std::string& filename, std::ostream&, Item*){
-            return item->loadRtsProfile(filename);
-        },
-        [](RTSystemItem* item, const std::string& filename, std::ostream&, Item*){
-            return item->saveRtsProfile(filename);
-        });
+        [](RTSystemItem* item, const std::string& filename, std::ostream&, Item*) {
+        return item->loadRtsProfile(filename);
+    },
+        [](RTSystemItem* item, const std::string& filename, std::ostream&, Item*) {
+        return item->saveRtsProfile(filename);
+    });
 }
 
 
@@ -621,30 +624,35 @@ RTSystemItemImpl::~RTSystemItemImpl()
 }
 
 
-Item* RTSystemItem::doDuplicate() const {
-	return new RTSystemItem(*this);
+Item* RTSystemItem::doDuplicate() const
+{
+    return new RTSystemItem(*this);
 }
 
-void RTSystemItemImpl::onLocationChanged(string host, int port) {
-  NameServerManager::instance()->getNCHelper()->setLocation(host, port);
+void RTSystemItemImpl::onLocationChanged(string host, int port)
+{
+    NameServerManager::instance()->getNCHelper()->setLocation(host, port);
 }
 
-RTSComp* RTSystemItem::nameToRTSComp(const string& name) {
+RTSComp* RTSystemItem::nameToRTSComp(const string& name)
+{
     return impl->nameToRTSComp(name);
 }
 
-RTSComp* RTSystemItemImpl::nameToRTSComp(const string& name) {
-	//DDEBUG_V("RTSystemItemImpl::nameToRTSComp:%s", name.c_str());
+RTSComp* RTSystemItemImpl::nameToRTSComp(const string& name)
+{
+    //DDEBUG_V("RTSystemItemImpl::nameToRTSComp:%s", name.c_str());
     map<string, RTSCompPtr>::iterator it = rtsComps.find(name);
-    if(it==rtsComps.end())
+    if (it == rtsComps.end())
         return 0;
     else
         return it->second.get();
 }
 
 
-RTSComp* RTSystemItem::addRTSComp(const string& name, const QPointF& pos) {
-	return impl->addRTSComp(name, pos);
+RTSComp* RTSystemItem::addRTSComp(const string& name, const QPointF& pos)
+{
+    return impl->addRTSComp(name, pos);
 }
 
 
@@ -652,14 +660,14 @@ RTSComp* RTSystemItemImpl::addRTSComp(const string& name, const QPointF& pos)
 {
     DDEBUG_V("RTSystemItemImpl::addRTSComp:%s", name.c_str());
 
-    if(!nameToRTSComp("/" + name + ".rtc")){
+    if (!nameToRTSComp("/" + name + ".rtc")) {
         std::vector<NamingContextHelper::ObjectPath> pathList;
         NamingContextHelper::ObjectPath path(name, "rtc");
         pathList.push_back(path);
         NamingContextHelper* ncHelper = NameServerManager::instance()->getNCHelper();
         RTC::RTObject_ptr rtc = ncHelper->findObject<RTC::RTObject>(pathList);
         DDEBUG_V("ncHelper host:%s, port:%d", ncHelper->host().c_str(), ncHelper->port());
-        if(rtc == RTC::RTObject::_nil()){
+        if (rtc == RTC::RTObject::_nil()) {
             DDEBUG("RTSystemItemImpl::addRTSComp Failed");
             return nullptr;
         }
@@ -689,12 +697,12 @@ RTSComp* RTSystemItemImpl::addRTSComp(const NamingContextHelper::ObjectInfo& inf
 
     string fullPath = info.getFullPath();
 
-    if(!nameToRTSComp(fullPath)){
+    if (!nameToRTSComp(fullPath)) {
         std::vector<NamingContextHelper::ObjectPath> target = info.fullPath_;
         auto ncHelper = NameServerManager::instance()->getNCHelper();
         ncHelper->setLocation(info.hostAddress_, info.portNo_);
         RTC::RTObject_ptr rtc = ncHelper->findObject<RTC::RTObject>(target);
-        if(!isObjectAlive(rtc)){
+        if (!isObjectAlive(rtc)) {
             CORBA::release(rtc);
             rtc = nullptr;
         }
@@ -718,7 +726,7 @@ void RTSystemItem::deleteRTSComp(const string& name)
 
 void RTSystemItemImpl::deleteRTSComp(const string& name)
 {
-    if(rtsComps.erase(name) > 0){
+    if (rtsComps.erase(name) > 0) {
         self->suggestFileUpdate();
     }
 }
@@ -733,8 +741,8 @@ bool RTSystemItem::compIsAlive(RTSComp* rtsComp)
 bool RTSystemItemImpl::compIsAlive(RTSComp* rtsComp)
 {
     //DDEBUG("RTSystemItemImpl::compIsAlive");
-    if(rtsComp->rtc_){
-        if(isObjectAlive(rtsComp->rtc_)){
+    if (rtsComp->rtc_) {
+        if (isObjectAlive(rtsComp->rtc_)) {
             return true;
         } else {
             rtsComp->setRtc(0);
@@ -742,28 +750,28 @@ bool RTSystemItemImpl::compIsAlive(RTSComp* rtsComp)
         }
     } else {
         //DDEBUG_V("Full Path = %s", rtsComp->fullPath.c_str());
-    		QStringList nameList = QString::fromStdString(rtsComp->fullPath).split("/");
+        QStringList nameList = QString::fromStdString(rtsComp->fullPath).split("/");
         std::vector<NamingContextHelper::ObjectPath> pathList;
         for (int index = 0; index < nameList.count(); index++) {
-    			  QString elem = nameList[index];
-            if(elem.length()==0) continue;
-    			  QStringList elemList = elem.split(".");
-            if(elemList.size() != 2) return false;
-    			  NamingContextHelper::ObjectPath path(elemList[0].toStdString(), elemList[1].toStdString());
-    			  pathList.push_back(path);
-    		}
+            QString elem = nameList[index];
+            if (elem.length() == 0) continue;
+            QStringList elemList = elem.split(".");
+            if (elemList.size() != 2) return false;
+            NamingContextHelper::ObjectPath path(elemList[0].toStdString(), elemList[1].toStdString());
+            pathList.push_back(path);
+        }
 
         RTC::RTObject_ptr rtc = NameServerManager::instance()->getNCHelper()->findObject<RTC::RTObject>(pathList);
-        if(!isObjectAlive(rtc)){
+        if (!isObjectAlive(rtc)) {
             //DDEBUG("RTSystemItemImpl::compIsAlive NOT Alive");
             return false;
         } else {
             DDEBUG("RTSystemItemImpl::compIsAlive Alive");
             rtsComp->setRtc(rtc);
-            if(autoConnection){
+            if (autoConnection) {
                 list<RTSConnection*> rtsConnectionList;
                 RTSCompToConnectionList(rtsComp, rtsConnectionList, 0);
-                for(auto it = rtsConnectionList.begin(); it != rtsConnectionList.end(); it++){
+                for (auto it = rtsConnectionList.begin(); it != rtsConnectionList.end(); it++) {
                     auto connection = *it;
                     connection->connect();
                 }
@@ -788,7 +796,7 @@ RTSConnection* RTSystemItem::addRTSConnection
 (const std::string& id, const std::string& name, RTSPort* sourcePort, RTSPort* targetPort, const std::vector<NamedValuePtr>& propList, const Vector2 pos[])
 {
     bool setPos = true;
-    if(!pos) setPos = false;
+    if (!pos) setPos = false;
     return impl->addRTSConnection(id, name, sourcePort, targetPort, propList, setPos, pos);
 }
 
@@ -805,7 +813,7 @@ RTSConnection* RTSystemItemImpl::addRTSConnection
     RTSConnection* rtsConnection_;
     auto it = rtsConnections.find(RTSystemItem::RTSPortPair(sourcePort, targetPort));
 
-    if(it != rtsConnections.end()){
+    if (it != rtsConnections.end()) {
         rtsConnection_ = it->second;;
 
     } else {
@@ -814,14 +822,14 @@ RTSConnection* RTSystemItemImpl::addRTSConnection
                 id, name,
                 sourcePort->rtsComp->name, sourcePort->name,
                 targetPort->rtsComp->name, targetPort->name);
-        
+
         rtsConnection->srcRTC = sourcePort->rtsComp;
         rtsConnection->sourcePort = sourcePort;
         rtsConnection->targetRTC = targetPort->rtsComp;
         rtsConnection->targetPort = targetPort;
         rtsConnection->propList = propList;
 
-	if(setPos){
+        if (setPos) {
             rtsConnection->setPosition(pos);
         }
 
@@ -831,19 +839,19 @@ RTSConnection* RTSystemItemImpl::addRTSConnection
         updated = true;
     }
 
-    if(!CORBA::is_nil(sourcePort->port) && !sourcePort->port->_non_existent() &&
+    if (!CORBA::is_nil(sourcePort->port) && !sourcePort->port->_non_existent() &&
        !CORBA::is_nil(targetPort->port) && !targetPort->port->_non_existent()) {
-        if(rtsConnection_->connect()){
+        if (rtsConnection_->connect()) {
             updated = true;
         }
     }
 
-    if(rtsConnection_->id.empty()){
+    if (rtsConnection_->id.empty()) {
         rtsConnection_->id = "NoConnection_" + getConnectionNumber();
         updated = true;
     }
 
-    if(updated){
+    if (updated) {
         self->suggestFileUpdate();
     }
 
@@ -861,17 +869,17 @@ RTSConnection* RTSystemItemImpl::addRTSConnectionName
     string sourceId = "/" + sourceCompName + ".rtc";
     RTSPort* sourcePort = 0;
     RTSComp* sourceRtc = nameToRTSComp(sourceId);
-    if(sourceRtc){
+    if (sourceRtc) {
         sourcePort = sourceRtc->nameToRTSPort(sourcePortName);
     }
 
     string targetId = "/" + targetCompName + ".rtc";
     RTSPort* targetPort = 0;
     RTSComp* targetRtc = nameToRTSComp(targetId);
-    if(targetRtc){
+    if (targetRtc) {
         targetPort = targetRtc->nameToRTSPort(targetPortName);
     }
-    if(sourcePort && targetPort){
+    if (sourcePort && targetPort) {
         vector<NamedValuePtr> propList;
         NamedValuePtr paramDataFlow(new NamedValue("dataport.dataflow_type", dataflow));
         propList.push_back(paramDataFlow);
@@ -897,24 +905,24 @@ bool RTSystemItemImpl::connectionCheck()
 {
     //DDEBUG("RTSystemItemImpl::connectionCheck");
     bool updated = false;
-    
-    for(auto it= rtsConnections.begin(); it != rtsConnections.end(); it++){
+
+    for (auto it = rtsConnections.begin(); it != rtsConnections.end(); it++) {
         const RTSystemItem::RTSPortPair& ports = it->first;
-        if(ports(0)->isConnectedWith(ports(1))){
-            if(!it->second->isAlive_){
+        if (ports(0)->isConnectedWith(ports(1))) {
+            if (!it->second->isAlive_) {
                 it->second->isAlive_ = true;
                 updated = true;
             }
         } else {
-            if(it->second->isAlive_){
+            if (it->second->isAlive_) {
                 it->second->isAlive_ = false;
                 updated = true;
             }
         }
     }
 
-    for(auto it = rtsComps.begin(); it != rtsComps.end(); it++){
-        if(it->second->connectionCheck()){
+    for (auto it = rtsComps.begin(); it != rtsComps.end(); it++) {
+        if (it->second->connectionCheck()) {
             updated = true;
         }
     }
@@ -934,22 +942,22 @@ void RTSystemItem::RTSCompToConnectionList
 void RTSystemItemImpl::RTSCompToConnectionList
 (const RTSComp* rtsComp, list<RTSConnection*>& rtsConnectionList, int mode)
 {
-    for(RTSystemItem::RTSConnectionMap::iterator it = rtsConnections.begin();
-            it != rtsConnections.end(); it++){
-        switch (mode){
-        case 0:
-        default :
-            if(it->second->sourceRtcName == rtsComp->name || it->second->targetRtcName == rtsComp->name)
-                rtsConnectionList.push_back(it->second);
-            break;
-        case 1:
-            if(it->second->sourceRtcName == rtsComp->name)
-                rtsConnectionList.push_back(it->second);
-            break;
-        case 2:
-            if(it->second->targetRtcName == rtsComp->name)
-                rtsConnectionList.push_back(it->second);
-            break;
+    for (RTSystemItem::RTSConnectionMap::iterator it = rtsConnections.begin();
+            it != rtsConnections.end(); it++) {
+        switch (mode) {
+            case 0:
+            default:
+                if (it->second->sourceRtcName == rtsComp->name || it->second->targetRtcName == rtsComp->name)
+                    rtsConnectionList.push_back(it->second);
+                break;
+            case 1:
+                if (it->second->sourceRtcName == rtsComp->name)
+                    rtsConnectionList.push_back(it->second);
+                break;
+            case 2:
+                if (it->second->targetRtcName == rtsComp->name)
+                    rtsConnectionList.push_back(it->second);
+                break;
         }
     }
 }
@@ -977,7 +985,7 @@ void RTSystemItem::disconnectAndRemoveConnection(RTSConnection* connection)
 void RTSystemItemImpl::removeConnection(RTSConnection* connection)
 {
     RTSystemItem::RTSPortPair pair(connection->sourcePort, connection->targetPort);
-    if(rtsConnections.erase(pair) > 0){
+    if (rtsConnections.erase(pair) > 0) {
         self->suggestFileUpdate();
     }
 }
@@ -996,9 +1004,9 @@ void RTSystemItemImpl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("Vendor Name"), vendorName, changeProperty(vendorName));
     putProperty(_("Version"), version, changeProperty(version));
     putProperty(_("State Check"), stateCheck,
-                [&](int value){ setStateCheckMethod(value); return true; });
+                [&](int value) { setStateCheckMethod(value); return true; });
     putProperty(_("Polling Cycle"), pollingCycle,
-                [&](int value){ changePollingPeriod(value); return true; });
+                [&](int value) { changePollingPeriod(value); return true; });
     putProperty(_("CheckAtLoading"), checkAtLoading, changeProperty(checkAtLoading));
 
 #if defined(OPENRTM_VERSION12)
@@ -1008,25 +1016,25 @@ void RTSystemItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 
 void RTSystemItemImpl::changePollingPeriod(int value)
 {
-    DDEBUG_V("RTSystemItemImpl::changePollingPeriod=%d",value);
-    if(pollingCycle != value) {
-      pollingCycle = value;
-      sigTimerPeriodChanged(value);
+    DDEBUG_V("RTSystemItemImpl::changePollingPeriod=%d", value);
+    if (pollingCycle != value) {
+        pollingCycle = value;
+        sigTimerPeriodChanged(value);
     }
 }
 
 void RTSystemItemImpl::setStateCheckMethod(int value)
 {
-    DDEBUG_V("RTSystemItemImpl::setStateCheckMethod=%d",value);
+    DDEBUG_V("RTSystemItemImpl::setStateCheckMethod=%d", value);
     stateCheck.selectIndex(value);
     changeStateCheck();
 }
 
 void RTSystemItemImpl::setStateCheckMethodByString(const string& value)
 {
-    DDEBUG_V("RTSystemItemImpl::setStateCheckMethodByString=%s",value.c_str());
+    DDEBUG_V("RTSystemItemImpl::setStateCheckMethodByString=%s", value.c_str());
     stateCheck.select(value);
-    DDEBUG_V("RTSystemItemImpl::setStateCheckMethodByString=%d",stateCheck.selectedIndex());
+    DDEBUG_V("RTSystemItemImpl::setStateCheckMethodByString=%d", stateCheck.selectedIndex());
     changeStateCheck();
 }
 
@@ -1034,8 +1042,7 @@ void RTSystemItemImpl::changeStateCheck()
 {
     int state = stateCheck.selectedIndex();
     DDEBUG_V("RTSystemItemImpl::changeStateCheck=%d", state);
-    switch(state)
-    {
+    switch (state) {
         case MANUAL_CHECK:
             sigTimerChanged(false);
             break;
@@ -1053,7 +1060,7 @@ bool RTSystemItem::loadRtsProfile(const string& filename)
 {
     DDEBUG_V("RTSystemItem::loadRtsProfile=%s", filename.c_str());
     ProfileHandler::getRtsProfileInfo(filename, impl->vendorName, impl->version);
-    if(ProfileHandler::restoreRtsProfile(filename, this)){
+    if (ProfileHandler::restoreRtsProfile(filename, this)) {
         impl->sigLoadedRTSystem(false);
         return true;
     }
@@ -1069,10 +1076,10 @@ bool RTSystemItem::saveRtsProfile(const string& filename)
 
 bool RTSystemItemImpl::saveRtsProfile(const string& filename)
 {
-    if(vendorName.empty()){
+    if (vendorName.empty()) {
         vendorName = "Choreonoid";
     }
-    if(version.empty()){
+    if (version.empty()) {
         version = "1.0.0";
     }
     string systemId = "RTSystem:" + vendorName + ":" + self->name() + ":" + version;
@@ -1104,49 +1111,54 @@ int RTSystemItem::stateCheck() const
     return impl->stateCheck.selectedIndex();
 }
 
-bool RTSystemItem::checkStatus() {
+bool RTSystemItem::checkStatus()
+{
     return impl->checkStatus();
 }
 
-bool RTSystemItemImpl::checkStatus() {
+bool RTSystemItemImpl::checkStatus()
+{
     bool modified = false;
 
-    for(auto it = rtsComps.begin(); it != rtsComps.end(); it++){
-        if(compIsAlive(it->second)) {
-            if(it->second->isAlive_==false) {
+    for (auto it = rtsComps.begin(); it != rtsComps.end(); it++) {
+        if (compIsAlive(it->second)) {
+            if (it->second->isAlive_ == false) {
                 modified = true;
             }
             it->second->isAlive_ = true;
         } else {
-            if(it->second->isAlive_) {
+            if (it->second->isAlive_) {
                 modified = true;
             }
             it->second->isAlive_ = false;
         }
     }
     //
-    if(connectionCheck() ) {
+    if (connectionCheck()) {
         modified = true;
     }
 
     return modified;
 }
 
-struct ConnectorPropComparator {
-	string target_;
+struct ConnectorPropComparator
+{
+    string target_;
 
-	ConnectorPropComparator(string value) {
-		target_ = value;
-	}
-	bool operator()(const NamedValuePtr elem) const {
-		return (target_ == elem->name_);
-	}
+    ConnectorPropComparator(string value)
+    {
+        target_ = value;
+    }
+    bool operator()(const NamedValuePtr elem) const
+    {
+        return (target_ == elem->name_);
+    }
 };
 
 ///////////
 bool RTSystemItem::store(Archive& archive)
 {
-    if(overwrite()){
+    if (overwrite()) {
         archive.writeRelocatablePath("filename", filePath());
         archive.write("format", fileFormat());
 
@@ -1182,18 +1194,18 @@ bool RTSystemItem::restore(const Archive& archive)
        so that the states of the RTCs created by other items can be loaded.
     */
     std::string filename, formatId;
-    if(archive.readRelocatablePath("filename", filename)){
-        if(archive.read("format", formatId)){
+    if (archive.readRelocatablePath("filename", filename)) {
+        if (archive.read("format", formatId)) {
             archive.addPostProcess(
-                [this, filename, formatId](){ load(filename, formatId); });
+                [this, filename, formatId]() { load(filename, formatId); });
         }
     } else {
         // old format data contained in a project file
-        archive.addPostProcess( [&](){ impl->restoreRTSystem(archive); });
+        archive.addPostProcess([&]() { impl->restoreRTSystem(archive); });
     }
-    
+
     string stateCheck;
-    if(archive.read("StateCheck", stateCheck)) {
+    if (archive.read("StateCheck", stateCheck)) {
         DDEBUG_V("StateCheck:%s", stateCheck.c_str());
         impl->setStateCheckMethodByString(stateCheck);
     }
@@ -1265,13 +1277,13 @@ void RTSystemItemImpl::restoreRTSystem(const Archive& archive)
                         pos[i] << p(2 * i), p(2 * i + 1);
                     }
                 }
-                
+
                 addRTSConnectionName("", name, sR, sP, tR, tP, dataflow, subscription, readPos, pos);
             }
         }
     }
 
-    if(checkAtLoading) {
+    if (checkAtLoading) {
         checkStatus();
     }
 
@@ -1281,38 +1293,42 @@ void RTSystemItemImpl::restoreRTSystem(const Archive& archive)
 
 
 void RTSystemItemImpl::restoreRTSComp(const string& name, const Vector2& pos,
-        const vector<pair<string, bool>>& inPorts, const vector<pair<string, bool>>& outPorts) {
-	DDEBUG("RTSystemItemImpl::restoreRTSComp");
+        const vector<pair<string, bool>>& inPorts, const vector<pair<string, bool>>& outPorts)
+{
+    DDEBUG("RTSystemItemImpl::restoreRTSComp");
 
-	RTSComp* comp = addRTSComp(name, QPointF(pos(0), pos(1)) );
-	if (comp == 0) return;
-	if (!comp->rtc_) {
-		comp->inPorts.clear();
-		comp->outPorts.clear();
-		for (int i = 0; i < inPorts.size(); i++) {
-			RTSPortPtr rtsPort = new RTSPort(inPorts[i].first, 0, comp);
-			rtsPort->isInPort = true;
-			rtsPort->isServicePort = inPorts[i].second;
-			comp->inPorts.push_back(rtsPort);
-		}
-		for (int i = 0; i < outPorts.size(); i++) {
-			RTSPortPtr rtsPort = new RTSPort(outPorts[i].first, 0, comp);
-			rtsPort->isInPort = false;
-			rtsPort->isServicePort = outPorts[i].second;
-			comp->outPorts.push_back(rtsPort);
-		}
-	}
-	DDEBUG("RTSystemItemImpl::restoreRTSComp End");
+    RTSComp* comp = addRTSComp(name, QPointF(pos(0), pos(1)));
+    if (comp == 0) return;
+    if (!comp->rtc_) {
+        comp->inPorts.clear();
+        comp->outPorts.clear();
+        for (int i = 0; i < inPorts.size(); i++) {
+            RTSPortPtr rtsPort = new RTSPort(inPorts[i].first, 0, comp);
+            rtsPort->isInPort = true;
+            rtsPort->isServicePort = inPorts[i].second;
+            comp->inPorts.push_back(rtsPort);
+        }
+        for (int i = 0; i < outPorts.size(); i++) {
+            RTSPortPtr rtsPort = new RTSPort(outPorts[i].first, 0, comp);
+            rtsPort->isInPort = false;
+            rtsPort->isServicePort = outPorts[i].second;
+            comp->outPorts.push_back(rtsPort);
+        }
+    }
+    DDEBUG("RTSystemItemImpl::restoreRTSComp End");
 }
 
-SignalProxy<void(int)> RTSystemItem::sigTimerPeriodChanged() {
+SignalProxy<void(int)> RTSystemItem::sigTimerPeriodChanged()
+{
     return impl->sigTimerPeriodChanged;
 }
 
-SignalProxy<void(bool)> RTSystemItem::sigTimerChanged() {
+SignalProxy<void(bool)> RTSystemItem::sigTimerChanged()
+{
     return impl->sigTimerChanged;
 }
 
-SignalProxy<void(bool)> RTSystemItem::sigLoadedRTSystem() {
+SignalProxy<void(bool)> RTSystemItem::sigLoadedRTSystem()
+{
     return impl->sigLoadedRTSystem;
 }

@@ -3,7 +3,7 @@
 
  * @file
  */
-#include "OpenRTMItem.h"
+#include "RTCWrapper.h"
 #include "RTSConfigurationView.h"
 #include "RTSCommonUtil.h"
 #include "LoggerUtil.h"
@@ -20,14 +20,14 @@ bool RTCWrapper::getConfiguration(NamingContextHelper::ObjectInfo& target, std::
     if (target.fullPath_.size() == 0) {
         NamingContextHelper::ObjectPath path(target.id_, "rtc");
         pathList.push_back(path);
-	  } else {
+    } else {
         pathList = target.fullPath_;
     }
 
     auto ncHelper = NameServerManager::instance()->getNCHelper();
     rtc_ = ncHelper->findObject<RTC::RTObject>(pathList);
-    
-    if(CORBA::is_nil(rtc_)){
+
+    if (CORBA::is_nil(rtc_)) {
         return false;
     }
 
@@ -37,10 +37,10 @@ bool RTCWrapper::getConfiguration(NamingContextHelper::ObjectInfo& target, std::
         configuration_ = rtc_->get_configuration();
 
         SDOPackage::ConfigurationSet* activeConf = configuration_->get_active_configuration_set();
-        if(activeConf){
+        if (activeConf) {
             activeName = QString(string(activeConf->id).c_str());
         }
-    } catch(CORBA::SystemException& ex){
+    } catch (CORBA::SystemException& ex) {
         ncHelper->putExceptionMessage(ex);
         return false;
     }
@@ -70,56 +70,56 @@ bool RTCWrapper::getConfiguration(NamingContextHelper::ObjectInfo& target, std::
 
 void RTCWrapper::updateConfiguration(std::vector<ConfigurationSetParamPtr>& configList)
 {
-    if(isObjectAlive(configuration_) == false) return;
+    if (isObjectAlive(configuration_) == false) return;
 
-	  QString activeName;
-	  for (int index = 0; index < configList.size(); index++) {
-		    ConfigurationSetParamPtr target = configList[index];
-		    if (target->getActive()) {
-			      activeName = target->getName();
-		    }
+    QString activeName;
+    for (int index = 0; index < configList.size(); index++) {
+        ConfigurationSetParamPtr target = configList[index];
+        if (target->getActive()) {
+            activeName = target->getName();
+        }
 
-		    if (target->getMode() == ParamMode::MODE_INSERT) {
-			      SDOPackage::ConfigurationSet newSet;
-			      newSet.id = CORBA::string_dup(target->getName().toStdString().c_str());
-			      NVList configList;
-			      std::vector<ConfigurationParamPtr> configSetList = target->getConfigurationList();
-			      for (int idxDetail = 0; idxDetail < configSetList.size(); idxDetail++) {
-				        ConfigurationParamPtr param = configSetList[idxDetail];
-				        if (param->getMode() == MODE_DELETE || param->getMode() == MODE_IGNORE) continue;
-				        DDEBUG_V("id:%d", param->getId());
-				        CORBA_SeqUtil::push_back(configList,
-					        NVUtil::newNV(param->getName().toStdString().c_str(), param->getValue().toStdString().c_str()));
-			      }
-			      newSet.configuration_data = configList;
-    			  configuration_->add_configuration_set(newSet);
+        if (target->getMode() == ParamMode::MODE_INSERT) {
+            SDOPackage::ConfigurationSet newSet;
+            newSet.id = CORBA::string_dup(target->getName().toStdString().c_str());
+            NVList configList;
+            std::vector<ConfigurationParamPtr> configSetList = target->getConfigurationList();
+            for (int idxDetail = 0; idxDetail < configSetList.size(); idxDetail++) {
+                ConfigurationParamPtr param = configSetList[idxDetail];
+                if (param->getMode() == MODE_DELETE || param->getMode() == MODE_IGNORE) continue;
+                DDEBUG_V("id:%d", param->getId());
+                CORBA_SeqUtil::push_back(configList,
+                    NVUtil::newNV(param->getName().toStdString().c_str(), param->getValue().toStdString().c_str()));
+            }
+            newSet.configuration_data = configList;
+            configuration_->add_configuration_set(newSet);
 
-		    } else if (target->getMode() == ParamMode::MODE_UPDATE) {
-			      SDOPackage::ConfigurationSetList_var confSet = configuration_->get_configuration_sets();
-			      for (int idxConf = 0; idxConf < confSet->length(); idxConf++) {
-				        SDOPackage::ConfigurationSet conf = confSet[idxConf];
-				        QString name = QString(string(conf.id).c_str());
-				        if (name == target->getNameOrg()) {
-					          conf.id = CORBA::string_dup(target->getName().toStdString().c_str());
-					          NVList configList;
-					          std::vector<ConfigurationParamPtr> configSetList = target->getConfigurationList();
-					          for (int idxDetail = 0; idxDetail < configSetList.size(); idxDetail++) {
-						            ConfigurationParamPtr param = configSetList[idxDetail];
-						            if (param->getMode() == MODE_DELETE || param->getMode() == MODE_IGNORE) continue;
-						            DDEBUG_V("id:%d", param->getId());
-						            CORBA_SeqUtil::push_back(configList,
-							            NVUtil::newNV(param->getName().toStdString().c_str(), param->getValue().toStdString().c_str()));
-					          }
-					          conf.configuration_data = configList;
-					          configuration_->set_configuration_set_values(conf);
-				        }
-			      }
+        } else if (target->getMode() == ParamMode::MODE_UPDATE) {
+            SDOPackage::ConfigurationSetList_var confSet = configuration_->get_configuration_sets();
+            for (int idxConf = 0; idxConf < confSet->length(); idxConf++) {
+                SDOPackage::ConfigurationSet conf = confSet[idxConf];
+                QString name = QString(string(conf.id).c_str());
+                if (name == target->getNameOrg()) {
+                    conf.id = CORBA::string_dup(target->getName().toStdString().c_str());
+                    NVList configList;
+                    std::vector<ConfigurationParamPtr> configSetList = target->getConfigurationList();
+                    for (int idxDetail = 0; idxDetail < configSetList.size(); idxDetail++) {
+                        ConfigurationParamPtr param = configSetList[idxDetail];
+                        if (param->getMode() == MODE_DELETE || param->getMode() == MODE_IGNORE) continue;
+                        DDEBUG_V("id:%d", param->getId());
+                        CORBA_SeqUtil::push_back(configList,
+                            NVUtil::newNV(param->getName().toStdString().c_str(), param->getValue().toStdString().c_str()));
+                    }
+                    conf.configuration_data = configList;
+                    configuration_->set_configuration_set_values(conf);
+                }
+            }
 
-		    } else if (target->getMode() == ParamMode::MODE_DELETE) {
-			      configuration_->remove_configuration_set(CORBA::string_dup(target->getName().toStdString().c_str()));
-		    }
-	  }
-	  configuration_->activate_configuration_set(activeName.toStdString().c_str());
+        } else if (target->getMode() == ParamMode::MODE_DELETE) {
+            configuration_->remove_configuration_set(CORBA::string_dup(target->getName().toStdString().c_str()));
+        }
+    }
+    configuration_->activate_configuration_set(activeName.toStdString().c_str());
 }
 
 void RTCWrapper::setRTObject(RTC::RTObject_ptr target)
@@ -129,7 +129,7 @@ void RTCWrapper::setRTObject(RTC::RTObject_ptr target)
 
     if (!isObjectAlive(target)) {
         ownedExeContList_ = 0;
-  	DDEBUG("RTSComp::setRTObject NULL");
+        DDEBUG("RTSComp::setRTObject NULL");
         return;
     }
     rtc_ = target;
@@ -138,9 +138,9 @@ void RTCWrapper::setRTObject(RTC::RTObject_ptr target)
 
 bool RTCWrapper::activateComponent()
 {
-    if(!isObjectAlive(rtc_)) return false;
+    if (!isObjectAlive(rtc_)) return false;
     if (ownedExeContList_->length() == 0) return false;
-    if( searchActiveEC() == false ) return false;
+    if (searchActiveEC() == false) return false;
 
     RTC::ReturnCode_t ret = ownedExeContList_[activeIndex_]->activate_component(rtc_);
     if (ret != RTC::ReturnCode_t::RTC_OK) return false;
@@ -149,9 +149,9 @@ bool RTCWrapper::activateComponent()
 
 bool RTCWrapper::deactivateComponent()
 {
-    if(!isObjectAlive(rtc_)) return false;
+    if (!isObjectAlive(rtc_)) return false;
     if (ownedExeContList_->length() == 0) return false;
-    if( searchActiveEC() == false ) return false;
+    if (searchActiveEC() == false) return false;
 
     RTC::ReturnCode_t ret = ownedExeContList_[activeIndex_]->deactivate_component(rtc_);
     if (ret != RTC::ReturnCode_t::RTC_OK) return false;
@@ -160,10 +160,10 @@ bool RTCWrapper::deactivateComponent()
 
 bool RTCWrapper::resetComponent()
 {
-    if(!isObjectAlive(rtc_)) return false;
+    if (!isObjectAlive(rtc_)) return false;
     if (ownedExeContList_->length() == 0) return false;
-    if( searchActiveEC() == false ) return false;
- 
+    if (searchActiveEC() == false) return false;
+
     RTC::ReturnCode_t ret = ownedExeContList_[activeIndex_]->reset_component(rtc_);
     if (ret != RTC::ReturnCode_t::RTC_OK) return false;
     return true;
@@ -171,7 +171,7 @@ bool RTCWrapper::resetComponent()
 
 bool RTCWrapper::finalizeComponent()
 {
-    if(!isObjectAlive(rtc_)) return false;
+    if (!isObjectAlive(rtc_)) return false;
     RTC::ReturnCode_t ret = rtc_->exit();
     if (ret != RTC::ReturnCode_t::RTC_OK) return false;
     return true;
@@ -179,21 +179,21 @@ bool RTCWrapper::finalizeComponent()
 
 bool RTCWrapper::startExecutionContext()
 {
-	  if (ownedExeContList_->length() == 0) return false;
-    if( isObjectAlive(ownedExeContList_[activeIndex_]) == false ) return false;
+    if (ownedExeContList_->length() == 0) return false;
+    if (isObjectAlive(ownedExeContList_[activeIndex_]) == false) return false;
 
-	  RTC::ReturnCode_t ret = ownedExeContList_[activeIndex_]->start();
-	  if (ret != RTC::ReturnCode_t::RTC_OK) return false;
-	  return true;
+    RTC::ReturnCode_t ret = ownedExeContList_[activeIndex_]->start();
+    if (ret != RTC::ReturnCode_t::RTC_OK) return false;
+    return true;
 }
 
 bool RTCWrapper::stopExecutionContext()
 {
     bool result = false;
-	  if (ownedExeContList_->length() == 0) return result;
+    if (ownedExeContList_->length() == 0) return result;
 
     for (CORBA::ULong index = 0; index < ownedExeContList_->length(); ++index) {
-        if( isObjectAlive(ownedExeContList_[index]) ) {
+        if (isObjectAlive(ownedExeContList_[index])) {
             if (ownedExeContList_[index]->is_running()) {
                 activeIndex_ = index;
                 RTC::ReturnCode_t ret = ownedExeContList_[index]->stop();
@@ -203,30 +203,31 @@ bool RTCWrapper::stopExecutionContext()
             }
         }
     }
-	  return result;
+    return result;
 }
 
 RTC_STATUS RTCWrapper::getRTCState()
 {
-	  if (CORBA::is_nil(rtc_) || rtc_->_non_existent()) return RTC_FINALIZE;
-	  if (ownedExeContList_->length() == 0) return RTC_UNKNOWN;
+    if (CORBA::is_nil(rtc_) || rtc_->_non_existent()) return RTC_FINALIZE;
+    if (ownedExeContList_->length() == 0) return RTC_UNKNOWN;
 
-    if( searchActiveEC() == false ) return RTC_UNKNOWN;
+    if (searchActiveEC() == false) return RTC_UNKNOWN;
 
-	  LifeCycleState state = ownedExeContList_[activeIndex_]->get_component_state(rtc_);
-	  if (state == RTC::ERROR_STATE) {
-		    return RTC_ERROR;
-	  } else if (state == RTC::ACTIVE_STATE) {
-		    return RTC_ACTIVE;
-	  } else {
-		    return RTC_INACTIVE;
-	  }
+    LifeCycleState state = ownedExeContList_[activeIndex_]->get_component_state(rtc_);
+    if (state == RTC::ERROR_STATE) {
+        return RTC_ERROR;
+    } else if (state == RTC::ACTIVE_STATE) {
+        return RTC_ACTIVE;
+    } else {
+        return RTC_INACTIVE;
+    }
 }
 
-bool RTCWrapper::searchActiveEC() {
+bool RTCWrapper::searchActiveEC()
+{
     bool result = false;
     for (CORBA::ULong index = 0; index < ownedExeContList_->length(); ++index) {
-        if( isObjectAlive(ownedExeContList_[index]) ) {
+        if (isObjectAlive(ownedExeContList_[index])) {
             if (ownedExeContList_[index]->is_running()) {
                 activeIndex_ = index;
                 result = true;
@@ -236,6 +237,3 @@ bool RTCWrapper::searchActiveEC() {
     }
     return result;
 }
-
-
-

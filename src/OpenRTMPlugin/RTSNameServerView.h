@@ -1,7 +1,7 @@
 #ifndef CNOID_OPENRTM_PLUGIN_RTS_NAME_SERVER_VIEW_H
 #define CNOID_OPENRTM_PLUGIN_RTS_NAME_SERVER_VIEW_H
 
-#include "OpenRTMItem.h"
+#include "RTCWrapper.h"
 #include <cnoid/CorbaUtil>
 #include <cnoid/TreeWidget>
 #include <cnoid/MenuManager>

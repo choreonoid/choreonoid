@@ -261,7 +261,7 @@ void RTSNameServerView::updateView()
 
 void RTSNameServerView::onActivated()
 {
-    if(impl->isObjectListUpdateRequested){
+    if (impl->isObjectListUpdateRequested) {
         impl->updateObjectList(true);
     }
 }
@@ -271,12 +271,12 @@ void RTSNameServerViewImpl::updateObjectList(bool force)
 {
     DDEBUG("RTSNameServerViewImpl::updateObjectList");
 
-    if(isObjectListUpdateRequested){
+    if (isObjectListUpdateRequested) {
         force = true;
         isObjectListUpdateRequested = false;
     }
 
-    if( !force ) {
+    if (!force) {
         treeWidget.expandAll();
         return;
     }
@@ -284,7 +284,7 @@ void RTSNameServerViewImpl::updateObjectList(bool force)
     try {
         treeWidget.clear();
         vector<NameServerInfo> serverList = NameServerManager::instance()->getServerList();
-        for(auto it=serverList.begin(); it!=serverList.end(); it++) {
+        for (auto it = serverList.begin(); it != serverList.end(); it++) {
             // Update to connect information
             NameServerManager::instance()->getNCHelper()->setLocation((*it).hostAddress, (*it).portNo);
 
@@ -298,7 +298,7 @@ void RTSNameServerViewImpl::updateObjectList(bool force)
             // Clear information update to all views.
             //clearDiagram();
 
-            if(NameServerManager::instance()->getNCHelper()->updateConnection()){
+            if (NameServerManager::instance()->getNCHelper()->updateConnection()) {
                 NamingContextHelper::ObjectInfoList objects = NameServerManager::instance()->getNCHelper()->getObjectList();
                 vector<NamingContextHelper::ObjectPath> pathList;
                 updateObjectList(objects, topElem, pathList);
@@ -308,8 +308,7 @@ void RTSNameServerViewImpl::updateObjectList(bool force)
             }
             topElem->setIOR(string(NameServerManager::instance()->getNCHelper()->getRootIOR()));
         }
-    }
-    catch (...) {
+    } catch (...) {
         // ignore the exception for non crash.
         DDEBUG_V("RTSNameServerViewImpl::updateObjectList Error:%s", NameServerManager::instance()->getNCHelper()->errorMessage().c_str());
     }
@@ -320,7 +319,7 @@ void RTSNameServerViewImpl::updateObjectList
 (const NamingContextHelper::ObjectInfoList& objects, QTreeWidgetItem* parent, vector<NamingContextHelper::ObjectPath> pathList)
 {
     DDEBUG("RTSNameServerViewImpl::updateObjectList Path");
-    for(size_t i = 0; i < objects.size(); ++i){
+    for (size_t i = 0; i < objects.size(); ++i) {
         const NamingContextHelper::ObjectInfo& info = objects[i];
         DDEBUG_V("%s=%s, %s", info.id_.c_str(), info.kind_.c_str(), info.ior_.c_str());
 
@@ -328,14 +327,14 @@ void RTSNameServerViewImpl::updateObjectList
         pathList.push_back(path);
         RTC::RTObject_ptr rtc = NameServerManager::instance()->getNCHelper()->findObject<RTC::RTObject>(pathList);
         pathList.pop_back();
-        if(CORBA::is_nil(rtc) == false){
+        if (CORBA::is_nil(rtc) == false) {
             RTSVItem* item = new RTSVItem(info, rtc);
             item->kind_ = KIND_RTC;
             parent->addChild(item);
             continue;
         }
 
-        if(!info.isContext_){
+        if (!info.isContext_) {
             RTSVItem* item = new RTSVItem(info, 0);
             item->setText(0, QString::fromStdString(info.id_) + "|");
             item->setIcon(0, QIcon(":/Corba/icons/Question.png"));
@@ -349,27 +348,27 @@ void RTSNameServerViewImpl::updateObjectList
         item->setText(0, QString::fromStdString(info.id_) + "|" + QString::fromStdString(info.kind_));
 
         NamingContextHelper::ObjectPath pathSub(info.id_, info.kind_);
-        if(RTCCommonUtil::compareIgnoreCase(info.kind_, "host_cxt")){
+        if (RTCCommonUtil::compareIgnoreCase(info.kind_, "host_cxt")) {
             item->setIcon(0, QIcon(":/Corba/icons/Server.png"));
             item->kind_ = KIND_HOST;
 
-        } else if(RTCCommonUtil::compareIgnoreCase(info.kind_, "cate_cxt")){
+        } else if (RTCCommonUtil::compareIgnoreCase(info.kind_, "cate_cxt")) {
             item->setIcon(0, QIcon(":/Corba/icons/CategoryNamingContext.png"));
             item->kind_ = KIND_CATEGORY;
 
-        } else if(RTCCommonUtil::compareIgnoreCase(info.kind_, "mgr_cxt")){
+        } else if (RTCCommonUtil::compareIgnoreCase(info.kind_, "mgr_cxt")) {
             item->setIcon(0, QIcon(":/Corba/icons/ManagerNamingContext.png"));
             item->kind_ = KIND_MANAGER;
 
-        } else if(RTCCommonUtil::compareIgnoreCase(info.kind_, "mod_cxt")){
+        } else if (RTCCommonUtil::compareIgnoreCase(info.kind_, "mod_cxt")) {
             item->setIcon(0, QIcon(":/Corba/icons/ModuleNamingContext.png"));
             item->kind_ = KIND_MODULE;
 
-        } else if(RTCCommonUtil::compareIgnoreCase(info.kind_, "server_cxt")){
+        } else if (RTCCommonUtil::compareIgnoreCase(info.kind_, "server_cxt")) {
             item->setIcon(0, QIcon(":/Corba/icons/RT.png"));
             item->kind_ = KIND_SERVER;
 
-        } else if(RTCCommonUtil::compareIgnoreCase(info.kind_, "mgr")){
+        } else if (RTCCommonUtil::compareIgnoreCase(info.kind_, "mgr")) {
             item->setIcon(0, QIcon(":/Corba/icons/RTCManager.png"));
             item->kind_ = KIND_RTC_MANAGER;
 
@@ -379,9 +378,9 @@ void RTSNameServerViewImpl::updateObjectList
         }
         pathList.push_back(pathSub);
 
-        if( item->kind_ != KIND_RTC_MANAGER ) {
+        if (item->kind_ != KIND_RTC_MANAGER) {
             NamingContextHelper* ncHelper = NameServerManager::instance()->getNCHelper();
-            if(ncHelper->updateConnection()){
+            if (ncHelper->updateConnection()) {
                 NamingContextHelper::ObjectInfoList objects = ncHelper->getObjectList(pathList);
                 updateObjectList(objects, item, pathList);
             }
@@ -398,9 +397,9 @@ void RTSNameServerViewImpl::onSelectionChanged()
     selectedItemList.clear();
 
     QList<QTreeWidgetItem*> selected = treeWidget.selectedItems();
-    for(int i = 0; i < selected.size(); ++i){
+    for (int i = 0; i < selected.size(); ++i) {
         RTSVItem* item = dynamic_cast<RTSVItem*>(selected[i]);
-        if(item){
+        if (item) {
             selectedItemList.push_back(item->info_);
         }
     }
@@ -417,7 +416,7 @@ void RTSNameServerView::setSelection(std::string RTCName, std::string RTCfullPat
 
 void RTSNameServerViewImpl::setSelection(std::string RTCName, std::string RTCfullPath)
 {
-    if(RTCName.empty()){
+    if (RTCName.empty()) {
         treeWidget.clearSelection();
         return;
     }
@@ -425,18 +424,18 @@ void RTSNameServerViewImpl::setSelection(std::string RTCName, std::string RTCful
     updateObjectList();
 
     QList<QTreeWidgetItem*> items = treeWidget.findItems(QString(RTCName.c_str()), Qt::MatchFixedString | Qt::MatchRecursive);
-    if(items.empty()){
+    if (items.empty()) {
         return;
     }
 
-    if(items.size() == 1){
+    if (items.size() == 1) {
         treeWidget.setCurrentItem(items[0]);
 
     } else {
-        for(int index = 0; index < items.size(); ++index){
+        for (int index = 0; index < items.size(); ++index) {
             RTSVItem* target = (RTSVItem*)items[index];
             DDEBUG_V("source:%s, target:%s", RTCfullPath.c_str(), target->info_.getFullPath().c_str());
-            if(RTCfullPath == target->info_.getFullPath()){
+            if (RTCfullPath == target->info_.getFullPath()) {
                 treeWidget.setCurrentItem(items[index]);
                 break;
             }
@@ -444,19 +443,20 @@ void RTSNameServerViewImpl::setSelection(std::string RTCName, std::string RTCful
     }
 }
 
-void RTSNameServerViewImpl::connectNameServer() {
+void RTSNameServerViewImpl::connectNameServer()
+{
     DDEBUG("RTSNameServerViewImpl::connectNameServer");
 
     ConnectDialog dialog;
     dialog.exec();
 
-    if(dialog.isOK_==false) return;
+    if (dialog.isOK_ == false) return;
 
     string hostAddress;
     int portNo;
-    if( dialog.isManager_ ) {
+    if (dialog.isManager_) {
         NameServerInfo info = RTCCommonUtil::getManagerAddress();
-        if(info.hostAddress.empty()) return;
+        if (info.hostAddress.empty()) return;
         hostAddress = info.hostAddress;
         portNo = info.portNo;
     } else {
@@ -472,7 +472,7 @@ void RTSNameServerViewImpl::cleatZombee()
 {
     DDEBUG("RTSNameServerViewImpl::cleatZombee");
     int topNum = treeWidget.topLevelItemCount();
-    for(int index=0; index<topNum; index++) {
+    for (int index = 0; index < topNum; index++) {
         RTSVItem* topItem = (RTSVItem*)treeWidget.topLevelItem(index);
         DDEBUG_V("topItem Name : %s", topItem->text(0).toStdString().c_str());
         checkZombee(topItem);
@@ -483,10 +483,10 @@ void RTSNameServerViewImpl::checkZombee(RTSVItem* parent)
 {
     int childCount = parent->childCount();
     vector<RTSVItem*> removeList;
-    for(int idxChild=0; idxChild<childCount; idxChild++) {
+    for (int idxChild = 0; idxChild < childCount; idxChild++) {
         RTSVItem* childItem = (RTSVItem*)parent->child(idxChild);
         DDEBUG_V("childItem Name : %s", childItem->text(0).toStdString().c_str());
-        if(isObjectAlive(childItem->info_.ior_)==false) {
+        if (isObjectAlive(childItem->info_.ior_) == false) {
             DDEBUG("RTSNameServerViewImpl::cleatZombee INACTIVE");
             childItem->removing_ = true;
             removeList.push_back(childItem);
@@ -507,13 +507,13 @@ bool RTSNameServerView::storeState(Archive& archive)
     ListingPtr severNodes = new Listing();
 
     vector<NameServerInfo> serverList = NameServerManager::instance()->getServerList();
-    for(auto it = serverList.begin(); it!=serverList.end(); it++) {
+    for (auto it = serverList.begin(); it != serverList.end(); it++) {
         MappingPtr eachNode = new Mapping();
         eachNode->write("host", (*it).hostAddress, DOUBLE_QUOTED);
         eachNode->write("port", (*it).portNo);
         severNodes->append(eachNode);
     }
-    if(!severNodes->empty()){
+    if (!severNodes->empty()) {
         archive.insert("NameServers", severNodes);
     }
     return true;
@@ -525,32 +525,32 @@ bool RTSNameServerView::restoreState(const Archive& archive)
     DDEBUG("RTSNameServerView::restoreState");
 
     const Listing& nodes = *archive.findListing("NameServers");
-    if(nodes.isValid() && !nodes.empty()){
-        for(int index=0; index < nodes.size(); ++index){
+    if (nodes.isValid() && !nodes.empty()) {
+        for (int index = 0; index < nodes.size(); ++index) {
             const Mapping& node = *nodes[index].toMapping();
 
             string hostAdr = "localhost";
             ValueNode* hostNode = node.find("host");
-            if(hostNode->isValid()){
-              hostAdr = hostNode->toString();
+            if (hostNode->isValid()) {
+                hostAdr = hostNode->toString();
             }
             int portNo = 2809;
             ValueNode* portNode = node.find("port");
-            if(portNode->isValid()){
-              portNo = portNode->toInt();
+            if (portNode->isValid()) {
+                portNo = portNode->toInt();
             }
             NameServerManager::instance()->addServer(hostAdr, portNo);
         }
     }
 
     archive.addPostProcess(
-        [&](){
-            if(isActive()){
-                impl->updateObjectList(true);
-            } else {
-                // impl->isObjectListUpdateRequested = true;
-            }
-        });
+        [&]() {
+        if (isActive()) {
+            impl->updateObjectList(true);
+        } else {
+            // impl->isObjectListUpdateRequested = true;
+        }
+    });
 
     return true;
 }
@@ -571,14 +571,14 @@ void RTSNameTreeWidget::mouseMoveEvent(QMouseEvent *event)
 void RTSNameTreeWidget::mousePressEvent(QMouseEvent* event)
 {
     DDEBUG("RTSNameTreeWidget::mousePressEvent");
-    if(event->button() == Qt::RightButton){
-        if(currentItem()){
+    if (event->button() == Qt::RightButton) {
+        if (currentItem()) {
             menuManager.setNewPopupMenu(this);
             menuManager.addItem(_("Show IOR"))
                 ->sigTriggered().connect(std::bind(&RTSNameTreeWidget::showIOR, this));
 
             RTSVItem* targetItem = (RTSVItem*)this->currentItem();
-            if(targetItem->kind_ == KIND_SERVER){
+            if (targetItem->kind_ == KIND_SERVER) {
                 menuManager.addItem(_("Delete from View"))
                     ->sigTriggered().connect(std::bind(&RTSNameTreeWidget::deleteFromView, this));
             } else {
@@ -586,8 +586,8 @@ void RTSNameTreeWidget::mousePressEvent(QMouseEvent* event)
                     ->sigTriggered().connect(std::bind(&RTSNameTreeWidget::deleteFromNameService, this));
             }
 
-            if(targetItem->kind_ == KIND_RTC){
-                if(isObjectAlive(targetItem->rtc_)){
+            if (targetItem->kind_ == KIND_RTC) {
+                if (isObjectAlive(targetItem->rtc_)) {
                     menuManager.addSeparator();
                     menuManager.addItem("Activate")
                         ->sigTriggered().connect(std::bind(&RTSNameTreeWidget::activateComponent, this));
@@ -595,7 +595,7 @@ void RTSNameTreeWidget::mousePressEvent(QMouseEvent* event)
                         ->sigTriggered().connect(std::bind(&RTSNameTreeWidget::deactivateComponent, this));
                     menuManager.addItem("Reset")
                         ->sigTriggered().connect(std::bind(&RTSNameTreeWidget::resetComponent, this));
-                    if(isManagedRTC(((RTSVItem*)this->currentItem())->rtc_) == false){
+                    if (isManagedRTC(((RTSVItem*)this->currentItem())->rtc_) == false) {
                         menuManager.addItem("Exit")
                             ->sigTriggered().connect(std::bind(&RTSNameTreeWidget::finalizeComponent, this));
                     }
@@ -605,10 +605,10 @@ void RTSNameTreeWidget::mousePressEvent(QMouseEvent* event)
                     menuManager.addItem("Stop")
                         ->sigTriggered().connect(std::bind(&RTSNameTreeWidget::stopExecutionContext, this));
                 }
-            } else if(targetItem->kind_ == KIND_RTC_MANAGER){
+            } else if (targetItem->kind_ == KIND_RTC_MANAGER) {
 
             } else {
-                if(targetItem->kind_ != KIND_OTHER){
+                if (targetItem->kind_ != KIND_OTHER) {
                     menuManager.addItem(_("Add Context"))
                         ->sigTriggered().connect(std::bind(&RTSNameTreeWidget::addContext, this));
                     menuManager.addItem(_("Add Object"))
@@ -640,11 +640,11 @@ void RTSNameTreeWidget::deleteFromView()
 void RTSNameTreeWidget::deleteFromNameService()
 {
     int ret = QMessageBox::question(this, _("Confirm"), _("Are you sure you want to delete?"));
-    if(ret == QMessageBox::No){
+    if (ret == QMessageBox::No) {
         return;
     }
 
-    if(NameServerManager::instance()->getNCHelper()->isAlive() == false){
+    if (NameServerManager::instance()->getNCHelper()->isAlive() == false) {
         return;
     }
 
@@ -675,7 +675,7 @@ void RTSNameTreeWidget::addObject()
 void RTSNameTreeWidget::activateComponent()
 {
     RTSVItem* item = (RTSVItem*)this->currentItem();
-    if(item->activateComponent() == false){
+    if (item->activateComponent() == false) {
         QMessageBox::information(this, _("Activate"), _("Activation of target component FAILED."));
     }
 }
@@ -684,7 +684,7 @@ void RTSNameTreeWidget::activateComponent()
 void RTSNameTreeWidget::deactivateComponent()
 {
     RTSVItem* item = (RTSVItem*)this->currentItem();
-    if(item->deactivateComponent() == false){
+    if (item->deactivateComponent() == false) {
         QMessageBox::information(this, _("Deactivate"), _("Deactivation of target component FAILED."));
     }
 }
@@ -693,7 +693,7 @@ void RTSNameTreeWidget::deactivateComponent()
 void RTSNameTreeWidget::resetComponent()
 {
     RTSVItem* item = (RTSVItem*)this->currentItem();
-    if(item->resetComponent() == false){
+    if (item->resetComponent() == false) {
         QMessageBox::information(this, _("Reset"), _("FAILED to reset target component."));
     }
 }
@@ -702,7 +702,7 @@ void RTSNameTreeWidget::resetComponent()
 void RTSNameTreeWidget::finalizeComponent()
 {
     RTSVItem* item = (RTSVItem*)this->currentItem();
-    if(item->finalizeComponent() == false){
+    if (item->finalizeComponent() == false) {
         QMessageBox::information(this, _("Exit"), _("FAILED to exit target component."));
     }
     item->setHidden(true);
@@ -712,7 +712,7 @@ void RTSNameTreeWidget::finalizeComponent()
 void RTSNameTreeWidget::startExecutionContext()
 {
     RTSVItem* item = (RTSVItem*)this->currentItem();
-    if(item->startExecutionContext() == false){
+    if (item->startExecutionContext() == false) {
         QMessageBox::information(this, _("Start"), _("FAILED to start ExecutionContext."));
     }
 }
@@ -721,7 +721,7 @@ void RTSNameTreeWidget::startExecutionContext()
 void RTSNameTreeWidget::stopExecutionContext()
 {
     RTSVItem* item = (RTSVItem*)this->currentItem();
-    if(item->stopExecutionContext() == false){
+    if (item->stopExecutionContext() == false) {
         QMessageBox::information(this, _("Start"), _("FAILED to stop ExecutionContext."));
     }
 }
@@ -741,7 +741,7 @@ RTSVItem::RTSVItem(const NamingContextHelper::ObjectInfo& info, RTC::RTObject_pt
     setIcon(0, info_.isAlive_ ? QIcon(":/Corba/icons/NSRTC.png") : QIcon(":/Corba/icons/NSZombi.png"));
     setIOR(info.ior_);
 
-    if(rtc){
+    if (rtc) {
         setRTObject(rtc);
     }
 }
@@ -803,7 +803,7 @@ AddContextDialog::AddContextDialog(RTSVItem* target)
 
 void AddContextDialog::okClicked()
 {
-    if(NameServerManager::instance()->getNCHelper()->isAlive() == false){
+    if (NameServerManager::instance()->getNCHelper()->isAlive() == false) {
         close();
         return;
     }
@@ -814,7 +814,7 @@ void AddContextDialog::okClicked()
 
     NamingContextHelper::ObjectPath path(name.toStdString(), kind.toStdString());
     pathList.push_back(path);
-    if(NameServerManager::instance()->getNCHelper()->bind_new_context(pathList) == false){
+    if (NameServerManager::instance()->getNCHelper()->bind_new_context(pathList) == false) {
         QMessageBox::information(this, _("Add Context"), _("Failed to add context."));
         nameEdit_->setFocus();
         nameEdit_->selectAll();
@@ -882,7 +882,7 @@ AddObjectDialog::AddObjectDialog(RTSVItem* target)
 
 void AddObjectDialog::okClicked()
 {
-    if(NameServerManager::instance()->getNCHelper()->isAlive() == false){
+    if (NameServerManager::instance()->getNCHelper()->isAlive() == false) {
         close();
         return;
     }
@@ -894,14 +894,15 @@ void AddObjectDialog::okClicked()
     NamingContextHelper::ObjectPath path(name.toStdString(), kind.toStdString());
     pathList.push_back(path);
     string strIor = ior.toStdString();
-    if(NameServerManager::instance()->getNCHelper()->bindObject(pathList, strIor) == false){
+    if (NameServerManager::instance()->getNCHelper()->bindObject(pathList, strIor) == false) {
         QMessageBox::information(this, _("Add Object"), _("Failed to add object."));
         return;
     }
     close();
 }
 
-ConnectDialog::ConnectDialog() : isOK_(false), hostAddress_(""), portNum_(2809), isManager_(false) {
+ConnectDialog::ConnectDialog() : isOK_(false), hostAddress_(""), portNum_(2809), isManager_(false)
+{
     NamingContextHelper* ncHelper = NameServerManager::instance()->getNCHelper();
 
     QFrame* frmBase = new QFrame;
@@ -930,7 +931,7 @@ ConnectDialog::ConnectDialog() : isOK_(false), hostAddress_(""), portNum_(2809),
     baseLayout->addWidget(chkRTM_, 1, 0, 1, 4);
 
     QFrame* frmButtons = new QFrame;
-	  PushButton* btnOK = new PushButton(_("OK"));
+    PushButton* btnOK = new PushButton(_("OK"));
     btnOK->sigClicked().connect(
         std::bind(
             static_cast<void(ConnectDialog::*)(void)>(&ConnectDialog::okClicked), this));
@@ -941,7 +942,7 @@ ConnectDialog::ConnectDialog() : isOK_(false), hostAddress_(""), portNum_(2809),
 
     QHBoxLayout* buttonLayout = new QHBoxLayout(frmButtons);
     buttonLayout->setContentsMargins(2, 2, 2, 2);
-	  buttonLayout->addWidget(btnOK);
+    buttonLayout->addWidget(btnOK);
     buttonLayout->addStretch();
     buttonLayout->addWidget(btnCancel);
 
@@ -951,17 +952,20 @@ ConnectDialog::ConnectDialog() : isOK_(false), hostAddress_(""), portNum_(2809),
     setLayout(mainLayout);
 }
 
-void ConnectDialog::chkCanged() {
+void ConnectDialog::chkCanged()
+{
     hostAddressBox_->setEnabled(!chkRTM_->isChecked());
     portNumberSpin_->setEnabled(!chkRTM_->isChecked());
 }
 
-void ConnectDialog::cancelClicked() {
+void ConnectDialog::cancelClicked()
+{
     isOK_ = false;
     close();
 }
 
-void ConnectDialog::okClicked() {
+void ConnectDialog::okClicked()
+{
     isOK_ = true;
     hostAddress_ = hostAddressBox_->string();
     portNum_ = portNumberSpin_->value();

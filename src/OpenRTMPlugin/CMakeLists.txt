@@ -9,7 +9,7 @@ set(plugin_sources
   PortConnectionDialog.cpp
   ControllerRTCItem.cpp
   BodyIoRTCItem.cpp
-  OpenRTMItem.cpp
+  RTCWrapper.cpp
   RTCItem.cpp
   SimulationExecutionContext.cpp
   SimulationPeriodicExecutionContext.cpp

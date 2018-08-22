@@ -16,8 +16,7 @@
 #pragma warning( disable : 4290 )
 #endif
 
-namespace cnoid
-{
+namespace cnoid {
 /*!
   To call 'tick()' when the 'deactivate_component" function is called,
   OpenHRPExecutionContext is redefined as this class in the OpenRTM plugin.

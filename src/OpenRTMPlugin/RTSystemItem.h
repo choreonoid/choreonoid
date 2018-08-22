@@ -11,7 +11,7 @@
 #include <QPoint>
 #include <list>
 #include <string>
-#include "OpenRTMItem.h"
+#include "RTCWrapper.h"
 #include "ProfileHandler.h"
 #include "exportdecl.h"
 
@@ -27,7 +27,8 @@ public:
     std::string name_;
     std::string value_;
 
-    NamedValue(std::string name, std::string value){
+    NamedValue(std::string name, std::string value)
+    {
         name_ = name;
         value_ = value;
     };
@@ -42,15 +43,18 @@ public:
     std::string if_polarity;
     std::string if_tname;
     std::string if_iname;
-    
-    bool isRequiredPolarity() {
+
+    bool isRequiredPolarity()
+    {
         return if_polarity == "required";
     };
-    
-    std::string toDispStr() {
+
+    std::string toDispStr()
+    {
         return rtc_name + ":" + if_tname + ":" + if_iname;
     };
-    std::string toStr() {
+    std::string toStr()
+    {
         return rtc_name + ".port." + port_name + "." + if_polarity + "." + if_tname + "." + if_iname;
     };
 };
@@ -58,7 +62,7 @@ typedef std::shared_ptr<PortInterface> PortInterfacePtr;
 
 class RTSPort : public Referenced
 {
-public :
+public:
     RTSComp* rtsComp;
     std::string name;
     RTC::PortService_var port;
@@ -104,12 +108,12 @@ public:
     RTSConnection(
         const std::string& id, const std::string& name, const std::string& sourceRtcName,
         const std::string& sourcePortName, const std::string& targetRtcName, const std::string& targetPortName);
-    bool isAlive(){ return isAlive_; };
+    bool isAlive() { return isAlive_; };
     void setPosition(const Vector2 pos[]);
 
 private:
     bool isAlive_;
-    
+
     /**
        \return true if the connection is newly established.
        false if the connection has already been established, or the connection failed.
@@ -202,7 +206,7 @@ public:
     SignalProxy<void(bool)> sigTimerChanged();
     SignalProxy<void(bool)> sigLoadedRTSystem();
 
-protected :
+protected:
     virtual Item* doDuplicate() const override;
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
     virtual bool store(Archive& archive) override;

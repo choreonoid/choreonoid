@@ -24,7 +24,7 @@ public:
     BodyItem* bodyItem = 0;
     BodyIoRTC* bodyIoRTC = 0;
     MessageView* mv;
-    
+
     BodyIoRTCItemImpl(BodyIoRTCItem* self);
     BodyIoRTCItemImpl(BodyIoRTCItem* self, const BodyIoRTCItemImpl& org);
     void setBodyItem(BodyItem* newBodyItem, bool forceReset);
@@ -37,7 +37,6 @@ public:
 };
 
 }
-
 
 void BodyIoRTCItem::initialize(ExtensionManager* ext)
 {

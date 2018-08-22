@@ -11,21 +11,21 @@
 namespace cnoid {
 
 class RTMImageViewImpl;
-    
+
 class CNOID_EXPORT RTMImageView : public View
 {
 public:
     static void initializeClass(ExtensionManager* ext);
-        
+
     RTMImageView();
     ~RTMImageView();
 
     virtual void setName(const std::string& name) override;
-    
+
 protected:
     virtual void onActivated() override;
     virtual void onDeactivated() override;
-        
+
 private:
     RTMImageViewImpl* impl;
 };

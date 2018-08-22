@@ -81,7 +81,7 @@ void onCtrl_C_Input(int)
 #ifdef Q_OS_WIN32
 BOOL WINAPI consoleCtrlHandler(DWORD ctrlChar)
 {
-    callLater([](){ MainWindow::instance()->close(); };
+    callLater([](){ MainWindow::instance()->close(); });
     return FALSE;
 }
 #endif

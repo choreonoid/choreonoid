@@ -1,6 +1,6 @@
 /*!
  * @brief  This is a definition of RTSystemEditorPlugin.
- * @author Hisashi Ikari 
+ * @author Hisashi Ikari
  * @file
  */
 #include "RTSPropertiesView.h"
@@ -31,12 +31,12 @@ using namespace std;
 using namespace std::placeholders;
 
 namespace {
-    static const string RTC_CONTEXT_KIND [3] = {_("PERIODIC"), _("EVENT_DRIVEN"), _("OTHER")};
-    static const string RTC_CONTEXT_STATE[4] = {_("CREATED"), _("INACTIVE"), _("ACTIVE"), _("ERROR")};
+static const string RTC_CONTEXT_KIND[3] = { _("PERIODIC"), _("EVENT_DRIVEN"), _("OTHER") };
+static const string RTC_CONTEXT_STATE[4] = { _("CREATED"), _("INACTIVE"), _("ACTIVE"), _("ERROR") };
 
-    static const string RTC_PROPERTY_DATAFLOW    [2] = {_("push"), _("pull")};
-    static const string RTC_PROPERTY_INTERFACE   [1] = {_("corba_cdr")};
-    static const string RTC_PROPERTY_SUBSCRIPTION[3] = {_("flush"), _("new"), _("periodic")};
+static const string RTC_PROPERTY_DATAFLOW[2] = { _("push"), _("pull") };
+static const string RTC_PROPERTY_INTERFACE[1] = { _("corba_cdr") };
+static const string RTC_PROPERTY_SUBSCRIPTION[3] = { _("flush"), _("new"), _("periodic") };
 };
 
 namespace cnoid {
@@ -79,7 +79,7 @@ void RTSPropertiesView::initializeClass(ExtensionManager* ext)
     ext->viewManager().registerClass<RTSPropertiesView>(
             "RTSPropertiesView", N_("RTC Properties"), ViewManager::SINGLE_OPTIONAL);
 }
- 
+
 
 RTSPropertiesView* RTSPropertiesView::instance()
 {
@@ -121,8 +121,8 @@ RTSPropertiesViewImpl::RTSPropertiesViewImpl(RTSPropertiesView* self)
     self->setLayout(vbox);
 
     RTSNameServerView* nsView = RTSNameServerView::instance();
-    if(nsView){
-        if(!selectionChangedConnection.connected()){
+    if (nsView) {
+        if (!selectionChangedConnection.connected()) {
             selectionChangedConnection = nsView->sigSelectionChanged().connect(
                 std::bind(&RTSPropertiesViewImpl::onItemSelectionChanged, this, _1));
         }
@@ -139,21 +139,21 @@ RTSPropertiesViewImpl::~RTSPropertiesViewImpl()
 void RTSPropertiesViewImpl::onItemSelectionChanged(const list<NamingContextHelper::ObjectInfo>& items)
 {
     DDEBUG_V("RTSPropertiesViewImpl::onItemSelectionChanged : %d", items.size());
-    if(items.size()!=1)
+    if (items.size() != 1)
         return;
 
     const NamingContextHelper::ObjectInfo& item = items.front();
-    if(item.id_ == currentItem.id_
+    if (item.id_ == currentItem.id_
         && item.hostAddress_ == currentItem.hostAddress_
         && item.portNo_ == currentItem.portNo_) {
-          return;
+        return;
     }
     currentItem.id_ = item.id_;
     currentItem.isAlive_ = item.isAlive_;
     currentItem.kind_ = item.kind_;
     currentItem.fullPath_ = item.fullPath_;
-    currentItem.hostAddress_= item.hostAddress_;
-    currentItem.portNo_= item.portNo_;
+    currentItem.hostAddress_ = item.hostAddress_;
+    currentItem.portNo_ = item.portNo_;
     showProperties();
 }
 
@@ -163,7 +163,7 @@ void RTSPropertiesViewImpl::showProperties()
     DDEBUG("RTSPropertiesViewImpl::showProperties");
     treeWidget.clear();
 
-    if(currentItem.id_!="" && currentItem.isAlive_){
+    if (currentItem.id_ != "" && currentItem.isAlive_) {
         NamingContextHelper* ncHelper = NameServerManager::instance()->getNCHelper();
         ncHelper->setLocation(currentItem.hostAddress_, currentItem.portNo_);
         RTC::RTObject_var rtc = ncHelper->findObject<RTC::RTObject>(currentItem.fullPath_);
@@ -171,12 +171,11 @@ void RTSPropertiesViewImpl::showProperties()
         ComponentProfile_var cprofile;
         try {
             cprofile = rtc->get_component_profile();
-        }
-        catch(CORBA::SystemException& ex){
+        } catch (CORBA::SystemException& ex) {
             ncHelper->putExceptionMessage(ex);
             return;
         }
-        
+
         QTreeWidgetItem *item = new QTreeWidgetItem;
 
         showProfile(cprofile, item);
@@ -263,7 +262,7 @@ void RTSPropertiesViewImpl::showExecutionContext(RTC::RTObject_ptr rtc, QTreeWid
     showExecutionContext(rtc, exeContList, ownedChild);
 
     exeContList = rtc->get_participating_contexts();
-    if(exeContList->length()){
+    if (exeContList->length()) {
         QTreeWidgetItem* child = new QTreeWidgetItem;
         child->setText(0, _("Participate"));
         item->addChild(child);
@@ -330,8 +329,8 @@ void RTSPropertiesViewImpl::showPortConcrete(PortProfile* portprofile, QTreeWidg
     } else {
         port->setText(0, QString(portType.substr(4).c_str()));
         port->setIcon(0, QIcon(boost::iequals(portType, "DataOutPort") ?
-                ":/RTSystemEditor/icons/IconOutPort.png" :
-                ":/RTSystemEditor/icons/IconInPort.png"));
+            ":/RTSystemEditor/icons/IconOutPort.png" :
+            ":/RTSystemEditor/icons/IconInPort.png"));
     }
     item->addChild(port);
 
@@ -397,13 +396,13 @@ void RTSPropertiesViewImpl::showConnection(PortService_var port, string id, QTre
     item->setText(0, _("Connector Profile"));
     item->setIcon(0, QIcon(":/RTSystemEditor/icons/IconConnector.png"));
 
-    if(CORBA::is_nil(port) || port->_non_existent())
+    if (CORBA::is_nil(port) || port->_non_existent())
         return;
     PortProfile_var portprofile = port->get_port_profile();
     ConnectorProfileList connections = portprofile->connector_profiles;
-    for(CORBA::ULong i = 0; i < connections.length(); i++){
+    for (CORBA::ULong i = 0; i < connections.length(); i++) {
         ConnectorProfile connector = connections[i];
-        if(id == string(connector.connector_id)){
+        if (id == string(connector.connector_id)) {
             PortServiceList& connectedPorts = connector.ports;
 
             QTreeWidgetItem* conPropChild = new QTreeWidgetItem;
@@ -422,7 +421,7 @@ void RTSPropertiesViewImpl::showConnection(PortService_var port, string id, QTre
             coil::Properties cproperties = NVUtil::toProperties(connector.properties);
             vector<string> names = cproperties.propertyNames();
             for (vector<string>::iterator iter = names.begin(); iter != names.end(); iter++) {
-                    // view the attribute of rtc-connection.
+                // view the attribute of rtc-connection.
                 string name = (*iter).c_str();
                 //QTreeWidgetItem* connPropChild = judgementType(name);
                 conPropChild = new QTreeWidgetItem;
@@ -545,8 +544,8 @@ SettingDialog::SettingDialog()
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
     cmbLogLevel->setCurrentText(level);
 #else
-    for(int i=0; i < cmbLogLevel->count(); ++i){
-        if(cmbLogLevel->itemText(i) == level){
+    for (int i = 0; i < cmbLogLevel->count(); ++i) {
+        if (cmbLogLevel->itemText(i) == level) {
             cmbLogLevel->setCurrentIndex(i);
             break;
         }
@@ -589,11 +588,11 @@ void SettingDialog::oKClicked()
     appVars->write("logLevel", cmbLogLevel->currentText().toStdString());
 
     RTSDiagramView* view = RTSDiagramView::instance();
-    if(view) {
+    if (view) {
         view->updateSetting();
     }
 
-    if(isRestart) {
+    if (isRestart) {
         QMessageBox::warning(this, _("OpenRTM Preferences"), _("The specified setting becomes valid after RESTART."));
     }
     close();
