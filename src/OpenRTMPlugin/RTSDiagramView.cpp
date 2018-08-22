@@ -34,7 +34,7 @@ using namespace std::placeholders;
 using namespace RTC;
 
 #define STATE_CHECK_TIME 1000  //msec
-#define OPACITY 0.5
+#define OPACITY 0.3
 
 namespace {
 
@@ -1430,13 +1430,13 @@ void RTSDiagramViewImpl::updateView()
         RTSystemItem::RTSConnectionMap& connections = currentRTSItem->rtsConnections();
         for (RTSystemItem::RTSConnectionMap::iterator itr = connections.begin();
                 itr != connections.end(); itr++) {
-            DDEBUG("RTSDiagramViewImpl::updateView find connection")
-                if (rtsConnections.find(itr->second->id) == rtsConnections.end()) {
-                    RTSConnection* rtsConnection = itr->second.get();
-                    RTSPortGItem* source = rtsPortMap.find(rtsConnection->sourcePort)->second;
-                    RTSPortGItem* target = rtsPortMap.find(rtsConnection->targetPort)->second;
-                    createConnectionGItem(rtsConnection, source, target);
-                }
+            DDEBUG("RTSDiagramViewImpl::updateView find connection");
+            if (rtsConnections.find(itr->second->id) == rtsConnections.end()) {
+                RTSConnection* rtsConnection = itr->second.get();
+                RTSPortGItem* source = rtsPortMap.find(rtsConnection->sourcePort)->second;
+                RTSPortGItem* target = rtsPortMap.find(rtsConnection->targetPort)->second;
+                createConnectionGItem(rtsConnection, source, target);
+            }
         }
         setAcceptDrops(true);
     } else {
@@ -1533,7 +1533,7 @@ RTSCompGItem::RTSCompGItem(RTSComp* rtsComp, RTSDiagramViewImpl* impl, const QPo
     effect = new QGraphicsOpacityEffect;
     effect->setOpacity(OPACITY);
     setGraphicsEffect(effect);
-    if (rtsComp->rtc_) {
+    if (isObjectAlive(rtsComp->rtc_)) {
         rtsComp->isAlive_ = true;
         effect->setEnabled(false);
     } else {
@@ -1570,7 +1570,7 @@ void RTSCompGItem::create(const QPointF& pos)
     int rectX = (text->boundingRect().width() / 2 - 50 / 2) - 5;
     rect->setPos(rectX + pos.x(), pos.y());
     rect->setPen(QPen(QColor("darkgray")));
-    rect->setBrush(QBrush(QColor("black")));
+    rect->setBrush(QBrush(QColor("lightgray")));
     addToGroup(rect);
     setFlags(QGraphicsItem::ItemIsMovable | QGraphicsItem::ItemIsSelectable | QGraphicsItem::ItemSendsScenePositionChanges);
 

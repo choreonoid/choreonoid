@@ -741,11 +741,11 @@ bool RTSystemItem::compIsAlive(RTSComp* rtsComp)
 bool RTSystemItemImpl::compIsAlive(RTSComp* rtsComp)
 {
     //DDEBUG("RTSystemItemImpl::compIsAlive");
-    if (rtsComp->rtc_) {
+    if (rtsComp->isAlive_ && rtsComp->rtc_ && rtsComp->rtc_ != nullptr) {
         if (isObjectAlive(rtsComp->rtc_)) {
             return true;
         } else {
-            rtsComp->setRtc(0);
+            rtsComp->setRtc(nullptr);
             return false;
         }
     } else {
@@ -1124,11 +1124,13 @@ bool RTSystemItemImpl::checkStatus()
         if (compIsAlive(it->second)) {
             if (it->second->isAlive_ == false) {
                 modified = true;
+                DDEBUG("RTSystemItemImpl::checkStatus 1");
             }
             it->second->isAlive_ = true;
         } else {
-            if (it->second->isAlive_) {
+            if (it->second->isAlive_ == true) {
                 modified = true;
+                DDEBUG("RTSystemItemImpl::checkStatus 2");
             }
             it->second->isAlive_ = false;
         }
@@ -1136,6 +1138,7 @@ bool RTSystemItemImpl::checkStatus()
     //
     if (connectionCheck()) {
         modified = true;
+        DDEBUG("RTSystemItemImpl::checkStatus 3");
     }
 
     return modified;
