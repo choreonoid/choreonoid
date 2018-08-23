@@ -460,7 +460,7 @@ bool ControllerRTCItemImpl::createRTCmain(bool isBodyIORTC) {
     execContext = RTC::ExecutionContextService::_nil();
     isSimulationExecutionContext = false; 
     RTC::ExecutionContextList_var eclist = rtc->get_owned_contexts();
-#if defined(OPENRTM_VERSION11)
+#if defined(OPENRTM_VERSION12)
     int selected = execContextType.index(execContextType.selectedSymbol());
     for (CORBA::ULong index = 0; index < eclist->length(); ++index) {
         if (!CORBA::is_nil(eclist[index])) {
@@ -670,7 +670,7 @@ bool ControllerRTCItem::restore(const Archive& archive)
 
 bool ControllerRTCItemImpl::restore(const Archive& archive)
 {
-  DDEBUG("ControllerRTCItemImpl::restore");
+    DDEBUG("ControllerRTCItemImpl::restore");
     string value;
     if(archive.read("module", value) || archive.read("moduleName", value)){
         filesystem::path path(archive.expandPathVariables(value));
