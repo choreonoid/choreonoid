@@ -26,6 +26,8 @@ using namespace cnoid;
 
 namespace {
 
+const bool ENABLE_LIST_UPDATE_FOR_HIDDEN_VIEW_IN_LOADING_PROJECT = false;
+
 class InfomationDialog : public Dialog
 {
 public:
@@ -212,7 +214,7 @@ RTSNameServerViewImpl::RTSNameServerViewImpl(RTSNameServerView* self)
             static_cast<void(RTSNameServerViewImpl::*)(void)>(&RTSNameServerViewImpl::cleatZombee), this));
     hbox->addWidget(clearZombeeButton);
 
-    isObjectListUpdateRequested = true;
+    isObjectListUpdateRequested = false;
 
     vbox->addLayout(hbox, 0);
 
@@ -549,7 +551,9 @@ bool RTSNameServerView::restoreState(const Archive& archive)
         if (isActive()) {
             impl->updateObjectList(true);
         } else {
-            // impl->isObjectListUpdateRequested = true;
+            if(ENABLE_LIST_UPDATE_FOR_HIDDEN_VIEW_IN_LOADING_PROJECT){
+                impl->isObjectListUpdateRequested = true;
+            }
         }
     });
 
