@@ -26,6 +26,8 @@ using namespace cnoid;
 
 namespace {
 
+const bool ENABLE_LIST_UPDATE_FOR_HIDDEN_VIEW_IN_LOADING_PROJECT = false;
+
 class InfomationDialog : public Dialog
 {
 public:
@@ -565,7 +567,9 @@ bool RTSNameServerView::restoreState(const Archive& archive)
         if (isActive()) {
             impl->updateObjectList(true);
         } else {
-            // impl->isObjectListUpdateRequested = true;
+            if(ENABLE_LIST_UPDATE_FOR_HIDDEN_VIEW_IN_LOADING_PROJECT){
+                impl->isObjectListUpdateRequested = true;
+            }
         }
     });
 

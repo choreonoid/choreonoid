@@ -326,6 +326,8 @@ bool NameServerManager::addServer(string hostAddress, int portNo)
     server.hostAddress = hostAddress;
     server.portNo = portNo;
     serverList.push_back(server);
+
+    return true;
 }
 
 bool NameServerManager::isExistServer(string hostAddress, int portNo)

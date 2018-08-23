@@ -687,6 +687,8 @@ bool ControllerRTCItemImpl::restore(const Archive& archive)
                 // For the backward compatibility
                 if(value == "ChoreonoidExecutionContext"){
                     execContextType.select(SIMULATION_EXECUTION_CONTEXT);
+                } else if(value == "PeriodicExecutionContext"){
+                    execContextType.select(SIMULATION_PERIODIC_EXECUTION_CONTEXT);
                 }
             }
         }
