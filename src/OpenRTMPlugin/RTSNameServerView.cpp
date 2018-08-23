@@ -109,6 +109,7 @@ private:
         vector<NamingContextHelper::ObjectPath> pathList);
     void onSelectionChanged();
 
+    void showServerInfo();
     void connectNameServer();
     void cleatZombee();
     void checkZombee(RTSVItem* parent);
@@ -212,7 +213,7 @@ RTSNameServerViewImpl::RTSNameServerViewImpl(RTSNameServerView* self)
             static_cast<void(RTSNameServerViewImpl::*)(void)>(&RTSNameServerViewImpl::cleatZombee), this));
     hbox->addWidget(clearZombeeButton);
 
-    isObjectListUpdateRequested = true;
+    isObjectListUpdateRequested = false;
 
     vbox->addLayout(hbox, 0);
 
@@ -227,6 +228,8 @@ RTSNameServerViewImpl::RTSNameServerViewImpl(RTSNameServerView* self)
 
     vbox->addWidget(&treeWidget, 1);
     self->setLayout(vbox);
+    //
+    showServerInfo();
 }
 
 
@@ -441,6 +444,19 @@ void RTSNameServerViewImpl::setSelection(std::string RTCName, std::string RTCful
                 break;
             }
         }
+    }
+}
+
+void RTSNameServerViewImpl::showServerInfo() {
+    treeWidget.clear();
+    vector<NameServerInfo> serverList = NameServerManager::instance()->getServerList();
+    for (auto it = serverList.begin(); it != serverList.end(); it++) {
+        RTSVItem* topElem = new RTSVItem();
+        QString hostName = QString::fromStdString((*it).hostAddress) + ":" + QString::number((*it).portNo);
+        topElem->setText(0, hostName);
+        topElem->setIcon(0, QIcon(":/Corba/icons/RT.png"));
+        topElem->kind_ = KIND_SERVER;
+        treeWidget.addTopLevelItem(topElem);
     }
 }
 
@@ -873,9 +889,6 @@ AddObjectDialog::AddObjectDialog(RTSVItem* target)
     mainLayout->addWidget(frmDisp);
     mainLayout->addWidget(frmButton);
     setLayout(mainLayout);
-
-    //connect(okButton, SIGNAL(clicked()), this, SLOT(okClicked()));
-    //connect(cancelButton, SIGNAL(clicked()), this, SLOT(reject()));
 
     setMinimumWidth(350);
 }
