@@ -7,8 +7,6 @@
 #ifndef CNOID_OPENRTM_PLUGIN_VISION_SENSOR_SUBSCRIBER_RTC_ITEM_H
 #define CNOID_OPENRTM_PLUGIN_VISION_SENSOR_SUBSCRIBER_RTC_ITEM_H
 
-#include <cnoid/Item>
-#include <cnoid/BodyItem>
 #include <cnoid/ControllerItem>
 #include "exportdecl.h"
 
@@ -25,8 +23,8 @@ public:
     VisionSensorSubscriberRTCItem(const VisionSensorSubscriberRTCItem& org);
     ~VisionSensorSubscriberRTCItem();
 
-    virtual void onPositionChanged();
     virtual void onDisconnectedFromRoot();
+    virtual void onPositionChanged();
     virtual Item* doDuplicate() const;
     virtual void doPutProperties(PutPropertyFunction& putProperty);
     virtual bool store(Archive& archive);
@@ -41,7 +39,6 @@ public:
 
 private:
     VisionSensorSubscriberRTCItemImpl* impl;
-    BodyItem* bodyItem;
 };
 
 typedef ref_ptr<VisionSensorSubscriberRTCItem> VisionSensorSubscriberRTCItemPtr;
