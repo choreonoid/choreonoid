@@ -457,6 +457,7 @@ void RTSNameServerViewImpl::showServerInfo() {
         QString hostName = QString::fromStdString((*it).hostAddress) + ":" + QString::number((*it).portNo);
         topElem->setText(0, hostName);
         topElem->setIcon(0, QIcon(":/Corba/icons/RT.png"));
+        topElem->setDisabled(true);
         topElem->kind_ = KIND_SERVER;
         treeWidget.addTopLevelItem(topElem);
     }
