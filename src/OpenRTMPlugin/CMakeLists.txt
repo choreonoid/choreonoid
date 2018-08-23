@@ -44,13 +44,14 @@ QTX_WRAP_CPP(
   )
 set(plugin_sources ${plugin_sources} ${qtsources})
 
-set(idl_files PointCloud)
+unset(idl_cpp_files)
+unset(idl_h_files)
 if(USE_BUILTIN_CAMERA_IMAGE_IDL)
   set(idl_files ${idl_files} CameraImage)
+  idl_compile_cpp(idl_cpp_files idl_h_files deprecated/corba ${idl_files} LOCAL)
 else()
   set(OPENRTM_LIBRARIES ${OPENRTM_LIBRARIES} ${OPENRTM_CAMERA_LIBRARY})
 endif()
-idl_compile_cpp(idl_cpp_files idl_h_files deprecated/corba ${idl_files} LOCAL)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 make_gettext_mofiles(${plugin} mofiles)
