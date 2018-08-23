@@ -8,6 +8,7 @@
 #include <cnoid/RangeCamera>
 #include <cnoid/RangeSensor>
 #include <cnoid/ItemManager>
+#include <cnoid/Archive>
 #include <cnoid/Config>
 #include <cnoid/MessageView>
 #include <cnoid/OpenRTMUtil>
@@ -190,10 +191,10 @@ class VisionSensorSubscriberRTCItemImpl
 public:
     VisionSensorSubscriberRTCItem* self;
     MessageView* mv;
-    OpenRTM::ExtTrigExecutionContextService_var execContext;
-    bool isSimulationExecutionContext;
     BodyItem* bodyItem;
     SubscriberRTC* subscriberRTC;
+    RTC::ExecutionContext_var execContext;
+    int periodicRate;
 
     VisionSensorSubscriberRTCItemImpl(VisionSensorSubscriberRTCItem* self);
     VisionSensorSubscriberRTCItemImpl(VisionSensorSubscriberRTCItem* self, const VisionSensorSubscriberRTCItemImpl& org);
@@ -243,7 +244,7 @@ VisionSensorSubscriberRTCItem::VisionSensorSubscriberRTCItem()
 
 
 VisionSensorSubscriberRTCItem::VisionSensorSubscriberRTCItem(const VisionSensorSubscriberRTCItem& org)
-    : ControllerItem(org)
+    : Item(org)
 {
     impl = new VisionSensorSubscriberRTCItemImpl(this);
 }
@@ -255,8 +256,18 @@ VisionSensorSubscriberRTCItemImpl::VisionSensorSubscriberRTCItemImpl(VisionSenso
 {
     bodyItem = nullptr;
     subscriberRTC = nullptr;
+    execContext = RTC::ExecutionContext::_nil();
+    periodicRate = 30;
 
     self->sigNameChanged().connect([&](const string&){ createRTC(); });
+}
+
+
+VisionSensorSubscriberRTCItemImpl::VisionSensorSubscriberRTCItemImpl
+(VisionSensorSubscriberRTCItem* self, const VisionSensorSubscriberRTCItemImpl& org)
+    : VisionSensorSubscriberRTCItemImpl(self)
+{
+    periodicRate = org.periodicRate;
 }
 
 
@@ -299,6 +310,14 @@ void VisionSensorSubscriberRTCItemImpl::setBodyItem(BodyItem* newBodyItem)
 }
 
 
+void VisionSensorSubscriberRTCItem::setPeriodicRate(int rate)
+{
+    if(rate != impl->periodicRate){
+        impl->periodicRate = rate;
+        impl->createRTC();
+    }
+}
+
 void VisionSensorSubscriberRTCItemImpl::createRTC()
 {
     deleteRTC();
@@ -310,10 +329,10 @@ void VisionSensorSubscriberRTCItemImpl::createRTC()
     boost::format param(
         "VisionSensorSubscriber?"
         "instance_name=%1%&"
-        "exec_cxt.periodic.type=SimulationExecutionContext&"
-        "exec_cxt.periodic.rate=1000000");
+        "exec_cxt.periodic.type=PeriodicExecutionContext&"
+        "exec_cxt.periodic.rate=%2%");
     
-    RTC::RtcBase* rtc = createManagedRTC(str(param % self->name()).c_str());
+    RTC::RtcBase* rtc = createManagedRTC(str(param % self->name() % periodicRate).c_str());
     if(!rtc){
         mv->putln(MessageView::ERROR, boost::format(_("RTC for \"%1%\" cannot be created.")) % self->name());
         return;
@@ -322,12 +341,12 @@ void VisionSensorSubscriberRTCItemImpl::createRTC()
     subscriberRTC = dynamic_cast<SubscriberRTC*>(rtc);
     createInPorts();
 
-    execContext = OpenRTM::ExtTrigExecutionContextService::_nil();
-    isSimulationExecutionContext = true;
+    execContext = RTC::ExecutionContext::_nil();
     RTC::ExecutionContextList_var eclist = rtc->get_owned_contexts();
     for(CORBA::ULong i=0; i < eclist->length(); ++i){
-        if(!CORBA::is_nil(eclist[i])){
-            execContext = OpenRTM::ExtTrigExecutionContextService::_narrow(eclist[i]);
+        execContext = eclist[i];
+        if(!CORBA::is_nil(execContext)){
+            execContext->activate_component(subscriberRTC->getObjRef());
             break;
         }
     }
@@ -386,97 +405,20 @@ Item* VisionSensorSubscriberRTCItem::doDuplicate() const
 
 void VisionSensorSubscriberRTCItem::doPutProperties(PutPropertyFunction& putProperty)
 {
-
+    putProperty.decimals(3)(_("Periodic rate"), impl->periodicRate,
+                            [&](int rate){ setPeriodicRate(rate); return true; });
 }
 
 
 bool VisionSensorSubscriberRTCItem::store(Archive& archive)
 {
+    archive.write("periodicRate", impl->periodicRate);
     return true;
 }
 
 
 bool VisionSensorSubscriberRTCItem::restore(const Archive& archive)
 {
+    archive.read("periodicRate", impl->periodicRate);
     return true;
-}
-
-
-bool VisionSensorSubscriberRTCItem::start()
-{
-    return impl->start();
-}
-
-
-bool VisionSensorSubscriberRTCItemImpl::start()
-{
-    bool isReady = false;
-
-    if(subscriberRTC){
-        if(!CORBA::is_nil(execContext)){
-            RTC::ReturnCode_t result = RTC::RTC_OK;
-            RTC::LifeCycleState state = execContext->get_component_state(subscriberRTC->getObjRef());
-            if(state == RTC::ERROR_STATE){
-                result = execContext->reset_component(subscriberRTC->getObjRef());
-                execContext->tick();
-            } else if(state == RTC::ACTIVE_STATE){
-                result = execContext->deactivate_component(subscriberRTC->getObjRef());
-                execContext->tick();
-            }
-            if(result == RTC::RTC_OK){
-                result = execContext->activate_component(subscriberRTC->getObjRef());
-                execContext->tick();
-            }
-            if(result == RTC::RTC_OK){
-                isReady = true;
-            }
-        }
-    }
-
-    return isReady;
-}
-
-
-double VisionSensorSubscriberRTCItem::timeStep() const
-{
-    return 0.0;
-}
-
-
-void VisionSensorSubscriberRTCItem::input()
-{
-
-}
-
-
-bool VisionSensorSubscriberRTCItem::control()
-{
-    if(impl->isSimulationExecutionContext){
-        impl->execContext->tick();
-    }
-    return true;
-}
-
-
-void VisionSensorSubscriberRTCItem::output()
-{
-
-}
-
-
-void VisionSensorSubscriberRTCItem::stop()
-{
-    impl->stop();
-}
-
-
-void VisionSensorSubscriberRTCItemImpl::stop()
-{
-    RTC::LifeCycleState state = execContext->get_component_state(subscriberRTC->getObjRef());
-    if(state == RTC::ERROR_STATE){
-        execContext->reset_component(subscriberRTC->getObjRef());
-    } else {
-        execContext->deactivate_component(subscriberRTC->getObjRef());
-    }
-    execContext->tick();
 }
