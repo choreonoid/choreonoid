@@ -16,6 +16,7 @@
 #include <rtm/DataFlowComponentBase.h>
 #include <rtm/DataInPort.h>
 #include <rtm/idl/InterfaceDataTypes.hh>
+#include <cnoid/corba/PointCloud.hh>
 
 #ifdef USE_BUILTIN_CAMERA_IMAGE_IDL
 # include "deprecated/corba/CameraImage.hh"
@@ -34,7 +35,16 @@ using namespace cnoid;
 
 namespace {
 
-class CameraImageInput : public Referenced
+class InputBase : public Referenced
+{
+public:
+    virtual void read() = 0;
+};
+
+typedef ref_ptr<InputBase> InputBasePtr;
+    
+
+class CameraImageInput : public InputBase
 {
 public:
     RTC::InPort<Img::TimedCameraImage> port;
@@ -44,11 +54,14 @@ public:
     CameraImageInput(Camera* camera)
         : port(camera->name().c_str(), timedCameraImage),
           camera(camera) { }
+
+    void read();
 };
+
 typedef ref_ptr<CameraImageInput> CameraImageInputPtr;
 
 
-class PointCloudInput : public Referenced
+class PointCloudInput : public InputBase
 {
 public:
     RTC::InPort<RTC::PointCloud> port;
@@ -58,11 +71,14 @@ public:
     PointCloudInput(RangeCamera* rangeCamera)
         : port((rangeCamera->name() + "-depth").c_str(), pointCloud),
           rangeCamera(rangeCamera) { }
+
+    void read();
 };
+
 typedef ref_ptr<PointCloudInput> PointCloudInputPtr;
 
 
-class RangeDataInput : public Referenced
+class RangeDataInput : public InputBase
 {
 public:
     RTC::InPort<RTC::RangeData> port;
@@ -72,20 +88,20 @@ public:
     RangeDataInput(RangeSensor* rangeSensor)
         : port(rangeSensor->name().c_str(), timedRangeData),
           rangeSensor(rangeSensor) { }
+
+    void read();
 };
+
 typedef ref_ptr<RangeDataInput> RangeDataInputPtr;
 
 
 class SubscriberRTC : public RTC::DataFlowComponentBase
 {
 public:
-    vector<CameraImageInputPtr> cameraImageInputs;
-    vector<PointCloudInputPtr> pointCloudInputs;
-    vector<RangeDataInputPtr> rangeDataInputs;
+    vector<InputBasePtr> inputs;
     
     SubscriberRTC(RTC::Manager* manager);
-    ~SubscriberRTC(){ };
-
+    void createInPorts(Body* body);
     virtual RTC::ReturnCode_t onInitialize();
     virtual RTC::ReturnCode_t onActivated(RTC::UniqueId ec_id);
     virtual RTC::ReturnCode_t onDeactivated(RTC::UniqueId ec_id);
@@ -99,6 +115,40 @@ SubscriberRTC::SubscriberRTC(RTC::Manager* manager)
     : DataFlowComponentBase(manager)
 {
 
+}
+
+
+void SubscriberRTC::createInPorts(Body* body)
+{
+    DeviceList<> devices = body->devices();
+    
+    DeviceList<Camera> cameras(devices);
+
+    for(size_t i=0; i < cameras.size(); ++i){
+        auto camera = cameras[i];
+        if(camera->imageType() != Camera::NO_IMAGE){
+            CameraImageInputPtr input = new CameraImageInput(camera);
+            if(addInPort(input->port.name(), input->port)){
+                inputs.push_back(input);
+            }
+        }
+        auto rangeCamera = dynamic_pointer_cast<RangeCamera>(camera);
+        if(rangeCamera){
+            PointCloudInputPtr input = new PointCloudInput(rangeCamera);
+            if(addInPort(input->port.name(), input->port)){
+                inputs.push_back(input);
+            }
+        }
+    }
+
+    DeviceList<RangeSensor> rangeSensors(devices);
+    for(size_t i=0; i < rangeSensors.size(); ++i){
+        auto sensor = rangeSensors[i];
+        RangeDataInputPtr input = new RangeDataInput(sensor);
+        if(addInPort(input->port.name(), input->port)){
+            inputs.push_back(input);
+        }
+    }
 }
 
 
@@ -122,67 +172,98 @@ RTC::ReturnCode_t SubscriberRTC::onDeactivated(RTC::UniqueId ec_id)
 
 RTC::ReturnCode_t SubscriberRTC::onExecute(RTC::UniqueId ec_id)
 {
-    for(auto& input : cameraImageInputs){
-        if(input->port.isNew()){
-            do {
-                input->port.read();
-            } while(input->port.isNew());
-
-            Img::TimedCameraImage& timedCameraImage = input->timedCameraImage;
-
-            int numComponents;
-            switch(timedCameraImage.data.image.format){
-            case Img::CF_GRAY :
-                numComponents = 1;
-                break;
-            case Img::CF_RGB :
-                numComponents = 3;
-                break;
-            case Img::CF_UNKNOWN :
-            default :
-                numComponents = 0;
-                break;
-            }
-
-            std::shared_ptr<Image> tmpImage = std::make_shared<Image>();
-            tmpImage->setSize(timedCameraImage.data.image.width, timedCameraImage.data.image.height, numComponents);
-            size_t length = timedCameraImage.data.image.raw_data.length();
-            memcpy(tmpImage->pixels(), timedCameraImage.data.image.raw_data.get_buffer(), length);
-
-            Camera* camera = input->camera;
-            callLater([camera, tmpImage]() mutable {
-                    camera->setImage(tmpImage);
-                    camera->notifyStateChange();
-                });
-        }
+    for(auto& input : inputs){
+        input->read();
     }
-
-    for(auto& input : rangeDataInputs){
-        if(input->port.isNew()){
-            do {
-                input->port.read();
-            }while(input->port.isNew());
-
-            RTC::RangeData& timedRangeData = input->timedRangeData;
-            double* src = timedRangeData.ranges.get_buffer();
-            int numPoints = timedRangeData.ranges.length();
-            std::shared_ptr<RangeSensor::RangeData> tmpRangeData = std::make_shared<vector<double>>();
-            tmpRangeData->clear();
-            for(int i=0; i < numPoints; i++){
-                tmpRangeData->push_back(src[i]);
-            }
-
-            RangeSensor* rangeSensor = input->rangeSensor;
-            callLater([rangeSensor, tmpRangeData]() mutable {
-                    rangeSensor->setRangeData(tmpRangeData);
-                    rangeSensor->notifyStateChange();
-                });
-        }
-    }
-
     return RTC::RTC_OK;
 }
 
+void CameraImageInput::read()
+{
+    if(port.isNew()){
+        do {
+            port.read();
+        } while(port.isNew());
+        
+        int numComponents;
+        switch(timedCameraImage.data.image.format){
+        case Img::CF_GRAY :
+            numComponents = 1;
+            break;
+        case Img::CF_RGB :
+            numComponents = 3;
+            break;
+        case Img::CF_UNKNOWN :
+        default :
+            numComponents = 0;
+            break;
+        }
+
+        std::shared_ptr<Image> tmpImage = std::make_shared<Image>();
+        tmpImage->setSize(timedCameraImage.data.image.width, timedCameraImage.data.image.height, numComponents);
+        size_t length = timedCameraImage.data.image.raw_data.length();
+        memcpy(tmpImage->pixels(), timedCameraImage.data.image.raw_data.get_buffer(), length);
+        
+        CameraPtr tmpCamera = camera;
+        callLater([tmpCamera, tmpImage]() mutable {
+                tmpCamera->setImage(tmpImage);
+                tmpCamera->notifyStateChange();
+            });
+    }
+}
+
+
+void PointCloudInput::read()
+{
+    if(port.isNew()){
+        do {
+            port.read();
+        } while(port.isNew());
+
+        const RTC::PointCloudPointList& pcPoints = pointCloud.points;
+        const int numPoints = pcPoints.length();
+        auto tmpPoints = std::make_shared<RangeCamera::PointData>(numPoints);
+        
+        for(int i=0; i < numPoints; ++i){
+            Vector3f& p = (*tmpPoints)[i];
+            const RTC::Point3D& point = pcPoints[i].point;
+            p.x() = point.x;
+            p.y() = point.y;
+            p.z() = point.z;
+        }
+
+        RangeCameraPtr tmpRangeCamera = rangeCamera;
+        callLater([tmpRangeCamera, tmpPoints]() mutable {
+                tmpRangeCamera->setPoints(tmpPoints);
+                tmpRangeCamera->notifyStateChange();
+            });
+    }
+}
+
+
+void RangeDataInput::read()
+{
+    if(port.isNew()){
+        do {
+            port.read();
+        }while(port.isNew());
+            
+        double* src = timedRangeData.ranges.get_buffer();
+        int numPoints = timedRangeData.ranges.length();
+        std::shared_ptr<RangeSensor::RangeData> tmpRangeData = std::make_shared<vector<double>>();
+        tmpRangeData->clear();
+        for(int i=0; i < numPoints; i++){
+            tmpRangeData->push_back(src[i]);
+        }
+            
+        RangeSensorPtr tmpRangeSensor = rangeSensor;
+        callLater([tmpRangeSensor, tmpRangeData]() mutable {
+                tmpRangeSensor->setRangeData(tmpRangeData);
+                tmpRangeSensor->notifyStateChange();
+            });
+    }
+}
+    
 
 namespace cnoid {
 
@@ -202,7 +283,6 @@ public:
 
     void setBodyItem(BodyItem* bodyItem);
     void createRTC();
-    void createInPorts();
     void deleteRTC();
     bool start();
     void stop();
@@ -339,7 +419,7 @@ void VisionSensorSubscriberRTCItemImpl::createRTC()
     }
 
     subscriberRTC = dynamic_cast<SubscriberRTC*>(rtc);
-    createInPorts();
+    subscriberRTC->createInPorts(bodyItem->body());
 
     execContext = RTC::ExecutionContext::_nil();
     RTC::ExecutionContextList_var eclist = rtc->get_owned_contexts();
@@ -348,40 +428,6 @@ void VisionSensorSubscriberRTCItemImpl::createRTC()
         if(!CORBA::is_nil(execContext)){
             execContext->activate_component(subscriberRTC->getObjRef());
             break;
-        }
-    }
-}
-
-
-void VisionSensorSubscriberRTCItemImpl::createInPorts()
-{
-    DeviceList<> devices = bodyItem->body()->devices();
-    
-    DeviceList<Camera> cameras(devices);
-
-    for(size_t i=0; i < cameras.size(); ++i){
-        auto camera = cameras[i];
-        if(camera->imageType() != Camera::NO_IMAGE){
-            CameraImageInputPtr input = new CameraImageInput(camera);
-            if(subscriberRTC->addInPort(input->port.name(), input->port)){
-                subscriberRTC->cameraImageInputs.push_back(input);
-            }
-        }
-        auto rangeCamera = dynamic_pointer_cast<RangeCamera>(camera);
-        if(rangeCamera){
-            PointCloudInputPtr input = new PointCloudInput(rangeCamera);
-            if(subscriberRTC->addInPort(input->port.name(), input->port)){
-                subscriberRTC->pointCloudInputs.push_back(input);
-            }
-        }
-    }
-
-    DeviceList<RangeSensor> rangeSensors(devices);
-    for(size_t i=0; i < rangeSensors.size(); ++i){
-        auto sensor = rangeSensors[i];
-        RangeDataInputPtr input = new RangeDataInput(sensor);
-        if(subscriberRTC->addInPort(input->port.name(), input->port)){
-            subscriberRTC->rangeDataInputs.push_back(input);
         }
     }
 }

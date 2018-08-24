@@ -564,6 +564,7 @@ void PointCloudVisualizerItemImpl::updateRangeCameraState()
             c[2] = *pixels++ / 255.0;;
         }
     }
+
     pointSet->notifyUpdate();
 }
 

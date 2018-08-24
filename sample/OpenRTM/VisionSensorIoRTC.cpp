@@ -27,8 +27,6 @@ extern "C" {
 using namespace std;
 using namespace cnoid;
 
-static const bool USE_OLD_IDL_POINT_CLOUD_TYPES_POINT_CLOUD = true;
-
 class DeviceIo : public Referenced
 {
 protected:
@@ -72,8 +70,8 @@ public:
     RangeCameraPtr modelRangeCamera;
     RangeCameraPtr rangeCamera;
     std::shared_ptr<const RangeCamera::PointData> lastPoints;
-
     string portName;
+    bool useOldPointCloudIDL;
 
     // Old IDL defined in namespace PointCloudTypes 
     PointCloudTypes::PointCloud pointCloud1;
@@ -83,7 +81,7 @@ public:
     RTC::PointCloud pointCloud2;
     RTC::OutPort<RTC::PointCloud> pointCloud2Out;
     
-    RangeCameraIo(RangeCamera* rangeCamera);
+    RangeCameraIo(RangeCamera* rangeCamera, bool useOldPointCloudIDL);
     virtual void setPorts(BodyIoRTC* rtc) override;
     virtual bool initializeSimulation(Body* body) override;
     void initializePointCloud1OutPort();
@@ -119,6 +117,7 @@ class VisionSensorIoRTC : public BodyIoRTC
 public:
     BodyPtr ioBody;
     vector<DeviceIoPtr> deviceIoList;
+    bool useOldPointCloudIDL;
 
     VisionSensorIoRTC(RTC::Manager* manager);
     ~VisionSensorIoRTC();
@@ -169,13 +168,21 @@ VisionSensorIoRTC::~VisionSensorIoRTC()
 
 bool VisionSensorIoRTC::initializeIO(ControllerIO* io)
 {
+    useOldPointCloudIDL = false;
+    for(auto& option : io->options()){
+        if(option == "useOldPointCloudIDL"){
+            io->os() << "PointCloudTypes::PointCloud is used to output a depth image" << endl;
+            useOldPointCloudIDL = true;
+        } else {
+            io->os() << "Unknow option: " << option << endl;
+        }
+    }
+            
     deviceIoList.clear();
-    
     DeviceList<> devices = io->body()->devices();
-
     for(auto& device : devices){
         if(auto rangeCamera = dynamic_pointer_cast<RangeCamera>(device)){
-            deviceIoList.push_back(new RangeCameraIo(rangeCamera));
+            deviceIoList.push_back(new RangeCameraIo(rangeCamera, useOldPointCloudIDL));
         } else if(auto camera = dynamic_pointer_cast<Camera>(device)){
             deviceIoList.push_back(new CameraIo(camera));
         } else if(auto rangeSensor = dynamic_pointer_cast<RangeSensor>(device)){
@@ -371,10 +378,11 @@ void CameraIo::clearSimulationDevice()
 }
 
 
-RangeCameraIo::RangeCameraIo(RangeCamera* rangeCamera)
+RangeCameraIo::RangeCameraIo(RangeCamera* rangeCamera, bool useOldPointCloudIDL)
     : CameraIo(rangeCamera),
       modelRangeCamera(rangeCamera),
       portName(rangeCamera->name() + "-depth"),
+      useOldPointCloudIDL(useOldPointCloudIDL),
       pointCloud1Out(portName.c_str(), pointCloud1),
       pointCloud2Out(portName.c_str(), pointCloud2)
 {
@@ -385,7 +393,7 @@ void RangeCameraIo::setPorts(BodyIoRTC* rtc)
 {
     CameraIo::setPorts(rtc);
 
-    if(USE_OLD_IDL_POINT_CLOUD_TYPES_POINT_CLOUD){
+    if(useOldPointCloudIDL){
         rtc->addOutPort(portName.c_str(), pointCloud1Out);
     } else {
         rtc->addOutPort(portName.c_str(), pointCloud2Out);
@@ -403,7 +411,7 @@ bool RangeCameraIo::initializeSimulation(Body* body)
         return false;
     }
 
-    if(USE_OLD_IDL_POINT_CLOUD_TYPES_POINT_CLOUD){
+    if(useOldPointCloudIDL){
         initializePointCloud1OutPort();
     } else {
         initializePointCloud2OutPort();
@@ -468,10 +476,8 @@ void RangeCameraIo::initializePointCloud1OutPort()
 
 void RangeCameraIo::initializePointCloud2OutPort()
 {
-
+    
 }
-
-
 
 
 void RangeCameraIo::onStateChanged()
@@ -482,7 +488,7 @@ void RangeCameraIo::onStateChanged()
         if(rangeCamera->sharedPoints() != lastPoints){
             lastPoints = rangeCamera->sharedPoints();
             if(!lastPoints->empty()){
-                if(USE_OLD_IDL_POINT_CLOUD_TYPES_POINT_CLOUD){
+                if(useOldPointCloudIDL){
                     if(!lastImage->empty()){
                         pointCloud1.height = lastImage->height();
                         pointCloud1.width = lastImage->width();
@@ -536,7 +542,34 @@ void RangeCameraIo::outputPointCloud1()
 
 void RangeCameraIo::outputPointCloud2()
 {
+    const vector<Vector3f>& points = *lastPoints;
+    const Image& image = *lastImage;
+    const unsigned char* pixels = nullptr;
+    if(!image.empty()){
+        pixels = image.pixels();
+    }
+    pointCloud2.points.length(points.size());
 
+    for(size_t i=0; i < points.size(); ++i){
+        const Vector3f& point = points[i];
+        RTC::PointCloudPoint& pcPoint = pointCloud2.points[i];
+        RTC::Point3D& p = pcPoint.point;
+        p.x = point.x();
+        p.y = point.y();
+        p.z = point.z();
+        RTC::RGBColour& c = pcPoint.colour;
+        if(pixels){
+            c.r = *pixels++;
+            c.g = *pixels++;
+            c.b = *pixels++;
+        } else {
+            c.r = 1.0;
+            c.g = 1.0;
+            c.b = 1.0;
+        }
+    }
+
+    pointCloud2Out.write();
 }
 
 
