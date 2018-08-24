@@ -6,7 +6,7 @@
 #include "VirtualRobotPortHandler.h"
 #include "BodyRTCItem.h"
 
-#include <deprecated/corba/PointCloud.hh>
+#include <cnoid/corba/PointCloud.hh>
 
 #ifdef USE_BUILTIN_CAMERA_IMAGE_IDL
 # include <deprecated/corba/CameraImage.hh>
