@@ -691,6 +691,7 @@ void CameraRangeOutPortHandlerImpl::initialize(Body* simBody)
             value.fields[5].count = 1;
             value.point_step = 16;
         }
+        // Originally is_bigendian has to be decided by CPU difference.
         value.is_bigendian = false;
         value.is_dense = true;
         
