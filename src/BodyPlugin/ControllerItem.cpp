@@ -104,10 +104,22 @@ SignalProxy<void(const std::string& message)> ControllerItem::sigMessage()
 }
 
 
+void ControllerItem::onOptionsChanged()
+{
+
+}
+
+
 void ControllerItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("No delay mode"), isNoDelayMode_, changeProperty(isNoDelayMode_));
-    putProperty(_("Controller options"), optionString_, changeProperty(optionString_));
+
+    putProperty(_("Controller options"), optionString_,
+                [&](const string& options){
+                    optionString_ = options;
+                    onOptionsChanged();
+                    return true;
+                });
 }
 
 

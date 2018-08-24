@@ -88,6 +88,8 @@ public:
 protected:
     void putMessage(const std::string& message);
 
+    virtual void onOptionsChanged();
+
     virtual void doPutProperties(PutPropertyFunction& putProperty);
     virtual bool store(Archive& archive);
     virtual bool restore(const Archive& archive);
