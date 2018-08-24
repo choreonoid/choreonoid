@@ -78,13 +78,12 @@ items:
                 periodicRate: 0
             - 
               id: 6
-              name: "RTMPointCloudIO"
+              name: "Tank-VisionSensorSubscripter"
               plugin: OpenRTM
               class: VisionSensorSubscriberRTCItem
               data: 
-                componentName: VisionSensorSubscriber
-                rangeSensorPortNames: [ VLP-16 ]
-                cameraPortNames: [ Kinect_image, Theta_image ]
+                periodicRate: 30
+                pointCloudPortType: "PointCloudTypes::PointCloud"
             - 
               id: 7
               name: "Joystick"
@@ -195,8 +194,7 @@ items:
                 depthError: 0
                 enableHeadLight: true
                 enableAdditionalLights: true
-                rotateOutputDirection: false
-                enableInterpolation: false
+                antiAliasing: false
         - 
           id: 12
           name: "TankVisionSystem"
@@ -453,12 +451,12 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 369, 1545 ]
+      sizes: [ 459, 1920 ]
       children: 
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 531, 529 ]
+          sizes: [ 766, 763 ]
           children: 
             - 
               type: pane
@@ -471,17 +469,17 @@ viewAreas:
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 774, 286 ]
+          sizes: [ 1116, 413 ]
           children: 
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 659, 880 ]
+              sizes: [ 820, 1094 ]
               children: 
                 - 
                   type: splitter
                   orientation: vertical
-                  sizes: [ 374, 394 ]
+                  sizes: [ 541, 569 ]
                   children: 
                     - 
                       type: pane
@@ -498,7 +496,7 @@ viewAreas:
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 770, 769 ]
+              sizes: [ 958, 956 ]
               children: 
                 - 
                   type: pane

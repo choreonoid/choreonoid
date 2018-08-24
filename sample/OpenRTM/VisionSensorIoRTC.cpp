@@ -66,22 +66,19 @@ public:
 class RangeCameraIo : public CameraIo
 {
     ThreadPool threadPool;
+
 public:
     RangeCameraPtr modelRangeCamera;
     RangeCameraPtr rangeCamera;
     std::shared_ptr<const RangeCamera::PointData> lastPoints;
     string portName;
-    bool useOldPointCloudIDL;
-
-    // Old IDL defined in namespace PointCloudTypes 
+    int pointCloudPortType;
     PointCloudTypes::PointCloud pointCloud1;
     RTC::OutPort<PointCloudTypes::PointCloud> pointCloud1Out;
-
-    // OpenRTM's Offical IDL defined in namespace RTC
     RTC::PointCloud pointCloud2;
     RTC::OutPort<RTC::PointCloud> pointCloud2Out;
     
-    RangeCameraIo(RangeCamera* rangeCamera, bool useOldPointCloudIDL);
+    RangeCameraIo(RangeCamera* rangeCamera, int portType);
     virtual void setPorts(BodyIoRTC* rtc) override;
     virtual bool initializeSimulation(Body* body) override;
     void initializePointCloud1OutPort();
@@ -117,7 +114,7 @@ class VisionSensorIoRTC : public BodyIoRTC
 public:
     BodyPtr ioBody;
     vector<DeviceIoPtr> deviceIoList;
-    bool useOldPointCloudIDL;
+    int pointCloudPortType;
 
     VisionSensorIoRTC(RTC::Manager* manager);
     ~VisionSensorIoRTC();
@@ -168,11 +165,11 @@ VisionSensorIoRTC::~VisionSensorIoRTC()
 
 bool VisionSensorIoRTC::initializeIO(ControllerIO* io)
 {
-    useOldPointCloudIDL = false;
+    pointCloudPortType = 1;
     for(auto& option : io->options()){
-        if(option == "useOldPointCloudIDL"){
-            io->os() << "PointCloudTypes::PointCloud is used to output a depth image" << endl;
-            useOldPointCloudIDL = true;
+        if(option == "useNewPointCloudType"){
+            io->os() << "RTC::PointCloud is used to output a depth image" << endl;
+            pointCloudPortType = 2;
         } else {
             io->os() << "Unknow option: " << option << endl;
         }
@@ -182,7 +179,7 @@ bool VisionSensorIoRTC::initializeIO(ControllerIO* io)
     DeviceList<> devices = io->body()->devices();
     for(auto& device : devices){
         if(auto rangeCamera = dynamic_pointer_cast<RangeCamera>(device)){
-            deviceIoList.push_back(new RangeCameraIo(rangeCamera, useOldPointCloudIDL));
+            deviceIoList.push_back(new RangeCameraIo(rangeCamera, pointCloudPortType));
         } else if(auto camera = dynamic_pointer_cast<Camera>(device)){
             deviceIoList.push_back(new CameraIo(camera));
         } else if(auto rangeSensor = dynamic_pointer_cast<RangeSensor>(device)){
@@ -378,14 +375,15 @@ void CameraIo::clearSimulationDevice()
 }
 
 
-RangeCameraIo::RangeCameraIo(RangeCamera* rangeCamera, bool useOldPointCloudIDL)
+RangeCameraIo::RangeCameraIo(RangeCamera* rangeCamera, int pointCloudPortType)
     : CameraIo(rangeCamera),
       modelRangeCamera(rangeCamera),
       portName(rangeCamera->name() + "-depth"),
-      useOldPointCloudIDL(useOldPointCloudIDL),
+      pointCloudPortType(pointCloudPortType),
       pointCloud1Out(portName.c_str(), pointCloud1),
       pointCloud2Out(portName.c_str(), pointCloud2)
 {
+    
 }
 
 
@@ -393,9 +391,9 @@ void RangeCameraIo::setPorts(BodyIoRTC* rtc)
 {
     CameraIo::setPorts(rtc);
 
-    if(useOldPointCloudIDL){
+    if(pointCloudPortType == 1){
         rtc->addOutPort(portName.c_str(), pointCloud1Out);
-    } else {
+    } else if(pointCloudPortType == 2){
         rtc->addOutPort(portName.c_str(), pointCloud2Out);
     }
 }
@@ -411,9 +409,9 @@ bool RangeCameraIo::initializeSimulation(Body* body)
         return false;
     }
 
-    if(useOldPointCloudIDL){
+    if(pointCloudPortType == 1){
         initializePointCloud1OutPort();
-    } else {
+    } else if(pointCloudPortType == 2){
         initializePointCloud2OutPort();
     }
 
@@ -488,7 +486,11 @@ void RangeCameraIo::onStateChanged()
         if(rangeCamera->sharedPoints() != lastPoints){
             lastPoints = rangeCamera->sharedPoints();
             if(!lastPoints->empty()){
-                if(useOldPointCloudIDL){
+
+                if(pointCloudPortType == 2){
+                    threadPool.start([&](){ outputPointCloud2(); });
+
+                } else if(pointCloudPortType == 1){
                     if(!lastImage->empty()){
                         pointCloud1.height = lastImage->height();
                         pointCloud1.width = lastImage->width();
@@ -502,8 +504,6 @@ void RangeCameraIo::onStateChanged()
                         }
                     }
                     threadPool.start([&](){ outputPointCloud1(); });
-                } else {
-                    threadPool.start([&](){ outputPointCloud2(); });
                 }
             }
         }
