@@ -217,6 +217,7 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
+      selected: [ 10 ]
       checked: [ 1, 2, [ 8, "Kinect" ], [ 8, "VLP-16" ] ]
       expanded: [ 1, 2, 8, 10 ]
   - 
@@ -331,6 +332,12 @@ views:
     mounted: true
   - 
     id: 9
+    name: "Configuration"
+    plugin: OpenRTM
+    class: RTSConfigurationView
+    mounted: true
+  - 
+    id: 10
     name: "RTC Diagram"
     plugin: OpenRTM
     class: RTSDiagramView
@@ -338,7 +345,7 @@ views:
     state: 
       currentRTSItem: 12
   - 
-    id: 10
+    id: 11
     plugin: OpenRTM
     class: RTSNameServerView
     mounted: true
@@ -346,13 +353,13 @@ views:
       host: localhost
       port: 2809
   - 
-    id: 11
+    id: 12
     name: "RTC Properties"
     plugin: OpenRTM
     class: RTSPropertiesView
     mounted: true
   - 
-    id: 12
+    id: 13
     plugin: Python
     class: PythonConsoleView
     mounted: true
@@ -451,12 +458,12 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 459, 1920 ]
+      sizes: [ 369, 1545 ]
       children: 
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 766, 763 ]
+          sizes: [ 531, 529 ]
           children: 
             - 
               type: pane
@@ -464,30 +471,30 @@ viewAreas:
               current: 1
             - 
               type: pane
-              views: [ 0, 7, 10 ]
-              current: 10
+              views: [ 0, 7, 11 ]
+              current: 11
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 1116, 413 ]
+          sizes: [ 774, 286 ]
           children: 
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 820, 1094 ]
+              sizes: [ 770, 769 ]
               children: 
                 - 
                   type: splitter
                   orientation: vertical
-                  sizes: [ 541, 569 ]
+                  sizes: [ 374, 394 ]
                   children: 
                     - 
                       type: pane
-                      views: [ 5, 6, 9 ]
-                      current: 9
+                      views: [ 5, 6, 10 ]
+                      current: 10
                     - 
                       type: pane
-                      views: [ 11, 8 ]
+                      views: [ 12, 9, 8 ]
                       current: 8
                 - 
                   type: pane
@@ -496,11 +503,11 @@ viewAreas:
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 958, 956 ]
+              sizes: [ 770, 769 ]
               children: 
                 - 
                   type: pane
-                  views: [ 2, 12 ]
+                  views: [ 2, 13 ]
                   current: 2
                 - 
                   type: pane
