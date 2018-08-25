@@ -199,8 +199,14 @@ void CameraImageInput::read()
         case Img::CF_GRAY:
             image = createImageFromRawData(srcImage, 1);
             break;
+
+#ifndef USE_BUILTIN_CAMERA_IMAGE_IDL
         case Img::CF_JPEG:
         case Img::CF_PNG:
+#else
+        case Img::CF_GRAY_JPEG:
+        case Img::CF_RGB_JPEG:
+#endif
             image = createImageFromImageFormat(srcImage);
             break;
         default:
