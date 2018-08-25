@@ -8,9 +8,9 @@
 #define CNOID_OPENRTM_PLUGIN_SIMULATION_PERIODIC_EXECUTION_CONTEXT_H
 
 #include <rtm/RTC.h>
+#include <coil/Task.h>
 #include <rtm/Manager.h>
 #include <rtm/PeriodicExecutionContext.h>
-#include <coil/Task.h>
 
 #ifdef WIN32
 #pragma warning( disable : 4290 )
@@ -24,7 +24,7 @@ namespace cnoid {
 */
 #ifdef OPENRTM_VERSION11
 class SimulationPeriodicExecutionContext : public virtual RTC::PeriodicExecutionContext
-#else
+#elif defined(OPENRTM_VERSION12)
 class SimulationPeriodicExecutionContext : public virtual RTC_exp::PeriodicExecutionContext
 #endif
 {

@@ -17,7 +17,6 @@ using namespace cnoid;
 SimulationPeriodicExecutionContext::SimulationPeriodicExecutionContext()
     : PeriodicExecutionContext()
 {
-    DDEBUG("SimulationPeriodicExecutionContext::SimulationPeriodicExecutionContext");
 }
 
 
@@ -33,14 +32,18 @@ throw (CORBA::SystemException)
     DDEBUG("SimulationPeriodicExecutionContext::activate_component");
 
 #if defined(OPENRTM_VERSION11)
+
     CompItr it = std::find_if(m_comps.begin(), m_comps.end(), find_comp(comp));
     if (it == m_comps.end()) {
         return RTC::BAD_PARAMETER;
     }
+
     if (!(it->_sm.m_sm.isIn(RTC::INACTIVE_STATE))) {
         return RTC::PRECONDITION_NOT_MET;
     }
+
     it->_sm.m_sm.goTo(RTC::ACTIVE_STATE);
+
     it->_sm.worker();
 
     if (it->_sm.m_sm.isIn(RTC::ACTIVE_STATE)) {
@@ -75,27 +78,33 @@ throw (CORBA::SystemException)
 RTC::ReturnCode_t SimulationPeriodicExecutionContext::deactivate_component(RTC::LightweightRTObject_ptr comp)
 throw (CORBA::SystemException)
 {
+    DDEBUG("SimulationPeriodicExecutionContext::deactivate_component");
     RTC_TRACE(("deactivate_component()"));
 
 #if defined(OPENRTM_VERSION11)
 
     CompItr it = std::find_if(m_comps.begin(), m_comps.end(), find_comp(comp));
     if (it == m_comps.end()) {
+        DDEBUG("SimulationPeriodicExecutionContext::deactivate_component BAD_PARAMETER");
         return RTC::BAD_PARAMETER;
     }
     if (!(it->_sm.m_sm.isIn(RTC::ACTIVE_STATE))) {
+        DDEBUG("SimulationPeriodicExecutionContext::deactivate_component PRECONDITION_NOT_MET");
         return RTC::PRECONDITION_NOT_MET;
     }
 
     it->_sm.m_sm.goTo(RTC::INACTIVE_STATE);
+
     it->_sm.worker();
 
     if (it->_sm.m_sm.isIn(RTC::INACTIVE_STATE)) {
         RTC_TRACE(("The component has been properly deactivated."));
+        DDEBUG("SimulationPeriodicExecutionContext::deactivate_component RTC_OK");
         return RTC::RTC_OK;
     }
 
     RTC_ERROR(("The component could not be deactivated."));
+    DDEBUG("SimulationPeriodicExecutionContext::deactivate_component RTC_ERROR");
     return RTC::RTC_ERROR;
 
 #elif defined(OPENRTM_VERSION12)

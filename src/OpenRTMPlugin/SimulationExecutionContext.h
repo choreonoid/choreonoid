@@ -11,7 +11,7 @@
 
 #if defined(OPENRTM_VERSION11)
 #include <rtm/PeriodicExecutionContext.h>
-#else
+#elif defined(OPENRTM_VERSION12)
 #include <rtm/OpenHRPExecutionContext.h>
 #endif
 
@@ -27,7 +27,7 @@ namespace cnoid {
 */
 #ifdef OPENRTM_VERSION11
 class SimulationExecutionContext : public virtual RTC::PeriodicExecutionContext
-#else
+#elif defined(OPENRTM_VERSION12)
 class SimulationExecutionContext : public RTC::OpenHRPExecutionContext
 #endif
 {
