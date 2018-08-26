@@ -121,7 +121,7 @@ ControllerRTCItemImpl::ControllerRTCItemImpl(ControllerRTCItem* self)
 
     execContextType.setSymbol(SIMULATION_EXECUTION_CONTEXT,  N_("SimulationExecutionContext"));
 #if defined(OPENRTM_VERSION11)
-    execContextType.setSymbol(SIMULATION_PERIODIC_EXECUTION_CONTEXT,  N_("PeriodicExecutionContext"));
+    execContextType.setSymbol(SIMULATION_PERIODIC_EXECUTION_CONTEXT,  N_("SimulationPeriodicExecutionContext"));
 #elif defined(OPENRTM_VERSION12)
     execContextType.setSymbol(SIMULATION_PERIODIC_EXECUTION_CONTEXT, N_("SimulationPeriodicExecutionContext"));
 #endif
