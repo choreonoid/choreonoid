@@ -468,7 +468,7 @@ void RangeCameraIo::initializePointCloud1OutPort()
         pointCloud1.point_step = 16;
     }
     pointCloud1.is_bigendian = false;
-    pointCloud1.is_dense = true;
+    pointCloud1.is_dense = rangeCamera->isDense();
 }
 
 
