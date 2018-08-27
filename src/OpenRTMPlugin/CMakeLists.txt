@@ -2,6 +2,8 @@ if(NOT BUILD_OPENRTM_PLUGIN)
   return()
 endif()
 
+#set(CMAKE_BUILD_TYPE Debug)
+
 set(plugin CnoidOpenRTMPlugin)
 
 set(plugin_sources
