@@ -209,10 +209,8 @@ void RTCItem::doPutProperties(PutPropertyFunction& putProperty)
                 [&](const string& name) { setModuleName(name); return true; });
     putProperty(_("Base directory"), baseDirectoryType,
                 [&](int which) { setBaseDirectoryType(which); return true; });
-
     putProperty(_("Execution context"), periodicType,
-                [&](int which) { return periodicType.select(which); });
-    setPeriodicType(periodicType.selectedIndex());
+                [&](int which) { setPeriodicType(which); return true; });
     putProperty(_("Periodic rate"), periodicRate,
                 [&](int rate) { setPeriodicRate(rate); return true; });
     putProperty(_("Activation"), isActivationEnabled_, [&](bool on) { setActivationEnabled(on); return true; });
