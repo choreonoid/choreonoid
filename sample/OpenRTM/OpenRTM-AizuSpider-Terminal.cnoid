@@ -98,7 +98,7 @@ items:
         module: "${PROGRAM_TOP}/lib/choreonoid-1.7/rtc/JoystickRTC"
         baseDirectory: "RTC directory"
         periodicType: PeriodicExecutionContext
-        periodicRate: 1000
+        periodicRate: 30
         activation: true
 views: 
   - 
