@@ -45,7 +45,7 @@ items:
               plugin: Body
               class: SimpleControllerItem
               data: 
-                isNoDelayMode: true
+                isNoDelayMode: false
                 controllerOptions: ""
                 controller: "AizuSpiderController.so"
                 baseDirectory: "Controller directory"

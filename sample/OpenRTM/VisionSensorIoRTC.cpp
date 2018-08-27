@@ -11,6 +11,8 @@
 #include <rtm/DataOutPort.h>
 #include <rtm/idl/BasicDataTypeSkel.h>
 #include <rtm/idl/InterfaceDataTypes.hh>
+#include <cnoid/corba/PointCloud.hh>
+
 #ifdef WIN32
 #include <rtm/idl/CameraCommonInterface.hh>
 extern "C" {
@@ -21,12 +23,9 @@ extern "C" {
 #include <rtm/ext/CameraCommonInterface.hh>
 #include <jpeglib.h>
 #endif
-//#include <cnoid/corba/PointCloud.hh>
-
 
 using namespace std;
 using namespace cnoid;
-
 
 class DeviceIo : public Referenced
 {
@@ -50,9 +49,9 @@ class CameraIo : public DeviceIo
 public:
     CameraPtr modelCamera;
     CameraPtr camera;
+    std::shared_ptr<const Image> lastImage;
     Img::TimedCameraImage cameraImage;
     RTC::OutPort<Img::TimedCameraImage> cameraImageOut;
-    std::shared_ptr<const Image> lastImage;
     bool jpegCompression;
 
     CameraIo(Camera* camera);
@@ -67,19 +66,26 @@ public:
 class RangeCameraIo : public CameraIo
 {
     ThreadPool threadPool;
+
 public:
     RangeCameraPtr modelRangeCamera;
     RangeCameraPtr rangeCamera;
-    //PointCloudTypes::PointCloud pointCloud;
-    //RTC::OutPort<PointCloudTypes::PointCloud> pointCloudOut;
     std::shared_ptr<const RangeCamera::PointData> lastPoints;
-    std::shared_ptr<const Image> lastImage;
-
-    RangeCameraIo(RangeCamera* rangeCamera);
+    string portName;
+    int pointCloudPortType;
+    PointCloudTypes::PointCloud pointCloud1;
+    RTC::OutPort<PointCloudTypes::PointCloud> pointCloud1Out;
+    RTC::PointCloud pointCloud2;
+    RTC::OutPort<RTC::PointCloud> pointCloud2Out;
+    
+    RangeCameraIo(RangeCamera* rangeCamera, int portType);
     virtual void setPorts(BodyIoRTC* rtc) override;
     virtual bool initializeSimulation(Body* body) override;
+    void initializePointCloud1OutPort();
+    void initializePointCloud2OutPort();
     virtual void onStateChanged() override;
-    void outputRangeData();
+    void outputPointCloud1();
+    void outputPointCloud2();
     virtual void clearSimulationDevice() override;
 };    
 
@@ -108,6 +114,7 @@ class VisionSensorIoRTC : public BodyIoRTC
 public:
     BodyPtr ioBody;
     vector<DeviceIoPtr> deviceIoList;
+    int pointCloudPortType;
 
     VisionSensorIoRTC(RTC::Manager* manager);
     ~VisionSensorIoRTC();
@@ -158,13 +165,21 @@ VisionSensorIoRTC::~VisionSensorIoRTC()
 
 bool VisionSensorIoRTC::initializeIO(ControllerIO* io)
 {
+    pointCloudPortType = 1;
+    for(auto& option : io->options()){
+        if(option == "useNewPointCloudType"){
+            io->os() << "RTC::PointCloud is used to output a depth image" << endl;
+            pointCloudPortType = 2;
+        } else {
+            io->os() << "Unknow option: " << option << endl;
+        }
+    }
+            
     deviceIoList.clear();
-    
     DeviceList<> devices = io->body()->devices();
-
     for(auto& device : devices){
         if(auto rangeCamera = dynamic_pointer_cast<RangeCamera>(device)){
-            deviceIoList.push_back(new RangeCameraIo(rangeCamera));
+            deviceIoList.push_back(new RangeCameraIo(rangeCamera, pointCloudPortType));
         } else if(auto camera = dynamic_pointer_cast<Camera>(device)){
             deviceIoList.push_back(new CameraIo(camera));
         } else if(auto rangeSensor = dynamic_pointer_cast<RangeSensor>(device)){
@@ -360,19 +375,27 @@ void CameraIo::clearSimulationDevice()
 }
 
 
-RangeCameraIo::RangeCameraIo(RangeCamera* rangeCamera)
+RangeCameraIo::RangeCameraIo(RangeCamera* rangeCamera, int pointCloudPortType)
     : CameraIo(rangeCamera),
-      modelRangeCamera(rangeCamera)
-      //pointCloudOut(rangeCamera->name().c_str(), pointCloud)
+      modelRangeCamera(rangeCamera),
+      portName(rangeCamera->name() + "-depth"),
+      pointCloudPortType(pointCloudPortType),
+      pointCloud1Out(portName.c_str(), pointCloud1),
+      pointCloud2Out(portName.c_str(), pointCloud2)
 {
-
+    
 }
 
 
 void RangeCameraIo::setPorts(BodyIoRTC* rtc)
 {
     CameraIo::setPorts(rtc);
-    //rtc->addOutPort((modelRangeCamera->name() + "-depth").c_str(), pointCloudOut);
+
+    if(pointCloudPortType == 1){
+        rtc->addOutPort(portName.c_str(), pointCloud1Out);
+    } else if(pointCloudPortType == 2){
+        rtc->addOutPort(portName.c_str(), pointCloud2Out);
+    }
 }
 
 
@@ -386,7 +409,18 @@ bool RangeCameraIo::initializeSimulation(Body* body)
         return false;
     }
 
-    /*
+    if(pointCloudPortType == 1){
+        initializePointCloud1OutPort();
+    } else if(pointCloudPortType == 2){
+        initializePointCloud2OutPort();
+    }
+
+    return true;
+}
+
+
+void RangeCameraIo::initializePointCloud1OutPort()
+{
     string format;
     switch(rangeCamera->imageType()){
     case Camera::COLOR_IMAGE:
@@ -398,46 +432,49 @@ bool RangeCameraIo::initializeSimulation(Body* body)
         format = "xyz";
         break;
     }
-    pointCloud.type = CORBA::string_dup(format.c_str());
+    pointCloud1.type = CORBA::string_dup(format.c_str());
 
     if(format == "xyz"){
-        pointCloud.fields.length(3);
+        pointCloud1.fields.length(3);
     } else if (format == "xyzrgb"){
-        pointCloud.fields.length(6);
+        pointCloud1.fields.length(6);
     }
-    pointCloud.fields[0].name = "x";
-    pointCloud.fields[0].offset = 0;
-    pointCloud.fields[0].data_type = PointCloudTypes::FLOAT32;
-    pointCloud.fields[0].count = 4;
-    pointCloud.fields[1].name = "y";
-    pointCloud.fields[1].offset = 4;
-    pointCloud.fields[1].data_type = PointCloudTypes::FLOAT32;
-    pointCloud.fields[1].count = 4;
-    pointCloud.fields[2].name = "z";
-    pointCloud.fields[2].offset = 8;
-    pointCloud.fields[2].data_type = PointCloudTypes::FLOAT32;
-    pointCloud.fields[2].count = 4;
-    pointCloud.point_step = 12;
+    pointCloud1.fields[0].name = "x";
+    pointCloud1.fields[0].offset = 0;
+    pointCloud1.fields[0].data_type = PointCloudTypes::FLOAT32;
+    pointCloud1.fields[0].count = 4;
+    pointCloud1.fields[1].name = "y";
+    pointCloud1.fields[1].offset = 4;
+    pointCloud1.fields[1].data_type = PointCloudTypes::FLOAT32;
+    pointCloud1.fields[1].count = 4;
+    pointCloud1.fields[2].name = "z";
+    pointCloud1.fields[2].offset = 8;
+    pointCloud1.fields[2].data_type = PointCloudTypes::FLOAT32;
+    pointCloud1.fields[2].count = 4;
+    pointCloud1.point_step = 12;
     if (format == "xyzrgb"){
-        pointCloud.fields[3].name = "r";
-        pointCloud.fields[3].offset = 12;
-        pointCloud.fields[3].data_type = PointCloudTypes::UINT8;
-        pointCloud.fields[3].count = 1;
-        pointCloud.fields[4].name = "g";
-        pointCloud.fields[4].offset = 13;
-        pointCloud.fields[4].data_type = PointCloudTypes::UINT8;
-        pointCloud.fields[4].count = 1;
-        pointCloud.fields[5].name = "b";
-        pointCloud.fields[5].offset = 14;
-        pointCloud.fields[5].data_type = PointCloudTypes::UINT8;
-        pointCloud.fields[5].count = 1;
-        pointCloud.point_step = 16;
+        pointCloud1.fields[3].name = "r";
+        pointCloud1.fields[3].offset = 12;
+        pointCloud1.fields[3].data_type = PointCloudTypes::UINT8;
+        pointCloud1.fields[3].count = 1;
+        pointCloud1.fields[4].name = "g";
+        pointCloud1.fields[4].offset = 13;
+        pointCloud1.fields[4].data_type = PointCloudTypes::UINT8;
+        pointCloud1.fields[4].count = 1;
+        pointCloud1.fields[5].name = "b";
+        pointCloud1.fields[5].offset = 14;
+        pointCloud1.fields[5].data_type = PointCloudTypes::UINT8;
+        pointCloud1.fields[5].count = 1;
+        pointCloud1.point_step = 16;
     }
-    pointCloud.is_bigendian = false;
-    pointCloud.is_dense = true;
-    */
+    pointCloud1.is_bigendian = false;
+    pointCloud1.is_dense = rangeCamera->isDense();
+}
+
+
+void RangeCameraIo::initializePointCloud2OutPort()
+{
     
-    return true;
 }
 
 
@@ -448,42 +485,46 @@ void RangeCameraIo::onStateChanged()
     if(!threadPool.isRunning()){
         if(rangeCamera->sharedPoints() != lastPoints){
             lastPoints = rangeCamera->sharedPoints();
-            lastImage = rangeCamera->sharedImage();
             if(!lastPoints->empty()){
-                if(!lastImage->empty()){
-                    //pointCloud.height = lastImage->height();
-                    //pointCloud.width = lastImage->width();
-                } else {
-                    if(rangeCamera->isOrganized()){
-                        //pointCloud.height = rangeCamera->resolutionY();
-                        //pointCloud.width = rangeCamera->resolutionX();
+
+                if(pointCloudPortType == 2){
+                    threadPool.start([&](){ outputPointCloud2(); });
+
+                } else if(pointCloudPortType == 1){
+                    if(!lastImage->empty()){
+                        pointCloud1.height = lastImage->height();
+                        pointCloud1.width = lastImage->width();
                     } else {
-                        //pointCloud.height = 1;
-                        //pointCloud.width = rangeCamera->numPoints();
+                        if(rangeCamera->isOrganized()){
+                            pointCloud1.height = rangeCamera->resolutionY();
+                            pointCloud1.width = rangeCamera->resolutionX();
+                        } else {
+                            pointCloud1.height = 1;
+                            pointCloud1.width = rangeCamera->numPoints();
+                        }
                     }
+                    threadPool.start([&](){ outputPointCloud1(); });
                 }
-                threadPool.start([&](){ outputRangeData(); });
             }
         }
     }
 }
 
 
-void RangeCameraIo::outputRangeData()
+void RangeCameraIo::outputPointCloud1()
 {
     const vector<Vector3f>& points = *lastPoints;
     const Image& image = *lastImage;
 
-    /*
-    pointCloud.row_step = pointCloud.point_step * pointCloud.width;
-    size_t length = points.size() * pointCloud.point_step;
-    pointCloud.data.length(length);
-    unsigned char* dis = (unsigned char*)pointCloud.data.get_buffer();
+    pointCloud1.row_step = pointCloud1.point_step * pointCloud1.width;
+    size_t length = points.size() * pointCloud1.point_step;
+    pointCloud1.data.length(length);
+    unsigned char* dis = (unsigned char*)pointCloud1.data.get_buffer();
     const unsigned char* pixels = 0;
     if(!image.empty()){
         pixels = image.pixels();
     }
-    for(size_t i=0; i < points.size(); i++, dis += pointCloud.point_step){
+    for(size_t i=0; i < points.size(); i++, dis += pointCloud1.point_step){
         memcpy(&dis[0], &points[i].x(), 4);
         memcpy(&dis[4], &points[i].y(), 4);
         memcpy(&dis[8], &points[i].z(), 4);
@@ -495,8 +536,40 @@ void RangeCameraIo::outputRangeData()
         }
     }
 
-    pointCloudOut.write();
-    */
+    pointCloud1Out.write();
+}
+
+
+void RangeCameraIo::outputPointCloud2()
+{
+    const vector<Vector3f>& points = *lastPoints;
+    const Image& image = *lastImage;
+    const unsigned char* pixels = nullptr;
+    if(!image.empty()){
+        pixels = image.pixels();
+    }
+    pointCloud2.points.length(points.size());
+
+    for(size_t i=0; i < points.size(); ++i){
+        const Vector3f& point = points[i];
+        RTC::PointCloudPoint& pcPoint = pointCloud2.points[i];
+        RTC::Point3D& p = pcPoint.point;
+        p.x = point.x();
+        p.y = point.y();
+        p.z = point.z();
+        RTC::RGBColour& c = pcPoint.colour;
+        if(pixels){
+            c.r = *pixels++;
+            c.g = *pixels++;
+            c.b = *pixels++;
+        } else {
+            c.r = 1.0;
+            c.g = 1.0;
+            c.b = 1.0;
+        }
+    }
+
+    pointCloud2Out.write();
 }
 
 

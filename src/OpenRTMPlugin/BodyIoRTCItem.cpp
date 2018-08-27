@@ -97,6 +97,13 @@ void BodyIoRTCItem::onPositionChanged()
 }
 
 
+void BodyIoRTCItem::onOptionsChanged()
+{
+    // Recreate RTC with new options
+    impl->createBodyIoRTC();
+}
+
+
 void BodyIoRTCItemImpl::setBodyItem(BodyItem* newBodyItem, bool forceReset)
 {
     if(newBodyItem != bodyItem || forceReset){

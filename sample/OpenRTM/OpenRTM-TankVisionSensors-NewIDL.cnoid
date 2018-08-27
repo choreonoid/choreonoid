@@ -22,11 +22,11 @@ items:
           data: 
             modelFile: "${SHARE}/model/Tank/Tank.body"
             currentBaseLink: ""
-            rootPosition: [ -2, -0.5, 0.1 ]
+            rootPosition: [ -2, -0.499999997, 0.1059 ]
             rootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
+              1, 2.80052647e-09, -8.56766596e-10, 
+              -2.80052647e-09, 1, -5.40907594e-10, 
+              8.56766595e-10, 5.40907597e-10, 1 ]
             jointPositions: [  0.000000,  0.000000 ]
             initialRootPosition: [ -2, -0.5, 0.1 ]
             initialRootAttitude: [ 
@@ -41,11 +41,11 @@ items:
           children: 
             - 
               id: 3
-              name: "BodyIo"
+              name: "TankIO"
               plugin: OpenRTM
               class: BodyIoRTCItem
               data: 
-                isNoDelayMode: true
+                isNoDelayMode: false
                 controllerOptions: ""
                 module: "TankIoRTC"
                 baseDirectory: "RTC directory"
@@ -53,26 +53,23 @@ items:
                 periodicRate: 0
             - 
               id: 4
-              name: "VisionSensorOut"
+              name: "VisionSensorIO"
               plugin: OpenRTM
-              class: BodyRTCItem
+              class: BodyIoRTCItem
               data: 
-                isNoDelayMode: true
-                controllerOptions: ""
-                moduleName: ""
-                confFileName: "TankVisionSensorOut.conf"
-                configurationMode: "Use Configuration File"
-                AutoConnect: false
-                InstanceName: "VisionSensorOut"
-                bodyPeriodicRate: 0
+                isNoDelayMode: false
+                controllerOptions: "useNewPointCloudType"
+                module: "VisionSensorIoRTC"
                 baseDirectory: "RTC directory"
+                instanceName: ""
+                periodicRate: 0
             - 
               id: 5
               name: "TankJoystickController"
               plugin: OpenRTM
               class: ControllerRTCItem
               data: 
-                isNoDelayMode: true
+                isNoDelayMode: false
                 controllerOptions: ""
                 module: "TankJoystickControllerRTC"
                 baseDirectory: "RTC directory"
@@ -81,11 +78,19 @@ items:
                 periodicRate: 0
             - 
               id: 6
+              name: "Tank-VisionSensorSubscripter"
+              plugin: OpenRTM
+              class: VisionSensorSubscriberRTCItem
+              data: 
+                periodicRate: 30
+                pointCloudPortType: "RTC::PointCloud"
+            - 
+              id: 7
               name: "Joystick"
               plugin: OpenRTM
               class: ControllerRTCItem
               data: 
-                isNoDelayMode: true
+                isNoDelayMode: false
                 controllerOptions: ""
                 module: "JoystickRTC"
                 baseDirectory: "RTC directory"
@@ -93,24 +98,7 @@ items:
                 executionContext: "PeriodicExecutionContext"
                 periodicRate: 30
             - 
-              id: 7
-              name: "PointCloudSubscriber"
-              plugin: OpenRTM
-              class: PointCloudSubscriberRTCItem
-              data: 
-                componentName: PointCloudSubscriber
-                pointCloudPortNames: [ Kinect ]
-            - 
               id: 8
-              name: "VisionSensorSubscriber"
-              plugin: OpenRTM
-              class: VisionSensorSubscriberRTCItem
-              data: 
-                componentName: VisionSensorSubscriber
-                rangeSensorPortNames: [ VLP-16 ]
-                cameraPortNames: [ Kinect, Theta ]
-            - 
-              id: 9
               name: "SensorVisualizer"
               plugin: Body
               class: SensorVisualizer
@@ -137,7 +125,7 @@ items:
                     class: CameraImageVisualizer
                     name: Theta
         - 
-          id: 10
+          id: 9
           name: "Labo1"
           plugin: Body
           class: BodyItem
@@ -149,7 +137,7 @@ items:
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            jointPositions: [ -0.000000 ]
+            jointPositions: [  0.000000 ]
             initialRootPosition: [ 0, 0, 0 ]
             initialRootAttitude: [ 
               1, 0, 0, 
@@ -160,7 +148,7 @@ items:
             selfCollisionDetection: false
             isEditable: false
         - 
-          id: 11
+          id: 10
           name: "AISTSimulator"
           plugin: Body
           class: AISTSimulatorItem
@@ -190,7 +178,7 @@ items:
             oldAccelSensorMode: false
           children: 
             - 
-              id: 12
+              id: 11
               name: "GLVisionSimulator"
               plugin: Body
               class: GLVisionSimulatorItem
@@ -206,18 +194,17 @@ items:
                 depthError: 0
                 enableHeadLight: true
                 enableAdditionalLights: true
-                rotateOutputDirection: false
-                enableInterpolation: false
-    - 
-      id: 13
-      name: "TankVisionSystem"
-      plugin: OpenRTM
-      class: RTSystemItem
-      data: 
-        filename: "${PROJECT_DIR}/OldTankVisionSystem.xml"
-        format: RTS-PROFILE-XML
-        AutoConnection: true
-        PollingCycle: 500
+                antiAliasing: false
+        - 
+          id: 12
+          name: "TankVisionSystem-NewIDL"
+          plugin: OpenRTM
+          class: RTSystemItem
+          data: 
+            filename: "${PROJECT_DIR}/TankVisionSystem-NewIDL.xml"
+            format: RTS-PROFILE-XML
+            AutoConnection: true
+            PollingCycle: 500
 views: 
   - 
     id: 0
@@ -230,9 +217,9 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      selected: [ 1 ]
-      checked: [ 1, 2, [ 9, "Kinect" ], [ 9, "VLP-16" ] ]
-      expanded: [ 1, 2, 5, 9, 11 ]
+      selected: [ 10 ]
+      checked: [ 1, 2, [ 8, "Kinect" ], [ 8, "VLP-16" ] ]
+      expanded: [ 1, 2, 8, 10 ]
   - 
     id: 2
     plugin: Base
@@ -299,20 +286,20 @@ views:
       yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       dedicatedItemTreeViewChecks: false
   - 
-    id: 5
+    id: 4
     name: "Virtual Joystick"
     plugin: Base
     class: VirtualJoystickView
     mounted: true
   - 
-    id: 6
+    id: 5
     plugin: Body
     class: BodyLinkView
     mounted: true
     state: 
       showRotationMatrix: false
   - 
-    id: 7
+    id: 6
     plugin: Body
     class: JointSliderView
     mounted: true
@@ -326,7 +313,7 @@ views:
       labelOnLeft: true
       currentBodyItem: 2
   - 
-    id: 8
+    id: 7
     plugin: Body
     class: LinkSelectionView
     mounted: true
@@ -338,10 +325,16 @@ views:
           id: 2
           selectedLinks: [ 0 ]
   - 
-    id: 9
-    name: "RTM-Image"
+    id: 8
+    name: "CameraImageView"
     plugin: OpenRTM
     class: RTMImageView
+    mounted: true
+  - 
+    id: 9
+    name: "Configuration"
+    plugin: OpenRTM
+    class: RTSConfigurationView
     mounted: true
   - 
     id: 10
@@ -350,7 +343,7 @@ views:
     class: RTSDiagramView
     mounted: true
     state: 
-      currentRTSItem: 13
+      currentRTSItem: 12
   - 
     id: 11
     plugin: OpenRTM
@@ -437,7 +430,7 @@ Body:
         showPpcom: false
         showZmp: false
       - 
-        bodyItem: 10
+        bodyItem: 9
         showCenterOfMass: false
         showPpcom: false
         showZmp: false
@@ -465,12 +458,12 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 373, 1541 ]
+      sizes: [ 369, 1545 ]
       children: 
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 530, 530 ]
+          sizes: [ 531, 529 ]
           children: 
             - 
               type: pane
@@ -478,31 +471,31 @@ viewAreas:
               current: 1
             - 
               type: pane
-              views: [ 0, 8, 11 ]
+              views: [ 0, 7, 11 ]
               current: 11
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 855, 205 ]
+          sizes: [ 774, 286 ]
           children: 
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 657, 878 ]
+              sizes: [ 770, 769 ]
               children: 
                 - 
                   type: splitter
                   orientation: vertical
-                  sizes: [ 414, 435 ]
+                  sizes: [ 374, 394 ]
                   children: 
                     - 
                       type: pane
-                      views: [ 6, 7, 10 ]
+                      views: [ 5, 6, 10 ]
                       current: 10
                     - 
                       type: pane
-                      views: [ 12, 9 ]
-                      current: 9
+                      views: [ 12, 9, 8 ]
+                      current: 8
                 - 
                   type: pane
                   views: [ 3 ]
@@ -510,7 +503,7 @@ viewAreas:
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 768, 767 ]
+              sizes: [ 770, 769 ]
               children: 
                 - 
                   type: pane
@@ -518,8 +511,8 @@ viewAreas:
                   current: 2
                 - 
                   type: pane
-                  views: [ 5 ]
-                  current: 5
+                  views: [ 4 ]
+                  current: 4
 layoutOfToolBars: 
   rows: 
     - 

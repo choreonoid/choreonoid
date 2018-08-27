@@ -6,7 +6,7 @@
 #include "VirtualRobotPortHandler.h"
 #include "BodyRTCItem.h"
 
-#include <deprecated/corba/PointCloud.hh>
+#include <cnoid/corba/PointCloud.hh>
 
 #ifdef USE_BUILTIN_CAMERA_IMAGE_IDL
 # include <deprecated/corba/CameraImage.hh>
@@ -691,6 +691,7 @@ void CameraRangeOutPortHandlerImpl::initialize(Body* simBody)
             value.fields[5].count = 1;
             value.point_step = 16;
         }
+        // Originally is_bigendian has to be decided by CPU difference.
         value.is_bigendian = false;
         value.is_dense = true;
         
