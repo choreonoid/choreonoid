@@ -156,7 +156,7 @@ private:
     void setRtc(RTC::RTObject_ptr rtc);
     bool connectionCheck();
     bool connectionCheckSub(RTSPort* rtsPort);
-    std::string getComponentPath(RTC::PortService_ptr source);
+    bool getComponentPath(RTC::PortService_ptr source, std::string& out_path);
 
     friend class RTSystemItemImpl;
 };
