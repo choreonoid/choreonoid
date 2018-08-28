@@ -28,7 +28,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 namespace filesystem = boost::filesystem;
 using boost::format;
@@ -57,12 +56,13 @@ public:
     void saveProject(const string& filename);
     void overwriteCurrentProject();
         
-    void onSigOptionsParsed(boost::program_options::variables_map& v);
+    void onProjectOptionsParsed(boost::program_options::variables_map& v);
+    void onInputFileOptionsParsed(std::vector<std::string>& inputFiles);
     void openDialogToLoadProject();
     void openDialogToSaveProject();
 
-    void onPerspectiveCheckToggled();
-    void onHomeRelativeCheckToggled();
+    void onPerspectiveCheckToggled(bool on);
+    void onHomeRelativeCheckToggled(bool on);
         
     void connectArchiver(
         const std::string& name,
@@ -121,29 +121,31 @@ ProjectManagerImpl::ProjectManagerImpl(ProjectManager* self, ExtensionManager* e
     mm.setPath("/File");
 
     mm.addItem(_("Open Project"))
-        ->sigTriggered().connect(std::bind(&ProjectManagerImpl::openDialogToLoadProject, this));
+        ->sigTriggered().connect([&](){ openDialogToLoadProject(); });
     mm.addItem(_("Save Project"))
-        ->sigTriggered().connect(std::bind(&ProjectManagerImpl::overwriteCurrentProject, this));
+        ->sigTriggered().connect([&](){ overwriteCurrentProject(); });
     mm.addItem(_("Save Project As"))
-        ->sigTriggered().connect(std::bind(&ProjectManagerImpl::openDialogToSaveProject, this));
+        ->sigTriggered().connect([&](){ openDialogToSaveProject(); });
 
     mm.setPath(N_("Project File Options"));
 
     perspectiveCheck = mm.addCheckItem(_("Perspective"));
     perspectiveCheck->setChecked(config->get("storePerspective", true));
-    perspectiveCheck->sigToggled().connect(std::bind(&ProjectManagerImpl::onPerspectiveCheckToggled, this));
+    perspectiveCheck->sigToggled().connect([&](bool on){ onPerspectiveCheckToggled(on); });
 
     homeRelativeCheck = mm.addCheckItem(_("Use HOME relative directories"));
     homeRelativeCheck->setChecked(config->get("useHomeRelative", false));
-    homeRelativeCheck->sigToggled().connect(std::bind(&ProjectManagerImpl::onHomeRelativeCheckToggled, this));
+    homeRelativeCheck->sigToggled().connect([&](bool on){ onHomeRelativeCheckToggled(on); });
 
     mm.setPath("/File");
     mm.addSeparator();
 
     OptionManager& om = em->optionManager();
-    om.addOption("project", boost::program_options::value< vector<string> >(), "load a project file");
-    om.addPositionalOption("project", -1);
-    om.sigOptionsParsed().connect(std::bind(&ProjectManagerImpl::onSigOptionsParsed, this, _1));
+    om.addOption("project", boost::program_options::value<vector<string>>(), "load a project file");
+    om.sigInputFileOptionsParsed().connect(
+        [&](std::vector<std::string>& inputFiles){ onInputFileOptionsParsed(inputFiles); });
+    om.sigOptionsParsed().connect(
+        [&](boost::program_options::variables_map& v){ onProjectOptionsParsed(v); });
 
     isLoadingProject = false;
     mainWindow = MainWindow::instance();
@@ -497,12 +499,26 @@ void ProjectManagerImpl::overwriteCurrentProject()
 }
 
     
-void ProjectManagerImpl::onSigOptionsParsed(boost::program_options::variables_map& v)
+void ProjectManagerImpl::onProjectOptionsParsed(boost::program_options::variables_map& v)
 {
     if(v.count("project")){
-        vector<string> projectFileNames = v["project"].as< vector<string> >();
+        vector<string> projectFileNames = v["project"].as<vector<string>>();
         for(size_t i=0; i < projectFileNames.size(); ++i){
             loadProject(toActualPathName(projectFileNames[i]), nullptr, true);
+        }
+    }
+}
+
+
+void ProjectManagerImpl::onInputFileOptionsParsed(std::vector<std::string>& inputFiles)
+{
+    auto iter = inputFiles.begin();
+    while(iter != inputFiles.end()){
+        if(getExtension(*iter) == "cnoid"){
+            loadProject(toActualPathName(*iter), nullptr, true);
+            iter = inputFiles.erase(iter);
+        } else {
+            ++iter;
         }
     }
 }
@@ -566,14 +582,14 @@ void ProjectManagerImpl::openDialogToSaveProject()
 }
 
 
-void ProjectManagerImpl::onPerspectiveCheckToggled()
+void ProjectManagerImpl::onPerspectiveCheckToggled(bool on)
 {
     AppConfig::archive()->openMapping("ProjectManager")
         ->write("storePerspective", perspectiveCheck->isChecked());
 }
 
 
-void ProjectManagerImpl::onHomeRelativeCheckToggled()
+void ProjectManagerImpl::onHomeRelativeCheckToggled(bool on)
 {
     AppConfig::archive()->openMapping("ProjectManager")
         ->write("useHomeRelative", homeRelativeCheck->isChecked());
