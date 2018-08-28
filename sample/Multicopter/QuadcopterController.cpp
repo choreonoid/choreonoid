@@ -136,10 +136,8 @@ Vector4 QuadcopterController::getZRPY()
 
 Vector2 QuadcopterController::getXY()
 {
-    auto T = ioBody->rootLink()->position();
-    double x = T.translation().x();
-    double y = T.translation().y();
-    return Vector2(y, x);
+    auto p = ioBody->rootLink()->translation();
+    return Vector2(p.x(), p.y());
 }
 
 
@@ -149,7 +147,6 @@ bool QuadcopterController::control()
 
     //control rotors
     Vector4 zrpy = getZRPY();
-    Vector2 xy = getXY();
     double cc = cos(zrpy[1]) * cos(zrpy[2]);
     double gfcoef = 1.0 * 9.80665 / 4 / cc ;
     Vector4 force = Vector4::Zero();
@@ -173,53 +170,59 @@ bool QuadcopterController::control()
 
     if(rotorswitch) {
         Vector4 f;
-        for(int i = 0; i < 4; ++i) {
-            double dzrpy = (zrpy[i] - zrpyprev[i]) / timeStep;
-            if(fabs(dzrpy) > (M_PI / timeStep)) {
-                dzrpy = 0.0;
-            }
-            double ddzrpy = (dzrpy - dzrpyprev[i]) / timeStep;
-            double pos = joystick->getPosition(targetMode, rotorAxis[i]);
 
-            if((i == 0) || (i == 3)) {
+        Vector4 dzrpy = (zrpy - zrpyprev) / timeStep;
+        Vector4 ddzrpy = (dzrpy - dzrpyprev) / timeStep;
+
+        // For the stable mode
+        Vector2 xy = getXY();
+        Vector2 dxy = (xy - xyprev) / timeStep;
+        Vector2 ddxy = (dxy - dxyprev) / timeStep;
+        Vector2 dxy_local = Eigen::Rotation2Dd(-zrpy[3]) * dxy;
+        Vector2 ddxy_local = Eigen::Rotation2Dd(-zrpy[3]) * ddxy;
+
+        for(int axis = 0; axis < 4; ++axis) {
+            double pos = joystick->getPosition(targetMode, rotorAxis[axis]);
+
+            if((axis == 0) || (axis == 3)) {
                 if(fabs(pos) > 0.25) {
-                    dzrpyref[i] = RATE[i] * pos;
+                    dzrpyref[axis] = RATE[axis] * pos;
                 } else {
-                    dzrpyref[i] = 0.0;
+                    dzrpyref[axis] = 0.0;
                 }
-                f[i] = KP[i] * (dzrpyref[i] - dzrpy) + KD[i] * (0.0 - ddzrpy);
-
+                f[axis] = KP[axis] * (dzrpyref[axis] - dzrpy[axis]) + KD[axis] * (0.0 - ddzrpy[axis]);
             } else {
-
-                if(isStableMode){
+                if(!isStableMode){
                     if(fabs(pos) > 0.25) {
-                        dxyref[i - 1] = RATEX[i - 1] * pos;
+                        zrpyref[axis] = RATE[axis] * pos;
                     } else {
-                        dxyref[i - 1] = 0.0;
+                        zrpyref[axis] = 0.0;
                     }
-
-                    double dxy = (xy[i - 1] - xyprev[i - 1]) /timeStep;
-                    double ddxy = (dxy - dxyprev[i - 1]) /timeStep;
-                    
-                    zrpyref[i] = KPX[i - 1] * (dxyref[i - 1] - dxy) + KDX[i - 1] * (0.0 - ddxy);
-                    if(i == 1) {
-                        zrpyref[i] *= -1.0;
-                    }
-                    xyprev[i - 1] = xy[i - 1];
-                    dxyprev[i - 1] = dxy;
-
-                } else {                    
+                } else {
+                    int axis_xy = axis - 1;
                     if(fabs(pos) > 0.25) {
-                        zrpyref[i] = RATE[i] * pos;
+                        dxyref[axis_xy] = RATEX[axis_xy] * pos;
                     } else {
-                        zrpyref[i] = 0.0;
+                        dxyref[axis_xy] = 0.0;
+                    }
+                    zrpyref[axis] =
+                        KPX[axis_xy] * (dxyref[axis_xy] - dxy_local[1 - axis_xy]) +
+                        KDX[axis_xy] * (0.0 - ddxy_local[1 - axis_xy]);
+
+                    if(axis == 1) {
+                        zrpyref[axis] *= -1.0;
                     }
                 }
-                f[i] = KP[i] * (zrpyref[i] - zrpy[i]) + KD[i] * (0.0 - dzrpy);
+                f[axis] = KP[axis] * (zrpyref[axis] - zrpy[axis]) + KD[axis] * (0.0 - dzrpy[axis]);
             }
-            zrpyprev[i] = zrpy[i];
-            dzrpyprev[i] = dzrpy;
         }
+        zrpyprev = zrpy;
+        dzrpyprev = dzrpy;
+
+        // For the stable mode
+        xyprev = xy;
+        dxyprev = dxy;
+        
         for(int i = 0; i < 4; ++i) {
             double fi = 0.0;
             fi += gfcoef;
