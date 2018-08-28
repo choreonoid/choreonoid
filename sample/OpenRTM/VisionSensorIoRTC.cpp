@@ -340,6 +340,9 @@ void CameraIo::outputImage()
         void* dis = (void*)cameraImage.data.image.raw_data.get_buffer();
         memcpy(dis, outbuffer, writtenSize);
 
+        free(row_pointers);
+        free(outbuffer);
+
     }else{
 
         switch(camera->imageType()){
