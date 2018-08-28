@@ -74,12 +74,13 @@ list(APPEND project_files OpenRTM-Tank.cnoid)
 if(NOT USE_BUILTIN_CAMERA_IMAGE_IDL)
   add_cnoid_body_io_rtc(VisionSensorIoRTC VisionSensorIoRTC.cpp)
   target_link_libraries(VisionSensorIoRTC ${OPENRTM_CAMERA_LIBRARY})
-  list(APPEND project_files OpenRTM-TankVisionSensors.cnoid TankVisionSystem.xml)
+  list(APPEND project_files
+    OpenRTM-TankVisionSensors.cnoid
+    TankVisionSystem.xml
+    OpenRTM-TankVisionSensors-NewIDL.cnoid
+    TankVisionSystem-NewIDL.xml
+    )
 endif()
-
-file(COPY TankVisionSensorOut.conf DESTINATION ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}/rtc)
-install(FILES TankVisionSensorOut.conf DESTINATION ${CNOID_PLUGIN_SUBDIR}/rtc)
-list(APPEND project_files OpenRTM-TankVisionSensors-OldIDL.cnoid OldTankVisionSystem.xml)
 
 # Teleoperation samples
 list(APPEND project_files

@@ -25,6 +25,14 @@ public:
 
     void setPeriodicRate(int rate);
 
+    enum PointCloudPortType {
+        POINT_CLOUD_TYPES_POINT_CLOUD_TYPE,
+        RTC_POINT_CLOUD_TYPE,
+        N_POINT_CLOUD_PORT_TYPES
+    };
+    
+    void setPointCloudPortType(int type);
+
     virtual void onDisconnectedFromRoot();
     virtual void onPositionChanged();
     virtual Item* doDuplicate() const;
