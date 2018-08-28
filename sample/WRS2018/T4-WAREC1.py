@@ -1,2 +1,3 @@
 import WRSUtil
-WRSUtil.loadProject("SingleSceneView", "T4", [ "AGXSimulator", "AISTSimulator" ], "WAREC1")
+WRSUtil.loadProject(
+    "MultiSceneViews", "T4", [ "AGXSimulator", "AISTSimulator" ], "WAREC1")
