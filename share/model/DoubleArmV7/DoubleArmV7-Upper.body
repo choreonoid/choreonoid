@@ -155,7 +155,7 @@ links:
             beamWidth: 50
             cutOffAngle: 60
             cutOffExponent: 6
-            attenuation: [ 0, 0, 0 ]
+            attenuation: [ 1, 0, 0 ]
             intensity: 1.0
   -
     name: BOOM
