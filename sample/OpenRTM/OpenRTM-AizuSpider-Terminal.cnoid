@@ -6,92 +6,19 @@ items:
   children: 
     - 
       id: 1
-      name: "RTSystem"
+      name: "AizuSpider-RTSystem"
       plugin: OpenRTM
       class: RTSystemItem
       data: 
+        filename: "/home/nakaoka/choreonoid-second/build/../sample/OpenRTM/AizuSpider-RTSystem.xml"
+        format: RTS-PROFILE-XML
         AutoConnection: true
-        RTSComps: 
-          - 
-            name: AizuSpider-VisionSensorIoRTC
-            pos: [ -67, 98 ]
-            OutPorts: 
-              - 
-                name: AizuSpider-VisionSensorIoRTC.ARM_CAMERA
-                isServicePort: false
-              - 
-                name: AizuSpider-VisionSensorIoRTC.BACK_CAMERA
-                isServicePort: false
-              - 
-                name: AizuSpider-VisionSensorIoRTC.FRONT_CAMERA
-                isServicePort: false
-              - 
-                name: AizuSpider-VisionSensorIoRTC.LEFT_CAMERA
-                isServicePort: false
-              - 
-                name: AizuSpider-VisionSensorIoRTC.LRF
-                isServicePort: false
-              - 
-                name: AizuSpider-VisionSensorIoRTC.RIGHT_CAMERA
-                isServicePort: false
-          - 
-            name: AizuSpider-JoystickInput
-            pos: [ 174, 13 ]
-            InPorts: 
-              - 
-                name: AizuSpider-JoystickInput.axes
-                isServicePort: false
-              - 
-                name: AizuSpider-JoystickInput.buttons
-                isServicePort: false
-          - 
-            name: CameraImage
-            pos: [ 354, 125 ]
-            InPorts: 
-              - 
-                name: CameraImage.cameraImage
-                isServicePort: false
-          - 
-            name: JoystickRTC0
-            pos: [ -71, 11 ]
-            OutPorts: 
-              - 
-                name: JoystickRTC0.axes
-                isServicePort: false
-              - 
-                name: JoystickRTC0.buttons
-                isServicePort: false
-        RTSConnections: 
-          - 
-            name: JoystickRTC0.axes_AizuSpider-JoystickInput.axes
-            sourceRtcName: JoystickRTC0
-            sourcePortName: JoystickRTC0.axes
-            targetRtcName: AizuSpider-JoystickInput
-            targetPortName: AizuSpider-JoystickInput.axes
-            dataflow: push
-            subscription: flush
-            position: [ 13, 30, 18, 30, 123.5, 30, 123.5, 32, 229, 32, 234, 32 ]
-          - 
-            name: JoystickRTC0.buttons_AizuSpider-JoystickInput.buttons
-            sourceRtcName: JoystickRTC0
-            sourcePortName: JoystickRTC0.buttons
-            targetRtcName: AizuSpider-JoystickInput
-            targetPortName: AizuSpider-JoystickInput.buttons
-            dataflow: push
-            subscription: flush
-            position: [ 13, 48, 18, 48, 123.5, 48, 123.5, 50, 229, 50, 234, 50 ]
-          - 
-            name: AizuSpider-VisionSensorIoRTC.FRONT_CAMERA_CameraImage.cameraImage
-            sourceRtcName: AizuSpider-VisionSensorIoRTC
-            sourcePortName: AizuSpider-VisionSensorIoRTC.FRONT_CAMERA
-            targetRtcName: CameraImage
-            targetPortName: CameraImage.cameraImage
-            dataflow: push
-            subscription: flush
-            position: [ 74, 153, 79, 153, 226.5, 153, 226.5, 144, 374, 144, 379, 144 ]
+        PollingCycle: 500
+        StateCheck: Polling
+        CheckAtLoading: true
     - 
       id: 2
-      name: "RTC"
+      name: "JoystickRTC"
       plugin: OpenRTM
       class: RTCItem
       data: 
@@ -111,8 +38,6 @@ views:
     plugin: Base
     class: ItemTreeView
     mounted: true
-    state: 
-      selected: [ 1 ]
   - 
     id: 2
     plugin: Base
@@ -212,6 +137,7 @@ views:
       listingMode: "Link Tree"
   - 
     id: 8
+    name: "MultiCopterMonitor"
     plugin: Multicopter
     class: MulticopterMonitorView
   - 
@@ -234,8 +160,10 @@ views:
     class: RTSNameServerView
     mounted: true
     state: 
-      host: localhost
-      port: 2809
+      NameServers: 
+        - 
+          host: "localhost"
+          port: 2809
   - 
     id: 12
     plugin: Python
@@ -261,6 +189,39 @@ toolbars:
     lazyCollisionDetectionMode: true
   "LeggedBodyBar": 
     stanceWidth: 0.15
+  "BodyMotionGenerationBar": 
+    autoGenerationForNewBody: true
+    balancer: false
+    autoGeneration: false
+    timeScaleRatio: 1
+    preInitialDuration: 1
+    postFinalDuration: 1
+    onlyTimeBarRange: false
+    makeNewBodyItem: true
+    stealthyStepMode: true
+    stealthyHeightRatioThresh: 2
+    flatLiftingHeight: 0.005
+    flatLandingHeight: 0.005
+    impactReductionHeight: 0.005
+    impactReductionTime: 0.04
+    autoZmp: true
+    minZmpTransitionTime: 0.1
+    zmpCenteringTimeThresh: 0.03
+    zmpTimeMarginBeforeLiftingSpin: 0
+    zmpMaxDistanceFromCenter: 0.02
+    allLinkPositions: false
+    lipSyncMix: false
+    timeToStartBalancer: 0
+    balancerIterations: 2
+    plainBalancerMode: false
+    boundaryConditionType: position
+    boundarySmootherType: quintic
+    boundarySmootherTime: 0.5
+    boundaryCmAdjustment: false
+    boundaryCmAdjustmentTime: 1
+    waistHeightRelaxation: false
+    gravity: 9.8
+    dynamicsTimeRatio: 1
 Body: 
   "BodyMotionEngine": 
     updateJointVelocities: false
@@ -289,12 +250,12 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 364, 1550 ]
+      sizes: [ 356, 1518 ]
       children: 
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 470, 470 ]
+          sizes: [ 626, 625 ]
           children: 
             - 
               type: pane
@@ -307,12 +268,12 @@ viewAreas:
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 673, 267 ]
+          sizes: [ 896, 355 ]
           children: 
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 723, 821 ]
+              sizes: [ 708, 804 ]
               children: 
                 - 
                   type: pane
