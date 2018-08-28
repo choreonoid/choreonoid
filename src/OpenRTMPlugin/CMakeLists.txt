@@ -2,6 +2,8 @@ if(NOT BUILD_OPENRTM_PLUGIN)
   return()
 endif()
 
+#set(CMAKE_BUILD_TYPE Debug)
+
 set(plugin CnoidOpenRTMPlugin)
 
 set(plugin_sources
@@ -9,14 +11,14 @@ set(plugin_sources
   PortConnectionDialog.cpp
   ControllerRTCItem.cpp
   BodyIoRTCItem.cpp
-  OpenRTMItem.cpp
+  RTCWrapper.cpp
   RTCItem.cpp
   SimulationExecutionContext.cpp
   SimulationPeriodicExecutionContext.cpp
   ProfileHandler.cpp
   RTSNameServerView.cpp
   RTSPropertiesView.cpp
-  RTSItem.cpp
+  RTSystemItem.cpp
   RTSDiagramView.cpp
   RTMImageView.cpp
   RTSCommonUtil.cpp

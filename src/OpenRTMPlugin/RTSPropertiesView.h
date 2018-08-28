@@ -1,18 +1,21 @@
 /*!
  * @brief  This is a definition of RTSystemEditorPlugin.
- * @author Hisashi Ikari 
+ * @author Hisashi Ikari
  * @file
  */
 #ifndef CNOID_OPENRTM_PLUGIN_RTS_ROPERTIES_VIEW_H_INCLUDED
 #define CNOID_OPENRTM_PLUGIN_RTS_ROPERTIES_VIEW_H_INCLUDED
 
-#include "RTSNameServerView.h"
 #include <cnoid/View>
 #include <rtm/idl/RTC.hh>
-//#include <boost/shared_ptr.hpp>
 
-namespace cnoid 
-{
+#include <cnoid/Dialog>
+#include <cnoid/CheckBox>
+#include <cnoid/ComboBox>
+#include <cnoid/LineEdit>
+ //#include <boost/shared_ptr.hpp>
+
+namespace cnoid {
 class   RTSPropertiesViewImpl;
 
 class RTSPropertiesView : public cnoid::View
@@ -33,6 +36,29 @@ public:
 
 private:
     RTSPropertiesViewImpl* impl;
+};
+
+class SettingDialog : public Dialog
+{
+public:
+    SettingDialog();
+
+private:
+    CheckBox* chkLog;
+    ComboBox* cmbLogLevel;
+
+    LineEdit* leSetting;
+
+    LineEdit* leName;
+    LineEdit* leVersion;
+    LineEdit* lePoling;
+#ifndef OPENRTM_VERSION110
+    LineEdit* leHeartBeat;
+#endif
+
+    void oKClicked();
+    void rejected();
+    void logChanged(bool state);
 };
 
 };

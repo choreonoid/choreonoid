@@ -7,6 +7,7 @@
 #include <cnoid/ImageWidget>
 #include <cnoid/ViewManager>
 #include <cnoid/LazyCaller>
+#include <cnoid/CorbaUtil>
 #include <rtm/DataFlowComponentBase.h>
 #include <rtm/DataInPort.h>
 
@@ -41,7 +42,7 @@ public:
     ImageViewRTC(Manager* manager);
     void setImageWidget(ImageWidget* widget);
     ReturnCode_t onInitialize() override;
-    ReturnCode_t onExecute(UniqueId ec_id);    
+    ReturnCode_t onExecute(UniqueId ec_id);
 };
 
 }
@@ -56,7 +57,7 @@ public:
     ScopedConnection connection;
     ImageViewRTC* rtc;
     OpenRTM::ExtTrigExecutionContextService_var execContext;
-    
+
     RTMImageViewImpl(RTMImageView* self);
     ~RTMImageViewImpl();
     void createRTC(const std::string& name);
@@ -112,7 +113,7 @@ RTMImageViewImpl::RTMImageViewImpl(RTMImageView* self)
 
     rtc = 0;
     execContext = OpenRTM::ExtTrigExecutionContextService::_nil();
-    connection.reset(sigAboutToFinalizeRTM().connect([&](){ deleteRTC(); }));
+    connection.reset(sigAboutToFinalizeRTM().connect([&]() { deleteRTC(); }));
 }
 
 
@@ -130,7 +131,7 @@ RTMImageViewImpl::~RTMImageViewImpl()
 
 void RTMImageView::setName(const std::string& name_)
 {
-    if(name_ != name()){
+    if (name_ != name()) {
         View::setName(name_);
         impl->createRTC(name_);
     }
@@ -140,19 +141,19 @@ void RTMImageView::setName(const std::string& name_)
 void RTMImageViewImpl::createRTC(const std::string& name)
 {
     deleteRTC();
-        
+
     auto args = str(
         format("ImageView?instance_name=%1%&"
-               "exec_cxt.periodic.type=PeriodicExecutionContext&exec_cxt.periodic.rate=30")
+            "exec_cxt.periodic.type=PeriodicExecutionContext&exec_cxt.periodic.rate=30")
         % self->name());
 
     rtc = dynamic_cast<ImageViewRTC*>(cnoid::createManagedRTC(args));
-    
-    if(rtc){
+
+    if (rtc) {
         rtc->setImageWidget(imageWidget);
         RTC::ExecutionContextList_var eclist = rtc->get_owned_contexts();
-        for(CORBA::ULong i=0; i < eclist->length(); ++i){
-            if(!CORBA::is_nil(eclist[i])){
+        for (CORBA::ULong i = 0; i < eclist->length(); ++i) {
+            if (!CORBA::is_nil(eclist[i])) {
                 execContext = OpenRTM::ExtTrigExecutionContextService::_narrow(eclist[i]);
                 break;
             }
@@ -163,29 +164,33 @@ void RTMImageViewImpl::createRTC(const std::string& name)
 
 void RTMImageViewImpl::deleteRTC()
 {
-    if(rtc){
+    if (rtc) {
         cnoid::deleteRTC(rtc);
         rtc = 0;
     }
     execContext = OpenRTM::ExtTrigExecutionContextService::_nil();
-}    
+}
 
 
 void RTMImageView::onActivated()
 {
-    impl->execContext->activate_component(impl->rtc->getObjRef());
+    if (!CORBA::is_nil(impl->execContext)) {
+        impl->execContext->activate_component(impl->rtc->getObjRef());
+    }
 }
 
 
 void RTMImageView::onDeactivated()
 {
-    impl->execContext->deactivate_component(impl->rtc->getObjRef());
+    if (!CORBA::is_nil(impl->execContext)) {
+        impl->execContext->deactivate_component(impl->rtc->getObjRef());
+    }
 }
 
 
 ImageViewRTC::ImageViewRTC(Manager* manager)
     : DataFlowComponentBase(manager),
-      imageInPort("cameraImage", timedCameraImage)
+    imageInPort("cameraImage", timedCameraImage)
 {
     imageWidget = 0;
 }
@@ -206,49 +211,49 @@ ReturnCode_t ImageViewRTC::onInitialize()
 
 ReturnCode_t ImageViewRTC::onExecute(UniqueId ec_id)
 {
-    if(imageInPort.isNew()){
+    if (imageInPort.isNew()) {
         do {
             imageInPort.read();
-        } while(imageInPort.isNew());
-            
-        int numComponents;
-        bool jpegCompression=false;
+        } while (imageInPort.isNew());
 
-        switch(timedCameraImage.data.image.format){
-        case Img::CF_GRAY :
-            numComponents = 1;
-            break;
-        case Img::CF_RGB :
-            numComponents = 3;
-            break;
+        int numComponents;
+        bool jpegCompression = false;
+
+        switch (timedCameraImage.data.image.format) {
+            case Img::CF_GRAY:
+                numComponents = 1;
+                break;
+            case Img::CF_RGB:
+                numComponents = 3;
+                break;
 #ifdef USE_BUILTIN_CAMERA_IMAGE_IDL
-        case Img::CF_RGB_JPEG :
+            case Img::CF_RGB_JPEG:
 #else
-        case Img::CF_JPEG :
+            case Img::CF_JPEG:
 #endif
-            numComponents = 3;
-            jpegCompression = true;
-            break;
-        case Img::CF_UNKNOWN :
-        default :
-            numComponents = 0;
-            break;
+                numComponents = 3;
+                jpegCompression = true;
+                break;
+            case Img::CF_UNKNOWN:
+            default:
+                numComponents = 0;
+                break;
         }
 
-        if(jpegCompression){
+        if (jpegCompression) {
             int size = timedCameraImage.data.image.raw_data.length();
             const unsigned char* src = timedCameraImage.data.image.raw_data.get_buffer();
             const char *format = "JPG";
-            QImage qImage = QImage::fromData( src, size, format);
+            QImage qImage = QImage::fromData(src, size, format);
 
-            callLater([&, qImage](){ imageWidget->setImage(qImage); });
-        }else{
+            callLater([&, qImage]() { imageWidget->setImage(qImage); });
+        } else {
             Image image;
             image.setSize(timedCameraImage.data.image.width, timedCameraImage.data.image.height, numComponents);
             size_t length = timedCameraImage.data.image.raw_data.length();
             memcpy(image.pixels(), timedCameraImage.data.image.raw_data.get_buffer(), length);
 
-            callLater([&, image](){ imageWidget->setImage(image); });
+            callLater([&, image]() { imageWidget->setImage(image); });
         }
 
     }

@@ -11,7 +11,7 @@
 #include <QPoint>
 #include <list>
 #include <string>
-#include "OpenRTMItem.h"
+#include "RTCWrapper.h"
 #include "ProfileHandler.h"
 #include "exportdecl.h"
 
@@ -27,7 +27,8 @@ public:
     std::string name_;
     std::string value_;
 
-    NamedValue(std::string name, std::string value){
+    NamedValue(std::string name, std::string value)
+    {
         name_ = name;
         value_ = value;
     };
@@ -42,15 +43,18 @@ public:
     std::string if_polarity;
     std::string if_tname;
     std::string if_iname;
-    
-    bool isRequiredPolarity() {
+
+    bool isRequiredPolarity()
+    {
         return if_polarity == "required";
     };
-    
-    std::string toDispStr() {
+
+    std::string toDispStr()
+    {
         return rtc_name + ":" + if_tname + ":" + if_iname;
     };
-    std::string toStr() {
+    std::string toStr()
+    {
         return rtc_name + ".port." + port_name + "." + if_polarity + "." + if_tname + "." + if_iname;
     };
 };
@@ -58,7 +62,7 @@ typedef std::shared_ptr<PortInterface> PortInterfacePtr;
 
 class RTSPort : public Referenced
 {
-public :
+public:
     RTSComp* rtsComp;
     std::string name;
     RTC::PortService_var port;
@@ -98,15 +102,18 @@ public:
     Vector2 position[6];
     bool setPos;
 
+    DataPortConnector dataProfile;
+    ServicePortConnector serviceProfile;
+
     RTSConnection(
         const std::string& id, const std::string& name, const std::string& sourceRtcName,
         const std::string& sourcePortName, const std::string& targetRtcName, const std::string& targetPortName);
-    bool isAlive(){ return isAlive_; };
+    bool isAlive() { return isAlive_; };
     void setPosition(const Vector2 pos[]);
 
 private:
     bool isAlive_;
-    
+
     /**
        \return true if the connection is newly established.
        false if the connection has already been established, or the connection failed.
@@ -127,11 +134,15 @@ class RTSComp : public Referenced, public RTCWrapper
 public:
     std::string name;
     std::string fullPath;
+    std::string hostAddress;
+    int portNo;
     std::vector<RTSPortPtr> inPorts;
     std::vector<RTSPortPtr> outPorts;
 
-    RTSComp(const std::string& name, RTC::RTObject_ptr rtc, RTSystemItem* rts, const QPointF& pos);
-    RTSComp(const std::string& name, const std::string& fullPath, RTC::RTObject_ptr rtc, RTSystemItem* rts, const QPointF& pos);
+    Component profile;
+    bool isAlive_;
+
+    RTSComp(const std::string& name, const std::string& fullPath, RTC::RTObject_ptr rtc, RTSystemItem* rts, const QPointF& pos, const std::string& host, int port);
     RTSystemItem* rts() { return rts_; }
     RTSPort* nameToRTSPort(const std::string& name);
     const QPointF& pos() const { return pos_; }
@@ -145,7 +156,7 @@ private:
     void setRtc(RTC::RTObject_ptr rtc);
     bool connectionCheck();
     bool connectionCheckSub(RTSPort* rtsPort);
-    std::string getComponentPath(RTC::PortService_ptr source);
+    bool getComponentPath(RTC::PortService_ptr source, std::string& out_path);
 
     friend class RTSystemItemImpl;
 };
@@ -174,7 +185,8 @@ public:
 
     RTSConnection* addRTSConnection(
         const std::string& id, const std::string& name,
-        RTSPort* sourcePort, RTSPort* targetPort, const std::vector<NamedValuePtr>& propList);
+        RTSPort* sourcePort, RTSPort* targetPort, const std::vector<NamedValuePtr>& propList,
+        const Vector2 pos[]);
     bool connectionCheck();
     void RTSCompToConnectionList(const RTSComp* rtsComp, std::list<RTSConnection*>& rtsConnectionList, int mode = 0);
     RTSConnectionMap& rtsConnections();
@@ -186,8 +198,15 @@ public:
     int pollingCycle() const;
     void setVendorName(const std::string& name);
     void setVersion(const std::string& version);
+    int stateCheck() const;
 
-protected :
+    bool checkStatus();
+
+    SignalProxy<void(int)> sigTimerPeriodChanged();
+    SignalProxy<void(bool)> sigTimerChanged();
+    SignalProxy<void(bool)> sigLoadedRTSystem();
+
+protected:
     virtual Item* doDuplicate() const override;
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
     virtual bool store(Archive& archive) override;

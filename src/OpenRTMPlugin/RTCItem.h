@@ -22,7 +22,7 @@ public:
     bool isValid() const;
     const std::string& name() const { return componentName; }
     void activate();
-        
+
 private:
     RTC::RTObject_var rtcRef;
     RTC::RtcBase* rtc_;
@@ -34,7 +34,7 @@ private:
     void init(const std::string& moduleName, PropertyMap& properties);
     void init(const boost::filesystem::path& modulePath, PropertyMap& properties);
     bool createRTC(PropertyMap& properties);
-    void setupModules(std::string& fileName, std::string& initFuncName, std::string& componentName, PropertyMap& properties );
+    void setupModules(std::string& fileName, std::string& initFuncName, std::string& componentName, PropertyMap& properties);
     void createProcess(std::string& command, PropertyMap& properties);
     void onReadyReadServerProcessOutput();
 };
@@ -43,20 +43,22 @@ class CNOID_EXPORT RTCItem : public Item
 {
 public:
     static void initialize(ExtensionManager* ext);
-        
+
     RTCItem();
     RTCItem(const RTCItem& org);
     virtual ~RTCItem();
-    
-    enum PERIODIC_TYPE {
+
+    enum PERIODIC_TYPE
+    {
         PERIODIC_EXECUTION_CONTEXT = 0,
         SYNCH_EXT_TRIGGER,
         EXT_TRIG_EXECUTION_CONTEXT,
         SIMULATION_EXECUTION_CONTEXT,
         N_PERIODIC_TYPE
     };
-    
-    enum BaseDirectoryType {
+
+    enum BaseDirectoryType
+    {
         NO_BASE_DIRECTORY,
         RTC_DIRECTORY,
         PROJECT_DIRECTORY,
@@ -77,7 +79,7 @@ protected:
     virtual void doPutProperties(PutPropertyFunction& putProperty);
     virtual bool store(Archive& archive);
     virtual bool restore(const Archive& archive);
-        
+
 private:
     std::ostream& os;
     MessageView* mv;
@@ -97,7 +99,7 @@ private:
     void updateRTCInstance(bool forceUpdate = true);
     bool convertAbsolutePath();
 };
-        
+
 typedef ref_ptr<RTCItem> RTCItemPtr;
 
 }

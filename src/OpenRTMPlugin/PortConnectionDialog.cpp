@@ -35,23 +35,23 @@ PortConnectionDialogBase::PortConnectionDialogBase()
     gridSubLayout->addWidget(lstDetail, 0, 0, 5, 1);
 
     PushButton* addButton = new PushButton(_("Add"));
-    addButton->sigClicked().connect([&](){ onAddButtonClicked(); });
+    addButton->sigClicked().connect([&]() { onAddButtonClicked(); });
     gridSubLayout->addWidget(addButton, 0, 1, 1, 1);
 
     PushButton* deleteButton = new PushButton(_("Delete"));
-    deleteButton->sigClicked().connect([&](){ onDeleteButtonClicked(); });
+    deleteButton->sigClicked().connect([&]() { onDeleteButtonClicked(); });
     gridSubLayout->addWidget(deleteButton, 1, 1, 1, 1);
-    
+
     buttonFrame = new QFrame;
     QHBoxLayout* buttonBotLayout = new QHBoxLayout(buttonFrame);
 
     PushButton* cancelButton = new PushButton(_("&Cancel"));
-    cancelButton->sigClicked().connect([&](){ reject(); });
+    cancelButton->sigClicked().connect([&]() { reject(); });
     buttonBotLayout->addWidget(cancelButton);
 
     PushButton* okButton = new PushButton(_("&OK"));
     okButton->setDefault(true);
-    okButton->sigClicked().connect([&](){ onOkButtonClicked(); });
+    okButton->sigClicked().connect([&]() { onOkButtonClicked(); });
     buttonBotLayout->addWidget(okButton);
 }
 
@@ -274,28 +274,28 @@ void DataPortConnectionDialog::setDisp(RTSPort* source, RTSPort* target)
     vector<string> types = RTCCommonUtil::getAllowDataTypes(source, target);
     //bool isAllowAny = RTCCommonUtil::isAllowAnyDataType(source, target);
     dataTypeCombo->clear();
-    for(int index = 0; index < types.size(); index++){
+    for (int index = 0; index < types.size(); index++) {
         dataTypeCombo->addItem(QString::fromStdString(types[index]));
     }
     dataTypeCombo->setCurrentIndex(0);
     //
     types = RTCCommonUtil::getAllowInterfaceTypes(source, target);
     interfaceCombo->clear();
-    for(int index = 0; index < types.size(); index++){
+    for (int index = 0; index < types.size(); index++) {
         interfaceCombo->addItem(QString::fromStdString(types[index]));
     }
     interfaceCombo->setCurrentIndex(0);
     //
     types = RTCCommonUtil::getAllowDataflowTypes(source, target);
     dataflowCombo->clear();
-    for(int index = 0; index < types.size(); index++){
+    for (int index = 0; index < types.size(); index++) {
         dataflowCombo->addItem(QString::fromStdString(types[index]));
     }
     dataflowCombo->setCurrentIndex(0);
     //
     types = RTCCommonUtil::getAllowSubscriptionTypes(source, target);
     subscriptionCombo->clear();
-    for(int index = 0; index < types.size(); index++){
+    for (int index = 0; index < types.size(); index++) {
         subscriptionCombo->addItem(QString::fromStdString(types[index]));
     }
     subscriptionCombo->setCurrentIndex(0);
@@ -304,23 +304,23 @@ void DataPortConnectionDialog::setDisp(RTSPort* source, RTSPort* target)
 
 void DataPortConnectionDialog::subscriptionComboSelectionChanged(int target)
 {
-    QString selected  = subscriptionCombo->currentText().toLower();
+    QString selected = subscriptionCombo->currentText().toLower();
     DDEBUG_V("CreateConnectionDialog::subscriptionComboSelectionChanged %s", selected.toStdString().c_str());
-    if(selected == "flush"){
+    if (selected == "flush") {
         pushrateEdit->clear();
         pushrateEdit->setEnabled(false);
         pushpolicyCombo->setEnabled(false);
         skipcountEdit->clear();
         skipcountEdit->setEnabled(false);
 
-    } else if(selected == "new"){
+    } else if (selected == "new") {
         pushrateEdit->clear();
         pushrateEdit->setEnabled(false);
         pushpolicyCombo->setEnabled(true);
         skipcountEdit->clear();
         skipcountEdit->setEnabled(false);
 
-    } else if(selected == "periodic"){
+    } else if (selected == "periodic") {
         pushrateEdit->setEnabled(true);
         pushrateEdit->setText("1000.0");
         pushpolicyCombo->setEnabled(true);
@@ -333,7 +333,7 @@ void DataPortConnectionDialog::subscriptionComboSelectionChanged(int target)
 void DataPortConnectionDialog::pushpolicyComboSelectionChanged(int target)
 {
     QString selected = pushpolicyCombo->currentText().toLower();
-    if(selected == "skip"){
+    if (selected == "skip") {
         skipcountEdit->setText("0");
         skipcountEdit->setEnabled(true);
     } else {
@@ -358,20 +358,20 @@ void DataPortConnectionDialog::onOkButtonClicked()
     keyList.append(QString::fromStdString("dataport.interface_type"));
     keyList.append(QString::fromStdString("dataport.dataflow_type"));
     keyList.append(QString::fromStdString("dataport.subscription_type"));
-    if(pushrateEdit->isEnabled()){
+    if (pushrateEdit->isEnabled()) {
         addProperty("dataport.push_rate", pushrateEdit->text().toStdString());
         keyList.append(QString::fromStdString("dataport.push_rate"));
     }
-    if(pushpolicyCombo->isEnabled()){
+    if (pushpolicyCombo->isEnabled()) {
         addProperty("dataport.publisher.push_policy", pushpolicyCombo->currentText().toStdString());
         keyList.append(QString::fromStdString("dataport.publisher.push_policy"));
     }
-    if(skipcountEdit->isEnabled()){
+    if (skipcountEdit->isEnabled()) {
         addProperty("dataport.publisher.skip_count", skipcountEdit->text().toStdString());
         keyList.append(QString::fromStdString("dataport.publisher.skip_count"));
     }
     //
-    if(detailCheck->isChecked()){
+    if (detailCheck->isChecked()) {
         DDEBUG("CreateConnectionDialog::okClicked Detail Checked");
         addProperty("dataport.outport.buffer.length", outLengthEdit->text().toStdString());
         addProperty("dataport.outport.buffer.write.full_policy", outPolicyCombo->currentText().toStdString());
@@ -395,12 +395,12 @@ void DataPortConnectionDialog::onOkButtonClicked()
         keyList.append(QString::fromStdString("dataport.inport.buffer.read.empty_policy"));
         keyList.append(QString::fromStdString("dataport.inport.buffer.read.timeout"));
         //
-        if(0 < lstDetail->rowCount()){
-            for(int index = 0; index < lstDetail->rowCount(); index++){
+        if (0 < lstDetail->rowCount()) {
+            for (int index = 0; index < lstDetail->rowCount(); index++) {
                 QString strName = lstDetail->item(index, 0)->text();
                 QString strValue = lstDetail->item(index, 1)->text();
                 DDEBUG_V("Item: %s, %s", strName.toStdString().c_str(), strValue.toStdString().c_str());
-                if(keyList.contains(strName)){
+                if (keyList.contains(strName)) {
                     QMessageBox::warning(this, _("Port Connect"), _("Duplicate property name."));
                     return;
                 } else {
@@ -431,7 +431,7 @@ ServicePortConnectionDialog::ServicePortConnectionDialog()
 
     QFrame* frmGridIF = new QFrame;
     QGridLayout* gridIFLayout = new QGridLayout(frmGridIF);
-    
+
     lstInterface = new QTableWidget(0, 2);
     lstInterface->setSelectionBehavior(QAbstractItemView::SelectRows);
     lstInterface->setSelectionMode(QAbstractItemView::SingleSelection);
@@ -443,11 +443,11 @@ ServicePortConnectionDialog::ServicePortConnectionDialog()
     gridIFLayout->addWidget(lstInterface, 0, 0, 5, 1);
 
     PushButton* addButton_IF = new PushButton(_("Add"));
-    addButton_IF->sigClicked().connect([&](){ addIF(); });
+    addButton_IF->sigClicked().connect([&]() { addIF(); });
     gridIFLayout->addWidget(addButton_IF, 0, 1, 1, 1);
 
     PushButton* deleteButton_IF = new PushButton(_("Delete"));
-    deleteButton_IF->sigClicked().connect([&](){ deleteIF(); });
+    deleteButton_IF->sigClicked().connect([&]() { deleteIF(); });
     gridIFLayout->addWidget(deleteButton_IF, 1, 1, 1, 1);
 
     frmEditSub = new QFrame;
@@ -482,10 +482,10 @@ void ServicePortConnectionDialog::registInterfaceMap(RTSPort* port)
     string portName = "unknown";
     //
     string name = port->name;
-    if(0<name.length()){
+    if (name.empty() == false) {
         vector<string> names = RTCCommonUtil::split(name, '.');
-        if(names.size() < 2){
-            if(port->rtsComp!=0){
+        if (names.size() < 2) {
+            if (port->rtsComp != 0) {
                 compName = port->rtsComp->name;
             }
             portName = names[0];
@@ -495,13 +495,13 @@ void ServicePortConnectionDialog::registInterfaceMap(RTSPort* port)
         }
     }
 
-    for(int index = 0; index < port->interList.size(); index++){
+    for (int index = 0; index < port->interList.size(); index++) {
         PortInterfacePtr ip = port->interList[index];
         ip->rtc_name = compName;
         ip->port_name = portName;
         string label = ip->toDispStr();
         DDEBUG_V("label:%s", label.c_str());
-        if(ip->isRequiredPolarity()){
+        if (ip->isRequiredPolarity()) {
             consumerLabelList.push_back(label);
             consumerConList.push_back(ip->toStr());
         } else {
@@ -521,12 +521,12 @@ void ServicePortConnectionDialog::addIF()
 
     QComboBox* consumerCombo = new QComboBox();
     lstInterface->setCellWidget(row, 0, consumerCombo);
-    for(int index = 0; index < consumerLabelList.size(); index++){
+    for (int index = 0; index < consumerLabelList.size(); index++) {
         consumerCombo->addItem(QString::fromStdString(consumerLabelList[index]));
     }
     QComboBox* providerCombo = new QComboBox();
     lstInterface->setCellWidget(row, 1, providerCombo);
-    for(int index = 0; index < providerLabelList.size(); index++){
+    for (int index = 0; index < providerLabelList.size(); index++) {
         providerCombo->addItem(QString::fromStdString(providerLabelList[index]));
     }
 }
@@ -547,9 +547,9 @@ void ServicePortConnectionDialog::onOkButtonClicked()
     QList<QString> keyList;
     propList.clear();
 
-    if(detailCheck->isChecked()){
-        if(0 < lstInterface->rowCount()){
-            for(int index = 0; index < lstInterface->rowCount(); index++){
+    if (detailCheck->isChecked()) {
+        if (0 < lstInterface->rowCount()) {
+            for (int index = 0; index < lstInterface->rowCount(); index++) {
                 QComboBox* consumerCombo = (QComboBox*)lstInterface->cellWidget(index, 0);
                 QComboBox* providerCombo = (QComboBox*)lstInterface->cellWidget(index, 1);
                 int conIndex = consumerCombo->currentIndex();
@@ -557,7 +557,7 @@ void ServicePortConnectionDialog::onOkButtonClicked()
                 int proIndex = providerCombo->currentIndex();
                 string strProvider = providerConList[proIndex];
                 DDEBUG_V("Item IF: %s, %s", strConsumer.c_str(), strProvider.c_str());
-                if(keyList.contains(QString::fromStdString(strConsumer))){
+                if (keyList.contains(QString::fromStdString(strConsumer))) {
                     QMessageBox::warning(this, _("Port Connect"), _("Duplicate property name."));
                     return;
                 } else {
@@ -566,12 +566,12 @@ void ServicePortConnectionDialog::onOkButtonClicked()
                 addProperty(strConsumer, strProvider);
             }
         }
-        if(0 < lstDetail->rowCount()){
-            for(int index = 0; index < lstDetail->rowCount(); index++){
+        if (0 < lstDetail->rowCount()) {
+            for (int index = 0; index < lstDetail->rowCount(); index++) {
                 QString strName = lstDetail->item(index, 0)->text();
                 QString strValue = lstDetail->item(index, 1)->text();
                 DDEBUG_V("Item: %s, %s", strName.toStdString().c_str(), strValue.toStdString().c_str());
-                if(keyList.contains(strName)){
+                if (keyList.contains(strName)) {
                     QMessageBox::warning(this, _("Port Connect"), _("Duplicate property name."));
                     return;
                 } else {
