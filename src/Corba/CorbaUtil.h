@@ -40,14 +40,8 @@ public:
     struct ObjectPath {
         std::string id;
         std::string kind;
-
-        ObjectPath(std::string strId) {
-            this->id = strId;
-        };
-        ObjectPath(std::string strId, std::string strKind) {
-            this->id = strId;
-            this->kind = strKind;
-        };
+        ObjectPath(const std::string& id) : id(id) { }
+        ObjectPath(const std::string& id, const std::string& kind) : id(id), kind(kind) { }
     };
     
     template <class T> typename T::_ptr_type findObject(std::vector<ObjectPath>& pathList) {
@@ -67,14 +61,17 @@ public:
         }
     }
 
-    CORBA::Object::_ptr_type findObject(const std::string& name, const std::string& kind = "") {
-        ObjectPath path(name, kind);
-        std::vector<ObjectPath> pathList;
-        pathList.push_back(path);
+    CORBA::Object::_ptr_type findObject(std::vector<ObjectPath>& pathList) {
         return findObjectSub(pathList);
     }
 
-    CORBA::Object::_ptr_type findObject(std::vector<ObjectPath>& pathList) {
+    template <class T> typename T::_ptr_type findObject(const std::string& name, const std::string& kind = "") {
+        std::vector<ObjectPath> pathList = { ObjectPath(name, kind) };
+        return findObject<T>(pathList);
+    }
+
+    CORBA::Object::_ptr_type findObject(const std::string& name, const std::string& kind = "") {
+        std::vector<ObjectPath> pathList = { ObjectPath(name, kind) };
         return findObjectSub(pathList);
     }
 
