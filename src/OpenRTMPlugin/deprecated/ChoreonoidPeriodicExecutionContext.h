@@ -17,10 +17,9 @@
 
 namespace cnoid
 {
-/*!
-  To call 'tick()' when the 'deactivate_component" function is called,
-  OpenHRPExecutionContext is redefined as this class in the OpenRTM plugin.
-  See post 02356 to the openrtm-users mailing list.
+/**
+   This EC causes a problem of calling onDeactivae twice, so do not use it.
+   You can use SimulationPeriodicExecutionContext instead of it.
 */
 #if defined(OPENRTM_VERSION11)
 class ChoreonoidPeriodicExecutionContext : public virtual RTC::PeriodicExecutionContext

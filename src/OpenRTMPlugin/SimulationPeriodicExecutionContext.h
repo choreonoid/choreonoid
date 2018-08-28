@@ -15,6 +15,11 @@
 namespace cnoid {
 
 #ifdef OPENRTM_VERSION11
+/**
+   This EC has an asynchronous version of the deactivate function.
+   By using this EC, the deactivation when the simulation is stopped does not block a while
+   even if the RTC has long periodic cycle.
+*/
 class SimulationPeriodicExecutionContext : public virtual RTC::PeriodicExecutionContext
 {
 public:
@@ -23,7 +28,7 @@ public:
 };
 
 #elif defined(OPENRTM_VERSION12)
-// Temporary
+// Temporary. Implement the similar EC for OpenRTM version 1.2.0
 typedef RTC_exp::PeriodicExecutionContext SimulationPeriodicExecutionContext;
 
 #endif
