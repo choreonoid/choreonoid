@@ -84,7 +84,7 @@ bool ProfileHandler::restoreRtsProfile(std::string targetFile, RTSystemItem* rts
         DDEBUG_V("addRTSComp: %s, %s, host=%s, port=%d", info.id_.c_str(), info.getFullPath().c_str(), info.hostAddress_.c_str(), info.portNo_);
         RTSComp* comp = rts->addRTSComp(info, QPointF(pos(0), pos(1)));
         if (comp == 0) continue;
-        if (!comp->rtc_) {
+        if (CORBA::is_nil(comp->rtc_)){
             comp->inPorts.clear();
             comp->outPorts.clear();
             for (int idxData = 0; idxData < compProf.dataPortList.size(); idxData++) {
