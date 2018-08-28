@@ -44,6 +44,12 @@ using boost::format;
 
 namespace {
 
+// Old conf filename. This should be deprecated, but continue to use for a while
+const char* DEFAULT_CONF_FILENAME = "./rtc.conf.choreonoid";
+
+// New conf filename. It is desirable to use this.
+//const char* DEFAUT_CONF_FILENAME = "./choreonoid.rtc.conf"
+
 class ManagerEx : public RTC::Manager
 {
 public:
@@ -112,7 +118,7 @@ public:
     virtual bool initialize()
     {
         DDEBUG("initialize");
-        string configFile = "./choreonoid.rtc.conf";
+        string configFile = DEFAULT_CONF_FILENAME;
         string loggerEnable = "logger.enable: NO";
         string logLeval = "logger.log_level: WARN";
         MappingPtr appVars = AppConfig::archive()->openMapping("OpenRTM");
@@ -123,7 +129,7 @@ public:
                 logLeval = "logger.log_level:" + appVars->get("logLevel", "INFO");
             }
             //
-            configFile = appVars->get("defaultSetting", "./choreonoid.rtc.conf");
+            configFile = appVars->get("defaultSetting", DEFAULT_CONF_FILENAME);
         }
 
         const char* argv[] = {
