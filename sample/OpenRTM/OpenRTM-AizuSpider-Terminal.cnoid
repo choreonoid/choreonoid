@@ -13,7 +13,7 @@ items:
         filename: "/home/nakaoka/choreonoid-second/build/../sample/OpenRTM/AizuSpider-RTSystem.xml"
         format: RTS-PROFILE-XML
         AutoConnection: true
-        PollingCycle: 500
+        PollingCycle: 1000
         StateCheck: Polling
         CheckAtLoading: true
     - 
@@ -22,7 +22,7 @@ items:
       plugin: OpenRTM
       class: RTCItem
       data: 
-        module: "${PROGRAM_TOP}/lib/choreonoid-1.7/rtc/JoystickRTC"
+        module: "JoystickRTC"
         baseDirectory: "RTC directory"
         periodicType: PeriodicExecutionContext
         periodicRate: 30
@@ -137,17 +137,12 @@ views:
       listingMode: "Link Tree"
   - 
     id: 8
-    name: "MultiCopterMonitor"
-    plugin: Multicopter
-    class: MulticopterMonitorView
-  - 
-    id: 9
     name: "CameraImage"
     plugin: OpenRTM
     class: RTMImageView
     mounted: true
   - 
-    id: 10
+    id: 9
     name: "RTC Diagram"
     plugin: OpenRTM
     class: RTSDiagramView
@@ -155,7 +150,7 @@ views:
     state: 
       currentRTSItem: 1
   - 
-    id: 11
+    id: 10
     plugin: OpenRTM
     class: RTSNameServerView
     mounted: true
@@ -165,84 +160,9 @@ views:
           host: "localhost"
           port: 2809
   - 
-    id: 12
+    id: 11
     plugin: Python
     class: PythonConsoleView
-toolbars: 
-  "TimeBar": 
-    minTime: 0
-    maxTime: 5
-    frameRate: 1000
-    playbackFrameRate: 100
-    idleLoopDrivenMode: false
-    currentTime: 0
-    speedScale: 1
-    syncToOngoingUpdates: true
-    autoExpansion: true
-  "KinematicsBar": 
-    mode: AUTO
-    enablePositionDragger: true
-    penetrationBlock: false
-    collisionLinkHighlight: false
-    snapDistance: 0.025
-    penetrationBlockDepth: 0.0005
-    lazyCollisionDetectionMode: true
-  "LeggedBodyBar": 
-    stanceWidth: 0.15
-  "BodyMotionGenerationBar": 
-    autoGenerationForNewBody: true
-    balancer: false
-    autoGeneration: false
-    timeScaleRatio: 1
-    preInitialDuration: 1
-    postFinalDuration: 1
-    onlyTimeBarRange: false
-    makeNewBodyItem: true
-    stealthyStepMode: true
-    stealthyHeightRatioThresh: 2
-    flatLiftingHeight: 0.005
-    flatLandingHeight: 0.005
-    impactReductionHeight: 0.005
-    impactReductionTime: 0.04
-    autoZmp: true
-    minZmpTransitionTime: 0.1
-    zmpCenteringTimeThresh: 0.03
-    zmpTimeMarginBeforeLiftingSpin: 0
-    zmpMaxDistanceFromCenter: 0.02
-    allLinkPositions: false
-    lipSyncMix: false
-    timeToStartBalancer: 0
-    balancerIterations: 2
-    plainBalancerMode: false
-    boundaryConditionType: position
-    boundarySmootherType: quintic
-    boundarySmootherTime: 0.5
-    boundaryCmAdjustment: false
-    boundaryCmAdjustmentTime: 1
-    waistHeightRelaxation: false
-    gravity: 9.8
-    dynamicsTimeRatio: 1
-Body: 
-  "BodyMotionEngine": 
-    updateJointVelocities: false
-  "EditableSceneBody": 
-    staticModelEditing: true
-  "KinematicFaultChecker": 
-    checkJointPositions: true
-    angleMargin: 0
-    translationMargin: 0
-    checkJointVelocities: true
-    velocityLimitRatio: 100
-    targetJoints: all
-    checkSelfCollisions: true
-    onlyTimeBarRange: false
-  "SplineFilterDialog": 
-    isInputFrameRateSpecified: false
-    inputFrameRate: 200
-    isOutputFrameRateSpecified: false
-    outputFrameRate: 200
-OpenRTM: 
-  "deleteUnmanagedRTCsOnStartingSimulation": false
 viewAreas: 
   - 
     type: embedded
@@ -263,8 +183,8 @@ viewAreas:
               current: 1
             - 
               type: pane
-              views: [ 0, 7, 11 ]
-              current: 11
+              views: [ 0, 7, 10 ]
+              current: 10
         - 
           type: splitter
           orientation: vertical
@@ -277,12 +197,12 @@ viewAreas:
               children: 
                 - 
                   type: pane
-                  views: [ 5, 6, 10 ]
-                  current: 10
+                  views: [ 5, 6, 9 ]
+                  current: 9
                 - 
                   type: pane
-                  views: [ 3, 9 ]
-                  current: 9
+                  views: [ 3, 8 ]
+                  current: 8
             - 
               type: pane
               views: [ 2 ]
@@ -291,8 +211,9 @@ layoutOfToolBars:
   rows: 
     - 
       - { name: "FileBar", x: 0, priority: 0 }
-      - { name: "ScriptBar", x: 48, priority: 0 }
-      - { name: "SimulationBar", x: 95, priority: 1 }
-      - { name: "TimeBar", x: 96, priority: 0 }
-      - { name: "SceneBar", x: 1336, priority: 2 }
-      - { name: "BodyBar", x: 1702, priority: 0 }
+      - { name: "ScriptBar", x: 47, priority: 0 }
+      - { name: "TimeBar", x: 94, priority: 0 }
+      - { name: "SceneBar", x: 1075, priority: 0 }
+      - { name: "ImageViewBar", x: 1240, priority: 3 }
+      - { name: "BodyBar", x: 1623, priority: 1 }
+      - { name: "KinematicsBar", x: 1649, priority: 2 }
