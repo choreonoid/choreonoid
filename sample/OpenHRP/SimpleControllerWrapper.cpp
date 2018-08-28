@@ -99,7 +99,7 @@ public:
 
     virtual Body* body() { return ioBody; }
     virtual double timeStep() const { return OpenHRPControllerBase::timeStep; }
-    virtual std::string name() const override { return ""; }
+    virtual std::string controllerName() const override { return ""; }
     virtual void enableIO(Link* link) override { }
     virtual void enableInput(Link* link) override { }
     virtual void enableInput(Link* link, int stateTypes) override { }
