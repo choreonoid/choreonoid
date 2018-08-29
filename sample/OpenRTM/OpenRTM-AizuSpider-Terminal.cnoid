@@ -10,7 +10,7 @@ items:
       plugin: OpenRTM
       class: RTSystemItem
       data: 
-        filename: "/home/nakaoka/choreonoid-second/build/../sample/OpenRTM/AizuSpider-RTSystem.xml"
+        filename: "AizuSpider-RTSystem.xml"
         format: RTS-PROFILE-XML
         AutoConnection: true
         PollingCycle: 1000
