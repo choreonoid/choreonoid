@@ -1378,6 +1378,7 @@ void RTSDiagramViewImpl::onTime()
     if (doConnectionCheck) {
         if (currentRTSItem->checkStatus()) {
             updateView();
+            updateRestoredView();
         }
     }
 
@@ -1533,7 +1534,7 @@ RTSCompGItem::RTSCompGItem(RTSComp* rtsComp, RTSDiagramViewImpl* impl, const QPo
     effect = new QGraphicsOpacityEffect;
     effect->setOpacity(OPACITY);
     setGraphicsEffect(effect);
-    if (isObjectAlive(rtsComp->rtc_)) {
+    if (!CORBA::is_nil(rtsComp->rtc_)) {
         rtsComp->isAlive_ = true;
         effect->setEnabled(false);
     } else {

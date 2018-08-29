@@ -28,10 +28,15 @@
 # endif
 #endif
 
+#if defined(_WIN32) && defined(ERROR)
+#undef ERROR
+#endif
+
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
+using boost::format;
 
 namespace {
 
@@ -621,7 +626,6 @@ void VisionSensorSubscriberRTCItem::setPointCloudPortType(int type)
         impl->createRTC();
     }
 }
-
 
 void VisionSensorSubscriberRTCItemImpl::createRTC()
 {
