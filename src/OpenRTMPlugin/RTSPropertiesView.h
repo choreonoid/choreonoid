@@ -51,7 +51,6 @@ private:
 
     LineEdit* leName;
     LineEdit* leVersion;
-    LineEdit* lePoling;
 #ifndef OPENRTM_VERSION110
     LineEdit* leHeartBeat;
 #endif

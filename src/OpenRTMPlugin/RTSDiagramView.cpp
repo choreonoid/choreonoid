@@ -765,7 +765,7 @@ void RTSCompGItem::clearCandidate()
 
 
 RTSDiagramViewImpl::RTSDiagramViewImpl(RTSDiagramView* self)
-    :self(self), sourcePort(0), pollingPeriod(500)
+    :self(self), sourcePort(0), pollingPeriod(1000)
 {
     self->setDefaultLayoutArea(View::CENTER);
 
@@ -786,9 +786,6 @@ RTSDiagramViewImpl::RTSDiagramViewImpl(RTSDiagramView* self)
     }
 
     timer.setSingleShot(false);
-    MappingPtr appVars = AppConfig::archive()->openMapping("OpenRTM");
-    pollingPeriod = appVars->get("pollingCycle", 500);
-    timer.setInterval(pollingPeriod);
     timeOutConnection.reset(
         timer.sigTimeout().connect(
             std::bind(&RTSDiagramViewImpl::onTime, this)));
@@ -1463,17 +1460,6 @@ void RTSDiagramViewImpl::updateRestoredView()
     }
 }
 
-void RTSDiagramViewImpl::updateSetting()
-{
-    DDEBUG("RTSDiagramViewImpl::updateSetting");
-
-    MappingPtr appVars = AppConfig::archive()->openMapping("OpenRTM");
-    int pPeriod = appVars->get("pollingCycle", 500);
-    timerPeriodUpdate(pPeriod);
-    pPeriod = pollingPeriod;
-}
-
-
 void RTSDiagramViewImpl::activateComponent()
 {
     RTSCompGItem* target = selectionRTCs.front();
@@ -1657,11 +1643,6 @@ void RTSDiagramView::onRTSCompSelectionChange()
     impl->onRTSCompSelectionChange();
 }
 
-
-void RTSDiagramView::updateSetting()
-{
-    impl->updateSetting();
-}
 
 bool RTSDiagramView::storeState(Archive& archive)
 {

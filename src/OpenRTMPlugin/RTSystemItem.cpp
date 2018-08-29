@@ -616,7 +616,7 @@ RTSystemItem::RTSystemItem(const RTSystemItem& org)
 
 
 RTSystemItemImpl::RTSystemItemImpl(RTSystemItem* self, const RTSystemItemImpl& org)
-    : self(self)
+    : self(self), pollingCycle(1000)
 {
     initialize();
     autoConnection = org.autoConnection;
@@ -630,7 +630,6 @@ void RTSystemItemImpl::initialize()
     Mapping* config = AppConfig::archive()->openMapping("OpenRTM");
     vendorName = config->get("defaultVendor", "AIST");
     version = config->get("defaultVersion", "1.0.0");
-    pollingCycle = config->get("pollingCycle", 500);
     stateCheck.setSymbol(POLLING_CHECK, "Polling");
     stateCheck.setSymbol(MANUAL_CHECK, "Manual");
     checkAtLoading = true;
@@ -789,6 +788,7 @@ bool RTSystemItemImpl::compIsAlive(RTSComp* rtsComp)
             pathList.push_back(path);
         }
 
+        NameServerManager::instance()->getNCHelper()->setLocation(rtsComp->hostAddress, rtsComp->portNo);  
         RTC::RTObject_ptr rtc = NameServerManager::instance()->getNCHelper()->findObject<RTC::RTObject>(pathList);
         if (!isObjectAlive(rtc)) {
             //DDEBUG("RTSystemItemImpl::compIsAlive NOT Alive");
@@ -1150,15 +1150,13 @@ bool RTSystemItemImpl::checkStatus()
 
     for (auto it = rtsComps.begin(); it != rtsComps.end(); it++) {
         if (compIsAlive(it->second)) {
-            if (it->second->isAlive_ == false) {
+            if (!it->second->isAlive_) {
                 modified = true;
-                DDEBUG("RTSystemItemImpl::checkStatus 1");
             }
             it->second->isAlive_ = true;
         } else {
-            if (it->second->isAlive_ == true) {
+            if (it->second->isAlive_) {
                 modified = true;
-                DDEBUG("RTSystemItemImpl::checkStatus 2");
             }
             it->second->isAlive_ = false;
         }
@@ -1166,7 +1164,6 @@ bool RTSystemItemImpl::checkStatus()
     //
     if (connectionCheck()) {
         modified = true;
-        DDEBUG("RTSystemItemImpl::checkStatus 3");
     }
 
     return modified;
