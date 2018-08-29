@@ -1,6 +1,7 @@
 
 #include "RTSystemItem.h"
 #include "ProfileHandler.h"
+#include "RTSCommonUtil.h"
 #include "LoggerUtil.h"
 #include <rtm/idl/RTC.hh>
 #include <QDateTime>
@@ -74,8 +75,15 @@ bool ProfileHandler::restoreRtsProfile(std::string targetFile, RTSystemItem* rts
         }
         if (isSkip) continue;
         info.id_ = compProf.instanceName;
-        info.hostAddress_ = hostName.toStdString();
-        info.portNo_ = 2809;
+
+        if(compProf.isOpenRTM) {
+            NameServerInfo ns = RTCCommonUtil::getManagerAddress();
+            info.hostAddress_ = ns.hostAddress;
+            info.portNo_ = ns.portNo;
+        } else {
+            info.hostAddress_ = hostName.toStdString();
+            info.portNo_ = 2809;
+        }
 
         Vector2 pos;
         pos.x() = compProf.posX;
@@ -233,6 +241,13 @@ bool ProfileHandler::parseProfile(std::string targetFile, RtsProfile& profile)
         xml_node pos = comp.child("rtsExt:Location");
         proComp.posX = pos.attribute("rtsExt:x").as_int();
         proComp.posY = pos.attribute("rtsExt:y").as_int();
+
+        for (pugi::xml_node prop = comp.child("rtsExt:Properties"); prop; prop = prop.next_sibling("rtsExt:Properties")) {
+            if (prop.attribute("rtsExt:name").as_string() == "OpenRTM_NS") {
+                proComp.isOpenRTM = prop.attribute("rtsExt:value").as_bool();
+                break;
+            }
+        }
 
         proComp.activeConfigurationSet = comp.attribute("rts:activeConfigurationSet").as_string();
         //ConfigurationSet
@@ -429,7 +444,7 @@ void ProfileHandler::saveRtsProfile
             }
             //
             copyNVListToProperty(compRaw->properties, compProf.propertyList);
-
+            compProf.isOpenRTM = NameServerManager::instance()->isOpenRTM(comp->hostAddress, comp->portNo);
             profile.compList.push_back(compProf);
         } catch (...) {
             os << "\033[31mWarning: " << "Failed to acquire [" << comp->name << "] information.\033[0m" << endl;
@@ -637,6 +652,11 @@ void ProfileHandler::writeComponent(std::vector<Component>& compList, xml_node& 
         compNode.append_attribute("rts:instanceName") = target.instanceName.c_str();
         compNode.append_attribute("rts:pathUri") = target.pathUri.c_str();
         compNode.append_attribute("rts:id") = target.id.c_str();
+
+        xml_node propertyNode = compNode.append_child("rtsExt:Properties");
+        propertyNode.append_attribute("rtsExt:value") = target.isOpenRTM;
+        propertyNode.append_attribute("rtsExt:name") = "OpenRTM_NS";
+
         //DataPort
         writeDataPort(target.dataPortList, compNode);
         //ServicePort

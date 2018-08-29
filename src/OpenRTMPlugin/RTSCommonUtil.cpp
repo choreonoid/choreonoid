@@ -302,6 +302,7 @@ NameServerInfo RTCCommonUtil::getManagerAddress()
     if (1 < elems.size()) {
         result.portNo = QString::fromStdString(elems[1]).toInt();
     }
+    result.isOpenRTM = true;
 
     return result;
 }
@@ -316,26 +317,40 @@ NameServerManager* NameServerManager::instance()
     return handler;
 }
 
-bool NameServerManager::addServer(string hostAddress, int portNo)
+void NameServerManager::addServer(NameServerInfo source)
 {
-    DDEBUG_V("NameServerManager::addServer %s, %d", hostAddress.c_str(), portNo);
-    vector<NameServerInfo>::iterator serverItr = find_if(serverList.begin(), serverList.end(), ServerComparator(hostAddress, portNo));
-    if (serverItr != serverList.end()) return false;
-
-    NameServerInfo server;
-    server.hostAddress = hostAddress;
-    server.portNo = portNo;
-    serverList.push_back(server);
-
-    return true;
+    DDEBUG_V("NameServerManager::addServer %s, %d", source.hostAddress.c_str(), source.portNo);
+    vector<NameServerInfo>::iterator serverItr = find_if(serverList.begin(), serverList.end(), ServerFullComparator(source));
+    if (serverItr != serverList.end()) return;
+    serverList.push_back(source);
 }
 
-bool NameServerManager::isExistServer(string hostAddress, int portNo)
+void NameServerManager::addOpenRTMServer()
 {
-    vector<NameServerInfo>::iterator serverItr = find_if(serverList.begin(), serverList.end(), ServerComparator(hostAddress, portNo));
+    NameServerInfo info = RTCCommonUtil::getManagerAddress();
+    NameServerInfo nsInfo(info.hostAddress, info.portNo, info.isOpenRTM);
+    addServer(nsInfo);
+}
+
+bool NameServerManager::isExistServer(NameServerInfo source)
+{
+    vector<NameServerInfo>::iterator serverItr = find_if(serverList.begin(), serverList.end(), ServerComparator(source.hostAddress, source.portNo));
     if (serverItr != serverList.end()) return true;
     return false;
 }
+
+bool NameServerManager::isOpenRTM(string hostAddress, int portNo)
+{
+    for(unsigned int index=0; index<serverList.size(); index++) {
+        NameServerInfo info = serverList[index];
+        if (info.hostAddress != hostAddress || info.portNo != portNo) continue;
+        if(info.isOpenRTM) {
+            return true;
+        }
+    }
+    return false;
+}
+
 
 }
 

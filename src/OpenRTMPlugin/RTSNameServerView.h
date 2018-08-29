@@ -27,7 +27,7 @@ public:
 
     //Proxy to RTSNameServerViewImpl
     void updateView();
-    void setSelection(std::string RTCname, std::string RTCfullPath);
+    void setSelection(std::string RTCname, std::string RTCfullPath, std::string nsInfo);
 
 protected:
     virtual void onActivated() override;
