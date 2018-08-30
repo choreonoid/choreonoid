@@ -8,6 +8,7 @@
 #include <cnoid/Archive>
 #include <cnoid/MessageView>
 #include <cnoid/MenuManager>
+#include <cnoid/ItemManager>
 #include <QHeaderView>
 #include <QCheckBox>
 #include <QRadioButton>
@@ -545,14 +546,22 @@ void LinkTreeWidget::fixListingMode(bool on)
 LinkTreeWidgetImpl::BodyItemInfoPtr LinkTreeWidgetImpl::getBodyItemInfo(BodyItem* bodyItem)
 {
     BodyItemInfoPtr info;
+    bool isInfoForNewBody = false;
 
     if(bodyItem){
         if(bodyItem == currentBodyItem){
             info = currentBodyItemInfo;
         } else if(isCacheEnabled){
-            BodyItemInfoMap::iterator p = bodyItemInfoCache.find(bodyItem);
+            auto p = bodyItemInfoCache.find(bodyItem);
             if(p != bodyItemInfoCache.end()){
                 info = p->second;
+            } else if(isCacheEnabled){
+                auto originalItem = ItemManager::findOriginalItemForReloadedItem(bodyItem);
+                auto q = bodyItemInfoCache.find(dynamic_cast<BodyItem*>(originalItem));
+                if(q != bodyItemInfoCache.end()){
+                    info = q->second;
+                    isInfoForNewBody = true;
+                }
             }
         }
 
@@ -561,6 +570,10 @@ LinkTreeWidgetImpl::BodyItemInfoPtr LinkTreeWidgetImpl::getBodyItemInfo(BodyItem
                 bodyItemInfoCache.clear();
             }
             info = std::make_shared<BodyItemInfo>();
+            isInfoForNewBody = true;
+        }
+
+        if(isInfoForNewBody){
             info->linkGroup = LinkGroup::create(*bodyItem->body());
             info->detachedFromRootConnection = bodyItem->sigDetachedFromRoot().connect(
                 [this, bodyItem](){ onBodyItemDetachedFromRoot(bodyItem); });
@@ -691,6 +704,8 @@ void LinkTreeWidgetImpl::setCurrentBodyItem(BodyItem* bodyItem, bool forceTreeUp
             }
 
             addCustomRows();
+
+            restoreTreeState();
         }
 
         sigUpdateRequest(true);
