@@ -169,6 +169,7 @@ links:
     elements:
       - 
         type: AGXBreakableJointDevice
+        isOptional: true
         link1Name: BODY
         link2Name: FR_DOOR
         jointType: fixed
@@ -234,6 +235,7 @@ links:
     elements:
       - 
         type: AGXBreakableJointDevice
+        isOptional: true
         link1Name: BODY
         link2Name: BR_DOOR
         jointType: fixed
