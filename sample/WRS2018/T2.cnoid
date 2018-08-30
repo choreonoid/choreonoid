@@ -33,13 +33,13 @@ items:
                   1, 0, 0, 
                   0, 1, 0, 
                   0, 0, 1 ]
-                jointPositions: [  0.324631,  0.000000,  0.200713,  0.000000 ]
+                jointPositions: [ 0, 0, 0, 0 ]
                 initialRootPosition: [ 10, 1.4, 0 ]
                 initialRootAttitude: [ 
                   1, 0, 0, 
                   0, 1, 0, 
                   0, 0, 1 ]
-                initialJointPositions: [  0.324631,  0.000000,  0.200713,  0.000000 ]
+                initialJointPositions: [ 0, 0, 0, 0 ]
                 zmp: [ 0, 0, 0 ]
                 collisionDetection: true
                 selfCollisionDetection: false
