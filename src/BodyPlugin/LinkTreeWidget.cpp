@@ -22,7 +22,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 using boost::dynamic_bitset;
 
@@ -315,7 +314,7 @@ void LinkTreeWidgetImpl::initialize()
     listingMode = LinkTreeWidget::LINK_LIST;
     listingModeCombo.setCurrentIndex(listingMode);
     listingModeCombo.sigCurrentIndexChanged().connect(
-        std::bind(&LinkTreeWidgetImpl::onListingModeChanged, this, _1));
+        [&](int index){ onListingModeChanged(index); });
 }
 
 
@@ -564,7 +563,7 @@ LinkTreeWidgetImpl::BodyItemInfoPtr LinkTreeWidgetImpl::getBodyItemInfo(BodyItem
             info = std::make_shared<BodyItemInfo>();
             info->linkGroup = LinkGroup::create(*bodyItem->body());
             info->detachedFromRootConnection = bodyItem->sigDetachedFromRoot().connect(
-                std::bind(&LinkTreeWidgetImpl::onBodyItemDetachedFromRoot, this, bodyItem));
+                [this, bodyItem](){ onBodyItemDetachedFromRoot(bodyItem); });
             bodyItemInfoCache[bodyItem] = info;
         }
 
@@ -579,6 +578,10 @@ LinkTreeWidgetImpl::BodyItemInfoPtr LinkTreeWidgetImpl::getBodyItemInfo(BodyItem
 
 void LinkTreeWidgetImpl::onBodyItemDetachedFromRoot(BodyItem* bodyItem)
 {
+    if(TRACE_FUNCTIONS){
+        cout << "LinkTreeWidgetImpl::onBodyItemDetachedFromRoot(" << bodyItem->name() << ")" << endl;
+    }
+    
     if(currentBodyItem == bodyItem){
         setCurrentBodyItem(0, false);
     }
@@ -627,7 +630,8 @@ void LinkTreeWidgetImpl::clearTreeItems()
 void LinkTreeWidgetImpl::setCurrentBodyItem(BodyItem* bodyItem, bool forceTreeUpdate)
 {
     if(TRACE_FUNCTIONS){
-        cout << "LinkTreeWidgetImpl::setCurrentBodyItem()" << endl;
+        cout << "LinkTreeWidgetImpl::setCurrentBodyItem(" << (bodyItem ? bodyItem->name() : string("0"))
+        << ", " << forceTreeUpdate << ")" << endl;
     }
 
     bool currentChanged = bodyItem != currentBodyItem;
@@ -1224,7 +1228,7 @@ bool LinkTreeWidgetImpl::storeState(Archive& archive)
 
 bool LinkTreeWidget::restoreState(const Archive& archive)
 {
-    archive.addPostProcess(std::bind(&LinkTreeWidgetImpl::restoreState, impl, std::ref(archive)));
+    archive.addPostProcess([&](){ impl->restoreState(archive); });
     return true;
 }
 
