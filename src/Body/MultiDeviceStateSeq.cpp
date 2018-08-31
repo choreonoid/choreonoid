@@ -5,6 +5,7 @@
 
 #include "MultiDeviceStateSeq.h"
 #include "BodyMotion.h"
+#include <cnoid/YAMLWriter>
 
 using namespace std;
 using namespace cnoid;
@@ -86,4 +87,21 @@ MultiDeviceStateSeqPtr cnoid::getOrCreateMultiDeviceStateSeq(BodyMotion& motion)
 void cnoid::clearMultiDeviceStateSeq(BodyMotion& motion)
 {
     motion.clearExtraSeq(mdskey);
+}
+
+
+bool MultiDeviceStateSeq::doWriteSeq(YAMLWriter& writer, std::function<void()> additionalPartCallback)
+{
+    double version = writer.info("formatVersion", 0.0);
+    if(version >= 1.0 && version < 2.0){
+        return false; // not supported for the format verions 1
+    }
+
+    return AbstractSeq::doWriteSeq(
+        writer,
+        [&](){
+
+            if(additionalPartCallback) additionalPartCallback();
+
+        });
 }

@@ -144,38 +144,38 @@ static void writeSE3(YAMLWriter& writer, const SE3& value)
 }
     
 
-bool MultiSE3Seq::doWriteSeq(YAMLWriter& writer)
+bool MultiSE3Seq::doWriteSeq(YAMLWriter& writer, std::function<void()> additionalPartCallback)
 {
-    if(!writeSeqHeaders(writer)){
-        return false;
-    }
-
-    double version = writer.info("formatVersion", 2.0);
-
-    string formatKey;
-    if(version >= 2.0){
-        formatKey = "SE3Format";
-    } else {
-        formatKey = "format";
-    }
-
-    writer.putKeyValue(formatKey, "XYZQWQXQYQZ");
+    double version = writer.getOrCreateInfo("formatVersion", 2.0);
     
-    writer.putKey("frames");
-    writer.startListing();
-    const int m = numParts();
-    const int n = numFrames();
-    for(int i=0; i < n; ++i){
-        Frame f = frame(i);
-        writer.startFlowStyleListing();
-        for(int j=0; j < m; ++j){
-            writeSE3(writer, f[j]);
-        }
-        writer.endListing();
-    }
-    writer.endListing();
+    return BaseSeqType::doWriteSeq(
+        writer,
+        [&](){
+            string formatKey;
+            if(version >= 2.0){
+                formatKey = "SE3Format";
+            } else {
+                formatKey = "format";
+            }
+
+            writer.putKeyValue(formatKey, "XYZQWQXQYQZ");
+
+            if(additionalPartCallback) additionalPartCallback();
     
-    return true;
+            writer.putKey("frames");
+            writer.startListing();
+            const int m = numParts();
+            const int n = numFrames();
+            for(int i=0; i < n; ++i){
+                Frame f = frame(i);
+                writer.startFlowStyleListing();
+                for(int j=0; j < m; ++j){
+                    writeSE3(writer, f[j]);
+                }
+                writer.endListing();
+            }
+            writer.endListing();
+        });
 }
 
 

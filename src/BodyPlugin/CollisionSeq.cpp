@@ -189,22 +189,22 @@ void CollisionSeq::writeCollsionData(YAMLWriter& writer, const CollisionLinkPair
 }
 
 
-bool CollisionSeq::doWriteSeq(YAMLWriter& writer)
+bool CollisionSeq::doWriteSeq(YAMLWriter& writer, std::function<void()> additionalPartCallback)
 {
-    if(!writeSeqHeaders(writer)){
-        return false;
-    }
+    return BaseSeqType::doWriteSeq(
+        writer,
+        [&](){
+            writer.putKeyValue("format", "PxPyPzNxNyNzD");
 
-    writer.putKeyValue("format", "PxPyPzNxNyNzD");
-
-    writer.putKey("frames");
-    writer.startListing();
-    
-    const int n = numFrames();
-    for(int i=0; i < n; ++i){
-        Frame f = frame(i);
-        writeCollsionData(writer, f[0]);
-    }
-    writer.endListing();
-    return true;
+            if(additionalPartCallback) additionalPartCallback();
+            
+            writer.putKey("frames");
+            writer.startListing();
+            const int n = numFrames();
+            for(int i=0; i < n; ++i){
+                Frame f = frame(i);
+                writeCollsionData(writer, f[0]);
+            }
+            writer.endListing();
+        });
 }

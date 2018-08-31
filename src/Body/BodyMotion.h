@@ -156,7 +156,7 @@ public:
 
 protected:
     virtual bool doReadSeq(const Mapping* archive, std::ostream& os) override;
-    virtual bool doWriteSeq(YAMLWriter& writer) override;
+    virtual bool doWriteSeq(YAMLWriter& writer, std::function<void()> additionalPartCallback) override;
         
 private:
     MultiSE3SeqPtr linkPosSeq_;

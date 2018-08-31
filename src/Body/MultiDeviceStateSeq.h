@@ -3,8 +3,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODY_MULTI_DEVICE_STATE_SEQ_H_INCLUDED
-#define CNOID_BODY_MULTI_DEVICE_STATE_SEQ_H_INCLUDED
+#ifndef CNOID_BODY_MULTI_DEVICE_STATE_SEQ_H
+#define CNOID_BODY_MULTI_DEVICE_STATE_SEQ_H
 
 #include "Device.h"
 #include <cnoid/MultiSeq>
@@ -28,7 +28,10 @@ public:
 
     using BaseSeqType::operator=;
     MultiDeviceStateSeq& operator=(const MultiDeviceStateSeq& rhs);
-    virtual AbstractSeqPtr cloneSeq() const;        
+    virtual AbstractSeqPtr cloneSeq() const;
+
+protected:
+    virtual bool doWriteSeq(YAMLWriter& writer, std::function<void()> additionalPartCallback) override;
 };
 
 typedef MultiDeviceStateSeq::Ptr MultiDeviceStateSeqPtr;

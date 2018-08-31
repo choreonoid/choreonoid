@@ -64,33 +64,26 @@ bool Vector3Seq::doReadSeq(const Mapping* archive, std::ostream& os)
 }
 
 
-bool Vector3Seq::doWriteSeq(YAMLWriter& writer)
+bool Vector3Seq::doWriteSeq(YAMLWriter& writer, std::function<void()> additionalPartCallback)
 {
-    return writeVector3SeqHeaders(writer) && writeVector3SeqFrames(writer);
-}
-
-
-bool Vector3Seq::writeVector3SeqHeaders(YAMLWriter& writer)
-{
-    return writeSeqHeaders(writer);
-}
-
-
-bool Vector3Seq::writeVector3SeqFrames(YAMLWriter& writer)
-{
-    writer.putKey("frames");
-    writer.startListing();
-    const int n = numFrames();
-    for(int i=0; i < n; ++i){
-        writer.startFlowStyleListing();
-        const Vector3& v = (*this)[i];
-        for(int j=0; j < 3; ++j){
-            writer.putScalar(v[j]);
-        }
-        writer.endListing();
-    }
-    writer.endListing();
-    return true;
+    return BaseSeqType::doWriteSeq(
+        writer,
+        [&](){
+            if(additionalPartCallback) additionalPartCallback();
+            
+            writer.putKey("frames");
+            writer.startListing();
+            const int n = numFrames();
+            for(int i=0; i < n; ++i){
+                writer.startFlowStyleListing();
+                const Vector3& v = (*this)[i];
+                for(int j=0; j < 3; ++j){
+                    writer.putScalar(v[j]);
+                }
+                writer.endListing();
+            }
+            writer.endListing();
+        });
 }
 
 
