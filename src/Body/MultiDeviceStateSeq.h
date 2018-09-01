@@ -32,6 +32,9 @@ public:
 
 protected:
     virtual bool doWriteSeq(YAMLWriter& writer, std::function<void()> additionalPartCallback) override;
+
+private:
+    void writeDeviceStateSeq(YAMLWriter& writer, int deviceIndex);
 };
 
 typedef MultiDeviceStateSeq::Ptr MultiDeviceStateSeqPtr;

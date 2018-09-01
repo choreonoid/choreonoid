@@ -100,8 +100,51 @@ bool MultiDeviceStateSeq::doWriteSeq(YAMLWriter& writer, std::function<void()> a
     return AbstractSeq::doWriteSeq(
         writer,
         [&](){
-
             if(additionalPartCallback) additionalPartCallback();
 
+            const int n = numFrames();
+            const int m = numParts();
+            if(n * m > 0){
+                writer.putKey("devices");
+                writer.startListing();
+                for(int i=0; i < m; ++i){
+                    writeDeviceStateSeq(writer, i);
+                }
+                writer.endListing();
+            }
         });
+}
+
+
+void MultiDeviceStateSeq::writeDeviceStateSeq(YAMLWriter& writer, int deviceIndex)
+{
+    auto seq = part(deviceIndex);
+    DeviceState* state = seq[0];
+    const int size = state->stateSize();
+    vector<double> buf(size);
+    writer.startMapping();
+    writer.putKeyValue("type", state->typeName());
+    state = nullptr;
+    
+    writer.putKey("frames");
+    writer.startListing();
+
+    double dt = timeStep();
+    const int numFrames = seq.size();
+    for(int i=0; i < numFrames; ++i){
+        if(seq[i] != state){
+            state = seq[i];
+            state->writeState(&buf.front());
+            writer.startFlowStyleListing();
+            writer.putScalar(dt * i);
+            for(int j=0; j < size; ++j){
+                writer.putScalar(buf[j]);
+            }
+            writer.endListing();
+        }
+    }
+
+    writer.endListing();
+
+    writer.endMapping();
 }
