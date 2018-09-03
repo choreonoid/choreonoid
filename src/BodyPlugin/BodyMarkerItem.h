@@ -26,6 +26,15 @@ public:
     virtual void setName(const std::string& name);
     virtual SgNode* getScene();
 
+    enum MarkerType {
+        CROSS_MARKER,
+        AXIS_ARROWS_MARKER,
+        N_MARKER_TYPES
+    };
+
+    void setMarkerType(int type);
+    void setMarkerSize(double size);
+    
 protected:
     virtual Item* doDuplicate() const;
     virtual void onPositionChanged();
