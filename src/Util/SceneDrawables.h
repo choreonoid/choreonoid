@@ -10,6 +10,7 @@
 #include "Image.h"
 #include <boost/variant.hpp>
 #include <memory>
+#include <initializer_list>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -157,10 +158,9 @@ public:
     typedef typename T::Scalar Scalar;
 
     SgVectorArray() { }
-
     SgVectorArray(size_t size) : values(size) { }
-
     SgVectorArray(const std::vector<T>& org) : values(org) { }
+    SgVectorArray(std::initializer_list<T> init) : values(init.begin(), init.end()) { }
 
     template<class Element>
     SgVectorArray(const std::vector<Element>& org) {
