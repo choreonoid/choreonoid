@@ -42,6 +42,8 @@ public:
         conePosition = new SgPosTransform();
         conePosition->addChild(cone);
         addChild(conePosition);
+
+        setVector(Vector3(0.0, 0.0, 0.0));
     }
 
     void setVector(const Vector3& v) {
@@ -50,10 +52,12 @@ public:
         cylinderPosition->setTranslation(Vector3(0.0, len / 2.0, 0.0));
         conePosition->setTranslation(Vector3(0.0, len, 0.0));
 
-        Vector3 axis = (Vector3::UnitY().cross(v)).normalized();
-        double angle = acos(Vector3::UnitY().dot(v) / len);
-        setRotation(AngleAxis(angle, axis));
-
+        if(len > 0.0){
+            Vector3 axis = (Vector3::UnitY().cross(v)).normalized();
+            double angle = acos(Vector3::UnitY().dot(v) / len);
+            setRotation(AngleAxis(angle, axis));
+        }
+            
         notifyUpdate(update);
     }
 };
