@@ -31,7 +31,7 @@ public:
 
     void clear();
 
-    void readHeader(Mapping& node);
+    void readHeader(Mapping& info);
 
     enum AngleUnit { DEGREE, RADIAN };
     void setAngleUnit(AngleUnit unit);
@@ -44,22 +44,22 @@ public:
     float toRadian(float angle) const {
         return isDegreeMode_ ? radian(angle) : angle;
     }
-    bool readAngle(const Mapping& node, const char* key, double& angle) const;
-    bool readAngle(const Mapping& node, const char* key, float& angle) const;
-    bool readRotation(const Mapping& node, Matrix3& out_R) const;
-    bool extractRotation(Mapping& node, Matrix3& out_R) const;
-    SgNode* readNode(Mapping& node);
-    SgNode* readNode(Mapping& node, const std::string& type);
-    SgNode* readNodeList(ValueNode& node);
+    bool readAngle(const Mapping& info, const char* key, double& angle) const;
+    bool readAngle(const Mapping& info, const char* key, float& angle) const;
+    bool readRotation(const Mapping& info, Matrix3& out_R) const;
+    bool extractRotation(Mapping& info, Matrix3& out_R) const;
+    SgNode* readNode(Mapping& info);
+    SgNode* readNode(Mapping& info, const std::string& type);
+    SgNode* readNodeList(ValueNode& info);
 
     struct Resource {
         SgNodePtr scene;
-        ValueNodePtr node;
+        ValueNodePtr info;
         std::string directory;
     };
-    Resource readResourceNode(Mapping& node);
+    Resource readResourceNode(Mapping& info);
     
-    SgObject* readObject(Mapping& node);
+    SgObject* readObject(Mapping& info);
 
     typedef std::function<std::string(const std::string& path, std::ostream& os)> UriSchemeHandler;
     
@@ -69,7 +69,7 @@ private:
     YAMLSceneReaderImpl* impl;
     friend class YAMLSceneReaderImpl;
     bool isDegreeMode_;
-    bool readRotation(const ValueNode* value, Matrix3& out_R) const;
+    bool readRotation(const ValueNode* info, Matrix3& out_R) const;
     AngleAxis readAngleAxis(const Listing& rotation) const;
 };
 

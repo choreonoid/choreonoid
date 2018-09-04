@@ -1546,12 +1546,12 @@ bool YAMLBodyLoaderImpl::readResource(Mapping& node)
         addScene(resource.scene);
         isSceneNodeAdded = true;
 
-    } else if(resource.node){
+    } else if(resource.info){
         string orgBaseDirectory = sceneReader.baseDirectory();
         sceneReader.setBaseDirectory(resource.directory);
 
         //isSceneNodeAdded = readElementContents(*resource.node);
-        ValueNodePtr resourceNode = resource.node;
+        ValueNodePtr resourceNode = resource.info;
         isSceneNodeAdded = readTransformContents(
             node,
             [this, resourceNode](Mapping&){
