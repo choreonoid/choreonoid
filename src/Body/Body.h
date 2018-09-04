@@ -56,6 +56,47 @@ public:
     void initializeState();
 
     /**
+       The number of all the links the body has.
+       The value corresponds to the size of the sequence obtained by link() function.
+    */
+    int numLinks() const {
+        return linkTraverse_.numLinks();
+    }
+
+    /**
+       This function returns the link of a given index in the whole link sequence.
+       The order of the sequence corresponds to a link-tree traverse from the root link.
+       The size of the sequence can be obtained by numLinks().
+    */
+    Link* link(int index) const {
+        return linkTraverse_.link(index);
+    }
+
+    /**
+       LinkTraverse object that traverses all the links from the root link
+    */
+    const LinkTraverse& linkTraverse() const {
+        return linkTraverse_;
+    }
+
+    const LinkTraverse& links() const {
+        return linkTraverse_;
+    }
+    
+    /**
+       This function returns a link object whose name of Joint node matches a given name.
+       Null is returned when the body has no joint of the given name.
+    */
+    Link* link(const std::string& name) const;
+
+    /**
+       The root link of the body
+    */
+    Link* rootLink() const {
+        return rootLink_;
+    }
+
+    /**
        The number of the links that are actual joints.
        The joints given joint ids are recognized as such joints.
        Note that the acutal value is the maximum joint ID plus one.
@@ -95,54 +136,25 @@ public:
         return jointIdToLinkArray[id];
     }
 
-    class JointAccessor {
-        typedef std::vector<LinkPtr> Container;
-        Container& joints;
-        size_t size;
+    template<class Container> class ContainerWrapper {
     public:
-        JointAccessor(std::vector<LinkPtr>& joints, size_t size) : joints(joints), size(size) { }
-        Container::iterator begin() { return joints.begin(); }
-        Container::iterator end() { return joints.begin() + size; }
+        typedef typename Container::iterator iterator;
+        ContainerWrapper(iterator begin, iterator end) : begin_(begin), end_(end) { }
+        iterator begin() { return begin_; }
+        iterator end() { return end_; }
+    private:
+        iterator begin_;
+        iterator end_;
     };
 
-    JointAccessor joints() { return JointAccessor(jointIdToLinkArray, numActualJoints); }
-    JointAccessor allJoints() { return JointAccessor(jointIdToLinkArray, jointIdToLinkArray.size()); }
-
-    /**
-       The number of all the links the body has.
-       The value corresponds to the size of the sequence obtained by link() function.
-    */
-    int numLinks() const {
-        return linkTraverse_.numLinks();
-    }
-
-    /**
-       This function returns the link of a given index in the whole link sequence.
-       The order of the sequence corresponds to a link-tree traverse from the root link.
-       The size of the sequence can be obtained by numLinks().
-    */
-    Link* link(int index) const {
-        return linkTraverse_.link(index);
-    }
-
-    /**
-       LinkTraverse object that traverses all the links from the root link
-    */
-    const LinkTraverse& linkTraverse() const {
-        return linkTraverse_;
+    ContainerWrapper<std::vector<LinkPtr>> joints() {
+        return ContainerWrapper<std::vector<LinkPtr>>(
+            jointIdToLinkArray.begin(), jointIdToLinkArray.begin() + numActualJoints);
     }
     
-    /**
-       This function returns a link object whose name of Joint node matches a given name.
-       Null is returned when the body has no joint of the given name.
-    */
-    Link* link(const std::string& name) const;
-
-    /**
-       The root link of the body
-    */
-    Link* rootLink() const {
-        return rootLink_;
+    ContainerWrapper<std::vector<LinkPtr>> allJoints() {
+        return ContainerWrapper<std::vector<LinkPtr>>(
+            jointIdToLinkArray.begin(), jointIdToLinkArray.end());
     }
 
     int numDevices() const {
