@@ -743,6 +743,15 @@ SgObject* SgSwitch::clone(SgCloneMap& cloneMap) const
 }
 
 
+void SgSwitch::setTurnedOn(bool on, bool doNotify)
+{
+    isTurnedOn_ = on;
+    if(doNotify){
+        notifyUpdate();
+    }
+}
+
+
 SgUnpickableGroup::SgUnpickableGroup()
     : SgGroup(findPolymorphicId<SgUnpickableGroup>())
 {
