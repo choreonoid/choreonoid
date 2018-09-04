@@ -5,15 +5,18 @@
 
 #include "BodyMarkerItem.h"
 #include <cnoid/ItemManager>
+#include <cnoid/MessageView>
 #include <cnoid/BodyItem>
 #include <cnoid/SceneGraph>
 #include <cnoid/MeshGenerator>
 #include <cnoid/Archive>
 #include <cnoid/EigenArchive>
+#include <boost/format.hpp>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
+using boost::format;
 
 namespace cnoid {
 
@@ -23,29 +26,32 @@ public:
     BodyMarkerItem* self;
     BodyItem* bodyItem;
     Link* targetLink;
-    string targetLinkName;
+    Position T_node;
+    Position localPosition;
     SgPosTransformPtr marker;
+    SgSwitchPtr markerSwitch;
+    SgMaterialPtr markerMaterial;
     SgUpdate markerUpdate;
-    Affine3 localPosition;
+    ScopedConnection connection;
+    string targetLinkName;
+    string targetNodeName;
     Selection markerType;
     double markerSize;
     Vector3f markerColor;
-    ScopedConnection connection;
+    MeshGenerator meshGenerator;
 
     BodyMarkerItemImpl(BodyMarkerItem* self);
     BodyMarkerItemImpl(BodyMarkerItem* self, const BodyMarkerItemImpl& org);
-    void setMarkerType(int type);
-    void setMarkerSize(double size);
     void updateMarker();
     void setCross();
+    void setSphere();
     void setAxisArrows();
     void setBodyItem(BodyItem* bodyItem);
-    void setTargetLink(const string& name);
-    void updateTargetLink();
+    bool updateTarget();
+    bool findNode();
+    bool findNode(SgNode* node, Affine3 T);
     void updateMarkerPosition();
     void doPutProperties(PutPropertyFunction& putProperty);
-    bool onTranslationPropertyChanged(const string& value);
-    bool onRPYPropertyChanged(const string& value);
     bool store(Archive& archive);
     bool restore(const Archive& archive);
 };
@@ -77,29 +83,41 @@ BodyMarkerItem::BodyMarkerItem(const BodyMarkerItem& org)
 
 BodyMarkerItemImpl::BodyMarkerItemImpl(BodyMarkerItem* self)
     : self(self),
-      markerType(BodyMarkerItem::N_MARKER_TYPES, CNOID_GETTEXT_DOMAIN_NAME),
-      markerColor(1.0f, 1.0f, 0.0f)
+      markerType(BodyMarkerItem::N_MARKER_TYPES, CNOID_GETTEXT_DOMAIN_NAME)
 {
     bodyItem = nullptr;
     targetLink = nullptr;
-    marker = new SgPosTransform;
     localPosition.setIdentity();
 
     markerType.setSymbol(BodyMarkerItem::CROSS_MARKER, N_("Cross"));
+    markerType.setSymbol(BodyMarkerItem::SPHERE_MARKER, N_("Sphere"));
     markerType.setSymbol(BodyMarkerItem::AXIS_ARROWS_MARKER, N_("Axis arrows"));
     markerType.select(BodyMarkerItem::CROSS_MARKER);
 
     markerSize = 0.1;
+    markerColor << 1.0f, 1.0f, 0.0f;
+
+    marker = new SgPosTransform;
+    markerSwitch = new SgSwitch;
+    markerSwitch->turnOff();
+    marker->addChild(markerSwitch);
+    markerMaterial = new SgMaterial;
+    markerMaterial->setDiffuseColor(Vector3f::Zero());
+    markerMaterial->setEmissiveColor(markerColor);
+    markerMaterial->setAmbientIntensity(0.0f);
 }
 
 
 BodyMarkerItemImpl::BodyMarkerItemImpl(BodyMarkerItem* self, const BodyMarkerItemImpl& org)
     : BodyMarkerItemImpl(self)
 {
+    targetLinkName = org.targetLinkName;
+    targetNodeName = org.targetNodeName;
     localPosition = org.localPosition;
     markerType = org.markerType;
     markerSize = org.markerSize;
     markerColor = org.markerColor;
+    markerMaterial->setEmissiveColor(markerColor);
 }
 
 
@@ -109,34 +127,68 @@ BodyMarkerItem::~BodyMarkerItem()
 }
 
 
-void BodyMarkerItem::setMarkerType(int type)
+void BodyMarkerItem::setName(const std::string& name)
 {
-    impl->setMarkerType(type);
+    Item::setName(name);
 }
 
 
-void BodyMarkerItemImpl::setMarkerType(int type)
+Item* BodyMarkerItem::doDuplicate() const
 {
-    if(type != markerType.which() || marker->empty()){
-        markerType.select(type);
-        updateMarker();
+    return new BodyMarkerItem(*this);
+}
+
+
+void BodyMarkerItem::onPositionChanged()
+{
+    impl->setBodyItem(findOwnerItem<BodyItem>());
+}
+
+
+void BodyMarkerItemImpl::setBodyItem(BodyItem* bodyItem)
+{
+    if(bodyItem != this->bodyItem){
+        this->bodyItem = bodyItem;
+        updateTarget();
+    }
+}
+
+
+SgNode* BodyMarkerItem::getScene()
+{
+    if(impl->markerSwitch->empty()){
+        impl->updateMarker();
+    }
+    return impl->marker;
+}
+
+
+void BodyMarkerItem::setMarkerType(int type)
+{
+    if(type != impl->markerType.which() || impl->marker->empty()){
+        impl->markerType.select(type);
+        impl->updateMarker();
     }
 }
 
 
 void BodyMarkerItem::setMarkerSize(double size)
 {
-    impl->setMarkerSize(size);
+    if(size != impl->markerSize){
+        impl->markerSize = size;
+        if(!impl->markerSwitch->empty()){
+            impl->updateMarker();
+        }
+    }
 }
 
 
-void BodyMarkerItemImpl::setMarkerSize(double size)
+void BodyMarkerItem::setMarkerColor(const Vector3f& color)
 {
-    if(size != markerSize){
-        markerSize = size;
-        if(!marker->empty()){
-            updateMarker();
-        }
+    if(color != impl->markerColor){
+        impl->markerColor = color;
+        impl->markerMaterial->setEmissiveColor(color);
+        impl->markerMaterial->notifyUpdate();
     }
 }
         
@@ -147,19 +199,21 @@ void BodyMarkerItemImpl::updateMarker()
     case BodyMarkerItem::CROSS_MARKER:
         setCross();
         break;
+    case BodyMarkerItem::SPHERE_MARKER:
+        setSphere();
+        break;
     case BodyMarkerItem::AXIS_ARROWS_MARKER:
         setAxisArrows();
         break;
     defautl:
         break;
     }
-    marker->notifyUpdate(markerUpdate);
 }
 
 
 void BodyMarkerItemImpl::setCross()
 {
-    marker->clearChildren();
+    markerSwitch->clearChildren();
 
     const float p = markerSize;
     auto vertices = new SgVertexArray {
@@ -178,23 +232,31 @@ void BodyMarkerItemImpl::setCross()
     lineSet->setLine(1, 2, 3);
     lineSet->setLine(2, 4, 5);
 
-    lineSet->setColors(new SgColorArray{ markerColor });
-    lineSet->colorIndices().resize(6, 0);
+    lineSet->setMaterial(markerMaterial);
 
-    marker->addChild(lineSet);
+    markerSwitch->addChild(lineSet, true);
+}
+
+
+void BodyMarkerItemImpl::setSphere()
+{
+    markerSwitch->clearChildren();
+    SgShape* shape = new SgShape;
+    shape->setMesh(meshGenerator.generateSphere(markerSize / 2.0));
+    shape->setMaterial(markerMaterial);
+    markerSwitch->addChild(shape, true);
 }
 
 
 void BodyMarkerItemImpl::setAxisArrows()
 {
-    marker->clearChildren();
+    markerSwitch->clearChildren();
 
     double r1 = markerSize * 0.1;
     double h1 = markerSize * 0.7;
     double r2 = markerSize * 0.2;
     double h2 = markerSize * 0.3;
     
-    MeshGenerator meshGenerator;
     SgMeshPtr mesh = meshGenerator.generateArrow(r1, h1, r2, h2);
     mesh->translate(Vector3f(0.0f, h1 / 2.0, 0.0f));
 
@@ -218,78 +280,122 @@ void BodyMarkerItemImpl::setAxisArrows()
             arrow->setRotation(AngleAxis( PI / 2.0, Vector3::UnitX()));
         }
 
-        marker->addChild(arrow);
+        markerSwitch->addChild(arrow, true);
     }
 }
 
 
-void BodyMarkerItem::setName(const std::string& name)
+bool BodyMarkerItem::setTargetLink(const std::string& name)
 {
-    Item::setName(name);
+    impl->targetLinkName = name;
+    return impl->updateTarget();
 }
 
 
-Item* BodyMarkerItem::doDuplicate() const
+bool BodyMarkerItem::setTargetNode(const std::string& name)
 {
-    return new BodyMarkerItem(*this);
+    impl->targetNodeName = name;
+    return impl->updateTarget();
 }
 
 
-SgNode* BodyMarkerItem::getScene()
+bool BodyMarkerItemImpl::updateTarget()
 {
-    if(impl->marker->empty()){
-        impl->updateMarker();
-    }
-    return impl->marker;
-}
+    targetLink = nullptr;
+    T_node.setIdentity();
+    connection.disconnect();
+    bool isValid = false;
 
+    if(bodyItem){
+        isValid = true; 
+        auto mv = MessageView::instance();
 
-void BodyMarkerItem::onPositionChanged()
-{
-    impl->setBodyItem(findOwnerItem<BodyItem>());
-}
-
-
-void BodyMarkerItemImpl::setBodyItem(BodyItem* bodyItem)
-{
-    if(bodyItem != this->bodyItem){
-        this->bodyItem = bodyItem;
-        updateTargetLink();
-        connection.disconnect();
-        if(bodyItem){
+        if(!targetLinkName.empty()){
+            targetLink = bodyItem->body()->link(targetLinkName);
+            if(!targetLink){
+                isValid = false;
+                mv->putln(MessageView::WARNING,
+                          format(_("Target link \"%1%\" of \"%2%\" is not found."))
+                          % targetLinkName % self->name());
+            }
+        }
+        if(isValid && !targetNodeName.empty()){
+            if(!findNode()){
+                targetLink = nullptr;
+                isValid = false;
+                mv->putln(MessageView::WARNING,
+                          format(_("Target node \"%1%\" of \"%2%\" is not found."))
+                          % targetNodeName % self->name());
+            }
+        }
+        if(isValid){
             connection.reset(
-                bodyItem->sigKinematicStateChanged().connect( [&](){ updateMarkerPosition(); } ));
+                bodyItem->sigKinematicStateChanged().connect(
+                    [&](){ updateMarkerPosition(); } ));
+            markerSwitch->turnOn();
             updateMarkerPosition();
         }
     }
+
+    if(!isValid){
+        markerSwitch->turnOff(true);
+    }
+
+    return isValid;
 }
 
 
-void BodyMarkerItemImpl::setTargetLink(const string& name)
+bool BodyMarkerItemImpl::findNode()
 {
-    targetLinkName = name;
-    updateTargetLink();
-}
-
-
-void BodyMarkerItemImpl::updateTargetLink()
-{
-    targetLink = nullptr;
-    if(bodyItem){
-        if(!targetLinkName.empty()){
-            targetLink = bodyItem->body()->link(targetLinkName);
-        }
-        if(!targetLink){
-            targetLink = bodyItem->body()->rootLink();
+    bool found = false;
+    if(targetLink){
+        found = findNode(targetLink->shape(), Affine3::Identity());
+    } else {
+        for(auto& link : bodyItem->body()->links()){
+            if(findNode(link->shape(), Affine3::Identity())){
+                targetLink = link;
+                found = true;
+                break;
+            }
         }
     }
+    return found;
 }
 
+
+bool BodyMarkerItemImpl::findNode(SgNode* node, Affine3 T)
+{
+    if(node->name() == targetNodeName){
+        T_node = T;
+        return true;
+    }
+    if(auto group = dynamic_cast<SgGroup*>(node)){
+        if(auto transform = dynamic_cast<SgTransform*>(node)){
+            Affine3 T0;
+            transform->getTransform(T0);
+            T = T * T0;
+        }
+        for(auto& child : *group){
+            if(findNode(child, T)){
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+
+void BodyMarkerItem::setOffsetPosition(const Position& T)
+{
+    impl->localPosition = T;
+    impl->updateMarkerPosition();
+}
+    
 
 void BodyMarkerItemImpl::updateMarkerPosition()
 {
-    if(marker){
-        marker->setPosition(targetLink->T() * localPosition);
+    if(targetLink && marker){
+        marker->setPosition(targetLink->T() * T_node * localPosition);
         marker->notifyUpdate(markerUpdate);
     }
 }
@@ -304,44 +410,50 @@ void BodyMarkerItem::doPutProperties(PutPropertyFunction& putProperty)
 void BodyMarkerItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Marker type"), markerType,
-                [&](int type){ setMarkerType(type); return true; });
-    putProperty(_("Marker size"), markerSize,
-                [&](double size){ setMarkerSize(size); return true; });
-    putProperty(_("Target link"), targetLinkName,
-                [&](const string& name){ setTargetLink(name); return true; });
+                [&](int type){ self->setMarkerType(type); return true; });
+
+    putProperty(_("Link"), targetLinkName,
+                [&](const string& name){ return self->setTargetLink(name); });
+
+    putProperty(_("Node"), targetNodeName,
+                [&](const string& name){ return self->setTargetNode(name); });
+
     putProperty(_("Translation"), str(Vector3(localPosition.translation())),
-                [&](const string& value){ return onTranslationPropertyChanged(value); });
+                [&](const string& value){
+                    Vector3 p;
+                    if(toVector3(value, p)){
+                        localPosition.translation() = p;
+                        updateMarkerPosition();
+                        return true;
+                    }
+                    return false;
+                });
 
     Vector3 rpy(TO_DEGREE * rpyFromRot(localPosition.linear()));
-    putProperty("RPY", str(rpy), [&](const string& value){ return onRPYPropertyChanged(value); });
+    putProperty("RPY", str(rpy), [&](const string& value){
+            Vector3 rpy;
+            if(toVector3(value, rpy)){
+                localPosition.linear() = rotFromRpy(TO_RADIAN * rpy);
+                updateMarkerPosition();
+                return true;
+            }
+            return false;
+        });
+
+    putProperty(_("Size"), markerSize,
+                [&](double size){ self->setMarkerSize(size); return true; });
+
+    putProperty(_("Color"), str(markerColor),
+                [&](const string& value){
+                    Vector3f color;
+                    if(toVector3(value, color)){
+                        self->setMarkerColor(color);
+                        return true;
+                    }
+                    return false;
+                });
 }
 
-
-bool BodyMarkerItemImpl::onTranslationPropertyChanged(const string& value)
-{
-    Vector3 p;
-    if(toVector3(value, p)){
-        localPosition.translation() = p;
-        marker->notifyUpdate();
-        self->notifyUpdate();
-        return true;
-    }
-    return false;
-}
-
-
-bool BodyMarkerItemImpl::onRPYPropertyChanged(const string& value)
-{
-    Vector3 rpy;
-    if(toVector3(value, rpy)){
-        localPosition.linear() = rotFromRpy(TO_RADIAN * rpy);
-        marker->notifyUpdate();
-        self->notifyUpdate();
-        return true;
-    }
-    return false;
-}
-    
 
 bool BodyMarkerItem::store(Archive& archive)
 {
@@ -352,10 +464,12 @@ bool BodyMarkerItem::store(Archive& archive)
 bool BodyMarkerItemImpl::store(Archive& archive)
 {
     archive.write("markerType", markerType.selectedSymbol(), DOUBLE_QUOTED);
-    archive.write("markerSize", markerSize);
-    archive.write("targetLink", targetLinkName, DOUBLE_QUOTED);
+    archive.write("link", targetLinkName, DOUBLE_QUOTED);
+    archive.write("node", targetNodeName, DOUBLE_QUOTED);
     write(archive, "translation", Vector3(localPosition.translation()));
     write(archive, "rotation", AngleAxis(localPosition.linear()));
+    archive.write("size", markerSize);
+    write(archive, "color", markerColor);
     return true;
 }
 
@@ -372,9 +486,9 @@ bool BodyMarkerItemImpl::restore(const Archive& archive)
     if(archive.read("markerType", symbol)){
         markerType.select(symbol);
     }
-    archive.read("markerSize", markerSize);
-    
-    archive.read("targetLink", targetLinkName);
+
+    archive.read("link", targetLinkName);
+    archive.read("node", targetNodeName);
 
     Vector3 translation;
     if(read(archive, "translation", translation)){
@@ -383,6 +497,13 @@ bool BodyMarkerItemImpl::restore(const Archive& archive)
     AngleAxis a;
     if(read(archive, "rotation", a)){
         localPosition.linear() = a.toRotationMatrix();
+    }
+
+    archive.read("size", markerSize);
+
+    Vector3f color;
+    if(read(archive, "color", color)){
+        self->setMarkerColor(color);
     }
 
     updateMarker();

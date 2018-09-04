@@ -8,6 +8,7 @@
 
 #include <cnoid/Item>
 #include <cnoid/SceneProvider>
+#include <cnoid/EigenTypes>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -26,15 +27,21 @@ public:
     virtual void setName(const std::string& name);
     virtual SgNode* getScene();
 
+    bool setTargetLink(const std::string& name);
+    bool setTargetNode(const std::string& name);
+    void setOffsetPosition(const Position& T);
+    
     enum MarkerType {
         CROSS_MARKER,
+        SPHERE_MARKER,
         AXIS_ARROWS_MARKER,
         N_MARKER_TYPES
     };
 
     void setMarkerType(int type);
     void setMarkerSize(double size);
-    
+    void setMarkerColor(const Vector3f& color);
+
 protected:
     virtual Item* doDuplicate() const;
     virtual void onPositionChanged();
