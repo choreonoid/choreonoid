@@ -1663,7 +1663,7 @@ void GL1SceneRendererImpl::renderPlot(SgPlot* plot, SgVertexArray& expandedVerti
         //glDisableClientState(GL_NORMAL_ARRAY);
         lastAlpha = 1.0;
         if(!plot->hasColors()){
-            setColor(material->diffuseColor());
+            setColor(material->diffuseColor() + material->emissiveColor());
         }
     } else if(!isPicking){
         enableCullFace(false);
