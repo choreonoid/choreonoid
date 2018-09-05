@@ -75,7 +75,7 @@ items:
               children: 
                 - 
                   id: 5
-                  name: "DoubleArmV7Controller_velocity"
+                  name: "DoubleArmV7Controller"
                   plugin: Body
                   class: SimpleControllerItem
                   data: 
