@@ -22,9 +22,9 @@ CNOID_PYTHON_DEFINE_GET_POINTER(MessageView)
 
 namespace {
 
-void (MessageView::*MessageView_put)(const std::string& message) = &MessageView::put;
-void (MessageView::*MessageView_putln)(const std::string& message) = &MessageView::putln;
-void (MessageView::*MessageView_notify)(const std::string& message) = &MessageView::notify;
+void (MessageView::*MessageView_put)(const std::string& message, int) = &MessageView::put;
+void (MessageView::*MessageView_putln)(const std::string& message, int) = &MessageView::putln;
+void (MessageView::*MessageView_notify)(const std::string& message, int) = &MessageView::notify;
 
 View* ViewManager_getOrCreateView1(const std::string& moduleName, const std::string& className){
     return ViewManager::getOrCreateView(moduleName, className);

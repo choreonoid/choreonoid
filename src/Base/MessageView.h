@@ -33,31 +33,39 @@ public:
 
     enum MessageType { NORMAL, ERROR, WARNING, HIGHLIGHT };
 
-    void put(const char* message);
-    void put(const std::string& message);
-    void put(const boost::format& message);
-    void put(const QString& message);
+    void put(const char* message, int type = NORMAL);
+    void put(const std::string& message, int type = NORMAL);
+    void put(const boost::format& message, int type = NORMAL);
+    void put(const QString& message, int type = NORMAL);
 
+    void putln();
+    void putln(const char* message, int type = NORMAL);
+    void putln(const std::string& message, int type = NORMAL);
+    void putln(const boost::format& message, int type = NORMAL);
+    void putln(const QString& message, int type = NORMAL);
+
+    void notify(const char* message, int type = NORMAL);
+    void notify(const std::string& message, int type = NORMAL);
+    void notify(const boost::format& message, int type = NORMAL);
+    void notify(const QString& message, int type = NORMAL);
+
+    //! \deprecated
     void put(int type, const char* message);
+    //! \deprecated
     void put(int type, const std::string& message);
+    //! \deprecated
     void put(int type, const boost::format& message);
+    //! \deprecated
     void put(int type, const QString& message);
     
-    void putln();
-    void putln(const char* message);
-    void putln(const std::string& message);
-    void putln(const boost::format& message);
-    void putln(const QString& message);
-
+    //! \deprecated
     void putln(int type, const char* message);
+    //! \deprecated
     void putln(int type, const std::string& message);
+    //! \deprecated
     void putln(int type, const boost::format& message);
+    //! \deprecated
     void putln(int type, const QString& message);
-
-    void notify(const char* message);
-    void notify(const std::string& message);
-    void notify(const boost::format& message);
-    void notify(const QString& message);
 
     int currentColumn();
         
