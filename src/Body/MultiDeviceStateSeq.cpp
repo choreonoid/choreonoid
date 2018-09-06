@@ -172,7 +172,8 @@ void MultiDeviceStateSeq::writeDeviceStateSeq(YAMLWriter& writer, int deviceInde
     }
     const int numFrames = validFrameIndices.size();
     writer.putKeyValue("numFrames", numFrames);
-    writer.putKeyValue("hasFrameTime", true);
+    const bool hasFrameTime = validFrameIndices.size() < seq.size();
+    writer.putKeyValue("hasFrameTime", hasFrameTime);
 
     writer.putKey("frames");
     writer.startListing();
@@ -182,7 +183,9 @@ void MultiDeviceStateSeq::writeDeviceStateSeq(YAMLWriter& writer, int deviceInde
         int index = validFrameIndices[i];
         seq[index]->writeState(&buf.front());
         writer.startFlowStyleListing();
-        writer.putScalar(dt * index);
+        if(hasFrameTime){
+            writer.putScalar(dt * index);
+        }
         for(int j=0; j < stateSize; ++j){
             writer.putScalar(buf[j]);
         }
