@@ -760,10 +760,9 @@ void SimulationBodyImpl::initializeResultItems()
     const int numDevices = deviceStateBuf.colSize();
     if(numDevices == 0 || !simImpl->isDeviceStateOutputEnabled){
         clearMultiDeviceStateSeq(*motion);
-
     } else {
         deviceStateResults = getOrCreateMultiDeviceStateSeq(*motion);
-        deviceStateResults->setNumParts(numDevices);
+        deviceStateResults->initialize(body_->devices());
     }
 }
 
