@@ -11,21 +11,21 @@ using namespace std;
 using namespace cnoid;
 
 namespace {
-static const string mdskey("MultiDeviceStateSeq");
+static const string contentName("MultiDeviceStateSeq");
 }
 
 
 MultiDeviceStateSeq::MultiDeviceStateSeq()
     : BaseSeqType("MultiDeviceStateSeq")
 {
-    setSeqContentName(mdskey);
+    setSeqContentName(contentName);
 }
 
 
 MultiDeviceStateSeq::MultiDeviceStateSeq(int numFrames, int numDevices)
     : BaseSeqType("MultiDeviceStateSeq", numFrames, numDevices)
 {
-    setSeqContentName(mdskey);
+    setSeqContentName(contentName);
 }
 
 
@@ -70,25 +70,25 @@ MultiDeviceStateSeq::~MultiDeviceStateSeq()
 
 const std::string& MultiDeviceStateSeq::key()
 {
-    return mdskey;
+    return contentName;
 }
 
 
 MultiDeviceStateSeqPtr cnoid::getMultiDeviceStateSeq(const BodyMotion& motion)
 {
-    return motion.extraSeq<MultiDeviceStateSeq>(mdskey);
+    return motion.extraSeq<MultiDeviceStateSeq>(contentName);
 }
 
 
 MultiDeviceStateSeqPtr cnoid::getOrCreateMultiDeviceStateSeq(BodyMotion& motion)
 {
-    return motion.getOrCreateExtraSeq<MultiDeviceStateSeq>(mdskey);
+    return motion.getOrCreateExtraSeq<MultiDeviceStateSeq>(contentName);
 }
 
 
 void cnoid::clearMultiDeviceStateSeq(BodyMotion& motion)
 {
-    motion.clearExtraSeq(mdskey);
+    motion.clearExtraSeq(contentName);
 }
 
 
@@ -125,7 +125,7 @@ const std::string& MultiDeviceStateSeq::partLabel(int partIndex) const
 
 bool MultiDeviceStateSeq::doWriteSeq(YAMLWriter& writer, std::function<void()> additionalPartCallback)
 {
-    double version = writer.info("formatVersion", 0.0);
+    double version = writer.info("formatVersion", 3.0);
     if(version >= 1.0 && version < 2.0){
         return false; // not supported for the format verions 1
     }
