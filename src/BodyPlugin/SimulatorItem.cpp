@@ -716,13 +716,24 @@ void SimulationBodyImpl::initializeResultBuffers()
         deviceStateBuf.clear();
         prevFlushedDeviceStateInDirectMode.clear();
     } else {
+        /**
+           Temporary code to avoid a bug in storing device states by reserving sufficient buffer size.
+           The original bug is in Deque2D's resize operation.
+        */
+        deviceStateBuf.resize(100, numDevices); 
+        
         // This buf always has the first element to keep unchanged states
         deviceStateBuf.resize(1, numDevices); 
         prevFlushedDeviceStateInDirectMode.resize(numDevices);
         for(size_t i=0; i < devices.size(); ++i){
             deviceStateConnections.add(
                 devices[i]->sigStateChanged().connect(
-                    [this, i](){ deviceStateChangeFlag[i] = true; }));
+                    [this, i](){
+                        /** \note This must be thread safe
+                            if notifyStateChange is called from several threads.
+                        */
+                        deviceStateChangeFlag[i] = true;
+                    }));
         }
     }
 }
