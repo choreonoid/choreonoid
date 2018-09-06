@@ -71,13 +71,10 @@ links:
     parent: BASE
     translation: [ 0, 0, 0.1565 ]
     jointType: revolute
+    jointId: 0
     jointAxis: [ 0, 0, -1 ]
     jointRange: [ -10000, 10000 ]
-    jointLockCompliance: 0.00096963
-    jointLockSpookDamping: 0.1
-    jointLockForceRange: [ -18.0, 18.0 ]
     jointVelocityRange: [ -42.0, 42.0 ]
-    jointId: 0
     centerOfMass: [ 0, -0.002, 0.0605 ]
     mass: 0.7477
     inertia: [
@@ -86,6 +83,11 @@ links:
       0,        0,        0.000598
     ]
     rotorInertia: 0.2
+    # AGX parameters
+    jointMotorForceRange: [ -18.0, 18.0 ]
+    jointLockForceRange: [ -18.0, 18.0 ]
+    jointLockCompliance: 0.00096963
+    jointLockSpookDamping: 0.1
     elements:
       -
         type: Visual
@@ -121,14 +123,11 @@ links:
     parent: SHOULDER
     translation: [ 0, 0.0015, 0.119 ]
     jointType: revolute
-    jointAxis: [ 0, -1, 0 ]
-    jointRange: [ 50, 310 ]
-    jointAngle: 180
-    jointLockCompliance: 0.00047171
-    jointLockSpookDamping: 0.1
-    jointLockForceRange: [ -37.0, 37.0 ]
-    jointVelocityRange: [ -56.4, 56.4 ]
     jointId: 1
+    jointAxis: [ 0, -1, 0 ]
+    jointAngle: 180
+    jointRange: [ 50, 310 ]
+    jointVelocityRange: [ -56.4, 56.4 ]
     centerOfMass: [ 0, 0.01, -0.02065 ]
     mass: 0.99
     inertia: [
@@ -137,6 +136,11 @@ links:
       0,        0,        0.000792
     ]
     rotorInertia: 0.2
+    # AGX parameters
+    jointMotorForceRange: [ -37.0, 37.0 ]
+    jointLockForceRange: [ -37.0, 37.0 ]
+    jointLockCompliance: 0.00047171
+    jointLockSpookDamping: 0.1
     elements:
       -
         type: Visual
@@ -171,14 +175,11 @@ links:
     parent: ARM
     translation: [ 0, 0, -0.410 ]
     jointType: revolute
-    jointAxis: [ 0, 1, 0 ]
-    jointRange: [ 19, 341 ]
-    jointAngle: 180
-    jointLockCompliance: 0.00096963
-    jointLockSpookDamping: 0.1
-    jointLockForceRange: [ -18.0, 18.0 ]
-    jointVelocityRange: [ -42.0, 42.0 ]
     jointId: 2
+    jointAxis: [ 0, 1, 0 ]
+    jointAngle: 180
+    jointRange: [ 19, 341 ]
+    jointVelocityRange: [ -42.0, 42.0 ]
     centerOfMass: [ 0, -0.0086, 0.081 ]
     mass: 0.6763
     inertia: [
@@ -187,6 +188,11 @@ links:
       0,       0,       0.000304
     ]
     rotorInertia: 0.1
+    # AGX parameters
+    jointMotorForceRange: [ -18.0, 18.0 ]
+    jointLockForceRange: [ -18.0, 18.0 ]
+    jointLockCompliance: 0.00096963
+    jointLockSpookDamping: 0.1
     elements:
       -
         type: Visual
@@ -221,14 +227,16 @@ links:
     parent: FOREARM
     translation: [ 0, -0.01125, 0.207 ]
     jointType: revolute
+    jointId: 3
     jointAxis: [ 0, 0, -1 ]
     jointRange: [ -10000, 10000 ]
+    jointVelocityRange: [ -90.0, 90.0 ]
+    rotorInertia: 0.05
+    # AGX parameters
+    jointMotorForceRange: [ -6.8, 6.8 ]
+    jointLockForceRange: [ -6.8, 6.8 ]
     jointLockCompliance: 0.00256666
     jointLockSpookDamping: 0.1
-    jointLockForceRange: [ -6.8, 6.8 ]
-    jointVelocityRange: [ -90.0, 90.0 ]
-    jointId: 3
-    rotorInertia: 0.05
     elements: &WRIST_elements
       RigidBody:
         centerOfMass: [ 0, 0.037, 0.0642 ]
@@ -279,14 +287,16 @@ links:
     translation: [ 0, 0.03725, 0.06401 ]
     rotation: [ [ -1, 0, 0, 60 ], [ 0, 0, 1, 180 ] ]
     jointType: revolute
+    jointId: 4
     jointAxis: [ 0, 0, -1 ]
     jointRange: [ -10000, 10000 ]
+    jointVelocityRange: [ -90.0, 90.0 ]
+    rotorInertia: 0.05
+    # AGX parameters
+    jointMotorForceRange: [ -6.8, 6.8 ]
+    jointLockForceRange: [ -6.8, 6.8 ]
     jointLockCompliance: 0.00256666
     jointLockSpookDamping: 0.1
-    jointLockForceRange: [ -6.8, 6.8 ]
-    jointVelocityRange: [ -90.0, 90.0 ]
-    jointId: 4
-    rotorInertia: 0.05
     elements: *WRIST_elements
   -
     name: HAND
@@ -294,13 +304,10 @@ links:
     translation: [ 0, 0.03725, 0.06401 ]
     rotation: [ [ -1, 0, 0, 60 ], [ 0, 0, 1, 90 ] ]
     jointType: revolute
+    jointId: 5
     jointAxis: [ 0, 0, -1 ]
     jointRange: [ -10000, 10000 ]
-    jointLockCompliance: 0.00256666
-    jointLockSpookDamping: 0.1
-    jointLockForceRange: [ -6.8, 6.8 ]
     jointVelocityRange: [ -90.0, 90.0 ]
-    jointId: 5
     centerOfMass: [ 0, 0, 0.06 ]
     mass: 0.727
     inertia: [
@@ -309,6 +316,11 @@ links:
       0,           0,           0.000582
     ]
     rotorInertia: 0.05
+    # AGX parameters
+    jointMotorForceRange: [ -6.8, 6.8 ]
+    jointLockForceRange: [ -6.8, 6.8 ]
+    jointLockCompliance: 0.00256666
+    jointLockSpookDamping: 0.1
     elements:
       -
         type: Visual
@@ -416,29 +428,26 @@ links:
     translation: [ 0.03116, 0, 0.11498 ]
     rotation: [ [ 0, 0, 1, 180 ], [ 0, -1, 0, 55 ] ]
     jointType: revolute
-    jointAxis: [ 0, 1, 0 ]
-    jointRange: [ 0, 115 ]
-    jointAngle: 55
-    jointLockCompliance: 0.636318
-    jointLockSpookDamping: 0.1
-    jointLockForceRange: [ -0.96, 0.96 ]
-    jointVelocityRange: [ -95.0, 95.0 ]
     jointId: 6
+    jointAxis: [ 0, 1, 0 ]
+    jointAngle: 55
+    jointRange: [ 0, 115 ]
+    jointVelocityRange: [ -95.0, 95.0 ]
     rotorInertia: 0.005
     material: Hand
+    # AGX parameters
+    jointMotorForceRange: [ -0.96, 0.96 ]
+    jointLockForceRange: [ -0.96, 0.96 ]
+    jointLockCompliance: 0.636318
+    jointLockSpookDamping: 0.1
     elements: &FINGER_elements
       RigidBody:
         centerOfMass: [ 0, 0, 0.022 ]
-        mass: 0.08 # Original value is 0.01, but it causes the penetration into environmental objects with AGX
-        # Original
-        #inertia: [
-        #  0.000000789997, 0,          0,
-        #  0,              0.00000008, 0,
-        #  0,              0,          0.000000789997 ]
+        mass: 0.01
         inertia: [
-          0.0001, 0,      0,
-          0,      0.0001, 0,
-          0,      0,      0.0001 ]
+          0.000000789997, 0,          0,
+          0,              0.00000008, 0,
+          0,              0,          0.000000789997 ]
         elements:
           -
             type: Visual
@@ -509,17 +518,11 @@ links:
     elements: &FINGER_TIP_elements
       RigidBody:
         centerOfMass: [ 0, 0, 0.022 ]
-        mass: 0.08 # Original value is 0.01, but it causes the penetration into environmental objects with AGX
-        # Original
-        #inertia: [
-        #  0.000000789997, 0,          0,
-        #  0,              0.00000008, 0,
-        #  0,              0,          0.000000789997 ]
+        mass: 0.01
         inertia: [
-          0.0001, 0,      0,
-          0,      0.0001, 0,
-          0,      0,      0.0001 ]
-
+          0.000000789997, 0,          0,
+          0,              0.00000008, 0,
+          0,              0,          0.000000789997 ]
         elements:
           -
             type: Visual
@@ -603,16 +606,18 @@ links:
     translation: [ -0.02982, 0.02277, 0.1139 ]
     rotation: [ [ 0, 0, -1, 10.6 ], [ 0, -1, 0, 55 ] ]
     jointType: revolute
-    jointAxis: [ 0, 1, 0 ]
-    jointRange: [ 0, 115 ]
-    jointAngle: 55
-    jointLockCompliance: 0.636318
-    jointLockSpookDamping: 0.1
-    jointLockForceRange: [ -0.96, 0.96 ]
-    jointVelocityRange: [ -95.0, 95.0 ]
     jointId: 7
+    jointAxis: [ 0, 1, 0 ]
+    jointAngle: 55
+    jointRange: [ 0, 115 ]
+    jointVelocityRange: [ -95.0, 95.0 ]
     rotorInertia: 0.005
     material: Hand
+    # AGX parameters
+    jointMotorForceRange: [ -0.96, 0.96 ]
+    jointLockForceRange: [ -0.96, 0.96 ]
+    jointLockCompliance: 0.636318
+    jointLockSpookDamping: 0.1
     elements: *FINGER_elements
   -
     name: FINGER2_TIP
@@ -631,15 +636,17 @@ links:
     rotation: [ [ 0, 0, 1, 10.6 ], [ 0, -1, 0, 55 ] ]
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
-    jointRange: [ 0, 115 ]
-    jointAngle: 55
-    jointLockCompliance: 0.636318
-    jointLockSpookDamping: 0.1
-    jointLockForceRange: [ -0.96, 0.96 ]
-    jointVelocityRange: [ -95.0, 95.0 ]
     jointId: 8
+    jointAngle: 55
+    jointRange: [ 0, 115 ]
     rotorInertia: 0.005
     material: Hand
+    # AGX parameters
+    jointMotorForceRange: [ -0.96, 0.96 ]
+    jointLockForceRange: [ -0.96, 0.96 ]
+    jointLockCompliance: 0.636318
+    jointLockSpookDamping: 0.1
+    jointVelocityRange: [ -95.0, 95.0 ]
     elements: *FINGER_elements
   -
     name: FINGER3_TIP

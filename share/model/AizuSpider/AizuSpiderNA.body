@@ -203,6 +203,9 @@ links:
     jointAxis: [ 0, -1, 0 ]
     jointId: 0
     gearRatio: 2090
+    # AGX parameters
+    jointMotorForceRange: [ -200, 200 ]
+    jointLockForceRange: [ -200, 200 ]
     elements: &FLIPPER_ELEMENTS
 
       - # Flipper Body
@@ -263,6 +266,9 @@ links:
     jointAxis: [ 0, -1, 0 ]
     jointId: 1
     gearRatio: 2090
+    # AGX parameters
+    jointMotorForceRange: [ -200, 200 ]
+    jointLockForceRange: [ -200, 200 ]
     elements: *FLIPPER_ELEMENTS
 
   - # Front Left Sub Belt Drive Pully
@@ -313,6 +319,9 @@ links:
     jointAxis: [ 0, 1, 0 ]
     jointId: 2
     gearRatio: 2090
+    # AGX parameters
+    jointMotorForceRange: [ -200, 200 ]
+    jointLockForceRange: [ -200, 200 ]
     elements:
       Transform:
         rotation: [ 0, 0, 1, 180 ]
@@ -366,6 +375,9 @@ links:
     jointAxis: [ 0, 1, 0 ]
     jointId: 3
     gearRatio: 2090
+    # AGX parameters
+    jointMotorForceRange: [ -200, 200 ]
+    jointLockForceRange: [ -200, 200 ]
     elements:
       Transform:
         rotation: [ 0, 0, 1, 180 ]

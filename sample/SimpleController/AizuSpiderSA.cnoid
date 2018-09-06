@@ -101,6 +101,30 @@ items:
             isEditable: false
         - 
           id: 7
+          name: "AGXSimulator-Position"
+          plugin: AGXDynamics
+          class: AGXSimulatorItem
+          data: 
+            timestep: 0.005
+            realtimeSync: true
+            recording: "full"
+            timeRangeMode: "Unlimited"
+            timeLength: 180
+            allLinkPositionOutputMode: true
+            deviceStateOutput: true
+            controllerThreads: true
+            recordCollisionData: false
+            controllerOptions: "position"
+            Gravity: [ 0, 0, -9.80665 ]
+            NumThreads: 4
+            ContactReduction: true
+            ContactReductionBinResolution: 3
+            ContactReductionThreshhold: 12
+            ContactWarmstarting: false
+            AutoSleep: false
+            SaveToAGXFileOnStart: false
+        - 
+          id: 8
           name: "AGXSimulator-Velocity"
           plugin: AGXDynamics
           class: AGXSimulatorItem
@@ -124,7 +148,7 @@ items:
             AutoSleep: false
             SaveToAGXFileOnStart: false
         - 
-          id: 8
+          id: 9
           name: "AGXSimulator-Torque"
           plugin: AGXDynamics
           class: AGXSimulatorItem
@@ -387,7 +411,7 @@ viewAreas:
                 - 
                   type: pane
                   views: [ 6, 7, 4 ]
-                  current: 7
+                  current: 6
                 - 
                   type: pane
                   views: [ 3 ]
