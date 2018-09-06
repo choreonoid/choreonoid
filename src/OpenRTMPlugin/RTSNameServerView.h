@@ -1,14 +1,11 @@
 #ifndef CNOID_OPENRTM_PLUGIN_RTS_NAME_SERVER_VIEW_H
 #define CNOID_OPENRTM_PLUGIN_RTS_NAME_SERVER_VIEW_H
 
-#include "OpenRTMItem.h"
+#include "RTCWrapper.h"
 #include <cnoid/CorbaUtil>
 #include <cnoid/TreeWidget>
 #include <cnoid/MenuManager>
-#include <cnoid/Dialog>
 #include <cnoid/View>
-#include <QComboBox>
-#include <QTextEdit>
 
 namespace cnoid {
 
@@ -25,16 +22,12 @@ public:
     virtual ~RTSNameServerView();
 
     SignalProxy<void(const std::list<NamingContextHelper::ObjectInfo>&)> sigSelectionChanged();
-    SignalProxy<void(std::string, int)> sigLocationChanged();
 
     std::list<NamingContextHelper::ObjectInfo> getSelection();
 
     //Proxy to RTSNameServerViewImpl
-    const std::string getHost();
-    int getPort();
     void updateView();
     void setSelection(std::string RTCname, std::string RTCfullPath);
-    NamingContextHelper getNCHelper();
 
 protected:
     virtual void onActivated() override;
@@ -67,10 +60,13 @@ private:
     void finalizeComponent();
     void startExecutionContext();
     void stopExecutionContext();
+
+    void restartManager();
+    void shutdownManager();
 };
 
 
-enum CORBA_KIND { KIND_CATEGORY, KIND_HOST, KIND_MANAGER, KIND_MODULE, KIND_SERVER, KIND_RTC, KIND_FOLDER, KIND_OTHER };
+enum CORBA_KIND { KIND_CATEGORY, KIND_HOST, KIND_MANAGER, KIND_RTC_MANAGER, KIND_MODULE, KIND_SERVER, KIND_RTC, KIND_FOLDER, KIND_OTHER };
 
 
 class RTSVItem : public QTreeWidgetItem, public RTCWrapper
@@ -81,41 +77,7 @@ public:
 
     NamingContextHelper::ObjectInfo info_;
     CORBA_KIND kind_;
-};
-
-
-class AddContextDialog : public Dialog
-{
-    Q_OBJECT
-public:
-    AddContextDialog(RTSVItem* target);
-
-private Q_SLOTS:
-    void okClicked();
-
-private:
-    RTSVItem * target_;
-
-    QLineEdit* nameEdit_;
-    QComboBox* kindCombo_;
-};
-
-
-class AddObjectDialog : public Dialog
-{
-    Q_OBJECT
-public:
-    AddObjectDialog(RTSVItem* target);
-
-private Q_SLOTS:
-    void okClicked();
-
-private:
-    RTSVItem * target_;
-
-    QLineEdit* nameEdit_;
-    QLineEdit* kindEdit_;
-    QTextEdit* iorText_;
+    bool removing_;
 };
 
 }

@@ -397,60 +397,54 @@ bool BodyMotion::doReadSeq(const Mapping* archive, std::ostream& os)
 }
 
 
-bool BodyMotion::doWriteSeq(YAMLWriter& writer)
+bool BodyMotion::doWriteSeq(YAMLWriter& writer, std::function<void()> additionalPartCallback)
 {
-    double version = writer.info("formatVersion", 2.0);
+    double version = writer.getOrCreateInfo("formatVersion", 2.0);
     bool isVersion1 = version >= 1.0 && version < 2.0;
-
-    writer.setInfo("formatVersion", version);
-
-    writer.setDoubleFormat("%.9g");
-
     if(isVersion1){
         writer.putComment("Body motion data set format version 1.0 defined by Choreonoid\n");
-        writer.putKeyValue("type", "BodyMotion");
-    } else {
-        if(!AbstractSeq::writeSeqHeaders(writer)){
-            return false;
-        }
+        setSeqType("BodyMotion");
     }
-        
-    writer.putKey("components");
-    writer.setInfo("isComponent", true);
+    
+    return AbstractSeq::doWriteSeq(
+        writer,
+        [&](){
+            writer.setDoubleFormat("%.9g");
 
-    writer.startListing();
+            if(additionalPartCallback) additionalPartCallback();
 
-    if(linkPosSeq_->numFrames() > 0){
-        if(!linkPosSeq_->writeSeq(writer)){
-            return false;
-        }
+            writer.putKey("components");
+            writer.setInfo("isComponent", true);
+
+            writer.startListing();
+
+            if(linkPosSeq_->numFrames() > 0){
+                linkPosSeq_->writeSeq(writer);
+            }
+
+            if(jointPosSeq_->numFrames() > 0){
+                string orgContentName;
+                if(isVersion1){
+                    orgContentName = jointPosSeq_->seqContentName();
+                    jointPosSeq_->setSeqContentName("JointPosition");
+                }
+                jointPosSeq_->writeSeq(writer);
+                if(isVersion1){
+                    jointPosSeq_->setSeqContentName(orgContentName);
+                }
+            }
+            
+            for(ExtraSeqMap::iterator p = extraSeqs.begin(); p != extraSeqs.end(); ++p){
+                AbstractSeqPtr& seq = p->second;
+                seq->writeSeq(writer);
+            }
+            
+            writer.endListing();
+        });
+
+    if(isVersion1){
+        setSeqType("CompositeSeq");
     }
-
-    if(jointPosSeq_->numFrames() > 0){
-        string orgContentName;
-        if(isVersion1){
-            orgContentName = jointPosSeq_->seqContentName();
-            jointPosSeq_->setSeqContentName("JointPosition");
-        }
-        bool result = jointPosSeq_->writeSeq(writer);
-        if(isVersion1){
-            jointPosSeq_->setSeqContentName(orgContentName);
-        }
-        if(!result){
-            return false;
-        }
-    }
-
-    for(ExtraSeqMap::iterator p = extraSeqs.begin(); p != extraSeqs.end(); ++p){
-        AbstractSeqPtr& seq = p->second;
-        if(!seq->writeSeq(writer)){
-            return false;
-        }
-    }
-
-    writer.endListing();
-
-    return true;
 }
 
 

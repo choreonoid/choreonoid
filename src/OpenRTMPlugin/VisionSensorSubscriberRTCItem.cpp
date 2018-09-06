@@ -4,17 +4,19 @@
 */
 
 #include "VisionSensorSubscriberRTCItem.h"
+#include <cnoid/BodyItem>
+#include <cnoid/RangeCamera>
+#include <cnoid/RangeSensor>
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
 #include <cnoid/Config>
-#include <cnoid/RangeCamera>
-#include <cnoid/RangeSensor>
 #include <cnoid/MessageView>
 #include <cnoid/OpenRTMUtil>
 #include <cnoid/LazyCaller>
 #include <rtm/DataFlowComponentBase.h>
 #include <rtm/DataInPort.h>
 #include <rtm/idl/InterfaceDataTypes.hh>
+#include <cnoid/corba/PointCloud.hh>
 
 #ifdef USE_BUILTIN_CAMERA_IMAGE_IDL
 # include "deprecated/corba/CameraImage.hh"
@@ -33,86 +35,85 @@ using namespace cnoid;
 
 namespace {
 
-class CameraInPort
+class SubscriberRTC;
+
+class InputBase : public Referenced
 {
 public:
-    RTC::InPort<Img::TimedCameraImage> inPort;
-    Img::TimedCameraImage timedCameraImage;
-    string portName;
+    virtual void read() = 0;
+};
+
+typedef ref_ptr<InputBase> InputBasePtr;
+    
+class CameraImageInput : public InputBase
+{
+public:
     CameraPtr camera;
+    RTC::InPort<Img::TimedCameraImage> port;
+    Img::TimedCameraImage timedCameraImage;
 
-    CameraInPort(Camera* camera, const string& name)
-        : inPort(name.c_str(), timedCameraImage),
-          portName(name),
-          camera(camera) { }
+    CameraImageInput(SubscriberRTC* rtc, Camera* camera);
+    void read();
+    shared_ptr<Image> createImageFromRawData(Img::ImageData& srcImage, int numComponents);
+    shared_ptr<Image> createImageFromImageFormat(Img::ImageData& srcImage);
 };
-typedef std::shared_ptr<CameraInPort> CameraInPortPtr;
 
-class RangeDataInPort
+typedef ref_ptr<CameraImageInput> CameraImageInputPtr;
+
+
+class PointCloudInput : public InputBase
 {
 public:
-    RTC::InPort<RTC::RangeData> inPort;
-    RTC::RangeData timedRangeData;
-    string portName;
-    RangeSensorPtr rangeSensor;
+    RangeCameraPtr rangeCamera;
+    int pointCloudPortType;
+    RTC::InPort<PointCloudTypes::PointCloud> port1;
+    PointCloudTypes::PointCloud pointCloud1;
+    RTC::InPort<RTC::PointCloud> port2;
+    RTC::PointCloud pointCloud2;
 
-    RangeDataInPort(RangeSensor* rangeSensor, const string& name)
-        : inPort(name.c_str(), timedRangeData),
-          portName(name),
-          rangeSensor(rangeSensor) { }
+    struct PointCloudField {
+        unsigned long offset;
+        PointCloudTypes::DataType type;
+        unsigned long count;
+    };
+    std::map<string, PointCloudField> pointCloudField;
+
+    PointCloudInput(SubscriberRTC* rtc, RangeCamera* rangeCamera, int pointCloudPortType);
+    void read();
+    void read1();
+    float readFloatPointCloudData(unsigned char* src, PointCloudField& fe, bool is_bigendian);
+    void read2();
 };
-typedef std::shared_ptr<RangeDataInPort> RangeDataInPortPtr;
 
+typedef ref_ptr<PointCloudInput> PointCloudInputPtr;
+
+
+class RangeDataInput : public InputBase
+{
+public:
+    RangeSensorPtr rangeSensor;
+    RTC::InPort<RTC::RangeData> port;
+    RTC::RangeData timedRangeData;
+
+    RangeDataInput(SubscriberRTC* rtc, RangeSensor* rangeSensor);
+    void read();
+};
+
+typedef ref_ptr<RangeDataInput> RangeDataInputPtr;
 
 class SubscriberRTC : public RTC::DataFlowComponentBase
 {
 public:
-    typedef map<string, RangeDataInPortPtr> RangeDataInPortMap;
-    RangeDataInPortMap rangeDataInPorts;
-
-    typedef map<string, CameraInPortPtr> CameraInPortMap;
-    CameraInPortMap cameraInPorts;
-
-    static void registerFactory(RTC::Manager* manager, const char* componentTypeName);
-
+    vector<InputBasePtr> inputs;
+    
     SubscriberRTC(RTC::Manager* manager);
-    ~SubscriberRTC(){ };
-
-    bool createPort(
-        DeviceList<RangeSensor> rangeSensors, vector<string> rangeSensorPortNames,
-        DeviceList<Camera> cameras, vector<string> cameraPortNames );
-
+    void createInPorts(Body* body, int pointCloudPortType);
     virtual RTC::ReturnCode_t onInitialize();
     virtual RTC::ReturnCode_t onActivated(RTC::UniqueId ec_id);
     virtual RTC::ReturnCode_t onDeactivated(RTC::UniqueId ec_id);
     virtual RTC::ReturnCode_t onExecute(RTC::UniqueId ec_id);
 };
 
-}
-
-
-void SubscriberRTC::registerFactory(RTC::Manager* manager, const char* componentTypeName)
-{
-  static const char* pointCloudIORTC_spec[] = {
-    "implementation_id", "VisionSensorSubscriber",
-    "type_name",         "VisionSensorSubscriber",
-    "description",       "This component is the pointCloud visualization component.",
-    "version",           CNOID_VERSION_STRING,
-    "vendor",            "AIST",
-    "category",          "choreonoid",
-    "activity_type",     "DataFlowComponent",
-    "max_instance",      "10",
-    "language",          "C++",
-    "lang_type",         "compile",
-    "conf.default.debugLevel", "0",
-    ""
-  };
-
-  RTC::Properties profile(pointCloudIORTC_spec);
-  profile.setDefault("type_name", componentTypeName);
-  manager->registerFactory(profile,
-                           RTC::Create<SubscriberRTC>,
-                           RTC::Delete<SubscriberRTC>);
 }
 
 
@@ -123,29 +124,27 @@ SubscriberRTC::SubscriberRTC(RTC::Manager* manager)
 }
 
 
-bool SubscriberRTC::createPort(
-    DeviceList<RangeSensor> rangeSensors, vector<string> rangeSensorPortNames,
-    DeviceList<Camera> cameras, vector<string> cameraPortNames)
+void SubscriberRTC::createInPorts(Body* body, int pointCloudPortType)
 {
-    bool ret = true;
+    DeviceList<> devices = body->devices();
+    
+    DeviceList<Camera> cameras(devices);
 
-    for(size_t i=0; i<rangeSensors.size(); i++){
-        RangeDataInPort* rangeDataInPort = new RangeDataInPort(rangeSensors[i], rangeSensorPortNames[i]);
-        if(!addInPort(rangeDataInPort->portName.c_str(), rangeDataInPort->inPort))
-            ret = false;
-        else
-            rangeDataInPorts.insert(make_pair(rangeDataInPort->portName, RangeDataInPortPtr(rangeDataInPort)));
+    for(size_t i=0; i < cameras.size(); ++i){
+        auto camera = cameras[i];
+        if(camera->imageType() != Camera::NO_IMAGE){
+            inputs.push_back(new CameraImageInput(this, camera));
+        }
+        auto rangeCamera = dynamic_pointer_cast<RangeCamera>(camera);
+        if(rangeCamera){
+            inputs.push_back(new PointCloudInput(this, rangeCamera, pointCloudPortType));
+        }
     }
 
-    for(size_t i=0; i < cameras.size(); i++){
-        CameraInPort* cameraInPort = new CameraInPort(cameras[i], cameraPortNames[i]);
-        if(!addInPort(cameraInPort->portName.c_str(), cameraInPort->inPort))
-            ret = false;
-        else
-            cameraInPorts.insert(make_pair(cameraInPort->portName, CameraInPortPtr(cameraInPort)));
+    DeviceList<RangeSensor> rangeSensors(devices);
+    for(size_t i=0; i < rangeSensors.size(); ++i){
+        inputs.push_back(new RangeDataInput(this, rangeSensors[i]));
     }
-
-    return ret;
 }
 
 
@@ -160,6 +159,7 @@ RTC::ReturnCode_t SubscriberRTC::onActivated(RTC::UniqueId ec_id)
     return RTC::RTC_OK;
 }
 
+
 RTC::ReturnCode_t SubscriberRTC::onDeactivated(RTC::UniqueId ec_id)
 {
     return RTC::RTC_OK;
@@ -168,67 +168,306 @@ RTC::ReturnCode_t SubscriberRTC::onDeactivated(RTC::UniqueId ec_id)
 
 RTC::ReturnCode_t SubscriberRTC::onExecute(RTC::UniqueId ec_id)
 {
-    for(RangeDataInPortMap::iterator it = rangeDataInPorts.begin();
-            it != rangeDataInPorts.end(); it++){
-        RTC::InPort<RTC::RangeData>& inport_ = it->second->inPort;
-        if(inport_.isNew()){
-            do {
-                inport_.read();
-            }while(inport_.isNew());
-
-            RTC::RangeData& timedRangeData = it->second->timedRangeData;
-            RangeSensor* rangeSensor = it->second->rangeSensor;
-
-            double* src = timedRangeData.ranges.get_buffer();
-            int numPoints = timedRangeData.ranges.length();
-            std::shared_ptr<RangeSensor::RangeData> tmpRangeData = std::make_shared< vector<double> >();
-            tmpRangeData->clear();
-            for(int i=0; i < numPoints; i++)
-                tmpRangeData->push_back(src[i]);
-
-            rangeSensor->setRangeData(tmpRangeData);
-
-            callLater( [rangeSensor](){rangeSensor->notifyStateChange();} );
-        }
+    for(auto& input : inputs){
+        input->read();
     }
-
-    for(CameraInPortMap::iterator it = cameraInPorts.begin();
-            it != cameraInPorts.end(); it++){
-        RTC::InPort<Img::TimedCameraImage>& inport_ = it->second->inPort;
-        if(inport_.isNew()){
-            do {
-                inport_.read();
-            }while(inport_.isNew());
-
-            Img::TimedCameraImage& timedCameraImage = it->second->timedCameraImage;
-            Camera* camera = it->second->camera;
-
-            int numComponents;
-            switch(timedCameraImage.data.image.format){
-            case Img::CF_GRAY :
-                numComponents = 1;
-                break;
-            case Img::CF_RGB :
-                numComponents = 3;
-                break;
-            case Img::CF_UNKNOWN :
-            default :
-                numComponents = 0;
-                break;
-            }
-
-            std::shared_ptr<Image> tmpImage = std::make_shared<Image>();
-            tmpImage->setSize(timedCameraImage.data.image.width, timedCameraImage.data.image.height, numComponents);
-            size_t length = timedCameraImage.data.image.raw_data.length();
-            memcpy(tmpImage->pixels(), timedCameraImage.data.image.raw_data.get_buffer(), length);
-            camera->setImage(tmpImage);
-
-            callLater( [camera](){camera->notifyStateChange();} );
-        }
-    }
-
     return RTC::RTC_OK;
 }
+
+
+CameraImageInput::CameraImageInput(SubscriberRTC* rtc, Camera* camera)
+    : camera(camera),
+      port(camera->name().c_str(), timedCameraImage)
+{
+    rtc->addInPort(port.name(), port);
+}
+
+
+void CameraImageInput::read()
+{
+    if(port.isNew()){
+        do {
+            port.read();
+        } while(port.isNew());
+        
+        std::shared_ptr<Image> image;
+        auto srcImage = timedCameraImage.data.image;
+        switch(srcImage.format){
+        case Img::CF_RGB:
+            image = createImageFromRawData(srcImage, 3);
+            break;
+        case Img::CF_GRAY:
+            image = createImageFromRawData(srcImage, 1);
+            break;
+
+#ifndef USE_BUILTIN_CAMERA_IMAGE_IDL
+        case Img::CF_JPEG:
+        case Img::CF_PNG:
+#else
+        case Img::CF_GRAY_JPEG:
+        case Img::CF_RGB_JPEG:
+#endif
+            image = createImageFromImageFormat(srcImage);
+            break;
+        default:
+            break;
+        }
+
+        if(image){
+            CameraPtr tmpCamera = camera;
+            callLater([tmpCamera, image]() mutable {
+                tmpCamera->setImage(image);
+                tmpCamera->notifyStateChange();
+                });
+        }
+    }
+}
+
+
+shared_ptr<Image> CameraImageInput::createImageFromRawData(Img::ImageData& srcImage, int numComponents)
+{
+    auto image = std::make_shared<Image>();
+    image->setSize(srcImage.width, srcImage.height, numComponents);
+    memcpy(image->pixels(), srcImage.raw_data.get_buffer(), srcImage.raw_data.length());
+    return image;
+}
+
+
+shared_ptr<Image> CameraImageInput::createImageFromImageFormat(Img::ImageData& srcImage)
+{
+    auto image = std::make_shared<Image>();
+    auto& data = srcImage.raw_data;
+    QImage qImage = QImage::fromData(data.get_buffer(), data.length());
+    const int w = qImage.width();
+    const int h = qImage.height();
+    const bool hasAlpha = qImage.hasAlphaChannel();
+    if(qImage.isGrayscale()){
+        image->setSize(w, h, 1);
+        unsigned char* pixels = image->pixels();
+        for(int y=0; y < h; ++y){
+            for(int x=0; x < w; ++x){
+                *pixels++ = qGray(qImage.pixel(x, y));
+            }
+        }
+    } else {
+        image->setSize(w, h, hasAlpha ? 4 : 3);
+        unsigned char* pixels = image->pixels();
+        for(int y=0; y < h; ++y){
+            for(int x=0; x < w; ++x){
+                QRgb rgb = qImage.pixel(x, y);
+                *pixels++ = qRed(rgb);
+                *pixels++ = qGreen(rgb);
+                *pixels++ = qBlue(rgb);
+                if(hasAlpha){
+                    *pixels++ = qAlpha(rgb);
+                }
+            }
+        }
+    }
+    return image;
+}
+
+
+PointCloudInput::PointCloudInput(SubscriberRTC* rtc, RangeCamera* rangeCamera, int pointCloudPortType)
+    : rangeCamera(rangeCamera),
+      pointCloudPortType(pointCloudPortType),
+      port1((rangeCamera->name() + "-depth").c_str(), pointCloud1),
+      port2((rangeCamera->name() + "-depth").c_str(), pointCloud2)
+{
+    if(pointCloudPortType == VisionSensorSubscriberRTCItem::POINT_CLOUD_TYPES_POINT_CLOUD_TYPE){
+
+        pointCloudField["x"].offset = 0;
+        pointCloudField["x"].type = PointCloudTypes::FLOAT32;
+        pointCloudField["x"].count = 4;
+        pointCloudField["y"].offset = 4;
+        pointCloudField["y"].type = PointCloudTypes::FLOAT32;
+        pointCloudField["y"].count = 4;
+        pointCloudField["z"].offset = 8;
+        pointCloudField["z"].type = PointCloudTypes::FLOAT32;
+        pointCloudField["z"].count = 4;
+        pointCloudField["r"].offset = 12;
+        pointCloudField["r"].type = PointCloudTypes::UINT8;
+        pointCloudField["r"].count = 1;
+        pointCloudField["g"].offset = 13;
+        pointCloudField["g"].type = PointCloudTypes::UINT8;
+        pointCloudField["g"].count = 1;
+        pointCloudField["b"].offset = 14;
+        pointCloudField["b"].type = PointCloudTypes::UINT8;
+        pointCloudField["b"].count = 1;
+        
+        rtc->addInPort(port1.name(), port1);
+        
+    } else if(pointCloudPortType == VisionSensorSubscriberRTCItem::RTC_POINT_CLOUD_TYPE){
+        rtc->addInPort(port2.name(), port2);
+    }
+}
+
+
+void PointCloudInput::read()
+{
+    if(pointCloudPortType == VisionSensorSubscriberRTCItem::POINT_CLOUD_TYPES_POINT_CLOUD_TYPE){
+        read1();
+    } else if(pointCloudPortType == VisionSensorSubscriberRTCItem::RTC_POINT_CLOUD_TYPE){
+        read2();
+    }
+}
+
+
+void PointCloudInput::read1()
+{
+    if(port1.isNew()){
+        do {
+            port1.read();
+        } while(port1.isNew());
+    
+        int numPoints = pointCloud1.height * pointCloud1.width;
+        bool rgb = false;
+        for(size_t i=0; i < pointCloud1.fields.length(); ++i){
+            string name = string(pointCloud1.fields[i].name);
+            pointCloudField[name].offset = pointCloud1.fields[i].offset;
+            pointCloudField[name].type = pointCloud1.fields[i].data_type;
+            pointCloudField[name].count = pointCloud1.fields[i].count;
+            if(i==5){
+                rgb = true;
+            }
+        }
+        unsigned char* src = (unsigned char*)pointCloud1.data.get_buffer();
+        auto tmpPoints = std::make_shared<vector<Vector3f>>();
+        std::shared_ptr<Image> tmpImage;
+        unsigned char* pixels = nullptr;
+        if(rgb){
+            tmpImage = std::make_shared<Image>();
+            tmpImage->setSize(pointCloud1.width, pointCloud1.height, 3);
+            pixels = tmpImage->pixels();
+        }
+        
+        tmpPoints->clear();
+        tmpPoints->reserve(numPoints);
+        
+        PointCloudField& fex = pointCloudField["x"];
+        PointCloudField& fey = pointCloudField["y"];
+        PointCloudField& fez = pointCloudField["z"];
+        PointCloudField& fer = pointCloudField["r"];
+        PointCloudField& feg = pointCloudField["g"];
+        PointCloudField& feb = pointCloudField["b"];
+        
+        for(int i=0; i < numPoints; ++i, src+=pointCloud1.point_step){
+            Vector3f point;
+            point.x() = readFloatPointCloudData(&src[fex.offset], fex, pointCloud1.is_bigendian );
+            point.y() = readFloatPointCloudData(&src[fey.offset], fey, pointCloud1.is_bigendian );
+            point.z() = readFloatPointCloudData(&src[fez.offset], fez, pointCloud1.is_bigendian );
+            tmpPoints->push_back(point);
+            
+            if(rgb && pixels){
+                pixels[0] = src[fer.offset];
+                pixels[1] = src[feg.offset];
+                pixels[2] = src[feb.offset];
+                pixels += 3;
+            }
+        }
+        
+        if(!rgb || !pixels){
+            tmpImage.reset();
+        }
+
+        RangeCameraPtr tmpRangeCamera = rangeCamera;
+        callLater([tmpRangeCamera, tmpPoints, tmpImage]() mutable {
+                tmpRangeCamera->setPoints(tmpPoints);
+                if(tmpImage){
+                    tmpRangeCamera->setImage(tmpImage);
+                }
+                tmpRangeCamera->notifyStateChange();
+            });
+    }
+}
+
+
+float PointCloudInput::readFloatPointCloudData(unsigned char* src, PointCloudField& fe, bool is_bigendian)
+{
+    unsigned char* src_;
+    unsigned char buf[8];
+    if(is_bigendian){
+        for(size_t i=0; i < fe.count; i++){
+            buf[i] = src[fe.count-1-i];
+        }
+        src_ = buf;
+    } else {
+        src_ = src;
+    }
+
+    switch(fe.type){
+    case PointCloudTypes::FLOAT32 :
+        return *((float *)src_);
+
+    case PointCloudTypes::FLOAT64 :
+        return *((double *)src_);
+
+    default:
+        break;
+    }
+    return 0;
+}
+
+
+void PointCloudInput::read2()
+{
+    if(port2.isNew()){
+        do {
+            port2.read();
+        } while(port2.isNew());
+
+        const RTC::PointCloudPointList& pcPoints = pointCloud2.points;
+        const int numPoints = pcPoints.length();
+        auto tmpPoints = std::make_shared<RangeCamera::PointData>(numPoints);
+        
+        for(int i=0; i < numPoints; ++i){
+            Vector3f& p = (*tmpPoints)[i];
+            const RTC::Point3D& point = pcPoints[i].point;
+            p.x() = point.x;
+            p.y() = point.y;
+            p.z() = point.z;
+        }
+
+        RangeCameraPtr tmpRangeCamera = rangeCamera;
+        callLater([tmpRangeCamera, tmpPoints]() mutable {
+                tmpRangeCamera->setPoints(tmpPoints);
+                tmpRangeCamera->notifyStateChange();
+            });
+    }
+}
+
+
+RangeDataInput::RangeDataInput(SubscriberRTC* rtc, RangeSensor* rangeSensor)
+    : rangeSensor(rangeSensor),
+      port(rangeSensor->name().c_str(), timedRangeData)
+{
+    rtc->addInPort(port.name(), port);
+}
+
+
+void RangeDataInput::read()
+{
+    if(port.isNew()){
+        do {
+            port.read();
+        }while(port.isNew());
+            
+        double* src = timedRangeData.ranges.get_buffer();
+        int numPoints = timedRangeData.ranges.length();
+        std::shared_ptr<RangeSensor::RangeData> tmpRangeData = std::make_shared<vector<double>>();
+        tmpRangeData->clear();
+        for(int i=0; i < numPoints; i++){
+            tmpRangeData->push_back(src[i]);
+        }
+            
+        RangeSensorPtr tmpRangeSensor = rangeSensor;
+        callLater([tmpRangeSensor, tmpRangeData]() mutable {
+                tmpRangeSensor->setRangeData(tmpRangeData);
+                tmpRangeSensor->notifyStateChange();
+            });
+    }
+}
+    
 
 namespace cnoid {
 
@@ -237,32 +476,19 @@ class VisionSensorSubscriberRTCItemImpl
 public:
     VisionSensorSubscriberRTCItem* self;
     MessageView* mv;
-    OpenRTM::ExtTrigExecutionContextService_var execContext;
-    bool isSimulationExecutionContext;
-
-    Body* body;
-    DeviceList<Camera> cameras;
-    DeviceList<RangeSensor> rangeSensors;
+    BodyItem* bodyItem;
     SubscriberRTC* subscriberRTC;
-    string componentName;
-    vector<string> rangeSensorPortNames;
-    vector<string> cameraPortNames;
+    RTC::ExecutionContext_var execContext;
+    int periodicRate;
+    Selection pointCloudPortType;
 
     VisionSensorSubscriberRTCItemImpl(VisionSensorSubscriberRTCItem* self);
     VisionSensorSubscriberRTCItemImpl(VisionSensorSubscriberRTCItem* self, const VisionSensorSubscriberRTCItemImpl& org);
     ~VisionSensorSubscriberRTCItemImpl();
 
-    bool onComponentNamePropertyChanged(const string& name);
-    bool onCameraPortNamePropertyChanged(int i, const string& name);
-    bool onRangeSensorPortNamePropertyChanged(int i, const string& name);
-
-    bool recreateRTC();
-    bool createRTC();
+    void setBodyItem(BodyItem* bodyItem);
+    void createRTC();
     void deleteRTC();
-    void changeOwnerBodyItem(BodyItem* bodyItem);
-    void doPutProperties(PutPropertyFunction& putProperty);
-    void store(Archive& archive);
-    void restore(const Archive& archive);
     bool start();
     void stop();
 };
@@ -274,38 +500,69 @@ void VisionSensorSubscriberRTCItem::initializeClass(ExtensionManager* ext)
 {
     ext->itemManager().registerClass<VisionSensorSubscriberRTCItem>(N_("VisionSensorSubscriberRTCItem"));
     ext->itemManager().addCreationPanel<VisionSensorSubscriberRTCItem>();
+
+    static const char* spec[] = {
+        "implementation_id", "VisionSensorSubscriber",
+        "type_name",         "VisionSensorSubscriber",
+        "description",       "This component is the pointCloud visualization component.",
+        "version",           CNOID_VERSION_STRING,
+        "vendor",            "AIST",
+        "category",          "choreonoid",
+        "activity_type",     "DataFlowComponent",
+        "max_instance",      "10",
+        "language",          "C++",
+        "lang_type",         "compile",
+        "conf.default.debugLevel", "0",
+        ""
+    };
+
+    RTC::Properties profile(spec);
+    RTC::Manager::instance().registerFactory(
+        profile, RTC::Create<SubscriberRTC>, RTC::Delete<SubscriberRTC>);
 }
 
 
 VisionSensorSubscriberRTCItem::VisionSensorSubscriberRTCItem()
 {
     impl = new VisionSensorSubscriberRTCItemImpl(this);
-    bodyItem = 0;
+}
+
+
+VisionSensorSubscriberRTCItem::VisionSensorSubscriberRTCItem(const VisionSensorSubscriberRTCItem& org)
+    : Item(org)
+{
+    impl = new VisionSensorSubscriberRTCItemImpl(this);
 }
 
 
 VisionSensorSubscriberRTCItemImpl::VisionSensorSubscriberRTCItemImpl(VisionSensorSubscriberRTCItem* self)
     : self(self),
-      mv(MessageView::instance())
+      mv(MessageView::instance()),
+      pointCloudPortType(VisionSensorSubscriberRTCItem::N_POINT_CLOUD_PORT_TYPES, CNOID_GETTEXT_DOMAIN_NAME)
 {
-    subscriberRTC = 0;
-    body = 0;
+    bodyItem = nullptr;
+    subscriberRTC = nullptr;
+    execContext = RTC::ExecutionContext::_nil();
+    periodicRate = 30;
+
+    pointCloudPortType.setSymbol(
+        VisionSensorSubscriberRTCItem::POINT_CLOUD_TYPES_POINT_CLOUD_TYPE,
+        "PointCloudTypes::PointCloud");
+    pointCloudPortType.setSymbol(
+        VisionSensorSubscriberRTCItem::RTC_POINT_CLOUD_TYPE,
+        "RTC::PointCloud");
+    pointCloudPortType.select(VisionSensorSubscriberRTCItem::POINT_CLOUD_TYPES_POINT_CLOUD_TYPE);
+    
+    self->sigNameChanged().connect([&](const string&){ createRTC(); });
 }
 
 
-VisionSensorSubscriberRTCItem::VisionSensorSubscriberRTCItem(const VisionSensorSubscriberRTCItem& org)
-    : ControllerItem(org)
-{
-    impl = new VisionSensorSubscriberRTCItemImpl(this, *org.impl);
-    bodyItem = 0;
-}
-
-
-VisionSensorSubscriberRTCItemImpl::VisionSensorSubscriberRTCItemImpl(VisionSensorSubscriberRTCItem* self, const VisionSensorSubscriberRTCItemImpl& org)
+VisionSensorSubscriberRTCItemImpl::VisionSensorSubscriberRTCItemImpl
+(VisionSensorSubscriberRTCItem* self, const VisionSensorSubscriberRTCItemImpl& org)
     : VisionSensorSubscriberRTCItemImpl(self)
 {
-    subscriberRTC = 0;
-    body = 0;
+    periodicRate = org.periodicRate;
+    pointCloudPortType = org.pointCloudPortType;
 }
 
 
@@ -321,94 +578,83 @@ VisionSensorSubscriberRTCItemImpl::~VisionSensorSubscriberRTCItemImpl()
 }
 
 
-void VisionSensorSubscriberRTCItem::onPositionChanged()
-{
-    BodyItem* ownerBodyItem = findOwnerItem<BodyItem>();
-    if(ownerBodyItem){
-        if(bodyItem != ownerBodyItem){
-            impl->changeOwnerBodyItem(ownerBodyItem);
-            bodyItem = ownerBodyItem;
-        }
-    }else{
-        impl->deleteRTC();
-        impl->body = 0;
-        bodyItem = 0;
-    }
-}
-
-
-void VisionSensorSubscriberRTCItemImpl::changeOwnerBodyItem(BodyItem* bodyItem)
-{
-    body = bodyItem->body();
-    cameras.clear();
-    DeviceList<Camera> cameras0 = body->devices<Camera>();
-    for(size_t i=0; i<cameras0.size(); i++){
-        if(cameras0[i]->imageType() != Camera::NO_IMAGE)
-            cameras.push_back(cameras0[i]);
-    }
-    rangeSensors = body->devices<RangeSensor>();
-
-    if(componentName.empty())
-        componentName = self->name();
-
-    rangeSensorPortNames.resize(rangeSensors.size());
-    for(size_t i=0; i<rangeSensors.size(); i++){
-        if(rangeSensorPortNames[i].empty())
-            rangeSensorPortNames[i] = rangeSensors[i]->name();
-    }
-
-    cameraPortNames.resize(cameras.size());
-    for(size_t i=0; i<cameras.size(); i++){
-        if(cameraPortNames[i].empty())
-            cameraPortNames[i] = cameras[i]->name() + "_image";
-    }
-
-   //self->notifyUpdate();
-
-    deleteRTC();
-    createRTC();
-}
-
-
 void VisionSensorSubscriberRTCItem::onDisconnectedFromRoot()
 {
     impl->deleteRTC();
 }
 
 
-bool VisionSensorSubscriberRTCItemImpl::createRTC()
+void VisionSensorSubscriberRTCItem::onPositionChanged()
 {
-    RTC::Manager* rtcManager = &RTC::Manager::instance();
-    SubscriberRTC::registerFactory(rtcManager, componentName.c_str());
+    impl->setBodyItem(findOwnerItem<BodyItem>());
+}
 
-    /// --- create RTC ---
+
+void VisionSensorSubscriberRTCItemImpl::setBodyItem(BodyItem* newBodyItem)
+{
+    if(newBodyItem){
+        if(newBodyItem != bodyItem){
+            bodyItem = newBodyItem;
+            deleteRTC();
+            createRTC();
+        }
+    } else {
+        deleteRTC();
+        bodyItem = nullptr;
+    }
+}
+
+
+void VisionSensorSubscriberRTCItem::setPeriodicRate(int rate)
+{
+    if(rate != impl->periodicRate){
+        impl->periodicRate = rate;
+        impl->createRTC();
+    }
+}
+
+
+void VisionSensorSubscriberRTCItem::setPointCloudPortType(int type)
+{
+    if(type != impl->pointCloudPortType.which()){
+        impl->pointCloudPortType.select(type);
+        impl->createRTC();
+    }
+}
+
+
+void VisionSensorSubscriberRTCItemImpl::createRTC()
+{
+    deleteRTC();
+
+    if(!bodyItem){
+        return;
+    }
+    
     boost::format param(
         "VisionSensorSubscriber?"
         "instance_name=%1%&"
-        "exec_cxt.periodic.type=SimulationExecutionContext&"
-        "exec_cxt.periodic.rate=1000000");
+        "exec_cxt.periodic.type=PeriodicExecutionContext&"
+        "exec_cxt.periodic.rate=%2%");
     
-    RTC::RtcBase* rtc = createManagedRTC(str(param % componentName).c_str());
+    RTC::RtcBase* rtc = createManagedRTC(str(param % self->name() % periodicRate).c_str());
     if(!rtc){
-        MessageView::instance()->putln(fmt(_("RTC \"%1%\" cannot be created.")) % componentName);
-        return false;
+        mv->putln(MessageView::ERROR, boost::format(_("RTC for \"%1%\" cannot be created.")) % self->name());
+        return;
     }
-    MessageView::instance()->putln(fmt(_("RTC \"%1%\" has been created.")) % componentName);
 
     subscriberRTC = dynamic_cast<SubscriberRTC*>(rtc);
-    subscriberRTC->createPort(rangeSensors, rangeSensorPortNames, cameras, cameraPortNames );
+    subscriberRTC->createInPorts(bodyItem->body(), pointCloudPortType.which());
 
-    execContext = OpenRTM::ExtTrigExecutionContextService::_nil();
-    isSimulationExecutionContext = true;
+    execContext = RTC::ExecutionContext::_nil();
     RTC::ExecutionContextList_var eclist = rtc->get_owned_contexts();
     for(CORBA::ULong i=0; i < eclist->length(); ++i){
-        if(!CORBA::is_nil(eclist[i])){
-            execContext = OpenRTM::ExtTrigExecutionContextService::_narrow(eclist[i]);
+        execContext = eclist[i];
+        if(!CORBA::is_nil(execContext)){
+            execContext->activate_component(subscriberRTC->getObjRef());
             break;
         }
     }
-
-    return true;
 }
 
 
@@ -417,19 +663,8 @@ void VisionSensorSubscriberRTCItemImpl::deleteRTC()
     if(subscriberRTC){
         subscriberRTC->exit();
         RTC::Manager::instance().cleanupComponents();
-        subscriberRTC = 0;
+        subscriberRTC = nullptr;
     }
-}
-
-
-bool VisionSensorSubscriberRTCItemImpl::recreateRTC()
-{
-    if(body){
-        deleteRTC();
-        return createRTC();
-    }
-
-    return true;
 }
 
 
@@ -441,179 +676,30 @@ Item* VisionSensorSubscriberRTCItem::doDuplicate() const
 
 void VisionSensorSubscriberRTCItem::doPutProperties(PutPropertyFunction& putProperty)
 {
-    impl->doPutProperties(putProperty);
-}
+    putProperty.decimals(3)(_("Periodic rate"), impl->periodicRate,
+                            [&](int rate){ setPeriodicRate(rate); return true; });
 
-
-void VisionSensorSubscriberRTCItemImpl::doPutProperties(PutPropertyFunction& putProperty)
-{
-    putProperty(_("ComponentName"), componentName,
-            [this](const string& name){ return onComponentNamePropertyChanged(name); });
-
-    for(size_t i=0; i < cameraPortNames.size(); i++){
-        putProperty(_("CameraPortName")+to_string(i), cameraPortNames[i],
-            [this, i](const string& name){ return onCameraPortNamePropertyChanged(i, name); });
-        }
-    for(size_t i=0; i < rangeSensorPortNames.size(); i++){
-        putProperty(_("rangeSensorPortName")+to_string(i), rangeSensorPortNames[i],
-            [this, i](const string& name){ return onRangeSensorPortNamePropertyChanged(i, name); });
-    }
-}
-
-
-bool VisionSensorSubscriberRTCItemImpl::onComponentNamePropertyChanged(const string& name)
-{
-    componentName = name;
-
-    recreateRTC();
-    return true;
-}
-
-
-bool VisionSensorSubscriberRTCItemImpl::onCameraPortNamePropertyChanged(int i, const string& name)
-{
-    cameraPortNames[i] = name;
-
-    recreateRTC();
-    return true;
-}
-
-
-bool VisionSensorSubscriberRTCItemImpl::onRangeSensorPortNamePropertyChanged(int i, const string& name)
-{
-    rangeSensorPortNames[i] = name;
-
-    recreateRTC();
-    return true;
-
+    putProperty(_("Point cloud port type"), impl->pointCloudPortType,
+                [&](int which){ setPointCloudPortType(which); return true; });
 }
 
 
 bool VisionSensorSubscriberRTCItem::store(Archive& archive)
 {
-    impl->store(archive);
+    archive.write("periodicRate", impl->periodicRate);
+    archive.write("pointCloudPortType", impl->pointCloudPortType.selectedSymbol(), DOUBLE_QUOTED);
     return true;
 }
 
-
-void VisionSensorSubscriberRTCItemImpl::store(Archive& archive)
-{
-    archive.write("componentName", componentName);
-
-    Listing& list1 = *archive.createFlowStyleListing("rangeSensorPortNames");
-    for(size_t i=0; i<rangeSensorPortNames.size(); i++){
-        list1.append(rangeSensorPortNames[i]);
-    }
-
-    Listing& list2 = *archive.createFlowStyleListing("cameraPortNames");
-    for(size_t i=0; i<cameraPortNames.size(); i++){
-        list2.append(cameraPortNames[i]);
-    }
-}
 
 bool VisionSensorSubscriberRTCItem::restore(const Archive& archive)
 {
-    impl->restore(archive);
+    archive.read("periodicRate", impl->periodicRate);
+
+    string type;
+    if(archive.read("pointCloudPortType", type)){
+        impl->pointCloudPortType.select(type);
+    }
+    
     return true;
-}
-
-
-void VisionSensorSubscriberRTCItemImpl::restore(const Archive& archive)
-{
-    archive.read("componentName", componentName);
-
-    const Listing& list1 = *archive.findListing("rangeSensorPortNames");
-    if(list1.isValid()){
-        rangeSensorPortNames.clear();
-        for(int i=0; i < list1.size(); i++)
-            rangeSensorPortNames.push_back(list1[i]);
-    }
-
-    const Listing& list2 = *archive.findListing("cameraPortNames");
-    if(list2.isValid()){
-        cameraPortNames.clear();
-        for(int i=0; i < list2.size(); i++)
-            cameraPortNames.push_back(list2[i]);
-    }
-
-}
-
-
-bool VisionSensorSubscriberRTCItem::start()
-{
-    return impl->start();
-}
-
-
-bool VisionSensorSubscriberRTCItemImpl::start()
-{
-    bool isReady = false;
-
-    if(subscriberRTC){
-        if(!CORBA::is_nil(execContext)){
-            RTC::ReturnCode_t result = RTC::RTC_OK;
-            RTC::LifeCycleState state = execContext->get_component_state(subscriberRTC->getObjRef());
-            if(state == RTC::ERROR_STATE){
-                result = execContext->reset_component(subscriberRTC->getObjRef());
-                execContext->tick();
-            } else if(state == RTC::ACTIVE_STATE){
-                result = execContext->deactivate_component(subscriberRTC->getObjRef());
-                execContext->tick();
-            }
-            if(result == RTC::RTC_OK){
-                result = execContext->activate_component(subscriberRTC->getObjRef());
-                execContext->tick();
-            }
-            if(result == RTC::RTC_OK){
-                isReady = true;
-            }
-        }
-    }
-
-    return isReady;
-}
-
-
-double VisionSensorSubscriberRTCItem::timeStep() const
-{
-    return 0.0;
-}
-
-
-void VisionSensorSubscriberRTCItem::input()
-{
-
-}
-
-
-bool VisionSensorSubscriberRTCItem::control()
-{
-    if(impl->isSimulationExecutionContext){
-        impl->execContext->tick();
-    }
-    return true;
-}
-
-
-void VisionSensorSubscriberRTCItem::output()
-{
-
-}
-
-
-void VisionSensorSubscriberRTCItem::stop()
-{
-    impl->stop();
-}
-
-
-void VisionSensorSubscriberRTCItemImpl::stop()
-{
-    RTC::LifeCycleState state = execContext->get_component_state(subscriberRTC->getObjRef());
-    if(state == RTC::ERROR_STATE){
-        execContext->reset_component(subscriberRTC->getObjRef());
-    } else {
-        execContext->deactivate_component(subscriberRTC->getObjRef());
-    }
-    execContext->tick();
 }

@@ -21,7 +21,7 @@ materials:
     viscosity: 0.0
   -
     name: Hand
-    roughness: 0.5
+    roughness: 1.0
     viscosity: 0.0
   -
     name: TankTracks

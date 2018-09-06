@@ -58,26 +58,27 @@ bool MultiValueSeq::doReadSeq(const Mapping* archive, std::ostream& os)
 }
     
 
-bool MultiValueSeq::doWriteSeq(YAMLWriter& writer)
+bool MultiValueSeq::doWriteSeq(YAMLWriter& writer, std::function<void()> additionalPartCallback)
 {
-    if(!writeSeqHeaders(writer)){
-        return false;
-    }
-
-    writer.putKey("frames");
-    writer.startListing();
-    const int n = numFrames();
-    const int m = numParts();
-    for(int i=0; i < n; ++i){
-        writer.startFlowStyleListing();
-        Frame v = frame(i);
-        for(int j=0; j < m; ++j){
-            writer.putScalar(v[j]);
-        }
-        writer.endListing();
-    }
-    writer.endListing();
-    return true;
+    return BaseSeqType::doWriteSeq(
+        writer,
+        [&](){
+            if(additionalPartCallback) additionalPartCallback();
+            
+            writer.putKey("frames");
+            writer.startListing();
+            const int n = numFrames();
+            const int m = numParts();
+            for(int i=0; i < n; ++i){
+                writer.startFlowStyleListing();
+                Frame v = frame(i);
+                for(int j=0; j < m; ++j){
+                    writer.putScalar(v[j]);
+                }
+                writer.endListing();
+            }
+            writer.endListing();
+        });
 }
 
 

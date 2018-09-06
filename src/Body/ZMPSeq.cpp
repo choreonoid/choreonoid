@@ -77,17 +77,16 @@ void ZMPSeq::setRootRelative(bool on)
 }
 
 
-bool ZMPSeq::doWriteSeq(YAMLWriter& writer)
+bool ZMPSeq::doWriteSeq(YAMLWriter& writer, std::function<void()> additionalPartCallback)
 {
-    if(!Vector3Seq::writeVector3SeqHeaders(writer)){
-        return false;
-    }
-    
-    if(isRootRelative_){
-        writer.putKeyValue("isRootRelative", true);
-    }
-
-    return Vector3Seq::writeVector3SeqFrames(writer);
+    return BaseSeqType::doWriteSeq(
+        writer,
+        [&](){
+            if(isRootRelative_){
+                writer.putKeyValue("isRootRelative", true);
+            }
+            if(additionalPartCallback) additionalPartCallback();
+        });
 }
 
 

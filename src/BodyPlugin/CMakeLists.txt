@@ -23,6 +23,7 @@ set(sources
   FisheyeLensConverter.cpp
   SensorVisualizerItem.cpp
   BodyTrackingCameraItem.cpp
+  BodyMarkerItem.cpp
   BodyMotionEngine.cpp
   KinematicFaultChecker.cpp
   SplineFilterDialog.cpp
@@ -62,6 +63,7 @@ set(headers
   GLVisionSimulatorItem.h
   SensorVisualizerItem.h
   BodyTrackingCameraItem.h
+  BodyMarkerItem.h
   KinematicFaultChecker.h
   BodyBar.h
   KinematicsBar.h

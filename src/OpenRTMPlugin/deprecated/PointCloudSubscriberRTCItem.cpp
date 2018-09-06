@@ -4,7 +4,7 @@
 */
 
 #include "PointCloudSubscriberRTCItem.h"
-#include <deprecated/corba/PointCloud.hh>
+#include <cnoid/corba/PointCloud.hh>
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
 #include <cnoid/Config>

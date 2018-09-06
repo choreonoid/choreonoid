@@ -11,17 +11,20 @@ class JoystickRTC : public RTC::DataFlowComponentBase
 {
 public:
     JoystickRTC(RTC::Manager* manager);
-    virtual ~JoystickRTC();
+    ~JoystickRTC();
+
     virtual RTC::ReturnCode_t onInitialize();
     virtual RTC::ReturnCode_t onActivated(RTC::UniqueId ec_id);
     virtual RTC::ReturnCode_t onDeactivated(RTC::UniqueId ec_id);
     virtual RTC::ReturnCode_t onExecute(RTC::UniqueId ec_id);
 
+protected:
     RTC::TimedFloatSeq axes;
     RTC::OutPort<RTC::TimedFloatSeq> axesOut;
     RTC::TimedBooleanSeq buttons;
     RTC::OutPort<RTC::TimedBooleanSeq> buttonsOut;
   
+private:
     cnoid::Joystick* joystick; 
     std::string device;
     unsigned int debugLevel;

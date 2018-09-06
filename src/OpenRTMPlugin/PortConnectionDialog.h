@@ -1,7 +1,7 @@
 #ifndef CNOID_OPENRTM_PLUGIN_PORT_CONNECTION_DIALOG_H
 #define CNOID_OPENRTM_PLUGIN_PORT_CONNECTION_DIALOG_H
 
-#include "RTSItem.h"
+#include "RTSystemItem.h"
 #include <cnoid/Dialog>
 #include <cnoid/ComboBox>
 #include <cnoid/CheckBox>

@@ -429,12 +429,16 @@ links:
     elements: &FINGER_elements
       RigidBody:
         centerOfMass: [ 0, 0, 0.022 ]
-        mass: 0.01
+        mass: 0.08 # Original value is 0.01, but it causes the penetration into environmental objects with AGX
+        # Original
+        #inertia: [
+        #  0.000000789997, 0,          0,
+        #  0,              0.00000008, 0,
+        #  0,              0,          0.000000789997 ]
         inertia: [
-          0.000000789997, 0,          0,
-          0,              0.00000008, 0,
-          0,              0,          0.000000789997
-        ]
+          0.0001, 0,      0,
+          0,      0.0001, 0,
+          0,      0,      0.0001 ]
         elements:
           -
             type: Visual
@@ -505,12 +509,17 @@ links:
     elements: &FINGER_TIP_elements
       RigidBody:
         centerOfMass: [ 0, 0, 0.022 ]
-        mass: 0.01
+        mass: 0.08 # Original value is 0.01, but it causes the penetration into environmental objects with AGX
+        # Original
+        #inertia: [
+        #  0.000000789997, 0,          0,
+        #  0,              0.00000008, 0,
+        #  0,              0,          0.000000789997 ]
         inertia: [
-          0.000000789997, 0,          0,
-          0,              0.00000008, 0,
-          0,              0,          0.000000789997
-        ]
+          0.0001, 0,      0,
+          0,      0.0001, 0,
+          0,      0,      0.0001 ]
+
         elements:
           -
             type: Visual

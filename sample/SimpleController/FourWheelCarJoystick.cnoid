@@ -46,7 +46,7 @@ items:
               plugin: SimpleController
               class: SimpleControllerItem
               data: 
-                isImmediateMode: true
+                isNoDelayMode: false
                 controllerOptions: ""
                 controller: "FourWheelCarJoystickController"
                 reloading: true

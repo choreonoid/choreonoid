@@ -39,7 +39,7 @@ links:
     parent: UPPER_TFRAME
     jointType: revolute
     jointAxis: Y
-    jointId: 2
+    jointId: 0
     jointRange: [ -687.5, 687.5 ]
     maxJointVelocity: 180
     rotorInertia: 3.0E-4
@@ -49,6 +49,9 @@ links:
       4.19870890E+01, 1.70520040E+00, -6.24433200E+00,
       1.70520040E+00, 9.66620960E+01, -6.61440150E-01,
       -6.24433200E+00, -6.61440150E-01, 6.14020130E+01 ]
+    # AGX parameters
+    jointMotorForceRange: [ -12000.0, 12000.0 ]
+    jointLockForceRange: [ -12000.0, 12000.0 ]
     elements:
       - { type: Resource, uri: "prt/middleframe.wrl" }
       -
@@ -125,7 +128,7 @@ links:
     translation: [ -0.845, 0.192, -0.110 ]
     jointType: revolute
     jointAxis: Y
-    jointId: 3
+    jointId: 1
     jointRange: [ -48, 69.5 ]
     maxJointVelocity: 1146
     rotorInertia: 3.0E-04
@@ -135,6 +138,9 @@ links:
       0.328996567191697, 5.52858323486756e-003, 5.74693929208142e-003,
       5.52858323486756e-003, 0.160727640206049, -1.33419251009407e-002,
       5.74693929208142e-003, -1.33419251009407e-002, 0.319147626929996 ]
+    # AGX parameters
+    jointMotorForceRange: [ -12000.0, 12000.0 ]
+    jointLockForceRange: [ -12000.0, 12000.0 ]
     elements:
       - { type: Resource, uri: "prt/swingbrkt.wrl" }
       - { type: ForceSensor, name: SWING_TORQUE, id: 0 }
@@ -155,7 +161,7 @@ links:
             beamWidth: 50
             cutOffAngle: 60
             cutOffExponent: 6
-            attenuation: [ 0, 0, 0 ]
+            attenuation: [ 1, 0, 0 ]
             intensity: 1.0
   -
     name: BOOM
@@ -163,7 +169,7 @@ links:
     translation: [ -0.070, 0.200, 0 ]
     jointType: revolute
     jointAxis: Z
-    jointId: 4
+    jointId: 2
     jointAngle: -70
     jointRange: [ -75.1, 53.2 ]
     maxJointVelocity: 1146
@@ -173,6 +179,9 @@ links:
       1.48138597730672, 0.1902362002908, 1.05546586084014e-015,
       0.1902362002908, 31.4435403431583,  -2.05305944696362e-017,
       1.05546586084014e-015, -2.05305944696362e-017, 32.5752155940256 ]
+    # AGX parameters
+    jointMotorForceRange: [ -15000.0, 15000.0 ]
+    jointLockForceRange: [ -15000.0, 15000.0 ]
     elements:
       - { type: Resource, uri: "prt/cp_boom.wrl" }
       - { type: ForceSensor, name: BOOM_TORQUE, id: 1 }
@@ -182,7 +191,7 @@ links:
     translation: [ -1.760, 0, 0 ]
     jointType: revolute
     jointAxis: Z
-    jointId: 5
+    jointId: 3
     jointAngle: 150
     jointRange: [ 30.7, 152.1 ]
     maxJointVelocity: 1146
@@ -192,6 +201,9 @@ links:
       0.35420506763418, -0.59676584437886, 1.78134245842626e-016,
       -0.59676584437886, 5.16579159038522, 6.97110293472855e-017,
       1.78134245842626e-016, 6.97110293472855e-017, 5.39850890239257 ]
+    # AGX parameters
+    jointMotorForceRange: [ -12000.0, 12000.0 ]
+    jointLockForceRange: [ -12000.0, 12000.0 ]
     elements:
       - { type: Resource, uri: "prt/cp_arm.wrl" }
       - { type: ForceSensor, name: ARM_TORQUE, id: 2 }
@@ -201,7 +213,7 @@ links:
     translation: [ -0.965, 0, 0 ]
     jointType: revolute
     jointAxis: Z
-    jointId: 6
+    jointId: 4
     jointRange: [ -33.7, 90 ]
     maxJointVelocity: 5730
     mass: 2.1377092e+01
@@ -210,6 +222,9 @@ links:
       2.4528689e-1,  7.1716531e-3,  0.0000000e+00,
       7.1716531e-3,  1.8144181e-1,  0.0000000e+00,
       0.0000000e+00, 0.0000000e+00, 2.1758796e-1 ]
+    # AGX parameters
+    jointMotorForceRange: [ -10000.0, 10000.0 ]
+    jointLockForceRange: [ -10000.0, 10000.0 ]
     elements:
       - { type: Visual, elements: { Resource: { uri: "prt/tohku_hand_pitch.wrl" } } }
       -
@@ -257,7 +272,7 @@ links:
     name: TOHKU_ROLL
     parent: TOHKU_PITCH
     translation: [ -0.227, 0.0, 0.0 ]
-    jointId: 7
+    jointId: 5
     jointType: revolute
     jointAxis: X
     jointRange: [ -180, 180 ]
@@ -268,6 +283,9 @@ links:
       7.8278692e-1,  0.0000000e+00,  0.0000000e+00,
       0.0000000e+00, 7.0832807e-1,   0.0000000e+00,
       0.0000000e+00,  0.0000000e+00, 1.1161951e-1 ]
+    # AGX parameters
+    jointMotorForceRange: [ -10000.0, 10000.0 ]
+    jointLockForceRange: [ -10000.0, 10000.0 ]
     elements:
       Visual: { elements: { Resource: { uri: "prt/tohku_hand_roll.wrl" } } }
       Collision:
@@ -323,7 +341,7 @@ links:
     name: TOHKU_TIP_01
     parent: TOHKU_ROLL
     translation: [ -0.309, 0.0, 0.0 ]
-    jointId: 8
+    jointId: 6
     jointType: revolute
     jointAxis: Z
     jointRange: [ -20.0, 0 ]
@@ -335,6 +353,9 @@ links:
       1.1688229e-2,  1.5080350e-2,  -7.1011455e-4,
       1.2268932e-3, -7.1011455e-4,  1.8011625e-1 ]
     material: Hand
+    # AGX parameters
+    jointMotorForceRange: [ -10000.0, 10000.0 ]
+    jointLockForceRange: [ -10000.0, 10000.0 ]
     elements:
       Visual: { elements: { Resource: { uri: "prt/tohku_hand_tip.wrl" } } }
       Collision: &TOHKU_TIP_COLLISION_MODEL
@@ -516,7 +537,7 @@ links:
     parent: TOHKU_ROLL
     translation: [ -0.309, 0.0, 0.0 ]
     rotation: [ 1, 0, 0, 180 ]
-    jointId: 9
+    jointId: 7
     jointType: revolute
     jointAxis: Z
     jointRange: [ -20.0, 0 ]
@@ -528,6 +549,9 @@ links:
       1.1688229e-2,  1.5080350e-2,  -7.1011455e-4,
       1.2268932e-3,  -7.1011455e-4, 1.8011625e-1 ]
     material: Hand
+    # AGX parameters
+    jointMotorForceRange: [ -10000.0, 10000.0 ]
+    jointLockForceRange: [ -10000.0, 10000.0 ]
     elements:
       Visual: { elements: { Resource: { uri: "prt/tohku_hand_tip.wrl" } } }
       Collision: *TOHKU_TIP_COLLISION_MODEL
@@ -537,7 +561,7 @@ links:
     translation: [ 0.0, 0.3, 0.0 ]
     jointType: revolute
     jointAxis: Y
-    jointId: 10
+    jointId: 8
     jointRange: [ -687.5, 687.5 ]
     maxJointVelocity: 573
     mass: 535.84647
@@ -546,6 +570,9 @@ links:
       7.97084620E+01, -8.47185310E+00, 1.11603580E+00,
       -8.47185310E+00, 1.00038320E+02,  5.51320690E+00,
       1.11603580E+00, 5.51320690E+00, 6.17888570E+01 ]
+    # AGX parameters
+    jointMotorForceRange: [ -12000.0, 12000.0 ]
+    jointLockForceRange: [ -12000.0, 12000.0 ]
     elements: 
       - { type: Resource, uri: "prt/frame_marge.wrl" }
       -
@@ -583,7 +610,7 @@ links:
     rotation: [ 0, 1, 0, 180 ]
     jointType: revolute
     jointAxis: Y
-    jointId: 11
+    jointId: 9
     jointRange: [ -60, 60 ]
     maxJointVelocity: 1146
     mass: 1.3380749e+01
@@ -592,6 +619,9 @@ links:
       5.9129940e-02, -3.7243340e-03, 0.0000000e+00,
       -3.7243340e-03, 3.5238822e-02, 0.0000000e+00,
       0.0000000e+00, 0.0000000e+00, 7.3441120e-02 ]
+    # AGX parameters
+    jointMotorForceRange: [ -12000.0, 12000.0 ]
+    jointLockForceRange: [ -12000.0, 12000.0 ]
     elements:
       - { type: Resource, uri: "prt/mani_swgbrkt_v7.wrl" }
       - { type: ForceSensor, name: MNP_SWING_TORQUE, id: 4 }
@@ -600,7 +630,7 @@ links:
     parent: MNP_SWING
     translation: [ -0.07, 0.14, 0 ]
     rotation: [ 0, 0, -1, 90 ]
-    jointId: 12
+    jointId: 10
     jointType: revolute
     jointAxis: Z
     jointRange: [ 0, 115 ]
@@ -611,6 +641,9 @@ links:
       1.1028539e-01, 4.3989080e-02, 0.0000000e+00,
       4.3989080e-02, 7.0046174e+00, 0.0000000e+00,
       0.0000000e+00, 0.0000000e+00, 6.9737013e+00 ]
+    # AGX parameters
+    jointMotorForceRange: [ -15000.0, 15000.0 ]
+    jointLockForceRange: [ -15000.0, 15000.0 ]
     elements:
       - { type: Resource, uri: "prt/mani_boom_v7_2.wrl" }
       - { type: ForceSensor, name: MNP_BOOM_TORQUE, id: 5 }
@@ -619,7 +652,7 @@ links:
     parent: MANIBOOM
     translation: [ -1.48, 0.08, 0 ]
     rotation: [ 0, 0, 1, 180 ]
-    jointId: 13
+    jointId: 11
     jointType: revolute
     jointAxis: Z
     jointRange: [ -110, 0 ]
@@ -630,6 +663,9 @@ links:
       1.9152986e-01, 1.1443044e-01, 0.0000000e+00,
       1.1443044e-01, 7.9632756e-01, 0.0000000e+00,
       0.0000000e+00, 0.0000000e+00, 8.1910511e-01 ]
+    # AGX parameters
+    jointMotorForceRange: [ -12000.0, 12000.0 ]
+    jointLockForceRange: [ -12000.0, 12000.0 ]
     elements:
       - { type: Resource, uri: "prt/mani_arm_v7_2.wrl" }
       - { type: ForceSensor, name: MNP_ARM_TORQUE, id: 6 }
@@ -637,7 +673,7 @@ links:
     name: MANIELBOW
     parent: MANIARM
     translation: [ -0.55, 0.27, 0 ]
-    jointId: 14
+    jointId: 12
     jointType: revolute
     jointAxis: Z
     jointRange: [ -90, 20 ]
@@ -648,6 +684,9 @@ links:
       1.5009182e-1, 6.9121654e-2, 0.0000000e+00,
       6.9121654e-2, 1.8822635e-1, 0.0000000e+00,
       0.0000000e+00, 0.0000000e+00,  2.3426912e-1 ]
+    # AGX parameters
+    jointMotorForceRange: [ -10000.0, 10000.0 ]
+    jointLockForceRange: [ -10000.0, 10000.0 ]
     elements:
       - { type: Resource, uri: "prt/mani_elbow_v7_marge.wrl" }
       - { type: ForceSensor, name: MNP_ELBOW_TORQUE, id: 7 }
@@ -655,7 +694,7 @@ links:
     name: YAWJOINT
     parent: MANIELBOW
     translation: [ -0.23, 0.00, 0 ]
-    jointId: 15
+    jointId: 13
     jointType: revolute
     jointAxis: Y
     jointRange: [ -50.48, 50.48 ]
@@ -666,6 +705,9 @@ links:
       0.0917743, 0, -0.000933033,
       0, 0.193104, 0,
       -0.000933033, 0, 0.221433 ]
+    # AGX parameters
+    jointMotorForceRange: [ -10000.0, 10000.0 ]
+    jointLockForceRange: [ -10000.0, 10000.0 ]
     elements:
       - { type: Resource, uri: "prt/mani_plan2_roll_v7.wrl" }
       - { type: ForceSensor, name: MNP_YAW_TORQUE, id: 8 }
@@ -684,7 +726,7 @@ links:
     parent: YAWJOINT
     translation: [ -0.4053, 0, 0 ]
     rotation: [ 0, 1, 0, 180 ]
-    jointId: 16
+    jointId: 14
     jointType: revolute
     jointAxis: X
     jointRange: [ -270, 270 ]
@@ -695,6 +737,9 @@ links:
       0.00678026, 0, 0,
       0, 0.0266742, 0,
       0, 0, 0.0241877 ]
+    # AGX parameters
+    jointMotorForceRange: [ -8000.0, 8000.0 ]
+    jointLockForceRange: [ -8000.0, 8000.0 ]
     elements:
       - { type: Visual, elements: { Resource: { uri: "prt/handbase_marge_v7.wrl" } } }
       -
@@ -765,7 +810,7 @@ links:
     name: PUSHROD
     parent: HANDBASE
     translation: [ 0.0917, 0, 0 ]
-    jointId: 17
+    jointId: 15
     jointType: prismatic
     jointAxis: X
     jointRange: [ -0.0507, 0 ]
@@ -776,6 +821,9 @@ links:
       0.000237569, 0, 0,
       0, 0.00159781, 0,
       0, 0, 0.00159822 ]
+    # AGX parameters
+    jointMotorForceRange: [ -8000.0, 8000.0 ]
+    jointLockForceRange: [ -8000.0, 8000.0 ]
     elements:
       - { type: Resource, uri: "prt/hand_rod_v7.wrl" }
       - { type: ForceSensor, name: MNP_PUSH_FORCE, id: 10 }

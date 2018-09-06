@@ -5,7 +5,7 @@
 
 #include "ChoreonoidPeriodicExecutionContext.h"
 #include <rtm/ECFactory.h>
-#ifndef OPENRTM_VERSION110
+#if defined(OPENRTM_VERSION12)
  #include <rtm/RTObjectStateMachine.h>
 #endif
 
@@ -27,7 +27,7 @@ ChoreonoidPeriodicExecutionContext::~ChoreonoidPeriodicExecutionContext()
 RTC::ReturnCode_t ChoreonoidPeriodicExecutionContext::deactivate_component(RTC::LightweightRTObject_ptr comp)
     throw (CORBA::SystemException)
 {
-#ifdef OPENRTM_VERSION110
+#if defined(OPENRTM_VERSION11)
     RTC_TRACE(("deactivate_component()"));
 
     CompItr it = std::find_if(m_comps.begin(), m_comps.end(), find_comp(comp));
@@ -50,7 +50,7 @@ RTC::ReturnCode_t ChoreonoidPeriodicExecutionContext::deactivate_component(RTC::
     RTC_ERROR(("The component could not be deactivated."));
     return RTC::RTC_ERROR;
 
-#else
+#elif defined(OPENRTM_VERSION12)
     RTC_impl::RTObjectStateMachine* rtobj = m_worker.findComponent(comp);
 
     if (rtobj == NULL)
@@ -66,7 +66,7 @@ RTC::ReturnCode_t ChoreonoidPeriodicExecutionContext::deactivate_component(RTC::
 
     rtobj->workerDo();
 
-    if (!(rtobj->isCurrentState(RTC::INACTIVE_STATE)))
+    if (rtobj->isCurrentState(RTC::INACTIVE_STATE))
     {
     	return RTC::RTC_OK;
     }

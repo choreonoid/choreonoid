@@ -101,7 +101,7 @@ public:
         friend class ViewManager;
     };
 
-    static void restoreViews(ArchivePtr archive, const std::string& key, ViewStateInfo& out_viewStateInfo);
+    static bool restoreViews(ArchivePtr archive, const std::string& key, ViewStateInfo& out_viewStateInfo);
     static bool restoreViewStates(ViewStateInfo& info);
 
     static SignalProxy<void(View* view)> sigViewCreated();

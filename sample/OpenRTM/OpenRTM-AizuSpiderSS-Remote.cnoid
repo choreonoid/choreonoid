@@ -49,7 +49,7 @@ items:
               plugin: Body
               class: SimpleControllerItem
               data: 
-                isNoDelayMode: true
+                isNoDelayMode: false
                 controllerOptions: ""
                 controller: "AizuSpiderController"
                 baseDirectory: "Controller directory"
@@ -61,7 +61,7 @@ items:
                   plugin: Body
                   class: SimpleControllerItem
                   data: 
-                    isNoDelayMode: true
+                    isNoDelayMode: false
                     controllerOptions: ""
                     controller: "Jaco2Controller"
                     baseDirectory: "Controller directory"
@@ -72,7 +72,7 @@ items:
                   plugin: Body
                   class: SimpleControllerItem
                   data: 
-                    isNoDelayMode: true
+                    isNoDelayMode: false
                     controllerOptions: ""
                     controller: "RemoteJoystickInputController"
                     baseDirectory: "Controller directory"
@@ -83,7 +83,7 @@ items:
               plugin: OpenRTM
               class: BodyIoRTCItem
               data: 
-                isNoDelayMode: true
+                isNoDelayMode: false
                 controllerOptions: ""
                 module: "VisionSensorIoRTC"
                 baseDirectory: "RTC directory"

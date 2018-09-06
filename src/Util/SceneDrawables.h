@@ -10,6 +10,7 @@
 #include "Image.h"
 #include <boost/variant.hpp>
 #include <memory>
+#include <initializer_list>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -115,6 +116,8 @@ class CNOID_EXPORT SgTexture : public SgObject
 public:
     SgTexture();
     SgTexture(const SgTexture& org, SgCloneMap& cloneMap);
+    ~SgTexture();
+    
     virtual SgObject* clone(SgCloneMap& cloneMap) const;
     virtual int numChildObjects() const;
     virtual SgObject* childObject(int index);
@@ -157,10 +160,9 @@ public:
     typedef typename T::Scalar Scalar;
 
     SgVectorArray() { }
-
     SgVectorArray(size_t size) : values(size) { }
-
     SgVectorArray(const std::vector<T>& org) : values(org) { }
+    SgVectorArray(std::initializer_list<T> init) : values(init.begin(), init.end()) { }
 
     template<class Element>
     SgVectorArray(const std::vector<Element>& org) {
@@ -228,7 +230,8 @@ class CNOID_EXPORT SgMeshBase : public SgObject
 protected:
     SgMeshBase();
     SgMeshBase(const SgMeshBase& org, SgCloneMap& cloneMap);
-        
+    ~SgMeshBase();
+    
 public:
     virtual int numChildObjects() const;
     virtual SgObject* childObject(int index);
@@ -441,6 +444,8 @@ class CNOID_EXPORT SgShape : public SgNode
 {
 public:
     SgShape();
+    ~SgShape();
+    
     virtual SgObject* clone(SgCloneMap& cloneMap) const;
     virtual int numChildObjects() const;
     virtual SgObject* childObject(int index);
@@ -478,6 +483,7 @@ class CNOID_EXPORT SgPlot : public SgNode
 protected:
     SgPlot(int polymorhicId);
     SgPlot(const SgPlot& org, SgCloneMap& cloneMap);
+    ~SgPlot();
     
 public:
 

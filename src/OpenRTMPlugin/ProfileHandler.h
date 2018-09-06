@@ -5,6 +5,7 @@
 #include <vector>
 #include <map>
 #include <memory>
+#include <ostream>
 #include <cnoid/Referenced>
 #include <cnoid/IdPair>
 #include <rtm/idl/SDOPackage.hh>
@@ -12,104 +13,117 @@
 
 namespace cnoid {
 
-class Property {
+class Property
+{
 public:
-	std::string name;
-	std::string value;
+    std::string name;
+    std::string value;
 };
 
-class ExecutionContext {
+class ExecutionContext
+{
 public:
-	std::string id;
-	std::string kind;
-	double rate;
-	std::vector<Property> propertyList;
+    std::string id;
+    std::string kind;
+    double rate;
+    std::vector<Property> propertyList;
 };
 
-class ConfigurationSet{
+class ConfigurationSet
+{
 public:
-	std::string id;
-	std::vector<Property> dataList;
+    std::string id;
+    std::vector<Property> dataList;
 };
 
-class ServicePort {
+class ServicePort
+{
 public:
-	std::string name;
-	std::vector<Property> propertyList;
+    std::string name;
+    std::vector<Property> propertyList;
 };
 
-class DataPort {
+class DataPort
+{
 public:
-	std::string name;
-	std::string direction;
-	std::vector<Property> propertyList;
+    std::string name;
+    std::string direction;
+    std::vector<Property> propertyList;
 };
 
-class Component {
+class Component
+{
 public:
-	std::string id;
-	std::string instanceName;
-	std::string pathUri;
-	std::string activeConfigurationSet;
-	bool isRequired;
-	int posX;
-	int posY;
-	//
-	std::vector<DataPort> dataPortList;
-	std::vector<ServicePort> servicePortList;
-	std::vector<ConfigurationSet> configList;
-	std::vector<ExecutionContext> ecList;
-	std::vector<Property> propertyList;
+    std::string id;
+    std::string instanceName;
+    std::string pathUri;
+    std::string activeConfigurationSet;
+    bool isRequired;
+    int posX;
+    int posY;
+    //
+    std::vector<DataPort> dataPortList;
+    std::vector<ServicePort> servicePortList;
+    std::vector<ConfigurationSet> configList;
+    std::vector<ExecutionContext> ecList;
+    std::vector<Property> propertyList;
 
-	Component() {
-		activeConfigurationSet = "default";
-		posX = 0;
-		posY = 0;
-	}
-};
-/////
-class TargetPort {
-public:
-	std::string portName;
-	std::string instanceName;
-	std::string componentId;
-	std::string pathId;
-
-	std::vector<Property> propertyList;
-};
-
-class DataPortConnector {
-public:
-	std::string connectorId;
-	std::string name;
-	std::string dataType;
-	std::string interfaceType;
-	std::string dataflowType;
-	std::string subscriptionType;
-	double pushInterval;
-	std::vector<Property> propertyList;
-
-	TargetPort source;
-	TargetPort target;
+    Component()
+    {
+        activeConfigurationSet = "default";
+        posX = 0;
+        posY = 0;
+    }
 };
 /////
-class ServicePortConnector{
+class TargetPort
+{
 public:
-	std::string connectorId;
-	std::string name;
-	std::string transMethod;
-	std::vector<Property> propertyList;
+    std::string portName;
+    std::string instanceName;
+    std::string componentId;
+    std::string pathId;
 
-	TargetPort source;
-	TargetPort target;
+    std::vector<Property> propertyList;
 };
 
-class RtsProfile {
+class DataPortConnector
+{
 public:
-	std::string id;
-	std::vector<Component> compList;
-	std::vector<DataPortConnector> dataConnList;
-	std::vector<ServicePortConnector> serviceConnList;
+    std::string connectorId;
+    std::string name;
+    std::string dataType;
+    std::string interfaceType;
+    std::string dataflowType;
+    std::string subscriptionType;
+    double pushInterval;
+    std::vector<Property> propertyList;
+    Vector2 pos[6];
+
+    TargetPort source;
+    TargetPort target;
+};
+/////
+class ServicePortConnector
+{
+public:
+    std::string connectorId;
+    std::string name;
+    std::string transMethod;
+    std::vector<Property> propertyList;
+    Vector2 pos[6];
+
+    TargetPort source;
+    TargetPort target;
+};
+
+class RtsProfile
+{
+public:
+    std::string id;
+    std::vector<Component> compList;
+    std::vector<DataPortConnector> dataConnList;
+    std::vector<ServicePortConnector> serviceConnList;
 };
 
 class RTSystemItem;
@@ -123,41 +137,47 @@ typedef cnoid::IdPair<RTSPort*> RTSPortPair;
 typedef ref_ptr<RTSConnection> RTSConnectionPtr;
 typedef std::map<RTSPortPair, RTSConnectionPtr> RTSConnectionMap;
 
-class ProfileHandler {
+class ProfileHandler
+{
 public:
-	ProfileHandler() {};
-	~ProfileHandler() {};
+    ProfileHandler() {};
+    ~ProfileHandler() {};
 
-	static bool restoreRtsProfile(std::string targetFile, RTSystemItem* impl);
-  static bool getRtsProfileInfo(std::string targetFile, std::string& vendorName, std::string& version);
+    static bool restoreRtsProfile(std::string targetFile, RTSystemItem* impl);
+    static bool getRtsProfileInfo(std::string targetFile, std::string& vendorName, std::string& version);
 
-	static void saveRtsProfile(
-            const std::string& targetFile, std::string& systemId, std::string& hostName,
-            std::map<std::string, cnoid::RTSCompPtr>& comps, RTSConnectionMap& connections);
-    
+    static void saveRtsProfile(
+            const std::string& targetFile, std::string& systemId,
+            std::map<std::string, cnoid::RTSCompPtr>& comps, RTSConnectionMap& connections,
+            std::ostream& os);
+
 private:
-	static bool parseProfile(std::string targetFile, RtsProfile& profile);
-	static void parseConfigurationSet(pugi::xml_node& comp, Component& proComp);
-	static TargetPort parseTargetPort(const pugi::xml_node& targetPort);
+    static bool parseProfile(std::string targetFile, RtsProfile& profile);
+    static void parseConfigurationSet(pugi::xml_node& comp, Component& proComp);
+    static TargetPort parseTargetPort(const pugi::xml_node& targetPort);
 
-	static RTSPort* getTargetPort(std::string& sourceRtc, std::string& sourcePort, RTSystemItem* impl);
-	/////
-	static bool writeProfile(const std::string& targetFile, RtsProfile& profile);
-	static void writeComponent(std::vector<Component>& compList, pugi::xml_node& parent);
-	static void writeDataPort(std::vector<DataPort>& portList, pugi::xml_node& parent);
-	static void writeServicePort(std::vector<ServicePort>& portList, pugi::xml_node& parent);
-	static void writeConfigurationSet(std::vector<ConfigurationSet>& configList, pugi::xml_node& parent);
-	static void writeExecutionContext(std::vector<ExecutionContext>& ecList, pugi::xml_node& parent);
-	static void writeLocation(Component& target, pugi::xml_node& parent);
-	static void writeProperty(std::vector<Property>& propList, pugi::xml_node& parent);
+    static RTSPort* getTargetPort(std::string& sourceRtc, std::string& sourcePort, RTSystemItem* impl);
+    /////
+    static bool writeProfile(const std::string& targetFile, RtsProfile& profile, std::ostream& os);
+    static void writeComponent(std::vector<Component>& compList, pugi::xml_node& parent);
+    static void writeDataPort(std::vector<DataPort>& portList, pugi::xml_node& parent);
+    static void writeServicePort(std::vector<ServicePort>& portList, pugi::xml_node& parent);
+    static void writeConfigurationSet(std::vector<ConfigurationSet>& configList, pugi::xml_node& parent);
+    static void writeExecutionContext(std::vector<ExecutionContext>& ecList, pugi::xml_node& parent);
+    static void writeLocation(Component& target, pugi::xml_node& parent);
+    static void writeProperty(std::vector<Property>& propList, pugi::xml_node& parent);
 
-	static void writeDataConnector(std::vector<DataPortConnector>& connList, pugi::xml_node& parent);
-	static void writeServiceConnector(std::vector<ServicePortConnector>& connList, pugi::xml_node& parent);
-	static void writeTargetPort(TargetPort& target, std::string tag, pugi::xml_node& parent);
+    static void writeDataConnector(std::vector<DataPortConnector>& connList, pugi::xml_node& parent);
+    static void writeServiceConnector(std::vector<ServicePortConnector>& connList, pugi::xml_node& parent);
+    static void writeTargetPort(TargetPort& target, std::string tag, pugi::xml_node& parent);
 
-	static void copyNVListToProperty(SDOPackage::NVList& source, std::vector<Property>& target);
-	static void buildPortInfo(RTSPort* port, Component& compProf, std::string direction);
-	static TargetPort buildTargetPortInfo(RTSPort* sourcePort, std::string& hostName);
+    static void copyNVListToProperty(SDOPackage::NVList& source, std::vector<Property>& target);
+    static void buildPortInfo(RTSPort* port, Component& compProf, std::string direction);
+    static TargetPort buildTargetPortInfo(RTSPort* sourcePort);
+    static void buildPosition(const RTSConnection* connect, int offsetX, int offsetY, std::vector<Property>& propList);
+
+    static void appendStringValue(std::vector<Property>& target, std::string& name, std::string& value);
+    static void removePropertyByValue(std::vector<Property>& target, const std::string& name);
 };
 
 }

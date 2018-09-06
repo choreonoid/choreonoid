@@ -24,7 +24,7 @@ public:
     BodyItem* bodyItem = 0;
     BodyIoRTC* bodyIoRTC = 0;
     MessageView* mv;
-    
+
     BodyIoRTCItemImpl(BodyIoRTCItem* self);
     BodyIoRTCItemImpl(BodyIoRTCItem* self, const BodyIoRTCItemImpl& org);
     void setBodyItem(BodyItem* newBodyItem, bool forceReset);
@@ -37,7 +37,6 @@ public:
 };
 
 }
-
 
 void BodyIoRTCItem::initialize(ExtensionManager* ext)
 {
@@ -95,6 +94,13 @@ Item* BodyIoRTCItem::doDuplicate() const
 void BodyIoRTCItem::onPositionChanged()
 {
     impl->setBodyItem(findOwnerItem<BodyItem>(), false);
+}
+
+
+void BodyIoRTCItem::onOptionsChanged()
+{
+    // Recreate RTC with new options
+    impl->createBodyIoRTC();
 }
 
 

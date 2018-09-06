@@ -3,8 +3,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODY_PLUGIN_MULTI_DEVICE_STATE_SEQ_ITEM_H_INCLUDED
-#define CNOID_BODY_PLUGIN_MULTI_DEVICE_STATE_SEQ_ITEM_H_INCLUDED
+#ifndef CNOID_BODY_PLUGIN_MULTI_DEVICE_STATE_SEQ_ITEM_H
+#define CNOID_BODY_PLUGIN_MULTI_DEVICE_STATE_SEQ_ITEM_H
 
 #include <cnoid/MultiDeviceStateSeq>
 #include <cnoid/AbstractSeqItem>
@@ -21,9 +21,7 @@ public:
     MultiDeviceStateSeqItem(MultiDeviceStateSeqPtr seq);
     MultiDeviceStateSeqItem(const MultiDeviceStateSeqItem& org);
     virtual ~MultiDeviceStateSeqItem();
-
     virtual AbstractMultiSeqPtr abstractMultiSeq();
-
     MultiDeviceStateSeqPtr seq() { return seq_; }
 
 protected:

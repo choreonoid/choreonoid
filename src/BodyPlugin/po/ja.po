@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-08-10 22:29+0900\n"
+"POT-Creation-Date: 2018-09-04 01:31+0900\n"
 "PO-Revision-Date: 2011-11-12 14:46+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Language =\n"
@@ -180,7 +180,7 @@ msgstr "質量"
 msgid "Static model"
 msgstr "静的モデル"
 
-#: BodyItem.cpp:1131 WorldItem.cpp:468
+#: BodyItem.cpp:1131 WorldItem.cpp:500
 msgid "Collision detection"
 msgstr "干渉検出"
 
@@ -276,6 +276,34 @@ msgstr "関節並進位置 [m]"
 msgid "Joint Velocity [m/s]"
 msgstr "関節速度 [m/s]"
 
+#: BodyMarkerItem.cpp:59
+msgid "BodyMarkerItem"
+msgstr "ボディマーカアイテム"
+
+#: BodyMarkerItem.cpp:88
+msgid "Cross"
+msgstr ""
+
+#: BodyMarkerItem.cpp:89
+msgid "Axis arrows"
+msgstr ""
+
+#: BodyMarkerItem.cpp:306
+msgid "Marker type"
+msgstr "マーカタイプ"
+
+#: BodyMarkerItem.cpp:308
+msgid "Marker size"
+msgstr "マーカサイズ"
+
+#: BodyMarkerItem.cpp:310 BodyTrackingCameraItem.cpp:253
+msgid "Target link"
+msgstr "対象リンク"
+
+#: BodyMarkerItem.cpp:312
+msgid "Translation"
+msgstr "位置"
+
 #: BodyMotionControllerItem.cpp:39
 msgid "BodyMotionControllerItem"
 msgstr "ボディモーションコントローラアイテム"
@@ -334,7 +362,7 @@ msgstr "%1%のデータを置き換えますか？"
 msgid "Do you want to set %1% as a sequence data of %2%?"
 msgstr "%2%のシーケンスデータとして%1%をセットしますか？"
 
-#: BodyPlugin.cpp:124
+#: BodyPlugin.cpp:126
 msgid ""
 "The Collision deteciton module used in this plugin is implemented using the "
 "OPCODE library (http://www.codercorner.com/Opcode.htm).\n"
@@ -364,27 +392,23 @@ msgstr "透視投影"
 msgid "Orthographic"
 msgstr "並行投影"
 
-#: BodyTrackingCameraItem.cpp:247
-msgid "Target link"
-msgstr "対象リンク"
-
-#: BodyTrackingCameraItem.cpp:249
+#: BodyTrackingCameraItem.cpp:255
 msgid "Keep relative attitude"
 msgstr "姿勢保持"
 
-#: BodyTrackingCameraItem.cpp:251
+#: BodyTrackingCameraItem.cpp:257
 msgid "Camera type"
 msgstr "カメラ タイプ"
 
-#: BodyTrackingCameraItem.cpp:253
+#: BodyTrackingCameraItem.cpp:259
 msgid "Near clip distance"
 msgstr "クリッピング近距離"
 
-#: BodyTrackingCameraItem.cpp:255
+#: BodyTrackingCameraItem.cpp:261
 msgid "Far clip distance"
 msgstr "クリッピング遠距離"
 
-#: BodyTrackingCameraItem.cpp:257
+#: BodyTrackingCameraItem.cpp:263
 msgid "field Of View"
 msgstr "視野角"
 
@@ -400,11 +424,11 @@ msgstr "干渉列アイテム"
 msgid "Collision Data"
 msgstr "干渉データ"
 
-#: ControllerItem.cpp:91
+#: ControllerItem.cpp:115
 msgid "No delay mode"
 msgstr "無遅延モード"
 
-#: ControllerItem.cpp:92 SimulatorItem.cpp:2544
+#: ControllerItem.cpp:117 SimulatorItem.cpp:2558
 msgid "Controller options"
 msgstr "コントローラオプション"
 
@@ -993,12 +1017,12 @@ msgstr "関節速度下限"
 msgid "Joint inertia"
 msgstr "関節慣性"
 
-#: LinkSelectionView.cpp:39
+#: LinkSelectionView.cpp:38
 msgid "Links"
 msgstr "リンク"
 
-#: LinkTreeWidget.cpp:276 LinkTreeWidget.cpp:663 LinkTreeWidget.cpp:668
-#: LinkTreeWidget.cpp:683
+#: LinkTreeWidget.cpp:276 LinkTreeWidget.cpp:680 LinkTreeWidget.cpp:685
+#: LinkTreeWidget.cpp:700
 msgid "Link"
 msgstr "リンク"
 
@@ -1022,7 +1046,7 @@ msgstr "関節ツリー"
 msgid "Part Tree"
 msgstr "身体部位ツリー"
 
-#: LinkTreeWidget.cpp:673 LinkTreeWidget.cpp:678
+#: LinkTreeWidget.cpp:690 LinkTreeWidget.cpp:695
 msgid "Joint"
 msgstr "関節"
 
@@ -1030,27 +1054,27 @@ msgstr "関節"
 msgid "MultiDeviceStateSeqItem"
 msgstr ""
 
-#: SensorVisualizerItem.cpp:147
+#: SensorVisualizerItem.cpp:151
 msgid "SensorVisualizer"
 msgstr "センサビジュアライザ"
 
-#: SensorVisualizerItem.cpp:325
+#: SensorVisualizerItem.cpp:329
 msgid "ForceSensorVisualizer"
 msgstr "力センサビジュアライザ"
 
-#: SensorVisualizerItem.cpp:443
+#: SensorVisualizerItem.cpp:447
 msgid "Visual ratio"
 msgstr "表示比率"
 
-#: SensorVisualizerItem.cpp:478
+#: SensorVisualizerItem.cpp:482
 msgid "PointCloudVisualizer"
 msgstr "ポイントクラウドビジュアライザ"
 
-#: SensorVisualizerItem.cpp:574
+#: SensorVisualizerItem.cpp:579
 msgid "RangeSensorVisualizer"
 msgstr "レンジセンサビジュアライザ"
 
-#: SensorVisualizerItem.cpp:676
+#: SensorVisualizerItem.cpp:681
 msgid "CameraImageVisualizer"
 msgstr "カメラ画像ビジュアライザ"
 
@@ -1074,8 +1098,9 @@ msgstr "プロジェクトディレクトリ"
 msgid ""
 "Controller module \"%1%\" of %2% is specified as a relative path from the "
 "project directory, but the project directory has not been determined yet."
-msgstr "%2%のコントローラモジュール\"%1%\"はプロジェクトディレクトリからの相対パスで指定されていますが、"
-"プロジェクトディレクトリはまだ決まっていません。"
+msgstr ""
+"%2%のコントローラモジュール\"%1%\"はプロジェクトディレクトリからの相対パスで"
+"指定されていますが、プロジェクトディレクトリはまだ決まっていません。"
 
 #: SimpleControllerItem.cpp:293
 msgid "The controller module of %1% has already been loaded."
@@ -1103,7 +1128,8 @@ msgstr ""
 
 #: SimpleControllerItem.cpp:321
 msgid "The controller factory of %1% failed to create a controller instance."
-msgstr "%1%のコントローラファクトリはコントローラインスタンスの生成に失敗しました。"
+msgstr ""
+"%1%のコントローラファクトリはコントローラインスタンスの生成に失敗しました。"
 
 #: SimpleControllerItem.cpp:329
 msgid "%1% failed to configure the controller"
@@ -1121,23 +1147,23 @@ msgstr "%1%のコントローラモジュール\"%2%\"をアンロードしま�
 msgid "%1%'s initialize method failed."
 msgstr "%1%のinitializeメソッドが失敗しました。"
 
-#: SimpleControllerItem.cpp:708 SimpleControllerItem.cpp:714
+#: SimpleControllerItem.cpp:708
 msgid "%1% failed to start"
 msgstr "%1%を稼働できませんでした。"
 
-#: SimpleControllerItem.cpp:902
+#: SimpleControllerItem.cpp:900
 msgid "Simple Controller Module (*.%1%)"
 msgstr "シンプルコントローラモジュール (*.%1%)"
 
-#: SimpleControllerItem.cpp:910
+#: SimpleControllerItem.cpp:908
 msgid "Controller module"
 msgstr "コントローラモジュール"
 
-#: SimpleControllerItem.cpp:912
+#: SimpleControllerItem.cpp:910
 msgid "Base directory"
 msgstr "ベースディレクトリ"
 
-#: SimpleControllerItem.cpp:914
+#: SimpleControllerItem.cpp:912
 msgid "Reloading"
 msgstr "再読込"
 
@@ -1224,71 +1250,71 @@ msgstr "遅延"
 msgid "Simulation only"
 msgstr "シミュレーション用に限定"
 
-#: SimulatorItem.cpp:1082
+#: SimulatorItem.cpp:1090
 msgid "Timestep"
 msgstr "タイムステップ"
 
-#: SimulatorItem.cpp:1083
+#: SimulatorItem.cpp:1091
 msgid "Framerate"
 msgstr "フレームレート"
 
-#: SimulatorItem.cpp:1084
+#: SimulatorItem.cpp:1092
 msgid "Time bar"
 msgstr "タイムバー"
 
-#: SimulatorItem.cpp:1094
+#: SimulatorItem.cpp:1102
 msgid "full"
 msgstr "全て"
 
-#: SimulatorItem.cpp:1095
+#: SimulatorItem.cpp:1103
 msgid "tail"
 msgstr "末尾"
 
-#: SimulatorItem.cpp:1096
+#: SimulatorItem.cpp:1104
 msgid "off"
 msgstr "オフ"
 
-#: SimulatorItem.cpp:1099
+#: SimulatorItem.cpp:1107
 msgid "Unlimited"
 msgstr "無制限"
 
-#: SimulatorItem.cpp:1100
+#: SimulatorItem.cpp:1108
 msgid "Active control period"
 msgstr "能動制御期間"
 
-#: SimulatorItem.cpp:1101
+#: SimulatorItem.cpp:1109
 msgid "Specified time"
 msgstr "指定時間"
 
-#: SimulatorItem.cpp:1102
+#: SimulatorItem.cpp:1110
 msgid "Time bar range"
 msgstr "タイムバー範囲"
 
-#: SimulatorItem.cpp:1449
+#: SimulatorItem.cpp:1457
 msgid "%1% must be in a WorldItem to do simulation."
 msgstr "%1%はシミュレーションを行うワールドである必要があります。"
 
-#: SimulatorItem.cpp:1565
+#: SimulatorItem.cpp:1573
 msgid "SubSimulatorItem \"%1%\" has been detected."
 msgstr "サブシミュレータアイテム\"%1%\"が検出されました。"
 
-#: SimulatorItem.cpp:1570
+#: SimulatorItem.cpp:1578
 msgid "The initialization of \"%1%\" failed."
 msgstr "\"%1%\"の初期化に失敗しました。"
 
-#: SimulatorItem.cpp:1573
+#: SimulatorItem.cpp:1581
 msgid "SubSimulatorItem \"%1%\" is disabled."
 msgstr "サブシミュレータアイテム\"%1%\"は無効化されています。"
 
-#: SimulatorItem.cpp:1595
+#: SimulatorItem.cpp:1603
 msgid "%1% for %2% failed to start."
 msgstr "%2%用の%1%を稼働できませんでした。"
 
-#: SimulatorItem.cpp:1602
+#: SimulatorItem.cpp:1610
 msgid "%1% failed to start."
 msgstr "%1%を稼働できませんでした。"
 
-#: SimulatorItem.cpp:1642
+#: SimulatorItem.cpp:1650
 msgid ""
 "WorldLogFileItem \"%1%\" has been detected. A simulation result is recoreded "
 "to \"%2%\"."
@@ -1296,59 +1322,59 @@ msgstr ""
 "ワールドログファイルアイテム \"%1%\" が検出されました。シミュレーション結果は"
 "\"%1%\" に記録されます。"
 
-#: SimulatorItem.cpp:1700
+#: SimulatorItem.cpp:1708
 msgid "Simulation by %1% has started."
 msgstr "%1%によるシミュレーションを開始しました。"
 
-#: SimulatorItem.cpp:2253
+#: SimulatorItem.cpp:2261
 msgid "Simulation by %1% has finished at %2% [s]."
 msgstr "%1%によるシミュレーションが%2%秒時点で終了しました。"
 
-#: SimulatorItem.cpp:2254
+#: SimulatorItem.cpp:2262
 msgid "Computation time is %1% [s], computation time / simulation time = %2%."
 msgstr "計算時間: %1% [s], 計算時間 / シミュレーション時間 = %2%"
 
-#: SimulatorItem.cpp:2517
+#: SimulatorItem.cpp:2531
 msgid "Temporal resolution type"
 msgstr "時間分解能タイプ"
 
-#: SimulatorItem.cpp:2521
+#: SimulatorItem.cpp:2535
 msgid "Time step"
 msgstr "タイムステップ"
 
-#: SimulatorItem.cpp:2524
+#: SimulatorItem.cpp:2538
 msgid "Frame rate"
 msgstr "フレームレート"
 
-#: SimulatorItem.cpp:2528
+#: SimulatorItem.cpp:2542
 msgid "Sync with realtime"
 msgstr "実時間同期"
 
-#: SimulatorItem.cpp:2530
+#: SimulatorItem.cpp:2544
 msgid "Time range"
 msgstr "時間範囲"
 
-#: SimulatorItem.cpp:2532
+#: SimulatorItem.cpp:2546
 msgid "Time length"
 msgstr "時間長"
 
-#: SimulatorItem.cpp:2534
+#: SimulatorItem.cpp:2548
 msgid "Recording"
 msgstr "記録モード"
 
-#: SimulatorItem.cpp:2536
+#: SimulatorItem.cpp:2550
 msgid "All link positions"
 msgstr "全リンク位置姿勢出力"
 
-#: SimulatorItem.cpp:2538
+#: SimulatorItem.cpp:2552
 msgid "Device state output"
 msgstr "デバイス状態の記録"
 
-#: SimulatorItem.cpp:2540
+#: SimulatorItem.cpp:2554
 msgid "Record collision data"
 msgstr "干渉データの記録"
 
-#: SimulatorItem.cpp:2542
+#: SimulatorItem.cpp:2556
 msgid "Controller Threads"
 msgstr "コントローラスレッド"
 
@@ -1385,19 +1411,27 @@ msgstr ""
 msgid "Enabled"
 msgstr "有効"
 
-#: WorldItem.cpp:101
+#: WorldItem.cpp:104
 msgid "WorldItem"
 msgstr "ワールドアイテム"
 
-#: WorldItem.cpp:470
+#: WorldItem.cpp:474
+msgid "Material table \"%1%\" has been reloaded."
+msgstr "マテリアルテーブル\"%1%\"を読み込み直しました。"
+
+#: WorldItem.cpp:485
+msgid "Reloading material table \"%1%\" failed."
+msgstr "マテリアルテーブル\"%1%\"の再読込に失敗しました。"
+
+#: WorldItem.cpp:502
 msgid "Collision detector"
 msgstr "干渉検出器"
 
-#: WorldItem.cpp:473
+#: WorldItem.cpp:505
 msgid "Contact material definition file (*.yaml)"
 msgstr "接触マテリアル定義ファイル (*.yaml)"
 
-#: WorldItem.cpp:474
+#: WorldItem.cpp:506
 msgid "Material table"
 msgstr "マテリアルテーブル"
 

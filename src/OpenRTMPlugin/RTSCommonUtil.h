@@ -1,56 +1,127 @@
 /*!
  * @brief  This is a definition of RTSystemEditorPlugin.
- * @author Hisashi Ikari 
+ * @author Hisashi Ikari
  * @file
  */
 #ifndef CNOID_OPENRTM_PLUGIN_RTS_COMMON_UTIL_H_INCLUDED
 #define CNOID_OPENRTM_PLUGIN_RTS_COMMON_UTIL_H_INCLUDED
 
 #include <vector>
-#include "RTSItem.h"
+#include "RTSystemItem.h"
+
+using namespace std;
 
 namespace cnoid {
 
 /*!
   * @brief Common processing of RTS.
   */
-class TypeComparer {
+class TypeComparer
+{
 public:
-	virtual std::string match(std::string type1, std::string type2) = 0;
+    virtual std::string match(std::string type1, std::string type2) = 0;
 };
 
-class DataTypeComparer : public TypeComparer {
+class DataTypeComparer : public TypeComparer
+{
 public:
-	std::string match(std::string type1, std::string type2);
+    std::string match(std::string type1, std::string type2);
 };
 
-class ignoreCaseComparer : public TypeComparer {
+class ignoreCaseComparer : public TypeComparer
+{
 public:
-	std::string match(std::string type1, std::string type2);
+    std::string match(std::string type1, std::string type2);
 };
 
-class RTCCommonUtil {
+struct NameServerInfo
+{
+    std::string hostAddress;
+    int portNo;
+
+    NameServerInfo()
+    {
+        this->hostAddress = "";
+        this->portNo = -1;
+    };
+};
+
+class RTCCommonUtil
+{
 public:
-  static void splitPortName(std::string& value);
-  static void splitPortName(std::string& value, std::vector<std::string>& result);
+    static void splitPortName(std::string& value);
+    static void splitPortName(std::string& value, std::vector<std::string>& result);
 
-	static std::vector<std::string> split(const std::string &str, char delim);
-	static bool isAllowAnyDataType(RTSPort* source, RTSPort* target);
+    static std::vector<std::string> split(const std::string &str, char delim);
+    static bool isAllowAnyDataType(RTSPort* source, RTSPort* target);
 
-	static std::vector<std::string> getAllowDataTypes(RTSPort* source, RTSPort* target);
-	static std::vector<std::string> getAllowInterfaceTypes(RTSPort* source, RTSPort* target);
-	static std::vector<std::string> getAllowDataflowTypes(RTSPort* source, RTSPort* target);
-	static std::vector<std::string> getAllowSubscriptionTypes(RTSPort* source, RTSPort* target);
+    static std::vector<std::string> getAllowDataTypes(RTSPort* source, RTSPort* target);
+    static std::vector<std::string> getAllowInterfaceTypes(RTSPort* source, RTSPort* target);
+    static std::vector<std::string> getAllowDataflowTypes(RTSPort* source, RTSPort* target);
+    static std::vector<std::string> getAllowSubscriptionTypes(RTSPort* source, RTSPort* target);
 
-	static bool isIFR(std::string type);
-  static bool compareIgnoreCase(const std::string& lhs, const std::string& rhs);
+    static bool isIFR(std::string type);
+    static bool compareIgnoreCase(const std::string& lhs, const std::string& rhs);
+
+    static NameServerInfo getManagerAddress();
 
 private:
-	static std::vector<std::string> getAllowList(std::vector<std::string>& source, std::vector<std::string>& target, TypeComparer& comparer);
-	static bool isAnyString(std::string target);
-	static bool isExistAny(std::vector<std::string> target);
+    static std::vector<std::string> getAllowList(std::vector<std::string>& source, std::vector<std::string>& target, TypeComparer& comparer);
+    static bool isAnyString(std::string target);
+    static bool isExistAny(std::vector<std::string> target);
 
 
+};
+
+struct ServerComparator
+{
+    string hostAddress_;
+    int portNo_;
+
+    ServerComparator(string hostAddress, int portNo)
+    {
+        hostAddress_ = hostAddress;
+        portNo_ = portNo;
+    }
+    bool operator()(const NameServerInfo elem) const
+    {
+        return (hostAddress_ == elem.hostAddress && portNo_ == elem.portNo);
+    }
+};
+
+class NameServerManager
+{
+public:
+    static NameServerManager* instance();
+    ~NameServerManager()
+    {
+        if (handler) {
+            delete handler;
+        }
+        delete ncHelper;
+    };
+
+    inline NamingContextHelper* getNCHelper()
+    {
+        return ncHelper;
+    }
+
+    inline std::vector<NameServerInfo> getServerList()
+    {
+        return serverList;
+    }
+    bool addServer(string hostAddress, int portNo);
+    bool isExistServer(string hostAddress, int portNo);
+
+private:
+    static NameServerManager* handler;
+    NameServerManager()
+    {
+        ncHelper = new NamingContextHelper();
+    };
+
+    NamingContextHelper* ncHelper;
+    std::vector<NameServerInfo> serverList;
 };
 
 };

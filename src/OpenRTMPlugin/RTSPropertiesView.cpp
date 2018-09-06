@@ -1,6 +1,6 @@
 /*!
  * @brief  This is a definition of RTSystemEditorPlugin.
- * @author Hisashi Ikari 
+ * @author Hisashi Ikari
  * @file
  */
 #include "RTSPropertiesView.h"
@@ -10,12 +10,19 @@
 #include <cnoid/ViewManager>
 #include <cnoid/TreeWidget>
 #include <cnoid/ConnectionSet>
+#include <cnoid/AppConfig>
+#include <cnoid/Buttons>
 #include <QVBoxLayout>
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
 #include <rtm/idl/RTC.hh>
 #include <rtm/NVUtil.h>
 #include <coil/Properties.h>
+
+#include <QLabel>
+#include <QMessageBox>
+
+#include "LoggerUtil.h"
 #include "gettext.h"
 
 using namespace RTC;
@@ -24,12 +31,12 @@ using namespace std;
 using namespace std::placeholders;
 
 namespace {
-    static const string RTC_CONTEXT_KIND [3] = {_("PERIODIC"), _("EVENT_DRIVEN"), _("OTHER")};
-    static const string RTC_CONTEXT_STATE[4] = {_("CREATED"), _("INACTIVE"), _("ACTIVE"), _("ERROR")};
+static const string RTC_CONTEXT_KIND[3] = { _("PERIODIC"), _("EVENT_DRIVEN"), _("OTHER") };
+static const string RTC_CONTEXT_STATE[4] = { _("CREATED"), _("INACTIVE"), _("ACTIVE"), _("ERROR") };
 
-    static const string RTC_PROPERTY_DATAFLOW    [2] = {_("push"), _("pull")};
-    static const string RTC_PROPERTY_INTERFACE   [1] = {_("corba_cdr")};
-    static const string RTC_PROPERTY_SUBSCRIPTION[3] = {_("flush"), _("new"), _("periodic")};
+static const string RTC_PROPERTY_DATAFLOW[2] = { _("push"), _("pull") };
+static const string RTC_PROPERTY_INTERFACE[1] = { _("corba_cdr") };
+static const string RTC_PROPERTY_SUBSCRIPTION[3] = { _("flush"), _("new"), _("periodic") };
 };
 
 namespace cnoid {
@@ -47,10 +54,8 @@ public:
 
     RTSPropertiesView* self;
     Connection selectionChangedConnection;
-    Connection locationChangedConnection;
 
     void onItemSelectionChanged(const list<NamingContextHelper::ObjectInfo>& items);
-    void onLocationChanged(std::string host, int port);
     void showProperties();
     void showPort(ComponentProfile_var cprofile, QTreeWidgetItem* item);
     void showPortConcrete(PortProfile* portprofile, QTreeWidgetItem* item);
@@ -61,7 +66,6 @@ public:
     void showConnection(PortService_var port, string id, QTreeWidgetItem* item);
 
     RTSPropertyTreeWidget  treeWidget;
-    NamingContextHelper ncHelper;
 
 private:
     NamingContextHelper::ObjectInfo currentItem;
@@ -75,7 +79,7 @@ void RTSPropertiesView::initializeClass(ExtensionManager* ext)
     ext->viewManager().registerClass<RTSPropertiesView>(
             "RTSPropertiesView", N_("RTC Properties"), ViewManager::SINGLE_OPTIONAL);
 }
- 
+
 
 RTSPropertiesView* RTSPropertiesView::instance()
 {
@@ -117,15 +121,10 @@ RTSPropertiesViewImpl::RTSPropertiesViewImpl(RTSPropertiesView* self)
     self->setLayout(vbox);
 
     RTSNameServerView* nsView = RTSNameServerView::instance();
-    if(nsView){
-        if(!selectionChangedConnection.connected()){
+    if (nsView) {
+        if (!selectionChangedConnection.connected()) {
             selectionChangedConnection = nsView->sigSelectionChanged().connect(
                 std::bind(&RTSPropertiesViewImpl::onItemSelectionChanged, this, _1));
-        }
-        if(!locationChangedConnection.connected()){
-            locationChangedConnection = nsView->sigLocationChanged().connect(
-                std::bind(&RTSPropertiesViewImpl::onLocationChanged, this, _1, _2));
-            ncHelper.setLocation(nsView->getHost(), nsView->getPort());
         }
     }
 }
@@ -134,40 +133,49 @@ RTSPropertiesViewImpl::RTSPropertiesViewImpl(RTSPropertiesView* self)
 RTSPropertiesViewImpl::~RTSPropertiesViewImpl()
 {
     selectionChangedConnection.disconnect();
-    locationChangedConnection.disconnect();
 }
 
 
 void RTSPropertiesViewImpl::onItemSelectionChanged(const list<NamingContextHelper::ObjectInfo>& items)
 {
-    if(items.size()!=1)
+    DDEBUG_V("RTSPropertiesViewImpl::onItemSelectionChanged : %d", items.size());
+    if (items.size() != 1)
         return;
 
     const NamingContextHelper::ObjectInfo& item = items.front();
-    if(item.id != currentItem.id){
-        currentItem.id = item.id;
-        currentItem.isAlive = item.isAlive;
-        currentItem.kind = item.kind;
-        showProperties();
+    if (item.id_ == currentItem.id_
+        && item.hostAddress_ == currentItem.hostAddress_
+        && item.portNo_ == currentItem.portNo_) {
+        return;
     }
-}
-
-
-void RTSPropertiesViewImpl::onLocationChanged(string host, int port)
-{
-    ncHelper.setLocation(host, port);
+    currentItem.id_ = item.id_;
+    currentItem.isAlive_ = item.isAlive_;
+    currentItem.kind_ = item.kind_;
+    currentItem.fullPath_ = item.fullPath_;
+    currentItem.hostAddress_ = item.hostAddress_;
+    currentItem.portNo_ = item.portNo_;
+    showProperties();
 }
 
 
 void RTSPropertiesViewImpl::showProperties()
 {
+    DDEBUG("RTSPropertiesViewImpl::showProperties");
     treeWidget.clear();
 
-    if(currentItem.id!="" && currentItem.isAlive){
-        RTC::RTObject_ptr rtc = ncHelper.findObject<RTC::RTObject>(currentItem.id, "rtc");
-        if(!ncHelper.isObjectAlive(rtc))
-                return;
-        ComponentProfile_var cprofile = rtc->get_component_profile();
+    if (currentItem.id_ != "" && currentItem.isAlive_) {
+        NamingContextHelper* ncHelper = NameServerManager::instance()->getNCHelper();
+        ncHelper->setLocation(currentItem.hostAddress_, currentItem.portNo_);
+        RTC::RTObject_var rtc = ncHelper->findObject<RTC::RTObject>(currentItem.fullPath_);
+
+        ComponentProfile_var cprofile;
+        try {
+            cprofile = rtc->get_component_profile();
+        } catch (CORBA::SystemException& ex) {
+            ncHelper->putExceptionMessage(ex);
+            return;
+        }
+
         QTreeWidgetItem *item = new QTreeWidgetItem;
 
         showProfile(cprofile, item);
@@ -182,7 +190,7 @@ void RTSPropertiesViewImpl::showProperties()
 
 void RTSPropertiesViewImpl::showConnectionProperties(PortService_var port, string id)
 {
-    currentItem.id = "";
+    currentItem.id_ = "";
 
     treeWidget.clear();
     QTreeWidgetItem *item = new QTreeWidgetItem;
@@ -254,7 +262,7 @@ void RTSPropertiesViewImpl::showExecutionContext(RTC::RTObject_ptr rtc, QTreeWid
     showExecutionContext(rtc, exeContList, ownedChild);
 
     exeContList = rtc->get_participating_contexts();
-    if(exeContList->length()){
+    if (exeContList->length()) {
         QTreeWidgetItem* child = new QTreeWidgetItem;
         child->setText(0, _("Participate"));
         item->addChild(child);
@@ -321,8 +329,8 @@ void RTSPropertiesViewImpl::showPortConcrete(PortProfile* portprofile, QTreeWidg
     } else {
         port->setText(0, QString(portType.substr(4).c_str()));
         port->setIcon(0, QIcon(boost::iequals(portType, "DataOutPort") ?
-                ":/RTSystemEditor/icons/IconOutPort.png" :
-                ":/RTSystemEditor/icons/IconInPort.png"));
+            ":/RTSystemEditor/icons/IconOutPort.png" :
+            ":/RTSystemEditor/icons/IconInPort.png"));
     }
     item->addChild(port);
 
@@ -388,13 +396,13 @@ void RTSPropertiesViewImpl::showConnection(PortService_var port, string id, QTre
     item->setText(0, _("Connector Profile"));
     item->setIcon(0, QIcon(":/RTSystemEditor/icons/IconConnector.png"));
 
-    if(CORBA::is_nil(port) || port->_non_existent())
+    if (CORBA::is_nil(port) || port->_non_existent())
         return;
     PortProfile_var portprofile = port->get_port_profile();
     ConnectorProfileList connections = portprofile->connector_profiles;
-    for(CORBA::ULong i = 0; i < connections.length(); i++){
+    for (CORBA::ULong i = 0; i < connections.length(); i++) {
         ConnectorProfile connector = connections[i];
-        if(id == string(connector.connector_id)){
+        if (id == string(connector.connector_id)) {
             PortServiceList& connectedPorts = connector.ports;
 
             QTreeWidgetItem* conPropChild = new QTreeWidgetItem;
@@ -413,7 +421,7 @@ void RTSPropertiesViewImpl::showConnection(PortService_var port, string id, QTre
             coil::Properties cproperties = NVUtil::toProperties(connector.properties);
             vector<string> names = cproperties.propertyNames();
             for (vector<string>::iterator iter = names.begin(); iter != names.end(); iter++) {
-                    // view the attribute of rtc-connection.
+                // view the attribute of rtc-connection.
                 string name = (*iter).c_str();
                 //QTreeWidgetItem* connPropChild = judgementType(name);
                 conPropChild = new QTreeWidgetItem;
@@ -434,6 +442,168 @@ void RTSPropertiesViewImpl::showConnection(PortService_var port, string id, QTre
     }
 
 }
+//////////
+SettingDialog::SettingDialog()
+{
+    chkLog = new CheckBox(_("Log Output"));
+    chkLog->sigToggled().connect(
+        std::bind(
+            static_cast<void(SettingDialog::*)(bool)>(&SettingDialog::logChanged), this, _1));
+
+    QLabel* lblLevel = new QLabel(_("Log Level:"));
+    cmbLogLevel = new ComboBox();
+    cmbLogLevel->addItem("SILENT");
+    cmbLogLevel->addItem("FATAL");
+    cmbLogLevel->addItem("ERROR");
+    cmbLogLevel->addItem("WARN");
+    cmbLogLevel->addItem("INFO");
+    cmbLogLevel->addItem("DEBUG");
+    cmbLogLevel->addItem("TRACE");
+    cmbLogLevel->addItem("VERBOSE");
+    cmbLogLevel->addItem("PARANOID");
+
+    QLabel* lblSetting = new QLabel(_("Setting:"));
+    leSetting = new LineEdit;
+
+    QLabel* lblName = new QLabel(_("VendorName:"));
+    leName = new LineEdit;
+    QLabel* lblVersion = new QLabel(_("Version:"));
+    leVersion = new LineEdit;
+    QLabel* lblPolling = new QLabel(_("Polling Cycle:"));
+    lePoling = new LineEdit;
+    QLabel* lblUnit = new QLabel("ms");
+
+#if defined(OPENRTM_VERSION12)
+    QLabel* lblHeartBeat = new QLabel(_("Heartbeat Period:"));
+    leHeartBeat = new LineEdit;
+    QLabel* lblUnitHb = new QLabel("ms");
+#endif
+
+    QFrame* frmDetail = new QFrame;
+    QGridLayout* gridSubLayout = new QGridLayout(frmDetail);
+    gridSubLayout->addWidget(chkLog, 0, 0, 1, 1);
+    gridSubLayout->addWidget(lblLevel, 0, 1, 1, 1);
+    gridSubLayout->addWidget(cmbLogLevel, 0, 2, 1, 1);
+
+    gridSubLayout->addWidget(lblSetting, 1, 0, 1, 1);
+    gridSubLayout->addWidget(leSetting, 1, 1, 1, 2);
+
+    gridSubLayout->addWidget(lblName, 2, 0, 1, 1);
+    gridSubLayout->addWidget(leName, 2, 1, 1, 2);
+    gridSubLayout->addWidget(lblVersion, 3, 0, 1, 1);
+    gridSubLayout->addWidget(leVersion, 3, 1, 1, 2);
+    gridSubLayout->addWidget(lblPolling, 4, 0, 1, 1);
+    gridSubLayout->addWidget(lePoling, 4, 1, 1, 2);
+    gridSubLayout->addWidget(lblUnit, 4, 3, 1, 1);
+
+#if defined(OPENRTM_VERSION12)
+    gridSubLayout->addWidget(lblHeartBeat, 5, 0, 1, 1);
+    gridSubLayout->addWidget(leHeartBeat, 5, 1, 1, 2);
+    gridSubLayout->addWidget(lblUnitHb, 5, 3, 1, 1);
+#endif
+
+    QFrame* frmButton = new QFrame;
+
+    auto okButton = new PushButton(_("&OK"));
+    okButton->setDefault(true);
+    okButton->sigClicked().connect(
+        std::bind(
+            static_cast<void(SettingDialog::*)(void)>(&SettingDialog::oKClicked), this));
+
+    auto cancelButton = new PushButton(_("&Cancel"));
+    cancelButton->sigClicked().connect(
+        std::bind(
+            static_cast<void(SettingDialog::*)(void)>(&SettingDialog::rejected), this));
+
+    QHBoxLayout* buttonBotLayout = new QHBoxLayout(frmButton);
+    buttonBotLayout->addWidget(cancelButton);
+    buttonBotLayout->addStretch();
+    buttonBotLayout->addWidget(okButton);
+
+    QVBoxLayout* mainLayout = new QVBoxLayout;
+    mainLayout->addWidget(frmDetail);
+    mainLayout->addWidget(frmButton);
+    setLayout(mainLayout);
+
+    setWindowTitle(_("OpenRTM Preferences"));
+
+    MappingPtr appVars = AppConfig::archive()->openMapping("OpenRTM");
+    leSetting->setText(QString::fromStdString(appVars->get("defaultSetting", "./choreonoid.rtc.conf")));
+    leName->setText(QString::fromStdString(appVars->get("defaultVendor", "AIST")));
+    leVersion->setText(QString::fromStdString(appVars->get("defaultVersion", "1.0.0")));
+    lePoling->setText(QString::number(appVars->get("pollingCycle", 500)));
+
+#if defined(OPENRTM_VERSION12)
+    leHeartBeat->setText(QString::number(appVars->get("heartBeatPeriod", 500)));
+#endif
+
+    chkLog->setChecked(appVars->get("outputLog", false));
+
+    QString level = QString::fromStdString(appVars->get("logLevel", "INFO"));
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+    cmbLogLevel->setCurrentText(level);
+#else
+    for (int i = 0; i < cmbLogLevel->count(); ++i) {
+        if (cmbLogLevel->itemText(i) == level) {
+            cmbLogLevel->setCurrentIndex(i);
+            break;
+        }
+    }
+#endif
+
+    cmbLogLevel->setEnabled(chkLog->isChecked());
+}
+
+
+void SettingDialog::logChanged(bool state)
+{
+    cmbLogLevel->setEnabled(chkLog->isChecked());
+}
+
+
+void SettingDialog::oKClicked()
+{
+    DDEBUG("SettingDialog::oKClicked");
+    MappingPtr appVars = AppConfig::archive()->openMapping("OpenRTM");
+
+    QString orgSetting = QString::fromStdString(appVars->get("defaultSetting", "./choreonoid.rtc.conf"));
+    QString newSetting = leSetting->text();
+    bool orgLog = appVars->get("outputLog", false);
+    bool newLog = chkLog->isChecked();
+    QString orgLevel = QString::fromStdString(appVars->get("logLevel", "INFO"));
+    QString newLevel = cmbLogLevel->currentText();
+    bool isRestart = (orgSetting != newSetting) || (orgLog != newLog) || (orgLevel != newLevel);
+
+    appVars->write("defaultSetting", leSetting->text().toStdString(), DOUBLE_QUOTED);
+    appVars->write("defaultVendor", leName->text().toStdString(), DOUBLE_QUOTED);
+    appVars->write("defaultVersion", leVersion->text().toStdString(), DOUBLE_QUOTED);
+    appVars->write("pollingCycle", lePoling->text().toInt());
+
+#if defined(OPENRTM_VERSION12)
+    appVars->write("heartBeatPeriod", leHeartBeat->text().toInt());
+#endif
+
+    appVars->write("outputLog", chkLog->isChecked());
+    appVars->write("logLevel", cmbLogLevel->currentText().toStdString());
+
+    RTSDiagramView* view = RTSDiagramView::instance();
+    if (view) {
+        view->updateSetting();
+    }
+
+    if (isRestart) {
+        QMessageBox::warning(this, _("OpenRTM Preferences"), _("The specified setting becomes valid after RESTART."));
+    }
+    close();
+}
+
+
+void SettingDialog::rejected()
+{
+    close();
+}
+
 
 
 

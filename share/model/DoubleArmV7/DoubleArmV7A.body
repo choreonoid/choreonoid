@@ -203,6 +203,7 @@ links:
     type: SubBody
     uri: DoubleArmV7-Upper.body
     parent: TFRAME
+    jointIdOffset: 0
   -
     name: WIRE_GUARD_L
     parent: TFRAME

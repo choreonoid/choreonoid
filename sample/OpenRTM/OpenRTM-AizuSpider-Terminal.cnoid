@@ -6,99 +6,26 @@ items:
   children: 
     - 
       id: 1
-      name: "RTSystem"
+      name: "AizuSpider-RTSystem"
       plugin: OpenRTM
       class: RTSystemItem
       data: 
+        filename: "AizuSpider-RTSystem.xml"
+        format: RTS-PROFILE-XML
         AutoConnection: true
-        RTSComps: 
-          - 
-            name: AizuSpider-VisionSensorIoRTC
-            pos: [ -67, 98 ]
-            OutPorts: 
-              - 
-                name: AizuSpider-VisionSensorIoRTC.ARM_CAMERA
-                isServicePort: false
-              - 
-                name: AizuSpider-VisionSensorIoRTC.BACK_CAMERA
-                isServicePort: false
-              - 
-                name: AizuSpider-VisionSensorIoRTC.FRONT_CAMERA
-                isServicePort: false
-              - 
-                name: AizuSpider-VisionSensorIoRTC.LEFT_CAMERA
-                isServicePort: false
-              - 
-                name: AizuSpider-VisionSensorIoRTC.LRF
-                isServicePort: false
-              - 
-                name: AizuSpider-VisionSensorIoRTC.RIGHT_CAMERA
-                isServicePort: false
-          - 
-            name: AizuSpider-JoystickInput
-            pos: [ 174, 13 ]
-            InPorts: 
-              - 
-                name: AizuSpider-JoystickInput.axes
-                isServicePort: false
-              - 
-                name: AizuSpider-JoystickInput.buttons
-                isServicePort: false
-          - 
-            name: CameraImage
-            pos: [ 354, 125 ]
-            InPorts: 
-              - 
-                name: CameraImage.cameraImage
-                isServicePort: false
-          - 
-            name: JoystickRTC0
-            pos: [ -71, 11 ]
-            OutPorts: 
-              - 
-                name: JoystickRTC0.axes
-                isServicePort: false
-              - 
-                name: JoystickRTC0.buttons
-                isServicePort: false
-        RTSConnections: 
-          - 
-            name: JoystickRTC0.axes_AizuSpider-JoystickInput.axes
-            sourceRtcName: JoystickRTC0
-            sourcePortName: JoystickRTC0.axes
-            targetRtcName: AizuSpider-JoystickInput
-            targetPortName: AizuSpider-JoystickInput.axes
-            dataflow: push
-            subscription: flush
-            position: [ 13, 30, 18, 30, 123.5, 30, 123.5, 32, 229, 32, 234, 32 ]
-          - 
-            name: JoystickRTC0.buttons_AizuSpider-JoystickInput.buttons
-            sourceRtcName: JoystickRTC0
-            sourcePortName: JoystickRTC0.buttons
-            targetRtcName: AizuSpider-JoystickInput
-            targetPortName: AizuSpider-JoystickInput.buttons
-            dataflow: push
-            subscription: flush
-            position: [ 13, 48, 18, 48, 123.5, 48, 123.5, 50, 229, 50, 234, 50 ]
-          - 
-            name: AizuSpider-VisionSensorIoRTC.FRONT_CAMERA_CameraImage.cameraImage
-            sourceRtcName: AizuSpider-VisionSensorIoRTC
-            sourcePortName: AizuSpider-VisionSensorIoRTC.FRONT_CAMERA
-            targetRtcName: CameraImage
-            targetPortName: CameraImage.cameraImage
-            dataflow: push
-            subscription: flush
-            position: [ 74, 153, 79, 153, 226.5, 153, 226.5, 144, 374, 144, 379, 144 ]
+        PollingCycle: 1000
+        StateCheck: Polling
+        CheckAtLoading: true
     - 
       id: 2
-      name: "RTC"
+      name: "JoystickRTC"
       plugin: OpenRTM
       class: RTCItem
       data: 
-        module: "${PROGRAM_TOP}/lib/choreonoid-1.7/rtc/JoystickRTC"
+        module: "JoystickRTC"
         baseDirectory: "RTC directory"
         periodicType: PeriodicExecutionContext
-        periodicRate: 1000
+        periodicRate: 30
         activation: true
 views: 
   - 
@@ -111,8 +38,6 @@ views:
     plugin: Base
     class: ItemTreeView
     mounted: true
-    state: 
-      selected: [ 1 ]
   - 
     id: 2
     plugin: Base
@@ -212,16 +137,12 @@ views:
       listingMode: "Link Tree"
   - 
     id: 8
-    plugin: Multicopter
-    class: MulticopterMonitorView
-  - 
-    id: 9
     name: "CameraImage"
     plugin: OpenRTM
     class: RTMImageView
     mounted: true
   - 
-    id: 10
+    id: 9
     name: "RTC Diagram"
     plugin: OpenRTM
     class: RTSDiagramView
@@ -229,59 +150,19 @@ views:
     state: 
       currentRTSItem: 1
   - 
-    id: 11
+    id: 10
     plugin: OpenRTM
     class: RTSNameServerView
     mounted: true
     state: 
-      host: localhost
-      port: 2809
+      NameServers: 
+        - 
+          host: "localhost"
+          port: 2809
   - 
-    id: 12
+    id: 11
     plugin: Python
     class: PythonConsoleView
-toolbars: 
-  "TimeBar": 
-    minTime: 0
-    maxTime: 5
-    frameRate: 1000
-    playbackFrameRate: 100
-    idleLoopDrivenMode: false
-    currentTime: 0
-    speedScale: 1
-    syncToOngoingUpdates: true
-    autoExpansion: true
-  "KinematicsBar": 
-    mode: AUTO
-    enablePositionDragger: true
-    penetrationBlock: false
-    collisionLinkHighlight: false
-    snapDistance: 0.025
-    penetrationBlockDepth: 0.0005
-    lazyCollisionDetectionMode: true
-  "LeggedBodyBar": 
-    stanceWidth: 0.15
-Body: 
-  "BodyMotionEngine": 
-    updateJointVelocities: false
-  "EditableSceneBody": 
-    staticModelEditing: true
-  "KinematicFaultChecker": 
-    checkJointPositions: true
-    angleMargin: 0
-    translationMargin: 0
-    checkJointVelocities: true
-    velocityLimitRatio: 100
-    targetJoints: all
-    checkSelfCollisions: true
-    onlyTimeBarRange: false
-  "SplineFilterDialog": 
-    isInputFrameRateSpecified: false
-    inputFrameRate: 200
-    isOutputFrameRateSpecified: false
-    outputFrameRate: 200
-OpenRTM: 
-  "deleteUnmanagedRTCsOnStartingSimulation": false
 viewAreas: 
   - 
     type: embedded
@@ -289,12 +170,12 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 364, 1550 ]
+      sizes: [ 356, 1518 ]
       children: 
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 470, 470 ]
+          sizes: [ 626, 625 ]
           children: 
             - 
               type: pane
@@ -302,26 +183,26 @@ viewAreas:
               current: 1
             - 
               type: pane
-              views: [ 0, 7, 11 ]
-              current: 11
+              views: [ 0, 7, 10 ]
+              current: 10
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 673, 267 ]
+          sizes: [ 896, 355 ]
           children: 
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 723, 821 ]
+              sizes: [ 708, 804 ]
               children: 
                 - 
                   type: pane
-                  views: [ 5, 6, 10 ]
-                  current: 10
+                  views: [ 5, 6, 9 ]
+                  current: 9
                 - 
                   type: pane
-                  views: [ 3, 9 ]
-                  current: 9
+                  views: [ 3, 8 ]
+                  current: 8
             - 
               type: pane
               views: [ 2 ]
@@ -330,8 +211,9 @@ layoutOfToolBars:
   rows: 
     - 
       - { name: "FileBar", x: 0, priority: 0 }
-      - { name: "ScriptBar", x: 48, priority: 0 }
-      - { name: "SimulationBar", x: 95, priority: 1 }
-      - { name: "TimeBar", x: 96, priority: 0 }
-      - { name: "SceneBar", x: 1336, priority: 2 }
-      - { name: "BodyBar", x: 1702, priority: 0 }
+      - { name: "ScriptBar", x: 47, priority: 0 }
+      - { name: "TimeBar", x: 94, priority: 0 }
+      - { name: "SceneBar", x: 1075, priority: 0 }
+      - { name: "ImageViewBar", x: 1240, priority: 3 }
+      - { name: "BodyBar", x: 1623, priority: 1 }
+      - { name: "KinematicsBar", x: 1649, priority: 2 }
