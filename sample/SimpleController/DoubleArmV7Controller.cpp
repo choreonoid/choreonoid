@@ -1,5 +1,5 @@
 #include <cnoid/SimpleController>
-#include <cnoid/Joystick>
+#include <cnoid/SharedJoystick>
 
 using namespace std;
 using namespace cnoid;
@@ -25,7 +25,12 @@ public:
     vector<double> pgain;
     vector<double> dgain;
 
-    Joystick joystick;
+    SharedJoystickPtr joystick;
+    int arm1Mode;
+    int arm2Mode;
+    int currentJoystickMode;
+    const int SHIFT_BUTTON = Joystick::L_BUTTON;
+    int shiftState;
 
     enum AxisType { STICK, BUTTON };
 
@@ -41,10 +46,6 @@ public:
 
     vector<vector<OperationAxis>> operationAxes;
     int operationSetIndex;
-    bool prevSelectButtonState;
-    const int SHIFT_BUTTON = Joystick::L_BUTTON;
-    int shiftState;
-    const int SELECT_BUTTON_ID = Joystick::LOGO_BUTTON;
 
     DoubleArmV7Controller();
     virtual bool initialize(SimpleControllerIO* io) override;
@@ -95,6 +96,10 @@ bool DoubleArmV7Controller::initialize(SimpleControllerIO* io)
     
     initArms(io);
     initPDGain();
+
+    joystick = io->getOrCreateSharedObject<SharedJoystick>("joystick");
+    arm1Mode = joystick->addMode();
+    arm2Mode = joystick->addMode();
     initJoystickKeyBind();
 
     return true;
@@ -239,21 +244,24 @@ void DoubleArmV7Controller::initJoystickKeyBind()
     };
 
     operationSetIndex = 0;
-    prevSelectButtonState = false;
 }
 
 
 bool DoubleArmV7Controller::control()
 {
-    joystick.readCurrentState();
+    joystick->updateState(arm1Mode);
 
-    shiftState = joystick.getButtonState(SHIFT_BUTTON) ? 1 : 0;
-
-    bool selectButtonState = joystick.getButtonState(SELECT_BUTTON_ID);
-    if(!prevSelectButtonState && selectButtonState){
-        operationSetIndex = 1 - operationSetIndex;
+    if(joystick->mode() == arm1Mode){
+        currentJoystickMode = arm1Mode;
+        operationSetIndex = 0;
+    } else if(joystick->mode() == arm2Mode){
+        currentJoystickMode = arm2Mode;
+        operationSetIndex = 1;
+    } else {
+        currentJoystickMode = -1;
     }
-    prevSelectButtonState = selectButtonState;
+
+    shiftState = joystick->getButtonState(SHIFT_BUTTON) ? 1 : 0;
 
     if(trackType){
         controlTracks();
@@ -277,16 +285,16 @@ void DoubleArmV7Controller::controlTracks()
     const double k2 = 0.6;
 
     double pos[2];
-    pos[0] = k1 * joystick.getPosition(Joystick::DIRECTIONAL_PAD_H_AXIS);
-    pos[1] = k1 * joystick.getPosition(Joystick::DIRECTIONAL_PAD_V_AXIS);
+    pos[0] = k1 * joystick->getPosition(currentJoystickMode, Joystick::DIRECTIONAL_PAD_H_AXIS);
+    pos[1] = k1 * joystick->getPosition(currentJoystickMode, Joystick::DIRECTIONAL_PAD_V_AXIS);
     
     if(shiftState == 1){
         pos[0] += k2 * (
-            joystick.getPosition(Joystick::L_STICK_H_AXIS) +
-            joystick.getPosition(Joystick::R_STICK_H_AXIS));
+            joystick->getPosition(currentJoystickMode, Joystick::L_STICK_H_AXIS) +
+            joystick->getPosition(currentJoystickMode, Joystick::R_STICK_H_AXIS));
         pos[1] += k2 * (
-            joystick.getPosition(Joystick::L_STICK_V_AXIS) +
-            joystick.getPosition(Joystick::R_STICK_V_AXIS));
+            joystick->getPosition(currentJoystickMode, Joystick::L_STICK_V_AXIS) +
+            joystick->getPosition(currentJoystickMode, Joystick::R_STICK_V_AXIS));
     }
     
     for(int i=0; i < 2; ++i){
@@ -314,11 +322,11 @@ void DoubleArmV7Controller::setTargetArmPositions()
             Link* joint = axis.joint;
             double& q = qref[armJointIdMap[joint->jointId()]];
             if(axis.type == BUTTON){
-                if(joystick.getButtonState(axis.id)){
+                if(joystick->getButtonState(currentJoystickMode, axis.id)){
                     q += axis.ratio * dt;
                 }
             } else if(axis.type == STICK){
-                double pos = joystick.getPosition(axis.id);
+                double pos = joystick->getPosition(currentJoystickMode, axis.id);
                 q += axis.ratio * pos * dt;
             }
             if(q > joint->q_upper()){
