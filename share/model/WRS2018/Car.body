@@ -167,7 +167,7 @@ links:
     jointMotor: true
     jointMotorCompliance: 0.1
     elements:
-      - 
+      -
         type: AGXBreakableJointDevice
         isOptional: true
         link1Name: BODY
@@ -177,6 +177,7 @@ links:
         breakType: force
         breakLimitForce: 30
         validAxis: [ 0, 1, 0 ]
+        signedAxis: [ 0, -1, 0 ]
         period: 0.5
       -
         type: Visual
@@ -243,6 +244,7 @@ links:
         breakType: force
         breakLimitForce: 30
         validAxis: [ 0, 1, 0 ]
+        signedAxis: [ 0, -1, 0 ]
         period: 0.5
 
       - 
