@@ -2,25 +2,23 @@ format: ChoreonoidBody
 formatVersion: 1.0
 angleUnit: degree
 name: DoubleArmV7-Upper
-rootLink: UPPER_TFRAME
+rootLink: TFRAME
 
 links:
   -
-    name: UPPER_TFRAME
-    jointType: fixed
-    mass: 40
+    name: TFRAME
+    jointType: free
+    translation: [ 0, 0, 0.520 ]
+    rotation: [ 1, 0, 0, 90 ]
+    mass: 445
+    centerOfMass: [ 2.61167950E-02, -2.48536360E-01, 7.38255770E-05 ]
     inertia: [
-      10,  0,  0,
-       0, 10,  0,
-       0,  0, 10 ]
+      1.17125210E+02,  9.30859190E-01,  7.71323470E-03,
+      9.30859190E-01,  2.13308730E+02,  -4.07759970E-03,
+      7.71323470E-03,  -4.07759970E-03, 1.08880120E+02 ]
     elements:
-      -
-        type: Shape
-        translation: [ 0, -0.03, 0 ]
-        geometry: { type: Cylinder, radius: 0.27, height: 0.06 }
-        appearance: 
-          material:
-            diffuseColor: [ 0.53, 0.56, 0.27 ]
+      - type: Resource
+        uri: "prt/frame1.wrl"
       - 
         type: RateGyroSensor
         name: FRAME_GYRO
@@ -36,7 +34,7 @@ links:
         fieldOfView: 41.08
   -
     name: MFRAME
-    parent: UPPER_TFRAME
+    parent: TFRAME
     jointType: revolute
     jointAxis: Y
     jointId: 0
@@ -557,7 +555,7 @@ links:
       Collision: *TOHKU_TIP_COLLISION_MODEL
   -
     name: UFRAME
-    parent: UPPER_TFRAME
+    parent: TFRAME
     translation: [ 0.0, 0.3, 0.0 ]
     jointType: revolute
     jointAxis: Y
