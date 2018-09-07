@@ -1,5 +1,6 @@
 #include <cnoid/SimpleController>
 #include <cnoid/SharedJoystick>
+#include <cnoid/EigenUtil>
 #include <boost/format.hpp>
 
 using namespace std;
@@ -15,13 +16,15 @@ class Jaco2Controller : public SimpleController
 
     struct JointInfo {
         Link* joint;
-        double qref;
-        double qold;
+        double q_ref;
+        double q_old;
         double kp;
         double kd;
     };
 
     vector<JointInfo> jointInfos;
+
+    double fingerJointTargetAngle;
 
     struct JointSpec {
         string name;
@@ -38,11 +41,11 @@ class Jaco2Controller : public SimpleController
         WRIST2,
         HAND,
         FINGER1,
-        FINGER1_TIP,
         FINGER2,
-        FINGER2_TIP,
         FINGER3,
-        FINGER3_TIP,
+        //FINGER1_TIP,
+        //FINGER2_TIP,
+        //FINGER3_TIP,
         NUM_JOINTS
     };
 
@@ -55,10 +58,13 @@ public:
     virtual bool control() override;
     void updateTargetJointAngles();
     void setTargetJointAngle(int jointID, Joystick::AxisID stickID, double k);
+    void setFingerTargetJointAngles();
+    void clampTargetJointAngle(int jointId);
     void setTargetJointAngle(int jointID, Joystick::ButtonID button1, Joystick::ButtonID button2, double k);
-    void controlJointsWithTorque();
-    void controlJointsWithVelocity();
+    
     void controlJointsWithPosition();
+    void controlJointsWithVelocity();
+    void controlJointsWithTorque();
 };
 
 
@@ -101,11 +107,11 @@ bool Jaco2Controller::initialize(SimpleControllerIO* io)
         specs[WRIST2      ] = { "WRIST2",    300.0,   30,  P_GAIN_VELOCITY };
         specs[HAND        ] = { "HAND",      250.0,   25,  P_GAIN_VELOCITY };
         specs[FINGER1     ] = { "FINGER1",     30,     3,  P_GAIN_VELOCITY };
-        specs[FINGER1_TIP ] = { "FINGER1_TIP", 20,     2,  P_GAIN_VELOCITY };
         specs[FINGER2     ] = { "FINGER2",     30,     3,  P_GAIN_VELOCITY };
-        specs[FINGER2_TIP ] = { "FINGER2_TIP", 20,     2,  P_GAIN_VELOCITY };
         specs[FINGER3     ] = { "FINGER3",     30,     3,  P_GAIN_VELOCITY };
-        specs[FINGER3_TIP ] = { "FINGER3_TIP", 20,     2,  P_GAIN_VELOCITY };
+        //specs[FINGER1_TIP ] = { "FINGER1_TIP", 20,     2,  P_GAIN_VELOCITY };
+        //specs[FINGER2_TIP ] = { "FINGER2_TIP", 20,     2,  P_GAIN_VELOCITY };
+        //specs[FINGER3_TIP ] = { "FINGER3_TIP", 20,     2,  P_GAIN_VELOCITY };
     } else {
         //                                     P      D      P (vel)
         specs[SHOULDER    ] = { "SHOULDER",   400.0, 30.0,  P_GAIN_VELOCITY };
@@ -114,12 +120,12 @@ bool Jaco2Controller::initialize(SimpleControllerIO* io)
         specs[WRIST1      ] = { "WRIST1",      60.0,  5.0,  P_GAIN_VELOCITY };
         specs[WRIST2      ] = { "WRIST2",      60.0,  5.0,  P_GAIN_VELOCITY };
         specs[HAND        ] = { "HAND",        60.0,  5.0,  P_GAIN_VELOCITY };
-        specs[FINGER1     ] = { "FINGER1",     5.0,  0.5,  P_GAIN_VELOCITY };
-        specs[FINGER1_TIP ] = { "FINGER1_TIP", 3.0,  0.3,  P_GAIN_VELOCITY };
-        specs[FINGER2     ] = { "FINGER2",     5.0,  0.5,  P_GAIN_VELOCITY };
-        specs[FINGER2_TIP ] = { "FINGER2_TIP", 3.0,  0.3,  P_GAIN_VELOCITY };
-        specs[FINGER3     ] = { "FINGER3",     5.0,  0.5,  P_GAIN_VELOCITY };
-        specs[FINGER3_TIP ] = { "FINGER3_TIP", 3.0,  0.3,  P_GAIN_VELOCITY };
+        specs[FINGER1     ] = { "FINGER1",      5.0,  0.5,  P_GAIN_VELOCITY };
+        specs[FINGER2     ] = { "FINGER2",      5.0,  0.5,  P_GAIN_VELOCITY };
+        specs[FINGER3     ] = { "FINGER3",      5.0,  0.5,  P_GAIN_VELOCITY };
+        //specs[FINGER1_TIP ] = { "FINGER1_TIP", 3.0,  0.3,  P_GAIN_VELOCITY };
+        //specs[FINGER2_TIP ] = { "FINGER2_TIP", 3.0,  0.3,  P_GAIN_VELOCITY };
+        //specs[FINGER3_TIP ] = { "FINGER3_TIP", 3.0,  0.3,  P_GAIN_VELOCITY };
     }
     
     if(!initializeJoints(io, specs, prefix)){
@@ -136,28 +142,29 @@ bool Jaco2Controller::initialize(SimpleControllerIO* io)
 bool Jaco2Controller::initializeJoints(SimpleControllerIO* io, vector<JointSpec>& specs, const string& prefix)
 {
     for(auto& spec : specs){
+        JointInfo info;
         string name = prefix + spec.name;
         auto joint = body->link(name);
         if(!joint){
             io->os() << format("%1% of %2% is not found") % name % body->name() << endl;
-            return false;
-        }
-        joint->setActuationMode(mainActuationMode);
-        io->enableIO(joint);
+        } else {
+            joint->setActuationMode(mainActuationMode);
+            io->enableIO(joint);
 
-        JointInfo info;
-        info.joint = joint;
-        info.qref = info.qold = joint->q();
+            info.joint = joint;
+            info.q_ref = info.q_old = joint->q();
 
-        if(mainActuationMode == Link::JOINT_VELOCITY){
-            info.kp = spec.kp_velocity;
-        } else if(mainActuationMode == Link::JOINT_TORQUE){
-            info.kp = spec.kp_torque;
-            info.kd = spec.kd_torque;
+            if(mainActuationMode == Link::JOINT_VELOCITY){
+                info.kp = spec.kp_velocity;
+            } else if(mainActuationMode == Link::JOINT_TORQUE){
+                info.kp = spec.kp_torque;
+                info.kd = spec.kd_torque;
+            }
         }
-        
         jointInfos.push_back(info);
     }
+
+    fingerJointTargetAngle = jointInfos[FINGER1].joint->q();
 
     return true;
 }
@@ -199,49 +206,78 @@ void Jaco2Controller::updateTargetJointAngles()
     setTargetJointAngle(WRIST2, Joystick::B_BUTTON, Joystick::X_BUTTON, K);
     setTargetJointAngle(HAND,   Joystick::R_BUTTON, Joystick::L_BUTTON, 1.2 * K);
 
-    double dq_finger = 0.0;
-    double lt = joystick->getPosition(targetMode, Joystick::L_TRIGGER_AXIS);
-    if(lt > 0.1){
-        dq_finger -= dt * 0.4 * lt;
-    }
-    double rt = joystick->getPosition(targetMode, Joystick::R_TRIGGER_AXIS);
-    if(rt > 0.1){
-        dq_finger += dt * 0.4 * rt;
-    }
-    
-    for(int i = FINGER1; i <= FINGER3_TIP; ++i){
-        jointInfos[i].qref += dq_finger;
-    }
+    setFingerTargetJointAngles();
 }
 
 
 void Jaco2Controller::setTargetJointAngle(int jointID, Joystick::AxisID stickID, double k)
 {
-    jointInfos[jointID].qref += dt * k * joystick->getPosition(targetMode, stickID, 0.1);
+    jointInfos[jointID].q_ref += dt * k * joystick->getPosition(targetMode, stickID, 0.1);
+    clampTargetJointAngle(jointID);
 }
 
 
 void Jaco2Controller::setTargetJointAngle(int jointID, Joystick::ButtonID button1, Joystick::ButtonID button2, double k)
 {
-    double dq = 0.0;
     if(joystick->getButtonState(targetMode, button1)){
-        dq -= dt * k;
+        jointInfos[jointID].q_ref -= dt * k;
     }
     if(joystick->getButtonState(targetMode, button2)){
-        dq += dt * k;
+        jointInfos[jointID].q_ref += dt * k;
     }
-    jointInfos[jointID].qref += dq;
+    clampTargetJointAngle(jointID);
 }
 
 
-void Jaco2Controller::controlJointsWithTorque()
+void Jaco2Controller::setFingerTargetJointAngles()
+{
+    double lt = joystick->getPosition(targetMode, Joystick::L_TRIGGER_AXIS);
+    if(lt > 0.1){
+        fingerJointTargetAngle -= dt * 0.4 * lt;
+    }
+    double rt = joystick->getPosition(targetMode, Joystick::R_TRIGGER_AXIS);
+    if(rt > 0.1){
+        fingerJointTargetAngle += dt * 0.4 * rt;
+    }
+    double q_max = -100.0;
+    double q_min = 100.0;
+
+    for(auto& id : vector<int>{ FINGER1, FINGER2, FINGER3 }){
+        auto& info = jointInfos[id];
+        info.q_ref = fingerJointTargetAngle;
+        clampTargetJointAngle(id);
+        q_max = std::max(info.q_ref, q_max);
+        q_min = std::min(info.q_ref, q_min);
+    }
+    if(fingerJointTargetAngle > q_max){
+        fingerJointTargetAngle = q_max;
+    } else if(fingerJointTargetAngle < q_min){
+        fingerJointTargetAngle = q_min;
+    }
+}
+
+
+void Jaco2Controller::clampTargetJointAngle(int jointID)
+{
+    auto& info = jointInfos[jointID];
+    auto joint = info.joint;
+    auto& q_ref = info.q_ref;
+    static const double maxerror = radian(3.0);
+    double q_current = joint->q();
+    double q_lower = std::max(q_current - maxerror, joint->q_lower());
+    double q_upper = std::min(q_current + maxerror, joint->q_upper());
+    if(q_ref < q_lower){
+        q_ref = q_lower;
+    } else if(q_ref > q_upper){
+        q_ref = q_upper;
+    }
+}
+    
+
+void Jaco2Controller::controlJointsWithPosition()
 {
     for(auto& info : jointInfos){
-        auto joint = info.joint;
-        double q = joint->q();
-        double dq = (q - info.qold) / dt;
-        joint->u() = info.kp * (info.qref - q) + info.kd * (0.0 - dq);
-        info.qold = q;
+        info.joint->q() = info.q_ref;
     }
 }
 
@@ -251,15 +287,19 @@ void Jaco2Controller::controlJointsWithVelocity()
     for(auto& info : jointInfos){
         auto joint = info.joint;
         double q = joint->q();
-        joint->dq() = info.kp * (info.qref - q) / dt;
+        joint->dq() = info.kp * (info.q_ref - q) / dt;
     }
 }
 
 
-void Jaco2Controller::controlJointsWithPosition()
+void Jaco2Controller::controlJointsWithTorque()
 {
     for(auto& info : jointInfos){
-        info.joint->q() = info.qref;
+        auto joint = info.joint;
+        double q = joint->q();
+        double dq = (q - info.q_old) / dt;
+        joint->u() = info.kp * (info.q_ref - q) + info.kd * (0.0 - dq);
+        info.q_old = q;
     }
 }
 
