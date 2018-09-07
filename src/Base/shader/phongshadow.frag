@@ -73,6 +73,9 @@ vec3 calcDiffuseAndSpecularElements(LightInfo light, vec3 diffuseColor)
         vec3 s = normalize(vec3(light.position));
         vec3 v = normalize(vec3(-position));
         vec3 n = normalize(normal);
+        if(dot(position, n) > 0.0){
+            n = -n;
+        }
         vec3 r = reflect(-s, n);
         return light.intensity * (
             diffuseColor * max(dot(s, n), 0.0) +
@@ -102,6 +105,9 @@ vec3 calcDiffuseAndSpecularElements(LightInfo light, vec3 diffuseColor)
         
         vec3 v = normalize(vec3(-position));
         vec3 n = normalize(normal);
+        if(dot(position, n) > 0.0){
+            n = -n;
+        }
         vec3 r = reflect(-s, n);
         float distance = sqrt(dot(l, l)); // l.length()
         ki *= 1.0 / max(1.0,

@@ -1,4 +1,3 @@
-
 # @author Shin'ichiro Nakaoka
 
 option(BUILD_HRPSYS31_PLUGIN "Building the Hrpsys31 Plugin" OFF)
@@ -20,22 +19,20 @@ set(target CnoidHrpsys31Plugin)
 set(sources
   Hrpsys31Plugin.cpp
   Hrpsys31Item.cpp
-  RTMPointCloudIOItem.cpp
   )
 
 set(headers
   Hrpsys31Item.h
-  RTMPointCloudIOItem.h
   )
 
 idl_compile_cpp(idl_cpp_files idl_h_files corba/hrpsys
   RobotHardwareService
   StateHolderService
+  LOCAL
   )
 
-include_directories(${OPENRTM_INCLUDE_DIRS})
+include_directories(${CMAKE_CURRENT_BINARY_DIR} ${OPENRTM_INCLUDE_DIRS})
 link_directories(${OPENRTM_LIBRARY_DIRS})
-
 make_gettext_mofiles(${target} mofiles)
 add_cnoid_plugin(${target} SHARED ${sources} ${headers} ${idl_cpp_files} ${mofiles})
 target_link_libraries(${target} CnoidRobotAccessPlugin CnoidOpenRTMPlugin)

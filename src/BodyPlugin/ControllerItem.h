@@ -27,10 +27,10 @@ public:
     virtual ~ControllerItem();
 
     bool isActive() const;
-    bool isNoDelayMode() const { return isNoDelayMode_; }
+    bool isNoDelayMode() const;
     bool setNoDelayMode(bool on);
     
-    const std::string& optionString() const { return optionString_; }
+    const std::string& optionString() const;
 
     /**
        This function is called before the simulation world is initialized.
@@ -88,6 +88,8 @@ public:
 protected:
     void putMessage(const std::string& message);
 
+    virtual void onOptionsChanged();
+
     virtual void doPutProperties(PutPropertyFunction& putProperty);
     virtual bool store(Archive& archive);
     virtual bool restore(const Archive& archive);
@@ -101,9 +103,7 @@ private:
 
     friend class SimulatorItemImpl;
 
-    void setSimulatorItem(SimulatorItem* item) {
-        simulatorItem_ = item;
-    }
+    void setSimulatorItem(SimulatorItem* item);
 };
         
 typedef ref_ptr<ControllerItem> ControllerItemPtr;

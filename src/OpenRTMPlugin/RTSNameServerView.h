@@ -1,25 +1,17 @@
-/**
-   @author Shin'ichiro Nakaoka
-   @author Hisashi Ikari
-*/
+#ifndef CNOID_OPENRTM_PLUGIN_RTS_NAME_SERVER_VIEW_H
+#define CNOID_OPENRTM_PLUGIN_RTS_NAME_SERVER_VIEW_H
 
-#ifndef CNOID_OPENRTM_PLUGIN_RTS_NAME_SERVER_VIEW_H_INCLUDED
-#define CNOID_OPENRTM_PLUGIN_RTS_NAME_SERVER_VIEW_H_INCLUDED
-
-#include <cnoid/View>
-#include <cnoid/PolymorphicPointerArray>
+#include "RTCWrapper.h"
 #include <cnoid/CorbaUtil>
 #include <cnoid/TreeWidget>
+#include <cnoid/MenuManager>
+#include <cnoid/View>
 
-using namespace cnoid;
+namespace cnoid {
 
-namespace cnoid
-{
 class RTSNameServerViewImpl;
+class RTSVItem;
 
-/*!
- * @brief It is a screen of RTC list.
- */
 class RTSNameServerView : public View
 {
 public:
@@ -29,30 +21,63 @@ public:
     RTSNameServerView();
     virtual ~RTSNameServerView();
 
-    SignalProxy<void(const std::list<NamingContextHelper::ObjectInfo>&)>
-    	sigSelectionChanged();
-    SignalProxy<void(std::string, int)> sigLocationChanged();
+    SignalProxy<void(const std::list<NamingContextHelper::ObjectInfo>&)> sigSelectionChanged();
 
-    const std::string getHost();
-    int getPort();
     std::list<NamingContextHelper::ObjectInfo> getSelection();
-    void setSelection(std::string RTCname);
+
+    //Proxy to RTSNameServerViewImpl
     void updateView();
+    void setSelection(std::string RTCname, std::string RTCfullPath);
 
 protected:
+    virtual void onActivated() override;
     virtual bool storeState(Archive& archive) override;
     virtual bool restoreState(const Archive& archive) override;
 
 private:
-    RTSNameServerViewImpl* impl;
+    RTSNameServerViewImpl * impl;
 };
+
 
 class RTSNameTreeWidget : public TreeWidget
 {
     Q_OBJECT
+private:
+    MenuManager menuManager;
 
-private :
-    void mouseMoveEvent(QMouseEvent *event);
+    void mouseMoveEvent(QMouseEvent* event);
+    void mousePressEvent(QMouseEvent* event);
+
+    void showIOR();
+    void deleteFromView();
+    void deleteFromNameService();
+    void addContext();
+    void addObject();
+
+    void activateComponent();
+    void deactivateComponent();
+    void resetComponent();
+    void finalizeComponent();
+    void startExecutionContext();
+    void stopExecutionContext();
+
+    void restartManager();
+    void shutdownManager();
+};
+
+
+enum CORBA_KIND { KIND_CATEGORY, KIND_HOST, KIND_MANAGER, KIND_RTC_MANAGER, KIND_MODULE, KIND_SERVER, KIND_RTC, KIND_FOLDER, KIND_OTHER };
+
+
+class RTSVItem : public QTreeWidgetItem, public RTCWrapper
+{
+public:
+    RTSVItem();
+    RTSVItem(const NamingContextHelper::ObjectInfo& info, RTC::RTObject_ptr rtc = 0);
+
+    NamingContextHelper::ObjectInfo info_;
+    CORBA_KIND kind_;
+    bool removing_;
 };
 
 }

@@ -7,7 +7,7 @@
 #define CNOID_UTIL_EXECUTABLE_PATH_H
 
 #include <string>
-#include "Config.h"
+#include <cnoid/Config>
 #include "exportdecl.h"
 
 namespace cnoid {

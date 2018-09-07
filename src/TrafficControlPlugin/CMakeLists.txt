@@ -14,5 +14,5 @@ set(sources
 set(target CnoidTrafficControlPlugin)
 make_gettext_mofiles(${target} mofiles)
 add_cnoid_plugin(${target} SHARED ${sources} ${mofiles})
-target_link_libraries(${target} CnoidBase)
+target_link_libraries(${target} CnoidBodyPlugin)
 apply_common_setting_for_plugin(${target})

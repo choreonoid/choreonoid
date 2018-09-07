@@ -22,6 +22,16 @@ void Link_setRotation(Link& self, const Matrix3& R) { self.setRotation(R); }
 Vector3 Link_getOffsetTranslation(Link& self) { return self.offsetTranslation(); }
 Matrix3 Link_getOffsetRotation(Link& self) { return self.offsetRotation(); }
 
+py::object Link_info2(Link& self, const std::string& key, py::object defaultValue)
+{
+    if(!PyFloat_Check(defaultValue.ptr())){
+        PyErr_SetString(PyExc_TypeError, "The argument type is not supported");
+        throw py::error_already_set();
+    }
+    double v = defaultValue.cast<double>();
+    return py::cast(self.info(key, v));
+}
+
 }
 
 namespace cnoid {
@@ -30,29 +40,29 @@ void exportPyLink(py::module& m)
 {
     py::class_<Link, LinkPtr, Referenced> link(m, "Link");
     link
-        .def("name", &Link::name)
-        .def("index", &Link::index)
+        .def_property_readonly("name", &Link::name)
+        .def_property_readonly("index", &Link::index)
         .def("isValid", &Link::isValid)
-        .def("parent", &Link::parent)
-        .def("sibling", &Link::sibling)
-        .def("child", &Link::child)
+        .def_property_readonly("parent", &Link::parent)
+        .def_property_readonly("sibling", &Link::sibling)
+        .def_property_readonly("child", &Link::child)
         .def("isRoot", &Link::isRoot)
         .def_property("T", (Position&(Link::*)())&Link::T, Link_setPosition)
-        .def("position", (Position&(Link::*)())&Link::position)
+        .def_property("position", (Position&(Link::*)())&Link::position, Link_setPosition)
         .def("setPosition", Link_setPosition)
         .def_property("p", Link_getTranslation, Link_setTranslation)
-        .def("translation", Link_getTranslation)
+        .def_property("translation", Link_getTranslation, Link_setTranslation)
         .def("setTranslation", Link_setTranslation)
         .def_property("R", Link_getRotation, Link_setRotation)
-        .def("rotation", Link_getRotation)
+        .def_property("rotation", Link_getRotation, Link_setRotation)
         .def("setRotation", Link_setRotation)
         .def_property_readonly("Tb", (Position&(Link::*)())&Link::Tb)
         .def_property_readonly("b", Link_getOffsetTranslation)
-        .def("offsetTranslation", Link_getOffsetTranslation)
+        .def_property_readonly("offsetTranslation", Link_getOffsetTranslation)
         .def_property_readonly("Rb", Link_getOffsetRotation)
-        .def("offsetRotation", Link_getOffsetRotation)
-        .def("jointId", &Link::jointId)
-        .def("jointType", &Link::jointType)
+        .def_property_readonly("offsetRotation", Link_getOffsetRotation)
+        .def_property_readonly("jointId", &Link::jointId)
+        .def_property_readonly("jointType", &Link::jointType)
         .def("isFixedJoint", &Link::isFixedJoint)
         .def("isFreeJoint", &Link::isFreeJoint)
         .def("isRevoluteJoint", &Link::isRevoluteJoint)
@@ -60,7 +70,7 @@ void exportPyLink(py::module& m)
         .def("isPrismaticJoint", &Link::isPrismaticJoint)
         .def("isSlideJoint", &Link::isSlideJoint)
         .def_property_readonly("a", &Link::a)
-        .def("jointAxis", &Link::jointAxis)
+        .def_property_readonly("jointAxis", &Link::jointAxis)
         .def_property_readonly("d", &Link::d)
         .def_property("q", (double&(Link::*)())&Link::q, [](Link& self, double q){ self.q() = q; })
         .def_property("dq", (double&(Link::*)())&Link::dq, [](Link& self, double dq){ self.dq() = dq; })
@@ -75,11 +85,11 @@ void exportPyLink(py::module& m)
         .def_property("dv", (Vector3&(Link::*)())&Link::dv, [](Link& self, const Vector3& dv){ self.dv() = dv; })
         .def_property("dw", (Vector3&(Link::*)())&Link::dw, [](Link& self, const Vector3& dw){ self.dw() = dw; })
         .def_property_readonly("c", &Link::c)
-        .def("centerOfMass", &Link::centerOfMass)
+        .def_property_readonly("centerOfMass", &Link::centerOfMass)
         .def_property("wc", (Vector3&(Link::*)())&Link::wc, [](Link& self, const Vector3& wc){ self.wc() = wc; })
-        .def("centerOfMassGlobal", (Vector3&(Link::*)())&Link::centerOfMassGlobal)
+        .def_property_readonly("centerOfMassGlobal", (Vector3&(Link::*)())&Link::centerOfMassGlobal)
         .def_property_readonly("m", &Link::m)
-        .def("mass", &Link::mass)
+        .def_property_readonly("mass", &Link::mass)
         .def_property_readonly("I", &Link::I)
         .def_property_readonly("Jm2", &Link::Jm2)
         .def_property("F_ext", (Vector6&(Link::*)())&Link::F_ext, [](Link& self, const Vector6& F){ self.F_ext() = F; })
@@ -87,11 +97,11 @@ void exportPyLink(py::module& m)
                       [](Link& self, const Vector3& f){ self.f_ext() = f; })
         .def_property("tau_ext", [](Link& self) -> Vector3 { return self.tau_ext(); },
                       [](Link& self, const Vector3& tau){ self.tau_ext() = tau; })
-        .def("materialId", &Link::materialId)
-        .def("materialName", &Link::materialName)
-        .def("shape", &Link::shape)
-        .def("visualShape", &Link::visualShape)
-        .def("collisionShape", &Link::collisionShape)
+        .def_property_readonly("materialId", &Link::materialId)
+        .def_property_readonly("materialName", &Link::materialName)
+        .def_property_readonly("shape", &Link::shape)
+        .def_property_readonly("visualShape", &Link::visualShape)
+        .def_property_readonly("collisionShape", &Link::collisionShape)
         .def("setIndex", &Link::setIndex)
         .def("prependChild", &Link::prependChild)
         .def("appendChild", &Link::appendChild)
@@ -111,19 +121,39 @@ void exportPyLink(py::module& m)
         .def("setShape", &Link::setShape)
         .def("setVisualShape", &Link::setVisualShape)
         .def("setCollisionShape", &Link::setCollisionShape)
-        .def("attitude", &Link::attitude)
+        .def_property("attitude", &Link::attitude, &Link::setAttitude)
         .def("setAttitude", &Link::setAttitude)
         .def("calcRfromAttitude", &Link::calcRfromAttitude)
         .def("info", (Mapping*(Link::*)())&Link::info)
-        .def("info", [](Link& self, const std::string& key, py::object defaultValue) {
-            if(!PyFloat_Check(defaultValue.ptr())){
-                PyErr_SetString(PyExc_TypeError, "The argument type is not supported");
-                throw py::error_already_set();
-            }
-            double v = defaultValue.cast<double>();
-            return py::cast(self.info(key, v));
-        })
+        .def("info", Link_info2)
         .def("floatInfo", [](Link& self, const std::string& key) { return self.info<double>(key); })
+
+        // deprecated
+        .def("getName", &Link::name)
+        .def("getIndex", &Link::index)
+        .def("getParent", &Link::parent)
+        .def("getSibling", &Link::sibling)
+        .def("getChild", &Link::child)
+        .def("getPosition", (Position&(Link::*)())&Link::position)
+        .def("getTranslation", Link_getTranslation)
+        .def("getRotation", Link_getRotation)
+        .def("getOffsetTranslation", Link_getOffsetTranslation)
+        .def("getOffsetRotation", Link_getOffsetRotation)
+        .def("getJointId", &Link::jointId)
+        .def("getJointType", &Link::jointType)
+        .def("getJointAxis", &Link::jointAxis)
+        .def("getCenterOfMass", &Link::centerOfMass)
+        .def("getCenterOfMassGlobal", (Vector3&(Link::*)())&Link::centerOfMassGlobal)
+        .def("getMass", &Link::mass)
+        .def("getMaterialId", &Link::materialId)
+        .def("getMaterialName", &Link::materialName)
+        .def("getShape", &Link::shape)
+        .def("getVisualShape", &Link::visualShape)
+        .def("getCollisionShape", &Link::collisionShape)
+        .def("getAttitude", &Link::attitude)
+        .def("getInfo", (Mapping*(Link::*)())&Link::info)
+        .def("getInfo", Link_info2)
+        .def("getFloatInfo", [](Link& self, const std::string& key) { return self.info<double>(key); })
         ;
 
     py::enum_<Link::JointType>(link, "JointType")

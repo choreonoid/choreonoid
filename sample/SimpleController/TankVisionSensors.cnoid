@@ -20,7 +20,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/tank/tank.body"
+            modelFile: "${SHARE}/model/Tank/Tank.body"
             currentBaseLink: ""
             rootPosition: [ -2, -0.5, 0.1 ]
             rootAttitude: [ 
@@ -45,7 +45,7 @@ items:
               plugin: Body
               class: SimpleControllerItem
               data: 
-                isNoDelayMode: true
+                isNoDelayMode: false
                 controllerOptions: ""
                 controller: "TankJoystickController"
                 baseDirectory: "Controller directory"
@@ -59,21 +59,21 @@ items:
                 subItems: 
                   - 
                     class: PointCloudVisualizer
-                    name: Camera
+                    name: Kinect
                     renderingMode: Point
                     pointSize: 0
                     voxelSize: 0.01
                     isEditable: false
                   - 
                     class: RangeSensorVisualizer
-                    name: VelodyneVLP-16
+                    name: VLP-16
                     renderingMode: Point
                     pointSize: 0
                     voxelSize: 0.01
                     isEditable: false
                   - 
                     class: CameraImageVisualizer
-                    name: Camera_Image
+                    name: "Kinect Camera"
         - 
           id: 5
           name: "Labo1"
@@ -87,7 +87,6 @@ items:
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            jointPositions: [  ]
             initialRootPosition: [ 0, 0, 0 ]
             initialRootAttitude: [ 
               1, 0, 0, 
@@ -103,6 +102,7 @@ items:
           plugin: Body
           class: AISTSimulatorItem
           data: 
+            timeStep: 0.001
             realtimeSync: true
             recording: "tail"
             timeRangeMode: "Active control period"
@@ -138,7 +138,7 @@ items:
                 maxLatency: 1
                 recordVisionData: true
                 threadMode: Sensor
-                bestEffort: false
+                bestEffort: true
                 allSceneObjects: false
                 rangeSensorPrecisionRatio: 2
                 depthError: 0
@@ -147,37 +147,41 @@ items:
 views: 
   - 
     id: 0
-    name: "CameraImage"
+    name: "Kinect Image"
     plugin: Base
     class: ImageView
     mounted: true
     state: 
-      ImageProviderItem: [ 4, "Camera_Image" ]
+      ImageProviderItem: [ 4, "Kinect Camera" ]
   - 
     id: 1
-    name: "Camera"
+    name: "Theta Image"
     plugin: Base
     class: ImageView
+    mounted: true
+    state: 
+      ImageProviderItem: [ 4, "Theta" ]
   - 
-    id: 4
+    id: 2
     plugin: Base
     class: ItemPropertyView
     mounted: true
   - 
-    id: 5
+    id: 3
     plugin: Base
     class: ItemTreeView
     mounted: true
     state: 
-      checked: [ 1, 2, [ 4, "VelodyneVLP-16" ] ]
-      expanded: [ 1, 2, 3, 4, 6 ]
+      selected: [ 6 ]
+      checked: [ 1, 2, [ 4, "Kinect" ], [ 4, "VLP-16" ] ]
+      expanded: [ 1, 2, 3, 4, 5, 6 ]
   - 
-    id: 6
+    id: 4
     plugin: Base
     class: MessageView
     mounted: true
   - 
-    id: 7
+    id: 5
     plugin: Base
     class: SceneView
     mounted: true
@@ -220,9 +224,9 @@ views:
           fieldOfView: 0.6978
           near: 0.01
           far: 10000
-          eye: [ -6.44723288, -3.30408906, 3.23335936 ]
-          direction: [ 0.819988251, 0.45015162, -0.353529047 ]
-          up: [ 0.309902039, 0.170127932, 0.935423547 ]
+          eye: [ -7.55000311, -3.78400786, 3.39380608 ]
+          direction: [ 0.844599733, 0.410130528, -0.344157291 ]
+          up: [ 0.309587218, 0.15033295, 0.938912008 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
@@ -234,20 +238,20 @@ views:
       yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       dedicatedItemTreeViewChecks: false
   - 
-    id: 11
+    id: 6
     name: "Joystick"
     plugin: Base
     class: VirtualJoystickView
     mounted: true
   - 
-    id: 12
+    id: 7
     plugin: Body
     class: BodyLinkView
     mounted: true
     state: 
       showRotationMatrix: false
   - 
-    id: 13
+    id: 8
     plugin: Body
     class: JointSliderView
     mounted: true
@@ -261,7 +265,7 @@ views:
       labelOnLeft: true
       currentBodyItem: 2
   - 
-    id: 14
+    id: 9
     plugin: Body
     class: LinkSelectionView
     mounted: true
@@ -273,21 +277,11 @@ views:
           id: 2
           selectedLinks: [ 0 ]
   - 
-    id: 16
+    id: 10
     plugin: Python
     class: PythonConsoleView
     mounted: true
-toolbars: 
-  "TimeBar": 
-    minTime: 0
-    maxTime: 5
-    frameRate: 1000
-    playbackFrameRate: 60
-    idleLoopDrivenMode: false
-    currentTime: 0
-    speedScale: 1
-    syncToOngoingUpdates: true
-    autoExpansion: true
+
 viewAreas: 
   - 
     type: embedded
@@ -295,49 +289,68 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 351, 1498 ]
+      sizes: [ 363, 1551 ]
       children: 
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 557, 556 ]
+          sizes: [ 530, 530 ]
           children: 
             - 
               type: pane
-              views: [ 5 ]
-              current: 5
+              views: [ 3 ]
+              current: 3
             - 
               type: pane
-              views: [ 4, 14 ]
-              current: 4
+              views: [ 2, 9 ]
+              current: 2
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 795, 318 ]
+          sizes: [ 822, 238 ]
           children: 
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 699, 793 ]
+              sizes: [ 724, 821 ]
               children: 
                 - 
-                  type: pane
-                  views: [ 12, 13, 0 ]
-                  current: 0
+                  type: splitter
+                  orientation: vertical
+                  sizes: [ 408, 408 ]
+                  children: 
+                    - 
+                      type: pane
+                      views: [ 7, 8, 0 ]
+                      current: 0
+                    - 
+                      type: pane
+                      views: [ 1 ]
+                      current: 1
                 - 
                   type: pane
-                  views: [ 7 ]
-                  current: 7
+                  views: [ 5 ]
+                  current: 5
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 859, 633 ]
+              sizes: [ 890, 655 ]
               children: 
                 - 
                   type: pane
-                  views: [ 6, 16 ]
-                  current: 6
+                  views: [ 4, 10 ]
+                  current: 4
                 - 
                   type: pane
-                  views: [ 11 ]
-                  current: 11
+                  views: [ 6 ]
+                  current: 6
+layoutOfToolBars: 
+  rows: 
+    - 
+      - { name: "FileBar", x: 0, priority: 0 }
+      - { name: "SimulationBar", x: 47, priority: 1 }
+      - { name: "ScriptBar", x: 47, priority: 0 }
+      - { name: "TimeBar", x: 94, priority: 0 }
+      - { name: "SceneBar", x: 1175, priority: 2 }
+      - { name: "KinematicsBar", x: 1540, priority: 3 }
+      - { name: "ImageViewBar", x: 1774, priority: 4 }

@@ -98,8 +98,9 @@ private:
     RTC::CorbaNaming* naming;
     BridgeConf* bridgeConf;
     VirtualRobotRTC* virtualRobotRTC;
-    OpenRTM::ExtTrigExecutionContextService_var virtualRobotEC;
-        
+    RTC::ExecutionContextService_var virtualRobotEC;
+    OpenRTM::ExtTrigExecutionContextService_var virtualRobotExtEC;
+
     Selection configMode;
     bool autoConnect;
     RTComponent* rtcomp;
@@ -110,7 +111,8 @@ private:
     {
         RTC::RTObject_var rtcRef;
         PortMap portMap;
-        OpenRTM::ExtTrigExecutionContextService_var execContext;
+        RTC::ExecutionContextService_var execContext;
+        OpenRTM::ExtTrigExecutionContextService_var execContextExt;
         double timeRate;
         double timeRateCounter;
     };

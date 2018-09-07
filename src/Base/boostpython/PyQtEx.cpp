@@ -29,4 +29,3 @@ void exportPyQtExTypes()
 }
 
 }
-

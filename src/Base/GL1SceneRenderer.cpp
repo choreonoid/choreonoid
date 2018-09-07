@@ -64,6 +64,7 @@ public:
     bool useIDforPicking;
     vector<TransparentShapeInfoPtr> transparentShapes;
     ResourceMap resourceMap;
+    ScopedConnection updateConnection;
 
     DisplayListResource(){
         listID = 0;
@@ -180,6 +181,7 @@ public:
     ResourceMap resourceMaps[2];
     ResourceMap* currentResourceMap;
     ResourceMap* nextResourceMap;
+    vector<SgInvariantGroup*> invariantGroupsToUpdate;
     int currentResourceMapIndex;
     DisplayListResource* currentDisplayListResource;
 
@@ -507,6 +509,7 @@ void GL1SceneRendererImpl::beginRendering(bool doRenderingCommands)
     if(isResourceClearRequested){
         resourceMaps[0].clear();
         resourceMaps[1].clear();
+        invariantGroupsToUpdate.clear();
         hasValidNextResourceMap = false;
         isCheckingUnusedResources = false;
         isResourceClearRequested = false;
@@ -514,6 +517,10 @@ void GL1SceneRendererImpl::beginRendering(bool doRenderingCommands)
     if(hasValidNextResourceMap){
         currentResourceMapIndex = 1 - currentResourceMapIndex;
         currentResourceMap = &resourceMaps[currentResourceMapIndex];
+        for(auto& group : invariantGroupsToUpdate){
+            currentResourceMap->erase(group);
+        }
+        invariantGroupsToUpdate.clear();
         nextResourceMap = &resourceMaps[1 - currentResourceMapIndex];
         hasValidNextResourceMap = false;
     }
@@ -966,6 +973,11 @@ void GL1SceneRendererImpl::renderInvariantGroup(SgInvariantGroup* group)
         if(p == currentResourceMap->end()){
             resource = new DisplayListResource();
             currentResourceMap->insert(ResourceMap::value_type(group, resource));
+            resource->updateConnection.reset(
+                group->sigUpdated().connect(
+                    [&, group](const SgUpdate& update){
+                        invariantGroupsToUpdate.push_back(group);
+                    }));
         } else {
             resource = static_cast<DisplayListResource*>(p->second.get());
         }
@@ -1651,7 +1663,7 @@ void GL1SceneRendererImpl::renderPlot(SgPlot* plot, SgVertexArray& expandedVerti
         //glDisableClientState(GL_NORMAL_ARRAY);
         lastAlpha = 1.0;
         if(!plot->hasColors()){
-            setColor(material->diffuseColor());
+            setColor(material->diffuseColor() + material->emissiveColor());
         }
     } else if(!isPicking){
         enableCullFace(false);

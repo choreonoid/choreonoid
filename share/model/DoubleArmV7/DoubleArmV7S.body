@@ -22,7 +22,6 @@ links:
     parent: TFRAME
     translation: [ 0.7, -0.295, 0.600 ]
     jointAxis: Z
-    jointId: 0
     actuationMode: jointSurfaceVelocity
     maxJointVelocity: 573
     mass: 73.0
@@ -37,7 +36,6 @@ links:
     parent: TFRAME
     translation: [ 0.7, -0.295, -0.600 ]
     jointAxis: Z
-    jointId: 1
     actuationMode: jointSurfaceVelocity
     maxJointVelocity: 573
     mass: 73.0
@@ -51,3 +49,4 @@ links:
     type: SubBody
     uri: DoubleArmV7-Upper.body
     parent: TFRAME
+    jointIdOffset: 0

@@ -50,9 +50,17 @@ foreach(version ${versions})
   set_target_properties(${target} PROPERTIES COMPILE_DEFINITIONS ${defver})
   target_link_libraries(${target} CnoidOpenHRP${version} CnoidBody ${OMNIORB_LIBRARIES})
   
+  # Openhrp modelLoader debug program
+  #set(target openHRP-modelLoadr-test)
+  #add_cnoid_executable(${target} modelLoader-test.cpp)
+  #set_target_properties(${target} PROPERTIES COMPILE_DEFINITIONS ${defver})
+  #target_link_libraries(${target} CnoidBody CnoidOpenHRP${version} ${OMNIORB_LIBRARIES})
+  
 endforeach()
 
-configure_file(OpenHRP-SR1Walk.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
-configure_file(OpenHRP-SR1Liftup.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
-configure_file(OpenHRP-PA10Pickup.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
-configure_file(OpenHRP-OnlineViewer.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+install(FILES 
+  OpenHRP-SR1Walk.cnoid
+  OpenHRP-SR1Liftup.cnoid
+  OpenHRP-PA10Pickup.cnoid
+  OpenHRP-OnlineViewer.cnoid
+  DESTINATION ${CNOID_SHARE_SUBDIR}/project)

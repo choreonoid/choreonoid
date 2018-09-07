@@ -22,13 +22,7 @@ if(UNIX AND NOT APPLE)
   set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-Bsymbolic")
 endif()
 
-include_directories(${OPENRTM_INCLUDE_DIRS})
-
-set(IDL_INCLUDE_DIRS 
-  ${OPENRTM_PREFIX}/include/openrtm-1.1/rtm/idl
-  ${OPENRTM_PREFIX}/rtm/idl # for the Windows installer version
-  )
-
+include_directories(${CMAKE_CURRENT_BINARY_DIR} ${OPENRTM_INCLUDE_DIRS})
 link_directories(${OPENRTM_LIBRARY_DIRS})
 
 foreach(version ${versions})
@@ -60,7 +54,6 @@ foreach(version ${versions})
   set(headers
     OpenHRPControllerBase.h
     )
-  make_headers_public(OpenHRPControllerBase.h)
 
   set(target CnoidOpenHRP${version})
 

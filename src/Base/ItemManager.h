@@ -199,6 +199,7 @@ public:
     void addMenuItemToImport(const std::string& caption, std::function<void()> slot);
 
     static void reloadItems(const ItemList<>& items);
+    static Item* findOriginalItemForReloadedItem(Item* item);
 
 private:
     void registerClassSub(

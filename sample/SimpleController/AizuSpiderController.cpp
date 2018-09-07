@@ -70,20 +70,20 @@ bool AizuSpiderController::initialize(SimpleControllerIO* io)
 {
     body = io->body();
     dt = io->timeStep();
-    mainActuationMode = Link::ActuationMode::JOINT_TORQUE;
 
+    io->os() << "The actuation mode of " << io->controllerName() << " is ";
     string option = io->optionString();
-    if(!option.empty()){
-        if(option == "velocity"){
-            mainActuationMode = Link::ActuationMode::JOINT_VELOCITY;
-        } else if(option == "position"){
-            mainActuationMode = Link::ActuationMode::JOINT_ANGLE;
-        } else if(option == "torque"){
-            mainActuationMode = Link::ActuationMode::JOINT_TORQUE;
-        } else {
-            io->os() << format("Warning: Unknown option \"%1%\".") % option << endl;
-        }
+    if(option == "velocity"){
+        mainActuationMode = Link::ActuationMode::JOINT_VELOCITY;
+        io->os() << "JOINT_VELOCITY";
+    } else if(option  == "position"){
+        mainActuationMode = Link::ActuationMode::JOINT_DISPLACEMENT;
+        io->os() << "JOINT_DISPLACEMENT";
+    } else {
+        mainActuationMode = Link::ActuationMode::JOINT_EFFORT;
+        io->os() << "JOINT_EFFORT";
     }
+    io->os() << "." << endl;
 
     if(!initializeTracks(io)){
         return false;

@@ -4,7 +4,7 @@ from cnoid.Body import *
 from cnoid.BodyPlugin import *
 import math;
 
-sceneWidget = SceneView.instance().sceneWidget()
+sceneWidget = SceneView.instance.sceneWidget
 sceneWidget.setHeadLightEnabled(False)
 sceneWidget.setFloorGrid(False)
 sceneWidget.setWorldLightIntensity(0.1)
@@ -16,26 +16,28 @@ sceneWidget.setCameraPosition(
     [  0.146464, -0.301009,  0.942307 ])
 
 joystickView = ViewManager.getOrCreateView("Base", "VirtualJoystickView")
-MainWindow.instance().viewArea().addView(joystickView)
+MainWindow.instance.viewArea.addView(joystickView)
 joystickView.bringToFront()
 
+itv = ItemTreeView.instance
+
 worldItem = WorldItem()
-RootItem.instance().addChildItem(worldItem)
+RootItem.instance.addChildItem(worldItem)
 
 laboItem = BodyItem()
-laboItem.load(shareDirectory() + "/model/Labo1/Labo1.body")
+laboItem.load(shareDirectory + "/model/Labo1/Labo1.body")
 worldItem.addChildItem(laboItem)
-ItemTreeView.instance().checkItem(laboItem)
+itv.checkItem(laboItem)
 
 tankItem = BodyItem()
-tankItem.load(shareDirectory() + "/model/tank/tank.body")
-tank = tankItem.body()
-tank.rootLink().setTranslation([-0.8, 2.4, 0.1])
-tank.rootLink().setRotation(rotFromRpy([0, 0, math.radians(-90.0)]))
+tankItem.load(shareDirectory + "/model/tank/tank.body")
+tank = tankItem.body
+tank.rootLink.setTranslation([-0.8, 2.4, 0.1])
+tank.rootLink.setRotation(rotFromRpy([0, 0, math.radians(-90.0)]))
 tank.calcForwardKinematics()
 tankItem.storeInitialState()
 worldItem.addChildItem(tankItem)
-ItemTreeView.instance().checkItem(tankItem)
+itv.checkItem(tankItem)
 
 controllerItem = SimpleControllerItem()
 controllerItem.setController("TankJoystickController")
@@ -46,6 +48,6 @@ simulatorItem.setTimeStep(0.001)
 simulatorItem.setRealtimeSyncMode(True)
 simulatorItem.setTimeRangeMode(SimulatorItem.TimeRangeMode.TR_UNLIMITED)
 worldItem.addChildItem(simulatorItem)
-ItemTreeView.instance().selectItem(simulatorItem)
+itv.selectItem(simulatorItem)
 
 simulatorItem.startSimulation()

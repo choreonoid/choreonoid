@@ -1,33 +1,51 @@
 <?xml version="1.0"?>
-<package>
+
+<package format="2">
+
   <name>choreonoid</name>
-  <version>1.6.0</version>
-  <description>Choreonoid is an integrated graphical robotics software framework.</description>
-
-  <maintainer email="s.nakaoka@aist.go.jp">Shin'ichiro Nakaoka</maintainer>
-
+  <version>1.7.0</version>
+  <description>
+    Choreonoid is integrated graphical robotics software based on functions to simulate robots
+  </description>
+  <maintainer email="s.nakaoka@gmail.com">Shin'ichiro Nakaoka</maintainer>
   <license>MIT</license>
-
+  <author email="s.nakaoka@gmail.com">Shin'ichiro Nakaoka</author>
+  <author>Choreonoid Development Team, AIST</author>
   <url type="website">http://choreonoid.org/</url>
   <url type="repository">https://github.com/s-nakaoka/choreonoid/</url>
+  <url type="bugtracker">https://github.com/s-nakaoka/choreonoid/issues</url>
 
-  <author email="s.nakaoka@aist.go.jp">Shin'ichiro Nakaoka</author>
-  <author>Choreonoid Development Team, AIST</author>
+  <buildtool_depend>catkin</buildtool_depend>
 
-  <buildtool_depend>cmake</buildtool_depend>
-  <buildtool_depend>pkg-config</buildtool_depend>
+  <depend>boost</depend>
+  <build_export_depend>eigen</build_export_depend>
+  <build_depend>yaml</build_depend>
+  <exec_depend>yaml</exec_depend>
+  <depend>zlib</depend>
+  <depend>libjpeg</depend>
+  <build_depend>libpng12-dev</build_depend>
+  <build_depend>assimp-dev</build_depend>
+  <exec_depend>assimp</exec_depend>
 
-  <!-- The *_depend tags are used to specify dependencies -->
-  <!-- Dependencies can be catkin packages or system dependencies -->
-  <!-- Examples: -->
-  <!-- Use build_depend for packages you need at compile time: -->
-  <!--   <build_depend>message_generation</build_depend> -->
-  <!-- Use buildtool_depend for build tool packages: -->
-  <!--   <buildtool_depend>catkin</buildtool_depend> -->
-  <!-- Use run_depend for packages you need at runtime: -->
-  <!--   <run_depend>message_runtime</run_depend> -->
-  <!-- Use test_depend for packages you need only for testing: -->
-  <!--   <test_depend>gtest</test_depend> -->
+  <build_export_depend>qtbast5-dev</build_export_depend>
+  <build_depend>libqt5-opengl-dev</build_depend>
+  <build_depend>libqt5x11extras5-dev</build_depend>
+  <exec_depend>libqt5-core</exec_depend>
+  <exec_depend>libqt5-gui</exec_depend>
+  <exec_depend>libqt5-widgets</exec_depend>
+  <exec_depend>libqt5-network</exec_depend>
+  <exec_depend>libqt5-opengl</exec_depend>
+  <exec_depend>opengl</exec_depend>
+
+  <depend>python</depend>
+  <depend>python-numpy</depend>
+
+  <build_depend>libpulse-dev</build_depend>
+  <build_depend>libsndfile1-dev</build_depend>
+  <build_depend>libgstreamer1.0-dev</build_depend>
+  <build_depend>libgstreamer-plugins-base1.0-dev</build_depend>
+  <exec_depend>gstreamer1.0</exec_depend>
+  <exec_depend>gstreamer1.0-plugins-base</exec_depend>
 
   <export>
     <build_type>cmake</build_type>

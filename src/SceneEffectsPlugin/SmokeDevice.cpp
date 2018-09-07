@@ -7,24 +7,25 @@
 #include "SceneSmoke.h"
 #include <cnoid/YAMLBodyLoader>
 #include <cnoid/SceneDevice>
+#include <cnoid/EigenUtil>
 
 using namespace std;
 using namespace cnoid;
 
 namespace {
 
-bool readSmokeDevice(YAMLBodyLoader& loader, Mapping& node)
-{
-    SmokeDevicePtr fountain = new SmokeDevice;
-    return loader.readDevice(fountain, node);
-}
-
-
 SceneDevice* createSceneSmokeDevice(Device* device)
 {
+    auto smokeDevice = static_cast<SmokeDevice*>(device);
     auto sceneSmoke = new SceneSmoke;
     auto sceneDevice = new SceneDevice(device, sceneSmoke);
 
+    sceneDevice->setFunctionOnStateChanged(
+        [sceneSmoke, smokeDevice](){
+            sceneSmoke->particleSystem() = smokeDevice->particleSystem();
+            sceneSmoke->notifyUpdate();
+        });
+    
     sceneDevice->setFunctionOnTimeChanged(
         [sceneSmoke](double time){
             sceneSmoke->setTime(time);
@@ -37,7 +38,14 @@ SceneDevice* createSceneSmokeDevice(Device* device)
 struct TypeRegistration
 {
     TypeRegistration() {
-        YAMLBodyLoader::addNodeType("SmokeDevice", readSmokeDevice);
+        YAMLBodyLoader::addNodeType(
+            "SmokeDevice",
+            [](YAMLBodyLoader& loader, Mapping& node){
+                SmokeDevicePtr smoke = new SmokeDevice;
+                smoke->particleSystem().readParameters(loader.sceneReader(), node);
+                return loader.readDevice(smoke, node);
+            });
+
         SceneDevice::registerSceneDeviceFactory<SmokeDevice>(createSceneSmokeDevice);
     }
 } registration;
@@ -48,13 +56,22 @@ struct TypeRegistration
 SmokeDevice::SmokeDevice()
 {
     on_ = true;
+
+    auto& ps = particleSystem_;
+    ps.setLifeTime(5.0f);
+    ps.setParticleSize(0.06f);
+    ps.setNumParticles(2000);
+    ps.setAcceleration(Vector3f(0.0f, 0.0f, 0.04f));
+    ps.setEmissionRange(radian(120.0f));
 }
 
 
 SmokeDevice::SmokeDevice(const SmokeDevice& org, bool copyStateOnly)
-    : Device(org, copyStateOnly)
+    : Device(org, copyStateOnly),
+      on_(org.on_),
+      particleSystem_(org.particleSystem_)
 {
-    copyStateFrom(org);
+
 }
 
 
@@ -67,6 +84,7 @@ const char* SmokeDevice::typeName()
 void SmokeDevice::copyStateFrom(const SmokeDevice& other)
 {
     on_ = other.on_;
+    particleSystem_ = other.particleSystem_;
 }
 
 
@@ -101,19 +119,35 @@ void SmokeDevice::forEachActualType(std::function<bool(const std::type_info& typ
 
 int SmokeDevice::stateSize() const
 {
-    return 1;
+    return 6;
 }
 
 
 const double* SmokeDevice::readState(const double* buf)
 {
-    on_ = buf[0];
-    return buf + 1;
+    int i = 0;
+    auto& ps = particleSystem_;
+
+    on_ = buf[i++];
+    ps.setNumParticles(buf[i++]);
+    ps.setAcceleration(Vector3f(buf[i++], buf[i++], buf[i++]));
+    ps.setEmissionRange(buf[i++]);
+    
+    return buf + i;
 }
 
 
 double* SmokeDevice::writeState(double* out_buf) const
 {
-    out_buf[0] = on_ ? 1.0 : 0.0;
-    return out_buf + 1;
+    int i = 0;
+    auto& ps = particleSystem_;
+    
+    out_buf[i++] = on_ ? 1.0 : 0.0;
+    out_buf[i++] = ps.numParticles();
+    out_buf[i++] = ps.acceleration()[0];
+    out_buf[i++] = ps.acceleration()[1];
+    out_buf[i++] = ps.acceleration()[2];
+    out_buf[i++] = ps.emissionRange();
+
+    return out_buf + i;
 }

@@ -1,0 +1,43 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: RockDrill
+
+links:
+  -
+    name: BASE
+    translation: [ 0, 0, 0 ]
+    jointType: free
+    density: 533.0
+    mass: 20.0
+    inertia: [
+      0.7, 0,   0,
+      0,   0.7, 0,
+      0,   0,   0.2 ]
+    centerOfMass: [ 0, 0, 0 ]
+    elements:
+      Resource:
+        rotation: [ [ 0, 0, 1, 90 ], [ 1, 0, 0, -90 ] ]
+        translation: [ 0.035, 0.03, 0.15 ]
+        uri: "resource/RockDrill.dae"
+  -
+    name: PUSHER
+    parent: BASE
+    translation: [ 0, 0, -0.2 ]
+    jointType: prismatic
+    jointId: 0
+    jointAxis: [ 0, 0, 1 ]
+    jointRange: [ -0.05, 0.05 ]
+    density: 2500
+    mass: 20.0
+    inertia: [
+      0.133333, 0,   0,
+      0,   0.133333, 0,
+      0,   0,   00.133333 ]
+    centerOfMass: [ 0, 0, -0.25]
+    elements:
+      Resource:
+        rotation: [ [ 0, 0, 1, 90 ], [ 1, 0, 0, -90 ] ]
+        translation: [ 0.05, -0.05, -0.34 ]
+        uri: "resource/RockDrill.dae"
+        node: [ ID38, ID54, ID46 ]

@@ -1,0 +1,432 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: Quadcopter
+
+MultiCopterTargetBody:
+  cutoffDistance: -1
+  normMiddleValue: -1
+
+links:
+  -
+    name: BODY
+    translation: [ 0, 0, 0.2 ]
+    jointType: free
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 0.39
+    inertia: [
+      0.000948, 0,   0,
+      0,   0.000948, 0,
+      0,   0,   0.001556 ]
+    MultiCopterTargetLink:
+      applyForce: [ true, true, true, true ] 
+      density: 2700
+      centerOfBuoyancy: [ 0.0, 0.0, 0.0 ]
+      additionalMassCoef: 0.1
+      additionalInertiaMatrix: [
+        0.000891, 0, 0,
+        0, 0.000891, 0,
+        0, 0, 0.0001463 ]
+    elements:
+      Shape:
+        geometry:
+          type: Box
+          size: [ 0.15, 0.15, 0.07 ]
+        appearance: &BlueAppearance
+          material:
+            diffuseColor: [ 0.2, 0.2, 0.8 ]
+            specularColor: [ 0.2, 0.2, 0.8 ]
+            shininess: 0.6
+  -
+    name: CAMERA_T
+    parent: BODY
+    translation: [ 0, 0, -0.05 ]
+    jointType: revolute
+    jointAxis: -Y
+    jointRange: [ -180, -0 ]
+    maxJointVelocity: 90
+    jointId: 0
+    elements:
+      - 
+        type: RigidBody
+        centerOfMass: [ 0, 0, 0 ]
+        mass: 0.03
+        inertia: [
+          0.0000108, 0,   0,
+          0,   0.0000108, 0,
+          0,   0,   0.0000108 ]
+        elements:
+          Shape:
+            geometry:
+              type: Sphere
+              radius: 0.03
+            appearance: *BlueAppearance
+      - 
+        type: Camera
+        name: Camera
+        translation: [ 0.03, 0, 0 ]
+        rotation: [ [ 1, 0, 0, 90 ], [ 0, 1, 0, -90 ] ]
+        format: COLOR_DEPTH
+        fieldOfView: 65
+        nearClipDistance: 0.02
+        width: 320
+        height: 240
+        frameRate: 30
+        elements:
+          Shape:
+            rotation: [ 1, 0, 0, 90 ]
+            geometry:
+              type: Cylinder
+              radius: 0.015
+              height: 0.01
+            appearance:
+              material:
+                diffuseColor: [ 0.8, 0.8, 0.2 ]
+                specularColor: [ 0.2, 0.2, 0 ]
+                shininess: 0.6
+  -
+    name: LEG0
+    parent: BODY
+    translation: [ 0.06, -0.06, -0.075 ]
+    jointType: fixed
+    centerOfMass: [ 0, 0, 0 ]
+    mass: &LegMass 0.03
+    inertia: &LegInertia [
+      0.000016, 0,   0,
+      0,   0.000016, 0,
+      0,   0,   0.000001 ]
+    elements: &LegElements
+      Shape:
+        geometry:
+          type: Box
+          size: [ 0.01, 0.01, 0.08 ]
+        appearance: &WhiteAppearance
+          material:
+            diffuseColor: [ 1, 1, 1 ]
+            specularColor: [ 0.2, 0.2, 0.2 ]
+            shininess: 0.6
+  -
+    name: LEG1
+    parent: BODY
+    translation: [ 0.06, 0.06, -0.075 ]
+    jointType: fixed
+    centerOfMass: [ 0, 0, 0 ]
+    mass: *LegMass
+    inertia: *LegInertia
+    elements: *LegElements
+  -
+    name: LEG2
+    parent: BODY
+    translation: [ -0.06, 0.06, -0.075 ]
+    jointType: fixed
+    centerOfMass: [ 0, 0, 0 ]
+    mass: *LegMass
+    inertia: *LegInertia
+    elements: *LegElements
+  -
+    name: LEG3
+    parent: BODY
+    translation: [ -0.06, -0.06, -0.075 ]
+    jointType: fixed
+    centerOfMass: [ 0, 0, 0 ]
+    mass: *LegMass
+    inertia: *LegInertia
+    elements: *LegElements
+  -
+    name: ARM02
+    parent: BODY
+    rotation: [ 0, 0, 1, 45 ]
+    jointType: fixed
+    centerOfMass: [ 0, 0, 0 ]
+    mass: &ArmMass 0.09
+    inertia: &ArmInertia [
+      0.002703, 0,   0,
+      0,   0.000006, 0,
+      0,   0,   0.002703 ]
+    elements: &ArmElements
+      Shape:
+        geometry:
+          type: Box
+          size: [ 0.02, 0.6, 0.02 ]
+        appearance: *BlueAppearance
+  -
+    name: ARM13
+    parent: BODY
+    rotation: [ 0, 0, 1, -45 ]
+    jointType: fixed
+    centerOfMass: [ 0, 0, 0 ]
+    mass: *ArmMass
+    inertia: *ArmInertia
+    elements: *ArmElements
+  -
+    name: ROTOR0
+    parent: ARM02
+    translation: [ 0, -0.3, 0 ]
+    jointType: fixed
+    centerOfMass: [ 0, 0, 0 ]
+    mass: &RotorMass 0.03
+    inertia: &RotorInertia [
+      0.000009, 0,   0,
+      0,   0.000009, 0,
+      0,   0,   0.000013 ]
+    elements:
+      -
+        type: Shape
+        geometry:
+          type: Box
+          size: [ 0.05, 0.05, 0.03 ]
+        appearance: &RotorAppearance_G
+          material:
+            diffuseColor: [ 0, 1, 0 ]
+            specularColor: [ 0, 0.2, 0 ]
+            shininess: 0.6
+      -
+        type: RotorDevice
+        name: RotorDevice0
+        position: &RotorPos [ 0, 0, 0 ]
+        direction: &RotorDir [ 0, 0, 1 ]
+        valueRange: &RotorValRng [ -20, 20 ]
+        torqueRange: &RotorTrqRng [ -20, 20 ]
+        effectParameter: &RotorEffPrm
+          wallDistance: 1.0
+          wallNormMiddleValue: 0.5
+          wallMaxRate: 0.1
+          groundDistance: 1.0
+          groundNormMiddleValue: 0.5
+          groundMaxRate: 0.1
+  -
+    name: ROTOR1
+    parent: ARM13
+    translation: [ 0, 0.3, 0 ]
+    jointType: fixed
+    centerOfMass: [ 0, 0, 0 ]
+    mass: *RotorMass
+    inertia: *RotorInertia
+    elements:
+      -
+        type: Shape
+        geometry:
+          type: Box
+          size: [ 0.05, 0.05, 0.03 ]
+        appearance: *RotorAppearance_G
+      -
+        type: RotorDevice
+        name: RotorDevice1
+        position: *RotorPos
+        direction: *RotorDir
+        valueRange: *RotorValRng
+        torqueRange: *RotorTrqRng
+        effectParameter: *RotorEffPrm
+  -
+    name: ROTOR2
+    parent: ARM02
+    translation: [ 0, 0.3, 0 ]
+    jointType: fixed
+    centerOfMass: [ 0, 0, 0 ]
+    mass: *RotorMass
+    inertia: *RotorInertia
+    elements:
+      -
+        type: Shape
+        geometry:
+          type: Box
+          size: [ 0.05, 0.05, 0.03 ]
+        appearance: &RotorAppearance_R
+          material:
+            diffuseColor: [ 1, 0, 0 ]
+            specularColor: [ 0.2, 0, 0 ]
+            shininess: 0.6
+      -
+        type: RotorDevice
+        name: RotorDevice2
+        position: *RotorPos
+        direction: *RotorDir
+        valueRange: *RotorValRng
+        torqueRange: *RotorTrqRng
+        effectParameter: *RotorEffPrm
+  -
+    name: ROTOR3
+    parent: ARM13
+    translation: [ 0, -0.3, 0 ]
+    jointType: fixed
+    centerOfMass: [ 0, 0, 0 ]
+    mass: *RotorMass
+    inertia: *RotorInertia
+    elements:
+      -
+        type: Shape
+        geometry:
+          type: Box
+          size: [ 0.05, 0.05, 0.03 ]
+        appearance: *RotorAppearance_R
+      -
+        type: RotorDevice
+        name: RotorDevice3
+        position: *RotorPos
+        direction: *RotorDir
+        valueRange: *RotorValRng
+        torqueRange: *RotorTrqRng
+        effectParameter: *RotorEffPrm
+  -
+    name: PROP0
+    parent: ROTOR0
+    translation: &PropTrans [ 0, 0, 0.02 ]
+    jointType: &PropJointType revolute
+    jointAxis: &PropJointAxis -Z
+    jointRange: &PropJointRange unlimited
+    maxJointVelocity: &PropMaxJointVel 5000
+    jointId: 1
+    centerOfMass: &PropCenterOfMass [ 0, 0, 0 ]
+    mass: &PropMass 0.02
+    inertia: &PropInertia [
+      0.000002, 0,   0,
+      0,   0.000150, 0,
+      0,   0,   0.000152 ]
+    elements: &PropElements
+      Shape:
+        geometry:
+          type: Box
+          size: [ 0.3, 0.03, 0.005 ]
+        appearance: *WhiteAppearance
+  -
+    name: PROP1
+    parent: ROTOR1
+    translation: *PropTrans
+    jointType: *PropJointType
+    jointAxis: *PropJointAxis
+    jointRange: *PropJointRange
+    maxJointVelocity: *PropMaxJointVel
+    jointId: 2
+    centerOfMass: *PropCenterOfMass
+    mass: *PropMass
+    inertia: *PropInertia
+    elements: *PropElements
+  -
+    name: PROP2
+    parent: ROTOR2
+    translation: *PropTrans
+    jointType: *PropJointType
+    jointAxis: *PropJointAxis
+    jointRange: *PropJointRange
+    maxJointVelocity: *PropMaxJointVel
+    jointId: 3
+    centerOfMass: *PropCenterOfMass
+    mass: *PropMass
+    inertia: *PropInertia
+    elements: *PropElements
+  -
+    name: PROP3
+    parent: ROTOR3
+    translation: *PropTrans
+    jointType: *PropJointType
+    jointAxis: *PropJointAxis
+    jointRange: *PropJointRange
+    maxJointVelocity: *PropMaxJointVel
+    jointId: 4
+    centerOfMass: *PropCenterOfMass
+    mass: *PropMass
+    inertia: *PropInertia
+    elements: *PropElements
+  -
+    name: GUARD0
+    parent: ROTOR0
+    jointType: fixed
+    centerOfMass: [ 0, 0, 0 ]
+    mass: &GuardMass 0.02
+    inertia: &GuardInertia [
+      0.01, 0,   0,
+      0,   0.01, 0,
+      0,   0,   0.1 ]
+    elements: &GuardElements_03
+      -
+        type: Shape
+        geometry:
+          type: Box
+          size: [ 0.405, 0.008, 0.008 ]
+        appearance: *WhiteAppearance
+      -
+        type: Shape
+        geometry:
+          type: Box
+          size: [ 0.008, 0.405, 0.008 ]
+        appearance: *WhiteAppearance
+      -
+        type: Transform
+        translation: [ 0.1, -0.1, 0 ]
+        rotation: [ 0, 0, 1, 45 ]
+        elements:
+          -
+            type: Shape
+            geometry:
+              type: Box
+              size: [ 0.28284, 0.008, 0.008 ]
+            appearance: *WhiteAppearance
+      -
+        type: Transform
+        translation: [ -0.1, -0.1, 0 ]
+        rotation: [ 0, 0, 1, 135 ]
+        elements:
+          -
+            type: Shape
+            geometry:
+              type: Box
+              size: [ 0.28284, 0.008, 0.008 ]
+            appearance: *WhiteAppearance
+  -
+    name: GUARD1
+    parent: ROTOR1
+    jointType: fixed
+    centerOfMass: [ 0, 0, 0 ]
+    mass: *GuardMass
+    inertia: *GuardInertia
+    elements: &GuardElements_12
+      -
+        type: Shape
+        geometry:
+          type: Box
+          size: [ 0.405, 0.008, 0.008 ]
+        appearance: *WhiteAppearance
+      -
+        type: Shape
+        geometry:
+          type: Box
+          size: [ 0.008, 0.405, 0.008 ]
+        appearance: *WhiteAppearance
+      -
+        type: Transform
+        translation: [ -0.1, 0.1, 0 ]
+        rotation: [ 0, 0, 1, 45 ]
+        elements:
+          -
+            type: Shape
+            geometry:
+              type: Box
+              size: [ 0.28284, 0.008, 0.008 ]
+            appearance: *WhiteAppearance
+      -
+        type: Transform
+        translation: [ 0.1, 0.1, 0 ]
+        rotation: [ 0, 0, 1, 135 ]
+        elements:
+          -
+            type: Shape
+            geometry:
+              type: Box
+              size: [ 0.28284, 0.008, 0.008 ]
+            appearance: *WhiteAppearance
+  -
+    name: GUARD2
+    parent: ROTOR2
+    jointType: fixed
+    centerOfMass: [ 0, 0, 0 ]
+    mass: *GuardMass
+    inertia: *GuardInertia
+    elements: *GuardElements_12
+  -
+    name: GUARD3
+    parent: ROTOR3
+    jointType: fixed
+    centerOfMass: [ 0, 0, 0 ]
+    mass: *GuardMass
+    inertia: *GuardInertia
+    elements: *GuardElements_03

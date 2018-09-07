@@ -1,6 +1,6 @@
 
-#ifndef CNOID_COS_NAMING_IMPL_H
-#define CNOID_COS_NAMING_IMPL_H
+#ifndef CNOID_CORBA_COS_NAMING_IMPL_H
+#define CNOID_CORBA_COS_NAMING_IMPL_H
 
 #include <omniORB4/Naming.hh>
 #include <mutex>
@@ -24,8 +24,7 @@ public:
     ~BindingNode();
 };
 
-class NamingContext_impl : public POA_CosNaming::NamingContextExt,
-                           public PortableServer::RefCountServantBase
+class NamingContext_impl : public POA_CosNaming::NamingContextExt, public PortableServer::RefCountServantBase
 {
     friend class BindingNode;
         
@@ -59,6 +58,7 @@ private:
     BindingNode* firstNode;
     BindingNode* lastNode;
     int size;
+    int count = 0;
 
     ~NamingContext_impl();
         
@@ -68,8 +68,7 @@ private:
 };
 
 
-class BindingIterator_impl : public POA_CosNaming::BindingIterator,
-                             public PortableServer::RefCountServantBase
+class BindingIterator_impl : public POA_CosNaming::BindingIterator, public PortableServer::RefCountServantBase
 {
 public:
     BindingIterator_impl(PortableServer::POA_ptr poa, CosNaming::BindingList* list);

@@ -51,7 +51,7 @@ items:
               plugin: SimpleController
               class: SimpleControllerItem
               data: 
-                isImmediateMode: true
+                isNoDelayMode: false
                 controller: "SR1MinimumController"
                 reloading: true
                 inputLinkPositions: false

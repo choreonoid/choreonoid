@@ -19,20 +19,20 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/tank/tank.body"
+            modelFile: "${SHARE}/model/Tank/Tank.body"
             currentBaseLink: ""
             rootPosition: [ -2, -0.5, 0.1 ]
             rootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            jointPositions: [  0.000000,  0.000000,  0.000000,  0.000000 ]
+            jointPositions: [ 0, 0 ]
             initialRootPosition: [ -2, -0.5, 0.1 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            initialJointPositions: [  0.000000,  0.000000,  0.000000,  0.000000 ]
+            initialJointPositions: [ 0, 0 ]
             zmp: [ 0, 0, 0 ]
             collisionDetection: true
             selfCollisionDetection: false
@@ -88,6 +88,7 @@ items:
           plugin: Body
           class: AISTSimulatorItem
           data: 
+            timeStep: 0.001
             realtimeSync: true
             recording: "full"
             timeRangeMode: "Unlimited"
@@ -360,10 +361,6 @@ views:
           id: 2
           selectedLinks: [ 0 ]
   - 
-    id: 10
-    plugin: OpenRTM
-    class: RTSNameServerView
-  - 
     id: 11
     plugin: Python
     class: PythonConsoleView
@@ -371,113 +368,6 @@ toolbars:
   "TimeBar": 
     minTime: 0
     maxTime: 49.783
-    frameRate: 1000
-    playbackFrameRate: 100
-    idleLoopDrivenMode: false
-    currentTime: 0
-    speedScale: 1
-    syncToOngoingUpdates: true
-    autoExpansion: true
-  "KinematicsBar": 
-    mode: AUTO
-    enablePositionDragger: true
-    penetrationBlock: false
-    collisionLinkHighlight: false
-    snapDistance: 0.025
-    penetrationBlockDepth: 0.0005
-    lazyCollisionDetectionMode: true
-  "BodyBar": 
-    current: 8
-  "LeggedBodyBar": 
-    stanceWidth: 0.15
-  "BodyMotionGenerationBar": 
-    autoGenerationForNewBody: true
-    balancer: false
-    autoGeneration: false
-    timeScaleRatio: 1
-    preInitialDuration: 1
-    postFinalDuration: 1
-    onlyTimeBarRange: false
-    makeNewBodyItem: true
-    stealthyStepMode: true
-    stealthyHeightRatioThresh: 2
-    flatLiftingHeight: 0.005
-    flatLandingHeight: 0.005
-    impactReductionHeight: 0.005
-    impactReductionTime: 0.04
-    autoZmp: true
-    minZmpTransitionTime: 0.1
-    zmpCenteringTimeThresh: 0.03
-    zmpTimeMarginBeforeLiftingSpin: 0
-    zmpMaxDistanceFromCenter: 0.02
-    allLinkPositions: false
-    lipSyncMix: false
-    timeToStartBalancer: 0
-    balancerIterations: 2
-    plainBalancerMode: false
-    boundaryConditionType: position
-    boundarySmootherType: quintic
-    boundarySmootherTime: 0.5
-    boundaryCmAdjustment: false
-    boundaryCmAdjustmentTime: 1
-    waistHeightRelaxation: false
-    gravity: 9.8
-    dynamicsTimeRatio: 1
-Body: 
-  "BodyMotionEngine": 
-    updateJointVelocities: false
-  "EditableSceneBody": 
-    editableSceneBodies: 
-      - 
-        bodyItem: 2
-        showCenterOfMass: false
-        showPpcom: false
-        showZmp: false
-      - 
-        bodyItem: 4
-        showCenterOfMass: false
-        showPpcom: false
-        showZmp: false
-      - 
-        bodyItem: 7
-        showCenterOfMass: false
-        showPpcom: false
-        showZmp: false
-      - 
-        bodyItem: 8
-        showCenterOfMass: false
-        showPpcom: false
-        showZmp: false
-      - 
-        bodyItem: 9
-        showCenterOfMass: false
-        showPpcom: false
-        showZmp: false
-      - 
-        bodyItem: 10
-        showCenterOfMass: false
-        showPpcom: false
-        showZmp: false
-      - 
-        bodyItem: 11
-        showCenterOfMass: false
-        showPpcom: false
-        showZmp: false
-    staticModelEditing: true
-  "KinematicFaultChecker": 
-    checkJointPositions: true
-    angleMargin: 0
-    translationMargin: 0
-    checkJointVelocities: true
-    velocityLimitRatio: 100
-    targetJoints: all
-    checkSelfCollisions: true
-    onlyTimeBarRange: false
-Media: 
-  "PulseAudioManager": 
-    keepStreamConnection: false
-OpenRTM: 
-  "deleteUnmanagedRTCsOnStartingSimulation": false
 viewAreas: 
   - 
     type: embedded

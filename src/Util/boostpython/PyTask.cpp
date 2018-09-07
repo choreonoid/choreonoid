@@ -81,6 +81,7 @@ bool TaskProc_waitForCommandToFinish3(TaskProc& self, Connection connectionToDis
     return ret;
 }
 
+
 /**
    \todo Currently boost::python::object is used for storing the callback function object,
    but this generates a circular reference between the task object and the function object
@@ -216,6 +217,10 @@ TaskCommandPtr TaskCommand_setCommandLinkAutomatic2(TaskCommand& self, bool on) 
 
 TaskCommandPtr TaskCommand_setLevel(TaskCommand& self, int level){
     return self.setLevel(level);
+}
+
+TaskCommandPtr TaskCommand_linkToNextTask(TaskCommand& self) {
+    return self.linkToNextTask();
 }
 
 TaskPhasePtr TaskPhase_clone1(TaskPhase& self){
@@ -522,7 +527,6 @@ void AbstractTaskSequencer_addTask(AbstractTaskSequencer& self, py::object pyTas
     }
 }
 
-
 bool AbstractTaskSequencer_updateTask(AbstractTaskSequencer& self, py::object pyTask)
 {
     if(TaskPtr task = registerTask(&self, pyTask)){
@@ -531,10 +535,18 @@ bool AbstractTaskSequencer_updateTask(AbstractTaskSequencer& self, py::object py
     return false;
 }
 
-
 TaskPtr AbstractTaskSequencer_task(AbstractTaskSequencer& self, int index)
 {
     return self.task(index);
+}
+
+void AbstractTaskSequencer_serializeTasks(AbstractTaskSequencer& self, py::list taskList)
+{
+    std::vector<std::string> tasks(py::len(taskList));
+    for(size_t i=0; i < tasks.size(); ++i){
+        tasks[i] = py::extract<string>(taskList[i]);
+    }
+    self.serializeTasks(tasks);
 }
 
 }
@@ -545,6 +557,7 @@ void exportPyTaskTypes()
 {
     py::class_<TaskProc, TaskProc*, boost::noncopyable>("TaskProc", py::no_init)
         .def("currentPhaseIndex", &TaskProc::currentPhaseIndex)
+        .def("getCurrentPhaseIndex", &TaskProc::currentPhaseIndex)
         .def("isAutoMode", &TaskProc::isAutoMode)
         .def("breakSequence", &TaskProc::breakSequence)
         .def("setNextCommand", &TaskProc::setNextCommand)
@@ -571,16 +584,20 @@ void exportPyTaskTypes()
         .def("isChecked", &TaskToggleState::isChecked)
         .def("setChecked", &TaskToggleState::setChecked)
         .def("sigToggled", &TaskToggleState::sigToggled)
+        .def("getSigToggled", &TaskToggleState::sigToggled)
         ;
 
     py::implicitly_convertible<TaskToggleStatePtr, ReferencedPtr>();
 
     py::class_<TaskCommand, TaskCommandPtr, py::bases<Referenced>>("TaskCommand", py::init<const std::string&>())
         .def("caption", &TaskCommand::caption, py::return_value_policy<py::copy_const_reference>())
+        .def("getCaption", &TaskCommand::caption, py::return_value_policy<py::copy_const_reference>())
         .def("setCaption", TaskCommand_setCaption)
         .def("description", &TaskCommand::description, py::return_value_policy<py::copy_const_reference>())
+        .def("getDescription", &TaskCommand::description, py::return_value_policy<py::copy_const_reference>())
         .def("setDescription", TaskCommand_setDescription)
         .def("function", &TaskCommand::function)
+        .def("getFunction", &TaskCommand::function)
         .def("setFunction", TaskCommand_setFunction)
         .def("setDefault", TaskCommand_setDefault1)
         .def("setDefault", TaskCommand_setDefault2)
@@ -589,13 +606,18 @@ void exportPyTaskTypes()
         .def("setCheckable", TaskCommand_setCheckable2)
         .def("setToggleState", TaskCommand_setToggleState)
         .def("toggleState", TaskCommand_toggleState)
+        .def("getToggleState", TaskCommand_toggleState)
         .def("setChecked", TaskCommand_setChecked)
         .def("isChecked", &TaskCommand::isChecked)
         .def("nextPhaseIndex", &TaskCommand::nextPhaseIndex)
+        .def("getNextPhaseIndex", &TaskCommand::nextPhaseIndex)
+        .def("nextPhaseIndex", &TaskCommand::nextPhaseIndex)
+        .def("getNextPhaseIndex", &TaskCommand::nextPhaseIndex)
         .def("setPhaseLink", TaskCommand_setPhaseLink)
         .def("setPhaseLinkStep", TaskCommand_setPhaseLinkStep)
         .def("linkToNextPhase", TaskCommand_linkToNextPhase)
         .def("nextCommandIndex", &TaskCommand::nextCommandIndex)
+        .def("getNextCommandIndex", &TaskCommand::nextCommandIndex)
         .def("setCommandLink", TaskCommand_setCommandLink)
         .def("setCommandLinkStep", TaskCommand_setCommandLinkStep)
         .def("linkToNextCommand", TaskCommand_linkToNextCommand)
@@ -604,6 +626,8 @@ void exportPyTaskTypes()
         .def("setCommandLinkAutomatic", TaskCommand_setCommandLinkAutomatic2)
         .def("setLevel", TaskCommand_setLevel)
         .def("level", &TaskCommand::level)
+        .def("getLevel", &TaskCommand::level)
+        .def("linkToNextTask", TaskCommand_linkToNextTask)
         ;
     
     py::implicitly_convertible<TaskCommandPtr, ReferencedPtr>();
@@ -615,23 +639,31 @@ void exportPyTaskTypes()
         .def("clone", TaskPhase_clone1)
         .def("clone", TaskPhase_clone2)
         .def("caption", &TaskPhase::caption, py::return_value_policy<py::copy_const_reference>())
+        .def("getCaption", &TaskPhase::caption, py::return_value_policy<py::copy_const_reference>())
         .def("setCaption", &TaskPhase::setCaption)
         .def("isSkipped", &TaskPhase::isSkipped)
         .def("setSkipped", &TaskPhase::setSkipped)
         .def("setPreCommand", TaskPhase_setPreCommand)
         .def("setPreCommand", &TaskPhase::setPreCommand)
         .def("preCommand", &TaskPhase::preCommand)
+        .def("getPreCommand", &TaskPhase::preCommand)
         .def("addCommand", TaskPhase_addCommand1)
         .def("addCommand", TaskPhase_addCommand2)
         .def("addToggleCommand", TaskPhase_addToggleCommand1)
         .def("addToggleCommand", TaskPhase_addToggleCommand2)
         .def("addCommandEx", py::raw_function(TaskPhase_addCommandEx, 2))
         .def("numCommands", &TaskPhase::numCommands)
+        .def("getNumCommands", &TaskPhase::numCommands)
         .def("command", TaskPhase_command)
+        .def("getCommand", TaskPhase_command)
         .def("lastCommandIndex", &TaskPhase::lastCommandIndex)
+        .def("getLastCommandIndex", &TaskPhase::lastCommandIndex)
         .def("lastCommand", TaskPhase_lastCommand)
+        .def("getLastCommand", TaskPhase_lastCommand)
         .def("commandLevel", &TaskPhase::commandLevel)
+        .def("getCommandLevel", &TaskPhase::commandLevel)
         .def("maxCommandLevel", &TaskPhase::maxCommandLevel)
+        .def("getMaxCommandLevel", &TaskPhase::maxCommandLevel)
         ;
 
     py::implicitly_convertible<TaskPhasePtr, ReferencedPtr>();
@@ -639,6 +671,7 @@ void exportPyTaskTypes()
     py::class_<TaskPhaseProxy, TaskPhaseProxyPtr, py::bases<Referenced>, boost::noncopyable>("TaskPhaseProxy", py::no_init)
         .def("setCommandLevel", &TaskPhaseProxy::setCommandLevel)
         .def("commandLevel", &TaskPhaseProxy::commandLevel)
+        .def("getCommandLevel", &TaskPhaseProxy::commandLevel)
         .def("addCommand", TaskPhaseProxy_addCommand1)
         .def("addCommand", TaskPhaseProxy_addCommand2)
         .def("addToggleCommand", TaskPhaseProxy_addToggleCommand1)
@@ -658,14 +691,19 @@ void exportPyTaskTypes()
         .def(py::init<const Task&, bool>())
         .def(py::init<const Task&>())
         .def("name", &Task::name, py::return_value_policy<py::copy_const_reference>())
+        .def("getName", &Task::name, py::return_value_policy<py::copy_const_reference>())
         .def("setName", &Task::setName)
         .def("caption", &Task::caption, py::return_value_policy<py::copy_const_reference>())
+        .def("getCaption", &Task::caption, py::return_value_policy<py::copy_const_reference>())
         .def("setCaption", &Task::setCaption)
         .def("numPhases", &Task::numPhases)
+        .def("getNumPhases", &Task::numPhases)
         .def("phase", Task_phase)
+        .def("getPhase", Task_phase)
         .def("addPhase", Task_addPhase1)
         .def("addPhase", Task_addPhase2)
         .def("lastPhase", Task_lastPhase)
+        .def("getLastPhase", Task_lastPhase)
         .def("setPreCommand", Task_setPreCommand)
         .def("setPreCommand", &Task::setPreCommand)
         .def("addCommand", Task_addCommand1)
@@ -674,15 +712,20 @@ void exportPyTaskTypes()
         .def("addToggleCommand", Task_addToggleCommand2)
         .def("addCommandEx", py::raw_function(Task_addCommandEx, 2))
         .def("lastCommand", Task_lastCommand)
+        .def("getLastCommand", Task_lastCommand)
         .def("lastCommandIndex", &Task::lastCommandIndex)
+        .def("getLastCommandIndex", &Task::lastCommandIndex)
         .def("funcToSetCommandLink", &Task::funcToSetCommandLink)
+        .def("getFuncToSetCommandLink", &Task::funcToSetCommandLink)
         .def("onMenuRequest", &Task::onMenuRequest, &TaskWrap::default_onMenuRequest)
         .def("onActivated", &Task::onActivated, &TaskWrap::default_onActivated)
         .def("onDeactivated", &Task::onDeactivated, &TaskWrap::default_onDeactivated)
         .def("storeState", &Task::storeState, &TaskWrap::default_storeState)
         .def("restoreState", &Task::restoreState, &TaskWrap::default_restoreState)
         .def("commandLevel", &Task::commandLevel)
+        .def("getCommandLevel", &Task::commandLevel)
         .def("maxCommandLevel", &Task::maxCommandLevel)
+        .def("getMaxCommandLevel", &Task::maxCommandLevel)
         ;
 
     py::implicitly_convertible<TaskPtr, ReferencedPtr>();
@@ -695,24 +738,35 @@ void exportPyTaskTypes()
         .def("updateTask", AbstractTaskSequencer_updateTask)
         .def("removeTask", &AbstractTaskSequencer::removeTask)
         .def("sigTaskAdded", &AbstractTaskSequencer::sigTaskAdded)
+        .def("getSigTaskAdded", &AbstractTaskSequencer::sigTaskAdded)
         .def("sigTaskRemoved", &AbstractTaskSequencer::sigTaskRemoved)
+        .def("getSigTaskRemoved", &AbstractTaskSequencer::sigTaskRemoved)
         .def("clearTasks", &AbstractTaskSequencer::clearTasks)
         .def("numTasks", &AbstractTaskSequencer::numTasks)
+        .def("getNumTasks", &AbstractTaskSequencer::numTasks)
         .def("task", AbstractTaskSequencer_task)
+        .def("getTask", AbstractTaskSequencer_task)
         .def("currentTaskIndex", &AbstractTaskSequencer::currentTaskIndex)
+        .def("getCurrentTaskIndex", &AbstractTaskSequencer::currentTaskIndex)
         .def("setCurrentTask", &AbstractTaskSequencer::setCurrentTask)
         .def("sigCurrentTaskChanged", &AbstractTaskSequencer::sigCurrentTaskChanged)
+        .def("getSigCurrentTaskChanged", &AbstractTaskSequencer::sigCurrentTaskChanged)
         .def("currentPhaseIndex", &AbstractTaskSequencer::currentPhaseIndex)
+        .def("getCurrentPhaseIndex", &AbstractTaskSequencer::currentPhaseIndex)
         .def("setCurrentPhase", &AbstractTaskSequencer::setCurrentPhase)
         .def("sigCurrentPhaseChanged", &AbstractTaskSequencer::sigCurrentPhaseChanged)
         .def("currentCommandIndex", &AbstractTaskSequencer::currentCommandIndex)
+        .def("getCurrentCommandIndex", &AbstractTaskSequencer::currentCommandIndex)
         .def("executeCommand", &AbstractTaskSequencer::executeCommand)
         .def("sigCurrentCommandChanged", &AbstractTaskSequencer::sigCurrentCommandChanged)
+        .def("getSigCurrentCommandChanged", &AbstractTaskSequencer::sigCurrentCommandChanged)
         .def("isBusy", &AbstractTaskSequencer::isBusy)
         .def("sigBusyStateChanged", &AbstractTaskSequencer::sigBusyStateChanged)
+        .def("getSigBusyStateChanged", &AbstractTaskSequencer::sigBusyStateChanged)
         .def("isAutoMode", &AbstractTaskSequencer::isAutoMode)
         .def("setAutoMode", &AbstractTaskSequencer::setAutoMode)
         .def("sigAutoModeToggled", &AbstractTaskSequencer::sigAutoModeToggled)
+        .def("serializeTasks", AbstractTaskSequencer_serializeTasks)
         ;
 }
 

@@ -1,6 +1,7 @@
 
 add_subdirectory(Util)
 add_subdirectory(AISTCollisionDetector)
+add_subdirectory(AssimpSceneLoader)
 add_subdirectory(Body)
 add_subdirectory(Corba)
 add_subdirectory(OpenRTM)

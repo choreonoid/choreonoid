@@ -23,6 +23,11 @@
 #include <set>
 #include <list>
 #include <iostream>
+
+#ifdef Q_OS_WIN32
+#include <QtGlobal>
+#endif
+
 #include "gettext.h"
 
 using namespace std;
@@ -66,6 +71,7 @@ public:
         
     MessageView* mv;
 
+    string pluginDirectory;
     QRegExp pluginNamePattern;
 
     struct PluginInfo;
@@ -182,6 +188,15 @@ PluginManagerImpl::PluginManagerImpl(ExtensionManager* ext)
       unloadPluginsLater(std::bind(&PluginManagerImpl::unloadPluginsActually, this), LazyCaller::PRIORITY_LOW),
       reloadPluginsLater(std::bind(&PluginManagerImpl::loadPlugins, this), LazyCaller::PRIORITY_LOW)
 {
+    pluginDirectory = getNativePathString(
+        filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR);
+
+#ifdef Q_OS_WIN32
+    // Add the plugin directory to PATH
+    auto newPath = QString("%1;%2").arg(pluginDirectory.c_str()).arg(qEnvironmentVariable("PATH"));
+    qputenv("PATH", newPath.toLocal8Bit());
+#endif
+
     pluginNamePattern.setPattern(
         QString(DLL_PREFIX) + "Cnoid.+Plugin" + DEBUG_SUFFIX + "\\." + DLL_EXTENSION);
 
@@ -296,10 +311,7 @@ void PluginManager::scanPluginFilesInDirectoyOfExecFile()
 
 void PluginManagerImpl::scanPluginFilesInDirectoyOfExecFile()
 {
-    string directory = getNativePathString(
-        filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR);
-
-    scanPluginFiles(directory, false);
+    scanPluginFiles(pluginDirectory, false);
 } 
 
 

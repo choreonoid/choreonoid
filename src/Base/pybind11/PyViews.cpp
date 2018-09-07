@@ -23,18 +23,27 @@ void exportPyViews(py::module m)
 
     py::class_<View, QWidget> view(m, "View");
     view
+        .def_property("name", &View::name, &View::setName)
         .def("setName", &View::setName)
-        .def("name", &View::name)
         .def("isActive", &View::isActive)
         .def("bringToFront", &View::bringToFront)
-        .def("sigActivated", &View::sigActivated)
-        .def("sigDeactivated", &View::sigDeactivated)
+        .def_property_readonly("sigActivated", &View::sigActivated)
+        .def_property_readonly("sigDeactivated", &View::sigDeactivated)
+        .def_property("defaultLayoutArea", &View::defaultLayoutArea, &View::setDefaultLayoutArea)
         .def("setDefaultLayoutArea", &View::setDefaultLayoutArea)
-        .def("defaultLayoutArea", &View::defaultLayoutArea)
-        .def("indicatorOnInfoBar", &View::indicatorOnInfoBar, py::return_value_policy::reference)
+        .def_property_readonly("indicatorOnInfoBar", &View::indicatorOnInfoBar, py::return_value_policy::reference)
         .def("enableFontSizeZoomKeys", &View::enableFontSizeZoomKeys)
-        .def_static("lastFocusView", &View::lastFocusView, py::return_value_policy::reference)
-        .def("sigFocusChanged", &View::sigFocusChanged)
+        .def_property_readonly_static("lastFocusView", &View::lastFocusView, py::return_value_policy::reference)
+        .def_property_readonly("sigFocusChanged", &View::sigFocusChanged)
+
+        // deprecated
+        .def("getName", &View::name)
+        .def("getSigActivated", &View::sigActivated)
+        .def("getSigDeactivated", &View::sigDeactivated)
+        .def("getDefaultLayoutArea", &View::defaultLayoutArea)
+        .def("getIndicatorOnInfoBar", &View::indicatorOnInfoBar, py::return_value_policy::reference)
+        .def_static("getLastFocusView", &View::lastFocusView, py::return_value_policy::reference)
+        .def("getSigFocusChanged", &View::sigFocusChanged)
         ;
 
     py::enum_<View::LayoutArea>(view, "LayoutArea")
@@ -48,23 +57,28 @@ void exportPyViews(py::module m)
         .export_values();
 
     py::class_<MessageView, View>(m, "MessageView")
-        .def_static("instance", &MessageView::instance, py::return_value_policy::reference)
-        .def("put", (void (MessageView::*)(const std::string&)) &MessageView::put)
-        .def("putln", (void (MessageView::*)(const std::string&)) &MessageView::putln)
-        .def("notify", (void (MessageView::*)(const std::string&)) &MessageView::notify)
+        .def_property_readonly_static(
+            "instance", [](py::object){ return MessageView::instance(); }, py::return_value_policy::reference)
+        .def("put", (void (MessageView::*)(const std::string&, int)) &MessageView::put)
+        .def("putln", (void (MessageView::*)(const std::string&, int)) &MessageView::putln)
+        .def("notify", (void (MessageView::*)(const std::string&, int)) &MessageView::notify)
         .def("flush", &MessageView::flush)
         .def("clear", &MessageView::clear)
         .def("beginStdioRedirect", &MessageView::beginStdioRedirect)
         .def("endStdioRedirect", &MessageView::endStdioRedirect)
         .def_static("isFlushing", &MessageView::isFlushing)
-        .def_static("sigFlushFinished", &MessageView::sigFlushFinished)
+        .def_property_readonly_static("sigFlushFinished", &MessageView::sigFlushFinished)
+
+        // deprecated
+        .def_static("getInstance", &MessageView::instance, py::return_value_policy::reference)
+        .def_static("getSigFlushFinished", &MessageView::sigFlushFinished)
         ;
 
     py::class_<SceneWidget, QWidget>(m, "SceneWidget")
-        .def("sigStateChanged", &SceneWidget::sigStateChanged)
+        .def_property_readonly("sigStateChanged", &SceneWidget::sigStateChanged)
         .def("setEditMode", &SceneWidget::setEditMode)
+        .def_property("collisionLinesVisible", &SceneWidget::collisionLinesVisible, &SceneWidget::setCollisionLinesVisible)
         .def("setCollisionLinesVisible", &SceneWidget::setCollisionLinesVisible)
-        .def("collisionLinesVisible", &SceneWidget::collisionLinesVisible)
         .def("setHeadLightIntensity", &SceneWidget::setHeadLightIntensity)
         .def("setWorldLightIntensity", &SceneWidget::setWorldLightIntensity)
         .def("setWorldLightAmbient", &SceneWidget::setWorldLightAmbient)
@@ -90,15 +104,28 @@ void exportPyViews(py::module m)
         .def("setHeight", &SceneWidget::setHeight)
         .def("setNear", &SceneWidget::setNear)
         .def("setFar", &SceneWidget::setFar)
+
+        // deprecated
+        .def("getSigStateChanged", &SceneWidget::sigStateChanged)
+        .def("getCollisionLinesVisible", &SceneWidget::collisionLinesVisible)
         ;
 
     py::class_<SceneView, View>(m, "SceneView")
-        .def_static("instance", &SceneView::instance, py::return_value_policy::reference)
-        .def("sceneWidget", &SceneView::sceneWidget, py::return_value_policy::reference)
+        .def_property_readonly_static(
+            "instance", [](py::object){ return SceneView::instance(); }, py::return_value_policy::reference)
+        .def_property_readonly("sceneWidget", &SceneView::sceneWidget, py::return_value_policy::reference)
+
+        // deprecated
+        .def_static("getInstance", &SceneView::instance, py::return_value_policy::reference)
+        .def("getSceneWidget", &SceneView::sceneWidget, py::return_value_policy::reference)
         ;
 
     py::class_<TaskView, View, AbstractTaskSequencer>(m, "TaskView")
-        .def_static("instance", &TaskView::instance, py::return_value_policy::reference)
+        .def_property_readonly_static(
+            "instance", [](py::object){ return TaskView::instance(); }, py::return_value_policy::reference)
+
+        // deprecated
+        .def_static("getInstance", &TaskView::instance, py::return_value_policy::reference)
         ;
 
     py::class_<ViewManager>(m, "ViewManager")
@@ -106,10 +133,16 @@ void exportPyViews(py::module m)
                     [](const std::string& moduleName, const std::string& className){
                         return ViewManager::getOrCreateView(moduleName, className);
                     }, py::return_value_policy::reference)
-        .def_static("sigViewCreated", &ViewManager::sigViewCreated)
-        .def_static("sigViewActivated", &ViewManager::sigViewActivated)
-        .def_static("sigViewDeactivated", &ViewManager::sigViewDeactivated)
-        .def_static("sigViewRemoved", &ViewManager::sigViewRemoved)
+        .def_property_readonly_static("sigViewCreated", &ViewManager::sigViewCreated)
+        .def_property_readonly_static("sigViewActivated", &ViewManager::sigViewActivated)
+        .def_property_readonly_static("sigViewDeactivated", &ViewManager::sigViewDeactivated)
+        .def_property_readonly_static("sigViewRemoved", &ViewManager::sigViewRemoved)
+
+        // deprecated
+        .def_static("getSigViewCreated", &ViewManager::sigViewCreated)
+        .def_static("getSigViewActivated", &ViewManager::sigViewActivated)
+        .def_static("getSigViewDeactivated", &ViewManager::sigViewDeactivated)
+        .def_static("getSigViewRemoved", &ViewManager::sigViewRemoved)
         ;
 }
 

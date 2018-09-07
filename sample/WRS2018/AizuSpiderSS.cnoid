@@ -117,29 +117,24 @@ views:
           fieldOfView: 0.698132
           near: 0.01
           far: 100
-          eye: [ -0.586912597, -0.656016255, 0.898826995 ]
+          eye: [ -0.606395368, -0.547913296, 0.914747748 ]
           direction: [ 0.937891553, 0.209730762, -0.276355643 ]
-          up: [ 0.269694767, 0.0603089871, 0.96105544 ]
+          up: [ 0.269694768, 0.0603089866, 0.96105544 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 5.73009
           near: 0.01
           far: 100
         - 
-          camera: BodyTrackingCamera (Perspective)
+          camera: BodyTrackingCamera
           isCurrent: true
           fieldOfView: 0.785398
           near: 0.01
           far: 100
-          eye: [ -1.25264984, -1.13460477, 1.27391661 ]
-          direction: [ 0.932970426, 0.240269685, -0.268023624 ]
-          up: [ 0.25955461, 0.066843603, 0.96341234 ]
-        - 
-          camera: BodyTrackingCamera (Orthographic)
-          orthoHeight: 2
-          near: 0.01
-          far: 100
-      backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
+          eye: [ -0.543500475, -0.414703735, 0.842134452 ]
+          direction: [ 0.962129087, 0.147434452, -0.229283016 ]
+          up: [ 0.226637528, 0.0347294144, 0.973359799 ]
+      backgroundColor: [ 0, 0, 0 ]
       gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
@@ -200,20 +195,16 @@ views:
           camera: [ AizuSpider, FRONT_CAMERA ]
           isCurrent: true
         - 
-          camera: BodyTrackingCamera (Perspective)
+          camera: BodyTrackingCamera
           fieldOfView: 0.785398
           near: 0.01
           far: 100
-          eye: [ -1.25264984, -1.13460477, 1.27391661 ]
-          direction: [ 0.932970426, 0.240269685, -0.268023624 ]
-          up: [ 0.25955461, 0.066843603, 0.96341234 ]
-        - 
-          camera: BodyTrackingCamera (Orthographic)
-          orthoHeight: 2
-          near: 0.01
-          far: 100
-      backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
+          eye: [ -0.543500475, -0.414703735, 0.842134452 ]
+          direction: [ 0.962129087, 0.147434452, -0.229283016 ]
+          up: [ 0.226637528, 0.0347294144, 0.973359799 ]
+      backgroundColor: [ 0, 0, 0 ]
       gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      dedicatedItemTreeViewChecks: false
+      dedicatedItemTreeViewChecks: true
+      checked: [ 1, 4 ]

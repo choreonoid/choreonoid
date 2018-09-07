@@ -32,4 +32,3 @@ add_cnoid_python_module(PyBase
 )
 
 target_link_libraries(PyBase CnoidPyBase)
-apply_common_setting_for_python_module(PyBase)

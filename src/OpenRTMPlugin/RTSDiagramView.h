@@ -1,17 +1,17 @@
 /*!
  * @brief  This is a definition of RTSystemEditorPlugin.
- * @author Hisashi Ikari 
+ * @author Hisashi Ikari
  * @file
  */
 #ifndef CNOID_OPENRTM_PLUGIN_RTS_DIAGRAM_VIEW_H_INCLUDED
 #define CNOID_OPENRTM_PLUGIN_RTS_DIAGRAM_VIEW_H_INCLUDED
 
 #include <cnoid/View>
+#include <cnoid/Dialog>
 
 using namespace cnoid;
 
-namespace cnoid 
-{
+namespace cnoid {
 class RTSDiagramViewImpl;
 
 class RTSDiagramView : public View
@@ -25,9 +25,9 @@ public:
     RTSDiagramView();
     virtual ~RTSDiagramView();
 
-    void updateView();
+    void updateSetting();
 
-public Q_SLOTS:
+    public Q_SLOTS:
     void onRTSCompSelectionChange();
 
 protected:
@@ -35,8 +35,8 @@ protected:
     virtual void onDeactivated() override;
     virtual bool storeState(Archive& archive) override;
     virtual bool restoreState(const Archive& archive) override;
-    
-private :
+
+private:
     RTSDiagramViewImpl* impl;
 
 };

@@ -14,9 +14,8 @@ namespace cnoid {
 class ExtensionManager;
 class AppImpl;
 
-class CNOID_EXPORT App : public QObject
+class CNOID_EXPORT App
 {
-    Q_OBJECT
         
 public:
     App(int& argc, char**& argv);
@@ -28,14 +27,16 @@ public:
 
     static void clearFocusView();
 
-    virtual bool eventFilter(QObject* watched, QEvent* event);
-
 private:
     AppImpl* impl;
+};
 
-private Q_SLOTS:
+class AppImplBase : public QObject
+{
+    Q_OBJECT
+    
+protected Q_SLOTS:
     void onFocusChanged(QWidget* old, QWidget* now);
-
 };
 
 }

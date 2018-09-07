@@ -1,0 +1,219 @@
+optionalPlugins: [ "GRobot" ]
+
+items: 
+  id: 0
+  name: "Root"
+  plugin: Base
+  class: RootItem
+  children: 
+    - 
+      id: 1
+      name: "World"
+      plugin: Body
+      class: WorldItem
+      data: 
+        collisionDetection: true
+      children: 
+        - 
+          id: 2
+          name: "RIC30"
+          plugin: Body
+          class: BodyItem
+          data: 
+            modelFile: "${SHARE}/model/RIC30/RIC30.body"
+            currentBaseLink: "L_ANKLE_R"
+            rootPosition: [  0.016187, -0.001703,  0.166423 ]
+            rootAttitude: [ 
+               1.000000, -0.000000, -0.000000, 
+               0.000000,  1.000000,  0.000000, 
+               0.000000, -0.000000,  1.000000 ]
+            jointPositions: [ 
+              -0.000000,  0.025517,  0.353210, -0.573108, -0.219897,  0.025517, -0.000000,  0.025510, -0.353202, 
+               0.573126,  0.219924,  0.025510,  0.000000,  0.000000,  0.349066, -0.174533, -0.698132, -0.349066, 
+               0.174533,  0.698132 ]
+            initialRootPosition: [  0.000000,  0.000000,  0.160500 ]
+            initialRootAttitude: [ 
+               1.000000,  0.000000,  0.000000, 
+               0.000000,  1.000000,  0.000000, 
+               0.000000,  0.000000,  1.000000 ]
+            initialJointPositions: [ 
+               0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000, 
+               0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000, 
+               0.000000,  0.000000 ]
+            zmp: [  0.015400, -0.004900,  0.000000 ]
+            selfCollisionDetection: false
+          children: 
+            - 
+              id: 3
+              name: "BodyMotionController"
+              plugin: Body
+              class: BodyMotionControllerItem
+              children: 
+                - 
+                  id: 4
+                  name: "SampleMotion1"
+                  plugin: PoseSeq
+                  class: PoseSeqItem
+                  data: 
+                    filename: "${SHARE}/motion/RIC30/SampleMotion1.pseq"
+                    format: POSE-SEQ-YAML
+                    barLength: 1
+            - 
+              id: 5
+              name: "GRobotController"
+              plugin: GRobot
+              class: GRobotControllerItem
+              data: 
+                port: /dev/ttyUSB0
+        - 
+          id: 6
+          name: "Floor"
+          plugin: Body
+          class: BodyItem
+          data: 
+            modelFile: "${SHARE}/model/misc/smallfloor.body"
+            currentBaseLink: ""
+            rootPosition: [  0.000000,  0.000000, -0.010000 ]
+            rootAttitude: [ 
+               1.000000,  0.000000,  0.000000, 
+               0.000000,  1.000000,  0.000000, 
+               0.000000,  0.000000,  1.000000 ]
+            jointPositions: [  ]
+            initialRootPosition: [  0.000000,  0.000000, -0.010000 ]
+            initialRootAttitude: [ 
+               1.000000,  0.000000,  0.000000, 
+               0.000000,  1.000000,  0.000000, 
+               0.000000,  0.000000,  1.000000 ]
+            zmp: [  0.000000,  0.000000,  0.000000 ]
+            selfCollisionDetection: false
+        - 
+          id: 7
+          name: "AISTSimulator"
+          plugin: Body
+          class: AISTSimulatorItem
+          data: 
+            timeStep: 0.01
+            realtimeSync: true
+            recording: "full"
+            timeRangeMode: "Active control period"
+            timeLength: 60
+            allLinkPositionOutputMode: false
+            deviceStateOutput: false
+            controllerThreads: true
+            recordCollisionData: false
+            dynamicsMode: "High-gain dynamics"
+            integrationMode: "Runge Kutta"
+            gravity: [ 0, 0, -9.80665 ]
+            staticFriction: 1
+            slipFriction: 1
+            cullingThresh: 0.005
+            contactCullingDepth: 0.05
+            errorCriterion: 0.001
+            maxNumIterations: 1000
+            contactCorrectionDepth: 0.0005
+            contactCorrectionVelocityRatio: 30
+            kinematicWalking: false
+            2Dmode: false
+views: 
+  "Items": 
+    selected: [  ]
+    checked: [ 1, 2 ]
+    expanded: [ 1, 2, 3, 4 ]
+  "Scene": 
+    walkthrough: false
+    showCollisions: false
+    wireframe: false
+    defaultHeadLight: true
+    defaultHeadLightIntensity: 0.75
+    worldLight: true
+    worldLightIntensity: 0.5
+    worldLightAmbient: 0.3
+    additionalLights: true
+    floorGrid: true
+    floorGridSpan: 2
+    floorGridInterval: 0.05
+    normalVisualization: false
+    normalLength: 0.01
+    coordinateAxes: true
+    showFPS: false
+    camera: 
+      current: Perspective
+      eye: [ 0.492063, 0.150117, 0.159901 ]
+      direction: [ -0.951097, -0.298014, -0.0812513 ]
+      up: [ -0.0775343, -0.0242944, 0.996694 ]
+      fieldOfView: 0.6978
+      near: 0.01
+      far: 10000
+      orthoHeight: 0.323817
+    backgroundColor: [ 0.1, 0.1, 0.3 ]
+    gridColor: [ 0.9, 0.9, 0.9, 1 ]
+  "Links": 
+    listingMode: "Link List"
+    currentBodyItem: 3
+    bodyItems: 
+      - 
+        id: 3
+        selectedLinks: [ 0 ]
+  "Body / Link": 
+    showRotationMatrix: false
+  "Joint Sliders": 
+    showAllJoints: true
+    jointId: true
+    name: true
+    numColumns: 1
+    spinBox: true
+    slider: true
+    labelOnLeft: true
+    currentBodyItem: 3
+  "Pose Roll": 
+    currentPoseSeqItem: 5
+    defaultTransitionTime: 0
+    updateAll: true
+    autoUpdate: false
+    timeSync: true
+    listingMode: "Part Tree"
+    bodyItems: 
+      - 
+        id: 3
+        expandedParts: [ "LEGS", "LOWER-BODY", "Whole Body" ]
+    timeLength: 10
+    showLipSync: false
+    gridInterval: 1
+toolbars: 
+  "TimeBar": 
+    minTime: 0
+    maxTime: 15
+    frameRate: 100
+  "BodyMotionGenerationBar":
+    autoGenerationForNewBody: true
+    balancer: true
+    autoGeneration: true
+    timeScaleRatio: 1
+    preInitialDuration: 1
+    postFinalDuration: 1
+    onlyTimeBarRange: true
+    makeNewBodyItem: true
+    stealthyStepMode: false
+    stealthyHeightRatioThresh: 2
+    flatLiftingHeight: 0.005
+    flatLandingHeight: 0.005
+    impactReductionHeight: 0.005
+    impactReductionTime: 0.04
+    autoZmp: true
+    minZmpTransitionTime: 0.1
+    zmpCenteringTimeThresh: 0.03
+    zmpTimeMarginBeforeLiftingSpin: 0
+    zmpMaxDistanceFromCenter: 0.02
+    allLinkPositions: true
+    lipSyncMix: false
+    timeToStartBalancer: 0
+    balancerIterations: 2
+    plainBalancerMode: false
+    boundaryConditionType: position
+    boundarySmootherType: off
+    boundarySmootherTime: 0.5
+    boundaryCmAdjustment: false
+    boundaryCmAdjustmentTime: 1
+    waistHeightRelaxation: false
+    gravity: 9.8
+    dynamicsTimeRatio: 1

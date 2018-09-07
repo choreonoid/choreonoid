@@ -20,14 +20,14 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/tank/tank.body"
+            modelFile: "${SHARE}/model/Tank/Tank.body"
             currentBaseLink: ""
             rootPosition: [ -2, -0.499999997, 0.1059 ]
             rootAttitude: [ 
               1, 2.80052647e-09, -8.56766596e-10, 
               -2.80052647e-09, 1, -5.40907594e-10, 
               8.56766595e-10, 5.40907597e-10, 1 ]
-            jointPositions: [ -0.000000, -0.009806 ]
+            jointPositions: [  0.000000,  0.000000 ]
             initialRootPosition: [ -2, -0.5, 0.1 ]
             initialRootAttitude: [ 
               1, 0, 0, 
@@ -41,46 +41,56 @@ items:
           children: 
             - 
               id: 3
-              name: "TankIoRTC"
+              name: "TankIO"
               plugin: OpenRTM
               class: BodyIoRTCItem
               data: 
-                isNoDelayMode: true
+                isNoDelayMode: false
                 controllerOptions: ""
-                module: "TankVisionSensorIoRTC.so"
+                module: "TankIoRTC"
                 baseDirectory: "RTC directory"
                 instanceName: ""
                 periodicRate: 0
             - 
               id: 4
+              name: "VisionSensorIO"
+              plugin: OpenRTM
+              class: BodyIoRTCItem
+              data: 
+                isNoDelayMode: false
+                controllerOptions: ""
+                module: "VisionSensorIoRTC"
+                baseDirectory: "RTC directory"
+                instanceName: ""
+                periodicRate: 0
+            - 
+              id: 5
               name: "TankJoystickController"
               plugin: OpenRTM
               class: ControllerRTCItem
               data: 
-                isNoDelayMode: true
+                isNoDelayMode: false
                 controllerOptions: ""
                 module: "TankJoystickControllerRTC"
                 baseDirectory: "RTC directory"
                 instanceName: ""
-                executionContext: "ChoreonoidExecutionContext"
+                executionContext: "SimulationExecutionContext"
                 periodicRate: 0
             - 
-              id: 5
-              name: "RTMPointCloudIO"
-              plugin: Hrpsys31
-              class: RTMPointCloudIOItem
-              data: 
-                componentName: RTMPointCloudIO
-                pointCloudPortNames: [ Camera_range ]
-                rangeSensorPortNames: [ VelodyneVLP-16 ]
-                cameraPortNames: [ Camera_image ]
-            - 
               id: 6
+              name: "Tank-VisionSensorSubscripter"
+              plugin: OpenRTM
+              class: VisionSensorSubscriberRTCItem
+              data: 
+                periodicRate: 30
+                pointCloudPortType: "PointCloudTypes::PointCloud"
+            - 
+              id: 7
               name: "Joystick"
               plugin: OpenRTM
               class: ControllerRTCItem
               data: 
-                isNoDelayMode: true
+                isNoDelayMode: false
                 controllerOptions: ""
                 module: "JoystickRTC"
                 baseDirectory: "RTC directory"
@@ -88,7 +98,7 @@ items:
                 executionContext: "PeriodicExecutionContext"
                 periodicRate: 30
             - 
-              id: 7
+              id: 8
               name: "SensorVisualizer"
               plugin: Body
               class: SensorVisualizer
@@ -96,23 +106,26 @@ items:
                 subItems: 
                   - 
                     class: PointCloudVisualizer
-                    name: Camera
+                    name: Kinect
                     renderingMode: Point
                     pointSize: 0
                     voxelSize: 0.01
                     isEditable: false
                   - 
                     class: RangeSensorVisualizer
-                    name: VelodyneVLP-16
+                    name: VLP-16
                     renderingMode: Point
                     pointSize: 0
                     voxelSize: 0.01
                     isEditable: false
                   - 
                     class: CameraImageVisualizer
-                    name: Camera_Image
+                    name: Kinect_Image
+                  - 
+                    class: CameraImageVisualizer
+                    name: Theta
         - 
-          id: 8
+          id: 9
           name: "Labo1"
           plugin: Body
           class: BodyItem
@@ -124,7 +137,7 @@ items:
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            jointPositions: [  ]
+            jointPositions: [  0.000000 ]
             initialRootPosition: [ 0, 0, 0 ]
             initialRootAttitude: [ 
               1, 0, 0, 
@@ -135,7 +148,7 @@ items:
             selfCollisionDetection: false
             isEditable: false
         - 
-          id: 9
+          id: 10
           name: "AISTSimulator"
           plugin: Body
           class: AISTSimulatorItem
@@ -165,7 +178,7 @@ items:
             oldAccelSensorMode: false
           children: 
             - 
-              id: 10
+              id: 11
               name: "GLVisionSimulator"
               plugin: Body
               class: GLVisionSimulatorItem
@@ -175,204 +188,45 @@ items:
                 maxLatency: 1
                 recordVisionData: false
                 threadMode: Sensor
-                bestEffort: false
+                bestEffort: true
                 allSceneObjects: false
                 rangeSensorPrecisionRatio: 4
                 depthError: 0
                 enableHeadLight: true
                 enableAdditionalLights: true
+                antiAliasing: false
         - 
-          id: 11
-          name: "RTSystem"
+          id: 12
+          name: "TankVisionSystem"
           plugin: OpenRTM
           class: RTSystemItem
           data: 
+            filename: "${PROJECT_DIR}/TankVisionSystem.xml"
+            format: RTS-PROFILE-XML
             AutoConnection: true
-            RTSComps: 
-              - 
-                name: JoystickRTC
-                pos: [ -698, -321 ]
-                OutPorts: 
-                  - 
-                    name: JoystickRTC.axes
-                    isServicePort: false
-                  - 
-                    name: JoystickRTC.buttons
-                    isServicePort: false
-              - 
-                name: RTMPointCloudIO
-                pos: [ -229, -156 ]
-                InPorts: 
-                  - 
-                    name: RTMPointCloudIO.Camera_image
-                    isServicePort: false
-                  - 
-                    name: RTMPointCloudIO.Camera_range
-                    isServicePort: false
-                  - 
-                    name: RTMPointCloudIO.VelodyneVLP-16
-                    isServicePort: false
-              - 
-                name: Tank-TankVisionSensorIoRTC
-                pos: [ -572, -156 ]
-                InPorts: 
-                  - 
-                    name: Tank-TankVisionSensorIoRTC.dq
-                    isServicePort: false
-                  - 
-                    name: Tank-TankVisionSensorIoRTC.light
-                    isServicePort: false
-                  - 
-                    name: Tank-TankVisionSensorIoRTC.u
-                    isServicePort: false
-                OutPorts: 
-                  - 
-                    name: Tank-TankVisionSensorIoRTC.Camera_image
-                    isServicePort: false
-                  - 
-                    name: Tank-TankVisionSensorIoRTC.Camera_range
-                    isServicePort: false
-                  - 
-                    name: Tank-TankVisionSensorIoRTC.VelodyneVLP-16
-                    isServicePort: false
-                  - 
-                    name: Tank-TankVisionSensorIoRTC.q
-                    isServicePort: false
-              - 
-                name: TankJoystickControllerRTC
-                pos: [ -520, -321 ]
-                InPorts: 
-                  - 
-                    name: TankJoystickControllerRTC.axes
-                    isServicePort: false
-                  - 
-                    name: TankJoystickControllerRTC.buttons
-                    isServicePort: false
-                  - 
-                    name: TankJoystickControllerRTC.q
-                    isServicePort: false
-                OutPorts: 
-                  - 
-                    name: TankJoystickControllerRTC.dq
-                    isServicePort: false
-                  - 
-                    name: TankJoystickControllerRTC.light
-                    isServicePort: false
-                  - 
-                    name: TankJoystickControllerRTC.u
-                    isServicePort: false
-            RTSConnections: 
-              - 
-                name: TankJoystickControllerRTC.light_Tank-TankVisionSensorIoRTC.light
-                sourceRtcName: TankJoystickControllerRTC
-                sourcePortName: TankJoystickControllerRTC.light
-                targetRtcName: Tank-TankVisionSensorIoRTC
-                targetPortName: Tank-TankVisionSensorIoRTC.light
-                dataflow: push
-                subscription: flush
-                position: [ -389, -284, -302, -284, -302, -192, -571, -192, -571, -119, -496, -119 ]
-              - 
-                name: Tank-TankVisionSensorIoRTC.VelodyneVLP-16_RTMPointCloudIO.VelodyneVLP-16
-                sourceRtcName: Tank-TankVisionSensorIoRTC
-                sourcePortName: Tank-TankVisionSensorIoRTC.VelodyneVLP-16
-                targetRtcName: RTMPointCloudIO
-                targetPortName: RTMPointCloudIO.VelodyneVLP-16
-                dataflow: push
-                subscription: flush
-                position: [ -436, -101, -431, -101, -312.5, -101, -312.5, -101, -194, -101, -189, -101 ]
-              - 
-                name: TankJoystickControllerRTC.dq_Tank-TankVisionSensorIoRTC.dq
-                sourceRtcName: TankJoystickControllerRTC
-                sourcePortName: TankJoystickControllerRTC.dq
-                targetRtcName: Tank-TankVisionSensorIoRTC
-                targetPortName: Tank-TankVisionSensorIoRTC.dq
-                dataflow: push
-                subscription: flush
-                position: [ -389, -302, -273, -302, -273, -169, -559, -169, -559, -137, -496, -137 ]
-              - 
-                name: JoystickRTC.buttons_TankJoystickControllerRTC.buttons
-                sourceRtcName: JoystickRTC
-                sourcePortName: JoystickRTC.buttons
-                targetRtcName: TankJoystickControllerRTC
-                targetPortName: TankJoystickControllerRTC.buttons
-                dataflow: push
-                subscription: flush
-                position: [ -618, -284, -613, -284, -531.5, -284, -531.5, -284, -454, -284, -449, -284 ]
-              - 
-                name: Tank-TankVisionSensorIoRTC.Camera_image_RTMPointCloudIO.Camera_image
-                sourceRtcName: Tank-TankVisionSensorIoRTC
-                sourcePortName: Tank-TankVisionSensorIoRTC.Camera_image
-                targetRtcName: RTMPointCloudIO
-                targetPortName: RTMPointCloudIO.Camera_image
-                dataflow: push
-                subscription: flush
-                position: [ -436, -137, -431, -137, -312.5, -137, -312.5, -137, -194, -137, -189, -137 ]
-              - 
-                name: TankJoystickControllerRTC.u_Tank-TankVisionSensorIoRTC.u
-                sourceRtcName: TankJoystickControllerRTC
-                sourcePortName: TankJoystickControllerRTC.u
-                targetRtcName: Tank-TankVisionSensorIoRTC
-                targetPortName: Tank-TankVisionSensorIoRTC.u
-                dataflow: push
-                subscription: flush
-                position: [ -389, -266, -319, -266, -319, -206, -586, -206, -586, -101, -496, -101 ]
-              - 
-                name: TankJoystickControllerRTC.q_Tank-TankVisionSensorIoRTC.q
-                sourceRtcName: TankJoystickControllerRTC
-                sourcePortName: TankJoystickControllerRTC.q
-                targetRtcName: Tank-TankVisionSensorIoRTC
-                targetPortName: Tank-TankVisionSensorIoRTC.q
-                dataflow: push
-                subscription: flush
-                position: [ -449, -266, -601, -266, -601, -19, -360, -19, -360, -83, -436, -83 ]
-              - 
-                name: Tank-TankVisionSensorIoRTC.Camera_range_RTMPointCloudIO.Camera_range
-                sourceRtcName: Tank-TankVisionSensorIoRTC
-                sourcePortName: Tank-TankVisionSensorIoRTC.Camera_range
-                targetRtcName: RTMPointCloudIO
-                targetPortName: RTMPointCloudIO.Camera_range
-                dataflow: push
-                subscription: flush
-                position: [ -436, -119, -431, -119, -312.5, -119, -312.5, -119, -194, -119, -189, -119 ]
-              - 
-                name: JoystickRTC.axes_TankJoystickControllerRTC.axes
-                sourceRtcName: JoystickRTC
-                sourcePortName: JoystickRTC.axes
-                targetRtcName: TankJoystickControllerRTC
-                targetPortName: TankJoystickControllerRTC.axes
-                dataflow: push
-                subscription: flush
-                position: [ -618, -302, -613, -302, -531.5, -302, -531.5, -302, -454, -302, -449, -302 ]
+            PollingCycle: 500
 views: 
   - 
     id: 0
-    name: "Camera"
-    plugin: Base
-    class: ImageView
-    mounted: true
-    state: 
-      ImageProviderItem: [ 7, "Camera_Image" ]
-  - 
-    id: 1
     plugin: Base
     class: ItemPropertyView
     mounted: true
   - 
-    id: 2
+    id: 1
     plugin: Base
     class: ItemTreeView
     mounted: true
     state: 
-      selected: [ 9 ]
-      checked: [ 1, 2, [ 7, "Camera" ], [ 7, "VelodyneVLP-16" ] ]
-      expanded: [ 1, 2, 7, 9 ]
+      selected: [ 10 ]
+      checked: [ 1, 2, [ 8, "Kinect" ], [ 8, "VLP-16" ] ]
+      expanded: [ 1, 2, 8, 10 ]
   - 
-    id: 3
+    id: 2
     plugin: Base
     class: MessageView
     mounted: true
   - 
-    id: 4
+    id: 3
     plugin: Base
     class: SceneView
     mounted: true
@@ -432,81 +286,20 @@ views:
       yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       dedicatedItemTreeViewChecks: false
   - 
-    id: 5
-    name: "Scene 2"
-    plugin: Base
-    class: SceneView
-    state: 
-      editMode: true
-      viewpointControlMode: thirdPerson
-      collisionLines: false
-      polygonMode: fill
-      defaultHeadLight: true
-      defaultHeadLightIntensity: 0.75
-      headLightLightingFromBack: false
-      worldLight: true
-      worldLightIntensity: 0.5
-      worldLightAmbient: 0.3
-      additionalLights: true
-      shadowLights: 
-        - 0
-      fog: true
-      floorGrid: false
-      floorGridSpan: 10
-      floorGridInterval: 0.5
-      xzGridSpan: 10
-      xzGridInterval: 0.5
-      xzGrid: false
-      yzGridSpan: 10
-      yzGridInterval: 0.5
-      texture: true
-      lineWidth: 1
-      pointSize: 1
-      normalVisualization: false
-      normalLength: 0.01
-      coordinateAxes: true
-      fpsTestIteration: 1
-      showFPS: false
-      enableNewDisplayListDoubleRendering: false
-      useBufferForPicking: true
-      upsideDown: false
-      cameras: 
-        - 
-          camera: [ System, Perspective ]
-          fieldOfView: 0.6978
-          near: 0.01
-          far: 100
-          eye: [ -5.29126118, -5.01169376, 3.84184278 ]
-          direction: [ 0.756596254, 0.487150344, -0.43617273 ]
-          up: [ 0.3667299, 0.236126726, 0.899862962 ]
-        - 
-          camera: [ System, Orthographic ]
-          orthoHeight: 20
-          near: 0.01
-          far: 100
-        - 
-          camera: [ Tank, Camera ]
-          isCurrent: true
-      backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
-      gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      dedicatedItemTreeViewChecks: false
-  - 
-    id: 6
+    id: 4
     name: "Virtual Joystick"
     plugin: Base
     class: VirtualJoystickView
     mounted: true
   - 
-    id: 7
+    id: 5
     plugin: Body
     class: BodyLinkView
     mounted: true
     state: 
       showRotationMatrix: false
   - 
-    id: 8
+    id: 6
     plugin: Body
     class: JointSliderView
     mounted: true
@@ -518,19 +311,31 @@ views:
       spinBox: true
       slider: true
       labelOnLeft: true
-      currentBodyItem: 8
+      currentBodyItem: 2
   - 
-    id: 9
+    id: 7
     plugin: Body
     class: LinkSelectionView
     mounted: true
     state: 
       listingMode: "Link List"
-      currentBodyItem: 8
+      currentBodyItem: 2
       bodyItems: 
         - 
           id: 2
           selectedLinks: [ 0 ]
+  - 
+    id: 8
+    name: "CameraImageView"
+    plugin: OpenRTM
+    class: RTMImageView
+    mounted: true
+  - 
+    id: 9
+    name: "Configuration"
+    plugin: OpenRTM
+    class: RTSConfigurationView
+    mounted: true
   - 
     id: 10
     name: "RTC Diagram"
@@ -538,12 +343,15 @@ views:
     class: RTSDiagramView
     mounted: true
     state: 
-      currentRTSItem: 11
+      currentRTSItem: 12
   - 
     id: 11
     plugin: OpenRTM
     class: RTSNameServerView
     mounted: true
+    state: 
+      host: localhost
+      port: 2809
   - 
     id: 12
     name: "RTC Properties"
@@ -574,6 +382,8 @@ toolbars:
     snapDistance: 0.025
     penetrationBlockDepth: 0.0005
     lazyCollisionDetectionMode: true
+  "BodyBar": 
+    current: 2
   "LeggedBodyBar": 
     stanceWidth: 0.15
   "BodyMotionGenerationBar": 
@@ -598,6 +408,17 @@ toolbars:
     zmpMaxDistanceFromCenter: 0.02
     allLinkPositions: false
     lipSyncMix: false
+    timeToStartBalancer: 0
+    balancerIterations: 2
+    plainBalancerMode: false
+    boundaryConditionType: position
+    boundarySmootherType: off
+    boundarySmootherTime: 0.5
+    boundaryCmAdjustment: false
+    boundaryCmAdjustmentTime: 1
+    waistHeightRelaxation: false
+    gravity: 9.8
+    dynamicsTimeRatio: 1
 Body: 
   "BodyMotionEngine": 
     updateJointVelocities: false
@@ -609,7 +430,7 @@ Body:
         showPpcom: false
         showZmp: false
       - 
-        bodyItem: 8
+        bodyItem: 9
         showCenterOfMass: false
         showPpcom: false
         showZmp: false
@@ -623,6 +444,11 @@ Body:
     targetJoints: all
     checkSelfCollisions: true
     onlyTimeBarRange: false
+  "SplineFilterDialog": 
+    isInputFrameRateSpecified: false
+    inputFrameRate: 200
+    isOutputFrameRateSpecified: false
+    outputFrameRate: 200
 OpenRTM: 
   "deleteUnmanagedRTCsOnStartingSimulation": false
 viewAreas: 
@@ -632,61 +458,61 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 356, 1493 ]
+      sizes: [ 369, 1545 ]
       children: 
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 557, 556 ]
+          sizes: [ 531, 529 ]
           children: 
             - 
               type: pane
-              views: [ 2 ]
-              current: 2
+              views: [ 1 ]
+              current: 1
             - 
               type: pane
-              views: [ 1, 9, 11 ]
-              current: 1
+              views: [ 0, 7, 11 ]
+              current: 11
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 813, 300 ]
+          sizes: [ 774, 286 ]
           children: 
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 637, 850 ]
+              sizes: [ 770, 769 ]
               children: 
                 - 
                   type: splitter
                   orientation: vertical
-                  sizes: [ 393, 414 ]
+                  sizes: [ 374, 394 ]
                   children: 
                     - 
                       type: pane
-                      views: [ 7, 8, 10 ]
+                      views: [ 5, 6, 10 ]
                       current: 10
                     - 
                       type: pane
-                      views: [ 12, 0 ]
-                      current: 0
+                      views: [ 12, 9, 8 ]
+                      current: 8
+                - 
+                  type: pane
+                  views: [ 3 ]
+                  current: 3
+            - 
+              type: splitter
+              orientation: horizontal
+              sizes: [ 770, 769 ]
+              children: 
+                - 
+                  type: pane
+                  views: [ 2, 13 ]
+                  current: 2
                 - 
                   type: pane
                   views: [ 4 ]
                   current: 4
-            - 
-              type: splitter
-              orientation: horizontal
-              sizes: [ 744, 743 ]
-              children: 
-                - 
-                  type: pane
-                  views: [ 3, 13 ]
-                  current: 3
-                - 
-                  type: pane
-                  views: [ 6 ]
-                  current: 6
 layoutOfToolBars: 
   rows: 
     - 
@@ -694,5 +520,4 @@ layoutOfToolBars:
       - { name: "ScriptBar", x: 48, priority: 0 }
       - { name: "SimulationBar", x: 95, priority: 1 }
       - { name: "TimeBar", x: 96, priority: 0 }
-      - { name: "SceneBar", x: 1336, priority: 2 }
-      - { name: "ImageViewBar", x: 1705, priority: 0 }
+      - { name: "SceneBar", x: 1652, priority: 2 }

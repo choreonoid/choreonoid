@@ -1,0 +1,24 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: Debris-M
+
+links:
+  -
+    name: BASE
+    translation: [ 0.0, 0.0, 0.5 ]
+    jointType: free
+    massType: density
+    density: 8000
+    mass: 30
+    inertia: [
+      2.0,  0,    0,
+      0,      10.0, 0,
+      0,      0    , 10.0 ]
+    material: Default
+    AMOR: true
+    autoSleep: true
+    elements: &box
+      Shape:
+        geometry: { type: Box, size: [ 1.5, 0.15, 0.15 ] }
+        appearance: { material: { diffuseColor: [ 1.0, 0.5, 0.2 ] } }

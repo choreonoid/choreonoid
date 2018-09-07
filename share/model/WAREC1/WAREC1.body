@@ -2730,7 +2730,14 @@ links:
             rotation: [ 1, 0, 0, 180 ]
             elements: *LEE_SHAPE
 
+standardPose: [
+   20,  20, 0, -65, 0, -45, 0, # Rear Left
+  -20,  20, 0, -65, 0, -45, 0, # Real Right
+  -20, -20, 0 , 65, 0,  45, 0, # Front Left
+   20, -20, 0,  65, 0,  45, 0  # Front Right
+]
 
 collisionDetection:
   excludeTreeDepth: 1
   excludeLinks: [ ]
+

@@ -220,8 +220,10 @@ void ItvItem::setData(int column, int role, const QVariant& value)
 
 SigCheckToggled* ItvItem::sigCheckToggled(int id)
 {
-    if(id < static_cast<int>(sigCheckToggledList.size())){
-        return sigCheckToggledList[id].get();
+    if(id >= 0){
+        if(id < static_cast<int>(sigCheckToggledList.size())){
+            return sigCheckToggledList[id].get();
+        }
     }
     return 0;
 }
@@ -229,13 +231,16 @@ SigCheckToggled* ItvItem::sigCheckToggled(int id)
 
 SigCheckToggled& ItvItem::getOrCreateSigCheckToggled(int id)
 {
-    if(id >= static_cast<int>(sigCheckToggledList.size())){
-        sigCheckToggledList.resize(id + 1);
+    if(id >= 0){
+        if(id >= static_cast<int>(sigCheckToggledList.size())){
+            sigCheckToggledList.resize(id + 1);
+        }
+        if(!sigCheckToggledList[id]){
+            sigCheckToggledList[id] = std::make_shared<SigCheckToggled>();
+        }
+        return *sigCheckToggledList[id];
     }
-    if(!sigCheckToggledList[id]){
-        sigCheckToggledList[id] = std::make_shared<SigCheckToggled>();
-    }
-    return *sigCheckToggledList[id];
+    return *sigCheckToggledList[0];
 }
 
 
@@ -851,7 +856,16 @@ bool ItemTreeViewImpl::isItemChecked(Item* item, int id)
 {
     ItvItem* itvItem = getItvItem(item);
     if(itvItem){
-        return (itvItem->checkState(id + 1) == Qt::Checked);
+        if(id == ItemTreeView::ID_ANY){
+            for(int i=0; i < checkColumns.size(); ++i){
+                if(itvItem->checkState(i + 1) == Qt::Checked){
+                    return true;
+                }
+            }
+            return false;
+        } else {
+            return (itvItem->checkState(id + 1) == Qt::Checked);
+        }
     }
     return false;
 }

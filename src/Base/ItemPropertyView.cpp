@@ -280,8 +280,13 @@ public:
         QFileDialog dialog(MainWindow::instance());
         dialog.setWindowTitle(_("Select File"));
         dialog.setViewMode(QFileDialog::List);
-        dialog.setFileMode(QFileDialog::ExistingFile);
-        dialog.setLabelText(QFileDialog::Accept, _("Select"));
+        if(value.isExistingFileMode()){
+            dialog.setFileMode(QFileDialog::ExistingFile);
+            dialog.setLabelText(QFileDialog::Accept, _("Select"));
+        }else{
+            dialog.setFileMode(QFileDialog::AnyFile);
+            dialog.setLabelText(QFileDialog::Accept, _("OK"));
+        }
         dialog.setLabelText(QFileDialog::Reject, _("Cancel"));
 
         filesystem::path directory;

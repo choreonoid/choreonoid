@@ -34,6 +34,7 @@ public:
         
     SgUpdate() : action_(MODIFIED) { path_.reserve(16); }
     SgUpdate(int action) : action_(action) { path_.reserve(16); }
+    SgUpdate(const SgUpdate& org) : action_(org.action_), path_(org.path_) { }
     virtual ~SgUpdate();
     int action() const { return action_; }
     bool isModified() const { return (action_ & MODIFIED); }
@@ -454,9 +455,9 @@ public:
     SgSwitch(const SgSwitch& org, SgCloneMap& cloneMap);
     virtual SgObject* clone(SgCloneMap& cloneMap) const override;
 
-    void turnOn() { isTurnedOn_ = true; }
-    void turnOff() { isTurnedOn_ = false; }
-    void setTurnedOn(bool on) { isTurnedOn_ = on; }
+    void turnOn(bool doNotify = false) { setTurnedOn(true, doNotify); }
+    void turnOff(bool doNotify = false) { setTurnedOn(false, doNotify); }
+    void setTurnedOn(bool on, bool doNotify = false);
     bool isTurnedOn() const { return isTurnedOn_; }
 
   private:

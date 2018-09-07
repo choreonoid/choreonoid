@@ -3,12 +3,16 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_PHENOMENON_PLUGIN_FIRE_DEVICE_H
-#define CNOID_PHENOMENON_PLUGIN_FIRE_DEVICE_H
+#ifndef CNOID_SCENE_EFFECTS_PLUGIN_FIRE_DEVICE_H
+#define CNOID_SCENE_EFFECTS_PLUGIN_FIRE_DEVICE_H
 
+#include "FireParticleSystem.h"
 #include <cnoid/Device>
 
 namespace cnoid {
+
+class YAMLBodyLoader;
+class Mapping;
 
 class FireDevice : public Device
 {
@@ -27,21 +31,13 @@ public:
 
     bool on() const { return on_; }
     void on(bool on) { on_ = on; }
-    void setAcceleration(const Vector3f& a) { acceleration_ = a; }
-    const Vector3f& acceleration() const { return acceleration_; }
-    void setInitialSpeedAverage(float average){ initialSpeedAverage_ = average; }
-    void setInitialSpeedVariation(float variation){ initialSpeedVariation_ = variation; }
-    void setInitialVelocityAngleRange(float angle){ initialVelocityAngleRange_ = angle; }
-    float initialSpeedAverage() const { return initialSpeedAverage_; }
-    float initialSpeedVariation() const { return initialSpeedVariation_; }
-    float initialVelocityAngleRange() const { return initialVelocityAngleRange_; }
+
+    FireParticleSystem& particleSystem() { return particleSystem_; }
+    const FireParticleSystem& particleSystem() const { return particleSystem_; }
         
 private:
     bool on_;
-    Vector3f acceleration_;
-    float initialSpeedAverage_;
-    float initialSpeedVariation_;
-    float initialVelocityAngleRange_;
+    FireParticleSystem particleSystem_;
 };
 
 typedef ref_ptr<FireDevice> FireDevicePtr;

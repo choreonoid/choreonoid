@@ -8,6 +8,7 @@
 #include <cnoid/Archive>
 #include <cnoid/MessageView>
 #include <cnoid/MenuManager>
+#include <cnoid/ItemManager>
 #include <QHeaderView>
 #include <QCheckBox>
 #include <QRadioButton>
@@ -22,7 +23,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 using boost::dynamic_bitset;
 
@@ -315,7 +315,7 @@ void LinkTreeWidgetImpl::initialize()
     listingMode = LinkTreeWidget::LINK_LIST;
     listingModeCombo.setCurrentIndex(listingMode);
     listingModeCombo.sigCurrentIndexChanged().connect(
-        std::bind(&LinkTreeWidgetImpl::onListingModeChanged, this, _1));
+        [&](int index){ onListingModeChanged(index); });
 }
 
 
@@ -546,14 +546,22 @@ void LinkTreeWidget::fixListingMode(bool on)
 LinkTreeWidgetImpl::BodyItemInfoPtr LinkTreeWidgetImpl::getBodyItemInfo(BodyItem* bodyItem)
 {
     BodyItemInfoPtr info;
+    bool isInfoForNewBody = false;
 
     if(bodyItem){
         if(bodyItem == currentBodyItem){
             info = currentBodyItemInfo;
         } else if(isCacheEnabled){
-            BodyItemInfoMap::iterator p = bodyItemInfoCache.find(bodyItem);
+            auto p = bodyItemInfoCache.find(bodyItem);
             if(p != bodyItemInfoCache.end()){
                 info = p->second;
+            } else if(isCacheEnabled){
+                auto originalItem = ItemManager::findOriginalItemForReloadedItem(bodyItem);
+                auto q = bodyItemInfoCache.find(dynamic_cast<BodyItem*>(originalItem));
+                if(q != bodyItemInfoCache.end()){
+                    info = q->second;
+                    isInfoForNewBody = true;
+                }
             }
         }
 
@@ -562,9 +570,13 @@ LinkTreeWidgetImpl::BodyItemInfoPtr LinkTreeWidgetImpl::getBodyItemInfo(BodyItem
                 bodyItemInfoCache.clear();
             }
             info = std::make_shared<BodyItemInfo>();
+            isInfoForNewBody = true;
+        }
+
+        if(isInfoForNewBody){
             info->linkGroup = LinkGroup::create(*bodyItem->body());
             info->detachedFromRootConnection = bodyItem->sigDetachedFromRoot().connect(
-                std::bind(&LinkTreeWidgetImpl::onBodyItemDetachedFromRoot, this, bodyItem));
+                [this, bodyItem](){ onBodyItemDetachedFromRoot(bodyItem); });
             bodyItemInfoCache[bodyItem] = info;
         }
 
@@ -579,6 +591,10 @@ LinkTreeWidgetImpl::BodyItemInfoPtr LinkTreeWidgetImpl::getBodyItemInfo(BodyItem
 
 void LinkTreeWidgetImpl::onBodyItemDetachedFromRoot(BodyItem* bodyItem)
 {
+    if(TRACE_FUNCTIONS){
+        cout << "LinkTreeWidgetImpl::onBodyItemDetachedFromRoot(" << bodyItem->name() << ")" << endl;
+    }
+    
     if(currentBodyItem == bodyItem){
         setCurrentBodyItem(0, false);
     }
@@ -627,7 +643,8 @@ void LinkTreeWidgetImpl::clearTreeItems()
 void LinkTreeWidgetImpl::setCurrentBodyItem(BodyItem* bodyItem, bool forceTreeUpdate)
 {
     if(TRACE_FUNCTIONS){
-        cout << "LinkTreeWidgetImpl::setCurrentBodyItem()" << endl;
+        cout << "LinkTreeWidgetImpl::setCurrentBodyItem(" << (bodyItem ? bodyItem->name() : string("0"))
+        << ", " << forceTreeUpdate << ")" << endl;
     }
 
     bool currentChanged = bodyItem != currentBodyItem;
@@ -687,6 +704,8 @@ void LinkTreeWidgetImpl::setCurrentBodyItem(BodyItem* bodyItem, bool forceTreeUp
             }
 
             addCustomRows();
+
+            restoreTreeState();
         }
 
         sigUpdateRequest(true);
@@ -1224,7 +1243,7 @@ bool LinkTreeWidgetImpl::storeState(Archive& archive)
 
 bool LinkTreeWidget::restoreState(const Archive& archive)
 {
-    archive.addPostProcess(std::bind(&LinkTreeWidgetImpl::restoreState, impl, std::ref(archive)));
+    archive.addPostProcess([&](){ impl->restoreState(archive); });
     return true;
 }
 

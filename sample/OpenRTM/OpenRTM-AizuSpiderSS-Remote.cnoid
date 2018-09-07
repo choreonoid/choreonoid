@@ -1,0 +1,512 @@
+items: 
+  id: 0
+  name: "Root"
+  plugin: Base
+  class: RootItem
+  children: 
+    - 
+      id: 1
+      name: "World"
+      plugin: Body
+      class: WorldItem
+      data: 
+        collisionDetection: false
+        collisionDetector: AISTCollisionDetector
+        materialTableFile: "${SHARE}/default/materials.yaml"
+      children: 
+        - 
+          id: 2
+          name: "AizuSpider"
+          plugin: Body
+          class: BodyItem
+          data: 
+            modelFile: "${SHARE}/model/AizuSpider/AizuSpiderSS.body"
+            currentBaseLink: "CHASSIS"
+            rootPosition: [ -1.99999286, -0.500000021, 0.0349511794 ]
+            rootAttitude: [ 
+              0.999999979, -1.2550743e-07, 0.000203750094, 
+              1.2550906e-07, 1, -7.9917126e-09, 
+              -0.000203750094, 8.01728491e-09, 0.999999979 ]
+            jointPositions: [ 
+               0.000000,  0.000000,  0.000000,  0.000000, -1.570796,  2.635447,  0.471239, -1.623156,  0.104720,  1.745329, 
+               0.000000,  0.000000,  0.000000 ]
+            initialRootPosition: [ -2, -0.5, 0.035 ]
+            initialRootAttitude: [ 
+              1, 0, 0, 
+              0, 1, 0, 
+              0, 0, 1 ]
+            initialJointPositions: [ 
+               0.000000,  0.000000,  0.000000,  0.000000, -1.570796,  2.635447,  0.471239, -1.623156,  0.104720,  1.745329, 
+               0.000000,  0.000000,  0.000000 ]
+            zmp: [ 0, 0, 0 ]
+            collisionDetection: true
+            selfCollisionDetection: false
+            isEditable: true
+          children: 
+            - 
+              id: 3
+              name: "AizuSpiderController"
+              plugin: Body
+              class: SimpleControllerItem
+              data: 
+                isNoDelayMode: false
+                controllerOptions: ""
+                controller: "AizuSpiderController"
+                baseDirectory: "Controller directory"
+                reloading: true
+              children: 
+                - 
+                  id: 4
+                  name: "Jaco2Controller"
+                  plugin: Body
+                  class: SimpleControllerItem
+                  data: 
+                    isNoDelayMode: false
+                    controllerOptions: ""
+                    controller: "Jaco2Controller"
+                    baseDirectory: "Controller directory"
+                    reloading: true
+                - 
+                  id: 5
+                  name: "AizuSpider-JoystickInput"
+                  plugin: Body
+                  class: SimpleControllerItem
+                  data: 
+                    isNoDelayMode: false
+                    controllerOptions: ""
+                    controller: "RemoteJoystickInputController"
+                    baseDirectory: "Controller directory"
+                    reloading: false
+            - 
+              id: 6
+              name: "VisionIoSensorRTC"
+              plugin: OpenRTM
+              class: BodyIoRTCItem
+              data: 
+                isNoDelayMode: false
+                controllerOptions: ""
+                module: "VisionSensorIoRTC"
+                baseDirectory: "RTC directory"
+                instanceName: ""
+                periodicRate: 0
+            - 
+              id: 7
+              name: "BodyTrackingCamera"
+              plugin: Body
+              class: BodyTrackingCameraItem
+              data: 
+                keepRelativeAttitude: true
+                nearClipDistance: 0.01
+                farClipDistance: 100
+        - 
+          id: 8
+          name: "Labo1"
+          plugin: Body
+          class: BodyItem
+          data: 
+            modelFile: "${SHARE}/model/Labo1/Labo1.body"
+            currentBaseLink: "Root"
+            rootPosition: [ 0, 0, 0 ]
+            rootAttitude: [ 
+              1, 0, 0, 
+              0, 1, 0, 
+              0, 0, 1 ]
+            jointPositions: [ -0.000000 ]
+            initialRootPosition: [ 0, 0, 0 ]
+            initialRootAttitude: [ 
+              1, 0, 0, 
+              0, 1, 0, 
+              0, 0, 1 ]
+            zmp: [ 0, 0, 0 ]
+            collisionDetection: true
+            selfCollisionDetection: false
+            isEditable: false
+        - 
+          id: 9
+          name: "GLVisionSimulator"
+          plugin: Body
+          class: GLVisionSimulatorItem
+          data: 
+            enabled: true
+            maxFrameRate: 1000
+            maxLatency: 1
+            recordVisionData: false
+            threadMode: Sensor
+            bestEffort: false
+            allSceneObjects: false
+            rangeSensorPrecisionRatio: 2
+            depthError: 0
+            enableHeadLight: true
+            enableAdditionalLights: true
+          children: 
+            - 
+              id: 10
+              name: "AISTSimulator-Position"
+              plugin: Body
+              class: AISTSimulatorItem
+              data: 
+                timestep: 0.005
+                realtimeSync: true
+                recording: "full"
+                timeRangeMode: "Unlimited"
+                timeLength: 60
+                allLinkPositionOutputMode: true
+                deviceStateOutput: true
+                controllerThreads: true
+                recordCollisionData: false
+                controllerOptions: "position"
+                dynamicsMode: "Forward dynamics"
+                integrationMode: "Runge Kutta"
+                gravity: [ 0, 0, -9.80665 ]
+                staticFriction: 0.5
+                dynamicFriction: 0.5
+                cullingThresh: 0.01
+                contactCullingDepth: 0.05
+                errorCriterion: 0.001
+                maxNumIterations: 1000
+                contactCorrectionDepth: 0.0001
+                contactCorrectionVelocityRatio: 30
+                kinematicWalking: false
+                2Dmode: false
+                oldAccelSensorMode: false
+            - 
+              id: 11
+              name: "AISTSimulator-Velocity"
+              plugin: Body
+              class: AISTSimulatorItem
+              data: 
+                timestep: 0.005
+                realtimeSync: true
+                recording: "full"
+                timeRangeMode: "Unlimited"
+                timeLength: 60
+                allLinkPositionOutputMode: true
+                deviceStateOutput: true
+                controllerThreads: true
+                recordCollisionData: false
+                controllerOptions: "velocity"
+                dynamicsMode: "Forward dynamics"
+                integrationMode: "Runge Kutta"
+                gravity: [ 0, 0, -9.80665 ]
+                staticFriction: 0.5
+                dynamicFriction: 0.5
+                cullingThresh: 0.01
+                contactCullingDepth: 0.05
+                errorCriterion: 0.001
+                maxNumIterations: 1000
+                contactCorrectionDepth: 0.0001
+                contactCorrectionVelocityRatio: 30
+                kinematicWalking: false
+                2Dmode: false
+                oldAccelSensorMode: false
+            - 
+              id: 12
+              name: "AISTSimulator-Torque"
+              plugin: Body
+              class: AISTSimulatorItem
+              data: 
+                timestep: 0.001
+                realtimeSync: true
+                recording: "full"
+                timeRangeMode: "Unlimited"
+                timeLength: 60
+                allLinkPositionOutputMode: true
+                deviceStateOutput: true
+                controllerThreads: true
+                recordCollisionData: false
+                controllerOptions: "torque"
+                dynamicsMode: "Forward dynamics"
+                integrationMode: "Runge Kutta"
+                gravity: [ 0, 0, -9.80665 ]
+                staticFriction: 0.5
+                dynamicFriction: 0.5
+                cullingThresh: 0.01
+                contactCullingDepth: 0.05
+                errorCriterion: 0.001
+                maxNumIterations: 1000
+                contactCorrectionDepth: 0.0001
+                contactCorrectionVelocityRatio: 30
+                kinematicWalking: false
+                2Dmode: false
+                oldAccelSensorMode: false
+views: 
+  - 
+    id: 0
+    plugin: Base
+    class: ItemPropertyView
+    mounted: true
+  - 
+    id: 1
+    plugin: Base
+    class: ItemTreeView
+    mounted: true
+    state: 
+      selected: [ 12 ]
+      checked: [ 1, 2, 7, 8 ]
+      expanded: [ 1, 2, 3, 8, 9 ]
+  - 
+    id: 2
+    plugin: Base
+    class: MessageView
+    mounted: true
+  - 
+    id: 3
+    plugin: Base
+    class: SceneView
+    mounted: true
+    state: 
+      editMode: false
+      viewpointControlMode: thirdPerson
+      collisionLines: false
+      polygonMode: fill
+      defaultHeadLight: true
+      defaultHeadLightIntensity: 0.6
+      headLightLightingFromBack: false
+      worldLight: true
+      worldLightIntensity: 0.4
+      worldLightAmbient: 0
+      additionalLights: true
+      shadowLights: 
+        - 0
+        - 1
+      fog: true
+      floorGrid: false
+      floorGridSpan: 10
+      floorGridInterval: 0.5
+      xzGridSpan: 10
+      xzGridInterval: 0.5
+      xzGrid: false
+      yzGridSpan: 10
+      yzGridInterval: 0.5
+      texture: true
+      lineWidth: 1
+      pointSize: 1
+      normalVisualization: false
+      normalLength: 0.01
+      coordinateAxes: true
+      fpsTestIteration: 1
+      showFPS: false
+      enableNewDisplayListDoubleRendering: false
+      useBufferForPicking: true
+      upsideDown: false
+      cameras: 
+        - 
+          camera: [ System, Perspective ]
+          isCurrent: true
+          fieldOfView: 0.6978
+          near: 0.01
+          far: 10000
+          eye: [ -4.03773228, -2.34269571, 2.02033223 ]
+          direction: [ 0.711954996, 0.503646067, -0.489347242 ]
+          up: [ 0.399492714, 0.282606254, 0.87208903 ]
+        - 
+          camera: [ System, Orthographic ]
+          orthoHeight: 20
+          near: 0.01
+          far: 10000
+        - 
+          camera: BodyTrackingCamera (Perspective)
+          fieldOfView: 0.785398
+          near: 0.01
+          far: 100
+          eye: [ -4.36835019, -0.521277748, 1.5318827 ]
+          direction: [ 0.895962029, 1.16010613e-07, -0.44413066 ]
+          up: [ 0.44413066, 4.85585146e-08, 0.895962029 ]
+        - 
+          camera: BodyTrackingCamera (Orthographic)
+          orthoHeight: 2
+          near: 0.01
+          far: 100
+      backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
+      gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
+      xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
+      yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
+      dedicatedItemTreeViewChecks: false
+  - 
+    id: 4
+    name: "Joystick"
+    plugin: Base
+    class: VirtualJoystickView
+  - 
+    id: 5
+    plugin: Body
+    class: BodyLinkView
+    mounted: true
+    state: 
+      showRotationMatrix: false
+  - 
+    id: 6
+    plugin: Body
+    class: JointSliderView
+    mounted: true
+    state: 
+      showAllJoints: true
+      jointId: true
+      name: true
+      numColumns: 1
+      spinBox: true
+      slider: true
+      labelOnLeft: true
+      currentBodyItem: 2
+  - 
+    id: 7
+    plugin: Body
+    class: LinkSelectionView
+    mounted: true
+    state: 
+      listingMode: "Link Tree"
+      currentBodyItem: 2
+      bodyItems: 
+        - 
+          id: 8
+          selectedLinks: [ 1 ]
+  - 
+    id: 8
+    name: "RTC Diagram"
+    plugin: OpenRTM
+    class: RTSDiagramView
+    mounted: true
+  - 
+    id: 9
+    plugin: OpenRTM
+    class: RTSNameServerView
+    mounted: true
+    state: 
+      host: localhost
+      port: 2809
+  - 
+    id: 10
+    plugin: Python
+    class: PythonConsoleView
+toolbars: 
+  "TimeBar": 
+    minTime: 0
+    maxTime: 5
+    frameRate: 1000
+    playbackFrameRate: 100
+    idleLoopDrivenMode: false
+    currentTime: 0
+    speedScale: 1
+    syncToOngoingUpdates: true
+    autoExpansion: true
+  "KinematicsBar": 
+    mode: AUTO
+    enablePositionDragger: true
+    penetrationBlock: false
+    collisionLinkHighlight: false
+    snapDistance: 0.025
+    penetrationBlockDepth: 0.0005
+    lazyCollisionDetectionMode: true
+  "BodyBar": 
+    current: 2
+  "LeggedBodyBar": 
+    stanceWidth: 0.15
+  "BodyMotionGenerationBar": 
+    autoGenerationForNewBody: true
+    balancer: false
+    autoGeneration: false
+    timeScaleRatio: 1
+    preInitialDuration: 1
+    postFinalDuration: 1
+    onlyTimeBarRange: false
+    makeNewBodyItem: true
+    stealthyStepMode: true
+    stealthyHeightRatioThresh: 2
+    flatLiftingHeight: 0.005
+    flatLandingHeight: 0.005
+    impactReductionHeight: 0.005
+    impactReductionTime: 0.04
+    autoZmp: true
+    minZmpTransitionTime: 0.1
+    zmpCenteringTimeThresh: 0.03
+    zmpTimeMarginBeforeLiftingSpin: 0
+    zmpMaxDistanceFromCenter: 0.02
+    allLinkPositions: false
+    lipSyncMix: false
+    timeToStartBalancer: 0
+    balancerIterations: 2
+    plainBalancerMode: false
+    boundaryConditionType: position
+    boundarySmootherType: quintic
+    boundarySmootherTime: 0.5
+    boundaryCmAdjustment: false
+    boundaryCmAdjustmentTime: 1
+    waistHeightRelaxation: false
+    gravity: 9.8
+    dynamicsTimeRatio: 1
+Body: 
+  "BodyMotionEngine": 
+    updateJointVelocities: false
+  "EditableSceneBody": 
+    editableSceneBodies: 
+      - 
+        bodyItem: 2
+        showCenterOfMass: false
+        showPpcom: false
+        showZmp: false
+      - 
+        bodyItem: 8
+        showCenterOfMass: false
+        showPpcom: false
+        showZmp: false
+    staticModelEditing: true
+  "KinematicFaultChecker": 
+    checkJointPositions: true
+    angleMargin: 0
+    translationMargin: 0
+    checkJointVelocities: true
+    velocityLimitRatio: 100
+    targetJoints: all
+    checkSelfCollisions: true
+    onlyTimeBarRange: false
+  "SplineFilterDialog": 
+    isInputFrameRateSpecified: false
+    inputFrameRate: 200
+    isOutputFrameRateSpecified: false
+    outputFrameRate: 200
+OpenRTM: 
+  "deleteUnmanagedRTCsOnStartingSimulation": false
+viewAreas: 
+  - 
+    type: embedded
+    tabs: true
+    contents: 
+      type: splitter
+      orientation: horizontal
+      sizes: [ 334, 1420 ]
+      children: 
+        - 
+          type: splitter
+          orientation: vertical
+          sizes: [ 578, 578 ]
+          children: 
+            - 
+              type: pane
+              views: [ 1 ]
+              current: 1
+            - 
+              type: pane
+              views: [ 0, 7, 9 ]
+              current: 0
+        - 
+          type: splitter
+          orientation: vertical
+          sizes: [ 828, 328 ]
+          children: 
+            - 
+              type: pane
+              views: [ 5, 6, 8, 3 ]
+              current: 3
+            - 
+              type: pane
+              views: [ 2 ]
+              current: 2
+layoutOfToolBars: 
+  rows: 
+    - 
+      - { name: "FileBar", x: 0, priority: 0 }
+      - { name: "ScriptBar", x: 48, priority: 0 }
+      - { name: "SimulationBar", x: 95, priority: 1 }
+      - { name: "TimeBar", x: 96, priority: 0 }
+      - { name: "SceneBar", x: 1336, priority: 2 }
+      - { name: "BodyBar", x: 1702, priority: 0 }

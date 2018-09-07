@@ -1,4 +1,4 @@
-optionalPlugins: [ ODE, Bullet, PhysX, AgX ]
+optionalPlugins: [ ODE, Bullet, PhysX ]
 
 items: 
   id: 0
@@ -45,7 +45,7 @@ items:
               plugin: SimpleController
               class: SimpleControllerItem
               data: 
-                isImmediateMode: true
+                isNoDelayMode: false
                 controller: "PA10PickupController"
                 reloading: true
                 inputLinkPositions: false
@@ -122,6 +122,7 @@ items:
           plugin: Body
           class: AISTSimulatorItem
           data: 
+            timeStep: 0.001
             realtimeSync: true
             recording: "full"
             timeRangeMode: "Time bar range"
@@ -149,6 +150,7 @@ items:
           plugin: ODE
           class: ODESimulatorItem
           data: 
+            timeStep: 0.001
             realtimeSync: true
             recording: "full"
             timeRangeMode: "Time bar range"
@@ -176,6 +178,7 @@ items:
           plugin: Bullet
           class: BulletSimulatorItem
           data: 
+            timeStep: 0.001
             realtimeSync: true
             recording: "full"
             timeRangeMode: "Time bar range"
@@ -197,6 +200,7 @@ items:
           plugin: PhysX
           class: PhysXSimulatorItem
           data: 
+            timeStep: 0.001
             realtimeSync: true
             recording: "full"
             timeRangeMode: "Time bar range"
@@ -210,32 +214,6 @@ items:
             dynamicFriction: 0.5
             Restitution: 0.1
             jointLimitMode: false
-        - 
-          id: 11
-          name: "AgXSimulator"
-          plugin: AgX
-          class: AgXSimulatorItem
-          data: 
-            realtimeSync: true
-            recording: "full"
-            timeRangeMode: "Time bar range"
-            onlyActiveControlPeriod: true
-            timeLength: 60
-            allLinkPositionOutputMode: false
-            deviceStateOutput: true
-            controllerThreads: true
-            recordCollisionData: false
-            dynamicsMode: Forward dynamics
-            gravity: [ 0, 0, -9.80665 ]
-            friction: 0.5
-            restitution: 0.1
-            frictionModelType: Iterative Projected
-            frictionSolveType: Split
-            numThreads: 1
-            contactReductionMode: Geometry
-            contactReductionBinResolution: 2
-            contactReductionThreshold: 4
-
 views: 
   "Items": 
     selected: [ 7 ]
@@ -274,189 +252,7 @@ views:
       orthoHeight: 20
     backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
     gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-  "Multi Value Seq": 
-    mode: view
-    editMode: freeLine
-    original: true
-    velocity: false
-    acceleration: false
-    limits: true
-    grid: true
-    gridWidth: 0.2
-    gridHeight: 0.2
-    lineWidth: 1
-    rulers: false
-    sync: true
-    controlPointStep: 1
-    controlPointOffset: 0
-    controlPointHeighlight: false
-    scrollMode: continuous
-    lower: -10
-    upper: 10
-  "Multi SE3 Seq": 
-    mode: view
-    editMode: freeLine
-    original: true
-    velocity: false
-    acceleration: false
-    limits: true
-    grid: true
-    gridWidth: 0.2
-    gridHeight: 0.2
-    lineWidth: 1
-    rulers: false
-    sync: true
-    controlPointStep: 1
-    controlPointOffset: 0
-    controlPointHeighlight: false
-    scrollMode: continuous
-    lower: -10
-    upper: 10
-    visibleElements: [ 0, 1, 2 ]
-  "Links": 
-    listingMode: "Link List"
-    currentBodyItem: 4
-    bodyItems: 
-      - 
-        id: 2
-        selectedLinks: [ 7 ]
-      - 
-        id: 4
-        selectedLinks: [ 0 ]
-      - 
-        id: 5
-        selectedLinks: [ 0 ]
-  "Body / Link": 
-    showRotationMatrix: false
-  "Joint Sliders": 
-    showAllJoints: true
-    jointId: true
-    name: true
-    numColumns: 1
-    spinBox: true
-    slider: true
-    labelOnLeft: true
-    currentBodyItem: 4
-  "Joint Trajectories": 
-    mode: view
-    editMode: freeLine
-    original: true
-    velocity: false
-    acceleration: false
-    limits: true
-    grid: true
-    gridWidth: 0.2
-    gridHeight: 0.2
-    lineWidth: 1
-    rulers: false
-    sync: true
-    controlPointStep: 1
-    controlPointOffset: 0
-    controlPointHeighlight: false
-    scrollMode: continuous
-    lower: -10
-    upper: 10
-  "Multi Affine3 Seq": 
-    mode: view
-    editMode: freeLine
-    original: true
-    velocity: false
-    acceleration: false
-    limits: true
-    grid: true
-    gridWidth: 0.2
-    gridHeight: 0.2
-    lineWidth: 1
-    rulers: false
-    sync: true
-    controlPointStep: 1
-    controlPointOffset: 0
-    controlPointHeighlight: false
-    scrollMode: continuous
-    lower: -10
-    upper: 10
-    visibleElements: [ 0, 1, 2 ]
-  "Pose Roll": 
-    defaultTransitionTime: 0
-    updateAll: true
-    autoUpdate: false
-    timeSync: true
-    listingMode: "Part Tree"
-    timeLength: 10
-    showLipSync: false
-    gridInterval: 1
 toolbars: 
   "TimeBar": 
     minTime: 0
     maxTime: 8
-    frameRate: 1000
-    playbackFrameRate: 100
-    idleLoopDrivenMode: false
-    currentTime: 0
-    speedScale: 1
-    syncToOngoingUpdates: true
-    autoExpansion: true
-  "BodyMotionGenerationBar": 
-    balancer: false
-    autoGeneration: false
-    timeScaleRatio: 1
-    preInitialDuration: 1
-    postFinalDuration: 1
-    onlyTimeBarRange: false
-    makeNewBodyItem: true
-    stealthyStepMode: true
-    stealthyHeightRatioThresh: 2
-    flatLiftingHeight: 0.005
-    flatLandingHeight: 0.005
-    impactReductionHeight: 0.005
-    impactReductionTime: 0.04
-    autoZmp: true
-    minZmpTransitionTime: 0.1
-    zmpCenteringTimeThresh: 0.03
-    zmpTimeMarginBeforeLiftingSpin: 0
-    zmpMaxDistanceFromCenter: 0.02
-    allLinkPositions: false
-    lipSyncMix: false
-  "BodyBar": 
-    stanceWidth: 0.15
-  "KinematicsBar": 
-    mode: IK
-    attitude: true
-    penetrationBlock: true
-    collisionLinkHighlight: false
-    snapDistance: 0.025
-    penetrationBlockDepth: 0.0005
-    lazyCollisionDetectionMode: true
-Body: 
-  "BodyMotionEngine": 
-    updateJointVelocities: false
-  "EditableSceneBody": 
-    editableSceneBodies: 
-      - 
-        bodyItem: 2
-        showCenterOfMass: false
-        showZmp: false
-      - 
-        bodyItem: 4
-        showCenterOfMass: false
-        showZmp: false
-      - 
-        bodyItem: 5
-        showCenterOfMass: false
-        showZmp: false
-      - 
-        bodyItem: 6
-        showCenterOfMass: false
-        showZmp: false
-  "KinematicFaultChecker": 
-    checkJointPositions: true
-    angleMargin: 0
-    translationMargin: 0
-    checkJointVelocities: true
-    velocityLimitRatio: 100
-    targetJoints: all
-    checkSelfCollisions: true
-    onlyTimeBarRange: false
-OpenRTM: 
-  "OpenRTMPlugin": 
-    deleteUnmanagedRTCsOnStartingSimulation: false

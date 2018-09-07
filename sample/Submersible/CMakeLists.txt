@@ -1,6 +1,3 @@
-
-#set(CMAKE_BUILD_TYPE Debug)
-
 if(NOT ENABLE_GUI)
   return()
 endif()
@@ -20,7 +17,4 @@ add_cnoid_plugin(${target} SHARED ${sources})
 target_link_libraries(${target} CnoidBodyPlugin)
 apply_common_setting_for_plugin(${target})
 
-configure_file(submersible.body ${CNOID_SOURCE_SHARE_DIR}/model/misc COPYONLY)
-configure_file(FogUnderWater.wrl ${CNOID_SOURCE_SHARE_DIR}/model/misc COPYONLY)
-configure_file(SubmersibleSample.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
-              
+install(FILES SubmersibleSample.cnoid DESTINATION ${CNOID_SHARE_SUBDIR}/project)

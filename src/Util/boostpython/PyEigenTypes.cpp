@@ -323,8 +323,11 @@ void exportPyEigenTypes()
     py::def("angleAxis44", angleAxis44);
     py::def("normalized", getNormalized);
     py::def("unitX", getUnitX);
+    py::def("getUnitX", getUnitX);
     py::def("unitY", getUnitY);
+    py::def("getUnitY", getUnitY);
     py::def("unitZ", getUnitZ);
+    py::def("getUnitZ", getUnitZ);
 
     PySignal<void(const Affine3&)>("Affine3Signal");   
 }

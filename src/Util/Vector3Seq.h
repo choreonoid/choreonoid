@@ -32,9 +32,7 @@ public:
 protected:
     virtual Vector3 defaultValue() const override;
     virtual bool doReadSeq(const Mapping* archive, std::ostream& os) override;
-    virtual bool doWriteSeq(YAMLWriter& writer) override;
-    bool writeVector3SeqHeaders(YAMLWriter& writer);
-    bool writeVector3SeqFrames(YAMLWriter& writer);
+    virtual bool doWriteSeq(YAMLWriter& writer, std::function<void()> writeAdditionalPart) override;
 };
 
 typedef std::shared_ptr<Vector3Seq> Vector3SeqPtr;

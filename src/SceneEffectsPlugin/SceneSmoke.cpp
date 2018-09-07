@@ -21,6 +21,7 @@ public:
     void render(SceneSmoke* fountain);
 
     GLint lifeTimeLocation;
+    GLint accelLocation;
     GLuint nParticles;
     GLuint initVelBuffer;
     GLuint offsetTimeBuffer;
@@ -41,27 +42,27 @@ struct Registration {
 SceneSmoke::SceneSmoke()
     : SceneParticles(findPolymorphicId<SceneSmoke>())
 {
-    angle_ = 0.1f;
-    lifeTime_ = 5.0f;
-    acceleration_ << 0.0f, 0.0f, -9.8f;
-
-    setParticleSize(0.06f);
     setTexture(":/SceneEffectsPlugin/texture/smoke.png");
 }
 
 
 SceneSmoke::SceneSmoke(const SceneSmoke& org)
-    : SceneParticles(org)
+    : SceneParticles(org),
+      particleSystem_(org.particleSystem_)
 {
-    angle_ = org.angle_;
-    lifeTime_ = org.lifeTime_;
-    acceleration_ = org.acceleration_;
+
 }
 
 
 SgObject* SceneSmoke::clone(SgCloneMap& cloneMap) const
 {
     return new SceneSmoke(*this);
+}
+
+
+ParticleSystem* SceneSmoke::getParticleSystem()
+{
+    return &particleSystem_;
 }
 
 
@@ -81,17 +82,16 @@ bool SmokeProgram::initializeRendering(SceneParticles* particles)
     if(!ParticlesProgramBase::initializeRendering(particles)){
         return false;
     }
-    auto smoke = static_cast<SceneSmoke*>(particles);
 
-    nParticles = 2000;
+    auto ps = particles->getParticleSystem();
 
     // Fill the first velocity buffer with random velocities
     Vector3f v;
     float velocity, theta, phi;
-    vector<GLfloat> data(nParticles * 3);
-    for(GLuint i = 0; i < nParticles; ++i) {
+    vector<GLfloat> data(ps->numParticles() * 3);
+    for(GLuint i = 0; i < ps->numParticles(); ++i) {
         
-        theta = PI / 3.0f * random();
+        theta = ps->emissionRange() / 2.0f * random();
         phi = 2.0 * PI * random();
 
         v.x() = sinf(theta) * cosf(phi);
@@ -110,10 +110,10 @@ bool SmokeProgram::initializeRendering(SceneParticles* particles)
     glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(float), &data.front(), GL_STATIC_DRAW);
     
     // Fill the offset time buffer
-    data.resize(nParticles);
-    float rate = smoke->lifeTime() / nParticles;
+    data.resize(ps->numParticles());
+    float rate = ps->lifeTime() / ps->numParticles();
     float time = 0.0f;
-    for(GLuint i = 0; i < nParticles; ++i) {
+    for(GLuint i = 0; i < ps->numParticles(); ++i) {
         data[i] = time;
         time += rate;
     }
@@ -133,15 +133,19 @@ bool SmokeProgram::initializeRendering(SceneParticles* particles)
     glBindVertexArray(0);
 
     lifeTimeLocation = getUniformLocation("lifeTime");
+    accelLocation = getUniformLocation("accel");
 
     return true;
 }
 
 
-void SmokeProgram::render(SceneSmoke* fountain)
+void SmokeProgram::render(SceneSmoke* smoke)
 {
-    setTime(fountain->time());
-    glUniform1f(lifeTimeLocation, fountain->lifeTime());
+    auto& ps = smoke->particleSystem();
+    setTime(smoke->time() + ps.offsetTime());
+    glUniform1f(lifeTimeLocation, ps.lifeTime());
+    Vector3f accel = globalAttitude().transpose() * ps.acceleration();
+    glUniform3fv(accelLocation, 1, accel.data());
     glBindVertexArray(vertexArray);
-    glDrawArrays(GL_POINTS, 0, nParticles);
+    glDrawArrays(GL_POINTS, 0, ps.numParticles());
 }

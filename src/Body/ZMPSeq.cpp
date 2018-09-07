@@ -11,14 +11,14 @@ using namespace std;
 using namespace cnoid;
 
 namespace {
-static const string zmpkey("ZMP");
+static const string contentName("ZMPSeq");
 }
     
 
 ZMPSeq::ZMPSeq(int nFrames)
     : Vector3Seq(nFrames)
 {
-    setSeqContentName(zmpkey);
+    setSeqContentName(contentName);
     isRootRelative_ = false;
 }
 
@@ -33,7 +33,7 @@ ZMPSeq::ZMPSeq(const ZMPSeq& org)
 ZMPSeq::ZMPSeq(const Vector3Seq& org)
     : Vector3Seq(org)
 {
-    setSeqContentName(zmpkey);
+    setSeqContentName(contentName);
     isRootRelative_ = false;
 }
 
@@ -67,7 +67,7 @@ AbstractSeqPtr ZMPSeq::cloneSeq() const
 
 const std::string& ZMPSeq::key()
 {
-    return zmpkey;
+    return contentName;
 }
 
 
@@ -77,17 +77,16 @@ void ZMPSeq::setRootRelative(bool on)
 }
 
 
-bool ZMPSeq::doWriteSeq(YAMLWriter& writer)
+bool ZMPSeq::doWriteSeq(YAMLWriter& writer, std::function<void()> additionalPartCallback)
 {
-    if(!Vector3Seq::writeVector3SeqHeaders(writer)){
-        return false;
-    }
-    
-    if(isRootRelative_){
-        writer.putKeyValue("isRootRelative", true);
-    }
-
-    return Vector3Seq::writeVector3SeqFrames(writer);
+    return BaseSeqType::doWriteSeq(
+        writer,
+        [&](){
+            if(isRootRelative_){
+                writer.putKeyValue("isRootRelative", true);
+            }
+            if(additionalPartCallback) additionalPartCallback();
+        });
 }
 
 
@@ -103,19 +102,19 @@ bool ZMPSeq::doReadSeq(const Mapping* archive, std::ostream& os)
 
 ZMPSeqPtr cnoid::getZMPSeq(const BodyMotion& motion)
 {
-    return motion.extraSeq<ZMPSeq>(zmpkey);
+    return motion.extraSeq<ZMPSeq>(contentName);
 }
 
 
 ZMPSeqPtr cnoid::getOrCreateZMPSeq(BodyMotion& motion)
 {
-    return motion.getOrCreateExtraSeq<ZMPSeq>(zmpkey);
+    return motion.getOrCreateExtraSeq<ZMPSeq>(contentName);
 }
 
 
 void cnoid::clearZMPSeq(BodyMotion& motion)
 {
-    motion.clearExtraSeq(zmpkey);
+    motion.clearExtraSeq(contentName);
 }
 
 

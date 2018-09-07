@@ -9,6 +9,8 @@ if(NOT BUILD_AGX_BODYEXTENSION_PLUGIN)
   return()
 endif()
 
+set(target CnoidAGXBodyExtensionPlugin)
+
 set(sources
   AGXBodyExtensionPlugin.cpp
   AGXBodyExtensionSample.cpp
@@ -20,9 +22,23 @@ set(sources
 set(headers
 )
 
-set(target CnoidAGXBodyExtensionPlugin)
+make_gettext_mofiles(${target} mofiles)
 add_cnoid_plugin(${target} SHARED ${sources} ${headers})
-target_link_libraries(${target} CnoidAGXDynamicsPlugin ${AGX_LIBRARIES} ${AGX_LIBRARIES_RELEASE})
-apply_common_setting_for_plugin(${target})
 
+AGX_TARGET_LINK_LIBRARIES(${target} optimized ${AGX_LIBRARIES_RELEASE})
+if(AGX_LIBRARIES_DEBUG)
+  AGX_TARGET_LINK_LIBRARIES(${target} debug ${AGX_LIBRARIES_DEBUG} )
+else()
+  AGX_TARGET_LINK_LIBRARIES(${target} debug ${AGX_LIBRARIES_RELEASE} )
+endif()
+
+target_link_libraries(${target} CnoidAGXDynamicsPlugin)
+
+get_target_property(compile_flags ${target} COMPILE_FLAGS)
+if(NOT compile_flags)
+  set(compile_flags "")
+endif()
+set_target_properties(${target} PROPERTIES COMPILE_FLAGS "${compile_flags} -msse3")
+
+apply_common_setting_for_plugin(${target})
 

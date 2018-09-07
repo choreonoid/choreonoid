@@ -106,17 +106,17 @@ public:
     ConstSeqIterator extraSeqEnd() const { return extraSeqs.end(); }
         
     template <class SeqType>
-        std::shared_ptr<SeqType> extraSeq(const std::string& contentName) const {
-        ExtraSeqMap::const_iterator p = extraSeqs.find(contentName);
+        std::shared_ptr<SeqType> extraSeq(const std::string& name) const {
+        ExtraSeqMap::const_iterator p = extraSeqs.find(name);
         return ((p != extraSeqs.end()) ?
                 std::dynamic_pointer_cast<SeqType>(p->second) : std::shared_ptr<SeqType>());
     }
 
-    void setExtraSeq(AbstractSeqPtr seq);
+    void setExtraSeq(const std::string& name, AbstractSeqPtr seq);
 
     template <class SeqType>
-        std::shared_ptr<SeqType> getOrCreateExtraSeq(const std::string& contentName) {
-        AbstractSeqPtr& base = extraSeqs[contentName];
+        std::shared_ptr<SeqType> getOrCreateExtraSeq(const std::string& name) {
+        AbstractSeqPtr& base = extraSeqs[name];
         std::shared_ptr<SeqType> seq;
         if(base){
             seq = std::dynamic_pointer_cast<SeqType>(base);
@@ -131,7 +131,7 @@ public:
         return seq;
     }
 
-    void clearExtraSeq(const std::string& contentName);
+    void clearExtraSeq(const std::string& name);
 
     SignalProxy<void()> sigExtraSeqsChanged() {
         return sigExtraSeqsChanged_;
@@ -156,7 +156,7 @@ public:
 
 protected:
     virtual bool doReadSeq(const Mapping* archive, std::ostream& os) override;
-    virtual bool doWriteSeq(YAMLWriter& writer) override;
+    virtual bool doWriteSeq(YAMLWriter& writer, std::function<void()> additionalPartCallback) override;
         
 private:
     MultiSE3SeqPtr linkPosSeq_;

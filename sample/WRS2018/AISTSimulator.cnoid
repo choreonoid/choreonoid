@@ -5,36 +5,6 @@ items:
   class: RootItem
   children: 
     - 
-      id: 1
-      name: "AISTSimulator-Position"
-      plugin: Body
-      class: AISTSimulatorItem
-      data: 
-        timestep: 0.005
-        realtimeSync: true
-        recording: "full"
-        timeRangeMode: "Unlimited"
-        timeLength: 60
-        allLinkPositionOutputMode: true
-        deviceStateOutput: true
-        controllerThreads: true
-        recordCollisionData: false
-        controllerOptions: "position"
-        dynamicsMode: "Forward dynamics"
-        integrationMode: "Runge Kutta"
-        gravity: [ 0, 0, -9.80665 ]
-        staticFriction: 0.5
-        dynamicFriction: 0.5
-        cullingThresh: 0.01
-        contactCullingDepth: 0.05
-        errorCriterion: 0.001
-        maxNumIterations: 1000
-        contactCorrectionDepth: 0.0001
-        contactCorrectionVelocityRatio: 30
-        kinematicWalking: false
-        2Dmode: false
-        oldAccelSensorMode: false
-    - 
       id: 2
       name: "AISTSimulator-Torque"
       plugin: Body
@@ -50,6 +20,36 @@ items:
         controllerThreads: true
         recordCollisionData: false
         controllerOptions: "torque"
+        dynamicsMode: "Forward dynamics"
+        integrationMode: "Runge Kutta"
+        gravity: [ 0, 0, -9.80665 ]
+        staticFriction: 0.5
+        dynamicFriction: 0.5
+        cullingThresh: 0.01
+        contactCullingDepth: 0.05
+        errorCriterion: 0.001
+        maxNumIterations: 1000
+        contactCorrectionDepth: 0.0001
+        contactCorrectionVelocityRatio: 30
+        kinematicWalking: false
+        2Dmode: false
+        oldAccelSensorMode: false
+    - 
+      id: 1
+      name: "AISTSimulator-Position"
+      plugin: Body
+      class: AISTSimulatorItem
+      data: 
+        timestep: 0.005
+        realtimeSync: true
+        recording: "full"
+        timeRangeMode: "Unlimited"
+        timeLength: 60
+        allLinkPositionOutputMode: true
+        deviceStateOutput: true
+        controllerThreads: true
+        recordCollisionData: false
+        controllerOptions: "position"
         dynamicsMode: "Forward dynamics"
         integrationMode: "Runge Kutta"
         gravity: [ 0, 0, -9.80665 ]

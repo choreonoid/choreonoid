@@ -8,6 +8,7 @@
 #include <iostream>
 #include <yaml.h>
 #include <boost/format.hpp>
+#include <unordered_map>
 #include "gettext.h"
 
 using namespace std;
@@ -23,7 +24,7 @@ namespace cnoid {
 class YAMLReaderImpl
 {
 public:
-    YAMLReaderImpl();
+    YAMLReaderImpl(YAMLReader* self);
     ~YAMLReaderImpl();
 
     void setMappingFactory(YAMLReader::MappingFactoryBase* factory);
@@ -44,7 +45,9 @@ public:
     void onAlias(yaml_event_t& event);
 
     static ScalarNode* createScalar(const yaml_event_t& event);
-        
+
+    YAMLReader* self;
+    
     yaml_parser_t parser;
     FILE* file;
 
@@ -62,8 +65,9 @@ public:
 
     stack<NodeInfo> nodeStack;
 
-    typedef map<string, ValueNodePtr> AnchorMap;
+    typedef unordered_map<string, ValueNodePtr> AnchorMap;
     AnchorMap anchorMap;
+    AnchorMap importedAnchorMap;
 
     bool isRegularMultiListingExpected;
     vector<int> expectedListingSizes;
@@ -75,13 +79,13 @@ public:
 
 YAMLReader::YAMLReader()
 {
-    impl = new YAMLReaderImpl();
+    impl = new YAMLReaderImpl(this);
 }
 
 
-YAMLReaderImpl::YAMLReaderImpl()
+YAMLReaderImpl::YAMLReaderImpl(YAMLReader* self)
+    : self(self)
 {
-    yaml_parser_initialize(&parser);
     file = 0;
     mappingFactory = new YAMLReader::MappingFactory<Mapping>();
     currentDocumentIndex = 0;
@@ -151,6 +155,7 @@ bool YAMLReader::load(const std::string& filename)
 
 bool YAMLReaderImpl::load(const std::string& filename)
 {
+    yaml_parser_initialize(&parser);
     clearDocuments();
 
     if(isRegularMultiListingExpected){
@@ -188,6 +193,7 @@ bool YAMLReader::parse(const std::string& yamlstring)
 
 bool YAMLReaderImpl::parse(const std::string& yamlstring)
 {
+    yaml_parser_initialize(&parser);
     clearDocuments();
 
     if(isRegularMultiListingExpected){
@@ -535,9 +541,9 @@ void YAMLReaderImpl::onAlias(yaml_event_t& event)
         cout << "YAMLReaderImpl::onAlias()" << endl;
     }
 
-    AnchorMap::iterator p = anchorMap.find((char*)event.data.alias.anchor);
+    auto node = self->findAnchoredNode((char*)event.data.alias.anchor);
 
-    if(p == anchorMap.end()){
+    if(!node){
         ValueNode::Exception ex;
         ex.setMessage(str(format(_("Anchor \"%1%\" is not defined")) % (char*)event.data.alias.anchor));
         const yaml_mark_t& mark = event.start_mark;
@@ -545,7 +551,32 @@ void YAMLReaderImpl::onAlias(yaml_event_t& event)
         throw ex;
     }
     
-    addNode(p->second, event);
+    addNode(node, event);
+}
+
+
+ValueNode* YAMLReader::findAnchoredNode(const std::string& anchor)
+{
+    ValueNode* node = nullptr;
+    
+    auto p = impl->anchorMap.find(anchor);
+    if(p != impl->anchorMap.end()){
+        node = p->second;
+    } else {
+        auto q = impl->importedAnchorMap.find(anchor);
+        if(q != impl->importedAnchorMap.end()){
+            node = q->second;
+        }
+    }
+
+    return node;
+}
+
+
+void YAMLReader::importAnchors(const YAMLReader& anotherReader)
+{
+    auto& mapToImport = anotherReader.impl->anchorMap;
+    impl->importedAnchorMap.insert(mapToImport.begin(), mapToImport.end());
 }
 
 
@@ -582,16 +613,6 @@ ValueNode* YAMLReader::loadDocument(const std::string& filename)
         throw ex;
     }
     return document();
-}
-
-
-ValueNode* YAMLReader::findAnchoredNode(const std::string& anchor)
-{
-    auto iter = impl->anchorMap.find(anchor);
-    if(iter != impl->anchorMap.end()){
-        return iter->second;
-    }
-    return nullptr;
 }
 
 

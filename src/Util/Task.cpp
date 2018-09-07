@@ -157,6 +157,12 @@ TaskCommand* TaskCommand::setCommandLinkStep(int commandIndexStep)
 }
 
 
+TaskCommand* TaskCommand::linkToNextTask()
+{
+    return setPhaseLink(std::numeric_limits<int>::max());
+}
+
+
 TaskPhase::TaskPhase(const std::string& caption)
     : caption_(caption)
 {

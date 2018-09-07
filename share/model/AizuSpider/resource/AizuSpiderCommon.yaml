@@ -25,12 +25,14 @@ LIGHT_YELLOW: &LIGHT_YELLOW
 
 LRF_UTM-30LX: &LRF_UTM-30LX
   type: RangeSensor
+  name: UTM-30LX
   scanAngle: 135
   scanStep: 0.25
   scanRate: 25
   maxDistance: 30
   elements:
     RigidBody:
+      translation: [ 0, 0, 0.03 ]
       centerOfMass: [ 0, 0.05544, 0.09464 ]
       mass: 5.29071
       inertia: [
@@ -51,6 +53,35 @@ LRF_UTM-30LX: &LRF_UTM-30LX
                   diffuseColor: [ 0.73, 0.36, 0.02 ]
                   specularColor: [ 0, 0, 0 ]
                   shinines: 0
+
+
+LIDAR_VLP16: &LIDAR_VLP16
+  type: RangeSensor
+  name: VLP-16
+  yawRange: 180
+  yawStep:  0.4
+  pitchRange: 30.0
+  pitchStep: 2.0
+  scanRate:  20
+  maxDistance: 100.0
+  elements:
+    RigidBody:
+      translation: [ 0, 0, 0.03 ]
+      centerOfMass: [ 0, 0.05544, 0.09464 ]
+      mass: 5.29071
+      inertia: [
+        0.19949663865, 0,             0,
+        0,             0.57863919195, 0.00041287283,
+        0,             0.00041287283, 0.37968799701 ]
+      elements:
+        Shape:
+          geometry: { type: Box, size: [ 0.060, 0.087, 0.060 ] }
+          appearance:
+            material:
+              diffuseColor: [ 0.73, 0.36, 0.02 ]
+              specularColor: [ 0, 0, 0 ]
+              qshinines: 0
+
 
 CAMERA_MCM-4350FISH: &CAMERA_MCM-4350FISH
   type: Camera
@@ -188,9 +219,10 @@ CHASSIS: &CHASSIS
         id: 0
       - # Range sensor
         <<: *LRF_UTM-30LX
+        #<<: *LIDAR_VLP16
         name: LRF
         id: 0
-        translation: [ 0.20415, 0, 0.19750 ]
+        translation: [ 0.23415, 0, 0.19750 ]
         rotation: [ [ 0, 0, 1, -90 ], [ 1, 0, 0, 90 ] ]
       - # B0010_3101<1>
         <<: *CAMERA_MCM-4350FISH

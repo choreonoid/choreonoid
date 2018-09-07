@@ -4,58 +4,87 @@ angleUnit: degree
 name: ChocoTerrain
 
 STEP: &STEP
-  type: Resource
-  uri: "resource/ChocoStepP1.dae"
+  type: Transform
+  elements:
+    Visual:
+      resource:
+        uri: "resource/ChocoStepP1.dae"
+    Collision:
+      shape:
+        rotation: [ 1, 0, 0, 90 ]
+        translation: [ 0.5, 0.5, 0 ]
+        geometry:
+          type: Extrusion
+          crossSection: [ -0.5, -0.5, 0.5, -0.5, 0.5, 0.5, -0.5, 0.5, -0.5, -0.5 ]
+          scale: [ 1, 1, 0.9, 0.9 ]
+          spine: [ 0, 0, 0, 0.0, 0.1, 0 ]
 
+LINE1: &LINE1
+  -
+    <<: *STEP
+    translation: [ 0, -3.0, 0 ]
+  -
+    <<: *STEP
+    translation: [ 0, -1.8, 0 ]
+  -
+    <<: *STEP
+    translation: [ 0, -0.6, 0 ]
+  -
+    <<: *STEP
+    translation: [ 0, 0.6, 0 ]
+  -
+    <<: *STEP
+    translation: [ 0, 1.8, 0 ]
+  -
+    <<: *STEP
+    translation: [ 0, 3.0, 0 ]
+
+LINE2: &LINE2
+  -
+    <<: *STEP
+    translation: [ 0, -2.4, 0 ]
+  -
+    <<: *STEP
+    translation: [ 0, -1.2, 0 ]
+  -
+    <<: *STEP
+    translation: [ 0, 0, 0 ]
+  -
+    <<: *STEP
+    translation: [ 0, 1.2, 0 ]
+  -
+    <<: *STEP
+    translation: [ 0, 2.4, 0 ]
+  
 links:
   -
-    name: Base
+    name: BASE
     jointType: fixed
+    translation: [ 0, 0.1, 0 ]
     material: Ground
     convexDecomposition: true
-    elements:
-      Transform:
-        translation: [ 0, -0.5, 0 ]
-        elements:
-          -
-            <<: *STEP
-            translation: [ 0, -1.8, 0 ]
-          -
-            <<: *STEP
-            translation: [ 0, -0.6, 0 ]
-          -
-            <<: *STEP
-            translation: [ 0, 0.6, 0 ]
-          -
-            <<: *STEP
-            translation: [ 0, 1.8, 0 ]
-          -
-            <<: *STEP
-            translation: [ 1.2, -1.2, 0 ]
-          -
-            <<: *STEP
-            translation: [ 1.2, 0, 0 ]
-          -
-            <<: *STEP
-            translation: [ 1.2, 1.2, 0 ]
-          -
-            <<: *STEP
-            translation: [ 2.4, -1.8, 0 ]
-          -
-            <<: *STEP
-            translation: [ 2.4, -0.6, 0 ]
-          -
-            <<: *STEP
-            translation: [ 2.4, 0.6, 0 ]
-          -
-            <<: *STEP
-            translation: [ 2.4, 1.8, 0 ]
-          -
-            <<: *STEP
-            translation: [ 3.6, -1.2, 0 ]
-          -
-            <<: *STEP
-            translation: [ 3.6, 0, 0 ]
-          -
-            <<: *STEP
-            translation: [ 3.6, 1.2, 0 ]
+    elements: *LINE1
+  -
+    name: S2
+    parent: BASE
+    jointType: fixed
+    translation: [ 1.2, 0, 0 ]
+    material: Ground
+    convexDecomposition: true
+    elements: *LINE2
+  -
+    name: S3
+    parent: BASE
+    jointType: fixed
+    translation: [ 2.4, 0, 0 ]
+    material: Ground
+    convexDecomposition: true
+    elements: *LINE1
+  -
+    name: S4
+    parent: BASE
+    jointType: fixed
+    translation: [ 3.6, 0, 0 ]
+    material: Ground
+    convexDecomposition: true
+    elements: *LINE2

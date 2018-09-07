@@ -1,0 +1,8 @@
+usr/bin/*
+usr/lib/lib*.so.*
+usr/lib/*/lib*.so
+usr/lib/*/simplecontroller/*.so
+usr/lib/*/python/cnoid/*
+usr/lib/*/customizer/
+usr/share/choreonoid-*/
+usr/share/locale/

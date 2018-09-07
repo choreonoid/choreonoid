@@ -1,16 +1,7 @@
-/*!
-  @file
-  @author Shizuko Hattori, Shin'ichiro Nakaoka
-*/
-
+#include <cnoid/AssimpSceneLoader>
 #include <cnoid/Plugin>
 
-using namespace std;
-using namespace cnoid;
-
-namespace {
-    
-class AssimpPlugin : public Plugin
+class AssimpPlugin : public cnoid::Plugin
 {
 public:
     AssimpPlugin() : Plugin("Assimp")
@@ -20,6 +11,7 @@ public:
         
     virtual bool initialize()
     {
+        cnoid::AssimpSceneLoader::initializeClass();
         return true;
     }
         
@@ -28,7 +20,5 @@ public:
         return true;
     }
 };
-
-}
 
 CNOID_IMPLEMENT_PLUGIN_ENTRY(AssimpPlugin);

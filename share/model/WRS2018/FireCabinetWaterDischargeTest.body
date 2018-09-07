@@ -1,0 +1,103 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: FireCabinet
+rootLink: BASE
+
+links:
+  -
+    type: SubBody
+    uri: "FireCabinet.body"
+    jointType: fixed
+  -
+    name: HOSE_ROOT
+    parent: HOSE_REEL
+    jointType: fixed
+    translation: [ -0.0835, -0.311, 0.22 ]
+    density: 1.0
+    elements:
+      -
+        type: AGXWireDevice
+        isOptional: true
+        radius: 0.02
+        resolutionPerUnitLength: 1
+        collision: true
+        selfCollision: true
+        materialName: Wire
+        Winch:
+            linkName: HOSE_ROOT
+            position: [ 0, 0.23, 0 ]
+            normal: [ 0, 0, 1 ]
+            pulledInLength: 100
+            haulForceRange: [ -50, 50 ]
+        Nodes:
+          -
+            type: free
+            linkName: HOSE_ROOT
+            position: [ 0, 0.1685, 0.1685 ]
+          -
+            type: free
+            linkName: HOSE_ROOT
+            position: [ 0, 0, 0.23 ]
+          -
+            type: free
+            linkName: HOSE_ROOT
+            position: [ 0, -0.1685, 0.1685 ]
+          -
+            type: free
+            linkName: HOSE_ROOT
+            position: [ 0, -0.23, 0 ]
+          -
+            type: free
+            linkName: HOSE_ROOT
+            position: [ 0, -0.23, -0.05 ]
+          -
+            type: free
+            linkName: HOSE_ROOT
+            position: [ 0, -0.23, -0.4 ]
+          -
+            type: free
+            linkName: HOSE_ROOT
+            position: [ 4.8, -0.23, -0.75 ]
+          -
+            type: free
+            linkName: HOSE_ROOT
+            position: [ 5.0, 0.0, -0.75 ]
+          -
+            #type: link
+            type: fixed
+            linkName: HOSE_ADAPTER
+            position: [ 0, 0, 0]
+            #twistStiffness: 1e6
+            #bendStiffness: 1e6
+            superBendReplacedWithBend: true
+  -
+    name: HOSE_ADAPTER
+    parent: HOSE_ROOT
+    translation: [ 5.0, 0.0, -0.75 ]
+    rotation: [ 1, 0, 0, 90 ]
+    jointType: free
+    density: 3.0
+    elements:
+      -
+        name: Attachment
+        type: Shape
+        geometry: { type: Sphere, radius: 0.024 }
+        appearance: &red { material: { diffuseColor: [ 1.0, 0, 0 ] }}
+      -
+        name: Nozzle
+        translation: [ 0, 0, -0.075 ]
+        type: Shape
+        rotation: [ 1, 0, 0, -90 ]
+        geometry: { type: Cylinder, radius: 0.016, height: 0.15 }
+        appearance: *red
+      -
+        type: FountainDevice
+        translation: [ 0, 0, -0.15 ]
+        rotation: [ 1, 0, 0, 180 ]
+        name: Water
+        lifeTime: 5
+        emissionRange: 1
+
+        
+

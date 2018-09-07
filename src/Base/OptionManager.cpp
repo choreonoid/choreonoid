@@ -3,8 +3,11 @@
 */
 
 #include "OptionManager.h"
+#include "MessageView.h"
+#include <boost/format.hpp>
 #include <iostream>
 #include <set>
+#include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
@@ -19,7 +22,10 @@ struct OptionInfo {
     program_options::variables_map variables;
 };
 
-OptionInfo* info = 0;
+OptionInfo* info = nullptr;
+
+vector<string> inputFiles;
+Signal<void(std::vector<std::string>& inputFiles)> sigInputFileOptionsParsed_[2];
 
 Signal<void(boost::program_options::variables_map& variables)> sigOptionsParsed_[2];
 
@@ -28,10 +34,9 @@ Signal<void(boost::program_options::variables_map& variables)> sigOptionsParsed_
 
 bool OptionManager::parseCommandLine1(int argc, char *argv[])
 {
-    if(!info){
-        info = new OptionInfo;
-    }
-    
+    info->options.add_options()("input-file", program_options::value<vector<string>>(), "general input file");
+    info->positionalOptions.add("input-file", -1);
+
     info->options.add_options()("help,h", "show help message");
 
     bool is_error = false;
@@ -47,11 +52,16 @@ bool OptionManager::parseCommandLine1(int argc, char *argv[])
     }
 
     bool terminated;
+
+    if(info->variables.count("input-file")){
+        inputFiles = info->variables["input-file"].as<vector<string>>();
+    }
     
     if(info->variables.count("help") || is_error){
         cout << info->options << endl;
         terminated = true;
     } else {
+        sigInputFileOptionsParsed_[0](inputFiles);
         sigOptionsParsed_[0](info->variables);
         terminated = false;
     }
@@ -62,6 +72,7 @@ bool OptionManager::parseCommandLine1(int argc, char *argv[])
 
 void OptionManager::parseCommandLine2()
 {
+    sigInputFileOptionsParsed_[1](inputFiles);
     sigOptionsParsed_[1](info->variables);
     
     // The destructors of the OptionInfo members should be executed here
@@ -70,9 +81,14 @@ void OptionManager::parseCommandLine2()
     // unloaded, the destructors may cause the segmentation fault
     // by calling the non-existent codes.
     delete info;
-    info = 0;
+    info = nullptr;
     sigOptionsParsed_[0].disconnect_all_slots();
     sigOptionsParsed_[1].disconnect_all_slots();
+
+    for(auto& file : inputFiles){
+        MessageView::instance()->putln(
+            MessageView::WARNING, boost::format(_("Input file \"%1%\" was not processed.")) % file);
+    }
 }
 
 
@@ -86,14 +102,6 @@ OptionManager::~OptionManager()
 {
 
 }
-
-
-/*
-  boost::program_options::options_description_easy_init OptionManager::addOptions()
-  {
-  return options.add_options();
-  }
-*/
 
 
 OptionManager& OptionManager::addOption(const char* name, const char* description)
@@ -123,12 +131,25 @@ OptionManager& OptionManager::addOption(const char* name, const program_options:
 }
 
 
+/*
 OptionManager& OptionManager::addPositionalOption(const char* name, int maxCount)
 {
     if(info){
         info->positionalOptions.add(name, maxCount);
     }
     return *this;
+}
+*/
+
+
+SignalProxy<void(std::vector<std::string>& inputFiles)> OptionManager::sigInputFileOptionsParsed(int phase)
+{
+    if(phase < 0){
+        phase = 0;
+    } else if(phase > 1){
+        phase = 1;
+    }
+    return sigInputFileOptionsParsed_[phase];
 }
 
 
@@ -141,5 +162,3 @@ SignalProxy<void(boost::program_options::variables_map& variables)> OptionManage
     }
     return sigOptionsParsed_[phase];
 }
-
-

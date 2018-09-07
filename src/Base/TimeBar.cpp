@@ -15,20 +15,31 @@
 #include "CheckBox.h"
 #include "Dialog.h"
 #include <QDialogButtonBox>
-#include <QTime>
 #include <boost/lexical_cast.hpp>
 #include <cmath>
 #include <limits>
 #include <iostream>
+
+#if QT_VERSION >= 0x040700
+#include <QElapsedTimer>
+#else
+#include <QTime>
+typedef QTime QElapsedTimer;
+#endif
+
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 
 namespace {
 
 const bool TRACE_FUNCTIONS = false;
+
+const double DEFAULT_FRAME_RATE = 1000.0;
+
+// The following value shoud be same as the display refresh rate to make the animation smooth
+const double DEFAULT_PLAYBACK_FRAMERATE = 60.0;
     
 inline double myNearByInt(double x)
 {
@@ -78,7 +89,7 @@ public:
         hbox->addWidget(new QLabel(_("Playback frame rate")));
         playbackFrameRateSpin.setAlignment(Qt::AlignCenter);
         playbackFrameRateSpin.setRange(0, 1000);
-        playbackFrameRateSpin.setValue(50);
+        playbackFrameRateSpin.setValue(DEFAULT_PLAYBACK_FRAMERATE);
         hbox->addWidget(&playbackFrameRateSpin);
         hbox->addStretch();
         vbox->addLayout(hbox);
@@ -175,13 +186,13 @@ public:
 
     bool setTime(double time, bool calledFromPlaybackLoop, QWidget* callerWidget = 0);
     void onTimeSpinChanged(double value);
-    bool onTimeSliderChangeValue(double value);
+    bool onTimeSliderValueChanged(int value);
 
     void setTimeRange(double minTime, double maxTime);
     void setFrameRate(double rate);
     void updateTimeProperties(bool forceUpdate);
-    void onPlaybackSpeedScaleChanged();
-    void onPlaybackFrameRateChanged();
+    void onPlaybackSpeedScaleChanged(double value);
+    void onPlaybackFrameRateChanged(int value);
     void onPlayActivated();
     void onResumeActivated();
     void startPlayback();
@@ -192,7 +203,7 @@ public:
     void stopFillLevelUpdate(int id);
 
     void onTimeRangeSpinsChanged();
-    void onFrameRateSpinChanged();
+    void onFrameRateSpinChanged(int value);
 
     virtual void timerEvent(QTimerEvent* event);
         
@@ -221,7 +232,7 @@ public:
     double playbackFrameRate;
     double animationTimeOffset;
     int timerId;
-    QTime timer;
+    QElapsedTimer elapsedTimer;
     bool repeatMode;
     bool isDoingPlayback;
     map<int, double> fillLevelMap;
@@ -239,7 +250,7 @@ public:
 static void onSigOptionsParsed(boost::program_options::variables_map& v)
 {
     if(v.count("start-playback")){
-        callLater(std::bind(&TimeBar::startPlayback, TimeBar::instance()));
+        callLater([](){ TimeBar::instance()->startPlayback(); });
     }
 }
 
@@ -283,7 +294,7 @@ TimeBarImpl::TimeBarImpl(TimeBar* self)
     self->setStretchable(true);
     
     self->time_ = 0.0;
-    self->frameRate_ = 100.0;
+    self->frameRate_ = DEFAULT_FRAME_RATE;
     decimals = 2;
     minTime = 0.0;
     maxTime = 30.0;
@@ -294,29 +305,29 @@ TimeBarImpl::TimeBarImpl(TimeBar* self)
     isFillLevelActive = false;
 
     self->addButton(QIcon(":/Base/icons/play.png"), _("Start animation"))
-        ->sigClicked().connect(std::bind(&TimeBarImpl::onPlayActivated, this));
+        ->sigClicked().connect([&](){ onPlayActivated(); });
 
     stopResumeButton = self->addButton(resumeIcon, _("Resume animation"));
     stopResumeButton->setIcon(resumeIcon);
-    stopResumeButton->sigClicked().connect(std::bind(&TimeBarImpl::onResumeActivated, this));
+    stopResumeButton->sigClicked().connect([&](){ onResumeActivated(); });
 
     self->addButton(QIcon(":/Base/icons/refresh.png"), _("Refresh state at the current time"))
-        ->sigClicked().connect(std::bind(&TimeBarImpl::onRefreshButtonClicked, this));
+        ->sigClicked().connect([&](){ onRefreshButtonClicked(); });
     
     timeSpin = new DoubleSpinBox();
     timeSpin->setAlignment(Qt::AlignCenter);
-    timeSpin->sigValueChanged().connect(std::bind(&TimeBarImpl::onTimeSpinChanged, this, _1));
+    timeSpin->sigValueChanged().connect([&](double value){ onTimeSpinChanged(value); });
     self->addWidget(timeSpin);
 
     timeSlider = new Slider(Qt::Horizontal);
-    timeSlider->sigValueChanged().connect(std::bind(&TimeBarImpl::onTimeSliderChangeValue, this, _1));
+    timeSlider->sigValueChanged().connect([&](int value){ onTimeSliderValueChanged(value); });
     timeSlider->setMinimumWidth(timeSlider->sizeHint().width());
     self->addWidget(timeSlider);
 
     minTimeSpin = new DoubleSpinBox();
     minTimeSpin->setAlignment(Qt::AlignCenter);
     minTimeSpin->setRange(-999.0, 999.0);
-    minTimeSpin->sigValueChanged().connect(std::bind(&TimeBarImpl::onTimeRangeSpinsChanged, this));
+    minTimeSpin->sigValueChanged().connect([&](double){ onTimeRangeSpinsChanged(); });
     self->addWidget(minTimeSpin);
 
     self->addLabel(" : ");
@@ -324,15 +335,15 @@ TimeBarImpl::TimeBarImpl(TimeBar* self)
     maxTimeSpin = new DoubleSpinBox();
     maxTimeSpin->setAlignment(Qt::AlignCenter);
     maxTimeSpin->setRange(-999.0, 999.0);
-    maxTimeSpin->sigValueChanged().connect(std::bind(&TimeBarImpl::onTimeRangeSpinsChanged, this));
+    maxTimeSpin->sigValueChanged().connect([&](double){ onTimeRangeSpinsChanged(); });
     self->addWidget(maxTimeSpin);
 
     self->addButton(QIcon(":/Base/icons/setup.png"), _("Show the config dialog"))
-        ->sigClicked().connect(std::bind(&QDialog::show, &config));
+        ->sigClicked().connect([&](){ config.show(); });
 
-    config.frameRateSpin.sigValueChanged().connect(std::bind(&TimeBarImpl::onFrameRateSpinChanged, this));
-    config.playbackFrameRateSpin.sigValueChanged().connect(std::bind(&TimeBarImpl::onPlaybackFrameRateChanged, this));
-    config.playbackSpeedScaleSpin.sigValueChanged().connect(std::bind(&TimeBarImpl::onPlaybackSpeedScaleChanged, this));
+    config.frameRateSpin.sigValueChanged().connect([&](int value){ onFrameRateSpinChanged(value); });
+    config.playbackFrameRateSpin.sigValueChanged().connect([&](int value){ onPlaybackFrameRateChanged(value); });
+    config.playbackSpeedScaleSpin.sigValueChanged().connect([&](double value){ onPlaybackSpeedScaleChanged(value); });
 
     playbackSpeedScale = config.playbackSpeedScaleSpin.value();
     playbackFrameRate = config.playbackFrameRateSpin.value();
@@ -469,7 +480,7 @@ void TimeBarImpl::onTimeSpinChanged(double value)
 }
 
 
-bool TimeBarImpl::onTimeSliderChangeValue(double value)
+bool TimeBarImpl::onTimeSliderValueChanged(int value)
 {
     if(TRACE_FUNCTIONS){
         cout << "TimeBarImpl::onTimeSliderChanged(): value = " << value << endl;
@@ -560,9 +571,9 @@ void TimeBarImpl::updateTimeProperties(bool forceUpdate)
 }
 
     
-void TimeBarImpl::onPlaybackSpeedScaleChanged()
+void TimeBarImpl::onPlaybackSpeedScaleChanged(double value)
 {
-    playbackSpeedScale = config.playbackSpeedScaleSpin.value();
+    playbackSpeedScale = value;
     
     if(isDoingPlayback){
         startPlayback();
@@ -582,10 +593,10 @@ void TimeBar::setPlaybackSpeedScale(double scale)
 }
 
 
-void TimeBarImpl::onPlaybackFrameRateChanged()
+void TimeBarImpl::onPlaybackFrameRateChanged(int value)
 {
-    playbackFrameRate = config.playbackFrameRateSpin.value();
-    
+    playbackFrameRate = value;
+
     if(isDoingPlayback){
         startPlayback();
     }
@@ -654,13 +665,18 @@ void TimeBarImpl::startPlayback()
             const static QString tip(_("Stop animation"));
             stopResumeButton->setIcon(stopIcon);
             stopResumeButton->setToolTip(tip);
+            int interval;
             if(config.idleLoopDrivenCheck.isChecked()){
-                timerId = startTimer(0);
+                interval = 0;
             } else {
-                timerId = startTimer((int)myNearByInt(1000.0 / playbackFrameRate));
+                interval = myNearByInt(1000.0 / playbackFrameRate);
             }
-            
-            timer.start();
+#if QT_VERSION >= 0x050000
+            timerId = startTimer(interval, Qt::PreciseTimer);
+#else
+            timerId = startTimer(interval);
+#endif
+            elapsedTimer.start();
         }
     }
 }
@@ -781,7 +797,7 @@ void TimeBar::startPlaybackFromFillLevel()
 double TimeBar::realPlaybackTime() const
 {
     if(impl->isDoingPlayback){
-        return impl->animationTimeOffset + impl->playbackSpeedScale * (impl->timer.elapsed() / 1000.0);
+        return impl->animationTimeOffset + impl->playbackSpeedScale * (impl->elapsedTimer.elapsed() / 1000.0);
     } else {
         return time_;
     }
@@ -790,7 +806,7 @@ double TimeBar::realPlaybackTime() const
 
 void TimeBarImpl::timerEvent(QTimerEvent*)
 {
-    double time = animationTimeOffset + playbackSpeedScale * (timer.elapsed() / 1000.0);
+    double time = animationTimeOffset + playbackSpeedScale * (elapsedTimer.elapsed() / 1000.0);
 
     bool doStopAtLastFillLevel = false;
     if(isFillLevelActive){
@@ -820,7 +836,7 @@ void TimeBarImpl::onTimeRangeSpinsChanged()
 }
 
 
-void TimeBarImpl::onFrameRateSpinChanged()
+void TimeBarImpl::onFrameRateSpinChanged(int value)
 {
     setFrameRate(config.frameRateSpin.value());
 }

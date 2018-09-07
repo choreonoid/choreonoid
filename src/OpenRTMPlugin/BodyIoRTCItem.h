@@ -16,11 +16,11 @@ class CNOID_EXPORT BodyIoRTCItem : public ControllerRTCItem
 {
 public:
     static void initialize(ExtensionManager* ext);
-        
+
     BodyIoRTCItem();
     BodyIoRTCItem(const BodyIoRTCItem& org);
     virtual ~BodyIoRTCItem();
-        
+
     virtual bool initialize(ControllerIO* io) override;
     virtual bool start() override;
     virtual void input() override;
@@ -30,17 +30,17 @@ public:
 protected:
     virtual Item* doDuplicate() const override;
     virtual void onPositionChanged() override;
+    virtual void onOptionsChanged() override;
     virtual std::string getDefaultRTCInstanceName() const override;
     virtual bool createRTC() override;
     virtual void deleteRTC(bool waitToBeDeleted) override;
-        
+
 private:
     BodyIoRTCItemImpl* impl;
     friend class BodyIoRTCItemImpl;
 };
-        
+
 typedef ref_ptr<BodyIoRTCItem> BodyIoRTCItemPtr;
 
 }
-
 #endif

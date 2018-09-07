@@ -108,16 +108,19 @@ void ParticlesProgramBase::render
     int x, y, width, height;
     renderer_->getViewport(x, y, width, height);
     SgCamera* camera = renderer_->currentCamera();
+    auto ps = particles->getParticleSystem();
+    
     if(SgPerspectiveCamera* persCamera = dynamic_cast<SgPerspectiveCamera*>(camera)){
         glUniform1f(angle2pixelsLocation, height / persCamera->fovy((double)width / height));
-        glUniform1f(pointSizeLocation, particles->particleSize());
+        glUniform1f(pointSizeLocation, ps->particleSize());
     } else if(SgOrthographicCamera* orthoCamera = dynamic_cast<SgOrthographicCamera*>(camera)){
         //float size = 0.08f * height / orthoCamera->height();
-        glUniform1f(pointSizeLocation, -particles->particleSize());
+        glUniform1f(pointSizeLocation, -ps->particleSize());
     }
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, textureId);
+    glBindSampler(0, 0);
     
     glUniform1i(particleTexLocation, 0);
 

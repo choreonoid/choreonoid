@@ -66,6 +66,13 @@ public:
         return !operator==(rhs);
     }
 
+    template <class RhsReferencedType, class RhsPointerType>
+    PolymorphicReferencedArray& assign(
+        const PolymorphicReferencedArray<RhsReferencedType, BaseReferencedType, RhsPointerType>& another){
+        clear();
+        (*this) << another;
+    }
+
     template <class RetReferencedType, class RetPointerType>
     PolymorphicReferencedArray& operator<<(const PolymorphicReferencedArray<RetReferencedType, BaseReferencedType, RetPointerType>& rhs) {
         for(std::size_t i=0; i < rhs.size(); ++i){

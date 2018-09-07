@@ -359,7 +359,7 @@ bool BodyMotionItem::onChildItemAboutToBeAdded(Item* childItem_, bool isManualOp
                            _("Confirm"),
                            str(format(_("Do you want to set %1% as a sequence data of %2%?"))
                                % childItem_->name() % this->name()))){
-                        motion()->setExtraSeq(seqItem->abstractSeq());
+                        motion()->setExtraSeq(seqItem->name(), seqItem->abstractSeq());
                         return false;
                     }
                 }

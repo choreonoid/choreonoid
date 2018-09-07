@@ -1,10 +1,11 @@
 /**
-   @author Shin'ichiro Nakaoka
+@author Shin'ichiro Nakaoka
 */
 
 #include "CorbaUtil.h"
 #include <boost/format.hpp>
 
+#include <iterator>
 #include <iostream>
 
 using namespace std;
@@ -12,11 +13,13 @@ using namespace cnoid;
 using boost::format;
 
 namespace {
+
 CORBA::ORB_ptr orb = 0;
 NamingContextHelper namingContextHelper;
+
 }
 
-    
+
 CORBA::ORB_ptr cnoid::getORB()
 {
     return orb;
@@ -25,7 +28,39 @@ CORBA::ORB_ptr cnoid::getORB()
 
 NamingContextHelper* cnoid::getDefaultNamingContextHelper()
 {
-    return &namingContextHelper;
+	return &namingContextHelper;
+}
+
+
+bool cnoid::isObjectAlive(CORBA::Object_ptr obj)
+{
+    bool isAlive = false;
+
+    if(obj && !CORBA::is_nil(obj)){
+        omniORB::setClientCallTimeout(obj, 150);
+        try {
+            if (!obj->_non_existent()) {
+                isAlive = true;
+            }
+        }
+        catch (const CORBA::TRANSIENT &) {
+        }
+        catch (...) {
+        }
+        omniORB::setClientCallTimeout(obj, 0);
+    }
+    
+    return isAlive;
+}
+
+bool cnoid::isObjectAlive(std::string ior)
+{
+  	try {
+		    CORBA::Object_ptr object = getORB()->string_to_object(ior.c_str());
+        return isObjectAlive(object);
+	  } catch (...) {
+  		  return false;
+	  }
 }
 
 
@@ -34,34 +69,35 @@ NamingContextHelper::NamingContextHelper()
     host_ = "localhost";
     port_ = 2809;
     failedInLastAccessToNamingContext = false;
+    os_ = &cout;
 }
 
 
 void cnoid::initializeCorbaUtil(bool activatePOAManager, int listeningPort)
 {
-    if(orb){
+    if (orb) {
         return; // already initialized
     }
-    
+
     int numArgs = (listeningPort >= 0) ? 5 : 1;
-        
+
     char** argv = new char*[numArgs];
     int argc = 0;
     argv[argc++] = (char*)"choreonoid";
 
     string endpoint;
-    if(listeningPort >= 0){
+    if (listeningPort >= 0) {
         endpoint = str(format("giop:tcp::%1%") % listeningPort);
         argv[argc++] = (char*)"-ORBendPoint";
         argv[argc++] = (char*)endpoint.c_str();
         argv[argc++] = (char*)"-ORBpoaUniquePersistentSystemIds";
         argv[argc++] = (char*)"1";
     }
-    
+
     // Initialize ORB
     orb = CORBA::ORB_init(argc, argv);
 
-    delete [] argv;
+    delete[] argv;
 
     initializeCorbaUtil(orb, activatePOAManager);
 }
@@ -69,7 +105,7 @@ void cnoid::initializeCorbaUtil(bool activatePOAManager, int listeningPort)
 
 void cnoid::initializeCorbaUtil(CORBA::ORB_ptr orb_, bool activatePOAManager)
 {
-    if(!orb){
+    if (!orb) {
         orb = orb_;
     }
 
@@ -88,6 +124,7 @@ NamingContextHelper::NamingContextHelper(const std::string& host, int port)
     : NamingContextHelper()
 {
     setLocation(host, port);
+    os_ = &cout;
 }
 
 
@@ -102,6 +139,12 @@ void NamingContextHelper::setLocation(const std::string& host, int port)
     port_ = port;
     namingContextLocation = str(format("corbaloc:iiop:%1%:%2%/NameService") % host % port);
     namingContext = CosNaming::NamingContext::_nil();
+}
+
+
+void NamingContextHelper::setMessageSink(std::ostream& os)
+{
+    os_ = &os;
 }
 
 
@@ -121,7 +164,7 @@ bool NamingContextHelper::isAlive(bool doRescan)
     }
 }
 
-
+    
 const std::string& NamingContextHelper::errorMessage()
 {
     return errorMessage_;
@@ -133,23 +176,23 @@ bool NamingContextHelper::checkOrUpdateNamingContext()
     if(failedInLastAccessToNamingContext){
         return false;
     }
-    if(!CORBA::is_nil(namingContext)){
+    if (!CORBA::is_nil(namingContext)) {
         return true;
     }
 
     try {
-        omniORB::setClientCallTimeout(1000);
+        omniORB::setClientCallTimeout(500);
 
         CORBA::Object_var obj = getORB()->string_to_object(namingContextLocation.c_str());
         namingContext = CosNaming::NamingContext::_narrow(obj);
 
-        omniORB::setClientCallTimeout(namingContext, 250);
+        omniORB::setClientCallTimeout(namingContext, 150);
 
-        if(CORBA::is_nil(namingContext)){
+        if (CORBA::is_nil(namingContext)) {
             errorMessage_ = str(format("The object at %1% is not a NamingContext object.") % namingContextLocation);
             failedInLastAccessToNamingContext = true;
         }
-    } catch(CORBA::SystemException& ex) {
+    } catch (CORBA::SystemException& ex) {
         errorMessage_ = str(format("A NameService doesn't exist at \"%1%\".") % namingContextLocation);
         namingContext = CosNaming::NamingContext::_nil();
         failedInLastAccessToNamingContext = true;
@@ -161,23 +204,30 @@ bool NamingContextHelper::checkOrUpdateNamingContext()
 }
 
 
-CORBA::Object_ptr NamingContextHelper::findObjectSub(const std::string& name, const std::string& kind)
+CORBA::Object_ptr NamingContextHelper::findObjectSub(std::vector<ObjectPath>& pathList)
 {
     CORBA::Object_ptr obj = CORBA::Object::_nil();
-    
+
     if(checkOrUpdateNamingContext()){
 
+        string fullName;
         CosNaming::Name ncName;
-        ncName.length(1);
-        ncName[0].id = CORBA::string_dup(name.c_str());
-        ncName[0].kind = CORBA::string_dup(kind.c_str());
+        ncName.length(pathList.size());
+        for(int index = 0; index < pathList.size(); index++){
+            ncName[index].id = CORBA::string_dup(pathList[index].id.c_str());
+            ncName[index].kind = CORBA::string_dup(pathList[index].kind.c_str());
+            if(0 < fullName.length()){
+                fullName = fullName + "/";
+            }
+            fullName = fullName + pathList[index].id;
+        }
 
         try {
             obj = namingContext->resolve(ncName);
 
-        } catch(const CosNaming::NamingContext::NotFound &ex) {
-            errorMessage_ = str(format("\"%1%\" is not found: ") % name);
-            switch(ex.why) {
+        } catch (const CosNaming::NamingContext::NotFound &ex) {
+            errorMessage_ = str(format("\"%1%\" is not found: ") % fullName);
+            switch (ex.why) {
             case CosNaming::NamingContext::missing_node:
                 errorMessage_ += "Missing Node";
                 break;
@@ -191,39 +241,46 @@ CORBA::Object_ptr NamingContextHelper::findObjectSub(const std::string& name, co
                 errorMessage_ += "Unknown Error";
                 break;
             }
-        
-        } catch(CosNaming::NamingContext::CannotProceed &exc) {
-            errorMessage_ = str(format("Resolving \"%1%\" cannot be proceeded.") % name);
 
-        } catch(CosNaming::NamingContext::AlreadyBound &exc) {
-            errorMessage_ = str(format("\"%1%\" has already been bound.") % name);
+        } catch (CosNaming::NamingContext::CannotProceed &exc) {
+            errorMessage_ = str(format("Resolving \"%1%\" cannot be proceeded.") % fullName);
 
-        } catch(const CORBA::TRANSIENT &){
-            errorMessage_ = str(format("Resolving \"%1% \" failed with the TRANSIENT exception.") % name);
+        } catch (CosNaming::NamingContext::AlreadyBound &exc) {
+            errorMessage_ = str(format("\"%1%\" has already been bound.") % fullName);
+
+        } catch (const CORBA::TRANSIENT &) {
+            errorMessage_ = str(format("Resolving \"%1% \" failed with the TRANSIENT exception.") % fullName);
         }
     }
 
     return obj;
 }
 
-    
-NamingContextHelper::ObjectInfoList NamingContextHelper::getObjectList()
+
+NamingContextHelper::ObjectInfoList NamingContextHelper::getObjectList(std::vector<ObjectPath>& pathList)
 {
     ObjectInfoList objects;
-    
-    if(checkOrUpdateNamingContext()){
-        
-        CosNaming::BindingList_var bList;
-        CosNaming::BindingIterator_var bIter;
-        const CORBA::ULong batchSize = 100;
-        
-        namingContext->list(batchSize, bList, bIter);
-        
-        appendBindingList(bList, objects);
 
-        if(!CORBA::is_nil(bIter) && isObjectAlive(bIter)){
-            while(bIter->next_n(batchSize, bList)){
-                appendBindingList(bList, objects);
+    if(checkOrUpdateNamingContext()){
+
+        CORBA::Object_var obj = findObjectSub(pathList);
+
+        if(isObjectAlive(obj)){
+        
+            CosNaming::NamingContext_var new_context = CosNaming::NamingContext::_narrow(obj);
+        
+            CosNaming::BindingList_var bList;
+            CosNaming::BindingIterator_var bIter;
+            const CORBA::ULong batchSize = 100;
+        
+            new_context->list(batchSize, bList, bIter);
+
+            appendBindingList(bList, pathList, objects);
+
+            if(!CORBA::is_nil(bIter) && isObjectAlive(bIter)){
+                while (bIter->next_n(batchSize, bList)) {
+                    appendBindingList(bList, pathList, objects);
+                }
             }
         }
     }
@@ -232,41 +289,101 @@ NamingContextHelper::ObjectInfoList NamingContextHelper::getObjectList()
 }
 
 
+NamingContextHelper::ObjectInfoList NamingContextHelper::getObjectList()
+{
+    ObjectInfoList objects;
+
+    if(checkOrUpdateNamingContext()){
+        CosNaming::BindingList_var bList;
+        CosNaming::BindingIterator_var bIter;
+        const CORBA::ULong batchSize = 100;
+
+        namingContext->list(batchSize, bList, bIter);
+
+        appendBindingList(bList, objects);
+
+        if(!CORBA::is_nil(bIter) && isObjectAlive(bIter)){
+            while(bIter->next_n(batchSize, bList)){
+                appendBindingList(bList, objects);
+            }
+        }
+    }
+    return objects;
+}
+
+
 void NamingContextHelper::appendBindingList(CosNaming::BindingList_var& bList, ObjectInfoList& objects)
 {
-    for(CORBA::ULong i=0; i < bList->length(); ++i){
+    for (CORBA::ULong i = 0; i < bList->length(); ++i) {
         ObjectInfo info;
-        info.id = bList[i].binding_name[0].id;
-        info.kind = bList[i].binding_name[0].kind;
-        CORBA::Object_ptr obj = findObject(info.id, info.kind);
-        info.isAlive = isObjectAlive(obj);
+        info.id_ = bList[i].binding_name[0].id;
+        info.kind_ = bList[i].binding_name[0].kind;
+        info.isContext_ = false;
+        info.hostAddress_ = host_;
+        info.portNo_ = port_;
+
+        CORBA::Object_ptr obj = findObject(info.id_, info.kind_);
+        info.isAlive_ = isObjectAlive(obj);
+        
+        if(info.isAlive_){
+            CosNaming::NamingContext_var check = CosNaming::NamingContext::_narrow(obj);
+            if(check != CosNaming::NamingContext::_nil()){
+                info.isContext_ = true;
+            }
+        }
+
+        info.ior_ = orb->object_to_string(obj);
+        ObjectPath path(info.id_, info.kind_);
+        info.fullPath_.push_back(path);
         CORBA::release(obj);
         objects.push_back(info);
     }
 }
 
 
-bool NamingContextHelper::isObjectAlive(CORBA::Object_ptr obj)
+void NamingContextHelper::appendBindingList(CosNaming::BindingList_var& bList, std::vector<ObjectPath> pathList, ObjectInfoList& objects)
 {
-    bool isAlive = false;
-    
-    if(obj && !CORBA::is_nil(obj)){
-        omniORB::setClientCallTimeout(obj, 250);
-        try {
-            if(!obj->_non_existent()){
-                isAlive = true;
-            }
-        }
-        catch(const CORBA::TRANSIENT &){
-            
-        }
-        catch(...){
-            
-        }
-        omniORB::setClientCallTimeout(obj, 0);
+    for (CORBA::ULong i = 0; i < bList->length(); ++i) {
+        ObjectInfo info;
+        info.id_ = bList[i].binding_name[0].id;
+        info.kind_ = bList[i].binding_name[0].kind;
+        info.hostAddress_ = host_;
+        info.portNo_ = port_;
+
+        ObjectPath path(info.id_, info.kind_);
+        pathList.push_back(path);
+
+        CORBA::Object_ptr obj = findObjectSub(pathList);
+        info.isAlive_ = isObjectAlive(obj);
+        info.ior_ = orb->object_to_string(obj);
+        copy(pathList.begin(), pathList.end(), std::back_inserter(info.fullPath_));
+        pathList.pop_back();
+        CORBA::release(obj);
+        objects.push_back(info);
     }
-        
-    return isAlive;
+}
+
+
+bool NamingContextHelper::bindObject(std::vector<ObjectPath>& pathList, std::string& ior)
+{
+    if (isAlive() == false) return false;
+
+    try {
+        CORBA::Object_var object = getORB()->string_to_object(ior.c_str());
+        if(CORBA::is_nil(object)) return false;
+
+        CosNaming::Name ncName;
+        ncName.length(pathList.size());
+        for(int index = 0; index < pathList.size(); index++){
+            ncName[index].id = CORBA::string_dup(pathList[index].id.c_str());
+            ncName[index].kind = CORBA::string_dup(pathList[index].kind.c_str());
+        }
+        namingContext->bind(ncName, object);
+    } catch (...) {
+        return false;
+    }
+
+    return true;
 }
 
 
@@ -275,7 +392,7 @@ bool NamingContextHelper::bindObject(CORBA::Object_ptr object, const std::string
     if(isAlive()){
         CosNaming::Name nc;
         nc.length(1);
-        nc[0].id   = CORBA::string_dup(name.c_str());
+        nc[0].id = CORBA::string_dup(name.c_str());
         nc[0].kind = CORBA::string_dup("");
         namingContext->rebind(nc, object);
         return true;
@@ -284,14 +401,58 @@ bool NamingContextHelper::bindObject(CORBA::Object_ptr object, const std::string
 }
 
 
+void NamingContextHelper::unbind(std::vector<ObjectPath> pathList)
+{
+    if(isAlive()){
+        CosNaming::Name ncName;
+        ncName.length(pathList.size());
+        for (int index = 0; index < pathList.size(); index++) {
+            ncName[index].id = CORBA::string_dup(pathList[index].id.c_str());
+            ncName[index].kind = CORBA::string_dup(pathList[index].kind.c_str());
+        }
+        namingContext->unbind(ncName);
+    }
+}
+
+
 void NamingContextHelper::unbind(const std::string& name)
 {
     if(isAlive()){
         CosNaming::Name nc;
         nc.length(1);
-        nc[0].id   = CORBA::string_dup(name.c_str());
+        nc[0].id = CORBA::string_dup(name.c_str());
         nc[0].kind = CORBA::string_dup("");
         namingContext->unbind(nc);
     }
 }
 
+
+bool NamingContextHelper::bind_new_context(std::vector<ObjectPath>& pathList)
+{
+    if (isAlive() == false) return false;
+
+    try {
+        CosNaming::Name ncName;
+        ncName.length(pathList.size());
+        for (int index = 0; index < pathList.size(); index++) {
+            ncName[index].id = CORBA::string_dup(pathList[index].id.c_str());
+            ncName[index].kind = CORBA::string_dup(pathList[index].kind.c_str());
+        }
+        namingContext->bind_new_context(ncName);
+    } catch (...) {
+        return false;
+    }
+    return true;
+}
+
+
+std::string NamingContextHelper::getRootIOR()
+{
+    return namingContext->_toString(namingContext);
+}
+
+
+void NamingContextHelper::putExceptionMessage(CORBA::SystemException& ex)
+{
+    os() << format("CORBA %1% (%2%), %3%.") %  ex._name() % ex._rep_id() % ex.NP_minorString() << endl;
+}

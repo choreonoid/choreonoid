@@ -97,7 +97,9 @@ public:
     bool initializeInterpreter();
     virtual bool finalize();
 
+    void onInputFileOptionsParsed(std::vector<std::string>& inputFiles);
     void onSigOptionsParsed(boost::program_options::variables_map& v);
+    void executeScriptFileOnStartup(const string& scriptFile);
     bool storeProperties(Archive& archive);
     void restoreProperties(const Archive& archive);
 
@@ -161,7 +163,10 @@ bool PythonPlugin::initialize()
     
     OptionManager& opm = optionManager();
     opm.addOption("python,p", boost::program_options::value< vector<string> >(), "load a python script file");
-    opm.sigOptionsParsed(1).connect([&](boost::program_options::variables_map& v){ onSigOptionsParsed(v); });
+    opm.sigInputFileOptionsParsed(1).connect(
+        [&](std::vector<std::string>& inputFiles){ onInputFileOptionsParsed(inputFiles); });
+    opm.sigOptionsParsed(1).connect(
+        [&](boost::program_options::variables_map& v){ onSigOptionsParsed(v); });
 
     setProjectArchiver(
         [&](Archive& archive){ return storeProperties(archive); },
@@ -171,21 +176,41 @@ bool PythonPlugin::initialize()
 }
 
 
+void PythonPlugin::onInputFileOptionsParsed(std::vector<std::string>& inputFiles)
+{
+    auto iter = inputFiles.begin();
+    while(iter != inputFiles.end()){
+        if(getExtension(*iter) == "py"){
+            executeScriptFileOnStartup(*iter);
+            iter = inputFiles.erase(iter);
+        } else {
+            ++iter;
+        }
+    }
+}
+
+
 void PythonPlugin::onSigOptionsParsed(boost::program_options::variables_map& v)
 {
-    if (v.count("python")) {
-        vector<string> pythonScriptFileNames = v["python"].as< vector<string> >();
+    if(v.count("python")){
+        vector<string> pythonScriptFileNames = v["python"].as<vector<string>>();
         for(unsigned int i = 0; i < pythonScriptFileNames.size(); i++){
-            MessageView::instance()->putln((format(_("Executing python script \"%1%\" ...")) % pythonScriptFileNames[i]).str());
-            executor().execFile(pythonScriptFileNames[i]);
-            if(!executor().hasException()){
-                MessageView::instance()->putln(_("The script finished."));
-            } else {
-                MessageView::instance()->putln(_("Failed to run the python script."));
-                python::gil_scoped_acquire lock;
-                MessageView::instance()->put(executor().exceptionText());
-            }
+            executeScriptFileOnStartup(pythonScriptFileNames[i]);
         }
+    }
+}
+
+
+void PythonPlugin::executeScriptFileOnStartup(const string& scriptFile)
+{
+    MessageView::instance()->putln(format(_("Executing python script \"%1%\" ...")) % scriptFile);
+    executor().execFile(scriptFile);
+    if(!executor().hasException()){
+        MessageView::instance()->putln(_("The script finished."));
+    } else {
+        MessageView::instance()->putln(MessageView::WARNING, _("Failed to run the python script."));
+        python::gil_scoped_acquire lock;
+        MessageView::instance()->put(executor().exceptionText());
     }
 }
 

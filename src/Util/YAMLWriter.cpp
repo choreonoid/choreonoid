@@ -769,6 +769,28 @@ template<> bool YAMLWriter::info(const std::string& key, const bool& defaultValu
 }
 
 
+template<> double YAMLWriter::getOrCreateInfo(const std::string& key, const double& defaultValue)
+{
+    double value;
+    if(!impl->info->read(key, value)){
+        impl->info->write(key, defaultValue);
+        value = defaultValue;
+    }
+    return value;
+}
+
+
+template<> bool YAMLWriter::getOrCreateInfo(const std::string& key, const bool& defaultValue)
+{
+    bool value;
+    if(!impl->info->read(key, value)){
+        impl->info->write(key, defaultValue);
+        value = defaultValue;
+    }
+    return value;
+}
+
+
 template<> void YAMLWriter::setInfo(const std::string& key, const double& value)
 {
     impl->info->write(key, value);

@@ -1,4 +1,4 @@
-optionalPlugins: [ ODE, Bullet, PhysX, AgX ]
+optionalPlugins: [ ODE, Bullet, PhysX ]
 
 items: 
   id: 0
@@ -52,7 +52,7 @@ items:
               plugin: SimpleController
               class: SimpleControllerItem
               data: 
-                isImmediateMode: true
+                isNoDelayMode: false
                 controllerOptions: ""
                 controller: "SR1WalkGraspController"
                 reloading: true
@@ -105,6 +105,7 @@ items:
               plugin: Body
               class: AISTSimulatorItem
               data: 
+                timeStep: 0.002
                 realtimeSync: true
                 recording: "full"
                 timeRangeMode: "Time bar range"
@@ -133,6 +134,7 @@ items:
               plugin: ODE
               class: ODESimulatorItem
               data: 
+                timeStep: 0.002
                 realtimeSync: true
                 recording: "full"
                 timeRangeMode: "Time bar range"
@@ -155,31 +157,6 @@ items:
                 2Dmode: false
                 UseWorldItem'sCollisionDetector: false
                 velocityMode: false
-            - 
-              id: 10
-              name: "AgXSimulator"
-              plugin: AgX
-              class: AgXSimulatorItem
-              data: 
-                realtimeSync: true
-                recording: "full"
-                timeRangeMode: "Time bar range"
-                timeLength: 27
-                allLinkPositionOutputMode: false
-                deviceStateOutput: true
-                controllerThreads: true
-                recordCollisionData: false
-                controllerOptions: ""
-                dynamicsMode: Forward dynamics
-                gravity: [ 0, 0, -9.80665 ]
-                friction: 0.5
-                restitution: 0.1
-                frictionModelType: Iterative Projected
-                frictionSolveType: Direct
-                numThreads: 1
-                contactReductionMode: Geometry
-                contactReductionBinResolution: 2
-                contactReductionThreshold: 4
     - 
       id: 11
       name: "vase"
@@ -318,13 +295,6 @@ toolbars:
   "TimeBar": 
     minTime: 0
     maxTime: 25
-    frameRate: 500
-    playbackFrameRate: 100
-    idleLoopDrivenMode: false
-    currentTime: 0
-    speedScale: 1
-    syncToOngoingUpdates: true
-    autoExpansion: true
 viewAreas: 
   - 
     type: embedded

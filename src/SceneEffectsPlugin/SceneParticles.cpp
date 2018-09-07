@@ -25,13 +25,13 @@ SceneParticles::SceneParticles(int polymorhicId)
     : SgNode(polymorhicId)
 {
     time_ = 0.0f;
-    particleSize_ = 0.1f;
 }
 
 
 SceneParticles::SceneParticles(const SceneParticles& org)
-    : SgNode(org)
+    : SgNode(org),
+      time_(org.time_),
+      texture_(org.texture_)
 {
-    time_ = org.time_;
-    particleSize_ = org.particleSize_;
+
 }

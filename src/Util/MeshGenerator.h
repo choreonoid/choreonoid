@@ -13,7 +13,7 @@
 
 namespace cnoid {
 
-class MeshNormalGenerator;
+class MeshFilter;
 
 class CNOID_EXPORT MeshGenerator
 {
@@ -89,7 +89,7 @@ public:
 private:
     int divisionNumber_;
     bool isNormalGenerationEnabled_;
-    MeshNormalGenerator* normalGenerator;
+    MeshFilter* meshFilter;
 
     void generateNormals(SgMesh* mesh, double creaseAngle);
 

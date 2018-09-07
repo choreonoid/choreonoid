@@ -14,6 +14,8 @@ namespace cnoid {
 class CNOID_EXPORT ZMPSeq : public Vector3Seq
 {
 public:
+    typedef Vector3Seq BaseSeqType;
+    
     static const std::string& key();
 
     ZMPSeq(int nFrames = 0);
@@ -29,7 +31,7 @@ public:
 
 protected:
     virtual bool doReadSeq(const Mapping* archive, std::ostream& os) override;
-    virtual bool doWriteSeq(YAMLWriter& writer) override;
+    virtual bool doWriteSeq(YAMLWriter& writer, std::function<void()> additionalPartCallback) override;
 
 private:
     bool isRootRelative_;

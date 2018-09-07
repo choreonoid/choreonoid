@@ -1,4 +1,4 @@
-optionalPlugins: [ ODE, Bullet, PhysX, AgX ]
+optionalPlugins: [ ODE, Bullet, PhysX ]
 
 items: 
   id: 0
@@ -46,7 +46,7 @@ items:
               plugin: SimpleController
               class: SimpleControllerItem
               data: 
-                isImmediateMode: true
+                isNoDelayMode: false
                 controllerOptions: ""
                 controller: "SampleCrawlerJoystickController"
                 reloading: true

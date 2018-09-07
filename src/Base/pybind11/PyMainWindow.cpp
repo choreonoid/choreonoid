@@ -17,16 +17,27 @@ namespace cnoid {
 void exportPyMainWindow(py::module m)
 {
     py::class_<MainWindow, QMainWindow>(m, "MainWindow")
-        .def_static("instance", &MainWindow::instance, py::return_value_policy::reference)
+        .def_property_readonly_static(
+            "instance", [](py::object){ return MainWindow::instance(); }, py::return_value_policy::reference)
         .def("setProjectTitle", &MainWindow::setProjectTitle)
-        .def("toolBarArea", &MainWindow::toolBarArea)
-        .def("viewArea", &MainWindow::viewArea, py::return_value_policy::reference)
-        .def("addToolBar", &MainWindow::addToolBar);
+        .def_property_readonly("toolBarArea", &MainWindow::toolBarArea)
+        .def_property_readonly("viewArea", &MainWindow::viewArea, py::return_value_policy::reference)
+        .def("addToolBar", &MainWindow::addToolBar)
+
+        // deprecated
+        .def_static("getInstance", &MainWindow::instance, py::return_value_policy::reference)
+        .def("getToolBarArea", &MainWindow::toolBarArea)
+        .def("getViewArea", &MainWindow::viewArea, py::return_value_policy::reference)
+        ;
 
     py::class_<ViewArea, QWidget>(m, "ViewArea")
         .def("addView", &ViewArea::addView)
         .def("removeView", &ViewArea::removeView)
-        .def("numViews", &ViewArea::numViews);
+        .def_property_readonly("numViews", &ViewArea::numViews)
+
+        // deprecated
+        .def("getNumViews", &ViewArea::numViews)
+        ;
 }
 
 }

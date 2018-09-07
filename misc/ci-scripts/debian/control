@@ -1,0 +1,96 @@
+Source: choreonoid%VERSION%
+Priority: extra
+Maintainer: Fumio KANEHIRO <f-kanehiro@aist.go.jp>
+Build-Depends: debhelper (>= 9), cmake,
+	       doxygen, doxygen-latex, graphviz,
+	       pkg-kde-tools (>= 0.6),
+	       libboost-all-dev,
+	       libeigen3-dev,
+	       libz-dev,
+	       libjpeg-dev,
+	       libpng-dev,
+	       libglew-dev,
+	       libxfixes-dev,
+	       libyaml-dev,
+	       libqt4-opengl-dev,
+	       qt4-dev-tools,
+	       qt4-qtconfig,
+	       qtbase5-dev,
+	       libqt5opengl5-dev,
+	       libqt5x11extras5-dev,
+	       libode-dev,
+	       libomniorb4-dev,
+	       libcos4-dev,
+	       omniidl,
+	       omniorb-nameserver,
+	       python-omniorb,
+	       omniidl-python,
+	       python2.7-dev,
+	       python3-dev,
+	       uuid-dev,
+	       openrtm-aist,
+	       openrtm-aist-dev,
+	       gettext
+Standards-Version: 3.9.4
+Section: science
+Homepage: http://choreonoid.org/
+Vcs-Browser: http://anonscm.debian.org/gitweb/?p=debian-science/packages/choreonoid.git
+Vcs-Git: git://anonscm.debian.org/debian-science/packages/choreonoid.git
+XS-Testsuite: autopkgtest
+
+Package: choreonoid%VERSION%
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends},
+Suggests: choreonoid%VERSION%-doc
+Multi-Arch: foreign
+Description: Integrated robotics GUI environment
+ Choreonoid is an integrated robotics GUI environment, which allows
+ users to add their own functions on the basis of various basic
+ robotics functions.
+
+Package: choreonoid%VERSION%-dev
+Architecture: any
+Section: libdevel
+Depends: choreonoid%VERSION% (= ${binary:Version}), ${misc:Depends},
+	 libboost-all-dev,
+	 libeigen3-dev,
+	 libz-dev,
+	 libjpeg-dev,
+	 libpng-dev,
+	 libglew-dev,
+	 libyaml-dev,
+	 libqt4-opengl-dev,
+	 pkg-config
+Multi-Arch: same
+Description: Integrated robotics GUI environment - development files
+ Choreonoid is an integrated robotics GUI environment, which allows
+ users to add their own functions on the basis of various basic
+ robotics functions.
+ .
+ This package gathers header files required to compile Choreonoid.
+
+Package: choreonoid%VERSION%-openrtm-plugin
+Architecture: any
+Section: libs
+Depends: choreonoid%VERSION% (= ${binary:Version}),
+	 ${shlibs:Depends}, ${misc:Depends},
+	 openrtm-aist
+Multi-Arch: same
+Description: Integrated robotics GUI environment - OpenRTM Plugin
+ Choreonoid is an integrated robotics GUI environment, which allows
+ users to add their own functions on the basis of various basic
+ robotics functions.
+ .
+ This package provides OpenRTM Plugin for Choreonoid.
+
+Package: choreonoid%VERSION%-doc
+Architecture: all
+Section: doc
+Depends: ${misc:Depends}
+Multi-Arch: foreign
+Description: Integrated robotics GUI environment - documentation
+ Choreonoid is an integrated robotics GUI environment, which allows
+ users to add their own functions on the basis of various basic
+ robotics functions.
+ .
+ This package gathers choreonoid documentation.

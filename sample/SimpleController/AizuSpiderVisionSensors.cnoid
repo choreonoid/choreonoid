@@ -1,0 +1,540 @@
+items: 
+  id: 0
+  name: "Root"
+  plugin: Base
+  class: RootItem
+  children: 
+    - 
+      id: 1
+      name: "World"
+      plugin: Body
+      class: WorldItem
+      data: 
+        collisionDetection: false
+        collisionDetector: AISTCollisionDetector
+        materialTableFile: "${SHARE}/default/materials.yaml"
+      children: 
+        - 
+          id: 2
+          name: "AizuSpider"
+          plugin: Body
+          class: BodyItem
+          data: 
+            modelFile: "${SHARE}/model/AizuSpider/AizuSpiderSS.body"
+            currentBaseLink: "CHASSIS"
+            rootPosition: [ -2, -0.5, 0.035 ]
+            rootAttitude: [ 
+              1, 0, 0, 
+              0, 1, 0, 
+              0, 0, 1 ]
+            jointPositions: [ 
+               0.000000,  0.000000,  0.000000,  0.000000, -1.570796,  2.635447,  0.471239, -1.623156,  0.104720,  1.745329, 
+               0.000000,  0.000000,  0.000000 ]
+            initialRootPosition: [ -2, -0.5, 0.035 ]
+            initialRootAttitude: [ 
+              1, 0, 0, 
+              0, 1, 0, 
+              0, 0, 1 ]
+            initialJointPositions: [ 
+               0.000000,  0.000000,  0.000000,  0.000000, -1.570796,  2.635447,  0.471239, -1.623156,  0.104720,  1.745329, 
+               0.000000,  0.000000,  0.000000 ]
+            zmp: [ 0, 0, 0 ]
+            collisionDetection: true
+            selfCollisionDetection: false
+            isEditable: true
+          children: 
+            - 
+              id: 3
+              name: "AizuSpiderController"
+              plugin: Body
+              class: SimpleControllerItem
+              data: 
+                isNoDelayMode: false
+                controllerOptions: ""
+                controller: "AizuSpiderController.so"
+                baseDirectory: "Controller directory"
+                reloading: true
+              children: 
+                - 
+                  id: 4
+                  name: "Jaco2Controller"
+                  plugin: Body
+                  class: SimpleControllerItem
+                  data: 
+                    isNoDelayMode: false
+                    controllerOptions: ""
+                    controller: "Jaco2Controller.so"
+                    baseDirectory: "Controller directory"
+                    reloading: true
+            - 
+              id: 5
+              name: "BodyTrackingCamera"
+              plugin: Body
+              class: BodyTrackingCameraItem
+              data: 
+                keepRelativeAttitude: false
+                cameraType: "Perspective"
+                nearClipDistance: 0.01
+                farClipDistance: 100
+                fieldOfView: 0.785398
+            - 
+              id: 6
+              name: "LIDAR-View"
+              plugin: Body
+              class: BodyTrackingCameraItem
+              data: 
+                keepRelativeAttitude: true
+                cameraType: "Perspective"
+                nearClipDistance: 0.01
+                farClipDistance: 100
+                fieldOfView: 0.785398
+            - 
+              id: 7
+              name: "SensorVisualizer"
+              plugin: Body
+              class: SensorVisualizer
+              data: 
+                subItems: 
+                  - 
+                    class: RangeSensorVisualizer
+                    name: LRF
+                    renderingMode: Point
+                    pointSize: 2
+                    voxelSize: 0.01
+                    isEditable: false
+                  - 
+                    class: CameraImageVisualizer
+                    name: FRONT_CAMERA
+                  - 
+                    class: CameraImageVisualizer
+                    name: LEFT_CAMERA
+                  - 
+                    class: CameraImageVisualizer
+                    name: RIGHT_CAMERA
+                  - 
+                    class: CameraImageVisualizer
+                    name: BACK_CAMERA
+                  - 
+                    class: CameraImageVisualizer
+                    name: ARM_CAMERA
+        - 
+          id: 8
+          name: "Labo1"
+          plugin: Body
+          class: BodyItem
+          data: 
+            modelFile: "${SHARE}/model/Labo1/Labo1.body"
+            currentBaseLink: "Root"
+            rootPosition: [ 0, 0, 0 ]
+            rootAttitude: [ 
+              1, 0, 0, 
+              0, 1, 0, 
+              0, 0, 1 ]
+            jointPositions: [  0.000000 ]
+            initialRootPosition: [ 0, 0, 0 ]
+            initialRootAttitude: [ 
+              1, 0, 0, 
+              0, 1, 0, 
+              0, 0, 1 ]
+            zmp: [ 0, 0, 0 ]
+            collisionDetection: true
+            selfCollisionDetection: false
+            isEditable: false
+        - 
+          id: 9
+          name: "AISTSimulator"
+          plugin: Body
+          class: AISTSimulatorItem
+          data: 
+            timestep: 0.001
+            realtimeSync: true
+            recording: "full"
+            timeRangeMode: "Unlimited"
+            timeLength: 60
+            allLinkPositionOutputMode: true
+            deviceStateOutput: true
+            controllerThreads: true
+            recordCollisionData: false
+            controllerOptions: "torque"
+            dynamicsMode: "Forward dynamics"
+            integrationMode: "Runge Kutta"
+            gravity: [ 0, 0, -9.80665 ]
+            staticFriction: 0.5
+            dynamicFriction: 0.5
+            cullingThresh: 0.01
+            contactCullingDepth: 0.05
+            errorCriterion: 0.001
+            maxNumIterations: 1000
+            contactCorrectionDepth: 0.0001
+            contactCorrectionVelocityRatio: 30
+            kinematicWalking: false
+            2Dmode: false
+            oldAccelSensorMode: false
+          children: 
+            - 
+              id: 10
+              name: "GLVisionSimulator"
+              plugin: Body
+              class: GLVisionSimulatorItem
+              data: 
+                enabled: true
+                maxFrameRate: 1000
+                maxLatency: 1
+                recordVisionData: true
+                threadMode: Sensor
+                bestEffort: true
+                allSceneObjects: false
+                rangeSensorPrecisionRatio: 2
+                depthError: 0
+                enableHeadLight: true
+                enableAdditionalLights: true
+                antiAliasing: false
+views: 
+  - 
+    id: 0
+    plugin: Base
+    class: ItemPropertyView
+    mounted: true
+  - 
+    id: 1
+    plugin: Base
+    class: ItemTreeView
+    mounted: true
+    state: 
+      checked: [ 1, 2, 5, 8 ]
+      expanded: [ 1, 2, 3, 7, 9 ]
+  - 
+    id: 2
+    plugin: Base
+    class: MessageView
+    mounted: true
+  - 
+    id: 3
+    plugin: Base
+    class: SceneView
+    mounted: true
+    state: 
+      editMode: false
+      viewpointControlMode: thirdPerson
+      collisionLines: false
+      polygonMode: fill
+      defaultHeadLight: true
+      defaultHeadLightIntensity: 0.6
+      headLightLightingFromBack: false
+      worldLight: true
+      worldLightIntensity: 0.4
+      worldLightAmbient: 0
+      additionalLights: true
+      shadowLights: 
+        - 0
+        - 1
+      fog: true
+      floorGrid: false
+      floorGridSpan: 10
+      floorGridInterval: 0.5
+      xzGridSpan: 10
+      xzGridInterval: 0.5
+      xzGrid: false
+      yzGridSpan: 10
+      yzGridInterval: 0.5
+      texture: true
+      lineWidth: 1
+      pointSize: 1
+      normalVisualization: false
+      normalLength: 0.01
+      coordinateAxes: true
+      fpsTestIteration: 1
+      showFPS: false
+      enableNewDisplayListDoubleRendering: false
+      useBufferForPicking: true
+      upsideDown: false
+      cameras: 
+        - 
+          camera: [ System, Perspective ]
+          fieldOfView: 0.6978
+          near: 0.01
+          far: 10000
+          eye: [ -4.03773228, -2.34269571, 2.02033223 ]
+          direction: [ 0.711954996, 0.503646067, -0.489347242 ]
+          up: [ 0.399492714, 0.282606254, 0.87208903 ]
+        - 
+          camera: [ System, Orthographic ]
+          orthoHeight: 20
+          near: 0.01
+          far: 10000
+        - 
+          camera: BodyTrackingCamera
+          isCurrent: true
+          fieldOfView: 0.785398
+          near: 0.01
+          far: 100
+          eye: [ -4.03773228, -2.34269571, 2.02033223 ]
+          direction: [ 0.711954996, 0.503646067, -0.489347242 ]
+          up: [ 0.399492714, 0.282606254, 0.87208903 ]
+      backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
+      gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
+      xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
+      yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
+      dedicatedItemTreeViewChecks: false
+  - 
+    id: 4
+    name: "Scene 2"
+    plugin: Base
+    class: SceneView
+    mounted: true
+    state: 
+      editMode: false
+      viewpointControlMode: thirdPerson
+      collisionLines: false
+      polygonMode: fill
+      defaultHeadLight: true
+      defaultHeadLightIntensity: 0.75
+      headLightLightingFromBack: false
+      worldLight: true
+      worldLightIntensity: 0.5
+      worldLightAmbient: 0.3
+      additionalLights: true
+      shadowLights: 
+        - 0
+      fog: true
+      floorGrid: false
+      floorGridSpan: 10
+      floorGridInterval: 0.5
+      xzGridSpan: 10
+      xzGridInterval: 0.5
+      xzGrid: false
+      yzGridSpan: 10
+      yzGridInterval: 0.5
+      texture: true
+      lineWidth: 1
+      pointSize: 1
+      normalVisualization: false
+      normalLength: 0.01
+      coordinateAxes: true
+      fpsTestIteration: 1
+      showFPS: false
+      enableNewDisplayListDoubleRendering: false
+      useBufferForPicking: true
+      upsideDown: false
+      cameras: 
+        - 
+          camera: [ System, Perspective ]
+          fieldOfView: 0.6978
+          near: 0.01
+          far: 100
+          eye: [ -5.29126118, -5.01169376, 3.84184278 ]
+          direction: [ 0.756596254, 0.487150344, -0.43617273 ]
+          up: [ 0.3667299, 0.236126726, 0.899862962 ]
+        - 
+          camera: [ System, Orthographic ]
+          orthoHeight: 20
+          near: 0.01
+          far: 100
+        - 
+          camera: [ AizuSpider, FRONT_CAMERA ]
+          isCurrent: true
+        - 
+          camera: BodyTrackingCamera
+          fieldOfView: 0.785398
+          near: 0.01
+          far: 100
+          eye: [ -4.03773228, -2.34269571, 2.02033223 ]
+          direction: [ 0.711954996, 0.503646067, -0.489347242 ]
+          up: [ 0.399492714, 0.282606254, 0.87208903 ]
+      backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
+      gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
+      xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
+      yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
+      dedicatedItemTreeViewChecks: false
+  - 
+    id: 5
+    name: "LIDAR"
+    plugin: Base
+    class: SceneView
+    mounted: true
+    state: 
+      editMode: false
+      viewpointControlMode: thirdPerson
+      collisionLines: false
+      polygonMode: fill
+      defaultHeadLight: true
+      defaultHeadLightIntensity: 0.75
+      headLightLightingFromBack: false
+      worldLight: false
+      worldLightIntensity: 0.5
+      worldLightAmbient: 0.3
+      additionalLights: false
+      fog: true
+      floorGrid: false
+      floorGridSpan: 10
+      floorGridInterval: 0.5
+      xzGridSpan: 10
+      xzGridInterval: 0.5
+      xzGrid: false
+      yzGridSpan: 10
+      yzGridInterval: 0.5
+      texture: true
+      lineWidth: 1
+      pointSize: 1
+      normalVisualization: false
+      normalLength: 0.01
+      coordinateAxes: true
+      fpsTestIteration: 1
+      showFPS: false
+      enableNewDisplayListDoubleRendering: false
+      useBufferForPicking: true
+      upsideDown: false
+      cameras: 
+        - 
+          camera: [ System, Perspective ]
+          fieldOfView: 0.698132
+          near: 0.01
+          far: 100
+          eye: [ -4.75262637, -0.451915726, 1.87489648 ]
+          direction: [ 0.908405906, 5.56238192e-17, -0.418089357 ]
+          up: [ 0.418089357, 2.56005896e-17, 0.908405906 ]
+        - 
+          camera: [ System, Orthographic ]
+          orthoHeight: 20
+          near: 0.01
+          far: 100
+        - 
+          camera: LIDAR-View
+          isCurrent: true
+          fieldOfView: 0.785398
+          near: 0.01
+          far: 100
+          eye: [ -4.20307891, -0.469708843, 2.3192548 ]
+          direction: [ 0.824577685, 5.04908212e-17, -0.565748743 ]
+          up: [ 0.565748743, 3.46421194e-17, 0.824577685 ]
+      backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
+      gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
+      xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
+      yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
+      dedicatedItemTreeViewChecks: true
+      checked: [ 2, 6, [ 7, "LRF" ] ]
+  - 
+    id: 6
+    name: "Joystick"
+    plugin: Base
+    class: VirtualJoystickView
+    mounted: true
+  - 
+    id: 7
+    plugin: Body
+    class: BodyLinkView
+    mounted: true
+    state: 
+      showRotationMatrix: false
+  - 
+    id: 8
+    plugin: Body
+    class: JointSliderView
+    mounted: true
+    state: 
+      showAllJoints: true
+      jointId: true
+      name: true
+      numColumns: 1
+      spinBox: true
+      slider: true
+      labelOnLeft: true
+      currentBodyItem: 2
+  - 
+    id: 9
+    plugin: Body
+    class: LinkSelectionView
+    mounted: true
+    state: 
+      listingMode: "Link Tree"
+      currentBodyItem: 2
+      bodyItems: 
+        - 
+          id: 8
+          selectedLinks: [ 1 ]
+  - 
+    id: 10
+    plugin: Multicopter
+    class: MulticopterMonitorView
+  - 
+    id: 11
+    plugin: OpenRTM
+    class: RTSNameServerView
+    state: 
+      host: localhost
+      port: 2809
+  - 
+    id: 12
+    plugin: Python
+    class: PythonConsoleView
+viewAreas: 
+  - 
+    type: embedded
+    tabs: true
+    contents: 
+      type: splitter
+      orientation: horizontal
+      sizes: [ 458, 1953 ]
+      children: 
+        - 
+          type: splitter
+          orientation: vertical
+          sizes: [ 809, 808 ]
+          children: 
+            - 
+              type: pane
+              views: [ 1 ]
+              current: 1
+            - 
+              type: pane
+              views: [ 0, 9 ]
+              current: 0
+        - 
+          type: splitter
+          orientation: vertical
+          sizes: [ 1157, 460 ]
+          children: 
+            - 
+              type: splitter
+              orientation: horizontal
+              sizes: [ 912, 1035 ]
+              children: 
+                - 
+                  type: splitter
+                  orientation: vertical
+                  sizes: [ 576, 575 ]
+                  children: 
+                    - 
+                      type: pane
+                      views: [ 4 ]
+                      current: 4
+                    - 
+                      type: pane
+                      views: [ 7, 8, 5 ]
+                      current: 5
+                - 
+                  type: pane
+                  views: [ 3 ]
+                  current: 3
+            - 
+              type: splitter
+              orientation: horizontal
+              sizes: [ 1173, 774 ]
+              children: 
+                - 
+                  type: pane
+                  views: [ 2 ]
+                  current: 2
+                - 
+                  type: pane
+                  views: [ 6 ]
+                  current: 6
+layoutOfToolBars: 
+  rows: 
+    - 
+      - { name: "FileBar", x: 0, priority: 0 }
+      - { name: "ScriptBar", x: 48, priority: 0 }
+      - { name: "SimulationBar", x: 95, priority: 1 }
+      - { name: "TimeBar", x: 96, priority: 0 }
+      - { name: "SceneBar", x: 1336, priority: 2 }
+      - { name: "BodyBar", x: 1702, priority: 0 }

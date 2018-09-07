@@ -1,0 +1,181 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: SimpleTank
+
+links:
+  -
+    name: CHASSIS
+    translation: [ 0, 0, 0.1 ]
+    jointType: free
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 8.0
+    inertia: [
+      0.1, 0,   0,
+      0,   0.1, 0,
+      0,   0,   0.5 ]
+    elements:
+      Shape:
+        geometry:
+          type: Box
+          size: [ 0.45, 0.3, 0.1 ]
+        appearance: &BodyAppearance
+          material:
+            diffuseColor: [ 0, 0.6, 0 ]
+            specularColor: [ 0.2, 0.8, 0.2 ]
+            shininess: 0.6
+  -
+    name: TURRET_Y
+    parent: CHASSIS
+    translation: [ -0.04, 0, 0.1 ]
+    jointType: revolute
+    jointAxis: -Z
+    jointRange: unlimited
+    maxJointVelocity: 90
+    jointId: 0
+    centerOfMass: [ 0, 0, 0.025 ]
+    mass: 4.0
+    inertia: [
+      0.1, 0,   0,
+      0,   0.1, 0,
+      0,   0,   0.1 ]
+    elements:
+      Shape:
+        geometry:
+          type: Box
+          size: [ 0.2, 0.2, 0.1 ]
+        appearance: *BodyAppearance
+  -
+    name: TURRET_P
+    parent: TURRET_Y
+    translation: [ 0, 0, 0.05 ]
+    jointType: revolute
+    jointAxis: -Y
+    jointRange: [ -10, 45 ]
+    maxJointVelocity: 90
+    jointId: 1
+    elements:
+      - 
+        # Turret
+        type: RigidBody
+        centerOfMass: [ 0, 0, 0 ]
+        mass: 3.0
+        inertia: [
+          0.1, 0,   0,
+          0,   0.1, 0,
+          0,   0,   0.1 ]
+        elements:
+          Shape:
+            geometry:
+              type: Cylinder
+              height: 0.1
+              radius: 0.1
+            appearance: *BodyAppearance
+      - 
+        # Gun
+        type: Transform
+        translation: [ 0.2, 0, 0 ]
+        rotation: [ 0, 0, 1, 90 ]
+        elements:
+          RigidBody:
+            centerOfMass: [ 0, 0, 0 ]
+            mass: 1.0
+            inertia: [
+              0.01, 0,   0,
+              0,    0.1, 0,
+              0,    0,   0.1 ]
+            elements:
+              Shape:
+                geometry:
+                  type: Cylinder
+                  height: 0.2
+                  radius: 0.02
+                appearance: *BodyAppearance
+      -
+        type: SpotLight
+        name: Light
+        translation: [ 0.08, 0, 0.1 ]
+        direction: [ 1, 0, 0 ]
+        beamWidth: 36
+        cutOffAngle: 40
+        cutOffExponent: 6
+        attenuation: [ 1, 0, 0.01 ]
+        elements:
+          Shape:
+            rotation: [ 0, 0, 1, 90 ]
+            translation: [ -0.02, 0, 0 ]
+            geometry:
+              type: Cone
+              height: 0.04
+              radius: 0.025
+            appearance:
+              material:
+                diffuseColor: [ 1.0, 1.0, 0.4 ]
+                ambientIntensity: 0.3
+                emissiveColor: [ 0.8, 0.8, 0.3 ]
+      - 
+        type: Camera
+        name: Camera
+        translation: [ 0.1, 0, 0.05 ]
+        rotation: [ [ 1, 0, 0, 90 ], [ 0, 1, 0, -90 ] ]
+        format: COLOR
+        fieldOfView: 62
+        nearClipDistance: 0.02
+        width: 640
+        height: 480
+        frameRate: 30
+        elements:
+          Shape:
+            rotation: [ 1, 0, 0, 90 ]
+            geometry:
+              type: Cylinder
+              radius: 0.02
+              height: 0.02
+            appearance:
+              material:
+                diffuseColor: [ 0.2, 0.2, 0.8 ]
+                specularColor: [ 0.6, 0.6, 1.0 ]
+                shininess: 0.6
+  -
+    name: TRACK_L
+    parent: CHASSIS
+    translation: [ 0, 0.2, 0 ]
+    jointType: fixed
+    jointAxis: Y
+    actuationMode: jointSurfaceVelocity
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 1.0
+    inertia: [
+      0.02, 0,    0,
+      0,    0.02, 0,
+      0,    0,    0.02 ]
+    elements:
+      Shape: &TRACK 
+        geometry:
+          type: Extrusion
+          crossSection: [
+            -0.22, -0.1,
+             0.22, -0.1,
+             0.34,  0.06,
+            -0.34,  0.06,
+            -0.22, -0.1
+            ]
+          spine: [ 0, -0.05, 0, 0, 0.05, 0 ]
+        appearance:
+          material:
+            diffuseColor: [ 0.2, 0.2, 0.2 ]
+  -
+    name: TRACK_R
+    parent: CHASSIS
+    translation: [ 0, -0.2, 0 ]
+    jointType: fixed
+    jointAxis: Y
+    actuationMode: jointSurfaceVelocity
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 1.0
+    inertia: [
+      0.02, 0,    0,
+      0,    0.02, 0,
+      0,    0,    0.02 ]
+    elements:
+      Shape: *TRACK 

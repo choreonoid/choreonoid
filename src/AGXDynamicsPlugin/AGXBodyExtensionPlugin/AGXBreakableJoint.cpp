@@ -159,6 +159,7 @@ struct JointBreakerDesc{
         breakLimitImpulse = std::numeric_limits<double>::max();
         offsetForce = 0.0;
         validAxis = agx::Vec3(1, 1, 1);
+        signedAxis = agx::Vec3(0, 0, 0);
     }
     agx::ConstraintRef joint;
     string breakType;
@@ -167,6 +168,7 @@ struct JointBreakerDesc{
     double breakLimitImpulse;
     double offsetForce;
     agx::Vec3 validAxis;
+    agx::Vec3 signedAxis;
 };
 
 class JointBreaker : public JointBreakerDesc, public agxSDK::StepEventListener
@@ -197,8 +199,15 @@ public:
         agx::Vec3 vf, vt;
         joint->getLastForce((agx::UInt)0, vf, vt); // world coord.
         for(int i = 0; i < 3; i++){
+            // Filter force when sign are different
+            if(signedAxis[i] != 0.0){
+                if(signbit(vf[i]) != signbit(signedAxis[i])){
+                    vf[i] = 0.0;
+                }
+            }
             vf[i] = vf[i] * validAxis[i];
         }
+        cout << "AGXBreakableJoint force vector " << vf << endl;
 
         agx::Real force  = std::max(0.0,  vf.length() - offsetForce);
         if(breakType == "force"){
@@ -222,7 +231,7 @@ public:
         }else{
             m_bTimerOn = false;
         }
-        std::cout << "AGXBreakableJoint force " << breakLimitForce << " " << force << std::endl;
+        cout << "AGXBreakableJoint force " << breakLimitForce << " " << force << endl;
     }
 
     void breakOnImpulse(const agx::Real& force){
@@ -231,7 +240,7 @@ public:
         if(breakLimitImpulse <= m_recivedImpulse){
             joint->setEnable(false);
         }
-        std::cout << "AGXBreakableJoint impulse " << force << " " << breakLimitImpulse << " " << m_recivedImpulse << std::endl;
+        cout << "AGXBreakableJoint impulse " << force << " " << breakLimitImpulse << " " << m_recivedImpulse << endl;
     }
 };
 
@@ -270,6 +279,7 @@ AGXBreakableJoint::AGXBreakableJoint(AGXBreakableJointDevice* device, AGXBody* a
             position = Vector3();
             jointAxis = Vector3(0, 0, 1);
             c_validAxis = agxConvert::toCnoid(validAxis);
+            c_signedAxis = agxConvert::toCnoid(signedAxis);
             jointRange[0] = -std::numeric_limits<double>::max();
             jointRange[1] = std::numeric_limits<double>::max();
         }
@@ -278,6 +288,7 @@ AGXBreakableJoint::AGXBreakableJoint(AGXBreakableJointDevice* device, AGXBody* a
         Vector3 position;   // joint position on link1 coordinate
         Vector3 jointAxis;  // joint axis on link1 coordinate
         Vector3 c_validAxis;
+        Vector3 c_signedAxis;
         Vector2 jointRange;
         JointBreakerDesc& getJointBreakerDesc(){
             return static_cast<JointBreakerDesc&>(*this);
@@ -298,6 +309,7 @@ AGXBreakableJoint::AGXBreakableJoint(AGXBreakableJointDevice* device, AGXBody* a
     agxConvert::setVector(jointDeviceInfo.find("position"), jp.position);
     agxConvert::setVector(jointDeviceInfo.find("jointAxis"), jp.jointAxis);
     agxConvert::setVector(jointDeviceInfo.find("validAxis"), jp.c_validAxis);
+    agxConvert::setVector(jointDeviceInfo.find("signedAxis"), jp.c_signedAxis);
     agxConvert::setVector(jointDeviceInfo.find("jointRange"), jp.jointRange);
 
     AGXElementaryConstraint base, range, lock;
@@ -326,6 +338,7 @@ AGXBreakableJoint::AGXBreakableJoint(AGXBreakableJointDevice* device, AGXBody* a
     const Vector3 p = link1->attitude() * jp.position + link1->p();
     const Vector3 a = link1->attitude() * jp.jointAxis;
     jp.validAxis = agxConvert::toAGX(link1->attitude() * jp.c_validAxis);
+    jp.signedAxis = agxConvert::toAGX(jp.c_signedAxis);
 
     auto createConstraint = [&](AGXConstraintDesc& jd){
         jd.set(base);
