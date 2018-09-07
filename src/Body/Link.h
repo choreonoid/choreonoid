@@ -236,6 +236,7 @@ public:
 
     virtual void prependChild(Link* link);
     virtual void appendChild(Link* link);
+    bool isOwnerOf(const Link* link) const;
     bool removeChild(Link* link);
 
     void setOffsetPosition(const Position& T){

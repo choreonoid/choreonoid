@@ -289,7 +289,7 @@ public:
     void readNodeInLinks(Mapping* linkNode, const string& nodeType);
     void readLinkNode(Mapping* linkNode);
     void setLinkName(Link* link, const string& name, ValueNode* node);
-    LinkPtr readLinkContents(Mapping* linkNode);
+    LinkPtr readLinkContents(Mapping* linkNode, LinkPtr link = nullptr);
     void setJointId(Link* link, int id);
     void readJointContents(Link* link, Mapping* node);
     bool extractAxis(Mapping* node, const char* key, Vector3& out_axis);
@@ -416,7 +416,7 @@ void readInertia(Listing& inertia, Matrix3& I)
         I(2, 1) = I(1, 2);
         I(2, 2) = inertia[5].toDouble();
     } else {
-        inertia.throwException(_("The number of elements specified as an inertia value must be six or nine."));
+        inertia.throwException(_("The number of elements specified as an inertia value must be six or nine"));
     }
 }
 
@@ -810,12 +810,12 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
                 ++p;
             }
         } else {
-            links->throwException(_("Invalid value specified in the \"links\" key."));
+            links->throwException(_("Invalid value specified in the \"links\" key"));
         }
     }
 
     if(linkInfos.empty()){
-        topNode->throwException(_("There is no link defined."));
+        topNode->throwException(_("There is no link defined"));
     }
 
     auto rootLinkNode = topNode->extract("rootLink");
@@ -824,7 +824,7 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
         auto p = linkMap.find(rootLinkName);
         if(p == linkMap.end()){
             rootLinkNode->throwException(
-                str(format(_("Link \"%1%\" specified in \"rootLink\" is not defined.")) % rootLinkName));
+                str(format(_("Link \"%1%\" specified in \"rootLink\" is not defined")) % rootLinkName));
         }
         rootLink = p->second;
 
@@ -840,16 +840,21 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
         if(parent.empty()){
             if(info->link != rootLink){
                 info->node->throwException(
-                    str(format(_("The parent of %1% is not specified.")) % link->name()));
+                    str(format(_("The parent of %1% is not specified")) % link->name()));
             }
         } else {
             auto p = linkMap.find(parent);
-            if(p != linkMap.end()){
-                Link* parentLink = p->second;
-                parentLink->appendChild(link);
-            } else {
+            if(p == linkMap.end()){
                 info->node->throwException(
                     str(format(_("Parent link \"%1%\" of %2% is not defined")) % parent % link->name()));
+            } else {
+                Link* parentLink = p->second;
+                if(link->isOwnerOf(parentLink)){
+                    info->node->throwException(
+                        str(format(_("Adding \"%1%\" to link \"%2%\" will result in a cyclic reference"))
+                            % link->name() % parent));
+                }
+                parentLink->appendChild(link);
             }
         }
     }        
@@ -927,13 +932,16 @@ void YAMLBodyLoaderImpl::setLinkName(Link* link, const string& name, ValueNode* 
 }
 
 
-LinkPtr YAMLBodyLoaderImpl::readLinkContents(Mapping* node)
+LinkPtr YAMLBodyLoaderImpl::readLinkContents(Mapping* node, LinkPtr link)
 {
-    LinkPtr link = body->createLink();
-
-    auto nameNode = node->extract("name");
-    if(nameNode){
-        setLinkName(link, nameNode->toString(), nameNode);
+    bool isSubBodyNode = (link != nullptr);
+    
+    if(!isSubBodyNode){
+        link = body->createLink();
+        auto nameNode = node->extract("name");
+        if(nameNode){
+            setLinkName(link, nameNode->toString(), nameNode);
+        }
     }
 
     if(extractEigen(node, "translation", v)){
@@ -961,7 +969,7 @@ LinkPtr YAMLBodyLoaderImpl::readLinkContents(Mapping* node)
         sceneGroupSetStack.push_back(SceneGroupSet());
         currentSceneGroupSet().newGroup<SgInvariantGroup>();
         
-        if(readElementContents(*elements)){
+        if(readElementContents(*elements) && !isSubBodyNode){
             SceneGroupSet& sgs = currentSceneGroupSet();
             sgs.setName(link->name());
             if(hasVisualOrCollisionNodes){
@@ -975,33 +983,36 @@ LinkPtr YAMLBodyLoaderImpl::readLinkContents(Mapping* node)
         sceneGroupSetStack.pop_back();
     }
 
-    RigidBody rbody;
-    if(!extractEigen(node, "centerOfMass", rbody.c)){
-        rbody.c.setZero();
-    }
-    if(!extract(node, "mass", rbody.m)){
-        rbody.m = 0.0;
-    }
-    if(!extractInertia(node, "inertia", rbody.I)){
-        rbody.I.setZero();
-    }
-    rigidBodies.push_back(rbody);
-    setMassParameters(link);
+    if(!isSubBodyNode){
+        RigidBody rbody;
+        if(!extractEigen(node, "centerOfMass", rbody.c)){
+            rbody.c.setZero();
+        }
+        if(!extract(node, "mass", rbody.m)){
+            rbody.m = 0.0;
+        }
+        if(!extractInertia(node, "inertia", rbody.I)){
+            rbody.I.setZero();
+        }
+        rigidBodies.push_back(rbody);
+        setMassParameters(link);
 
-    ValueNode* import = node->find("import");
-    if(import->isValid()){
-        if(import->isMapping()){
-            node->insert(import->toMapping());
-        } else if(import->isListing()){
-            Listing& importList = *import->toListing();
-            for(int i=importList.size() - 1; i >= 0; --i){
-                node->insert(importList[i].toMapping());
+        ValueNode* import = node->find("import");
+        if(import->isValid()){
+            if(import->isMapping()){
+                node->insert(import->toMapping());
+            } else if(import->isListing()){
+                Listing& importList = *import->toListing();
+                for(int i=importList.size() - 1; i >= 0; --i){
+                    node->insert(importList[i].toMapping());
+                }
             }
         }
+        
+        link->resetInfo(node);
     }
-    link->resetInfo(node);
 
-    currentLink = 0;
+    currentLink = nullptr;
 
     return link;
 }
@@ -1309,7 +1320,7 @@ bool YAMLBodyLoaderImpl::readElementContents(ValueNode& elements)
             }
         }
     } else {
-        elements.throwException(_("A value of the \"elements\" key must be a sequence or a mapping."));
+        elements.throwException(_("A value of the \"elements\" key must be a sequence or a mapping"));
     }
 
     return isSceneNodeAdded;
@@ -1499,13 +1510,13 @@ bool YAMLBodyLoaderImpl::readVisualOrCollision(Mapping& node, bool isVisual)
     if(isVisual){
         if(currentModelType == COLLISION){
             node.throwException(
-                _("The visual node is conflicting with the Collision node defined at the higher level."));
+                _("The visual node is conflicting with the Collision node defined at the higher level"));
         }
         currentModelType = VISUAL;
     } else {
         if(currentModelType == VISUAL){
             node.throwException(
-                _("The collision node is conflicting with the Visual node defined at the higher level."));
+                _("The collision node is conflicting with the Visual node defined at the higher level"));
         }
         currentModelType = COLLISION;
     }
@@ -1732,20 +1743,20 @@ void YAMLBodyLoaderImpl::readContinuousTrackNode(Mapping* node)
 {
     string parent;
     if(!extract(node, "parent", parent)){
-        node->throwException("parent must be specified.");
+        node->throwException("parent must be specified");
     }
 
     int numJoints = 0;
     if(!extract(node, "numJoints", numJoints)){
-        node->throwException("numJoints must be specified.");
+        node->throwException("numJoints must be specified");
     }
     if(numJoints < 3){
-        node->throwException("numJoints must be more than 2.");
+        node->throwException("numJoints must be more than 2");
     }
 
     Vector3 jointOffset;
     if(!extractEigen(node, "jointOffset", jointOffset)){
-        node->throwException("jointOffset must be specified.");
+        node->throwException("jointOffset must be specified");
     }
 
     const int numOpenJoints = numJoints - 1;
@@ -1795,7 +1806,7 @@ void YAMLBodyLoaderImpl::readSubBodyNode(Mapping* node)
 {
     string uri;
     if(!node->read("uri", uri)){
-        node->throwException("uri must be specified.");
+        node->throwException("uri must be specified");
     }
     
     filesystem::path filepath(uri);
@@ -1803,7 +1814,7 @@ void YAMLBodyLoaderImpl::readSubBodyNode(Mapping* node)
         filepath = getCompactPath(filesystem::path(sceneReader.baseDirectory()) / filepath);
     }
     if(filesystem::equivalent(mainFilePath, filepath)){
-        node->throwException("recursive sub-body is prohibited.");
+        node->throwException("recursive sub-body is prohibited");
     }
 
     BodyPtr subBody;
@@ -1869,18 +1880,10 @@ void YAMLBodyLoaderImpl::addSubBodyLinks(BodyPtr subBody, Mapping* node)
         body->addDevice(device);
     }
 
-    Link* rootLink = subBody->rootLink();
+    LinkPtr rootLink = subBody->rootLink();
 
-    readJointContents(rootLink, node);
-
-    if(read(*node, "translation", v)){
-        rootLink->setOffsetTranslation(v);
-    }
-    Matrix3 R;
-    if(extractRotation(*node, R)){
-        rootLink->setOffsetRotation(R);
-    }
-
+    readLinkContents(node, rootLink);
+    
     LinkInfoPtr linkInfo = new LinkInfo;
     linkInfo->link = rootLink;
     linkInfo->node = node;
@@ -1915,7 +1918,7 @@ void YAMLBodyLoaderImpl::readExtraJoint(Mapping* node)
     for(int i=0; i < 2; ++i){
         if(!joint.link[i]){
             node->throwException(
-                str(format(_("The link specified in \"link%1%Name\" is not found.")) % (i + 1)));
+                str(format(_("The link specified in \"link%1%Name\" is not found")) % (i + 1)));
         }
     }
 
@@ -1923,12 +1926,12 @@ void YAMLBodyLoaderImpl::readExtraJoint(Mapping* node)
     if(jointType == "piston"){
         joint.type = ExtraJoint::EJ_PISTON;
         if(!readAxis(node, "jointAxis", joint.axis)){
-            node->throwException(_("The jointAxis value must be specified for the pistion type."));
+            node->throwException(_("The jointAxis value must be specified for the pistion type"));
         }
     } else if(jointType == "ball"){
         joint.type = ExtraJoint::EJ_BALL;
     } else {
-        node->throwException(str(format(_("Joint type \"%1%\" is not available.")) % jointType));
+        node->throwException(str(format(_("Joint type \"%1%\" is not available")) % jointType));
     }
 
     readEx(*node, "link1LocalPos", joint.point[0]);
