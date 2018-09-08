@@ -10,7 +10,10 @@ Transform {
             Appearance {
               material
                 Material {
-                  diffuseColor 0.45 0.38 0.52
+                  #diffuseColor 0.45 0.38 0.52
+		  diffuseColor 0.54 0.46 0.62
+		  specularColor 0.7 0.7 0.7
+		  shininess 0.1
                 }
             }
           geometry

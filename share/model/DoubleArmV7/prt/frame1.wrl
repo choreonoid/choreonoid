@@ -8,7 +8,10 @@ Transform {
       Appearance {
 	material 
 	Material {
-	  diffuseColor 0.52999997 0.56 0.27000001
+	  #diffuseColor 0.52999997 0.56 0.27000001
+	  diffuseColor 0.3 0.3 0.3
+	  specularColor 0.1 0.1 0.1
+	  shininess 0.05
 	}
       }
       geometry 
