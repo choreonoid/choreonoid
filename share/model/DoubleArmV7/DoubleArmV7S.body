@@ -6,17 +6,9 @@ rootLink: TFRAME
 
 links:
   -
-    name: TFRAME
-    jointType: free
-    translation: [ 0, 0, 0.520 ]
-    rotation: [ [ 0, 0, 1, 180 ], [ 1, 0, 0, 90 ] ]
-    mass: 445
-    centerOfMass: [ 2.61167950E-02, -2.48536360E-01, 7.38255770E-05 ]
-    inertia: [
-      1.17125210E+02,  9.30859190E-01,  7.71323470E-03,
-      9.30859190E-01,  2.13308730E+02,  -4.07759970E-03,
-      7.71323470E-03,  -4.07759970E-03, 1.08880120E+02 ]
-    elements: { Resource: { uri: "prt/frame1.wrl" } }
+    type: SubBody
+    uri: DoubleArmV7-Upper.body
+    jointIdOffset: 0
   -
     name: TRACK_L
     parent: TFRAME
@@ -45,8 +37,47 @@ links:
       -1.21522830E-01, 2.45512090E+01, -1.72173060E-04,
       5.01141340E-04, -1.72173060E-04, 2.65997250E+01 ]
     elements: { type: Resource, uri: "prt/tframe.wrl" }
-  -
-    type: SubBody
-    uri: DoubleArmV7-Upper.body
-    parent: TFRAME
-    jointIdOffset: 0
+
+collisionDetection:
+  excludeTreeDepth: 1
+  excludeLinks: [ PUSHROD ]
+  excludeLinkGroups:
+    -
+      name: MFRAMEGroup
+      links: [ MFRAME, TFRAME ]
+    -
+      name: UFRAMEGroup
+      links: [ UFRAME, MFRAME ]
+    -
+      name: HandGroup
+      links: [
+        MANIARM, MANIELBOW, YAWJOINT,
+        HANDBASE, HANDSLNK_I, HANDSLNK_O,
+        MANIFNG_U, HANDTIP_U, HANDLNK_I,
+        MANIFNG_L, HANDTIP_L, HANDLNK_O ]
+    -
+      name: ManiBoomGroup
+      links: [
+        MNP_SWING, MANIBOOM, MANIARM,
+        UFRAME, MFRAME, TFRAME,
+        TRACK_L, TRACK_R ]
+    -
+      name: ManiBoomGroup
+      links: [
+        MNP_SWING, MANIBOOM, MANIARM,
+        UFRAME, MFRAME, TFRAME,
+        TRACK_L, TRACK_R ]
+    -
+      name: BoomGroup
+      links: [
+        BLOCK, BOOM, UFRAME, MFRAME, TFRAME,
+        TRACK_L, TRACK_R ]
+    -
+      name: ArmGroup
+      links: [ BLOCK, BOOM, ARM, UFRAME, MFRAME, TFRAME ]
+    -
+      name: TOHKU_Group
+      links: [ TOHKU_TIP_01, TOHKU_TIP_02, TOHKU_ROLL, TOHKU_PITCH, ARM ]
+    -
+      name: TOHKU_Group2
+      links: [ TOHKU_ROLL, TOHKU_PITCH, ARM, BOOM, BLOCK ]
