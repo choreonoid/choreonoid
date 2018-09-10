@@ -78,7 +78,3 @@ collisionDetection:
     -
       name: Finger2Group
       links: [ ARM2_FINGER1, ARM2_FINGER2, ARM2_FINGER3 ]
-  #excludeLinks: [ ]
-  #excludeLinksDynamic: [ ]
-  #enableAGXWireContact: true
-  #excludeLinksWireCollision: [ linkQ, linkR, ... ]

@@ -442,7 +442,3 @@ collisionDetection:
         FL_FLIPPER, FL_SUB_TRACK_WHEEL1,
         BR_FLIPPER, BR_SUB_TRACK_WHEEL1,
         BL_FLIPPER, BL_SUB_TRACK_WHEEL1 ]
-  #excludeLinks: [ ]
-  #excludeLinksDynamic: [ ]
-  #enableAGXWireContact: true
-  #excludeLinksWireCollision: [ linkQ, linkR, ... ]

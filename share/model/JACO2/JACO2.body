@@ -673,3 +673,13 @@ standardPose: [
 
 collisionDetection:
   excludeTreeDepth: 1
+  excludeLinkGroups:
+    -
+      name: ShoulderGroup
+      links: [ BASE, SHOULDER, ARM ]
+    -
+      name: ForeArmGroup
+      links: [ FOREARM, WRIST1, WRIST2, HAND ]
+    -
+      name: FingerGroup
+      links: [ FINGER1, FINGER2, FINGER3 ]
