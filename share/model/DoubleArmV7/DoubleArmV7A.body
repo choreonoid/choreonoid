@@ -6,19 +6,10 @@ rootLink: TFRAME
 
 links:
   -
-    name: TFRAME
-    jointType: free
-    translation: [ 0, 0, 0.520 ]
-    rotation: [ 1, 0, 0, 90 ]
-    mass: 445
-    centerOfMass: [ 2.61167950E-02, -2.48536360E-01, 7.38255770E-05 ]
-    inertia: [
-      1.17125210E+02,  9.30859190E-01,  7.71323470E-03,
-      9.30859190E-01,  2.13308730E+02,  -4.07759970E-03,
-      7.71323470E-03,  -4.07759970E-03, 1.08880120E+02 ]
+    type: SubBody
+    uri: DoubleArmV7-Upper.body
+    jointIdOffset: 0
     elements:
-      - type: Resource
-        uri: "prt/frame1.wrl"
       -
         type: AGXVehicleContinuousTrackDevice
         name: TRACK_L
@@ -88,11 +79,12 @@ links:
     elements: &WeelShape
       Shape:
         rotation: [ 1, 0, 0, 90 ]
-        appearance: &black
+        appearance:
           material:
             diffuseColor: [ 0.3, 0.3, 0.3 ]
             ambientIntensity: 0.2
-            specularColor: [ 0.8, 0.8, 0.8 ]
+            specularColor: [ 0.2, 0.2, 0.2 ]
+            shininess: 0.1
         geometry: { type: Cylinder, radius: 0.2, height: 0.25 }
   -
     name: WHEEL_L1
@@ -200,11 +192,6 @@ links:
     material: DoubleArmV7AWheel
     elements: *WeelShape
   -
-    type: SubBody
-    uri: DoubleArmV7-Upper.body
-    parent: TFRAME
-    jointIdOffset: 0
-  -
     name: WIRE_GUARD_L
     parent: TFRAME
     jointType: fixed
@@ -245,6 +232,49 @@ links:
 
 
 collisionDetection:
+  excludeTreeDepth: 1
   excludeLinksDynamic: [ WIRE_GUARD_L, WIRE_GUARD_R ]
+  excludeSelfCollisionLinks: [ PUSHROD ]
+  excludeLinkGroups:
+    -
+      name: MFRAMEGroup
+      links: [ MFRAME, TFRAME ]
+    -
+      name: UFRAMEGroup
+      links: [ UFRAME, MFRAME ]
+    -
+      name: HandGroup
+      links: [
+        MANIARM, MANIELBOW, YAWJOINT,
+        HANDBASE, HANDSLNK_I, HANDSLNK_O,
+        MANIFNG_U, HANDTIP_U, HANDLNK_I,
+        MANIFNG_L, HANDTIP_L, HANDLNK_O ]
+    -
+      name: ManiBoomGroup
+      links: [
+        MNP_SWING, MANIBOOM, MANIARM,
+        UFRAME, MFRAME, TFRAME,
+        WHEEL_L0, WHEEL_L1, WHEEL_L2, WHEEL_L3, WHEEL_R0, WHEEL_R1, WHEEL_R2, WHEEL_R3 ]
+    -
+      name: ManiBoomGroup
+      links: [
+        MNP_SWING, MANIBOOM, MANIARM,
+        UFRAME, MFRAME, TFRAME,
+        WHEEL_L0, WHEEL_L1, WHEEL_L2, WHEEL_L3, WHEEL_R0, WHEEL_R1, WHEEL_R2, WHEEL_R3 ]
+    -
+      name: BoomGroup
+      links: [
+        BLOCK, BOOM, UFRAME, MFRAME, TFRAME,
+        WHEEL_L0, WHEEL_L1, WHEEL_L2, WHEEL_L3, WHEEL_R0, WHEEL_R1, WHEEL_R2, WHEEL_R3 ]
+    -
+      name: ArmGroup
+      links: [ BLOCK, BOOM, ARM, UFRAME, MFRAME, TFRAME ]
+    -
+      name: TOHKU_Group
+      links: [ TOHKU_TIP_01, TOHKU_TIP_02, TOHKU_ROLL, TOHKU_PITCH, ARM ]
+    -
+      name: TOHKU_Group2
+      links: [ TOHKU_ROLL, TOHKU_PITCH, ARM, BOOM, BLOCK ]
+
   #excludeLinksWireCollision: [ WIRE_GUARD_L, WIRE_GUARD_R, TFRAME,
   #  WHEEL_L0, WHEEL_L1, WHEEL_L2, WHEEL_L3, WHEEL_R0, WHEEL_R1, WHEEL_R2, WHEEL_R3 ]

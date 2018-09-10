@@ -580,12 +580,12 @@ void SimpleControllerItemImpl::enableInput(Link* link)
 
     case Link::JOINT_EFFORT:
     case Link::JOINT_SURFACE_VELOCITY:
-        defaultInputStateTypes = SimpleControllerIO::JOINT_ANGLE;
+        defaultInputStateTypes = SimpleControllerIO::JOINT_DISPLACEMENT;
         break;
 
     case Link::JOINT_DISPLACEMENT:
     case Link::JOINT_VELOCITY:
-        defaultInputStateTypes = SimpleControllerIO::JOINT_ANGLE | SimpleControllerIO::JOINT_TORQUE;
+        defaultInputStateTypes = SimpleControllerIO::JOINT_DISPLACEMENT | SimpleControllerIO::JOINT_EFFORT;
         break;
 
     case Link::LINK_POSITION:

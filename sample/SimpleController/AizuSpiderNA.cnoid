@@ -40,7 +40,7 @@ items:
               -9.561105, -9.256446,  28.323594,  15.363550, -14.635380, -9.256446 ]
             zmp: [ 0, 0, 0 ]
             collisionDetection: true
-            selfCollisionDetection: false
+            selfCollisionDetection: true
             isEditable: true
           children: 
             - 

@@ -11,6 +11,8 @@ Transform {
               material
                 Material {
                   diffuseColor 0.87 0.7426 0.79
+		  #diffuseColor 0.4 0.4 0.4
+		  specularColor 0.2 0.2 0.2
                 }
             }
           geometry

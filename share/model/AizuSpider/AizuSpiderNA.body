@@ -422,3 +422,27 @@ links:
         idlerNames: [ BL_SUB_TRACK_WHEEL2 ]
         upAxis: [ 0, 0, 1 ]
         <<: [ *SUB_BELT_SPEC, *COMMON_BELT_SPEC ]
+
+# TODO: Share the following information with other AizuSpider models
+collisionDetection:
+  excludeTreeDepth: 1
+  excludeSelfCollisionLinks: [
+    R_TRACK_WHEEL1, R_TRACK_WHEEL2, R_TRACK_BOTTOM_GUIDE, R_TRACK_TOP_ROLLER, R_TRACK,
+    L_TRACK_WHEEL1, L_TRACK_WHEEL2, L_TRACK_BOTTOM_GUIDE, L_TRACK_TOP_ROLLER, L_TRACK,
+    FR_SUB_TRACK_WHEEL2, FR_SUB_TRACK_BOTTOM_GUIDE, FR_SUB_TRACK,
+    FL_SUB_TRACK_WHEEL2, FL_SUB_TRACK_BOTTOM_GUIDE, FL_SUB_TRACK,
+    BR_SUB_TRACK_WHEEL2, BR_SUB_TRACK_BOTTOM_GUIDE, BR_SUB_TRACK,
+    BL_SUB_TRACK_WHEEL2, BL_SUB_TRACK_BOTTOM_GUIDE, BL_SUB_TRACK ]
+  excludeLinkGroups:
+    -
+      name: ChassisGroup
+      links: [
+        CHASSIS,
+        FR_FLIPPER, FR_SUB_TRACK_WHEEL1,
+        FL_FLIPPER, FL_SUB_TRACK_WHEEL1,
+        BR_FLIPPER, BR_SUB_TRACK_WHEEL1,
+        BL_FLIPPER, BL_SUB_TRACK_WHEEL1 ]
+  #excludeLinks: [ ]
+  #excludeLinksDynamic: [ ]
+  #enableAGXWireContact: true
+  #excludeLinksWireCollision: [ linkQ, linkR, ... ]

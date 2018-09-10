@@ -52,25 +52,25 @@ items:
               data: 
                 modelFile: "${SHARE}/model/DoubleArmV7/DoubleArmV7A.body"
                 currentBaseLink: "TFRAME"
-                rootPosition: [ -0.00246979369, 0.00366262694, 0.537615659 ]
+                rootPosition: [ 0, 0, 0.537615659 ]
                 rootAttitude: [ 
-                  -0.999948148, 0.000523355798, -0.0101699709, 
-                  -0.0101699455, 5.11840195e-05, 0.999948283, 
-                  0.000523849272, 0.999999862, -4.58588655e-05 ]
+                  -1, 0, 0,
+                   0, 0, 1,
+                   0, 1, 0 ]
                 jointPositions: [ 
-                   0.391500, -0.762258, -1.310742,  2.654646,  0.000000,  0.101593, -0.349066, -0.349066, 
+                   -0.000000,  0.000000, -1.221730,  2.617994,  0.000000,  0.000000,  0.000000,  0.000000, 
                   -0.000000, -0.000000,  0.000000,  0.000000, -0.000000, -0.000000,  0.000000,  0.000000 ]
-                initialRootPosition: [ 6.92089792e-05, 4.6847637e-06, 0.53746052 ]
+                initialRootPosition:  [ 0, 0, 0.537615659 ]
                 initialRootAttitude: [ 
-                  -0.999999999, -5.01305606e-05, 1.23659303e-06, 
-                  1.23613222e-06, 9.19198636e-06, 1, 
-                  -5.0130572e-05, 0.999999999, -9.19226618e-06 ]
+                  -1, 0, 0,
+                   0, 0, 1,
+                   0, 1, 0 ]
                 initialJointPositions: [ 
                    -0.000000,  0.000000, -1.221730,  2.617994,  0.000000,  0.000000,  0.000000,  0.000000, 
                   -0.000000, -0.000000,  0.000000,  0.000000, -0.000000, -0.000000,  0.000000,  0.000000 ]
                 zmp: [ 0, 0, 0 ]
                 collisionDetection: true
-                selfCollisionDetection: false
+                selfCollisionDetection: true
                 isEditable: true
               children: 
                 - 
@@ -80,7 +80,7 @@ items:
                   class: SimpleControllerItem
                   data: 
                     isNoDelayMode: false
-                    controllerOptions: "position"
+                    controllerOptions: "velocity"
                     controller: "DoubleArmV7Controller"
                     baseDirectory: "Controller directory"
                     reloading: true
@@ -94,7 +94,7 @@ items:
                 currentBaseLink: "Floor"
                 rootPosition: [ 0, 0, -0.1 ]
                 rootAttitude: [ 
-                  1, 0, 0, 
+                  1, 0, 0,
                   0, 1, 0, 
                   0, 0, 1 ]
                 jointPositions: [  ]

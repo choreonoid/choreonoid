@@ -172,6 +172,20 @@ void Link::appendChild(Link* link)
 }
 
 
+bool Link::isOwnerOf(const Link* link) const
+{
+    if(link == this){
+        return true;
+    }
+    for(const Link* owner = link->parent_; owner; owner = owner->parent_){
+        if(owner == link){
+            return true;
+        }
+    }
+    return false;
+}
+    
+
 /**
    A child link is removed from the link.
    If a link given by the parameter is not a child of the link, false is returned.
