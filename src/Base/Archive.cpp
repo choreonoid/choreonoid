@@ -426,7 +426,7 @@ ValueNodePtr Archive::getItemId(Item* item) const
             }
         }
     }
-    return 0;
+    return nullptr;
 }
 
 
