@@ -141,9 +141,11 @@ void ForwardDynamicsCBM::complementHighGainModeCommandValues()
     for(size_t i=0; i < highGainModeJoints.size(); ++i){
         Link* joint = highGainModeJoints[i];
         if(joint->actuationMode() == Link::JOINT_DISPLACEMENT){
+            joint->q() = joint->q_target();
             joint->dq() = (joint->q() - qGivenPrev[i]) / timeStep;
             joint->ddq() = (joint->dq() - dqGivenPrev[i]) / timeStep;
         } else {
+            joint->dq() = joint->dq_target();
             joint->q() = joint->q() + joint->dq() * timeStep;
             joint->ddq() = (joint->dq() - dqGivenPrev[i]) / timeStep;
         }

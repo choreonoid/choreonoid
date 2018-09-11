@@ -139,7 +139,7 @@ void DynamicsSimulator_impl::setCharacterLinkData(
             
         case OpenHRP::DynamicsSimulator::JOINT_VALUE:
             if(!link->isFixedJoint()){
-                link->q() = data[0];
+                link->q_target() = data[0];
             }
             break;
             
@@ -147,7 +147,7 @@ void DynamicsSimulator_impl::setCharacterLinkData(
             if(!link->isFixedJoint() ||
                link->jointType() == Link::PSEUDO_CONTINUOUS_TRACK ||
                link->actuationMode() == Link::JOINT_SURFACE_VELOCITY){
-                link->dq() = data[0];
+                link->dq_target() = data[0];
             }
             break;
             
@@ -320,13 +320,13 @@ void DynamicsSimulator_impl::setCharacterAllLinkData(
         
     case OpenHRP::DynamicsSimulator::JOINT_VALUE:
         for(int i=0; i < n; ++i){
-            body->joint(i)->q() = wdata[i];
+            body->joint(i)->q_target() = wdata[i];
         }
         break;
         
     case OpenHRP::DynamicsSimulator::JOINT_VELOCITY:
         for(int i=0; i < n; ++i){
-            body->joint(i)->dq() = wdata[i];
+            body->joint(i)->dq_target() = wdata[i];
         }
         break;
         

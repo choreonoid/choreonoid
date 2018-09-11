@@ -699,7 +699,7 @@ void PhysXLink::setVelocityToPhysX()
 {
     if(link->isRotationalJoint()){
     	PxRevoluteJoint* joint = pxJoint->is<PxRevoluteJoint>();
-    	double v = link->dq();
+    	double v = link->dq_target();
     	joint->setDriveVelocity(v);
     } else if(link->isSlideJoint()){
 
@@ -1095,6 +1095,8 @@ void PhysXSimulatorItemImpl::addBody(PhysXBody* physXBody)
         joint->u() = 0.0;
         joint->dq() = 0.0;
         joint->ddq() = 0.0;
+        joint->q_target() = joint->q();
+        joint->dq_target() = joint->dq();
     }
     
     body.clearExternalForces();
@@ -1164,7 +1166,7 @@ void PhysXSimulatorItemImpl::onContactModify(PxContactModifyPair* const pairs, P
             continue;
 
         dir.normalize();
-        dir *= sign * crawlerlink->dq();
+        dir *= sign * crawlerlink->dq_target();
         pairs->contacts.setTargetVelocity(i, dir);
     }
 }

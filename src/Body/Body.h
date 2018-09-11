@@ -53,7 +53,8 @@ public:
     */
     void updateLinkTree();
 
-    void initializeState();
+    void initializePosition();
+    virtual void initializeState();
 
     /**
        The number of all the links the body has.

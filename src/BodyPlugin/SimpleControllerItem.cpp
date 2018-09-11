@@ -66,6 +66,8 @@ public:
     vector<bool> outputLinkFlags;
     vector<unsigned short> outputLinkIndices;
 
+    bool isOldRefarenceVariableMode;
+
     ConnectionSet outputDeviceStateConnections;
     boost::dynamic_bitset<> outputDeviceStateChangeFlag;
 
@@ -164,6 +166,7 @@ SimpleControllerItemImpl::SimpleControllerItemImpl(SimpleControllerItem* self)
     controller = nullptr;
     ioBody = nullptr;
     io = nullptr;
+    isOldRefarenceVariableMode = false;
     mv = MessageView::instance();
     doReloading = false;
 
@@ -193,6 +196,7 @@ SimpleControllerItemImpl::SimpleControllerItemImpl(SimpleControllerItem* self, c
     controller = nullptr;
     ioBody = nullptr;
     io = nullptr;
+    isOldRefarenceVariableMode = org.isOldRefarenceVariableMode;
     mv = MessageView::instance();
     doReloading = org.doReloading;
 }
@@ -828,12 +832,19 @@ void SimpleControllerItemImpl::output()
             simLink->u() = ioLink->u();
             break;
         case Link::JOINT_DISPLACEMENT:
-            simLink->q() = ioLink->q();
+            if(isOldRefarenceVariableMode){
+                simLink->q_target() = ioLink->q();
+            } else {
+                simLink->q_target() = ioLink->q_target();
+            }
             break;
         case Link::JOINT_VELOCITY:
         case Link::JOINT_SURFACE_VELOCITY:
-            simLink->dq() = ioLink->dq();
-            simLink->dq() = ioLink->dq();
+            if(isOldRefarenceVariableMode){
+                simLink->dq_target() = ioLink->dq();
+            } else {
+                simLink->dq_target() = ioLink->dq_target();
+            }
             break;
         case Link::LINK_POSITION:
             simLink->T() = ioLink->T();
@@ -910,6 +921,8 @@ void SimpleControllerItemImpl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("Base directory"), baseDirectoryType, changeProperty(baseDirectoryType));
 
     putProperty(_("Reloading"), doReloading, [&](bool on){ return onReloadingChanged(on); });
+
+    putProperty(_("Old target value variable mode"), isOldRefarenceVariableMode, changeProperty(isOldRefarenceVariableMode));
 }
 
 
@@ -927,6 +940,7 @@ bool SimpleControllerItemImpl::store(Archive& archive)
     archive.writeRelocatablePath("controller", controllerModuleName);
     archive.write("baseDirectory", baseDirectoryType.selectedSymbol(), DOUBLE_QUOTED);
     archive.write("reloading", doReloading);
+    archive.write("isOldRefarenceVariableMode", isOldRefarenceVariableMode);
     return true;
 }
 
@@ -956,6 +970,8 @@ bool SimpleControllerItemImpl::restore(const Archive& archive)
             loadController();
         }
     }
+
+    archive.read("isOldRefarenceVariableMode", isOldRefarenceVariableMode);
 
     return true;
 }

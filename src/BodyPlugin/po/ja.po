@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-09-04 01:31+0900\n"
+"POT-Creation-Date: 2018-09-11 18:53+0900\n"
 "PO-Revision-Date: 2011-11-12 14:46+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Language =\n"
@@ -276,33 +276,54 @@ msgstr "関節並進位置 [m]"
 msgid "Joint Velocity [m/s]"
 msgstr "関節速度 [m/s]"
 
-#: BodyMarkerItem.cpp:59
+#: BodyMarkerItem.cpp:65
 msgid "BodyMarkerItem"
 msgstr "ボディマーカアイテム"
 
-#: BodyMarkerItem.cpp:88
+#: BodyMarkerItem.cpp:92
 msgid "Cross"
-msgstr ""
+msgstr "十字"
 
-#: BodyMarkerItem.cpp:89
+#: BodyMarkerItem.cpp:93
+msgid "Sphere"
+msgstr "球"
+
+#: BodyMarkerItem.cpp:94
 msgid "Axis arrows"
-msgstr ""
+msgstr "軸矢印"
 
-#: BodyMarkerItem.cpp:306
+#: BodyMarkerItem.cpp:318
+msgid "Target link \"%1%\" of \"%2%\" is not found."
+msgstr "\"%2%\"の対象リンク\"%1%\"がみつかりません。"
+
+#: BodyMarkerItem.cpp:327
+msgid "Target node \"%1%\" of \"%2%\" is not found."
+msgstr "\"%2%\"の対象ノード\"%1%\"がみつかりません。"
+
+#: BodyMarkerItem.cpp:412
 msgid "Marker type"
 msgstr "マーカタイプ"
 
-#: BodyMarkerItem.cpp:308
-msgid "Marker size"
-msgstr "マーカサイズ"
+#: BodyMarkerItem.cpp:415 LinkTreeWidget.cpp:276 LinkTreeWidget.cpp:681
+#: LinkTreeWidget.cpp:686 LinkTreeWidget.cpp:701
+msgid "Link"
+msgstr "リンク"
 
-#: BodyMarkerItem.cpp:310 BodyTrackingCameraItem.cpp:253
-msgid "Target link"
-msgstr "対象リンク"
+#: BodyMarkerItem.cpp:418
+msgid "Node"
+msgstr "ノード"
 
-#: BodyMarkerItem.cpp:312
+#: BodyMarkerItem.cpp:421
 msgid "Translation"
 msgstr "位置"
+
+#: BodyMarkerItem.cpp:443
+msgid "Size"
+msgstr "サイズ"
+
+#: BodyMarkerItem.cpp:446
+msgid "Color"
+msgstr "色"
 
 #: BodyMotionControllerItem.cpp:39
 msgid "BodyMotionControllerItem"
@@ -392,6 +413,10 @@ msgstr "透視投影"
 msgid "Orthographic"
 msgstr "並行投影"
 
+#: BodyTrackingCameraItem.cpp:253
+msgid "Target link"
+msgstr "対象リンク"
+
 #: BodyTrackingCameraItem.cpp:255
 msgid "Keep relative attitude"
 msgstr "姿勢保持"
@@ -428,7 +453,7 @@ msgstr "干渉データ"
 msgid "No delay mode"
 msgstr "無遅延モード"
 
-#: ControllerItem.cpp:117 SimulatorItem.cpp:2558
+#: ControllerItem.cpp:117 SimulatorItem.cpp:2568
 msgid "Controller options"
 msgstr "コントローラオプション"
 
@@ -1021,11 +1046,6 @@ msgstr "関節慣性"
 msgid "Links"
 msgstr "リンク"
 
-#: LinkTreeWidget.cpp:276 LinkTreeWidget.cpp:680 LinkTreeWidget.cpp:685
-#: LinkTreeWidget.cpp:700
-msgid "Link"
-msgstr "リンク"
-
 #: LinkTreeWidget.cpp:309
 msgid "Link List"
 msgstr "リンク一覧"
@@ -1046,11 +1066,11 @@ msgstr "関節ツリー"
 msgid "Part Tree"
 msgstr "身体部位ツリー"
 
-#: LinkTreeWidget.cpp:690 LinkTreeWidget.cpp:695
+#: LinkTreeWidget.cpp:691 LinkTreeWidget.cpp:696
 msgid "Joint"
 msgstr "関節"
 
-#: MultiDeviceStateSeqItem.cpp:80
+#: MultiDeviceStateSeqItem.cpp:85
 msgid "MultiDeviceStateSeqItem"
 msgstr ""
 
@@ -1078,23 +1098,23 @@ msgstr "レンジセンサビジュアライザ"
 msgid "CameraImageVisualizer"
 msgstr "カメラ画像ビジュアライザ"
 
-#: SimpleControllerItem.cpp:147
+#: SimpleControllerItem.cpp:149
 msgid "SimpleControllerItem"
 msgstr "シンプルコントローラアイテム"
 
-#: SimpleControllerItem.cpp:172
+#: SimpleControllerItem.cpp:175
 msgid "None"
 msgstr "なし"
 
-#: SimpleControllerItem.cpp:173
+#: SimpleControllerItem.cpp:176
 msgid "Controller directory"
 msgstr "コントローラディレクトリ"
 
-#: SimpleControllerItem.cpp:174
+#: SimpleControllerItem.cpp:177
 msgid "Project directory"
 msgstr "プロジェクトディレクトリ"
 
-#: SimpleControllerItem.cpp:280
+#: SimpleControllerItem.cpp:284
 msgid ""
 "Controller module \"%1%\" of %2% is specified as a relative path from the "
 "project directory, but the project directory has not been determined yet."
@@ -1102,23 +1122,23 @@ msgstr ""
 "%2%のコントローラモジュール\"%1%\"はプロジェクトディレクトリからの相対パスで"
 "指定されていますが、プロジェクトディレクトリはまだ決まっていません。"
 
-#: SimpleControllerItem.cpp:293
+#: SimpleControllerItem.cpp:297
 msgid "The controller module of %1% has already been loaded."
 msgstr "%1%のコントローラモジュールは既にロードされています。"
 
-#: SimpleControllerItem.cpp:300
+#: SimpleControllerItem.cpp:304
 msgid "Loading the controller module \"%2%\" of %1% ... "
 msgstr "%1%のコントローラモジュール\"%2%\"をロード中･･･"
 
-#: SimpleControllerItem.cpp:303
+#: SimpleControllerItem.cpp:307
 msgid "Failed.\n"
 msgstr "失敗。\n"
 
-#: SimpleControllerItem.cpp:307
+#: SimpleControllerItem.cpp:311
 msgid "OK!"
 msgstr ""
 
-#: SimpleControllerItem.cpp:314
+#: SimpleControllerItem.cpp:318
 msgid ""
 "The factory function \"createSimpleController()\" is not found in the "
 "controller module."
@@ -1126,46 +1146,50 @@ msgstr ""
 "ファクトリ関数\"createSimpleController()\"がコントローラモジュール内に見つか"
 "りません。"
 
-#: SimpleControllerItem.cpp:321
+#: SimpleControllerItem.cpp:325
 msgid "The controller factory of %1% failed to create a controller instance."
 msgstr ""
 "%1%のコントローラファクトリはコントローラインスタンスの生成に失敗しました。"
 
-#: SimpleControllerItem.cpp:329
+#: SimpleControllerItem.cpp:333
 msgid "%1% failed to configure the controller"
 msgstr "%1%はコントローラインスタンスの生成に失敗しました。"
 
-#: SimpleControllerItem.cpp:333
+#: SimpleControllerItem.cpp:337
 msgid "A controller instance has successfully been created."
 msgstr "コントローラインスタンスを生成しました。"
 
-#: SimpleControllerItem.cpp:354
+#: SimpleControllerItem.cpp:358
 msgid "The controller module \"%2%\" of %1% has been unloaded."
 msgstr "%1%のコントローラモジュール\"%2%\"をアンロードしました。"
 
-#: SimpleControllerItem.cpp:444
+#: SimpleControllerItem.cpp:448
 msgid "%1%'s initialize method failed."
 msgstr "%1%のinitializeメソッドが失敗しました。"
 
-#: SimpleControllerItem.cpp:708
+#: SimpleControllerItem.cpp:712
 msgid "%1% failed to start"
 msgstr "%1%を稼働できませんでした。"
 
-#: SimpleControllerItem.cpp:900
+#: SimpleControllerItem.cpp:911
 msgid "Simple Controller Module (*.%1%)"
 msgstr "シンプルコントローラモジュール (*.%1%)"
 
-#: SimpleControllerItem.cpp:908
+#: SimpleControllerItem.cpp:919
 msgid "Controller module"
 msgstr "コントローラモジュール"
 
-#: SimpleControllerItem.cpp:910
+#: SimpleControllerItem.cpp:921
 msgid "Base directory"
 msgstr "ベースディレクトリ"
 
-#: SimpleControllerItem.cpp:912
+#: SimpleControllerItem.cpp:923
 msgid "Reloading"
 msgstr "再読込"
+
+#: SimpleControllerItem.cpp:925
+msgid "Old target value variable mode"
+msgstr "旧指令値変数モード"
 
 #: SimulationBar.cpp:53
 msgid "SimulationBar"
@@ -1250,71 +1274,71 @@ msgstr "遅延"
 msgid "Simulation only"
 msgstr "シミュレーション用に限定"
 
-#: SimulatorItem.cpp:1090
+#: SimulatorItem.cpp:1100
 msgid "Timestep"
 msgstr "タイムステップ"
 
-#: SimulatorItem.cpp:1091
+#: SimulatorItem.cpp:1101
 msgid "Framerate"
 msgstr "フレームレート"
 
-#: SimulatorItem.cpp:1092
+#: SimulatorItem.cpp:1102
 msgid "Time bar"
 msgstr "タイムバー"
 
-#: SimulatorItem.cpp:1102
+#: SimulatorItem.cpp:1112
 msgid "full"
 msgstr "全て"
 
-#: SimulatorItem.cpp:1103
+#: SimulatorItem.cpp:1113
 msgid "tail"
 msgstr "末尾"
 
-#: SimulatorItem.cpp:1104
+#: SimulatorItem.cpp:1114
 msgid "off"
 msgstr "オフ"
 
-#: SimulatorItem.cpp:1107
+#: SimulatorItem.cpp:1117
 msgid "Unlimited"
 msgstr "無制限"
 
-#: SimulatorItem.cpp:1108
+#: SimulatorItem.cpp:1118
 msgid "Active control period"
 msgstr "能動制御期間"
 
-#: SimulatorItem.cpp:1109
+#: SimulatorItem.cpp:1119
 msgid "Specified time"
 msgstr "指定時間"
 
-#: SimulatorItem.cpp:1110
+#: SimulatorItem.cpp:1120
 msgid "Time bar range"
 msgstr "タイムバー範囲"
 
-#: SimulatorItem.cpp:1457
+#: SimulatorItem.cpp:1467
 msgid "%1% must be in a WorldItem to do simulation."
 msgstr "%1%はシミュレーションを行うワールドである必要があります。"
 
-#: SimulatorItem.cpp:1573
+#: SimulatorItem.cpp:1583
 msgid "SubSimulatorItem \"%1%\" has been detected."
 msgstr "サブシミュレータアイテム\"%1%\"が検出されました。"
 
-#: SimulatorItem.cpp:1578
+#: SimulatorItem.cpp:1588
 msgid "The initialization of \"%1%\" failed."
 msgstr "\"%1%\"の初期化に失敗しました。"
 
-#: SimulatorItem.cpp:1581
+#: SimulatorItem.cpp:1591
 msgid "SubSimulatorItem \"%1%\" is disabled."
 msgstr "サブシミュレータアイテム\"%1%\"は無効化されています。"
 
-#: SimulatorItem.cpp:1603
+#: SimulatorItem.cpp:1613
 msgid "%1% for %2% failed to start."
 msgstr "%2%用の%1%を稼働できませんでした。"
 
-#: SimulatorItem.cpp:1610
+#: SimulatorItem.cpp:1620
 msgid "%1% failed to start."
 msgstr "%1%を稼働できませんでした。"
 
-#: SimulatorItem.cpp:1650
+#: SimulatorItem.cpp:1660
 msgid ""
 "WorldLogFileItem \"%1%\" has been detected. A simulation result is recoreded "
 "to \"%2%\"."
@@ -1322,59 +1346,59 @@ msgstr ""
 "ワールドログファイルアイテム \"%1%\" が検出されました。シミュレーション結果は"
 "\"%1%\" に記録されます。"
 
-#: SimulatorItem.cpp:1708
+#: SimulatorItem.cpp:1718
 msgid "Simulation by %1% has started."
 msgstr "%1%によるシミュレーションを開始しました。"
 
-#: SimulatorItem.cpp:2261
+#: SimulatorItem.cpp:2271
 msgid "Simulation by %1% has finished at %2% [s]."
 msgstr "%1%によるシミュレーションが%2%秒時点で終了しました。"
 
-#: SimulatorItem.cpp:2262
+#: SimulatorItem.cpp:2272
 msgid "Computation time is %1% [s], computation time / simulation time = %2%."
 msgstr "計算時間: %1% [s], 計算時間 / シミュレーション時間 = %2%"
 
-#: SimulatorItem.cpp:2531
+#: SimulatorItem.cpp:2541
 msgid "Temporal resolution type"
 msgstr "時間分解能タイプ"
 
-#: SimulatorItem.cpp:2535
+#: SimulatorItem.cpp:2545
 msgid "Time step"
 msgstr "タイムステップ"
 
-#: SimulatorItem.cpp:2538
+#: SimulatorItem.cpp:2548
 msgid "Frame rate"
 msgstr "フレームレート"
 
-#: SimulatorItem.cpp:2542
+#: SimulatorItem.cpp:2552
 msgid "Sync with realtime"
 msgstr "実時間同期"
 
-#: SimulatorItem.cpp:2544
+#: SimulatorItem.cpp:2554
 msgid "Time range"
 msgstr "時間範囲"
 
-#: SimulatorItem.cpp:2546
+#: SimulatorItem.cpp:2556
 msgid "Time length"
 msgstr "時間長"
 
-#: SimulatorItem.cpp:2548
+#: SimulatorItem.cpp:2558
 msgid "Recording"
 msgstr "記録モード"
 
-#: SimulatorItem.cpp:2550
+#: SimulatorItem.cpp:2560
 msgid "All link positions"
 msgstr "全リンク位置姿勢出力"
 
-#: SimulatorItem.cpp:2552
+#: SimulatorItem.cpp:2562
 msgid "Device state output"
 msgstr "デバイス状態の記録"
 
-#: SimulatorItem.cpp:2554
+#: SimulatorItem.cpp:2564
 msgid "Record collision data"
 msgstr "干渉データの記録"
 
-#: SimulatorItem.cpp:2556
+#: SimulatorItem.cpp:2566
 msgid "Controller Threads"
 msgstr "コントローラスレッド"
 
@@ -1459,23 +1483,23 @@ msgstr "タイムスタンプ接尾辞"
 msgid "Recording frame rate"
 msgstr "記録フレームレート"
 
-#: ZMPSeqItem.cpp:69
+#: ZMPSeqItem.cpp:74
 msgid "ZMPSeqItem"
 msgstr "ZMP軌道アイテム"
 
-#: ZMPSeqItem.cpp:109
+#: ZMPSeqItem.cpp:114
 msgid "%1% of %2% has been converted to %3%."
 msgstr "%2%の%1%は%3%に変換されました。"
 
-#: ZMPSeqItem.cpp:111
+#: ZMPSeqItem.cpp:116
 msgid "the root relative coordinate"
 msgstr "ルート相対座標"
 
-#: ZMPSeqItem.cpp:111
+#: ZMPSeqItem.cpp:116
 msgid "the global coordinate"
 msgstr "グローバル座標"
 
-#: ZMPSeqItem.cpp:116
+#: ZMPSeqItem.cpp:121
 msgid ""
 "%1%'s coordinate system cannot be changed because there is no root link "
 "motion associated with %1%."
@@ -1483,7 +1507,7 @@ msgstr ""
 "%1%と関連付けられた動作はルートリンクが含まれていないため%1%の座標系は変更で"
 "きません。"
 
-#: ZMPSeqItem.cpp:132
+#: ZMPSeqItem.cpp:137
 msgid "Root relative"
 msgstr "ルート相対"
 

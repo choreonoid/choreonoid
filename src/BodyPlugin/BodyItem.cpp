@@ -340,7 +340,7 @@ bool BodyItemImpl::loadModelFile(const std::string& filename)
     if(newBody){
         body = newBody;
         body->setName(self->name());
-        body->initializeState();
+        body->initializePosition();
     }
 
     initBody(false);
@@ -358,7 +358,7 @@ void BodyItem::setBody(Body* body)
 void BodyItemImpl::setBody(Body* body_)
 {
     body = body_;
-    body->initializeState();
+    body->initializePosition();
 
     initBody(false);
 }

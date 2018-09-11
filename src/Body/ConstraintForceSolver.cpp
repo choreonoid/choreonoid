@@ -971,7 +971,7 @@ bool CFSImpl::setContactConstraintPoint(LinkPair& linkPair, const Collision& col
                     direction = collision.normal.cross(axis);
                 }
                 direction.normalize();
-                v[k] += link->dq() * direction;
+                v[k] += link->dq_target() * direction;
             }
         }
     }

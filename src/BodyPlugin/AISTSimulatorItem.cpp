@@ -442,33 +442,16 @@ void AISTSimulatorItemImpl::addBody(AISTSimBody* simBody)
 {
     DyBody* body = static_cast<DyBody*>(simBody->body());
 
-    DyLink* rootLink = body->rootLink();
-    rootLink->v().setZero();
-    rootLink->dv().setZero();
-    rootLink->w().setZero();
-    rootLink->dw().setZero();
-    rootLink->vo().setZero();
-    rootLink->dvo().setZero();
-
     bool hasHighgainJoints = false;
-
-    for(int i=0; i < body->numLinks(); ++i){
-        Link* link = body->link(i);
-        link->u() = 0.0;
-        link->dq() = 0.0;
-        link->ddq() = 0.0;
+    for(auto& link : body->links()){
         if(link->actuationMode() == Link::JOINT_DISPLACEMENT ||
            link->actuationMode() == Link::JOINT_VELOCITY ||
            link->actuationMode() == Link::LINK_POSITION){
             hasHighgainJoints = true;
         }
     }
-    
-    body->clearExternalForces();
-    body->calcForwardKinematics(true, true);
 
     int bodyIndex;
-
     if(hasHighgainJoints){
         auto dynamics = make_shared_aligned<ForwardDynamicsCBM>(body);
         highGainDynamicsList.push_back(dynamics);

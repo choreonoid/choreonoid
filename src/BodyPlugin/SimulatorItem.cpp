@@ -570,6 +570,8 @@ bool SimulationBodyImpl::initialize(SimulatorItemImpl* simImpl, BodyItem* bodyIt
     controllers.clear();
     resultItemPrefix = simImpl->self->name() + "-" + bodyItem->name();
 
+    body_->initializeState();
+
     isDynamic = !body_->isStaticModel();
     bool doReset = simImpl->doReset && isDynamic;
     extractAssociatedItems(doReset);

@@ -28,6 +28,8 @@ Link::Link()
     dq_ = 0.0;
     ddq_ = 0.0;
     u_ = 0.0;
+    q_target_ = 0.0;
+    dq_target_ = 0.0;
     v_.setZero();
     w_.setZero();
     dv_.setZero();
@@ -69,6 +71,9 @@ Link::Link(const Link& org)
     dq_ = org.dq_;
     ddq_ = org.ddq_;
     u_ = org.u_;
+
+    q_target_ = org.q_target_;
+    dq_target_ = org.dq_target_;
 
     v_ = org.v_;
     w_ = org.w_;
@@ -113,6 +118,21 @@ Link::~Link()
         link->sibling_ = 0;
         link = next;
     }
+}
+
+
+void Link::initializeState()
+{
+    u_ = 0.0;
+    dq_ = 0.0;
+    ddq_ = 0.0;
+    q_target_ = q_;
+    dq_target_ = dq_;
+    v_.setZero();
+    w_.setZero();
+    dv_.setZero();
+    dw_.setZero();
+    F_ext_.setZero();
 }
 
 

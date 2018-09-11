@@ -713,7 +713,7 @@ void AGXLink::setVelocityToAGX()
         case Link::SLIDE_JOINT:{
             agx::Constraint1DOF* const joint1DOF = agx::Constraint1DOF::safeCast(getAGXConstraint());
             if(!joint1DOF) break;
-            joint1DOF->getMotor1D()->setSpeed(orgLink->dq());
+            joint1DOF->getMotor1D()->setSpeed(orgLink->dq_target());
             return;
             break;
         }
@@ -723,7 +723,7 @@ void AGXLink::setVelocityToAGX()
 
     if(orgLink->actuationMode() == Link::JOINT_SURFACE_VELOCITY){
         // Set speed(scalar) to x value. Direction is automatically calculated at AGXPseudoContinuousTrackGeometry::calculateSurfaceVelocity
-        agx::Vec3f vel((float)orgLink->dq(), 0.0, 0.0);
+        agx::Vec3f vel((float)orgLink->dq_target(), 0.0, 0.0);
         getAGXGeometry()->setSurfaceVelocity(vel);
     }
 }
@@ -736,7 +736,7 @@ void AGXLink::setPositionToAGX()
         case Link::SLIDE_JOINT:{
             agx::Constraint1DOFRef const joint1DOF = agx::Constraint1DOF::safeCast(getAGXConstraint());
             if(!joint1DOF) break;
-            joint1DOF->getLock1D()->setPosition(orgLink->q());
+            joint1DOF->getLock1D()->setPosition(orgLink->q_target());
             break;
         }
         default :

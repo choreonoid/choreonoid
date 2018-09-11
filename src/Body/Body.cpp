@@ -399,26 +399,27 @@ const Vector3& Body::centerOfMass() const
 }
 
 
-void Body::initializeState()
+void Body::initializePosition()
 {
     rootLink_->T() = rootLink_->Tb();
 
-    rootLink_->v().setZero();
-    rootLink_->w().setZero();
-    rootLink_->dv().setZero();
-    rootLink_->dw().setZero();
-    
-    const int n = linkTraverse_.numLinks();
-    for(int i=0; i < n; ++i){
-        Link* link = linkTraverse_[i];
-        link->u() = 0.0;
+    for(auto& link : linkTraverse_){
         link->q() = link->q_initial();
-        link->dq() = 0.0;
-        link->ddq() = 0.0;
+        link->initializeState();
     }
- 
+
     calcForwardKinematics(true, true);
-    clearExternalForces();
+    initializeDeviceStates();
+}
+
+
+void Body::initializeState()
+{
+    for(auto& link : linkTraverse_){
+        link->initializeState();
+    }
+
+    calcForwardKinematics(true, true);
     initializeDeviceStates();
 }
 
