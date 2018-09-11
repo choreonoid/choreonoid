@@ -336,7 +336,12 @@ void DoubleArmV7Controller::setTargetArmPositions()
 
     // Restrict each target position by taking the joint displacement range
     // and the cunnret joint displacement into accout
-    static const double maxerror = radian(3.0);
+    double maxerror;
+    if(mainActuationMode == Link::ActuationMode::JOINT_EFFORT){
+        maxerror = radian(20.0);
+    } else {
+        maxerror = radian(5.0);
+    }
     for(size_t i=0; i < armJoints.size(); ++i){
         auto joint = armJoints[i];
         auto& q = q_ref[i];
