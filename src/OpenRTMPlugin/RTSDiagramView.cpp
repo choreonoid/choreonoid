@@ -1173,9 +1173,12 @@ void RTSDiagramViewImpl::timerPeriodUpdate(int value)
 {
     DDEBUG_V("RTSDiagramViewImpl::timerPeriodUpdate : %d", value);
     if (pollingPeriod != value) {
-        timer.stop();
+        pollingPeriod = value;
+
+        bool isStarted = timer.isActive();
+        if( isStarted ) timer.stop();
         timer.setInterval(value);
-        timer.start();
+        if( isStarted ) timer.start();
     }
 }
 
@@ -1387,6 +1390,7 @@ void RTSDiagramViewImpl::onTime()
 
 void RTSDiagramViewImpl::setCurrentRTSItem(RTSystemItem* item)
 {
+    DDEBUG("RTSDiagramViewImpl::setCurrentRTSItem");
     timer.setInterval(item->pollingCycle());
 
     currentRTSItem = item;

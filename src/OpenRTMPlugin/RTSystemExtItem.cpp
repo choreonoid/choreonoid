@@ -102,6 +102,7 @@ public:
 
     void onActivated(bool on);
     void changePollingPeriod(int value);
+    void changeStateCheck();
 
 private:
     Timer timer;
@@ -110,7 +111,6 @@ private:
     void onTime();
 
     void setStateCheckMethod(int value);
-    void changeStateCheck();
 };
 
 }
@@ -1094,10 +1094,11 @@ void RTSystemExtItemImpl::changePollingPeriod(int value)
     DDEBUG_V("RTSystemItemImpl::changePollingPeriod=%d", value);
     if (pollingCycle != value) {
         pollingCycle = value;
-        //sigTimerPeriodChanged(value);
-        timer.stop();
+
+        bool isStarted = timer.isActive();
+        if( isStarted ) timer.stop();
         timer.setInterval(value);
-        timer.start();
+        if( isStarted ) timer.start();
     }
 }
 
@@ -1274,6 +1275,7 @@ bool RTSystemExtItem::restore(const Archive& archive)
     if (archive.read("StateCheck", stateCheck)) {
         DDEBUG_V("StateCheck:%s", stateCheck.c_str());
         impl->setStateCheckMethodByString(stateCheck);
+        archive.addPostProcess([&]() { impl->changeStateCheck(); });
     }
 
     return true;

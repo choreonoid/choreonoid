@@ -99,9 +99,10 @@ public:
     Signal<void(bool)> sigTimerChanged;
     Signal<void(bool)> sigLoadedRTSystem;
 
+    void changeStateCheck();
+
 private:
     void setStateCheckMethod(int value);
-    void changeStateCheck();
     void changePollingPeriod(int value);
 };
 
@@ -1222,6 +1223,7 @@ bool RTSystemItem::restore(const Archive& archive)
     if (archive.read("StateCheck", stateCheck)) {
         DDEBUG_V("StateCheck:%s", stateCheck.c_str());
         impl->setStateCheckMethodByString(stateCheck);
+        archive.addPostProcess([&]() { impl->changeStateCheck(); });
     }
 
     return true;
