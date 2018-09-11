@@ -859,12 +859,12 @@ void JointDataSeqInPortHandler::outputDataToSimulator(const BodyPtr& body)
     switch(linkDataType) {
     case JOINT_VALUE:
         for(int i=0; i < n; i++){
-            body->joint(i)->q() = values.data[i];
+            body->joint(i)->q_target() = values.data[i];
         }
         break;
     case JOINT_VELOCITY:
         for(int i=0; i < n; i++){
-            body->joint(i)->dq() = values.data[i];
+            body->joint(i)->dq_target() = values.data[i];
         }
         break;
     case JOINT_ACCELERATION:
@@ -907,11 +907,11 @@ void LinkDataInPortHandler::outputDataToSimulator(const BodyPtr& body)
     switch(linkDataType) {
     case JOINT_VALUE:
         for(size_t i=0; i<n; i++)
-            body->link(linkNames[i])->q() = values.data[i];
+            body->link(linkNames[i])->q_target() = values.data[i];
         break;
     case JOINT_VELOCITY:
         for(size_t i=0; i<n; i++)
-            body->link(linkNames[i])->dq() = values.data[i];
+            body->link(linkNames[i])->dq_target() = values.data[i];
         break;
     case JOINT_ACCELERATION:
         for(size_t i=0; i<n; i++)
