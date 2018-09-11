@@ -123,13 +123,13 @@ public:
         // set the velocity of each tracks
         if(usePseudoContinousTrackMode){
             double k = 1.0;
-            trackL->dq() = k * (-2.0 * pos[1] + pos[0]);
-            trackR->dq() = k * (-2.0 * pos[1] - pos[0]);
+            trackL->dq_target() = k * (-2.0 * pos[1] + pos[0]);
+            trackR->dq_target() = k * (-2.0 * pos[1] - pos[0]);
 
         }else{
             double k = 4.0;
-            trackL->dq() = k * (-pos[1] + pos[0]);
-            trackR->dq() = k * (-pos[1] - pos[0]);
+            trackL->dq_target() = k * (-pos[1] + pos[0]);
+            trackR->dq_target() = k * (-pos[1] - pos[0]);
         }
 
         static const double P = 200.0;
@@ -144,7 +144,7 @@ public:
             }
 
             if(turretActuationMode == Link::JOINT_VELOCITY){
-                joint->dq() = pos;
+                joint->dq_target() = pos;
 
             } else if(turretActuationMode == Link::JOINT_TORQUE){
                 double q = joint->q();

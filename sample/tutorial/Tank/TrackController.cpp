@@ -38,8 +38,8 @@ public:
             }
         }
 
-        trackL->dq() = -2.0 * pos[1] + pos[0];
-        trackR->dq() = -2.0 * pos[1] - pos[0];
+        trackL->dq_target() = -2.0 * pos[1] + pos[0];
+        trackR->dq_target() = -2.0 * pos[1] - pos[0];
 
         return true;
     }

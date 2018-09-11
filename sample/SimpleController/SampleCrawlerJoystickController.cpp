@@ -60,8 +60,8 @@ public:
             }
         }
         // set the velocity of each crawlers
-        crawlerL->dq() = -2.0 * pos[1] + pos[0];
-        crawlerR->dq() = -2.0 * pos[1] - pos[0];
+        crawlerL->dq_target() = -2.0 * pos[1] + pos[0];
+        crawlerR->dq_target() = -2.0 * pos[1] - pos[0];
 
         return true;
     }

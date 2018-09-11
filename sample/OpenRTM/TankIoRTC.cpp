@@ -135,8 +135,8 @@ void TankIoRTC::outputToSimulator()
     if(velocitiesIn.isNew()){
         velocitiesIn.read();
         if(velocities.data.length() >= 2){
-            trackL->dq() = velocities.data[0];
-            trackR->dq() = velocities.data[1];
+            trackL->dq_target() = velocities.data[0];
+            trackR->dq_target() = velocities.data[1];
         }
     }
     if(light && lightSwitchIn.isNew()){

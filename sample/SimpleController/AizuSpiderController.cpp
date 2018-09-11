@@ -244,8 +244,8 @@ void AizuSpiderController::controlTracks()
     case Link::JOINT_VELOCITY:
     case Link::JOINT_SURFACE_VELOCITY:
         for(int i=0; i < 3; ++i){
-            tracks[i*2  ]->dq() = dq_L;
-            tracks[i*2+1]->dq() = dq_R;
+            tracks[i*2  ]->dq_target() = dq_L;
+            tracks[i*2+1]->dq_target() = dq_R;
         }
         break;
 
@@ -342,7 +342,7 @@ void AizuSpiderController::controlJointsWithVelocity()
 {
     for(auto& info : jointInfos){
         auto joint = info.joint;
-        joint->dq() = info.kp * (info.qref - joint->q()) / dt;
+        joint->dq_target() = info.kp * (info.qref - joint->q()) / dt;
     }
 }
 
@@ -350,7 +350,7 @@ void AizuSpiderController::controlJointsWithVelocity()
 void AizuSpiderController::controlJointsWithPosition()
 {
     for(auto& info : jointInfos){
-        info.joint->q() = info.qref;
+        info.joint->q_target() = info.qref;
     }
 }
 

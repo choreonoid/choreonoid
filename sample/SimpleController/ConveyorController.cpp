@@ -21,7 +21,7 @@ public:
 
     virtual bool control() override
     {
-        conveyorJoint->dq() = 1.0;
+        conveyorJoint->dq_target() = 1.0;
         return true;
     }
 };
