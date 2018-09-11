@@ -257,7 +257,8 @@ bool ProfileHandlerExt::parseProfile(std::string targetFile, RtsProfile& profile
             DataPort proPort;
             proPort.name = dataPort.attribute("rts:name").as_string();
             for (xml_node prop = dataPort.child("rtsExt:Properties"); prop; prop = prop.next_sibling("rtsExt:Properties")) {
-                if (prop.attribute("rtsExt:name").as_string() == "port.port_type") {
+                string propName = prop.attribute("rtsExt:name").as_string();
+                if (propName == "port.port_type") {
                     proPort.direction = prop.attribute("rtsExt:value").as_string();
                 }
             }

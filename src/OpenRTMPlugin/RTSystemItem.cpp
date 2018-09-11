@@ -1169,20 +1169,6 @@ bool RTSystemItemImpl::checkStatus()
     return modified;
 }
 
-struct ConnectorPropComparator
-{
-    string target_;
-
-    ConnectorPropComparator(string value)
-    {
-        target_ = value;
-    }
-    bool operator()(const NamedValuePtr elem) const
-    {
-        return (target_ == elem->name_);
-    }
-};
-
 ///////////
 bool RTSystemItem::store(Archive& archive)
 {

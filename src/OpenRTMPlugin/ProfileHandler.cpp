@@ -225,6 +225,7 @@ RTSPort* ProfileHandler::getTargetPort(std::string& sourceRtc, std::string& sour
 
 bool ProfileHandler::parseProfile(std::string targetFile, RtsProfile& profile)
 {
+    DDEBUG("ProfileHandler::parseProfile");
     xml_document doc;
     xml_parse_result result = doc.load_file(targetFile.c_str());
     if (result == 0) return false;
@@ -257,7 +258,8 @@ bool ProfileHandler::parseProfile(std::string targetFile, RtsProfile& profile)
             DataPort proPort;
             proPort.name = dataPort.attribute("rts:name").as_string();
             for (xml_node prop = dataPort.child("rtsExt:Properties"); prop; prop = prop.next_sibling("rtsExt:Properties")) {
-                if (prop.attribute("rtsExt:name").as_string() == "port.port_type") {
+                string propName = prop.attribute("rtsExt:name").as_string();
+                if (propName == "port.port_type") {
                     proPort.direction = prop.attribute("rtsExt:value").as_string();
                 }
             }
@@ -517,13 +519,6 @@ void ProfileHandler::saveRtsProfile
 
 void ProfileHandler::buildPosition(const RTSConnection* connect, int offsetX, int offsetY, std::vector<Property>& propList)
 {
-    //QString posX1 = QString::number( (connect->position[1](0) + connect->position[2](0))/2 + offsetX );
-    //QString posY1 = QString::number( (connect->position[1](1) + connect->position[2](1))/2 + offsetY );
-    //QString posX2 = QString::number( (connect->position[2](0) + connect->position[3](0))/2 + offsetX );
-    //QString posY2 = QString::number( (connect->position[2](1) + connect->position[3](1))/2 + offsetY );
-    //QString posX3 = QString::number( (connect->position[3](0) + connect->position[4](0))/2 + offsetX );
-    //QString posY3 = QString::number( (connect->position[3](1) + connect->position[4](1))/2 + offsetY );
-
     QString position = "{";
     for (int idxPos = 0; idxPos < 6; idxPos++) {
         if (0 < idxPos) position.append(",");
@@ -533,12 +528,22 @@ void ProfileHandler::buildPosition(const RTSConnection* connect, int offsetX, in
     }
     position.append("}");
 
-    //string bendPoint = "{1:(" + posX1.toStdString() + "," + posY1.toStdString() + "),"
-    //                  + "2:(" + posX2.toStdString() + "," + posY2.toStdString() + "),"
-    //                  + "3:(" + posX3.toStdString() + "," + posY3.toStdString() + ")}";
     string positionName = "POSITION";
     string value = position.toStdString();
     appendStringValue(propList, positionName, value);
+
+    //QString posX1 = QString::number( (connect->position[1](0) + connect->position[2](0))/2 + offsetX );
+    //QString posY1 = QString::number( (connect->position[1](1) + connect->position[2](1))/2 + offsetY );
+    //QString posX2 = QString::number( (connect->position[2](0) + connect->position[3](0))/2 + offsetX );
+    //QString posY2 = QString::number( (connect->position[2](1) + connect->position[3](1))/2 + offsetY );
+    //QString posX3 = QString::number( (connect->position[3](0) + connect->position[4](0))/2 + offsetX );
+    //QString posY3 = QString::number( (connect->position[3](1) + connect->position[4](1))/2 + offsetY );
+
+    //string bendPointName = "BEND_POINT";
+    //string bendPoint = "{1:(" + posX1.toStdString() + "," + posY1.toStdString() + "),"
+    //                  + "2:(" + posX2.toStdString() + "," + posY2.toStdString() + "),"
+    //                  + "3:(" + posX3.toStdString() + "," + posY3.toStdString() + ")}";
+    //appendStringValue(propList, bendPointName, bendPoint);
 }
 
 TargetPort ProfileHandler::buildTargetPortInfo(RTSPort* sourcePort)
