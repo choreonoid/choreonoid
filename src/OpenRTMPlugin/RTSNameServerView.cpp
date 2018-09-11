@@ -676,7 +676,12 @@ void RTSNameTreeWidget::showIOR()
 
 void RTSNameTreeWidget::deleteFromView()
 {
+    DDEBUG("RTSNameTreeWidget::deleteFromView");
+
     RTSVItem* item = (RTSVItem*)this->currentItem();
+    QString target = item->text(0);
+    DDEBUG_V("target:%s", target.toStdString().c_str());
+    NameServerManager::instance()->deleteServer(target.toStdString());
     delete item;
 }
 

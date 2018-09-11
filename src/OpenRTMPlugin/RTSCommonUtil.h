@@ -135,6 +135,7 @@ public:
     void addOpenRTMServer();
     bool isExistServer(NameServerInfo source);
     bool isOpenRTM(string hostAddress, int portNo);
+    void deleteServer(string target);
 
 private:
     static NameServerManager* handler;

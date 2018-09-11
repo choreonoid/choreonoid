@@ -351,6 +351,13 @@ bool NameServerManager::isOpenRTM(string hostAddress, int portNo)
     return false;
 }
 
+void NameServerManager::deleteServer(string target) {
+    vector<string> info = RTCCommonUtil::split(target, ':');
+    if (info.size() < 2) return;
+
+    serverList.erase(remove_if(serverList.begin(), serverList.end(),
+        ServerComparator(info[0], QString::fromStdString(info[1]).toInt())), serverList.end());
+}
 
 }
 
