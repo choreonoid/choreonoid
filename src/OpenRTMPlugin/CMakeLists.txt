@@ -32,6 +32,12 @@ set(plugin_sources
   deprecated/ChoreonoidPeriodicExecutionContext.cpp
   deprecated/BridgeConf.cpp
   deprecated/PointCloudSubscriberRTCItem.cpp
+
+  RTSystemExtItem.cpp
+  RTSDiagramExtView.cpp
+  ProfileHandlerExt.cpp
+  PortConnectionDialogExt.cpp
+  RTSCommonUtilExt.cpp
   )
 
 set(plugin_headers
@@ -41,6 +47,7 @@ QTX_ADD_RESOURCES(RC_SRCS OpenRTMPlugin.qrc)
 QTX_WRAP_CPP(
   qtsources
   RTSNameServerView.h
+  RTSDiagramExtView.h
   RTSDiagramView.h
   RTSConfigurationView.h
   )

@@ -33,6 +33,9 @@
 #include <cnoid/AppConfig>
 #include <rtm/ComponentActionListener.h>
 
+#include "RTSDiagramExtView.h"
+#include "RTSystemExtItem.h"
+
 #include "LoggerUtil.h"
 
 #include "gettext.h"
@@ -236,6 +239,9 @@ public:
 
         VisionSensorSubscriberRTCItem::initializeClass(this);
         PointCloudSubscriberRTCItem::initializeClass(this);
+
+        RTSystemExtItem::initializeClass(this);
+        RTSDiagramExtView::initializeClass(this);
 
 
         DDEBUG("initialize Finished");
