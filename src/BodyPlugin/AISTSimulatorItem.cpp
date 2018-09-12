@@ -119,6 +119,7 @@ public:
     bool initializeSimulation(const std::vector<SimulationBody*>& simBodies);
     void addBody(AISTSimBody* simBody);
     void clearExternalForces();
+    void stepKinematicsSimulation(const std::vector<SimulationBody*>& activeSimBodies);
     void setForcedPosition(BodyItem* bodyItem, const Position& T);
     void doSetForcedPosition();
     void doPutProperties(PutPropertyFunction& putProperty);
@@ -474,25 +475,38 @@ void AISTSimulatorItemImpl::clearExternalForces()
 
 bool AISTSimulatorItem::stepSimulation(const std::vector<SimulationBody*>& activeSimBodies)
 {
-    if(!impl->dynamicsMode.is(KINEMATICS)){
+    switch(impl->dynamicsMode.which()){
+    case FORWARD_DYNAMICS:
         for(auto&& dynamics : impl->highGainDynamicsList){
             dynamics->complementHighGainModeCommandValues();
         }
         impl->world.calcNextState();
-        return true;
+        break;
+    case KINEMATICS:
+        impl->stepKinematicsSimulation(activeSimBodies);
+        break;
     }
+    return true;
+}
 
-    // Kinematics mode
-    if(!impl->isKinematicWalkingEnabled){
-        for(size_t i=0; i < activeSimBodies.size(); ++i){
-            activeSimBodies[i]->body()->calcForwardKinematics(true, true);
+
+void AISTSimulatorItemImpl::stepKinematicsSimulation(const std::vector<SimulationBody*>& activeSimBodies)
+{
+    for(size_t i=0; i < activeSimBodies.size(); ++i){
+        SimulationBody* simBody = activeSimBodies[i];
+        Body* body = simBody->body();
+
+        for(auto& joint : body->allJoints()){
+            joint->q() = joint->q_target();
+            joint->dq() = joint->dq_target();
         }
-    } else {
-        for(size_t i=0; i < activeSimBodies.size(); ++i){
-            SimulationBody* simBody = activeSimBodies[i];
+        
+        if(!isKinematicWalkingEnabled){
+            body->calcForwardKinematics(true, true);
+        } else {
             KinematicWalkBody* walkBody = dynamic_cast<KinematicWalkBody*>(simBody);
             if(!walkBody){
-                simBody->body()->calcForwardKinematics(true, true);
+                body->calcForwardKinematics(true, true);
             } else {
                 walkBody->traverse.calcForwardKinematics(true, true);
                 
@@ -521,7 +535,6 @@ bool AISTSimulatorItem::stepSimulation(const std::vector<SimulationBody*>& activ
             }
         }
     }
-    return true;
 }
 
 
