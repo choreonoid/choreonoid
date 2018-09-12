@@ -512,15 +512,7 @@ void SimpleControllerItemImpl::updateIOStateTypes()
 std::string SimpleControllerItemImpl::optionString() const
 {
     if(io){
-        const std::string& opt1 = io->optionString();
-        const std::string& opt2 = self->optionString();
-        if(!opt1.empty()){
-            if(opt2.empty()){
-                return opt1;
-            } else {
-                return opt1 + " " + opt2;
-            }
-        }
+        return getIntegratedOptionString(io->optionString(), self->optionString());
     }
     return self->optionString();
 }
@@ -539,21 +531,21 @@ Body* SimpleControllerItemImpl::body()
 }
 
 
-double SimpleControllerItem::timeStep() const
+double SimpleControllerItemImpl::timeStep() const
 {
-    return impl->io ? impl->io->timeStep() : 0.0;
+    return io ? io->timeStep() : 0.0;
 }
 
 
-double SimpleControllerItemImpl::timeStep() const
+double SimpleControllerItem::timeStep() const
 {
-    return io->timeStep();
+    return impl->timeStep();
 }
 
 
 double SimpleControllerItemImpl::currentTime() const
 {
-    return io->currentTime();
+    return io ? io->currentTime() : 0.0;
 }
 
 

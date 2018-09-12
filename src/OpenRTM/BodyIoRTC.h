@@ -27,18 +27,11 @@ public:
        If there is an associated BodyItem, its body object can be obtained from the io object
        and a set of ports corresponding to the body model can dynamically be created in
        this function.
-       
-       \note The io object is dedicated to this function and must not be sotred and used
-       in other virtual functions called by the system.
     */
     virtual bool initializeIO(ControllerIO* io);
 
     /**
        This function is called when the simulation is initialized.
-       
-       \note The io object given to this function is the object managed by a simulator item.
-       It is different from the object given to the initializeIO function, which is not
-       managed by the simulator item.
     */
     virtual bool initializeSimulation(ControllerIO* io);
 

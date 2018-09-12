@@ -1310,6 +1310,12 @@ bool SimulatorItem::isSelfCollisionEnabled() const
 }
 
 
+const std::string& SimulatorItem::controllerOptionString() const
+{
+    return impl->controllerOptionString_;
+}
+
+
 /*
   Extract body items, controller items which are not associated with (not under) a body item,
   and simulation script items which are not under another simulator item
@@ -1625,7 +1631,7 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
                 if(ready){
                     ++iter;
                 } else {
-                    controller->setSimulatorItem(0);
+                    controller->setSimulatorItem(nullptr);
                     string message = controller->getMessage();
                     if(!message.empty()){
                         mv->putln(message);
@@ -2255,7 +2261,7 @@ void SimulatorItemImpl::onSimulationLoopStopped()
         for(size_t j=0; j < controllers.size(); ++j){
             ControllerItem* controller = controllers[j];
             controller->stop();
-            controller->setSimulatorItem(0);
+            controller->setSimulatorItem(nullptr);
         }
     }
     self->finalizeSimulation();
