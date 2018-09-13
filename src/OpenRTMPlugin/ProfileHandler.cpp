@@ -393,15 +393,13 @@ void ProfileHandler::saveRtsProfile
 
         try {
             Component compProf;
-            ComponentProfile* compRaw = comp->rtc_->get_component_profile();
-            compProf.id = "RTC:" + string(compRaw->vendor) + ":" + string(compRaw->category) + ":" + string(compRaw->instance_name) + ":" + string(compRaw->version);
-            compProf.instanceName = compRaw->instance_name;
+            compProf.id = "RTC:" + comp->vendor_ + ":" + comp->category_ + ":" + comp->name + ":" + comp->version_;
+            compProf.instanceName = comp->name;
             compProf.pathUri = comp->hostAddress + comp->fullPath;
             compProf.activeConfigurationSet = comp->rtc_->get_configuration()->get_active_configuration_set()->id;
             compProf.posX = comp->pos().x() + offsetX;
             compProf.posY = comp->pos().y() + offsetY;
 
-            PortProfileList portList = compRaw->port_profiles;
             for (vector<RTSPortPtr>::iterator p0 = comp->inPorts.begin(); p0 != comp->inPorts.end(); p0++) {
                 RTSPort* in = *p0;
                 buildPortInfo(in, compProf, "DataInPort");
@@ -445,6 +443,7 @@ void ProfileHandler::saveRtsProfile
                 }
             }
             //
+            ComponentProfile* compRaw = comp->rtc_->get_component_profile();
             copyNVListToProperty(compRaw->properties, compProf.propertyList);
             compProf.isOpenRTM = NameServerManager::instance()->isOpenRTM(comp->hostAddress, comp->portNo);
             profile.compList.push_back(compProf);
@@ -471,11 +470,12 @@ void ProfileHandler::saveRtsProfile
                 ServicePortConnector conProf;
                 ConnectorProfileList_var connectorProfiles = connect->sourcePort->port->get_connector_profiles();
                 if (0 < connectorProfiles->length()) {
-                    ConnectorProfile& connectorProfile = connectorProfiles[0];
-                    conProf.connectorId = connectorProfile.connector_id;
-                    conProf.name = connectorProfile.name;
+                    conProf.connectorId = connect->id;
+                    conProf.name = connect->name;
 
+                    ConnectorProfile& connectorProfile = connectorProfiles[0];
                     copyNVListToProperty(connectorProfile.properties, conProf.propertyList);
+
                     conProf.source = buildTargetPortInfo(connect->sourcePort);
                     conProf.target = buildTargetPortInfo(connect->targetPort);
 
@@ -488,9 +488,10 @@ void ProfileHandler::saveRtsProfile
                 DataPortConnector conProf;
                 ConnectorProfileList_var connectorProfiles = connect->sourcePort->port->get_connector_profiles();
                 if (0 < connectorProfiles->length()) {
+                    conProf.connectorId = connect->id;
+                    conProf.name = connect->name;
+
                     ConnectorProfile& connectorProfile = connectorProfiles[0];
-                    conProf.connectorId = connectorProfile.connector_id;
-                    conProf.name = connectorProfile.name;
                     conProf.dataType = NVUtil::toString(connectorProfile.properties, "dataport.data_type");
                     conProf.interfaceType = NVUtil::toString(connectorProfile.properties, "dataport.interface_type");
                     conProf.dataflowType = NVUtil::toString(connectorProfile.properties, "dataport.dataflow_type");
@@ -550,10 +551,9 @@ TargetPort ProfileHandler::buildTargetPortInfo(RTSPort* sourcePort)
 {
     TargetPort result;
 
-    result.portName = sourcePort->port->get_port_profile()->name;
-    ComponentProfile* compRaw = sourcePort->port->get_port_profile()->owner->get_component_profile();
-    result.componentId = "RTC:" + string(compRaw->vendor) + ":" + string(compRaw->category) + ":" + string(compRaw->instance_name) + ":" + string(compRaw->version);
-    result.instanceName = compRaw->instance_name;
+    result.portName = sourcePort->name;
+    result.componentId = "RTC:" + sourcePort->rtsComp->vendor_ + ":" + sourcePort->rtsComp->category_ + ":" + sourcePort->rtsComp->name + ":" + sourcePort->rtsComp->version_;
+    result.instanceName = sourcePort->rtsComp->name;
 
     Property prop;
     prop.name = "COMPONENT_PATH_ID";
@@ -568,14 +568,14 @@ void ProfileHandler::buildPortInfo(RTSPort* port, Component& compProf, std::stri
     PortProfile* portRaw = port->port->get_port_profile();
     if (port->isServicePort) {
         ServicePort portProf;
-        portProf.name = portRaw->name;
+        portProf.name = port->name;
 
         copyNVListToProperty(portRaw->properties, portProf.propertyList);
         compProf.servicePortList.push_back(portProf);
 
     } else {
         DataPort portProf;
-        portProf.name = portRaw->name;
+        portProf.name = port->name;
         portProf.direction = direction;
 
         copyNVListToProperty(portRaw->properties, portProf.propertyList);
