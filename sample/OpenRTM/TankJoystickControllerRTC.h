@@ -8,6 +8,7 @@
 #include <rtm/Manager.h>
 #include <rtm/DataFlowComponentBase.h>
 #include <rtm/idl/BasicDataTypeSkel.h>
+#include <rtm/idl/ExtendedDataTypesSkel.h>
 #include <rtm/CorbaPort.h>
 #include <rtm/DataInPort.h>
 #include <rtm/DataOutPort.h>
@@ -28,6 +29,9 @@ protected:
     RTC::TimedDoubleSeq angles;
     RTC::InPort<RTC::TimedDoubleSeq> anglesIn;
     
+    RTC::Acceleration3D accel;
+    RTC::InPort<RTC::Acceleration3D> accelIn;
+
     RTC::TimedFloatSeq axes;
     RTC::InPort<RTC::TimedFloatSeq> axesIn;
   
@@ -50,6 +54,8 @@ private:
     std::vector<float> lastAxes;
     bool lastLightButtonState;
     bool isLightOn;
+    int lightBlinkCounter;
+    int lightBlinkDuration;
 };
 
 extern "C"

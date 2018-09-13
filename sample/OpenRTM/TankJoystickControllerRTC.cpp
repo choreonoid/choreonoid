@@ -3,9 +3,11 @@
 */
 
 #include "TankJoystickControllerRTC.h"
+#include <cnoid/EigenTypes>
 #include <cmath>
 
 using namespace std;
+using namespace cnoid;
 
 namespace {
 
@@ -35,6 +37,7 @@ const char* spec[] =
 TankJoystickControllerRTC::TankJoystickControllerRTC(RTC::Manager* manager)
     : RTC::DataFlowComponentBase(manager),
       anglesIn("q", angles),
+      accelIn("dv", accel),
       axesIn("axes", axes),
       buttonsIn("buttons", buttons),
       velocitiesOut("dq", velocities),
@@ -55,6 +58,7 @@ RTC::ReturnCode_t TankJoystickControllerRTC::onInitialize()
 {
     // Set InPort buffers
     addInPort("q", anglesIn);
+    addInPort("dv", accelIn);
     addInPort("axes", axesIn);
     addInPort("buttons", buttonsIn);
     
@@ -88,6 +92,8 @@ RTC::ReturnCode_t TankJoystickControllerRTC::onActivated(RTC::UniqueId ec_id)
     lightSwitch.data.length(1);
     lastLightButtonState = false;
     isLightOn = true;
+    lightBlinkCounter = 0;
+    lightBlinkDuration = 0;
 
     lastAxes.clear();
     lastAxes.resize(5, 0.0f);
@@ -148,13 +154,36 @@ RTC::ReturnCode_t TankJoystickControllerRTC::onExecute(RTC::UniqueId ec_id)
         if(lightButtonState){
             if(!lastLightButtonState){
                 isLightOn = !isLightOn;
-                lightSwitch.data[0] = isLightOn;
-                lightSwitchOut.write();
             }
         }
         lastLightButtonState = lightButtonState;
     }
 
+    if(accelIn.isNew()){
+        accelIn.read();
+        if(lightBlinkCounter == 0 && Vector2(accel.ax, accel.ay).norm() > 500.0){
+            // Blink light when large acceleration is detected
+            lightBlinkCounter = 21;
+            lightBlinkDuration = 0;
+            isLightOn = false;
+        }
+    }
+
+    if(lightBlinkCounter > 0){
+        if(lightBlinkDuration > 0.0){
+            --lightBlinkDuration;
+        } else {
+            isLightOn = !isLightOn;
+            --lightBlinkCounter;
+            lightBlinkDuration = 0.1 / timeStep;
+        }
+    }
+
+    if(isLightOn != lightSwitch.data[0]){
+        lightSwitch.data[0] = isLightOn;
+        lightSwitchOut.write();
+    }
+        
     return RTC::RTC_OK;
 }
 
