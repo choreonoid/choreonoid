@@ -443,8 +443,6 @@ void ProfileHandler::saveRtsProfile
                 }
             }
             //
-            ComponentProfile* compRaw = comp->rtc_->get_component_profile();
-            copyNVListToProperty(compRaw->properties, compProf.propertyList);
             compProf.isOpenRTM = NameServerManager::instance()->isOpenRTM(comp->hostAddress, comp->portNo);
             profile.compList.push_back(compProf);
         } catch (...) {
