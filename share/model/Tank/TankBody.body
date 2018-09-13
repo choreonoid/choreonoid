@@ -55,7 +55,14 @@ links:
             translation: [ -0.205, 0.0, -0.04 ]
             rotation: [ 0, 1, 0, 15 ]
             geometry: { type: Box, size: [ 0.03881, 0.3, 0.01 ] }
-
+      -
+        type: AccelerationSensor
+        name: ACCEL_SENSOR
+        id: 0
+      -
+        type: RateGyroSensor
+        name: GYRO
+        id: 0
   -
     name: TURRET_Y
     parent: CHASSIS
