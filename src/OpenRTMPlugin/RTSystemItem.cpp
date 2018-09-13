@@ -100,10 +100,10 @@ public:
     Signal<void(bool)> sigLoadedRTSystem;
 
     void changeStateCheck();
+    void changePollingPeriod(int value);
 
 private:
     void setStateCheckMethod(int value);
-    void changePollingPeriod(int value);
 };
 
 }
@@ -1177,13 +1177,13 @@ bool RTSystemItem::store(Archive& archive)
         archive.writeRelocatablePath("filename", filePath());
         archive.write("format", fileFormat());
 
-        archive.write("AutoConnection", impl->autoConnection);
-        archive.write("PollingCycle", impl->pollingCycle);
-        archive.write("StateCheck", impl->stateCheck.selectedSymbol());
-        archive.write("CheckAtLoading", impl->checkAtLoading);
+        archive.write("autoConnection", impl->autoConnection);
+        archive.write("pollingCycle", impl->pollingCycle);
+        archive.write("stateCheck", impl->stateCheck.selectedSymbol());
+        archive.write("checkAtLoading", impl->checkAtLoading);
 
 #if defined(OPENRTM_VERSION12)
-        archive.write("HeartBeatPeriod", impl->heartBeatPeriod);
+        archive.write("heartBeatPeriod", impl->heartBeatPeriod);
 #endif
         return true;
     }
@@ -1196,12 +1196,26 @@ bool RTSystemItem::restore(const Archive& archive)
 {
     DDEBUG("RTSystemItemImpl::restore");
 
-    archive.read("AutoConnection", impl->autoConnection);
-    archive.read("PollingCycle", impl->pollingCycle);
-    archive.read("CheckAtLoading", impl->checkAtLoading);
+    if (archive.read("autoConnection", impl->autoConnection) == false) {
+        archive.read("AutoConnection", impl->autoConnection);
+    }
+    //if( archive.read("pollingCycle", impl->pollingCycle)==false) {
+    //    archive.read("PollingCycle", impl->pollingCycle);
+    //}
+    if( archive.read("checkAtLoading", impl->checkAtLoading)==false) {
+        archive.read("CheckAtLoading", impl->checkAtLoading);
+    }
+    int pollingCycle;
+    if( archive.read("pollingCycle", pollingCycle)==false) {
+        archive.read("PollingCycle", pollingCycle);
+    }
+    impl->changePollingPeriod(pollingCycle);
+
 
 #if defined(OPENRTM_VERSION12)
-    archive.read("HeartBeatPeriod", impl->heartBeatPeriod);
+    if(archive.read("HeartBeatPeriod", impl->heartBeatPeriod) == false) {
+        archive.read("heartBeatPeriod", impl->heartBeatPeriod);
+    }
 #endif
 
     /**

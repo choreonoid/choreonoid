@@ -1226,10 +1226,10 @@ bool RTSystemExtItem::store(Archive& archive)
         archive.writeRelocatablePath("filename", filePath());
         archive.write("format", fileFormat());
 
-        archive.write("AutoConnection", impl->autoConnection);
-        archive.write("PollingCycle", impl->pollingCycle);
-        archive.write("StateCheck", impl->stateCheck.selectedSymbol());
-        archive.write("CheckAtLoading", impl->checkAtLoading);
+        archive.write("autoConnection", impl->autoConnection);
+        archive.write("pollingCycle", impl->pollingCycle);
+        archive.write("stateCheck", impl->stateCheck.selectedSymbol());
+        archive.write("checkAtLoading", impl->checkAtLoading);
 
 #if defined(OPENRTM_VERSION12)
         archive.write("HeartBeatPeriod", impl->heartBeatPeriod);
@@ -1243,17 +1243,26 @@ bool RTSystemExtItem::store(Archive& archive)
 
 bool RTSystemExtItem::restore(const Archive& archive)
 {
-    DDEBUG("RTSystemItemImpl::restore");
+    DDEBUG("RTSystemExtItem::restore");
+
+    if (archive.read("autoConnection", impl->autoConnection) == false) {
+        archive.read("AutoConnection", impl->autoConnection);
+    }
 
     int pollingCycle;
-    archive.read("AutoConnection", impl->autoConnection);
-    archive.read("PollingCycle", pollingCycle);
-    archive.read("CheckAtLoading", impl->checkAtLoading);
+    if( archive.read("pollingCycle", pollingCycle)==false) {
+        archive.read("PollingCycle", pollingCycle);
+    }
+    if( archive.read("checkAtLoading", impl->checkAtLoading)==false) {
+        archive.read("CheckAtLoading", impl->checkAtLoading);
+    }
 
     impl->changePollingPeriod(pollingCycle);
 
 #if defined(OPENRTM_VERSION12)
-    archive.read("HeartBeatPeriod", impl->heartBeatPeriod);
+    if(archive.read("HeartBeatPeriod", impl->heartBeatPeriod) == false) {
+        archive.read("heartBeatPeriod", impl->heartBeatPeriod);
+    }
 #endif
 
     /**
