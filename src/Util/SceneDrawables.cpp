@@ -794,6 +794,23 @@ void SgPlot::updateBoundingBox()
 }
 
 
+void SgPlot::clear()
+{
+    if(vertices_){
+        vertices_->clear();
+    }
+    if(normals_){
+        normals_->clear();
+    }
+    normalIndices_.clear();
+    
+    if(colors_){
+        colors_->clear();
+    }
+    colorIndices_.clear();
+}
+
+
 SgVertexArray* SgPlot::setVertices(SgVertexArray* vertices)
 {
     if(vertices_){

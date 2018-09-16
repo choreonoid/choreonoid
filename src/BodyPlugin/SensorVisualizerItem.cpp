@@ -541,34 +541,38 @@ void PointCloudVisualizerItemImpl::onSensorPositionsChanged()
 
 void PointCloudVisualizerItemImpl::updateRangeCameraState()
 {
-    if(!ItemTreeView::instance()->isItemChecked(self, ItemTreeView::ID_ANY))
+    if(!ItemTreeView::instance()->isItemChecked(self, ItemTreeView::ID_ANY)){
         return;
-
-    const vector<Vector3f>& src = rangeCamera->constPoints();
-    SgVertexArray& points = *pointSet->getOrCreateVertices();
-    const int numPoints = src.size();
-    points.resize(numPoints);
-    for(int i=0; i < numPoints; ++i){
-        points[i] = src[i];
     }
 
-    SgColorArray& colors = *pointSet->getOrCreateColors();
-    const Image& image = rangeCamera->constImage();
-    if(image.empty() || image.numComponents() != 3){
-        colors.clear();
+    if(!rangeCamera->on()){
+        pointSet->clear();
     } else {
-        const unsigned char* pixels = image.pixels();
-        const int numPixels = image.width() * image.height();
-        const int n = std::min(numPixels, numPoints);
-        colors.resize(n);
-        for(int i=0; i < n; ++i){
-            Vector3f& c = colors[i];
-            c[0] = *pixels++ / 255.0;
-            c[1] = *pixels++ / 255.0;;
-            c[2] = *pixels++ / 255.0;;
+        const vector<Vector3f>& src = rangeCamera->constPoints();
+        SgVertexArray& points = *pointSet->getOrCreateVertices();
+        const int numPoints = src.size();
+        points.resize(numPoints);
+        for(int i=0; i < numPoints; ++i){
+            points[i] = src[i];
+        }
+
+        SgColorArray& colors = *pointSet->getOrCreateColors();
+        const Image& image = rangeCamera->constImage();
+        if(image.empty() || image.numComponents() != 3){
+            colors.clear();
+        } else {
+            const unsigned char* pixels = image.pixels();
+            const int numPixels = image.width() * image.height();
+            const int n = std::min(numPixels, numPoints);
+            colors.resize(n);
+            for(int i=0; i < n; ++i){
+                Vector3f& c = colors[i];
+                c[0] = *pixels++ / 255.0f;
+                c[1] = *pixels++ / 255.0f;
+                c[2] = *pixels++ / 255.0f;
+            }
         }
     }
-
     pointSet->notifyUpdate();
 }
 
@@ -642,38 +646,42 @@ void RangeSensorVisualizerItemImpl::updateRangeSensorState()
         return;
     }
 
-    const RangeSensor::RangeData& src = rangeSensor->constRangeData();
-    SgVertexArray& points = *pointSet->getOrCreateVertices();
-    const int numPoints = src.size();
-    points.clear();
+    if(!rangeSensor->on()){
+        pointSet->clear();
+    } else {
+        const RangeSensor::RangeData& src = rangeSensor->constRangeData();
+        const int numPoints = src.size();
+        SgVertexArray& points = *pointSet->getOrCreateVertices();
+        points.clear();
 
-    if(!src.empty()){
-        points.reserve(numPoints);
-        const int numPitchSamples = rangeSensor->numPitchSamples();
-        const double pitchStep = rangeSensor->pitchStep();
-        const int numYawSamples = rangeSensor->numYawSamples();
-        const double yawStep = rangeSensor->yawStep();
-        
-        for(int pitch=0; pitch < numPitchSamples; ++pitch){
-            const double pitchAngle = pitch * pitchStep - rangeSensor->pitchRange() / 2.0;
-            const double cosPitchAngle = cos(pitchAngle);
-            const int srctop = pitch * numYawSamples;
+        if(!src.empty()){
+            points.reserve(numPoints);
+            const int numPitchSamples = rangeSensor->numPitchSamples();
+            const double pitchStep = rangeSensor->pitchStep();
+            const int numYawSamples = rangeSensor->numYawSamples();
+            const double yawStep = rangeSensor->yawStep();
 
-            for(int yaw=0; yaw < numYawSamples; ++yaw){
-                const double distance = src[srctop + yaw];
-                if(distance <= rangeSensor->maxDistance()){
-                    double yawAngle = yaw * yawStep - rangeSensor->yawRange() / 2.0;
-                    float x = distance *  cosPitchAngle * sin(-yawAngle);
-                    float y  = distance * sin(pitchAngle);
-                    float z  = -distance * cosPitchAngle * cos(yawAngle);
-                    points.push_back(Vector3f(x, y, z));
+            for(int pitch=0; pitch < numPitchSamples; ++pitch){
+                const double pitchAngle = pitch * pitchStep - rangeSensor->pitchRange() / 2.0;
+                const double cosPitchAngle = cos(pitchAngle);
+                const int srctop = pitch * numYawSamples;
+
+                for(int yaw=0; yaw < numYawSamples; ++yaw){
+                    const double distance = src[srctop + yaw];
+                    if(distance <= rangeSensor->maxDistance()){
+                        double yawAngle = yaw * yawStep - rangeSensor->yawRange() / 2.0;
+                        float x = distance *  cosPitchAngle * sin(-yawAngle);
+                        float y  = distance * sin(pitchAngle);
+                        float z  = -distance * cosPitchAngle * cos(yawAngle);
+                        points.push_back(Vector3f(x, y, z));
+                    }
                 }
             }
         }
     }
-
     pointSet->notifyUpdate();
 }
+
 
 void CameraImageVisualizerItem::initializeClass(ExtensionManager* ext)
 {
@@ -729,7 +737,11 @@ void CameraImageVisualizerItemImpl::setBodyItem(BodyItem* bodyItem, Camera* came
 
 void CameraImageVisualizerItemImpl::updateCameraImage()
 {
-    image = camera->sharedImage();
+    if(camera->on()){
+        image = camera->sharedImage();
+    } else {
+        image.reset();
+    }
     self->notifyImageUpdate();
 }
 
