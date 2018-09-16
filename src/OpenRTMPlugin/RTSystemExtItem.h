@@ -148,7 +148,7 @@ public:
     RTSystemExtItem* rts() { return rts_; }
     RTSPortExt* nameToRTSPort(const std::string& name);
     const QPointF& pos() const { return pos_; }
-    void setPos(const QPointF& p);
+    void moveToRelative(const QPointF& p);
 
 private:
     RTSystemExtItem* rts_;

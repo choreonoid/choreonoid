@@ -580,11 +580,11 @@ bool RTSCompExt::getComponentPath(RTC::PortService_ptr source, std::string& out_
     return false;
 }
 
-
-void RTSCompExt::setPos(const QPointF& p)
+void RTSCompExt::moveToRelative(const QPointF& p)
 {
-    if (p != pos_) {
-        pos_ = p;
+    QPointF newPos = pos_ + p;
+    if (newPos != pos_) {
+        pos_ = newPos;
         rts_->suggestFileUpdate();
     }
 }
@@ -1141,6 +1141,7 @@ bool RTSystemExtItem::loadRtsProfile(const string& filename)
     ProfileHandler::getRtsProfileInfo(filename, impl->vendorName, impl->version);
     if (ProfileHandlerExt::restoreRtsProfile(filename, this)) {
         impl->sigLoadedRTSystem(false);
+        clearFileUpdate();
         return true;
     }
     return false;
@@ -1365,6 +1366,7 @@ void RTSystemExtItemImpl::restoreRTSystem(const Archive& archive)
     }
 
     sigLoadedRTSystem(true);
+    self->clearFileUpdate();
     DDEBUG("RTSystemItemImpl::restoreRTSystem End");
 }
 

@@ -1091,6 +1091,7 @@ bool RTSystemItem::loadRtsProfile(const string& filename)
     ProfileHandler::getRtsProfileInfo(filename, impl->vendorName, impl->version);
     if (ProfileHandler::restoreRtsProfile(filename, this)) {
         impl->sigLoadedRTSystem(false);
+        clearFileUpdate();
         return true;
     }
     return false;
@@ -1105,6 +1106,7 @@ bool RTSystemItem::saveRtsProfile(const string& filename)
 
 bool RTSystemItemImpl::saveRtsProfile(const string& filename)
 {
+    DDEBUG_V("RTSystemItem::saveRtsProfile=%s", filename.c_str());
     if (vendorName.empty()) {
         vendorName = "Choreonoid";
     }
@@ -1199,9 +1201,6 @@ bool RTSystemItem::restore(const Archive& archive)
     if (archive.read("autoConnection", impl->autoConnection) == false) {
         archive.read("AutoConnection", impl->autoConnection);
     }
-    //if( archive.read("pollingCycle", impl->pollingCycle)==false) {
-    //    archive.read("PollingCycle", impl->pollingCycle);
-    //}
     if( archive.read("checkAtLoading", impl->checkAtLoading)==false) {
         archive.read("CheckAtLoading", impl->checkAtLoading);
     }
@@ -1318,6 +1317,7 @@ void RTSystemItemImpl::restoreRTSystem(const Archive& archive)
     }
 
     sigLoadedRTSystem(true);
+    self->clearFileUpdate();
     DDEBUG("RTSystemItemImpl::restoreRTSystem End");
 }
 

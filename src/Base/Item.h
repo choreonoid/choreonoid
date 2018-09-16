@@ -164,6 +164,7 @@ public:
     void clearFileInformation();
 
     void suggestFileUpdate() { isConsistentWithFile_ = false; }
+    void clearFileUpdate() { isConsistentWithFile_ = true; }
 
     void putProperties(PutPropertyFunction& putProperty);
 

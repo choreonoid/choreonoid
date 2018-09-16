@@ -591,7 +591,7 @@ typedef ref_ptr<RTSCompExtGItem> RTSCompExtGItemPtr;
 QVariant RTSCompExtGItem::itemChange(GraphicsItemChange change, const QVariant & value)
 {
     if (change == ItemPositionChange) {
-        rtsComp->setPos(rtsComp->pos() + value.value<QPointF>() - pos());
+        rtsComp->moveToRelative(value.value<QPointF>() - pos());
         for (auto it = inPorts.begin(); it != inPorts.end(); ++it) {
             it->second->pos += value.value<QPointF>() - pos();
         }
