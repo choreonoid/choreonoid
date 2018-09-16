@@ -80,14 +80,13 @@ public:
 
     virtual Device* clone() const = 0;
     virtual void forEachActualType(std::function<bool(const std::type_info& type)> func);
-    virtual void clearState();
 
     bool hasStateOnly() const { return (ns != 0); }
 
     const int index() const { return ns->index; }
     const int id() const { return ns->id; }
     const std::string& name() const { return ns->name; }
-        
+
     const Link* link() const { return ns->link; }
     Link* link() { return ns->link; }
 
@@ -111,9 +110,14 @@ public:
 
     template<typename Derived>
         void setLocalTranslation(const Eigen::MatrixBase<Derived>& p) { ns->T_local.translation() = p; }
-        
+
     double cycle() const { return ns->cycle; }
     void setCycle(double msec) { ns->cycle = msec; }
+
+    virtual void clearState();
+
+    virtual bool on() const;
+    virtual void on(bool on);
 
     SignalProxy<void()> sigStateChanged() {
         return ns->sigStateChanged;

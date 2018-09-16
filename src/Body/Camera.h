@@ -26,9 +26,6 @@ public:
     virtual Device* clone() const override;
     virtual void forEachActualType(std::function<bool(const std::type_info& type)> func) override;
     virtual void clearState() override;
-    virtual int stateSize() const override;
-    virtual const double* readState(const double* buf) override;
-    virtual double* writeState(double* out_buf) const override;
 
     void setImageStateClonable(bool on) { isImageStateClonable_ = on; }
     bool isImageStateClonable() const { return isImageStateClonable_; }
@@ -42,8 +39,8 @@ public:
     LensType lensType() const { return lensType_; }
     void setLensType(LensType type) { lensType_ = type; }
 
-    bool on() const { return on_; }
-    void on(bool on) { on_ = on; }
+    virtual bool on() const override;
+    void on(bool on) override;
 
     double nearClipDistance() const { return nearClipDistance_; }
     void setNearClipDistance(double d) { nearClipDistance_ = d; }
@@ -91,6 +88,10 @@ public:
     */
     double delay() const { return delay_; }
     void setDelay(double time) { delay_ = time; }
+
+    virtual int stateSize() const override;
+    virtual const double* readState(const double* buf) override;
+    virtual double* writeState(double* out_buf) const override;
 
 private:
     bool on_;

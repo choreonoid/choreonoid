@@ -54,3 +54,15 @@ void Device::clearState()
 {
 
 }
+
+
+bool Device::on() const
+{
+    return true;
+}
+
+
+void Device::on(bool)
+{
+
+}

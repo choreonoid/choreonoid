@@ -107,6 +107,28 @@ void Camera::forEachActualType(std::function<bool(const std::type_info& type)> f
 }
 
 
+void Camera::clearState()
+{
+    if(image_.use_count() == 1){
+        image_->clear();
+    } else {
+        image_ = std::make_shared<Image>();
+    }
+}
+
+
+bool Camera::on() const
+{
+    return on_;
+}
+
+
+void Camera::on(bool on)
+{
+    on_ = on;
+}
+
+
 Image& Camera::image()
 {
     if(image_.use_count() > 1){
@@ -131,16 +153,6 @@ void Camera::setImage(std::shared_ptr<Image>& image)
         image_ = std::make_shared<Image>(*image);
     }
     image.reset();
-}
-
-
-void Camera::clearState()
-{
-    if(image_.use_count() == 1){
-        image_->clear();
-    } else {
-        image_ = std::make_shared<Image>();
-    }
 }
 
 

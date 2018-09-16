@@ -164,6 +164,17 @@ void RangeSensor::clearState()
 }
 
 
+bool RangeSensor::on() const
+{
+    return on_;
+}
+
+
+void RangeSensor::on(bool on)
+{
+    on_ = on;
+}
+
 int RangeSensor::stateSize() const
 {
     return 9;
