@@ -32,6 +32,7 @@ links:
         width: 1280
         height: 720
         fieldOfView: 41.08
+        on: true
   -
     name: MFRAME
     parent: TFRAME
@@ -54,24 +55,6 @@ links:
       - { type: Resource, uri: "prt/middleframe.wrl" }
       -
         type: Camera
-        name: WORK_RIGHT_VIEW
-        rotation: [ -0.00190454, 0.999046, 0.0436175, 175 ]
-        translation: [ -1.5, 0.165993, -2 ]
-        format: COLOR
-        width: 640
-        height: 360
-        fieldOfView: 96
-      -
-        type: Camera
-        name: WORK_LEFT_VIEW
-        rotation: [ -0.706786, 0.706754, 0.0308563, 7.07007 ]
-        translation: [ -1.5, 0.166007, 2 ]
-        format: COLOR
-        width: 640
-        height: 360
-        fieldOfView: 96
-      -
-        type: Camera
         name: mid_RIGHT_CAMERA
         rotation: [ -0.706785, 0.706755, 0.0308563, 7.07007 ]
         translation: [ -0.5, 1.216, 0.0999955 ]
@@ -80,6 +63,7 @@ links:
         height: 360
         fieldOfView: 96
         farClipDistance: 5
+        on: false
       -
         type: Camera
         name: mid_LEFT_CAMERA
@@ -90,6 +74,7 @@ links:
         height: 360
         fieldOfView: 96
         farClipDistance: 5
+        on: false
       -
         type: Camera
         name: Mid_TOP_CAMERA
@@ -100,6 +85,7 @@ links:
         height: 360
         fieldOfView: 96
         farClipDistance: 5
+        on: false
       -
         type: Camera
         name: Mid_BOTTOM_CAMERA
@@ -110,6 +96,7 @@ links:
         height: 360
         fieldOfView: 96
         farClipDistance: 5
+        on: false
       -
         type: Camera
         name: Mid_FRONT_CAMERA
@@ -120,6 +107,7 @@ links:
         height: 720
         fieldOfView: 40
         farClipDistance: 5
+        on: false
   -
     name: BLOCK
     parent: MFRAME
@@ -266,6 +254,7 @@ links:
         height: 720
         fieldOfView: 115.97
         farClipDistance: 5
+        on: false
   -
     name: TOHKU_ROLL
     parent: TOHKU_PITCH
@@ -582,6 +571,7 @@ links:
         width: 640
         height: 360
         fieldOfView: 95.91
+        on: false
       -
         type: Camera
         name: UF_TOP_CAMERA
@@ -591,6 +581,7 @@ links:
         width: 640
         height: 360
         fieldOfView: 95.91
+        on: false
       -
         type: Camera
         name: UF_FRONT_CAMERA
@@ -601,6 +592,7 @@ links:
         height: 720
         fieldOfView: 41.08
         farClipDistance: 5
+        on: false
   -
     name: MNP_SWING
     parent: UFRAME
@@ -719,6 +711,7 @@ links:
         height: 720
         fieldOfView: 115.97
         farClipDistance: 5
+        on: false
   -
     name: HANDBASE
     parent: YAWJOINT
