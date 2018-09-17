@@ -1126,22 +1126,24 @@ void GLVisionSimulatorItemImpl::onPreDynamics()
     
     for(size_t i=0; i < sensorRenderers.size(); ++i){
         auto& renderer = sensorRenderers[i];
-        if(renderer->elapsedTime >= renderer->cycleTime){
-            if(!renderer->isRendering){
-                renderer->onsetTime = currentTime;
-                renderer->isRendering = true;
-                if(useThreadsForSensors){
-                    renderer->startConcurrentRendering();
-                } else {
-                    if(!pQueueMutex){
-                        pQueueMutex = &queueMutex;
-                        pQueueMutex->lock();
+        if(renderer->device->on()){
+            if(renderer->elapsedTime >= renderer->cycleTime){
+                if(!renderer->isRendering){
+                    renderer->onsetTime = currentTime;
+                    renderer->isRendering = true;
+                    if(useThreadsForSensors){
+                        renderer->startConcurrentRendering();
+                    } else {
+                        if(!pQueueMutex){
+                            pQueueMutex = &queueMutex;
+                            pQueueMutex->lock();
+                        }
+                        renderer->updateSensorScene(true);
+                        sensorQueue.push(renderer);
                     }
-                    renderer->updateSensorScene(true);
-                    sensorQueue.push(renderer);
+                    renderer->elapsedTime -= renderer->cycleTime;
+                    renderersInRendering.push_back(renderer);
                 }
-                renderer->elapsedTime -= renderer->cycleTime;
-                renderersInRendering.push_back(renderer);
             }
         }
         renderer->elapsedTime += worldTimeStep;
