@@ -229,21 +229,25 @@ CHASSIS: &CHASSIS
         name: FRONT_CAMERA
         translation: [ 0.25470, 0, 0.13550  ]
         rotation: [ [ 0, 0, 1, -90 ], [ 1, 0, 0, 90 ] ]
+        on: true
       - # B0010_3101<2>
         <<: *CAMERA_MCM-4350FISH
         name: LEFT_CAMERA
         translation: [ 0, 0.17850, 0.04450 ]
         rotation: [ 1, 0, 0, 90 ]
+        on: false
       - # B0010_3101<3>
         <<: *CAMERA_MCM-4350FISH
         name: RIGHT_CAMERA
         translation: [ 0, -0.17850, 0.04450 ]
         rotation: [ [ 0, 0, 1, 180 ], [ 1, 0, 0, 90 ] ]
+        on: false
       - # B0010_3101<4>
         <<: *CAMERA_MCM-4350FISH
         name: BACK_CAMERA
         translation: [ -0.35670, 0, 0.094 ]
         rotation: [ [ 0, 0, 1, 90 ], [ 1, 0, 0, 90 ] ]
+        on: false
       - # Front light
         <<: *LIGHT
         name: FRONT_LIGHT
