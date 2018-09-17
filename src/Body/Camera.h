@@ -95,7 +95,7 @@ public:
 
 private:
     bool on_;
-    bool isImageStateClonable_;
+    bool isImageStateClonable_; // Non state variable
     ImageType imageType_;
     LensType lensType_;
     int resolutionX_;
@@ -107,7 +107,6 @@ private:
     double delay_;
     std::shared_ptr<Image> image_;
 
-    Camera(const Camera& org, int x);
     void copyCameraStateFrom(const Camera& other);
 };
 

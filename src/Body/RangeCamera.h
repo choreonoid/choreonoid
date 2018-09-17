@@ -54,7 +54,6 @@ private:
     bool isOrganized_;
     bool isDense_;
 
-    RangeCamera(const RangeCamera& org, int x);
     void copyRangeCameraStateFrom(const RangeCamera& other);    
 };
 

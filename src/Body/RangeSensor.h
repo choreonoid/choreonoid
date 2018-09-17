@@ -86,7 +86,7 @@ public:
 
 private:
     bool on_;
-    bool isRangeDataStateClonable_;
+    bool isRangeDataStateClonable_; // Non state variable
     double yawRange_;
     double yawStep_;
     double pitchRange_;
@@ -97,7 +97,6 @@ private:
     double delay_;
     std::shared_ptr<RangeData> rangeData_;
 
-    RangeSensor(const RangeSensor& org, int x /* dummy */);
     void copyRangeSensorStateFrom(const RangeSensor& other);    
 };
 
