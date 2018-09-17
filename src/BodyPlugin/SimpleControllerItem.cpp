@@ -415,6 +415,7 @@ bool SimpleControllerItem::initialize(ControllerIO* io)
 {
     if(impl->initialize(io, new SharedInfo)){
         impl->updateInputEnabledDevices();
+        output();
         return true;
     }
     return false;
@@ -459,6 +460,7 @@ SimpleController* SimpleControllerItemImpl::initialize(ControllerIO* io, SharedI
             }
         }
     }
+
     updateIOStateTypes();
 
     return controller;
