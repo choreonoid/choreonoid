@@ -107,6 +107,12 @@ public:
         };
         spotLight = dynamic_pointer_cast<SpotLight>(devices[0].device);
 
+        // Turn on all the devices
+        for(auto& device : devices){
+            device.device->on(true);
+            device.device->notifyStateChange();
+        }
+
         return true;
     }
 
