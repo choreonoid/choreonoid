@@ -228,6 +228,7 @@ public:
     SensorScenePtr sharedScene;
     vector<SensorScenePtr> scenes;
     vector<SensorScreenRendererPtr> screens;
+    bool wasDeviceOn;
     bool isRendering;  // only updated and referred to in the simulation thread
     std::shared_ptr<RangeSensor::RangeData> rangeData;
     FisheyeLensConverter fisheyeLensConverter;
@@ -771,10 +772,10 @@ bool SensorRenderer::initialize(const vector<SimulationBody*>& simBodies)
         }
     }
 
-    elapsedTime = cycleTime + 1.0e-6;
+    elapsedTime = 0.0;
     latency = std::min(cycleTime, simImpl->maxLatency);
     onsetTime = 0.0;
-    
+    wasDeviceOn = false;
     isRendering = false;
 
     if(simImpl->useThreadsForSensors){
@@ -1126,7 +1127,11 @@ void GLVisionSimulatorItemImpl::onPreDynamics()
     
     for(size_t i=0; i < sensorRenderers.size(); ++i){
         auto& renderer = sensorRenderers[i];
-        if(renderer->device->on()){
+        bool isOn = renderer->device->on();
+        if(isOn){
+            if(!renderer->wasDeviceOn){
+                renderer->elapsedTime = renderer->cycleTime;
+            }
             if(renderer->elapsedTime >= renderer->cycleTime){
                 if(!renderer->isRendering){
                     renderer->onsetTime = currentTime;
@@ -1145,8 +1150,9 @@ void GLVisionSimulatorItemImpl::onPreDynamics()
                     renderersInRendering.push_back(renderer);
                 }
             }
+            renderer->elapsedTime += worldTimeStep;
         }
-        renderer->elapsedTime += worldTimeStep;
+        renderer->wasDeviceOn = isOn;
     }
 
     if(pQueueMutex){
