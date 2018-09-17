@@ -1587,6 +1587,7 @@ bool YAMLBodyLoaderImpl::readDevice(Device* device, Mapping& node)
     device->setName(nameStack.back());
 
     if(node.read("id", id)) device->setId(id);
+    if(node.read("on", on)) device->on(on);
 
     const Affine3& T = transformStack.back();
     device->setLocalTranslation(T.translation());
@@ -1679,7 +1680,6 @@ bool YAMLBodyLoaderImpl::readCamera(Mapping& node)
         }
     }
 
-    if(node.read("on", on)) camera->on(on);
     if(node.read("width", value)) camera->setResolutionX(value);
     if(node.read("height", value)) camera->setResolutionY(value);
     if(readAngle(node, "fieldOfView", value)) camera->setFieldOfView(value);
@@ -1695,8 +1695,6 @@ bool YAMLBodyLoaderImpl::readRangeSensor(Mapping& node)
 {
     RangeSensorPtr rangeSensor = new RangeSensor;
     
-    if(node.read("on", on)) rangeSensor->on(on);
-
     if(readAngle(node, "yawRange", value)){
         rangeSensor->setYawRange(value);
     } else if(readAngle(node, "scanAngle", value)){ // backward compatibility
@@ -1722,7 +1720,6 @@ bool YAMLBodyLoaderImpl::readSpotLight(Mapping& node)
 {
     SpotLightPtr light = new SpotLight();
 
-    if(node.read("on", on)) light->on(on);
     if(read(node, "color", color)) light->setColor(color);
     if(node.read("intensity", value)) light->setIntensity(value);
     if(read(node, "direction", v)) light->setDirection(v);
