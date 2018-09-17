@@ -53,7 +53,7 @@ def write_project_script(filename, task, robot, interface):
         if options:
             options += ", "
         options += "enableVisionSimulation = True, "
-        options += 'targetVisionSensors = "{}", '.format(get_vision_sensors(robot))
+        #options += 'targetVisionSensors = "{}", '.format(get_vision_sensors(robot))
         options += 'remoteType = "{}"'.format(interface)
 
     if not options:

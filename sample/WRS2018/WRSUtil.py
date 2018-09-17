@@ -77,6 +77,7 @@ def loadProject(
     if enableVisionSimulation:
         visionSimulator = GLVisionSimulatorItem()
         visionSimulator.setTargetSensors(targetVisionSensors)
+        visionSimulator.setBestEffortMode(True)
         simulators = world.getDescendantItems(SimulatorItem)
         for simulator in simulators:
             simulator.addChildItem(visionSimulator.duplicate())
