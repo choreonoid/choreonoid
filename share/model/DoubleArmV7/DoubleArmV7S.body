@@ -12,31 +12,47 @@ links:
   -
     name: TRACK_L
     parent: TFRAME
-    translation: [ 0.7, -0.295, 0.600 ]
-    jointAxis: Z
+    translation: [ -0.7, 0.6, -0.295 ]
+    jointAxis: Y
     actuationMode: jointSurfaceVelocity
     maxJointVelocity: 573
-    mass: 73.0
-    centerOfMass: [ -7.20905670E-01, -6.74188380E-03, -1.13870140E-05 ]
-    inertia: [
-      2.68492180E+00,  -1.21522830E-01, 5.01141340E-04,
-      -1.21522830E-01, 2.45512090E+01,  -1.72173060E-04,
-      5.01141340E-04,  -1.72173060E-04, 2.65997250E+01 ]
-    elements: { type: Resource, uri: "prt/tframe.wrl" }
+    elements:
+      Transform:
+        rotation: [ [ 0, 0, 1, 180 ], [ 1, 0, 0, 90 ] ]
+        elements:
+          -
+            type: Resource
+            uri: "prt/tframe.wrl"
+          -
+            type: RigidBody
+            mass: 73.0
+            centerOfMass: [ -7.20905670E-01, -6.74188380E-03, -1.13870140E-05 ]
+            inertia: [
+              2.68492180E+00,  -1.21522830E-01, 5.01141340E-04,
+              -1.21522830E-01, 2.45512090E+01,  -1.72173060E-04,
+              5.01141340E-04,  -1.72173060E-04, 2.65997250E+01 ]
   -
     name: TRACK_R
     parent: TFRAME
-    translation: [ 0.7, -0.295, -0.600 ]
-    jointAxis: Z
+    translation: [ -0.7, -0.6, -0.295 ]
+    jointAxis: Y
     actuationMode: jointSurfaceVelocity
     maxJointVelocity: 573
-    mass: 73.0
-    centerOfMass: [ -7.20905670E-01, -6.74188380E-03, -1.13870140E-05 ]
-    momentsOfInertia: [
-      2.68492180E+00, -1.21522830E-01, 5.01141340E-04,
-      -1.21522830E-01, 2.45512090E+01, -1.72173060E-04,
-      5.01141340E-04, -1.72173060E-04, 2.65997250E+01 ]
-    elements: { type: Resource, uri: "prt/tframe.wrl" }
+    elements:
+      Transform:
+        rotation: [ [ 0, 0, 1, 180 ], [ 1, 0, 0, 90 ] ]
+        elements:
+          -
+            type: Resource
+            uri: "prt/tframe.wrl"
+          -
+            type: RigidBody
+            mass: 73.0
+            centerOfMass: [ -7.20905670E-01, -6.74188380E-03, -1.13870140E-05 ]
+            momentsOfInertia: [
+              2.68492180E+00, -1.21522830E-01, 5.01141340E-04,
+              -1.21522830E-01, 2.45512090E+01, -1.72173060E-04,
+              5.01141340E-04, -1.72173060E-04, 2.65997250E+01 ]
 
 collisionDetection:
   excludeTreeDepth: 1
