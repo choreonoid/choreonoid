@@ -84,10 +84,12 @@ links:
     ]
     rotorInertia: 0.2
     # AGX parameters
-    jointMotorForceRange: [ -18.0, 18.0 ]
-    jointLockForceRange: [ -18.0, 18.0 ]
-    jointLockCompliance: 0.00096963
-    jointLockSpookDamping: 0.1
+    #jointMotorForceRange: [ -18.0, 18.0 ]
+    #jointLockForceRange: [ -18.0, 18.0 ]
+    #jointLockCompliance: 0.00096963
+    #jointLockSpookDamping: 0.1
+    jointMotorForceRange: [ -40.0, 40.0 ]
+    jointLockForceRange: [ -40.0, 40.0 ]
     elements:
       -
         type: Visual
@@ -139,8 +141,8 @@ links:
     # AGX parameters
     jointMotorForceRange: [ -37.0, 37.0 ]
     jointLockForceRange: [ -37.0, 37.0 ]
-    jointLockCompliance: 0.00047171
-    jointLockSpookDamping: 0.1
+    #jointLockCompliance: 0.00047171
+    #jointLockSpookDamping: 0.1
     elements:
       -
         type: Visual
@@ -189,10 +191,12 @@ links:
     ]
     rotorInertia: 0.1
     # AGX parameters
-    jointMotorForceRange: [ -18.0, 18.0 ]
-    jointLockForceRange: [ -18.0, 18.0 ]
-    jointLockCompliance: 0.00096963
-    jointLockSpookDamping: 0.1
+    #jointMotorForceRange: [ -18.0, 18.0 ]
+    #jointLockForceRange: [ -18.0, 18.0 ]
+    #jointLockCompliance: 0.00096963
+    #jointLockSpookDamping: 0.1
+    jointMotorForceRange: [ -30.0, 30.0 ]
+    jointLockForceRange: [ -30.0, 30.0 ]
     elements:
       -
         type: Visual
@@ -233,10 +237,12 @@ links:
     jointVelocityRange: [ -90.0, 90.0 ]
     rotorInertia: 0.05
     # AGX parameters
-    jointMotorForceRange: [ -6.8, 6.8 ]
-    jointLockForceRange: [ -6.8, 6.8 ]
-    jointLockCompliance: 0.00256666
-    jointLockSpookDamping: 0.1
+    #jointMotorForceRange: [ -6.8, 6.8 ]
+    #jointLockForceRange: [ -6.8, 6.8 ]
+    #jointLockCompliance: 0.00256666
+    #jointLockSpookDamping: 0.1
+    jointMotorForceRange: [ -15, 15 ]
+    jointLockForceRange: [ -15, 15 ]
     elements: &WRIST_elements
       RigidBody:
         centerOfMass: [ 0, 0.037, 0.0642 ]
@@ -293,10 +299,12 @@ links:
     jointVelocityRange: [ -90.0, 90.0 ]
     rotorInertia: 0.05
     # AGX parameters
-    jointMotorForceRange: [ -6.8, 6.8 ]
-    jointLockForceRange: [ -6.8, 6.8 ]
-    jointLockCompliance: 0.00256666
-    jointLockSpookDamping: 0.1
+    #jointMotorForceRange: [ -6.8, 6.8 ]
+    #jointLockForceRange: [ -6.8, 6.8 ]
+    #jointLockCompliance: 0.00256666
+    #jointLockSpookDamping: 0.1
+    jointMotorForceRange: [ -15, 15 ]
+    jointLockForceRange: [ -15, 15 ]
     elements: *WRIST_elements
   -
     name: HAND
@@ -317,10 +325,12 @@ links:
     ]
     rotorInertia: 0.05
     # AGX parameters
-    jointMotorForceRange: [ -6.8, 6.8 ]
-    jointLockForceRange: [ -6.8, 6.8 ]
-    jointLockCompliance: 0.00256666
-    jointLockSpookDamping: 0.1
+    #jointMotorForceRange: [ -6.8, 6.8 ]
+    #jointLockForceRange: [ -6.8, 6.8 ]
+    #jointLockCompliance: 0.00256666
+    #jointLockSpookDamping: 0.1
+    jointMotorForceRange: [ -10, 10 ]
+    jointLockForceRange: [ -10, 10 ]
     elements:
       -
         type: Visual
@@ -436,10 +446,12 @@ links:
     rotorInertia: 0.005
     material: Hand
     # AGX parameters
-    jointMotorForceRange: [ -0.96, 0.96 ]
-    jointLockForceRange: [ -0.96, 0.96 ]
-    jointLockCompliance: 0.636318
-    jointLockSpookDamping: 0.1
+    #jointMotorForceRange: [ -0.96, 0.96 ]
+    #jointLockForceRange: [ -0.96, 0.96 ]
+    #jointLockCompliance: 0.636318
+    #jointLockSpookDamping: 0.1
+    jointMotorForceRange: [ -10, 10 ]
+    jointLockForceRange: [ -10, 10 ]
     elements: &FINGER_elements
       RigidBody:
         centerOfMass: [ 0, 0, 0.022 ]
@@ -614,10 +626,12 @@ links:
     rotorInertia: 0.005
     material: Hand
     # AGX parameters
-    jointMotorForceRange: [ -0.96, 0.96 ]
-    jointLockForceRange: [ -0.96, 0.96 ]
-    jointLockCompliance: 0.636318
-    jointLockSpookDamping: 0.1
+    #jointMotorForceRange: [ -0.96, 0.96 ]
+    #jointLockForceRange: [ -0.96, 0.96 ]
+    #jointLockCompliance: 0.636318
+    #jointLockSpookDamping: 0.1
+    jointMotorForceRange: [ -10, 10 ]
+    jointLockForceRange: [ -10, 10 ]
     elements: *FINGER_elements
   -
     name: FINGER2_TIP
@@ -642,10 +656,12 @@ links:
     rotorInertia: 0.005
     material: Hand
     # AGX parameters
-    jointMotorForceRange: [ -0.96, 0.96 ]
-    jointLockForceRange: [ -0.96, 0.96 ]
-    jointLockCompliance: 0.636318
-    jointLockSpookDamping: 0.1
+    #jointMotorForceRange: [ -0.96, 0.96 ]
+    #jointLockForceRange: [ -0.96, 0.96 ]
+    #jointLockCompliance: 0.636318
+    #jointLockSpookDamping: 0.1
+    jointMotorForceRange: [ -10, 10 ]
+    jointLockForceRange: [ -10, 10 ]
     jointVelocityRange: [ -95.0, 95.0 ]
     elements: *FINGER_elements
   -
