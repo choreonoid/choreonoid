@@ -68,6 +68,7 @@ public:
     ~PluginManagerImpl();
 
     Action* startupLoadingCheck;
+    Action* namingConventionCheck;
         
     MessageView* mv;
 
@@ -200,20 +201,25 @@ PluginManagerImpl::PluginManagerImpl(ExtensionManager* ext)
     pluginNamePattern.setPattern(
         QString(DLL_PREFIX) + "Cnoid.+Plugin" + DEBUG_SUFFIX + "\\." + DLL_EXTENSION);
 
-    MappingPtr config = AppConfig::archive()->openMapping("PluginManager");
-
     // for the base module
     PluginInfoPtr info = std::make_shared<PluginInfo>();
     info->name = "Base";
     nameToPluginInfoMap.insert(make_pair(string("Base"), info));
 
+    auto config = AppConfig::archive()->openMapping("PluginManager");
+
     MenuManager& mm = ext->menuManager();
-    mm.setPath("/File");
+    mm.setPath("/File/Plugin");
     mm.addItem(_("Load Plugin"))
         ->sigTriggered().connect(std::bind(&PluginManagerImpl::onLoadPluginTriggered, this));
 
+    mm.addSeparator();
+
     startupLoadingCheck = mm.addCheckItem(_("Startup Plugin Loading"));
     startupLoadingCheck->setChecked(config->get("startupPluginLoading", true));
+
+    namingConventionCheck = mm.addCheckItem(_("Check the naming convention of plugin files"));
+    namingConventionCheck->setChecked(config->get("checkPluginfileNamingConvention", true));
     
     mm.addSeparator();
 }
@@ -229,8 +235,9 @@ PluginManagerImpl::~PluginManagerImpl()
 {
     finalizePlugins();
 
-    AppConfig::archive()->openMapping("PluginManager")
-        ->write("startupPluginLoading", startupLoadingCheck->isChecked());
+    auto config = AppConfig::archive()->openMapping("PluginManager");
+    config->write("startupPluginLoading", startupLoadingCheck->isChecked());
+    config->write("checkPluginfileNamingConvention", namingConventionCheck->isChecked());
 }
 
 
@@ -350,7 +357,7 @@ void PluginManagerImpl::scanPluginFiles(const std::string& pathString, bool isRe
             }
         } else {
             QString filename(getFilename(pluginPath).c_str());
-            if(pluginNamePattern.exactMatch(filename)){
+            if(!namingConventionCheck->isChecked() || pluginNamePattern.exactMatch(filename)){
                 PluginMap::iterator p = pathToPluginInfoMap.find(pathString);
                 if(p == pathToPluginInfoMap.end()){
                     PluginInfoPtr info = std::make_shared<PluginInfo>();
