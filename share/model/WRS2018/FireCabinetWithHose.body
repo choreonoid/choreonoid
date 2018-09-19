@@ -20,7 +20,7 @@ links:
         type: AGXWireDevice
         isOptional: true
         radius: 0.02
-        resolutionPerUnitLength: 1
+        resolutionPerUnitLength: 5
         collision: true
         selfCollision: true
         materialName: Wire
