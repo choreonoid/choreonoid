@@ -13,7 +13,7 @@ links:
     name: HOSE_ROOT
     parent: HOSE_REEL
     jointType: fixed
-    translation: [ -0.0835, -0.311, 0.22 ]
+    translation: [ -0.088, -0.311, 0.22 ]
     density: 1.0
     elements:
       -
@@ -54,26 +54,45 @@ links:
           -
             type: link
             linkName: HOSE_ADAPTER
-            position: [ 0, 0, 0]
+            position: [ 0, 0, 0.09 ]
             twistStiffness: 1e8
             bendStiffness: 1e8
             superBendReplacedWithBend: true
   -
     name: HOSE_ADAPTER
     parent: HOSE_ROOT
-    translation: [ 0, -0.23, -0.05 ]
+    rotation: [ [ 0, 1, 0, 90 ], [ 1, 0, 0, 90 ] ]
+    translation: [ 0, -0.23, -0.125 ]
     jointType: free
-    density: 1.0
+    density: 5.0
     elements:
       -
-        name: Attachment
         type: Shape
-        geometry: { type: Sphere, radius: 0.024 }
+        rotation: [ 0, 0, 1, 90 ]
+        geometry: { type: Cylinder, radius: 0.016, height: 0.15 }
         appearance: &red { material: { diffuseColor: [ 1.0, 0, 0 ] }}
       -
-        name: Nozzle
-        translation: [ 0, 0, -0.075 ]
         type: Shape
-        rotation: [ 1, 0, 0, -90 ]
-        geometry: { type: Cylinder, radius: 0.016, height: 0.15 }
+        translation: [ -0.075, 0, 0 ]
+        geometry: { type: Sphere, radius: 0.024 }
         appearance: *red
+
+  # This does not work well. Probably the center of mass calculated by the density mass type is wrong.
+  # -
+  #   name: HOSE_ADAPTER
+  #   parent: HOSE_ROOT
+  #   translation: [ 0, -0.23, -0.05 ]
+  #   jointType: free
+  #   massType: density
+  #   density: 1.0
+  #   elements:
+  #     -
+  #       type: Shape
+  #       geometry: { type: Sphere, radius: 0.024 }
+  #       appearance: &red { material: { diffuseColor: [ 1.0, 0, 0 ] }}
+  #     -
+  #       type: Shape
+  #       translation: [ 0, 0, -0.075 ]
+  #       rotation: [ 1, 0, 0, -90 ]
+  #       geometry: { type: Cylinder, radius: 0.016, height: 0.15 }
+  #       appearance: *red
