@@ -29,7 +29,7 @@ links:
             position: [ 0, 0.23, 0 ]
             normal: [ 0, 0, 1 ]
             pulledInLength: 100
-            haulForceRange: [ -50, 50 ]
+            haulForceRange: [ -30, 30 ]
         Nodes:
           -
             type: free

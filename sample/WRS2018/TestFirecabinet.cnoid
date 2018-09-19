@@ -33,16 +33,16 @@ items:
                   -1, 0, 0, 
                   0, -1, 0, 
                   0, 0, 1 ]
-                jointPositions: [ -2.792527,  1.570796,  0.000000,  0.000000,  0.000000 ]
+                jointPositions: [  0.000000,  0.000000,  0.000000,  0.000000,  0.000000 ]
                 initialRootPosition: [ 1.6, 0, 0.256 ]
                 initialRootAttitude: [ 
                   -1, 0, 0, 
                   0, -1, 0, 
                   0, 0, 1 ]
-                initialJointPositions: [ -2.792527,  1.570796,  0.000000,  0.000000,  0.000000 ]
+                initialJointPositions: [  0.000000,  0.000000,  0.000000,  0.000000,  0.000000 ]
                 zmp: [ 0, 0, 0 ]
                 collisionDetection: true
-                selfCollisionDetection: false
+                selfCollisionDetection: true
                 isEditable: true
             - 
               id: 4
@@ -61,8 +61,8 @@ items:
                 initialRootPosition: [ 1.52730321, 0.311165846, 1.06482962 ]
                 initialRootAttitude: [ 
                   0.0166105077, 0.179221257, -0.983668558, 
-                  -0.999861603, 0.00206194497, -0.0165082682, 
-                  -0.000930362221, 0.983806632, 0.179230703 ]
+                  -0.999861603, 0.00206194517, -0.0165082682, 
+                  -0.000930362067, 0.983806632, 0.179230703 ]
                 initialJointPositions: [  0.118811 ]
                 zmp: [ 0, 0, 0 ]
                 collisionDetection: true
@@ -359,7 +359,7 @@ views:
       spinBox: true
       slider: true
       labelOnLeft: true
-      currentBodyItem: 6
+      currentBodyItem: 3
   - 
     id: 7
     plugin: Body
@@ -367,7 +367,7 @@ views:
     mounted: true
     state: 
       listingMode: "Link List"
-      currentBodyItem: 6
+      currentBodyItem: 3
   - 
     id: 8
     plugin: OpenRTM
@@ -402,7 +402,7 @@ toolbars:
     penetrationBlockDepth: 0.0005
     lazyCollisionDetectionMode: true
   "BodyBar": 
-    current: 6
+    current: 3
   "LeggedBodyBar": 
     stanceWidth: 0.15
   "BodyMotionGenerationBar": 
