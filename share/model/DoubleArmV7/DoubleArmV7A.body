@@ -191,16 +191,17 @@ links:
     material: DoubleArmV7AWheel
     elements: *WeelShape
   -
+    &WIRE_GUARD
     name: WIRE_GUARD_L
     parent: TFRAME
     jointType: fixed
-    translation: [ 0.02, 0.600, -0.595 ]
+    translation: [ 0.02, 0.61, -0.32 ]
     centerOfMass: [ 0, 0, 0 ]
-    mass: 1.0
+    mass: 0.1
     inertia: [
-      0.208, 0, 0,
-      0, 0.555, 0,
-      0, 0, 0.388 ]
+      0.001, 0,      0,
+      0,      0.001, 0,
+      0,      0,      0.001 ]
     material: default
     elements: &WireGuard
       -
@@ -210,25 +211,13 @@ links:
           type: Shape
           appearance: &red
             material:
-              diffuseColor: [ 0.8, 0.0, 0.0 ]
-              ambientIntensity: 0.2
-              specularColor: [ 0.8, 0.8, 0.8 ]
-              transparency: 0.8
-          geometry: { type: Box, size: [ 2.1, 0.5, 1.5 ] }
+              diffuseColor: [ 0, 1, 0 ]
+              transparency: 0.6
+          geometry: { type: Box, size: [ 1.94, 0.32, 0.6 ] }
   -
+    <<: *WIRE_GUARD
     name: WIRE_GUARD_R
-    parent: TFRAME
-    jointType: fixed
-    translation: [ 0.02, -0.600, -0.595 ]
-    centerOfMass: [ 0, 0, 0 ]
-    mass: 1.0
-    inertia: [
-      0.208, 0, 0,
-      0, 0.555, 0,
-      0, 0, 0.388 ]
-    material: default
-    elements: *WireGuard
-
+    translation: [ 0.02, -0.61, -0.32 ]
 
 collisionDetection:
   excludeTreeDepth: 1
@@ -274,6 +263,10 @@ collisionDetection:
     -
       name: TOHKU_Group2
       links: [ TOHKU_ROLL, TOHKU_PITCH, ARM, BOOM, BLOCK ]
-
-  #excludeLinksWireCollision: [ WIRE_GUARD_L, WIRE_GUARD_R, TFRAME,
-  #  WHEEL_L0, WHEEL_L1, WHEEL_L2, WHEEL_L3, WHEEL_R0, WHEEL_R1, WHEEL_R2, WHEEL_R3 ]
+  
+  excludeLinksWireCollision: [
+    TFRAME, WHEEL_L0, WHEEL_L1, WHEEL_L2, WHEEL_L3, WHEEL_R0, WHEEL_R1, WHEEL_R2, WHEEL_R3,
+    TOHKU_TIP_01, TOHKU_TIP_02,
+    MANIFNG_U, HANDTIP_U, HANDLNK_I, MANIFNG_L, HANDTIP_L, HANDLNK_O ]
+  
+  excludeLinksDynamic: [ WIRE_GUARD_L, WIRE_GUARD_R ]
