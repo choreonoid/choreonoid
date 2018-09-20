@@ -60,9 +60,9 @@ items:
                 jointPositions: [  0.118811 ]
                 initialRootPosition: [ 1.52730321, 0.311165846, 1.06482962 ]
                 initialRootAttitude: [ 
-                  0.0166105077, 0.179221257, -0.983668558, 
-                  -0.999861603, 0.00206194517, -0.0165082682, 
-                  -0.000930362067, 0.983806632, 0.179230703 ]
+                  0.0166105079, 0.179221257, -0.983668558, 
+                  -0.999861603, 0.00206194534, -0.0165082684, 
+                  -0.00093036192, 0.983806632, 0.179230703 ]
                 initialJointPositions: [  0.118811 ]
                 zmp: [ 0, 0, 0 ]
                 collisionDetection: true
@@ -93,30 +93,32 @@ items:
                 isEditable: false
         - 
           id: 6
-          name: "AizuSpider"
+          name: "DoubleArmV7"
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/AizuSpider/AizuSpiderSA.body"
-            currentBaseLink: "CHASSIS"
-            rootPosition: [ 0, 0, 0.034 ]
+            modelFile: "${SHARE}/model/DoubleArmV7/DoubleArmV7A.body"
+            currentBaseLink: "TFRAME"
+            rootPosition: [ -1.5, 0, 0.52 ]
             rootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
             jointPositions: [ 
-              -0.030804, -0.030804, -0.030804, -0.030804, -1.571498,  0.872665,  0.868112, -0.002000,  0.002020, -0.000032, 
-               0.000033,  0.000574, -0.000000,  56.150628,  56.065966,  54.082347,  53.992656,  88.492347,  56.150618,  85.787464, 
-               54.082337,  96.815326,  56.150620,  93.733905,  54.082339 ]
-            initialRootPosition: [ 0, 0, 0.034 ]
+               3.141593,  0.000000, -1.221730,  2.617994,  0.000000,  0.000000,  0.000000,  0.000000,  3.141593,  0.000000, 
+               0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000, 
+               0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000, 
+               0.000000,  0.000000 ]
+            initialRootPosition: [ -1.5, 0, 0.52 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
             initialJointPositions: [ 
-              -0.030804, -0.030804, -0.030804, -0.030804, -1.571498,  0.872665,  0.868112, -0.002000,  0.002020, -0.000032, 
-               0.000033,  0.000574, -0.000000,  56.150628,  56.065966,  54.082347,  53.992656,  88.492347,  56.150618,  85.787464, 
-               54.082337,  96.815326,  56.150620,  93.733905,  54.082339 ]
+               3.141593,  0.000000, -1.221730,  2.617994,  0.000000,  0.000000,  0.000000,  0.000000,  3.141593,  0.000000, 
+               0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000, 
+               0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000, 
+               0.000000,  0.000000 ]
             zmp: [ 0, 0, 0 ]
             collisionDetection: true
             selfCollisionDetection: true
@@ -124,43 +126,18 @@ items:
           children: 
             - 
               id: 7
-              name: "AizuSpiderController"
+              name: "DoubleArmV7Controller"
               plugin: Body
               class: SimpleControllerItem
               data: 
                 isNoDelayMode: false
                 controllerOptions: ""
-                controller: "AizuSpiderController.so"
+                controller: "DoubleArmV7Controller"
                 baseDirectory: "Controller directory"
                 reloading: true
                 isOldTargetVariableMode: false
-              children: 
-                - 
-                  id: 8
-                  name: "Jaco2Controller"
-                  plugin: Body
-                  class: SimpleControllerItem
-                  data: 
-                    isNoDelayMode: false
-                    controllerOptions: ""
-                    controller: "Jaco2Controller.so"
-                    baseDirectory: "Controller directory"
-                    reloading: true
-                    isOldTargetVariableMode: false
-            - 
-              id: 9
-              name: "BodyTrackingCamera"
-              plugin: Body
-              class: BodyTrackingCameraItem
-              data: 
-                targetLink: ""
-                keepRelativeAttitude: false
-                cameraType: "Perspective"
-                nearClipDistance: 0.01
-                farClipDistance: 100
-                fieldOfView: 0.785398
         - 
-          id: 10
+          id: 8
           name: "AGXSimulator"
           plugin: AGXDynamics
           class: AGXSimulatorItem
@@ -195,9 +172,9 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      selected: [ 10 ]
-      checked: [ 3, 4, 5, 6, 8, 9 ]
-      expanded: [ 1, 2, 3, 4, 6, 7, 10 ]
+      selected: [ 8 ]
+      checked: [ 3, 4, 5, 6 ]
+      expanded: [ 1, 3, 4, 6, 7, 8 ]
   - 
     id: 2
     plugin: Base
@@ -249,22 +226,14 @@ views:
           fieldOfView: 0.698132
           near: 0.01
           far: 200
-          eye: [ -1.74542529, -1.6301597, 1.25387782 ]
-          direction: [ 0.79474852, 0.557899101, -0.239004988 ]
-          up: [ 0.1956182, 0.137320442, 0.97101834 ]
+          eye: [ -6.27496989, -2.7864425, 3.52587161 ]
+          direction: [ 0.839452845, 0.387080495, -0.381428384 ]
+          up: [ 0.346377865, 0.15971846, 0.924398392 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
           near: 0.01
           far: 200
-        - 
-          camera: BodyTrackingCamera
-          fieldOfView: 0.785398
-          near: 0.01
-          far: 100
-          eye: [ -0.968239588, -1.96276458, 0.597430939 ]
-          direction: [ 0.590195946, 0.806201364, -0.0413292411 ]
-          up: [ 0.0244132096, 0.0333481838, 0.999145582 ]
       backgroundColor: [ 0, 0, 0 ]
       gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
@@ -311,6 +280,7 @@ views:
       cameras: 
         - 
           camera: [ System, Perspective ]
+          isCurrent: true
           fieldOfView: 0.698132
           near: 0.01
           far: 200
@@ -322,23 +292,12 @@ views:
           orthoHeight: 20
           near: 0.01
           far: 200
-        - 
-          camera: [ AizuSpider, FRONT_CAMERA ]
-          isCurrent: true
-        - 
-          camera: BodyTrackingCamera
-          fieldOfView: 0.785398
-          near: 0.01
-          far: 100
-          eye: [ -0.968239588, -1.96276458, 0.597430939 ]
-          direction: [ 0.590195946, 0.806201364, -0.0413292411 ]
-          up: [ 0.0244132096, 0.0333481838, 0.999145582 ]
       backgroundColor: [ 0, 0, 0 ]
       gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       dedicatedItemTreeViewChecks: true
-      checked: [ 3, 5, 6, 9 ]
+      checked: [ 3, 5 ]
   - 
     id: 5
     plugin: Body
@@ -359,7 +318,7 @@ views:
       spinBox: true
       slider: true
       labelOnLeft: true
-      currentBodyItem: 3
+      currentBodyItem: 6
   - 
     id: 7
     plugin: Body
@@ -367,7 +326,7 @@ views:
     mounted: true
     state: 
       listingMode: "Link List"
-      currentBodyItem: 3
+      currentBodyItem: 6
   - 
     id: 8
     plugin: OpenRTM
@@ -402,7 +361,7 @@ toolbars:
     penetrationBlockDepth: 0.0005
     lazyCollisionDetectionMode: true
   "BodyBar": 
-    current: 3
+    current: 6
   "LeggedBodyBar": 
     stanceWidth: 0.15
   "BodyMotionGenerationBar": 
