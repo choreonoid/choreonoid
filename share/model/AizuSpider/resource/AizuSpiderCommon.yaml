@@ -613,6 +613,12 @@ TRACK_BOTTOM_ROLLER_VISUAL: &TRACK_BOTTOM_ROLLER_VISUAL
 
 # Main Belt Bottom Roller Guide (For AGX)
 TRACK_BOTTOM_ROLLER_GUIDE: &TRACK_BOTTOM_ROLLER_GUIDE
+  RigidBody:
+    mass: 0.01
+    inertia: [
+      0.0001, 0,      0,
+      0,      0.0001, 0,
+      0,      0,      0.0001 ]
   Collision:
     shape:
       geometry: { type: Box, size: [ 0.306, 0.067, 0.050125 ] }
@@ -771,15 +777,18 @@ SUB_TRACK_BOTTOM_ROLLER_VISUAL: &SUB_TRACK_BOTTOM_ROLLER_VISUAL
 
 # Sub Belt Bottom Roller Guide (For AGX)
 SUB_TRACK_BOTTOM_ROLLER_GUIDE: &SUB_TRACK_BOTTOM_ROLLER_GUIDE
+  RigidBody:
+    mass: 0.01
+    inertia: [
+      0.0001, 0,      0,
+      0,      0.0001, 0,
+      0,      0,      0.0001 ]
   Collision:
-    elements:
-      Transform:
-        rotation: [ 0, -1, 0, 7.82 ]
-        elements:
-          Shape:
-            translation: [ 0, 0, 0.00383 ]
-            geometry: { type: Box, size: [ 0.14, 0.053, 0.04 ] }
-            appearance: *LIGHT_YELLOW
+    shape:
+      rotation: [ 0, -1, 0, 7.82 ]
+      translation: [ 0, 0, 0.00383 ]
+      geometry: { type: Box, size: [ 0.14, 0.053, 0.04 ] }
+      appearance: *LIGHT_YELLOW
 
 # Sub Belt
 SUB_BELT: &SUB_BELT

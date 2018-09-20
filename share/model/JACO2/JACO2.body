@@ -699,3 +699,5 @@ collisionDetection:
     -
       name: FingerGroup
       links: [ FINGER1, FINGER2, FINGER3 ]
+  
+  excludeLinksWireCollision: [ FINGER1, FINGER1_TIP, FINGER2, FINGER2_TIP, FINGER3, FINGER3_TIP ]
