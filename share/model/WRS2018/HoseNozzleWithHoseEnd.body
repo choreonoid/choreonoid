@@ -82,3 +82,24 @@ links:
         type: Shape
         translation: [ -0.0019, -0.00143, 0.047 ]
         geometry: { type: Box, size: [ 0.0095, 0.08, 0.0015 ] }
+
+  -
+    name: HOSE_ADAPTER
+    parent: NOZZLE
+    translation: [ -0.05, 0, 0 ]
+    jointType: prismatic
+    jointAxis: X
+    jointId: 1
+    jointRange: [ -0.1, 0.1 ]
+    density: 5.0
+    elements:
+      -
+        type: Shape
+        rotation: [ 0, 0, 1, 90 ]
+        geometry: { type: Cylinder, radius: 0.016, height: 0.15 }
+        appearance: &red { material: { diffuseColor: [ 1.0, 0, 0 ] }}
+      -
+        type: Shape
+        translation: [ -0.075, 0, 0 ]
+        geometry: { type: Sphere, radius: 0.024 }
+        appearance: *red
