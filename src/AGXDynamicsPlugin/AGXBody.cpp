@@ -909,7 +909,8 @@ void AGXBody::setCollisionExcludeLinkGroups(const Mapping& cdMapping){
         const Mapping&  groupInfo = *group->toMapping();
         // get group name and add name to agx to disable collision
         stringstream ss;
-        if(const ValueNodePtr& nameNode = groupInfo.find("name")){
+        auto nameNode = groupInfo.find("name");
+        if(nameNode->isValid()){
             ss << "AGXExcludeLinkGroups_" << nameNode->toString() << agx::UuidGenerator().generate().str() << std::endl;
         }else{
             ss << "AGXExcludeLinkGroups_" << agx::UuidGenerator().generate().str() << std::endl;
