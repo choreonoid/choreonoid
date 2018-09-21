@@ -7,6 +7,7 @@
 
 #include <cnoid/Signal>
 #include <QSlider>
+#include <QDial>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -30,6 +31,26 @@ private:
     Signal<void(int)> sigValueChanged_;
 
     void initialize();        
+};
+
+class CNOID_EXPORT Dial : public QDial
+{
+    Q_OBJECT
+
+public:
+    Dial(QWidget* parent = 0);
+
+    SignalProxy<void(int)> sigValueChanged() {
+        return sigValueChanged_;
+    }
+
+private Q_SLOTS:
+    void onValueChanged(int value);
+
+private:
+    Signal<void(int)> sigValueChanged_;
+
+    void initialize();
 };
 
 }

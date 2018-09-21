@@ -30,3 +30,22 @@ void Slider::onValueChanged(int value)
 {
     sigValueChanged_(value);
 }
+
+
+Dial::Dial(QWidget* parent)
+    : QDial(parent)
+{
+    initialize();
+}
+
+
+void Dial::initialize()
+{
+    connect(this, SIGNAL(valueChanged(int)), this, SLOT(onValueChanged(int)));
+}
+
+
+void Dial::onValueChanged(int value)
+{
+    sigValueChanged_(value);
+}
