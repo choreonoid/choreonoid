@@ -65,6 +65,16 @@ links:
         rotation: [ 0, 0, 1, 90 ]
         geometry: { type: Cylinder, radius: 0.021, height: 0.0362 }
         appearance: *GRAY3
+      -
+        type: FountainDevice
+        name: WATER
+        on: true
+        translation: [ 0.3, 0, 0 ]
+        rotation: [ 0, 1, 0, 90 ]
+        lifeTime: 4
+        particleSize: 0.03
+        numParticles: 5000
+        emissionRange: 1
   -
     name: HOSE_NOZZLE_LEVER
     parent: HOSE_NOZZLE
@@ -73,7 +83,7 @@ links:
     jointAxis: Y
     jointId: 0
     jointRange: [ -45, 45 ]
-    jointDisplacement: 45
+    jointAngle: 45
     centerOfMass: [ 0, 0, 0.03 ]
     mass: 0.4
     inertia: [ 0.0005, 0,      0,

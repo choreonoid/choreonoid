@@ -33,19 +33,32 @@ items:
                   -1, 0, 0, 
                   0, -1, 0, 
                   0, 0, 1 ]
-                jointPositions: [  45.000000,  0.000000,  0.000000 ]
+                jointPositions: [  0.785398,  0.000000,  0.000000 ]
                 initialRootPosition: [ 1.4, 0, 0.1 ]
                 initialRootAttitude: [ 
                   -1, 0, 0, 
                   0, -1, 0, 
                   0, 0, 1 ]
-                initialJointPositions: [  45.000000,  0.000000,  0.000000 ]
+                initialJointPositions: [  0.785398,  0.000000,  0.000000 ]
                 zmp: [ 0, 0, 0 ]
                 collisionDetection: true
                 selfCollisionDetection: true
                 isEditable: true
+              children: 
+                - 
+                  id: 4
+                  name: "HoseNozzleController"
+                  plugin: Body
+                  class: SimpleControllerItem
+                  data: 
+                    isNoDelayMode: false
+                    controllerOptions: ""
+                    controller: "HoseNozzleController.so"
+                    baseDirectory: "Controller directory"
+                    reloading: false
+                    isOldTargetVariableMode: false
             - 
-              id: 4
+              id: 5
               name: "Floor"
               plugin: Body
               class: BodyItem
@@ -68,7 +81,7 @@ items:
                 selfCollisionDetection: false
                 isEditable: false
         - 
-          id: 5
+          id: 6
           name: "AizuSpider"
           plugin: Body
           class: BodyItem
@@ -101,7 +114,7 @@ items:
             isEditable: true
           children: 
             - 
-              id: 6
+              id: 7
               name: "AizuSpiderController"
               plugin: Body
               class: SimpleControllerItem
@@ -114,7 +127,7 @@ items:
                 isOldTargetVariableMode: false
               children: 
                 - 
-                  id: 7
+                  id: 8
                   name: "Arm1Controller"
                   plugin: Body
                   class: SimpleControllerItem
@@ -126,7 +139,7 @@ items:
                     reloading: true
                     isOldTargetVariableMode: false
                 - 
-                  id: 8
+                  id: 9
                   name: "Arm2Controller"
                   plugin: Body
                   class: SimpleControllerItem
@@ -138,7 +151,7 @@ items:
                     reloading: true
                     isOldTargetVariableMode: false
             - 
-              id: 9
+              id: 10
               name: "BodyTrackingCamera"
               plugin: Body
               class: BodyTrackingCameraItem
@@ -150,7 +163,7 @@ items:
                 farClipDistance: 100
                 fieldOfView: 0.785398
         - 
-          id: 10
+          id: 11
           name: "AGXSimulator"
           plugin: AGXDynamics
           class: AGXSimulatorItem
@@ -185,9 +198,8 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      selected: [ 10 ]
-      checked: [ 3, 4, 5, 7, 8 ]
-      expanded: [ 1, 2, 5, 6, 9 ]
+      checked: [ 3, 5, 6, 8, 9 ]
+      expanded: [ 1, 2, 3, 6, 7, 10 ]
   - 
     id: 2
     plugin: Base
@@ -239,9 +251,9 @@ views:
           fieldOfView: 0.698132
           near: 0.01
           far: 200
-          eye: [ -0.529957387, 1.69377056, 1.22578717 ]
-          direction: [ 0.587339449, -0.778996398, -0.219538117 ]
-          up: [ 0.132167772, -0.175295935, 0.975603923 ]
+          eye: [ -1.83554153, -1.47977514, 1.47691317 ]
+          direction: [ 0.805674671, 0.488702435, -0.334751035 ]
+          up: [ 0.28621303, 0.173609783, 0.942306609 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
@@ -312,7 +324,7 @@ views:
       xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       dedicatedItemTreeViewChecks: true
-      checked: [ 3, 4, 5, 8 ]
+      checked: [ 3, 5, 6, 9 ]
   - 
     id: 5
     plugin: Body
@@ -344,15 +356,6 @@ views:
       currentBodyItem: 3
   - 
     id: 8
-    plugin: OpenRTM
-    class: RTSNameServerView
-    state: 
-      NameServers: 
-        - 
-          host: "localhost"
-          port: 2809
-  - 
-    id: 9
     plugin: Python
     class: PythonConsoleView
     mounted: true
@@ -423,12 +426,12 @@ Body:
         showPpcom: false
         showZmp: false
       - 
-        bodyItem: 4
+        bodyItem: 5
         showCenterOfMass: false
         showPpcom: false
         showZmp: false
       - 
-        bodyItem: 5
+        bodyItem: 6
         showCenterOfMass: false
         showPpcom: false
         showZmp: false
@@ -447,8 +450,6 @@ Body:
     inputFrameRate: 200
     isOutputFrameRateSpecified: false
     outputFrameRate: 200
-OpenRTM: 
-  "deleteUnmanagedRTCsOnStartingSimulation": false
 viewAreas: 
   - 
     type: embedded
@@ -456,12 +457,12 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 407, 1984 ]
+      sizes: [ 365, 1780 ]
       children: 
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 623, 622 ]
+          sizes: [ 708, 706 ]
           children: 
             - 
               type: pane
@@ -474,17 +475,17 @@ viewAreas:
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 957, 288 ]
+          sizes: [ 1087, 327 ]
           children: 
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 859, 1119 ]
+              sizes: [ 756, 1018 ]
               children: 
                 - 
                   type: pane
                   views: [ 5, 6, 4 ]
-                  current: 5
+                  current: 6
                 - 
                   type: pane
                   views: [ 3 ]
@@ -492,7 +493,7 @@ viewAreas:
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 989, 989 ]
+              sizes: [ 887, 887 ]
               children: 
                 - 
                   type: pane
@@ -500,8 +501,8 @@ viewAreas:
                   current: 2
                 - 
                   type: pane
-                  views: [ 9 ]
-                  current: 9
+                  views: [ 8 ]
+                  current: 8
 layoutOfToolBars: 
   rows: 
     - 

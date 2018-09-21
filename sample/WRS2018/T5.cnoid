@@ -205,6 +205,19 @@ items:
                 collisionDetection: true
                 selfCollisionDetection: true
                 isEditable: true
+              children: 
+                - 
+                  id: 100
+                  name: "HoseNozzleController"
+                  plugin: Body
+                  class: SimpleControllerItem
+                  data: 
+                    isNoDelayMode: false
+                    controllerOptions: ""
+                    controller: "HoseNozzleController.so"
+                    baseDirectory: "Controller directory"
+                    reloading: false
+                    isOldTargetVariableMode: false
             - 
               id: 12
               name: "Debris-M"

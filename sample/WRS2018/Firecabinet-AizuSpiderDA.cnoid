@@ -44,6 +44,19 @@ items:
                 collisionDetection: true
                 selfCollisionDetection: true
                 isEditable: true
+              children: 
+                - 
+                  id: 10
+                  name: "HoseNozzleController"
+                  plugin: Body
+                  class: SimpleControllerItem
+                  data: 
+                    isNoDelayMode: false
+                    controllerOptions: ""
+                    controller: "HoseNozzleController.so"
+                    baseDirectory: "Controller directory"
+                    reloading: false
+                    isOldTargetVariableMode: false
             - 
               id: 5
               name: "Floor"
