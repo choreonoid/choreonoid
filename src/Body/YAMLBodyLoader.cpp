@@ -1091,7 +1091,11 @@ void YAMLBodyLoaderImpl::readJointContents(Link* link, Mapping* node)
     }
     auto jointDisplacementNode = node->extract("jointDisplacement");
     if(jointDisplacementNode){
-        link->setInitialJointDisplacement(jointDisplacementNode->toDouble());
+        if(link->isRevoluteJoint()){
+            link->setInitialJointDisplacement(toRadian(jointDisplacementNode->toDouble()));
+        } else {
+            link->setInitialJointDisplacement(jointDisplacementNode->toDouble());
+        }
     }
 
     double lower = -std::numeric_limits<double>::max();
