@@ -7,6 +7,7 @@
 #include "SceneFountain.h"
 #include <cnoid/YAMLBodyLoader>
 #include <cnoid/SceneDevice>
+#include <cnoid/Body>
 #include <cnoid/EigenUtil>
 
 using namespace std;
@@ -55,8 +56,6 @@ struct TypeRegistration
 
 FountainDevice::FountainDevice()
 {
-    on_ = true;
-
     auto& ps = particleSystem_;
     ps.setLifeTime(3.0f);
     ps.setParticleSize(0.06f);
@@ -68,7 +67,6 @@ FountainDevice::FountainDevice()
 
 FountainDevice::FountainDevice(const FountainDevice& org, bool copyStateOnly)
     : Device(org, copyStateOnly),
-      on_(org.on_),
       particleSystem_(org.particleSystem_)
 {
 
@@ -83,7 +81,6 @@ const char* FountainDevice::typeName()
 
 void FountainDevice::copyStateFrom(const FountainDevice& other)
 {
-    on_ = other.on_;
     particleSystem_ = other.particleSystem_;
 }
 
@@ -117,9 +114,26 @@ void FountainDevice::forEachActualType(std::function<bool(const std::type_info& 
 }
 
 
+bool FountainDevice::on() const
+{
+    return particleSystem_.on();
+}
+
+
+void FountainDevice::on(bool on)
+{
+    if(on && !particleSystem_.on()){
+        if(link()){
+            particleSystem_.setOffsetTime(-link()->body()->currentTime());
+        }
+    }
+    particleSystem_.on(on);
+}
+
+
 int FountainDevice::stateSize() const
 {
-    return 6;
+    return 7;
 }
 
 
@@ -128,7 +142,8 @@ const double* FountainDevice::readState(const double* buf)
     int i = 0;
     auto& ps = particleSystem_;
 
-    on_ = buf[i++];
+    ps.on(buf[i++]);
+    ps.setOffsetTime(buf[i++]);
     ps.setNumParticles(buf[i++]);
     ps.setAcceleration(Vector3f(buf[i++], buf[i++], buf[i++]));
     ps.setEmissionRange(buf[i++]);
@@ -142,7 +157,8 @@ double* FountainDevice::writeState(double* out_buf) const
     int i = 0;
     auto& ps = particleSystem_;
     
-    out_buf[i++] = on_ ? 1.0 : 0.0;
+    out_buf[i++] = ps.on() ? 1.0 : 0.0;
+    out_buf[i++] = ps.offsetTime();
     out_buf[i++] = ps.numParticles();
     out_buf[i++] = ps.acceleration()[0];
     out_buf[i++] = ps.acceleration()[1];
