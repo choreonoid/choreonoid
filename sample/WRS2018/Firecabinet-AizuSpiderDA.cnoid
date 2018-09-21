@@ -45,30 +45,6 @@ items:
                 selfCollisionDetection: true
                 isEditable: true
             - 
-              id: 4
-              name: "HoseNozzle"
-              plugin: Body
-              class: BodyItem
-              data: 
-                modelFile: "${SHARE}/model/WRS2018/HoseNozzle.body"
-                currentBaseLink: "BASE"
-                rootPosition: [ 1.52730321, 0.311165846, 1.06482962 ]
-                rootAttitude: [ 
-                  0.0166105079, 0.179221257, -0.983668558, 
-                  -0.999861603, 0.00206194513, -0.0165082684, 
-                  -0.000930362148, 0.983806632, 0.179230703 ]
-                jointPositions: [  0.118811 ]
-                initialRootPosition: [ 1.52730321, 0.311165846, 1.06482962 ]
-                initialRootAttitude: [ 
-                  0.0166105077, 0.179221257, -0.983668558, 
-                  -0.999861603, 0.0020619453, -0.0165082682, 
-                  -0.000930361922, 0.983806632, 0.179230703 ]
-                initialJointPositions: [  0.118811 ]
-                zmp: [ 0, 0, 0 ]
-                collisionDetection: true
-                selfCollisionDetection: false
-                isEditable: true
-            - 
               id: 5
               name: "Floor"
               plugin: Body

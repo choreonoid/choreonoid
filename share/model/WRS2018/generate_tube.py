@@ -66,6 +66,14 @@ def generate_tube(verticalAxisIndex, verticalTranslation, radius, height, widthR
         ))
        
 
+#generate_tube(
+#    verticalAxisIndex = 0, verticalTranslation = 0.0305,
+#    radius = 0.0235, height = 0.07, widthRatio = 0.84, thickness = 0.0125, resolution = 24)
+
+#generate_tube(
+#    verticalAxisIndex = 0, verticalTranslation = -0.035,
+#    radius = 0.0235, height = 0.07, widthRatio = 0.84, thickness = 0.0125, resolution = 24)
+
 generate_tube(
-    verticalAxisIndex = 0, verticalTranslation = 0.0305,
-    radius = 0.0235, height = 0.07, widthRatio = 0.84, thickness = 0.0125, resolution = 24)
+    verticalAxisIndex = 0, verticalTranslation = -0.025,
+    radius = 0.0235, height = 0.05, widthRatio = 0.84, thickness = 0.0125, resolution = 24)

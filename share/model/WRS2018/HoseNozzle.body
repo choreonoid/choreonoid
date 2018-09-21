@@ -5,54 +5,55 @@ name: HoseNozzle
 
 links:
   -
-    name: NOZZLE
+    name: HOSE_NOZZLE
     jointType: free
-    mass: 2.0
-    centerOfMass: [ 0.2, 0, 0 ]
-    inertia: [ 0.1, 0, 0,
-               0,   1, 0,
-               0,   0, 1 ]
+    mass: 1.6
+    centerOfMass: [ 0.12, 0, 0 ]
+    inertia: [ 0.002, 0,    0,
+               0,     0.03, 0,
+               0,     0,    0.03 ]
     elements:
       -
         type: Resource
-        uri: "resource/NozzleSlot.yaml"
+        uri: "resource/HoseNozzleSlot.yaml"
         node: TUBE
       -
         type: Shape
-        translation: [ 0.1125, 0, 0 ]
+        translation: [ 0.047, 0, 0 ]
         rotation: [ 0, 0, 1, 90 ]
         geometry: { type: Cylinder, radius: 0.022, height: 0.094 }
       -
         type: Shape
-        translation: [ 0.1745, 0, 0 ]
+        translation: [ 0.109, 0, 0 ]
         rotation: [ 0, 0, 1, 90 ]
         geometry: { type: Cylinder, radius: 0.019, height: 0.03 }
       -
         type: Shape
-        translation: [ 0.275, 0, 0 ]
+        translation: [ 0.2095, 0, 0 ]
         rotation: [ 0, 0, 1, 90 ]
         geometry: { type: Cylinder, radius: 0.0158, height: 0.17 }
       -
         type: Shape
-        translation: [ 0.3775, 0, 0 ]
+        translation: [ 0.312, 0, 0 ]
         rotation: [ 0, 0, 1, 90 ]
         geometry: { type: Cylinder, radius: 0.021, height: 0.0362 }
   -
-    name: NOZZLE_LEVER
-    parent: NOZZLE
-    translation: [ 0.096, 0, 0.002 ]
+    name: HOSE_NOZZLE_LEVER
+    parent: HOSE_NOZZLE
+    translation: [ 0.0305, 0, 0.002 ]
     jointType: revolute
     jointAxis: Y
     jointId: 0
-    jointRange: [ 0, 60 ]
+    jointRange: [ -45, 45 ]
+    jointDisplacement: 45
     centerOfMass: [ 0, 0, 0.03 ]
-    mass: 0.5
-    inertia: [ 0.1, 0,   0,
-               0,   0.1, 0,
-               0,   0,   0.1 ]
+    mass: 0.4
+    inertia: [ 0.0005, 0,      0,
+               0,      0.0005, 0,
+               0,      0,      0.0005 ]
     # For the friction for AGX
     jointMotor: true
-    jointMotorCompliance: 0.9
+    jointMotorCompliance: 0.5
     elements:
       -
         type: Shape
