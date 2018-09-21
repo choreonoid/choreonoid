@@ -261,6 +261,9 @@ public:
     static void addCustomizerDirectory(const std::string& path);
     static BodyInterface* bodyInterface();
 
+    void setCurrentTimeFunction(std::function<double()> func);
+    double currentTime() const { return currentTimeFunction(); }
+
 protected:
     void copy(const Body& org);
 
@@ -272,6 +275,7 @@ private:
     int numActualJoints;
     DeviceList<> devices_;
     std::vector<ExtraJoint> extraJoints_;
+    std::function<double()> currentTimeFunction;
     BodyImpl* impl;
 
     void initialize();

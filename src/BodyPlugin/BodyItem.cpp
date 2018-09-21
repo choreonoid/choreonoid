@@ -17,6 +17,7 @@
 #include <cnoid/LazySignal>
 #include <cnoid/LazyCaller>
 #include <cnoid/MessageView>
+#include <cnoid/TimeBar>
 #include <cnoid/ItemManager>
 #include <cnoid/OptionManager>
 #include <cnoid/MenuManager>
@@ -83,6 +84,11 @@ void onSigOptionsParsed(boost::program_options::variables_map& variables)
     		}
     	}
     }
+}
+
+double getCurrentTime()
+{
+    return TimeBar::instance()->time();
 }
 
 }
@@ -341,6 +347,7 @@ bool BodyItemImpl::loadModelFile(const std::string& filename)
         body = newBody;
         body->setName(self->name());
         body->initializePosition();
+        body->setCurrentTimeFunction(getCurrentTime);
     }
 
     initBody(false);

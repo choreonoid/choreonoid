@@ -29,6 +29,11 @@ typedef std::map<std::string, LinkPtr> NameToLinkMap;
 typedef std::map<std::string, Device*> DeviceNameMap;
 typedef std::map<std::string, ReferencedPtr> CacheMap;
 
+double getCurrentTime()
+{
+    return 0.0;
+}
+
 }
 
 namespace cnoid {
@@ -65,6 +70,7 @@ Body::Body()
     initialize();
     rootLink_ = createLink();
     numActualJoints = 0;
+    currentTimeFunction = getCurrentTime;
 
     impl->centerOfMass.setZero();
     impl->mass = 0.0;
@@ -92,6 +98,8 @@ Body::Body(const Body& org)
 void Body::copy(const Body& org)
 {
     initialize();
+
+    currentTimeFunction = org.currentTimeFunction;
 
     impl->centerOfMass = org.impl->centerOfMass;
     impl->mass = org.impl->mass;
@@ -702,3 +710,10 @@ void BodyImpl::applyLinkOffsetRotationsToDevices(Body* body, vector<bool>& valid
         }
     }
 }
+
+
+void Body::setCurrentTimeFunction(std::function<double()> func)
+{
+    currentTimeFunction = func;
+}
+
