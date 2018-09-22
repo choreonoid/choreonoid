@@ -670,10 +670,7 @@ namespace cnoid {
 class RTSDiagramExtViewImpl : public QGraphicsView
 {
 public:
-    RTSDiagramExtView* self;
     RTSystemItemExtPtr currentRTSItem;
-    QGraphicsScene  scene;
-    ScopedConnection nsViewSelectionChangedConnection;
     ScopedConnection itemAddedConnection;
     ScopedConnection itemTreeViewSelectionChangedConnection;
     ScopedConnection connectionOfRTSystemItemDetachedFromRoot;
@@ -716,7 +713,6 @@ public:
     void createConnectionGItem(RTSConnectionExt* rtsConnection, RTSPortExtGItem* sourcePort, RTSPortExtGItem* targetPort);
     void onRTSCompSelectionChange();
     void onRTSCompPositionChanged(const RTSCompExtGItem*);
-    void onTime();
     void onActivated(bool on);
     void onItemTreeViewSelectionChanged(const ItemList<RTSystemExtItem>& items);
     void onRTSystemItemDetachedFromRoot();
@@ -733,8 +729,16 @@ public:
 
     void onLoadedRTSystem(bool value);
     void onUpdateStatus(bool modified);
+
 private:
+    RTSDiagramExtView* self;
+    QGraphicsScene  scene;
+
+    ScopedConnection nsViewSelectionChangedConnection;
+
     bool activated;
+
+    void updateStatus();
 };
 
 }
@@ -1003,7 +1007,7 @@ void RTSDiagramExtViewImpl::mousePressEvent(QMouseEvent* event)
             if (currentRTSItem->stateCheck() == 1) {
                 menuManager.setNewPopupMenu(this);
                 menuManager.addItem(_("Update"))
-                    ->sigTriggered().connect(std::bind(&RTSDiagramExtViewImpl::onTime, this));
+                    ->sigTriggered().connect(std::bind(&RTSDiagramExtViewImpl::updateStatus, this));
 
                 menuManager.popupMenu()->popup(event->globalPos());
             }
@@ -1223,7 +1227,14 @@ void RTSDiagramExtViewImpl::onActivated(bool on)
     DDEBUG_V("RTSDiagramExtViewImpl::onActivated : %d", on);
     activated = on;
     if( currentRTSItem ) {
-        currentRTSItem->onActivated(on);
+        if(on) {
+            updateStatusConnection.reset(
+                    currentRTSItem->sigStatusUpdate().connect(
+                        std::bind(&RTSDiagramExtViewImpl::onUpdateStatus, this, _1)));
+        } else {
+            updateStatusConnection.disconnect();
+        }
+        currentRTSItem->onActivated();
     }
 }
 
@@ -1393,7 +1404,7 @@ void RTSDiagramExtViewImpl::createConnectionGItem
 }
 
 
-void RTSDiagramExtViewImpl::onTime()
+void RTSDiagramExtViewImpl::updateStatus()
 {
     if (currentRTSItem) {
         currentRTSItem->checkStatus();
@@ -1432,10 +1443,14 @@ void RTSDiagramExtViewImpl::onTime()
 void RTSDiagramExtViewImpl::setCurrentRTSItem(RTSystemExtItem* item)
 {
     DDEBUG("RTSDiagramExtViewImpl::setCurrentRTSItem");
-    //timer.setInterval(item->pollingCycle());
 
     currentRTSItem = item;
-    currentRTSItem->onActivated(activated);
+    currentRTSItem->onActivated();
+
+    updateStatusConnection.reset(
+            currentRTSItem->sigStatusUpdate().connect(
+                std::bind(&RTSDiagramExtViewImpl::onUpdateStatus, this, _1)));
+
     connectionOfRTSystemItemDetachedFromRoot.reset(
         item->sigDetachedFromRoot().connect(
             [&]() { onRTSystemItemDetachedFromRoot(); }));

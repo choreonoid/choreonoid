@@ -37,11 +37,8 @@ struct RTSPortComparator
 class RTSystemExtItemImpl
 {
 public:
-    RTSystemExtItem* self;
-    Connection locationChangedConnection;
     map<string, RTSCompExtPtr> rtsComps;
     RTSystemExtItem::RTSConnectionMap rtsConnections;
-    int connectionNo;
     bool autoConnection;
 
     std::string vendorName;
@@ -100,15 +97,17 @@ public:
     Signal<void(bool)> sigLoadedRTSystem;
     Signal<void(bool)> sigStatusUpdate;
 
-    void onActivated(bool on);
+    void onActivated();
     void changePollingPeriod(int value);
     void changeStateCheck();
 
 private:
+    RTSystemExtItem* self;
+    Connection locationChangedConnection;
+    int connectionNo;
+
     Timer timer;
     ScopedConnection timeOutConnection;
-
-    void onTime();
 
     void setStateCheckMethod(int value);
 };
@@ -680,23 +679,16 @@ void RTSystemExtItemImpl::onLocationChanged(string host, int port)
     NameServerManager::instance()->getNCHelper()->setLocation(host, port);
 }
 
-void RTSystemExtItemImpl::onTime()
+void RTSystemExtItem::onActivated()
 {
-    checkStatus();
+    impl->onActivated();
 }
 
-void RTSystemExtItem::onActivated(bool on)
+void RTSystemExtItemImpl::onActivated()
 {
-    impl->onActivated(on);
-}
-
-void RTSystemExtItemImpl::onActivated(bool on)
-{
-    DDEBUG_V("RTSystemExtItemImpl::onActivated : %d", on);
-    if (on) {
+    DDEBUG("RTSystemExtItemImpl::onActivated");
+    if( sigStatusUpdate.empty() == false && stateCheck.selectedIndex()==POLLING_CHECK ) {
         timer.start();
-    } else {
-        timer.stop();
     }
 }
 
@@ -978,7 +970,6 @@ bool RTSystemExtItem::connectionCheck()
 
 bool RTSystemExtItemImpl::connectionCheck()
 {
-    //DDEBUG("RTSystemItemImpl::connectionCheck");
     bool updated = false;
 
     for (auto it = rtsConnections.begin(); it != rtsConnections.end(); it++) {
@@ -1002,7 +993,6 @@ bool RTSystemExtItemImpl::connectionCheck()
         }
     }
 
-    //DDEBUG("RTSystemItemImpl::connectionCheck End");
     return updated;
 }
 
@@ -1123,14 +1113,14 @@ void RTSystemExtItemImpl::changeStateCheck()
     DDEBUG_V("RTSystemItemImpl::changeStateCheck=%d", state);
     switch (state) {
         case MANUAL_CHECK:
-            onActivated(false);
+            timer.stop();
             break;
 #if defined(OPENRTM_VERSION12)
         case OBSERVER_CHECK:
             break;
 #endif
         default:
-            onActivated(true);
+            timer.start();
             break;
     }
 }
@@ -1192,6 +1182,10 @@ void RTSystemExtItem::checkStatus()
 void RTSystemExtItemImpl::checkStatus()
 {
     DDEBUG("RTSystemExtItemImpl::checkStatus");
+    if( sigStatusUpdate.empty() ) {
+        timer.stop();
+    }
+
     bool modified = false;
 
     for (auto it = rtsComps.begin(); it != rtsComps.end(); it++) {

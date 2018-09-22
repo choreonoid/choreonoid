@@ -202,7 +202,7 @@ public:
     int stateCheck() const;
 
     void checkStatus();
-    void onActivated(bool on);
+    void onActivated();
 
     SignalProxy<void(bool)> sigLoadedRTSystem();
     SignalProxy<void(bool)> sigStatusUpdate();
