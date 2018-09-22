@@ -39,7 +39,9 @@ public:
     };
 
     void setMarkerType(int type);
+    double markerSize() const;
     void setMarkerSize(double size);
+    const Vector3f& markerColor() const;
     void setMarkerColor(const Vector3f& color);
 
 protected:

@@ -400,13 +400,15 @@ SgGroup::iterator SgGroup::removeChild(iterator childIter, bool doNotify)
 bool SgGroup::removeChild(SgNode* node, bool doNotify)
 {
     bool removed = false;
-    iterator p = children.begin();
-    while(p != children.end()){
-        if((*p) == node){
-            p = removeChild(p, doNotify);
-            removed = true;
-        } else {
-            ++p;
+    if(node){
+        iterator p = children.begin();
+        while(p != children.end()){
+            if((*p) == node){
+                p = removeChild(p, doNotify);
+                removed = true;
+            } else {
+                ++p;
+            }
         }
     }
     return removed;
