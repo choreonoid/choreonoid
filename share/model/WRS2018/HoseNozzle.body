@@ -67,6 +67,7 @@ links:
         appearance: *GRAY3
       -
         type: FountainDevice
+        isOptional: true
         name: WATER
         on: true
         translation: [ 0.3, 0, 0 ]
