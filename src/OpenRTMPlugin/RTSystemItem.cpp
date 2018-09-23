@@ -1204,7 +1204,7 @@ bool RTSystemItem::restore(const Archive& archive)
     if( archive.read("checkAtLoading", impl->checkAtLoading)==false) {
         archive.read("CheckAtLoading", impl->checkAtLoading);
     }
-    int pollingCycle;
+    int pollingCycle = 1000;
     if( archive.read("pollingCycle", pollingCycle)==false) {
         archive.read("PollingCycle", pollingCycle);
     }
