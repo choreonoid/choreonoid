@@ -15,41 +15,35 @@ using namespace cnoid;
 
 namespace {
 
-SceneDevice* createSceneFountainDevice(Device* device)
-{
-    auto fountainDevice = static_cast<FountainDevice*>(device);
-    auto sceneFountain = new SceneFountain;
-    auto sceneDevice = new SceneDevice(device, sceneFountain);
+YAMLBodyLoader::NodeTypeRegistration registerFountainDevice(
+    "FountainDevice",
+    [](YAMLBodyLoader& loader, Mapping& node){
+        FountainDevicePtr fountain = new FountainDevice;
+        fountain->particleSystem().readParameters(loader.sceneReader(), node);
+        return loader.readDevice(fountain, node);
+    });
 
-    sceneDevice->setFunctionOnStateChanged(
-        [sceneFountain, fountainDevice](){
-            sceneFountain->particleSystem() = fountainDevice->particleSystem();
-            sceneFountain->notifyUpdate();
-        });
-
-    sceneDevice->setFunctionOnTimeChanged(
-        [sceneFountain](double time){
-            sceneFountain->setTime(time);
-            sceneFountain->notifyUpdate();
-        });
-            
-    return sceneDevice;
-}
-                        
-struct TypeRegistration
-{
-    TypeRegistration() {
-        YAMLBodyLoader::addNodeType(
-            "FountainDevice",
-            [](YAMLBodyLoader& loader, Mapping& node){
-                FountainDevicePtr fountain = new FountainDevice;
-                fountain->particleSystem().readParameters(loader.sceneReader(), node);
-                return loader.readDevice(fountain, node);
+SceneDevice::FactoryRegistration<FountainDevice>
+registerSceneFountainDeviceFactory(
+    [](Device* device){
+        auto fountainDevice = static_cast<FountainDevice*>(device);
+        auto sceneFountain = new SceneFountain;
+        auto sceneDevice = new SceneDevice(device, sceneFountain);
+        
+        sceneDevice->setFunctionOnStateChanged(
+            [sceneFountain, fountainDevice](){
+                sceneFountain->particleSystem() = fountainDevice->particleSystem();
+                sceneFountain->notifyUpdate();
             });
-
-        SceneDevice::registerSceneDeviceFactory<FountainDevice>(createSceneFountainDevice);
-    }
-} registration;
+        
+        sceneDevice->setFunctionOnTimeChanged(
+            [sceneFountain](double time){
+                sceneFountain->setTime(time);
+                sceneFountain->notifyUpdate();
+            });
+        
+        return sceneDevice;
+    });
 
 }
 

@@ -21,7 +21,6 @@ bool readDevice(YAMLBodyLoader& loader, Mapping& node)
     return loader.readDevice(device, node);
 }
 
-
 template <class DeviceType, class SceneNodeType>
 SceneDevice* createSceneDevice(Device* device)
 {
@@ -43,17 +42,18 @@ SceneDevice* createSceneDevice(Device* device)
             
     return sceneDevice;
 }
-                        
-struct TypeRegistration
-{
-    TypeRegistration() {
-        YAMLBodyLoader::addNodeType("SnowDevice", readDevice<SnowDevice>);
-        SceneDevice::registerSceneDeviceFactory<SnowDevice>(createSceneDevice<SnowDevice, SceneSnow>);
 
-        YAMLBodyLoader::addNodeType("RainDevice", readDevice<RainDevice>);
-        SceneDevice::registerSceneDeviceFactory<RainDevice>(createSceneDevice<RainDevice, SceneRain>);
-    }
-} registration;
+YAMLBodyLoader::NodeTypeRegistration
+registerSnowDevice("SnowDevice", readDevice<SnowDevice>);
+
+SceneDevice::FactoryRegistration<SnowDevice>
+registerSceneSmokeDeviceFactory(createSceneDevice<SnowDevice, SceneSnow>);
+
+YAMLBodyLoader::NodeTypeRegistration
+registerRainDevice("RainDevice", readDevice<RainDevice>);
+
+SceneDevice::FactoryRegistration<RainDevice>
+registerSceneRainDeviceFactory(createSceneDevice<RainDevice, SceneRain>);
 
 }
 
