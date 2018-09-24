@@ -364,6 +364,10 @@ public:
         return sceneReader.readRotation(node, out_R);
     }
     
+    bool readRotation(const Mapping& node, const char* key, Matrix3& out_R) const {
+        return sceneReader.readRotation(node, key, out_R);
+    }
+
     bool extractRotation(Mapping& node, Matrix3& out_R) const {
         return sceneReader.extractRotation(node, out_R);
     }
@@ -591,6 +595,12 @@ bool YAMLBodyLoader::readAngle(const Mapping& node, const char* key, double& ang
 bool YAMLBodyLoader::readRotation(const Mapping& node, Matrix3& out_R) const
 {
     return impl->readRotation(node, out_R);
+}
+
+
+bool YAMLBodyLoader::readRotation(const Mapping& node, const char* key, Matrix3& out_R) const
+{
+    return impl->readRotation(node, key, out_R);
 }
 
 

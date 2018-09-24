@@ -12,12 +12,12 @@ using namespace cnoid;
 
 SceneMarker::SceneMarker()
 {
-    markerType_ = CROSS_MARKER;
-    markerSize_ = 0.1;
+    markerType_ = NO_MARKER;
+    markerSize_ = 0.01;
 
     material = new SgMaterial;
     material->setDiffuseColor(Vector3f::Zero());
-    material->setEmissiveColor(Vector3f(1.0f, 1.0f, 0.0f));
+    material->setEmissiveColor(Vector3f(1.0f, 0.0f, 0.0f));
     material->setTransparency(0.0f);
     material->setAmbientIntensity(0.0f);
 }
@@ -28,14 +28,16 @@ void SceneMarker::updateMarker(bool doNotify)
     clearChildren();
 
     switch(markerType_){
+    case NO_MARKER:
+        break;
     case CROSS_MARKER:
         setCross();
         break;
     case SPHERE_MARKER:
         setSphere();
         break;
-    case AXIS_ARROWS_MARKER:
-        setAxisArrows();
+    case AXES_MARKER:
+        setAxes();
         break;
     defautl:
         break;
@@ -49,7 +51,7 @@ void SceneMarker::updateMarker(bool doNotify)
 
 void SceneMarker::setCross()
 {
-    const float p = markerSize_;
+    const float p = markerSize_ / 0.2f;
     auto vertices = new SgVertexArray {
         {   -p, 0.0f, 0.0f },
         {    p, 0.0f, 0.0f },
@@ -83,7 +85,7 @@ void SceneMarker::setSphere()
 }
 
 
-void SceneMarker::setAxisArrows()
+void SceneMarker::setAxes()
 {
     double r1 = markerSize_ * 0.1;
     double h1 = markerSize_ * 0.7;

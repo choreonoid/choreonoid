@@ -7,16 +7,20 @@ set(target CnoidBody)
 
 set(sources
   Body.cpp
-  VRMLBody.cpp
-  LinkTraverse.cpp
   Link.cpp
+  Device.cpp
+  LinkTraverse.cpp
   LinkPath.cpp
   JointPath.cpp
   Jacobian.cpp
   Material.cpp
   ContactMaterial.cpp
   MaterialTable.cpp
-  Device.cpp
+  SceneBody.cpp
+  SceneDevice.cpp
+  AbstractBodyLoader.cpp
+  BodyLoader.cpp
+  YAMLBodyLoader.cpp
   ForceSensor.cpp
   RateGyroSensor.cpp
   AccelerationSensor.cpp
@@ -27,10 +31,9 @@ set(sources
   Light.cpp
   PointLight.cpp
   SpotLight.cpp
+  MarkerDevice.cpp
   MultiDeviceStateSeq.cpp
   ExtraBodyStateAccessor.cpp
-  SceneBody.cpp
-  SceneDevice.cpp
   SceneCollision.cpp
   CompositeIK.cpp
   PinDragIK.cpp
@@ -52,10 +55,8 @@ set(sources
   ConstraintForceSolver.cpp
   InverseDynamics.cpp
   PenetrationBlocker.cpp
-  AbstractBodyLoader.cpp
-  BodyLoader.cpp
-  YAMLBodyLoader.cpp
   VRMLBodyLoader.cpp
+  VRMLBody.cpp
   PoseProviderToBodyMotionConverter.cpp
   BodyMotionUtil.cpp
   ControllerIO.cpp
@@ -94,6 +95,7 @@ set(headers
   Light.h
   PointLight.h
   SpotLight.h
+  MarkerDevice.h
   SceneBody.h
   SceneDevice.h
   SceneCollision.h

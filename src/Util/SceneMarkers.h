@@ -17,9 +17,10 @@ public:
     SceneMarker();
 
     enum MarkerType {
+        NO_MARKER,
         CROSS_MARKER,
         SPHERE_MARKER,
-        AXIS_ARROWS_MARKER,
+        AXES_MARKER,
         N_MARKER_TYPES
     };
 
@@ -41,7 +42,7 @@ private:
 
     void setCross();
     void setSphere();
-    void setAxisArrows();
+    void setAxes();
 };
 
 typedef ref_ptr<SceneMarker> SceneMarkerPtr;

@@ -18,6 +18,25 @@ using namespace std;
 using namespace cnoid;
 using boost::format;
 
+namespace {
+
+int getSceneMarkerType(int type)
+{
+    switch(type){
+    case BodyMarkerItem::CROSS_MARKER:
+        return SceneMarker::CROSS_MARKER;
+    case BodyMarkerItem::SPHERE_MARKER:
+        return SceneMarker::SPHERE_MARKER;
+    case BodyMarkerItem::AXES_MARKER:
+        return SceneMarker::AXES_MARKER;
+    default:
+        break;
+    }
+    return SceneMarker::NO_MARKER;
+}
+
+}
+
 namespace cnoid {
 
 class BodyMarkerItemImpl
@@ -83,7 +102,7 @@ BodyMarkerItemImpl::BodyMarkerItemImpl(BodyMarkerItem* self)
 
     markerType.setSymbol(BodyMarkerItem::CROSS_MARKER, N_("Cross"));
     markerType.setSymbol(BodyMarkerItem::SPHERE_MARKER, N_("Sphere"));
-    markerType.setSymbol(BodyMarkerItem::AXIS_ARROWS_MARKER, N_("Axis arrows"));
+    markerType.setSymbol(BodyMarkerItem::AXES_MARKER, N_("Axes"));
     markerType.select(BodyMarkerItem::CROSS_MARKER);
 
     marker = new SceneMarker;
@@ -145,12 +164,18 @@ SgNode* BodyMarkerItem::getScene()
 }
 
 
+int BodyMarkerItem::markerType() const
+{
+    return impl->markerType.which();
+}
+
+
 void BodyMarkerItem::setMarkerType(int type)
 {
     auto& marker = impl->marker;
     if(type != impl->markerType.which()){
         impl->markerType.select(type);
-        marker->setMarkerType(type);
+        marker->setMarkerType(getSceneMarkerType(type));
         if(!marker->empty()){
             marker->updateMarker(true);
         }

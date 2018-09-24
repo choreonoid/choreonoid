@@ -342,6 +342,12 @@ bool YAMLSceneReader::readRotation(const Mapping& info, Matrix3& out_R) const
 }
 
 
+bool YAMLSceneReader::readRotation(const Mapping& info, const char* key, Matrix3& out_R) const
+{
+    return readRotation(info.find(key), out_R);
+}
+
+
 bool YAMLSceneReader::extractRotation(Mapping& info, Matrix3& out_R) const
 {
     ValueNodePtr value = info.extract("rotation");
