@@ -1325,33 +1325,33 @@ void GLSLSceneRendererImpl::renderShapeMain
         }
     }
 
-    if(!stateFlag[CULL_FACE]){
-        bool enableCullFace;
-        if(backFaceCullingMode == GLSceneRenderer::ENABLE_BACK_FACE_CULLING){
-            enableCullFace = mesh->isSolid();
-        } else if(backFaceCullingMode == GLSceneRenderer::DISABLE_BACK_FACE_CULLING){
-            enableCullFace = false;
-        } else if(backFaceCullingMode == GLSceneRenderer::FORCE_BACK_FACE_CULLING){
-            enableCullFace = true;
-        }
-        if(enableCullFace){
-            glEnable(GL_CULL_FACE);
-        } else {
-            glDisable(GL_CULL_FACE);
-        }
-        isCullFaceEnabled = enableCullFace;
-        stateFlag[CULL_FACE] = true;
-
-    } else if(backFaceCullingMode == GLSceneRenderer::ENABLE_BACK_FACE_CULLING){
-        if(mesh->isSolid()){
-            if(!isCullFaceEnabled){
-                glEnable(GL_CULL_FACE);
-                isCullFaceEnabled = true;
+    if(backFaceCullingMode != GLSceneRenderer::DISABLE_BACK_FACE_CULLING){
+        if(!stateFlag[CULL_FACE]){
+            bool enableCullFace;
+            if(backFaceCullingMode == GLSceneRenderer::ENABLE_BACK_FACE_CULLING){
+                enableCullFace = mesh->isSolid();
+            } else if(backFaceCullingMode == GLSceneRenderer::FORCE_BACK_FACE_CULLING){
+                enableCullFace = true;
             }
-        } else {
-            if(isCullFaceEnabled){
+            if(enableCullFace){
+                glEnable(GL_CULL_FACE);
+            } else {
                 glDisable(GL_CULL_FACE);
-                isCullFaceEnabled = false;
+            }
+            isCullFaceEnabled = enableCullFace;
+            stateFlag[CULL_FACE] = true;
+            
+        } else if(backFaceCullingMode == GLSceneRenderer::ENABLE_BACK_FACE_CULLING){
+            if(mesh->isSolid()){
+                if(!isCullFaceEnabled){
+                    glEnable(GL_CULL_FACE);
+                    isCullFaceEnabled = true;
+                }
+            } else {
+                if(isCullFaceEnabled){
+                    glDisable(GL_CULL_FACE);
+                    isCullFaceEnabled = false;
+                }
             }
         }
     }
