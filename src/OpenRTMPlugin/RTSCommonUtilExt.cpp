@@ -18,20 +18,20 @@ namespace cnoid {
 
 vector<string> RTCCommonUtilExt::getAllowDataTypes(RTSPortExt* source, RTSPortExt* target)
 {
-    DDEBUG("RTCCommonUtil::getAllowDataTypes Ext");
+    //DDEBUG("RTCCommonUtil::getAllowDataTypes Ext");
 
     vector<string> sourceTypes = source->getDataTypes();
     vector<string> targetTypes = target->getDataTypes();
     DataTypeComparer comparator;
     vector<string> result = getAllowList(sourceTypes, targetTypes, comparator);
 
-    DDEBUG_V("RTCCommonUtil::getAllowDataTypes Ext:%d", result.size());
+    //DDEBUG_V("RTCCommonUtil::getAllowDataTypes Ext:%d", result.size());
     return result;
 }
 
 vector<string> RTCCommonUtilExt::getAllowInterfaceTypes(RTSPortExt* source, RTSPortExt* target)
 {
-    DDEBUG("RTCCommonUtil::getAllowInterfaceTypes");
+    //DDEBUG("RTCCommonUtil::getAllowInterfaceTypes");
 
     vector<string> result;
     if (source == 0 && target == 0) {
@@ -48,13 +48,13 @@ vector<string> RTCCommonUtilExt::getAllowInterfaceTypes(RTSPortExt* source, RTSP
     ignoreCaseComparer comparator;
     result = getAllowList(sourceTypes, targetTypes, comparator);
 
-    DDEBUG_V("RTCCommonUtil::getAllowInterfaceTypes:%d", result.size());
+    //DDEBUG_V("RTCCommonUtil::getAllowInterfaceTypes:%d", result.size());
     return result;
 }
 
 vector<string> RTCCommonUtilExt::getAllowDataflowTypes(RTSPortExt* source, RTSPortExt* target)
 {
-    DDEBUG("RTCCommonUtil::getAllowDataflowTypes");
+    //DDEBUG("RTCCommonUtil::getAllowDataflowTypes");
 
     vector<string> result;
     if (source == 0 && target == 0) {
@@ -71,13 +71,13 @@ vector<string> RTCCommonUtilExt::getAllowDataflowTypes(RTSPortExt* source, RTSPo
     ignoreCaseComparer comparator;
     result = getAllowList(sourceTypes, targetTypes, comparator);
 
-    DDEBUG_V("RTCCommonUtil::getAllowDataflowTypes %d", result.size());
+    //DDEBUG_V("RTCCommonUtil::getAllowDataflowTypes %d", result.size());
     return result;
 }
 
 vector<string> RTCCommonUtilExt::getAllowSubscriptionTypes(RTSPortExt* source, RTSPortExt* target)
 {
-    DDEBUG("RTCCommonUtil::getAllowSubscriptionTypes");
+    //DDEBUG("RTCCommonUtil::getAllowSubscriptionTypes");
 
     vector<string> result;
     if (source == 0 && target == 0) {
@@ -90,23 +90,22 @@ vector<string> RTCCommonUtilExt::getAllowSubscriptionTypes(RTSPortExt* source, R
 
     vector<string> sourceTypes = source->getSubscriptionTypes();
     vector<string> targetTypes = target->getSubscriptionTypes();
-    DDEBUG_V("size %d %d", sourceTypes.size(), targetTypes.size());
     //
     ignoreCaseComparer comparator;
     result = getAllowList(sourceTypes, targetTypes, comparator);
 
-    DDEBUG_V("RTCCommonUtil::getAllowSubscriptionTypes:%d", result.size());
+    //DDEBUG_V("RTCCommonUtil::getAllowSubscriptionTypes:%d", result.size());
 
     return result;
 }
 //////////
 vector<string> RTCCommonUtilExt::getAllowList(vector<string>& source, vector<string>& target, TypeComparer& comparer)
 {
-    DDEBUG("RTCCommonUtil::getAllowList");
+    //DDEBUG("RTCCommonUtil::getAllowList");
 
     bool isAllowAny_Source = isExistAny(source);
     bool isAllowAny_Target = isExistAny(target);
-    DDEBUG_V("Any Source:%d, target:%d", isAllowAny_Source, isAllowAny_Target);
+    //DDEBUG_V("Any Source:%d, target:%d", isAllowAny_Source, isAllowAny_Target);
     //
     vector<string> resultTmp;
     for (int index = 0; index < source.size(); index++) {
@@ -119,7 +118,7 @@ vector<string> RTCCommonUtilExt::getAllowList(vector<string>& source, vector<str
             for (int idx02 = 0; idx02 < target.size(); idx02++) {
                 string type2 = target[idx02];
                 match = comparer.match(type1, type2);
-                DDEBUG_V("type01:%s, type02:%s, match:%s", type1.c_str(), type2.c_str(), match.c_str());
+                //DDEBUG_V("type01:%s, type02:%s, match:%s", type1.c_str(), type2.c_str(), match.c_str());
                 if (match.empty() == false) {
                     resultTmp.push_back(match);
                     break;

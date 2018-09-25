@@ -1244,7 +1244,7 @@ bool RTSystemExtItem::restore(const Archive& archive)
         archive.read("AutoConnection", impl->autoConnection);
     }
 
-    int pollingCycle;
+    int pollingCycle = 1000;
     if( archive.read("pollingCycle", pollingCycle)==false) {
         archive.read("PollingCycle", pollingCycle);
     }
