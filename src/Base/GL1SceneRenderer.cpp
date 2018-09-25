@@ -387,7 +387,7 @@ void GL1SceneRendererImpl::initialize()
     defaultPointSize = 1.0f;
     defaultLineWidth = 1.0f;
 
-    backFaceCullingMode = GLSceneRenderer::DISABLE_BACK_FACE_CULLING;
+    backFaceCullingMode = GLSceneRenderer::ENABLE_BACK_FACE_CULLING;
     
     doNormalVisualization = false;
     normalLength = 0.0;

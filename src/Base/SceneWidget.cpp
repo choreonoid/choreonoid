@@ -100,6 +100,9 @@ public:
     DoubleSpinBox zFarSpin;
     CheckBox lightingCheck;
     CheckBox smoothShadingCheck;
+    Selection cullingMode;
+    ButtonGroup cullingModeGroup;
+    RadioButton cullingRadios[GLSceneRenderer::N_CULLING_MODES];
     CheckBox headLightCheck;
     DoubleSpinBox headLightIntensitySpin;
     CheckBox headLightFromBackCheck;
@@ -2885,7 +2888,8 @@ void SceneWidgetImpl::activateSystemNode(SgNode* node, bool on)
 
 
 ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
-    : sceneWidgetImpl(impl)
+    : sceneWidgetImpl(impl),
+      cullingMode(GLSceneRenderer::N_CULLING_MODES, CNOID_GETTEXT_DOMAIN_NAME)
 {
     setWindowTitle(_("Scene Config"));
 
@@ -2941,21 +2945,24 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
 
     hbox = new QHBoxLayout();
     hbox->addWidget(new QLabel(_("Back face culling mode: ")));
-    auto cullingModeGroup = new ButtonGroup;
-    RadioButton* cullingRadios[3];
-    cullingRadios[0] = new RadioButton(_("Enabled"), this);
-    cullingRadios[1] = new RadioButton(_("Disabled"), this);
-    cullingRadios[2] = new RadioButton(_("Force culling"), this);
-    for(int i=0; i < 3; ++i){
-        cullingModeGroup->addButton(cullingRadios[i], i);
-        hbox->addWidget(cullingRadios[i]);
-    }
     auto renderer = sceneWidgetImpl->renderer;
-    cullingRadios[renderer->backFaceCullingMode()]->setChecked(true);
-    cullingModeGroup->sigButtonClicked().connect(
-        [impl, renderer](int mode){
+    cullingMode.setSymbol(GLSceneRenderer::ENABLE_BACK_FACE_CULLING, "enabled");
+    cullingMode.setSymbol(GLSceneRenderer::DISABLE_BACK_FACE_CULLING, "disabled");
+    cullingMode.setSymbol(GLSceneRenderer::FORCE_BACK_FACE_CULLING, "forced");
+    cullingMode.select(renderer->backFaceCullingMode());
+    cullingRadios[GLSceneRenderer::ENABLE_BACK_FACE_CULLING].setText(_("Enabled"));
+    cullingRadios[GLSceneRenderer::DISABLE_BACK_FACE_CULLING].setText(_("Disabled"));
+    cullingRadios[GLSceneRenderer::FORCE_BACK_FACE_CULLING].setText(_("Forced"));
+    for(int i=0; i < cullingMode.size(); ++i){
+        cullingModeGroup.addButton(&cullingRadios[i], i);
+        hbox->addWidget(&cullingRadios[i]);
+    }
+    cullingRadios[cullingMode.which()].setChecked(true);
+    cullingModeGroup.sigButtonClicked().connect(
+        [&, renderer](int mode){
+            cullingMode.select(mode);
             renderer->setBackFaceCullingMode(mode);
-            impl->update();
+            sceneWidgetImpl->update();
         });
     hbox->addStretch();
     vbox->addLayout(hbox);
@@ -3231,6 +3238,7 @@ void ConfigDialog::updateBuiltinCameraConfig()
 
 void ConfigDialog::storeState(Archive& archive)
 {
+    archive.write("cullingMode", cullingMode.selectedSymbol());
     archive.write("defaultHeadLight", headLightCheck.isChecked());
     archive.write("defaultHeadLightIntensity", headLightIntensitySpin.value());
     archive.write("headLightLightingFromBack", headLightFromBackCheck.isChecked());
@@ -3275,6 +3283,14 @@ void ConfigDialog::storeState(Archive& archive)
 
 void ConfigDialog::restoreState(const Archive& archive)
 {
+    string symbol;
+    if(archive.read("cullingMode", symbol)){
+        if(cullingMode.select(symbol)){
+            cullingRadios[cullingMode.which()].setChecked(true);
+            sceneWidgetImpl->renderer->setBackFaceCullingMode(cullingMode.which());
+        }
+    }
+    
     headLightCheck.setChecked(archive.get("defaultHeadLight", headLightCheck.isChecked()));
     headLightIntensitySpin.setValue(archive.get("defaultHeadLightIntensity", headLightIntensitySpin.value()));
     headLightFromBackCheck.setChecked(archive.get("headLightLightingFromBack", headLightFromBackCheck.isChecked()));

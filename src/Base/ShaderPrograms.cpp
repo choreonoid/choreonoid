@@ -491,4 +491,5 @@ void ShadowMapProgram::initializeFrameRendering()
 void ShadowMapProgram::deactivate()
 {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glCullFace(GL_BACK);
 }

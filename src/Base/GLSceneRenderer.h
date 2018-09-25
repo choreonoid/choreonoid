@@ -83,7 +83,8 @@ public:
     enum CullingMode {
         ENABLE_BACK_FACE_CULLING,
         DISABLE_BACK_FACE_CULLING,
-        FORCE_BACK_FACE_CULLING
+        FORCE_BACK_FACE_CULLING,
+        N_CULLING_MODES
     };
 
     virtual void setBackFaceCullingMode(int mode) = 0;

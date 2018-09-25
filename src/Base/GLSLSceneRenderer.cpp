@@ -23,13 +23,6 @@ using namespace cnoid;
 
 namespace {
 
-/*
-  The back face culling is disabled by default because the current implementation
-  cannot render a scene with shadows correctly when the culling using
-  glEnable(GL_CULL_FACE) is enabled.
-*/
-const int DEFAULT_BACK_FACE_CULLING_MODE = GLSceneRenderer::DISABLE_BACK_FACE_CULLING;
-
 const bool USE_FBO_FOR_PICKING = true;
 const bool SHOW_IMAGE_FOR_PICKING = false;
 
@@ -441,7 +434,7 @@ void GLSLSceneRendererImpl::initialize()
     currentResourceMap = &resourceMaps[0];
     nextResourceMap = &resourceMaps[1];
 
-    backFaceCullingMode = DEFAULT_BACK_FACE_CULLING_MODE;
+    backFaceCullingMode = GLSceneRenderer::ENABLE_BACK_FACE_CULLING;
 
     modelMatrixStack.reserve(16);
     viewMatrix.setIdentity();
@@ -1325,13 +1318,20 @@ void GLSLSceneRendererImpl::renderShapeMain
         }
     }
 
-    if(backFaceCullingMode != GLSceneRenderer::DISABLE_BACK_FACE_CULLING){
+    if(!isRenderingShadowMap){
+
         if(!stateFlag[CULL_FACE]){
             bool enableCullFace;
-            if(backFaceCullingMode == GLSceneRenderer::ENABLE_BACK_FACE_CULLING){
+            switch(backFaceCullingMode){
+            case GLSceneRenderer::ENABLE_BACK_FACE_CULLING:
                 enableCullFace = mesh->isSolid();
-            } else if(backFaceCullingMode == GLSceneRenderer::FORCE_BACK_FACE_CULLING){
+                break;
+            case GLSceneRenderer::DISABLE_BACK_FACE_CULLING:
+                enableCullFace = false;
+                break;
+            case GLSceneRenderer::FORCE_BACK_FACE_CULLING:
                 enableCullFace = true;
+                break;
             }
             if(enableCullFace){
                 glEnable(GL_CULL_FACE);
@@ -1340,7 +1340,7 @@ void GLSLSceneRendererImpl::renderShapeMain
             }
             isCullFaceEnabled = enableCullFace;
             stateFlag[CULL_FACE] = true;
-            
+
         } else if(backFaceCullingMode == GLSceneRenderer::ENABLE_BACK_FACE_CULLING){
             if(mesh->isSolid()){
                 if(!isCullFaceEnabled){
