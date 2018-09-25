@@ -2225,7 +2225,10 @@ const Matrix4& GL1SceneRenderer::projectionMatrix() const
 
 void GL1SceneRenderer::setBackFaceCullingMode(int mode)
 {
-    impl->backFaceCullingMode = mode;
+    if(mode != impl->backFaceCullingMode){
+        impl->backFaceCullingMode = mode;
+        requestToClearResources();
+    }
 }
 
 
