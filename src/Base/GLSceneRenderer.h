@@ -80,6 +80,15 @@ public:
 
     virtual void setUpsideDown(bool on);
 
+    enum CullingMode {
+        ENABLE_BACK_FACE_CULLING,
+        DISABLE_BACK_FACE_CULLING,
+        FORCE_BACK_FACE_CULLING
+    };
+
+    virtual void setBackFaceCullingMode(int mode) = 0;
+    virtual int backFaceCullingMode() const = 0;
+
 protected:
     virtual void onSceneGraphUpdated(const SgUpdate& update) override;
     virtual void onImageUpdated(SgImage* image) = 0;

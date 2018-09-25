@@ -11,6 +11,7 @@
 #include "InteractiveCameraTransform.h"
 #include "MainWindow.h"
 #include "Buttons.h"
+#include "ButtonGroup.h"
 #include "CheckBox.h"
 #include "ToolBar.h"
 #include "Dialog.h"
@@ -2904,10 +2905,7 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
         [=](int value){ impl->onFieldOfViewChanged(radian(value)); });
     hbox->addWidget(&fieldOfViewSpin);
     hbox->addWidget(new QLabel("[deg]"));
-    hbox->addStretch();
-    vbox->addLayout(hbox);
-
-    hbox = new QHBoxLayout();
+    hbox->addSpacing(8);
     hbox->addWidget(new QLabel(_("Clipping depth")));
     hbox->addSpacing(8);
     hbox->addWidget(new QLabel(_("Near")));
@@ -2938,6 +2936,27 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     smoothShadingCheck.setChecked(true);
     smoothShadingCheck.sigToggled().connect([=](bool on){ impl->onSmoothShadingToggled(on); });
     hbox->addWidget(&smoothShadingCheck);
+    hbox->addStretch();
+    vbox->addLayout(hbox);
+
+    hbox = new QHBoxLayout();
+    hbox->addWidget(new QLabel(_("Back face culling mode: ")));
+    auto cullingModeGroup = new ButtonGroup;
+    RadioButton* cullingRadios[3];
+    cullingRadios[0] = new RadioButton(_("Enabled"), this);
+    cullingRadios[1] = new RadioButton(_("Disabled"), this);
+    cullingRadios[2] = new RadioButton(_("Force culling"), this);
+    for(int i=0; i < 3; ++i){
+        cullingModeGroup->addButton(cullingRadios[i], i);
+        hbox->addWidget(cullingRadios[i]);
+    }
+    auto renderer = sceneWidgetImpl->renderer;
+    cullingRadios[renderer->backFaceCullingMode()]->setChecked(true);
+    cullingModeGroup->sigButtonClicked().connect(
+        [impl, renderer](int mode){
+            renderer->setBackFaceCullingMode(mode);
+            impl->update();
+        });
     hbox->addStretch();
     vbox->addLayout(hbox);
     
@@ -2982,10 +3001,8 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     worldLightAmbientSpin.setValue(0.3);
     worldLightAmbientSpin.sigValueChanged().connect([&](double){ updateDefaultLightsLater(); });
     hbox->addWidget(&worldLightAmbientSpin);
-    hbox->addStretch();
-    vbox->addLayout(hbox);
-    
-    hbox = new QHBoxLayout();
+
+    hbox->addSpacing(8);
     additionalLightsCheck.setText(_("Additional lights"));
     additionalLightsCheck.setChecked(true);
     additionalLightsCheck.sigToggled().connect([&](bool){ updateDefaultLightsLater(); });
@@ -3006,10 +3023,7 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
         shadow.lightSpin.sigValueChanged().connect([&](double){ updateDefaultLightsLater(); });
         hbox->addWidget(&shadow.lightSpin);
     }
-    hbox->addStretch();
-    vbox->addLayout(hbox);
-    
-    hbox = new QHBoxLayout();
+
     shadowAntiAliasingCheck.setText(_("Anti-aliasing of shadows"));
     shadowAntiAliasingCheck.setChecked(true);
     shadowAntiAliasingCheck.sigToggled().connect([&](bool){ updateDefaultLightsLater(); });
@@ -3022,8 +3036,14 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     fogCheck.setChecked(true);
     fogCheck.sigToggled().connect([&](bool){ updateDefaultLightsLater(); });
     hbox->addWidget(&fogCheck);
+
+    textureCheck.setText(_("Texture"));
+    textureCheck.setChecked(true);
+    textureCheck.sigToggled().connect([=](bool on){ impl->onTextureToggled(on); });
+    hbox->addWidget(&textureCheck);
     hbox->addStretch();
     vbox->addLayout(hbox);
+    
     
     vbox->addLayout(new HSeparatorBox(new QLabel(_("Background"))));
     hbox = new QHBoxLayout();
@@ -3072,13 +3092,6 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     gridCheck[FLOOR_GRID].blockSignals(false);
 
     vbox->addWidget(new HSeparator());
-    hbox = new QHBoxLayout();
-    textureCheck.setText(_("Texture"));
-    textureCheck.setChecked(true);
-    textureCheck.sigToggled().connect([=](bool on){ impl->onTextureToggled(on); });
-    hbox->addWidget(&textureCheck);
-    hbox->addStretch();
-    vbox->addLayout(hbox);
 
     hbox = new QHBoxLayout();
     defaultColorButton.setText(_("Default color"));
@@ -3185,8 +3198,8 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     vbox->addLayout(hbox);
 
     topVBox->addLayout(vbox);
-
     topVBox->addWidget(new HSeparator());
+
     QPushButton* okButton = new QPushButton(_("&Ok"));
     okButton->setDefault(true);
     QDialogButtonBox* buttonBox = new QDialogButtonBox(this);

@@ -24,13 +24,11 @@ using namespace cnoid;
 namespace {
 
 /*
-  If the following value is true, the isSolid flag of a mesh is
-  reflected in the rendering.
-  In the current implementation, this is achieved using glEnable(GL_CULL_FACE).
-  However, this implementation does not render the scene correctly when the
-  shadow is enabled.
+  The back face culling is disabled by default because the current implementation
+  cannot render a scene with shadows correctly when the culling using
+  glEnable(GL_CULL_FACE) is enabled.
 */
-const bool ENABLE_IS_SOLID = false;
+const int DEFAULT_BACK_FACE_CULLING_MODE = GLSceneRenderer::DISABLE_BACK_FACE_CULLING;
 
 const bool USE_FBO_FOR_PICKING = true;
 const bool SHOW_IMAGE_FOR_PICKING = false;
@@ -265,13 +263,13 @@ public:
     GLfloat defaultPointSize;
     GLfloat defaultLineWidth;
     GLResourceMap resourceMaps[2];
+    GLResourceMap* currentResourceMap;
+    GLResourceMap* nextResourceMap;
+    int currentResourceMapIndex;
     bool doUnusedResourceCheck;
     bool isCheckingUnusedResources;
     bool hasValidNextResourceMap;
     bool isResourceClearRequested;
-    int currentResourceMapIndex;
-    GLResourceMap* currentResourceMap;
-    GLResourceMap* nextResourceMap;
 
     vector<char> scaledImageBuf;
     Eigen::Affine2f textureTransform;
@@ -295,6 +293,7 @@ public:
         SPECULAR_COLOR,
         SHININESS,
         ALPHA,
+        CULL_FACE,
         POINT_SIZE,
         LINE_WIDTH,
         NUM_STATE_FLAGS
@@ -302,7 +301,8 @@ public:
 
     vector<bool> stateFlag;
 
-    boost::optional<bool> isCullFaceEnabled;
+    int backFaceCullingMode;
+    bool isCullFaceEnabled;
 
     float pointSize;
     float lineWidth;
@@ -440,6 +440,8 @@ void GLSLSceneRendererImpl::initialize()
     isResourceClearRequested = false;
     currentResourceMap = &resourceMaps[0];
     nextResourceMap = &resourceMaps[1];
+
+    backFaceCullingMode = DEFAULT_BACK_FACE_CULLING_MODE;
 
     modelMatrixStack.reserve(16);
     viewMatrix.setIdentity();
@@ -606,13 +608,6 @@ bool GLSLSceneRendererImpl::initializeGL()
 
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_DITHER);
-
-    if(ENABLE_IS_SOLID){
-        glEnable(GL_CULL_FACE);
-        isCullFaceEnabled = true;
-    } else {
-        glDisable(GL_CULL_FACE);
-    }
 
     glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
@@ -1088,6 +1083,8 @@ void GLSLSceneRendererImpl::pushProgram(ShaderProgram& program, bool isLightingP
             currentNolightingProgram = static_cast<NolightingProgram*>(currentProgram);
         }
         program.activate();
+
+        clearGLState();
     }
     programStack.push_back(info);
 }
@@ -1111,6 +1108,7 @@ void GLSLSceneRendererImpl::popProgram()
         currentNolightingProgram = info.nolightingProgram;
         if(currentProgram){
             currentProgram->activate();
+            clearGLState();
         }
     }
     programStack.pop_back();
@@ -1326,17 +1324,38 @@ void GLSLSceneRendererImpl::renderShapeMain
             phongShadowProgram.setVertexColorEnabled(mesh->hasColors());
         }
     }
-    if(ENABLE_IS_SOLID){
-        bool doCullFace = mesh->isSolid();
-        if(!isCullFaceEnabled || *isCullFaceEnabled != doCullFace){
-            if(doCullFace){
+
+    if(!stateFlag[CULL_FACE]){
+        bool enableCullFace;
+        if(backFaceCullingMode == GLSceneRenderer::ENABLE_BACK_FACE_CULLING){
+            enableCullFace = mesh->isSolid();
+        } else if(backFaceCullingMode == GLSceneRenderer::DISABLE_BACK_FACE_CULLING){
+            enableCullFace = false;
+        } else if(backFaceCullingMode == GLSceneRenderer::FORCE_BACK_FACE_CULLING){
+            enableCullFace = true;
+        }
+        if(enableCullFace){
+            glEnable(GL_CULL_FACE);
+        } else {
+            glDisable(GL_CULL_FACE);
+        }
+        isCullFaceEnabled = enableCullFace;
+        stateFlag[CULL_FACE] = true;
+
+    } else if(backFaceCullingMode == GLSceneRenderer::ENABLE_BACK_FACE_CULLING){
+        if(mesh->isSolid()){
+            if(!isCullFaceEnabled){
                 glEnable(GL_CULL_FACE);
-            } else {
-                glDisable(GL_CULL_FACE);
+                isCullFaceEnabled = true;
             }
-            isCullFaceEnabled = doCullFace;
+        } else {
+            if(isCullFaceEnabled){
+                glDisable(GL_CULL_FACE);
+                isCullFaceEnabled = false;
+            }
         }
     }
+    
     drawVertexResource(resource, GL_TRIANGLES, position);
 }
 
@@ -1917,8 +1936,6 @@ void GLSLSceneRendererImpl::clearGLState()
     shininess = 0.0f;
     alpha = 1.0f;
 
-    isCullFaceEnabled = boost::none;
-
     pointSize = defaultPointSize;    
     lineWidth = defaultLineWidth;
 }
@@ -2157,4 +2174,16 @@ void GLSLSceneRenderer::enableUnusedResourceCheck(bool on)
 void GLSLSceneRenderer::setUpsideDown(bool on)
 {
     impl->isUpsideDownEnabled = on;
+}
+
+
+void GLSLSceneRenderer::setBackFaceCullingMode(int mode)
+{
+    impl->backFaceCullingMode = mode;
+}
+
+
+int GLSLSceneRenderer::backFaceCullingMode() const
+{
+    return impl->backFaceCullingMode;
 }
