@@ -717,7 +717,11 @@ SgMesh* YAMLSceneReaderImpl::readExtrusion(Mapping& info)
     info.read("beginCap", extrusion.beginCap);
     info.read("endCap", extrusion.endCap);
 
-    return meshGenerator.generateExtrusion(extrusion, generateTexCoord);
+    SgMesh* mesh = meshGenerator.generateExtrusion(extrusion, generateTexCoord);
+
+    mesh->setSolid(info.get("solid", mesh->isSolid()));
+    
+    return mesh;
 }
 
 
@@ -754,11 +758,13 @@ SgMesh* YAMLSceneReaderImpl::readElevationGrid(Mapping& info)
         generateTexCoord = false;
     }
 
-    SgMesh* mesh= meshGenerator.generateElevationGrid(grid, generateTexCoord);
+    SgMesh* mesh = meshGenerator.generateElevationGrid(grid, generateTexCoord);
     if(texCoord){
         mesh->setTexCoords(texCoord);
         mesh->texCoordIndices() = mesh->triangleVertices();
     }
+
+    mesh->setSolid(info.get("solid", mesh->isSolid()));
 
     return mesh;
 }
@@ -815,7 +821,7 @@ SgMesh* YAMLSceneReaderImpl::readIndexedFaceSet(Mapping& info)
     }
 
     //polygonMeshTriangulator.setDeepCopyEnabled(true);
-    SgMesh* mesh= polygonMeshTriangulator.triangulate(polygonMesh);
+    SgMesh* mesh = polygonMeshTriangulator.triangulate(polygonMesh);
     const string& errorMessage = polygonMeshTriangulator.errorMessage();
     if(!errorMessage.empty()){
         info.throwException("Error of an IndexedFaceSet node: \n" + errorMessage);
@@ -830,6 +836,8 @@ SgMesh* YAMLSceneReaderImpl::readIndexedFaceSet(Mapping& info)
     double creaseAngle = 0.0;
     self->readAngle(info, "creaseAngle", creaseAngle);
     meshFilter.generateNormals(mesh, creaseAngle);
+
+    mesh->setSolid(info.get("solid", mesh->isSolid()));
 
     return mesh;
 }
