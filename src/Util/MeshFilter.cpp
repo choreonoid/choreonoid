@@ -21,16 +21,22 @@ const float PI = 3.14159265358979323846f;
 typedef array<int, 3> FaceId;
 
 template<class Triangle>
-FaceId getFaceId(Triangle& triangle)
+FaceId getFaceId(Triangle& triangle, bool doPreserveFlippedFaces)
 {
-    if(triangle[0] < triangle[1]){
-        if(triangle[0] < triangle[2]){
-            return FaceId{triangle[0], triangle[1], triangle[2]};
+    if(doPreserveFlippedFaces){
+        if(triangle[0] < triangle[1]){
+            if(triangle[0] < triangle[2]){
+                return FaceId{triangle[0], triangle[1], triangle[2]};
+            }
+        } else if(triangle[1] < triangle[2]){
+            return FaceId{triangle[1], triangle[2], triangle[0]};
         }
-    } else if(triangle[1] < triangle[2]){
-        return FaceId{triangle[1], triangle[2], triangle[0]};
+        return FaceId{triangle[2], triangle[0], triangle[1]};
+    } else {
+        FaceId id = { triangle[0], triangle[1], triangle[2] };
+        std::sort(id.begin(), id.end());
+        return id;
     }
-    return FaceId{triangle[2], triangle[0], triangle[1]};
 }
 
 struct EdgeId : public IdPair<int>
@@ -109,7 +115,7 @@ public:
     MeshFilterImpl(const MeshFilterImpl& org);
     void forAllMeshes(SgNode* node, function<void(SgMesh* mesh)> callback);
     void removeRedundantVertices(SgMesh* mesh);
-    void removeRedundantFaces(SgMesh* mesh);
+    void removeRedundantFaces(SgMesh* mesh, bool doPreserveFlippedFaces);
     void removeNormalIndicesOfRedundantFaces(SgMesh* mesh, const vector<bool>& uniqueFaceFlags);
     void removeRedundantNormals(SgMesh* mesh);
     void calculateFaceNormals(SgMesh* mesh, bool ignoreZeroNormals);
@@ -277,19 +283,23 @@ void MeshFilterImpl::removeRedundantVertices(SgMesh* mesh)
 }
 
 
-void MeshFilter::removeRedundantFaces(SgNode* scene)
+void MeshFilter::removeRedundantFaces(SgNode* scene, bool doPreserveFlippedFaces)
 {
-    impl->forAllMeshes(scene, [&](SgMesh* mesh){ impl->removeRedundantFaces(mesh); });
+    impl->forAllMeshes(
+        scene,
+        [&, doPreserveFlippedFaces](SgMesh* mesh){
+            impl->removeRedundantFaces(mesh, doPreserveFlippedFaces);
+        });
 }
 
 
-void MeshFilter::removeRedundantFaces(SgMesh* mesh)
+void MeshFilter::removeRedundantFaces(SgMesh* mesh, bool doPreserveFlippedFaces)
 {
-    impl->removeRedundantFaces(mesh);
+    impl->removeRedundantFaces(mesh, doPreserveFlippedFaces);
 }
 
 
-void MeshFilterImpl::removeRedundantFaces(SgMesh* mesh)
+void MeshFilterImpl::removeRedundantFaces(SgMesh* mesh, bool doPreserveFlippedFaces)
 {
     const int numOrgTriangles = mesh->numTriangles();
     if(numOrgTriangles == 0){
@@ -309,7 +319,8 @@ void MeshFilterImpl::removeRedundantFaces(SgMesh* mesh)
 
     for(int i=0; i < numOrgTriangles; ++i){
         SgMesh::ConstTriangleRef triangle(&orgTriangles[i*3]);
-        bool inserted = existingFaces.insert(getFaceId(triangle)).second;
+        auto id = getFaceId(triangle, doPreserveFlippedFaces);
+        bool inserted = existingFaces.insert(id).second;
         if(inserted){
             mesh->newTriangle() = triangle;
         }
