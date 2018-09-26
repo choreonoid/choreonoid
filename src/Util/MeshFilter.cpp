@@ -23,9 +23,14 @@ typedef array<int, 3> FaceId;
 template<class Triangle>
 FaceId getFaceId(Triangle& triangle)
 {
-    FaceId id = { triangle[0], triangle[1], triangle[2] };
-    std::sort(id.begin(), id.end());
-    return id;
+    if(triangle[0] < triangle[1]){
+        if(triangle[0] < triangle[2]){
+            return FaceId{triangle[0], triangle[1], triangle[2]};
+        }
+    } else if(triangle[1] < triangle[2]){
+        return FaceId{triangle[1], triangle[2], triangle[0]};
+    }
+    return FaceId{triangle[2], triangle[0], triangle[1]};
 }
 
 struct EdgeId : public IdPair<int>
