@@ -10,11 +10,11 @@ DEF unnamed Transform {
 	  children [
 	    DEF ID4 Shape {
 	      appearance Appearance {
-		material DEF Material_7 Material {
-		  ambientIntensity 0.312245
+		material DEF RedMaterial Material {
+		  ambientIntensity 0.3
 		  diffuseColor 0.670588 0.145098 0.145098
-		  shininess 0.078125
-		  specularColor 0.4 0.4 0.4
+		  shininess 0.5
+		  specularColor 0.5 0.3 0.3
 		}
 	      }
 	      geometry IndexedFaceSet {
@@ -65,11 +65,11 @@ DEF unnamed Transform {
 	    }
 	    DEF ID12 Shape {
 	      appearance Appearance {
-		material DEF Material_2 Material {
-		  ambientIntensity 0
-		  diffuseColor 0 0 0
-		  shininess 0.078125
-		  specularColor 0.4 0.4 0.4
+		material DEF BlackMaterial Material {
+		  ambientIntensity 0.1
+		  diffuseColor 0.2 0.2 0.2
+		  shininess 0.390625
+		  specularColor 0.5 0.5 0.5
 		}
 	      }
 	      geometry IndexedFaceSet {
@@ -152,7 +152,7 @@ DEF unnamed Transform {
 	    }
 	    DEF ID20 Shape {
 	      appearance Appearance {
-		material USE Material_2
+		material USE BlackMaterial
 	      }
 	      geometry IndexedFaceSet {
 		coord Coordinate {
@@ -183,7 +183,7 @@ DEF unnamed Transform {
 	    }
 	    DEF ID26 Shape {
 	      appearance Appearance {
-		material USE Material_7
+		material USE RedMaterial
 	      }
 	      geometry IndexedFaceSet {
 		coord Coordinate {
@@ -220,7 +220,7 @@ DEF unnamed Transform {
 	    }
 	    DEF ID32 Shape {
 	      appearance Appearance {
-		material USE Material_2
+		material USE BlackMaterial
 	      }
 	      geometry IndexedFaceSet {
 		coord Coordinate {
@@ -236,7 +236,7 @@ DEF unnamed Transform {
 	    }
 	    DEF ID33 Shape {
 	      appearance Appearance {
-		material USE Material_7
+		material USE RedMaterial
 	      }
 	      geometry IndexedFaceSet {
 		coord Coordinate {
@@ -252,7 +252,7 @@ DEF unnamed Transform {
 	    }
 	    DEF ID38 Shape {
 	      appearance Appearance {
-		material USE Material_2
+		material USE BlackMaterial
 	      }
 	      geometry IndexedFaceSet {
 		coord Coordinate {
@@ -277,7 +277,7 @@ DEF unnamed Transform {
 	    }
 	    DEF ID45 Shape {
 	      appearance Appearance {
-		material USE Material_2
+		material USE BlackMaterial
 	      }
 	      geometry IndexedFaceSet {
 		coord Coordinate {
@@ -296,7 +296,7 @@ DEF unnamed Transform {
 	    }
 	    DEF ID50 Shape {
 	      appearance Appearance {
-		material USE Material_7
+		material USE RedMaterial
 	      }
 	      geometry IndexedFaceSet {
 		coord Coordinate {
@@ -393,7 +393,7 @@ DEF unnamed Transform {
 	    }
 	    DEF ID76 Shape {
 	      appearance Appearance {
-		material USE Material_2
+		material USE BlackMaterial
 	      }
 	      geometry IndexedFaceSet {
 		coord Coordinate {
@@ -412,7 +412,7 @@ DEF unnamed Transform {
 	    }
 	    DEF ID83 Shape {
 	      appearance Appearance {
-		material USE Material_7
+		material USE RedMaterial
 	      }
 	      geometry IndexedFaceSet {
 		coord Coordinate {

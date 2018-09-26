@@ -7,11 +7,11 @@ DEF Scene Group {
       children [
 	DEF ID000 Shape {
 	  appearance Appearance {
-	    material DEF Material_7 Material {
-	      ambientIntensity 0
+	    material DEF RedMaterial Material {
+	      ambientIntensity 0.3
 	      diffuseColor 0.670588 0.145098 0.145098
-	      shininess 0.390625
-	      specularColor 0.0625 0.0625 0.0625
+	      shininess 0.5
+	      specularColor 0.5 0.3 0.3
 	    }
 	  }
 	  geometry IndexedFaceSet {
@@ -1547,8 +1547,8 @@ DEF Scene Group {
 	DEF ID001 Shape {
 	  appearance Appearance {
 	    material DEF Material_2 Material {
-	      ambientIntensity 0
-	      diffuseColor 0.25 0.25 0.25
+	      ambientIntensity 0.1
+	      diffuseColor 0.2 0.2 0.2
 	      shininess 0.390625
 	      specularColor 0.5 0.5 0.5
 	    }
@@ -2899,10 +2899,10 @@ DEF Scene Group {
 	DEF ID009 Shape {
 	  appearance Appearance {
 	    material DEF Material_21 Material {
-	      ambientIntensity 0
-	      diffuseColor 0.74902 0.74902 0.74902
-	      shininess 0.390625
-	      specularColor 0.0625 0.0625 0.0625
+	      ambientIntensity 0.2
+	      diffuseColor 0.8 0.8 0.8
+	      shininess 0.5
+	      specularColor 0.5 0.5 0.5
 	    }
 	  }
 	  geometry IndexedFaceSet {
@@ -2971,10 +2971,10 @@ DEF Scene Group {
 	DEF ID010 Shape {
 	  appearance Appearance {
 	    material DEF Material_20 Material {
-	      ambientIntensity 0
-	      diffuseColor 0.0980392 0.0980392 0.0980392
-	      shininess 0.390625
-	      specularColor 0.0625 0.0625 0.0625
+	      ambientIntensity 0.05
+	      diffuseColor 0.1 0.1 0.1
+	      shininess 0.1
+	      specularColor 0.1 0.1 0.1
 	    }
 	  }
 	  geometry IndexedFaceSet {
