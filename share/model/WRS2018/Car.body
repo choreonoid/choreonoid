@@ -3,46 +3,10 @@ formatVersion: 1.0
 angleUnit: degree
 name: Car
 
-CAR_BODY: &CAR_BODY
+PRIMITIVE_RESOURCE: &PRIMITIVE_RESOURCE
   type: Resource
-  uri: "resource/CarCollisionShapes.yaml"
-  node: CAR_BODY
+  uri: "resource/CarPrimitives.yaml"
 
-CAR_STEERING: &CAR_STEERING
-  type: Resource
-  uri: "resource/CarCollisionShapes.yaml"
-  node: CAR_STEERING
-
-CAR_DOOR_FR: &CAR_DOOR_FR
-  type: Resource
-  uri: "resource/CarCollisionShapes.yaml"
-  node: CAR_DOOR_FR
-
-CAR_DOOR_KNOB_RIGHT: &CAR_DOOR_KNOB_RIGHT
-  type: Resource
-  uri: "resource/CarCollisionShapes.yaml"
-  node: CAR_DOOR_KNOB_RIGHT
-  
-CAR_DOOR_FL: &CAR_DOOR_FL
-  type: Resource
-  uri: "resource/CarCollisionShapes.yaml"
-  node: CAR_DOOR_FL
-
-CAR_DOOR_KNOB_LEFT: &CAR_DOOR_KNOB_LEFT
-  type: Resource
-  uri: "resource/CarCollisionShapes.yaml"
-  node: CAR_DOOR_KNOB_LEFT
-  
-CAR_DOOR_FL: &CAR_DOOR_BR
-  type: Resource
-  uri: "resource/CarCollisionShapes.yaml"
-  node: CAR_DOOR_BR
-  
-CAR_DOOR_FL: &CAR_DOOR_BL
-  type: Resource
-  uri: "resource/CarCollisionShapes.yaml"
-  node: CAR_DOOR_BL
-  
 links:
   -
     name: BODY
@@ -83,74 +47,14 @@ links:
       -
         type: Collision
         elements:
-          -
-            <<: *CAR_BODY
-          - 
-            type: Transform
-            translation: [ -0.3, 0.001, 0.9 ]
-            elements:  # roof
-              - 
-                type: Shape
-                name: roof right1
-                translation: [ 0.495, -0.45, 0.421 ]
-                rotation: [ [ 0, 1, 0, 13], [ 1, 0, 0, 9 ] ]
-                geometry: { type: Box, size: [ 0.13, 0.11, 0.015 ] }
-              -
-                type: Shape
-                name: roof right2
-                translation: [ 0.289, -0.45, 0.449 ]
-                rotation: [ [ 0, 1, 0, 5], [ 1, 0, 0, 9 ] ] 
-                geometry: { type: Box, size: [ 0.3, 0.11, 0.015 ] }
-              -
-                type: Shape
-                name: roof right3
-                translation: [ -0.06, -0.45, 0.462 ]
-                rotation: [ 1, 0, 0, 9 ]
-                geometry: { type: Box, size: [ 0.4, 0.11, 0.015 ] }
-              -
-                type: Shape
-                name: roof right5
-                translation: [ 0.49, -0.541, 0.387 ]
-                rotation: [ [ 0, 1, 0, 13], [ 1, 0, 0, 34 ] ]
-                geometry: { type: Box, size: [ 0.12, 0.1, 0.015 ] }
-              -
-                type: Shape
-                name: roof right6
-                translation: [ 0.289, -0.54, 0.416 ]
-                rotation: [ [ 0, 1, 0, 5], [ 1, 0, 0, 33 ] ] 
-                geometry: { type: Box, size: [ 0.3, 0.09, 0.015 ] }
-              -
-                type: Shape
-                name: roof right7
-                translation: [ -0.06, -0.54, 0.43 ]
-                rotation: [ 1, 0, 0, 33 ]
-                geometry: { type: Box, size: [ 0.404, 0.09, 0.015 ] }
-              -
-                type: Shape
-                name: roof center1
-                translation: [ 0.50, 0, 0.429 ]
-                rotation: [ 0, 1, 0, 13]
-                geometry: { type: Box, size: [ 0.14, 0.8, 0.015 ] }
-              -
-                type: Shape
-                name: roof center2
-                translation: [ 0.289, 0, 0.457 ]
-                rotation: [ 0, 1, 0, 5]
-                geometry: { type: Box, size: [ 0.3, 0.8, 0.015 ] }
-              -
-                type: Shape
-                name: roof center3
-                translation: [ -0.06, 0, 0.47 ]
-                geometry: { type: Box, size: [ 0.4, 0.8, 0.015 ] }
-              -
-                type: Shape
-                name: roof center4
-                translation: [ -0.39, 0, 0.453 ]
-                rotation: [ 0, 1, 0, -7]
-                geometry: { type: Box, size: [ 0.27, 0.8, 0.015 ] }
-          -
-            <<: *CAR_STEERING
-            translation: [ 0.5, 0.333, 0.84 ]
+          - { <<: *PRIMITIVE_RESOURCE, node: CAR_BODY }
+          - { <<: *PRIMITIVE_RESOURCE, node: CAR_NORMAL_ROOF }
+          - { <<: *PRIMITIVE_RESOURCE, node: CAR_STEERING, translation: [ 0.49, 0.39, 0.839 ] }
+
+      - { <<: *PRIMITIVE_RESOURCE, node: CAR_TYRE, translation: [  1.365, -0.72, 0.34 ] }
+      - { <<: *PRIMITIVE_RESOURCE, node: CAR_TYRE, translation: [  1.365,  0.72, 0.34 ] }
+      - { <<: *PRIMITIVE_RESOURCE, node: CAR_TYRE, translation: [ -1.315, -0.72, 0.34 ] }
+      - { <<: *PRIMITIVE_RESOURCE, node: CAR_TYRE, translation: [ -1.315,  0.72, 0.34 ] }
   -
     name: FR_DOOR
     parent: BODY
@@ -185,13 +89,12 @@ links:
           rotation: [ 0, 0, 1, 90 ]
           translation: [ -1.14, 0, 0 ]
           uri: "resource/CarDoorFR.wrl" 
-          #exclude: [ ID51, ID21 ]
       -
         type: Collision
         elements:
-          <<: *CAR_DOOR_FR
+          <<: *PRIMITIVE_RESOURCE
+          node: CAR_DOOR_FR
           translation: [ -0.873, 0.8175, -0.3306 ]
-
   -
     name: FL_DOOR
     parent: BODY
@@ -208,16 +111,16 @@ links:
     jointMotor: true
     jointMotorCompliance: 0.1
     elements:
-      Visual : { resource: { rotation: [ 0, 0, 1, 90 ],
-                             translation: [ -1.14, 0.0, 0.0016 ],
-                             uri: "resource/CarDoorFL.wrl"
-                             #,exclude: ID7
-                           } }
+      Visual:
+        resource:
+          rotation: [ 0, 0, 1, 90 ]
+          translation: [ -1.14, 0.0, 0.0016 ]
+          uri: "resource/CarDoorFL.wrl"
       Collision :
         elements:
-          <<: *CAR_DOOR_FL
+          <<: *PRIMITIVE_RESOURCE
+          node: CAR_DOOR_FL
           translation: [ -0.8757, -0.6904, -0.333 ]
-
   -
     name: BR_DOOR
     parent: BODY
@@ -246,27 +149,24 @@ links:
         validAxis: [ 0, 1, 0 ]
         signedAxis: [ 0, -1, 0 ]
         period: 0.5
-
       - 
         type: Visual
         resource:
           rotation: [ 0, 0, 1, 90 ]
           translation: [ -0.5, 0, 0 ]
           uri: "resource/CarDoorBR.wrl"
-          #,exclude: ID6
       -
         type: Collision
         elements:
           Transform:
             translation: [ -0.2, 0.0, 0.0 ]
             elements:
+              - { <<: *PRIMITIVE_RESOURCE, node: CAR_DOOR_BR }
               -
-                <<: *CAR_DOOR_BR
-              -
-                <<: *CAR_DOOR_KNOB_RIGHT
+                <<: *PRIMITIVE_RESOURCE
+                node: CAR_DOOR_KNOB_RIGHT
                 translation: [ -0.706, -0.078, 0.6215 ]
                 rotation: [ 0, 1, 0, 1.6 ]
-
   -
     name: BL_DOOR
     parent: BODY
@@ -283,19 +183,19 @@ links:
     jointMotor: true
     jointMotorCompliance: 0.1
     elements:
-      Visual : { resource: { rotation: [ 0, 0, 1, 90 ],
-                             translation: [ -0.5, 0, 0 ],
-                             uri: "resource/CarDoorBL.wrl"
-                             #,exclude: ID6
-                           } }
+      Visual:
+        resource:
+          rotation: [ 0, 0, 1, 90 ]
+          translation: [ -0.5, 0, 0 ]
+          uri: "resource/CarDoorBL.wrl"
       Collision :
         elements:
           Transform:
             translation: [ -0.197, 0.1453, 0.0 ]
             elements:
+              - { <<: *PRIMITIVE_RESOURCE, node: CAR_DOOR_BL }
               -
-                <<: *CAR_DOOR_BL
-              -
-                <<: *CAR_DOOR_KNOB_LEFT
+                <<: *PRIMITIVE_RESOURCE
+                node: CAR_DOOR_KNOB_LEFT
                 translation: [ -0.705, 0.077, 0.6175 ]
                 rotation: [ 0, 1, 0, 1.6 ]
