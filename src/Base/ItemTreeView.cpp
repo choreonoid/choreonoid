@@ -37,8 +37,9 @@ class ItvItem : public QTreeWidgetItem
 public:
     Item* item;
     ItemTreeViewImpl* itemTreeViewImpl;
-    bool isExpandedBeforeRemoving;
     vector<SigCheckToggledPtr> sigCheckToggledList;
+    SigCheckToggled sigAnyColumnCheckedToggled;
+    bool isExpandedBeforeRemoving;
 
     ItvItem(Item* item, ItemTreeViewImpl* itemTreeViewImpl);
     virtual ~ItvItem();
@@ -80,6 +81,7 @@ public:
 
     vector<CheckColumnPtr> checkColumns;
 
+    Signal<void(Item* item, bool isChecked)> sigAnyColumnCheckedToggled;
     Signal<void(Item* item, bool isChecked)> sigCheckToggledForInvalidId;
     Signal<void(bool isChecked)> sigCheckToggledForInvalidItem;
     Signal<void(const ItemList<>&)> sigSelectionChanged;
@@ -192,9 +194,9 @@ QVariant ItvItem::data(int column, int role) const
 
 void ItvItem::setData(int column, int role, const QVariant& value)
 {
-    QTreeWidgetItem::setData(column, role, value);
-    
     if(column == 0){
+        QTreeWidgetItem::setData(column, role, value);
+
         if(role == Qt::DisplayRole || role == Qt::EditRole){
             if(value.type() == QVariant::String){
                 if(!value.toString().isEmpty()){
@@ -203,15 +205,30 @@ void ItvItem::setData(int column, int role, const QVariant& value)
             }
         }
     } else if(column >= 1 && role == Qt::CheckStateRole){
+        bool checked = ((Qt::CheckState)value.toInt() == Qt::Checked);
+        bool wasAnyColumnChecked = itemTreeViewImpl->isItemChecked(item, ItemTreeView::ID_ANY);
+
+        QTreeWidgetItem::setData(column, role, value);
+
         const unsigned int id = column - 1;
         if(id < itemTreeViewImpl->checkColumns.size()){
             CheckColumnPtr& cc = itemTreeViewImpl->checkColumns[id];
             cc->needToUpdateCheckedItemList = true;
-            const bool checked = ((Qt::CheckState)value.toInt() == Qt::Checked);
             cc->sigCheckToggled(item, checked);
             SigCheckToggled* sig = sigCheckToggled(id);
             if(sig){
                 (*sig)(checked);
+            }
+            if(checked){
+                if(!wasAnyColumnChecked){
+                    itemTreeViewImpl->sigAnyColumnCheckedToggled(item, true);
+                    sigAnyColumnCheckedToggled(true);
+                }
+            } else {
+                if(!itemTreeViewImpl->isItemChecked(item, ItemTreeView::ID_ANY)){
+                    itemTreeViewImpl->sigAnyColumnCheckedToggled(item, false);
+                    sigAnyColumnCheckedToggled(false);
+                }
             }
         }
     }
@@ -225,7 +242,7 @@ SigCheckToggled* ItvItem::sigCheckToggled(int id)
             return sigCheckToggledList[id].get();
         }
     }
-    return 0;
+    return nullptr;
 }
 
 
@@ -869,7 +886,7 @@ bool ItemTreeViewImpl::isItemChecked(Item* item, int id)
     }
     return false;
 }
-    
+
 
 bool ItemTreeView::checkItem(Item* item, bool checked, int id)
 {
@@ -902,6 +919,9 @@ SignalProxy<void(const ItemList<>&)> ItemTreeView::sigSelectionOrTreeChanged()
 
 SignalProxy<void(Item* item, bool isChecked)> ItemTreeView::sigCheckToggled(int id)
 {
+    if(id == ID_ANY){
+        return impl->sigAnyColumnCheckedToggled;
+    }
     if(id < static_cast<int>(impl->checkColumns.size())){
         return impl->checkColumns[id]->sigCheckToggled;
     }
@@ -911,6 +931,9 @@ SignalProxy<void(Item* item, bool isChecked)> ItemTreeView::sigCheckToggled(int 
 
 SignalProxy<void(bool isChecked)> ItemTreeView::sigCheckToggled(Item* item, int id)
 {
+    if(id == ID_ANY){
+        return impl->getOrCreateItvItem(item)->sigAnyColumnCheckedToggled;
+    }
     if(id < static_cast<int>(impl->checkColumns.size())){
         return impl->getOrCreateItvItem(item)->getOrCreateSigCheckToggled(id);
     }
