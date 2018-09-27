@@ -320,7 +320,6 @@ void PointCloudInput::read1()
             port1.read();
         } while(port1.isNew());
     
-        int numPoints = pointCloud1.height * pointCloud1.width;
         bool rgb = false;
         for(size_t i=0; i < pointCloud1.fields.length(); ++i){
             string name = string(pointCloud1.fields[i].name);
@@ -331,6 +330,10 @@ void PointCloudInput::read1()
                 rgb = true;
             }
         }
+
+        int n = pointCloud1.height * pointCloud1.width;
+        int m = pointCloud1.data.length() / pointCloud1.point_step;
+        int numPoints = std::min(n, m);
         unsigned char* src = (unsigned char*)pointCloud1.data.get_buffer();
         auto tmpPoints = std::make_shared<vector<Vector3f>>();
         std::shared_ptr<Image> tmpImage;
@@ -450,7 +453,7 @@ void RangeDataInput::read()
     if(port.isNew()){
         do {
             port.read();
-        }while(port.isNew());
+        } while(port.isNew());
             
         double* src = timedRangeData.ranges.get_buffer();
         int numPoints = timedRangeData.ranges.length();
