@@ -191,7 +191,7 @@ public:
             m_rigids[0]->getGeometries().front()->setEnableCollisions(m_rigids[1]->getGeometries().front(), false);
         }
 
-        std::cout << "AGXMagneticJoint " << "distance: " << d << " angle: " <<  agx::radiansToDegrees(rad)<< std::endl;
+        LOGGER_INFO() << "AGXMagneticJoint " << "distance: " << d << " angle: " <<  agx::radiansToDegrees(rad)<< LOGGER_ENDL();
     }
 };
 

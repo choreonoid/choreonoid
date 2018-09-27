@@ -413,13 +413,13 @@ void AGXLink::createAGXShape()
             AGXConvexDecompositionPtr conDec = new AGXConvexDecomposition();
             numConvex = conDec->getConvexBuilder()->build(td.vertices, td.indices, td.triangles);
             if(numConvex > 0){
-                std::cout << orgLink->name() << " convex decomposition succeed." << std::endl;
-                std::cout << "Divided to " << numConvex << std::endl;
+                LOGGER_INFO() << orgLink->name() << " convex decomposition succeed." << LOGGER_ENDL();
+                LOGGER_INFO() << "Divided to " << numConvex << std::endl;
                 for(auto shape : conDec->getConvexBuilder()->getConvexShapes()){
                     getAGXGeometry()->add(shape, agx::AffineMatrix4x4());
                 }
             }else{
-                std::cout << orgLink->name() << " convex decomposition failed." << std::endl;
+                LOGGER_WARNING() << orgLink->name() << " convex decomposition failed." << LOGGER_ENDL();
             }
         }
 
