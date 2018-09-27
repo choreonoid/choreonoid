@@ -47,6 +47,7 @@ public:
     bool readAngle(const Mapping& info, const char* key, double& angle) const;
     bool readAngle(const Mapping& info, const char* key, float& angle) const;
     bool readRotation(const Mapping& info, Matrix3& out_R) const;
+    bool readRotation(const Mapping& info, const char* key, Matrix3& out_R) const;
     bool extractRotation(Mapping& info, Matrix3& out_R) const;
     SgNode* readNode(Mapping& info);
     SgNode* readNode(Mapping& info, const std::string& type);

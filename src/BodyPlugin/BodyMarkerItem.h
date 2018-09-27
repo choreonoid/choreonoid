@@ -34,12 +34,15 @@ public:
     enum MarkerType {
         CROSS_MARKER,
         SPHERE_MARKER,
-        AXIS_ARROWS_MARKER,
+        AXES_MARKER,
         N_MARKER_TYPES
     };
 
+    int markerType() const;
     void setMarkerType(int type);
+    double markerSize() const;
     void setMarkerSize(double size);
+    const Vector3f& markerColor() const;
     void setMarkerColor(const Vector3f& color);
 
 protected:

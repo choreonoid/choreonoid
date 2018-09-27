@@ -39,6 +39,13 @@ const std::unordered_map<std::string, agx::FrictionModel::SolveType> agxSolveTyp
     {"directAndIterative", agx::FrictionModel::SolveType::DIRECT_AND_ITERATIVE}
 };
 
+const std::unordered_map<std::string, agx::Notify::NotifyLevel> agxNotifyLevel{
+    {"debug", agx::Notify::NOTIFY_DEBUG},
+    {"info", agx::Notify::NOTIFY_INFO},
+    {"warning", agx::Notify::NOTIFY_WARNING},
+    {"error", agx::Notify::NOTIFY_ERROR}
+};
+
 AGXSimulatorItemImpl::AGXSimulatorItemImpl(AGXSimulatorItem* self)
     : self(self)
 {
@@ -54,6 +61,11 @@ AGXSimulatorItemImpl::AGXSimulatorItemImpl(AGXSimulatorItem* self)
     m_p_enableAMOR = simDesc.enableAMOR;
     m_p_enableAutoSleep = simDesc.enableAutoSleep;
     m_p_saveToAGXFileOnStart = false;
+    m_p_debugMessageOnConsoleType = Selection(agxNotifyLevel.size(), CNOID_GETTEXT_DOMAIN_NAME);
+    for(auto i : agxNotifyLevel){
+        m_p_debugMessageOnConsoleType.setSymbol(i.second, N_(i.first));
+    }
+    m_p_debugMessageOnConsoleType.select(agx::Notify::NOTIFY_WARNING);
 }
 
 AGXSimulatorItemImpl::AGXSimulatorItemImpl(AGXSimulatorItem* self, const AGXSimulatorItemImpl& org)
@@ -69,6 +81,7 @@ AGXSimulatorItemImpl::AGXSimulatorItemImpl(AGXSimulatorItem* self, const AGXSimu
     m_p_enableAMOR                    =  org.m_p_enableAMOR                   ;
     m_p_enableAutoSleep               =  org.m_p_enableAutoSleep              ;
     m_p_saveToAGXFileOnStart          =  org.m_p_saveToAGXFileOnStart         ;
+    m_p_debugMessageOnConsoleType     =  org.m_p_debugMessageOnConsoleType    ;
 }
 
 AGXSimulatorItemImpl::~AGXSimulatorItemImpl(){}
@@ -86,6 +99,8 @@ void AGXSimulatorItemImpl::doPutProperties(PutPropertyFunction & putProperty)
     putProperty(_("AMOR"), m_p_enableAMOR, changeProperty(m_p_enableAMOR));
     putProperty(_("(deprecated)AutoSleep"), m_p_enableAutoSleep, changeProperty(m_p_enableAutoSleep));
     putProperty(_("SaveToAGXFileOnStart"), m_p_saveToAGXFileOnStart, changeProperty(m_p_saveToAGXFileOnStart));
+    putProperty(_("DebugMessageOnConsole"), m_p_debugMessageOnConsoleType,
+    [&](int index){ return m_p_debugMessageOnConsoleType.select(index); });
 }
 
 bool AGXSimulatorItemImpl::store(Archive & archive)
@@ -98,6 +113,7 @@ bool AGXSimulatorItemImpl::store(Archive & archive)
     archive.write("ContactWarmstarting", m_p_enableContactWarmstarting);
     archive.write("AutoSleep", m_p_enableAutoSleep);
     archive.write("SaveToAGXFileOnStart", m_p_saveToAGXFileOnStart);
+    archive.write("DebugMessageOnConsole", m_p_debugMessageOnConsoleType.selectedIndex());
     return true;
 }
 
@@ -111,6 +127,9 @@ bool AGXSimulatorItemImpl::restore(const Archive & archive)
     archive.read("ContactWarmstarting", m_p_enableContactWarmstarting);
     archive.read("AutoSleep", m_p_enableAutoSleep);
     archive.read("SaveToAGXFileOnStart", m_p_saveToAGXFileOnStart);
+    int agxNL = agx::Notify::NOTIFY_WARNING;
+    archive.read("DebugMessageOnConsole", agxNL);
+    m_p_debugMessageOnConsoleType.select(agxNL);
     return true;
 }
 
@@ -134,6 +153,10 @@ bool AGXSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody
     sd.simdesc.enableContactWarmstarting = m_p_enableContactWarmstarting;
     sd.simdesc.enableAutoSleep = m_p_enableAutoSleep;
     agxScene = AGXScene::create(sd);
+    const agx::Notify::NotifyLevel notifyLevel = agxNotifyLevel.at(m_p_debugMessageOnConsoleType.selectedSymbol());
+    agx::Notify::instance()->setNotifyLevel(notifyLevel);
+    //agx::Notify::instance()->setLogNotifyLevel(notifyLevel);
+    //agx::Logger::instance()->setLogNotifyLevel(notifyLevel);
 
     createAGXMaterialTable();
 
@@ -147,7 +170,6 @@ bool AGXSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody
     setAdditionalAGXMaterialParam();
 
     if(m_p_saveToAGXFileOnStart) saveSimulationToAGXFile();
-    
     return true;
 }
 
@@ -242,30 +264,30 @@ void AGXSimulatorItemImpl::setAdditionalAGXMaterialParam()
             agx::ContactMaterial* cmat = mgr->getOrCreateContactMaterial(mat1, mat2);
             if(!cmat) return;
             string cmatName = "[" + mat1->getName() + " " + mat2->getName() + "]";
-            std::cout << "AGXDynamicsPlugin:INFO " << "contact material " << cmatName  << std::endl;
+            LOGGER_INFO() << "AGXDynamicsPlugin:INFO " << "contact material " << cmatName  << LOGGER_ENDL();
             auto cnfobfm = dynamic_cast<agx::ConstantNormalForceOrientedBoxFrictionModel*>(cmat->getFrictionModel());
             if(!cnfobfm) return;
-            std::cout << "AGXDynamicsPlugin:INFO " << "cnfobfm found at " << cmatName << std::endl;
+            LOGGER_INFO() << "AGXDynamicsPlugin:INFO " << "cnfobfm found at the material table " << cmatName << LOGGER_ENDL();
 
             string referenceBodyName, referenceLinkName;
             if(mat->info()->read("referenceBodyName", referenceBodyName)){}else{
-                std::cout << "AGXDynamicsPlugin:WARNING " << "referenceBodyName is not set or correct at " << cmatName << std::endl;
+                LOGGER_WARNING() << "AGXDynamicsPlugin:WARNING " << "referenceBodyName is not set or correct at the material table " << cmatName << LOGGER_ENDL();
                 return;
             }
             if(mat->info()->read("referenceLinkName", referenceLinkName)){}else{
-                std::cout << "AGXDynamicsPlugin:WARNING " << "referenceLinkName is not set or correct at " << cmatName << std::endl;
+                LOGGER_WARNING() << "AGXDynamicsPlugin:WARNING " << "referenceLinkName is not set or correct at the material table " << cmatName << LOGGER_ENDL();
                 return;
             }
 
             auto simBody = self->findSimulationBody(referenceBodyName);
             AGXBody* body = static_cast<AGXBody*>(simBody);
             if(!body){
-                std::cout << "AGXDynamicsPlugin:WARNING " << "reference body " << referenceBodyName << " is not found at" << cmatName << std::endl;
+                LOGGER_WARNING() << "AGXDynamicsPlugin:WARNING " << "reference body " << referenceBodyName << " is not found at the material table " << cmatName << LOGGER_ENDL();
                 return;
             }
             agx::RigidBody* rigid = body->getAGXRigidBody(referenceLinkName);
             if(!rigid){
-                std::cout << "AGXDynamicsPlugin:WARNING " << "reference rigidbody " << referenceLinkName << " is not found at " << cmatName << std::endl;
+                LOGGER_WARNING() << "AGXDynamicsPlugin:WARNING " << "reference rigidbody " << referenceLinkName << " is not found at the material table " << cmatName << LOGGER_ENDL();
                 return;
             }
 
@@ -275,9 +297,9 @@ void AGXSimulatorItemImpl::setAdditionalAGXMaterialParam()
             if(agxConvert::setVector(&mat->info()->get("primaryDirection"), primaryDirection)){
                 cnfobfm->setPrimaryDirection(agxConvert::toAGX(primaryDirection));
             }else{
-                std::cout << "AGXDynamicsPlugin:WARNING " << "primaryDirection is not set or correct" << std::endl;
+                LOGGER_WARNING() << "AGXDynamicsPlugin:WARNING " << "primaryDirection is not set or correct" << LOGGER_ENDL();
             }
-            std::cout << "AGXDynamicsPlugin:INFO " << "cnfobfm modified at " << cmatName << std::endl;
+            LOGGER_INFO() << "AGXDynamicsPlugin:INFO " << "cnfobfm modified at " << cmatName << LOGGER_ENDL();
         }
     );
 }
@@ -285,6 +307,10 @@ void AGXSimulatorItemImpl::setAdditionalAGXMaterialParam()
 
 bool AGXSimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& activeSimBodies)
 {
+    agxScene->setMainWorkThread();
+    // Need to set NotifyLevel for each thread.
+    agx::Notify::instance()->setNotifyLevel(agxNotifyLevel.at(m_p_debugMessageOnConsoleType.selectedSymbol()));
+
     for(auto simBody : activeSimBodies){
         auto const agxBody = dynamic_cast<AGXBody*>(simBody);
         agxBody->setControlInputToAGX();

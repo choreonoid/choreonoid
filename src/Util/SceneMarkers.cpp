@@ -10,6 +10,140 @@
 using namespace std;
 using namespace cnoid;
 
+SceneMarker::SceneMarker()
+{
+    markerType_ = NO_MARKER;
+    markerSize_ = 0.01;
+
+    material = new SgMaterial;
+    material->setDiffuseColor(Vector3f::Zero());
+    material->setEmissiveColor(Vector3f(1.0f, 0.0f, 0.0f));
+    material->setTransparency(0.0f);
+    material->setAmbientIntensity(0.0f);
+}
+
+
+void SceneMarker::updateMarker(bool doNotify)
+{
+    clearChildren();
+
+    switch(markerType_){
+    case NO_MARKER:
+        break;
+    case CROSS_MARKER:
+        setCross();
+        break;
+    case SPHERE_MARKER:
+        setSphere();
+        break;
+    case AXES_MARKER:
+        setAxes();
+        break;
+    defautl:
+        break;
+    }
+
+    if(doNotify){
+        notifyUpdate(SgUpdate::ADDED | SgUpdate::REMOVED);
+    }
+}
+
+
+void SceneMarker::setCross()
+{
+    const float p = markerSize_ / 0.2f;
+    auto vertices = new SgVertexArray {
+        {   -p, 0.0f, 0.0f },
+        {    p, 0.0f, 0.0f },
+        { 0.0f,   -p, 0.0f },
+        { 0.0f,    p, 0.0f },
+        { 0.0f, 0.0f,   -p },
+        { 0.0f, 0.0f,    p }
+    };
+    
+    SgLineSet* lineSet = new SgLineSet;
+    lineSet->setVertices(vertices);
+    lineSet->setNumLines(3);
+    lineSet->setLine(0, 0, 1);
+    lineSet->setLine(1, 2, 3);
+    lineSet->setLine(2, 4, 5);
+
+    lineSet->setMaterial(material);
+
+    addChild(lineSet);
+}
+
+
+void SceneMarker::setSphere()
+{
+    SgShape* sphere = new SgShape;
+    MeshGenerator mg;
+    sphere->setMesh(mg.generateSphere(markerSize_ / 2.0f));
+    sphere->setMaterial(material);
+
+    addChild(sphere);
+}
+
+
+void SceneMarker::setAxes()
+{
+    double r1 = markerSize_ * 0.1;
+    double h1 = markerSize_ * 0.7;
+    double r2 = markerSize_ * 0.2;
+    double h2 = markerSize_ * 0.3;
+    
+    MeshGenerator mg;
+    SgMeshPtr mesh = mg.generateArrow(r1, h1, r2, h2);
+    mesh->translate(Vector3f(0.0f, h1 / 2.0, 0.0f));
+
+    for(int i=0; i < 3; ++i){
+        SgShape* shape = new SgShape;
+        shape->setMesh(mesh);
+
+        SgMaterial* material = new SgMaterial;
+        Vector3f color(0.2f, 0.2f, 0.2f);
+        color[i] = 1.0f;
+        material->setDiffuseColor(Vector3f::Zero());
+        material->setEmissiveColor(color);
+        material->setAmbientIntensity(0.0f);
+        shape->setMaterial(material);
+            
+        SgPosTransform* arrow = new SgPosTransform;
+        arrow->addChild(shape);
+        if(i == 0){
+            arrow->setRotation(AngleAxis(-PI / 2.0, Vector3::UnitZ()));
+        } else if(i == 2){
+            arrow->setRotation(AngleAxis( PI / 2.0, Vector3::UnitX()));
+        }
+
+        addChild(arrow);
+    }
+}
+
+
+const Vector3f& SceneMarker::color() const
+{
+    return material->emissiveColor();
+}
+
+
+void SceneMarker::setColor(const Vector3f& color)
+{
+    material->setEmissiveColor(color);
+}
+
+
+double SceneMarker::transparency() const
+{
+    return material->transparency();
+}
+
+
+void SceneMarker::setTransparency(float t)
+{
+    material->setTransparency(t);
+}
+
 
 CrossMarker::CrossMarker(double size, const Vector3f& color, double lineWidth)
 {

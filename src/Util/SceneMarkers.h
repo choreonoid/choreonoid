@@ -11,6 +11,43 @@
 
 namespace cnoid {
 
+class CNOID_EXPORT SceneMarker : public SgPosTransform
+{
+public:
+    SceneMarker();
+
+    enum MarkerType {
+        NO_MARKER,
+        CROSS_MARKER,
+        SPHERE_MARKER,
+        AXES_MARKER,
+        N_MARKER_TYPES
+    };
+
+    int markerType() const { return markerType_; }
+    void setMarkerType(int type){ markerType_ = type; }
+    double markerSize() const { return markerSize_; }
+    void setMarkerSize(double size){ markerSize_ = size; }
+    void updateMarker(bool doNotify = false);
+        
+    const Vector3f& color() const;
+    void setColor(const Vector3f& c);
+    double transparency() const;
+    void setTransparency(float t);
+
+private:
+    int markerType_;
+    float markerSize_;
+    SgMaterialPtr material;
+
+    void setCross();
+    void setSphere();
+    void setAxes();
+};
+
+typedef ref_ptr<SceneMarker> SceneMarkerPtr;
+
+
 class CNOID_EXPORT CrossMarker : public SgPosTransform
 {
 public:
@@ -21,6 +58,7 @@ private:
     SgVertexArrayPtr vertices;
     double size_;
 };
+
 typedef ref_ptr<CrossMarker> CrossMarkerPtr;
 
 
@@ -36,6 +74,7 @@ private:
     SgScaleTransformPtr scale;
     SgMaterialPtr material;
 };
+
 typedef ref_ptr<SphereMarker> SphereMarkerPtr;
 
 
@@ -49,6 +88,7 @@ private:
     void create(const BoundingBox& bbox, const Vector3f& color, float transparency, double width);
     void addMarker(SgShape* shape, double x, double y, double z);
 };
+
 typedef ref_ptr<BoundingBoxMarker> BoundingBoxMarkerPtr;
 
 }

@@ -14,41 +14,36 @@ using namespace cnoid;
 
 namespace {
 
-SceneDevice* createSceneSmokeDevice(Device* device)
-{
-    auto smokeDevice = static_cast<SmokeDevice*>(device);
-    auto sceneSmoke = new SceneSmoke;
-    auto sceneDevice = new SceneDevice(device, sceneSmoke);
+YAMLBodyLoader::NodeTypeRegistration
+registerSmokeDevice(
+    "SmokeDevice",
+    [](YAMLBodyLoader& loader, Mapping& node){
+        SmokeDevicePtr smoke = new SmokeDevice;
+        smoke->particleSystem().readParameters(loader.sceneReader(), node);
+        return loader.readDevice(smoke, node);
+    });
 
-    sceneDevice->setFunctionOnStateChanged(
-        [sceneSmoke, smokeDevice](){
-            sceneSmoke->particleSystem() = smokeDevice->particleSystem();
-            sceneSmoke->notifyUpdate();
-        });
-    
-    sceneDevice->setFunctionOnTimeChanged(
-        [sceneSmoke](double time){
-            sceneSmoke->setTime(time);
-            sceneSmoke->notifyUpdate();
-        });
-            
-    return sceneDevice;
-}
-                        
-struct TypeRegistration
-{
-    TypeRegistration() {
-        YAMLBodyLoader::addNodeType(
-            "SmokeDevice",
-            [](YAMLBodyLoader& loader, Mapping& node){
-                SmokeDevicePtr smoke = new SmokeDevice;
-                smoke->particleSystem().readParameters(loader.sceneReader(), node);
-                return loader.readDevice(smoke, node);
+SceneDevice::FactoryRegistration<SmokeDevice>
+registerSceneSmokeDeviceFactory(
+    [](Device* device){
+        auto smokeDevice = static_cast<SmokeDevice*>(device);
+        auto sceneSmoke = new SceneSmoke;
+        auto sceneDevice = new SceneDevice(device, sceneSmoke);
+
+        sceneDevice->setFunctionOnStateChanged(
+            [sceneSmoke, smokeDevice](){
+                sceneSmoke->particleSystem() = smokeDevice->particleSystem();
+                sceneSmoke->notifyUpdate();
             });
-
-        SceneDevice::registerSceneDeviceFactory<SmokeDevice>(createSceneSmokeDevice);
-    }
-} registration;
+    
+        sceneDevice->setFunctionOnTimeChanged(
+            [sceneSmoke](double time){
+                sceneSmoke->setTime(time);
+                sceneSmoke->notifyUpdate();
+            });
+            
+        return sceneDevice;
+    });
 
 }
 

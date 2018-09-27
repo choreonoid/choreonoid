@@ -207,7 +207,7 @@ public:
             }
             vf[i] = vf[i] * validAxis[i];
         }
-        cout << "AGXBreakableJoint force vector " << vf << endl;
+        LOGGER_INFO() << "AGXBreakableJoint force vector " << vf << LOGGER_ENDL();
 
         agx::Real force  = std::max(0.0,  vf.length() - offsetForce);
         if(breakType == "force"){
@@ -231,7 +231,7 @@ public:
         }else{
             m_bTimerOn = false;
         }
-        cout << "AGXBreakableJoint force " << breakLimitForce << " " << force << endl;
+        LOGGER_INFO() << "AGXBreakableJoint force " << breakLimitForce << " " << force << LOGGER_ENDL();
     }
 
     void breakOnImpulse(const agx::Real& force){
@@ -240,7 +240,7 @@ public:
         if(breakLimitImpulse <= m_recivedImpulse){
             joint->setEnable(false);
         }
-        cout << "AGXBreakableJoint impulse " << force << " " << breakLimitImpulse << " " << m_recivedImpulse << endl;
+        LOGGER_INFO() << "AGXBreakableJoint impulse " << force << " " << breakLimitImpulse << " " << m_recivedImpulse << LOGGER_ENDL();
     }
 };
 

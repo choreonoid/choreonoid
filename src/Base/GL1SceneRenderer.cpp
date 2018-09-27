@@ -202,22 +202,6 @@ public:
     GLfloat defaultLineWidth;
     GLuint defaultTextureName;
         
-    bool doNormalVisualization;
-    double normalLength;
-
-    bool isCompiling;
-    bool isNewDisplayListDoubleRenderingEnabled;
-    bool isNewDisplayListCreated;
-    bool isPicking;
-
-    GLdouble pickX;
-    GLdouble pickY;
-    typedef std::shared_ptr<SgNodePath> SgNodePathPtr;
-    SgNodePath currentNodePath;
-    vector<SgNodePathPtr> pickingNodePathList;
-    SgNodePath pickedNodePath;
-    Vector3 pickedPoint;
-
     vector<TransparentShapeInfoPtr> transparentShapeInfos;
 
     // OpenGL states
@@ -258,6 +242,24 @@ public:
     bool isDepthMaskEnabled;
     float pointSize;
     float lineWidth;
+
+    int backFaceCullingMode;
+
+    bool doNormalVisualization;
+    double normalLength;
+
+    bool isCompiling;
+    bool isNewDisplayListDoubleRenderingEnabled;
+    bool isNewDisplayListCreated;
+    bool isPicking;
+
+    GLdouble pickX;
+    GLdouble pickY;
+    typedef std::shared_ptr<SgNodePath> SgNodePathPtr;
+    SgNodePath currentNodePath;
+    vector<SgNodePathPtr> pickingNodePathList;
+    SgNodePath pickedNodePath;
+    Vector3 pickedPoint;
 
     ostream* os_;
     ostream& os() { return *os_; }
@@ -384,6 +386,8 @@ void GL1SceneRendererImpl::initialize()
     isTextureEnabled = true;
     defaultPointSize = 1.0f;
     defaultLineWidth = 1.0f;
+
+    backFaceCullingMode = GLSceneRenderer::ENABLE_BACK_FACE_CULLING;
     
     doNormalVisualization = false;
     normalLength = 0.0;
@@ -462,19 +466,6 @@ bool GL1SceneRendererImpl::initializeGL()
         return false;
     }
 
-    isCullFaceEnabled = false;
-    if(isCullFaceEnabled){
-        glEnable(GL_CULL_FACE);
-        GLint twoSide = 0;
-        isLightModelTwoSide = false;
-        glLightModeliv(GL_LIGHT_MODEL_TWO_SIDE, &twoSide);
-    } else {
-        glDisable(GL_CULL_FACE);
-        GLint twoSide = 1;
-        isLightModelTwoSide = true;
-        glLightModeliv(GL_LIGHT_MODEL_TWO_SIDE, &twoSide);
-    }
-    
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_NORMALIZE);
     setFrontCCW(true);
@@ -1424,15 +1415,17 @@ void GL1SceneRendererImpl::renderMesh(SgMesh* mesh, bool hasTexture)
     if(false){
         putMeshData(mesh);
     }
-    
-    const bool ENABLE_CULLING = true;
-    if(ENABLE_CULLING){
-        enableCullFace(mesh->isSolid());
-        setLightModelTwoSide(!mesh->isSolid());
-    } else {
-        enableCullFace(false);
-        setLightModelTwoSide(true);
+
+    bool doCullFace;
+    if(backFaceCullingMode == GLSceneRenderer::ENABLE_BACK_FACE_CULLING){
+        doCullFace = mesh->isSolid();
+    } else if(backFaceCullingMode == GLSceneRenderer::DISABLE_BACK_FACE_CULLING){
+        doCullFace = false;
+    } else if(backFaceCullingMode == GLSceneRenderer::FORCE_BACK_FACE_CULLING){
+        doCullFace = true;
     }
+    enableCullFace(doCullFace);
+    setLightModelTwoSide(!doCullFace);
 
     glPushClientAttrib(GL_CLIENT_VERTEX_ARRAY_BIT);
 
@@ -1844,7 +1837,7 @@ void GL1SceneRendererImpl::clearGLState()
     shininess = 0.0f;
     lastAlpha = 1.0f;
     isColorMaterialEnabled = false;
-    isCullFaceEnabled = true;
+    isCullFaceEnabled = false;
     isCCW = false;
     isLightingEnabled = true;
     isLightModelTwoSide = false;
@@ -1982,18 +1975,13 @@ void GL1SceneRendererImpl::enableCullFace(bool on)
     if(!stateFlag[CULL_FACE] || isCullFaceEnabled != on){
         if(on){
             glEnable(GL_CULL_FACE);
+            //glCullFace(GL_BACK);
         } else {
             glDisable(GL_CULL_FACE);
         }
         isCullFaceEnabled = on;
         stateFlag.set(CULL_FACE);
     }
-}
-
-
-void GL1SceneRenderer::enableCullFace(bool on)
-{
-    impl->enableCullFace(on);
 }
 
 
@@ -2232,4 +2220,19 @@ const Affine3& GL1SceneRenderer::currentModelTransform() const
 const Matrix4& GL1SceneRenderer::projectionMatrix() const
 {
     return impl->lastProjectionMatrix;
+}
+
+
+void GL1SceneRenderer::setBackFaceCullingMode(int mode)
+{
+    if(mode != impl->backFaceCullingMode){
+        impl->backFaceCullingMode = mode;
+        requestToClearResources();
+    }
+}
+
+
+int GL1SceneRenderer::backFaceCullingMode() const
+{
+    return impl->backFaceCullingMode;
 }

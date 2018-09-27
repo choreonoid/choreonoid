@@ -3,108 +3,129 @@ formatVersion: 1.0
 angleUnit: degree
 name: HoseNozzle
 
+GRAY2: &GRAY2
+  material:
+    diffuseColor: [ 0.34, 0.34, 0.34 ]
+    specularColor: [ 0.25, 0.25, 0.25 ]
+    shininess: 0.05
+
+GRAY3: &GRAY3
+  material:
+    diffuseColor: [ 0.45, 0.45, 0.45 ]
+    specularColor: [ 0.5, 0.5, 0.5 ]
+    shininess: 0.08
+
+GRAY4: &GRAY4
+  material:
+    diffuseColor: [ 0.6, 0.6, 0.6 ]
+    specularColor: [ 0.8, 0.8, 0.8 ]
+    shininess: 0.1
+
+SILVER: &SILVER
+  material:
+    diffuseColor: [ 0.67, 0.67, 0.67 ]
+    specularColor: [ 0.8, 0.8, 0.8 ]
+    shininess: 0.05
+
 links:
   -
-    name: BASE
+    name: HOSE_NOZZLE
     jointType: free
-    mass: 2.0
-    centerOfMass: [ 0.2, 0, 0 ]
-    inertia: [ 0.1, 0, 0,
-               0,   1, 0,
-               0,   0, 1 ]
+    mass: 1.6
+    centerOfMass: [ 0.12, 0, 0 ]
+    inertia: [ 0.002, 0,    0,
+               0,     0.03, 0,
+               0,     0,    0.03 ]
     elements:
       -
-        type: Visual
-        resource:
-          translation: [ 0, -0.04245, -0.03 ]
-          uri: "resource/HoseNozzle.dae"
-          exclude: ID5
+        type: Resource
+        uri: "resource/HoseNozzleSlot.yaml"
+        node: TUBE
       -
-        type: Collision
-        elements:
-          -
-            type: Shape
-            translation: [ 0.033, 0, 0 ]
-            rotation: [ 0, 0, 1, 90 ]
-            geometry: { type: Cylinder, radius: 0.03, height: 0.066 }
-          -
-            type: Shape
-            translation: [ 0.1125, 0, 0 ]
-            rotation: [ 0, 0, 1, 90 ]
-            geometry: { type: Cylinder, radius: 0.022, height: 0.094 }
-          -
-            type: Shape
-            translation: [ 0.1745, 0, 0 ]
-            rotation: [ 0, 0, 1, 90 ]
-            geometry: { type: Cylinder, radius: 0.019, height: 0.03 }
-          -
-            type: Shape
-            translation: [ 0.275, 0, 0 ]
-            rotation: [ 0, 0, 1, 90 ]
-            geometry: { type: Cylinder, radius: 0.0158, height: 0.17 }
-          -
-            type: Shape
-            translation: [ 0.3775, 0, 0 ]
-            rotation: [ 0, 0, 1, 90 ]
-            geometry: { type: Cylinder, radius: 0.021, height: 0.0362 }
+        type: Shape
+        translation: [ 0.047, 0, 0 ]
+        rotation: [ 0, 0, 1, 90 ]
+        geometry: { type: Cylinder, radius: 0.022, height: 0.094 }
+        appearance: *GRAY2
+      -
+        type: Shape
+        translation: [ 0.109, 0, 0 ]
+        rotation: [ 0, 0, 1, 90 ]
+        geometry: { type: Cylinder, radius: 0.019, height: 0.03 }
+        appearance: *GRAY3
+      -
+        type: Shape
+        translation: [ 0.2095, 0, 0 ]
+        rotation: [ 0, 0, 1, 90 ]
+        geometry: { type: Cylinder, radius: 0.0158, height: 0.17 }
+        appearance: *SILVER
+      -
+        type: Shape
+        translation: [ 0.312, 0, 0 ]
+        rotation: [ 0, 0, 1, 90 ]
+        geometry: { type: Cylinder, radius: 0.021, height: 0.0362 }
+        appearance: *GRAY3
+      -
+        type: FountainDevice
+        isOptional: true
+        name: WATER
+        on: true
+        translation: [ 0.3, 0, 0 ]
+        rotation: [ 0, 1, 0, 90 ]
+        lifeTime: 4
+        particleSize: 0.03
+        numParticles: 5000
+        emissionRange: 1
   -
-    name: LEVER
-    parent: BASE
-    translation: [ 0.096, 0, 0.002 ]
+    name: HOSE_NOZZLE_LEVER
+    parent: HOSE_NOZZLE
+    translation: [ 0.0305, 0, 0.002 ]
     jointType: revolute
     jointAxis: Y
     jointId: 0
-    jointRange: [ 0, 60 ]
+    jointRange: [ -45, 45 ]
+    jointAngle: 45
     centerOfMass: [ 0, 0, 0.03 ]
-    mass: 0.5
-    inertia: [ 0.1, 0,   0,
-               0,   0.1, 0,
-               0,   0,   0.1 ]
+    mass: 0.4
+    inertia: [ 0.0005, 0,      0,
+               0,      0.0005, 0,
+               0,      0,      0.0005 ]
     # For the friction for AGX
     jointMotor: true
-    jointMotorCompliance: 0.9
+    jointMotorCompliance: 0.5
     elements:
       -
-        type: Visual
-        elements:
-          -
-            type: Resource
-            translation: [ 0.006, -0.0425, -0.0044 ]
-            uri: "resource/HoseNozzle.dae"
-            node: ID53
-          -
-            type: Resource
-            translation: [ 0.0855, -0.0425, -0.028 ]
-            uri: "resource/HoseNozzle.dae"
-            node: ID5
+        type: Shape
+        translation: [ 0, -0.00015, 0 ]
+        geometry: { type: Cylinder, radius: 0.023, height: 0.0605 }
+        appearance: *GRAY2
       -
-        type: Collision
-        elements:
-          -
-            type: Shape
-            translation: [ 0, -0.00015, 0 ]
-            geometry: { type: Cylinder, radius: 0.023, height: 0.0605 }
-          -
-            type: Shape
-            translation: [ -0.0019, -0.00143, 0.054 ]
-            geometry: { type: Cylinder, radius: 0.0078, height: 0.08 }
-          -
-            type: Shape
-            translation: [ -0.0019, -0.04195, 0.0066 ]
-            geometry: { type: Cylinder, radius: 0.0045, height: 0.0011 }
-          -
-            type: Shape
-            translation: [ -0.0019, 0.03915, 0.00655 ]
-            geometry: { type: Cylinder, radius: 0.0045, height: 0.0013 }
-          -
-            type: Shape
-            translation: [ -0.0019, -0.0359, 0.02445 ]
-            geometry: { type: Box, size: [ 0.0095, 0.011, 0.0443 ] }
-          -
-            type: Shape
-            translation: [ -0.0019, 0.03334, 0.0253 ]
-            geometry: { type: Box, size: [ 0.0095, 0.0103, 0.0465 ] }
-          -
-            type: Shape
-            translation: [ -0.0019, -0.00143, 0.047 ]
-            geometry: { type: Box, size: [ 0.0095, 0.08, 0.0015 ] }
+        type: Shape
+        translation: [ -0.0019, -0.00143, 0.054 ]
+        geometry: { type: Cylinder, radius: 0.0078, height: 0.08 }
+        appearance: *GRAY3
+      -
+        type: Shape
+        translation: [ -0.0019, -0.04195, 0.0066 ]
+        geometry: { type: Cylinder, radius: 0.0045, height: 0.0011 }
+        appearance: *GRAY4
+      -
+        type: Shape
+        translation: [ -0.0019, 0.03915, 0.00655 ]
+        geometry: { type: Cylinder, radius: 0.0045, height: 0.0013 }
+        appearance: *GRAY4
+      -
+        type: Shape
+        translation: [ -0.0019, -0.0359, 0.02445 ]
+        geometry: { type: Box, size: [ 0.0095, 0.011, 0.0443 ] }
+        appearance: *GRAY3
+      -
+        type: Shape
+        translation: [ -0.0019, 0.03334, 0.0253 ]
+        geometry: { type: Box, size: [ 0.0095, 0.0103, 0.0465 ] }
+        appearance: *GRAY3
+      -
+        type: Shape
+        translation: [ -0.0019, -0.00143, 0.047 ]
+        geometry: { type: Box, size: [ 0.0095, 0.08, 0.0015 ] }
+        appearance: *GRAY2

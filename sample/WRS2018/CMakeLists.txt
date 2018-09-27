@@ -44,3 +44,5 @@ install(FILES
   T5-AizuSpiderSS.py
   T6-DoubleArmV7A.py
   DESTINATION ${CNOID_SHARE_SUBDIR}/project/WRS2018)
+
+add_subdirectory(src)

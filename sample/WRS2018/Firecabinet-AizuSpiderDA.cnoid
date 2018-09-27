@@ -82,32 +82,32 @@ items:
                 isEditable: false
         - 
           id: 6
-          name: "DoubleArmV7"
+          name: "AizuSpider"
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/DoubleArmV7/DoubleArmV7A.body"
-            currentBaseLink: "TFRAME"
-            rootPosition: [ -1.5, 0, 0.52 ]
+            modelFile: "${SHARE}/model/AizuSpider/AizuSpiderDA.body"
+            currentBaseLink: "CHASSIS"
+            rootPosition: [ 0, 0, 0.034 ]
             rootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
             jointPositions: [ 
-               3.141593,  0.000000, -1.221730,  2.617994,  0.000000,  0.000000,  0.000000,  0.000000,  3.141593,  0.000000, 
+               0.000000,  0.000000,  0.000000,  0.000000, -1.570796,  2.635447,  0.471239, -1.623156,  0.104720,  1.745329, 
+               0.000000,  0.000000,  0.000000, -1.570796,  2.635447,  0.471239, -1.623156,  0.104720,  1.745329,  0.000000, 
                0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000, 
-               0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000, 
-               0.000000,  0.000000 ]
-            initialRootPosition: [ -1.5, 0, 0.52 ]
+               0.000000,  0.000000,  0.000000,  0.000000 ]
+            initialRootPosition: [ 0, 0, 0.034 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
             initialJointPositions: [ 
-               3.141593,  0.000000, -1.221730,  2.617994,  0.000000,  0.000000,  0.000000,  0.000000,  3.141593,  0.000000, 
+               0.000000,  0.000000,  0.000000,  0.000000, -1.570796,  2.635447,  0.471239, -1.623156,  0.104720,  1.745329, 
+               0.000000,  0.000000,  0.000000, -1.570796,  2.635447,  0.471239, -1.623156,  0.104720,  1.745329,  0.000000, 
                0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000, 
-               0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000, 
-               0.000000,  0.000000 ]
+               0.000000,  0.000000,  0.000000,  0.000000 ]
             zmp: [ 0, 0, 0 ]
             collisionDetection: true
             selfCollisionDetection: true
@@ -115,18 +115,53 @@ items:
           children: 
             - 
               id: 7
-              name: "DoubleArmV7Controller"
+              name: "AizuSpiderController"
               plugin: Body
               class: SimpleControllerItem
               data: 
                 isNoDelayMode: false
                 controllerOptions: ""
-                controller: "DoubleArmV7Controller"
+                controller: "AizuSpiderController.so"
                 baseDirectory: "Controller directory"
                 reloading: true
                 isOldTargetVariableMode: false
+              children: 
+                - 
+                  id: 8
+                  name: "Arm1Controller"
+                  plugin: Body
+                  class: SimpleControllerItem
+                  data: 
+                    isNoDelayMode: false
+                    controllerOptions: "ARM1_"
+                    controller: "Jaco2Controller.so"
+                    baseDirectory: "Controller directory"
+                    reloading: true
+                - 
+                  id: 9
+                  name: "Arm2Controller"
+                  plugin: Body
+                  class: SimpleControllerItem
+                  data: 
+                    isNoDelayMode: false
+                    controllerOptions: "ARM2_"
+                    controller: "Jaco2Controller.so"
+                    baseDirectory: "Controller directory"
+                    reloading: true
+            - 
+              id: 10
+              name: "BodyTrackingCamera"
+              plugin: Body
+              class: BodyTrackingCameraItem
+              data: 
+                targetLink: ""
+                keepRelativeAttitude: false
+                cameraType: "Perspective"
+                nearClipDistance: 0.01
+                farClipDistance: 100
+                fieldOfView: 0.785398
         - 
-          id: 8
+          id: 11
           name: "AGXSimulator"
           plugin: AGXDynamics
           class: AGXSimulatorItem
@@ -161,9 +196,9 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      selected: [ 8 ]
-      checked: [ 3, 4, 5, 6 ]
-      expanded: [ 1, 3, 4, 6, 7, 8 ]
+      selected: [ 10 ]
+      checked: [ 3, 4, 5, 6, 8, 9 ]
+      expanded: [ 1, 3, 4, 6, 7, 10 ]
   - 
     id: 2
     plugin: Base
@@ -215,14 +250,22 @@ views:
           fieldOfView: 0.698132
           near: 0.01
           far: 200
-          eye: [ -6.27496989, -2.7864425, 3.52587161 ]
-          direction: [ 0.839452845, 0.387080495, -0.381428384 ]
-          up: [ 0.346377865, 0.15971846, 0.924398392 ]
+          eye: [ -1.74542529, -1.6301597, 1.25387782 ]
+          direction: [ 0.79474852, 0.557899101, -0.239004988 ]
+          up: [ 0.1956182, 0.137320442, 0.97101834 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
           near: 0.01
           far: 200
+        - 
+          camera: BodyTrackingCamera
+          fieldOfView: 0.785398
+          near: 0.01
+          far: 100
+          eye: [ -0.968239588, -1.96276458, 0.597430939 ]
+          direction: [ 0.590195946, 0.806201364, -0.0413292411 ]
+          up: [ 0.0244132096, 0.0333481838, 0.999145582 ]
       backgroundColor: [ 0, 0, 0 ]
       gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
@@ -269,7 +312,6 @@ views:
       cameras: 
         - 
           camera: [ System, Perspective ]
-          isCurrent: true
           fieldOfView: 0.698132
           near: 0.01
           far: 200
@@ -281,12 +323,23 @@ views:
           orthoHeight: 20
           near: 0.01
           far: 200
+        - 
+          camera: [ AizuSpider, FRONT_CAMERA ]
+          isCurrent: true
+        - 
+          camera: BodyTrackingCamera
+          fieldOfView: 0.785398
+          near: 0.01
+          far: 100
+          eye: [ -0.968239588, -1.96276458, 0.597430939 ]
+          direction: [ 0.590195946, 0.806201364, -0.0413292411 ]
+          up: [ 0.0244132096, 0.0333481838, 0.999145582 ]
       backgroundColor: [ 0, 0, 0 ]
       gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       dedicatedItemTreeViewChecks: true
-      checked: [ 3, 5 ]
+      checked: [ 3, 5, 6, 9 ]
   - 
     id: 5
     plugin: Body
@@ -318,15 +371,6 @@ views:
       currentBodyItem: 6
   - 
     id: 8
-    plugin: OpenRTM
-    class: RTSNameServerView
-    state: 
-      NameServers: 
-        - 
-          host: "localhost"
-          port: 2809
-  - 
-    id: 9
     plugin: Python
     class: PythonConsoleView
     mounted: true
@@ -341,6 +385,8 @@ toolbars:
     speedScale: 1
     syncToOngoingUpdates: true
     autoExpansion: true
+  "LeggedBodyBar": 
+    stanceWidth: 0.15
   "KinematicsBar": 
     mode: AUTO
     enablePositionDragger: true
@@ -351,8 +397,6 @@ toolbars:
     lazyCollisionDetectionMode: true
   "BodyBar": 
     current: 6
-  "LeggedBodyBar": 
-    stanceWidth: 0.15
   "BodyMotionGenerationBar": 
     autoGenerationForNewBody: true
     balancer: false
@@ -426,8 +470,6 @@ Body:
     inputFrameRate: 200
     isOutputFrameRateSpecified: false
     outputFrameRate: 200
-OpenRTM: 
-  "deleteUnmanagedRTCsOnStartingSimulation": false
 viewAreas: 
   - 
     type: embedded
@@ -435,12 +477,12 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 407, 1984 ]
+      sizes: [ 365, 1780 ]
       children: 
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 623, 622 ]
+          sizes: [ 708, 706 ]
           children: 
             - 
               type: pane
@@ -453,12 +495,12 @@ viewAreas:
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 957, 288 ]
+          sizes: [ 1087, 327 ]
           children: 
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 859, 1119 ]
+              sizes: [ 770, 1004 ]
               children: 
                 - 
                   type: pane
@@ -471,7 +513,7 @@ viewAreas:
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 989, 989 ]
+              sizes: [ 887, 887 ]
               children: 
                 - 
                   type: pane
@@ -479,8 +521,8 @@ viewAreas:
                   current: 2
                 - 
                   type: pane
-                  views: [ 9 ]
-                  current: 9
+                  views: [ 8 ]
+                  current: 8
 layoutOfToolBars: 
   rows: 
     - 

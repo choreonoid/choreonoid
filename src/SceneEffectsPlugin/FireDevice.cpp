@@ -14,41 +14,36 @@ using namespace cnoid;
 
 namespace {
 
-SceneDevice* createSceneFireDevice(Device* device)
-{
-    auto fireDevice = static_cast<FireDevice*>(device);
-    auto sceneFire = new SceneFire;
-    auto sceneDevice = new SceneDevice(fireDevice, sceneFire);
+YAMLBodyLoader::NodeTypeRegistration
+registerFireDevice(
+    "FireDevice",
+    [](YAMLBodyLoader& loader, Mapping& node){
+        FireDevicePtr fire = new FireDevice;
+        fire->particleSystem().readParameters(loader.sceneReader(), node);
+        return loader.readDevice(fire, node);
+    });
 
-    sceneDevice->setFunctionOnStateChanged(
-        [sceneFire, fireDevice](){
-            sceneFire->particleSystem() = fireDevice->particleSystem();
-            sceneFire->notifyUpdate();
-        });
+SceneDevice::FactoryRegistration<FireDevice>
+registerSceneFireDeviceFactory(
+    [](Device* device){
+        auto fireDevice = static_cast<FireDevice*>(device);
+        auto sceneFire = new SceneFire;
+        auto sceneDevice = new SceneDevice(fireDevice, sceneFire);
 
-    sceneDevice->setFunctionOnTimeChanged(
-        [sceneFire](double time){
-            sceneFire->setTime(time);
-            sceneFire->notifyUpdate();
-        });
-            
-    return sceneDevice;
-}
-                        
-struct TypeRegistration
-{
-    TypeRegistration() {
-        YAMLBodyLoader::addNodeType(
-            "FireDevice",
-            [](YAMLBodyLoader& loader, Mapping& node){
-                FireDevicePtr fire = new FireDevice;
-                fire->particleSystem().readParameters(loader.sceneReader(), node);
-                return loader.readDevice(fire, node);
+        sceneDevice->setFunctionOnStateChanged(
+            [sceneFire, fireDevice](){
+                sceneFire->particleSystem() = fireDevice->particleSystem();
+                sceneFire->notifyUpdate();
             });
 
-        SceneDevice::registerSceneDeviceFactory<FireDevice>(createSceneFireDevice);
-    }
-} registration;
+        sceneDevice->setFunctionOnTimeChanged(
+            [sceneFire](double time){
+                sceneFire->setTime(time);
+                sceneFire->notifyUpdate();
+            });
+            
+        return sceneDevice;
+    });
 
 }
 

@@ -362,6 +362,15 @@ SimulationBody* AISTSimulatorItem::createSimulationBody(Body* orgBody)
     const int n = orgBody->numLinks();
     for(int i=0; i < n; ++i){
         impl->orgLinkToInternalLinkMap[orgBody->link(i)] = body->link(i);
+
+        auto link = body->link(i);
+        if(link->isFreeJoint() && !link->isRoot()){
+            MessageView::instance()->putln(
+                format(_("The joint %1% of %2% is a free joint. AISTSimulator does not allow for a free joint except for the root link."))
+                % link->name() % body->name(),
+                MessageView::WARNING);
+            link->setJointType(Link::FIXED_JOINT);
+        }
     }
     
     if(impl->dynamicsMode.is(KINEMATICS) && impl->isKinematicWalkingEnabled){
