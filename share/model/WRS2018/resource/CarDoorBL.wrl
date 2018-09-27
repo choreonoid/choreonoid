@@ -7,11 +7,11 @@ DEF ID2 Transform {
       children [
 	DEF ID3 Shape {
 	  appearance Appearance {
-	    material DEF Material_7 Material {
-	      ambientIntensity 0.312245
+	    material DEF RedMaterial Material {
+	      ambientIntensity 0.3
 	      diffuseColor 0.670588 0.145098 0.145098
-	      shininess 0.078125
-	      specularColor 0.4 0.4 0.4
+	      shininess 0.5
+	      specularColor 0.5 0.3 0.3
 	    }
 	  }
 	  geometry IndexedFaceSet {
@@ -156,11 +156,11 @@ DEF ID2 Transform {
 	}
 	DEF ID20 Shape {
 	  appearance Appearance {
-	    material DEF Material_2 Material {
-	      ambientIntensity 0
-	      diffuseColor 0 0 0
-	      shininess 0.078125
-	      specularColor 0.4 0.4 0.4
+	    material DEF BlackMaterial Material {
+	      ambientIntensity 0.1
+	      diffuseColor 0.2 0.2 0.2
+	      shininess 0.390625
+	      specularColor 0.5 0.5 0.5
 	    }
 	  }
 	  geometry IndexedFaceSet {
@@ -196,12 +196,7 @@ DEF ID2 Transform {
 	}
 	DEF ID30 Shape {
 	  appearance Appearance {
-	    material DEF Color_M08 Material {
-	      ambientIntensity 0.85
-	      diffuseColor 0.117647 0.117647 0.117647
-	      shininess 0.078125
-	      specularColor 0.4 0.4 0.4
-	    }
+	    material USE BlackMaterial
 	  }
 	  geometry IndexedFaceSet {
 	    coord Coordinate {
@@ -227,7 +222,7 @@ DEF ID2 Transform {
 	}
 	DEF ID35 Shape {
 	  appearance Appearance {
-	    material USE Material_2
+	    material USE BlackMaterial
 	  }
 	  geometry IndexedFaceSet {
 	    coord Coordinate {
@@ -269,7 +264,7 @@ DEF ID2 Transform {
 	}
 	DEF ID41 Shape {
 	  appearance Appearance {
-	    material USE Material_2
+	    material USE BlackMaterial
 	  }
 	  geometry IndexedFaceSet {
 	    coord Coordinate {
@@ -283,7 +278,7 @@ DEF ID2 Transform {
 		0.585183 -21.2919 6.98698 0.0660703 0.0866203 3.59964 0.262275 -11.5839 4.32068 0.330257 -22.9327 4.73088 
 		0.0413382 -11.5155 3.02172 1.77636e-15 0 0 0.0583348 -22.3175 3.09009 0.011173 -11.5155 0.081934 
 		0.0583327 -25.8041 3.02171 0.011173 -22.1124 -0.0547986 0.774058 -23.247 4.70113 0.011173 -25.8041 0.081934 
-		0.774058 -26.0741 3.03937 
+		0.774058 -26.0741 3.03937
 	      ]
 	    }
 	    coordIndex [
@@ -292,21 +287,21 @@ DEF ID2 Transform {
 	      15 14 17 -1 15 17 8 -1 15 8 11 -1 15 11 18 -1 9 19 11 -1 17 14 20 -1 8 17 20 -1 19 18 11 -1 
 	      15 21 16 -1 14 16 20 -1 19 22 18 -1 23 21 15 -1 21 24 16 -1 22 23 15 -1 23 25 21 -1 21 26 24 -1 
 	      25 26 21 -1 26 27 24 -1 25 28 26 -1 28 27 26 -1 25 29 28 -1 28 30 27 -1 29 31 28 -1 28 31 30 -1 
-	      30 32 27 -1 30 33 32 -1 33 30 31 -1 34 27 32 -1 33 35 32 -1 36 32 35 -1 
+	      30 32 27 -1 30 33 32 -1 33 30 31 -1 34 27 32 -1 33 35 32 -1 36 32 35 -1
 	    ]
 	    normal Normal {
 	      vector [
-		-0.999571 -0.00370209 -0.0290565 -0.999961 0.000164324 -0.00877413 -0.999444 0.00193311 -0.0332768 -0.999973 0.000407378 -0.00735145 
-		-0.999829 -0.000882038 0.0184855 -0.999982 0.00136315 -0.00576251 -0.999825 -0.00617539 0.0176564 -0.999448 0.00882105 -0.0320449 
-		-0.998946 0.0458746 -0.001173 -0.999775 0.0055773 -0.0204749 -0.999322 0.0271561 -0.0248579 -0.999946 0.00193635 -0.0101859 
-		-0.99244 0.11846 0.0321078 -0.648207 -0.0535405 0.75958 -0.992051 0.122652 -0.0281292 -0.998918 0.00212202 0.0464687 
-		-0.977775 0.201023 -0.0595514 -0.998646 0.0517483 -0.00530702 -0.999938 0.0105219 -0.00369572 -0.999912 0.0127145 -0.00386901 
-		-0.963053 0.258746 -0.0746968 -0.996139 -0.0043349 0.0876835 -0.999708 0.0221963 -0.00956107 -0.995348 -0.00230942 0.096313 
-		-0.995434 -0.00226234 0.0954223 -0.996072 0.0193602 0.0864102 -0.997388 -0.00352941 0.072138 -0.99048 -0.00477216 0.137573 
-		-0.988784 -0.00190445 0.14934 -0.996114 -0.00205224 0.0880513 -0.999854 0.000886149 0.0170554 -0.995975 -0.000944265 0.0896291 
-		-0.999947 -0.000897201 0.0102605 -0.999937 -0.00127402 0.0111146 -0.998647 -0.000611678 0.0520051 -0.999884 -3.39221e-05 0.0152326 
-		-0.19684 -0.48681 0.85104 -0.277971 -0.471752 0.836769 -0.210061 -0.49495 0.843148 -0.999871 0.000594094 0.0160405 
-		-0.267412 -0.963515 -0.0114146 -0.353045 -0.935589 0.00566352 -0.296956 -0.954833 -0.0105615 
+	    	-0.999571 -0.00370209 -0.0290565 -0.999961 0.000164324 -0.00877413 -0.999444 0.00193311 -0.0332768 -0.999973 0.000407378 -0.00735145 
+	    	-0.999829 -0.000882038 0.0184855 -0.999982 0.00136315 -0.00576251 -0.999825 -0.00617539 0.0176564 -0.999448 0.00882105 -0.0320449 
+	    	-0.998946 0.0458746 -0.001173 -0.999775 0.0055773 -0.0204749 -0.999322 0.0271561 -0.0248579 -0.999946 0.00193635 -0.0101859 
+	    	-0.99244 0.11846 0.0321078 -0.648207 -0.0535405 0.75958 -0.992051 0.122652 -0.0281292 -0.998918 0.00212202 0.0464687 
+	    	-0.977775 0.201023 -0.0595514 -0.998646 0.0517483 -0.00530702 -0.999938 0.0105219 -0.00369572 -0.999912 0.0127145 -0.00386901 
+	    	-0.963053 0.258746 -0.0746968 -0.996139 -0.0043349 0.0876835 -0.999708 0.0221963 -0.00956107 -0.995348 -0.00230942 0.096313 
+	    	-0.995434 -0.00226234 0.0954223 -0.996072 0.0193602 0.0864102 -0.997388 -0.00352941 0.072138 -0.99048 -0.00477216 0.137573 
+	    	-0.988784 -0.00190445 0.14934 -0.996114 -0.00205224 0.0880513 -0.999854 0.000886149 0.0170554 -0.995975 -0.000944265 0.0896291 
+	    	-0.999947 -0.000897201 0.0102605 -0.999937 -0.00127402 0.0111146 -0.998647 -0.000611678 0.0520051 -0.999884 -3.39221e-05 0.0152326 
+	    	-0.19684 -0.48681 0.85104 -0.277971 -0.471752 0.836769 -0.210061 -0.49495 0.843148 -0.999871 0.000594094 0.0160405 
+	    	-0.267412 -0.963515 -0.0114146 -0.353045 -0.935589 0.00566352 -0.296956 -0.954833 -0.0105615 
 	      ]
 	    }
 	    normalIndex [
@@ -319,56 +314,38 @@ DEF ID2 Transform {
 	    ]
 	  }
 	}
-	DEF ID47 Shape {
-	  appearance Appearance {
-	    material USE Material_2
-	  }
-	  geometry IndexedFaceSet {
-	    coord Coordinate {
-	      point [
-		9.17541 1.13499 25.1147 6.4195 1.13499 22.7525 9.17541 1.13499 22.7525 6.4195 1.13499 25.1147 
-		9.17541 -6.73902 22.7525 9.17541 -6.73902 25.1147 6.4195 0.150743 25.1147 8.38801 0.150743 25.1147 
-		8.38801 -5.75477 25.1147 6.4195 -6.73902 25.1147 6.4195 -5.75477 25.1147 6.4195 -6.73902 22.7525 
-		8.38801 -5.75477 22.7525 6.4195 -5.75477 22.7525 6.4195 0.150743 22.7525 8.38801 0.150743 22.7525 
-	      ]
+	Transform {
+	  rotation 1 0 0 0.03
+	  translation 0 19.37 -0.3
+	  children [
+	
+	    DEF ID47 Shape {
+	      appearance Appearance {
+		material USE BlackMaterial
+	      }
+	      geometry IndexedFaceSet {
+		coord Coordinate {
+		  point [
+		   9.17541 1.13499 25.1147 6.4195 1.13499 22.7525 9.17541 1.13499 22.7525 6.4195 1.13499 25.1147 
+		   9.17541 -6.73902 22.7525 9.17541 -6.73902 25.1147 6.4195 0.150743 25.1147 8.38801 0.150743 25.1147 
+		   8.38801 -5.75477 25.1147 6.4195 -6.73902 25.1147 6.4195 -5.75477 25.1147 6.4195 -6.73902 22.7525 
+		   8.38801 -5.75477 22.7525 6.4195 -5.75477 22.7525 6.4195 0.150743 22.7525 8.38801 0.150743 22.7525 
+		   8.38801 -5.75477 25.1147 6.4195 -5.75477 22.7525 8.38801 -5.75477 22.7525 6.4195 -5.75477 25.1147
+		  ]
+		}
+		coordIndex [
+		 2 1 0 -1 3 0 1 -1 5 4 0 -1 2 0 4 -1 3 6 0 -1 7 0 6 -1 8 0 7 -1 10 9 8 -1 
+		 5 8 9 -1 0 8 5 -1 13 12 11 -1 4 11 12 -1 2 4 12 -1 1 2 14 -1 15 14 2 -1 12 15 2 -1 
+		 4 5 11 -1 9 11 5 -1 11 9 13 -1 10 13 9 -1 12 8 15 -1 7 15 8 -1 15 7 14 -1 6 14 7 -1 
+		 18 17 16 -1 19 16 17 -1
+		]
+	      }
 	    }
-	    coordIndex [
-	      2 1 0 -1 3 0 1 -1 5 4 0 -1 2 0 4 -1 3 6 0 -1 7 0 6 -1 8 0 7 -1 10 9 8 -1 
-	      5 8 9 -1 0 8 5 -1 13 12 11 -1 4 11 12 -1 2 4 12 -1 1 2 14 -1 15 14 2 -1 12 15 2 -1 
-	      4 5 11 -1 9 11 5 -1 11 9 13 -1 10 13 9 -1 12 8 15 -1 7 15 8 -1 15 7 14 -1 6 14 7 -1 
-
-	    ]
-	    normal Normal {
-	      vector [
-		3.06168e-14 -1 -5.52296e-28 -3.06168e-14 1 5.52296e-28 -1 -3.07191e-14 1.80202e-14 1 3.07191e-14 -1.80202e-14 
-		-1.80478e-14 -5.55427e-28 -1 1.80478e-14 5.55427e-28 1 
-	      ]
-	    }
-	    normalIndex [
-	      1 1 1 -1 1 1 1 -1 3 3 3 -1 3 3 3 -1 5 5 5 -1 5 5 5 -1 5 5 5 -1 5 5 5 -1 
-	      5 5 5 -1 5 5 5 -1 4 4 4 -1 4 4 4 -1 4 4 4 -1 4 4 4 -1 4 4 4 -1 4 4 4 -1 
-	      0 0 0 -1 0 0 0 -1 2 2 2 -1 2 2 2 -1 2 2 2 -1 2 2 2 -1 0 0 0 -1 0 0 0 -1 
-
-	    ]
-	  }
-	}
-	DEF ID53 Shape {
-	  appearance Appearance {
-	    material USE Material_2
-	  }
-	  geometry IndexedFaceSet {
-	    ccw FALSE
-	    coord Coordinate {
-	      point [ 8.38801 -5.75477 25.1147 6.4195 -5.75477 22.7525 8.38801 -5.75477 22.7525 6.4195 -5.75477 25.1147 ]
-	    }
-	    coordIndex [
-	      0 1 2 -1 1 0 3 -1 
-	    ]
-	  }
+	  ]
 	}
 	DEF ID65 Shape {
 	  appearance Appearance {
-	    material USE Material_2
+	    material USE BlackMaterial
 	  }
 	  geometry IndexedFaceSet {
 	    solid FALSE
@@ -391,7 +368,7 @@ DEF ID2 Transform {
 	}
 	DEF ID77 Shape {
 	  appearance Appearance {
-	    material USE Material_2
+	    material USE BlackMaterial
 	  }
 	  geometry IndexedFaceSet {
 	    solid FALSE
@@ -427,7 +404,7 @@ DEF ID2 Transform {
 	}
 	DEF ID83 Shape {
 	  appearance Appearance {
-	    material USE Material_2
+	    material USE BlackMaterial
 	  }
 	  geometry IndexedFaceSet {
 	    coord Coordinate {
@@ -449,7 +426,7 @@ DEF ID2 Transform {
 	}
 	DEF ID90 Shape {
 	  appearance Appearance {
-	    material USE Color_M08
+	    material USE BlackMaterial
 	  }
 	  geometry IndexedFaceSet {
 	    coord Coordinate {
@@ -468,7 +445,7 @@ DEF ID2 Transform {
 	}
 	DEF ID95 Shape {
 	  appearance Appearance {
-	    material USE Color_M08
+	    material USE BlackMaterial
 	  }
 	  geometry IndexedFaceSet {
 	    ccw FALSE
@@ -485,7 +462,7 @@ DEF ID2 Transform {
 	}
 	DEF ID101 Shape {
 	  appearance Appearance {
-	    material USE Material_2
+	    material USE BlackMaterial
 	  }
 	  geometry IndexedFaceSet {
 	    coord Coordinate {
@@ -504,7 +481,7 @@ DEF ID2 Transform {
 	}
 	DEF ID107 Shape {
 	  appearance Appearance {
-	    material USE Color_M08
+	    material USE BlackMaterial
 	  }
 	  geometry IndexedFaceSet {
 	    coord Coordinate {
@@ -523,7 +500,7 @@ DEF ID2 Transform {
 	}
 	DEF ID113 Shape {
 	  appearance Appearance {
-	    material USE Material_7
+	    material USE RedMaterial
 	  }
 	  geometry IndexedFaceSet {
 	    solid FALSE
@@ -556,7 +533,7 @@ DEF ID2 Transform {
 	}
 	DEF ID119 Shape {
 	  appearance Appearance {
-	    material USE Material_7
+	    material USE RedMaterial
 	  }
 	  geometry IndexedFaceSet {
 	    solid FALSE
@@ -582,7 +559,7 @@ DEF ID2 Transform {
 	}
 	DEF ID151 Shape {
 	  appearance Appearance {
-	    material USE Color_M08
+	    material USE BlackMaterial
 	  }
 	  geometry IndexedFaceSet {
 	    ccw FALSE
