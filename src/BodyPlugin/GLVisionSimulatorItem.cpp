@@ -230,6 +230,7 @@ public:
     vector<SensorScreenRendererPtr> screens;
     bool wasDeviceOn;
     bool isRendering;  // only updated and referred to in the simulation thread
+    bool needToClearVisionDataByTurningOff;
     std::shared_ptr<RangeSensor::RangeData> rangeData;
     FisheyeLensConverter fisheyeLensConverter;
 
@@ -244,6 +245,7 @@ public:
     void render(SensorScreenRenderer*& currentGLContextScreen, bool doDoneGLContextCurrent);
     void finalizeRendering();
     bool waitForRenderingToFinish();
+    void clearVisionData();
     void copyVisionData();
     bool waitForRenderingToFinish(std::unique_lock<std::mutex>& lock);
 };
@@ -263,6 +265,7 @@ public:
     double currentTime;
     vector<SensorRendererPtr> sensorRenderers;
     vector<SensorRenderer*> renderersInRendering;
+    vector<SensorRenderer*> renderersToTurnOff;
 
     bool useGLSL;
     bool useQueueThreadForAllSensors;
@@ -529,6 +532,7 @@ bool GLVisionSimulatorItemImpl::initializeSimulation(SimulatorItem* simulatorIte
     
     isBestEffortMode = isBestEffortModeProperty;
     renderersInRendering.clear();
+    renderersToTurnOff.clear();
 
     cloneMap.clear();
 
@@ -777,6 +781,7 @@ bool SensorRenderer::initialize(const vector<SimulationBody*>& simBodies)
     onsetTime = 0.0;
     wasDeviceOn = false;
     isRendering = false;
+    needToClearVisionDataByTurningOff = false;
 
     if(simImpl->useThreadsForSensors){
         if(sharedScene){
@@ -1130,6 +1135,11 @@ void GLVisionSimulatorItemImpl::onPreDynamics()
         bool isOn = renderer->device->on();
         if(isOn){
             if(!renderer->wasDeviceOn){
+                if(renderer->needToClearVisionDataByTurningOff){
+                    renderersToTurnOff.erase(
+                        std::find(renderersToTurnOff.begin(), renderersToTurnOff.end(), renderer));
+                    renderer->needToClearVisionDataByTurningOff = false;
+                }
                 renderer->elapsedTime = renderer->cycleTime;
             }
             if(renderer->elapsedTime >= renderer->cycleTime){
@@ -1150,8 +1160,13 @@ void GLVisionSimulatorItemImpl::onPreDynamics()
                     renderersInRendering.push_back(renderer);
                 }
             }
-            renderer->elapsedTime += worldTimeStep;
+        } else {
+            if(renderer->wasDeviceOn){
+                renderer->needToClearVisionDataByTurningOff = true;
+                renderersToTurnOff.push_back(renderer);
+            }
         }
+        renderer->elapsedTime += worldTimeStep;
         renderer->wasDeviceOn = isOn;
     }
 
@@ -1338,6 +1353,19 @@ void GLVisionSimulatorItemImpl::onPostDynamics()
     } else {
         getVisionDataInQueueThread();
     }
+
+    if(!renderersToTurnOff.empty()){
+        auto iter = renderersToTurnOff.begin();
+        while(iter != renderersToTurnOff.end()){
+            auto renderer = *iter;
+            if(renderer->isRendering){
+                ++iter;
+            } else {
+                renderer->clearVisionData();
+                iter = renderersToTurnOff.erase(iter);
+            }
+        }
+    }
 }
 
 
@@ -1348,7 +1376,9 @@ void GLVisionSimulatorItemImpl::getVisionDataInThreadsForSensors()
         auto renderer = *iter;
         if(renderer->elapsedTime >= renderer->latency){
             if(renderer->waitForRenderingToFinish()){
-                renderer->copyVisionData();
+                if(!renderer->needToClearVisionDataByTurningOff){
+                    renderer->copyVisionData();
+                }
                 renderer->isRendering = false;
             }
         }
@@ -1396,7 +1426,9 @@ void GLVisionSimulatorItemImpl::getVisionDataInQueueThread()
         SensorRenderer* renderer = *p;
         if(renderer->elapsedTime >= renderer->latency){
             if(renderer->waitForRenderingToFinish(lock)){
-                renderer->copyVisionData();
+                if(!renderer->needToClearVisionDataByTurningOff){
+                    renderer->copyVisionData();
+                }
                 renderer->isRendering = false;
             }
         }
@@ -1427,8 +1459,29 @@ bool SensorRenderer::waitForRenderingToFinish(std::unique_lock<std::mutex>& lock
 
     return true;
 }
-        
 
+
+void SensorRenderer::clearVisionData()
+{
+    if(camera){
+        camera->clearImage();
+        if(rangeCamera){
+            rangeCamera->clearPoints();
+        }
+    } else if(rangeSensor){
+        rangeSensor->clearRangeData();
+    }
+
+    if(simImpl->isVisionDataRecordingEnabled){
+        device->notifyStateChange();
+    } else {
+        simBody->notifyUnrecordedDeviceStateChange(device);
+    }
+
+    needToClearVisionDataByTurningOff = false;
+}
+   
+        
 void SensorRenderer::copyVisionData()
 {
     bool hasUpdatedData = true;

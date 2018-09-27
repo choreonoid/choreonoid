@@ -105,12 +105,18 @@ void Camera::forEachActualType(std::function<bool(const std::type_info& type)> f
 
 void Camera::clearState()
 {
+    clearImage();
+}
+
+
+void Camera::clearImage()
+{
     if(image_.use_count() == 1){
         image_->clear();
     } else {
         image_ = std::make_shared<Image>();
     }
-}
+}    
 
 
 bool Camera::on() const

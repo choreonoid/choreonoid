@@ -112,12 +112,18 @@ void RangeCamera::clearState()
 {
     Camera::clearState();
 
+    clearPoints();
+}
+
+
+void RangeCamera::clearPoints()
+{
     if(points_.use_count() == 1){
         points_->clear();
     } else {
         points_ = std::make_shared<PointData>();
     }
-}
+}    
 
 
 void RangeCamera::setOrganized(bool on)

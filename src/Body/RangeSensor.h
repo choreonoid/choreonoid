@@ -74,6 +74,8 @@ public:
     */
     void setRangeData(std::shared_ptr<RangeData>& rangeData);
 
+    void clearRangeData();    
+
     /**
        Time [s] consumed in the measurement
     */

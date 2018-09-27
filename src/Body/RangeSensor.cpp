@@ -151,6 +151,12 @@ void RangeSensor::setRangeData(std::shared_ptr<RangeData>& data)
 
 void RangeSensor::clearState()
 {
+    clearRangeData();
+}
+
+
+void RangeSensor::clearRangeData()
+{
     if(rangeData_.use_count() == 1){
         rangeData_->clear();
     } else {

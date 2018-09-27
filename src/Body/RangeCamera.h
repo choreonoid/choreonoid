@@ -49,6 +49,8 @@ public:
     */
     void setPoints(std::shared_ptr<PointData>& points);
 
+    void clearPoints();
+
 private:
     std::shared_ptr< std::vector<Vector3f> > points_;
     bool isOrganized_;

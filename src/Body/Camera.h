@@ -83,6 +83,8 @@ public:
     */
     void setImage(std::shared_ptr<Image>& image);
 
+    void clearImage();
+
     /**
        Time [s] consumed in shooting the current image
     */
