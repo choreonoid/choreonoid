@@ -332,7 +332,6 @@ void MeshFilterImpl::removeRedundantFaces(SgMesh* mesh, int reductionMode)
             }
             bool inserted = existingFaces.insert(id).second;
             if(inserted){
-                int faceIndex = mesh->numTriangles();
                 mesh->newTriangle() = triangle;
                 if(checkValidFaceIndices){
                     validFaceIndices.push_back(i);
