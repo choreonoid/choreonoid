@@ -9,6 +9,7 @@
 #include <cnoid/ConnectionSet>
 #include <cnoid/ThreadPool>
 #include <rtm/DataOutPort.h>
+#include <rtm/DataInPort.h>
 #include <rtm/idl/BasicDataTypeSkel.h>
 #include <rtm/idl/InterfaceDataTypes.hh>
 #include <cnoid/corba/PointCloud.hh>
@@ -31,13 +32,19 @@ class DeviceIo : public Referenced
 {
 protected:
     ScopedConnectionSet connections;
+    RTC::TimedBooleanSeq deviceSwitch;
+    RTC::InPort<RTC::TimedBooleanSeq> deviceSwitchIn;
     
 public:
+    DeviceIo(Device* device);
     virtual void setPorts(BodyIoRTC* rtc) = 0;
     virtual bool initializeSimulation(Body* body) = 0;
     virtual void onStateChanged() = 0;
     void stopSimulation();
     virtual void clearSimulationDevice() = 0;
+    void setSwitchPort(BodyIoRTC* rtc);
+    void readSwitch();
+    virtual Device* device() = 0;
 };
 
 typedef ref_ptr<DeviceIo> DeviceIoPtr;
@@ -60,6 +67,7 @@ public:
     virtual void onStateChanged() override;
     void outputImage();
     virtual void clearSimulationDevice() override;
+    virtual Device* device() override { return camera; }
 };
 
 
@@ -87,6 +95,7 @@ public:
     void outputPointCloud1();
     void outputPointCloud2();
     virtual void clearSimulationDevice() override;
+    virtual Device* device() override { return rangeCamera; }
 };    
 
 
@@ -106,6 +115,7 @@ public:
     virtual void onStateChanged() override;
     void outputRangeData();
     virtual void clearSimulationDevice() override;
+    virtual Device* device() override { return rangeSensor; }
 };    
     
 
@@ -123,6 +133,7 @@ public:
     virtual void inputFromSimulator() override;
     virtual void outputToSimulator() override;
     virtual void stopSimulation() override;
+    virtual RTC::ReturnCode_t onExecute(RTC::UniqueId ec_id) override;
 };
 
 
@@ -188,6 +199,7 @@ bool VisionSensorIoRTC::initializeIO(ControllerIO* io)
     }
     for(auto& deviceIo : deviceIoList){
         deviceIo->setPorts(this);
+        deviceIo->setSwitchPort(this);
     }
 
     return true;
@@ -198,6 +210,7 @@ bool VisionSensorIoRTC::initializeSimulation(ControllerIO* io)
 {
     for(auto& deviceIo : deviceIoList){
         deviceIo->initializeSimulation(io->body());
+        io->os() << deviceIo->device()->name() << ": " << (deviceIo->device()->on() ? "ON" : "OFF") << endl;
     }
     return true;
 }
@@ -223,6 +236,37 @@ void VisionSensorIoRTC::stopSimulation()
 }
 
 
+RTC::ReturnCode_t VisionSensorIoRTC::onExecute(RTC::UniqueId ec_id)
+{
+    for(auto& deviceIo : deviceIoList){
+        deviceIo->readSwitch();
+    }
+    return RTC::RTC_OK;
+}
+
+
+DeviceIo::DeviceIo(Device* device)
+    : deviceSwitchIn((device->name()+"_switch").c_str(), deviceSwitch)
+{
+
+}
+
+void DeviceIo::setSwitchPort(BodyIoRTC* rtc)
+{
+    rtc->addInPort(deviceSwitchIn.name(), deviceSwitchIn);
+}
+
+
+void DeviceIo::readSwitch()
+{
+    if(deviceSwitchIn.isNew()){
+        deviceSwitchIn.read();
+        device()->on(!device()->on());
+        device()->notifyStateChange();
+    }
+}
+
+
 void DeviceIo::stopSimulation()
 {
     connections.disconnect();
@@ -231,7 +275,8 @@ void DeviceIo::stopSimulation()
 
 
 CameraIo::CameraIo(Camera* camera)
-    : modelCamera(camera),
+    : DeviceIo(camera),
+      modelCamera(camera),
       cameraImageOut(camera->name().c_str(), cameraImage),
       jpegCompression(true)
 {
@@ -288,6 +333,13 @@ bool CameraIo::initializeSimulation(Body* body)
 
 void CameraIo::onStateChanged()
 {
+    if(!camera->on()){
+        threadPool.wait();
+        cameraImage.data.image.raw_data.length(0);
+        cameraImageOut.write();
+        return;
+    }
+
     if(!threadPool.isRunning()){ // Skip if writing to the outport is not finished
         if(camera->sharedImage() != lastImage){
             lastImage = camera->sharedImage();
@@ -584,7 +636,8 @@ void RangeCameraIo::clearSimulationDevice()
 
 
 RangeSensorIo::RangeSensorIo(RangeSensor* sensor)
-    : modelRangeSensor(sensor),
+    : DeviceIo(sensor),
+      modelRangeSensor(sensor),
       rangeDataOut(sensor->name().c_str(), rangeData)
 {
 

@@ -45,15 +45,18 @@ protected:
     RTC::TimedDoubleSeq torques;
     RTC::OutPort<RTC::TimedDoubleSeq> torquesOut;
     
-    RTC::TimedBooleanSeq lightSwitch;
-    RTC::OutPort<RTC::TimedBooleanSeq> lightSwitchOut;
-  
+    RTC::TimedBooleanSeq switches[4];
+    RTC::OutPort<RTC::TimedBooleanSeq> switch1Out;
+    RTC::OutPort<RTC::TimedBooleanSeq> switch2Out;
+    RTC::OutPort<RTC::TimedBooleanSeq> switch3Out;
+    RTC::OutPort<RTC::TimedBooleanSeq> switch4Out;
+
 private:
     double qref[2];
     double qprev[2];
     std::vector<float> lastAxes;
-    bool lastLightButtonState;
-    bool isLightOn;
+    bool lastButtonState[4];
+    bool isOn[4];
     int lightBlinkCounter;
     int lightBlinkDuration;
 };
