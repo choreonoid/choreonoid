@@ -10,7 +10,7 @@
 		</rts:DataPorts>
 		<rts:ConfigurationSets rts:id="default" />
 		<rts:ExecutionContexts xsi:type="rtsExt:execution_context_ext" rts:id="0" rts:rate="30" rts:kind="PERIODIC" />
-		<rtsExt:Location rtsExt:direction="RIGHT" rtsExt:width="-1" rtsExt:height="-1" rtsExt:x="324" rtsExt:y="249" />
+		<rtsExt:Location rtsExt:direction="RIGHT" rtsExt:width="-1" rtsExt:height="-1" rtsExt:x="390" rtsExt:y="272" />
 	</rts:Components>
 	<rts:Components xsi:type="rtsExt:component_ext" rts:isRequired="false" rts:compositeType="None" rts:activeConfigurationSet="default" rts:instanceName="JoystickRTC" rts:pathUri="localhost/JoystickRTC.rtc" rts:id="RTC:AIST:HumanInterfaceDevice:JoystickRTC:1.0.0">
 		<rts:DataPorts xsi:type="rtsExt:dataport_ext" rts:name="JoystickRTC.axes">
@@ -32,7 +32,7 @@
 			<rts:ConfigurationData rts:data="0" rts:name="debugLevel" />
 		</rts:ConfigurationSets>
 		<rts:ExecutionContexts xsi:type="rtsExt:execution_context_ext" rts:id="0" rts:rate="30" rts:kind="PERIODIC" />
-		<rtsExt:Location rtsExt:direction="RIGHT" rtsExt:width="-1" rtsExt:height="-1" rtsExt:x="0" rtsExt:y="18" />
+		<rtsExt:Location rtsExt:direction="RIGHT" rtsExt:width="-1" rtsExt:height="-1" rtsExt:x="63" rtsExt:y="54" />
 	</rts:Components>
 	<rts:Components xsi:type="rtsExt:component_ext" rts:isRequired="false" rts:compositeType="None" rts:activeConfigurationSet="default" rts:instanceName="Tank-TankIoRTC" rts:pathUri="localhost/Tank-TankIoRTC.rtc" rts:id="RTC:AIST:Generic:Tank-TankIoRTC:1.0">
 		<rts:DataPorts xsi:type="rtsExt:dataport_ext" rts:name="Tank-TankIoRTC.u">
@@ -51,7 +51,7 @@
 		</rts:DataPorts>
 		<rts:DataPorts xsi:type="rtsExt:dataport_ext" rts:name="Tank-TankIoRTC.light">
 			<rtsExt:Properties rtsExt:value="DataInPort" rtsExt:name="port.port_type" />
-			<rtsExt:Properties rtsExt:value="IDL:RTC/TimedBooleanSeq:1.0" rtsExt:name="dataport.data_type" />
+			<rtsExt:Properties rtsExt:value="IDL:RTC/TimedBoolean:1.0" rtsExt:name="dataport.data_type" />
 			<rtsExt:Properties rtsExt:value="Any" rtsExt:name="dataport.subscription_type" />
 			<rtsExt:Properties rtsExt:value="push,pull" rtsExt:name="dataport.dataflow_type" />
 			<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
@@ -79,26 +79,26 @@
 		</rts:DataPorts>
 		<rts:ConfigurationSets rts:id="default" />
 		<rts:ExecutionContexts xsi:type="rtsExt:execution_context_ext" rts:id="0" rts:rate="1000" rts:kind="PERIODIC" />
-		<rtsExt:Location rtsExt:direction="RIGHT" rtsExt:width="-1" rtsExt:height="-1" rtsExt:x="459" rtsExt:y="1" />
+		<rtsExt:Location rtsExt:direction="RIGHT" rtsExt:width="-1" rtsExt:height="-1" rtsExt:x="516" rtsExt:y="18" />
 	</rts:Components>
 	<rts:Components xsi:type="rtsExt:component_ext" rts:isRequired="false" rts:compositeType="None" rts:activeConfigurationSet="default" rts:instanceName="Tank-VisionSensorIoRTC" rts:pathUri="localhost/Tank-VisionSensorIoRTC.rtc" rts:id="RTC:Choreonoid:Generic:Tank-VisionSensorIoRTC:1.0.0">
 		<rts:DataPorts xsi:type="rtsExt:dataport_ext" rts:name="Tank-VisionSensorIoRTC.Kinect_switch">
 			<rtsExt:Properties rtsExt:value="DataInPort" rtsExt:name="port.port_type" />
-			<rtsExt:Properties rtsExt:value="IDL:RTC/TimedBooleanSeq:1.0" rtsExt:name="dataport.data_type" />
+			<rtsExt:Properties rtsExt:value="IDL:RTC/TimedBoolean:1.0" rtsExt:name="dataport.data_type" />
 			<rtsExt:Properties rtsExt:value="Any" rtsExt:name="dataport.subscription_type" />
 			<rtsExt:Properties rtsExt:value="push,pull" rtsExt:name="dataport.dataflow_type" />
 			<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
 		</rts:DataPorts>
 		<rts:DataPorts xsi:type="rtsExt:dataport_ext" rts:name="Tank-VisionSensorIoRTC.Theta_switch">
 			<rtsExt:Properties rtsExt:value="DataInPort" rtsExt:name="port.port_type" />
-			<rtsExt:Properties rtsExt:value="IDL:RTC/TimedBooleanSeq:1.0" rtsExt:name="dataport.data_type" />
+			<rtsExt:Properties rtsExt:value="IDL:RTC/TimedBoolean:1.0" rtsExt:name="dataport.data_type" />
 			<rtsExt:Properties rtsExt:value="Any" rtsExt:name="dataport.subscription_type" />
 			<rtsExt:Properties rtsExt:value="push,pull" rtsExt:name="dataport.dataflow_type" />
 			<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
 		</rts:DataPorts>
 		<rts:DataPorts xsi:type="rtsExt:dataport_ext" rts:name="Tank-VisionSensorIoRTC.VLP-16_switch">
 			<rtsExt:Properties rtsExt:value="DataInPort" rtsExt:name="port.port_type" />
-			<rtsExt:Properties rtsExt:value="IDL:RTC/TimedBooleanSeq:1.0" rtsExt:name="dataport.data_type" />
+			<rtsExt:Properties rtsExt:value="IDL:RTC/TimedBoolean:1.0" rtsExt:name="dataport.data_type" />
 			<rtsExt:Properties rtsExt:value="Any" rtsExt:name="dataport.subscription_type" />
 			<rtsExt:Properties rtsExt:value="push,pull" rtsExt:name="dataport.dataflow_type" />
 			<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
@@ -133,7 +133,7 @@
 		</rts:DataPorts>
 		<rts:ConfigurationSets rts:id="default" />
 		<rts:ExecutionContexts xsi:type="rtsExt:execution_context_ext" rts:id="0" rts:rate="1000" rts:kind="PERIODIC" />
-		<rtsExt:Location rtsExt:direction="RIGHT" rtsExt:width="-1" rtsExt:height="-1" rtsExt:x="29" rtsExt:y="159" />
+		<rtsExt:Location rtsExt:direction="RIGHT" rtsExt:width="-1" rtsExt:height="-1" rtsExt:x="82" rtsExt:y="189" />
 	</rts:Components>
 	<rts:Components xsi:type="rtsExt:component_ext" rts:isRequired="false" rts:compositeType="None" rts:activeConfigurationSet="default" rts:instanceName="Tank-VisionSensorSubscripter" rts:pathUri="localhost/Tank-VisionSensorSubscripter.rtc" rts:id="RTC:AIST:choreonoid:Tank-VisionSensorSubscripter:1.7">
 		<rts:DataPorts xsi:type="rtsExt:dataport_ext" rts:name="Tank-VisionSensorSubscripter.Kinect">
@@ -168,7 +168,7 @@
 			<rts:ConfigurationData rts:data="0" rts:name="debugLevel" />
 		</rts:ConfigurationSets>
 		<rts:ExecutionContexts xsi:type="rtsExt:execution_context_ext" rts:id="0" rts:rate="30" rts:kind="PERIODIC" />
-		<rtsExt:Location rtsExt:direction="RIGHT" rtsExt:width="-1" rtsExt:height="-1" rtsExt:x="474" rtsExt:y="159" />
+		<rtsExt:Location rtsExt:direction="RIGHT" rtsExt:width="-1" rtsExt:height="-1" rtsExt:x="528" rtsExt:y="189" />
 	</rts:Components>
 	<rts:Components xsi:type="rtsExt:component_ext" rts:isRequired="false" rts:compositeType="None" rts:activeConfigurationSet="default" rts:instanceName="TankJoystickControllerRTC" rts:pathUri="localhost/TankJoystickControllerRTC.rtc" rts:id="RTC:AIST:Generic:TankJoystickControllerRTC:1.0">
 		<rts:DataPorts xsi:type="rtsExt:dataport_ext" rts:name="TankJoystickControllerRTC.q">
@@ -215,148 +215,37 @@
 		</rts:DataPorts>
 		<rts:DataPorts xsi:type="rtsExt:dataport_ext" rts:name="TankJoystickControllerRTC.switch1">
 			<rtsExt:Properties rtsExt:value="DataOutPort" rtsExt:name="port.port_type" />
-			<rtsExt:Properties rtsExt:value="IDL:RTC/TimedBooleanSeq:1.0" rtsExt:name="dataport.data_type" />
+			<rtsExt:Properties rtsExt:value="IDL:RTC/TimedBoolean:1.0" rtsExt:name="dataport.data_type" />
 			<rtsExt:Properties rtsExt:value="flush,new,periodic" rtsExt:name="dataport.subscription_type" />
 			<rtsExt:Properties rtsExt:value="push,pull" rtsExt:name="dataport.dataflow_type" />
 			<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
 		</rts:DataPorts>
 		<rts:DataPorts xsi:type="rtsExt:dataport_ext" rts:name="TankJoystickControllerRTC.switch2">
 			<rtsExt:Properties rtsExt:value="DataOutPort" rtsExt:name="port.port_type" />
-			<rtsExt:Properties rtsExt:value="IDL:RTC/TimedBooleanSeq:1.0" rtsExt:name="dataport.data_type" />
+			<rtsExt:Properties rtsExt:value="IDL:RTC/TimedBoolean:1.0" rtsExt:name="dataport.data_type" />
 			<rtsExt:Properties rtsExt:value="flush,new,periodic" rtsExt:name="dataport.subscription_type" />
 			<rtsExt:Properties rtsExt:value="push,pull" rtsExt:name="dataport.dataflow_type" />
 			<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
 		</rts:DataPorts>
 		<rts:DataPorts xsi:type="rtsExt:dataport_ext" rts:name="TankJoystickControllerRTC.switch3">
 			<rtsExt:Properties rtsExt:value="DataOutPort" rtsExt:name="port.port_type" />
-			<rtsExt:Properties rtsExt:value="IDL:RTC/TimedBooleanSeq:1.0" rtsExt:name="dataport.data_type" />
+			<rtsExt:Properties rtsExt:value="IDL:RTC/TimedBoolean:1.0" rtsExt:name="dataport.data_type" />
 			<rtsExt:Properties rtsExt:value="flush,new,periodic" rtsExt:name="dataport.subscription_type" />
 			<rtsExt:Properties rtsExt:value="push,pull" rtsExt:name="dataport.dataflow_type" />
 			<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
 		</rts:DataPorts>
 		<rts:DataPorts xsi:type="rtsExt:dataport_ext" rts:name="TankJoystickControllerRTC.switch4">
 			<rtsExt:Properties rtsExt:value="DataOutPort" rtsExt:name="port.port_type" />
-			<rtsExt:Properties rtsExt:value="IDL:RTC/TimedBooleanSeq:1.0" rtsExt:name="dataport.data_type" />
+			<rtsExt:Properties rtsExt:value="IDL:RTC/TimedBoolean:1.0" rtsExt:name="dataport.data_type" />
 			<rtsExt:Properties rtsExt:value="flush,new,periodic" rtsExt:name="dataport.subscription_type" />
 			<rtsExt:Properties rtsExt:value="push,pull" rtsExt:name="dataport.dataflow_type" />
 			<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
 		</rts:DataPorts>
 		<rts:ConfigurationSets rts:id="default" />
 		<rts:ExecutionContexts xsi:type="rtsExt:execution_context_ext" rts:id="0" rts:rate="1000" rts:kind="PERIODIC" />
-		<rtsExt:Location rtsExt:direction="RIGHT" rtsExt:width="-1" rtsExt:height="-1" rtsExt:x="180" rtsExt:y="0" />
+		<rtsExt:Location rtsExt:direction="RIGHT" rtsExt:width="-1" rtsExt:height="-1" rtsExt:x="237" rtsExt:y="18" />
 	</rts:Components>
-	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="4297c290-f68a-41c0-b044-9570adb61487" rts:name="TankJoystickControllerRTC.switch1_Tank-TankIoRTC.light" rts:dataType="IDL:RTC/TimedBooleanSeq:1.0" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush">
-		<rts:sourceDataPort xsi:type="rtsExt:target_port_ext" rts:portName="TankJoystickControllerRTC.switch1" rts:instanceName="TankJoystickControllerRTC" rts:componentId="RTC:AIST:Generic:TankJoystickControllerRTC:1.0">
-			<rtsExt:Properties rtsExt:value="localhost/TankJoystickControllerRTC.rtc" rtsExt:name="COMPONENT_PATH_ID" />
-		</rts:sourceDataPort>
-		<rts:targetDataPort xsi:type="rtsExt:target_port_ext" rts:portName="Tank-TankIoRTC.light" rts:instanceName="Tank-TankIoRTC" rts:componentId="RTC:AIST:Generic:Tank-TankIoRTC:1.0">
-			<rtsExt:Properties rtsExt:value="localhost/Tank-TankIoRTC.rtc" rtsExt:name="COMPONENT_PATH_ID" />
-		</rts:targetDataPort>
-		<rtsExt:Properties rtsExt:value="IDL:RTC/TimedBooleanSeq:1.0" rtsExt:name="dataport.data_type" />
-		<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
-		<rtsExt:Properties rtsExt:value="push" rtsExt:name="dataport.dataflow_type" />
-		<rtsExt:Properties rtsExt:value="flush" rtsExt:name="dataport.subscription_type" />
-		<rtsExt:Properties rtsExt:value="little,big" rtsExt:name="dataport.serializer.cdr.endian" />
-		<rtsExt:Properties rtsExt:value="{1:(310,55),2:(315,55),3:(400.5,55),4:(400.5,56),5:(486,56),6:(491,56)}" rtsExt:name="POSITION" />
-	</rts:DataPortConnectors>
-	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="9d25b1cb-7285-43cd-9dd3-000000000000" rts:name="TankJoystickControllerRTC.switch2_Tank-VisionSensorIoRTC.Kinect_switch" rts:dataType="IDL:RTC/TimedBooleanSeq:1.0" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush">
-		<rts:sourceDataPort xsi:type="rtsExt:target_port_ext" rts:portName="TankJoystickControllerRTC.switch2" rts:instanceName="TankJoystickControllerRTC" rts:componentId="RTC:AIST:Generic:TankJoystickControllerRTC:1.0">
-			<rtsExt:Properties rtsExt:value="localhost/TankJoystickControllerRTC.rtc" rtsExt:name="COMPONENT_PATH_ID" />
-		</rts:sourceDataPort>
-		<rts:targetDataPort xsi:type="rtsExt:target_port_ext" rts:portName="Tank-VisionSensorIoRTC.Kinect_switch" rts:instanceName="Tank-VisionSensorIoRTC" rts:componentId="RTC:Choreonoid:Generic:Tank-VisionSensorIoRTC:1.0.0">
-			<rtsExt:Properties rtsExt:value="localhost/Tank-VisionSensorIoRTC.rtc" rtsExt:name="COMPONENT_PATH_ID" />
-		</rts:targetDataPort>
-		<rtsExt:Properties rtsExt:value="IDL:RTC/TimedBooleanSeq:1.0" rtsExt:name="dataport.data_type" />
-		<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
-		<rtsExt:Properties rtsExt:value="push" rtsExt:name="dataport.dataflow_type" />
-		<rtsExt:Properties rtsExt:value="flush" rtsExt:name="dataport.subscription_type" />
-		<rtsExt:Properties rtsExt:value="little,big" rtsExt:name="dataport.serializer.cdr.endian" />
-		<rtsExt:Properties rtsExt:value="{1:(310,73),2:(410,73),3:(410,160),4:(84,160),5:(84,178),6:(89,178)}" rtsExt:name="POSITION" />
-	</rts:DataPortConnectors>
-	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="3d268325-2b42-4734-b403-522a2601b055" rts:name="TankJoystickControllerRTC.switch3_Tank-VisionSensorIoRTC.Theta_switch" rts:dataType="IDL:RTC/TimedBooleanSeq:1.0" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush">
-		<rts:sourceDataPort xsi:type="rtsExt:target_port_ext" rts:portName="TankJoystickControllerRTC.switch3" rts:instanceName="TankJoystickControllerRTC" rts:componentId="RTC:AIST:Generic:TankJoystickControllerRTC:1.0">
-			<rtsExt:Properties rtsExt:value="localhost/TankJoystickControllerRTC.rtc" rtsExt:name="COMPONENT_PATH_ID" />
-		</rts:sourceDataPort>
-		<rts:targetDataPort xsi:type="rtsExt:target_port_ext" rts:portName="Tank-VisionSensorIoRTC.Theta_switch" rts:instanceName="Tank-VisionSensorIoRTC" rts:componentId="RTC:Choreonoid:Generic:Tank-VisionSensorIoRTC:1.0.0">
-			<rtsExt:Properties rtsExt:value="localhost/Tank-VisionSensorIoRTC.rtc" rtsExt:name="COMPONENT_PATH_ID" />
-		</rts:targetDataPort>
-		<rtsExt:Properties rtsExt:value="IDL:RTC/TimedBooleanSeq:1.0" rtsExt:name="dataport.data_type" />
-		<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
-		<rtsExt:Properties rtsExt:value="push" rtsExt:name="dataport.dataflow_type" />
-		<rtsExt:Properties rtsExt:value="flush" rtsExt:name="dataport.subscription_type" />
-		<rtsExt:Properties rtsExt:value="little,big" rtsExt:name="dataport.serializer.cdr.endian" />
-		<rtsExt:Properties rtsExt:value="{1:(310,91),2:(384,91),3:(384,143.5),4:(54,143.5),5:(54,196),6:(89,196)}" rtsExt:name="POSITION" />
-	</rts:DataPortConnectors>
-	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="7431bb3e-10cc-421c-bb04-d39826740848" rts:name="Tank-VisionSensorIoRTC.VLP-16_Tank-VisionSensorSubscripter.VLP-16" rts:dataType="IDL:RTC/RangeData:1.0" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush">
-		<rts:sourceDataPort xsi:type="rtsExt:target_port_ext" rts:portName="Tank-VisionSensorIoRTC.VLP-16" rts:instanceName="Tank-VisionSensorIoRTC" rts:componentId="RTC:Choreonoid:Generic:Tank-VisionSensorIoRTC:1.0.0">
-			<rtsExt:Properties rtsExt:value="localhost/Tank-VisionSensorIoRTC.rtc" rtsExt:name="COMPONENT_PATH_ID" />
-		</rts:sourceDataPort>
-		<rts:targetDataPort xsi:type="rtsExt:target_port_ext" rts:portName="Tank-VisionSensorSubscripter.VLP-16" rts:instanceName="Tank-VisionSensorSubscripter" rts:componentId="RTC:AIST:choreonoid:Tank-VisionSensorSubscripter:1.7">
-			<rtsExt:Properties rtsExt:value="localhost/Tank-VisionSensorSubscripter.rtc" rtsExt:name="COMPONENT_PATH_ID" />
-		</rts:targetDataPort>
-		<rtsExt:Properties rtsExt:value="IDL:RTC/RangeData:1.0" rtsExt:name="dataport.data_type" />
-		<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
-		<rtsExt:Properties rtsExt:value="push" rtsExt:name="dataport.dataflow_type" />
-		<rtsExt:Properties rtsExt:value="flush" rtsExt:name="dataport.subscription_type" />
-		<rtsExt:Properties rtsExt:value="little,big" rtsExt:name="dataport.serializer.cdr.endian" />
-		<rtsExt:Properties rtsExt:value="{1:(149,232),2:(154,232),3:(350,232),4:(350,232),5:(548,232),6:(553,232)}" rtsExt:name="POSITION" />
-	</rts:DataPortConnectors>
-	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="a3333923-4016-4dfa-b315-2dbe5eb0052d" rts:name="Tank-TankIoRTC.q_TankJoystickControllerRTC.q" rts:dataType="IDL:RTC/TimedDoubleSeq:1.0" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush">
-		<rts:sourceDataPort xsi:type="rtsExt:target_port_ext" rts:portName="Tank-TankIoRTC.q" rts:instanceName="Tank-TankIoRTC" rts:componentId="RTC:AIST:Generic:Tank-TankIoRTC:1.0">
-			<rtsExt:Properties rtsExt:value="localhost/Tank-TankIoRTC.rtc" rtsExt:name="COMPONENT_PATH_ID" />
-		</rts:sourceDataPort>
-		<rts:targetDataPort xsi:type="rtsExt:target_port_ext" rts:portName="TankJoystickControllerRTC.q" rts:instanceName="TankJoystickControllerRTC" rts:componentId="RTC:AIST:Generic:TankJoystickControllerRTC:1.0">
-			<rtsExt:Properties rtsExt:value="localhost/TankJoystickControllerRTC.rtc" rtsExt:name="COMPONENT_PATH_ID" />
-		</rts:targetDataPort>
-		<rtsExt:Properties rtsExt:value="IDL:RTC/TimedDoubleSeq:1.0" rtsExt:name="dataport.data_type" />
-		<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
-		<rtsExt:Properties rtsExt:value="push" rtsExt:name="dataport.dataflow_type" />
-		<rtsExt:Properties rtsExt:value="flush" rtsExt:name="dataport.subscription_type" />
-		<rtsExt:Properties rtsExt:value="little,big" rtsExt:name="dataport.serializer.cdr.endian" />
-		<rtsExt:Properties rtsExt:value="{1:(551,20),2:(556,20),3:(556,1),4:(245,1),5:(245,19),6:(250,19)}" rtsExt:name="POSITION" />
-	</rts:DataPortConnectors>
-	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="ecabe4f6-74a4-44f5-ac6d-d1184ea5af5f" rts:name="Tank-VisionSensorIoRTC.Theta_CameraImageView.cameraImage" rts:dataType="IDL:Img/TimedCameraImage:1.0" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush">
-		<rts:sourceDataPort xsi:type="rtsExt:target_port_ext" rts:portName="Tank-VisionSensorIoRTC.Theta" rts:instanceName="Tank-VisionSensorIoRTC" rts:componentId="RTC:Choreonoid:Generic:Tank-VisionSensorIoRTC:1.0.0">
-			<rtsExt:Properties rtsExt:value="localhost/Tank-VisionSensorIoRTC.rtc" rtsExt:name="COMPONENT_PATH_ID" />
-		</rts:sourceDataPort>
-		<rts:targetDataPort xsi:type="rtsExt:target_port_ext" rts:portName="CameraImageView.cameraImage" rts:instanceName="CameraImageView" rts:componentId="RTC:Choreonoid:Choreonoid:CameraImageView:1.0.0">
-			<rtsExt:Properties rtsExt:value="localhost/CameraImageView.rtc" rtsExt:name="COMPONENT_PATH_ID" />
-		</rts:targetDataPort>
-		<rtsExt:Properties rtsExt:value="IDL:Img/TimedCameraImage:1.0" rtsExt:name="dataport.data_type" />
-		<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
-		<rtsExt:Properties rtsExt:value="push" rtsExt:name="dataport.dataflow_type" />
-		<rtsExt:Properties rtsExt:value="flush" rtsExt:name="dataport.subscription_type" />
-		<rtsExt:Properties rtsExt:value="little,big" rtsExt:name="dataport.serializer.cdr.endian" />
-		<rtsExt:Properties rtsExt:value="{1:(149,214),2:(154,214),3:(257,214),4:(257,268),5:(361,268),6:(366,268)}" rtsExt:name="POSITION" />
-	</rts:DataPortConnectors>
-	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="5518ce64-078b-4e6d-b564-879742198093" rts:name="JoystickRTC.axes_TankJoystickControllerRTC.axes" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush">
-		<rts:sourceDataPort xsi:type="rtsExt:target_port_ext" rts:portName="JoystickRTC.axes" rts:instanceName="JoystickRTC" rts:componentId="RTC:AIST:HumanInterfaceDevice:JoystickRTC:1.0.0">
-			<rtsExt:Properties rtsExt:value="localhost/JoystickRTC.rtc" rtsExt:name="COMPONENT_PATH_ID" />
-		</rts:sourceDataPort>
-		<rts:targetDataPort xsi:type="rtsExt:target_port_ext" rts:portName="TankJoystickControllerRTC.axes" rts:instanceName="TankJoystickControllerRTC" rts:componentId="RTC:AIST:Generic:TankJoystickControllerRTC:1.0">
-			<rtsExt:Properties rtsExt:value="localhost/TankJoystickControllerRTC.rtc" rtsExt:name="COMPONENT_PATH_ID" />
-		</rts:targetDataPort>
-		<rtsExt:Properties rtsExt:value="push" rtsExt:name="dataport.dataflow_type" />
-		<rtsExt:Properties rtsExt:value="flush" rtsExt:name="dataport.subscription_type" />
-		<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
-		<rtsExt:Properties rtsExt:value="little,big" rtsExt:name="dataport.serializer.cdr.endian" />
-		<rtsExt:Properties rtsExt:value="{1:(79,37),2:(84,37),3:(157,37),4:(157,55),5:(245,55),6:(250,55)}" rtsExt:name="POSITION" />
-	</rts:DataPortConnectors>
-	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="65a9afb0-0f7a-44cc-ac9b-0a0ed7306d47" rts:name="JoystickRTC.buttons_TankJoystickControllerRTC.buttons" rts:dataType="IDL:RTC/TimedBooleanSeq:1.0" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush">
-		<rts:sourceDataPort xsi:type="rtsExt:target_port_ext" rts:portName="JoystickRTC.buttons" rts:instanceName="JoystickRTC" rts:componentId="RTC:AIST:HumanInterfaceDevice:JoystickRTC:1.0.0">
-			<rtsExt:Properties rtsExt:value="localhost/JoystickRTC.rtc" rtsExt:name="COMPONENT_PATH_ID" />
-		</rts:sourceDataPort>
-		<rts:targetDataPort xsi:type="rtsExt:target_port_ext" rts:portName="TankJoystickControllerRTC.buttons" rts:instanceName="TankJoystickControllerRTC" rts:componentId="RTC:AIST:Generic:TankJoystickControllerRTC:1.0">
-			<rtsExt:Properties rtsExt:value="localhost/TankJoystickControllerRTC.rtc" rtsExt:name="COMPONENT_PATH_ID" />
-		</rts:targetDataPort>
-		<rtsExt:Properties rtsExt:value="IDL:RTC/TimedBooleanSeq:1.0" rtsExt:name="dataport.data_type" />
-		<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
-		<rtsExt:Properties rtsExt:value="push" rtsExt:name="dataport.dataflow_type" />
-		<rtsExt:Properties rtsExt:value="flush" rtsExt:name="dataport.subscription_type" />
-		<rtsExt:Properties rtsExt:value="little,big" rtsExt:name="dataport.serializer.cdr.endian" />
-		<rtsExt:Properties rtsExt:value="{1:(79,55),2:(84,55),3:(144,55),4:(144,73),5:(245,73),6:(250,73)}" rtsExt:name="POSITION" />
-	</rts:DataPortConnectors>
-	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="835f2971-728c-40a4-9f92-4e882423307f" rts:name="TankJoystickControllerRTC.u_Tank-TankIoRTC.u" rts:dataType="IDL:RTC/TimedDoubleSeq:1.0" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush">
+	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="226679ab-ae6c-47be-befd-253b00000000" rts:name="TankJoystickControllerRTC.u_Tank-TankIoRTC.u" rts:dataType="IDL:RTC/TimedDoubleSeq:1.0" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush">
 		<rts:sourceDataPort xsi:type="rtsExt:target_port_ext" rts:portName="TankJoystickControllerRTC.u" rts:instanceName="TankJoystickControllerRTC" rts:componentId="RTC:AIST:Generic:TankJoystickControllerRTC:1.0">
 			<rtsExt:Properties rtsExt:value="localhost/TankJoystickControllerRTC.rtc" rtsExt:name="COMPONENT_PATH_ID" />
 		</rts:sourceDataPort>
@@ -370,7 +259,90 @@
 		<rtsExt:Properties rtsExt:value="little,big" rtsExt:name="dataport.serializer.cdr.endian" />
 		<rtsExt:Properties rtsExt:value="{1:(310,37),2:(315,37),3:(400,37),4:(400,20),5:(486,20),6:(491,20)}" rtsExt:name="POSITION" />
 	</rts:DataPortConnectors>
-	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="81561aaf-166c-4cc5-b353-055cf5e42e79" rts:name="TankJoystickControllerRTC.dq_Tank-TankIoRTC.dq" rts:dataType="IDL:RTC/TimedDoubleSeq:1.0" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush">
+	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="f9b6050e-cb00-0000-0000-000000000000" rts:name="Tank-VisionSensorIoRTC.VLP-16_Tank-VisionSensorSubscripter.VLP-16" rts:dataType="IDL:RTC/RangeData:1.0" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush">
+		<rts:sourceDataPort xsi:type="rtsExt:target_port_ext" rts:portName="Tank-VisionSensorIoRTC.VLP-16" rts:instanceName="Tank-VisionSensorIoRTC" rts:componentId="RTC:Choreonoid:Generic:Tank-VisionSensorIoRTC:1.0.0">
+			<rtsExt:Properties rtsExt:value="localhost/Tank-VisionSensorIoRTC.rtc" rtsExt:name="COMPONENT_PATH_ID" />
+		</rts:sourceDataPort>
+		<rts:targetDataPort xsi:type="rtsExt:target_port_ext" rts:portName="Tank-VisionSensorSubscripter.VLP-16" rts:instanceName="Tank-VisionSensorSubscripter" rts:componentId="RTC:AIST:choreonoid:Tank-VisionSensorSubscripter:1.7">
+			<rtsExt:Properties rtsExt:value="localhost/Tank-VisionSensorSubscripter.rtc" rtsExt:name="COMPONENT_PATH_ID" />
+		</rts:targetDataPort>
+		<rtsExt:Properties rtsExt:value="IDL:RTC/RangeData:1.0" rtsExt:name="dataport.data_type" />
+		<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
+		<rtsExt:Properties rtsExt:value="push" rtsExt:name="dataport.dataflow_type" />
+		<rtsExt:Properties rtsExt:value="flush" rtsExt:name="dataport.subscription_type" />
+		<rtsExt:Properties rtsExt:value="little,big" rtsExt:name="dataport.serializer.cdr.endian" />
+		<rtsExt:Properties rtsExt:value="{1:(149,232),2:(154,232),3:(350,232),4:(350,232),5:(548,232),6:(553,232)}" rtsExt:name="POSITION" />
+	</rts:DataPortConnectors>
+	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="52ca4c55-0000-0000-0000-000000000000" rts:name="TankJoystickControllerRTC.switch2_Tank-VisionSensorIoRTC.Kinect_switch" rts:dataType="IDL:RTC/TimedBooleanSeq:1.0" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush">
+		<rts:sourceDataPort xsi:type="rtsExt:target_port_ext" rts:portName="TankJoystickControllerRTC.switch2" rts:instanceName="TankJoystickControllerRTC" rts:componentId="RTC:AIST:Generic:TankJoystickControllerRTC:1.0">
+			<rtsExt:Properties rtsExt:value="localhost/TankJoystickControllerRTC.rtc" rtsExt:name="COMPONENT_PATH_ID" />
+		</rts:sourceDataPort>
+		<rts:targetDataPort xsi:type="rtsExt:target_port_ext" rts:portName="Tank-VisionSensorIoRTC.Kinect_switch" rts:instanceName="Tank-VisionSensorIoRTC" rts:componentId="RTC:Choreonoid:Generic:Tank-VisionSensorIoRTC:1.0.0">
+			<rtsExt:Properties rtsExt:value="localhost/Tank-VisionSensorIoRTC.rtc" rtsExt:name="COMPONENT_PATH_ID" />
+		</rts:targetDataPort>
+		<rtsExt:Properties rtsExt:value="IDL:RTC/TimedBooleanSeq:1.0" rtsExt:name="dataport.data_type" />
+		<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
+		<rtsExt:Properties rtsExt:value="push" rtsExt:name="dataport.dataflow_type" />
+		<rtsExt:Properties rtsExt:value="flush" rtsExt:name="dataport.subscription_type" />
+		<rtsExt:Properties rtsExt:value="little,big" rtsExt:name="dataport.serializer.cdr.endian" />
+		<rtsExt:Properties rtsExt:value="{1:(310,73),2:(410,73),3:(410,160),4:(84,160),5:(84,178),6:(89,178)}" rtsExt:name="POSITION" />
+	</rts:DataPortConnectors>
+	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="d06c1b2a-a10d-422f-8ca3-061de8fa5d95" rts:name="TankJoystickControllerRTC.switch1_Tank-TankIoRTC.light" rts:dataType="IDL:RTC/TimedBooleanSeq:1.0" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush">
+		<rts:sourceDataPort xsi:type="rtsExt:target_port_ext" rts:portName="TankJoystickControllerRTC.switch1" rts:instanceName="TankJoystickControllerRTC" rts:componentId="RTC:AIST:Generic:TankJoystickControllerRTC:1.0">
+			<rtsExt:Properties rtsExt:value="localhost/TankJoystickControllerRTC.rtc" rtsExt:name="COMPONENT_PATH_ID" />
+		</rts:sourceDataPort>
+		<rts:targetDataPort xsi:type="rtsExt:target_port_ext" rts:portName="Tank-TankIoRTC.light" rts:instanceName="Tank-TankIoRTC" rts:componentId="RTC:AIST:Generic:Tank-TankIoRTC:1.0">
+			<rtsExt:Properties rtsExt:value="localhost/Tank-TankIoRTC.rtc" rtsExt:name="COMPONENT_PATH_ID" />
+		</rts:targetDataPort>
+		<rtsExt:Properties rtsExt:value="IDL:RTC/TimedBooleanSeq:1.0" rtsExt:name="dataport.data_type" />
+		<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
+		<rtsExt:Properties rtsExt:value="push" rtsExt:name="dataport.dataflow_type" />
+		<rtsExt:Properties rtsExt:value="flush" rtsExt:name="dataport.subscription_type" />
+		<rtsExt:Properties rtsExt:value="little,big" rtsExt:name="dataport.serializer.cdr.endian" />
+		<rtsExt:Properties rtsExt:value="{1:(310,55),2:(315,55),3:(400.5,55),4:(400.5,56),5:(486,56),6:(491,56)}" rtsExt:name="POSITION" />
+	</rts:DataPortConnectors>
+	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="769ed35c-1cc1-4b7c-8d20-fd9cd7ac6590" rts:name="JoystickRTC.axes_TankJoystickControllerRTC.axes" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush">
+		<rts:sourceDataPort xsi:type="rtsExt:target_port_ext" rts:portName="JoystickRTC.axes" rts:instanceName="JoystickRTC" rts:componentId="RTC:AIST:HumanInterfaceDevice:JoystickRTC:1.0.0">
+			<rtsExt:Properties rtsExt:value="localhost/JoystickRTC.rtc" rtsExt:name="COMPONENT_PATH_ID" />
+		</rts:sourceDataPort>
+		<rts:targetDataPort xsi:type="rtsExt:target_port_ext" rts:portName="TankJoystickControllerRTC.axes" rts:instanceName="TankJoystickControllerRTC" rts:componentId="RTC:AIST:Generic:TankJoystickControllerRTC:1.0">
+			<rtsExt:Properties rtsExt:value="localhost/TankJoystickControllerRTC.rtc" rtsExt:name="COMPONENT_PATH_ID" />
+		</rts:targetDataPort>
+		<rtsExt:Properties rtsExt:value="push" rtsExt:name="dataport.dataflow_type" />
+		<rtsExt:Properties rtsExt:value="flush" rtsExt:name="dataport.subscription_type" />
+		<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
+		<rtsExt:Properties rtsExt:value="little,big" rtsExt:name="dataport.serializer.cdr.endian" />
+		<rtsExt:Properties rtsExt:value="{1:(79,37),2:(84,37),3:(157,37),4:(157,55),5:(245,55),6:(250,55)}" rtsExt:name="POSITION" />
+	</rts:DataPortConnectors>
+	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="d58da2a5-02a3-44a3-a010-bd3bbc99869d" rts:name="TankJoystickControllerRTC.switch3_Tank-VisionSensorIoRTC.Theta_switch" rts:dataType="IDL:RTC/TimedBooleanSeq:1.0" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush">
+		<rts:sourceDataPort xsi:type="rtsExt:target_port_ext" rts:portName="TankJoystickControllerRTC.switch3" rts:instanceName="TankJoystickControllerRTC" rts:componentId="RTC:AIST:Generic:TankJoystickControllerRTC:1.0">
+			<rtsExt:Properties rtsExt:value="localhost/TankJoystickControllerRTC.rtc" rtsExt:name="COMPONENT_PATH_ID" />
+		</rts:sourceDataPort>
+		<rts:targetDataPort xsi:type="rtsExt:target_port_ext" rts:portName="Tank-VisionSensorIoRTC.Theta_switch" rts:instanceName="Tank-VisionSensorIoRTC" rts:componentId="RTC:Choreonoid:Generic:Tank-VisionSensorIoRTC:1.0.0">
+			<rtsExt:Properties rtsExt:value="localhost/Tank-VisionSensorIoRTC.rtc" rtsExt:name="COMPONENT_PATH_ID" />
+		</rts:targetDataPort>
+		<rtsExt:Properties rtsExt:value="IDL:RTC/TimedBooleanSeq:1.0" rtsExt:name="dataport.data_type" />
+		<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
+		<rtsExt:Properties rtsExt:value="push" rtsExt:name="dataport.dataflow_type" />
+		<rtsExt:Properties rtsExt:value="flush" rtsExt:name="dataport.subscription_type" />
+		<rtsExt:Properties rtsExt:value="little,big" rtsExt:name="dataport.serializer.cdr.endian" />
+		<rtsExt:Properties rtsExt:value="{1:(310,91),2:(384,91),3:(384,143.5),4:(54,143.5),5:(54,196),6:(89,196)}" rtsExt:name="POSITION" />
+	</rts:DataPortConnectors>
+	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="70b0bd35-646d-41cc-b6e2-1ee80b2fcb31" rts:name="JoystickRTC.buttons_TankJoystickControllerRTC.buttons" rts:dataType="IDL:RTC/TimedBooleanSeq:1.0" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush">
+		<rts:sourceDataPort xsi:type="rtsExt:target_port_ext" rts:portName="JoystickRTC.buttons" rts:instanceName="JoystickRTC" rts:componentId="RTC:AIST:HumanInterfaceDevice:JoystickRTC:1.0.0">
+			<rtsExt:Properties rtsExt:value="localhost/JoystickRTC.rtc" rtsExt:name="COMPONENT_PATH_ID" />
+		</rts:sourceDataPort>
+		<rts:targetDataPort xsi:type="rtsExt:target_port_ext" rts:portName="TankJoystickControllerRTC.buttons" rts:instanceName="TankJoystickControllerRTC" rts:componentId="RTC:AIST:Generic:TankJoystickControllerRTC:1.0">
+			<rtsExt:Properties rtsExt:value="localhost/TankJoystickControllerRTC.rtc" rtsExt:name="COMPONENT_PATH_ID" />
+		</rts:targetDataPort>
+		<rtsExt:Properties rtsExt:value="IDL:RTC/TimedBooleanSeq:1.0" rtsExt:name="dataport.data_type" />
+		<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
+		<rtsExt:Properties rtsExt:value="push" rtsExt:name="dataport.dataflow_type" />
+		<rtsExt:Properties rtsExt:value="flush" rtsExt:name="dataport.subscription_type" />
+		<rtsExt:Properties rtsExt:value="little,big" rtsExt:name="dataport.serializer.cdr.endian" />
+		<rtsExt:Properties rtsExt:value="{1:(79,55),2:(84,55),3:(144,55),4:(144,73),5:(245,73),6:(250,73)}" rtsExt:name="POSITION" />
+	</rts:DataPortConnectors>
+	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="45e201c0-1a0b-4028-93b8-e033b0c76290" rts:name="TankJoystickControllerRTC.dq_Tank-TankIoRTC.dq" rts:dataType="IDL:RTC/TimedDoubleSeq:1.0" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush">
 		<rts:sourceDataPort xsi:type="rtsExt:target_port_ext" rts:portName="TankJoystickControllerRTC.dq" rts:instanceName="TankJoystickControllerRTC" rts:componentId="RTC:AIST:Generic:TankJoystickControllerRTC:1.0">
 			<rtsExt:Properties rtsExt:value="localhost/TankJoystickControllerRTC.rtc" rtsExt:name="COMPONENT_PATH_ID" />
 		</rts:sourceDataPort>
@@ -384,7 +356,35 @@
 		<rtsExt:Properties rtsExt:value="little,big" rtsExt:name="dataport.serializer.cdr.endian" />
 		<rtsExt:Properties rtsExt:value="{1:(310,19),2:(315,19),3:(400,19),4:(400,38),5:(486,38),6:(491,38)}" rtsExt:name="POSITION" />
 	</rts:DataPortConnectors>
-	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="ff889f0e-ebae-4c1b-94bb-47949371998e" rts:name="Tank-VisionSensorIoRTC.Kinect-depth_Tank-VisionSensorSubscripter.Kinect-depth" rts:dataType="IDL:RTC/PointCloud:1.0" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush">
+	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="b212bd51-16de-429f-adea-bbe81f67b5d8" rts:name="TankJoystickControllerRTC.switch4_Tank-VisionSensorIoRTC.VLP-16_switch" rts:dataType="IDL:RTC/TimedBooleanSeq:1.0" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush">
+		<rts:sourceDataPort xsi:type="rtsExt:target_port_ext" rts:portName="TankJoystickControllerRTC.switch4" rts:instanceName="TankJoystickControllerRTC" rts:componentId="RTC:AIST:Generic:TankJoystickControllerRTC:1.0">
+			<rtsExt:Properties rtsExt:value="localhost/TankJoystickControllerRTC.rtc" rtsExt:name="COMPONENT_PATH_ID" />
+		</rts:sourceDataPort>
+		<rts:targetDataPort xsi:type="rtsExt:target_port_ext" rts:portName="Tank-VisionSensorIoRTC.VLP-16_switch" rts:instanceName="Tank-VisionSensorIoRTC" rts:componentId="RTC:Choreonoid:Generic:Tank-VisionSensorIoRTC:1.0.0">
+			<rtsExt:Properties rtsExt:value="localhost/Tank-VisionSensorIoRTC.rtc" rtsExt:name="COMPONENT_PATH_ID" />
+		</rts:targetDataPort>
+		<rtsExt:Properties rtsExt:value="IDL:RTC/TimedBooleanSeq:1.0" rtsExt:name="dataport.data_type" />
+		<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
+		<rtsExt:Properties rtsExt:value="push" rtsExt:name="dataport.dataflow_type" />
+		<rtsExt:Properties rtsExt:value="flush" rtsExt:name="dataport.subscription_type" />
+		<rtsExt:Properties rtsExt:value="little,big" rtsExt:name="dataport.serializer.cdr.endian" />
+		<rtsExt:Properties rtsExt:value="{1:(310,109),2:(369,109),3:(369,134),4:(23,134),5:(23,214),6:(89,214)}" rtsExt:name="POSITION" />
+	</rts:DataPortConnectors>
+	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="452a8ff1-88f5-46c3-8e24-258dec1ac186" rts:name="Tank-TankIoRTC.q_TankJoystickControllerRTC.q" rts:dataType="IDL:RTC/TimedDoubleSeq:1.0" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush">
+		<rts:sourceDataPort xsi:type="rtsExt:target_port_ext" rts:portName="Tank-TankIoRTC.q" rts:instanceName="Tank-TankIoRTC" rts:componentId="RTC:AIST:Generic:Tank-TankIoRTC:1.0">
+			<rtsExt:Properties rtsExt:value="localhost/Tank-TankIoRTC.rtc" rtsExt:name="COMPONENT_PATH_ID" />
+		</rts:sourceDataPort>
+		<rts:targetDataPort xsi:type="rtsExt:target_port_ext" rts:portName="TankJoystickControllerRTC.q" rts:instanceName="TankJoystickControllerRTC" rts:componentId="RTC:AIST:Generic:TankJoystickControllerRTC:1.0">
+			<rtsExt:Properties rtsExt:value="localhost/TankJoystickControllerRTC.rtc" rtsExt:name="COMPONENT_PATH_ID" />
+		</rts:targetDataPort>
+		<rtsExt:Properties rtsExt:value="IDL:RTC/TimedDoubleSeq:1.0" rtsExt:name="dataport.data_type" />
+		<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
+		<rtsExt:Properties rtsExt:value="push" rtsExt:name="dataport.dataflow_type" />
+		<rtsExt:Properties rtsExt:value="flush" rtsExt:name="dataport.subscription_type" />
+		<rtsExt:Properties rtsExt:value="little,big" rtsExt:name="dataport.serializer.cdr.endian" />
+		<rtsExt:Properties rtsExt:value="{1:(551,20),2:(556,20),3:(556,1),4:(245,1),5:(245,19),6:(250,19)}" rtsExt:name="POSITION" />
+	</rts:DataPortConnectors>
+	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="442d7702-a40f-4857-9983-91f1e6c3e3dd" rts:name="Tank-VisionSensorIoRTC.Kinect-depth_Tank-VisionSensorSubscripter.Kinect-depth" rts:dataType="IDL:RTC/PointCloud:1.0" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush">
 		<rts:sourceDataPort xsi:type="rtsExt:target_port_ext" rts:portName="Tank-VisionSensorIoRTC.Kinect-depth" rts:instanceName="Tank-VisionSensorIoRTC" rts:componentId="RTC:Choreonoid:Generic:Tank-VisionSensorIoRTC:1.0.0">
 			<rtsExt:Properties rtsExt:value="localhost/Tank-VisionSensorIoRTC.rtc" rtsExt:name="COMPONENT_PATH_ID" />
 		</rts:sourceDataPort>
@@ -398,18 +398,18 @@
 		<rtsExt:Properties rtsExt:value="little,big" rtsExt:name="dataport.serializer.cdr.endian" />
 		<rtsExt:Properties rtsExt:value="{1:(149,196),2:(154,196),3:(361,196),4:(361,196),5:(548,196),6:(553,196)}" rtsExt:name="POSITION" />
 	</rts:DataPortConnectors>
-	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="b2ae7eef-2a4f-45cc-9b78-15537d3dad64" rts:name="TankJoystickControllerRTC.switch4_Tank-VisionSensorIoRTC.VLP-16_switch" rts:dataType="IDL:RTC/TimedBooleanSeq:1.0" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush">
-		<rts:sourceDataPort xsi:type="rtsExt:target_port_ext" rts:portName="TankJoystickControllerRTC.switch4" rts:instanceName="TankJoystickControllerRTC" rts:componentId="RTC:AIST:Generic:TankJoystickControllerRTC:1.0">
-			<rtsExt:Properties rtsExt:value="localhost/TankJoystickControllerRTC.rtc" rtsExt:name="COMPONENT_PATH_ID" />
-		</rts:sourceDataPort>
-		<rts:targetDataPort xsi:type="rtsExt:target_port_ext" rts:portName="Tank-VisionSensorIoRTC.VLP-16_switch" rts:instanceName="Tank-VisionSensorIoRTC" rts:componentId="RTC:Choreonoid:Generic:Tank-VisionSensorIoRTC:1.0.0">
+	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="101a33c9-9995-4d10-8f76-a1f53c38619e" rts:name="Tank-VisionSensorIoRTC.Theta_CameraImageView.cameraImage" rts:dataType="IDL:Img/TimedCameraImage:1.0" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush">
+		<rts:sourceDataPort xsi:type="rtsExt:target_port_ext" rts:portName="Tank-VisionSensorIoRTC.Theta" rts:instanceName="Tank-VisionSensorIoRTC" rts:componentId="RTC:Choreonoid:Generic:Tank-VisionSensorIoRTC:1.0.0">
 			<rtsExt:Properties rtsExt:value="localhost/Tank-VisionSensorIoRTC.rtc" rtsExt:name="COMPONENT_PATH_ID" />
+		</rts:sourceDataPort>
+		<rts:targetDataPort xsi:type="rtsExt:target_port_ext" rts:portName="CameraImageView.cameraImage" rts:instanceName="CameraImageView" rts:componentId="RTC:Choreonoid:Choreonoid:CameraImageView:1.0.0">
+			<rtsExt:Properties rtsExt:value="localhost/CameraImageView.rtc" rtsExt:name="COMPONENT_PATH_ID" />
 		</rts:targetDataPort>
-		<rtsExt:Properties rtsExt:value="IDL:RTC/TimedBooleanSeq:1.0" rtsExt:name="dataport.data_type" />
+		<rtsExt:Properties rtsExt:value="IDL:Img/TimedCameraImage:1.0" rtsExt:name="dataport.data_type" />
 		<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
 		<rtsExt:Properties rtsExt:value="push" rtsExt:name="dataport.dataflow_type" />
 		<rtsExt:Properties rtsExt:value="flush" rtsExt:name="dataport.subscription_type" />
 		<rtsExt:Properties rtsExt:value="little,big" rtsExt:name="dataport.serializer.cdr.endian" />
-		<rtsExt:Properties rtsExt:value="{1:(310,109),2:(369,109),3:(369,134),4:(23,134),5:(23,214),6:(89,214)}" rtsExt:name="POSITION" />
+		<rtsExt:Properties rtsExt:value="{1:(149,214),2:(154,214),3:(257,214),4:(257,268),5:(361,268),6:(366,268)}" rtsExt:name="POSITION" />
 	</rts:DataPortConnectors>
 </rts:RtsProfile>
