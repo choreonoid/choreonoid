@@ -96,10 +96,9 @@ RTC::ReturnCode_t TankJoystickControllerRTC::onActivated(RTC::UniqueId ec_id)
     }
 
     for(int i=0; i<4; i++){
-        switches[i].data.length(1);
-        switches[i].data[0] = true;
+        switches[i].data = false;
         lastButtonState[i] = false;
-        isOn[i] = true;
+        isOn[i] = false;
     }
     lightBlinkCounter = 0;
     lightBlinkDuration = 0;
@@ -191,8 +190,8 @@ RTC::ReturnCode_t TankJoystickControllerRTC::onExecute(RTC::UniqueId ec_id)
     }
 
     for(int i=0; i<4; i++){
-        if(isOn[i] != switches[i].data[0]){
-            switches[i].data[0] = isOn[i];
+        if(isOn[i] != switches[i].data){
+            switches[i].data = isOn[i];
             switch (i) {
             case 0 : switch1Out.write();
                         break;

@@ -32,8 +32,8 @@ class DeviceIo : public Referenced
 {
 protected:
     ScopedConnectionSet connections;
-    RTC::TimedBooleanSeq deviceSwitch;
-    RTC::InPort<RTC::TimedBooleanSeq> deviceSwitchIn;
+    RTC::TimedBoolean deviceSwitch;
+    RTC::InPort<RTC::TimedBoolean> deviceSwitchIn;
     
 public:
     DeviceIo(Device* device);
@@ -261,8 +261,10 @@ void DeviceIo::readSwitch()
 {
     if(deviceSwitchIn.isNew()){
         deviceSwitchIn.read();
-        device()->on(!device()->on());
-        device()->notifyStateChange();
+        if(device()->on() != deviceSwitch.data){
+            device()->on(deviceSwitch.data);
+            device()->notifyStateChange();
+        }
     }
 }
 

@@ -45,11 +45,11 @@ protected:
     RTC::TimedDoubleSeq torques;
     RTC::OutPort<RTC::TimedDoubleSeq> torquesOut;
     
-    RTC::TimedBooleanSeq switches[4];
-    RTC::OutPort<RTC::TimedBooleanSeq> switch1Out;
-    RTC::OutPort<RTC::TimedBooleanSeq> switch2Out;
-    RTC::OutPort<RTC::TimedBooleanSeq> switch3Out;
-    RTC::OutPort<RTC::TimedBooleanSeq> switch4Out;
+    RTC::TimedBoolean switches[4];
+    RTC::OutPort<RTC::TimedBoolean> switch1Out;
+    RTC::OutPort<RTC::TimedBoolean> switch2Out;
+    RTC::OutPort<RTC::TimedBoolean> switch3Out;
+    RTC::OutPort<RTC::TimedBoolean> switch4Out;
 
 private:
     double qref[2];
