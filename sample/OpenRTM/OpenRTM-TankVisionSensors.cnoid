@@ -221,7 +221,7 @@ items:
                     class: RangeSensorVisualizer
                     name: VLP-16
                     renderingMode: Point
-                    pointSize: 0
+                    pointSize: 2
                     voxelSize: 0.01
                     isEditable: false
                   - 
@@ -562,12 +562,12 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 495, 2072 ]
+      sizes: [ 459, 1920 ]
       children: 
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 848, 844 ]
+          sizes: [ 754, 751 ]
           children: 
             - 
               type: pane
@@ -576,21 +576,21 @@ viewAreas:
             - 
               type: pane
               views: [ 0, 8, 12 ]
-              current: 0
+              current: 12
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 1235, 457 ]
+          sizes: [ 1099, 406 ]
           children: 
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 1034, 1032 ]
+              sizes: [ 958, 956 ]
               children: 
                 - 
                   type: splitter
                   orientation: vertical
-                  sizes: [ 598, 631 ]
+                  sizes: [ 532, 561 ]
                   children: 
                     - 
                       type: pane
@@ -603,7 +603,7 @@ viewAreas:
                 - 
                   type: splitter
                   orientation: vertical
-                  sizes: [ 615, 614 ]
+                  sizes: [ 547, 546 ]
                   children: 
                     - 
                       type: pane
@@ -616,7 +616,7 @@ viewAreas:
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 1034, 1032 ]
+              sizes: [ 958, 956 ]
               children: 
                 - 
                   type: pane
