@@ -36,6 +36,8 @@ links:
           - { <<: *PRIMITIVE_RESOURCE, node: CAR_BODY }
           - { <<: *PRIMITIVE_RESOURCE, node: CAR_NORMAL_ROOF }
           - { <<: *PRIMITIVE_RESOURCE, node: CAR_STEERING, translation: [ 0.49, 0.39, 0.839 ] }
+          - { <<: *PRIMITIVE_RESOURCE, node: CAR_INTERIOR }
+          
 
       - { <<: *PRIMITIVE_RESOURCE, node: CAR_WHEEL, translation: [  1.365, -0.72, 0.34 ] }
       - { <<: *PRIMITIVE_RESOURCE, node: CAR_WHEEL, translation: [  1.365,  0.72, 0.34 ] }
