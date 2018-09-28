@@ -8,6 +8,10 @@ materials:
     roughness: 0.5
     viscosity: 0.0
   -
+    name: Tyre
+    roughness: 1.0
+    viscosity: 0.0
+  -
     name: Tracks
     roughness: 0.5
     viscosity: 0.0
@@ -76,6 +80,11 @@ contactMaterials:
   -
     materials: [ Ground, Sole ]
     friction: 1.0
+    restitution: 0.0
+    frictionModel: [ cone, direct ]
+  -
+    materials: [ Ground, Tyre ]
+    friction: 10
     restitution: 0.0
     frictionModel: [ cone, direct ]
   -

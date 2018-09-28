@@ -2631,7 +2631,7 @@ CAR_DOOR_BL: &CAR_DOOR_BL
       rotation: [ [ 1, 0, 0, 29 ], [ 0, 1, 0, -10 ] ]
       geometry: { type: Box, size: [ 0.23, 0.01, 0.2] }
 
-CAR_TYRE: &CAR_TYRE
+CAR_WHEEL: &CAR_WHEEL
   -
     type: Shape
     geometry: { type: Cylinder, radius: 0.342, height: 0.24 }

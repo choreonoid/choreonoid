@@ -16,10 +16,10 @@ links:
       0, 50, 0,
       0, 0, 50 ]
     elements:
-      - { <<: *PRIMITIVE_RESOURCE, node: CAR_TYRE, translation: [  1.365, -0.72, 0.34 ] }
-      - { <<: *PRIMITIVE_RESOURCE, node: CAR_TYRE, translation: [  1.365,  0.72, 0.34 ] }
-      - { <<: *PRIMITIVE_RESOURCE, node: CAR_TYRE, translation: [ -1.315, -0.72, 0.34 ] }
-      - { <<: *PRIMITIVE_RESOURCE, node: CAR_TYRE, translation: [ -1.315,  0.72, 0.34 ] }
+      - { <<: *PRIMITIVE_RESOURCE, node: CAR_WHEEL, translation: [  1.365, -0.72, 0.34 ] }
+      - { <<: *PRIMITIVE_RESOURCE, node: CAR_WHEEL, translation: [  1.365,  0.72, 0.34 ] }
+      - { <<: *PRIMITIVE_RESOURCE, node: CAR_WHEEL, translation: [ -1.315, -0.72, 0.34 ] }
+      - { <<: *PRIMITIVE_RESOURCE, node: CAR_WHEEL, translation: [ -1.315,  0.72, 0.34 ] }
       -
         type: Visual
         resource:
