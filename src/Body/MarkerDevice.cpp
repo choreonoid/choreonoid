@@ -92,6 +92,7 @@ SceneMarkerDevice::SceneMarkerDevice(Device* device_)
       device(static_cast<MarkerDevice*>(device_))
 {
     marker = new SceneMarker;
+    marker->setName(device->name());
     isMarkerAttached = false;
     setFunctionOnStateChanged([&](){ updateScene(); });
 }

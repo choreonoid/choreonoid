@@ -125,7 +125,6 @@ SceneDevice* SceneDevice::create(Device* device)
 SceneDevice::SceneDevice(Device* device)
     : device_(device)
 {
-    setName(device->name());
     setTransform(device->link()->Rs().transpose() * device->T_local());
 }
 
@@ -136,7 +135,7 @@ SceneDevice::SceneDevice
  std::function<void(double time)> functionOnTimeChanged)
     : SceneDevice(device)
 {
-    setName(device->name());
+    sceneNode->setName(device->name());
     addChild(sceneNode);
     setFunctionOnStateChanged(functionOnStateChanged);
     setFunctionOnTimeChanged(functionOnTimeChanged);
