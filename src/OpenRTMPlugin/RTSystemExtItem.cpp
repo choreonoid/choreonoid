@@ -592,7 +592,7 @@ void RTSystemExtItem::initializeClass(ExtensionManager* ext)
 {
     DDEBUG("RTSystemItem::initializeClass");
     ItemManager& im = ext->itemManager();
-    im.registerClass<RTSystemExtItem>(N_("RTSystemExtItem"));
+    im.registerClass<RTSystemExtItem>(N_("RTSystemItem"));
     im.addCreationPanel<RTSystemExtItem>();
     im.addLoaderAndSaver<RTSystemExtItem>(
         _("RT-System"), "RTS-PROFILE-XML", "xml",

@@ -1729,5 +1729,5 @@ bool RTSDiagramExtView::restoreState(const Archive& archive)
 void RTSDiagramExtView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<RTSDiagramExtView>(
-        "RTSDiagramExtView", N_("RTC Diagram Ext"), ViewManager::SINGLE_OPTIONAL);
+        "RTSDiagramView", N_("RTC Diagram"), ViewManager::SINGLE_OPTIONAL);
 }
