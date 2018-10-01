@@ -4,24 +4,24 @@
    \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_OPENRTM_PLUGIN_VISION_SENSOR_SUBSCRIBER_RTC_ITEM_H
-#define CNOID_OPENRTM_PLUGIN_VISION_SENSOR_SUBSCRIBER_RTC_ITEM_H
+#ifndef CNOID_OPENRTM_PLUGIN_BODY_STATE_SUBSCRIBER_RTC_ITEM_H
+#define CNOID_OPENRTM_PLUGIN_BODY_STATE_SUBSCRIBER_RTC_ITEM_H
 
 #include <cnoid/Item>
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class VisionSensorSubscriberRTCItemImpl;
+class BodyStateSubscriberRTCItemImpl;
 
-class CNOID_EXPORT VisionSensorSubscriberRTCItem : public Item
+class CNOID_EXPORT BodyStateSubscriberRTCItem : public Item
 {
 public:
     static void initializeClass(ExtensionManager* ext);
 
-    VisionSensorSubscriberRTCItem();
-    VisionSensorSubscriberRTCItem(const VisionSensorSubscriberRTCItem& org);
-    ~VisionSensorSubscriberRTCItem();
+    BodyStateSubscriberRTCItem();
+    BodyStateSubscriberRTCItem(const BodyStateSubscriberRTCItem& org);
+    ~BodyStateSubscriberRTCItem();
 
     void setPeriodicRate(int rate);
 
@@ -41,10 +41,10 @@ public:
     virtual bool restore(const Archive& archive);
 
 private:
-    VisionSensorSubscriberRTCItemImpl* impl;
+    BodyStateSubscriberRTCItemImpl* impl;
 };
 
-typedef ref_ptr<VisionSensorSubscriberRTCItem> VisionSensorSubscriberRTCItemPtr;
+typedef ref_ptr<BodyStateSubscriberRTCItem> BodyStateSubscriberRTCItemPtr;
 
 }
 

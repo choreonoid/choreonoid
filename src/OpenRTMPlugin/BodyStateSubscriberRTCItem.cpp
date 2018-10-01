@@ -3,7 +3,7 @@
    \author Shin'ichiro Nakaoka
 */
 
-#include "VisionSensorSubscriberRTCItem.h"
+#include "BodyStateSubscriberRTCItem.h"
 #include <cnoid/BodyItem>
 #include <cnoid/RangeCamera>
 #include <cnoid/RangeSensor>
@@ -17,6 +17,7 @@
 #include <rtm/DataInPort.h>
 #include <rtm/idl/InterfaceDataTypes.hh>
 #include <cnoid/corba/PointCloud.hh>
+#include <mutex>
 
 #ifdef USE_BUILTIN_CAMERA_IMAGE_IDL
 # include "deprecated/corba/CameraImage.hh"
@@ -39,6 +40,16 @@ using namespace cnoid;
 
 namespace {
 
+// For the backward compatibility
+class VisionSensorSubscriberRTCItem : public BodyStateSubscriberRTCItem
+{
+public:
+    VisionSensorSubscriberRTCItem() { }
+    VisionSensorSubscriberRTCItem(const VisionSensorSubscriberRTCItem& org)
+        : BodyStateSubscriberRTCItem(org) { }
+    virtual Item* doDuplicate() const { return new VisionSensorSubscriberRTCItem(*this); };
+};
+
 class SubscriberRTC;
 
 class InputBase : public Referenced
@@ -48,6 +59,24 @@ public:
 };
 
 typedef ref_ptr<InputBase> InputBasePtr;
+
+
+class KinematicStateInput : public InputBase
+{
+public:
+    
+    BodyItem* bodyItem;
+    RTC::InPort<RTC::TimedDoubleSeq> qin;
+    RTC::TimedDoubleSeq q;
+    vector<double> qtmp;
+    LazyCaller updateKinematicStateCaller;
+    std::mutex kinematicStateMutex;
+
+    KinematicStateInput(SubscriberRTC* rtc, BodyItem* bodyItem);
+    virtual void read() override;
+    void updateKinematicState();
+};
+
     
 class CameraImageInput : public InputBase
 {
@@ -57,12 +86,10 @@ public:
     Img::TimedCameraImage timedCameraImage;
 
     CameraImageInput(SubscriberRTC* rtc, Camera* camera);
-    void read();
+    virtual void read() override;
     shared_ptr<Image> createImageFromRawData(Img::ImageData& srcImage, int numComponents);
     shared_ptr<Image> createImageFromImageFormat(Img::ImageData& srcImage);
 };
-
-typedef ref_ptr<CameraImageInput> CameraImageInputPtr;
 
 
 class PointCloudInput : public InputBase
@@ -83,13 +110,11 @@ public:
     std::map<string, PointCloudField> pointCloudField;
 
     PointCloudInput(SubscriberRTC* rtc, RangeCamera* rangeCamera, int pointCloudPortType);
-    void read();
+    virtual void read() override;
     void read1();
     float readFloatPointCloudData(unsigned char* src, PointCloudField& fe, bool is_bigendian);
     void read2();
 };
-
-typedef ref_ptr<PointCloudInput> PointCloudInputPtr;
 
 
 class RangeDataInput : public InputBase
@@ -100,10 +125,9 @@ public:
     RTC::RangeData timedRangeData;
 
     RangeDataInput(SubscriberRTC* rtc, RangeSensor* rangeSensor);
-    void read();
+    virtual void read() override;
 };
 
-typedef ref_ptr<RangeDataInput> RangeDataInputPtr;
 
 class SubscriberRTC : public RTC::DataFlowComponentBase
 {
@@ -111,7 +135,7 @@ public:
     vector<InputBasePtr> inputs;
     
     SubscriberRTC(RTC::Manager* manager);
-    void createInPorts(Body* body, int pointCloudPortType);
+    void createInPorts(BodyItem* bodyItem, int pointCloudPortType, bool isVisionSensorSubscriber);
     virtual RTC::ReturnCode_t onInitialize();
     virtual RTC::ReturnCode_t onActivated(RTC::UniqueId ec_id);
     virtual RTC::ReturnCode_t onDeactivated(RTC::UniqueId ec_id);
@@ -128,9 +152,13 @@ SubscriberRTC::SubscriberRTC(RTC::Manager* manager)
 }
 
 
-void SubscriberRTC::createInPorts(Body* body, int pointCloudPortType)
+void SubscriberRTC::createInPorts(BodyItem* bodyItem, int pointCloudPortType, bool isVisionSensorSubscriber)
 {
-    DeviceList<> devices = body->devices();
+    if(!isVisionSensorSubscriber){
+        inputs.push_back(new KinematicStateInput(this, bodyItem));
+    }
+    
+    DeviceList<> devices = bodyItem->body()->devices();
     
     DeviceList<Camera> cameras(devices);
 
@@ -179,6 +207,48 @@ RTC::ReturnCode_t SubscriberRTC::onExecute(RTC::UniqueId ec_id)
 }
 
 
+KinematicStateInput::KinematicStateInput(SubscriberRTC* rtc, BodyItem* bodyItem)
+    : bodyItem(bodyItem),
+      qin("q", q),
+      updateKinematicStateCaller([&](){ updateKinematicState(); })
+{
+    rtc->addInPort("q", qin);
+}
+
+
+void KinematicStateInput::read()
+{
+    if(qin.isNew()){
+        do {
+            qin.read();
+        } while(qin.isNew());
+
+        if(q.data.length() > 0){
+            lock_guard<mutex> lock(kinematicStateMutex);
+            qtmp.resize(q.data.length());
+            for(size_t i=0; i < qtmp.size(); ++i){
+                qtmp[i] = q.data[i];
+            }
+            updateKinematicStateCaller();
+        }
+    }
+}
+
+
+void KinematicStateInput::updateKinematicState()
+{
+    auto body = bodyItem->body();
+    {
+        lock_guard<mutex> lock(kinematicStateMutex);
+        int n = std::min(body->numJoints(), (int)qtmp.size());
+        for(int i=0; i < n; ++i){
+            body->joint(i)->q() = qtmp[i];
+        }
+    }
+    bodyItem->notifyKinematicStateChange(true);
+}
+    
+        
 CameraImageInput::CameraImageInput(SubscriberRTC* rtc, Camera* camera)
     : camera(camera),
       port(camera->name().c_str(), timedCameraImage)
@@ -278,7 +348,7 @@ PointCloudInput::PointCloudInput(SubscriberRTC* rtc, RangeCamera* rangeCamera, i
       port1((rangeCamera->name() + "-depth").c_str(), pointCloud1),
       port2((rangeCamera->name() + "-depth").c_str(), pointCloud2)
 {
-    if(pointCloudPortType == VisionSensorSubscriberRTCItem::POINT_CLOUD_TYPES_POINT_CLOUD_TYPE){
+    if(pointCloudPortType == BodyStateSubscriberRTCItem::POINT_CLOUD_TYPES_POINT_CLOUD_TYPE){
 
         pointCloudField["x"].offset = 0;
         pointCloudField["x"].type = PointCloudTypes::FLOAT32;
@@ -301,7 +371,7 @@ PointCloudInput::PointCloudInput(SubscriberRTC* rtc, RangeCamera* rangeCamera, i
         
         rtc->addInPort(port1.name(), port1);
         
-    } else if(pointCloudPortType == VisionSensorSubscriberRTCItem::RTC_POINT_CLOUD_TYPE){
+    } else if(pointCloudPortType == BodyStateSubscriberRTCItem::RTC_POINT_CLOUD_TYPE){
         rtc->addInPort(port2.name(), port2);
     }
 }
@@ -309,9 +379,9 @@ PointCloudInput::PointCloudInput(SubscriberRTC* rtc, RangeCamera* rangeCamera, i
 
 void PointCloudInput::read()
 {
-    if(pointCloudPortType == VisionSensorSubscriberRTCItem::POINT_CLOUD_TYPES_POINT_CLOUD_TYPE){
+    if(pointCloudPortType == BodyStateSubscriberRTCItem::POINT_CLOUD_TYPES_POINT_CLOUD_TYPE){
         read1();
-    } else if(pointCloudPortType == VisionSensorSubscriberRTCItem::RTC_POINT_CLOUD_TYPE){
+    } else if(pointCloudPortType == BodyStateSubscriberRTCItem::RTC_POINT_CLOUD_TYPE){
         read2();
     }
 }
@@ -478,10 +548,10 @@ void RangeDataInput::read()
 
 namespace cnoid {
 
-class VisionSensorSubscriberRTCItemImpl
+class BodyStateSubscriberRTCItemImpl
 {
 public:
-    VisionSensorSubscriberRTCItem* self;
+    BodyStateSubscriberRTCItem* self;
     MessageView* mv;
     BodyItem* bodyItem;
     SubscriberRTC* subscriberRTC;
@@ -489,9 +559,9 @@ public:
     int periodicRate;
     Selection pointCloudPortType;
 
-    VisionSensorSubscriberRTCItemImpl(VisionSensorSubscriberRTCItem* self);
-    VisionSensorSubscriberRTCItemImpl(VisionSensorSubscriberRTCItem* self, const VisionSensorSubscriberRTCItemImpl& org);
-    ~VisionSensorSubscriberRTCItemImpl();
+    BodyStateSubscriberRTCItemImpl(BodyStateSubscriberRTCItem* self);
+    BodyStateSubscriberRTCItemImpl(BodyStateSubscriberRTCItem* self, const BodyStateSubscriberRTCItemImpl& org);
+    ~BodyStateSubscriberRTCItemImpl();
 
     void setBodyItem(BodyItem* bodyItem);
     void createRTC();
@@ -503,10 +573,11 @@ public:
 }
 
 
-void VisionSensorSubscriberRTCItem::initializeClass(ExtensionManager* ext)
+void BodyStateSubscriberRTCItem::initializeClass(ExtensionManager* ext)
 {
+    ext->itemManager().registerClass<BodyStateSubscriberRTCItem>(N_("BodyStateSubscriberRTCItem"));
     ext->itemManager().registerClass<VisionSensorSubscriberRTCItem>(N_("VisionSensorSubscriberRTCItem"));
-    ext->itemManager().addCreationPanel<VisionSensorSubscriberRTCItem>();
+    ext->itemManager().addCreationPanel<BodyStateSubscriberRTCItem>();
 
     static const char* spec[] = {
         "implementation_id", "VisionSensorSubscriber",
@@ -529,23 +600,23 @@ void VisionSensorSubscriberRTCItem::initializeClass(ExtensionManager* ext)
 }
 
 
-VisionSensorSubscriberRTCItem::VisionSensorSubscriberRTCItem()
+BodyStateSubscriberRTCItem::BodyStateSubscriberRTCItem()
 {
-    impl = new VisionSensorSubscriberRTCItemImpl(this);
+    impl = new BodyStateSubscriberRTCItemImpl(this);
 }
 
 
-VisionSensorSubscriberRTCItem::VisionSensorSubscriberRTCItem(const VisionSensorSubscriberRTCItem& org)
+BodyStateSubscriberRTCItem::BodyStateSubscriberRTCItem(const BodyStateSubscriberRTCItem& org)
     : Item(org)
 {
-    impl = new VisionSensorSubscriberRTCItemImpl(this);
+    impl = new BodyStateSubscriberRTCItemImpl(this);
 }
 
 
-VisionSensorSubscriberRTCItemImpl::VisionSensorSubscriberRTCItemImpl(VisionSensorSubscriberRTCItem* self)
+BodyStateSubscriberRTCItemImpl::BodyStateSubscriberRTCItemImpl(BodyStateSubscriberRTCItem* self)
     : self(self),
       mv(MessageView::instance()),
-      pointCloudPortType(VisionSensorSubscriberRTCItem::N_POINT_CLOUD_PORT_TYPES, CNOID_GETTEXT_DOMAIN_NAME)
+      pointCloudPortType(BodyStateSubscriberRTCItem::N_POINT_CLOUD_PORT_TYPES, CNOID_GETTEXT_DOMAIN_NAME)
 {
     bodyItem = nullptr;
     subscriberRTC = nullptr;
@@ -553,51 +624,51 @@ VisionSensorSubscriberRTCItemImpl::VisionSensorSubscriberRTCItemImpl(VisionSenso
     periodicRate = 30;
 
     pointCloudPortType.setSymbol(
-        VisionSensorSubscriberRTCItem::POINT_CLOUD_TYPES_POINT_CLOUD_TYPE,
+        BodyStateSubscriberRTCItem::POINT_CLOUD_TYPES_POINT_CLOUD_TYPE,
         "PointCloudTypes::PointCloud");
     pointCloudPortType.setSymbol(
-        VisionSensorSubscriberRTCItem::RTC_POINT_CLOUD_TYPE,
+        BodyStateSubscriberRTCItem::RTC_POINT_CLOUD_TYPE,
         "RTC::PointCloud");
-    pointCloudPortType.select(VisionSensorSubscriberRTCItem::POINT_CLOUD_TYPES_POINT_CLOUD_TYPE);
+    pointCloudPortType.select(BodyStateSubscriberRTCItem::POINT_CLOUD_TYPES_POINT_CLOUD_TYPE);
     
     self->sigNameChanged().connect([&](const string&){ createRTC(); });
 }
 
 
-VisionSensorSubscriberRTCItemImpl::VisionSensorSubscriberRTCItemImpl
-(VisionSensorSubscriberRTCItem* self, const VisionSensorSubscriberRTCItemImpl& org)
-    : VisionSensorSubscriberRTCItemImpl(self)
+BodyStateSubscriberRTCItemImpl::BodyStateSubscriberRTCItemImpl
+(BodyStateSubscriberRTCItem* self, const BodyStateSubscriberRTCItemImpl& org)
+    : BodyStateSubscriberRTCItemImpl(self)
 {
     periodicRate = org.periodicRate;
     pointCloudPortType = org.pointCloudPortType;
 }
 
 
-VisionSensorSubscriberRTCItem::~VisionSensorSubscriberRTCItem()
+BodyStateSubscriberRTCItem::~BodyStateSubscriberRTCItem()
 {
     delete impl;
 }
 
 
-VisionSensorSubscriberRTCItemImpl::~VisionSensorSubscriberRTCItemImpl()
+BodyStateSubscriberRTCItemImpl::~BodyStateSubscriberRTCItemImpl()
 {
     deleteRTC();
 }
 
 
-void VisionSensorSubscriberRTCItem::onDisconnectedFromRoot()
+void BodyStateSubscriberRTCItem::onDisconnectedFromRoot()
 {
     impl->deleteRTC();
 }
 
 
-void VisionSensorSubscriberRTCItem::onPositionChanged()
+void BodyStateSubscriberRTCItem::onPositionChanged()
 {
     impl->setBodyItem(findOwnerItem<BodyItem>());
 }
 
 
-void VisionSensorSubscriberRTCItemImpl::setBodyItem(BodyItem* newBodyItem)
+void BodyStateSubscriberRTCItemImpl::setBodyItem(BodyItem* newBodyItem)
 {
     if(newBodyItem){
         if(newBodyItem != bodyItem){
@@ -612,7 +683,7 @@ void VisionSensorSubscriberRTCItemImpl::setBodyItem(BodyItem* newBodyItem)
 }
 
 
-void VisionSensorSubscriberRTCItem::setPeriodicRate(int rate)
+void BodyStateSubscriberRTCItem::setPeriodicRate(int rate)
 {
     if(rate != impl->periodicRate){
         impl->periodicRate = rate;
@@ -621,7 +692,7 @@ void VisionSensorSubscriberRTCItem::setPeriodicRate(int rate)
 }
 
 
-void VisionSensorSubscriberRTCItem::setPointCloudPortType(int type)
+void BodyStateSubscriberRTCItem::setPointCloudPortType(int type)
 {
     if(type != impl->pointCloudPortType.which()){
         impl->pointCloudPortType.select(type);
@@ -630,7 +701,7 @@ void VisionSensorSubscriberRTCItem::setPointCloudPortType(int type)
 }
 
 
-void VisionSensorSubscriberRTCItemImpl::createRTC()
+void BodyStateSubscriberRTCItemImpl::createRTC()
 {
     deleteRTC();
 
@@ -651,7 +722,11 @@ void VisionSensorSubscriberRTCItemImpl::createRTC()
     }
 
     subscriberRTC = dynamic_cast<SubscriberRTC*>(rtc);
-    subscriberRTC->createInPorts(bodyItem->body(), pointCloudPortType.which());
+
+    // For the backward compatibility
+    bool isVisionSensorSubscriber = dynamic_cast<VisionSensorSubscriberRTCItem*>(self);
+    
+    subscriberRTC->createInPorts(bodyItem, pointCloudPortType.which(), isVisionSensorSubscriber);
 
     execContext = RTC::ExecutionContext::_nil();
     RTC::ExecutionContextList_var eclist = rtc->get_owned_contexts();
@@ -665,7 +740,7 @@ void VisionSensorSubscriberRTCItemImpl::createRTC()
 }
 
 
-void VisionSensorSubscriberRTCItemImpl::deleteRTC()
+void BodyStateSubscriberRTCItemImpl::deleteRTC()
 {
     if(subscriberRTC){
         subscriberRTC->exit();
@@ -675,13 +750,13 @@ void VisionSensorSubscriberRTCItemImpl::deleteRTC()
 }
 
 
-Item* VisionSensorSubscriberRTCItem::doDuplicate() const
+Item* BodyStateSubscriberRTCItem::doDuplicate() const
 {
-    return new VisionSensorSubscriberRTCItem(*this);
+    return new BodyStateSubscriberRTCItem(*this);
 }
 
 
-void VisionSensorSubscriberRTCItem::doPutProperties(PutPropertyFunction& putProperty)
+void BodyStateSubscriberRTCItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty.decimals(3)(_("Periodic rate"), impl->periodicRate,
                             [&](int rate){ setPeriodicRate(rate); return true; });
@@ -691,7 +766,7 @@ void VisionSensorSubscriberRTCItem::doPutProperties(PutPropertyFunction& putProp
 }
 
 
-bool VisionSensorSubscriberRTCItem::store(Archive& archive)
+bool BodyStateSubscriberRTCItem::store(Archive& archive)
 {
     archive.write("periodicRate", impl->periodicRate);
     archive.write("pointCloudPortType", impl->pointCloudPortType.selectedSymbol(), DOUBLE_QUOTED);
@@ -699,7 +774,7 @@ bool VisionSensorSubscriberRTCItem::store(Archive& archive)
 }
 
 
-bool VisionSensorSubscriberRTCItem::restore(const Archive& archive)
+bool BodyStateSubscriberRTCItem::restore(const Archive& archive)
 {
     archive.read("periodicRate", impl->periodicRate);
 

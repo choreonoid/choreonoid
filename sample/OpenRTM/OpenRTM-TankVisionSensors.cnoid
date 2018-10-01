@@ -197,9 +197,9 @@ items:
           children: 
             - 
               id: 12
-              name: "Tank-VisionSensorSubscripter"
+              name: "Tank-BodyStateSubscripter"
               plugin: OpenRTM
-              class: VisionSensorSubscriberRTCItem
+              class: BodyStateSubscriberRTCItem
               data: 
                 periodicRate: 30
                 pointCloudPortType: "PointCloudTypes::PointCloud"
