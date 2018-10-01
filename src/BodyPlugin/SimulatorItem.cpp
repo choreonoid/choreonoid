@@ -1633,10 +1633,6 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
                     ++iter;
                 } else {
                     controller->setSimulatorItem(nullptr);
-                    string message = controller->getMessage();
-                    if(!message.empty()){
-                        mv->putln(message);
-                    }
                     iter = controllers.erase(iter);
                 }
             }
