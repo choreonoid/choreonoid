@@ -97,13 +97,13 @@ items:
               data: 
                 modelFile: "${SHARE}/model/WRS2018/Flag1L.body"
                 currentBaseLink: "BASE"
-                rootPosition: [ 3, -1.5, 0 ]
+                rootPosition: [ 8, 1.5, 0 ]
                 rootAttitude: [ 
                   1, 0, 0, 
                   0, 1, 0, 
                   0, 0, 1 ]
                 jointPositions: [  ]
-                initialRootPosition: [ 3, -1.5, 0 ]
+                initialRootPosition: [ 8, 1.5, 0 ]
                 initialRootAttitude: [ 
                   1, 0, 0, 
                   0, 1, 0, 
@@ -120,13 +120,13 @@ items:
               data: 
                 modelFile: "${SHARE}/model/WRS2018/Flag1R.body"
                 currentBaseLink: "BASE"
-                rootPosition: [ 3, 1.5, 0 ]
+                rootPosition: [ 8, -1.5, 0 ]
                 rootAttitude: [ 
                   1, 0, 0, 
                   0, 1, 0, 
                   0, 0, 1 ]
                 jointPositions: [  ]
-                initialRootPosition: [ 3, 1.5, 0 ]
+                initialRootPosition: [ 8, -1.5, 0 ]
                 initialRootAttitude: [ 
                   1, 0, 0, 
                   0, 1, 0, 
@@ -143,13 +143,13 @@ items:
               data: 
                 modelFile: "${SHARE}/model/WRS2018/Flag2L.body"
                 currentBaseLink: "BASE"
-                rootPosition: [ 18, -1.5, 0 ]
+                rootPosition: [ 24, 1.5, 0 ]
                 rootAttitude: [ 
                   1, 0, 0, 
                   0, 1, 0, 
                   0, 0, 1 ]
                 jointPositions: [  ]
-                initialRootPosition: [ 18, -1.5, 0 ]
+                initialRootPosition: [ 24, 1.5, 0 ]
                 initialRootAttitude: [ 
                   1, 0, 0, 
                   0, 1, 0, 
@@ -166,13 +166,13 @@ items:
               data: 
                 modelFile: "${SHARE}/model/WRS2018/Flag2R.body"
                 currentBaseLink: "BASE"
-                rootPosition: [ 18, 1.5, 0 ]
+                rootPosition: [ 24, -1.5, 0 ]
                 rootAttitude: [ 
                   1, 0, 0, 
                   0, 1, 0, 
                   0, 0, 1 ]
                 jointPositions: [  ]
-                initialRootPosition: [ 18, 1.5, 0 ]
+                initialRootPosition: [ 24, -1.5, 0 ]
                 initialRootAttitude: [ 
                   1, 0, 0, 
                   0, 1, 0, 
@@ -189,17 +189,17 @@ items:
               data: 
                 modelFile: "${SHARE}/model/WRS2018/DebrisL.body"
                 currentBaseLink: "body"
-                rootPosition: [ 11.4708, 0.513, 0.2561 ]
+                rootPosition: [ 17.4708, 0.513, 0.2561 ]
                 rootAttitude: [ 
                   0.583190384, 3.16285444e-17, 0.812335507, 
                   0.812335507, -5.24312372e-17, -0.583190384, 
                   2.41462927e-17, 1, -5.6270383e-17 ]
                 jointPositions: [  ]
-                initialRootPosition: [ 11.4708, 0.513, 0.2561 ]
+                initialRootPosition: [ 17.4708, 0.513, 0.2561 ]
                 initialRootAttitude: [ 
-                  0.583190384, 5.55111512e-17, 0.812335507, 
-                  0.812335507, 2.43132181e-11, -0.583190384, 
-                  5.55111512e-17, 1, 2.43132181e-11 ]
+                  0.583190384, 0, 0.812335507, 
+                  0.812335507, 0, -0.583190384, 
+                  0, 1, 0 ]
                 zmp: [ 0, 0, 0 ]
                 collisionDetection: true
                 selfCollisionDetection: false
@@ -212,17 +212,17 @@ items:
               data: 
                 modelFile: "${SHARE}/model/WRS2018/DebrisL.body"
                 currentBaseLink: "body"
-                rootPosition: [ 9.01791415, 1.32184046, 0.250018981 ]
+                rootPosition: [ 15.0179141, 1.32184046, 0.250018981 ]
                 rootAttitude: [ 
                   0.260242958, -2.3118086e-09, -0.965543165, 
                   -0.965543165, -2.5600849e-09, -0.260242958, 
                   -1.87024057e-09, 1, -2.89839506e-09 ]
                 jointPositions: [  ]
-                initialRootPosition: [ 9.01791415, 1.32184046, 0.250018981 ]
+                initialRootPosition: [ 15.0179141, 1.32184046, 0.250018981 ]
                 initialRootAttitude: [ 
-                  0.260242958, -2.31180869e-09, -0.965543165, 
-                  -0.965543165, -2.56008481e-09, -0.260242958, 
-                  -1.87024046e-09, 1, -2.89839486e-09 ]
+                  0.260242958, -2.31180874e-09, -0.965543165, 
+                  -0.965543165, -2.56008503e-09, -0.260242958, 
+                  -1.87024057e-09, 1, -2.8983953e-09 ]
                 zmp: [ 0, 0, 0 ]
                 collisionDetection: true
                 selfCollisionDetection: false
@@ -235,13 +235,13 @@ items:
               data: 
                 modelFile: "${SHARE}/model/WRS2018/DebrisM.body"
                 currentBaseLink: "BASE"
-                rootPosition: [ 9.94948414, -1.55283525, 0.177759899 ]
+                rootPosition: [ 15.9494841, -1.55283525, 0.177759899 ]
                 rootAttitude: [ 
                   -0.993341324, -0.0468294996, -0.105261637, 
                   0.04777417, -0.99883721, -0.00646969417, 
                   -0.104836267, -0.0114554019, 0.994423517 ]
                 jointPositions: [  ]
-                initialRootPosition: [ 9.94948414, -1.55283525, 0.177759899 ]
+                initialRootPosition: [ 15.9494841, -1.55283525, 0.177759899 ]
                 initialRootAttitude: [ 
                   -0.993341324, -0.0468294996, -0.105261637, 
                   0.04777417, -0.99883721, -0.00646969417, 
@@ -258,13 +258,13 @@ items:
               data: 
                 modelFile: "${SHARE}/model/WRS2018/DebrisM.body"
                 currentBaseLink: "BASE"
-                rootPosition: [ 8.73217814, 2.18332243, 0.503777543 ]
+                rootPosition: [ 14.7321781, 2.18332243, 0.503777543 ]
                 rootAttitude: [ 
                   0.165945371, 0.934393322, -0.315232063, 
                   -0.807295591, 0.312305183, 0.500738756, 
                   0.566335557, 0.171390176, 0.806157208 ]
                 jointPositions: [  ]
-                initialRootPosition: [ 8.73217814, 2.18332243, 0.503777543 ]
+                initialRootPosition: [ 14.7321781, 2.18332243, 0.503777543 ]
                 initialRootAttitude: [ 
                   0.165945371, 0.934393322, -0.315232063, 
                   -0.807295591, 0.312305183, 0.500738756, 
@@ -281,13 +281,13 @@ items:
               data: 
                 modelFile: "${SHARE}/model/WRS2018/DebrisM.body"
                 currentBaseLink: "BASE"
-                rootPosition: [ 10.5704368, -1.55570997, 0.06811898 ]
+                rootPosition: [ 16.5704368, -1.55570997, 0.06811898 ]
                 rootAttitude: [ 
                   0.383368851, 0.923595325, -3.08148791e-32, 
                   -0.923595325, 0.383368851, 1.84889275e-32, 
                   2.88897518e-32, 2.13723994e-32, 1 ]
                 jointPositions: [  ]
-                initialRootPosition: [ 10.5704368, -1.55570997, 0.06811898 ]
+                initialRootPosition: [ 16.5704368, -1.55570997, 0.06811898 ]
                 initialRootAttitude: [ 
                   0.383368851, 0.923595325, -3.08148791e-32, 
                   -0.923595325, 0.383368851, 1.84889275e-32, 
@@ -304,13 +304,13 @@ items:
               data: 
                 modelFile: "${SHARE}/model/WRS2018/DebrisM.body"
                 currentBaseLink: "BASE"
-                rootPosition: [ 8.41171923, -2.45175724, 0.06811898 ]
+                rootPosition: [ 14.4117192, -2.45175724, 0.06811898 ]
                 rootAttitude: [ 
                   0.383368851, 0.923595325, -3.08148791e-32, 
                   -0.923595325, 0.383368851, 1.84889275e-32, 
                   2.88897518e-32, 2.13723994e-32, 1 ]
                 jointPositions: [  ]
-                initialRootPosition: [ 8.41171923, -2.45175724, 0.06811898 ]
+                initialRootPosition: [ 14.4117192, -2.45175724, 0.06811898 ]
                 initialRootAttitude: [ 
                   0.383368851, 0.923595325, -3.08148791e-32, 
                   -0.923595325, 0.383368851, 1.84889275e-32, 
@@ -327,13 +327,13 @@ items:
               data: 
                 modelFile: "${SHARE}/model/WRS2018/DebrisM.body"
                 currentBaseLink: "BASE"
-                rootPosition: [ 9.23351362, -0.00941166374, 0.360099551 ]
+                rootPosition: [ 15.2335136, -0.00941166374, 0.360099551 ]
                 rootAttitude: [ 
                   -0.0557230537, -0.997704845, -0.0384705524, 
                   0.920168027, -0.0363609894, -0.389831604, 
                   0.387538053, -0.0571219798, 0.920082245 ]
                 jointPositions: [  ]
-                initialRootPosition: [ 9.23351362, -0.00941166374, 0.360099551 ]
+                initialRootPosition: [ 15.2335136, -0.00941166374, 0.360099551 ]
                 initialRootAttitude: [ 
                   -0.0557230537, -0.997704845, -0.0384705524, 
                   0.920168027, -0.0363609894, -0.389831604, 
@@ -350,16 +350,16 @@ items:
               data: 
                 modelFile: "${SHARE}/model/WRS2018/DebrisS.body"
                 currentBaseLink: "BASE"
-                rootPosition: [ 7.91694411, -0.594931463, 0.02001898 ]
+                rootPosition: [ 13.9169441, -0.594931463, 0.02001898 ]
                 rootAttitude: [ 
                   0.853699662, 0.520765673, -3.08148791e-32, 
-                  -0.520765673, 0.853699662, 1.84889275e-32, 
+                  -0.520765673, 0.853699662, 1.84889274e-32, 
                   3.59350506e-32, 2.6334013e-34, 1 ]
                 jointPositions: [  ]
-                initialRootPosition: [ 7.91694411, -0.594931463, 0.02001898 ]
+                initialRootPosition: [ 13.9169441, -0.594931463, 0.02001898 ]
                 initialRootAttitude: [ 
                   0.853699662, 0.520765673, -3.08148791e-32, 
-                  -0.520765673, 0.853699662, 1.84889275e-32, 
+                  -0.520765673, 0.853699662, 1.84889274e-32, 
                   3.59350506e-32, 2.6334013e-34, 1 ]
                 zmp: [ 0, 0, 0 ]
                 collisionDetection: true
@@ -373,17 +373,41 @@ items:
               data: 
                 modelFile: "${SHARE}/model/WRS2018/DebrisS.body"
                 currentBaseLink: "BASE"
-                rootPosition: [ 7.66584411, -1.62263146, 0.02001898 ]
+                rootPosition: [ 13.6658441, -1.62263146, 0.02001898 ]
                 rootAttitude: [ 
                   0.40469107, -0.914453464, -3.08148791e-32, 
                   0.914453464, 0.40469107, 1.84889275e-32, 
                   -4.43675736e-33, -3.56610768e-32, 1 ]
                 jointPositions: [  ]
-                initialRootPosition: [ 7.66584411, -1.62263146, 0.02001898 ]
+                initialRootPosition: [ 13.6658441, -1.62263146, 0.02001898 ]
                 initialRootAttitude: [ 
                   0.40469107, -0.914453464, -3.08148791e-32, 
                   0.914453464, 0.40469107, 1.84889275e-32, 
                   -4.43675736e-33, -3.56610768e-32, 1 ]
+                zmp: [ 0, 0, 0 ]
+                collisionDetection: true
+                selfCollisionDetection: false
+                isEditable: true
+            - 
+              id: 19
+              name: "Car"
+              plugin: Body
+              class: BodyItem
+              data: 
+                modelFile: "${SHARE}/model/WRS2018/CarT4.body"
+                currentBaseLink: "BODY"
+                rootPosition: [ 7.8, -0.1, 0 ]
+                rootAttitude: [ 
+                  -0.866025404, -0.5, 0, 
+                  0.5, -0.866025404, 0, 
+                  0, 0, 1 ]
+                jointPositions: [  0.000000,  0.000000,  0.000000,  0.000000 ]
+                initialRootPosition: [ 7.8, -0.1, 0 ]
+                initialRootAttitude: [ 
+                  -0.866025404, -0.5, 0, 
+                  0.5, -0.866025404, 0, 
+                  0, 0, 1 ]
+                initialJointPositions: [  0.000000,  0.000000,  0.000000,  0.000000 ]
                 zmp: [ 0, 0, 0 ]
                 collisionDetection: true
                 selfCollisionDetection: false
@@ -393,8 +417,9 @@ views:
     id: 1
     plugin: Base
     class: ItemTreeView
+    mounted: true
     state: 
-      checked: [ 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18 ]
+      checked: [ 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 ]
       expanded: [ 1, 10, 11, 13 ]
   - 
     id: 4
@@ -403,4 +428,4 @@ views:
     class: SceneView
     state: 
       dedicatedItemTreeViewChecks: true
-      checked: [ 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18 ]
+      checked: [ 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 ]

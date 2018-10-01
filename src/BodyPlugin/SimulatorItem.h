@@ -135,7 +135,9 @@ public:
 
     void setSelfCollisionEnabled(bool on);
     bool isSelfCollisionEnabled() const ;
-        
+
+    const std::string& controllerOptionString() const;
+    
     /**
        For sub simulators
     */

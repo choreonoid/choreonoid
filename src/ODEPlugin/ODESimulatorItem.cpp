@@ -626,14 +626,14 @@ void ODELink::setTorqueToODE()
 void ODELink::setVelocityToODE()
 {
     if(link->isRotationalJoint()){
-    	dReal v = link->dq();
+    	dReal v = link->dq_target();
     	if(!USE_AMOTOR){
     		dJointSetHingeParam(jointID, dParamVel, v);
         } else {
     		dJointSetAMotorParam(motorID, dParamVel, v);
         }
     } else if(link->isSlideJoint()){
-    	dReal v = link->dq();
+    	dReal v = link->dq_target();
     	dJointSetSliderParam(jointID, dParamVel, v);
     }
 }
@@ -1131,6 +1131,8 @@ void ODESimulatorItemImpl::addBody(ODEBody* odeBody)
         joint->u() = 0.0;
         joint->dq() = 0.0;
         joint->ddq() = 0.0;
+        joint->q_target() = joint->q();
+        joint->dq_target() = joint->dq();
     }
     
     body.clearExternalForces();
@@ -1210,7 +1212,7 @@ static void nearCallback(void* data, dGeomID g1, dGeomID g2)
                         //Vector3 pos(dpos[0], dpos[1], dpos[2]);
                         //Vector3 v = crawlerlink->v + crawlerlink->w.cross(pos-crawlerlink->p);
                         //surface.motion1 = dir.dot(v) + crawlerlink->u;
-                        surface.motion1 = crawlerlink->dq();
+                        surface.motion1 = crawlerlink->dq_target();
                         surface.mu = impl->friction;
                         surface.mu2 = 0.5;
                     }

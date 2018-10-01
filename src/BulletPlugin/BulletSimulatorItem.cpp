@@ -222,7 +222,7 @@ static bool CustomMaterialCombinerCallback(btManifoldPoint& cp, const btCollisio
 
     cp.m_lateralFrictionDir1.setValue(frictionDir1.x(), frictionDir1.y(), frictionDir1.z());
     cp.m_lateralFrictionDir2.setValue(frictionDir2.x(), frictionDir2.y(), frictionDir2.z());
-    cp.m_contactMotion1 = crawlerlink->dq();
+    cp.m_contactMotion1 = crawlerlink->dq_target();
 
 #if 0
     std::cout << frictionDir1.x() << " " << frictionDir1.y() << " " << frictionDir1.z() << std::endl;
@@ -986,14 +986,14 @@ void BulletLink::setVelocityToBullet()
 {
     if(bulletBody->multiBody){
         if(motor)
-            motor->setVelocityTarget(link->dq());
+            motor->setVelocityTarget(link->dq_target());
     }else{
         if(link->isRotationalJoint()){
-            double v = link->dq();
+            double v = link->dq_target();
             ((btHingeConstraint*)joint)->enableAngularMotor(true, v, numeric_limits<double>::max());
 
         } else if(link->isSlideJoint()){
-            double v = link->dq();
+            double v = link->dq_target();
             ((btGeneric6DofConstraint*)joint)->getTranslationalLimitMotor()->m_enableMotor[2] = true;
             ((btGeneric6DofConstraint*)joint)->getTranslationalLimitMotor()->m_targetVelocity[2] = v;
             ((btGeneric6DofConstraint*)joint)->getTranslationalLimitMotor()->m_maxMotorForce[2] =  numeric_limits<double>::max();
@@ -1455,6 +1455,8 @@ void BulletSimulatorItemImpl::addBody(BulletBody* bulletBody, short group)
         joint->u() = 0.0;
         joint->dq() = 0.0;
         joint->ddq() = 0.0;
+        joint->q_target() = joint->q();
+        joint->dq_target() = joint->dq();
     }
     
     body->clearExternalForces();

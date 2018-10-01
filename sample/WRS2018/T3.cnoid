@@ -148,7 +148,7 @@ items:
               plugin: Body
               class: BodyItem
               data: 
-                modelFile: "${SHARE}/model/WRS2018/Car.body"
+                modelFile: "${SHARE}/model/WRS2018/CarT2.body"
                 currentBaseLink: "BODY"
                 rootPosition: [ 10, 1.4, 0 ]
                 rootAttitude: [ 
@@ -174,29 +174,6 @@ items:
               data: 
                 modelFile: "${SHARE}/model/WRS2018/Flag1L.body"
                 currentBaseLink: "BASE"
-                rootPosition: [ 3, -1.5, 0 ]
-                rootAttitude: [ 
-                  1, 0, 0, 
-                  0, 1, 0, 
-                  0, 0, 1 ]
-                jointPositions: [  ]
-                initialRootPosition: [ 3, -1.5, 0 ]
-                initialRootAttitude: [ 
-                  1, 0, 0, 
-                  0, 1, 0, 
-                  0, 0, 1 ]
-                zmp: [ 0, 0, 0 ]
-                collisionDetection: true
-                selfCollisionDetection: false
-                isEditable: false
-            - 
-              id: 10
-              name: "Flag1R"
-              plugin: Body
-              class: BodyItem
-              data: 
-                modelFile: "${SHARE}/model/WRS2018/Flag1R.body"
-                currentBaseLink: "BASE"
                 rootPosition: [ 3, 1.5, 0 ]
                 rootAttitude: [ 
                   1, 0, 0, 
@@ -213,6 +190,29 @@ items:
                 selfCollisionDetection: false
                 isEditable: false
             - 
+              id: 10
+              name: "Flag1R"
+              plugin: Body
+              class: BodyItem
+              data: 
+                modelFile: "${SHARE}/model/WRS2018/Flag1R.body"
+                currentBaseLink: "BASE"
+                rootPosition: [ 3, -1.5, 0 ]
+                rootAttitude: [ 
+                  1, 0, 0, 
+                  0, 1, 0, 
+                  0, 0, 1 ]
+                jointPositions: [  ]
+                initialRootPosition: [ 3, -1.5, 0 ]
+                initialRootAttitude: [ 
+                  1, 0, 0, 
+                  0, 1, 0, 
+                  0, 0, 1 ]
+                zmp: [ 0, 0, 0 ]
+                collisionDetection: true
+                selfCollisionDetection: false
+                isEditable: false
+            - 
               id: 11
               name: "Flag2L"
               plugin: Body
@@ -220,13 +220,13 @@ items:
               data: 
                 modelFile: "${SHARE}/model/WRS2018/Flag2L.body"
                 currentBaseLink: "BASE"
-                rootPosition: [ 18, -1.5, 0 ]
+                rootPosition: [ 18, 1.5, 0 ]
                 rootAttitude: [ 
                   1, 0, 0, 
                   0, 1, 0, 
                   0, 0, 1 ]
                 jointPositions: [  ]
-                initialRootPosition: [ 18, -1.5, 0 ]
+                initialRootPosition: [ 18, 1.5, 0 ]
                 initialRootAttitude: [ 
                   1, 0, 0, 
                   0, 1, 0, 
@@ -243,13 +243,13 @@ items:
               data: 
                 modelFile: "${SHARE}/model/WRS2018/Flag2R.body"
                 currentBaseLink: "BASE"
-                rootPosition: [ 18, 1.5, 0 ]
+                rootPosition: [ 18, -1.5, 0 ]
                 rootAttitude: [ 
                   1, 0, 0, 
                   0, 1, 0, 
                   0, 0, 1 ]
                 jointPositions: [  ]
-                initialRootPosition: [ 18, 1.5, 0 ]
+                initialRootPosition: [ 18, -1.5, 0 ]
                 initialRootAttitude: [ 
                   1, 0, 0, 
                   0, 1, 0, 

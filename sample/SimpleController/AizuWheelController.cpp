@@ -99,8 +99,8 @@ bool AizuWheelController::control()
     switch(actuationMode){
 
     case Link::JOINT_VELOCITY:
-        wheels[0]->dq() = dq_L;
-        wheels[1]->dq() = dq_R;
+        wheels[0]->dq_target() = dq_L;
+        wheels[1]->dq_target() = dq_R;
         break;
 
     case Link::JOINT_TORQUE:

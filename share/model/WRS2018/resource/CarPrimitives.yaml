@@ -374,7 +374,7 @@ CAR_BODY: &CAR_BODY
           name: rear center1
           translation: [ -0.511, 0.0, 0.205]
           geometry: { type: Box, size: [ 1.018, 1.14, 0.41 ] }
-        -
+        - #center
           type: Shape 
           name: rear center2
           translation: [ -1.05, 0.0, 0.04]
@@ -633,18 +633,7 @@ CAR_BODY: &CAR_BODY
           translation: [0.968, 0.44, 0.322]
           rotation: [ [ 0, 0, 1, 17], [ 0, 1, 0, 21 ] ]
           geometry: { type: Box, size: [ 0.26, 0.4, 0.1 ] }
-        - #center
-          type: Shape
-          name: front center6
-          translation: [ 0.56, 0.0, 0.14 ]
-          geometry: { type: Box, size: [ 1.0, 1.12, 0.28 ] }
-        -
-          type: Shape
-          name: front center7
-          translation: [ 0.44, 0.0, 0.34 ]
-          rotation: [ 0, 1, 0, 10 ]
-          geometry: { type: Box, size: [ 0.8, 1.12, 0.27 ] }
-        - 
+        -  #center
           type: Shape 
           name: front center8
           translation: [ 0.48, 0.0, 0.477]
@@ -773,6 +762,7 @@ CAR_BODY: &CAR_BODY
           translation: [0.78, 0.695, 0.33]
           rotation: [ 0, 0, 1, -20] 
           geometry: { type: Box, size: [ 0.45, 0.10, 0.04 ] }
+
     -
       type: Transform
       translation: [ 0.0, 0.001, 0.4]
@@ -799,6 +789,72 @@ CAR_BODY: &CAR_BODY
           translation: [ 0.84, -0.705, 0.439 ]
           rotation: [ [ 0, 1, 0 , 58 ], [ 0, 0, 1, -25 ] ]
           geometry: { type: Box, size: [ 0.2, 0.198, 0.01] }
+        - #left
+          type: Shape
+          name: inside front left1
+          translation: [ 0.923, 0.729, -0.008 ]
+          rotation: [ 0, 1, 0, 12 ]
+          geometry: { type: Box, size: [ 0.2, 0.18, 0.2 ] }
+        -
+          type: Shape 
+          name: inside front left2
+          translation: [ 0.94, 0.735, 0.22 ]
+          geometry: { type: Box, size: [ 0.2, 0.198, 0.34 ] }
+        -
+          type: Shape 
+          name: inside front left3
+          translation: [ 0.94, 0.715, 0.44 ]
+          geometry: { type: Box, size: [ 0.2, 0.198, 0.1] }
+        -
+          type: Shape 
+          name: inside front left4
+          translation: [ 0.84, 0.705, 0.439 ]
+          rotation: [ [ 0, 1, 0 , 58 ], [ 0, 0, 1, 25 ] ]
+          geometry: { type: Box, size: [ 0.2, 0.198, 0.01] }
+    -
+      type: Transform
+      translation: [ -0.38, 0.76, 0.28 ]
+      elements: # rib left
+        - &RIB_SHAPE1
+          type: Shape
+          name: rib left1
+          translation: [ -0.007, 0, 0.345 ]
+          rotation: [ [ 0, 1, 0, -13.5 ], [ 1, 0, 0, 4.5 ] ]
+          geometry: { type: Box, size: [ 0.068, 0.05, 0.74]  }
+        - &RIB_SHAPE2
+          type: Shape
+          name: rib left2
+          translation: [ -0.118, -0.118, 0.852 ]
+          rotation: [ [ 0, 1, 0, -10 ], [ 1, 0, 0, 29 ] ]
+          geometry: { type: Box, size: [ 0.068, 0.05, 0.38]  }
+    -
+      type: Transform
+      translation: [ -0.4, -0.758, 0.28 ]
+      elements: # rib right
+        -
+          <<: *RIB_SHAPE1
+          name: rib right1
+          rotation: [ [ 0, 1, 0, -13.5 ], [ 1, 0, 0, -4.5 ] ]
+        -
+          <<: *RIB_SHAPE2
+          name: rib right2
+          translation: [ -0.118, 0.118, 0.852 ]
+          rotation: [ [ 0, 1, 0, -10 ], [ 1, 0, 0, -29 ] ]
+
+CAR_INTERIOR: &CAR_INTERIOR
+    -
+      type: Transform
+      translation: [ 1.0, 0.001, 0.4]
+      elements: #front
+        - #center
+          type: Shape
+          name: front center6
+          translation: [ 0.56, 0.0, 0.14 ]
+          geometry: { type: Box, size: [ 1.0, 1.12, 0.28 ] }
+    -
+      type: Transform
+      translation: [ 0.0, 0.001, 0.4]
+      elements: #inside front
         - #right foot
           type: Shape
           name: inside front right foot1
@@ -898,28 +954,6 @@ CAR_BODY: &CAR_BODY
           name: inside front right up11
           translation: [ 0.657, -0.67, 0.405]
           geometry: { type: Cylinder, radius: 0.08, height: 0.04 }
-        - #left
-          type: Shape
-          name: inside front left1
-          translation: [ 0.923, 0.729, -0.008 ]
-          rotation: [ 0, 1, 0, 12 ]
-          geometry: { type: Box, size: [ 0.2, 0.18, 0.2 ] }
-        -
-          type: Shape 
-          name: inside front left2
-          translation: [ 0.94, 0.735, 0.22 ]
-          geometry: { type: Box, size: [ 0.2, 0.198, 0.34 ] }
-        -
-          type: Shape 
-          name: inside front left3
-          translation: [ 0.94, 0.715, 0.44 ]
-          geometry: { type: Box, size: [ 0.2, 0.198, 0.1] }
-        -
-          type: Shape 
-          name: inside front left4
-          translation: [ 0.84, 0.705, 0.439 ]
-          rotation: [ [ 0, 1, 0 , 58 ], [ 0, 0, 1, 25 ] ]
-          geometry: { type: Box, size: [ 0.2, 0.198, 0.01] }
         - #left foot
           type: Shape
           name: inside front left foot1
@@ -1200,56 +1234,11 @@ CAR_BODY: &CAR_BODY
           name: right sheet7
           translation: [ -0.247, -0.0096, 0.747]
           geometry: { type: Box, size: [ 0.081, 0.278, 0.16] }
-    -
-      type: Shape  #tire rf
-      translation: [ 1.376, -0.72, 0.345 ]
-      geometry: &TIRE_GEOMETRY
-        { type: Cylinder, radius: 0.344, height: 0.24 }
-    -
-      type: Shape  #tire lf
-      translation: [ 1.376, 0.72, 0.345 ]
-      geometry: *TIRE_GEOMETRY
-    -
-      type: Shape  #tire rr
-      translation: [ -1.323, -0.72, 0.345 ]
-      geometry: *TIRE_GEOMETRY
-    -
-      type: Shape  #tire lr
-      translation: [ -1.323, 0.72, 0.345 ]
-      geometry: *TIRE_GEOMETRY
-    -
-      type: Transform
-      translation: [ -0.38, 0.76, 0.28 ]
-      elements: # rib left
-        - &RIB_SHAPE1
-          type: Shape
-          name: rib left1
-          translation: [ -0.007, 0, 0.345 ]
-          rotation: [ [ 0, 1, 0, -13.5 ], [ 1, 0, 0, 4.5 ] ]
-          geometry: { type: Box, size: [ 0.068, 0.05, 0.74]  }
-        - &RIB_SHAPE2
-          type: Shape
-          name: rib left2
-          translation: [ -0.118, -0.118, 0.852 ]
-          rotation: [ [ 0, 1, 0, -10 ], [ 1, 0, 0, 29 ] ]
-          geometry: { type: Box, size: [ 0.068, 0.05, 0.38]  }
-    -
-      type: Transform
-      translation: [ -0.4, -0.758, 0.28 ]
-      elements: # rib right
-        -
-          <<: *RIB_SHAPE1
-          name: rib right1
-          rotation: [ [ 0, 1, 0, -13.5 ], [ 1, 0, 0, -4.5 ] ]
-        -
-          <<: *RIB_SHAPE2
-          name: rib right2
-          translation: [ -0.118, 0.118, 0.852 ]
-          rotation: [ [ 0, 1, 0, -10 ], [ 1, 0, 0, -29 ] ]
+  
           
 CAR_STEERING: &CAR_STEERING
   type: Transform
-  rotation: [ 0, 1, 0, 16 ]
+  rotation: [ 0, 1, 0, 16.2 ]
   elements:
     - # pillar
       type: Shape
@@ -2647,6 +2636,92 @@ CAR_DOOR_BL: &CAR_DOOR_BL
       translation: [ -0.03, -0.184, 0.945 ]
       rotation: [ [ 1, 0, 0, 29 ], [ 0, 1, 0, -10 ] ]
       geometry: { type: Box, size: [ 0.23, 0.01, 0.2] }
+
+CAR_WHEEL: &CAR_WHEEL
+  -
+    type: Shape
+    geometry: { type: Cylinder, radius: 0.342, height: 0.24 }
+    appearance:
+      material:
+        ambientIntensity: 0.05
+        diffuseColor: [ 0.1, 0.1, 0.1 ]
+        shininess: 0.1
+        specularColor: [ 0.1, 0.1, 0.1 ]
+  -
+    type: Visual
+    shape:
+      geometry: { type: Cylinder, radius: 0.24, height: 0.244 }
+      appearance:
+        material:
+          ambientIntensity: 0.2
+          diffuseColor: [ 0.8, 0.8, 0.8 ]
+          shininess: 0.5
+          specularColor: [ 0.5, 0.5, 0.5 ]
+
+CAR_NORMAL_ROOF: &CAR_NORMAL_ROOF
+  type: Transform
+  translation: [ -0.3, 0.001, 0.9 ]
+  elements:  # roof
+    - 
+      type: Shape
+      name: roof right1
+      translation: [ 0.495, -0.45, 0.421 ]
+      rotation: [ [ 0, 1, 0, 13], [ 1, 0, 0, 9 ] ]
+      geometry: { type: Box, size: [ 0.13, 0.11, 0.015 ] }
+    -
+      type: Shape
+      name: roof right2
+      translation: [ 0.289, -0.45, 0.449 ]
+      rotation: [ [ 0, 1, 0, 5], [ 1, 0, 0, 9 ] ] 
+      geometry: { type: Box, size: [ 0.3, 0.11, 0.015 ] }
+    -
+      type: Shape
+      name: roof right3
+      translation: [ -0.06, -0.45, 0.462 ]
+      rotation: [ 1, 0, 0, 9 ]
+      geometry: { type: Box, size: [ 0.4, 0.11, 0.015 ] }
+    -
+      type: Shape
+      name: roof right5
+      translation: [ 0.49, -0.541, 0.387 ]
+      rotation: [ [ 0, 1, 0, 13], [ 1, 0, 0, 34 ] ]
+      geometry: { type: Box, size: [ 0.12, 0.1, 0.015 ] }
+    -
+      type: Shape
+      name: roof right6
+      translation: [ 0.289, -0.54, 0.416 ]
+      rotation: [ [ 0, 1, 0, 5], [ 1, 0, 0, 33 ] ] 
+      geometry: { type: Box, size: [ 0.3, 0.09, 0.015 ] }
+    -
+      type: Shape
+      name: roof right7
+      translation: [ -0.06, -0.54, 0.43 ]
+      rotation: [ 1, 0, 0, 33 ]
+      geometry: { type: Box, size: [ 0.404, 0.09, 0.015 ] }
+    -
+      type: Shape
+      name: roof center1
+      translation: [ 0.50, 0, 0.429 ]
+      rotation: [ 0, 1, 0, 13]
+      geometry: { type: Box, size: [ 0.14, 0.8, 0.015 ] }
+    -
+      type: Shape
+      name: roof center2
+      translation: [ 0.289, 0, 0.457 ]
+      rotation: [ 0, 1, 0, 5]
+      geometry: { type: Box, size: [ 0.3, 0.8, 0.015 ] }
+    -
+      type: Shape
+      name: roof center3
+      translation: [ -0.06, 0, 0.47 ]
+      geometry: { type: Box, size: [ 0.4, 0.8, 0.015 ] }
+    -
+      type: Shape
+      name: roof center4
+      translation: [ -0.39, 0, 0.453 ]
+      rotation: [ 0, 1, 0, -7]
+      geometry: { type: Box, size: [ 0.27, 0.8, 0.015 ] }
+  
 
 CAR_DAMAGED_ROOF: &CAR_DAMAGED_ROOF
   type: Transform

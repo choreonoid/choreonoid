@@ -86,6 +86,9 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
     void setPointSize(float size);
     void setLineWidth(float width);
 
+    virtual void setBackFaceCullingMode(int mode) override;
+    virtual int backFaceCullingMode() const override;
+
   protected:
     virtual void doRender() override;
     virtual bool doPick(int x, int y) override;

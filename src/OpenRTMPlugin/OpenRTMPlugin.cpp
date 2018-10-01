@@ -16,7 +16,7 @@
 #include "RTMImageView.h"
 #include "RTSystemItem.h"
 #include "RTSCommonUtil.h"
-#include "VisionSensorSubscriberRTCItem.h"
+#include "BodyStateSubscriberRTCItem.h"
 #include "deprecated/BodyRTCItem.h"
 #include "deprecated/ChoreonoidExecutionContext.h"
 #include "deprecated/ChoreonoidPeriodicExecutionContext.h"
@@ -237,7 +237,7 @@ public:
         RTSConfigurationView::initializeClass(this);
         RTMImageView::initializeClass(this);
 
-        VisionSensorSubscriberRTCItem::initializeClass(this);
+        BodyStateSubscriberRTCItem::initializeClass(this);
         PointCloudSubscriberRTCItem::initializeClass(this);
 
         RTSystemExtItem::initializeClass(this);

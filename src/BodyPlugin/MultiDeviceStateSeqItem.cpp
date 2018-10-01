@@ -18,7 +18,12 @@ namespace {
 AbstractSeqItem* createMultiDeviceStateSeqItem(AbstractSeqPtr seq)
 {
     MultiDeviceStateSeqPtr dseq = dynamic_pointer_cast<MultiDeviceStateSeq>(seq);
-    return dseq ? new MultiDeviceStateSeqItem(dseq) : 0;
+    if(dseq){
+        auto item = new MultiDeviceStateSeqItem(dseq);
+        item->setName("Devices");
+        return item;
+    }
+    return nullptr;
 }
 
 

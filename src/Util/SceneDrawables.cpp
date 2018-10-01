@@ -170,6 +170,17 @@ SgTexture::SgTexture(const SgTexture& org, SgCloneMap& cloneMap)
 }
 
 
+SgTexture::~SgTexture()
+{
+    if(image_){
+        image_->removeParent(this);
+    }
+    if(textureTransform_){
+        textureTransform_->removeParent(this);
+    }
+}    
+
+
 SgObject* SgTexture::clone(SgCloneMap& cloneMap) const
 {
     return new SgTexture(*this, cloneMap);
@@ -264,6 +275,23 @@ SgMeshBase::SgMeshBase(const SgMeshBase& org, SgCloneMap& cloneMap)
     isSolid_ = org.isSolid_;
     bbox = org.bbox;
 }
+
+
+SgMeshBase::~SgMeshBase()
+{
+    if(vertices_){
+        vertices_->removeParent(this);
+    }
+    if(normals_){
+        normals_->removeParent(this);
+    }
+    if(colors_){
+        colors_->removeParent(this);
+    }
+    if(texCoords_){
+        texCoords_->removeParent(this);
+    }
+}    
 
     
 int SgMeshBase::numChildObjects() const
@@ -564,6 +592,20 @@ SgShape::SgShape(const SgShape& org, SgCloneMap& cloneMap)
 }
 
 
+SgShape::~SgShape()
+{
+    if(mesh_){
+        mesh_->removeParent(this);
+    }
+    if(material_){
+        material_->removeParent(this);
+    }
+    if(texture_){
+        texture_->removeParent(this);
+    }
+}    
+
+
 SgObject* SgShape::clone(SgCloneMap& cloneMap) const
 {
     return new SgShape(*this, cloneMap);
@@ -696,6 +738,22 @@ SgPlot::SgPlot(const SgPlot& org, SgCloneMap& cloneMap)
     bbox = org.bbox;
 }
 
+SgPlot::~SgPlot()
+{
+    if(vertices_){
+        vertices_->removeParent(this);
+    }
+    if(normals_){
+        normals_->removeParent(this);
+    }
+    if(colors_){
+        colors_->removeParent(this);
+    }
+    if(material_){
+        material_->removeParent(this);
+    }
+}    
+
 
 int SgPlot::numChildObjects() const
 {
@@ -733,6 +791,23 @@ void SgPlot::updateBoundingBox()
         }
         bbox = bboxf;
     }
+}
+
+
+void SgPlot::clear()
+{
+    if(vertices_){
+        vertices_->clear();
+    }
+    if(normals_){
+        normals_->clear();
+    }
+    normalIndices_.clear();
+    
+    if(colors_){
+        colors_->clear();
+    }
+    colorIndices_.clear();
 }
 
 

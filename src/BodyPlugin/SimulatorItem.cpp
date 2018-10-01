@@ -570,6 +570,9 @@ bool SimulationBodyImpl::initialize(SimulatorItemImpl* simImpl, BodyItem* bodyIt
     controllers.clear();
     resultItemPrefix = simImpl->self->name() + "-" + bodyItem->name();
 
+    body_->setCurrentTimeFunction([this](){ return this->simImpl->currentTime(); });
+    body_->initializeState();
+
     isDynamic = !body_->isStaticModel();
     bool doReset = simImpl->doReset && isDynamic;
     extractAssociatedItems(doReset);
@@ -716,13 +719,24 @@ void SimulationBodyImpl::initializeResultBuffers()
         deviceStateBuf.clear();
         prevFlushedDeviceStateInDirectMode.clear();
     } else {
+        /**
+           Temporary code to avoid a bug in storing device states by reserving sufficient buffer size.
+           The original bug is in Deque2D's resize operation.
+        */
+        deviceStateBuf.resize(100, numDevices); 
+        
         // This buf always has the first element to keep unchanged states
         deviceStateBuf.resize(1, numDevices); 
         prevFlushedDeviceStateInDirectMode.resize(numDevices);
         for(size_t i=0; i < devices.size(); ++i){
             deviceStateConnections.add(
                 devices[i]->sigStateChanged().connect(
-                    [this, i](){ deviceStateChangeFlag[i] = true; }));
+                    [this, i](){
+                        /** \note This must be thread safe
+                            if notifyStateChange is called from several threads.
+                        */
+                        deviceStateChangeFlag[i] = true;
+                    }));
         }
     }
 }
@@ -760,10 +774,9 @@ void SimulationBodyImpl::initializeResultItems()
     const int numDevices = deviceStateBuf.colSize();
     if(numDevices == 0 || !simImpl->isDeviceStateOutputEnabled){
         clearMultiDeviceStateSeq(*motion);
-
     } else {
         deviceStateResults = getOrCreateMultiDeviceStateSeq(*motion);
-        deviceStateResults->setNumParts(numDevices);
+        deviceStateResults->initialize(body_->devices());
     }
 }
 
@@ -1298,6 +1311,12 @@ bool SimulatorItem::isSelfCollisionEnabled() const
 }
 
 
+const std::string& SimulatorItem::controllerOptionString() const
+{
+    return impl->controllerOptionString_;
+}
+
+
 /*
   Extract body items, controller items which are not associated with (not under) a body item,
   and simulation script items which are not under another simulator item
@@ -1613,7 +1632,7 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
                 if(ready){
                     ++iter;
                 } else {
-                    controller->setSimulatorItem(0);
+                    controller->setSimulatorItem(nullptr);
                     string message = controller->getMessage();
                     if(!message.empty()){
                         mv->putln(message);
@@ -2243,7 +2262,7 @@ void SimulatorItemImpl::onSimulationLoopStopped()
         for(size_t j=0; j < controllers.size(); ++j){
             ControllerItem* controller = controllers[j];
             controller->stop();
-            controller->setSimulatorItem(0);
+            controller->setSimulatorItem(nullptr);
         }
     }
     self->finalizeSimulation();

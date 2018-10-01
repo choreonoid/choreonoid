@@ -385,7 +385,7 @@ void SceneBarImpl::onSceneRendererCamerasChanged()
         targetRenderer->getSimplifiedCameraPathStrings(i, pathStrings);
         string label;
         if(pathStrings.empty()){
-            label = str(boost::format(_("Camera %1%")) % i);
+            label = str(boost::format("Camera %1%") % i);
         } else if(pathStrings.size() == 1){
             label = pathStrings.front();
         } else {

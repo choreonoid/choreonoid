@@ -11,6 +11,7 @@
 #include "InteractiveCameraTransform.h"
 #include "MainWindow.h"
 #include "Buttons.h"
+#include "ButtonGroup.h"
 #include "CheckBox.h"
 #include "ToolBar.h"
 #include "Dialog.h"
@@ -99,6 +100,9 @@ public:
     DoubleSpinBox zFarSpin;
     CheckBox lightingCheck;
     CheckBox smoothShadingCheck;
+    Selection cullingMode;
+    ButtonGroup cullingModeGroup;
+    RadioButton cullingRadios[GLSceneRenderer::N_CULLING_MODES];
     CheckBox headLightCheck;
     DoubleSpinBox headLightIntensitySpin;
     CheckBox headLightFromBackCheck;
@@ -2884,7 +2888,8 @@ void SceneWidgetImpl::activateSystemNode(SgNode* node, bool on)
 
 
 ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
-    : sceneWidgetImpl(impl)
+    : sceneWidgetImpl(impl),
+      cullingMode(GLSceneRenderer::N_CULLING_MODES, CNOID_GETTEXT_DOMAIN_NAME)
 {
     setWindowTitle(_("Scene Config"));
 
@@ -2904,10 +2909,7 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
         [=](int value){ impl->onFieldOfViewChanged(radian(value)); });
     hbox->addWidget(&fieldOfViewSpin);
     hbox->addWidget(new QLabel("[deg]"));
-    hbox->addStretch();
-    vbox->addLayout(hbox);
-
-    hbox = new QHBoxLayout();
+    hbox->addSpacing(8);
     hbox->addWidget(new QLabel(_("Clipping depth")));
     hbox->addSpacing(8);
     hbox->addWidget(new QLabel(_("Near")));
@@ -2938,6 +2940,30 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     smoothShadingCheck.setChecked(true);
     smoothShadingCheck.sigToggled().connect([=](bool on){ impl->onSmoothShadingToggled(on); });
     hbox->addWidget(&smoothShadingCheck);
+    hbox->addStretch();
+    vbox->addLayout(hbox);
+
+    hbox = new QHBoxLayout();
+    hbox->addWidget(new QLabel(_("Back face culling mode: ")));
+    auto renderer = sceneWidgetImpl->renderer;
+    cullingMode.setSymbol(GLSceneRenderer::ENABLE_BACK_FACE_CULLING, "enabled");
+    cullingMode.setSymbol(GLSceneRenderer::DISABLE_BACK_FACE_CULLING, "disabled");
+    cullingMode.setSymbol(GLSceneRenderer::FORCE_BACK_FACE_CULLING, "forced");
+    cullingMode.select(renderer->backFaceCullingMode());
+    cullingRadios[GLSceneRenderer::ENABLE_BACK_FACE_CULLING].setText(_("Enabled"));
+    cullingRadios[GLSceneRenderer::DISABLE_BACK_FACE_CULLING].setText(_("Disabled"));
+    cullingRadios[GLSceneRenderer::FORCE_BACK_FACE_CULLING].setText(_("Forced"));
+    for(int i=0; i < cullingMode.size(); ++i){
+        cullingModeGroup.addButton(&cullingRadios[i], i);
+        hbox->addWidget(&cullingRadios[i]);
+    }
+    cullingRadios[cullingMode.which()].setChecked(true);
+    cullingModeGroup.sigButtonClicked().connect(
+        [&, renderer](int mode){
+            cullingMode.select(mode);
+            renderer->setBackFaceCullingMode(mode);
+            sceneWidgetImpl->update();
+        });
     hbox->addStretch();
     vbox->addLayout(hbox);
     
@@ -2982,10 +3008,8 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     worldLightAmbientSpin.setValue(0.3);
     worldLightAmbientSpin.sigValueChanged().connect([&](double){ updateDefaultLightsLater(); });
     hbox->addWidget(&worldLightAmbientSpin);
-    hbox->addStretch();
-    vbox->addLayout(hbox);
-    
-    hbox = new QHBoxLayout();
+
+    hbox->addSpacing(8);
     additionalLightsCheck.setText(_("Additional lights"));
     additionalLightsCheck.setChecked(true);
     additionalLightsCheck.sigToggled().connect([&](bool){ updateDefaultLightsLater(); });
@@ -3006,10 +3030,7 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
         shadow.lightSpin.sigValueChanged().connect([&](double){ updateDefaultLightsLater(); });
         hbox->addWidget(&shadow.lightSpin);
     }
-    hbox->addStretch();
-    vbox->addLayout(hbox);
-    
-    hbox = new QHBoxLayout();
+
     shadowAntiAliasingCheck.setText(_("Anti-aliasing of shadows"));
     shadowAntiAliasingCheck.setChecked(true);
     shadowAntiAliasingCheck.sigToggled().connect([&](bool){ updateDefaultLightsLater(); });
@@ -3022,8 +3043,14 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     fogCheck.setChecked(true);
     fogCheck.sigToggled().connect([&](bool){ updateDefaultLightsLater(); });
     hbox->addWidget(&fogCheck);
+
+    textureCheck.setText(_("Texture"));
+    textureCheck.setChecked(true);
+    textureCheck.sigToggled().connect([=](bool on){ impl->onTextureToggled(on); });
+    hbox->addWidget(&textureCheck);
     hbox->addStretch();
     vbox->addLayout(hbox);
+    
     
     vbox->addLayout(new HSeparatorBox(new QLabel(_("Background"))));
     hbox = new QHBoxLayout();
@@ -3072,13 +3099,6 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     gridCheck[FLOOR_GRID].blockSignals(false);
 
     vbox->addWidget(new HSeparator());
-    hbox = new QHBoxLayout();
-    textureCheck.setText(_("Texture"));
-    textureCheck.setChecked(true);
-    textureCheck.sigToggled().connect([=](bool on){ impl->onTextureToggled(on); });
-    hbox->addWidget(&textureCheck);
-    hbox->addStretch();
-    vbox->addLayout(hbox);
 
     hbox = new QHBoxLayout();
     defaultColorButton.setText(_("Default color"));
@@ -3185,8 +3205,8 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     vbox->addLayout(hbox);
 
     topVBox->addLayout(vbox);
-
     topVBox->addWidget(new HSeparator());
+
     QPushButton* okButton = new QPushButton(_("&Ok"));
     okButton->setDefault(true);
     QDialogButtonBox* buttonBox = new QDialogButtonBox(this);
@@ -3218,6 +3238,7 @@ void ConfigDialog::updateBuiltinCameraConfig()
 
 void ConfigDialog::storeState(Archive& archive)
 {
+    archive.write("cullingMode", cullingMode.selectedSymbol());
     archive.write("defaultHeadLight", headLightCheck.isChecked());
     archive.write("defaultHeadLightIntensity", headLightIntensitySpin.value());
     archive.write("headLightLightingFromBack", headLightFromBackCheck.isChecked());
@@ -3262,6 +3283,14 @@ void ConfigDialog::storeState(Archive& archive)
 
 void ConfigDialog::restoreState(const Archive& archive)
 {
+    string symbol;
+    if(archive.read("cullingMode", symbol)){
+        if(cullingMode.select(symbol)){
+            cullingRadios[cullingMode.which()].setChecked(true);
+            sceneWidgetImpl->renderer->setBackFaceCullingMode(cullingMode.which());
+        }
+    }
+    
     headLightCheck.setChecked(archive.get("defaultHeadLight", headLightCheck.isChecked()));
     headLightIntensitySpin.setValue(archive.get("defaultHeadLightIntensity", headLightIntensitySpin.value()));
     headLightFromBackCheck.setChecked(archive.get("headLightLightingFromBack", headLightFromBackCheck.isChecked()));

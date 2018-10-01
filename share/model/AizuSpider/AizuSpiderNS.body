@@ -176,3 +176,25 @@ links:
     jointAxis: [ 0, 1, 0 ]
     actuationMode: jointSurfaceVelocity
     elements: { <<: *COMMON_RESOURCE, node: SUB_BELT, rotation: [ 0, 0, 1, 180.0 ] }
+
+# TODO: Share the following information with other AizuSpider models
+collisionDetection:
+  excludeTreeDepth: 1
+  excludeLinkGroups:
+    -
+      name: ChassisGroup
+      links: [
+        CHASSIS, R_TRACK, L_TRACK,
+        FR_FLIPPER, FL_FLIPPER, BR_FLIPPER, BL_FLIPPER ]
+    -
+      name: FrontSubTrackGroup
+      links: [
+        CHASSIS, R_TRACK, L_TRACK,
+        FR_FLIPPER, FL_FLIPPER, BR_FLIPPER, BL_FLIPPER,
+        FR_SUB_TRACK, FL_SUB_TRACK ]
+    -
+      name: BackSubTrackGroup
+      links: [
+        CHASSIS, R_TRACK, L_TRACK,
+        FR_FLIPPER, FL_FLIPPER, BR_FLIPPER, BL_FLIPPER,
+        BR_SUB_TRACK, BL_SUB_TRACK ]

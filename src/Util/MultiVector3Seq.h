@@ -26,15 +26,14 @@ public:
     MultiVector3Seq(int numFrames, int numParts = 1);
     MultiVector3Seq(const MultiVector3Seq& org);
     virtual ~MultiVector3Seq();
-
     using BaseSeqType::operator=;
     virtual AbstractSeqPtr cloneSeq() const override;
     void copySeqProperties(const MultiVector3Seq& source);
-        
+
 protected:
     virtual Vector3 defaultValue() const override;
     virtual bool doReadSeq(const Mapping* archive, std::ostream& os) override;
-    virtual bool doWriteSeq(YAMLWriter& writer) override;
+    virtual bool doWriteSeq(YAMLWriter& writer, std::function<void()> additionalPartCallback) override;
 };
 
 typedef MultiVector3Seq::Ptr MultiVector3SeqPtr;

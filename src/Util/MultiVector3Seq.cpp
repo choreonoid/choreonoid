@@ -74,29 +74,30 @@ bool MultiVector3Seq::doReadSeq(const Mapping* archive, std::ostream& os)
 }
 
 
-bool MultiVector3Seq::doWriteSeq(YAMLWriter& writer)
+bool MultiVector3Seq::doWriteSeq(YAMLWriter& writer, std::function<void()> additionalPartCallback)
 {
-    if(!writeSeqHeaders(writer)){
-        return false;
-    }
+    return BaseSeqType::doWriteSeq(
+        writer,
+        [&](){
+            if(additionalPartCallback) additionalPartCallback();
 
-    writer.putKey("frames");
-    writer.startListing();
-    const int m = numParts();
-    const int n = numFrames();
-    for(int i=0; i < n; ++i){
-        Frame f = frame(i);
-        writer.startFlowStyleListing();
-        for(int j=0; j < m; ++j){
-            writer.startFlowStyleListing();
-            const Vector3& p = f[j];
-            writer.putScalar(p.x());
-            writer.putScalar(p.y());
-            writer.putScalar(p.z());
+            writer.putKey("frames");
+            writer.startListing();
+            const int n = numFrames();
+            const int m = numParts();
+            for(int i=0; i < n; ++i){
+                Frame f = frame(i);
+                writer.startFlowStyleListing();
+                for(int j=0; j < m; ++j){
+                    writer.startFlowStyleListing();
+                    const Vector3& p = f[j];
+                    writer.putScalar(p.x());
+                    writer.putScalar(p.y());
+                    writer.putScalar(p.z());
+                    writer.endListing();
+                }
+                writer.endListing();
+            }
             writer.endListing();
-        }
-        writer.endListing();
-    }
-    writer.endListing();
-    return true;
+        });
 }

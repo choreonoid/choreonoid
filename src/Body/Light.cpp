@@ -39,6 +39,18 @@ void Light::forEachActualType(std::function<bool(const std::type_info& type)> fu
 }
 
 
+bool Light::on() const
+{
+    return on_;
+}
+
+
+void Light::on(bool on)
+{
+    on_ = on;
+}
+
+
 int Light::lightStateSize()
 {
     return 5;

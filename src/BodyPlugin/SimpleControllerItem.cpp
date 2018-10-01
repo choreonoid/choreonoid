@@ -66,6 +66,8 @@ public:
     vector<bool> outputLinkFlags;
     vector<unsigned short> outputLinkIndices;
 
+    bool isOldTargetVariableMode;
+
     ConnectionSet outputDeviceStateConnections;
     boost::dynamic_bitset<> outputDeviceStateChangeFlag;
 
@@ -164,6 +166,7 @@ SimpleControllerItemImpl::SimpleControllerItemImpl(SimpleControllerItem* self)
     controller = nullptr;
     ioBody = nullptr;
     io = nullptr;
+    isOldTargetVariableMode = false;
     mv = MessageView::instance();
     doReloading = false;
 
@@ -193,6 +196,7 @@ SimpleControllerItemImpl::SimpleControllerItemImpl(SimpleControllerItem* self, c
     controller = nullptr;
     ioBody = nullptr;
     io = nullptr;
+    isOldTargetVariableMode = org.isOldTargetVariableMode;
     mv = MessageView::instance();
     doReloading = org.doReloading;
 }
@@ -411,6 +415,7 @@ bool SimpleControllerItem::initialize(ControllerIO* io)
 {
     if(impl->initialize(io, new SharedInfo)){
         impl->updateInputEnabledDevices();
+        output();
         return true;
     }
     return false;
@@ -455,6 +460,7 @@ SimpleController* SimpleControllerItemImpl::initialize(ControllerIO* io, SharedI
             }
         }
     }
+
     updateIOStateTypes();
 
     return controller;
@@ -508,15 +514,7 @@ void SimpleControllerItemImpl::updateIOStateTypes()
 std::string SimpleControllerItemImpl::optionString() const
 {
     if(io){
-        const std::string& opt1 = io->optionString();
-        const std::string& opt2 = self->optionString();
-        if(!opt1.empty()){
-            if(opt2.empty()){
-                return opt1;
-            } else {
-                return opt1 + " " + opt2;
-            }
-        }
+        return getIntegratedOptionString(io->optionString(), self->optionString());
     }
     return self->optionString();
 }
@@ -535,21 +533,21 @@ Body* SimpleControllerItemImpl::body()
 }
 
 
-double SimpleControllerItem::timeStep() const
+double SimpleControllerItemImpl::timeStep() const
 {
-    return impl->io ? impl->io->timeStep() : 0.0;
+    return io ? io->timeStep() : 0.0;
 }
 
 
-double SimpleControllerItemImpl::timeStep() const
+double SimpleControllerItem::timeStep() const
 {
-    return io->timeStep();
+    return impl->timeStep();
 }
 
 
 double SimpleControllerItemImpl::currentTime() const
 {
-    return io->currentTime();
+    return io ? io->currentTime() : 0.0;
 }
 
 
@@ -580,12 +578,12 @@ void SimpleControllerItemImpl::enableInput(Link* link)
 
     case Link::JOINT_EFFORT:
     case Link::JOINT_SURFACE_VELOCITY:
-        defaultInputStateTypes = SimpleControllerIO::JOINT_ANGLE;
+        defaultInputStateTypes = SimpleControllerIO::JOINT_DISPLACEMENT;
         break;
 
     case Link::JOINT_DISPLACEMENT:
     case Link::JOINT_VELOCITY:
-        defaultInputStateTypes = SimpleControllerIO::JOINT_ANGLE | SimpleControllerIO::JOINT_TORQUE;
+        defaultInputStateTypes = SimpleControllerIO::JOINT_DISPLACEMENT | SimpleControllerIO::JOINT_EFFORT;
         break;
 
     case Link::LINK_POSITION:
@@ -828,12 +826,19 @@ void SimpleControllerItemImpl::output()
             simLink->u() = ioLink->u();
             break;
         case Link::JOINT_DISPLACEMENT:
-            simLink->q() = ioLink->q();
+            if(isOldTargetVariableMode){
+                simLink->q_target() = ioLink->q();
+            } else {
+                simLink->q_target() = ioLink->q_target();
+            }
             break;
         case Link::JOINT_VELOCITY:
         case Link::JOINT_SURFACE_VELOCITY:
-            simLink->dq() = ioLink->dq();
-            simLink->dq() = ioLink->dq();
+            if(isOldTargetVariableMode){
+                simLink->dq_target() = ioLink->dq();
+            } else {
+                simLink->dq_target() = ioLink->dq_target();
+            }
             break;
         case Link::LINK_POSITION:
             simLink->T() = ioLink->T();
@@ -910,6 +915,8 @@ void SimpleControllerItemImpl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("Base directory"), baseDirectoryType, changeProperty(baseDirectoryType));
 
     putProperty(_("Reloading"), doReloading, [&](bool on){ return onReloadingChanged(on); });
+
+    putProperty(_("Old target value variable mode"), isOldTargetVariableMode, changeProperty(isOldTargetVariableMode));
 }
 
 
@@ -927,6 +934,7 @@ bool SimpleControllerItemImpl::store(Archive& archive)
     archive.writeRelocatablePath("controller", controllerModuleName);
     archive.write("baseDirectory", baseDirectoryType.selectedSymbol(), DOUBLE_QUOTED);
     archive.write("reloading", doReloading);
+    archive.write("isOldTargetVariableMode", isOldTargetVariableMode);
     return true;
 }
 
@@ -956,6 +964,8 @@ bool SimpleControllerItemImpl::restore(const Archive& archive)
             loadController();
         }
     }
+
+    archive.read("isOldTargetVariableMode", isOldTargetVariableMode);
 
     return true;
 }

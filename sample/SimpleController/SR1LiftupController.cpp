@@ -255,7 +255,7 @@ public:
         if(actuationMode == Link::JOINT_VELOCITY){
             for(int i=0; i < ioBody->numJoints(); ++i){
                 Link* joint = ioBody->joint(i);
-                joint->dq() = (qref[i] - joint->q()) / timeStep;
+                joint->dq_target() = (qref[i] - joint->q()) / timeStep;
             }
         }
 

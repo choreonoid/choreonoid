@@ -42,7 +42,7 @@ public:
     virtual SgNode* getScene() override;
 
     void setMaterialTableFile(const std::string& filename);
-    MaterialTable* materialTable();
+    MaterialTable* materialTable(bool checkFileUpdate = true);
 
     //! \deprecated
     ItemList<BodyItem> collisionBodyItems() const { return coldetBodyItems(); }

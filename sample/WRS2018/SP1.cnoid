@@ -348,7 +348,7 @@ items:
               plugin: Body
               class: BodyItem
               data: 
-                modelFile: "${SHARE}/model/WRS2018/Car.body"
+                modelFile: "${SHARE}/model/WRS2018/CarT2.body"
                 currentBaseLink: "BODY"
                 rootPosition: [ 33.4180639, -2.83452943, 0.062662571 ]
                 rootAttitude: [ 

@@ -114,8 +114,14 @@ ImageViewImpl::~ImageViewImpl()
 
 void ImageViewImpl::updateImage()
 {
-    if(imageProvider)
-        imageWidget->setImage( *imageProvider->getImage() );
+    if(imageProvider){
+        auto image = imageProvider->getImage();
+        if(image){
+            imageWidget->setImage(*imageProvider->getImage());
+            return;
+        }
+    }
+    imageWidget->clear();
 }
 
 

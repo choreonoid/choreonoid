@@ -95,7 +95,7 @@ items:
                 module: "JoystickRTC"
                 baseDirectory: "RTC directory"
                 instanceName: ""
-                executionContext: "PeriodicExecutionContext"
+                executionContext: "SimulationPeriodicExecutionContext"
                 periodicRate: 30
             - 
               id: 8
@@ -115,7 +115,7 @@ items:
                     class: RangeSensorVisualizer
                     name: VLP-16
                     renderingMode: Point
-                    pointSize: 0
+                    pointSize: 2
                     voxelSize: 0.01
                     isEditable: false
                   - 
@@ -205,6 +205,8 @@ items:
             format: RTS-PROFILE-XML
             AutoConnection: true
             PollingCycle: 500
+            StateCheck: Polling
+            CheckAtLoading: true
 views: 
   - 
     id: 0
@@ -217,7 +219,6 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      selected: [ 10 ]
       checked: [ 1, 2, [ 8, "Kinect" ], [ 8, "VLP-16" ] ]
       expanded: [ 1, 2, 8, 10 ]
   - 
@@ -235,6 +236,7 @@ views:
       viewpointControlMode: thirdPerson
       collisionLines: false
       polygonMode: fill
+      cullingMode: enabled
       defaultHeadLight: true
       defaultHeadLightIntensity: 0.4
       headLightLightingFromBack: false
@@ -350,8 +352,10 @@ views:
     class: RTSNameServerView
     mounted: true
     state: 
-      host: localhost
-      port: 2809
+      NameServers: 
+        - 
+          host: "localhost"
+          port: 2809
   - 
     id: 12
     name: "RTC Properties"
@@ -458,12 +462,12 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 369, 1545 ]
+      sizes: [ 459, 1920 ]
       children: 
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 531, 529 ]
+          sizes: [ 754, 751 ]
           children: 
             - 
               type: pane
@@ -476,17 +480,17 @@ viewAreas:
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 774, 286 ]
+          sizes: [ 1099, 406 ]
           children: 
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 770, 769 ]
+              sizes: [ 1015, 899 ]
               children: 
                 - 
                   type: splitter
                   orientation: vertical
-                  sizes: [ 374, 394 ]
+                  sizes: [ 532, 561 ]
                   children: 
                     - 
                       type: pane
@@ -503,7 +507,7 @@ viewAreas:
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 770, 769 ]
+              sizes: [ 958, 956 ]
               children: 
                 - 
                   type: pane

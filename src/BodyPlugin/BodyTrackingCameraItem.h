@@ -23,6 +23,7 @@ public:
 
     BodyTrackingCameraItem();
     BodyTrackingCameraItem(const BodyTrackingCameraItem& org);
+    ~BodyTrackingCameraItem();
 
     virtual void setName(const std::string& name);
     virtual SgNode* getScene();

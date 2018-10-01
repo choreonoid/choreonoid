@@ -73,7 +73,7 @@ vec3 calcDiffuseAndSpecularElements(LightInfo light, vec3 diffuseColor)
         vec3 s = normalize(vec3(light.position));
         vec3 v = normalize(vec3(-position));
         vec3 n = normalize(normal);
-        if(dot(position, n) > 0.0){
+        if(!gl_FrontFacing){
             n = -n;
         }
         vec3 r = reflect(-s, n);
@@ -105,7 +105,7 @@ vec3 calcDiffuseAndSpecularElements(LightInfo light, vec3 diffuseColor)
         
         vec3 v = normalize(vec3(-position));
         vec3 n = normalize(normal);
-        if(dot(position, n) > 0.0){
+        if(!gl_FrontFacing){
             n = -n;
         }
         vec3 r = reflect(-s, n);

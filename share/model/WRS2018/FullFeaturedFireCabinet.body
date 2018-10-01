@@ -13,14 +13,14 @@ links:
     name: HOSE_ROOT
     parent: HOSE_REEL
     jointType: fixed
-    translation: [ -0.0835, -0.311, 0.22 ]
+    translation: [ -0.088, -0.311, 0.22 ]
     density: 1.0
     elements:
       -
         type: AGXWireDevice
         isOptional: true
         radius: 0.02
-        resolutionPerUnitLength: 1
+        resolutionPerUnitLength: 5
         collision: true
         selfCollision: true
         materialName: Wire
@@ -29,7 +29,7 @@ links:
             position: [ 0, 0.23, 0 ]
             normal: [ 0, 0, 1 ]
             pulledInLength: 100
-            haulForceRange: [ -50, 50 ]
+            haulForceRange: [ -30, 30 ]
         Nodes:
           -
             type: free
@@ -53,27 +53,45 @@ links:
             position: [ 0, -0.23, -0.05 ]
           -
             type: link
-            linkName: HOSE_ADAPTER
-            position: [ 0, 0, 0]
+            linkName: HOSE_CONNECTOR
+            position: [ 0, 0, 0.095 ]
             twistStiffness: 1e8
             bendStiffness: 1e8
             superBendReplacedWithBend: true
   -
-    name: HOSE_ADAPTER
+    type: SubBody
+    uri: "HoseConnector.body"
     parent: HOSE_ROOT
-    translation: [ 0, -0.23, -0.05 ]
+    rotation: [ [ 0, 1, 0, 90 ], [ 1, 0, 0, 90 ] ]
+    translation: [ 0, -0.23, -0.125 ]
     jointType: free
-    density: 1.0
+
+  -
+    type: SubBody
+    uri: "HoseNozzle.body"
+    parent: BASE
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 0.07, -0.27, 0.81 ]
+    jointType: free
+    jointIdOffset: 4
     elements:
       -
-        name: Attachment
-        type: Shape
-        geometry: { type: Sphere, radius: 0.024 }
-        appearance: &red { material: { diffuseColor: [ 1.0, 0, 0 ] }}
-      -
-        name: Nozzle
-        translation: [ 0, 0, -0.075 ]
-        type: Shape
-        rotation: [ 1, 0, 0, -90 ]
-        geometry: { type: Cylinder, radius: 0.016, height: 0.15 }
-        appearance: *red
+        type: AGXMagneticJointDevice
+        isOptional: true
+        link1Name: HOSE_NOZZLE
+        link2Name: HOSE_CONNECTOR
+        position1: [ 0, 0, 0 ]
+        position2: [ 0.08, 0, 0 ]
+        connectAxis1: [ 1, 0, 0 ]
+        connectAxis2: [ 1, 0, 0 ]
+        jointCompliance: 1e-8
+        jointSpookDamping: 0.33
+        validDistance: 0.02
+        validAngle: 10
+
+collisionDetection:
+  excludeTreeDepth: 1
+  excludeLinkGroups:
+    - links: [ BASE, BASE_BOTTOM, BASE_TOP, BASE_LEFT, BASE_RIGHT, LOCK, DOOR, VALVE_BASE, VALVE, NOZZLE_STAND ]
+    - links: [ HOSE_REEL, BASE, BASE_BOTTOM, BASE_TOP, BASE_LEFT, BASE_RIGHT, LOCK, VALVE_BASE, VALVE, NOZZLE_STAND ]
+    - links: [ KNOB, BASE, BASE_BOTTOM, BASE_TOP, BASE_LEFT, BASE_RIGHT, DOOR, VALVE_BASE, VALVE, NOZZLE_STAND ]

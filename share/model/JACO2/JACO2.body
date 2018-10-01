@@ -71,13 +71,10 @@ links:
     parent: BASE
     translation: [ 0, 0, 0.1565 ]
     jointType: revolute
+    jointId: 0
     jointAxis: [ 0, 0, -1 ]
     jointRange: [ -10000, 10000 ]
-    jointLockCompliance: 0.00096963
-    jointLockSpookDamping: 0.1
-    jointLockForceRange: [ -18.0, 18.0 ]
     jointVelocityRange: [ -42.0, 42.0 ]
-    jointId: 0
     centerOfMass: [ 0, -0.002, 0.0605 ]
     mass: 0.7477
     inertia: [
@@ -86,6 +83,13 @@ links:
       0,        0,        0.000598
     ]
     rotorInertia: 0.2
+    # AGX parameters
+    #jointMotorForceRange: [ -18.0, 18.0 ]
+    #jointLockForceRange: [ -18.0, 18.0 ]
+    #jointLockCompliance: 0.00096963
+    #jointLockSpookDamping: 0.1
+    jointMotorForceRange: [ -40.0, 40.0 ]
+    jointLockForceRange: [ -40.0, 40.0 ]
     elements:
       -
         type: Visual
@@ -121,14 +125,11 @@ links:
     parent: SHOULDER
     translation: [ 0, 0.0015, 0.119 ]
     jointType: revolute
-    jointAxis: [ 0, -1, 0 ]
-    jointRange: [ 50, 310 ]
-    jointAngle: 180
-    jointLockCompliance: 0.00047171
-    jointLockSpookDamping: 0.1
-    jointLockForceRange: [ -37.0, 37.0 ]
-    jointVelocityRange: [ -56.4, 56.4 ]
     jointId: 1
+    jointAxis: [ 0, -1, 0 ]
+    jointAngle: 180
+    jointRange: [ 50, 310 ]
+    jointVelocityRange: [ -56.4, 56.4 ]
     centerOfMass: [ 0, 0.01, -0.02065 ]
     mass: 0.99
     inertia: [
@@ -137,6 +138,11 @@ links:
       0,        0,        0.000792
     ]
     rotorInertia: 0.2
+    # AGX parameters
+    jointMotorForceRange: [ -37.0, 37.0 ]
+    jointLockForceRange: [ -37.0, 37.0 ]
+    #jointLockCompliance: 0.00047171
+    #jointLockSpookDamping: 0.1
     elements:
       -
         type: Visual
@@ -171,14 +177,11 @@ links:
     parent: ARM
     translation: [ 0, 0, -0.410 ]
     jointType: revolute
-    jointAxis: [ 0, 1, 0 ]
-    jointRange: [ 19, 341 ]
-    jointAngle: 180
-    jointLockCompliance: 0.00096963
-    jointLockSpookDamping: 0.1
-    jointLockForceRange: [ -18.0, 18.0 ]
-    jointVelocityRange: [ -42.0, 42.0 ]
     jointId: 2
+    jointAxis: [ 0, 1, 0 ]
+    jointAngle: 180
+    jointRange: [ 19, 341 ]
+    jointVelocityRange: [ -42.0, 42.0 ]
     centerOfMass: [ 0, -0.0086, 0.081 ]
     mass: 0.6763
     inertia: [
@@ -187,6 +190,13 @@ links:
       0,       0,       0.000304
     ]
     rotorInertia: 0.1
+    # AGX parameters
+    #jointMotorForceRange: [ -18.0, 18.0 ]
+    #jointLockForceRange: [ -18.0, 18.0 ]
+    #jointLockCompliance: 0.00096963
+    #jointLockSpookDamping: 0.1
+    jointMotorForceRange: [ -30.0, 30.0 ]
+    jointLockForceRange: [ -30.0, 30.0 ]
     elements:
       -
         type: Visual
@@ -221,14 +231,18 @@ links:
     parent: FOREARM
     translation: [ 0, -0.01125, 0.207 ]
     jointType: revolute
+    jointId: 3
     jointAxis: [ 0, 0, -1 ]
     jointRange: [ -10000, 10000 ]
-    jointLockCompliance: 0.00256666
-    jointLockSpookDamping: 0.1
-    jointLockForceRange: [ -6.8, 6.8 ]
     jointVelocityRange: [ -90.0, 90.0 ]
-    jointId: 3
     rotorInertia: 0.05
+    # AGX parameters
+    #jointMotorForceRange: [ -6.8, 6.8 ]
+    #jointLockForceRange: [ -6.8, 6.8 ]
+    #jointLockCompliance: 0.00256666
+    #jointLockSpookDamping: 0.1
+    jointMotorForceRange: [ -15, 15 ]
+    jointLockForceRange: [ -15, 15 ]
     elements: &WRIST_elements
       RigidBody:
         centerOfMass: [ 0, 0.037, 0.0642 ]
@@ -279,14 +293,18 @@ links:
     translation: [ 0, 0.03725, 0.06401 ]
     rotation: [ [ -1, 0, 0, 60 ], [ 0, 0, 1, 180 ] ]
     jointType: revolute
+    jointId: 4
     jointAxis: [ 0, 0, -1 ]
     jointRange: [ -10000, 10000 ]
-    jointLockCompliance: 0.00256666
-    jointLockSpookDamping: 0.1
-    jointLockForceRange: [ -6.8, 6.8 ]
     jointVelocityRange: [ -90.0, 90.0 ]
-    jointId: 4
     rotorInertia: 0.05
+    # AGX parameters
+    #jointMotorForceRange: [ -6.8, 6.8 ]
+    #jointLockForceRange: [ -6.8, 6.8 ]
+    #jointLockCompliance: 0.00256666
+    #jointLockSpookDamping: 0.1
+    jointMotorForceRange: [ -15, 15 ]
+    jointLockForceRange: [ -15, 15 ]
     elements: *WRIST_elements
   -
     name: HAND
@@ -294,13 +312,10 @@ links:
     translation: [ 0, 0.03725, 0.06401 ]
     rotation: [ [ -1, 0, 0, 60 ], [ 0, 0, 1, 90 ] ]
     jointType: revolute
+    jointId: 5
     jointAxis: [ 0, 0, -1 ]
     jointRange: [ -10000, 10000 ]
-    jointLockCompliance: 0.00256666
-    jointLockSpookDamping: 0.1
-    jointLockForceRange: [ -6.8, 6.8 ]
     jointVelocityRange: [ -90.0, 90.0 ]
-    jointId: 5
     centerOfMass: [ 0, 0, 0.06 ]
     mass: 0.727
     inertia: [
@@ -309,6 +324,13 @@ links:
       0,           0,           0.000582
     ]
     rotorInertia: 0.05
+    # AGX parameters
+    #jointMotorForceRange: [ -6.8, 6.8 ]
+    #jointLockForceRange: [ -6.8, 6.8 ]
+    #jointLockCompliance: 0.00256666
+    #jointLockSpookDamping: 0.1
+    jointMotorForceRange: [ -10, 10 ]
+    jointLockForceRange: [ -10, 10 ]
     elements:
       -
         type: Visual
@@ -416,16 +438,20 @@ links:
     translation: [ 0.03116, 0, 0.11498 ]
     rotation: [ [ 0, 0, 1, 180 ], [ 0, -1, 0, 55 ] ]
     jointType: revolute
-    jointAxis: [ 0, 1, 0 ]
-    jointRange: [ 0, 115 ]
-    jointAngle: 55
-    jointLockCompliance: 0.636318
-    jointLockSpookDamping: 0.1
-    jointLockForceRange: [ -0.96, 0.96 ]
-    jointVelocityRange: [ -95.0, 95.0 ]
     jointId: 6
+    jointAxis: [ 0, 1, 0 ]
+    jointAngle: 55
+    jointRange: [ 0, 115 ]
+    jointVelocityRange: [ -95.0, 95.0 ]
     rotorInertia: 0.005
     material: Hand
+    # AGX parameters
+    #jointMotorForceRange: [ -0.96, 0.96 ]
+    #jointLockForceRange: [ -0.96, 0.96 ]
+    #jointLockCompliance: 0.636318
+    #jointLockSpookDamping: 0.1
+    jointMotorForceRange: [ -10, 10 ]
+    jointLockForceRange: [ -10, 10 ]
     elements: &FINGER_elements
       RigidBody:
         centerOfMass: [ 0, 0, 0.022 ]
@@ -433,8 +459,7 @@ links:
         inertia: [
           0.000000789997, 0,          0,
           0,              0.00000008, 0,
-          0,              0,          0.000000789997
-        ]
+          0,              0,          0.000000789997 ]
         elements:
           -
             type: Visual
@@ -451,14 +476,9 @@ links:
                 geometry: { type: Cylinder, height: 0.0225, radius: 0.00425 }
               -
                 type: Shape
-                translation: [ -0.00204, 0, 0.00112 ]
-                rotation: [ 0, -1, 0, 13.29 ]
-                geometry: { type: Box, size: [ 0.012, 0.0225, 0.007 ] }
-              -
-                type: Shape
-                translation: [ -0.00403, 0, 0.00749 ]
-                rotation: [ 0, -1, 0, 20.92 ]
-                geometry: { type: Box, size: [ 0.012, 0.0225, 0.008 ] }
+                translation: [ -0.0016, 0, 0.0025 ]
+                rotation: [ 0, -1, 0, 15 ]
+                geometry: { type: Box, size: [ 0.01, 0.0225, 0.012 ] }
               -
                 type: Shape
                 translation: [ -0.00509, 0, 0.01452 ]
@@ -466,14 +486,9 @@ links:
                 geometry: { type: Box, size: [ 0.012, 0.0225, 0.014 ] }
               -
                 type: Shape
-                translation: [ -0.00537, 0, 0.02663 ]
-                rotation: [ 0, 1, 0, 7.35 ]
-                geometry: { type: Box, size: [ 0.012, 0.0225, 0.016 ] }
-              -
-                type: Shape
-                translation: [ -0.00393, 0, 0.03943 ]
-                rotation: [ 0, 1, 0, 5.04 ]
-                geometry: { type: Box, size: [ 0.012, 0.0225, 0.01024 ] }
+                translation: [ -0.0049, 0, 0.0295 ]
+                rotation: [ 0, 1, 0, 6 ]
+                geometry: { type: Box, size: [ 0.012, 0.0225, 0.03 ] }
               -
                 type: Shape
                 translation: [ -0.00417, 0, 0.04404 ]
@@ -509,8 +524,7 @@ links:
         inertia: [
           0.000000789997, 0,          0,
           0,              0.00000008, 0,
-          0,              0,          0.000000789997
-        ]
+          0,              0,          0.000000789997 ]
         elements:
           -
             type: Visual
@@ -523,42 +537,14 @@ links:
             elements:
               -
                 type: Shape
-                translation: [ -0.00984, 0, -0.00468 ]
-                geometry: { type: Cylinder, height: 0.020, radius: 0.00476 }
+                translation: [ -0.0044, 0, -0.0028 ]
+                rotation: [ 0, 1, 0, 0 ]
+                geometry: { type: Box, size: [ 0.0182, 0.015, 0.0122 ] }
               -
                 type: Shape
-                translation: [ -0.00581, 0, -0.00257 ]
-                rotation: [ 0, 1, 0, 78.33 ]
-                geometry: { type: Box, size: [ 0.012, 0.020, 0.00939 ] }
-              -
-                type: Shape
-                translation: [ -0.00037, 0, -0.00137 ]
-                rotation: [ 0, 1, 0, 74.36 ]
-                geometry: { type: Box, size: [ 0.012, 0.020, 0.00260 ] }
-              -
-                type: Shape
-                translation: [ -0.00051, 0, -0.00144 ]
-                rotation: [ 0, 1, 0, 48.01 ]
-                geometry: { type: Box, size: [ 0.012, 0.020, 0.00269 ] }
-              -
-                type: Shape
-                translation: [ -0.00121, 0, -0.00216 ]
-                rotation: [ 0, 1, 0, 6.63 ]
-                geometry: { type: Box, size: [ 0.012, 0.020, 0.00433 ] }
-              -
-                type: Shape
-                translation: [ -0.001, 0, 0.00105 ]
-                geometry: { type: Box, size: [ 0.012, 0.020, 0.00350 ] }
-              -
-                type: Shape
-                translation: [ -0.00113, 0, 0.00404 ]
-                rotation: [ 0, -1, 0, 4.90 ]
-                geometry: { type: Box, size: [ 0.012, 0.020, 0.00351 ] }
-              -
-                type: Shape
-                translation: [ -0.003, 0, 0.01380 ]
+                translation: [ -0.0025, 0, 0.0123 ]
                 rotation: [ 0, -1, 0, 18.05 ]
-                geometry: { type: Box, size: [ 0.010, 0.020, 0.01904 ] }
+                geometry: { type: Box, size: [ 0.010, 0.020, 0.0225 ] }
               -
                 type: Shape
                 translation: [ -0.00525, 0, 0.02545 ]
@@ -576,34 +562,34 @@ links:
                 geometry: { type: Box, size: [ 0.004, 0.020, 0.01455 ] }
               -
                 type: Shape
-                translation: [ -0.00718, 0, 0.03432 ]
+                translation: [ -0.00715, 0, 0.03432 ]
                 rotation: [ 0, 1, 0, 7.36 ]
-                geometry: { type: Box, size: [ 0.00427, 0.020, 0.01596 ] }
+                geometry: { type: Box, size: [ 0.0043, 0.020, 0.01596 ] }
               -
                 type: Shape
                 translation: [ -0.00795, 0, 0.01117 ]
                 rotation: [ 0, 1, 0, 7.86 ]
                 geometry: { type: Box, size: [ 0.00889, 0.020, 0.03286 ] }
-              -
-                type: Shape
-                translation: [ -0.00614, 0, 0.02729 ]
-                geometry: { type: Box, size: [ 0.006, 0.020, 0.010 ] }
   -
     name: FINGER2
     parent: HAND
     translation: [ -0.02982, 0.02277, 0.1139 ]
     rotation: [ [ 0, 0, -1, 10.6 ], [ 0, -1, 0, 55 ] ]
     jointType: revolute
-    jointAxis: [ 0, 1, 0 ]
-    jointRange: [ 0, 115 ]
-    jointAngle: 55
-    jointLockCompliance: 0.636318
-    jointLockSpookDamping: 0.1
-    jointLockForceRange: [ -0.96, 0.96 ]
-    jointVelocityRange: [ -95.0, 95.0 ]
     jointId: 7
+    jointAxis: [ 0, 1, 0 ]
+    jointAngle: 55
+    jointRange: [ 0, 115 ]
+    jointVelocityRange: [ -95.0, 95.0 ]
     rotorInertia: 0.005
     material: Hand
+    # AGX parameters
+    #jointMotorForceRange: [ -0.96, 0.96 ]
+    #jointLockForceRange: [ -0.96, 0.96 ]
+    #jointLockCompliance: 0.636318
+    #jointLockSpookDamping: 0.1
+    jointMotorForceRange: [ -10, 10 ]
+    jointLockForceRange: [ -10, 10 ]
     elements: *FINGER_elements
   -
     name: FINGER2_TIP
@@ -622,15 +608,19 @@ links:
     rotation: [ [ 0, 0, 1, 10.6 ], [ 0, -1, 0, 55 ] ]
     jointType: revolute
     jointAxis: [ 0, 1, 0 ]
-    jointRange: [ 0, 115 ]
-    jointAngle: 55
-    jointLockCompliance: 0.636318
-    jointLockSpookDamping: 0.1
-    jointLockForceRange: [ -0.96, 0.96 ]
-    jointVelocityRange: [ -95.0, 95.0 ]
     jointId: 8
+    jointAngle: 55
+    jointRange: [ 0, 115 ]
     rotorInertia: 0.005
     material: Hand
+    # AGX parameters
+    #jointMotorForceRange: [ -0.96, 0.96 ]
+    #jointLockForceRange: [ -0.96, 0.96 ]
+    #jointLockCompliance: 0.636318
+    #jointLockSpookDamping: 0.1
+    jointMotorForceRange: [ -10, 10 ]
+    jointLockForceRange: [ -10, 10 ]
+    jointVelocityRange: [ -95.0, 95.0 ]
     elements: *FINGER_elements
   -
     name: FINGER3_TIP
@@ -657,3 +647,15 @@ standardPose: [
 
 collisionDetection:
   excludeTreeDepth: 1
+  excludeLinkGroups:
+    -
+      name: ShoulderGroup
+      links: [ BASE, SHOULDER, ARM ]
+    -
+      name: ForeArmGroup
+      links: [ FOREARM, WRIST1, WRIST2, HAND ]
+    -
+      name: FingerGroup
+      links: [ FINGER1, FINGER2, FINGER3 ]
+  
+  excludeLinksWireCollision: [ FINGER1, FINGER1_TIP, FINGER2, FINGER2_TIP, FINGER3, FINGER3_TIP ]

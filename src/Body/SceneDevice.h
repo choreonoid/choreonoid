@@ -25,9 +25,16 @@ public:
     // for integrating new device types
     typedef std::function<SceneDevice*(Device* device)> SceneDeviceFactory;
     template<class DeviceType>
-    static void registerSceneDeviceFactory(const SceneDeviceFactory& factory) {
+    static void registerSceneDeviceFactory(const SceneDeviceFactory& factory){
         registerSceneDeviceFactory_(typeid(DeviceType), factory);
     }
+
+    template<class DeviceType>
+    struct FactoryRegistration {
+        FactoryRegistration(const SceneDeviceFactory& factory){
+            registerSceneDeviceFactory_(typeid(DeviceType), factory);
+        }
+    };
 
     static SceneDevice* create(Device* device);
 

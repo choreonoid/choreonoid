@@ -21,7 +21,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 namespace filesystem = boost::filesystem;
 
@@ -134,8 +133,10 @@ void MultiPointSetItem::initializeClass(ExtensionManager* ext)
         im.addCreationPanel<MultiPointSetItem>();
         im.addLoaderAndSaver<MultiPointSetItem>(
             _("Multi Point Sets"), "MULTI-PCD-SET", "yaml",
-            std::bind(&MultiPointSetItemImpl::loadItem, _1, _2),
-            std::bind(&MultiPointSetItemImpl::saveItem, _1, _2),
+            [](MultiPointSetItem* item, const std::string& filename, std::ostream& os, Item*){
+                return MultiPointSetItemImpl::loadItem(item, filename); },
+            [](MultiPointSetItem* item, const std::string& filename, std::ostream& os, Item*){
+                return MultiPointSetItemImpl::saveItem(item, filename); },
             ItemManager::PRIORITY_DEFAULT);
         initialized = true;
     }
@@ -181,10 +182,11 @@ void MultiPointSetItemImpl::initialize()
 
     itemSelectionChangedConnection.reset(
         ItemTreeView::instance()->sigSelectionChanged().connect(
-            std::bind(&MultiPointSetItemImpl::onItemSelectionChanged, this, _1)));
+            [&](const ItemList<PointSetItem>& items){ onItemSelectionChanged(items); }));
+
     subTreeChangedConnection.reset(
         self->sigSubTreeChanged().connect(
-            std::bind(&MultiPointSetItemImpl::onSubTreeChanged, this)));
+            [&](){ onSubTreeChanged(); }));
 
     isAutoSaveMode = false;
 }    
@@ -263,7 +265,7 @@ void MultiPointSetItemImpl::onSubTreeChanged()
             info->index = i;
             info->pointSetUpdateConnection.reset(
                 item->pointSet()->sigUpdated().connect(
-                    std::bind(&MultiPointSetItemImpl::onPointSetUpdated, this, item)));
+                    [&, item](const SgUpdate&){ onPointSetUpdated(item); }));
             itemInfoMap.insert(ItemInfoMap::value_type(item, info));
 
             sigPointSetItemAdded(i);
@@ -515,16 +517,15 @@ void MultiPointSetItem::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("Directory"), "");
     putProperty(_("Num point sets"), numPointSetItems());
     putProperty(_("Rendering mode"), impl->renderingMode,
-                std::bind(&MultiPointSetItemImpl::onRenderingModePropertyChanged, impl, _1));
+                [&](int mode){ return impl->onRenderingModePropertyChanged(mode); });
     putProperty.decimals(1).min(0.0)(_("Point size"), pointSize(),
-                                     std::bind(&MultiPointSetItem::setPointSize, this, _1), true);
+                                     [&](double size){ setPointSize(size); return true; });
     putProperty.decimals(4)(_("Voxel size"), voxelSize(),
-                            std::bind(&MultiPointSetItem::setVoxelSize, this, _1), true);
+                            [&](double size){ setVoxelSize(size); return true; });
     putProperty(_("Top translation"), str(Vector3(topOffsetTransform().translation())),
-                std::bind(&MultiPointSetItemImpl::onTopTranslationPropertyChanged, impl, _1));
+                [&](const string& value){ return impl->onTopTranslationPropertyChanged(value); });
     Vector3 rpy(TO_DEGREE * rpyFromRot(topOffsetTransform().linear()));
-    putProperty("Top RPY", str(rpy), std::bind(&MultiPointSetItemImpl::onTopRotationPropertyChanged, impl, _1));
-    
+    putProperty("Top RPY", str(rpy), [&](const string& value){ return impl->onTopRotationPropertyChanged(value); });
 }
 
 
@@ -607,9 +608,9 @@ SceneMultiPointSet::SceneMultiPointSet(MultiPointSetItemImpl* multiPointSetItem)
     regionMarker = new RectRegionMarker;
     regionMarker->setEditModeCursor(QCursor(QPixmap(":/Base/icons/eraser-cursor.png"), 3, 2));
     regionMarker->sigRegionFixed().connect(
-        std::bind(&SceneMultiPointSet::onRegionFixed, this, _1));
+        [&](const PolyhedralRegion& region){ onRegionFixed(region); });
     regionMarker->sigContextMenuRequest().connect(
-        std::bind(&SceneMultiPointSet::onContextMenuRequestInEraserMode, this, _1, _2));
+        [&](const SceneWidgetEvent& event, MenuManager& manager){ onContextMenuRequestInEraserMode(event, manager); });
     isEditable = true;
 }
 
@@ -723,12 +724,13 @@ bool SceneMultiPointSet::onPointerMoveEvent(const SceneWidgetEvent&)
 void SceneMultiPointSet::onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager)
 {
     menuManager.addItem(_("PointSet: Clear Attention Points"))->sigTriggered().connect(
-        std::bind(&SceneMultiPointSet::clearAttentionPoints, this, true));
+        [&](){ clearAttentionPoints(true); });
 
     if(!regionMarker->isEditing()){
+        SceneWidget* sceneWidget = event.sceneWidget();
         eraserModeMenuItemConnection.reset(
             menuManager.addItem(_("PointSet: Start Eraser Mode"))->sigTriggered().connect(
-                std::bind(&RectRegionMarker::startEditing, regionMarker.get(), event.sceneWidget())));
+                [&, sceneWidget](){ regionMarker->startEditing(sceneWidget); }));
     }
 }
 
@@ -737,7 +739,7 @@ void SceneMultiPointSet::onContextMenuRequestInEraserMode(const SceneWidgetEvent
 {
     eraserModeMenuItemConnection.reset(
         menuManager.addItem(_("PointSet: Exit Eraser Mode"))->sigTriggered().connect(
-            std::bind(&RectRegionMarker::finishEditing, regionMarker.get())));
+            [&](){ regionMarker->finishEditing(); }));
 }
 
 

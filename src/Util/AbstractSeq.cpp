@@ -56,10 +56,23 @@ AbstractSeq::~AbstractSeq()
 }
 
 
+void AbstractSeq::setSeqType(const std::string& type)
+{
+    seqType_ = type;
+}
+
+
+void AbstractSeq::setSeqContentName(const std::string& name)
+{
+    this->contentName_ = name;
+}
+
+
 double AbstractSeq::defaultFrameRate()
 {
     return 100.0;
 }
+
 
 double AbstractSeq::getTimeStep() const
 {
@@ -128,24 +141,11 @@ bool AbstractSeq::doReadSeq(const Mapping*, std::ostream& os)
 
 bool AbstractSeq::writeSeq(YAMLWriter& writer)
 {
-    writer.startMapping();
-        
-    bool result = doWriteSeq(writer);
-    
-    writer.endMapping();
-    
-    return result;
+    return doWriteSeq(writer, nullptr);
 }
 
 
-bool AbstractSeq::doWriteSeq(YAMLWriter& writer)
-{
-    writer.putMessage(str(format(_("The function to write %1% is not implemented.\n")) % seqType()));
-    return false;
-}
-
-
-bool AbstractSeq::writeSeqHeaders(YAMLWriter& writer)
+bool AbstractSeq::doWriteSeq(YAMLWriter& writer, std::function<void()> additionalPartCallback)
 {
     if(seqType_.empty()){
         if(contentName_.empty()){
@@ -164,13 +164,11 @@ bool AbstractSeq::writeSeqHeaders(YAMLWriter& writer)
         return false;
     }
 
+    writer.startMapping();
+    
     writer.putKeyValue("type", seqType_);
     if(!contentName_.empty()){
         writer.putKeyValue("content", contentName_);
-    }
-
-    if(auto multiSeq = dynamic_cast<AbstractMultiSeq*>(this)){
-        writer.putKeyValue("numParts", multiSeq->getNumParts());
     }
 
     double version = writer.info("formatVersion", 0.0);
@@ -179,6 +177,10 @@ bool AbstractSeq::writeSeqHeaders(YAMLWriter& writer)
     }
     writer.putKeyValue("frameRate", frameRate);
     writer.putKeyValue("numFrames", getNumFrames());
+
+    if(additionalPartCallback) additionalPartCallback();
+
+    writer.endMapping();
     
     return true;
 }
@@ -236,13 +238,14 @@ const std::string& AbstractMultiSeq::partLabel(int /* partIndex */) const
 }
 
 
-bool AbstractMultiSeq::doWriteSeq(YAMLWriter& writer)
+bool AbstractMultiSeq::doWriteSeq(YAMLWriter& writer, std::function<void()> additionalPartCallback)
 {
-    if(AbstractSeq::doWriteSeq(writer)){
-        writer.putKeyValue("numParts", getNumParts());
-        return true;
-    }
-    return false;
+    return AbstractSeq::doWriteSeq(
+        writer,
+        [&](){
+            writer.putKeyValue("numParts", getNumParts());
+            if(additionalPartCallback) additionalPartCallback();
+        });
 }
 
 

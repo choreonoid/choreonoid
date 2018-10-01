@@ -413,13 +413,13 @@ void AGXLink::createAGXShape()
             AGXConvexDecompositionPtr conDec = new AGXConvexDecomposition();
             numConvex = conDec->getConvexBuilder()->build(td.vertices, td.indices, td.triangles);
             if(numConvex > 0){
-                std::cout << orgLink->name() << " convex decomposition succeed." << std::endl;
-                std::cout << "Divided to " << numConvex << std::endl;
+                LOGGER_INFO() << orgLink->name() << " convex decomposition succeed." << LOGGER_ENDL();
+                LOGGER_INFO() << "Divided to " << numConvex << std::endl;
                 for(auto shape : conDec->getConvexBuilder()->getConvexShapes()){
                     getAGXGeometry()->add(shape, agx::AffineMatrix4x4());
                 }
             }else{
-                std::cout << orgLink->name() << " convex decomposition failed." << std::endl;
+                LOGGER_WARNING() << orgLink->name() << " convex decomposition failed." << LOGGER_ENDL();
             }
         }
 
@@ -713,7 +713,7 @@ void AGXLink::setVelocityToAGX()
         case Link::SLIDE_JOINT:{
             agx::Constraint1DOF* const joint1DOF = agx::Constraint1DOF::safeCast(getAGXConstraint());
             if(!joint1DOF) break;
-            joint1DOF->getMotor1D()->setSpeed(orgLink->dq());
+            joint1DOF->getMotor1D()->setSpeed(orgLink->dq_target());
             return;
             break;
         }
@@ -723,7 +723,7 @@ void AGXLink::setVelocityToAGX()
 
     if(orgLink->actuationMode() == Link::JOINT_SURFACE_VELOCITY){
         // Set speed(scalar) to x value. Direction is automatically calculated at AGXPseudoContinuousTrackGeometry::calculateSurfaceVelocity
-        agx::Vec3f vel((float)orgLink->dq(), 0.0, 0.0);
+        agx::Vec3f vel((float)orgLink->dq_target(), 0.0, 0.0);
         getAGXGeometry()->setSurfaceVelocity(vel);
     }
 }
@@ -736,7 +736,7 @@ void AGXLink::setPositionToAGX()
         case Link::SLIDE_JOINT:{
             agx::Constraint1DOFRef const joint1DOF = agx::Constraint1DOF::safeCast(getAGXConstraint());
             if(!joint1DOF) break;
-            joint1DOF->getLock1D()->setPosition(orgLink->q());
+            joint1DOF->getLock1D()->setPosition(orgLink->q_target());
             break;
         }
         default :
@@ -909,7 +909,8 @@ void AGXBody::setCollisionExcludeLinkGroups(const Mapping& cdMapping){
         const Mapping&  groupInfo = *group->toMapping();
         // get group name and add name to agx to disable collision
         stringstream ss;
-        if(const ValueNodePtr& nameNode = groupInfo.find("name")){
+        auto nameNode = groupInfo.find("name");
+        if(nameNode->isValid()){
             ss << "AGXExcludeLinkGroups_" << nameNode->toString() << agx::UuidGenerator().generate().str() << std::endl;
         }else{
             ss << "AGXExcludeLinkGroups_" << agx::UuidGenerator().generate().str() << std::endl;

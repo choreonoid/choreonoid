@@ -148,7 +148,7 @@ items:
           data: 
             timestep: 0.001
             realtimeSync: true
-            recording: "full"
+            recording: "off"
             timeRangeMode: "Unlimited"
             timeLength: 60
             allLinkPositionOutputMode: true
@@ -452,21 +452,6 @@ views:
         - 
           id: 8
           selectedLinks: [ 1 ]
-  - 
-    id: 10
-    plugin: Multicopter
-    class: MulticopterMonitorView
-  - 
-    id: 11
-    plugin: OpenRTM
-    class: RTSNameServerView
-    state: 
-      host: localhost
-      port: 2809
-  - 
-    id: 12
-    plugin: Python
-    class: PythonConsoleView
 viewAreas: 
   - 
     type: embedded

@@ -22,12 +22,8 @@ public:
     using Device::copyStateFrom;
     virtual void forEachActualType(std::function<bool(const std::type_info& type)> func) override;
 
-    static int lightStateSize();
-    virtual const double* readState(const double* buf) override;
-    virtual double* writeState(double* out_buf) const override;
-
-    bool on() const { return on_; }
-    void on(bool on) { on_ = on; }
+    bool on() const override;
+    void on(bool on) override;
 
     const Vector3f& color() const { return color_; }
     void setColor(const Vector3f& c) { color_ = c; }
@@ -36,6 +32,10 @@ public:
     float intensity() const { return intensity_; }
     void setIntensity(float intensity) { intensity_ = intensity; }
         
+    static int lightStateSize();
+    virtual const double* readState(const double* buf) override;
+    virtual double* writeState(double* out_buf) const override;
+
 private:
     Vector3f color_;
     float intensity_;

@@ -9,6 +9,7 @@
 #include <cnoid/ConnectionSet>
 #include <cnoid/ThreadPool>
 #include <rtm/DataOutPort.h>
+#include <rtm/DataInPort.h>
 #include <rtm/idl/BasicDataTypeSkel.h>
 #include <rtm/idl/InterfaceDataTypes.hh>
 #include <cnoid/corba/PointCloud.hh>
@@ -29,15 +30,20 @@ using namespace cnoid;
 
 class DeviceIo : public Referenced
 {
-protected:
-    ScopedConnectionSet connections;
-    
 public:
+    ScopedConnectionSet connections;
+    RTC::TimedBoolean deviceSwitch;
+    RTC::InPort<RTC::TimedBoolean> deviceSwitchIn;
+    
+    DeviceIo(Device* device);
     virtual void setPorts(BodyIoRTC* rtc) = 0;
     virtual bool initializeSimulation(Body* body) = 0;
+    void doCommonInitialization(Device* device);
     virtual void onStateChanged() = 0;
     void stopSimulation();
     virtual void clearSimulationDevice() = 0;
+    void setSwitchPort(BodyIoRTC* rtc);
+    virtual Device* device() = 0;
 };
 
 typedef ref_ptr<DeviceIo> DeviceIoPtr;
@@ -45,8 +51,8 @@ typedef ref_ptr<DeviceIo> DeviceIoPtr;
 
 class CameraIo : public DeviceIo
 {
-    ThreadPool threadPool;
 public:
+    ThreadPool threadPool;
     CameraPtr modelCamera;
     CameraPtr camera;
     std::shared_ptr<const Image> lastImage;
@@ -60,14 +66,14 @@ public:
     virtual void onStateChanged() override;
     void outputImage();
     virtual void clearSimulationDevice() override;
+    virtual Device* device() override { return camera; }
 };
 
 
 class RangeCameraIo : public CameraIo
 {
-    ThreadPool threadPool;
-
 public:
+    ThreadPool threadPool;
     RangeCameraPtr modelRangeCamera;
     RangeCameraPtr rangeCamera;
     std::shared_ptr<const RangeCamera::PointData> lastPoints;
@@ -87,13 +93,14 @@ public:
     void outputPointCloud1();
     void outputPointCloud2();
     virtual void clearSimulationDevice() override;
+    virtual Device* device() override { return rangeCamera; }
 };    
 
 
 class RangeSensorIo : public DeviceIo
 {
-    ThreadPool threadPool;
 public:
+    ThreadPool threadPool;
     RangeSensorPtr modelRangeSensor;
     RangeSensorPtr rangeSensor;
     RTC::RangeData rangeData;
@@ -106,6 +113,7 @@ public:
     virtual void onStateChanged() override;
     void outputRangeData();
     virtual void clearSimulationDevice() override;
+    virtual Device* device() override { return rangeSensor; }
 };    
     
 
@@ -115,12 +123,14 @@ public:
     BodyPtr ioBody;
     vector<DeviceIoPtr> deviceIoList;
     int pointCloudPortType;
+    vector<function<void()>> stateChangeNotifyFunctions;
 
     VisionSensorIoRTC(RTC::Manager* manager);
     ~VisionSensorIoRTC();
     virtual bool initializeIO(ControllerIO* io) override;
     virtual bool initializeSimulation(ControllerIO* io) override;
     virtual void inputFromSimulator() override;
+    virtual RTC::ReturnCode_t onExecute(RTC::UniqueId ec_id) override;
     virtual void outputToSimulator() override;
     virtual void stopSimulation() override;
 };
@@ -188,6 +198,7 @@ bool VisionSensorIoRTC::initializeIO(ControllerIO* io)
     }
     for(auto& deviceIo : deviceIoList){
         deviceIo->setPorts(this);
+        deviceIo->setSwitchPort(this);
     }
 
     return true;
@@ -198,6 +209,7 @@ bool VisionSensorIoRTC::initializeSimulation(ControllerIO* io)
 {
     for(auto& deviceIo : deviceIoList){
         deviceIo->initializeSimulation(io->body());
+        io->os() << deviceIo->device()->name() << ": " << (deviceIo->device()->on() ? "ON" : "OFF") << endl;
     }
     return true;
 }
@@ -209,9 +221,40 @@ void VisionSensorIoRTC::inputFromSimulator()
 }
 
 
+RTC::ReturnCode_t VisionSensorIoRTC::onExecute(RTC::UniqueId ec_id)
+{
+    // Check the on / off switch input
+    for(auto& deviceIo : deviceIoList){
+        if(deviceIo->deviceSwitchIn.isNew()){
+            deviceIo->deviceSwitchIn.read();
+            auto device = deviceIo->device();
+            auto on = deviceIo->deviceSwitch.data;
+
+            /**
+               Checking the actual on / off state of the device and notify the change is
+               processed in the 'outputToSimulator' function because a device object should
+               not be accessed in the onExecute function, which is executed in parallel
+               with simulation functions.
+            */
+            stateChangeNotifyFunctions.push_back(
+                [device, on](){
+                    if(on != device->on()){
+                        device->on(on);
+                        device->notifyStateChange();
+                    }
+                });
+        }
+    }
+    return RTC::RTC_OK;
+}
+
+
 void VisionSensorIoRTC::outputToSimulator()
 {
-
+    for(auto& func : stateChangeNotifyFunctions){
+        func();
+    }
+    stateChangeNotifyFunctions.clear();
 }
 
 
@@ -220,6 +263,28 @@ void VisionSensorIoRTC::stopSimulation()
     for(auto& deviceIo : deviceIoList){
         deviceIo->stopSimulation();
     }
+    stateChangeNotifyFunctions.clear();
+}
+
+
+DeviceIo::DeviceIo(Device* device)
+    : deviceSwitchIn((device->name()+"_switch").c_str(), deviceSwitch)
+{
+
+}
+
+
+void DeviceIo::doCommonInitialization(Device* device)
+{
+    connections.add(
+        device->sigStateChanged().connect(
+            [&](){ onStateChanged(); }));
+}
+    
+
+void DeviceIo::setSwitchPort(BodyIoRTC* rtc)
+{
+    rtc->addInPort(deviceSwitchIn.name(), deviceSwitchIn);
 }
 
 
@@ -231,7 +296,8 @@ void DeviceIo::stopSimulation()
 
 
 CameraIo::CameraIo(Camera* camera)
-    : modelCamera(camera),
+    : DeviceIo(camera),
+      modelCamera(camera),
       cameraImageOut(camera->name().c_str(), cameraImage),
       jpegCompression(true)
 {
@@ -278,9 +344,7 @@ bool CameraIo::initializeSimulation(Body* body)
         }
     }
 
-    connections.add(
-        camera->sigStateChanged().connect(
-            [&](){ onStateChanged(); }));
+    doCommonInitialization(camera);
 
     return true;
 }
@@ -288,12 +352,14 @@ bool CameraIo::initializeSimulation(Body* body)
 
 void CameraIo::onStateChanged()
 {
-    if(!threadPool.isRunning()){ // Skip if writing to the outport is not finished
+    /**
+       Skip if writing to the outport is not finished.
+       The empty image is always output when the camera is turned off.
+    */
+    if(!camera->on() || !threadPool.isRunning()){
         if(camera->sharedImage() != lastImage){
             lastImage = camera->sharedImage();
-            if(!lastImage->empty()){
-                threadPool.start([&](){ outputImage(); });
-            }
+            threadPool.start([&](){ outputImage(); });
         }
     }
 }
@@ -305,7 +371,7 @@ void CameraIo::outputImage()
     cameraImage.data.image.height = height = lastImage->height();
     cameraImage.data.image.width = width = lastImage->width();
 
-    if(jpegCompression){
+    if(jpegCompression && !lastImage->empty()){
 
         cameraImage.data.image.format = Img::CF_JPEG;
         struct jpeg_compress_struct cinfo;
@@ -347,7 +413,7 @@ void CameraIo::outputImage()
         free(row_pointers);
         free(outbuffer);
 
-    }else{
+    } else {
 
         switch(camera->imageType()){
         case Camera::GRAYSCALE_IMAGE:
@@ -485,29 +551,26 @@ void RangeCameraIo::onStateChanged()
 {
     CameraIo::onStateChanged();
 
-    if(!threadPool.isRunning()){
+    if(!rangeCamera->on() || !threadPool.isRunning()){
         if(rangeCamera->sharedPoints() != lastPoints){
             lastPoints = rangeCamera->sharedPoints();
-            if(!lastPoints->empty()){
+            if(pointCloudPortType == 2){
+                threadPool.start([&](){ outputPointCloud2(); });
 
-                if(pointCloudPortType == 2){
-                    threadPool.start([&](){ outputPointCloud2(); });
-
-                } else if(pointCloudPortType == 1){
-                    if(!lastImage->empty()){
-                        pointCloud1.height = lastImage->height();
-                        pointCloud1.width = lastImage->width();
+            } else if(pointCloudPortType == 1){
+                if(!lastImage->empty()){
+                    pointCloud1.height = lastImage->height();
+                    pointCloud1.width = lastImage->width();
+                } else {
+                    if(rangeCamera->isOrganized()){
+                        pointCloud1.height = rangeCamera->resolutionY();
+                        pointCloud1.width = rangeCamera->resolutionX();
                     } else {
-                        if(rangeCamera->isOrganized()){
-                            pointCloud1.height = rangeCamera->resolutionY();
-                            pointCloud1.width = rangeCamera->resolutionX();
-                        } else {
-                            pointCloud1.height = 1;
-                            pointCloud1.width = rangeCamera->numPoints();
-                        }
+                        pointCloud1.height = 1;
+                        pointCloud1.width = rangeCamera->numPoints();
                     }
-                    threadPool.start([&](){ outputPointCloud1(); });
                 }
+                threadPool.start([&](){ outputPointCloud1(); });
             }
         }
     }
@@ -584,7 +647,8 @@ void RangeCameraIo::clearSimulationDevice()
 
 
 RangeSensorIo::RangeSensorIo(RangeSensor* sensor)
-    : modelRangeSensor(sensor),
+    : DeviceIo(sensor),
+      modelRangeSensor(sensor),
       rangeDataOut(sensor->name().c_str(), rangeData)
 {
 
@@ -623,9 +687,7 @@ bool RangeSensorIo::initializeSimulation(Body* body)
     rangeData.geometry.geometry.size.h = 0.0;
     rangeData.geometry.elementGeometries.length(0);
 
-    connections.add(
-        rangeSensor->sigStateChanged().connect(
-            [&](){ onStateChanged(); }));
+    doCommonInitialization(rangeSensor);
 
     return true;
 }

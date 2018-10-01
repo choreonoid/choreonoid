@@ -8,6 +8,10 @@ materials:
     roughness: 0.5
     viscosity: 0.0
   -
+    name: Tire
+    roughness: 1.0
+    viscosity: 0.0
+  -
     name: Tracks
     roughness: 0.5
     viscosity: 0.0
@@ -21,7 +25,7 @@ materials:
     viscosity: 0.0
   -
     name: Hand
-    roughness: 0.5
+    roughness: 1.0
     viscosity: 0.0
   -
     name: TankTracks
@@ -76,6 +80,11 @@ contactMaterials:
   -
     materials: [ Ground, Sole ]
     friction: 1.0
+    restitution: 0.0
+    frictionModel: [ cone, direct ]
+  -
+    materials: [ Ground, Tire ]
+    friction: 1
     restitution: 0.0
     frictionModel: [ cone, direct ]
   -

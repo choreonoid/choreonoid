@@ -47,11 +47,22 @@ public:
     double toRadian(double angle) const;
     bool readAngle(const Mapping& node, const char* key, double& angle) const;
     bool readRotation(const Mapping& node, Matrix3& out_R) const;
+    bool readRotation(const Mapping& node, const char* key, Matrix3& out_R) const;
+
+    struct NodeTypeRegistration {
+        NodeTypeRegistration(
+            const char* typeName,
+            std::function<bool(YAMLBodyLoader& loader, Mapping& node)> readFunction)
+        {
+            addNodeType(typeName, readFunction);
+        }
+    };
 
 private:
     YAMLBodyLoaderImpl* impl;
     friend class YAMLBodyLoaderImpl;
 };
+
 
 }
 

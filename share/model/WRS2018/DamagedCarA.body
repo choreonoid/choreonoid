@@ -2,55 +2,29 @@ format: ChoreonoidBody
 formatVersion: 1.0
 name: DamagedCarA
 
-CAR_BODY: &CAR_BODY
+PRIMITIVE_RESOURCE: &PRIMITIVE_RESOURCE
   type: Resource
-  uri: "resource/CarCollisionShapes.yaml"
-  node: CAR_BODY
+  uri: "resource/CarPrimitives.yaml"
 
-CAR_STEERING: &CAR_STEERING
-  type: Resource
-  uri: "resource/CarCollisionShapes.yaml"
-  node: CAR_STEERING
-  
-CAR_DAMAGED_ROOF: &CAR_DAMAGED_ROOF
-  type: Resource
-  uri: "resource/CarCollisionShapes.yaml"
-  node: CAR_DAMAGED_ROOF
-
-CAR_DOOR_FR_BODY: &CAR_DOOR_FR_BODY
-  type: Resource
-  uri: "resource/CarCollisionShapes.yaml"
-  node: CAR_DOOR_FR_BODY
-
-CAR_DOOR_FL: &CAR_DOOR_FL
-  type: Resource
-  uri: "resource/CarCollisionShapes.yaml"
-  node: CAR_DOOR_FL
-
-CAR_DOOR_BR: &CAR_DOOR_BR
-  type: Resource
-  uri: "resource/CarCollisionShapes.yaml"
-  node: CAR_DOOR_BR
-
-CAR_DOOR_BL: &CAR_DOOR_BL
-  type: Resource
-  uri: "resource/CarCollisionShapes.yaml"
-  node: CAR_DOOR_BL
-  
 links:
   -
     name: body
     jointType: fixed
-    mass: 100.0
+    mass: 1000.0
     inertia: [
       50, 0, 0,
       0, 50, 0,
       0, 0, 50 ]
     elements:
-      Visual:
+      - { <<: *PRIMITIVE_RESOURCE, node: CAR_WHEEL, translation: [  1.365, -0.72, 0.34 ] }
+      - { <<: *PRIMITIVE_RESOURCE, node: CAR_WHEEL, translation: [  1.365,  0.72, 0.34 ] }
+      - { <<: *PRIMITIVE_RESOURCE, node: CAR_WHEEL, translation: [ -1.315, -0.72, 0.34 ] }
+      - { <<: *PRIMITIVE_RESOURCE, node: CAR_WHEEL, translation: [ -1.315,  0.72, 0.34 ] }
+      -
+        type: Visual
         resource:
           translation: [ -1.325, 0.835, 0 ]
-          uri: resource/DamagedCarA.dae
+          uri: "resource/DamagedCarA.dae"
        #   exclude: [ ID930, ID528, ID966, ID37, ID48, ID62, ID68, ID76, ID84,
        #              ID840, ID870, ID846, ID92, ID98, ID106, ID112, ID118,
        #              ID124, ID130, ID136, ID144, ID150, ID156, ID162, ID168,
@@ -72,24 +46,13 @@ links:
        #              ID952, ID956, ID966,ID972, ID978, ID984, ID990, ID996,
        #              ID1002, ID1008, ID1012
        #    ]
-      Collision:
+      -
+        type: Collision
         elements:
-          -
-            <<: *CAR_BODY
-          - 
-            <<: *CAR_DAMAGED_ROOF
-          -
-            <<: *CAR_STEERING
-            translation: [ 0.472, 0.395, 0.777 ]
-          - 
-            <<: *CAR_DOOR_FR_BODY
-            translation: [ 0.0, 0.001, 0.0 ]
-          - 
-            <<: *CAR_DOOR_FL
-            translation: [ 0.001, -0.0005, -0.002 ]
-          - 
-            <<: *CAR_DOOR_BR
-            translation: [ -0.623, -0.815, 0.2531 ]
-          - 
-            <<: *CAR_DOOR_BL
-            translation: [ -0.62,  0.815, 0.2531 ]
+          - { <<: *PRIMITIVE_RESOURCE, node: CAR_BODY }
+          - { <<: *PRIMITIVE_RESOURCE, node: CAR_DAMAGED_ROOF }
+          - { <<: *PRIMITIVE_RESOURCE, node: CAR_STEERING, translation: [ 0.49, 0.39, 0.839 ] }
+          - { <<: *PRIMITIVE_RESOURCE, node: CAR_DOOR_FR_BODY, translation: [ 0.0, 0.001, 0.0 ] }
+          - { <<: *PRIMITIVE_RESOURCE, node: CAR_DOOR_FL, translation: [ 0.001, -0.0005, -0.002 ] }
+          - { <<: *PRIMITIVE_RESOURCE, node: CAR_DOOR_BR, translation: [ -0.623, -0.815, 0.2531 ] }
+          - { <<: *PRIMITIVE_RESOURCE, node: CAR_DOOR_BL, translation: [ -0.62,  0.815, 0.2531 ] }

@@ -55,6 +55,7 @@ private:
     bool    m_p_enableAMOR;
     bool    m_p_enableAutoSleep;
     bool    m_p_saveToAGXFileOnStart;
+    Selection m_p_debugMessageOnConsoleType;
     AGXScene* getAGXScene();
 };
 }

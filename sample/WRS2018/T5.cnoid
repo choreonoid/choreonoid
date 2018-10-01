@@ -97,29 +97,6 @@ items:
               data: 
                 modelFile: "${SHARE}/model/WRS2018/Flag1L.body"
                 currentBaseLink: "BASE"
-                rootPosition: [ 3, -1.5, 0 ]
-                rootAttitude: [ 
-                  1, 0, 0, 
-                  0, 1, 0, 
-                  0, 0, 1 ]
-                jointPositions: [  ]
-                initialRootPosition: [ 3, -1.5, 0 ]
-                initialRootAttitude: [ 
-                  1, 0, 0, 
-                  0, 1, 0, 
-                  0, 0, 1 ]
-                zmp: [ 0, 0, 0 ]
-                collisionDetection: true
-                selfCollisionDetection: false
-                isEditable: false
-            - 
-              id: 7
-              name: "Flag1R"
-              plugin: Body
-              class: BodyItem
-              data: 
-                modelFile: "${SHARE}/model/WRS2018/Flag1R.body"
-                currentBaseLink: "BASE"
                 rootPosition: [ 3, 1.5, 0 ]
                 rootAttitude: [ 
                   1, 0, 0, 
@@ -136,20 +113,20 @@ items:
                 selfCollisionDetection: false
                 isEditable: false
             - 
-              id: 8
-              name: "Flag2L"
+              id: 7
+              name: "Flag1R"
               plugin: Body
               class: BodyItem
               data: 
-                modelFile: "${SHARE}/model/WRS2018/Flag2L.body"
+                modelFile: "${SHARE}/model/WRS2018/Flag1R.body"
                 currentBaseLink: "BASE"
-                rootPosition: [ 21, -1.5, 0 ]
+                rootPosition: [ 3, -1.5, 0 ]
                 rootAttitude: [ 
                   1, 0, 0, 
                   0, 1, 0, 
                   0, 0, 1 ]
                 jointPositions: [  ]
-                initialRootPosition: [ 21, -1.5, 0 ]
+                initialRootPosition: [ 3, -1.5, 0 ]
                 initialRootAttitude: [ 
                   1, 0, 0, 
                   0, 1, 0, 
@@ -159,12 +136,12 @@ items:
                 selfCollisionDetection: false
                 isEditable: false
             - 
-              id: 9
-              name: "Flag2R"
+              id: 8
+              name: "Flag2L"
               plugin: Body
               class: BodyItem
               data: 
-                modelFile: "${SHARE}/model/WRS2018/Flag2R.body"
+                modelFile: "${SHARE}/model/WRS2018/Flag2L.body"
                 currentBaseLink: "BASE"
                 rootPosition: [ 21, 1.5, 0 ]
                 rootAttitude: [ 
@@ -182,53 +159,65 @@ items:
                 selfCollisionDetection: false
                 isEditable: false
             - 
+              id: 9
+              name: "Flag2R"
+              plugin: Body
+              class: BodyItem
+              data: 
+                modelFile: "${SHARE}/model/WRS2018/Flag2R.body"
+                currentBaseLink: "BASE"
+                rootPosition: [ 21, -1.5, 0 ]
+                rootAttitude: [ 
+                  1, 0, 0, 
+                  0, 1, 0, 
+                  0, 0, 1 ]
+                jointPositions: [  ]
+                initialRootPosition: [ 21, -1.5, 0 ]
+                initialRootAttitude: [ 
+                  1, 0, 0, 
+                  0, 1, 0, 
+                  0, 0, 1 ]
+                zmp: [ 0, 0, 0 ]
+                collisionDetection: true
+                selfCollisionDetection: false
+                isEditable: false
+            - 
               id: 10
               name: "FireCabinet"
               plugin: Body
               class: BodyItem
               data: 
-                modelFile: "${SHARE}/model/WRS2018/FireCabinetWithHose.body"
+                modelFile: "${SHARE}/model/WRS2018/FullFeaturedFireCabinet.body"
                 currentBaseLink: "BASE"
                 rootPosition: [ 7, 4.21, 0.256 ]
                 rootAttitude: [ 
                   2.22044605e-16, 1, 0, 
                   -1, 2.22044605e-16, -0, 
                   -0, 0, 1 ]
-                jointPositions: [ -0.715676,  0.000000,  0.000000,  0.000000,  0.000000 ]
+                jointPositions: [ 0, 0, 0, 0, 0 ]
                 initialRootPosition: [ 7, 4.21, 0.256 ]
                 initialRootAttitude: [ 
                   2.22044605e-16, 1, 0, 
                   -1, 2.22044605e-16, -0, 
                   -0, 0, 1 ]
-                initialJointPositions: [ -0.715676,  0.000000,  0.000000,  0.000000,  0.000000 ]
+                initialJointPositions: [ 0, 0, 0, 0, 0 ]
                 zmp: [ 0, 0, 0 ]
                 collisionDetection: true
-                selfCollisionDetection: false
+                selfCollisionDetection: true
                 isEditable: true
-            - 
-              id: 11
-              name: "HoseNozzle"
-              plugin: Body
-              class: BodyItem
-              data: 
-                modelFile: "${SHARE}/model/WRS2018/HoseNozzle.body"
-                currentBaseLink: "BASE"
-                rootPosition: [ 6.67934738, 4.1405342, 1.06499852 ]
-                rootAttitude: [ 
-                  1, 0, 0, 
-                  0, 1, 0, 
-                  0, 0, 1 ]
-                jointPositions: [  0.000000 ]
-                initialRootPosition: [ 6.67934738, 4.1405342, 1.06499852 ]
-                initialRootAttitude: [ 
-                  1, 0, 0, 
-                  0, 1, 0, 
-                  0, 0, 1 ]
-                initialJointPositions: [  0.000000 ]
-                zmp: [ 0, 0, 0 ]
-                collisionDetection: true
-                selfCollisionDetection: false
-                isEditable: true
+              children: 
+                - 
+                  id: 100
+                  name: "HoseNozzleController"
+                  plugin: Body
+                  class: SimpleControllerItem
+                  data: 
+                    isNoDelayMode: false
+                    controllerOptions: ""
+                    controller: "HoseNozzleController.so"
+                    baseDirectory: "Controller directory"
+                    reloading: false
+                    isOldTargetVariableMode: false
             - 
               id: 12
               name: "Debris-M"
