@@ -30,6 +30,10 @@
 
 #include "gettext.h"
 
+#if defined(ERROR)
+#undef ERROR
+#endif
+
 using namespace std;
 using namespace cnoid;
 
