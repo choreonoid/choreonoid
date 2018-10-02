@@ -160,11 +160,8 @@ public:
 
     std::time_t fileModificationTime() const { return fileModificationTime_; }
     bool isConsistentWithFile() const { return isConsistentWithFile_; }
-
     void clearFileInformation();
-
     void suggestFileUpdate() { isConsistentWithFile_ = false; }
-    void clearFileUpdate() { isConsistentWithFile_ = true; }
 
     void putProperties(PutPropertyFunction& putProperty);
 

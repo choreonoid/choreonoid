@@ -1131,7 +1131,6 @@ bool RTSystemExtItem::loadRtsProfile(const string& filename)
     ProfileHandler::getRtsProfileInfo(filename, impl->vendorName, impl->version);
     if (ProfileHandlerExt::restoreRtsProfile(filename, this)) {
         impl->sigLoadedRTSystem(false);
-        clearFileUpdate();
         return true;
     }
     return false;
@@ -1360,7 +1359,6 @@ void RTSystemExtItemImpl::restoreRTSystem(const Archive& archive)
     }
 
     sigLoadedRTSystem(true);
-    self->clearFileUpdate();
     DDEBUG("RTSystemItemImpl::restoreRTSystem End");
 }
 
