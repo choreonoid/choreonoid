@@ -775,7 +775,7 @@ public:
     void startExecutionContext();
     void stopExecutionContext();
 
-    void onLoadedRTSystem(bool value);
+    void onRTSystemLoaded(bool isRestored);
     void onUpdateStatus(bool modified);
 
 private:
@@ -1551,8 +1551,8 @@ void RTSDiagramExtViewImpl::setCurrentRTSItem(RTSystemExtItem* item)
         item->sigDetachedFromRoot().connect(
             [&]() { onRTSystemItemDetachedFromRoot(); }));
     rtsLoadedConnection.reset(
-            currentRTSItem->sigLoadedRTSystem().connect(
-                std::bind(&RTSDiagramExtViewImpl::onLoadedRTSystem, this, _1)));
+            currentRTSItem->sigLoaded().connect(
+                std::bind(&RTSDiagramExtViewImpl::onRTSystemLoaded, this, _1)));
     updateStatusConnection.reset(
             currentRTSItem->sigStatusUpdate().connect(
                 std::bind(&RTSDiagramExtViewImpl::onUpdateStatus, this, _1)));
@@ -1658,9 +1658,9 @@ void RTSDiagramExtViewImpl::stopExecutionContext()
     }
 }
 
-void RTSDiagramExtViewImpl::onLoadedRTSystem(bool value)
+void RTSDiagramExtViewImpl::onRTSystemLoaded(bool value)
 {
-    DDEBUG_V("RTSDiagramViewImpl::onLoadedRTSystem : %d", value);
+    DDEBUG_V("RTSDiagramViewImpl::onRTSystemLoaded : %d", value);
     updateView();
     if (value) {
         if (currentRTSItem) {

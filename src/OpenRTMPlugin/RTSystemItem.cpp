@@ -97,7 +97,7 @@ public:
 
     Signal<void(int)> sigTimerPeriodChanged;
     Signal<void(bool)> sigTimerChanged;
-    Signal<void(bool)> sigLoadedRTSystem;
+    Signal<void(bool)> sigLoaded;
 
     void changeStateCheck();
     void changePollingPeriod(int value);
@@ -1090,7 +1090,7 @@ bool RTSystemItem::loadRtsProfile(const string& filename)
     DDEBUG_V("RTSystemItem::loadRtsProfile=%s", filename.c_str());
     ProfileHandler::getRtsProfileInfo(filename, impl->vendorName, impl->version);
     if (ProfileHandler::restoreRtsProfile(filename, this)) {
-        impl->sigLoadedRTSystem(false);
+        impl->sigLoaded(false);
         return true;
     }
     return false;
@@ -1315,7 +1315,7 @@ void RTSystemItemImpl::restoreRTSystem(const Archive& archive)
         checkStatus();
     }
 
-    sigLoadedRTSystem(true);
+    sigLoaded(true);
     DDEBUG("RTSystemItemImpl::restoreRTSystem End");
 }
 
@@ -1356,7 +1356,7 @@ SignalProxy<void(bool)> RTSystemItem::sigTimerChanged()
     return impl->sigTimerChanged;
 }
 
-SignalProxy<void(bool)> RTSystemItem::sigLoadedRTSystem()
+SignalProxy<void(bool)> RTSystemItem::sigLoaded()
 {
-    return impl->sigLoadedRTSystem;
+    return impl->sigLoaded;
 }

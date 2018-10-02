@@ -204,7 +204,7 @@ public:
     void checkStatus();
     void onActivated();
 
-    SignalProxy<void(bool)> sigLoadedRTSystem();
+    SignalProxy<void(bool isRestored)> sigLoaded();
     SignalProxy<void(bool)> sigStatusUpdate();
 
 protected:

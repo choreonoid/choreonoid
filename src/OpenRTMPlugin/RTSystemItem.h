@@ -204,7 +204,7 @@ public:
 
     SignalProxy<void(int)> sigTimerPeriodChanged();
     SignalProxy<void(bool)> sigTimerChanged();
-    SignalProxy<void(bool)> sigLoadedRTSystem();
+    SignalProxy<void(bool isRestored)> sigLoaded();
 
 protected:
     virtual Item* doDuplicate() const override;

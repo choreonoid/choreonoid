@@ -94,7 +94,7 @@ public:
     void setStateCheckMethodByString(const string& value);
     void checkStatus();
 
-    Signal<void(bool)> sigLoadedRTSystem;
+    Signal<void(bool)> sigLoaded;
     Signal<void(bool)> sigStatusUpdate;
 
     void onActivated();
@@ -1130,7 +1130,7 @@ bool RTSystemExtItem::loadRtsProfile(const string& filename)
     DDEBUG_V("RTSystemItem::loadRtsProfile=%s", filename.c_str());
     ProfileHandler::getRtsProfileInfo(filename, impl->vendorName, impl->version);
     if (ProfileHandlerExt::restoreRtsProfile(filename, this)) {
-        impl->sigLoadedRTSystem(false);
+        impl->sigLoaded(false);
         return true;
     }
     return false;
@@ -1358,7 +1358,7 @@ void RTSystemExtItemImpl::restoreRTSystem(const Archive& archive)
         checkStatus();
     }
 
-    sigLoadedRTSystem(true);
+    sigLoaded(true);
     DDEBUG("RTSystemItemImpl::restoreRTSystem End");
 }
 
@@ -1389,9 +1389,9 @@ void RTSystemExtItemImpl::restoreRTSComp(const string& name, const Vector2& pos,
     DDEBUG("RTSystemItemImpl::restoreRTSComp End");
 }
 
-SignalProxy<void(bool)> RTSystemExtItem::sigLoadedRTSystem()
+SignalProxy<void(bool)> RTSystemExtItem::sigLoaded()
 {
-    return impl->sigLoadedRTSystem;
+    return impl->sigLoaded;
 }
 
 SignalProxy<void(bool)> RTSystemExtItem::sigStatusUpdate()
