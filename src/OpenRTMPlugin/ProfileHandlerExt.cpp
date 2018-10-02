@@ -76,7 +76,7 @@ bool ProfileHandlerExt::restoreRtsProfile(std::string targetFile, RTSystemExtIte
         if (isSkip) continue;
         info.id_ = compProf.instanceName;
 
-        if(compProf.isOpenRTM) {
+        if(compProf.isRegisteredInRtmDefaultNameServer) {
             NameServerInfo ns = RTCCommonUtil::getManagerAddress();
             info.hostAddress_ = ns.hostAddress;
             info.portNo_ = ns.portNo;
@@ -244,7 +244,7 @@ bool ProfileHandlerExt::parseProfile(std::string targetFile, RtsProfile& profile
 
         for (pugi::xml_node prop = comp.child("rtsExt:Properties"); prop; prop = prop.next_sibling("rtsExt:Properties")) {
             if (prop.attribute("rtsExt:name").as_string() == "OpenRTM_NS") {
-                proComp.isOpenRTM = prop.attribute("rtsExt:value").as_bool();
+                proComp.isRegisteredInRtmDefaultNameServer = prop.attribute("rtsExt:value").as_bool();
                 break;
             }
         }
@@ -442,7 +442,7 @@ void ProfileHandlerExt::saveRtsProfile
                 }
             }
             //
-            compProf.isOpenRTM = NameServerManager::instance()->isOpenRTM(comp->hostAddress, comp->portNo);
+            compProf.isRegisteredInRtmDefaultNameServer = NameServerManager::instance()->isRtmDefaultNameServer(comp->hostAddress, comp->portNo);
             profile.compList.push_back(compProf);
         } catch (...) {
             os << "\033[31mWarning: " << "Failed to acquire [" << comp->name << "] information.\033[0m" << endl;
@@ -654,7 +654,7 @@ void ProfileHandlerExt::writeComponent(std::vector<Component>& compList, xml_nod
         compNode.append_attribute("rts:id") = target.id.c_str();
 
         xml_node propertyNode = compNode.append_child("rtsExt:Properties");
-        propertyNode.append_attribute("rtsExt:value") = target.isOpenRTM;
+        propertyNode.append_attribute("rtsExt:value") = target.isRegisteredInRtmDefaultNameServer;
         propertyNode.append_attribute("rtsExt:name") = "OpenRTM_NS";
 
         //DataPort

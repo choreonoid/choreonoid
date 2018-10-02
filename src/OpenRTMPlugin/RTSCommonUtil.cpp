@@ -301,7 +301,7 @@ NameServerInfo RTCCommonUtil::getManagerAddress()
     if (1 < elems.size()) {
         result.portNo = QString::fromStdString(elems[1]).toInt();
     }
-    result.isOpenRTM = true;
+    result.isRtmDefaultNameServer = true;
 
     return result;
 }
@@ -316,7 +316,7 @@ NameServerManager* NameServerManager::instance()
     return handler;
 }
 
-void NameServerManager::addServer(NameServerInfo source)
+void NameServerManager::addNameServer(NameServerInfo source)
 {
     DDEBUG_V("NameServerManager::addServer %s, %d", source.hostAddress.c_str(), source.portNo);
     vector<NameServerInfo>::iterator serverItr = find_if(serverList.begin(), serverList.end(), ServerFullComparator(source));
@@ -324,33 +324,33 @@ void NameServerManager::addServer(NameServerInfo source)
     serverList.push_back(source);
 }
 
-void NameServerManager::addOpenRTMServer()
+void NameServerManager::addRtmDefaultNameServer()
 {
     NameServerInfo info = RTCCommonUtil::getManagerAddress();
-    NameServerInfo nsInfo(info.hostAddress, info.portNo, info.isOpenRTM);
-    addServer(nsInfo);
+    NameServerInfo nsInfo(info.hostAddress, info.portNo, info.isRtmDefaultNameServer);
+    addNameServer(nsInfo);
 }
 
-bool NameServerManager::isExistServer(NameServerInfo source)
+bool NameServerManager::isExistingNameServer(NameServerInfo source)
 {
     vector<NameServerInfo>::iterator serverItr = find_if(serverList.begin(), serverList.end(), ServerComparator(source.hostAddress, source.portNo));
     if (serverItr != serverList.end()) return true;
     return false;
 }
 
-bool NameServerManager::isOpenRTM(string hostAddress, int portNo)
+bool NameServerManager::isRtmDefaultNameServer(string hostAddress, int portNo)
 {
     for(unsigned int index=0; index<serverList.size(); index++) {
         NameServerInfo info = serverList[index];
         if (info.hostAddress != hostAddress || info.portNo != portNo) continue;
-        if(info.isOpenRTM) {
+        if(info.isRtmDefaultNameServer) {
             return true;
         }
     }
     return false;
 }
 
-void NameServerManager::deleteServer(string target) {
+void NameServerManager::removeNameServer(string target) {
     vector<string> info = RTCCommonUtil::split(target, ':');
     if (info.size() < 2) return;
 

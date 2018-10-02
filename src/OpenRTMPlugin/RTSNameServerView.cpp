@@ -186,7 +186,7 @@ RTSNameServerViewImpl::RTSNameServerViewImpl(RTSNameServerView* self)
     self->setDefaultLayoutArea(View::LEFT_BOTTOM);
     NamingContextHelper* ncHelper = NameServerManager::instance()->getNCHelper();
     NameServerInfo nsInfo(ncHelper->host(), ncHelper->port(), false);
-    NameServerManager::instance()->addServer(nsInfo);
+    NameServerManager::instance()->addNameServer(nsInfo);
 
     QVBoxLayout* vbox = new QVBoxLayout();
 
@@ -491,10 +491,10 @@ void RTSNameServerViewImpl::connectNameServer()
     if (dialog.isOK_ == false) return;
 
     if (dialog.isManager_) {
-        NameServerManager::instance()->addOpenRTMServer();
+        NameServerManager::instance()->addRtmDefaultNameServer();
     } else {
         NameServerInfo nsInfo(dialog.hostAddress_, dialog.portNum_, false);
-        NameServerManager::instance()->addServer(nsInfo);
+        NameServerManager::instance()->addNameServer(nsInfo);
     }
     updateObjectList(true);
 }
@@ -540,7 +540,7 @@ bool RTSNameServerView::storeState(Archive& archive)
     vector<NameServerInfo> serverList = NameServerManager::instance()->getServerList();
     for (auto it = serverList.begin(); it != serverList.end(); it++) {
         MappingPtr eachNode = new Mapping();
-        eachNode->write("isOpenRTM", (*it).isOpenRTM);
+        eachNode->write("isDefaultNameServer", (*it).isRtmDefaultNameServer);
         eachNode->write("host", (*it).hostAddress, DOUBLE_QUOTED);
         eachNode->write("port", (*it).portNo);
         severNodes->append(eachNode);
@@ -561,13 +561,16 @@ bool RTSNameServerView::restoreState(const Archive& archive)
         for (int index = 0; index < nodes.size(); ++index) {
             const Mapping& node = *nodes[index].toMapping();
 
-            bool isOpenRTM = false;
-            ValueNode* openRTMNode = node.find("isOpenRTM");
-            if (openRTMNode->isValid()) {
-                isOpenRTM = openRTMNode->toBool();
+            bool isDefaultNameServer = false;
+            auto defaultNameServerValueNode = node.find("isDefaultNameServer");
+            if (!defaultNameServerValueNode->isValid()) {
+                defaultNameServerValueNode = node.find("isOpenRTM"); // for the backward compatibility
             }
-            if (isOpenRTM) {
-                NameServerManager::instance()->addOpenRTMServer();
+            if(defaultNameServerValueNode->isValid()){
+                isDefaultNameServer = defaultNameServerValueNode->toBool();
+            }
+            if (isDefaultNameServer) {
+                NameServerManager::instance()->addRtmDefaultNameServer();
             } else {
                 string hostAdr = "localhost";
                 ValueNode* hostNode = node.find("host");
@@ -580,7 +583,7 @@ bool RTSNameServerView::restoreState(const Archive& archive)
                     portNo = portNode->toInt();
                 }
                 NameServerInfo nsInfo(hostAdr, portNo, false);
-                NameServerManager::instance()->addServer(nsInfo);
+                NameServerManager::instance()->addNameServer(nsInfo);
             }
         }
     }
@@ -681,7 +684,7 @@ void RTSNameTreeWidget::deleteFromView()
     RTSVItem* item = (RTSVItem*)this->currentItem();
     QString target = item->text(0);
     DDEBUG_V("target:%s", target.toStdString().c_str());
-    NameServerManager::instance()->deleteServer(target.toStdString());
+    NameServerManager::instance()->removeNameServer(target.toStdString());
     delete item;
 }
 

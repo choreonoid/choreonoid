@@ -63,7 +63,7 @@ namespace cnoid {
 //    bool isRequired;
 //    int posX;
 //    int posY;
-//    bool isOpenRTM;
+//    bool isRegisteredInRtmDefaultNameServer;
 //    //
 //    std::vector<DataPort> dataPortList;
 //    std::vector<ServicePort> servicePortList;
