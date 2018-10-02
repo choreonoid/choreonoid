@@ -29,6 +29,10 @@
 # endif
 #endif
 
+#if defined(_WIN32) && defined(ERROR)
+#undef ERROR
+#endif
+
 #include "gettext.h"
 
 #if defined(ERROR)
@@ -37,6 +41,7 @@
 
 using namespace std;
 using namespace cnoid;
+using boost::format;
 
 namespace {
 

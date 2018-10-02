@@ -1,6 +1,6 @@
 
-#include "RTSystemItem.h"
-#include "ProfileHandler.h"
+#include "RTSystemExtItem.h"
+#include "ProfileHandlerExt.h"
 #include "RTSCommonUtil.h"
 #include "LoggerUtil.h"
 #include <rtm/idl/RTC.hh>
@@ -28,7 +28,7 @@ struct PropertyValueComparator
     }
 };
 
-bool ProfileHandler::getRtsProfileInfo(std::string targetFile, std::string& vendorName, std::string& version)
+bool ProfileHandlerExt::getRtsProfileInfo(std::string targetFile, std::string& vendorName, std::string& version)
 {
     RtsProfile profile;
     if (parseProfile(targetFile, profile) == false) return false;
@@ -41,7 +41,7 @@ bool ProfileHandler::getRtsProfileInfo(std::string targetFile, std::string& vend
     return true;
 }
 
-bool ProfileHandler::restoreRtsProfile(std::string targetFile, RTSystemItem* rts)
+bool ProfileHandlerExt::restoreRtsProfile(std::string targetFile, RTSystemExtItem* rts)
 {
     DDEBUG("ProfileHandler::restoreRtsProfile");
     RtsProfile profile;
@@ -90,14 +90,14 @@ bool ProfileHandler::restoreRtsProfile(std::string targetFile, RTSystemItem* rts
         pos.y() = compProf.posY;
 
         DDEBUG_V("addRTSComp: %s, %s, host=%s, port=%d", info.id_.c_str(), info.getFullPath().c_str(), info.hostAddress_.c_str(), info.portNo_);
-        RTSComp* comp = rts->addRTSComp(info, QPointF(pos(0), pos(1)));
+        RTSCompExt* comp = rts->addRTSComp(info, QPointF(pos(0), pos(1)));
         if (comp == 0) continue;
         if (CORBA::is_nil(comp->rtc_)){
             comp->inPorts.clear();
             comp->outPorts.clear();
             for (int idxData = 0; idxData < compProf.dataPortList.size(); idxData++) {
                 DataPort portProf = compProf.dataPortList[idxData];
-                RTSPortPtr rtsPort = new RTSPort(portProf.name, 0, comp);
+                RTSPortExtPtr rtsPort = new RTSPortExt(portProf.name, 0, comp);
                 rtsPort->isServicePort = false;
                 if (portProf.direction == "DataOutPort") {
                     rtsPort->isInPort = false;
@@ -109,7 +109,7 @@ bool ProfileHandler::restoreRtsProfile(std::string targetFile, RTSystemItem* rts
             }
             for (int idxService = 0; idxService < compProf.servicePortList.size(); idxService++) {
                 ServicePort portProf = compProf.servicePortList[idxService];
-                RTSPortPtr rtsPort = new RTSPort(portProf.name, 0, comp);
+                RTSPortExtPtr rtsPort = new RTSPortExt(portProf.name, 0, comp);
                 rtsPort->isServicePort = true;
                 rtsPort->isInPort = false;
                 comp->outPorts.push_back(rtsPort);
@@ -165,42 +165,42 @@ bool ProfileHandler::restoreRtsProfile(std::string targetFile, RTSystemItem* rts
     /////
     for (int idxData = 0; idxData < profile.dataConnList.size(); idxData++) {
         DataPortConnector dataConProf = profile.dataConnList[idxData];
-        RTSPort* sourcePort = getTargetPort(dataConProf.source.pathId, dataConProf.source.portName, rts);
-        RTSPort* targetPort = getTargetPort(dataConProf.target.pathId, dataConProf.target.portName, rts);
+        RTSPortExt* sourcePort = getTargetPort(dataConProf.source.pathId, dataConProf.source.portName, rts);
+        RTSPortExt* targetPort = getTargetPort(dataConProf.target.pathId, dataConProf.target.portName, rts);
 
         string id = "";
         string name = dataConProf.name;
 
-        vector<NamedValuePtr> propList;
+        vector<NamedValueExtPtr> propList;
         for (int idxProp = 0; idxProp < dataConProf.propertyList.size(); idxProp++) {
             Property propPro = dataConProf.propertyList[idxProp];
             if (propPro.name == "dataport.corba_cdr.inport_ior") continue;
-            NamedValuePtr param(new NamedValue(propPro.name, propPro.value));
+            NamedValueExtPtr param(new NamedValueExt(propPro.name, propPro.value));
             propList.push_back(param);
         }
 
         if (sourcePort && targetPort) {
-            RTSConnection* conn = rts->addRTSConnection(id, name, sourcePort, targetPort, propList, dataConProf.pos);
+            RTSConnectionExt* conn = rts->addRTSConnection(id, name, sourcePort, targetPort, propList, dataConProf.pos);
             conn->dataProfile = dataConProf;
         }
     }
     for (int idxService = 0; idxService < profile.serviceConnList.size(); idxService++) {
         ServicePortConnector serviceConProf = profile.serviceConnList[idxService];
-        RTSPort* sourcePort = getTargetPort(serviceConProf.source.pathId, serviceConProf.source.portName, rts);
-        RTSPort* targetPort = getTargetPort(serviceConProf.target.pathId, serviceConProf.target.portName, rts);
+        RTSPortExt* sourcePort = getTargetPort(serviceConProf.source.pathId, serviceConProf.source.portName, rts);
+        RTSPortExt* targetPort = getTargetPort(serviceConProf.target.pathId, serviceConProf.target.portName, rts);
 
         string id = "";
         string name = serviceConProf.name;
 
-        vector<NamedValuePtr> propList;
+        vector<NamedValueExtPtr> propList;
         for (int idxProp = 0; idxProp < serviceConProf.propertyList.size(); idxProp++) {
             Property propPro = serviceConProf.propertyList[idxProp];
-            NamedValuePtr param(new NamedValue(propPro.name, propPro.value));
+            NamedValueExtPtr param(new NamedValueExt(propPro.name, propPro.value));
             propList.push_back(param);
         }
 
         if (sourcePort && targetPort) {
-            RTSConnection* conn = rts->addRTSConnection(id, name, sourcePort, targetPort, propList, serviceConProf.pos);
+            RTSConnectionExt* conn = rts->addRTSConnection(id, name, sourcePort, targetPort, propList, serviceConProf.pos);
             conn->serviceProfile = serviceConProf;
         }
     }
@@ -208,24 +208,23 @@ bool ProfileHandler::restoreRtsProfile(std::string targetFile, RTSystemItem* rts
     return true;
 }
 
-RTSPort* ProfileHandler::getTargetPort(std::string& sourceRtc, std::string& sourcePort, RTSystemItem* rts)
+RTSPortExt* ProfileHandlerExt::getTargetPort(std::string& sourceRtc, std::string& sourcePort, RTSystemExtItem* rts)
 {
-    RTSPort* result = 0;
+    RTSPortExt* result = 0;
 
     QString sourcePath = QString::fromStdString(sourceRtc);
     QStringList sourcePathList = sourcePath.split("/");
     sourcePathList.removeAt(0);
     QString sourceId = "/" + sourcePathList.join("/");
-    RTSComp* rtc = rts->nameToRTSComp(sourceId.toStdString());
+    RTSCompExt* rtc = rts->nameToRTSComp(sourceId.toStdString());
     if (rtc) {
         result = rtc->nameToRTSPort(sourcePort);
     }
     return result;
 }
 
-bool ProfileHandler::parseProfile(std::string targetFile, RtsProfile& profile)
+bool ProfileHandlerExt::parseProfile(std::string targetFile, RtsProfile& profile)
 {
-    DDEBUG("ProfileHandler::parseProfile");
     xml_document doc;
     xml_parse_result result = doc.load_file(targetFile.c_str());
     if (result == 0) return false;
@@ -329,7 +328,7 @@ bool ProfileHandler::parseProfile(std::string targetFile, RtsProfile& profile)
     return true;
 }
 
-void ProfileHandler::parseConfigurationSet(xml_node& comp, Component& proComp)
+void ProfileHandlerExt::parseConfigurationSet(xml_node& comp, Component& proComp)
 {
     for (xml_node configSet = comp.child("rts:ConfigurationSets"); configSet; configSet = configSet.next_sibling("rts:ConfigurationSets")) {
         ConfigurationSet configSetProf;
@@ -344,7 +343,7 @@ void ProfileHandler::parseConfigurationSet(xml_node& comp, Component& proComp)
     }
 }
 
-TargetPort ProfileHandler::parseTargetPort(const pugi::xml_node& targetPort)
+TargetPort ProfileHandlerExt::parseTargetPort(const pugi::xml_node& targetPort)
 {
     TargetPort result;
     result.portName = targetPort.attribute("rts:portName").as_string();
@@ -359,21 +358,21 @@ TargetPort ProfileHandler::parseTargetPort(const pugi::xml_node& targetPort)
     return result;
 }
 //////////
-void ProfileHandler::saveRtsProfile
-(const string& targetFile, string& systemId, map<string, RTSCompPtr>& comps, RTSConnectionMap& connections, std::ostream& os)
+void ProfileHandlerExt::saveRtsProfile
+(const string& targetFile, string& systemId, map<string, RTSCompExtPtr>& comps, RTSConnectionExtMap& connections, std::ostream& os)
 {
     RtsProfile profile;
     profile.id = systemId;
 
     int offsetX = 0;
     int offsetY = 0;
-    for (map<string, RTSCompPtr>::iterator it = comps.begin(); it != comps.end(); it++) {
-        RTSComp* comp = it->second.get();
+    for (map<string, RTSCompExtPtr>::iterator it = comps.begin(); it != comps.end(); it++) {
+        RTSCompExt* comp = it->second.get();
         if (comp->pos().x() < offsetX) offsetX = comp->pos().x();
         if (comp->pos().y() < offsetY) offsetY = comp->pos().y();
     }
-    for (RTSConnectionMap::iterator it = connections.begin(); it != connections.end(); it++) {
-        RTSConnection* connect = it->second.get();
+    for (RTSConnectionExtMap::iterator it = connections.begin(); it != connections.end(); it++) {
+        RTSConnectionExt* connect = it->second.get();
         for (int idxPos = 0; idxPos < 6; idxPos++) {
             if (connect->position[idxPos](0) < offsetX) offsetX = connect->position[idxPos](0);
             if (connect->position[idxPos](1) < offsetY) offsetY = connect->position[idxPos](1);
@@ -382,8 +381,8 @@ void ProfileHandler::saveRtsProfile
     if (offsetX < 0) offsetX = -offsetX;
     if (offsetY < 0) offsetY = -offsetY;
 
-    for (map<string, RTSCompPtr>::iterator it = comps.begin(); it != comps.end(); it++) {
-        RTSComp* comp = it->second.get();
+    for (map<string, RTSCompExtPtr>::iterator it = comps.begin(); it != comps.end(); it++) {
+        RTSCompExt* comp = it->second.get();
 
         if (!isObjectAlive(comp->rtc_)) {
             os << "\033[31mWarning: " << comp->name << "is NOT ALIVE.\033[0m" << endl;
@@ -400,12 +399,12 @@ void ProfileHandler::saveRtsProfile
             compProf.posX = comp->pos().x() + offsetX;
             compProf.posY = comp->pos().y() + offsetY;
 
-            for (vector<RTSPortPtr>::iterator p0 = comp->inPorts.begin(); p0 != comp->inPorts.end(); p0++) {
-                RTSPort* in = *p0;
+            for (vector<RTSPortExtPtr>::iterator p0 = comp->inPorts.begin(); p0 != comp->inPorts.end(); p0++) {
+                RTSPortExt* in = *p0;
                 buildPortInfo(in, compProf, "DataInPort");
             }
-            for (vector<RTSPortPtr>::iterator p0 = comp->outPorts.begin(); p0 != comp->outPorts.end(); p0++) {
-                RTSPort* out = *p0;
+            for (vector<RTSPortExtPtr>::iterator p0 = comp->outPorts.begin(); p0 != comp->outPorts.end(); p0++) {
+                RTSPortExt* out = *p0;
                 buildPortInfo(out, compProf, "DataOutPort");
             }
             //
@@ -450,8 +449,8 @@ void ProfileHandler::saveRtsProfile
         }
     }
     //
-    for (RTSConnectionMap::iterator it = connections.begin(); it != connections.end(); it++) {
-        RTSConnection* connect = it->second.get();
+    for (RTSConnectionExtMap::iterator it = connections.begin(); it != connections.end(); it++) {
+        RTSConnectionExt* connect = it->second.get();
 
         if (!isObjectAlive(connect->sourcePort->port)) {
             os << "\033[31mWarning: " << "The connection between " << connect->sourcePort->name << " and " << connect->targetPort->name << " is NOT ALIVE.\033[0m" << endl;
@@ -473,7 +472,6 @@ void ProfileHandler::saveRtsProfile
 
                     ConnectorProfile& connectorProfile = connectorProfiles[0];
                     copyNVListToProperty(connectorProfile.properties, conProf.propertyList);
-
                     conProf.source = buildTargetPortInfo(connect->sourcePort);
                     conProf.target = buildTargetPortInfo(connect->targetPort);
 
@@ -516,7 +514,7 @@ void ProfileHandler::saveRtsProfile
     writeProfile(targetFile, profile, os);
 }
 
-void ProfileHandler::buildPosition(const RTSConnection* connect, int offsetX, int offsetY, std::vector<Property>& propList)
+void ProfileHandlerExt::buildPosition(const RTSConnectionExt* connect, int offsetX, int offsetY, std::vector<Property>& propList)
 {
     QString position = "{";
     for (int idxPos = 0; idxPos < 6; idxPos++) {
@@ -545,7 +543,7 @@ void ProfileHandler::buildPosition(const RTSConnection* connect, int offsetX, in
     //appendStringValue(propList, bendPointName, bendPoint);
 }
 
-TargetPort ProfileHandler::buildTargetPortInfo(RTSPort* sourcePort)
+TargetPort ProfileHandlerExt::buildTargetPortInfo(RTSPortExt* sourcePort)
 {
     TargetPort result;
 
@@ -561,7 +559,7 @@ TargetPort ProfileHandler::buildTargetPortInfo(RTSPort* sourcePort)
     return result;
 }
 
-void ProfileHandler::buildPortInfo(RTSPort* port, Component& compProf, std::string direction)
+void ProfileHandlerExt::buildPortInfo(RTSPortExt* port, Component& compProf, std::string direction)
 {
     PortProfile* portRaw = port->port->get_port_profile();
     if (port->isServicePort) {
@@ -579,10 +577,9 @@ void ProfileHandler::buildPortInfo(RTSPort* port, Component& compProf, std::stri
         copyNVListToProperty(portRaw->properties, portProf.propertyList);
         compProf.dataPortList.push_back(portProf);
     }
-
 }
 
-void ProfileHandler::copyNVListToProperty(NVList& source, vector<Property>& target)
+void ProfileHandlerExt::copyNVListToProperty(NVList& source, vector<Property>& target)
 {
     for (CORBA::ULong i(0), len(source.length()); i < len; ++i) {
         const char* value;
@@ -596,7 +593,7 @@ void ProfileHandler::copyNVListToProperty(NVList& source, vector<Property>& targ
     }
 }
 
-void ProfileHandler::appendStringValue(std::vector<Property>& target, std::string& name, std::string& value)
+void ProfileHandlerExt::appendStringValue(std::vector<Property>& target, std::string& name, std::string& value)
 {
     bool isExist = false;
     for (Property prop : target) {
@@ -614,12 +611,12 @@ void ProfileHandler::appendStringValue(std::vector<Property>& target, std::strin
     }
 }
 
-void ProfileHandler::removePropertyByValue(std::vector<Property>& target, const std::string& name)
+void ProfileHandlerExt::removePropertyByValue(std::vector<Property>& target, const std::string& name)
 {
     target.erase(remove_if(target.begin(), target.end(), PropertyValueComparator(name)), target.end());
 }
 
-bool ProfileHandler::writeProfile(const std::string& targetFile, RtsProfile& profile, std::ostream& os)
+bool ProfileHandlerExt::writeProfile(const std::string& targetFile, RtsProfile& profile, std::ostream& os)
 {
     xml_document doc;
     xml_node profileNode = doc.append_child("rts:RtsProfile");
@@ -643,7 +640,7 @@ bool ProfileHandler::writeProfile(const std::string& targetFile, RtsProfile& pro
     return ret;
 }
 
-void ProfileHandler::writeComponent(std::vector<Component>& compList, xml_node& parent)
+void ProfileHandlerExt::writeComponent(std::vector<Component>& compList, xml_node& parent)
 {
     for (int idxComp = 0; idxComp < compList.size(); idxComp++) {
         Component target = compList[idxComp];
@@ -673,7 +670,7 @@ void ProfileHandler::writeComponent(std::vector<Component>& compList, xml_node& 
     }
 }
 
-void ProfileHandler::writeDataPort(std::vector<DataPort>& portList, xml_node& parent)
+void ProfileHandlerExt::writeDataPort(std::vector<DataPort>& portList, xml_node& parent)
 {
     for (int idxData = 0; idxData < portList.size(); idxData++) {
         DataPort dataport = portList[idxData];
@@ -685,7 +682,7 @@ void ProfileHandler::writeDataPort(std::vector<DataPort>& portList, xml_node& pa
     }
 }
 
-void ProfileHandler::writeServicePort(std::vector<ServicePort>& portList, xml_node& parent)
+void ProfileHandlerExt::writeServicePort(std::vector<ServicePort>& portList, xml_node& parent)
 {
     for (int idxService = 0; idxService < portList.size(); idxService++) {
         ServicePort serviceport = portList[idxService];
@@ -698,7 +695,7 @@ void ProfileHandler::writeServicePort(std::vector<ServicePort>& portList, xml_no
 
 }
 
-void ProfileHandler::writeConfigurationSet(std::vector<ConfigurationSet>& configList, xml_node& parent)
+void ProfileHandlerExt::writeConfigurationSet(std::vector<ConfigurationSet>& configList, xml_node& parent)
 {
     for (int idxConfig = 0; idxConfig < configList.size(); idxConfig++) {
         ConfigurationSet config = configList[idxConfig];
@@ -713,7 +710,7 @@ void ProfileHandler::writeConfigurationSet(std::vector<ConfigurationSet>& config
     }
 }
 
-void ProfileHandler::writeExecutionContext(std::vector<ExecutionContext>& ecList, xml_node& parent)
+void ProfileHandlerExt::writeExecutionContext(std::vector<ExecutionContext>& ecList, xml_node& parent)
 {
     for (int idxEC = 0; idxEC < ecList.size(); idxEC++) {
         ExecutionContext ec = ecList[idxEC];
@@ -727,7 +724,7 @@ void ProfileHandler::writeExecutionContext(std::vector<ExecutionContext>& ecList
     }
 }
 
-void ProfileHandler::writeLocation(Component& target, xml_node& parent)
+void ProfileHandlerExt::writeLocation(Component& target, xml_node& parent)
 {
     xml_node posNode = parent.append_child("rtsExt:Location");
     posNode.append_attribute("rtsExt:direction") = "RIGHT";
@@ -737,7 +734,7 @@ void ProfileHandler::writeLocation(Component& target, xml_node& parent)
     posNode.append_attribute("rtsExt:y") = target.posY;
 }
 
-void ProfileHandler::writeDataConnector(std::vector<DataPortConnector>& connList, xml_node& parent)
+void ProfileHandlerExt::writeDataConnector(std::vector<DataPortConnector>& connList, xml_node& parent)
 {
     for (int idxConn = 0; idxConn < connList.size(); idxConn++) {
         DataPortConnector conn = connList[idxConn];
@@ -761,7 +758,7 @@ void ProfileHandler::writeDataConnector(std::vector<DataPortConnector>& connList
     }
 }
 
-void ProfileHandler::writeServiceConnector(std::vector<ServicePortConnector>& connList, xml_node& parent)
+void ProfileHandlerExt::writeServiceConnector(std::vector<ServicePortConnector>& connList, xml_node& parent)
 {
     for (int idxConn = 0; idxConn < connList.size(); idxConn++) {
         ServicePortConnector conn = connList[idxConn];
@@ -775,7 +772,7 @@ void ProfileHandler::writeServiceConnector(std::vector<ServicePortConnector>& co
     }
 }
 
-void ProfileHandler::writeTargetPort(TargetPort& target, std::string tag, xml_node& parent)
+void ProfileHandlerExt::writeTargetPort(TargetPort& target, std::string tag, xml_node& parent)
 {
     xml_node targetPortNode = parent.append_child(tag.c_str());
     targetPortNode.append_attribute("xsi:type") = "rtsExt:target_port_ext";
@@ -786,7 +783,7 @@ void ProfileHandler::writeTargetPort(TargetPort& target, std::string tag, xml_no
     writeProperty(target.propertyList, targetPortNode);
 }
 
-void ProfileHandler::writeProperty(std::vector<Property>& propList, xml_node& parent)
+void ProfileHandlerExt::writeProperty(std::vector<Property>& propList, xml_node& parent)
 {
     for (int idxProp = 0; idxProp < propList.size(); idxProp++) {
         Property prop = propList[idxProp];

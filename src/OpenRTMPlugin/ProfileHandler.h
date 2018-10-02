@@ -61,6 +61,7 @@ public:
     bool isRequired;
     int posX;
     int posY;
+    bool isOpenRTM;
     //
     std::vector<DataPort> dataPortList;
     std::vector<ServicePort> servicePortList;

@@ -134,6 +134,11 @@ void RTCWrapper::setRTObject(RTC::RTObject_ptr target)
     }
     rtc_ = target;
     ownedExeContList_ = rtc_->get_owned_contexts();
+    //
+    compProfile_ = rtc_->get_component_profile();
+    category_ = string(compProfile_->category);
+    vendor_ = string(compProfile_->vendor);
+    version_ = string(compProfile_->version);
 }
 
 bool RTCWrapper::activateComponent()

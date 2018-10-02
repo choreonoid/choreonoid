@@ -5,7 +5,7 @@
 #include <cnoid/View>
 #include <cnoid/CorbaUtil>
 #include <QTableWidget>
-#include <QCheckBox>
+#include <cnoid/CheckBox>
 #include <QStyledItemDelegate>
 #include <memory>
 
@@ -102,8 +102,6 @@ public:
     bool getActive() const { return active_; }
     void setActive(bool value);
     void setRadio(QRadioButton* value) { radioActive_ = value; }
-    int getRowCount() const { return this->rowCount_; }
-    void setRowCount(int value) { this->rowCount_ = value; }
     int getMode() const { return this->mode_; }
     void setChanged();
     std::vector<ConfigurationParamPtr> getConfigurationList() const { return configurationList_; }
@@ -120,7 +118,6 @@ private:
     bool active_;
     bool activeOrg_;
     QRadioButton* radioActive_;
-    int rowCount_;
     std::vector<ConfigurationParamPtr> configurationList_;
 };
 
@@ -129,8 +126,6 @@ typedef std::shared_ptr<ConfigurationSetParam> ConfigurationSetParamPtr;
 
 class DetailDelegate : public QStyledItemDelegate
 {
-    Q_OBJECT
-
 public:
     DetailDelegate(RTSConfigurationViewImpl* view, QWidget *parent = 0);
     virtual void setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const;
@@ -142,7 +137,6 @@ private:
 
 class ConfigSetDelegate : public QStyledItemDelegate
 {
-    Q_OBJECT
 public:
     ConfigSetDelegate(RTSConfigurationViewImpl* view, QWidget *parent = 0);
     virtual void setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const;
@@ -183,9 +177,29 @@ public:
 
     void updateConfigurationSet();
 
-    private Q_SLOTS:
+private Q_SLOTS:
     void configSetSelectionChanged();
     void activeSetChanged();
+
+private:
+    NamingContextHelper::ObjectInfo currentItem_;
+    RTCWrapperPtr currentRtc_;
+
+    QLineEdit* txtCompName_;
+    QTableWidget* lstConfigSet_;
+    CheckBox* chkSetDetail_;
+
+    QLineEdit* txtConfSetName_;
+    QTableWidget* lstDetail_;
+    CheckBox* chkDetail_;
+
+    std::vector<ConfigurationSetParamPtr> configSetList_;
+    ConfigurationSetParamPtr currentSet_;
+
+    void getConfigurationSet();
+    void showConfigurationSetView();
+    void showConfigurationView();
+    ///
     void setCopyClicked();
     void setAddClicked();
     void setDeleteClicked();
@@ -197,25 +211,6 @@ public:
 
     void applyClicked();
     void cancelClicked();
-
-private:
-    NamingContextHelper::ObjectInfo currentItem_;
-    RTCWrapperPtr currentRtc_;
-
-    QLineEdit* txtCompName_;
-    QTableWidget* lstConfigSet_;
-    QCheckBox* chkSetDetail_;
-
-    QLineEdit* txtConfSetName_;
-    QTableWidget* lstDetail_;
-    QCheckBox* chkDetail_;
-
-    std::vector<ConfigurationSetParamPtr> configSetList_;
-    ConfigurationSetParamPtr currentSet_;
-
-    void getConfigurationSet();
-    void showConfigurationSetView();
-    void showConfigurationView();
 };
 
 }
