@@ -70,6 +70,18 @@ items:
               children: 
                 - 
                   id: 5
+                  name: "Controller"
+                  plugin: Body
+                  class: SimpleControllerItem
+                  data: 
+                    isNoDelayMode: false
+                    controllerOptions: ""
+                    controller: "CarT3Controller.so"
+                    baseDirectory: "Controller directory"
+                    reloading: false
+                    isOldTargetVariableMode: false
+                - 
+                  id: 6
                   name: "SensorVisualizer"
                   plugin: Body
                   class: SensorVisualizer
@@ -80,7 +92,7 @@ items:
                         name: ForceSensor
                         visualRatio: 0.002
             - 
-              id: 6
+              id: 7
               name: "Spreader"
               plugin: Body
               class: BodyItem
@@ -103,7 +115,7 @@ items:
                 selfCollisionDetection: false
                 isEditable: true
         - 
-          id: 7
+          id: 8
           name: "DoubleArmV7"
           plugin: Body
           class: BodyItem
@@ -136,7 +148,7 @@ items:
             isEditable: true
           children: 
             - 
-              id: 8
+              id: 9
               name: "DoubleArmV7Controller"
               plugin: Body
               class: SimpleControllerItem
@@ -148,7 +160,7 @@ items:
                 reloading: true
                 isOldTargetVariableMode: false
         - 
-          id: 9
+          id: 10
           name: "AGXSimulator"
           plugin: AGXDynamics
           class: AGXSimulatorItem
@@ -171,7 +183,7 @@ items:
             ContactWarmstarting: true
             AutoSleep: false
             SaveToAGXFileOnStart: false
-            DebugMessageOnConsole: 1
+            DebugMessageOnConsole: 2
 views: 
   - 
     id: 0
@@ -184,8 +196,8 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      checked: [ 3, 4, [ 5, "ForceSensor" ], 6, 7 ]
-      expanded: [ 1, 2, 4, 5, 7, 8 ]
+      checked: [ 3, 4, 7, 8 ]
+      expanded: [ 1, 2, 4, 6, 8, 9 ]
   - 
     id: 2
     plugin: Base
@@ -240,7 +252,7 @@ views:
           far: 200
           eye: [ -0.724784721, -5.3455219, 2.06639099 ]
           direction: [ 0.395778771, 0.889262876, -0.229283017 ]
-          up: [ 0.0932289902, 0.209473285, 0.973359799 ]
+          up: [ 0.0932289905, 0.209473285, 0.973359799 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
@@ -310,7 +322,7 @@ views:
       xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       dedicatedItemTreeViewChecks: true
-      checked: [ 3, 4, 6, 7 ]
+      checked: [ 3, 4, 7, 8 ]
   - 
     id: 5
     plugin: Body
@@ -320,6 +332,12 @@ views:
       showRotationMatrix: false
   - 
     id: 6
+    name: "Body State"
+    plugin: Body
+    class: BodyStateView
+    mounted: true
+  - 
+    id: 7
     plugin: Body
     class: JointSliderView
     mounted: true
@@ -333,23 +351,13 @@ views:
       labelOnLeft: true
       currentBodyItem: 4
   - 
-    id: 7
+    id: 8
     plugin: Body
     class: LinkSelectionView
     mounted: true
     state: 
       listingMode: "Link List"
       currentBodyItem: 4
-  - 
-    id: 8
-    plugin: OpenRTM
-    class: RTSNameServerView
-    state: 
-      NameServers: 
-        - 
-          isDefaultNameServer: false
-          host: "localhost"
-          port: 2809
   - 
     id: 9
     plugin: Python
@@ -366,18 +374,6 @@ toolbars:
     speedScale: 1
     syncToOngoingUpdates: true
     autoExpansion: true
-  "KinematicsBar": 
-    mode: AUTO
-    enablePositionDragger: true
-    penetrationBlock: false
-    collisionLinkHighlight: false
-    snapDistance: 0.025
-    penetrationBlockDepth: 0.0005
-    lazyCollisionDetectionMode: true
-  "BodyBar": 
-    current: 4
-  "LeggedBodyBar": 
-    stanceWidth: 0.15
   "BodyMotionGenerationBar": 
     autoGenerationForNewBody: true
     balancer: false
@@ -411,6 +407,18 @@ toolbars:
     waistHeightRelaxation: false
     gravity: 9.8
     dynamicsTimeRatio: 1
+  "KinematicsBar": 
+    mode: AUTO
+    enablePositionDragger: true
+    penetrationBlock: false
+    collisionLinkHighlight: false
+    snapDistance: 0.025
+    penetrationBlockDepth: 0.0005
+    lazyCollisionDetectionMode: true
+  "BodyBar": 
+    current: 4
+  "LeggedBodyBar": 
+    stanceWidth: 0.15
 Body: 
   "BodyMotionEngine": 
     updateJointVelocities: false
@@ -427,12 +435,12 @@ Body:
         showPpcom: false
         showZmp: false
       - 
-        bodyItem: 6
+        bodyItem: 7
         showCenterOfMass: false
         showPpcom: false
         showZmp: false
       - 
-        bodyItem: 7
+        bodyItem: 8
         showCenterOfMass: false
         showPpcom: false
         showZmp: false
@@ -451,8 +459,6 @@ Body:
     inputFrameRate: 200
     isOutputFrameRateSpecified: false
     outputFrameRate: 200
-OpenRTM: 
-  "deleteUnmanagedRTCsOnStartingSimulation": false
 viewAreas: 
   - 
     type: embedded
@@ -460,12 +466,12 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 437, 2130 ]
+      sizes: [ 478, 2329 ]
       children: 
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 847, 845 ]
+          sizes: [ 695, 693 ]
           children: 
             - 
               type: pane
@@ -473,21 +479,21 @@ viewAreas:
               current: 1
             - 
               type: pane
-              views: [ 0, 7 ]
+              views: [ 0, 8 ]
               current: 0
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 1301, 391 ]
+          sizes: [ 1067, 321 ]
           children: 
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 922, 1202 ]
+              sizes: [ 1008, 1315 ]
               children: 
                 - 
                   type: pane
-                  views: [ 5, 6, 4 ]
+                  views: [ 5, 7, 4 ]
                   current: 5
                 - 
                   type: pane
@@ -496,7 +502,7 @@ viewAreas:
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 1062, 1062 ]
+              sizes: [ 1162, 1161 ]
               children: 
                 - 
                   type: pane
@@ -504,8 +510,8 @@ viewAreas:
                   current: 2
                 - 
                   type: pane
-                  views: [ 9 ]
-                  current: 9
+                  views: [ 9, 6 ]
+                  current: 6
 layoutOfToolBars: 
   rows: 
     - 

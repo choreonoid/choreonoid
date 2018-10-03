@@ -16,12 +16,6 @@ links:
                0, 1, 0,
                0, 0, 1 ]
     elements:
-      # -
-      #   # Visualization of the door lock position for FR_DOOR
-      #   type: Shape
-      #   translation: [ -0.4, -0.75, 0.73 ]
-      #   geometry: { type: Sphere, radius: 0.025 }
-      #   appearance: { material: { diffuseColor: [ 1, 1, 0 ] } }
       -
         type: Visual
         resource: 
@@ -64,7 +58,7 @@ links:
   -
     name: FR_DOOR
     parent: BODY
-    translation: [ 0.865, -0.814, 0.33 ]
+    translation: &FR_DOOR_TRANSLATION [ 0.865, -0.814, 0.33 ]
     rotation: [ 0, 1, 0, -0.05 ]
     jointType: free
     jointRange: [ 0, 70 ]
@@ -89,7 +83,7 @@ links:
   -
     name: FR_DOOR_HINGE
     parent: BODY
-    translation: [ -0.012, 0.025, 0.29 ]
+    translation: [ *FR_DOOR_TRANSLATION, [ -0.012, 0.025, 0.29 ] ]
     joinType: fixed
     jointAxis: [ 1, 0, 0 ]
     mass: 1
@@ -97,10 +91,20 @@ links:
                0, 1, 0,
                0, 0, 1 ]
     elements:
-      # -
-      #   type: ForceSensor
-      #   name: DOOR_HINGE_FORCE_SENSOR
-      #   id: 0
+      -
+        type: ForceSensor
+        name: FR_DOOR_HINGE_FORCE_SENSOR
+        id: 0
+      -
+        type: AGXBreakableJointDevice
+        name: FR_DOOR_HINGE_CONSTRAINT
+        isOptional: true
+        link1Name: BODY
+        link2Name: FR_DOOR
+        jointType: fixed
+        jointCompliance: &DOOR_CONSTRAINT_COMPLIANCE 5.0e-5
+        position: [ -0.012, 0.025, 0.29 ]
+        breakType: none
       -
         type: Collision
         elements:
@@ -111,17 +115,27 @@ links:
   -
     name: FR_DOOR_LOCK
     parent: BODY
-    translation: [ -1.326, 0.025, 0.29 ]
+    translation: [ *FR_DOOR_TRANSLATION, [ -1.326, 0.025, 0.29 ] ]
     joinType: fixed
     mass: 1
     inertia: [ 1, 0, 0,
                0, 1, 0,
                0, 0, 1 ]
     elements:
-      # -
-      #   type: ForceSensor
-      #   name: DOOR_LOCK_FORCE_SENSOR
-      #   id: 1
+      -
+        type: ForceSensor
+        name: FR_DOOR_LOCK_FORCE_SENSOR
+        id: 1
+      -
+        type: AGXBreakableJointDevice
+        name: FR_DOOR_LOCK_CONSTRAINT
+        isOptional: true
+        link1Name: BODY
+        link2Name: FR_DOOR
+        jointType: fixed
+        jointCompliance: *DOOR_CONSTRAINT_COMPLIANCE
+        position: [ -1.326, 0.025, 0.29 ]
+        breakType: none
       -
         type: Collision
         elements:
