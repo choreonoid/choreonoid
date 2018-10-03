@@ -2,6 +2,7 @@
 #include "AGXScene.h"
 #include <cnoid/MeshExtractor>
 #include <cnoid/SceneDrawables>
+#include <cnoid/ForceSensor>
 #include <mutex>
 #include "AGXVehicleContinuousTrack.h"
 #include "AGXConvexDecomposition.h"
@@ -42,7 +43,7 @@ bool createAGXVehicleContinousTrack(AGXBody* agxBody)
 ////////////////////////////////////////////////////////////
 // AGXLink
 AGXLink::AGXLink(Link* const link) : _orgLink(link){}
-AGXLink::AGXLink(Link* const link, AGXLink* const parent, const Vector3& parentOrigin, AGXBody* const agxBody, bool makeStatic) :
+AGXLink::AGXLink(Link* const link, AGXLink* const parent, const Vector3& parentOrigin, AGXBody* const agxBody, std::set<Link*>& forceSensorLinks, bool makeStatic) :
     _agxBody(agxBody),
     _orgLink(link),
     _agxParentLink(parent),
@@ -61,13 +62,13 @@ AGXLink::AGXLink(Link* const link, AGXLink* const parent, const Vector3& parentO
         agxBody->addControllableLink(this);
     }
 
-    if(link->jointType() != Link::FIXED_JOINT){
+    if(link->jointType() != Link::FIXED_JOINT || forceSensorLinks.find(link) != forceSensorLinks.end()){
         makeStatic = false;
     }
 
     constructAGXLink(makeStatic);
     for(Link* child = link->child(); child; child = child->sibling()){
-        new AGXLink(child, this, getOrigin(), agxBody, makeStatic);
+        new AGXLink(child, this, getOrigin(), agxBody, forceSensorLinks, makeStatic);
     }
 }
 
@@ -816,7 +817,11 @@ void AGXBody::createBody(AGXScene* agxScene)
     if(body()->rootLink()->jointType() != Link::FIXED_JOINT){
         makeStatic = false;
     }
-    new AGXLink(body()->rootLink(), nullptr, Vector3::Zero(), this, makeStatic);
+    std::set<Link*> forceSensorLinks;
+    for(auto& sensor : body()->devices<ForceSensor>()){
+        forceSensorLinks.insert(sensor->link());
+    }
+    new AGXLink(body()->rootLink(), nullptr, Vector3::Zero(), this, forceSensorLinks, makeStatic);
     setLinkStateToAGX();
     createExtraJoint();
     callExtensionFuncs();
