@@ -2427,10 +2427,7 @@ void SimulatorItem::clearExternalForces()
 void SimulatorItemImpl::doSetExternalForce()
 {
     std::lock_guard<std::mutex> lock(extForceMutex);
-    Link* link = extForceInfo.link;
-    link->f_ext() += extForceInfo.f;
-    const Vector3 p = link->T() * extForceInfo.point;
-    link->tau_ext() += p.cross(extForceInfo.f);
+    extForceInfo.link->addExternalForce(extForceInfo.f, extForceInfo.point);
     if(extForceInfo.time > 0.0){
         extForceInfo.time -= worldTimeStep_;
         if(extForceInfo.time <= 0.0){

@@ -229,6 +229,11 @@ public:
     Vector6::ConstFixedSegmentReturnType<3>::Type tau_ext() const { return F_ext_.tail<3>(); }
     Vector6::FixedSegmentReturnType<3>::Type tau_ext() { return F_ext_.tail<3>(); }
 
+    void addExternalForce(const Vector3& f, const Vector3& p_local){
+        f_ext() += f;
+        tau_ext() += (T_ * p_local).cross(f);
+    }
+    
     int materialId() const { return materialId_; }
     std::string materialName() const;
     
