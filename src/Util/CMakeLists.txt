@@ -153,7 +153,6 @@ set(headers
   Joystick.h
   ExtJoystick.h
   SharedJoystick.h
-  JoystickGamepad.h
   Task.h
   AbstractTaskSequencer.h
   Exception.h

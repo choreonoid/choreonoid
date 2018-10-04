@@ -4,7 +4,7 @@
 */
 
 #include <cnoid/SimpleController>
-#include <cnoid/JoystickGamepad>
+#include <cnoid/Joystick>
 
 using namespace std;
 using namespace cnoid;
@@ -13,7 +13,7 @@ class LinkPositionController : public SimpleController
 {
     Link* link;
     double dt;
-    Gamepad gamepad;
+    Joystick joystick;
 
 public:
 
@@ -32,8 +32,8 @@ public:
 
         dt = io->timeStep();
 
-        if(!gamepad.isReady()){
-            os << "Joystick is not ready: " << gamepad.errorMessage() << endl;
+        if(!joystick.isReady()){
+            os << "Joystick is not ready: " << joystick.errorMessage() << endl;
         }
 
         return true;
@@ -41,16 +41,19 @@ public:
 
     virtual bool control() override
     {
-        gamepad.readCurrentState();
-        link->p().x() += gamepad.getStickLX() * dt;
-        link->p().y() += gamepad.getStickLY() * dt;
-        link->p().z() -= gamepad.getTriggerL2() * dt;
-        link->p().z() += gamepad.getTriggerR2() * dt;
+        joystick.readCurrentState();
 
-        Matrix3 mat;
-        mat = AngleAxis(-1 * gamepad.getStickRY() * dt, Vector3::UnitX())
-            * AngleAxis(     gamepad.getStickRX() * dt, Vector3::UnitZ());
-        link->T().rotate(mat);
+        if(joystick.getButtonState(Joystick::L_BUTTON) || joystick.getButtonState(Joystick::R_BUTTON)){
+            Matrix3 R;
+            R = AngleAxis(-joystick.getPosition(Joystick::R_STICK_H_AXIS) * dt, Vector3::UnitZ())
+                * AngleAxis(-joystick.getPosition(Joystick::L_STICK_V_AXIS) * dt, Vector3::UnitY())
+                * AngleAxis(joystick.getPosition(Joystick::L_STICK_H_AXIS) * dt, Vector3::UnitX());
+            link->R() = link->R() * R;
+        } else {
+            link->p() += link->R() * Vector3::UnitX() * (-joystick.getPosition(Joystick::L_STICK_V_AXIS) * dt);
+            link->p() += link->R() * Vector3::UnitY() * (-joystick.getPosition(Joystick::L_STICK_H_AXIS) * dt);
+            link->p() += link->R() * Vector3::UnitZ() * (-joystick.getPosition(Joystick::R_STICK_V_AXIS) * dt);
+        }
 
         return true;
     }
