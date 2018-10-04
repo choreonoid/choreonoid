@@ -369,8 +369,9 @@ bool YAMLSceneReader::readTranslation(const ValueNode* info, Vector3& out_p) con
             out_p.setZero();
             Vector3 v;
             for(int i=0; i < translations.size(); ++i){
-                read(*translations[i].toListing(), v);
-                out_p += v;
+                if(readTranslation(&translations[i], v)){
+                    out_p += v;
+                }
             }
         }
     }
