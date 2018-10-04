@@ -327,8 +327,10 @@ int AppImpl::exec()
         result = qapplication->exec();
     }
 
-    for(Item* item = RootItem::instance()->childItem(); item; item = item->nextItem()){
+    for(Item* item = RootItem::instance()->childItem(); item; ){
+        Item* next = item->nextItem(); // detachFromParentItem() may deallocate item
         item->detachFromParentItem();
+        item = next;
     }
 
     PluginManager::finalize();
