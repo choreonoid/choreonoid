@@ -891,15 +891,15 @@ CAR_BODY_AROUND_FR_DOOR2_SHRINK: &CAR_BODY_AROUND_FR_DOOR2_SHRINK
         - #right
           type: Shape
           name: inside front right1
-          translation: [ 0.923, -0.729, -0.008 ]
-          rotation: [ 0, 1, 0, 12 ]
-          geometry: { type: Box, size: [ 0.15, 0.18, 0.2 ] }
+          translation: [ 0.935, -0.729, -0.05 ]
+          rotation: [ 0, 1, 0, 20 ]
+          geometry: { type: Box, size: [ 0.18, 0.18, 0.15 ] }
           appearance: *RED
         -
           type: Shape 
           name: inside front right2
-          translation: [ 0.94, -0.735, 0.22 ]
-          geometry: { type: Box, size: [ 0.135, 0.198, 0.34 ] }
+          translation: [ 0.94, -0.735, 0.2 ]
+          geometry: { type: Box, size: [ 0.135, 0.198, 0.4 ] }
           appearance: *RED
 
 CAR_BODY_AROUND_FR_DOOR: &CAR_BODY_AROUND_FR_DOOR

@@ -34,7 +34,8 @@ public:
         dt = io->timeStep();
         
         targets = {
-            { "FR_DOOR_HINGE_FORCE_SENSOR", "FR_DOOR_HINGE_CONSTRAINT" },
+            { "FR_DOOR_UPPER_HINGE_FORCE_SENSOR", "FR_DOOR_UPPER_HINGE_CONSTRAINT" },
+            { "FR_DOOR_LOWER_HINGE_FORCE_SENSOR", "FR_DOOR_LOWER_HINGE_CONSTRAINT" },
             { "FR_DOOR_LOCK_FORCE_SENSOR",  "FR_DOOR_LOCK_CONSTRAINT"  }
         };
 
@@ -56,7 +57,7 @@ public:
         if(targets.empty()){
             io->os() << "No spreader target was found." << endl;
         } else {
-            io->os() << targets.size() << " spreader targets has been found." << endl;
+            io->os() << targets.size() << " spreader targets have been found." << endl;
         }
 
         return !targets.empty();
@@ -70,7 +71,6 @@ public:
 
     virtual bool control() override
     {
-        //io->os() << "control" << endl;
         bool doRequestToSpread = false;
         
         auto iter = targets.begin();
@@ -82,7 +82,7 @@ public:
                 if(target.breakableJoint->on()){
                     target.time += dt;
                     //io->os() << target.forceSensor->name() << "'s time counter is " << target.time << endl;
-                    if(target.time > 2.0){
+                    if(target.time > 3.0){
                         target.breakableJoint->on(false);
                         target.breakableJoint->notifyStateChange();
                     }
