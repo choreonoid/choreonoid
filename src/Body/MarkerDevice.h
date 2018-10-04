@@ -50,6 +50,7 @@ public:
 
     const Position& offsetPosition() const { return offsetPosition_; }
     void setOffsetPosition(const Position& T) { offsetPosition_ = T; }
+    void setOffsetTranslation(const Vector3& p) { offsetPosition_.translation() = p; }
 
 private:
     bool on_;

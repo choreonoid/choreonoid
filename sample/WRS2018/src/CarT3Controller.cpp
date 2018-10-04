@@ -5,6 +5,7 @@
 #include <cnoid/SimpleController>
 #include <cnoid/Device>
 #include <cnoid/ForceSensor>
+#include <cnoid/MarkerDevice>
 #include "SpreaderController.h"
 
 using namespace std;
@@ -20,15 +21,22 @@ class CarT3Controller : public SimpleController
         int forceIteration;
         double forceDuration;
         double force;
+        double markerDuration;
         string sensorName;
         string jointName;
         SpreaderTarget(const char* sensorName, const char* jointName)
-            : timeToBreak(0.0), forceIteration(0), sensorName(sensorName), jointName(jointName) { }
+            : sensorName(sensorName), jointName(jointName) {
+            timeToBreak = 0.0;
+            forceIteration = 0;
+            markerDuration = 0.0;
+        }
     };
     vector<SpreaderTarget> targets;
     SimpleControllerIO* io;
     double timeStep;
     SpreaderController* spreaderController;
+    Link* door;
+    MarkerDevice* marker;
     
 public:
 
@@ -52,7 +60,6 @@ public:
             if(target.forceSensor && target.breakableJoint){
                 target.link = target.forceSensor->link();
                 io->enableInput(target.forceSensor);
-                io->enableOutput(target.link, LINK_FORCE);
                 ++iter;
             } else {
                 iter = targets.erase(iter);
@@ -62,9 +69,21 @@ public:
         io->os() << io->controllerName() << ": ";
         if(targets.empty()){
             io->os() << "No spreader target was found." << endl;
-        } else {
-            io->os() << targets.size() << " spreader targets have been found." << endl;
+            return false;
         }
+        io->os() << targets.size() << " spreader targets have been found." << endl;
+
+        door = body->link("FR_DOOR");
+        io->enableOutput(door, LINK_FORCE);
+
+        marker = body->findDevice<MarkerDevice>("DestructionMarker");
+        if(!marker){
+            io->os() << "DestructionMarker was not found." << endl;
+            return false;
+        }
+        io->enableInput(marker);
+        marker->on(false);
+        marker->notifyStateChange();
 
         return !targets.empty();
     }
@@ -90,17 +109,26 @@ public:
                     if(target.timeToBreak > 1.5){
                         target.breakableJoint->on(false);
                         target.breakableJoint->notifyStateChange();
-                        target.forceIteration = 8;
+
+                        /*
+                        target.forceIteration = 1;
                         target.forceDuration = 0.1;
-                        target.force = 1000.0;
+                        target.force = -10.0;
+                        */
+
+                        target.markerDuration = 0.8;
+                        marker->setMarkerSize(0.001);
+                        marker->on(true);
+                        marker->notifyStateChange();
+                        marker->setOffsetTranslation(target.link->offsetTranslation());
                     }
                 }
             }
             /*
             if(target.forceIteration > 0){
-                io->os() << target.link->name() << ": force applied" << endl;
-                Vector3 f = target.link->T() * Vector3(target.force, 0.0, 0.0);
-                target.link->addExternalForce(f, Vector3(-0.72, -0.02, 0.3));
+                //io->os() << door->name() << ": force applied" << endl;
+                Vector3 f = door->T() * Vector3(0.0, target.force, 0.0);
+                door->addExternalForce(f, Vector3(-0.72, -0.02, 0.3));
                 target.forceDuration -= timeStep;
                 if(target.forceDuration <= 0.0){
                     target.forceDuration = 0.1;
@@ -109,6 +137,14 @@ public:
                 }
             }
             */
+            if(target.markerDuration > 0.0){
+                marker->setMarkerSize(marker->markerSize() + 0.003);
+                target.markerDuration -= timeStep;
+                if(target.markerDuration <= 0.0){
+                    marker->on(false);
+                }
+                marker->notifyStateChange();
+            }
         }
 
         if(spreaderController){

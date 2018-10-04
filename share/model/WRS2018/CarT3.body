@@ -23,6 +23,13 @@ links:
                0, 0, 1 ]
     elements:
       -
+        type: MarkerDevice
+        name: DestructionMarker
+        markerType: sphere
+        color: [ 1, 1, 0 ]
+        size: 0.001f
+        transparency: 0.5
+      -
         type: Visual
         resource: 
           rotation: [ 0, 0, 1, 90 ]
@@ -64,8 +71,8 @@ links:
   -
     name: FR_DOOR
     parent: BODY
-    #translation: &FR_DOOR_TRANSLATION [ [ 0.875, -0.814, 0.328 ], [ -0.012, 0, 0.002 ] ]
-    translation: [ &FR_DOOR_TRANSLATION [ [ 0.875, -0.814, 0.328 ], [ -0.012, 0, 0.002 ] ], [ 0.01, 0, 0 ] ]
+    translation: &FR_DOOR_TRANSLATION [ [ 0.875, -0.814, 0.328 ], [ -0.012, 0, 0.002 ] ]
+    #translation: [ &FR_DOOR_TRANSLATION [ [ 0.875, -0.814, 0.328 ], [ -0.012, 0, 0.002 ] ], [ 0.01, 0, 0 ] ]
     rotation: [ 0, 1, 0, -0.05 ]
     jointType: free
     jointRange: [ 0, 70 ]
