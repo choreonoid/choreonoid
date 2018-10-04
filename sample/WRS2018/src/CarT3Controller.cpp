@@ -5,8 +5,7 @@
 #include <cnoid/SimpleController>
 #include <cnoid/Device>
 #include <cnoid/ForceSensor>
-
-#include <iostream>
+#include "SpreaderController.h"
 
 using namespace std;
 using namespace cnoid;
@@ -16,15 +15,16 @@ class CarT3Controller : public SimpleController
     struct SpreaderTarget {
         ForceSensorPtr forceSensor;
         DevicePtr breakableJoint;
-        double impulse;
+        double time;
         string sensorName;
         string jointName;
         SpreaderTarget(const char* sensorName, const char* jointName)
-            : impulse(0.0), sensorName(sensorName), jointName(jointName) { }
+            : time(0.0), sensorName(sensorName), jointName(jointName) { }
     };
     vector<SpreaderTarget> targets;
     SimpleControllerIO* io;
     double dt;
+    SpreaderController* spreaderController;
     
 public:
 
@@ -44,7 +44,6 @@ public:
             auto& target = *iter;
             target.forceSensor = body->findDevice<ForceSensor>(target.sensorName);
             target.breakableJoint = body->findDevice(target.jointName);
-            cout << "target.breakableJoint: " << target.breakableJoint << endl;
             if(target.forceSensor && target.breakableJoint){
                 io->enableInput(target.forceSensor);
                 ++iter;
@@ -52,7 +51,6 @@ public:
                 iter = targets.erase(iter);
             }
         }
-
 
         io->os() << io->controllerName() << ": ";
         if(targets.empty()){
@@ -64,26 +62,39 @@ public:
         return !targets.empty();
     }
 
+    virtual bool start() override
+    {
+        spreaderController = SpreaderController::instance();
+        return true;
+    }
+
     virtual bool control() override
     {
+        //io->os() << "control" << endl;
+        bool doRequestToSpread = false;
+        
         auto iter = targets.begin();
         while(iter != targets.end()){
             auto& target = *iter;
-            if(!target.breakableJoint->on()){
-                iter = targets.erase(iter);
-            } else {
-                double fy = target.forceSensor->f().y();
-                if(fy > 100.0){
-                    target.impulse += fy * dt;
-                    io->os() << target.forceSensor->name() << "'s impulse is " << target.impulse << endl;
-                    if(target.impulse > 300.0){
+            double fy = target.forceSensor->f().y();
+            if(fy > 100.0){
+                doRequestToSpread = true;
+                if(target.breakableJoint->on()){
+                    target.time += dt;
+                    //io->os() << target.forceSensor->name() << "'s time counter is " << target.time << endl;
+                    if(target.time > 2.0){
                         target.breakableJoint->on(false);
                         target.breakableJoint->notifyStateChange();
                     }
                 }
-                ++iter;
             }
+            ++iter;
         }
+
+        if(spreaderController){
+            spreaderController->requestToSpread(doRequestToSpread);
+        }
+        
         return targets.empty();
     }
 };

@@ -102,7 +102,7 @@ links:
         link1Name: BODY
         link2Name: FR_DOOR
         jointType: fixed
-        jointCompliance: &DOOR_CONSTRAINT_COMPLIANCE 5.0e-5
+        jointCompliance: &DOOR_CONSTRAINT_COMPLIANCE 1.0e-6
         position: [ -0.012, 0.025, 0.29 ]
         breakType: none
       -

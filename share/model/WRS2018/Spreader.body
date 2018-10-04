@@ -133,10 +133,14 @@ links:
                 appearance: *GRAY2
              
   -
-    name: END_L
+    name: FLANGE_WEDGE_L
     parent: BASE
-    translation: [ 0.155, 0, 0.035 ]
-    jointType: fixed
+    translation: [ [ 0.155, 0, 0.035 ], [ 0.03, 0.03, 0 ] ]
+    jointType: revolute
+    jointAxis: Z
+    jointRange: [ 0, 30 ]
+    jointId: 0
+    jointLockForceRange: [ -1000, 1000.0 ]
     mass: 1.0
     centerOfMass: [ 0.06, 0.024, 0 ]
     inertia: [ 0.001, 0, 0,
@@ -145,7 +149,7 @@ links:
     elements:
           - 
             type: Transform
-            translation: [ 0.0, -0.0015, 0.00153 ]
+            translation: [ [ 0.0, -0.0015, 0.00153 ], [ -0.03, -0.03, 0 ] ]
             elements: &END_SHAPE
               -
                 type: Shape
@@ -247,10 +251,14 @@ links:
                 geometry: { type: Box, size: [ 0.0092, 0.004, 0.05 ] }
                 appearance: *SILVER
   -
-    name: END_R
+    name: FLANGE_WEDGE_R
     parent: BASE
-    translation: [ 0.155, 0, 0.035 ]
-    jointType: fixed
+    translation: [ [ 0.155, 0, 0.035 ], [ 0.03, -0.03, 0 ] ]
+    jointType: revolute
+    jointAxis: -Z
+    jointRange: [ 0, 30 ]
+    jointId: 1
+    jointLockForceRange: [ -1000, 1000.0 ]
     mass: 1.0
     centerOfMass: [ 0.06, -0.024, 0 ]
     inertia: [ 0.001, 0, 0,
@@ -259,6 +267,6 @@ links:
     elements:
           - 
             type: Transform
-            translation: [ 0.0, -0.0015, 0.00153 ]
+            translation: [ [ 0.0, -0.0015, 0.00153 ], [ -0.03, 0.03, 0 ] ]
             rotation: [ 1, 0, 0, 180 ]
             elements: *END_SHAPE
