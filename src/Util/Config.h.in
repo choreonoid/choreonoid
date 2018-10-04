@@ -16,4 +16,12 @@
 #cmakedefine CNOID_USE_PYTHON2
 #cmakedefine CNOID_USE_BOOST_REGEX
 
+#if defined _WIN32 || defined __CYGWIN__
+#define CNOID_GENERAL_EXPORT __declspec(dllexport)
+#else
+#if __GNUC__ >= 4
+#define CNOID_GENERAL_EXPORT __attribute__ ((visibility("default")))
+#endif
+#endif
+
 #endif
