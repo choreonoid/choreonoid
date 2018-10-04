@@ -17,6 +17,7 @@
 #include <QLibrary>
 #include <boost/format.hpp>
 #include <boost/dynamic_bitset.hpp>
+#include <set>
 #include "gettext.h"
 
 using namespace std;
@@ -65,6 +66,7 @@ public:
 
     vector<bool> outputLinkFlags;
     vector<unsigned short> outputLinkIndices;
+    set<int> forceOutputLinkIndices;
 
     bool isOldTargetVariableMode;
 
@@ -130,6 +132,7 @@ public:
     virtual void enableInput(Link* link, int stateTypes) override;
     virtual void enableInput(Device* device) override;
     virtual void enableOutput(Link* link) override;
+    virtual void enableOutput(Link* link, int stateTypes) override;
 
     // deprecated virtual functions
     virtual void setLinkInput(Link* link, int stateTypes) override;
@@ -631,7 +634,7 @@ void SimpleControllerItemImpl::enableOutput(Link* link)
 }
 
 
-void SimpleControllerItemImpl::setLinkOutput(Link* link, int stateTypes)
+void SimpleControllerItemImpl::enableOutput(Link* link, int stateTypes)
 {
     Link::ActuationMode mode = Link::NO_ACTUATION;
 
@@ -649,6 +652,18 @@ void SimpleControllerItemImpl::setLinkOutput(Link* link, int stateTypes)
         link->setActuationMode(mode);
         enableOutput(link);
     }
+
+    if(stateTypes & SimpleControllerIO::LINK_FORCE){
+        forceOutputLinkIndices.insert(link->index());
+        // Global link position is needed to calculate the correct external force value
+        enableInput(link, SimpleControllerIO::LINK_POSITION);
+    }
+}
+
+
+void SimpleControllerItemImpl::setLinkOutput(Link* link, int stateTypes)
+{
+    enableOutput(link, stateTypes);
 }
 
 
@@ -846,6 +861,10 @@ void SimpleControllerItemImpl::output()
         default:
             break;
         }
+    }
+
+    for(auto& index : forceOutputLinkIndices){
+        simulationBody->link(index)->F_ext() += ioBody->link(index)->F_ext();
     }
         
     if(outputDeviceStateChangeFlag.any()){
