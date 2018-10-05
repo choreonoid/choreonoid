@@ -102,7 +102,6 @@ items:
                   0.957822, 0, 0.287361,
                   0, 1, 0,
                   -0.287361, 0, 0.957822 ]
-                jointPositions: [  ]
                 initialRootPosition: [ 6, 3.7, 0.337 ]
                 initialRootAttitude: [ 
                   0.957822, 0, 0.287361,
@@ -125,36 +124,6 @@ items:
                     baseDirectory: "Controller directory"
                     reloading: false
                     isOldTargetVariableMode: false
-            - 
-              id: 7
-              name: "Victim"
-              plugin: Body
-              class: BodyItem
-              data: 
-                modelFile: "${SHARE}/model/WRS2018/Victim.body"
-                currentBaseLink: "WAIST"
-                rootPosition: [ 10.1589, 1.77, 0.5665 ]
-                rootAttitude: [ 
-                  2.22044605e-16, -0, -1, 
-                  0, 1, -0, 
-                  1, 0, 2.22044605e-16 ]
-                jointPositions: [ 
-                   0.000000,  1.123992,  0.303687,  0.000000,  0.000000,  0.034907,  0.715585, -0.139626,  0.000000,  0.034907, 
-                   0.715585, -0.132645, -0.401426,  1.570796,  0.314159,  1.047198,  0.523599, -0.401426, -1.570796,  0.314159, 
-                   1.047198,  0.523599 ]
-                initialRootPosition: [ 10.1589, 1.77, 0.5665 ]
-                initialRootAttitude: [ 
-                  2.22044605e-16, -0, -1, 
-                  0, 1, -0, 
-                  1, 0, 2.22044605e-16 ]
-                initialJointPositions: [ 
-                   0.000000,  1.123992,  0.303687,  0.000000,  0.000000,  0.034907,  0.715585, -0.139626,  0.000000,  0.034907, 
-                   0.715585, -0.132645, -0.401426,  1.570796,  0.314159,  1.047198,  0.523599, -0.401426, -1.570796,  0.314159, 
-                   1.047198,  0.523599 ]
-                zmp: [ 0, 0, 0 ]
-                collisionDetection: true
-                selfCollisionDetection: false
-                isEditable: true
             - 
               id: 8
               name: "Car"
@@ -192,6 +161,36 @@ items:
                     baseDirectory: "Controller directory"
                     reloading: false
                     isOldTargetVariableMode: false
+            - 
+              id: 30
+              name: "Victim"
+              plugin: Body
+              class: BodyItem
+              data: 
+                modelFile: "${SHARE}/model/WRS2018/Victim.body"
+                currentBaseLink: "WAIST"
+                rootPosition: [ 10.1723, 1.012, 0.5733 ]
+                rootAttitude: [ 
+                  -0.175366726, 1.8978131e-18, -0.98450318, 
+                  2.147623e-17, 1, -1.8978131e-18, 
+                  0.98450318, -2.147623e-17, -0.175366726 ]
+                jointPositions: [ 
+                   0.000000,  1.119763,  0.606997, -0.322886,  0.022394,  0.000000,  0.000000,  0.755187, -1.570796, -0.841090, 
+                   0.022689,  0.000000,  0.000000,  0.755728, -1.570796, -0.841249, -0.026946,  0.011916, -0.142889,  0.913207, 
+                  -0.338695, -0.027343, -0.026180,  0.012217, -0.143117,  0.912807, -0.338594, -0.027925 ]
+                initialRootPosition: [ 10.1723, 1.012, 0.5733 ]
+                initialRootAttitude: [ 
+                  -0.175366726, 1.8978131e-18, -0.98450318, 
+                  2.147623e-17, 1, -1.8978131e-18, 
+                  0.98450318, -2.147623e-17, -0.175366726 ]
+                initialJointPositions: [ 
+                   0.000000,  1.119763,  0.606997, -0.322886,  0.022394,  0.000000,  0.000000,  0.755187, -1.570796, -0.841090, 
+                   0.022689,  0.000000,  0.000000,  0.755728, -1.570796, -0.841249, -0.026946,  0.011916, -0.142889,  0.913207, 
+                  -0.338695, -0.027343, -0.026180,  0.012217, -0.143117,  0.912807, -0.338594, -0.027925 ]
+                zmp: [ 0, 0, 0 ]
+                collisionDetection: true
+                selfCollisionDetection: true
+                isEditable: true
             - 
               id: 9
               name: "Flag1L"
@@ -290,7 +289,7 @@ views:
     plugin: Base
     class: ItemTreeView
     state: 
-      checked: [ 3, 4, 6, 7, 8, 9, 10, 11, 12 ]
+      checked: [ 3, 4, 6, 7, 8, 9, 10, 11, 12, 30 ]
       expanded: [ 1, 8 ]
   - 
     id: 4
@@ -299,4 +298,4 @@ views:
     class: SceneView
     state: 
       dedicatedItemTreeViewChecks: true
-      checked: [ 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 ]
+      checked: [ 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 30 ]

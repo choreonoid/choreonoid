@@ -87,25 +87,24 @@ items:
               class: BodyItem
               data: 
                 modelFile: "${SHARE}/model/WRS2018/Victim.body"
-                currentBaseLink: "CHEST_P"
-                rootPosition: [ 2.21054921, -0.613331965, 0.570516879 ]
+                rootPosition: [ 2.2056441, -0.671722796, 0.573309943 ]
                 rootAttitude: [ 
-                  1.89693141e-15, 1, -1.38138742e-14, 
-                  -0.311092248, 1.36565332e-14, 0.950379721, 
-                  0.950379721, 2.27354391e-15, 0.311092248 ]
+                  -5.98997074e-10, 0.999975631, 0.00698126001, 
+                  0.173648178, -0.00687519926, 0.984783754, 
+                  0.984807753, 0.00121228335, -0.173643947 ]
                 jointPositions: [ 
-                  -0.000000,  0.961676, -0.013963,  0.424115, -0.241413, -0.000001,  0.000000,  0.848609,  0.000000,  0.000000, 
-                  -0.240855,  0.000000,  0.000000,  0.848230,  0.000000,  0.000000,  0.000000, -0.000000,  0.388784,  0.828414, 
-                  -0.509699,  0.000000,  0.000000,  0.000000,  0.389208,  0.829031, -0.509636,  0.000000 ]
-                initialRootPosition: [ 2.21054921, -0.613331965, 0.570516879 ]
+                   0.000000,  1.119763,  0.606997, -0.322886,  0.022394,  0.000000,  0.000000,  0.755187, -1.570796, -0.841090, 
+                   0.022689,  0.000000,  0.000000,  0.755728, -1.570796, -0.841249, -0.026946,  0.011916, -0.142889,  0.913207, 
+                  -0.338695, -0.027343, -0.026180,  0.012217, -0.143117,  0.912807, -0.338594, -0.027925 ]
+                initialRootPosition: [ 2.2056441, -0.671722796, 0.573309943 ]
                 initialRootAttitude: [ 
-                  -1.5849575e-09, 1, 5.98431193e-10, 
-                  -0.311092247, -1.58494617e-09, 0.950379722, 
-                  0.950379722, 5.98446848e-10, 0.311092246 ]
+                  -2.41473508e-11, 0.999975631, 0.00698126014, 
+                  0.173648178, -0.00687519908, 0.984783754, 
+                  0.984807753, 0.00121228315, -0.173643947 ]
                 initialJointPositions: [ 
-                  -0.000000,  0.961676, -0.013963,  0.424115, -0.241413, -0.000001,  0.000000,  0.848609,  0.000000,  0.000000, 
-                  -0.240855,  0.000000,  0.000000,  0.848230,  0.000000,  0.000000,  0.000000, -0.000000,  0.388784,  0.828414, 
-                  -0.509699,  0.000000,  0.000000,  0.000000,  0.389208,  0.829031, -0.509636,  0.000000 ]
+                   0.000000,  1.119763,  0.606997, -0.322886,  0.022394,  0.000000,  0.000000,  0.755187, -1.570796, -0.841090, 
+                   0.022689,  0.000000,  0.000000,  0.755728, -1.570796, -0.841249, -0.026946,  0.011916, -0.142889,  0.913207, 
+                  -0.338695, -0.027343, -0.026180,  0.012217, -0.143117,  0.912807, -0.338594, -0.027925 ]
                 zmp: [ 0, 0, 0 ]
                 collisionDetection: true
                 selfCollisionDetection: true
@@ -147,38 +146,8 @@ items:
                     baseDirectory: "Controller directory"
                     reloading: false
                     isOldTargetVariableMode: false
-            - 
-              id: 9
-              name: "Victim"
-              plugin: Body
-              class: BodyItem
-              data: 
-                modelFile: "${SHARE}/model/WRS2018/Victim.body"
-                currentBaseLink: "WAIST"
-                rootPosition: [ 0.0457, -2, 0.1198 ]
-                rootAttitude: [ 
-                  -0.272431146, -0, -0.962175281, 
-                  0, 1, -0, 
-                  0.962175281, 0, -0.272431146 ]
-                jointPositions: [ 
-                   0.000000,  1.176352,  0.191986,  0.118682, -0.153589,  0.000000,  0.000000,  0.479966,  1.570796,  1.089085, 
-                  -0.153589,  0.000000,  0.000000,  0.479966,  1.570796,  1.089085,  0.000000,  0.000000,  0.055851,  0.872665, 
-                  -0.438078,  0.000000,  0.000000,  0.000000,  0.055851,  0.872665, -0.438078,  0.000000 ]
-                initialRootPosition: [ 0.0457, -2, 0.1198 ]
-                initialRootAttitude: [ 
-                  -0.272431145, -0, -0.962175281, 
-                  0, 1, -0, 
-                  0.962175281, 0, -0.272431145 ]
-                initialJointPositions: [ 
-                   0.000000,  1.176352,  0.191986,  0.118682, -0.153589,  0.000000,  0.000000,  0.479966,  1.570796,  1.089085, 
-                  -0.153589,  0.000000,  0.000000,  0.479966,  1.570796,  1.089085,  0.000000,  0.000000,  0.055851,  0.872665, 
-                  -0.438078,  0.000000,  0.000000,  0.000000,  0.055851,  0.872665, -0.438078,  0.000000 ]
-                zmp: [ 0, 0, 0 ]
-                collisionDetection: true
-                selfCollisionDetection: true
-                isEditable: true
         - 
-          id: 10
+          id: 9
           name: "DoubleArmV7"
           plugin: Body
           class: BodyItem
@@ -211,7 +180,7 @@ items:
             isEditable: true
           children: 
             - 
-              id: 11
+              id: 10
               name: "DoubleArmV7Controller"
               plugin: Body
               class: SimpleControllerItem
@@ -223,7 +192,7 @@ items:
                 reloading: true
                 isOldTargetVariableMode: false
         - 
-          id: 12
+          id: 11
           name: "AGXSimulator"
           plugin: AGXDynamics
           class: AGXSimulatorItem
@@ -259,8 +228,9 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      checked: [ 3, 4, 6, 7, 9, 10 ]
-      expanded: [ 1, 2, 4, 5, 6, 7, 8, 9, 10, 11 ]
+      selected: [ 11 ]
+      checked: [ 3, 4, 6, 7, 9 ]
+      expanded: [ 1, 2, 4, 5, 6, 7, 8, 9, 10 ]
   - 
     id: 2
     plugin: Base
@@ -313,12 +283,12 @@ views:
           fieldOfView: 0.698132
           near: 0.01
           far: 200
-          eye: [ -6.31438654, -4.47027675, 3.46774582 ]
-          direction: [ 0.829205435, 0.485845558, -0.276355642 ]
-          up: [ 0.238441604, 0.139706988, 0.96105544 ]
+          eye: [ -4.7460508, -3.8685649, 3.19663242 ]
+          direction: [ 0.774708727, 0.518710587, -0.361615425 ]
+          up: [ 0.300480969, 0.201188724, 0.932327348 ]
         - 
           camera: [ System, Orthographic ]
-          orthoHeight: 2.10798
+          orthoHeight: 5.73008
           near: 0.01
           far: 200
       backgroundColor: [ 0, 0, 0 ]
@@ -352,7 +322,6 @@ views:
       spinBox: true
       slider: true
       labelOnLeft: true
-      currentBodyItem: 6
   - 
     id: 7
     plugin: Body
@@ -360,7 +329,6 @@ views:
     mounted: true
     state: 
       listingMode: "Link Tree"
-      currentBodyItem: 6
       bodyItems: 
         - 
           id: 4
@@ -371,131 +339,13 @@ views:
             0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 
             20, 21, 22, 23, 24, 25, 26, 27, 28 ]
         - 
-          id: 10
+          id: 9
           selectedLinks: [ 14 ]
   - 
     id: 8
-    plugin: OpenRTM
-    class: RTSNameServerView
-    state: 
-      NameServers: 
-        - 
-          isDefaultNameServer: false
-          host: "localhost"
-          port: 2809
-  - 
-    id: 9
     plugin: Python
     class: PythonConsoleView
     mounted: true
-toolbars: 
-  "TimeBar": 
-    minTime: 0
-    maxTime: 69.035
-    frameRate: 1000
-    playbackFrameRate: 60
-    idleLoopDrivenMode: false
-    currentTime: 0
-    speedScale: 1
-    syncToOngoingUpdates: true
-    autoExpansion: true
-  "KinematicsBar": 
-    mode: IK
-    enablePositionDragger: true
-    penetrationBlock: false
-    collisionLinkHighlight: false
-    snapDistance: 0.025
-    penetrationBlockDepth: 0.0005
-    lazyCollisionDetectionMode: true
-  "BodyBar": 
-    current: 6
-  "LeggedBodyBar": 
-    stanceWidth: 0.15
-  "BodyMotionGenerationBar": 
-    autoGenerationForNewBody: true
-    balancer: false
-    autoGeneration: false
-    timeScaleRatio: 1
-    preInitialDuration: 1
-    postFinalDuration: 1
-    onlyTimeBarRange: false
-    makeNewBodyItem: true
-    stealthyStepMode: true
-    stealthyHeightRatioThresh: 2
-    flatLiftingHeight: 0.005
-    flatLandingHeight: 0.005
-    impactReductionHeight: 0.005
-    impactReductionTime: 0.04
-    autoZmp: true
-    minZmpTransitionTime: 0.1
-    zmpCenteringTimeThresh: 0.03
-    zmpTimeMarginBeforeLiftingSpin: 0
-    zmpMaxDistanceFromCenter: 0.02
-    allLinkPositions: false
-    lipSyncMix: false
-    timeToStartBalancer: 0
-    balancerIterations: 2
-    plainBalancerMode: false
-    boundaryConditionType: position
-    boundarySmootherType: quintic
-    boundarySmootherTime: 0.5
-    boundaryCmAdjustment: false
-    boundaryCmAdjustmentTime: 1
-    waistHeightRelaxation: false
-    gravity: 9.8
-    dynamicsTimeRatio: 1
-Body: 
-  "BodyMotionEngine": 
-    updateJointVelocities: false
-  "EditableSceneBody": 
-    editableSceneBodies: 
-      - 
-        bodyItem: 3
-        showCenterOfMass: false
-        showPpcom: false
-        showZmp: false
-      - 
-        bodyItem: 4
-        showCenterOfMass: false
-        showPpcom: false
-        showZmp: false
-      - 
-        bodyItem: 6
-        showCenterOfMass: false
-        showPpcom: false
-        showZmp: false
-      - 
-        bodyItem: 7
-        showCenterOfMass: false
-        showPpcom: false
-        showZmp: false
-      - 
-        bodyItem: 9
-        showCenterOfMass: false
-        showPpcom: false
-        showZmp: false
-      - 
-        bodyItem: 10
-        showCenterOfMass: false
-        showPpcom: false
-        showZmp: false
-    staticModelEditing: true
-  "KinematicFaultChecker": 
-    checkJointPositions: true
-    angleMargin: 0
-    translationMargin: 0
-    checkJointVelocities: true
-    velocityLimitRatio: 100
-    targetJoints: all
-    checkSelfCollisions: true
-    onlyTimeBarRange: false
-  "SplineFilterDialog": 
-    isInputFrameRateSpecified: false
-    inputFrameRate: 200
-    isOutputFrameRateSpecified: false
-    outputFrameRate: 200
-OpenRTM: 
-  "deleteUnmanagedRTCsOnStartingSimulation": false
 viewAreas: 
   - 
     type: embedded
@@ -503,12 +353,12 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 437, 2130 ]
+      sizes: [ 309, 1582 ]
       children: 
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 847, 845 ]
+          sizes: [ 577, 575 ]
           children: 
             - 
               type: pane
@@ -517,16 +367,16 @@ viewAreas:
             - 
               type: pane
               views: [ 0, 7 ]
-              current: 7
+              current: 0
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 1301, 391 ]
+          sizes: [ 886, 266 ]
           children: 
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 803, 1321 ]
+              sizes: [ 497, 1079 ]
               children: 
                 - 
                   type: pane
@@ -539,7 +389,7 @@ viewAreas:
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 1062, 1062 ]
+              sizes: [ 788, 788 ]
               children: 
                 - 
                   type: pane
@@ -547,7 +397,7 @@ viewAreas:
                   current: 2
                 - 
                   type: pane
-                  views: [ 9, 5 ]
+                  views: [ 8, 5 ]
                   current: 5
 layoutOfToolBars: 
   rows: 
