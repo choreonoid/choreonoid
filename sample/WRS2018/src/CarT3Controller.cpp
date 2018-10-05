@@ -18,14 +18,11 @@ class CarT3Controller : public SimpleController
         ForceSensorPtr forceSensor;
         DevicePtr breakableJoint;
         double timeToBreak;
-        int markerBlinkIteration;
-        double markerBlinkTimer;
         string sensorName;
         string jointName;
         SpreaderTarget(const char* sensorName, const char* jointName)
             : sensorName(sensorName), jointName(jointName) {
             timeToBreak = 0.0;
-            markerBlinkIteration = 0;
         }
     };
     vector<SpreaderTarget> targets;
@@ -33,6 +30,8 @@ class CarT3Controller : public SimpleController
     double timeStep;
     SpreaderController* spreaderController;
     MarkerDevice* marker;
+    int markerBlinkIteration;
+    double markerBlinkTimer;
     
 public:
 
@@ -76,7 +75,9 @@ public:
         }
         io->enableInput(marker);
         marker->on(false);
+        marker->setMarkerSize(0.24);
         marker->notifyStateChange();
+        markerBlinkIteration = 0;
 
         return !targets.empty();
     }
@@ -92,7 +93,6 @@ public:
         bool doRequestToSpread = false;
         
         for(auto& target : targets){
-            target.link->F_ext().setZero();
             double fy = target.forceSensor->f().y();
             if(fy > 100.0){
                 doRequestToSpread = true;
@@ -101,32 +101,32 @@ public:
                     if(target.timeToBreak > 2.0){
                         target.breakableJoint->on(false);
                         target.breakableJoint->notifyStateChange();
-                        target.markerBlinkIteration = 7;
-                        target.markerBlinkTimer = 0.0;
-                        marker->setMarkerSize(0.24);
+                        markerBlinkIteration = 7;
+                        markerBlinkTimer = 0.0;
                         marker->setOffsetTranslation(target.link->offsetTranslation());
                         marker->on(true);
                         marker->notifyStateChange();
                     }
                 }
             }
-            if(target.markerBlinkIteration > 0){
-                target.markerBlinkTimer += timeStep;
-                if(target.markerBlinkTimer >= 0.12){
-                    target.markerBlinkTimer = 0.0;
-                    --target.markerBlinkIteration;
-                    if(target.markerBlinkIteration == 0){
-                        marker->on(false);
-                    } else {
-                        marker->on(!marker->on());
-                    }
-                    marker->notifyStateChange();
-                }
-            }
         }
 
         if(spreaderController){
             spreaderController->requestToSpread(doRequestToSpread);
+        }
+        
+        if(markerBlinkIteration > 0){
+            markerBlinkTimer += timeStep;
+            if(markerBlinkTimer >= 0.12){
+                markerBlinkTimer = 0.0;
+                --markerBlinkIteration;
+                if(markerBlinkIteration == 0){
+                    marker->on(false);
+                } else {
+                    marker->on(!marker->on());
+                }
+                marker->notifyStateChange();
+            }
         }
         
         return true;
