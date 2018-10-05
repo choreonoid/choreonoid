@@ -49,10 +49,10 @@ bool SpreaderController::control()
     double q_target;
     if(isToSpreadRequested){
         double q = std::max(flangeL->q(), flangeR->q());
-        q_target = std::min(q + radian(1.0), flangeL->q_upper());
+        q_target = std::min(q + radian(0.8), flangeL->q_upper());
     } else {
         double q = std::min(flangeL->q(), flangeR->q());
-        q_target = std::max(q - radian(1.0), 0.0);
+        q_target = std::max(q - radian(0.8), 0.0);
     }
     flangeL->q_target() = q_target;
     flangeR->q_target() = q_target; 

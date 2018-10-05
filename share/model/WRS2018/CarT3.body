@@ -121,7 +121,7 @@ links:
         breakType: none
       - 
         type: Shape
-        geometry: { type: Box, size: [ 0.05, 0.02, 0.07 ] }
+        geometry: { type: Box, size: [ 0.05, 0.02, 0.08 ] }
         appearance: *SILVER
   -
     name: FR_DOOR_LOWER_HINGE
@@ -144,7 +144,7 @@ links:
         position: [ -0.012, 0.03, 0.12 ]
       - 
         type: Shape
-        geometry: { type: Box, size: [ 0.07, 0.02, 0.07 ] }
+        geometry: { type: Box, size: [ 0.07, 0.02, 0.08 ] }
         appearance: *SILVER
   -
     name: FR_DOOR_LOCK

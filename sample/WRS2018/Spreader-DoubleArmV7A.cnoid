@@ -80,17 +80,6 @@ items:
                     baseDirectory: "Controller directory"
                     reloading: false
                     isOldTargetVariableMode: false
-                - 
-                  id: 6
-                  name: "SensorVisualizer"
-                  plugin: Body
-                  class: SensorVisualizer
-                  data: 
-                    subItems: 
-                      - 
-                        class: ForceSensorVisualizer
-                        name: ForceSensor
-                        visualRatio: 0.002
             - 
               id: 7
               name: "Spreader"

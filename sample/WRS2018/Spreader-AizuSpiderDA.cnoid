@@ -67,6 +67,19 @@ items:
                 collisionDetection: true
                 selfCollisionDetection: true
                 isEditable: true
+              children: 
+                - 
+                  id: 20
+                  name: "Controller"
+                  plugin: Body
+                  class: SimpleControllerItem
+                  data: 
+                    isNoDelayMode: false
+                    controllerOptions: ""
+                    controller: "CarT3Controller.so"
+                    baseDirectory: "Controller directory"
+                    reloading: false
+                    isOldTargetVariableMode: false
             - 
               id: 5
               name: "Spreader"
@@ -90,6 +103,20 @@ items:
                 collisionDetection: true
                 selfCollisionDetection: false
                 isEditable: true
+              children: 
+                - 
+                  id: 21
+                  name: "SpreaderController"
+                  plugin: Body
+                  class: SimpleControllerItem
+                  data: 
+                    isNoDelayMode: false
+                    controllerOptions: ""
+                    controller: "SpreaderController.so"
+                    baseDirectory: "Controller directory"
+                    reloading: false
+                    isOldTargetVariableMode: false
+
         - 
           id: 6
           name: "AizuSpider"
