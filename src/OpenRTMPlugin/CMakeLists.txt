@@ -9,7 +9,6 @@ set(plugin CnoidOpenRTMPlugin)
 set(plugin_sources
   OpenRTMPlugin.cpp
   RTSCommonUtil.cpp
-  ProfileHandler.cpp
   ControllerRTCItem.cpp
   BodyIoRTCItem.cpp
   RTCWrapper.cpp
@@ -21,6 +20,7 @@ set(plugin_sources
   RTMImageView.cpp
   RTSConfigurationView.cpp
   BodyStateSubscriberRTCItem.cpp
+  RTSCommonUtil.cpp
   LoggerUtil.cpp
   deprecated/BodyRTCItem.cpp
   deprecated/VirtualRobotRTC.cpp
@@ -44,14 +44,17 @@ if(ENABLE_NEW_RT_SYSTEM_ITEM_IMPLEMENTATION)
   set(plugin_sources ${plugin_sources}
     RTSystemExtItem.cpp
     RTSDiagramExtView.cpp
+    RTSTypeUtilExt.cpp
     ProfileHandlerExt.cpp
     PortConnectionDialogExt.cpp
-    RTSCommonUtilExt.cpp)
+)
   set(qt_wrap_cpp_files ${qt_wrap_cpp_files} RTSDiagramExtView.h)
 else()
   set(plugin_sources ${plugin_sources}
     RTSystemItem.cpp
     RTSDiagramView.cpp
+    RTSTypeUtil.cpp
+	ProfileHandler.cpp
     PortConnectionDialog.cpp)
   set(qt_wrap_cpp_files ${qt_wrap_cpp_files} RTSDiagramView.h)
 endif()  

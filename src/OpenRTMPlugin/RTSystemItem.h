@@ -201,10 +201,10 @@ public:
     int stateCheck() const;
 
     bool checkStatus();
+    bool isCheckAtLoading();
 
     SignalProxy<void(int)> sigTimerPeriodChanged();
     SignalProxy<void(bool)> sigTimerChanged();
-    SignalProxy<void(bool isRestored)> sigLoaded();
 
 protected:
     virtual Item* doDuplicate() const override;

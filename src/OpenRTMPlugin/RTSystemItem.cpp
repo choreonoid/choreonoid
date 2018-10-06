@@ -1,5 +1,6 @@
 #include "RTSystemItem.h"
 #include "RTSCommonUtil.h"
+#include "RTSTypeUtil.h"
 #include <cnoid/MessageView>
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
@@ -97,7 +98,6 @@ public:
 
     Signal<void(int)> sigTimerPeriodChanged;
     Signal<void(bool)> sigTimerChanged;
-    Signal<void(bool)> sigLoaded;
 
     void changeStateCheck();
     void changePollingPeriod(int value);
@@ -200,9 +200,9 @@ bool RTSPort::checkConnectablePort(RTSPort* target)
 
     //In case of connection between data ports
     if (!isServicePort && !target->isServicePort) {
-        vector<string> dataTypes = RTCCommonUtil::getAllowDataTypes(this, target);
-        vector<string> ifTypes = RTCCommonUtil::getAllowInterfaceTypes(this, target);
-        vector<string> subTypes = RTCCommonUtil::getAllowSubscriptionTypes(this, target);
+        vector<string> dataTypes = RTSTypeUtil::getAllowDataTypes(this, target);
+        vector<string> ifTypes = RTSTypeUtil::getAllowInterfaceTypes(this, target);
+        vector<string> subTypes = RTSTypeUtil::getAllowSubscriptionTypes(this, target);
         if (dataTypes.size() == 0 || ifTypes.size() == 0 || subTypes.size() == 0) {
             return false;
         }
@@ -1090,7 +1090,7 @@ bool RTSystemItem::loadRtsProfile(const string& filename)
     DDEBUG_V("RTSystemItem::loadRtsProfile=%s", filename.c_str());
     ProfileHandler::getRtsProfileInfo(filename, impl->vendorName, impl->version);
     if (ProfileHandler::restoreRtsProfile(filename, this)) {
-        impl->sigLoaded(false);
+        notifyUpdate();
         return true;
     }
     return false;
@@ -1171,6 +1171,10 @@ bool RTSystemItemImpl::checkStatus()
     return modified;
 }
 
+bool RTSystemItem::isCheckAtLoading()
+{
+    return impl->checkAtLoading;
+}
 ///////////
 bool RTSystemItem::store(Archive& archive)
 {
@@ -1318,7 +1322,7 @@ void RTSystemItemImpl::restoreRTSystem(const Archive& archive)
         checkStatus();
     }
 
-    sigLoaded(true);
+    self->notifyUpdate();
     DDEBUG("RTSystemItemImpl::restoreRTSystem End");
 }
 
@@ -1357,9 +1361,4 @@ SignalProxy<void(int)> RTSystemItem::sigTimerPeriodChanged()
 SignalProxy<void(bool)> RTSystemItem::sigTimerChanged()
 {
     return impl->sigTimerChanged;
-}
-
-SignalProxy<void(bool)> RTSystemItem::sigLoaded()
-{
-    return impl->sigLoaded;
 }

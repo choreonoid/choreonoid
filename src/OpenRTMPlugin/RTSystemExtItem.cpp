@@ -1,5 +1,6 @@
 #include "RTSystemExtItem.h"
-#include "RTSCommonUtilExt.h"
+#include "RTSCommonUtil.h"
+#include "RTSTypeUtilExt.h"
 #include "ProfileHandlerExt.h"
 #include <cnoid/MessageView>
 #include <cnoid/ItemManager>
@@ -94,7 +95,6 @@ public:
     void setStateCheckMethodByString(const string& value);
     void checkStatus();
 
-    Signal<void(bool)> sigLoaded;
     Signal<void(bool)> sigStatusUpdate;
 
     void onActivated();
@@ -205,9 +205,9 @@ bool RTSPortExt::checkConnectablePort(RTSPortExt* target)
 
     //In case of connection between data ports
     if (!isServicePort && !target->isServicePort) {
-        vector<string> dataTypes = RTCCommonUtilExt::getAllowDataTypes(this, target);
-        vector<string> ifTypes = RTCCommonUtilExt::getAllowInterfaceTypes(this, target);
-        vector<string> subTypes = RTCCommonUtilExt::getAllowSubscriptionTypes(this, target);
+        vector<string> dataTypes = RTSTypeUtilExt::getAllowDataTypes(this, target);
+        vector<string> ifTypes = RTSTypeUtilExt::getAllowInterfaceTypes(this, target);
+        vector<string> subTypes = RTSTypeUtilExt::getAllowSubscriptionTypes(this, target);
         if (dataTypes.size() == 0 || ifTypes.size() == 0 || subTypes.size() == 0) {
             return false;
         }
@@ -1128,9 +1128,9 @@ void RTSystemExtItemImpl::changeStateCheck()
 bool RTSystemExtItem::loadRtsProfile(const string& filename)
 {
     DDEBUG_V("RTSystemItem::loadRtsProfile=%s", filename.c_str());
-    ProfileHandler::getRtsProfileInfo(filename, impl->vendorName, impl->version);
+    ProfileHandlerExt::getRtsProfileInfo(filename, impl->vendorName, impl->version);
     if (ProfileHandlerExt::restoreRtsProfile(filename, this)) {
-        impl->sigLoaded(false);
+        notifyUpdate();
         return true;
     }
     return false;
@@ -1213,6 +1213,11 @@ void RTSystemExtItemImpl::checkStatus()
     DDEBUG_V("RTSystemExtItemImpl::checkStatus End : %d", modified);
     sigStatusUpdate(modified);
 }
+
+bool RTSystemExtItem::isCheckAtLoading()
+{
+    return impl->checkAtLoading;
+}
 ///////////
 bool RTSystemExtItem::store(Archive& archive)
 {
@@ -1275,7 +1280,10 @@ bool RTSystemExtItem::restore(const Archive& archive)
     }
 
     string stateCheck;
-    if (archive.read("StateCheck", stateCheck)) {
+    if (archive.read("stateCheck", stateCheck) == false) {
+        archive.read("StateCheck", stateCheck);
+    }
+    if(stateCheck.empty()==false) {
         DDEBUG_V("StateCheck:%s", stateCheck.c_str());
         impl->setStateCheckMethodByString(stateCheck);
         archive.addPostProcess([&]() { impl->changeStateCheck(); });
@@ -1358,7 +1366,7 @@ void RTSystemExtItemImpl::restoreRTSystem(const Archive& archive)
         checkStatus();
     }
 
-    sigLoaded(true);
+    self->notifyUpdate();
     DDEBUG("RTSystemItemImpl::restoreRTSystem End");
 }
 
@@ -1387,11 +1395,6 @@ void RTSystemExtItemImpl::restoreRTSComp(const string& name, const Vector2& pos,
         }
     }
     DDEBUG("RTSystemItemImpl::restoreRTSComp End");
-}
-
-SignalProxy<void(bool)> RTSystemExtItem::sigLoaded()
-{
-    return impl->sigLoaded;
 }
 
 SignalProxy<void(bool)> RTSystemExtItem::sigStatusUpdate()

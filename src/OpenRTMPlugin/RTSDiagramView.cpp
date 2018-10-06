@@ -326,7 +326,7 @@ public:
     void startExecutionContext();
     void stopExecutionContext();
 
-    void onRTSystemLoaded(bool value);
+    void onRTSystemLoaded();
 };
 
 }
@@ -1489,8 +1489,8 @@ void RTSDiagramViewImpl::setCurrentRTSItem(RTSystemItem* item)
             currentRTSItem->sigTimerChanged().connect(
                 std::bind(&RTSDiagramViewImpl::onActivated, this, _1)));
     rtsLoadedConnection.reset(
-            currentRTSItem->sigLoaded().connect(
-                std::bind(&RTSDiagramViewImpl::onRTSystemLoaded, this, _1)));
+            currentRTSItem->sigUpdated().connect(
+                std::bind(&RTSDiagramViewImpl::onRTSystemLoaded, this)));
 
     updateView();
 }
@@ -1758,12 +1758,12 @@ void RTSDiagramView::initializeClass(ExtensionManager* ext)
         "RTSDiagramView", N_("RTC Diagram"), ViewManager::SINGLE_OPTIONAL);
 }
 
-void RTSDiagramViewImpl::onRTSystemLoaded(bool isRestored)
+void RTSDiagramViewImpl::onRTSystemLoaded()
 {
-    DDEBUG_V("RTSDiagramViewImpl::onRTSystemLoaded : %d", isRestored);
+    DDEBUG("RTSDiagramViewImpl::onRTSystemLoaded");
 
     updateView();
-    if (isRestored) {
+    if (currentRTSItem->isCheckAtLoading()) {
         checkStatus();
     }
     updateRestoredView();

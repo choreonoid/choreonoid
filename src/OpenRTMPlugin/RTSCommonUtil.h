@@ -59,24 +59,11 @@ public:
     static void splitPortName(std::string& value, std::vector<std::string>& result);
 
     static std::vector<std::string> split(const std::string &str, char delim);
-    static bool isAllowAnyDataType(RTSPort* source, RTSPort* target);
-
-    static std::vector<std::string> getAllowDataTypes(RTSPort* source, RTSPort* target);
-    static std::vector<std::string> getAllowInterfaceTypes(RTSPort* source, RTSPort* target);
-    static std::vector<std::string> getAllowDataflowTypes(RTSPort* source, RTSPort* target);
-    static std::vector<std::string> getAllowSubscriptionTypes(RTSPort* source, RTSPort* target);
 
     static bool isIFR(std::string type);
     static bool compareIgnoreCase(const std::string& lhs, const std::string& rhs);
 
     static NameServerInfo getManagerAddress();
-
-private:
-    static std::vector<std::string> getAllowList(std::vector<std::string>& source, std::vector<std::string>& target, TypeComparer& comparer);
-    static bool isAnyString(std::string target);
-    static bool isExistAny(std::vector<std::string> target);
-
-
 };
 
 struct ServerFullComparator

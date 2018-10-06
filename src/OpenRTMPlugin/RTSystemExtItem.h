@@ -202,9 +202,9 @@ public:
     int stateCheck() const;
 
     void checkStatus();
+    bool isCheckAtLoading();
     void onActivated();
 
-    SignalProxy<void(bool isRestored)> sigLoaded();
     SignalProxy<void(bool)> sigStatusUpdate();
 
 protected:
