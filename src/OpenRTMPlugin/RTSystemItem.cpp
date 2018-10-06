@@ -1232,7 +1232,10 @@ bool RTSystemItem::restore(const Archive& archive)
     }
 
     string stateCheck;
-    if (archive.read("StateCheck", stateCheck)) {
+    if (archive.read("stateCheck", stateCheck) == false) {
+        archive.read("StateCheck", stateCheck);
+    }
+    if(stateCheck.empty()==false) {
         DDEBUG_V("StateCheck:%s", stateCheck.c_str());
         impl->setStateCheckMethodByString(stateCheck);
         archive.addPostProcess([&]() { impl->changeStateCheck(); });
