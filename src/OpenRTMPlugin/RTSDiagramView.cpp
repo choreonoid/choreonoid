@@ -1760,7 +1760,7 @@ void RTSDiagramView::initializeClass(ExtensionManager* ext)
 
 void RTSDiagramViewImpl::onRTSystemLoaded(bool isRestored)
 {
-    DDEBUG_V("RTSDiagramViewImpl::onRTSystemLoaded : %d", value);
+    DDEBUG_V("RTSDiagramViewImpl::onRTSystemLoaded : %d", isRestored);
 
     updateView();
     if (isRestored) {

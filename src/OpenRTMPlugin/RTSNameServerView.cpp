@@ -521,6 +521,7 @@ void RTSNameServerViewImpl::checkZombee(RTSVItem* parent)
             DDEBUG("RTSNameServerViewImpl::cleatZombee INACTIVE");
             childItem->removing_ = true;
             removeList.push_back(childItem);
+            NameServerManager::instance()->getNCHelper()->unbind(childItem->info_.fullPath_);
             continue;
         }
         DDEBUG("RTSNameServerViewImpl::cleatZombee ACTIVE");
