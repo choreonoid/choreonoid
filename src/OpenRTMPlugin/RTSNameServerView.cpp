@@ -293,7 +293,7 @@ void RTSNameServerViewImpl::updateObjectList(bool force)
         vector<NameServerInfo> serverList = NameServerManager::instance()->getServerList();
         vector<NameServerInfo> addedList;
         for (auto it = serverList.begin(); it != serverList.end(); it++) {
-            vector<NameServerInfo>::iterator serverItr = find_if(addedList.begin(), addedList.end(), ServerComparator((*it).hostAddress, (*it).portNo));
+            vector<NameServerInfo>::iterator serverItr = find_if(addedList.begin(), addedList.end(), ServerFullComparator(*it));
             if (serverItr != addedList.end()) continue;
             addedList.push_back(*it);
 
@@ -301,7 +301,12 @@ void RTSNameServerViewImpl::updateObjectList(bool force)
             NameServerManager::instance()->getNCHelper()->setLocation((*it).hostAddress, (*it).portNo);
 
             RTSVItem* topElem = new RTSVItem();
-            QString hostName = QString::fromStdString((*it).hostAddress) + ":" + QString::number((*it).portNo);
+            QString hostName;
+            if((*it).isRtmDefaultNameServer) {
+                hostName = "Default(" + QString::fromStdString((*it).hostAddress) + ":" + QString::number((*it).portNo) + ")";
+            } else {
+                hostName = QString::fromStdString((*it).hostAddress) + ":" + QString::number((*it).portNo);
+            }
             topElem->setText(0, hostName);
             topElem->setIcon(0, QIcon(":/Corba/icons/RT.png"));
             topElem->kind_ = KIND_SERVER;
@@ -521,7 +526,11 @@ void RTSNameServerViewImpl::checkZombee(RTSVItem* parent)
             DDEBUG("RTSNameServerViewImpl::cleatZombee INACTIVE");
             childItem->removing_ = true;
             removeList.push_back(childItem);
-            NameServerManager::instance()->getNCHelper()->unbind(childItem->info_.fullPath_);
+            try {
+                NameServerManager::instance()->getNCHelper()->unbind(childItem->info_.fullPath_);
+            } catch(CosNaming::NamingContext::NotFound ex) {
+                DDEBUG("RTSNameServerViewImpl::cleatZombee NOT EXIST");
+            }
             continue;
         }
         DDEBUG("RTSNameServerViewImpl::cleatZombee ACTIVE");
