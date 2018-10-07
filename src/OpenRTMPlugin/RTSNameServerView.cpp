@@ -310,6 +310,7 @@ void RTSNameServerViewImpl::updateObjectList(bool force)
             topElem->setText(0, hostName);
             topElem->setIcon(0, QIcon(":/Corba/icons/RT.png"));
             topElem->kind_ = KIND_SERVER;
+            topElem->nsInfo_ = (*it);
             NamingContextHelper::ObjectInfo info;
             info.hostAddress_ = (*it).hostAddress;
             info.portNo_ = (*it).portNo;
@@ -565,6 +566,7 @@ bool RTSNameServerView::storeState(Archive& archive)
 bool RTSNameServerView::restoreState(const Archive& archive)
 {
     DDEBUG("RTSNameServerView::restoreState");
+    NameServerManager::instance()->clearNameServer();
 
     const Listing& nodes = *archive.findListing("NameServers");
     if (nodes.isValid() && !nodes.empty()) {
@@ -596,6 +598,12 @@ bool RTSNameServerView::restoreState(const Archive& archive)
                 NameServerManager::instance()->addNameServer(nsInfo);
             }
         }
+    }
+
+    if (NameServerManager::instance()->getServerList().size() == 0) {
+        NamingContextHelper* ncHelper = NameServerManager::instance()->getNCHelper();
+        NameServerInfo nsInfo(ncHelper->host(), ncHelper->port(), false);
+        NameServerManager::instance()->addNameServer(nsInfo);
     }
 
     archive.addPostProcess(
@@ -694,7 +702,7 @@ void RTSNameTreeWidget::deleteFromView()
     RTSVItem* item = (RTSVItem*)this->currentItem();
     QString target = item->text(0);
     DDEBUG_V("target:%s", target.toStdString().c_str());
-    NameServerManager::instance()->removeNameServer(target.toStdString());
+    NameServerManager::instance()->removeNameServer(item->nsInfo_);
     delete item;
 }
 

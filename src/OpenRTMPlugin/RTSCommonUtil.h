@@ -42,8 +42,8 @@ struct NameServerInfo
 
     NameServerInfo()
     {
-        this->hostAddress = "";
-        this->portNo = -1;
+        this->hostAddress = "localhost";
+        this->portNo = 2809;
         this->isRtmDefaultNameServer = false;
     };
     NameServerInfo(std::string host, int port, bool isRtmDefaultNameServer)
@@ -123,7 +123,8 @@ public:
     void addRtmDefaultNameServer();
     bool isExistingNameServer(NameServerInfo source);
     bool isRtmDefaultNameServer(string hostAddress, int portNo);
-    void removeNameServer(string target);
+    void removeNameServer(NameServerInfo target);
+    void clearNameServer();
 
 private:
     static NameServerManager* handler;

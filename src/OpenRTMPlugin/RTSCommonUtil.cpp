@@ -128,8 +128,8 @@ NameServerInfo RTCCommonUtil::getManagerAddress()
 
     coil::Properties prop = rtcManager->getConfig();
     std::string val = prop.getProperty("corba.nameservers");
-    DDEBUG_V("RTCCommonUtil::getManagerAddress: %s", val.c_str());
     vector<string> elems = RTCCommonUtil::split(val, ':');
+    DDEBUG_V("RTCCommonUtil::getManagerAddress: %s %d", val.c_str(), elems.size());
     if (elems.size() == 0) return result;
     result.hostAddress = elems[0];
     result.portNo = 2809;
@@ -185,12 +185,12 @@ bool NameServerManager::isRtmDefaultNameServer(string hostAddress, int portNo)
     return false;
 }
 
-void NameServerManager::removeNameServer(string target) {
-    vector<string> info = RTCCommonUtil::split(target, ':');
-    if (info.size() < 2) return;
+void NameServerManager::removeNameServer(NameServerInfo target) {
+    serverList.erase(remove_if(serverList.begin(), serverList.end(), ServerFullComparator(target)));
+}
 
-    serverList.erase(remove_if(serverList.begin(), serverList.end(),
-        ServerComparator(info[0], QString::fromStdString(info[1]).toInt())), serverList.end());
+void NameServerManager::clearNameServer() {
+    serverList.clear();
 }
 
 }
