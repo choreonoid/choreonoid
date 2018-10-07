@@ -512,6 +512,9 @@ double RTSConnectionExtGItem::calcLinePos(PortInfo source, PortInfo target) {
         } else {
             result = trgTop - 10;
         }
+        
+    } else {
+        result = (source.portPos.y() + target.portPos.y()) / 2.0;
     }
 
     return result;
