@@ -1295,6 +1295,15 @@ void ItemTreeViewImpl::restoreExpandedItems(const Archive& archive)
 }
 
 
+void ItemTreeView::expandItem(Item* item)
+{
+    ItvItem* itvItem = impl->getItvItem(item);
+    if(itvItem){
+        itvItem->setExpanded(item);
+    }
+}
+
+
 void ItemTreeViewImpl::zoomFontSize(int pointSizeDiff)
 {
     QFont font = TreeWidget::font();

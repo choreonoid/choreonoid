@@ -187,9 +187,6 @@ bool Item::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManualOpera
     ++numChildren_;
 
     if(rootItem){
-        if(!isMoving){
-            item->callFuncOnConnectedToRoot();
-        }
         if(itemsBeingAddedOrRemoved.find(this) == itemsBeingAddedOrRemoved.end()){
             // This must be before rootItem->notifyEventOnSubTreeAdded().
             item->callSlotsOnPositionChanged();
@@ -208,6 +205,10 @@ bool Item::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManualOpera
     if(recursiveTreeChangeCounter == 0){
         emitSigSubTreeChanged();
         itemsBeingAddedOrRemoved.clear();
+    }
+
+    if(rootItem && !isMoving){
+        item->callFuncOnConnectedToRoot();
     }
 
     return true;
@@ -484,6 +485,12 @@ RootItem* Item::findRootItem() const
         current = current->parent_;
     }
     return dynamic_cast<RootItem*>(current);
+}
+
+
+bool Item::isConnectedToRoot() const
+{
+    return findRootItem() != nullptr;
 }
 
 

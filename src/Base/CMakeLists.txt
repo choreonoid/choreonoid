@@ -63,6 +63,7 @@ set(sources
   OptionManager.cpp
   Plugin.cpp
   FolderItem.cpp
+  SubProjectItem.cpp
   AbstractSeqItem.cpp
   MultiValueSeqItem.cpp
   MultiSE3SeqItem.cpp
@@ -164,6 +165,7 @@ set(headers
   PutPropertyFunction.h
   RootItem.h
   FolderItem.h
+  SubProjectItem.h
   AbstractSeqItem.h
   MultiSeqItem.h
   MultiValueSeqItem.h

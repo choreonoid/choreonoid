@@ -78,6 +78,7 @@ public:
     void setTemporal(bool on = true);
 
     RootItem* findRootItem() const;
+    bool isConnectedToRoot() const;
 
     /**
        Find an item that has the corresponding path to it in the sub tree
@@ -108,7 +109,7 @@ public:
     */
     Item* findSubItem(const std::string& path) const;
     template<class ItemType>
-   ItemType* findSubItem(const std::string& path) const {
+    ItemType* findSubItem(const std::string& path) const {
         return dynamic_cast<ItemType*>(findSubItem(path));
     }
     
@@ -182,8 +183,8 @@ public:
        This signal is emitted when the position of this item in the item tree is changed.
        Being added to the tree and being removed from the tree are also the events
        to emit this signal.
-       This signal is also emitted for descendent items when the position of an ancestor item
-       is changed.
+       This signal is also emitted for descendent items when the position of an ancestor
+       item is changed.
        This signal is emitted before RootItem::sigTreeChanged();
     */
     SignalProxy<void()> sigPositionChanged() {
@@ -196,6 +197,7 @@ public:
     SignalProxy<void()> sigDetachedFromRoot() {
         return sigDetachedFromRoot_;
     }
+
     /**
        @note Please use this instead of sigDetachedFromRoot()
     */
@@ -215,7 +217,10 @@ public:
     }
 
 protected:
-
+    /**
+       This function is called when the item has been connected to the tree including the root item.
+       The onPositionChanged function and sigSubTreeChanged are processed before calling this function.
+    */
     virtual void onConnectedToRoot();
     virtual void onDisconnectedFromRoot();
     virtual void onPositionChanged();
