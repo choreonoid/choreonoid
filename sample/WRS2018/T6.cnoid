@@ -5,683 +5,667 @@ items:
   class: RootItem
   children: 
     - 
-      id: 1
-      name: "World"
+      id: 3
+      name: "RoadSurface40m"
       plugin: Body
-      class: WorldItem
+      class: BodyItem
       data: 
-        collisionDetection: false
-        collisionDetector: AISTCollisionDetector
-        materialTableFile: "${SHARE}/default/materials.yaml"
+        modelFile: "${SHARE}/model/WRS2018/RoadSurface40m.body"
+        currentBaseLink: "1_Base"
+        rootPosition: [ 0, 0, 0 ]
+        rootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        jointPositions: [  ]
+        initialRootPosition: [ 0, 0, 0 ]
+        initialRootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: false
+        isEditable: false
+    - 
+      id: 4
+      name: "TunnelWall40m-L"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/model/WRS2018/TunnelWall40m-L.body"
+        currentBaseLink: "1_Base"
+        rootPosition: [ 0, 0, 0 ]
+        rootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        jointPositions: [  ]
+        initialRootPosition: [ 0, 0, 0 ]
+        initialRootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: false
+        isEditable: false
+    - 
+      id: 5
+      name: "TunnelWall40m-R"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/model/WRS2018/TunnelWall40m-R.body"
+        currentBaseLink: "1_Base"
+        rootPosition: [ 0, 0, 0 ]
+        rootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        jointPositions: [  ]
+        initialRootPosition: [ 0, 0, 0 ]
+        initialRootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: false
+        isEditable: false
+    - 
+      id: 6
+      name: "Flag1L"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/model/WRS2018/Flag1L.body"
+        currentBaseLink: "BASE"
+        rootPosition: [ 3, 1.5, 0 ]
+        rootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        jointPositions: [  ]
+        initialRootPosition: [ 3, 1.5, 0 ]
+        initialRootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: false
+        isEditable: false
+    - 
+      id: 7
+      name: "Flag1R"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/model/WRS2018/Flag1R.body"
+        currentBaseLink: "BASE"
+        rootPosition: [ 3, -1.5, 0 ]
+        rootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        jointPositions: [  ]
+        initialRootPosition: [ 3, -1.5, 0 ]
+        initialRootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: false
+        isEditable: false
+    - 
+      id: 8
+      name: "Flag2L"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/model/WRS2018/Flag2L.body"
+        currentBaseLink: "BASE"
+        rootPosition: [ 24, 1.5, 0 ]
+        rootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        jointPositions: [  ]
+        initialRootPosition: [ 24, 1.5, 0 ]
+        initialRootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: false
+        isEditable: false
+    - 
+      id: 9
+      name: "Flag2R"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/model/WRS2018/Flag2R.body"
+        currentBaseLink: "BASE"
+        rootPosition: [ 24, -1.5, 0 ]
+        rootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        jointPositions: [  ]
+        initialRootPosition: [ 24, -1.5, 0 ]
+        initialRootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: false
+        isEditable: false
+    - 
+      id: 10
+      name: "DamagedCarA"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/model/WRS2018/DamagedCarA.body"
+        currentBaseLink: "body"
+        rootPosition: [ 15.5, 1.59, 0 ]
+        rootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        jointPositions: [  ]
+        initialRootPosition: [ 15.5, 1.59, 0 ]
+        initialRootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: false
+        isEditable: false
+    - 
+      id: 11
+      name: "DamagedCarB"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/model/WRS2018/DamagedCarB.body"
+        currentBaseLink: "body"
+        rootPosition: [ 11.32, 1.99, 0 ]
+        rootAttitude: [ 
+          0.707106781, 0.707106781, -0, 
+          -0.707106781, 0.707106781, 0, 
+          0, 0, 1 ]
+        jointPositions: [  ]
+        initialRootPosition: [ 11.32, 1.99, 0 ]
+        initialRootAttitude: [ 
+          0.707106781, 0.707106781, -0, 
+          -0.707106781, 0.707106781, 0, 
+          0, 0, 1 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: false
+        isEditable: false
+    - 
+      id: 12
+      name: "DamagedCarB"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/model/WRS2018/DamagedCarB.body"
+        currentBaseLink: "body"
+        rootPosition: [ 19.795, 2.345, 0 ]
+        rootAttitude: [ 
+          0.707106781, -0.707106781, 0, 
+          0.707106781, 0.707106781, -0, 
+          0, 0, 1 ]
+        jointPositions: [  ]
+        initialRootPosition: [ 19.795, 2.345, 0 ]
+        initialRootAttitude: [ 
+          0.707106781, -0.707106781, 0, 
+          0.707106781, 0.707106781, 0, 
+          0, 0, 1 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: false
+        isEditable: false
+    - 
+      id: 13
+      name: "CollapsedCeilings"
+      plugin: Base
+      class: FolderItem
+    - 
+      id: 14
+      name: "CollapsedCeiling01"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/model/WRS2018/CollapsedCeiling1.body"
+        currentBaseLink: "body"
+        rootPosition: [ 10.7403062, 1.39354147, 1.47373301 ]
+        rootAttitude: [ 
+          6.15918357e-17, -0.992153354, -0.125026882, 
+          0.999549026, 0.00375444053, -0.0297934389, 
+          0.0300290663, -0.124970498, 0.991705919 ]
+        jointPositions: [  ]
+        initialRootPosition: [ 10.7403062, 1.39354147, 1.47373301 ]
+        initialRootAttitude: [ 
+          3.65610542e-10, -0.992153354, -0.125026882, 
+          0.999549026, 0.0037544409, -0.0297934389, 
+          0.0300290664, -0.124970498, 0.991705919 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: false
+        isEditable: true
+    - 
+      id: 15
+      name: "CollapsedCeiling16"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/model/WRS2018/CollapsedCeiling3.body"
+        currentBaseLink: "body"
+        rootPosition: [ 15.6896692, 1.96242562, 1.59328166 ]
+        rootAttitude: [ 
+          0.00307819428, 0.999960435, -0.00834583978, 
+          -0.966597955, 0.000836403144, -0.256296107, 
+          -0.256278986, 0.00885600087, 0.966562286 ]
+        jointPositions: [  ]
+        initialRootPosition: [ 15.6896692, 1.96242562, 1.59328166 ]
+        initialRootAttitude: [ 
+          0.00307819408, 0.999960435, -0.00834583988, 
+          -0.966597955, 0.000836402926, -0.256296107, 
+          -0.256278986, 0.00885600095, 0.966562286 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: false
+        isEditable: true
+    - 
+      id: 16
+      name: "static"
+      plugin: Base
+      class: FolderItem
       children: 
         - 
-          id: 2
-          name: "Envrionment"
-          plugin: Base
-          class: FolderItem
-          children: 
-            - 
-              id: 3
-              name: "RoadSurface40m"
-              plugin: Body
-              class: BodyItem
-              data: 
-                modelFile: "${SHARE}/model/WRS2018/RoadSurface40m.body"
-                currentBaseLink: "1_Base"
-                rootPosition: [ 0, 0, 0 ]
-                rootAttitude: [ 
-                  1, 0, 0, 
-                  0, 1, 0, 
-                  0, 0, 1 ]
-                jointPositions: [  ]
-                initialRootPosition: [ 0, 0, 0 ]
-                initialRootAttitude: [ 
-                  1, 0, 0, 
-                  0, 1, 0, 
-                  0, 0, 1 ]
-                zmp: [ 0, 0, 0 ]
-                collisionDetection: true
-                selfCollisionDetection: false
-                isEditable: false
-            - 
-              id: 4
-              name: "TunnelWall40m-L"
-              plugin: Body
-              class: BodyItem
-              data: 
-                modelFile: "${SHARE}/model/WRS2018/TunnelWall40m-L.body"
-                currentBaseLink: "1_Base"
-                rootPosition: [ 0, 0, 0 ]
-                rootAttitude: [ 
-                  1, 0, 0, 
-                  0, 1, 0, 
-                  0, 0, 1 ]
-                jointPositions: [  ]
-                initialRootPosition: [ 0, 0, 0 ]
-                initialRootAttitude: [ 
-                  1, 0, 0, 
-                  0, 1, 0, 
-                  0, 0, 1 ]
-                zmp: [ 0, 0, 0 ]
-                collisionDetection: true
-                selfCollisionDetection: false
-                isEditable: false
-            - 
-              id: 5
-              name: "TunnelWall40m-R"
-              plugin: Body
-              class: BodyItem
-              data: 
-                modelFile: "${SHARE}/model/WRS2018/TunnelWall40m-R.body"
-                currentBaseLink: "1_Base"
-                rootPosition: [ 0, 0, 0 ]
-                rootAttitude: [ 
-                  1, 0, 0, 
-                  0, 1, 0, 
-                  0, 0, 1 ]
-                jointPositions: [  ]
-                initialRootPosition: [ 0, 0, 0 ]
-                initialRootAttitude: [ 
-                  1, 0, 0, 
-                  0, 1, 0, 
-                  0, 0, 1 ]
-                zmp: [ 0, 0, 0 ]
-                collisionDetection: true
-                selfCollisionDetection: false
-                isEditable: false
-            - 
-              id: 6
-              name: "Flag1L"
-              plugin: Body
-              class: BodyItem
-              data: 
-                modelFile: "${SHARE}/model/WRS2018/Flag1L.body"
-                currentBaseLink: "BASE"
-                rootPosition: [ 3, 1.5, 0 ]
-                rootAttitude: [ 
-                  1, 0, 0, 
-                  0, 1, 0, 
-                  0, 0, 1 ]
-                jointPositions: [  ]
-                initialRootPosition: [ 3, 1.5, 0 ]
-                initialRootAttitude: [ 
-                  1, 0, 0, 
-                  0, 1, 0, 
-                  0, 0, 1 ]
-                zmp: [ 0, 0, 0 ]
-                collisionDetection: true
-                selfCollisionDetection: false
-                isEditable: false
-            - 
-              id: 7
-              name: "Flag1R"
-              plugin: Body
-              class: BodyItem
-              data: 
-                modelFile: "${SHARE}/model/WRS2018/Flag1R.body"
-                currentBaseLink: "BASE"
-                rootPosition: [ 3, -1.5, 0 ]
-                rootAttitude: [ 
-                  1, 0, 0, 
-                  0, 1, 0, 
-                  0, 0, 1 ]
-                jointPositions: [  ]
-                initialRootPosition: [ 3, -1.5, 0 ]
-                initialRootAttitude: [ 
-                  1, 0, 0, 
-                  0, 1, 0, 
-                  0, 0, 1 ]
-                zmp: [ 0, 0, 0 ]
-                collisionDetection: true
-                selfCollisionDetection: false
-                isEditable: false
-            - 
-              id: 8
-              name: "Flag2L"
-              plugin: Body
-              class: BodyItem
-              data: 
-                modelFile: "${SHARE}/model/WRS2018/Flag2L.body"
-                currentBaseLink: "BASE"
-                rootPosition: [ 24, 1.5, 0 ]
-                rootAttitude: [ 
-                  1, 0, 0, 
-                  0, 1, 0, 
-                  0, 0, 1 ]
-                jointPositions: [  ]
-                initialRootPosition: [ 24, 1.5, 0 ]
-                initialRootAttitude: [ 
-                  1, 0, 0, 
-                  0, 1, 0, 
-                  0, 0, 1 ]
-                zmp: [ 0, 0, 0 ]
-                collisionDetection: true
-                selfCollisionDetection: false
-                isEditable: false
-            - 
-              id: 9
-              name: "Flag2R"
-              plugin: Body
-              class: BodyItem
-              data: 
-                modelFile: "${SHARE}/model/WRS2018/Flag2R.body"
-                currentBaseLink: "BASE"
-                rootPosition: [ 24, -1.5, 0 ]
-                rootAttitude: [ 
-                  1, 0, 0, 
-                  0, 1, 0, 
-                  0, 0, 1 ]
-                jointPositions: [  ]
-                initialRootPosition: [ 24, -1.5, 0 ]
-                initialRootAttitude: [ 
-                  1, 0, 0, 
-                  0, 1, 0, 
-                  0, 0, 1 ]
-                zmp: [ 0, 0, 0 ]
-                collisionDetection: true
-                selfCollisionDetection: false
-                isEditable: false
-            - 
-              id: 10
-              name: "DamagedCarA"
-              plugin: Body
-              class: BodyItem
-              data: 
-                modelFile: "${SHARE}/model/WRS2018/DamagedCarA.body"
-                currentBaseLink: "body"
-                rootPosition: [ 15.5, 1.59, 0 ]
-                rootAttitude: [ 
-                  1, 0, 0, 
-                  0, 1, 0, 
-                  0, 0, 1 ]
-                jointPositions: [  ]
-                initialRootPosition: [ 15.5, 1.59, 0 ]
-                initialRootAttitude: [ 
-                  1, 0, 0, 
-                  0, 1, 0, 
-                  0, 0, 1 ]
-                zmp: [ 0, 0, 0 ]
-                collisionDetection: true
-                selfCollisionDetection: false
-                isEditable: false
-            - 
-              id: 11
-              name: "DamagedCarB"
-              plugin: Body
-              class: BodyItem
-              data: 
-                modelFile: "${SHARE}/model/WRS2018/DamagedCarB.body"
-                currentBaseLink: "body"
-                rootPosition: [ 11.32, 1.99, 0 ]
-                rootAttitude: [ 
-                  0.707106781, 0.707106781, -0, 
-                  -0.707106781, 0.707106781, 0, 
-                  0, 0, 1 ]
-                jointPositions: [  ]
-                initialRootPosition: [ 11.32, 1.99, 0 ]
-                initialRootAttitude: [ 
-                  0.707106781, 0.707106781, -0, 
-                  -0.707106781, 0.707106781, 0, 
-                  0, 0, 1 ]
-                zmp: [ 0, 0, 0 ]
-                collisionDetection: true
-                selfCollisionDetection: false
-                isEditable: false
-            - 
-              id: 12
-              name: "DamagedCarB"
-              plugin: Body
-              class: BodyItem
-              data: 
-                modelFile: "${SHARE}/model/WRS2018/DamagedCarB.body"
-                currentBaseLink: "body"
-                rootPosition: [ 19.795, 2.345, 0 ]
-                rootAttitude: [ 
-                  0.707106781, -0.707106781, 0, 
-                  0.707106781, 0.707106781, -0, 
-                  0, 0, 1 ]
-                jointPositions: [  ]
-                initialRootPosition: [ 19.795, 2.345, 0 ]
-                initialRootAttitude: [ 
-                  0.707106781, -0.707106781, 0, 
-                  0.707106781, 0.707106781, 0, 
-                  0, 0, 1 ]
-                zmp: [ 0, 0, 0 ]
-                collisionDetection: true
-                selfCollisionDetection: false
-                isEditable: false
-            - 
-              id: 13
-              name: "CollapsedCeilings"
-              plugin: Base
-              class: FolderItem
-            - 
-              id: 14
-              name: "CollapsedCeiling01"
-              plugin: Body
-              class: BodyItem
-              data: 
-                modelFile: "${SHARE}/model/WRS2018/CollapsedCeiling1.body"
-                currentBaseLink: "body"
-                rootPosition: [ 10.7403062, 1.39354147, 1.47373301 ]
-                rootAttitude: [ 
-                  6.15918357e-17, -0.992153354, -0.125026882, 
-                  0.999549026, 0.00375444053, -0.0297934389, 
-                  0.0300290663, -0.124970498, 0.991705919 ]
-                jointPositions: [  ]
-                initialRootPosition: [ 10.7403062, 1.39354147, 1.47373301 ]
-                initialRootAttitude: [ 
-                  3.65610542e-10, -0.992153354, -0.125026882, 
-                  0.999549026, 0.0037544409, -0.0297934389, 
-                  0.0300290664, -0.124970498, 0.991705919 ]
-                zmp: [ 0, 0, 0 ]
-                collisionDetection: true
-                selfCollisionDetection: false
-                isEditable: true
-            - 
-              id: 15
-              name: "CollapsedCeiling16"
-              plugin: Body
-              class: BodyItem
-              data: 
-                modelFile: "${SHARE}/model/WRS2018/CollapsedCeiling3.body"
-                currentBaseLink: "body"
-                rootPosition: [ 15.6896692, 1.96242562, 1.59328166 ]
-                rootAttitude: [ 
-                  0.00307819428, 0.999960435, -0.00834583978, 
-                  -0.966597955, 0.000836403144, -0.256296107, 
-                  -0.256278986, 0.00885600087, 0.966562286 ]
-                jointPositions: [  ]
-                initialRootPosition: [ 15.6896692, 1.96242562, 1.59328166 ]
-                initialRootAttitude: [ 
-                  0.00307819408, 0.999960435, -0.00834583988, 
-                  -0.966597955, 0.000836402926, -0.256296107, 
-                  -0.256278986, 0.00885600095, 0.966562286 ]
-                zmp: [ 0, 0, 0 ]
-                collisionDetection: true
-                selfCollisionDetection: false
-                isEditable: true
-            - 
-              id: 16
-              name: "static"
-              plugin: Base
-              class: FolderItem
-              children: 
-                - 
-                  id: 17
-                  name: "CollapsedCeiling02"
-                  plugin: Body
-                  class: BodyItem
-                  data: 
-                    modelFile: "${SHARE}/model/WRS2018/CollapsedCeiling2.body"
-                    currentBaseLink: "body"
-                    rootPosition: [ 11.459898, 2.3771534, 1.4574778 ]
-                    rootAttitude: [ 
-                      -0.00523596383, 0.989512225, -0.144354222, 
-                      -0.999986292, -0.00518112124, 0.000755843847, 
-                      0, 0.144356201, 0.989525789 ]
-                    jointPositions: [  ]
-                    initialRootPosition: [ 11.459898, 2.3771534, 1.4574778 ]
-                    initialRootAttitude: [ 
-                      -0.00523596371, 0.989512225, -0.144354222, 
-                      -0.999986292, -0.00518112113, 0.000755843743, 
-                      -9.78522124e-11, 0.144356201, 0.989525789 ]
-                    zmp: [ 0, 0, 0 ]
-                    staticModel: true
-                    collisionDetection: true
-                    selfCollisionDetection: false
-                    isEditable: true
-                - 
-                  id: 18
-                  name: "CollapsedCeiling03"
-                  plugin: Body
-                  class: BodyItem
-                  data: 
-                    modelFile: "${SHARE}/model/WRS2018/CollapsedCeiling2.body"
-                    currentBaseLink: "body"
-                    rootPosition: [ 12.1942665, 2.5951114, 1.19103625 ]
-                    rootAttitude: [ 
-                      -0.00523596383, 0.921430738, 0.388507375, 
-                      -0.999986292, -0.00482464415, -0.00203423845, 
-                      -4.33680869e-19, -0.388512701, 0.921443368 ]
-                    jointPositions: [  ]
-                    initialRootPosition: [ 12.1942665, 2.5951114, 1.19103625 ]
-                    initialRootAttitude: [ 
-                      -0.00523596424, 0.921430738, 0.388507375, 
-                      -0.999986292, -0.00482464463, -0.00203423834, 
-                      2.50123172e-10, -0.388512701, 0.921443368 ]
-                    zmp: [ 0, 0, 0 ]
-                    staticModel: true
-                    collisionDetection: true
-                    selfCollisionDetection: false
-                    isEditable: true
-                - 
-                  id: 19
-                  name: "CollapsedCeiling04"
-                  plugin: Body
-                  class: BodyItem
-                  data: 
-                    modelFile: "${SHARE}/model/WRS2018/CollapsedCeiling2.body"
-                    currentBaseLink: "body"
-                    rootPosition: [ 12.7554216, 1.97177024, 1.24199026 ]
-                    rootAttitude: [ 
-                      -0.00523596383, 0.99997137, -0.00546287669, 
-                      -0.999986292, -0.0052358857, 2.86038168e-05, 
-                      -4.60785923e-19, 0.00546295157, 0.999985078 ]
-                    jointPositions: [  ]
-                    initialRootPosition: [ 12.7554216, 1.97177024, 1.24199026 ]
-                    initialRootAttitude: [ 
-                      -0.00523596314, 0.99997137, -0.00546287669, 
-                      -0.999986292, -0.00523588501, 2.86038183e-05, 
-                      3.33513208e-12, 0.00546295157, 0.999985078 ]
-                    zmp: [ 0, 0, 0 ]
-                    staticModel: true
-                    collisionDetection: true
-                    selfCollisionDetection: false
-                    isEditable: true
-                - 
-                  id: 20
-                  name: "CollapsedCeiling05"
-                  plugin: Body
-                  class: BodyItem
-                  data: 
-                    modelFile: "${SHARE}/model/WRS2018/CollapsedCeiling2.body"
-                    currentBaseLink: "body"
-                    rootPosition: [ 13.4367329, 1.9238602, 1.17508043 ]
-                    rootAttitude: [ 
-                      -0.00523596383, 0.966201252, -0.257735765, 
-                      -0.999986292, -0.00505906416, 0.00134951364, 
-                      -4.33680869e-19, 0.257739298, 0.966214497 ]
-                    jointPositions: [  ]
-                    initialRootPosition: [ 13.4367329, 1.9238602, 1.17508043 ]
-                    initialRootAttitude: [ 
-                      -0.0052359632, 0.966201252, -0.257735765, 
-                      -0.999986292, -0.00505906352, 0.00134951361, 
-                      5.27138611e-11, 0.257739298, 0.966214497 ]
-                    zmp: [ 0, 0, 0 ]
-                    collisionDetection: true
-                    selfCollisionDetection: false
-                    isEditable: true
-                - 
-                  id: 21
-                  name: "CollapsedCeiling06"
-                  plugin: Body
-                  class: BodyItem
-                  data: 
-                    modelFile: "${SHARE}/model/WRS2018/CollapsedCeiling1.body"
-                    currentBaseLink: "body"
-                    rootPosition: [ 13.2809869, 2.51854234, 1.73830591 ]
-                    rootAttitude: [ 
-                      -0.00336994308, -0.999994321, -2.94658597e-05, 
-                      0.966325282, -0.00324889799, -0.257303118, 
-                      0.257301561, -0.000895570466, 0.966330743 ]
-                    jointPositions: [  ]
-                    initialRootPosition: [ 13.2809869, 2.51854234, 1.73830591 ]
-                    initialRootAttitude: [ 
-                      -0.00336994296, -0.999994321, -2.94658106e-05, 
-                      0.966325282, -0.00324889789, -0.257303118, 
-                      0.257301561, -0.000895570396, 0.966330743 ]
-                    zmp: [ 0, 0, 0 ]
-                    staticModel: true
-                    collisionDetection: true
-                    selfCollisionDetection: false
-                    isEditable: true
-                - 
-                  id: 22
-                  name: "CollapsedCeiling07"
-                  plugin: Body
-                  class: BodyItem
-                  data: 
-                    modelFile: "${SHARE}/model/WRS2018/CollapsedCeiling3.body"
-                    currentBaseLink: "body"
-                    rootPosition: [ 14.4861312, 1.97570529, 1.58712745 ]
-                    rootAttitude: [ 
-                      0.00663415177, 0.999943166, -0.00834583978, 
-                      -0.966588869, 0.00427373391, -0.256296106, 
-                      -0.256245872, 0.0097673031, 0.966562286 ]
-                    jointPositions: [  ]
-                    initialRootPosition: [ 14.4861312, 1.97570529, 1.58712745 ]
-                    initialRootAttitude: [ 
-                      0.00663415132, 0.999943166, -0.00834583968, 
-                      -0.966588869, 0.0042737335, -0.256296106, 
-                      -0.256245872, 0.00976730294, 0.966562286 ]
-                    zmp: [ 0, 0, 0 ]
-                    staticModel: true
-                    collisionDetection: true
-                    selfCollisionDetection: false
-                    isEditable: true
-                - 
-                  id: 23
-                  name: "CollapsedCeiling08"
-                  plugin: Body
-                  class: BodyItem
-                  data: 
-                    modelFile: "${SHARE}/model/WRS2018/CollapsedCeiling3.body"
-                    currentBaseLink: "body"
-                    rootPosition: [ 16.5229205, 2.01486049, 1.44191574 ]
-                    rootAttitude: [ 
-                      0.00663415177, 0.999976076, 0.00195867286, 
-                      -0.966588869, 0.00691455, -0.256238459, 
-                      -0.256245872, -0.000193306561, 0.966611616 ]
-                    jointPositions: [  ]
-                    initialRootPosition: [ 16.5229205, 2.01486049, 1.44191574 ]
-                    initialRootAttitude: [ 
-                      0.00663415114, 0.999976076, 0.00195867284, 
-                      -0.966588869, 0.00691454937, -0.256238459, 
-                      -0.256245872, -0.000193306607, 0.966611616 ]
-                    zmp: [ 0, 0, 0 ]
-                    staticModel: true
-                    collisionDetection: true
-                    selfCollisionDetection: false
-                    isEditable: true
-                - 
-                  id: 24
-                  name: "CollapsedCeiling09"
-                  plugin: Body
-                  class: BodyItem
-                  data: 
-                    modelFile: "${SHARE}/model/WRS2018/CollapsedCeiling4.body"
-                    currentBaseLink: "body"
-                    rootPosition: [ 15.3065589, -0.693538158, 0.437609953 ]
-                    rootAttitude: [ 
-                      1, -0, 0, 
-                      0, 0.867286217, -0.497809821, 
-                      0, 0.497809821, 0.867286217 ]
-                    jointPositions: [  ]
-                    initialRootPosition: [ 15.3065589, -0.693538158, 0.437609953 ]
-                    initialRootAttitude: [ 
-                      1, 0, 0, 
-                      0, 0.867286217, -0.497809821, 
-                      0, 0.497809821, 0.867286217 ]
-                    zmp: [ 0, 0, 0 ]
-                    staticModel: true
-                    collisionDetection: true
-                    selfCollisionDetection: false
-                    isEditable: true
-                - 
-                  id: 25
-                  name: "CollapsedCeiling10"
-                  plugin: Body
-                  class: BodyItem
-                  data: 
-                    modelFile: "${SHARE}/model/WRS2018/CollapsedCeiling2.body"
-                    currentBaseLink: "body"
-                    rootPosition: [ 15.5718824, 0.09073283, 0.172750962 ]
-                    rootAttitude: [ 
-                      -0.999978243, -0.00019951399, 0.00659350857, 
-                      -0.001503193, -0.966352555, -0.257216796, 
-                      0.0064229722, -0.257221111, 0.96633123 ]
-                    jointPositions: [  ]
-                    initialRootPosition: [ 15.5718824, 0.09073283, 0.172750962 ]
-                    initialRootAttitude: [ 
-                      -0.999978243, -0.00019951399, 0.00659350857, 
-                      -0.001503193, -0.966352555, -0.257216796, 
-                      0.0064229722, -0.257221111, 0.96633123 ]
-                    zmp: [ 0, 0, 0 ]
-                    collisionDetection: true
-                    selfCollisionDetection: false
-                    isEditable: true
-                - 
-                  id: 26
-                  name: "CollapsedCeiling11"
-                  plugin: Body
-                  class: BodyItem
-                  data: 
-                    modelFile: "${SHARE}/model/WRS2018/CollapsedCeiling2.body"
-                    currentBaseLink: "body"
-                    rootPosition: [ 15.5366923, 0.0693665837, 0.445270702 ]
-                    rootAttitude: [ 
-                      -0.999998895, 0.00148608804, -3.87245779e-05, 
-                      -0.00148597947, -0.999995339, -0.00266709536, 
-                      -4.26879359e-05, -0.00266703487, 0.999996443 ]
-                    jointPositions: [  ]
-                    initialRootPosition: [ 15.5366923, 0.0693665837, 0.445270702 ]
-                    initialRootAttitude: [ 
-                      -0.999998895, 0.00148608804, -3.87245779e-05, 
-                      -0.00148597947, -0.999995339, -0.00266709536, 
-                      -4.26879359e-05, -0.00266703487, 0.999996443 ]
-                    zmp: [ 0, 0, 0 ]
-                    collisionDetection: true
-                    selfCollisionDetection: false
-                    isEditable: true
-                - 
-                  id: 27
-                  name: "CollapsedCeiling12"
-                  plugin: Body
-                  class: BodyItem
-                  data: 
-                    modelFile: "${SHARE}/model/WRS2018/CollapsedCeiling1.body"
-                    currentBaseLink: "body"
-                    rootPosition: [ 18.5538278, 1.41468494, 1.29533525 ]
-                    rootAttitude: [ 
-                      -0.00458398833, 0.999986176, -0.00257575113, 
-                      -0.966493275, -0.00509150874, -0.256641435, 
-                      -0.256651002, 0.0013130048, 0.966503254 ]
-                    jointPositions: [  ]
-                    initialRootPosition: [ 18.5538278, 1.41468494, 1.29533525 ]
-                    initialRootAttitude: [ 
-                      -0.00458398814, 0.999986176, -0.00257575095, 
-                      -0.966493275, -0.00509150851, -0.256641435, 
-                      -0.256651002, 0.00131300467, 0.966503254 ]
-                    zmp: [ 0, 0, 0 ]
-                    collisionDetection: true
-                    selfCollisionDetection: false
-                    isEditable: true
-                - 
-                  id: 28
-                  name: "CollapsedCeiling13"
-                  plugin: Body
-                  class: BodyItem
-                  data: 
-                    modelFile: "${SHARE}/model/WRS2018/CollapsedCeiling5.body"
-                    currentBaseLink: "body"
-                    rootPosition: [ 17.4254369, 1.63211378, 1.46385791 ]
-                    rootAttitude: [ 
-                      -0.0829057791, 0.865762638, 0.493539954, 
-                      -0.985638669, 0.00187447117, -0.168857634, 
-                      -0.147115757, -0.500451337, 0.85317373 ]
-                    jointPositions: [  ]
-                    initialRootPosition: [ 17.4254369, 1.63211378, 1.46385791 ]
-                    initialRootAttitude: [ 
-                      -0.0829057788, 0.865762638, 0.493539954, 
-                      -0.985638669, 0.00187447144, -0.168857634, 
-                      -0.147115757, -0.500451337, 0.85317373 ]
-                    zmp: [ 0, 0, 0 ]
-                    collisionDetection: true
-                    selfCollisionDetection: false
-                    isEditable: true
-                - 
-                  id: 29
-                  name: "CollapsedCeiling14"
-                  plugin: Body
-                  class: BodyItem
-                  data: 
-                    modelFile: "${SHARE}/model/WRS2018/CollapsedCeiling2.body"
-                    currentBaseLink: "body"
-                    rootPosition: [ 19.3268236, 2.08185763, 1.70347089 ]
-                    rootAttitude: [ 
-                      0.0175034357, 0.961376269, -0.274680358, 
-                      -0.963333354, 0.0897796657, 0.252840783, 
-                      0.267735839, 0.260183168, 0.927697278 ]
-                    jointPositions: [  ]
-                    initialRootPosition: [ 19.3268236, 2.08185763, 1.70347089 ]
-                    initialRootAttitude: [ 
-                      0.0175034354, 0.961376269, -0.274680358, 
-                      -0.963333354, 0.0897796654, 0.252840783, 
-                      0.267735839, 0.260183168, 0.927697278 ]
-                    zmp: [ 0, 0, 0 ]
-                    collisionDetection: true
-                    selfCollisionDetection: false
-                    isEditable: true
-                - 
-                  id: 30
-                  name: "CollapsedCeiling15"
-                  plugin: Body
-                  class: BodyItem
-                  data: 
-                    modelFile: "${SHARE}/model/WRS2018/CollapsedCeiling2.body"
-                    currentBaseLink: "body"
-                    rootPosition: [ 19.3630299, 2.24057746, 2.11704225 ]
-                    rootAttitude: [ 
-                      -0.0054205759, 0.941429182, 0.337167187, 
-                      -0.965306823, -0.0929503089, 0.244014298, 
-                      0.261061975, -0.324147088, 0.909271857 ]
-                    jointPositions: [  ]
-                    initialRootPosition: [ 19.3630299, 2.24057746, 2.11704225 ]
-                    initialRootAttitude: [ 
-                      -0.00542057571, 0.941429182, 0.337167187, 
-                      -0.965306823, -0.0929503087, 0.244014298, 
-                      0.261061975, -0.324147088, 0.909271857 ]
-                    zmp: [ 0, 0, 0 ]
-                    collisionDetection: true
-                    selfCollisionDetection: false
-                    isEditable: true
-            - 
-              id: 31
-              name: "Shoring-M"
-              plugin: Body
-              class: BodyItem
-              data: 
-                modelFile: "${SHARE}/model/WRS2018/ShoringM.body"
-                currentBaseLink: "body"
-                rootPosition: [ 5.0931497, 3.02159396, 0.217851381 ]
-                rootAttitude: [ 
-                  1, 0, -0, 
-                  0, 0.205208134, 0.978718357, 
-                  0, -0.978718357, 0.205208134 ]
-                jointPositions: [  ]
-                initialRootPosition: [ 5.0931497, 3.02159396, 0.217851381 ]
-                initialRootAttitude: [ 
-                  1, 0, -0, 
-                  0, 0.205208134, 0.978718357, 
-                  0, -0.978718357, 0.205208134 ]
-                zmp: [ 0, 0, 0 ]
-                collisionDetection: true
-                selfCollisionDetection: false
-                isEditable: true
-            - 
-              id: 32
-              name: "Shoring-L"
-              plugin: Body
-              class: BodyItem
-              data: 
-                modelFile: "${SHARE}/model/WRS2018/ShoringL.body"
-                currentBaseLink: "body"
-                rootPosition: [ 7, 2.3399, 0 ]
-                rootAttitude: [ 
-                  6.123234e-17, 1, -0, 
-                  -1, 6.123234e-17, 0, 
-                  0, 0, 1 ]
-                jointPositions: [  ]
-                initialRootPosition: [ 7, 2.3399, 0 ]
-                initialRootAttitude: [ 
-                  2.22044605e-16, 1, -0, 
-                  -1, 2.22044605e-16, 0, 
-                  0, 0, 1 ]
-                zmp: [ 0, 0, 0 ]
-                collisionDetection: true
-                selfCollisionDetection: false
-                isEditable: true
+          id: 17
+          name: "CollapsedCeiling02"
+          plugin: Body
+          class: BodyItem
+          data: 
+            modelFile: "${SHARE}/model/WRS2018/CollapsedCeiling2.body"
+            currentBaseLink: "body"
+            rootPosition: [ 11.459898, 2.3771534, 1.4574778 ]
+            rootAttitude: [ 
+              -0.00523596383, 0.989512225, -0.144354222, 
+              -0.999986292, -0.00518112124, 0.000755843847, 
+              0, 0.144356201, 0.989525789 ]
+            jointPositions: [  ]
+            initialRootPosition: [ 11.459898, 2.3771534, 1.4574778 ]
+            initialRootAttitude: [ 
+              -0.00523596371, 0.989512225, -0.144354222, 
+              -0.999986292, -0.00518112113, 0.000755843743, 
+              -9.78522124e-11, 0.144356201, 0.989525789 ]
+            zmp: [ 0, 0, 0 ]
+            staticModel: true
+            collisionDetection: true
+            selfCollisionDetection: false
+            isEditable: true
+        - 
+          id: 18
+          name: "CollapsedCeiling03"
+          plugin: Body
+          class: BodyItem
+          data: 
+            modelFile: "${SHARE}/model/WRS2018/CollapsedCeiling2.body"
+            currentBaseLink: "body"
+            rootPosition: [ 12.1942665, 2.5951114, 1.19103625 ]
+            rootAttitude: [ 
+              -0.00523596383, 0.921430738, 0.388507375, 
+              -0.999986292, -0.00482464415, -0.00203423845, 
+              -4.33680869e-19, -0.388512701, 0.921443368 ]
+            jointPositions: [  ]
+            initialRootPosition: [ 12.1942665, 2.5951114, 1.19103625 ]
+            initialRootAttitude: [ 
+              -0.00523596424, 0.921430738, 0.388507375, 
+              -0.999986292, -0.00482464463, -0.00203423834, 
+              2.50123172e-10, -0.388512701, 0.921443368 ]
+            zmp: [ 0, 0, 0 ]
+            staticModel: true
+            collisionDetection: true
+            selfCollisionDetection: false
+            isEditable: true
+        - 
+          id: 19
+          name: "CollapsedCeiling04"
+          plugin: Body
+          class: BodyItem
+          data: 
+            modelFile: "${SHARE}/model/WRS2018/CollapsedCeiling2.body"
+            currentBaseLink: "body"
+            rootPosition: [ 12.7554216, 1.97177024, 1.24199026 ]
+            rootAttitude: [ 
+              -0.00523596383, 0.99997137, -0.00546287669, 
+              -0.999986292, -0.0052358857, 2.86038168e-05, 
+              -4.60785923e-19, 0.00546295157, 0.999985078 ]
+            jointPositions: [  ]
+            initialRootPosition: [ 12.7554216, 1.97177024, 1.24199026 ]
+            initialRootAttitude: [ 
+              -0.00523596314, 0.99997137, -0.00546287669, 
+              -0.999986292, -0.00523588501, 2.86038183e-05, 
+              3.33513208e-12, 0.00546295157, 0.999985078 ]
+            zmp: [ 0, 0, 0 ]
+            staticModel: true
+            collisionDetection: true
+            selfCollisionDetection: false
+            isEditable: true
+        - 
+          id: 20
+          name: "CollapsedCeiling05"
+          plugin: Body
+          class: BodyItem
+          data: 
+            modelFile: "${SHARE}/model/WRS2018/CollapsedCeiling2.body"
+            currentBaseLink: "body"
+            rootPosition: [ 13.4367329, 1.9238602, 1.17508043 ]
+            rootAttitude: [ 
+              -0.00523596383, 0.966201252, -0.257735765, 
+              -0.999986292, -0.00505906416, 0.00134951364, 
+              -4.33680869e-19, 0.257739298, 0.966214497 ]
+            jointPositions: [  ]
+            initialRootPosition: [ 13.4367329, 1.9238602, 1.17508043 ]
+            initialRootAttitude: [ 
+              -0.0052359632, 0.966201252, -0.257735765, 
+              -0.999986292, -0.00505906352, 0.00134951361, 
+              5.27138611e-11, 0.257739298, 0.966214497 ]
+            zmp: [ 0, 0, 0 ]
+            collisionDetection: true
+            selfCollisionDetection: false
+            isEditable: true
+        - 
+          id: 21
+          name: "CollapsedCeiling06"
+          plugin: Body
+          class: BodyItem
+          data: 
+            modelFile: "${SHARE}/model/WRS2018/CollapsedCeiling1.body"
+            currentBaseLink: "body"
+            rootPosition: [ 13.2809869, 2.51854234, 1.73830591 ]
+            rootAttitude: [ 
+              -0.00336994308, -0.999994321, -2.94658597e-05, 
+              0.966325282, -0.00324889799, -0.257303118, 
+              0.257301561, -0.000895570466, 0.966330743 ]
+            jointPositions: [  ]
+            initialRootPosition: [ 13.2809869, 2.51854234, 1.73830591 ]
+            initialRootAttitude: [ 
+              -0.00336994296, -0.999994321, -2.94658106e-05, 
+              0.966325282, -0.00324889789, -0.257303118, 
+              0.257301561, -0.000895570396, 0.966330743 ]
+            zmp: [ 0, 0, 0 ]
+            staticModel: true
+            collisionDetection: true
+            selfCollisionDetection: false
+            isEditable: true
+        - 
+          id: 22
+          name: "CollapsedCeiling07"
+          plugin: Body
+          class: BodyItem
+          data: 
+            modelFile: "${SHARE}/model/WRS2018/CollapsedCeiling3.body"
+            currentBaseLink: "body"
+            rootPosition: [ 14.4861312, 1.97570529, 1.58712745 ]
+            rootAttitude: [ 
+              0.00663415177, 0.999943166, -0.00834583978, 
+              -0.966588869, 0.00427373391, -0.256296106, 
+              -0.256245872, 0.0097673031, 0.966562286 ]
+            jointPositions: [  ]
+            initialRootPosition: [ 14.4861312, 1.97570529, 1.58712745 ]
+            initialRootAttitude: [ 
+              0.00663415132, 0.999943166, -0.00834583968, 
+              -0.966588869, 0.0042737335, -0.256296106, 
+              -0.256245872, 0.00976730294, 0.966562286 ]
+            zmp: [ 0, 0, 0 ]
+            staticModel: true
+            collisionDetection: true
+            selfCollisionDetection: false
+            isEditable: true
+        - 
+          id: 23
+          name: "CollapsedCeiling08"
+          plugin: Body
+          class: BodyItem
+          data: 
+            modelFile: "${SHARE}/model/WRS2018/CollapsedCeiling3.body"
+            currentBaseLink: "body"
+            rootPosition: [ 16.5229205, 2.01486049, 1.44191574 ]
+            rootAttitude: [ 
+              0.00663415177, 0.999976076, 0.00195867286, 
+              -0.966588869, 0.00691455, -0.256238459, 
+              -0.256245872, -0.000193306561, 0.966611616 ]
+            jointPositions: [  ]
+            initialRootPosition: [ 16.5229205, 2.01486049, 1.44191574 ]
+            initialRootAttitude: [ 
+              0.00663415114, 0.999976076, 0.00195867284, 
+              -0.966588869, 0.00691454937, -0.256238459, 
+              -0.256245872, -0.000193306607, 0.966611616 ]
+            zmp: [ 0, 0, 0 ]
+            staticModel: true
+            collisionDetection: true
+            selfCollisionDetection: false
+            isEditable: true
+        - 
+          id: 24
+          name: "CollapsedCeiling09"
+          plugin: Body
+          class: BodyItem
+          data: 
+            modelFile: "${SHARE}/model/WRS2018/CollapsedCeiling4.body"
+            currentBaseLink: "body"
+            rootPosition: [ 15.3065589, -0.693538158, 0.437609953 ]
+            rootAttitude: [ 
+              1, -0, 0, 
+              0, 0.867286217, -0.497809821, 
+              0, 0.497809821, 0.867286217 ]
+            jointPositions: [  ]
+            initialRootPosition: [ 15.3065589, -0.693538158, 0.437609953 ]
+            initialRootAttitude: [ 
+              1, 0, 0, 
+              0, 0.867286217, -0.497809821, 
+              0, 0.497809821, 0.867286217 ]
+            zmp: [ 0, 0, 0 ]
+            staticModel: true
+            collisionDetection: true
+            selfCollisionDetection: false
+            isEditable: true
+        - 
+          id: 25
+          name: "CollapsedCeiling10"
+          plugin: Body
+          class: BodyItem
+          data: 
+            modelFile: "${SHARE}/model/WRS2018/CollapsedCeiling2.body"
+            currentBaseLink: "body"
+            rootPosition: [ 15.5718824, 0.09073283, 0.172750962 ]
+            rootAttitude: [ 
+              -0.999978243, -0.00019951399, 0.00659350857, 
+              -0.001503193, -0.966352555, -0.257216796, 
+              0.0064229722, -0.257221111, 0.96633123 ]
+            jointPositions: [  ]
+            initialRootPosition: [ 15.5718824, 0.09073283, 0.172750962 ]
+            initialRootAttitude: [ 
+              -0.999978243, -0.00019951399, 0.00659350857, 
+              -0.001503193, -0.966352555, -0.257216796, 
+              0.0064229722, -0.257221111, 0.96633123 ]
+            zmp: [ 0, 0, 0 ]
+            collisionDetection: true
+            selfCollisionDetection: false
+            isEditable: true
+        - 
+          id: 26
+          name: "CollapsedCeiling11"
+          plugin: Body
+          class: BodyItem
+          data: 
+            modelFile: "${SHARE}/model/WRS2018/CollapsedCeiling2.body"
+            currentBaseLink: "body"
+            rootPosition: [ 15.5366923, 0.0693665837, 0.445270702 ]
+            rootAttitude: [ 
+              -0.999998895, 0.00148608804, -3.87245779e-05, 
+              -0.00148597947, -0.999995339, -0.00266709536, 
+              -4.26879359e-05, -0.00266703487, 0.999996443 ]
+            jointPositions: [  ]
+            initialRootPosition: [ 15.5366923, 0.0693665837, 0.445270702 ]
+            initialRootAttitude: [ 
+              -0.999998895, 0.00148608804, -3.87245779e-05, 
+              -0.00148597947, -0.999995339, -0.00266709536, 
+              -4.26879359e-05, -0.00266703487, 0.999996443 ]
+            zmp: [ 0, 0, 0 ]
+            collisionDetection: true
+            selfCollisionDetection: false
+            isEditable: true
+        - 
+          id: 27
+          name: "CollapsedCeiling12"
+          plugin: Body
+          class: BodyItem
+          data: 
+            modelFile: "${SHARE}/model/WRS2018/CollapsedCeiling1.body"
+            currentBaseLink: "body"
+            rootPosition: [ 18.5538278, 1.41468494, 1.29533525 ]
+            rootAttitude: [ 
+              -0.00458398833, 0.999986176, -0.00257575113, 
+              -0.966493275, -0.00509150874, -0.256641435, 
+              -0.256651002, 0.0013130048, 0.966503254 ]
+            jointPositions: [  ]
+            initialRootPosition: [ 18.5538278, 1.41468494, 1.29533525 ]
+            initialRootAttitude: [ 
+              -0.00458398814, 0.999986176, -0.00257575095, 
+              -0.966493275, -0.00509150851, -0.256641435, 
+              -0.256651002, 0.00131300467, 0.966503254 ]
+            zmp: [ 0, 0, 0 ]
+            collisionDetection: true
+            selfCollisionDetection: false
+            isEditable: true
+        - 
+          id: 28
+          name: "CollapsedCeiling13"
+          plugin: Body
+          class: BodyItem
+          data: 
+            modelFile: "${SHARE}/model/WRS2018/CollapsedCeiling5.body"
+            currentBaseLink: "body"
+            rootPosition: [ 17.4254369, 1.63211378, 1.46385791 ]
+            rootAttitude: [ 
+              -0.0829057791, 0.865762638, 0.493539954, 
+              -0.985638669, 0.00187447117, -0.168857634, 
+              -0.147115757, -0.500451337, 0.85317373 ]
+            jointPositions: [  ]
+            initialRootPosition: [ 17.4254369, 1.63211378, 1.46385791 ]
+            initialRootAttitude: [ 
+              -0.0829057788, 0.865762638, 0.493539954, 
+              -0.985638669, 0.00187447144, -0.168857634, 
+              -0.147115757, -0.500451337, 0.85317373 ]
+            zmp: [ 0, 0, 0 ]
+            collisionDetection: true
+            selfCollisionDetection: false
+            isEditable: true
+        - 
+          id: 29
+          name: "CollapsedCeiling14"
+          plugin: Body
+          class: BodyItem
+          data: 
+            modelFile: "${SHARE}/model/WRS2018/CollapsedCeiling2.body"
+            currentBaseLink: "body"
+            rootPosition: [ 19.3268236, 2.08185763, 1.70347089 ]
+            rootAttitude: [ 
+              0.0175034357, 0.961376269, -0.274680358, 
+              -0.963333354, 0.0897796657, 0.252840783, 
+              0.267735839, 0.260183168, 0.927697278 ]
+            jointPositions: [  ]
+            initialRootPosition: [ 19.3268236, 2.08185763, 1.70347089 ]
+            initialRootAttitude: [ 
+              0.0175034354, 0.961376269, -0.274680358, 
+              -0.963333354, 0.0897796654, 0.252840783, 
+              0.267735839, 0.260183168, 0.927697278 ]
+            zmp: [ 0, 0, 0 ]
+            collisionDetection: true
+            selfCollisionDetection: false
+            isEditable: true
+        - 
+          id: 30
+          name: "CollapsedCeiling15"
+          plugin: Body
+          class: BodyItem
+          data: 
+            modelFile: "${SHARE}/model/WRS2018/CollapsedCeiling2.body"
+            currentBaseLink: "body"
+            rootPosition: [ 19.3630299, 2.24057746, 2.11704225 ]
+            rootAttitude: [ 
+              -0.0054205759, 0.941429182, 0.337167187, 
+              -0.965306823, -0.0929503089, 0.244014298, 
+              0.261061975, -0.324147088, 0.909271857 ]
+            jointPositions: [  ]
+            initialRootPosition: [ 19.3630299, 2.24057746, 2.11704225 ]
+            initialRootAttitude: [ 
+              -0.00542057571, 0.941429182, 0.337167187, 
+              -0.965306823, -0.0929503087, 0.244014298, 
+              0.261061975, -0.324147088, 0.909271857 ]
+            zmp: [ 0, 0, 0 ]
+            collisionDetection: true
+            selfCollisionDetection: false
+            isEditable: true
+    - 
+      id: 31
+      name: "Shoring-M"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/model/WRS2018/ShoringM.body"
+        currentBaseLink: "body"
+        rootPosition: [ 5.0931497, 3.02159396, 0.217851381 ]
+        rootAttitude: [ 
+          1, 0, -0, 
+          0, 0.205208134, 0.978718357, 
+          0, -0.978718357, 0.205208134 ]
+        jointPositions: [  ]
+        initialRootPosition: [ 5.0931497, 3.02159396, 0.217851381 ]
+        initialRootAttitude: [ 
+          1, 0, -0, 
+          0, 0.205208134, 0.978718357, 
+          0, -0.978718357, 0.205208134 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: false
+        isEditable: true
+    - 
+      id: 32
+      name: "Shoring-L"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/model/WRS2018/ShoringL.body"
+        currentBaseLink: "body"
+        rootPosition: [ 7, 2.3399, 0 ]
+        rootAttitude: [ 
+          6.123234e-17, 1, -0, 
+          -1, 6.123234e-17, 0, 
+          0, 0, 1 ]
+        jointPositions: [  ]
+        initialRootPosition: [ 7, 2.3399, 0 ]
+        initialRootAttitude: [ 
+          2.22044605e-16, 1, -0, 
+          -1, 2.22044605e-16, 0, 
+          0, 0, 1 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: false
+        isEditable: true
 views: 
   - 
     id: 1
