@@ -15,6 +15,11 @@ links:
         name: FRAME_GYRO
         id: 0
       -
+        type: CompetitorMarker
+        name: CompetitorMarker
+        isOptional: true
+        offsetTranslation: [ 0, 0, 1.2 ]
+      -
         type: Transform
         rotation: [ [0, 0, 1, 180 ], [ 1, 0, 0, 90 ] ]
         elements:

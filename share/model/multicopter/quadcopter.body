@@ -28,7 +28,8 @@ links:
         0, 0.000891, 0,
         0, 0, 0.0001463 ]
     elements:
-      Shape:
+      -
+        type: Shape
         geometry:
           type: Box
           size: [ 0.15, 0.15, 0.07 ]
@@ -37,6 +38,11 @@ links:
             diffuseColor: [ 0.2, 0.2, 0.8 ]
             specularColor: [ 0.2, 0.2, 0.8 ]
             shininess: 0.6
+      -
+        type: CompetitorMarker
+        name: CompetitorMarker
+        isOptional: true
+        offsetTranslation: [ 0, 0, 0.05 ]
   -
     name: CAMERA_T
     parent: BODY
