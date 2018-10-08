@@ -11,6 +11,9 @@
 
 namespace cnoid {
 
+class YAMLBodyLoader;
+class Mapping;
+
 class CNOID_EXPORT MarkerDevice : public Device
 {
 public:
@@ -26,6 +29,8 @@ public:
     virtual int stateSize() const;
     virtual const double* readState(const double* buf);
     virtual double* writeState(double* out_buf) const;
+
+    bool readDescription(YAMLBodyLoader& loader, Mapping& node);
 
     virtual bool on() const;
     virtual void on(bool on);
@@ -45,7 +50,9 @@ public:
         
     const Vector3f& color() const { return color_; }
     void setColor(const Vector3f& c) { color_ = c; }
-    double transparency() const { return transparency_; }
+    float emission() const { return emission_; }
+    void setEmission(float r) { emission_ = r; }
+    float transparency() const { return transparency_; }
     void setTransparency(float t) { transparency_ = t; }
 
     const Position& offsetPosition() const { return offsetPosition_; }
@@ -58,6 +65,7 @@ private:
     float markerSize_;
     Position offsetPosition_;
     Vector3f color_;
+    float emission_;
     float transparency_;
 };
 

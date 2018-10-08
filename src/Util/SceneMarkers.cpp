@@ -14,10 +14,12 @@ SceneMarker::SceneMarker()
 {
     markerType_ = NO_MARKER;
     markerSize_ = 0.01;
+    emission_ = 0.5;
 
     material = new SgMaterial;
-    material->setDiffuseColor(Vector3f::Zero());
-    material->setEmissiveColor(Vector3f(1.0f, 0.0f, 0.0f));
+    Vector3f c(1.0f, 0.0f, 0.0f);
+    material->setDiffuseColor(c);
+    material->setEmissiveColor(emission_ * c);
     material->setTransparency(0.0f);
     material->setAmbientIntensity(0.0f);
 }
@@ -129,7 +131,21 @@ const Vector3f& SceneMarker::color() const
 
 void SceneMarker::setColor(const Vector3f& color)
 {
-    material->setEmissiveColor(color);
+    material->setDiffuseColor(color);
+    material->setEmissiveColor(emission_ * color);
+}
+
+
+float SceneMarker::emission() const
+{
+    return emission_;
+}
+
+
+void SceneMarker::setEmission(float r)
+{
+    emission_ = r;
+    material->setEmissiveColor(r * material->diffuseColor());
 }
 
 

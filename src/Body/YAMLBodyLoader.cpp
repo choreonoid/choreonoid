@@ -108,7 +108,7 @@ struct ROSPackageSchemeHandlerRegistration {
 namespace cnoid {
 
 void YAMLBodyLoader::addNodeType
-(const std::string& typeName,  std::function<bool(YAMLBodyLoader& loader, Mapping& node)> readFunction)
+(const std::string& typeName, std::function<bool(YAMLBodyLoader& loader, Mapping& node)> readFunction)
 {
     std::lock_guard<std::mutex> guard(customNodeFunctionMutex);
     customNodeFunctions[typeName] = readFunction;

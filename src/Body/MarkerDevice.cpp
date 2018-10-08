@@ -15,46 +15,14 @@ using namespace cnoid;
 
 namespace {
 
-bool readMarkerDevice(YAMLBodyLoader& loader, Mapping& node)
-{
-    MarkerDevicePtr device = new MarkerDevice;
-
-    string type;
-    if(node.read("markerType", type)){
-        if(type == "cross"){
-            device->setMarkerType(MarkerDevice::CROSS_MARKER);
-        } else if(type == "sphere"){
-            device->setMarkerType(MarkerDevice::SPHERE_MARKER);
-        } else if(type == "axes"){
-            device->setMarkerType(MarkerDevice::AXES_MARKER);
-        } else {
-            node.throwException(
-                str(boost::format("Unknown marker type '%1%'") % type));
-        }
-    }
-
-    device->setMarkerSize(node.get("size", device->markerSize()));
-    device->setTransparency(node.get("transparency", device->transparency()));
-
-    Vector3f c;
-    if(read(node, "color", c)) device->setColor(c);
-
-    Position T = Affine3::Identity();
-    Vector3 p;
-    if(read(node, "offsetTranslation", p)){
-        T.translation() = p;
-    }
-    Matrix3 R;
-    if(loader.readRotation(node, "offsetRotation", R)){
-        T.linear() = R;
-    }
-    device->setOffsetPosition(T);
-
-    return loader.readDevice(device, node);
-}
-
 YAMLBodyLoader::NodeTypeRegistration
-registerMarkerDevice("MarkerDevice", readMarkerDevice);
+registerMarkerDevice(
+    "MarkerDevice",
+    [](YAMLBodyLoader& loader, Mapping& node){
+        MarkerDevicePtr device = new MarkerDevice;
+        return device->readDescription(loader, node);
+    });
+        
 
 int getSceneMarkerType(int type)
 {
@@ -140,6 +108,7 @@ MarkerDevice::MarkerDevice()
     markerSize_ = 0.01f;
     offsetPosition_.setIdentity();
     color_ << 1.0f, 0.0f, 0.0f;
+    emission_ = 0.5f;
     transparency_ = 0.7f;
 }
 
@@ -211,7 +180,7 @@ void MarkerDevice::on(bool on)
 
 int MarkerDevice::stateSize() const
 {
-    return 6;
+    return 15;
 }
 
 
@@ -223,6 +192,7 @@ const double* MarkerDevice::readState(const double* buf)
     markerSize_ = buf[i++];
     color_ = Eigen::Map<const Vector3>(buf + i).cast<float>();
     i += 3;
+    emission_ = buf[i++];
     transparency_ = buf[i++];
     offsetPosition_.translation() << buf[i++], buf[i++], buf[i++];
     offsetPosition_.linear() = Quat(buf[i++], buf[i++], buf[i++], buf[i++]).toRotationMatrix();
@@ -240,6 +210,7 @@ double* MarkerDevice::writeState(double* out_buf) const
     out_buf[i++] = color_[0];
     out_buf[i++] = color_[1];
     out_buf[i++] = color_[2];
+    out_buf[i++] = emission_;
     out_buf[i++] = transparency_;
 
     auto p = offsetPosition_.translation();
@@ -254,4 +225,42 @@ double* MarkerDevice::writeState(double* out_buf) const
     out_buf[i++] = q.z();
     
     return out_buf + i;
+}
+
+
+bool MarkerDevice::readDescription(YAMLBodyLoader& loader, Mapping& node)
+{
+    string type;
+    if(node.read("markerType", type)){
+        if(type == "cross"){
+            setMarkerType(MarkerDevice::CROSS_MARKER);
+        } else if(type == "sphere"){
+            setMarkerType(MarkerDevice::SPHERE_MARKER);
+        } else if(type == "axes"){
+            setMarkerType(MarkerDevice::AXES_MARKER);
+        } else {
+            node.throwException(
+                str(boost::format("Unknown marker type '%1%'") % type));
+        }
+    }
+
+    setMarkerSize(node.get("size", markerSize()));
+    setEmission(node.get("emission", emission()));
+    setTransparency(node.get("transparency", transparency()));
+
+    Vector3f c;
+    if(read(node, "color", c)) setColor(c);
+
+    Position T = Affine3::Identity();
+    Vector3 p;
+    if(read(node, "offsetTranslation", p)){
+        T.translation() = p;
+    }
+    Matrix3 R;
+    if(loader.readRotation(node, "offsetRotation", R)){
+        T.linear() = R;
+    }
+    setOffsetPosition(T);
+
+    return loader.readDevice(this, node);
 }
