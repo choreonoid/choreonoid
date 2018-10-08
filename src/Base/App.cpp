@@ -16,6 +16,7 @@
 #include "MainWindow.h"
 #include "RootItem.h"
 #include "FolderItem.h"
+#include "SubProjectItem.h"
 #include "ExtCommandItem.h"
 #include "SceneItem.h"
 #include "PointSetItem.h"
@@ -196,7 +197,7 @@ void AppImpl::initialize( const char* appName, const char* vendorName, const QIc
     
     MessageView::initializeClass(ext);
     RootItem::initializeClass(ext);
-    ProjectManager::initialize(ext);
+    ProjectManager::initializeClass(ext);
 
     FileBar::initialize(ext);
     ScriptBar::initialize(ext);
@@ -217,6 +218,7 @@ void AppImpl::initialize( const char* appName, const char* vendorName, const QIc
     TimeSyncItemEngineManager::initialize();
     
     FolderItem::initializeClass(ext);
+    SubProjectItem::initializeClass(ext);
     ExtCommandItem::initializeClass(ext);
     MultiValueSeqItem::initializeClass(ext);
     MultiSE3SeqItem::initializeClass(ext);

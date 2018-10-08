@@ -209,7 +209,7 @@ PluginManagerImpl::PluginManagerImpl(ExtensionManager* ext)
     auto config = AppConfig::archive()->openMapping("PluginManager");
 
     MenuManager& mm = ext->menuManager();
-    mm.setPath("/File/Plugin");
+    mm.setPath("/File").setPath(N_("Plugin"));
     mm.addItem(_("Load Plugin"))
         ->sigTriggered().connect(std::bind(&PluginManagerImpl::onLoadPluginTriggered, this));
 
