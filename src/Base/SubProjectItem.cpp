@@ -30,15 +30,16 @@ public:
     bool isLoadingMainProject;
     bool isSavingSubProject;
     ScopedConnectionSet updateConnections;
-    unique_ptr<ProjectManager> subProjectManager;
+    unique_ptr<ProjectManager> projectManager_;
 
     SubProjectItemImpl(SubProjectItem* self);
     SubProjectItemImpl(SubProjectItem* self, const SubProjectItemImpl& org);
-    ProjectManager* getProjectManager();
-    ProjectManager* getSubProjectManager();
+    bool loadSubProject(const std::string& filename);
+    ProjectManager* projectManager();
     void doLoadSubProject(const std::string& filename);
     void enableSubProjectUpdateDetection();
     void onSubProjectUpdated();
+    bool saveSubProject(const std::string& filename);
 };
 
 }
@@ -52,10 +53,10 @@ void SubProjectItem::initializeClass(ExtensionManager* ext)
         im.addLoaderAndSaver<SubProjectItem>(
             _("SubProjet"), "PROJECT", "cnoid",
             [](SubProjectItem* item, const std::string& filename, std::ostream&, Item*){
-                return item->loadSubProject(filename);
+                return item->impl->loadSubProject(filename);
             },
             [](SubProjectItem* item, const std::string& filename, std::ostream&, Item*){
-                return item->saveSubProject(filename);
+                return item->impl->saveSubProject(filename);
             });
         initialized = true;
     }
@@ -117,7 +118,7 @@ void SubProjectItem::onConnectedToRoot()
 }
 
 
-bool SubProjectItem::loadSubProject(const std::string& filename)
+bool SubProjectItemImpl::loadSubProject(const std::string& filename)
 {
     if(projectFilesBeingLoaded.find(filename) != projectFilesBeingLoaded.end()){
         MessageView::instance()->putln(
@@ -126,11 +127,11 @@ bool SubProjectItem::loadSubProject(const std::string& filename)
         return false;
     }
 
-    if(isConnectedToRoot()){
-        impl->doLoadSubProject(filename);
+    if(self->isConnectedToRoot()){
+        doLoadSubProject(filename);
         return true;
     } else {
-        impl->projectFileToLoad = filename;
+        projectFileToLoad = filename;
         return true;
     }
 
@@ -138,23 +139,12 @@ bool SubProjectItem::loadSubProject(const std::string& filename)
 }
 
 
-ProjectManager* SubProjectItemImpl::getProjectManager()
+ProjectManager* SubProjectItemImpl::projectManager()
 {
-    auto mainProjectManager = ProjectManager::instance();
-    isLoadingMainProject = mainProjectManager->isLoadingProject();
-    if(!isLoadingMainProject){
-        return mainProjectManager;
+    if(!projectManager_){
+        projectManager_.reset(new ProjectManager());
     }
-    return getSubProjectManager();
-}
-
-
-ProjectManager* SubProjectItemImpl::getSubProjectManager()
-{
-    if(!subProjectManager){
-        subProjectManager.reset(new ProjectManager());
-    }
-    return subProjectManager.get();
+    return projectManager_.get();
 }
 
 
@@ -162,7 +152,7 @@ void SubProjectItemImpl::doLoadSubProject(const std::string& filename)
 {
     projectFilesBeingLoaded.insert(filename);
 
-    auto items = getProjectManager()->loadProject(filename, self);
+    auto items = projectManager()->loadProject(filename, self);
 
     projectFilesBeingLoaded.erase(filename);
 
@@ -205,11 +195,11 @@ void SubProjectItemImpl::onSubProjectUpdated()
 }
     
 
-bool SubProjectItem::saveSubProject(const std::string& filename)
+bool SubProjectItemImpl::saveSubProject(const std::string& filename)
 {
-    impl->isSavingSubProject = true;
-    impl->getSubProjectManager()->saveProject(filename, this);
-    impl->isSavingSubProject = false;
+    isSavingSubProject = true;
+    projectManager()->saveProject(filename, self);
+    isSavingSubProject = false;
     return true;
 }
 
@@ -231,6 +221,7 @@ void SubProjectItem::setSaveMode(int mode)
     if(impl->saveMode.select(mode)){
         if(mode == MANUAL_SAVE){
             impl->updateConnections.disconnect();
+            setConsistentWithFile(true);
         } else {
             impl->enableSubProjectUpdateDetection();
         }
@@ -251,7 +242,7 @@ void SubProjectItem::doPutProperties(PutPropertyFunction& putProperty)
 
 bool SubProjectItem::store(Archive& archive)
 {
-    if(!impl->isSavingSubProject && impl->saveMode.is(AUTOMATIC_SAVE)){
+    if(!impl->isSavingSubProject){
         if(overwrite()){
             archive.writeRelocatablePath("filename", filePath());
             archive.write("format", fileFormat());

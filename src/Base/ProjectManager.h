@@ -21,6 +21,7 @@ class CNOID_EXPORT ProjectManager
 public:
     static void initializeClass(ExtensionManager* ext);
     static ProjectManager* instance();
+    static bool isProjectBeingLoaded();
 
     //The constructor used to create a sub instance for recursive loading / saving
     ProjectManager();
@@ -32,7 +33,6 @@ public:
     void overwriteCurrentProject();
     std::string currentProjectFile() const;
     std::string currentProjectDirectory() const;
-    bool isLoadingProject() const;
     void setCurrentProjectName(const std::string& filename);
 
 private:

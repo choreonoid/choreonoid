@@ -124,10 +124,7 @@ void exportPyItems(py::module m)
     PyItemList<FolderItem>(m, "FolderItemList");
 
     py::class_<SubProjectItem, SubProjectItemPtr, Item>(m, "SubProjectItem")
-        .def(py::init<>())
-        .def("loadSubProject", &SubProjectItem::loadSubProject)
-        .def("saveSubProject", &SubProjectItem::saveSubProject)
-        ;
+        .def(py::init<>());
 
     PyItemList<SubProjectItem>(m, "SubProjectItemList");
     

@@ -35,6 +35,7 @@ using boost::format;
 namespace {
 
 ProjectManager* instance_ = nullptr;
+int projectBeingLoadedCounter = 0;
 Action* perspectiveCheck = nullptr;
 Action* homeRelativeCheck = nullptr;
 MainWindow* mainWindow = nullptr;
@@ -77,7 +78,6 @@ public:
         std::function<void(const Archive&)> restoreFunction);
 
     ProjectManager* self;
-    bool isLoadingProject;
     ItemTreeArchiver itemTreeArchiver;
     string currentProjectName;
     string lastAccessedProjectFile;
@@ -108,6 +108,12 @@ void ProjectManager::initializeClass(ExtensionManager* ext)
 }
 
 
+bool ProjectManager::isProjectBeingLoaded()
+{
+    return projectBeingLoadedCounter > 0;
+}
+
+        
 ProjectManager::ProjectManager()
 {
     impl = new ProjectManagerImpl(this);
@@ -117,7 +123,7 @@ ProjectManager::ProjectManager()
 ProjectManagerImpl::ProjectManagerImpl(ProjectManager* self)
     : self(self)
 {
-    isLoadingProject = false;
+    
 }
 
 
@@ -208,12 +214,6 @@ bool ProjectManagerImpl::restoreObjectStates
 }
 
 
-bool ProjectManager::isLoadingProject() const
-{
-    return impl->isLoadingProject;
-}
-        
-
 ItemList<> ProjectManager::loadProject(const std::string& filename, Item* parentItem)
 {
     return impl->loadProject(filename, parentItem, false);
@@ -224,7 +224,7 @@ ItemList<> ProjectManagerImpl::loadProject(const std::string& filename, Item* pa
 {
     ItemList<> loadedItems;
     
-    isLoadingProject = true;
+    ++projectBeingLoadedCounter;
     
     bool loaded = false;
     YAMLReader reader;
@@ -369,14 +369,14 @@ ItemList<> ProjectManagerImpl::loadProject(const std::string& filename, Item* pa
         mv->put(ex.message());
     }
 
-    isLoadingProject = false;
-    
     if(!loaded){                
         mv->notify(
             format(_("Loading project \"%1%\" failed. Any valid objects were not loaded.")) % filename,
             MessageView::ERROR);
         lastAccessedProjectFile.clear();
     }
+
+    --projectBeingLoadedCounter;
 
     return loadedItems;
 }
@@ -386,6 +386,9 @@ void ProjectManager::setCurrentProjectName(const std::string& name)
 {
     impl->currentProjectName = name;
     mainWindow->setProjectTitle(name);
+
+    filesystem::path path(impl->lastAccessedProjectFile);
+    impl->lastAccessedProjectFile = (path.parent_path() / (name + ".cnoid")).string();
 }
         
 

@@ -21,8 +21,6 @@ public:
     SubProjectItem(const SubProjectItem& org);
     virtual ~SubProjectItem();
 
-    bool loadSubProject(const std::string& filename);
-    bool saveSubProject(const std::string& filename);
     bool isSavingSubProject() const;
 
     enum SaveMode { MANUAL_SAVE, AUTOMATIC_SAVE, N_SAVE_MODE };

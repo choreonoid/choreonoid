@@ -678,6 +678,56 @@ bool Item::overwrite(bool forceOverwrite, const std::string& format)
 }
 
 
+const std::string& Item::filePath() const
+{
+    return filePath_;
+}
+
+
+const std::string& Item::fileFormat() const
+{
+    return fileFormat_;
+}
+
+
+#ifdef CNOID_BACKWARD_COMPATIBILITY
+const std::string& Item::lastAccessedFilePath() const
+{
+    return filePath_;
+}
+
+
+const std::string& Item::lastAccessedFileFormatId() const
+{
+    return fileFormat_;
+}
+#endif
+
+
+std::time_t Item::fileModificationTime() const
+{
+    return fileModificationTime_;
+}
+
+
+bool Item::isConsistentWithFile() const
+{
+    return isConsistentWithFile_;
+}
+
+
+void Item::setConsistentWithFile(bool isConsistent)
+{
+    isConsistentWithFile_ = isConsistent;
+}
+
+
+void Item::suggestFileUpdate()
+{
+    isConsistentWithFile_ = false;
+}
+
+
 void Item::updateFileInformation(const std::string& filename, const std::string& format)
 {
     filesystem::path fpath(filename);

@@ -151,18 +151,19 @@ public:
     bool save(const std::string& filename, const std::string& format = std::string());
     bool overwrite(bool forceOverwrite = false, const std::string& format = std::string());
 
-    const std::string& filePath() const { return filePath_; }
-    const std::string& fileFormat() const { return fileFormat_; }
+    const std::string& filePath() const;
+    const std::string& fileFormat() const;
 
 #ifdef CNOID_BACKWARD_COMPATIBILITY
-    const std::string& lastAccessedFilePath() const { return filePath_; }
-    const std::string& lastAccessedFileFormatId() const { return fileFormat_; }
+    const std::string& lastAccessedFilePath() const;
+    const std::string& lastAccessedFileFormatId() const;
 #endif
 
-    std::time_t fileModificationTime() const { return fileModificationTime_; }
-    bool isConsistentWithFile() const { return isConsistentWithFile_; }
+    std::time_t fileModificationTime() const;
+    bool isConsistentWithFile() const;
+    void setConsistentWithFile(bool isConsistent);
+    void suggestFileUpdate();
     void clearFileInformation();
-    void suggestFileUpdate() { isConsistentWithFile_ = false; }
 
     void putProperties(PutPropertyFunction& putProperty);
 
