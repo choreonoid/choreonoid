@@ -23,7 +23,7 @@ except:
     pass
 
 def loadProject(
-    viewProject, task, simulatorProjects, robotProject,
+    view, task, simulatorProjects, robotProject,
     enableMulticopterSimulation = False, enableVisionSimulation = False, targetVisionSensors = "", remoteType = ""):
 
     directory = os.path.dirname(os.path.realpath(__file__))
@@ -31,7 +31,11 @@ def loadProject(
     itv = ItemTreeView.instance
     pm = ProjectManager.instance
 
-    pm.loadProject(os.path.join(directory, viewProject + ".cnoid"))
+    viewProject = SubProjectItem()
+    viewProject.name = "ViewProject"
+    viewProject.load(os.path.join(directory, view + ".cnoid"))
+    RootItem.instance.addChildItem(viewProject)
+    itv.expandItem(viewProject, False)
 
     world = WorldItem()
     world.name = "World"
