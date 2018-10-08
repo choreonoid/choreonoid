@@ -25,6 +25,10 @@ public:
     bool saveSubProject(const std::string& filename);
     bool isSavingSubProject() const;
 
+    enum SaveMode { MANUAL_SAVE, AUTOMATIC_SAVE, N_SAVE_MODE };
+    void setSaveMode(int mode);
+    int saveMode() const;
+
 protected:
     virtual Item* doDuplicate() const override;
     virtual void onConnectedToRoot() override;

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-10-08 14:33+0900\n"
+"POT-Creation-Date: 2018-10-08 16:01+0900\n"
 "PO-Revision-Date: 2011-11-12 11:42+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -1489,20 +1489,32 @@ msgstr "スクリプトバー"
 msgid "Execute scripts"
 msgstr "スクリプトの実行"
 
-#: SubProjectItem.cpp:49
+#: SubProjectItem.cpp:51
 msgid "SubProjectItem"
 msgstr "サブプロジェクトアイテム"
 
-#: SubProjectItem.cpp:51
+#: SubProjectItem.cpp:53
 msgid "SubProjet"
 msgstr "サブプロジェクト"
 
-#: SubProjectItem.cpp:116
+#: SubProjectItem.cpp:78
+msgid "Manual save"
+msgstr "手動保存"
+
+#: SubProjectItem.cpp:79
+msgid "Automatic save"
+msgstr "自動保存"
+
+#: SubProjectItem.cpp:124
 msgid "Sub projects to load \"%1%\" are recursively specified."
 msgstr ""
 "読みこもうとしているサブプロジェクト \"%1%\" は再帰的に指定されています．"
 
-#: SubProjectItem.cpp:203
+#: SubProjectItem.cpp:243
+msgid "Save mode"
+msgstr "保存モード"
+
+#: SubProjectItem.cpp:247
 msgid "Updated"
 msgstr "更新"
 

@@ -26,6 +26,7 @@ class SubProjectItemImpl
 public:
     SubProjectItem* self;
     std::string projectFileToLoad;
+    Selection saveMode;
     bool isLoadingMainProject;
     bool isSavingSubProject;
     ScopedConnectionSet updateConnections;
@@ -36,6 +37,7 @@ public:
     ProjectManager* getProjectManager();
     ProjectManager* getSubProjectManager();
     void doLoadSubProject(const std::string& filename);
+    void enableSubProjectUpdateDetection();
     void onSubProjectUpdated();
 };
 
@@ -67,10 +69,15 @@ SubProjectItem::SubProjectItem()
 
 
 SubProjectItemImpl::SubProjectItemImpl(SubProjectItem* self)
-    : self(self)
+    : self(self),
+      saveMode(SubProjectItem::N_SAVE_MODE, CNOID_GETTEXT_DOMAIN_NAME)
 {
     isLoadingMainProject = false;
     isSavingSubProject = false;
+
+    saveMode.setSymbol(SubProjectItem::MANUAL_SAVE, N_("Manual save"));
+    saveMode.setSymbol(SubProjectItem::AUTOMATIC_SAVE, N_("Automatic save"));
+    saveMode.select(SubProjectItem::MANUAL_SAVE);
 }
 
 
@@ -85,6 +92,7 @@ SubProjectItemImpl::SubProjectItemImpl(SubProjectItem* self, const SubProjectIte
     : SubProjectItemImpl(self)
 {
     projectFileToLoad = org.projectFileToLoad;
+    saveMode = org.saveMode;
 }
 
 
@@ -156,8 +164,26 @@ void SubProjectItemImpl::doLoadSubProject(const std::string& filename)
 
     auto items = getProjectManager()->loadProject(filename, self);
 
+    projectFilesBeingLoaded.erase(filename);
+
+    if(!isLoadingMainProject){
+        ItemTreeView::instance()->expandItem(self);
+    }
+
+    if(saveMode.is(SubProjectItem::AUTOMATIC_SAVE)){
+        enableSubProjectUpdateDetection();
+    }
+}
+
+
+void SubProjectItemImpl::enableSubProjectUpdateDetection()
+{
     updateConnections.disconnect();
-    for(auto& item : items){
+
+    ItemList<> subTreeItems;
+    subTreeItems.extractSubTreeItems(self);
+
+    for(auto& item : subTreeItems){
         updateConnections.add(
             item->sigNameChanged().connect(
                 [&](const std::string&){ onSubProjectUpdated(); }));
@@ -165,19 +191,15 @@ void SubProjectItemImpl::doLoadSubProject(const std::string& filename)
             item->sigUpdated().connect(
                 [&](){ onSubProjectUpdated(); }));
     }
-    self->sigSubTreeChanged().connect([&](){ onSubProjectUpdated(); });
 
-    projectFilesBeingLoaded.erase(filename);
-
-    if(!isLoadingMainProject){
-        ItemTreeView::instance()->expandItem(self);
-    }
+    updateConnections.add(
+        self->sigSubTreeChanged().connect(
+            [&](){ onSubProjectUpdated(); }));
 }
 
 
 void SubProjectItemImpl::onSubProjectUpdated()
 {
-    updateConnections.disconnect();
     self->suggestFileUpdate();
     self->notifyUpdate();
 }
@@ -198,18 +220,42 @@ bool SubProjectItem::isSavingSubProject() const
 }
 
 
+int SubProjectItem::saveMode() const
+{
+    return impl->saveMode.which();
+}
+
+
+void SubProjectItem::setSaveMode(int mode)
+{
+    if(impl->saveMode.select(mode)){
+        if(mode == MANUAL_SAVE){
+            impl->updateConnections.disconnect();
+        } else {
+            impl->enableSubProjectUpdateDetection();
+        }
+    }
+}
+
+
 void SubProjectItem::doPutProperties(PutPropertyFunction& putProperty)
 {
-    putProperty(_("Updated"), !isConsistentWithFile());
+    putProperty(_("Save mode"), impl->saveMode,
+                [&](int index){ setSaveMode(index); return true; });
+
+    if(impl->saveMode.is(AUTOMATIC_SAVE)){
+        putProperty(_("Updated"), !isConsistentWithFile());
+    }
 }
 
 
 bool SubProjectItem::store(Archive& archive)
 {
-    if(!impl->isSavingSubProject){
+    if(!impl->isSavingSubProject && impl->saveMode.is(AUTOMATIC_SAVE)){
         if(overwrite()){
             archive.writeRelocatablePath("filename", filePath());
             archive.write("format", fileFormat());
+            archive.write("saveMode", impl->saveMode.selectedSymbol(), DOUBLE_QUOTED);
         }
     }
     return true;
@@ -218,7 +264,11 @@ bool SubProjectItem::store(Archive& archive)
 
 bool SubProjectItem::restore(const Archive& archive)
 {
-    std::string filename, format;
+    string symbol;
+    if(archive.read("saveMode", symbol)){
+        impl->saveMode.select(symbol);
+    }
+    string filename, format;
     if(archive.readRelocatablePath("filename", filename) && archive.read("format", format)){
         return load(filename, format);
     }
