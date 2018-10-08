@@ -91,7 +91,7 @@ public:
     bool isItemChecked(Item* item, int id = 0);
     bool checkItem(Item* item, bool check = true, int id = 0);
 
-    void expandItem(Item* item);
+    void expandItem(Item* item, bool expanded = true);
 
     /**
        The signal that is emitted when the item selection state is changed.

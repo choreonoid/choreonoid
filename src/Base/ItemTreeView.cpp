@@ -1295,11 +1295,11 @@ void ItemTreeViewImpl::restoreExpandedItems(const Archive& archive)
 }
 
 
-void ItemTreeView::expandItem(Item* item)
+void ItemTreeView::expandItem(Item* item, bool expanded)
 {
     ItvItem* itvItem = impl->getItvItem(item);
     if(itvItem){
-        itvItem->setExpanded(item);
+        itvItem->setExpanded(expanded);
     }
 }
 
