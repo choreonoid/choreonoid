@@ -337,7 +337,7 @@
             <init_from>Blacktop_Old_01.jpg</init_from>
         </image>
         <image id="ID27">
-            <init_from>Blacktop_New.jpg</init_from>
+            <init_from>Blacktop_New_fixed.jpg</init_from>
         </image>
     </library_images>
     <scene>
