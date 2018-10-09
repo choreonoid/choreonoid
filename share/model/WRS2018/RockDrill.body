@@ -6,20 +6,51 @@ name: RockDrill
 links:
   -
     name: BASE
-    translation: [ 0, 0, 0 ]
     jointType: free
-    density: 533.0
-    mass: 20.0
+    mass: 15.0
     inertia: [
-      0.7, 0,   0,
-      0,   0.7, 0,
+      0.5, 0,   0,
+      0,   0.5, 0,
       0,   0,   0.2 ]
-    centerOfMass: [ 0, 0, 0 ]
+    centerOfMass: [ -0.03, -0.03, 0 ]
     elements:
-      Resource:
-        rotation: [ [ 0, 0, 1, 90 ], [ 1, 0, 0, -90 ] ]
-        translation: [ 0.035, 0.03, 0.15 ]
-        uri: "resource/RockDrill.dae"
+      -
+        type: Shape
+        translation: [ 0, -0.09, 0.125 ]
+        geometry: { type: Cylinder, height: 0.1, radius: 0.025 }
+        appearance: &GREEN
+          material:
+            ambientIntensity: 0.4
+            diffuseColor: [ 0, 0.65, 0 ]
+            shininess: 0.08
+            specularColor: [ 0.4, 0.4, 0.4 ]
+      -
+        type: Shape
+        translation: [ 0, -0.005, 0.11 ]
+        geometry: { type: Box, size: [ 0.07, 0.07, 0.08 ] }
+        appearance: *GREEN
+      -
+        type: Shape
+        translation: [ 0, -0.015, -0.04 ]
+        geometry: { type: Box, size: [ 0.07, 0.09, 0.22 ] }
+        appearance: *GREEN
+      -
+        type: Shape
+        translation: [ -0.135, 0, -0.12 ]
+        rotation: [ 0, 0, 1, 90 ]
+        geometry: { type: Cylinder, height: 0.2, radius: 0.02 }
+        appearance: &BLACK
+          material:
+            ambientIntensity: 0.85
+            diffuseColor: [ 0.12, 0.12, 0.12 ]
+            shininess: 0.08
+            specularColor: [ 0.4, 0.4, 0.4 ]
+      -
+        type: Shape
+        translation: [ 0, 0, -0.175 ]
+        rotation: [ 1, 0, 0, 90 ]
+        geometry: { type: Cylinder, height: 0.05, radius: 0.025 }
+        appearance: *BLACK
   -
     name: PUSHER
     parent: BASE
@@ -28,16 +59,38 @@ links:
     jointId: 0
     jointAxis: [ 0, 0, 1 ]
     jointRange: [ -0.05, 0.05 ]
-    density: 2500
-    mass: 20.0
+    mass: 15.0
     inertia: [
-      0.133333, 0,   0,
-      0,   0.133333, 0,
-      0,   0,   00.133333 ]
-    centerOfMass: [ 0, 0, -0.25]
+      0.5, 0,   0,
+      0,   0.5, 0,
+      0,   0,   0.1 ]
+    centerOfMass: [ 0, 0, -0.18 ]
     elements:
-      Resource:
-        rotation: [ [ 0, 0, 1, 90 ], [ 1, 0, 0, -90 ] ]
-        translation: [ 0.05, -0.05, -0.34 ]
-        uri: "resource/RockDrill.dae"
-        node: [ ID38, ID54, ID46 ]
+      -
+        type: Shape
+        translation: [ 0, 0, 0 ]
+        rotation: [ 1, 0, 0, 90 ]
+        geometry: { type: Cylinder, height: 0.1, radius: 0.01 }
+        appearance: &GRAY
+          material:
+            ambientIntensity: 0.3
+            diffuseColor: [ 0.32, 0.32, 0.32 ]
+            shininess: 0.08
+            specularColor: [ 0.4, 0.4, 0.4 ]
+      -
+        type: Shape
+        translation: [ 0, 0, -0.065 ]
+        rotation: [ 1, 0, 0, 90 ]
+        geometry: { type: Cylinder, height: 0.03, radius: 0.03 }
+        appearance: *GRAY
+      -
+        type: Shape
+        translation: [ 0, 0, -0.21 ]
+        rotation: [ 1, 0, 0, 90 ]
+        geometry: { type: Cylinder, height: 0.26, radius: 0.05 }
+        appearance:
+          material:
+            ambientIntensity: 0.2
+            diffuseColor: [ 0.75, 0.75, 0.75 ]
+            shininess: 0.08
+            specularColor: [ 0.4, 0.4, 0.4 ]
