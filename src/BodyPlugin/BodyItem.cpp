@@ -1250,18 +1250,22 @@ bool BodyItemImpl::restore(const Archive& archive)
         qs = archive.findListing("initialJointPositions");
         if(qs->isValid()){
             BodyState::Data& q = initialState.data(BodyState::JOINT_POSITIONS);
-            int nj = body->numAllJoints();
-            if(qs->size() != nj){
-                if(qs->size() != body->numJoints()){
+            int n = body->numAllJoints();
+            int m = qs->size();
+            if(m != n){
+                if(m != body->numJoints()){
                     MessageView::instance()->putln(
                         format("Mismatched size of the stored initial joint positions for %1%") % self->name(),
                         MessageView::WARNING);
                 }
-                nj = std::min(qs->size(), nj);
+                m = std::min(m, n);
             }
-            q.resize(nj);
-            for(int i=0; i < nj; ++i){
+            q.resize(n);
+            for(int i=0; i < m; ++i){
                 q[i] = (*qs)[i].toDouble();
+            }
+            for(int i=m; i < n; ++i){
+                q[i] = body->joint(i)->q();
             }
         }
 
