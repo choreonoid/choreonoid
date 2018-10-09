@@ -189,13 +189,35 @@ items:
         collisionDetection: true
         selfCollisionDetection: false
         isEditable: false
+    - 
+      id: 11
+      name: "TargetT2_140-0"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/model/WRS2018/TargetT2_140-0.body"
+        currentBaseLink: "BASE"
+        rootPosition: [ 10, -1, 0 ]
+        rootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        jointPositions: [  ]
+        initialRootPosition: [ 10, -1, 0 ]
+        initialRootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        collisionDetection: true
+        selfCollisionDetection: false
+        isEditable: false
 views: 
   - 
     id: 1
     plugin: Base
     class: ItemTreeView
     state: 
-      checked: [ 3, 5, 6, 7, 8, 9, 10 ]
+      checked: [ 3, 5, 6, 7, 8, 9, 10, 11 ]
       expanded: [ 1 ]
   - 
     id: 4
@@ -204,4 +226,4 @@ views:
     class: SceneView
     state: 
       dedicatedItemTreeViewChecks: true
-      checked: [ 3, 4, 5, 6, 7, 8, 9, 10 ]
+      checked: [ 3, 4, 5, 6, 7, 8, 9, 10, 11 ]
