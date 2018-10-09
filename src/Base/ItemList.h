@@ -15,7 +15,7 @@ class CNOID_EXPORT ItemListBase
 {
 public:
     virtual bool push_back_if_type_matches(Item* item) = 0;
-    bool extractChildItemsSub(Item* item);
+    bool extractSubTreeItemsSub(Item* item);
     bool extractParentItemsSub(Item* item);
     bool extractAssociatedItemsSub(Item* item);
     bool extractSubItemsSub(Item* item);
@@ -44,10 +44,13 @@ public:
             ArrayBase::front().get() : 0;
     }
 
-    bool extractChildItems(Item* item){ 
+    bool extractSubTreeItems(Item* root){
         ArrayBase::clear();
-        return ItemListBase::extractChildItemsSub(item);
+        return ItemListBase::extractSubTreeItemsSub(root);
     }
+
+    //! \deprecated Use extractSubTreeItems.
+    bool extractChildItems(Item* item){ return extractSubTreeItems(item); }
 
     bool extractAssociatedItems(Item* item){
         ArrayBase::clear();

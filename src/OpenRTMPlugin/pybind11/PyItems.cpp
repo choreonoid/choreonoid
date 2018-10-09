@@ -6,6 +6,9 @@
 #include "../ControllerRTCItem.h"
 #include "../BodyIoRTCItem.h"
 #include "../deprecated/BodyRTCItem.h"
+#if defined(_WINDOWS) && defined(HAVE_UNISTD_H)
+#undef HAVE_UNISTD_H
+#endif
 #include <cnoid/PyBase>
 
 using namespace cnoid;

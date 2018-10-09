@@ -24,6 +24,8 @@ public:
     DyLink(const Link& link);
     virtual Link* clone() const;
 
+    virtual void initializeState() override;
+
     DyLink* parent() const { return static_cast<DyLink*>(Link::parent()); }
     DyLink* sibling() const { return static_cast<DyLink*>(Link::sibling()); }
     DyLink* child() const { return static_cast<DyLink*>(Link::child()); }

@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <functional>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -73,9 +74,7 @@ public:
         return contentName_;
     }
 
-    virtual void setSeqContentName(const std::string& name) {
-        this->contentName_ = name;
-    }
+    virtual void setSeqContentName(const std::string& name);
 
     bool readSeq(const Mapping* archive, std::ostream& os = nullout());
     bool writeSeq(YAMLWriter& writer);
@@ -84,10 +83,10 @@ public:
     const std::string& seqMessage() const;
 
 protected:
+    void setSeqType(const std::string& type);
+    
     virtual bool doReadSeq(const Mapping* archive, std::ostream& os);
-    virtual bool doWriteSeq(YAMLWriter& writer);
-
-    bool writeSeqHeaders(YAMLWriter& writer);
+    virtual bool doWriteSeq(YAMLWriter& writer, std::function<void()> additionalPartCallback);
 
     //! deprecated. Use the os parameter of readSeq to get messages in reading
     void clearSeqMessage() { }
@@ -124,8 +123,7 @@ public:
     virtual const std::string& partLabel(int partIndex) const;
 
 protected:
-    virtual bool doWriteSeq(YAMLWriter& writer);
- 
+    virtual bool doWriteSeq(YAMLWriter& writer, std::function<void()> additionalPartCallback);
     std::vector<std::string> readSeqPartLabels(const Mapping& archive);
     bool writeSeqPartLabels(YAMLWriter& writer);
 };

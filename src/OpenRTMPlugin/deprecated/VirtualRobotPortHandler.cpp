@@ -6,7 +6,7 @@
 #include "VirtualRobotPortHandler.h"
 #include "BodyRTCItem.h"
 
-#include <deprecated/corba/PointCloud.hh>
+#include <cnoid/corba/PointCloud.hh>
 
 #ifdef USE_BUILTIN_CAMERA_IMAGE_IDL
 # include <deprecated/corba/CameraImage.hh>
@@ -691,6 +691,7 @@ void CameraRangeOutPortHandlerImpl::initialize(Body* simBody)
             value.fields[5].count = 1;
             value.point_step = 16;
         }
+        // Originally is_bigendian has to be decided by CPU difference.
         value.is_bigendian = false;
         value.is_dense = true;
         
@@ -858,12 +859,12 @@ void JointDataSeqInPortHandler::outputDataToSimulator(const BodyPtr& body)
     switch(linkDataType) {
     case JOINT_VALUE:
         for(int i=0; i < n; i++){
-            body->joint(i)->q() = values.data[i];
+            body->joint(i)->q_target() = values.data[i];
         }
         break;
     case JOINT_VELOCITY:
         for(int i=0; i < n; i++){
-            body->joint(i)->dq() = values.data[i];
+            body->joint(i)->dq_target() = values.data[i];
         }
         break;
     case JOINT_ACCELERATION:
@@ -906,11 +907,11 @@ void LinkDataInPortHandler::outputDataToSimulator(const BodyPtr& body)
     switch(linkDataType) {
     case JOINT_VALUE:
         for(size_t i=0; i<n; i++)
-            body->link(linkNames[i])->q() = values.data[i];
+            body->link(linkNames[i])->q_target() = values.data[i];
         break;
     case JOINT_VELOCITY:
         for(size_t i=0; i<n; i++)
-            body->link(linkNames[i])->dq() = values.data[i];
+            body->link(linkNames[i])->dq_target() = values.data[i];
         break;
     case JOINT_ACCELERATION:
         for(size_t i=0; i<n; i++)

@@ -10,9 +10,9 @@
 #include <coil/Task.h>
 #include <rtm/Manager.h>
 
-#if defined(OPENRTM_VERSION110)
+#if defined(OPENRTM_VERSION11)
  #include <rtm/PeriodicExecutionContext.h>
-#else
+#elif defined(OPENRTM_VERSION12)
  #include <rtm/OpenHRPExecutionContext.h>
 #endif
 
@@ -27,9 +27,9 @@ namespace cnoid
   OpenHRPExecutionContext is redefined as this class in the OpenRTM plugin.
   See post 02356 to the openrtm-users mailing list.
 */
-#ifdef OPENRTM_VERSION110
+#if defined(OPENRTM_VERSION11)
 class ChoreonoidExecutionContext : public virtual RTC::PeriodicExecutionContext
-#else
+#elif defined(OPENRTM_VERSION12)
 class ChoreonoidExecutionContext : public RTC::OpenHRPExecutionContext
 #endif
 {

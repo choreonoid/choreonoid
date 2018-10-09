@@ -142,10 +142,12 @@ bool FountainProgram::initializeRendering(SceneParticles* particles)
 void FountainProgram::render(SceneFountain* fountain)
 {
     auto& ps = fountain->particleSystem();
-    setTime(fountain->time() + ps.offsetTime());
-    glUniform1f(lifeTimeLocation, ps.lifeTime());
-    Vector3f accel = globalAttitude().transpose() * ps.acceleration();
-    glUniform3fv(accelLocation, 1, accel.data());
-    glBindVertexArray(vertexArray);
-    glDrawArrays(GL_POINTS, 0, ps.numParticles());
+    if(ps.on()){
+        setTime(fountain->time() + ps.offsetTime());
+        glUniform1f(lifeTimeLocation, ps.lifeTime());
+        Vector3f accel = globalAttitude().transpose() * ps.acceleration();
+        glUniform3fv(accelLocation, 1, accel.data());
+        glBindVertexArray(vertexArray);
+        glDrawArrays(GL_POINTS, 0, ps.numParticles());
+    }
 }

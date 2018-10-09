@@ -27,10 +27,10 @@ public:
     virtual ~ControllerItem();
 
     bool isActive() const;
-    bool isNoDelayMode() const { return isNoDelayMode_; }
+    bool isNoDelayMode() const;
     bool setNoDelayMode(bool on);
     
-    const std::string& optionString() const { return optionString_; }
+    const std::string& optionString() const;
 
     /**
        This function is called before the simulation world is initialized.
@@ -72,9 +72,6 @@ public:
     */
     virtual void stop();
 
-    SignalProxy<void(const std::string& message)> sigMessage();
-    std::string getMessage();
-
 #ifdef ENABLE_SIMULATION_PROFILING
     virtual void getProfilingNames(std::vector<std::string>& profilingNames);
     virtual void getProfilingTimes(std::vector<double>& profilingTimes);
@@ -86,24 +83,20 @@ public:
     void setImmediateMode(bool on) { setNoDelayMode(on); }
 
 protected:
-    void putMessage(const std::string& message);
-
-    virtual void doPutProperties(PutPropertyFunction& putProperty);
-    virtual bool store(Archive& archive);
-    virtual bool restore(const Archive& archive);
+    virtual void onOptionsChanged();
+    
+    virtual void doPutProperties(PutPropertyFunction& putProperty) override;
+    virtual bool store(Archive& archive) override;
+    virtual bool restore(const Archive& archive) override;
 
 private:
     SimulatorItemPtr simulatorItem_;
     bool isNoDelayMode_;
-    std::string message_;
-    Signal<void(const std::string& message)> sigMessage_;
     std::string optionString_;
 
     friend class SimulatorItemImpl;
 
-    void setSimulatorItem(SimulatorItem* item) {
-        simulatorItem_ = item;
-    }
+    void setSimulatorItem(SimulatorItem* item);
 };
         
 typedef ref_ptr<ControllerItem> ControllerItemPtr;

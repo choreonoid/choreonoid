@@ -143,8 +143,8 @@ public:
     void addTask(Task* task);
     bool updateTask(Task* task);
     void clearTasks();
-    bool setCurrentTask(int index, bool forceUpdate);
-    bool setCurrentTaskByName(const std::string& name, bool forceUpdate);
+    bool setCurrentTask(int index, bool forceUpdate, bool isTransition = false);
+    bool setCurrentTaskByName(const std::string& name, bool forceUpdate, bool isTransition = false);
     CommandButton* getOrCreateCommandButton(int index);
     void layoutCommandButtons();
     bool setCurrentCommandIndex(int index);
@@ -746,14 +746,18 @@ void TaskView::setCurrentCommand(int commandIndex, bool doExecution)
 }
 
 
-bool TaskViewImpl::setCurrentTask(int index, bool forceUpdate)
+bool TaskViewImpl::setCurrentTask(int index, bool forceUpdate, bool isTransition)
 {
+    if(TRACE_FUNCTIONS){
+        cout << "TaskViewImpl::setCurrentTask(" << index << ", " << forceUpdate << ")" << endl;
+    }
+
     if(index < 0 || index >= static_cast<int>(tasks.size())){
         return false;
     }
 
-    bool changed = index != currentTaskIndex;
-    if(!changed && !forceUpdate){
+    bool isTaskChanged = index != currentTaskIndex;
+    if(!isTaskChanged && !forceUpdate){
         return false;
     }
 
@@ -763,7 +767,7 @@ bool TaskViewImpl::setCurrentTask(int index, bool forceUpdate)
         taskCombo.blockSignals(false);
     }
 
-    if(changed && currentTaskIndex >= 0){
+    if(isTaskChanged && currentTaskIndex >= 0){
         TaskInfo& old = tasks[currentTaskIndex];
         old.state = new Mapping();
         if(isExecutionEnabled()){
@@ -776,8 +780,10 @@ bool TaskViewImpl::setCurrentTask(int index, bool forceUpdate)
     currentTask = info.task;
     currentTaskIndex = index;
 
-    currentPhaseIndex_ = -1;
+    int prevPhaseIndex = currentPhaseIndex_;
+    currentPhaseIndex_ = 0;
     currentPhase.reset();
+    currentCommandIndex = NO_CURRENT_COMMAND;
     setPhaseIndex(0, false);
 
     lastUsualPhaseIndex = currentPhaseIndex_;
@@ -787,15 +793,23 @@ bool TaskViewImpl::setCurrentTask(int index, bool forceUpdate)
         info.task->onActivated(self);
     }
     
-    if(changed){
+    if(isTaskChanged){
         sigCurrentTaskChanged();
+    }
+    if(currentPhaseIndex_ != prevPhaseIndex){
+        sigCurrentPhaseChanged();
+    }
+
+    if(isTransition && isAutoMode()){
+        // Proceed the start button
+        executeCommandSuccessively(0);
     }
 
     return true;
 }
 
 
-bool TaskViewImpl::setCurrentTaskByName(const std::string& name, bool forceUpdate)
+bool TaskViewImpl::setCurrentTaskByName(const std::string& name, bool forceUpdate, bool isTransition)
 {
     if(currentTask && currentTask->name() == name){
         return true;
@@ -803,7 +817,7 @@ bool TaskViewImpl::setCurrentTaskByName(const std::string& name, bool forceUpdat
     for(size_t i=0; i < tasks.size(); ++i){
         Task* task = tasks[i].task;
         if(task->name() == name){
-            setCurrentTask(i, forceUpdate);
+            setCurrentTask(i, forceUpdate, isTransition);
             return true;
         }
     }
@@ -1216,6 +1230,10 @@ void TaskViewImpl::setTransitionToNextCommand()
 
 void TaskViewImpl::goToNextTask()
 {
+    if(TRACE_FUNCTIONS){
+        cout << "TaskViewImpl::goToNextTask)(" << endl;
+    }
+    
     if(!currentTask){
         return;
     }
@@ -1227,7 +1245,7 @@ void TaskViewImpl::goToNextTask()
             int nextIndex = i + 1;
             if(nextIndex < serializedTasks.size()){
                 const auto& nextTask = serializedTasks[nextIndex];
-                if(setCurrentTaskByName(nextTask, true)){
+                if(setCurrentTaskByName(nextTask, true, true)){
                     ++currentIndexInSerializedTasks;
                 } else {
                     mv->putln(MessageView::WARNING,

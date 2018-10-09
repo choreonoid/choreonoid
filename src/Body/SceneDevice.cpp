@@ -18,7 +18,6 @@
 #include <unordered_map>
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 
 namespace {
@@ -114,8 +113,11 @@ static bool createSceneDevice(Device* device, const std::type_info& type, SceneD
 
 SceneDevice* SceneDevice::create(Device* device)
 {
-    SceneDevice* sceneDevice = 0;
-    device->forEachActualType(std::bind(createSceneDevice, device,  _1, std::ref(sceneDevice)));
+    SceneDevice* sceneDevice = nullptr;
+    device->forEachActualType(
+        [device, &sceneDevice](const std::type_info& type){
+            return createSceneDevice(device, type, sceneDevice);
+        });
     return sceneDevice;
 }
 

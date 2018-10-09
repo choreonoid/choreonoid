@@ -121,7 +121,7 @@ public:
         }
     }
     
-    bool configure(SimpleControllerIO* io) override
+    bool configure(SimpleControllerConfig* config) override
     {
         if(joystickInputRTC){
             execContext = OpenRTM::ExtTrigExecutionContextService::_nil();
@@ -131,7 +131,7 @@ public:
         
         auto args = str(
             format("JoystickInput?instance_name=%1%&exec_cxt.periodic.type=ChoreonoidExecutionContext")
-            % io->name());
+            % config->controllerName());
             
         joystickInputRTC = dynamic_cast<JoystickInputRTC*>(cnoid::createManagedRTC(args));
 

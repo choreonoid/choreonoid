@@ -7,16 +7,16 @@
 using namespace std;
 using namespace cnoid;
 
-
 namespace {
+
 const bool TRACE_FUNCTIONS = false;
+
 }
 
 std::mutex NamingContext_impl::mtx;
 
 
-BindingNode::BindingNode
-(const CosNaming::Name& n, CosNaming::BindingType t,  CORBA::Object_ptr o, NamingContext_impl* nc)
+BindingNode::BindingNode(const CosNaming::Name& n, CosNaming::BindingType t,  CORBA::Object_ptr o, NamingContext_impl* nc)
 {
     binding.binding_name = n;
     binding.binding_type = t;
@@ -59,10 +59,10 @@ NamingContext_impl::NamingContext_impl(PortableServer::POA_ptr poa, const Portab
     firstNode = 0;
     lastNode = 0;
     size = 0;
-		try {
-			poa->activate_object_with_id(id, this);
-		} catch (...) {
-		}
+    try {
+        poa->activate_object_with_id(id, this);
+    } catch (...) {
+    }
 }
 
 
@@ -152,10 +152,10 @@ CosNaming::NamingContext_ptr NamingContext_impl::new_context()
     if(TRACE_FUNCTIONS){
         cout << "NamingContext_impl::new_context()" << endl;
     }
-		PortableServer::ObjectId_var an_oid = PortableServer::string_to_ObjectId("id" + count++);
-		CORBA::Object_var ref = nspoa->create_reference_with_id(an_oid, CosNaming::NamingContext::_PD_repoId);
+    PortableServer::ObjectId_var an_oid = PortableServer::string_to_ObjectId("id" + count++);
+    CORBA::Object_var ref = nspoa->create_reference_with_id(an_oid, CosNaming::NamingContext::_PD_repoId);
 
-		PortableServer::ObjectId_var id = nspoa->reference_to_id(ref);
+    PortableServer::ObjectId_var id = nspoa->reference_to_id(ref);
     NamingContext_impl* nc = new NamingContext_impl(nspoa, id);
     CosNaming::NamingContext_ptr ncref = nc->_this();
     nc->_remove_ref();
@@ -334,8 +334,7 @@ CosNaming::NamingContext_ptr NamingContext_impl::resolve_multi(const CosNaming::
 }
 
 
-void NamingContext_impl::bind_sub
-(const CosNaming::Name& n, CORBA::Object_ptr obj, CosNaming::BindingType t, CORBA::Boolean rebind)
+void NamingContext_impl::bind_sub(const CosNaming::Name& n, CORBA::Object_ptr obj, CosNaming::BindingType t, CORBA::Boolean rebind)
 {
     if(TRACE_FUNCTIONS){
         cout << "NamingContext_impl::bind_sub()" << endl;

@@ -159,6 +159,7 @@ public:
 
     // Following functions are defined in the ControllerIO class
     virtual Body* body() override;
+    std::ostream& os() const;
     virtual double timeStep() const override;
     virtual double currentTime() const override;
     virtual std::string optionString() const override;
@@ -241,7 +242,6 @@ public:
     double actualSimulationTime;
     double finishTime;
     MessageView* mv;
-    ostream& os;
 
     bool doReset;
     bool isWaitingForSimulationToStop;
@@ -325,9 +325,10 @@ public:
 
     // Functions defined in the ControllerIO class
     virtual Body* body() override;
+    virtual std::string optionString() const override;
+    virtual std::ostream& os() const override;
     virtual double timeStep() const override;
     virtual double currentTime() const override;
-    virtual std::string optionString() const override;
 };
 
 
@@ -569,6 +570,9 @@ bool SimulationBodyImpl::initialize(SimulatorItemImpl* simImpl, BodyItem* bodyIt
     controllers.clear();
     resultItemPrefix = simImpl->self->name() + "-" + bodyItem->name();
 
+    body_->setCurrentTimeFunction([this](){ return this->simImpl->currentTime(); });
+    body_->initializeState();
+
     isDynamic = !body_->isStaticModel();
     bool doReset = simImpl->doReset && isDynamic;
     extractAssociatedItems(doReset);
@@ -715,13 +719,24 @@ void SimulationBodyImpl::initializeResultBuffers()
         deviceStateBuf.clear();
         prevFlushedDeviceStateInDirectMode.clear();
     } else {
+        /**
+           Temporary code to avoid a bug in storing device states by reserving sufficient buffer size.
+           The original bug is in Deque2D's resize operation.
+        */
+        deviceStateBuf.resize(100, numDevices); 
+        
         // This buf always has the first element to keep unchanged states
         deviceStateBuf.resize(1, numDevices); 
         prevFlushedDeviceStateInDirectMode.resize(numDevices);
         for(size_t i=0; i < devices.size(); ++i){
             deviceStateConnections.add(
                 devices[i]->sigStateChanged().connect(
-                    [this, i](){ deviceStateChangeFlag[i] = true; }));
+                    [this, i](){
+                        /** \note This must be thread safe
+                            if notifyStateChange is called from several threads.
+                        */
+                        deviceStateChangeFlag[i] = true;
+                    }));
         }
     }
 }
@@ -759,10 +774,9 @@ void SimulationBodyImpl::initializeResultItems()
     const int numDevices = deviceStateBuf.colSize();
     if(numDevices == 0 || !simImpl->isDeviceStateOutputEnabled){
         clearMultiDeviceStateSeq(*motion);
-
     } else {
         deviceStateResults = getOrCreateMultiDeviceStateSeq(*motion);
-        deviceStateResults->setNumParts(numDevices);
+        deviceStateResults->initialize(body_->devices());
     }
 }
 
@@ -1044,6 +1058,18 @@ Body* SimulationBodyImpl::body()
 }
 
 
+std::string SimulationBodyImpl::optionString() const
+{
+    return simImpl->controllerOptionString_;
+}
+
+
+std::ostream& SimulationBodyImpl::os() const
+{
+    return simImpl->mv->cout();
+}
+
+
 double SimulationBodyImpl::timeStep() const
 {
     return simImpl->worldTimeStep_;
@@ -1053,12 +1079,6 @@ double SimulationBodyImpl::timeStep() const
 double SimulationBodyImpl::currentTime() const
 {
     return simImpl->currentTime();
-}
-
-
-std::string SimulationBodyImpl::optionString() const
-{
-    return simImpl->controllerOptionString_;
 }
 
 
@@ -1076,8 +1096,7 @@ SimulatorItemImpl::SimulatorItemImpl(SimulatorItem* self)
       postDynamicsFunctions(this),
       recordingMode(SimulatorItem::N_RECORDING_MODES, CNOID_GETTEXT_DOMAIN_NAME),
       timeRangeMode(SimulatorItem::N_TIME_RANGE_MODES, CNOID_GETTEXT_DOMAIN_NAME),
-      mv(MessageView::instance()),
-      os(mv->cout())
+      mv(MessageView::instance())
 {
     worldItem = nullptr;
     
@@ -1292,6 +1311,12 @@ bool SimulatorItem::isSelfCollisionEnabled() const
 }
 
 
+const std::string& SimulatorItem::controllerOptionString() const
+{
+    return impl->controllerOptionString_;
+}
+
+
 /*
   Extract body items, controller items which are not associated with (not under) a body item,
   and simulation script items which are not under another simulator item
@@ -1447,7 +1472,8 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
     stopSimulation(true);
 
     if(!worldItem){
-        os << (fmt(_("%1% must be in a WorldItem to do simulation.")) % self->name()) << endl;
+        mv->putln(MessageView::ERROR,
+                  format(_("%1% must be in a WorldItem to do simulation.")) % self->name());
         return false;
     }
 
@@ -1563,14 +1589,15 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
             SubSimulatorItem* item = *p;
             bool initialized = false;
             if(item->isEnabled()){
-                os << (fmt(_("SubSimulatorItem \"%1%\" has been detected.")) % item->name()) << endl;
+                mv->putln(format(_("SubSimulatorItem \"%1%\" has been detected.")) % item->name());
                 if(item->initializeSimulation(self)){
                     initialized = true;
                 } else {
-                    os << (fmt(_("The initialization of \"%1%\" failed.")) % item->name()) << endl;
+                    mv->putln(MessageView::WARNING,
+                              format(_("The initialization of \"%1%\" failed.")) % item->name());
                 }
             } else {
-                os << (fmt(_("SubSimulatorItem \"%1%\" is disabled.")) % item->name()) << endl;
+                mv->putln(format(_("SubSimulatorItem \"%1%\" is disabled.")) % item->name());
             }
             if(initialized){
                 ++p;
@@ -1591,24 +1618,21 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
                 if(body){
                     ready = controller->start();
                     if(!ready){
-                        os << (fmt(_("%1% for %2% failed to initialize."))
-                               % controller->name() % simBodyImpl->bodyItem->name()) << endl;
+                        mv->putln(MessageView::WARNING,
+                                  format(_("%1% for %2% failed to start."))
+                                  % controller->name() % simBodyImpl->bodyItem->name());
                     }
                 } else {
                     ready = controller->start();
                     if(!ready){
-                        os << (fmt(_("%1% failed to initialize."))
-                               % controller->name()) << endl;
+                        mv->putln(MessageView::WARNING,
+                                  format(_("%1% failed to start.")) % controller->name());
                     }
                 }
                 if(ready){
                     ++iter;
                 } else {
-                    controller->setSimulatorItem(0);
-                    string message = controller->getMessage();
-                    if(!message.empty()){
-                        os << message << endl;
-                    }
+                    controller->setSimulatorItem(nullptr);
                     iter = controllers.erase(iter);
                 }
             }
@@ -1638,8 +1662,9 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
             if(worldLogFileItem->logFileName().empty()){
                 worldLogFileItem = 0;
             } else {
-                os << (fmt(_("WorldLogFileItem \"%1%\" has been detected. A simulation result is recoreded to \"%2%\"."))
-                       % worldLogFileItem->name() % worldLogFileItem->logFileName()) << endl;
+                mv->putln(format(_("WorldLogFileItem \"%1%\" has been detected. "
+                                   "A simulation result is recoreded to \"%2%\"."))
+                          % worldLogFileItem->name() % worldLogFileItem->logFileName());
 
                 worldLogFileItem->clearOutput();
                 worldLogFileItem->beginHeaderOutput();
@@ -2233,7 +2258,7 @@ void SimulatorItemImpl::onSimulationLoopStopped()
         for(size_t j=0; j < controllers.size(); ++j){
             ControllerItem* controller = controllers[j];
             controller->stop();
-            controller->setSimulatorItem(0);
+            controller->setSimulatorItem(nullptr);
         }
     }
     self->finalizeSimulation();
@@ -2326,6 +2351,12 @@ std::string SimulatorItemImpl::optionString() const
 }
 
 
+std::ostream& SimulatorItemImpl::os() const
+{
+    return mv->cout();
+}
+
+
 SignalProxy<void()> SimulatorItem::sigSimulationStarted()
 {
     return impl->sigSimulationStarted;
@@ -2396,10 +2427,7 @@ void SimulatorItem::clearExternalForces()
 void SimulatorItemImpl::doSetExternalForce()
 {
     std::lock_guard<std::mutex> lock(extForceMutex);
-    Link* link = extForceInfo.link;
-    link->f_ext() += extForceInfo.f;
-    const Vector3 p = link->T() * extForceInfo.point;
-    link->tau_ext() += p.cross(extForceInfo.f);
+    extForceInfo.link->addExternalForce(extForceInfo.f, extForceInfo.point);
     if(extForceInfo.time > 0.0){
         extForceInfo.time -= worldTimeStep_;
         if(extForceInfo.time <= 0.0){

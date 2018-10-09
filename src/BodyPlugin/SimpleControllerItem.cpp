@@ -4,6 +4,7 @@
 
 #include "SimpleControllerItem.h"
 #include <cnoid/SimpleController>
+#include <cnoid/BodyItem>
 #include <cnoid/Body>
 #include <cnoid/Link>
 #include <cnoid/Archive>
@@ -16,6 +17,7 @@
 #include <QLibrary>
 #include <boost/format.hpp>
 #include <boost/dynamic_bitset.hpp>
+#include <set>
 #include "gettext.h"
 
 using namespace std;
@@ -64,6 +66,9 @@ public:
 
     vector<bool> outputLinkFlags;
     vector<unsigned short> outputLinkIndices;
+    set<int> forceOutputLinkIndices;
+
+    bool isOldTargetVariableMode;
 
     ConnectionSet outputDeviceStateConnections;
     boost::dynamic_bitset<> outputDeviceStateChangeFlag;
@@ -73,6 +78,8 @@ public:
     vector<char> linkIndexToInputStateTypeMap;
         
     MessageView* mv;
+
+    SimpleControllerConfig config;
 
     std::string controllerModuleName;
     std::string controllerModuleFilename;
@@ -95,10 +102,11 @@ public:
     bool loadController();
     void unloadController();
     void initializeIoBody();
-    void resetConfigurations();
+    void clearIoTargets();
     void updateInputEnabledDevices();
     SimpleController* initialize(ControllerIO* io, SharedInfo* info);
     void updateIOStateTypes();
+    bool start();
     void input();
     void onInputDeviceStateChanged(int deviceIndex);
     void onOutputDeviceStateChanged(int deviceIndex);
@@ -118,12 +126,13 @@ public:
     virtual bool setNoDelayMode(bool on);
 
     // virtual functions of SimpleControllerIO
-    virtual std::string name() const override;
+    virtual std::string controllerName() const override;
     virtual void enableIO(Link* link) override;
     virtual void enableInput(Link* link) override;
     virtual void enableInput(Link* link, int stateTypes) override;
     virtual void enableInput(Device* device) override;
     virtual void enableOutput(Link* link) override;
+    virtual void enableOutput(Link* link, int stateTypes) override;
 
     // deprecated virtual functions
     virtual void setLinkInput(Link* link, int stateTypes) override;
@@ -154,10 +163,13 @@ SimpleControllerItem::SimpleControllerItem()
 
 SimpleControllerItemImpl::SimpleControllerItemImpl(SimpleControllerItem* self)
     : self(self),
+      config(this),
       baseDirectoryType(N_BASE_DIRECTORY_TYPES, CNOID_GETTEXT_DOMAIN_NAME)
 {
     controller = nullptr;
+    ioBody = nullptr;
     io = nullptr;
+    isOldTargetVariableMode = false;
     mv = MessageView::instance();
     doReloading = false;
 
@@ -179,12 +191,15 @@ SimpleControllerItem::SimpleControllerItem(const SimpleControllerItem& org)
 
 SimpleControllerItemImpl::SimpleControllerItemImpl(SimpleControllerItem* self, const SimpleControllerItemImpl& org)
     : self(self),
+      config(this),
       controllerModuleName(org.controllerModuleName),
       controllerDirectory(org.controllerDirectory),
       baseDirectoryType(org.baseDirectoryType)
 {
     controller = nullptr;
+    ioBody = nullptr;
     io = nullptr;
+    isOldTargetVariableMode = org.isOldTargetVariableMode;
     mv = MessageView::instance();
     doReloading = org.doReloading;
 }
@@ -309,13 +324,16 @@ bool SimpleControllerItemImpl::loadController()
 
     controller = factory();
     if(!controller){
-        mv->putln(MessageView::ERROR, _("The factory failed to create a controller instance."));
+        mv->putln(MessageView::ERROR,
+                  format(_("The controller factory of %1% failed to create a controller instance."))
+                  % self->name());
         unloadController();
         return false;
     }
 
-    if(!controller->configure(this)){
-        mv->putln(MessageView::ERROR, _("Failed to configure the controller"));
+    if(!controller->configure(&config)){
+        mv->putln(MessageView::ERROR,
+                  format(_("%1% failed to configure the controller")) % self->name());
         return false;
     }
 
@@ -387,7 +405,7 @@ void SimpleControllerItemImpl::initializeIoBody()
 }
 
 
-void SimpleControllerItemImpl::resetConfigurations()
+void SimpleControllerItemImpl::clearIoTargets()
 {
     inputLinkIndices.clear();
     inputStateTypes.clear();
@@ -400,6 +418,7 @@ bool SimpleControllerItem::initialize(ControllerIO* io)
 {
     if(impl->initialize(io, new SharedInfo)){
         impl->updateInputEnabledDevices();
+        output();
         return true;
     }
     return false;
@@ -427,7 +446,7 @@ SimpleController* SimpleControllerItemImpl::initialize(ControllerIO* io, SharedI
         ioBody = sharedInfo->ioBody;
     }
 
-    resetConfigurations();
+    clearIoTargets();
 
     if(!controller->initialize(this)){
         mv->putln(MessageView::ERROR, fmt(_("%1%'s initialize method failed.")) % self->name());
@@ -435,8 +454,8 @@ SimpleController* SimpleControllerItemImpl::initialize(ControllerIO* io, SharedI
         return nullptr;
     }
 
-    for(Item* child = self->childItem(); child; child = child->nextItem()){
-        SimpleControllerItem* childControllerItem = dynamic_cast<SimpleControllerItem*>(child);
+    for(Item* child = self->childItem(); child; child = child->nextItem()){ 
+       SimpleControllerItem* childControllerItem = dynamic_cast<SimpleControllerItem*>(child);
         if(childControllerItem){
             SimpleController* childController = childControllerItem->impl->initialize(io, sharedInfo);
             if(childController){
@@ -444,6 +463,7 @@ SimpleController* SimpleControllerItemImpl::initialize(ControllerIO* io, SharedI
             }
         }
     }
+
     updateIOStateTypes();
 
     return controller;
@@ -497,15 +517,7 @@ void SimpleControllerItemImpl::updateIOStateTypes()
 std::string SimpleControllerItemImpl::optionString() const
 {
     if(io){
-        const std::string& opt1 = io->optionString();
-        const std::string& opt2 = self->optionString();
-        if(!opt1.empty()){
-            if(opt2.empty()){
-                return opt1;
-            } else {
-                return opt1 + " " + opt2;
-            }
-        }
+        return getIntegratedOptionString(io->optionString(), self->optionString());
     }
     return self->optionString();
 }
@@ -513,25 +525,32 @@ std::string SimpleControllerItemImpl::optionString() const
 
 Body* SimpleControllerItemImpl::body()
 {
-    return ioBody;
-}
-
-
-double SimpleControllerItem::timeStep() const
-{
-    return impl->io ? impl->io->timeStep() : 0.0;
+    if(ioBody){
+        return ioBody;
+    } else {
+        if(auto bodyItem = self->findOwnerItem<BodyItem>()){
+            return bodyItem->body();
+        }
+    }
+    return nullptr;
 }
 
 
 double SimpleControllerItemImpl::timeStep() const
 {
-    return io->timeStep();
+    return io ? io->timeStep() : 0.0;
+}
+
+
+double SimpleControllerItem::timeStep() const
+{
+    return impl->timeStep();
 }
 
 
 double SimpleControllerItemImpl::currentTime() const
 {
-    return io->currentTime();
+    return io ? io->currentTime() : 0.0;
 }
 
 
@@ -541,7 +560,7 @@ std::ostream& SimpleControllerItemImpl::os() const
 }
 
 
-std::string SimpleControllerItemImpl::name() const
+std::string SimpleControllerItemImpl::controllerName() const
 {
     return self->name();
 }
@@ -562,12 +581,12 @@ void SimpleControllerItemImpl::enableInput(Link* link)
 
     case Link::JOINT_EFFORT:
     case Link::JOINT_SURFACE_VELOCITY:
-        defaultInputStateTypes = SimpleControllerIO::JOINT_ANGLE;
+        defaultInputStateTypes = SimpleControllerIO::JOINT_DISPLACEMENT;
         break;
 
     case Link::JOINT_DISPLACEMENT:
     case Link::JOINT_VELOCITY:
-        defaultInputStateTypes = SimpleControllerIO::JOINT_ANGLE | SimpleControllerIO::JOINT_TORQUE;
+        defaultInputStateTypes = SimpleControllerIO::JOINT_DISPLACEMENT | SimpleControllerIO::JOINT_EFFORT;
         break;
 
     case Link::LINK_POSITION:
@@ -615,7 +634,7 @@ void SimpleControllerItemImpl::enableOutput(Link* link)
 }
 
 
-void SimpleControllerItemImpl::setLinkOutput(Link* link, int stateTypes)
+void SimpleControllerItemImpl::enableOutput(Link* link, int stateTypes)
 {
     Link::ActuationMode mode = Link::NO_ACTUATION;
 
@@ -633,6 +652,18 @@ void SimpleControllerItemImpl::setLinkOutput(Link* link, int stateTypes)
         link->setActuationMode(mode);
         enableOutput(link);
     }
+
+    if(stateTypes & SimpleControllerIO::LINK_FORCE){
+        forceOutputLinkIndices.insert(link->index());
+        // Global link position is needed to calculate the correct external force value
+        enableInput(link, SimpleControllerIO::LINK_POSITION);
+    }
+}
+
+
+void SimpleControllerItemImpl::setLinkOutput(Link* link, int stateTypes)
+{
+    enableOutput(link, stateTypes);
 }
 
 
@@ -678,19 +709,27 @@ void SimpleControllerItemImpl::setImmediateMode(bool on)
 
 bool SimpleControllerItem::start()
 {
+    return impl->start();
+}
+
+
+bool SimpleControllerItemImpl::start()
+{
     bool result = true;
-    if(!impl->controller->start()){
+    if(!controller->start()){
+        mv->putln(MessageView::WARNING,
+                  format(_("%1% failed to start")) % self->name());
         result = false;
     } else {
-        for(size_t i=0; i < impl->childControllerItems.size(); ++i){
-            if(!impl->childControllerItems[i]->start()){
+        for(auto& childController : childControllerItems){
+            if(!childController->start()){
                 result = false;
                 break;
             }
         }
     }
     if(!result){
-        impl->sharedInfo.reset();
+        sharedInfo.reset();
     }
     return result;
 }
@@ -802,12 +841,19 @@ void SimpleControllerItemImpl::output()
             simLink->u() = ioLink->u();
             break;
         case Link::JOINT_DISPLACEMENT:
-            simLink->q() = ioLink->q();
+            if(isOldTargetVariableMode){
+                simLink->q_target() = ioLink->q();
+            } else {
+                simLink->q_target() = ioLink->q_target();
+            }
             break;
         case Link::JOINT_VELOCITY:
         case Link::JOINT_SURFACE_VELOCITY:
-            simLink->dq() = ioLink->dq();
-            simLink->dq() = ioLink->dq();
+            if(isOldTargetVariableMode){
+                simLink->dq_target() = ioLink->dq();
+            } else {
+                simLink->dq_target() = ioLink->dq_target();
+            }
             break;
         case Link::LINK_POSITION:
             simLink->T() = ioLink->T();
@@ -815,6 +861,10 @@ void SimpleControllerItemImpl::output()
         default:
             break;
         }
+    }
+
+    for(auto& index : forceOutputLinkIndices){
+        simulationBody->link(index)->F_ext() += ioBody->link(index)->F_ext();
     }
         
     if(outputDeviceStateChangeFlag.any()){
@@ -841,7 +891,7 @@ void SimpleControllerItem::stop()
     }
     impl->controller->stop();
 
-    impl->resetConfigurations();
+    impl->clearIoTargets();
 
     if(impl->doReloading || !findRootItem()){
         impl->unloadController();
@@ -849,6 +899,7 @@ void SimpleControllerItem::stop()
         impl->sharedInfo.reset();
     }
     impl->io = nullptr;
+    impl->ioBody = nullptr;
 }
 
 
@@ -883,6 +934,8 @@ void SimpleControllerItemImpl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("Base directory"), baseDirectoryType, changeProperty(baseDirectoryType));
 
     putProperty(_("Reloading"), doReloading, [&](bool on){ return onReloadingChanged(on); });
+
+    putProperty(_("Old target value variable mode"), isOldTargetVariableMode, changeProperty(isOldTargetVariableMode));
 }
 
 
@@ -900,6 +953,7 @@ bool SimpleControllerItemImpl::store(Archive& archive)
     archive.writeRelocatablePath("controller", controllerModuleName);
     archive.write("baseDirectory", baseDirectoryType.selectedSymbol(), DOUBLE_QUOTED);
     archive.write("reloading", doReloading);
+    archive.write("isOldTargetVariableMode", isOldTargetVariableMode);
     return true;
 }
 
@@ -929,6 +983,8 @@ bool SimpleControllerItemImpl::restore(const Archive& archive)
             loadController();
         }
     }
+
+    archive.read("isOldTargetVariableMode", isOldTargetVariableMode);
 
     return true;
 }

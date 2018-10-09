@@ -199,6 +199,8 @@ CreationPanelBaseMap creationPanelBaseMap;
 
 QWidget* importMenu;
 
+std::map<ItemPtr, ItemPtr> reloadedItemToOriginalItemMap;
+
 
 vector<string> separateExtensions(const string& multiExtString)
 {
@@ -1331,6 +1333,8 @@ void ItemManagerImpl::onReloadSelectedItemsActivated()
 
 void ItemManager::reloadItems(const ItemList<>& items)
 {
+    reloadedItemToOriginalItemMap.clear();
+    
     for(size_t i=0; i < items.size(); ++i){
 
         Item* item = items.get(i);
@@ -1341,6 +1345,8 @@ void ItemManager::reloadItems(const ItemList<>& items)
             ItemPtr reloaded = item->duplicate();
             if(reloaded){
                 if(reloaded->load(item->filePath(), item->parentItem(), item->fileFormat())){
+
+                    reloadedItemToOriginalItemMap[reloaded] = item;
 
                     item->parentItem()->insertChildItem(reloaded, item);
                     
@@ -1361,6 +1367,18 @@ void ItemManager::reloadItems(const ItemList<>& items)
             }
         }
     }
+
+    reloadedItemToOriginalItemMap.clear();
+}
+
+
+Item* ItemManager::findOriginalItemForReloadedItem(Item* item)
+{
+    auto iter = reloadedItemToOriginalItemMap.find(item);
+    if(iter != reloadedItemToOriginalItemMap.end()){
+        return iter->second;
+    }
+    return nullptr;
 }
 
 

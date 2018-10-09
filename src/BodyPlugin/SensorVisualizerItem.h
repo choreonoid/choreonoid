@@ -7,12 +7,6 @@
 #define CNOID_BODY_PLUGIN_SENSOR_VISUALIZER_ITEM_H
 
 #include <cnoid/Item>
-#include <cnoid/BodyItem>
-#include <cnoid/SceneProvider>
-#include <cnoid/PointSetItem>
-#include <cnoid/RangeCamera>
-#include <cnoid/RangeSensor>
-#include <cnoid/ImageProvider>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -42,102 +36,6 @@ private:
         
 typedef ref_ptr<SensorVisualizerItem> SensorVisualizerItemPtr;
 
-
-class ForceSensorVisualizerItemImpl;
-
-class CNOID_EXPORT ForceSensorVisualizerItem : public Item, public SceneProvider
-{
-public :
-    static void initializeClass(ExtensionManager* ext);
-
-    ForceSensorVisualizerItem();
-    virtual ~ForceSensorVisualizerItem();
-
-    virtual SgNode* getScene();
-
-    void setBodyItem(BodyItem* bodyItem);
-    void setVisualRatio(double visualRatio);
-
-protected:
-    virtual void doPutProperties(PutPropertyFunction& putProperty);
-    virtual bool store(Archive& archive);
-    virtual bool restore(const Archive& archive);
-
-private :
-    ForceSensorVisualizerItemImpl* impl;
-};
-
-typedef ref_ptr<ForceSensorVisualizerItem> ForceSensorVisualizerItemPtr;
-
-
-class PointCloudVisualizerItemImpl;
-
-class CNOID_EXPORT PointCloudVisualizerItem : public PointSetItem
-{
-public :
-    static void initializeClass(ExtensionManager* ext);
-
-    PointCloudVisualizerItem();
-    virtual ~PointCloudVisualizerItem();
-
-    void setBodyItem(BodyItem* bodyItem, RangeCamera* rangeCamera);
-
-protected:
-    //virtual void doPutProperties(PutPropertyFunction& putProperty);
-    //virtual bool store(Archive& archive);
-
-private :
-    PointCloudVisualizerItemImpl* impl;
-};
-
-typedef ref_ptr<PointCloudVisualizerItem> PointCloudVisualizerItemPtr;
-
-class RangeSensorVisualizerItemImpl;
-
-class CNOID_EXPORT RangeSensorVisualizerItem : public PointSetItem
-{
-public :
-    static void initializeClass(ExtensionManager* ext);
-
-    RangeSensorVisualizerItem();
-    virtual ~RangeSensorVisualizerItem();
-
-    void setBodyItem(BodyItem* bodyItem, RangeSensor* rangeSensor);
-
-protected:
-    //virtual void doPutProperties(PutPropertyFunction& putProperty);
-    //virtual bool store(Archive& archive);
-
-private :
-    RangeSensorVisualizerItemImpl* impl;
-};
-
-typedef ref_ptr<RangeSensorVisualizerItem> RangeSensorVisualizerItemPtr;
-
-class CameraImageVisualizerItemImpl;
-
-class CNOID_EXPORT CameraImageVisualizerItem : public Item, public ImageProvider
-{
-public :
-    static void initializeClass(ExtensionManager* ext);
-
-    CameraImageVisualizerItem();
-    virtual ~CameraImageVisualizerItem();
-
-    virtual const Image* getImage();
-
-    void setBodyItem(BodyItem* bodyItem, Camera* camera);
-
-
-protected:
-    //virtual void doPutProperties(PutPropertyFunction& putProperty);
-    //virtual bool store(Archive& archive);
-
-private :
-    CameraImageVisualizerItemImpl* impl;
-};
-
-typedef ref_ptr<CameraImageVisualizerItem> CameraImageVisualizerItemPtr;
-
 }
+
 #endif

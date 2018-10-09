@@ -5,8 +5,8 @@
 #include "SimulationExecutionContext.h"
 #include <rtm/ECFactory.h>
 
-#ifndef OPENRTM_VERSION11
- #include <rtm/RTObjectStateMachine.h>
+#if defined(OPENRTM_VERSION12)
+#include <rtm/RTObjectStateMachine.h>
 #endif
 
 using namespace cnoid;
@@ -14,7 +14,7 @@ using namespace cnoid;
 #if defined(OPENRTM_VERSION11)
 SimulationExecutionContext::SimulationExecutionContext()
     : PeriodicExecutionContext()
-#else
+#elif defined(OPENRTM_VERSION12)
 SimulationExecutionContext::SimulationExecutionContext()
     : OpenHRPExecutionContext()
 #endif
@@ -31,9 +31,9 @@ SimulationExecutionContext::~SimulationExecutionContext()
 
 void SimulationExecutionContext::tick() throw (CORBA::SystemException)
 {
-#ifdef OPENRTM_VERSION11
+#if defined(OPENRTM_VERSION11)
     std::for_each(m_comps.begin(), m_comps.end(), invoke_worker());
-#else
+#elif defined(OPENRTM_VERSION12)
     invokeWorker();
 #endif
 }
@@ -46,88 +46,88 @@ int SimulationExecutionContext::svc(void)
 
 
 RTC::ReturnCode_t SimulationExecutionContext::activate_component(RTC::LightweightRTObject_ptr comp)
-    throw (CORBA::SystemException)
+throw (CORBA::SystemException)
 {
-#ifdef OPENRTM_VERSION11
+#if defined(OPENRTM_VERSION11)
 
-	CompItr it = std::find_if(m_comps.begin(), m_comps.end(), find_comp(comp));
-	if(it == m_comps.end()){
-		return RTC::BAD_PARAMETER;
+    CompItr it = std::find_if(m_comps.begin(), m_comps.end(), find_comp(comp));
+    if (it == m_comps.end()) {
+        return RTC::BAD_PARAMETER;
     }
 
-	if(!(it->_sm.m_sm.isIn(RTC::INACTIVE_STATE))){
-		return RTC::PRECONDITION_NOT_MET;
+    if (!(it->_sm.m_sm.isIn(RTC::INACTIVE_STATE))) {
+        return RTC::PRECONDITION_NOT_MET;
     }
 
-	it->_sm.m_sm.goTo(RTC::ACTIVE_STATE);
+    it->_sm.m_sm.goTo(RTC::ACTIVE_STATE);
 
-	it->_sm.worker();
+    it->_sm.worker();
 
-	if((it->_sm.m_sm.isIn(RTC::ACTIVE_STATE))){
-		return RTC::RTC_OK;
+    if (it->_sm.m_sm.isIn(RTC::ACTIVE_STATE)) {
+        return RTC::RTC_OK;
     }
 
-	return RTC::RTC_ERROR;
-    
-#else
-    
-	RTC_impl::RTObjectStateMachine* rtobj = m_worker.findComponent(comp);
+    return RTC::RTC_ERROR;
 
-	if(rtobj == NULL){
-		return RTC::BAD_PARAMETER;
+#elif defined(OPENRTM_VERSION12)
+
+    RTC_impl::RTObjectStateMachine* rtobj = m_worker.findComponent(comp);
+
+    if (rtobj == NULL) {
+        return RTC::BAD_PARAMETER;
     }
-	if(!(rtobj->isCurrentState(RTC::INACTIVE_STATE))){
-		return RTC::PRECONDITION_NOT_MET;
-	}
-	m_syncActivation = false;
+    if (!(rtobj->isCurrentState(RTC::INACTIVE_STATE))) {
+        return RTC::PRECONDITION_NOT_MET;
+    }
+    m_syncActivation = false;
 
-	RTC::ReturnCode_t ret = ExecutionContextBase::activateComponent(comp);
-	invokeWorkerPreDo();
-	if((rtobj->isCurrentState(RTC::ACTIVE_STATE))){
-		return RTC::RTC_OK;
-	}
-	return RTC::RTC_ERROR;
+    RTC::ReturnCode_t ret = ExecutionContextBase::activateComponent(comp);
+    invokeWorkerPreDo();
+    if (rtobj->isCurrentState(RTC::ACTIVE_STATE)) {
+        return RTC::RTC_OK;
+    }
+    return RTC::RTC_ERROR;
 
 #endif
 }
 
 
 RTC::ReturnCode_t SimulationExecutionContext::deactivate_component(RTC::LightweightRTObject_ptr comp)
-    throw (CORBA::SystemException)
+throw (CORBA::SystemException)
 {
-#ifdef OPENRTM_VERSION11
-    
+#if defined(OPENRTM_VERSION11)
+
     RTC_TRACE(("deactivate_component()"));
 
     CompItr it = std::find_if(m_comps.begin(), m_comps.end(), find_comp(comp));
-    if(it == m_comps.end()){
+    if (it == m_comps.end()) {
         return RTC::BAD_PARAMETER;
     }
-    if(!(it->_sm.m_sm.isIn(RTC::ACTIVE_STATE))){
+    if (!(it->_sm.m_sm.isIn(RTC::ACTIVE_STATE))) {
         return RTC::PRECONDITION_NOT_MET;
     }
-    
+
     it->_sm.m_sm.goTo(RTC::INACTIVE_STATE);
 
     //tick();
     it->_sm.worker();
 
-    if(it->_sm.m_sm.isIn(RTC::INACTIVE_STATE)){
+    if (it->_sm.m_sm.isIn(RTC::INACTIVE_STATE)) {
         RTC_TRACE(("The component has been properly deactivated."));
         return RTC::RTC_OK;
     }
-    
+
     RTC_ERROR(("The component could not be deactivated."));
     return RTC::RTC_ERROR;
-    
-#else
-    
+
+#elif defined(OPENRTM_VERSION12)
+
     RTC_impl::RTObjectStateMachine* rtobj = m_worker.findComponent(comp);
 
-    if(rtobj == NULL){
+    if (rtobj == NULL) {
         return RTC::BAD_PARAMETER;
     }
-    if(!(rtobj->isCurrentState(RTC::ACTIVE_STATE))){
+    if (!(rtobj->isCurrentState(RTC::ACTIVE_STATE))) {
         return RTC::PRECONDITION_NOT_MET;
     }
 
@@ -135,58 +135,58 @@ RTC::ReturnCode_t SimulationExecutionContext::deactivate_component(RTC::Lightwei
     RTC::ReturnCode_t ret = ExecutionContextBase::deactivateComponent(comp);
     invokeWorkerPreDo();
 
-    if(!(rtobj->isCurrentState(RTC::INACTIVE_STATE))){
+    if (rtobj->isCurrentState(RTC::INACTIVE_STATE)) {
         return RTC::RTC_OK;
     }
 
     return RTC::RTC_ERROR;
-    
+
 #endif
-}    
+}
 
 
 RTC::ReturnCode_t SimulationExecutionContext::reset_component(RTC::LightweightRTObject_ptr comp)
-    throw (CORBA::SystemException)
+throw (CORBA::SystemException)
 {
-#ifdef OPENRTM_VERSION11
+#if defined(OPENRTM_VERSION11)
 
-	CompItr it = std::find_if(m_comps.begin(), m_comps.end(), find_comp(comp));
-	if(it == m_comps.end()){
-		return RTC::BAD_PARAMETER;
+    CompItr it = std::find_if(m_comps.begin(), m_comps.end(), find_comp(comp));
+    if (it == m_comps.end()) {
+        return RTC::BAD_PARAMETER;
     }
 
-	if(!(it->_sm.m_sm.isIn(RTC::ERROR_STATE))){
-		return RTC::PRECONDITION_NOT_MET;
+    if (!(it->_sm.m_sm.isIn(RTC::ERROR_STATE))) {
+        return RTC::PRECONDITION_NOT_MET;
     }
 
-	it->_sm.m_sm.goTo(RTC::INACTIVE_STATE);
+    it->_sm.m_sm.goTo(RTC::INACTIVE_STATE);
 
-	it->_sm.worker();
+    it->_sm.worker();
 
-	if((it->_sm.m_sm.isIn(RTC::INACTIVE_STATE))){
-		return RTC::RTC_OK;
+    if (it->_sm.m_sm.isIn(RTC::INACTIVE_STATE)) {
+        return RTC::RTC_OK;
     }
 
-	return RTC::RTC_ERROR;
+    return RTC::RTC_ERROR;
 
-#else
+#elif defined(OPENRTM_VERSION12)
 
-	RTC_impl::RTObjectStateMachine* rtobj = m_worker.findComponent(comp);
+    RTC_impl::RTObjectStateMachine* rtobj = m_worker.findComponent(comp);
 
-	if(rtobj == NULL){
-		return RTC::BAD_PARAMETER;
-	}
-	if(!(rtobj->isCurrentState(RTC::ERROR_STATE))){
-		return RTC::PRECONDITION_NOT_MET;
-	}
-	m_syncReset = false;
-	RTC::ReturnCode_t ret = ExecutionContextBase::resetComponent(comp);
-	invokeWorkerPreDo();
+    if (rtobj == NULL) {
+        return RTC::BAD_PARAMETER;
+    }
+    if (!(rtobj->isCurrentState(RTC::ERROR_STATE))) {
+        return RTC::PRECONDITION_NOT_MET;
+    }
+    m_syncReset = false;
+    RTC::ReturnCode_t ret = ExecutionContextBase::resetComponent(comp);
+    invokeWorkerPreDo();
 
-	if((rtobj->isCurrentState(RTC::INACTIVE_STATE))){
-		return RTC::RTC_OK;
-	}
-	return RTC::RTC_ERROR;
+    if (rtobj->isCurrentState(RTC::INACTIVE_STATE)) {
+        return RTC::RTC_OK;
+    }
+    return RTC::RTC_ERROR;
 
 #endif
 }

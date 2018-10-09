@@ -7,21 +7,27 @@
 using namespace cnoid;
 
 
-bool ItemListBase::extractChildItemsSub(Item* item)
+static bool extractSubTreeItemsIter(ItemListBase* items, Item* item)
 {
     bool extracted = false;
     if(item){
-        if(push_back_if_type_matches(item)){
+        if(items->push_back_if_type_matches(item)){
             extracted = true;
         }
-        if(extractChildItemsSub(item->childItem())){
+        if(extractSubTreeItemsIter(items, item->childItem())){
             extracted = true;
         }
-        if(extractChildItemsSub(item->nextItem())){
+        if(extractSubTreeItemsIter(items, item->nextItem())){
             extracted = true;
         }
     }
     return extracted;
+}
+
+
+bool ItemListBase::extractSubTreeItemsSub(Item* item)
+{
+    return extractSubTreeItemsIter(this, item->childItem());
 }
 
 
@@ -50,7 +56,7 @@ bool ItemListBase::extractParentItemsSub(Item* item)
 bool ItemListBase::extractAssociatedItemsSub(Item* item)
 {
     bool extracted = extractParentItemsSub(item);
-    if(extractChildItemsSub(item)){
+    if(extractSubTreeItemsSub(item)){
         extracted = true;
     }
     return extracted;

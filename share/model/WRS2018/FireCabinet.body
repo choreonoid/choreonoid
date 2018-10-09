@@ -3,6 +3,42 @@ formatVersion: 1.0
 angleUnit: degree
 name: FireCabinet
 
+RED: &RED
+  material:
+    diffuseColor: [ 0.95, 0.2, 0.2 ]
+    specularColor: [ 0.9, 0.3, 0.3 ]
+    shininess: 0.5
+
+RED2: &RED2
+  material:
+    diffuseColor: [ 1, 0.24, 0.24 ]
+    specularColor: [ 1.0, 0.4, 0.4 ]
+    shininess: 0.5
+
+MAGENTA: &MAGENTA
+  material:
+    diffuseColor: [ 0.9, 0.1, 0.25 ]
+    specularColor: [ 1.0, 0.35, 0.4 ]
+    shininess: 0.1
+
+BLACK: &BLACK
+  material:
+    diffuseColor: [ 0, 0, 0 ]
+    specularColor: [ 0.5, 0.5, 0.5 ]
+    shininess: 0.1
+
+GRAY: &GRAY
+  material:
+    diffuseColor: [ 0.4, 0.4, 0.4 ]
+    specularColor: [ 0.5, 0.5, 0.5 ]
+    shininess: 0.04
+
+SILVER: &SILVER
+  material:
+    diffuseColor: [ 0.67, 0.67, 0.67 ]
+    specularColor: [ 0.8, 0.8, 0.8 ]
+    shininess: 0.05
+
 # Optional definition for the door knob joint
 DOOR_KNOB: &DOOR_KNOB
   name: KNOB
@@ -11,247 +47,167 @@ DOOR_KNOB: &DOOR_KNOB
   jointType: revolute
   jointAxis: X
   jointId: 3
-  jointRange: [ -90, 90 ]
+  jointRange: [ 0, 90 ]
   mass: 0.5
   inertia: [ 0.1, 0, 0,
              0, 0.1, 0,
              0, 0, 0.1 ]
   # For the friction for AGX
   jointMotor: true
-  jointMotorCompliance: 0.9
+  jointMotorCompliance: 1.0
   elements:
-    Visual:
-      resource:
-        rotation: [ 0, 0, 1, 180 ]
-        translation: [ 0.042, -0.0125, 0.0125 ]
-        uri: "resource/FireCabinetDoor.dae"
-        node: ID20
-    Collision:
+    -
+      type: Shape
+      rotation: [ 0, 0, 1, -90 ]
+      translation: [ 0.021, 0, 0 ]
+      geometry: { type: Cylinder, radius: 0.0125, height: 0.042 }
+      appearance: &KNOB_APP
+        material:
+          diffuseColor: [ 1, 1, 1]
+    -
+      type: Shape
+      translation: [ 0.038, 0, -0.048 ]
+      geometry: { type: Box, size: [ 0.008, 0.025, 0.095 ] }
+      appearance: *KNOB_APP
+    -
+      type: Shape
+      rotation: [ 0, 0, 1, -90 ]
+      translation: [ 0.038, 0, -0.095 ]
+      geometry: { type: Cylinder, radius: 0.0125, height: 0.008 }
+      appearance: *KNOB_APP
+    -
+      type: Shape
+      translation: [ -0.013, 0, 0.0 ]
+      rotation: [ 0, 0, 1, -90 ]
+      geometry: { type: Cylinder, radius: 0.005, height: 0.03 }
+      appearance: *RED
+    -
+      type: Transform
+      rotation: [ 1, 0, 0, -30 ]
+      translation: [ -0.03, 0, 0.0 ]
       elements:
-        -
-          type: Shape
-          rotation: [ 0, 0, 1, -90 ]
-          translation: [ 0.021, 0, 0 ]
-          geometry: { type: Cylinder, radius: 0.0125, height: 0.042 }
-          appearance: &KNOB_APP
-            material:
-              diffuseColor: [ 1, 1, 1]
-        -
-          type: Shape
-          translation: [ 0.038, 0, -0.048 ]
-          geometry: { type: Box, size: [ 0.008, 0.025, 0.095 ] }
-          appearance: *KNOB_APP
-        -
-          type: Shape
-          rotation: [ 0, 0, 1, -90 ]
-          translation: [ 0.038, 0, -0.095 ]
-          geometry: { type: Cylinder, radius: 0.0125, height: 0.008 }
-          appearance: *KNOB_APP
-        -
-          type: Shape
-          translation: [ -0.0105, 0, 0.0 ]
-          rotation: [ 0, 0, 1, -90 ]
-          geometry: { type: Cylinder, radius: 0.005, height: 0.025 }
-        -
-          type: Shape
-          translation: [ -0.0205, 0.015, 0.0 ]
-          geometry: { type: Box, size: [ 0.005, 0.03, 0.01 ] }
-        -
-          type: Shape
-          translation: [ -0.0155, 0.0055, 0.0 ]
-          geometry: { type: Box, size: [ 0.005, 0.011, 0.01 ] }
-
+        Shape:
+          name: LOCK
+          translation: [ 0, 0.048, 0 ]
+          geometry: { type: Box, size: [ 0.005, 0.105, 0.015 ] }
+          appearance: *RED
 links:
   -
     name: BASE
     jointType: fixed
+    mass: 1
+    inertia: [ 1, 0, 0,
+               0, 1, 0,
+               0, 0, 1 ]
     elements:
       -
-        type: Visual
-        elements:
-          Resource:
-            rotation: [ 0, 0, 1, 90 ]
-            translation: [ 0, -0.37, 0 ]
-            uri: "resource/FireCabinetBase.dae"
+        type: Shape
+        name: BASE_BOX5
+        translation: [ 0.0055, 0.005, 0.4625 ]
+        geometry: { type: Box, size: [ 0.011, 0.75, 0.875 ] }
+        appearance: *RED
+  -
+    name: BASE_BOTTOM
+    parent: BASE
+    jointType: fixed
+    mass: 1
+    inertia: [ 1, 0, 0,
+               0, 1, 0,
+               0, 0, 1 ]
+    elements:
       -
-        type: Collision
-        elements:
-          -
-            name: BASE_BOX1
-            type: Transform
-            translation: [ 0.115, 0.005, 1.025 ]
-            elements:
-              Shape: { geometry: { type: Box, size: [ 0.23, 0.75, 0.25 ] } }
-          -
-            name: BASE_BOX2
-            type: Transform
-            translation: [ 0.115, -0.3575, 0.4625 ]
-            elements: &BASE_BOX2
-              Shape: { geometry: { type: Box, size: [ 0.23, 0.025, 0.875 ] } }
-          -
-            name: BASE_BOX3
-            type: Transform
-            translation: [ 0.115, 0.3675, 0.4625 ]
-            elements: *BASE_BOX2
-          -
-            name: BASE_REEL_HINGE1
-            type: Shape
-            translation: [ 0.17, 0.345, 0.403 ]
-            rotation: [ 1, 0, 0, 90 ]
-            geometry: { type: Cylinder, radius: 0.02, height: 0.005 }
-          -
-            name: BASE_REEL_HINGE2
-            type: Shape
-            translation: [ 0.17, 0.35, 0.403 ]
-            geometry: { type: Box, size: [ 0.04, 0.01, 0.005 ] }
-          -
-            name: BASE_REEL_HINGE3
-            type: Shape
-            translation: [ 0.17, 0.345, 0.2875 ]
-            rotation: [ 1, 0, 0, 90 ]
-            geometry: { type: Cylinder, radius: 0.02, height: 0.005 }
-          -
-            name: BASE_REEL_HINGE4
-            type: Shape
-            translation: [ 0.17, 0.35, 0.2875 ]
-            geometry: { type: Box, size: [ 0.04, 0.01, 0.005 ] }
-          -
-            name: BASE_BOX4
-            type: Transform
-            translation: [ 0.115, 0.005, 0.0125 ]
-            elements: &BASE_BOX4
-              Shape: { geometry: { type: Box, size: [ 0.23, 0.75, 0.025 ] } }
-          -
-            name: BASE_BOX5
-            type: Transform
-            translation: [ 0.0055, 0.005, 0.4625 ]
-            elements:
-              Shape: { geometry: { type: Box, size: [ 0.011, 0.75, 0.875 ] } }
-          -
-            name: BASE_BOX6
-            type: Transform
-            translation: [ 0.0243, -0.2915, 0.8038 ]
-            elements: &BASE_BOX6
-              Shape: { geometry: { type: Box, size: [ 0.027, 0.025, 0.05 ] } }
-          -
-            name: BASE_BOX7
-            type: Transform
-            translation: [ 0.0505, -0.2914, 0.7663 ]
-            elements: &BASE_BOX7
-              Shape: { geometry: { type: Box, size: [ 0.079, 0.025, 0.025 ] } }
-          -
-            name: BASE_BOX8
-            type: Transform
-            translation: [ 0.09409, -0.2914, 0.7688 ]
-            elements: &BASE_BOX8
-              Shape: { geometry: { type: Box, size: [ 0.01, 0.025, 0.03 ] } }
-          - type: Transform
-            translation: [ -0.0005, 0.0499, 0.014 ]
-            elements:
-              -
-                name: BASE_BOX9
-                type: Transform
-                translation: [ 0.0243, -0.0931, 0.8038 ]
-                elements: *BASE_BOX6
-              -
-                name: BASE_BOX7
-                type: Transform
-                translation: [ 0.0505, -0.0931, 0.7663 ]
-                elements: *BASE_BOX7
-              -
-                name: BASE_BOX8
-                type: Transform
-                translation: [ 0.09409, -0.0931, 0.7688 ]
-                elements: *BASE_BOX8
-          -
-            name: VALVE_1
-            type: Transform
-            translation: [ 0.0719, 0.2608, 0.7201 ]
-            rotation: [ 1, 0, 0, 90 ]
-            elements:
-              Shape: { geometry: { type: Cylinder, radius: 0.0298, height: 0.0485 } }
-          -
-            name: VALVE_2
-            type: Transform
-            translation: [ 0.06853, 0.2647, 0.728 ]
-            rotation: [ [ 0, 0, 1, 88.38 ], [ 1, 0, 0, 0.5 ] ]
-            elements:
-              Shape: { geometry: { type: Cylinder, radius: 0.008, height: 0.138 } }
-          -
-            name: VALVE_3
-            type: Transform
-            translation: [ 0.0719, 0.2635, 0.7479 ]
-            rotation: [ 1, 0, 0, 90.8 ]
-            elements: &VALVE_3
-              Shape: { geometry: { type: Cylinder, radius: 0.0332, height: 0.0065 } }
-          -
-            name: VALVE_4
-            type: Transform
-            translation: [ 0.0718, 0.2635, 0.7525 ]
-            rotation: [ 1, 0, 0, 90.8 ]
-            elements:
-              Shape: { geometry: { type: Cylinder, radius: 0.0294, height: 0.003 } }
-          -
-            name: VALVE_5
-            type: Transform
-            translation: [ 0.0719, 0.2635, 0.7567 ]
-            rotation: [ 1, 0, 0, 90.8 ]
-            elements: *VALVE_3
-          -
-            name: VALVE_6
-            type: Transform
-            translation: [ 0.0718, 0.2635, 0.7686 ]
-            rotation: [ 1, 0, 0, 90.8 ]
-            elements:
-              Shape: { geometry: { type: Cylinder, radius: 0.0255, height: 0.0175 } }
-          -
-            name: VALVE_7
-            type: Transform
-            translation: [ 0.0718, 0.2635, 0.8066 ]
-            rotation: [ 0, 0, 1, 90 ]
-            elements:
-              Shape: { geometry: { type: Capsule, radius: 0.042, height: 0.038 } }
-          -
-            name: VALVE_8
-            type: Transform
-            translation: [ 0.0176, 0.2631, 0.8066 ]
-            rotation: [ 0, 0, 1, 90 ]
-            elements: &VALVE_8
-              Shape: { geometry: { type: Cylinder, radius: 0.0475, height: 0.011 } }
-          -
-            name: VALVE_9
-            type: Transform
-            translation: [ 0.1263, 0.2623, 0.8066 ]
-            rotation: [ 0, 0, 1, 90 ]
-            elements: *VALVE_8
-          -
-            name: VALVE_10
-            type: Transform
-            translation: [ 0.1367, 0.2625, 0.8066 ]
-            rotation: [ 0, 0, 1, 90 ]
-            elements:
-              Shape: { geometry: { type: Cylinder, radius: 0.0465, height: 0.01 } }
-          -
-            name: VALVE_11
-            type: Transform
-            translation: [ 0.1461, 0.2624, 0.8066 ]
-            rotation: [ 0, 0, 1, 90 ]
-            elements:
-              Shape: { geometry: { type: Cylinder, radius: 0.02, height: 0.009 } }
-          -
-            name: VALVE_12
-            type: Transform
-            translation: [ 0.1531, 0.2623, 0.8066 ]
-            rotation: [ 0, 0, 1, 90 ]
-            elements:
-              Shape: { geometry: { type: Cylinder, radius: 0.011, height: 0.006 } }
-          -
-            name: VALVE_13
-            type: Transform
-            translation: [ 0.1778, 0.2622, 0.8067 ]
-            rotation: [ 0, 0, 1, 90 ]
-            elements:
-              Shape: { geometry: { type: Cylinder, radius: 0.0033, height: 0.0435 } }
+        name: BASE_BOX4
+        type: Transform
+        translation: [ 0.115, 0.005, 0.0125 ]
+        elements: &BASE_BOX4
+          Shape:
+            geometry: { type: Box, size: [ 0.23, 0.75, 0.025 ] }
+            appearance: *RED
+  -
+    name: BASE_TOP
+    parent: BASE
+    jointType: fixed
+    mass: 1
+    inertia: [ 1, 0, 0,
+               0, 1, 0,
+               0, 0, 1 ]
+    elements:
+      -
+        type: Shape
+        name: BASE_BOX1
+        translation: [ 0.115, 0.005, 1.025 ]
+        geometry: { type: Box, size: [ 0.23, 0.75, 0.25 ] }
+        appearance: *RED
+  -
+    name: BASE_LEFT
+    parent: BASE
+    jointType: fixed
+    mass: 1
+    inertia: [ 1, 0, 0,
+               0, 1, 0,
+               0, 0, 1 ]
+    elements:
+      -
+        type: Transform
+        name: BASE_BOX2
+        translation: [ 0.115, -0.3575, 0.4625 ]
+        elements: &BASE_BOX2
+          Shape: 
+            geometry: { type: Box, size: [ 0.23, 0.025, 0.875 ] }
+            appearance: *RED
+  -
+    name: BASE_RIGHT
+    parent: BASE
+    jointType: fixed
+    mass: 1
+    inertia: [ 1, 0, 0,
+               0, 1, 0,
+               0, 0, 1 ]
+    elements:
+      -
+        type: Transform
+        name: BASE_BOX3
+        translation: [ 0.115, 0.3675, 0.4625 ]
+        elements: *BASE_BOX2
+      -
+        type: Shape
+        name: BASE_REEL_HINGE1
+        translation: [ 0.17, 0.345, 0.403 ]
+        rotation: [ 1, 0, 0, 90 ]
+        geometry: { type: Cylinder, radius: 0.02, height: 0.005 }
+        appearance: *RED
+      -
+        type: Shape
+        name: BASE_REEL_HINGE2
+        translation: [ 0.17, 0.35, 0.403 ]
+        geometry: { type: Box, size: [ 0.04, 0.01, 0.005 ] }
+        appearance: *RED
+      -
+        type: Shape
+        name: BASE_REEL_HINGE3
+        translation: [ 0.17, 0.345, 0.2875 ]
+        rotation: [ 1, 0, 0, 90 ]
+        geometry: { type: Cylinder, radius: 0.02, height: 0.005 }
+        appearance: *RED
+      -
+        type: Shape
+        name: BASE_REEL_HINGE4
+        translation: [ 0.17, 0.35, 0.2875 ]
+        geometry: { type: Box, size: [ 0.04, 0.01, 0.005 ] }
+        appearance: *RED
+  -
+    name: LOCK
+    parent: BASE
+    translation: [ 0.206, 0.344, 0.535 ]
+    jointType: fixed
+    mass: 0.2
+    inertia: [ 0.1, 0, 0,
+               0, 0.1, 0,
+               0, 0, 0.1 ]
+    elements:
+      Shape:
+        geometry: { type: Box, size: [ 0.005, 0.022, 0.12 ] }
+        appearance: *RED
   -
     name: DOOR
     parent: BASE
@@ -267,60 +223,58 @@ links:
 
     # For the friction for AGX
     jointMotor: true
-    jointMotorCompliance: 0.9
+    jointMotorCompliance: 0.1
 
     elements:
       -
-        type: Visual
-        elements:
-          Resource:
-            rotation: [ 0, 0, 1, 180 ]
-            translation: [ 0, 0.7, 0 ]
-            uri: "resource/FireCabinetDoor.dae"
+        name: COOR1
+        type: Shape
+        translation: [ -0.005, 0.323, 0.4375 ]
+        geometry: { type: Box, size: [ 0.01, 0.646, 0.875 ] }
+        appearance: *RED
       -
-        type: Collision
-        elements:
-          -
-            name: COOR1
-            type: Shape
-            translation: [ -0.005, 0.323, 0.4375 ]
-            geometry: { type: Box, size: [ 0.01, 0.646, 0.875 ] }
-          -
-            name: DOOR2
-            type: Shape
-            translation: [ -0.01, 0.648, 0.4375 ]
-            geometry: { type: Box, size: [ 0.02, 0.005, 0.875 ] }
-          -
-            name: COOR3
-            type: Shape
-            translation: [ -0.0175, 0.673, 0.4375 ]
-            geometry: { type: Box, size: [ 0.005, 0.054, 0.875 ] }
-          -
-            name: COOR4
-            type: Shape
-            translation: [ -0.0025, 0.65, 0.4375 ]
-            geometry: { type: Box, size: [ 0.005, 0.01, 0.875 ] }
-          -
-            name: COOR4
-            type: Shape
-            translation: [ -0.01, 0.6975, 0.4375 ]
-            geometry: { type: Box, size: [ 0.02, 0.005, 0.875 ] }
-          -
-            name: COOR4
-            type: Shape
-            translation: [ -0.0105, 0.679, 0.4375 ]
-            rotation: [ 0, 0, 1, -24 ]
-            geometry: { type: Box, size: [ 0.002, 0.04, 0.875 ] }
-          -
-            name: COOR5
-            type: Shape
-            translation: [ -0.0105, 0.6725, 0.8725 ]
-            geometry: { type: Box, size: [ 0.02, 0.054, 0.005 ] }
-          -
-            name: COOR6
-            type: Shape
-            translation: [ -0.0105, 0.6725, 0.0025 ]
-            geometry: { type: Box, size: [ 0.02, 0.054, 0.005 ] }
+        name: DOOR2
+        type: Shape
+        translation: [ -0.01, 0.648, 0.4375 ]
+        geometry: { type: Box, size: [ 0.02, 0.005, 0.875 ] }
+        appearance: *RED
+      -
+        name: COOR3
+        type: Shape
+        translation: [ -0.0175, 0.673, 0.4375 ]
+        geometry: { type: Box, size: [ 0.005, 0.054, 0.875 ] }
+        appearance: *RED
+      -
+        name: COOR4
+        type: Shape
+        translation: [ -0.0025, 0.65, 0.4375 ]
+        geometry: { type: Box, size: [ 0.005, 0.01, 0.875 ] }
+        appearance: *RED
+      -
+        name: COOR4
+        type: Shape
+        translation: [ -0.01, 0.6975, 0.4375 ]
+        geometry: { type: Box, size: [ 0.02, 0.005, 0.875 ] }
+        appearance: *RED
+      -
+        name: COOR4
+        type: Shape
+        translation: [ -0.0105, 0.679, 0.4375 ]
+        rotation: [ 0, 0, 1, -24 ]
+        geometry: { type: Box, size: [ 0.002, 0.04, 0.875 ] }
+        appearance: *RED
+      -
+        name: COOR5
+        type: Shape
+        translation: [ -0.0105, 0.6725, 0.8725 ]
+        geometry: { type: Box, size: [ 0.02, 0.054, 0.005 ] }
+        appearance: *RED
+      -
+        name: COOR6
+        type: Shape
+        translation: [ -0.0105, 0.6725, 0.0025 ]
+        geometry: { type: Box, size: [ 0.02, 0.054, 0.005 ] }
+        appearance: *RED
   -
     *DOOR_KNOB
   -
@@ -338,7 +292,7 @@ links:
 
     # For the friction for AGX
     jointMotor: true
-    jointMotorCompliance: 0.9
+    jointMotorCompliance: 0.1
 
     elements:
       -
@@ -346,18 +300,18 @@ links:
         translation: [ 0, 0, 0.055 ]
         rotation: [ 1, 0, 0, 90 ]
         geometry: { type: Cylinder, radius: 0.015, height: 0.11 }
-        appearance: &RED { material: { diffuseColor: [ 1.0, 0, 0 ] }}
+        appearance: *RED2
       -
         type: Shape
         translation: [ 0, -0.15, 0.05 ]
         geometry: { type: Box, size: [ 0.02, 0.3, 0.1 ] }
-        appearance: *RED
+        appearance: *RED2
       -
         type: Shape
         translation: [ 0, -0.311, 0.07 ]
         rotation: [ 1, 0, 0, 90 ]
         geometry: { type: Cylinder, radius: 0.02, height: 0.2 }
-        appearance: &SILVER { material: { diffuseColor: [ 0.67, 0.67, 0.67 ], specularColor: [ 0.8, 0.8, 0.8 ], shininess: 0.05 } }
+        appearance: *SILVER
       - 
         type: Transform
         translation: [ -0.05, -0.311, 0.17 ]
@@ -439,7 +393,7 @@ links:
               Shape:
                 rotation: [ 0, 0, 1, 90 ]
                 geometry: { type: Cylinder, radius: 0.25, height: 0.01 }
-                appearance: *RED
+                appearance: *RED2
           -
             type: Transform
             name: REEL_DISK2
@@ -448,27 +402,129 @@ links:
           -
             type: Shape
             name: REEL_DISK3
-            translation: [ -0.05, 0, 0 ]
+            translation: [ -0.055, 0, 0 ]
             rotation: [ 0, 0, 1, 90 ]
-            geometry: { type: Cylinder, radius: 0.21, height: 0.1 }
+            geometry: { type: Cylinder, radius: 0.21, height: 0.10 }
+            appearance: *RED2
+  -
+    name: VALVE_BASE
+    parent: BASE
+    jointType: fixed
+    mass: 3.0
+    inertia: [ 0.05, 0, 0,
+               0, 0.05, 0,
+               0, 0, 0.05 ]
+    elements:
+      -
+        type: Shape
+        name: VALVE_1
+        translation: [ 0.0719, 0.2608, 0.7201 ]
+        rotation: [ 1, 0, 0, 90 ]
+        geometry: { type: Cylinder, radius: 0.0298, height: 0.0485 }
+        appearance: *BLACK
+      -
+        type: Shape
+        name: VALVE_2
+        translation: [ 0.06853, 0.2647, 0.728 ]
+        rotation: [ [ 0, 0, 1, 88.38 ], [ 1, 0, 0, 0.5 ] ]
+        geometry: { type: Cylinder, radius: 0.008, height: 0.138 }
+        appearance: *GRAY
+      -
+        type: Transform
+        name: VALVE_3
+        translation: [ 0.0719, 0.2635, 0.7479 ]
+        rotation: [ 1, 0, 0, 90.8 ]
+        elements: &VALVE_3
+          Shape:
+            geometry: { type: Cylinder, radius: 0.0332, height: 0.0065 }
             appearance: *RED
+      -
+        type: Shape
+        name: VALVE_4
+        translation: [ 0.0718, 0.2635, 0.7525 ]
+        rotation: [ 1, 0, 0, 90.8 ]
+        geometry: { type: Cylinder, radius: 0.0294, height: 0.003 }
+        appearance: *RED
+      -
+        name: VALVE_5
+        type: Transform
+        translation: [ 0.0719, 0.2635, 0.7567 ]
+        rotation: [ 1, 0, 0, 90.8 ]
+        elements: *VALVE_3
+      -
+        type: Shape
+        name: VALVE_6
+        translation: [ 0.0718, 0.2635, 0.7686 ]
+        rotation: [ 1, 0, 0, 90.8 ]
+        geometry: { type: Cylinder, radius: 0.0255, height: 0.0175 }
+        appearance: *RED
+      -
+        type: Shape
+        name: VALVE_7
+        translation: [ 0.0718, 0.2635, 0.8066 ]
+        rotation: [ 0, 0, 1, 90 ]
+        geometry: { type: Capsule, radius: 0.042, height: 0.038 }
+        appearance: *RED
+      -
+        name: VALVE_8
+        type: Transform
+        translation: [ 0.0176, 0.2631, 0.8066 ]
+        rotation: [ 0, 0, 1, 90 ]
+        elements: &VALVE_8
+          Shape:
+            geometry: { type: Cylinder, radius: 0.0475, height: 0.011 }
+            appearance: *RED
+      -
+        name: VALVE_9
+        type: Transform
+        translation: [ 0.1263, 0.2623, 0.8066 ]
+        rotation: [ 0, 0, 1, 90 ]
+        elements: *VALVE_8
+      -
+        type: Shape
+        name: VALVE_10
+        translation: [ 0.1367, 0.2625, 0.8066 ]
+        rotation: [ 0, 0, 1, 90 ]
+        geometry: { type: Cylinder, radius: 0.0465, height: 0.01 }
+        appearance: *RED
+      -
+        type: Shape
+        name: VALVE_11
+        translation: [ 0.1461, 0.2624, 0.8066 ]
+        rotation: [ 0, 0, 1, 90 ]
+        geometry: { type: Cylinder, radius: 0.02, height: 0.009 }
+        appearance: *RED
+      -
+        type: Shape
+        name: VALVE_12
+        translation: [ 0.1531, 0.2623, 0.8066 ]
+        rotation: [ 0, 0, 1, 90 ]
+        geometry: { type: Cylinder, radius: 0.011, height: 0.006 }
+        appearance: *RED
+      -
+        type: Shape
+        name: VALVE_13
+        translation: [ 0.1778, 0.2622, 0.8067 ]
+        rotation: [ 0, 0, 1, 90 ]
+        geometry: { type: Cylinder, radius: 0.0033, height: 0.0435 }
+        appearance: *RED
   -
     name: VALVE
-    parent: BASE
+    parent: VALVE_BASE
     translation: [ 0.19, 0.262, 0.8065 ]
     jointType: revolute
     jointAxis: X
     jointId: 2
     jointRange: [ unlimited, unlimited ]
-    mass: 10.0
-    inertia: [ 1, 0, 0,
-               0, 1, 0,
-               0, 0, 1 ]
+    mass: 3.0
+    inertia: [ 0.05, 0, 0,
+               0, 0.05, 0,
+               0, 0, 0.05 ]
 
     # For the friction for AGX
     jointMotor: true
-    jointMotorCompliance: 0.9
-
+    jointMotorCompliance: 0.5
+    jointMotorSpookDamping: 0.01
     elements:
       -
         type: Visual
@@ -485,19 +541,21 @@ links:
             rotation: [ [ 0, 0, 1, -0.283 ], [ 0, 1, 0, -0.029 ] ]
             elements:
               -
+                type: Shape
                 name: HANDLE_1
-                type: Transform
                 translation: [ 0.0, 0.0, 0.0 ]
                 rotation: [ 0, 0, 1, 90 ]
-                elements:
-                  Shape: { geometry: { type: Cylinder, radius: 0.011, height: 0.01 } }
+                geometry: { type: Cylinder, radius: 0.011, height: 0.01 }
+                appearance: *MAGENTA
               -
-                name: HANDLE_2
                 type: Transform
+                name: HANDLE_2
                 translation: [ 0.0, 0.0145, 0.026 ]
                 rotation: [ 1, 0, 0, -29.2 ]
                 elements: &HANDLE_2
-                  Shape: { geometry: { type: Box, size: [ 0.01, 0.0078, 0.04 ] } }
+                  Shape:
+                    geometry: { type: Box, size: [ 0.01, 0.0078, 0.04 ] }
+                    appearance: *MAGENTA
               -
                 name: HANDLE_3
                 type: Transform
@@ -539,16 +597,19 @@ links:
                     geometry: &HANDLERING1
                       type: Box
                       size: [ 0.01, 0.0155, 0.01 ]
+                    appearance: *MAGENTA
                   -
                     type: Shape
                     translation: [ 0.0, 0.0195, 0.04955 ]
                     rotation: [ 1, 0, 0, -21.7 ]
                     geometry: *HANDLERING1
+                    appearance: *MAGENTA
                   -
                     type: Shape
                     translation: [ 0.0, 0.03182, 0.0427 ]
                     rotation: [ 1, 0, 0, -36.7 ]
                     geometry: *HANDLERING1
+                    appearance: *MAGENTA
               -
                 type: Transform
                 name: HANDLE_RING2
@@ -584,3 +645,55 @@ links:
                 name: HANDLE_RING8
                 rotation: [ 1, 0, 0, -135 ]
                 elements: *HANDLRING_PARTS
+  -
+    name: NOZZLE_STAND
+    parent: BASE
+    jointType: fixed
+    mass: 3.0
+    inertia: [ 0.05, 0, 0,
+               0, 0.05, 0,
+               0, 0, 0.05 ]
+    elements:
+      -
+        type: Transform
+        name: BASE_BOX6
+        translation: [ 0.0243, -0.2915, 0.8038 ]
+        elements: &BASE_BOX6
+          Shape:
+            geometry: { type: Box, size: [ 0.027, 0.025, 0.05 ] }
+            appearance: *SILVER
+      -
+        name: BASE_BOX7
+        type: Transform
+        translation: [ 0.0505, -0.2914, 0.7663 ]
+        elements: &BASE_BOX7
+          Shape:
+            geometry: { type: Box, size: [ 0.079, 0.025, 0.025 ] }
+            appearance: *SILVER
+      -
+        type: Transform
+        name: BASE_BOX8
+        translation: [ 0.09409, -0.2914, 0.7688 ]
+        elements: &BASE_BOX8
+          Shape:
+            geometry: { type: Box, size: [ 0.01, 0.025, 0.03 ] }
+            appearance: *SILVER
+      -
+        type: Transform
+        translation: [ -0.0005, 0.0499, 0.014 ]
+        elements:
+          -
+            name: BASE_BOX9
+            type: Transform
+            translation: [ 0.0243, -0.0931, 0.8038 ]
+            elements: *BASE_BOX6
+          -
+            name: BASE_BOX7
+            type: Transform
+            translation: [ 0.0505, -0.0931, 0.7663 ]
+            elements: *BASE_BOX7
+          -
+            name: BASE_BOX8
+            type: Transform
+            translation: [ 0.09409, -0.0931, 0.7688 ]
+            elements: *BASE_BOX8

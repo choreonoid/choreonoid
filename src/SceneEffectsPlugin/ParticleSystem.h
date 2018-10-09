@@ -19,6 +19,9 @@ public:
     ParticleSystem(const ParticleSystem& org);
     virtual ~ParticleSystem();
 
+    bool on() const { return on_; }
+    void on(bool on) { on_ = on; }
+
     float offsetTime() const { return offsetTime_; }
     void setOffsetTime(float t) { offsetTime_ = t; }
 
@@ -40,6 +43,7 @@ public:
     void readParameters(const YAMLSceneReader& reader, const Mapping& node);
 
 private:
+    bool on_;
     float offsetTime_;
     float lifeTime_;
     float particleSize_;

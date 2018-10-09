@@ -18,8 +18,13 @@ public:
     OptionManager& addOption(const char* name, const char* description);
     OptionManager& addOption(const char* name, const boost::program_options::value_semantic* s);
     OptionManager& addOption(const char* name, const boost::program_options::value_semantic* s, const char* description);
-    OptionManager& addPositionalOption(const char* name, int maxCount);
 
+    /**
+       Positional option is replaced with input file options that can obtained by the sigInputFileOptionsParsed signal.
+    */
+    // OptionManager& addPositionalOption(const char* name, int maxCount);
+
+    SignalProxy<void(std::vector<std::string>& inputFiles)> sigInputFileOptionsParsed(int phase = 0);
     SignalProxy<void(boost::program_options::variables_map& variables)> sigOptionsParsed(int phase = 0);
 
 private:

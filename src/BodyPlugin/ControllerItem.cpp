@@ -13,7 +13,7 @@ using namespace cnoid;
 
 ControllerItem::ControllerItem()
 {
-    isNoDelayMode_ = true;
+    isNoDelayMode_ = false;
 }
 
 
@@ -31,6 +31,18 @@ ControllerItem::~ControllerItem()
 }
 
 
+bool ControllerItem::isActive() const
+{
+    return simulatorItem_ ? simulatorItem_->isRunning() : false;
+}
+
+
+bool ControllerItem::isNoDelayMode() const
+{
+    return isNoDelayMode_;
+}
+
+
 bool ControllerItem::setNoDelayMode(bool on)
 {
     isNoDelayMode_ = on;
@@ -38,9 +50,15 @@ bool ControllerItem::setNoDelayMode(bool on)
 }
 
 
-bool ControllerItem::isActive() const
+const std::string& ControllerItem::optionString() const
 {
-    return simulatorItem_ ? simulatorItem_->isRunning() : false;
+    return optionString_;
+}
+
+
+void ControllerItem::setSimulatorItem(SimulatorItem* item)
+{
+    simulatorItem_ = item;
 }
 
 
@@ -62,34 +80,22 @@ void ControllerItem::stop()
 }
 
 
-std::string ControllerItem::getMessage()
+void ControllerItem::onOptionsChanged()
 {
-    string message(message_);
-    message_.clear();
-    return message;
-}
 
-
-void ControllerItem::putMessage(const std::string& message)
-{
-    message_ += message;
-    if(!sigMessage_.empty()){
-        sigMessage_(message_);
-        message_.clear();
-    }
-}
-
-
-SignalProxy<void(const std::string& message)> ControllerItem::sigMessage()
-{
-    return sigMessage_;
 }
 
 
 void ControllerItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("No delay mode"), isNoDelayMode_, changeProperty(isNoDelayMode_));
-    putProperty(_("Controller options"), optionString_, changeProperty(optionString_));
+
+    putProperty(_("Controller options"), optionString_,
+                [&](const string& options){
+                    optionString_ = options;
+                    onOptionsChanged();
+                    return true;
+                });
 }
 
 

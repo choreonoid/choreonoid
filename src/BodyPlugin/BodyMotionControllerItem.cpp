@@ -9,10 +9,12 @@
 #include <cnoid/ItemList>
 #include <cnoid/ItemTreeView>
 #include <cnoid/ControllerIO>
+#include <cnoid/MessageView>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
+using boost::format;
 
 namespace cnoid {
 
@@ -75,11 +77,13 @@ bool BodyMotionControllerItem::initialize(ControllerIO* io)
 
 bool BodyMotionControllerItemImpl::initialize(ControllerIO* io)
 {
+    auto mv = MessageView::instance();
+    
     ItemList<BodyMotionItem> motionItems;
     if(!motionItems.extractChildItems(self)){
-        self->putMessage(
-            str(boost::format(_("Any body motion item for %1% is not found."))
-                % self->name()));
+        mv->putln(
+            format(_("Any body motion item for %1% is not found.")) % self->name(),
+            MessageView::ERROR);
         return false;
     }
     motionItem = motionItems.front();
@@ -94,24 +98,21 @@ bool BodyMotionControllerItemImpl::initialize(ControllerIO* io)
 
     qseqRef = motionItem->motion()->jointPosSeq();
 
-    body = io->body();
-
-    for(Link* joint : body->joints()){
-        joint->setActuationMode(Link::JOINT_DISPLACEMENT);
-    }
-        
-    currentFrame = 0;
-    numJoints = std::min(body->numJoints(), qseqRef->numParts());
     if(qseqRef->numFrames() == 0){
-        self->putMessage(_("Reference motion is empty()."));
+        mv->putln(
+            format(_("%1% for %2% is empty.")) % motionItem->name() % self->name(),
+            MessageView::ERROR);
         return false;
     }
     if(fabs(qseqRef->frameRate() - (1.0 / io->timeStep())) > 1.0e-6){
-        self->putMessage(_("The frame rate of the reference motion is different from the world frame rate."));
+        mv->putln(
+            format(_("The frame rate of %1% is different from the world frame rate.")) % motionItem->name(),
+            MessageView::ERROR);
         return false;
     }
 
-    // Overwrite the initial position and pose
+    body = io->body();
+
     MultiSE3SeqPtr lseq = motionItem->motion()->linkPosSeq();
     if(lseq->numParts() > 0 && lseq->numFrames() > 0){
         SE3& p = lseq->at(0, 0);
@@ -119,9 +120,19 @@ bool BodyMotionControllerItemImpl::initialize(ControllerIO* io)
         rootLink->p() = p.translation();
         rootLink->R() = p.rotation().toRotationMatrix();
     }
-    self->output();
+
+    numJoints = std::min(body->numJoints(), qseqRef->numParts());
+
+    MultiValueSeq::Frame q = qseqRef->frame(0);
+    for(int i=0; i < numJoints; ++i){
+        auto joint = body->joint(i);
+        joint->setActuationMode(Link::JOINT_DISPLACEMENT);
+        joint->q() = joint->q_target() = q[i];
+    }
     body->calcForwardKinematics();
-    
+
+    currentFrame = 0;
+
     return true;
 }
 
@@ -156,7 +167,7 @@ void BodyMotionControllerItem::output()
     if(impl->currentFrame < impl->qseqRef->numFrames()){
         MultiValueSeq::Frame q = impl->qseqRef->frame(impl->currentFrame);
         for(int i=0; i < impl->numJoints; ++i){
-            impl->body->joint(i)->q() = q[i];
+            impl->body->joint(i)->q_target() = q[i];
         }
         impl->currentFrame++;
     }

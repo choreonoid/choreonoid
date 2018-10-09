@@ -20,7 +20,12 @@ namespace {
 AbstractSeqItem* createZMPSeqItem(AbstractSeqPtr seq)
 {
     ZMPSeqPtr zmpseq = dynamic_pointer_cast<ZMPSeq>(seq);
-    return zmpseq ? new ZMPSeqItem(zmpseq) : 0;
+    if(zmpseq){
+        auto item = new ZMPSeqItem(zmpseq);
+        item->setName("ZMP");
+        return item;
+    }
+    return nullptr;
 }
 
 

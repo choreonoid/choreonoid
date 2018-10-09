@@ -8,6 +8,7 @@
 #include <cnoid/ItemManager>
 #include <cnoid/RootItem>
 #include <cnoid/Archive>
+#include <cnoid/MessageView>
 #include <cnoid/ConnectionSet>
 #include <cnoid/LazyCaller>
 #include <cnoid/BodyCollisionDetector>
@@ -20,6 +21,7 @@
 using namespace std;
 using namespace cnoid;
 namespace filesystem = boost::filesystem;
+using boost::format;
 
 namespace {
 
@@ -78,6 +80,7 @@ public:
 
     string materialTableFile;
     MaterialTablePtr materialTable;
+    std::time_t materialTableTimestamp;
 
     WorldItemImpl(WorldItem* self);
     WorldItemImpl(WorldItem* self, const WorldItemImpl& org);
@@ -90,7 +93,7 @@ public:
     void updateColdetBodyInfos(vector<ColdetBodyInfo>& infos);
     void updateCollisions(bool forceUpdate);
     void extractCollisions(const CollisionPair& collisionPair);
-    void createMaterialTable();
+    MaterialTable* getOrLoadMaterialTable(bool checkFileUpdate);
 };
 
 }
@@ -158,6 +161,7 @@ void WorldItemImpl::init()
     collisions = std::make_shared<vector<CollisionLinkPairPtr>>();
     sceneCollision = new SceneCollision(collisions);
     sceneCollision->setName("Collisions");
+    materialTableTimestamp = 0;
 }
 
     
@@ -438,25 +442,53 @@ void WorldItem::setMaterialTableFile(const std::string& filename)
 }
 
 
-MaterialTable* WorldItem::materialTable()
+MaterialTable* WorldItem::materialTable(bool checkFileUpdate)
 {
-    if(!impl->materialTable){
-        impl->createMaterialTable();
-    }
-    return impl->materialTable;
+    return impl->getOrLoadMaterialTable(checkFileUpdate);
 }
 
 
-void WorldItemImpl::createMaterialTable()
+MaterialTable* WorldItemImpl::getOrLoadMaterialTable(bool checkFileUpdate)
 {
-    materialTable = new MaterialTable;
+    bool failedToLoad = false;
     
-    if(!materialTableFile.empty()){
-        materialTable->load(materialTableFile, os);
+    if(!materialTable){
+        materialTable = new MaterialTable;
+        if(materialTable->load(materialTableFile, os)){
+            materialTableTimestamp = filesystem::last_write_time(materialTableFile);
+        } else {
+            failedToLoad = true;
+        }
+
+    } else if(checkFileUpdate){
+        if(!materialTableFile.empty()){
+            filesystem::path fpath(materialTableFile);
+            if(filesystem::exists(fpath)){
+                std::time_t newTimestamp = filesystem::last_write_time(materialTableFile);
+                if(newTimestamp > materialTableTimestamp){
+                    MaterialTablePtr newMaterialTable = new MaterialTable;
+                    if(newMaterialTable->load(materialTableFile, os)){
+                        materialTable = newMaterialTable;
+                        materialTableTimestamp = newTimestamp;
+                        MessageView::instance()->putln(
+                            format(_("Material table \"%1%\" has been reloaded.")) % materialTableFile);
+                    } else {
+                        failedToLoad = true;
+                    }
+                }
+            }
+        }
     }
+
+    if(failedToLoad){
+        MessageView::instance()->putln(
+            MessageView::WARNING, format(_("Reloading material table \"%1%\" failed.")) % materialTableFile);
+    }
+
+    return materialTable;
 }
 
-        
+
 Item* WorldItem::doDuplicate() const
 {
     return new WorldItem(*this);

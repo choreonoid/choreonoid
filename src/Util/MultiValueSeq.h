@@ -33,7 +33,7 @@ public:
 
 protected:
     virtual bool doReadSeq(const Mapping* archive, std::ostream& os) override;
-    virtual bool doWriteSeq(YAMLWriter& writer) override;
+    virtual bool doWriteSeq(YAMLWriter& writer, std::function<void()> writeAdditionalPart) override;
 };
 
 typedef MultiValueSeq::Ptr MultiValueSeqPtr;        

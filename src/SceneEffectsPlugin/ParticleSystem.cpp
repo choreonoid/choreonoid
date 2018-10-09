@@ -13,6 +13,7 @@ using namespace cnoid;
 
 ParticleSystem::ParticleSystem()
 {
+    on_ = true;
     offsetTime_ = 0.0f;
     lifeTime_ = 3.0f;
     particleSize_ = 0.1f;
@@ -24,6 +25,7 @@ ParticleSystem::ParticleSystem()
 
 ParticleSystem::ParticleSystem(const ParticleSystem& org)
 {
+    on_ = org.on_;
     offsetTime_ = org.offsetTime_;
     lifeTime_ = org.lifeTime_;
     particleSize_ = org.particleSize_;

@@ -21,11 +21,24 @@ const float PI = 3.14159265358979323846f;
 typedef array<int, 3> FaceId;
 
 template<class Triangle>
-FaceId getFaceId(Triangle& triangle)
+FaceId getOverlappingFaceId(Triangle& triangle)
 {
     FaceId id = { triangle[0], triangle[1], triangle[2] };
     std::sort(id.begin(), id.end());
     return id;
+}
+
+template<class Triangle>
+FaceId getExactFaceId(Triangle& triangle)
+{
+    if(triangle[0] < triangle[1]){
+        if(triangle[0] < triangle[2]){
+            return FaceId{triangle[0], triangle[1], triangle[2]};
+        }
+    } else if(triangle[1] < triangle[2]){
+        return FaceId{triangle[1], triangle[2], triangle[0]};
+    }
+    return FaceId{triangle[2], triangle[0], triangle[1]};
 }
 
 struct EdgeId : public IdPair<int>
@@ -104,8 +117,8 @@ public:
     MeshFilterImpl(const MeshFilterImpl& org);
     void forAllMeshes(SgNode* node, function<void(SgMesh* mesh)> callback);
     void removeRedundantVertices(SgMesh* mesh);
-    void removeRedundantFaces(SgMesh* mesh);
-    void removeNormalIndicesOfRedundantFaces(SgMesh* mesh, const vector<bool>& uniqueFaceFlags);
+    void removeRedundantFaces(SgMesh* mesh, int reductionMode);
+    void removeNormalIndicesOfRedundantFaces(SgMesh* mesh, const vector<int>& validFaceIndices);
     void removeRedundantNormals(SgMesh* mesh);
     void calculateFaceNormals(SgMesh* mesh, bool ignoreZeroNormals);
     void makeFacesOfVertexMap(SgMesh* mesh, bool removeSameNormalFaces = false);
@@ -272,19 +285,23 @@ void MeshFilterImpl::removeRedundantVertices(SgMesh* mesh)
 }
 
 
-void MeshFilter::removeRedundantFaces(SgNode* scene)
+void MeshFilter::removeRedundantFaces(SgNode* scene, int reductionMode)
 {
-    impl->forAllMeshes(scene, [&](SgMesh* mesh){ impl->removeRedundantFaces(mesh); });
+    impl->forAllMeshes(
+        scene,
+        [&, reductionMode](SgMesh* mesh){
+            impl->removeRedundantFaces(mesh, reductionMode);
+        });
 }
 
 
-void MeshFilter::removeRedundantFaces(SgMesh* mesh)
+void MeshFilter::removeRedundantFaces(SgMesh* mesh, int reductionMode)
 {
-    impl->removeRedundantFaces(mesh);
+    impl->removeRedundantFaces(mesh, reductionMode);
 }
 
 
-void MeshFilterImpl::removeRedundantFaces(SgMesh* mesh)
+void MeshFilterImpl::removeRedundantFaces(SgMesh* mesh, int reductionMode)
 {
     const int numOrgTriangles = mesh->numTriangles();
     if(numOrgTriangles == 0){
@@ -292,47 +309,76 @@ void MeshFilterImpl::removeRedundantFaces(SgMesh* mesh)
     }
 
     SgIndexArray orgTriangles = mesh->triangleVertices();
-    unordered_set<FaceId> existingFaces;
-    existingFaces.reserve(numOrgTriangles);
     auto& triangles = mesh->triangleVertices();
     triangles.clear();
 
-    vector<bool> uniqueFaceFlags;
+    vector<int> validFaceIndices;
+    bool checkValidFaceIndices;
     if(mesh->hasNormals() || mesh->hasColors() || mesh->hasTexCoords()){
-        uniqueFaceFlags.resize(numOrgTriangles);
+        checkValidFaceIndices = true;
+        validFaceIndices.reserve(numOrgTriangles);
     }
 
-    for(int i=0; i < numOrgTriangles; ++i){
-        SgMesh::ConstTriangleRef triangle(&orgTriangles[i*3]);
-        bool inserted = existingFaces.insert(getFaceId(triangle)).second;
-        if(inserted){
-            mesh->newTriangle() = triangle;
+    if(reductionMode != MeshFilter::KEEP_LAST_OVERLAPPING_FACES){
+        unordered_set<FaceId> existingFaces;
+        existingFaces.reserve(numOrgTriangles);
+        for(int i=0; i < numOrgTriangles; ++i){
+            SgMesh::ConstTriangleRef triangle(&orgTriangles[i*3]);
+            FaceId id;
+            if(reductionMode == MeshFilter::KEEP_OVERLAPPING_FACES_WTIH_DIFFERENT_DIRECTIONS){
+                id = getExactFaceId(triangle);
+            } else {
+                id = getOverlappingFaceId(triangle);
+            }
+            bool inserted = existingFaces.insert(id).second;
+            if(inserted){
+                mesh->newTriangle() = triangle;
+                if(checkValidFaceIndices){
+                    validFaceIndices.push_back(i);
+                }
+            }
         }
-        if(!uniqueFaceFlags.empty()){
-            uniqueFaceFlags[i] = inserted;
+    } else {
+        unordered_map<FaceId, int> existingFaceMap;
+        existingFaceMap.reserve(numOrgTriangles);
+        for(int i=0; i < numOrgTriangles; ++i){
+            SgMesh::ConstTriangleRef triangle(&orgTriangles[i*3]);
+            FaceId id = getOverlappingFaceId(triangle);
+            int faceIndex = mesh->numTriangles();
+            auto inserted = existingFaceMap.insert(make_pair(id, faceIndex));
+            if(inserted.second){
+                mesh->newTriangle() = triangle;
+                if(checkValidFaceIndices){
+                    validFaceIndices.push_back(i);
+                }
+            } else {
+                faceIndex = inserted.first->second;
+                mesh->triangle(faceIndex) = triangle;
+                if(checkValidFaceIndices){
+                    validFaceIndices[faceIndex] = i;
+                }
+            }
         }
     }
 
     if(mesh->hasNormals()){
-        removeNormalIndicesOfRedundantFaces(mesh, uniqueFaceFlags);
+        removeNormalIndicesOfRedundantFaces(mesh, validFaceIndices);
     }
 }
 
 
-void MeshFilterImpl::removeNormalIndicesOfRedundantFaces(SgMesh* mesh, const vector<bool>& uniqueFaceFlags)
+void MeshFilterImpl::removeNormalIndicesOfRedundantFaces(SgMesh* mesh, const vector<int>& validFaceIndices)
 {
     auto& normalIndices = mesh->normalIndices();
     if(!normalIndices.empty()){
         const SgIndexArray orgNormalIndices = normalIndices;
-        const int numOrgFaces = orgNormalIndices.size() / 3;
         normalIndices.clear();
-        for(size_t i=0; i < numOrgFaces; ++i){
-            if(uniqueFaceFlags[i]){
-                int top = i*3;
-                normalIndices.push_back(orgNormalIndices[top    ]);
-                normalIndices.push_back(orgNormalIndices[top + 1]);
-                normalIndices.push_back(orgNormalIndices[top + 2]);
-            }
+        for(size_t i=0; i < validFaceIndices.size(); ++i){
+            int orgFaceIndex = validFaceIndices[i];
+            int top = orgFaceIndex * 3;
+            normalIndices.push_back(orgNormalIndices[top    ]);
+            normalIndices.push_back(orgNormalIndices[top + 1]);
+            normalIndices.push_back(orgNormalIndices[top + 2]);
         }
         normalIndices.shrink_to_fit();
     }

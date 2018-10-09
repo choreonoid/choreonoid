@@ -16,6 +16,7 @@
 #include "MainWindow.h"
 #include "RootItem.h"
 #include "FolderItem.h"
+#include "SubProjectItem.h"
 #include "ExtCommandItem.h"
 #include "SceneItem.h"
 #include "PointSetItem.h"
@@ -65,7 +66,6 @@
 #include "gettext.h"
 
 using namespace cnoid;
-using namespace std::placeholders;
 
 namespace {
 
@@ -76,23 +76,22 @@ Signal<void()> sigAboutToQuit_;
 
 void onCtrl_C_Input(int)
 {
-    callLater(std::bind(&MainWindow::close, MainWindow::instance()));
+    callLater([](){ MainWindow::instance()->close(); });
 }
 
 #ifdef Q_OS_WIN32
 BOOL WINAPI consoleCtrlHandler(DWORD ctrlChar)
 {
-    callLater(std::bind(&MainWindow::close, MainWindow::instance()));
+    callLater([](){ MainWindow::instance()->close(); });
     return FALSE;
 }
 #endif
 
 }
 
-
 namespace cnoid {
 
-class AppImpl
+class AppImpl : public AppImplBase
 {
     App* self;
     QApplication* qapplication;
@@ -113,6 +112,7 @@ class AppImpl
     void onSigOptionsParsed(boost::program_options::variables_map& v);
     void showInformationDialog();
     void onOpenGLVSyncToggled(bool on);
+    virtual bool eventFilter(QObject* watched, QEvent* event);
 
     friend class App;
     friend class View;
@@ -126,7 +126,7 @@ App::App(int& argc, char**& argv)
     impl = new AppImpl(this, argc, argv);
 }
 
-#include <iostream>
+
 AppImpl::AppImpl(App* self, int& argc, char**& argv)
     : self(self),
       argc(argc),
@@ -148,8 +148,8 @@ AppImpl::AppImpl(App* self, int& argc, char**& argv)
 
     qapplication = new QApplication(argc, argv);
 
-    self->connect(qapplication, SIGNAL(focusChanged(QWidget*, QWidget*)),
-                  self, SLOT(onFocusChanged(QWidget*, QWidget*)));
+    connect(qapplication, SIGNAL(focusChanged(QWidget*, QWidget*)),
+            this, SLOT(onFocusChanged(QWidget*, QWidget*)));
 }
 
 
@@ -197,7 +197,7 @@ void AppImpl::initialize( const char* appName, const char* vendorName, const QIc
     
     MessageView::initializeClass(ext);
     RootItem::initializeClass(ext);
-    ProjectManager::initialize(ext);
+    ProjectManager::initializeClass(ext);
 
     FileBar::initialize(ext);
     ScriptBar::initialize(ext);
@@ -218,6 +218,7 @@ void AppImpl::initialize( const char* appName, const char* vendorName, const QIc
     TimeSyncItemEngineManager::initialize();
     
     FolderItem::initializeClass(ext);
+    SubProjectItem::initializeClass(ext);
     ExtCommandItem::initializeClass(ext);
     MultiValueSeqItem::initializeClass(ext);
     MultiSE3SeqItem::initializeClass(ext);
@@ -235,21 +236,22 @@ void AppImpl::initialize( const char* appName, const char* vendorName, const QIc
     PathVariableEditor::initialize(ext);
     
     ext->menuManager().setPath("/Help").addItem(_("About Choreonoid"))
-        ->sigTriggered().connect(std::bind(&AppImpl::showInformationDialog, this));
+        ->sigTriggered().connect([&](){ showInformationDialog(); });
 
     // OpenGL settings
     Action* vsyncItem = ext->menuManager().setPath("/Options/OpenGL").addCheckItem(_("Vertical Sync"));
     vsyncItem->setChecked(glfmt.swapInterval() > 0);
-    vsyncItem->sigToggled().connect(std::bind(&AppImpl::onOpenGLVSyncToggled, this, _1));
+    vsyncItem->sigToggled().connect([&](bool on){ onOpenGLVSyncToggled(on); });
 
     PluginManager::initialize(ext);
     PluginManager::instance()->doStartupLoading(pluginPathList);
 
-    mainWindow->installEventFilter(self);
+    mainWindow->installEventFilter(this);
 
     OptionManager& om = ext->optionManager();
     om.addOption("quit", "quit the application just after it is invoked");
-    om.sigOptionsParsed().connect(std::bind(&AppImpl::onSigOptionsParsed, this, _1));
+    om.sigOptionsParsed().connect(
+        [&](boost::program_options::variables_map& v){ onSigOptionsParsed(v); });
 
     // Some plugins such as OpenRTM plugin are driven by a library which tries to catch SIGINT.
     // This may block the normal termination by inputting Ctrl+C.
@@ -327,8 +329,10 @@ int AppImpl::exec()
         result = qapplication->exec();
     }
 
-    for(Item* item = RootItem::instance()->childItem(); item; item = item->nextItem()){
+    for(Item* item = RootItem::instance()->childItem(); item; ){
+        Item* next = item->nextItem(); // detachFromParentItem() may deallocate item
         item->detachFromParentItem();
+        item = next;
     }
 
     PluginManager::finalize();
@@ -340,10 +344,10 @@ int AppImpl::exec()
 }
 
 
-bool App::eventFilter(QObject* watched, QEvent* event)
+bool AppImpl::eventFilter(QObject* watched, QEvent* event)
 {
-    if(watched == impl->mainWindow && event->type() == QEvent::Close){
-        impl->onMainWindowCloseEvent();
+    if(watched == mainWindow && event->type() == QEvent::Close){
+        onMainWindowCloseEvent();
         event->accept();
         return true;
     }
@@ -410,7 +414,7 @@ void AppImpl::onOpenGLVSyncToggled(bool on)
 }
 
 
-void App::onFocusChanged(QWidget* /* old */, QWidget* now)
+void AppImplBase::onFocusChanged(QWidget* /* old */, QWidget* now)
 {
     while(now){
         View* view = dynamic_cast<View*>(now);

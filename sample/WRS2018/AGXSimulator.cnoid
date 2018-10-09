@@ -19,7 +19,7 @@ items:
         deviceStateOutput: true
         controllerThreads: true
         recordCollisionData: false
-        controllerOptions: "velocity"
+        controllerOptions: "position"
         Gravity: [ 0, 0, -9.80665 ]
         NumThreads: 4
         ContactReduction: true
@@ -33,7 +33,6 @@ views:
     id: 1
     plugin: Base
     class: ItemTreeView
-    mounted: true
     state: 
       selected: [ 1 ]
       expanded: [ 1 ]

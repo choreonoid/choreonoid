@@ -19,22 +19,24 @@ class ProjectManagerImpl;
 class CNOID_EXPORT ProjectManager
 {
 public:
+    static void initializeClass(ExtensionManager* ext);
     static ProjectManager* instance();
-        
+    static bool isProjectBeingLoaded();
+
+    //The constructor used to create a sub instance for recursive loading / saving
+    ProjectManager();
+    
     ~ProjectManager();
     
     ItemList<> loadProject(const std::string& filename, Item* parentItem = nullptr);
-    void saveProject(const std::string& filename);
+    void saveProject(const std::string& filename, Item* item = nullptr);
     void overwriteCurrentProject();
     std::string currentProjectFile() const;
     std::string currentProjectDirectory() const;
-    bool isLoadingProject() const;
     void setCurrentProjectName(const std::string& filename);
 
-    static void initialize(ExtensionManager* em);
-
 private:
-    ProjectManager(ExtensionManager* em);
+    ProjectManager(ExtensionManager* ext);
 
     ProjectManagerImpl* impl;
 
@@ -53,3 +55,4 @@ private:
 }
 
 #endif
+

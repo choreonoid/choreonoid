@@ -80,6 +80,7 @@ public:
     
     template<typename T> T info(const std::string& key) const;
     template<typename T> T info(const std::string& key, const T& defaultValue) const;
+    template<typename T> T getOrCreateInfo(const std::string& key, const T& defaultValue);
     template<typename T> void setInfo(const std::string& key, const T& value);
 
     void resetInfo(Mapping* info);
@@ -97,6 +98,8 @@ private:
 template<> CNOID_EXPORT double YAMLWriter::info(const std::string& key) const;
 template<> CNOID_EXPORT double YAMLWriter::info(const std::string& key, const double& defaultValue) const;
 template<> CNOID_EXPORT bool YAMLWriter::info(const std::string& key, const bool& defaultValue) const;
+template<> CNOID_EXPORT double YAMLWriter::getOrCreateInfo(const std::string& key, const double& defaultValue);
+template<> CNOID_EXPORT bool YAMLWriter::getOrCreateInfo(const std::string& key, const bool& defaultValue);
 template<> CNOID_EXPORT void YAMLWriter::setInfo(const std::string& key, const double& value);
 template<> CNOID_EXPORT void YAMLWriter::setInfo(const std::string& key, const bool& value);
 

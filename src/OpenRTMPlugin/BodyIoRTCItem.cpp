@@ -21,23 +21,28 @@ class BodyIoRTCItemImpl : public ControllerIO
 {
 public:
     BodyIoRTCItem* self;
-    BodyItem* bodyItem = 0;
-    BodyIoRTC* bodyIoRTC = 0;
+    BodyItem* bodyItem;
+    BodyIoRTC* bodyIoRTC;
+    ControllerIO* io;
     MessageView* mv;
-    
+
     BodyIoRTCItemImpl(BodyIoRTCItem* self);
     BodyIoRTCItemImpl(BodyIoRTCItem* self, const BodyIoRTCItemImpl& org);
     void setBodyItem(BodyItem* newBodyItem, bool forceReset);
     bool createBodyIoRTC();
 
     // Virtual functions of ControllerIO
-    virtual Body* body();
-    virtual std::string optionString() const;
-    virtual std::ostream& os() const;
+    virtual Body* body() override;
+    virtual std::string optionString() const override;
+    virtual std::ostream& os() const override;
+    virtual double timeStep() const override;
+    virtual double currentTime() const override;
+    virtual bool isNoDelayMode() const override;
+    virtual bool setNoDelayMode(bool on) override;
+    
 };
 
 }
-
 
 void BodyIoRTCItem::initialize(ExtensionManager* ext)
 {
@@ -61,7 +66,9 @@ BodyIoRTCItemImpl::BodyIoRTCItemImpl(BodyIoRTCItem* self)
     : self(self),
       mv(MessageView::instance())
 {
-
+    bodyItem = nullptr;
+    bodyIoRTC = nullptr;
+    io = nullptr;
 }
 
 
@@ -98,6 +105,13 @@ void BodyIoRTCItem::onPositionChanged()
 }
 
 
+void BodyIoRTCItem::onOptionsChanged()
+{
+    // Recreate RTC with new options
+    impl->createBodyIoRTC();
+}
+
+
 void BodyIoRTCItemImpl::setBodyItem(BodyItem* newBodyItem, bool forceReset)
 {
     if(newBodyItem != bodyItem || forceReset){
@@ -115,7 +129,9 @@ std::string BodyIoRTCItem::getDefaultRTCInstanceName() const
 
 Body* BodyIoRTCItemImpl::body()
 {
-    if(bodyItem){
+    if(io){
+        return io->body();
+    } else if(bodyItem){
         return bodyItem->body();
     }
     return nullptr;
@@ -124,6 +140,9 @@ Body* BodyIoRTCItemImpl::body()
 
 std::string BodyIoRTCItemImpl::optionString() const
 {
+    if(io){
+        return getIntegratedOptionString(io->optionString(), self->optionString());
+    }
     return self->optionString();
 }
 
@@ -133,6 +152,30 @@ std::ostream& BodyIoRTCItemImpl::os() const
     return mv->cout();
 }
 
+
+double BodyIoRTCItemImpl::timeStep() const
+{
+    return io ? io->timeStep() : 0.0;
+}
+        
+
+double BodyIoRTCItemImpl::currentTime() const
+{
+    return io ? io->currentTime() : 0.0;
+}
+        
+
+bool BodyIoRTCItemImpl::isNoDelayMode() const
+{
+    return self->isNoDelayMode();
+}
+        
+
+bool BodyIoRTCItemImpl::setNoDelayMode(bool on)
+{
+    return self->setNoDelayMode(on);
+}
+        
 
 bool BodyIoRTCItem::createRTC()
 {
@@ -192,7 +235,8 @@ void BodyIoRTCItem::deleteRTC(bool waitToBeDeleted)
 bool BodyIoRTCItem::initialize(ControllerIO* io)
 {
     if(impl->bodyIoRTC){
-        return impl->bodyIoRTC->initializeSimulation(io);
+        impl->io = io;
+        return impl->bodyIoRTC->initializeSimulation(impl);
     }
     return false;
 }
@@ -228,4 +272,5 @@ void BodyIoRTCItem::stop()
 {
     impl->bodyIoRTC->stopSimulation();
     ControllerRTCItem::stop();
+    impl->io = nullptr;
 }

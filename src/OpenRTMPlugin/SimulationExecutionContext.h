@@ -10,17 +10,16 @@
 #include <rtm/Manager.h>
 
 #if defined(OPENRTM_VERSION11)
- #include <rtm/PeriodicExecutionContext.h>
-#else
- #include <rtm/OpenHRPExecutionContext.h>
+#include <rtm/PeriodicExecutionContext.h>
+#elif defined(OPENRTM_VERSION12)
+#include <rtm/OpenHRPExecutionContext.h>
 #endif
 
 #ifdef WIN32
 #pragma warning( disable : 4290 )
 #endif
 
-namespace cnoid
-{
+namespace cnoid {
 /*!
   To call 'tick()' when the 'deactivate_component" function is called,
   OpenHRPExecutionContext is redefined as this class in the OpenRTM plugin.
@@ -28,7 +27,7 @@ namespace cnoid
 */
 #ifdef OPENRTM_VERSION11
 class SimulationExecutionContext : public virtual RTC::PeriodicExecutionContext
-#else
+#elif defined(OPENRTM_VERSION12)
 class SimulationExecutionContext : public RTC::OpenHRPExecutionContext
 #endif
 {

@@ -631,6 +631,9 @@ void Mapping::insert(const std::string& key, ValueNode* node)
     if(!isValid()){
         throwNotMappingException();
     }
+    if(!node){
+        throwException(_("A node to insert into a Mapping is a null node"));
+    }
     const string uKey(key);
     insertSub(uKey, node);
 }

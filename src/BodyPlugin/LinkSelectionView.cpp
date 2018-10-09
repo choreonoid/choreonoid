@@ -11,7 +11,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 
 namespace {
@@ -70,7 +69,7 @@ LinkSelectionViewImpl::LinkSelectionViewImpl(LinkSelectionView* self)
 
     currentBodyItemChangeConnection =
         BodyBar::instance()->sigCurrentBodyItemChanged().connect(
-            std::bind(&LinkTreeWidget::setBodyItem, &linkTreeWidget, _1));
+            [&](BodyItem* bodyItem){ linkTreeWidget.setBodyItem(bodyItem); });
 }
 
 

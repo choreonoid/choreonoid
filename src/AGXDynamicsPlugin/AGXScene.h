@@ -18,6 +18,7 @@ public:
     AGXScene(const AGXSceneDesc& desc);
     static AGXScene* create(const AGXSceneDesc& desc);
     void clear();
+    void setMainWorkThread();
     void stepSimulation();
     agxSDK::SimulationRef getSimulation() const;
     agx::Bool add(agx::RigidBody* const rigid);

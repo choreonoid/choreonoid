@@ -670,4 +670,36 @@ msgstr "コンテキストの追加に失敗しました"
 msgid "Failed to add object."
 msgstr "オブジェクトの追加に失敗しました"
 
+#: RTSystemItem.cpp:987
+msgid "State Check"
+msgstr "状態検知方法"
+
+#: RTSDiagramView.cpp:943
+msgid "Update"
+msgstr "状態更新"
+
+#: RTSDiagramView.cpp:1711
+msgid "Setting:"
+msgstr "設定ファイル:"
+
+#: RTSDiagramView.cpp:1829
+msgid "The specified setting becomes valid after RESTART."
+msgstr "指定した設定は再起動後に有効となります"
+
+#: RTSDiagramView.cpp:1829
+msgid "Kill All Zombies"
+msgstr "ゾンビをクリア"
+
+#: RTSDiagramView.cpp:1829
+msgid "Add Name Server"
+msgstr "ネームサーバを追加"
+
+#: RTSDiagramView.cpp:1829
+msgid "Name server set in OpenRTM"
+msgstr "OpenRTMで設定されているネームサーバ"
+
+#: RTSystemItem.cpp:1020
+msgid "CheckAtLoading"
+msgstr "読込時に状態チェック"
+
 

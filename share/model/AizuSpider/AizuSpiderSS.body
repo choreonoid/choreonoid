@@ -27,3 +27,37 @@ standardPose: [
   # Arm 1
   -90, 151, 27, -93, 6, 100, 0, 0, 0
   ]
+
+# TODO: Share the following information with other AizuSpider models
+collisionDetection:
+  excludeTreeDepth: 1
+  excludeLinkGroups:
+    -
+      name: ChassisGroup
+      links: [
+        CHASSIS, R_TRACK, L_TRACK,
+        FR_FLIPPER, FL_FLIPPER, BR_FLIPPER, BL_FLIPPER,
+        BASE, SHOULDER ]
+    -
+      name: FrontSubTrackGroup
+      links: [
+        CHASSIS, R_TRACK, L_TRACK,
+        FR_FLIPPER, FL_FLIPPER, BR_FLIPPER, BL_FLIPPER,
+        FR_SUB_TRACK, FL_SUB_TRACK,
+        BASE, SHOULDER ]
+    -
+      name: BackSubTrackGroup
+      links: [
+        CHASSIS, R_TRACK, L_TRACK,
+        FR_FLIPPER, FL_FLIPPER, BR_FLIPPER, BL_FLIPPER,
+        BR_SUB_TRACK, BL_SUB_TRACK,
+        BASE, SHOULDER ]
+    -
+      name: ArmGroup
+      links: [ BASE, ARM ]
+    -
+      name: ForeArmGroup
+      links: [ FOREARM, WRIST1, WRIST2, HAND ]
+    -
+      name: FingerGroup
+      links: [ FINGER1, FINGER2, FINGER3 ]

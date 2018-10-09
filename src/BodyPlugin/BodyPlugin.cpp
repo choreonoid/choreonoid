@@ -15,6 +15,7 @@
 #include "WorldLogFileItem.h"
 #include "SensorVisualizerItem.h"
 #include "BodyTrackingCameraItem.h"
+#include "BodyMarkerItem.h"
 #include "KinematicFaultChecker.h"
 #include "SplineFilterDialog.h"
 #include "BodyBar.h"
@@ -77,6 +78,7 @@ public:
         WorldLogFileItem::initializeClass(this);
         SensorVisualizerItem::initializeClass(this);
         BodyTrackingCameraItem::initializeClass(this);
+        BodyMarkerItem::initializeClass(this);
 
         BodyMotionEngine::initialize(this);
         CollisionSeqEngine::initialize(this);

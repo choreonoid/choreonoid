@@ -43,7 +43,7 @@ items:
               plugin: SimpleController
               class: SimpleControllerItem
               data: 
-                isImmediateMode: true
+                isNoDelayMode: false
                 controller: "SampleCrawlerJoystickController"
                 reloading: true
                 inputLinkPositions: false

@@ -168,14 +168,14 @@ void BodyTrackingCameraItem::initializeClass(ExtensionManager* ext)
 
 BodyTrackingCameraItem::BodyTrackingCameraItem()
 {
-    impl = new BodyTrackingCameraItemImpl();
+    impl = new BodyTrackingCameraItemImpl;
 }
 
 
 BodyTrackingCameraItem::BodyTrackingCameraItem(const BodyTrackingCameraItem& org)
     : Item(org)
 {
-    impl = new BodyTrackingCameraItemImpl();
+    impl = new BodyTrackingCameraItemImpl(*org.impl);
     setName(org.name());
 }
 
@@ -204,6 +204,12 @@ BodyTrackingCameraItemImpl::BodyTrackingCameraItemImpl(const BodyTrackingCameraI
 {
     cameraType = org.cameraType;
     cameraTransform->targetLinkName = org.cameraTransform->targetLinkName;
+}
+
+
+BodyTrackingCameraItem::~BodyTrackingCameraItem()
+{
+    delete impl;
 }
 
 

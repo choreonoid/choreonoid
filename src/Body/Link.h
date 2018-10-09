@@ -45,6 +45,8 @@ public:
         
     virtual ~Link();
 
+    virtual void initializeState();
+
     const std::string& name() const { return name_; }
 
     int index() const { return index_; }
@@ -184,6 +186,11 @@ public:
     double u() const { return u_; }
     double& u() { return u_; }
 
+    double q_target() const { return q_target_; }  ///< the target position of the joint displacement
+    double& q_target() { return q_target_; }       ///< the target position of the joint displacement
+    double dq_target() const { return dq_target_; } ///< the target velocity of the joint displacement
+    double& dq_target() { return dq_target_; }      ///< the target velocity of the joint displacement
+
     double q_initial() const { return q_initial_; }
     double q_upper() const { return q_upper_; }  ///< the upper limit of joint values
     double q_lower() const { return q_lower_; }  ///< the lower limit of joint values
@@ -222,6 +229,11 @@ public:
     Vector6::ConstFixedSegmentReturnType<3>::Type tau_ext() const { return F_ext_.tail<3>(); }
     Vector6::FixedSegmentReturnType<3>::Type tau_ext() { return F_ext_.tail<3>(); }
 
+    void addExternalForce(const Vector3& f_global, const Vector3& p_local){
+        f_ext() += f_global;
+        tau_ext() += (T_ * p_local).cross(f_global);
+    }
+    
     int materialId() const { return materialId_; }
     std::string materialName() const;
     
@@ -236,6 +248,7 @@ public:
 
     virtual void prependChild(Link* link);
     virtual void appendChild(Link* link);
+    bool isOwnerOf(const Link* link) const;
     bool removeChild(Link* link);
 
     void setOffsetPosition(const Position& T){
@@ -323,6 +336,8 @@ private:
     double dq_;
     double ddq_;
     double u_;
+    double q_target_;
+    double dq_target_;
     Vector3 v_;
     Vector3 w_;
     Vector3 dv_;

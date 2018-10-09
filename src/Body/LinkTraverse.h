@@ -17,6 +17,9 @@ class Link;
 class CNOID_EXPORT LinkTraverse
 {
 public:
+    typedef std::vector<Link*>::iterator iterator;
+    typedef std::vector<Link*>::const_iterator const_iterator;
+    
     LinkTraverse();
     LinkTraverse(int size);
     LinkTraverse(Link* root, bool doUpward = false, bool doDownward = true);
@@ -54,11 +57,19 @@ public:
         return links[index];
     }
     
-    std::vector<Link*>::const_iterator begin() const {
+    iterator begin() {
         return links.begin();
     }
 
-    std::vector<Link*>::const_iterator end() const {
+    iterator end() {
+        return links.end();
+    }
+
+    const_iterator begin() const {
+        return links.begin();
+    }
+
+    const_iterator end() const {
         return links.end();
     }
 	

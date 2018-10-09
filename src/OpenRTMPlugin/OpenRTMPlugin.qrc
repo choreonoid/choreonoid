@@ -12,6 +12,10 @@
   <file>icons/Folder.png</file>
   <file>icons/NSRTC.png</file>
   <file>icons/NSZombi.png</file>
+  <file>icons/RTCManager.png</file>
+  <file>icons/Refresh.png</file>
+  <file>icons/KillZombie.png</file>
+  <file>icons/Connect.png</file>
 
 </qresource>
 

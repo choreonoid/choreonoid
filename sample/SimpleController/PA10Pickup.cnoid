@@ -45,7 +45,7 @@ items:
               plugin: SimpleController
               class: SimpleControllerItem
               data: 
-                isImmediateMode: true
+                isNoDelayMode: false
                 controller: "PA10PickupController"
                 reloading: true
                 inputLinkPositions: false

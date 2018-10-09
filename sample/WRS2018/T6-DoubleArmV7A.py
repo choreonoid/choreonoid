@@ -1,2 +1,3 @@
 import WRSUtil
-WRSUtil.loadProject("T6", "AGXSimulator", "DoubleArmV7A")
+WRSUtil.loadProject(
+    "MultiSceneViews", "T6", "AGXSimulator", "DoubleArmV7A")

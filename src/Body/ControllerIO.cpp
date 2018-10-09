@@ -22,6 +22,19 @@ std::string ControllerIO::optionString() const
 }
 
 
+std::string ControllerIO::getIntegratedOptionString(const std::string& opt1, const std::string& opt2) const
+{
+    if(!opt1.empty()){
+        if(opt2.empty()){
+            return opt1;
+        } else {
+            return opt1 + " " + opt2;
+        }
+    }
+    return opt2;
+}
+
+
 std::vector<std::string> ControllerIO::options() const
 {
     typedef boost::escaped_list_separator<char> separator;

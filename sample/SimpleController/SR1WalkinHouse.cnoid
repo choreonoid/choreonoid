@@ -52,7 +52,7 @@ items:
               plugin: SimpleController
               class: SimpleControllerItem
               data: 
-                isImmediateMode: true
+                isNoDelayMode: false
                 controllerOptions: ""
                 controller: "SR1WalkGraspController"
                 reloading: true

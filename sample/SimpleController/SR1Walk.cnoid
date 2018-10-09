@@ -53,7 +53,7 @@ items:
               plugin: SimpleController
               class: SimpleControllerItem
               data: 
-                isImmediateMode: true
+                isNoDelayMode: false
                 controller: "SR1WalkPatternController"
                 reloading: true
                 inputLinkPositions: false

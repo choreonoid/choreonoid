@@ -49,12 +49,13 @@ public:
     */
     void setPoints(std::shared_ptr<PointData>& points);
 
+    void clearPoints();
+
 private:
     std::shared_ptr< std::vector<Vector3f> > points_;
     bool isOrganized_;
     bool isDense_;
 
-    RangeCamera(const RangeCamera& org, int x);
     void copyRangeCameraStateFrom(const RangeCamera& other);    
 };
 
