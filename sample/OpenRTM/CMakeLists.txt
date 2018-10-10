@@ -85,6 +85,7 @@ endif()
 # Teleoperation samples
 list(APPEND project_files
   OpenRTM-AizuSpiderSS-Remote.cnoid
-  OpenRTM-AizuSpider-Terminal.cnoid)
+  OpenRTM-AizuSpider-Terminal.cnoid
+  OpenRTM-DoubleArmV7-Terminal.cnoid)
 
 install(FILES ${project_files} DESTINATION ${CNOID_SHARE_SUBDIR}/project)

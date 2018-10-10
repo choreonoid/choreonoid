@@ -1,4 +1,4 @@
 import WRSUtil
 WRSUtil.loadProject(
-    "SingleSceneView", "SP", "AISTSimulator", "DoubleArmV7S",
+    "SingleSceneView", "SP1", "AISTSimulator", "AizuSpiderSS",
     enableVisionSimulation = True, remoteType = "ROS")

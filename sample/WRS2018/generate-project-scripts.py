@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-tasks = [ "T1", "T2", "T3", "T4", "T5", "T6", "SP" ]
+tasks = [ "T1", "T2", "T3", "T4", "T5", "T6", "SP1" ]
 robots = [ "AizuSpiderSS", "AizuSpiderSA", "DoubleArmV7S", "DoubleArmV7A", "WAREC1", "Quadcopter" ]
 interfaces = [ "", "RTM", "ROS" ]
 
