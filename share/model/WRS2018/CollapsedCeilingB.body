@@ -1,6 +1,6 @@
 format: ChoreonoidBody
 formatVersion: 1.0
-name: CollapsedCeiling5
+name: CollapsedCeilingB
 
 links:
   -
@@ -16,7 +16,7 @@ links:
       Shape:
         geometry:
           type: Box
-          size: [ 5, 1.2, 0.09 ]
+          size: [ 3.5, 1.2, 0.09 ]
         appearance:
           material:
             diffuseColor: [ 1, 1, 1 ]

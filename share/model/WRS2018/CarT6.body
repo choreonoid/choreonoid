@@ -12,30 +12,6 @@ links:
     name: BODY
     jointType: fixed
     elements:
-      # -
-      #   # Visualization of the door lock position for FR_DOOR
-      #   type: Shape
-      #   translation: [ -0.4, -0.75, 0.73 ]
-      #   geometry: { type: Sphere, radius: 0.025 }
-      #   appearance: { material: { diffuseColor: [ 1, 1, 0 ] } }
-      # -
-      #   # Visualization of the door lock position for FL_DOOR
-      #   type: Shape
-      #   translation: [ -0.4, 0.75, 0.73 ]
-      #   geometry: { type: Sphere, radius: 0.025 }
-      #   appearance: { material: { diffuseColor: [ 1, 1, 0 ] } }
-      # -
-      #   # Visualization of the door lock position for BR_DOOR
-      #   type: Shape
-      #   translation: [ -1.39, -0.76, 0.89 ]
-      #   geometry: { type: Sphere, radius: 0.025 }
-      #   appearance: { material: { diffuseColor: [ 1, 1, 0 ] } }
-      # -
-      #   # Visualization of the door lock position for BL_DOOR
-      #   type: Shape
-      #   translation: [ -1.39, 0.76, 0.89 ]
-      #   geometry: { type: Sphere, radius: 0.025 }
-      #   appearance: { material: { diffuseColor: [ 1, 1, 0 ] } }
       -
         type: Visual
         resource: 
@@ -58,72 +34,36 @@ links:
     name: FR_DOOR
     parent: BODY
     translation: [ 0.875, -0.814, 0.328 ]
-    jointType: revolute
-    jointAxis: Z
-    jointId: 0
-    jointRange: [ 0, 70 ]
+    jointType: fixed
     centerOfMass: [ -0.7, 0.01, 0.38 ]
     mass: 15.0
     inertia: [ 1, 0, 0,
                0, 1, 0,
                0, 0, 1 ]
-    # For the friction for AGX
-    jointMotor: true
-    jointMotorCompliance: 0.02
     elements:
-      -
-        type: AGXBreakableJointDevice
-        isOptional: true
-        link1Name: BODY
-        link2Name: FR_DOOR
-        jointType: fixed
-        position: [ -0.4, -0.75, 0.73 ]
-        breakType: force
-        breakLimitForce: 30
-        validAxis: [ 0, 1, 0 ]
-        signedAxis: [ 0, -1, 0 ]
-        period: 0.5
       -
         type: Visual
         resource:
           rotation: [ 0, 0, 1, 90 ]
           translation: [ -1.14, 0, 0 ]
-          uri: "resource/RedCarDoorFR.wrl" 
+          uri: "resource/CarDoorFR-Body.wrl" 
       -
         type: Collision
         elements:
           <<: *PRIMITIVE_RESOURCE
-          node: CAR_DOOR_FR
+          node: CAR_DOOR_FR_BODY
           translation: [ -0.873, 0.8175, -0.3306 ]
   -
     name: FL_DOOR
     parent: BODY
     translation: [ 0.875, 0.814, 0.328 ]
-    jointType: revolute
-    jointAxis: Z
-    jointId: 1
-    jointRange: [ -70, 0 ]
+    jointType: fixed
     mass: 15.0
     centerOfMass: [ -0.7, -0.01, 0.38 ]
     inertia: [ 1, 0, 0,
                0, 1, 0,
                0, 0, 1 ]
-    # For the friction for AGX
-    jointMotor: true
-    jointMotorCompliance: 0.02
     elements:
-      -
-        type: AGXBreakableJointDevice
-        isOptional: true
-        link1Name: BODY
-        link2Name: FL_DOOR
-        jointType: fixed
-        position: [ -0.4, 0.75, 0.73 ]
-        breakType: force
-        breakLimitForce: 30
-        validAxis: [ 0, 1, 0 ]
-        signedAxis: [ 0, 1, 0 ]
-        period: 0.5
       -
         type: Visual
         resource:
@@ -139,31 +79,13 @@ links:
     name: BR_DOOR
     parent: BODY
     translation: [ -0.423, -0.814, 0.254 ]
-    jointType: revolute
-    jointAxis: Z
-    jointId: 2
-    jointRange: [ 0, 70 ]
+    jointType: fixed
     centerOfMass: [ -0.37, 0.01, 0.4 ]
     mass: 10.0
     inertia: [ 1, 0, 0,
                0, 1, 0,
                0, 0, 1 ]
-    # For the friction for AGX
-    jointMotor: true
-    jointMotorCompliance: 0.02
     elements:
-      - 
-        type: AGXBreakableJointDevice
-        isOptional: true
-        link1Name: BODY
-        link2Name: BR_DOOR
-        jointType: fixed
-        position: [ -1.39, -0.76, 0.89 ]
-        breakType: force
-        breakLimitForce: 30
-        validAxis: [ 0, 1, 0 ]
-        signedAxis: [ 0, -1, 0 ]
-        period: 0.5
       - 
         type: Visual
         resource:
@@ -183,31 +105,13 @@ links:
     name: BL_DOOR
     parent: BODY
     translation: [ -0.423, 0.814, 0.254 ]
-    jointType: revolute
-    jointAxis: Z
-    jointId: 3
-    jointRange: [ -70, 0 ]
+    jointType: fixed
     centerOfMass: [ -0.37, -0.01, 0.4 ]
     mass: 10.0
     inertia: [ 1, 0, 0,
                0, 1, 0,
                0, 0, 1 ]
-    # For the friction for AGX
-    jointMotor: true
-    jointMotorCompliance: 0.02
     elements:
-      - 
-        type: AGXBreakableJointDevice
-        isOptional: true
-        link1Name: BODY
-        link2Name: BL_DOOR
-        jointType: fixed
-        position: [ -1.39, 0.76, 0.89 ]
-        breakType: force
-        breakLimitForce: 30
-        validAxis: [ 0, 1, 0 ]
-        signedAxis: [ 0, 1, 0 ]
-        period: 0.5
       -
         type: Visual
         resource:

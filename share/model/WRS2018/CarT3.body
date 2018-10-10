@@ -34,7 +34,7 @@ links:
         resource: 
           rotation: [ 0, 0, 1, 90 ]
           translation: [ 2.3, -0.8755, 0 ]
-          uri: "resource/CarBody.wrl"
+          uri: "resource/RedCarBody.wrl"
       -
         type: Collision
         elements:
@@ -95,7 +95,7 @@ links:
         resource:
           rotation: [ 0, 0, 1, 90 ]
           translation: [ -1.14, 0, 0 ]
-          uri: "resource/CarDoorFR.wrl" 
+          uri: "resource/RedCarDoorFR.wrl" 
       -
         type: Collision
         elements:
@@ -193,7 +193,7 @@ links:
         resource:
           rotation: [ 0, 0, 1, 90 ]
           translation: [ -1.137, -0.1265, 0.004 ]
-          uri: "resource/CarDoorFL.wrl"
+          uri: "resource/RedCarDoorFL.wrl"
       - type: Collision
         elements:
           <<: *PRIMITIVE_RESOURCE
@@ -215,7 +215,7 @@ links:
         resource:
           rotation: [ 0, 0, 1, 90 ]
           translation: [ [ -0.492, 0.002, -0.003 ], [ -0.03, 0, 0 ] ]
-          uri: "resource/CarDoorBR.wrl"
+          uri: "resource/RedCarDoorBR.wrl"
       -
         type: Collision
         translation: [ [ -0.192, 0.002, -0.003 ], [ -0.055, 0, 0 ] ]
@@ -241,7 +241,7 @@ links:
         resource:
           rotation: [ 0, 0, 1, 90 ]
           translation: [ -0.5, -0.146, 0 ]
-          uri: "resource/CarDoorBL.wrl"
+          uri: "resource/RedCarDoorBL.wrl"
       -
         type: Collision
         translation: [ -0.197, -0.001, -0.0 ]

@@ -59,6 +59,8 @@ links:
     jointId: 0
     jointAxis: [ 0, 0, 1 ]
     jointRange: [ -0.05, 0.05 ]
+    jointMotorForceRange: [ -1000.0, 1000.0 ]
+    jointLockForceRange: [ -1000.0, 1000.0 ]
     mass: 15.0
     inertia: [
       0.5, 0,   0,

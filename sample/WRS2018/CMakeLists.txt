@@ -7,13 +7,9 @@ if(NOT BUILD_WRS2018_SAMPLES)
   return()
 endif()
 
-
 file(GLOB project_files "*.cnoid")
 file(GLOB project_script_files "T?-*.py")
 file(GLOB project_script_files "SP?-*.py")
-
-message(STATUS ${project_files} ${project_script_files})
-
 
 install(FILES
   ${project_files}
