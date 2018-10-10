@@ -1283,7 +1283,7 @@ msgstr "グローバル座標位置 = (%1$.3f %2$.3f %3$.3f)"
 
 #: SceneWidget.cpp:1453
 msgid "Object: %1%, Global Position: (%2$.3f %3$.3f %4$.3f)"
-msgstr "グローバル座標位置 = (%2$.3f %3$.3f %4$.3f)"
+msgstr "オブジェクト: %1%, グローバル座標位置 = (%2$.3f %3$.3f %4$.3f)"
 
 #: SceneWidget.cpp:1885
 msgid "Edit Mode"
