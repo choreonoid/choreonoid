@@ -24,7 +24,7 @@ RangeSensor::RangeSensor()
     yawStep_ = 1.0;
     pitchRange_ = 0.0;
     pitchStep_ = 0.0;
-    minDistance_ = 0.01;
+    minDistance_ = 0.1;
     maxDistance_ = 10.0;
     scanRate_ = 10.0;
     delay_ = 0.0;

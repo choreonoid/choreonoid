@@ -24,8 +24,8 @@ Camera::Camera()
     resolutionX_ = 640;
     resolutionY_ = 480;
     fieldOfView_ = 0.785398;
-    nearClipDistance_ = 0.01;
-    farClipDistance_ = 100.0;
+    nearClipDistance_ = 0.04;
+    farClipDistance_ = 200.0;
     frameRate_ = 30.0;
     delay_ = 0.0;
     image_ = std::make_shared<Image>();
