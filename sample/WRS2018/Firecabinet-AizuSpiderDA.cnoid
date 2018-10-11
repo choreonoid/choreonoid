@@ -157,8 +157,8 @@ items:
                 targetLink: ""
                 keepRelativeAttitude: false
                 cameraType: "Perspective"
-                nearClipDistance: 0.01
-                farClipDistance: 100
+                nearClipDistance: 0.05
+                farClipDistance: 200
                 fieldOfView: 0.785398
         - 
           id: 11
@@ -248,7 +248,7 @@ views:
           camera: [ System, Perspective ]
           isCurrent: true
           fieldOfView: 0.698132
-          near: 0.01
+          near: 0.05
           far: 200
           eye: [ -1.74542529, -1.6301597, 1.25387782 ]
           direction: [ 0.79474852, 0.557899101, -0.239004988 ]
@@ -256,13 +256,10 @@ views:
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
-          near: 0.01
+          near: 0.05
           far: 200
         - 
           camera: BodyTrackingCamera
-          fieldOfView: 0.785398
-          near: 0.01
-          far: 100
           eye: [ -0.968239588, -1.96276458, 0.597430939 ]
           direction: [ 0.590195946, 0.806201364, -0.0413292411 ]
           up: [ 0.0244132096, 0.0333481838, 0.999145582 ]
@@ -313,7 +310,7 @@ views:
         - 
           camera: [ System, Perspective ]
           fieldOfView: 0.698132
-          near: 0.01
+          near: 0.05
           far: 200
           eye: [ 4, 2, 1.5 ]
           direction: [ -0.888888889, -0.444444444, -0.111111111 ]
@@ -321,16 +318,13 @@ views:
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
-          near: 0.01
+          near: 0.05
           far: 200
         - 
           camera: [ AizuSpider, FRONT_CAMERA ]
           isCurrent: true
         - 
           camera: BodyTrackingCamera
-          fieldOfView: 0.785398
-          near: 0.01
-          far: 100
           eye: [ -0.968239588, -1.96276458, 0.597430939 ]
           direction: [ 0.590195946, 0.806201364, -0.0413292411 ]
           up: [ 0.0244132096, 0.0333481838, 0.999145582 ]

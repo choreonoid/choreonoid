@@ -159,8 +159,8 @@ items:
                 targetLink: ""
                 keepRelativeAttitude: false
                 cameraType: "Perspective"
-                nearClipDistance: 0.01
-                farClipDistance: 100
+                nearClipDistance: 0.05
+                farClipDistance: 200
                 fieldOfView: 0.785398
         - 
           id: 11
@@ -249,7 +249,7 @@ views:
           camera: [ System, Perspective ]
           isCurrent: true
           fieldOfView: 0.698132
-          near: 0.01
+          near: 0.05
           far: 200
           eye: [ -1.83554153, -1.47977514, 1.47691317 ]
           direction: [ 0.805674671, 0.488702435, -0.334751035 ]
@@ -257,7 +257,7 @@ views:
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
-          near: 0.01
+          near: 0.05
           far: 200
       backgroundColor: [ 0, 0, 0 ]
       gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
@@ -306,7 +306,7 @@ views:
         - 
           camera: [ System, Perspective ]
           fieldOfView: 0.698132
-          near: 0.01
+          near: 0.05
           far: 200
           eye: [ 4, 2, 1.5 ]
           direction: [ -0.888888889, -0.444444444, -0.111111111 ]
@@ -314,7 +314,7 @@ views:
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
-          near: 0.01
+          near: 0.05
           far: 200
         - 
           camera: [ AizuSpider, FRONT_CAMERA ]
