@@ -2057,7 +2057,7 @@ bool SceneWidget::isBuiltinCameraCurrent() const
 
 bool SceneWidget::isBuiltinCamera(SgCamera* camera) const
 {
-    return (camera == impl->builtinPersCamera || camera == builtinOrthoCamera);
+    return (camera == impl->builtinPersCamera || camera == impl->builtinOrthoCamera);
 }
 
 
