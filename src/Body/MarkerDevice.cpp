@@ -194,8 +194,10 @@ const double* MarkerDevice::readState(const double* buf)
     i += 3;
     emission_ = buf[i++];
     transparency_ = buf[i++];
-    offsetPosition_.translation() << buf[i++], buf[i++], buf[i++];
-    offsetPosition_.linear() = Quat(buf[i++], buf[i++], buf[i++], buf[i++]).toRotationMatrix();
+    offsetPosition_.translation() << buf[i], buf[i+1], buf[i+2];
+    i += 3;
+    offsetPosition_.linear() = Quat(buf[i], buf[i+1], buf[i+2], buf[i+3]).toRotationMatrix();
+    i += 4;
     return buf + i;
 }
 

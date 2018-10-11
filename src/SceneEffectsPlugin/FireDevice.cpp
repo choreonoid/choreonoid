@@ -118,7 +118,8 @@ const double* FireDevice::readState(const double* buf)
 
     on_ = buf[i++];
     ps.setNumParticles(buf[i++]);
-    ps.setAcceleration(Vector3f(buf[i++], buf[i++], buf[i++]));
+    ps.setAcceleration(Vector3f(buf[i], buf[i+1], buf[i+2]));
+    buf += 3;
     ps.setEmissionRange(buf[i++]);
     ps.setInitialSpeedAverage(buf[i++]);
     ps.setInitialSpeedVariation(buf[i++]);
