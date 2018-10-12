@@ -8,13 +8,14 @@
 
 #include "ParticleSystem.h"
 #include <cnoid/Device>
+#include "exportdecl.h"
 
 namespace cnoid {
 
 class YAMLBodyLoader;
 class Mapping;
 
-class FireDevice : public Device
+class CNOID_EXPORT FireDevice : public Device
 {
 public:
     FireDevice();

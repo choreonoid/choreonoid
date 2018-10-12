@@ -26,6 +26,7 @@ public:
 
     // Variables to detect changes causing the buffer update
     int numParticles;
+    float lifeTime;
     float emissionRange;
     float initialSpeedAverage;
     float initialSpeedVariation;
@@ -117,6 +118,7 @@ void FireProgram::updateParticleBuffers(SceneFire* fire)
     Vector3f v;
     float speed, theta, phi;
     vector<GLfloat> data(numParticles * 3);
+    srandom(0);
     for(GLuint i = 0; i < numParticles; ++i) {
         theta = emissionRange / 2.0f * random();
         phi = 2.0 * PI * random();
@@ -167,6 +169,7 @@ void FireProgram::render(SceneFire* fire)
     }
 
     if(numParticles != ps.numParticles() ||
+       lifeTime != ps.lifeTime() ||
        emissionRange != ps.emissionRange() ||
        initialSpeedAverage != ps.initialSpeedAverage() ||
        initialSpeedVariation != ps.initialSpeedVariation()){

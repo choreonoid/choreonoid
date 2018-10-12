@@ -1,0 +1,46 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+name: Stand
+
+links:
+  -
+    name: body
+    jointType: fixed
+    elements:
+      -
+        type: Shape
+        translation: [ 0, 0, 0.2 ]
+        geometry:
+          type: Box
+          size: [ 0.03, 0.05, 0.4 ]
+        appearance:
+          material:
+            diffuseColor: [ 0.5, 0.5, 0.5 ]
+      -
+        type: Transform
+        translation: [ 0, -0.04, 0.38 ]
+        elements:
+          -
+            type: Shape
+            translation: [ 0, 0, 0.04 ]
+            rotation: [ 1, 0, 0, 45 ]
+            geometry:
+              type: Box
+              size: [ 0.03, 0.03, 0.08 ]
+            appearance:
+              material:
+                diffuseColor: [ 0.5, 0.5, 0.5 ]
+      -
+        type: Transform
+        translation: [ 0, 0.04, 0.38 ]
+        elements:
+          -
+            type: Shape
+            translation: [ 0, 0, 0.04 ]
+            rotation: [ 1, 0, 0, -45 ]
+            geometry:
+              type: Box
+              size: [ 0.03, 0.03, 0.08 ]
+            appearance:
+              material:
+                diffuseColor: [ 0.5, 0.5, 0.5 ]

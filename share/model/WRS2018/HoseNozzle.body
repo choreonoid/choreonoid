@@ -69,13 +69,23 @@ links:
         type: FountainDevice
         isOptional: true
         name: WATER
-        on: true
+        on: false
         translation: [ 0.3, 0, 0 ]
         rotation: [ 0, 1, 0, 90 ]
-        lifeTime: 4
-        particleSize: 0.03
+        lifeTime: 0.8
+        particleSize: 0.04
         numParticles: 5000
-        emissionRange: 1
+        initialSpeedAverage: 8
+        initialSpeedVariation: 0.5
+        emissionRange: 3
+        acceleration: [ 0, 0, -5.0 ]
+      -
+        type: MarkerDevice
+        name: MARKER
+        markerType: cross
+        size: 0.1
+        on: true
+
   -
     name: HOSE_NOZZLE_LEVER
     parent: HOSE_NOZZLE
@@ -92,7 +102,8 @@ links:
                0,      0,      0.0005 ]
     # For the friction for AGX
     jointMotor: true
-    jointMotorCompliance: 0.5
+    #jointMotorCompliance: 0.5
+    jointMotorCompliance: 10.0 # for fire test
     elements:
       -
         type: Shape
