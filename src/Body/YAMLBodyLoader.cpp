@@ -1504,11 +1504,11 @@ bool YAMLBodyLoaderImpl::readRigidBody(Mapping& node)
     RigidBody rbody;
     const Affine3& T = transformStack.back();
 
-    if(read(node, "centerOfMass", v)){
-        rbody.c = T.linear() * v + T.translation();
-    } else {
-        rbody.c.setZero();
+    if(!read(node, "centerOfMass", v)){
+        v.setZero();
     }
+    rbody.c = T.linear() * v + T.translation();
+
     if(!node.read("mass", rbody.m)){
         rbody.m = 0.0;
     }
