@@ -879,7 +879,7 @@ void WorldLogFileItemImpl::readDeviceStates(BodyInfo* bodyInfo, double time)
     while(readBuf.pos < endPos && deviceIndex < numDevices){
         DeviceInfo& devInfo = bodyInfo->deviceInfo(deviceIndex);
         Device* device = bodyInfo->body->device(deviceIndex);
-        const int header = readBuf.readOctet();
+        const int header = readBuf.readShort();
         if(header < 0){
             readLastDeviceState(devInfo, device);
         } else {
@@ -924,7 +924,7 @@ void WorldLogFileItemImpl::readLastDeviceState(DeviceInfo& devInfo, Device* devi
         ifs.seekg(pos);
         devInfo.lastStateSeekPos = pos;
         readBuf2.clear();
-        int size = readBuf2.readOctet();
+        int size = readBuf2.readShort();
         if(size > 0){
             readDeviceState(devInfo, device, readBuf2, size);
         }
@@ -1104,7 +1104,7 @@ void WorldLogFileItemImpl::outputDeviceState(DeviceState* state)
     } else {
         cache = (*pLastDeviceStateCacheArray)[deviceIndex];
         if(state == cache->state){
-            writeBuf.writeOctet(-1);
+            writeBuf.writeShort(-1);
             writeBuf.writeSeekOffset(cache->seekPos);
             goto endOutputDeviceState;
         }
@@ -1112,10 +1112,10 @@ void WorldLogFileItemImpl::outputDeviceState(DeviceState* state)
     cache->state = state;
     cache->seekPos = writeBuf.seekPos();
     if(!state){
-        writeBuf.writeOctet(0);
+        writeBuf.writeShort(0);
     } else {
         int size = state->stateSize();
-        writeBuf.writeOctet(size);
+        writeBuf.writeShort(size);
         doubleWriteBuf.resize(size);
         state->writeState(&doubleWriteBuf.front());
         for(int i=0; i < size; ++i){

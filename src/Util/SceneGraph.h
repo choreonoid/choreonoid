@@ -455,11 +455,14 @@ public:
     SgSwitch(const SgSwitch& org, SgCloneMap& cloneMap);
     virtual SgObject* clone(SgCloneMap& cloneMap) const override;
 
-    void turnOn(bool doNotify = false) { setTurnedOn(true, doNotify); }
-    void turnOff(bool doNotify = false) { setTurnedOn(false, doNotify); }
     void setTurnedOn(bool on, bool doNotify = false);
     bool isTurnedOn() const { return isTurnedOn_; }
 
+    //! \deprecated
+    void turnOn(bool doNotify = false) { setTurnedOn(true, doNotify); }
+    //! \deprecated
+    void turnOff(bool doNotify = false) { setTurnedOn(false, doNotify); }
+    
   private:
     bool isTurnedOn_;
 };
