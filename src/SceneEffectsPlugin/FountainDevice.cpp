@@ -52,8 +52,8 @@ FountainDevice::FountainDevice()
 {
     auto& ps = particleSystem_;
     ps.setLifeTime(3.0f);
-    ps.setParticleSize(0.06f);
-    ps.setNumParticles(10000);
+    ps.setParticleSize(0.05f);
+    ps.setNumParticles(1000);
     ps.setAcceleration(Vector3f(0.0f, 0.0f, -0.2f));
     ps.setEmissionRange(radian(30.0f));
 }

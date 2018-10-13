@@ -8,6 +8,7 @@
 #include <cnoid/YAMLBodyLoader>
 #include <cnoid/SceneDevice>
 #include <cnoid/EigenArchive>
+#include <cnoid/Body>
 
 using namespace std;
 using namespace cnoid;
@@ -50,13 +51,18 @@ registerSceneFireDeviceFactory(
 
 FireDevice::FireDevice()
 {
-    on_ = true;
+    particleSystem_.setLifeTime(5.0f);
+    particleSystem_.setAcceleration(Vector3f(0.0f, 0.0f, 0.05f));
+    particleSystem_.setNumParticles(200);
+    particleSystem_.setParticleSize(0.25f);
+    particleSystem_.setEmissionRange(PI / 2.0);
+    particleSystem_.setInitialSpeedAverage(0.1f);
+    particleSystem_.setInitialSpeedVariation(0.1f);
 }
 
 
 FireDevice::FireDevice(const FireDevice& org, bool copyStateOnly)
     : Device(org, copyStateOnly),
-      on_(org.on_),
       particleSystem_(org.particleSystem_)
 {
 
@@ -71,7 +77,6 @@ const char* FireDevice::typeName()
 
 void FireDevice::copyStateFrom(const FireDevice& other)
 {
-    on_ = other.on_;
     particleSystem_ = other.particleSystem_;
 }
 
@@ -105,6 +110,23 @@ void FireDevice::forEachActualType(std::function<bool(const std::type_info& type
 }
 
 
+bool FireDevice::on() const
+{
+    return particleSystem_.on();
+}
+
+
+void FireDevice::on(bool on)
+{
+    if(on && !particleSystem_.on()){
+        if(link()){
+            particleSystem_.setOffsetTime(-link()->body()->currentTime());
+        }
+    }
+    particleSystem_.on(on);
+}
+
+
 int FireDevice::stateSize() const
 {
     return 8;
@@ -116,7 +138,7 @@ const double* FireDevice::readState(const double* buf)
     int i = 0;
     auto& ps = particleSystem_;
 
-    on_ = buf[i++];
+    ps.on(buf[i++]);
     ps.setNumParticles(buf[i++]);
     ps.setAcceleration(Vector3f(buf[i++], buf[i++], buf[i++]));
     ps.setEmissionRange(buf[i++]);
@@ -132,7 +154,7 @@ double* FireDevice::writeState(double* out_buf) const
     int i = 0;
     auto& ps = particleSystem_;
     
-    out_buf[i++] = on_ ? 1.0 : 0.0;
+    out_buf[i++] = ps.on() ? 1.0 : 0.0;
     out_buf[i++] = ps.numParticles();
     out_buf[i++] = ps.acceleration()[0];
     out_buf[i++] = ps.acceleration()[1];
