@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-10-08 16:01+0900\n"
+"POT-Creation-Date: 2018-10-14 00:22+0900\n"
 "PO-Revision-Date: 2011-11-12 11:42+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -42,11 +42,11 @@ msgstr "タイムステップ"
 msgid "Num parts"
 msgstr "パート数"
 
-#: App.cpp:238 App.cpp:393
+#: App.cpp:240 App.cpp:395
 msgid "About Choreonoid"
 msgstr "Choreonoid について"
 
-#: App.cpp:242
+#: App.cpp:244
 msgid "Vertical Sync"
 msgstr "垂直同期"
 
@@ -62,19 +62,19 @@ msgstr "\"%1\"は存在しません．"
 msgid "Save the image of %1"
 msgstr "%1の画像を保存"
 
-#: CaptureBar.cpp:96 ItemManager.cpp:1154 ProjectManager.cpp:600
+#: CaptureBar.cpp:96 ItemManager.cpp:1154 ProjectManager.cpp:603
 #: TextEditView.cpp:119
 msgid "Save"
 msgstr "保存"
 
 #: CaptureBar.cpp:97 ItemManager.cpp:945 ItemManager.cpp:1155
-#: ItemPropertyView.cpp:290 PluginManager.cpp:671 ProjectManager.cpp:575
-#: ProjectManager.cpp:601 TaskView.cpp:278
+#: ItemPropertyView.cpp:290 PluginManager.cpp:671 ProjectManager.cpp:578
+#: ProjectManager.cpp:604 TaskView.cpp:278
 msgid "Cancel"
 msgstr "キャンセル"
 
 #: CaptureBar.cpp:100 ItemManager.cpp:246 ItemPropertyView.cpp:309
-#: PluginManager.cpp:675 ProjectManager.cpp:579 ProjectManager.cpp:605
+#: PluginManager.cpp:675 ProjectManager.cpp:582 ProjectManager.cpp:608
 msgid "Any files (*)"
 msgstr "全てのファイル (*)"
 
@@ -98,7 +98,7 @@ msgstr "キャプチャバー"
 msgid "Capture the image of a view or toolbar"
 msgstr "ビューやツールバーの画像をキャプチャします"
 
-#: DescriptionDialog.cpp:28 SceneWidget.cpp:3210
+#: DescriptionDialog.cpp:28 SceneWidget.cpp:3217
 msgid "&Ok"
 msgstr "了解(&O)"
 
@@ -197,6 +197,10 @@ msgstr "プログラムの有効化に失敗しました"
 #: GLSLProgram.cpp:174
 msgid "Shader has not been linked."
 msgstr "シェーダがリンクされていません．"
+
+#: GeneralSliderView.cpp:202
+msgid "General Sliders"
+msgstr "汎用スライダ"
 
 #: GraphBar.cpp:108
 msgid "GraphBar"
@@ -303,31 +307,31 @@ msgstr "画像アイテムの選択"
 msgid "Adjust image size according to view"
 msgstr "画像サイスをビューに合わせる"
 
-#: Item.cpp:711 MultiSeqItemCreationPanel.cpp:27
+#: Item.cpp:761 MultiSeqItemCreationPanel.cpp:27
 msgid "Name"
 msgstr "名前"
 
-#: Item.cpp:722
+#: Item.cpp:772
 msgid "Class"
 msgstr "クラス"
 
-#: Item.cpp:727 MainWindow.cpp:246 PointSetItem.cpp:517 SceneItem.cpp:108
+#: Item.cpp:777 MainWindow.cpp:246 PointSetItem.cpp:517 SceneItem.cpp:108
 msgid "File"
 msgstr "ファイル"
 
-#: Item.cpp:730
+#: Item.cpp:780
 msgid "Num children"
 msgstr "小アイテムの数"
 
-#: Item.cpp:731
+#: Item.cpp:781
 msgid "Sub item?"
 msgstr "サブアイテム？"
 
-#: Item.cpp:732
+#: Item.cpp:782
 msgid "Temporal"
 msgstr "一時的"
 
-#: Item.cpp:733
+#: Item.cpp:783
 msgid "Refs"
 msgstr "参照数"
 
@@ -419,7 +423,7 @@ msgstr "%1%のシングルトンインスタンスは既に読み込まれてい
 msgid "Load %1"
 msgstr "%1の読み込み"
 
-#: ItemManager.cpp:944 PluginManager.cpp:670 ProjectManager.cpp:574
+#: ItemManager.cpp:944 PluginManager.cpp:670 ProjectManager.cpp:577
 msgid "Open"
 msgstr "読み込み"
 
@@ -954,7 +958,7 @@ msgstr "入力ファイル \"%1%\" は処理されませんでした．"
 msgid "%1% of \"%2%\" cannot be expanded !"
 msgstr "\"%2%\"の%1%は展開できません！"
 
-#: PathVariableEditor.cpp:58 ProjectManager.cpp:147
+#: PathVariableEditor.cpp:58 ProjectManager.cpp:153
 msgid "Project File Options"
 msgstr "プロジェクトファイルオプション"
 
@@ -1086,27 +1090,27 @@ msgstr "ポイント数"
 msgid "Translation"
 msgstr "並進"
 
-#: ProjectManager.cpp:140
+#: ProjectManager.cpp:146
 msgid "Open Project"
 msgstr "プロジェクトの読み込み"
 
-#: ProjectManager.cpp:142
+#: ProjectManager.cpp:148
 msgid "Save Project"
 msgstr "プロジェクトの保存"
 
-#: ProjectManager.cpp:144
+#: ProjectManager.cpp:150
 msgid "Save Project As"
 msgstr "名前を付けてプロジェクトを保存"
 
-#: ProjectManager.cpp:149
+#: ProjectManager.cpp:155
 msgid "Perspective"
 msgstr "レイアウト"
 
-#: ProjectManager.cpp:153
+#: ProjectManager.cpp:159
 msgid "Use HOME relative directories"
 msgstr "HOME相対ディレクトリを使用"
 
-#: ProjectManager.cpp:201
+#: ProjectManager.cpp:207
 msgid ""
 "The state of the \"%1%\" %2% was not completely restored.\n"
 "%3%"
@@ -1138,41 +1142,41 @@ msgstr "プロジェクト \"%1%\" を完全に読み込みました．"
 msgid "Project \"%1%\" has been partially loaded."
 msgstr "プロジェクト \"%1%\" 部分的にを読み込みました．"
 
-#: ProjectManager.cpp:376
+#: ProjectManager.cpp:374
 msgid "Loading project \"%1%\" failed. Any valid objects were not loaded."
 msgstr ""
 "プロジェクト\"%1%\"の読み込みに失敗しました．いかなるオブジェクトもロードされ"
 "ていません．"
 
-#: ProjectManager.cpp:432
+#: ProjectManager.cpp:435
 msgid "Can't open file \"%1%\" for writing.\n"
 msgstr "\"%1%\"は書き込み用ファイルとして開けません．\n"
 
-#: ProjectManager.cpp:447
+#: ProjectManager.cpp:450
 msgid "Saving sub project %1% as \"%2%\" ..."
 msgstr "サブプロジェクト \"%1%\" を \"%2%\" に保存中…"
 
-#: ProjectManager.cpp:449
+#: ProjectManager.cpp:452
 msgid "Saving the project as \"%1%\" ..."
 msgstr "プロジェクトを \"%1%\" に保存中…"
 
-#: ProjectManager.cpp:515
+#: ProjectManager.cpp:518
 msgid "Saving the project file has been finished."
 msgstr "プロジェクトファイルの保存が完了しました."
 
-#: ProjectManager.cpp:521
+#: ProjectManager.cpp:524
 msgid "Saving the project file failed."
 msgstr "プロジェクトファイルの保存に失敗しました．"
 
-#: ProjectManager.cpp:571
+#: ProjectManager.cpp:574
 msgid "Open a Choreonoid project file"
 msgstr "Choreonoidプロジェクトファイルの読み込み"
 
-#: ProjectManager.cpp:578 ProjectManager.cpp:604
+#: ProjectManager.cpp:581 ProjectManager.cpp:607
 msgid "Project files (*.cnoid)"
 msgstr "プロジェクトファイル (*.cnoid)"
 
-#: ProjectManager.cpp:596
+#: ProjectManager.cpp:599
 msgid "Save a choreonoid project file"
 msgstr "Choreonoid プロジェクトファイルの保存"
 
@@ -1305,179 +1309,179 @@ msgstr "床グリッド色"
 msgid "Default Color"
 msgstr "デフォルト色"
 
-#: SceneWidget.cpp:2894
+#: SceneWidget.cpp:2901
 msgid "Scene Config"
 msgstr "シーン設定"
 
-#: SceneWidget.cpp:2904
+#: SceneWidget.cpp:2911
 msgid "Default Camera"
 msgstr "デフォルトカメラ"
 
-#: SceneWidget.cpp:2906
+#: SceneWidget.cpp:2913
 msgid "Field of view"
 msgstr "視野角"
 
-#: SceneWidget.cpp:2913
+#: SceneWidget.cpp:2920
 msgid "Clipping depth"
 msgstr "クリッピング深度"
 
-#: SceneWidget.cpp:2915
+#: SceneWidget.cpp:2922
 msgid "Near"
 msgstr "近隣"
 
-#: SceneWidget.cpp:2921
+#: SceneWidget.cpp:2928
 msgid "Far"
 msgstr "遠方"
 
-#: SceneWidget.cpp:2932
+#: SceneWidget.cpp:2939
 msgid "Lighting"
 msgstr "ライティング"
 
-#: SceneWidget.cpp:2934
+#: SceneWidget.cpp:2941
 msgid "Do lighiting"
 msgstr "ライティングする"
 
-#: SceneWidget.cpp:2939
+#: SceneWidget.cpp:2946
 msgid "Smooth shading"
 msgstr "スムーズシェーディング"
 
-#: SceneWidget.cpp:2947
+#: SceneWidget.cpp:2954
 msgid "Back face culling mode: "
 msgstr "隠面消去"
 
-#: SceneWidget.cpp:2953
+#: SceneWidget.cpp:2960
 msgid "Enabled"
 msgstr "有効"
 
-#: SceneWidget.cpp:2954
+#: SceneWidget.cpp:2961
 msgid "Disabled"
 msgstr "無効"
 
-#: SceneWidget.cpp:2955
+#: SceneWidget.cpp:2962
 msgid "Forced"
 msgstr "強制"
 
-#: SceneWidget.cpp:2971
+#: SceneWidget.cpp:2978
 msgid "Head light"
 msgstr "ヘッドライト"
 
-#: SceneWidget.cpp:2976 SceneWidget.cpp:2996
+#: SceneWidget.cpp:2983 SceneWidget.cpp:3003
 msgid "Intensity"
 msgstr "照度"
 
-#: SceneWidget.cpp:2984
+#: SceneWidget.cpp:2991
 msgid "Back lighting"
 msgstr "裏面照射"
 
-#: SceneWidget.cpp:2991
+#: SceneWidget.cpp:2998
 msgid "World light"
 msgstr "ワールドライト"
 
-#: SceneWidget.cpp:3004
+#: SceneWidget.cpp:3011
 msgid "Ambient"
 msgstr "環境光"
 
-#: SceneWidget.cpp:3013
+#: SceneWidget.cpp:3020
 msgid "Additional lights"
 msgstr "追加のライト"
 
-#: SceneWidget.cpp:3023
+#: SceneWidget.cpp:3030
 msgid "Shadow %1"
 msgstr "影 %1"
 
-#: SceneWidget.cpp:3027
+#: SceneWidget.cpp:3034
 msgid "Light"
 msgstr "ライト"
 
-#: SceneWidget.cpp:3034
+#: SceneWidget.cpp:3041
 msgid "Anti-aliasing of shadows"
 msgstr "影のアンチエイリアシング"
 
-#: SceneWidget.cpp:3042
+#: SceneWidget.cpp:3049
 msgid "Fog"
 msgstr "フォグ"
 
-#: SceneWidget.cpp:3047
+#: SceneWidget.cpp:3054
 msgid "Texture"
 msgstr "テクスチャ"
 
-#: SceneWidget.cpp:3055
+#: SceneWidget.cpp:3062
 msgid "Background"
 msgstr "背景"
 
-#: SceneWidget.cpp:3057
+#: SceneWidget.cpp:3064
 msgid "Background color"
 msgstr "背景色"
 
-#: SceneWidget.cpp:3069
+#: SceneWidget.cpp:3076
 msgid "Span"
 msgstr "長さ"
 
-#: SceneWidget.cpp:3079
+#: SceneWidget.cpp:3086
 msgid "Interval"
 msgstr "間隔"
 
-#: SceneWidget.cpp:3088
+#: SceneWidget.cpp:3095
 msgid "Color"
 msgstr "色"
 
-#: SceneWidget.cpp:3094
+#: SceneWidget.cpp:3101
 msgid "Show the floor grid"
 msgstr "床グリッド線の表示"
 
-#: SceneWidget.cpp:3095
+#: SceneWidget.cpp:3102
 msgid "Show the xz plane grid"
 msgstr "xz平面グリッド線の表示"
 
-#: SceneWidget.cpp:3096
+#: SceneWidget.cpp:3103
 msgid "Show the yz plane grid"
 msgstr "ｙｚ平面グリッド線の表示"
 
-#: SceneWidget.cpp:3104
+#: SceneWidget.cpp:3111
 msgid "Default color"
 msgstr "デフォルト色"
 
-#: SceneWidget.cpp:3108
+#: SceneWidget.cpp:3115
 msgid "Default line width"
 msgstr "デフォルトの線幅"
 
-#: SceneWidget.cpp:3116
+#: SceneWidget.cpp:3123
 msgid "Default point size"
 msgstr "デフォルト点サイズ"
 
-#: SceneWidget.cpp:3127
+#: SceneWidget.cpp:3134
 msgid "Do point rendering in the wireframe mode"
 msgstr "ワイヤフレームモードでポイントレンダリングを行う"
 
-#: SceneWidget.cpp:3135
+#: SceneWidget.cpp:3142
 msgid "Normal Visualization"
 msgstr "法線の表示"
 
-#: SceneWidget.cpp:3150
+#: SceneWidget.cpp:3157
 msgid "Coordinate axes"
 msgstr "座標軸"
 
-#: SceneWidget.cpp:3156
+#: SceneWidget.cpp:3163
 msgid "Show FPS"
 msgstr "フレームレートの表示"
 
-#: SceneWidget.cpp:3164
+#: SceneWidget.cpp:3171
 msgid "Test"
 msgstr "テスト"
 
-#: SceneWidget.cpp:3174
+#: SceneWidget.cpp:3181
 msgid "Do double rendering when a new display list is created."
 msgstr "新規ディスプレイリスト生成時に二重にレンダリングを行う"
 
-#: SceneWidget.cpp:3182
+#: SceneWidget.cpp:3189
 msgid "Use an OpenGL pixel buffer for picking"
 msgstr "ピッキングにOpenGLピクセルバッファを使う"
 
-#: SceneWidget.cpp:3190
+#: SceneWidget.cpp:3197
 msgid "Show collision visualization button set"
 msgstr ""
 
-#: SceneWidget.cpp:3200
+#: SceneWidget.cpp:3207
 msgid "Upside down"
 msgstr "上下反転"
 
@@ -1497,24 +1501,24 @@ msgstr "サブプロジェクトアイテム"
 msgid "SubProjet"
 msgstr "サブプロジェクト"
 
-#: SubProjectItem.cpp:78
+#: SubProjectItem.cpp:77
 msgid "Manual save"
 msgstr "手動保存"
 
-#: SubProjectItem.cpp:79
+#: SubProjectItem.cpp:78
 msgid "Automatic save"
 msgstr "自動保存"
 
-#: SubProjectItem.cpp:124
+#: SubProjectItem.cpp:123
 msgid "Sub projects to load \"%1%\" are recursively specified."
 msgstr ""
 "読みこもうとしているサブプロジェクト \"%1%\" は再帰的に指定されています．"
 
-#: SubProjectItem.cpp:243
+#: SubProjectItem.cpp:232
 msgid "Save mode"
 msgstr "保存モード"
 
-#: SubProjectItem.cpp:247
+#: SubProjectItem.cpp:236
 msgid "Updated"
 msgstr "更新"
 
