@@ -100,14 +100,14 @@ public:
     std::list<NamingContextHelper::ObjectInfo> selectedItemList;
 
     void updateObjectList(bool force = false);
-    void setSelection(std::string RTCName, std::string RTCfullPath, std::string nsInfo);  
+    void setSelection(std::string RTCName, std::string RTCfullPath, NamingContextHelper::ObjectInfo nsInfo);  
 
 private:
     RTSNameServerView * self_;
     RTSNameTreeWidget treeWidget;
 
     void updateObjectList(
-        const NamingContextHelper::ObjectInfoList& objects, QTreeWidgetItem* parent,
+        NamingContextHelper::ObjectInfoList& objects, QTreeWidgetItem* parent,
         vector<NamingContextHelper::ObjectPath> pathList);
     void onSelectionChanged();
 
@@ -314,6 +314,7 @@ void RTSNameServerViewImpl::updateObjectList(bool force)
             NamingContextHelper::ObjectInfo info;
             info.hostAddress_ = (*it).hostAddress;
             info.portNo_ = (*it).portNo;
+            info.isRegisteredInRtmDefaultNameServer_ = (*it).isRtmDefaultNameServer;
             topElem->info_ = info;
             treeWidget.addTopLevelItem(topElem);
 
@@ -338,12 +339,13 @@ void RTSNameServerViewImpl::updateObjectList(bool force)
 
 
 void RTSNameServerViewImpl::updateObjectList
-(const NamingContextHelper::ObjectInfoList& objects, QTreeWidgetItem* parent, vector<NamingContextHelper::ObjectPath> pathList)
+(NamingContextHelper::ObjectInfoList& objects, QTreeWidgetItem* parent, vector<NamingContextHelper::ObjectPath> pathList)
 {
     DDEBUG("RTSNameServerViewImpl::updateObjectList Path");
     for (size_t i = 0; i < objects.size(); ++i) {
-        const NamingContextHelper::ObjectInfo& info = objects[i];
+        NamingContextHelper::ObjectInfo& info = objects[i];
         DDEBUG_V("%s=%s, %s", info.id_.c_str(), info.kind_.c_str(), info.ior_.c_str());
+        info.isRegisteredInRtmDefaultNameServer_ = ((RTSVItem*)parent)->info_.isRegisteredInRtmDefaultNameServer_;
 
         NamingContextHelper::ObjectPath path(info.id_, info.kind_);
         pathList.push_back(path);
@@ -430,13 +432,13 @@ void RTSNameServerViewImpl::onSelectionChanged()
 }
 
 
-void RTSNameServerView::setSelection(std::string RTCName, std::string RTCfullPath, std::string nsInfo)
+void RTSNameServerView::setSelection(std::string RTCName, std::string RTCfullPath, NamingContextHelper::ObjectInfo nsInfo)
 {
     impl->setSelection(RTCName, RTCfullPath, nsInfo);
 }
 
 
-void RTSNameServerViewImpl::setSelection(std::string RTCName, std::string RTCfullPath, std::string nsInfo)
+void RTSNameServerViewImpl::setSelection(std::string RTCName, std::string RTCfullPath, NamingContextHelper::ObjectInfo nsInfo)
 {
     if (RTCName.empty()) {
         treeWidget.clearSelection();
@@ -445,16 +447,15 @@ void RTSNameServerViewImpl::setSelection(std::string RTCName, std::string RTCful
 
     updateObjectList();
 
-    //QList<QTreeWidgetItem*> items = treeWidget.findItems(QString(RTCName.c_str()), Qt::MatchFixedString | Qt::MatchRecursive);
-    //if (items.empty()) {
-    //    return;
-    //}
     QList<QTreeWidgetItem*> items = treeWidget.findItems(QString(RTCName.c_str()), Qt::MatchFixedString | Qt::MatchRecursive);
+
+    DDEBUG_V("match Num:%d", items.size());
 
     if (items.size() == 1) {
         RTSVItem* target = (RTSVItem*)items[0];
-        QString ns = QString::fromStdString(target->info_.hostAddress_) + ":" + QString::number( target->info_.portNo_);
-        if (nsInfo == ns.toStdString()) {
+        if (nsInfo.hostAddress_ == target->info_.hostAddress_ 
+            && nsInfo.portNo_ == target->info_.portNo_
+            && nsInfo.isRegisteredInRtmDefaultNameServer_ == target->info_.isRegisteredInRtmDefaultNameServer_ ) {
             treeWidget.setCurrentItem(items[0]);
         }
 
@@ -462,8 +463,9 @@ void RTSNameServerViewImpl::setSelection(std::string RTCName, std::string RTCful
         for (int index = 0; index < items.size(); ++index) {
             RTSVItem* target = (RTSVItem*)items[index];
             DDEBUG_V("source:%s, target:%s", RTCfullPath.c_str(), target->info_.getFullPath().c_str());
-            QString ns = QString::fromStdString(target->info_.hostAddress_) + ":" + QString::number( target->info_.portNo_);
-            if (nsInfo == ns.toStdString()) {
+            if (nsInfo.hostAddress_ == target->info_.hostAddress_ 
+                && nsInfo.portNo_ == target->info_.portNo_
+                && nsInfo.isRegisteredInRtmDefaultNameServer_ == target->info_.isRegisteredInRtmDefaultNameServer_ ) {
                 if (RTCfullPath == target->info_.getFullPath()) {
                     treeWidget.setCurrentItem(items[index]);
                     break;

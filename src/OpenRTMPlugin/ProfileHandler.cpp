@@ -80,9 +80,11 @@ bool ProfileHandler::restoreRtsProfile(std::string targetFile, RTSystemItem* rts
             NameServerInfo ns = RTCCommonUtil::getManagerAddress();
             info.hostAddress_ = ns.hostAddress;
             info.portNo_ = ns.portNo;
+            info.isRegisteredInRtmDefaultNameServer_ = true;
         } else {
             info.hostAddress_ = hostName.toStdString();
             info.portNo_ = 2809;
+            info.isRegisteredInRtmDefaultNameServer_ = false;
         }
 
         Vector2 pos;

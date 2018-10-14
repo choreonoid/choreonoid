@@ -1153,15 +1153,19 @@ void RTSDiagramViewImpl::onRTSCompSelectionChange()
         RTSNameServerView* nsView = RTSNameServerView::instance();
         if (nsView) {
             RTSComp* selected = selectionRTCs.front()->rtsComp;
-            QString hostInfo = QString::fromStdString(selected->hostAddress) + ":" + QString::number(selected->portNo);
-            nsView->setSelection(selected->name, selected->fullPath, hostInfo.toStdString());
+            NamingContextHelper::ObjectInfo nsInfo;
+            nsInfo.hostAddress_ = selected->hostAddress;
+            nsInfo.portNo_ = selected->portNo;
+            nsInfo.isRegisteredInRtmDefaultNameServer_ = selected->isDefaultNS;
+            nsView->setSelection(selected->name, selected->fullPath, nsInfo);
         }
     }
 
     if (selectionRTSConnections.size() == 1 && singleSelectedConnection != selectionRTSConnections.front()) {
         RTSNameServerView* nsView = RTSNameServerView::instance();
         if (nsView) {
-            nsView->setSelection("", "", "");
+            NamingContextHelper::ObjectInfo nsInfo;
+            nsView->setSelection("", "", nsInfo);
         }
         RTSPropertiesView* propView = RTSPropertiesView::instance();
         if (propView) {

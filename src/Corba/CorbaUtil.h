@@ -97,6 +97,7 @@ public:
         std::vector<ObjectPath> fullPath_;
         std::string hostAddress_;
         int portNo_;
+        bool isRegisteredInRtmDefaultNameServer_;
 
         const std::string getFullPath() const {
             std::string result;

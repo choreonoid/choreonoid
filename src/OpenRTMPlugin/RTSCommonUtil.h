@@ -11,6 +11,15 @@
 
 using namespace std;
 
+namespace {
+// Old conf filename. This should be deprecated, but continue to use for a while
+const char* DEFAULT_CONF_FILENAME = "./rtc.conf.choreonoid";
+
+// New conf filename. It is desirable to use this.
+//const char* DEFAUT_CONF_FILENAME = "./choreonoid.rtc.conf"
+
+};
+
 namespace cnoid {
 
 /*!

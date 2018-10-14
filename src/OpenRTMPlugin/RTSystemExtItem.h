@@ -137,6 +137,7 @@ public:
     std::string fullPath;
     std::string hostAddress;
     int portNo;
+    bool isDefaultNS;
     std::vector<RTSPortExtPtr> inPorts;
     std::vector<RTSPortExtPtr> outPorts;
 
@@ -144,7 +145,7 @@ public:
     bool isAlive_;
     RTC_STATUS rtc_status_;
 
-    RTSCompExt(const std::string& name, const std::string& fullPath, RTC::RTObject_ptr rtc, RTSystemExtItem* rts, const QPointF& pos, const std::string& host, int port);
+    RTSCompExt(const std::string& name, const std::string& fullPath, RTC::RTObject_ptr rtc, RTSystemExtItem* rts, const QPointF& pos, const std::string& host, int port, bool isDefault);
     RTSystemExtItem* rts() { return rts_; }
     RTSPortExt* nameToRTSPort(const std::string& name);
     const QPointF& pos() const { return pos_; }

@@ -363,8 +363,8 @@ void RTSConnectionExt::setPosition(const Vector2 pos[])
     srcRTC->rts()->suggestFileUpdate();
 }
 //////////
-RTSCompExt::RTSCompExt(const string& name, const std::string& fullPath, RTC::RTObject_ptr rtc, RTSystemExtItem* rts, const QPointF& pos, const string& host, int port)
-    : rts_(rts), pos_(pos), name(name), fullPath(fullPath), hostAddress(host), portNo(port)
+RTSCompExt::RTSCompExt(const string& name, const std::string& fullPath, RTC::RTObject_ptr rtc, RTSystemExtItem* rts, const QPointF& pos, const string& host, int port, bool isDefault)
+    : rts_(rts), pos_(pos), name(name), fullPath(fullPath), hostAddress(host), portNo(port), isDefaultNS(isDefault)
 {
     setRtc(rtc);
 }
@@ -731,7 +731,7 @@ RTSCompExt* RTSystemExtItemImpl::addRTSComp(const string& name, const QPointF& p
         }
 
         string fullPath = "/" + name + ".rtc";
-        RTSCompExtPtr rtsComp = new RTSCompExt(name, fullPath, rtc, self, pos, ncHelper->host().c_str(), ncHelper->port());
+        RTSCompExtPtr rtsComp = new RTSCompExt(name, fullPath, rtc, self, pos, ncHelper->host().c_str(), ncHelper->port(), false);
         rtsComps[fullPath] = rtsComp;
 
         self->suggestFileUpdate();
@@ -766,7 +766,7 @@ RTSCompExt* RTSystemExtItemImpl::addRTSComp(const NamingContextHelper::ObjectInf
             rtc = nullptr;
         }
 
-        RTSCompExtPtr rtsComp = new RTSCompExt(info.id_, fullPath, rtc, self, pos, info.hostAddress_, info.portNo_);
+        RTSCompExtPtr rtsComp = new RTSCompExt(info.id_, fullPath, rtc, self, pos, info.hostAddress_, info.portNo_, info.isRegisteredInRtmDefaultNameServer_);
         rtsComps[fullPath] = rtsComp;
 
         self->suggestFileUpdate();
