@@ -5,6 +5,7 @@
 #include <cnoid/SimpleController>
 #include <cnoid/FountainDevice>
 #include <cnoid/EigenUtil>
+#include <cnoid/SceneGraph>
 #include <cnoid/MarkerDevice>
 #include "FireController.h"
 
@@ -15,6 +16,8 @@ class HoseNozzleController : public SimpleController
 {
     SimpleControllerIO* io;
     Link* nozzle;
+    Link* hoseConnector;
+    Vector3 hoseConnectorEndPosition;
     Link* lever;
     FountainDevice* water;
     MarkerDevice* marker;
@@ -29,30 +32,39 @@ public:
         auto body = io->body();
 
         nozzle = body->link("HOSE_NOZZLE");
+        hoseConnector = body->link("HOSE_CONNECTOR");
         lever = body->link("HOSE_NOZZLE_LEVER");
         water = body->findDevice<FountainDevice>("WATER");
         marker = body->findDevice<MarkerDevice>("MARKER");
 
-        if(nozzle && lever && water && marker){
-            mode = 0;
-            io->enableInput(nozzle, LINK_POSITION);
-            io->enableInput(lever, JOINT_DISPLACEMENT);
-            auto options = io->options();
-            if(std::find(options.begin(), options.end(), "test1") != options.end()){
-                mode = 1;
-            }
+        if(!nozzle || !hoseConnector || !lever || !water || !marker){
+            io->os() << "HoseNozzleController: Eequired body components are not completely detected." << endl;
+            return false;
+        }
 
-            if(mode > 0){
-                io->os() << "HoseNozzleController: test mode " << mode << endl;
-            }
-            if(mode == 1){
-                io->enableOutput(lever, JOINT_VELOCITY);
-                lever->dq_target() = -0.5;
-            }
-            return true;
+        mode = 0;
+        io->enableInput(nozzle, LINK_POSITION);
+
+        io->enableInput(hoseConnector, LINK_POSITION);
+        Affine3 T;
+        hoseConnector->shape()->findNode("END", T);
+        hoseConnectorEndPosition = T.translation();
+
+        io->enableInput(lever, JOINT_DISPLACEMENT);
+        
+        auto options = io->options();
+        if(std::find(options.begin(), options.end(), "test1") != options.end()){
+            mode = 1;
         }
         
-        return false;
+        if(mode > 0){
+            io->os() << "HoseNozzleController: test mode " << mode << endl;
+        }
+        if(mode == 1){
+            io->enableOutput(lever, JOINT_VELOCITY);
+            lever->dq_target() = -0.5;
+        }
+        return true;
     }
 
     virtual bool start() override
@@ -63,14 +75,18 @@ public:
 
     virtual bool control() override
     {
+        Vector3 p = hoseConnector->attitude() * hoseConnectorEndPosition + hoseConnector->translation();
+        double distance = (nozzle->translation() - p).norm();
+        bool isHoseConnected = distance < 0.001;
+        
         if(!water->on()){
-            if(lever->q() < radian(-30.0)){
+            if(isHoseConnected && lever->q() < radian(-30.0)){
                 water->on(true);
                 water->notifyStateChange();
                 lever->dq_target() = 0.0; // for test1
             }
         } else {
-            if(lever->q() > radian(0.0)){
+            if(!isHoseConnected || lever->q() > radian(0.0)){
                 water->on(false);
                 water->notifyStateChange();
             }
