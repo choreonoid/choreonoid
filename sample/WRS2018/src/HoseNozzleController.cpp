@@ -97,8 +97,11 @@ public:
         Position T_nozzle;
         T_nozzle.linear() = nozzle->attitude();
         T_nozzle.translation() = nozzle->translation();
-        marker->setOffsetTranslation(T_nozzle.inverse() * position);
-        marker->notifyStateChange();
+
+        if(marker->on()){
+            marker->setOffsetTranslation(T_nozzle.inverse() * position);
+            marker->notifyStateChange();
+        }
 
         double strength = water->on() ? 1.0 : 0.0;
         fireController->notifyWaterFlowTarget(position, strength);

@@ -56,7 +56,7 @@ items:
           data: 
             modelFile: "${SHARE}/model/AizuSpider/AizuSpiderSA.body"
             currentBaseLink: "CHASSIS"
-            rootPosition: [ 7, -1, 0.0367 ]
+            rootPosition: [ 7, -0.959, 0.0367 ]
             rootAttitude: [ 
               6.123234e-17, -1, 0, 
               1, 6.123234e-17, 0, 
@@ -65,7 +65,7 @@ items:
                0.000000,  0.000000,  0.000000,  0.000000, -0.574351,  2.599138,  2.092345, -2.266188,  0.570451, -0.499683, 
                0.000000,  0.000000,  0.000000,  0.000000, -0.008342,  0.000000, -0.008366, -0.014841, -0.000001, -0.013637, 
               -0.000001, -0.023065,  0.000000, -0.023078,  0.000000 ]
-            initialRootPosition: [ 7, -1, 0.0367 ]
+            initialRootPosition: [ 7, -0.959, 0.0367 ]
             initialRootAttitude: [ 
               2.22044605e-16, -1, 0, 
               1, 2.22044605e-16, 0, 
@@ -134,7 +134,7 @@ views:
     class: SceneView
     mounted: true
     state: 
-      editMode: true
+      editMode: false
       viewpointControlMode: thirdPerson
       collisionLines: false
       polygonMode: fill
@@ -173,9 +173,9 @@ views:
           fieldOfView: 0.698132
           near: 0.05
           far: 200
-          eye: [ 6.83650992, -2.87742775, 2.04824564 ]
-          direction: [ 0.424899083, 0.744272393, -0.515285721 ]
-          up: [ 0.255472248, 0.447496709, 0.857018451 ]
+          eye: [ 5.31445349, -1.9144707, 0.984337725 ]
+          direction: [ 0.855820525, 0.458745948, -0.239004989 ]
+          up: [ 0.210650372, 0.112915035, 0.971018339 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
@@ -386,7 +386,7 @@ viewAreas:
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 389, 1193 ]
+              sizes: [ 327, 1255 ]
               children: 
                 - 
                   type: pane

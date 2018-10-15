@@ -340,6 +340,19 @@ items:
         collisionDetection: true
         selfCollisionDetection: false
         isEditable: false
+      children: 
+        - 
+          id: 18
+          name: "FireController"
+          plugin: Body
+          class: SimpleControllerItem
+          data: 
+            isNoDelayMode: false
+            controllerOptions: ""
+            controller: "FireController.so"
+            baseDirectory: "Controller directory"
+            reloading: false
+            isOldTargetVariableMode: false
 views: 
   - 
     id: 1

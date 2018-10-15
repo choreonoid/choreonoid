@@ -79,11 +79,10 @@ bool FireController::control()
         bool hit = false;
         if(waterStrength > 0.0){
             double distance = (fireRoot->translation() - waterPosition).norm();
-            io->os() << "distance: " << distance << endl;
+            //io->os() << "distance: " << distance << endl;
             if(distance < 0.3){
                 hit = true;
-                io->os() << "hit!" << endl;
-                
+                //io->os() << "hit!" << endl;
             }
         }
         if(hit){
@@ -113,7 +112,7 @@ bool FireController::control()
         }
     }
 
-    io->os() << "Fire strength: " << fireStrength << endl;
+    //io->os() << "Fire strength: " << fireStrength << endl;
 
     if(fireStrength <= 0.0){
         fire->on(false);
