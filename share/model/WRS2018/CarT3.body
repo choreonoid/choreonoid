@@ -116,11 +116,6 @@ links:
                0,      0,      0.0001 ]
     jointMotor: true
     jointMotorCompliance: 0.02
-    elements:
-      Visual:
-        shape:
-          geometry: { type: Box, size: [ 0.02, 0.02, 0.6 ] }
-          appearance: { material: { diffuseColor: [ 0, 1, 0 ] } }
   -
     name: FR_DOOR_UPPER_HINGE
     parent: BODY
