@@ -80,6 +80,7 @@ links:
       -
         type: AGXMagneticJointDevice
         isOptional: true
+        constraintType: hinge
         link1Name: HOSE_NOZZLE
         link2Name: HOSE_CONNECTOR
         position1: [ 0, 0, 0 ]
