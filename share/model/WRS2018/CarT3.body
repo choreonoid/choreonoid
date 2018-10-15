@@ -83,7 +83,7 @@ links:
     #translation: [ &FR_DOOR_TRANSLATION [ [ 0.875, -0.814, 0.328 ], [ -0.012, 0, 0.002 ] ], [ 0.01, 0, 0 ] ]
     rotation: [ 0, 1, 0, -0.05 ]
     jointType: free
-    jointRange: [ 0, 70 ]
+    jointRange: [ 0, 60 ]
     centerOfMass: [ -0.7, 0.03, 0.38 ]
     mass: 30.0
     inertia: [ 5, 0, 0,
@@ -103,6 +103,25 @@ links:
           node: CAR_DOOR_FR
           translation: [ -0.873, 0.8175, -0.3306 ]
   -
+    name: FR_DOOR_VIRTUAL_HINGE
+    parent: BODY
+    translation: [ *FR_DOOR_TRANSLATION ]
+    jointType: revolute
+    jointAxis: Z
+    jointId: 0
+    jointRange: [ 0, 70 ]
+    mass: 0.1
+    inertia: [ 0.0001, 0,      0,
+               0,      0.0001, 0,
+               0,      0,      0.0001 ]
+    jointMotor: true
+    jointMotorCompliance: 0.02
+    elements:
+      Visual:
+        shape:
+          geometry: { type: Box, size: [ 0.02, 0.02, 0.6 ] }
+          appearance: { material: { diffuseColor: [ 0, 1, 0 ] } }
+  -
     name: FR_DOOR_UPPER_HINGE
     parent: BODY
     translation: [ *FR_DOOR_TRANSLATION, [ -0.012, 0.03, 0.42 ] ]
@@ -121,7 +140,7 @@ links:
         type: AGXBreakableJointDevice
         name: FR_DOOR_UPPER_HINGE_CONSTRAINT
         isOptional: true
-        link1Name: BODY
+        link1Name: FR_DOOR_VIRTUAL_HINGE
         link2Name: FR_DOOR
         jointType: fixed
         jointCompliance: 1.0e-6
@@ -171,7 +190,9 @@ links:
       -
         <<: *DOOR_CONSTRAINT
         name: FR_DOOR_LOCK_CONSTRAINT
-        position: [ -1.326, 0.035, 0.3 ]
+        link1Name: BODY
+        # [ *FR_DOOR_TRANSLATION, [ -1.326, 0.035, 0.3 ] ]
+        position: [ -0.463, -0.779, 0.63 ]
       -
         type: Shape
         rotation: [ 0, 0, 1, 90 ]
