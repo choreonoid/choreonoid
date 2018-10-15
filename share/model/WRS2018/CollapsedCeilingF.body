@@ -10,14 +10,17 @@ ASPHALT: &ASPHALT
     repeatS: true
     repeatT: true
 
-TUBE_APPEARANCE: &TUBE_APPEARANCE
+TUBE_APPEARANCE1: &TUBE_APPEARANCE1
   material:
     diffuseColor: [ 0.2, 0.2, 0.2 ]
   texture:
     url: "resource/Asphalt_New.jpg" 
     repeatS: true
     repeatT: true
-  #textureTransform: { scale: [ 0.01, 0.01 ] }
+
+TUBE_APPEARANCE: &TUBE_APPEARANCE
+  material:
+    diffuseColor: [ 0.25, 0.15, 0.15 ]
 
 links:
   -
