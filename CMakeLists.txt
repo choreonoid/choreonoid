@@ -5,6 +5,7 @@ else()
 endif()
 
 cmake_policy(SET CMP0003 NEW)
+cmake_policy(SET CMP0057 NEW)
 set(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS true)
 
 include(FindPkgConfig)
