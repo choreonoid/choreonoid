@@ -254,6 +254,8 @@ AGXMagneticJoint::AGXMagneticJoint(AGXMagneticJointDevice* device, AGXBody* agxB
     agxConvert::setVector(jointDeviceInfo.find("connectAxis2"), jp.connectAxis2);
     jointDeviceInfo.read("validDistance", jp.validDistance);
     jointDeviceInfo.read("validAngle", jp.validAngle);
+    string constraintType;
+    jointDeviceInfo.read("constraintType", constraintType);
 
     AGXElementaryConstraint base;
     jointDeviceInfo.read("jointCompliance", base.compliance);
@@ -285,7 +287,13 @@ AGXMagneticJoint::AGXMagneticJoint(AGXMagneticJointDevice* device, AGXBody* agxB
     f[1]->setLocalTranslate(lp2);
     f[1]->setLocalRotate(agx::Quat(axis2z, axis2));
 
-    auto joint = new agx::LockJoint(r[0], f[0], r[1], f[1]);
+    agx::Constraint* joint;
+    if(constraintType == "hinge"){
+        joint = new agx::Hinge(r[0], f[0], r[1], f[1]);
+    } else {
+        joint = new agx::LockJoint(r[0], f[0], r[1], f[1]);
+    }
+
     joint->setEnable(false);
     joint->setCompliance(base.compliance);
     joint->setDamping(base.spookDamping);
