@@ -178,6 +178,8 @@ public:
 
     virtual bool isGroup() const;
 
+    SgNodePath findNode(const std::string& name, Affine3& out_T);
+
 protected:
     SgNode(int polymorhicId);
 };
