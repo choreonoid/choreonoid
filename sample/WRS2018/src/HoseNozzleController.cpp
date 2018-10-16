@@ -75,9 +75,14 @@ public:
 
     virtual bool control() override
     {
-        Vector3 p = hoseConnector->attitude() * hoseConnectorEndPosition + hoseConnector->translation();
-        double distance = (nozzle->translation() - p).norm();
-        bool isHoseConnected = distance < 0.001;
+        bool isHoseConnected;
+        if(mode > 0){
+            isHoseConnected = true;
+        } else {
+            Vector3 p = hoseConnector->attitude() * hoseConnectorEndPosition + hoseConnector->translation();
+            double distance = (nozzle->translation() - p).norm();
+            isHoseConnected = distance < 0.001;
+        }
         
         if(!water->on()){
             if(isHoseConnected && lever->q() < radian(-30.0)){
