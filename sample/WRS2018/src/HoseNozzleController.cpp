@@ -16,6 +16,7 @@ class HoseNozzleController : public SimpleController
 {
     SimpleControllerIO* io;
     Link* nozzle;
+    Link* valve;
     Link* hoseConnector;
     Vector3 hoseConnectorEndPosition;
     Link* lever;
@@ -32,18 +33,20 @@ public:
         auto body = io->body();
 
         nozzle = body->link("HOSE_NOZZLE");
+        valve = body->link("VALVE");
         hoseConnector = body->link("HOSE_CONNECTOR");
         lever = body->link("HOSE_NOZZLE_LEVER");
         water = body->findDevice<FountainDevice>("WATER");
         marker = body->findDevice<MarkerDevice>("MARKER");
 
-        if(!nozzle || !hoseConnector || !lever || !water || !marker){
+        if(!nozzle || !valve || !hoseConnector || !lever || !water || !marker){
             io->os() << "HoseNozzleController: Eequired body components are not completely detected." << endl;
             return false;
         }
 
         mode = 0;
         io->enableInput(nozzle, LINK_POSITION);
+        io->enableInput(valve, JOINT_ANGLE);
 
         io->enableInput(hoseConnector, LINK_POSITION);
         Affine3 T;
@@ -76,22 +79,26 @@ public:
     virtual bool control() override
     {
         bool isHoseConnected;
+        bool isValveOpened;
+        
         if(mode > 0){
             isHoseConnected = true;
+            isValveOpened = true;
         } else {
             Vector3 p = hoseConnector->attitude() * hoseConnectorEndPosition + hoseConnector->translation();
             double distance = (nozzle->translation() - p).norm();
             isHoseConnected = distance < 0.001;
+            isValveOpened = (valve->q() >= radian(90));
         }
         
         if(!water->on()){
-            if(isHoseConnected && lever->q() < radian(-30.0)){
+            if(isValveOpened && isHoseConnected && lever->q() < radian(-30.0)){
                 water->on(true);
                 water->notifyStateChange();
                 lever->dq_target() = 0.0; // for test1
             }
         } else {
-            if(!isHoseConnected || lever->q() > radian(0.0)){
+            if(!isValveOpened || !isHoseConnected || lever->q() > radian(0.0)){
                 water->on(false);
                 water->notifyStateChange();
             }

@@ -91,7 +91,7 @@ bool FireController::control()
                 r = 10.0;
             }
             fireStrength = std::max(0.0, fireStrength - r * timeStep);
-            fireSizePhase += radian(6);
+            fireSizePhase += radian(7);
             fireSizeRatio = 1.0 + 0.1 * sin(fireSizePhase);
             float size = 0.56 * (fireStrength / 600.) + 0.04;
             fire->particleSystem().setParticleSize(fireSizeRatio * size);
@@ -100,7 +100,7 @@ bool FireController::control()
             fireStrength = std::min(600.0, fireStrength + 1.2 * timeStep);
             if(fireSizePhase > 0.0){
                 fireSizePhase = fmod(fireSizePhase, 2.0 * PI);
-                fireSizePhase += radian(6);
+                fireSizePhase += radian(7);
                 if(fireSizePhase > 2.0 * PI){
                     fireSizePhase = 0.0;
                 }
