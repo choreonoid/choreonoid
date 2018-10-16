@@ -190,7 +190,7 @@ void AGXVehicleContinuousTrackDevice::copyStateFrom(const DeviceState& other)
 
 DeviceState* AGXVehicleContinuousTrackDevice::cloneState() const
 {
-    return new AGXVehicleContinuousTrackDevice(*this, false);
+    return new AGXVehicleContinuousTrackDevice(*this, true);
 }
 
 

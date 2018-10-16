@@ -94,7 +94,7 @@ void SmokeDevice::copyStateFrom(const DeviceState& other)
 
 DeviceState* SmokeDevice::cloneState() const
 {
-    return new SmokeDevice(*this, false);
+    return new SmokeDevice(*this, true);
 }
 
 
