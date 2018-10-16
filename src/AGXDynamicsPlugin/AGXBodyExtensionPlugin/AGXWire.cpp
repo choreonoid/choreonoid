@@ -19,6 +19,8 @@
 using namespace std;
 namespace cnoid{
 
+const int MAX_NUM_WIRE_NODES_FOR_LOG = 60;
+
 /////////////////////////////////////////////////////////////////////////
 // WireNodeState
 struct WireNodeState{
@@ -130,7 +132,7 @@ void AGXWireDevice::copyStateFrom(const DeviceState& other)
 
 DeviceState* AGXWireDevice::cloneState() const
 {
-    return new AGXWireDevice(*this, false);
+    return new AGXWireDevice(*this, true);
 }
 
 Device*AGXWireDevice::clone() const
@@ -147,17 +149,52 @@ void AGXWireDevice::forEachActualType(std::function<bool(const std::type_info&ty
 
 int AGXWireDevice::stateSize() const
 {
-    return 1;
+    return 3 * MAX_NUM_WIRE_NODES_FOR_LOG + 2;
 }
 
 const double* AGXWireDevice::readState(const double* buf)
 {
-    return buf + 1;
+    int i = 0;
+    const int n = buf[i++];
+    m_wireNodeStates.resize(n);
+    int j=0;
+    while(j < n){
+        m_wireNodeStates[j].position << buf[i], buf[i+1], buf[i+2];
+        i += 3;
+        ++j;
+    }
+    i += (MAX_NUM_WIRE_NODES_FOR_LOG - j) * 3;
+    radius = buf[i++];
+    return buf + i;
 }
 
 double* AGXWireDevice::writeState(double* out_buf) const
 {
-    return out_buf + 1;
+    int i = 0;
+    const int m = m_wireNodeStates.size();
+    int n = std::min(m, MAX_NUM_WIRE_NODES_FOR_LOG);
+
+    out_buf[i++] = n;
+    
+    int j = 0;
+    int offset = (m > n) ? (m - n) : 0;
+    while(j < n){
+        const Vector3& p = m_wireNodeStates[j + offset].position;
+        out_buf[i++] = p.x();
+        out_buf[i++] = p.y();
+        out_buf[i++] = p.z();
+        ++j;
+    }
+    while(j < MAX_NUM_WIRE_NODES_FOR_LOG){
+        out_buf[i++] = 0.0;
+        out_buf[i++] = 0.0;
+        out_buf[i++] = 0.0;
+        ++j;
+    }
+    
+    out_buf[i++] = radius;
+    
+    return out_buf + i;
 }
 
 void AGXWireDevice::setDesc(const AGXWireDeviceDesc& desc)
