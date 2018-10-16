@@ -1658,7 +1658,10 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
 
         worldLogFileItem = nullptr;
         ItemList<WorldLogFileItem> worldLogFileItems;
-        worldLogFileItems.extractChildItems(self);
+        worldLogFileItems.extractChildItems(self); // Check child items first
+        if(worldLogFileItems.empty()){
+            worldLogFileItems.extractChildItems(worldItem); // Check items in the world secondly
+        }
         worldLogFileItem = worldLogFileItems.toSingle(true);
         if(worldLogFileItem){
             if(worldLogFileItem->logFileName().empty()){
