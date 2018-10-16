@@ -114,7 +114,7 @@ void SmokeDevice::forEachActualType(std::function<bool(const std::type_info& typ
 
 int SmokeDevice::stateSize() const
 {
-    return 6;
+    return 11;
 }
 
 
@@ -123,11 +123,16 @@ const double* SmokeDevice::readState(const double* buf)
     int i = 0;
     auto& ps = particleSystem_;
 
-    on_ = buf[i++];
+    ps.on(buf[i++]);
+    ps.setOffsetTime(buf[i++]);
+    ps.setLifeTime(buf[i++]);
     ps.setNumParticles(buf[i++]);
+    ps.setParticleSize(buf[i++]);
+    ps.setInitialSpeedAverage(buf[i++]);
+    ps.setInitialSpeedVariation(buf[i++]);
+    ps.setEmissionRange(buf[i++]);
     ps.setAcceleration(Vector3f(buf[i], buf[i+1], buf[i+2]));
     i += 3;
-    ps.setEmissionRange(buf[i++]);
     
     return buf + i;
 }
@@ -138,12 +143,17 @@ double* SmokeDevice::writeState(double* out_buf) const
     int i = 0;
     auto& ps = particleSystem_;
     
-    out_buf[i++] = on_ ? 1.0 : 0.0;
+    out_buf[i++] = ps.on() ? 1.0 : 0.0;
+    out_buf[i++] = ps.offsetTime();
+    out_buf[i++] = ps.lifeTime();
     out_buf[i++] = ps.numParticles();
+    out_buf[i++] = ps.particleSize();
+    out_buf[i++] = ps.initialSpeedAverage();
+    out_buf[i++] = ps.initialSpeedVariation();
+    out_buf[i++] = ps.emissionRange();
     out_buf[i++] = ps.acceleration()[0];
     out_buf[i++] = ps.acceleration()[1];
     out_buf[i++] = ps.acceleration()[2];
-    out_buf[i++] = ps.emissionRange();
 
     return out_buf + i;
 }

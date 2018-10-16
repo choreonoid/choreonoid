@@ -129,7 +129,7 @@ void FireDevice::on(bool on)
 
 int FireDevice::stateSize() const
 {
-    return 8;
+    return 11;
 }
 
 
@@ -139,12 +139,15 @@ const double* FireDevice::readState(const double* buf)
     auto& ps = particleSystem_;
 
     ps.on(buf[i++]);
+    ps.setOffsetTime(buf[i++]);
+    ps.setLifeTime(buf[i++]);
     ps.setNumParticles(buf[i++]);
-    ps.setAcceleration(Vector3f(buf[i], buf[i+1], buf[i+2]));
-    buf += 3;
-    ps.setEmissionRange(buf[i++]);
+    ps.setParticleSize(buf[i++]);
     ps.setInitialSpeedAverage(buf[i++]);
     ps.setInitialSpeedVariation(buf[i++]);
+    ps.setEmissionRange(buf[i++]);
+    ps.setAcceleration(Vector3f(buf[i], buf[i+1], buf[i+2]));
+    i += 3;
     
     return buf + i;
 }
@@ -156,13 +159,16 @@ double* FireDevice::writeState(double* out_buf) const
     auto& ps = particleSystem_;
     
     out_buf[i++] = ps.on() ? 1.0 : 0.0;
+    out_buf[i++] = ps.offsetTime();
+    out_buf[i++] = ps.lifeTime();
     out_buf[i++] = ps.numParticles();
+    out_buf[i++] = ps.particleSize();
+    out_buf[i++] = ps.initialSpeedAverage();
+    out_buf[i++] = ps.initialSpeedVariation();
+    out_buf[i++] = ps.emissionRange();
     out_buf[i++] = ps.acceleration()[0];
     out_buf[i++] = ps.acceleration()[1];
     out_buf[i++] = ps.acceleration()[2];
-    out_buf[i++] = ps.emissionRange();
-    out_buf[i++] = ps.initialSpeedAverage();
-    out_buf[i++] = ps.initialSpeedVariation();
 
     return out_buf + i;
 }

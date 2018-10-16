@@ -52,8 +52,8 @@ private:
     bool on_;
     float offsetTime_;
     float lifeTime_;
-    float particleSize_;
     int numParticles_;
+    float particleSize_;
     float initialSpeedAverage_;
     float initialSpeedVariation_;
     float emissionRange_;

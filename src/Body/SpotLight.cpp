@@ -77,7 +77,7 @@ void SpotLight::forEachActualType(std::function<bool(const std::type_info& type)
 
 int SpotLight::stateSize() const
 {
-    return PointLightStateSize + 5;
+    return PointLightStateSize + 6;
 }
 
 
@@ -87,7 +87,8 @@ const double* SpotLight::readState(const double* buf)
     direction_ = Eigen::Map<const Vector3>(buf);
     beamWidth_ = buf[3];
     cutOffAngle_ = buf[4];
-    return buf + 5;
+    cutOffExponent_ = buf[5];
+    return buf + 6;
 }
 
 
@@ -97,5 +98,6 @@ double* SpotLight::writeState(double* out_buf) const
     Eigen::Map<Vector3>(out_buf) << direction_;
     out_buf[3] = beamWidth_;
     out_buf[4] = cutOffAngle_;
-    return out_buf + 5;
+    out_buf[5] = cutOffExponent_;
+    return out_buf + 6;
 }
