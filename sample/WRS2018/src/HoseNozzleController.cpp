@@ -35,11 +35,14 @@ public:
         nozzle = body->link("HOSE_NOZZLE");
         valve = body->link("VALVE");
         hoseConnector = body->link("HOSE_CONNECTOR");
+        Affine3 T;
+        auto nodePath = hoseConnector->shape()->findNode("END", T);
+        hoseConnectorEndPosition = T.translation();
         lever = body->link("HOSE_NOZZLE_LEVER");
         water = body->findDevice<FountainDevice>("WATER");
         marker = body->findDevice<MarkerDevice>("MARKER");
 
-        if(!nozzle || !valve || !hoseConnector || !lever || !water || !marker){
+        if(!nozzle || !valve || !hoseConnector || nodePath.empty() || !lever || !water || !marker){
             io->os() << "HoseNozzleController: Eequired body components are not completely detected." << endl;
             return false;
         }
@@ -47,17 +50,14 @@ public:
         mode = 0;
         io->enableInput(nozzle, LINK_POSITION);
         io->enableInput(valve, JOINT_ANGLE);
-
         io->enableInput(hoseConnector, LINK_POSITION);
-        Affine3 T;
-        hoseConnector->shape()->findNode("END", T);
-        hoseConnectorEndPosition = T.translation();
-
         io->enableInput(lever, JOINT_DISPLACEMENT);
         
         auto options = io->options();
         if(std::find(options.begin(), options.end(), "test1") != options.end()){
             mode = 1;
+        } else if(std::find(options.begin(), options.end(), "test2") != options.end()){
+            mode = 2;
         }
         
         if(mode > 0){
@@ -81,21 +81,29 @@ public:
         bool isHoseConnected;
         bool isValveOpened;
         
-        if(mode > 0){
+        if(mode == 1){
             isHoseConnected = true;
             isValveOpened = true;
         } else {
             Vector3 p = hoseConnector->attitude() * hoseConnectorEndPosition + hoseConnector->translation();
             double distance = (nozzle->translation() - p).norm();
             isHoseConnected = distance < 0.001;
-            isValveOpened = (valve->q() >= radian(90));
+            if(mode == 2){
+                io->os() << "Nozzle connection distance: " << distance << endl;
+                if(isHoseConnected){
+                    io->os() << "The hose is connected to the nozzle" << endl;
+                }
+            }
+            isValveOpened = (valve->q() >= radian(90.0));
         }
-        
+
         if(!water->on()){
             if(isValveOpened && isHoseConnected && lever->q() < radian(-30.0)){
                 water->on(true);
                 water->notifyStateChange();
-                lever->dq_target() = 0.0; // for test1
+                if(mode > 0){
+                    lever->dq_target() = 0.0;
+                }
             }
         } else {
             if(!isValveOpened || !isHoseConnected || lever->q() > radian(0.0)){
