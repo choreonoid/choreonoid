@@ -1193,6 +1193,8 @@ endfunction()
 
 
 if(ENABLE_PYTHON)
+  function(apply_common_setting_for_python_module target)
+  endfunction()
   function(add_cnoid_python_module)
   
     set(target ${ARGV0})
