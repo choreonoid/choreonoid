@@ -36,13 +36,14 @@ public:
         valve = body->link("VALVE");
         hoseConnector = body->link("HOSE_CONNECTOR");
         Affine3 T;
-        auto nodePath = hoseConnector->shape()->findNode("END", T);
-        hoseConnectorEndPosition = T.translation();
+        //auto nodePath = hoseConnector->shape()->findNode("END", T);
+        //hoseConnectorEndPosition = T.translation();
+        hoseConnectorEndPosition << 0.08, 0.0, 0.0;
         lever = body->link("HOSE_NOZZLE_LEVER");
         water = body->findDevice<FountainDevice>("WATER");
         marker = body->findDevice<MarkerDevice>("MARKER");
 
-        if(!nozzle || !valve || !hoseConnector || nodePath.empty() || !lever || !water || !marker){
+        if(!nozzle || !valve || !hoseConnector || /* nodePath.empty() || */ !lever || !water || !marker){
             io->os() << "HoseNozzleController: Eequired body components are not completely detected." << endl;
             return false;
         }
