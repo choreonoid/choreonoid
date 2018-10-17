@@ -18,11 +18,17 @@ class SmokeProgram : public ParticlesProgram
 public:
     SmokeProgram(GLSLSceneRenderer* renderer);
     virtual bool initializeRendering(SceneParticles* particles) override;
+    void updateParticleBuffers(SceneSmoke* smoke);
     void render(SceneSmoke* fountain);
 
     GLint lifeTimeLocation;
     GLint accelLocation;
-    GLuint nParticles;
+
+    // Variables to detect changes causing the buffer update
+    int numParticles;
+    float lifeTime;
+    float emissionRange;
+
     GLuint initVelBuffer;
     GLuint offsetTimeBuffer;
     GLuint vertexArray;
@@ -34,7 +40,6 @@ struct Registration {
         registerSceneEffectType<SceneSmoke, SmokeProgram>();
     }
 } registration;
-
 
 }
 
@@ -83,15 +88,34 @@ bool SmokeProgram::initializeRendering(SceneParticles* particles)
         return false;
     }
 
-    auto ps = particles->getParticleSystem();
+    lifeTimeLocation = getUniformLocation("lifeTime");
+    accelLocation = getUniformLocation("accel");
 
+    glGenBuffers(1, &initVelBuffer);
+    glGenBuffers(1, &offsetTimeBuffer);
+    glGenVertexArrays(1, &vertexArray);
+
+    SceneSmoke* smoke = static_cast<SceneSmoke*>(particles);
+    updateParticleBuffers(smoke);
+
+    return true;
+}
+
+
+void SmokeProgram::updateParticleBuffers(SceneSmoke* smoke)
+{
+    auto& ps = smoke->particleSystem();
+    numParticles = ps.numParticles();
+    lifeTime = ps.lifeTime();
+    emissionRange = ps.emissionRange();
+    
     // Fill the first velocity buffer with random velocities
     Vector3f v;
     float velocity, theta, phi;
-    vector<GLfloat> data(ps->numParticles() * 3);
-    for(GLuint i = 0; i < ps->numParticles(); ++i) {
-        
-        theta = ps->emissionRange() / 2.0f * random();
+    vector<GLfloat> data(numParticles * 3);
+    srandom(0);
+    for(GLuint i = 0; i < numParticles; ++i) {
+        theta = emissionRange / 2.0f * random();
         phi = 2.0 * PI * random();
 
         v.x() = sinf(theta) * cosf(phi);
@@ -105,24 +129,22 @@ bool SmokeProgram::initializeRendering(SceneParticles* particles)
         data[3*i+1] = v.y();
         data[3*i+2] = v.z();
     }
-    glGenBuffers(1, &initVelBuffer);
+
     glBindBuffer(GL_ARRAY_BUFFER, initVelBuffer);
     glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(float), &data.front(), GL_STATIC_DRAW);
     
     // Fill the offset time buffer
-    data.resize(ps->numParticles());
-    float rate = ps->lifeTime() / ps->numParticles();
+    data.resize(numParticles);
+    float rate = lifeTime / numParticles;
     float time = 0.0f;
-    for(GLuint i = 0; i < ps->numParticles(); ++i) {
+    for(GLuint i = 0; i < numParticles; ++i) {
         data[i] = time;
         time += rate;
     }
-    glGenBuffers(1, &offsetTimeBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, offsetTimeBuffer);
     glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(float), &data.front(), GL_STATIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    glGenVertexArrays(1, &vertexArray);
     glBindVertexArray(vertexArray);
     glBindBuffer(GL_ARRAY_BUFFER, initVelBuffer);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
@@ -131,21 +153,37 @@ bool SmokeProgram::initializeRendering(SceneParticles* particles)
     glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 0, NULL);
     glEnableVertexAttribArray(1);
     glBindVertexArray(0);
-
-    lifeTimeLocation = getUniformLocation("lifeTime");
-    accelLocation = getUniformLocation("accel");
-
-    return true;
 }
 
 
 void SmokeProgram::render(SceneSmoke* smoke)
 {
     auto& ps = smoke->particleSystem();
+
+    if(!ps.on()){
+        return;
+    }
+
+    if(numParticles != ps.numParticles() ||
+       lifeTime != ps.lifeTime() ||
+       emissionRange != ps.emissionRange()){
+        updateParticleBuffers(smoke);
+    }
+    
     setTime(smoke->time() + ps.offsetTime());
     glUniform1f(lifeTimeLocation, ps.lifeTime());
     Vector3f accel = globalAttitude().transpose() * ps.acceleration();
     glUniform3fv(accelLocation, 1, accel.data());
+
+    /*
+    GLint blendSrc, blendDst;
+    glGetIntegerv(GL_BLEND_SRC_ALPHA, &blendSrc);
+    glGetIntegerv(GL_BLEND_DST_ALPHA, &blendDst);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+    */
+    
     glBindVertexArray(vertexArray);
     glDrawArrays(GL_POINTS, 0, ps.numParticles());
+
+    //glBlendFunc(blendSrc, blendDst);
 }
