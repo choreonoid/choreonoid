@@ -28,13 +28,13 @@ items:
               data: 
                 modelFile: "${SHARE}/model/WRS2018/NozzleConnectionTest.body"
                 currentBaseLink: "STAND"
-                rootPosition: [ 1.4, 0, 0.1 ]
+                rootPosition: [ 1.4, 0, 0 ]
                 rootAttitude: [ 
                   -1, 0, 0, 
                   0, -1, 0, 
                   0, 0, 1 ]
                 jointPositions: [  0.785398,  0.000000,  0.000000 ]
-                initialRootPosition: [ 1.4, 0, 0.1 ]
+                initialRootPosition: [ 1.4, 0, 0 ]
                 initialRootAttitude: [ 
                   -1, 0, 0, 
                   0, -1, 0, 
@@ -159,8 +159,8 @@ items:
                 targetLink: ""
                 keepRelativeAttitude: false
                 cameraType: "Perspective"
-                nearClipDistance: 0.01
-                farClipDistance: 100
+                nearClipDistance: 0.05
+                farClipDistance: 200
                 fieldOfView: 0.785398
         - 
           id: 11
@@ -186,14 +186,19 @@ items:
             ContactWarmstarting: true
             AutoSleep: false
             SaveToAGXFileOnStart: false
+            DebugMessageOnConsole: 2
 views: 
   - 
     id: 0
     plugin: Base
+    class: GeneralSliderView
+  - 
+    id: 1
+    plugin: Base
     class: ItemPropertyView
     mounted: true
   - 
-    id: 1
+    id: 2
     plugin: Base
     class: ItemTreeView
     mounted: true
@@ -201,12 +206,12 @@ views:
       checked: [ 3, 5, 6, 8, 9 ]
       expanded: [ 1, 2, 3, 6, 7, 10 ]
   - 
-    id: 2
+    id: 3
     plugin: Base
     class: MessageView
     mounted: true
   - 
-    id: 3
+    id: 4
     plugin: Base
     class: SceneView
     mounted: true
@@ -215,6 +220,7 @@ views:
       viewpointControlMode: thirdPerson
       collisionLines: false
       polygonMode: fill
+      cullingMode: enabled
       defaultHeadLight: true
       defaultHeadLightIntensity: 0.9
       headLightLightingFromBack: false
@@ -249,15 +255,15 @@ views:
           camera: [ System, Perspective ]
           isCurrent: true
           fieldOfView: 0.698132
-          near: 0.01
+          near: 0.05
           far: 200
-          eye: [ -1.83554153, -1.47977514, 1.47691317 ]
-          direction: [ 0.805674671, 0.488702435, -0.334751035 ]
-          up: [ 0.28621303, 0.173609783, 0.942306609 ]
+          eye: [ -1.45888591, -1.29411513, 1.65571118 ]
+          direction: [ 0.741078425, 0.459719612, -0.489347163 ]
+          up: [ 0.415834386, 0.257958154, 0.872089075 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
-          near: 0.01
+          near: 0.05
           far: 200
       backgroundColor: [ 0, 0, 0 ]
       gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
@@ -265,7 +271,7 @@ views:
       yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       dedicatedItemTreeViewChecks: false
   - 
-    id: 4
+    id: 5
     name: "Camera Scene"
     plugin: Base
     class: SceneView
@@ -275,6 +281,7 @@ views:
       viewpointControlMode: thirdPerson
       collisionLines: false
       polygonMode: fill
+      cullingMode: enabled
       defaultHeadLight: true
       defaultHeadLightIntensity: 0.8
       headLightLightingFromBack: false
@@ -306,7 +313,7 @@ views:
         - 
           camera: [ System, Perspective ]
           fieldOfView: 0.698132
-          near: 0.01
+          near: 0.05
           far: 200
           eye: [ 4, 2, 1.5 ]
           direction: [ -0.888888889, -0.444444444, -0.111111111 ]
@@ -314,7 +321,7 @@ views:
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
-          near: 0.01
+          near: 0.05
           far: 200
         - 
           camera: [ AizuSpider, FRONT_CAMERA ]
@@ -326,14 +333,14 @@ views:
       dedicatedItemTreeViewChecks: true
       checked: [ 3, 5, 6, 9 ]
   - 
-    id: 5
+    id: 6
     plugin: Body
     class: BodyLinkView
     mounted: true
     state: 
       showRotationMatrix: false
   - 
-    id: 6
+    id: 7
     plugin: Body
     class: JointSliderView
     mounted: true
@@ -347,7 +354,7 @@ views:
       labelOnLeft: true
       currentBodyItem: 3
   - 
-    id: 7
+    id: 8
     plugin: Body
     class: LinkSelectionView
     mounted: true
@@ -355,7 +362,17 @@ views:
       listingMode: "Link List"
       currentBodyItem: 3
   - 
-    id: 8
+    id: 9
+    plugin: OpenRTM
+    class: RTSNameServerView
+    state: 
+      NameServers: 
+        - 
+          isDefaultNameServer: false
+          host: "localhost"
+          port: 2809
+  - 
+    id: 10
     plugin: Python
     class: PythonConsoleView
     mounted: true
@@ -370,16 +387,16 @@ toolbars:
     speedScale: 1
     syncToOngoingUpdates: true
     autoExpansion: true
+  "BodyBar": 
+    current: 3
   "KinematicsBar": 
-    mode: AUTO
+    mode: IK
     enablePositionDragger: true
     penetrationBlock: false
     collisionLinkHighlight: false
     snapDistance: 0.025
     penetrationBlockDepth: 0.0005
     lazyCollisionDetectionMode: true
-  "BodyBar": 
-    current: 3
   "LeggedBodyBar": 
     stanceWidth: 0.15
   "BodyMotionGenerationBar": 
@@ -450,6 +467,8 @@ Body:
     inputFrameRate: 200
     isOutputFrameRateSpecified: false
     outputFrameRate: 200
+OpenRTM: 
+  "deleteUnmanagedRTCsOnStartingSimulation": false
 viewAreas: 
   - 
     type: embedded
@@ -457,52 +476,52 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 365, 1780 ]
+      sizes: [ 326, 1588 ]
       children: 
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 708, 706 ]
+          sizes: [ 471, 469 ]
           children: 
             - 
               type: pane
-              views: [ 1 ]
-              current: 1
+              views: [ 2 ]
+              current: 2
             - 
               type: pane
-              views: [ 0, 7 ]
-              current: 0
+              views: [ 1, 8 ]
+              current: 1
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 1087, 327 ]
+          sizes: [ 723, 217 ]
           children: 
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 756, 1018 ]
+              sizes: [ 674, 908 ]
               children: 
                 - 
                   type: pane
-                  views: [ 5, 6, 4 ]
+                  views: [ 6, 7, 5 ]
                   current: 6
+                - 
+                  type: pane
+                  views: [ 4 ]
+                  current: 4
+            - 
+              type: splitter
+              orientation: horizontal
+              sizes: [ 791, 791 ]
+              children: 
                 - 
                   type: pane
                   views: [ 3 ]
                   current: 3
-            - 
-              type: splitter
-              orientation: horizontal
-              sizes: [ 887, 887 ]
-              children: 
                 - 
                   type: pane
-                  views: [ 2 ]
-                  current: 2
-                - 
-                  type: pane
-                  views: [ 8 ]
-                  current: 8
+                  views: [ 10 ]
+                  current: 10
 layoutOfToolBars: 
   rows: 
     - 

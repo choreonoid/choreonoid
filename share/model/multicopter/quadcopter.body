@@ -72,7 +72,7 @@ links:
         name: Camera
         translation: [ 0.03, 0, 0 ]
         rotation: [ [ 1, 0, 0, 90 ], [ 0, 1, 0, -90 ] ]
-        format: COLOR_DEPTH
+        format: COLOR
         fieldOfView: 65
         nearClipDistance: 0.02
         width: 320

@@ -3,23 +3,15 @@ formatVersion: 1.0
 angleUnit: degree
 name: RoadSurface60m
 
+HALF_ROAD_LENGTH: &HALF_ROAD_LENGTH 30
+ROAD_LENGTH: &ROAD_LENGTH 60
+
 links:
   -
-    type: SubBody
-    uri: RoadSurface20m.body
+    name: Base
     jointType: fixed
-    prefix: 1_
-  -
-    type: SubBody
-    translation: [ 20, 0, 0 ]
-    uri: RoadSurface20m.body
-    parent: 1_Base
-    jointType: fixed
-    prefix: 2_
-  -
-    type: SubBody
-    translation: [ 40, 0, 0 ]
-    uri: RoadSurface20m.body
-    parent: 1_Base
-    jointType: fixed
-    prefix: 3_
+    material: Ground
+    elements:
+      Resource:
+        uri: "resource/RoadSurfaceCommon.yaml"
+        node: ROAD_SURFACE_ELEMENTS

@@ -27,7 +27,6 @@ public:
     SubProjectItem* self;
     std::string projectFileToLoad;
     Selection saveMode;
-    bool isLoadingMainProject;
     bool isSavingSubProject;
     ScopedConnectionSet updateConnections;
     unique_ptr<ProjectManager> projectManager_;
@@ -73,7 +72,6 @@ SubProjectItemImpl::SubProjectItemImpl(SubProjectItem* self)
     : self(self),
       saveMode(SubProjectItem::N_SAVE_MODE, CNOID_GETTEXT_DOMAIN_NAME)
 {
-    isLoadingMainProject = false;
     isSavingSubProject = false;
 
     saveMode.setSymbol(SubProjectItem::MANUAL_SAVE, N_("Manual save"));
@@ -156,7 +154,7 @@ void SubProjectItemImpl::doLoadSubProject(const std::string& filename)
 
     projectFilesBeingLoaded.erase(filename);
 
-    if(!isLoadingMainProject){
+    if(!ProjectManager::isProjectBeingLoaded()){
         ItemTreeView::instance()->expandItem(self);
     }
 

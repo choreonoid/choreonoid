@@ -65,8 +65,8 @@ items:
           class: BodyTrackingCameraItem
           data: 
             keepRelativeAttitude: false
-            nearClipDistance: 0.01
-            farClipDistance: 100
+            nearClipDistance: 0.05
+            farClipDistance: 200
 views: 
   - 
     id: 1
@@ -85,8 +85,6 @@ views:
           camera: BodyTrackingCamera
           isCurrent: true
           fieldOfView: 0.785398
-          near: 0.01
-          far: 100
           eye: [ -0.543500475, -0.414703735, 0.842134452 ]
           direction: [ 0.962129087, 0.147434452, -0.229283016 ]
           up: [ 0.226637528, 0.0347294144, 0.973359799 ]

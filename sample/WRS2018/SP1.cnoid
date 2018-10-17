@@ -887,7 +887,7 @@ views:
           camera: [ System, Perspective ]
           isCurrent: true
           fieldOfView: 0.698132
-          near: 0.01
+          near: 0.05
           far: 300
           eye: [ -2.87507632, -1.64846187, 2.08744936 ]
           direction: [ 0.962682337, 0.25527351, -0.0898785482 ]
@@ -895,7 +895,7 @@ views:
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
-          near: 0.01
+          near: 0.05
           far: 300
       backgroundColor: [ 0, 0, 0 ]
       gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
@@ -945,7 +945,7 @@ views:
           camera: [ System, Perspective ]
           isCurrent: true
           fieldOfView: 0.698132
-          near: 0.01
+          near: 0.05
           far: 200
           eye: [ -2.9852766, 0.135515917, 1.00369799 ]
           direction: [ 0.999009817, 0.0220366298, 0.0386493531 ]
@@ -953,7 +953,7 @@ views:
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
-          near: 0.01
+          near: 0.05
           far: 200
       backgroundColor: [ 0, 0, 0 ]
       gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]

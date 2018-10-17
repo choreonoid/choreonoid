@@ -90,6 +90,7 @@ links:
 
       -
         type: AGXMagneticJointDevice
+        constraintType: hinge
         link1Name: HOSE_NOZZLE
         link2Name: HOSE_CONNECTOR
         position1: [ 0, 0, 0 ]
@@ -107,26 +108,26 @@ links:
     parent: STAND
     rotation: [ 0, 0, 1, 90 ]
 
+    # for the test using a robot
     translation: [ 0, 0.227, 0.71 ]
     jointType: free
 
-    # constrained version
-    #translation: [ 0, 0.195, 0.81 ]
+    # for the test using mouse
     #jointType: fixed
+    #translation: [ 0, 0.0, 0.024 ]
 
   -
     type: SubBody
     uri: "HoseConnector.body"
 
+    # for a test using a robot
     rotation: [ 0, 0, 1, 90 ]
     parent: STAND
     translation: [ 0, -0.13, 0.71 ]
     jointType: free
 
-    # constrained version
-    #parent: HOSE_NOZZLE
-    #translation: [ -0.185, 0, 0 ]
-    #jointType: prismatic
-    #jointAxis: X
-    #jointId: 1
-    #jointRange: [ -0.3, 0.3 ]
+    # for a test using the mouse
+    #parent: STAND
+    #jointType: free
+    #rotation: [ 0, 0, 1, 90 ]
+    #translation: [ 0.0, -0.12, 0.024 ]

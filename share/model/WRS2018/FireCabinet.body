@@ -515,7 +515,7 @@ links:
     jointType: revolute
     jointAxis: X
     jointId: 2
-    jointRange: [ unlimited, unlimited ]
+    jointRange: [ 0, 360 ]
     mass: 3.0
     inertia: [ 0.05, 0, 0,
                0, 0.05, 0,
@@ -529,10 +529,33 @@ links:
       -
         type: Visual
         elements:
-          Resource:
+          -
+            type: Resource
             translation: [ 0, -0.059, -0.059 ]
             rotation: [ 0, 0, 1, 90 ]
             uri: "resource/FireCabinetValve.dae"
+          -
+            type: Transform
+            translation: [ -0.005291, 0.0, 0.0 ]
+            rotation: [ [ 0, 0, 1, -0.283 ], [ 0, 1, 0, -0.029 ] ]
+            elements:
+              -
+                type: Transform
+                translation: [ 0.0, 0.029, 0.00032 ]
+                rotation: [ 1, 0, 0, -89.2 ]
+                elements: &HANDLE_PART
+                  Shape:
+                    geometry: { type: Box, size: [ 0.0102, 0.008, 0.038 ] }
+                    appearance: 
+                      material: 
+                        diffuseColor: [ 0.67, 0.67, 0.67 ]
+                        specularColor: [ 0.8, 0.8, 0.8 ]
+                        shininess: 0.05
+              -
+                type: Transform
+                translation: [ 0.0, -0.0295, -0.0006 ]
+                rotation: [ 1, 0, 0, -89.2 ]
+                elements: *HANDLE_PART
       -
         type: Collision
         elements:

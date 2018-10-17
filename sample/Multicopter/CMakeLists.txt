@@ -26,5 +26,8 @@ if(BUILD_OPENRTM_PLUGIN AND BUILD_OPENRTM_SAMPLES)
   endif()
   add_cnoid_sample_rtc(QuadcopterControllerRTC QuadcopterControllerRTC.cpp)
   add_cnoid_body_io_rtc(QuadcopterIoRTC QuadcopterIoRTC.cpp)
-  install(FILES OpenRTM-QuadcopterJoystick.cnoid DESTINATION ${CNOID_SHARE_SUBDIR}/project)
+  install(FILES
+    OpenRTM-QuadcopterJoystick.cnoid
+    OpenRTM-Quadcopter-Terminal.cnoid
+    DESTINATION ${CNOID_SHARE_SUBDIR}/project)
 endif()

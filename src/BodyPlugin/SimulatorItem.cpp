@@ -469,7 +469,7 @@ void SimulatorItem::initializeClass(ExtensionManager* ext)
 
 SimulatorItem* SimulatorItem::findActiveSimulatorItemFor(Item* item)
 {
-    SimulatorItem* activeSimulatorItem = 0;
+    SimulatorItem* activeSimulatorItem = nullptr;
     if(item){
         WorldItem* worldItem = item->findOwnerItem<WorldItem>();
         if(worldItem){
@@ -497,7 +497,7 @@ SimulationBodyImpl::SimulationBodyImpl(SimulationBody* self, Body* body)
     : self(self),
       body_(body)
 {
-    simImpl = 0;
+    simImpl = nullptr;
     areShapesCloned = false;
     isActive = false;
     isDynamic = false;
@@ -540,7 +540,7 @@ ControllerItem* SimulationBody::controller(int index) const
 void SimulationBodyImpl::findControlSrcItems(Item* item, vector<Item*>& io_items, bool doPickCheckedItems)
 {
     while(item){
-        Item* srcItem = 0;
+        Item* srcItem = nullptr;
         if(dynamic_cast<ControllerItem*>(item)){
             srcItem = item;
         }
@@ -1008,30 +1008,32 @@ void SimulationBodyImpl::flushResultsToBody()
 
 void SimulationBodyImpl::flushResultsToWorldLogFile(int bufferFrame)
 {
-    if(bufferFrame < linkPosBuf.rowSize()){
-        WorldLogFileItem* log = simImpl->worldLogFileItem;
-        log->beginBodyStateOutput();
+    //if(bufferFrame < linkPosBuf.rowSize()){
+    
+    WorldLogFileItem* log = simImpl->worldLogFileItem;
+    log->beginBodyStateOutput();
 
+    if(linkPosBuf.colSize() > 0){
         MultiSE3Deque::Row posbuf = linkPosBuf.row(bufferFrame);
         log->outputLinkPositions(posbuf.begin(), posbuf.size());
-
-        if(jointPosBuf.colSize() > 0){
-            Deque2D<double>::Row jointbuf = jointPosBuf.row(bufferFrame);
-            log->outputJointPositions(jointbuf.begin(), jointbuf.size());
-        }
-
-        if(deviceStateBuf.colSize() > 0){
-            // Skip the first element because it is used for sharing an unchanged state
-            Deque2D<DeviceStatePtr>::Row states = deviceStateBuf.row(bufferFrame + 1);
-            log->beginDeviceStateOutput();
-            for(int i=0; i < states.size(); ++i){
-                log->outputDeviceState(states[i]);
-            }
-            log->endDeviceStateOutput();
-        }
-
-        log->endBodyStateOutput();
     }
+    if(jointPosBuf.colSize() > 0){
+        Deque2D<double>::Row jointbuf = jointPosBuf.row(bufferFrame);
+        log->outputJointPositions(jointbuf.begin(), jointbuf.size());
+    }
+    if(deviceStateBuf.colSize() > 0){
+        // Skip the first element because it is used for sharing an unchanged state
+        Deque2D<DeviceStatePtr>::Row states = deviceStateBuf.row(bufferFrame + 1);
+        log->beginDeviceStateOutput();
+        for(int i=0; i < states.size(); ++i){
+            log->outputDeviceState(states[i]);
+        }
+        log->endDeviceStateOutput();
+    }
+
+    log->endBodyStateOutput();
+
+    //}
 }
 
 
@@ -1185,7 +1187,7 @@ void SimulatorItem::onPositionChanged()
 void SimulatorItem::onDisconnectedFromRoot()
 {
     impl->stopSimulation(true);
-    impl->worldItem = 0;
+    impl->worldItem = nullptr;
 }
 
 
@@ -1654,13 +1656,16 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
         aboutToQuitConnection = cnoid::sigAboutToQuit().connect(
             [&](){ stopSimulation(true); });
 
-        worldLogFileItem = 0;
+        worldLogFileItem = nullptr;
         ItemList<WorldLogFileItem> worldLogFileItems;
-        worldLogFileItems.extractChildItems(self);
+        worldLogFileItems.extractChildItems(self); // Check child items first
+        if(worldLogFileItems.empty()){
+            worldLogFileItems.extractChildItems(worldItem); // Check items in the world secondly
+        }
         worldLogFileItem = worldLogFileItems.toSingle(true);
         if(worldLogFileItem){
             if(worldLogFileItem->logFileName().empty()){
-                worldLogFileItem = 0;
+                worldLogFileItem = nullptr;
             } else {
                 mv->putln(format(_("WorldLogFileItem \"%1%\" has been detected. "
                                    "A simulation result is recoreded to \"%2%\"."))
@@ -1758,7 +1763,7 @@ const std::vector<SimulationBody*>& SimulatorItem::simulationBodies()
 */
 SimulationBody* SimulatorItem::findSimulationBody(BodyItem* bodyItem)
 {
-    SimulationBody* simBody = 0;
+    SimulationBody* simBody = nullptr;
     BodyItemToSimBodyMap::iterator p = impl->simBodyMap.find(bodyItem);
     if(p != impl->simBodyMap.end()){
         simBody = p->second;
@@ -2694,7 +2699,7 @@ void SimulatorItemImpl::restoreBodyMotionEngines(const Archive& archive)
         }
     }
 
-    collisionSeqEngine = 0;
+    collisionSeqEngine = nullptr;
     ValueNode* id;
     id = archive.find("collisionSeqItem");
     if(id->isValid()){

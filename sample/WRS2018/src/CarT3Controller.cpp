@@ -55,6 +55,8 @@ public:
             if(target.forceSensor && target.breakableJoint){
                 target.link = target.forceSensor->link();
                 io->enableInput(target.forceSensor);
+                target.breakableJoint->on(true);
+                target.breakableJoint->notifyStateChange();
                 ++iter;
             } else {
                 iter = targets.erase(iter);

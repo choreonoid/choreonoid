@@ -319,11 +319,11 @@ items:
         isEditable: true
     - 
       id: 17
-      name: "Fire1"
+      name: "Fire"
       plugin: Body
       class: BodyItem
       data: 
-        modelFile: "${SHARE}/model/WRS2018/Fire1.body"
+        modelFile: "${SHARE}/model/WRS2018/Fire.body"
         currentBaseLink: "Base"
         rootPosition: [ 15, -1, 0.2 ]
         rootAttitude: [ 
@@ -340,6 +340,28 @@ items:
         collisionDetection: true
         selfCollisionDetection: false
         isEditable: false
+      children: 
+        - 
+          id: 18
+          name: "FireController"
+          plugin: Body
+          class: SimpleControllerItem
+          data: 
+            isNoDelayMode: false
+            controllerOptions: ""
+            controller: "FireController.so"
+            baseDirectory: "Controller directory"
+            reloading: false
+            isOldTargetVariableMode: false
+    - 
+      id: 19
+      name: "WorldLogFile"
+      plugin: Body
+      class: WorldLogFileItem
+      data: 
+        filename: T5.log
+        timeStampSuffix: true
+        recordingFrameRate: 100
 views: 
   - 
     id: 1

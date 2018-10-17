@@ -2055,6 +2055,12 @@ bool SceneWidget::isBuiltinCameraCurrent() const
 }
 
 
+bool SceneWidget::isBuiltinCamera(SgCamera* camera) const
+{
+    return (camera == impl->builtinPersCamera || camera == impl->builtinOrthoCamera);
+}
+
+
 void SceneWidgetImpl::setCurrentCameraPath(const std::vector<std::string>& simplifiedPathStrings)
 {
     renderer->setCurrentCameraPath(simplifiedPathStrings);
@@ -2573,14 +2579,15 @@ Mapping* SceneWidgetImpl::storeCameraState(int cameraIndex, bool isInteractiveCa
 
     if(isInteractiveCamera){
         SgCamera* camera = renderer->camera(cameraIndex);
-        if(SgPerspectiveCamera* pers = dynamic_cast<SgPerspectiveCamera*>(camera)){
-            state->write("fieldOfView", pers->fieldOfView());
-        } else if(SgOrthographicCamera* ortho = dynamic_cast<SgOrthographicCamera*>(camera)){
-            state->write("orthoHeight", ortho->height());
+        if(self->isBuiltinCamera(camera)){
+            if(SgPerspectiveCamera* pers = dynamic_cast<SgPerspectiveCamera*>(camera)){
+                state->write("fieldOfView", pers->fieldOfView());
+            } else if(SgOrthographicCamera* ortho = dynamic_cast<SgOrthographicCamera*>(camera)){
+                state->write("orthoHeight", ortho->height());
+            }
+            state->write("near", camera->nearClipDistance());
+            state->write("far", camera->farClipDistance());
         }
-        state->write("near", camera->nearClipDistance());
-        state->write("far", camera->farClipDistance());
-
         if(cameraTransform){
             const Affine3& T = cameraTransform->T();
             write(*state, "eye", T.translation());

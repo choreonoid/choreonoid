@@ -12,6 +12,8 @@ RangeCamera::RangeCamera()
 {
     setImageType(NO_IMAGE);
     points_ = std::make_shared<PointData>();
+    setNearClipDistance(0.5);
+    setFarClipDistance(4.0);
     isOrganized_ = false;
     isDense_ = false;
 }

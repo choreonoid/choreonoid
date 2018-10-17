@@ -3,32 +3,15 @@ formatVersion: 1.0
 angleUnit: degree
 name: RoadSurface20m
 
+HALF_ROAD_LENGTH: &HALF_ROAD_LENGTH 10
+ROAD_LENGTH: &ROAD_LENGTH 20
+
 links:
   -
     name: Base
     jointType: fixed
     material: Ground
     elements:
-      -
-        type: Visual
-        resource: { uri: "resource/RoadSurface20m.dae" }
-      -
-        type: Collision
-        elements:
-          -
-            type: Shape
-            name: Surface
-            translation: [ 10.0, 0.0, -0.225 ]
-            geometry: { type: Box, size: [ 20.0, 7.0, 0.45 ] }
-          -
-            type: Transform
-            translation: [ 10.0, 4.05, -0.1 ]
-            elements:
-              - &RoadCurb
-                type: Shape
-                name: RoadCurb
-                geometry: { type: Box, size: [ 20.0, 1.1, 0.7 ] }
-          -
-            type: Transform
-            translation: [ 10.0, -4.05, -0.1 ]
-            elements: *RoadCurb
+      Resource:
+        uri: "resource/RoadSurfaceCommon.yaml"
+        node: ROAD_SURFACE_ELEMENTS

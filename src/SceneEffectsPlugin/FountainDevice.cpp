@@ -52,8 +52,8 @@ FountainDevice::FountainDevice()
 {
     auto& ps = particleSystem_;
     ps.setLifeTime(3.0f);
-    ps.setParticleSize(0.06f);
-    ps.setNumParticles(10000);
+    ps.setParticleSize(0.05f);
+    ps.setNumParticles(1000);
     ps.setAcceleration(Vector3f(0.0f, 0.0f, -0.2f));
     ps.setEmissionRange(radian(30.0f));
 }
@@ -90,7 +90,7 @@ void FountainDevice::copyStateFrom(const DeviceState& other)
 
 DeviceState* FountainDevice::cloneState() const
 {
-    return new FountainDevice(*this, false);
+    return new FountainDevice(*this, true);
 }
 
 
@@ -127,7 +127,7 @@ void FountainDevice::on(bool on)
 
 int FountainDevice::stateSize() const
 {
-    return 7;
+    return 11;
 }
 
 
@@ -138,9 +138,14 @@ const double* FountainDevice::readState(const double* buf)
 
     ps.on(buf[i++]);
     ps.setOffsetTime(buf[i++]);
+    ps.setLifeTime(buf[i++]);
     ps.setNumParticles(buf[i++]);
-    ps.setAcceleration(Vector3f(buf[i++], buf[i++], buf[i++]));
+    ps.setParticleSize(buf[i++]);
+    ps.setInitialSpeedAverage(buf[i++]);
+    ps.setInitialSpeedVariation(buf[i++]);
     ps.setEmissionRange(buf[i++]);
+    ps.setAcceleration(Vector3f(buf[i], buf[i+1], buf[i+2]));
+    i += 3;
     
     return buf + i;
 }
@@ -153,11 +158,15 @@ double* FountainDevice::writeState(double* out_buf) const
     
     out_buf[i++] = ps.on() ? 1.0 : 0.0;
     out_buf[i++] = ps.offsetTime();
+    out_buf[i++] = ps.lifeTime();
     out_buf[i++] = ps.numParticles();
+    out_buf[i++] = ps.particleSize();
+    out_buf[i++] = ps.initialSpeedAverage();
+    out_buf[i++] = ps.initialSpeedVariation();
+    out_buf[i++] = ps.emissionRange();
     out_buf[i++] = ps.acceleration()[0];
     out_buf[i++] = ps.acceleration()[1];
     out_buf[i++] = ps.acceleration()[2];
-    out_buf[i++] = ps.emissionRange();
 
     return out_buf + i;
 }

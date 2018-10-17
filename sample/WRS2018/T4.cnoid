@@ -372,30 +372,15 @@ items:
         collisionDetection: true
         selfCollisionDetection: false
         isEditable: true
-    # - 
-    #   id: 19
-    #   name: "Car"
-    #   plugin: Body
-    #   class: BodyItem
-    #   data: 
-    #     modelFile: "${SHARE}/model/WRS2018/CarT4.body"
-    #     currentBaseLink: "BODY"
-    #     rootPosition: [ 7.8, -0.1, 0 ]
-    #     rootAttitude: [ 
-    #       -0.866025404, -0.5, 0, 
-    #       0.5, -0.866025404, 0, 
-    #       0, 0, 1 ]
-    #     jointPositions: [  0.000000,  0.000000,  0.000000,  0.000000 ]
-    #     initialRootPosition: [ 7.8, -0.1, 0 ]
-    #     initialRootAttitude: [ 
-    #       -0.866025404, -0.5, 0, 
-    #       0.5, -0.866025404, 0, 
-    #       0, 0, 1 ]
-    #     initialJointPositions: [  0.000000,  0.000000,  0.000000,  0.000000 ]
-    #     zmp: [ 0, 0, 0 ]
-    #     collisionDetection: true
-    #     selfCollisionDetection: false
-    #     isEditable: true
+    - 
+      id: 19
+      name: "WorldLogFile"
+      plugin: Body
+      class: WorldLogFileItem
+      data: 
+        filename: T4.log
+        timeStampSuffix: true
+        recordingFrameRate: 100
 views: 
   - 
     id: 1

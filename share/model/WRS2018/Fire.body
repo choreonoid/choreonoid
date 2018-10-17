@@ -1,0 +1,28 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: Fire
+links:
+  -
+    name: ROOT
+    jointType: fixed
+  -
+    name: FIRE_JOINT
+    parent: ROOT
+    jointType: prismatic
+    jointAxis: Z
+    jointRange: [ 0, 0.24 ]
+    jointDisplacement: 0.08
+    actuationMode: jointDisplacement
+    jointId: 0
+    elements:
+      FireDevice:
+        name: FIRE
+        offsetTime: 5
+        lifeTime: 5
+        acceleration: [ 0, 0, 0.04 ]
+        numParticles: 200
+        particleSize: 0.23
+        emissionRange: 180
+        initialSpeedAverage: 0.1
+        initialSpeedVariation: 0.1

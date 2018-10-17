@@ -52,6 +52,7 @@ public:
     SgPerspectiveCamera* builtinPerspectiveCamera() const;
     SgOrthographicCamera* builtinOrthographicCamera() const;
     bool isBuiltinCameraCurrent() const;
+    bool isBuiltinCamera(SgCamera* camera) const;
     InteractiveCameraTransform* findOwnerInteractiveCameraTransform(int cameraIndex);
 
     void startBuiltinCameraViewChange(const Vector3& center);

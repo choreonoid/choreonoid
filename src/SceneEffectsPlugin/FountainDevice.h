@@ -8,10 +8,11 @@
 
 #include "ParticleSystem.h"
 #include <cnoid/Device>
+#include "exportdecl.h"
 
 namespace cnoid {
 
-class FountainDevice : public Device
+class CNOID_EXPORT FountainDevice : public Device
 {
 public:
     FountainDevice();
@@ -26,8 +27,8 @@ public:
     virtual const double* readState(const double* buf) override;
     virtual double* writeState(double* out_buf) const override;
 
-    virtual bool on() const;
-    virtual void on(bool on);
+    virtual bool on() const override;
+    virtual void on(bool on) override;
         
     ParticleSystem& particleSystem() { return particleSystem_; }
     const ParticleSystem& particleSystem() const { return particleSystem_; }

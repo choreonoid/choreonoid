@@ -102,6 +102,7 @@ set(sources
   MultiPointSetItem.cpp
   MovieRecorder.cpp
   TextEditView.cpp
+  GeneralSliderView.cpp
   ImageView.cpp
   TextEdit.cpp
   TaskView.cpp
@@ -205,6 +206,7 @@ set(headers
   PointSetItem.h
   MultiPointSetItem.h
   TextEditView.h
+  GeneralSliderView.h
   ImageView.h
   JoystickCapture.h
   TextEdit.h

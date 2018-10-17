@@ -305,7 +305,7 @@ views:
           camera: [ System, Perspective ]
           isCurrent: true
           fieldOfView: 0.698132
-          near: 0.01
+          near: 0.05
           far: 200
           eye: [ -0.724784721, -5.3455219, 2.06639099 ]
           direction: [ 0.395778771, 0.889262876, -0.229283017 ]
@@ -313,7 +313,7 @@ views:
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
-          near: 0.01
+          near: 0.05
           far: 200
       backgroundColor: [ 0, 0, 0 ]
       gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]

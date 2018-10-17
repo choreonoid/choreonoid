@@ -1,6 +1,14 @@
 add_cnoid_simple_controller(SpreaderController SpreaderController.cpp)
-
 add_cnoid_simple_controller(CarT3Controller CarT3Controller.cpp)
 target_link_libraries(CarT3Controller SpreaderController)
 
-add_cnoid_simple_controller(HoseNozzleController HoseNozzleController.cpp)
+if(BUILD_SCENE_EFFECTS_PLUGIN)
+  add_cnoid_simple_controller(FireController FireController.cpp)
+  target_link_libraries(FireController CnoidSceneEffectsPlugin)
+  add_cnoid_simple_controller(HoseNozzleController HoseNozzleController.cpp)
+  target_link_libraries(HoseNozzleController FireController)
+endif()
+
+add_cnoid_simple_controller(RockDrillController RockDrillController.cpp)
+add_cnoid_simple_controller(BoaringTargetController BoaringTargetController.cpp)
+target_link_libraries(BoaringTargetController RockDrillController)

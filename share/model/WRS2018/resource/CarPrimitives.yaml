@@ -1819,7 +1819,7 @@ CAR_DOOR_FR_BODY: &CAR_DOOR_FR_BODY
       name: DoorFR front1
       translation: [ 0.77, -0.756, 0.394 ]
       rotation: [ 0, 1, 0, 20 ]
-      geometry: { type: Box, size: [ 0.11, 0.132, 0.13] }
+      geometry: { type: Box, size: [ 0.11, 0.132, 0.125 ] }
     - 
       type: Shape
       name: DoorFR front2
