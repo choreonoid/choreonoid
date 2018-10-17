@@ -237,27 +237,36 @@ bool SgNode::isGroup() const
 }
 
 
-static bool findNodeSub(SgNode* node, const std::string& name, SgNodePath& path, Affine3& out_T)
+/**
+   \note The current implementation of this function does not seem to return the correct T value
+*/
+static bool findNodeSub(SgNode* node, const std::string& name, SgNodePath& path, Affine3 T, Affine3& out_T)
 {
-    if(node->name() == name){
-        path.push_back(node);
-        return true;
-    }
+    path.push_back(node);
 
     if(auto group = dynamic_cast<SgGroup*>(node)){
-        path.push_back(node);
         if(auto transform = dynamic_cast<SgTransform*>(group)){
             Affine3 T0;
             transform->getTransform(T0);
-            out_T = out_T * T0;
+            T = T * T0;
+        }
+        if(node->name() == name){
+            out_T = T;
+            return true;
         }
         for(auto& child : *group){
-            if(findNodeSub(child, name, path, out_T)){
+            if(findNodeSub(child, name, path, T, out_T)){
                 return true;
             }
         }
-        path.pop_back();
+    } else {
+        if(node->name() == name){
+            out_T = T;
+            return true;
+        }
     }
+    
+    path.pop_back();
 
     return false;
 }
@@ -267,7 +276,7 @@ SgNodePath SgNode::findNode(const std::string& name, Affine3& out_T)
 {
     SgNodePath path;
     out_T.setIdentity();
-    findNodeSub(this, name, path, out_T);
+    findNodeSub(this, name, path, out_T, out_T);
     return path;
 }
 
