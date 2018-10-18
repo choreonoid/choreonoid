@@ -86,6 +86,22 @@ links:
         size: 0.1
         on: false
   -
+    # Extra link for preventing the hand from sticking to the nozzle slot
+    name: HOSE_NOZZLE_SLOT_GUARD
+    parent: HOSE_NOZZLE
+    translation: [ -0.025, 0, 0 ]
+    jointType: fixed
+    mass: 0.01
+    inertia: [ 0.0001, 0,      0,
+               0,      0.0001, 0,
+               0,      0,      0.0001 ]
+    elements:
+      Collision:
+        shape:
+          rotation: [ 0, 0, 1, 90 ]
+          geometry: { type: Cylinder, radius: 0.031, height: 0.051 }
+          appearance: *SILVER
+  -
     name: HOSE_NOZZLE_LEVER
     parent: HOSE_NOZZLE
     translation: [ 0.0305, 0, 0.002 ]
