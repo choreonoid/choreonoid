@@ -32,7 +32,7 @@ links:
     name: HOSE_NOZZLE
     jointType: free
     mass: 1.6
-    centerOfMass: [ 0.12, 0, 0 ]
+    centerOfMass: [ 0.1, 0, 0 ]
     inertia: [ 0.002, 0,    0,
                0,     0.03, 0,
                0,     0,    0.03 ]
@@ -111,7 +111,7 @@ links:
     jointRange: [ -45, 45 ]
     jointAngle: 45
     centerOfMass: [ 0, 0, 0.03 ]
-    mass: 0.4
+    mass: 0.3
     inertia: [ 0.0005, 0,      0,
                0,      0.0005, 0,
                0,      0,      0.0005 ]
@@ -154,3 +154,31 @@ links:
         translation: [ -0.0019, -0.00143, 0.047 ]
         geometry: { type: Box, size: [ 0.0095, 0.08, 0.0015 ] }
         appearance: *GRAY2
+  -
+    name: HOSE_NOZZLE_WATER_REACTION_JOINT1
+    parent: HOSE_NOZZLE
+    translation: [ 0.3, 0, 0 ]
+    jointType: revolute
+    jointAxis: X
+    jointRange: unlimited
+    mass: 0.01
+    inertia: [ 0.0001, 0,       0,
+               0,      0.00001, 0,
+               0,      0,       0.0001 ]
+  -
+    name: HOSE_NOZZLE_WATER_REACTION_JOINT2
+    parent: HOSE_NOZZLE_WATER_REACTION_JOINT1
+    jointType: prismatic
+    jointAxis: Y
+    jointRange: [ -0.2, 0.2 ]
+    mass: 0.19
+    inertia: [ 0.0001, 0,       0,
+               0,      0.00001, 0,
+               0,      0,       0.0001 ]
+    # elements:
+    #   Visual:
+    #     shape:
+    #       geometry: { type: Sphere, radius: 0.01 }
+    #       appearance:
+    #         material:
+    #           diffuseColor: [ 1, 0, 0 ]

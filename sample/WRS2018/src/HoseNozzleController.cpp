@@ -12,15 +12,25 @@
 using namespace std;
 using namespace cnoid;
 
+static float random(float max = 1.0f)
+{
+    return ((float)rand() / RAND_MAX) * max;
+}
+
+
 class HoseNozzleController : public SimpleController
 {
     SimpleControllerIO* io;
+    double timeStep;
     Link* nozzle;
     Link* valve;
     Link* hoseConnector;
     Vector3 hoseConnectorEndPosition;
     Link* lever;
     FountainDevice* water;
+    Link* reactionJoint1;
+    Link* reactionJoint2;
+    double reactionCycleTimer;
     MarkerDevice* marker;
     FireController* fireController;
     int mode;
@@ -30,6 +40,7 @@ public:
     virtual bool initialize(SimpleControllerIO* io) override
     {
         this->io = io;
+        timeStep = io->timeStep();
         auto body = io->body();
 
         nozzle = body->link("HOSE_NOZZLE");
@@ -40,10 +51,13 @@ public:
         //hoseConnectorEndPosition = T.translation();
         hoseConnectorEndPosition << 0.08, 0.0, 0.0;
         lever = body->link("HOSE_NOZZLE_LEVER");
+        reactionJoint1 = body->link("HOSE_NOZZLE_WATER_REACTION_JOINT1");
+        reactionJoint2 = body->link("HOSE_NOZZLE_WATER_REACTION_JOINT2");
         water = body->findDevice<FountainDevice>("WATER");
         marker = body->findDevice<MarkerDevice>("MARKER");
 
-        if(!nozzle || !valve || !hoseConnector || /* nodePath.empty() || */ !lever || !water || !marker){
+        if(!nozzle || !valve || !hoseConnector || /* nodePath.empty() || */ !lever ||
+           !reactionJoint1 || !reactionJoint2 || !water || !marker){
             io->os() << "HoseNozzleController: Eequired body components are not completely detected." << endl;
             return false;
         }
@@ -53,6 +67,11 @@ public:
         io->enableInput(valve, JOINT_ANGLE);
         io->enableInput(hoseConnector, LINK_POSITION);
         io->enableInput(lever, JOINT_DISPLACEMENT);
+        reactionJoint1->setActuationMode(Link::JOINT_DISPLACEMENT);
+        reactionJoint2->setActuationMode(Link::JOINT_DISPLACEMENT);
+        io->enableIO(reactionJoint1);
+        io->enableIO(reactionJoint2);
+        reactionCycleTimer = 0.0;
         
         auto options = io->options();
         if(std::find(options.begin(), options.end(), "test1") != options.end()){
@@ -110,6 +129,17 @@ public:
             if(!isValveOpened || !isHoseConnected || lever->q() > radian(0.0)){
                 water->on(false);
                 water->notifyStateChange();
+                reactionJoint2->q_target() = 0.0;
+            } else {
+                reactionCycleTimer += timeStep;
+                //io->os() << "reactionCycleTimer: " << reactionCycleTimer << endl;
+                if(reactionCycleTimer >= 0.16){
+                    reactionJoint1->q_target() = reactionJoint1->q() + (random(radian(360.0)) - radian(180.0));
+                    //io->os() << "reactionJoint1->q_target(): " << reactionJoint1->q_target() << endl;
+                    reactionJoint2->q_target() = random(0.2) - 0.1;
+                    //io->os() << "reactionJoint2->q_target(): " << reactionJoint2->q_target() << endl;
+                    reactionCycleTimer = 0.0;
+                }
             }
         }
         if(fireController){
