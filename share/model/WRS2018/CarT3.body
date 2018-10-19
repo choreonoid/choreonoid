@@ -83,7 +83,6 @@ links:
     #translation: [ &FR_DOOR_TRANSLATION [ [ 0.875, -0.814, 0.328 ], [ -0.012, 0, 0.002 ] ], [ 0.01, 0, 0 ] ]
     rotation: [ 0, 1, 0, -0.05 ]
     jointType: free
-    jointRange: [ 0, 60 ]
     centerOfMass: [ -0.7, 0.03, 0.38 ]
     mass: 30.0
     inertia: [ 5, 0, 0,
@@ -194,6 +193,16 @@ links:
         geometry: { type: Capsule, height: 0.05, radius: 0.03 }
         appearance: *SILVER
   -
+    name: FR_DOOR_BLOCKER
+    parent: BODY
+    translation: [ -0.418, -0.678, 0.605 ]
+    jointType: fixed
+    elements:
+      Collision:
+        shape:
+          rotation: [ 0, 1, 0, -13.5 ]
+          geometry: { type: Box, size: [ 0.06, 0.01, 0.46 ] }
+  -
     name: FL_DOOR
     parent: BODY
     translation: [ 0.875, 0.814, 0.328 ]
@@ -270,5 +279,5 @@ links:
 
 collisionDetection:
   excludeLinkGroups:
-    - links: [ BODY, FL_DOOR, BR_DOOR, BL_DOOR, BODY_AROUND_FR_DOOR, FR_DOOR_UPPER_HINGE, FR_DOOR_LOWER_HINGE, FR_DOOR_LOCK ]
+    - links: [ BODY, FL_DOOR, BR_DOOR, BL_DOOR, BODY_AROUND_FR_DOOR, FR_DOOR_UPPER_HINGE, FR_DOOR_LOWER_HINGE, FR_DOOR_LOCK, FR_DOOR_BLOCKER ]
     - links: [ FR_DOOR, BODY_AROUND_FR_DOOR, FR_DOOR_UPPER_HINGE, FR_DOOR_LOWER_HINGE, FR_DOOR_LOCK ]
