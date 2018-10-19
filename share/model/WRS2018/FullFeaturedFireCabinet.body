@@ -87,6 +87,8 @@ links:
         connectAxis2: [ 1, 0, 0 ]
         jointCompliance: 1e-8
         jointSpookDamping: 0.33
+        jointMotor: true
+        jointMotorCompliance: 0.1
         validDistance: 0.02
         validAngle: 10
 
