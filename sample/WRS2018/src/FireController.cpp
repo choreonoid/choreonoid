@@ -86,9 +86,9 @@ bool FireController::control()
             }
         }
         if(hit){
-            double r = 5.0;
+            double r = 7.5;
             if(fireStrength < 100.0){
-                r = 10.0;
+                r = 13.0;
             }
             fireStrength = std::max(0.0, fireStrength - r * timeStep);
             fireSizePhase += radian(7);

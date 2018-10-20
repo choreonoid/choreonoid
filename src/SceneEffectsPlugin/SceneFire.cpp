@@ -110,6 +110,7 @@ void FireProgram::updateParticleBuffers(SceneFire* fire)
 {
     auto& ps = fire->particleSystem();
     numParticles = ps.numParticles();
+    lifeTime = ps.lifeTime();
     emissionRange = ps.emissionRange();
     initialSpeedAverage = ps.initialSpeedAverage();
     initialSpeedVariation = ps.initialSpeedVariation();
@@ -139,7 +140,7 @@ void FireProgram::updateParticleBuffers(SceneFire* fire)
     
     // Fill the offset time buffer
     data.resize(numParticles);
-    float rate = ps.lifeTime() / numParticles;
+    float rate = lifeTime / numParticles;
     float time = 0.0f;
     for(GLuint i = 0; i < numParticles; ++i) {
         data[i] = time;

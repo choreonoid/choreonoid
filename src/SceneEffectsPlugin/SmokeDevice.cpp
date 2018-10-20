@@ -6,6 +6,7 @@
 #include "SmokeDevice.h"
 #include "SceneSmoke.h"
 #include <cnoid/YAMLBodyLoader>
+#include <cnoid/Body>
 #include <cnoid/SceneDevice>
 #include <cnoid/EigenUtil>
 
@@ -50,20 +51,17 @@ registerSceneSmokeDeviceFactory(
 
 SmokeDevice::SmokeDevice()
 {
-    on_ = true;
-
     auto& ps = particleSystem_;
     ps.setLifeTime(5.0f);
-    ps.setParticleSize(0.06f);
     ps.setNumParticles(2000);
-    ps.setAcceleration(Vector3f(0.0f, 0.0f, 0.04f));
+    ps.setParticleSize(0.06f);
     ps.setEmissionRange(radian(120.0f));
+    ps.setAcceleration(Vector3f(0.0f, 0.0f, 0.04f));
 }
 
 
 SmokeDevice::SmokeDevice(const SmokeDevice& org, bool copyStateOnly)
     : Device(org, copyStateOnly),
-      on_(org.on_),
       particleSystem_(org.particleSystem_)
 {
 
@@ -78,7 +76,6 @@ const char* SmokeDevice::typeName()
 
 void SmokeDevice::copyStateFrom(const SmokeDevice& other)
 {
-    on_ = other.on_;
     particleSystem_ = other.particleSystem_;
 }
 
@@ -110,6 +107,24 @@ void SmokeDevice::forEachActualType(std::function<bool(const std::type_info& typ
         Device::forEachActualType(func);
     }
 }
+
+
+bool SmokeDevice::on() const
+{
+    return particleSystem_.on();
+}
+
+
+void SmokeDevice::on(bool on)
+{
+    if(on && !particleSystem_.on()){
+        if(link()){
+            particleSystem_.setOffsetTime(-link()->body()->currentTime());
+        }
+    }
+    particleSystem_.on(on);
+}
+
 
 
 int SmokeDevice::stateSize() const

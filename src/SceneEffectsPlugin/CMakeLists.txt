@@ -7,7 +7,6 @@ endif()
 set(sources
   SceneEffectsPlugin.cpp
   ParticleSystem.cpp
-  #FireParticleSystem.cpp
   SceneParticles.cpp
   SceneFountain.cpp
   SceneFire.cpp
