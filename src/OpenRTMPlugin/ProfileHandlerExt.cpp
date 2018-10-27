@@ -245,11 +245,14 @@ bool ProfileHandlerExt::parseProfile(std::string targetFile, RtsProfile& profile
         proComp.posY = pos.attribute("rtsExt:y").as_int();
 
         for (pugi::xml_node prop = comp.child("rtsExt:Properties"); prop; prop = prop.next_sibling("rtsExt:Properties")) {
-            if (prop.attribute("rtsExt:name").as_string() == "OpenRTM_NS") {
-                proComp.isRegisteredInRtmDefaultNameServer = prop.attribute("rtsExt:value").as_bool();
+            string propName = prop.attribute("rtsExt:name").as_string();
+            if (propName == "OpenRTM_NS") {
+                bool isDefault = prop.attribute("rtsExt:value").as_bool();
+                proComp.isRegisteredInRtmDefaultNameServer = isDefault;
                 break;
             }
         }
+        DDEBUG_V("pathUri=%s, default=%d", proComp.pathUri.c_str(), proComp.isRegisteredInRtmDefaultNameServer);
 
         proComp.activeConfigurationSet = comp.attribute("rts:activeConfigurationSet").as_string();
         //ConfigurationSet

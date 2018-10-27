@@ -759,7 +759,12 @@ RTSCompExt* RTSystemExtItemImpl::addRTSComp(const NamingContextHelper::ObjectInf
     if (!nameToRTSComp(fullPath)) {
         std::vector<NamingContextHelper::ObjectPath> target = info.fullPath_;
         auto ncHelper = NameServerManager::instance()->getNCHelper();
-        ncHelper->setLocation(info.hostAddress_, info.portNo_);
+        if(info.isRegisteredInRtmDefaultNameServer_) {
+            NameServerInfo ns = RTCCommonUtil::getManagerAddress();
+            ncHelper->setLocation(ns.hostAddress, ns.portNo);
+        } else {
+            ncHelper->setLocation(info.hostAddress_, info.portNo_);
+        }
         RTC::RTObject_ptr rtc = ncHelper->findObject<RTC::RTObject>(target);
         if (!isObjectAlive(rtc)) {
             CORBA::release(rtc);
@@ -825,7 +830,18 @@ bool RTSystemExtItemImpl::compIsAlive(RTSCompExt* rtsComp)
             pathList.push_back(path);
         }
 
-        NameServerManager::instance()->getNCHelper()->setLocation(rtsComp->hostAddress, rtsComp->portNo);  
+        std::string host;
+        int port;
+        if(rtsComp->isDefaultNS) {
+            NameServerInfo ns = RTCCommonUtil::getManagerAddress();
+            host = ns.hostAddress;
+            port = ns.portNo;
+        } else {
+            host = rtsComp->hostAddress;
+            port = rtsComp->portNo;
+        }
+        DDEBUG_V("host:%s, port:%d, default:%d", host.c_str(), port, rtsComp->isDefaultNS);
+        NameServerManager::instance()->getNCHelper()->setLocation(host, port);
         RTC::RTObject_ptr rtc = NameServerManager::instance()->getNCHelper()->findObject<RTC::RTObject>(pathList);
         if (!isObjectAlive(rtc)) {
             //DDEBUG("RTSystemItemImpl::compIsAlive NOT Alive");
