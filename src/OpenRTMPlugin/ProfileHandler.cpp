@@ -91,7 +91,7 @@ bool ProfileHandler::restoreRtsProfile(std::string targetFile, RTSystemItem* rts
         pos.x() = compProf.posX;
         pos.y() = compProf.posY;
 
-        DDEBUG_V("addRTSComp: %s, %s, host=%s, port=%d", info.id_.c_str(), info.getFullPath().c_str(), info.hostAddress_.c_str(), info.portNo_);
+        DDEBUG_V("addRTSComp: %s, %s, host=%s, port=%d, default=%d", info.id_.c_str(), info.getFullPath().c_str(), info.hostAddress_.c_str(), info.portNo_, info.isRegisteredInRtmDefaultNameServer_);
         RTSComp* comp = rts->addRTSComp(info, QPointF(pos(0), pos(1)));
         if (comp == 0) continue;
         if (CORBA::is_nil(comp->rtc_)){
@@ -246,11 +246,14 @@ bool ProfileHandler::parseProfile(std::string targetFile, RtsProfile& profile)
         proComp.posY = pos.attribute("rtsExt:y").as_int();
 
         for (pugi::xml_node prop = comp.child("rtsExt:Properties"); prop; prop = prop.next_sibling("rtsExt:Properties")) {
-            if (prop.attribute("rtsExt:name").as_string() == "OpenRTM_NS") {
-                proComp.isRegisteredInRtmDefaultNameServer = prop.attribute("rtsExt:value").as_bool();
+            string propName = prop.attribute("rtsExt:name").as_string();
+            if (propName == "OpenRTM_NS") {
+                bool isDefault = prop.attribute("rtsExt:value").as_bool();
+                proComp.isRegisteredInRtmDefaultNameServer = isDefault;
                 break;
             }
         }
+        DDEBUG_V("pathUri=%s, default=%d", proComp.pathUri.c_str(), proComp.isRegisteredInRtmDefaultNameServer);
 
         proComp.activeConfigurationSet = comp.attribute("rts:activeConfigurationSet").as_string();
         //ConfigurationSet
