@@ -29,6 +29,7 @@ public:
 
 protected:
     virtual Item* doDuplicate() const override;
+    virtual void onConnectedToRoot() override;
     virtual void onPositionChanged() override;
     virtual void onOptionsChanged() override;
     virtual std::string getDefaultRTCInstanceName() const override;

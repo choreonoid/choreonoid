@@ -187,14 +187,19 @@ bool Item::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManualOpera
     ++numChildren_;
 
     if(rootItem){
-        if(itemsBeingAddedOrRemoved.find(this) == itemsBeingAddedOrRemoved.end()){
-            // This must be before rootItem->notifyEventOnSubTreeAdded().
-            item->callSlotsOnPositionChanged();
-        }
         if(isMoving){
             rootItem->notifyEventOnSubTreeMoved(item);
         } else {
             rootItem->notifyEventOnSubTreeAdded(item);
+        }
+    }
+
+    if(rootItem){
+        if(!isMoving){
+            item->callFuncOnConnectedToRoot();
+        }
+        if(itemsBeingAddedOrRemoved.find(this) == itemsBeingAddedOrRemoved.end()){
+            item->callSlotsOnPositionChanged();
         }
     }
 
@@ -205,10 +210,6 @@ bool Item::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManualOpera
     if(recursiveTreeChangeCounter == 0){
         emitSigSubTreeChanged();
         itemsBeingAddedOrRemoved.clear();
-    }
-
-    if(rootItem && !isMoving){
-        item->callFuncOnConnectedToRoot();
     }
 
     return true;

@@ -50,14 +50,14 @@ public:
     bool recallStateAtTime(double time);
     void invalidateLastStateConsistency();
 
-    virtual void notifyUpdate();
+    virtual void notifyUpdate() override;
 
 protected:
-    virtual Item* doDuplicate() const;
-    virtual void onPositionChanged();
-    virtual void doPutProperties(PutPropertyFunction& putProperty);
-    virtual bool store(Archive& archive);
-    virtual bool restore(const Archive& archive);
+    virtual Item* doDuplicate() const override;
+    virtual void onPositionChanged() override;
+    virtual void doPutProperties(PutPropertyFunction& putProperty) override;
+    virtual bool store(Archive& archive) override;
+    virtual bool restore(const Archive& archive) override;
 
 private:
     WorldLogFileItemImpl* impl;

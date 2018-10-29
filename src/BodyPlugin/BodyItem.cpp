@@ -251,8 +251,6 @@ void BodyItemImpl::init(bool calledFromCopyConstructor)
     isCallingSlotsOnKinematicStateEdited = false;
 
     initBody(calledFromCopyConstructor);
-
-    self->sigPositionChanged().connect(std::bind(&BodyItemImpl::onPositionChanged, this));
 }
 
 
@@ -319,15 +317,6 @@ SignalProxy<void()> BodyItem::sigKinematicStateChanged()
 SignalProxy<void()> BodyItem::sigKinematicStateEdited()
 {
     return impl->sigKinematicStateEdited.signal();
-}
-
-
-void BodyItemImpl::onPositionChanged()
-{
-    WorldItem* worldItem = self->findOwnerItem<WorldItem>();
-    if(!worldItem){
-        self->clearCollisions();
-    }
 }
 
 
@@ -1062,6 +1051,15 @@ void BodyItemImpl::doAssign(Item* srcItem)
         initialState = srcBodyItem->impl->initialState;
         
         self->notifyKinematicStateChange(true);
+    }
+}
+
+
+void BodyItem::onPositionChanged()
+{
+    WorldItem* worldItem = findOwnerItem<WorldItem>();
+    if(!worldItem){
+        clearCollisions();
     }
 }
 

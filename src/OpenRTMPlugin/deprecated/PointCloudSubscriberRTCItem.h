@@ -24,12 +24,12 @@ public:
     PointCloudSubscriberRTCItem(const PointCloudSubscriberRTCItem& org);
     ~PointCloudSubscriberRTCItem();
 
-    virtual void onPositionChanged();
-    virtual void onDisconnectedFromRoot();
-    virtual Item* doDuplicate() const;
-    virtual void doPutProperties(PutPropertyFunction& putProperty);
-    virtual bool store(Archive& archive);
-    virtual bool restore(const Archive& archive);
+    virtual void onPositionChanged() override;
+    virtual void onDisconnectedFromRoot() override;
+    virtual Item* doDuplicate() const override;
+    virtual void doPutProperties(PutPropertyFunction& putProperty) override;
+    virtual bool store(Archive& archive) override;
+    virtual bool restore(const Archive& archive) override;
 
     virtual bool start() override;
     virtual double timeStep() const override;
