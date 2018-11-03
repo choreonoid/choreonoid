@@ -106,6 +106,11 @@ private:
     RTSNameServerView * self_;
     RTSNameTreeWidget treeWidget;
 
+    bool isUpdating_;
+    PushButton* updateButton_;
+    bool cancelUpdating_;
+
+    void updateObjectListLocal();
     void updateObjectList(
         NamingContextHelper::ObjectInfoList& objects, QTreeWidgetItem* parent,
         vector<NamingContextHelper::ObjectPath> pathList);
@@ -179,6 +184,7 @@ RTSNameServerView::RTSNameServerView()
 
 
 RTSNameServerViewImpl::RTSNameServerViewImpl(RTSNameServerView* self)
+    : isUpdating_(false), cancelUpdating_(false)
 {
     DDEBUG("RTSNameServerViewImpl::RTSNameServerViewImpl");
     this->self_ = self;
@@ -200,13 +206,13 @@ RTSNameServerViewImpl::RTSNameServerViewImpl(RTSNameServerView* self)
     hbox->addWidget(connectButton);
     hbox->addStretch();
 
-    auto updateButton = new PushButton(_(" Update "));
-    updateButton->setIcon(QIcon(":/Corba/icons/Refresh.png"));
-    updateButton->setToolTip(_(" Update "));
-    updateButton->sigClicked().connect(
+    updateButton_ = new PushButton(_(" Update "));
+    updateButton_->setIcon(QIcon(":/Corba/icons/Refresh.png"));
+    updateButton_->setToolTip(_(" Update "));
+    updateButton_->sigClicked().connect(
         std::bind(
-            static_cast<void(RTSNameServerViewImpl::*)(bool)>(&RTSNameServerViewImpl::updateObjectList), this, true));
-    hbox->addWidget(updateButton);
+            static_cast<void(RTSNameServerViewImpl::*)(void)>(&RTSNameServerViewImpl::updateObjectListLocal), this));
+    hbox->addWidget(updateButton_);
 
     auto clearZombeeButton = new PushButton();
     clearZombeeButton->setIcon(QIcon(":/Corba/icons/KillZombie.png"));
@@ -274,6 +280,29 @@ void RTSNameServerView::onActivated()
 }
 
 
+void RTSNameServerViewImpl::updateObjectListLocal()
+{
+    DDEBUG("RTSNameServerViewImpl::updateObjectListLocal");
+    if(isUpdating_) {
+        cancelUpdating_ = true;
+        updateButton_->setText(_(" Update "));
+        updateButton_->setToolTip(_(" Update "));
+        isUpdating_ = false;
+
+    } else {
+        isUpdating_ = true;
+        cancelUpdating_ = false;
+        updateButton_->setText(_("Cancel Updating"));
+        updateButton_->setToolTip(_("Cancel Updating"));
+
+        updateObjectList(true);
+
+        updateButton_->setText(_(" Update "));
+        updateButton_->setToolTip(_(" Update "));
+        isUpdating_ = false;
+    }
+}
+
 void RTSNameServerViewImpl::updateObjectList(bool force)
 {
     DDEBUG("RTSNameServerViewImpl::updateObjectList");
@@ -318,6 +347,8 @@ void RTSNameServerViewImpl::updateObjectList(bool force)
             topElem->info_ = info;
             treeWidget.addTopLevelItem(topElem);
 
+            MessageView::instance()->flush();
+
             // Clear information update to all views.
             //clearDiagram();
 
@@ -343,6 +374,9 @@ void RTSNameServerViewImpl::updateObjectList
 {
     DDEBUG("RTSNameServerViewImpl::updateObjectList Path");
     for (size_t i = 0; i < objects.size(); ++i) {
+        MessageView::instance()->flush();
+        if (cancelUpdating_) return;
+
         NamingContextHelper::ObjectInfo& info = objects[i];
         DDEBUG_V("%s=%s, %s", info.id_.c_str(), info.kind_.c_str(), info.ior_.c_str());
         info.isRegisteredInRtmDefaultNameServer_ = ((RTSVItem*)parent)->info_.isRegisteredInRtmDefaultNameServer_;
@@ -358,7 +392,7 @@ void RTSNameServerViewImpl::updateObjectList
             continue;
         }
 
-        if (!info.isContext_) {
+        if (!info.isContext_ && !RTCCommonUtil::compareIgnoreCase(info.kind_, "mgr")) {
             RTSVItem* item = new RTSVItem(info, 0);
             item->setText(0, QString::fromStdString(info.id_) + "|");
             item->setIcon(0, QIcon(":/Corba/icons/Question.png"));
@@ -413,7 +447,6 @@ void RTSNameServerViewImpl::updateObjectList
     }
     DDEBUG("RTSNameServerViewImpl::updateObjectList Path End");
 }
-
 
 void RTSNameServerViewImpl::onSelectionChanged()
 {
