@@ -240,6 +240,7 @@ bool ProfileHandler::parseProfile(std::string targetFile, RtsProfile& profile)
         Component proComp;
         proComp.instanceName = comp.attribute("rts:instanceName").as_string();
         proComp.pathUri = comp.attribute("rts:pathUri").as_string();
+        proComp.id = comp.attribute("rts:id").as_string();
         //Position
         xml_node pos = comp.child("rtsExt:Location");
         proComp.posX = pos.attribute("rtsExt:x").as_int();
@@ -258,6 +259,14 @@ bool ProfileHandler::parseProfile(std::string targetFile, RtsProfile& profile)
         proComp.activeConfigurationSet = comp.attribute("rts:activeConfigurationSet").as_string();
         //ConfigurationSet
         parseConfigurationSet(comp, proComp);
+
+        for (xml_node execCont = comp.child("rts:ExecutionContexts"); execCont; execCont = execCont.next_sibling("rts:ExecutionContexts")) {
+            ExecutionContext ecProf;
+            ecProf.id = execCont.attribute("rts:id").as_string();
+            ecProf.rate = execCont.attribute("rts:rate").as_double();
+            ecProf.kind = execCont.attribute("rts:kind").as_string();
+            proComp.ecList.push_back(ecProf);
+        }
         //DataPort
         for (xml_node dataPort = comp.child("rts:DataPorts"); dataPort; dataPort = dataPort.next_sibling("rts:DataPorts")) {
             DataPort proPort;
@@ -267,6 +276,10 @@ bool ProfileHandler::parseProfile(std::string targetFile, RtsProfile& profile)
                 if (propName == "port.port_type") {
                     proPort.direction = prop.attribute("rtsExt:value").as_string();
                 }
+                Property propPro;
+                propPro.name = prop.attribute("rtsExt:name").as_string();
+                propPro.value = prop.attribute("rtsExt:value").as_string();
+                proPort.propertyList.push_back(propPro);
             }
             proComp.dataPortList.push_back(proPort);
         }
@@ -274,6 +287,12 @@ bool ProfileHandler::parseProfile(std::string targetFile, RtsProfile& profile)
         for (xml_node servicePort = comp.child("rts:ServicePorts"); servicePort; servicePort = servicePort.next_sibling("rts:ServicePorts")) {
             ServicePort proPort;
             proPort.name = servicePort.attribute("rts:name").as_string();
+            for (xml_node prop = servicePort.child("rtsExt:Properties"); prop; prop = prop.next_sibling("rtsExt:Properties")) {
+                Property propPro;
+                propPro.name = prop.attribute("rtsExt:name").as_string();
+                propPro.value = prop.attribute("rtsExt:value").as_string();
+                proPort.propertyList.push_back(propPro);
+            }
             proComp.servicePortList.push_back(proPort);
         }
         profile.compList.push_back(proComp);
@@ -282,6 +301,13 @@ bool ProfileHandler::parseProfile(std::string targetFile, RtsProfile& profile)
     for (xml_node dataConn = rtsProfile.child("rts:DataPortConnectors"); dataConn; dataConn = dataConn.next_sibling("rts:DataPortConnectors")) {
         DataPortConnector dataConProf;
         dataConProf.name = dataConn.attribute("rts:name").as_string();
+        dataConProf.connectorId = dataConn.attribute("rts:connectorId").as_string();
+        dataConProf.dataType = dataConn.attribute("rts:dataType").as_string();
+        dataConProf.interfaceType = dataConn.attribute("rts:interfaceType").as_string();
+        dataConProf.dataflowType = dataConn.attribute("rts:dataflowType").as_string();
+        dataConProf.subscriptionType = dataConn.attribute("rts:subscriptionType").as_string();
+        try { dataConProf.pushInterval = dataConn.attribute("rts:pushInterval").as_double(); } catch(...) {}
+
         dataConProf.source = parseTargetPort(dataConn.child("rts:sourceDataPort"));
         dataConProf.target = parseTargetPort(dataConn.child("rts:targetDataPort"));;
 
@@ -301,6 +327,16 @@ bool ProfileHandler::parseProfile(std::string targetFile, RtsProfile& profile)
                     dataConProf.pos[idxPos] << posX[idxPos], posY[idxPos];
                 }
             }
+            //if (propPro.name == "BEND_POINT") {
+            //    int posX[3], posY[3];
+            //    sscanf(propPro.value.c_str(),
+            //      "{1:(%d,%d),2:(%d,%d),3:(%d,%d)}", &posX[0], &posY[0], &posX[1], &posY[1], &posX[2], &posY[2]);
+            //    DDEBUG_V("Value: (%d, %d), (%d, %d), (%d, %d) ", posX[0], posY[0], posX[1], posY[1], posX[2], posY[2]);
+
+            //    dataConProf.pos[1] << posX[0], posY[0];
+            //    dataConProf.pos[2] << posX[1], posY[1];
+            //    dataConProf.pos[3] << posX[2], posY[2];
+            //}
         }
         profile.dataConnList.push_back(dataConProf);
     }
@@ -353,11 +389,13 @@ TargetPort ProfileHandler::parseTargetPort(const pugi::xml_node& targetPort)
 {
     TargetPort result;
     result.portName = targetPort.attribute("rts:portName").as_string();
-    result.instanceName = targetPort.attribute("rts:instanceName").as_string();
+    try { result.instanceName = targetPort.attribute("rts:instanceName").as_string(); } catch(...) {}
+    result.componentId = targetPort.attribute("rts:componentId").as_string();
     for (xml_node prop = targetPort.child("rtsExt:Properties"); prop; prop = prop.next_sibling("rtsExt:Properties")) {
         string propName = prop.attribute("rtsExt:name").as_string();
         if (propName == "COMPONENT_PATH_ID") {
             result.pathId = prop.attribute("rtsExt:value").as_string();
+            DDEBUG_V("pathId : %s", result.pathId.c_str());
             break;
         }
     }
@@ -458,7 +496,7 @@ void ProfileHandler::saveRtsProfile
     for (RTSConnectionMap::iterator it = connections.begin(); it != connections.end(); it++) {
         RTSConnection* connect = it->second.get();
 
-        if (!isObjectAlive(connect->sourcePort->port)) {
+        if (!isObjectAlive(connect->sourcePort->port) || !isObjectAlive(connect->targetPort->port)) {
             os << "\033[31mWarning: " << "The connection between " << connect->sourcePort->name << " and " << connect->targetPort->name << " is NOT ALIVE.\033[0m" << endl;
             if (connect->sourcePort->isServicePort) {
                 profile.serviceConnList.push_back(connect->serviceProfile);
@@ -535,13 +573,22 @@ void ProfileHandler::buildPosition(const RTSConnection* connect, int offsetX, in
     string positionName = "POSITION";
     string value = position.toStdString();
     appendStringValue(propList, positionName, value);
+    //////////
+    //int posX1n = connect->position[1](0) + offsetX;
+    //int posY1n = (connect->position[1](1) + connect->position[2](1)) / 2 + offsetY;
 
-    //QString posX1 = QString::number( (connect->position[1](0) + connect->position[2](0))/2 + offsetX );
-    //QString posY1 = QString::number( (connect->position[1](1) + connect->position[2](1))/2 + offsetY );
-    //QString posX2 = QString::number( (connect->position[2](0) + connect->position[3](0))/2 + offsetX );
-    //QString posY2 = QString::number( (connect->position[2](1) + connect->position[3](1))/2 + offsetY );
-    //QString posX3 = QString::number( (connect->position[3](0) + connect->position[4](0))/2 + offsetX );
-    //QString posY3 = QString::number( (connect->position[3](1) + connect->position[4](1))/2 + offsetY );
+    //int posX2n = (connect->position[2](0) + connect->position[3](0)) / 2 + offsetX;
+    //int posY2n = connect->position[2](1) + offsetY;
+
+    //int posX3n = connect->position[3](0) + offsetX;
+    //int posY3n = (connect->position[3](1) + connect->position[4](1)) / 2 + offsetY;
+
+    //QString posX1 = QString::number(posX1n);
+    //QString posY1 = QString::number(posY1n);
+    //QString posX2 = QString::number(posX2n);
+    //QString posY2 = QString::number(posY2n);
+    //QString posX3 = QString::number(posX3n);
+    //QString posY3 = QString::number(posY3n);
 
     //string bendPointName = "BEND_POINT";
     //string bendPoint = "{1:(" + posX1.toStdString() + "," + posY1.toStdString() + "),"
@@ -789,6 +836,20 @@ void ProfileHandler::writeTargetPort(TargetPort& target, std::string tag, xml_no
     targetPortNode.append_attribute("rts:componentId") = target.componentId.c_str();
 
     writeProperty(target.propertyList, targetPortNode);
+
+    bool isHit = false;
+    for(Property targetProp : target.propertyList ) {
+        if(targetProp.name == "COMPONENT_PATH_ID") {
+            targetProp.value = target.pathId.c_str();
+            isHit = true;
+            break;
+        }
+    }
+    if(!isHit) {
+        xml_node propertyNode = targetPortNode.append_child("rtsExt:Properties");
+        propertyNode.append_attribute("rtsExt:value") = target.pathId.c_str();
+        propertyNode.append_attribute("rtsExt:name") = "COMPONENT_PATH_ID";
+    }
 }
 
 void ProfileHandler::writeProperty(std::vector<Property>& propList, xml_node& parent)
