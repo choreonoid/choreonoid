@@ -121,14 +121,14 @@ void FountainProgram::updateParticleBuffers(SceneFountain* fountain)
     vector<GLfloat> data(numParticles * 3);
     for(GLuint i = 0; i < numParticles; ++i) {
         
-        theta = emissionRange / 2.0f * random();
-        phi = 2.0 * PI * random();
+        theta = emissionRange / 2.0f * frandom();
+        phi = 2.0 * PI * frandom();
 
         v.x() = sinf(theta) * cosf(phi);
         v.y() = sinf(theta) * sinf(phi);
         v.z() = cosf(theta);
 
-        speed = std::max(0.0f, initialSpeedAverage + initialSpeedVariation * (random() - 0.5f));
+        speed = std::max(0.0f, initialSpeedAverage + initialSpeedVariation * (frandom() - 0.5f));
         v = v.normalized() * speed;
 
         data[3*i]   = v.x();
