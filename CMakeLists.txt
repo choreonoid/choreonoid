@@ -209,6 +209,10 @@ if(MSVC)
 
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /fp:fast /arch:SSE2 /arch:SSE2")
   endif()
+
+  if(${MSVC_VERSION} GREATER_EQUAL 1915)
+    add_definitions(-D_ENABLE_EXTENDED_ALIGNED_STORAGE)
+  endif()
 endif()
 
 find_package(Threads)
