@@ -8,9 +8,9 @@ links:
     jointType: free
     mass: 1000.0
     inertia: [
-      100, 0, 0,
-      0, 100, 0,
-      0, 0, 100 ]
+      120, 0, 0,
+      0, 2084, 0,
+      0, 0, 2203 ]
     autoSleep: true
     elements:
       Shape:

@@ -1,0 +1,2859 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: TerrainC
+
+BLOCK: &BLOCK
+  type: Shape
+  appearance:
+    material:
+      diffuseColor: [ 0.56, 0.56, 0.56 ]
+  geometry:
+    type: IndexedFaceSet
+    coordinate: [ -0.2, -0.2, 0.0,
+                   0.2, -0.2, 0.0,
+                   0.2,  0.2, 0.0,
+                  -0.2,  0.2, 0.0,
+                  -0.2, -0.2, 0.14,
+                   0.2, -0.2, 0.247,
+                   0.2,  0.2, 0.247,
+                  -0.2,  0.2, 0.14 ]
+    coordIndex: [ 3, 2, 1, 0, -1,
+                  4, 5, 6, 7, -1,
+                  4, 0, 1, 5, -1,
+                  5, 1, 2, 6, -1,
+                  6, 2, 3, 7, -1,
+                  7, 3, 0, 4, -1 ]
+                  
+BASE_BLOCK: &BASE_BLOCK
+  type: Shape
+  appearance:
+    material:
+      diffuseColor: [ 0.56, 0.56, 0.56 ]
+  geometry: { type: Box, size: [ 0.4, 0.4, 0.14 ] }
+
+LINE0: &LINE0
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 0.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 0.4, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 0.8, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 1.2, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 1.6, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 2.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 2.4, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 2.8, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 3.2, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 3.6, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 4.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 4.4, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 4.8, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 5.2, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 5.6, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 6.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 6.4, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 6.8, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 7.2, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 7.6, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 8.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 8.4, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 8.8, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 9.2, 0, 0.0 ]
+
+LINE1: &LINE1
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 0.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 0.4, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 0.4, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 0.8, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 1.2, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 1.6, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 1.6, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 2.0, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 2.4, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 2.4, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 2.8, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 3.2, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 3.2, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 3.6, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 4.0, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 4.4, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 4.8, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 4.8, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 5.2, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 5.6, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 5.6, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 6.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 6.4, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 6.4, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 6.8, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 7.2, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 7.2, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 7.6, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 7.6, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 8.0, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 8.4, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 8.8, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 8.8, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 9.2, 0, 0.0 ]
+
+LINE2: &LINE2
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 0.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 0.4, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 0.8, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 1.2, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 1.6, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 2.0, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 2.4, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 2.8, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 3.2, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 3.6, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 4.0, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 4.0, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 4.4, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 4.8, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 5.2, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 5.6, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 6.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 6.4, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 6.4, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 6.8, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 7.2, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 7.6, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 7.6, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 8.0, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 8.0, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 8.4, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 8.4, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 8.8, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 8.8, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 9.2, 0, 0.0 ]
+
+LINE3: &LINE3
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 0.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 0.4, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 0.8, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 1.2, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 1.6, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 2.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 2.4, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 2.8, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 3.2, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 3.2, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 3.6, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 4.0, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 4.4, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 4.8, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 4.8, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 5.2, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 5.2, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 5.6, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 5.6, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 6.0, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 6.0, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 6.4, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 6.4, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 6.8, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 7.2, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 7.2, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 7.6, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 8.0, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 8.4, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 8.8, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 8.8, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 9.2, 0, 0.0 ]
+
+LINE4: &LINE4
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 0.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 0.4, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 0.8, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 1.2, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 1.6, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 1.6, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 2.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 2.4, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 2.4, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 2.8, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 2.8, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 3.2, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 3.2, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 3.6, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 4.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 4.4, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 4.4, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 4.8, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 5.2, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 5.2, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 5.6, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 6.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 6.4, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 6.8, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 7.2, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 7.6, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 8.0, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 8.0, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 8.4, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 8.8, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 9.2, 0, 0.0 ]
+
+LINE5: &LINE5
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 0.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 0.4, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 0.8, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 0.8, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 1.2, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 1.6, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 2.0, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 2.4, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 2.8, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 2.8, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 3.2, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 3.6, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 4.0, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 4.4, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 4.8, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 4.8, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 5.2, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 5.6, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 6.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 6.4, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 6.8, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 6.8, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 7.2, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 7.6, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 8.0, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 8.0, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 8.4, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 8.4, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 8.8, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 9.2, 0, 0.0 ]
+
+LINE6: &LINE6
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 0.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 0.4, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 0.8, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 1.2, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 1.6, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 2.0, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 2.0, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 2.4, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 2.4, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 2.8, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 3.2, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 3.2, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 3.6, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 3.6, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 4.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 4.4, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 4.8, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 5.2, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 5.2, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 5.6, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 5.6, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 6.0, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 6.4, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 6.8, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 6.8, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 7.2, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 7.2, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 7.6, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 8.0, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 8.4, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 8.8, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 9.2, 0, 0.0 ]
+
+LINE7: &LINE7
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 0.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 0.4, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 0.4, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 0.8, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 1.2, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 1.6, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 2.0, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 2.0, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 2.4, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 2.4, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 2.8, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 3.2, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 3.2, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 3.6, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 3.6, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 4.0, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 4.4, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 4.8, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 4.8, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 5.2, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 5.2, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 5.6, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 6.0, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 6.4, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 6.8, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 7.2, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 7.6, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 8.0, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 8.0, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 8.4, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 8.8, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 9.2, 0, 0.0 ]
+
+LINE8: &LINE8
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 0.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 0.4, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 0.8, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 1.2, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 1.6, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 1.6, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 2.0, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 2.4, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 2.8, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 3.2, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 3.6, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 4.0, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 4.4, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 4.8, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 5.2, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 5.2, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 5.6, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 6.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 6.4, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 6.8, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 6.8, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 7.2, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 7.2, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 7.6, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 8.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 8.4, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 8.8, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 9.2, 0, 0.0 ]
+
+LINE9: &LINE9
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 0.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 0.4, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 0.8, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 0.8, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 1.2, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 1.2, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 1.6, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 2.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 2.4, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 2.8, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 3.2, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 3.6, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 4.0, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 4.4, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 4.8, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 4.8, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 5.2, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 5.6, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 6.0, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 6.4, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 6.4, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 6.8, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 7.2, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 7.6, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 8.0, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 8.4, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 8.8, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 9.2, 0, 0.0 ]
+
+LINE10: &LINE10
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 0.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 0.4, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 0.8, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 1.2, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 1.2, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 1.6, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 2.0, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 2.4, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 2.8, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 3.2, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 3.6, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 4.0, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 4.0, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 4.4, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 4.8, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 5.2, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 5.2, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 5.6, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 6.0, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 6.0, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 6.4, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 6.4, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 6.8, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 7.2, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 7.6, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 7.6, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 8.0, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 8.0, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 8.4, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 8.4, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 8.8, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 9.2, 0, 0.0 ]
+
+LINE11: &LINE11
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 0.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 0.4, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 0.4, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 0.8, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 0.8, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 1.2, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 1.2, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 1.6, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 2.0, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 2.0, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 2.4, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 2.8, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 3.2, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 3.6, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 4.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 4.4, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 4.4, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 4.8, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 4.8, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 5.2, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 5.6, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 6.0, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 6.0, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 6.4, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 6.8, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 7.2, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 7.6, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 7.6, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 8.0, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 8.4, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 8.4, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 8.8, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 9.2, 0, 0.0 ]
+
+LINE12: &LINE12
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 0.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 0.4, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 0.8, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 1.2, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 1.2, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 1.6, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 1.6, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 2.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 2.4, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 2.8, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 3.2, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 3.6, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 4.0, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 4.4, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 4.4, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 4.8, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 5.2, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 5.2, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 5.6, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 5.6, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 6.0, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 6.0, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 6.4, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 6.8, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 7.2, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 7.6, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 8.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 8.4, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 8.8, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 9.2, 0, 0.0 ]
+
+LINE13: &LINE13
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 0.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 0.4, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 0.8, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 1.2, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 1.2, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 1.6, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 1.6, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 2.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 2.4, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 2.8, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 2.8, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 3.2, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 3.6, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 4.0, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 4.4, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 4.8, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 5.2, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 5.6, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 6.0, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 6.0, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 6.4, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 6.4, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 6.8, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 6.8, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 7.2, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 7.6, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 8.0, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 8.0, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 8.4, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 8.4, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 8.8, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 9.2, 0, 0.0 ]
+
+LINE14: &LINE14
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 0.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 0.4, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 0.8, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 1.2, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 1.6, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 2.0, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 2.4, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 2.4, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 2.8, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 3.2, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 3.6, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 3.6, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 4.0, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 4.4, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 4.4, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 4.8, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 4.8, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 5.2, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 5.6, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 6.0, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 6.4, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 6.8, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 6.8, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 7.2, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 7.2, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 7.6, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 8.0, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 8.0, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 8.4, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 8.4, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 8.8, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 9.2, 0, 0.0 ]
+
+LINE15: &LINE15
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 0.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 0.4, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 0.4, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 0.8, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 1.2, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 1.6, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 1.6, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 2.0, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 2.4, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 2.8, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 2.8, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 3.2, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 3.2, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 3.6, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 4.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 4.4, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 4.8, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 4.8, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 5.2, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 5.2, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 5.6, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 6.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 6.4, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 6.4, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 6.8, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 7.2, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 7.6, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 8.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 8.4, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 8.4, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 8.8, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 9.2, 0, 0.0 ]
+
+LINE16: &LINE16
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 0.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 0.4, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 0.8, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 1.2, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 1.6, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 2.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 2.4, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 2.8, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 2.8, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 3.2, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 3.6, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 4.0, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 4.0, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 4.4, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 4.4, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 4.8, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 5.2, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 5.2, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 5.6, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 5.6, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 6.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 6.4, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 6.8, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 6.8, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 7.2, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 7.6, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 7.6, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 8.0, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 8.0, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 8.4, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 8.8, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 9.2, 0, 0.0 ]
+
+LINE17: &LINE17
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 0.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 0.4, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 0.8, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 1.2, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 1.6, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 2.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 2.4, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 2.8, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 3.2, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 3.6, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 4.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 4.4, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 4.8, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 5.2, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 5.6, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 6.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 6.4, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 6.8, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 7.2, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 7.6, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 8.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 8.4, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 8.8, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 9.2, 0, 0.0 ]
+
+links:
+  - 
+    name: 0
+    jointType: fixed
+    material: Ground
+    convexRecompostiion: true
+    elements:
+      -
+        type: Transform
+        translation: [ 0.0, 0.0, 0 ]
+        elements: *LINE0
+
+  - 
+    name: 1
+    parent: 0
+    jointType: fixed
+    material: Ground
+    convexRecompostiion: true
+    translation: [ 0.0, 0.4, 0 ]
+    elements: *LINE1
+
+  - 
+    name: 2
+    parent: 0
+    jointType: fixed
+    material: Ground
+    convexRecompostiion: true
+    translation: [ 0.0, 0.8, 0 ]
+    elements: *LINE2
+
+  - 
+    name: 3
+    parent: 0
+    jointType: fixed
+    material: Ground
+    convexRecompostiion: true
+    translation: [ 0.0, 1.2, 0 ]
+    elements: *LINE3
+
+  - 
+    name: 4
+    parent: 0
+    jointType: fixed
+    material: Ground
+    convexRecompostiion: true
+    translation: [ 0.0, 1.6, 0 ]
+    elements: *LINE4
+
+  - 
+    name: 5
+    parent: 0
+    jointType: fixed
+    material: Ground
+    convexRecompostiion: true
+    translation: [ 0.0, 2.0, 0 ]
+    elements: *LINE5
+
+  - 
+    name: 6
+    parent: 0
+    jointType: fixed
+    material: Ground
+    convexRecompostiion: true
+    translation: [ 0.0, 2.4, 0 ]
+    elements: *LINE6
+
+  - 
+    name: 7
+    parent: 0
+    jointType: fixed
+    material: Ground
+    convexRecompostiion: true
+    translation: [ 0.0, 2.8, 0 ]
+    elements: *LINE7
+
+  - 
+    name: 8
+    parent: 0
+    jointType: fixed
+    material: Ground
+    convexRecompostiion: true
+    translation: [ 0.0, 3.2, 0 ]
+    elements: *LINE8
+
+  - 
+    name: 9
+    parent: 0
+    jointType: fixed
+    material: Ground
+    convexRecompostiion: true
+    translation: [ 0.0, 3.6, 0 ]
+    elements: *LINE9
+
+  - 
+    name: 10
+    parent: 0
+    jointType: fixed
+    material: Ground
+    convexRecompostiion: true
+    translation: [ 0.0, 4.0, 0 ]
+    elements: *LINE10
+
+  - 
+    name: 11
+    parent: 0
+    jointType: fixed
+    material: Ground
+    convexRecompostiion: true
+    translation: [ 0.0, 4.4, 0 ]
+    elements: *LINE11
+
+  - 
+    name: 12
+    parent: 0
+    jointType: fixed
+    material: Ground
+    convexRecompostiion: true
+    translation: [ 0.0, 4.8, 0 ]
+    elements: *LINE12
+
+  - 
+    name: 13
+    parent: 0
+    jointType: fixed
+    material: Ground
+    convexRecompostiion: true
+    translation: [ 0.0, 5.2, 0 ]
+    elements: *LINE13
+
+  - 
+    name: 14
+    parent: 0
+    jointType: fixed
+    material: Ground
+    convexRecompostiion: true
+    translation: [ 0.0, 5.6, 0 ]
+    elements: *LINE14
+
+  - 
+    name: 15
+    parent: 0
+    jointType: fixed
+    material: Ground
+    convexRecompostiion: true
+    translation: [ 0.0, 6.0, 0 ]
+    elements: *LINE15
+
+  - 
+    name: 16
+    parent: 0
+    jointType: fixed
+    material: Ground
+    convexRecompostiion: true
+    translation: [ 0.0, 6.4, 0 ]
+    elements: *LINE16
+
+  - 
+    name: 17
+    parent: 0
+    jointType: fixed
+    material: Ground
+    convexRecompostiion: true
+    translation: [ 0.0, 6.8, 0 ]
+    elements: *LINE17
+

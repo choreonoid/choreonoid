@@ -8,9 +8,9 @@ links:
     jointType: free
     mass: 1000.0
     inertia: [
-      100, 0, 0,
-      0, 100, 0,
-      0, 0, 100 ]
+      480, 0, 0,
+      0, 480, 0,
+      0, 0, 960 ]
     material: Ground
     elements:
       Shape:

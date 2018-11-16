@@ -5,7 +5,7 @@ name: JungleGym
 
 RESOURCE: &RESOURCE
   type: Resource
-  uri: "resource/JungleGymFrames.yaml"
+  uri: "resource/JungleGym/JungleGymFrames2.yaml"
 
 links:
   -

@@ -1,0 +1,24 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+name: LockPositionCone
+
+links:
+  -
+    name: body
+    jointType: fixed
+    autoSleep: true
+    elements:
+      -
+        type: Visual
+        elements:
+          -
+            type: Shape
+            rotation: [ 1, 0,  0, 90 ]
+            geometry:
+              type: Cone
+              radius: 0.05
+              height: 0.2
+            appearance:
+              material:
+                diffuseColor: [ 0.8, 0.8, 0 ]
+                transparency: 0.6

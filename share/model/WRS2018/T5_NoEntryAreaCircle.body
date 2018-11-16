@@ -1,0 +1,357 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: FireCircle
+
+TUBE_APPARANCE: &TUBE_APPEARANCE
+  material:
+    diffuseColor: [ 1, 0, 0 ]
+
+TUBE: &TUBE
+  type: Group
+  elements:
+
+    - # Cylinder wall 1
+      type: Shape
+      rotation: [ 0, 0, 1, 0.0 ]
+      translation: [ 5.05, 0.0, 0.0 ]
+      geometry: { type: Box, size: [ 0.1, 0.6685433, 0.002 ] }
+      appearance: *TUBE_APPEARANCE
+
+    - # Cylinder wall 2
+      type: Shape
+      rotation: [ 0, 0, 1, 7.5 ]
+      translation: [ 5.0068, 0.65916, 0.0 ]
+      geometry: { type: Box, size: [ 0.1, 0.6685433, 0.002 ] }
+      appearance: *TUBE_APPEARANCE
+
+    - # Cylinder wall 3
+      type: Shape
+      rotation: [ 0, 0, 1, 15.0 ]
+      translation: [ 4.8779, 1.307, 0.0 ]
+      geometry: { type: Box, size: [ 0.1, 0.6685433, 0.002 ] }
+      appearance: *TUBE_APPEARANCE
+
+    - # Cylinder wall 4
+      type: Shape
+      rotation: [ 0, 0, 1, 22.5 ]
+      translation: [ 4.6656, 1.9326, 0.0 ]
+      geometry: { type: Box, size: [ 0.1, 0.6685433, 0.002 ] }
+      appearance: *TUBE_APPEARANCE
+
+    - # Cylinder wall 5
+      type: Shape
+      rotation: [ 0, 0, 1, 30.0 ]
+      translation: [ 4.3734, 2.525, 0.0 ]
+      geometry: { type: Box, size: [ 0.1, 0.6685433, 0.002 ] }
+      appearance: *TUBE_APPEARANCE
+
+    - # Cylinder wall 6
+      type: Shape
+      rotation: [ 0, 0, 1, 37.5 ]
+      translation: [ 4.0064, 3.0742, 0.0 ]
+      geometry: { type: Box, size: [ 0.1, 0.6685433, 0.002 ] }
+      appearance: *TUBE_APPEARANCE
+
+    - # Cylinder wall 7
+      type: Shape
+      rotation: [ 0, 0, 1, 45.0 ]
+      translation: [ 3.5709, 3.5709, 0.0 ]
+      geometry: { type: Box, size: [ 0.1, 0.6685433, 0.002 ] }
+      appearance: *TUBE_APPEARANCE
+
+    - # Cylinder wall 8
+      type: Shape
+      rotation: [ 0, 0, 1, 52.5 ]
+      translation: [ 3.0742, 4.0064, 0.0 ]
+      geometry: { type: Box, size: [ 0.1, 0.6685433, 0.002 ] }
+      appearance: *TUBE_APPEARANCE
+
+    - # Cylinder wall 9
+      type: Shape
+      rotation: [ 0, 0, 1, 60.0 ]
+      translation: [ 2.525, 4.3734, 0.0 ]
+      geometry: { type: Box, size: [ 0.1, 0.6685433, 0.002 ] }
+      appearance: *TUBE_APPEARANCE
+
+    - # Cylinder wall 10
+      type: Shape
+      rotation: [ 0, 0, 1, 67.5 ]
+      translation: [ 1.9326, 4.6656, 0.0 ]
+      geometry: { type: Box, size: [ 0.1, 0.6685433, 0.002 ] }
+      appearance: *TUBE_APPEARANCE
+
+    - # Cylinder wall 11
+      type: Shape
+      rotation: [ 0, 0, 1, 75.0 ]
+      translation: [ 1.307, 4.8779, 0.0 ]
+      geometry: { type: Box, size: [ 0.1, 0.6685433, 0.002 ] }
+      appearance: *TUBE_APPEARANCE
+
+    - # Cylinder wall 12
+      type: Shape
+      rotation: [ 0, 0, 1, 82.5 ]
+      translation: [ 0.65916, 5.0068, 0.0 ]
+      geometry: { type: Box, size: [ 0.1, 0.6685433, 0.002 ] }
+      appearance: *TUBE_APPEARANCE
+
+    - # Cylinder wall 13
+      type: Shape
+      rotation: [ 0, 0, 1, 90.0 ]
+      translation: [ 3.0922e-16, 5.05, 0.0 ]
+      geometry: { type: Box, size: [ 0.1, 0.6685433, 0.002 ] }
+      appearance: *TUBE_APPEARANCE
+
+    - # Cylinder wall 14
+      type: Shape
+      rotation: [ 0, 0, 1, 97.5 ]
+      translation: [ -0.65916, 5.0068, 0.0 ]
+      geometry: { type: Box, size: [ 0.1, 0.6685433, 0.002 ] }
+      appearance: *TUBE_APPEARANCE
+
+    - # Cylinder wall 15
+      type: Shape
+      rotation: [ 0, 0, 1, 105.0 ]
+      translation: [ -1.307, 4.8779, 0.0 ]
+      geometry: { type: Box, size: [ 0.1, 0.6685433, 0.002 ] }
+      appearance: *TUBE_APPEARANCE
+
+    - # Cylinder wall 16
+      type: Shape
+      rotation: [ 0, 0, 1, 112.5 ]
+      translation: [ -1.9326, 4.6656, 0.0 ]
+      geometry: { type: Box, size: [ 0.1, 0.6685433, 0.002 ] }
+      appearance: *TUBE_APPEARANCE
+
+    - # Cylinder wall 17
+      type: Shape
+      rotation: [ 0, 0, 1, 120.0 ]
+      translation: [ -2.525, 4.3734, 0.0 ]
+      geometry: { type: Box, size: [ 0.1, 0.6685433, 0.002 ] }
+      appearance: *TUBE_APPEARANCE
+
+    - # Cylinder wall 18
+      type: Shape
+      rotation: [ 0, 0, 1, 127.5 ]
+      translation: [ -3.0742, 4.0064, 0.0 ]
+      geometry: { type: Box, size: [ 0.1, 0.6685433, 0.002 ] }
+      appearance: *TUBE_APPEARANCE
+
+    - # Cylinder wall 19
+      type: Shape
+      rotation: [ 0, 0, 1, 135.0 ]
+      translation: [ -3.5709, 3.5709, 0.0 ]
+      geometry: { type: Box, size: [ 0.1, 0.6685433, 0.002 ] }
+      appearance: *TUBE_APPEARANCE
+
+    - # Cylinder wall 20
+      type: Shape
+      rotation: [ 0, 0, 1, 142.5 ]
+      translation: [ -4.0064, 3.0742, 0.0 ]
+      geometry: { type: Box, size: [ 0.1, 0.6685433, 0.002 ] }
+      appearance: *TUBE_APPEARANCE
+
+    - # Cylinder wall 21
+      type: Shape
+      rotation: [ 0, 0, 1, 150.0 ]
+      translation: [ -4.3734, 2.525, 0.0 ]
+      geometry: { type: Box, size: [ 0.1, 0.6685433, 0.002 ] }
+      appearance: *TUBE_APPEARANCE
+
+    - # Cylinder wall 22
+      type: Shape
+      rotation: [ 0, 0, 1, 157.5 ]
+      translation: [ -4.6656, 1.9326, 0.0 ]
+      geometry: { type: Box, size: [ 0.1, 0.6685433, 0.002 ] }
+      appearance: *TUBE_APPEARANCE
+
+    - # Cylinder wall 23
+      type: Shape
+      rotation: [ 0, 0, 1, 165.0 ]
+      translation: [ -4.8779, 1.307, 0.0 ]
+      geometry: { type: Box, size: [ 0.1, 0.6685433, 0.002 ] }
+      appearance: *TUBE_APPEARANCE
+
+    - # Cylinder wall 24
+      type: Shape
+      rotation: [ 0, 0, 1, 172.5 ]
+      translation: [ -5.0068, 0.65916, 0.0 ]
+      geometry: { type: Box, size: [ 0.1, 0.6685433, 0.002 ] }
+      appearance: *TUBE_APPEARANCE
+
+    - # Cylinder wall 25
+      type: Shape
+      rotation: [ 0, 0, 1, 180.0 ]
+      translation: [ -5.05, 6.1845e-16, 0.0 ]
+      geometry: { type: Box, size: [ 0.1, 0.6685433, 0.002 ] }
+      appearance: *TUBE_APPEARANCE
+
+    - # Cylinder wall 26
+      type: Shape
+      rotation: [ 0, 0, 1, 187.5 ]
+      translation: [ -5.0068, -0.65916, 0.0 ]
+      geometry: { type: Box, size: [ 0.1, 0.6685433, 0.002 ] }
+      appearance: *TUBE_APPEARANCE
+
+    - # Cylinder wall 27
+      type: Shape
+      rotation: [ 0, 0, 1, 195.0 ]
+      translation: [ -4.8779, -1.307, 0.0 ]
+      geometry: { type: Box, size: [ 0.1, 0.6685433, 0.002 ] }
+      appearance: *TUBE_APPEARANCE
+
+    - # Cylinder wall 28
+      type: Shape
+      rotation: [ 0, 0, 1, 202.5 ]
+      translation: [ -4.6656, -1.9326, 0.0 ]
+      geometry: { type: Box, size: [ 0.1, 0.6685433, 0.002 ] }
+      appearance: *TUBE_APPEARANCE
+
+    - # Cylinder wall 29
+      type: Shape
+      rotation: [ 0, 0, 1, 210.0 ]
+      translation: [ -4.3734, -2.525, 0.0 ]
+      geometry: { type: Box, size: [ 0.1, 0.6685433, 0.002 ] }
+      appearance: *TUBE_APPEARANCE
+
+    - # Cylinder wall 30
+      type: Shape
+      rotation: [ 0, 0, 1, 217.5 ]
+      translation: [ -4.0064, -3.0742, 0.0 ]
+      geometry: { type: Box, size: [ 0.1, 0.6685433, 0.002 ] }
+      appearance: *TUBE_APPEARANCE
+
+    - # Cylinder wall 31
+      type: Shape
+      rotation: [ 0, 0, 1, 225.0 ]
+      translation: [ -3.5709, -3.5709, 0.0 ]
+      geometry: { type: Box, size: [ 0.1, 0.6685433, 0.002 ] }
+      appearance: *TUBE_APPEARANCE
+
+    - # Cylinder wall 32
+      type: Shape
+      rotation: [ 0, 0, 1, 232.5 ]
+      translation: [ -3.0742, -4.0064, 0.0 ]
+      geometry: { type: Box, size: [ 0.1, 0.6685433, 0.002 ] }
+      appearance: *TUBE_APPEARANCE
+
+    - # Cylinder wall 33
+      type: Shape
+      rotation: [ 0, 0, 1, 240.0 ]
+      translation: [ -2.525, -4.3734, 0.0 ]
+      geometry: { type: Box, size: [ 0.1, 0.6685433, 0.002 ] }
+      appearance: *TUBE_APPEARANCE
+
+    - # Cylinder wall 34
+      type: Shape
+      rotation: [ 0, 0, 1, 247.5 ]
+      translation: [ -1.9326, -4.6656, 0.0 ]
+      geometry: { type: Box, size: [ 0.1, 0.6685433, 0.002 ] }
+      appearance: *TUBE_APPEARANCE
+
+    - # Cylinder wall 35
+      type: Shape
+      rotation: [ 0, 0, 1, 255.0 ]
+      translation: [ -1.307, -4.8779, 0.0 ]
+      geometry: { type: Box, size: [ 0.1, 0.6685433, 0.002 ] }
+      appearance: *TUBE_APPEARANCE
+
+    - # Cylinder wall 36
+      type: Shape
+      rotation: [ 0, 0, 1, 262.5 ]
+      translation: [ -0.65916, -5.0068, 0.0 ]
+      geometry: { type: Box, size: [ 0.1, 0.6685433, 0.002 ] }
+      appearance: *TUBE_APPEARANCE
+
+    - # Cylinder wall 37
+      type: Shape
+      rotation: [ 0, 0, 1, 270.0 ]
+      translation: [ -9.2767e-16, -5.05, 0.0 ]
+      geometry: { type: Box, size: [ 0.1, 0.6685433, 0.002 ] }
+      appearance: *TUBE_APPEARANCE
+
+    - # Cylinder wall 38
+      type: Shape
+      rotation: [ 0, 0, 1, 277.5 ]
+      translation: [ 0.65916, -5.0068, 0.0 ]
+      geometry: { type: Box, size: [ 0.1, 0.6685433, 0.002 ] }
+      appearance: *TUBE_APPEARANCE
+
+    - # Cylinder wall 39
+      type: Shape
+      rotation: [ 0, 0, 1, 285.0 ]
+      translation: [ 1.307, -4.8779, 0.0 ]
+      geometry: { type: Box, size: [ 0.1, 0.6685433, 0.002 ] }
+      appearance: *TUBE_APPEARANCE
+
+    - # Cylinder wall 40
+      type: Shape
+      rotation: [ 0, 0, 1, 292.5 ]
+      translation: [ 1.9326, -4.6656, 0.0 ]
+      geometry: { type: Box, size: [ 0.1, 0.6685433, 0.002 ] }
+      appearance: *TUBE_APPEARANCE
+
+    - # Cylinder wall 41
+      type: Shape
+      rotation: [ 0, 0, 1, 300.0 ]
+      translation: [ 2.525, -4.3734, 0.0 ]
+      geometry: { type: Box, size: [ 0.1, 0.6685433, 0.002 ] }
+      appearance: *TUBE_APPEARANCE
+
+    - # Cylinder wall 42
+      type: Shape
+      rotation: [ 0, 0, 1, 307.5 ]
+      translation: [ 3.0742, -4.0064, 0.0 ]
+      geometry: { type: Box, size: [ 0.1, 0.6685433, 0.002 ] }
+      appearance: *TUBE_APPEARANCE
+
+    - # Cylinder wall 43
+      type: Shape
+      rotation: [ 0, 0, 1, 315.0 ]
+      translation: [ 3.5709, -3.5709, 0.0 ]
+      geometry: { type: Box, size: [ 0.1, 0.6685433, 0.002 ] }
+      appearance: *TUBE_APPEARANCE
+
+    - # Cylinder wall 44
+      type: Shape
+      rotation: [ 0, 0, 1, 322.5 ]
+      translation: [ 4.0064, -3.0742, 0.0 ]
+      geometry: { type: Box, size: [ 0.1, 0.6685433, 0.002 ] }
+      appearance: *TUBE_APPEARANCE
+
+    - # Cylinder wall 45
+      type: Shape
+      rotation: [ 0, 0, 1, 330.0 ]
+      translation: [ 4.3734, -2.525, 0.0 ]
+      geometry: { type: Box, size: [ 0.1, 0.6685433, 0.002 ] }
+      appearance: *TUBE_APPEARANCE
+
+    - # Cylinder wall 46
+      type: Shape
+      rotation: [ 0, 0, 1, 337.5 ]
+      translation: [ 4.6656, -1.9326, 0.0 ]
+      geometry: { type: Box, size: [ 0.1, 0.6685433, 0.002 ] }
+      appearance: *TUBE_APPEARANCE
+
+    - # Cylinder wall 47
+      type: Shape
+      rotation: [ 0, 0, 1, 345.0 ]
+      translation: [ 4.8779, -1.307, 0.0 ]
+      geometry: { type: Box, size: [ 0.1, 0.6685433, 0.002 ] }
+      appearance: *TUBE_APPEARANCE
+
+    - # Cylinder wall 48
+      type: Shape
+      rotation: [ 0, 0, 1, 352.5 ]
+      translation: [ 5.0068, -0.65916, 0.0 ]
+      geometry: { type: Box, size: [ 0.1, 0.6685433, 0.002 ] }
+      appearance: *TUBE_APPEARANCE
+
+
+links:
+  -
+    name: root
+    elements:
+      Visual:
+        elements: *TUBE
+

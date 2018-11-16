@@ -6,7 +6,7 @@ links:
   -
     name: body
     jointType: free
-    mass: 100.0
+    mass: 150.0
     inertia: [
       50, 0, 0,
       0, 50, 0,
@@ -28,10 +28,12 @@ links:
             translation: [ -0.85, -0.551, 1.0 ]
             elements: &BOX1
               Shape: { geometry: { type: Box, size: [ 0.1, 0.1, 1.8 ] } }
+#左足
           -
             name: BOX2
             type: Transform
             translation: [ 0.0, -0.551, 0.05 ]
+            material: Tire
             elements: &BOX2
               Shape: { geometry: { type: Box, size: [ 1.8, 0.1, 0.1 ] } }
           -
@@ -95,10 +97,12 @@ links:
             type: Transform
             translation: [ -0.85, 0.549, 1.0 ]
             elements: *BOX1
+#右足
           -
             name: BOX14
             type: Transform
             translation: [ 0.0, 0.549, 0.05 ]
+            material: Tire
             elements: *BOX2
           -
             name: BOX15
@@ -153,9 +157,11 @@ links:
             translation: [ -0.75, 0.6085, 0.8985 ]
             elements: *BOX7
           -
+#後足
             name: BOX25
             type: Transform
             translation: [ 0.95, -0.001, 0.05 ]
+            material: Tire
             elements:
               Shape: { geometry: { type: Box, size: [ 0.1, 1.6, 0.1 ] } }
           -

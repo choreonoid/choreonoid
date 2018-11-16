@@ -1,0 +1,227 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: TerrainC
+
+BLOCK: &BLOCK
+  type: Shape
+  appearance:
+    material:
+      diffuseColor: [ 0.0, 0.6, 0.0 ]
+  geometry:
+    type: IndexedFaceSet
+    coordinate: [ -0.25, -0.25, 0.0,
+                   0.25, -0.25, 0.0,
+                   0.25,  0.25, 0.0,
+                  -0.25,  0.25, 0.0,
+                  -0.25, -0.25, 0.14,
+                   0.25, -0.25, 0.25,
+                   0.25,  0.25, 0.25,
+                  -0.25,  0.25, 0.14 ]
+    coordIndex: [ 3, 2, 1, 0, -1,
+                  4, 5, 6, 7, -1,
+                  4, 0, 1, 5, -1,
+                  5, 1, 2, 6, -1,
+                  6, 2, 3, 7, -1,
+                  7, 3, 0, 4, -1 ]
+                  
+BASE_BLOCK: &BASE_BLOCK
+  type: Shape
+  appearance:
+    material:
+      diffuseColor: [ 0.0, 0.6, 0.0 ]
+  geometry: { type: Box, size: [ 0.5, 0.5, 0.14 ] }
+
+LINE0: &LINE0
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 0.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 0.5, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 1.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 1.5, 0, 0.0 ]
+
+LINE1: &LINE1
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 0.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 0.5, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 1.0, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 1.5, 0, 0.0 ]
+
+LINE2: &LINE2
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 0.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 0.5, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 1.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 1.5, 0, 0.0 ]
+
+LINE3: &LINE3
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 0.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 0.5, 0, 0.14 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 1.0, 0, 0.28 ]
+
+  -
+    <<: *BASE_BLOCK
+    translation: [ 1.0, 0, 0.21 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 1.5, 0, 0.0 ]
+
+LINE4: &LINE4
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 0.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 0.5, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 1.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 180 ]
+    translation: [ 1.5, 0, 0.0 ]
+
+LINE5: &LINE5
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 0.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 0.5, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 270 ]
+    translation: [ 1.0, 0, 0.0 ]
+
+  -
+    <<: *BLOCK
+    rotation: [ 0, 0, 1, 0 ]
+    translation: [ 1.5, 0, 0.0 ]
+
+links:
+  - 
+    name: 0
+    jointType: fixed
+    material: Ground
+    convexRecompostiion: true
+    elements:
+      -
+        type: Transform
+        translation: [ 0.0, 0.0, 0 ]
+        elements: *LINE0
+
+  - 
+    name: 1
+    parent: 0
+    jointType: fixed
+    material: Ground
+    convexRecompostiion: true
+    translation: [ 0.0, 0.5, 0 ]
+    elements: *LINE1
+
+  - 
+    name: 2
+    parent: 0
+    jointType: fixed
+    material: Ground
+    convexRecompostiion: true
+    translation: [ 0.0, 1.0, 0 ]
+    elements: *LINE2
+
+  - 
+    name: 3
+    parent: 0
+    jointType: fixed
+    material: Ground
+    convexRecompostiion: true
+    translation: [ 0.0, 1.5, 0 ]
+    elements: *LINE3
+
+  - 
+    name: 4
+    parent: 0
+    jointType: fixed
+    material: Ground
+    convexRecompostiion: true
+    translation: [ 0.0, 2.0, 0 ]
+    elements: *LINE4
+
+  - 
+    name: 5
+    parent: 0
+    jointType: fixed
+    material: Ground
+    convexRecompostiion: true
+    translation: [ 0.0, 2.5, 0 ]
+    elements: *LINE5
+
