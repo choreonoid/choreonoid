@@ -88,34 +88,33 @@ public:
     std::vector<Property> propertyList;
 };
 
-class DataPortConnector
+class PortConnector
 {
 public:
     std::string connectorId;
     std::string name;
-    std::string dataType;
-    std::string interfaceType;
-    std::string dataflowType;
-    std::string subscriptionType;
-    double pushInterval;
+
     std::vector<Property> propertyList;
     Vector2 pos[6];
 
     TargetPort source;
     TargetPort target;
 };
-/////
-class ServicePortConnector
+
+class DataPortConnector : public PortConnector
 {
 public:
-    std::string connectorId;
-    std::string name;
+    std::string dataType;
+    std::string interfaceType;
+    std::string dataflowType;
+    std::string subscriptionType;
+    double pushInterval;
+};
+/////
+class ServicePortConnector :public PortConnector
+{
+public:
     std::string transMethod;
-    std::vector<Property> propertyList;
-    Vector2 pos[6];
-
-    TargetPort source;
-    TargetPort target;
 };
 
 class RtsProfile
@@ -156,6 +155,7 @@ private:
     static bool parseProfile(std::string targetFile, RtsProfile& profile);
     static void parseConfigurationSet(pugi::xml_node& comp, Component& proComp);
     static TargetPort parseTargetPort(const pugi::xml_node& targetPort);
+    static void parseConnectorPosition(const pugi::xml_node& targetCon, PortConnector& profile);
 
     static RTSPort* getTargetPort(std::string& sourceRtc, std::string& sourcePort, RTSystemItem* impl);
     /////
@@ -179,6 +179,7 @@ private:
 
     static void appendStringValue(std::vector<Property>& target, std::string& name, std::string& value);
     static void removePropertyByValue(std::vector<Property>& target, const std::string& name);
+
 };
 
 }

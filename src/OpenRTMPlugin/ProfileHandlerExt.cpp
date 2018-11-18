@@ -310,23 +310,8 @@ bool ProfileHandlerExt::parseProfile(std::string targetFile, RtsProfile& profile
         dataConProf.source = parseTargetPort(dataConn.child("rts:sourceDataPort"));
         dataConProf.target = parseTargetPort(dataConn.child("rts:targetDataPort"));;
 
-        for (pugi::xml_node prop = dataConn.child("rtsExt:Properties"); prop; prop = prop.next_sibling("rtsExt:Properties")) {
-            Property propPro;
-            propPro.name = prop.attribute("rtsExt:name").as_string();
-            propPro.value = prop.attribute("rtsExt:value").as_string();
-            dataConProf.propertyList.push_back(propPro);
-            if (propPro.name == "POSITION") {
-                float posX[6], posY[6];
-                sscanf(propPro.value.c_str(),
-                  "{1:(%f,%f),2:(%f,%f),3:(%f,%f),4:(%f,%f),5:(%f,%f),6:(%f,%f)}",
-                  &posX[0], &posY[0], &posX[1], &posY[1], &posX[2], &posY[2], &posX[3], &posY[3], &posX[4], &posY[4], &posX[5], &posY[5]);
-                DDEBUG_V("Value: (%f, %f), (%f, %f), (%f, %f), (%f, %f), (%f, %f), (%f, %f) ",
-                  posX[0], posY[0], posX[1], posY[1], posX[2], posY[2], posX[3], posY[3], posX[4], posY[4], posX[5], posY[5]);
-                for (int idxPos = 0; idxPos < 6; idxPos++) {
-                    dataConProf.pos[idxPos] << posX[idxPos], posY[idxPos];
-                }
-            }
-        }
+        parseConnectorPosition(dataConn, dataConProf);
+        
         profile.dataConnList.push_back(dataConProf);
     }
     //ServicePortConnector
@@ -336,23 +321,8 @@ bool ProfileHandlerExt::parseProfile(std::string targetFile, RtsProfile& profile
         serviceConProf.source = parseTargetPort(serviceConn.child("rts:sourceServicePort"));
         serviceConProf.target = parseTargetPort(serviceConn.child("rts:targetServicePort"));;
 
-        for (pugi::xml_node prop = serviceConn.child("rtsExt:Properties"); prop; prop = prop.next_sibling("rtsExt:Properties")) {
-            Property propPro;
-            propPro.name = prop.attribute("rtsExt:name").as_string();
-            propPro.value = prop.attribute("rtsExt:value").as_string();
-            serviceConProf.propertyList.push_back(propPro);
-            if (propPro.name == "POSITION") {
-                float posX[6], posY[6];
-                sscanf(propPro.value.c_str(),
-                  "{1:(%f,%f),2:(%f,%f),3:(%f,%f),4:(%f,%f),5:(%f,%f),6:(%f,%f)}",
-                  &posX[0], &posY[0], &posX[1], &posY[1], &posX[2], &posY[2], &posX[3], &posY[3], &posX[4], &posY[4], &posX[5], &posY[5]);
-                DDEBUG_V("Value: (%f, %f), (%f, %f), (%f, %f), (%f, %f), (%f, %f), (%f, %f) ",
-                  posX[0], posY[0], posX[1], posY[1], posX[2], posY[2], posX[3], posY[3], posX[4], posY[4], posX[5], posY[5]);
-                for (int idxPos = 0; idxPos < 6; idxPos++) {
-                    serviceConProf.pos[idxPos] << posX[idxPos], posY[idxPos];
-                }
-            }
-        }
+        parseConnectorPosition(serviceConn, serviceConProf);
+        
         profile.serviceConnList.push_back(serviceConProf);
     }
 
@@ -389,6 +359,37 @@ TargetPort ProfileHandlerExt::parseTargetPort(const pugi::xml_node& targetPort)
         }
     }
     return result;
+}
+
+void ProfileHandlerExt::parseConnectorPosition(const pugi::xml_node& targetCon, PortConnector& profile)
+{
+    for (pugi::xml_node prop = targetCon.child("rtsExt:Properties"); prop; prop = prop.next_sibling("rtsExt:Properties")) {
+        Property propPro;
+        propPro.name = prop.attribute("rtsExt:name").as_string();
+        propPro.value = prop.attribute("rtsExt:value").as_string();
+        profile.propertyList.push_back(propPro);
+        if (propPro.name == "POSITION") {
+            float posX[6], posY[6];
+            sscanf(propPro.value.c_str(),
+                "{1:(%f,%f),2:(%f,%f),3:(%f,%f),4:(%f,%f),5:(%f,%f),6:(%f,%f)}",
+                &posX[0], &posY[0], &posX[1], &posY[1], &posX[2], &posY[2], &posX[3], &posY[3], &posX[4], &posY[4], &posX[5], &posY[5]);
+            DDEBUG_V("Value: (%f, %f), (%f, %f), (%f, %f), (%f, %f), (%f, %f), (%f, %f) ",
+                posX[0], posY[0], posX[1], posY[1], posX[2], posY[2], posX[3], posY[3], posX[4], posY[4], posX[5], posY[5]);
+            for (int idxPos = 0; idxPos < 6; idxPos++) {
+                profile.pos[idxPos] << posX[idxPos], posY[idxPos];
+            }
+        }
+        //if (propPro.name == "BEND_POINT") {
+        //    int posX[3], posY[3];
+        //    sscanf(propPro.value.c_str(),
+        //      "{1:(%d,%d),2:(%d,%d),3:(%d,%d)}", &posX[0], &posY[0], &posX[1], &posY[1], &posX[2], &posY[2]);
+        //    DDEBUG_V("Value: (%d, %d), (%d, %d), (%d, %d) ", posX[0], posY[0], posX[1], posY[1], posX[2], posY[2]);
+
+        //    dataConProf.pos[1] << posX[0], posY[0];
+        //    dataConProf.pos[2] << posX[1], posY[1];
+        //    dataConProf.pos[3] << posX[2], posY[2];
+        //}
+    }
 }
 //////////
 void ProfileHandlerExt::saveRtsProfile
