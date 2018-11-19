@@ -41,6 +41,7 @@ namespace {
         XBOX_360,
         XBOX_ONE,
         F310,
+        F710,
         UNSUPPORTED,
         NUM_MODELS
     };
@@ -106,6 +107,13 @@ namespace {
         A_BUTTON, B_BUTTON, X_BUTTON, Y_BUTTON, L_BUTTON, R_BUTTON, SELECT_BUTTON, START_BUTTON,
         L_STICK_BUTTON, R_STICK_BUTTON, INVALID_BUTTON };
 
+    const int F710_Axes[] = {    // mode button OFF
+        L_STICK_H_AXIS, L_STICK_V_AXIS, L_TRIGGER_AXIS, R_STICK_V_AXIS, R_STICK_H_AXIS, INVALID_AXIS,
+        DIRECTIONAL_PAD_H_AXIS, DIRECTIONAL_PAD_V_AXIS };
+
+    const int F710_Buttons[] = {
+        A_BUTTON, B_BUTTON, X_BUTTON, Y_BUTTON, L_BUTTON, R_BUTTON, SELECT_BUTTON, START_BUTTON,
+        L_STICK_BUTTON, R_STICK_BUTTON, INVALID_BUTTON };
 
     struct ModelInfo {
         ModelID id;
@@ -117,7 +125,8 @@ namespace {
         { 0x054C<<16 | 0x09CC, PS4 },
         { 0x045E<<16 | 0x028E, XBOX_360 },
         { 0x045E<<16 | 0x02FF, XBOX_ONE },
-        { 0x046D<<16 | 0xC21D, F310 }
+        { 0x046D<<16 | 0xC21D, F310 },
+        { 0x046D<<16 | 0xC21F, F710 }
     };
 
     map<ModelID, ModelInfo> modelInfos = {
@@ -125,6 +134,7 @@ namespace {
         { XBOX_360, { XBOX_360,  XBOX_360_Axes,  XBOX_360_Buttons } },
         { XBOX_ONE,{ XBOX_ONE,  nullptr,  nullptr } },
         { F310, { F310,  F310_Axes,  F310_Buttons } }, 
+        { F710, { F710,  F710_Axes,  F710_Buttons } },
         { UNSUPPORTED, { UNSUPPORTED, nullptr,    nullptr } }
     };
 
@@ -388,7 +398,7 @@ bool JoystickImpl::readCurrentState_joyGet()
                     }
 
                     double value1 = (value - MAX_VALUE_16BIT) / MAX_VALUE_16BIT;
-                    if ( (currentModel.id == F310 || currentModel.id == XBOX_360 ) 
+                    if ( (currentModel.id == F310 || currentModel.id == XBOX_360 || currentModel.id == F710)
                             && axisId == L_TRIGGER_AXIS) {
                         if (value1 < 0) {
                             axes[L_TRIGGER_AXIS] = 0;
