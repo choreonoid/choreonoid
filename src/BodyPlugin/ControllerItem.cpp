@@ -80,30 +80,6 @@ void ControllerItem::stop()
 }
 
 
-std::string ControllerItem::getMessage()
-{
-    string message(message_);
-    message_.clear();
-    return message;
-}
-
-
-void ControllerItem::putMessage(const std::string& message)
-{
-    message_ += message;
-    if(!sigMessage_.empty()){
-        sigMessage_(message_);
-        message_.clear();
-    }
-}
-
-
-SignalProxy<void(const std::string& message)> ControllerItem::sigMessage()
-{
-    return sigMessage_;
-}
-
-
 void ControllerItem::onOptionsChanged()
 {
 

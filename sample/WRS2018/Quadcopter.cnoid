@@ -47,14 +47,13 @@ items:
           class: BodyTrackingCameraItem
           data: 
             keepRelativeAttitude: false
-            nearClipDistance: 0.01
-            farClipDistance: 100
+            nearClipDistance: 0.05
+            farClipDistance: 200
 views: 
   - 
     id: 1
     plugin: Base
     class: ItemTreeView
-    mounted: true
     state: 
       checked: [ 1, 3, 4 ]
       expanded: [ 1, 2 ]
@@ -62,133 +61,27 @@ views:
     id: 3
     plugin: Base
     class: SceneView
-    mounted: true
     state: 
-      editMode: false
-      viewpointControlMode: thirdPerson
-      collisionLines: false
-      polygonMode: fill
-      defaultHeadLight: true
-      defaultHeadLightIntensity: 0.8
-      headLightLightingFromBack: false
-      worldLight: true
-      worldLightIntensity: 0.7
-      worldLightAmbient: 0.3
-      additionalLights: true
-      fog: true
-      floorGrid: false
-      floorGridSpan: 10
-      floorGridInterval: 0.5
-      xzGridSpan: 10
-      xzGridInterval: 0.5
-      xzGrid: false
-      yzGridSpan: 10
-      yzGridInterval: 0.5
-      texture: true
-      lineWidth: 1
-      pointSize: 1
-      normalVisualization: false
-      normalLength: 0.01
-      coordinateAxes: true
-      fpsTestIteration: 1
-      showFPS: false
-      enableNewDisplayListDoubleRendering: false
-      useBufferForPicking: true
-      upsideDown: false
       cameras: 
-        - 
-          camera: [ System, Perspective ]
-          fieldOfView: 0.698132
-          near: 0.01
-          far: 100
-          eye: [ -0.606395368, -0.547913296, 0.914747748 ]
-          direction: [ 0.937891553, 0.209730762, -0.276355643 ]
-          up: [ 0.269694768, 0.0603089866, 0.96105544 ]
-        - 
-          camera: [ System, Orthographic ]
-          orthoHeight: 5.73009
-          near: 0.01
-          far: 100
         - 
           camera: BodyTrackingCamera
           isCurrent: true
-          fieldOfView: 0.785398
-          near: 0.01
-          far: 100
           eye: [ -0.543500475, -0.414703735, 0.842134452 ]
           direction: [ 0.962129087, 0.147434452, -0.229283016 ]
           up: [ 0.226637528, 0.0347294144, 0.973359799 ]
-      backgroundColor: [ 0, 0, 0 ]
-      gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      dedicatedItemTreeViewChecks: false
   - 
     id: 4
     name: "Camera Scene"
     plugin: Base
     class: SceneView
-    mounted: true
     state: 
-      editMode: false
-      viewpointControlMode: thirdPerson
-      collisionLines: false
-      polygonMode: fill
-      defaultHeadLight: true
-      defaultHeadLightIntensity: 0.8
-      headLightLightingFromBack: false
-      worldLight: true
-      worldLightIntensity: 0.7
-      worldLightAmbient: 0.3
-      additionalLights: true
-      fog: true
-      floorGrid: false
-      floorGridSpan: 10
-      floorGridInterval: 0.5
-      xzGridSpan: 10
-      xzGridInterval: 0.5
-      xzGrid: false
-      yzGridSpan: 10
-      yzGridInterval: 0.5
-      texture: true
-      lineWidth: 1
-      pointSize: 1
-      normalVisualization: false
-      normalLength: 0.01
-      coordinateAxes: true
-      fpsTestIteration: 1
-      showFPS: false
-      enableNewDisplayListDoubleRendering: false
-      useBufferForPicking: true
-      upsideDown: false
       cameras: 
-        - 
-          camera: [ System, Perspective ]
-          fieldOfView: 0.698132
-          near: 0.01
-          far: 100
-          eye: [ -5.70561679, -1.23665242, 3.31145986 ]
-          direction: [ 0.953750871, 0.205334582, -0.219538117 ]
-          up: [ 0.21462057, 0.0462060135, 0.975603923 ]
-        - 
-          camera: [ System, Orthographic ]
-          orthoHeight: 20
-          near: 0.01
-          far: 100
         - 
           camera: [ quadcopter, Camera ]
           isCurrent: true
         - 
           camera: BodyTrackingCamera
-          fieldOfView: 0.785398
-          near: 0.01
-          far: 100
           eye: [ -0.543500475, -0.414703735, 0.842134452 ]
           direction: [ 0.962129087, 0.147434452, -0.229283016 ]
           up: [ 0.226637528, 0.0347294144, 0.973359799 ]
-      backgroundColor: [ 0, 0, 0 ]
-      gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      dedicatedItemTreeViewChecks: true
       checked: [ 1, 4 ]

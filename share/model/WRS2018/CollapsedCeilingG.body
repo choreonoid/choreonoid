@@ -1,0 +1,52 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+name: CollapsedCeilingG
+
+links:
+  -
+    name: ROOT
+    jointType: fixed
+  -
+    name: BODY
+    parent: ROOT
+    jointType: revolute 
+    jointAxis: Y
+    jointId: 0
+    elements:
+      Transform:
+        translation: [ 1.5, 0, 0.045 ]
+        elements:
+          -
+            type: RigidBody
+            mass: 1000.0
+            inertia: [
+              100, 0, 0,
+              0, 100, 0,
+              0, 0, 100 ]
+          -
+            type: Shape
+            geometry: { type: Box, size: [ 3.0, 1.2, 0.09 ] }
+            appearance: &APP
+              material:
+                diffuseColor: [ 1, 1, 1 ]
+              texture:
+                url: "resource/Asphalt_New.jpg" 
+                repeatS: true
+                repeatT: true
+              textureTransform:
+                scale: [ 10, 4 ]
+          -
+            type: Shape
+            translation: [ -0.2, 0, -0.095 ]
+            geometry: { type: Box, size: [ 2.6, 0.2, 0.1 ] }
+            appearance: *APP
+          -
+            type: Shape
+            translation: [ 0, 0.35, -0.095 ]
+            geometry: { type: Box, size: [ 3.0, 0.5, 0.1 ] }
+            appearance: *APP
+          -
+            type: Shape
+            translation: [ 0, -0.35, -0.095 ]
+            geometry: { type: Box, size: [ 3.0, 0.5, 0.1 ] }
+            appearance: *APP

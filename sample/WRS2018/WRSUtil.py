@@ -23,18 +23,29 @@ except:
     pass
 
 def loadProject(
-    viewProject, worldProject, simulatorProjects, robotProject,
+    view, task, simulatorProjects, robotProject,
     enableMulticopterSimulation = False, enableVisionSimulation = False, targetVisionSensors = "", remoteType = ""):
 
     directory = os.path.dirname(os.path.realpath(__file__))
     
+    itv = ItemTreeView.instance
     pm = ProjectManager.instance
 
-    pm.loadProject(os.path.join(directory, viewProject + ".cnoid"))
+    viewProject = SubProjectItem()
+    viewProject.name = "ViewProject"
+    viewProject.load(os.path.join(directory, view + ".cnoid"))
+    RootItem.instance.addChildItem(viewProject)
+    itv.expandItem(viewProject, False)
 
-    pm.loadProject(os.path.join(directory, worldProject + ".cnoid"))
+    world = WorldItem()
+    world.name = "World"
+    RootItem.instance.addChildItem(world)
 
-    world = Item.find("World")
+    taskProject = SubProjectItem()
+    taskProject.name = task
+    taskProject.load(os.path.join(directory, task + ".cnoid"))
+    world.addChildItem(taskProject)
+    itv.expandItem(taskProject, False)
 
     if not isinstance(simulatorProjects, list):
         simulatorProjects = [ simulatorProjects ]
@@ -42,7 +53,6 @@ def loadProject(
         pm.loadProject(os.path.join(directory, project + ".cnoid"), world)
 
     # select only the first simulator item
-    itv = ItemTreeView.instance
     selectedSimulatorItems = SimulatorItemList(itv.getSelectedItems())
     for i in range(1, len(selectedSimulatorItems)):
         itv.selectItem(selectedSimulatorItems[i], False)
@@ -77,8 +87,9 @@ def loadProject(
     if enableVisionSimulation:
         visionSimulator = GLVisionSimulatorItem()
         visionSimulator.setTargetSensors(targetVisionSensors)
+        visionSimulator.setBestEffortMode(True)
         simulators = world.getDescendantItems(SimulatorItem)
         for simulator in simulators:
             simulator.addChildItem(visionSimulator.duplicate())
             
-    pm.setCurrentProjectName(worldProject + "-" + robotProject)
+    pm.setCurrentProjectName(task + "-" + robotProject)

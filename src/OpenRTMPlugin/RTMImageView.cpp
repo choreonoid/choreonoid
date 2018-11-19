@@ -240,6 +240,10 @@ ReturnCode_t ImageViewRTC::onExecute(UniqueId ec_id)
                 break;
         }
 
+        if(!timedCameraImage.data.image.raw_data.length()){
+            callLater([&]() { imageWidget->clear(); });
+        }
+
         if (jpegCompression) {
             int size = timedCameraImage.data.image.raw_data.length();
             const unsigned char* src = timedCameraImage.data.image.raw_data.get_buffer();

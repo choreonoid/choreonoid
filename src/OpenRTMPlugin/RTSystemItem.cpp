@@ -97,12 +97,13 @@ public:
 
     Signal<void(int)> sigTimerPeriodChanged;
     Signal<void(bool)> sigTimerChanged;
-    Signal<void(bool)> sigLoadedRTSystem;
+    Signal<void(bool)> sigLoaded;
+
+    void changeStateCheck();
+    void changePollingPeriod(int value);
 
 private:
     void setStateCheckMethod(int value);
-    void changeStateCheck();
-    void changePollingPeriod(int value);
 };
 
 }
@@ -584,12 +585,12 @@ void RTSystemItem::initializeClass(ExtensionManager* ext)
     im.addCreationPanel<RTSystemItem>();
     im.addLoaderAndSaver<RTSystemItem>(
         _("RT-System"), "RTS-PROFILE-XML", "xml",
-        [](RTSystemItem* item, const std::string& filename, std::ostream&, Item*) {
-        return item->loadRtsProfile(filename);
-    },
-        [](RTSystemItem* item, const std::string& filename, std::ostream&, Item*) {
-        return item->saveRtsProfile(filename);
-    });
+        [](RTSystemItem* item, const std::string& filename, std::ostream&, Item*){
+            return item->loadRtsProfile(filename);
+        },
+        [](RTSystemItem* item, const std::string& filename, std::ostream&, Item*){
+            return item->saveRtsProfile(filename);
+        });
 }
 
 
@@ -616,7 +617,7 @@ RTSystemItem::RTSystemItem(const RTSystemItem& org)
 
 
 RTSystemItemImpl::RTSystemItemImpl(RTSystemItem* self, const RTSystemItemImpl& org)
-    : self(self)
+    : self(self), pollingCycle(1000)
 {
     initialize();
     autoConnection = org.autoConnection;
@@ -630,7 +631,6 @@ void RTSystemItemImpl::initialize()
     Mapping* config = AppConfig::archive()->openMapping("OpenRTM");
     vendorName = config->get("defaultVendor", "AIST");
     version = config->get("defaultVersion", "1.0.0");
-    pollingCycle = config->get("pollingCycle", 500);
     stateCheck.setSymbol(POLLING_CHECK, "Polling");
     stateCheck.setSymbol(MANUAL_CHECK, "Manual");
     checkAtLoading = true;
@@ -789,6 +789,7 @@ bool RTSystemItemImpl::compIsAlive(RTSComp* rtsComp)
             pathList.push_back(path);
         }
 
+        NameServerManager::instance()->getNCHelper()->setLocation(rtsComp->hostAddress, rtsComp->portNo);  
         RTC::RTObject_ptr rtc = NameServerManager::instance()->getNCHelper()->findObject<RTC::RTObject>(pathList);
         if (!isObjectAlive(rtc)) {
             //DDEBUG("RTSystemItemImpl::compIsAlive NOT Alive");
@@ -1089,7 +1090,7 @@ bool RTSystemItem::loadRtsProfile(const string& filename)
     DDEBUG_V("RTSystemItem::loadRtsProfile=%s", filename.c_str());
     ProfileHandler::getRtsProfileInfo(filename, impl->vendorName, impl->version);
     if (ProfileHandler::restoreRtsProfile(filename, this)) {
-        impl->sigLoadedRTSystem(false);
+        impl->sigLoaded(false);
         return true;
     }
     return false;
@@ -1104,6 +1105,7 @@ bool RTSystemItem::saveRtsProfile(const string& filename)
 
 bool RTSystemItemImpl::saveRtsProfile(const string& filename)
 {
+    DDEBUG_V("RTSystemItem::saveRtsProfile=%s", filename.c_str());
     if (vendorName.empty()) {
         vendorName = "Choreonoid";
     }
@@ -1150,15 +1152,13 @@ bool RTSystemItemImpl::checkStatus()
 
     for (auto it = rtsComps.begin(); it != rtsComps.end(); it++) {
         if (compIsAlive(it->second)) {
-            if (it->second->isAlive_ == false) {
+            if (!it->second->isAlive_) {
                 modified = true;
-                DDEBUG("RTSystemItemImpl::checkStatus 1");
             }
             it->second->isAlive_ = true;
         } else {
-            if (it->second->isAlive_ == true) {
+            if (it->second->isAlive_) {
                 modified = true;
-                DDEBUG("RTSystemItemImpl::checkStatus 2");
             }
             it->second->isAlive_ = false;
         }
@@ -1166,25 +1166,10 @@ bool RTSystemItemImpl::checkStatus()
     //
     if (connectionCheck()) {
         modified = true;
-        DDEBUG("RTSystemItemImpl::checkStatus 3");
     }
 
     return modified;
 }
-
-struct ConnectorPropComparator
-{
-    string target_;
-
-    ConnectorPropComparator(string value)
-    {
-        target_ = value;
-    }
-    bool operator()(const NamedValuePtr elem) const
-    {
-        return (target_ == elem->name_);
-    }
-};
 
 ///////////
 bool RTSystemItem::store(Archive& archive)
@@ -1193,13 +1178,13 @@ bool RTSystemItem::store(Archive& archive)
         archive.writeRelocatablePath("filename", filePath());
         archive.write("format", fileFormat());
 
-        archive.write("AutoConnection", impl->autoConnection);
-        archive.write("PollingCycle", impl->pollingCycle);
-        archive.write("StateCheck", impl->stateCheck.selectedSymbol());
-        archive.write("CheckAtLoading", impl->checkAtLoading);
+        archive.write("autoConnection", impl->autoConnection);
+        archive.write("pollingCycle", impl->pollingCycle);
+        archive.write("stateCheck", impl->stateCheck.selectedSymbol());
+        archive.write("checkAtLoading", impl->checkAtLoading);
 
 #if defined(OPENRTM_VERSION12)
-        archive.write("HeartBeatPeriod", impl->heartBeatPeriod);
+        archive.write("heartBeatPeriod", impl->heartBeatPeriod);
 #endif
         return true;
     }
@@ -1212,12 +1197,23 @@ bool RTSystemItem::restore(const Archive& archive)
 {
     DDEBUG("RTSystemItemImpl::restore");
 
-    archive.read("AutoConnection", impl->autoConnection);
-    archive.read("PollingCycle", impl->pollingCycle);
-    archive.read("CheckAtLoading", impl->checkAtLoading);
+    if (archive.read("autoConnection", impl->autoConnection) == false) {
+        archive.read("AutoConnection", impl->autoConnection);
+    }
+    if( archive.read("checkAtLoading", impl->checkAtLoading)==false) {
+        archive.read("CheckAtLoading", impl->checkAtLoading);
+    }
+    int pollingCycle = 1000;
+    if( archive.read("pollingCycle", pollingCycle)==false) {
+        archive.read("PollingCycle", pollingCycle);
+    }
+    impl->changePollingPeriod(pollingCycle);
+
 
 #if defined(OPENRTM_VERSION12)
-    archive.read("HeartBeatPeriod", impl->heartBeatPeriod);
+    if(archive.read("HeartBeatPeriod", impl->heartBeatPeriod) == false) {
+        archive.read("heartBeatPeriod", impl->heartBeatPeriod);
+    }
 #endif
 
     /**
@@ -1239,6 +1235,7 @@ bool RTSystemItem::restore(const Archive& archive)
     if (archive.read("StateCheck", stateCheck)) {
         DDEBUG_V("StateCheck:%s", stateCheck.c_str());
         impl->setStateCheckMethodByString(stateCheck);
+        archive.addPostProcess([&]() { impl->changeStateCheck(); });
     }
 
     return true;
@@ -1318,7 +1315,7 @@ void RTSystemItemImpl::restoreRTSystem(const Archive& archive)
         checkStatus();
     }
 
-    sigLoadedRTSystem(true);
+    sigLoaded(true);
     DDEBUG("RTSystemItemImpl::restoreRTSystem End");
 }
 
@@ -1359,7 +1356,7 @@ SignalProxy<void(bool)> RTSystemItem::sigTimerChanged()
     return impl->sigTimerChanged;
 }
 
-SignalProxy<void(bool)> RTSystemItem::sigLoadedRTSystem()
+SignalProxy<void(bool)> RTSystemItem::sigLoaded()
 {
-    return impl->sigLoadedRTSystem;
+    return impl->sigLoaded;
 }

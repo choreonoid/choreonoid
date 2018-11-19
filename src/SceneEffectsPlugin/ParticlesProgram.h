@@ -9,6 +9,7 @@
 #include <cnoid/GLSLSceneRenderer>
 #include <cnoid/ShaderPrograms>
 #include <memory>
+#include <cstdlib>
 
 namespace cnoid {
 
@@ -22,7 +23,7 @@ public:
     void setTime(float time){
         glUniform1f(timeLocation, time);
     }
-    static float random(float max = 1.0f) {
+    static float frandom(float max = 1.0f) {
         return ((float)rand() / RAND_MAX) * max;
     }
 

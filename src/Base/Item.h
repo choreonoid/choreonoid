@@ -78,6 +78,7 @@ public:
     void setTemporal(bool on = true);
 
     RootItem* findRootItem() const;
+    bool isConnectedToRoot() const;
 
     /**
        Find an item that has the corresponding path to it in the sub tree
@@ -108,7 +109,7 @@ public:
     */
     Item* findSubItem(const std::string& path) const;
     template<class ItemType>
-   ItemType* findSubItem(const std::string& path) const {
+    ItemType* findSubItem(const std::string& path) const {
         return dynamic_cast<ItemType*>(findSubItem(path));
     }
     
@@ -150,20 +151,19 @@ public:
     bool save(const std::string& filename, const std::string& format = std::string());
     bool overwrite(bool forceOverwrite = false, const std::string& format = std::string());
 
-    const std::string& filePath() const { return filePath_; }
-    const std::string& fileFormat() const { return fileFormat_; }
+    const std::string& filePath() const;
+    const std::string& fileFormat() const;
 
 #ifdef CNOID_BACKWARD_COMPATIBILITY
-    const std::string& lastAccessedFilePath() const { return filePath_; }
-    const std::string& lastAccessedFileFormatId() const { return fileFormat_; }
+    const std::string& lastAccessedFilePath() const;
+    const std::string& lastAccessedFileFormatId() const;
 #endif
 
-    std::time_t fileModificationTime() const { return fileModificationTime_; }
-    bool isConsistentWithFile() const { return isConsistentWithFile_; }
-
+    std::time_t fileModificationTime() const;
+    bool isConsistentWithFile() const;
+    void setConsistentWithFile(bool isConsistent);
+    void suggestFileUpdate();
     void clearFileInformation();
-
-    void suggestFileUpdate() { isConsistentWithFile_ = false; }
 
     void putProperties(PutPropertyFunction& putProperty);
 
@@ -184,8 +184,8 @@ public:
        This signal is emitted when the position of this item in the item tree is changed.
        Being added to the tree and being removed from the tree are also the events
        to emit this signal.
-       This signal is also emitted for descendent items when the position of an ancestor item
-       is changed.
+       This signal is also emitted for descendent items when the position of an ancestor
+       item is changed.
        This signal is emitted before RootItem::sigTreeChanged();
     */
     SignalProxy<void()> sigPositionChanged() {
@@ -198,6 +198,7 @@ public:
     SignalProxy<void()> sigDetachedFromRoot() {
         return sigDetachedFromRoot_;
     }
+
     /**
        @note Please use this instead of sigDetachedFromRoot()
     */
@@ -217,7 +218,10 @@ public:
     }
 
 protected:
-
+    /**
+       This function is called when the item has been connected to the tree including the root item.
+       The onPositionChanged function and sigSubTreeChanged are processed before calling this function.
+    */
     virtual void onConnectedToRoot();
     virtual void onDisconnectedFromRoot();
     virtual void onPositionChanged();

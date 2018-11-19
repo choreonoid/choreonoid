@@ -1,0 +1,123 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+name: CollapsedCeilingF
+
+ASPHALT: &ASPHALT
+  material:
+    diffuseColor: [ 1, 1, 1 ]
+  texture:
+    url: "resource/Asphalt_New.jpg" 
+    repeatS: true
+    repeatT: true
+
+TUBE_APPEARANCE1: &TUBE_APPEARANCE1
+  material:
+    diffuseColor: [ 0.2, 0.2, 0.2 ]
+  texture:
+    url: "resource/Asphalt_New.jpg" 
+    repeatS: true
+    repeatT: true
+
+TUBE_APPEARANCE: &TUBE_APPEARANCE
+  material:
+    diffuseColor: [ 0.25, 0.15, 0.15 ]
+
+links:
+  -
+    name: BODY
+    jointType: free
+    mass: 1000.0
+    inertia: [
+      100, 0, 0,
+      0, 100, 0,
+      0, 0, 100 ]
+    material: Ground
+    elements:
+      -
+        type: Shape
+        translation: [ 0, 0.34, 0 ]
+        geometry: { type: Box, size: [ 4.2, 0.52, 0.09 ] }
+        appearance:
+          <<: *ASPHALT
+          textureTransform: { scale: [ 10, 2 ] }
+      -
+        type: Shape
+        translation: [ 0, -0.34, 0 ]
+        geometry: { type: Box, size: [ 4.2, 0.52, 0.09 ] }
+        appearance:
+          <<: *ASPHALT
+          textureTransform: { scale: [ 10, 2 ] }
+      -
+        type: Shape
+        translation: [ 1.73, 0, 0 ]
+        geometry: { type: Box, size: [ 0.74, 0.16, 0.09 ] }
+        appearance:
+          <<: *ASPHALT
+          textureTransform: { scale: [ 2, 1 ] }
+      -
+        type: Shape
+        translation: [ -0.45, 0, 0 ]
+        geometry: { type: Box, size: [ 3.3, 0.16, 0.09 ] }
+        appearance:
+          <<: *ASPHALT
+          textureTransform: { scale: [ 2, 1 ] }
+      -
+        type: Resource
+        translation: [ 1.28, 0, 0 ]
+        uri: "resource/CeilingHole.yaml"
+        node: TUBE
+  -
+    name: BOARING_BASE
+    parent: BODY
+    translation: [ 1.28, 0, 0 ]
+    jointType: prismatic
+    jointAxis: Z
+    jointRange: [ -0.05, 0.05 ]
+    mass: 0.1
+    inertia: [
+      0.001, 0,   0,
+      0,   0.001, 0,
+      0,   0,   0.001 ]
+    elements:
+      -
+        type: ForceSensor
+        name: FORCE_SENSOR
+        id: 0
+  -
+    name: BOARING_TARGET
+    parent: BOARING_BASE
+    jointType: free
+    mass: 10.0
+    inertia: [
+      0.15, 0,   0,
+      0,   0.15, 0,
+      0,   0,   0.15 ]
+    elements:
+      -
+        type: Collision
+        elements:
+          Shape:
+            rotation: [ 1, 0, 0, 90 ]
+            geometry: { type: Cylinder, height: 0.09, radius: 0.078 }
+            appearance: { material: { diffuseColor: [ 0.5, 0.5, 0.5 ] } }
+      -
+        type: Visual
+        elements:
+          Shape:
+            rotation: [ 1, 0, 0, 90 ]
+            geometry: { type: Cylinder, height: 0.09, radius: 0.081 }
+            appearance:
+              <<: *ASPHALT
+      -
+        type: AGXBreakableJointDevice
+        name: BOARING_CONSTRAINT
+        isOptional: true
+        link1Name: BOARING_BASE
+        link2Name: BOARING_TARGET
+        jointType: fixed
+        jointCompliance: 5.0e-6
+        breakType: none
+
+collisionDetection:
+  excludeLinkGroups:
+    - links: [ BODY, BOARING_BASE, BOARING_TARGET ]

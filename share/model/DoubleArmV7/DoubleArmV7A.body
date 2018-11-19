@@ -16,7 +16,7 @@ links:
         sprocketNames: [ WHEEL_L0 ]
         rollerNames: [ WHEEL_L1, WHEEL_L2 ]
         idlerNames: [ WHEEL_L3 ]
-        upAxis: [ 0, 1, 0 ]
+        upAxis: [ 0, 0, 1 ]
         numberOfNodes: 50
         nodeThickness: 0.03
         nodeWidth:  0.25
@@ -42,7 +42,7 @@ links:
         sprocketNames: [ WHEEL_R0 ]
         rollerNames: [ WHEEL_R1, WHEEL_R2 ]
         idlerNames: [ WHEEL_R3 ]
-        upAxis: [ 0, 1, 0 ]
+        upAxis: [ 0, 0, 1 ]
         numberOfNodes: 50
         nodeThickness: 0.03
         nodeWidth:  0.25
@@ -66,19 +66,18 @@ links:
     name: WHEEL_L0
     parent: TFRAME
     jointType: revolute
-    jointAxis: [ 0, 0, 1 ]
-    translation: [ -0.74, -0.295, 0.600 ]
+    jointAxis: Y
+    translation: [ 0.74, 0.600, -0.295 ]
     centerOfMass: [ 0, 0, 0 ]
     maxJointVelocity: 573
     mass: 13.25
     inertia: [
       0.2015, 0, 0,
-      0, 0.2015, 0,
-      0, 0, 0.265 ]
+      0, 0.265, 0,
+      0, 0, 0.2015 ]
     material: DoubleArmV7AWheel
     elements: &WeelShape
       Shape:
-        rotation: [ 1, 0, 0, 90 ]
         appearance:
           material:
             diffuseColor: [ 0.3, 0.3, 0.3 ]
@@ -90,118 +89,119 @@ links:
     name: WHEEL_L1
     parent: TFRAME
     jointType: revolute
-    jointAxis: [ 0, 0, 1 ]
-    translation: [ -0.26, -0.295, 0.600 ]
+    jointAxis: Y
+    translation: [ 0.26, 0.600, -0.295 ]
     centerOfMass: [ 0, 0, 0 ]
     maxJointVelocity: 573
     mass: 13.25
     inertia: [
       0.2015, 0, 0,
-      0, 0.2015, 0,
-      0, 0, 0.265 ]
+      0, 0.265, 0,
+      0, 0, 0.2015 ]
     material: DoubleArmV7AWheel
     elements: *WeelShape
   -
     name: WHEEL_L2
     parent: TFRAME
     jointType: revolute
-    jointAxis: [ 0, 0, 1 ]
-    translation: [ 0.22, -0.295, 0.600 ]
+    jointAxis: Y
+    translation: [ -0.22, 0.600, -0.295 ]
     centerOfMass: [ 0, 0, 0 ]
     maxJointVelocity: 573
     mass: 13.25
     inertia: [
       0.2015, 0, 0,
-      0, 0.2015, 0,
-      0, 0, 0.265 ]
+      0, 0.265, 0,
+      0, 0, 0.2015 ]
     material: DoubleArmV7AWheel
     elements: *WeelShape
   -
     name: WHEEL_L3
     parent: TFRAME
     jointType: revolute
-    jointAxis: [ 0, 0, 1 ]
-    translation: [ 0.70, -0.295, 0.600 ]
+    jointAxis: Y
+    translation: [ -0.70, 0.600, -0.295 ]
     centerOfMass: [ 0, 0, 0 ]
     maxJointVelocity: 573
     mass: 13.25
     inertia: [
       0.2015, 0, 0,
-      0, 0.2015, 0,
-      0, 0, 0.265 ]
+      0, 0.265, 0,
+      0, 0, 0.2015 ]
     material: DoubleArmV7AWheel
     elements: *WeelShape
   -
     name: WHEEL_R0
     parent: TFRAME
     jointType: revolute
-    jointAxis: [ 0, 0, 1 ]
-    translation: [ -0.74, -0.295, -0.600 ]
+    jointAxis: Y
+    translation: [ 0.74, -0.600, -0.295 ]
     centerOfMass: [ 0, 0, 0 ]
     maxJointVelocity: 573
     mass: 13.25
     inertia: [
       0.2015, 0, 0,
-      0, 0.2015, 0,
-      0, 0, 0.265 ]
+      0, 0.265, 0,
+      0, 0, 0.2015 ]
     material: DoubleArmV7AWheel
     elements: *WeelShape
   -
     name: WHEEL_R1
     parent: TFRAME
     jointType: revolute
-    jointAxis: [ 0, 0, 1 ]
-    translation: [ -0.26, -0.295, -0.600 ]
+    jointAxis: Y
+    translation: [ 0.26, -0.600, -0.295 ]
     centerOfMass: [ 0, 0, 0 ]
     maxJointVelocity: 573
     mass: 13.25
     inertia: [
       0.2015, 0, 0,
-      0, 0.2015, 0,
-      0, 0, 0.265 ]
+      0, 0.265, 0,
+      0, 0, 0.2015 ]
     material: DoubleArmV7AWheel
     elements: *WeelShape
   -
     name: WHEEL_R2
     parent: TFRAME
     jointType: revolute
-    jointAxis: [ 0, 0, 1 ]
-    translation: [ 0.22, -0.295, -0.600 ]
+    jointAxis: Y
+    translation: [ -0.22, -0.600, -0.295 ]
     centerOfMass: [ 0, 0, 0 ]
     maxJointVelocity: 573
     mass: 13.25
     inertia: [
       0.2015, 0, 0,
-      0, 0.2015, 0,
-      0, 0, 0.265 ]
+      0, 0.265, 0,
+      0, 0, 0.2015 ]
     material: DoubleArmV7AWheel
     elements: *WeelShape
   -
     name: WHEEL_R3
     parent: TFRAME
     jointType: revolute
-    jointAxis: [ 0, 0, 1 ]
-    translation: [ 0.70, -0.295, -0.600 ]
+    jointAxis: Y
+    translation: [ -0.70, -0.600, -0.295 ]
     centerOfMass: [ 0, 0, 0 ]
     maxJointVelocity: 573
     mass: 13.25
     inertia: [
       0.2015, 0, 0,
-      0, 0.2015, 0,
-      0, 0, 0.265 ]
+      0, 0.265, 0,
+      0, 0, 0.2015 ]
     material: DoubleArmV7AWheel
     elements: *WeelShape
   -
+    &WIRE_GUARD
     name: WIRE_GUARD_L
     parent: TFRAME
     jointType: fixed
-    translation: [ -0.02, -0.595, 0.600 ]
+    translation: [ 0.02, 0.61, -0.32 ]
     centerOfMass: [ 0, 0, 0 ]
-    mass: 1.0
+    mass: 0.1
     inertia: [
-      0.208, 0, 0,
-      0, 0.388, 0,
-      0, 0, 0.555 ]
+      0.001, 0,      0,
+      0,      0.001, 0,
+      0,      0,      0.001 ]
     material: default
     elements: &WireGuard
       -
@@ -211,25 +211,13 @@ links:
           type: Shape
           appearance: &red
             material:
-              diffuseColor: [ 0.8, 0.0, 0.0 ]
-              ambientIntensity: 0.2
-              specularColor: [ 0.8, 0.8, 0.8 ]
-              transparency: 0.8
-          geometry: { type: Box, size: [ 2.1, 1.5, 0.5 ] }
+              diffuseColor: [ 0, 1, 0 ]
+              transparency: 0.6
+          geometry: { type: Box, size: [ 1.94, 0.32, 0.6 ] }
   -
+    <<: *WIRE_GUARD
     name: WIRE_GUARD_R
-    parent: TFRAME
-    jointType: fixed
-    translation: [ -0.02, -0.595, -0.600 ]
-    centerOfMass: [ 0, 0, 0 ]
-    mass: 1.0
-    inertia: [
-      0.208, 0, 0,
-      0, 0.388, 0,
-      0, 0, 0.555 ]
-    material: default
-    elements: *WireGuard
-
+    translation: [ 0.02, -0.61, -0.32 ]
 
 collisionDetection:
   excludeTreeDepth: 1
@@ -275,6 +263,10 @@ collisionDetection:
     -
       name: TOHKU_Group2
       links: [ TOHKU_ROLL, TOHKU_PITCH, ARM, BOOM, BLOCK ]
-
-  #excludeLinksWireCollision: [ WIRE_GUARD_L, WIRE_GUARD_R, TFRAME,
-  #  WHEEL_L0, WHEEL_L1, WHEEL_L2, WHEEL_L3, WHEEL_R0, WHEEL_R1, WHEEL_R2, WHEEL_R3 ]
+  
+  excludeLinksWireCollision: [
+    TFRAME, WHEEL_L0, WHEEL_L1, WHEEL_L2, WHEEL_L3, WHEEL_R0, WHEEL_R1, WHEEL_R2, WHEEL_R3,
+    TOHKU_TIP_01, TOHKU_TIP_02,
+    MANIFNG_U, HANDTIP_U, HANDLNK_I, MANIFNG_L, HANDTIP_L, HANDLNK_O ]
+  
+  excludeLinksDynamic: [ WIRE_GUARD_L, WIRE_GUARD_R ]

@@ -24,13 +24,13 @@ public:
     void setRTCInstanceName(const std::string& name);
     
 protected:
-    virtual Item* doDuplicate() const;
-    virtual void onConnectedToRoot();
-    virtual void onPositionChanged();
-    virtual void onDisconnectedFromRoot();
-    virtual void doPutProperties(PutPropertyFunction& putProperty);
-    virtual bool store(Archive& archive);
-    virtual bool restore(const Archive& archive);
+    virtual Item* doDuplicate() const override;
+    virtual void onConnectedToRoot() override;
+    virtual void onPositionChanged() override;
+    virtual void onDisconnectedFromRoot() override;
+    virtual void doPutProperties(PutPropertyFunction& putProperty) override;
+    virtual bool store(Archive& archive) override;
+    virtual bool restore(const Archive& archive) override;
         
 private:
     OpenHRPInterpreterServiceItemImpl* impl;

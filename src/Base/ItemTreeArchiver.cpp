@@ -4,6 +4,7 @@
 
 #include "ItemTreeArchiver.h"
 #include "RootItem.h"
+#include "SubProjectItem.h"
 #include "ItemManager.h"
 #include "PluginManager.h"
 #include "MessageView.h"
@@ -110,7 +111,7 @@ ArchivePtr ItemTreeArchiverImpl::storeIter(Archive& parentArchive, Item* item, b
             format(_("\"%1%\" cannot be stored. Its type is not registered.")) % item->name(),
             MessageView::ERROR);
         isComplete = false;
-        return 0;
+        return nullptr;
     }
 
     ArchivePtr archive = new Archive();
@@ -128,7 +129,7 @@ ArchivePtr ItemTreeArchiverImpl::storeIter(Archive& parentArchive, Item* item, b
         if(!item->store(*dataArchive)){
             mv->putln(format(_("\"%1%\" cannot be stored.")) % item->name(), MessageView::ERROR);
             isComplete = false;
-            return 0;
+            return nullptr;
         }
 
         archive->registerItemId(item, itemIdCounter);
@@ -137,6 +138,12 @@ ArchivePtr ItemTreeArchiverImpl::storeIter(Archive& parentArchive, Item* item, b
     }
 
     archive->write("name", item->name(), DOUBLE_QUOTED);
+
+    auto subProjectItem = dynamic_cast<SubProjectItem*>(item);
+    if(subProjectItem && subProjectItem->isSavingSubProject()){
+        pluginName = "Base";
+        className = "RootItem";
+    }
 
     if(item->isSubItem()){
         archive->write("isSubItem", true);
@@ -148,8 +155,11 @@ ArchivePtr ItemTreeArchiverImpl::storeIter(Archive& parentArchive, Item* item, b
         }
     }
 
+    if(subProjectItem && !subProjectItem->isSavingSubProject()){
+        return archive;
+    }
+
     ListingPtr children = new Listing();
-    
     for(Item* childItem = item->childItem(); childItem; childItem = childItem->nextItem()){
         if(childItem->isTemporal()){
             continue;
@@ -159,11 +169,11 @@ ArchivePtr ItemTreeArchiverImpl::storeIter(Archive& parentArchive, Item* item, b
             children->append(childArchive);
         }
     }
-
     if(!children->empty()){
         archive->insert("children", children);
     } else if(item->isSubItem()){
-        archive = 0;
+        // Sub item without childiren is not stored
+        archive = nullptr;
     }
 
     return archive;
@@ -308,6 +318,7 @@ ItemPtr ItemTreeArchiverImpl::restoreItem
             }
         }
         if(item){
+            mvout() << parentItem->name() << "->addChildItem(" << item->name() << ")" << endl;
             parentItem->addChildItem(item);
             restoredItems.push_back(item);
         }

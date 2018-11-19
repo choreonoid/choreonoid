@@ -2,6 +2,7 @@
 #include "AGXScene.h"
 #include <cnoid/MeshExtractor>
 #include <cnoid/SceneDrawables>
+#include <cnoid/ForceSensor>
 #include <mutex>
 #include "AGXVehicleContinuousTrack.h"
 #include "AGXConvexDecomposition.h"
@@ -42,7 +43,7 @@ bool createAGXVehicleContinousTrack(AGXBody* agxBody)
 ////////////////////////////////////////////////////////////
 // AGXLink
 AGXLink::AGXLink(Link* const link) : _orgLink(link){}
-AGXLink::AGXLink(Link* const link, AGXLink* const parent, const Vector3& parentOrigin, AGXBody* const agxBody, bool makeStatic) :
+AGXLink::AGXLink(Link* const link, AGXLink* const parent, const Vector3& parentOrigin, AGXBody* const agxBody, std::set<Link*>& forceSensorLinks, bool makeStatic) :
     _agxBody(agxBody),
     _orgLink(link),
     _agxParentLink(parent),
@@ -61,13 +62,13 @@ AGXLink::AGXLink(Link* const link, AGXLink* const parent, const Vector3& parentO
         agxBody->addControllableLink(this);
     }
 
-    if(link->jointType() != Link::FIXED_JOINT){
+    if(link->jointType() != Link::FIXED_JOINT || forceSensorLinks.find(link) != forceSensorLinks.end()){
         makeStatic = false;
     }
 
     constructAGXLink(makeStatic);
     for(Link* child = link->child(); child; child = child->sibling()){
-        new AGXLink(child, this, getOrigin(), agxBody, makeStatic);
+        new AGXLink(child, this, getOrigin(), agxBody, forceSensorLinks, makeStatic);
     }
 }
 
@@ -413,13 +414,13 @@ void AGXLink::createAGXShape()
             AGXConvexDecompositionPtr conDec = new AGXConvexDecomposition();
             numConvex = conDec->getConvexBuilder()->build(td.vertices, td.indices, td.triangles);
             if(numConvex > 0){
-                std::cout << orgLink->name() << " convex decomposition succeed." << std::endl;
-                std::cout << "Divided to " << numConvex << std::endl;
+                LOGGER_INFO() << orgLink->name() << " convex decomposition succeed." << LOGGER_ENDL();
+                LOGGER_INFO() << "Divided to " << numConvex << std::endl;
                 for(auto shape : conDec->getConvexBuilder()->getConvexShapes()){
                     getAGXGeometry()->add(shape, agx::AffineMatrix4x4());
                 }
             }else{
-                std::cout << orgLink->name() << " convex decomposition failed." << std::endl;
+                LOGGER_WARNING() << orgLink->name() << " convex decomposition failed." << LOGGER_ENDL();
             }
         }
 
@@ -816,7 +817,11 @@ void AGXBody::createBody(AGXScene* agxScene)
     if(body()->rootLink()->jointType() != Link::FIXED_JOINT){
         makeStatic = false;
     }
-    new AGXLink(body()->rootLink(), nullptr, Vector3::Zero(), this, makeStatic);
+    std::set<Link*> forceSensorLinks;
+    for(auto& sensor : body()->devices<ForceSensor>()){
+        forceSensorLinks.insert(sensor->link());
+    }
+    new AGXLink(body()->rootLink(), nullptr, Vector3::Zero(), this, forceSensorLinks, makeStatic);
     setLinkStateToAGX();
     createExtraJoint();
     callExtensionFuncs();
@@ -909,7 +914,8 @@ void AGXBody::setCollisionExcludeLinkGroups(const Mapping& cdMapping){
         const Mapping&  groupInfo = *group->toMapping();
         // get group name and add name to agx to disable collision
         stringstream ss;
-        if(const ValueNodePtr& nameNode = groupInfo.find("name")){
+        auto nameNode = groupInfo.find("name");
+        if(nameNode->isValid()){
             ss << "AGXExcludeLinkGroups_" << nameNode->toString() << agx::UuidGenerator().generate().str() << std::endl;
         }else{
             ss << "AGXExcludeLinkGroups_" << agx::UuidGenerator().generate().str() << std::endl;

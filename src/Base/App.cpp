@@ -16,6 +16,7 @@
 #include "MainWindow.h"
 #include "RootItem.h"
 #include "FolderItem.h"
+#include "SubProjectItem.h"
 #include "ExtCommandItem.h"
 #include "SceneItem.h"
 #include "PointSetItem.h"
@@ -44,6 +45,7 @@
 #include "MovieRecorder.h"
 #include "LazyCaller.h"
 #include "TextEditView.h"
+#include "GeneralSliderView.h"
 #include "VirtualJoystickView.h"
 #include "DescriptionDialog.h"
 #include "MessageLogItem.h"
@@ -196,18 +198,19 @@ void AppImpl::initialize( const char* appName, const char* vendorName, const QIc
     
     MessageView::initializeClass(ext);
     RootItem::initializeClass(ext);
-    ProjectManager::initialize(ext);
+    ProjectManager::initializeClass(ext);
 
     FileBar::initialize(ext);
     ScriptBar::initialize(ext);
     TimeBar::initialize(ext);
     ItemTreeView::initializeClass(ext);
     ItemPropertyView::initializeClass(ext);
-    TextEditView::initializeClass(ext);
     SceneBar::initialize(ext);
     SceneView::initializeClass(ext);
     ImageViewBar::initialize(ext);
     ImageView::initializeClass(ext);
+    TextEditView::initializeClass(ext);
+    GeneralSliderView::initializeClass(ext);
     GraphBar::initialize(ext);
     MultiValueSeqGraphView::initializeClass(ext);
     MultiSE3SeqGraphView::initializeClass(ext);
@@ -217,6 +220,7 @@ void AppImpl::initialize( const char* appName, const char* vendorName, const QIc
     TimeSyncItemEngineManager::initialize();
     
     FolderItem::initializeClass(ext);
+    SubProjectItem::initializeClass(ext);
     ExtCommandItem::initializeClass(ext);
     MultiValueSeqItem::initializeClass(ext);
     MultiSE3SeqItem::initializeClass(ext);
@@ -327,8 +331,10 @@ int AppImpl::exec()
         result = qapplication->exec();
     }
 
-    for(Item* item = RootItem::instance()->childItem(); item; item = item->nextItem()){
+    for(Item* item = RootItem::instance()->childItem(); item; ){
+        Item* next = item->nextItem(); // detachFromParentItem() may deallocate item
         item->detachFromParentItem();
+        item = next;
     }
 
     PluginManager::finalize();

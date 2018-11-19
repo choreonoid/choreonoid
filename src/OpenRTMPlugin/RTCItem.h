@@ -73,12 +73,12 @@ public:
     bool isActivationEnabled() const { return isActivationEnabled_; }
 
 protected:
-    virtual void onPositionChanged();
-    virtual void onDisconnectedFromRoot();
-    virtual Item* doDuplicate() const;
-    virtual void doPutProperties(PutPropertyFunction& putProperty);
-    virtual bool store(Archive& archive);
-    virtual bool restore(const Archive& archive);
+    virtual void onConnectedToRoot() override;
+    virtual void onDisconnectedFromRoot() override;
+    virtual Item* doDuplicate() const override;
+    virtual void doPutProperties(PutPropertyFunction& putProperty) override;
+    virtual bool store(Archive& archive) override;
+    virtual bool restore(const Archive& archive) override;
 
 private:
     std::ostream& os;

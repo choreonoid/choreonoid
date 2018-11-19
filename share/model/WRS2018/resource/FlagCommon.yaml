@@ -17,7 +17,7 @@ FLAG: &FLAG
   -
     type: Collision
     shape:
-      translation: [ 0, 0.35, 1.75 ]
+      translation: [ 0, *FLAG_Y, 1.75 ]
       geometry:
         type: Box
         size: [ 0.1, 0.5, 0.5 ]

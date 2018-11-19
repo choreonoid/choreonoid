@@ -5,13 +5,19 @@
 
 #include "SensorVisualizerItem.h"
 #include "BodyItem.h"
-#include <cnoid/ItemTreeView>
 #include <cnoid/BasicSensors>
+#include <cnoid/RangeCamera>
+#include <cnoid/RangeSensor>
+#include <cnoid/PointSetItem>
+#include <cnoid/ItemTreeView>
 #include <cnoid/ItemManager>
-#include <cnoid/Archive>
+#include <cnoid/SceneGraph>
 #include <cnoid/SceneDrawables>
 #include <cnoid/MeshGenerator>
+#include <cnoid/SceneProvider>
+#include <cnoid/ImageProvider>
 #include <cnoid/ConnectionSet>
+#include <cnoid/Archive>
 #include "gettext.h"
 
 using namespace std;
@@ -64,6 +70,85 @@ public:
 
 typedef ref_ptr<Arrow> ArrowPtr;
 
+class SensorVisualizerItemBase
+{
+public:
+    Item* visualizerItem;
+    BodyItem* bodyItem;
+    ScopedConnection sigCheckToggledConnection;
+    SensorVisualizerItemBase(Item* visualizerItem);
+    void setBodyItem(BodyItem* bodyItem);
+    void updateVisualization();
+
+    virtual void enableVisualization(bool on) = 0;
+    virtual void doUpdateVisualization() = 0;
+};
+    
+
+class ForceSensorVisualizerItem : public Item, public SensorVisualizerItemBase, public SceneProvider
+{
+public:
+    ForceSensorVisualizerItem();
+    virtual SgNode* getScene();
+    virtual void enableVisualization(bool on) override;
+    virtual void doUpdateVisualization() override;
+    void updateSensorPositions();
+    void updateForceSensorState(int index);
+    virtual void doPutProperties(PutPropertyFunction& putProperty);
+    virtual bool store(Archive& archive);
+    virtual bool restore(const Archive& archive);
+
+    SgGroupPtr scene;
+    SgShapePtr cylinder;
+    SgShapePtr cone;
+    DeviceList<ForceSensor> forceSensors;
+    vector<ArrowPtr> forceSensorArrows;
+    double visualRatio;
+    ScopedConnectionSet connections;
+};
+
+class CameraImageVisualizerItem : public Item, public ImageProvider, public SensorVisualizerItemBase
+{
+public:
+    CameraImageVisualizerItem();
+    virtual const Image* getImage();
+    void setBodyItem(BodyItem* bodyItem, Camera* camera);
+    virtual void enableVisualization(bool on) override;
+    virtual void doUpdateVisualization() override;
+
+    CameraPtr camera;
+    ScopedConnectionSet connections;
+    std::shared_ptr<const Image> image;
+};
+
+class PointCloudVisualizerItem : public PointSetItem, public SensorVisualizerItemBase
+{
+public:
+    PointCloudVisualizerItem();
+    void setBodyItem(BodyItem* bodyItem, RangeCamera* rangeCamera);
+    virtual void enableVisualization(bool on) override;
+    virtual void doUpdateVisualization() override;
+    void updateSensorPosition();
+    void updateRangeCameraState();
+
+    RangeCameraPtr rangeCamera;
+    ScopedConnectionSet connections;
+};
+
+class RangeSensorVisualizerItem : public PointSetItem, public SensorVisualizerItemBase
+{
+public:
+    RangeSensorVisualizerItem();
+    void setBodyItem(BodyItem* bodyItem, RangeSensor* rangeSensor);
+    virtual void enableVisualization(bool on) override;
+    virtual void doUpdateVisualization() override;
+    void updateSensorPosition();
+    void updateRangeSensorState();
+
+    RangeSensorPtr rangeSensor;
+    ScopedConnectionSet connections;
+};
+
 }
 
 namespace cnoid {
@@ -75,71 +160,9 @@ public:
     BodyItem* bodyItem;
     vector<Item*> subItems;
     vector<ItemPtr> restoredSubItems;
-    double forceSensor_visualRatio;
 
     SensorVisualizerItemImpl(SensorVisualizerItem* self);
     void onPositionChanged();
-};
-
-class ForceSensorVisualizerItemImpl
-{
-public:
-    ForceSensorVisualizerItem* self;
-    SgGroupPtr scene;
-    SgShapePtr cylinder;
-    SgShapePtr cone;
-    DeviceList<ForceSensor> forceSensors;
-    vector<ArrowPtr> forceSensorArrows;
-    double visualRatio;
-    ScopedConnectionSet connections;
-
-    ForceSensorVisualizerItemImpl(ForceSensorVisualizerItem* self);
-    void setBodyItem(BodyItem* bodyItem);
-    void onSensorPositionsChanged();
-    void updateSensorState();
-    void updateForceSensorState(int index);
-    void onForceSensorStateChanged(int index);
-};
-
-class PointCloudVisualizerItemImpl
-{
-public:
-    PointCloudVisualizerItem* self;
-    RangeCamera* rangeCamera;
-    ScopedConnectionSet connections;
-    SgPointSet* pointSet;
-
-    PointCloudVisualizerItemImpl(PointCloudVisualizerItem* self);
-    void setBodyItem(BodyItem* bodyItem, RangeCamera* rangeCamera);
-    void onSensorPositionsChanged();
-    void updateRangeCameraState();
-};
-
-class RangeSensorVisualizerItemImpl
-{
-public:
-    RangeSensorVisualizerItem* self;
-    RangeSensor* rangeSensor;
-    ScopedConnectionSet connections;
-    SgPointSet* pointSet;
-
-    RangeSensorVisualizerItemImpl(RangeSensorVisualizerItem* self);
-    void setBodyItem(BodyItem* bodyItem, RangeSensor* rangeSensor);
-    void onSensorPositionsChanged();
-    void updateRangeSensorState();
-};
-
-class CameraImageVisualizerItemImpl
-{
-public:
-    CameraImageVisualizerItem* self;
-    Camera* camera;
-    ScopedConnectionSet connections;
-    std::shared_ptr<const Image> image;
-
-    CameraImageVisualizerItemImpl(CameraImageVisualizerItem* self);
-    void setBodyItem(BodyItem* bodyItem, Camera* camera);
-    void updateCameraImage();
 };
 
 }
@@ -151,10 +174,10 @@ void SensorVisualizerItem::initializeClass(ExtensionManager* ext)
     im.registerClass<SensorVisualizerItem>(N_("SensorVisualizer"));
     im.addCreationPanel<SensorVisualizerItem>();
 
-    ForceSensorVisualizerItem::initializeClass(ext);
-    PointCloudVisualizerItem::initializeClass(ext);
-    RangeSensorVisualizerItem::initializeClass(ext);
-    CameraImageVisualizerItem::initializeClass(ext);
+    im.registerClass<ForceSensorVisualizerItem>(N_("ForceSensorVisualizer"));
+    im.registerClass<PointCloudVisualizerItem>(N_("PointCloudVisualizer"));
+    im.registerClass<RangeSensorVisualizerItem>(N_("RangeSensorVisualizer"));
+    im.registerClass<CameraImageVisualizerItem>(N_("CameraImageVisualizer"));
 }
 
 
@@ -163,11 +186,13 @@ SensorVisualizerItem::SensorVisualizerItem()
     impl = new SensorVisualizerItemImpl(this);
 }
 
+
 SensorVisualizerItemImpl::SensorVisualizerItemImpl(SensorVisualizerItem* self)
     : self(self)
 {
-    forceSensor_visualRatio = 0.002;
+
 }
+
 
 SensorVisualizerItem::SensorVisualizerItem(const SensorVisualizerItem& org)
     : Item(org)
@@ -190,8 +215,9 @@ Item* SensorVisualizerItem::doDuplicate() const
 
 void SensorVisualizerItem::onPositionChanged()
 {
-    if(parentItem())
+    if(parentItem()){
         impl->onPositionChanged();
+    }
 }
 
 
@@ -216,9 +242,8 @@ void SensorVisualizerItemImpl::onPositionChanged()
                 ForceSensorVisualizerItem* forceSensorVisualizerItem= 0;
                 if(j<n){
                     forceSensorVisualizerItem = dynamic_cast<ForceSensorVisualizerItem*>(restoredSubItems[j++].get());
-                }else{
+                } else {
                     forceSensorVisualizerItem = new ForceSensorVisualizerItem();
-                    forceSensorVisualizerItem->setVisualRatio(forceSensor_visualRatio);
                 }
                 if(forceSensorVisualizerItem){
                     forceSensorVisualizerItem->setBodyItem(bodyItem);
@@ -323,22 +348,36 @@ bool SensorVisualizerItem::restore(const Archive& archive)
 }
 
 
-void ForceSensorVisualizerItem::initializeClass(ExtensionManager* ext)
+SensorVisualizerItemBase::SensorVisualizerItemBase(Item* visualizerItem)
+    : visualizerItem(visualizerItem),
+      bodyItem(nullptr)
 {
-    ItemManager& im = ext->itemManager();
-    im.registerClass<ForceSensorVisualizerItem>(N_("ForceSensorVisualizer"));
+    sigCheckToggledConnection.reset(
+        ItemTreeView::instance()->sigCheckToggled(visualizerItem, ItemTreeView::ID_ANY).connect(
+            [&](bool on){ enableVisualization(on); }));
 }
 
+
+void SensorVisualizerItemBase::setBodyItem(BodyItem* bodyItem)
+{
+    this->bodyItem = bodyItem;
+    enableVisualization(ItemTreeView::instance()->isItemChecked(visualizerItem, ItemTreeView::ID_ANY));
+}
+
+
+void SensorVisualizerItemBase::updateVisualization()
+{
+    if(ItemTreeView::instance()->isItemChecked(visualizerItem, ItemTreeView::ID_ANY)){
+        doUpdateVisualization();
+    }
+}
+    
 
 ForceSensorVisualizerItem::ForceSensorVisualizerItem()
+    : SensorVisualizerItemBase(this)
 {
-    impl = new ForceSensorVisualizerItemImpl(this);
-}
-
-
-ForceSensorVisualizerItemImpl::ForceSensorVisualizerItemImpl(ForceSensorVisualizerItem* self)
-    : self(self)
-{
+    setName("ForceSensor");
+    
     scene = new SgGroup;
 
     SgMaterial* material = new SgMaterial;
@@ -361,57 +400,51 @@ ForceSensorVisualizerItemImpl::ForceSensorVisualizerItemImpl(ForceSensorVisualiz
 }
 
 
-ForceSensorVisualizerItem::~ForceSensorVisualizerItem()
-{
-    delete impl;
-}
-
-
-void ForceSensorVisualizerItem::setBodyItem(BodyItem* bodyItem)
-{
-    if(name().empty())
-        setName("ForceSensor");
-
-    impl->setBodyItem(bodyItem);
-}
-
-
-void ForceSensorVisualizerItemImpl::setBodyItem(BodyItem* bodyItem)
-{
-    connections.disconnect();
-    connections.add(
-        bodyItem->sigKinematicStateChanged().connect(
-            [&](){ onSensorPositionsChanged(); }));
-
-    Body* body = bodyItem->body();
-    forceSensors = body->devices<ForceSensor>();
-    scene->clearChildren();
-    forceSensorArrows.clear();
-    for(size_t i=0; i < forceSensors.size(); ++i){
-        ArrowPtr arrow = new Arrow(cylinder, cone);
-        forceSensorArrows.push_back(arrow);
-        scene->addChild(arrow);
-        connections.add(
-            forceSensors[i]->sigStateChanged().connect(
-                [this, i](){ updateForceSensorState(i); }));
-    }
-
-    onSensorPositionsChanged();
-    updateSensorState();
-}
-
-
 SgNode* ForceSensorVisualizerItem::getScene()
 {
-    return impl->scene;
+    return scene;
 }
 
 
-void ForceSensorVisualizerItemImpl::onSensorPositionsChanged()
+void ForceSensorVisualizerItem::enableVisualization(bool on)
 {
-    if(!ItemTreeView::instance()->isItemChecked(self, ItemTreeView::ID_ANY)){
-        return;
+    connections.disconnect();
+    scene->clearChildren();
+    forceSensors.clear();
+
+    if(bodyItem && on){
+        connections.add(
+            bodyItem->sigKinematicStateChanged().connect(
+                [&](){ updateSensorPositions(); }));
+
+        Body* body = bodyItem->body();
+        forceSensors = body->devices<ForceSensor>();
+        forceSensorArrows.clear();
+        for(size_t i=0; i < forceSensors.size(); ++i){
+            ArrowPtr arrow = new Arrow(cylinder, cone);
+            forceSensorArrows.push_back(arrow);
+            scene->addChild(arrow);
+            connections.add(
+                forceSensors[i]->sigStateChanged().connect(
+                    [this, i](){ updateForceSensorState(i); }));
+        }
+
+        doUpdateVisualization();
     }
+}
+
+
+void ForceSensorVisualizerItem::doUpdateVisualization()
+{
+    updateSensorPositions();
+    for(size_t i=0; i < forceSensors.size(); ++i){
+        updateForceSensorState(i);
+    }
+}
+
+    
+void ForceSensorVisualizerItem::updateSensorPositions()
+{
     for(size_t i=0; i < forceSensors.size(); ++i){
         ForceSensor* sensor = forceSensors[i];
         Vector3 p = sensor->link()->T() * sensor->localTranslation();
@@ -420,18 +453,7 @@ void ForceSensorVisualizerItemImpl::onSensorPositionsChanged()
 }
 
 
-void ForceSensorVisualizerItemImpl::updateSensorState()
-{
-    if(!ItemTreeView::instance()->isItemChecked(self, ItemTreeView::ID_ANY)){
-        return;
-    }
-    for(size_t i=0; i < forceSensors.size(); ++i){
-        updateForceSensorState(i);
-    }
-}
-
-    
-void ForceSensorVisualizerItemImpl::updateForceSensorState(int index)
+void ForceSensorVisualizerItem::updateForceSensorState(int index)
 {
     if(index < static_cast<int>(forceSensors.size())){
         ForceSensor* sensor = forceSensors[index];
@@ -444,11 +466,11 @@ void ForceSensorVisualizerItemImpl::updateForceSensorState(int index)
 void ForceSensorVisualizerItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty.decimals(4)(
-        _("Visual ratio"), impl->visualRatio,
+        _("Visual ratio"), visualRatio,
         [&](double ratio){
             if(ratio > 0.0){
-                impl->visualRatio = ratio;
-                impl->updateSensorState();
+                visualRatio = ratio;
+                updateVisualization();
                 return true;
             }
             return false;
@@ -458,101 +480,135 @@ void ForceSensorVisualizerItem::doPutProperties(PutPropertyFunction& putProperty
 
 bool ForceSensorVisualizerItem::store(Archive& archive)
 {
-    archive.write("visualRatio", impl->visualRatio);
+    archive.write("visualRatio", visualRatio);
     return true;
 }
 
 
 bool ForceSensorVisualizerItem::restore(const Archive& archive)
 {
-    archive.read("visualRatio", impl->visualRatio);
+    archive.read("visualRatio", visualRatio);
     return true;
 }
 
 
-void ForceSensorVisualizerItem::setVisualRatio(double visualRatio_)
+CameraImageVisualizerItem::CameraImageVisualizerItem()
+    : SensorVisualizerItemBase(this)
 {
-    impl->visualRatio = visualRatio_;
+
 }
 
 
-void PointCloudVisualizerItem::initializeClass(ExtensionManager* ext)
+const Image* CameraImageVisualizerItem::getImage()
 {
-    ItemManager& im = ext->itemManager();
-    im.registerClass<PointCloudVisualizerItem>(N_("PointCloudVisualizer"));
+    return image.get();
+}
+
+
+void CameraImageVisualizerItem::setBodyItem(BodyItem* bodyItem, Camera* camera)
+{
+    if(name().empty()){
+        string name = camera->name();
+        if(dynamic_cast<RangeCamera*>(camera))
+            name += "_Image";
+        setName(name);
+    }
+
+    this->camera = camera;
+
+    SensorVisualizerItemBase::setBodyItem(bodyItem);
+}
+
+
+void CameraImageVisualizerItem::enableVisualization(bool on)
+{
+    connections.disconnect();
+
+    if(camera && on){
+        connections.add(
+            camera->sigStateChanged().connect(
+                [&](){ doUpdateVisualization(); }));
+
+        doUpdateVisualization();
+    }
+}
+
+
+void CameraImageVisualizerItem::doUpdateVisualization()
+{
+    if(camera){
+        image = camera->sharedImage();
+    } else {
+        image.reset();
+    }
+    notifyImageUpdate();
 }
 
 
 PointCloudVisualizerItem::PointCloudVisualizerItem()
+    : SensorVisualizerItemBase(this)
 {
-    impl = new PointCloudVisualizerItemImpl(this);
-}
 
-
-PointCloudVisualizerItemImpl::PointCloudVisualizerItemImpl(PointCloudVisualizerItem* self)
-    : self(self)
-{
-    pointSet = self->pointSet();
-}
-
-
-PointCloudVisualizerItem::~PointCloudVisualizerItem()
-{
-    delete impl;
 }
 
 
 void PointCloudVisualizerItem::setBodyItem(BodyItem* bodyItem, RangeCamera* rangeCamera)
 {
-    if(name().empty())
+    if(name().empty()){
         setName(rangeCamera->name());
-
-    impl->setBodyItem(bodyItem, rangeCamera);
+    }
+    this->rangeCamera = rangeCamera;
+    
+    SensorVisualizerItemBase::setBodyItem(bodyItem);
 }
 
 
-void PointCloudVisualizerItemImpl::setBodyItem(BodyItem* bodyItem, RangeCamera* rangeCamera_)
+void PointCloudVisualizerItem::enableVisualization(bool on)
 {
     connections.disconnect();
-    connections.add(
-        bodyItem->sigKinematicStateChanged().connect(
-            [&](){ onSensorPositionsChanged(); }));
 
-    rangeCamera = rangeCamera_;
+    if(bodyItem && rangeCamera && on){
+        connections.add(
+            bodyItem->sigKinematicStateChanged().connect(
+                [&](){ updateSensorPosition(); }));
+        connections.add(
+            rangeCamera->sigStateChanged().connect(
+                [&](){ updateRangeCameraState(); }));
 
-    connections.add(
-        rangeCamera->sigStateChanged().connect(
-            [&](){ updateRangeCameraState(); }));
-
-    onSensorPositionsChanged();
-    updateRangeCameraState();
+        doUpdateVisualization();
+    }
 }
 
 
-void PointCloudVisualizerItemImpl::onSensorPositionsChanged()
+void PointCloudVisualizerItem::doUpdateVisualization()
 {
-    if(!ItemTreeView::instance()->isItemChecked(self, ItemTreeView::ID_ANY))
-        return;
+    if(rangeCamera){
+        updateSensorPosition();
+        updateRangeCameraState();
+    }
+}
 
+
+void PointCloudVisualizerItem::updateSensorPosition()
+{
     const Affine3 T =  (rangeCamera->link()->T() * rangeCamera->T_local());
-    self->setOffsetTransform(T);
+    setOffsetTransform(T);
 }
 
 
-void PointCloudVisualizerItemImpl::updateRangeCameraState()
+void PointCloudVisualizerItem::updateRangeCameraState()
 {
-    if(!ItemTreeView::instance()->isItemChecked(self, ItemTreeView::ID_ANY))
-        return;
-
+    auto pointSet_ = pointSet();
+    
     const vector<Vector3f>& src = rangeCamera->constPoints();
-    SgVertexArray& points = *pointSet->getOrCreateVertices();
+    SgVertexArray& points = *pointSet_->getOrCreateVertices();
     const int numPoints = src.size();
     points.resize(numPoints);
     for(int i=0; i < numPoints; ++i){
         points[i] = src[i];
     }
 
-    SgColorArray& colors = *pointSet->getOrCreateColors();
+    SgColorArray& colors = *pointSet_->getOrCreateColors();
     const Image& image = rangeCamera->constImage();
     if(image.empty() || image.numComponents() != 3){
         colors.clear();
@@ -563,88 +619,73 @@ void PointCloudVisualizerItemImpl::updateRangeCameraState()
         colors.resize(n);
         for(int i=0; i < n; ++i){
             Vector3f& c = colors[i];
-            c[0] = *pixels++ / 255.0;
-            c[1] = *pixels++ / 255.0;;
-            c[2] = *pixels++ / 255.0;;
+            c[0] = *pixels++ / 255.0f;
+            c[1] = *pixels++ / 255.0f;
+            c[2] = *pixels++ / 255.0f;
         }
     }
-
-    pointSet->notifyUpdate();
-}
-
-
-void RangeSensorVisualizerItem::initializeClass(ExtensionManager* ext)
-{
-    ItemManager& im = ext->itemManager();
-    im.registerClass<RangeSensorVisualizerItem>(N_("RangeSensorVisualizer"));
+    pointSet_->notifyUpdate();
 }
 
 
 RangeSensorVisualizerItem::RangeSensorVisualizerItem()
+    : SensorVisualizerItemBase(this)
 {
-    impl = new RangeSensorVisualizerItemImpl(this);
-}
 
-
-RangeSensorVisualizerItemImpl::RangeSensorVisualizerItemImpl(RangeSensorVisualizerItem* self)
-    : self(self)
-{
-    pointSet = self->pointSet();
-}
-
-
-RangeSensorVisualizerItem::~RangeSensorVisualizerItem()
-{
-    delete impl;
 }
 
 
 void RangeSensorVisualizerItem::setBodyItem(BodyItem* bodyItem, RangeSensor* rangeSensor)
 {
-    if(name().empty())
+    if(name().empty()){
         setName(rangeSensor->name());
+    }
+    this->rangeSensor = rangeSensor;
 
-    impl->setBodyItem(bodyItem, rangeSensor);
+    SensorVisualizerItemBase::setBodyItem(bodyItem);
 }
 
 
-void RangeSensorVisualizerItemImpl::setBodyItem(BodyItem* bodyItem, RangeSensor* rangeSensor_)
+void RangeSensorVisualizerItem::enableVisualization(bool on)
 {
     connections.disconnect();
-    connections.add(
-        bodyItem->sigKinematicStateChanged().connect(
-            [&](){ onSensorPositionsChanged(); }));
 
-    rangeSensor = rangeSensor_;
+    if(bodyItem && rangeSensor && on){
+        connections.add(
+            bodyItem->sigKinematicStateChanged().connect(
+                [&](){ updateSensorPosition(); }));
+        connections.add(
+            rangeSensor->sigStateChanged().connect(
+                [&](){ updateRangeSensorState(); }));
 
-    connections.add(
-        rangeSensor->sigStateChanged().connect(
-            [&](){ updateRangeSensorState(); }));
-
-    onSensorPositionsChanged();
-    updateRangeSensorState();
-}
-
-
-void RangeSensorVisualizerItemImpl::onSensorPositionsChanged()
-{
-    if(!ItemTreeView::instance()->isItemChecked(self, ItemTreeView::ID_ANY))
-        return;
-
-    const Affine3 T = (rangeSensor->link()->T() * rangeSensor->T_local());
-    self->setOffsetTransform(T);
-}
-
-
-void RangeSensorVisualizerItemImpl::updateRangeSensorState()
-{
-    if(!ItemTreeView::instance()->isItemChecked(self, ItemTreeView::ID_ANY)){
-        return;
+        doUpdateVisualization();
     }
+}
+
+
+void RangeSensorVisualizerItem::doUpdateVisualization()
+{
+    if(rangeSensor){
+        updateSensorPosition();
+        updateRangeSensorState();
+    }
+}
+
+
+void RangeSensorVisualizerItem::updateSensorPosition()
+{
+    const Affine3 T = (rangeSensor->link()->T() * rangeSensor->T_local());
+    setOffsetTransform(T);
+}
+
+
+void RangeSensorVisualizerItem::updateRangeSensorState()
+{
+    auto pointSet_ = pointSet();
 
     const RangeSensor::RangeData& src = rangeSensor->constRangeData();
-    SgVertexArray& points = *pointSet->getOrCreateVertices();
     const int numPoints = src.size();
+    SgVertexArray& points = *pointSet_->getOrCreateVertices();
     points.clear();
 
     if(!src.empty()){
@@ -658,7 +699,7 @@ void RangeSensorVisualizerItemImpl::updateRangeSensorState()
             const double pitchAngle = pitch * pitchStep - rangeSensor->pitchRange() / 2.0;
             const double cosPitchAngle = cos(pitchAngle);
             const int srctop = pitch * numYawSamples;
-
+            
             for(int yaw=0; yaw < numYawSamples; ++yaw){
                 const double distance = src[srctop + yaw];
                 if(distance <= rangeSensor->maxDistance()){
@@ -671,70 +712,5 @@ void RangeSensorVisualizerItemImpl::updateRangeSensorState()
             }
         }
     }
-
-    pointSet->notifyUpdate();
-}
-
-void CameraImageVisualizerItem::initializeClass(ExtensionManager* ext)
-{
-    ItemManager& im = ext->itemManager();
-    im.registerClass<CameraImageVisualizerItem>(N_("CameraImageVisualizer"));
-}
-
-
-CameraImageVisualizerItem::CameraImageVisualizerItem()
-{
-    impl = new CameraImageVisualizerItemImpl(this);
-}
-
-
-CameraImageVisualizerItemImpl::CameraImageVisualizerItemImpl(CameraImageVisualizerItem* self)
-    : self(self)
-{
-
-}
-
-
-CameraImageVisualizerItem::~CameraImageVisualizerItem()
-{
-    delete impl;
-}
-
-
-void CameraImageVisualizerItem::setBodyItem(BodyItem* bodyItem, Camera* camera)
-{
-    if(name().empty()){
-        string name = camera->name();
-        if(dynamic_cast<RangeCamera*>(camera))
-            name += "_Image";
-        setName(name);
-    }
-
-    impl->setBodyItem(bodyItem, camera);
-}
-
-
-void CameraImageVisualizerItemImpl::setBodyItem(BodyItem* bodyItem, Camera* camera_)
-{
-    connections.disconnect();
-    camera = camera_;
-
-    connections.add(
-        camera->sigStateChanged().connect(
-            [&](){ updateCameraImage(); }));
-
-    updateCameraImage();
-}
-
-
-void CameraImageVisualizerItemImpl::updateCameraImage()
-{
-    image = camera->sharedImage();
-    self->notifyImageUpdate();
-}
-
-
-const Image* CameraImageVisualizerItem::getImage()
-{
-    return impl->image.get();
+    pointSet_->notifyUpdate();
 }

@@ -19,6 +19,9 @@ public:
     ParticleSystem(const ParticleSystem& org);
     virtual ~ParticleSystem();
 
+    bool on() const { return on_; }
+    void on(bool on) { on_ = on; }
+
     float offsetTime() const { return offsetTime_; }
     void setOffsetTime(float t) { offsetTime_ = t; }
 
@@ -31,21 +34,30 @@ public:
     int numParticles() const { return numParticles_; }
     void setNumParticles(int n) { numParticles_ = n; }
 
-    const Vector3f& acceleration() const { return acceleration_; }
-    void setAcceleration(const Vector3f& a){ acceleration_ = a; }
+    float initialSpeedAverage() const { return initialSpeedAverage_; }
+    void setInitialSpeedAverage(float v){ initialSpeedAverage_ = v; }
+
+    float initialSpeedVariation() const { return initialSpeedVariation_; }
+    void setInitialSpeedVariation(float v){ initialSpeedVariation_ = v; }
 
     float emissionRange() const { return emissionRange_; }
     void setEmissionRange(float r) { emissionRange_ = r; }
 
+    const Vector3f& acceleration() const { return acceleration_; }
+    void setAcceleration(const Vector3f& a){ acceleration_ = a; }
+
     void readParameters(const YAMLSceneReader& reader, const Mapping& node);
 
 private:
+    bool on_;
     float offsetTime_;
     float lifeTime_;
-    float particleSize_;
     int numParticles_;
-    Vector3f acceleration_;
+    float particleSize_;
+    float initialSpeedAverage_;
+    float initialSpeedVariation_;
     float emissionRange_;
+    Vector3f acceleration_;
 };
 
 }

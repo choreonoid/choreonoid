@@ -8,22 +8,19 @@ set(plugin CnoidOpenRTMPlugin)
 
 set(plugin_sources
   OpenRTMPlugin.cpp
-  PortConnectionDialog.cpp
+  RTSCommonUtil.cpp
+  ProfileHandler.cpp
   ControllerRTCItem.cpp
   BodyIoRTCItem.cpp
   RTCWrapper.cpp
   RTCItem.cpp
   SimulationExecutionContext.cpp
   SimulationPeriodicExecutionContext.cpp
-  ProfileHandler.cpp
   RTSNameServerView.cpp
   RTSPropertiesView.cpp
-  RTSystemItem.cpp
-  RTSDiagramView.cpp
   RTMImageView.cpp
-  RTSCommonUtil.cpp
   RTSConfigurationView.cpp
-  VisionSensorSubscriberRTCItem.cpp
+  BodyStateSubscriberRTCItem.cpp
   LoggerUtil.cpp
   deprecated/BodyRTCItem.cpp
   deprecated/VirtualRobotRTC.cpp
@@ -37,13 +34,32 @@ set(plugin_sources
 set(plugin_headers
   )
 
-QTX_ADD_RESOURCES(RC_SRCS OpenRTMPlugin.qrc)
-QTX_WRAP_CPP(
-  qtsources
+set(qt_wrap_cpp_files
   RTSNameServerView.h
-  RTSDiagramView.h
-  RTSConfigurationView.h
-  )
+  RTSConfigurationView.h)
+
+option(ENABLE_NEW_RT_SYSTEM_ITEM_IMPLEMENTATION "Enable the new implementation of RTSystemItem" OFF)
+if(ENABLE_NEW_RT_SYSTEM_ITEM_IMPLEMENTATION)
+  add_definitions(-DENABLE_NEW_RT_SYSTEM_ITEM_IMPLEMENTATION)
+  set(plugin_sources ${plugin_sources}
+    RTSystemExtItem.cpp
+    RTSDiagramExtView.cpp
+    ProfileHandlerExt.cpp
+    PortConnectionDialogExt.cpp
+    RTSCommonUtilExt.cpp)
+  set(qt_wrap_cpp_files ${qt_wrap_cpp_files} RTSDiagramExtView.h)
+else()
+  set(plugin_sources ${plugin_sources}
+    RTSystemItem.cpp
+    RTSDiagramView.cpp
+    PortConnectionDialog.cpp)
+  set(qt_wrap_cpp_files ${qt_wrap_cpp_files} RTSDiagramView.h)
+endif()  
+
+QTX_ADD_RESOURCES(RC_SRCS OpenRTMPlugin.qrc)
+
+QTX_WRAP_CPP(qtsources ${qt_wrap_cpp_files})
+
 set(plugin_sources ${plugin_sources} ${qtsources})
 
 unset(idl_cpp_files)

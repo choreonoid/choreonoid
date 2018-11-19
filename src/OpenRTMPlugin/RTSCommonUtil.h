@@ -38,11 +38,17 @@ struct NameServerInfo
 {
     std::string hostAddress;
     int portNo;
+    bool isRtmDefaultNameServer;
 
     NameServerInfo()
     {
         this->hostAddress = "";
         this->portNo = -1;
+        this->isRtmDefaultNameServer = false;
+    };
+    NameServerInfo(std::string host, int port, bool isRtmDefaultNameServer)
+        : hostAddress(host), portNo(port), isRtmDefaultNameServer(isRtmDefaultNameServer)
+    {
     };
 };
 
@@ -71,6 +77,22 @@ private:
     static bool isExistAny(std::vector<std::string> target);
 
 
+};
+
+struct ServerFullComparator
+{
+    NameServerInfo target_;
+
+    ServerFullComparator(NameServerInfo target)
+    {
+        target_ = target;
+    }
+    bool operator()(const NameServerInfo elem) const
+    {
+        return (target_.hostAddress == elem.hostAddress 
+                    && target_.portNo == elem.portNo
+                    && target_.isRtmDefaultNameServer == elem.isRtmDefaultNameServer);
+    }
 };
 
 struct ServerComparator
@@ -110,8 +132,11 @@ public:
     {
         return serverList;
     }
-    bool addServer(string hostAddress, int portNo);
-    bool isExistServer(string hostAddress, int portNo);
+    void addNameServer(NameServerInfo source);
+    void addRtmDefaultNameServer();
+    bool isExistingNameServer(NameServerInfo source);
+    bool isRtmDefaultNameServer(string hostAddress, int portNo);
+    void removeNameServer(string target);
 
 private:
     static NameServerManager* handler;

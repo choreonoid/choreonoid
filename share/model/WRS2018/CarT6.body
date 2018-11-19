@@ -1,0 +1,134 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: Car
+
+PRIMITIVE_RESOURCE: &PRIMITIVE_RESOURCE
+  type: Resource
+  uri: "resource/CarPrimitives.yaml"
+
+links:
+  -
+    name: BODY
+    jointType: fixed
+    elements:
+      -
+        type: Visual
+        resource: 
+          rotation: [ 0, 0, 1, 90 ]
+          translation: [ 2.3, -0.8755, 0 ]
+          uri: "resource/RedCarBody.wrl"
+      -
+        type: Collision
+        elements:
+          - { <<: *PRIMITIVE_RESOURCE, node: CAR_BODY, translation: [ 0, 0.0015, 0 ] }
+          - { <<: *PRIMITIVE_RESOURCE, node: CAR_NORMAL_ROOF, translation: [ 0, 0.0015, 0 ] }
+          - { <<: *PRIMITIVE_RESOURCE, node: CAR_STEERING, translation: [ 0.49, 0.3915, 0.839 ] }
+          - { <<: *PRIMITIVE_RESOURCE, node: CAR_INTERIOR, translation: [ 0, 0.0015, 0 ] }
+          
+      - { <<: *PRIMITIVE_RESOURCE, node: CAR_WHEEL, translation: [  1.365, -0.725, 0.34 ] }
+      - { <<: *PRIMITIVE_RESOURCE, node: CAR_WHEEL, translation: [  1.365,  0.725, 0.34 ] }
+      - { <<: *PRIMITIVE_RESOURCE, node: CAR_WHEEL, translation: [ -1.315, -0.725, 0.34 ] }
+      - { <<: *PRIMITIVE_RESOURCE, node: CAR_WHEEL, translation: [ -1.315,  0.725, 0.34 ] }
+  -
+    name: FR_DOOR
+    parent: BODY
+    translation: [ 0.875, -0.814, 0.328 ]
+    jointType: fixed
+    centerOfMass: [ -0.7, 0.01, 0.38 ]
+    mass: 15.0
+    inertia: [ 1, 0, 0,
+               0, 1, 0,
+               0, 0, 1 ]
+    elements:
+      -
+        type: Visual
+        resource:
+          rotation: [ 0, 0, 1, 90 ]
+          translation: [ -1.14, 0, 0 ]
+          uri: "resource/CarDoorFR-Body.wrl" 
+      -
+        type: Collision
+        elements:
+          <<: *PRIMITIVE_RESOURCE
+          node: CAR_DOOR_FR_BODY
+          translation: [ -0.873, 0.8175, -0.3306 ]
+  -
+    name: FL_DOOR
+    parent: BODY
+    translation: [ 0.875, 0.814, 0.328 ]
+    jointType: fixed
+    mass: 15.0
+    centerOfMass: [ -0.7, -0.01, 0.38 ]
+    inertia: [ 1, 0, 0,
+               0, 1, 0,
+               0, 0, 1 ]
+    elements:
+      -
+        type: Visual
+        resource:
+          rotation: [ 0, 0, 1, 90 ]
+          translation: [ -1.137, -0.1265, 0.004 ]
+          uri: "resource/RedCarDoorFL.wrl"
+      - type: Collision
+        elements:
+          <<: *PRIMITIVE_RESOURCE
+          node: CAR_DOOR_FL
+          translation: [ -0.8727, -0.817, -0.3306 ]
+  -
+    name: BR_DOOR
+    parent: BODY
+    translation: [ -0.423, -0.814, 0.254 ]
+    jointType: fixed
+    centerOfMass: [ -0.37, 0.01, 0.4 ]
+    mass: 10.0
+    inertia: [ 1, 0, 0,
+               0, 1, 0,
+               0, 0, 1 ]
+    elements:
+      - 
+        type: Visual
+        resource:
+          rotation: [ 0, 0, 1, 90 ]
+          translation: [ -0.492, 0.002, -0.003 ]
+          uri: "resource/RedCarDoorBR.wrl"
+      -
+        type: Collision
+        translation: [ -0.192, 0.002, -0.003 ]
+        elements: { <<: *PRIMITIVE_RESOURCE, node: CAR_DOOR_BR }
+      -
+        <<: *PRIMITIVE_RESOURCE
+        node: CAR_DOOR_KNOB_RIGHT
+        translation: [ -0.857, -0.077, 0.598 ]
+        rotation: [ 0, 1, 0, 1.0 ]
+  -
+    name: BL_DOOR
+    parent: BODY
+    translation: [ -0.423, 0.814, 0.254 ]
+    jointType: fixed
+    centerOfMass: [ -0.37, -0.01, 0.4 ]
+    mass: 10.0
+    inertia: [ 1, 0, 0,
+               0, 1, 0,
+               0, 0, 1 ]
+    elements:
+      -
+        type: Visual
+        resource:
+          rotation: [ 0, 0, 1, 90 ]
+          translation: [ -0.5, -0.146, 0 ]
+          uri: "resource/RedCarDoorBL.wrl"
+      -
+        type: Collision
+        translation: [ -0.197, -0.001, -0.0 ]
+        elements: { <<: *PRIMITIVE_RESOURCE, node: CAR_DOOR_BL }
+
+      - <<: *PRIMITIVE_RESOURCE
+        node: CAR_DOOR_KNOB_LEFT
+        translation: [ -0.857, 0.077, 0.598 ]
+        rotation: [ 0, 1, 0, 1.0 ]
+
+collisionDetection:
+  excludeTreeDepth: 1
+  excludeLinkGroups:
+    - links: [ BODY, FR_DOOR, FL_DOOR, BR_DOOR, BL_DOOR ]

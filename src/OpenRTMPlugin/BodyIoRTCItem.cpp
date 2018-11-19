@@ -99,6 +99,15 @@ Item* BodyIoRTCItem::doDuplicate() const
 }
 
 
+void BodyIoRTCItem::onConnectedToRoot()
+{
+    /**
+       Do nothing here to cancel the implementation of ControllerRTCItem.
+       The RTC is created when the onPositionChanged function is called.
+    */
+}
+
+
 void BodyIoRTCItem::onPositionChanged()
 {
     impl->setBodyItem(findOwnerItem<BodyItem>(), false);

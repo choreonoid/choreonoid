@@ -103,20 +103,20 @@ vector<string> RTCCommonUtil::split(const std::string &str, char delim)
 
 vector<string> RTCCommonUtil::getAllowDataTypes(RTSPort* source, RTSPort* target)
 {
-    DDEBUG("RTCCommonUtil::getAllowDataTypes");
+    //DDEBUG("RTCCommonUtil::getAllowDataTypes");
 
     vector<string> sourceTypes = source->getDataTypes();
     vector<string> targetTypes = target->getDataTypes();
     DataTypeComparer comparator;
     vector<string> result = getAllowList(sourceTypes, targetTypes, comparator);
 
-    DDEBUG_V("RTCCommonUtil::getAllowDataTypes:%d", result.size());
+    //DDEBUG_V("RTCCommonUtil::getAllowDataTypes:%d", result.size());
     return result;
 }
 
 vector<string> RTCCommonUtil::getAllowInterfaceTypes(RTSPort* source, RTSPort* target)
 {
-    DDEBUG("RTCCommonUtil::getAllowInterfaceTypes");
+    //DDEBUG("RTCCommonUtil::getAllowInterfaceTypes");
 
     vector<string> result;
     if (source == 0 && target == 0) {
@@ -133,13 +133,13 @@ vector<string> RTCCommonUtil::getAllowInterfaceTypes(RTSPort* source, RTSPort* t
     ignoreCaseComparer comparator;
     result = getAllowList(sourceTypes, targetTypes, comparator);
 
-    DDEBUG_V("RTCCommonUtil::getAllowInterfaceTypes:%d", result.size());
+    //DDEBUG_V("RTCCommonUtil::getAllowInterfaceTypes:%d", result.size());
     return result;
 }
 
 vector<string> RTCCommonUtil::getAllowDataflowTypes(RTSPort* source, RTSPort* target)
 {
-    DDEBUG("RTCCommonUtil::getAllowDataflowTypes");
+    //DDEBUG("RTCCommonUtil::getAllowDataflowTypes");
 
     vector<string> result;
     if (source == 0 && target == 0) {
@@ -156,13 +156,13 @@ vector<string> RTCCommonUtil::getAllowDataflowTypes(RTSPort* source, RTSPort* ta
     ignoreCaseComparer comparator;
     result = getAllowList(sourceTypes, targetTypes, comparator);
 
-    DDEBUG_V("RTCCommonUtil::getAllowDataflowTypes %d", result.size());
+    //DDEBUG_V("RTCCommonUtil::getAllowDataflowTypes %d", result.size());
     return result;
 }
 
 vector<string> RTCCommonUtil::getAllowSubscriptionTypes(RTSPort* source, RTSPort* target)
 {
-    DDEBUG("RTCCommonUtil::getAllowSubscriptionTypes");
+    //DDEBUG("RTCCommonUtil::getAllowSubscriptionTypes");
 
     vector<string> result;
     if (source == 0 && target == 0) {
@@ -175,23 +175,22 @@ vector<string> RTCCommonUtil::getAllowSubscriptionTypes(RTSPort* source, RTSPort
 
     vector<string> sourceTypes = source->getSubscriptionTypes();
     vector<string> targetTypes = target->getSubscriptionTypes();
-    DDEBUG_V("size %d %d", sourceTypes.size(), targetTypes.size());
     //
     ignoreCaseComparer comparator;
     result = getAllowList(sourceTypes, targetTypes, comparator);
 
-    DDEBUG_V("RTCCommonUtil::getAllowSubscriptionTypes:%d", result.size());
+    //DDEBUG_V("RTCCommonUtil::getAllowSubscriptionTypes:%d", result.size());
 
     return result;
 }
 
 vector<string> RTCCommonUtil::getAllowList(vector<string>& source, vector<string>& target, TypeComparer& comparer)
 {
-    DDEBUG("RTCCommonUtil::getAllowList");
+    //DDEBUG("RTCCommonUtil::getAllowList");
 
     bool isAllowAny_Source = isExistAny(source);
     bool isAllowAny_Target = isExistAny(target);
-    DDEBUG_V("Any Source:%d, target:%d", isAllowAny_Source, isAllowAny_Target);
+    //DDEBUG_V("Any Source:%d, target:%d", isAllowAny_Source, isAllowAny_Target);
     //
     vector<string> resultTmp;
     for (int index = 0; index < source.size(); index++) {
@@ -204,7 +203,7 @@ vector<string> RTCCommonUtil::getAllowList(vector<string>& source, vector<string
             for (int idx02 = 0; idx02 < target.size(); idx02++) {
                 string type2 = target[idx02];
                 match = comparer.match(type1, type2);
-                DDEBUG_V("type01:%s, type02:%s, match:%s", type1.c_str(), type2.c_str(), match.c_str());
+                //DDEBUG_V("type01:%s, type02:%s, match:%s", type1.c_str(), type2.c_str(), match.c_str());
                 if (match.empty() == false) {
                     resultTmp.push_back(match);
                     break;
@@ -302,6 +301,7 @@ NameServerInfo RTCCommonUtil::getManagerAddress()
     if (1 < elems.size()) {
         result.portNo = QString::fromStdString(elems[1]).toInt();
     }
+    result.isRtmDefaultNameServer = true;
 
     return result;
 }
@@ -316,25 +316,46 @@ NameServerManager* NameServerManager::instance()
     return handler;
 }
 
-bool NameServerManager::addServer(string hostAddress, int portNo)
+void NameServerManager::addNameServer(NameServerInfo source)
 {
-    DDEBUG_V("NameServerManager::addServer %s, %d", hostAddress.c_str(), portNo);
-    vector<NameServerInfo>::iterator serverItr = find_if(serverList.begin(), serverList.end(), ServerComparator(hostAddress, portNo));
-    if (serverItr != serverList.end()) return false;
-
-    NameServerInfo server;
-    server.hostAddress = hostAddress;
-    server.portNo = portNo;
-    serverList.push_back(server);
-
-    return true;
+    DDEBUG_V("NameServerManager::addServer %s, %d", source.hostAddress.c_str(), source.portNo);
+    vector<NameServerInfo>::iterator serverItr = find_if(serverList.begin(), serverList.end(), ServerFullComparator(source));
+    if (serverItr != serverList.end()) return;
+    serverList.push_back(source);
 }
 
-bool NameServerManager::isExistServer(string hostAddress, int portNo)
+void NameServerManager::addRtmDefaultNameServer()
 {
-    vector<NameServerInfo>::iterator serverItr = find_if(serverList.begin(), serverList.end(), ServerComparator(hostAddress, portNo));
+    NameServerInfo info = RTCCommonUtil::getManagerAddress();
+    NameServerInfo nsInfo(info.hostAddress, info.portNo, info.isRtmDefaultNameServer);
+    addNameServer(nsInfo);
+}
+
+bool NameServerManager::isExistingNameServer(NameServerInfo source)
+{
+    vector<NameServerInfo>::iterator serverItr = find_if(serverList.begin(), serverList.end(), ServerComparator(source.hostAddress, source.portNo));
     if (serverItr != serverList.end()) return true;
     return false;
+}
+
+bool NameServerManager::isRtmDefaultNameServer(string hostAddress, int portNo)
+{
+    for(unsigned int index=0; index<serverList.size(); index++) {
+        NameServerInfo info = serverList[index];
+        if (info.hostAddress != hostAddress || info.portNo != portNo) continue;
+        if(info.isRtmDefaultNameServer) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void NameServerManager::removeNameServer(string target) {
+    vector<string> info = RTCCommonUtil::split(target, ':');
+    if (info.size() < 2) return;
+
+    serverList.erase(remove_if(serverList.begin(), serverList.end(),
+        ServerComparator(info[0], QString::fromStdString(info[1]).toInt())), serverList.end());
 }
 
 }

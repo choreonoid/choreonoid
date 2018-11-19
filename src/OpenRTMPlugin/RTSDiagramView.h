@@ -25,9 +25,7 @@ public:
     RTSDiagramView();
     virtual ~RTSDiagramView();
 
-    void updateSetting();
-
-    public Q_SLOTS:
+public Q_SLOTS:
     void onRTSCompSelectionChange();
 
 protected:

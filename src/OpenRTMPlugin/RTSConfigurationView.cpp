@@ -3,6 +3,7 @@
 #include "RTSNameServerView.h"
 #include "LoggerUtil.h"
 #include <cnoid/ViewManager>
+#include <cnoid/Buttons>
 #include <QRadioButton>
 #include <QBoxLayout>
 #include <QLabel>
@@ -176,10 +177,26 @@ RTSConfigurationViewImpl::RTSConfigurationViewImpl(RTSConfigurationView* self)
 
     lstConfigSet_->setItemDelegate(new ConfigSetDelegate(this));
 
-    chkSetDetail_ = new QCheckBox(_("Detail"));
-    QPushButton* btnSetCopy = new QPushButton(_("Copy"));
-    QPushButton* btnSetAdd = new QPushButton(_("Add"));
-    QPushButton* btnSetDelete = new QPushButton(_("Delete"));
+    chkSetDetail_ = new CheckBox(_("Detail"));
+    chkSetDetail_->sigToggled().connect(
+        std::bind(
+            static_cast<void(RTSConfigurationViewImpl::*)(void)>(&RTSConfigurationViewImpl::setDetailClicked), this));
+
+    PushButton* btnSetCopy = new PushButton(_("Copy"));
+    btnSetCopy->sigClicked().connect(
+        std::bind(
+            static_cast<void(RTSConfigurationViewImpl::*)(void)>(&RTSConfigurationViewImpl::setCopyClicked), this));
+
+    PushButton* btnSetAdd = new PushButton(_("Add"));
+    btnSetAdd->sigClicked().connect(
+        std::bind(
+            static_cast<void(RTSConfigurationViewImpl::*)(void)>(&RTSConfigurationViewImpl::setAddClicked), this));
+
+    PushButton* btnSetDelete = new PushButton(_("Delete"));
+    btnSetDelete->sigClicked().connect(
+        std::bind(
+            static_cast<void(RTSConfigurationViewImpl::*)(void)>(&RTSConfigurationViewImpl::setDeleteClicked), this));
+
     QFrame* frmSetButtons = new QFrame;
     QHBoxLayout* setBtnLayout = new QHBoxLayout(frmSetButtons);
     setBtnLayout->addWidget(btnSetCopy);
@@ -223,11 +240,23 @@ RTSConfigurationViewImpl::RTSConfigurationViewImpl(RTSConfigurationView* self)
 #endif
     lstDetail_->setItemDelegate(new DetailDelegate(this));
 
-    chkDetail_ = new QCheckBox(_("Detail"));
-    QPushButton* btnAdd = new QPushButton(_("Add"));
+    chkDetail_ = new CheckBox(_("Detail"));
+    chkDetail_->sigToggled().connect(
+        std::bind(
+            static_cast<void(RTSConfigurationViewImpl::*)(void)>(&RTSConfigurationViewImpl::detailClicked), this));
+
+    PushButton* btnAdd = new PushButton(_("Add"));
     btnAdd->setEnabled(false);
-    QPushButton* btnDelete = new QPushButton(_("Delete"));
+    btnAdd->sigClicked().connect(
+        std::bind(
+            static_cast<void(RTSConfigurationViewImpl::*)(void)>(&RTSConfigurationViewImpl::addClicked), this));
+
+    PushButton* btnDelete = new PushButton(_("Delete"));
     btnDelete->setEnabled(false);
+    btnAdd->sigClicked().connect(
+        std::bind(
+            static_cast<void(RTSConfigurationViewImpl::*)(void)>(&RTSConfigurationViewImpl::deleteClicked), this));
+
     QFrame* frmButtons = new QFrame;
     QHBoxLayout* btnLayout = new QHBoxLayout(frmButtons);
     btnLayout->addStretch();
@@ -247,8 +276,16 @@ RTSConfigurationViewImpl::RTSConfigurationViewImpl(RTSConfigurationView* self)
     splitter->addWidget(frmConfSet);
     splitter->addWidget(frmDetail);
 
-    QPushButton* btnApply = new QPushButton(_("Apply"));
-    QPushButton* btnCancel = new QPushButton(_("Cancel"));
+    PushButton* btnApply = new PushButton(_("Apply"));
+    btnApply->sigClicked().connect(
+        std::bind(
+            static_cast<void(RTSConfigurationViewImpl::*)(void)>(&RTSConfigurationViewImpl::applyClicked), this));
+
+    PushButton* btnCancel = new PushButton(_("Cancel"));
+    btnCancel->sigClicked().connect(
+        std::bind(
+            static_cast<void(RTSConfigurationViewImpl::*)(void)>(&RTSConfigurationViewImpl::cancelClicked), this));
+
     QFrame* frmMainButtons = new QFrame;
     QVBoxLayout* mainBtnLayout = new QVBoxLayout(frmMainButtons);
     mainBtnLayout->addWidget(btnApply);
@@ -271,16 +308,6 @@ RTSConfigurationViewImpl::RTSConfigurationViewImpl(RTSConfigurationView* self)
     }
 
     connect(lstConfigSet_, SIGNAL(itemSelectionChanged()), this, SLOT(configSetSelectionChanged()));
-    connect(btnSetCopy, SIGNAL(clicked()), this, SLOT(setCopyClicked()));
-    connect(btnSetAdd, SIGNAL(clicked()), this, SLOT(setAddClicked()));
-    connect(btnSetDelete, SIGNAL(clicked()), this, SLOT(setDeleteClicked()));
-    connect(chkSetDetail_, SIGNAL(clicked()), this, SLOT(setDetailClicked()));
-
-    connect(chkDetail_, SIGNAL(clicked()), this, SLOT(detailClicked()));
-    connect(btnAdd, SIGNAL(clicked()), this, SLOT(addClicked()));
-    connect(btnDelete, SIGNAL(clicked()), this, SLOT(deleteClicked()));
-    connect(btnApply, SIGNAL(clicked()), this, SLOT(applyClicked()));
-    connect(btnCancel, SIGNAL(clicked()), this, SLOT(cancelClicked()));
 }
 
 
@@ -558,7 +585,6 @@ void RTSConfigurationViewImpl::showConfigurationSetView()
         QRadioButton* radioActive = new QRadioButton;
         connect(radioActive, SIGNAL(clicked()), this, SLOT(activeSetChanged()));
         param->setRadio(radioActive);
-        param->setRowCount(row);
         radioGrp->addButton(radioActive);
         QFrame* frmRadio = new QFrame;
         QHBoxLayout* radioLayout = new QHBoxLayout(frmRadio);
@@ -672,18 +698,22 @@ void RTSConfigurationViewImpl::activeSetChanged()
 {
     DDEBUG("RTSConfigurationViewImpl::activeSetChanged");
     for (int index = 0; index < configSetList_.size(); ++index) {
-        configSetList_[index]->updateActive();
-        int row = configSetList_[index]->getRowCount();
-        if (lstConfigSet_->rowCount() <= row) {
-            continue;
-        }
-        DDEBUG_V("index:%d, row:%d", index, row);
-        if (configSetList_[index]->isChangedActive()) {
-            lstConfigSet_->item(row, 0)->setBackgroundColor("#FFC0C0");
-        } else {
-            lstConfigSet_->item(row, 0)->setBackgroundColor(Qt::white);
+        ConfigurationSetParamPtr targetSet = configSetList_[index];
+        targetSet->updateActive();
+        for (int idxRow = 0; idxRow < lstConfigSet_->rowCount(); ++idxRow) {
+            int rowId = lstConfigSet_->item(idxRow, 0)->data(Qt::UserRole).toInt();
+            if( rowId==targetSet->getId()) {
+                DDEBUG_V("index:%d, row:%d", index, idxRow);
+                if (targetSet->isChangedActive()) {
+                    lstConfigSet_->item(idxRow, 0)->setBackgroundColor("#FFC0C0");
+                } else {
+                    lstConfigSet_->item(idxRow, 0)->setBackgroundColor(Qt::white);
+                }
+                break;
+            }
         }
     }
+    DDEBUG("RTSConfigurationViewImpl::activeSetChanged End");
 }
 
 

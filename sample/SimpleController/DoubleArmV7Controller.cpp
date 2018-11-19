@@ -205,10 +205,10 @@ void DoubleArmV7Controller::initPDGain()
 
     } else if(mainActuationMode == Link::ActuationMode::JOINT_VELOCITY){
         pgain = {
-        /* MFRAME */ 100, /* BLOCK */ 180, /* BOOM */ 150, /* ARM  */ 100,
-        /* PITCH  */  30, /* ROLL  */  20, /* TIP1 */   5, /* TIP2 */   5,
-        /* UFRAME */ 150, /* SWING */ 180, /* BOOM */ 100, /* ARM  */  80,
-        /* ELBOW */   30, /* YAW   */  20, /* HAND */   1, /* ROD  */  50};
+        /* MFRAME */ 100, /* BLOCK */ 100, /* BOOM */ 100, /* ARM  */ 100,
+        /* PITCH  */  50, /* ROLL  */  50, /* TIP1 */   5, /* TIP2 */   5,
+        /* UFRAME */ 100, /* SWING */ 100, /* BOOM */ 100, /* ARM  */ 100,
+        /* ELBOW */   50, /* YAW   */  20, /* HAND */  20, /* ROD  */  50};
     }
 }
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-tasks = [ "T1", "T2", "T3", "T4", "T5", "T6", "SP" ]
+tasks = [ "T1", "T2", "T3", "T4", "T5", "T6", "SP1" ]
 robots = [ "AizuSpiderSS", "AizuSpiderSA", "DoubleArmV7S", "DoubleArmV7A", "WAREC1", "Quadcopter" ]
 interfaces = [ "", "RTM", "ROS" ]
 
@@ -53,7 +53,7 @@ def write_project_script(filename, task, robot, interface):
         if options:
             options += ", "
         options += "enableVisionSimulation = True, "
-        options += 'targetVisionSensors = "{}", '.format(get_vision_sensors(robot))
+        #options += 'targetVisionSensors = "{}", '.format(get_vision_sensors(robot))
         options += 'remoteType = "{}"'.format(interface)
 
     if not options:

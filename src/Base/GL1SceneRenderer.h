@@ -65,7 +65,6 @@ public:
     void setEmissionColor(const Vector4f& color);
     void setSpecularColor(const Vector4f& color);
     void setShininess(float shininess);
-    void enableCullFace(bool on);
     void setFrontCCW(bool on);
     void enableLighting(bool on);
     void setLightModelTwoSide(bool on);
@@ -73,6 +72,9 @@ public:
     void enableDepthMask(bool on);
     void setPointSize(float size);
     void setLineWidth(float width);
+
+    virtual void setBackFaceCullingMode(int mode) override;
+    virtual int backFaceCullingMode() const override;
 
   protected:
     virtual void doRender() override;

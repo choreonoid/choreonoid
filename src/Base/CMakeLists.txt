@@ -63,6 +63,7 @@ set(sources
   OptionManager.cpp
   Plugin.cpp
   FolderItem.cpp
+  SubProjectItem.cpp
   AbstractSeqItem.cpp
   MultiValueSeqItem.cpp
   MultiSE3SeqItem.cpp
@@ -101,6 +102,7 @@ set(sources
   MultiPointSetItem.cpp
   MovieRecorder.cpp
   TextEditView.cpp
+  GeneralSliderView.cpp
   ImageView.cpp
   TextEdit.cpp
   TaskView.cpp
@@ -164,6 +166,7 @@ set(headers
   PutPropertyFunction.h
   RootItem.h
   FolderItem.h
+  SubProjectItem.h
   AbstractSeqItem.h
   MultiSeqItem.h
   MultiValueSeqItem.h
@@ -203,6 +206,7 @@ set(headers
   PointSetItem.h
   MultiPointSetItem.h
   TextEditView.h
+  GeneralSliderView.h
   ImageView.h
   JoystickCapture.h
   TextEdit.h

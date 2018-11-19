@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_GUIBASE_FOLDER_ITEM_H_INCLUDED
-#define CNOID_GUIBASE_FOLDER_ITEM_H_INCLUDED
+#ifndef CNOID_BASE_FOLDER_ITEM_H
+#define CNOID_BASE_FOLDER_ITEM_H
 
 #include "Item.h"
 #include "exportdecl.h"
@@ -20,9 +20,9 @@ public:
     virtual ~FolderItem();
 
 protected:
-    virtual Item* doDuplicate() const;
-    virtual bool store(Archive& archive);
-    virtual bool restore(const Archive& archive);
+    virtual Item* doDuplicate() const override;
+    virtual bool store(Archive& archive) override;
+    virtual bool restore(const Archive& archive) override;
 };
 
 typedef ref_ptr<FolderItem> FolderItemPtr;

@@ -44,8 +44,8 @@ public:
     RTC::TimedDoubleSeq velocities;
     RTC::InPort<RTC::TimedDoubleSeq> velocitiesIn;
 
-    RTC::TimedBooleanSeq lightSwitch;
-    RTC::InPort<RTC::TimedBooleanSeq> lightSwitchIn;
+    RTC::TimedBoolean lightSwitch;
+    RTC::InPort<RTC::TimedBoolean> lightSwitchIn;
     
     // DataOutPort declaration
     RTC::TimedDoubleSeq angles;
@@ -130,6 +130,8 @@ bool TankIoRTC::initializeSimulation(ControllerIO* io)
     gyro = ioBody->findDevice<RateGyroSensor>("GYRO");
     light = ioBody->findDevice<Light>("Light");
     
+    lightSwitch.data = light->on();
+
     return true;
 }
 
@@ -179,12 +181,10 @@ void TankIoRTC::outputToSimulator()
         trackL->dq_target() = velocities.data[0];
         trackR->dq_target() = velocities.data[1];
     }
-    if(lightSwitch.data.length() >= 1){
-        bool on = lightSwitch.data[0];
-        if(on != light->on()){
-            light->on(on);
-            light->notifyStateChange();
-        }
+    bool on = lightSwitch.data;
+    if(on != light->on()){
+        light->on(on);
+        light->notifyStateChange();
     }
 }
 

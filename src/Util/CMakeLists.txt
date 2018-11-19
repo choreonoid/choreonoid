@@ -153,7 +153,6 @@ set(headers
   Joystick.h
   ExtJoystick.h
   SharedJoystick.h
-  JoystickGamepad.h
   Task.h
   AbstractTaskSequencer.h
   Exception.h
@@ -191,7 +190,7 @@ elseif(MSVC)
   else()
     set(libraries ${libraries} yaml)
   endif()
-  target_link_libraries(${target} ${libraries})
+  target_link_libraries(${target} ${libraries} xinput)
 endif()
 
 apply_common_setting_for_library(${target} "${headers}")

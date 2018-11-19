@@ -1,6 +1,7 @@
 
 #include "RTSystemItem.h"
 #include "ProfileHandler.h"
+#include "RTSCommonUtil.h"
 #include "LoggerUtil.h"
 #include <rtm/idl/RTC.hh>
 #include <QDateTime>
@@ -74,8 +75,15 @@ bool ProfileHandler::restoreRtsProfile(std::string targetFile, RTSystemItem* rts
         }
         if (isSkip) continue;
         info.id_ = compProf.instanceName;
-        info.hostAddress_ = hostName.toStdString();
-        info.portNo_ = 2809;
+
+        if(compProf.isRegisteredInRtmDefaultNameServer) {
+            NameServerInfo ns = RTCCommonUtil::getManagerAddress();
+            info.hostAddress_ = ns.hostAddress;
+            info.portNo_ = ns.portNo;
+        } else {
+            info.hostAddress_ = hostName.toStdString();
+            info.portNo_ = 2809;
+        }
 
         Vector2 pos;
         pos.x() = compProf.posX;
@@ -217,6 +225,7 @@ RTSPort* ProfileHandler::getTargetPort(std::string& sourceRtc, std::string& sour
 
 bool ProfileHandler::parseProfile(std::string targetFile, RtsProfile& profile)
 {
+    DDEBUG("ProfileHandler::parseProfile");
     xml_document doc;
     xml_parse_result result = doc.load_file(targetFile.c_str());
     if (result == 0) return false;
@@ -234,6 +243,13 @@ bool ProfileHandler::parseProfile(std::string targetFile, RtsProfile& profile)
         proComp.posX = pos.attribute("rtsExt:x").as_int();
         proComp.posY = pos.attribute("rtsExt:y").as_int();
 
+        for (pugi::xml_node prop = comp.child("rtsExt:Properties"); prop; prop = prop.next_sibling("rtsExt:Properties")) {
+            if (prop.attribute("rtsExt:name").as_string() == "OpenRTM_NS") {
+                proComp.isRegisteredInRtmDefaultNameServer = prop.attribute("rtsExt:value").as_bool();
+                break;
+            }
+        }
+
         proComp.activeConfigurationSet = comp.attribute("rts:activeConfigurationSet").as_string();
         //ConfigurationSet
         parseConfigurationSet(comp, proComp);
@@ -242,7 +258,8 @@ bool ProfileHandler::parseProfile(std::string targetFile, RtsProfile& profile)
             DataPort proPort;
             proPort.name = dataPort.attribute("rts:name").as_string();
             for (xml_node prop = dataPort.child("rtsExt:Properties"); prop; prop = prop.next_sibling("rtsExt:Properties")) {
-                if (prop.attribute("rtsExt:name").as_string() == "port.port_type") {
+                string propName = prop.attribute("rtsExt:name").as_string();
+                if (propName == "port.port_type") {
                     proPort.direction = prop.attribute("rtsExt:value").as_string();
                 }
             }
@@ -376,15 +393,13 @@ void ProfileHandler::saveRtsProfile
 
         try {
             Component compProf;
-            ComponentProfile* compRaw = comp->rtc_->get_component_profile();
-            compProf.id = "RTC:" + string(compRaw->vendor) + ":" + string(compRaw->category) + ":" + string(compRaw->instance_name) + ":" + string(compRaw->version);
-            compProf.instanceName = compRaw->instance_name;
+            compProf.id = "RTC:" + comp->vendor_ + ":" + comp->category_ + ":" + comp->name + ":" + comp->version_;
+            compProf.instanceName = comp->name;
             compProf.pathUri = comp->hostAddress + comp->fullPath;
             compProf.activeConfigurationSet = comp->rtc_->get_configuration()->get_active_configuration_set()->id;
             compProf.posX = comp->pos().x() + offsetX;
             compProf.posY = comp->pos().y() + offsetY;
 
-            PortProfileList portList = compRaw->port_profiles;
             for (vector<RTSPortPtr>::iterator p0 = comp->inPorts.begin(); p0 != comp->inPorts.end(); p0++) {
                 RTSPort* in = *p0;
                 buildPortInfo(in, compProf, "DataInPort");
@@ -428,8 +443,7 @@ void ProfileHandler::saveRtsProfile
                 }
             }
             //
-            copyNVListToProperty(compRaw->properties, compProf.propertyList);
-
+            compProf.isRegisteredInRtmDefaultNameServer = NameServerManager::instance()->isRtmDefaultNameServer(comp->hostAddress, comp->portNo);
             profile.compList.push_back(compProf);
         } catch (...) {
             os << "\033[31mWarning: " << "Failed to acquire [" << comp->name << "] information.\033[0m" << endl;
@@ -454,11 +468,12 @@ void ProfileHandler::saveRtsProfile
                 ServicePortConnector conProf;
                 ConnectorProfileList_var connectorProfiles = connect->sourcePort->port->get_connector_profiles();
                 if (0 < connectorProfiles->length()) {
-                    ConnectorProfile& connectorProfile = connectorProfiles[0];
-                    conProf.connectorId = connectorProfile.connector_id;
-                    conProf.name = connectorProfile.name;
+                    conProf.connectorId = connect->id;
+                    conProf.name = connect->name;
 
+                    ConnectorProfile& connectorProfile = connectorProfiles[0];
                     copyNVListToProperty(connectorProfile.properties, conProf.propertyList);
+
                     conProf.source = buildTargetPortInfo(connect->sourcePort);
                     conProf.target = buildTargetPortInfo(connect->targetPort);
 
@@ -471,9 +486,10 @@ void ProfileHandler::saveRtsProfile
                 DataPortConnector conProf;
                 ConnectorProfileList_var connectorProfiles = connect->sourcePort->port->get_connector_profiles();
                 if (0 < connectorProfiles->length()) {
+                    conProf.connectorId = connect->id;
+                    conProf.name = connect->name;
+
                     ConnectorProfile& connectorProfile = connectorProfiles[0];
-                    conProf.connectorId = connectorProfile.connector_id;
-                    conProf.name = connectorProfile.name;
                     conProf.dataType = NVUtil::toString(connectorProfile.properties, "dataport.data_type");
                     conProf.interfaceType = NVUtil::toString(connectorProfile.properties, "dataport.interface_type");
                     conProf.dataflowType = NVUtil::toString(connectorProfile.properties, "dataport.dataflow_type");
@@ -502,13 +518,6 @@ void ProfileHandler::saveRtsProfile
 
 void ProfileHandler::buildPosition(const RTSConnection* connect, int offsetX, int offsetY, std::vector<Property>& propList)
 {
-    //QString posX1 = QString::number( (connect->position[1](0) + connect->position[2](0))/2 + offsetX );
-    //QString posY1 = QString::number( (connect->position[1](1) + connect->position[2](1))/2 + offsetY );
-    //QString posX2 = QString::number( (connect->position[2](0) + connect->position[3](0))/2 + offsetX );
-    //QString posY2 = QString::number( (connect->position[2](1) + connect->position[3](1))/2 + offsetY );
-    //QString posX3 = QString::number( (connect->position[3](0) + connect->position[4](0))/2 + offsetX );
-    //QString posY3 = QString::number( (connect->position[3](1) + connect->position[4](1))/2 + offsetY );
-
     QString position = "{";
     for (int idxPos = 0; idxPos < 6; idxPos++) {
         if (0 < idxPos) position.append(",");
@@ -518,22 +527,31 @@ void ProfileHandler::buildPosition(const RTSConnection* connect, int offsetX, in
     }
     position.append("}");
 
-    //string bendPoint = "{1:(" + posX1.toStdString() + "," + posY1.toStdString() + "),"
-    //                  + "2:(" + posX2.toStdString() + "," + posY2.toStdString() + "),"
-    //                  + "3:(" + posX3.toStdString() + "," + posY3.toStdString() + ")}";
     string positionName = "POSITION";
     string value = position.toStdString();
     appendStringValue(propList, positionName, value);
+
+    //QString posX1 = QString::number( (connect->position[1](0) + connect->position[2](0))/2 + offsetX );
+    //QString posY1 = QString::number( (connect->position[1](1) + connect->position[2](1))/2 + offsetY );
+    //QString posX2 = QString::number( (connect->position[2](0) + connect->position[3](0))/2 + offsetX );
+    //QString posY2 = QString::number( (connect->position[2](1) + connect->position[3](1))/2 + offsetY );
+    //QString posX3 = QString::number( (connect->position[3](0) + connect->position[4](0))/2 + offsetX );
+    //QString posY3 = QString::number( (connect->position[3](1) + connect->position[4](1))/2 + offsetY );
+
+    //string bendPointName = "BEND_POINT";
+    //string bendPoint = "{1:(" + posX1.toStdString() + "," + posY1.toStdString() + "),"
+    //                  + "2:(" + posX2.toStdString() + "," + posY2.toStdString() + "),"
+    //                  + "3:(" + posX3.toStdString() + "," + posY3.toStdString() + ")}";
+    //appendStringValue(propList, bendPointName, bendPoint);
 }
 
 TargetPort ProfileHandler::buildTargetPortInfo(RTSPort* sourcePort)
 {
     TargetPort result;
 
-    result.portName = sourcePort->port->get_port_profile()->name;
-    ComponentProfile* compRaw = sourcePort->port->get_port_profile()->owner->get_component_profile();
-    result.componentId = "RTC:" + string(compRaw->vendor) + ":" + string(compRaw->category) + ":" + string(compRaw->instance_name) + ":" + string(compRaw->version);
-    result.instanceName = compRaw->instance_name;
+    result.portName = sourcePort->name;
+    result.componentId = "RTC:" + sourcePort->rtsComp->vendor_ + ":" + sourcePort->rtsComp->category_ + ":" + sourcePort->rtsComp->name + ":" + sourcePort->rtsComp->version_;
+    result.instanceName = sourcePort->rtsComp->name;
 
     Property prop;
     prop.name = "COMPONENT_PATH_ID";
@@ -548,14 +566,14 @@ void ProfileHandler::buildPortInfo(RTSPort* port, Component& compProf, std::stri
     PortProfile* portRaw = port->port->get_port_profile();
     if (port->isServicePort) {
         ServicePort portProf;
-        portProf.name = portRaw->name;
+        portProf.name = port->name;
 
         copyNVListToProperty(portRaw->properties, portProf.propertyList);
         compProf.servicePortList.push_back(portProf);
 
     } else {
         DataPort portProf;
-        portProf.name = portRaw->name;
+        portProf.name = port->name;
         portProf.direction = direction;
 
         copyNVListToProperty(portRaw->properties, portProf.propertyList);
@@ -637,6 +655,11 @@ void ProfileHandler::writeComponent(std::vector<Component>& compList, xml_node& 
         compNode.append_attribute("rts:instanceName") = target.instanceName.c_str();
         compNode.append_attribute("rts:pathUri") = target.pathUri.c_str();
         compNode.append_attribute("rts:id") = target.id.c_str();
+
+        xml_node propertyNode = compNode.append_child("rtsExt:Properties");
+        propertyNode.append_attribute("rtsExt:value") = target.isRegisteredInRtmDefaultNameServer;
+        propertyNode.append_attribute("rtsExt:name") = "OpenRTM_NS";
+
         //DataPort
         writeDataPort(target.dataPortList, compNode);
         //ServicePort

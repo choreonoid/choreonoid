@@ -26,11 +26,17 @@ public:
     void removeRedundantVertices(SgNode* scene);
     void removeRedundantVertices(SgMesh* mesh);
 
+    enum FaceReductionMode {
+        KEEP_OVERLAPPING_FACES_WTIH_DIFFERENT_DIRECTIONS,
+        KEEP_FIRST_OVERLAPPING_FACES,
+        KEEP_LAST_OVERLAPPING_FACES
+    };
+
     /**
        The following functions can only be applied to the meshes that do not have redundant vertices
     */
-    void removeRedundantFaces(SgNode* scene);
-    void removeRedundantFaces(SgMesh* mesh);
+    void removeRedundantFaces(SgNode* scene, int reductionMode = KEEP_OVERLAPPING_FACES_WTIH_DIFFERENT_DIRECTIONS);
+    void removeRedundantFaces(SgMesh* mesh, int reductionMode = KEEP_OVERLAPPING_FACES_WTIH_DIFFERENT_DIRECTIONS);
     
     void removeRedundantNormals(SgNode* scene);
     void removeRedundantNormals(SgMesh* mesh);

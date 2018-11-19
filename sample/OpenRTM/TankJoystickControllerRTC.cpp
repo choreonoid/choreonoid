@@ -42,7 +42,10 @@ TankJoystickControllerRTC::TankJoystickControllerRTC(RTC::Manager* manager)
       buttonsIn("buttons", buttons),
       velocitiesOut("dq", velocities),
       torquesOut("u", torques),
-      lightSwitchOut("light", lightSwitch)
+      switch1Out("switch1", switches[0]),
+      switch2Out("switch2", switches[1]),
+      switch3Out("switch3", switches[2]),
+      switch4Out("switch4", switches[3])
 {
 
 }
@@ -65,7 +68,10 @@ RTC::ReturnCode_t TankJoystickControllerRTC::onInitialize()
     // Set OutPort buffer
     addOutPort("dq", velocitiesOut);
     addOutPort("u", torquesOut);
-    addOutPort("light", lightSwitchOut);
+    addOutPort("switch1", switch1Out);
+    addOutPort("switch2", switch2Out);
+    addOutPort("switch3", switch3Out);
+    addOutPort("switch4", switch4Out);
 
     return RTC::RTC_OK;
 }
@@ -89,9 +95,11 @@ RTC::ReturnCode_t TankJoystickControllerRTC::onActivated(RTC::UniqueId ec_id)
         torques.data[i] = 0.0;
     }
 
-    lightSwitch.data.length(1);
-    lastLightButtonState = false;
-    isLightOn = true;
+    for(int i=0; i<4; i++){
+        switches[i].data = false;
+        lastButtonState[i] = false;
+        isOn[i] = false;
+    }
     lightBlinkCounter = 0;
     lightBlinkDuration = 0;
 
@@ -150,13 +158,15 @@ RTC::ReturnCode_t TankJoystickControllerRTC::onExecute(RTC::UniqueId ec_id)
 
     if(buttonsIn.isNew()){
         buttonsIn.read();
-        bool lightButtonState = buttons.data[0];
-        if(lightButtonState){
-            if(!lastLightButtonState){
-                isLightOn = !isLightOn;
+        for(int i=0; i<4; i++){
+            bool buttonState = buttons.data[i];
+            if(buttonState){
+                if(!lastButtonState[i]){
+                    isOn[i] = !isOn[i];
+                }
             }
+            lastButtonState[i] = buttonState;
         }
-        lastLightButtonState = lightButtonState;
     }
 
     if(accelIn.isNew()){
@@ -165,7 +175,7 @@ RTC::ReturnCode_t TankJoystickControllerRTC::onExecute(RTC::UniqueId ec_id)
             // Blink light when large acceleration is detected
             lightBlinkCounter = 21;
             lightBlinkDuration = 0;
-            isLightOn = false;
+            isOn[0] = false;
         }
     }
 
@@ -173,15 +183,26 @@ RTC::ReturnCode_t TankJoystickControllerRTC::onExecute(RTC::UniqueId ec_id)
         if(lightBlinkDuration > 0.0){
             --lightBlinkDuration;
         } else {
-            isLightOn = !isLightOn;
+            isOn[0] = !isOn[0];
             --lightBlinkCounter;
             lightBlinkDuration = 0.1 / timeStep;
         }
     }
 
-    if(isLightOn != lightSwitch.data[0]){
-        lightSwitch.data[0] = isLightOn;
-        lightSwitchOut.write();
+    for(int i=0; i<4; i++){
+        if(isOn[i] != switches[i].data){
+            switches[i].data = isOn[i];
+            switch (i) {
+            case 0 : switch1Out.write();
+                        break;
+            case 1 : switch2Out.write();
+                        break;
+            case 2 : switch3Out.write();
+                        break;
+            case 3 : switch4Out.write();
+                        break;
+            }
+        }
     }
         
     return RTC::RTC_OK;

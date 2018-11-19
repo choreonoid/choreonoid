@@ -1,0 +1,178 @@
+SILVER: &SILVER
+  material:
+    diffuseColor: [ 0.67, 0.67, 0.67 ]
+    specularColor: [ 0.8, 0.8, 0.8 ]
+    shininess: 0.05
+
+TUBE: &TUBE
+  type: Group
+  elements:
+
+    - # Cylinder wall 1
+      type: Shape
+      rotation: [ 1, 0, 0, 0.0 ]
+      translation: [ -0.025, 0.0235, 0.0 ]
+      geometry: { type: Box, size: [ 0.05, 0.0125, 0.006579992 ] }
+      appearance: *SILVER
+
+    - # Cylinder wall 2
+      type: Shape
+      rotation: [ 1, 0, 0, 15.0 ]
+      translation: [ -0.025, 0.022699, 0.0060822 ]
+      geometry: { type: Box, size: [ 0.05, 0.0125, 0.006579992 ] }
+      appearance: *SILVER
+
+    - # Cylinder wall 3
+      type: Shape
+      rotation: [ 1, 0, 0, 30.0 ]
+      translation: [ -0.025, 0.020352, 0.01175 ]
+      geometry: { type: Box, size: [ 0.05, 0.0125, 0.006579992 ] }
+      appearance: *SILVER
+
+    - # Cylinder wall 4
+      type: Shape
+      rotation: [ 1, 0, 0, 45.0 ]
+      translation: [ -0.025, 0.016617, 0.016617 ]
+      geometry: { type: Box, size: [ 0.05, 0.0125, 0.006579992 ] }
+      appearance: *SILVER
+
+    - # Cylinder wall 5
+      type: Shape
+      rotation: [ 1, 0, 0, 60.0 ]
+      translation: [ -0.025, 0.01175, 0.020352 ]
+      geometry: { type: Box, size: [ 0.05, 0.0125, 0.006579992 ] }
+      appearance: *SILVER
+
+    - # Cylinder wall 6
+      type: Shape
+      rotation: [ 1, 0, 0, 75.0 ]
+      translation: [ -0.025, 0.0060822, 0.022699 ]
+      geometry: { type: Box, size: [ 0.05, 0.0125, 0.006579992 ] }
+      appearance: *SILVER
+
+    - # Cylinder wall 7
+      type: Shape
+      rotation: [ 1, 0, 0, 90.0 ]
+      translation: [ -0.025, 1.439e-18, 0.0235 ]
+      geometry: { type: Box, size: [ 0.05, 0.0125, 0.006579992 ] }
+      appearance: *SILVER
+
+    - # Cylinder wall 8
+      type: Shape
+      rotation: [ 1, 0, 0, 105.0 ]
+      translation: [ -0.025, -0.0060822, 0.022699 ]
+      geometry: { type: Box, size: [ 0.05, 0.0125, 0.006579992 ] }
+      appearance: *SILVER
+
+    - # Cylinder wall 9
+      type: Shape
+      rotation: [ 1, 0, 0, 120.0 ]
+      translation: [ -0.025, -0.01175, 0.020352 ]
+      geometry: { type: Box, size: [ 0.05, 0.0125, 0.006579992 ] }
+      appearance: *SILVER
+
+    - # Cylinder wall 10
+      type: Shape
+      rotation: [ 1, 0, 0, 135.0 ]
+      translation: [ -0.025, -0.016617, 0.016617 ]
+      geometry: { type: Box, size: [ 0.05, 0.0125, 0.006579992 ] }
+      appearance: *SILVER
+
+    - # Cylinder wall 11
+      type: Shape
+      rotation: [ 1, 0, 0, 150.0 ]
+      translation: [ -0.025, -0.020352, 0.01175 ]
+      geometry: { type: Box, size: [ 0.05, 0.0125, 0.006579992 ] }
+      appearance: *SILVER
+
+    - # Cylinder wall 12
+      type: Shape
+      rotation: [ 1, 0, 0, 165.0 ]
+      translation: [ -0.025, -0.022699, 0.0060822 ]
+      geometry: { type: Box, size: [ 0.05, 0.0125, 0.006579992 ] }
+      appearance: *SILVER
+
+    - # Cylinder wall 13
+      type: Shape
+      rotation: [ 1, 0, 0, 180.0 ]
+      translation: [ -0.025, -0.0235, 2.8779e-18 ]
+      geometry: { type: Box, size: [ 0.05, 0.0125, 0.006579992 ] }
+      appearance: *SILVER
+
+    - # Cylinder wall 14
+      type: Shape
+      rotation: [ 1, 0, 0, 195.0 ]
+      translation: [ -0.025, -0.022699, -0.0060822 ]
+      geometry: { type: Box, size: [ 0.05, 0.0125, 0.006579992 ] }
+      appearance: *SILVER
+
+    - # Cylinder wall 15
+      type: Shape
+      rotation: [ 1, 0, 0, 210.0 ]
+      translation: [ -0.025, -0.020352, -0.01175 ]
+      geometry: { type: Box, size: [ 0.05, 0.0125, 0.006579992 ] }
+      appearance: *SILVER
+
+    - # Cylinder wall 16
+      type: Shape
+      rotation: [ 1, 0, 0, 225.0 ]
+      translation: [ -0.025, -0.016617, -0.016617 ]
+      geometry: { type: Box, size: [ 0.05, 0.0125, 0.006579992 ] }
+      appearance: *SILVER
+
+    - # Cylinder wall 17
+      type: Shape
+      rotation: [ 1, 0, 0, 240.0 ]
+      translation: [ -0.025, -0.01175, -0.020352 ]
+      geometry: { type: Box, size: [ 0.05, 0.0125, 0.006579992 ] }
+      appearance: *SILVER
+
+    - # Cylinder wall 18
+      type: Shape
+      rotation: [ 1, 0, 0, 255.0 ]
+      translation: [ -0.025, -0.0060822, -0.022699 ]
+      geometry: { type: Box, size: [ 0.05, 0.0125, 0.006579992 ] }
+      appearance: *SILVER
+
+    - # Cylinder wall 19
+      type: Shape
+      rotation: [ 1, 0, 0, 270.0 ]
+      translation: [ -0.025, -4.3169e-18, -0.0235 ]
+      geometry: { type: Box, size: [ 0.05, 0.0125, 0.006579992 ] }
+      appearance: *SILVER
+
+    - # Cylinder wall 20
+      type: Shape
+      rotation: [ 1, 0, 0, 285.0 ]
+      translation: [ -0.025, 0.0060822, -0.022699 ]
+      geometry: { type: Box, size: [ 0.05, 0.0125, 0.006579992 ] }
+      appearance: *SILVER
+
+    - # Cylinder wall 21
+      type: Shape
+      rotation: [ 1, 0, 0, 300.0 ]
+      translation: [ -0.025, 0.01175, -0.020352 ]
+      geometry: { type: Box, size: [ 0.05, 0.0125, 0.006579992 ] }
+      appearance: *SILVER
+
+    - # Cylinder wall 22
+      type: Shape
+      rotation: [ 1, 0, 0, 315.0 ]
+      translation: [ -0.025, 0.016617, -0.016617 ]
+      geometry: { type: Box, size: [ 0.05, 0.0125, 0.006579992 ] }
+      appearance: *SILVER
+
+    - # Cylinder wall 23
+      type: Shape
+      rotation: [ 1, 0, 0, 330.0 ]
+      translation: [ -0.025, 0.020352, -0.01175 ]
+      geometry: { type: Box, size: [ 0.05, 0.0125, 0.006579992 ] }
+      appearance: *SILVER
+
+    - # Cylinder wall 24
+      type: Shape
+      rotation: [ 1, 0, 0, 345.0 ]
+      translation: [ -0.025, 0.022699, -0.0060822 ]
+      geometry: { type: Box, size: [ 0.05, 0.0125, 0.006579992 ] }
+      appearance: *SILVER
+

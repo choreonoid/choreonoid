@@ -53,18 +53,10 @@ items:
                 modelFile: "${SHARE}/model/DoubleArmV7/DoubleArmV7A.body"
                 currentBaseLink: "TFRAME"
                 rootPosition: [ 0, 0, 0.537615659 ]
-                rootAttitude: [ 
-                  -1, 0, 0,
-                   0, 0, 1,
-                   0, 1, 0 ]
                 jointPositions: [ 
                    -0.000000,  0.000000, -1.221730,  2.617994,  0.000000,  0.000000,  0.000000,  0.000000, 
                   -0.000000, -0.000000,  0.000000,  0.000000, -0.000000, -0.000000,  0.000000,  0.000000 ]
                 initialRootPosition:  [ 0, 0, 0.537615659 ]
-                initialRootAttitude: [ 
-                  -1, 0, 0,
-                   0, 0, 1,
-                   0, 1, 0 ]
                 initialJointPositions: [ 
                    -0.000000,  0.000000, -1.221730,  2.617994,  0.000000,  0.000000,  0.000000,  0.000000, 
                   -0.000000, -0.000000,  0.000000,  0.000000, -0.000000, -0.000000,  0.000000,  0.000000 ]
@@ -80,7 +72,7 @@ items:
                   class: SimpleControllerItem
                   data: 
                     isNoDelayMode: false
-                    controllerOptions: "velocity"
+                    controllerOptions: "position"
                     controller: "DoubleArmV7Controller"
                     baseDirectory: "Controller directory"
                     reloading: true

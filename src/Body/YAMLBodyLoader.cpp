@@ -108,7 +108,7 @@ struct ROSPackageSchemeHandlerRegistration {
 namespace cnoid {
 
 void YAMLBodyLoader::addNodeType
-(const std::string& typeName,  std::function<bool(YAMLBodyLoader& loader, Mapping& node)> readFunction)
+(const std::string& typeName, std::function<bool(YAMLBodyLoader& loader, Mapping& node)> readFunction)
 {
     std::lock_guard<std::mutex> guard(customNodeFunctionMutex);
     customNodeFunctions[typeName] = readFunction;
@@ -359,13 +359,23 @@ public:
     bool readAngle(const Mapping& node, const char* key, double& angle) const {
         return sceneReader.readAngle(node, key, angle);
     }
-
     bool readRotation(const Mapping& node, Matrix3& out_R) const {
         return sceneReader.readRotation(node, out_R);
     }
-    
+    bool readRotation(const Mapping& node, const char* key, Matrix3& out_R) const {
+        return sceneReader.readRotation(node, key, out_R);
+    }
     bool extractRotation(Mapping& node, Matrix3& out_R) const {
         return sceneReader.extractRotation(node, out_R);
+    }
+    bool readTranslation(const Mapping& node, Vector3& out_p) const {
+        return sceneReader.readTranslation(node, out_p);
+    }
+    bool readTranslation(const Mapping& node, const char* key, Vector3& out_p) const {
+        return sceneReader.readTranslation(node, key, out_p);
+    }
+    bool extractTranslation(Mapping& node, Vector3& out_p) const {
+        return sceneReader.extractTranslation(node, out_p);
     }
 };
 
@@ -591,6 +601,12 @@ bool YAMLBodyLoader::readAngle(const Mapping& node, const char* key, double& ang
 bool YAMLBodyLoader::readRotation(const Mapping& node, Matrix3& out_R) const
 {
     return impl->readRotation(node, out_R);
+}
+
+
+bool YAMLBodyLoader::readRotation(const Mapping& node, const char* key, Matrix3& out_R) const
+{
+    return impl->readRotation(node, key, out_R);
 }
 
 
@@ -944,7 +960,7 @@ LinkPtr YAMLBodyLoaderImpl::readLinkContents(Mapping* node, LinkPtr link)
         }
     }
 
-    if(extractEigen(node, "translation", v)){
+    if(extractTranslation(*node, v)){
         link->setOffsetTranslation(v);
     }
     Matrix3 R;
@@ -1091,7 +1107,11 @@ void YAMLBodyLoaderImpl::readJointContents(Link* link, Mapping* node)
     }
     auto jointDisplacementNode = node->extract("jointDisplacement");
     if(jointDisplacementNode){
-        link->setInitialJointDisplacement(jointDisplacementNode->toDouble());
+        if(link->isRevoluteJoint()){
+            link->setInitialJointDisplacement(toRadian(jointDisplacementNode->toDouble()));
+        } else {
+            link->setInitialJointDisplacement(jointDisplacementNode->toDouble());
+        }
     }
 
     double lower = -std::numeric_limits<double>::max();
@@ -1396,7 +1416,7 @@ bool YAMLBodyLoaderImpl::readTransformContents(Mapping& node, NodeFunction nodeF
     bool hasScale = false;
     bool isSceneNodeAdded = false;
     
-    if(read(node, "translation", v)){
+    if(readTranslation(node, v)){
         T.translation() = v;
         hasPosTransform = true;
     }
@@ -1484,11 +1504,11 @@ bool YAMLBodyLoaderImpl::readRigidBody(Mapping& node)
     RigidBody rbody;
     const Affine3& T = transformStack.back();
 
-    if(read(node, "centerOfMass", v)){
-        rbody.c = T.linear() * v + T.translation();
-    } else {
-        rbody.c.setZero();
+    if(!read(node, "centerOfMass", v)){
+        v.setZero();
     }
+    rbody.c = T.linear() * v + T.translation();
+
     if(!node.read("mass", rbody.m)){
         rbody.m = 0.0;
     }
@@ -1587,6 +1607,7 @@ bool YAMLBodyLoaderImpl::readDevice(Device* device, Mapping& node)
     device->setName(nameStack.back());
 
     if(node.read("id", id)) device->setId(id);
+    if(node.read("on", on)) device->on(on);
 
     const Affine3& T = transformStack.back();
     device->setLocalTranslation(T.translation());
@@ -1679,7 +1700,6 @@ bool YAMLBodyLoaderImpl::readCamera(Mapping& node)
         }
     }
 
-    if(node.read("on", on)) camera->on(on);
     if(node.read("width", value)) camera->setResolutionX(value);
     if(node.read("height", value)) camera->setResolutionY(value);
     if(readAngle(node, "fieldOfView", value)) camera->setFieldOfView(value);
@@ -1695,8 +1715,6 @@ bool YAMLBodyLoaderImpl::readRangeSensor(Mapping& node)
 {
     RangeSensorPtr rangeSensor = new RangeSensor;
     
-    if(node.read("on", on)) rangeSensor->on(on);
-
     if(readAngle(node, "yawRange", value)){
         rangeSensor->setYawRange(value);
     } else if(readAngle(node, "scanAngle", value)){ // backward compatibility
@@ -1722,7 +1740,6 @@ bool YAMLBodyLoaderImpl::readSpotLight(Mapping& node)
 {
     SpotLightPtr light = new SpotLight();
 
-    if(node.read("on", on)) light->on(on);
     if(read(node, "color", color)) light->setColor(color);
     if(node.read("intensity", value)) light->setIntensity(value);
     if(read(node, "direction", v)) light->setDirection(v);

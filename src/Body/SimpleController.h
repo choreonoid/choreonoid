@@ -21,7 +21,8 @@ class CNOID_EXPORT SimpleControllerIO : public ControllerIO
         JOINT_TORQUE = 1 << 3,
         JOINT_FORCE = 1 << 3,
         JOINT_EFFORT = 1 << 3,
-        LINK_POSITION = 1 << 4
+        LINK_POSITION = 1 << 4,
+        LINK_FORCE = 1 << 5
     };
 
     virtual std::string controllerName() const = 0;
@@ -30,6 +31,7 @@ class CNOID_EXPORT SimpleControllerIO : public ControllerIO
     virtual void enableInput(Link* link) = 0;
     virtual void enableInput(Link* link, int stateTypes) = 0;
     virtual void enableOutput(Link* link) = 0;
+    virtual void enableOutput(Link* link, int stateTypes) = 0;
     virtual void enableInput(Device* device) = 0;
 
     template<class T> T* getOrCreateSharedObject(const std::string& name) {
@@ -104,7 +106,8 @@ class CNOID_EXPORT SimpleController
         JOINT_ACCELERATION = SimpleControllerIO::JOINT_ACCELERATION,
         JOINT_TORQUE = SimpleControllerIO::JOINT_TORQUE,
         JOINT_FORCE = SimpleControllerIO::JOINT_FORCE,
-        LINK_POSITION = SimpleControllerIO::LINK_POSITION
+        LINK_POSITION = SimpleControllerIO::LINK_POSITION,
+        LINK_FORCE = SimpleControllerIO::LINK_FORCE
     };
 
   protected:

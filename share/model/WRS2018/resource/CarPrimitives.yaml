@@ -1,0 +1,3159 @@
+BLACK: &BLACK
+  material:
+    ambientIntensity: 0.1
+    diffuseColor: [ 0.2, 0.2, 0.2 ]
+    shininess: 0.390625
+    specularColor: [ 0.5, 0.5, 0.5 ]
+
+RED: &RED
+  material_:
+    diffuseColor: [ 1, 0, 0 ]
+
+CAR_BODY_WITHOUT_PART_AROUND_FR_DOOR: &CAR_BODY_WITHOUT_PART_AROUND_FR_DOOR
+  type: Group
+  elements:
+    -
+      type: Transform
+      translation: [ 0.0, 0.001, 0.25 ]
+      elements: #bottom
+        - 
+          type: Shape
+          name: bottom1
+          translation: [ 1.53, 0.0, 0.08]
+          geometry: { type: Box, size: [ 1.1, 1.4, 0.15 ] }
+        -  
+          type: Shape
+          name: bottom2
+          translation: [ 0.37, 0.0, 0.035 ]
+          rotation: [ 0, 1, 0, 0.8 ]
+          geometry: { type: Box, size: [ 1.275, 1.63, 0.07 ] }
+        -
+          type: Shape
+          name: bottom3
+          translation: [ -0.605, 0.0, 0.04 ]
+          geometry: { type: Box, size: [ 0.69, 1.39, 0.08 ] }
+        -
+          type: Shape 
+          name: bottom4
+          translation: [ -0.605, -0.749, 0.034 ]
+          rotation: [ 1, 0, 0, 31 ]
+          geometry: { type: Box, size: [ 0.69, 0.14, 0.02 ] }
+        -
+          type: Shape 
+          name: bottom5
+          translation: [ -0.605, 0.749, 0.034 ]
+          rotation: [ 1, 0, 0, -31 ]
+          geometry: { type: Box, size: [ 0.69, 0.14, 0.02 ] }
+        -
+          type: Shape
+          name: bottom6
+          translation: [ -1.293, 0.0, 0.163]
+          rotation: [ 0, 1, 0, 3 ]
+          geometry: { type: Box, size: [ 0.7, 1.16, 0.286 ] }
+        -
+          type: Shape
+          name: bottom7
+          translation: [ -1.92, 0.0, 0.225]
+          rotation: [ 0, 1, 0, 8.7 ]
+          geometry: { type: Box, size: [ 0.6, 1.3, 0.286 ] }
+    - 
+      type: Transform
+      translation: [ -0.3, 0.001, 0.9 ]
+      elements:  # roof
+        - #center
+          type: Shape
+          name: front window center1
+          translation: [ 0.745, -0.2, 0.33 ]
+          rotation: [ [ 0, 1, 0, 26] , [ 1, 0, 0, 2 ] ]
+          geometry: { type: Box, size: [ 0.4, 0.4, 0.01 ] }
+        - 
+          type: Shape 
+          name: front window center2
+          translation: [ 1.095, -0.2, 0.151 ]
+          rotation: [ [ 0, 1, 0, 28] , [ 1, 0, 0, 3 ] ]
+          geometry: { type: Box, size: [ 0.4, 0.4, 0.01 ] }
+        -
+          type: Shape
+          name: front window center3
+          translation: [ 0.745, 0.2, 0.33 ]
+          rotation: [ [ 0, 1, 0, 26] , [ 1, 0, 0, -2 ] ]
+          geometry: { type: Box, size: [ 0.4, 0.4, 0.01 ] }
+        - 
+          type: Shape 
+          name: front window center4
+          translation: [ 1.095, 0.2, 0.151 ]
+          rotation: [ [ 0, 1, 0, 28] , [ 1, 0, 0, -3 ] ]
+          geometry: { type: Box, size: [ 0.4, 0.4, 0.01 ] }
+        -
+          type: Shape
+          name: rear window center1
+          translation: [ -0.76, 0, 0.373 ]
+          rotation: [ 0, 1, 0, -15]
+          geometry: { type: Box, size: [ 0.5, 0.7, 0.015 ] }
+        -
+          type: Shape
+          name: rear window center2
+          translation: [ -1.17, 0, 0.237 ]
+          rotation: [ 0, 1, 0, -23]
+          geometry: { type: Box, size: [ 0.37, 0.7, 0.015 ] }
+        -
+          type: Shape
+          name: rear window center3
+          translation: [ -1.383, 0, 0.142 ]
+          rotation: [ 0, 1, 0, -28]
+          geometry: { type: Box, size: [ 0.1, 0.7, 0.015 ] }
+        - #right
+          type: Shape 
+          name: front window right1
+          translation: [ 0.734, -0.468, 0.31 ]
+          rotation: [ [ 0, 1, 0, 26] , [ 1, 0, 0, 12 ] ]
+          geometry: { type: Box, size: [ 0.4, 0.14, 0.01 ] }
+        - 
+          type: Shape 
+          name: front window right2
+          translation: [ 1.09, -0.468, 0.127 ]
+          rotation: [ [ 0, 1, 0, 28] , [ 1, 0, 0, 12 ] ]
+          geometry: { type: Box, size: [ 0.4, 0.14, 0.01 ] }
+        -
+          type: Shape 
+          name: front window right3
+          translation: [ 0.725, -0.559, 0.29 ]
+          rotation: [ [ 0, 1, 0, 25] , [ 1, 0, 0, 15 ] ]
+          geometry: { type: Box, size: [ 0.4, 0.05, 0.01 ] }
+        -
+          type: Shape 
+          name: front window right4
+          translation: [ 1.04, -0.595, 0.121 ]
+          rotation: [ [ 0, 1, 0, 28] , [ 1, 0, 0, 15 ] ]
+          geometry: { type: Box, size: [ 0.34, 0.12, 0.01 ] }
+        -
+          type: Shape 
+          name: front window right5
+          translation: [ 0.775, -0.592, 0.254 ]
+          rotation: [ [ 0, 1, 0, 23] , [ 1, 0, 0, 17 ], [ 0, 0, 1, -14 ] ]
+          geometry: { type: Box, size: [ 0.29, 0.078, 0.01 ] }
+        -
+          type: Shape 
+          name: front window right6
+          translation: [ 1.01, -0.66, 0.120 ]
+          rotation: [ [ 0, 1, 0, 26] , [ 1, 0, 0, 15 ], [ 0, 0, 1, -14 ] ]
+          geometry: { type: Box, size: [ 0.3, 0.09, 0.01 ] }
+        -
+          type: Shape
+          name: roof right4
+          translation: [ -0.39, -0.45, 0.445 ]
+          rotation: [ [ 0, 1, 0, -7], [1, 0, 0, 9 ] ]
+          geometry: { type: Box, size: [ 0.27, 0.11, 0.015 ] }
+        -
+          type: Shape
+          name: roof right8
+          translation: [ -0.39, -0.54, 0.412 ]
+          rotation: [ [ 0, 1, 0, -7], [1, 0, 0, 33 ] ]
+          geometry: { type: Box, size: [ 0.27, 0.1, 0.015 ] }
+        - #
+          type: Shape
+          name: rear window right1
+          translation: [ -0.76, -0.43, 0.365 ]
+          rotation: [ [ 0, 1, 0, -15], [ 1, 0, 0, 6 ] ]
+          geometry: { type: Box, size: [ 0.5, 0.16, 0.015 ] }
+        -
+          type: Shape
+          name: rear window right2
+          translation: [ -1.17, -0.455, 0.225 ]
+          rotation: [ [ 0, 1, 0, -23], [ 1, 0, 0, 6 ] ]
+          geometry: { type: Box, size: [ 0.37, 0.21, 0.015 ] }
+        -
+          type: Shape
+          name: rear window right3
+          translation: [ -1.383, -0.49, 0.125 ]
+          rotation: [ [ 0, 1, 0, -28], [ 1, 0, 0, 6 ] ]
+          geometry: { type: Box, size: [ 0.1, 0.3, 0.015 ] }
+        -
+          type: Shape
+          name: rear window right4
+          translation: [ -0.76, -0.535, 0.347 ]
+          rotation: [ [ 0, 1, 0, -15], [ 1, 0, 0, 22 ] ]
+          geometry: { type: Box, size: [ 0.5, 0.06, 0.015 ] }
+        -
+          type: Shape
+          name: rear window right5
+          translation: [ -1.17, -0.59, 0.201 ]
+          rotation: [ [ 0, 1, 0, -23], [ 1, 0, 0, 22 ] ]
+          geometry: { type: Box, size: [ 0.39, 0.09, 0.015 ] }
+        - #
+          type: Shape 
+          name: roof rear right1
+          translation: [ -0.56, -0.56, 0.37 ]
+          rotation: [ [ 0, 1, 0, -9] , [ 1, 0, 0, 30 ], [ 0, 0, 1, 10] ]
+          geometry: { type: Box, size: [ 0.4, 0.12, 0.015 ] }
+        - 
+          type: Shape 
+          name: roof rear right2
+          translation: [ -0.925, -0.615, 0.252 ]
+          rotation: [ [ 0, 1, 0, -15] , [ 1, 0, 0, 32 ], [ 0, 0, 1, 14] ]
+          geometry: { type: Box, size: [ 0.4, 0.15, 0.015 ] }
+        - 
+          type: Shape 
+          name: roof rear right3
+          translation: [ -1.22, -0.66, 0.15 ]
+          rotation: [ [ 0, 1, 0, -14] , [ 1, 0, 0, 36 ], [ 0, 0, 1, 14] ]
+          geometry: { type: Box, size: [ 0.25, 0.12, 0.015 ] }
+        - 
+          type: Shape 
+          name: roof rear right4
+          translation: [ -1.135, -0.745, 0.085 ]
+          rotation: [ [ 0, 1, 0, -6] , [ 1, 0, 0, 47 ], [ 0, 0, 1, 14] ]
+          geometry: { type: Box, size: [ 0.2, 0.16, 0.015 ] }
+        - #left
+          type: Shape 
+          name: front window left1
+          translation: [ 0.734, 0.468, 0.31 ]
+          rotation: [ [ 0, 1, 0, 26] , [ 1, 0, 0, -12 ] ]
+          geometry: { type: Box, size: [ 0.4, 0.14, 0.01 ] }
+        - 
+          type: Shape 
+          name: front window left2
+          translation: [ 1.09, 0.468, 0.127 ]
+          rotation: [ [ 0, 1, 0, 28] , [ 1, 0, 0, -12 ] ]
+          geometry: { type: Box, size: [ 0.4, 0.14, 0.01 ] }
+        -
+          type: Shape 
+          name: front window left3
+          translation: [ 0.725, 0.559, 0.29 ]
+          rotation: [ [ 0, 1, 0, 25] , [ 1, 0, 0, -15 ] ]
+          geometry: { type: Box, size: [ 0.4, 0.05, 0.01 ] }
+        -
+          type: Shape 
+          name: front window left4
+          translation: [ 1.04, 0.595, 0.121 ]
+          rotation: [ [ 0, 1, 0, 28] , [ 1, 0, 0, -15 ] ]
+          geometry: { type: Box, size: [ 0.34, 0.12, 0.01 ] }
+        -
+          type: Shape 
+          name: front window left5
+          translation: [ 0.775, 0.592, 0.254 ]
+          rotation: [ [ 0, 1, 0, 23] , [ 1, 0, 0, -17 ], [ 0, 0, 1, 14 ] ]
+          geometry: { type: Box, size: [ 0.29, 0.078, 0.01 ] }
+        -
+          type: Shape 
+          name: front window left6
+          translation: [ 1.01, 0.66, 0.120 ]
+          rotation: [ [ 0, 1, 0, 26] , [ 1, 0, 0, -15 ], [ 0, 0, 1, 14 ] ]
+          geometry: { type: Box, size: [ 0.3, 0.09, 0.01 ] }
+        - 
+          type: Shape 
+          name: roof front left1
+          translation: [ 0.77, 0.647, 0.227 ]
+          rotation: [ [ 0, 1, 0, 20] , [ 1, 0, 0, -30 ], [ 0, 0, 1, 17 ] ]
+          geometry: { type: Box, size: [ 0.6, 0.06, 0.015 ] }
+        - 
+          type: Shape 
+          name: roof front left2
+          translation: [ 1.07, 0.735, 0.057 ]
+          rotation: [ [ 0, 1, 0, 25] , [ 1, 0, 0, -32 ], [ 0, 0, 1, 17 ] ]
+          geometry: { type: Box, size: [ 0.12, 0.06, 0.02 ] }
+        - 
+          type: Shape 
+          name: roof front left3
+          translation: [ 1.176, 0.76, 0.0 ]
+          geometry: { type: Box, size: [ 0.12, 0.04, 0.058 ] }
+        - #
+          type: Shape
+          name: roof left1
+          translation: [ 0.495, 0.45, 0.421 ]
+          rotation: [ [ 0, 1, 0, 13], [ 1, 0, 0, -9 ] ]
+          geometry: { type: Box, size: [ 0.13, 0.11, 0.015 ] }
+        -
+          type: Shape
+          name: roof left2
+          translation: [ 0.289, 0.45, 0.449 ]
+          rotation: [ [ 0, 1, 0, 5], [ 1, 0, 0, -9 ] ] 
+          geometry: { type: Box, size: [ 0.3, 0.11, 0.015 ] }
+        -
+          type: Shape
+          name: roof left3
+          translation: [ -0.06, 0.45, 0.462 ]
+          rotation: [ 1, 0, 0, -9 ]
+          geometry: { type: Box, size: [ 0.4, 0.11, 0.015 ] }
+        -
+          type: Shape
+          name: roof left4
+          translation: [ -0.39, 0.45, 0.445 ]
+          rotation: [ [ 0, 1, 0, -7], [1, 0, 0, -9 ] ]
+          geometry: { type: Box, size: [ 0.27, 0.11, 0.015 ] }
+        -    #
+          type: Shape
+          name: roof left5
+          translation: [ 0.49, 0.541, 0.387 ]
+          rotation: [ [ 0, 1, 0, 13], [ 1, 0, 0, -34 ] ]
+          geometry: { type: Box, size: [ 0.12, 0.1, 0.015 ] }
+        -
+          type: Shape
+          name: roof left6
+          translation: [ 0.289, 0.54, 0.416 ]
+          rotation: [ [ 0, 1, 0, 5], [ 1, 0, 0, -33 ] ] 
+          geometry: { type: Box, size: [ 0.3, 0.09, 0.015 ] }
+        -
+          type: Shape
+          name: roof left7
+          translation: [ -0.06, 0.54, 0.43 ]
+          rotation: [ 1, 0, 0, -33 ]
+          geometry: { type: Box, size: [ 0.404, 0.09, 0.015 ] }
+        -
+          type: Shape
+          name: roof left8
+          translation: [ -0.39, 0.54, 0.412 ]
+          rotation: [ [ 0, 1, 0, -7], [1, 0, 0, -33 ] ]
+          geometry: { type: Box, size: [ 0.27, 0.1, 0.015 ] }
+        - #
+          type: Shape
+          name: rear window left1
+          translation: [ -0.76, 0.43, 0.365 ]
+          rotation: [ [ 0, 1, 0, -15], [ 1, 0, 0, -6 ] ]
+          geometry: { type: Box, size: [ 0.5, 0.16, 0.015 ] }
+        -
+          type: Shape
+          name: rear window left2
+          translation: [ -1.17, 0.455, 0.225 ]
+          rotation: [ [ 0, 1, 0, -23], [ 1, 0, 0, -6 ] ]
+          geometry: { type: Box, size: [ 0.37, 0.21, 0.015 ] }
+        -
+          type: Shape
+          name: rear window left3
+          translation: [ -1.383, 0.49, 0.125 ]
+          rotation: [ [ 0, 1, 0, -28], [ 1, 0, 0, -6 ] ]
+          geometry: { type: Box, size: [ 0.1, 0.3, 0.015 ] }
+        -
+          type: Shape
+          name: rear window left4
+          translation: [ -0.76, 0.535, 0.347 ]
+          rotation: [ [ 0, 1, 0, -15], [ 1, 0, 0, -22 ] ]
+          geometry: { type: Box, size: [ 0.5, 0.06, 0.015 ] }
+        -
+          type: Shape
+          name: rear window left5
+          translation: [ -1.17, 0.59, 0.201 ]
+          rotation: [ [ 0, 1, 0, -23], [ 1, 0, 0, -22 ] ]
+          geometry: { type: Box, size: [ 0.39, 0.09, 0.015 ] }
+        - #
+          type: Shape 
+          name: roof rear left1
+          translation: [ -0.56, 0.56, 0.37 ]
+          rotation: [ [ 0, 1, 0, -9] , [ 1, 0, 0, -30 ], [ 0, 0, 1, -10] ]
+          geometry: { type: Box, size: [ 0.4, 0.12, 0.015 ] }
+        - 
+          type: Shape 
+          name: roof rear left2
+          translation: [ -0.925, 0.615, 0.252 ]
+          rotation: [ [ 0, 1, 0, -15] , [ 1, 0, 0, -32 ], [ 0, 0, 1, -14] ]
+          geometry: { type: Box, size: [ 0.4, 0.15, 0.015 ] }
+        - 
+          type: Shape 
+          name: roof rear left3
+          translation: [ -1.22, 0.66, 0.15 ]
+          rotation: [ [ 0, 1, 0, -14] , [ 1, 0, 0, -36 ], [ 0, 0, 1, -14] ]
+          geometry: { type: Box, size: [ 0.25, 0.12, 0.015 ] }
+        - 
+          type: Shape 
+          name: roof rear left4
+          translation: [ -1.135, 0.745, 0.085 ]
+          rotation: [ [ 0, 1, 0, -6] , [ 1, 0, 0, -47 ], [ 0, 0, 1, -14] ]
+          geometry: { type: Box, size: [ 0.2, 0.16, 0.015 ] }
+    -
+      type: Transform
+      translation: [ -1.17, 0.001, 0.55 ]
+      elements: #rear
+        - #center
+          type: Shape
+          name: rear center1
+          translation: [ -0.511, 0.0, 0.205]
+          geometry: { type: Box, size: [ 1.018, 1.14, 0.41 ] }
+        - #center
+          type: Shape 
+          name: rear center2
+          translation: [ -1.05, 0.0, 0.04]
+          geometry: { type: Box, size: [ 0.06, 1.14, 0.2 ] }
+        - 
+          type: Shape
+          name: rear center3
+          translation: [ -0.255, 0.0, 0.413]
+          rotation: [ 0, 1, 0, 7.5]
+          geometry: { type: Box, size: [ 0.5, 1.34, 0.07 ] }
+        - 
+          type: Shape
+          name: rear center4
+          translation: [ -0.76, 0.0, 0.445]
+          geometry: { type: Box, size: [ 0.52, 1.0, 0.07 ] }
+        - 
+          type: Shape 
+          name: rear center5
+          translation: [ -0.648, -0.585, 0.437]
+          rotation: [ 1, 0, 0, 5 ]
+          geometry: { type: Box, size: [ 0.3, 0.18, 0.07 ] }
+        - 
+          type: Shape 
+          name: rear center6
+          translation: [ -0.905, -0.555, 0.432]
+          rotation: [ 1, 0, 0, 10 ]
+          geometry: { type: Box, size: [ 0.23, 0.14, 0.07 ] }
+        - 
+          type: Shape 
+          name: rear center7
+          translation: [ -0.648, 0.585, 0.437]
+          rotation: [ 1, 0, 0, -5 ]
+          geometry: { type: Box, size: [ 0.3, 0.18, 0.07 ] }
+        - 
+          type: Shape 
+          name: rear center8
+          translation: [ -0.905, 0.555, 0.432]
+          rotation: [ 1, 0, 0, -10 ]
+          geometry: { type: Box, size: [ 0.23, 0.14, 0.07 ] }
+        - #right
+          type: Shape
+          name: rear right1
+          translation: [ -0.18,  -0.713, -0.07]
+          rotation: [  [ 0, 1, 0, 3 ], [ 1, 0, 0, 8 ] ]
+          geometry: { type: Box, size: [ 0.638, 0.25, 0.39 ] }
+        - 
+          type: Shape 
+          name: rear right2
+          translation: [ 0.17,  -0.713, -0.1]
+          rotation: [  [ 1, 0, 0, 8 ], [ 0, 1, 0, -12 ] ]
+          geometry: { type: Box, size: [ 0.05, 0.25, 0.4 ] }
+        -
+          type: Shape 
+          name: rear right3
+          translation: [ -0.58,  -0.713, -0.06]
+          rotation: [  [ 0, 1, 0, 9 ], [ 1, 0, 0, 8 ] ]
+          geometry: { type: Box, size: [ 0.5, 0.2, 0.35 ] } 
+        -
+          type: Shape 
+          name: rear right4
+          translation: [ -0.888,  -0.708, -0.026]
+          rotation: [[ 0, 0, 1 , -25],  [ 0, 1, 0, 9 ] , [1, 0, 0, 5] ]
+          geometry: { type: Box, size: [ 0.28, 0.1, 0.32 ] }
+        - 
+          type: Shape 
+          name: rear right5
+          translation: [ -0.05,  -0.72, 0.15]
+          rotation: [ 0, 1, 0, -28 ] 
+          geometry: { type: Box, size: [ 0.3, 0.17, 0.28 ] }
+        - 
+          type: Shape 
+          name: rear right6
+          translation: [ -0.13,  -0.72, 0.3]
+          geometry: { type: Box, size: [ 0.27, 0.17, 0.2 ] }
+        - 
+          type: Shape 
+          name: rear right7
+          translation: [ -0.15,  -0.70, 0.42]
+          geometry: { type: Box, size: [ 0.21, 0.06, 0.05 ] }
+        - 
+          type: Shape
+          name: rear right8
+          translation: [ -0.38,  -0.72, 0.21]
+          geometry: { type: Box, size: [ 0.5, 0.21, 0.23 ] } 
+        - 
+          type: Shape
+          name: rear right9
+          translation: [ -0.79,  -0.65, 0.21]
+          rotation: [ 0, 0, 1, -20 ]
+          geometry: { type: Box, size: [ 0.43, 0.21, 0.23 ] }
+        - 
+          type: Shape
+          name: rear right10
+          translation: [ -0.45,  -0.71, 0.365]
+          rotation: [ 1, 0, 0, 45 ]
+          geometry: { type: Box, size: [ 0.4, 0.19, 0.1 ] }  
+        - 
+          type: Shape
+          name: rear right11
+          translation: [ -0.81,  -0.65, 0.365]
+          rotation: [ [ 0, 0, 1, -20], [ 1, 0, 0, 50 ] ]
+          geometry: { type: Box, size: [ 0.4, 0.17, 0.1 ] } 
+        - #left
+          type: Shape
+          name: rear left1
+          translation: [ -0.18,  0.713, -0.07]
+          rotation: [  [ 0, 1, 0, 3 ], [ 1, 0, 0, -8 ] ]
+          geometry: { type: Box, size: [ 0.638, 0.25, 0.39 ] }
+        - 
+          type: Shape 
+          name: rear left2
+          translation: [ 0.17,  0.713, -0.1]
+          rotation: [  [ 1, 0, 0, -8 ], [ 0, 1, 0, -12 ] ]
+          geometry: { type: Box, size: [ 0.05, 0.25, 0.4 ] }
+        -
+          type: Shape 
+          name: rear left3
+          translation: [ -0.58,  0.713, -0.06]
+          rotation: [  [ 0, 1, 0, 9 ], [ 1, 0, 0, -8 ] ]
+          geometry: { type: Box, size: [ 0.5, 0.2, 0.35 ] } 
+        -
+          type: Shape 
+          name: rear left4
+          translation: [ -0.888,  0.708, -0.026]
+          rotation: [[ 0, 0, 1 , 25],  [ 0, 1, 0, 9 ] , [1, 0, 0, -5] ]
+          geometry: { type: Box, size: [ 0.28, 0.1, 0.32 ] }
+        - 
+          type: Shape 
+          name: rear left5
+          translation: [ -0.05,  0.72, 0.15]
+          rotation: [ 0, 1, 0, -28 ] 
+          geometry: { type: Box, size: [ 0.3, 0.17, 0.28 ] }
+        - 
+          type: Shape 
+          name: rear left6
+          translation: [ -0.13,  0.72, 0.3]
+          geometry: { type: Box, size: [ 0.27, 0.17, 0.2 ] }
+        - 
+          type: Shape 
+          name: rear left7
+          translation: [ -0.15,  0.70, 0.42]
+          geometry: { type: Box, size: [ 0.21, 0.06, 0.05 ] }
+        - 
+          type: Shape
+          name: rear left8
+          translation: [ -0.38,  0.72, 0.21]
+          geometry: { type: Box, size: [ 0.5, 0.21, 0.23 ] } 
+        - 
+          type: Shape
+          name: rear left9
+          translation: [ -0.79,  0.65, 0.21]
+          rotation: [ 0, 0, 1, 20 ]
+          geometry: { type: Box, size: [ 0.43, 0.21, 0.23 ] }
+        - 
+          type: Shape
+          name: rear left10
+          translation: [ -0.45,  0.71, 0.365]
+          rotation: [ 1, 0, 0, -45 ]
+          geometry: { type: Box, size: [ 0.4, 0.19, 0.1 ] }  
+        - 
+          type: Shape
+          name: rear left11
+          translation: [ -0.81,  0.65, 0.365]
+          rotation: [ [ 0, 0, 1, 20], [ 1, 0, 0, -50 ] ]
+          geometry: { type: Box, size: [ 0.4, 0.17, 0.1 ] }
+    -
+      type: Transform
+      translation: [ 1.0, 0.001, 0.4]
+      elements: #front
+        - # center 
+          type: Shape
+          name: front center1
+          translation: [ 1.18, 0.0, -0.05]
+          rotation: [ 0, 1, 0, -9 ]
+          geometry: { type: Box, size: [ 0.19, 0.58, 0.15 ] }
+        -
+          type: Shape
+          name: front center2
+          translation: [1.2, 0.0, 0.09]
+          geometry: { type: Box, size: [ 0.19, 0.58, 0.12 ] }
+        - 
+          type: Shape
+          name: front center3
+          translation: [1.198, 0.0, 0.141]
+          rotation: [ 0, 1, 0, 34 ]
+          geometry: { type: Box, size: [ 0.15, 0.58, 0.12 ] }
+        - 
+          type: Shape
+          name: front center4
+          translation: [1.15, 0.0, 0.24]
+          rotation: [ 0, 1, 0, -20 ]
+          geometry: { type: Box, size: [ 0.08, 0.58, 0.145 ] }
+        - 
+          type: Shape 
+          name: front center5
+          translation: [1.024, 0.0, 0.321]
+          rotation: [ 0, 1, 0, 21 ]
+          geometry: { type: Box, size: [ 0.26, 0.58, 0.1 ] }
+        - #front right
+          type: Shape
+          name: front right1
+          translation: [1.145, -0.458, -0.048]
+          rotation: [ [ 0, 0, 1, -17], [ 0, 1, 0, -10 ] ]
+          geometry: { type: Box, size: [ 0.15, 0.40, 0.15 ] }
+        -
+          type: Shape 
+          name: front right2
+          translation: [1.165, -0.46, 0.09]
+          rotation: [ 0, 0, 1, -17] 
+          geometry: { type: Box, size: [ 0.15, 0.40, 0.12 ] }
+        - 
+          type: Shape
+          name: front right3
+          translation: [1.145, -0.454, 0.141]
+          rotation: [ [ 0, 0, 1, -17], [ 0, 1, 0, 33 ] ]
+          geometry: { type: Box, size: [ 0.15, 0.4, 0.12 ] }
+        - 
+          type: Shape 
+          name: front right4
+          translation: [1.093, -0.468, 0.24]
+          rotation: [ [ 0, 0, 1, -17], [ 0, 1, 0, -20 ] ]
+          geometry: { type: Box, size: [ 0.08, 0.4, 0.145 ] }
+        - 
+          type: Shape 
+          name: front right5
+          translation: [0.968, -0.44, 0.322]
+          rotation: [ [ 0, 0, 1, -17], [ 0, 1, 0, 21 ] ]
+          geometry: { type: Box, size: [ 0.26, 0.4, 0.1 ] }
+        - #front left
+          type: Shape
+          name: front left1
+          translation: [1.145, 0.458, -0.048]
+          rotation: [ [ 0, 0, 1, 17], [ 0, 1, 0, -10 ] ]
+          geometry: { type: Box, size: [ 0.15, 0.40, 0.15 ] }
+        -
+          type: Shape 
+          name: front left2
+          translation: [1.165, 0.46, 0.09]
+          rotation: [ 0, 0, 1, 17] 
+          geometry: { type: Box, size: [ 0.15, 0.40, 0.12 ] }
+        - 
+          type: Shape
+          name: front left3
+          translation: [1.145, 0.454, 0.141]
+          rotation: [ [ 0, 0, 1, 17], [ 0, 1, 0, 33 ] ]
+          geometry: { type: Box, size: [ 0.15, 0.4, 0.12 ] }
+        - 
+          type: Shape 
+          name: front left4
+          translation: [1.093, 0.468, 0.24]
+          rotation: [ [ 0, 0, 1, 17], [ 0, 1, 0, -20 ] ]
+          geometry: { type: Box, size: [ 0.08, 0.4, 0.145 ] }
+        - 
+          type: Shape 
+          name: front left5
+          translation: [0.968, 0.44, 0.322]
+          rotation: [ [ 0, 0, 1, 17], [ 0, 1, 0, 21 ] ]
+          geometry: { type: Box, size: [ 0.26, 0.4, 0.1 ] }
+        -  #center
+          type: Shape 
+          name: front center8
+          translation: [ 0.48, 0.0, 0.477]
+          rotation: [ 0, 1, 0, 10 ]
+          geometry: { type: Box, size: [ 0.9, 0.58, 0.03 ] }
+        - 
+          type: Shape 
+          name: front center9
+          translation: [ 0.48,  -0.48, 0.374]
+          rotation: [ [ 0, 1, 0, 10 ], [ 1, 0, 0, 5 ] ]
+          geometry: { type: Box, size: [ 0.9, 0.4, 0.2 ] }
+        - 
+          type: Shape 
+          name: front center10
+          translation: [ 0.48,  0.48, 0.374]
+          rotation: [ [ 0, 1, 0, 10 ], [ 1, 0, 0, -5 ] ]
+          geometry: { type: Box, size: [ 0.9, 0.4, 0.2 ] }
+        - 
+          type: Shape 
+          name: front center11
+          translation: [ -0.05,  0.0, 0.415]
+          geometry: { type: Box, size: [ 0.22, 0.86, 0.3 ] }
+        - 
+          type: Shape 
+          name: front center13
+          translation: [ -0.05,  0.58, 0.495]
+          rotation: [ [ 0, 1, 0, 3 ], [ 1, 0, 0, -6 ] ]
+          geometry: { type: Box, size: [ 0.22, 0.32, 0.1 ] }
+        - #right
+          type: Shape 
+          name: front right6
+          translation: [ 0.392,  -0.783, 0.05]
+          rotation: [ 1, 0, 0, 8 ]
+          geometry: { type: Box, size: [ 0.77, 0.1, 0.39 ] }
+        -
+          type: Shape 
+          name: front right7
+          translation: [ 0.34,  -0.753, 0.305]
+          geometry: { type: Box, size: [ 0.7, 0.16, 0.2 ] }
+        -
+          type: Shape 
+          name: front right8
+          translation: [ 0.2,  -0.73, 0.41]
+          rotation: [ [ 0, 1, 0, 8], [ 1, 0, 0, 30 ] ]
+          geometry: { type: Box, size: [ 0.4, 0.18, 0.1 ] }
+        -
+          type: Shape
+          name: front right9
+          translation: [0.945, -0.706, -0.048]
+          rotation: [ [ 0, 0, 1, 20], [ 0, 1, 0, -5 ] ]
+          geometry: { type: Box, size: [ 0.42, 0.10, 0.15 ] }
+        -
+          type: Shape 
+          name: front right10
+          translation: [0.96, -0.71, 0.09]
+          rotation: [ 0, 0, 1, 22] 
+          geometry: { type: Box, size: [ 0.43, 0.10, 0.15 ] }
+        -
+          type: Shape 
+          name: front right11
+          translation: [0.9, -0.71, 0.19]
+          rotation: [ 0, 0, 1, 24] 
+          geometry: { type: Box, size: [ 0.45, 0.10, 0.06 ] }
+        -
+          type: Shape 
+          name: front right12
+          translation: [0.84, -0.7, 0.27]
+          rotation: [ 0, 0, 1, 20] 
+          geometry: { type: Box, size: [ 0.45, 0.10, 0.1 ] }
+        -
+          type: Shape 
+          name: front right13
+          translation: [0.78, -0.695, 0.33]
+          rotation: [ 0, 0, 1, 20] 
+          geometry: { type: Box, size: [ 0.45, 0.10, 0.04 ] }
+        - #left
+          type: Shape 
+          name: front left6
+          translation: [ 0.392,  0.783, 0.05]
+          rotation: [ 1, 0, 0, -8 ]
+          geometry: { type: Box, size: [ 0.77, 0.1, 0.39 ] }
+        -
+          type: Shape 
+          name: front left7
+          translation: [ 0.34,  0.753, 0.305]
+          geometry: { type: Box, size: [ 0.7, 0.16, 0.2 ] }
+        -
+          type: Shape 
+          name: front left8
+          translation: [ 0.2,  0.73, 0.41]
+          rotation: [ [ 0, 1, 0, 8], [ 1, 0, 0, -30 ] ]
+          geometry: { type: Box, size: [ 0.4, 0.18, 0.1 ] }
+        -
+          type: Shape
+          name: front left9
+          translation: [0.945, 0.706, -0.048]
+          rotation: [ [ 0, 0, 1, -20], [ 0, 1, 0, -5 ] ]
+          geometry: { type: Box, size: [ 0.42, 0.10, 0.15 ] }
+        -
+          type: Shape 
+          name: front left10
+          translation: [0.96, 0.71, 0.09]
+          rotation: [ 0, 0, 1, -22] 
+          geometry: { type: Box, size: [ 0.43, 0.10, 0.15 ] }
+        -
+          type: Shape 
+          name: front left11
+          translation: [0.9, 0.71, 0.19]
+          rotation: [ 0, 0, 1, -24] 
+          geometry: { type: Box, size: [ 0.45, 0.10, 0.06 ] }
+        -
+          type: Shape 
+          name: front left12
+          translation: [0.84, 0.7, 0.27]
+          rotation: [ 0, 0, 1, -20] 
+          geometry: { type: Box, size: [ 0.45, 0.10, 0.1 ] }
+        -
+          type: Shape 
+          name: front left13
+          translation: [0.78, 0.695, 0.33]
+          rotation: [ 0, 0, 1, -20] 
+          geometry: { type: Box, size: [ 0.45, 0.10, 0.04 ] }
+
+    -
+      type: Transform
+      translation: [ 0.0, 0.001, 0.4]
+      elements: #inside front
+        - #left
+          type: Shape
+          name: inside front left1
+          translation: [ 0.923, 0.729, -0.008 ]
+          rotation: [ 0, 1, 0, 12 ]
+          geometry: { type: Box, size: [ 0.2, 0.18, 0.2 ] }
+        -
+          type: Shape 
+          name: inside front left2
+          translation: [ 0.94, 0.735, 0.22 ]
+          geometry: { type: Box, size: [ 0.2, 0.198, 0.34 ] }
+        -
+          type: Shape 
+          name: inside front left3
+          translation: [ 0.94, 0.715, 0.44 ]
+          geometry: { type: Box, size: [ 0.2, 0.198, 0.1] }
+        -
+          type: Shape 
+          name: inside front left4
+          translation: [ 0.84, 0.705, 0.439 ]
+          rotation: [ [ 0, 1, 0 , 58 ], [ 0, 0, 1, 25 ] ]
+          geometry: { type: Box, size: [ 0.2, 0.198, 0.01] }
+    -
+      type: Transform
+      translation: [ -0.38, 0.76, 0.28 ]
+      elements: # rib left
+        - &RIB_SHAPE1
+          type: Shape
+          name: rib left1
+          translation: [ -0.007, 0, 0.345 ]
+          rotation: [ [ 0, 1, 0, -13.5 ], [ 1, 0, 0, 4.5 ] ]
+          geometry: { type: Box, size: [ 0.068, 0.05, 0.74]  }
+        - &RIB_SHAPE2
+          type: Shape
+          name: rib left2
+          translation: [ -0.118, -0.118, 0.852 ]
+          rotation: [ [ 0, 1, 0, -10 ], [ 1, 0, 0, 29 ] ]
+          geometry: { type: Box, size: [ 0.068, 0.05, 0.38]  }
+
+CAR_BODY_AROUND_FR_DOOR1: &CAR_BODY_AROUND_FR_DOOR1
+  type: Group
+  elements:
+    -
+      type: Transform
+      translation: [ 1.0, 0.001, 0.4]
+      elements: #front
+        - 
+          type: Shape 
+          name: front center12
+          translation: [ -0.05,  -0.58, 0.495]
+          rotation: [ [ 0, 1, 0, 3 ], [ 1, 0, 0, 6 ] ]
+          geometry: { type: Box, size: [ 0.22, 0.32, 0.1 ] }
+          appearance: *RED
+    -
+      type: Transform
+      translation: [ 0.0, 0.001, 0.4]
+      elements: #inside front
+        -
+          type: Shape 
+          name: inside front right3
+          translation: [ 0.94, -0.715, 0.44 ]
+          geometry: { type: Box, size: [ 0.2, 0.198, 0.1] }
+          appearance: *RED
+        -
+          type: Shape 
+          name: inside front right4
+          translation: [ 0.84, -0.705, 0.439 ]
+          rotation: [ [ 0, 1, 0 , 58 ], [ 0, 0, 1, -25 ] ]
+          geometry: { type: Box, size: [ 0.2, 0.198, 0.01] }
+          appearance: *RED
+    - 
+      type: Transform
+      translation: [ -0.3, 0.001, 0.9 ]
+      elements:  # roof
+        - 
+          type: Shape 
+          name: roof front right1
+          translation: [ 0.77, -0.647, 0.227 ]
+          rotation: [ [ 0, 1, 0, 20] , [ 1, 0, 0, 30 ], [ 0, 0, 1, -17 ] ]
+          geometry: { type: Box, size: [ 0.6, 0.06, 0.015 ] }
+          appearance: *RED
+        - 
+          type: Shape 
+          name: roof front right2
+          translation: [ 1.07, -0.735, 0.057 ]
+          rotation: [ [ 0, 1, 0, 25] , [ 1, 0, 0, 32 ], [ 0, 0, 1, -17 ] ]
+          geometry: { type: Box, size: [ 0.12, 0.06, 0.02 ] }
+          appearance: *RED
+        - 
+          type: Shape 
+          name: roof front right3
+          translation: [ 1.176, -0.76, 0.0 ]
+          geometry: { type: Box, size: [ 0.12, 0.04, 0.058 ] }
+          appearance: *RED
+    -
+      type: Transform
+      translation: [ -0.4, -0.758, 0.28 ]
+      elements: # rib right
+        -
+          <<: *RIB_SHAPE1
+          name: rib right1
+          translation: [ -0.007, 0, 0.345 ]
+          rotation: [ [ 0, 1, 0, -13.5 ], [ 1, 0, 0, -4.5 ] ]
+          appearance: *RED
+        - 
+          <<: *RIB_SHAPE2
+          name: rib right2
+          translation: [ -0.118, 0.118, 0.852 ]
+          rotation: [ [ 0, 1, 0, -10 ], [ 1, 0, 0, -29 ] ]
+          appearance: *RED
+
+CAR_BODY_AROUND_FR_DOOR2: &CAR_BODY_AROUND_FR_DOOR2
+      type: Transform
+      translation: [ 0.0, 0.001, 0.4]
+      elements: #inside front
+        - #right
+          type: Shape
+          name: inside front right1
+          translation: [ 0.923, -0.729, -0.008 ]
+          rotation: [ 0, 1, 0, 12 ]
+          geometry: { type: Box, size: [ 0.2, 0.18, 0.2 ] }
+          appearance: *RED
+        -
+          type: Shape 
+          name: inside front right2
+          translation: [ 0.94, -0.735, 0.22 ]
+          geometry: { type: Box, size: [ 0.2, 0.198, 0.34 ] }
+          appearance: *RED
+
+CAR_BODY_AROUND_FR_DOOR2_SHRINK: &CAR_BODY_AROUND_FR_DOOR2_SHRINK
+      type: Transform
+      translation: [ 0.0, 0.001, 0.4]
+      elements: #inside front
+        - #right
+          type: Shape
+          name: inside front right1
+          translation: [ 0.935, -0.729, -0.05 ]
+          rotation: [ 0, 1, 0, 20 ]
+          geometry: { type: Box, size: [ 0.18, 0.18, 0.15 ] }
+          appearance: *RED
+        -
+          type: Shape 
+          name: inside front right2
+          translation: [ 0.94, -0.735, 0.2 ]
+          geometry: { type: Box, size: [ 0.135, 0.198, 0.4 ] }
+          appearance: *RED
+
+CAR_BODY_AROUND_FR_DOOR: &CAR_BODY_AROUND_FR_DOOR
+  type: Group
+  elements:
+    - *CAR_BODY_AROUND_FR_DOOR1
+    - *CAR_BODY_AROUND_FR_DOOR2
+
+CAR_BODY_AROUND_FR_DOOR_SHRINK: &CAR_BODY_AROUND_FR_DOOR_SHRINK
+  - *CAR_BODY_AROUND_FR_DOOR1
+  - *CAR_BODY_AROUND_FR_DOOR2_SHRINK
+
+CAR_BODY: &CAR_BODY
+  - *CAR_BODY_WITHOUT_PART_AROUND_FR_DOOR
+  - *CAR_BODY_AROUND_FR_DOOR
+
+
+CAR_INTERIOR_WITHOUT_PART_AROUND_FR_DOOR: &CAR_INTERIOR_WITHOUT_PART_AROUND_FR_DOOR
+  type: Group
+  elements:
+    -
+      type: Transform
+      translation: [ 0.0, 0.001, 0.4]
+      elements: #inside front
+        - #right foot
+          type: Shape
+          name: inside front right foot1
+          translation: [ 0.93, -0.615, 0.04 ]
+          rotation: [ [ 0, 0, 1, 18 ], [ 1, 0, 0, 3 ] ]
+          geometry: { type: Box, size: [ 0.2, 0.02, 0.3 ] }
+        - 
+          type: Shape 
+          name: inside front right foot2
+          translation: [ 0.914, -0.619, 0.18 ]
+          rotation: [ [ 0, 0, 1, 18 ], [ 0, 1, 0, -15 ], [ 1, 0, 0, -5 ] ]
+          geometry: { type: Box, size: [ 0.2, 0.02, 0.16 ] }
+        - 
+          type: Shape
+          name: inside front right foot3
+          translation: [ 0.88, -0.37, -0.064]
+          rotation: [ 0, 1, 0, -20.2 ]
+          geometry: { type: Box, size: [ 0.2, 0.55, 0.02 ] }
+        - 
+          type: Shape
+          name: inside front right foot4
+          translation: [ 1.002, -0.37, 0.06]
+          rotation: [ 0, 1, 0, 15 ]
+          geometry: { type: Box, size: [ 0.02, 0.55, 0.2 ] }
+        - 
+          type: Shape
+          name: inside front right foot5
+          translation: [ 0.9, -0.12, 0.06]
+          rotation: [ [ 0, 0, 1, -3 ], [ 1, 0, 0, 7 ] ]
+          geometry: { type: Box, size: [ 0.25, 0.04, 0.36 ] }
+        - 
+          type: Shape
+          name: inside front right foot6
+          translation: [ 0.91, -0.37, 0.195]
+          rotation: [ 0, 1, 0, 23.5 ]
+          geometry: { type: Box, size: [ 0.25, 0.55, 0.02 ] }
+        - #right up
+          type: Shape
+          name: inside front right up1
+          translation: [ 0.705, -0.38, 0.286]
+          rotation: [ 0, 1, 0, 15 ]
+          geometry: { type: Box, size: [ 0.25, 0.46, 0.05 ] }
+        -
+          type: Shape
+          name: inside front right up2
+          translation: [ 0.58, -0.38, 0.355]
+          rotation: [ 0, 1, 0, -23 ]
+          geometry: { type: Box, size: [ 0.05, 0.43, 0.112] }
+        -
+          type: Shape
+          name: inside front right up3
+          translation: [ 0.576, -0.38, 0.435]
+          rotation: [ 0, 1, 0, 20 ]
+          geometry: { type: Box, size: [ 0.05, 0.43, 0.10] }
+        -
+          type: Shape
+          name: inside front right up4
+          translation: [ 0.612, -0.38, 0.488]
+          rotation: [ 0, 1, 0, 56.5 ]
+          geometry: { type: Box, size: [ 0.05, 0.43, 0.07] }
+        -
+          type: Shape
+          name: inside front right up5
+          translation: [ 0.745, -0.375, 0.523]
+          rotation: [ 0, 1, 0, -10 ]
+          geometry: { type: Box, size: [ 0.23, 0.43, 0.05] }
+        -
+          type: Shape
+          name: inside front right up8
+          translation: [ 0.745, -0.63, 0.333]
+          rotation: [ [ 0, 1, 0, 15], [ 1, 0, 0, 8 ] ]
+          geometry: { type: Box, size: [0.23, 0.08, 0.13] }
+        -
+          type: Shape
+          name: inside front right up9
+          translation: [ 0.657, -0.6, 0.405]
+          geometry: { type: Cylinder, radius: 0.11, height: 0.02 }
+        -
+          type: Shape
+          name: inside front right up10
+          translation: [ 0.657, -0.63, 0.405]
+          geometry: { type: Cylinder, radius: 0.1, height: 0.04 }
+        - #left foot
+          type: Shape
+          name: inside front left foot1
+          translation: [ 0.93, 0.615, 0.04 ]
+          rotation: [ [ 0, 0, 1, -18 ], [ 1, 0, 0, -3 ] ]
+          geometry: { type: Box, size: [ 0.2, 0.02, 0.3 ] }
+        - 
+          type: Shape 
+          name: inside front left foot2
+          translation: [ 0.914, 0.619, 0.18 ]
+          rotation: [ [ 0, 0, 1, -18 ], [ 0, 1, 0, -15 ], [ 1, 0, 0, 5 ] ]
+          geometry: { type: Box, size: [ 0.2, 0.02, 0.16 ] }
+        - 
+          type: Shape
+          name: inside front left foot3
+          translation: [ 0.88, 0.37, -0.064]
+          rotation: [ 0, 1, 0, -20.2 ]
+          geometry: { type: Box, size: [ 0.2, 0.55, 0.02 ] }
+        - 
+          type: Shape
+          name: inside front left foot4
+          translation: [ 1.002, 0.37, 0.06]
+          rotation: [ 0, 1, 0, 15 ]
+          geometry: { type: Box, size: [ 0.02, 0.55, 0.2 ] }
+        - 
+          type: Shape  
+          name: inside front left foot5
+          translation: [ 0.9, 0.12, 0.06]
+          rotation: [ [ 0, 0, 1, 3 ], [ 1, 0, 0, -7 ] ]
+          geometry: { type: Box, size: [ 0.25, 0.04, 0.36 ] }
+        - 
+          type: Shape
+          name: inside front left foot6
+          translation: [ 0.91, 0.37, 0.195]
+          rotation: [ 0, 1, 0, 23.5 ]
+          geometry: { type: Box, size: [ 0.25, 0.55, 0.02 ] }
+        - #left up
+          type: Shape
+          name: inside front left up1
+          translation: [ 0.705, 0.38, 0.286]
+          rotation: [ 0, 1, 0, 15 ]
+          geometry: { type: Box, size: [ 0.25, 0.46, 0.05 ] }
+        -
+          type: Shape
+          name: inside front left up2
+          translation: [ 0.58, 0.38, 0.355]
+          rotation: [ 0, 1, 0, -23 ]
+          geometry: { type: Box, size: [ 0.05, 0.42, 0.112] }
+        -
+          type: Shape
+          name: inside front left up3
+          translation: [ 0.576, 0.38, 0.435]
+          rotation: [ 0, 1, 0, 20 ]
+          geometry: { type: Box, size: [ 0.05, 0.42, 0.10] }
+        -
+          type: Shape
+          name: inside front left up4
+          translation: [ 0.612, 0.38, 0.488]
+          rotation: [ 0, 1, 0, 56.5 ]
+          geometry: { type: Box, size: [ 0.05, 0.42, 0.07] }
+        -
+          type: Shape 
+          name: inside front left up5
+          translation: [ 0.735, 0.38, 0.54]
+          geometry: { type: Box, size: [ 0.26, 0.42, 0.05] }
+        -
+          type: Shape 
+          name: inside front left up6
+          translation: [ 0.59, 0.38, 0.542]
+          geometry: { type: Box, size: [ 0.05, 0.2, 0.04] }
+        -
+          type: Shape 
+          name: inside front left up7
+          translation: [ 0.74, 0.64, 0.523]
+          rotation: [ [ 0, 1, 0, -10 ], [ 1, 0, 0, -6 ], [ 0, 0, 1, 12 ] ]
+          geometry: { type: Box, size: [ 0.23, 0.16, 0.03] }
+        -
+          type: Shape
+          name: inside front left up8
+          translation: [ 0.745, 0.63, 0.433]
+          rotation: [ 1, 0, 0, -8 ]
+          geometry: { type: Box, size: [0.23, 0.14, 0.17] }
+        -
+          type: Shape
+          name: inside front left up9
+          translation: [ 0.745, 0.63, 0.333]
+          rotation: [ [ 0, 1, 0, 15], [ 1, 0, 0, -8 ] ]
+          geometry: { type: Box, size: [0.23, 0.08, 0.13] }
+        -
+          type: Shape
+          name: inside front left up10
+          translation: [ 0.657, 0.6, 0.405]
+          geometry: { type: Cylinder, radius: 0.11, height: 0.02 }
+        -
+          type: Shape
+          name: inside front left up11
+          translation: [ 0.657, 0.63, 0.405]
+          geometry: { type: Cylinder, radius: 0.1, height: 0.04 }
+        -
+          type: Shape
+          name: inside front left up12
+          translation: [ 0.657, 0.67, 0.405]
+          geometry: { type: Cylinder, radius: 0.08, height: 0.04 }
+        - #center
+          type: Shape
+          name: inside front center1
+          translation: [ 0.25, 0.0, -0.04]
+          geometry: { type: Box, size: [0.5, 0.22, 0.08] }
+        -
+          type: Shape
+          name: inside front center2
+          translation: [ 0.28, 0.0, 0.0215]
+          geometry: { type: Box, size: [0.442, 0.18, 0.05] }
+        -
+          type: Shape
+          name: inside front center3
+          translation: [ -0.005, 0.0, -0.057]
+          rotation: [ 0, 1, 0, 34 ]
+          geometry: { type: Box, size: [0.1, 0.19, 0.105] }
+        -
+          type: Shape
+          name: inside front center4
+          translation: [ 0.029, 0.0, 0.008]
+          rotation: [ 0, 1, 0, -22]
+          geometry: { type: Box, size: [0.084, 0.185, 0.05] }
+        -
+          type: Shape 
+          name: inside front center5
+          translation: [ 0.65, -0.005, -0.04]
+          geometry: { type: Box, size: [0.3, 0.21, 0.08] }
+        - 
+          type: Shape  
+          name: inside front center6
+          translation: [ 0.648, -0.07, 0.09]
+          rotation: [ [ 1, 0, 0, 17 ], [ 0, 1, 0, 20 ] ]
+          geometry: { type: Box, size: [ 0.3, 0.1, 0.4 ] }
+        - 
+          type: Shape  
+          name: inside front center7
+          translation: [ 0.643, 0.0, 0.09]
+          rotation: [ 0, 1, 0, 18 ]
+          geometry: { type: Box, size: [ 0.3, 0.18, 0.4 ] }
+        - 
+          type: Shape  
+          name: inside front center8
+          translation: [ 0.648, 0.07, 0.09]
+          rotation: [ [ 1, 0, 0, -10 ], [ 0, 1, 0, 20 ] ]
+          geometry: { type: Box, size: [ 0.3, 0.1, 0.4 ] }
+        -
+          type: Shape 
+          name: inside front center9
+          translation: [ 0.558, -0.01, 0.355]
+          rotation: [ 0, 1, 0, -23 ]
+          geometry: { type: Box, size: [ 0.05, 0.31, 0.112] }
+        -
+          type: Shape
+          name: inside front center10
+          translation: [ 0.554, -0.01, 0.435]
+          rotation: [ 0, 1, 0, 20 ]
+          geometry: { type: Box, size: [ 0.05, 0.31, 0.10] }
+        -
+          type: Shape
+          name: inside front center11
+          translation: [ 0.59, -0.01, 0.488]
+          rotation: [ 0, 1, 0, 56.5 ]
+          geometry: { type: Box, size: [ 0.05, 0.31, 0.07] }
+        -
+          type: Shape
+          name: inside front center12
+          translation: [ 0.729, 0.005, 0.522]
+          rotation: [ 0, 1, 0, -9 ]
+          geometry: { type: Box, size: [ 0.245, 0.34, 0.05] }
+        -
+          type: Shape
+          name: inside front center13
+          translation: [ 0.65, 0.155, 0.40]
+          geometry: { type: Cylinder, radius: 0.12, height: 0.04 }
+    -
+      type: Transform
+      translation: [ 0.0, 0.001, 0.3]
+      elements: #back sheets
+        - 
+          type: Shape
+          name: back sheets1
+          translation: [ -0.838, 0.0, 0.13]
+          rotation: [ 0, 1, 0, -1]
+          geometry: { type: Box, size: [ 0.4, 1.38, 0.23] }
+        -
+          type: Shape
+          name: back sheets2
+          translation: [ -1.105, 0.0, 0.43]
+          rotation: [ 0, 1, 0, -27]
+          geometry: { type: Box, size: [ 0.1, 1.38, 0.48] }
+    -
+      type: Transform
+      translation: [ 0.0, 0.372, 0.33 ]
+      elements: #left sheet
+        -
+          type: Shape
+          name: left sheet1
+          translation: [ 0.064, 0.0, 0.06]
+          geometry: { type: Box, size: [ 0.51, 0.437, 0.13] }
+        -
+          type: Shape
+          name: left sheet2
+          translation: [ 0.119, 0.0, 0.12]
+          rotation: [ 0, 1, 0, -3.5 ]
+          geometry: { type: Box, size: [ 0.4, 0.437, 0.03] }
+        -
+          type: Shape
+          translation: [ -0.200, 0.0, 0.315]
+          rotation: [ 0, 1, 0, -9 ]
+          geometry: { type: Box, size: [ 0.076, 0.437, 0.65] }
+        -
+          type: Shape
+          name: left sheet3
+          translation: [ -0.158, 0.0, 0.338]
+          rotation: [ 0, 1, 0, -17 ]
+          geometry: { type: Box, size: [ 0.08, 0.437, 0.6] }
+        -
+          type: Shape
+          name: left sheet4
+          translation: [ -0.247, 0.095, 0.65]
+          rotation: [ 1, 0, 0, 90 ]
+          geometry: { type: Cylinder, radius: 0.015, height: 0.05 }
+        -
+          type: Shape
+          name: left sheet5
+          translation: [ -0.247, -0.072, 0.65]
+          rotation: [ 1, 0, 0, 90 ]
+          geometry: { type: Cylinder, radius: 0.015, height: 0.05 }
+        -
+          type: Shape
+          name: left sheet6
+          translation: [ -0.247, 0.0096, 0.747]
+          geometry: { type: Box, size: [ 0.081, 0.278, 0.16] }
+    -
+      type: Transform
+      translation: [ 0.0, -0.384, 0.33 ]
+      elements: #right sheet
+        -
+          type: Shape
+          name: right sheet1
+          translation: [ 0.064, -0.005, 0.06]
+          geometry: { type: Box, size: [ 0.51, 0.41, 0.13] }
+        -
+          type: Shape
+          name: right sheet2
+          translation: [ 0.119, -0.005, 0.12]
+          rotation: [ 0, 1, 0, -3.5 ]
+          geometry: { type: Box, size: [ 0.4, 0.41, 0.03] }
+        -
+          type: Shape
+          name: right sheet3
+          translation: [ -0.200, -0.005, 0.315]
+          rotation: [ 0, 1, 0, -9 ]
+          geometry: { type: Box, size: [ 0.076, 0.41, 0.65] }
+        -
+          type: Shape
+          name: right sheet4
+          translation: [ -0.158, -0.005, 0.338]
+          rotation: [ 0, 1, 0, -17 ]
+          geometry: { type: Box, size: [ 0.08, 0.41, 0.6] }
+        -
+          type: Shape
+          name: right sheet5
+          translation: [ -0.247, -0.095, 0.65]
+          rotation: [ 1, 0, 0, 90 ]
+          geometry: { type: Cylinder, radius: 0.015, height: 0.05 }
+        -
+          type: Shape
+          name: right sheet6
+          translation: [ -0.247, 0.072, 0.65]
+          rotation: [ 1, 0, 0, 90 ]
+          geometry: { type: Cylinder, radius: 0.015, height: 0.05 }
+        -
+          type: Shape
+          name: right sheet7
+          translation: [ -0.247, -0.0096, 0.747]
+          geometry: { type: Box, size: [ 0.081, 0.278, 0.16] }
+  
+CAR_INTERIOR_AROUND_FR_DOOR: &CAR_INTERIOR_AROUND_FR_DOOR
+      type: Transform
+      translation: [ 0.0, 0.001, 0.4]
+      elements: #inside front
+        -
+          type: Shape 
+          name: inside front right up6
+          translation: [ 0.74, -0.64, 0.523]
+          rotation: [ [ 0, 1, 0, -10 ], [ 1, 0, 0, 6 ], [ 0, 0, 1, -12 ] ]
+          geometry: { type: Box, size: [ 0.23, 0.16, 0.03] }
+          appearance: *RED
+        -
+          type: Shape
+          name: inside front right up7
+          translation: [ 0.745, -0.63, 0.433]
+          rotation: [ 1, 0, 0, 8 ]
+          geometry: { type: Box, size: [0.23, 0.14, 0.17] }
+          appearance: *RED
+        -
+          type: Shape
+          name: inside front right up11
+          translation: [ 0.657, -0.67, 0.405]
+          geometry: { type: Cylinder, radius: 0.08, height: 0.04 }
+          appearance: *RED
+
+CAR_INTERIOR: &CAR_INTERIOR
+  - *CAR_INTERIOR_WITHOUT_PART_AROUND_FR_DOOR
+  - *CAR_INTERIOR_AROUND_FR_DOOR
+
+CAR_STEERING: &CAR_STEERING
+  type: Transform
+  rotation: [ 0, 1, 0, 16.2 ]
+  elements:
+    - # pillar
+      type: Shape
+      name: steering pillar
+      translation: [ 0.15, 0.0, 0 ]
+      rotation: [ 0, 0, 1, 90 ]
+      geometry: { type: Cylinder, radius: 0.06, height: 0.4 }
+    - # ring
+      type: Shape 
+      name: steering ring1
+      translation: [ -0.0615, 0.033, 0.157 ] 
+      rotation: [ 1, 0, 0, -10 ]
+      geometry: &STEERING_RING_SHAPE1
+        { type: Cylinder, radius: 0.0115, height: 0.071 }
+    -
+      type: Shape
+      name: steering ring2
+      translation: [ -0.06, 0.094, 0.133 ] 
+      rotation: [ [ 1, 0, 0, -33 ], [ 0, 0, 1, -2 ] ]
+      geometry: *STEERING_RING_SHAPE1
+    -
+      type: Shape
+      name: steering ring3
+      translation: [ -0.057, 0.142, 0.0885 ] 
+      rotation: [ [ 1, 0, 0, -53 ], [ 0, 0, 1, -3 ] ]
+      geometry: *STEERING_RING_SHAPE1
+    -
+      type: Shape
+      name: steering ring4
+      translation: [ -0.0545, 0.167, 0.033 ] 
+      rotation: [ [ 1, 0, 0, -80 ], [ 0, 0, 1, -2 ] ]
+      geometry: &STEERING_RING_SHAPE2
+        { type: Cylinder, radius: 0.0115, height: 0.064 }
+    -
+      type: Shape
+      name: steering ring5
+      translation: [ -0.0615, -0.033, 0.157 ] 
+      rotation: [ 1, 0, 0, 10 ]
+      geometry: *STEERING_RING_SHAPE1
+    -
+      type: Shape
+      name: steering ring6
+      translation: [ -0.06, -0.094, 0.133 ] 
+      rotation: [ [ 1, 0, 0, 33 ], [ 0, 0, 1, 2 ] ]
+      geometry: *STEERING_RING_SHAPE1
+    -
+      type: Shape
+      name: steering ring7
+      translation: [ -0.057, -0.142, 0.0885 ] 
+      rotation: [ [ 1, 0, 0, 53 ], [ 0, 0, 1, 3 ] ]
+      geometry: *STEERING_RING_SHAPE1
+    -
+      type: Shape
+      name: steering ring8
+      translation: [ -0.0545, -0.167, 0.033 ] 
+      rotation: [ [ 1, 0, 0, 80 ], [ 0, 0, 1, 2 ] ]
+      geometry: *STEERING_RING_SHAPE2
+    -
+      type: Shape 
+      name: steering ring9
+      translation: [ -0.046, -0.034, -0.146 ] 
+      rotation: [ 1, 0, 0, -10 ]
+      geometry: &STEERING_RING_SHAPE3
+        { type: Cylinder, radius: 0.0115, height: 0.073 }
+    -
+      type: Shape 
+      name: steering ring10
+      translation: [ -0.047, -0.095, -0.122 ] 
+      rotation: [ [ 1, 0, 0, -33 ], [ 0, 0, 1, -2 ] ]
+      geometry: *STEERING_RING_SHAPE1
+    -
+      type: Shape 
+      name: steering ring11
+      translation: [ -0.0498, -0.142, -0.079 ] 
+      rotation: [ [ 1, 0, 0, -53 ], [ 0, 0, 1, -3 ] ]
+      geometry: &STEERING_RING_SHAPE4
+        { type: Cylinder, radius: 0.0115, height: 0.065 }
+    -
+      type: Shape 
+      name: steering ring12
+      translation: [ -0.0526, -0.166, -0.026 ] 
+      rotation: [ [ 1, 0, 0, -78 ], [ 0, 0, 1, -2 ] ]
+      geometry: *STEERING_RING_SHAPE2
+    - 
+      type: Shape 
+      name: steering ring13
+      translation: [ -0.046, 0.034, -0.146 ] 
+      rotation: [ 1, 0, 0, 10 ]
+      geometry: *STEERING_RING_SHAPE3
+    -
+      type: Shape 
+      name: steering ring14
+      translation: [ -0.047, 0.095, -0.122 ] 
+      rotation: [ [ 1, 0, 0, 33 ], [ 0, 0, 1, 2 ] ]
+      geometry: *STEERING_RING_SHAPE1
+    -
+      type: Shape 
+      name: steering ring15
+      translation: [ -0.0498, 0.142, -0.079 ] 
+      rotation: [ [ 1, 0, 0, 53 ], [ 0, 0, 1, 3 ] ]
+      geometry: *STEERING_RING_SHAPE4
+    -
+      type: Shape 
+      name: steering ring16
+      translation: [ -0.0526, 0.166, -0.026 ] 
+      rotation: [ [ 1, 0, 0, 78 ], [ 0, 0, 1, 2 ] ]
+      geometry: *STEERING_RING_SHAPE2
+    - # center top
+      type: Shape 
+      name: steering center top1
+      translation: [ -0.058, 0.019, 0.037 ] 
+      rotation: [ [ 1, 0, 0, -9 ], [ 0, 1, 0, -3 ] ]
+      geometry: { type: Box, size: [ 0.02, 0.05, 0.07]  }
+    -  
+      type: Shape 
+      name: steering center top2
+      translation: [ -0.0575, 0.052, 0.021 ] 
+      rotation: [ [ 1, 0, 0, -37 ], [ 0, 1, 0, -3 ] ]
+      geometry: { type: Box, size: [ 0.02, 0.06, 0.07]  }
+    -  
+      type: Shape 
+      name: steering center top3
+      translation: [ -0.057, 0.063, 0.003 ] 
+      rotation: [ [ 1, 0, 0, 2 ], [ 0, 1, 0, -3 ] ]
+      geometry: { type: Box, size: [ 0.02, 0.07, 0.056]  }
+    -  
+      type: Shape 
+      name: steering center top4
+      translation: [ -0.058, -0.019, 0.037 ] 
+      rotation: [ [ 1, 0, 0, 9 ], [ 0, 1, 0, -3 ] ]
+      geometry: { type: Box, size: [ 0.02, 0.05, 0.07]  }
+    -  
+      type: Shape 
+      name: steering center top5
+      translation: [ -0.0575, -0.052, 0.021 ] 
+      rotation: [ [ 1, 0, 0, 37 ], [ 0, 1, 0, -3 ] ]
+      geometry: { type: Box, size: [ 0.02, 0.06, 0.07]  }
+    -  
+      type: Shape 
+      name: steering center top6
+      translation: [ -0.057, -0.063, 0.003 ] 
+      rotation: [ [ 1, 0, 0, -2 ], [ 0, 1, 0, -3 ] ]
+      geometry: { type: Box, size: [ 0.02, 0.07, 0.056]  }
+    -  # center bottom
+      type: Shape 
+      name: steering center bottom1
+      translation: [ -0.055, 0.052, -0.027 ] 
+      rotation: [ [ 1, 0, 0, -46 ], [ 0, 1, 0, -2 ] ]
+      geometry: { type: Box, size: [ 0.02, 0.06, 0.07]  }
+    -  
+      type: Shape 
+      name: steering center bottom2
+      translation: [ -0.054, 0.015, -0.0455 ] 
+      rotation: [ [ 1, 0, 0, 15 ], [ 0, 1, 0, -2 ] ]
+      geometry: { type: Box, size: [ 0.02, 0.05, 0.07]  }
+    -  
+      type: Shape 
+      name: steering center bottom3
+      translation: [ -0.055, -0.052, -0.027 ] 
+      rotation: [ [ 1, 0, 0, 46 ], [ 0, 1, 0, -2 ] ]
+      geometry: { type: Box, size: [ 0.02, 0.06, 0.07]  }
+    -  
+      type: Shape 
+      name: steering center bottom4
+      translation: [ -0.054, -0.015, -0.0455 ] 
+      rotation: [ [ 1, 0, 0, -15 ], [ 0, 1, 0, -2 ] ]
+      geometry: { type: Box, size: [ 0.02, 0.05, 0.07]  }
+    -  
+      type: Shape 
+      name: steering center bottom5
+      translation: [ -0.056, 0, 0 ] 
+      rotation: [ 0, 1, 0, -2 ] 
+      geometry: { type: Box, size: [ 0.02, 0.07, 0.03]  }
+    - #left
+      type: Shape 
+      name: steering center left1
+      translation: [ -0.054, 0.125, 0.005 ] 
+      rotation: [ 0, 1, 0, -3 ]
+      geometry: { type: Box, size: [ 0.011, 0.08, 0.05]  }
+    - 
+      type: Shape 
+      name: steering center left2
+      translation: [ -0.056, 0.154, 0.043 ] 
+      rotation: [ [ 1, 0, 0, -17 ], [ 0, 1, 0, -3 ] ]
+      geometry: { type: Box, size: [ 0.011, 0.02, 0.04]  }
+    - 
+      type: Shape 
+      name: steering center left3
+      translation: [ -0.052, 0.154, -0.035 ] 
+      rotation: [ [ 1, 0, 0, 18 ], [ 0, 1, 0, -2 ] ]
+      geometry: { type: Box, size: [ 0.011, 0.02, 0.04]  }
+    - #right
+      type: Shape 
+      name: steering center right1
+      translation: [ -0.054, -0.125, 0.005 ] 
+      rotation: [ 0, 1, 0, -3 ]
+      geometry: { type: Box, size: [ 0.011, 0.08, 0.05]  }
+    - 
+      type: Shape 
+      name: steering center right2
+      translation: [ -0.056, -0.154, 0.043 ] 
+      rotation: [ [ 1, 0, 0, 17 ], [ 0, 1, 0, -3 ] ]
+      geometry: { type: Box, size: [ 0.011, 0.02, 0.04]  }
+    - 
+      type: Shape 
+      name: steering center right3
+      translation: [ -0.052, -0.154, -0.035 ] 
+      rotation: [ [ 1, 0, 0, -18 ], [ 0, 1, 0, -2 ] ]
+      geometry: { type: Box, size: [ 0.011, 0.02, 0.04]  }
+    - #bottom
+      type: Shape 
+      name: steering center bottom6
+      translation: [ -0.049, 0, -0.11 ] 
+      rotation: [ 0, 1, 0, -3 ]
+      geometry: { type: Box, size: [ 0.011, 0.056, 0.08]  }
+    - 
+      type: Shape 
+      name: steering center bottom7
+      translation: [ -0.048, 0.044, -0.1354 ] 
+      rotation: [ [ 1, 0, 0, -17 ], [ 0, 1, 0, -3 ] ]
+      geometry: { type: Box, size: [ 0.011, 0.04, 0.016]  }
+    - 
+      type: Shape 
+      name: steering center bottom8
+      translation: [ -0.048, -0.044, -0.1354 ] 
+      rotation: [ [ 1, 0, 0, 17 ], [ 0, 1, 0, -3 ] ]
+      geometry: { type: Box, size: [ 0.011, 0.04, 0.016]  }
+      
+CAR_DOOR_FR_WINDOW: &CAR_DOOR_FR_WINDOW
+  type: Transform
+  translation: [ 0.0, -0.73, 1.0 ]
+  rotation: [ [ 0, 1, 0, 2.3 ], [ 1, 0, 0, -29 ] ] 
+  elements: #window
+    -
+      type: Shape
+      name: DoorFR window1
+      translation : [ -0.175, 0.0, 0.115 ]
+      geometry: { type: Box, size: [ 0.5, 0.008, 0.4 ] }
+    -
+      type: Shape
+      name: DoorFR window2
+      translation : [ 0.125, 0.0, 0.035 ]
+      geometry: { type: Box, size: [ 0.12, 0.008, 0.25 ] }
+    -
+      type: Shape 
+      name: DoorFR window3
+      translation : [ 0.325, 0.0, 0.027 ]
+      rotation : [ 0, 1, 0, 30 ] 
+      geometry: { type: Box, size: [ 0.3, 0.008, 0.32 ] }
+    -
+      type: Shape
+      name: DoorFR window4
+      translation : [ 0.172, 0.0, 0.152 ]
+      rotation : [ 0, 1, 0, 26 ]
+      geometry: { type: Box, size: [ 0.11, 0.008, 0.25 ] }
+    -
+      type: Shape
+      name: DoorFR window5
+      translation : [ 0.092, 0.0, 0.182 ]
+      rotation : [ 0, 1, 0, 15 ]
+      geometry: { type: Box, size: [ 0.11, 0.008, 0.25 ] }
+    -
+      type: Shape
+      name: DoorFR window6
+      translation : [ -0.033, 0.0, 0.297 ]
+      rotation : [ 0, 1, 0, 5 ]
+      geometry: { type: Box, size: [ 0.205, 0.008, 0.06 ] }
+    -
+      type: Shape
+      name: DoorFR window7
+      translation : [ -0.3115, 0.0, 0.2995 ]
+      rotation : [ 0, 1, 0, -2 ]
+      geometry: { type: Box, size: [ 0.36, 0.008, 0.06 ] }
+    -
+      type: Shape
+      name: DoorFR window8
+      translation : [ -0.4992, 0.0, 0.3117 ]
+      rotation : [ 0, 1, 0, -11 ]
+      geometry: { type: Box, size: [ 0.018, 0.008, 0.02 ] }
+    -
+      type: Shape
+      name: DoorFR window9
+      translation : [ -0.423, 0.0, 0.135 ]
+      rotation : [ 0, 1, 0, -11 ]
+      geometry: { type: Box, size: [ 0.1, 0.008, 0.36 ] }
+    -
+      type: Shape
+      name: DoorFR window10
+      translation : [ -0.4255, 0.0, -0.067 ]
+      rotation : [ 0, 1, 0, 40 ]
+      geometry: { type: Box, size: [ 0.04, 0.008, 0.04 ] }
+      
+CAR_DOOR_FR_BODY: &CAR_DOOR_FR_BODY
+  type: Transform
+  elements : # door body
+    - #top
+      type: Shape
+      name: DoorFR center top1
+      translation : [ 0.17, -0.749, 0.896 ]
+      rotation: [ [ 0, 1, 0, 3.2 ], [ 1, 0, 0, -9] ] 
+      geometry: { type: Box, size: [ 1.25, 0.06, 0.05 ] }
+    -
+      type: Shape
+      name: DoorFR center top2
+      translation : [ 0.17, -0.719, 0.8865 ]
+      rotation: [ [ 0, 1, 0, 3.2 ], [ 1, 0, 0, -40] ] 
+      geometry: { type: Box, size: [ 1.25, 0.032, 0.05 ] }
+    - #inside
+      type: Shape
+      name: DoorFR center inside1
+      translation : [ 0.2, -0.7155, 0.645 ]
+      rotation: [  0, 1, 0, 3.2 ] 
+      geometry: { type: Box, size: [ 1.1, 0.05, 0.5 ] }
+    -
+      type: Shape 
+      name: DoorFR center insider2
+      translation : [ 0.268, -0.7155, 0.3760 ]
+      rotation: [ 0, 1, 0, 0.9 ] 
+      geometry: { type: Box, size: [ 1.06, 0.05, 0.1 ] }
+    -
+      type: Shape 
+      name: DoorFR center inside3
+      translation : [ -0.399, -0.7155, 0.844 ]
+      rotation: [  0, 1, 0, 3.2 ] 
+      geometry: { type: Box, size: [ 0.12, 0.05, 0.17 ] }
+    -  #bottom
+      type: Shape 
+      name: DoorFR center bottom1
+      translation : [ 0.268, -0.775, 0.334 ]
+      rotation: [ [ 0, 1, 0, 0.9 ], [ 1, 0, 0, 2.7] ]
+      geometry: { type: Box, size: [ 1.06, 0.08, 0.02 ] }
+    -  #outside
+      type: Shape
+      name: DoorFR center outside1
+      translation : [ 0.175, -0.766, 0.853 ]
+      rotation: [ [ 0, 1, 0, 3.2 ], [ 1, 0, 0, -38.5] , [ 1, 0, 0, 2]  ] 
+      geometry: { type: Box, size: [ 1.24, 0.1, 0.105 ] }
+    -
+      type: Shape
+      name: DoorFR center outside2
+      translation : [ 0.2, -0.7668, 0.70 ]
+      rotation: [ [ 0, 1, 0, 2.3 ], [ 1, 0, 0, -0.6 ] ] 
+      geometry: { type: Box, size: [ 1.24, 0.14, 0.29 ] }
+    -
+      type: Shape
+      name: DoorFR center outside3
+      translation : [ 0.213, -0.841, 0.557 ]
+      rotation: [ 0, 1, 0, 1.3 ]
+      geometry: { type: Box, size: [ 1.275, 0.02, 0.05 ] }
+    - 
+      type: Shape
+      name: DoorFR center outside4
+      translation : [ -0.424, -0.841, 0.571 ]
+      rotation: [ 0, 1, 0, -16 ]
+      geometry: { type: Box, size: [ 0.014, 0.02, 0.049 ] }
+    -
+      type: Shape
+      name: DoorFR center outside5
+      translation : [ 0.275, -0.767, 0.44 ]
+      rotation: [ [ 0, 1, 0, 1 ], [ 1, 0, 0, 6 ] ] 
+      geometry: { type: Box, size: [ 1.05, 0.12, 0.22 ] }
+    -   #rear top
+      type: Transform
+      rotation : [ [ 0, 0, 1, -4 ], [ 0, 1, 0, 13 ] ]
+      translation : [ -0.4375, -0.783, 0.9030 ]
+      elements:
+        -
+          type: Shape 
+          name: DoorFR rear top1
+          translation: [ -0.0275, -0.0395, -0.027 ]
+          rotation: [ [ 1, 0, 0, -37.5], [ 0, 0, 1, -2 ] ]
+          geometry: { type: Box, size: [ 0.005, 0.02, 0.02 ] }
+        -
+          type: Shape 
+          name: DoorFR rear top2
+          translation: [ -0.012, -0.0395, -0.0135 ]
+          rotation: [ [ 1, 0, 0, -37.5], [ 0, 0, 1, -2 ] ]
+          geometry: { type: Box, size: [ 0.036, 0.005, 0.04 ] }
+        -
+          type: Shape
+          name: DoorFR rear top3
+          translation: [ 0, 0.002, 0.004 ]
+          rotation: [ 1, 0, 0, -37.5]
+          geometry: { type: Box, size: [ 0.06, 0.05, 0.082 ] }
+        -
+          type: Shape
+          name: DoorFR rear top4
+          translation: [ 0, 0.03, 0 ]
+          rotation: [ 1, 0, 0, -9]
+          geometry: { type: Box, size: [ 0.06, 0.06, 0.095 ] }
+        -
+          type: Shape
+          name: DoorFR rear top5
+          translation : [ 0, 0.06, 0.009 ]
+          rotation: [ 1, 0, 0, -40] 
+          geometry: { type: Box, size: [ 0.06, 0.032, 0.06 ] }
+        -
+          type: Shape
+          name: DoorFR rear top6
+          translation : [ 0, 0.0715, -0.018 ]
+          geometry: { type: Box, size: [ 0.06, 0.04, 0.08 ] }
+        -
+          type: Shape
+          name: DoorFR rear top7
+          translation : [ 0, 0.02, -0.038 ]
+          rotation: [ 1, 0, 0, -10]
+          geometry: { type: Box, size: [ 0.06, 0.12, 0.03 ] }
+        -
+          type: Shape
+          name: DoorFR rear top8
+          translation : [ -0.0095, 0.0755, -0.061 ]
+          rotation: [ 1, 0, 0, -5]
+          geometry: { type: Box, size: [ 0.04, 0.03, 0.009 ] }
+    -  #rear center
+      type: Shape
+      name: DoorFR rear center1
+      translation: [ -0.458, -0.827, 0.87 ]
+      rotation : [ [ 0, 1, 0, 7 ], [ 1, 0, 0, -30 ] ]
+      geometry: { type: Box, size: [ 0.038, 0.018, 0.01 ] }
+    -
+      type: Shape
+      name: DoorFR rear center2
+      translation: [ -0.458, -0.827, 0.872 ]
+      rotation : [ 0, 1, 0, -7 ]
+      geometry: { type: Box, size: [ 0.038, 0.018, 0.005 ] }
+    -
+      type: Shape
+      name: DoorFR rear center3
+      translation: [ -0.4417, -0.811, 0.869 ]
+      rotation : [ 0, 1, 0, -7 ]
+      geometry: { type: Box, size: [ 0.07, 0.047, 0.006 ] }
+    -
+      type: Shape
+      name: DoorFR rear center4
+      translation: [ -0.423, -0.80, 0.866 ]
+      rotation : [ 0, 1, 0, -7 ]
+      geometry: { type: Box, size: [ 0.105, 0.069, 0.006 ] }
+    -
+      type: Shape
+      name: DoorFR rear center5
+      translation: [ -0.413, -0.7825, 0.862 ]
+      rotation : [ 0, 1, 0, -7 ]
+      geometry: { type: Box, size: [ 0.125, 0.106, 0.006 ] }
+    -
+      type: Shape
+      name: DoorFR rear center6
+      translation: [ -0.4045, -0.7742, 0.857 ]
+      rotation : [ 0, 1, 0, -7 ]
+      geometry: { type: Box, size: [ 0.142, 0.125, 0.006 ] }
+    -
+      type: Shape
+      name: DoorFR rear center7
+      translation: [ -0.3998, -0.76413, 0.854 ]
+      rotation : [ 0, 1, 0, -7 ]
+      geometry: { type: Box, size: [ 0.15, 0.1473, 0.004 ] }
+    -
+      type: Shape
+      name: DoorFR rear center8
+      translation: [ -0.393, -0.76413, 0.79 ]
+      rotation : [ 0, 1, 0, -7 ]
+      geometry: { type: Box, size: [ 0.15, 0.1473, 0.125 ] }
+    -  
+      type: Shape
+      name: DoorFR rear center9
+      translation: [ -0.3743, -0.76413, 0.6695 ]
+      rotation : [ 0, 1, 0, -11 ]
+      geometry: { type: Box, size: [ 0.15, 0.1473, 0.13 ] }
+    -  
+      type: Shape
+      name: DoorFR rear center10
+      translation: [ -0.3568, -0.76413, 0.587 ]
+      rotation : [ 0, 1, 0, -15.3 ]
+      geometry: { type: Box, size: [ 0.15, 0.1473, 0.05 ] }
+    -  # rear bottom
+      type: Shape
+      name: DoorFR rear bottom1
+      translation: [ -0.321, -0.7615, 0.516 ]
+      rotation : [ 0, 1, 0, -20 ]
+      geometry: { type: Box, size: [ 0.17, 0.142, 0.12 ] }
+    -
+      type: Shape
+      name: DoorFR rear bottom2
+      translation: [ -0.291, -0.7594, 0.454 ]
+      rotation : [ 0, 1, 0, -37 ]
+      geometry: { type: Box, size: [ 0.17, 0.1378, 0.072 ] }
+    -
+      type: Shape
+      name: DoorFR rear bottom3
+      translation: [ -0.257, -0.756, 0.4288 ]
+      rotation : [ 0, 1, 0, -60 ]
+      geometry: { type: Box, size: [ 0.17, 0.131, 0.084 ] }
+    - # front
+      type: Shape
+      translation: [ 0.79, -0.7635, 0.625 ]
+      geometry: { type: Box, size: [ 0.11, 0.147, 0.38] }
+    - 
+      type: Shape
+      name: DoorFR front1
+      translation: [ 0.77, -0.756, 0.394 ]
+      rotation: [ 0, 1, 0, 20 ]
+      geometry: { type: Box, size: [ 0.11, 0.132, 0.125 ] }
+    - 
+      type: Shape
+      name: DoorFR front2
+      translation: [ 0.772, -0.731, 0.814 ]
+      rotation: [ 0, 1, 0, -20 ]
+      geometry: { type: Box, size: [ 0.1, 0.08, 0.096] }
+    - 
+      type: Shape
+      name: DoorFR front3
+      translation: [ 0.773, -0.775, 0.81 ]
+      rotation: [ [ 0, 1, 0, -20 ], [1, 0, 0, -35] ]
+      geometry: { type: Box, size: [ 0.11, 0.08, 0.092] }
+    - # window side
+      type: Shape
+      name: DoorFR window side1
+      translation: [ 0.612, -0.751, 0.89 ]
+      rotation: [ [ 0, 1, 0, 3.2 ], [ 0, 0, 1, -2] ]
+      geometry: { type: Box, size: [ 0.365, 0.065, 0.03] }
+    - 
+      type: Shape
+      name: DoorFR window side2
+      translation: [ 0.605, -0.749, 0.92 ]
+      rotation: [ [ 0, 1, 0, 3.2 ], [ 0, 0, 1, -2] ]
+      geometry: { type: Box, size: [ 0.32, 0.05, 0.04] }
+    - 
+      type: Shape
+      name: DoorFR window side3
+      translation: [ 0.725, -0.753, 0.944 ]
+      rotation: [ [ 0, 1, 0, 3.2 ], [ 0, 0, 1, -2] ]
+      geometry: { type: Box, size: [ 0.06, 0.018, 0.02] }
+    - 
+      type: Shape
+      name: DoorFR window side4
+      translation: [ 0.575, -0.741, 0.96 ]
+      rotation: [ [ 0, 1, 0, 3.2 ], [ 0, 0, 1, -5] ]
+      geometry: { type: Box, size: [ 0.24, 0.03, 0.04] }
+    - 
+      type: Shape
+      name: DoorFR window side5
+      translation: [ 0.66, -0.748, 0.98 ]
+      rotation: [ [ 0, 1, 0, 3.2 ], [ 0, 0, 1, -5] ]
+      geometry: { type: Box, size: [ 0.06, 0.008, 0.02] }
+    - 
+      type: Shape
+      name: DoorFR window side6
+      translation: [ 0.56, -0.730, 1.0]
+      rotation: [ [ 0, 1, 0, 3.2 ], [ 0, 0, 1, -10] ]
+      geometry: { type: Box, size: [ 0.15, 0.015, 0.04] }
+    - 
+      type: Shape
+      name: DoorFR window side7
+      translation: [ 0.545, -0.703, 1.04]
+      rotation: [ [1, 0, 0, -29], [ 0, 1, 0, 3.2 ], [ 0, 0, 1, -12] ]
+      geometry: { type: Box, size: [ 0.065, 0.008, 0.055] }
+    - &DOOR_KNOB_RIGHT
+      type: Transform
+      translation: [ -0.2818, -0.897, 0.8074 ]
+      elements : # door knob
+        - &DOOR_KNOB_SHAPE1
+          type: Shape
+          name: DoorFR door knob1
+          geometry: { type: Box, size: [ 0.2, 0.02, 0.06] }
+          appearance: *BLACK
+        - &DOOR_KNOB_SHAPE2
+          type: Shape
+          name: DoorFR door knob2
+          translation: [ 0.0875, 0.035, 0.0 ]
+          geometry: &DOOR_KNOB_GEOMETRY1
+            { type: Box, size: [ 0.025, 0.05, 0.06] }
+          appearance: *BLACK
+        - &DOOR_KNOB_SHAPE3
+          type: Shape
+          name: DoorFR door knob3
+          translation: [ -0.0875, 0.035, 0.0 ]
+          geometry: *DOOR_KNOB_GEOMETRY1
+          appearance: *BLACK
+    -
+      type: Transform
+      translation: [ 0.54, -0.85, 0.98 ]
+      elements : # mirror
+        -
+          type: Shape
+          name: DoorFR mirror1
+          rotation: [ 0, 0, 1, -8 ]
+          geometry: &MIRROR_GEOMETRY1
+            { type: Capsule, radius: 0.06, height: 0.13 }
+        -
+          type: Shape
+          name: DoorFR mirror2
+          translation: [ 0.034, -0.005, -0.007 ]
+          rotation: [ 0, 0, 1, -35 ]
+          geometry: &MIRROR_GEOMETRY2
+            { type: Capsule, radius: 0.052, height: 0.165 } 
+
+CAR_DOOR_FR: &CAR_DOOR_FR
+  type: Transform
+  elements:
+    -
+      <<: *CAR_DOOR_FR_WINDOW
+    -
+      <<: *CAR_DOOR_FR_BODY
+      
+CAR_DOOR_FL: &CAR_DOOR_FL
+  type: Transform
+  elements: 
+    -
+      type: Transform
+      translation: [ 0.0, 0.73, 1.0 ]
+      rotation: [ [ 0, 1, 0, 2.3 ], [ 1, 0, 0, 29 ] ] 
+      elements: #window
+        -
+          type: Shape
+          name: DoorFL window1
+          translation : [ -0.175, 0.0, 0.115 ]
+          geometry: { type: Box, size: [ 0.5, 0.008, 0.4 ] }
+        -
+          type: Shape
+          name: DoorFL window2
+          translation : [ 0.125, 0.0, 0.035 ]
+          geometry: { type: Box, size: [ 0.12, 0.008, 0.25 ] }
+        -
+          type: Shape 
+          name: DoorFL window3
+          translation : [ 0.325, 0.0, 0.027 ]
+          rotation : [ 0, 1, 0, 30 ] 
+          geometry: { type: Box, size: [ 0.3, 0.008, 0.32 ] }
+        -
+          type: Shape
+          name: DoorFL window4
+          translation : [ 0.172, 0.0, 0.152 ]
+          rotation : [ 0, 1, 0, 26 ]
+          geometry: { type: Box, size: [ 0.11, 0.008, 0.25 ] }
+        -
+          type: Shape
+          name: DoorFL window5
+          translation : [ 0.092, 0.0, 0.182 ]
+          rotation : [ 0, 1, 0, 15 ]
+          geometry: { type: Box, size: [ 0.11, 0.008, 0.25 ] }
+        -
+          type: Shape
+          name: DoorFL window6
+          translation : [ -0.033, 0.0, 0.297 ]
+          rotation : [ 0, 1, 0, 5 ]
+          geometry: { type: Box, size: [ 0.205, 0.008, 0.06 ] }
+        -
+          type: Shape
+          name: DoorFL window7
+          translation : [ -0.3115, 0.0, 0.2995 ]
+          rotation : [ 0, 1, 0, -2 ]
+          geometry: { type: Box, size: [ 0.36, 0.008, 0.06 ] }
+        -
+          type: Shape
+          name: DoorFL window8
+          translation : [ -0.4992, 0.0, 0.3117 ]
+          rotation : [ 0, 1, 0, -11 ]
+          geometry: { type: Box, size: [ 0.018, 0.008, 0.02 ] }
+        -
+          type: Shape
+          name: DoorFL window9
+          translation : [ -0.423, 0.0, 0.135 ]
+          rotation : [ 0, 1, 0, -11 ]
+          geometry: { type: Box, size: [ 0.1, 0.008, 0.36 ] }
+        -
+          type: Shape
+          name: DoorFL window10
+          translation : [ -0.4255, 0.0, -0.067 ]
+          rotation : [ 0, 1, 0, 40 ]
+          geometry: { type: Box, size: [ 0.04, 0.008, 0.04 ] }
+    -
+      type: Transform
+      elements : # door body
+        - #top
+          type: Shape
+          name: DoorFL center top1
+          translation : [ 0.17, 0.749, 0.896 ]
+          rotation: [ [ 0, 1, 0, 3.2 ], [ 1, 0, 0, 9] ] 
+          geometry: { type: Box, size: [ 1.25, 0.06, 0.05 ] }
+        -
+          type: Shape
+          name: DoorFL center top2
+          translation : [ 0.17, 0.719, 0.8865 ]
+          rotation: [ [ 0, 1, 0, 3.2 ], [ 1, 0, 0, 40] ] 
+          geometry: { type: Box, size: [ 1.25, 0.032, 0.05 ] }
+        - #inside
+          type: Shape
+          name: DoorFL center inside1
+          translation : [ 0.2, 0.7155, 0.645 ]
+          rotation: [  0, 1, 0, 3.2 ] 
+          geometry: { type: Box, size: [ 1.1, 0.05, 0.5 ] }
+        -
+          type: Shape 
+          name: DoorFL center insider2
+          translation : [ 0.268, 0.7155, 0.3760 ]
+          rotation: [ 0, 1, 0, 0.9 ] 
+          geometry: { type: Box, size: [ 1.06, 0.05, 0.1 ] }
+        -
+          type: Shape 
+          name: DoorFL center inside3
+          translation : [ -0.399, 0.7155, 0.844 ]
+          rotation: [  0, 1, 0, 3.2 ] 
+          geometry: { type: Box, size: [ 0.12, 0.05, 0.17 ] }
+        -  #bottom
+          type: Shape 
+          name: DoorFL center bottom1
+          translation : [ 0.268, 0.775, 0.334 ]
+          rotation: [ [ 0, 1, 0, 0.9 ], [ 1, 0, 0, -2.7] ]
+          geometry: { type: Box, size: [ 1.06, 0.08, 0.02 ] }
+        -  #outside
+          type: Shape
+          name: DoorFL center outside1
+          translation : [ 0.175, 0.766, 0.853 ]
+          rotation: [ [ 0, 1, 0, 3.2 ], [ 1, 0, 0, 38.5] , [ 1, 0, 0, -2]  ] 
+          geometry: { type: Box, size: [ 1.24, 0.1, 0.105 ] }
+        -
+          type: Shape
+          name: DoorFL center outside2
+          translation : [ 0.2, 0.7668, 0.70 ]
+          rotation: [ [ 0, 1, 0, 2.3 ], [ 1, 0, 0, 0.6 ] ] 
+          geometry: { type: Box, size: [ 1.24, 0.14, 0.29 ] }
+        -
+          type: Shape
+          name: DoorFL center outside3
+          translation : [ 0.213, 0.841, 0.557 ]
+          rotation: [ 0, 1, 0, 1.3 ]
+          geometry: { type: Box, size: [ 1.275, 0.02, 0.05 ] }
+        - 
+          type: Shape
+          name: DoorFL center outside4
+          translation : [ -0.424, 0.841, 0.571 ]
+          rotation: [ 0, 1, 0, -16 ]
+          geometry: { type: Box, size: [ 0.014, 0.02, 0.049 ] }
+        -
+          type: Shape
+          name: DoorFL center outside5
+          translation : [ 0.275, 0.767, 0.44 ]
+          rotation: [ [ 0, 1, 0, 1 ], [ 1, 0, 0, -6 ] ] 
+          geometry: { type: Box, size: [ 1.05, 0.12, 0.22 ] }
+        -   #rear top
+          type: Transform
+          rotation : [ [ 0, 0, 1, 4 ], [ 0, 1, 0, 13 ] ]
+          translation : [ -0.4375, 0.783, 0.9030 ]
+          elements:
+            -
+              type: Shape 
+              name: DoorFL rear top1
+              translation: [ -0.0275, 0.0395, -0.027 ]
+              rotation: [ [ 1, 0, 0, 37.5], [ 0, 0, 1, 2 ] ]
+              geometry: { type: Box, size: [ 0.005, 0.02, 0.02 ] }
+            -
+              type: Shape 
+              name: DoorFL rear top2
+              translation: [ -0.012, 0.0395, -0.0135 ]
+              rotation: [ [ 1, 0, 0, 37.5], [ 0, 0, 1, 2 ] ]
+              geometry: { type: Box, size: [ 0.036, 0.005, 0.04 ] }
+            -
+              type: Shape
+              name: DoorFL rear top3
+              translation: [ 0, -0.002, 0.004 ]
+              rotation: [ 1, 0, 0, 37.5]
+              geometry: { type: Box, size: [ 0.06, 0.05, 0.082 ] }
+            -
+              type: Shape
+              name: DoorFL rear top4
+              translation: [ 0, -0.03, 0 ]
+              rotation: [ 1, 0, 0, 9]
+              geometry: { type: Box, size: [ 0.06, 0.06, 0.095 ] }
+            -
+              type: Shape
+              name: DoorFL rear top5
+              translation : [ 0, -0.06, 0.009 ]
+              rotation: [ 1, 0, 0, 40] 
+              geometry: { type: Box, size: [ 0.06, 0.032, 0.06 ] }
+            -
+              type: Shape
+              name: DoorFL rear top6
+              translation : [ 0, -0.0715, -0.018 ]
+              geometry: { type: Box, size: [ 0.06, 0.04, 0.08 ] }
+            -
+              type: Shape
+              name: DoorFL rear top7
+              translation : [ 0, -0.02, -0.038 ]
+              rotation: [ 1, 0, 0, 10]
+              geometry: { type: Box, size: [ 0.06, 0.12, 0.03 ] }
+            -
+              type: Shape
+              name: DoorFL rear top8
+              translation : [ -0.0095, -0.0755, -0.061 ]
+              rotation: [ 1, 0, 0, 5]
+              geometry: { type: Box, size: [ 0.04, 0.03, 0.009 ] }
+        -  #rear center
+          type: Shape
+          name: DoorFL rear center1
+          translation: [ -0.458, 0.827, 0.87 ]
+          rotation : [ [ 0, 1, 0, 7 ], [ 1, 0, 0, 30 ] ]
+          geometry: { type: Box, size: [ 0.038, 0.018, 0.01 ] }
+        -
+          type: Shape
+          name: DoorFL rear center2
+          translation: [ -0.458, 0.827, 0.872 ]
+          rotation : [ 0, 1, 0, -7 ]
+          geometry: { type: Box, size: [ 0.038, 0.018, 0.005 ] }
+        -
+          type: Shape
+          name: DoorFL rear center3
+          translation: [ -0.4417, 0.811, 0.869 ]
+          rotation : [ 0, 1, 0, -7 ]
+          geometry: { type: Box, size: [ 0.07, 0.047, 0.006 ] }
+        -
+          type: Shape
+          name: DoorFL rear center4
+          translation: [ -0.423, 0.80, 0.866 ]
+          rotation : [ 0, 1, 0, -7 ]
+          geometry: { type: Box, size: [ 0.105, 0.069, 0.006 ] }
+        -
+          type: Shape
+          name: DoorFL rear center5
+          translation: [ -0.413, 0.7825, 0.862 ]
+          rotation : [ 0, 1, 0, -7 ]
+          geometry: { type: Box, size: [ 0.125, 0.106, 0.006 ] }
+        -
+          type: Shape
+          name: DoorFL rear center6
+          translation: [ -0.4045, 0.7742, 0.857 ]
+          rotation : [ 0, 1, 0, -7 ]
+          geometry: { type: Box, size: [ 0.142, 0.125, 0.006 ] }
+        -
+          type: Shape
+          name: DoorFL rear center7
+          translation: [ -0.3998, 0.76413, 0.854 ]
+          rotation : [ 0, 1, 0, -7 ]
+          geometry: { type: Box, size: [ 0.15, 0.1473, 0.004 ] }
+        -
+          type: Shape
+          name: DoorFL rear center8
+          translation: [ -0.393, 0.76413, 0.79 ]
+          rotation : [ 0, 1, 0, -7 ]
+          geometry: { type: Box, size: [ 0.15, 0.1473, 0.125 ] }
+        -  
+          type: Shape
+          name: DoorFL rear center9
+          translation: [ -0.3743, 0.76413, 0.6695 ]
+          rotation : [ 0, 1, 0, -11 ]
+          geometry: { type: Box, size: [ 0.15, 0.1473, 0.13 ] }
+        -  
+          type: Shape
+          name: DoorFL rear center10
+          translation: [ -0.3568, 0.76413, 0.587 ]
+          rotation : [ 0, 1, 0, -15.3 ]
+          geometry: { type: Box, size: [ 0.15, 0.1473, 0.05 ] }
+        -  # rear bottom
+          type: Shape
+          name: DoorFL rear bottom1
+          translation: [ -0.321, 0.7615, 0.516 ]
+          rotation : [ 0, 1, 0, -20 ]
+          geometry: { type: Box, size: [ 0.17, 0.142, 0.12 ] }
+        -
+          type: Shape
+          name: DoorFL rear bottom2
+          translation: [ -0.291, 0.7594, 0.454 ]
+          rotation : [ 0, 1, 0, -37 ]
+          geometry: { type: Box, size: [ 0.17, 0.1378, 0.072 ] }
+        -
+          type: Shape
+          name: DoorFL rear bottom3
+          translation: [ -0.257, 0.756, 0.4288 ]
+          rotation : [ 0, 1, 0, -60 ]
+          geometry: { type: Box, size: [ 0.17, 0.131, 0.084 ] }
+        - # front
+          type: Shape
+          translation: [ 0.79, 0.7635, 0.625 ]
+          geometry: { type: Box, size: [ 0.11, 0.147, 0.38] }
+        - 
+          type: Shape
+          name: DoorFL front1
+          translation: [ 0.77, 0.756, 0.394 ]
+          rotation: [ 0, 1, 0, 20 ]
+          geometry: { type: Box, size: [ 0.11, 0.132, 0.13] }
+        - 
+          type: Shape
+          name: DoorFL front2
+          translation: [ 0.772, 0.731, 0.814 ]
+          rotation: [ 0, 1, 0, -20 ]
+          geometry: { type: Box, size: [ 0.1, 0.08, 0.096] }
+        - 
+          type: Shape
+          name: DoorFL front3
+          translation: [ 0.773, 0.775, 0.81 ]
+          rotation: [ [ 0, 1, 0, -20 ], [1, 0, 0, 35] ]
+          geometry: { type: Box, size: [ 0.11, 0.08, 0.092] }
+        - # window side
+          type: Shape
+          name: DoorFL window side1
+          translation: [ 0.612, 0.751, 0.89 ]
+          rotation: [ [ 0, 1, 0, 3.2 ], [ 0, 0, 1, 2] ]
+          geometry: { type: Box, size: [ 0.365, 0.065, 0.03] }
+        - 
+          type: Shape
+          name: DoorFL window side2
+          translation: [ 0.605, 0.749, 0.92 ]
+          rotation: [ [ 0, 1, 0, 3.2 ], [ 0, 0, 1, 2] ]
+          geometry: { type: Box, size: [ 0.32, 0.05, 0.04] }
+        - 
+          type: Shape
+          name: DoorFL window side3
+          translation: [ 0.725, 0.753, 0.944 ]
+          rotation: [ [ 0, 1, 0, 3.2 ], [ 0, 0, 1, 2] ]
+          geometry: { type: Box, size: [ 0.06, 0.018, 0.02] }
+        - 
+          type: Shape
+          name: DoorFL window side4
+          translation: [ 0.575, 0.741, 0.96 ]
+          rotation: [ [ 0, 1, 0, 3.2 ], [ 0, 0, 1, 5] ]
+          geometry: { type: Box, size: [ 0.24, 0.03, 0.04] }
+        - 
+          type: Shape
+          name: DoorFL window side5
+          translation: [ 0.66, 0.748, 0.98 ]
+          rotation: [ [ 0, 1, 0, 3.2 ], [ 0, 0, 1, 5] ]
+          geometry: { type: Box, size: [ 0.06, 0.008, 0.02] }
+        - 
+          type: Shape
+          name: DoorFL window side6
+          translation: [ 0.56, 0.730, 1.0]
+          rotation: [ [ 0, 1, 0, 3.2 ], [ 0, 0, 1, 10] ]
+          geometry: { type: Box, size: [ 0.15, 0.015, 0.04] }
+        - 
+          type: Shape
+          name: DoorFL window side7
+          translation: [ 0.545, 0.703, 1.04]
+          rotation: [ [1, 0, 0, 29], [ 0, 1, 0, 3.2 ], [ 0, 0, 1, 12] ]
+          geometry: { type: Box, size: [ 0.065, 0.008, 0.055] }
+    - &DOOR_KNOB_LEFT
+      type: Transform
+      translation: [ -0.2818, 0.897, 0.8074 ]
+      elements : # door knob
+        -
+          <<: *DOOR_KNOB_SHAPE1
+          name: DoorFL door knob1
+        - 
+          <<: *DOOR_KNOB_SHAPE2
+          name: DoorFL door knob2
+          translation: [ 0.0875, -0.035, 0.0 ]
+        -  
+          <<: *DOOR_KNOB_SHAPE3
+          name: DoorFL door knob3
+          translation: [ -0.0875, -0.035, 0.0 ]
+    -
+      type: Transform
+      translation: [ 0.54, 0.85, 0.98 ]
+      elements : # mirror
+        -
+          type: Shape
+          name: DoorFL mirror1
+          rotation: [ 0, 0, 1, 8 ]
+          geometry: *MIRROR_GEOMETRY1
+        -
+          type: Shape
+          name: DoorFL mirror2
+          translation: [ 0.034, 0.005, -0.007 ]
+          rotation: [ 0, 0, 1, 35 ]
+          geometry: *MIRROR_GEOMETRY2
+          
+CAR_DOOR_KNOB_RIGHT: &CAR_DOOR_KNOB_RIGHT
+  <<: *DOOR_KNOB_RIGHT
+  translation: [ 0, 0, 0 ]
+  
+CAR_DOOR_KNOB_LEFT: &CAR_DOOR_KNOB_LEFT
+  <<: *DOOR_KNOB_LEFT
+  translation: [ 0, 0, 0 ]
+  
+CAR_DOOR_BR: &CAR_DOOR_BR
+  type: Transform
+  elements: 
+    -
+      type: Shape
+      name: doorBR bottom1
+      translation: [ 0.027, 0.072, 0.04 ]
+      geometry: { type: Box, size: [ 0.658, 0.144, 0.077] }
+    -
+      type: Shape
+      name: doorBR bottom2
+      translation: [ 0.259, 0.067, 0.10 ]
+      rotation: [ [ 0, 1, 0, -45 ], [ 1, 0, 0, 6 ], [0, 0, 1, -3 ] ]
+      geometry: { type: Box, size: [ 0.1, 0.138, 0.17] }
+    -
+      type: Shape
+      name: doorBR bottom3
+      translation: [ -0.032, 0.066, 0.13 ]
+      rotation: [ 1, 0, 0, 6 ]
+      geometry: { type: Box, size: [ 0.54, 0.144, 0.124] }
+    -
+      type: Shape
+      name: doorBR bottom4
+      translation: [ 0.168, 0.054, 0.235 ]
+      rotation: [ [ 0, 1, 0, -20 ], [ 1, 0, 0, 4 ], [0, 0, 1, -2 ] ]
+      geometry: { type: Box, size: [ 0.1, 0.142, 0.13] }
+    -
+      type: Shape
+      name: doorBR bottom5
+      translation: [ -0.057, 0.054, 0.25 ]
+      rotation: [ 1, 0, 0, 4 ]
+      geometry: { type: Box, size: [ 0.5, 0.144, 0.124] }
+    -
+      type: Shape
+      name: doorBR bottom6
+      translation: [ -0.298, 0.054, 0.25 ]
+      rotation: [ [ 0, 1, 0, -18 ], [ 1, 0, 0, 4 ] ]
+      geometry: { type: Box, size: [ 0.06, 0.144, 0.14] }
+    - #center
+      type: Shape
+      name: doorBR center1
+      translation: [ 0.146, 0.051, 0.40 ]
+      rotation: [ 0, 1, 0, -12 ]
+      geometry: { type: Box, size: [ 0.06, 0.144, 0.21] }
+    -
+      type: Shape
+      name: doorBR center2
+      translation: [ -0.095, 0.051, 0.40 ]
+      geometry: { type: Box, size: [ 0.5, 0.145, 0.2] }
+    -
+      type: Shape
+      name: doorBR line
+      translation: [ -0.068, -0.0245, 0.318 ]
+      geometry: { type: Box, size: [ 0.5, 0.02, 0.055] }
+    -
+      type: Shape
+      name: doorBR center3
+      translation: [ -0.337, 0.051, 0.355 ]
+      rotation: [ 0, 1, 0, -22 ]
+      geometry: { type: Box, size: [ 0.06, 0.145, 0.12] }
+    -
+      type: Shape
+      name: doorBR center4
+      translation: [ -0.38, 0.051, 0.465 ]
+      rotation: [ 0, 1, 0, -46 ]
+      geometry: { type: Box, size: [ 0.11, 0.145, 0.14] }
+    -
+      type: Shape
+      name: doorBR center5
+      translation: [ -0.186, 0.052, 0.56 ]
+      geometry: { type: Box, size: [ 0.68, 0.145, 0.12] }
+    -
+      type: Shape
+      name: doorBR center6
+      translation: [ -0.66, 0.052, 0.570 ]
+      geometry: { type: Box, size: [ 0.29, 0.145, 0.1] }
+    -
+      type: Shape
+      name: doorBR center7
+      translation: [ -0.5, 0.052, 0.516 ]
+      rotation: [ 0, 1, 0, 25 ]
+      geometry: { type: Box, size: [ 0.14, 0.145, 0.05] }
+    -
+      type: Shape
+      name: doorBR center8
+      translation: [ -0.4, 0.054, 0.624 ]
+      rotation: [ 0, 1, 0, 2 ]
+      geometry: { type: Box, size: [ 0.82, 0.145, 0.037] }
+    - #top
+      type: Shape
+      name: doorBR top1
+      translation: [ -0.30, 0.091, 0.664 ]
+      rotation: [ 0, 1, 0, 2 ]
+      geometry: { type: Box, size: [ 0.89, 0.07, 0.07] }
+    -
+      type: Shape
+      name: doorBR top2
+      translation: [ -0.33, 0.026, 0.669 ]
+      rotation: [ [ 1, 0, 0, -38 ], [ 0, 1, 0, 2 ], [ 0, 0, 1, 1 ] ]
+      geometry: { type: Box, size: [ 0.955, 0.032, 0.11] }
+    -
+      type: Shape
+      name: doorBR top3
+      translation: [ -0.275, 0.085, 0.71 ]
+      rotation: [ [ 1, 0, 0, -8 ], [ 0, 1, 0, 3 ],  [ 0, 0, 1, -1] ]
+      geometry: { type: Box, size: [ 0.88, 0.054, 0.03] }
+    -
+      type: Shape
+      name: doorBR top4
+      translation: [ -0.135, 0.104, 0.693 ]
+      rotation: [ [ 1, 0, 0, 50 ], [ 0, 1, 0, 2 ],  [ 0, 0, 1, -2] ]
+      geometry: { type: Box, size: [ 0.6, 0.03, 0.03] }
+    - #
+      type: Shape
+      name: doorBR top front1
+      translation: [ 0.145, 0.081, 0.65 ]
+      rotation: [ [ 0, 1, 0, 16 ], [ 0, 0, 1, -3] ]
+      geometry: { type: Box, size: [ 0.03, 0.09, 0.06] }
+    -
+      type: Shape
+      name: doorBR top front2
+      translation: [ 0.143, 0.033, 0.645 ]
+      rotation: [ [ 1, 0, 0, 55 ], [ 0, 1, 0, 8 ], [ 0, 0, 1, -10] ]
+      geometry: { type: Box, size: [ 0.015, 0.105, 0.06] }
+    - #
+      type: Shape
+      name: doorBR top rear1
+      translation: [ -0.799, 0.09, 0.699 ]
+      rotation: [ [ 1, 0, 0, 20 ], [ 0, 1, 0, 6 ], [ 0, 0, 1, 0] ]
+      geometry: { type: Box, size: [ 0.015, 0.043, 0.105] }
+    -
+      type: Shape
+      name: doorBR top rear2
+      translation: [ -0.8, 0.055, 0.68 ]
+      rotation: [ 0, 1, 0, 4 ]
+      geometry: { type: Box, size: [ 0.015, 0.06, 0.05] }
+    -
+      type: Shape
+      name: doorBR top rear3
+      translation: [ -0.515, 0.095, 0.721 ]
+      rotation: [ [ 1, 0, 0, -8 ], [ 0, 1, 0, 3 ], [ 0, 0, 1, -1] ]
+      geometry: { type: Box, size: [ 0.5, 0.03, 0.04 ] }
+    -
+      type: Shape
+      name: doorBR top rear4
+      translation: [ -0.78, 0.104, 0.723 ]
+      rotation: [ [ 1, 0, 0, 20 ], [ 0, 1, 0, 6 ] ]
+      geometry: { type: Box, size: [ 0.03, 0.01, 0.07] }
+    -
+      type: Shape
+      name: doorBR top rear5
+      translation: [ -0.745, 0.111, 0.682 ]
+      rotation: [ 0, 1, 0, 50 ]
+      geometry: { type: Box, size: [ 0.05, 0.03, 0.127] }
+    -
+      type: Shape
+      name: doorBR top rear5
+      translation: [ -0.745, 0.107, 0.695 ]
+      rotation: [ 0, 1, 0, 60 ]
+      geometry: { type: Box, size: [ 0.05, 0.03, 0.1] }
+    - #window
+      type: Shape
+      name: doorBR window bottom1
+      translation: [ -0.52, 0.071, 0.74 ]
+      rotation: [ [ 1, 0, 0, -50 ], [ 0, 1, 0, 2 ], [ 0, 0, 1, 1 ] ]
+      geometry: { type: Box, size: [ 0.55, 0.01, 0.04] }
+    - 
+      type: Shape
+      name: doorBR window bottom2
+      translation: [-0.12, 0.062, 0.725 ]
+      rotation: [ [ 1, 0, 0, -34 ], [ 0, 1, 0, 3.8 ] ]
+      geometry: { type: Box, size: [ 0.6, 0.01, 0.04] }
+    - 
+      type: Shape
+      name: doorBR window bottom2
+      translation: [-0.5, 0.085, 0.755 ]
+      rotation: [ [ 1, 0, 0, -34 ], [ 0, 1, 0, 3.8 ] ]
+      geometry: { type: Box, size: [ 0.35, 0.01, 0.02] }
+    - 
+      type: Shape
+      name: doorBR window front1
+      translation: [ 0.119, 0.15, 0.88 ]
+      rotation: [ [ 1, 0, 0, -30 ], [ 0, 1, 0, -8 ] ]
+      geometry: { type: Box, size: [ 0.07, 0.01, 0.38] }
+    - #
+      type: Shape
+      name: doorBR window1
+      translation: [ -0.093, 0.107, 0.8 ]
+      rotation: [ 1, 0, 0, -28 ] 
+      geometry: { type: Box, size: [ 0.4, 0.01, 0.2] }
+    -
+      type: Shape
+      name: doorBR window2
+      translation: [ -0.48, 0.116, 0.806 ]
+      rotation: [ [ 1, 0, 0, -30 ], [ 0, 1, 0, -26 ], [ 0, 0, 1, -1.7 ] ]
+      geometry: { type: Box, size: [ 0.4, 0.01, 0.2] }
+    -
+      type: Shape
+      name: doorBR window3
+      translation: [ -0.33, 0.092, 0.77 ]
+      rotation: [ 1, 0, 0, -28 ]
+      geometry: { type: Box, size: [ 0.1, 0.01, 0.06] }
+    -
+      type: Shape
+      name: doorBR window4
+      translation: [ -0.223, 0.163, 0.906 ]
+      rotation: [ [ 1, 0, 0, -29 ], [ 0, 1, 0, -17 ], [ 0, 0, 1, -1.2] ]
+      geometry: { type: Box, size: [ 0.2, 0.01, 0.2] }
+    -
+      type: Shape
+      name: doorBR window5
+      translation: [ -0.03, 0.184, 0.945 ]
+      rotation: [ [ 1, 0, 0, -29 ], [ 0, 1, 0, -10 ] ]
+      geometry: { type: Box, size: [ 0.23, 0.01, 0.2] }
+
+CAR_DOOR_BL: &CAR_DOOR_BL
+  type: Transform
+  elements: 
+    -
+      type: Shape
+      name: doorBL bottom1
+      translation: [ 0.027, -0.072, 0.04 ]
+      geometry: { type: Box, size: [ 0.658, 0.144, 0.077] }
+    -
+      type: Shape
+      name: doorBL bottom2
+      translation: [ 0.259, -0.067, 0.10 ]
+      rotation: [ [ 0, 1, 0, -45 ], [ 1, 0, 0, -6 ], [0, 0, 1, 3 ] ]
+      geometry: { type: Box, size: [ 0.1, 0.138, 0.17] }
+    -
+      type: Shape
+      name: doorBL bottom3
+      translation: [ -0.032, -0.066, 0.13 ]
+      rotation: [ 1, 0, 0, -6 ]
+      geometry: { type: Box, size: [ 0.54, 0.144, 0.124] }
+    -
+      type: Shape
+      name: doorBL bottom4
+      translation: [ 0.168, -0.054, 0.235 ]
+      rotation: [ [ 0, 1, 0, -20 ], [ 1, 0, 0, -4 ], [0, 0, 1, 2 ] ]
+      geometry: { type: Box, size: [ 0.1, 0.142, 0.13] }
+    -
+      type: Shape
+      name: doorBL bottom5
+      translation: [ -0.057, -0.054, 0.25 ]
+      rotation: [ 1, 0, 0, -4 ]
+      geometry: { type: Box, size: [ 0.5, 0.144, 0.124] }
+    -
+      type: Shape
+      name: doorBL bottom6
+      translation: [ -0.298, -0.054, 0.25 ]
+      rotation: [ [ 0, 1, 0, -18 ], [ 1, 0, 0, -4 ] ]
+      geometry: { type: Box, size: [ 0.06, 0.144, 0.14] }
+    - #center
+      type: Shape
+      name: doorBL center1
+      translation: [ 0.146, -0.051, 0.40 ]
+      rotation: [ 0, 1, 0, -12 ]
+      geometry: { type: Box, size: [ 0.06, 0.144, 0.21] }
+    -
+      type: Shape
+      name: doorBL center2
+      translation: [ -0.095, -0.051, 0.40 ]
+      geometry: { type: Box, size: [ 0.5, 0.145, 0.2] }
+    -
+      type: Shape
+      name: doorBL line
+      translation: [ -0.068, 0.0245, 0.318 ]
+      geometry: { type: Box, size: [ 0.5, 0.02, 0.055] }
+    -
+      type: Shape
+      name: doorBL center3
+      translation: [ -0.337, -0.051, 0.355 ]
+      rotation: [ 0, 1, 0, -22 ]
+      geometry: { type: Box, size: [ 0.06, 0.145, 0.12] }
+    -
+      type: Shape
+      name: doorBL center4
+      translation: [ -0.38, -0.051, 0.465 ]
+      rotation: [ 0, 1, 0, -46 ]
+      geometry: { type: Box, size: [ 0.11, 0.145, 0.14] }
+    -
+      type: Shape
+      name: doorBL center5
+      translation: [ -0.186, -0.052, 0.56 ]
+      geometry: { type: Box, size: [ 0.68, 0.145, 0.12] }
+    -
+      type: Shape
+      name: doorBL center6
+      translation: [ -0.66, -0.052, 0.570 ]
+      geometry: { type: Box, size: [ 0.29, 0.145, 0.1] }
+    -
+      type: Shape
+      name: doorBL center7
+      translation: [ -0.5, -0.052, 0.516 ]
+      rotation: [ 0, 1, 0, 25 ]
+      geometry: { type: Box, size: [ 0.14, 0.145, 0.05] }
+    -
+      type: Shape
+      name: doorBL center8
+      translation: [ -0.4, -0.054, 0.624 ]
+      rotation: [ 0, 1, 0, 2 ]
+      geometry: { type: Box, size: [ 0.82, 0.145, 0.037] }
+    - #top
+      type: Shape
+      name: doorBL top1
+      translation: [ -0.30, -0.091, 0.664 ]
+      rotation: [ 0, 1, 0, 2 ]
+      geometry: { type: Box, size: [ 0.89, 0.07, 0.07] }
+    -
+      type: Shape 
+      name: doorBL top2
+      translation: [ -0.328, -0.027, 0.669 ]
+      rotation: [ [ 1, 0, 0, 38 ], [ 0, 1, 0, 2 ], [ 0, 0, 1, -1 ] ]
+      geometry: { type: Box, size: [ 0.955, 0.032, 0.11] }
+    -
+      type: Shape
+      name: doorBL top3
+      translation: [ -0.275, -0.085, 0.71 ]
+      rotation: [ [ 1, 0, 0, 8 ], [ 0, 1, 0, 3 ],  [ 0, 0, 1, 1] ]
+      geometry: { type: Box, size: [ 0.88, 0.054, 0.03] }
+    -
+      type: Shape
+      name: doorBL top4
+      translation: [ -0.135, -0.104, 0.693 ]
+      rotation: [ [ 1, 0, 0, -50 ], [ 0, 1, 0, 2 ],  [ 0, 0, 1, 2] ]
+      geometry: { type: Box, size: [ 0.6, 0.03, 0.03] }
+    - #
+      type: Shape
+      name: doorBL top front1
+      translation: [ 0.145, -0.081, 0.65 ]
+      rotation: [ [ 0, 1, 0, 16 ], [ 0, 0, 1, 3] ]
+      geometry: { type: Box, size: [ 0.03, 0.09, 0.06] }
+    -
+      type: Shape
+      name: doorBL top front2
+      translation: [ 0.143, -0.033, 0.645 ]
+      rotation: [ [ 1, 0, 0, -55 ], [ 0, 1, 0, 8 ], [ 0, 0, 1, 10] ]
+      geometry: { type: Box, size: [ 0.015, 0.105, 0.06] }
+    - #
+      type: Shape
+      name: doorBL top rear1
+      translation: [ -0.799, -0.09, 0.699 ]
+      rotation: [ [ 1, 0, 0, -20 ], [ 0, 1, 0, 6 ], [ 0, 0, 1, 0] ]
+      geometry: { type: Box, size: [ 0.015, 0.043, 0.105] }
+    -
+      type: Shape
+      name: doorBL top rear2
+      translation: [ -0.8, -0.055, 0.68 ]
+      rotation: [ 0, 1, 0, 4 ]
+      geometry: { type: Box, size: [ 0.015, 0.06, 0.05] }
+    -
+      type: Shape
+      name: doorBL top rear3
+      translation: [ -0.515, -0.095, 0.721 ]
+      rotation: [ [ 1, 0, 0, 8 ], [ 0, 1, 0, 3 ], [ 0, 0, 1, 1] ]
+      geometry: { type: Box, size: [ 0.5, 0.03, 0.04 ] }
+    -
+      type: Shape
+      name: doorBL top rear4
+      translation: [ -0.78, -0.104, 0.723 ]
+      rotation: [ [ 1, 0, 0, -20 ], [ 0, 1, 0, 6 ] ]
+      geometry: { type: Box, size: [ 0.03, 0.01, 0.07] }
+    -
+      type: Shape
+      name: doorBL top rear5
+      translation: [ -0.745, -0.111, 0.682 ]
+      rotation: [ 0, 1, 0, 50 ]
+      geometry: { type: Box, size: [ 0.05, 0.03, 0.127] }
+    -
+      type: Shape
+      name: doorBL top rear5
+      translation: [ -0.745, -0.107, 0.695 ]
+      rotation: [ 0, 1, 0, 60 ]
+      geometry: { type: Box, size: [ 0.05, 0.03, 0.1] }
+    - #window
+      type: Shape
+      name: doorBL window bottom1
+      translation: [ -0.52, -0.071, 0.74 ]
+      rotation: [ [ 1, 0, 0, 50 ], [ 0, 1, 0, 2 ], [ 0, 0, 1, -1 ] ]
+      geometry: { type: Box, size: [ 0.55, 0.01, 0.04] }
+    - 
+      type: Shape
+      name: doorBL window bottom2
+      translation: [-0.12, -0.062, 0.725 ]
+      rotation: [ [ 1, 0, 0, 34 ], [ 0, 1, 0, 3.8 ] ]
+      geometry: { type: Box, size: [ 0.6, 0.01, 0.04] }
+    - 
+      type: Shape
+      name: doorBL window bottom2
+      translation: [-0.5, -0.085, 0.755 ]
+      rotation: [ [ 1, 0, 0, 34 ], [ 0, 1, 0, 3.8 ] ]
+      geometry: { type: Box, size: [ 0.35, 0.01, 0.02] }
+    - 
+      type: Shape
+      name: doorBL window front1
+      translation: [ 0.119, -0.15, 0.88 ]
+      rotation: [ [ 1, 0, 0, 30 ], [ 0, 1, 0, -8 ] ]
+      geometry: { type: Box, size: [ 0.07, 0.01, 0.38] }
+    - #
+      type: Shape
+      name: doorBL window1
+      translation: [ -0.093, -0.107, 0.8 ]
+      rotation: [ 1, 0, 0, 28 ] 
+      geometry: { type: Box, size: [ 0.4, 0.01, 0.2] }
+    -
+      type: Shape
+      name: doorBL window2
+      translation: [ -0.48, -0.116, 0.806 ]
+      rotation: [ [ 1, 0, 0, 30 ], [ 0, 1, 0, -26 ], [ 0, 0, 1, 1.7 ] ]
+      geometry: { type: Box, size: [ 0.4, 0.01, 0.2] }
+    -
+      type: Shape
+      name: doorBL window3
+      translation: [ -0.33, -0.092, 0.77 ]
+      rotation: [ 1, 0, 0, 28 ]
+      geometry: { type: Box, size: [ 0.1, 0.01, 0.06] }
+    -
+      type: Shape
+      name: doorBL window4
+      translation: [ -0.223, -0.163, 0.906 ]
+      rotation: [ [ 1, 0, 0, 29 ], [ 0, 1, 0, -17 ], [ 0, 0, 1, 1.2] ]
+      geometry: { type: Box, size: [ 0.2, 0.01, 0.2] }
+    -
+      type: Shape
+      name: doorBL window5
+      translation: [ -0.03, -0.184, 0.945 ]
+      rotation: [ [ 1, 0, 0, 29 ], [ 0, 1, 0, -10 ] ]
+      geometry: { type: Box, size: [ 0.23, 0.01, 0.2] }
+
+CAR_WHEEL: &CAR_WHEEL
+  -
+    type: Shape
+    geometry: { type: Cylinder, radius: 0.342, height: 0.24 }
+    appearance:
+      material:
+        ambientIntensity: 0.05
+        diffuseColor: [ 0.1, 0.1, 0.1 ]
+        shininess: 0.1
+        specularColor: [ 0.1, 0.1, 0.1 ]
+  -
+    type: Visual
+    shape:
+      geometry: { type: Cylinder, radius: 0.24, height: 0.244 }
+      appearance:
+        material:
+          ambientIntensity: 0.2
+          diffuseColor: [ 0.8, 0.8, 0.8 ]
+          shininess: 0.5
+          specularColor: [ 0.5, 0.5, 0.5 ]
+
+CAR_NORMAL_ROOF_WITHOUT_PART_AROUND_FR_DOOR: &CAR_NORMAL_ROOF_WITHOUT_PART_AROUND_FR_DOOR
+  type: Transform
+  translation: [ -0.3, 0.001, 0.9 ]
+  elements:  # roof
+    - 
+      type: Shape
+      name: roof right1
+      translation: [ 0.495, -0.45, 0.421 ]
+      rotation: [ [ 0, 1, 0, 13], [ 1, 0, 0, 9 ] ]
+      geometry: { type: Box, size: [ 0.13, 0.11, 0.015 ] }
+    -
+      type: Shape
+      name: roof right2
+      translation: [ 0.289, -0.45, 0.449 ]
+      rotation: [ [ 0, 1, 0, 5], [ 1, 0, 0, 9 ] ] 
+      geometry: { type: Box, size: [ 0.3, 0.11, 0.015 ] }
+    -
+      type: Shape
+      name: roof right3
+      translation: [ -0.06, -0.45, 0.462 ]
+      rotation: [ 1, 0, 0, 9 ]
+      geometry: { type: Box, size: [ 0.4, 0.11, 0.015 ] }
+    -
+      type: Shape
+      name: roof center1
+      translation: [ 0.50, 0, 0.429 ]
+      rotation: [ 0, 1, 0, 13]
+      geometry: { type: Box, size: [ 0.14, 0.8, 0.015 ] }
+    -
+      type: Shape
+      name: roof center2
+      translation: [ 0.289, 0, 0.457 ]
+      rotation: [ 0, 1, 0, 5]
+      geometry: { type: Box, size: [ 0.3, 0.8, 0.015 ] }
+    -
+      type: Shape
+      name: roof center3
+      translation: [ -0.06, 0, 0.47 ]
+      geometry: { type: Box, size: [ 0.4, 0.8, 0.015 ] }
+    -
+      type: Shape
+      name: roof center4
+      translation: [ -0.39, 0, 0.453 ]
+      rotation: [ 0, 1, 0, -7]
+      geometry: { type: Box, size: [ 0.27, 0.8, 0.015 ] }
+
+CAR_NORMAL_ROOF_AROUND_FR_DOOR: &CAR_NORMAL_ROOF_AROUND_FR_DOOR
+  type: Transform
+  translation: [ -0.3, 0.001, 0.9 ]
+  elements:  # roof
+    -
+      type: Shape
+      name: roof right5
+      translation: [ 0.49, -0.541, 0.387 ]
+      rotation: [ [ 0, 1, 0, 13], [ 1, 0, 0, 34 ] ]
+      geometry: { type: Box, size: [ 0.12, 0.1, 0.015 ] }
+      appearance: *RED
+    -
+      type: Shape
+      name: roof right6
+      translation: [ 0.289, -0.54, 0.416 ]
+      rotation: [ [ 0, 1, 0, 5], [ 1, 0, 0, 33 ] ] 
+      geometry: { type: Box, size: [ 0.3, 0.09, 0.015 ] }
+      appearance: *RED
+    -
+      type: Shape
+      name: roof right7
+      translation: [ -0.06, -0.54, 0.43 ]
+      rotation: [ 1, 0, 0, 33 ]
+      geometry: { type: Box, size: [ 0.404, 0.09, 0.015 ] }
+      appearance: *RED
+
+CAR_NORMAL_ROOF: &CAR_NORMAL_ROOF
+  - *CAR_NORMAL_ROOF_WITHOUT_PART_AROUND_FR_DOOR
+  - *CAR_NORMAL_ROOF_AROUND_FR_DOOR
+  
+
+CAR_DAMAGED_ROOF: &CAR_DAMAGED_ROOF
+  type: Transform
+  translation: [ -0.3, 0.001, 0.9 ]
+  elements: 
+    - 
+      type: Shape
+      name: roof right1
+      translation: [ 0.495, -0.45, 0.414 ]
+      rotation: [ [ 0, 1, 0, 13], [ 1, 0, 0, 9 ] ]
+      geometry: { type: Box, size: [ 0.13, 0.11, 0.001 ] }
+    -
+      type: Shape
+      name: roof right11
+      translation: [ 0.534, -0.45, 0.414 ]
+      rotation: [ [ 0, 1, 0, 13], [ 1, 0, 0, 8 ] ]
+      geometry: { type: Box, size: [ 0.06, 0.11, 0.010 ] }
+    -
+      type: Shape
+      name: roof right12
+      translation: [ 0.477, -0.45, 0.421 ]
+      rotation: [ [ 0, 1, 0, 0], [ 1, 0, 0, 8 ] ]
+      geometry: { type: Box, size: [ 0.06, 0.11, 0.010 ] }
+    -
+      type: Shape
+      name: roof right2
+      translation: [ 0.289, -0.45, 0.442 ]
+      rotation: [ [ 0, 1, 0, 5], [ 1, 0, 0, 9 ] ] 
+      geometry: { type: Box, size: [ 0.3, 0.11, 0.001 ] }
+    -
+      type: Shape
+      name: roof right21
+      translation: [ 0.21, -0.494, 0.451 ]
+      rotation: [ [ 0, 1, 0, 2], [ 1, 0, 0, 9 ] ] 
+      geometry: { type: Box, size: [ 0.14, 0.025, 0.013 ] }
+    -
+      type: Shape
+      name: roof right22
+      translation: [ 0.16, -0.44, 0.461 ]
+      rotation: [ [ 0, 1, 0, 2], [ 1, 0, 0, 8 ] ] 
+      geometry: { type: Box, size: [ 0.04, 0.09, 0.013 ] }
+    -
+      type: Shape
+      name: roof right23
+      translation: [ 0.2, -0.44, 0.461 ]
+      rotation: [ [ 0, 1, 0, 4], [ 1, 0, 0, 4 ] ] 
+      geometry: { type: Box, size: [ 0.04, 0.09, 0.003 ] }
+    -
+      type: Shape
+      name: roof right24
+      translation: [ 0.239, -0.44, 0.456 ]
+      rotation: [ [ 0, 1, 0, 8], [ 1, 0, 0, 3 ] ] 
+      geometry: { type: Box, size: [ 0.04, 0.09, 0.003 ] }
+    -
+      type: Shape
+      name: roof right25
+      translation: [ 0.268, -0.44, 0.452 ]
+      rotation: [ [ 0, 1, 0, 12], [ 1, 0, 0, 2] ] 
+      geometry: { type: Box, size: [ 0.02, 0.09, 0.001 ] }
+    -
+      type: Shape
+      name: roof right3
+      translation: [ -0.06, -0.45, 0.462 ]
+      rotation: [ 1, 0, 0, 9 ]
+      geometry: { type: Box, size: [ 0.4, 0.11, 0.015 ] }
+    -
+      type: Shape
+      name: roof right5
+      translation: [ 0.49, -0.541, 0.387 ]
+      rotation: [ [ 0, 1, 0, 13], [ 1, 0, 0, 34 ] ]
+      geometry: { type: Box, size: [ 0.12, 0.1, 0.015 ] }
+    -
+      type: Shape
+      name: roof right6
+      translation: [ 0.289, -0.54, 0.416 ]
+      rotation: [ [ 0, 1, 0, 5], [ 1, 0, 0, 33 ] ] 
+      geometry: { type: Box, size: [ 0.3, 0.09, 0.015 ] }
+    -
+      type: Shape
+      name: roof right7
+      translation: [ -0.06, -0.54, 0.43 ]
+      rotation: [ 1, 0, 0, 33 ]
+      geometry: { type: Box, size: [ 0.404, 0.09, 0.015 ] }
+    - 
+      type: Shape
+      name: roof center1
+      translation: [ 0.50, 0, 0.422 ]
+      rotation: [ 0, 1, 0, 13]
+      geometry: { type: Box, size: [ 0.14, 0.8, 0.001 ] }
+    - 
+      type: Shape
+      name: roof center100
+      translation: [ 0.50, 0.275, 0.431 ]
+      rotation: [ [ 0, 1, 0, 13], [ 1, 0, 0, -1.7 ] ]
+      geometry: { type: Box, size: [ 0.14, 0.26, 0.014 ] }
+    - 
+      type: Shape
+      name: roof center101
+      translation: [ 0.545, 0.07, 0.426 ]
+      rotation: [ [ 0, 1, 0, 17.5],  [ 1, 0, 0, -0.5 ] ]
+      geometry: { type: Box, size: [ 0.05, 0.16, 0.014 ] }
+    - 
+      type: Shape
+      name: roof center102
+      translation: [ 0.514, 0.085, 0.435 ]
+      rotation: [ [ 0, 1, 0, 10],  [ 1, 0, 0, -0.5 ]]
+      geometry: { type: Box, size: [ 0.02, 0.14, 0.013 ] }
+    - 
+      type: Shape
+      name: roof center103
+      translation: [ 0.495, 0.103, 0.439 ]
+      rotation: [ [ 0, 1, 0, 7],  [ 1, 0, 0, -0.5 ]]
+      geometry: { type: Box, size: [ 0.02, 0.1, 0.013 ] }
+    - 
+      type: Shape
+      name: roof center104
+      translation: [ 0.475, 0.123, 0.442 ]
+      rotation: [ [ 0, 1, 0, 7],  [ 1, 0, 0, -0.5 ]]
+      geometry: { type: Box, size: [ 0.02, 0.06, 0.013 ] }
+    - 
+      type: Shape
+      name: roof center105
+      translation: [ 0.455, 0.14, 0.445 ]
+      rotation: [ [ 0, 1, 0, 7],  [ 1, 0, 0, -0.5 ]]
+      geometry: { type: Box, size: [ 0.025, 0.02, 0.013 ] }
+    - 
+      type: Shape 
+      name: roof center106
+      translation: [ 0.483, 0.075, 0.441 ]
+      rotation: [ [ 0, 1, 0, 7],  [ 1, 0, 0, 1 ], [ 0, 0, 1, 28] ]
+      geometry: { type: Box, size: [ 0.02, 0.18, 0.013 ] }
+    - 
+      type: Shape 
+      name: roof center107
+      translation: [ 0.456, 0.07, 0.442 ]
+      rotation: [ [ 0, 0, 1, 27], [ 1, 0, 0, 5],  [ 0, 1, 0, -18] ]
+      geometry: { type: Box, size: [ 0.041, 0.24, 0.001 ] }
+    - 
+      type: Shape 
+      name: roof center108  
+      translation: [ 0.485, -0.05, 0.429 ]
+      rotation: [ [ 0, 0, 1, 2], [ 1, 0, 0, 0],  [ 0, 1, 0, 8] ]
+      geometry: { type: Box, size: [ 0.05, 0.18, 0.001 ] }
+    - 
+      type: Shape
+      name: roof center110
+      translation: [ 0.541, -0.275, 0.42 ]
+      rotation: [ [ 0, 1, 0, 13], [ 1, 0, 0, 1.7 ] ]
+      geometry: { type: Box, size: [ 0.06, 0.26, 0.014 ] }
+    - 
+      type: Shape
+      name: roof center111
+      translation: [ 0.545, -0.07, 0.425 ]
+      rotation: [ [ 0, 1, 0, 15],  [ 1, 0, 0, 1 ] ]
+      geometry: { type: Box, size: [ 0.05, 0.16, 0.014 ] }
+    - 
+      type: Shape
+      name: roof center112
+      translation: [ 0.514, -0.1, 0.433 ]
+      rotation: [ [ 0, 1, 0, 10],  [ 1, 0, 0, 1 ]]
+      geometry: { type: Box, size: [ 0.02, 0.12, 0.013 ] }
+    - 
+      type: Shape
+      name: roof center113
+      translation: [ 0.495, -0.135, 0.435 ]
+      rotation: [ [ 0, 1, 0, 7],  [ 1, 0, 0, 1 ]]
+      geometry: { type: Box, size: [ 0.03, 0.05, 0.013 ] }
+    - 
+      type: Shape
+      name: roof center114
+      translation: [ 0.502, -0.09, 0.434 ]
+      rotation: [ [ 0, 1, 0, 7],  [ 1, 0, 0, 1 ], [ 0, 0, 1, -20] ]
+      geometry: { type: Box, size: [ 0.03, 0.18, 0.013 ] }
+    - 
+      type: Shape
+      name: roof center115
+      translation: [ 0.488, -0.22, 0.436 ]
+      rotation: [ [ 0, 1, 0, 8],  [ 1, 0, 0, 2.5 ]]
+      geometry: { type: Box, size: [ 0.06, 0.12, 0.005 ] }
+    - 
+      type: Shape
+      name: roof center116
+      translation: [ 0.488, -0.343, 0.43 ]
+      rotation: [ [ 0, 1, 0, -1],  [ 1, 0, 0, -1 ]]
+      geometry: { type: Box, size: [ 0.06, 0.12, 0.001 ] }
+    - 
+      type: Shape
+      name: roof center117
+      translation: [ 0.477, -0.308, 0.433 ]
+      rotation: [ [ 0, 1, 0, 7],  [ 1, 0, 0, 6 ]]
+      geometry: { type: Box, size: [ 0.08, 0.06, 0.001 ] }
+    -
+      type: Shape
+      name: roof center2
+      translation: [ 0.289, 0, 0.45 ]
+      rotation: [ 0, 1, 0, 5]
+      geometry: { type: Box, size: [ 0.3, 0.8, 0.001 ] }
+    - 
+      type: Shape
+      name: roof center200
+      translation: [ 0.282, 0.285, 0.459 ]
+      rotation: [ [ 0, 1, 0, 4.5], [ 1, 0, 0, -1.2 ] ]
+      geometry: { type: Box, size: [ 0.3, 0.24, 0.014 ] }
+    - 
+      type: Shape
+      name: roof center201
+      translation: [ 0.376, 0.157, 0.453 ]
+      rotation: [  [ 0, 0, 1, 29 ], [ 0, 1, 0, 5], [ 1, 0, 0, 45 ] ]
+      geometry: { type: Box, size: [ 0.09, 0.001, 0.025 ] }
+    - 
+      type: Shape
+      name: roof center202
+      translation: [ 0.376, 0.168, 0.461 ]
+      rotation: [  [ 0, 0, 1, 29 ], [ 0, 1, 0, 5], [ 1, 0, 0, -1 ] ]
+      geometry: { type: Box, size: [ 0.11, 0.04, 0.001 ] }
+    - 
+      type: Shape
+      name: roof center210
+      translation: [ 0.235, 0.05, 0.4665 ]
+      rotation: [ [ 0, 1, 0, 4], [ 1, 0, 0, 2.5 ] ]
+      geometry: { type: Box, size: [ 0.2, 0.25, 0.001 ] }
+    - 
+      type: Shape
+      name: roof center211
+      translation: [ 0.26, -0.08, 0.4605 ]
+      rotation: [ [ 0, 1, 0, 4], [ 1, 0, 0, 3 ] ]
+      geometry: { type: Box, size: [ 0.16, 0.27, 0.001 ] }
+    - 
+      type: Shape
+      name: roof center212
+      translation: [ 0.35, -0.085, 0.455 ]
+      rotation: [ [ 0, 1, 0, 4], [ 1, 0, 0, 3 ] ]
+      geometry: { type: Box, size: [ 0.03, 0.25, 0.001 ] }
+    - 
+      type: Shape
+      name: roof center213
+      translation: [ 0.375, -0.08, 0.452 ]
+      rotation: [ [ 0, 1, 0, 4], [ 1, 0, 0, 3 ] ]
+      geometry: { type: Box, size: [ 0.02, 0.18, 0.001 ] }
+    - 
+      type: Shape
+      name: roof center214
+      translation: [ 0.359, 0.08, 0.451 ]
+      rotation: [ [ 0, 0, 1, 30 ], [ 0, 1, 0, 40], [ 1, 0, 0, 4  ] ]
+      geometry: { type: Box, size: [ 0.025, 0.16, 0.004 ] }
+    - 
+      type: Shape
+      name: roof center215
+      translation: [ 0.410, -0.039, 0.443 ]
+      rotation: [ [ 0, 0, 1, 17 ], [ 0, 1, 0, 30], [ 1, 0, 0, 2  ] ]
+      geometry: { type: Box, size: [ 0.025, 0.105, 0.004 ] }
+    - 
+      type: Shape
+      name: roof center216
+      translation: [ 0.401, -0.17, 0.44 ]
+      rotation: [ [ 0, 0, 1, -15 ], [ 0, 1, 0, 25], [ 1, 0, 0, 0.5  ] ]
+      geometry: { type: Box, size: [ 0.025, 0.18, 0.004 ] }
+    - 
+      type: Shape
+      name: roof center217
+      translation: [ 0.351, 0.05, 0.458 ]
+      rotation: [ [ 0, 0, 1, 27 ], [ 0, 1, 0, 4], [ 1, 0, 0, 3  ] ]
+      geometry: { type: Box, size: [ 0.025, 0.13, 0.003 ] }
+    - 
+      type: Shape
+      name: roof center218
+      translation: [ 0.388, -0.05, 0.452 ]
+      rotation: [ [ 0, 0, 1, 16 ], [ 0, 1, 0, 4], [ 1, 0, 0, 2  ] ]
+      geometry: { type: Box, size: [ 0.027, 0.10, 0.003 ] }
+    - 
+      type: Shape
+      name: roof center219
+      translation: [ 0.378, -0.17, 0.447 ]
+      rotation: [ [ 0, 0, 1, -15 ], [ 0, 1, 0, 4], [ 1, 0, 0, 2  ] ]
+      geometry: { type: Box, size: [ 0.025, 0.16, 0.004 ] }
+    - 
+      type: Shape
+      name: roof center220
+      translation: [ 0.45, -0.25, 0.441 ]
+      rotation: [ [ 0, 1, 0, 8], [ 1, 0, 0, 2  ] ]
+      geometry: { type: Box, size: [ 0.03, 0.06, 0.004 ] }
+    - 
+      type: Shape
+      name: roof center221
+      translation: [ 0.459, -0.197, 0.438 ]
+      rotation: [ [ 0, 0, 1, -24 ], [ 0, 1, 0, 8], [ 1, 0, 0, -1.5  ] ]
+      geometry: { type: Box, size: [ 0.025, 0.06, 0.012 ] }
+    - 
+      type: Shape
+      name: roof center222
+      translation: [ 0.422, -0.245, 0.44 ]
+      rotation: [ [ 0, 0, 1, 48 ], [ 0, 1, 0, 2], [ 1, 0, 0, -9  ] ]
+      geometry: { type: Box, size: [ 0.08, 0.027, 0.003 ] }
+    - 
+      type: Shape
+      name: roof center223
+      translation: [ 0.427, -0.279, 0.441 ]
+      rotation: [ [ 0, 0, 1, -45 ], [ 0, 1, 0, 7], [ 1, 0, 0, 0  ] ]
+      geometry: { type: Box, size: [ 0.03, 0.05, 0.003 ] }
+    - 
+      type: Shape
+      name: roof center230
+      translation: [ 0.195, -0.349, 0.462 ]
+      rotation: [ [ 0, 1, 0, 6.5], [ 1, 0, 0, -2 ] ]
+      geometry: { type: Box, size: [ 0.12, 0.1, 0.004 ] }
+    -
+      type: Shape
+      name: roof center3
+      translation: [ -0.06, 0, 0.463 ]
+      geometry: { type: Box, size: [ 0.4, 0.8, 0.001 ] }
+    - 
+      type: Shape
+      name: roof center300
+      translation: [ -0.06, 0.285, 0.472 ]
+      rotation: [ 1, 0, 0, -1 ]
+      geometry: { type: Box, size: [ 0.4, 0.24, 0.014 ] }
+    - 
+      type: Shape
+      name: roof center310
+      translation: [ -0.06, 0, 0.471 ]
+      rotation: [ 1, 0, 0, 3 ]
+      geometry: { type: Box, size: [ 0.4, 0.34, 0.002 ] }
+    - 
+      type: Shape
+      name: roof center311
+      translation: [ -0.06, -0.325, 0.47 ]
+      rotation: [ 1, 0, 0, -4 ]
+      geometry: { type: Box, size: [ 0.4, 0.15, 0.004 ] }
+    -
+      type: Shape
+      name: roof center312
+      translation: [ -0.2, -0.15, 0.47]
+      rotation: [ 0, 1, 0, 4 ]
+      geometry: { type: Box, size: [ 0.13, 0.5, 0.001 ] }
+    -
+      type: Shape
+      name: roof center4
+      translation: [ -0.39, 0, 0.453 ]
+      rotation: [ 0, 1, 0, -7]
+      geometry: { type: Box, size: [ 0.27, 0.8, 0.015 ] }

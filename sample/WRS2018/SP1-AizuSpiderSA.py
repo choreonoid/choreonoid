@@ -1,2 +1,3 @@
 import WRSUtil
-WRSUtil.loadProject("SP1", "AGXSimulator", "AizuSpiderSA")
+WRSUtil.loadProject(
+    "MultiSceneViews", "SP1", "AGXSimulator", "AizuSpiderSA")

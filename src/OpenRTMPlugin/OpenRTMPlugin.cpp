@@ -11,12 +11,19 @@
 #include "OpenRTMUtil.h"
 #include "RTSNameServerView.h"
 #include "RTSPropertiesView.h"
-#include "RTSDiagramView.h"
 #include "RTSConfigurationView.h"
 #include "RTMImageView.h"
+
+#ifdef ENABLE_NEW_RT_SYSTEM_ITEM_IMPLEMENTATION
+#include "RTSDiagramExtView.h"
+#include "RTSystemExtItem.h"
+#else
+#include "RTSDiagramView.h"
 #include "RTSystemItem.h"
+#endif
+
 #include "RTSCommonUtil.h"
-#include "VisionSensorSubscriberRTCItem.h"
+#include "BodyStateSubscriberRTCItem.h"
 #include "deprecated/BodyRTCItem.h"
 #include "deprecated/ChoreonoidExecutionContext.h"
 #include "deprecated/ChoreonoidPeriodicExecutionContext.h"
@@ -228,15 +235,20 @@ public:
         }
 
         RTSNameServerView::initializeClass(this);
-        RTSystemItem::initializeClass(this);
         RTSPropertiesView::initializeClass(this);
-        RTSDiagramView::initializeClass(this);
         RTSConfigurationView::initializeClass(this);
         RTMImageView::initializeClass(this);
 
-        VisionSensorSubscriberRTCItem::initializeClass(this);
-        PointCloudSubscriberRTCItem::initializeClass(this);
+#ifdef ENABLE_NEW_RT_SYSTEM_ITEM_IMPLEMENTATION
+        RTSystemExtItem::initializeClass(this);
+        RTSDiagramExtView::initializeClass(this);
+#else
+        RTSystemItem::initializeClass(this);
+        RTSDiagramView::initializeClass(this);
+#endif
 
+        BodyStateSubscriberRTCItem::initializeClass(this);
+        PointCloudSubscriberRTCItem::initializeClass(this);
 
         DDEBUG("initialize Finished");
 

@@ -29,11 +29,11 @@ public:
     virtual SgNode* getScene();
 
 protected:
-    virtual Item* doDuplicate() const;
-    virtual void onPositionChanged();
-    virtual void doPutProperties(PutPropertyFunction& putProperty);
-    virtual bool store(Archive& archive);
-    virtual bool restore(const Archive& archive);
+    virtual Item* doDuplicate() const override;
+    virtual void onPositionChanged() override;
+    virtual void doPutProperties(PutPropertyFunction& putProperty) override;
+    virtual bool store(Archive& archive) override;
+    virtual bool restore(const Archive& archive) override;
     
 private:
     BodyTrackingCameraItemImpl* impl;

@@ -229,21 +229,25 @@ CHASSIS: &CHASSIS
         name: FRONT_CAMERA
         translation: [ 0.25470, 0, 0.13550  ]
         rotation: [ [ 0, 0, 1, -90 ], [ 1, 0, 0, 90 ] ]
+        on: true
       - # B0010_3101<2>
         <<: *CAMERA_MCM-4350FISH
         name: LEFT_CAMERA
         translation: [ 0, 0.17850, 0.04450 ]
         rotation: [ 1, 0, 0, 90 ]
+        on: false
       - # B0010_3101<3>
         <<: *CAMERA_MCM-4350FISH
         name: RIGHT_CAMERA
         translation: [ 0, -0.17850, 0.04450 ]
         rotation: [ [ 0, 0, 1, 180 ], [ 1, 0, 0, 90 ] ]
+        on: false
       - # B0010_3101<4>
         <<: *CAMERA_MCM-4350FISH
         name: BACK_CAMERA
         translation: [ -0.35670, 0, 0.094 ]
         rotation: [ [ 0, 0, 1, 90 ], [ 1, 0, 0, 90 ] ]
+        on: false
       - # Front light
         <<: *LIGHT
         name: FRONT_LIGHT
@@ -609,6 +613,12 @@ TRACK_BOTTOM_ROLLER_VISUAL: &TRACK_BOTTOM_ROLLER_VISUAL
 
 # Main Belt Bottom Roller Guide (For AGX)
 TRACK_BOTTOM_ROLLER_GUIDE: &TRACK_BOTTOM_ROLLER_GUIDE
+  RigidBody:
+    mass: 0.01
+    inertia: [
+      0.0001, 0,      0,
+      0,      0.0001, 0,
+      0,      0,      0.0001 ]
   Collision:
     shape:
       geometry: { type: Box, size: [ 0.306, 0.067, 0.050125 ] }
@@ -767,15 +777,18 @@ SUB_TRACK_BOTTOM_ROLLER_VISUAL: &SUB_TRACK_BOTTOM_ROLLER_VISUAL
 
 # Sub Belt Bottom Roller Guide (For AGX)
 SUB_TRACK_BOTTOM_ROLLER_GUIDE: &SUB_TRACK_BOTTOM_ROLLER_GUIDE
+  RigidBody:
+    mass: 0.01
+    inertia: [
+      0.0001, 0,      0,
+      0,      0.0001, 0,
+      0,      0,      0.0001 ]
   Collision:
-    elements:
-      Transform:
-        rotation: [ 0, -1, 0, 7.82 ]
-        elements:
-          Shape:
-            translation: [ 0, 0, 0.00383 ]
-            geometry: { type: Box, size: [ 0.14, 0.053, 0.04 ] }
-            appearance: *LIGHT_YELLOW
+    shape:
+      rotation: [ 0, -1, 0, 7.82 ]
+      translation: [ 0, 0, 0.00383 ]
+      geometry: { type: Box, size: [ 0.14, 0.053, 0.04 ] }
+      appearance: *LIGHT_YELLOW
 
 # Sub Belt
 SUB_BELT: &SUB_BELT

@@ -469,9 +469,6 @@ SettingDialog::SettingDialog()
     leName = new LineEdit;
     QLabel* lblVersion = new QLabel(_("Version:"));
     leVersion = new LineEdit;
-    QLabel* lblPolling = new QLabel(_("Polling Cycle:"));
-    lePoling = new LineEdit;
-    QLabel* lblUnit = new QLabel("ms");
 
 #if defined(OPENRTM_VERSION12)
     QLabel* lblHeartBeat = new QLabel(_("Heartbeat Period:"));
@@ -492,9 +489,6 @@ SettingDialog::SettingDialog()
     gridSubLayout->addWidget(leName, 2, 1, 1, 2);
     gridSubLayout->addWidget(lblVersion, 3, 0, 1, 1);
     gridSubLayout->addWidget(leVersion, 3, 1, 1, 2);
-    gridSubLayout->addWidget(lblPolling, 4, 0, 1, 1);
-    gridSubLayout->addWidget(lePoling, 4, 1, 1, 2);
-    gridSubLayout->addWidget(lblUnit, 4, 3, 1, 1);
 
 #if defined(OPENRTM_VERSION12)
     gridSubLayout->addWidget(lblHeartBeat, 5, 0, 1, 1);
@@ -531,7 +525,6 @@ SettingDialog::SettingDialog()
     leSetting->setText(QString::fromStdString(appVars->get("defaultSetting", "./choreonoid.rtc.conf")));
     leName->setText(QString::fromStdString(appVars->get("defaultVendor", "AIST")));
     leVersion->setText(QString::fromStdString(appVars->get("defaultVersion", "1.0.0")));
-    lePoling->setText(QString::number(appVars->get("pollingCycle", 500)));
 
 #if defined(OPENRTM_VERSION12)
     leHeartBeat->setText(QString::number(appVars->get("heartBeatPeriod", 500)));
@@ -578,7 +571,6 @@ void SettingDialog::oKClicked()
     appVars->write("defaultSetting", leSetting->text().toStdString(), DOUBLE_QUOTED);
     appVars->write("defaultVendor", leName->text().toStdString(), DOUBLE_QUOTED);
     appVars->write("defaultVersion", leVersion->text().toStdString(), DOUBLE_QUOTED);
-    appVars->write("pollingCycle", lePoling->text().toInt());
 
 #if defined(OPENRTM_VERSION12)
     appVars->write("heartBeatPeriod", leHeartBeat->text().toInt());
@@ -586,11 +578,6 @@ void SettingDialog::oKClicked()
 
     appVars->write("outputLog", chkLog->isChecked());
     appVars->write("logLevel", cmbLogLevel->currentText().toStdString());
-
-    RTSDiagramView* view = RTSDiagramView::instance();
-    if (view) {
-        view->updateSetting();
-    }
 
     if (isRestart) {
         QMessageBox::warning(this, _("OpenRTM Preferences"), _("The specified setting becomes valid after RESTART."));
