@@ -25,8 +25,8 @@ public:
     WorldLogFileItem(const WorldLogFileItem& org);
     ~WorldLogFileItem();
 
-    bool setLogFileName(const std::string& filename);
-    const std::string& logFileName() const;
+    bool setLogFile(const std::string& filename);
+    const std::string& logFile() const;
 
     double recordingFrameRate() const;
 
