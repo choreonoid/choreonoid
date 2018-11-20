@@ -326,16 +326,14 @@ ItemManager::~ItemManager()
 ItemManagerImpl::~ItemManagerImpl()
 {
     // unregister creation panels
-    for(set<ItemCreationPanel*>::iterator it = registeredCreationPanels.begin(); it != registeredCreationPanels.end(); ++it){
+    for(auto it = registeredCreationPanels.begin(); it != registeredCreationPanels.end(); ++it){
         ItemCreationPanel* panel = *it;
         delete panel;
     }
     
     // unregister loaders
-    for(set<LoaderPtr>::iterator it = registeredLoaders.begin(); it != registeredLoaders.end(); ++it){
-
+    for(auto it = registeredLoaders.begin(); it != registeredLoaders.end(); ++it){
         LoaderPtr loader = *it;
-
         ClassInfoMap::iterator p = typeIdToClassInfoMap.find(loader->typeId);
         if(p != typeIdToClassInfoMap.end()){
             list<LoaderPtr>& loaders = p->second->loaders;
@@ -351,7 +349,7 @@ ItemManagerImpl::~ItemManagerImpl()
     }
 
     // unregister savers
-    for(set<SaverPtr>::iterator it = registeredSavers.begin(); it != registeredSavers.end(); ++it){
+    for(auto it = registeredSavers.begin(); it != registeredSavers.end(); ++it){
         SaverPtr saver = *it;
         ClassInfoMap::iterator p = typeIdToClassInfoMap.find(saver->typeId);
         if(p != typeIdToClassInfoMap.end()){
@@ -368,26 +366,19 @@ ItemManagerImpl::~ItemManagerImpl()
     }
 
     // unregister item class identifiers, CreationPanelBases and savers
-    for(set<string>::iterator q = registeredTypeIds.begin(); q != registeredTypeIds.end(); ++q){
-
+    for(auto q = registeredTypeIds.begin(); q != registeredTypeIds.end(); ++q){
         const string& id = *q;
-
-        Item::sigClassUnregistered_(id.c_str());
-
         CreationPanelBaseMap::iterator s = creationPanelBaseMap.find(id);
         if(s != creationPanelBaseMap.end()){
             CreationPanelBase* base = s->second;
             delete base;
             creationPanelBaseMap.erase(s);
         }
-
         typeIdToClassInfoMap.erase(id);
     }
 
     // unregister creation panel filters
-    for(CreationPanelFilterSet::iterator p = registeredCreationPanelFilters.begin();
-        p != registeredCreationPanelFilters.end(); ++p){
-
+    for(auto p = registeredCreationPanelFilters.begin(); p != registeredCreationPanelFilters.end(); ++p){
         ClassInfoMap::iterator q = typeIdToClassInfoMap.find(p->first);
         if(q != typeIdToClassInfoMap.end()){
             ClassInfoPtr& classInfo = q->second;
