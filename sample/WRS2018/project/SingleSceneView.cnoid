@@ -104,95 +104,10 @@ views:
     state: 
       listingMode: "Link List"
   - 
-    id: 7
-    plugin: OpenRTM
-    class: RTSNameServerView
-    state: 
-      host: localhost
-      port: 2809
-  - 
     id: 8
     plugin: Python
     class: PythonConsoleView
     mounted: true
-toolbars: 
-  "TimeBar": 
-    minTime: 0
-    maxTime: 30
-    frameRate: 1000
-    playbackFrameRate: 60
-    idleLoopDrivenMode: false
-    currentTime: 0
-    speedScale: 1
-    syncToOngoingUpdates: true
-    autoExpansion: true
-  "KinematicsBar": 
-    mode: AUTO
-    enablePositionDragger: true
-    penetrationBlock: false
-    collisionLinkHighlight: false
-    snapDistance: 0.025
-    penetrationBlockDepth: 0.0005
-    lazyCollisionDetectionMode: true
-  "LeggedBodyBar": 
-    stanceWidth: 0.15
-  "BodyMotionGenerationBar": 
-    autoGenerationForNewBody: true
-    balancer: false
-    autoGeneration: false
-    timeScaleRatio: 1
-    preInitialDuration: 1
-    postFinalDuration: 1
-    onlyTimeBarRange: false
-    makeNewBodyItem: true
-    stealthyStepMode: true
-    stealthyHeightRatioThresh: 2
-    flatLiftingHeight: 0.005
-    flatLandingHeight: 0.005
-    impactReductionHeight: 0.005
-    impactReductionTime: 0.04
-    autoZmp: true
-    minZmpTransitionTime: 0.1
-    zmpCenteringTimeThresh: 0.03
-    zmpTimeMarginBeforeLiftingSpin: 0
-    zmpMaxDistanceFromCenter: 0.02
-    allLinkPositions: false
-    lipSyncMix: false
-    timeToStartBalancer: 0
-    balancerIterations: 2
-    plainBalancerMode: false
-    boundaryConditionType: position
-    boundarySmootherType: quintic
-    boundarySmootherTime: 0.5
-    boundaryCmAdjustment: false
-    boundaryCmAdjustmentTime: 1
-    waistHeightRelaxation: false
-    gravity: 9.8
-    dynamicsTimeRatio: 1
-Body: 
-  "BodyMotionEngine": 
-    updateJointVelocities: false
-  "EditableSceneBody": 
-    staticModelEditing: true
-  "KinematicFaultChecker": 
-    checkJointPositions: true
-    angleMargin: 0
-    translationMargin: 0
-    checkJointVelocities: true
-    velocityLimitRatio: 100
-    targetJoints: all
-    checkSelfCollisions: true
-    onlyTimeBarRange: false
-  "SplineFilterDialog": 
-    isInputFrameRateSpecified: false
-    inputFrameRate: 200
-    isOutputFrameRateSpecified: false
-    outputFrameRate: 200
-Media: 
-  "PulseAudioManager": 
-    keepStreamConnection: false
-OpenRTM: 
-  "deleteUnmanagedRTCsOnStartingSimulation": false
 viewAreas: 
   - 
     type: embedded
@@ -200,12 +115,12 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 326, 1588 ]
+      sizes: [ 400, 2000 ]
       children: 
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 556, 556 ]
+          sizes: [ 700, 700 ]
           children: 
             - 
               type: pane
@@ -218,12 +133,12 @@ viewAreas:
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 855, 257 ]
+          sizes: [ 800, 200 ]
           children: 
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 687, 895 ]
+              sizes: [ 0, 2000 ]
               children: 
                 - 
                   type: pane
@@ -236,7 +151,7 @@ viewAreas:
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 791, 791 ]
+              sizes: [ 1200, 800 ]
               children: 
                 - 
                   type: pane
@@ -254,5 +169,5 @@ layoutOfToolBars:
       - { name: "ScriptBar", x: 47, priority: 0 }
       - { name: "SimulationBar", x: 93, priority: 1 }
       - { name: "TimeBar", x: 94, priority: 0 }
-      - { name: "SceneBar", x: 1324, priority: 4 }
-      - { name: "KinematicsBar", x: 1687, priority: 3 }
+      - { name: "SceneBar", x: 5000, priority: 4 }
+      - { name: "KinematicsBar", x: 5000, priority: 3 }
