@@ -15,6 +15,7 @@ if(UNIX)
 endif()
 
 install(DIRECTORY
+  model
   project
   script
   test

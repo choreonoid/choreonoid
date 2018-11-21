@@ -49,7 +49,7 @@ items:
               plugin: Body
               class: BodyItem
               data: 
-                modelFile: "${SHARE}/model/WRS2018/CarT3.body"
+                modelFile: "${SHARE}/WRS2018/model/CarT3.body"
                 currentBaseLink: "BODY"
                 rootPosition: [ 2.6, -0.5, 0 ]
                 rootAttitude: [ 
@@ -86,7 +86,7 @@ items:
               plugin: Body
               class: BodyItem
               data: 
-                modelFile: "${SHARE}/model/WRS2018/Victim.body"
+                modelFile: "${SHARE}/WRS2018/model/Victim.body"
                 rootPosition: [ 2.2056441, -0.671722796, 0.573309943 ]
                 rootAttitude: [ 
                   -5.98997074e-10, 0.999975631, 0.00698126001, 
@@ -115,7 +115,7 @@ items:
               plugin: Body
               class: BodyItem
               data: 
-                modelFile: "${SHARE}/model/WRS2018/Spreader.body"
+                modelFile: "${SHARE}/WRS2018/model/Spreader.body"
                 currentBaseLink: "BASE"
                 rootPosition: [ 1.122252, -0.0975240504, 0.0864676285 ]
                 rootAttitude: [ 

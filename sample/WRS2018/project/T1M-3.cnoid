@@ -10,7 +10,7 @@ items:
       plugin: Body
       class: BodyItem
       data: 
-        modelFile: "${SHARE}/model/WRS2018/Debris1.body"
+        modelFile: "${SHARE}/WRS2018/model/Debris1.body"
         currentBaseLink: "BASE"
         rootPosition: [ 33, 3.8, 0.1 ]
         rootAttitude: [ 
@@ -33,7 +33,7 @@ items:
       plugin: Body
       class: BodyItem
       data: 
-        modelFile: "${SHARE}/model/WRS2018/Debris1.body"
+        modelFile: "${SHARE}/WRS2018/model/Debris1.body"
         currentBaseLink: "BASE"
         rootPosition: [ 32.5, -4.4, 0.1 ]
         rootAttitude: [ 
@@ -56,7 +56,7 @@ items:
       plugin: Body
       class: BodyItem
       data: 
-        modelFile: "${SHARE}/model/WRS2018/Debris1.body"
+        modelFile: "${SHARE}/WRS2018/model/Debris1.body"
         currentBaseLink: "BASE"
         rootPosition: [ 12.5, -3.8, 0.1 ]
         rootAttitude: [ 
@@ -79,7 +79,7 @@ items:
       plugin: Body
       class: BodyItem
       data: 
-        modelFile: "${SHARE}/model/WRS2018/Debris1.body"
+        modelFile: "${SHARE}/WRS2018/model/Debris1.body"
         currentBaseLink: "BASE"
         rootPosition: [ 13.8, 4, 0.1 ]
         rootAttitude: [ 
@@ -102,7 +102,7 @@ items:
       plugin: Body
       class: BodyItem
       data: 
-        modelFile: "${SHARE}/model/WRS2018/CarT6-Gray.body"
+        modelFile: "${SHARE}/WRS2018/model/CarT6-Gray.body"
         currentBaseLink: ""
         rootPosition: [ 27, -3.8, 0.3 ]
         rootAttitude: [ 
@@ -125,7 +125,7 @@ items:
       plugin: Body
       class: BodyItem
       data: 
-        modelFile: "${SHARE}/model/WRS2018/CarT6-Gray.body"
+        modelFile: "${SHARE}/WRS2018/model/CarT6-Gray.body"
         currentBaseLink: ""
         rootPosition: [ 27, 3.8, 0.3 ]
         rootAttitude: [ 
@@ -148,7 +148,7 @@ items:
       plugin: Body
       class: BodyItem
       data: 
-        modelFile: "${SHARE}/model/WRS2018/Flag5R.body"
+        modelFile: "${SHARE}/WRS2018/model/Flag5R.body"
         currentBaseLink: "BASE"
         rootPosition: [ 43, -1.75, 0 ]
         rootAttitude: [ 
@@ -171,7 +171,7 @@ items:
       plugin: Body
       class: BodyItem
       data: 
-        modelFile: "${SHARE}/model/WRS2018/Flag5L.body"
+        modelFile: "${SHARE}/WRS2018/model/Flag5L.body"
         currentBaseLink: "BASE"
         rootPosition: [ 43, 1.75, 0 ]
         rootAttitude: [ 
@@ -194,7 +194,7 @@ items:
       plugin: Body
       class: BodyItem
       data: 
-        modelFile: "${SHARE}/model/WRS2018/TerrainB.body"
+        modelFile: "${SHARE}/WRS2018/model/TerrainB.body"
         currentBaseLink: "0"
         rootPosition: [ 37, -2.25, 0 ]
         rootAttitude: [ 
@@ -217,7 +217,7 @@ items:
       plugin: Body
       class: BodyItem
       data: 
-        modelFile: "${SHARE}/model/WRS2018/Flag4R.body"
+        modelFile: "${SHARE}/WRS2018/model/Flag4R.body"
         currentBaseLink: "BASE"
         rootPosition: [ 35.6, -1.5, 0 ]
         rootAttitude: [ 
@@ -240,7 +240,7 @@ items:
       plugin: Body
       class: BodyItem
       data: 
-        modelFile: "${SHARE}/model/WRS2018/Flag4L.body"
+        modelFile: "${SHARE}/WRS2018/model/Flag4L.body"
         currentBaseLink: "BASE"
         rootPosition: [ 35.6, 1.5, 0 ]
         rootAttitude: [ 
@@ -263,7 +263,7 @@ items:
       plugin: Body
       class: BodyItem
       data: 
-        modelFile: "${SHARE}/model/WRS2018/JungleGymM3.body"
+        modelFile: "${SHARE}/WRS2018/model/JungleGymM3.body"
         currentBaseLink: "ROOT"
         rootPosition: [ 33.5, 0, 0 ]
         rootAttitude: [ 
@@ -286,7 +286,7 @@ items:
       plugin: Body
       class: BodyItem
       data: 
-        modelFile: "${SHARE}/model/WRS2018/Flag3L.body"
+        modelFile: "${SHARE}/WRS2018/model/Flag3L.body"
         currentBaseLink: "BASE"
         rootPosition: [ 28.5, 1.75, 0 ]
         rootAttitude: [ 
@@ -309,7 +309,7 @@ items:
       plugin: Body
       class: BodyItem
       data: 
-        modelFile: "${SHARE}/model/WRS2018/Flag3R.body"
+        modelFile: "${SHARE}/WRS2018/model/Flag3R.body"
         currentBaseLink: "BASE"
         rootPosition: [ 28.5, -1.75, 0 ]
         rootAttitude: [ 
@@ -332,7 +332,7 @@ items:
       plugin: Body
       class: BodyItem
       data: 
-        modelFile: "${SHARE}/model/WRS2018/TerrainB.body"
+        modelFile: "${SHARE}/WRS2018/model/TerrainB.body"
         currentBaseLink: "0"
         rootPosition: [ 26, -2.25, 0 ]
         rootAttitude: [ 
@@ -355,7 +355,7 @@ items:
       plugin: Body
       class: BodyItem
       data: 
-        modelFile: "${SHARE}/model/WRS2018/JungleGymM2.body"
+        modelFile: "${SHARE}/WRS2018/model/JungleGymM2.body"
         currentBaseLink: "ROOT"
         rootPosition: [ 24.5, 0, 0 ]
         rootAttitude: [ 
@@ -378,7 +378,7 @@ items:
       plugin: Body
       class: BodyItem
       data: 
-        modelFile: "${SHARE}/model/WRS2018/Flag2R.body"
+        modelFile: "${SHARE}/WRS2018/model/Flag2R.body"
         currentBaseLink: "BASE"
         rootPosition: [ 17, -1.75, 0 ]
         rootAttitude: [ 
@@ -401,7 +401,7 @@ items:
       plugin: Body
       class: BodyItem
       data: 
-        modelFile: "${SHARE}/model/WRS2018/Flag2L.body"
+        modelFile: "${SHARE}/WRS2018/model/Flag2L.body"
         currentBaseLink: "BASE"
         rootPosition: [ 17, 1.75, 0 ]
         rootAttitude: [ 
@@ -430,7 +430,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/WRS2018/TerrainA.body"
+            modelFile: "${SHARE}/WRS2018/model/TerrainA.body"
             currentBaseLink: "1"
             rootPosition: [ 15, 2.4, 0 ]
             rootAttitude: [ 
@@ -453,7 +453,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/WRS2018/TerrainA.body"
+            modelFile: "${SHARE}/WRS2018/model/TerrainA.body"
             currentBaseLink: "1"
             rootPosition: [ 15, -2.4, 0 ]
             rootAttitude: [ 
@@ -476,7 +476,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/WRS2018/TerrainA.body"
+            modelFile: "${SHARE}/WRS2018/model/TerrainA.body"
             currentBaseLink: "1"
             rootPosition: [ 17.4, 0, 0 ]
             rootAttitude: [ 
@@ -499,7 +499,7 @@ items:
       plugin: Body
       class: BodyItem
       data: 
-        modelFile: "${SHARE}/model/WRS2018/JungleGymM1.body"
+        modelFile: "${SHARE}/WRS2018/model/JungleGymM1.body"
         currentBaseLink: "ROOT"
         rootPosition: [ 11, 0, 0 ]
         rootAttitude: [ 
@@ -522,7 +522,7 @@ items:
       plugin: Body
       class: BodyItem
       data: 
-        modelFile: "${SHARE}/model/WRS2018/TerrainA.body"
+        modelFile: "${SHARE}/WRS2018/model/TerrainA.body"
         currentBaseLink: "1"
         rootPosition: [ 6, 3, 0 ]
         rootAttitude: [ 
@@ -545,7 +545,7 @@ items:
       plugin: Body
       class: BodyItem
       data: 
-        modelFile: "${SHARE}/model/WRS2018/Flag1R.body"
+        modelFile: "${SHARE}/WRS2018/model/Flag1R.body"
         currentBaseLink: "BASE"
         rootPosition: [ 5, -3.45, 0 ]
         rootAttitude: [ 
@@ -568,7 +568,7 @@ items:
       plugin: Body
       class: BodyItem
       data: 
-        modelFile: "${SHARE}/model/WRS2018/Flag1L.body"
+        modelFile: "${SHARE}/WRS2018/model/Flag1L.body"
         currentBaseLink: "BASE"
         rootPosition: [ 5, 0, 0 ]
         rootAttitude: [ 
@@ -591,7 +591,7 @@ items:
       plugin: Body
       class: BodyItem
       data: 
-        modelFile: "${SHARE}/model/WRS2018/RoadSurface.body"
+        modelFile: "${SHARE}/WRS2018/model/RoadSurface.body"
         currentBaseLink: "Base"
         rootPosition: [ 0, 0, 0 ]
         rootAttitude: [ 
@@ -614,7 +614,7 @@ items:
       plugin: Body
       class: BodyItem
       data: 
-        modelFile: "${SHARE}/model/WRS2018/TunnelWall60m-R.body"
+        modelFile: "${SHARE}/WRS2018/model/TunnelWall60m-R.body"
         currentBaseLink: "1_Base"
         rootPosition: [ 0, 0, 0 ]
         rootAttitude: [ 
@@ -637,7 +637,7 @@ items:
       plugin: Body
       class: BodyItem
       data: 
-        modelFile: "${SHARE}/model/WRS2018/TunnelWall60m-L.body"
+        modelFile: "${SHARE}/WRS2018/model/TunnelWall60m-L.body"
         currentBaseLink: "1_Base"
         rootPosition: [ 0, 0, 0 ]
         rootAttitude: [ 
@@ -669,7 +669,7 @@ items:
       plugin: Body
       class: BodyItem
       data: 
-        modelFile: "${SHARE}/model/WRS2018/SmokeT1_02.body"
+        modelFile: "${SHARE}/WRS2018/model/SmokeT1_02.body"
         currentBaseLink: "Base"
         rootPosition: [ 23, 0, 1 ]
         rootAttitude: [ 
@@ -692,7 +692,7 @@ items:
       plugin: Body
       class: BodyItem
       data: 
-        modelFile: "${SHARE}/model/WRS2018/SmokeT1_02.body"
+        modelFile: "${SHARE}/WRS2018/model/SmokeT1_02.body"
         currentBaseLink: "Base"
         rootPosition: [ 35, 0, 1 ]
         rootAttitude: [ 

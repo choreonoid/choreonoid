@@ -10,7 +10,7 @@ items:
       plugin: Body
       class: BodyItem
       data: 
-        modelFile: "${SHARE}/model/WRS2018/RoadSurface.body"
+        modelFile: "${SHARE}/WRS2018/model/RoadSurface.body"
         currentBaseLink: "Base"
         rootPosition: [ 0, 0, 0 ]
         rootAttitude: [ 
@@ -33,7 +33,7 @@ items:
       plugin: Body
       class: BodyItem
       data: 
-        modelFile: "${SHARE}/model/WRS2018/TunnelWall60m-R.body"
+        modelFile: "${SHARE}/WRS2018/model/TunnelWall60m-R.body"
         currentBaseLink: "1_Base"
         rootPosition: [ 0, 0, 0 ]
         rootAttitude: [ 
@@ -56,7 +56,7 @@ items:
       plugin: Body
       class: BodyItem
       data: 
-        modelFile: "${SHARE}/model/WRS2018/TunnelWall60m-L.body"
+        modelFile: "${SHARE}/WRS2018/model/TunnelWall60m-L.body"
         currentBaseLink: "1_Base"
         rootPosition: [ 0, 0, 0 ]
         rootAttitude: [ 
@@ -79,7 +79,7 @@ items:
       plugin: Body
       class: BodyItem
       data: 
-        modelFile: "${SHARE}/model/WRS2018/Flag1L.body"
+        modelFile: "${SHARE}/WRS2018/model/Flag1L.body"
         currentBaseLink: "BASE"
         rootPosition: [ 4, 1.5, 0 ]
         rootAttitude: [ 
@@ -102,7 +102,7 @@ items:
       plugin: Body
       class: BodyItem
       data: 
-        modelFile: "${SHARE}/model/WRS2018/Flag1R.body"
+        modelFile: "${SHARE}/WRS2018/model/Flag1R.body"
         currentBaseLink: "BASE"
         rootPosition: [ 4, -1.5, 0 ]
         rootAttitude: [ 
@@ -125,7 +125,7 @@ items:
       plugin: Body
       class: BodyItem
       data: 
-        modelFile: "${SHARE}/model/WRS2018/Flag2L.body"
+        modelFile: "${SHARE}/WRS2018/model/Flag2L.body"
         currentBaseLink: "BASE"
         rootPosition: [ 30, 1.5, 0 ]
         rootAttitude: [ 
@@ -148,7 +148,7 @@ items:
       plugin: Body
       class: BodyItem
       data: 
-        modelFile: "${SHARE}/model/WRS2018/Flag2R.body"
+        modelFile: "${SHARE}/WRS2018/model/Flag2R.body"
         currentBaseLink: "BASE"
         rootPosition: [ 30, -1.5, 0 ]
         rootAttitude: [ 
@@ -177,7 +177,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/WRS2018/ShoringM.body"
+            modelFile: "${SHARE}/WRS2018/model/ShoringM.body"
             currentBaseLink: "body"
             rootPosition: [ 6.00002042, 3.02525048, 0.191243621 ]
             rootAttitude: [ 
@@ -200,7 +200,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/WRS2018/CarT6-Gray.body"
+            modelFile: "${SHARE}/WRS2018/model/CarT6-Gray.body"
             currentBaseLink: ""
             rootPosition: [ 13, 2, 0 ]
             rootAttitude: [ 
@@ -223,7 +223,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/WRS2018/GroovedPlate3.body"
+            modelFile: "${SHARE}/WRS2018/model/GroovedPlate3.body"
             currentBaseLink: "root"
             rootPosition: [ 15, 2, 1.4 ]
             rootAttitude: [ 
@@ -247,7 +247,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/WRS2018/CollapsedCeilingA.body"
+            modelFile: "${SHARE}/WRS2018/model/CollapsedCeilingA.body"
             currentBaseLink: "body"
             rootPosition: [ 14.5177525, 1.65504343, 1.05336206 ]
             rootAttitude: [ 
@@ -271,7 +271,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/WRS2018/CollapsedCeilingE.body"
+            modelFile: "${SHARE}/WRS2018/model/CollapsedCeilingE.body"
             currentBaseLink: "body"
             rootPosition: [ 13.3807052, 2.74057867, 1.4423478 ]
             rootAttitude: [ 
@@ -294,7 +294,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/WRS2018/T6_ShoringGuide.body"
+            modelFile: "${SHARE}/WRS2018/model/T6_ShoringGuide.body"
             currentBaseLink: "body"
             rootPosition: [ 13.3770762, -0.786928845, 0.12 ]
             rootAttitude: [ 
@@ -317,7 +317,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/WRS2018/Rubble1.body"
+            modelFile: "${SHARE}/WRS2018/model/Rubble1.body"
             currentBaseLink: "body"
             rootPosition: [ 13.607919, -0.39629095, 0.08 ]
             rootAttitude: [ 
@@ -346,7 +346,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/WRS2018/ShoringL.body"
+            modelFile: "${SHARE}/WRS2018/model/ShoringL.body"
             currentBaseLink: "body"
             rootPosition: [ 8.2, 2.3399, -8.12082226e-06 ]
             rootAttitude: [ 
@@ -369,7 +369,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/WRS2018/CarT6-Gray.body"
+            modelFile: "${SHARE}/WRS2018/model/CarT6-Gray.body"
             currentBaseLink: ""
             rootPosition: [ 17.530503, 1.84226775, 0.0831241808 ]
             rootAttitude: [ 
@@ -392,7 +392,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/WRS2018/CollapsedCeilingA.body"
+            modelFile: "${SHARE}/WRS2018/model/CollapsedCeilingA.body"
             currentBaseLink: "body"
             rootPosition: [ 18.3767, 3.2116, 1.2933 ]
             rootAttitude: [ 
@@ -415,7 +415,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/WRS2018/CollapsedCeilingA.body"
+            modelFile: "${SHARE}/WRS2018/model/CollapsedCeilingA.body"
             currentBaseLink: "body"
             rootPosition: [ 18.9361, 2.1259, 1.1207 ]
             rootAttitude: [ 
@@ -438,7 +438,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/WRS2018/CollapsedCeilingB.body"
+            modelFile: "${SHARE}/WRS2018/model/CollapsedCeilingB.body"
             currentBaseLink: "body"
             rootPosition: [ 17.5679931, 3.2125176, 0.545976741 ]
             rootAttitude: [ 
@@ -461,7 +461,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/WRS2018/CollapsedCeilingA.body"
+            modelFile: "${SHARE}/WRS2018/model/CollapsedCeilingA.body"
             currentBaseLink: "body"
             rootPosition: [ 18.1284, 2.0292, 1.5202 ]
             rootAttitude: [ 
@@ -484,7 +484,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/WRS2018/CollapsedCeilingD.body"
+            modelFile: "${SHARE}/WRS2018/model/CollapsedCeilingD.body"
             currentBaseLink: "body"
             rootPosition: [ 17.7011, 1.1033, 1.3987 ]
             rootAttitude: [ 
@@ -507,7 +507,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/WRS2018/T6_ShoringLineL.body"
+            modelFile: "${SHARE}/WRS2018/model/T6_ShoringLineL.body"
             currentBaseLink: "body"
             rootPosition: [ 18.2399078, 0.0642831115, 0 ]
             rootAttitude: [ 
@@ -536,7 +536,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/WRS2018/CarT6.body"
+            modelFile: "${SHARE}/WRS2018/model/CarT6.body"
             currentBaseLink: ""
             rootPosition: [ 22.5, 1.59, 0 ]
             rootAttitude: [ 
@@ -560,7 +560,7 @@ items:
               plugin: Body
               class: BodyItem
               data: 
-                modelFile: "${SHARE}/model/WRS2018/TargetT6_35-50_3.body"
+                modelFile: "${SHARE}/WRS2018/model/TargetT6_35-50_3.body"
                 currentBaseLink: "QR-BASE"
                 rootPosition: [ 22.6, 1.2, 0.4 ]
                 rootAttitude: [ 
@@ -583,7 +583,7 @@ items:
               plugin: Body
               class: BodyItem
               data: 
-                modelFile: "${SHARE}/model/WRS2018/TargetT6_35-50_3.body"
+                modelFile: "${SHARE}/WRS2018/model/TargetT6_35-50_3.body"
                 currentBaseLink: "QR-BASE"
                 rootPosition: [ 22.6, 1.2, 0.47 ]
                 rootAttitude: [ 
@@ -606,7 +606,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/WRS2018/RockDrill.body"
+            modelFile: "${SHARE}/WRS2018/model/RockDrill.body"
             currentBaseLink: "BASE"
             rootPosition: [ 20.1542, -3.7883, 0.2929 ]
             rootAttitude: [ 
@@ -643,7 +643,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/WRS2018/CollapsedCeilingF.body"
+            modelFile: "${SHARE}/WRS2018/model/CollapsedCeilingF.body"
             currentBaseLink: ""
             rootPosition: [ 22.695, 1.9462, 1.5967 ]
             rootAttitude: [ 
@@ -680,7 +680,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/WRS2018/CollapsedCeilingC.body"
+            modelFile: "${SHARE}/WRS2018/model/CollapsedCeilingC.body"
             currentBaseLink: "body"
             rootPosition: [ 21.4861, 1.9757, 1.5871 ]
             rootAttitude: [ 
@@ -704,7 +704,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/WRS2018/CollapsedCeilingC.body"
+            modelFile: "${SHARE}/WRS2018/model/CollapsedCeilingC.body"
             currentBaseLink: "body"
             rootPosition: [ 23.5229, 2.0149, 1.4419 ]
             rootAttitude: [ 
@@ -728,7 +728,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/WRS2018/CollapsedCeilingD.body"
+            modelFile: "${SHARE}/WRS2018/model/CollapsedCeilingD.body"
             currentBaseLink: "body"
             rootPosition: [ 22.2844, -1.179, 0.6306 ]
             rootAttitude: [ 
@@ -752,7 +752,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/WRS2018/CollapsedCeilingB.body"
+            modelFile: "${SHARE}/WRS2018/model/CollapsedCeilingB.body"
             currentBaseLink: "body"
             rootPosition: [ 22.5719, 0.0907, 0.1728 ]
             rootAttitude: [ 
@@ -776,7 +776,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/WRS2018/CollapsedCeilingB.body"
+            modelFile: "${SHARE}/WRS2018/model/CollapsedCeilingB.body"
             currentBaseLink: "body"
             rootPosition: [ 22.5367, 0.0694, 0.4453 ]
             rootAttitude: [ 
@@ -800,7 +800,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/WRS2018/CollapsedCeilingA.body"
+            modelFile: "${SHARE}/WRS2018/model/CollapsedCeilingA.body"
             currentBaseLink: "body"
             rootPosition: [ 21.8367, 1.7085, 1.6531 ]
             rootAttitude: [ 
@@ -824,7 +824,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/WRS2018/CollapsedCeilingA.body"
+            modelFile: "${SHARE}/WRS2018/model/CollapsedCeilingA.body"
             currentBaseLink: "body"
             rootPosition: [ 24.082, 0.6334, 0.8295 ]
             rootAttitude: [ 
@@ -847,7 +847,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/WRS2018/CollapsedCeilingD.body"
+            modelFile: "${SHARE}/WRS2018/model/CollapsedCeilingD.body"
             currentBaseLink: "body"
             rootPosition: [ 22.3066, -0.6935, 0.4376 ]
             rootAttitude: [ 

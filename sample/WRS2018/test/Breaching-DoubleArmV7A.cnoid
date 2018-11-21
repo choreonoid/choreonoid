@@ -49,7 +49,7 @@ items:
               plugin: Body
               class: BodyItem
               data: 
-                modelFile: "${SHARE}/model/WRS2018/CarT6.body"
+                modelFile: "${SHARE}/WRS2018/model/CarT6.body"
                 currentBaseLink: "body"
                 rootPosition: [ 3, -0.3074, 0.0018 ]
                 rootAttitude: [ 
@@ -72,7 +72,7 @@ items:
               plugin: Body
               class: BodyItem
               data: 
-                modelFile: "${SHARE}/model/WRS2018/CollapsedCeilingF.body"
+                modelFile: "${SHARE}/WRS2018/model/CollapsedCeilingF.body"
                 currentBaseLink: "BODY"
                 rootPosition: [ 3.34934118, -0.382399106, 1.67307534 ]
                 rootAttitude: [ 
@@ -109,7 +109,7 @@ items:
               plugin: Body
               class: BodyItem
               data: 
-                modelFile: "${SHARE}/model/WRS2018/CollapsedCeilingD.body"
+                modelFile: "${SHARE}/WRS2018/model/CollapsedCeilingD.body"
                 currentBaseLink: "body"
                 rootPosition: [ 0.722699735, 4.10999994e-05, 0.441905466 ]
                 rootAttitude: [ 
@@ -133,7 +133,7 @@ items:
               plugin: Body
               class: BodyItem
               data: 
-                modelFile: "${SHARE}/model/WRS2018/ConcreteBox.body"
+                modelFile: "${SHARE}/WRS2018/model/ConcreteBox.body"
                 currentBaseLink: "body"
                 rootPosition: [ 4.8661, -0.4, 1 ]
                 rootAttitude: [ 
@@ -156,7 +156,7 @@ items:
               plugin: Body
               class: BodyItem
               data: 
-                modelFile: "${SHARE}/model/WRS2018/RockDrill.body"
+                modelFile: "${SHARE}/WRS2018/model/RockDrill.body"
                 currentBaseLink: "BASE"
                 rootPosition: [ -0.600084132, -8.01590551e-05, 0.539977688 ]
                 rootAttitude: [ 
