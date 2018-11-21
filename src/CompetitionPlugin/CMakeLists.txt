@@ -1,6 +1,5 @@
-#option(BUILD_COMPETITION_PLUGIN "Building CompetitionPlugin" OFF)
-#if(NOT BUILD_COMPETITION_PLUGIN)
-if(NOT BUILD_WRS2018_SAMPLES) # temporary
+option(BUILD_COMPETITION_PLUGIN "Building CompetitionPlugin" OFF)
+if(NOT BUILD_COMPETITION_PLUGIN)
   return()
 endif()
 
