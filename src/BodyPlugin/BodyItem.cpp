@@ -1199,96 +1199,85 @@ bool BodyItem::restore(const Archive& archive)
 
 bool BodyItemImpl::restore(const Archive& archive)
 {
-    bool restored = false;
+    if(!archive.loadItemFile(self, "modelFile")){
+        return false;
+    }
+
+    Vector3 p = Vector3::Zero();
+    Matrix3 R = Matrix3::Identity();
+        
+    if(read(archive, "rootPosition", p)){
+        body->rootLink()->p() = p;
+    }
+    if(read(archive, "rootAttitude", R)){
+        body->rootLink()->R() = R;
+    }
+    Listing* qs = archive.findListing("jointPositions");
+    if(qs->isValid()){
+        int nj = body->numAllJoints();
+        if(qs->size() != nj){
+            if(qs->size() != body->numJoints()){
+                MessageView::instance()->putln(
+                    format("Mismatched size of the stored joint positions for %1%") % self->name(),
+                    MessageView::WARNING);
+            }
+            nj = std::min(qs->size(), nj);
+        }
+        for(int i=0; i < nj; ++i){
+            body->joint(i)->q() = (*qs)[i].toDouble();
+        }
+    }
+
+    //! \todo replace the following code with the ValueTree serialization function of BodyState
+    initialState.clear();
+
+    read(archive, "initialRootPosition", p);
+    read(archive, "initialRootAttitude", R);
+    initialState.setRootLinkPosition(SE3(p, R));
     
-    string modelFile;
-    /*
-      if(archive.readRelocatablePath("modelFile", modelFile)){
-      restored = modelFile.empty() || load(modelFile);
-      }
-    */
-    if(archive.readRelocatablePath("modelFile", modelFile)){
-        restored = self->load(modelFile);
+    qs = archive.findListing("initialJointPositions");
+    if(qs->isValid()){
+        BodyState::Data& q = initialState.data(BodyState::JOINT_POSITIONS);
+        int n = body->numAllJoints();
+        int m = qs->size();
+        if(m != n){
+            if(m != body->numJoints()){
+                MessageView::instance()->putln(
+                    format("Mismatched size of the stored initial joint positions for %1%") % self->name(),
+                    MessageView::WARNING);
+            }
+            m = std::min(m, n);
+        }
+        q.resize(n);
+        for(int i=0; i < m; ++i){
+            q[i] = (*qs)[i].toDouble();
+        }
+        for(int i=m; i < n; ++i){
+            q[i] = body->joint(i)->q();
+        }
     }
 
-    if(restored){
-
-        Vector3 p = Vector3::Zero();
-        Matrix3 R = Matrix3::Identity();
+    read(archive, "zmp", zmp);
         
-        if(read(archive, "rootPosition", p)){
-            body->rootLink()->p() = p;
-        }
-        if(read(archive, "rootAttitude", R)){
-            body->rootLink()->R() = R;
-        }
-        Listing* qs = archive.findListing("jointPositions");
-        if(qs->isValid()){
-            int nj = body->numAllJoints();
-            if(qs->size() != nj){
-                if(qs->size() != body->numJoints()){
-                    MessageView::instance()->putln(
-                        format("Mismatched size of the stored joint positions for %1%") % self->name(),
-                        MessageView::WARNING);
-                }
-                nj = std::min(qs->size(), nj);
-            }
-            for(int i=0; i < nj; ++i){
-                body->joint(i)->q() = (*qs)[i].toDouble();
-            }
-        }
+    body->calcForwardKinematics();
+    setCurrentBaseLink(body->link(archive.get("currentBaseLink", "")));
 
-        //! \todo replace the following code with the ValueTree serialization function of BodyState
-        initialState.clear();
-
-        read(archive, "initialRootPosition", p);
-        read(archive, "initialRootAttitude", R);
-        initialState.setRootLinkPosition(SE3(p, R));
-
-        qs = archive.findListing("initialJointPositions");
-        if(qs->isValid()){
-            BodyState::Data& q = initialState.data(BodyState::JOINT_POSITIONS);
-            int n = body->numAllJoints();
-            int m = qs->size();
-            if(m != n){
-                if(m != body->numJoints()){
-                    MessageView::instance()->putln(
-                        format("Mismatched size of the stored initial joint positions for %1%") % self->name(),
-                        MessageView::WARNING);
-                }
-                m = std::min(m, n);
-            }
-            q.resize(n);
-            for(int i=0; i < m; ++i){
-                q[i] = (*qs)[i].toDouble();
-            }
-            for(int i=m; i < n; ++i){
-                q[i] = body->joint(i)->q();
-            }
-        }
-
-        read(archive, "zmp", zmp);
-        
-        body->calcForwardKinematics();
-        setCurrentBaseLink(body->link(archive.get("currentBaseLink", "")));
-
-        bool staticModel;
-        if(archive.read("staticModel", staticModel)){
-            onStaticModelPropertyChanged(staticModel);
-        }
-
-        bool on;
-        if(archive.read("collisionDetection", on)){
-            enableCollisionDetection(on);
-        }
-        if(archive.read("selfCollisionDetection", on)){
-            enableSelfCollisionDetection(on);
-        }
-
-        archive.read("isEditable", isEditable);
-
-        self->notifyKinematicStateChange();
+    bool staticModel;
+    if(archive.read("staticModel", staticModel)){
+        onStaticModelPropertyChanged(staticModel);
     }
 
-    return restored;
+    bool on;
+    if(archive.read("collisionDetection", on)){
+        enableCollisionDetection(on);
+    }
+    if(archive.read("selfCollisionDetection", on)){
+        enableSelfCollisionDetection(on);
+    }
+
+    archive.read("isEditable", isEditable);
+
+    self->notifyKinematicStateChange();
+
+    return true;
 }

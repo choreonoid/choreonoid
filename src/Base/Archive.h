@@ -65,6 +65,8 @@ public:
         
     bool readRelocatablePath(const std::string& key, std::string& out_value) const;
 
+    bool loadItemFile(Item* item, const std::string& fileNameKey, const std::string& fileFormatKey = std::string()) const;
+
     std::string getRelocatablePath(const std::string& path) const;
     void writeRelocatablePath(const std::string& key, const std::string& path);
 

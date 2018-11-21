@@ -11,9 +11,9 @@
 #include "MainWindow.h"
 #include "MessageView.h"
 #include "CheckBox.h"
-#include "ParametricPathProcessor.h"
 #include <cnoid/FileUtil>
 #include <cnoid/ExecutablePath>
+#include <cnoid/ParametricPathProcessor>
 #include <QLayout>
 #include <QLabel>
 #include <QLineEdit>
@@ -806,6 +806,12 @@ bool ItemManager::load(Item* item, const std::string& filename, Item* parentItem
 
 bool ItemManagerImpl::load(Item* item, const string& filename, Item* parentItem, const string& formatId)
 {
+    if(filename.empty()){
+        messageView->putln(
+            _("Item with empty filename cannot be loaded."), MessageView::ERROR);
+        return false;
+    }
+        
     ParametricPathProcessor* pathProcessor = ParametricPathProcessor::instance();
     boost::optional<string> expanded = pathProcessor->expand(filename);
     if(!expanded){
@@ -820,8 +826,10 @@ bool ItemManagerImpl::load(Item* item, const string& filename, Item* parentItem,
     const string& typeId = typeid(*item).name();
     ClassInfoMap::iterator p = typeIdToClassInfoMap.find(typeId);
     if(p == typeIdToClassInfoMap.end()){
-        messageView->putln(format(_("\"%1%\" cannot be loaded because item type \"%2%\" is not registered."))
-                           % pathString % typeId);
+        messageView->putln(
+            (format(_("\"%1%\" cannot be loaded because item type \"%2%\" is not registered."))
+             % pathString % typeId),
+            MessageView::ERROR);
         return false;
     }
     
@@ -858,12 +866,13 @@ bool ItemManagerImpl::load(Item* item, const string& filename, Item* parentItem,
     if(!targetLoader){
         if(formatId.empty()){
             messageView->putln(
-                format(_("\"%1%\" cannot be loaded because the file format is unknown."))
-                % pathString);
+                (format(_("\"%1%\" cannot be loaded because the file format is unknown.")) % pathString),
+                MessageView::ERROR);
         } else {
             messageView->putln(
-                format(_("\"%1%\" cannot be loaded because file format \"%2%\" is unknown."))
-                % pathString % formatId);
+                (format(_("\"%1%\" cannot be loaded because file format \"%2%\" is unknown."))
+                 % pathString % formatId),
+                MessageView::ERROR);
         }
     } else {
         if(load(targetLoader, item, pathString, parentItem)){

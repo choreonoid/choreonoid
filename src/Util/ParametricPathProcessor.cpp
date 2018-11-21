@@ -3,12 +3,21 @@
 */
 
 #include "ParametricPathProcessor.h"
-#include <cnoid/ValueTree>
-#include <cnoid/ExecutablePath>
-#include <cnoid/FileUtil>
-#include <cnoid/UTF8>
-#include <QRegExp>
+#include "ValueTree.h"
+#include "ExecutablePath.h"
+#include "FileUtil.h"
+#include "UTF8.h"
 #include <boost/format.hpp>
+
+#ifdef CNOID_USE_BOOST_REGEX
+#include <boost/regex.hpp>
+using boost::regex;
+using boost::smatch;
+using boost::regex_match;
+#else
+#include <regex>
+#endif
+
 #include "gettext.h"
 
 using namespace std;
@@ -16,32 +25,31 @@ using namespace cnoid;
 using boost::format;
 namespace filesystem = boost::filesystem;
 
-namespace {
-
-QRegExp regexVar("^\\$\\{(\\w+)\\}");
-
-}
-
 namespace cnoid {
 
 class ParametricPathProcessorImpl
 {
 public:
     MappingPtr variables;
-    QString topDirString;
-    QString shareDirString;
-    QString homeDirString;
+    regex variableRegex;
+    bool isVariableRegexAssinged;
+    string baseDirString;
     filesystem::path baseDirPath;
-    filesystem::path topDirPath;
-    filesystem::path shareDirPath;
-    filesystem::path homeDirPath;
     bool isBaseDirInHome;
+    string topDirString;
+    filesystem::path topDirPath;
+    string shareDirString;
+    filesystem::path shareDirPath;
+    string homeDirString;
+    filesystem::path homeDirPath;
+    string projectDirString;
     string errorMessage;
 
     ParametricPathProcessorImpl();
     bool findSubDirectoryOfDirectoryVariable(
         const filesystem::path& path, std::string& out_varName, filesystem::path& out_relativePath);
-    bool replaceDirectoryVariable(QString& io_pathString, const string& varname, int pos, int len);
+    bool replaceDirectoryVariable(string& io_pathString, const string& varname, int pos, int len);
+    boost::optional<std::string> expand(const std::string& pathString);
 };
 
 }
@@ -62,6 +70,7 @@ ParametricPathProcessor::ParametricPathProcessor()
 
 ParametricPathProcessorImpl::ParametricPathProcessorImpl()
 {
+    isVariableRegexAssinged = false;
     isBaseDirInHome = false;
     
     const std::string& top = executableTopDirectory();
@@ -94,16 +103,23 @@ void ParametricPathProcessor::setVariables(Mapping* variables)
 
 void ParametricPathProcessor::setBaseDirectory(const std::string& directory)
 {
+    impl->baseDirString = directory;
     impl->baseDirPath = directory;
     filesystem::path relativePath;
     impl->isBaseDirInHome = findSubDirectory(impl->homeDirPath, impl->baseDirPath, relativePath);
+}
+
+
+void ParametricPathProcessor::setProjectDirectory(const std::string& directory)
+{
+    impl->projectDirString = directory;
 }
     
 
 /**
    \todo Use integated nested map whose node is a single path element to be more efficient.
 */
-std::string ParametricPathProcessor::parameterize(const std::string& orgPathString) const
+std::string ParametricPathProcessor::parameterize(const std::string& orgPathString)
 {
     filesystem::path orgPath(orgPathString);
 
@@ -168,39 +184,53 @@ bool ParametricPathProcessorImpl::findSubDirectoryOfDirectoryVariable
 }
 
 
-boost::optional<std::string> ParametricPathProcessor::expand(const std::string& pathString) const
+boost::optional<std::string> ParametricPathProcessor::expand(const std::string& pathString)
 {
-    filesystem::path path;
-    
-    QString qpath(pathString.c_str());
+    return impl->expand(pathString);
+}
 
-    // expand variables in the path
-    int pos = regexVar.indexIn(qpath);
-    if(pos == -1){
+
+boost::optional<std::string> ParametricPathProcessorImpl::expand(const std::string& pathString)
+{
+    if(!isVariableRegexAssinged){
+        variableRegex = "^\\$\\{(\\w+)\\}";
+        isVariableRegexAssinged = true;
+    }
+
+    filesystem::path path;
+    smatch match;
+    if(!regex_search(pathString, match, variableRegex)){
         path = pathString;
     } else {
-        int len = regexVar.matchedLength();
-        if(regexVar.captureCount() > 0){
-            QString varname = regexVar.cap(1);
-            if(varname == "SHARE"){
-                qpath.replace(pos, len, impl->shareDirString);
-            } else if(varname == "PROGRAM_TOP"){
-                qpath.replace(pos, len, impl->topDirString);
-            } else if(varname == "HOME"){
-                qpath.replace(pos, len, impl->homeDirString);
-            } else {
-                if(!impl->replaceDirectoryVariable(qpath, varname.toStdString(), pos, len)){
-                    return boost::none;
-                }
+        int pos = match.position();
+        int len = match.length();
+        string varname = match.str(1);
+        string expanded(pathString);
+        if(varname == "SHARE"){
+            expanded.replace(pos, len, shareDirString);
+        } else if(varname == "PROGRAM_TOP"){
+            expanded.replace(pos, len, topDirString);
+        } else if(varname == "HOME"){
+            expanded.replace(pos, len, homeDirString);
+        } else if(varname == "PROJECT_DIR"){
+            if(projectDirString.empty()){
+                errorMessage =
+                    str(format(_("PROJECT_DIR of \"%1%\" cannot be expanded.")) % pathString);
+                return boost::none;
+            }
+            expanded.replace(pos, len, projectDirString);
+        } else {
+            if(!replaceDirectoryVariable(expanded, varname, pos, len)){
+                return boost::none;
             }
         }
-        path = qpath.toStdString();
+        path = expanded;
     }
-            
-    if(checkAbsolute(path) || impl->baseDirPath.empty()){
+
+    if(checkAbsolute(path) || baseDirPath.empty()){
         return getNativePathString(path);
     } else {
-        filesystem::path fullPath = impl->baseDirPath / path;
+        filesystem::path fullPath = baseDirPath / path;
         if(!path.empty() && (*path.begin() == "..")){
             filesystem::path compact(getCompactPath(fullPath));
             return getNativePathString(compact);
@@ -212,15 +242,15 @@ boost::optional<std::string> ParametricPathProcessor::expand(const std::string& 
 
 
 bool ParametricPathProcessorImpl::replaceDirectoryVariable
-(QString& io_pathString, const string& varname, int pos, int len)
+(string& io_pathString, const string& varname, int pos, int len)
 {
     Listing* paths = variables->findListing(varname);
     if(paths){
         for(int i=0; i < paths->size(); ++i){
             string vpath;
-            QString replaced(io_pathString);
-            replaced.replace(pos, len, paths->at(i)->toString().c_str());
-            filesystem::file_status fstatus = filesystem::status(filesystem::path(replaced.toStdString()));
+            string replaced(io_pathString);
+            replaced.replace(pos, len, paths->at(i)->toString());
+            filesystem::file_status fstatus = filesystem::status(filesystem::path(replaced));
             if(filesystem::is_directory(fstatus) || filesystem::exists(fstatus)) {
                 io_pathString = replaced;
                 return true;
@@ -228,7 +258,7 @@ bool ParametricPathProcessorImpl::replaceDirectoryVariable
         }
     }
 
-    errorMessage = str(format(_("%1% of \"%2%\" cannot be expanded !")) % varname % io_pathString.toStdString());
+    errorMessage = str(format(_("%1% of \"%2%\" cannot be expanded.")) % varname % io_pathString);
     return false;
 }
 

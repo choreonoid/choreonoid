@@ -19,6 +19,7 @@ set(sources
   NullOut.cpp
   FileUtil.cpp
   ExecutablePath.cpp
+  ParametricPathProcessor.cpp
   AbstractSeq.cpp
   Vector3Seq.cpp
   MultiSE3Seq.cpp
@@ -102,6 +103,7 @@ set(headers
   Vector3Seq.h
   FileUtil.h
   ExecutablePath.h
+  ParametricPathProcessor.h
   UTF8.h
   BoundingBox.h
   SceneGraph.h

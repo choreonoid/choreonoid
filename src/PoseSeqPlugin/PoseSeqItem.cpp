@@ -618,12 +618,6 @@ bool PoseSeqItem::store(Archive& archive)
 
 bool PoseSeqItem::restore(const Archive& archive)
 {
-    std::string filename, formatId;
-    if(archive.readRelocatablePath("filename", filename) && archive.read("format", formatId)){
-        if(load(filename, archive.currentParentItem(), formatId)){
-            archive.read("barLength", barLength_);
-            return true;
-        }
-    }
-    return false;
+    archive.read("barLength", barLength_);
+    return archive.loadItemFile(this, "filename", "format");
 }
