@@ -158,6 +158,7 @@ set(headers
   Exception.h
   exportdecl.h
   CnoidUtil.h
+  ThreadPool.h
   )
 
 set(target CnoidUtil)
