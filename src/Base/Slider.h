@@ -39,8 +39,10 @@ class CNOID_EXPORT Dial : public QDial
 
 public:
     Dial(QWidget* parent = 0);
+    void setValue(double value);
+    double value();
 
-    SignalProxy<void(int)> sigValueChanged() {
+    SignalProxy<void(double)> sigValueChanged() {
         return sigValueChanged_;
     }
 
@@ -48,9 +50,12 @@ private Q_SLOTS:
     void onValueChanged(int value);
 
 private:
-    Signal<void(int)> sigValueChanged_;
+    Signal<void(double)> sigValueChanged_;
+    int pre_Value;
+    double increasing_Value;
 
     void initialize();
+
 };
 
 }

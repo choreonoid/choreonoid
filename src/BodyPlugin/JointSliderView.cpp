@@ -204,15 +204,6 @@ public:
 
         slider.setRange(lower * resolution, upper * resolution);
 
-        dial.setRange(lower * resolution, upper * resolution);
-        if( lower == -max * unitConversionRatio || upper > max * unitConversionRatio ){
-            dial.setWrapping(true);
-            dial.setNotchesVisible(false);
-        }else {
-            dial.setWrapping(false);
-            dial.setNotchesVisible(true);
-        }
-
         if(unitConversionRatio != 1.0){ // degree mode
             spin.setDecimals(1);
             spin.setRange(-999.9, 999.9);
@@ -223,6 +214,17 @@ public:
             spin.setRange(-9.99, 9.99);
             spin.setSingleStep(0.0001);
             setRangeLabelValues(lower, upper, 3);
+        }
+
+        if( joint->q_lower() == -std::numeric_limits<double>::max() && joint->q_upper() == std::numeric_limits<double>::max() ){
+            dial.setWrapping(true);
+            dial.setNotchesVisible(false);
+            dial.setRange(-PI * unitConversionRatio * resolution, PI * unitConversionRatio * resolution);
+            spin.setRange(-std::numeric_limits<double>::max(), std::numeric_limits<double>::max());
+        }else {
+            dial.setWrapping(false);
+            dial.setNotchesVisible(true);
+            dial.setRange(lower * resolution, upper * resolution);
         }
 
         spin.blockSignals(false);
@@ -262,17 +264,6 @@ public:
     }
 
     void onDialValueChanged(double value){
-        if(dial.wrapping()){
-            double pre_value = spin.value() * resolution;
-            double diff = value - pre_value;
-            double dial_range = dial.maximum() - dial.minimum();
-            if( diff > dial_range/2.0 ){
-                value = pre_value + dial_range - diff;
-            }else if( diff < -dial_range/2.0 ){
-                value = pre_value - dial_range + diff;
-            }
-        }
-        std::cout << value << std::endl;
         spin.blockSignals(true);
         spin.setValue(value / resolution);
         spin.blockSignals(false);
@@ -287,7 +278,7 @@ public:
         slider.setValue(value * resolution);
         slider.blockSignals(false);
         dial.blockSignals(true);
-        dial.setValue(value * resolution);
+        dial.setValue(value* resolution);
         dial.blockSignals(false);
         viewImpl->onJointSliderChanged(index);
     }
