@@ -5,7 +5,6 @@
 #include "App.h"
 #include "AppUtil.h"
 #include "AppConfig.h"
-#include "ParametricPathProcessor.h"
 #include "ExtensionManager.h"
 #include "OptionManager.h"
 #include "PluginManager.h"
@@ -52,6 +51,7 @@
 #include <cnoid/Config>
 #include <cnoid/ValueTree>
 #include <cnoid/CnoidUtil>
+#include <cnoid/ParametricPathProcessor>
 #include <QApplication>
 #include <QTextCodec>
 #include <QGLFormat>

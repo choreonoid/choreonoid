@@ -1,0 +1,277 @@
+WIDTH: &WIDTH 0.1
+HALF_WIDTH: &HALF_WIDTH 0.05
+
+APP: &APP
+  material:
+    diffuseColor: [ 0.6, 0.6, 0.6 ]
+    specularColor: [ 0, 0, 0 ]
+    shinines: 0.6
+
+
+SQUAREPLATE-50: &SQUAREPLATE-50
+  -
+    type: Shape
+    translation: [ *HALF_WIDTH, 0.25, 0.25 ]
+    geometry: { type: Box, size: [ *HALF_WIDTH, 0.5, 0.5 ] }
+    appearance: *APP
+
+SQUAREPLATE-70: &SQUAREPLATE-70
+  -
+    type: Shape
+    translation: [ *HALF_WIDTH, 0.35, 0.35 ]
+    geometry: { type: Box, size: [ *HALF_WIDTH, 0.7, 0.7 ] }
+    appearance: *APP
+
+SQUAREPLATE-100: &SQUAREPLATE-100
+  -
+    type: Shape
+    translation: [ *HALF_WIDTH, 0.5, 0.5 ]
+    geometry: { type: Box, size: [ *HALF_WIDTH, 1, 1 ] }
+    appearance: *APP
+
+L1: &L1 1
+L1H: &L1H_P 0.5
+L1H: &L1H_M -0.5
+
+J1-100-1: &J1-100-1
+  -
+    type: Shape
+    translation: [ *L1H_P, *L1H_P, *L1H_P ]
+    geometry: { type: Box, size: [ *WIDTH, *WIDTH, *L1 ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L1H_P, *L1H_M, *L1H_P ]
+    geometry: { type: Box, size: [ *WIDTH, *WIDTH, *L1 ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L1H_M, *L1H_P, *L1H_P ]
+    geometry: { type: Box, size: [ *WIDTH, *WIDTH, *L1 ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L1H_M, *L1H_M, *L1H_P ]
+    geometry: { type: Box, size: [ *WIDTH, *WIDTH, *L1 ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ 0, *L1H_P, *L1 ]
+    geometry: { type: Box, size: [ *L1, *WIDTH, *WIDTH ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ 0, *L1H_M, *L1 ]
+    geometry: { type: Box, size: [ *L1, *WIDTH, *WIDTH ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L1H_P, 0, *L1 ]
+    geometry: { type: Box, size: [ *WIDTH, *L1, *WIDTH ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L1H_M, 0, *L1 ]
+    geometry: { type: Box, size: [ *WIDTH, *L1, *WIDTH ] }
+    appearance: *APP
+
+J1-100-1_B: &J1-100-1_B
+  -
+    type: Shape
+    translation: [ *L1H_P, *L1H_P, *L1H_P ]
+    geometry: { type: Box, size: [ *WIDTH, *WIDTH, *L1 ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L1H_P, *L1H_M, *L1H_P ]
+    geometry: { type: Box, size: [ *WIDTH, *WIDTH, *L1 ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L1H_M, *L1H_P, *L1H_P ]
+    geometry: { type: Box, size: [ *WIDTH, *WIDTH, *L1 ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L1H_M, *L1H_M, *L1H_P ]
+    geometry: { type: Box, size: [ *WIDTH, *WIDTH, *L1 ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ 0, *L1H_P, *L1 ]
+    geometry: { type: Box, size: [ *L1, *WIDTH, *WIDTH ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ 0, *L1H_M, *L1 ]
+    geometry: { type: Box, size: [ *L1, *WIDTH, *WIDTH ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L1H_P, 0, *L1 ]
+    geometry: { type: Box, size: [ *WIDTH, *L1, *WIDTH ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L1H_M, 0, *L1 ]
+    geometry: { type: Box, size: [ *WIDTH, *L1, *WIDTH ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ 0, *L1H_P, 0 ]
+    geometry: { type: Box, size: [ *L1, *WIDTH, *WIDTH ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ 0, *L1H_M, 0 ]
+    geometry: { type: Box, size: [ *L1, *WIDTH, *WIDTH ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L1H_P, 0, 0 ]
+    geometry: { type: Box, size: [ *WIDTH, *L1, *WIDTH ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L1H_M, 0, 0 ]
+    geometry: { type: Box, size: [ *WIDTH, *L1, *WIDTH ] }
+    appearance: *APP
+
+L07: &L07 0.7
+L07H: &L07H_P 0.35
+L07H: &L07H_M -0.35
+
+J1-70-1: &J1-70-1
+  -
+    type: Shape
+    translation: [ *L07H_P, *L07H_P, *L07H_P ]
+    geometry: { type: Box, size: [ *WIDTH, *WIDTH, *L07 ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L07H_P, *L07H_M, *L07H_P ]
+    geometry: { type: Box, size: [ *WIDTH, *WIDTH, *L07 ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L07H_M, *L07H_P, *L07H_P ]
+    geometry: { type: Box, size: [ *WIDTH, *WIDTH, *L07 ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L07H_M, *L07H_M, *L07H_P ]
+    geometry: { type: Box, size: [ *WIDTH, *WIDTH, *L07 ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ 0, *L07H_P, *L07 ]
+    geometry: { type: Box, size: [ *L07, *WIDTH, *WIDTH ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ 0, *L07H_M, *L07 ]
+    geometry: { type: Box, size: [ *L07, *WIDTH, *WIDTH ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L07H_P, 0, *L07 ]
+    geometry: { type: Box, size: [ *WIDTH, *L07, *WIDTH ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L07H_M, 0, *L07 ]
+    geometry: { type: Box, size: [ *WIDTH, *L07, *WIDTH ] }
+    appearance: *APP
+
+
+L05: &L05 0.5
+L05H: &L05H_P 0.25
+L05H: &L05H_M -0.25
+
+J1-50-1: &J1-50-1
+  -
+    type: Shape
+    translation: [ *L05H_P, *L05H_P, *L05H_P ]
+    geometry: { type: Box, size: [ *WIDTH, *WIDTH, *L05 ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L05H_P, *L05H_M, *L05H_P ]
+    geometry: { type: Box, size: [ *WIDTH, *WIDTH, *L05 ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L05H_M, *L05H_P, *L05H_P ]
+    geometry: { type: Box, size: [ *WIDTH, *WIDTH, *L05 ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L05H_M, *L05H_M, *L05H_P ]
+    geometry: { type: Box, size: [ *WIDTH, *WIDTH, *L05 ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ 0, *L05H_P, *L05 ]
+    geometry: { type: Box, size: [ *L05, *WIDTH, *WIDTH ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ 0, *L05H_M, *L05 ]
+    geometry: { type: Box, size: [ *L05, *WIDTH, *WIDTH ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L05H_P, 0, *L05 ]
+    geometry: { type: Box, size: [ *WIDTH, *L05, *WIDTH ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L05H_M, 0, *L05 ]
+    geometry: { type: Box, size: [ *WIDTH, *L05, *WIDTH ] }
+    appearance: *APP
+
+L3: &L3 3
+L3H: &L3H_P 1.5
+L3H: &L3H_M -1.5
+
+J3-100-1_3: &J3-100-1_3
+  -
+    type: Shape
+    translation: [ *L3H_P, *L3H_P, *L3H_P ]
+    geometry: { type: Box, size: [ *WIDTH, *WIDTH, *L3 ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L3H_P, *L3H_M, *L3H_P ]
+    geometry: { type: Box, size: [ *WIDTH, *WIDTH, *L3 ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L3H_M, *L3H_P, *L3H_P ]
+    geometry: { type: Box, size: [ *WIDTH, *WIDTH, *L3 ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L3H_M, *L3H_M, *L3H_P ]
+    geometry: { type: Box, size: [ *WIDTH, *WIDTH, *L3 ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ 0, *L3H_P, *L3 ]
+    geometry: { type: Box, size: [ *L3, *WIDTH, *WIDTH ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ 0, *L3H_M, *L3 ]
+    geometry: { type: Box, size: [ *L3, *WIDTH, *WIDTH ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L3H_P, 0, *L3 ]
+    geometry: { type: Box, size: [ *WIDTH, *L3, *WIDTH ] }
+    appearance: *APP
+  -
+    type: Shape
+    translation: [ *L3H_M, 0, *L3 ]
+    geometry: { type: Box, size: [ *WIDTH, *L3, *WIDTH ] }
+    appearance: *APP

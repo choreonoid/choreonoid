@@ -29,10 +29,6 @@ unordered_set<Item*> itemsBeingAddedOrRemoved;
 
 }
 
-namespace cnoid {
-Signal<void(const char* type_info_name)> Item::sigClassUnregistered_;
-}
-
 
 Item::Item()
 {
@@ -733,16 +729,14 @@ void Item::updateFileInformation(const std::string& filename, const std::string&
 {
     filesystem::path fpath(filename);
     if(filesystem::exists(fpath)){
-        filePath_ = filename;
-        fileFormat_ = format;
         fileModificationTime_ = filesystem::last_write_time(fpath);
         isConsistentWithFile_ = true;
     } else {
-        filePath_.clear();
-        fileFormat_.clear();
         fileModificationTime_ = 0;
         isConsistentWithFile_ = false;
-    }
+    }        
+    filePath_ = filename;
+    fileFormat_ = format;
 }
 
 

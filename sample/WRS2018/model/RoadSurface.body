@@ -1,0 +1,77 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: RoadSurface
+
+ROAD_TEXTURE_FILE: &ROAD_TEXTURE_FILE "resource/Blacktop_New.jpg"
+APP: &APP_ROAD
+  texture: &TEXTURE_ROAD
+    url: *ROAD_TEXTURE_FILE
+    repeatS: true
+    repeatT: true
+  textureTransform:
+    scale: [ 40, 1 ]
+
+ROADCURB_TEXTURE_FILE: &ROADCURB_TEXTURE_FILE "resource/Blacktop_Old_01.jpg"
+APP_ROADCURB: &APP_ROADCURB
+  texture:
+    url: *ROADCURB_TEXTURE_FILE
+    repeatS: true
+    repeatT: true
+  textureTransform:
+    scale: [ 5, 1 ]
+
+links:
+  -
+    name: Base
+    jointType: fixed
+    material: Ground
+    elements:
+      -
+        type: Transform
+        elements:
+          - #dummy
+            type: Shape
+            translation: [ 0, 0, -0.2 ]
+            geometry: { type: Box, size: [ 0.01, 0.01, 0.01 ] }
+            appearance:
+              texture:
+                url: *ROAD_TEXTURE_FILE
+                repeatS: true
+                repeatT: true
+              textureTransform:
+                scale: [ 7, 1 ]
+            
+          -
+            type: Shape
+            name: Surface
+            translation: [ 30.0, 0.0, -0.225 ]
+            geometry: { type: Box, size: [ 60.0, 7.2, 0.45 ] }
+            #appearance: *APP_ROAD
+            appearance:
+              texture:
+                url: *ROAD_TEXTURE_FILE
+                repeatS: true
+                repeatT: true
+              textureTransform:
+                scale: [ 3, 3 ]
+          -
+            type: Transform
+            translation: [ 30.0, 4.1, -0.1 ]
+            elements:
+              - &RoadCurb
+                type: Shape
+                name: RoadCurb
+                geometry: { type: Box, size: [ 60.0, 1.0, 0.7 ] }
+                #appearance: *APP_ROADCURB
+                appearance:
+                  texture:
+                    url: *ROADCURB_TEXTURE_FILE
+                    repeatS: true
+                    repeatT: true
+                  textureTransform:
+                    scale: [ 1, 1 ]
+          -
+            type: Transform
+            translation: [ 30.0, -4.1, -0.1 ]
+            elements: *RoadCurb

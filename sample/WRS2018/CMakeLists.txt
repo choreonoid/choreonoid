@@ -2,19 +2,23 @@ if(NOT ENABLE_GUI)
   return()
 endif()
 
-option(BUILD_WRS2018_SAMPLES "Building WRS2018 samples" ON)
-if(NOT BUILD_WRS2018_SAMPLES)
+option(BUILD_WRS2018 "Building the WRS2018 files" OFF)
+if(NOT BUILD_WRS2018)
   return()
 endif()
 
-file(GLOB project_files "*.cnoid")
-file(GLOB project_script_files "T?-*.py")
-file(GLOB project_script_files "SP?-*.py")
+if(UNIX)
+  add_custom_target(
+    symlink_to_WRS2018 ALL
+    COMMAND ${CMAKE_COMMAND} -E create_symlink
+    ${CMAKE_CURRENT_SOURCE_DIR} ${CNOID_BINARY_SHARE_DIR}/WRS2018)
+endif()
 
-install(FILES
-  ${project_files}
-  ${project_script_files}
-  WRSUtil.py
-  DESTINATION ${CNOID_SHARE_SUBDIR}/project/WRS2018)
+install(DIRECTORY
+  model
+  project
+  script
+  test
+  DESTINATION ${CNOID_SHARE_SUBDIR}/WRS2018)
 
-add_subdirectory(src)
+add_subdirectory(controller)

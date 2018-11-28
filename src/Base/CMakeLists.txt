@@ -9,7 +9,6 @@ set(sources
   MenuManager.cpp
   Menu.cpp
   ProjectManager.cpp
-  ParametricPathProcessor.cpp
   PathVariableEditor.cpp
   PluginManager.cpp
   MainWindow.cpp
@@ -158,7 +157,6 @@ set(headers
   ProjectManager.h
   PluginManager.h
   Plugin.h
-  ParametricPathProcessor.h
   MessageView.h
   ItemTreeView.h
   ItemList.h

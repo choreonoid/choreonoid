@@ -668,13 +668,17 @@ int SceneRenderer::findCameraPath(const std::vector<std::string>& simplifiedPath
         if(candidates.size() == 1){
             index = candidates.front();
 
-        } else if(candidates.size() >= 2 && simplifiedPathStrings.size() >= 2){
-            const string& owner = simplifiedPathStrings.front();
-            for(size_t i=0; i < candidates.size(); ++i){
-                const vector<SgNode*>& path = cameraPath(i);
-                if(path.front()->name() == owner){
-                    index = i;
-                    break;
+        } else if(candidates.size() >= 2){
+            if(simplifiedPathStrings.size() == 1){
+                index = candidates.front();
+            } else {
+                const string& owner = simplifiedPathStrings.front();
+                for(size_t i=0; i < candidates.size(); ++i){
+                    const vector<SgNode*>& path = cameraPath(i);
+                    if(path.front()->name() == owner){
+                        index = i;
+                        break;
+                    }
                 }
             }
         }

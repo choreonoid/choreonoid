@@ -1,0 +1,61 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: TerrainSloopM
+
+BUMP: &BUMP
+  type: Shape
+  geometry:
+    type: IndexedFaceSet
+    # size 1.2 x 1.2, height 0.34
+    coordinate: [
+    # bottom
+      -0.5, -0.25, 0.0,
+      -0.5,  0.25, 0.0,
+       0.5,  0.25, 0.0,
+       0.5, -0.25, 0.0,
+      # top
+      -0.5, -0.25, 0.17,
+       0.5, -0.25, 0.17 ]
+    coordIndex: [
+      0, 1, 2, 3, -1,
+      0, 4, 1, -1,
+      1, 4, 5, 2, -1,
+      2, 5, 3, -1,
+      0, 3, 5, 4, -1 ]
+  appearance:
+    material:
+      diffuseColor: [ 0, 0.6, 0 ]
+
+BUMPS1: &BUMPS1
+  -
+    <<: *BUMP
+
+
+BUMPS2: &BUMPS2
+  -
+    <<: *BUMP
+    translation: [ 0, 1.8, 0 ]
+  -
+    <<: *BUMP
+    translation: [ 0, 0.6, 0 ]
+    rotation: [ 0, 0, 1, 180 ]
+  -
+    <<: *BUMP
+    translation: [ 0, -0.6, 0 ]
+  -
+    <<: *BUMP
+    translation: [ 0, -1.8, 0 ]
+    rotation: [ 0, 0, 1, 180 ]
+
+links:
+  -
+    name: 1
+    jointType: fixed
+    material: Ground
+    convexRecompostiion: true
+    elements:
+      -
+        type: Transform
+        elements: *BUMPS1
+

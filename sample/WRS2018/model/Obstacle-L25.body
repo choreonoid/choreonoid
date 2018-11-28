@@ -1,0 +1,75 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: Obstacle-L25
+
+APP:
+  appearance: &APP
+    material:
+      diffuseColor: [ 1.0, 0.5, 0.2 ]
+
+
+BOX25-1: &BOX25-1
+  type: Transform
+  elements:
+    Shape: 
+      geometry: &BOX
+        type: Box
+        size: [ 0.25, 0.25, 0.25 ]
+      appearance: *APP
+    RigidBody:
+      centerOfMass: [ 0, 0, 0 ]
+      mass: 15.625
+      inertia: [
+        0.01041667 , 0,          0,
+        0,           0.01041667, 0,
+        0,           0,          0.01041667 ]
+
+BOX25-15: &BOX25-15
+  type: Transform
+  elements:
+    Shape: 
+      geometry: *BOX
+      appearance: *APP
+    RigidBody:
+      centerOfMass: [ 0, 0, 0 ]
+      mass: 23.4375
+      inertia: [
+        0.01041667 , 0,          0,
+        0,           0.01041667, 0,
+        0,           0,          0.01041667 ]
+
+BOX25-15: &BOX25-05
+  type: Transform
+  elements:
+    Shape: 
+      geometry: *BOX
+      appearance: *APP
+    RigidBody:
+      centerOfMass: [ 0, 0, 0 ]
+      mass: 23.4375
+      inertia: [
+        0.01041667 , 0,          0,
+        0,           0.01041667, 0,
+        0,           0,          0.01041667 ]
+
+OBJ: &OBJ
+  -
+    <<: *BOX25-05
+    translation: [ 0, 0, 0 ]
+  -
+    <<: *BOX25-05
+    translation: [ 0, 0, 0.25 ]
+  -
+    <<: *BOX25-05
+    translation: [ 0, 0, 0.5 ]
+  -
+    <<: *BOX25-05
+    translation: [ 0, 0.25, 0.5 ]
+
+links:
+  -
+    name: BASE
+    jointType: free
+    translation: [ 0, 0, 0 ]
+    elements: *OBJ

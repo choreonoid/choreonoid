@@ -1664,12 +1664,12 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
         }
         worldLogFileItem = worldLogFileItems.toSingle(true);
         if(worldLogFileItem){
-            if(worldLogFileItem->logFileName().empty()){
+            if(worldLogFileItem->logFile().empty()){
                 worldLogFileItem = nullptr;
             } else {
                 mv->putln(format(_("WorldLogFileItem \"%1%\" has been detected. "
                                    "A simulation result is recoreded to \"%2%\"."))
-                          % worldLogFileItem->name() % worldLogFileItem->logFileName());
+                          % worldLogFileItem->name() % worldLogFileItem->logFile());
 
                 worldLogFileItem->clearOutput();
                 worldLogFileItem->beginHeaderOutput();

@@ -1,0 +1,431 @@
+items: 
+  id: 0
+  name: "Root"
+  plugin: Base
+  class: RootItem
+  children: 
+    - 
+      id: 1
+      name: "TargetT2_35-50"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/WRS2018/model/TargetT2_35-50_1.body"
+        currentBaseLink: "QR-BASE"
+        rootPosition: [ 9.2, 1.7, 0.565 ]
+        rootAttitude: [ 
+          1, 0, 0, 
+          0, 0.5, -0.866025404, 
+          0, 0.866025404, 0.5 ]
+        jointPositions: [  ]
+        initialRootPosition: [ 9.2, 1.7, 0.565 ]
+        initialRootAttitude: [ 
+          1, 0, 0, 
+          0, 0.5, -0.866025404, 
+          0, 0.866025404, 0.5 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: false
+        isEditable: false
+    - 
+      id: 2
+      name: "TargetT2_35-50"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/WRS2018/model/TargetT2_35-50_2.body"
+        currentBaseLink: "QR-BASE"
+        rootPosition: [ 12.5, 1.6, 0.01 ]
+        rootAttitude: [ 
+          1, 0, 0, 
+          0, 0.707106781, -0.707106781, 
+          0, 0.707106781, 0.707106781 ]
+        jointPositions: [  ]
+        initialRootPosition: [ 12.5, 1.6, 0.01 ]
+        initialRootAttitude: [ 
+          1, 0, 0, 
+          0, 0.707106781, -0.707106781, 
+          0, 0.707106781, 0.707106781 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: false
+        isEditable: false
+    - 
+      id: 3
+      name: "TargetT2_35-50"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/WRS2018/model/TargetT2_35-50_3.body"
+        currentBaseLink: "QR-BASE"
+        rootPosition: [ 7.5, 1.6, 0.01 ]
+        rootAttitude: [ 
+          1, 0, 0, 
+          0, 0.707106781, -0.707106781, 
+          0, 0.707106781, 0.707106781 ]
+        jointPositions: [  ]
+        initialRootPosition: [ 7.5, 1.6, 0.01 ]
+        initialRootAttitude: [ 
+          1, 0, 0, 
+          0, 0.707106781, -0.707106781, 
+          0, 0.707106781, 0.707106781 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: false
+        isEditable: false
+    - 
+      id: 4
+      name: "RoadSurface"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/WRS2018/model/RoadSurface.body"
+        currentBaseLink: "Base"
+        rootPosition: [ 0, 0, 0 ]
+        rootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        jointPositions: [  ]
+        initialRootPosition: [ 0, 0, 0 ]
+        initialRootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: false
+        isEditable: false
+    - 
+      id: 5
+      name: "TunnelWall60m-R"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/WRS2018/model/TunnelWall60m-R.body"
+        currentBaseLink: "1_Base"
+        rootPosition: [ 0, 0, 0 ]
+        rootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        jointPositions: [  ]
+        initialRootPosition: [ 0, 0, 0 ]
+        initialRootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: false
+        isEditable: false
+    - 
+      id: 6
+      name: "TunnelWall60m-L"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/WRS2018/model/TunnelWall60m-L.body"
+        currentBaseLink: "1_Base"
+        rootPosition: [ 0, 0, 0 ]
+        rootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        jointPositions: [  ]
+        initialRootPosition: [ 0, 0, 0 ]
+        initialRootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: false
+        isEditable: false
+    - 
+      id: 7
+      name: "DamagedCarB-2"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/WRS2018/model/CarT6-Gray.body"
+        currentBaseLink: ""
+        rootPosition: [ 15, 1.4, 0 ]
+        rootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        jointPositions: [  ]
+        initialRootPosition: [ 15, 1.4, 0 ]
+        initialRootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: false
+        isEditable: false
+    - 
+      id: 8
+      name: "DamagedCarB-1"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/WRS2018/model/CarT6-Gray.body"
+        currentBaseLink: ""
+        rootPosition: [ 5, 1.4, 0 ]
+        rootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        jointPositions: [  ]
+        initialRootPosition: [ 5, 1.4, 0 ]
+        initialRootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: false
+        isEditable: false
+    - 
+      id: 9
+      name: "Flag2R"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/WRS2018/model/Flag2R.body"
+        currentBaseLink: "BASE"
+        rootPosition: [ 18, -3, 0 ]
+        rootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        jointPositions: [  ]
+        initialRootPosition: [ 18, -3, 0 ]
+        initialRootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: false
+        isEditable: false
+    - 
+      id: 10
+      name: "Flag2L"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/WRS2018/model/Flag2L.body"
+        currentBaseLink: "BASE"
+        rootPosition: [ 18, 0, 0 ]
+        rootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        jointPositions: [  ]
+        initialRootPosition: [ 18, 0, 0 ]
+        initialRootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: false
+        isEditable: false
+    - 
+      id: 11
+      name: "Flag1R"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/WRS2018/model/Flag1R.body"
+        currentBaseLink: "BASE"
+        rootPosition: [ 4, -3, 0 ]
+        rootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        jointPositions: [  ]
+        initialRootPosition: [ 4, -3, 0 ]
+        initialRootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: false
+        isEditable: false
+    - 
+      id: 12
+      name: "Flag1L"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/WRS2018/model/Flag1L.body"
+        currentBaseLink: "BASE"
+        rootPosition: [ 4, 0, 0 ]
+        rootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        jointPositions: [  ]
+        initialRootPosition: [ 4, 0, 0 ]
+        initialRootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: false
+        isEditable: false
+    - 
+      id: 13
+      name: "Car"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/WRS2018/model/CarT2.body"
+        currentBaseLink: "BODY"
+        rootPosition: [ 10, 1.4, 0 ]
+        rootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        jointPositions: [  0.000000,  0.000000,  0.000000,  0.000000 ]
+        initialRootPosition: [ 10, 1.4, 0 ]
+        initialRootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        initialJointPositions: [  0.000000,  0.000000,  0.000000,  0.000000 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: false
+        isEditable: false
+    - 
+      id: 14
+      name: "Victim"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/WRS2018/model/VictimQRC.body"
+        currentBaseLink: "WAIST"
+        rootPosition: [ 10.1723, 1.012, 0.5733 ]
+        rootAttitude: [ 
+          -0.175366726, 1.8978131e-18, -0.98450318, 
+          2.147623e-17, 1, -1.8978131e-18, 
+          0.98450318, -2.147623e-17, -0.175366726 ]
+        jointPositions: [ 
+           0.000000,  1.119763,  0.606997, -0.322886,  0.022394,  0.000000,  0.000000,  0.755187, -1.570796, -0.841090, 
+           0.022689,  0.000000,  0.000000,  0.755728, -1.570796, -0.841249, -0.026946,  0.011916, -0.142889,  0.913207, 
+          -0.338695, -0.027343, -0.026180,  0.012217, -0.143117,  0.912807, -0.338594, -0.027925 ]
+        initialRootPosition: [ 10.1723, 1.012, 0.5733 ]
+        initialRootAttitude: [ 
+          -0.175366726, 1.89781311e-18, -0.98450318, 
+          2.147623e-17, 1, -1.89781311e-18, 
+          0.98450318, -2.147623e-17, -0.175366726 ]
+        initialJointPositions: [ 
+           0.000000,  1.119763,  0.606997, -0.322886,  0.022394,  0.000000,  0.000000,  0.755187, -1.570796, -0.841090, 
+           0.022689,  0.000000,  0.000000,  0.755728, -1.570796, -0.841249, -0.026946,  0.011916, -0.142889,  0.913207, 
+          -0.338695, -0.027343, -0.026180,  0.012217, -0.143117,  0.912807, -0.338594, -0.027925 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: true
+        isEditable: true
+    - 
+      id: 15
+      name: "TargetT2_35-50"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/WRS2018/model/TargetT2_35-50_4.body"
+        currentBaseLink: "QR-BASE"
+        rootPosition: [ 11.5, 0.55, 0.6 ]
+        rootAttitude: [ 
+          1, 0, 0, 
+          0, 6.123234e-17, -1, 
+          0, 1, 6.123234e-17 ]
+        jointPositions: [  ]
+        initialRootPosition: [ 11.5, 0.55, 0.6 ]
+        initialRootAttitude: [ 
+          1, 0, 0, 
+          0, 6.123234e-17, -1, 
+          0, 1, 6.123234e-17 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: false
+        isEditable: false
+    - 
+      id: 16
+      name: "TargetT2_35-50"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/WRS2018/model/TargetT2_35-50_5.body"
+        currentBaseLink: "QR-BASE"
+        rootPosition: [ 7.825, 1.4, 1.025 ]
+        rootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        jointPositions: [  ]
+        initialRootPosition: [ 7.825, 1.4, 1.025 ]
+        initialRootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: false
+        isEditable: false
+    - 
+      id: 17
+      name: "WorldLogFile"
+      plugin: Body
+      class: WorldLogFileItem
+      data: 
+        filename: T2.log
+        timeStampSuffix: true
+        recordingFrameRate: 100
+    - 
+      id: 18
+      name: "Smoke"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/WRS2018/model/SmokeT2_02.body"
+        currentBaseLink: "Base"
+        rootPosition: [ 12, 1.2, 0.5 ]
+        rootAttitude: [ 
+          0.25, -0.258819045, -0.933012702, 
+          0.0669872981, 0.965925826, -0.25, 
+          0.965925826, 0, 0.258819045 ]
+        jointPositions: [  ]
+        initialRootPosition: [ 12, 1.2, 0.5 ]
+        initialRootAttitude: [ 
+          0.25, -0.258819045, -0.933012702, 
+          0.0669872981, 0.965925826, -0.25, 
+          0.965925826, -2.77555756e-17, 0.258819045 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: false
+        isEditable: false
+views: 
+  - 
+    id: 1
+    plugin: Base
+    class: ItemTreeView
+    mounted: true
+    state: 
+      checked: [ 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18 ]
+      expanded: [ 3 ]
+  - 
+    id: 2
+    name: "Camera Scene"
+    plugin: Base
+    class: SceneView
+    state: 
+      dedicatedItemTreeViewChecks: true
+      checked: [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18 ]

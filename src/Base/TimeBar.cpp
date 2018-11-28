@@ -326,7 +326,7 @@ TimeBarImpl::TimeBarImpl(TimeBar* self)
 
     minTimeSpin = new DoubleSpinBox();
     minTimeSpin->setAlignment(Qt::AlignCenter);
-    minTimeSpin->setRange(-999.0, 999.0);
+    minTimeSpin->setRange(-9999.0, 9999.0);
     minTimeSpin->sigValueChanged().connect([&](double){ onTimeRangeSpinsChanged(); });
     self->addWidget(minTimeSpin);
 
@@ -334,7 +334,7 @@ TimeBarImpl::TimeBarImpl(TimeBar* self)
 
     maxTimeSpin = new DoubleSpinBox();
     maxTimeSpin->setAlignment(Qt::AlignCenter);
-    maxTimeSpin->setRange(-999.0, 999.0);
+    maxTimeSpin->setRange(-9999.0, 9999.0);
     maxTimeSpin->sigValueChanged().connect([&](double){ onTimeRangeSpinsChanged(); });
     self->addWidget(maxTimeSpin);
 

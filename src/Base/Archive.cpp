@@ -15,7 +15,6 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/tokenizer.hpp>
 #include <map>
-#include <iostream>
 #include <cstdlib>
 #include "gettext.h"
 
@@ -340,6 +339,19 @@ bool Archive::readRelocatablePath(const std::string& key, std::string& out_value
 }
 
 
+bool Archive::loadItemFile(Item* item, const std::string& fileNameKey, const std::string& fileFormatKey) const
+{
+    string filename, format;
+    if(readRelocatablePath(fileNameKey, filename)){
+        if(!fileFormatKey.empty()){
+            read(fileFormatKey, format);
+        }
+        return item->load(filename, currentParentItem(), format);
+    }
+    return false;
+}
+            
+
 /**
    \todo Use integated nested map whose node is a single path element to be more efficient.
 */
@@ -449,7 +461,7 @@ Item* Archive::findItem(int id) const
             return p->second;
         }
     }
-    return 0;
+    return nullptr;
 }
 
 
@@ -512,7 +524,7 @@ View* Archive::findView(int id) const
             return p->second;
         }
     }
-    return 0;
+    return nullptr;
 }
 
 
@@ -521,7 +533,7 @@ Item* Archive::currentParentItem() const
     if(shared){
         return shared->currentParentItem;
     }
-    return 0;
+    return nullptr;
 }
 
 
