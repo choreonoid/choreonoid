@@ -1,0 +1,45 @@
+ROAD_TEXTURE: &ROAD_TEXTURE "../Asphalt_New.jpg"
+
+APP: &APP
+  texture:
+    url: *ROAD_TEXTURE
+
+
+V-1_0-10: &V-1_0-10
+  -
+    type: Shape
+    translation: [ 0, 0, -0.05 ]
+    geometry:
+      type: Box
+      size: [ 1.0, 1.0, 0.3 ]
+    appearance: *APP
+  -
+    type: Transform
+    translation: [ -0.5, 0, 0.1 ]
+    rotation: [ 0, 0, 1, 0 ]
+    elements: &EDGE
+      Shape:
+        geometry:
+          type: Extrusion
+          crossSection: [  0.0,   0.0,
+                           0.057735026919, 0.0,
+                           0.0,   0.1,
+                           0.0,   0.0 ]
+          spine: [ 0.0, -0.5, 0.0,
+                   0.0,  0.5, 0.0 ]
+        appearance: *APP
+  -
+    type: Transform
+    translation: [ 0.00, -0.5, 0.1 ]
+    rotation: [ 0, 0, 1, 90 ]
+    elements: *EDGE
+  -
+    type: Transform
+    translation: [ 0.5, 0.00, 0.1 ]
+    rotation: [ 0, 0, 1, 180 ]
+    elements: *EDGE
+  -
+    type: Transform
+    translation: [ 0.00, 0.5, 0.1 ]
+    rotation: [ 0, 0, 1, -90 ]
+    elements: *EDGE

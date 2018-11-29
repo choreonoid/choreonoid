@@ -318,7 +318,6 @@ ItemPtr ItemTreeArchiverImpl::restoreItem
             }
         }
         if(item){
-            mvout() << parentItem->name() << "->addChildItem(" << item->name() << ")" << endl;
             parentItem->addChildItem(item);
             restoredItems.push_back(item);
         }

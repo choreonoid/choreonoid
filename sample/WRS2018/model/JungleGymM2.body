@@ -1,0 +1,167 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: JungleGym2
+
+RESOURCE: &RESOURCE
+  type: Resource
+  uri: "resource/JungleGym/JungleGymFrames.yaml"
+
+links:
+  -
+    name: ROOT
+    jointType: fixed
+  -
+    name: JungleGymM2
+    parent: ROOT
+    jointType: fixed
+    elements:
+      -
+        type: Transform
+        elements:
+          -
+            <<: *RESOURCE
+            translation: [ 0, 0, 0 ]
+            node: J1-50-1
+          -
+            <<: *RESOURCE
+            translation: [ -0.16, 0.85, 0 ]
+            rotation: [ 0, 0, -1, -30 ]
+            node: J1-70-1
+          -
+            <<: *RESOURCE
+            translation: [ -0.16, -0.85, 0 ]
+            rotation: [ 0, 0, -1, 30 ]
+            node: J1-70-1
+          -
+            type: Transform
+            translation: [ -1.1, -1.68, 0 ]
+            rotation: [ 0, 0, -1, 75 ]
+            elements:
+              # layer1
+              -
+                <<: *RESOURCE
+                translation: [ 0, 0, 0 ]
+                node: J1-100-1
+              -
+                <<: *RESOURCE
+                translation: [ 1, 0, 0 ]
+                node: J1-100-1
+              -
+                <<: *RESOURCE
+                translation: [ 2, 0, 0 ]
+                node: J1-100-1
+              # layer2
+              -
+                <<: *RESOURCE
+                translation: [ -1, 0, 1 ]
+                node: J1-100-1_B
+              -
+                <<: *RESOURCE
+                translation: [ 0, 0, 1 ]
+                node: J1-100-1
+              -
+                <<: *RESOURCE
+                translation: [ 1, 0, 1 ]
+                node: J1-100-1
+              -
+                <<: *RESOURCE
+                translation: [ 2, 0, 1 ]
+                node: J1-100-1
+              #layer3
+              -
+                <<: *RESOURCE
+                translation: [ 0, 0, 2 ]
+                node: J1-100-1
+              -
+                <<: *RESOURCE
+                translation: [ 1, 0, 2 ]
+                node: J1-100-1
+              -
+                <<: *RESOURCE
+                translation: [ 2, 0, 2 ]
+                node: J1-100-1
+              #layer4
+              -
+                <<: *RESOURCE
+                translation: [ 0, 0, 3 ]
+                node: J1-100-1
+              -
+                <<: *RESOURCE
+                translation: [ 1, 0, 3 ]
+                node: J1-100-1
+              #layer5
+              -
+                <<: *RESOURCE
+                translation: [ 0, 0, 4 ]
+                node: J1-100-1
+              -
+                <<: *RESOURCE
+                translation: [ -1, 0, 4 ]
+                node: J1-100-1_B
+          -
+            type: Transform
+            translation: [ -1.1, 1.68, 0 ]
+            rotation: [ 0, 0, -1, -75 ]
+            elements:
+              #layer1
+              -
+                <<: *RESOURCE
+                translation: [ 0, 0, 0 ]
+                node: J1-100-1
+              -
+                <<: *RESOURCE
+                translation: [ 1, 0, 0 ]
+                node: J1-100-1
+              -
+                <<: *RESOURCE
+                translation: [ 2, 0, 0 ]
+                node: J1-100-1
+              #layer2
+              -
+                <<: *RESOURCE
+                translation: [ -1, 0, 1 ]
+                node: J1-100-1_B
+              -
+                <<: *RESOURCE
+                translation: [ 0, 0, 1 ]
+                node: J1-100-1
+              -
+                <<: *RESOURCE
+                translation: [ 1, 0, 1 ]
+                node: J1-100-1
+              -
+                <<: *RESOURCE
+                translation: [ 2, 0, 1 ]
+                node: J1-100-1
+              #layer3
+              -
+                <<: *RESOURCE
+                translation: [ 0, 0, 2 ]
+                node: J1-100-1
+              -
+                <<: *RESOURCE
+                translation: [ 1, 0, 2 ]
+                node: J1-100-1
+              -
+                <<: *RESOURCE
+                translation: [ 2, 0, 2 ]
+                node: J1-100-1
+              #layer4
+              -
+                <<: *RESOURCE
+                translation: [ 0, 0, 3 ]
+                node: J1-100-1
+              -
+                <<: *RESOURCE
+                translation: [ 1, 0, 3 ]
+                node: J1-100-1
+              #layer5
+              -
+                <<: *RESOURCE
+                translation: [ 0, 0, 4 ]
+                node: J1-100-1
+              -
+                <<: *RESOURCE
+                translation: [ -1, 0, 4 ]
+                node: J1-100-1_B

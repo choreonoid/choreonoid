@@ -1,0 +1,420 @@
+items: 
+  id: 0
+  name: "Root"
+  plugin: Base
+  class: RootItem
+  children: 
+    - 
+      id: 1
+      name: "World"
+      plugin: Body
+      class: WorldItem
+      data: 
+        collisionDetection: false
+        collisionDetector: AISTCollisionDetector
+        materialTableFile: "${SHARE}/default/materials.yaml"
+      children: 
+        - 
+          id: 2
+          name: "Environment"
+          plugin: Base
+          class: FolderItem
+          children: 
+            - 
+              id: 3
+              name: "Floor"
+              plugin: Body
+              class: BodyItem
+              data: 
+                modelFile: "${SHARE}/model/misc/floor.body"
+                currentBaseLink: "Floor"
+                rootPosition: [ 0, 0, -0.1 ]
+                rootAttitude: [ 
+                  1, 0, 0, 
+                  0, 1, 0, 
+                  0, 0, 1 ]
+                jointPositions: [  ]
+                initialRootPosition: [ 0, 0, -0.1 ]
+                initialRootAttitude: [ 
+                  1, 0, 0, 
+                  0, 1, 0, 
+                  0, 0, 1 ]
+                zmp: [ 0, 0, 0 ]
+                collisionDetection: true
+                selfCollisionDetection: false
+                isEditable: false
+            - 
+              id: 4
+              name: "Car"
+              plugin: Body
+              class: BodyItem
+              data: 
+                modelFile: "${SHARE}/WRS2018/model/CarT3.body"
+                currentBaseLink: "BODY"
+                rootPosition: [ 2.6, -0.5, 0 ]
+                rootAttitude: [ 
+                  6.123234e-17, 1, 0, 
+                  -1, 6.123234e-17, 0, 
+                  0, 0, 1 ]
+                jointPositions: [  0.000000 ]
+                initialRootPosition: [ 2.6, -0.5, 0 ]
+                initialRootAttitude: [ 
+                  2.22044605e-16, 1, 0, 
+                  -1, 2.22044605e-16, -0, 
+                  -0, 0, 1 ]
+                initialJointPositions: [  0.000000 ]
+                zmp: [ 0, 0, 0 ]
+                collisionDetection: true
+                selfCollisionDetection: true
+                isEditable: true
+              children: 
+                - 
+                  id: 20
+                  name: "Controller"
+                  plugin: Body
+                  class: SimpleControllerItem
+                  data: 
+                    isNoDelayMode: false
+                    controllerOptions: ""
+                    controller: "CarT3Controller.so"
+                    baseDirectory: "Controller directory"
+                    reloading: false
+                    isOldTargetVariableMode: false
+            - 
+              id: 30
+              name: "Victim"
+              plugin: Body
+              class: BodyItem
+              data: 
+                modelFile: "${SHARE}/WRS2018/model/Victim.body"
+                rootPosition: [ 2.2056441, -0.671722796, 0.573309943 ]
+                rootAttitude: [ 
+                  -5.98997074e-10, 0.999975631, 0.00698126001, 
+                  0.173648178, -0.00687519926, 0.984783754, 
+                  0.984807753, 0.00121228335, -0.173643947 ]
+                jointPositions: [ 
+                   0.000000,  1.119763,  0.606997, -0.322886,  0.022394,  0.000000,  0.000000,  0.755187, -1.570796, -0.841090, 
+                   0.022689,  0.000000,  0.000000,  0.755728, -1.570796, -0.841249, -0.026946,  0.011916, -0.142889,  0.913207, 
+                  -0.338695, -0.027343, -0.026180,  0.012217, -0.143117,  0.912807, -0.338594, -0.027925 ]
+                initialRootPosition: [ 2.2056441, -0.671722796, 0.573309943 ]
+                initialRootAttitude: [ 
+                  -2.41473508e-11, 0.999975631, 0.00698126014, 
+                  0.173648178, -0.00687519908, 0.984783754, 
+                  0.984807753, 0.00121228315, -0.173643947 ]
+                initialJointPositions: [ 
+                   0.000000,  1.119763,  0.606997, -0.322886,  0.022394,  0.000000,  0.000000,  0.755187, -1.570796, -0.841090, 
+                   0.022689,  0.000000,  0.000000,  0.755728, -1.570796, -0.841249, -0.026946,  0.011916, -0.142889,  0.913207, 
+                  -0.338695, -0.027343, -0.026180,  0.012217, -0.143117,  0.912807, -0.338594, -0.027925 ]
+                zmp: [ 0, 0, 0 ]
+                collisionDetection: true
+                selfCollisionDetection: true
+                isEditable: true
+            - 
+              id: 5
+              name: "Spreader"
+              plugin: Body
+              class: BodyItem
+              data: 
+                modelFile: "${SHARE}/WRS2018/model/Spreader.body"
+                currentBaseLink: "BASE"
+                rootPosition: [ 1.13522279, -0.0845083447, 0.0871711022 ]
+                rootAttitude: [ 
+                  0.962183539, 0, 0.272401976, 
+                  0, 1, 0, 
+                  -0.272401976, 0, 0.962183539 ]
+                jointPositions: [  ]
+                initialRootPosition: [ 1.13522279, -0.0845083447, 0.0871711022 ]
+                initialRootAttitude: [ 
+                  0.962183539, 0, 0.272401976, 
+                  0, 1, 0, 
+                  -0.272401976, 0, 0.962183539 ]
+                zmp: [ 0, 0, 0 ]
+                collisionDetection: true
+                selfCollisionDetection: false
+                isEditable: true
+              children: 
+                - 
+                  id: 21
+                  name: "SpreaderController"
+                  plugin: Body
+                  class: SimpleControllerItem
+                  data: 
+                    isNoDelayMode: false
+                    controllerOptions: ""
+                    controller: "SpreaderController.so"
+                    baseDirectory: "Controller directory"
+                    reloading: false
+                    isOldTargetVariableMode: false
+
+        - 
+          id: 6
+          name: "AizuSpider"
+          plugin: Body
+          class: BodyItem
+          data: 
+            modelFile: "${SHARE}/model/AizuSpider/AizuSpiderDA.body"
+            currentBaseLink: "CHASSIS"
+            rootPosition: [ 0, 0, 0.034 ]
+            rootAttitude: [ 
+              1, 0, 0, 
+              0, 1, 0, 
+              0, 0, 1 ]
+            jointPositions: [ 
+               0.000000,  0.000000,  0.000000,  0.000000, -1.570796,  2.635447,  0.471239, -1.623156,  0.104720,  1.745329, 
+               0.000000,  0.000000,  0.000000, -1.570796,  2.635447,  0.471239, -1.623156,  0.104720,  1.745329,  0.000000, 
+               0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000, 
+               0.000000,  0.000000,  0.000000,  0.000000 ]
+            initialRootPosition: [ 0, 0, 0.034 ]
+            initialRootAttitude: [ 
+              1, 0, 0, 
+              0, 1, 0, 
+              0, 0, 1 ]
+            initialJointPositions: [ 
+               0.000000,  0.000000,  0.000000,  0.000000, -1.570796,  2.635447,  0.471239, -1.623156,  0.104720,  1.745329, 
+               0.000000,  0.000000,  0.000000, -1.570796,  2.635447,  0.471239, -1.623156,  0.104720,  1.745329,  0.000000, 
+               0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000, 
+               0.000000,  0.000000,  0.000000,  0.000000 ]
+            zmp: [ 0, 0, 0 ]
+            collisionDetection: true
+            selfCollisionDetection: true
+            isEditable: true
+          children: 
+            - 
+              id: 7
+              name: "AizuSpiderController"
+              plugin: Body
+              class: SimpleControllerItem
+              data: 
+                isNoDelayMode: false
+                controllerOptions: ""
+                controller: "AizuSpiderController.so"
+                baseDirectory: "Controller directory"
+                reloading: true
+                isOldTargetVariableMode: false
+              children: 
+                - 
+                  id: 8
+                  name: "Arm1Controller"
+                  plugin: Body
+                  class: SimpleControllerItem
+                  data: 
+                    isNoDelayMode: false
+                    controllerOptions: "ARM1_"
+                    controller: "Jaco2Controller.so"
+                    baseDirectory: "Controller directory"
+                    reloading: true
+                    isOldTargetVariableMode: false
+                - 
+                  id: 9
+                  name: "Arm2Controller"
+                  plugin: Body
+                  class: SimpleControllerItem
+                  data: 
+                    isNoDelayMode: false
+                    controllerOptions: "ARM2_"
+                    controller: "Jaco2Controller.so"
+                    baseDirectory: "Controller directory"
+                    reloading: true
+                    isOldTargetVariableMode: false
+        - 
+          id: 11
+          name: "AGXSimulator"
+          plugin: AGXDynamics
+          class: AGXSimulatorItem
+          data: 
+            timeStep: 0.005
+            realtimeSync: true
+            recording: "full"
+            timeRangeMode: "Unlimited"
+            timeLength: 180
+            allLinkPositionOutputMode: true
+            deviceStateOutput: true
+            controllerThreads: true
+            recordCollisionData: false
+            controllerOptions: "position"
+            Gravity: [ 0, 0, -9.80665 ]
+            NumThreads: 4
+            ContactReduction: true
+            ContactReductionBinResolution: 3
+            ContactReductionThreshhold: 12
+            ContactWarmstarting: true
+            AutoSleep: false
+            SaveToAGXFileOnStart: false
+            DebugMessageOnConsole: 2
+views: 
+  - 
+    id: 0
+    plugin: Base
+    class: ItemPropertyView
+    mounted: true
+  - 
+    id: 1
+    plugin: Base
+    class: ItemTreeView
+    mounted: true
+    state: 
+      checked: [ 3, 4, 5, 6, 8, 9, 30 ]
+      expanded: [ 1, 2, 6, 7, 10 ]
+  - 
+    id: 2
+    plugin: Base
+    class: MessageView
+    mounted: true
+  - 
+    id: 3
+    plugin: Base
+    class: SceneView
+    mounted: true
+    state: 
+      editMode: false
+      viewpointControlMode: thirdPerson
+      collisionLines: false
+      polygonMode: fill
+      cullingMode: enabled
+      defaultHeadLight: true
+      defaultHeadLightIntensity: 0.9
+      headLightLightingFromBack: false
+      worldLight: true
+      worldLightIntensity: 0.8
+      worldLightAmbient: 0.3
+      additionalLights: false
+      shadowLights: 
+        - 0
+      fog: true
+      floorGrid: false
+      floorGridSpan: 10
+      floorGridInterval: 0.5
+      xzGridSpan: 10
+      xzGridInterval: 0.5
+      xzGrid: false
+      yzGridSpan: 10
+      yzGridInterval: 0.5
+      texture: true
+      lineWidth: 1
+      pointSize: 1
+      normalVisualization: false
+      normalLength: 0.01
+      coordinateAxes: true
+      fpsTestIteration: 1
+      showFPS: false
+      enableNewDisplayListDoubleRendering: false
+      useBufferForPicking: true
+      upsideDown: false
+      cameras: 
+        - 
+          camera: [ System, Perspective ]
+          isCurrent: true
+          fieldOfView: 0.698132
+          near: 0.05
+          far: 200
+          eye: [ -0.724784721, -5.3455219, 2.06639099 ]
+          direction: [ 0.395778771, 0.889262876, -0.229283017 ]
+          up: [ 0.0932289897, 0.209473285, 0.973359799 ]
+        - 
+          camera: [ System, Orthographic ]
+          orthoHeight: 20
+          near: 0.05
+          far: 200
+      backgroundColor: [ 0, 0, 0 ]
+      gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
+      xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
+      yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
+      dedicatedItemTreeViewChecks: false
+  - 
+    id: 5
+    plugin: Body
+    class: BodyLinkView
+    mounted: true
+    state: 
+      showRotationMatrix: false
+  - 
+    id: 6
+    plugin: Body
+    class: JointSliderView
+    mounted: true
+    state: 
+      showAllJoints: true
+      jointId: false
+      name: true
+      numColumns: 1
+      spinBox: true
+      slider: true
+      labelOnLeft: true
+      currentBodyItem: 5
+  - 
+    id: 7
+    plugin: Body
+    class: LinkSelectionView
+    mounted: true
+    state: 
+      listingMode: "Link List"
+      currentBodyItem: 5
+  - 
+    id: 9
+    plugin: Python
+    class: PythonConsoleView
+    mounted: true
+viewAreas: 
+  - 
+    type: embedded
+    tabs: true
+    contents: 
+      type: splitter
+      orientation: horizontal
+      sizes: [ 437, 2130 ]
+      children: 
+        - 
+          type: splitter
+          orientation: vertical
+          sizes: [ 847, 845 ]
+          children: 
+            - 
+              type: pane
+              views: [ 1 ]
+              current: 1
+            - 
+              type: pane
+              views: [ 0, 7 ]
+              current: 0
+        - 
+          type: splitter
+          orientation: vertical
+          sizes: [ 1301, 391 ]
+          children: 
+            - 
+              type: splitter
+              orientation: horizontal
+              sizes: [ 922, 1202 ]
+              children: 
+                - 
+                  type: pane
+                  views: [ 5, 6, 4 ]
+                  current: 5
+                - 
+                  type: pane
+                  views: [ 3 ]
+                  current: 3
+            - 
+              type: splitter
+              orientation: horizontal
+              sizes: [ 1062, 1062 ]
+              children: 
+                - 
+                  type: pane
+                  views: [ 2 ]
+                  current: 2
+                - 
+                  type: pane
+                  views: [ 9 ]
+                  current: 9
+layoutOfToolBars: 
+  rows: 
+    - 
+      - { name: "FileBar", x: 0, priority: 0 }
+      - { name: "CaptureBar", x: 47, priority: 2 }
+      - { name: "ScriptBar", x: 47, priority: 0 }
+      - { name: "SimulationBar", x: 93, priority: 1 }
+      - { name: "TimeBar", x: 94, priority: 0 }
+      - { name: "SceneBar", x: 1324, priority: 4 }
+      - { name: "KinematicsBar", x: 1687, priority: 3 }
+      - { name: "BodyBar", x: 1923, priority: 0 }

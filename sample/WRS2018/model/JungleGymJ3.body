@@ -1,0 +1,18 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: JungleGymJ3
+
+RESOURCE: &RESOURCE
+  type: Resource
+  uri: "resource/JungleGym/JungleGymFrames.yaml"
+
+links:
+  -
+    name: JungleGymJ3
+    jointType: fixed
+    elements:
+      -
+        <<: *RESOURCE
+        node: J3-100-1_3
+

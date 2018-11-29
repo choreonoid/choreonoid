@@ -1,0 +1,22 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+name: ShoringGuide
+
+links:
+  -
+    name: body
+    jointType: fixed
+    autoSleep: true
+    elements:
+      -
+        type: Visual
+        elements:
+          -
+            type: Shape
+            geometry:
+              type: Box
+              size: [ 1, 0.1, 0.05 ]
+            appearance:
+              material:
+                diffuseColor: [ 0, 0.8, 0 ]
+                transparency: 0.6

@@ -1,0 +1,437 @@
+items: 
+  id: 0
+  name: "Root"
+  plugin: Base
+  class: RootItem
+  children: 
+    - 
+      id: 1
+      name: "Flag5R"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/WRS2018/model/Flag5R.body"
+        currentBaseLink: "BASE"
+        rootPosition: [ 24, 0, 0 ]
+        rootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        jointPositions: [  ]
+        initialRootPosition: [ 24, 0, 0 ]
+        initialRootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: false
+        isEditable: false
+    - 
+      id: 2
+      name: "Flag5L"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/WRS2018/model/Flag5L.body"
+        currentBaseLink: "BASE"
+        rootPosition: [ 24, 3, 0 ]
+        rootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        jointPositions: [  ]
+        initialRootPosition: [ 24, 3, 0 ]
+        initialRootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: false
+        isEditable: false
+    - 
+      id: 3
+      name: "Flag4R"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/WRS2018/model/Flag4R.body"
+        currentBaseLink: "BASE"
+        rootPosition: [ 15.9367, -0.15, 0 ]
+        rootAttitude: [ 
+          0.965925826, -0.258819045, 0, 
+          0.258819045, 0.965925826, 0, 
+          0, 0, 1 ]
+        jointPositions: [  ]
+        initialRootPosition: [ 15.9367, -0.15, 0 ]
+        initialRootAttitude: [ 
+          0.965925826, -0.258819045, 0, 
+          0.258819045, 0.965925826, 0, 
+          0, 0, 1 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: false
+        isEditable: true
+    - 
+      id: 4
+      name: "Flag4L"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/WRS2018/model/Flag4L.body"
+        currentBaseLink: "BASE"
+        rootPosition: [ 19.0559585, 0, 0 ]
+        rootAttitude: [ 
+          -0.965925826, 0.258819045, 0, 
+          -0.258819045, -0.965925826, 0, 
+          0, 0, 1 ]
+        jointPositions: [  ]
+        initialRootPosition: [ 19.0559585, 0, 0 ]
+        initialRootAttitude: [ 
+          -0.965925826, 0.258819045, 0, 
+          -0.258819045, -0.965925826, 0, 
+          0, 0, 1 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: false
+        isEditable: true
+    - 
+      id: 5
+      name: "JungleGymJ3-5"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/WRS2018/model/JungleGymJ3.body"
+        currentBaseLink: "JungleGymJ3"
+        rootPosition: [ 17.8, -1.9, -1 ]
+        rootAttitude: [ 
+          0.965925826, -0.258819045, 0, 
+          0.258819045, 0.965925826, 0, 
+          0, 0, 1 ]
+        jointPositions: [  ]
+        initialRootPosition: [ 17.8, -1.9, -1 ]
+        initialRootAttitude: [ 
+          0.965925826, -0.258819045, 0, 
+          0.258819045, 0.965925826, 0, 
+          0, 0, 1 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: false
+        isEditable: false
+    - 
+      id: 6
+      name: "JungleGymJ3-4"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/WRS2018/model/JungleGymJ3.body"
+        currentBaseLink: "JungleGymJ3"
+        rootPosition: [ 17.8, 1.9, -1 ]
+        rootAttitude: [ 
+          0.965925826, 0.258819045, 0, 
+          -0.258819045, 0.965925826, 0, 
+          0, 0, 1 ]
+        jointPositions: [  ]
+        initialRootPosition: [ 17.8, 1.9, -1 ]
+        initialRootAttitude: [ 
+          0.965925826, 0.258819045, 0, 
+          -0.258819045, 0.965925826, -0, 
+          -0, 0, 1 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: false
+        isEditable: false
+    - 
+      id: 7
+      name: "JungleGymJ3-3"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/WRS2018/model/JungleGymJ3.body"
+        currentBaseLink: "JungleGymJ3"
+        rootPosition: [ 14, -1.9, -1 ]
+        rootAttitude: [ 
+          0.965925826, 0.258819045, 0, 
+          -0.258819045, 0.965925826, 0, 
+          0, 0, 1 ]
+        jointPositions: [  ]
+        initialRootPosition: [ 14, -1.9, -1 ]
+        initialRootAttitude: [ 
+          0.965925826, 0.258819045, 0, 
+          -0.258819045, 0.965925826, -0, 
+          -0, 0, 1 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: false
+        isEditable: false
+    - 
+      id: 8
+      name: "Flag3R"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/WRS2018/model/Flag3R.body"
+        currentBaseLink: "BASE"
+        rootPosition: [ 15.9367, 0.6603, 0 ]
+        rootAttitude: [ 
+          0.965925826, -0.258819045, 0, 
+          0.258819045, 0.965925826, 0, 
+          0, 0, 1 ]
+        jointPositions: [  ]
+        initialRootPosition: [ 15.9367, 0.6603, 0 ]
+        initialRootAttitude: [ 
+          0.965925826, -0.258819045, 0, 
+          0.258819045, 0.965925826, 0, 
+          0, 0, 1 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: false
+        isEditable: false
+    - 
+      id: 9
+      name: "Flag3L"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/WRS2018/model/Flag3L.body"
+        currentBaseLink: "BASE"
+        rootPosition: [ 12.8, 0, 0 ]
+        rootAttitude: [ 
+          -0.258819045, -0.965925826, 0, 
+          0.965925826, -0.258819045, 0, 
+          0, 0, 1 ]
+        jointPositions: [  ]
+        initialRootPosition: [ 12.8, 0, 0 ]
+        initialRootAttitude: [ 
+          -0.258819034, -0.965925826, 0, 
+          0.965925826, -0.258819034, 0, 
+          0, 0, 1 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: false
+        isEditable: false
+    - 
+      id: 10
+      name: "JungleGymJ3-2"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/WRS2018/model/JungleGymJ3.body"
+        currentBaseLink: "JungleGymJ3"
+        rootPosition: [ 14, 1.9, -1 ]
+        rootAttitude: [ 
+          0.965925826, -0.258819045, 0, 
+          0.258819045, 0.965925826, 0, 
+          0, 0, 1 ]
+        jointPositions: [  ]
+        initialRootPosition: [ 14, 1.9, -1 ]
+        initialRootAttitude: [ 
+          0.965925826, -0.258819045, 0, 
+          0.258819045, 0.965925826, 0, 
+          0, 0, 1 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: false
+        isEditable: false
+    - 
+      id: 11
+      name: "Flag2R"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/WRS2018/model/Flag2R.body"
+        currentBaseLink: "BASE"
+        rootPosition: [ 9, -3.5, 0 ]
+        rootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        jointPositions: [  ]
+        initialRootPosition: [ 9, -3.5, 0 ]
+        initialRootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: false
+        isEditable: false
+    - 
+      id: 12
+      name: "Flag2L"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/WRS2018/model/Flag2L.body"
+        currentBaseLink: "BASE"
+        rootPosition: [ 9, 3.5, 0 ]
+        rootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        jointPositions: [  ]
+        initialRootPosition: [ 9, 3.5, 0 ]
+        initialRootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: false
+        isEditable: false
+    - 
+      id: 13
+      name: "JungleGymJ3-1"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/WRS2018/model/JungleGymJ3.body"
+        currentBaseLink: "JungleGymJ3"
+        rootPosition: [ 6, 1.4, -1 ]
+        rootAttitude: [ 
+          0.965925826, -0.258819045, 0, 
+          0.258819045, 0.965925826, 0, 
+          0, 0, 1 ]
+        jointPositions: [  ]
+        initialRootPosition: [ 6, 1.4, -1 ]
+        initialRootAttitude: [ 
+          0.965925826, -0.258819045, 0, 
+          0.258819045, 0.965925826, 0, 
+          0, 0, 1 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: false
+        isEditable: false
+    - 
+      id: 14
+      name: "Flag1R"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/WRS2018/model/Flag1R.body"
+        currentBaseLink: "BASE"
+        rootPosition: [ 4, -1, 0 ]
+        rootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        jointPositions: [  ]
+        initialRootPosition: [ 4, -1, 0 ]
+        initialRootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: false
+        isEditable: false
+    - 
+      id: 15
+      name: "Flag1L"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/WRS2018/model/Flag1L.body"
+        currentBaseLink: "BASE"
+        rootPosition: [ 4, 3, 0 ]
+        rootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        jointPositions: [  ]
+        initialRootPosition: [ 4, 3, 0 ]
+        initialRootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: false
+        isEditable: false
+    - 
+      id: 16
+      name: "RoadSurfaceT1L"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/WRS2018/model/RoadSurface40m_T1L.body"
+        currentBaseLink: "Base"
+        rootPosition: [ 0, 0, 0 ]
+        rootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        jointPositions: [  ]
+        initialRootPosition: [ 0, 0, 0 ]
+        initialRootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: false
+        isEditable: false
+    - 
+      id: 17
+      name: "TunnelWall40m-R"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/WRS2018/model/TunnelWall40m-R.body"
+        currentBaseLink: "1_Base"
+        rootPosition: [ 0, 0, 0 ]
+        rootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        jointPositions: [  ]
+        initialRootPosition: [ 0, 0, 0 ]
+        initialRootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: false
+        isEditable: false
+    - 
+      id: 18
+      name: "TunnelWall40m-L"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/WRS2018/model/TunnelWall40m-L.body"
+        currentBaseLink: "1_Base"
+        rootPosition: [ 0, 0, 0 ]
+        rootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        jointPositions: [  ]
+        initialRootPosition: [ 0, 0, 0 ]
+        initialRootAttitude: [ 
+          1, 0, 0, 
+          0, 1, 0, 
+          0, 0, 1 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: false
+        isEditable: false
+views: 
+  - 
+    id: 1
+    plugin: Base
+    class: ItemTreeView
+    mounted: true
+    state: 
+      checked: [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18 ]
+      expanded: [ 1 ]
+  - 
+    id: 2
+    name: "Camera Scene"
+    plugin: Base
+    class: SceneView
+    state: 
+      dedicatedItemTreeViewChecks: true
+      checked: [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18 ]

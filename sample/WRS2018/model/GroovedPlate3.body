@@ -1,0 +1,66 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+name: ShoringTarget
+
+links:
+  -
+    name: root
+    jointType: fixed
+  -
+    name: joint1
+    parent: root
+    jointType: revolute 
+    jointAxis: Y
+    jointId: 0
+  -
+    name: body
+    parent: joint1
+    jointType: fixed
+    translation: [ 1.5, 0, 0.045 ]
+    mass: 100.0
+    inertia: [
+      12, 0, 0,
+      0, 75, 0,
+      0, 0, 87 ]
+    autoSleep: true
+    elements:
+      -
+        type: Transform
+        translation: [ 0.0, 0.0, 0.0 ]
+        elements:
+          -
+            type: Shape
+            geometry:
+              type: Box
+              size: [ 3.0, 1.2, 0.09 ]
+            appearance: &APP
+              material:
+                diffuseColor: [ 1, 1, 1 ]
+              texture:
+                url: "resource/Asphalt_New.jpg" 
+                repeatS: true
+                repeatT: true
+              textureTransform:
+                scale: [ 10, 4 ]
+          -
+            type: Shape
+            translation: [ -0.1, 0, -0.095 ]
+            geometry:
+              type: Box
+              size: [ 2.4, 0.12, 0.1 ]
+            appearance: *APP
+          -
+            type: Shape
+            translation: [ 0, 0.33, -0.095 ]
+            geometry:
+              type: Box
+              size: [ 3.0, 0.54, 0.1 ]
+            appearance: *APP
+          -
+            type: Shape
+            translation: [ 0, -0.33, -0.095 ]
+            geometry:
+              type: Box
+              size: [ 3.0, 0.54, 0.1 ]
+            appearance: *APP
+
