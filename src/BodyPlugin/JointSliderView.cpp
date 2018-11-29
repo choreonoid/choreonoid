@@ -90,7 +90,7 @@ public:
 };
 
 }
-#include <iostream>
+
 namespace {
     
 class SliderUnit
@@ -204,23 +204,31 @@ public:
 
         slider.setRange(lower * resolution, upper * resolution);
 
+        double deci;
         if(unitConversionRatio != 1.0){ // degree mode
             spin.setDecimals(1);
             spin.setRange(-999.9, 999.9);
             spin.setSingleStep(0.1);
             setRangeLabelValues(lower, upper, 1);
+            deci = 0.1;
         } else { // radian or meter
             spin.setDecimals(4);
             spin.setRange(-9.99, 9.99);
             spin.setSingleStep(0.0001);
             setRangeLabelValues(lower, upper, 3);
+            deci = 0.0001;
+        }
+        double v = unitConversionRatio * joint->q();
+        if( v<spin.minimum() || v>spin.maximum()){
+            int v0 = v<0.0? (int)-v : (int)v;
+            double max = pow(10, (int)log10(v0)+1)-deci;
+            spin.setRange(-max, max);
         }
 
         if( joint->q_lower() == -std::numeric_limits<double>::max() && joint->q_upper() == std::numeric_limits<double>::max() ){
             dial.setWrapping(true);
             dial.setNotchesVisible(false);
             dial.setRange(-PI * unitConversionRatio * resolution, PI * unitConversionRatio * resolution);
-            spin.setRange(-std::numeric_limits<double>::max(), std::numeric_limits<double>::max());
         }else {
             dial.setWrapping(false);
             dial.setNotchesVisible(true);
@@ -265,7 +273,11 @@ public:
 
     void onDialValueChanged(double value){
         spin.blockSignals(true);
-        spin.setValue(value / resolution);
+        double v = value / resolution;
+        if(v > spin.maximum() || v < spin.minimum() ) {
+            spin.setRange(spin.minimum()*10, spin.maximum()*10);
+        }
+        spin.setValue(v);
         spin.blockSignals(false);
         slider.blockSignals(true);
         slider.setValue(value);
