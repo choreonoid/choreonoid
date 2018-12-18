@@ -47,7 +47,7 @@ items:
               data: 
                 isNoDelayMode: false
                 controllerOptions: ""
-                module: "QuadcopterIoRTC.so"
+                module: "QuadcopterIoRTC"
                 baseDirectory: "RTC directory"
                 instanceName: ""
                 periodicRate: 0
@@ -59,7 +59,7 @@ items:
               data: 
                 isNoDelayMode: false
                 controllerOptions: ""
-                module: "QuadcopterControllerRTC.so"
+                module: "QuadcopterControllerRTC"
                 baseDirectory: "RTC directory"
                 instanceName: ""
                 executionContext: "SimulationExecutionContext"
@@ -72,7 +72,7 @@ items:
               data: 
                 isNoDelayMode: false
                 controllerOptions: ""
-                module: "JoystickRTC.so"
+                module: "JoystickRTC"
                 baseDirectory: "RTC directory"
                 instanceName: ""
                 executionContext: "SimulationExecutionContext"

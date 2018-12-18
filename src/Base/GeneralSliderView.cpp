@@ -215,7 +215,7 @@ void GeneralSliderView::initializeClass(ExtensionManager* ext)
 {
     ::instance =
         ext->viewManager().registerClass<GeneralSliderView>(
-            "GeneralSliderView", N_("General Sliders"), ViewManager::SINGLE_DEFAULT);
+            "GeneralSliderView", N_("General Sliders"), ViewManager::SINGLE_OPTIONAL);
 }
 
 

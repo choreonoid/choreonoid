@@ -113,16 +113,16 @@ void SmokeProgram::updateParticleBuffers(SceneSmoke* smoke)
     Vector3f v;
     float velocity, theta, phi;
     vector<GLfloat> data(numParticles * 3);
-    srandom(0);
+    srand(0);
     for(GLuint i = 0; i < numParticles; ++i) {
-        theta = emissionRange / 2.0f * random();
-        phi = 2.0 * PI * random();
+        theta = emissionRange / 2.0f * frandom();
+        phi = 2.0 * PI * frandom();
 
         v.x() = sinf(theta) * cosf(phi);
         v.y() = sinf(theta) * sinf(phi);
         v.z() = cosf(theta);
 
-        velocity = 0.1f + (0.2f - 0.1f) * random();
+        velocity = 0.1f + (0.2f - 0.1f) * frandom();
         v = v.normalized() * velocity;
 
         data[3*i]   = v.x();

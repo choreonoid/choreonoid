@@ -1,0 +1,13 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: ChocoBlock
+
+links:
+  -
+    name: BASE
+    jointType: fixed
+    elements:
+      Resource:
+        uri: "resource/Terrain/A-0.5-30.yaml"
+        node: A-0_5-30

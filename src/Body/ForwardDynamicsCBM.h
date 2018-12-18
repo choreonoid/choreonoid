@@ -40,7 +40,7 @@ public:
     void sumExternalForces();
     void solveUnknownAccels();
     void solveUnknownAccels(const Vector3& fext, const Vector3& tauext);
-    void solveUnknownAccels(DyLink* link, const Vector3& fext, const Vector3& tauext, const Vector3& rootfext, const Vector3& roottauext);
+    bool solveUnknownAccels(DyLink* link, const Vector3& fext, const Vector3& tauext, const Vector3& rootfext, const Vector3& roottauext);
 
     //! \deprecated Use Link::setActuationMode() instead.
     void setHighGainModeForAllJoints();

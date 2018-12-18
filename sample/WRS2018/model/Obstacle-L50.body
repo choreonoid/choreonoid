@@ -1,0 +1,86 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: Obstacle-L50
+
+APP:
+  appearance: &APP
+    material:
+      diffuseColor: [ 1.0, 0.5, 0.2 ]
+
+BOX50-1: &BOX50-1
+  type: Transform
+  elements:
+    Shape: 
+      geometry: &BOX
+        type: Box
+        size: [ 0.5, 0.5, 0.5 ]
+      appearance: *APP
+    RigidBody:
+      centerOfMass: [ 0, 0, 0 ]
+      mass: 125
+      inertia: [
+        0.04166667 , 0,          0,
+        0,           0.04166667, 0,
+        0,           0,          0.04166667 ]
+
+BOX50-15: &BOX50-05
+  type: Transform
+  elements:
+    Shape: 
+      geometry: *BOX
+      appearance: *APP
+    RigidBody:
+      centerOfMass: [ 0, 0, 0 ]
+      mass: 62.5
+      inertia: [
+        0.04166667 , 0,          0,
+        0,           0.04166667, 0,
+        0,           0,          0.04166667 ]
+
+BOX50-05: &BOX50-15
+  type: Transform
+  elements:
+    Shape: 
+      geometry: *BOX
+      appearance: *APP
+    RigidBody:
+      centerOfMass: [ 0, 0, 0 ]
+      mass: 187.5
+      inertia: [
+        0.04166667 , 0,          0,
+        0,           0.04166667, 0,
+        0,           0,          0.04166667 ]
+
+OBJ: &OBJ
+  -
+    <<: *BOX50-1
+    translation: [ 0, 0, 0 ]
+  -
+    <<: *BOX50-1
+    translation: [ 0, 0, 0.5 ]
+  -
+    <<: *BOX50-1
+    translation: [ 0, 0, 1 ]
+  -
+    <<: *BOX50-1
+    translation: [ 0, 0.5, 1 ]
+  -
+    type: Collision
+    elements:
+      -
+        type: Shape
+        translation: [ 0.0, 0.0, 0.5 ]
+        geometry: { type: Box, size: [ 0.5, 0.5, 1.5 ]}
+      -
+        type: Shape
+        translation: [ 0.0, 0.25, 1 ]
+        geometry: { type: Box, size: [ 0.5, 1.0, 0.5 ]}
+
+links:
+  -
+    name: BASE
+    translation: [ 0, 0, 0 ]
+    jointType: free
+    elements: *OBJ
+

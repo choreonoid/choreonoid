@@ -20,7 +20,7 @@ class TimeBar;
 class BodyItem;
 class BodyMotionGenerationBar;
 
-class CNOID_EXPORT PoseSeqItem : public cnoid::Item
+class CNOID_EXPORT PoseSeqItem : public Item
 {
 public:
     static void initializeClass(ExtensionManager* ext);        
@@ -29,19 +29,11 @@ public:
     PoseSeqItem(const PoseSeqItem& org);
     ~PoseSeqItem();
             
-    virtual void setName(const std::string& name);
+    virtual void setName(const std::string& name) override;
 
-    inline PoseSeqPtr poseSeq() {
-        return seq;
-    }
-
-    inline PoseSeqInterpolatorPtr interpolator(){
-        return interpolator_;
-    }
-
-    inline BodyMotionItem* bodyMotionItem(){
-        return bodyMotionItem_.get();
-    }
+    PoseSeqPtr poseSeq() { return seq; }
+    PoseSeqInterpolatorPtr interpolator(){ return interpolator_; }
+    BodyMotionItem* bodyMotionItem(){ return bodyMotionItem_; }
 
     virtual bool updateInterpolation();
     virtual bool updateTrajectory(bool putMessages = false);
@@ -62,11 +54,11 @@ public:
 
 protected:
 
-    virtual Item* doDuplicate() const;
-    virtual void onPositionChanged();
-    virtual void doPutProperties(PutPropertyFunction& putProperty);
-    virtual bool store(Archive& archive);
-    virtual bool restore(const Archive& archive);
+    virtual Item* doDuplicate() const override;
+    virtual void onPositionChanged() override;
+    virtual void doPutProperties(PutPropertyFunction& putProperty) override;
+    virtual bool store(Archive& archive) override;
+    virtual bool restore(const Archive& archive) override;
 
     BodyItem* ownerBodyItem;
     PoseSeqPtr seq;

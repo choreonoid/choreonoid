@@ -1,0 +1,28 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+name: CollapsedCeilingE
+
+links:
+  -
+    name: body
+    jointType: free
+    mass: 1000.0
+    inertia: [
+      120, 0, 0,
+      0, 2084, 0,
+      0, 0, 2203 ]
+    autoSleep: true
+    elements:
+      Shape:
+        geometry:
+          type: Box
+          size: [ 5, 1.2, 0.09 ]
+        appearance:
+          material:
+            diffuseColor: [ 1, 1, 1 ]
+          texture:
+            url: "resource/Asphalt_New.jpg" 
+            repeatS: true
+            repeatT: true
+          textureTransform:
+            scale: [ 10, 4 ]

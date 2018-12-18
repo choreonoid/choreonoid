@@ -1,0 +1,167 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: TargetT2_35-50
+
+links:
+  -
+    name: QR-BASE
+    jointType: fixed
+    elements:
+      - # QR code marker
+        type: Visual
+        shape:
+          geometry:
+            type: IndexedFaceSet
+            coordinate: [
+               0.01573,  0.01573, 0.011,
+              -0.01573,  0.01573, 0.011,
+              -0.01573, -0.01573, 0.011,
+               0.01573, -0.01573, 0.011 ]
+            coordIndex: [ 0, 1, 2, 3, -1 ]
+            texCoord: [
+              1, 1,
+              0, 1,
+              0, 0,
+              1, 0 ]
+            texCoordIndex: [ 0, 1, 2, 3, -1 ]
+          appearance:
+            texture:
+              url: "resource/QRT2_4.png"
+      - # Base
+        type: Shape
+        rotation: [ 1, 0, 0, 90 ]
+        translation: [ 0, 0, 0.005 ]
+        geometry:
+          type: Cylinder
+          radius: 0.0297
+          height: 0.01
+
+      - # Cylinder wall 1
+        type: Shape
+        rotation: [ 0, 0, 1, 0.0 ]
+        translation: [ 0.02475, 0.0, 0.035 ]
+        geometry:
+          type: Box
+          size: [ 0.005, 0.01084072, 0.05 ]
+
+      - # Cylinder wall 2
+        type: Shape
+        rotation: [ 0, 0, 1, 22.5 ]
+        translation: [ 0.022866, 0.0094714, 0.035 ]
+        geometry:
+          type: Box
+          size: [ 0.005, 0.01084072, 0.05 ]
+
+      - # Cylinder wall 3
+        type: Shape
+        rotation: [ 0, 0, 1, 45.0 ]
+        translation: [ 0.017501, 0.017501, 0.035 ]
+        geometry:
+          type: Box
+          size: [ 0.005, 0.01084072, 0.05 ]
+
+      - # Cylinder wall 4
+        type: Shape
+        rotation: [ 0, 0, 1, 67.5 ]
+        translation: [ 0.0094714, 0.022866, 0.035 ]
+        geometry:
+          type: Box
+          size: [ 0.005, 0.01084072, 0.05 ]
+
+      - # Cylinder wall 5
+        type: Shape
+        rotation: [ 0, 0, 1, 90.0 ]
+        translation: [ 1.5155e-18, 0.02475, 0.035 ]
+        geometry:
+          type: Box
+          size: [ 0.005, 0.01084072, 0.05 ]
+
+      - # Cylinder wall 6
+        type: Shape
+        rotation: [ 0, 0, 1, 112.5 ]
+        translation: [ -0.0094714, 0.022866, 0.035 ]
+        geometry:
+          type: Box
+          size: [ 0.005, 0.01084072, 0.05 ]
+
+      - # Cylinder wall 7
+        type: Shape
+        rotation: [ 0, 0, 1, 135.0 ]
+        translation: [ -0.017501, 0.017501, 0.035 ]
+        geometry:
+          type: Box
+          size: [ 0.005, 0.01084072, 0.05 ]
+
+      - # Cylinder wall 8
+        type: Shape
+        rotation: [ 0, 0, 1, 157.5 ]
+        translation: [ -0.022866, 0.0094714, 0.035 ]
+        geometry:
+          type: Box
+          size: [ 0.005, 0.01084072, 0.05 ]
+
+      - # Cylinder wall 9
+        type: Shape
+        rotation: [ 0, 0, 1, 180.0 ]
+        translation: [ -0.02475, 3.031e-18, 0.035 ]
+        geometry:
+          type: Box
+          size: [ 0.005, 0.01084072, 0.05 ]
+
+      - # Cylinder wall 10
+        type: Shape
+        rotation: [ 0, 0, 1, 202.5 ]
+        translation: [ -0.022866, -0.0094714, 0.035 ]
+        geometry:
+          type: Box
+          size: [ 0.005, 0.01084072, 0.05 ]
+
+      - # Cylinder wall 11
+        type: Shape
+        rotation: [ 0, 0, 1, 225.0 ]
+        translation: [ -0.017501, -0.017501, 0.035 ]
+        geometry:
+          type: Box
+          size: [ 0.005, 0.01084072, 0.05 ]
+
+      - # Cylinder wall 12
+        type: Shape
+        rotation: [ 0, 0, 1, 247.5 ]
+        translation: [ -0.0094714, -0.022866, 0.035 ]
+        geometry:
+          type: Box
+          size: [ 0.005, 0.01084072, 0.05 ]
+
+      - # Cylinder wall 13
+        type: Shape
+        rotation: [ 0, 0, 1, 270.0 ]
+        translation: [ -4.5465e-18, -0.02475, 0.035 ]
+        geometry:
+          type: Box
+          size: [ 0.005, 0.01084072, 0.05 ]
+
+      - # Cylinder wall 14
+        type: Shape
+        rotation: [ 0, 0, 1, 292.5 ]
+        translation: [ 0.0094714, -0.022866, 0.035 ]
+        geometry:
+          type: Box
+          size: [ 0.005, 0.01084072, 0.05 ]
+
+      - # Cylinder wall 15
+        type: Shape
+        rotation: [ 0, 0, 1, 315.0 ]
+        translation: [ 0.017501, -0.017501, 0.035 ]
+        geometry:
+          type: Box
+          size: [ 0.005, 0.01084072, 0.05 ]
+
+      - # Cylinder wall 16
+        type: Shape
+        rotation: [ 0, 0, 1, 337.5 ]
+        translation: [ 0.022866, -0.0094714, 0.035 ]
+        geometry:
+          type: Box
+          size: [ 0.005, 0.01084072, 0.05 ]
+

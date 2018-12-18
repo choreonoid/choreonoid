@@ -1,0 +1,58 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+name: Rubble1
+
+links:
+  -
+    name: body
+    jointType: fixed
+    translation: [ 1.5, 0, 0.045 ]
+    material: Ground
+    mass: 100.0
+    inertia: [
+      12, 0, 0,
+      0, 75, 0,
+      0, 0, 87 ]
+    autoSleep: true
+    elements:
+      -
+        type: Transform
+        translation: [ 0.0, 0.0, 0.0 ]
+        elements:
+          -
+            type: Shape
+            translation: [ -0.53, 0, 0 ]
+            geometry:
+              type: Box
+              size: [ 0.94, 2, 0.1 ]
+            appearance: &APP
+              material:
+                diffuseColor: [ 1, 1, 1 ]
+              texture:
+                url: "resource/Asphalt_New.jpg" 
+                repeatS: true
+                repeatT: true
+              textureTransform:
+                scale: [ 10, 4 ]
+          -
+            type: Shape
+            translation: [ 0.5, 0.53, 0 ]
+            geometry:
+              type: Box
+              size: [ 3, 0.94, 0.1 ]
+            appearance: *APP
+          -
+            type: Shape
+            translation: [ 0.5, -0.53, 0 ]
+            geometry:
+              type: Box
+              size: [ 3, 0.94, 0.1 ]
+            appearance: *APP
+          -
+            type: Shape
+            translation: [ 1.11, 0, 0 ]
+            geometry:
+              type: Box
+              size: [ 1.78, 2, 0.1 ]
+            appearance: *APP
+

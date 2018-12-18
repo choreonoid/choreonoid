@@ -16,7 +16,7 @@ class MulticopterMonitorView;
 
 class SimulationManager
 {
-friend class MulticopterSimulatorItem;
+friend class cnoid::MulticopterSimulatorItem;
 public:
 
     static SimulationManager* instance();

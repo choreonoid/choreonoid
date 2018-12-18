@@ -1,0 +1,66 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: TerrainSloop2
+
+ROAD_TEXTURE_FILE: &ROAD_TEXTURE_FILE "resource/Asphalt_New.jpg"
+APP: &APP_ROAD
+  texture: &TEXTURE_ROAD
+    url: *ROAD_TEXTURE_FILE
+    repeatS: true
+    repeatT: true
+
+BUMP: &BUMP
+  type: Shape
+  geometry:
+    type: IndexedFaceSet
+    # size 1.2 x 1.2, height 0.34
+    coordinate: [
+    # bottom
+      -1.0, -1, 0.0,
+      -1.0,  1, 0.0,
+       1.0,  1, 0.0,
+       1.0, -1, 0.0,
+      # top
+      -1.0, -1, 0.34,
+       1.0, -1, 0.34 ]
+    coordIndex: [
+      0, 1, 2, 3, -1,
+      0, 4, 1, -1,
+      1, 4, 5, 2, -1,
+      2, 5, 3, -1,
+      0, 3, 5, 4, -1 ]
+  appearance: *APP_ROAD
+
+BUMPS1: &BUMPS1
+  -
+    <<: *BUMP
+
+
+BUMPS2: &BUMPS2
+  -
+    <<: *BUMP
+    translation: [ 0, 1.8, 0 ]
+  -
+    <<: *BUMP
+    translation: [ 0, 0.6, 0 ]
+    rotation: [ 0, 0, 1, 180 ]
+  -
+    <<: *BUMP
+    translation: [ 0, -0.6, 0 ]
+  -
+    <<: *BUMP
+    translation: [ 0, -1.8, 0 ]
+    rotation: [ 0, 0, 1, 180 ]
+
+links:
+  -
+    name: 1
+    jointType: fixed
+    material: Ground
+    convexRecompostiion: true
+    elements:
+      -
+        type: Transform
+        elements: *BUMPS1
+

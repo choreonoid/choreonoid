@@ -47,7 +47,7 @@ items:
               data: 
                 isNoDelayMode: false
                 controllerOptions: ""
-                controller: "QuadcopterController.so"
+                controller: "QuadcopterController"
                 baseDirectory: "Controller directory"
                 reloading: false
             - 

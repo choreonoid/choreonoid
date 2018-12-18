@@ -367,12 +367,6 @@ TimeSyncItemEngine* createWorldLogFileEngine(Item* sourceItem)
     return 0;
 }
 
-
-bool loadWorldLogFile(WorldLogFileItem* item, const std::string& filename)
-{
-    return item->setLogFileName(filename);
-}
-
 }
 
 namespace cnoid {
@@ -381,7 +375,6 @@ class WorldLogFileItemImpl
 {
 public:
     WorldLogFileItem* self;
-    string filename;
     QDateTime recordingStartTime;
     bool isTimeStampSuffixEnabled;
     vector<string> bodyNames;
@@ -424,7 +417,7 @@ public:
     WorldLogFileItemImpl(WorldLogFileItem* self);
     WorldLogFileItemImpl(WorldLogFileItem* self, WorldLogFileItemImpl& org);
     ~WorldLogFileItemImpl();
-    bool setLogFileName(const std::string& name);
+    bool setLogFile(const std::string& name, bool isLoading = false);
     string getActualFilename();
     void updateBodyInfos();
     void onWorldSubTreeChanged();
@@ -460,7 +453,7 @@ void WorldLogFileItem::initializeClass(ExtensionManager* ext)
     im.addLoader<WorldLogFileItem>(
         _("World Log"), "CNOID-WORLD-LOG", "log",
         [](WorldLogFileItem* item, const std::string& filename, std::ostream&, Item*){
-            return loadWorldLogFile(item, filename);
+            return item->impl->setLogFile(filename, true);
         });
 
     ext->timeSyncItemEngineManger().addEngineFactory(createWorldLogFileEngine);    
@@ -498,7 +491,6 @@ WorldLogFileItemImpl::WorldLogFileItemImpl(WorldLogFileItem* self, WorldLogFileI
       readBuf(ifs),
       readBuf2(ifs)
 {
-    filename = org.filename;
     isTimeStampSuffixEnabled = org.isTimeStampSuffixEnabled;
     recordingFrameRate = org.recordingFrameRate;
     isBodyInfoUpdateNeeded = true;
@@ -530,32 +522,30 @@ void WorldLogFileItem::notifyUpdate()
 }
 
 
-const std::string& WorldLogFileItem::logFileName() const
+const std::string& WorldLogFileItem::logFile() const
 {
-    return impl->filename;
+    return filePath();
 }
 
 
-bool WorldLogFileItem::setLogFileName(const std::string& filename)
+bool WorldLogFileItem::setLogFile(const std::string& filename)
 {
-    return impl->setLogFileName(filename);
+    return impl->setLogFile(filename);
 }
 
 
-bool WorldLogFileItemImpl::setLogFileName(const std::string& name)
+bool WorldLogFileItemImpl::setLogFile(const std::string& filename, bool isLoading)
 {
-    if(name != filename){
-        filename = name;
-        readTopHeader();
-    }
-    return true;
+    self->updateFileInformation(filename, "CNOID-WORLD-LOG");
+    bool loaded = readTopHeader();
+    return isLoading ? loaded : true;
 }
 
 
 string WorldLogFileItemImpl::getActualFilename()
 {
     if(isTimeStampSuffixEnabled && recordingStartTime.isValid()){
-        filesystem::path filepath(filename);
+        filesystem::path filepath(self->filePath());
         string suffix = recordingStartTime.toString("-yyyy-MM-dd-hh-mm-ss").toStdString();
         string fname = getBasename(filepath) + suffix;
         string ext = getExtension(filepath);
@@ -564,7 +554,7 @@ string WorldLogFileItemImpl::getActualFilename()
         }
         return getPathString(filepath.parent_path() / filesystem::path(fname));
     } else {
-        return filename;
+        return self->filePath();
     }
 }
 
@@ -1161,9 +1151,11 @@ void WorldLogFileItemImpl::exchangeDeviceStateCacheArrays()
 
 void WorldLogFileItem::doPutProperties(PutPropertyFunction& putProperty)
 {
-    putProperty(_("Log file name"), impl->filename,
-                [&](const string& value){ return impl->setLogFileName(value); });
-    putProperty(_("Actual log file"), impl->getActualFilename());
+    FilePathProperty logFileProperty(filePath(), { string(_("World Log File (*.log)")) });
+    logFileProperty.setExistingFileMode(false);
+    putProperty(_("Log file"), logFileProperty,
+                [&](const string& file){ return impl->setLogFile(file); });
+    putProperty(_("Actual log file"), FilePathProperty(impl->getActualFilename()));
     putProperty(_("Time-stamp suffix"), impl->isTimeStampSuffixEnabled,
                 changeProperty(impl->isTimeStampSuffixEnabled));
     putProperty(_("Recording frame rate"), impl->recordingFrameRate,
@@ -1173,7 +1165,8 @@ void WorldLogFileItem::doPutProperties(PutPropertyFunction& putProperty)
 
 bool WorldLogFileItem::store(Archive& archive)
 {
-    archive.write("filename", impl->filename);
+    archive.writeRelocatablePath("filename", filePath());
+    archive.write("format", fileFormat());
     archive.write("timeStampSuffix", impl->isTimeStampSuffixEnabled);
     archive.write("recordingFrameRate", impl->recordingFrameRate);
     return true;
@@ -1182,11 +1175,13 @@ bool WorldLogFileItem::store(Archive& archive)
 
 bool WorldLogFileItem::restore(const Archive& archive)
 {
-    string filename;
     archive.read("timeStampSuffix", impl->isTimeStampSuffixEnabled);
     archive.read("recordingFrameRate", impl->recordingFrameRate);
-    if(archive.read("filename", filename)){
-        impl->setLogFileName(archive.expandPathVariables(filename));
+    
+    std::string filename, formatId;
+    if(archive.readRelocatablePath("filename", filename)){
+        impl->setLogFile(filename);
     }
+    
     return true;
 }

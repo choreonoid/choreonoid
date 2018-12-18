@@ -43,9 +43,9 @@ protected:
     void useOnlySimulationExecutionContext();
     bool createRTCmain(bool isBodyIORTC = false);
 
+    virtual Item* doDuplicate() const override;
     virtual void onConnectedToRoot() override;
     virtual void onDisconnectedFromRoot() override;
-    virtual Item* doDuplicate() const override;
     virtual std::string getDefaultRTCInstanceName() const;
     virtual bool createRTC();
     virtual void deleteRTC(bool waitToBeDeleted);

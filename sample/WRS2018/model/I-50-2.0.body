@@ -1,0 +1,28 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: I-50-2.0
+
+links:
+  -
+    name: ROOT
+    jointType: free
+    material: Default
+    elements:
+      -
+        type: Shape
+        geometry:
+          type: Cylinder
+          radius: 0.025
+          height: 2.0
+        appearance:
+          material:
+            diffuseColor: [ 1.0, 0.5, 0.2 ]
+      -
+        type: RigidBody
+        centerOfMass: [ 0, 0, 0 ]
+        mass: 2.0
+        inertia: [
+          0.33348958, 0,          0,
+          0,          0.33348958, 0,
+          0,          0,          0.00031250 ]

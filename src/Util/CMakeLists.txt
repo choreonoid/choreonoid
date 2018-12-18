@@ -19,6 +19,7 @@ set(sources
   NullOut.cpp
   FileUtil.cpp
   ExecutablePath.cpp
+  ParametricPathProcessor.cpp
   AbstractSeq.cpp
   Vector3Seq.cpp
   MultiSE3Seq.cpp
@@ -102,6 +103,7 @@ set(headers
   Vector3Seq.h
   FileUtil.h
   ExecutablePath.h
+  ParametricPathProcessor.h
   UTF8.h
   BoundingBox.h
   SceneGraph.h
@@ -158,6 +160,7 @@ set(headers
   Exception.h
   exportdecl.h
   CnoidUtil.h
+  ThreadPool.h
   )
 
 set(target CnoidUtil)
@@ -190,7 +193,7 @@ elseif(MSVC)
   else()
     set(libraries ${libraries} yaml)
   endif()
-  target_link_libraries(${target} ${libraries})
+  target_link_libraries(${target} ${libraries} xinput)
 endif()
 
 apply_common_setting_for_library(${target} "${headers}")

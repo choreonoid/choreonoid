@@ -29,10 +29,6 @@ unordered_set<Item*> itemsBeingAddedOrRemoved;
 
 }
 
-namespace cnoid {
-Signal<void(const char* type_info_name)> Item::sigClassUnregistered_;
-}
-
 
 Item::Item()
 {
@@ -187,14 +183,19 @@ bool Item::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManualOpera
     ++numChildren_;
 
     if(rootItem){
-        if(itemsBeingAddedOrRemoved.find(this) == itemsBeingAddedOrRemoved.end()){
-            // This must be before rootItem->notifyEventOnSubTreeAdded().
-            item->callSlotsOnPositionChanged();
-        }
         if(isMoving){
             rootItem->notifyEventOnSubTreeMoved(item);
         } else {
             rootItem->notifyEventOnSubTreeAdded(item);
+        }
+    }
+
+    if(rootItem){
+        if(!isMoving){
+            item->callFuncOnConnectedToRoot();
+        }
+        if(itemsBeingAddedOrRemoved.find(this) == itemsBeingAddedOrRemoved.end()){
+            item->callSlotsOnPositionChanged();
         }
     }
 
@@ -205,10 +206,6 @@ bool Item::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManualOpera
     if(recursiveTreeChangeCounter == 0){
         emitSigSubTreeChanged();
         itemsBeingAddedOrRemoved.clear();
-    }
-
-    if(rootItem && !isMoving){
-        item->callFuncOnConnectedToRoot();
     }
 
     return true;
@@ -732,16 +729,14 @@ void Item::updateFileInformation(const std::string& filename, const std::string&
 {
     filesystem::path fpath(filename);
     if(filesystem::exists(fpath)){
-        filePath_ = filename;
-        fileFormat_ = format;
         fileModificationTime_ = filesystem::last_write_time(fpath);
         isConsistentWithFile_ = true;
     } else {
-        filePath_.clear();
-        fileFormat_.clear();
         fileModificationTime_ = 0;
         isConsistentWithFile_ = false;
-    }
+    }        
+    filePath_ = filename;
+    fileFormat_ = format;
 }
 
 
