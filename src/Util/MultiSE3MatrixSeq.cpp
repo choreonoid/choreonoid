@@ -12,7 +12,6 @@
 
 using namespace std;
 using namespace cnoid;
-using boost::format;
 
 
 MultiSE3MatrixSeq::MultiSE3MatrixSeq()

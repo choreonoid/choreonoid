@@ -173,7 +173,9 @@ if(UNIX)
     ${CMAKE_THREAD_LIBS_INIT}
     ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY}
     ${GETTEXT_LIBRARIES}
-    m)
+    fmt::fmt
+    m
+    )
 
   if(CNOID_USE_BOOST_REGEX)
     set(libraries ${libraries} ${Boost_REGEX_LIBRARY})
@@ -187,7 +189,7 @@ if(UNIX)
   
 elseif(MSVC)
   set_target_properties(${target} PROPERTIES COMPILE_DEFINITIONS "YAML_DECLARE_STATIC")
-  set(libraries libpng jpeg zlib winmm ${GETTEXT_LIBRARIES})
+  set(libraries libpng jpeg zlib winmm ${GETTEXT_LIBRARIES} fmt::fmt)
   if(USE_EXTERNAL_YAML)
     set(libraries ${libraries} optimized yaml debug yamld)
   else()

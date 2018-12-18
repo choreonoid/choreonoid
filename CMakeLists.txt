@@ -1388,6 +1388,12 @@ elseif(MSVC)
   add_subdirectory(thirdparty/zlib123)
 endif()
 
+# fmtlib
+find_package(fmt QUIET)
+if(NOT fmt_FOUND)
+  add_subdirectory(thirdparty/fmt-5.3.0)
+endif()
+
 add_subdirectory(src)
 add_subdirectory(include)
 add_subdirectory(share)

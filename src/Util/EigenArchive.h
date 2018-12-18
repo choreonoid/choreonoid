@@ -7,7 +7,7 @@
 
 #include "ValueTree.h"
 #include "EigenUtil.h"
-#include <boost/format.hpp>
+#include <fmt/format.h>
 #include <functional>
 #include "exportdecl.h"
 
@@ -20,7 +20,7 @@ void read(const Listing& listing, Eigen::MatrixBase<Derived>& x)
     const int nc = x.cols();
     if(listing.size() != nr * nc){
         listing.throwException(
-            str(boost::format("A %1% x %2% matrix / vector value is expected") % nr % nc));
+            fmt::format("A {0} x {1} matrix / vector value is expected", nr, nc));
     }
     int index = 0;
     for(int i=0; i < nr; ++i){

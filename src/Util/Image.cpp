@@ -6,10 +6,9 @@
 #include "Image.h"
 #include "ImageIO.h"
 #include "Exception.h"
-#include <boost/format.hpp>
+#include <fmt/format.h>
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 
@@ -61,7 +60,7 @@ void Image::setSize(int width, int height, int nComponents)
     } else {
         exception_base exception;
         exception << error_info_message(
-            str(format("Invalid number (%1%) of image components") % nComponents));
+            fmt::format("Invalid number ({}) of image components", nComponents));
         BOOST_THROW_EXCEPTION(exception);
     }
     setSize(width, height);

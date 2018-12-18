@@ -12,12 +12,13 @@
 #include <boost/filesystem.hpp>
 #include <fstream>
 #include <regex>
+#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace cnoid;
 using namespace std;
 namespace filesystem = boost::filesystem;
-using boost::format;
+using fmt::format;
 
 namespace cnoid {
 
@@ -142,7 +143,7 @@ void MessageLogItemImpl::openFile()
         if(filesystem::exists(path)){
             bool ok = showConfirmDialog(
                     _("Confirm"),
-                    str(format(_(" \"%1%\" already exists.\n Do you want to replace it? " )) % filename));
+                    format(_(" \"{}\" already exists.\n Do you want to replace it? " ), filename));
             if(!ok){
                 mvConnection.unblock();
                 return;
@@ -153,9 +154,9 @@ void MessageLogItemImpl::openFile()
 
     if(!ofs){
         mv->putln(MessageView::ERROR,
-                format(_("Couldn't open file \"%1%\" for writing.\n")) % filename);
+                format(_("Couldn't open file \"{}\" for writing.\n"), filename));
     }else{
-        mv->putln(format(_("Opened file \"%1%\" for writing.\n")) % filename);
+        mv->putln(format(_("Opened file \"{}\" for writing.\n"), filename));
     }
 
     mvConnection.unblock();
