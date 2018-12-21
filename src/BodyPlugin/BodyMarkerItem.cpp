@@ -295,6 +295,9 @@ bool BodyMarkerItemImpl::findNode()
 }
 
 
+/**
+   \todo Use SgNode::findNode instead of this implementation
+*/
 bool BodyMarkerItemImpl::findNode(SgNode* node, Affine3 T)
 {
     if(node->name() == targetNodeName){

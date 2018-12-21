@@ -1,0 +1,137 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: HoseNozzleWithHoseConnector
+
+SILVER: &SILVER
+  material:
+    diffuseColor: [ 0.67, 0.67, 0.67 ]
+    specularColor: [ 0.8, 0.8, 0.8 ]
+    shininess: 0.05
+
+links:
+  -
+    name: STAND
+    jointType: fixed
+    mass: 3.0
+    inertia: [ 0.05, 0, 0,
+               0, 0.05, 0,
+               0, 0, 0.05 ]
+    elements:
+      # Nozzle Stand
+      -
+        type: Transform
+        translation: [ -0.06, 0.585, -0.09 ]
+        elements:
+          -
+            type: Transform
+            translation: [ 0.025, -0.2915, 0.79 ]
+            elements: &BASE_BOX6
+              Shape:
+                geometry: { type: Box, size: [ 0.025, 0.025, 0.03 ] }
+                appearance: *SILVER
+          -
+            type: Transform
+            translation: [ 0.0505, -0.2914, 0.7663 ]
+            elements: &BASE_BOX7
+              Shape: 
+                geometry: { type: Box, size: [ 0.079, 0.025, 0.025 ] }
+                appearance: *SILVER
+          -
+            type: Transform
+            translation: [ 0.089, -0.2914, 0.775 ]
+            elements: &BASE_BOX8
+              Shape: 
+                geometry: { type: Box, size: [ 0.01, 0.025, 0.04 ] }
+                appearance: *SILVER
+      -
+        type: Transform
+        translation: [ -0.06, 0.5, -0.1 ]
+        elements:
+          -
+            type: Transform
+            translation: [ -0.0005, 0.0499, 0.014 ]
+            elements:
+              -
+                type: Transform
+                translation: [ 0.0243, -0.0931, 0.79 ]
+                elements: *BASE_BOX6
+              -
+                name: BASE_BOX10
+                type: Transform
+                translation: [ 0.0505, -0.0931, 0.7663 ]
+                elements: *BASE_BOX7
+              -
+                name: BASE_BOX11
+                type: Transform
+                translation: [ 0.09409, -0.0931, 0.775 ]
+                elements: *BASE_BOX8
+      # Connector Stand
+      - 
+        type: Transform
+        translation: [ -0.06, 0.12, -0.085 ]
+        elements: &STAND1
+          -
+            type: Transform
+            translation: [ 0.0243, -0.2915, 0.8038 ]
+            elements: *BASE_BOX6
+          -
+            type: Transform
+            translation: [ 0.0505, -0.2914, 0.7663 ]
+            elements: *BASE_BOX7
+          -
+            type: Transform
+            translation: [ 0.09409, -0.2914, 0.775 ]
+            elements: *BASE_BOX8
+      -
+        type: Transform
+        translation: [ -0.06, 0.22, -0.085 ]
+        elements: *STAND1
+
+      -
+        type: AGXMagneticJointDevice
+        constraintType: hinge
+        link1Name: HOSE_NOZZLE
+        link2Name: HOSE_CONNECTOR
+        position1: [ 0, 0, 0 ]
+        position2: [ 0.08, 0, 0 ]
+        connectAxis1: [ 1, 0, 0 ]
+        connectAxis2: [ 1, 0, 0 ]
+        jointCompliance: 1e-8
+        jointSpookDamping: 0.33
+        validDistance: 0.02
+        validAngle: 10
+
+  -
+    type: SubBody
+    uri: "HoseNozzle.body"
+    parent: STAND
+    rotation: [ 0, 0, 1, 90 ]
+
+    # for the test using a robot
+    translation: [ 0, 0.227, 0.71 ]
+    jointType: free
+
+    # for the test using mouse
+    #jointType: fixed
+    #translation: [ 0, 0.0, 0.024 ]
+
+  -
+    type: SubBody
+    uri: "HoseConnector.body"
+
+    # for a test using a robot
+    rotation: [ 0, 0, 1, 90 ]
+    parent: STAND
+    translation: [ 0, -0.13, 0.71 ]
+    jointType: free
+
+    # for a test using the mouse
+    #parent: STAND
+    #jointType: free
+    #rotation: [ 0, 0, 1, 90 ]
+    #translation: [ 0.0, -0.12, 0.024 ]
+
+collisionDetection:
+  excludeTreeDepth: 1
+  excludeSelfCollisionLinks: [ HOSE_NOZZLE_SLOT_GUARD ]

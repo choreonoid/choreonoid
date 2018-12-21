@@ -585,12 +585,12 @@ void RTSystemItem::initializeClass(ExtensionManager* ext)
     im.addCreationPanel<RTSystemItem>();
     im.addLoaderAndSaver<RTSystemItem>(
         _("RT-System"), "RTS-PROFILE-XML", "xml",
-        [](RTSystemItem* item, const std::string& filename, std::ostream&, Item*) {
-        return item->loadRtsProfile(filename);
-    },
-        [](RTSystemItem* item, const std::string& filename, std::ostream&, Item*) {
-        return item->saveRtsProfile(filename);
-    });
+        [](RTSystemItem* item, const std::string& filename, std::ostream&, Item*){
+            return item->loadRtsProfile(filename);
+        },
+        [](RTSystemItem* item, const std::string& filename, std::ostream&, Item*){
+            return item->saveRtsProfile(filename);
+        });
 }
 
 

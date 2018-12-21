@@ -139,7 +139,7 @@ void RainDevice::copyStateFrom(const DeviceState& other)
 
 DeviceState* RainDevice::cloneState() const
 {
-    return new RainDevice(*this, false);
+    return new RainDevice(*this, true);
 }
 
 

@@ -1,0 +1,47 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: BaseA-50.0
+
+BLOCK: &BLOCK
+  type: Transform
+  elements:
+    -
+      type: Shape
+      geometry: { type: Box, size: [ 1, 1, 0.75 ] }
+
+RING: &RING
+  type: Transform
+#  rotation: [ 1, 0, 0, 90 ]
+  elements:
+    -
+      type: Shape
+      geometry: { type: Box, size: [ 1, 1, 0.2 ] }
+      translation: [ 0, 0, 0.15 ]
+    -
+      type: Shape
+      geometry: { type: Box, size: [ 1, 1, 0.2 ] }
+      translation: [ 0, 0, -0.15 ]
+    -
+      type: Shape
+      geometry: { type: Box, size: [ 1, 0.2, 0.5 ] }
+      translation: [ 0, 0.4, 0 ]
+    -
+      type: Shape
+      geometry: { type: Box, size: [ 1, 0.2, 0.5 ] }
+      translation: [ 0, -0.4, 0 ]
+
+links:
+  -
+    name: Base
+    jointType: fixed
+    material: Steel
+    elements: *RING
+  -
+    name: 2ndfloor
+    parent: Base
+    jointType: fixed
+    translation: [ 0, 0, -0.6225 ]
+    material: Steel
+    elements: *BLOCK
+

@@ -5,6 +5,7 @@ else()
 endif()
 
 cmake_policy(SET CMP0003 NEW)
+cmake_policy(SET CMP0057 NEW)
 set(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS true)
 
 include(FindPkgConfig)
@@ -207,6 +208,10 @@ if(MSVC)
     set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /GS- /fp:fast /arch:SSE2 /arch:SSE2")
 
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /fp:fast /arch:SSE2 /arch:SSE2")
+  endif()
+
+  if(${MSVC_VERSION} GREATER_EQUAL 1915)
+    add_definitions(-D_ENABLE_EXTENDED_ALIGNED_STORAGE)
   endif()
 endif()
 
@@ -437,7 +442,7 @@ endif()
 # eigen
 if(NOT EIGEN_DIR)
   if(MSVC)
-    file(GLOB eigen_dirs "c:/local/eigen-?.?.?")
+    file(GLOB eigen_dirs "c:/local/eigen-?.?.?" "d:/local/eigen-?.?.?")
     if(eigen_dirs)
       list(GET eigen_dirs 0 eigen_dir)
       message(STATUS "Found the Eigen directory: ${eigen_dir}")
@@ -519,7 +524,7 @@ macro(setup_qt5)
   endif()
 
   if(MSVC)
-    file(GLOB qt_cmake_dirs "c:/Qt/5.??.?/msvc20??_??/lib/cmake")
+    file(GLOB qt_cmake_dirs "c:/Qt/5.??.?/msvc20??_??/lib/cmake" "d:/Qt/5.??.?/msvc20??_??/lib/cmake")
     set(version 5.10)
     find_package(Qt5Core ${version} HINTS ${qt_cmake_dirs})
     find_package(Qt5Widgets ${version} HINTS ${qt_cmake_dirs})
@@ -619,7 +624,7 @@ endif()
 
 # Assimp
 if(MSVC AND (NOT DEFINED ENABLE_ASSIMP))
-  file(GLOB assimp_dirs "c:/local/Assimp*/lib/cmake/assimp-*")
+  file(GLOB assimp_dirs "c:/local/Assimp*/lib/cmake/assimp-*" "d:/local/Assimp*/lib/cmake/assimp-*")
   find_package(ASSIMP QUIET HINTS ${assimp_dirs})
 else()
   find_package(ASSIMP QUIET)
@@ -1143,9 +1148,16 @@ function(apply_common_setting_for_library_core target)
         ARCHIVE DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
     endif()
   else()
-    install(TARGETS ${target}
-      RUNTIME DESTINATION bin CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
-      LIBRARY DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
+    if(INSTALL_SDK)
+      install(TARGETS ${target}
+        RUNTIME DESTINATION bin CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
+        LIBRARY DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
+        ARCHIVE DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
+    else()
+      install(TARGETS ${target}
+        RUNTIME DESTINATION bin CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
+        LIBRARY DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
+    endif()
   endif()
 
 endfunction()

@@ -1,0 +1,60 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: FireCabinet
+rootLink: BASE
+
+links:
+  -
+    type: SubBody
+    uri: "FireCabinet.body"
+    jointType: fixed
+  -
+    name: HOSE_ROOT
+    parent: HOSE_REEL
+    jointType: fixed
+    translation: [ -0.088, -0.311, 0.22 ]
+    density: 1.0
+  -
+    type: SubBody
+    uri: "HoseConnector.body"
+    parent: HOSE_ROOT
+    #rotation: [ [ 0, 1, 0, 90 ], [ 1, 0, 0, 90 ] ]
+    rotation: [ 0, 0, 1, 90 ]
+    translation: [ 4.127, -0.234, -0.738 ]
+    jointType: free
+  -
+    type: SubBody
+    uri: "HoseNozzle.body"
+    parent: BASE
+    rotation: [ 0, 0, 1, 90 ]
+    #translation: [ 0.07, -0.27, 0.81 ]
+    translation: [ 4.21, -0.1, -0.227 ]
+    jointType: free
+    #jointType: fixed # for fire test
+    jointIdOffset: 4
+    elements:
+      -
+        type: AGXMagneticJointDevice
+        isOptional: true
+        constraintType: hinge
+        link1Name: HOSE_NOZZLE
+        link2Name: HOSE_CONNECTOR
+        position1: [ 0, 0, 0 ]
+        position2: [ 0.08, 0, 0 ]
+        connectAxis1: [ 1, 0, 0 ]
+        connectAxis2: [ 1, 0, 0 ]
+        jointCompliance: 1e-8
+        jointSpookDamping: 0.33
+        jointMotor: true
+        jointMotorCompliance: 0.1
+        validDistance: 0.02
+        validAngle: 10
+
+collisionDetection:
+  excludeTreeDepth: 1
+  excludeLinkGroups:
+    - links: [ BASE, BASE_BOTTOM, BASE_TOP, BASE_LEFT, BASE_RIGHT, LOCK, DOOR, VALVE_BASE, VALVE, NOZZLE_STAND ]
+    - links: [ HOSE_REEL, BASE, BASE_BOTTOM, BASE_TOP, BASE_LEFT, BASE_RIGHT, LOCK, VALVE_BASE, VALVE, NOZZLE_STAND ]
+    - links: [ KNOB, BASE, BASE_BOTTOM, BASE_TOP, BASE_LEFT, BASE_RIGHT, DOOR, VALVE_BASE, VALVE, NOZZLE_STAND ]
+  excludeSelfCollisionLinks: [ HOSE_NOZZLE_SLOT_GUARD ]

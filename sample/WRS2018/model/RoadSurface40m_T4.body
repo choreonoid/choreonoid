@@ -1,0 +1,694 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: RoadSurfaceT2
+
+ROAD_TEXTURE_FILE: &ROAD_TEXTURE_FILE "resource/Asphalt_New.jpg"
+APP: &APP_ROAD
+  texture: &TEXTURE_ROAD
+    url: *ROAD_TEXTURE_FILE
+    repeatS: true
+    repeatT: true
+
+ROADCURB_TEXTURE_FILE: &ROADCURB_TEXTURE_FILE "resource/Blacktop_Old_01.jpg"
+
+APP_ROADCURB: &APP_ROADCURB
+  texture:
+    url: *ROADCURB_TEXTURE_FILE
+    repeatS: true
+    repeatT: true
+  textureTransform:
+    scale: [ 40, 7 ]
+
+BLOCK: &BLOCK
+  -
+    type: Shape
+    geometry: { type: Box, size: [ 1.0, 1.0, 0.45 ] }
+    appearance: *APP_ROAD
+
+BLOCK: &THINBLOCK
+  -
+    type: Shape
+    geometry: { type: Box, size: [ 1.0, 0.2, 0.45 ] }
+    appearance: *APP_ROAD
+
+COLORBLOCK: &COLORBLOCK
+  -
+    type: Shape
+    geometry: { type: Box, size: [ 1.0, 1.0, 0.45 ] }
+    appearance: &APP_GREEN
+      material: &GREEN
+        diffuseColor: [ 0, 0.6, 0 ]
+        specularColor: [ 0.2, 0.8, 0.2 ]
+        shininess: 0.6
+
+BLOCKLINE: &BLOCKLINE
+  -
+    type: Transform
+    elements:
+      -
+        <<: *BLOCK
+        translation: [ 0, 3.1, -0.225 ]
+      -
+        <<: *BLOCK
+        translation: [ 0, 2.1, -0.225 ]
+      -
+        <<: *BLOCK
+        translation: [ 0, 1.1, -0.225 ]
+      -
+        <<: *BLOCK
+        translation: [ 0, 0.1, -0.225 ]
+      -
+        <<: *BLOCK
+        translation: [ 0, -0.9, -0.225 ]
+      -
+        <<: *BLOCK
+        translation: [ 0, -1.9, -0.225 ]
+      -
+        <<: *BLOCK
+        translation: [ 0, -2.9, -0.225 ]
+      -
+        <<: *THINBLOCK
+        translation: [ 0, -3.5, -0.225 ]
+
+PILLAR: &PILLAR
+  type: Transform
+  elements:
+    -
+      type: Shape
+      geometry: { type: Box, size: [ 1, 1, 3 ] }
+
+GATE: &GATE
+  type: Transform
+  elements:
+    -
+      type: Shape
+      geometry: { type: Box, size: [ 1, 1, 3 ] }
+    -
+      type: Shape
+      geometry: { type: Box, size: [ 1, 2, 1 ] }
+      translation: [ 0, -1.5, 1 ]
+
+HOLE: &HOLE
+  type: Transform
+  material: Steel
+  rotation: [ 0, 0, 1, 90]
+  elements:
+    -
+      type: Shape
+      geometry: { type: Box, size: [ 1, 0.45, 0.4 ] }
+      translation: [ 0, 0.275, -0.2 ]
+      appearance: *APP_GREEN
+    -
+      type: Shape
+      geometry: { type: Box, size: [ 1, 0.45, 0.4 ] }
+      translation: [ 0, -0.275, -0.2 ]
+      appearance: *APP_GREEN
+    -
+      type: Shape
+      geometry: { type: Box, size: [ 0.45, 1, 0.4 ] }
+      translation: [ 0.275, 0, -0.2 ]
+      appearance: *APP_GREEN
+    -
+      type: Shape
+      geometry: { type: Box, size: [ 0.45, 1, 0.4 ] }
+      translation: [ -0.275, 0, -0.2 ]
+      appearance: *APP_GREEN
+
+links:
+  -
+    name: Base
+    jointType: fixed
+    material: Ground
+    elements:
+      -
+        type: Transform
+        elements:
+          -
+            type: Shape
+            name: Surface
+            translation: [ 20.0, 0.0, -0.525 ]
+            geometry: { type: Box, size: [ 40.0, 7.2, 0.05 ] }
+          -
+            type: Transform
+            translation: [ 20.0, 4.1, -0.1 ]
+            elements:
+              - &RoadCurb
+                type: Shape
+                name: RoadCurb
+                geometry: { type: Box, size: [ 40.0, 1.0, 0.7 ] }
+                appearance: *APP_ROADCURB
+          -
+            type: Transform
+            translation: [ 20.0, -4.1, -0.1 ]
+            elements: *RoadCurb
+#LINE01-06
+          -
+            <<: *BLOCKLINE
+            translation: [ 0.5, 0, 0]
+          -
+            <<: *BLOCKLINE
+            translation: [ 1.5, 0, 0]
+          -
+            <<: *BLOCKLINE
+            translation: [ 2.5, 0, 0]
+          -
+            <<: *BLOCKLINE
+            translation: [ 3.5, 0, 0]
+          -
+            <<: *BLOCKLINE
+            translation: [ 4.5, 0, 0]
+          -
+            <<: *BLOCKLINE
+            translation: [ 5.5, 0, 0]
+#LINE07
+          -
+            <<: *BLOCK
+            translation: [ 6.5, 3.1, -0.225 ]
+          -
+            <<: *BLOCK
+            translation: [ 6.5, 2.1, -0.225 ]
+          -
+            <<: *BLOCK
+            translation: [ 6.5, 1.1, -0.225 ]
+          -
+            <<: *BLOCK
+            translation: [ 6.5, 0.1, -0.225 ]
+          -
+            <<: *BLOCK
+            translation: [ 6.5, -0.9, -0.225 ]
+          -
+            <<: *GATE
+            translation: [ 6.5, -0.9, 1.5 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 6.5, -1.9, -0.225 ]
+          -
+            <<: *THINBLOCK
+            translation: [ 6.5, -2.5, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 6.5, -3.1, -0.225 ]
+#LINE08
+          -
+            <<: *BLOCK
+            translation: [ 7.5, 3.1, -0.225 ]
+          -
+            <<: *BLOCK
+            translation: [ 7.5, 2.1, -0.225 ]
+          -
+            <<: *BLOCK
+            translation: [ 7.5, 1.1, -0.225 ]
+          -
+            <<: *BLOCK
+            translation: [ 7.5, 0.1, -0.225 ]
+          -
+            <<: *BLOCK
+            translation: [ 7.5, -0.9, -0.225 ]
+          -
+            <<: *GATE
+            translation: [ 7.5, -0.9, 1.5 ]
+          -
+            <<: *BLOCK
+            translation: [ 7.5, -1.9, -0.225 ]
+          -
+            <<: *THINBLOCK
+            translation: [ 7.5, -2.5, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 7.5, -3.1, -0.225 ]
+#LINE09
+          -
+            <<: *COLORBLOCK
+            translation: [ 8.5, 3.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 8.5, 2.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 8.5, 1.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 8.5, 0.1, -0.225 ]
+          -
+            <<: *BLOCK
+            translation: [ 8.5, -0.9, -0.225 ]
+          -
+            <<: *BLOCK
+            translation: [ 8.5, -1.9, -0.225 ]
+          -
+            <<: *THINBLOCK
+            translation: [ 8.5, -2.5, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 8.5, -3.1, -0.225 ]
+#LINE10
+          -
+            <<: *COLORBLOCK
+            translation: [ 9.5, 3.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 9.5, 2.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 9.5, 1.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 9.5, 0.1, -0.225 ]
+          -
+            <<: *BLOCK
+            translation: [ 9.5, -0.9, -0.225 ]
+          -
+            <<: *BLOCK
+            translation: [ 9.5, -1.9, -0.225 ]
+          -
+            <<: *THINBLOCK
+            translation: [ 9.5, -2.5, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 9.5, -3.1, -0.225 ]
+#LINE11
+          -
+            <<: *BLOCK
+            translation: [ 10.5, 3.1, -0.225 ]
+          -
+            <<: *BLOCK
+            translation: [ 10.5, 2.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 10.5, 1.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 10.5, 0.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 10.5, -0.9, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 10.5, -1.9, -0.225 ]
+          -
+            <<: *THINBLOCK
+            translation: [ 10.5, -2.5, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 10.5, -3.1, -0.225 ]
+#LINE12
+          -
+            <<: *BLOCK
+            translation: [ 11.5, 3.1, -0.225 ]
+          -
+            <<: *BLOCK
+            translation: [ 11.5, 2.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 11.5, 1.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 11.5, 0.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 11.5, -0.9, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 11.5, -1.9, -0.225 ]
+          -
+            <<: *THINBLOCK
+            translation: [ 11.5, -2.5, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 11.5, -3.1, -0.225 ]
+#LINE13
+          -
+            <<: *BLOCK
+            translation: [ 12.5, 3.1, -0.225 ]
+          -
+            <<: *BLOCK
+            translation: [ 12.5, 2.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 12.5, 1.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 12.5, 0.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 12.5, -0.9, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 12.5, -1.9, -0.225 ]
+          -
+            <<: *THINBLOCK
+            translation: [ 12.5, -2.5, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 12.5, -3.1, -0.225 ]
+#LINE14
+          -
+            <<: *BLOCK
+            translation: [ 13.5, 3.1, -0.225 ]
+          -
+            <<: *BLOCK
+            translation: [ 13.5, 2.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 13.5, 1.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 13.5, 0.1, -0.225 ]
+          -
+            <<: *BLOCK
+            translation: [ 13.5, -0.9, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 13.5, -1.9, -0.225 ]
+          -
+            <<: *THINBLOCK
+            translation: [ 13.5, -2.5, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 13.5, -3.1, -0.225 ]
+#LINE15
+          -
+            <<: *BLOCK
+            translation: [ 14.5, 3.1, -0.225 ]
+          -
+            <<: *BLOCK
+            translation: [ 14.5, 2.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 14.5, 1.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 14.5, 0.1, -0.225 ]
+          -
+            <<: *BLOCK
+            translation: [ 14.5, -0.9, -0.225 ]
+          -
+            <<: *BLOCK
+            translation: [ 14.5, -1.9, -0.225 ]
+          -
+            <<: *THINBLOCK
+            translation: [ 14.5, -2.5, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 14.5, -3.1, -0.225 ]
+#LINE16
+          -
+            <<: *COLORBLOCK
+            translation: [ 15.5, 3.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 15.5, 2.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 15.5, 1.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 15.5, 0.1, -0.225 ]
+          -
+            <<: *THINBLOCK
+            translation: [ 15.5, -0.5, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 15.5, -1.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 15.5, -2.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 15.5, -3.1, -0.225 ]
+#LINE17
+          -
+            <<: *COLORBLOCK
+            translation: [ 16.5, 3.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 16.5, 2.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 16.5, 1.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 16.5, 0.1, -0.225 ]
+          -
+            <<: *THINBLOCK
+            translation: [ 16.5, -0.5, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 16.5, -1.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 16.5, -2.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 16.5, -3.1, -0.225 ]
+#LINE18
+          -
+            <<: *BLOCK
+            translation: [ 17.5, 3.1, -0.225 ]
+          -
+            <<: *BLOCK
+            translation: [ 17.5, 2.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 17.5, 1.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 17.5, 0.1, -0.225 ]
+          -
+            <<: *THINBLOCK
+            translation: [ 17.5, -0.5, -0.225 ]
+          -
+            <<: *BLOCK
+            translation: [ 17.5, -1.1, -0.225 ]
+          -
+            <<: *BLOCK
+            translation: [ 17.5, -2.1, -0.225 ]
+          -
+            <<: *HOLE
+            material: Default
+            translation: [ 17.5, -3.1, 0 ]
+#LINE19
+          -
+            <<: *BLOCK
+            translation: [ 18.5, 3.1, -0.225 ]
+          -
+            <<: *BLOCK
+            translation: [ 18.5, 2.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 18.5, 1.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 18.5, 0.1, -0.225 ]
+          -
+            <<: *THINBLOCK
+            translation: [ 18.5, -0.5, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 18.5, -1.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 18.5, -2.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 18.5, -3.1, -0.225 ]
+#LINE20
+          -
+            <<: *BLOCK
+            translation: [ 19.5, 3.1, -0.225 ]
+          -
+            <<: *BLOCK
+            translation: [ 19.5, 2.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 19.5, 1.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 19.5, 0.1, -0.225 ]
+          -
+            <<: *THINBLOCK
+            translation: [ 19.5, -0.5, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 19.5, -1.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 19.5, -2.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 19.5, -3.1, -0.225 ]
+#LINE21
+          -
+            <<: *BLOCK
+            translation: [ 20.5, 3.1, -0.225 ]
+          -
+            <<: *BLOCK
+            translation: [ 20.5, 2.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 20.5, 1.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 20.5, 0.1, -0.225 ]
+          -
+            <<: *THINBLOCK
+            translation: [ 20.5, -0.5, -0.225 ]
+          -
+            <<: *PILLAR
+            translation: [ 20.5, -1.1, 1.5 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 20.5, -2.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 20.5, -3.1, -0.225 ]
+#LINE22
+          -
+            <<: *BLOCK
+            translation: [ 21.5, 3.1, -0.225 ]
+          -
+            <<: *BLOCK
+            translation: [ 21.5, 2.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 21.5, 1.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 21.5, 0.1, -0.225 ]
+          -
+            <<: *THINBLOCK
+            translation: [ 21.5, -0.5, -0.225 ]
+          -
+            <<: *GATE
+            translation: [ 21.5, -1.1, 1.5 ]
+          -
+            <<: *BLOCK
+            translation: [ 21.5, -2.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 21.5, -3.1, -0.225 ]
+#LINE23
+          -
+            <<: *COLORBLOCK
+            translation: [ 22.5, 3.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 22.5, 2.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 22.5, 1.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 22.5, 0.1, -0.225 ]
+          -
+            <<: *THINBLOCK
+            translation: [ 22.5, -0.5, -0.225 ]
+          -
+            <<: *PILLAR
+            translation: [ 22.5, -1.1, 1.5 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 22.5, -2.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 22.5, -3.1, -0.225 ]
+#LINE24
+          -
+            <<: *COLORBLOCK
+            translation: [ 23.5, 3.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 23.5, 2.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 23.5, 1.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 23.5, 0.1, -0.225 ]
+          -
+            <<: *THINBLOCK
+            translation: [ 23.5, -0.5, -0.225 ]
+          -
+            <<: *PILLAR
+            translation: [ 23.5, -1.1, 1.5 ]
+          -
+            <<: *PILLAR
+            translation: [ 23.5, -2.1, 1.5 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 23.5, -3.1, -0.225 ]
+#LINE25
+          -
+            <<: *PILLAR
+            translation: [ 24.5, 3.1, 1.5 ]
+          -
+            <<: *PILLAR
+            translation: [ 24.5, 2.1, 1.5 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 24.5, 1.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 24.5, 0.1, -0.225 ]
+          -
+            <<: *THINBLOCK
+            translation: [ 24.5, -0.5, -0.225 ]
+          -
+            <<: *BLOCK
+            translation: [ 24.5, -1.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 24.5, -2.1, -0.225 ]
+          -
+            <<: *COLORBLOCK
+            translation: [ 24.5, -3.1, -0.225 ]
+#LINE26-
+          -
+            <<: *BLOCKLINE
+            translation: [ 25.5, 0, 0]
+          -
+            <<: *BLOCKLINE
+            translation: [ 26.5, 0, 0]
+          -
+            <<: *BLOCKLINE
+            translation: [ 27.5, 0, 0]
+          -
+            <<: *BLOCKLINE
+            translation: [ 28.5, 0, 0]
+          -
+            <<: *BLOCKLINE
+            translation: [ 29.5, 0, 0]
+          -
+            <<: *BLOCKLINE
+            translation: [ 30.5, 0, 0]
+          -
+            <<: *BLOCKLINE
+            translation: [ 31.5, 0, 0]
+          -
+            <<: *BLOCKLINE
+            translation: [ 32.5, 0, 0]
+          -
+            <<: *BLOCKLINE
+            translation: [ 33.5, 0, 0]
+          -
+            <<: *BLOCKLINE
+            translation: [ 34.5, 0, 0]
+          -
+            <<: *BLOCKLINE
+            translation: [ 35.5, 0, 0]
+          -
+            <<: *BLOCKLINE
+            translation: [ 36.5, 0, 0]
+          -
+            <<: *BLOCKLINE
+            translation: [ 37.5, 0, 0]
+          -
+            <<: *BLOCKLINE
+            translation: [ 38.5, 0, 0]
+          -
+            <<: *BLOCKLINE
+            translation: [ 39.5, 0, 0]
+          -
+            <<: *BLOCKLINE
+            translation: [ 40.5, 0, 0]

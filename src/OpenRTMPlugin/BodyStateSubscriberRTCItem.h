@@ -33,12 +33,12 @@ public:
     
     void setPointCloudPortType(int type);
 
-    virtual void onDisconnectedFromRoot();
-    virtual void onPositionChanged();
-    virtual Item* doDuplicate() const;
-    virtual void doPutProperties(PutPropertyFunction& putProperty);
-    virtual bool store(Archive& archive);
-    virtual bool restore(const Archive& archive);
+    virtual void onDisconnectedFromRoot() override;
+    virtual void onPositionChanged() override;
+    virtual Item* doDuplicate() const override;
+    virtual void doPutProperties(PutPropertyFunction& putProperty) override;
+    virtual bool store(Archive& archive) override;
+    virtual bool restore(const Archive& archive) override;
 
 private:
     BodyStateSubscriberRTCItemImpl* impl;

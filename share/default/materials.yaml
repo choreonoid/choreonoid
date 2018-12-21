@@ -67,6 +67,11 @@ materials:
   -
     name: Wire
     wireYoungsModulusBend: 1e7
+  -
+    name: Steel
+    roughness: 1.0
+    viscosity: 0.0
+    youngsModulus: 200e9
 
 contactMaterials:
   -
@@ -175,3 +180,14 @@ contactMaterials:
     materials: [ Wire, Ground ]
     friction: 0.5
     restitution: 0.0
+  -
+    materials: [ Steel, Steel ]
+    friction: 0.5
+    restitution: 0.0
+    frictionModel: [ cone, direct ]
+  -
+    materials: [ Steel, Hand ]
+    friction: 1.0
+    restitution: 0.0
+    surfaceViscosity: 1e-8
+    frictionModel: [ cone, direct ]

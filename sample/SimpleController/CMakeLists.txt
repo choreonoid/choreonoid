@@ -62,6 +62,9 @@ list(APPEND project_files FourWheelCarJoystick.cnoid)
 add_cnoid_simple_controller(LinkPositionController LinkPositionController.cpp)
 list(APPEND project_files LinkPositionControl.cnoid)
 
+add_cnoid_simple_controller(LinkForceController LinkForceController.cpp)
+list(APPEND project_files LinkForceControl.cnoid)
+
 add_cnoid_simple_controller(HandyRockDrillController HandyRockDrillController.cpp)
 list(APPEND project_files HandyRockDrill.cnoid)
 

@@ -14,6 +14,11 @@ links:
     translation: [ 0, 0, 0.03503 ]
     jointType: free
     elements:
+      -
+        type: CompetitorMarker
+        name: CompetitorMarker
+        isOptional: true
+        offsetTranslation: [ -0.06, 0, 0.45 ]
 
       - # Chassis
         { <<: *COMMON_RESOURCE, node: CHASSIS }

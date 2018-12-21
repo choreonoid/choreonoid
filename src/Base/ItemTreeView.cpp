@@ -641,7 +641,7 @@ void ItemTreeViewImpl::insertItem(QTreeWidgetItem* parentTwItem, Item* item, Ite
         parentTwItem->addChild(itvItem);
     }
 
-    if(!projectManager->isLoadingProject()){
+    if(!ProjectManager::isProjectBeingLoaded()){
         if(!parentTwItem->isExpanded() && !item->isSubItem()){
             parentTwItem->setExpanded(true);
         }
@@ -1291,6 +1291,15 @@ void ItemTreeViewImpl::restoreExpandedItems(const Archive& archive)
                 }
             }
         }
+    }
+}
+
+
+void ItemTreeView::expandItem(Item* item, bool expanded)
+{
+    ItvItem* itvItem = impl->getItvItem(item);
+    if(itvItem){
+        itvItem->setExpanded(expanded);
     }
 }
 

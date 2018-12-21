@@ -108,7 +108,7 @@ struct ROSPackageSchemeHandlerRegistration {
 namespace cnoid {
 
 void YAMLBodyLoader::addNodeType
-(const std::string& typeName,  std::function<bool(YAMLBodyLoader& loader, Mapping& node)> readFunction)
+(const std::string& typeName, std::function<bool(YAMLBodyLoader& loader, Mapping& node)> readFunction)
 {
     std::lock_guard<std::mutex> guard(customNodeFunctionMutex);
     customNodeFunctions[typeName] = readFunction;
@@ -359,17 +359,23 @@ public:
     bool readAngle(const Mapping& node, const char* key, double& angle) const {
         return sceneReader.readAngle(node, key, angle);
     }
-
     bool readRotation(const Mapping& node, Matrix3& out_R) const {
         return sceneReader.readRotation(node, out_R);
     }
-    
     bool readRotation(const Mapping& node, const char* key, Matrix3& out_R) const {
         return sceneReader.readRotation(node, key, out_R);
     }
-
     bool extractRotation(Mapping& node, Matrix3& out_R) const {
         return sceneReader.extractRotation(node, out_R);
+    }
+    bool readTranslation(const Mapping& node, Vector3& out_p) const {
+        return sceneReader.readTranslation(node, out_p);
+    }
+    bool readTranslation(const Mapping& node, const char* key, Vector3& out_p) const {
+        return sceneReader.readTranslation(node, key, out_p);
+    }
+    bool extractTranslation(Mapping& node, Vector3& out_p) const {
+        return sceneReader.extractTranslation(node, out_p);
     }
 };
 
@@ -954,7 +960,7 @@ LinkPtr YAMLBodyLoaderImpl::readLinkContents(Mapping* node, LinkPtr link)
         }
     }
 
-    if(extractEigen(node, "translation", v)){
+    if(extractTranslation(*node, v)){
         link->setOffsetTranslation(v);
     }
     Matrix3 R;
@@ -1410,7 +1416,7 @@ bool YAMLBodyLoaderImpl::readTransformContents(Mapping& node, NodeFunction nodeF
     bool hasScale = false;
     bool isSceneNodeAdded = false;
     
-    if(read(node, "translation", v)){
+    if(readTranslation(node, v)){
         T.translation() = v;
         hasPosTransform = true;
     }
@@ -1498,11 +1504,11 @@ bool YAMLBodyLoaderImpl::readRigidBody(Mapping& node)
     RigidBody rbody;
     const Affine3& T = transformStack.back();
 
-    if(read(node, "centerOfMass", v)){
-        rbody.c = T.linear() * v + T.translation();
-    } else {
-        rbody.c.setZero();
+    if(!read(node, "centerOfMass", v)){
+        v.setZero();
     }
+    rbody.c = T.linear() * v + T.translation();
+
     if(!node.read("mass", rbody.m)){
         rbody.m = 0.0;
     }

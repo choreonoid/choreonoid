@@ -73,7 +73,10 @@ items:
                     isEditable: false
                   - 
                     class: CameraImageVisualizer
-                    name: "Kinect Camera"
+                    name: Kinect Camera
+                  - 
+                    class: CameraImageVisualizer
+                    name: Theta
         - 
           id: 5
           name: "Labo1"
@@ -173,7 +176,7 @@ views:
     mounted: true
     state: 
       selected: [ 6 ]
-      checked: [ 1, 2, [ 4, "Kinect" ], [ 4, "VLP-16" ] ]
+      checked: [ 1, 2, [ 4, "Kinect" ], [ 4, "VLP-16" ], [ 4, "Kinect Camera" ], [ 4, "Theta" ] ]
       expanded: [ 1, 2, 3, 4, 5, 6 ]
   - 
     id: 4

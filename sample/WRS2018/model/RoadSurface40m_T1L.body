@@ -1,0 +1,593 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: RoadSurfaceT1L
+
+ROAD_TEXTURE: &ROAD_TEXTURE_FILE "resource/Asphalt_New.jpg"
+APP: &APP
+  texture: &TEXTURE_ROAD
+    url: *ROAD_TEXTURE_FILE
+    repeatS: true
+    repeatT: true
+
+ROADCURB_TEXTURE: &ROADCURB_TEXTURE_FILE "resource/Blacktop_Old_01.jpg"
+APP_ROADCURB: &APP_ROADCURB
+  texture:
+    url: *ROADCURB_TEXTURE_FILE
+    repeatS: true
+    repeatT: true
+  textureTransform:
+    scale: [ 40, 1 ]
+
+BLOCK: &BLOCK
+  -
+    type: Shape
+    geometry: { type: Box, size: [ 1.0, 1.0, 0.45 ] }
+    appearance:
+      texture: *TEXTURE_ROAD 
+
+SPACER: &SPACER
+  -
+    type: Transform
+    elements:
+      -
+        type: Shape
+        translation: [ 0, 0, -0.2 ]
+        geometry: { type: Box, size: [ 0.01, 0.01, 0.01 ] }
+        appearance:
+          texture: &APP_SPACER_TEXTURE
+            url: *ROAD_TEXTURE_FILE
+            repeatS: true
+            repeatT: true
+          textureTransform:
+            scale: [ 0.25, 0.75 ]
+      -
+        type: Shape
+        translation: [ 0.375, 0.125, 0 ]
+        geometry: { type: Box, size: [ 0.25, 0.75, 0.45 ] }
+        appearance:
+          texture: *APP_SPACER_TEXTURE
+#            url: *ROAD_TEXTURE_FILE
+#            repeatS: true
+#            repeatT: true
+          textureTransform:
+            scale: [ 0.25, 0.75 ]
+      -
+        type: Shape
+        translation: [ -0.375, -0.125, 0 ]
+        geometry: { type: Box, size: [ 0.25, 0.75, 0.45 ] }
+        appearance:
+          texture:  *APP_SPACER_TEXTURE
+          textureTransform:
+            rotation: [ 0, 0, -1, 90]
+            scale: [ 0.25, 0.75 ]
+      -
+        type: Shape
+        translation: [ -0.125, 0.375, 0 ]
+        rotation: [ 0, 0, -1, 90 ]
+        geometry: { type: Box, size: [ 0.25, 0.75, 0.45 ] }
+        appearance:
+          texture:  *APP_SPACER_TEXTURE
+          textureTransform:
+            scale: [ 0.25, 0.75 ]
+#            rotation: [ 0, 0, 1, 90 ]
+      -
+        type: Shape
+        translation: [ 0.125, -0.375, 0 ]
+        rotation: [ 0, 0, -1, 90 ]
+        geometry: { type: Box, size: [ 0.25, 0.75, 0.45 ] }
+        appearance:
+          texture:  *APP_SPACER_TEXTURE
+          textureTransform:
+            scale: [ 0.25, 0.75 ]
+#            rotation: [ 0, 0, 1, 90 ]
+
+A-05-10: &A-05-10
+  -
+    type: Resource
+    uri: "resource/Terrain/A-0.5-10.yaml"
+    node: A-0_5-10
+
+A-05-10: &A-05-10-FILLED
+  -
+    type: Transform
+    elements:
+      -
+        <<: *SPACER
+        translation: [ 0, 0, -0.225 ]
+      -
+        <<: *A-05-10
+        translation: [ 0, 0, -0.2 ]
+
+A-05-20: &A-05-20
+  -
+    type: Resource
+    uri: "resource/Terrain/A-0.5-20.yaml"
+    node: A-0_5-20
+
+A-05-20: &A-05-20-FILLED
+  -
+    type: Transform
+    elements:
+      -
+        <<: *SPACER
+        translation: [ 0, 0, -0.225 ]
+      -
+        <<: *A-05-20
+        translation: [ 0, 0, -0.2 ]
+
+A-1-10: &A-1-10
+  -
+    type: Resource
+    uri: "resource/Terrain/A-1.0-10.yaml"
+    node: A-1_0-10
+
+A-1-20: &A-1-20
+  -
+    type: Resource
+    uri: "resource/Terrain/A-1.0-20.yaml"
+    node: A-1_0-20
+
+A-1-30: &A-1-30
+  -
+    type: Resource
+    uri: "resource/Terrain/A-1.0-30.yaml"
+    node: A-1_0-30
+
+
+V-05-30: &V-05-30
+  -
+    type: Resource
+    uri: "resource/Terrain/V-0.5-30.yaml"
+    node: V-0_5-30
+
+V-05-30: &V-05-30-FILLED
+  -
+    type: Transform
+    elements:
+      -
+        <<: *SPACER
+        translation: [ 0, 0, -0.225 ]
+      -
+        <<: *V-05-30
+        translation: [ 0, 0, -0.2 ]
+
+V-1-10: &V-1-10
+  -
+    type: Resource
+    uri: "resource/Terrain/V-1.0-10.yaml"
+    node: V-1_0-10
+
+BLOCKLINE: &BLOCKLINE
+  -
+    type: Transform
+    elements:
+      -
+        <<: *BLOCK
+        translation: [ 0, 3, -0.225 ]
+      -
+        <<: *BLOCK
+        translation: [ 0, 2, -0.225 ]
+      -
+        <<: *BLOCK
+        translation: [ 0, 1, -0.225 ]
+      -
+        <<: *BLOCK
+        translation: [ 0, 0, -0.225 ]
+      -
+        <<: *BLOCK
+        translation: [ 0, -1, -0.225 ]
+      -
+        <<: *BLOCK
+        translation: [ 0, -2, -0.225 ]
+      -
+        <<: *BLOCK
+        translation: [ 0, -3, -0.225 ]
+
+links:
+  -
+    name: Base
+    jointType: fixed
+    material: Ground
+    elements:
+      -
+        type: Transform
+        elements:
+          -
+            type: Shape
+            name: Surface
+            translation: [ 20.0, 0.0, -0.425 ]
+            geometry: { type: Box, size: [ 40.0, 7.2, 0.05 ] }
+            appearance:
+              texture:
+                url: *ROAD_TEXTURE_FILE
+                repeatS: true
+                repeatT: true
+              textureTransform:
+                scale: [ 1, 1 ]
+          -
+            type: Transform
+            translation: [ 20.0, 4.1, -0.1 ]
+            elements:
+              - &RoadCurb
+                type: Shape
+                name: RoadCurb
+                geometry: { type: Box, size: [ 40.0, 1.0, 0.7 ] }
+                appearance: *APP_ROADCURB
+          -
+            type: Transform
+            translation: [ 20.0, -4.1, -0.1 ]
+            elements: *RoadCurb
+          -
+            type: Transform
+            translation: [ 20, 3.55, -0.225 ]
+            elements:
+              - &Roadspacer
+                type: Shape
+                geometry:
+                  type: Box
+                  size: [ 40, 0.1, 0.45 ]
+                appearance:
+                  texture:
+                    url: *ROAD_TEXTURE_FILE
+                    repeatS: true
+                    repeatT: true
+#                  textureTransform:
+#                    scale: [ 0.25, 0.75 ]
+          -
+            type: Transform
+            translation: [ 20, -3.55, -0.225 ]
+            elements: *Roadspacer
+           
+#LINE01-05
+          -
+            <<: *BLOCKLINE
+            translation: [ 0.5, 0, 0]
+          -
+            <<: *BLOCKLINE
+            translation: [ 1.5, 0, 0]
+          -
+            <<: *BLOCKLINE
+            translation: [ 2.5, 0, 0]
+          -
+            <<: *BLOCKLINE
+            translation: [ 3.5, 0, 0]
+          -
+            <<: *BLOCKLINE
+            translation: [ 4.5, 0, 0]
+#LINE06
+          -
+            <<: *BLOCK
+            translation: [ 5.5, 3, -0.225 ]
+          -
+            <<: *BLOCK
+            translation: [ 5.5, 2, -0.225 ]
+          -
+            <<: *BLOCK
+            translation: [ 5.5, 1, -0.225 ]
+          -
+            <<: *BLOCK
+            translation: [ 5.5, 0, -0.225 ]
+          -
+            <<: *BLOCK
+            translation: [ 5.5, -1, -0.225 ]
+          -
+            <<: *V-1-10
+            translation: [ 5.5, -2, -0.2 ]
+          -
+            <<: *BLOCK
+            translation: [ 5.5, -3, -0.225 ]
+#LINE07
+          -
+            <<: *BLOCK
+            translation: [ 6.5, 3, -0.225 ]
+          -
+            <<: *BLOCK
+            translation: [ 6.5, 2, -0.225 ]
+          -
+            <<: *BLOCK
+            translation: [ 6.5, 1, -0.225 ]
+          -
+            <<: *BLOCK
+            translation: [ 6.5, 0, -0.225 ]
+          -
+            <<: *A-05-10-FILLED
+            translation: [ 6.5, -1, 0 ]
+          -
+            <<: *BLOCK
+            translation: [ 6.5, -2, -0.225 ]
+          -
+            <<: *A-05-10-FILLED
+            translation: [ 6.5, -3, 0 ]
+#LINE08
+          -
+            <<: *BLOCK
+            translation: [ 7.5, 3, -0.225 ]
+          -
+            <<: *BLOCK
+            translation: [ 7.5, 2, -0.225 ]
+          -
+            <<: *BLOCK
+            translation: [ 7.5, 1, -0.225 ]
+          -
+            <<: *BLOCK
+            translation: [ 7.5, 0, -0.225 ]
+          -
+            <<: *BLOCK
+            translation: [ 7.5, -1, -0.225 ]
+          -
+            <<: *V-1-10
+            translation: [ 7.5, -2, -0.2 ]
+          -
+            <<: *BLOCK
+            translation: [ 7.5, -3, -0.225 ]
+#LINE09
+          -
+            <<: *BLOCK
+            translation: [ 8.5, 3, -0.225 ]
+          -
+            <<: *V-05-30-FILLED
+            translation: [ 8.5, 2, 0 ]
+          -
+            <<: *BLOCK
+            translation: [ 8.5, 1, -0.225 ]
+          -
+            <<: *BLOCK
+            translation: [ 8.5, 0, -0.225 ]
+          -
+            <<: *A-05-10-FILLED
+            translation: [ 8.5, -1, 0 ]
+          -
+            <<: *BLOCK
+            translation: [ 8.5, -2, -0.225 ]
+          -
+            <<: *A-05-10-FILLED
+            translation: [ 8.5, -3, 0 ]
+#LINE10
+          -
+            <<: *A-1-30
+            translation: [ 9.5, 3, -0.2 ]
+          -
+            <<: *BLOCK
+            translation: [ 9.5, 2, -0.225 ]
+          -
+            <<: *A-1-30
+            translation: [ 9.5, 1, -0.2 ]
+          -
+            type: Shape
+            translation: [ 9.5, -0.5, -0.225 ]
+            geometry: { type: Box, size: [ 1.0, 2.0, 0.45 ] }
+            appearance: *APP
+          -
+            <<: *V-1-10
+            translation: [ 9.5, -2, -0.2 ]
+          -
+            <<: *BLOCK
+            translation: [ 9.5, -3, -0.225 ]
+#LINE11
+          -
+            <<: *BLOCK
+            translation: [ 10.5, 3, -0.225 ]
+          -
+            <<: *V-05-30-FILLED
+            translation: [ 10.5, 2, 0 ]
+          -
+            <<: *V-05-30-FILLED
+            translation: [ 10.5, 1, 0 ]
+          -
+            <<: *A-05-20-FILLED
+            translation: [ 10.5, 0, 0 ]
+          -
+            <<: *A-05-20-FILLED
+            translation: [ 10.5, -1, 0 ]
+          -
+            <<: *BLOCK
+            translation: [ 10.5, -2, -0.225 ]
+          -
+            <<: *A-05-10-FILLED
+            translation: [ 10.5, -3, 0 ]
+#LINE12-19
+          -
+            type: Transform
+            translation: [ 0, 0, -0.45 ]
+            rotation: [[ 1, 0, 0, 90],[ 0, 1, 0, 90 ]]
+            elements:
+              -
+                type: Shape
+                translation: [ 0, 0, -0.2]
+                geometry:
+                  type: Box
+                  size: [ 0.01, 0.01, 0.01]
+                appearance:
+                  texture:
+                    url: *ROAD_TEXTURE_FILE
+                    repeatS: true
+                    repeatT: true
+                  textureTransform:
+                    scale: [ 10, 15 ]
+              
+              -
+                type: Shape
+                geometry:
+                  type: Extrusion
+                  crossSection: [ 3.5,   11,
+                                  3.5,   18.039,
+                                  3.5,   19,
+                                 -3.5,   19,
+                                 -2.254, 18.412,
+                                 -1.288, 18.154,
+                                 -1.547, 17.188,
+                                  1.547, 14.612,
+                                  2.513, 14.354,
+                                  2.254, 13.387,
+                                  1.288, 13.646,
+                                  1.547, 14.612,
+                                 -1.547, 17.188,
+                                 -2.513, 17.446,
+                                 -2.254, 18.412,
+                                 -3.5,   19,
+                                 -3.5,   14.94,
+                                 -3.5,   11,
+                                  3.5,   11    ]
+                  spine: [ 0, 0, 0,
+                           0, 0.45, 0 ]
+                appearance:
+                  texture:
+                    url: *ROAD_TEXTURE_FILE
+                    repeatS: true
+                    repeatT: true
+                  textureTransform:
+                    scale: [ 20, 20 ]
+                    rotation: [ 0, 0, -1, 90 ]
+          -
+            <<: *V-1-10
+            translation: [ 14, 1.9, -0.2 ]
+            rotation: [ 0, 0, -1, -15 ]
+
+          -
+            <<: *V-1-10
+            translation: [ 17.8, -1.9, -0.2 ]
+            rotation: [ 0, 0, -1, -15 ]
+
+#LINE20
+          -
+            type: Shape
+            translation: [ 19.5, 2.5, -0.225 ]
+            geometry: { type: Box, size: [ 1.0, 2.0, 0.45 ] }
+            appearance: *APP
+          -
+            <<: *V-05-30-FILLED
+            translation: [ 19.5, 1, 0 ]
+          -
+            <<: *BLOCK
+            translation: [ 19.5, 0, -0.225 ]
+          -
+            <<: *V-05-30-FILLED
+            translation: [ 19.5, -1, 0 ]
+          -
+            type: Shape
+            translation: [ 19.5, -2.5, -0.225 ]
+            geometry: { type: Box, size: [ 1.0, 2.0, 0.45 ] }
+            appearance: *APP
+#LINE21
+          -
+            <<: *V-05-30-FILLED
+            translation: [ 20.5, 3, 0 ]
+          -
+            <<: *A-1-10
+            translation: [ 20.5, 2, -0.2 ]
+          -
+            <<: *V-05-30-FILLED
+            translation: [ 20.5, 1, 0 ]
+          -
+            <<: *A-1-30
+            translation: [ 20.5, 0, -0.2 ]
+          -
+            <<: *V-05-30-FILLED
+            translation: [ 20.5, -1, 0 ]
+          -
+            <<: *A-1-20
+            translation: [ 20.5, -2, -0.2 ]
+          -
+            <<: *BLOCK
+            translation: [ 20.5, -3, -0.225 ]
+#LINE22
+          -
+            <<: *V-05-30-FILLED
+            translation: [ 21.5, 3, 0 ]
+          -
+            <<: *V-05-30-FILLED
+            translation: [ 21.5, 2, 0 ]
+          -
+            <<: *V-05-30-FILLED
+            translation: [ 21.5, 1, 0 ]
+          -
+            <<: *V-05-30-FILLED
+            translation: [ 21.5, 0, 0 ]
+          -
+            <<: *V-05-30-FILLED
+            translation: [ 21.5, -1, 0 ]
+          -
+            <<: *V-05-30-FILLED
+            translation: [ 21.5, -2, 0 ]
+          -
+            <<: *BLOCK
+            translation: [ 21.5, -3, -0.225 ]
+#LINE23
+          -
+            <<: *V-05-30-FILLED
+            translation: [ 22.5, 3, 0 ]
+          -
+            <<: *A-1-10
+            translation: [ 22.5, 2, -0.2 ]
+          -
+            <<: *V-05-30-FILLED
+            translation: [ 22.5, 1, 0 ]
+          -
+            <<: *A-1-20
+            translation: [ 22.5, 0, -0.2 ]
+          -
+            <<: *V-05-30-FILLED
+            translation: [ 22.5, -1, 0 ]
+          -
+            <<: *A-1-30
+            translation: [ 22.5, -2, -0.2 ]
+          -
+            <<: *BLOCK
+            translation: [ 22.5, -3, -0.225 ]
+#LINE24-
+          -
+            <<: *BLOCKLINE
+            translation: [ 23.5, 0, 0]
+          -
+            <<: *BLOCKLINE
+            translation: [ 24.5, 0, 0]
+          -
+            <<: *BLOCKLINE
+            translation: [ 25.5, 0, 0]
+          -
+            <<: *BLOCKLINE
+            translation: [ 26.5, 0, 0]
+          -
+            <<: *BLOCKLINE
+            translation: [ 27.5, 0, 0]
+          -
+            <<: *BLOCKLINE
+            translation: [ 28.5, 0, 0]
+          -
+            <<: *BLOCKLINE
+            translation: [ 29.5, 0, 0]
+          -
+            <<: *BLOCKLINE
+            translation: [ 30.5, 0, 0]
+          -
+            <<: *BLOCKLINE
+            translation: [ 31.5, 0, 0]
+          -
+            <<: *BLOCKLINE
+            translation: [ 32.5, 0, 0]
+          -
+            <<: *BLOCKLINE
+            translation: [ 33.5, 0, 0]
+          -
+            <<: *BLOCKLINE
+            translation: [ 34.5, 0, 0]
+          -
+            <<: *BLOCKLINE
+            translation: [ 35.5, 0, 0]
+          -
+            <<: *BLOCKLINE
+            translation: [ 36.5, 0, 0]
+          -
+            <<: *BLOCKLINE
+            translation: [ 37.5, 0, 0]
+          -
+            <<: *BLOCKLINE
+            translation: [ 38.5, 0, 0]
+          -
+            <<: *BLOCKLINE
+            translation: [ 39.5, 0, 0]
+
+
+
+

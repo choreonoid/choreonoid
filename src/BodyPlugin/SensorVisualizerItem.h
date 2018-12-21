@@ -23,11 +23,11 @@ public:
     virtual ~SensorVisualizerItem();
 
 protected:
-    virtual Item* doDuplicate() const;
-    virtual void onPositionChanged();
-    virtual void onDisconnectedFromRoot();
-    virtual bool store(Archive& archive);
-    virtual bool restore(const Archive& archive);
+    virtual Item* doDuplicate() const override;
+    virtual void onPositionChanged() override;
+    virtual void onDisconnectedFromRoot() override;
+    virtual bool store(Archive& archive) override;
+    virtual bool restore(const Archive& archive) override;
 
 
 private:

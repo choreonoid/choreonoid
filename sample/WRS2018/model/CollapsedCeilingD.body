@@ -1,0 +1,28 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+name: CollapsedCeilingD
+
+links:
+  -
+    name: body
+    jointType: free
+    mass: 1000.0
+    inertia: [
+      480, 0, 0,
+      0, 480, 0,
+      0, 0, 960 ]
+    material: Ground
+    elements:
+      Shape:
+        geometry:
+          type: Box
+          size: [ 2.4, 2.4, 0.09 ]
+        appearance:
+          material:
+            diffuseColor: [ 1, 1, 1 ]
+          texture:
+            url: "resource/Asphalt_New.jpg" 
+            repeatS: true
+            repeatT: true
+          textureTransform:
+            scale: [ 5, 5 ]

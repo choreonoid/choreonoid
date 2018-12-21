@@ -1,0 +1,17 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: Flag5R
+
+POLE_COLOR: &POLE_COLOR [ 1, 0, 0 ]
+FLAG_Y: &FLAG_Y -0.35
+NUMBER_TEXTURE: &NUMBER_TEXTURE "5.png"
+
+links:
+  -
+    name: BASE
+    jointType: fixed
+    elements:
+      Resource:
+        uri: "resource/FlagCommon.yaml"
+        node: FLAG

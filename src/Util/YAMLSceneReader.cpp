@@ -316,6 +316,7 @@ AngleAxis YAMLSceneReader::readAngleAxis(const Listing& rotation) const
     return AngleAxis(toRadian(r[3]), axis);
 }
 
+
 bool YAMLSceneReader::readRotation(const ValueNode* info, Matrix3& out_R) const
 {
     if(!info || !info->isValid()){
@@ -323,13 +324,13 @@ bool YAMLSceneReader::readRotation(const ValueNode* info, Matrix3& out_R) const
     }
     const Listing& rotations = *info->toListing();
     if(!rotations.empty()){
-        if(rotations[0].isListing()){
+        if(!rotations[0].isListing()){
+            out_R = readAngleAxis(rotations);
+        } else {
             out_R = Matrix3::Identity();
             for(int i=0; i < rotations.size(); ++i){
                 out_R = out_R * readAngleAxis(*rotations[i].toListing());
             }
-        } else {
-            out_R = readAngleAxis(rotations);
         }
     }
     return true;
@@ -352,6 +353,48 @@ bool YAMLSceneReader::extractRotation(Mapping& info, Matrix3& out_R) const
 {
     ValueNodePtr value = info.extract("rotation");
     return readRotation(value, out_R);
+}
+
+
+bool YAMLSceneReader::readTranslation(const ValueNode* info, Vector3& out_p) const
+{
+    if(!info || !info->isValid()){
+        return false;
+    }
+    const Listing& translations = *info->toListing();
+    if(!translations.empty()){
+        if(!translations[0].isListing()){
+            read(translations, out_p);
+        } else {
+            out_p.setZero();
+            Vector3 v;
+            for(int i=0; i < translations.size(); ++i){
+                if(readTranslation(&translations[i], v)){
+                    out_p += v;
+                }
+            }
+        }
+    }
+    return true;
+}
+
+
+bool YAMLSceneReader::readTranslation(const Mapping& info, Vector3& out_p) const
+{
+    return readTranslation(info.find("translation"), out_p);
+}
+
+
+bool YAMLSceneReader::readTranslation(const Mapping& info, const char* key, Vector3& out_p) const
+{
+    return readTranslation(info.find(key), out_p);
+}
+
+
+bool YAMLSceneReader::extractTranslation(Mapping& info, Vector3& out_p) const
+{
+    ValueNodePtr value = info.extract("translation");
+    return readTranslation(value, out_p);
 }
 
 
@@ -490,10 +533,10 @@ SgNode* YAMLSceneReaderImpl::readTransform(Mapping& info)
     SgGroupPtr group;
 
     SgPosTransformPtr posTransform = new SgPosTransform;
-    if(read(info, "translation", v)){
+    if(self->readTranslation(info, v)){
         posTransform->setTranslation(v);
         group = posTransform;
-    }
+    }        
     Matrix3 R;
     if(self->readRotation(info, R)){
         posTransform->setRotation(R);
@@ -531,7 +574,7 @@ SgNode* YAMLSceneReaderImpl::readTransformParameters(Mapping& info, SgNode* scen
     Matrix3 R;
     bool isRotated = self->readRotation(info, R);
     Vector3 p;
-    bool isTranslated = read(info, "translation", p);
+    bool isTranslated = self->readTranslation(info, p);
     if(isRotated || isTranslated){
         SgPosTransform* transform = new SgPosTransform;
         if(isRotated){

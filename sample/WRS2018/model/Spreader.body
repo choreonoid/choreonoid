@@ -1,0 +1,272 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: Spreader
+
+YELLOW: &YELLOW
+  material:
+    diffuseColor: [ 1.0, 0.9, 0 ]
+    specularColor: [ 0.5, 0.4, 0.1 ]
+    shininess: 0.5
+
+SILVER: &SILVER
+  material:
+    diffuseColor: [ 0.65, 0.65, 0.65 ]
+    specularColor: [ 1, 1, 1 ]
+    shininess: 0.07
+
+GRAY2: &GRAY2
+  material:
+    diffuseColor: [ 0.2, 0.2, 0.2 ]
+    specularColor: [ 0.2, 0.2, 0.2 ]
+    shininess: 0.01
+
+links:
+  -
+    name: BASE
+    jointType: free
+    mass: 4.0
+    centerOfMass: [ -0.1, 0, 0 ]
+    inertia: [ 0.1, 0, 0,
+               0, 0.1, 0,
+               0, 0, 0.1 ]
+    elements:
+          -
+            type: Shape
+            name: stand
+            translation: [ -0.260795, 0.0, -0.128032 ]
+            geometry: { type: Box, size: [ 0.11, 0.09, 0.05 ] }
+            appearance: *YELLOW
+          -
+            type: Shape
+            name: stand grip
+            rotation: [ [ 1, 0, 0, -90 ], [ 0, 0, 1, 15 ] ]
+            translation: [ -0.270387, 0.0, -0.05284138 ]
+            geometry: { type: Cylinder, height: 0.12, radius: 0.03 }
+            appearance: *GRAY2
+          - 
+            type: Shape
+            name: body cylinder
+            rotation: [ 0, 0, 1, 90 ]
+            translation: [ -0.11, 0.0, 0.0365294 ]
+            geometry: { type: Cylinder, height: 0.45, radius: 0.045 }
+            appearance: *YELLOW
+          -
+            type: Shape
+            name: front box
+            translation: [ 0.135, 0.0, 0.03652939 ]
+            geometry: { type: Box, size: [ 0.04, 0.15, 0.09 ] }
+            appearance: *YELLOW
+          - 
+            type: Shape
+            name: back grip 1
+            rotation: [ 1, 0, 0, 90 ]
+            translation: [ -0.28, 0.0, 0.104 ]
+            geometry: { type: Capsule, height: 0.06, radius: 0.015 }
+            appearance: *GRAY2
+          - 
+            type: Shape
+            name: back grip 2
+            rotation: [ [ 0, 0, 1, 90 ], [ 1, 0, 0, -30 ] ]
+            translation: [ -0.247, 0.0, 0.1531]
+            geometry: { type:  Capsule, height: 0.0744, radius: 0.015 }
+            appearance: *GRAY2
+          - 
+            type: Shape
+            name: back grip 3
+            rotation: [ 0, 0, 1, 90 ]
+            translation: [ -0.148, 0.0, 0.1715 ]
+            geometry: { type: Capsule, height: 0.136, radius: 0.015 }
+            appearance: *GRAY2
+          - 
+            type: Shape
+            name: back grip 4
+            rotation: [ 0, 0, 1, 90 ]
+            translation: [ -0.08004, 0.0, 0.1715 ]
+            geometry: { type: Cylinder, height: 0.03, radius: 0.015 }
+            appearance: *GRAY2
+          - 
+            type: Transform
+            name: front grip
+            translation: [ 0.06, 0.0, 0.00 ]
+            elements: 
+              -
+                type: Shape
+                translation: [ 0.0, -0.0005, 0.16925 ]
+                geometry: { type: Capsule, height: 0.077, radius: 0.015 }
+                appearance: *GRAY2
+              -
+                type: Shape
+                translation: [ 0.0, 0.065, 0.1502 ]
+                rotation: [ 1, 0, 0, -35 ]
+                geometry: { type: Capsule, height: 0.065, radius: 0.015 }
+                appearance: *GRAY2
+              -
+                type: Shape
+                translation: [ 0.0, 0.0919, 0.1045 ]
+                rotation: [ 1, 0, 0, 90 ]
+                geometry: { type: Capsule, height: 0.054, radius: 0.015 }
+                appearance: *GRAY2
+              -
+                type: Shape
+                translation: [ 0.0, 0.065, 0.0589 ]
+                rotation: [ 1, 0, 0, 35 ]
+                geometry: { type: Capsule, height: 0.065, radius: 0.015 }
+                appearance: *GRAY2
+              -
+                type: Shape
+                translation: [ 0.0, -0.066, 0.1502 ]
+                rotation: [ 1, 0, 0, 35 ]
+                geometry: { type: Capsule, height: 0.065, radius: 0.015 }
+                appearance: *GRAY2
+              -
+                type: Shape
+                translation: [ 0.0, -0.0929, 0.1045 ]
+                rotation: [ 1, 0, 0, 90 ]
+                geometry: { type: Capsule, height: 0.054, radius: 0.015 }
+                appearance: *GRAY2
+              -
+                type: Shape
+                translation: [ 0.0, -0.066, 0.0589 ]
+                rotation: [ 1, 0, 0, -35 ]
+                geometry: { type: Capsule, height: 0.065, radius: 0.015 }
+                appearance: *GRAY2
+             
+  -
+    name: FLANGE_WEDGE_L
+    parent: BASE
+    translation: [ [ 0.155, 0, 0.035 ], [ 0.03, 0.03, 0 ] ]
+    jointType: revolute
+    jointAxis: Z
+    jointRange: [ 0, 30 ]
+    jointId: 0
+    jointLockForceRange: [ -1000, 1000.0 ]
+    mass: 1.0
+    centerOfMass: [ 0.06, 0.024, 0 ]
+    inertia: [ 0.001, 0, 0,
+               0, 0.001, 0,
+               0, 0, 0.001 ]
+    elements:
+          - 
+            type: Transform
+            translation: [ [ 0.0, -0.0015, 0.00153 ], [ -0.03, -0.03, 0 ] ]
+            elements: &END_SHAPE
+              -
+                type: Shape
+                name: end 1
+                translation: [ 0.02, 0.03, 0.0 ]
+                geometry: { type: Box, size: [ 0.04, 0.06, 0.05 ] }
+                appearance: *SILVER
+              -
+                type: Shape
+                name: end 2
+                translation: [ 0.109, 0.0303, 0.0 ]
+                rotation: [ 0, 0, 1, -21.8 ]
+                geometry: { type: Box, size: [ 0.15, 0.004, 0.05 ] }
+                appearance: *SILVER
+              -
+                type: Shape
+                name: end 3
+                translation: [ 0.11, 0.002, 0.0 ]
+                translation: [ 0.11, 0.0023, 0.0 ]
+                geometry: { type: Box, size: [ 0.14, 0.004, 0.05 ] }
+                geometry: { type: Box, size: [ 0.14, 0.0035, 0.05 ] }
+                appearance: *SILVER
+              -
+                type: Shape
+                name: end 4
+                translation: [ 0.1045, 0.006, 0.0 ]
+                geometry: { type: Box, size: [ 0.1292, 0.004, 0.05 ] }
+                appearance: *SILVER
+              -
+                type: Shape
+                name: end 5
+                translation: [ 0.0995, 0.01, 0.0 ]
+                geometry: { type: Box, size: [ 0.1192, 0.004, 0.05 ] }
+                appearance: *SILVER
+              -
+                type: Shape
+                name: end 6
+                translation: [ 0.0945, 0.014, 0.0 ]
+                geometry: { type: Box, size: [ 0.1092, 0.004, 0.05 ] }
+                appearance: *SILVER
+              -
+                type: Shape
+                name: end 7
+                translation: [ 0.0895, 0.018, 0.0 ]
+                geometry: { type: Box, size: [ 0.0992, 0.004, 0.05 ] }
+                appearance: *SILVER
+              -
+                type: Shape
+                name: end 8
+                translation: [ 0.0845, 0.022, 0.0 ]
+                geometry: { type: Box, size: [ 0.0892, 0.004, 0.05 ] }
+                appearance: *SILVER
+              -
+                type: Shape
+                name: end 9
+                translation: [ 0.0795, 0.026, 0.0 ]
+                geometry: { type: Box, size: [ 0.0792, 0.004, 0.05 ] }
+                appearance: *SILVER
+              -
+                type: Shape
+                name: end 10
+                translation: [ 0.0745, 0.03, 0.0 ]
+                geometry: { type: Box, size: [ 0.0692, 0.004, 0.05 ] }
+                appearance: *SILVER
+              -
+                type: Shape
+                name: end 11
+                translation: [ 0.0695, 0.034, 0.0 ]
+                geometry: { type: Box, size: [ 0.0592, 0.004, 0.05 ] }
+                appearance: *SILVER
+              -
+                type: Shape
+                name: end 12
+                translation: [ 0.0645, 0.038, 0.0 ]
+                geometry: { type: Box, size: [ 0.0492, 0.004, 0.05 ] }
+                appearance: *SILVER
+              -
+                type: Shape
+                name: end 13
+                translation: [ 0.0595, 0.042, 0.0 ]
+                geometry: { type: Box, size: [ 0.0392, 0.004, 0.05 ] }
+                appearance: *SILVER
+              -
+                type: Shape
+                name: end 14
+                translation: [ 0.0545, 0.046, 0.0 ]
+                geometry: { type: Box, size: [ 0.0292, 0.004, 0.05 ] }
+                appearance: *SILVER
+              -
+                type: Shape
+                name: end 15
+                translation: [ 0.0495, 0.05, 0.0 ]
+                geometry: { type: Box, size: [ 0.0192, 0.004, 0.05 ] }
+                appearance: *SILVER
+              -
+                type: Shape
+                name: end 16
+                translation: [ 0.0445, 0.054, 0.0 ]
+                geometry: { type: Box, size: [ 0.0092, 0.004, 0.05 ] }
+                appearance: *SILVER
+  -
+    name: FLANGE_WEDGE_R
+    parent: BASE
+    translation: [ [ 0.155, 0, 0.035 ], [ 0.03, -0.03, 0 ] ]
+    jointType: revolute
+    jointAxis: -Z
+    jointRange: [ 0, 30 ]
+    jointId: 1
+    jointLockForceRange: [ -1000, 1000.0 ]
+    mass: 1.0
+    centerOfMass: [ 0.06, -0.024, 0 ]
+    inertia: [ 0.001, 0, 0,
+               0, 0.001, 0,
+               0, 0, 0.001 ]
+    elements:
+          - 
+            type: Transform
+            translation: [ [ 0.0, -0.0015, 0.00153 ], [ -0.03, 0.03, 0 ] ]
+            rotation: [ 1, 0, 0, 180 ]
+            elements: *END_SHAPE

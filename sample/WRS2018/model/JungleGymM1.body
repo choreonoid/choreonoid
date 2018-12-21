@@ -1,0 +1,60 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: JungleGym1
+
+RESOURCE: &RESOURCE
+  type: Resource
+  uri: "resource/JungleGym/JungleGymFrames.yaml"
+
+links:
+  -
+    name: ROOT
+    jointType: fixed
+  -
+    name: JungleGym1
+    parent: ROOT
+    jointType: fixed
+    elements:
+      -
+        type: Transform
+        translation: [ 0.2, 0.8, 0 ]
+        rotation: [ 0, 0, -1, 30 ]
+        elements:
+          -
+            <<: *RESOURCE
+            translation: [ 0, 0, 0 ]
+            node: J1-100-1
+          -
+            <<: *RESOURCE
+            translation: [ 0, 1, 0 ]
+            node: J1-100-1
+          -
+            <<: *RESOURCE
+            translation: [ 0, 2, 0 ]
+            node: J1-100-1
+          -
+            <<: *RESOURCE
+            translation: [ 0, 3, 0 ]
+            node: J1-100-1
+      -
+        type: Transform
+        translation: [ 0, -0.56, 0 ]
+        rotation: [ 0, 0, -1, -30 ]
+        elements:
+          -
+            <<: *RESOURCE
+            translation: [ 0, 0, 0 ]
+            node: J1-70-1
+          -
+            <<: *RESOURCE
+            translation: [ 0, -0.7, 0 ]
+            node: J1-70-1
+          -
+            <<: *RESOURCE
+            translation: [ 0, -1.4, 0 ]
+            node: J1-70-1
+          -
+            <<: *RESOURCE
+            translation: [ 0, -2.1, 0 ]
+            node: J1-70-1

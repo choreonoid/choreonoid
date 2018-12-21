@@ -254,11 +254,18 @@ AGXMagneticJoint::AGXMagneticJoint(AGXMagneticJointDevice* device, AGXBody* agxB
     agxConvert::setVector(jointDeviceInfo.find("connectAxis2"), jp.connectAxis2);
     jointDeviceInfo.read("validDistance", jp.validDistance);
     jointDeviceInfo.read("validAngle", jp.validAngle);
+    string constraintType;
+    jointDeviceInfo.read("constraintType", constraintType);
 
     AGXElementaryConstraint base;
     jointDeviceInfo.read("jointCompliance", base.compliance);
     jointDeviceInfo.read("jointSpookDamping", base.spookDamping);
 
+    AGXElementaryConstraint motorDesc;
+    jointDeviceInfo.read("jointMotor", motorDesc.enable);
+    jointDeviceInfo.read("jointMotorCompliance", motorDesc.compliance);
+    jointDeviceInfo.read("jointMotorSpookDamping", motorDesc.spookDamping);
+    
     // Create magnetic joint
     AGXLink* const agxLink1 = getAGXBody()->getAGXLink(jp.link1Name);
     AGXLink* const agxLink2 = getAGXBody()->getAGXLink(jp.link2Name);
@@ -285,7 +292,18 @@ AGXMagneticJoint::AGXMagneticJoint(AGXMagneticJointDevice* device, AGXBody* agxB
     f[1]->setLocalTranslate(lp2);
     f[1]->setLocalRotate(agx::Quat(axis2z, axis2));
 
-    auto joint = new agx::LockJoint(r[0], f[0], r[1], f[1]);
+    agx::Constraint* joint;
+    if(constraintType == "hinge"){
+        auto hinge = new agx::Hinge(r[0], f[0], r[1], f[1]);
+        auto motor = hinge->getMotor1D();
+        motor->setEnable(motorDesc.enable);
+        motor->setCompliance(motorDesc.compliance);
+        motor->setDamping(motorDesc.spookDamping);
+        joint = hinge;
+    } else {
+        joint = new agx::LockJoint(r[0], f[0], r[1], f[1]);
+    }
+
     joint->setEnable(false);
     joint->setCompliance(base.compliance);
     joint->setDamping(base.spookDamping);

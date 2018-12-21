@@ -1560,6 +1560,7 @@ bool SensorScreenRenderer::getCameraImage(Image& image)
         return false;
     }
     image.setSize(pixelWidth, pixelHeight, 3);
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
     glReadPixels(0, 0, pixelWidth, pixelHeight, GL_RGB, GL_UNSIGNED_BYTE, image.pixels());
     image.applyVerticalFlip();
     return true;
@@ -1578,6 +1579,7 @@ bool SensorScreenRenderer::getRangeCameraData(Image& image, vector<Vector3f>& po
 
     const bool extractColors = (cameraForRendering->imageType() == Camera::COLOR_IMAGE);
     if(extractColors){
+        glPixelStorei(GL_PACK_ALIGNMENT, 1);
 #ifndef _WIN32
         colorBuf = (unsigned char*)alloca(pixelWidth * pixelHeight * 3 * sizeof(unsigned char));
         glReadPixels(0, 0, pixelWidth, pixelHeight, GL_RGB, GL_UNSIGNED_BYTE, colorBuf);

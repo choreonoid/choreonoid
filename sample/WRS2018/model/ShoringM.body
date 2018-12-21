@@ -1,0 +1,27 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: Shoring-M
+
+links:
+  -
+    name: body
+    jointType: free
+    mass: 3.0
+    inertia: [
+      0.5778, 0, 0,
+      0, 0.5778, 0,
+      0, 0, 0.005 ]
+    autoSleep: true
+    elements:
+      Shape:
+        geometry: { type: Box, size: [ 0.1, 0.1, 1.517 ] }
+        appearance:
+          material:
+            diffuseColor: [ 1, 1, 1 ]
+          texture:
+            url: "resource/Wood_Cherry_Original.jpg"
+            repeatS: true
+            repeatT: true
+          textureTransform:
+            scale: [ 1, 1 ]

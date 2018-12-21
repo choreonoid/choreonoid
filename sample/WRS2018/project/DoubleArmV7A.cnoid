@@ -1,0 +1,84 @@
+items: 
+  id: 0
+  name: "Root"
+  plugin: Base
+  class: RootItem
+  children: 
+    - 
+      id: 1
+      name: "DoubleArmV7"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/model/DoubleArmV7/DoubleArmV7A.body"
+        currentBaseLink: "TFRAME"
+        rootPosition: [ 1, 0.0037, 0.5376 ]
+        jointPositions: [ 
+           0.391500, -0.762258, -1.310742,  2.654646,  0.000000,  0.101593, -0.349066, -0.349066, 
+          -0.000000, -0.000000,  0.000000,  0.000000, -0.000000, -0.000000,  0.000000,  0.000000 ]
+        initialRootPosition: [ 1, 0.0037, 0.5376 ]
+        initialJointPositions: [ 
+           0.391500, -0.762258, -1.310742,  2.654646,  0.000000,  0.101593, -0.349066, -0.349066, 
+          -0.000000, -0.000000,  0.000000,  0.000000, -0.000000, -0.000000,  0.000000,  0.000000 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: true
+        isEditable: true
+      children: 
+        - 
+          id: 2
+          name: "DoubleArmV7Controller"
+          plugin: Body
+          class: SimpleControllerItem
+          data: 
+            isNoDelayMode: false
+            controllerOptions: ""
+            controller: "DoubleArmV7Controller"
+            baseDirectory: "Controller directory"
+            reloading: true
+        - 
+          id: 3
+          name: "BodyTrackingCamera"
+          plugin: Body
+          class: BodyTrackingCameraItem
+          data: 
+            keepRelativeAttitude: false
+            nearClipDistance: 0.05
+            farClipDistance: 200
+views: 
+  - 
+    id: 1
+    plugin: Base
+    class: ItemTreeView
+    state: 
+      checked: [ 1, 3 ]
+      expanded: [ 1 ]
+  - 
+    id: 3
+    plugin: Base
+    class: SceneView
+    state: 
+      cameras: 
+        - 
+          camera: BodyTrackingCamera
+          isCurrent: true
+          fieldOfView: 0.785398
+          eye: [ -2.82690084, -1.71109278, 2.5249298 ]
+          direction: [ 0.911599433, 0.294077183, -0.287236983 ]
+          up: [ 0.273364786, 0.0881860422, 0.957859549 ]
+  - 
+    id: 4
+    name: "Camera Scene"
+    plugin: Base
+    class: SceneView
+    state: 
+      cameras: 
+        - 
+          camera: [ DoubleArmV7, FRAME_FRONT_CAMERA ]
+          isCurrent: true
+        - 
+          camera: BodyTrackingCamera
+          eye: [ -2.82690084, -1.71109278, 2.5249298 ]
+          direction: [ 0.911599433, 0.294077183, -0.287236983 ]
+          up: [ 0.273364786, 0.0881860422, 0.957859549 ]
+      checked: [ 1, 3 ]

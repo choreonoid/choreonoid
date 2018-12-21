@@ -3,8 +3,8 @@
    \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_HRPSYS31_PLUGIN_HRPSYS31_ITEM_H_INCLUDED
-#define CNOID_HRPSYS31_PLUGIN_HRPSYS31_ITEM_H_INCLUDED
+#ifndef CNOID_HRPSYS31_PLUGIN_HRPSYS31_ITEM_H
+#define CNOID_HRPSYS31_PLUGIN_HRPSYS31_ITEM_H
 
 #include <cnoid/RobotAccessItem>
 #include "exportdecl.h"
@@ -21,28 +21,29 @@ public:
     Hrpsys31Item();
     Hrpsys31Item(const Hrpsys31Item& org);
 
-    virtual bool connectToRobot();
-    virtual bool disconnectFromRobot();
-    virtual bool activateServos(bool on);
-    virtual bool setStateReadingEnabled(bool on);
-    virtual bool sendCurrentPose();
-    virtual bool setPlaybackSyncEnabled(bool on);
+    virtual bool connectToRobot() override;
+    virtual bool disconnectFromRobot() override;
+    virtual bool activateServos(bool on) override;
+    virtual bool setStateReadingEnabled(bool on) override;
+    virtual bool sendCurrentPose() override;
+    virtual bool setPlaybackSyncEnabled(bool on) override;
         
 protected:
     virtual ~Hrpsys31Item();
         
-    virtual void onPositionChanged();
-    virtual void onDisconnectedFromRoot();
-    virtual Item* doDuplicate() const;
-    virtual void doPutProperties(PutPropertyFunction& putProperty);
-    virtual bool store(Archive& archive);
-    virtual bool restore(const Archive& archive);
+    virtual void onPositionChanged() override;
+    virtual void onDisconnectedFromRoot() override;
+    virtual Item* doDuplicate() const override;
+    virtual void doPutProperties(PutPropertyFunction& putProperty) override;
+    virtual bool store(Archive& archive) override;
+    virtual bool restore(const Archive& archive) override;
         
 private:
     Hrpsys31ItemImpl* impl;
 };
     
 typedef ref_ptr<Hrpsys31Item> Hrpsys31ItemPtr;
+
 }
 
 #endif

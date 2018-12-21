@@ -1,0 +1,17 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: RoadSurface20m
+
+HALF_ROAD_LENGTH: &HALF_ROAD_LENGTH 10
+ROAD_LENGTH: &ROAD_LENGTH 20
+
+links:
+  -
+    name: Base
+    jointType: fixed
+    material: Ground
+    elements:
+      Resource:
+        uri: "resource/RoadSurfaceCommon.yaml"
+        node: ROAD_SURFACE_ELEMENTS

@@ -121,9 +121,9 @@ void RTCItem::updateRTCInstance(bool forceUpdate)
     }
 }
 
-void RTCItem::onPositionChanged()
+void RTCItem::onConnectedToRoot()
 {
-    DDEBUG("RTCItem::onPositionChanged");
+    DDEBUG("RTCItem::onConnectedToRoot");
     updateRTCInstance(false);
 }
 

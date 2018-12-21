@@ -1,0 +1,29 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: JungleGym
+
+RESOURCE: &RESOURCE
+  type: Resource
+  uri: "resource/JungleGym/JungleGymFrames2.yaml"
+
+links:
+  -
+    name: Base
+    jointType: fixed
+    elements:
+      - 
+        <<: *RESOURCE
+        node: FRAME_3M
+      - 
+        <<: *RESOURCE
+        translation: [ 3, 0, 0 ]
+        node: FRAME_3M
+      -
+        <<: *RESOURCE
+        translation: [ 3.9, -2.1, 0 ]
+        node: FRAME_2_1_3M
+      -
+        <<: *RESOURCE
+        translation: [ 6.0, -2.1, 0 ]
+        node: FRAME_2_1M

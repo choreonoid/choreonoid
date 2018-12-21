@@ -1,0 +1,544 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: Victim
+rootLink: WAIST
+
+JOINT_COMPLIANCE: &JOINT_COMPLIANCE
+  actuationMode: jointAngle
+  jointLock: true
+  jointLockCompliance: 1.0
+  jointLockForceRange: [ -20.0, 20.0 ]
+
+links:
+  -
+    name: WAIST
+    jointType: free
+    mass: 6.0
+    inertia: [
+      0.044377667, 0,       0,
+      0,       0.0605605, 0,
+      0,       0,       0.044377667 ]
+    elements:
+      -
+        type: Shape
+        geometry: { type: Capsule, radius: 0.105, height: 0.12 }
+        appearance: &bodyColor
+          material:
+            diffuseColor: [ 1.0, 1.0, 0.0 ]
+  -
+    name: LUMBAR_Y
+    parent: WAIST
+    translation: [ 0.0, 0.0, 0.105 ]
+    jointType: revolute
+    jointId: 0
+    jointAxis: Z
+    jointRange: [ -30, 30 ]
+    mass: 0.1
+    inertia: [
+      0.001, 0,       0,
+      0,       0.001, 0,
+      0,       0,     0.001 ]
+    <<: *JOINT_COMPLIANCE
+    jointLockCompliance: 0.01
+    jointAngle: 0
+  -
+    name: LUMBAR_P
+    parent: LUMBAR_Y
+    jointType: revolute
+    jointId: 1
+    jointAxis: Y
+    jointRange: [ -10.0, 100 ]
+    mass: 6.0
+    inertia: [
+      0.044377667, 0,       0,
+      0,       0.0605605, 0,
+      0,       0,       0.044377667 ]
+    <<: *JOINT_COMPLIANCE
+    jointAngle: 64.2
+    elements:
+      -
+        type: Shape
+        translation: [ 0.0, 0.0, 0.105 ]
+        geometry: { type: Capsule, radius: 0.105, height: 0.10 }
+        appearance: *bodyColor
+  -
+    name: CHEST_P
+    parent: LUMBAR_P
+    translation: [ 0.0, 0.0, 0.21 ]
+    jointType: revolute
+    jointId: 2
+    jointAxis: Y
+    jointRange: [ -20.0, 45 ]
+    mass: 6.0
+    inertia: [
+      0.044377667, 0,       0,
+      0,       0.0605605, 0,
+      0,       0,       0.044377667 ]
+    <<: *JOINT_COMPLIANCE
+    jointAngle: 34.8
+    elements:
+      -
+        type: Shape
+        translation: [ 0.0, 0.0, 0.105 ]
+        geometry: { type: Capsule, radius: 0.105, height: 0.12 }
+        appearance: *bodyColor
+  -
+    name: NECK_P
+    parent: CHEST_P
+    translation: [ 0.0, 0.0, 0.21 ]
+    jointType: revolute
+    jointId: 3
+    jointAxis: Y
+    jointRange: [ -30, 30 ]
+    mass: 4.0
+    inertia: [
+      0.023716, 0,       0,
+      0,       0.023716, 0,
+      0,       0,       0.023716 ]
+    <<: *JOINT_COMPLIANCE
+    jointAngle: -18.5
+    elements:
+      -
+        type: Shape
+        translation: [ 0.0, 0.0, 0.11 ]
+        geometry: { type: Capsule, radius: 0.11, height: 0.01 }
+        appearance: *bodyColor
+  -
+    name: R_SHOULDER_P
+    parent: CHEST_P
+    translation: [ 0.0, -0.215, 0.14 ]
+    jointType: revolute
+    jointId: 4
+    jointAxis: -Y
+    jointRange: [ -45, 180 ]
+    mass: 0.1
+    inertia: [
+      0.001, 0,       0,
+      0,       0.001, 0,
+      0,       0,     0.001 ]
+    <<: *JOINT_COMPLIANCE
+    jointAngle: 1.3
+  -
+    name: R_SHOULDER_R
+    parent: R_SHOULDER_P
+    jointType: revolute
+    jointId: 5
+    jointAxis: X
+    jointRange: [ -90, 40 ]
+    mass: 0.1
+    inertia: [
+      0.001, 0,       0,
+      0,       0.001, 0,
+      0,       0,     0.001 ]
+    <<: *JOINT_COMPLIANCE
+    jointAngle: 0
+  -
+    name: R_SHOULDER_Y
+    parent: R_SHOULDER_R
+    jointType: revolute
+    jointId: 6
+    jointAxis: -Z
+    jointRange: [ -70, 70 ]
+    mass: 2.3
+    inertia: [
+      0.006029333, 0,       0,
+      0,       0.004284, 0,
+      0,       0,       0.006029333 ]
+    <<: *JOINT_COMPLIANCE
+    jointAngle: 0
+    elements:
+      -
+        type: Shape
+        translation: [ 0.0, 0, -0.08 ]
+        rotation: [ 1, 0, 0, 90 ]
+        geometry: { type: Capsule, radius: 0.05, height: 0.16 }
+        appearance: *bodyColor
+  -
+    name: R_ELBOW_P
+    parent: R_SHOULDER_Y
+    translation: [ 0.0, 0, -0.23 ]
+    jointType: revolute
+    jointId: 7
+    jointAxis: -Y
+    jointRange: [ 0, 130 ]
+    mass: 1.6
+    inertia: [
+      0.004440917, 0,       0,
+      0,       0.0020125, 0,
+      0,       0,       0.004440917 ]
+    <<: *JOINT_COMPLIANCE
+    jointAngle: 43.3
+    elements:
+      -
+        type: Shape
+        translation: [ 0, 0, -0.08 ]
+        rotation: [ 1, 0, 0, 90 ]
+        geometry: { type: Capsule, radius: 0.05, height: 0.16 }
+        appearance: *bodyColor
+  -
+    name: R_WRIST_Y
+    parent: R_ELBOW_P
+    translation: [ 0.0,0,  -0.21 ]
+    jointType: revolute
+    jointId: 8
+    jointAxis: -Z
+    jointRange: [ -90, 90 ]
+    mass: 0.1
+    inertia: [
+      0.001, 0,       0,
+      0,       0.001, 0,
+      0,       0,     0.001 ]
+    <<: *JOINT_COMPLIANCE
+    jointAngle: -90
+  -
+    name: R_WRIST_R
+    parent: R_WRIST_Y
+    jointType: revolute
+    jointId: 9
+    jointAxis: X
+    jointRange: [ -80, 80 ]
+    mass: 0.5
+    inertia: [
+      0.00189, 0,       0,
+      0,       0.000883333, 0,
+      0,       0,       0.002908333 ]
+    <<: *JOINT_COMPLIANCE
+    jointAngle: -48.2
+    elements:
+      -
+        type: Shape
+        translation: [ 0.0, 0, -0.06 ]
+        geometry: { type: Box, size: [ 0.08, 0.05, 0.13 ] }
+        appearance: *bodyColor
+  -
+    name: L_SHOULDER_P
+    parent: CHEST_P
+    translation: [ 0.0, 0.215, 0.14 ]
+    jointType: revolute
+    jointId: 10
+    jointAxis: -Y
+    jointRange: [ -45, 180 ]
+    mass: 0.1
+    inertia: [
+      0.001, 0,       0,
+      0,       0.001, 0,
+      0,       0,     0.001 ]
+    <<: *JOINT_COMPLIANCE
+    jointAngle: 1.3
+  -
+    name: L_SHOULDER_R
+    parent: L_SHOULDER_P
+    jointType: revolute
+    jointId: 11
+    jointAxis: -X
+    jointRange: [ -90, 40 ]
+    mass: 0.1
+    inertia: [
+      0.001, 0,       0,
+      0,       0.001, 0,
+      0,       0,     0.001 ]
+    <<: *JOINT_COMPLIANCE
+    jointAngle: 0
+  -
+    name: L_SHOULDER_Y
+    parent: L_SHOULDER_R
+    jointType: revolute
+    jointId: 12
+    jointAxis: Z
+    jointRange: [ -70, 70 ]
+    mass: 2.3
+    inertia: [
+      0.006029333, 0,       0,
+      0,       0.004284, 0,
+      0,       0,       0.006029333 ]
+    <<: *JOINT_COMPLIANCE
+    jointAngle: 0
+    elements:
+      -
+        type: Shape
+        translation: [ 0.0, 0, -0.08 ]
+        rotation: [ 1, 0, 0, 90 ]
+        geometry: { type: Capsule, radius: 0.05, height: 0.16 }
+        appearance: *bodyColor
+  -
+    name: L_ELBOW_P
+    parent: L_SHOULDER_Y
+    translation: [ 0.0, 0, -0.23 ]
+    jointType: revolute
+    jointId: 13
+    jointAxis: -Y
+    jointRange: [ 0, 130 ]
+    mass: 1.6
+    inertia: [
+      0.004440917, 0,       0,
+      0,       0.0020125, 0,
+      0,       0,       0.004440917 ]
+    <<: *JOINT_COMPLIANCE
+    jointAngle: 43.3
+    elements:
+      -
+        type: Shape
+        translation: [ 0, 0, -0.08 ]
+        rotation: [ 1, 0, 0, 90 ]
+        geometry: { type: Capsule, radius: 0.05, height: 0.16 }
+        appearance: *bodyColor
+  -
+    name: L_WRIST_Y
+    parent: L_ELBOW_P
+    translation: [ 0.0,0,  -0.21 ]
+    jointType: revolute
+    jointId: 14
+    jointAxis: Z
+    jointRange: [ -90, 90 ]
+    mass: 0.1
+    inertia: [
+      0.001, 0,       0,
+      0,       0.001, 0,
+      0,       0,     0.001 ]
+    <<: *JOINT_COMPLIANCE
+    jointAngle: -90.0
+  -
+    name: L_WRIST_R
+    parent: L_WRIST_Y
+    jointType: revolute
+    jointId: 15
+    jointAxis: -X
+    jointRange: [ -80, 80 ]
+    mass: 0.5
+    inertia: [
+      0.00189, 0,       0,
+      0,       0.000883333, 0,
+      0,       0,       0.002908333 ]
+    <<: *JOINT_COMPLIANCE
+    jointAngle: -48.2
+    elements:
+      -
+        type: Shape
+        translation: [ 0.0, 0, -0.06 ]
+        geometry: { type: Box, size: [ 0.08, 0.05, 0.13 ] }
+        appearance: *bodyColor
+
+  -
+    name: R_HIP_Y
+    parent: WAIST
+    translation: [ 0.0, -0.08, -0.10 ]
+    jointType: revolute
+    jointId: 16
+    jointAxis: Z
+    jointRange: [ -45, 45 ]
+    mass: 0.1
+    inertia: [
+      0.001, 0,       0,
+      0,       0.001, 0,
+      0,       0,     0.001 ]
+    <<: *JOINT_COMPLIANCE
+    jointAngle: -1.5
+  -
+    name: R_HIP_R
+    parent: R_HIP_Y
+    jointType: revolute
+    jointId: 17
+    jointAxis: X
+    jointRange: [ -30, 30 ]
+    mass: 0.1
+    inertia: [
+      0.001, 0,       0,
+      0,       0.001, 0,
+      0,       0,     0.001 ]
+    <<: *JOINT_COMPLIANCE
+    jointAngle: 0.7
+  -
+    name: R_HIP_P
+    parent: R_HIP_R
+    jointType: revolute
+    jointId: 18
+    jointAxis: -Y
+    jointRange: [ -60, 80 ]
+    mass: 7.0
+    inertia: [
+      0.029792, 0,       0,
+      0,       0.029792, 0,
+      0,       0,       0.025536 ]
+    <<: *JOINT_COMPLIANCE
+    jointLockCompliance: 0.01
+    jointAngle: -8.2
+    elements:
+      -
+        type: Shape
+        translation: [ 0.0, 0.0, -0.16 ]
+        rotation: [ 1, 0, 0, 90 ]
+        geometry: { type: Capsule, radius: 0.075, height: 0.2 }
+        appearance: *bodyColor
+  -
+    name: R_KNEE_P
+    parent: R_HIP_P
+    translation: [ 0.0, 0.0, -0.32 ]
+    jointType: revolute
+    jointId: 19
+    jointAxis: Y
+    jointRange: [ 0.0, 140 ]
+    mass: 3.0
+    inertia: [
+      0.010604417, 0,       0,
+      0,       0.010604417, 0,
+      0,       0,       0.0090895 ]
+    <<: *JOINT_COMPLIANCE
+    jointAngle: 52.3
+    elements:
+      -
+        type: Shape
+        translation: [ 0.0, 0.0, -0.155 ]
+        rotation: [ 1, 0, 0, 90 ]
+        geometry: { type: Capsule, radius: 0.065, height: 0.19 }
+        appearance: *bodyColor
+  -
+    name: R_ANKLE_P
+    parent: R_KNEE_P
+    translation: [ 0.0, 0.0, -0.3 ]
+    jointType: revolute
+    jointId: 20
+    jointAxis: -Y
+    jointRange: [ -40, 30 ]
+    mass: 0.1
+    inertia: [
+      0.001, 0,       0,
+      0,       0.001, 0,
+      0,       0,     0.001 ]
+    <<: *JOINT_COMPLIANCE
+    jointAngle: -19.4
+  -
+    name: R_ANKLE_R
+    parent: R_ANKLE_P
+    jointType: revolute
+    jointId: 21
+    jointAxis: X
+    jointRange: [ -20, 20 ]
+    mass: 1.26
+    inertia: [
+      0.00189, 0,       0,
+      0,       0.006833333, 0,
+      0,       0,       0.007733333 ]
+    <<: *JOINT_COMPLIANCE
+    jointAngle: -1.6
+    elements:
+      -
+        type: Shape
+        translation: [ 0.06, 0.0, -0.03 ]
+        geometry: { type: Box, size: [ 0.24, 0.11, 0.05 ] }
+        appearance: *bodyColor
+  -
+    name: L_HIP_Y
+    parent: WAIST
+    translation: [ 0.0, 0.08, -0.10 ]
+    jointType: revolute
+    jointId: 22
+    jointAxis: -Z
+    jointRange: [ -45, 45 ]
+    mass: 0.1
+    inertia: [
+      0.001, 0,       0,
+      0,       0.001, 0,
+      0,       0,     0.001 ]
+    <<: *JOINT_COMPLIANCE
+    jointAngle: -1.5
+  -
+    name: L_HIP_R
+    parent: L_HIP_Y
+    jointType: revolute
+    jointId: 23
+    jointAxis: -X
+    jointRange: [ -30, 30 ]
+    mass: 0.1
+    inertia: [
+      0.001, 0,       0,
+      0,       0.001, 0,
+      0,       0,     0.001 ]
+    <<: *JOINT_COMPLIANCE
+    jointAngle: 0.7
+  -
+    name: L_HIP_P
+    parent: L_HIP_R
+    jointType: revolute
+    jointId: 24
+    jointAxis: -Y
+    jointRange: [ -60, 80 ]
+    mass: 7.0
+    inertia: [
+      0.029792, 0,       0,
+      0,       0.029792, 0,
+      0,       0,       0.025536 ]
+    <<: *JOINT_COMPLIANCE
+    jointLockCompliance: 0.01
+    jointAngle: -8.2
+    elements:
+      -
+        type: Shape
+        translation: [ 0.0, 0.0, -0.16 ]
+        rotation: [ 1, 0, 0, 90 ]
+        geometry: { type: Capsule, radius: 0.075, height: 0.2 }
+        appearance: *bodyColor
+  -
+    name: L_KNEE_P
+    parent: L_HIP_P
+    translation: [ 0.0, 0.0, -0.32 ]
+    jointType: revolute
+    jointId: 25
+    jointAxis: Y
+    jointRange: [ 0.0, 140 ]
+    mass: 3.0
+    inertia: [
+      0.010604417, 0,       0,
+      0,       0.010604417, 0,
+      0,       0,       0.0090895 ]
+    <<: *JOINT_COMPLIANCE
+    jointAngle: 52.3
+    elements:
+      -
+        type: Shape
+        translation: [ 0.0, 0.0, -0.155 ]
+        rotation: [ 1, 0, 0, 90 ]
+        geometry: { type: Capsule, radius: 0.065, height: 0.19 }
+        appearance: *bodyColor
+  -
+    name: L_ANKLE_P
+    parent: L_KNEE_P
+    translation: [ 0.0, 0.0, -0.3 ]
+    jointType: revolute
+    jointId: 26
+    jointAxis: -Y
+    jointRange: [ -40, 30 ]
+    mass: 0.1
+    inertia: [
+      0.001, 0,       0,
+      0,       0.001, 0,
+      0,       0,     0.001 ]
+    <<: *JOINT_COMPLIANCE
+    jointAngle: -19.4
+  -
+    name: L_ANKLE_R
+    parent: L_ANKLE_P
+    jointType: revolute
+    jointId: 27
+    jointAxis: X
+    jointRange: [ -20, 20 ]
+    mass: 1.26
+    inertia: [
+      0.00189, 0,       0,
+      0,       0.006833333, 0,
+      0,       0,       0.007733333 ]
+    <<: *JOINT_COMPLIANCE
+    jointAngle: -1.6
+    elements:
+      -
+        type: Shape
+        translation: [ 0.06, 0.0, -0.03 ]
+        geometry: { type: Box, size: [ 0.24, 0.11, 0.05 ] }
+        appearance: *bodyColor
+
+collisionDetection:
+  excludeTreeDepth: 2
+  excludeLinkGroups:
+    - links: [ CHEST_P, R_SHOULDER_Y, L_SHOULDER_Y ]
+    - links: [ WAIST, R_HIP_P ]
+    - links: [ WAIST, L_HIP_P ]

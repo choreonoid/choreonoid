@@ -1,0 +1,53 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: Debris1
+
+
+BOX: &BOX
+  type: Transform
+  elements:
+    Shape: 
+      geometry:
+        type: Box
+        size: [ 0.5, 0.5, 0.5 ]
+
+OBJ: &OBJ
+  -
+    <<: *BOX
+    translation: [ -0.0625, -0.5, 0 ]
+  -
+    <<: *BOX
+    translation: [ 0, 0, 0 ]
+  -
+    <<: *BOX
+    translation: [ -0.125, 0.55, 0 ]
+  -
+    <<: *BOX
+    translation: [ 0.5, -0.5, 0 ]
+  -
+    <<: *BOX
+    translation: [ 0.525, 0, 0 ]
+  -
+    <<: *BOX
+    translation: [ 0.60, 0.525, 0 ]
+  -
+    <<: *BOX
+    translation: [ 0.1, -0.25, 0.5 ]
+  -
+    <<: *BOX
+    translation: [ 0, 0.25, 0.5 ]
+  -
+    <<: *BOX
+    translation: [ 0.6, 0.30, 0.5 ]
+  -
+    <<: *BOX
+    translation: [ 0.2, 0, 1 ]
+
+links:
+  -
+    name: BASE
+    translation: [ 0, 0, 0 ]
+    jointType: fixed
+    elements: *OBJ
+

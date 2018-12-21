@@ -32,6 +32,8 @@ public:
         
     const Vector3f& color() const;
     void setColor(const Vector3f& c);
+    float emission() const;
+    void setEmission(float r);
     double transparency() const;
     void setTransparency(float t);
 
@@ -39,6 +41,7 @@ private:
     int markerType_;
     float markerSize_;
     SgMaterialPtr material;
+    float emission_;
 
     void setCross();
     void setSphere();
