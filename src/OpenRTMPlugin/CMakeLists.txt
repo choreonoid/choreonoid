@@ -20,7 +20,6 @@ set(plugin_sources
   RTMImageView.cpp
   RTSConfigurationView.cpp
   BodyStateSubscriberRTCItem.cpp
-  RTSCommonUtil.cpp
   LoggerUtil.cpp
   deprecated/BodyRTCItem.cpp
   deprecated/VirtualRobotRTC.cpp
