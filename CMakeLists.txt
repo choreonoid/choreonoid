@@ -1,8 +1,4 @@
-if(MSVC)
-  cmake_minimum_required(VERSION 3.1.0) # Qt5 requies this version or later
-else()
-  cmake_minimum_required(VERSION 2.8.12) # Default version on Ubuntu 14.04
-endif()
+cmake_minimum_required(VERSION 3.1.0) # Qt5 requies this version or later
 
 cmake_policy(SET CMP0003 NEW)
 cmake_policy(SET CMP0057 NEW)
