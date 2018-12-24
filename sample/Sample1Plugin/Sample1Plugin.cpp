@@ -1,13 +1,8 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include <cnoid/Plugin>
+#include <cnoid/ToolBar>
 #include <cnoid/ItemTreeView>
 #include <cnoid/BodyItem>
-#include <cnoid/ToolBar>
 
-using namespace std;
 using namespace cnoid;
 
 class Sample1Plugin : public Plugin
@@ -21,30 +16,29 @@ public:
     
     virtual bool initialize()
     {
-        ToolBar* bar = new ToolBar("Sample1");
-        bar->addButton("Increment")
-            ->sigClicked().connect(bind(&Sample1Plugin::onButtonClicked, this, +0.04));
-        bar->addButton("Decrement")
-                ->sigClicked().connect(bind(&Sample1Plugin::onButtonClicked, this, -0.04));
+        auto bar = new ToolBar("Sample1");
+        auto button1 = bar->addButton("Increment");
+        button1->sigClicked().connect([&](){ onButtonClicked(0.04); });
+        auto button2 = bar->addButton("Decrement");
+        button2->sigClicked().connect([&](){ onButtonClicked(-0.04); });
+        bar->setVisibleByDefault(true);
         addToolBar(bar);
-
         return true;
     }
 
+private:
+    
     void onButtonClicked(double dq)
     {
-        ItemList<BodyItem> bodyItems =
-            ItemTreeView::mainInstance()->selectedItems<BodyItem>();
-        
-        for(size_t i=0; i < bodyItems.size(); ++i){
-            BodyPtr body = bodyItems[i]->body();
-            for(int j=0; j < body->numJoints(); ++j){
-                body->joint(j)->q() += dq;
+        auto bodyItems = ItemTreeView::instance()->selectedItems<BodyItem>();
+        for(auto& bodyItem : bodyItems){
+            auto body = bodyItem->body();
+            for(auto& joint : body->joints()){
+                joint->q() += dq;
             }
-            bodyItems[i]->notifyKinematicStateChange(true);
+            bodyItem->notifyKinematicStateChange(true);
         }
     }
 };
-
 
 CNOID_IMPLEMENT_PLUGIN_ENTRY(Sample1Plugin)

@@ -1,14 +1,19 @@
-if(NOT ENABLE_GUI)
-  return()
-endif()
-
-option(BUILD_HELLO_WORLD_SAMPLE "Building a Hello World sample plugin" OFF)
-
-if(BUILD_HELLO_WORLD_SAMPLE)
+if(CMAKE_PROJECT_NAME STREQUAL "Choreonoid")
+  # Build inside the Choreonoid project
   set(target CnoidHelloWorldPlugin)
   add_cnoid_plugin(${target} SHARED HelloWorldPlugin.cpp)
   target_link_libraries(${target} CnoidBase)
   apply_common_setting_for_plugin(${target})
+else()
+  # Stand alone build
+  cmake_minimum_required(VERSION 3.1.0)
+  project(HelloWorldPlugin)
+  find_package(Choreonoid REQUIRED)
+  add_definitions(${CHOREONOID_DEFINITIONS})
+  include_directories(${CHOREONOID_INCLUDE_DIRS})
+  link_directories(${CHOREONOID_LIBRARY_DIRS})
+  set(target CnoidHelloWorldPlugin)
+  add_library(${target} SHARED HelloWorldPlugin.cpp)
+  target_link_libraries(${target} ${CHOREONOID_BASE_LIBRARIES})
+  install(TARGETS ${target} LIBRARY DESTINATION ${CHOREONOID_PLUGIN_DIR})
 endif()
-
-#install_sample_source(HelloWorldPlugin.cpp)

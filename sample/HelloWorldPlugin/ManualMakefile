@@ -1,4 +1,3 @@
-
 CXXFLAGS += -fPIC `pkg-config --cflags choreonoid`
 PLUGIN = libCnoidHelloWorldPlugin.so
 
