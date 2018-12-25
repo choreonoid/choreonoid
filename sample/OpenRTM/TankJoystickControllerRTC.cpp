@@ -171,7 +171,7 @@ RTC::ReturnCode_t TankJoystickControllerRTC::onExecute(RTC::UniqueId ec_id)
 
     if(accelIn.isNew()){
         accelIn.read();
-        if(lightBlinkCounter == 0 && Vector2(accel.ax, accel.ay).norm() > 500.0){
+        if(lightBlinkCounter == 0 && Vector2(accel.data.ax, accel.data.ay).norm() > 500.0){
             // Blink light when large acceleration is detected
             lightBlinkCounter = 21;
             lightBlinkDuration = 0;
