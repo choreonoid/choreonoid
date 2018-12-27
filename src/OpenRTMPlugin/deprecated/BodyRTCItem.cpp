@@ -625,10 +625,10 @@ bool BodyRTCItem::restore(const Archive& archive)
         baseDirectoryType.select(value);
     }
 
-    if (archive.read("autoConnect", autoConnect) == false) {
+    if (!archive.read("autoConnect", autoConnect)){
         archive.read("AutoConnect", autoConnect);
     }
-    if(archive.read("instanceName", instanceName)) {
+    if(!archive.read("instanceName", instanceName)) {
         archive.read("InstanceName", instanceName);
     }
     archive.read("bodyPeriodicRate", executionCycleProperty);
