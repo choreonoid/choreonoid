@@ -29,8 +29,8 @@ protected:
     RTC::TimedDoubleSeq angles;
     RTC::InPort<RTC::TimedDoubleSeq> anglesIn;
     
-    RTC::Acceleration3D accel;
-    RTC::InPort<RTC::Acceleration3D> accelIn;
+    RTC::TimedAcceleration3D accel;
+    RTC::InPort<RTC::TimedAcceleration3D> accelIn;
 
     RTC::TimedFloatSeq axes;
     RTC::InPort<RTC::TimedFloatSeq> axesIn;

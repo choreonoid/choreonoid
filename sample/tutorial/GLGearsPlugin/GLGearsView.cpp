@@ -8,10 +8,7 @@
 #include <cnoid/MessageView>
 #include <cmath>
 
-using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
-
 
 GearsScene::GearsScene(QWidget* parent)
     : QGLWidget(parent),
@@ -22,7 +19,6 @@ GearsScene::GearsScene(QWidget* parent)
 
 }
 
-
 bool GearsScene::setTime(double time)
 {
     if(time < 30.0){
@@ -32,7 +28,6 @@ bool GearsScene::setTime(double time)
     }
     return false;
 }
-
 
 void GearsScene::initializeGL()
 {
@@ -69,7 +64,6 @@ void GearsScene::initializeGL()
     glEnable(GL_NORMALIZE);
 }
 
-
 void GearsScene::resizeGL(int width, int height)
 {
     GLfloat h = (GLfloat)height / width;
@@ -82,7 +76,6 @@ void GearsScene::resizeGL(int width, int height)
     glLoadIdentity();
     glTranslatef(0.0, 0.0, -40.0);
 }
-
 
 void GearsScene::paintGL()
 {
@@ -113,7 +106,6 @@ void GearsScene::paintGL()
 
     glPopMatrix();
 }
-
 
 /*
  * Draw a gear wheel.  You'll probably want to call this function when
@@ -240,7 +232,6 @@ void GearsScene::gear(GLfloat innerRadius, GLfloat outerRadius, GLfloat width, G
     glEnd();
 }
 
-
 GLGearsView::GLGearsView() : gearsScene(0)
 {
     gearsScene = new GearsScene(this);
@@ -251,16 +242,14 @@ GLGearsView::GLGearsView() : gearsScene(0)
     timeBar = TimeBar::instance();
 }
 
-
 void GLGearsView::onActivated()
 {
     if(!timeChangeConnection.connected()){
         timeChangeConnection = timeBar->sigTimeChanged().connect(
-            bind(&GearsScene::setTime, gearsScene, _1));
+            [&](double time){ return gearsScene->setTime(time); });
     }
     gearsScene->setTime(timeBar->time());
 }
-
 
 void GLGearsView::onDeactivated()
 {

@@ -51,12 +51,6 @@ using boost::format;
 
 namespace {
 
-// Old conf filename. This should be deprecated, but continue to use for a while
-const char* DEFAULT_CONF_FILENAME = "./rtc.conf.choreonoid";
-
-// New conf filename. It is desirable to use this.
-//const char* DEFAUT_CONF_FILENAME = "./choreonoid.rtc.conf"
-
 class ManagerEx : public RTC::Manager
 {
 public:
@@ -137,7 +131,18 @@ public:
             }
             //
             configFile = appVars->get("defaultSetting", DEFAULT_CONF_FILENAME);
+        } else {
+            appVars->write("defaultSetting", DEFAULT_CONF_FILENAME, DOUBLE_QUOTED);
+            appVars->write("defaultVendor", "AIST", DOUBLE_QUOTED);
+            appVars->write("defaultVersion", "1.0.0", DOUBLE_QUOTED);
+
+#if defined(OPENRTM_VERSION12)
+            appVars->write("heartBeatPeriod", 500);
+#endif
+            appVars->write("outputLog", false);
+            appVars->write("logLevel", "INFO");
         }
+        DDEBUG_V("configFile : %s", configFile.c_str());
 
         const char* argv[] = {
             "choreonoid",
@@ -231,7 +236,7 @@ public:
         NameServerInfo info = RTCCommonUtil::getManagerAddress();
         if (info.hostAddress.empty() == false) {
             NameServerManager::instance()->getNCHelper()->setLocation(info.hostAddress, info.portNo);
-            DDEBUG_V("Init ncHelper host:%s, port:%d", info.hostAddress.c_str(), info.hostAddress);
+            DDEBUG_V("Init ncHelper host:%s, port:%d", info.hostAddress.c_str(), info.portNo);
         }
 
         RTSNameServerView::initializeClass(this);

@@ -54,7 +54,7 @@ Action::~Action()
 }
 
 
-Signal<void(void)>& Action::sigTriggered()
+SignalProxy<void()> Action::sigTriggered()
 {    
     if(!sigTriggered_){
         sigTriggered_ = new Signal<void(void)>();
@@ -70,7 +70,7 @@ void Action::onTriggered(bool checked)
 }
 
 
-Signal<void(bool)>& Action::sigToggled()
+SignalProxy<void(bool)> Action::sigToggled()
 {    
     if(!sigToggled_){
         sigToggled_ = new Signal<void(bool)>();

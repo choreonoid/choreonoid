@@ -2,6 +2,7 @@
 #define CNOID_OPENRTM_PLUGIN_RTS_NAME_SERVER_VIEW_H
 
 #include "RTCWrapper.h"
+#include "RTSCommonUtil.h"
 #include <cnoid/CorbaUtil>
 #include <cnoid/TreeWidget>
 #include <cnoid/MenuManager>
@@ -27,7 +28,7 @@ public:
 
     //Proxy to RTSNameServerViewImpl
     void updateView();
-    void setSelection(std::string RTCname, std::string RTCfullPath, std::string nsInfo);
+    void setSelection(std::string RTCname, std::string RTCfullPath, NamingContextHelper::ObjectInfo nsInfo);
 
 protected:
     virtual void onActivated() override;
@@ -76,6 +77,7 @@ public:
     RTSVItem(const NamingContextHelper::ObjectInfo& info, RTC::RTObject_ptr rtc = 0);
 
     NamingContextHelper::ObjectInfo info_;
+    NameServerInfo nsInfo_;
     CORBA_KIND kind_;
     bool removing_;
 };

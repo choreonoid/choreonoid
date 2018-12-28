@@ -22,8 +22,8 @@ public:
     Action(const QIcon& icon, const QString& text, QObject* parent);
     ~Action();
                                
-    Signal<void(void)>& sigTriggered();
-    Signal<void(bool)>& sigToggled();
+    SignalProxy<void()> sigTriggered();
+    SignalProxy<void(bool)> sigToggled();
 
 private Q_SLOTS:
     void onTriggered(bool checked);

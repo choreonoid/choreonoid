@@ -593,8 +593,8 @@ bool BodyRTCItem::store(Archive& archive)
     archive.writeRelocatablePath("moduleName", moduleName);
     archive.writeRelocatablePath("confFileName", confFileName);
     archive.write("configurationMode", configMode.selectedSymbol(), DOUBLE_QUOTED);
-    archive.write("AutoConnect", autoConnect);
-    archive.write("InstanceName", instanceName, DOUBLE_QUOTED);
+    archive.write("autoConnect", autoConnect);
+    archive.write("instanceName", instanceName, DOUBLE_QUOTED);
     archive.write("bodyPeriodicRate", executionCycleProperty);
     archive.write("baseDirectory", baseDirectoryType.selectedSymbol(), DOUBLE_QUOTED);
 
@@ -624,8 +624,13 @@ bool BodyRTCItem::restore(const Archive& archive)
     if(archive.read("baseDirectory", value) || archive.read("RelativePathBase", value)){
         baseDirectoryType.select(value);
     }
-    archive.read("AutoConnect", autoConnect);
-    archive.read("InstanceName", instanceName);
+
+    if (!archive.read("autoConnect", autoConnect)){
+        archive.read("AutoConnect", autoConnect);
+    }
+    if(!archive.read("instanceName", instanceName)) {
+        archive.read("InstanceName", instanceName);
+    }
     archive.read("bodyPeriodicRate", executionCycleProperty);
 
     return true;
