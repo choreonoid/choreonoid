@@ -497,7 +497,7 @@ void SpringheadLink::setVelocityToSpringhead()
 {
 	if(phJoint1D){
 		phJoint1D->SetDamper(100000000.0);
-		phJoint1D->SetTargetVelocity(link->dq());
+		phJoint1D->SetTargetVelocity(link->dq_target());
 	}
 }
 
