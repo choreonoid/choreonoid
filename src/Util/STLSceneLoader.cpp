@@ -5,13 +5,13 @@
 #include "NullOut.h"
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/format.hpp>
+#include <fmt/format.h>
 #include <fstream>
 #include "gettext.h"
 
 using namespace std;
 using namespace boost::algorithm;
-using boost::format;
+using fmt::format;
 using namespace cnoid;
 
 namespace {
@@ -58,7 +58,7 @@ SgNode* STLSceneLoader::load(const std::string& filename)
 {
     std::ifstream ifs(filename.c_str(), std::ios::in | std::ios::binary);
     if(!ifs.is_open()){
-        os() << str(format(_("Unable to open file \"%1%\".")) % filename) << endl;
+        os() << format(_("Unable to open file \"{}\"."), filename) << endl;
         return 0;
     }
     

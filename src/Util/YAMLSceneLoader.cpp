@@ -9,12 +9,12 @@
 #include "ValueTree.h"
 #include "NullOut.h"
 #include <boost/filesystem.hpp>
-#include <boost/format.hpp>
+#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using boost::format;
+using fmt::format;
 
 namespace {
 
@@ -101,11 +101,11 @@ SgNode* YAMLSceneLoaderImpl::load(const std::string& filename)
             sceneReader.readHeader(*topNode);
             ValueNodePtr sceneElements = topNode->findMapping("scene");
             if(!sceneElements->isValid()){
-                os() << (format(_("Scene file \"%1%\" does not have the \"scene\" node.")) % filename) << endl;
+                os() << format(_("Scene file \"{}\" does not have the \"scene\" node."), filename) << endl;
             } else {
                 scene = sceneReader.readNodeList(*sceneElements);
                 if(!scene){
-                    os() << (format(_("Scene file \"%1%\" is an empty scene.")) % filename) << endl;
+                    os() << format(_("Scene file \"{}\" is an empty scene."), filename) << endl;
                     scene = new SgNode;
                 }
             }

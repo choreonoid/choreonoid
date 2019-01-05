@@ -1,8 +1,4 @@
-if(MSVC)
-  cmake_minimum_required(VERSION 3.1.0) # Qt5 requies this version or later
-else()
-  cmake_minimum_required(VERSION 2.8.12) # Default version on Ubuntu 14.04
-endif()
+cmake_minimum_required(VERSION 3.1.0) # Qt5 requies this version or later
 
 cmake_policy(SET CMP0003 NEW)
 cmake_policy(SET CMP0057 NEW)
@@ -567,7 +563,8 @@ macro(setup_qt5)
 
     if(INSTALL_SDK_WITH_EXTLIBS)
       foreach(dir
-          ${Qt5Core_INCLUDE_DIRS} ${Qt5Gui_INCLUDE_DIRS} ${Qt5OpenGL_INCLUDE_DIRS} ${Qt5Network_INCLUDE_DIRS})
+	  ${Qt5Core_INCLUDE_DIRS} ${Qt5Gui_INCLUDE_DIRS} ${Qt5Widgets_INCLUDE_DIRS}
+	  ${Qt5OpenGL_INCLUDE_DIRS} ${Qt5Network_INCLUDE_DIRS})
         install(DIRECTORY ${dir} DESTINATION ${CNOID_HEADER_SUBDIR})
       endforeach()
     endif()
@@ -1386,6 +1383,12 @@ elseif(MSVC)
   add_subdirectory(thirdparty/lpng1232)
   add_subdirectory(thirdparty/Jpeg-9c)
   add_subdirectory(thirdparty/zlib123)
+endif()
+
+# fmtlib
+find_package(fmt QUIET)
+if(NOT fmt_FOUND)
+  add_subdirectory(thirdparty/fmt-5.3.0)
 endif()
 
 add_subdirectory(src)

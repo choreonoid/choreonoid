@@ -4,12 +4,12 @@
 
 #include "GLSLProgram.h"
 #include <QFile>
-#include <boost/format.hpp>
+#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using boost::format;
+using fmt::format;
 
 
 GLSLProgram::GLSLProgram()
@@ -65,7 +65,7 @@ void GLSLProgram::loadShader(const char* filename, int shaderType)
     QFile file(filename);
 
     if(!file.exists()){
-        throw Exception(str(format(_("Shader \"%1%\" is not found.")) % filename));
+        throw Exception(format(_("Shader \"{}\" is not found."), filename));
     }
     
     file.open(QIODevice::ReadOnly);
@@ -88,9 +88,9 @@ void GLSLProgram::loadShader(const char* filename, int shaderType)
             vector<char> log(length);
             GLsizei written;
             glGetShaderInfoLog(shaderHandle, length, &written, &log[0]);
-            msg = str(format(_("Shader compilation of \"%1%\" failed.\n%2%")) % filename % &log[0]);
+            msg = format(_("Shader compilation of \"{0}\" failed.\n{1}"), filename, &log[0]);
         } else {
-            msg = str(format(_("Shader compilation of \"%1%\" failed.")) % filename);
+            msg = format(_("Shader compilation of \"{}\" failed."), filename);
         }
         glDeleteShader(shaderHandle);
         throw Exception(msg);
@@ -129,7 +129,7 @@ void GLSLProgram::link()
             vector<char> log(length);
             GLsizei written;
             glGetProgramInfoLog(programHandle, length, &written, &log[0]);
-            msg = str(format(_("Program link failed:\n%1%")) % &log[0]);
+            msg = format("Program link failed:\n{}", &log[0]);
         } else {
             msg = _("Program link failed.");
         }
@@ -159,7 +159,7 @@ void GLSLProgram::validate()
             vector<char> log(length);
             GLsizei written;
             glGetProgramInfoLog(programHandle, length, &written, &log[0]);
-            msg = str(format(_("Program failed to validate\n%1%")) % &log[0]);
+            msg = format("Program failed to validate\n{}", &log[0]);
         } else {
             msg = _("Program failed to validate");
         }

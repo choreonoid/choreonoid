@@ -38,7 +38,7 @@
 #include <QColorDialog>
 #include <QElapsedTimer>
 #include <QMessageBox>
-#include <boost/format.hpp>
+#include <fmt/format.h>
 #include <set>
 #include <iostream>
 #include "gettext.h"
@@ -1449,14 +1449,14 @@ void SceneWidgetImpl::updatePointerPosition()
     updateLatestEventPath();
     
     if(!isEditMode){
-        static boost::format f1(_("Global Position: (%1$.3f %2$.3f %3$.3f)"));
-        static boost::format f2(_("Object: %1%, Global Position: (%2$.3f %3$.3f %4$.3f)"));
+        static string f1(_("Global Position: ({0:.3f} {1:.3f} {2:.3f})"));
+        static string f2(_("Object: {0}, Global Position: ({1:.3f} {2:.3f} {3:.3f})"));
         const Vector3& p = latestEvent.point();
         string name = findObjectNameFromNodePath(latestEvent.nodePath());
         if(name.empty()){
-            updateIndicator(str(f1 % p.x() % p.y() % p.z()));
+            updateIndicator(fmt::format(f1, p.x(), p.y(), p.z()));
         } else {
-            updateIndicator(str(f2 % name % p.x() % p.y() % p.z()));
+            updateIndicator(fmt::format(f2, name, p.x(), p.y(), p.z()));
         }
         
     } else {

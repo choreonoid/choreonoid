@@ -186,6 +186,7 @@ set(headers
   LazySignal.h
   LazyCaller.h
   SceneWidget.h
+  SceneWidgetEvent.h
   SceneProjector.h
   SceneDragProjector.h
   SceneDragger.h

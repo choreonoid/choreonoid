@@ -89,7 +89,7 @@ foreach(version ${versions})
     )
   
   if(MSVC)
-    add_definitions(-D__WIN32__ -D__x86__ -D__NT__ -D__OSVERSION__=4 -D_CRT_SECURE_NO_DEPRECATE -D_WIN32_WINNT=0x0500 -DRTC_CORBA_CXXMAPPING11)
+    add_compile_options(${OPENRTM_CFLAGS})
   endif()
 
   make_gettext_mofiles(${target} mofiles)

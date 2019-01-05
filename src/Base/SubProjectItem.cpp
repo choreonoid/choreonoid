@@ -8,12 +8,13 @@
 #include "MessageView.h"
 #include "ItemTreeView.h"
 #include <cnoid/ConnectionSet>
+#include <fmt/format.h>
 #include <set>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using boost::format;
+using fmt::format;
 
 namespace {
 std::set<string> projectFilesBeingLoaded;
@@ -120,8 +121,8 @@ bool SubProjectItemImpl::loadSubProject(const std::string& filename)
 {
     if(projectFilesBeingLoaded.find(filename) != projectFilesBeingLoaded.end()){
         MessageView::instance()->putln(
-            format(_("Sub projects to load \"%1%\" are recursively specified."))
-            % filename, MessageView::ERROR);
+            format(_("Sub projects to load \"{}\" are recursively specified."),
+            filename), MessageView::ERROR);
         return false;
     }
 

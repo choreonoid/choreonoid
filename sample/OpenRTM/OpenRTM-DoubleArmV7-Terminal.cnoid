@@ -10,12 +10,12 @@ items:
       plugin: OpenRTM
       class: RTSystemItem
       data: 
-        filename: "DoubleArmV7-RTSystem.xml"
+        filename: "${PROJECT_DIR}/DoubleArmV7-RTSystem.xml"
         format: RTS-PROFILE-XML
-        AutoConnection: true
-        PollingCycle: 1000
-        StateCheck: Polling
-        CheckAtLoading: true
+        autoConnection: true
+        pollingCycle: 1000
+        stateCheck: Polling
+        checkAtLoading: true
     - 
       id: 2
       name: "JoystickRTC"
@@ -53,6 +53,7 @@ views:
       viewpointControlMode: thirdPerson
       collisionLines: false
       polygonMode: fill
+      cullingMode: enabled
       defaultHeadLight: true
       defaultHeadLightIntensity: 0.6
       headLightLightingFromBack: false
@@ -157,12 +158,88 @@ views:
     state: 
       NameServers: 
         - 
-          host: "localhost"
+          isDefaultNameServer: true
+          host: "150.29.145.246"
           port: 2809
   - 
     id: 11
     plugin: Python
     class: PythonConsoleView
+toolbars: 
+  "TimeBar": 
+    minTime: 0
+    maxTime: 30
+    frameRate: 1000
+    playbackFrameRate: 60
+    idleLoopDrivenMode: false
+    currentTime: 0
+    speedScale: 1
+    syncToOngoingUpdates: true
+    autoExpansion: true
+  "LeggedBodyBar": 
+    stanceWidth: 0.15
+  "KinematicsBar": 
+    mode: AUTO
+    enablePositionDragger: true
+    penetrationBlock: false
+    collisionLinkHighlight: false
+    snapDistance: 0.025
+    penetrationBlockDepth: 0.0005
+    lazyCollisionDetectionMode: true
+  "BodyMotionGenerationBar": 
+    autoGenerationForNewBody: true
+    balancer: false
+    autoGeneration: false
+    timeScaleRatio: 1
+    preInitialDuration: 1
+    postFinalDuration: 1
+    onlyTimeBarRange: false
+    makeNewBodyItem: true
+    stealthyStepMode: true
+    stealthyHeightRatioThresh: 2
+    flatLiftingHeight: 0.005
+    flatLandingHeight: 0.005
+    impactReductionHeight: 0.005
+    impactReductionTime: 0.04
+    autoZmp: true
+    minZmpTransitionTime: 0.1
+    zmpCenteringTimeThresh: 0.03
+    zmpTimeMarginBeforeLiftingSpin: 0
+    zmpMaxDistanceFromCenter: 0.02
+    allLinkPositions: false
+    lipSyncMix: false
+    timeToStartBalancer: 0
+    balancerIterations: 2
+    plainBalancerMode: false
+    boundaryConditionType: position
+    boundarySmootherType: quintic
+    boundarySmootherTime: 0.5
+    boundaryCmAdjustment: false
+    boundaryCmAdjustmentTime: 1
+    waistHeightRelaxation: false
+    gravity: 9.8
+    dynamicsTimeRatio: 1
+Body: 
+  "BodyMotionEngine": 
+    updateJointVelocities: false
+  "EditableSceneBody": 
+    staticModelEditing: true
+  "KinematicFaultChecker": 
+    checkJointPositions: true
+    angleMargin: 0
+    translationMargin: 0
+    checkJointVelocities: true
+    velocityLimitRatio: 100
+    targetJoints: all
+    checkSelfCollisions: true
+    onlyTimeBarRange: false
+  "SplineFilterDialog": 
+    isInputFrameRateSpecified: false
+    inputFrameRate: 200
+    isOutputFrameRateSpecified: false
+    outputFrameRate: 200
+OpenRTM: 
+  "deleteUnmanagedRTCsOnStartingSimulation": false
 viewAreas: 
   - 
     type: embedded
@@ -170,12 +247,12 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 356, 1518 ]
+      sizes: [ 364, 1550 ]
       children: 
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 626, 625 ]
+          sizes: [ 464, 464 ]
           children: 
             - 
               type: pane
@@ -188,12 +265,12 @@ viewAreas:
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 896, 355 ]
+          sizes: [ 665, 263 ]
           children: 
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 708, 804 ]
+              sizes: [ 723, 821 ]
               children: 
                 - 
                   type: pane

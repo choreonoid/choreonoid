@@ -4,20 +4,20 @@
 */
 
 #include "GeneralSeqReader.h"
-#include <boost/format.hpp>
+#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace cnoid;
-using boost::format;
+using fmt::format;
 
 std::string GeneralSeqReader::mismatched_seq_type_message(const std::string& type, AbstractSeq* seq)
 {
-    return str(format(_("Seq type \"%1%\" cannot be load into %2%.")) % type % seq->seqType());
+    return format(_("Seq type \"{0}\" cannot be load into {1}."), type, seq->seqType());
 }
 
 std::string GeneralSeqReader::has_frame_time_unsupported_message(double formatVersion)
 {
-    return str(format(_("The \"hasFrameTime\" parameter is not availabe in format version %1%.")) % formatVersion);
+    return format(_("The \"hasFrameTime\" parameter is not availabe in format version {}."), formatVersion);
 }
 
 std::string GeneralSeqReader::unkown_frame_rate_for_time_frame_seq_message()

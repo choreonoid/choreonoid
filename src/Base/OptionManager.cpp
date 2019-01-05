@@ -4,7 +4,7 @@
 
 #include "OptionManager.h"
 #include "MessageView.h"
-#include <boost/format.hpp>
+#include <fmt/format.h>
 #include <iostream>
 #include <set>
 #include "gettext.h"
@@ -87,7 +87,7 @@ void OptionManager::parseCommandLine2()
 
     for(auto& file : inputFiles){
         MessageView::instance()->putln(
-            MessageView::WARNING, boost::format(_("Input file \"%1%\" was not processed.")) % file);
+            MessageView::WARNING, fmt::format(_("Input file \"{}\" was not processed."), file));
     }
 }
 

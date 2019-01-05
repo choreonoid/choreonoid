@@ -136,13 +136,14 @@ public:
     std::string fullPath;
     std::string hostAddress;
     int portNo;
+    bool isDefaultNS;
     std::vector<RTSPortPtr> inPorts;
     std::vector<RTSPortPtr> outPorts;
 
     Component profile;
     bool isAlive_;
 
-    RTSComp(const std::string& name, const std::string& fullPath, RTC::RTObject_ptr rtc, RTSystemItem* rts, const QPointF& pos, const std::string& host, int port);
+    RTSComp(const std::string& name, const std::string& fullPath, RTC::RTObject_ptr rtc, RTSystemItem* rts, const QPointF& pos, const std::string& host, int port, bool isDefault);
     RTSystemItem* rts() { return rts_; }
     RTSPort* nameToRTSPort(const std::string& name);
     const QPointF& pos() const { return pos_; }
@@ -201,10 +202,10 @@ public:
     int stateCheck() const;
 
     bool checkStatus();
+    bool isCheckAtLoading();
 
     SignalProxy<void(int)> sigTimerPeriodChanged();
     SignalProxy<void(bool)> sigTimerChanged();
-    SignalProxy<void(bool isRestored)> sigLoaded();
 
 protected:
     virtual Item* doDuplicate() const override;

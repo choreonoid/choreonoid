@@ -1,5 +1,6 @@
 #include "PortConnectionDialogExt.h"
-#include "RTSCommonUtilExt.h"
+#include "RTSCommonUtil.h"
+#include "RTSTypeUtilExt.h"
 #include "LoggerUtil.h"
 #include <cnoid/Buttons>
 #include <QLabel>
@@ -271,7 +272,7 @@ void DataPortConnectionDialogExt::setDisp(RTSPortExt* source, RTSPortExt* target
     DDEBUG("CreateConnectionDialog::setDisp");
     nameLineEdit->setText(QString((source->name + "_" + target->name).c_str()));
     //
-    vector<string> types = RTCCommonUtilExt::getAllowDataTypes(source, target);
+    vector<string> types = RTSTypeUtilExt::getAllowDataTypes(source, target);
     //bool isAllowAny = RTCCommonUtil::isAllowAnyDataType(source, target);
     dataTypeCombo->clear();
     for (int index = 0; index < types.size(); index++) {
@@ -279,21 +280,21 @@ void DataPortConnectionDialogExt::setDisp(RTSPortExt* source, RTSPortExt* target
     }
     dataTypeCombo->setCurrentIndex(0);
     //
-    types = RTCCommonUtilExt::getAllowInterfaceTypes(source, target);
+    types = RTSTypeUtilExt::getAllowInterfaceTypes(source, target);
     interfaceCombo->clear();
     for (int index = 0; index < types.size(); index++) {
         interfaceCombo->addItem(QString::fromStdString(types[index]));
     }
     interfaceCombo->setCurrentIndex(0);
     //
-    types = RTCCommonUtilExt::getAllowDataflowTypes(source, target);
+    types = RTSTypeUtilExt::getAllowDataflowTypes(source, target);
     dataflowCombo->clear();
     for (int index = 0; index < types.size(); index++) {
         dataflowCombo->addItem(QString::fromStdString(types[index]));
     }
     dataflowCombo->setCurrentIndex(0);
     //
-    types = RTCCommonUtilExt::getAllowSubscriptionTypes(source, target);
+    types = RTSTypeUtilExt::getAllowSubscriptionTypes(source, target);
     subscriptionCombo->clear();
     for (int index = 0; index < types.size(); index++) {
         subscriptionCombo->addItem(QString::fromStdString(types[index]));

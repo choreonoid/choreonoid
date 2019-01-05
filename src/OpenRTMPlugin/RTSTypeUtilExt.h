@@ -3,8 +3,8 @@
  * @author Hisashi Ikari
  * @file
  */
-#ifndef CNOID_OPENRTM_PLUGIN_RTS_COMMON_UTIL_EXT_H_INCLUDED
-#define CNOID_OPENRTM_PLUGIN_RTS_COMMON_UTIL_EXT_H_INCLUDED
+#ifndef CNOID_OPENRTM_PLUGIN_RTS_TYPE_UTIL_EXT_H_INCLUDED
+#define CNOID_OPENRTM_PLUGIN_RTS_TYPE_UTIL_EXT_H_INCLUDED
 
 #include <vector>
 #include "RTSystemExtItem.h"
@@ -14,7 +14,7 @@ using namespace std;
 
 namespace cnoid {
 
-class RTCCommonUtilExt
+class RTSTypeUtilExt
 {
 public:
     static std::vector<std::string> getAllowDataTypes(RTSPortExt* source, RTSPortExt* target);

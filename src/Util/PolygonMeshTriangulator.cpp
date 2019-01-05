@@ -6,7 +6,7 @@
 #include "PolygonMeshTriangulator.h"
 #include "Triangulator.h"
 #include "SceneDrawables.h"
-#include <boost/format.hpp>
+#include <fmt/format.h>
 
 using namespace std;
 using namespace boost;
@@ -120,7 +120,7 @@ SgMesh* PolygonMeshTriangulatorImpl::triangulate(SgPolygonMesh* orgMesh)
         const int index = polygonVertices[i];
         if(index >= numVertices){
             if(numInvalidIndices == 0){
-                addErrorMessage(str(format("Vertex index %1% is over the number of vertices (%2%).") % index % numVertices));
+                addErrorMessage(fmt::format("Vertex index {0} is over the number of vertices ({1}).", index, numVertices));
             }
             ++numInvalidIndices;
         } else if(index >= 0){
@@ -151,8 +151,8 @@ SgMesh* PolygonMeshTriangulatorImpl::triangulate(SgPolygonMesh* orgMesh)
     }
 
     if(numInvalidIndices > 1){
-        addErrorMessage(str(format("There are %1% invalied vertex indices that are over the number of vertices (%2%).")
-                            % numInvalidIndices % numVertices));
+        addErrorMessage(fmt::format("There are {0} invalied vertex indices that are over the number of vertices ({1}).",
+                numInvalidIndices, numVertices));
     }
     if(mesh->numTriangles() == 0){
         addErrorMessage("There is no valid polygons to triangulete.");
@@ -221,9 +221,9 @@ const char* message2(int elementTypeId){
 
 const char* message3(int elementTypeId){
     switch(elementTypeId){
-    case 0: return "Normal index %1% is over the range of given normals.";
-    case 1: return "Color index %1% is over the range of given colors.";
-    case 2: return "TexCoord index %1% is over the range of given texCoords.";
+    case 0: return "Normal index {} is over the range of given normals.";
+    case 1: return "Color index {} is over the range of given colors.";
+    case 2: return "TexCoord index {} is over the range of given texCoords.";
     default: return 0;
     }
 }
@@ -258,7 +258,7 @@ bool PolygonMeshTriangulatorImpl::setIndices
             }
             const int index = orgIndices[orgPos];
             if(index < 0 || index >= numElements){
-                addErrorMessage(str(format(message3(elementTypeId)) % index));
+                addErrorMessage(fmt::format(message3(elementTypeId), index));
                 result = false;
                 break;
             }
