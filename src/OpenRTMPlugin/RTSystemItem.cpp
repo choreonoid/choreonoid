@@ -1,5 +1,6 @@
 #include "RTSystemItem.h"
 #include "RTSCommonUtil.h"
+#include "RTSTypeUtil.h"
 #include <cnoid/MessageView>
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
@@ -97,7 +98,6 @@ public:
 
     Signal<void(int)> sigTimerPeriodChanged;
     Signal<void(bool)> sigTimerChanged;
-    Signal<void(bool)> sigLoaded;
 
     void changeStateCheck();
     void changePollingPeriod(int value);
@@ -200,9 +200,9 @@ bool RTSPort::checkConnectablePort(RTSPort* target)
 
     //In case of connection between data ports
     if (!isServicePort && !target->isServicePort) {
-        vector<string> dataTypes = RTCCommonUtil::getAllowDataTypes(this, target);
-        vector<string> ifTypes = RTCCommonUtil::getAllowInterfaceTypes(this, target);
-        vector<string> subTypes = RTCCommonUtil::getAllowSubscriptionTypes(this, target);
+        vector<string> dataTypes = RTSTypeUtil::getAllowDataTypes(this, target);
+        vector<string> ifTypes = RTSTypeUtil::getAllowInterfaceTypes(this, target);
+        vector<string> subTypes = RTSTypeUtil::getAllowSubscriptionTypes(this, target);
         if (dataTypes.size() == 0 || ifTypes.size() == 0 || subTypes.size() == 0) {
             return false;
         }
@@ -345,8 +345,8 @@ void RTSConnection::setPosition(const Vector2 pos[])
 }
 
 
-RTSComp::RTSComp(const string& name, const std::string& fullPath, RTC::RTObject_ptr rtc, RTSystemItem* rts, const QPointF& pos, const string& host, int port)
-    : rts_(rts), pos_(pos), name(name), fullPath(fullPath), hostAddress(host), portNo(port)
+RTSComp::RTSComp(const string& name, const std::string& fullPath, RTC::RTObject_ptr rtc, RTSystemItem* rts, const QPointF& pos, const string& host, int port, bool isDefault)
+    : rts_(rts), pos_(pos), name(name), fullPath(fullPath), hostAddress(host), portNo(port), isDefaultNS(isDefault)
 {
     setRtc(rtc);
 }
@@ -701,7 +701,7 @@ RTSComp* RTSystemItemImpl::addRTSComp(const string& name, const QPointF& pos)
         }
 
         string fullPath = "/" + name + ".rtc";
-        RTSCompPtr rtsComp = new RTSComp(name, fullPath, rtc, self, pos, ncHelper->host().c_str(), ncHelper->port());
+        RTSCompPtr rtsComp = new RTSComp(name, fullPath, rtc, self, pos, ncHelper->host().c_str(), ncHelper->port(), false);
         rtsComps[fullPath] = rtsComp;
 
         self->suggestFileUpdate();
@@ -728,14 +728,19 @@ RTSComp* RTSystemItemImpl::addRTSComp(const NamingContextHelper::ObjectInfo& inf
     if (!nameToRTSComp(fullPath)) {
         std::vector<NamingContextHelper::ObjectPath> target = info.fullPath_;
         auto ncHelper = NameServerManager::instance()->getNCHelper();
-        ncHelper->setLocation(info.hostAddress_, info.portNo_);
+        if(info.isRegisteredInRtmDefaultNameServer_) {
+            NameServerInfo ns = RTCCommonUtil::getManagerAddress();
+            ncHelper->setLocation(ns.hostAddress, ns.portNo);
+        } else {
+            ncHelper->setLocation(info.hostAddress_, info.portNo_);
+        }
         RTC::RTObject_ptr rtc = ncHelper->findObject<RTC::RTObject>(target);
         if (!isObjectAlive(rtc)) {
             CORBA::release(rtc);
             rtc = nullptr;
         }
 
-        RTSCompPtr rtsComp = new RTSComp(info.id_, fullPath, rtc, self, pos, info.hostAddress_, info.portNo_);
+        RTSCompPtr rtsComp = new RTSComp(info.id_, fullPath, rtc, self, pos, info.hostAddress_, info.portNo_, info.isRegisteredInRtmDefaultNameServer_);
         rtsComps[fullPath] = rtsComp;
 
         self->suggestFileUpdate();
@@ -789,7 +794,18 @@ bool RTSystemItemImpl::compIsAlive(RTSComp* rtsComp)
             pathList.push_back(path);
         }
 
-        NameServerManager::instance()->getNCHelper()->setLocation(rtsComp->hostAddress, rtsComp->portNo);  
+        std::string host;
+        int port;
+        if(rtsComp->isDefaultNS) {
+            NameServerInfo ns = RTCCommonUtil::getManagerAddress();
+            host = ns.hostAddress;
+            port = ns.portNo;
+        } else {
+            host = rtsComp->hostAddress;
+            port = rtsComp->portNo;
+        }
+        DDEBUG_V("host:%s, port:%d, default:%d", host.c_str(), port, rtsComp->isDefaultNS);
+        NameServerManager::instance()->getNCHelper()->setLocation(host, port);
         RTC::RTObject_ptr rtc = NameServerManager::instance()->getNCHelper()->findObject<RTC::RTObject>(pathList);
         if (!isObjectAlive(rtc)) {
             //DDEBUG("RTSystemItemImpl::compIsAlive NOT Alive");
@@ -1090,7 +1106,7 @@ bool RTSystemItem::loadRtsProfile(const string& filename)
     DDEBUG_V("RTSystemItem::loadRtsProfile=%s", filename.c_str());
     ProfileHandler::getRtsProfileInfo(filename, impl->vendorName, impl->version);
     if (ProfileHandler::restoreRtsProfile(filename, this)) {
-        impl->sigLoaded(false);
+        notifyUpdate();
         return true;
     }
     return false;
@@ -1171,6 +1187,10 @@ bool RTSystemItemImpl::checkStatus()
     return modified;
 }
 
+bool RTSystemItem::isCheckAtLoading()
+{
+    return impl->checkAtLoading;
+}
 ///////////
 bool RTSystemItem::store(Archive& archive)
 {
@@ -1232,7 +1252,10 @@ bool RTSystemItem::restore(const Archive& archive)
     }
 
     string stateCheck;
-    if (archive.read("StateCheck", stateCheck)) {
+    if (archive.read("stateCheck", stateCheck) == false) {
+        archive.read("StateCheck", stateCheck);
+    }
+    if(stateCheck.empty()==false) {
         DDEBUG_V("StateCheck:%s", stateCheck.c_str());
         impl->setStateCheckMethodByString(stateCheck);
         archive.addPostProcess([&]() { impl->changeStateCheck(); });
@@ -1315,7 +1338,7 @@ void RTSystemItemImpl::restoreRTSystem(const Archive& archive)
         checkStatus();
     }
 
-    sigLoaded(true);
+    self->notifyUpdate();
     DDEBUG("RTSystemItemImpl::restoreRTSystem End");
 }
 
@@ -1354,9 +1377,4 @@ SignalProxy<void(int)> RTSystemItem::sigTimerPeriodChanged()
 SignalProxy<void(bool)> RTSystemItem::sigTimerChanged()
 {
     return impl->sigTimerChanged;
-}
-
-SignalProxy<void(bool)> RTSystemItem::sigLoaded()
-{
-    return impl->sigLoaded;
 }

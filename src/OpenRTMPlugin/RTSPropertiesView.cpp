@@ -522,7 +522,7 @@ SettingDialog::SettingDialog()
     setWindowTitle(_("OpenRTM Preferences"));
 
     MappingPtr appVars = AppConfig::archive()->openMapping("OpenRTM");
-    leSetting->setText(QString::fromStdString(appVars->get("defaultSetting", "./choreonoid.rtc.conf")));
+    leSetting->setText(QString::fromStdString(appVars->get("defaultSetting", DEFAULT_CONF_FILENAME)));
     leName->setText(QString::fromStdString(appVars->get("defaultVendor", "AIST")));
     leVersion->setText(QString::fromStdString(appVars->get("defaultVersion", "1.0.0")));
 

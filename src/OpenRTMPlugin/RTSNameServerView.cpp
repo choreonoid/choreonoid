@@ -100,14 +100,19 @@ public:
     std::list<NamingContextHelper::ObjectInfo> selectedItemList;
 
     void updateObjectList(bool force = false);
-    void setSelection(std::string RTCName, std::string RTCfullPath, std::string nsInfo);  
+    void setSelection(std::string RTCName, std::string RTCfullPath, NamingContextHelper::ObjectInfo nsInfo);  
 
 private:
     RTSNameServerView * self_;
     RTSNameTreeWidget treeWidget;
 
+    bool isUpdating_;
+    PushButton* updateButton_;
+    bool cancelUpdating_;
+
+    void updateObjectListLocal();
     void updateObjectList(
-        const NamingContextHelper::ObjectInfoList& objects, QTreeWidgetItem* parent,
+        NamingContextHelper::ObjectInfoList& objects, QTreeWidgetItem* parent,
         vector<NamingContextHelper::ObjectPath> pathList);
     void onSelectionChanged();
 
@@ -179,6 +184,7 @@ RTSNameServerView::RTSNameServerView()
 
 
 RTSNameServerViewImpl::RTSNameServerViewImpl(RTSNameServerView* self)
+    : isUpdating_(false), cancelUpdating_(false)
 {
     DDEBUG("RTSNameServerViewImpl::RTSNameServerViewImpl");
     this->self_ = self;
@@ -200,13 +206,13 @@ RTSNameServerViewImpl::RTSNameServerViewImpl(RTSNameServerView* self)
     hbox->addWidget(connectButton);
     hbox->addStretch();
 
-    auto updateButton = new PushButton(_(" Update "));
-    updateButton->setIcon(QIcon(":/Corba/icons/Refresh.png"));
-    updateButton->setToolTip(_(" Update "));
-    updateButton->sigClicked().connect(
+    updateButton_ = new PushButton(_(" Update "));
+    updateButton_->setIcon(QIcon(":/Corba/icons/Refresh.png"));
+    updateButton_->setToolTip(_(" Update "));
+    updateButton_->sigClicked().connect(
         std::bind(
-            static_cast<void(RTSNameServerViewImpl::*)(bool)>(&RTSNameServerViewImpl::updateObjectList), this, true));
-    hbox->addWidget(updateButton);
+            static_cast<void(RTSNameServerViewImpl::*)(void)>(&RTSNameServerViewImpl::updateObjectListLocal), this));
+    hbox->addWidget(updateButton_);
 
     auto clearZombeeButton = new PushButton();
     clearZombeeButton->setIcon(QIcon(":/Corba/icons/KillZombie.png"));
@@ -274,6 +280,29 @@ void RTSNameServerView::onActivated()
 }
 
 
+void RTSNameServerViewImpl::updateObjectListLocal()
+{
+    DDEBUG("RTSNameServerViewImpl::updateObjectListLocal");
+    if(isUpdating_) {
+        cancelUpdating_ = true;
+        updateButton_->setText(_(" Update "));
+        updateButton_->setToolTip(_(" Update "));
+        isUpdating_ = false;
+
+    } else {
+        isUpdating_ = true;
+        cancelUpdating_ = false;
+        updateButton_->setText(_("Cancel Updating"));
+        updateButton_->setToolTip(_("Cancel Updating"));
+
+        updateObjectList(true);
+
+        updateButton_->setText(_(" Update "));
+        updateButton_->setToolTip(_(" Update "));
+        isUpdating_ = false;
+    }
+}
+
 void RTSNameServerViewImpl::updateObjectList(bool force)
 {
     DDEBUG("RTSNameServerViewImpl::updateObjectList");
@@ -293,7 +322,7 @@ void RTSNameServerViewImpl::updateObjectList(bool force)
         vector<NameServerInfo> serverList = NameServerManager::instance()->getServerList();
         vector<NameServerInfo> addedList;
         for (auto it = serverList.begin(); it != serverList.end(); it++) {
-            vector<NameServerInfo>::iterator serverItr = find_if(addedList.begin(), addedList.end(), ServerComparator((*it).hostAddress, (*it).portNo));
+            vector<NameServerInfo>::iterator serverItr = find_if(addedList.begin(), addedList.end(), ServerFullComparator(*it));
             if (serverItr != addedList.end()) continue;
             addedList.push_back(*it);
 
@@ -301,15 +330,24 @@ void RTSNameServerViewImpl::updateObjectList(bool force)
             NameServerManager::instance()->getNCHelper()->setLocation((*it).hostAddress, (*it).portNo);
 
             RTSVItem* topElem = new RTSVItem();
-            QString hostName = QString::fromStdString((*it).hostAddress) + ":" + QString::number((*it).portNo);
+            QString hostName;
+            if((*it).isRtmDefaultNameServer) {
+                hostName = "Default(" + QString::fromStdString((*it).hostAddress) + ":" + QString::number((*it).portNo) + ")";
+            } else {
+                hostName = QString::fromStdString((*it).hostAddress) + ":" + QString::number((*it).portNo);
+            }
             topElem->setText(0, hostName);
             topElem->setIcon(0, QIcon(":/Corba/icons/RT.png"));
             topElem->kind_ = KIND_SERVER;
+            topElem->nsInfo_ = (*it);
             NamingContextHelper::ObjectInfo info;
             info.hostAddress_ = (*it).hostAddress;
             info.portNo_ = (*it).portNo;
+            info.isRegisteredInRtmDefaultNameServer_ = (*it).isRtmDefaultNameServer;
             topElem->info_ = info;
             treeWidget.addTopLevelItem(topElem);
+
+            MessageView::instance()->flush();
 
             // Clear information update to all views.
             //clearDiagram();
@@ -332,12 +370,16 @@ void RTSNameServerViewImpl::updateObjectList(bool force)
 
 
 void RTSNameServerViewImpl::updateObjectList
-(const NamingContextHelper::ObjectInfoList& objects, QTreeWidgetItem* parent, vector<NamingContextHelper::ObjectPath> pathList)
+(NamingContextHelper::ObjectInfoList& objects, QTreeWidgetItem* parent, vector<NamingContextHelper::ObjectPath> pathList)
 {
     DDEBUG("RTSNameServerViewImpl::updateObjectList Path");
     for (size_t i = 0; i < objects.size(); ++i) {
-        const NamingContextHelper::ObjectInfo& info = objects[i];
+        MessageView::instance()->flush();
+        if (cancelUpdating_) return;
+
+        NamingContextHelper::ObjectInfo& info = objects[i];
         DDEBUG_V("%s=%s, %s", info.id_.c_str(), info.kind_.c_str(), info.ior_.c_str());
+        info.isRegisteredInRtmDefaultNameServer_ = ((RTSVItem*)parent)->info_.isRegisteredInRtmDefaultNameServer_;
 
         NamingContextHelper::ObjectPath path(info.id_, info.kind_);
         pathList.push_back(path);
@@ -350,7 +392,7 @@ void RTSNameServerViewImpl::updateObjectList
             continue;
         }
 
-        if (!info.isContext_) {
+        if (!info.isContext_ && !RTCCommonUtil::compareIgnoreCase(info.kind_, "mgr")) {
             RTSVItem* item = new RTSVItem(info, 0);
             item->setText(0, QString::fromStdString(info.id_) + "|");
             item->setIcon(0, QIcon(":/Corba/icons/Question.png"));
@@ -406,7 +448,6 @@ void RTSNameServerViewImpl::updateObjectList
     DDEBUG("RTSNameServerViewImpl::updateObjectList Path End");
 }
 
-
 void RTSNameServerViewImpl::onSelectionChanged()
 {
     DDEBUG("RTSNameServerViewImpl::onSelectionChanged");
@@ -424,13 +465,13 @@ void RTSNameServerViewImpl::onSelectionChanged()
 }
 
 
-void RTSNameServerView::setSelection(std::string RTCName, std::string RTCfullPath, std::string nsInfo)
+void RTSNameServerView::setSelection(std::string RTCName, std::string RTCfullPath, NamingContextHelper::ObjectInfo nsInfo)
 {
     impl->setSelection(RTCName, RTCfullPath, nsInfo);
 }
 
 
-void RTSNameServerViewImpl::setSelection(std::string RTCName, std::string RTCfullPath, std::string nsInfo)
+void RTSNameServerViewImpl::setSelection(std::string RTCName, std::string RTCfullPath, NamingContextHelper::ObjectInfo nsInfo)
 {
     if (RTCName.empty()) {
         treeWidget.clearSelection();
@@ -439,16 +480,15 @@ void RTSNameServerViewImpl::setSelection(std::string RTCName, std::string RTCful
 
     updateObjectList();
 
-    //QList<QTreeWidgetItem*> items = treeWidget.findItems(QString(RTCName.c_str()), Qt::MatchFixedString | Qt::MatchRecursive);
-    //if (items.empty()) {
-    //    return;
-    //}
     QList<QTreeWidgetItem*> items = treeWidget.findItems(QString(RTCName.c_str()), Qt::MatchFixedString | Qt::MatchRecursive);
+
+    DDEBUG_V("match Num:%d", items.size());
 
     if (items.size() == 1) {
         RTSVItem* target = (RTSVItem*)items[0];
-        QString ns = QString::fromStdString(target->info_.hostAddress_) + ":" + QString::number( target->info_.portNo_);
-        if (nsInfo == ns.toStdString()) {
+        if (nsInfo.hostAddress_ == target->info_.hostAddress_ 
+            && nsInfo.portNo_ == target->info_.portNo_
+            && nsInfo.isRegisteredInRtmDefaultNameServer_ == target->info_.isRegisteredInRtmDefaultNameServer_ ) {
             treeWidget.setCurrentItem(items[0]);
         }
 
@@ -456,8 +496,9 @@ void RTSNameServerViewImpl::setSelection(std::string RTCName, std::string RTCful
         for (int index = 0; index < items.size(); ++index) {
             RTSVItem* target = (RTSVItem*)items[index];
             DDEBUG_V("source:%s, target:%s", RTCfullPath.c_str(), target->info_.getFullPath().c_str());
-            QString ns = QString::fromStdString(target->info_.hostAddress_) + ":" + QString::number( target->info_.portNo_);
-            if (nsInfo == ns.toStdString()) {
+            if (nsInfo.hostAddress_ == target->info_.hostAddress_ 
+                && nsInfo.portNo_ == target->info_.portNo_
+                && nsInfo.isRegisteredInRtmDefaultNameServer_ == target->info_.isRegisteredInRtmDefaultNameServer_ ) {
                 if (RTCfullPath == target->info_.getFullPath()) {
                     treeWidget.setCurrentItem(items[index]);
                     break;
@@ -521,6 +562,11 @@ void RTSNameServerViewImpl::checkZombee(RTSVItem* parent)
             DDEBUG("RTSNameServerViewImpl::cleatZombee INACTIVE");
             childItem->removing_ = true;
             removeList.push_back(childItem);
+            try {
+                NameServerManager::instance()->getNCHelper()->unbind(childItem->info_.fullPath_);
+            } catch(CosNaming::NamingContext::NotFound ex) {
+                DDEBUG("RTSNameServerViewImpl::cleatZombee NOT EXIST");
+            }
             continue;
         }
         DDEBUG("RTSNameServerViewImpl::cleatZombee ACTIVE");
@@ -555,6 +601,7 @@ bool RTSNameServerView::storeState(Archive& archive)
 bool RTSNameServerView::restoreState(const Archive& archive)
 {
     DDEBUG("RTSNameServerView::restoreState");
+    NameServerManager::instance()->clearNameServer();
 
     const Listing& nodes = *archive.findListing("NameServers");
     if (nodes.isValid() && !nodes.empty()) {
@@ -586,6 +633,12 @@ bool RTSNameServerView::restoreState(const Archive& archive)
                 NameServerManager::instance()->addNameServer(nsInfo);
             }
         }
+    }
+
+    if (NameServerManager::instance()->getServerList().size() == 0) {
+        NamingContextHelper* ncHelper = NameServerManager::instance()->getNCHelper();
+        NameServerInfo nsInfo(ncHelper->host(), ncHelper->port(), false);
+        NameServerManager::instance()->addNameServer(nsInfo);
     }
 
     archive.addPostProcess(
@@ -684,7 +737,7 @@ void RTSNameTreeWidget::deleteFromView()
     RTSVItem* item = (RTSVItem*)this->currentItem();
     QString target = item->text(0);
     DDEBUG_V("target:%s", target.toStdString().c_str());
-    NameServerManager::instance()->removeNameServer(target.toStdString());
+    NameServerManager::instance()->removeNameServer(item->nsInfo_);
     delete item;
 }
 

@@ -332,6 +332,10 @@ msgstr "RTCリスト"
 msgid " Update "
 msgstr " 更新 "
 
+#: RTSNameServerView.cpp:134
+msgid "Cancel Updating"
+msgstr "更新キャンセル"
+
 #: RTSNameServerView.cpp:143 RTSPropertiesView.cpp:108
 msgid "Object Name"
 msgstr "オブジェクト名"
