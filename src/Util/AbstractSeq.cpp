@@ -134,7 +134,7 @@ bool AbstractSeq::readSeq(const Mapping* archive, std::ostream& os)
 
 bool AbstractSeq::doReadSeq(const Mapping*, std::ostream& os)
 {
-    os << format( "The function to read {} is not implemented.", seqType()) << endl;
+    os << format(_("The function to read {} is not implemented."), seqType()) << endl;
     return false;
 }
 
@@ -160,7 +160,7 @@ bool AbstractSeq::doWriteSeq(YAMLWriter& writer, std::function<void()> additiona
     if(frameRate <= 0.0){
         writer.putMessage(
             format(_("Frame rate {0} of {1} is invalid.\n"),
-            frameRate, (contentName_.empty() ? seqType_ : contentName_)));
+                   frameRate, (contentName_.empty() ? seqType_ : contentName_)));
         return false;
     }
 

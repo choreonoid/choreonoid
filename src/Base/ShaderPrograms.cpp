@@ -290,7 +290,7 @@ void PhongShadowProgram::initializeShadowInfo(int index)
 {
     ShadowInfo& shadow = shadowInfos[index];
 
-    shadow.shadowMatrixLocation = getUniformLocation(format("shadowMatrices{}]", index));
+    shadow.shadowMatrixLocation = getUniformLocation(format("shadowMatrices[{}]", index));
     
     string prefix = format("shadows[{}].", index);
     shadow.lightIndexLocation = getUniformLocation(prefix + "lightIndex");

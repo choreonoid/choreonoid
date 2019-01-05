@@ -124,7 +124,7 @@ bool Vector3Seq::saveAsPlainFormat(const std::string& filename, std::ostream& os
         return false;
     }
 
-    string f("{0:.4f} {1:.6f} {2:.6f} {3:.6f}\n");
+    const string f("{0:.4f} {1:.6f} {2:.6f} {3:.6f}\n");
 
     const int n = numFrames();
     const double r = frameRate();

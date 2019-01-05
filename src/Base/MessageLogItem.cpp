@@ -142,8 +142,8 @@ void MessageLogItemImpl::openFile()
         filesystem::path path(filename);
         if(filesystem::exists(path)){
             bool ok = showConfirmDialog(
-                    _("Confirm"),
-                    format(_(" \"{}\" already exists.\n Do you want to replace it? " ), filename));
+                _("Confirm"),
+                format(_(" \"{}\" already exists.\n Do you want to replace it? " ), filename));
             if(!ok){
                 mvConnection.unblock();
                 return;
@@ -153,8 +153,8 @@ void MessageLogItemImpl::openFile()
     }
 
     if(!ofs){
-        mv->putln(MessageView::ERROR,
-                format(_("Couldn't open file \"{}\" for writing.\n"), filename));
+        mv->putln(format(_("Couldn't open file \"{}\" for writing.\n"), filename),
+                  MessageView::ERROR);
     }else{
         mv->putln(format(_("Opened file \"{}\" for writing.\n"), filename));
     }

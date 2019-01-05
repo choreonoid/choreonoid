@@ -65,7 +65,7 @@ void GLSLProgram::loadShader(const char* filename, int shaderType)
     QFile file(filename);
 
     if(!file.exists()){
-        throw Exception(format("Shader \"{}\" is not found.", filename));
+        throw Exception(format(_("Shader \"{}\" is not found."), filename));
     }
     
     file.open(QIODevice::ReadOnly);
@@ -88,9 +88,9 @@ void GLSLProgram::loadShader(const char* filename, int shaderType)
             vector<char> log(length);
             GLsizei written;
             glGetShaderInfoLog(shaderHandle, length, &written, &log[0]);
-            msg = format("Shader compilation of \"{0}\" failed.\n{1}", filename, &log[0]);
+            msg = format(_("Shader compilation of \"{0}\" failed.\n{1}"), filename, &log[0]);
         } else {
-            msg = format("Shader compilation of \"{}\" failed.", filename);
+            msg = format(_("Shader compilation of \"{}\" failed."), filename);
         }
         glDeleteShader(shaderHandle);
         throw Exception(msg);

@@ -136,7 +136,7 @@ std::string ParametricPathProcessor::parameterize(const std::string& orgPathStri
         } else {
             string varName;
             if(impl->findSubDirectoryOfDirectoryVariable(orgPath, varName, relativePath)){
-                return format("${{0}}/{1}", varName, getGenericPathString(relativePath));
+                return format("${{{0}}}/{1}", varName, getGenericPathString(relativePath));
 
             } else if(findSubDirectory(impl->shareDirPath, orgPath, relativePath)){
                 return string("${SHARE}/") + getGenericPathString(relativePath);

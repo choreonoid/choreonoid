@@ -270,7 +270,7 @@ else()
   target_link_libraries(${target}
     CnoidUtil
     ${QT_LIBRARIES} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${OPENGL_LIBRARY}
-    icuuc X11 Xfixes fmt
+    icuuc X11 Xfixes
     )
 endif()
 

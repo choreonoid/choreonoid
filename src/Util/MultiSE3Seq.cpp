@@ -189,7 +189,7 @@ bool MultiSE3Seq::loadPlainMatrixFormat(const std::string& filename, std::ostrea
 
     int n = loader.numParts();
     if(n < 12 || (n % 12) != 0){
-        os << format(_("\"{0}\" does not have elements in multiple of twelve (each 3 for position vectors, 9 for attitde matrices)"),
+        os << format(_("\"{}\" does not have elements in multiple of twelve (each 3 for position vectors, 9 for attitde matrices)"),
             filename) << endl;
         return false;
     }
@@ -261,7 +261,6 @@ bool MultiSE3Seq::loadPlainRpyFormat(const std::string& filename, std::ostream& 
 
 bool MultiSE3Seq::saveTopPartAsPlainMatrixFormat(const std::string& filename, std::ostream& os)
 {
-    string f("{0:.4f}");
     const int nFrames = numFrames();
 
     if(nFrames > 0 && numParts() > 0){
@@ -276,7 +275,7 @@ bool MultiSE3Seq::saveTopPartAsPlainMatrixFormat(const std::string& filename, st
 
         Part base = part(0);
         for(int i=0; i < nFrames; ++i){
-            file << format(f, (i / r));
+            file << format("{0:.4f}", (i / r));
             const SE3& x = base[i];
             for(int j=0; j < 3; ++j){
                 file << " " << x.translation()[j];

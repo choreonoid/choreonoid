@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-12-11 11:19+0900\n"
+"POT-Creation-Date: 2019-01-05 16:19+0900\n"
 "PO-Revision-Date: 2011-11-12 11:42+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: AbstractSeqItem.cpp:37 MovieRecorder.cpp:385
+#: AbstractSeqItem.cpp:37 MovieRecorder.cpp:386
 #: MultiSeqItemCreationPanel.cpp:46
 msgid "Frame rate"
 msgstr "フレームレート"
@@ -68,13 +68,13 @@ msgid "Save"
 msgstr "保存"
 
 #: CaptureBar.cpp:97 ItemManager.cpp:946 ItemManager.cpp:1156
-#: ItemPropertyView.cpp:290 PluginManager.cpp:682 ProjectManager.cpp:579
+#: ItemPropertyView.cpp:290 PluginManager.cpp:674 ProjectManager.cpp:579
 #: ProjectManager.cpp:605 TaskView.cpp:279
 msgid "Cancel"
 msgstr "キャンセル"
 
 #: CaptureBar.cpp:100 ItemManager.cpp:247 ItemPropertyView.cpp:309
-#: PluginManager.cpp:686 ProjectManager.cpp:583 ProjectManager.cpp:609
+#: PluginManager.cpp:678 ProjectManager.cpp:583 ProjectManager.cpp:609
 msgid "Any files (*)"
 msgstr "全てのファイル (*)"
 
@@ -142,6 +142,20 @@ msgstr "プロジェクトを保存"
 msgid "FolderItem"
 msgstr "フォルダアイテム"
 
+#: GLSLProgram.cpp:68
+msgid "Shader \"{}\" is not found."
+msgstr "シェーダ\"{}\"がみつかりません．"
+
+#: GLSLProgram.cpp:91
+msgid ""
+"Shader compilation of \"{0}\" failed.\n"
+"{1}"
+msgstr "\"{0}\"のシェーダコンパイルに失敗しました．\n{1}"
+
+#: GLSLProgram.cpp:93
+msgid "Shader compilation of \"{}\" failed."
+msgstr "\"{}\"のシェーダコンパイルに失敗しました．"
+
 #: GLSLProgram.cpp:102
 msgid "Unable to create shader program."
 msgstr "シェーダプログラムを生成できません．"
@@ -186,7 +200,7 @@ msgstr "速度軌道のプロット"
 msgid "Plot acceleration trajectories"
 msgstr "加速度軌道のプロット"
 
-#: GraphBar.cpp:142 MovieRecorder.cpp:464 SceneBar.cpp:186 TimeBar.cpp:341
+#: GraphBar.cpp:142 MovieRecorder.cpp:465 SceneBar.cpp:186 TimeBar.cpp:341
 msgid "Show the config dialog"
 msgstr "設定ダイアログの表示"
 
@@ -200,7 +214,7 @@ msgstr "線幅"
 
 #: GraphBar.cpp:173
 msgid "y-range, 10^"
-msgstr "y軸範囲"
+msgstr "y軸範囲, 10^"
 
 #: GraphBar.cpp:184
 msgid "Show limit values"
@@ -253,6 +267,10 @@ msgstr "連続"
 #: GraphBar.cpp:277
 msgid "page"
 msgstr "ページ"
+
+#: GraphWidget.cpp:1152
+msgid "Graph: Position = ({0:.5f}, {1:.5f})"
+msgstr "グラフ位置 = ({0:.5f}, {1:.5f})"
 
 #: ImageView.cpp:138
 msgid "Image"
@@ -390,7 +408,7 @@ msgstr "{}のシングルトンインスタンスは既に読み込まれてい�
 msgid "Load %1"
 msgstr "%1の読み込み"
 
-#: ItemManager.cpp:945 PluginManager.cpp:681 ProjectManager.cpp:578
+#: ItemManager.cpp:945 PluginManager.cpp:673 ProjectManager.cpp:578
 msgid "Open"
 msgstr "読み込み"
 
@@ -408,19 +426,19 @@ msgstr "{0} を \"{1}\" にエクスポート中"
 
 #: ItemManager.cpp:1128
 msgid "{} cannot be saved.\n"
-msgstr "{} は保存できません。\n"
+msgstr "{} は保存できません．\n"
 
 #: ItemManager.cpp:1130
 msgid "{} cannot be exported.\n"
-msgstr "{} はエクスポートできません。\n"
+msgstr "{} はエクスポートできません．\n"
 
 #: ItemManager.cpp:1134
 msgid "{0} cannot be saved as the {1} format.\n"
-msgstr "{0} はフォーマット{1}として保存できません。\n"
+msgstr "{0} はフォーマット{1}として保存できません．\n"
 
 #: ItemManager.cpp:1136
 msgid "{0} cannot be exported into the {1} format.\n"
-msgstr "{0} はフォーマット{1}としてエクスポートできません。\n"
+msgstr "{0} はフォーマット{1}としてエクスポートできません．\n"
 
 #: ItemManager.cpp:1151
 msgid "Save %1 as"
@@ -430,7 +448,7 @@ msgstr "%1の保存"
 msgid "Select File"
 msgstr "ファイルを選択"
 
-#: ItemPropertyView.cpp:285 MovieRecorder.cpp:368
+#: ItemPropertyView.cpp:285 MovieRecorder.cpp:369
 msgid "Select"
 msgstr "選択"
 
@@ -476,7 +494,8 @@ msgstr "\"{}\" を読み込むことができません．"
 
 #: ItemTreeArchiver.cpp:263
 msgid "Sub item \"{}\" is not found. Its children cannot be restored."
-msgstr "サブアイテム\"{}\"が見つからないため，その小アイテムの読み込みができません．"
+msgstr ""
+"サブアイテム\"{}\"が見つからないため，その小アイテムの読み込みができません．"
 
 #: ItemTreeArchiver.cpp:272
 msgid "Archive is broken."
@@ -496,7 +515,7 @@ msgstr "{0} \"{1}\" を読み込み中"
 
 #: ItemTreeArchiver.cpp:310
 msgid "The 'data' key does not have mapping-type data"
-msgstr "'data'キーがマッピング型のデータを有していません．"
+msgstr "'data'キーがマッピング型のデータを有していません"
 
 #: ItemTreeView.cpp:267
 msgid "Items"
@@ -668,7 +687,7 @@ msgstr ""
 " \"{}\" は既に存在しています。\n"
 "　内容が削除されてもいいですか？"
 
-#: MessageLogItem.cpp:157
+#: MessageLogItem.cpp:156
 msgid "Couldn't open file \"{}\" for writing.\n"
 msgstr "\"{}\"は書き込み用ファイルとして開けません．\n"
 
@@ -700,135 +719,135 @@ msgstr "メッセージ"
 msgid "Warning"
 msgstr "警告"
 
-#: MovieRecorder.cpp:74
+#: MovieRecorder.cpp:75
 msgid "O"
 msgstr ""
 
-#: MovieRecorder.cpp:77
+#: MovieRecorder.cpp:78
 msgid "*"
 msgstr ""
 
-#: MovieRecorder.cpp:267 MovieRecorder.cpp:327
+#: MovieRecorder.cpp:268 MovieRecorder.cpp:328
 msgid "Movie Recorder"
 msgstr "動画レコーダ"
 
-#: MovieRecorder.cpp:290
+#: MovieRecorder.cpp:291
 msgid "Offline"
 msgstr "オフライン"
 
-#: MovieRecorder.cpp:291
+#: MovieRecorder.cpp:292
 msgid "Online"
 msgstr "オンライン"
 
-#: MovieRecorder.cpp:292
+#: MovieRecorder.cpp:293
 msgid "Direct"
 msgstr "ダイレクト"
 
-#: MovieRecorder.cpp:308
+#: MovieRecorder.cpp:309
 msgid "Recording of {0} has been started with the {1} mode."
 msgstr "{1}モードによる{0}の録画を開始しました．"
 
-#: MovieRecorder.cpp:333
+#: MovieRecorder.cpp:334
 msgid "Target view:"
 msgstr "対象ビュー"
 
-#: MovieRecorder.cpp:339
+#: MovieRecorder.cpp:340
 msgid "Show the marker"
 msgstr "マーカ表示"
 
-#: MovieRecorder.cpp:348
+#: MovieRecorder.cpp:349
 msgid "Recording mode: "
 msgstr "録画モード"
 
-#: MovieRecorder.cpp:363 MultiPointSetItem.cpp:517
+#: MovieRecorder.cpp:364 MultiPointSetItem.cpp:517
 msgid "Directory"
 msgstr "ディレクトリ"
 
-#: MovieRecorder.cpp:378
+#: MovieRecorder.cpp:379
 msgid "Basename"
 msgstr "ベースファイル名"
 
-#: MovieRecorder.cpp:391
+#: MovieRecorder.cpp:392
 msgid "[fps]"
 msgstr ""
 
-#: MovieRecorder.cpp:396
+#: MovieRecorder.cpp:397
 msgid "Start time"
 msgstr "開始時刻"
 
-#: MovieRecorder.cpp:402 MovieRecorder.cpp:411
+#: MovieRecorder.cpp:403 MovieRecorder.cpp:412
 msgid "[s]"
 msgstr "[秒]"
 
-#: MovieRecorder.cpp:405
+#: MovieRecorder.cpp:406
 msgid "Finish time"
 msgstr "終了時刻"
 
-#: MovieRecorder.cpp:416
+#: MovieRecorder.cpp:417
 msgid "Image size"
 msgstr "画像サイズ"
 
-#: MovieRecorder.cpp:432
+#: MovieRecorder.cpp:433
 msgid "Capture the mouse cursor"
 msgstr "マウスカーソルもキャプチャする"
 
-#: MovieRecorder.cpp:441
+#: MovieRecorder.cpp:442
 msgid "&Record"
 msgstr "録画(&R)"
 
-#: MovieRecorder.cpp:452
+#: MovieRecorder.cpp:453
 msgid "MovieRecorderBar"
 msgstr "動画レコーダバー"
 
-#: MovieRecorder.cpp:456
+#: MovieRecorder.cpp:457
 msgid "Toggle Recording"
 msgstr "録画"
 
-#: MovieRecorder.cpp:460
+#: MovieRecorder.cpp:461
 msgid "Toggle Target View Marker"
 msgstr "対象ビューのマーカを表示"
 
-#: MovieRecorder.cpp:646
+#: MovieRecorder.cpp:647
 msgid "Select Directory"
 msgstr "ディレクトリの選択"
 
-#: MovieRecorder.cpp:708
+#: MovieRecorder.cpp:709
 msgid "Target view is not specified."
 msgstr "対象のビューが指定されていません．"
 
-#: MovieRecorder.cpp:716
+#: MovieRecorder.cpp:717
 msgid "Please set a directory to output image files."
 msgstr "画像ファイルを出力するディレクトリを指定してください．"
 
-#: MovieRecorder.cpp:722
+#: MovieRecorder.cpp:723
 msgid "{} is not a directory."
-msgstr "{} はディレクトリではありません．"
+msgstr "{}はディレクトリではありません．"
 
-#: MovieRecorder.cpp:798
+#: MovieRecorder.cpp:799
 msgid "The online mode recording for {} is ready."
 msgstr "オンラインモードによる{}の録画を待機しています．"
 
-#: MovieRecorder.cpp:1002
+#: MovieRecorder.cpp:1003
 msgid "Saving an image to \"{}\" failed."
 msgstr "画像の\"{}\"への保存ができませんでした．"
 
-#: MovieRecorder.cpp:1036
+#: MovieRecorder.cpp:1037
 msgid "Outputting sequential image files..."
 msgstr "連番画像ファイルを出力中…"
 
-#: MovieRecorder.cpp:1036
+#: MovieRecorder.cpp:1037
 msgid "Abort Output"
 msgstr "出力中止"
 
-#: MovieRecorder.cpp:1037
+#: MovieRecorder.cpp:1038
 msgid "Movie Recorder's Output Status"
 msgstr "動画レコーダの出力状況"
 
-#: MovieRecorder.cpp:1066
+#: MovieRecorder.cpp:1067
 msgid "Recording of {} has been finished."
 msgstr "{}の録画が終了しました．"
 
-#: MovieRecorder.cpp:1068
+#: MovieRecorder.cpp:1069
 msgid "Recording of {} has been stopped."
 msgstr "{}の録画を停止しました．"
 
@@ -944,93 +963,93 @@ msgstr "パス"
 msgid "&Apply"
 msgstr "適用(&A)"
 
-#: PluginManager.cpp:223
+#: PluginManager.cpp:213
 msgid "Plugin"
 msgstr "プラグイン"
 
-#: PluginManager.cpp:224
+#: PluginManager.cpp:214
 msgid "Load Plugin"
 msgstr "プラグインの読み込み"
 
-#: PluginManager.cpp:229
+#: PluginManager.cpp:219
 msgid "Startup Plugin Loading"
 msgstr "起動時のプラグイン読み込み"
 
-#: PluginManager.cpp:232
+#: PluginManager.cpp:222
 msgid "Check the naming convention of plugin files"
 msgstr "プラグインファイルの命名規則をチェックする"
 
-#: PluginManager.cpp:463
+#: PluginManager.cpp:453
 msgid ""
 "{0}-plugin cannot be initialized because required plugin(s) {1} are not "
 "found."
 msgstr ""
 "必要なプラグイン{1}が見つからないため、{0}プラグインの初期化ができません．"
 
-#: PluginManager.cpp:488 PluginManager.cpp:583
+#: PluginManager.cpp:478 PluginManager.cpp:575
 msgid "Plugin file \"{}\" has already been activated."
 msgstr "プラグインファイル\"{}\"は既に読み込まれています．"
 
-#: PluginManager.cpp:491
+#: PluginManager.cpp:481
 msgid "Detecting plugin file \"{}\""
 msgstr "プラグインファイル\"{}\"を検出しました．"
 
-#: PluginManager.cpp:510
+#: PluginManager.cpp:500
 msgid "The plugin entry function \"getChoreonoidPlugin\" is not found."
 msgstr "プラグインエントリ関数 \"getChoreonoidPlugin\" が見つかりません．"
 
-#: PluginManager.cpp:520
+#: PluginManager.cpp:510
 msgid "The plugin object cannot be created."
-msgstr "プラグインオブジェクトが生成できません。"
+msgstr "プラグインオブジェクトが生成できません．"
 
-#: PluginManager.cpp:529
+#: PluginManager.cpp:520
 msgid ""
 "The internal version of the {0} plugin is different from the system internal "
 "version.\n"
 "The plugin file \"{1}\" should be removed or updated to avoid a problem."
 msgstr ""
-"{0}プラグインの内部バージョンがシステムの内部バージョンと一致しません。\n"
+"{0}プラグインの内部バージョンがシステムの内部バージョンと一致しません．\n"
 "問題を避けるため，プラグインファイル \"{1}\" は削除か更新を行なってください．"
 
-#: PluginManager.cpp:559
+#: PluginManager.cpp:551
 msgid "Plugin file \"{0}\" conflicts with \"{1}\"."
 msgstr "{0}プラグインは\"{1}\"と競合しています．"
 
-#: PluginManager.cpp:568 PluginManager.cpp:666
+#: PluginManager.cpp:560 PluginManager.cpp:658
 msgid "Loading the plugin failed."
 msgstr "プラグインの読み込みができませんでした．"
 
-#: PluginManager.cpp:623
+#: PluginManager.cpp:615
 msgid "The plugin object cannot be intialized."
 msgstr "プラグインオブジェクトの初期化ができません．"
 
-#: PluginManager.cpp:646
+#: PluginManager.cpp:638
 msgid "About Plugins"
 msgstr "プラグインについて"
 
-#: PluginManager.cpp:647 PluginManager.cpp:719
+#: PluginManager.cpp:639 PluginManager.cpp:711
 msgid "About {} Plugin"
 msgstr "{}プラグインについて"
 
-#: PluginManager.cpp:658
+#: PluginManager.cpp:650
 msgid "{}-plugin has been activated."
 msgstr "{}プラグインが読み込まれました．"
 
-#: PluginManager.cpp:678
+#: PluginManager.cpp:670
 msgid "Load plugins"
 msgstr "プラグインの読み込み"
 
-#: PluginManager.cpp:685
+#: PluginManager.cpp:677
 msgid "Plugin files (*.%1)"
 msgstr "プラグインファイル (*.%1)"
 
-#: PluginManager.cpp:820
+#: PluginManager.cpp:812
 msgid "Plugin {} cannot be finalized."
-msgstr "プラグイン {} を終了できません．"
+msgstr "プラグイン{}を終了できません．"
 
-#: PluginManager.cpp:859
+#: PluginManager.cpp:851
 msgid "Plugin dll {} has been unloaded."
-msgstr "プラグイン {} のDLLが解放されました．"
+msgstr "プラグイン{}のDLLが解放されました．"
 
 #: PointSetItem.cpp:142
 msgid "PointSetItem"
@@ -1551,8 +1570,7 @@ msgstr "タスク \"{}\" が追加されました．"
 msgid ""
 "Task \"{}\" cannot be updated now because it is wating for a command to "
 "finish."
-msgstr ""
-"タスク \"{}\" は現在コマンドの終了待ちを行っているため更新できません．"
+msgstr "タスク \"{}\" は現在コマンドの終了待ちを行っているため更新できません．"
 
 #: TaskView.cpp:543
 msgid "Task \"{}\" has been updated with the new one."
@@ -1578,7 +1596,7 @@ msgstr "テキストエディタ"
 msgid ""
 "The document has been modified.\n"
 " Do you want to save your changes?"
-msgstr "変更内容を保存しますか？"
+msgstr "ドキュメントは変更されています。\n変更内容を保存しますか？"
 
 #: TextEditView.cpp:237
 msgid "unselected"
@@ -1669,8 +1687,7 @@ msgid ""
 "A singleton view \"{0}\" of the {1} type cannot be created because its "
 "singleton instance has already been created."
 msgstr ""
-"\"{1}\"タイプのシングルトンビュー\"{0}\"は既にそのシングルトンインスタンスが"
-"生成されています．"
+"\"{1}\"タイプのシングルトンビュー\"{0}\"は既にそのシングルトンインスタンスが生成されています．"
 
 #: ViewManager.cpp:847
 msgid ""
@@ -1682,38 +1699,3 @@ msgstr ""
 msgid "Virtual Joystick"
 msgstr "仮想ジョイスティック"
 
-#~ msgid "Shader \"%1%\" is not found."
-#~ msgstr "シェーダ\"%1%\"がみつかりません．"
-
-#~ msgid ""
-#~ "Shader compilation of \"%1%\" failed.\n"
-#~ "%2%"
-#~ msgstr ""
-#~ "\"%1%\"のシェーダコンパイルに失敗しました．\n"
-#~ "%2%"
-
-#~ msgid "Shader compilation of \"%1%\" failed."
-#~ msgstr "\"%1%\"のシェーダコンパイルに失敗しました．"
-
-#~ msgid ""
-#~ "Program link failed:\n"
-#~ "%1%"
-#~ msgstr ""
-#~ "プログラムのリンクに失敗しました:\n"
-#~ "%1%"
-
-#~ msgid ""
-#~ "Program failed to validate\n"
-#~ "%1%"
-#~ msgstr ""
-#~ "プログラムの有効化に失敗しました\n"
-#~ "%1%"
-
-#~ msgid "Graph: Position = (%1$.5f, %2$.5f)"
-#~ msgstr "グラフ位置 = (%1$.5f, %2$.5f)"
-
-#~ msgid "%1% of \"%2%\" cannot be expanded !"
-#~ msgstr "\"%2%\"の%1%は展開できません！"
-
-#~ msgid "About %1% Plugin"
-#~ msgstr "%1%プラグインについて"

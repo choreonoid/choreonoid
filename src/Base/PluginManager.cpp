@@ -61,7 +61,6 @@ PluginManager* instance_ = 0;
 
 namespace cnoid {
 
-
 class PluginManagerImpl
 {
 public:
@@ -516,10 +515,12 @@ bool PluginManagerImpl::loadPlugin(int index)
                     info->name = plugin->name();
 
                     if(plugin->internalVersion() != CNOID_INTERNAL_VERSION){
-                        mv->putln(MessageView::WARNING,
-                                  fmt::format(_("The internal version of the {0} plugin is different from the system internal version.\n"
-                                        "The plugin file \"{1}\" should be removed or updated to avoid a problem."),
-                                  info->name, info->pathString));
+                        mv->putln(
+                            fmt::format(
+                                _("The internal version of the {0} plugin is different from the system internal version.\n"
+                                  "The plugin file \"{1}\" should be removed or updated to avoid a problem."),
+                                info->name, info->pathString),
+                            MessageView::WARNING);
                     }
                         
                     const int numRequisites = plugin->numRequisites();

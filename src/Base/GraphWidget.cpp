@@ -1148,7 +1148,8 @@ bool GraphWidgetImpl::onScreenMouseMoveEvent(QMouseEvent* event)
     //hRuler.property_position() = x;
     //vRuler.property_position() = y;
 
-    statusLabel.setText(fmt::format("Graph: Position = ({0:.5f}, {1:.5f})", x, y).c_str());
+    statusLabel.setText(
+        fmt::format(_("Graph: Position = ({0:.5f}, {1:.5f})"), x, y).c_str());
 
     dragPrevScreenX = currentScreenX;
     dragPrevScreenY = currentScreenY;

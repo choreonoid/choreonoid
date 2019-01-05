@@ -25,7 +25,7 @@ void throwLoadException(const string& filename, const std::string& description)
 {
     exception_base exception;
     exception << error_info_message(
-        fmt::format("Image file \"{}\" cannot be loaded. %2%", filename, description));
+        fmt::format("Image file \"{0}\" cannot be loaded. {1}", filename, description));
     BOOST_THROW_EXCEPTION(exception);
 }
 
