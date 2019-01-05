@@ -37,7 +37,10 @@ copyrighted by other developers.
  * WAREC1 Model
    see share/model/WAREC1/LICENSE
 
- * IJG JPEG Library (http://www.ijg.org/)
+ * Eigen (http://eigen.tuxfamily.org)
+   see thirdparty/eigen/COPYING.README
+
+ * IJG JPEG Library (http://www.ijg.org)
    see thirdparty/Jpeg-6b/README
 
  * libpng (http://www.libpng.org/pub/png/libpng.html)
@@ -52,7 +55,7 @@ copyrighted by other developers.
  * OPCODE (http://www.codercorner.com/Opcode.htm)
    see src/AISTCollisionDetector/Opcode/ReadMe.txt
 
- * gettext (http://www.gnu.org/software/gettext/)
+ * gettext (http://www.gnu.org/software/gettext)
    see thirdparty/windows/include/libintl.h
 
  * pybind11 (https://github.com/pybind/pybind11)
@@ -61,8 +64,11 @@ copyrighted by other developers.
  * Sol (https://github.com/ThePhD/sol2)
    see thirdparty/sol2/LICENSE
 
- * Pugixml (https://pugixml.org/)
+ * Pugixml (https://pugixml.org)
    see thirdparty/pugixml-1.9/readme.txt
+
+ * fmt (http://fmtlib.net)
+   see thirdparty/fmt-5.3.0/LICENSE.rst
 
 ---------------------------------------------------------------------------
 
