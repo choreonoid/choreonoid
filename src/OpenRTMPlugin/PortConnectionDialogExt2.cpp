@@ -1,6 +1,6 @@
-#include "PortConnectionDialog.h"
+#include "PortConnectionDialogExt2.h"
 #include "RTSCommonUtil.h"
-#include "RTSTypeUtil.h"
+#include "RTSTypeUtilExt2.h"
 #include "LoggerUtil.h"
 #include <cnoid/Buttons>
 #include <QLabel>
@@ -13,7 +13,7 @@
 using namespace std;
 using namespace cnoid;
 
-PortConnectionDialogBase::PortConnectionDialogBase()
+PortConnectionDialogBaseExt2::PortConnectionDialogBaseExt2()
     : isAccepted(false)
 {
     nameLineEdit = new QLineEdit();
@@ -57,7 +57,7 @@ PortConnectionDialogBase::PortConnectionDialogBase()
 }
 
 
-void PortConnectionDialogBase::onAddButtonClicked()
+void PortConnectionDialogBaseExt2::onAddButtonClicked()
 {
     DDEBUG("PortConnectionDialogBase::onAddButtonClicked");
 
@@ -74,7 +74,7 @@ void PortConnectionDialogBase::onAddButtonClicked()
 }
 
 
-void PortConnectionDialogBase::onDeleteButtonClicked()
+void PortConnectionDialogBaseExt2::onDeleteButtonClicked()
 {
     DDEBUG("PortConnectionDialogBase::onDeleteButtonClicked");
 
@@ -84,7 +84,7 @@ void PortConnectionDialogBase::onDeleteButtonClicked()
 }
 
 
-void PortConnectionDialogBase::enableDetails(bool on)
+void PortConnectionDialogBaseExt2::enableDetails(bool on)
 {
     frmEditSub->setVisible(on);
     frmEditSub->setEnabled(on);
@@ -92,14 +92,14 @@ void PortConnectionDialogBase::enableDetails(bool on)
 }
 
 
-void PortConnectionDialogBase::addProperty(string name, string value)
+void PortConnectionDialogBaseExt2::addProperty(string name, string value)
 {
-    NamedValuePtr param(new NamedValue(name, value));
+    NamedValueExt2Ptr param(new NamedValueExt2(name, value));
     propList.push_back(param);
 }
 
 
-DataPortConnectionDialog::DataPortConnectionDialog()
+DataPortConnectionDialogExt2::DataPortConnectionDialogExt2()
 {
     setWindowTitle("Data Connector Profile");
 
@@ -267,12 +267,12 @@ DataPortConnectionDialog::DataPortConnectionDialog()
 }
 
 
-void DataPortConnectionDialog::setDisp(RTSPort* source, RTSPort* target)
+void DataPortConnectionDialogExt2::setDisp(RTSPortExt2* source, RTSPortExt2* target)
 {
     DDEBUG("CreateConnectionDialog::setDisp");
     nameLineEdit->setText(QString((source->name + "_" + target->name).c_str()));
     //
-    vector<string> types = RTSTypeUtil::getAllowDataTypes(source, target);
+    vector<string> types = RTSTypeUtilExt2::getAllowDataTypes(source, target);
     //bool isAllowAny = RTCCommonUtil::isAllowAnyDataType(source, target);
     dataTypeCombo->clear();
     for (int index = 0; index < types.size(); index++) {
@@ -280,21 +280,21 @@ void DataPortConnectionDialog::setDisp(RTSPort* source, RTSPort* target)
     }
     dataTypeCombo->setCurrentIndex(0);
     //
-    types = RTSTypeUtil::getAllowInterfaceTypes(source, target);
+    types = RTSTypeUtilExt2::getAllowInterfaceTypes(source, target);
     interfaceCombo->clear();
     for (int index = 0; index < types.size(); index++) {
         interfaceCombo->addItem(QString::fromStdString(types[index]));
     }
     interfaceCombo->setCurrentIndex(0);
     //
-    types = RTSTypeUtil::getAllowDataflowTypes(source, target);
+    types = RTSTypeUtilExt2::getAllowDataflowTypes(source, target);
     dataflowCombo->clear();
     for (int index = 0; index < types.size(); index++) {
         dataflowCombo->addItem(QString::fromStdString(types[index]));
     }
     dataflowCombo->setCurrentIndex(0);
     //
-    types = RTSTypeUtil::getAllowSubscriptionTypes(source, target);
+    types = RTSTypeUtilExt2::getAllowSubscriptionTypes(source, target);
     subscriptionCombo->clear();
     for (int index = 0; index < types.size(); index++) {
         subscriptionCombo->addItem(QString::fromStdString(types[index]));
@@ -303,7 +303,7 @@ void DataPortConnectionDialog::setDisp(RTSPort* source, RTSPort* target)
 }
 
 
-void DataPortConnectionDialog::subscriptionComboSelectionChanged(int target)
+void DataPortConnectionDialogExt2::subscriptionComboSelectionChanged(int target)
 {
     QString selected = subscriptionCombo->currentText().toLower();
     DDEBUG_V("CreateConnectionDialog::subscriptionComboSelectionChanged %s", selected.toStdString().c_str());
@@ -331,7 +331,7 @@ void DataPortConnectionDialog::subscriptionComboSelectionChanged(int target)
 }
 
 
-void DataPortConnectionDialog::pushpolicyComboSelectionChanged(int target)
+void DataPortConnectionDialogExt2::pushpolicyComboSelectionChanged(int target)
 {
     QString selected = pushpolicyCombo->currentText().toLower();
     if (selected == "skip") {
@@ -344,7 +344,7 @@ void DataPortConnectionDialog::pushpolicyComboSelectionChanged(int target)
 }
 
 
-void DataPortConnectionDialog::onOkButtonClicked()
+void DataPortConnectionDialogExt2::onOkButtonClicked()
 {
     DDEBUG("DataPortConnectionDialog::onOkButtonClicked");
 
@@ -417,7 +417,7 @@ void DataPortConnectionDialog::onOkButtonClicked()
 }
 
 
-ServicePortConnectionDialog::ServicePortConnectionDialog()
+ServicePortConnectionDialogExt2::ServicePortConnectionDialogExt2()
 {
     setWindowTitle("Service Connector Profile");
 
@@ -468,7 +468,7 @@ ServicePortConnectionDialog::ServicePortConnectionDialog()
 }
 
 
-void ServicePortConnectionDialog::setDisp(RTSPort* source, RTSPort* target)
+void ServicePortConnectionDialogExt2::setDisp(RTSPortExt2* source, RTSPortExt2* target)
 {
     nameLineEdit->setText(QString((source->name + "_" + target->name).c_str()));
 
@@ -477,13 +477,13 @@ void ServicePortConnectionDialog::setDisp(RTSPort* source, RTSPort* target)
 }
 
 
-void ServicePortConnectionDialog::registInterfaceMap(RTSPort* port)
+void ServicePortConnectionDialogExt2::registInterfaceMap(RTSPortExt2* port)
 {
     string compName = "unknown";
     string portName = "unknown";
     //
     string name = port->name;
-    if (!name.empty()) {
+    if (name.empty() == false) {
         vector<string> names = RTCCommonUtil::split(name, '.');
         if (names.size() < 2) {
             if (port->rtsComp != 0) {
@@ -497,7 +497,7 @@ void ServicePortConnectionDialog::registInterfaceMap(RTSPort* port)
     }
 
     for (int index = 0; index < port->interList.size(); index++) {
-        PortInterfacePtr ip = port->interList[index];
+        PortInterfaceExt2Ptr ip = port->interList[index];
         ip->rtc_name = compName;
         ip->port_name = portName;
         string label = ip->toDispStr();
@@ -513,7 +513,7 @@ void ServicePortConnectionDialog::registInterfaceMap(RTSPort* port)
 }
 
 
-void ServicePortConnectionDialog::addIF()
+void ServicePortConnectionDialogExt2::addIF()
 {
     DDEBUG("ServicePortConnectionDialog::addIF");
 
@@ -533,7 +533,7 @@ void ServicePortConnectionDialog::addIF()
 }
 
 
-void ServicePortConnectionDialog::deleteIF()
+void ServicePortConnectionDialogExt2::deleteIF()
 {
     int currRow = lstInterface->currentRow();
     lstInterface->removeRow(currRow);
@@ -541,7 +541,7 @@ void ServicePortConnectionDialog::deleteIF()
 }
 
 
-void ServicePortConnectionDialog::onOkButtonClicked()
+void ServicePortConnectionDialogExt2::onOkButtonClicked()
 {
     DDEBUG("ServicePortConnectionDialog::onOkButtonClicked");
 

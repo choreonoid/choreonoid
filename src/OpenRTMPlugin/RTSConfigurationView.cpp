@@ -447,7 +447,7 @@ void RTSConfigurationViewImpl::showConfigurationView()
         if (param->getMode() == MODE_DELETE || param->getMode() == MODE_IGNORE) {
             continue;
         }
-        if (chkDetail_->isChecked() == false) {
+        if (!chkDetail_->isChecked()) {
             if (param->getName().startsWith(QString::fromStdString("__"))) {
                 continue;
             }

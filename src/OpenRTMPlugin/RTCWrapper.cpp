@@ -70,7 +70,7 @@ bool RTCWrapper::getConfiguration(NamingContextHelper::ObjectInfo& target, std::
 
 void RTCWrapper::updateConfiguration(std::vector<ConfigurationSetParamPtr>& configList)
 {
-    if (isObjectAlive(configuration_) == false) return;
+    if (!isObjectAlive(configuration_)) return;
 
     QString activeName;
     for (int index = 0; index < configList.size(); index++) {
@@ -145,7 +145,7 @@ bool RTCWrapper::activateComponent()
 {
     if (!isObjectAlive(rtc_)) return false;
     if (ownedExeContList_->length() == 0) return false;
-    if (searchActiveEC() == false) return false;
+    if (!searchActiveEC()) return false;
 
     RTC::ReturnCode_t ret = ownedExeContList_[activeIndex_]->activate_component(rtc_);
     if (ret != RTC::ReturnCode_t::RTC_OK) return false;
@@ -156,7 +156,7 @@ bool RTCWrapper::deactivateComponent()
 {
     if (!isObjectAlive(rtc_)) return false;
     if (ownedExeContList_->length() == 0) return false;
-    if (searchActiveEC() == false) return false;
+    if (!searchActiveEC()) return false;
 
     RTC::ReturnCode_t ret = ownedExeContList_[activeIndex_]->deactivate_component(rtc_);
     if (ret != RTC::ReturnCode_t::RTC_OK) return false;
@@ -167,7 +167,7 @@ bool RTCWrapper::resetComponent()
 {
     if (!isObjectAlive(rtc_)) return false;
     if (ownedExeContList_->length() == 0) return false;
-    if (searchActiveEC() == false) return false;
+    if (!searchActiveEC()) return false;
 
     RTC::ReturnCode_t ret = ownedExeContList_[activeIndex_]->reset_component(rtc_);
     if (ret != RTC::ReturnCode_t::RTC_OK) return false;
@@ -185,7 +185,7 @@ bool RTCWrapper::finalizeComponent()
 bool RTCWrapper::startExecutionContext()
 {
     if (ownedExeContList_->length() == 0) return false;
-    if (isObjectAlive(ownedExeContList_[activeIndex_]) == false) return false;
+    if (!isObjectAlive(ownedExeContList_[activeIndex_])) return false;
 
     RTC::ReturnCode_t ret = ownedExeContList_[activeIndex_]->start();
     if (ret != RTC::ReturnCode_t::RTC_OK) return false;

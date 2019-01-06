@@ -15,29 +15,29 @@
 
 namespace cnoid {
 
-class RTSystemExtItem;
+class RTSystemExt2Item;
 
-class RTSCompExt;
-typedef cnoid::ref_ptr<RTSCompExt> RTSCompExtPtr;
+class RTSCompExt2;
+typedef cnoid::ref_ptr<RTSCompExt2> RTSCompExt2Ptr;
 
-class RTSPortExt;
-class RTSConnectionExt;
-typedef cnoid::IdPair<RTSPortExt*> RTSPortExtPair;
-typedef ref_ptr<RTSConnectionExt> RTSConnectionExtPtr;
-typedef std::map<RTSPortExtPair, RTSConnectionExtPtr> RTSConnectionExtMap;
+class RTSPortExt2;
+class RTSConnectionExt2;
+typedef cnoid::IdPair<RTSPortExt2*> RTSPortExt2Pair;
+typedef ref_ptr<RTSConnectionExt2> RTSConnectionExt2Ptr;
+typedef std::map<RTSPortExt2Pair, RTSConnectionExt2Ptr> RTSConnectionExt2Map;
 
-class ProfileHandlerExt
+class ProfileHandlerExt2
 {
 public:
-    ProfileHandlerExt() {};
-    ~ProfileHandlerExt() {};
+    ProfileHandlerExt2() {};
+    ~ProfileHandlerExt2() {};
 
-    static bool restoreRtsProfile(std::string targetFile, RTSystemExtItem* impl);
+    static bool restoreRtsProfile(std::string targetFile, RTSystemExt2Item* impl);
     static bool getRtsProfileInfo(std::string targetFile, std::string& vendorName, std::string& version);
 
     static void saveRtsProfile(
             const std::string& targetFile, std::string& systemId,
-            std::map<std::string, cnoid::RTSCompExtPtr>& comps, RTSConnectionExtMap& connections,
+            std::map<std::string, cnoid::RTSCompExt2Ptr>& comps, RTSConnectionExt2Map& connections,
             std::ostream& os);
 
 private:
@@ -46,7 +46,7 @@ private:
     static TargetPort parseTargetPort(const pugi::xml_node& targetPort);
     static void parseConnectorPosition(const pugi::xml_node& targetCon, PortConnector& profile);
 
-    static RTSPortExt* getTargetPort(std::string& sourceRtc, std::string& sourcePort, RTSystemExtItem* impl);
+    static RTSPortExt2* getTargetPort(std::string& sourceRtc, std::string& sourcePort, RTSystemExt2Item* impl);
     /////
     static bool writeProfile(const std::string& targetFile, RtsProfile& profile, std::ostream& os);
     static void writeComponent(std::vector<Component>& compList, pugi::xml_node& parent);
@@ -62,9 +62,9 @@ private:
     static void writeTargetPort(TargetPort& target, std::string tag, pugi::xml_node& parent);
 
     static void copyNVListToProperty(SDOPackage::NVList& source, std::vector<Property>& target);
-    static void buildPortInfo(RTSPortExt* port, Component& compProf, std::string direction);
-    static TargetPort buildTargetPortInfo(RTSPortExt* sourcePort);
-    static void buildPosition(const RTSConnectionExt* connect, int offsetX, int offsetY, std::vector<Property>& propList);
+    static void buildPortInfo(RTSPortExt2* port, Component& compProf, std::string direction);
+    static TargetPort buildTargetPortInfo(RTSPortExt2* sourcePort);
+    static void buildPosition(const RTSConnectionExt2* connect, int offsetX, int offsetY, std::vector<Property>& propList);
 
     static void appendStringValue(std::vector<Property>& target, std::string& name, std::string& value);
     static void removePropertyByValue(std::vector<Property>& target, const std::string& name);

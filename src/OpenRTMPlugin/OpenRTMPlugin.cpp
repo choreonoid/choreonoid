@@ -15,8 +15,13 @@
 #include "RTMImageView.h"
 
 #ifdef ENABLE_NEW_RT_SYSTEM_ITEM_IMPLEMENTATION
+#ifdef ENABLE_BACKGROUND_STATE_DETECTION
+#include "RTSDiagramExt2View.h"
+#include "RTSystemExt2Item.h"
+#else
 #include "RTSDiagramExtView.h"
 #include "RTSystemExtItem.h"
+#endif
 #else
 #include "RTSDiagramView.h"
 #include "RTSystemItem.h"
@@ -234,7 +239,7 @@ public:
             [&](const Archive& archive) { restore(archive); });
 
         NameServerInfo info = RTCCommonUtil::getManagerAddress();
-        if (info.hostAddress.empty() == false) {
+        if (!info.hostAddress.empty()) {
             NameServerManager::instance()->getNCHelper()->setLocation(info.hostAddress, info.portNo);
             DDEBUG_V("Init ncHelper host:%s, port:%d", info.hostAddress.c_str(), info.portNo);
         }
@@ -245,8 +250,13 @@ public:
         RTMImageView::initializeClass(this);
 
 #ifdef ENABLE_NEW_RT_SYSTEM_ITEM_IMPLEMENTATION
+#ifdef ENABLE_BACKGROUND_STATE_DETECTION
+        RTSystemExt2Item::initializeClass(this);
+        RTSDiagramExt2View::initializeClass(this);
+#else
         RTSystemExtItem::initializeClass(this);
         RTSDiagramExtView::initializeClass(this);
+#endif
 #else
         RTSystemItem::initializeClass(this);
         RTSDiagramView::initializeClass(this);

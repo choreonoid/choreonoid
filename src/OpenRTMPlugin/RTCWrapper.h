@@ -20,6 +20,10 @@ class RTCWrapper
 {
 public:
     RTCWrapper() : rtc_(0), ownedExeContList_(0), activeIndex_(0), category_(""), vendor_(""), version_("") {};
+    RTCWrapper(const RTCWrapper* source)
+      : rtc_(source->rtc_), ownedExeContList_(source->ownedExeContList_),
+        activeIndex_(source->activeIndex_),
+        category_(source->category_), vendor_(source->vendor_), version_(source->version_) {};
     ~RTCWrapper() {};
 
     RTC::RTObject_var rtc_;

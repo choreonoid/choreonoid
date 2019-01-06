@@ -885,7 +885,7 @@ void JointDataSeqInPortHandler::outputDataToSimulator(const BodyPtr& body)
 
 void JointDataSeqInPortHandler::readDataFromPort()
 {
-    if( inPort.isNew() == false ){
+    if( !inPort.isNew() ){
         values.data.length(0);
     }else
         inPort.read();
@@ -952,7 +952,7 @@ void LinkDataInPortHandler::outputDataToSimulator(const BodyPtr& body)
 
 void LinkDataInPortHandler::readDataFromPort()
 {
-    if( inPort.isNew() == false ){
+    if( !inPort.isNew() ){
         values.data.length(0);
     }else
         inPort.read();
@@ -982,7 +982,7 @@ void AbsTransformInPortHandler::outputDataToSimulator(const BodyPtr& body)
 
 void AbsTransformInPortHandler::readDataFromPort()
 {
-    if( inPort.isNew() == false ){
+    if( !inPort.isNew() ){
         return;
     }else
         inPort.read();
@@ -1007,7 +1007,7 @@ void LightOnInPortHandler::outputDataToSimulator(const BodyPtr& body)
 
 void LightOnInPortHandler::readDataFromPort()
 {
-    if( inPort.isNew() == false ){
+    if( !inPort.isNew() ){
         values.data.length(0);
     }else
         inPort.read();

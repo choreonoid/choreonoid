@@ -3,25 +3,29 @@
  * @author Hisashi Ikari
  * @file
  */
-#include "RTSTypeUtil.h"
+#include "RTSTypeUtilExt2.h"
+
+#include <string>
+#include <QString>
 
 #include "LoggerUtil.h"
+#include "gettext.h"
 
 using namespace std;
+using namespace boost;
 
 namespace cnoid {
 
-vector<string> RTSTypeUtil::getAllowDataTypes(RTSPort* source, RTSPort* target)
+vector<string> RTSTypeUtilExt2::getAllowDataTypes(RTSPortExt2* source, RTSPortExt2* target)
 {
     vector<string> sourceTypes = source->getDataTypes();
     vector<string> targetTypes = target->getDataTypes();
     DataTypeComparer comparator;
     vector<string> result = getAllowList(sourceTypes, targetTypes, comparator);
-
     return result;
 }
 
-vector<string> RTSTypeUtil::getAllowInterfaceTypes(RTSPort* source, RTSPort* target)
+vector<string> RTSTypeUtilExt2::getAllowInterfaceTypes(RTSPortExt2* source, RTSPortExt2* target)
 {
     vector<string> result;
     if (source == 0 && target == 0) {
@@ -41,7 +45,7 @@ vector<string> RTSTypeUtil::getAllowInterfaceTypes(RTSPort* source, RTSPort* tar
     return result;
 }
 
-vector<string> RTSTypeUtil::getAllowDataflowTypes(RTSPort* source, RTSPort* target)
+vector<string> RTSTypeUtilExt2::getAllowDataflowTypes(RTSPortExt2* source, RTSPortExt2* target)
 {
     vector<string> result;
     if (source == 0 && target == 0) {
@@ -61,7 +65,7 @@ vector<string> RTSTypeUtil::getAllowDataflowTypes(RTSPort* source, RTSPort* targ
     return result;
 }
 
-vector<string> RTSTypeUtil::getAllowSubscriptionTypes(RTSPort* source, RTSPort* target)
+vector<string> RTSTypeUtilExt2::getAllowSubscriptionTypes(RTSPortExt2* source, RTSPortExt2* target)
 {
     vector<string> result;
     if (source == 0 && target == 0) {
@@ -80,8 +84,8 @@ vector<string> RTSTypeUtil::getAllowSubscriptionTypes(RTSPort* source, RTSPort* 
 
     return result;
 }
-
-vector<string> RTSTypeUtil::getAllowList(vector<string>& source, vector<string>& target, TypeComparer& comparer)
+//////////
+vector<string> RTSTypeUtilExt2::getAllowList(vector<string>& source, vector<string>& target, TypeComparer& comparer)
 {
     //DDEBUG("RTCCommonUtil::getAllowList");
 
@@ -101,7 +105,7 @@ vector<string> RTSTypeUtil::getAllowList(vector<string>& source, vector<string>&
                 string type2 = target[idx02];
                 match = comparer.match(type1, type2);
                 //DDEBUG_V("type01:%s, type02:%s, match:%s", type1.c_str(), type2.c_str(), match.c_str());
-                if (!match.empty()) {
+                if (match.empty() == false) {
                     resultTmp.push_back(match);
                     break;
                 }
@@ -116,7 +120,7 @@ vector<string> RTSTypeUtil::getAllowList(vector<string>& source, vector<string>&
             for (int idx02 = 0; idx02 < resultTmp.size(); idx02++) {
                 string type2 = resultTmp[idx02];
                 match = comparer.match(type1, type2);
-                if (!match.empty()) {
+                if (match.empty() == false) {
                     break;
                 }
             }
@@ -135,12 +139,12 @@ vector<string> RTSTypeUtil::getAllowList(vector<string>& source, vector<string>&
     return result;
 }
 
-bool RTSTypeUtil::isAnyString(std::string target)
+bool RTSTypeUtilExt2::isAnyString(std::string target)
 {
     return RTCCommonUtil::compareIgnoreCase(target, "Any");
 }
 
-bool RTSTypeUtil::isExistAny(vector<string> target)
+bool RTSTypeUtilExt2::isExistAny(vector<string> target)
 {
     for (int index = 0; index < target.size(); index++) {
         if (isAnyString(target[index])) {
