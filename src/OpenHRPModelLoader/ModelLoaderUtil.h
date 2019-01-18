@@ -6,7 +6,7 @@
 #ifndef CNOID_OPENHRP_MODELLOADER_UTIL_H
 #define CNOID_OPENHRP_MODELLOADER_UTIL_H
 
-#include <cnoid/corba/OpenHRP/3.1/ModelLoader.hh>
+#include <cnoid/corba/OpenHRPModelLoader/ModelLoader.hh>
 #include <cnoid/EigenUtil>
 
 using namespace OpenHRP;
@@ -20,6 +20,7 @@ template <typename T, typename S> void setVector3( const T& v, S& out){
     out[2] = v(2);
 }
 void setVector3(const Vector3f& v, float* out);
+void setAngleAxis(const AngleAxis& a, DblArray4& out);
 void setMatrix3(const Matrix3& m, DblArray4& out);
 void setMatrix3(const Matrix3& m, DblArray9& out);
 void setTransformMatrix(const Matrix3& m, const Vector3& v, DblArray12& out);

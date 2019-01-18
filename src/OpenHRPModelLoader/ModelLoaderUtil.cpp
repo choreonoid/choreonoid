@@ -18,13 +18,18 @@ void setVector3(const Vector3f& v, float* out){
 }
 
 
-void setMatrix3(const Matrix3& m, DblArray4& out){
-    AngleAxis angleAxis(m);
-    Vector3& v = angleAxis.axis();
+void setAngleAxis(const AngleAxis& a, DblArray4& out){
+    const Vector3& v = a.axis();
     out[0] = v(0);
     out[1] = v(1);
     out[2] = v(2);
-    out[3] = angleAxis.angle();
+    out[3] = a.angle();
+}
+
+
+void setMatrix3(const Matrix3& m, DblArray4& out){
+    AngleAxis angleAxis(m);
+    setAngleAxis(angleAxis, out);
 }
 
 

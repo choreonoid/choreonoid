@@ -11,6 +11,7 @@
 #include <cnoid/RangeSensor>
 #include <cnoid/SpotLight>
 #include <cnoid/ValueTree>
+#include <cnoid/EigenArchive>
 #include <boost/algorithm/string.hpp>
 
 using namespace std;
@@ -194,9 +195,20 @@ void BodyInfo_impl::setLinks()
 
         setLink(linkInfo, link);
         setSegment(linkInfo, link);
-
-        linkInfo.hwcs.length(CORBA::ULong(0));  // Choreonoid Body has no setting corresponding to Hwc node
+        setHwc(linkInfo, link);
     }
+
+    //In Choreonoid Body, do not set jointValue for each Link, but use standardPose to make settings.
+    const Listing& pose = *body->info()->findListing("standardPose");
+    if(pose.isValid()){
+        const int n = std::min(pose.size(), body->numJoints());
+        for(int jointIndex=0; jointIndex < n; jointIndex++){
+            int i = body->joint(jointIndex)->index();
+            LinkInfo& linkInfo = links_[i];
+            linkInfo.jointValue = radian(pose[jointIndex].toDouble());   //TODO radian?
+        }
+    }
+
 }
 
 
@@ -259,8 +271,7 @@ void BodyInfo_impl::setLink(LinkInfo& linkInfo, Link& link)
     linkInfo.rotorResistor = link.info("rotorResistor", 1.0);
     linkInfo.torqueConst = link.info("torqueConst", 0.0);
     linkInfo.encoderPulse = link.info("encoderPulse", 1.0);
-
-    linkInfo.jointValue = 0.0; //Choreonoid Body has no setting corresponding to jointValue field in Link node
+    linkInfo.jointValue = 0.0;
 
     setShapeIndices(link.visualShape(), linkInfo.shapeIndices);
 }
@@ -272,20 +283,24 @@ void BodyInfo_impl::setSegment(LinkInfo& linkInfo, Link& link)
     setVector3(link.centerOfMass(), linkInfo.centerOfMass);
     setMatrix3(link.I(), linkInfo.inertia);
 
-    //Choreonoid Body has no setting corresponding to Segment node
+    //In the Choreonoid Body, multiple pieces of Segment node information are consolidated into one.
     linkInfo.segments.length(CORBA::ULong(1));
     SegmentInfo& segmentInfo = linkInfo.segments[0];
     segmentInfo.mass = link.mass();
     setVector3(link.centerOfMass(), segmentInfo.centerOfMass);
     setMatrix3(link.I(), segmentInfo.inertia);
-    segmentInfo.name = CORBA::string_dup("");
+    string name;
+    if(!link.info()->read("segmentName", name)){
+        name = link.name();
+    }
+    segmentInfo.name = CORBA::string_dup(name.c_str());
     TransformedShapeIndexSequence& shapeIndices = linkInfo.shapeIndices;
     segmentInfo.shapeIndices.length(shapeIndices.length());
     for(int i=0; i<shapeIndices.length(); i++){
         segmentInfo.shapeIndices[i] = i;
     }
     setTransformMatrix(Position::Identity(), segmentInfo.transformMatrix);
-    //
+
 }
 
 
@@ -394,5 +409,41 @@ void BodyInfo_impl::setLight(Device* device)
         lightInfo.cutOffAngle = spotlight->cutOffAngle();
     }
 
+    //lightInfo.ambientIntensity
+    //lightInfo.location
+    //lightInfo.radius
+
+}
+
+void BodyInfo_impl::setHwc(LinkInfo& linkInfo, Link& link)
+{
+    const Mapping& hwc = *link.info()->findMapping("Hwc");
+    if(hwc.isValid()){
+        int n = linkInfo.hwcs.length();
+        linkInfo.hwcs.length(n+1);
+        HwcInfo& hwcInfo = linkInfo.hwcs[n];
+        string s;
+        int i;
+        Vector3 v;
+        AngleAxis a;
+        if(hwc.read("name", s)){
+            hwcInfo.name = CORBA::string_dup( s.c_str() );;
+        }
+        if(hwc.read("id", i)){
+            hwcInfo.id = i;
+        }
+        if(read(hwc, "translation", v)){
+            setVector3(v, hwcInfo.translation);
+        }
+        if(read(hwc, "rotation", a)){
+            setAngleAxis(a, hwcInfo.rotation);
+            hwcInfo.rotation[3] = radian(hwcInfo.rotation[3]);             //TODO radian
+        }
+        if(hwc.read("url", s)){
+            hwcInfo.url = CORBA::string_dup( s.c_str() );;
+        }
+    }else{
+        linkInfo.hwcs.length(CORBA::ULong(0));
+    }
 }
 

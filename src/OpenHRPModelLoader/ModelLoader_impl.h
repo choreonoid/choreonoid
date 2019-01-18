@@ -6,7 +6,7 @@
 #ifndef CNOID_OPENHRP_MODELLOADER_MODELLOADER_IMPL_H
 #define CNOID_OPENHRP_MODELLOADER_MODELLOADER_IMPL_H
 
-#include <cnoid/corba/OpenHRP/3.1/ModelLoader.hh>
+#include <cnoid/corba/OpenHRPModelLoader/ModelLoader.hh>
 #include <string>
 #include <map>
 

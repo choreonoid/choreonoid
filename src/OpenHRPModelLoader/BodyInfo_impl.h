@@ -6,8 +6,8 @@
 #ifndef CNOID_OPENHRP_MODELLOADER_BODYINFO_IMPL_H
 #define CNOID_OPENHRP_MODELLOADER_BODYINFO_IMPL_H
 
-#include <cnoid/corba/OpenHRP/3.1/ModelLoader.hh>
-#include <cnoid/corba/OpenHRP/3.1/ViewSimulator.hh>
+#include <cnoid/corba/OpenHRPModelLoader/ModelLoader.hh>
+#include <cnoid/corba/OpenHRPModelLoader/ViewSimulator.hh>
 #include "ShapeSetInfo_impl.h"
 #include <cnoid/BodyLoader>
 #include <cnoid/Body>
@@ -48,6 +48,7 @@ private :
     void setLinks();
     void setLink(OpenHRP::LinkInfo& linkInfo, Link& link);
     void setSegment(OpenHRP::LinkInfo& linkInfo, Link& link);
+    void setHwc(OpenHRP::LinkInfo& linkInfo, Link& link);
     void setDevices();
     void setSensor(Device* device);
     void setLight(Device* device);
