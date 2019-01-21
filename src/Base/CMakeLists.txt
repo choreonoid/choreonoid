@@ -44,6 +44,7 @@ set(sources
   FloatingNumberBox.cpp
   ScrollBar.cpp
   Slider.cpp
+  Dial.cpp
   Splitter.cpp
   Buttons.cpp
   ButtonGroup.cpp
@@ -131,6 +132,7 @@ set(headers
   FloatingNumberBox.h
   ScrollBar.h
   Slider.h
+  Dial.h
   Splitter.h
   Buttons.h
   ButtonGroup.h
@@ -227,6 +229,7 @@ set(qtheaders
   FloatingNumberBox.h
   ScrollBar.h
   Slider.h
+  Dial.h
   Splitter.h
   Buttons.h
   ButtonGroup.h
