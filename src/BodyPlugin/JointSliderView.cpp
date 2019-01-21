@@ -13,6 +13,7 @@
 #include <cnoid/Buttons>
 #include <cnoid/SpinBox>
 #include <cnoid/Slider>
+#include <cnoid/Dial>
 #include <cnoid/Separator>
 #include <cnoid/LazyCaller>
 #include <cnoid/ViewManager>
