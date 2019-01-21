@@ -274,6 +274,11 @@ void BodyInfo_impl::setLink(LinkInfo& linkInfo, Link& link)
     linkInfo.jointValue = 0.0;
 
     setShapeIndices(link.visualShape(), linkInfo.shapeIndices);
+    linkInfo.inlinedShapeTransformMatrices.length(CORBA::ULong(0));
+
+    //linkInfo.AABBmaxDepth
+    //linkInfo.AABBmaxNum
+
 }
 
 
@@ -375,6 +380,7 @@ void BodyInfo_impl::setSensor(Device* device)
 
     //In choreonoid Body the Shape of the sensor is integrated into the shape of Link
     sensorInfo.shapeIndices.length(CORBA::ULong(0));
+    sensorInfo.inlinedShapeTransformMatrices.length(CORBA::ULong(0));
 }
 
 
@@ -442,8 +448,12 @@ void BodyInfo_impl::setHwc(LinkInfo& linkInfo, Link& link)
         if(hwc.read("url", s)){
             hwcInfo.url = CORBA::string_dup( s.c_str() );;
         }
+        //In choreonoid Body the Shape of the sensor is integrated into the shape of Link
+        hwcInfo.shapeIndices.length(CORBA::ULong(0));
+        hwcInfo.inlinedShapeTransformMatrices.length(CORBA::ULong(0));
     }else{
         linkInfo.hwcs.length(CORBA::ULong(0));
     }
+
 }
 
