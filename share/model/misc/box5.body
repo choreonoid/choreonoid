@@ -1,0 +1,20 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+
+name: box5
+rootLink: body
+links:
+  -
+    name: body
+    jointType: free
+    mass: 12.8  
+    inertia: [
+      0.72533, 0,       0,
+      0,       0.08533, 0,
+      0,       0,       0.72533 ]
+    elements:
+      Shape:
+        geometry: { type: Box, size: [ 0.8, 0.2, 0.2 ] }
+        appearance:
+          material:
+            diffuseColor: [ 1.0, 1.0, 0.0 ]

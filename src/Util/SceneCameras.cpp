@@ -12,8 +12,8 @@ using namespace cnoid;
 SgCamera::SgCamera(int polymorhicId)
     : SgPreprocessed(polymorhicId)
 {
-    nearClipDistance_ = 0.01;
-    farClipDistance_ = 100.0;
+    nearClipDistance_ = 0.04;
+    farClipDistance_ = 200.0;
 }
 
 

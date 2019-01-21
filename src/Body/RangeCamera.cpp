@@ -12,8 +12,18 @@ RangeCamera::RangeCamera()
 {
     setImageType(NO_IMAGE);
     points_ = std::make_shared<PointData>();
+    setNearClipDistance(0.5);
+    setFarClipDistance(4.0);
     isOrganized_ = false;
     isDense_ = false;
+}
+
+
+RangeCamera::RangeCamera(const RangeCamera& org, bool copyStateOnly)
+    : Camera(org, copyStateOnly),
+      points_(org.points_)
+{
+    copyRangeCameraStateFrom(org);
 }
 
 
@@ -42,44 +52,26 @@ void RangeCamera::copyStateFrom(const RangeCamera& other)
 
 void RangeCamera::copyRangeCameraStateFrom(const RangeCamera& other)
 {
+    if(other.isImageStateClonable()){
+        points_ = other.points_;
+    } else {
+        points_ = std::make_shared<PointData>();
+    }
+
     isOrganized_ = other.isOrganized_;
     isDense_ = other.isDense_;
 }
 
 
-RangeCamera::RangeCamera(const RangeCamera& org, bool copyStateOnly)
-    : Camera(org, copyStateOnly),
-      points_(org.points_)
-{
-    copyRangeCameraStateFrom(org);
-}
-
-        
 Device* RangeCamera::clone() const
 {
-    return new RangeCamera(*this);
+    return new RangeCamera(*this, false);
 }
 
 
-/**
-   Used for cloneState()
-*/
-RangeCamera::RangeCamera(const RangeCamera& org, int x /* dummy */)
-    : Camera(org, true)
-{
-    copyRangeCameraStateFrom(org);
-    
-    if(org.isImageStateClonable()){
-        points_ = org.points_;
-    } else {
-        points_ = std::make_shared<PointData>();
-    }
-}
-
-        
 DeviceState* RangeCamera::cloneState() const
 {
-    return new RangeCamera(*this, false);
+    return new RangeCamera(*this, true);
 }
 
 
@@ -122,12 +114,18 @@ void RangeCamera::clearState()
 {
     Camera::clearState();
 
+    clearPoints();
+}
+
+
+void RangeCamera::clearPoints()
+{
     if(points_.use_count() == 1){
         points_->clear();
     } else {
         points_ = std::make_shared<PointData>();
     }
-}
+}    
 
 
 void RangeCamera::setOrganized(bool on)

@@ -5,7 +5,7 @@
 #include "SceneLoader.h"
 #include "NullOut.h"
 #include "FileUtil.h"
-#include <boost/format.hpp>
+#include <fmt/format.h>
 #include <mutex>
 #include <map>
 #include <algorithm>
@@ -154,16 +154,16 @@ SgNode* SceneLoaderImpl::load(const std::string& filename)
 
     string ext = getExtension(filepath);
     if(ext.empty()){
-        os() << str(boost::format(_("The file format of \"%1%\" is unknown because it lacks a file name extension."))
-                    % getFilename(filepath)) << endl;
+        os() << fmt::format(_("The file format of \"{}\" is unknown because it lacks a file name extension."),
+                getFilename(filepath)) << endl;
         return 0;
     }
 
     SgNode* node = 0;
     auto loader = findLoader(ext);
     if(!loader){
-        os() << str(boost::format(_("The file format of \"%1%\" is not supported by the scene loader."))
-                    % getFilename(filepath)) << endl;
+        os() << fmt::format(_("The file format of \"{}\" is not supported by the scene loader."),
+                getFilename(filepath)) << endl;
     } else {
         loader->setMessageSink(os());
         if(defaultDivisionNumber > 0){

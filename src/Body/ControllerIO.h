@@ -28,6 +28,9 @@ class CNOID_EXPORT ControllerIO
 
     //! \deprecated Use timeStep().
     double worldTimeStep() const { return timeStep(); };
+
+  protected:
+    std::string getIntegratedOptionString(const std::string& opt1, const std::string& opt2) const;
 };
 
 }

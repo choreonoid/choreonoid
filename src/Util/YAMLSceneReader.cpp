@@ -17,8 +17,8 @@
 #include <cnoid/Exception>
 #include <cnoid/ImageIO>
 #include <cnoid/Config>
-#include <boost/format.hpp>
 #include <unordered_map>
+#include <fmt/format.h>
 #include <mutex>
 
 #ifdef CNOID_USE_BOOST_REGEX
@@ -35,7 +35,7 @@ using boost::regex_match;
 using namespace std;
 using namespace cnoid;
 namespace filesystem = boost::filesystem;
-using boost::format;
+using fmt::format;
 
 namespace {
 
@@ -316,6 +316,7 @@ AngleAxis YAMLSceneReader::readAngleAxis(const Listing& rotation) const
     return AngleAxis(toRadian(r[3]), axis);
 }
 
+
 bool YAMLSceneReader::readRotation(const ValueNode* info, Matrix3& out_R) const
 {
     if(!info || !info->isValid()){
@@ -323,13 +324,13 @@ bool YAMLSceneReader::readRotation(const ValueNode* info, Matrix3& out_R) const
     }
     const Listing& rotations = *info->toListing();
     if(!rotations.empty()){
-        if(rotations[0].isListing()){
+        if(!rotations[0].isListing()){
+            out_R = readAngleAxis(rotations);
+        } else {
             out_R = Matrix3::Identity();
             for(int i=0; i < rotations.size(); ++i){
                 out_R = out_R * readAngleAxis(*rotations[i].toListing());
             }
-        } else {
-            out_R = readAngleAxis(rotations);
         }
     }
     return true;
@@ -342,10 +343,58 @@ bool YAMLSceneReader::readRotation(const Mapping& info, Matrix3& out_R) const
 }
 
 
+bool YAMLSceneReader::readRotation(const Mapping& info, const char* key, Matrix3& out_R) const
+{
+    return readRotation(info.find(key), out_R);
+}
+
+
 bool YAMLSceneReader::extractRotation(Mapping& info, Matrix3& out_R) const
 {
     ValueNodePtr value = info.extract("rotation");
     return readRotation(value, out_R);
+}
+
+
+bool YAMLSceneReader::readTranslation(const ValueNode* info, Vector3& out_p) const
+{
+    if(!info || !info->isValid()){
+        return false;
+    }
+    const Listing& translations = *info->toListing();
+    if(!translations.empty()){
+        if(!translations[0].isListing()){
+            read(translations, out_p);
+        } else {
+            out_p.setZero();
+            Vector3 v;
+            for(int i=0; i < translations.size(); ++i){
+                if(readTranslation(&translations[i], v)){
+                    out_p += v;
+                }
+            }
+        }
+    }
+    return true;
+}
+
+
+bool YAMLSceneReader::readTranslation(const Mapping& info, Vector3& out_p) const
+{
+    return readTranslation(info.find("translation"), out_p);
+}
+
+
+bool YAMLSceneReader::readTranslation(const Mapping& info, const char* key, Vector3& out_p) const
+{
+    return readTranslation(info.find(key), out_p);
+}
+
+
+bool YAMLSceneReader::extractTranslation(Mapping& info, Vector3& out_p) const
+{
+    ValueNodePtr value = info.extract("translation");
+    return readTranslation(value, out_p);
 }
 
 
@@ -396,10 +445,10 @@ SgNode* YAMLSceneReaderImpl::readNode(Mapping& info, const string& type)
     NodeFunctionMap::iterator q = nodeFunctionMap.find(type);
     if(q == nodeFunctionMap.end()){
         if(info.get("isOptional", false)){
-            os() << format(_("Warning: the node type \"%1%\" is not defined. Reading this node has been skipped.")) % type << endl;
+            os() << format(_("Warning: the node type \"{}\" is not defined. Reading this node has been skipped."), type) << endl;
             return nullptr;
         }
-        info.throwException(str(format(_("The node type \"%1%\" is not defined.")) % type));
+        info.throwException(format(_("The node type \"{}\" is not defined."), type));
     }
 
     NodeFunction funcToReadNode = q->second;
@@ -465,8 +514,8 @@ void YAMLSceneReaderImpl::readNodeList(ValueNode& elements, SgGroup* group)
                 string type2 = typeNode->toString();
                 if(type2 != type){
                     element.throwException(
-                        str(format(_("The node type \"%1%\" is different from the type \"%2%\" specified in the parent node"))
-                            % type2 % type));
+                        format(_("The node type \"{0}\" is different from the type \"{1}\" specified in the parent node"),
+                                type2, type));
                 }
             }
             SgNodePtr scene = readNode(element, type);
@@ -484,10 +533,10 @@ SgNode* YAMLSceneReaderImpl::readTransform(Mapping& info)
     SgGroupPtr group;
 
     SgPosTransformPtr posTransform = new SgPosTransform;
-    if(read(info, "translation", v)){
+    if(self->readTranslation(info, v)){
         posTransform->setTranslation(v);
         group = posTransform;
-    }
+    }        
     Matrix3 R;
     if(self->readRotation(info, R)){
         posTransform->setRotation(R);
@@ -525,7 +574,7 @@ SgNode* YAMLSceneReaderImpl::readTransformParameters(Mapping& info, SgNode* scen
     Matrix3 R;
     bool isRotated = self->readRotation(info, R);
     Vector3 p;
-    bool isTranslated = read(info, "translation", p);
+    bool isTranslated = self->readTranslation(info, p);
     if(isRotated || isTranslated){
         SgPosTransform* transform = new SgPosTransform;
         if(isRotated){
@@ -599,7 +648,7 @@ SgMesh* YAMLSceneReaderImpl::readGeometry(Mapping& info)
         mesh = readResourceAsGeometry(info);
     } else {
         typeNode.throwException(
-            str(format(_("Unknown geometry \"%1%\"")) % type));
+            format(_("Unknown geometry \"{}\""), type));
     }
     return mesh;
 }
@@ -711,7 +760,11 @@ SgMesh* YAMLSceneReaderImpl::readExtrusion(Mapping& info)
     info.read("beginCap", extrusion.beginCap);
     info.read("endCap", extrusion.endCap);
 
-    return meshGenerator.generateExtrusion(extrusion, generateTexCoord);
+    SgMesh* mesh = meshGenerator.generateExtrusion(extrusion, generateTexCoord);
+
+    mesh->setSolid(info.get("solid", mesh->isSolid()));
+    
+    return mesh;
 }
 
 
@@ -748,11 +801,13 @@ SgMesh* YAMLSceneReaderImpl::readElevationGrid(Mapping& info)
         generateTexCoord = false;
     }
 
-    SgMesh* mesh= meshGenerator.generateElevationGrid(grid, generateTexCoord);
+    SgMesh* mesh = meshGenerator.generateElevationGrid(grid, generateTexCoord);
     if(texCoord){
         mesh->setTexCoords(texCoord);
         mesh->texCoordIndices() = mesh->triangleVertices();
     }
+
+    mesh->setSolid(info.get("solid", mesh->isSolid()));
 
     return mesh;
 }
@@ -809,7 +864,7 @@ SgMesh* YAMLSceneReaderImpl::readIndexedFaceSet(Mapping& info)
     }
 
     //polygonMeshTriangulator.setDeepCopyEnabled(true);
-    SgMesh* mesh= polygonMeshTriangulator.triangulate(polygonMesh);
+    SgMesh* mesh = polygonMeshTriangulator.triangulate(polygonMesh);
     const string& errorMessage = polygonMeshTriangulator.errorMessage();
     if(!errorMessage.empty()){
         info.throwException("Error of an IndexedFaceSet node: \n" + errorMessage);
@@ -824,6 +879,8 @@ SgMesh* YAMLSceneReaderImpl::readIndexedFaceSet(Mapping& info)
     double creaseAngle = 0.0;
     self->readAngle(info, "creaseAngle", creaseAngle);
     meshFilter.generateNormals(mesh, creaseAngle);
+
+    mesh->setSolid(info.get("solid", mesh->isSolid()));
 
     return mesh;
 }
@@ -1094,7 +1151,7 @@ void YAMLSceneReaderImpl::extractNamedYamlNodes
         auto node = info->yamlReader->findAnchoredNode(name);
         if(!node){
             resourceNode.throwException(
-                str(format(_("Node \"%1%\" is not found in \"%2%\".")) % name % uri));
+                format(_("Node \"{0}\" is not found in \"{1}\"."), name, uri));
         }
         if(group){
             group->append(node);
@@ -1123,7 +1180,7 @@ void YAMLSceneReaderImpl::extractNamedSceneNodes
         auto iter = nodeMap->find(name);
         if(iter == nodeMap->end()){
             resourceNode.throwException(
-                str(format(_("Node \"%1%\" is not found in \"%2%\".")) % name % uri));
+                format(_("Node \"{0}\" is not found in \"{1}\"."), name, uri));
         } else {
             SceneNodeInfo& nodeInfo = iter->second;
             if(nodeInfo.parent){
@@ -1190,7 +1247,7 @@ ResourceInfo* YAMLSceneReaderImpl::getOrCreateResourceInfo(Mapping& resourceNode
                 auto iter = uriSchemeHandlerMap.find(scheme);
                 if(iter == uriSchemeHandlerMap.end()){
                     resourceNode.throwException(
-                        str(format(_("The \"%1%\" scheme of \"%2%\" is not available")) % scheme % uri));
+                        format(_("The \"{0}\" scheme of \"{1}\" is not available"), scheme, uri));
                 } else {
                     auto& handler = iter->second;
                     filepath = handler(match.str(2), os());
@@ -1209,7 +1266,7 @@ ResourceInfo* YAMLSceneReaderImpl::getOrCreateResourceInfo(Mapping& resourceNode
     
     if(filepath.empty()){
         resourceNode.throwException(
-            str(format(_("The resource URI \"%1%\" is not valid")) % uri));
+            format(_("The resource URI \"{}\" is not valid"), uri));
     }
 
     ResourceInfoPtr info = new ResourceInfo;
@@ -1223,8 +1280,8 @@ ResourceInfo* YAMLSceneReaderImpl::getOrCreateResourceInfo(Mapping& resourceNode
         reader->importAnchors(*mainYamlReader);
         if(!reader->load(filename)){
             resourceNode.throwException(
-                str(format(_("YAML resource \"%1%\" cannot be loaded (%2%)"))
-                    % uri % reader->errorMessage()));
+                format(_("YAML resource \"{0}\" cannot be loaded ({1})"),
+                 uri, reader->errorMessage()));
         }
         info->yamlReader.reset(reader);
 
@@ -1232,7 +1289,7 @@ ResourceInfo* YAMLSceneReaderImpl::getOrCreateResourceInfo(Mapping& resourceNode
         SgNodePtr scene = sceneLoader.load(filename);
         if(!scene){
             resourceNode.throwException(
-                str(format(_("The resource is not found at URI \"%1%\"")) % uri));
+                format(_("The resource is not found at URI \"{}\""), uri));
         }
         info->scene = scene;
     }

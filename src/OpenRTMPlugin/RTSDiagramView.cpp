@@ -122,13 +122,21 @@ public:
     }
 };
 
+struct PortInfo {
+    bool isLeft;
+    QPointF portPos;
+    QPointF compPos;
+    double height;
+    double width;
+};
+
 class RTSConnectionGItem : public QGraphicsItemGroup, public Referenced
 {
 public:
     enum lineType { THREEPARTS_TYPE, FIVEPARTS_TYPE };
     const qreal xxoffset = 5;
 
-    RTSConnectionGItem(RTSConnection* rtsConnection, bool sIsLeft, QPointF s, bool tIsLeft, QPointF t);
+    RTSConnectionGItem(RTSConnection* rtsConnection, PortInfo source, PortInfo target);
     ~RTSConnectionGItem();
 
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
@@ -197,6 +205,8 @@ private:
     RTSConnectionMarkerItem* marker[5];
     ConnectionSet signalConnections;
     QGraphicsOpacityEffect* effect;
+
+    double calcLinePos(PortInfo source, PortInfo target);
 };
 
 typedef ref_ptr<RTSConnectionGItem> RTSConnectionGItemPtr;
@@ -210,7 +220,7 @@ public:
     QPointF pos;
 
     RTSPortGItem(RTSPort* rtsPort);
-    void create(int rectX, const QPointF& pos, int i, portType type);
+    void create(int rectX, const QPointF& pos, int i, portType type, const int interval);
     void stateCheck();
     void setCandidate(bool isCand);
 
@@ -221,14 +231,14 @@ typedef ref_ptr<RTSPortGItem> RTSPortGItemPtr;
 class RTSCompGItem : public QGraphicsItemGroup, public Referenced
 {
 public:
-    RTSCompGItem(RTSComp* rtsComp, RTSDiagramViewImpl* impl, const QPointF& pos);
+    RTSCompGItem(RTSComp* rtsComp, RTSDiagramViewImpl* impl, const QPointF& pos, const int interval);
     ~RTSCompGItem();
     QVariant itemChange(GraphicsItemChange change, const QVariant & value);
-    void create(const QPointF& pos);
+    void create(const QPointF& pos, const int interval);
     void stateCheck();
     void checkCandidate(RTSPortGItem* sourcePort);
     void clearCandidate();
-    int correctTextY();
+    int correctTextY(int interval);
 
     RTSDiagramViewImpl* impl;
     RTSComp* rtsComp;
@@ -294,6 +304,7 @@ public:
     void keyPressEvent(QKeyEvent* event);
     void onnsViewItemSelectionChanged(const list<NamingContextHelper::ObjectInfo>& items);
     RTSPortGItem* findTargetRTSPort(QPointF& pos);
+    RTSCompGItem* findTargetRTC(RTSPortGItem* port);
     RTSConnectionMarkerItem* findConnectionMarker(QGraphicsItem* gItem);
     void createConnectionGItem(RTSConnection* rtsConnection, RTSPortGItem* sourcePort, RTSPortGItem* targetPort);
     void onRTSCompSelectionChange();
@@ -315,15 +326,18 @@ public:
     void startExecutionContext();
     void stopExecutionContext();
 
-    void onLoadedRTSystem(bool value);
+    void onRTSystemLoaded();
+
+private:
+    int interval_;
 };
 
 }
 
 
 RTSConnectionGItem::RTSConnectionGItem
-(RTSConnection* rtsConnection, bool sIsLeft, QPointF s, bool tIsLeft, QPointF t)
-    : rtsConnection(rtsConnection), _sIsLeft(sIsLeft), _tIsLeft(tIsLeft)
+(RTSConnection* rtsConnection, PortInfo source, PortInfo target)
+    : rtsConnection(rtsConnection), _sIsLeft(source.isLeft), _tIsLeft(target.isLeft)
 {
     effect = new QGraphicsOpacityEffect;
     effect->setOpacity(OPACITY);
@@ -378,24 +392,24 @@ RTSConnectionGItem::RTSConnectionGItem
         }
     } else {
         qreal sx, tx;
-        sx = firstLineX(s.x());
-        tx = endLineX(t.x());
+        sx = firstLineX(source.portPos.x());
+        tx = endLineX(target.portPos.x());
         type = getType(sx, tx);
 
-        line[0] = new RTSConnectionLineItem(sx, s.y(), s.x(), s.y());
+        line[0] = new RTSConnectionLineItem(sx, source.portPos.y(), source.portPos.x(), source.portPos.y());
         addToGroup(line[0]);
 
-        line[1] = new RTSConnectionLineItem(tx, t.y(), t.x(), t.y());
+        line[1] = new RTSConnectionLineItem(tx, target.portPos.y(), target.portPos.x(), target.portPos.y());
         addToGroup(line[1]);
 
         qreal centerX = (sx + tx) / 2.0;
-        qreal centerY = (s.y() + t.y()) / 2.0;
+        qreal centerY = (source.portPos.y() + target.portPos.y()) / 2.0;
         if (type == THREEPARTS_TYPE) {
-            line[2] = new RTSConnectionLineItem(sx, s.y(), centerX, s.y());
+            line[2] = new RTSConnectionLineItem(sx, source.portPos.y(), centerX, source.portPos.y());
             addToGroup(line[2]);
-            line[3] = new RTSConnectionLineItem(centerX, s.y(), centerX, t.y());
+            line[3] = new RTSConnectionLineItem(centerX, source.portPos.y(), centerX, target.portPos.y());
             addToGroup(line[3]);
-            line[4] = new RTSConnectionLineItem(centerX, t.y(), tx, t.y());
+            line[4] = new RTSConnectionLineItem(centerX, target.portPos.y(), tx, target.portPos.y());
             addToGroup(line[4]);
             marker[0] = new RTSConnectionMarkerItem(line[0]->x2, line[0]->y2, RTSConnectionMarkerItem::UNMOVABLE);
             marker[1] = new RTSConnectionMarkerItem(line[1]->x2, line[1]->y2, RTSConnectionMarkerItem::UNMOVABLE);
@@ -404,12 +418,15 @@ RTSConnectionGItem::RTSConnectionGItem
                 marker[2]->sigPositionChanged.connect(
                     std::bind(&RTSConnectionGItem::lineMove, this, _1)));
             marker[3] = marker[4] = 0;
+
         } else {
-            line[2] = new RTSConnectionLineItem(sx, s.y(), sx, centerY);
+            centerY = calcLinePos(source, target);
+
+            line[2] = new RTSConnectionLineItem(sx, source.portPos.y(), sx, centerY);
             addToGroup(line[2]);
             line[3] = new RTSConnectionLineItem(sx, centerY, tx, centerY);
             addToGroup(line[3]);
-            line[4] = new RTSConnectionLineItem(tx, centerY, tx, t.y());
+            line[4] = new RTSConnectionLineItem(tx, centerY, tx, target.portPos.y());
             addToGroup(line[4]);
             marker[0] = new RTSConnectionMarkerItem(line[0]->x2, line[0]->y2, RTSConnectionMarkerItem::UNMOVABLE);
             marker[1] = new RTSConnectionMarkerItem(line[1]->x2, line[1]->y2, RTSConnectionMarkerItem::UNMOVABLE);
@@ -606,6 +623,38 @@ void RTSConnectionGItem::showMarker(bool on)
     }
 }
 
+double RTSConnectionGItem::calcLinePos(PortInfo source, PortInfo target) {
+    double result = 0.0;
+
+    double srcTop = source.compPos.y();
+    double srcBtm = source.compPos.y() + source.height;
+    double trgTop = target.compPos.y();
+    double trgBtm = target.compPos.y() + target.height;
+
+    if (srcTop <= trgTop && trgTop <= srcBtm) {
+        double diffBtm = trgBtm - source.portPos.y();
+        double diffTop = srcTop - source.portPos.y();
+        if (fabs(diffBtm) < fabs(diffTop)) {
+            result = trgBtm + 30;
+        } else {
+            result = srcTop - 10;
+        }
+
+    } else if (trgTop < srcTop && srcTop < trgBtm) {
+        double diffBtm = srcBtm - source.portPos.y();
+        double diffTop = trgTop - source.portPos.y();
+        if (fabs(diffBtm) < fabs(diffTop)) {
+            result = srcBtm + 30;
+        } else {
+            result = trgTop - 10;
+        }
+
+    } else {
+        result = (source.portPos.y() + target.portPos.y()) / 2.0;
+    }
+
+    return result;
+}
 
 RTSPortGItem::RTSPortGItem(RTSPort* rtsPort)
     : rtsPort(rtsPort)
@@ -614,22 +663,22 @@ RTSPortGItem::RTSPortGItem(RTSPort* rtsPort)
 }
 
 
-void RTSPortGItem::create(int rectX, const QPointF& pos, int i, portType type)
+void RTSPortGItem::create(int rectX, const QPointF& pos, int i, portType type, const int interval)
 {
     int r = 7 * i;
 
     switch (type) {
 
         case INPORT:
-            this->pos = QPointF(rectX + 5 + pos.x(), 5 + 7 + 7 + (25 * i) - r + pos.y());
+            this->pos = QPointF(rectX + 5 + pos.x(), 5 + 7 + 7 + (interval * i) - r + pos.y());
             polygon = new QGraphicsPolygonItem(
                 QPolygonF(QVector<QPointF>()
-                    << QPointF(rectX + 0 + pos.x(), 0 + 7 + 7 + (25 * i) - r + pos.y())
-                    << QPointF(rectX + 10 + pos.x(), 0 + 7 + 7 + (25 * i) - r + pos.y())
-                    << QPointF(rectX + 10 + pos.x(), 10 + 7 + 7 + (25 * i) - r + pos.y())
-                    << QPointF(rectX + 0 + pos.x(), 10 + 7 + 7 + (25 * i) - r + pos.y())
-                    << QPointF(rectX + 5 + pos.x(), 5 + 7 + 7 + (25 * i) - r + pos.y())
-                    << QPointF(rectX + 0 + pos.x(), 0 + 7 + 7 + (25 * i) - r + pos.y())));
+                    << QPointF(rectX + 0 + pos.x(), 0 + 7 + 7 + (interval * i) - r + pos.y())
+                    << QPointF(rectX + 10 + pos.x(), 0 + 7 + 7 + (interval * i) - r + pos.y())
+                    << QPointF(rectX + 10 + pos.x(), 10 + 7 + 7 + (interval * i) - r + pos.y())
+                    << QPointF(rectX + 0 + pos.x(), 10 + 7 + 7 + (interval * i) - r + pos.y())
+                    << QPointF(rectX + 5 + pos.x(), 5 + 7 + 7 + (interval * i) - r + pos.y())
+                    << QPointF(rectX + 0 + pos.x(), 0 + 7 + 7 + (interval * i) - r + pos.y())));
             polygon->setPen(QPen(QColor("red")));
             stateCheck();
             addToGroup(polygon);
@@ -638,13 +687,13 @@ void RTSPortGItem::create(int rectX, const QPointF& pos, int i, portType type)
         case OUTPORT:
             polygon = new QGraphicsPolygonItem(
                 QPolygonF(QVector<QPointF>()
-                    << QPointF(rectX + 53 + pos.x(), 0 + 7 + 7 + (25 * i) - r + pos.y())
-                    << QPointF(rectX + 60 + pos.x(), 0 + 7 + 7 + (25 * i) - r + pos.y())
-                    << QPointF(rectX + 65 + pos.x(), 5 + 7 + 7 + (25 * i) - r + pos.y())
-                    << QPointF(rectX + 60 + pos.x(), 10 + 7 + 7 + (25 * i) - r + pos.y())
-                    << QPointF(rectX + 53 + pos.x(), 10 + 7 + 7 + (25 * i) - r + pos.y())
-                    << QPointF(rectX + 53 + pos.x(), 0 + 7 + 7 + (25 * i) - r + pos.y())));
-            this->pos = QPointF(rectX + 65 + pos.x(), 5 + 7 + 7 + (25 * i) - r + pos.y());
+                    << QPointF(rectX + 53 + pos.x(), 0 + 7 + 7 + (interval * i) - r + pos.y())
+                    << QPointF(rectX + 60 + pos.x(), 0 + 7 + 7 + (interval * i) - r + pos.y())
+                    << QPointF(rectX + 65 + pos.x(), 5 + 7 + 7 + (interval * i) - r + pos.y())
+                    << QPointF(rectX + 60 + pos.x(), 10 + 7 + 7 + (interval * i) - r + pos.y())
+                    << QPointF(rectX + 53 + pos.x(), 10 + 7 + 7 + (interval * i) - r + pos.y())
+                    << QPointF(rectX + 53 + pos.x(), 0 + 7 + 7 + (interval * i) - r + pos.y())));
+            this->pos = QPointF(rectX + 65 + pos.x(), 5 + 7 + 7 + (interval * i) - r + pos.y());
             polygon->setPen(QPen(QColor("red")));
             stateCheck();
             addToGroup(polygon);
@@ -653,13 +702,13 @@ void RTSPortGItem::create(int rectX, const QPointF& pos, int i, portType type)
         case SERVICEPORT:
             polygon = new QGraphicsPolygonItem(
                 QPolygonF(QVector<QPointF>()
-                    << QPointF(rectX + 53 + pos.x(), 0 + 7 + 7 + (25 * i) - r + pos.y())
-                    << QPointF(rectX + 63 + pos.x(), 0 + 7 + 7 + (25 * i) - r + pos.y())
-                    << QPointF(rectX + 63 + pos.x(), 5 + 7 + 7 + (25 * i) - r + pos.y())
-                    << QPointF(rectX + 63 + pos.x(), 10 + 7 + 7 + (25 * i) - r + pos.y())
-                    << QPointF(rectX + 53 + pos.x(), 10 + 7 + 7 + (25 * i) - r + pos.y())
-                    << QPointF(rectX + 53 + pos.x(), 0 + 7 + 7 + (25 * i) - r + pos.y())));
-            this->pos = QPointF(rectX + 63 + pos.x(), 5 + 7 + 7 + (25 * i) - r + pos.y());
+                    << QPointF(rectX + 53 + pos.x(), 0 + 7 + 7 + (interval * i) - r + pos.y())
+                    << QPointF(rectX + 63 + pos.x(), 0 + 7 + 7 + (interval * i) - r + pos.y())
+                    << QPointF(rectX + 63 + pos.x(), 5 + 7 + 7 + (interval * i) - r + pos.y())
+                    << QPointF(rectX + 63 + pos.x(), 10 + 7 + 7 + (interval * i) - r + pos.y())
+                    << QPointF(rectX + 53 + pos.x(), 10 + 7 + 7 + (interval * i) - r + pos.y())
+                    << QPointF(rectX + 53 + pos.x(), 0 + 7 + 7 + (interval * i) - r + pos.y())));
+            this->pos = QPointF(rectX + 63 + pos.x(), 5 + 7 + 7 + (interval * i) - r + pos.y());
             polygon->setPen(QPen(QColor("red")));
             stateCheck();
             addToGroup(polygon);
@@ -700,7 +749,7 @@ QVariant RTSCompGItem::itemChange(GraphicsItemChange change, const QVariant & va
 }
 
 
-int RTSCompGItem::correctTextY()
+int RTSCompGItem::correctTextY(int interval)
 {
     int numIn = rtsComp->inPorts.size();
     int numOut = rtsComp->outPorts.size();
@@ -708,7 +757,7 @@ int RTSCompGItem::correctTextY()
     if (!numMax) {
         numMax = 1;
     }
-    return (25 * numMax) - 7 * (numMax - 1);
+    return (interval * numMax) - 7 * (numMax - 1);
 }
 
 
@@ -765,7 +814,7 @@ void RTSCompGItem::clearCandidate()
 
 
 RTSDiagramViewImpl::RTSDiagramViewImpl(RTSDiagramView* self)
-    :self(self), sourcePort(0), pollingPeriod(500)
+    :self(self), sourcePort(0), pollingPeriod(1000)
 {
     self->setDefaultLayoutArea(View::CENTER);
 
@@ -786,9 +835,6 @@ RTSDiagramViewImpl::RTSDiagramViewImpl(RTSDiagramView* self)
     }
 
     timer.setSingleShot(false);
-    MappingPtr appVars = AppConfig::archive()->openMapping("OpenRTM");
-    pollingPeriod = appVars->get("pollingCycle", 500);
-    timer.setInterval(pollingPeriod);
     timeOutConnection.reset(
         timer.sigTimeout().connect(
             std::bind(&RTSDiagramViewImpl::onTime, this)));
@@ -808,6 +854,12 @@ RTSDiagramViewImpl::RTSDiagramViewImpl(RTSDiagramView* self)
     scene.addItem(dragPortLine);
 
     targetMarker = 0;
+    interval_ = 25;
+    QFont f = font();
+    QFontMetrics fm(f); 
+    int pixelsHigh = fm.height(); 
+    DDEBUG_V("Font size:%d", pixelsHigh);
+    interval_ = pixelsHigh * 2.0;
 }
 
 
@@ -1109,14 +1161,20 @@ void RTSDiagramViewImpl::onRTSCompSelectionChange()
     if (selectionRTCs.size() == 1 && singleSelectedRTC != selectionRTCs.front()) {
         RTSNameServerView* nsView = RTSNameServerView::instance();
         if (nsView) {
-            nsView->setSelection(selectionRTCs.front()->rtsComp->name, selectionRTCs.front()->rtsComp->fullPath);
+            RTSComp* selected = selectionRTCs.front()->rtsComp;
+            NamingContextHelper::ObjectInfo nsInfo;
+            nsInfo.hostAddress_ = selected->hostAddress;
+            nsInfo.portNo_ = selected->portNo;
+            nsInfo.isRegisteredInRtmDefaultNameServer_ = selected->isDefaultNS;
+            nsView->setSelection(selected->name, selected->fullPath, nsInfo);
         }
     }
 
     if (selectionRTSConnections.size() == 1 && singleSelectedConnection != selectionRTSConnections.front()) {
         RTSNameServerView* nsView = RTSNameServerView::instance();
         if (nsView) {
-            nsView->setSelection("", "");
+            NamingContextHelper::ObjectInfo nsInfo;
+            nsView->setSelection("", "", nsInfo);
         }
         RTSPropertiesView* propView = RTSPropertiesView::instance();
         if (propView) {
@@ -1164,8 +1222,10 @@ void RTSDiagramViewImpl::onActivated(bool on)
 {
     DDEBUG_V("RTSDiagramViewImpl::onActivated : %d", on);
     if (on) {
+        DDEBUG_V("Timer Start");
         timer.start();
     } else {
+        DDEBUG_V("Timer Stop");
         timer.stop();
     }
 }
@@ -1174,9 +1234,18 @@ void RTSDiagramViewImpl::timerPeriodUpdate(int value)
 {
     DDEBUG_V("RTSDiagramViewImpl::timerPeriodUpdate : %d", value);
     if (pollingPeriod != value) {
-        timer.stop();
+        pollingPeriod = value;
+
+        bool isStarted = timer.isActive();
+        if (isStarted) {
+            DDEBUG_V("Timer Stop");
+            timer.stop();
+        }
         timer.setInterval(value);
-        timer.start();
+        if (isStarted) {
+            DDEBUG_V("Timer Start");
+            timer.start();
+        }
     }
 }
 
@@ -1218,6 +1287,24 @@ RTSPortGItem* RTSDiagramViewImpl::findTargetRTSPort(QPointF& pos)
     return nullptr;
 }
 
+RTSCompGItem* RTSDiagramViewImpl::findTargetRTC(RTSPortGItem* port) 
+{
+    for (map<string, RTSCompGItemPtr>::iterator it = rtsComps.begin(); it != rtsComps.end(); it++) {
+        map<string, RTSPortGItemPtr>& inPorts = it->second->inPorts;
+        for (map<string, RTSPortGItemPtr>::iterator itr = inPorts.begin(); itr != inPorts.end(); itr++) {
+            if (itr->second == port) {
+                return it->second.get();
+            }
+        }
+        map<string, RTSPortGItemPtr>& outPorts = it->second->outPorts;
+        for (map<string, RTSPortGItemPtr>::iterator itr = outPorts.begin(); itr != outPorts.end(); itr++) {
+            if (itr->second == port) {
+                return it->second.get();
+            }
+        }
+    }
+    return nullptr;
+}
 
 RTSConnectionMarkerItem* RTSDiagramViewImpl::findConnectionMarker(QGraphicsItem* gItem)
 {
@@ -1261,7 +1348,7 @@ void RTSDiagramViewImpl::addRTSComp(NamingContextHelper::ObjectInfo& info, const
     timeOutConnection.block();
     RTSComp* rtsComp = currentRTSItem->addRTSComp(info, pos);
     if (rtsComp) {
-        RTSCompGItemPtr rtsCompGItem = new RTSCompGItem(rtsComp, this, pos);
+        RTSCompGItemPtr rtsCompGItem = new RTSCompGItem(rtsComp, this, pos, interval_);
         rtsComps[info.getFullPath()] = rtsCompGItem;
         scene.addItem(rtsCompGItem);
 
@@ -1283,7 +1370,7 @@ void RTSDiagramViewImpl::addRTSComp(NamingContextHelper::ObjectInfo& info, const
 void RTSDiagramViewImpl::addRTSComp(RTSComp* rtsComp)
 {
     timeOutConnection.block();
-    RTSCompGItemPtr rtsCompGItem = new RTSCompGItem(rtsComp, this, rtsComp->pos());
+    RTSCompGItemPtr rtsCompGItem = new RTSCompGItem(rtsComp, this, rtsComp->pos(), interval_);
     rtsComps[rtsComp->fullPath] = rtsCompGItem;
     scene.addItem(rtsCompGItem);
     timeOutConnection.unblock();
@@ -1343,13 +1430,29 @@ void RTSDiagramViewImpl::createConnectionGItem
 (RTSConnection* rtsConnection, RTSPortGItem* sourcePort, RTSPortGItem* targetPort)
 {
     DDEBUG("RTSDiagramViewImpl::createConnectionGItem");
+
+    PortInfo sourceInfo;
+    sourceInfo.isLeft = rtsConnection->sourcePort->isInPort;
+    sourceInfo.portPos = sourcePort->pos;
+    RTSCompGItem* srcComp = findTargetRTC(sourcePort);
+    sourceInfo.compPos = srcComp->rect->scenePos();
+    sourceInfo.height = srcComp->rect->rect().bottom() - srcComp->rect->rect().top();
+    sourceInfo.width = srcComp->rect->rect().right() - srcComp->rect->rect().left();
+
+    PortInfo targetInfo;
+    targetInfo.isLeft = rtsConnection->targetPort->isInPort;
+    targetInfo.portPos = targetPort->pos;
+    RTSCompGItem* trgComp = findTargetRTC(targetPort);
+    targetInfo.compPos = trgComp->rect->scenePos();
+    targetInfo.height = trgComp->rect->rect().bottom() - trgComp->rect->rect().top();
+    targetInfo.width = trgComp->rect->rect().right() - trgComp->rect->rect().left();
+
     RTSConnectionGItemPtr gItem =
         new RTSConnectionGItem(
             rtsConnection,
-            rtsConnection->sourcePort->isInPort,
-            sourcePort->pos,
-            rtsConnection->targetPort->isInPort,
-            targetPort->pos);
+            sourceInfo,
+            targetInfo);
+
 
     scene.addItem(gItem);
     rtsConnections[rtsConnection->id] = gItem;
@@ -1378,6 +1481,7 @@ void RTSDiagramViewImpl::onTime()
     if (doConnectionCheck) {
         if (currentRTSItem->checkStatus()) {
             updateView();
+            updateRestoredView();
         }
     }
 
@@ -1387,6 +1491,7 @@ void RTSDiagramViewImpl::onTime()
 
 void RTSDiagramViewImpl::setCurrentRTSItem(RTSystemItem* item)
 {
+    DDEBUG("RTSDiagramViewImpl::setCurrentRTSItem");
     timer.setInterval(item->pollingCycle());
 
     currentRTSItem = item;
@@ -1400,8 +1505,8 @@ void RTSDiagramViewImpl::setCurrentRTSItem(RTSystemItem* item)
             currentRTSItem->sigTimerChanged().connect(
                 std::bind(&RTSDiagramViewImpl::onActivated, this, _1)));
     rtsLoadedConnection.reset(
-            currentRTSItem->sigLoadedRTSystem().connect(
-                std::bind(&RTSDiagramViewImpl::onLoadedRTSystem, this, _1)));
+            currentRTSItem->sigUpdated().connect(
+                std::bind(&RTSDiagramViewImpl::onRTSystemLoaded, this)));
 
     updateView();
 }
@@ -1460,17 +1565,6 @@ void RTSDiagramViewImpl::updateRestoredView()
     }
 }
 
-void RTSDiagramViewImpl::updateSetting()
-{
-    DDEBUG("RTSDiagramViewImpl::updateSetting");
-
-    MappingPtr appVars = AppConfig::archive()->openMapping("OpenRTM");
-    int pPeriod = appVars->get("pollingCycle", 500);
-    timerPeriodUpdate(pPeriod);
-    pPeriod = pollingPeriod;
-}
-
-
 void RTSDiagramViewImpl::activateComponent()
 {
     RTSCompGItem* target = selectionRTCs.front();
@@ -1526,14 +1620,14 @@ void RTSDiagramViewImpl::stopExecutionContext()
 }
 
 
-RTSCompGItem::RTSCompGItem(RTSComp* rtsComp, RTSDiagramViewImpl* impl, const QPointF& pos)
+RTSCompGItem::RTSCompGItem(RTSComp* rtsComp, RTSDiagramViewImpl* impl, const QPointF& pos, const int interval)
     : impl(impl), rtsComp(rtsComp)
 {
     DDEBUG("RTSCompGItem::RTSCompGItem(RTSComp");
     effect = new QGraphicsOpacityEffect;
     effect->setOpacity(OPACITY);
     setGraphicsEffect(effect);
-    if (isObjectAlive(rtsComp->rtc_)) {
+    if (!CORBA::is_nil(rtsComp->rtc_)) {
         rtsComp->isAlive_ = true;
         effect->setEnabled(false);
     } else {
@@ -1541,7 +1635,7 @@ RTSCompGItem::RTSCompGItem(RTSComp* rtsComp, RTSDiagramViewImpl* impl, const QPo
         effect->setEnabled(true);
     }
 
-    create(pos);
+    create(pos, interval);
     positionChangeConnection = sigPositionChanged.connect(
         std::bind(&RTSDiagramViewImpl::onRTSCompPositionChanged, impl, _1));
 }
@@ -1559,10 +1653,10 @@ RTSCompGItem::~RTSCompGItem()
 }
 
 
-void RTSCompGItem::create(const QPointF& pos)
+void RTSCompGItem::create(const QPointF& pos, const int interval)
 {
     QGraphicsTextItem * text = new QGraphicsTextItem(QString(rtsComp->name.c_str()));
-    int height = correctTextY();
+    int height = correctTextY(interval);
     text->setPos(0 + pos.x(), height + 5 + pos.y());
     addToGroup(text);
 
@@ -1580,13 +1674,16 @@ void RTSCompGItem::create(const QPointF& pos)
         string portName = string(inPort->name);
         RTCCommonUtil::splitPortName(portName);
         text = new QGraphicsTextItem(QString(portName.c_str()));
+        int r = 7 * i;
         int x = rectX + pos.x() - text->boundingRect().width();
-        int y = 25 * i - 7 * i - 3 + pos.y();
+        int portY = 5 + 7 + 7 + (interval * i) - r + pos.y();
+        int y = portY - interval * 4 / 5;
+
         text->setPos(x, y);
         addToGroup(text);
 
         RTSPortGItemPtr inPortGItem = new RTSPortGItem(inPort);
-        inPortGItem->create(rectX, pos, i, RTSPortGItem::INPORT);
+        inPortGItem->create(rectX, pos, i, RTSPortGItem::INPORT, interval);
         addToGroup(inPortGItem);
         inPorts[inPort->name] = inPortGItem;
         impl->rtsPortMap[inPort] = inPortGItem.get();
@@ -1600,15 +1697,16 @@ void RTSCompGItem::create(const QPointF& pos)
         text = new QGraphicsTextItem(QString(portName.c_str()));
         int r = 7 * i;
         int x = rectX + 66 + pos.x();
-        int y = 25 * i - r - 3 + pos.y();
+        int portY = 5 + 7 + 7 + (interval * i) - r + pos.y();
+        int y = portY - interval * 4 / 5;
         text->setPos(x, y);
         addToGroup(text);
 
         RTSPortGItemPtr outPortGItem = new RTSPortGItem(outPort);
         if (outPort->isServicePort) {
-            outPortGItem->create(rectX, pos, i, RTSPortGItem::SERVICEPORT);
+            outPortGItem->create(rectX, pos, i, RTSPortGItem::SERVICEPORT, interval);
         } else {
-            outPortGItem->create(rectX, pos, i, RTSPortGItem::OUTPORT);
+            outPortGItem->create(rectX, pos, i, RTSPortGItem::OUTPORT, interval);
         }
         addToGroup(outPortGItem);
         outPorts[outPort->name] = outPortGItem;
@@ -1655,11 +1753,6 @@ void RTSDiagramView::onRTSCompSelectionChange()
 }
 
 
-void RTSDiagramView::updateSetting()
-{
-    impl->updateSetting();
-}
-
 bool RTSDiagramView::storeState(Archive& archive)
 {
     if (impl->currentRTSItem) {
@@ -1685,11 +1778,12 @@ void RTSDiagramView::initializeClass(ExtensionManager* ext)
         "RTSDiagramView", N_("RTC Diagram"), ViewManager::SINGLE_OPTIONAL);
 }
 
-void RTSDiagramViewImpl::onLoadedRTSystem(bool value)
+void RTSDiagramViewImpl::onRTSystemLoaded()
 {
-    DDEBUG_V("RTSDiagramViewImpl::onLoadedRTSystem : %d", value);
+    DDEBUG("RTSDiagramViewImpl::onRTSystemLoaded");
+
     updateView();
-    if (value) {
+    if (currentRTSItem->isCheckAtLoading()) {
         checkStatus();
     }
     updateRestoredView();

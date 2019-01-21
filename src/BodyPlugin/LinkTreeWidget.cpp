@@ -561,6 +561,7 @@ LinkTreeWidgetImpl::BodyItemInfoPtr LinkTreeWidgetImpl::getBodyItemInfo(BodyItem
                 if(q != bodyItemInfoCache.end()){
                     info = q->second;
                     isInfoForNewBody = true;
+                    bodyItemInfoCache.erase(q);
                 }
             }
         }
@@ -1190,11 +1191,15 @@ bool LinkTreeWidgetImpl::storeState(Archive& archive)
         for(BodyItemInfoMap::iterator it = bodyItemInfoCache.begin(); it != bodyItemInfoCache.end(); ++it){
 
             BodyItem* bodyItem = it->first;
+            ValueNodePtr id = archive.getItemId(bodyItem);
+            if(!id){ // The item is not in the item tree
+                continue;
+            }
             BodyItemInfo& info = *it->second;
             MappingPtr bodyItemNode = new Mapping();
             bool isEmpty = true;
 
-            bodyItemNode->insert("id", archive.getItemId(bodyItem));
+            bodyItemNode->insert("id", id);
             
             const vector<int>& indices = selectedLinkIndices(bodyItem);
             if(!indices.empty()){

@@ -7,6 +7,7 @@
 #include "../Item.h"
 #include "../RootItem.h"
 #include "../FolderItem.h"
+#include "../SubProjectItem.h"
 #include "../AbstractTextItem.h"
 #include "../ScriptItem.h"
 #include "../ExtCommandItem.h"
@@ -122,6 +123,11 @@ void exportPyItems(py::module m)
 
     PyItemList<FolderItem>(m, "FolderItemList");
 
+    py::class_<SubProjectItem, SubProjectItemPtr, Item>(m, "SubProjectItem")
+        .def(py::init<>());
+
+    PyItemList<SubProjectItem>(m, "SubProjectItemList");
+    
     py::class_<AbstractTextItem, AbstractTextItemPtr, Item>(m, "AbstractTextItem")
         .def_property_readonly("textFilename", &AbstractTextItem::textFilename)
 

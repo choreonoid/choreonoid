@@ -41,7 +41,7 @@ public:
 
     void setBody(Body* body);
             
-    virtual void setName(const std::string& name);
+    virtual void setName(const std::string& name) override;
 
     Body* body() const;
 
@@ -133,16 +133,17 @@ public:
 
     bool setStance(double width);
             
-    virtual SgNode* getScene();
+    virtual SgNode* getScene() override;
     EditableSceneBody* sceneBody();
     EditableSceneBody* existingSceneBody();
 
 protected:
-    virtual Item* doDuplicate() const;
-    virtual void doAssign(Item* item);
-    virtual void doPutProperties(PutPropertyFunction& putProperty);
-    virtual bool store(Archive& archive);
-    virtual bool restore(const Archive& archive);
+    virtual Item* doDuplicate() const override;
+    virtual void doAssign(Item* item) override;
+    virtual void onPositionChanged() override;
+    virtual void doPutProperties(PutPropertyFunction& putProperty) override;
+    virtual bool store(Archive& archive) override;
+    virtual bool restore(const Archive& archive) override;
             
 private:
     friend class BodyItemImpl;

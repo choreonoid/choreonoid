@@ -29,6 +29,11 @@ typedef std::map<std::string, LinkPtr> NameToLinkMap;
 typedef std::map<std::string, Device*> DeviceNameMap;
 typedef std::map<std::string, ReferencedPtr> CacheMap;
 
+double getCurrentTime()
+{
+    return 0.0;
+}
+
 }
 
 namespace cnoid {
@@ -65,6 +70,7 @@ Body::Body()
     initialize();
     rootLink_ = createLink();
     numActualJoints = 0;
+    currentTimeFunction = getCurrentTime;
 
     impl->centerOfMass.setZero();
     impl->mass = 0.0;
@@ -92,6 +98,8 @@ Body::Body(const Body& org)
 void Body::copy(const Body& org)
 {
     initialize();
+
+    currentTimeFunction = org.currentTimeFunction;
 
     impl->centerOfMass = org.impl->centerOfMass;
     impl->mass = org.impl->mass;
@@ -399,26 +407,27 @@ const Vector3& Body::centerOfMass() const
 }
 
 
-void Body::initializeState()
+void Body::initializePosition()
 {
     rootLink_->T() = rootLink_->Tb();
 
-    rootLink_->v().setZero();
-    rootLink_->w().setZero();
-    rootLink_->dv().setZero();
-    rootLink_->dw().setZero();
-    
-    const int n = linkTraverse_.numLinks();
-    for(int i=0; i < n; ++i){
-        Link* link = linkTraverse_[i];
-        link->u() = 0.0;
+    for(auto& link : linkTraverse_){
         link->q() = link->q_initial();
-        link->dq() = 0.0;
-        link->ddq() = 0.0;
+        link->initializeState();
     }
- 
+
     calcForwardKinematics(true, true);
-    clearExternalForces();
+    initializeDeviceStates();
+}
+
+
+void Body::initializeState()
+{
+    for(auto& link : linkTraverse_){
+        link->initializeState();
+    }
+
+    calcForwardKinematics(true, true);
     initializeDeviceStates();
 }
 
@@ -701,3 +710,10 @@ void BodyImpl::applyLinkOffsetRotationsToDevices(Body* body, vector<bool>& valid
         }
     }
 }
+
+
+void Body::setCurrentTimeFunction(std::function<double()> func)
+{
+    currentTimeFunction = func;
+}
+

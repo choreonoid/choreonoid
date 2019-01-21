@@ -3,8 +3,11 @@
 */
 
 #include <cnoid/BodyIoRTC>
+#include <cnoid/AccelerationSensor>
+#include <cnoid/RateGyroSensor>
 #include <cnoid/Light>
 #include <rtm/idl/BasicDataTypeSkel.h>
+#include <rtm/idl/ExtendedDataTypesSkel.h>
 #include <rtm/DataInPort.h>
 #include <rtm/DataOutPort.h>
 
@@ -22,6 +25,7 @@ public:
     virtual bool initializeIO(ControllerIO* io) override;
     virtual bool initializeSimulation(ControllerIO* io) override;
     virtual void inputFromSimulator() override;
+    virtual RTC::ReturnCode_t onExecute(RTC::UniqueId ec_id) override;
     virtual void outputToSimulator() override;
 
     BodyPtr ioBody;
@@ -29,6 +33,9 @@ public:
     Link* turretP;
     Link* trackL;
     Link* trackR;
+    AccelerationSensor* accelSensor;
+    RateGyroSensor* gyro;
+    Light* light;
     
     // DataInPort declaration
     RTC::TimedDoubleSeq torques;
@@ -37,14 +44,20 @@ public:
     RTC::TimedDoubleSeq velocities;
     RTC::InPort<RTC::TimedDoubleSeq> velocitiesIn;
 
-    RTC::TimedBooleanSeq lightSwitch;
-    RTC::InPort<RTC::TimedBooleanSeq> lightSwitchIn;
-    LightPtr light;
+    RTC::TimedBoolean lightSwitch;
+    RTC::InPort<RTC::TimedBoolean> lightSwitchIn;
     
     // DataOutPort declaration
     RTC::TimedDoubleSeq angles;
     RTC::OutPort<RTC::TimedDoubleSeq> anglesOut;
+
+    RTC::TimedAcceleration3D accel;
+    RTC::OutPort<RTC::TimedAcceleration3D> accelOut;
+
+    RTC::TimedAngularVelocity3D angularVelocity;
+    RTC::OutPort<RTC::TimedAngularVelocity3D> angularVelocityOut;
 };
+
 
 const char* spec[] =
 {
@@ -68,7 +81,9 @@ TankIoRTC::TankIoRTC(RTC::Manager* manager)
       torquesIn("u", torques),
       velocitiesIn("dq", velocities),
       lightSwitchIn("light", lightSwitch),
-      anglesOut("q", angles)
+      anglesOut("q", angles),
+      accelOut("dv", accel),
+      angularVelocityOut("w", angularVelocity)
 {
 
 }
@@ -90,6 +105,8 @@ bool TankIoRTC::initializeIO(ControllerIO* io)
     // Set OutPort buffer
     addOutPort("q", anglesOut);
     angles.data.length(2);
+    addOutPort("dv", accelOut);
+    addOutPort("w", angularVelocityOut);
 
     return true;
 }
@@ -108,9 +125,13 @@ bool TankIoRTC::initializeSimulation(ControllerIO* io)
     trackR = ioBody->link("TRACK_R");
     trackL->setActuationMode(Link::JOINT_SURFACE_VELOCITY);
     trackR->setActuationMode(Link::JOINT_SURFACE_VELOCITY);
-    
+
+    accelSensor = ioBody->findDevice<AccelerationSensor>("ACCEL_SENSOR");
+    gyro = ioBody->findDevice<RateGyroSensor>("GYRO");
     light = ioBody->findDevice<Light>("Light");
     
+    lightSwitch.data = light->on();
+
     return true;
 }
 
@@ -119,29 +140,50 @@ void TankIoRTC::inputFromSimulator()
 {
     angles.data[0] = turretY->q();
     angles.data[1] = turretP->q();
+
+    auto dv = accelSensor->dv();
+    accel.data.ax = dv.x();
+    accel.data.ay = dv.y();
+    accel.data.az = dv.z();
+
+    auto w = gyro->w();
+    angularVelocity.data.avx = w.x();
+    angularVelocity.data.avy = w.y();
+    angularVelocity.data.avz = w.z();
+}
+
+
+RTC::ReturnCode_t TankIoRTC::onExecute(RTC::UniqueId ec_id)
+{
     anglesOut.write();
+    accelOut.write();
+    
+    if(torquesIn.isNew()){
+        torquesIn.read();
+    }
+    if(velocitiesIn.isNew()){
+        velocitiesIn.read();
+    }
+    if(light && lightSwitchIn.isNew()){
+        lightSwitchIn.read();
+    }
+    return RTC::RTC_OK;
 }
 
 
 void TankIoRTC::outputToSimulator()
 {
-    if(torquesIn.isNew()){
-        torquesIn.read();
-        if(torques.data.length() >= 2){
-            turretY->u() = torques.data[0];
-            turretP->u() = torques.data[1];
-        }
+    if(torques.data.length() >= 2){
+        turretY->u() = torques.data[0];
+        turretP->u() = torques.data[1];
     }
-    if(velocitiesIn.isNew()){
-        velocitiesIn.read();
-        if(velocities.data.length() >= 2){
-            trackL->dq() = velocities.data[0];
-            trackR->dq() = velocities.data[1];
-        }
+    if(velocities.data.length() >= 2){
+        trackL->dq_target() = velocities.data[0];
+        trackR->dq_target() = velocities.data[1];
     }
-    if(light && lightSwitchIn.isNew()){
-        lightSwitchIn.read();
-        light->on(lightSwitch.data[0]);
+    bool on = lightSwitch.data;
+    if(on != light->on()){
+        light->on(on);
         light->notifyStateChange();
     }
 }

@@ -19,6 +19,7 @@ set(sources
   NullOut.cpp
   FileUtil.cpp
   ExecutablePath.cpp
+  ParametricPathProcessor.cpp
   AbstractSeq.cpp
   Vector3Seq.cpp
   MultiSE3Seq.cpp
@@ -102,6 +103,7 @@ set(headers
   Vector3Seq.h
   FileUtil.h
   ExecutablePath.h
+  ParametricPathProcessor.h
   UTF8.h
   BoundingBox.h
   SceneGraph.h
@@ -153,12 +155,12 @@ set(headers
   Joystick.h
   ExtJoystick.h
   SharedJoystick.h
-  JoystickGamepad.h
   Task.h
   AbstractTaskSequencer.h
   Exception.h
   exportdecl.h
   CnoidUtil.h
+  ThreadPool.h
   )
 
 set(target CnoidUtil)
@@ -171,7 +173,9 @@ if(UNIX)
     ${CMAKE_THREAD_LIBS_INIT}
     ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY}
     ${GETTEXT_LIBRARIES}
-    m)
+    fmt::fmt
+    m
+    )
 
   if(CNOID_USE_BOOST_REGEX)
     set(libraries ${libraries} ${Boost_REGEX_LIBRARY})
@@ -185,13 +189,23 @@ if(UNIX)
   
 elseif(MSVC)
   set_target_properties(${target} PROPERTIES COMPILE_DEFINITIONS "YAML_DECLARE_STATIC")
-  set(libraries libpng jpeg zlib winmm ${GETTEXT_LIBRARIES})
+  set(libraries libpng jpeg zlib winmm ${GETTEXT_LIBRARIES} fmt::fmt)
   if(USE_EXTERNAL_YAML)
     set(libraries ${libraries} optimized yaml debug yamld)
   else()
     set(libraries ${libraries} yaml)
   endif()
-  target_link_libraries(${target} ${libraries})
+  find_file(XINPUT_DLL "XInput1_4.dll")
+  if(XINPUT_DLL)
+    target_link_libraries(${target} ${libraries} XInput)
+    add_definitions(-DUSE_XINPUT)
+  else()
+    find_file(XINPUT_DLL "XInput9_1_0.dll")
+    if(XINPUT_DLL)
+      target_link_libraries(${target} ${libraries} XInput9_1_0)
+      add_definitions(-DUSE_XINPUT)
+    endif()
+  endif()
 endif()
 
 apply_common_setting_for_library(${target} "${headers}")

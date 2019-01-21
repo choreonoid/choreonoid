@@ -1,0 +1,184 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: HoseNozzle
+
+GRAY2: &GRAY2
+  material:
+    diffuseColor: [ 0.34, 0.34, 0.34 ]
+    specularColor: [ 0.25, 0.25, 0.25 ]
+    shininess: 0.05
+
+GRAY3: &GRAY3
+  material:
+    diffuseColor: [ 0.45, 0.45, 0.45 ]
+    specularColor: [ 0.5, 0.5, 0.5 ]
+    shininess: 0.08
+
+GRAY4: &GRAY4
+  material:
+    diffuseColor: [ 0.6, 0.6, 0.6 ]
+    specularColor: [ 0.8, 0.8, 0.8 ]
+    shininess: 0.1
+
+SILVER: &SILVER
+  material:
+    diffuseColor: [ 0.67, 0.67, 0.67 ]
+    specularColor: [ 0.8, 0.8, 0.8 ]
+    shininess: 0.05
+
+links:
+  -
+    name: HOSE_NOZZLE
+    jointType: free
+    mass: 1.6
+    centerOfMass: [ 0.1, 0, 0 ]
+    inertia: [ 0.002, 0,    0,
+               0,     0.03, 0,
+               0,     0,    0.03 ]
+    elements:
+      -
+        type: Resource
+        uri: "resource/HoseNozzleSlot.yaml"
+        node: TUBE
+      -
+        type: Shape
+        translation: [ 0.047, 0, 0 ]
+        rotation: [ 0, 0, 1, 90 ]
+        geometry: { type: Cylinder, radius: 0.022, height: 0.094 }
+        appearance: *GRAY2
+      -
+        type: Shape
+        translation: [ 0.109, 0, 0 ]
+        rotation: [ 0, 0, 1, 90 ]
+        geometry: { type: Cylinder, radius: 0.019, height: 0.03 }
+        appearance: *GRAY3
+      -
+        type: Shape
+        translation: [ 0.2095, 0, 0 ]
+        rotation: [ 0, 0, 1, 90 ]
+        geometry: { type: Cylinder, radius: 0.0158, height: 0.17 }
+        appearance: *SILVER
+      -
+        type: Shape
+        translation: [ 0.312, 0, 0 ]
+        rotation: [ 0, 0, 1, 90 ]
+        geometry: { type: Cylinder, radius: 0.021, height: 0.0362 }
+        appearance: *GRAY3
+      -
+        type: FountainDevice
+        isOptional: true
+        name: WATER
+        on: false
+        translation: [ 0.3, 0, 0 ]
+        rotation: [ 0, 1, 0, 90 ]
+        lifeTime: 0.8
+        particleSize: 0.04
+        numParticles: 5000
+        initialSpeedAverage: 8
+        initialSpeedVariation: 0.5
+        emissionRange: 3
+        acceleration: [ 0, 0, -5.0 ]
+      -
+        type: MarkerDevice
+        name: MARKER
+        markerType: cross
+        size: 0.1
+        on: false
+  -
+    # Extra link for preventing the hand from sticking to the nozzle slot
+    name: HOSE_NOZZLE_SLOT_GUARD
+    parent: HOSE_NOZZLE
+    translation: [ -0.025, 0, 0 ]
+    jointType: fixed
+    mass: 0.01
+    inertia: [ 0.0001, 0,      0,
+               0,      0.0001, 0,
+               0,      0,      0.0001 ]
+    elements:
+      Collision:
+        shape:
+          rotation: [ 0, 0, 1, 90 ]
+          geometry: { type: Cylinder, radius: 0.031, height: 0.051 }
+          appearance: *SILVER
+  -
+    name: HOSE_NOZZLE_LEVER
+    parent: HOSE_NOZZLE
+    translation: [ 0.0305, 0, 0.002 ]
+    jointType: revolute
+    jointAxis: Y
+    jointId: 0
+    jointRange: [ -45, 45 ]
+    jointAngle: 45
+    centerOfMass: [ 0, 0, 0.03 ]
+    mass: 0.3
+    inertia: [ 0.0005, 0,      0,
+               0,      0.0005, 0,
+               0,      0,      0.0005 ]
+    # For the friction for AGX
+    jointMotor: true
+    jointMotorCompliance: 0.5
+    elements:
+      -
+        type: Shape
+        translation: [ 0, -0.00015, 0 ]
+        geometry: { type: Cylinder, radius: 0.023, height: 0.0605 }
+        appearance: *GRAY2
+      -
+        type: Shape
+        translation: [ -0.0019, -0.00143, 0.054 ]
+        geometry: { type: Cylinder, radius: 0.0078, height: 0.08 }
+        appearance: *GRAY3
+      -
+        type: Shape
+        translation: [ -0.0019, -0.04195, 0.0066 ]
+        geometry: { type: Cylinder, radius: 0.0045, height: 0.0011 }
+        appearance: *GRAY4
+      -
+        type: Shape
+        translation: [ -0.0019, 0.03915, 0.00655 ]
+        geometry: { type: Cylinder, radius: 0.0045, height: 0.0013 }
+        appearance: *GRAY4
+      -
+        type: Shape
+        translation: [ -0.0019, -0.0359, 0.02445 ]
+        geometry: { type: Box, size: [ 0.0095, 0.011, 0.0443 ] }
+        appearance: *GRAY3
+      -
+        type: Shape
+        translation: [ -0.0019, 0.03334, 0.0253 ]
+        geometry: { type: Box, size: [ 0.0095, 0.0103, 0.0465 ] }
+        appearance: *GRAY3
+      -
+        type: Shape
+        translation: [ -0.0019, -0.00143, 0.047 ]
+        geometry: { type: Box, size: [ 0.0095, 0.08, 0.0015 ] }
+        appearance: *GRAY2
+  -
+    name: HOSE_NOZZLE_WATER_REACTION_JOINT1
+    parent: HOSE_NOZZLE
+    translation: [ 0.3, 0, 0 ]
+    jointType: revolute
+    jointAxis: X
+    jointRange: unlimited
+    mass: 0.01
+    inertia: [ 0.0001, 0,       0,
+               0,      0.00001, 0,
+               0,      0,       0.0001 ]
+  -
+    name: HOSE_NOZZLE_WATER_REACTION_JOINT2
+    parent: HOSE_NOZZLE_WATER_REACTION_JOINT1
+    jointType: prismatic
+    jointAxis: Y
+    jointRange: [ -0.2, 0.2 ]
+    mass: 0.19
+    inertia: [ 0.0001, 0,       0,
+               0,      0.00001, 0,
+               0,      0,       0.0001 ]
+    # elements:
+    #   Visual:
+    #     shape:
+    #       geometry: { type: Sphere, radius: 0.01 }
+    #       appearance:
+    #         material:
+    #           diffuseColor: [ 1, 0, 0 ]

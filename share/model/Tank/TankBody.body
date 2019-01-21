@@ -55,7 +55,14 @@ links:
             translation: [ -0.205, 0.0, -0.04 ]
             rotation: [ 0, 1, 0, 15 ]
             geometry: { type: Box, size: [ 0.03881, 0.3, 0.01 ] }
-
+      -
+        type: AccelerationSensor
+        name: ACCEL_SENSOR
+        id: 0
+      -
+        type: RateGyroSensor
+        name: GYRO
+        id: 0
   -
     name: TURRET_Y
     parent: CHASSIS
@@ -429,6 +436,7 @@ links:
                 width: 320
                 height: 240
                 frameRate: 30
+                on: true
               -
                 type: Camera
                 name: Theta
@@ -440,6 +448,7 @@ links:
                 width: 720
                 height: 480
                 frameRate: 30
+                on: false
               -
                 type: RangeSensor
                 name: VLP-16
@@ -451,6 +460,7 @@ links:
                 pitchStep: 2.0
                 scanRate:  5
                 maxDistance: 100.0
+                on: false
               -
                 type: Transform
                 translation: [ -0.01, 0, 0.045 ]
@@ -474,3 +484,4 @@ links:
                     cutOffAngle: 40
                     cutOffExponent: 6
                     attenuation: [ 1, 0, 0.01 ]
+                    on: true

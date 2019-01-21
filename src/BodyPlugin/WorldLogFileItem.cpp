@@ -13,13 +13,9 @@
 #include <QDateTime>
 #include <fstream>
 #include <stack>
-
-#include <iostream>
-
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 namespace filesystem = boost::filesystem;
 
@@ -325,7 +321,7 @@ public:
             body = bodyItem->body();
             deviceInfos.resize(body->numDevices());
         } else {
-            body = 0;
+            body = nullptr;
         }
     }
     
@@ -371,12 +367,6 @@ TimeSyncItemEngine* createWorldLogFileEngine(Item* sourceItem)
     return 0;
 }
 
-
-bool loadWorldLogFile(WorldLogFileItem* item, const std::string& filename, std::ostream& os)
-{
-    return item->setLogFileName(filename);
-}
-
 }
 
 namespace cnoid {
@@ -385,7 +375,6 @@ class WorldLogFileItemImpl
 {
 public:
     WorldLogFileItem* self;
-    string filename;
     QDateTime recordingStartTime;
     bool isTimeStampSuffixEnabled;
     vector<string> bodyNames;
@@ -428,7 +417,7 @@ public:
     WorldLogFileItemImpl(WorldLogFileItem* self);
     WorldLogFileItemImpl(WorldLogFileItem* self, WorldLogFileItemImpl& org);
     ~WorldLogFileItemImpl();
-    bool setLogFileName(const std::string& name);
+    bool setLogFile(const std::string& name, bool isLoading = false);
     string getActualFilename();
     void updateBodyInfos();
     void onWorldSubTreeChanged();
@@ -438,10 +427,10 @@ public:
     bool recallStateAtTime(double time);
     bool loadCurrentFrameData();
     void readBodyStatees();
-    void readBodyState(BodyInfo* bodyInfo);
+    void readBodyState(BodyInfo* bodyInfo, double time);
     int readLinkPositions(Body* body);
     int readJointPositions(Body* body);
-    void readDeviceStates(BodyInfo* bodyInfo);
+    void readDeviceStates(BodyInfo* bodyInfo, double time);
     void readDeviceState(DeviceInfo& devInfo, Device* device, ReadBuf& buf, int size);
     void readLastDeviceState(DeviceInfo& devInfo, Device* device);
     void clearOutput();
@@ -462,7 +451,10 @@ void WorldLogFileItem::initializeClass(ExtensionManager* ext)
     im.registerClass<WorldLogFileItem>(N_("WorldLogFileItem"));
     im.addCreationPanel<WorldLogFileItem>();
     im.addLoader<WorldLogFileItem>(
-        _("World Log"), "CNOID-WORLD-LOG", "log", std::bind(loadWorldLogFile, _1, _2, _3));
+        _("World Log"), "CNOID-WORLD-LOG", "log",
+        [](WorldLogFileItem* item, const std::string& filename, std::ostream&, Item*){
+            return item->impl->setLogFile(filename, true);
+        });
 
     ext->timeSyncItemEngineManger().addEngineFactory(createWorldLogFileEngine);    
 }
@@ -499,7 +491,6 @@ WorldLogFileItemImpl::WorldLogFileItemImpl(WorldLogFileItem* self, WorldLogFileI
       readBuf(ifs),
       readBuf2(ifs)
 {
-    filename = org.filename;
     isTimeStampSuffixEnabled = org.isTimeStampSuffixEnabled;
     recordingFrameRate = org.recordingFrameRate;
     isBodyInfoUpdateNeeded = true;
@@ -531,32 +522,30 @@ void WorldLogFileItem::notifyUpdate()
 }
 
 
-const std::string& WorldLogFileItem::logFileName() const
+const std::string& WorldLogFileItem::logFile() const
 {
-    return impl->filename;
+    return filePath();
 }
 
 
-bool WorldLogFileItem::setLogFileName(const std::string& filename)
+bool WorldLogFileItem::setLogFile(const std::string& filename)
 {
-    return impl->setLogFileName(filename);
+    return impl->setLogFile(filename);
 }
 
 
-bool WorldLogFileItemImpl::setLogFileName(const std::string& name)
+bool WorldLogFileItemImpl::setLogFile(const std::string& filename, bool isLoading)
 {
-    if(name != filename){
-        filename = name;
-        readTopHeader();
-    }
-    return true;
+    self->updateFileInformation(filename, "CNOID-WORLD-LOG");
+    bool loaded = readTopHeader();
+    return isLoading ? loaded : true;
 }
 
 
 string WorldLogFileItemImpl::getActualFilename()
 {
     if(isTimeStampSuffixEnabled && recordingStartTime.isValid()){
-        filesystem::path filepath(filename);
+        filesystem::path filepath(self->filePath());
         string suffix = recordingStartTime.toString("-yyyy-MM-dd-hh-mm-ss").toStdString();
         string fname = getBasename(filepath) + suffix;
         string ext = getExtension(filepath);
@@ -565,7 +554,7 @@ string WorldLogFileItemImpl::getActualFilename()
         }
         return getPathString(filepath.parent_path() / filesystem::path(fname));
     } else {
-        return filename;
+        return self->filePath();
     }
 }
 
@@ -610,7 +599,7 @@ void WorldLogFileItem::onPositionChanged()
     } else {
         impl->worldSubTreeChangedConnection.reset(
             worldItem->sigSubTreeChanged().connect(
-                std::bind(&WorldLogFileItemImpl::onWorldSubTreeChanged, impl)));
+                [&](){ impl->onWorldSubTreeChanged(); }));
     }
     
     impl->isBodyInfoUpdateNeeded = true;
@@ -778,12 +767,12 @@ bool WorldLogFileItemImpl::recallStateAtTime(double time)
         switch(dataTypeID){
         case BODY_STATE:
         {
-            BodyInfo* bodyInfo = 0;
+            BodyInfo* bodyInfo = nullptr;
             if(bodyIndex < static_cast<int>(bodyInfos.size())){
                 bodyInfo = bodyInfos[bodyIndex];
             }
             if(bodyInfo){
-                readBodyState(bodyInfo);
+                readBodyState(bodyInfo, time);
             } else {
                 readBuf.seekToNextBlock();
             }
@@ -800,7 +789,7 @@ bool WorldLogFileItemImpl::recallStateAtTime(double time)
 }
 
 
-void WorldLogFileItemImpl::readBodyState(BodyInfo* bodyInfo)
+void WorldLogFileItemImpl::readBodyState(BodyInfo* bodyInfo, double time)
 {
     int endPos = readBuf.readNextBlockPos();
     bool updated = false;
@@ -829,7 +818,7 @@ void WorldLogFileItemImpl::readBodyState(BodyInfo* bodyInfo)
                 bodyInfo->bodyItem->notifyKinematicStateChange(doForwardKinematics);
                 updated = false;
             }
-            readDeviceStates(bodyInfo);
+            readDeviceStates(bodyInfo, time);
             break;
         default:
             readBuf.seekToNextBlock();
@@ -871,7 +860,7 @@ int WorldLogFileItemImpl::readJointPositions(Body* body)
 }
 
 
-void WorldLogFileItemImpl::readDeviceStates(BodyInfo* bodyInfo)
+void WorldLogFileItemImpl::readDeviceStates(BodyInfo* bodyInfo, double time)
 {
     const int endPos = readBuf.readNextBlockPos();
     Body* body = bodyInfo->body;
@@ -880,7 +869,7 @@ void WorldLogFileItemImpl::readDeviceStates(BodyInfo* bodyInfo)
     while(readBuf.pos < endPos && deviceIndex < numDevices){
         DeviceInfo& devInfo = bodyInfo->deviceInfo(deviceIndex);
         Device* device = bodyInfo->body->device(deviceIndex);
-        const int header = readBuf.readOctet();
+        const int header = readBuf.readShort();
         if(header < 0){
             readLastDeviceState(devInfo, device);
         } else {
@@ -889,6 +878,7 @@ void WorldLogFileItemImpl::readDeviceStates(BodyInfo* bodyInfo)
             readDeviceState(devInfo, device, readBuf, size);
             readBuf.seek(nextPos);
         }
+        device->notifyTimeChange(time);
         ++deviceIndex;
     }
     readBuf.seek(endPos);
@@ -924,7 +914,7 @@ void WorldLogFileItemImpl::readLastDeviceState(DeviceInfo& devInfo, Device* devi
         ifs.seekg(pos);
         devInfo.lastStateSeekPos = pos;
         readBuf2.clear();
-        int size = readBuf2.readOctet();
+        int size = readBuf2.readShort();
         if(size > 0){
             readDeviceState(devInfo, device, readBuf2, size);
         }
@@ -1097,14 +1087,14 @@ void WorldLogFileItem::outputDeviceState(DeviceState* state)
 
 void WorldLogFileItemImpl::outputDeviceState(DeviceState* state)
 {
-    DeviceStateCache* cache = 0;
+    DeviceStateCache* cache = nullptr;
         
     if(deviceIndex >= numDeviceStateCaches){
         cache = new DeviceStateCache;
     } else {
         cache = (*pLastDeviceStateCacheArray)[deviceIndex];
         if(state == cache->state){
-            writeBuf.writeOctet(-1);
+            writeBuf.writeShort(-1);
             writeBuf.writeSeekOffset(cache->seekPos);
             goto endOutputDeviceState;
         }
@@ -1112,10 +1102,10 @@ void WorldLogFileItemImpl::outputDeviceState(DeviceState* state)
     cache->state = state;
     cache->seekPos = writeBuf.seekPos();
     if(!state){
-        writeBuf.writeOctet(0);
+        writeBuf.writeShort(0);
     } else {
         int size = state->stateSize();
-        writeBuf.writeOctet(size);
+        writeBuf.writeShort(size);
         doubleWriteBuf.resize(size);
         state->writeState(&doubleWriteBuf.front());
         for(int i=0; i < size; ++i){
@@ -1161,9 +1151,11 @@ void WorldLogFileItemImpl::exchangeDeviceStateCacheArrays()
 
 void WorldLogFileItem::doPutProperties(PutPropertyFunction& putProperty)
 {
-    putProperty(_("Log file name"), impl->filename,
-                std::bind(&WorldLogFileItemImpl::setLogFileName, impl, _1));
-    putProperty(_("Actual log file"), impl->getActualFilename());
+    FilePathProperty logFileProperty(filePath(), { string(_("World Log File (*.log)")) });
+    logFileProperty.setExistingFileMode(false);
+    putProperty(_("Log file"), logFileProperty,
+                [&](const string& file){ return impl->setLogFile(file); });
+    putProperty(_("Actual log file"), FilePathProperty(impl->getActualFilename()));
     putProperty(_("Time-stamp suffix"), impl->isTimeStampSuffixEnabled,
                 changeProperty(impl->isTimeStampSuffixEnabled));
     putProperty(_("Recording frame rate"), impl->recordingFrameRate,
@@ -1173,7 +1165,8 @@ void WorldLogFileItem::doPutProperties(PutPropertyFunction& putProperty)
 
 bool WorldLogFileItem::store(Archive& archive)
 {
-    archive.write("filename", impl->filename);
+    archive.writeRelocatablePath("filename", filePath());
+    archive.write("format", fileFormat());
     archive.write("timeStampSuffix", impl->isTimeStampSuffixEnabled);
     archive.write("recordingFrameRate", impl->recordingFrameRate);
     return true;
@@ -1182,11 +1175,13 @@ bool WorldLogFileItem::store(Archive& archive)
 
 bool WorldLogFileItem::restore(const Archive& archive)
 {
-    string filename;
     archive.read("timeStampSuffix", impl->isTimeStampSuffixEnabled);
     archive.read("recordingFrameRate", impl->recordingFrameRate);
-    if(archive.read("filename", filename)){
-        impl->setLogFileName(archive.expandPathVariables(filename));
+    
+    std::string filename, formatId;
+    if(archive.readRelocatablePath("filename", filename)){
+        impl->setLogFile(filename);
     }
+    
     return true;
 }

@@ -1,0 +1,10 @@
+CXXFLAGS += -fPIC `pkg-config --cflags choreonoid-body-plugin`
+PLUGIN = libCnoidSample1Plugin.so
+
+$(PLUGIN): Sample1Plugin.o
+	g++ -shared  -o $(PLUGIN) Sample1Plugin.o `pkg-config --libs choreonoid-body-plugin`
+
+install: $(PLUGIN)
+	install -s $(PLUGIN) `pkg-config --variable=plugindir choreonoid`
+clean:
+	rm -f *.o *.so

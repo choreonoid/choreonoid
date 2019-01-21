@@ -15,13 +15,16 @@ class SceneTrackDevice : public SceneDevice
 {
     AGXVehicleContinuousTrackDevice* m_trackDevice;
     std::vector<SgPosTransformPtr> m_sgTracks;
-    bool m_bShapeCreated = false;
+    SgSwitchPtr trackSwitch;
 
 public:
     SceneTrackDevice(AGXVehicleContinuousTrackDevice* device)
         : SceneDevice(device)
     {
         m_trackDevice = device;
+        trackSwitch = new SgSwitch;
+        trackSwitch->turnOff();
+        addChild(trackSwitch);
         setFunctionOnStateChanged([&](){ update(); });
         initialize();
     }
@@ -29,34 +32,50 @@ public:
     void initialize(){
         m_sgTracks.clear();
         m_sgTracks.reserve(m_trackDevice->getNumNodes());
-        for (int i = 0; i < m_trackDevice->getNumNodes(); ++i) {
+        for(int i = 0; i < m_trackDevice->getNumNodes(); ++i){
             SgPosTransformPtr sgTrack = new SgPosTransform;
-            addChild(sgTrack, true);
+            trackSwitch->addChild(sgTrack);
             m_sgTracks.push_back(sgTrack);
         }
     }
 
     void update(){
-        if(m_trackDevice->getTrackStates().size() <= 0) return;
-        if(!m_bShapeCreated) m_bShapeCreated = createTrackShapes();
-        updateTrackPosition();
+        if(m_trackDevice->getTrackStates().size() <= 0){
+            trackSwitch->setTurnedOn(false, true);
+        } else {
+            if(!trackSwitch->isTurnedOn()){
+                createTrackShapes();
+                trackSwitch->setTurnedOn(true, true);
+            }
+            updateTrackPosition();
+        }
     }
 
-    bool createTrackShapes(){
+    void createTrackShapes(){
         MeshGenerator meshGenerator;
-        for(size_t i = 0; i < m_trackDevice->getTrackStates().size(); ++i) {
+        const TrackStates& states = m_trackDevice->getTrackStates();
+        for(size_t i = 0; i < states.size(); ++i) {
             m_sgTracks[i]->clearChildren();
-            auto shape = new SgShape;
-            shape->setMesh(meshGenerator.generateBox(m_trackDevice->getTrackStates()[i].boxSize));
-            m_sgTracks[i]->addChild(shape, true);
+            const auto& size = states[i].boxSize;
+            if(size != Vector3::Zero()){
+                auto shape = new SgShape;
+                shape->setMesh(meshGenerator.generateBox(size));
+                m_sgTracks[i]->addChild(shape, true);
+            }
         }
-        return true;
     }
 
     void updateTrackPosition() {
         const Position &linkPos_inv = m_trackDevice->link()->T().inverse();
-        for(size_t i = 0; i < m_trackDevice->getTrackStates().size(); ++i) {
-            m_sgTracks[i]->setTransform(linkPos_inv * m_trackDevice->getTrackStates()[i].position);
+        const TrackStates& states = m_trackDevice->getTrackStates();
+        for(size_t i = 0; i < states.size(); ++i){
+            const auto& state = states[i];
+            if(state.boxSize.x() == 0.0){
+                trackSwitch->turnOff(true);
+                break;
+            } else {
+                m_sgTracks[i]->setTransform(linkPos_inv * state.position);
+            }
         }
     }
 };
@@ -171,7 +190,7 @@ void AGXVehicleContinuousTrackDevice::copyStateFrom(const DeviceState& other)
 
 DeviceState* AGXVehicleContinuousTrackDevice::cloneState() const
 {
-    return new AGXVehicleContinuousTrackDevice(*this, false);
+    return new AGXVehicleContinuousTrackDevice(*this, true);
 }
 
 
@@ -191,18 +210,62 @@ void AGXVehicleContinuousTrackDevice::forEachActualType(std::function<bool(const
 
 int AGXVehicleContinuousTrackDevice::stateSize() const
 {
-    return 1;
+    return numberOfNodes * 10;
 }
 
 
 const double* AGXVehicleContinuousTrackDevice::readState(const double* buf)
 {
-    return buf + 1;
+    if(m_trackStates.size() < numberOfNodes){
+        m_trackStates.resize(numberOfNodes);
+    }
+    int i = 0;
+    for(int j=0; j < numberOfNodes; ++j){
+        TrackState& state = m_trackStates[j];
+        state.boxSize << buf[i], buf[i+1], buf[i+2];
+        i += 3;
+        state.position.translation() << buf[i], buf[i+1], buf[i+2];
+        i += 3;
+        state.position.linear() = Quat(buf[i], buf[i+1], buf[i+2], buf[i+3]).toRotationMatrix();
+        i += 4;
+    }
+    return buf + i;
 }
 
 double* AGXVehicleContinuousTrackDevice::writeState(double* out_buf) const
 {
-    return out_buf + 1;
+    double* out_buf0 = out_buf;
+    
+    int i = 0;
+    int j = 0;
+
+    while(j < m_trackStates.size()){
+        const TrackState& state = m_trackStates[j++];
+        const auto& s = state.boxSize;
+        out_buf[i++] = s.x();
+        out_buf[i++] = s.y();
+        out_buf[i++] = s.z();
+        const auto& T = state.position;
+        auto p = T.translation();
+        out_buf[i++] = p.x();
+        out_buf[i++] = p.y();
+        out_buf[i++] = p.z();
+        Quat q(T.linear());
+        out_buf[i++] = q.w();
+        out_buf[i++] = q.x();
+        out_buf[i++] = q.y();
+        out_buf[i++] = q.z();
+    }
+    out_buf += i;
+
+    int n = numberOfNodes - j;
+    if(n > 0){
+        int size = n * 10;
+        std::fill(out_buf, out_buf + size, 0.0);
+        out_buf += size;
+    }
+
+    return out_buf;
 }
 
 void AGXVehicleContinuousTrackDevice::initialize()

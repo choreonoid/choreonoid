@@ -26,12 +26,13 @@ protected:
     RobotAccessItem(const RobotAccessItem& org);
     virtual ~RobotAccessItem();
 
-    virtual void doPutProperties(PutPropertyFunction& putProperty);
-    virtual bool store(Archive& archive);
-    virtual bool restore(const Archive& archive);
+    virtual void doPutProperties(PutPropertyFunction& putProperty) override;
+    virtual bool store(Archive& archive) override;
+    virtual bool restore(const Archive& archive) override;
 };
 
 typedef ref_ptr<RobotAccessItem> RobotAccessItemPtr;
+
 }
 
 #endif

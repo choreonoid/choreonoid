@@ -11,9 +11,9 @@
 #include "MainWindow.h"
 #include "MessageView.h"
 #include "CheckBox.h"
-#include "ParametricPathProcessor.h"
 #include <cnoid/FileUtil>
 #include <cnoid/ExecutablePath>
+#include <cnoid/ParametricPathProcessor>
 #include <QLayout>
 #include <QLabel>
 #include <QLineEdit>
@@ -24,6 +24,7 @@
 #include <QSignalMapper>
 #include <QRegExp>
 #include <boost/tokenizer.hpp>
+#include <fmt/format.h>
 #include <set>
 #include <sstream>
 #include "gettext.h"
@@ -31,7 +32,7 @@
 using namespace std;
 using namespace cnoid;
 namespace filesystem = boost::filesystem;
-using boost::format;
+using fmt::format;
 
 namespace cnoid {
 
@@ -326,16 +327,14 @@ ItemManager::~ItemManager()
 ItemManagerImpl::~ItemManagerImpl()
 {
     // unregister creation panels
-    for(set<ItemCreationPanel*>::iterator it = registeredCreationPanels.begin(); it != registeredCreationPanels.end(); ++it){
+    for(auto it = registeredCreationPanels.begin(); it != registeredCreationPanels.end(); ++it){
         ItemCreationPanel* panel = *it;
         delete panel;
     }
     
     // unregister loaders
-    for(set<LoaderPtr>::iterator it = registeredLoaders.begin(); it != registeredLoaders.end(); ++it){
-
+    for(auto it = registeredLoaders.begin(); it != registeredLoaders.end(); ++it){
         LoaderPtr loader = *it;
-
         ClassInfoMap::iterator p = typeIdToClassInfoMap.find(loader->typeId);
         if(p != typeIdToClassInfoMap.end()){
             list<LoaderPtr>& loaders = p->second->loaders;
@@ -351,7 +350,7 @@ ItemManagerImpl::~ItemManagerImpl()
     }
 
     // unregister savers
-    for(set<SaverPtr>::iterator it = registeredSavers.begin(); it != registeredSavers.end(); ++it){
+    for(auto it = registeredSavers.begin(); it != registeredSavers.end(); ++it){
         SaverPtr saver = *it;
         ClassInfoMap::iterator p = typeIdToClassInfoMap.find(saver->typeId);
         if(p != typeIdToClassInfoMap.end()){
@@ -368,26 +367,19 @@ ItemManagerImpl::~ItemManagerImpl()
     }
 
     // unregister item class identifiers, CreationPanelBases and savers
-    for(set<string>::iterator q = registeredTypeIds.begin(); q != registeredTypeIds.end(); ++q){
-
+    for(auto q = registeredTypeIds.begin(); q != registeredTypeIds.end(); ++q){
         const string& id = *q;
-
-        Item::sigClassUnregistered_(id.c_str());
-
         CreationPanelBaseMap::iterator s = creationPanelBaseMap.find(id);
         if(s != creationPanelBaseMap.end()){
             CreationPanelBase* base = s->second;
             delete base;
             creationPanelBaseMap.erase(s);
         }
-
         typeIdToClassInfoMap.erase(id);
     }
 
     // unregister creation panel filters
-    for(CreationPanelFilterSet::iterator p = registeredCreationPanelFilters.begin();
-        p != registeredCreationPanelFilters.end(); ++p){
-
+    for(auto p = registeredCreationPanelFilters.begin(); p != registeredCreationPanelFilters.end(); ++p){
         ClassInfoMap::iterator q = typeIdToClassInfoMap.find(p->first);
         if(q != typeIdToClassInfoMap.end()){
             ClassInfoPtr& classInfo = q->second;
@@ -815,6 +807,12 @@ bool ItemManager::load(Item* item, const std::string& filename, Item* parentItem
 
 bool ItemManagerImpl::load(Item* item, const string& filename, Item* parentItem, const string& formatId)
 {
+    if(filename.empty()){
+        messageView->putln(
+            _("Item with empty filename cannot be loaded."), MessageView::ERROR);
+        return false;
+    }
+        
     ParametricPathProcessor* pathProcessor = ParametricPathProcessor::instance();
     boost::optional<string> expanded = pathProcessor->expand(filename);
     if(!expanded){
@@ -829,8 +827,10 @@ bool ItemManagerImpl::load(Item* item, const string& filename, Item* parentItem,
     const string& typeId = typeid(*item).name();
     ClassInfoMap::iterator p = typeIdToClassInfoMap.find(typeId);
     if(p == typeIdToClassInfoMap.end()){
-        messageView->putln(format(_("\"%1%\" cannot be loaded because item type \"%2%\" is not registered."))
-                           % pathString % typeId);
+        messageView->putln(
+            format(_("\"{0}\" cannot be loaded because item type \"{1}\" is not registered."),
+            pathString, typeId),
+            MessageView::ERROR);
         return false;
     }
     
@@ -867,12 +867,13 @@ bool ItemManagerImpl::load(Item* item, const string& filename, Item* parentItem,
     if(!targetLoader){
         if(formatId.empty()){
             messageView->putln(
-                format(_("\"%1%\" cannot be loaded because the file format is unknown."))
-                % pathString);
+                format(_("\"{}\" cannot be loaded because the file format is unknown."), pathString),
+                MessageView::ERROR);
         } else {
             messageView->putln(
-                format(_("\"%1%\" cannot be loaded because file format \"%2%\" is unknown."))
-                % pathString % formatId);
+                format(_("\"{0}\" cannot be loaded because file format \"{1}\" is unknown."),
+                pathString, formatId),
+                MessageView::ERROR);
         }
     } else {
         if(load(targetLoader, item, pathString, parentItem)){
@@ -892,7 +893,7 @@ bool ItemManagerImpl::load(LoaderPtr loader, Item* item, const string& filename_
 
         string filename(toActualPathName(filename_));
         
-        messageView->notify(format(_("Loading %1% \"%2%\"")) % loader->caption % filename);
+        messageView->notify(format(_("Loading {0} \"{1}\""), loader->caption, filename));
         messageView->flush();
 
         if(!parentItem){
@@ -931,8 +932,8 @@ void ItemManagerImpl::onLoadSpecificTypeItemActivated(LoaderPtr loader)
     if(classInfo->isSingleton){
         item = classInfo->singletonInstance;
         if(item->parentItem()){
-            showWarningDialog(format(_("The singleton instance of %1% is already loaded."))
-                              % classInfo->className);
+            showWarningDialog(format(_("The singleton instance of {} is already loaded."),
+            classInfo->className));
             return;
         }
     }
@@ -1095,9 +1096,9 @@ bool ItemManagerImpl::save
         tryToSave = true;
         
         if(!doExport){
-            messageView->notify(format(_("Saving %1% to \"%2%\"")) % itemLabel % filename);
+            messageView->notify(format(_("Saving {0} to \"{1}\""), itemLabel, filename));
         } else {
-            messageView->notify(format(_("Exporting %1% into \"%2%\"")) % itemLabel % filename);
+            messageView->notify(format(_("Exporting {0} into \"{1}\""), itemLabel, filename));
         }
         
         Item* parentItem = item->parentItem();
@@ -1124,15 +1125,15 @@ bool ItemManagerImpl::save
         string actualFormatId = targetSaver ? targetSaver->formatId : formatId;
         if(actualFormatId.empty()){
             if(!doExport){
-                messageView->put(format(_("%1% cannot be saved.\n")) % itemLabel);
+                messageView->put(format(_("{} cannot be saved.\n"), itemLabel));
             } else {
-                messageView->put(format(_("%1% cannot be exported.\n")) % itemLabel);
+                messageView->put(format(_("{} cannot be exported.\n"), itemLabel));
             }
         } else {
             if(!doExport){
-                messageView->put(format(_("%1% cannot be saved as the %2% format.\n")) % itemLabel % actualFormatId);
+                messageView->put(format(_("{0} cannot be saved as the {1} format.\n"), itemLabel, actualFormatId));
             } else {
-                messageView->put(format(_("%1% cannot be exported into the %2% format.\n")) % itemLabel % actualFormatId);
+                messageView->put(format(_("{0} cannot be exported into the {1} format.\n"), itemLabel, actualFormatId));
             }
         }
     }

@@ -1,0 +1,98 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: Car
+
+PRIMITIVE_RESOURCE: &PRIMITIVE_RESOURCE
+  type: Resource
+  uri: "resource/CarPrimitives.yaml"
+
+WHEEL_LINK: &WHEEL_LINK
+  name: WHEEL
+  parent: BODY
+  jointType: revolute
+  jointAxis: Y
+  jointRange: unlimited
+  mass: 20.0
+  inertia: [ 5, 0, 0,
+             0, 5, 0,
+             0, 0, 5 ]
+  material: Tire
+  # For the friction for AGX
+  jointMotor: true
+  elements: { <<: *PRIMITIVE_RESOURCE, node: CAR_WHEEL }
+
+links:
+  -
+    name: BODY
+    jointType: free
+    centerOfMass: [ 0.3, 0, 0.8 ]
+    mass: 1500
+    inertia: [ 50, 0,  0,
+               0,  100, 0,
+               0,  0,   100 ]
+    elements:
+      -
+        type: Visual
+        elements:
+          -
+            type: Resource
+            rotation: [ 0, 0, 1, 90 ]
+            translation: [ 2.3, -0.8755, 0 ]
+            uri: "resource/RedCarBody.wrl"
+          -
+            type: Resource
+            rotation: [ 0, 0, 1, 90 ]
+            translation: [ -0.265, -0.814, 0.328 ]
+            uri: "resource/RedCarDoorFR.wrl"
+          -
+            type: Resource
+            rotation: [ 0, 0, 1, 90 ]
+            translation: [ -0.262, 0.6875, 0.332 ]
+            uri: "resource/RedCarDoorFL.wrl"
+          -
+            type: Resource
+            rotation: [ 0, 0, 1, 90 ]
+            translation: [ -0.915, -0.812, 0.251 ]
+            uri: "resource/RedCarDoorBR.wrl"
+          -
+            type: Resource
+            rotation: [ 0, 0, 1, 90 ]
+            translation: [ -0.923, 0.668, 0.254 ]
+            uri: "resource/RedCarDoorBL.wrl"
+      -
+        type: Collision
+        elements:
+          - { <<: *PRIMITIVE_RESOURCE, node: CAR_BODY, translation: [ 0, 0.0015, 0 ] }
+          - { <<: *PRIMITIVE_RESOURCE, node: CAR_NORMAL_ROOF, translation: [ 0, 0.0015, 0 ] }
+          - { <<: *PRIMITIVE_RESOURCE, node: CAR_DOOR_FR, translation: [ 0.002, 0.0035, -0.0026 ] }
+          - { <<: *PRIMITIVE_RESOURCE, node: CAR_DOOR_FL, translation: [ 0.0023, -0.003, -0.0026 ] }
+          - { <<: *PRIMITIVE_RESOURCE, node: CAR_DOOR_BR, translation: [ -0.615, -0.812, 0.251 ] }
+          - { <<: *PRIMITIVE_RESOURCE, node: CAR_DOOR_BL, translation: [ -0.62, 0.813, 0.254 ] }
+        
+      - { <<: *PRIMITIVE_RESOURCE, node: CAR_DOOR_KNOB_RIGHT, rotation: [ 0, 1, 0, 1.0 ], translation: [ -1.28, -0.891, 0.852 ] }
+      - { <<: *PRIMITIVE_RESOURCE, node: CAR_DOOR_KNOB_LEFT,  rotation: [ 0, 1, 0, 1.0 ], translation: [ -1.28,  0.891, 0.852 ] }
+      
+  -
+    <<: *WHEEL_LINK
+    name: WHEEL_FR
+    translation: [ 1.365, -0.725, 0.34 ]
+    jointMotorCompliance: 0.0001
+  -
+    <<: *WHEEL_LINK
+    name: WHEEL_FL
+    translation: [ 1.365,  0.725, 0.34 ]
+    jointMotorCompliance: 0.0001
+  -
+    <<: *WHEEL_LINK
+    name: WHEEL_RR
+    translation: [ -1.315, -0.725, 0.34 ]
+    jointMotorCompliance: 0.001
+  -
+    <<: *WHEEL_LINK
+    name: WHEEL_RL
+    translation: [ -1.315,  0.725, 0.34 ]
+    jointMotorCompliance: 0.001
+
+collisionDetection:
+  excludeTreeDepth: 1

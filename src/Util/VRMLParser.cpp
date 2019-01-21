@@ -351,7 +351,7 @@ public:
     TProtoMap protoMap;
     TDefNodeMap defNodeMap;
 
-    void load(const string& filename);
+    void load(const string& filename, bool doClearAncestorPathsList);
     VRMLNodePtr readSpecificNode(VRMLNodeCategory nodeCategory, int symbol, const std::string& symbolString);
     VRMLNodePtr readInlineNode(VRMLNodeCategory nodeCategory);
     VRMLNodePtr newInlineSource(string& io_filename);
@@ -504,11 +504,11 @@ void VRMLParser::setProtoInstanceActualNodeExtractionMode(bool isOn)
 */
 void VRMLParser::load(const string& filename)
 {
-    impl->load(filename);
+    impl->load(filename, true);
 }
 
 
-void VRMLParserImpl::load(const string& filename)
+void VRMLParserImpl::load(const string& filename, bool doClearAncestorPathsList)
 {
     currentProtoInstance = 0;
     protoToEntityScannerMap.clear();
@@ -518,6 +518,9 @@ void VRMLParserImpl::load(const string& filename)
     filesystem::path path(filename);
     path.normalize();
     string pathString(path.string());
+    if(doClearAncestorPathsList){
+        ancestorPathsList.clear();
+    }
     ancestorPathsList.push_back(pathString);
     scanner->loadFile(pathString);
     
@@ -862,7 +865,7 @@ VRMLNodePtr VRMLParserImpl::newInlineSource(string& io_filename)
 
     VRMLParserImpl inlineParser(*this, ancestorPathsList);
 
-    inlineParser.load(chkFile);
+    inlineParser.load(chkFile, false);
     io_filename = chkFile;
 
     VRMLGroupPtr group = new VRMLGroup();

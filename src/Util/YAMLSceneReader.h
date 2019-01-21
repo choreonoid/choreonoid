@@ -47,7 +47,11 @@ public:
     bool readAngle(const Mapping& info, const char* key, double& angle) const;
     bool readAngle(const Mapping& info, const char* key, float& angle) const;
     bool readRotation(const Mapping& info, Matrix3& out_R) const;
+    bool readRotation(const Mapping& info, const char* key, Matrix3& out_R) const;
     bool extractRotation(Mapping& info, Matrix3& out_R) const;
+    bool readTranslation(const Mapping& info, Vector3& out_p) const;
+    bool readTranslation(const Mapping& info, const char* key, Vector3& out_p) const;
+    bool extractTranslation(Mapping& info, Vector3& out_p) const;
     SgNode* readNode(Mapping& info);
     SgNode* readNode(Mapping& info, const std::string& type);
     SgNode* readNodeList(ValueNode& info);
@@ -69,8 +73,9 @@ private:
     YAMLSceneReaderImpl* impl;
     friend class YAMLSceneReaderImpl;
     bool isDegreeMode_;
-    bool readRotation(const ValueNode* info, Matrix3& out_R) const;
     AngleAxis readAngleAxis(const Listing& rotation) const;
+    bool readRotation(const ValueNode* info, Matrix3& out_R) const;
+    bool readTranslation(const ValueNode* info, Vector3& out_p) const;
 };
 
 }

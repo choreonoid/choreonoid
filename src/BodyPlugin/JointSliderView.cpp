@@ -59,6 +59,7 @@ public:
     ToggleToolButton labelOnLeftToggle;
     ToggleToolButton putSpinEntryCheck;
     ToggleToolButton putSliderCheck;
+    ToggleToolButton putDialCheck;
     SpinBox numColumnsSpin;
 
     QButtonGroup unitRadioGroup;
@@ -70,13 +71,15 @@ public:
     QGridLayout sliderGrid;
 
     void updateSliderGrid();
-    void attachSliderUnits(SliderUnit* unit, int row, int col);
+    void attachSliderUnits(SliderUnit* unit, int row, int col, int nUnitRows);
     void initializeSliders(int num);
     void onNumColumnsChanged(int n);
     void onUnitChanged();
     bool eventFilter(QObject* object, QEvent* event);
     bool onSliderKeyPressEvent(Slider* slider, QKeyEvent* event);
     void focusSlider(int index);
+    bool onDialKeyPressEvent(Dial* dial, QKeyEvent* event);
+    void focusDial(int index);
     void onJointSliderChanged(int sliderIndex);
     void updateJointPositions();
     void onCurrentBodyItemChanged(BodyItem* bodyItem);
@@ -100,6 +103,7 @@ public:
     DoubleSpinBox spin;
     QLabel lowerLimitLabel;
     Slider slider;
+    Dial dial;
     QLabel upperLimitLabel;
     double unitConversionRatio;
 
@@ -111,6 +115,7 @@ public:
           spin(&viewImpl->sliderGridBase),
           lowerLimitLabel(&viewImpl->sliderGridBase),
           slider(Qt::Horizontal, &viewImpl->sliderGridBase),
+          dial(&viewImpl->sliderGridBase),
           upperLimitLabel(&viewImpl->sliderGridBase) {
 
         idLabel.setAlignment(Qt::AlignRight | Qt::AlignVCenter);
@@ -126,6 +131,11 @@ public:
         slider.setProperty("JointSliderIndex", index);
         slider.installEventFilter(viewImpl);
         slider.sigValueChanged().connect([&](double v){ onSliderValueChanged(v); });
+
+        dial.setSingleStep(0.1 * resolution);
+        dial.setProperty("JointDialIndex", index);
+        dial.installEventFilter(viewImpl);
+        dial.sigValueChanged().connect([&](double v){ onDialValueChanged(v); });
     }
 
     void setRangeLabelValues(double lower, double upper, int precision){
@@ -157,6 +167,11 @@ public:
             slider.hide();
             upperLimitLabel.hide();
         }
+        if(viewImpl->putDialCheck.isChecked()){
+            dial.show();
+        } else {
+            dial.hide();
+        }
         nameLabel.setText(joint->name().c_str());
         if(viewImpl->nameToggle.isChecked()){
             nameLabel.show();
@@ -185,23 +200,44 @@ public:
 
         slider.blockSignals(true);
         spin.blockSignals(true);
+        dial.blockSignals(true);
 
         slider.setRange(lower * resolution, upper * resolution);
 
+        double deci;
         if(unitConversionRatio != 1.0){ // degree mode
             spin.setDecimals(1);
             spin.setRange(-999.9, 999.9);
             spin.setSingleStep(0.1);
             setRangeLabelValues(lower, upper, 1);
+            deci = 0.1;
         } else { // radian or meter
             spin.setDecimals(4);
             spin.setRange(-9.99, 9.99);
             spin.setSingleStep(0.0001);
             setRangeLabelValues(lower, upper, 3);
+            deci = 0.0001;
+        }
+        double v = unitConversionRatio * joint->q();
+        if( v<spin.minimum() || v>spin.maximum()){
+            int v0 = v<0.0? (int)-v : (int)v;
+            double max = pow(10, (int)log10(v0)+1)-deci;
+            spin.setRange(-max, max);
+        }
+
+        if( joint->q_lower() == -std::numeric_limits<double>::max() && joint->q_upper() == std::numeric_limits<double>::max() ){
+            dial.setWrapping(true);
+            dial.setNotchesVisible(false);
+            dial.setRange(-PI * unitConversionRatio * resolution, PI * unitConversionRatio * resolution);
+        }else {
+            dial.setWrapping(false);
+            dial.setNotchesVisible(true);
+            dial.setRange(lower * resolution, upper * resolution);
         }
 
         spin.blockSignals(false);
         slider.blockSignals(false);
+        dial.blockSignals(false);
 
         updatePosition(joint);
     }
@@ -215,10 +251,13 @@ public:
         if(v != spin.value()){
             slider.blockSignals(true);
             spin.blockSignals(true);
+            dial.blockSignals(true);
             spin.setValue(v);
             slider.setValue(v * resolution);
+            dial.setValue(v * resolution);
             spin.blockSignals(false);
             slider.blockSignals(false);
+            dial.blockSignals(false);
         }
     }
 
@@ -226,6 +265,23 @@ public:
         spin.blockSignals(true);
         spin.setValue(value / resolution);
         spin.blockSignals(false);
+        dial.blockSignals(true);
+        dial.setValue(value);
+        dial.blockSignals(false);
+        viewImpl->onJointSliderChanged(index);
+    }
+
+    void onDialValueChanged(double value){
+        spin.blockSignals(true);
+        double v = value / resolution;
+        if(v > spin.maximum() || v < spin.minimum() ) {
+            spin.setRange(spin.minimum()*10, spin.maximum()*10);
+        }
+        spin.setValue(v);
+        spin.blockSignals(false);
+        slider.blockSignals(true);
+        slider.setValue(value);
+        slider.blockSignals(false);
         viewImpl->onJointSliderChanged(index);
     }
 
@@ -233,6 +289,9 @@ public:
         slider.blockSignals(true);
         slider.setValue(value * resolution);
         slider.blockSignals(false);
+        dial.blockSignals(true);
+        dial.setValue(value* resolution);
+        dial.blockSignals(false);
         viewImpl->onJointSliderChanged(index);
     }
 
@@ -242,6 +301,7 @@ public:
         grid.removeWidget(&spin);
         grid.removeWidget(&lowerLimitLabel);
         grid.removeWidget(&slider);
+        grid.removeWidget(&dial);
         grid.removeWidget(&upperLimitLabel);
     }
 };
@@ -308,6 +368,13 @@ JointSliderViewImpl::JointSliderViewImpl(JointSliderView* self) :
     putSliderCheck.sigToggled().connect([&](bool){ updateSliderGrid(); });
     hbox->addWidget(&putSliderCheck);
     
+    putDialCheck.setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
+    putDialCheck.setText(_("Dial"));
+    putDialCheck.setToolTip(_("Show dials for chaning joint positions"));
+    putDialCheck.setChecked(true);
+    putDialCheck.sigToggled().connect([&](bool){ updateSliderGrid(); });
+    hbox->addWidget(&putDialCheck);
+
     labelOnLeftToggle.setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
     labelOnLeftToggle.setText(_("IL"));
     labelOnLeftToggle.setToolTip(_("Put all the components for each joint in-line"));
@@ -423,13 +490,18 @@ void JointSliderViewImpl::updateSliderGrid()
 
         int nColumns = numColumnsSpin.value();
         bool isLabelAtLeft = labelOnLeftToggle.isChecked();
-        int nUnitColumns, nGridColumns;
+        int nUnitColumns, nGridColumns, nUnitRows;
         if(isLabelAtLeft){
             nUnitColumns = 6;
             nGridColumns = nColumns * nUnitColumns;
         } else {
             nUnitColumns = 5;
             nGridColumns = nColumns * nUnitColumns;
+        }
+        if(putSliderCheck.isChecked() && putDialCheck.isChecked()){
+            nUnitRows = 2;
+        } else {
+            nUnitRows = 1;
         }
 
         int row = 0;
@@ -441,23 +513,24 @@ void JointSliderViewImpl::updateSliderGrid()
 
             unit->initialize(body->joint(activeJointIds[i]));
             
+
             if(!isLabelAtLeft){
                 sliderGrid.addWidget(&unit->nameLabel, row, col, 1, nUnitColumns);
-                sliderGrid.addWidget(&unit->idLabel, row + 1, col);
-                attachSliderUnits(unit, row + 1, col + 1);
+                sliderGrid.addWidget(&unit->idLabel, row + 1, col, nUnitRows, 1);
+                attachSliderUnits(unit, row + 1, col + 1, nUnitRows);
                 col += nUnitColumns;
                 if(col == nGridColumns){
                     col = 0;
-                    row += 2;
+                    row += nUnitRows+1;
                 }
             } else {
-                sliderGrid.addWidget(&unit->idLabel,row, col);
-                sliderGrid.addWidget(&unit->nameLabel,row, col + 1);
-                attachSliderUnits(unit, row, col + 2);
+                sliderGrid.addWidget(&unit->idLabel,row, col, nUnitRows, 1);
+                sliderGrid.addWidget(&unit->nameLabel,row, col + 1, nUnitRows, 1);
+                attachSliderUnits(unit, row, col + 2, nUnitRows);
                 col += nUnitColumns;
                 if(col == nGridColumns){
                     col = 0;
-                    row += 1;
+                    row += nUnitRows;
                 }
             }
         }
@@ -465,12 +538,17 @@ void JointSliderViewImpl::updateSliderGrid()
 }
 
 
-void JointSliderViewImpl::attachSliderUnits(SliderUnit* unit, int row, int col)
+void JointSliderViewImpl::attachSliderUnits(SliderUnit* unit, int row, int col, int nUnitRows)
 {
-    sliderGrid.addWidget(&unit->spin, row, col);
+    sliderGrid.addWidget(&unit->spin, row, col, nUnitRows, 1);
     sliderGrid.addWidget(&unit->lowerLimitLabel,row, col + 1);
     sliderGrid.addWidget(&unit->slider, row, col + 2);
     sliderGrid.addWidget(&unit->upperLimitLabel,row, col + 3);
+    if(nUnitRows==1){
+        sliderGrid.addWidget(&unit->dial, row, col + 2);
+    } else {
+        sliderGrid.addWidget(&unit->dial, row+1, col + 2);
+    }
 }
 
 
@@ -518,6 +596,12 @@ bool JointSliderViewImpl::eventFilter(QObject* object, QEvent* event)
     if(slider && (event->type() == QEvent::KeyPress)){
         return onSliderKeyPressEvent(slider, static_cast<QKeyEvent*>(event));
     }
+
+    Dial* dial = dynamic_cast<Dial*>(object);
+    if(dial && (event->type() == QEvent::KeyPress)){
+        return onDialKeyPressEvent(dial, static_cast<QKeyEvent*>(event));
+    }
+
     return QObject::eventFilter(object, event);
 }
 
@@ -546,12 +630,47 @@ bool JointSliderViewImpl::onSliderKeyPressEvent(Slider* slider, QKeyEvent* event
 }
 
 
+bool JointSliderViewImpl::onDialKeyPressEvent(Dial* dial, QKeyEvent* event)
+{
+    int index = dial->property("JointDialIndex").toInt();
+
+    bool doContinue = false;
+
+    switch(event->key()){
+
+    case Qt::Key_Up:
+        focusDial(index - 1);
+        break;
+
+    case Qt::Key_Down:
+        focusDial(index + 1);
+        break;
+
+    default:
+        doContinue = true;
+        break;
+    }
+
+    return !doContinue;
+}
+
+
 void JointSliderViewImpl::focusSlider(int index)
 {
     if(index >= 0 && index < static_cast<int>(jointSliders.size())){
         Slider& slider = jointSliders[index]->slider;
         slider.setFocus(Qt::OtherFocusReason);
         scrollArea.ensureWidgetVisible(&slider);
+    }
+}
+
+
+void JointSliderViewImpl::focusDial(int index)
+{
+    if(index >= 0 && index < static_cast<int>(jointSliders.size())){
+        Dial& dial = jointSliders[index]->dial;
+        dial.setFocus(Qt::OtherFocusReason);
+        scrollArea.ensureWidgetVisible(&dial);
     }
 }
 
@@ -623,6 +742,7 @@ bool JointSliderViewImpl::storeState(Archive& archive)
     archive.write("numColumns", (numColumnsSpin.value()));
     archive.write("spinBox", (putSpinEntryCheck.isChecked()));
     archive.write("slider", (putSliderCheck.isChecked()));
+    archive.write("dial", (putDialCheck.isChecked()));
     archive.write("labelOnLeft", (labelOnLeftToggle.isChecked()));
     archive.writeItemId("currentBodyItem", currentBodyItem);
     return true;
@@ -643,6 +763,7 @@ bool JointSliderViewImpl::restoreState(const Archive& archive)
     numColumnsSpin.setValue(archive.get("numColumns", 1));
     putSpinEntryCheck.setChecked(archive.get("spinBox", true));
     putSliderCheck.setChecked(archive.get("slider", true));
+    putDialCheck.setChecked(archive.get("dial", false));
     labelOnLeftToggle.setChecked(archive.get("labelOnLeft", true));
 
     archive.addPostProcess(

@@ -8,13 +8,13 @@
 #include "ValueTree.h"
 #include "YAMLWriter.h"
 #include "GeneralSeqReader.h"
-#include <boost/format.hpp>
+#include <fmt/format.h>
 #include <fstream>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using boost::format;
+using fmt::format;
 
 
 Vector3Seq::Vector3Seq(int nFrames)
@@ -96,7 +96,7 @@ bool Vector3Seq::loadPlainFormat(const std::string& filename, std::ostream& os)
     }
 
     if(loader.numParts() < 3){
-        os << format(_("\"%1%\" does not have 3 columns for 3d vector elements.")) % filename << endl;
+        os << format(_("\"{}\" does not have 3 columns for 3d vector elements."), filename) << endl;
         return false;
     }
   
@@ -120,18 +120,18 @@ bool Vector3Seq::saveAsPlainFormat(const std::string& filename, std::ostream& os
     file.setf(ios::fixed);
 
     if(!file){
-        os << format(_("\"%1%\" cannot be opened.")) % filename << endl;
+        os << format(_("\"{}\" cannot be opened."), filename) << endl;
         return false;
     }
 
-    format f("%1$.4f %2$.6f %3$.6f %4$.6f\n");
+    const string f("{0:.4f} {1:.6f} {2:.6f} {3:.6f}\n");
 
     const int n = numFrames();
     const double r = frameRate();
 
     for(int i=0; i < n; ++i){
         const Vector3& v = (*this)[i];
-        file << (f % (i / r) % v.x() % v.y() % v.z());
+        file << format(f, (i / r), v.x(), v.y(), v.z());
     }
     
     return true;

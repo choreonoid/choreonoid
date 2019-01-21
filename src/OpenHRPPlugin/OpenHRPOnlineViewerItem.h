@@ -2,8 +2,8 @@
    @author Shizuko Hattori
 */
 
-#ifndef CNOID_OPENHRP_PLUGIN_ONLINE_VIEWER_ITEM_H_INCLUDED
-#define CNOID_OPENHRP_PLUGIN_ONLINE_VIEWER_ITEM_H_INCLUDED
+#ifndef CNOID_OPENHRP_PLUGIN_ONLINE_VIEWER_ITEM_H
+#define CNOID_OPENHRP_PLUGIN_ONLINE_VIEWER_ITEM_H
 
 #include <cnoid/Item>
 #include <cnoid/SceneProvider>
@@ -22,15 +22,13 @@ public:
     virtual ~OpenHRPOnlineViewerItem();
 
 protected:
-    virtual Item* doDuplicate() const;
-    virtual void onConnectedToRoot();
-    //virtual void onPositionChanged(){};
-    virtual void onDisconnectedFromRoot();
-    virtual void doPutProperties(PutPropertyFunction& putProperty);
-    virtual bool store(Archive& archive);
-    virtual bool restore(const Archive& archive);
-
-    virtual SgNode* getScene();
+    virtual Item* doDuplicate() const override;
+    virtual void onConnectedToRoot() override;
+    virtual void onDisconnectedFromRoot() override;
+    virtual void doPutProperties(PutPropertyFunction& putProperty) override;
+    virtual bool store(Archive& archive) override;
+    virtual bool restore(const Archive& archive) override;
+    virtual SgNode* getScene() override;
 
 private:
     OpenHRPOnlineViewerItemImpl* impl;

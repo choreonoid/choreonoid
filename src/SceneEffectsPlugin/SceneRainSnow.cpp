@@ -139,8 +139,8 @@ bool RainSnowProgram::initializeRendering(SceneParticles* particles)
     for(GLuint i = 0; i < ps.numParticles(); ++i) {
         float x, y;
         while(true){
-            x = 2.0 * r * random() - r;
-            y = 2.0 * r * random() - r;
+            x = 2.0 * r * frandom() - r;
+            y = 2.0 * r * frandom() - r;
             if(x * x + y * y <= r2){
                 break;
             }

@@ -4,10 +4,10 @@
 
 #include "LuaUtil.h"
 #include "../EigenUtil.h"
-#include <boost/format.hpp>
+#include <fmt/format.h>
 
 using namespace std;
-using boost::format;
+using fmt::format;
 using namespace cnoid;
 
 namespace cnoid {
@@ -30,7 +30,7 @@ void exportLuaEigenTypes(sol::table& module)
         sol::meta_function::multiplication, [](Vector3& self, Vector3& other) { return self.dot(other); },
         "dot", [](Vector3& self, Vector3& other) { return self.dot(other); },
         "cross", [](Vector3& self, Vector3& other) { return make_shared_aligned<Vector3>(self.cross(other)); },
-        "toString", [](Vector3& self) { return (format("{ %1%, %2%, %3% }") % self[0] % self[1] % self[2]).str(); }
+        "toString", [](Vector3& self) { return format("{ {0} {1} {2} }", self[0], self[1], self[2]); }
         );
 }
 

@@ -29,10 +29,6 @@ unordered_set<Item*> itemsBeingAddedOrRemoved;
 
 }
 
-namespace cnoid {
-Signal<void(const char* type_info_name)> Item::sigClassUnregistered_;
-}
-
 
 Item::Item()
 {
@@ -187,17 +183,19 @@ bool Item::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManualOpera
     ++numChildren_;
 
     if(rootItem){
-        if(!isMoving){
-            item->callFuncOnConnectedToRoot();
-        }
-        if(itemsBeingAddedOrRemoved.find(this) == itemsBeingAddedOrRemoved.end()){
-            // This must be before rootItem->notifyEventOnSubTreeAdded().
-            item->callSlotsOnPositionChanged();
-        }
         if(isMoving){
             rootItem->notifyEventOnSubTreeMoved(item);
         } else {
             rootItem->notifyEventOnSubTreeAdded(item);
+        }
+    }
+
+    if(rootItem){
+        if(!isMoving){
+            item->callFuncOnConnectedToRoot();
+        }
+        if(itemsBeingAddedOrRemoved.find(this) == itemsBeingAddedOrRemoved.end()){
+            item->callSlotsOnPositionChanged();
         }
     }
 
@@ -487,6 +485,12 @@ RootItem* Item::findRootItem() const
 }
 
 
+bool Item::isConnectedToRoot() const
+{
+    return findRootItem() != nullptr;
+}
+
+
 /**
    @return When the item is embeded one,
    this function returs the first parent item which is not an embeded one.
@@ -671,20 +675,68 @@ bool Item::overwrite(bool forceOverwrite, const std::string& format)
 }
 
 
+const std::string& Item::filePath() const
+{
+    return filePath_;
+}
+
+
+const std::string& Item::fileFormat() const
+{
+    return fileFormat_;
+}
+
+
+#ifdef CNOID_BACKWARD_COMPATIBILITY
+const std::string& Item::lastAccessedFilePath() const
+{
+    return filePath_;
+}
+
+
+const std::string& Item::lastAccessedFileFormatId() const
+{
+    return fileFormat_;
+}
+#endif
+
+
+std::time_t Item::fileModificationTime() const
+{
+    return fileModificationTime_;
+}
+
+
+bool Item::isConsistentWithFile() const
+{
+    return isConsistentWithFile_;
+}
+
+
+void Item::setConsistentWithFile(bool isConsistent)
+{
+    isConsistentWithFile_ = isConsistent;
+}
+
+
+void Item::suggestFileUpdate()
+{
+    isConsistentWithFile_ = false;
+}
+
+
 void Item::updateFileInformation(const std::string& filename, const std::string& format)
 {
     filesystem::path fpath(filename);
     if(filesystem::exists(fpath)){
-        filePath_ = filename;
-        fileFormat_ = format;
         fileModificationTime_ = filesystem::last_write_time(fpath);
         isConsistentWithFile_ = true;
     } else {
-        filePath_.clear();
-        fileFormat_.clear();
         fileModificationTime_ = 0;
         isConsistentWithFile_ = false;
-    }
+    }        
+    filePath_ = filename;
+    fileFormat_ = format;
 }
 
 

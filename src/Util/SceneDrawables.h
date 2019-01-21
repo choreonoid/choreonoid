@@ -491,7 +491,9 @@ public:
     virtual SgObject* childObject(int index);
     virtual const BoundingBox& boundingBox() const;
     void updateBoundingBox();
-    
+
+    void clear();
+
     bool hasVertices() const { return (vertices_ && !vertices_->empty()); }
     SgVertexArray* vertices() { return vertices_; }
     const SgVertexArray* vertices() const { return vertices_; }

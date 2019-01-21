@@ -24,11 +24,25 @@ RangeSensor::RangeSensor()
     yawStep_ = 1.0;
     pitchRange_ = 0.0;
     pitchStep_ = 0.0;
-    minDistance_ = 0.01;
+    minDistance_ = 0.1;
     maxDistance_ = 10.0;
     scanRate_ = 10.0;
     delay_ = 0.0;
     rangeData_ = std::make_shared<RangeData>();
+}
+
+
+RangeSensor::RangeSensor(const RangeSensor& org, bool copyStateOnly)
+    : Device(org, copyStateOnly),
+      rangeData_(org.rangeData_)
+{
+    if(copyStateOnly){
+        isRangeDataStateClonable_ = true;
+    } else {
+        isRangeDataStateClonable_ = org.isRangeDataStateClonable_;
+    }
+
+    copyRangeSensorStateFrom(org);
 }
 
 
@@ -51,7 +65,6 @@ void RangeSensor::copyStateFrom(const RangeSensor& other)
 void RangeSensor::copyRangeSensorStateFrom(const RangeSensor& other)
 {
     on_ = other.on_;
-    isRangeDataStateClonable_ = other.isRangeDataStateClonable_;
     yawRange_ = other.yawRange_;
     yawStep_ = other.yawStep_;
     pitchRange_ = other.pitchRange_;
@@ -60,42 +73,24 @@ void RangeSensor::copyRangeSensorStateFrom(const RangeSensor& other)
     maxDistance_ = other.maxDistance_;
     scanRate_ = other.scanRate_;
     delay_ = other.delay_;
-}
 
-
-RangeSensor::RangeSensor(const RangeSensor& org, bool copyStateOnly)
-    : Device(org, copyStateOnly),
-      rangeData_(org.rangeData_)
-{
-    copyRangeSensorStateFrom(org);
-}
-
-        
-Device* RangeSensor::clone() const
-{
-    return new RangeSensor(*this);
-}
-
-
-/**
-   Used for cloneState()
-*/
-RangeSensor::RangeSensor(const RangeSensor& org, int x /* dummy */)
-    : Device(org, true)
-{
-    copyRangeSensorStateFrom(org);
-
-    if(org.isRangeDataStateClonable_){
-        rangeData_ = org.rangeData_;
+    if(other.isRangeDataStateClonable_){
+        rangeData_ = other.rangeData_;
     } else {
         rangeData_ = std::make_shared<RangeData>();
     }
 }
 
-        
-DeviceState* RangeSensor::cloneState() const
+
+Device* RangeSensor::clone() const
 {
     return new RangeSensor(*this, false);
+}
+
+
+DeviceState* RangeSensor::cloneState() const
+{
+    return new RangeSensor(*this, true);
 }
 
 
@@ -156,6 +151,12 @@ void RangeSensor::setRangeData(std::shared_ptr<RangeData>& data)
 
 void RangeSensor::clearState()
 {
+    clearRangeData();
+}
+
+
+void RangeSensor::clearRangeData()
+{
     if(rangeData_.use_count() == 1){
         rangeData_->clear();
     } else {
@@ -163,6 +164,17 @@ void RangeSensor::clearState()
     }
 }
 
+
+bool RangeSensor::on() const
+{
+    return on_;
+}
+
+
+void RangeSensor::on(bool on)
+{
+    on_ = on;
+}
 
 int RangeSensor::stateSize() const
 {

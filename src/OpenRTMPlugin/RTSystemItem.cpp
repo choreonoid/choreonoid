@@ -1,5 +1,6 @@
 #include "RTSystemItem.h"
 #include "RTSCommonUtil.h"
+#include "RTSTypeUtil.h"
 #include <cnoid/MessageView>
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
@@ -97,12 +98,12 @@ public:
 
     Signal<void(int)> sigTimerPeriodChanged;
     Signal<void(bool)> sigTimerChanged;
-    Signal<void(bool)> sigLoadedRTSystem;
+
+    void changeStateCheck();
+    void changePollingPeriod(int value);
 
 private:
     void setStateCheckMethod(int value);
-    void changeStateCheck();
-    void changePollingPeriod(int value);
 };
 
 }
@@ -199,9 +200,9 @@ bool RTSPort::checkConnectablePort(RTSPort* target)
 
     //In case of connection between data ports
     if (!isServicePort && !target->isServicePort) {
-        vector<string> dataTypes = RTCCommonUtil::getAllowDataTypes(this, target);
-        vector<string> ifTypes = RTCCommonUtil::getAllowInterfaceTypes(this, target);
-        vector<string> subTypes = RTCCommonUtil::getAllowSubscriptionTypes(this, target);
+        vector<string> dataTypes = RTSTypeUtil::getAllowDataTypes(this, target);
+        vector<string> ifTypes = RTSTypeUtil::getAllowInterfaceTypes(this, target);
+        vector<string> subTypes = RTSTypeUtil::getAllowSubscriptionTypes(this, target);
         if (dataTypes.size() == 0 || ifTypes.size() == 0 || subTypes.size() == 0) {
             return false;
         }
@@ -344,8 +345,8 @@ void RTSConnection::setPosition(const Vector2 pos[])
 }
 
 
-RTSComp::RTSComp(const string& name, const std::string& fullPath, RTC::RTObject_ptr rtc, RTSystemItem* rts, const QPointF& pos, const string& host, int port)
-    : rts_(rts), pos_(pos), name(name), fullPath(fullPath), hostAddress(host), portNo(port)
+RTSComp::RTSComp(const string& name, const std::string& fullPath, RTC::RTObject_ptr rtc, RTSystemItem* rts, const QPointF& pos, const string& host, int port, bool isDefault)
+    : rts_(rts), pos_(pos), name(name), fullPath(fullPath), hostAddress(host), portNo(port), isDefaultNS(isDefault)
 {
     setRtc(rtc);
 }
@@ -584,12 +585,12 @@ void RTSystemItem::initializeClass(ExtensionManager* ext)
     im.addCreationPanel<RTSystemItem>();
     im.addLoaderAndSaver<RTSystemItem>(
         _("RT-System"), "RTS-PROFILE-XML", "xml",
-        [](RTSystemItem* item, const std::string& filename, std::ostream&, Item*) {
-        return item->loadRtsProfile(filename);
-    },
-        [](RTSystemItem* item, const std::string& filename, std::ostream&, Item*) {
-        return item->saveRtsProfile(filename);
-    });
+        [](RTSystemItem* item, const std::string& filename, std::ostream&, Item*){
+            return item->loadRtsProfile(filename);
+        },
+        [](RTSystemItem* item, const std::string& filename, std::ostream&, Item*){
+            return item->saveRtsProfile(filename);
+        });
 }
 
 
@@ -616,7 +617,7 @@ RTSystemItem::RTSystemItem(const RTSystemItem& org)
 
 
 RTSystemItemImpl::RTSystemItemImpl(RTSystemItem* self, const RTSystemItemImpl& org)
-    : self(self)
+    : self(self), pollingCycle(1000)
 {
     initialize();
     autoConnection = org.autoConnection;
@@ -630,7 +631,6 @@ void RTSystemItemImpl::initialize()
     Mapping* config = AppConfig::archive()->openMapping("OpenRTM");
     vendorName = config->get("defaultVendor", "AIST");
     version = config->get("defaultVersion", "1.0.0");
-    pollingCycle = config->get("pollingCycle", 500);
     stateCheck.setSymbol(POLLING_CHECK, "Polling");
     stateCheck.setSymbol(MANUAL_CHECK, "Manual");
     checkAtLoading = true;
@@ -701,7 +701,7 @@ RTSComp* RTSystemItemImpl::addRTSComp(const string& name, const QPointF& pos)
         }
 
         string fullPath = "/" + name + ".rtc";
-        RTSCompPtr rtsComp = new RTSComp(name, fullPath, rtc, self, pos, ncHelper->host().c_str(), ncHelper->port());
+        RTSCompPtr rtsComp = new RTSComp(name, fullPath, rtc, self, pos, ncHelper->host().c_str(), ncHelper->port(), false);
         rtsComps[fullPath] = rtsComp;
 
         self->suggestFileUpdate();
@@ -728,14 +728,19 @@ RTSComp* RTSystemItemImpl::addRTSComp(const NamingContextHelper::ObjectInfo& inf
     if (!nameToRTSComp(fullPath)) {
         std::vector<NamingContextHelper::ObjectPath> target = info.fullPath_;
         auto ncHelper = NameServerManager::instance()->getNCHelper();
-        ncHelper->setLocation(info.hostAddress_, info.portNo_);
+        if(info.isRegisteredInRtmDefaultNameServer_) {
+            NameServerInfo ns = RTCCommonUtil::getManagerAddress();
+            ncHelper->setLocation(ns.hostAddress, ns.portNo);
+        } else {
+            ncHelper->setLocation(info.hostAddress_, info.portNo_);
+        }
         RTC::RTObject_ptr rtc = ncHelper->findObject<RTC::RTObject>(target);
         if (!isObjectAlive(rtc)) {
             CORBA::release(rtc);
             rtc = nullptr;
         }
 
-        RTSCompPtr rtsComp = new RTSComp(info.id_, fullPath, rtc, self, pos, info.hostAddress_, info.portNo_);
+        RTSCompPtr rtsComp = new RTSComp(info.id_, fullPath, rtc, self, pos, info.hostAddress_, info.portNo_, info.isRegisteredInRtmDefaultNameServer_);
         rtsComps[fullPath] = rtsComp;
 
         self->suggestFileUpdate();
@@ -789,6 +794,18 @@ bool RTSystemItemImpl::compIsAlive(RTSComp* rtsComp)
             pathList.push_back(path);
         }
 
+        std::string host;
+        int port;
+        if(rtsComp->isDefaultNS) {
+            NameServerInfo ns = RTCCommonUtil::getManagerAddress();
+            host = ns.hostAddress;
+            port = ns.portNo;
+        } else {
+            host = rtsComp->hostAddress;
+            port = rtsComp->portNo;
+        }
+        DDEBUG_V("host:%s, port:%d, default:%d", host.c_str(), port, rtsComp->isDefaultNS);
+        NameServerManager::instance()->getNCHelper()->setLocation(host, port);
         RTC::RTObject_ptr rtc = NameServerManager::instance()->getNCHelper()->findObject<RTC::RTObject>(pathList);
         if (!isObjectAlive(rtc)) {
             //DDEBUG("RTSystemItemImpl::compIsAlive NOT Alive");
@@ -1089,7 +1106,7 @@ bool RTSystemItem::loadRtsProfile(const string& filename)
     DDEBUG_V("RTSystemItem::loadRtsProfile=%s", filename.c_str());
     ProfileHandler::getRtsProfileInfo(filename, impl->vendorName, impl->version);
     if (ProfileHandler::restoreRtsProfile(filename, this)) {
-        impl->sigLoadedRTSystem(false);
+        notifyUpdate();
         return true;
     }
     return false;
@@ -1104,6 +1121,7 @@ bool RTSystemItem::saveRtsProfile(const string& filename)
 
 bool RTSystemItemImpl::saveRtsProfile(const string& filename)
 {
+    DDEBUG_V("RTSystemItem::saveRtsProfile=%s", filename.c_str());
     if (vendorName.empty()) {
         vendorName = "Choreonoid";
     }
@@ -1150,15 +1168,13 @@ bool RTSystemItemImpl::checkStatus()
 
     for (auto it = rtsComps.begin(); it != rtsComps.end(); it++) {
         if (compIsAlive(it->second)) {
-            if (it->second->isAlive_ == false) {
+            if (!it->second->isAlive_) {
                 modified = true;
-                DDEBUG("RTSystemItemImpl::checkStatus 1");
             }
             it->second->isAlive_ = true;
         } else {
-            if (it->second->isAlive_ == true) {
+            if (it->second->isAlive_) {
                 modified = true;
-                DDEBUG("RTSystemItemImpl::checkStatus 2");
             }
             it->second->isAlive_ = false;
         }
@@ -1166,26 +1182,15 @@ bool RTSystemItemImpl::checkStatus()
     //
     if (connectionCheck()) {
         modified = true;
-        DDEBUG("RTSystemItemImpl::checkStatus 3");
     }
 
     return modified;
 }
 
-struct ConnectorPropComparator
+bool RTSystemItem::isCheckAtLoading()
 {
-    string target_;
-
-    ConnectorPropComparator(string value)
-    {
-        target_ = value;
-    }
-    bool operator()(const NamedValuePtr elem) const
-    {
-        return (target_ == elem->name_);
-    }
-};
-
+    return impl->checkAtLoading;
+}
 ///////////
 bool RTSystemItem::store(Archive& archive)
 {
@@ -1193,13 +1198,13 @@ bool RTSystemItem::store(Archive& archive)
         archive.writeRelocatablePath("filename", filePath());
         archive.write("format", fileFormat());
 
-        archive.write("AutoConnection", impl->autoConnection);
-        archive.write("PollingCycle", impl->pollingCycle);
-        archive.write("StateCheck", impl->stateCheck.selectedSymbol());
-        archive.write("CheckAtLoading", impl->checkAtLoading);
+        archive.write("autoConnection", impl->autoConnection);
+        archive.write("pollingCycle", impl->pollingCycle);
+        archive.write("stateCheck", impl->stateCheck.selectedSymbol());
+        archive.write("checkAtLoading", impl->checkAtLoading);
 
 #if defined(OPENRTM_VERSION12)
-        archive.write("HeartBeatPeriod", impl->heartBeatPeriod);
+        archive.write("heartBeatPeriod", impl->heartBeatPeriod);
 #endif
         return true;
     }
@@ -1212,12 +1217,23 @@ bool RTSystemItem::restore(const Archive& archive)
 {
     DDEBUG("RTSystemItemImpl::restore");
 
-    archive.read("AutoConnection", impl->autoConnection);
-    archive.read("PollingCycle", impl->pollingCycle);
-    archive.read("CheckAtLoading", impl->checkAtLoading);
+    if (archive.read("autoConnection", impl->autoConnection) == false) {
+        archive.read("AutoConnection", impl->autoConnection);
+    }
+    if( archive.read("checkAtLoading", impl->checkAtLoading)==false) {
+        archive.read("CheckAtLoading", impl->checkAtLoading);
+    }
+    int pollingCycle = 1000;
+    if( archive.read("pollingCycle", pollingCycle)==false) {
+        archive.read("PollingCycle", pollingCycle);
+    }
+    impl->changePollingPeriod(pollingCycle);
+
 
 #if defined(OPENRTM_VERSION12)
-    archive.read("HeartBeatPeriod", impl->heartBeatPeriod);
+    if(archive.read("HeartBeatPeriod", impl->heartBeatPeriod) == false) {
+        archive.read("heartBeatPeriod", impl->heartBeatPeriod);
+    }
 #endif
 
     /**
@@ -1236,9 +1252,13 @@ bool RTSystemItem::restore(const Archive& archive)
     }
 
     string stateCheck;
-    if (archive.read("StateCheck", stateCheck)) {
+    if (archive.read("stateCheck", stateCheck) == false) {
+        archive.read("StateCheck", stateCheck);
+    }
+    if(stateCheck.empty()==false) {
         DDEBUG_V("StateCheck:%s", stateCheck.c_str());
         impl->setStateCheckMethodByString(stateCheck);
+        archive.addPostProcess([&]() { impl->changeStateCheck(); });
     }
 
     return true;
@@ -1318,7 +1338,7 @@ void RTSystemItemImpl::restoreRTSystem(const Archive& archive)
         checkStatus();
     }
 
-    sigLoadedRTSystem(true);
+    self->notifyUpdate();
     DDEBUG("RTSystemItemImpl::restoreRTSystem End");
 }
 
@@ -1357,9 +1377,4 @@ SignalProxy<void(int)> RTSystemItem::sigTimerPeriodChanged()
 SignalProxy<void(bool)> RTSystemItem::sigTimerChanged()
 {
     return impl->sigTimerChanged;
-}
-
-SignalProxy<void(bool)> RTSystemItem::sigLoadedRTSystem()
-{
-    return impl->sigLoadedRTSystem;
 }

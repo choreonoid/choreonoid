@@ -971,7 +971,7 @@ bool CFSImpl::setContactConstraintPoint(LinkPair& linkPair, const Collision& col
                     direction = collision.normal.cross(axis);
                 }
                 direction.normalize();
-                v[k] += link->dq() * direction;
+                v[k] += link->dq_target() * direction;
             }
         }
     }
@@ -1336,8 +1336,9 @@ void CFSImpl::setAccelerationMatrix()
                         Vector3 arm = constraint.point - bodyData.body->rootLink()->p();
                         Vector3 tau = arm.cross(f);
                         Vector3 tauext = constraint.point.cross(f);
-                        bodyData.forwardDynamicsCBM->solveUnknownAccels(linkPair.link[k], f, tauext, f, tau);
-                        calcAccelsMM(bodyData, constraintIndex);
+                        if(bodyData.forwardDynamicsCBM->solveUnknownAccels(linkPair.link[k], f, tauext, f, tau)){
+                            calcAccelsMM(bodyData, constraintIndex);
+                        }
                     } else {
                         Vector3 tau = constraint.point.cross(f);
                         calcABMForceElementsWithTestForce(bodyData, linkPair.link[k], f, tau);
@@ -1361,8 +1362,9 @@ void CFSImpl::setAccelerationMatrix()
                             Vector3 arm = constraint.point - bodyData.body->rootLink()->p();
                             Vector3 tau = arm.cross(f);
                             Vector3 tauext = constraint.point.cross(f);
-                            bodyData.forwardDynamicsCBM->solveUnknownAccels(linkPair.link[k], f, tauext, f, tau);
-                            calcAccelsMM(bodyData, constraintIndex);
+                            if(bodyData.forwardDynamicsCBM->solveUnknownAccels(linkPair.link[k], f, tauext, f, tau)){
+                                calcAccelsMM(bodyData, constraintIndex);
+                            }
                         } else {
                             Vector3 tau = constraint.point.cross(f);
                             calcABMForceElementsWithTestForce(bodyData, linkPair.link[k], f, tau);

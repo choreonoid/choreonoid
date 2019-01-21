@@ -33,6 +33,11 @@ links:
       0.0127815,   1.9299188,     -0.00016286,
       0.00094062,  -0.00016286,   0.87692246 ]
     elements:
+      -
+        type: CompetitorMarker
+        name: CompetitorMarker
+        isOptional: true
+        offsetTranslation: [ -0.13, 0, 0.274 ]
       - 
         type: Visual
         elements: 

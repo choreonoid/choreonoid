@@ -124,7 +124,7 @@ public:
         case Link::JOINT_ANGLE:
             qref0 = qseq->frame(currentFrameIndex);
             for(int i=0; i < ioBody->numJoints(); ++i){
-                ioBody->joint(i)->q() = qref0[i];
+                ioBody->joint(i)->q_target() = qref0[i];
             }
             break;
 
@@ -132,7 +132,7 @@ public:
             qref0 = qref1;
             qref1 = qseq->frame(std::min(currentFrameIndex + 1, lastFrameIndex));
             for(int i=0; i < ioBody->numJoints(); ++i){
-                ioBody->joint(i)->dq() = (qref1[i] - qref0[i]) / dt;
+                ioBody->joint(i)->dq_target() = (qref1[i] - qref0[i]) / dt;
             }
             break;
 

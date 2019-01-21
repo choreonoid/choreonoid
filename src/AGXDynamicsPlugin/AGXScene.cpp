@@ -18,7 +18,7 @@ void AGXScene::clear(){
     if(sim) sim->cleanup(agxSDK::Simulation::CLEANUP_ALL);
 }
 
-void AGXScene::stepSimulation()
+void AGXScene::setMainWorkThread()
 {
 #if AGX_VERSION_GREATER_OR_EQUAL(2 ,21, 0, 0)
     agx::Thread::registerAsAgxThread();
@@ -26,6 +26,10 @@ void AGXScene::stepSimulation()
 #else
     agx::Thread::makeCurrentThreadMainThread();
 #endif
+}
+
+void AGXScene::stepSimulation()
+{
     getSimulation()->stepForward();
 }
 

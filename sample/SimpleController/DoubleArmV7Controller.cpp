@@ -1,5 +1,6 @@
 #include <cnoid/SimpleController>
 #include <cnoid/SharedJoystick>
+#include <cnoid/EigenUtil>
 
 using namespace std;
 using namespace cnoid;
@@ -20,10 +21,12 @@ public:
 
     vector<int> armJointIdMap;
     vector<Link*> armJoints;
-    vector<double> qref;
-    vector<double> qold;
+    vector<double> q_ref;
+    vector<double> q_prev;
     vector<double> pgain;
     vector<double> dgain;
+    double* q_tip1;
+    double* q_tip2;
 
     SharedJoystickPtr joystick;
     int arm1Mode;
@@ -162,12 +165,15 @@ void DoubleArmV7Controller::initArms(SimpleControllerIO* io)
             io->enableIO(joint);
             armJointIdMap.push_back(armJoints.size());
             armJoints.push_back(joint);
-            qref.push_back(joint->q());
+            q_ref.push_back(joint->q());
         } else {
             armJointIdMap.push_back(-1);
         }
     }
-    qold = qref;
+    q_prev = q_ref;
+    
+    q_tip1 = &q_ref[armJointIdMap[link("TOHKU_TIP_01")->jointId()]];
+    q_tip2 = &q_ref[armJointIdMap[link("TOHKU_TIP_02")->jointId()]];
 }
 
 
@@ -199,13 +205,10 @@ void DoubleArmV7Controller::initPDGain()
 
     } else if(mainActuationMode == Link::ActuationMode::JOINT_VELOCITY){
         pgain = {
-        /* MFRAME */ 100, /* BLOCK */ 180, /* BOOM */ 150, /* ARM  */ 100,
-        /* PITCH  */  30, /* ROLL  */  20, /* TIP1 */   5, /* TIP2 */   5,
-        /* UFRAME */ 150, /* SWING */ 180, /* BOOM */ 100, /* ARM  */  80,
-        /* ELBOW */   30, /* YAW   */  20, /* HAND */   1, /* ROD  */  50};
-
-    } else if(mainActuationMode == Link::ActuationMode::JOINT_DISPLACEMENT){
-        
+        /* MFRAME */ 100, /* BLOCK */ 100, /* BOOM */ 100, /* ARM  */ 100,
+        /* PITCH  */  50, /* ROLL  */  50, /* TIP1 */   5, /* TIP2 */   5,
+        /* UFRAME */ 100, /* SWING */ 100, /* BOOM */ 100, /* ARM  */ 100,
+        /* ELBOW */   50, /* YAW   */  20, /* HAND */  20, /* ROD  */  50};
     }
 }
 
@@ -267,7 +270,6 @@ bool DoubleArmV7Controller::control()
         controlTracks();
     }
     
-    setTargetArmPositions();
     controlArms();
 
     return true;
@@ -307,8 +309,8 @@ void DoubleArmV7Controller::controlTracks()
         trackL->u() = trackgain * (-2.0 * pos[1] + pos[0]);
         trackR->u() = trackgain * (-2.0 * pos[1] - pos[0]);
     } else {
-        trackL->dq() = trackgain * (-2.0 * pos[1] + pos[0]);
-        trackR->dq() = trackgain * (-2.0 * pos[1] - pos[0]);
+        trackL->dq_target() = trackgain * (-2.0 * pos[1] + pos[0]);
+        trackR->dq_target() = trackgain * (-2.0 * pos[1] - pos[0]);
     }
 }
 
@@ -319,28 +321,49 @@ void DoubleArmV7Controller::setTargetArmPositions()
 
     for(auto& axis : axes){
         if(axis.shift < 0 || axis.shift == shiftState){
-            Link* joint = axis.joint;
-            double& q = qref[armJointIdMap[joint->jointId()]];
+            auto joint = axis.joint;
+            auto& q = q_ref[armJointIdMap[joint->jointId()]];
             if(axis.type == BUTTON){
                 if(joystick->getButtonState(currentJoystickMode, axis.id)){
                     q += axis.ratio * dt;
                 }
             } else if(axis.type == STICK){
-                double pos = joystick->getPosition(currentJoystickMode, axis.id);
+                auto pos = joystick->getPosition(currentJoystickMode, axis.id);
                 q += axis.ratio * pos * dt;
-            }
-            if(q > joint->q_upper()){
-                q = joint->q_upper();
-            } else if(q < joint->q_lower()){
-                q = joint->q_lower();
             }
         }
     }
+
+    // Restrict each target position by taking the joint displacement range
+    // and the cunnret joint displacement into accout
+    double maxerror;
+    if(mainActuationMode == Link::ActuationMode::JOINT_EFFORT){
+        maxerror = radian(20.0);
+    } else {
+        maxerror = radian(5.0);
+    }
+    for(size_t i=0; i < armJoints.size(); ++i){
+        auto joint = armJoints[i];
+        auto& q = q_ref[i];
+        auto q_current = joint->q();
+        auto q_lower = std::max(q_current - maxerror, joint->q_lower());
+        auto q_upper = std::min(q_current + maxerror, joint->q_upper());
+        if(q < q_lower){
+            q = q_lower;
+        } else if(q > q_upper){
+            q = q_upper;
+        }
+    }
+
+    // Align the positions of the tip joints
+    (*q_tip1) = (*q_tip2) = std::max(*q_tip1, *q_tip2);
 }
 
 
 void DoubleArmV7Controller::controlArms()
 {
+    setTargetArmPositions();
+
     switch(mainActuationMode){
     case Link::ActuationMode::JOINT_DISPLACEMENT:
         controlArmsWithPosition();
@@ -360,8 +383,7 @@ void DoubleArmV7Controller::controlArms()
 void DoubleArmV7Controller::controlArmsWithPosition()
 {
     for(size_t i=0; i < armJoints.size(); ++i){
-        Link* joint = armJoints[i];
-        joint->q() = qref[i];
+        armJoints[i]->q_target() = q_ref[i];
     }
 }
 
@@ -369,9 +391,9 @@ void DoubleArmV7Controller::controlArmsWithPosition()
 void DoubleArmV7Controller::controlArmsWithVelocity()
 {
     for(size_t i=0; i < armJoints.size(); ++i){
-        Link* joint = armJoints[i];
-        double q = joint->q();
-        joint->dq() = (qref[i] - q) * pgain[i];
+        auto joint = armJoints[i];
+        auto q_current = joint->q();
+        joint->dq_target() = pgain[i] * (q_ref[i] - q_current);
     }
 }
 
@@ -379,11 +401,11 @@ void DoubleArmV7Controller::controlArmsWithVelocity()
 void DoubleArmV7Controller::controlArmsWithTorque()
 {
     for(size_t i=0; i < armJoints.size(); ++i){
-        Link* joint = armJoints[i];
-        double q = joint->q();
-        double dq = (q - qold[i]) / dt;
-        joint->u() = (qref[i] - q) * pgain[i] + (0.0 - dq) * dgain[i];
-        qold[i] = q;
+        auto joint = armJoints[i];
+        auto q_current = joint->q();
+        auto dq_current = (q_current - q_prev[i]) / dt;
+        joint->u() = pgain[i] * (q_ref[i] - q_current) + dgain[i] * (0.0 - dq_current);
+        q_prev[i] = q_current;
     }
 }
 

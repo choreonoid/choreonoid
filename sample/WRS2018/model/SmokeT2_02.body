@@ -1,0 +1,16 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: Smoke
+links:
+  -
+    name: Base
+    jointType: fixed
+    elements:
+      SmokeDevice:
+        offsetTime: -30
+        lifeTime: 35
+        acceleration: [ -0.01, -0.005, 0.001 ]
+        numParticles: 500
+        particleSize: 0.2
+        emissionRange: 90

@@ -54,6 +54,11 @@ links:
     translation: [ 0, 0, 0.03503 ]
     jointType: free
     elements:
+      -
+        type: CompetitorMarker
+        name: CompetitorMarker
+        isOptional: true
+        offsetTranslation: [ -0.06, 0, 0.45 ]
 
       - # Chassis
         { <<: *COMMON_RESOURCE, node: CHASSIS }
@@ -77,6 +82,26 @@ links:
 
       - # Left Bottom Rollers
         { <<: *MAIN_TRACK_BOTTOM_ROLLERS, translation: [ 0, 0.1415, -0.012 ] }
+
+      - # Right Main Belt
+        type: AGXVehicleContinuousTrackDevice
+        name: R_TRACK_AGX
+        sprocketNames: [ R_TRACK_WHEEL1 ]
+        rollerNames: [ R_TRACK_TOP_ROLLER ]
+        guideNames: [ R_TRACK_BOTTOM_GUIDE ]
+        idlerNames: [ R_TRACK_WHEEL2 ]
+        upAxis: [ 0, 0, 1 ]
+        <<: [ *MAIN_BELT_SPEC, *COMMON_BELT_SPEC ]
+
+      - # Left Main Belt
+        type: AGXVehicleContinuousTrackDevice
+        name: L_TRACK_AGX
+        sprocketNames: [ L_TRACK_WHEEL1 ]
+        rollerNames: [ L_TRACK_TOP_ROLLER ]
+        guideNames:  [ L_TRACK_BOTTOM_GUIDE ]
+        idlerNames: [ L_TRACK_WHEEL2 ]
+        upAxis: [ 0, 0, 1 ]
+        <<: [ *MAIN_BELT_SPEC, *COMMON_BELT_SPEC ]
 
   - # Right Main Belt Drive Pully
     name: R_TRACK_WHEEL1
@@ -122,22 +147,6 @@ links:
     material: *WHEEL_MATERIAL
     elements: { <<: *COMMON_RESOURCE, node: TRACK_TOP_ROLLER_CAPSULE }
 
-  - # Right Main Belt
-    name: R_TRACK
-    parent: CHASSIS
-    translation: [ 0.234, -0.146, 0.062 ]
-    jointType: fixed
-    elements:
-      -
-        type: AGXVehicleContinuousTrackDevice
-        name: R_TRACK_AGX
-        sprocketNames: [ R_TRACK_WHEEL1 ]
-        rollerNames: [ R_TRACK_TOP_ROLLER ]
-        guideNames: [ R_TRACK_BOTTOM_GUIDE ]
-        idlerNames: [ R_TRACK_WHEEL2 ]
-        upAxis: [ 0, 0, 1 ]
-        <<: [ *MAIN_BELT_SPEC, *COMMON_BELT_SPEC ]
-
   - # Left Main Belt Drive Pully
     name: L_TRACK_WHEEL1
     parent: CHASSIS
@@ -179,22 +188,6 @@ links:
     material: *WHEEL_MATERIAL
     elements: { <<: *COMMON_RESOURCE, node: TRACK_TOP_ROLLER_CAPSULE }
 
-  - # Left Main Belt
-    name: L_TRACK
-    parent: CHASSIS
-    translation: [ -0.234, 0.146, 0.062 ]
-    jointType: fixed
-    elements:
-      -
-        type: AGXVehicleContinuousTrackDevice
-        name: L_TRACK_AGX
-        sprocketNames: [ L_TRACK_WHEEL1 ]
-        rollerNames: [ L_TRACK_TOP_ROLLER ]
-        guideNames:  [ L_TRACK_BOTTOM_GUIDE ]
-        idlerNames: [ L_TRACK_WHEEL2 ]
-        upAxis: [ 0, 0, 1 ]
-        <<: [ *MAIN_BELT_SPEC, *COMMON_BELT_SPEC ]
-
   - # Front Right Flipper
     name: FR_FLIPPER
     parent: CHASSIS
@@ -206,17 +199,28 @@ links:
     # AGX parameters
     jointMotorForceRange: [ -200, 200 ]
     jointLockForceRange: [ -200, 200 ]
-    elements: &FLIPPER_ELEMENTS
+    elements:
+      - &FLIPPER_ELEMENTS
+        type: Group
+        elements: 
+          - # Flipper Body
+            { <<: *COMMON_RESOURCE, node: FLIPPER }
 
-      - # Flipper Body
-        { <<: *COMMON_RESOURCE, node: FLIPPER }
+            # Bottom Rollers
+          - { <<: *COMMON_RESOURCE, node: SUB_TRACK_BOTTOM_ROLLER_VISUAL, translation: [ 0.080, 0, -0.05363 ] }
+          - { <<: *COMMON_RESOURCE, node: SUB_TRACK_BOTTOM_ROLLER_VISUAL, translation: [ 0.115, 0, -0.04833 ] }
+          - { <<: *COMMON_RESOURCE, node: SUB_TRACK_BOTTOM_ROLLER_VISUAL, translation: [ 0.150, 0, -0.04404 ] }
+          - { <<: *COMMON_RESOURCE, node: SUB_TRACK_BOTTOM_ROLLER_VISUAL, translation: [ 0.185, 0, -0.03924 ] }
+          - { <<: *COMMON_RESOURCE, node: SUB_TRACK_BOTTOM_ROLLER_VISUAL, translation: [ 0.220, 0, -0.03444 ] }
 
-        # Bottom Rollers
-      - { <<: *COMMON_RESOURCE, node: SUB_TRACK_BOTTOM_ROLLER_VISUAL, translation: [ 0.080, 0, -0.05363 ] }
-      - { <<: *COMMON_RESOURCE, node: SUB_TRACK_BOTTOM_ROLLER_VISUAL, translation: [ 0.115, 0, -0.04833 ] }
-      - { <<: *COMMON_RESOURCE, node: SUB_TRACK_BOTTOM_ROLLER_VISUAL, translation: [ 0.150, 0, -0.04404 ] }
-      - { <<: *COMMON_RESOURCE, node: SUB_TRACK_BOTTOM_ROLLER_VISUAL, translation: [ 0.185, 0, -0.03924 ] }
-      - { <<: *COMMON_RESOURCE, node: SUB_TRACK_BOTTOM_ROLLER_VISUAL, translation: [ 0.220, 0, -0.03444 ] }
+      - # Front Right Sub Belt
+        type: AGXVehicleContinuousTrackDevice
+        name: FR_SUB_TRACK_AGX
+        sprocketNames: [ FR_SUB_TRACK_WHEEL1 ]
+        guideNames: [ FR_SUB_TRACK_BOTTOM_GUIDE ]
+        idlerNames: [ FR_SUB_TRACK_WHEEL2 ]
+        upAxis: [ 0, 0, 1 ]
+        <<: [ *SUB_BELT_SPEC, *COMMON_BELT_SPEC ]
 
   - # Front Right Sub Belt Drive Pully
     name: FR_SUB_TRACK_WHEEL1
@@ -244,20 +248,6 @@ links:
     material: *WHEEL_MATERIAL
     elements: { <<: *COMMON_RESOURCE, node: SUB_TRACK_BOTTOM_ROLLER_GUIDE }
 
-  - # Front Right Sub Belt
-    name: FR_SUB_TRACK
-    parent: FR_FLIPPER
-    jointType: fixed
-    elements:
-      -
-        type: AGXVehicleContinuousTrackDevice
-        name: FR_SUB_TRACK_AGX
-        sprocketNames: [ FR_SUB_TRACK_WHEEL1 ]
-        guideNames: [ FR_SUB_TRACK_BOTTOM_GUIDE ]
-        idlerNames: [ FR_SUB_TRACK_WHEEL2 ]
-        upAxis: [ 0, 0, 1 ]
-        <<: [ *SUB_BELT_SPEC, *COMMON_BELT_SPEC ]
-
   - # Front Left Flipper
     name: FL_FLIPPER
     parent: CHASSIS
@@ -269,7 +259,17 @@ links:
     # AGX parameters
     jointMotorForceRange: [ -200, 200 ]
     jointLockForceRange: [ -200, 200 ]
-    elements: *FLIPPER_ELEMENTS
+    elements:
+      - *FLIPPER_ELEMENTS
+      -
+        # Front Left Sub Belt
+        type: AGXVehicleContinuousTrackDevice
+        name: FL_SUB_TRACK_AGX
+        sprocketNames: [ FL_SUB_TRACK_WHEEL1 ]
+        guideNames: [ FL_SUB_TRACK_BOTTOM_GUIDE ]
+        idlerNames: [ FL_SUB_TRACK_WHEEL2 ]
+        upAxis: [ 0, 0, 1 ]
+        <<: [ *SUB_BELT_SPEC, *COMMON_BELT_SPEC ]
 
   - # Front Left Sub Belt Drive Pully
     name: FL_SUB_TRACK_WHEEL1
@@ -297,20 +297,6 @@ links:
     material: *WHEEL_MATERIAL
     elements: { <<: *COMMON_RESOURCE, node: SUB_TRACK_BOTTOM_ROLLER_GUIDE }
 
-  - # Front Left Sub Belt
-    name: FL_SUB_TRACK
-    parent: FL_FLIPPER
-    jointType: fixed
-    elements:
-      -
-        type: AGXVehicleContinuousTrackDevice
-        name: FL_SUB_TRACK_AGX
-        sprocketNames: [ FL_SUB_TRACK_WHEEL1 ]
-        guideNames: [ FL_SUB_TRACK_BOTTOM_GUIDE ]
-        idlerNames: [ FL_SUB_TRACK_WHEEL2 ]
-        upAxis: [ 0, 0, 1 ]
-        <<: [ *SUB_BELT_SPEC, *COMMON_BELT_SPEC ]
-
   - # Back Right Flipper
     name: BR_FLIPPER
     parent: CHASSIS
@@ -323,9 +309,19 @@ links:
     jointMotorForceRange: [ -200, 200 ]
     jointLockForceRange: [ -200, 200 ]
     elements:
-      Transform:
+      -
+        type: Transform
         rotation: [ 0, 0, 1, 180 ]
         elements: *FLIPPER_ELEMENTS
+      -
+        # Back Right Sub Belt
+        type: AGXVehicleContinuousTrackDevice
+        name: BR_SUB_TRACK_AGX
+        sprocketNames: [ BR_SUB_TRACK_WHEEL1 ]
+        guideNames: [ BR_SUB_TRACK_BOTTOM_GUIDE ]
+        idlerNames: [ BR_SUB_TRACK_WHEEL2 ]
+        upAxis: [ 0, 0, 1 ]
+        <<: [ *SUB_BELT_SPEC, *COMMON_BELT_SPEC ]
 
   - # Back Right Sub Belt Drive Pully
     name: BR_SUB_TRACK_WHEEL1
@@ -353,20 +349,6 @@ links:
     material: *WHEEL_MATERIAL
     elements: { <<: *COMMON_RESOURCE, node: SUB_TRACK_BOTTOM_ROLLER_GUIDE, rotation: [ 0, 0, 1, 180 ] }
 
-  - # Back Right Sub Belt
-    name: BR_SUB_TRACK
-    parent: BR_FLIPPER
-    jointType: fixed
-    elements:
-      -
-        type: AGXVehicleContinuousTrackDevice
-        name: BR_SUB_TRACK_AGX
-        sprocketNames: [ BR_SUB_TRACK_WHEEL1 ]
-        guideNames: [ BR_SUB_TRACK_BOTTOM_GUIDE ]
-        idlerNames: [ BR_SUB_TRACK_WHEEL2 ]
-        upAxis: [ 0, 0, 1 ]
-        <<: [ *SUB_BELT_SPEC, *COMMON_BELT_SPEC ]
-
   - # Back Left Flipper
     name: BL_FLIPPER
     parent: CHASSIS
@@ -379,9 +361,19 @@ links:
     jointMotorForceRange: [ -200, 200 ]
     jointLockForceRange: [ -200, 200 ]
     elements:
-      Transform:
+      -
+        type: Transform
         rotation: [ 0, 0, 1, 180 ]
         elements: *FLIPPER_ELEMENTS
+      -
+        # Back Left Sub Belt
+        type: AGXVehicleContinuousTrackDevice
+        name: BL_SUB_TRACK_AGX
+        sprocketNames: [ BL_SUB_TRACK_WHEEL1 ]
+        guideNames: [ BL_SUB_TRACK_BOTTOM_GUIDE ]
+        idlerNames: [ BL_SUB_TRACK_WHEEL2 ]
+        upAxis: [ 0, 0, 1 ]
+        <<: [ *SUB_BELT_SPEC, *COMMON_BELT_SPEC ]
 
   - # Back Left Sub Belt Drive Pully
     name: BL_SUB_TRACK_WHEEL1
@@ -409,16 +401,86 @@ links:
     material: *WHEEL_MATERIAL
     elements: { <<: *COMMON_RESOURCE, node: SUB_TRACK_BOTTOM_ROLLER_GUIDE, rotation: [ 0, 0, 1, 180 ] }
 
-  - # Back Left Sub Belt
-    name: BL_SUB_TRACK
-    parent: BL_FLIPPER
+  -
+    &WIRE_GUARD_MAIN
+    name: WIRE_GUARD_L
+    parent: CHASSIS
     jointType: fixed
+    translation: [ 0, 0.125, 0.07 ]
+    mass: 0.001
+    inertia: [
+      0.001, 0, 0,
+      0, 0.001, 0,
+      0, 0, 0.001 ]
     elements:
-      -
-        type: AGXVehicleContinuousTrackDevice
-        name: BL_SUB_TRACK_AGX
-        sprocketNames: [ BL_SUB_TRACK_WHEEL1 ]
-        guideNames: [ BL_SUB_TRACK_BOTTOM_GUIDE ]
-        idlerNames: [ BL_SUB_TRACK_WHEEL2 ]
-        upAxis: [ 0, 0, 1 ]
-        <<: [ *SUB_BELT_SPEC, *COMMON_BELT_SPEC ]
+      Collision:
+        shape:
+          geometry: { type: Box, size: [ 0.66, 0.12, 0.22 ] }
+          appearance: &GUARD_COLOR
+            material:
+              diffuseColor: [ 0, 1, 0 ]
+              transparency: 0.6
+  -
+    <<: *WIRE_GUARD_MAIN
+    name: WIRE_GUARD_R
+    translation: [ 0, -0.125, 0.07 ]
+  -
+    &WIRE_GUARD_SUB
+    name: WIRE_GUARD_FL
+    parent: FL_FLIPPER
+    jointType: fixed
+    translation: [ 0.125, 0, 0 ]
+    mass: 0.001
+    inertia: [
+      0.001, 0, 0,
+      0, 0.001, 0,
+      0, 0, 0.001 ]
+    elements:
+      Collision:
+        shape:
+          geometry: { type: Box, size: [ 0.44, 0.08, 0.19 ] }
+          appearance: *GUARD_COLOR
+  -
+    <<: *WIRE_GUARD_SUB
+    name: WIRE_GUARD_FR
+    parent: FR_FLIPPER
+    translation: [ 0.125, 0, 0 ]
+  -
+    <<: *WIRE_GUARD_SUB
+    name: WIRE_GUARD_BL
+    parent: BL_FLIPPER
+    translation: [ -0.125, 0, 0 ]
+  -
+    <<: *WIRE_GUARD_SUB
+    name: WIRE_GUARD_BR
+    parent: BR_FLIPPER
+    translation: [ -0.125, 0, 0 ]
+
+# TODO: Share the following information with other AizuSpider models
+collisionDetection:
+  excludeTreeDepth: 1
+  excludeSelfCollisionLinks: [
+    R_TRACK_WHEEL1, R_TRACK_WHEEL2, R_TRACK_BOTTOM_GUIDE, R_TRACK_TOP_ROLLER,
+    L_TRACK_WHEEL1, L_TRACK_WHEEL2, L_TRACK_BOTTOM_GUIDE, L_TRACK_TOP_ROLLERk
+    FR_SUB_TRACK_WHEEL2, FR_SUB_TRACK_BOTTOM_GUIDE,
+    FL_SUB_TRACK_WHEEL2, FL_SUB_TRACK_BOTTOM_GUIDE,
+    BR_SUB_TRACK_WHEEL2, BR_SUB_TRACK_BOTTOM_GUIDE,
+    BL_SUB_TRACK_WHEEL2, BL_SUB_TRACK_BOTTOM_GUIDE ]
+  excludeLinkGroups:
+    -
+      name: ChassisGroup
+      links: [
+        CHASSIS,
+        FR_FLIPPER, FR_SUB_TRACK_WHEEL1,
+        FL_FLIPPER, FL_SUB_TRACK_WHEEL1,
+        BR_FLIPPER, BR_SUB_TRACK_WHEEL1,
+        BL_FLIPPER, BL_SUB_TRACK_WHEEL1 ]
+  
+  excludeLinksWireCollision: [
+    R_TRACK_WHEEL1, R_TRACK_WHEEL2, R_TRACK_BOTTOM_GUIDE, R_TRACK_TOP_ROLLER,
+    L_TRACK_WHEEL1, L_TRACK_WHEEL2, L_TRACK_BOTTOM_GUIDE, L_TRACK_TOP_ROLLER,
+    FR_FLIPPER, FR_SUB_TRACK_WHEEL2, FR_SUB_TRACK_BOTTOM_GUIDE, FR_SUB_TRACK_WHEEL1,
+    FL_FLIPPER, FL_SUB_TRACK_WHEEL2, FL_SUB_TRACK_BOTTOM_GUIDE, FL_SUB_TRACK_WHEEL1,
+    BR_FLIPPER, BR_SUB_TRACK_WHEEL2, BR_SUB_TRACK_BOTTOM_GUIDE, BR_SUB_TRACK_WHEEL1,
+    BL_FLIPPER, BL_SUB_TRACK_WHEEL2, BL_SUB_TRACK_BOTTOM_GUIDE, BL_SUB_TRACK_WHEEL1 ]
+  excludeLinksDynamic: [ WIRE_GUARD_L, WIRE_GUARD_R, WIRE_GUARD_FL, WIRE_GUARD_FR, WIRE_GUARD_BL, WIRE_GUARD_BR ]

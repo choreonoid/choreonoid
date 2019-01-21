@@ -29,6 +29,15 @@ Link* DyLink::clone() const
 }
 
 
+void DyLink::initializeState()
+{
+    Link::initializeState();
+
+    vo_.setZero();
+    dvo_.setZero();
+}
+
+
 void DyLink::prependChild(Link* link)
 {
     if(DyLink* dyLink = dynamic_cast<DyLink*>(link)){

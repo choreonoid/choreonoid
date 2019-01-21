@@ -779,7 +779,7 @@ void RokiLink::setTorqueToRoki()
 {
     if(isCrawler){
         for(int i=0; i<cd_cells.size(); i++)
-            rkFDCDCellSetSlideVel( cd_cells[i], link->dq() );
+            rkFDCDCellSetSlideVel( cd_cells[i], link->dq_target() );
     } else {
         rkJointMotorSetInput( rkLinkJoint(rklink), &link->u() );
     }
@@ -1106,6 +1106,8 @@ void RokiSimulatorItemImpl::addBody(RokiBody* rokiBody)
         joint->u() = 0.0;
         joint->dq() = 0.0;
         joint->ddq() = 0.0;
+        joint->q_target() = joint->q();
+        joint->dq_target() = joint->dq();
     }
 
     body.clearExternalForces();

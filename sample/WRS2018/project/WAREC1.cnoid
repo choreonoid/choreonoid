@@ -1,0 +1,68 @@
+items: 
+  id: 0
+  name: "Root"
+  plugin: Base
+  class: RootItem
+  children: 
+    - 
+      id: 1
+      name: "WAREC1"
+      plugin: Body
+      class: BodyItem
+      data: 
+        modelFile: "${SHARE}/model/WAREC1/WAREC1.body"
+        currentBaseLink: "BASE"
+        rootPosition: [ 1, 0, 0.412 ]
+        rootAttitude: [ 
+          6.123234e-17, 0, 1, 
+          0, 1, 0, 
+          -1, 0, 6.123234e-17 ]
+        jointPositions: [ 
+           0.349066,  0.349066,  0.000000, -1.134464,  0.000000, -0.785398,  0.000000, -0.349066,  0.349066,  0.000000, 
+          -1.134464,  0.000000, -0.785398,  0.000000, -0.349066, -0.349066,  0.000000,  1.134464,  0.000000,  0.785398, 
+           0.000000,  0.349066, -0.349066,  0.000000,  1.134464,  0.000000,  0.785398,  0.000000 ]
+        initialRootPosition: [ 1, 0, 0.412 ]
+        initialRootAttitude: [ 
+          2.22044605e-16, 0, 1, 
+          0, 1, 0, 
+          -1, 0, 2.22044605e-16 ]
+        initialJointPositions: [ 
+           0.349066,  0.349066,  0.000000, -1.134464,  0.000000, -0.785398,  0.000000, -0.349066,  0.349066,  0.000000, 
+          -1.134464,  0.000000, -0.785398,  0.000000, -0.349066, -0.349066,  0.000000,  1.134464,  0.000000,  0.785398, 
+           0.000000,  0.349066, -0.349066,  0.000000,  1.134464,  0.000000,  0.785398,  0.000000 ]
+        zmp: [ 0, 0, 0 ]
+        collisionDetection: true
+        selfCollisionDetection: false
+        isEditable: true
+      children: 
+        - 
+          id: 2
+          name: "BodyTrackingCamera"
+          plugin: Body
+          class: BodyTrackingCameraItem
+          data: 
+            keepRelativeAttitude: false
+            cameraType: "Perspective"
+            nearClipDistance: 0.05
+            farClipDistance: 200
+            fieldOfView: 0.785398
+views: 
+  - 
+    id: 1
+    plugin: Base
+    class: ItemTreeView
+    state: 
+      checked: [ 1, 2 ]
+      expanded: [ 1 ]
+  - 
+    id: 3
+    plugin: Base
+    class: SceneView
+    state: 
+      cameras: 
+        - 
+          camera: BodyTrackingCamera
+          isCurrent: true
+          eye: [ -1.43752288, -0.770863182, 1.17480778 ]
+          direction: [ 0.914494576, 0.284946637, -0.287236983 ]
+          up: [ 0.274232963, 0.0854480306, 0.957859549 ]

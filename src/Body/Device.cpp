@@ -14,7 +14,7 @@ Device::Device()
     ns = new NonState;
     ns->index = -1;
     ns->id = -1;
-    ns->link = 0;
+    ns->link = nullptr;
     T_local().setIdentity();
     setCycle(20.0);
 }
@@ -23,13 +23,13 @@ Device::Device()
 Device::Device(const Device& org, bool copyStateOnly)
 {
     if(copyStateOnly){
-        ns = 0;
+        ns = nullptr;
     } else {
         ns = new NonState;
         ns->index = -1;
         ns->id = org.ns->id;
         ns->name = org.ns->name;
-        ns->link = 0;
+        ns->link = nullptr;
         T_local() = org.T_local();
         setCycle(org.cycle());
     }
@@ -51,6 +51,18 @@ void Device::forEachActualType(std::function<bool(const std::type_info& type)> f
 
 
 void Device::clearState()
+{
+
+}
+
+
+bool Device::on() const
+{
+    return true;
+}
+
+
+void Device::on(bool)
 {
 
 }

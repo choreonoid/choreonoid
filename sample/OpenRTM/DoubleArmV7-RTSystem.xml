@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <rts:RtsProfile rts:version="0.2" rts:id="RTSystem:AIST:DoubleArmV7-RTSystem:1.0.0" xmlns:rts="http://www.openrtp.org/namespaces/rts" xmlns:rtsExt="http://www.openrtp.org/namespaces/rts_ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-	<rts:Components xsi:type="rtsExt:component_ext" rts:isRequired="false" rts:compositeType="None" rts:activeConfigurationSet="default" rts:instanceName="CameraImage" rts:pathUri="localhost/CameraImage.rtc" rts:id="RTC:Choreonoid:Choreonoid:CameraImage:1.0.0">
+	<rts:Components xsi:type="rtsExt:component_ext" rts:isRequired="false" rts:compositeType="None" rts:activeConfigurationSet="default" rts:instanceName="CameraImage" rts:pathUri="150.29.145.246/CameraImage.rtc" rts:id="RTC:Choreonoid:Choreonoid:CameraImage:1.0.0">
+		<rtsExt:Properties rtsExt:value="true" rtsExt:name="OpenRTM_NS" />
 		<rts:DataPorts xsi:type="rtsExt:dataport_ext" rts:name="CameraImage.cameraImage">
 			<rtsExt:Properties rtsExt:value="DataInPort" rtsExt:name="port.port_type" />
 			<rtsExt:Properties rtsExt:value="IDL:Img/TimedCameraImage:1.0" rtsExt:name="dataport.data_type" />
@@ -10,9 +11,10 @@
 		</rts:DataPorts>
 		<rts:ConfigurationSets rts:id="default" />
 		<rts:ExecutionContexts xsi:type="rtsExt:execution_context_ext" rts:id="0" rts:rate="30" rts:kind="PERIODIC" />
-		<rtsExt:Location rtsExt:direction="RIGHT" rtsExt:width="-1" rtsExt:height="-1" rtsExt:x="456" rtsExt:y="155" />
+		<rtsExt:Location rtsExt:direction="RIGHT" rtsExt:width="-1" rtsExt:height="-1" rtsExt:x="497" rtsExt:y="195" />
 	</rts:Components>
-	<rts:Components xsi:type="rtsExt:component_ext" rts:isRequired="false" rts:compositeType="None" rts:activeConfigurationSet="default" rts:instanceName="DoubleArmV7-JoystickInput" rts:pathUri="localhost/DoubleArmV7-JoystickInput.rtc" rts:id="RTC:AIST:HumanInterfaceDevice:DoubleArmV7-JoystickInput:1.0.0">
+	<rts:Components xsi:type="rtsExt:component_ext" rts:isRequired="false" rts:compositeType="None" rts:activeConfigurationSet="default" rts:instanceName="DoubleArmV7-JoystickInput" rts:pathUri="150.29.145.246/DoubleArmV7-JoystickInput.rtc" rts:id="RTC:AIST:HumanInterfaceDevice:DoubleArmV7-JoystickInput:1.0.0">
+		<rtsExt:Properties rtsExt:value="true" rtsExt:name="OpenRTM_NS" />
 		<rts:DataPorts xsi:type="rtsExt:dataport_ext" rts:name="DoubleArmV7-JoystickInput.axes">
 			<rtsExt:Properties rtsExt:value="DataInPort" rtsExt:name="port.port_type" />
 			<rtsExt:Properties rtsExt:value="IDL:RTC/TimedFloatSeq:1.0" rtsExt:name="dataport.data_type" />
@@ -29,24 +31,88 @@
 		</rts:DataPorts>
 		<rts:ConfigurationSets rts:id="default" />
 		<rts:ExecutionContexts xsi:type="rtsExt:execution_context_ext" rts:id="0" rts:rate="1000" rts:kind="PERIODIC" />
-		<rtsExt:Location rtsExt:direction="RIGHT" rtsExt:width="-1" rtsExt:height="-1" rtsExt:x="368" rtsExt:y="0" />
+		<rtsExt:Location rtsExt:direction="RIGHT" rtsExt:width="-1" rtsExt:height="-1" rtsExt:x="286" rtsExt:y="8" />
 	</rts:Components>
-	<rts:Components xsi:type="rtsExt:component_ext" rts:isRequired="false" rts:compositeType="None" rts:activeConfigurationSet="default" rts:instanceName="DoubleArmV7-VisionSensorIoRTC" rts:pathUri="localhost/DoubleArmV7-VisionSensorIoRTC.rtc" rts:id="RTC:Choreonoid:Generic:DoubleArmV7-VisionSensorIoRTC:1.0.0">
+	<rts:Components xsi:type="rtsExt:component_ext" rts:isRequired="false" rts:compositeType="None" rts:activeConfigurationSet="default" rts:instanceName="DoubleArmV7-VisionSensorIoRTC" rts:pathUri="150.29.145.246/DoubleArmV7-VisionSensorIoRTC.rtc" rts:id="RTC:Choreonoid:Generic:DoubleArmV7-VisionSensorIoRTC:1.0.0">
+		<rtsExt:Properties rtsExt:value="true" rtsExt:name="OpenRTM_NS" />
+		<rts:DataPorts xsi:type="rtsExt:dataport_ext" rts:name="DoubleArmV7-VisionSensorIoRTC.FRAME_FRONT_CAMERA_switch">
+			<rtsExt:Properties rtsExt:value="DataInPort" rtsExt:name="port.port_type" />
+			<rtsExt:Properties rtsExt:value="IDL:RTC/TimedBoolean:1.0" rtsExt:name="dataport.data_type" />
+			<rtsExt:Properties rtsExt:value="Any" rtsExt:name="dataport.subscription_type" />
+			<rtsExt:Properties rtsExt:value="push,pull" rtsExt:name="dataport.dataflow_type" />
+			<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
+		</rts:DataPorts>
+		<rts:DataPorts xsi:type="rtsExt:dataport_ext" rts:name="DoubleArmV7-VisionSensorIoRTC.mid_RIGHT_CAMERA_switch">
+			<rtsExt:Properties rtsExt:value="DataInPort" rtsExt:name="port.port_type" />
+			<rtsExt:Properties rtsExt:value="IDL:RTC/TimedBoolean:1.0" rtsExt:name="dataport.data_type" />
+			<rtsExt:Properties rtsExt:value="Any" rtsExt:name="dataport.subscription_type" />
+			<rtsExt:Properties rtsExt:value="push,pull" rtsExt:name="dataport.dataflow_type" />
+			<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
+		</rts:DataPorts>
+		<rts:DataPorts xsi:type="rtsExt:dataport_ext" rts:name="DoubleArmV7-VisionSensorIoRTC.mid_LEFT_CAMERA_switch">
+			<rtsExt:Properties rtsExt:value="DataInPort" rtsExt:name="port.port_type" />
+			<rtsExt:Properties rtsExt:value="IDL:RTC/TimedBoolean:1.0" rtsExt:name="dataport.data_type" />
+			<rtsExt:Properties rtsExt:value="Any" rtsExt:name="dataport.subscription_type" />
+			<rtsExt:Properties rtsExt:value="push,pull" rtsExt:name="dataport.dataflow_type" />
+			<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
+		</rts:DataPorts>
+		<rts:DataPorts xsi:type="rtsExt:dataport_ext" rts:name="DoubleArmV7-VisionSensorIoRTC.Mid_TOP_CAMERA_switch">
+			<rtsExt:Properties rtsExt:value="DataInPort" rtsExt:name="port.port_type" />
+			<rtsExt:Properties rtsExt:value="IDL:RTC/TimedBoolean:1.0" rtsExt:name="dataport.data_type" />
+			<rtsExt:Properties rtsExt:value="Any" rtsExt:name="dataport.subscription_type" />
+			<rtsExt:Properties rtsExt:value="push,pull" rtsExt:name="dataport.dataflow_type" />
+			<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
+		</rts:DataPorts>
+		<rts:DataPorts xsi:type="rtsExt:dataport_ext" rts:name="DoubleArmV7-VisionSensorIoRTC.Mid_BOTTOM_CAMERA_switch">
+			<rtsExt:Properties rtsExt:value="DataInPort" rtsExt:name="port.port_type" />
+			<rtsExt:Properties rtsExt:value="IDL:RTC/TimedBoolean:1.0" rtsExt:name="dataport.data_type" />
+			<rtsExt:Properties rtsExt:value="Any" rtsExt:name="dataport.subscription_type" />
+			<rtsExt:Properties rtsExt:value="push,pull" rtsExt:name="dataport.dataflow_type" />
+			<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
+		</rts:DataPorts>
+		<rts:DataPorts xsi:type="rtsExt:dataport_ext" rts:name="DoubleArmV7-VisionSensorIoRTC.Mid_FRONT_CAMERA_switch">
+			<rtsExt:Properties rtsExt:value="DataInPort" rtsExt:name="port.port_type" />
+			<rtsExt:Properties rtsExt:value="IDL:RTC/TimedBoolean:1.0" rtsExt:name="dataport.data_type" />
+			<rtsExt:Properties rtsExt:value="Any" rtsExt:name="dataport.subscription_type" />
+			<rtsExt:Properties rtsExt:value="push,pull" rtsExt:name="dataport.dataflow_type" />
+			<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
+		</rts:DataPorts>
+		<rts:DataPorts xsi:type="rtsExt:dataport_ext" rts:name="DoubleArmV7-VisionSensorIoRTC.Lower_Hand_Camera_switch">
+			<rtsExt:Properties rtsExt:value="DataInPort" rtsExt:name="port.port_type" />
+			<rtsExt:Properties rtsExt:value="IDL:RTC/TimedBoolean:1.0" rtsExt:name="dataport.data_type" />
+			<rtsExt:Properties rtsExt:value="Any" rtsExt:name="dataport.subscription_type" />
+			<rtsExt:Properties rtsExt:value="push,pull" rtsExt:name="dataport.dataflow_type" />
+			<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
+		</rts:DataPorts>
+		<rts:DataPorts xsi:type="rtsExt:dataport_ext" rts:name="DoubleArmV7-VisionSensorIoRTC.UF_BOTTOM_CAMERA_switch">
+			<rtsExt:Properties rtsExt:value="DataInPort" rtsExt:name="port.port_type" />
+			<rtsExt:Properties rtsExt:value="IDL:RTC/TimedBoolean:1.0" rtsExt:name="dataport.data_type" />
+			<rtsExt:Properties rtsExt:value="Any" rtsExt:name="dataport.subscription_type" />
+			<rtsExt:Properties rtsExt:value="push,pull" rtsExt:name="dataport.dataflow_type" />
+			<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
+		</rts:DataPorts>
+		<rts:DataPorts xsi:type="rtsExt:dataport_ext" rts:name="DoubleArmV7-VisionSensorIoRTC.UF_TOP_CAMERA_switch">
+			<rtsExt:Properties rtsExt:value="DataInPort" rtsExt:name="port.port_type" />
+			<rtsExt:Properties rtsExt:value="IDL:RTC/TimedBoolean:1.0" rtsExt:name="dataport.data_type" />
+			<rtsExt:Properties rtsExt:value="Any" rtsExt:name="dataport.subscription_type" />
+			<rtsExt:Properties rtsExt:value="push,pull" rtsExt:name="dataport.dataflow_type" />
+			<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
+		</rts:DataPorts>
+		<rts:DataPorts xsi:type="rtsExt:dataport_ext" rts:name="DoubleArmV7-VisionSensorIoRTC.UF_FRONT_CAMERA_switch">
+			<rtsExt:Properties rtsExt:value="DataInPort" rtsExt:name="port.port_type" />
+			<rtsExt:Properties rtsExt:value="IDL:RTC/TimedBoolean:1.0" rtsExt:name="dataport.data_type" />
+			<rtsExt:Properties rtsExt:value="Any" rtsExt:name="dataport.subscription_type" />
+			<rtsExt:Properties rtsExt:value="push,pull" rtsExt:name="dataport.dataflow_type" />
+			<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
+		</rts:DataPorts>
+		<rts:DataPorts xsi:type="rtsExt:dataport_ext" rts:name="DoubleArmV7-VisionSensorIoRTC.Upper_Hand_Camera_switch">
+			<rtsExt:Properties rtsExt:value="DataInPort" rtsExt:name="port.port_type" />
+			<rtsExt:Properties rtsExt:value="IDL:RTC/TimedBoolean:1.0" rtsExt:name="dataport.data_type" />
+			<rtsExt:Properties rtsExt:value="Any" rtsExt:name="dataport.subscription_type" />
+			<rtsExt:Properties rtsExt:value="push,pull" rtsExt:name="dataport.dataflow_type" />
+			<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
+		</rts:DataPorts>
 		<rts:DataPorts xsi:type="rtsExt:dataport_ext" rts:name="DoubleArmV7-VisionSensorIoRTC.FRAME_FRONT_CAMERA">
-			<rtsExt:Properties rtsExt:value="DataOutPort" rtsExt:name="port.port_type" />
-			<rtsExt:Properties rtsExt:value="IDL:Img/TimedCameraImage:1.0" rtsExt:name="dataport.data_type" />
-			<rtsExt:Properties rtsExt:value="flush,new,periodic" rtsExt:name="dataport.subscription_type" />
-			<rtsExt:Properties rtsExt:value="push,pull" rtsExt:name="dataport.dataflow_type" />
-			<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
-		</rts:DataPorts>
-		<rts:DataPorts xsi:type="rtsExt:dataport_ext" rts:name="DoubleArmV7-VisionSensorIoRTC.WORK_RIGHT_VIEW">
-			<rtsExt:Properties rtsExt:value="DataOutPort" rtsExt:name="port.port_type" />
-			<rtsExt:Properties rtsExt:value="IDL:Img/TimedCameraImage:1.0" rtsExt:name="dataport.data_type" />
-			<rtsExt:Properties rtsExt:value="flush,new,periodic" rtsExt:name="dataport.subscription_type" />
-			<rtsExt:Properties rtsExt:value="push,pull" rtsExt:name="dataport.dataflow_type" />
-			<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
-		</rts:DataPorts>
-		<rts:DataPorts xsi:type="rtsExt:dataport_ext" rts:name="DoubleArmV7-VisionSensorIoRTC.WORK_LEFT_VIEW">
 			<rtsExt:Properties rtsExt:value="DataOutPort" rtsExt:name="port.port_type" />
 			<rtsExt:Properties rtsExt:value="IDL:Img/TimedCameraImage:1.0" rtsExt:name="dataport.data_type" />
 			<rtsExt:Properties rtsExt:value="flush,new,periodic" rtsExt:name="dataport.subscription_type" />
@@ -125,9 +191,10 @@
 		</rts:DataPorts>
 		<rts:ConfigurationSets rts:id="default" />
 		<rts:ExecutionContexts xsi:type="rtsExt:execution_context_ext" rts:id="0" rts:rate="1000" rts:kind="PERIODIC" />
-		<rtsExt:Location rtsExt:direction="RIGHT" rtsExt:width="-1" rtsExt:height="-1" rtsExt:x="0" rtsExt:y="104" />
+		<rtsExt:Location rtsExt:direction="RIGHT" rtsExt:width="-1" rtsExt:height="-1" rtsExt:x="0" rtsExt:y="148" />
 	</rts:Components>
-	<rts:Components xsi:type="rtsExt:component_ext" rts:isRequired="false" rts:compositeType="None" rts:activeConfigurationSet="default" rts:instanceName="JoystickRTC0" rts:pathUri="localhost/JoystickRTC0.rtc" rts:id="RTC:AIST:HumanInterfaceDevice:JoystickRTC0:1.0.0">
+	<rts:Components xsi:type="rtsExt:component_ext" rts:isRequired="false" rts:compositeType="None" rts:activeConfigurationSet="default" rts:instanceName="JoystickRTC0" rts:pathUri="150.29.145.246/JoystickRTC0.rtc" rts:id="RTC:AIST:HumanInterfaceDevice:JoystickRTC0:1.0.0">
+		<rtsExt:Properties rtsExt:value="true" rtsExt:name="OpenRTM_NS" />
 		<rts:DataPorts xsi:type="rtsExt:dataport_ext" rts:name="JoystickRTC0.axes">
 			<rtsExt:Properties rtsExt:value="DataOutPort" rtsExt:name="port.port_type" />
 			<rtsExt:Properties rtsExt:value="IDL:RTC/TimedFloatSeq:1.0" rtsExt:name="dataport.data_type" />
@@ -147,48 +214,48 @@
 			<rts:ConfigurationData rts:data="0" rts:name="debugLevel" />
 		</rts:ConfigurationSets>
 		<rts:ExecutionContexts xsi:type="rtsExt:execution_context_ext" rts:id="0" rts:rate="30" rts:kind="PERIODIC" />
-		<rtsExt:Location rtsExt:direction="RIGHT" rtsExt:width="-1" rtsExt:height="-1" rtsExt:x="127" rtsExt:y="0" />
+		<rtsExt:Location rtsExt:direction="RIGHT" rtsExt:width="-1" rtsExt:height="-1" rtsExt:x="33" rtsExt:y="8" />
 	</rts:Components>
-	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="1af8a81b-35e9-4937-a1b2-c15302a27a49" rts:name="JoystickRTC0.buttons_DoubleArmV7-JoystickInput.buttons" rts:dataType="IDL:RTC/TimedBooleanSeq:1.0" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush">
-		<rts:sourceDataPort xsi:type="rtsExt:target_port_ext" rts:portName="JoystickRTC0.buttons" rts:instanceName="JoystickRTC0" rts:componentId="RTC:AIST:HumanInterfaceDevice:JoystickRTC0:1.0.0">
-			<rtsExt:Properties rtsExt:value="localhost/JoystickRTC0.rtc" rtsExt:name="COMPONENT_PATH_ID" />
-		</rts:sourceDataPort>
-		<rts:targetDataPort xsi:type="rtsExt:target_port_ext" rts:portName="DoubleArmV7-JoystickInput.buttons" rts:instanceName="DoubleArmV7-JoystickInput" rts:componentId="RTC:AIST:HumanInterfaceDevice:DoubleArmV7-JoystickInput:1.0.0">
-			<rtsExt:Properties rtsExt:value="localhost/DoubleArmV7-JoystickInput.rtc" rtsExt:name="COMPONENT_PATH_ID" />
-		</rts:targetDataPort>
-		<rtsExt:Properties rtsExt:value="IDL:RTC/TimedBooleanSeq:1.0" rtsExt:name="dataport.data_type" />
-		<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
-		<rtsExt:Properties rtsExt:value="push" rtsExt:name="dataport.dataflow_type" />
-		<rtsExt:Properties rtsExt:value="flush" rtsExt:name="dataport.subscription_type" />
-		<rtsExt:Properties rtsExt:value="little,big" rtsExt:name="dataport.serializer.cdr.endian" />
-		<rtsExt:Properties rtsExt:value="{1:(211,37),2:(216,37),3:(331,37),4:(331,37),5:(437,37),6:(442,37)}" rtsExt:name="POSITION" />
-	</rts:DataPortConnectors>
-	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="f6705da0-b21f-4931-a264-0a75f371c107" rts:name="JoystickRTC0.axes_DoubleArmV7-JoystickInput.axes" rts:dataType="IDL:RTC/TimedFloatSeq:1.0" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush">
+	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="689a310b-2122-4c6f-9373-7c23a4ca638a" rts:name="JoystickRTC0.axes_DoubleArmV7-JoystickInput.axes" rts:dataType="IDL:RTC/TimedFloatSeq:1.0" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush" rts:pushInterval="1">
 		<rts:sourceDataPort xsi:type="rtsExt:target_port_ext" rts:portName="JoystickRTC0.axes" rts:instanceName="JoystickRTC0" rts:componentId="RTC:AIST:HumanInterfaceDevice:JoystickRTC0:1.0.0">
-			<rtsExt:Properties rtsExt:value="localhost/JoystickRTC0.rtc" rtsExt:name="COMPONENT_PATH_ID" />
+			<rtsExt:Properties rtsExt:value="150.29.145.246/JoystickRTC0.rtc" rtsExt:name="COMPONENT_PATH_ID" />
 		</rts:sourceDataPort>
 		<rts:targetDataPort xsi:type="rtsExt:target_port_ext" rts:portName="DoubleArmV7-JoystickInput.axes" rts:instanceName="DoubleArmV7-JoystickInput" rts:componentId="RTC:AIST:HumanInterfaceDevice:DoubleArmV7-JoystickInput:1.0.0">
-			<rtsExt:Properties rtsExt:value="localhost/DoubleArmV7-JoystickInput.rtc" rtsExt:name="COMPONENT_PATH_ID" />
+			<rtsExt:Properties rtsExt:value="150.29.145.246/DoubleArmV7-JoystickInput.rtc" rtsExt:name="COMPONENT_PATH_ID" />
 		</rts:targetDataPort>
 		<rtsExt:Properties rtsExt:value="IDL:RTC/TimedFloatSeq:1.0" rtsExt:name="dataport.data_type" />
 		<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
 		<rtsExt:Properties rtsExt:value="push" rtsExt:name="dataport.dataflow_type" />
 		<rtsExt:Properties rtsExt:value="flush" rtsExt:name="dataport.subscription_type" />
 		<rtsExt:Properties rtsExt:value="little,big" rtsExt:name="dataport.serializer.cdr.endian" />
-		<rtsExt:Properties rtsExt:value="{1:(211,19),2:(216,19),3:(331,19),4:(331,19),5:(437,19),6:(442,19)}" rtsExt:name="POSITION" />
+		<rtsExt:Properties rtsExt:value="{1:(129,27),2:(134,27),3:(258,27),4:(258,27),5:(381,27),6:(386,27)}" rtsExt:name="POSITION" />
 	</rts:DataPortConnectors>
-	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="c7241c3b-908e-4c46-b600-000000000000" rts:name="DoubleArmV7-VisionSensorIoRTC.FRAME_FRONT_CAMERA_CameraImage.cameraImage" rts:dataType="IDL:Img/TimedCameraImage:1.0" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush">
+	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="c397b1d5-035e-4137-8985-be12ed14b2db" rts:name="JoystickRTC0.buttons_DoubleArmV7-JoystickInput.buttons" rts:dataType="IDL:RTC/TimedBooleanSeq:1.0" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush" rts:pushInterval="1">
+		<rts:sourceDataPort xsi:type="rtsExt:target_port_ext" rts:portName="JoystickRTC0.buttons" rts:instanceName="JoystickRTC0" rts:componentId="RTC:AIST:HumanInterfaceDevice:JoystickRTC0:1.0.0">
+			<rtsExt:Properties rtsExt:value="150.29.145.246/JoystickRTC0.rtc" rtsExt:name="COMPONENT_PATH_ID" />
+		</rts:sourceDataPort>
+		<rts:targetDataPort xsi:type="rtsExt:target_port_ext" rts:portName="DoubleArmV7-JoystickInput.buttons" rts:instanceName="DoubleArmV7-JoystickInput" rts:componentId="RTC:AIST:HumanInterfaceDevice:DoubleArmV7-JoystickInput:1.0.0">
+			<rtsExt:Properties rtsExt:value="150.29.145.246/DoubleArmV7-JoystickInput.rtc" rtsExt:name="COMPONENT_PATH_ID" />
+		</rts:targetDataPort>
+		<rtsExt:Properties rtsExt:value="IDL:RTC/TimedBooleanSeq:1.0" rtsExt:name="dataport.data_type" />
+		<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
+		<rtsExt:Properties rtsExt:value="push" rtsExt:name="dataport.dataflow_type" />
+		<rtsExt:Properties rtsExt:value="flush" rtsExt:name="dataport.subscription_type" />
+		<rtsExt:Properties rtsExt:value="little,big" rtsExt:name="dataport.serializer.cdr.endian" />
+		<rtsExt:Properties rtsExt:value="{1:(129,64),2:(134,64),3:(257.5,64),4:(257.5,64),5:(381,64),6:(386,64)}" rtsExt:name="POSITION" />
+	</rts:DataPortConnectors>
+	<rts:DataPortConnectors xsi:type="rtsExt:dataport_connector_ext" rts:connectorId="0345912a-dc38-4e80-907e-4f8fbe344171" rts:name="DoubleArmV7-VisionSensorIoRTC.FRAME_FRONT_CAMERA_CameraImage.cameraImage" rts:dataType="IDL:Img/TimedCameraImage:1.0" rts:interfaceType="corba_cdr" rts:dataflowType="push" rts:subscriptionType="flush" rts:pushInterval="1">
 		<rts:sourceDataPort xsi:type="rtsExt:target_port_ext" rts:portName="DoubleArmV7-VisionSensorIoRTC.FRAME_FRONT_CAMERA" rts:instanceName="DoubleArmV7-VisionSensorIoRTC" rts:componentId="RTC:Choreonoid:Generic:DoubleArmV7-VisionSensorIoRTC:1.0.0">
-			<rtsExt:Properties rtsExt:value="localhost/DoubleArmV7-VisionSensorIoRTC.rtc" rtsExt:name="COMPONENT_PATH_ID" />
+			<rtsExt:Properties rtsExt:value="150.29.145.246/DoubleArmV7-VisionSensorIoRTC.rtc" rtsExt:name="COMPONENT_PATH_ID" />
 		</rts:sourceDataPort>
 		<rts:targetDataPort xsi:type="rtsExt:target_port_ext" rts:portName="CameraImage.cameraImage" rts:instanceName="CameraImage" rts:componentId="RTC:Choreonoid:Choreonoid:CameraImage:1.0.0">
-			<rtsExt:Properties rtsExt:value="localhost/CameraImage.rtc" rtsExt:name="COMPONENT_PATH_ID" />
+			<rtsExt:Properties rtsExt:value="150.29.145.246/CameraImage.rtc" rtsExt:name="COMPONENT_PATH_ID" />
 		</rts:targetDataPort>
 		<rtsExt:Properties rtsExt:value="IDL:Img/TimedCameraImage:1.0" rtsExt:name="dataport.data_type" />
 		<rtsExt:Properties rtsExt:value="corba_cdr" rtsExt:name="dataport.interface_type" />
 		<rtsExt:Properties rtsExt:value="push" rtsExt:name="dataport.dataflow_type" />
 		<rtsExt:Properties rtsExt:value="flush" rtsExt:name="dataport.subscription_type" />
 		<rtsExt:Properties rtsExt:value="little,big" rtsExt:name="dataport.serializer.cdr.endian" />
-		<rtsExt:Properties rtsExt:value="{1:(153,123),2:(158,123),3:(317,123),4:(317,174),5:(476,174),6:(481,174)}" rtsExt:name="POSITION" />
+		<rtsExt:Properties rtsExt:value="{1:(183,167),2:(188,167),3:(391,167),4:(391,214),5:(530,214),6:(535,214)}" rtsExt:name="POSITION" />
 	</rts:DataPortConnectors>
 </rts:RtsProfile>

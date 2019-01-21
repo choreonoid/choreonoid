@@ -39,20 +39,20 @@ public:
     virtual bool control() override
     {
         if(time < 2.0){
-            crawlerL->dq() = 1.5;
-            crawlerR->dq() = 1.5;
+            crawlerL->dq_target() = 1.5;
+            crawlerR->dq_target() = 1.5;
 
         } else if(time < 3.0){
-            crawlerL->dq() =  1.0;
-            crawlerR->dq() = -1.0;
+            crawlerL->dq_target() =  1.0;
+            crawlerR->dq_target() = -1.0;
 
         } else if(time < 5.0){
-            crawlerL->dq() = 1.5;
-            crawlerR->dq() = 1.5;
+            crawlerL->dq_target() = 1.5;
+            crawlerR->dq_target() = 1.5;
 
         } else if(time < 6.0){
-            crawlerL->dq() = -1.0;
-            crawlerR->dq() =  1.0;
+            crawlerL->dq_target() = -1.0;
+            crawlerR->dq_target() =  1.0;
         }
 
         time = fmod(time + dt, 6.0);

@@ -1,4 +1,3 @@
-
 if(NOT ENABLE_GUI)
   return()
 endif()

@@ -135,7 +135,9 @@ public:
 
     void setSelfCollisionEnabled(bool on);
     bool isSelfCollisionEnabled() const ;
-        
+
+    const std::string& controllerOptionString() const;
+    
     /**
        For sub simulators
     */
@@ -192,8 +194,8 @@ public:
 protected:
     SimulatorItem(const SimulatorItem& org);
 
-    virtual void onPositionChanged();
-    virtual void onDisconnectedFromRoot();
+    virtual void onPositionChanged() override;
+    virtual void onDisconnectedFromRoot() override;
 
     /**
        @note orgBody should not owned by the SimulationBody instance.
@@ -232,9 +234,9 @@ protected:
         return std::make_shared<CollisionLinkPairList>();
     }
 
-    void doPutProperties(PutPropertyFunction& putProperty);
-    bool store(Archive& archive);
-    bool restore(const Archive& archive);
+    virtual void doPutProperties(PutPropertyFunction& putProperty) override;
+    virtual bool store(Archive& archive) override;
+    virtual bool restore(const Archive& archive) override;
 
 #ifdef ENABLE_SIMULATION_PROFILING
     virtual void getProfilingNames(std::vector<std::string>& profilingNames);

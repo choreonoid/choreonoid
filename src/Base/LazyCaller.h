@@ -39,7 +39,8 @@ public:
     /**
        The function is called once even if the lazy call is requested many times
        before the function is actually called.
-       If the conservative mode is on, the function is called one before the function is called and finished.
+       If the conservative mode is on, a function call request is ignored if the function
+       previously requested to call is being executing.
     */
     void setConservative(bool on);
 

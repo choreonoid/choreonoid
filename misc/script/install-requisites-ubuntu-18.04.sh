@@ -8,6 +8,7 @@ libeigen3-dev \
 libeigen3-doc \
 libxfixes-dev \
 libyaml-dev \
+libfmt-dev \
 gettext \
 zlib1g-dev \
 libjpeg-dev \

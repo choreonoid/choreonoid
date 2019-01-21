@@ -72,9 +72,6 @@ public:
     */
     virtual void stop();
 
-    SignalProxy<void(const std::string& message)> sigMessage();
-    std::string getMessage();
-
 #ifdef ENABLE_SIMULATION_PROFILING
     virtual void getProfilingNames(std::vector<std::string>& profilingNames);
     virtual void getProfilingTimes(std::vector<double>& profilingTimes);
@@ -86,19 +83,15 @@ public:
     void setImmediateMode(bool on) { setNoDelayMode(on); }
 
 protected:
-    void putMessage(const std::string& message);
-
     virtual void onOptionsChanged();
-
-    virtual void doPutProperties(PutPropertyFunction& putProperty);
-    virtual bool store(Archive& archive);
-    virtual bool restore(const Archive& archive);
+    
+    virtual void doPutProperties(PutPropertyFunction& putProperty) override;
+    virtual bool store(Archive& archive) override;
+    virtual bool restore(const Archive& archive) override;
 
 private:
     SimulatorItemPtr simulatorItem_;
     bool isNoDelayMode_;
-    std::string message_;
-    Signal<void(const std::string& message)> sigMessage_;
     std::string optionString_;
 
     friend class SimulatorItemImpl;

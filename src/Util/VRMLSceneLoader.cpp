@@ -8,12 +8,12 @@
 #include "VRMLToSGConverter.h"
 #include "EasyScanner.h"
 #include "NullOut.h"
-#include <boost/format.hpp>
+#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using boost::format;
+using fmt::format;
 
 namespace {
 
@@ -99,7 +99,7 @@ SgNode* VRMLSceneLoaderImpl::load(const std::string& filename)
     }
 
     if(top->empty()){
-        os() << (format(_("VRML file \"%1%\" does not have any valid entity.")) % filename) << endl;
+        os() << format(_("VRML file \"{}\" does not have any valid entity."), filename) << endl;
         return 0;
     }
 
