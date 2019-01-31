@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-12-19 00:02+0900\n"
+"POT-Creation-Date: 2019-02-22 16:32+0900\n"
 "PO-Revision-Date: 2012-02-01 15:19+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -17,136 +17,156 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: OnlineViewerServer.cpp:139 OpenHRPOnlineViewerItem.cpp:306
+#: OnlineViewerServer.cpp:140 OpenHRPOnlineViewerItem.cpp:306
 msgid ""
-"OnlineViewer: The model file at \"%1%\" cannot be read. %2% protocol is not "
+"OnlineViewer: The model file at \"{0}\" cannot be read. {1} protocol is not "
 "supported."
 msgstr ""
-"オンラインビューア: %2%プロトコルはサポートされていないため、\"%1%\"のモデル"
-"ファイルは読み込めません。"
+"オンラインビューア: {1}プロトコルはサポートされていないため，\"{0}\"のモデル"
+"ファイルは読み込めません．"
 
-#: OnlineViewerServer.cpp:168 OpenHRPOnlineViewerItem.cpp:335
-msgid "OnlineViewer: Loading \"%1%\" at \"%2%\"."
-msgstr "オンラインビューア: \"%1%\"を\"%2%\"から読み込んでいます。"
+#: OnlineViewerServer.cpp:169 OpenHRPOnlineViewerItem.cpp:339
+msgid "OnlineViewer: Loading \"{0}\" at \"{1}\"."
+msgstr "オンラインビューア: \"{0}\"を\"{1}\"から読み込んでいます．"
 
-#: OnlineViewerServer.cpp:172 OpenHRPOnlineViewerItem.cpp:339
-msgid "OnlineViewer: Loading \"%1%\" failed."
-msgstr "オンラインビューア: \"%1%\"の読み込みに失敗しました。"
+#: OnlineViewerServer.cpp:172
+msgid "OnlineViewer: Loading \"{0}\" failed."
+msgstr "オンラインビューア: \"{0}\"の読み込みに失敗しました．"
 
-#: OnlineViewerServer.cpp:209 OpenHRPOnlineViewerItem.cpp:376
+#: OnlineViewerServer.cpp:209 OpenHRPOnlineViewerItem.cpp:380
+msgid "OnlineViewer: \"{}\" is unregistered because the name has been changed."
+msgstr "オンラインビューア: \"{}\"は名前が変更されたため登録が解除されました．"
+
+#: OnlineViewerServer.cpp:217 OpenHRPOnlineViewerItem.cpp:388
+msgid "OnlineViewer: \"{}\" has been removed."
+msgstr "オンラインビューア: \"{}\"は削除されました．"
+
+#: OpenHRPClockGeneratorItem.cpp:47
 msgid ""
-"OnlineViewer: \"%1%\" is unregistered because the name has been changed."
+"OpenHRP ClockGenerator failed to tick an execution context due to exception: "
+"{}."
 msgstr ""
-"オンラインビューア: \"%1%\"は名前が変更されたため登録が解除されました。"
+"OpennHRPクロックジェネレータは例外のため実行コンテキストをチックできませんでした: {}．"
 
-#: OnlineViewerServer.cpp:217 OpenHRPOnlineViewerItem.cpp:384
-msgid "OnlineViewer: \"%1%\" has been removed."
-msgstr "オンラインビューア: \"%1%\"は削除されました。"
+#: OpenHRPClockGeneratorItem.cpp:84
+msgid "OpenHRP ClockGenerator received a subscription request."
+msgstr "OpenHRPクロックジェネレータが購読要求を受信しました．"
 
-#: OpenHRPControllerItem.cpp:114
-msgid "Controller server process \"%1%\" cannot be executed."
-msgstr "コントローラサーバプロセス\"%1%\"は実行できません。"
+#: OpenHRPClockGeneratorItem.cpp:95
+msgid "OpenHRP ClockGenerator received an unsubscription request."
+msgstr "OpenHRPクロックジェネレータが登録解除要求を受け取りました．"
+
+#: OpenHRPClockGeneratorItem.cpp:131
+msgid "OpenHRPClockGeneratorItem"
+msgstr "OpenHRPクロックジェネレータアイテム"
+
+#: OpenHRPClockGeneratorItem.cpp:173
+msgid "OpenHRP ClockGenerator is used for this simulation."
+msgstr "このシミュレーションにはOpenHRP ClockGeneratorが使用されます．"
 
 #: OpenHRPControllerItem.cpp:116
+msgid "Controller server process \"{}\" cannot be executed."
+msgstr "コントローラサーバプロセス \"%1%\" は実行できません．"
+
+#: OpenHRPControllerItem.cpp:118
 msgid " This file does not exist."
-msgstr " このファイルは存在しません。"
+msgstr " このファイルは存在しません．"
 
-#: OpenHRPControllerItem.cpp:122
-msgid "Controller server process \"%1%\" has been executed by %2%."
-msgstr "%2%によってコントローラサーバプロセス\"%1%\"が起動されました。"
+#: OpenHRPControllerItem.cpp:124
+msgid "Controller server process \"{0}\" has been executed by {1}."
+msgstr "コントローラサーバプロセス \"{0}\" が{1}によって実行されました．"
 
-#: OpenHRPControllerItem.cpp:143
-msgid "Controller server object \"%1%\" is not found in the name server."
-msgstr ""
-"コントローラサーバオブジェクト\"%1%\"はネームサーバに登録されていません。"
+#: OpenHRPControllerItem.cpp:145
+msgid "Controller server object \"{}\" is not found in the name server."
+msgstr "コントローラサーバオブジェクト \"{}\"はネームサーバに登録されていません．"
 
-#: OpenHRPControllerItem.cpp:156
+#: OpenHRPControllerItem.cpp:158
 msgid ""
-"The CORBA object of controller \"%1%\" has been created by the factory \"%2%"
-"\"."
-msgstr ""
-"コントローラ\"%1%\"のCORBAオブジェクトがファクトリ\"%2%\"によって生成されまし"
-"た。"
+"The CORBA object of controller \"{0}\" has been created by the factory "
+"\"{1}\"."
+msgstr "コントローラ \"{0}\" のCORBAオブジェクトがファクトリ \"{1}\"によって生成されました．"
 
-#: OpenHRPControllerItem.cpp:163
-msgid "The CORBA object \"%1%\" of controller \"%2%\" has been obtained."
-msgstr "コントローラ\"%2%\"のCORBAオブジェクト\"%1%\"を取得しました。"
+#: OpenHRPControllerItem.cpp:165
+msgid "The CORBA object \"{0}\" of controller \"{1}\" has been obtained."
+msgstr "コントローラ \"{1}\"のCORBAオブジェクト \"{0}\"を取得しました．"
 
-#: OpenHRPControllerItem.cpp:231
+#: OpenHRPControllerItem.cpp:239
 msgid "Controller server name"
-msgstr "コントローラファクトリ名"
+msgstr "コントローラサーバ名"
 
-#: OpenHRPControllerItem.cpp:233
+#: OpenHRPControllerItem.cpp:241
 msgid "Controller server command"
 msgstr "コントローラサーバコマンド"
 
-#: OpenHRPInterpreterServiceItem.cpp:99
+#: OpenHRPInterpreterServiceItem.cpp:100
 msgid "OpenHRPInterpreterServiceItem"
 msgstr "OpenHRPインタプリタサービスアイテム"
 
-#: OpenHRPInterpreterServiceItem.cpp:196
-msgid "RTC \"%1%\" of \"%2%\" has been created."
-msgstr "\"%2%\"のRTC\"%1%\"を生成しました。"
+#: OpenHRPInterpreterServiceItem.cpp:197
+msgid "RTC \"{0}\" of \"{1}\" has been created."
+msgstr "\"{1}\" のRTC \"{0}\" を生成しました．"
 
-#: OpenHRPInterpreterServiceItem.cpp:199
-msgid "RTC \"%1%\" of \"%2%\" cannot be created."
-msgstr "\"%2\"のRTC\"%1%\"を生成できません。"
+#: OpenHRPInterpreterServiceItem.cpp:200
+msgid "RTC \"{0}\" of \"{1}\" cannot be created."
+msgstr "\"{1}\" のRTC \"{0}\" を生成できません．"
 
-#: OpenHRPInterpreterServiceItem.cpp:211
-msgid "RTC \"%1%\" of \"%2%\" has been deleted."
-msgstr "\"%2%\"のRTC\"%1%\"を削除しました。"
+#: OpenHRPInterpreterServiceItem.cpp:212
+msgid "RTC \"{0}\" of \"{1}\" has been deleted."
+msgstr "\"{1}\" のRTC \"{0}\" を削除しました．"
 
-#: OpenHRPInterpreterServiceItem.cpp:215
-msgid "RTC \"%1%\" of \"%2%\" cannot be deleted."
-msgstr "\"%2%\"のRTC\"%1%\"を削除できません。"
+#: OpenHRPInterpreterServiceItem.cpp:216
+msgid "RTC \"{0}\" of \"{1}\" cannot be deleted."
+msgstr "\"%1%\" のRTC \"{0}\" を削除できません．"
 
-#: OpenHRPInterpreterServiceItem.cpp:257
+#: OpenHRPInterpreterServiceItem.cpp:258
 msgid "RTC Instance name"
 msgstr "RTCインスタンス名"
 
-#: OpenHRPInterpreterServiceItem.cpp:259
+#: OpenHRPInterpreterServiceItem.cpp:260
 msgid "Force main thread execution"
 msgstr "メインスレッド実行を強要"
 
-#: OpenHRPInterpreterServiceItem.cpp:261
+#: OpenHRPInterpreterServiceItem.cpp:262
 msgid "Put script text to interpret"
 msgstr "実行するスクリプトのテキストを表示"
 
-#: OpenHRPInterpreterServiceItem.cpp:333
-msgid "%1%: interpret(\"%2%\")"
+#: OpenHRPInterpreterServiceItem.cpp:329
+msgid "{0}: interpret(\"{1}\")"
 msgstr ""
+
+#: OpenHRPInterpreterServiceItem.cpp:334
+msgid ""
+"The owner script item of {} is not found. The interpret function cannot be "
+"executed."
+msgstr ""
+"{}を所有するスクリプトアイテムが見つかりません．interpret関数は実行できません．"
 
 #: OpenHRPInterpreterServiceItem.cpp:338
 msgid ""
-"The owner script item of %1% is not found. The interpret function cannot be "
+"Owner script item \"{}\" is running now. The interpret function cannot be "
 "executed."
-msgstr "%1%を所有するスクリプトアイテムが見つかりません。interpret関数は実行できません。"
+msgstr ""
+"所有者であるスクリプトアイテム \"{}\"が実行中です．interpret関数は実行できません．"
 
 #: OpenHRPInterpreterServiceItem.cpp:342
-msgid ""
-"Owner script item \"%1%\" is running now. The interpret function cannot be "
-"executed."
-msgstr "所有者であるスクリプトアイテム\"%1%\"が実行中です。interpret関数は実行できません。"
-
-#: OpenHRPInterpreterServiceItem.cpp:346
 msgid "Executing the script given to the interpret function failed."
-msgstr "interpret関数に渡されたスクリプトの実行に失敗しました。"
+msgstr "interpret関数に渡されたスクリプトの実行に失敗しました．"
 
-#: OpenHRPInterpreterServiceItem.cpp:349
+#: OpenHRPInterpreterServiceItem.cpp:345
 msgid "The script does not return."
-msgstr "スクリプトの実行が戻りません。"
+msgstr "スクリプトの実行が戻りません．"
 
-#: OpenHRPInterpreterServiceItem.cpp:354
-msgid "%1%: interpret() returns %2%."
-msgstr "%1%: interpret() が %2% を返しました。"
+#: OpenHRPInterpreterServiceItem.cpp:350
+msgid "{0}: interpret() returns {1}."
+msgstr "{0}: interpret() が{1}を返しました．"
 
-#: OpenHRPInterpreterServiceItem.cpp:356
-msgid "%1%: interpret() finished."
-msgstr "%1%: interpret() が終了しました。"
+#: OpenHRPInterpreterServiceItem.cpp:352
+msgid "{}: interpret() finished."
+msgstr "{}: interpret() が終了しました．"
 
 #: OpenHRPOnlineViewerItem.cpp:43
 msgid "OpenHRP3.0OnlineViewerItem"
-msgstr "OpenHRP3.0コントローラアイテム"
+msgstr "OpenHRP3.0オンラインビューアアイテム"
 
 #: OpenHRPOnlineViewerItem.cpp:45
 msgid "OpenHRP3.1OnlineViewerItem"
@@ -156,10 +176,15 @@ msgstr "OpenHRP3.1オンラインビューアアイテム"
 msgid "Server name"
 msgstr "サーバ名"
 
-#: OpenHRPPlugin.cpp:23
+#: OpenHRPOnlineViewerItem.cpp:330 OpenHRPOnlineViewerItem.cpp:343
+msgid "OnlineViewer: Loading \"{}\" failed."
+msgstr "オンラインビューア: \"{}\" の読み込みに失敗しました．"
+
+#: OpenHRPPlugin.cpp:24
 msgid "OpenHRP3.0ControllerItem"
 msgstr "OpenHRP3.0コントローラアイテム"
 
-#: OpenHRPPlugin.cpp:26
+#: OpenHRPPlugin.cpp:27
 msgid "OpenHRP3.1ControllerItem"
 msgstr "OpenHRP3.1コントローラアイテム"
+

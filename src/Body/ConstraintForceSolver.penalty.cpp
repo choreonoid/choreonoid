@@ -24,7 +24,7 @@
 #include <cnoid/uBlasCommonTypes>
 #include <cnoidCorba/OpenHRPCommon.hh>
 #include <cnoid/ColdetModelPair>
-#include <boost/format.hpp>
+#include <fmt/format.h>
 #include <boost/random.hpp>
 #include <boost/numeric/ublas/triangular.hpp>
 #include <boost/numeric/ublas/lu.hpp>
@@ -338,7 +338,7 @@ static void putMatrix(TMatrix& M, const char *name)
         std::cout << "Matrix " << name << ": \n";
         for(size_t i=0; i < M.size1(); i++){
             for(size_t j=0; j < M.size2(); j++){
-                std::cout << boost::format(" %6.3f ") % M(i, j);
+                std::cout << fmt::format(" {:6.3f} ", M(i, j));
             }
             std::cout << std::endl;
         }

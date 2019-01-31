@@ -97,6 +97,16 @@ std::string str(const Vector3f& v)
 }
 
 
+std::string str(const Vector2& v)
+{
+    return fmt::format("{0} {1}", v[0], v[1]);
+}
+
+std::string str(const AngleAxis& a)
+{
+    return fmt::format("{0} {1}", str(a.axis()), a.angle());
+}
+
 template<class VectorType>
 static bool toVector3_(const std::string& s, VectorType& out_v)
 {

@@ -3,10 +3,12 @@
 */
 
 #include "MulticopterPluginHeader.h"
+#include <fmt/format.h>
 
 using namespace std;
 using namespace cnoid;
 using namespace Multicopter;
+using fmt::format;
 
 void
 UtilityImpl::printMessage(const std::string& msg, bool sync)
@@ -363,7 +365,7 @@ UtilityImpl::toString(const std::vector<double>& ary, const std::string& fmt)
 {
     vector<string> strAry;
     for(size_t i=0 ; i<ary.size() ; ++i){
-        strAry.push_back((boost::format(fmt) % ary[i]).str());
+        strAry.push_back(format(fmt, ary[i]));
     }
     return toString(strAry);
 }
@@ -482,22 +484,19 @@ UtilityImpl::printWarningMessageImpl(const string& msg)
 void
 UtilityImpl::printSomethingWrongAtBody(const string& key, const string& bodyName)
 {
-    boost::format fmt = cnoid::fmt(_("[%1%] tag is false in body[%2%].")) % key % bodyName;
-    UtilityImpl::printWarningMessage(fmt.str());
+    UtilityImpl::printWarningMessage(format(_("[{0}] tag is false in body[{1}]."), key, bodyName));
 }
 
 void
 UtilityImpl::printSomethingWrongAtLink(const string& key, const string& linkName)
 {    
-    boost::format fmt = cnoid::fmt(_("[%1%] tag is missing, or wrong parameter in link[%2%].")) % key % linkName;
-    UtilityImpl::printWarningMessage(fmt.str());
+    UtilityImpl::printWarningMessage(format(_("[{0}] tag is missing, or wrong parameter in link[{1}]."), key, linkName));
 }
 
 void
 UtilityImpl::printSomethingWrongAtRotor(const string& key)
 {
-    boost::format fmt = cnoid::fmt(_("[%1%] tag is missing, or wrong parameter in RotorDevice.")) % key;
-    UtilityImpl::printWarningMessage(fmt.str());
+    UtilityImpl::printWarningMessage(format(_("[{}] tag is missing, or wrong parameter in RotorDevice."), key));
 }
 
 

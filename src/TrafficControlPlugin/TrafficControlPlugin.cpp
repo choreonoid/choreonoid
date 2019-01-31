@@ -6,11 +6,11 @@
 #include "TCSimulatorItem.h"
 #include "DynamicTCSimulatorItem.h"
 #include <cnoid/Plugin>
-#include <boost/format.hpp>
+#include <fmt/format.h>
+#include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using boost::format;
 
 class TrafficControlPlugin : public Plugin
 {
@@ -40,7 +40,7 @@ public:
     virtual const char* description() const override
     {
         static std::string text =
-            str(format("TrafficControl Plugin Version %1%\n") % CNOID_FULL_VERSION_STRING) +
+            fmt::format("TrafficControl Plugin Version {}\n", CNOID_FULL_VERSION_STRING) +
             "\n" +
             "Copyrigh (c) 2018 Japan Atomic Energy Agency.\n"
             "\n" +

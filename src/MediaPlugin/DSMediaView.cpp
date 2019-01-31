@@ -19,11 +19,13 @@
 #include <algorithm>
 #include <windows.h>
 #include <mbctype.h>
+#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace std::placeholders;
 using namespace cnoid;
+using fmt::format;
 
 namespace {
 const bool TRACE_FUNCTIONS = false;
@@ -419,7 +421,7 @@ void DSMediaViewImpl::load()
 #define EIF(x)                                                          \
     result = (x);                                                       \
     if(FAILED(result)) {                                                \
-        throw DSException(str(fmt("FAILED(hr=0x%x) in" TEXT(#x)) % result)); \
+        throw DSException(format("FAILED(hr=0x{:x}) in" TEXT(#x), result)); \
     }
 
     struct DSException {
@@ -687,7 +689,7 @@ HRESULT DSMediaViewImpl::HandleDShowEvent()
                 if (SUCCEEDED(result = mediaControl->Stop())){
                     currentState = Stopped;
                 } else {
-                    mv->putln(fmt(_("Failed(%1%) to stop media clip!\n")) % result);
+                    mv->putln(format(_("Failed({}) to stop media clip!\n"), result));
                     unload();
                     break;
                 }

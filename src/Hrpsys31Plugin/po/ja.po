@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Hrpsys 31Plugin\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-09-25 14:40+0900\n"
+"POT-Creation-Date: 2019-01-25 10:13+0900\n"
 "PO-Revision-Date: 2013-09-25 14:40+0900\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -17,91 +17,156 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: Hrpsys31Item.cpp:71
+#: Hrpsys31Item.cpp:75
+msgid "R-Foot ZMP"
+msgstr "右足ZMP"
+
+#: Hrpsys31Item.cpp:76
+msgid "L-Foot ZMP"
+msgstr "左足ZMP"
+
+#: Hrpsys31Item.cpp:77
 msgid "Voltage"
 msgstr "電圧"
 
-#: Hrpsys31Item.cpp:72
+#: Hrpsys31Item.cpp:78
 msgid "Current"
 msgstr "電流"
 
-#: Hrpsys31Item.cpp:78
+#: Hrpsys31Item.cpp:89
+msgid "Pos"
+msgstr "位置"
+
+#: Hrpsys31Item.cpp:90
 msgid "Target"
 msgstr "目標"
 
-#: Hrpsys31Item.cpp:79
+#: Hrpsys31Item.cpp:91
 msgid "Calib"
 msgstr "キャリブ"
 
-#: Hrpsys31Item.cpp:80
+#: Hrpsys31Item.cpp:92
 msgid "Power"
 msgstr "パワー"
 
-#: Hrpsys31Item.cpp:81
+#: Hrpsys31Item.cpp:93
 msgid "Servo"
 msgstr "サーボ"
 
-#: Hrpsys31Item.cpp:82
+#: Hrpsys31Item.cpp:94
 msgid "Temp"
 msgstr "温度"
 
-#: Hrpsys31Item.cpp:83
+#: Hrpsys31Item.cpp:95
 msgid "Alarm"
 msgstr "警告"
 
-#: Hrpsys31Item.cpp:164
+#: Hrpsys31Item.cpp:203
 msgid "Hrpsys31Item"
 msgstr "HRPSYS-3.1アイテム"
 
-#: Hrpsys31Item.cpp:261
-msgid "Nameserver is not found at %1%:%2%."
-msgstr "%1%:%2% のネームサーバを検出できません。"
+#: Hrpsys31Item.cpp:227
+msgid "Actual"
+msgstr ""
 
-#: Hrpsys31Item.cpp:285
-msgid "Component \"%1%\" is not found."
-msgstr "コンポーネント \"%1%\" を検出できません。"
+#: Hrpsys31Item.cpp:228
+msgid "Reference"
+msgstr ""
 
-#: Hrpsys31Item.cpp:287
-msgid "Component \"%1%\" has been found."
-msgstr "コンポーネント \"%1%\" を検出しました。"
+#: Hrpsys31Item.cpp:320
+msgid "Connecting {} to the target robot ..."
+msgstr "{}を対象ロボットに接続しています…"
 
-#: Hrpsys31Item.cpp:290
-msgid "Service port \"%1%\" is not found."
-msgstr "サービスポート \"%1%\" を検出できません。"
+#: Hrpsys31Item.cpp:326
+msgid "Nameserver is not found at {0}:{1}."
+msgstr "{0}:{1} のネームサーバを検出できません．"
 
-#: Hrpsys31Item.cpp:292
-msgid "Service port \"%1%\" has been found."
-msgstr "サービスポート \"%1%\" を検出しました。"
+#: Hrpsys31Item.cpp:371
+msgid "Component \"{}\" has been found."
+msgstr "コンポーネント \"{}\" を検出しました．"
 
-#: Hrpsys31Item.cpp:335 Hrpsys31Item.cpp:383
-msgid "%1%: Access to %2% failed. The connection is terminated."
-msgstr "%1%: %2%へのアクセスに失敗しました。接続を解除します。"
+#: Hrpsys31Item.cpp:373
+msgid "Component \"{}\" is not found."
+msgstr "コンポーネント \"{}\" を検出できません．"
 
-#: Hrpsys31Item.cpp:447
+#: Hrpsys31Item.cpp:385
+msgid "Service port \"{}\" has been found."
+msgstr "サービスポート \"{}\" を検出しました．"
+
+#: Hrpsys31Item.cpp:387
+msgid "Service port \"{}\" is not found."
+msgstr "サービスポート \"{}\" を検出できません．"
+
+#: Hrpsys31Item.cpp:421
+msgid "{} is disconnected from the target robot"
+msgstr "{}は対象ロボットから切断されました"
+
+#: Hrpsys31Item.cpp:439
+msgid ""
+"{0} cannot turn on / off the servos because it is not connected with {1}."
+msgstr "{0}は{1}と接続されていないため、サーボをオン/オフできません．"
+
+#: Hrpsys31Item.cpp:455
+msgid "All the target servos of {} have already been turned on."
+msgstr "{}のすべての対象サーボはすでにオンになっています．"
+
+#: Hrpsys31Item.cpp:458
+msgid "Servo On"
+msgstr "サーボ　オン"
+
+#: Hrpsys31Item.cpp:458
+msgid "Servo Off"
+msgstr "サーボ　オフ"
+
+#: Hrpsys31Item.cpp:458
+msgid "Click OK to continue."
+msgstr "続行するにはOKをクリックしてください．"
+
+#: Hrpsys31Item.cpp:464
+msgid "The target servos of {} have been turned on."
+msgstr "{}のターゲット・サーボがオンになっています．"
+
+#: Hrpsys31Item.cpp:470
+msgid "{}: A CORBA Exception happened."
+msgstr "{}：CORBA例外が発生しました．"
+
+#: Hrpsys31Item.cpp:473
+msgid "{} cannot turn on the servos."
+msgstr "{}はサーボをオンにできません．"
+
+#: Hrpsys31Item.cpp:504 Hrpsys31Item.cpp:567
+msgid "{0}: Access to {1} failed. The connection is terminated."
+msgstr "{0}: {1}へのアクセスに失敗しました．接続を解除します．"
+
+#: Hrpsys31Item.cpp:642
 msgid "Host"
 msgstr "ホスト"
 
-#: Hrpsys31Item.cpp:448
+#: Hrpsys31Item.cpp:643
 msgid "Port"
 msgstr "ポート"
 
-#: Hrpsys31Item.cpp:449
+#: Hrpsys31Item.cpp:644
 msgid "RobotHardware"
-msgstr ""
+msgstr "ロボットハードウェア"
 
-#: Hrpsys31Item.cpp:450
+#: Hrpsys31Item.cpp:645
 msgid "StateHolder"
-msgstr ""
+msgstr "ステートホルダ"
 
-#: Hrpsys31Item.cpp:451
+#: Hrpsys31Item.cpp:646
 msgid "State reading"
 msgstr "状態読込"
 
-#: Hrpsys31Item.cpp:453
+#: Hrpsys31Item.cpp:648
 msgid "Read inverval"
 msgstr "読込間隔"
 
-#: Hrpsys31Item.cpp:455
+#: Hrpsys31Item.cpp:650
+msgid "Body update mode"
+msgstr "ボディ更新モード"
+
+#: Hrpsys31Item.cpp:652
 msgid "Connect on loading"
 msgstr "ロード時に接続"
 

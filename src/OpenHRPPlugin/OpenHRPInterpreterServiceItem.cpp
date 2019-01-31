@@ -12,12 +12,13 @@
 #include <cnoid/ScriptItem>
 #include <rtm/DataFlowComponentBase.h>
 #include <rtm/CorbaPort.h>
+#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace std::placeholders;
 using namespace cnoid;
-using boost::format;
+using fmt::format;
 
 namespace {
 const bool TRACE_FUNCTIONS = false;
@@ -183,21 +184,21 @@ bool ItemImpl::createRTC()
         return false;
     }
     
-    format param("OpenHRPInterpreterService?"
-                 "instance_name=%1%&"
+    string param("OpenHRPInterpreterService?"
+                 "instance_name={}&"
                  "exec_cxt.periodic_type=PeriodicExecutionContext&"
                  "exec_cxt.periodic.rate=10");
     
-    rtc = dynamic_cast<InterpreterRTC*>(cnoid::createManagedRTC(str(param % rtcInstanceName).c_str()));
+    rtc = dynamic_cast<InterpreterRTC*>(cnoid::createManagedRTC(format(param, rtcInstanceName)));
     
     if(rtc){
         rtc->interpreterService.itemImpl = this;
         
-        os << (format(_("RTC \"%1%\" of \"%2%\" has been created."))
-               % rtcInstanceName % self->name()) << endl;
+        os << format(_("RTC \"{0}\" of \"{1}\" has been created."),
+                     rtcInstanceName, self->name()) << endl;
     } else {
-        os << (format(_("RTC \"%1%\" of \"%2%\" cannot be created."))
-               % rtcInstanceName % self->name()) << endl;
+        os << format(_("RTC \"{0}\" of \"{1}\" cannot be created."),
+                     rtcInstanceName, self->name()) << endl;
     }
     
     return (rtc != 0);
@@ -208,12 +209,12 @@ bool ItemImpl::deleteRTC()
 {
     if(rtc){
         if(cnoid::deleteRTC(rtc)){
-            os << (format(_("RTC \"%1%\" of \"%2%\" has been deleted."))
-                   % rtcInstanceName % self->name()) << endl;
+            os << format(_("RTC \"{0}\" of \"{1}\" has been deleted."),
+                         rtcInstanceName, self->name()) << endl;
             rtc = 0;
         } else {
-            os << (format(_("RTC \"%1%\" of \"%2%\" cannot be deleted."))
-                   % rtcInstanceName % self->name()) << endl;
+            os << format(_("RTC \"{0}\" of \"{1}\" cannot be deleted."),
+                         rtcInstanceName, self->name()) << endl;
         }
     }
 
@@ -325,30 +326,30 @@ void InterpreterService_impl::interpretMain(const char* expr)
     Item* item = itemImpl->self;
 
     if(itemImpl->doPutScriptTextToInterpret){
-        os << (format(_("%1%: interpret(\"%2%\")")) % item->name() % expr) << endl;
+        os << format(_("{0}: interpret(\"{1}\")"), item->name(), expr) << endl;
     }
 
     ScriptItem* scriptItem = item->findOwnerItem<ScriptItem>();
     if(!scriptItem){
-        os <<(format(_("The owner script item of %1% is not found. The interpret function cannot be executed."))
-              % item->name()) << endl;
+        os << format(_("The owner script item of {} is not found. The interpret function cannot be executed."),
+                     item->name()) << endl;
     } else {
         if(scriptItem->isRunning()){
-            os << (format(_("Owner script item \"%1%\" is running now. The interpret function cannot be executed."))
-                   % scriptItem->name()) << endl;
+            os << format(_("Owner script item \"{}\" is running now. The interpret function cannot be executed."),
+                         scriptItem->name()) << endl;
         } else {
             if(!scriptItem->executeCode(expr)){
-                os << (format(_("Executing the script given to the interpret function failed."))) << endl;
+                os << _("Executing the script given to the interpret function failed.") << endl;
             } else {
                 if(!scriptItem->waitToFinish()){
-                    os << (format(_("The script does not return.")) % item->name()) << endl;
+                    os << _("The script does not return.") << endl;
                 } else {
                     result = scriptItem->resultString();
                     if(itemImpl->doPutScriptTextToInterpret){
                         if(!result.empty()){
-                            os << (format(_("%1%: interpret() returns %2%.")) % item->name() % result) << endl;
+                            os << format(_("{0}: interpret() returns {1}."), item->name(), result) << endl;
                         } else {
-                            os << (format(_("%1%: interpret() finished.")) % item->name()) << endl;
+                            os << format(_("{}: interpret() finished."), item->name()) << endl;
                         }
                     }
                 }

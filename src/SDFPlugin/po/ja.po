@@ -1,0 +1,48 @@
+# Japanese translations for PACKAGE package.
+# Copyright (C) 2019 THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# hattori <s.hattori@aist.go.jp>, 2019.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2019-01-29 13:20+0900\n"
+"PO-Revision-Date: 2019-01-29 13:20+0900\n"
+"Last-Translator: hattori <s.hattori@aist.go.jp>\n"
+"Language-Team: Japanese\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: SDFBodyLoader.cpp:1173
+msgid "{} not found"
+msgstr "{}はみつかりません．"
+
+#: SDFBodyLoader.cpp:1352
+msgid ""
+"max_angle must be greater of equal to min_angle [ min={0} max={1} ] ({2})"
+msgstr "max_angleはmin_angle以上でなければなりません． [min = {0} max = {1}] （{2}）"
+
+#: SDFBodyLoader.cpp:1372
+msgid "sensor range too big [ setting={0} threshold={1} ] ({2})"
+msgstr "センサーの範囲が大きすぎます． [設定= {0} しきい値= {1}] （{2}）"
+
+#: SDFBodyLoader.cpp:1380
+msgid ""
+"unable to convert angle, use default value [ min={0} max={1} default={2} ] "
+"({3})"
+msgstr ""
+"角度を変換できません。デフォルト値を使用してください．"
+"[min = {0} max = {1} default = {2}] ({3})"
+
+#: SDFBodyLoader.cpp:1391
+msgid ""
+"unable to convert angle, use alternate value [ min={0} max={1} "
+"alternate={2} ] ({3})"
+msgstr ""
+"角度を変換できません．別の値を使用してください．"
+"[min = {0} max = {1} alternate = {2}] ({3})"
+

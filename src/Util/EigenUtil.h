@@ -66,6 +66,8 @@ inline Matrix3 hat(const Vector3& x) {
 
 CNOID_EXPORT std::string str(const Vector3& v);
 CNOID_EXPORT std::string str(const Vector3f& v);
+CNOID_EXPORT std::string str(const Vector2& v);
+CNOID_EXPORT std::string str(const AngleAxis& a);
 CNOID_EXPORT bool toVector3(const std::string& s, Vector3& out_v);
 CNOID_EXPORT bool toVector3(const std::string& s, Vector3f& out_v);
 

@@ -11,11 +11,13 @@
 #include <cnoid/PutPropertyFunction>
 #include <cnoid/FileUtil>
 #include <boost/filesystem.hpp>
+#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace std::placeholders;
 using namespace cnoid;
+using fmt::format;
 namespace filesystem = boost::filesystem;
 
 namespace {
@@ -98,11 +100,11 @@ bool MediaItem::setMediaFilePath(const std::string& filepath)
     if(filesystem::exists(fpath) && !filesystem::is_directory(fpath)){
         mediaFilePath_ = filepath;
         filesystem::path fullpath = getAbsolutePath(fpath);
-        mediaURI_ = str(fmt("file://%1%") % getPathString(fullpath));
+        mediaURI_ = format("file://{}", getPathString(fullpath));
         return true;
 
     } else {
-        lastErrorMessage_ = str(fmt(_("Media file \"%1%\" does not exist.")) % filepath);
+        lastErrorMessage_ = format(_("Media file \"{}\" does not exist."), filepath);
         return false;
     }
 }
@@ -122,7 +124,7 @@ Item* MediaItem::doDuplicate() const
 
 void MediaItem::doPutProperties(PutPropertyFunction& putProperty)
 {
-    putProperty(_("uri"), mediaURI_);
+    putProperty("uri", mediaURI_);
     putProperty(_("offset"), offsetTime_, std::bind(&MediaItem::setOffsetTime, this, _1), true);
 }
 

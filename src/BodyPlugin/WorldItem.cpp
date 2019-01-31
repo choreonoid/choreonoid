@@ -15,13 +15,13 @@
 #include <cnoid/SceneCollision>
 #include <cnoid/MaterialTable>
 #include <cnoid/ExecutablePath>
-#include <boost/format.hpp>
+#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
 namespace filesystem = boost::filesystem;
-using boost::format;
+using fmt::format;
 
 namespace {
 
@@ -471,7 +471,7 @@ MaterialTable* WorldItemImpl::getOrLoadMaterialTable(bool checkFileUpdate)
                         materialTable = newMaterialTable;
                         materialTableTimestamp = newTimestamp;
                         MessageView::instance()->putln(
-                            format(_("Material table \"%1%\" has been reloaded.")) % materialTableFile);
+                            format(_("Material table \"{}\" has been reloaded."), materialTableFile));
                     } else {
                         failedToLoad = true;
                     }
@@ -482,7 +482,7 @@ MaterialTable* WorldItemImpl::getOrLoadMaterialTable(bool checkFileUpdate)
 
     if(failedToLoad){
         MessageView::instance()->putln(
-            MessageView::WARNING, format(_("Reloading material table \"%1%\" failed.")) % materialTableFile);
+            format(_("Reloading material table \"{}\" failed."), materialTableFile), MessageView::WARNING);
     }
 
     return materialTable;

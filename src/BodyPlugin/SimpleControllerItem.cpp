@@ -15,14 +15,14 @@
 #include <cnoid/ProjectManager>
 #include <cnoid/ItemManager>
 #include <QLibrary>
-#include <boost/format.hpp>
+#include <fmt/format.h>
 #include <boost/dynamic_bitset.hpp>
 #include <set>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using boost::format;
+using fmt::format;
 namespace filesystem = boost::filesystem;
 
 namespace {
@@ -283,11 +283,12 @@ bool SimpleControllerItemImpl::loadController()
             if(!projectDir.empty()){
                 modulePath = filesystem::path(projectDir) / modulePath;
             } else {
-                mv->putln(MessageView::ERROR,
-                          format(_("Controller module \"%1%\" of %2% is specified as a relative "
-                                   "path from the project directory, but the project directory "
-                                   "has not been determined yet."))
-                          % controllerModuleName % self->name());
+                mv->putln(
+                    format(_("Controller module \"{0}\" of {1} is specified as a relative "
+                             "path from the project directory, but the project directory "
+                             "has not been determined yet."),
+                           controllerModuleName, self->name()),
+                    MessageView::ERROR);
                 return false;
             }
         }
@@ -297,18 +298,18 @@ bool SimpleControllerItemImpl::loadController()
     controllerModule.setFileName(controllerModuleFilename.c_str());
         
     if(controllerModule.isLoaded()){
-        mv->putln(fmt(_("The controller module of %1% has already been loaded.")) % self->name());
+        mv->putln(format(_("The controller module of {} has already been loaded."), self->name()));
             
         // This should be called to make the reference to the DLL.
         // Otherwise, QLibrary::unload() unloads the DLL without considering this instance.
         controllerModule.load();
             
     } else {
-        mv->put(fmt(_("Loading the controller module \"%2%\" of %1% ... "))
-                % self->name() % controllerModuleFilename);
+        mv->put(format(_("Loading the controller module \"{1}\" of {0} ... "),
+                       self->name(), controllerModuleFilename));
         if(!controllerModule.load()){
             mv->put(_("Failed.\n"));
-            mv->putln(MessageView::ERROR, controllerModule.errorString());
+            mv->putln(controllerModule.errorString(), MessageView::ERROR);
             return false;
         }
         mv->putln(_("OK!"));
@@ -317,23 +318,22 @@ bool SimpleControllerItemImpl::loadController()
     SimpleController::Factory factory =
         (SimpleController::Factory)controllerModule.resolve("createSimpleController");
     if(!factory){
-        mv->putln(MessageView::ERROR,
-                  _("The factory function \"createSimpleController()\" is not found in the controller module."));
+        mv->putln(_("The factory function \"createSimpleController()\" is not found in the controller module."),
+                  MessageView::ERROR);
         return false;
     }
 
     controller = factory();
     if(!controller){
-        mv->putln(MessageView::ERROR,
-                  format(_("The controller factory of %1% failed to create a controller instance."))
-                  % self->name());
+        mv->putln(format(_("The controller factory of {} failed to create a controller instance."), self->name()),
+                  MessageView::ERROR);
         unloadController();
         return false;
     }
 
     if(!controller->configure(&config)){
-        mv->putln(MessageView::ERROR,
-                  format(_("%1% failed to configure the controller")) % self->name());
+        mv->putln(format(_("{} failed to configure the controller"), self->name()),
+                  MessageView::ERROR);
         return false;
     }
 
@@ -358,8 +358,8 @@ void SimpleControllerItemImpl::unloadController()
     }
 
     if(controllerModule.unload()){
-        mv->putln(fmt(_("The controller module \"%2%\" of %1% has been unloaded."))
-                  % self->name() % controllerModuleFilename);
+        mv->putln(format(_("The controller module \"{1}\" of {0} has been unloaded."),
+                         self->name(), controllerModuleFilename));
     }
 }
 
@@ -449,7 +449,7 @@ SimpleController* SimpleControllerItemImpl::initialize(ControllerIO* io, SharedI
     clearIoTargets();
 
     if(!controller->initialize(this)){
-        mv->putln(MessageView::ERROR, fmt(_("%1%'s initialize method failed.")) % self->name());
+        mv->putln(format(_("{}'s initialize method failed."), self->name()), MessageView::ERROR);
         sharedInfo.reset();
         return nullptr;
     }
@@ -717,8 +717,7 @@ bool SimpleControllerItemImpl::start()
 {
     bool result = true;
     if(!controller->start()){
-        mv->putln(MessageView::WARNING,
-                  format(_("%1% failed to start")) % self->name());
+        mv->putln(format(_("{} failed to start"), self->name()), MessageView::WARNING);
         result = false;
     } else {
         for(auto& childController : childControllerItems){
@@ -921,7 +920,7 @@ void SimpleControllerItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
     FilePathProperty moduleProperty(
         controllerModuleName,
-        { str(format(_("Simple Controller Module (*.%1%)")) % DLL_EXTENSION) });
+        { format(_("Simple Controller Module (*.{})"), DLL_EXTENSION) });
 
     if(baseDirectoryType.is(CONTROLLER_DIRECTORY)){
         moduleProperty.setBaseDirectory(controllerDirectory.string());

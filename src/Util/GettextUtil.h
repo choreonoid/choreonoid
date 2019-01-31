@@ -39,12 +39,14 @@ inline const char* dgettext(const char* domainname, const char* msgid){
 
 namespace cnoid {
 
+//! \deprecated
 inline boost::format fmt(const char* f_string) {
     boost::format f(f_string);
     f.exceptions(boost::io::no_error_bits);
     return f;
 }
 
+//! \deprecated
 inline boost::format fmt(const std::string& f_string) {
     boost::format f(f_string);
     f.exceptions(boost::io::no_error_bits);

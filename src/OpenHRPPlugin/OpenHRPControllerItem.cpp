@@ -10,6 +10,7 @@
 #include <cnoid/Archive>
 #include <cnoid/Sleep>
 #include <boost/filesystem.hpp>
+#include <fmt/format.h>
 #include <iostream>
 #include "gettext.h"
 
@@ -18,6 +19,7 @@ using namespace std::placeholders;
 using namespace cnoid;
 using namespace OpenHRP;
 namespace filesystem = boost::filesystem;
+using fmt::format;
 
 OpenHRPControllerItem::OpenHRPControllerItem()
 {
@@ -111,7 +113,7 @@ bool OpenHRPControllerItem::initialize(ControllerIO* io)
 #endif
 
             if(!controllerServerProcess.waitForStarted()){
-                mv->put(fmt(_("Controller server process \"%1%\" cannot be executed.")) % command);
+                mv->put(format(_("Controller server process \"{}\" cannot be executed."), command));
                 if(!filesystem::exists(command)){
                     mv->putln(_(" This file does not exist."));
                 } else {
@@ -119,8 +121,8 @@ bool OpenHRPControllerItem::initialize(ControllerIO* io)
                 }
 
             } else {
-                mv->putln(fmt(_("Controller server process \"%1%\" has been executed by %2%."))
-                          % command % name());
+                mv->putln(format(_("Controller server process \"{0}\" has been executed by {1}."),
+                                 command, name()));
                 
                 for(int i=0; i < 20; ++i){
                     controllerServerProcess.waitForReadyRead(10);
@@ -140,8 +142,8 @@ bool OpenHRPControllerItem::initialize(ControllerIO* io)
     }
 
     if(!serverReady){
-        mv->putln(fmt(_("Controller server object \"%1%\" is not found in the name server."))
-                  % controllerServerName);
+        mv->putln(format(_("Controller server object \"{}\" is not found in the name server."),
+                         controllerServerName));
         if(controllerServerProcess.state() != QProcess::NotRunning){
             controllerServerProcess.kill();
         }
@@ -153,15 +155,15 @@ bool OpenHRPControllerItem::initialize(ControllerIO* io)
 #ifdef OPENHRP_3_0
     controller = server->create(body->name().c_str());
     // do null check here
-    mv->putln(fmt(_("The CORBA object of controller \"%1%\" has been created by the factory \"%2%\"."))
-              % name() % controllerServerName);
+    mv->putln(format(_("The CORBA object of controller \"{0}\" has been created by the factory \"{1}\"."),
+                     name(), controllerServerName));
 
 #elif OPENHRP_3_1
     controller = server;
     controller->setModelName(body->name().c_str());
     controller->initialize();
-    mv->putln(fmt(_("The CORBA object \"%1%\" of controller \"%2%\" has been obtained."))
-              % controllerServerName % name());
+    mv->putln(format(_("The CORBA object \"{0}\" of controller \"{1}\" has been obtained."),
+                     controllerServerName, name()));
 #endif
 
     timeStep_ = io->timeStep();

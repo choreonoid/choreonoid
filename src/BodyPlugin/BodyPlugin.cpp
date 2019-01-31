@@ -41,10 +41,10 @@
 #include <cnoid/ItemManager>
 #include <cnoid/MessageView>
 #include <cnoid/CnoidBody>
+#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace cnoid;
-using boost::format;
 
 namespace {
   
@@ -117,7 +117,7 @@ public:
     virtual const char* description() const override
     {
         static std::string text =
-            str(format("Body Plugin Version %1%\n") % CNOID_FULL_VERSION_STRING) +
+            fmt::format("Body Plugin Version {}\n", CNOID_FULL_VERSION_STRING) +
             "\n" +
             "Copyrigh (c) 2018 Shin'ichiro Nakaoka and Choreonoid Development Team, AIST.\n"
             "\n" +

@@ -5,12 +5,13 @@
 #include "MulticopterPluginHeader.h"
 #include "MulticopterSimulatorItem.h"
 #include <cnoid/YAMLBodyLoader>
+#include <fmt/format.h>
 #include <cmath>
 #include <random>
 
 using namespace std;
 using namespace cnoid;
-using boost::format;
+using fmt::format;
 using namespace Multicopter;
 
 
@@ -566,8 +567,9 @@ SimulationManager::midDynamicFunction(SimulatorItem* simItem, MulticopterSimulat
 
             }
             catch(runtime_error& err){
-                UtilityImpl::printErrorMessage ((boost::format ("%s in %s at %lf") %
-                    err.what() % (*itl)->name() % simItem->currentTime()).str());
+                UtilityImpl::printErrorMessage(
+                    format("{0:s} in {1:s} at {2:lf}",
+                           err.what(), (*itl)->name(), simItem->currentTime()));
                 continue;
             }
         }
@@ -781,21 +783,21 @@ SimulationManager::logProc(SimulatorItem* simItem, MulticopterSimulatorItem* mul
         if( curTime >= _nextLogTime - _logIntrv*1.0e-6 ){
                 for(auto& linkOutVal : _linkOutValAry){
                     if(linkOutVal.logMode == false)continue;
-                    boost::format fmt = boost::format(" %.4lf,%s,%s, %.3e,%.3e,%.3e,"
-                                                      " %.3e,%.3e,%.3e, %.3e,%.3e,%.3e, %.3e,%.3e,%.3e,"
-                                                      " %.3e,%.3e,%.3e, %.3e,%.3e,%.3e, %.3e,%.3e,%.3e,"
-                                                      " %.3e,%.3e,%.3e, %.3e,%.3e,%.3e")
-                                        % curTime %linkOutVal.bodyName %linkOutVal.linkName
-                                        % linkOutVal.position.x() % linkOutVal.position.y() % linkOutVal.position.z()
-                                        % linkOutVal.velocity.x() % linkOutVal.velocity.y() % linkOutVal.velocity.z()
-                                        % linkOutVal.acceleration.x() % linkOutVal.acceleration.y() % linkOutVal.acceleration.z()
-                                        % linkOutVal.rotationalVelocity.x() % linkOutVal.rotationalVelocity.y() % linkOutVal.rotationalVelocity.z()
-                                        % linkOutVal.rotationalAcceleration.x() % linkOutVal.rotationalAcceleration.y() % linkOutVal.rotationalAcceleration.z()
-                                        % linkOutVal.buoyancyForce.x() % linkOutVal.buoyancyForce.y() % linkOutVal.buoyancyForce.z()
-                                        % linkOutVal.surfaceForce.x() % linkOutVal.surfaceForce.y() % linkOutVal.surfaceForce.z()
-                                        % linkOutVal.addMassForce.x() % linkOutVal.addMassForce.y() % linkOutVal.addMassForce.z()
-                                        % linkOutVal.addInertiaTorque.x() % linkOutVal.addInertiaTorque.y() % linkOutVal.addInertiaTorque.z();
-                    linkView->writeln(fmt.str());
+                    linkView->writeln(
+                        format(" {0:.4lf},{1:s},{2:s}, {3:.3e},{4:.3e},{5:.3e},"
+                               " {6:.3e},{7:.3e},{8:.3e}, {9:.3e},{10:.3e},{11:.3e}, {12:.3e},{13:.3e},{14:.3e},"
+                               " {15:.3e},{16:.3e},{17:.3e}, {18:.3e},{19:.3e},{20:.3e}, {21:.3e},{22:.3e},{23:.3e},"
+                               " {24:.3e},{25:.3e},{26:.3e}, {27:.3e},{28:.3e},{29:.3e}",
+                               curTime, linkOutVal.bodyName,linkOutVal.linkName,
+                               linkOutVal.position.x(), linkOutVal.position.y(), linkOutVal.position.z(),
+                               linkOutVal.velocity.x(), linkOutVal.velocity.y(), linkOutVal.velocity.z(),
+                               linkOutVal.acceleration.x(), linkOutVal.acceleration.y(), linkOutVal.acceleration.z(),
+                               linkOutVal.rotationalVelocity.x(), linkOutVal.rotationalVelocity.y(), linkOutVal.rotationalVelocity.z(),
+                               linkOutVal.rotationalAcceleration.x(), linkOutVal.rotationalAcceleration.y(), linkOutVal.rotationalAcceleration.z(),
+                               linkOutVal.buoyancyForce.x(), linkOutVal.buoyancyForce.y(), linkOutVal.buoyancyForce.z(),
+                               linkOutVal.surfaceForce.x(), linkOutVal.surfaceForce.y(), linkOutVal.surfaceForce.z(),
+                               linkOutVal.addMassForce.x(), linkOutVal.addMassForce.y(), linkOutVal.addMassForce.z(),
+                               linkOutVal.addInertiaTorque.x(), linkOutVal.addInertiaTorque.y(), linkOutVal.addInertiaTorque.z()));
                 }
             _nextLogTime += _logIntrv;
         }

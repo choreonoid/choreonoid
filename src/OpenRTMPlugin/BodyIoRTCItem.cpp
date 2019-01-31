@@ -7,13 +7,14 @@
 #include <cnoid/BodyItem>
 #include <cnoid/ItemManager>
 #include <cnoid/MessageView>
+#include <fmt/format.h>
 #include "gettext.h"
 
 #include "LoggerUtil.h"
 
 using namespace std;
 using namespace cnoid;
-using boost::format;
+using fmt::format;
 
 namespace cnoid {
 
@@ -39,7 +40,6 @@ public:
     virtual double currentTime() const override;
     virtual bool isNoDelayMode() const override;
     virtual bool setNoDelayMode(bool on) override;
-    
 };
 
 }
@@ -204,9 +204,10 @@ bool BodyIoRTCItemImpl::createBodyIoRTC()
 
         bodyIoRTC = dynamic_cast<BodyIoRTC*>(self->rtc());
         if(!bodyIoRTC){
-            mv->putln(MessageView::ERROR,
-                      format(_("RTC \"%1%\" of %2% cannot be used as a BodyIoRTC because it is not derived from it."))
-                      % self->rtcModuleName() % self->name());
+            mv->putln(
+                format(_("RTC \"{0}\" of {1} cannot be used as a BodyIoRTC because it is not derived from it."),
+                       self->rtcModuleName(), self->name()),
+                MessageView::ERROR);
             self->deleteRTC(false);
             return false;
         }
@@ -218,14 +219,15 @@ bool BodyIoRTCItemImpl::createBodyIoRTC()
         }
 
         if(!initialized){
-            mv->putln(MessageView::ERROR,
-                      format(_("RTC \"%1%\" of %2% failed to initialize."))
-                      % self->rtcModuleName() % self->name());
+            mv->putln(
+                format(_("RTC \"{0}\" of {1} failed to initialize."),
+                       self->rtcModuleName(), self->name()),
+                MessageView::ERROR);
             self->deleteRTC(true);
             return false;
         }
         
-        mv->putln(fmt(_("BodyIoRTC \"%1%\" has been created.")) % self->rtcInstanceName());
+        mv->putln(format(_("BodyIoRTC \"{}\" has been created."), self->rtcInstanceName()));
         
         return true;
     }

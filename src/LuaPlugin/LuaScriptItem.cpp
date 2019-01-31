@@ -10,11 +10,10 @@
 #include <cnoid/FileUtil>
 #include <cnoid/LazyCaller>
 #include <cnoid/MessageView>
+#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
-using boost::format;
 namespace filesystem = boost::filesystem;
 using namespace cnoid;
 
@@ -48,7 +47,9 @@ void LuaScriptItem::initializeClass(ExtensionManager* ext)
     ext->itemManager().registerClass<LuaScriptItem>(N_("LuaScriptItem"));
     ext->itemManager().addLoader<LuaScriptItem>(
         _("Lua Script"), "LUA-SCRIPT-FILE", "lua",
-        std::bind(&LuaScriptItem::setScriptFilename, _1, _2));
+        [](LuaScriptItem* item, const std::string& filename, std::ostream& /* os */, Item* /* parentItem */){
+            return item->setScriptFilename(filename);
+        });
 }
 
 
@@ -125,8 +126,9 @@ bool LuaScriptItem::setScriptFilename(const std::string& filename)
     filesystem::path scriptPath(filename);
     if(!filesystem::exists(scriptPath)){
         MessageView::instance()->putln(
-            str(format(_("Lua script file \"%1%\" cannot be loaded. The file does not exist.")) % filename));
-
+            fmt::format(
+                _("Lua script file \"{}\" cannot be loaded. The file does not exist."),
+                filename));
     } else {
         impl->scriptFilename = filename;
         if(name().empty()){
@@ -184,9 +186,11 @@ bool LuaScriptItemImpl::execute()
         // error
         auto msg = lua_tostring(L, -1);
         if(msg == nullptr){
-            mv->putln(MessageView::ERROR, format(_("Error in loading Lua script \"%1%\".")) % scriptFilename);
+            mv->putln(
+                fmt::format(_("Error in loading Lua script \"{}\"."), scriptFilename),
+                MessageView::ERROR);
         } else {
-            mv->putln(MessageView::ERROR, msg);
+            mv->putln(msg, MessageView::ERROR);
         }
         hasError = true;
     }
