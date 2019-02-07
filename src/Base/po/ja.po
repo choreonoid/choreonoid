@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-01-05 16:19+0900\n"
+"POT-Creation-Date: 2019-02-08 11:11+0900\n"
 "PO-Revision-Date: 2011-11-12 11:42+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -42,11 +42,11 @@ msgstr "タイムステップ"
 msgid "Num parts"
 msgstr "パート数"
 
-#: App.cpp:240 App.cpp:395
+#: App.cpp:242 App.cpp:397
 msgid "About Choreonoid"
 msgstr "Choreonoid について"
 
-#: App.cpp:244
+#: App.cpp:246
 msgid "Vertical Sync"
 msgstr "垂直同期"
 
@@ -150,7 +150,9 @@ msgstr "シェーダ\"{}\"がみつかりません．"
 msgid ""
 "Shader compilation of \"{0}\" failed.\n"
 "{1}"
-msgstr "\"{0}\"のシェーダコンパイルに失敗しました．\n{1}"
+msgstr ""
+"\"{0}\"のシェーダコンパイルに失敗しました．\n"
+"{1}"
 
 #: GLSLProgram.cpp:93
 msgid "Shader compilation of \"{}\" failed."
@@ -594,6 +596,78 @@ msgid ""
 "FITNESS FOR A PARTICULAR PURPOSE.See the GNU Lesser General Public License "
 "for more details.\n"
 msgstr ""
+
+#: LightingItem.cpp:76
+msgid "LightingItem"
+msgstr "ライティングアイテム"
+
+#: LightingItem.cpp:117
+msgid "directional light"
+msgstr "ディレクショナルライト"
+
+#: LightingItem.cpp:118
+msgid "Point light"
+msgstr "ポイントライト"
+
+#: LightingItem.cpp:119
+msgid "Spot light"
+msgstr "スポットライト"
+
+#: LightingItem.cpp:476
+msgid "Light Type"
+msgstr "ライトの種類"
+
+#: LightingItem.cpp:478 PointSetItem.cpp:527 SceneItem.cpp:109
+msgid "Translation"
+msgstr "位置"
+
+#: LightingItem.cpp:483
+msgid "Direction"
+msgstr "方向"
+
+#: LightingItem.cpp:487
+msgid "ON/OFF"
+msgstr ""
+
+#: LightingItem.cpp:489 SceneWidget.cpp:3095
+msgid "Color"
+msgstr "色"
+
+#: LightingItem.cpp:491 SceneWidget.cpp:2983 SceneWidget.cpp:3003
+msgid "Intensity"
+msgstr "照度"
+
+#: LightingItem.cpp:493
+msgid "AmbientIntensity"
+msgstr "周囲の照度"
+
+#: LightingItem.cpp:497
+msgid "ConstantAttenuation"
+msgstr "一定減衰率"
+
+#: LightingItem.cpp:499
+msgid "LinearAttenuation"
+msgstr "線形減衰率"
+
+#: LightingItem.cpp:501
+msgid "QuadraticAttenuation"
+msgstr "2次減衰率"
+
+#: LightingItem.cpp:505
+msgid "BeamWidth"
+msgstr "最大輝度照射角度"
+
+#: LightingItem.cpp:507
+msgid "CutOffAngle"
+msgstr "遮断角度"
+
+#: LightingItem.cpp:509
+msgid "CutOffExponent"
+msgstr "強度分布"
+
+#: LightingItem.cpp:513
+msgid "Show Marker"
+msgstr "マーカ表示"
 
 #: MainWindow.cpp:246
 msgid "Exit"
@@ -1067,10 +1141,6 @@ msgstr "編集可能"
 msgid "Num points"
 msgstr "ポイント数"
 
-#: PointSetItem.cpp:527 SceneItem.cpp:109
-msgid "Translation"
-msgstr "並進"
-
 #: ProjectManager.cpp:147
 msgid "Open Project"
 msgstr "プロジェクトの読み込み"
@@ -1345,10 +1415,6 @@ msgstr "強制"
 msgid "Head light"
 msgstr "ヘッドライト"
 
-#: SceneWidget.cpp:2983 SceneWidget.cpp:3003
-msgid "Intensity"
-msgstr "照度"
-
 #: SceneWidget.cpp:2991
 msgid "Back lighting"
 msgstr "裏面照射"
@@ -1400,10 +1466,6 @@ msgstr "長さ"
 #: SceneWidget.cpp:3086
 msgid "Interval"
 msgstr "間隔"
-
-#: SceneWidget.cpp:3095
-msgid "Color"
-msgstr "色"
 
 #: SceneWidget.cpp:3101
 msgid "Show the floor grid"
@@ -1596,7 +1658,9 @@ msgstr "テキストエディタ"
 msgid ""
 "The document has been modified.\n"
 " Do you want to save your changes?"
-msgstr "ドキュメントは変更されています。\n変更内容を保存しますか？"
+msgstr ""
+"ドキュメントは変更されています。\n"
+"変更内容を保存しますか？"
 
 #: TextEditView.cpp:237
 msgid "unselected"
@@ -1687,7 +1751,8 @@ msgid ""
 "A singleton view \"{0}\" of the {1} type cannot be created because its "
 "singleton instance has already been created."
 msgstr ""
-"\"{1}\"タイプのシングルトンビュー\"{0}\"は既にそのシングルトンインスタンスが生成されています．"
+"\"{1}\"タイプのシングルトンビュー\"{0}\"は既にそのシングルトンインスタンスが"
+"生成されています．"
 
 #: ViewManager.cpp:847
 msgid ""
@@ -1698,4 +1763,3 @@ msgstr ""
 #: VirtualJoystickView.cpp:107
 msgid "Virtual Joystick"
 msgstr "仮想ジョイスティック"
-
