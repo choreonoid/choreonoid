@@ -1,7 +1,7 @@
 #include "RTSystemExt2Item.h"
 #include "RTSCommonUtil.h"
-#include "RTSTypeUtilEXT2.h"
-#include "ProfileHandlerEXT2.h"
+#include "RTSTypeUtilExt2.h"
+#include "ProfileHandlerExt2.h"
 #include <cnoid/MessageView>
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
@@ -11,9 +11,11 @@
 #include <cnoid/LazyCaller>
 #include <boost/format.hpp>
 #include "LoggerUtil.h"
-#include <mutex>
+#include <thread>
 
 #include "gettext.h"
+
+//#define CONTINUOUS_CHECK
 
 using namespace cnoid;
 using namespace std;
@@ -46,7 +48,6 @@ public:
 
     map<string, RTSCompExt2Ptr> rtsCompsCheck;
     RTSystemExt2Item::RTSConnectionMap rtsConnectionsCheck;
-    bool isStatusChecking;
     RTSystemExt2Item::RTSConnectionMap rtsConnectionsAdded;
 
     std::string vendorName;
@@ -118,10 +119,12 @@ private:
     ScopedConnection timeOutConnection;
     bool modifed_;
     cnoid::LazyCaller updateStateLater;
+    bool isStatusChecking;
+    bool doStatusChecking;
 
     void setStateCheckMethod(int value);
     void copyForStatusChecking();
-    void restoreyForStatusChecking();
+    void restoreForStatusChecking();
 };
 
 }
@@ -809,7 +812,7 @@ RTSystemExt2Item::RTSystemExt2Item()
 
 
 RTSystemExt2ItemImpl::RTSystemExt2ItemImpl(RTSystemExt2Item* self)
-    : self(self), pollingCycle(1000), isStatusChecking(false)
+    : self(self), pollingCycle(1000), isStatusChecking(false), doStatusChecking(false)
 {
     initialize();
     autoConnection = true;
@@ -881,8 +884,9 @@ void RTSystemExt2Item::onActivated()
 
 void RTSystemExt2ItemImpl::onActivated()
 {
-    DDEBUG("RTSystemExtItemImpl::onActivated");
-    if( sigStatusUpdate.empty() == false && stateCheck.selectedIndex()==POLLING_CHECK ) {
+    DDEBUG_V("RTSystemExtItemImpl::onActivated %d, %d", stateCheck.selectedIndex());
+    if( stateCheck.selectedIndex()==POLLING_CHECK ) {
+        DDEBUG("RTSystemExtItemImpl::onActivated timer.start");
         timer.start();
     }
 }
@@ -1349,22 +1353,25 @@ void RTSystemExt2ItemImpl::checkStatus()
 {
     DDEBUG("RTSystemExt2ItemImpl::checkStatus");
     if( sigStatusUpdate.empty() ) {
+        DDEBUG("RTSystemExt2ItemImpl::checkStatus timer.stop");
         timer.stop();
     }
-    //statusChecking();
+    //
+    if (isStatusChecking) {
+        DDEBUG("RTSystemExt2ItemImpl::checkStatus isStatusChecking");
+        doStatusChecking = true;
+        return;
+    }
+    isStatusChecking = true;
+    copyForStatusChecking();
     std::thread checkThread = std::thread([&](){ statusChecking(); });
     checkThread.join();
 }
 
 void RTSystemExt2ItemImpl::statusChecking()
 {
-    if (isStatusChecking) return;
-    isStatusChecking = true;
-
     modifed_ = false;
 
-    copyForStatusChecking();
-    //////////
     DDEBUG("RTSystemExt2ItemImpl::statusChecking start");
     for (auto it = rtsCompsCheck.begin(); it != rtsCompsCheck.end(); it++) {
         RTSCompExt2* targetComp = it->second;
@@ -1409,14 +1416,11 @@ void RTSystemExt2ItemImpl::statusChecking()
     }
     //////////
     DDEBUG("RTSystemExt2ItemImpl::statusChecking finish");
-    callLater([&](){ restoreyForStatusChecking(); });
+    callLater([&](){ restoreForStatusChecking(); });
 }
 
 void RTSystemExt2ItemImpl::copyForStatusChecking() {
     DDEBUG("RTSystemExt2ItemImpl::copyForStatusChecking");
-    std::mutex rtcStateMutex;
-
-    std::lock_guard<std::mutex> guard(rtcStateMutex);
     rtsCompsCheck.clear();
     for (auto it = rtsComps.begin(); it != rtsComps.end(); it++) {
       rtsCompsCheck[it->first] = it->second->copyForChecking();
@@ -1428,10 +1432,7 @@ void RTSystemExt2ItemImpl::copyForStatusChecking() {
     rtsConnectionsAdded.clear();
 }
 
-void RTSystemExt2ItemImpl::restoreyForStatusChecking() {
-    std::mutex rtcStateMutex;
-
-    std::lock_guard<std::mutex> guard(rtcStateMutex);
+void RTSystemExt2ItemImpl::restoreForStatusChecking() {
     for (auto it = rtsCompsCheck.begin(); it != rtsCompsCheck.end(); it++) {
       RTSCompExt2Ptr targetComp = rtsComps[it->first];
       if (targetComp) {
@@ -1472,7 +1473,15 @@ void RTSystemExt2ItemImpl::restoreyForStatusChecking() {
 
     DDEBUG_V("RTSystemExt2ItemImpl::checkStatus End : %d", modifed_);
     sigStatusUpdate(modifed_);
+
     isStatusChecking = false;
+
+#ifdef CONTINUOUS_CHECK
+    if(doStatusChecking) {
+        doStatusChecking = false;
+        checkStatus();
+    }
+#endif
 }
 
 bool RTSystemExt2Item::isCheckAtLoading()
