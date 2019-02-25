@@ -342,7 +342,7 @@ LinkManager::saveBody(const cnoid::Body* body, const string& fileName)
         for(int i=0 ; i<triArySize ; ++i){
             Triangle3d tri = triAry[i];
             for(int j=0 ; j<3 ; ++j){
-                out << format("v {0:lf} {1:lf} {2:lf}", tri[j].x(), tri[j].y(), tri[j].z()) << endl;
+                out << format("v {0:f} {1:f} {2:f}", tri[j].x(), tri[j].y(), tri[j].z()) << endl;
             }
         }
 

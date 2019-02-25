@@ -784,10 +784,10 @@ SimulationManager::logProc(SimulatorItem* simItem, MulticopterSimulatorItem* mul
                 for(auto& linkOutVal : _linkOutValAry){
                     if(linkOutVal.logMode == false)continue;
                     linkView->writeln(
-                        format(" {0:.4lf},{1:s},{2:s}, {3:.3e},{4:.3e},{5:.3e},"
-                               " {6:.3e},{7:.3e},{8:.3e}, {9:.3e},{10:.3e},{11:.3e}, {12:.3e},{13:.3e},{14:.3e},"
-                               " {15:.3e},{16:.3e},{17:.3e}, {18:.3e},{19:.3e},{20:.3e}, {21:.3e},{22:.3e},{23:.3e},"
-                               " {24:.3e},{25:.3e},{26:.3e}, {27:.3e},{28:.3e},{29:.3e}",
+                        format(" {:.4f},{:s},{:s}, {:.3e},{:.3e},{:.3e},"
+                               " {:.3e},{:.3e},{:.3e}, {:.3e},{:.3e},{:.3e}, {:.3e},{:.3e},{:.3e},"
+                               " {:.3e},{:.3e},{:.3e}, {:.3e},{:.3e},{:.3e}, {:.3e},{:.3e},{:.3e},"
+                               " {:.3e},{:.3e},{:.3e}, {:.3e},{:.3e},{:.3e}",
                                curTime, linkOutVal.bodyName,linkOutVal.linkName,
                                linkOutVal.position.x(), linkOutVal.position.y(), linkOutVal.position.z(),
                                linkOutVal.velocity.x(), linkOutVal.velocity.y(), linkOutVal.velocity.z(),
