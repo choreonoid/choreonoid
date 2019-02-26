@@ -48,6 +48,7 @@
 #include "VirtualJoystickView.h"
 #include "DescriptionDialog.h"
 #include "MessageLogItem.h"
+#include "LightingItem.h"
 #include <cnoid/Config>
 #include <cnoid/ValueTree>
 #include <cnoid/CnoidUtil>
@@ -230,6 +231,7 @@ void AppImpl::initialize( const char* appName, const char* vendorName, const QIc
     PointSetItem::initializeClass(ext);
     MultiPointSetItem::initializeClass(ext);
     MessageLogItem::initializeClass(ext);
+    LightingItem::initializeClass(ext);
 
     MovieRecorder::initialize(ext);
 
