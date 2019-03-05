@@ -17,7 +17,7 @@ set(headers
   )
 
 add_cnoid_library(${target} SHARED ${sources} ${headers})
-target_link_libraries(${target} ${OMNIORB_LIBRARIES} ${Boost_THREAD_LIBRARY}) # omniDynamic4 
+target_link_libraries(${target} ${OMNIORB_LIBRARIES} ${Boost_THREAD_LIBRARY} fmt::fmt) # omniDynamic4 
 apply_common_setting_for_library(${target} "${headers}")
 
 # name server
