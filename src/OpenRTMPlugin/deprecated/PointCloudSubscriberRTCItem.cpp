@@ -13,12 +13,14 @@
 #include <cnoid/MessageView>
 #include <cnoid/OpenRTMUtil>
 #include <cnoid/LazyCaller>
+#include <fmt/format.h>
 #include <rtm/DataFlowComponentBase.h>
 #include <rtm/DataInPort.h>
 #include "../gettext.h"
 
 using namespace std;
 using namespace cnoid;
+using fmt::format;
 
 namespace {
 
@@ -385,18 +387,18 @@ bool PointCloudSubscriberRTCItemImpl::createRTC()
     RTC::Manager* rtcManager = &RTC::Manager::instance();
     SubscriberRTC::registerFactory(rtcManager, componentName.c_str());
 
-    boost::format param(
+    string param(
         "PointCloudSubscriber?"
-        "instance_name=%1%&"
+        "instance_name={}&"
         "exec_cxt.periodic.type=SimulationExecutionContext&"
         "exec_cxt.periodic.rate=1000000");
     
-    RTC::RtcBase* rtc = createManagedRTC(str(param % componentName).c_str());
+    RTC::RtcBase* rtc = createManagedRTC(format(param, componentName));
     if(!rtc){
-        MessageView::instance()->putln(fmt(_("RTC \"%1%\" cannot be created.")) % componentName);
+        MessageView::instance()->putln(format(_("RTC \"{}\" cannot be created."), componentName));
         return false;
     }
-    MessageView::instance()->putln(fmt(_("RTC \"%1%\" has been created.")) % componentName);
+    MessageView::instance()->putln(format(_("RTC \"{}\" has been created."), componentName));
 
     pointCloudIORTC = dynamic_cast<SubscriberRTC*>(rtc);
     pointCloudIORTC->createPort(rangeCameras, pointCloudPortNames);

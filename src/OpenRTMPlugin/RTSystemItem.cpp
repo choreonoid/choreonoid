@@ -6,7 +6,7 @@
 #include <cnoid/Archive>
 #include <cnoid/EigenArchive>
 #include <cnoid/AppConfig>
-#include <boost/format.hpp>
+#include <fmt/format.h>
 #include "LoggerUtil.h"
 
 #include "gettext.h"
@@ -15,7 +15,7 @@ using namespace cnoid;
 using namespace std;
 using namespace std::placeholders;
 using namespace RTC;
-using boost::format;
+using fmt::format;
 
 namespace cnoid {
 
@@ -485,8 +485,9 @@ bool RTSComp::connectionCheckSub(RTSPort* rtsPort)
             }
             catch (CORBA::SystemException& ex) {
                 MessageView::instance()->putln(
-                    MessageView::WARNING, format(_("CORBA %1% (%2%), %3% in RTSComp::connectionCheckSub()"))
-                    % ex._name() % ex._rep_id() % ex.NP_minorString());
+                    format(_("CORBA {0} ({1}), {2} in RTSComp::connectionCheckSub()"),
+                           ex._name(), ex._rep_id(), ex.NP_minorString()),
+                    MessageView::WARNING);
                 continue;
             }
             string portName = string(connectedPortProfile->name);
@@ -549,8 +550,9 @@ bool RTSComp::getComponentPath(RTC::PortService_ptr source, std::string& out_pat
         }
         catch (CORBA::SystemException& ex) {
             MessageView::instance()->putln(
-                MessageView::WARNING, format(_("CORBA %1% (%2%), %3% in RTSComp::getComponentPath()"))
-                % ex._name() % ex._rep_id() % ex.NP_minorString());
+                format(_("CORBA {0} ({1}), {2} in RTSComp::getComponentPath()"),
+                       ex._name(), ex._rep_id(), ex.NP_minorString()),
+                MessageView::WARNING);
             return false;
         }
         NVList properties = cprofile->properties;

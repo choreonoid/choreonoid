@@ -14,12 +14,12 @@
 #include <cnoid/Exception>
 #include <cnoid/FileUtil>
 #include <cnoid/NullOut>
+#include <fmt/format.h>
 #include <mutex>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using boost::format;
 namespace filesystem = boost::filesystem;
 
 namespace {
@@ -219,8 +219,9 @@ bool BodyLoaderImpl::load(Body* body, const std::string& filename)
         }
 
         if(!actualLoader){
-            (*os) << str(format(_("The file format of \"%1%\" is not supported by the body loader.\n"))
-                         % path.filename().string());
+            (*os) <<
+                fmt::format(_("The file format of \"{}\" is not supported by the body loader.\n"),
+                            path.filename().string());
         } else {
             actualLoader->setMessageSink(*os);
             actualLoader->setVerbose(isVerbose);

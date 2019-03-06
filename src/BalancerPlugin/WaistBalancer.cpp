@@ -9,6 +9,7 @@
 #include <cnoid/EigenUtil>
 #include <cnoid/NullOut>
 #include <cnoid/GaussianFilter>
+#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
@@ -501,9 +502,10 @@ void WaistBalancer::updateCmAndZmp(int frame)
         inertial_g = g + ddz;
         
         if(inertial_g < inertial_g_thresh){
-            os() << str(
-                fmt(_("Warning: The body is floating at %1% (Vertical CM acceleration is %2%)."))
-                % (frame * timeStep) % (ddz)) << endl;
+            os() << fmt::format(
+                _("Warning: The body is floating at {0} (Vertical CM acceleration is {1})."),
+                (frame * timeStep), (ddz))
+                 << endl;
 
             if(DoVerticalAccCompensation){
                 dP.z() = m * (inertial_g_thresh - g);

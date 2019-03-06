@@ -18,13 +18,14 @@
 #include <cnoid/Sleep>
 #include <cnoid/ProjectManager>
 #include <rtm/CorbaNaming.h>
+#include <fmt/format.h>
 #include "../LoggerUtil.h"
 #include "../gettext.h"
 
 using namespace std;
 using namespace cnoid;
 using namespace RTC;
-using boost::format;
+using fmt::format;
 namespace filesystem = boost::filesystem;
 
 namespace {
@@ -132,13 +133,13 @@ void BodyRTCItem::createRTC(BodyPtr body)
             std::string confFileName0 = getNativePathString(confPath);
             try {
                 if(bridgeConf->loadConfigFile(confFileName0.c_str())){
-                    mv->putln(fmt(_("Config File \"%1%\" has been loaded.")) % confFileName0);
+                    mv->putln(format(_("Config File \"{}\" has been loaded."), confFileName0));
                 } else {
-                    mv->putln(fmt(_("Cannot find or open \"%1%\".")) % confFileName0);
+                    mv->putln(format(_("Cannot find or open \"{}\"."), confFileName0));
                 }
             }
             catch (...) {
-                mv->putln(MessageView::ERROR, fmt(_("Cannot find or open \"%1%\".")) % confFileName0);
+                mv->putln(format(_("Cannot find or open \"{}\"."), confFileName0), MessageView::ERROR);
             }
         }
     }
@@ -146,7 +147,7 @@ void BodyRTCItem::createRTC(BodyPtr body)
     ModuleInfoList& moduleInfoList = bridgeConf->moduleInfoList;
     ModuleInfoList::iterator it;
     for(it=moduleInfoList.begin(); it != moduleInfoList.end(); ++it){
-        mv->putln(fmt(_("Loading Module....  \"%1%\"")) % it->fileName);
+        mv->putln(format(_("Loading Module....  \"{}\""), it->fileName));
     }
     bridgeConf->setupModules();
 
@@ -193,13 +194,13 @@ void BodyRTCItem::createRTC(BodyPtr body)
         i++;
     }
 #if defined(OPENRTM_VERSION11)
-    format param("VirtualRobot?instance_name=%1%&exec_cxt.periodic.type=ChoreonoidExecutionContext&exec_cxt.periodic.rate=1000000");
+    string param("VirtualRobot?instance_name={}&exec_cxt.periodic.type=ChoreonoidExecutionContext&exec_cxt.periodic.rate=1000000");
 #elif defined(OPENRTM_VERSION12)
-    format param("VirtualRobot?instance_name=%1%&execution_contexts=ChoreonoidExecutionContext()&exec_cxt.periodic.type=ChoreonoidExecutionContext&exec_cxt.periodic.rate=1000000&exec_cxt.sync_activation=NO&exec_cxt.sync_deactivation=NO");
+    string param("VirtualRobot?instance_name={}&execution_contexts=ChoreonoidExecutionContext()&exec_cxt.periodic.type=ChoreonoidExecutionContext&exec_cxt.periodic.rate=1000000&exec_cxt.sync_activation=NO&exec_cxt.sync_deactivation=NO");
     DDEBUG("New Parameter 01");
 #endif
-    RtcBase* rtc = createManagedRTC(str(param % instanceName).c_str());
-    mv->putln(fmt(_("RTC \"%1%\" has been created.")) % instanceName);
+    RtcBase* rtc = createManagedRTC(format(param, instanceName));
+    mv->putln(format(_("RTC \"{}\" has been created."), instanceName));
     virtualRobotRTC = dynamic_cast<VirtualRobotRTC*>(rtc);
     virtualRobotRTC->createPorts(bridgeConf);
 
@@ -334,14 +335,14 @@ bool BodyRTCItem::start()
     bool isReady = true;
     
     if(rtcomp && !rtcomp->isValid()){
-        mv->putln(fmt(_("RTC \"%1%\" is not ready.")) % rtcomp->name());
+        mv->putln(format(_("RTC \"{}\" is not ready."), rtcomp->name()));
         isReady = false;
     }
 
     if(virtualRobotRTC) {
         virtualRobotRTC->initialize(simulationBody);
         if(!virtualRobotRTC->checkOutPortStepTime(timeStep_)){
-            mv->putln(fmt(_("Output interval must be longer than the control interval.")));
+            mv->putln(_("Output interval must be longer than the control interval."));
             isReady = false;
         }
     }
@@ -558,7 +559,7 @@ void BodyRTCItem::doPutProperties(PutPropertyFunction& putProperty)
 
     FilePathProperty moduleProperty(
         moduleName,
-        { str(format(_("RT-Component module (*%1%)")) % DLL_SUFFIX) });
+        { format(_("RT-Component module (*{})"), DLL_SUFFIX) });
 
     FilePathProperty confFileProperty(
         confFileName,
@@ -662,11 +663,11 @@ void BodyRTCItem::detectRtcs()
 
             }
             if(CORBA::is_nil(objRef)) {
-                mv->putln(fmt(_("%1% is not found.")) % rtcName);
+                mv->putln(format(_("{} is not found."), rtcName));
             } else {
                 rtcRef = RTC::RTObject::_narrow(objRef);
                 if(CORBA::is_nil(rtcRef)){
-                    mv->putln(fmt(_("%1% is not an RTC object.")) % rtcName);
+                    mv->putln(format(_("{} is not an RTC object."), rtcName));
                 }
             }
         }
@@ -710,11 +711,11 @@ void BodyRTCItem::detectRtcs()
 
                     }
                     if(CORBA::is_nil(objRef)){
-                        mv->putln(fmt(_("%1% is not found.")) % rtcName);
+                        mv->putln(format(_("{} is not found."), rtcName));
                     } else {
                         rtcRef = RTC::RTObject::_narrow(objRef);
                         if(CORBA::is_nil(rtcRef)){
-                            mv->putln(fmt(_("%1% is not an RTC object.")) % rtcName);
+                            mv->putln(format(_("{} is not an RTC object."), rtcName));
                         }
                     }
                 }
@@ -770,7 +771,7 @@ BodyRTCItem::RtcInfoPtr BodyRTCItem::addRtcVectorWithConnection(RTC::RTObject_va
             rtcInfo->timeRate = 0.0;
             rtcInfo->timeRateCounter = 0.0;
         }
-        mv->putln(fmt(_("periodic-rate (%1%) = %2% ")) % rtcName % rtcInfo->timeRate);
+        mv->putln(format(_("periodic-rate ({0}) = {1} "), rtcName, rtcInfo->timeRate));
     }
     rtcInfoVector.push_back(rtcInfo);
 
@@ -897,7 +898,7 @@ void BodyRTCItem::setupRtcConnections()
             if(!instance0isRobot){
                 PortMap::iterator q = rtcInfo0->portMap.find(connection.PortName[0]);
                 if(q == rtcInfo0->portMap.end()){
-                    mv->putln(fmt(_("%1% does not have a port %2%.")) % instanceName0 % connection.PortName[0]);
+                    mv->putln(format(_("{0} does not have a port {1}."), instanceName0, connection.PortName[0]));
                     continue;
                 }
                 portRef0 = q->second;
@@ -906,7 +907,7 @@ void BodyRTCItem::setupRtcConnections()
             RTC::PortService_var portRef1;
             PortMap::iterator q = rtcInfo1->portMap.find(connection.PortName[1]);
             if(q == rtcInfo1->portMap.end()){
-                mv->putln(fmt(_("%1% does not have a port %2%.")) % instanceName1 % connection.PortName[1]);
+                mv->putln(format(_("{0} does not have a port {1}."), instanceName1, connection.PortName[1]));
                 continue;
             }
             portRef1 = q->second;
@@ -928,7 +929,7 @@ void BodyRTCItem::setupRtcConnections()
                     robotPortHandler = virtualRobotRTC->getInPortHandler(connection.PortName[0]);
                 }
                 if(!robotPortHandler){
-                    mv->putln(fmt(_("The robot does not have a port named %1%.")) % connection.PortName[0]);
+                    mv->putln(format(_("The robot does not have a port named {}."), connection.PortName[0]));
                     continue;
                 }
                 portRef0 = robotPortHandler->portRef;
@@ -939,12 +940,14 @@ void BodyRTCItem::setupRtcConnections()
 
             int connected = false;
             if(port1isIn){
-                mv->putln(fmt(_("connect %1%:%2% --> %3%:%4%")) 
-                          % instanceName0 % connection.PortName[0] % instanceName1 % connection.PortName[1]);
+                mv->putln(
+                    format(_("connect {0}:{1} --> {2}:{3}"),
+                           instanceName0, connection.PortName[0], instanceName1, connection.PortName[1]));
                 connected = connectPorts(portRef0, portRef1);
             }else{
-                mv->putln(fmt(_("connect %1%:%2% <-- %3%:%4%")) 
-                          % instanceName0 % connection.PortName[0] % instanceName1 % connection.PortName[1]);
+                mv->putln(
+                    format(_("connect {0}:{1} <-- {2}:{3}"),
+                           instanceName0, connection.PortName[0], instanceName1, connection.PortName[1]));
                 connected = connectPorts(portRef1, portRef0);
             }
 
@@ -1009,8 +1012,10 @@ void BodyRTCItem::setupRtcConnections()
                             RTC::PortService_var  robotPortRef = robotPortHandler->portRef;
                             if(!CORBA::is_nil(robotPortRef)){
                                 int connected = connectPorts(robotPortRef, controllerPortRef);
-                                mv->putln(fmt(_("connect %1%:%2% --> %3%:%4%")) 
-                                          % virtualRobotRTC->getInstanceName() % robotPortName % (*it)->get_component_profile()->instance_name % portName);
+                                mv->putln(
+                                    format(_("connect {0}:{1} --> {2}:{3}"),
+                                           virtualRobotRTC->getInstanceName(), robotPortName,
+                                           string((*it)->get_component_profile()->instance_name), portName));
                                 if(!connected){
                                     mv->putln(_("Connection was successful."));
                                 } else if(connected == -1){
@@ -1050,8 +1055,10 @@ void BodyRTCItem::setupRtcConnections()
                             RTC::PortService_var  robotPortRef = robotPortHandler->portRef;
                             if(!CORBA::is_nil(robotPortRef)){
                                 int connected = connectPorts(controllerPortRef, robotPortRef);
-                                mv->putln(fmt(_("connect %1%:%2% <-- %3%:%4%"))
-                                          % virtualRobotRTC->getInstanceName() % robotPortName % (*it)->get_component_profile()->instance_name % portName);
+                                mv->putln(
+                                    format(_("connect {0}:{1} <-- {2}:{3}"),
+                                           virtualRobotRTC->getInstanceName(), robotPortName,
+                                           string((*it)->get_component_profile()->instance_name), portName));
                                 if(!connected){
                                     mv->putln(_("Connection was successful."));
                                 } else if(connected == -1){
@@ -1125,7 +1132,7 @@ void BodyRTCItem::deleteModule(bool waitToBeDeleted)
                 if(it->rtcServant){
                     deleteList.push_back(it->rtcServant->getInstanceName());
                     it->rtcServant->exit();
-                    mv->putln(fmt(_("delete %1%")) % it->rtcServant->getInstanceName());
+                    mv->putln(format(_("delete {}"), it->rtcServant->getInstanceName()));
                 }
             }
         }
@@ -1141,7 +1148,7 @@ void BodyRTCItem::deleteModule(bool waitToBeDeleted)
 
     if(virtualRobotRTC){
         deleteList.push_back(virtualRobotRTC->getInstanceName());
-        mv->putln(fmt(_("delete %1%")) % virtualRobotRTC->getInstanceName());
+        mv->putln(format(_("delete {}"), virtualRobotRTC->getInstanceName()));
         cnoid::deleteRTC(virtualRobotRTC);
         virtualRobotRTC = 0;
     }
@@ -1162,7 +1169,7 @@ void BodyRTCItem::deleteModule(bool waitToBeDeleted)
             msleep(20);
         }
         for(std::vector<string>::iterator it=remainder.begin(); it!=remainder.end(); it++){
-            mv->putln(fmt(_("%1% cannot be deleted.")) % *it);
+            mv->putln(format(_("{} cannot be deleted."), *it));
         }
     }
 

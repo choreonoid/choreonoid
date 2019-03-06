@@ -13,6 +13,7 @@
 #include <cnoid/BodyMotionGenerationBar>
 #include <cnoid/CheckBox>
 #include <cnoid/Separator>
+#include <fmt/format.h>
 #include <QSpinBox>
 #include <QComboBox>
 #include <QTime>
@@ -20,7 +21,8 @@
 
 
 using namespace cnoid;
-using namespace boost;
+using fmt::format;
+
 
 namespace {
 
@@ -220,7 +222,7 @@ namespace {
             
             MessageView* mv = MessageView::mainInstance();
             if(putMessages){
-                mv->notify(fmt(_("Applying the waist balance filter with %1% iterations ... ")) % balancer->numIterations());
+                mv->notify(format(_("Applying the waist balance filter with {} iterations ... "), balancer->numIterations()));
                 mv->flush();
             }
         
@@ -232,7 +234,7 @@ namespace {
             
             if(result){
                 if(putMessages){
-                    mv->notify(fmt(_("OK ! (%1% [s] consumed.)")) % (time.elapsed() / 1000.0));
+                    mv->notify(format(_("OK ! ({} [s] consumed.)"), (time.elapsed() / 1000.0)));
                 }
                 motionItem->notifyUpdate();
             } else {

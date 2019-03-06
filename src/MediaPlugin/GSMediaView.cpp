@@ -13,6 +13,7 @@
 #include <cnoid/MessageView>
 #include <cnoid/Timer>
 #include <cnoid/LazyCaller>
+#include <fmt/format.h>
 #include <QEvent>
 #include <QResizeEvent>
 #include <QPainter>
@@ -26,7 +27,6 @@
 using namespace std;
 using namespace std::placeholders;
 using namespace cnoid;
-using boost::format;
 
 namespace {
 
@@ -117,10 +117,12 @@ bool GSMediaView::initializeClass(ExtensionManager* ext)
 
         GError* error = NULL;
         if(!gst_init_check(NULL, NULL, &error)){
-            MessageView::mainInstance()->put(_("GStreamer cannot be initialized:"));
+            MessageView::mainInstance()->put(_("GStreamer cannot be initialized: "));
             if(error){
                 MessageView::mainInstance()->putln(error->message);
                 g_error_free(error);
+            } else {
+                MessageView::mainInstance()->putln("");
             }
             return false;
         }
@@ -423,7 +425,7 @@ void GSMediaViewImpl::putGstMessage
     GError* err;
     parse(message, &err, &debug);
     g_free(debug);
-    mv->putln(MessageView::HIGHLIGHT, format(_("%1%: %2%")) % prefix % err->message);
+    mv->putln(fmt::format("{0}: {1}", prefix, err->message), MessageView::HIGHLIGHT);
     g_error_free(err);
 }
     

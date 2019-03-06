@@ -1389,6 +1389,8 @@ endif()
 find_package(fmt QUIET)
 if(NOT fmt_FOUND)
   add_subdirectory(thirdparty/fmt-5.3.0)
+  # Is this necessary when building on Windows?
+  include_directories(${PROJECT_SOURCE_DIR}/thirdparty/fmt-5.3.0/include)
 endif()
 
 add_subdirectory(src)

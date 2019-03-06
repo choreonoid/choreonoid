@@ -24,6 +24,7 @@
 #include <cnoid/ExtensionManager>
 #include <cnoid/Archive>
 #include <cnoid/ConnectionSet>
+#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
@@ -943,9 +944,9 @@ bool EditableSceneBodyImpl::onPointerMoveEvent(const SceneWidgetEvent& event)
         if(pointedSceneLink){
             const Vector3 p = pointedSceneLink->T().inverse() * event.point();
             event.updateIndicator(
-                (str(boost::format("%1% / %2% : (%3$ .3f, %4$ .3f, %5$ .3f)")
-                     % bodyItem->name() % pointedSceneLink->link()->name()
-                     % p.x() % p.y() % p.z())));
+                fmt::format("{0} / {1} : ({2:.3f}, {3:.3f}, {4:.3f})",
+                            bodyItem->name(), pointedSceneLink->link()->name(),
+                            p.x(), p.y(), p.z()));
         } else {
             event.updateIndicator("");
         }

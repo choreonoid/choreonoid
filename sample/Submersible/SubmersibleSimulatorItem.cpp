@@ -15,7 +15,6 @@
 
 using namespace std;
 using namespace cnoid;
-using boost::format;
 
 namespace {
 

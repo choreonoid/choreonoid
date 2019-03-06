@@ -38,6 +38,7 @@
 #include <cnoid/Sleep>
 #include <QTcpSocket>
 #include <cnoid/AppConfig>
+#include <fmt/format.h>
 #include <rtm/ComponentActionListener.h>
 
 #include "LoggerUtil.h"
@@ -47,7 +48,7 @@
 using namespace std;
 using namespace std::placeholders;
 using namespace cnoid;
-using boost::format;
+using fmt::format;
 
 namespace {
 
@@ -108,11 +109,9 @@ public:
             ::coil::Creator<::RTC::ExecutionContextBase, ExecutionContextType>,
             ::coil::Destructor<::RTC::ExecutionContextBase, ExecutionContextType>) == 0) {
 #endif
-            mv->putln(format(_("%1% has been registered.")) % name);
+            mv->putln(format(_("{} has been registered."), name));
         } else {
-            mv->putln(
-                MessageView::WARNING,
-                format(_("Failed to register %1%.")) % name);
+            mv->putln(format(_("Failed to register {}."), name), MessageView::WARNING);
         }
     }
 
@@ -314,7 +313,9 @@ public:
             if (n == 1) {
                 mv->notify(_("An RT component which is not managed by Choreonoid is being deleted."));
             } else {
-                mv->notify(format(_("%1% RT components which are not managed by Choreonoid are being deleted.")) % n);
+                mv->notify(
+                    format(_("{} RT components which are not managed by Choreonoid are being deleted."),
+                           n));
             }
             mv->flush();
             cnoid::deleteUnmanagedRTCs();
@@ -559,8 +560,9 @@ bool cnoid::deleteRTC(RTC::RtcBase* rtc)
 
         } catch (CORBA::SystemException& ex) {
             MessageView::instance()->putln(
-                MessageView::WARNING, format(_("CORBA %1% (%2%), %3% in cnoid::deleteRTC()."))
-                % ex._name() % ex._rep_id() % ex.NP_minorString());
+                format(_("CORBA {0} ({1}), {2} in cnoid::deleteRTC()."),
+                       ex._name(), ex._rep_id(), ex.NP_minorString()),
+                MessageView::WARNING);
         }
     }
 

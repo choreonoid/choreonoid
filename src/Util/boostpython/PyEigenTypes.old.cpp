@@ -5,7 +5,6 @@
 #include "PyUtil.h"
 #include "../EigenTypes.h"
 #include "../EigenUtil.h"
-#include <boost/format.hpp>
 
 namespace python = boost::python;
 using namespace boost::python;

@@ -16,13 +16,13 @@
 #include <cstdlib>
 #include <iostream>
 #include <boost/tokenizer.hpp>
-#include <boost/format.hpp>
+#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
 namespace filesystem = boost::filesystem;
-using boost::format;
+using fmt::format;
 
 #ifdef _WIN32
 # include <windows.h>
@@ -80,7 +80,7 @@ static bool loadCustomizerDll(BodyInterface* bodyInterface, const std::string fi
             if(customizerInterface){
 				
                 if(!checkInterface(customizerInterface)){
-                    os << (format(_("Body customizer \"%1%\" is incomatible and cannot be loaded.")) % filename) << endl;
+                    os << format(_("Body customizer \"{}\" is incomatible and cannot be loaded."), filename) << endl;
                 } else {
                 
                     const char** names = customizerInterface->getTargetModelNames();
@@ -95,7 +95,7 @@ static bool loadCustomizerDll(BodyInterface* bodyInterface, const std::string fi
                         }
                         modelNames += name;
                     }
-                    os << (format(_("Body customizer \"%1%\" for %2% has been loaded.")) % filename % modelNames) << endl;
+                    os << format(_("Body customizer \"{0}\" for {1} has been loaded."), filename, modelNames) << endl;
                 }
             }
         }

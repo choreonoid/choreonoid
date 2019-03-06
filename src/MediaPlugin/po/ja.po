@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-07-05 00:54+0900\n"
+"POT-Creation-Date: 2019-02-20 18:15+0900\n"
 "PO-Revision-Date: 2011-11-15 21:47+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -17,99 +17,90 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: AudioItem.cpp:33
+#: AudioItem.cpp:32
 msgid "AudioItem"
 msgstr "音声アイテム"
 
-#: AudioItem.cpp:36
+#: AudioItem.cpp:35
 msgid "Audio File"
 msgstr "音声ファイル"
 
-#: DSMediaView.cpp:109
+#: DSMediaView.cpp:110
 msgid "CoInitialize failed. MediaView is not available."
 msgstr ""
-"CoInitialize関数の実行に問題があるため、メディアビューを利用できません。"
+"CoInitialize関数の実行に問題があるため，メディアビューを利用できません．"
 
-#: DSMediaView.cpp:114 DSMediaView.cpp:151 GSMediaView.cpp:129
-#: GSMediaView.cpp:150
+#: DSMediaView.cpp:115 DSMediaView.cpp:152 GSMediaView.cpp:131
+#: GSMediaView.cpp:152
 msgid "Media"
 msgstr "メディア"
 
-#: DSMediaView.cpp:118 GSMediaView.cpp:133
+#: DSMediaView.cpp:119 GSMediaView.cpp:135
 msgid "Media View"
 msgstr "メディアビュー"
 
-#: DSMediaView.cpp:120 GSMediaView.cpp:135
+#: DSMediaView.cpp:121 GSMediaView.cpp:137
 msgid "Keep Aspect Ratio"
 msgstr "アスペクト比を維持"
 
-#: DSMediaView.cpp:123 GSMediaView.cpp:138
+#: DSMediaView.cpp:124 GSMediaView.cpp:140
 msgid "Keep Original Size"
 msgstr "元のサイズを維持"
 
-#: DSMediaView.cpp:453
+#: DSMediaView.cpp:454
 msgid "This media file is not able to seek!"
-msgstr "本メディアファイルはシーク出来ません。"
+msgstr "本メディアファイルはシーク出来ません！"
 
-#: DSMediaView.cpp:691
-msgid "Failed(%1%) to stop media clip!\n"
-msgstr "メディアクリップの停止が出来ません(%1)。\n"
+#: DSMediaView.cpp:692
+msgid "Failed({}) to stop media clip!\n"
+msgstr "メディアクリップの停止が出来ません({})！\n"
 
 #: GSMediaView.cpp:120
-msgid "GStreamer cannot be initialized:"
-msgstr "GStreamer の初期化が出来ません。"
+msgid "GStreamer cannot be initialized: "
+msgstr "GStreamerの初期化が出来ません: "
 
-#: GSMediaView.cpp:174
+#: GSMediaView.cpp:176
 msgid ""
 "Initialization of the GSMediaView failed. The playbin plugin is missing."
-msgstr "GSMediaViewの初期化に失敗しました。playbinプラグインがありません。"
+msgstr "GSMediaViewの初期化に失敗しました．playbinプラグインがありません．"
 
-#: GSMediaView.cpp:199
+#: GSMediaView.cpp:201
 msgid ""
 "Initialization of the GSMediaView failed. The ximagesink could not be "
 "created."
-msgstr ""
-"GStreamerのximagesinkが生成できないため、GSMediaViewを初期化出来ません。"
+msgstr "GSMediaViewの初期化に失敗しました．ximagesinkを生成できません．"
 
-#: GSMediaView.cpp:426
-msgid "%1%: %2%"
-msgstr ""
-
-#: MediaItem.cpp:51
+#: MediaItem.cpp:52
 msgid "MediaItem"
 msgstr "メディアアイテム"
 
-#: MediaItem.cpp:52
+#: MediaItem.cpp:53
 msgid "Media file"
 msgstr "メディアファイル"
 
-#: MediaItem.cpp:54
+#: MediaItem.cpp:55
 msgid "load an media file"
 msgstr "メディアファイルの読み込み"
 
-#: MediaItem.cpp:106
-msgid "Media file \"%1%\" does not exist."
-msgstr "メディアファイル \"%1%\" が存在しません。"
+#: MediaItem.cpp:107
+msgid "Media file \"{}\" does not exist."
+msgstr "メディアファイル \"{}\" が存在しません．"
 
-#: MediaItem.cpp:126
-msgid "uri"
-msgstr ""
-
-#: MediaItem.cpp:127
+#: MediaItem.cpp:128
 msgid "offset"
 msgstr "オフセット"
 
 #: PulseAudioManager.cpp:170
 msgid "PulseAudio's main loop cannot be created."
-msgstr "PulseAudioのメインループを生成できません。"
+msgstr "PulseAudioのメインループを生成できません．"
 
 #: PulseAudioManager.cpp:179
 msgid "PulseAudio's context cannot be created."
-msgstr "PulseAudioのコンテキストを生成できません。"
+msgstr "PulseAudioのコンテキストを生成できません．"
 
 #: PulseAudioManager.cpp:193
 msgid "PulseAudio's context cannot be connected to the server."
-msgstr "PulseAudioのコンテキストをサーバに接続できません。"
+msgstr "PulseAudioのコンテキストをサーバに接続できません．"
 
 #: PulseAudioManager.cpp:208
 msgid "PulseAudio"
@@ -125,21 +116,22 @@ msgstr "音声再生の完全同期"
 
 #: PulseAudioManager.cpp:511
 msgid "PulseAudio's stream cannot be created."
-msgstr "PulseAudioのストリームを生成できません。"
+msgstr "PulseAudioのストリームを生成できません．"
 
-#: PulseAudioManager.cpp:625
-msgid "PulseAudio stream for %1% cannot be written."
-msgstr "%1%のPulseAudioストリームに書き込みできません。"
+#: PulseAudioManager.cpp:629
+msgid "PulseAudio stream for {} cannot be written."
+msgstr "{}のPulseAudioストリームに書き込みできません．"
 
-#: PulseAudioManager.cpp:711
+#: PulseAudioManager.cpp:714
 msgid "overflowed"
 msgstr "オーバフロー"
 
-#: PulseAudioManager.cpp:716
+#: PulseAudioManager.cpp:719
 msgid "underflowed"
 msgstr "アンダーフロー"
 
-#: PulseAudioManager.cpp:728
+#: PulseAudioManager.cpp:732
 msgid ""
-"PulseAudioManager: Buffer of %1% %2%. Its playback time is adjusted to %3%."
-msgstr "PulseAudioManager: %1%のバッファが%2%です。再生時刻を%3%に調整します。"
+"PulseAudioManager: Buffer of {0} {1}. Its playback time is adjusted to {2}."
+msgstr "PulseAudioManager: {0}のバッファが{1}です．再生時刻を{2}に調整します．"
+

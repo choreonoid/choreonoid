@@ -26,6 +26,7 @@
 #include <cnoid/SceneCollision>
 #include <cnoid/CollisionSeqItem>
 #include <cnoid/CollisionSeq>
+#include <fmt/format.h>
 #include <QRegExp>
 #include <sstream>
 #include "gettext.h"
@@ -34,6 +35,7 @@ using namespace std;
 using namespace std::placeholders;
 using namespace cnoid;
 using namespace OpenHRP;
+using fmt::format;
 
 namespace cnoid {
 
@@ -301,8 +303,8 @@ void OpenHRPOnlineViewerItemImpl::loadsub(string name, string url)
             filepath = filePattern.cap(2).toStdString();
         } else {
             mv->putln(
-                fmt(_("OnlineViewer: The model file at \"%1%\" cannot be read. %2% protocol is not supported."))
-                % url % protocol);
+                format(_("OnlineViewer: The model file at \"{0}\" cannot be read. {1} protocol is not supported."),
+                       url, protocol));
             return;
         }
     } else {
@@ -325,7 +327,7 @@ void OpenHRPOnlineViewerItemImpl::loadsub(string name, string url)
         BodyItemPtr bodyItem = bodyItems[i];
         if(bodyItem->name() == name && bodyItem->filePath() == filepath){
             if(!bodyItem->load(filepath)){
-                mv->putln(fmt(_("OnlineViewer: Loading \"%1%\" failed.")) % name);
+                mv->putln(format(_("OnlineViewer: Loading \"{}\" failed."), name));
                 return;
             }
             registerBodyItem(bodyItem);
@@ -334,11 +336,11 @@ void OpenHRPOnlineViewerItemImpl::loadsub(string name, string url)
     }
     // load a new body item
     BodyItemPtr bodyItem = new BodyItem();
-    mv->putln(fmt(_("OnlineViewer: Loading \"%1%\" at \"%2%\"."))
-              % name % url);
+    mv->putln(format(_("OnlineViewer: Loading \"{0}\" at \"{1}\"."),
+                     name, url));
     mv->flush();
     if(!bodyItem->load(filepath)){
-        mv->putln(fmt(_("OnlineViewer: Loading \"%1%\" failed.")) % name);
+        mv->putln(format(_("OnlineViewer: Loading \"{}\" failed."), name));
 
     } else {
         bodyItem->setName(name);
@@ -375,15 +377,15 @@ void OpenHRPOnlineViewerItemImpl::registerBodyItem(BodyItemPtr bodyItem)
 void OpenHRPOnlineViewerItemImpl::onBodyItemNameChanged(BodyItem* bodyItem, const std::string& oldName)
 {
     bodyItemInfoMap.erase(oldName);
-    mv->putln(fmt(_("OnlineViewer: \"%1%\" is unregistered because the name has been changed."))
-              % oldName);
+    mv->putln(format(_("OnlineViewer: \"{}\" is unregistered because the name has been changed."),
+                     oldName));
 }
 
 
 void OpenHRPOnlineViewerItemImpl::onBodyItemDetachedFromRoot(BodyItem* bodyItem)
 {
     bodyItemInfoMap.erase(bodyItem->name());
-    mv->putln(fmt(_("OnlineViewer: \"%1%\" has been removed.")) % bodyItem->name());
+    mv->putln(format(_("OnlineViewer: \"{}\" has been removed."), bodyItem->name()));
 }
 
 

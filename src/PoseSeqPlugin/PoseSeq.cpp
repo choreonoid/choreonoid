@@ -9,7 +9,6 @@
 #include <cnoid/YAMLReader>
 #include <cnoid/YAMLWriter>
 #include <fstream>
-#include <boost/format.hpp>
 
 #include <iostream>
 

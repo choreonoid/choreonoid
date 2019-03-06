@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-01-28 18:59+0900\n"
+"POT-Creation-Date: 2019-02-22 18:10+0900\n"
 "PO-Revision-Date: 2013-09-10 16:13+0900\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -16,35 +16,6 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-
-#: PythonConsoleView.cpp:117
-msgid "Python Console"
-msgstr "Pythonコンソール"
-
-#: PythonPlugin.cpp:120
-msgid "Redirectiton to MessageView"
-msgstr ""
-
-#: PythonPlugin.cpp:123
-msgid "Refresh modules in the script directory"
-msgstr ""
-
-#: PythonPlugin.cpp:149
-msgid "Executing python script \"%1%\" ..."
-msgstr "Pythonスクリプト \"%1%\" を実行中..."
-
-#: PythonPlugin.cpp:152
-msgid "The script finished."
-msgstr "スクリプトが終了しました。"
-
-#: PythonPlugin.cpp:154
-msgid "Failed to run the python script."
-msgstr "Pythonスクリプトの実行に失敗しました。"
-
-#: PythonPlugin.cpp:243
-msgid ""
-"PythonPlugin: \"%1%\" has been added to the Python module search path list."
-msgstr "PythonPlugin: \"%1%\" がPythonのモジュールパスに追加されました。"
 
 #: PythonScriptItem.cpp:21
 msgid "PythonScriptItem"
@@ -62,76 +33,107 @@ msgstr "スクリプト"
 msgid "Execution on loading"
 msgstr "読み込み時に実行"
 
-#: PythonScriptItemImpl.cpp:57
-msgid "Python script file \"%1%\" cannot be loaded. The file does not exist."
-msgstr ""
-"Pythonスクリプトファイル \"%1%\" は存在しないため読みこむことができません。"
+#: PythonConsoleView.cpp:135
+msgid "Python Console"
+msgstr "Pythonコンソール"
 
-#: PythonScriptItemImpl.cpp:92
+#: PythonScriptItemImpl.cpp:59
+msgid "Python script file \"{}\" cannot be loaded. The file does not exist."
+msgstr ""
+"Pythonスクリプトファイル \"{}\" は存在しないため読みこむことができません．"
+
+#: PythonScriptItemImpl.cpp:93
 msgid ""
-"Python script \"%1%\" is now running in the foreground. The execution of the "
+"Python script \"{}\" is now running in the foreground. The execution of the "
 "script cannot be overlapped."
 msgstr ""
-"Pythonスクリプト \"%1%\" はバックグラウンドスレッドで実行中です。スクリプトを"
-"重複して実行することはできません。"
+"Pythonスクリプト \"{}\" はバックグラウンドスレッドで実行中です．スクリプトを"
+"重複して実行することはできません．"
 
-#: PythonScriptItemImpl.cpp:97
+#: PythonScriptItemImpl.cpp:98
 msgid "Python Script Termination"
 msgstr "Pythonスクリプトの停止"
 
-#: PythonScriptItemImpl.cpp:98
+#: PythonScriptItemImpl.cpp:99
 msgid ""
-"Python script \"%1%\" is running now. Do you want to terminate and restart "
-"it?"
+"Python script \"{}\" is running now. Do you want to terminate and restart it?"
 msgstr ""
-"Pythonスクリプト\"%1%\"はバックグラウンドスレッドで実行中です。これを停止して"
-"再実行しますか？"
+"Pythonスクリプト \"{}\" は実行中です．これを停止して再実行しますか？"
 
-#: PythonScriptItemImpl.cpp:103
+#: PythonScriptItemImpl.cpp:104
 msgid "The python script cannot be terminated. It cannot be restarted."
-msgstr "Pythonスクリプトを終了できません。再実行できません。"
+msgstr "Pythonスクリプトを終了できません．再実行できません．"
 
-#: PythonScriptItemImpl.cpp:111
-msgid " Python script \"%1%\" is empty."
-msgstr "Pythonスクリプト \"%1%\" は空です。"
+#: PythonScriptItemImpl.cpp:112
+msgid " Python script \"{}\" is empty."
+msgstr "Pythonスクリプト \"{}\" は空です．"
 
-#: PythonScriptItemImpl.cpp:117
-msgid "The file of Python script \"%1%\" does not exist."
-msgstr "Pythonスクリプト \"%1%\" のファイルが存在しません。"
+#: PythonScriptItemImpl.cpp:118
+msgid "The file of Python script \"{}\" does not exist."
+msgstr "Pythonスクリプト \"{}\" のファイルが存在しません．"
 
-#: PythonScriptItemImpl.cpp:120
-msgid "Execution of Python script \"%1%\" has been started."
-msgstr "Pythonスクリプト \"%1%\" の実行を開始しました。"
+#: PythonScriptItemImpl.cpp:121
+msgid "Execution of Python script \"{}\" has been started."
+msgstr "Pythonスクリプト \"{}\" の実行を開始しました．"
 
-#: PythonScriptItemImpl.cpp:138
+#: PythonScriptItemImpl.cpp:139
 msgid ""
-"Python script \"%1%\" is now running in the foreground. The code cannot be "
+"Python script \"{}\" is now running in the foreground. The code cannot be "
 "executed now."
 msgstr ""
-"Pythonスクリプト\"%1%\"はまだバックグラウンドスレッドで実行中です。これを停止"
-"して再実行しますか？"
+"Pythonスクリプト \"{}\" はフォアグラウンドで実行中です．今これを実行することはできません．"
+
+#: PythonScriptItemImpl.cpp:173
+msgid "The execution of Python script \"{}\" has been terminated."
+msgstr "Pythonスクリプト \"{}\" の実行が完了しました．"
 
 #: PythonScriptItemImpl.cpp:175
-msgid "The execution of Python script \"%1%\" has been finished."
-msgstr "Pythonスクリプト \"%1%\" の実行が完了しました。"
-
-#: PythonScriptItemImpl.cpp:177
 msgid ""
-"The execution of Python script \"%1%\" failed.\n"
-"%2%"
+"The execution of Python script \"{0}\" failed.\n"
+"{1}"
 msgstr ""
-"Pythonスクリプト \"%1%\" の実行が失敗しました。\n"
-"%2%"
+"Pythonスクリプト \"{0}\" の実行に失敗しました．\n"
+"{1}"
 
-#: PythonScriptItemImpl.cpp:192
-msgid "Python script \"%1%\" has been terminated."
-msgstr "Pythonスクリプト \"%1%\" を停止しました。"
+#: PythonScriptItemImpl.cpp:181
+msgid "The execution of Python script \"{}\" has been finished."
+msgstr "Pythonスクリプト \"{}\" の実行が完了しました．"
 
-#: PythonScriptItemImpl.cpp:194
+#: PythonScriptItemImpl.cpp:195
+msgid "Python script \"{}\" has been terminated."
+msgstr "Pythonスクリプト \"{}\" を停止しました．"
+
+#: PythonScriptItemImpl.cpp:197
 msgid ""
-"Python script \"%1%\" cannot be terminated. Some internal errors may happen."
-msgstr "Pythonスクリプト \"%1%\" の実行を停止できません。再実行できません。"
+"Python script \"{}\" cannot be terminated. Some internal errors may happen."
+msgstr "Pythonスクリプト \"{}\" の実行を停止できません．何らかの内部エラーが発生しているかもしれません．"
 
-#: PythonScriptItemImpl.cpp:205
+#: PythonScriptItemImpl.cpp:208
 msgid "Background execution"
 msgstr "バックグラウンド実行"
+
+#: PythonPlugin.cpp:149
+msgid "Redirectiton to MessageView"
+msgstr "メッセージビューへのリダイレクト"
+
+#: PythonPlugin.cpp:152
+msgid "Refresh modules in the script directory"
+msgstr "スクリプトディレクトリのモジュールを更新します．"
+
+#: PythonPlugin.cpp:207
+msgid "Executing python script \"{}\" ..."
+msgstr "Pythonスクリプト \"{}\" を実行中..."
+
+#: PythonPlugin.cpp:210
+msgid "The script finished."
+msgstr "スクリプトが終了しました．"
+
+#: PythonPlugin.cpp:212
+msgid "Failed to run the python script."
+msgstr "Pythonスクリプトの実行に失敗しました．"
+
+#: PythonPlugin.cpp:374
+msgid ""
+"PythonPlugin: \"{}\" has been added to the Python module search path list."
+msgstr "PythonPlugin: \"{}\" がPythonのモジュールパスに追加されました．"
+

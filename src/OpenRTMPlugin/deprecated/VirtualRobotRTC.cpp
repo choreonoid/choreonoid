@@ -8,11 +8,13 @@
 #include <cnoid/Config>
 #include <rtm/NVUtil.h>
 #include <cnoid/MessageView>
+#include <fmt/format.h>
 #include <iostream>
 #include "../gettext.h"
 
 using namespace std;
 using namespace cnoid;
+using fmt::format;
 
 namespace {
 const bool CONTROLLER_BRIDGE_DEBUG = false;
@@ -321,7 +323,9 @@ void VirtualRobotRTC::addConnectedRtcs(RTC::PortService_ptr portRef, RTC::RTCLis
                     RTC::ComponentProfile_var componentProfile = connectedRtcRef->get_component_profile();
                     string connectedRtcName(componentProfile->instance_name);
                     MessageView* mv = MessageView::instance();
-                    mv->putln(fmt(_("detected RTC: %1%  Port connection: %2% <--> %3%")) % connectedRtcName % portName % connectedPortProfile->name);
+                    mv->putln(
+                        format(_("detected RTC: {0}  Port connection: {1} <--> {2}"),
+                               connectedRtcName, portName, string(connectedPortProfile->name)));
 
                     RTC::ExecutionContextList_var execServices = connectedRtcRef->get_owned_contexts();
 

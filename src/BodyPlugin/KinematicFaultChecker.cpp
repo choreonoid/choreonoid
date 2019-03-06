@@ -27,13 +27,14 @@
 #include <QBoxLayout>
 #include <QFrame>
 #include <QLabel>
+#include <fmt/format.h>
 #include <map>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
 using boost::dynamic_bitset;
-using boost::format;
+using fmt::format;
 
 namespace {
 
@@ -280,11 +281,11 @@ void KinematicFaultCheckerImpl::apply()
             BodyMotionItem* motionItem = items.get(i);
             BodyItem* bodyItem = motionItem->findOwnerItem<BodyItem>();
             if(!bodyItem){
-                mes.notify(str(fmt(_("%1% is not owned by any BodyItem. Check skiped.")) % motionItem->name()));
+                mes.notify(format(_("{} is not owned by any BodyItem. Check skiped."), motionItem->name()));
             } else {
                 mes.putln();
-                mes.notify(str(fmt(_("Applying the Kinematic Fault Checker to %1% ..."))
-                               % motionItem->headItem()->name()));
+                mes.notify(format(_("Applying the Kinematic Fault Checker to {} ..."),
+                                  motionItem->headItem()->name()));
                 
                 dynamic_bitset<> linkSelection;
                 if(selectedJointsRadio.isChecked()){
@@ -316,7 +317,7 @@ void KinematicFaultCheckerImpl::apply()
                     if(n == 1){
                         mes.notify(_("A fault has been detected."));
                     } else {
-                        mes.notify(str(fmt(_("%1% faults have been detected.")) % n));
+                        mes.notify(format(_("{} faults have been detected."), n));
                     }
                 } else {
                     mes.notify(_("No faults have been detected."));
@@ -476,9 +477,6 @@ int KinematicFaultCheckerImpl::checkFaults
 
 void KinematicFaultCheckerImpl::putJointPositionFault(int frame, Link* joint, std::ostream& os)
 {
-    static format f1(fmt(_("%1$7.3f [s]: Position limit over of %2% (%3% is beyond the range (%4% , %5%) with margin %6%.)")));
-    static format f2(fmt(_("%1$7.3f [s]: Position limit over of %2% (%3% is beyond the range (%4% , %5%).)")));
-    
     if(frame > lastPosFaultFrames[joint->jointId()] + 1){
         double q, l, u, m;
         if(joint->isRotationalJoint()){
@@ -494,9 +492,11 @@ void KinematicFaultCheckerImpl::putJointPositionFault(int frame, Link* joint, st
         }
 
         if(m != 0.0){
-            os << (f1 % (frame / frameRate) % joint->name() % q % l % u % m) << endl;
+            os << format(_("{0:7.3f} [s]: Position limit over of {1} ({2} is beyond the range ({3} , {4}) with margin {5}.)"),
+                         (frame / frameRate), joint->name(), q, l, u, m) << endl;
         } else {
-            os << (f2 % (frame / frameRate) % joint->name() % q % l % u) << endl;
+            os << format(_("{0:7.3f} [s]: Position limit over of {1} ({2} is beyond the range ({3} , {4}).)"),
+                         (frame / frameRate), joint->name(), q, l, u) << endl;
         }
 
         numFaults++;
@@ -507,8 +507,6 @@ void KinematicFaultCheckerImpl::putJointPositionFault(int frame, Link* joint, st
 
 void KinematicFaultCheckerImpl::putJointVelocityFault(int frame, Link* joint, std::ostream& os)
 {
-    static format f(fmt(_("%1$7.3f [s]: Velocity limit over of %2% (%3% is %4$.0f %% of the range (%5% , %6%).)")));
-    
     if(frame > lastVelFaultFrames[joint->jointId()] + 1){
         double dq, l, u;
         if(joint->isRotationalJoint()){
@@ -524,8 +522,9 @@ void KinematicFaultCheckerImpl::putJointVelocityFault(int frame, Link* joint, st
         double r = (dq < 0.0) ? (dq / l) : (dq / u);
         r *= 100.0;
 
-        os << (f % (frame / frameRate) % joint->name() % dq % r % l % u) << endl;
-
+        os << format(_("{0:7.3f} [s]: Velocity limit over of {1} ({2} is {3:.0f}% of the range ({4} , {5}).)"),
+                     (frame / frameRate), joint->name(), dq, r, l, u) << endl;
+        
         numFaults++;
     }
     lastVelFaultFrames[joint->jointId()] = frame;
@@ -534,8 +533,6 @@ void KinematicFaultCheckerImpl::putJointVelocityFault(int frame, Link* joint, st
 
 void KinematicFaultCheckerImpl::putSelfCollision(Body* body, int frame, const CollisionPair& collisionPair, std::ostream& os)
 {
-    static format f(fmt(_("%1$7.3f [s]: Collision between %2% and %3%")));
-    
     bool putMessage = false;
     GeometryPair gPair(collisionPair.geometries());
     auto p = lastCollisionFrames.find(gPair);
@@ -552,7 +549,8 @@ void KinematicFaultCheckerImpl::putSelfCollision(Body* body, int frame, const Co
     if(putMessage){
         Link* link0 = static_cast<Link*>(collisionPair.object(0));
         Link* link1 = static_cast<Link*>(collisionPair.object(1));
-        os << (f % (frame / frameRate) % link0->name() % link1->name()) << endl;
+        os << format(_("{0:7.3f} [s]: Collision between {1} and {2}"),
+                     (frame / frameRate), link0->name(), link1->name()) << endl;
         numFaults++;
     }
 }

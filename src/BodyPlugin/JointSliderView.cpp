@@ -13,6 +13,7 @@
 #include <cnoid/Buttons>
 #include <cnoid/SpinBox>
 #include <cnoid/Slider>
+#include <cnoid/Dial>
 #include <cnoid/Separator>
 #include <cnoid/LazyCaller>
 #include <cnoid/ViewManager>
@@ -71,7 +72,7 @@ public:
     QGridLayout sliderGrid;
 
     void updateSliderGrid();
-    void attachSliderUnits(SliderUnit* unit, int row, int col, int nUnitRows);
+    void attachSliderUnits(SliderUnit* unit, int row, int col);
     void initializeSliders(int num);
     void onNumColumnsChanged(int n);
     void onUnitChanged();
@@ -490,18 +491,13 @@ void JointSliderViewImpl::updateSliderGrid()
 
         int nColumns = numColumnsSpin.value();
         bool isLabelAtLeft = labelOnLeftToggle.isChecked();
-        int nUnitColumns, nGridColumns, nUnitRows;
+        int nUnitColumns, nGridColumns;
         if(isLabelAtLeft){
+            nUnitColumns = 7;
+            nGridColumns = nColumns * nUnitColumns;
+        } else {
             nUnitColumns = 6;
             nGridColumns = nColumns * nUnitColumns;
-        } else {
-            nUnitColumns = 5;
-            nGridColumns = nColumns * nUnitColumns;
-        }
-        if(putSliderCheck.isChecked() && putDialCheck.isChecked()){
-            nUnitRows = 2;
-        } else {
-            nUnitRows = 1;
         }
 
         int row = 0;
@@ -516,21 +512,21 @@ void JointSliderViewImpl::updateSliderGrid()
 
             if(!isLabelAtLeft){
                 sliderGrid.addWidget(&unit->nameLabel, row, col, 1, nUnitColumns);
-                sliderGrid.addWidget(&unit->idLabel, row + 1, col, nUnitRows, 1);
-                attachSliderUnits(unit, row + 1, col + 1, nUnitRows);
+                sliderGrid.addWidget(&unit->idLabel, row + 1, col);
+                attachSliderUnits(unit, row + 1, col + 1);
                 col += nUnitColumns;
                 if(col == nGridColumns){
                     col = 0;
-                    row += nUnitRows+1;
+                    row += 2;
                 }
             } else {
-                sliderGrid.addWidget(&unit->idLabel,row, col, nUnitRows, 1);
-                sliderGrid.addWidget(&unit->nameLabel,row, col + 1, nUnitRows, 1);
-                attachSliderUnits(unit, row, col + 2, nUnitRows);
+                sliderGrid.addWidget(&unit->idLabel,row, col);
+                sliderGrid.addWidget(&unit->nameLabel,row, col + 1);
+                attachSliderUnits(unit, row, col + 2);
                 col += nUnitColumns;
                 if(col == nGridColumns){
                     col = 0;
-                    row += nUnitRows;
+                    row += 1;
                 }
             }
         }
@@ -538,17 +534,13 @@ void JointSliderViewImpl::updateSliderGrid()
 }
 
 
-void JointSliderViewImpl::attachSliderUnits(SliderUnit* unit, int row, int col, int nUnitRows)
+void JointSliderViewImpl::attachSliderUnits(SliderUnit* unit, int row, int col)
 {
-    sliderGrid.addWidget(&unit->spin, row, col, nUnitRows, 1);
+    sliderGrid.addWidget(&unit->spin, row, col);
     sliderGrid.addWidget(&unit->lowerLimitLabel,row, col + 1);
     sliderGrid.addWidget(&unit->slider, row, col + 2);
     sliderGrid.addWidget(&unit->upperLimitLabel,row, col + 3);
-    if(nUnitRows==1){
-        sliderGrid.addWidget(&unit->dial, row, col + 2);
-    } else {
-        sliderGrid.addWidget(&unit->dial, row+1, col + 2);
-    }
+    sliderGrid.addWidget(&unit->dial, row, col + 4);
 }
 
 

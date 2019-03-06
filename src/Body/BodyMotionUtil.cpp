@@ -15,21 +15,21 @@
 #include <cnoid/GaussianFilter>
 #include <cnoid/RangeLimiter>
 #include <cnoid/FileUtil>
-#include <boost/format.hpp>
+#include <fmt/format.h>
 #include <fstream>
 #include <vector>
 #include <limits>
 #include <cmath>
 #include <algorithm>
+#include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using boost::format;
+using fmt::format;
 namespace filesystem = boost::filesystem;
 
 static bool saveRootLinkAttAsRpyFormat(BodyMotion& motion, const std::string& filename, std::ostream& os)
 {
-    format f("%1$.4f %2$g %3$g %4$g\n");
     const MultiSE3SeqPtr& linkPosSeq = motion.linkPosSeq();
     const int nFrames = linkPosSeq->numFrames();
         
@@ -50,7 +50,7 @@ static bool saveRootLinkAttAsRpyFormat(BodyMotion& motion, const std::string& fi
                     rpy[j] = 0.0;
                 }
             }
-            ofs << (f % (i / r) % rpy[0] % rpy[1] % rpy[2]);
+            ofs << format("{0:.4f} {1:g} {2:g} {3:g}\n", (i / r), rpy[0], rpy[1], rpy[2]);
         }
             
         return true;
@@ -66,7 +66,6 @@ static bool saveRootLinkAccAsGsensFile(BodyMotion& motion, Body* body, const std
         return false;
     }
 
-    format f("%1$.4f %2$g %3$g %4$g\n");
     const MultiSE3SeqPtr& linkPosSeq = motion.linkPosSeq();
 
     AccelerationSensor* gsens = 0;
@@ -100,7 +99,7 @@ static bool saveRootLinkAccAsGsensFile(BodyMotion& motion, Body* body, const std
                     a[j] = 0.0;
                 }
             }
-            ofs << (f % (i / r) % a[0] % a[1] % a[2]);
+            ofs << format("{0:.4f} {1:g} {2:g} {3:g}\n", (i / r), a[0], a[1], a[2]);
         }
             
         return true;
@@ -423,8 +422,8 @@ static bool applyVelocityLimitFilterMain
             const double deltaUVLimit = joint->dq_upper() / frameRate;
             const double deltaLVLimit = joint->dq_lower() / frameRate;
             
-            os << str(format(" seq %1%: lower limit = %2%, upper limit = %3%")
-                      % i % joint->dq_lower() % joint->dq_upper()) << endl;
+            os << format(" seq {0}: lower limit = {1}, upper limit = {2}",
+                    i, joint->dq_lower(), joint->dq_upper()) << endl;
 
             if(usePollardMethod){
                 applyPollardVelocityLimitFilterSub(
@@ -465,8 +464,8 @@ void cnoid::applyGaussianFilter
     
     for(int i=0; i < seq.numParts(); ++i){
         if(i==0){
-            os << str(format("applying the gaussian filter (sigma = %1%, range = %2%) to seq") %
-                      sigma % range) << endl;
+            os << format(_("applying the gaussian filter (sigma = {0}, range = {1}) to seq"),
+                    sigma, range) << endl;
         }
         os << " " << i;
 
@@ -494,8 +493,8 @@ void cnoid::applyRangeLimitFilter
             const double upper = joint->q_upper() - margin;
             const double lower = joint->q_lower() + margin;
             if(upper > lower){
-                os << str(format(" seq %1%: lower limit = %2%, upper limit = %3%")
-                          % i % joint->q_lower() % joint->q_upper()) << endl;
+                os << format(" seq {0}: lower limit = {1}, upper limit = {2}",
+                        i, joint->q_lower(), joint->q_upper()) << endl;
 
                 MultiValueSeq::Part part = seq.part(i);
                 limiter.apply(part, upper, lower, limitGrad, edgeGradRatio);
