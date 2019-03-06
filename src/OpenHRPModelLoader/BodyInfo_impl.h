@@ -18,7 +18,7 @@
 namespace cnoid {
 
 class BodyInfo_impl : public virtual POA_OpenHRP::BodyInfo,
-                       public virtual ShapeSetInfo_impl
+                      public virtual ShapeSetInfo_impl
 {
 public:
 
@@ -59,4 +59,3 @@ private :
 }
 
 #endif
-

@@ -456,4 +456,3 @@ void BodyInfo_impl::setHwc(LinkInfo& linkInfo, Link& link)
     }
 
 }
-

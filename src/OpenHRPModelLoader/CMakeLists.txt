@@ -5,7 +5,7 @@ if(NOT BUILD_OPENHRP_MODEL_LOADER)
   return()
 endif()
 
-set(target openhrpModelLoader)
+set(target cnoid-openhrp-model-loader)
 
 set(sources
   ShapeSetInfo_impl.cpp

@@ -152,4 +152,3 @@ void ModelLoader_impl::shutdown()
     clearData();
     orb->shutdown(false);
 }
-
