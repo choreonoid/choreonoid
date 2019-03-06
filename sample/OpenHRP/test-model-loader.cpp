@@ -523,5 +523,3 @@ void dumpExtraJoint(const ExtraJointInfo& joint)
     dumpArray3(joint.point[0], "point0");
     dumpArray3(joint.point[1], "point1");
 }
-
-
