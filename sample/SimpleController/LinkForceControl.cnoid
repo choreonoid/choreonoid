@@ -93,7 +93,7 @@ items:
               data: 
                 isNoDelayMode: false
                 controllerOptions: "body"
-                controller: "LinkForceController.so"
+                controller: "LinkForceController"
                 baseDirectory: "Controller directory"
                 reloading: true
                 isOldTargetVariableMode: false

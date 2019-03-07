@@ -101,7 +101,7 @@ items:
               data: 
                 isNoDelayMode: true
                 controllerOptions: "2, 100"
-                controller: "HandyRockDrillController.so"
+                controller: "HandyRockDrillController"
                 baseDirectory: "Controller directory"
                 reloading: true
         - 

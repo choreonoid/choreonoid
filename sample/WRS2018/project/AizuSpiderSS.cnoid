@@ -41,7 +41,7 @@ items:
           data: 
             isNoDelayMode: false
             controllerOptions: ""
-            controller: "AizuSpiderController.so"
+            controller: "AizuSpiderController"
             baseDirectory: "Controller directory"
             reloading: true
           children: 
@@ -53,7 +53,7 @@ items:
               data: 
                 isNoDelayMode: false
                 controllerOptions: ""
-                controller: "Jaco2Controller.so"
+                controller: "Jaco2Controller"
                 baseDirectory: "Controller directory"
                 reloading: true
         - 

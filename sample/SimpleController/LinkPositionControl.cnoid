@@ -93,7 +93,7 @@ items:
               data: 
                 isNoDelayMode: true
                 controllerOptions: "body"
-                controller: "LinkPositionController.so"
+                controller: "LinkPositionController"
                 baseDirectory: "Controller directory"
                 reloading: true
                 isOldTargetVariableMode: false
