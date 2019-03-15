@@ -798,14 +798,16 @@ private:
 RTSCompExt2GItem::RTSCompExt2GItem(RTSCompExt2* rtsComp, RTSDiagramExt2ViewImpl* impl, const QPointF& pos, const int interval)
     : impl(impl), rtsComp(rtsComp)
 {
-    DDEBUG("RTSCompGItem::RTSCompGItem(RTSComp");
+    DDEBUG("RTSCompGItem::RTSCompGItem");
     effect = new QGraphicsOpacityEffect;
     effect->setOpacity(OPACITY);
     setGraphicsEffect(effect);
     if (!CORBA::is_nil(rtsComp->rtc_)) {
+        DDEBUG("RTSCompGItem::RTSCompGItem rtc NOT NULL");
         rtsComp->isAlive_ = true;
         effect->setEnabled(false);
     } else {
+        DDEBUG("RTSCompGItem::RTSCompGItem rtc NULL");
         rtsComp->isAlive_ = false;
         effect->setEnabled(true);
     }
@@ -1496,18 +1498,6 @@ void RTSDiagramExt2ViewImpl::createConnectionGItem
             sourceInfo,
             targetInfo);
 
-    //DDEBUG_V("SrcPort x:%f, y:%f, TrgPort x:%f, y:%f",
-    //    sourcePort->pos.x(), sourcePort->pos.y(),
-    //    targetPort->pos.x(), targetPort->pos.y());
-
-
-    //DDEBUG_V("SrcComp x:%f, y:%f, TrgComp x:%f, y:%f",
-    //    srcComp->rect->scenePos().x(), srcComp->rect->scenePos().y(),
-    //    trgComp->rect->scenePos().x(), trgComp->rect->scenePos().y());
-    //DDEBUG_V("SrcComp Height x:%f, y:%f, TrgPort x:%f, y:%f",
-    //    srcComp->rect->rect().top() - srcComp->rect->rect().bottom(), srcComp->rect->rect().right() - srcComp->rect->rect().left(),
-    //    trgComp->rect->rect().top() - trgComp->rect->rect().bottom(), trgComp->rect->rect().right() - trgComp->rect->rect().left());
-
     scene.addItem(gItem);
     rtsConnections[rtsConnection->id] = gItem;
     //DDEBUG("RTSDiagramViewImpl::createConnectionGItem End");
@@ -1520,35 +1510,6 @@ void RTSDiagramExt2ViewImpl::updateStatus()
         currentRTSItem->checkStatus();
     }
 }
-
-//void RTSDiagramExt2ViewImpl::onTime()
-//{
-//    //DDEBUG("RTSDiagramViewImpl::onTime");
-//    if (!currentRTSItem) {
-//        return;
-//    }
-//
-//    bool doConnectionCheck = true;
-//
-//    /**
-//       This is a temporary code to avoid a crach.
-//       The crach may be caused by the accesses to non-thread-safe objects
-//       of omniORB or OpenRTM from the main thread and simulation threads.
-//    */
-//    if (SimulatorItem::findActiveSimulatorItemFor(currentRTSItem)) {
-//        doConnectionCheck = false;
-//    }
-//
-//    if (doConnectionCheck) {
-//        if (currentRTSItem->checkStatus()) {
-//            updateView();
-//            updateRestoredView();
-//        }
-//    }
-//
-//    checkStatus();
-//}
-
 
 void RTSDiagramExt2ViewImpl::setCurrentRTSItem(RTSystemExt2Item* item)
 {
@@ -1589,8 +1550,18 @@ void RTSDiagramExt2ViewImpl::updateView()
         for (RTSystemExt2Item::RTSConnectionMap::iterator itr = connections.begin();
                 itr != connections.end(); itr++) {
             DDEBUG("RTSDiagramViewImpl::updateView find connection");
+            if(!itr->second) {
+              DDEBUG("itr->second is NULL");
+              continue;
+            }
+            
             if (rtsConnections.find(itr->second->id) == rtsConnections.end()) {
+                DDEBUG("RTSDiagramViewImpl::updateView connection NOT FOUND");
                 RTSConnectionExt2* rtsConnection = itr->second.get();
+                if(!rtsConnection) {
+                  DDEBUG("rtsConnection is NULL");
+                  continue;
+                }
                 RTSPortExt2GItem* source = rtsPortMap.find(rtsConnection->sourcePort)->second;
                 RTSPortExt2GItem* target = rtsPortMap.find(rtsConnection->targetPort)->second;
                 createConnectionGItem(rtsConnection, source, target);
@@ -1601,6 +1572,7 @@ void RTSDiagramExt2ViewImpl::updateView()
         setBackgroundBrush(QBrush(Qt::gray));
         setAcceptDrops(false);
     }
+    DDEBUG("RTSDiagramViewImpl::updateView End");
 }
 
 void RTSDiagramExt2ViewImpl::updateRestoredView()
@@ -1611,6 +1583,9 @@ void RTSDiagramExt2ViewImpl::updateRestoredView()
         for (auto it = rtsComps.begin(); it != rtsComps.end(); it++) {
             QPointF pos = it->second->pos();
             pos.setX(pos.x() + 1);
+            it->second->setPos(pos);
+            pos = it->second->pos();
+            pos.setX(pos.x() - 1);
             it->second->setPos(pos);
         }
     }

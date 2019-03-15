@@ -1588,6 +1588,7 @@ void RTSDiagramExtViewImpl::updateView()
             addRTSComp(itr->second.get());
         }
         RTSystemExtItem::RTSConnectionMap& connections = currentRTSItem->rtsConnections();
+        DDEBUG_V("con size : %d", currentRTSItem->rtsConnections().size());
         for (RTSystemExtItem::RTSConnectionMap::iterator itr = connections.begin();
                 itr != connections.end(); itr++) {
             DDEBUG("RTSDiagramViewImpl::updateView find connection");
@@ -1613,6 +1614,8 @@ void RTSDiagramExtViewImpl::updateRestoredView()
         for (auto it = rtsComps.begin(); it != rtsComps.end(); it++) {
             QPointF pos = it->second->pos();
             pos.setX(pos.x() + 1);
+            it->second->setPos(pos);
+            pos.setX(pos.x() - 1);
             it->second->setPos(pos);
         }
     }

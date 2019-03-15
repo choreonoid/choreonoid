@@ -132,13 +132,11 @@ private:
 RTSPortExt2::RTSPortExt2(const string& name_, PortService_var port_, RTSCompExt2* parent)
     : rtsComp(parent), isConnected_(false)
 {
-    DDEBUG("RTSPortExt2::RTSPortExt2");
     isInPort = true;
     name = name_;
     port = port_;
     //
-    if (port) {
-        DDEBUG("RTSPortExt2::RTSPortExt2 Port ALIVE");
+    if (port && isObjectAlive(port)) {
         RTC::PortProfile_var profile = port->get_port_profile();
         RTC::PortInterfaceProfileList interfaceList = profile->interfaces;
         for (CORBA::ULong index = 0; index < interfaceList.length(); ++index) {
@@ -170,7 +168,7 @@ RTSPortExt2::RTSPortExt2(const string& name_, PortService_var port_, RTSCompExt2
 
 
 RTSPortExt2Ptr RTSPortExt2::copyForChecking() {
-  DDEBUG("RTSPortExt2::copyForChecking");
+  //DDEBUG("RTSPortExt2::copyForChecking");
   RTSPortExt2Ptr result = new RTSPortExt2(this->name, this->port, this->rtsComp);
   result->isServicePort = this->isServicePort;
   result->isInPort = this->isInPort;
@@ -192,12 +190,13 @@ bool RTSPortExt2::checkConnected()
 
 bool RTSPortExt2::isConnectedWith(RTSPortExt2* target)
 {
-    if (!port || !target->port ||
-       CORBA::is_nil(port) || port->_non_existent() ||
-       CORBA::is_nil(target->port) || target->port->_non_existent()) {
+    DDEBUG("RTSPort::isConnectedWith");
+    if( !cnoid::isObjectAlive(port) || !cnoid::isObjectAlive(target->port)) {
+        DDEBUG("RTSPort::isConnectedWith False");
         return false;
     }
 
+    DDEBUG("RTSPort::isConnectedWith Check");
     ConnectorProfileList_var connectorProfiles = port->get_connector_profiles();
 
     for (CORBA::ULong i = 0; i < connectorProfiles->length(); ++i) {
@@ -206,11 +205,13 @@ bool RTSPortExt2::isConnectedWith(RTSPortExt2* target)
         for (CORBA::ULong j = 0; j < connectedPorts.length(); ++j) {
             PortService_ptr connectedPortRef = connectedPorts[j];
             if (connectedPortRef->_is_equivalent(target->port)) {
+                DDEBUG("RTSPort::isConnectedWith True");
                 return true;
             }
         }
     }
 
+    DDEBUG("RTSPort::isConnectedWith False");
     return false;
 }
 
@@ -313,18 +314,20 @@ RTSConnectionExt2::RTSConnectionExt2(const string& id, const string& name,
     isAlive_ = false;
 }
 
-RTSConnectionExt2Ptr RTSConnectionExt2::copyForChecking() {
-  RTSConnectionExt2Ptr result = new RTSConnectionExt2(
+RTSConnectionExt2Ptr RTSConnectionExt2::copyForChecking()
+{
+    DDEBUG("RTSConnectionExt2::copyForChecking");
+    RTSConnectionExt2Ptr result = new RTSConnectionExt2(
                                   this->id, this->name,
                                   this->sourceRtcName, this->sourcePortName,
                                   this->targetRtcName, this->targetRtcName);
-  result->srcRTC = this->srcRTC;
-  result->sourcePort = this->sourcePort;
-  result->targetRTC = this->targetRTC;
-  result->targetPort = this->targetPort;
-  result->isAlive_ = this->isAlive_;
+    result->srcRTC = this->srcRTC;
+    result->sourcePort = this->sourcePort;
+    result->targetRTC = this->targetRTC;
+    result->targetPort = this->targetPort;
+    result->isAlive_ = this->isAlive_;
 
-  return result;
+    return result;
 }
 
 bool RTSConnectionExt2::connect()
@@ -419,6 +422,8 @@ RTSCompExt2Ptr RTSCompExt2::copyForChecking() {
                           this->hostAddress, this->portNo, this->isDefaultNS);
   result->rtc_ = this->rtc_;
   result->orgComp_ = this;
+  result->rtc_status_ = this->rtc_status_;
+  result->isAlive_ = this->isAlive_;
 
   if (!isObjectAlive(this->rtc_)) {
     DDEBUG("RTSCompExt2::copyForChecking RTC NOT ALIVE");
@@ -426,14 +431,12 @@ RTSCompExt2Ptr RTSCompExt2::copyForChecking() {
 
     result->inPorts.clear();
     for (auto it = this->inPorts.begin(); it != this->inPorts.end(); it++) {
-      (*it)->port = 0;
-      RTSPortExt2* port = (*it)->copyForChecking();
+      RTSPortExt2Ptr port = (*it)->copyForChecking();
       result->inPorts.push_back(port);
     }
     result->outPorts.clear();
     for (auto it = this->outPorts.begin(); it != this->outPorts.end(); it++) {
-      (*it)->port = 0;
-      RTSPortExt2* port = (*it)->copyForChecking();
+      RTSPortExt2Ptr port = (*it)->copyForChecking();
       result->outPorts.push_back(port);
     }
 
@@ -441,8 +444,6 @@ RTSCompExt2Ptr RTSCompExt2::copyForChecking() {
     DDEBUG("RTSCompExt2::copyForChecking RTC ALIVE");
     result->ownedExeContList_ = this->ownedExeContList_;
     result->activeIndex_ = this->activeIndex_;
-    result->rtc_status_ = this->rtc_status_;
-    result->isAlive_ = this->isAlive_;
 
     result->inPorts.clear();
     for (auto it = this->inPorts.begin(); it != this->inPorts.end(); it++) {
@@ -453,6 +454,7 @@ RTSCompExt2Ptr RTSCompExt2::copyForChecking() {
       result->outPorts.push_back((*it)->copyForChecking());
     }
   }
+  DDEBUG("RTSCompExt2::copyForChecking End");
   return result;
 }
 
@@ -476,6 +478,7 @@ void RTSCompExt2::setRtc(RTObject_ptr rtc)
             RTSPortExt2* port = *it;
             port->port = 0;
         }
+        isAlive_ = false;
         DDEBUG("RTSComp::setRtc Failed");
         return;
     }
@@ -523,6 +526,7 @@ void RTSCompExt2::setRtc(RTObject_ptr rtc)
     }
 
     connectionCheck();
+    isAlive_ = true;
     DDEBUG("RTSComp::setRtc End");
 }
 
@@ -1013,11 +1017,16 @@ void RTSystemExt2ItemImpl::deleteRTSComp(const string& name)
 bool RTSystemExt2ItemImpl::compIsAliveForChecking(RTSCompExt2* rtsComp)
 {
     DDEBUG("RTSystemItemImpl::compIsAliveForChecking");
+    rtsComp->isSetRtc_ = false;
+    rtsComp->rtcCheck_ = 0;
     if (rtsComp->isAlive_ && rtsComp->rtc_ && rtsComp->rtc_ != nullptr) {
         if (isObjectAlive(rtsComp->rtc_)) {
+            rtsComp->isAlive_ = true;
             return true;
         } else {
-            rtsComp->setRtc(nullptr);
+            rtsComp->isSetRtc_ = true;
+            rtsComp->rtcCheck_ = nullptr;
+            rtsComp->isAlive_ = false;
             return false;
         }
     } else {
@@ -1047,8 +1056,12 @@ bool RTSystemExt2ItemImpl::compIsAliveForChecking(RTSCompExt2* rtsComp)
         NameServerManager::instance()->getNCHelper()->setLocation(host, port);
         RTC::RTObject_ptr rtc = NameServerManager::instance()->getNCHelper()->findObject<RTC::RTObject>(pathList);
         if (!isObjectAlive(rtc)) {
+            rtsComp->isAlive_ = false;
             return false;
         } else {
+            rtsComp->isSetRtc_ = true;
+            rtsComp->rtcCheck_ = rtc;
+            rtsComp->isAlive_ = true;
             return true;
         }
     }
@@ -1374,43 +1387,54 @@ void RTSystemExt2ItemImpl::statusChecking()
 
     DDEBUG("RTSystemExt2ItemImpl::statusChecking start");
     for (auto it = rtsCompsCheck.begin(); it != rtsCompsCheck.end(); it++) {
-        RTSCompExt2* targetComp = it->second;
         if (compIsAliveForChecking(it->second)) {
             if (!it->second->isAlive_) {
+              DDEBUG("RTSystemExt2ItemImpl::statusChecking 1");
               modifed_ = true;
             }
-            it->second->isAlive_ = true;
-            RTC_STATUS status = it->second->getRTCState();
+            RTC_STATUS status;
+            if (it->second->isSetRtc_) {
+                status = RTC_UNKNOWN;
+            } else {
+                status = it->second->getRTCState();
+            }
             DDEBUG_V("RTC State : %d, %d", it->second->rtc_status_, status);
             if (status != it->second->rtc_status_) {
+              DDEBUG("RTSystemExt2ItemImpl::statusChecking 2");
               modifed_ = true;
               it->second->rtc_status_ = status;
             }
         } else {
             if (it->second->isAlive_) {
+                DDEBUG("RTSystemExt2ItemImpl::statusChecking 3");
                 modifed_ = true;
             }
-            it->second->isAlive_ = false;
         }
     }
     ///
+    DDEBUG("RTSystemExt2ItemImpl::statusChecking rtsConnectionsCheck");
     for (auto it = rtsConnectionsCheck.begin(); it != rtsConnectionsCheck.end(); it++) {
         const RTSystemExt2Item::RTSPortPair& ports = it->first;
+
         if (ports(0)->isConnectedWith(ports(1))) {
             if (!it->second->isAlive_) {
                 it->second->isAlive_ = true;
+                DDEBUG("RTSystemExt2ItemImpl::statusChecking 4");
                 modifed_ = true;
             }
         } else {
             if (it->second->isAlive_) {
                 it->second->isAlive_ = false;
+                DDEBUG("RTSystemExt2ItemImpl::statusChecking 5");
                 modifed_ = true;
             }
         }
     }
 
+    DDEBUG("RTSystemExt2ItemImpl::statusChecking rtsCompsCheck");
     for (auto it = rtsCompsCheck.begin(); it != rtsCompsCheck.end(); it++) {
         if (it->second->connectionCheckForChecking()) {
+              DDEBUG("RTSystemExt2ItemImpl::statusChecking 6");
             modifed_ = true;
         }
     }
@@ -1419,65 +1443,80 @@ void RTSystemExt2ItemImpl::statusChecking()
     callLater([&](){ restoreForStatusChecking(); });
 }
 
-void RTSystemExt2ItemImpl::copyForStatusChecking() {
+void RTSystemExt2ItemImpl::copyForStatusChecking()
+{
     DDEBUG("RTSystemExt2ItemImpl::copyForStatusChecking");
     rtsCompsCheck.clear();
     for (auto it = rtsComps.begin(); it != rtsComps.end(); it++) {
-      rtsCompsCheck[it->first] = it->second->copyForChecking();
+        if(it->second) rtsCompsCheck[it->first] = it->second->copyForChecking();
     }
     rtsConnectionsCheck.clear();
     for (auto it = rtsConnections.begin(); it != rtsConnections.end(); it++) {
-      rtsConnectionsCheck[it->first] = it->second->copyForChecking();
+        if(it->second) rtsConnectionsCheck[it->first] = it->second->copyForChecking();
     }
     rtsConnectionsAdded.clear();
+    DDEBUG("RTSystemExt2ItemImpl::copyForStatusChecking End");
 }
 
-void RTSystemExt2ItemImpl::restoreForStatusChecking() {
+void RTSystemExt2ItemImpl::restoreForStatusChecking()
+{
+    DDEBUG("RTSystemExt2ItemImpl::restoreForStatusChecking");
     for (auto it = rtsCompsCheck.begin(); it != rtsCompsCheck.end(); it++) {
-      RTSCompExt2Ptr targetComp = rtsComps[it->first];
-      if (targetComp) {
-        RTSCompExt2Ptr sourceComp = rtsCompsCheck[it->first];
-        targetComp->rtc_status_ = sourceComp->rtc_status_;
-        //
-        for (auto itTarget = targetComp->inPorts.begin(); itTarget != targetComp->inPorts.end(); itTarget++) {
-          for (auto itSource = sourceComp->inPorts.begin(); itSource != sourceComp->inPorts.end(); itSource++) {
-            if ((*itSource)->name == (*itTarget)->name) {
-              (*itTarget)->isConnected_ = (*itSource)->checkConnected();
-              DDEBUG_V("InPort %s,%d", (*itTarget)->name.c_str(), (*itTarget)->isConnected_);
-              break;
+        RTSCompExt2Ptr targetComp = rtsComps[it->first];
+        if (targetComp) {
+            RTSCompExt2Ptr sourceComp = rtsCompsCheck[it->first];
+            targetComp->rtc_status_ = sourceComp->rtc_status_;
+            if (sourceComp->isSetRtc_) {
+                targetComp->setRtc(sourceComp->rtcCheck_);
+                if (autoConnection) {
+                    list<RTSConnectionExt2*> rtsConnectionList;
+                    RTSCompToConnectionList(targetComp, rtsConnectionList, 0);
+                    for (auto it = rtsConnectionList.begin(); it != rtsConnectionList.end(); it++) {
+                        auto connection = *it;
+                        connection->connect();
+                    }
+                    DDEBUG("autoConnection End");
+                }
             }
-          }
-        }
-        for (auto itTarget = targetComp->outPorts.begin(); itTarget != targetComp->outPorts.end(); itTarget++) {
-          for (auto itSource = sourceComp->outPorts.begin(); itSource != sourceComp->outPorts.end(); itSource++) {
-            if ((*itSource)->name == (*itTarget)->name) {
-              (*itTarget)->isConnected_ = (*itSource)->checkConnected();
-              DDEBUG_V("OutPort %s,%d", (*itTarget)->name.c_str(), (*itTarget)->isConnected_);
-              break;
+            //
+            for (auto itTarget = targetComp->inPorts.begin(); itTarget != targetComp->inPorts.end(); itTarget++) {
+                for (auto itSource = sourceComp->inPorts.begin(); itSource != sourceComp->inPorts.end(); itSource++) {
+                    if ((*itSource)->name == (*itTarget)->name) {
+                        (*itTarget)->isConnected_ = (*itSource)->checkConnected();
+                        DDEBUG_V("InPort %s,%d", (*itTarget)->name.c_str(), (*itTarget)->isConnected_);
+                        break;
+                    }
+                }
             }
-          }
+            for (auto itTarget = targetComp->outPorts.begin(); itTarget != targetComp->outPorts.end(); itTarget++) {
+                for (auto itSource = sourceComp->outPorts.begin(); itSource != sourceComp->outPorts.end(); itSource++) {
+                    if ((*itSource)->name == (*itTarget)->name) {
+                        (*itTarget)->isConnected_ = (*itSource)->checkConnected();
+                        DDEBUG_V("OutPort %s,%d", (*itTarget)->name.c_str(), (*itTarget)->isConnected_);
+                        break;
+                    }
+                }
+            }
         }
-      }
     }
     //
     for (auto it = rtsConnectionsCheck.begin(); it != rtsConnectionsCheck.end(); it++) {
-      RTSConnectionExt2Ptr targetConn = rtsConnections[it->first];
-      if (targetConn) {
-        RTSConnectionExt2Ptr sourceConn = rtsConnectionsCheck[it->first];
-        targetConn->isAlive_ = sourceConn->isAlive_;
-      }
+        if (0 < rtsConnections.count(it->first)) {
+            RTSConnectionExt2Ptr targetConn = rtsConnections[it->first];
+            RTSConnectionExt2Ptr sourceConn = rtsConnectionsCheck[it->first];
+            targetConn->isAlive_ = sourceConn->isAlive_;
+        }
     }
     for (auto it = rtsConnectionsAdded.begin(); it != rtsConnectionsAdded.end(); it++) {
-      rtsConnections[it->first] = it->second;
+        rtsConnections[it->first] = it->second;
     }
 
-    DDEBUG_V("RTSystemExt2ItemImpl::checkStatus End : %d", modifed_);
     sigStatusUpdate(modifed_);
 
     isStatusChecking = false;
 
 #ifdef CONTINUOUS_CHECK
-    if(doStatusChecking) {
+    if (doStatusChecking) {
         doStatusChecking = false;
         checkStatus();
     }

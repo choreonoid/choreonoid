@@ -41,7 +41,7 @@ option(ENABLE_NEW_RT_SYSTEM_ITEM_IMPLEMENTATION "Enable the new implementation o
 option(ENABLE_BACKGROUND_STATE_DETECTION "Enable background state detection" OFF)
 if(ENABLE_NEW_RT_SYSTEM_ITEM_IMPLEMENTATION)
   add_definitions(-DENABLE_NEW_RT_SYSTEM_ITEM_IMPLEMENTATION)
-if(ENABLE_NEW_RT_SYSTEM_ITEM_IMPLEMENTATION)
+if(ENABLE_BACKGROUND_STATE_DETECTION)
   add_definitions(-DENABLE_BACKGROUND_STATE_DETECTION)
   set(plugin_sources ${plugin_sources}
     RTSystemExt2Item.cpp

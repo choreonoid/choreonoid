@@ -151,6 +151,8 @@ public:
     RTC_STATUS rtc_status_;
 
     RTSCompExt2Ptr orgComp_;
+    bool isSetRtc_;
+    RTC::RTObject_ptr rtcCheck_;
 
     RTSCompExt2(const std::string& name, const std::string& fullPath, RTC::RTObject_ptr rtc, RTSystemExt2Item* rts, const QPointF& pos, const std::string& host, int port, bool isDefault);
     RTSystemExt2Item* rts() { return rts_; }
