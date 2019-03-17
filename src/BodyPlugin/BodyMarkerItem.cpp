@@ -11,12 +11,12 @@
 #include <cnoid/SceneMarkers>
 #include <cnoid/Archive>
 #include <cnoid/EigenArchive>
-#include <boost/format.hpp>
+#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using boost::format;
+using fmt::format;
 
 namespace {
 
@@ -246,18 +246,18 @@ bool BodyMarkerItemImpl::updateTarget()
             targetLink = bodyItem->body()->link(targetLinkName);
             if(!targetLink){
                 isValid = false;
-                mv->putln(MessageView::WARNING,
-                          format(_("Target link \"%1%\" of \"%2%\" is not found."))
-                          % targetLinkName % self->name());
+                mv->putln(
+                    format(_("Target link \"{0}\" of \"{1}\" is not found."), targetLinkName, self->name()),
+                    MessageView::WARNING);
             }
         }
         if(isValid && !targetNodeName.empty()){
             if(!findNode()){
                 targetLink = nullptr;
                 isValid = false;
-                mv->putln(MessageView::WARNING,
-                          format(_("Target node \"%1%\" of \"%2%\" is not found."))
-                          % targetNodeName % self->name());
+                mv->putln(
+                    format(_("Target node \"{0}\" of \"{1}\" is not found."), targetNodeName, self->name()),
+                    MessageView::WARNING);
             }
         }
         if(isValid){

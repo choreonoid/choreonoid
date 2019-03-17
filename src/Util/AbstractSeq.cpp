@@ -5,13 +5,13 @@
 
 #include "AbstractSeq.h"
 #include "YAMLWriter.h"
-#include <boost/format.hpp>
+#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
 
-using boost::format;
+using fmt::format;
 
 namespace {
 
@@ -134,7 +134,7 @@ bool AbstractSeq::readSeq(const Mapping* archive, std::ostream& os)
 
 bool AbstractSeq::doReadSeq(const Mapping*, std::ostream& os)
 {
-    os << format(_("The function to read %1% is not implemented.")) % seqType() << endl;
+    os << format(_("The function to read {} is not implemented."), seqType()) << endl;
     return false;
 }
 
@@ -151,7 +151,7 @@ bool AbstractSeq::doWriteSeq(YAMLWriter& writer, std::function<void()> additiona
         if(contentName_.empty()){
             writer.putMessage(_("The type of the sequence to write is unknown.\n"));
         } else {
-            writer.putMessage(str(format(_("The type of the %1% sequence to write is unknown.\n")) % contentName_));
+            writer.putMessage(format(_("The type of the {} sequence to write is unknown.\n"), contentName_));
         }
         return false;
     }
@@ -159,8 +159,8 @@ bool AbstractSeq::doWriteSeq(YAMLWriter& writer, std::function<void()> additiona
     const double frameRate = getFrameRate();
     if(frameRate <= 0.0){
         writer.putMessage(
-            str(format(_("Frame rate %1% of %2% is invalid.\n"))
-                % frameRate % (contentName_.empty() ? seqType_ : contentName_)));
+            format(_("Frame rate {0} of {1} is invalid.\n"),
+                   frameRate, (contentName_.empty() ? seqType_ : contentName_)));
         return false;
     }
 

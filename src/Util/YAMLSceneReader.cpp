@@ -17,8 +17,8 @@
 #include <cnoid/Exception>
 #include <cnoid/ImageIO>
 #include <cnoid/Config>
-#include <boost/format.hpp>
 #include <unordered_map>
+#include <fmt/format.h>
 #include <mutex>
 
 #ifdef CNOID_USE_BOOST_REGEX
@@ -35,7 +35,7 @@ using boost::regex_match;
 using namespace std;
 using namespace cnoid;
 namespace filesystem = boost::filesystem;
-using boost::format;
+using fmt::format;
 
 namespace {
 
@@ -445,10 +445,10 @@ SgNode* YAMLSceneReaderImpl::readNode(Mapping& info, const string& type)
     NodeFunctionMap::iterator q = nodeFunctionMap.find(type);
     if(q == nodeFunctionMap.end()){
         if(info.get("isOptional", false)){
-            os() << format(_("Warning: the node type \"%1%\" is not defined. Reading this node has been skipped.")) % type << endl;
+            os() << format(_("Warning: the node type \"{}\" is not defined. Reading this node has been skipped."), type) << endl;
             return nullptr;
         }
-        info.throwException(str(format(_("The node type \"%1%\" is not defined.")) % type));
+        info.throwException(format(_("The node type \"{}\" is not defined."), type));
     }
 
     NodeFunction funcToReadNode = q->second;
@@ -514,8 +514,8 @@ void YAMLSceneReaderImpl::readNodeList(ValueNode& elements, SgGroup* group)
                 string type2 = typeNode->toString();
                 if(type2 != type){
                     element.throwException(
-                        str(format(_("The node type \"%1%\" is different from the type \"%2%\" specified in the parent node"))
-                            % type2 % type));
+                        format(_("The node type \"{0}\" is different from the type \"{1}\" specified in the parent node"),
+                                type2, type));
                 }
             }
             SgNodePtr scene = readNode(element, type);
@@ -648,7 +648,7 @@ SgMesh* YAMLSceneReaderImpl::readGeometry(Mapping& info)
         mesh = readResourceAsGeometry(info);
     } else {
         typeNode.throwException(
-            str(format(_("Unknown geometry \"%1%\"")) % type));
+            format(_("Unknown geometry \"{}\""), type));
     }
     return mesh;
 }
@@ -1151,7 +1151,7 @@ void YAMLSceneReaderImpl::extractNamedYamlNodes
         auto node = info->yamlReader->findAnchoredNode(name);
         if(!node){
             resourceNode.throwException(
-                str(format(_("Node \"%1%\" is not found in \"%2%\".")) % name % uri));
+                format(_("Node \"{0}\" is not found in \"{1}\"."), name, uri));
         }
         if(group){
             group->append(node);
@@ -1180,7 +1180,7 @@ void YAMLSceneReaderImpl::extractNamedSceneNodes
         auto iter = nodeMap->find(name);
         if(iter == nodeMap->end()){
             resourceNode.throwException(
-                str(format(_("Node \"%1%\" is not found in \"%2%\".")) % name % uri));
+                format(_("Node \"{0}\" is not found in \"{1}\"."), name, uri));
         } else {
             SceneNodeInfo& nodeInfo = iter->second;
             if(nodeInfo.parent){
@@ -1247,7 +1247,7 @@ ResourceInfo* YAMLSceneReaderImpl::getOrCreateResourceInfo(Mapping& resourceNode
                 auto iter = uriSchemeHandlerMap.find(scheme);
                 if(iter == uriSchemeHandlerMap.end()){
                     resourceNode.throwException(
-                        str(format(_("The \"%1%\" scheme of \"%2%\" is not available")) % scheme % uri));
+                        format(_("The \"{0}\" scheme of \"{1}\" is not available"), scheme, uri));
                 } else {
                     auto& handler = iter->second;
                     filepath = handler(match.str(2), os());
@@ -1266,7 +1266,7 @@ ResourceInfo* YAMLSceneReaderImpl::getOrCreateResourceInfo(Mapping& resourceNode
     
     if(filepath.empty()){
         resourceNode.throwException(
-            str(format(_("The resource URI \"%1%\" is not valid")) % uri));
+            format(_("The resource URI \"{}\" is not valid"), uri));
     }
 
     ResourceInfoPtr info = new ResourceInfo;
@@ -1280,8 +1280,8 @@ ResourceInfo* YAMLSceneReaderImpl::getOrCreateResourceInfo(Mapping& resourceNode
         reader->importAnchors(*mainYamlReader);
         if(!reader->load(filename)){
             resourceNode.throwException(
-                str(format(_("YAML resource \"%1%\" cannot be loaded (%2%)"))
-                    % uri % reader->errorMessage()));
+                format(_("YAML resource \"{0}\" cannot be loaded ({1})"),
+                 uri, reader->errorMessage()));
         }
         info->yamlReader.reset(reader);
 
@@ -1289,7 +1289,7 @@ ResourceInfo* YAMLSceneReaderImpl::getOrCreateResourceInfo(Mapping& resourceNode
         SgNodePtr scene = sceneLoader.load(filename);
         if(!scene){
             resourceNode.throwException(
-                str(format(_("The resource is not found at URI \"%1%\"")) % uri));
+                format(_("The resource is not found at URI \"{}\""), uri));
         }
         info->scene = scene;
     }

@@ -13,6 +13,7 @@
 #include <cnoid/MessageView>
 #include <cnoid/InfoBar>
 #include <cnoid/Dialog>
+#include <fmt/format.h>
 #include <QDialogButtonBox>
 #include <QHeaderView>
 #include <QMouseEvent>
@@ -24,6 +25,7 @@
 using namespace std;
 using namespace std::placeholders;
 using namespace cnoid;
+using fmt::format;
 
 namespace {
 const bool TRACE_FUNCTIONS = false;
@@ -1423,7 +1425,7 @@ void PoseSeqViewBase::onFlipPosesActivated()
 void PoseSeqViewBase::countSelectedKeyPoses()
 {
     MessageView::mainInstance()->notify(
-        fmt(_("The number of selected key poses is %1%")) % selectedPoseIters.size());
+        format(_("The number of selected key poses is {}"), selectedPoseIters.size()));
 }
 
 

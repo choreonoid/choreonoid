@@ -14,7 +14,6 @@
 using namespace std;
 using namespace std::placeholders;
 using namespace cnoid;
-using boost::format;
 
 void
 TCSimulatorItem::initializeClass(ExtensionManager* ext)

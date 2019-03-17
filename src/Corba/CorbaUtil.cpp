@@ -3,14 +3,14 @@
 */
 
 #include "CorbaUtil.h"
-#include <boost/format.hpp>
+#include <fmt/format.h>
 
 #include <iterator>
 #include <iostream>
 
 using namespace std;
 using namespace cnoid;
-using boost::format;
+using fmt::format;
 
 namespace {
 
@@ -87,7 +87,7 @@ void cnoid::initializeCorbaUtil(bool activatePOAManager, int listeningPort)
 
     string endpoint;
     if (listeningPort >= 0) {
-        endpoint = str(format("giop:tcp::%1%") % listeningPort);
+        endpoint = format("giop:tcp::{}", listeningPort);
         argv[argc++] = (char*)"-ORBendPoint";
         argv[argc++] = (char*)endpoint.c_str();
         argv[argc++] = (char*)"-ORBpoaUniquePersistentSystemIds";
@@ -137,7 +137,7 @@ void NamingContextHelper::setLocation(const std::string& host, int port)
     }
     host_ = host;
     port_ = port;
-    namingContextLocation = str(format("corbaloc:iiop:%1%:%2%/NameService") % host % port);
+    namingContextLocation = format("corbaloc:iiop:{0}:{1}/NameService", host, port);
     namingContext = CosNaming::NamingContext::_nil();
 }
 
@@ -189,11 +189,11 @@ bool NamingContextHelper::checkOrUpdateNamingContext()
         omniORB::setClientCallTimeout(namingContext, 150);
 
         if (CORBA::is_nil(namingContext)) {
-            errorMessage_ = str(format("The object at %1% is not a NamingContext object.") % namingContextLocation);
+            errorMessage_ = format("The object at {} is not a NamingContext object.", namingContextLocation);
             failedInLastAccessToNamingContext = true;
         }
     } catch (CORBA::SystemException& ex) {
-        errorMessage_ = str(format("A NameService doesn't exist at \"%1%\".") % namingContextLocation);
+        errorMessage_ = format("A NameService doesn't exist at \"{}\".", namingContextLocation);
         namingContext = CosNaming::NamingContext::_nil();
         failedInLastAccessToNamingContext = true;
     }
@@ -226,7 +226,7 @@ CORBA::Object_ptr NamingContextHelper::findObjectSub(std::vector<ObjectPath>& pa
             obj = namingContext->resolve(ncName);
 
         } catch (const CosNaming::NamingContext::NotFound &ex) {
-            errorMessage_ = str(format("\"%1%\" is not found: ") % fullName);
+            errorMessage_ = format("\"{}\" is not found: ", fullName);
             switch (ex.why) {
             case CosNaming::NamingContext::missing_node:
                 errorMessage_ += "Missing Node";
@@ -243,13 +243,13 @@ CORBA::Object_ptr NamingContextHelper::findObjectSub(std::vector<ObjectPath>& pa
             }
 
         } catch (CosNaming::NamingContext::CannotProceed &exc) {
-            errorMessage_ = str(format("Resolving \"%1%\" cannot be proceeded.") % fullName);
+            errorMessage_ = format("Resolving \"{}\" cannot be proceeded.", fullName);
 
         } catch (CosNaming::NamingContext::AlreadyBound &exc) {
-            errorMessage_ = str(format("\"%1%\" has already been bound.") % fullName);
+            errorMessage_ = format("\"{}\" has already been bound.", fullName);
 
         } catch (const CORBA::TRANSIENT &) {
-            errorMessage_ = str(format("Resolving \"%1% \" failed with the TRANSIENT exception.") % fullName);
+            errorMessage_ = format("Resolving \"{}\" failed with the TRANSIENT exception.", fullName);
         }
     }
 
@@ -454,5 +454,5 @@ std::string NamingContextHelper::getRootIOR()
 
 void NamingContextHelper::putExceptionMessage(CORBA::SystemException& ex)
 {
-    os() << format("CORBA %1% (%2%), %3%.") %  ex._name() % ex._rep_id() % ex.NP_minorString() << endl;
+    os() << format("CORBA {0} ({1}), {2}.", ex._name(), ex._rep_id(), ex.NP_minorString()) << endl;
 }

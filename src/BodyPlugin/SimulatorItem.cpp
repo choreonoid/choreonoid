@@ -35,6 +35,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <set>
+#include <fmt/format.h>
 
 #ifdef ENABLE_SIMULATION_PROFILING
 #include <cnoid/ViewManager>
@@ -52,7 +53,7 @@ typedef QTime QElapsedTimer;
 
 using namespace std;
 using namespace cnoid;
-using boost::format;
+using fmt::format;
 
 namespace {
 
@@ -1474,8 +1475,9 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
     stopSimulation(true);
 
     if(!worldItem){
-        mv->putln(MessageView::ERROR,
-                  format(_("%1% must be in a WorldItem to do simulation.")) % self->name());
+        mv->putln(format(_("{} must be in a WorldItem to do simulation."),
+                         self->name()),
+                  MessageView::ERROR);
         return false;
     }
 
@@ -1591,15 +1593,16 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
             SubSimulatorItem* item = *p;
             bool initialized = false;
             if(item->isEnabled()){
-                mv->putln(format(_("SubSimulatorItem \"%1%\" has been detected.")) % item->name());
+                mv->putln(format(_("SubSimulatorItem \"{}\" has been detected."), item->name()));
                 if(item->initializeSimulation(self)){
                     initialized = true;
                 } else {
-                    mv->putln(MessageView::WARNING,
-                              format(_("The initialization of \"%1%\" failed.")) % item->name());
+                    mv->putln(format(_("The initialization of \"{}\" failed."),
+                                     item->name()),
+                              MessageView::WARNING);
                 }
             } else {
-                mv->putln(format(_("SubSimulatorItem \"%1%\" is disabled.")) % item->name());
+                mv->putln(format(_("SubSimulatorItem \"{}\" is disabled."), item->name()));
             }
             if(initialized){
                 ++p;
@@ -1620,15 +1623,16 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
                 if(body){
                     ready = controller->start();
                     if(!ready){
-                        mv->putln(MessageView::WARNING,
-                                  format(_("%1% for %2% failed to start."))
-                                  % controller->name() % simBodyImpl->bodyItem->name());
+                        mv->putln(format(_("{0} for {1} failed to start."),
+                                         controller->name(), simBodyImpl->bodyItem->name()),
+                                  MessageView::WARNING);
                     }
                 } else {
                     ready = controller->start();
                     if(!ready){
-                        mv->putln(MessageView::WARNING,
-                                  format(_("%1% failed to start.")) % controller->name());
+                        mv->putln(format(_("{} failed to start."),
+                                         controller->name()),
+                                  MessageView::WARNING);
                     }
                 }
                 if(ready){
@@ -1667,9 +1671,9 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
             if(worldLogFileItem->logFile().empty()){
                 worldLogFileItem = nullptr;
             } else {
-                mv->putln(format(_("WorldLogFileItem \"%1%\" has been detected. "
-                                   "A simulation result is recoreded to \"%2%\"."))
-                          % worldLogFileItem->name() % worldLogFileItem->logFile());
+                mv->putln(format(_("WorldLogFileItem \"{0}\" has been detected. "
+                                   "A simulation result is recoreded to \"{1}\"."),
+                                 worldLogFileItem->name(), worldLogFileItem->logFile()));
 
                 worldLogFileItem->clearOutput();
                 worldLogFileItem->beginHeaderOutput();
@@ -1725,7 +1729,7 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
         start();
         flushTimer.start(1000.0 / timeBar->playbackFrameRate());
 
-        mv->notify(format(_("Simulation by %1% has started.")) % self->name());
+        mv->notify(format(_("Simulation by {} has started."), self->name()));
 
         sigSimulationStarted();
     }
@@ -2278,9 +2282,9 @@ void SimulatorItemImpl::onSimulationLoopStopped()
         timeBar->stopFillLevelUpdate(fillLevelId);
     }
 
-    mv->notify(format(_("Simulation by %1% has finished at %2% [s].")) % self->name() % finishTime);
-    mv->putln(format(_("Computation time is %1% [s], computation time / simulation time = %2%."))
-              % actualSimulationTime % (actualSimulationTime / finishTime));
+    mv->notify(format(_("Simulation by {0} has finished at {1} [s]."), self->name(), finishTime));
+    mv->putln(format(_("Computation time is {0} [s], computation time / simulation time = {1}."),
+                     actualSimulationTime, (actualSimulationTime / finishTime)));
 
     clearSimulation();
 

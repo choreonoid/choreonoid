@@ -1,10 +1,10 @@
 #include <cnoid/SimpleController>
 #include <cnoid/SharedJoystick>
-#include <boost/format.hpp>
+#include <fmt/format.h>
 
 using namespace std;
 using namespace cnoid;
-using boost::format;
+using fmt::format;
 
 namespace {
 
@@ -140,7 +140,7 @@ bool AizuSpiderController::initializeTracks(SimpleControllerIO* io, vector<strin
     for(auto& name : names){
         auto link = body->link(name);
         if(!link){
-            io->os() << format("%1% of %2% is not found") % name % body->name() << endl;
+            io->os() << format("{0} of {1} is not found", name, body->name()) << endl;
             return false;
         }
         link->setActuationMode(trackActuationMode);
@@ -176,7 +176,7 @@ bool AizuSpiderController::initializeJoints(SimpleControllerIO* io, vector<Joint
     for(auto& spec : specs){
         auto joint = body->link(spec.name);
         if(!joint){
-            io->os() << format("%1% of %2% is not found") % spec.name % body->name() << endl;
+            io->os() << format("{0} of {1} is not found", spec.name, body->name()) << endl;
             return false;
         }
         joint->setActuationMode(mainActuationMode);

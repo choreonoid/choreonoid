@@ -3,11 +3,11 @@
 */
 
 #include "MulticopterPluginHeader.h"
+#include <fmt/format.h>
 
 using namespace std;
 using namespace cnoid;
 using namespace Multicopter;
-using boost::format;
 
 class MulticopterPlugin : public Plugin
 {
@@ -48,7 +48,7 @@ public:
     virtual const char* description() const override
     {
         static std::string text =
-            str(format("Multicoper Plugin Version %1%\n") % CNOID_FULL_VERSION_STRING) +
+            fmt::format("Multicoper Plugin Version {}\n", CNOID_FULL_VERSION_STRING) +
             "\n" +
             "Copyrigh (c) 2018 Japan Atomic Energy Agency.\n"
             "\n" +

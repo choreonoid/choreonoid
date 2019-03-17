@@ -8,7 +8,6 @@
 #include <cnoid/Link>
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 

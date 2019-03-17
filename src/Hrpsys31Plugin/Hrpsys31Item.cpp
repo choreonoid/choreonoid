@@ -19,13 +19,14 @@
 #include <cnoid/ExtraBodyStateAccessor>
 #include <QMessageBox>
 #include <rtm/idl/RTC.hh>
+#include <fmt/format.h>
 #include <iostream>
 #include "gettext.h"
 
 using namespace std;
 using namespace std::placeholders;
 using namespace cnoid;
-using boost::format;
+using fmt::format;
 
 namespace {
 
@@ -316,13 +317,13 @@ bool Hrpsys31ItemImpl::connectToRobot()
 
     disconnectFromRobot();
 
-    mv->putln(format(_("Connecting %1% to the target robot ...")) % self->name());
+    mv->putln(format(_("Connecting {} to the target robot ..."), self->name()));
     mv->flush();
 
     naming.setLocation(host, port);
 
     if(!naming.isAlive()){
-        mv->putln(format(_("Nameserver is not found at %1%:%2%.")) % host % port);
+        mv->putln(format(_("Nameserver is not found at {0}:{1}."), host, port));
 
     } else {
         RTC::RTObject_var robotHardware = findRTC(robotHardwareName);
@@ -367,9 +368,9 @@ RTC::RTObject_ptr Hrpsys31ItemImpl::findRTC(const string& rtcName)
 {
     RTC::RTObject_ptr rtc = naming.findObject<RTC::RTObject>(rtcName, "rtc");
     if(naming.isObjectAlive(rtc)){
-        mv->putln(format(_("Component \"%1%\" has been found.")) % rtcName);
+        mv->putln(format(_("Component \"{}\" has been found."), rtcName));
     } else {
-        mv->putln(format(_("Component \"%1%\" is not found.")) % rtcName);
+        mv->putln(format(_("Component \"{}\" is not found."), rtcName));
         rtc = RTC::RTObject::_nil();
     }
     return rtc;
@@ -381,9 +382,9 @@ typename ServiceType::_ptr_type Hrpsys31ItemImpl::findService(RTC::RTObject_ptr 
 {
     typename ServiceType::_ptr_type service = findRTCService<ServiceType>(rtc, serviceName);
     if(naming.isObjectAlive(service)){
-        mv->putln(format(_("Service port \"%1%\" has been found.")) % serviceName);
+        mv->putln(format(_("Service port \"{}\" has been found."), serviceName));
     } else {
-        mv->putln(format(_("Service port \"%1%\" is not found.")) % serviceName);
+        mv->putln(format(_("Service port \"{}\" is not found."), serviceName));
         service = ServiceType::_nil();
     }
     return service;
@@ -417,7 +418,7 @@ bool Hrpsys31ItemImpl::disconnectFromRobot()
         disconnected = true;
     }
     if(disconnected){
-        mv->putln(format(_("%1% is disconnected from the target robot")) % self->name());
+        mv->putln(format(_("{} is disconnected from the target robot"), self->name()));
     }
     return disconnected;
 }
@@ -435,8 +436,8 @@ bool Hrpsys31ItemImpl::activateServos(bool on)
     bool result = false;
     
     if(CORBA::is_nil(robotHardwareService)){
-        mv->putln(format(_("%1% cannot turn on / off the servos because it is not connected with %2%."))
-                  % self->name() % robotHardwareName);
+        mv->putln(format(_("{0} cannot turn on / off the servos because it is not connected with {1}."),
+                         self->name(), robotHardwareName));
     } else {
         OpenHRP::RobotHardwareService::RobotState_var state;
         try {
@@ -451,7 +452,7 @@ bool Hrpsys31ItemImpl::activateServos(bool on)
                 }
             }
             if(!isOperationValid){
-                mv->putln(format(_("All the target servos of %1% have already been turned on.")) % self->name());
+                mv->putln(format(_("All the target servos of {} have already been turned on."), self->name()));
                 result = true;
             } else {
                 confirmed = showConfirmDialog((on ? _("Servo On") : _("Servo Off")), _("Click OK to continue."));
@@ -460,16 +461,16 @@ bool Hrpsys31ItemImpl::activateServos(bool on)
                     result = robotHardwareService->servo(
                         "all", (on ? OpenHRP::RobotHardwareService::SWITCH_ON : OpenHRP::RobotHardwareService::SWITCH_OFF));
                     if(result){
-                        mv->putln(format(_("The target servos of %1% have been turned on.")) % self->name());
+                        mv->putln(format(_("The target servos of {} have been turned on."), self->name()));
                         onReadRequest();
                     }
                 }
             }
         } catch(CORBA::Exception& ex){
-            mv->putln(format(_("%1%: A CORBA Exeption happened.")) % self->name());
+            mv->putln(format(_("{}: A CORBA Exception happened."), self->name()));
         }
         if(confirmed && !result){
-            mv->putln(format(_("%1% cannot turn on the servos.")) % self->name());
+            mv->putln(format(_("{} cannot turn on the servos."), self->name()));
         }
     }
     return result;
@@ -500,8 +501,8 @@ void Hrpsys31ItemImpl::onReadRequest()
             
         } catch(CORBA::Exception& ex){
             robotHardwareService = OpenHRP::RobotHardwareService::_nil();
-            mv->putln(format(_("%1%: Access to %2% failed. The connection is terminated."))
-                      % self->name() % robotHardwareName);
+            mv->putln(format(_("{0}: Access to {1} failed. The connection is terminated."),
+                    self->name(), robotHardwareName));
             connectionFailed = true;
         }
         
@@ -563,8 +564,8 @@ void Hrpsys31ItemImpl::onReadRequest()
             
         } catch(CORBA::Exception& ex){
             stateHolderService = OpenHRP::StateHolderService::_nil();
-            mv->putln(format(_("%1%: Access to %2% failed. The connection is terminated."))
-                      % self->name() % stateHolderName);
+            mv->putln(format(_("{0}: Access to {1} failed. The connection is terminated."),
+                             self->name(), stateHolderName));
             connectionFailed = true;
         }
         

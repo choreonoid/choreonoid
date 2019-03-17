@@ -1,10 +1,10 @@
 #include <cnoid/SimpleController>
 #include <cnoid/SharedJoystick>
-#include <boost/format.hpp>
+#include <fmt/format.h>
 
 using namespace std;
 using namespace cnoid;
-using boost::format;
+using fmt::format;
 
 namespace {
 
@@ -44,7 +44,7 @@ bool AizuWheelController::initialize(SimpleControllerIO* io)
         } else if(option == "torque"){
             actuationMode = Link::JOINT_TORQUE;
         } else {
-            io->os() << format("Warning: Unknown option \"%1%\".") % option << endl;
+            io->os() << format("Warning: Unknown option \"{}\".", option) << endl;
         }
     }
 
@@ -68,7 +68,7 @@ bool AizuWheelController::initializeWheels(SimpleControllerIO* io, vector<string
     for(auto& name : names){
         auto link = body->link(name);
         if(!link){
-            io->os() << format("%1% of %2% is not found") % name % body->name() << endl;
+            io->os() << format("{0} of {1} is not found", name, body->name()) << endl;
             return false;
         }
         link->setActuationMode(actuationMode);

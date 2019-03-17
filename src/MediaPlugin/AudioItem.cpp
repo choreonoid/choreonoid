@@ -6,7 +6,7 @@
 #include "AudioItem.h"
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
-#include <boost/format.hpp>
+#include <fmt/format.h>
 
 #ifdef CNOID_MEDIA_PLUGIN_USE_LIBSNDFILE
 #include <sndfile.h>
@@ -17,7 +17,7 @@
 using namespace std;
 using namespace std::placeholders;
 using namespace cnoid;
-using boost::format;
+using fmt::format;
 
 namespace {
 std::shared_ptr< std::vector<float> > emptySamplingData;
@@ -128,15 +128,14 @@ bool AudioItem::loadAudioFile(const std::string& filename, std::ostream& os, Ite
         os << sf_strerror(sndfile);
 
     } else if(sfinfo.channels < 1 || sfinfo.channels > 2){
-        os << str(format("channels = %d") % sfinfo.channels);
+        os << format("channels = {:d}", sfinfo.channels);
 
     } else {
         if(false){
-            os <<
-                str(format(" format mask = %x, sub mask = %x, endian = %x\n")
-                    % (sfinfo.format & SF_FORMAT_TYPEMASK)
-                    % (sfinfo.format & SF_FORMAT_SUBMASK)
-                    % (sfinfo.format & SF_FORMAT_ENDMASK));
+            os << format(" format mask = {0:x}, sub mask = {1:x}, endian = {2:x}\n",
+                         (sfinfo.format & SF_FORMAT_TYPEMASK),
+                         (sfinfo.format & SF_FORMAT_SUBMASK),
+                         (sfinfo.format & SF_FORMAT_ENDMASK));
         }
 
         numChannels_ = sfinfo.channels;

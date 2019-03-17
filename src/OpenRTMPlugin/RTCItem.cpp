@@ -12,13 +12,14 @@
 #include <cnoid/ProjectManager>
 #include <cnoid/CorbaUtil>
 #include <rtm/RTObject.h>
+#include <fmt/format.h>
 #include "gettext.h"
 
 #include "LoggerUtil.h"
 
 using namespace std;
 using namespace cnoid;
-using boost::format;
+using fmt::format;
 namespace filesystem = boost::filesystem;
 
 namespace {
@@ -197,7 +198,7 @@ void RTCItem::doPutProperties(PutPropertyFunction& putProperty)
 
     FilePathProperty moduleProperty(
         moduleName,
-        { str(format(_("RT-Component module (*%1%)")) % DLL_SUFFIX) });
+        { format(_("RT-Component module (*{})"), DLL_SUFFIX) });
 
     if (baseDirectoryType.is(RTC_DIRECTORY)) {
         moduleProperty.setBaseDirectory(rtcDirectory.string());
@@ -343,7 +344,7 @@ bool  RTComponent::createRTC(PropertyMap& prop)
                 string initFunc(componentName + "Init");
                 setupModules(actualFilename, initFunc, componentName, prop);
             } else {
-                mv->putln(fmt(_("A file of RTC \"%1%\" does not exist.")) % componentName);
+                mv->putln(format(_("A file of RTC \"{}\" does not exist."), componentName));
             }
         }
     }
@@ -351,9 +352,9 @@ bool  RTComponent::createRTC(PropertyMap& prop)
     bool created = isValid();
 
     if (created) {
-        mv->putln(fmt(_("RTC \"%1%\" has been created from \"%2%\".")) % componentName % actualFilename);
+        mv->putln(format(_("RTC \"{0}\" has been created from \"{1}\"."), componentName, actualFilename));
     } else {
-        mv->putln(fmt(_("RTC \"%1%\" cannot be created.")) % componentName);
+        mv->putln(format(_("RTC \"{}\" cannot be created."), componentName));
     }
 
     return created;
@@ -378,11 +379,12 @@ void RTComponent::setupModules(string& fileName, string& initFuncName, string& c
     rtc_ = createManagedRTC((componentName + option).c_str());
 
     if (!rtc_) {
-        mv->putln(fmt(_("RTC \"%1%\" cannot be created by the RTC manager.\n"
-            " RTC module file: \"%2%\"\n"
-            " Init function: %3%\n"
-            " option: %4%"))
-          % componentName % fileName % initFuncName % option);
+        mv->putln(
+            format(_("RTC \"{0}\" cannot be created by the RTC manager.\n"
+                     " RTC module file: \"{1}\"\n"
+                     " Init function: {2}\n"
+                     " option: {3}"),
+                   componentName, fileName, initFuncName, option));
     }
 }
 
@@ -422,9 +424,9 @@ void RTComponent::createProcess(string& command, PropertyMap& prop)
     rtcProcess.start(command.c_str(), argv);
 #endif
     if (!rtcProcess.waitForStarted()) {
-        mv->putln(fmt(_("RT Component process \"%1%\" cannot be executed.")) % command);
+        mv->putln(format(_("RT Component process \"{}\" cannot be executed."), command));
     } else {
-        mv->putln(fmt(_("RT Component process \"%1%\" has been executed.")) % command);
+        mv->putln(format(_("RT Component process \"{}\" has been executed."), command));
         rtcProcess.sigReadyReadStandardOutput().connect(
           std::bind(&RTComponent::onReadyReadServerProcessOutput, this));
     }
@@ -439,14 +441,14 @@ void RTComponent::deleteRTC()
 
     if (rtc_) {
         string rtcName(rtc_->getInstanceName());
-        mv->putln(fmt(_("delete %1%")) % rtcName);
+        mv->putln(format(_("delete {}"), rtcName));
         if (!cnoid::deleteRTC(rtc_)) {
-            mv->putln(fmt(_("%1% cannot be deleted.")) % rtcName);
+            mv->putln(format(_("{} cannot be deleted."), rtcName));
         }
         rtc_ = nullptr;
 
     } else if (rtcProcess.state() != QProcess::NotRunning) {
-        mv->putln(fmt(_("delete %1%")) % componentName);
+        mv->putln(format(_("delete {}"), componentName));
         rtcProcess.kill();
         rtcProcess.waitForFinished(100);
     }

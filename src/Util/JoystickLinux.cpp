@@ -5,7 +5,7 @@
 #include "Joystick.h"
 #include "ExtJoystick.h"
 #include <cnoid/Config>
-#include <boost/format.hpp>
+#include <fmt/format.h>
 #include <boost/filesystem.hpp>
 #include <linux/joystick.h>
 #include <sys/ioctl.h>
@@ -30,7 +30,7 @@ using boost::regex_match;
 
 using namespace std;
 using namespace cnoid;
-using boost::format;
+using fmt::format;
 namespace filesystem = boost::filesystem;
 
 namespace {
@@ -251,11 +251,11 @@ bool JoystickImpl::findDevice(const string& device)
     } else {
         closeDevice();
         
-        format filebase("/dev/input/js%1%");
+        string filebase("/dev/input/js{}");
         regex sonyMotionSensors("^Sony.*Motion Sensors$");
         int id = 0;
         while(true){
-            string file = str(filebase % id);
+            string file = format(filebase, id);
             if(!filesystem::exists(filesystem::path(file))){
                 break;
             }
@@ -294,7 +294,7 @@ bool JoystickImpl::openDevice(const string& device)
     fd = open(device.c_str(), O_RDONLY | O_NONBLOCK);
 
     if(fd < 0){
-        errorMessage = str(format("Device \"%1%\": %2%") % device % strerror(errno));
+        errorMessage = format("Device \"{0}\": {1}", device, strerror(errno));
         return false;
     }
     errorMessage.clear();

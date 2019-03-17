@@ -11,12 +11,12 @@
 #include <cnoid/ZMPSeq>
 #include <cnoid/LazyCaller>
 #include <cnoid/MessageView>
-#include <boost/format.hpp>
+#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using boost::format;
+using fmt::format;
 
 namespace {
 
@@ -347,7 +347,7 @@ bool BodyMotionItem::onChildItemAboutToBeAdded(Item* childItem_, bool isManualOp
                             existingFound = true;
                             if(showConfirmDialog(
                                    _("Confirm"),
-                                   str(format(_("Do you want to replace the data of %1%?")) % item->name()))){
+                                   format(_("Do you want to replace the data of {}?"), item->name()))){
                                 *orgSeqItem->abstractSeq() = *seqItem->abstractSeq();
                                 return false;
                             }
@@ -357,8 +357,8 @@ bool BodyMotionItem::onChildItemAboutToBeAdded(Item* childItem_, bool isManualOp
                 if(!existingFound){
                     if(showConfirmDialog(
                            _("Confirm"),
-                           str(format(_("Do you want to set %1% as a sequence data of %2%?"))
-                               % childItem_->name() % this->name()))){
+                           format(_("Do you want to set {0} as a sequence data of {1}?"),
+                                  childItem_->name(), this->name()))){
                         motion()->setExtraSeq(seqItem->name(), seqItem->abstractSeq());
                         return false;
                     }

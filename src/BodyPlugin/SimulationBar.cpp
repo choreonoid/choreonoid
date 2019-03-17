@@ -11,13 +11,14 @@
 #include <cnoid/MessageView>
 #include <cnoid/OptionManager>
 #include <cnoid/LazyCaller>
+#include <fmt/format.h>
 #include <functional>
 #include "gettext.h"
 
 using namespace std;
 using namespace std::placeholders;
 using namespace cnoid;
-using boost::format;
+using fmt::format;
 
 static SimulationBar* instance_ = 0;
     
@@ -114,7 +115,7 @@ static void storeInitialBodyState(BodyItem* bodyItem)
 {
     bodyItem->storeInitialState();
     MessageView::instance()->putln(
-        format(_("Current state of %1% has been set to the initial state.")) % bodyItem->name());
+        format(_("Current state of {} has been set to the initial state."), bodyItem->name()));
 }
 
 
@@ -174,15 +175,15 @@ void SimulationBar::forEachSimulator(std::function<void(SimulatorItem* simulator
         SimulatorItem* simulator = simulators.get(i);
         WorldItem* world = simulator->findOwnerItem<WorldItem>();
         if(!world){
-            mv->notify(format(_("%1% cannot be processed because it is not related with a world."))
-                       % simulator->name());
+            mv->notify(format(_("{} cannot be processed because it is not related with a world."),
+                              simulator->name()));
         } else {
             WorldToSimulatorMap::iterator p = worldToSimulator.find(world);
             if(p != worldToSimulator.end()){
                 if(!p->second){
-                    mv->notify(format(_("%1% cannot be processed because another simulator"
-                                        "in the same world is also selected."))
-                               % simulator->name());
+                    mv->notify(format(_("{} cannot be processed because another simulator"
+                                        "in the same world is also selected."),
+                                      simulator->name()));
                 } else {
                     callback(simulator);
                 }

@@ -5,7 +5,7 @@
 #include "PyUtil.h"
 #include "../EigenTypes.h"
 #include "../EigenUtil.h"
-#include <boost/format.hpp>
+#include <fmt/format.h>
 
 namespace python = boost::python;
 using namespace boost::python;
@@ -114,8 +114,8 @@ typedef Eigen::Matrix<int,1,1>::Index Index;
 
 void checkIndex(Index i, Index size) {
     if(i < 0 || i >= size) {
-        static boost::format message("Index %1% out of range 0..%2%"); 
-        PyErr_SetString(PyExc_IndexError, (message % i % (size - 1)).str().c_str());
+        static string message("Index {0} out of range 0..{1}");
+        PyErr_SetString(PyExc_IndexError, fmt::format(message, i, (size - 1)).c_str());
         python::throw_error_already_set();
     }
 }
@@ -130,7 +130,7 @@ void extractIndex(python::tuple indexTuple, Index rows, Index cols, Index out_in
         if(!e.check()){
             PyErr_SetString(
                 PyExc_ValueError,
-                (boost::format("Unable to convert %1%-th index to integer.") % i).str().c_str());
+                fmt::format("Unable to convert {}-th index to integer.", i).c_str());
             python::throw_error_already_set();
         }
         out_index[i] = e(); 

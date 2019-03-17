@@ -11,14 +11,14 @@
 #include <cnoid/LinkPath>
 #include <cnoid/BodyItem>
 #include <cnoid/LeggedBodyHelper>
-#include <boost/format.hpp>
+#include <fmt/format.h>
 #include <iostream>
 #include "gettext.h"
 
 using namespace std;
 using namespace std::placeholders;
 using namespace cnoid;
-using boost::format;
+using fmt::format;
 
 namespace {
 
@@ -37,9 +37,9 @@ bool loadPoseSeqItem(PoseSeqItem* item, const std::string& filename, std::ostrea
                 item->setName(name);
             }
             if(item->poseSeq()->targetBodyName() != bodyItem->body()->name()){
-                format m(_("Warning: the original target body %1% of \"%2%\" is"
-                           "different from the current target %3%."));
-                os << str(m % item->poseSeq()->targetBodyName() % item->name() % bodyItem->body()->name());
+                os<< format( _("Warning: the original target body {0} of \"{1}\" is"
+                               "different from the current target {2}."),
+                             item->poseSeq()->targetBodyName(), item->name(), bodyItem->body()->name());
             }
             item->notifyUpdate();
         } else {
@@ -230,8 +230,9 @@ void PoseSeqItem::convert(BodyPtr orgBody)
                         clearFileInformation();
                         BodyPtr body = ownerBodyItem->body();
                         seq->setTargetBodyName(body->name());
-                        format m(_("Pose seq \"%1%\" has been converted. Its target has been changed from %2% to %3%"));
-                        MessageView::mainInstance()->notify(str(m % name() % orgBody->name() % body->name()));
+                        MessageView::mainInstance()->notify(
+                            format(_("Pose seq \"{0}\" has been converted. Its target has been changed from {1} to {2}"),
+                                   name(), orgBody->name(), body->name()));
                         
                         return;
                     }

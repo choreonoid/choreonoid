@@ -104,6 +104,7 @@ public:
     virtual void enableInput(Link* link) override { }
     virtual void enableInput(Link* link, int stateTypes) override { }
     virtual void enableOutput(Link* link) override { }
+    virtual void enableOutput(Link* link, int stateTypes) override { }
     virtual void enableInput(Device* device) override { }
 };
 

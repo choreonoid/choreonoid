@@ -24,6 +24,7 @@
 #include <cnoid/EigenUtil>
 #include <QThread>
 #include <QApplication>
+#include <fmt/format.h>
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string.hpp>
 #include <mutex>
@@ -51,7 +52,7 @@ static const bool DEBUG_MESSAGE = false;
 
 using namespace std;
 using namespace cnoid;
-using boost::format;
+using fmt::format;
 
 namespace {
 
@@ -501,8 +502,8 @@ bool GLVisionSimulatorItemImpl::initializeSimulation(SimulatorItem* simulatorIte
 {
 #if !USE_QT5_OPENGL
     if(!QGLPixelBuffer::hasOpenGLPbuffers()){
-        os << (format(_("The vision sensor simulation by %1% cannot be performed because the OpenGL pbuffer is not available."))
-               % self->name()) << endl;
+        os << format(_("The vision sensor simulation by {} cannot be performed because the OpenGL pbuffer is not available."),
+                     self->name()) << endl;
         return false;
     }
 #endif
@@ -561,8 +562,8 @@ bool GLVisionSimulatorItemImpl::initializeSimulation(SimulatorItem* simulatorIte
                 Device* device = body->device(j);
                 if(dynamic_cast<Camera*>(device) || dynamic_cast<RangeSensor*>(device)){
                     if(sensorNameSet.empty() || sensorNameSet.find(device->name()) != sensorNameSet.end()){
-                        os << (format(_("%1% detected vision sensor \"%2%\" of %3% as a target."))
-                               % self->name() % device->name() % simBody->body()->name()) << endl;
+                        os << format(_("{0} detected vision sensor \"{1}\" of {2} as a target."),
+                                     self->name(), device->name(), simBody->body()->name()) << endl;
                         sensorRenderers.push_back(new SensorRenderer(this, device, simBody, i));
                     }
                 }
@@ -571,7 +572,7 @@ bool GLVisionSimulatorItemImpl::initializeSimulation(SimulatorItem* simulatorIte
     }
 
     if(sensorRenderers.empty()){
-        os << (format(_("%1% has no target sensors")) % self->name()) << endl;
+        os << format(_("{} has no target sensors"), self->name()) << endl;
         return false;
     }
         
@@ -596,8 +597,8 @@ bool GLVisionSimulatorItemImpl::initializeSimulation(SimulatorItem* simulatorIte
         if(renderer->initialize(simBodies)){
             ++p;
         } else {
-            os << (format(_("%1%: Target sensor \"%2%\" cannot be initialized."))
-                   % self->name() % renderer->device->name()) << endl;
+            os << format(_("{0}: Target sensor \"{1}\" cannot be initialized."),
+                    self->name(), renderer->device->name()) << endl;
             p = sensorRenderers.erase(p);
         }
     }

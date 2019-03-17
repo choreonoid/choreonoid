@@ -30,6 +30,7 @@
 #include <cnoid/PinDragIK>
 #include <cnoid/PenetrationBlocker>
 #include <cnoid/FileUtil>
+#include <fmt/format.h>
 #include <bitset>
 #include <deque>
 #include <iostream>
@@ -40,7 +41,7 @@ using namespace std;
 using namespace std::placeholders;
 using namespace cnoid;
 
-using boost::format;
+using fmt::format;
 
 namespace {
 
@@ -1218,7 +1219,7 @@ bool BodyItemImpl::restore(const Archive& archive)
         if(qs->size() != nj){
             if(qs->size() != body->numJoints()){
                 MessageView::instance()->putln(
-                    format("Mismatched size of the stored joint positions for %1%") % self->name(),
+                    format(_("Mismatched size of the stored joint positions for {}"), self->name()),
                     MessageView::WARNING);
             }
             nj = std::min(qs->size(), nj);
@@ -1243,7 +1244,7 @@ bool BodyItemImpl::restore(const Archive& archive)
         if(m != n){
             if(m != body->numJoints()){
                 MessageView::instance()->putln(
-                    format("Mismatched size of the stored initial joint positions for %1%") % self->name(),
+                    format(_("Mismatched size of the stored initial joint positions for {}"), self->name()),
                     MessageView::WARNING);
             }
             m = std::min(m, n);

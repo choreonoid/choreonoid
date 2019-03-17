@@ -35,19 +35,21 @@ public:
 
     void put(const char* message, int type = NORMAL);
     void put(const std::string& message, int type = NORMAL);
-    void put(const boost::format& message, int type = NORMAL);
     void put(const QString& message, int type = NORMAL);
 
     void putln();
     void putln(const char* message, int type = NORMAL);
     void putln(const std::string& message, int type = NORMAL);
-    void putln(const boost::format& message, int type = NORMAL);
     void putln(const QString& message, int type = NORMAL);
 
     void notify(const char* message, int type = NORMAL);
     void notify(const std::string& message, int type = NORMAL);
-    void notify(const boost::format& message, int type = NORMAL);
     void notify(const QString& message, int type = NORMAL);
+
+    //! \deprecated
+    void put(const boost::format& message, int type = NORMAL);
+    void putln(const boost::format& message, int type = NORMAL);
+    void notify(const boost::format& message, int type = NORMAL);
 
     //! \deprecated
     void put(int type, const char* message);

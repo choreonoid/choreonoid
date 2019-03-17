@@ -25,7 +25,9 @@
 #include <vector>
 #include <string>
 #include <map>
+#ifdef USE_XINPUT
 #include <XInput.h>
+#endif
 
 using namespace std;
 using namespace cnoid;
@@ -266,6 +268,7 @@ void JoystickImpl::setJoystickModel(const int productId)
 
     currentModel = modelInfos[modelId];
 
+#ifdef USE_XINPUT
     if (modelId == XBOX_ONE) {
         for(int i=0; i<4; i++){
             XINPUT_STATE state;
@@ -278,6 +281,7 @@ void JoystickImpl::setJoystickModel(const int productId)
             }
         }
     }
+#endif
 
 }
 
@@ -439,6 +443,7 @@ bool JoystickImpl::readCurrentState_joyGet()
 
 bool JoystickImpl::readCurrentState_xinput()
 {
+#ifdef USE_XINPUT
     const float MAX_VALUE_16BIT = 32767.0f;
     const float MAX_VALUE_8BIT = 255.0f;
 
@@ -477,7 +482,7 @@ bool JoystickImpl::readCurrentState_xinput()
 
     axes[DIRECTIONAL_PAD_H_AXIS] = state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_RIGHT ? 1.0 : state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_LEFT ? -1.0 : 0.0;
     axes[DIRECTIONAL_PAD_V_AXIS] = state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_DOWN ? 1.0 : state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_UP ? -1.0 : 0.0;
-
+#endif
     return true;
 }
 

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-09-22 11:01+0900\n"
+"POT-Creation-Date: 2019-02-22 17:26+0900\n"
 "PO-Revision-Date: 2012-07-17 00:22+0100\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -17,693 +17,854 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: BodyIoRTCItem.cpp:39
-msgid "BodyIoRTCItem"
-msgstr "BodyIoRTCアイテム"
-
-#: BodyIoRTCItem.cpp:127
-msgid ""
-"RTC \"%1%\" of %2% cannot be used as a BodyIoRTC because it is not derived "
-"from it."
-msgstr ""
-"%2%のRTC\"%1%\"はBodyIoRTCを継承したものではないため、BodyIoRTCとしては使用で"
-"きません。"
-
-#: BodyIoRTCItem.cpp:134
-msgid "RTC \"%1%\" of %2% failed to initialize."
-msgstr "%2%のRTC\"%1%\"の初期化に失敗しました。"
-
-#: BodyIoRTCItem.cpp:140 ControllerRTCItem.cpp:304
-msgid "BodyIoRTC \"%1%\" has been created."
-msgstr "BodyIoRTC \"%1%\" を生成しました。"
-
-#: ControllerRTCItem.cpp:83
-msgid "ControllerRTCItem"
-msgstr "コントローラRTCアイテム"
-
-#: ControllerRTCItem.cpp:102
-msgid "None"
-msgstr "なし"
-
-#: ControllerRTCItem.cpp:103 RTCItem.cpp:68 deprecated/BodyRTCItem.cpp:65
-msgid "RTC directory"
-msgstr "RTCディレクトリ"
-
-#: ControllerRTCItem.cpp:104 RTCItem.cpp:69 deprecated/BodyRTCItem.cpp:66
-msgid "Project directory"
-msgstr "プロジェクトディレクトリ"
-
-#: ControllerRTCItem.cpp:109 RTCItem.cpp:55
-msgid "PeriodicExecutionContext"
-msgstr ""
-
-#: ControllerRTCItem.cpp:110 RTCItem.cpp:58
-msgid "ChoreonoidExecutionContext"
-msgstr ""
-
-#: ControllerRTCItem.cpp:270
-msgid ""
-"The rtc of %1% cannot be generated because the project directory is not "
-"determined. Please save the project as a project file."
-msgstr ""
-"%1%のRTCはプロジェクトディレクトリが未定のため生成できません。プロジェクファ"
-"イルの保存を行って下さい。"
-
-#: ControllerRTCItem.cpp:287
-msgid "RTC module file \"%1%\" of %2% does not exist."
-msgstr "%2%のRTCモジュールファイル\"%1%\"が存在しません。"
-
-#: ControllerRTCItem.cpp:337
-msgid "The RTC instance name of %1% is not specified."
-msgstr "%1%のRTCインスタンス名が指定されていません。"
-
-#: ControllerRTCItem.cpp:353
-msgid ""
-"RTC \"%1%\" of %2% is not created because more than %3% existing instances "
-"have the same base name \"%4%\"."
-msgstr ""
-"%2%のRTC\"%1%\"は同じベース名\"%4%\"を有する既存インスタンスが%3%個以上あるた"
-"め生成されません。"
-
-#: ControllerRTCItem.cpp:375
-msgid ""
-"RTC \"%1%\" of %2% cannot be created by the RTC manager.\n"
-" RTC module file: \"%3%\"\n"
-" Init function: %4%\n"
-" option: %5%"
-msgstr ""
-"%2%のRTC\"%1%\"をRTCマネージャで生成できません。\n"
-" RTCモジュールファイル: \"%3%\"\n"
-" Init関数: %4%\n"
-" オプション: %5%"
-
-#: ControllerRTCItem.cpp:426
-msgid "RTC instance %1% of %2% cannot be deleted."
-msgstr "%2%のRTCインスタンス\"%1%\"を削除できません。"
-
-#: ControllerRTCItem.cpp:524 RTCItem.cpp:187 deprecated/BodyRTCItem.cpp:525
-msgid "RT-Component module (*%1%)"
-msgstr "RTコンポーネントモジュール (*%1%)"
-
-#: ControllerRTCItem.cpp:532 RTCItem.cpp:195
-msgid "RTC module"
-msgstr "RTCモジュール"
-
-#: ControllerRTCItem.cpp:534 RTCItem.cpp:197 deprecated/BodyRTCItem.cpp:538
-msgid "Base directory"
-msgstr "ベースディレクトリ"
-
-#: ControllerRTCItem.cpp:537 deprecated/BodyRTCItem.cpp:518
-msgid "RTC Instance name"
-msgstr "RTCインスタンス名"
-
-#: ControllerRTCItem.cpp:541 RTCItem.cpp:200
-msgid "Execution context"
-msgstr "実行コンテキスト"
-
-#: ControllerRTCItem.cpp:545 RTCItem.cpp:203 deprecated/BodyRTCItem.cpp:520
-msgid "Periodic rate"
-msgstr "実行周波数"
-
-#: OpenRTMPlugin.cpp:129
-msgid "ChoreonoidExecutionContext has been registered."
-msgstr "ChoreonoidExecutionContextを登録しました。"
-
-#: OpenRTMPlugin.cpp:131
-msgid "Failed to register ChoreonoidExecutionContext."
-msgstr "ChoreonoidExecutionContextの登録に失敗しました。"
-
-#: OpenRTMPlugin.cpp:142
-msgid "ChoreonoidPeriodicExecutionContext has been registered."
-msgstr "ChoreonoidPeriodicExecutionContextを登録しました。"
-
-#: OpenRTMPlugin.cpp:14４
-msgid "Failed to register ChoreonoidPeriodicExecutionContext."
-msgstr "ChoreonoidPeriodicExecutionContextの登録に失敗しました。"
-
-#: OpenRTMPlugin.cpp:165
-msgid "Delete unmanaged RT components"
-msgstr "非管理下RTコンポーネントの削除"
-
-#: OpenRTMPlugin.cpp:170
-msgid "Delete unmanaged RT components on starting a simulation"
-msgstr "非管理下のRTコンポーネントをシミュレーション開始時に削除"
-
-#: OpenRTMPlugin.cpp:237
-msgid "An RT component which is not managed by Choreonoid is being deleted."
-msgstr "Choreonoidの管理下に無い1個のRTコンポーネントを削除しています。"
-
-#: OpenRTMPlugin.cpp:239
-msgid ""
-"%1% RT components which are not managed by Choreonoid are being deleted."
-msgstr "Choreonoidの管理下に無い%1%個のRTコンポーネントを削除しています。"
-
-#: OpenRTMPlugin.cpp:244
-msgid "The unmanaged RT component has been deleted."
-msgstr "RTコンポーネントのプロセス \"%1%\" を起動しました。"
-
-#: OpenRTMPlugin.cpp:246
-msgid "The unmanaged RT components have been deleted."
-msgstr "非管理下RTコンポーネントを削除しました。"
-
-#: OpenRTMPlugin.cpp:178
-msgid "Preferences"
-msgstr "設定画面"
-
-#: RTCItem.cpp:38
-msgid "RTCItem"
-msgstr "RTCアイテム"
-
-#: RTCItem.cpp:56
-msgid "SynchExtTriggerEC"
-msgstr ""
-
-#: RTCItem.cpp:57
-msgid "ExtTrigExecutionContext"
-msgstr ""
-
-#: RTCItem.cpp:260 deprecated/BodyRTCItem.cpp:122
-#: deprecated/BodyRTCItem.cpp:164
-msgid "Please save the project."
-msgstr "プロジェクトを保存してください。"
-
-#: RTCItem.cpp:328
-msgid "A file of RTC \"%1%\" does not exist."
-msgstr "RTC \"%1%\" のファイルが存在しません。"
-
-#: RTCItem.cpp:336
-msgid "RTC \"%1%\" has been created from \"%2%\"."
-msgstr "RTC \"%1%\" を \"%2%\" から生成しました。"
-
-#: RTCItem.cpp:338
-msgid "RTC \"%1%\" cannot be created."
-msgstr "RTC \"%1%\" を生成できませんした。"
-
-#: RTCItem.cpp:361
-msgid ""
-"RTC \"%1%\" cannot be created by the RTC manager.\n"
-" RTC module file: \"%2%\"\n"
-" Init function: %3%\n"
-" option: %4%"
-msgstr ""
-"RTC \"%1%\" をRTCマネージャから生成できません。\n"
-" RTCファイル: \"%2%\"\n"
-" Init関数: %3%\n"
-" オプション: %4%"
-
-#: RTCItem.cpp:403
-msgid "RT Component process \"%1%\" cannot be executed."
-msgstr "RTコンポーネントのプロセス \"%1%\" は起動できませんでした。"
-
-#: RTCItem.cpp:405
-msgid "RT Component process \"%1%\" has been executed."
-msgstr "RTコンポーネントのプロセス \"%1%\" を起動しました。"
-
-#: RTCItem.cpp:420 RTCItem.cpp:427 deprecated/BodyRTCItem.cpp:1082
-#: deprecated/BodyRTCItem.cpp:1098
-msgid "delete %1%"
-msgstr "%1% を削除しました。"
-
-#: RTCItem.cpp:422 deprecated/BodyRTCItem.cpp:1119
-msgid "%1% cannot be deleted."
-msgstr "%1% を削除できませんでした。"
-
-#: RTSDiagramView.cpp:791
-msgid "Drag and drop has been canceled. Please be operation again."
-msgstr ""
-
-#: RTSDiagramView.cpp:801
-msgid "%1% is not alive"
-msgstr "%1%は生存していません。"
-
-#: RTSDiagramView.cpp:930
-msgid "These are already connected."
-msgstr "それらは既に接続しています。"
-
-#: RTSDiagramView.cpp:966
-msgid "RTC Diagram"
-msgstr "RTCダイアグラム"
-
-#: RTSDiagramView.cpp:1396
-msgid "name : "
-msgstr "名前 : "
-
-#: RTSDiagramView.cpp:1402
-msgid "Interface Type : "
-msgstr "インタフェースタイプ : "
-
-#: RTSDiagramView.cpp:1410
-msgid "Dataflow Type : "
-msgstr "データフロータイプ : "
-
-#: RTSDiagramView.cpp:1419
-msgid "Subscription Type : "
-msgstr "サブスクリプションタイプ : "
-
-#: RTSDiagramView.cpp:1429
-msgid "&OK"
-msgstr ""
-
-#: RTSDiagramView.cpp:1431
-msgid "&Cancel"
-msgstr ""
-
-#: RTSDiagramView.cpp:1405
-msgid "VendorName:"
-msgstr "ベンダ名:"
-
-#: RTSDiagramView.cpp:1407
-msgid "Version:"
-msgstr "バージョン番号:"
-
-#: RTSDiagramView.cpp:1409
-msgid "Polling Cycle:"
-msgstr "ポーリング周期:"
-
-#: RTSDiagramView.cpp:1412
-msgid "Heartbeat Period:"
-msgstr "ハートビート周期:"
-
-#: RTSDiagramView.cpp:1418
-msgid "Log Output"
-msgstr "ログ出力"
-
-#: RTSDiagramView.cpp:1410
-msgid "Log Level:"
-msgstr "ログレベル:"
-
-#: RTSDiagramView.cpp:1443
-msgid "OpenRTM Preferences"
-msgstr "OpenRTM設定画面"
-
-#: RTSItem.cpp:377
-msgid "RTSystemItem"
-msgstr "RTシステムアイテム"
-
-#: RTSItem.cpp:700
-msgid "Auto Connection"
-msgstr "自動接続"
-
-#: RTSItem.cpp:803
-msgid "Vendor Name"
-msgstr "ベンダ名"
-
-#: RTSItem.cpp:805
-msgid "Profile Path"
-msgstr "プロファイル保存先"
-
-#: RTSItem.cpp:826
-msgid "Vendor is not set."
-msgstr "ベンダ名が設定されていません"
-
-#: RTSItem.cpp:830
-msgid "Version is not set."
-msgstr "バージョン番号が設定されていません"
-
-#: RTSItem.cpp:834
-msgid "RtsProfile file name is not set."
-msgstr "RtsProfileのファイル名が設定されていません"
-
-#: RTSNameServerView.cpp:80
-msgid "RTC List"
-msgstr "RTCリスト"
-
-#: RTSNameServerView.cpp:134
-msgid " Update "
-msgstr " 更新 "
-
-#: RTSNameServerView.cpp:134
-msgid "Cancel Updating"
-msgstr "更新キャンセル"
-
-#: RTSNameServerView.cpp:143 RTSPropertiesView.cpp:108
-msgid "Object Name"
-msgstr "オブジェクト名"
-
-#: RTSPropertiesView.cpp:27
-msgid "PERIODIC"
-msgstr ""
-
-#: RTSPropertiesView.cpp:27
-msgid "EVENT_DRIVEN"
-msgstr ""
-
-#: RTSPropertiesView.cpp:27
-msgid "OTHER"
-msgstr ""
-
-#: RTSPropertiesView.cpp:28
-msgid "CREATED"
-msgstr ""
-
-#: RTSPropertiesView.cpp:28
-msgid "INACTIVE"
-msgstr ""
-
-#: RTSPropertiesView.cpp:28
-msgid "ACTIVE"
-msgstr ""
-
-#: RTSPropertiesView.cpp:28
-msgid "ERROR"
-msgstr ""
-
-#: RTSPropertiesView.cpp:30
-msgid "push"
-msgstr ""
-
-#: RTSPropertiesView.cpp:30
-msgid "pull"
-msgstr ""
-
-#: RTSPropertiesView.cpp:31
-msgid "corba_cdr"
-msgstr ""
-
-#: RTSPropertiesView.cpp:32
-msgid "flush"
-msgstr ""
-
-#: RTSPropertiesView.cpp:32
-msgid "new"
-msgstr ""
-
-#: RTSPropertiesView.cpp:32
-msgid "periodic"
-msgstr "周期"
-
-#: RTSPropertiesView.cpp:76
-msgid "RTC Properties"
-msgstr "RTCプロパティ"
-
-#: RTSPropertiesView.cpp:108
-msgid "Object Value"
-msgstr "オブジェクト値"
-
-#: RTSPropertiesView.cpp:202
-msgid "Instance Name"
-msgstr "インスタンス名"
-
-#: RTSPropertiesView.cpp:207
-msgid "Type Name"
-msgstr "タイプ名"
-
-#: RTSPropertiesView.cpp:212
-msgid "Description"
-msgstr ""
-
-#: RTSPropertiesView.cpp:217
-msgid "Version"
-msgstr ""
-
-#: RTSPropertiesView.cpp:222
-msgid "Vendor"
-msgstr ""
-
-#: RTSPropertiesView.cpp:227
-msgid "Category"
-msgstr ""
-
-#: RTSPropertiesView.cpp:233 RTSPropertiesView.cpp:361
-msgid "Properties"
-msgstr ""
-
-#: RTSPropertiesView.cpp:250
-msgid "Owned"
-msgstr ""
-
-#: RTSPropertiesView.cpp:259
-msgid "Participate"
-msgstr ""
-
-#: RTSPropertiesView.cpp:279
-msgid "ID"
-msgstr ""
-
-#: RTSPropertiesView.cpp:284
-msgid "RTC State"
-msgstr ""
-
-#: RTSPropertiesView.cpp:291
-msgid "State"
-msgstr ""
-
-#: RTSPropertiesView.cpp:292
-msgid "RUNNING"
-msgstr ""
-
-#: RTSPropertiesView.cpp:292
-msgid "UNKNOWN"
-msgstr ""
-
-#: RTSPropertiesView.cpp:296
-msgid "Kind"
-msgstr ""
-
-#: RTSPropertiesView.cpp:301
-msgid "Rate"
-msgstr ""
-
-#: RTSPropertiesView.cpp:330 RTSPropertiesView.cpp:407
-msgid "Name"
-msgstr ""
-
-#: RTSPropertiesView.cpp:388
-msgid "Connector Profile"
-msgstr ""
-
-#: RTSPropertiesView.cpp:401
-msgid "Connector ID"
-msgstr ""
-
-#: deprecated/BodyRTCItem.cpp:37
+#: deprecated/VirtualRobotRTC.cpp:327
+msgid "detected RTC: {0}  Port connection: {1} <--> {2}"
+msgstr "RTCを検出： {0}　ポート接続：　{1} <--> {2}"
+
+#: deprecated/BodyRTCItem.cpp:39
 msgid "BodyRTCItem"
 msgstr "BodyRTCアイテム"
 
-#: deprecated/BodyRTCItem.cpp:60
+#: deprecated/BodyRTCItem.cpp:62
 msgid "Use Configuration File"
 msgstr "設定ファイルを使用"
 
-#: deprecated/BodyRTCItem.cpp:61
+#: deprecated/BodyRTCItem.cpp:63
 msgid "Create Default Port"
 msgstr "標準ポートを作成"
 
-#: deprecated/BodyRTCItem.cpp:131
-msgid "Config File \"%1%\" has been loaded."
-msgstr "設定ファイル \"%1%\" が読み込まれました。"
+#: deprecated/BodyRTCItem.cpp:67 RTCItem.cpp:68 ControllerRTCItem.cpp:119
+msgid "RTC directory"
+msgstr "RTCディレクトリ"
 
-#: deprecated/BodyRTCItem.cpp:133
-msgid "Cannot find or open \"%1%\"."
-msgstr "\"%1%\"　は存在しないか、開けません。"
+#: deprecated/BodyRTCItem.cpp:68 RTCItem.cpp:69 ControllerRTCItem.cpp:120
+msgid "Project directory"
+msgstr "プロジェクトディレクトリ"
 
-#: deprecated/BodyRTCItem.cpp:141
-msgid "Loading Module....  \"%1%\""
-msgstr "\"%1%\"を読み込み中...."
+#: deprecated/BodyRTCItem.cpp:126 deprecated/BodyRTCItem.cpp:173
+#: RTCItem.cpp:277
+msgid "Please save the project."
+msgstr "プロジェクトを保存してください．"
 
-#: deprecated/BodyRTCItem.cpp:189
-msgid "RTC \"%1%\" has been created."
-msgstr "RTC \"%1%\" を生成しました。"
+#: deprecated/BodyRTCItem.cpp:136
+msgid "Config File \"{}\" has been loaded."
+msgstr "設定ファイル \"{}\" が読み込まれました．"
 
-#: deprecated/BodyRTCItem.cpp:311
-msgid "RTC \"%1%\" is not ready."
-msgstr "RTC \"%1%\" が利用できません。"
+#: deprecated/BodyRTCItem.cpp:138 deprecated/BodyRTCItem.cpp:142
+msgid "Cannot find or open \"{}\"."
+msgstr "\"{}\" は存在しないか，開けません．"
 
-#: deprecated/BodyRTCItem.cpp:318
+#: deprecated/BodyRTCItem.cpp:150
+msgid "Loading Module....  \"{}\""
+msgstr "モジュール読み込み中....  \"{}\""
+
+#: deprecated/BodyRTCItem.cpp:203
+#: deprecated/PointCloudSubscriberRTCItem.cpp:401
+msgid "RTC \"{}\" has been created."
+msgstr "RTC \"{}\" を生成しました．"
+
+#: deprecated/BodyRTCItem.cpp:338
+msgid "RTC \"{}\" is not ready."
+msgstr "RTC \"{}\" は稼働できません．"
+
+#: deprecated/BodyRTCItem.cpp:345
 msgid "Output interval must be longer than the control interval."
-msgstr "出力間隔は、コントロールの間隔より長い必要があります。"
+msgstr "出力の時間間隔は制御の時間間隔より長くなければなりません．"
 
-#: deprecated/BodyRTCItem.cpp:517
+#: deprecated/BodyRTCItem.cpp:554
 msgid "Auto Connect"
-msgstr "自動ポート接続"
+msgstr "自動接続"
 
-#: deprecated/BodyRTCItem.cpp:529
+#: deprecated/BodyRTCItem.cpp:555 ControllerRTCItem.cpp:644
+msgid "RTC Instance name"
+msgstr "RTCインスタンス名"
+
+#: deprecated/BodyRTCItem.cpp:557 RTCItem.cpp:215
+#: BodyStateSubscriberRTCItem.cpp:767 ControllerRTCItem.cpp:652
+msgid "Periodic rate"
+msgstr "実行周波数"
+
+#: deprecated/BodyRTCItem.cpp:562 RTCItem.cpp:201 ControllerRTCItem.cpp:631
+msgid "RT-Component module (*{})"
+msgstr "RTコンポーネントモジュール (*{})"
+
+#: deprecated/BodyRTCItem.cpp:566
 msgid "RTC cconfiguration file (*.conf)"
-msgstr "RTC 設定ファィル (*.conf)"
+msgstr "RTC設定ファィル (*.conf)"
 
-#: deprecated/BodyRTCItem.cpp:541
+#: deprecated/BodyRTCItem.cpp:575 RTCItem.cpp:211 ControllerRTCItem.cpp:641
+msgid "Base directory"
+msgstr "ベースディレクトリ"
+
+#: deprecated/BodyRTCItem.cpp:578
 msgid "Controller module"
 msgstr "コントローラモジュール"
 
-#: deprecated/BodyRTCItem.cpp:544
+#: deprecated/BodyRTCItem.cpp:581
 msgid "Configuration mode"
-msgstr "設定モード"
+msgstr "コンフィギュレーションモード"
 
-#: deprecated/BodyRTCItem.cpp:547
+#: deprecated/BodyRTCItem.cpp:584
 msgid "Configuration file"
-msgstr "設定ファイル名"
+msgstr "コンフィギュレーションファイル"
 
-#: deprecated/BodyRTCItem.cpp:622 deprecated/BodyRTCItem.cpp:670
-msgid "%1% is not found."
-msgstr "%1% が見つかりません。"
+#: deprecated/BodyRTCItem.cpp:666 deprecated/BodyRTCItem.cpp:714
+msgid "{} is not found."
+msgstr "{}が見つかりません．"
 
-#: deprecated/BodyRTCItem.cpp:626 deprecated/BodyRTCItem.cpp:674
-msgid "%1% is not an RTC object."
-msgstr "%1% はRTCではありません。"
+#: deprecated/BodyRTCItem.cpp:670 deprecated/BodyRTCItem.cpp:718
+msgid "{} is not an RTC object."
+msgstr "{}はRTCオブジェクトではありません．"
 
-#: deprecated/BodyRTCItem.cpp:635
+#: deprecated/BodyRTCItem.cpp:679
 msgid "setup RT components"
-msgstr "RTCの設定をしています。"
+msgstr "RTコンポーネントの設定をしています．"
 
-#: deprecated/BodyRTCItem.cpp:730
-msgid "periodic-rate (%1%) = %2% "
-msgstr "周期(%1%) = %2% "
+#: deprecated/BodyRTCItem.cpp:774
+msgid "periodic-rate ({0}) = {1} "
+msgstr "周期 ({0}) = {1} "
 
-#: deprecated/BodyRTCItem.cpp:742
-msgid "detected the ExtTrigExecutionContext"
-msgstr "ExtTrigExecutionContextを検出しました。"
+#: deprecated/BodyRTCItem.cpp:786
+msgid "detected the ExecutionContext"
+msgstr "実行コンテキストを取得しました．"
 
-#: deprecated/BodyRTCItem.cpp:854 deprecated/BodyRTCItem.cpp:863
-msgid "%1% does not have a port %2%."
-msgstr "%1% は、ポート %2% を持っていません。"
+#: deprecated/BodyRTCItem.cpp:901 deprecated/BodyRTCItem.cpp:910
+msgid "{0} does not have a port {1}."
+msgstr "{0}はポート{1}を有していません．"
 
-#: deprecated/BodyRTCItem.cpp:885
-msgid "The robot does not have a port named %1%."
-msgstr "ロボットはポート %1% を持っていません。"
+#: deprecated/BodyRTCItem.cpp:932
+msgid "The robot does not have a port named {}."
+msgstr "ロボットは{}という名前のポートを有していません．"
 
-#: deprecated/BodyRTCItem.cpp:896 deprecated/BodyRTCItem.cpp:966
-msgid "connect %1%:%2% --> %3%:%4%"
-msgstr "%1%:%2% --> %3%:%4% 接続しています...."
+#: deprecated/BodyRTCItem.cpp:944 deprecated/BodyRTCItem.cpp:1016
+msgid "connect {0}:{1} --> {2}:{3}"
+msgstr "接続 {0}:{1} --> {2}:{3}"
 
-#: deprecated/BodyRTCItem.cpp:900 deprecated/BodyRTCItem.cpp:1007
-msgid "connect %1%:%2% <-- %3%:%4%"
-msgstr "%1%:%2% <-- %3%:%4% 接続しています...."
+#: deprecated/BodyRTCItem.cpp:949 deprecated/BodyRTCItem.cpp:1059
+msgid "connect {0}:{1} <-- {2}:{3}"
+msgstr "接続 {0}:{1} <-- {2}:{3}"
 
-#: deprecated/BodyRTCItem.cpp:906 deprecated/BodyRTCItem.cpp:969
-#: deprecated/BodyRTCItem.cpp:1010
+#: deprecated/BodyRTCItem.cpp:955 deprecated/BodyRTCItem.cpp:1020
+#: deprecated/BodyRTCItem.cpp:1063
 msgid "Connection was successful."
-msgstr "接続しました。"
+msgstr "接続に成功しました．"
 
-#: deprecated/BodyRTCItem.cpp:908 deprecated/BodyRTCItem.cpp:971
-#: deprecated/BodyRTCItem.cpp:1012
+#: deprecated/BodyRTCItem.cpp:957 deprecated/BodyRTCItem.cpp:1022
+#: deprecated/BodyRTCItem.cpp:1065
 msgid "Connection failed."
-msgstr "接続できませんでした。"
+msgstr "接続に失敗しました．"
 
-#: deprecated/BodyRTCItem.cpp:910 deprecated/BodyRTCItem.cpp:973
-#: deprecated/BodyRTCItem.cpp:1014
+#: deprecated/BodyRTCItem.cpp:959 deprecated/BodyRTCItem.cpp:1024
+#: deprecated/BodyRTCItem.cpp:1067
 msgid " It has already been connected."
-msgstr "既に接続しています。"
+msgstr "既に接続しています．"
 
-#: deprecated/OpenHRPClockGeneratorItem.cpp:43
-msgid ""
-"OpenHRP ClockGenerator failed to tick an execution context due to exception: "
-"%1%."
-msgstr ""
-"OpenHRPクロックジェネレータは例外により実行コンテキストのtickに失敗しました。"
+#: deprecated/BodyRTCItem.cpp:1135 deprecated/BodyRTCItem.cpp:1151
+#: RTCItem.cpp:444 RTCItem.cpp:451
+msgid "delete {}"
+msgstr "{}を削除しました．"
 
-#: deprecated/OpenHRPClockGeneratorItem.cpp:80
-msgid "OpenHRP ClockGenerator received a subscription request."
-msgstr "OpenHRPクロックジェネレータが購読要求を受信しました。"
+#: deprecated/BodyRTCItem.cpp:1172 RTCItem.cpp:446
+msgid "{} cannot be deleted."
+msgstr "{}を削除できませんでした．"
 
-#: deprecated/OpenHRPClockGeneratorItem.cpp:91
-msgid "OpenHRP ClockGenerator received an unsubscription request."
-msgstr "OpenHRPクロックジェネレータが購読停止要求を受信しました。"
+#: deprecated/PointCloudSubscriberRTCItem.cpp:293
+msgid "PointCloudSubscriberRTCItem"
+msgstr "ポイントクラウドサブスクライバRTCアイテム"
 
-#: deprecated/OpenHRPClockGeneratorItem.cpp:127
-msgid "OpenHRPClockGeneratorItem"
-msgstr "OpenHRPクロックジェネレータアイテム"
+#: deprecated/PointCloudSubscriberRTCItem.cpp:398 RTCItem.cpp:357
+msgid "RTC \"{}\" cannot be created."
+msgstr "RTC \"{}\" を生成できませんした．"
 
-#: deprecated/OpenHRPClockGeneratorItem.cpp:169
-msgid "OpenHRP ClockGenerator is used for this simulation."
-msgstr "本シミュレーションではOpenHRPクロックジェネレータが使用されます。"
+#: deprecated/PointCloudSubscriberRTCItem.cpp:455
+msgid "ComponentName"
+msgstr "コンポーネント名"
 
-#: deprecated/VirtualRobotRTC.cpp:324
-msgid "detected RTC: %1%  Port connection: %2% <--> %3%"
-msgstr "RTCを検出： %1%　ポート接続：　%2% <--> %3%"
+#: deprecated/PointCloudSubscriberRTCItem.cpp:459
+msgid "PointCloudPortName"
+msgstr "ポイントクラウドポート名"
 
-#: RTSConfigurationView.cpp:149
-msgid "Apply"
-msgstr "適用"
-
-#: RTSConfigurationView.cpp:150
-msgid "Cancel"
-msgstr "キャンセル"
-
-#: RTSConfigurationView.cpp:472
-msgid "Configuration"
-msgstr "RTCコンフィギュレーション"
-
-#: RTSConfigurationView.cpp:93
+#: PortConnectionDialogExt.cpp:21 RTSConfigurationView.cpp:180
+#: RTSConfigurationView.cpp:243 PortConnectionDialog.cpp:21
 msgid "Detail"
-msgstr "詳細表示"
+msgstr "詳細"
 
-#: RTSConfigurationView.cpp:94
-msgid "Copy"
-msgstr "複製"
-
-#: RTSConfigurationView.cpp:95
+#: PortConnectionDialogExt.cpp:38 PortConnectionDialogExt.cpp:446
+#: RTSConfigurationView.cpp:190 RTSConfigurationView.cpp:248
+#: PortConnectionDialog.cpp:38 PortConnectionDialog.cpp:446
 msgid "Add"
 msgstr "追加"
 
-#: RTSConfigurationView.cpp:96
+#: PortConnectionDialogExt.cpp:42 PortConnectionDialogExt.cpp:450
+#: RTSConfigurationView.cpp:195 RTSConfigurationView.cpp:254
+#: PortConnectionDialog.cpp:42 PortConnectionDialog.cpp:450
 msgid "Delete"
 msgstr "削除"
 
-#: RTSNameServiceView.cpp:99
-msgid "Show IOR"
-msgstr "IOR 表示"
+#: PortConnectionDialogExt.cpp:49 PortConnectionDialog.cpp:49
+#: RTSPropertiesView.cpp:507 RTSNameServerView.cpp:887
+#: RTSNameServerView.cpp:963
+msgid "&Cancel"
+msgstr ""
 
-#: RTSNameServiceView.cpp:121
-msgid "Delete from View"
-msgstr "ビューから削除"
+#: PortConnectionDialogExt.cpp:53 PortConnectionDialog.cpp:53
+#: RTSPropertiesView.cpp:501 RTSNameServerView.cpp:149
+#: RTSNameServerView.cpp:881 RTSNameServerView.cpp:957
+msgid "&OK"
+msgstr ""
 
-#: RTSNameServiceView.cpp:106
-msgid "Delete from Name Service"
-msgstr "ネームサービスから削除"
+#: PortConnectionDialogExt.cpp:106 PortConnectionDialogExt.cpp:424
+#: PortConnectionDialog.cpp:106 PortConnectionDialog.cpp:424
+msgid "name : "
+msgstr "名前 : "
 
-#: RTSNameServiceView.cpp:147
-msgid "Confirm"
-msgstr "確認"
+#: PortConnectionDialogExt.cpp:109 PortConnectionDialog.cpp:109
+msgid "Data Type : "
+msgstr "データタイプ : "
 
-#: RTSNameServiceView.cpp:147
-msgid "Are you sure you want to delete?"
-msgstr "本当に削除しても良いですか？"
+#: PortConnectionDialogExt.cpp:113 PortConnectionDialog.cpp:113
+msgid "Interface Type : "
+msgstr "インタフェースタイプ : "
 
-#: RTSNameServiceView.cpp:129
-msgid "Add Context"
-msgstr "コンテキストを追加"
+#: PortConnectionDialogExt.cpp:117 PortConnectionDialog.cpp:117
+msgid "Dataflow Type : "
+msgstr "データフロータイプ : "
 
-#: RTSNameServiceView.cpp:131
-msgid "Add Object"
-msgstr "オブジェクトを追加"
+#: PortConnectionDialogExt.cpp:121 PortConnectionDialog.cpp:121
+msgid "Subscription Type : "
+msgstr "サブスクリプションタイプ : "
 
-#: RTSNameServiceView.cpp:637
-msgid "Failed to add context."
-msgstr "コンテキストの追加に失敗しました"
+#: PortConnectionDialogExt.cpp:127 PortConnectionDialog.cpp:127
+msgid "Push Rate(Hz) : "
+msgstr "プッシュレート(Hz) : "
 
-#: RTSNameServiceView.cpp:653
-msgid "Failed to add object."
-msgstr "オブジェクトの追加に失敗しました"
+#: PortConnectionDialogExt.cpp:132 PortConnectionDialog.cpp:132
+msgid "Push Policy : "
+msgstr "プッシュポリシー : "
 
-#: RTSystemItem.cpp:987
-msgid "State Check"
-msgstr "状態検知方法"
+#: PortConnectionDialogExt.cpp:143 PortConnectionDialog.cpp:143
+msgid "Skip Count : "
+msgstr "スキップカウント : "
 
-#: RTSDiagramView.cpp:943
+#: PortConnectionDialogExt.cpp:168 PortConnectionDialogExt.cpp:210
+#: PortConnectionDialog.cpp:168 PortConnectionDialog.cpp:210
+msgid "Buffer length : "
+msgstr "バッファ長 : "
+
+#: PortConnectionDialogExt.cpp:173 PortConnectionDialogExt.cpp:215
+#: PortConnectionDialog.cpp:173 PortConnectionDialog.cpp:215
+msgid "Buffer full policy : "
+msgstr "バッファフルポリシー : "
+
+#: PortConnectionDialogExt.cpp:180 PortConnectionDialogExt.cpp:222
+#: PortConnectionDialog.cpp:180 PortConnectionDialog.cpp:222
+msgid "Buffer write timeout : "
+msgstr "バッファ書込タイムアウト : "
+
+#: PortConnectionDialogExt.cpp:185 PortConnectionDialogExt.cpp:227
+#: PortConnectionDialog.cpp:185 PortConnectionDialog.cpp:227
+msgid "Buffer empty policy : "
+msgstr "バッファエンプティポリシー : "
+
+#: PortConnectionDialogExt.cpp:192 PortConnectionDialogExt.cpp:234
+#: PortConnectionDialog.cpp:192 PortConnectionDialog.cpp:234
+msgid "Buffer read timeout : "
+msgstr "バッファ読込タイムアウト : "
+
+#: PortConnectionDialogExt.cpp:197 PortConnectionDialog.cpp:197
+msgid "Buffer (Outport)"
+msgstr "バッファ（出力ポート）"
+
+#: PortConnectionDialogExt.cpp:239 PortConnectionDialog.cpp:239
+msgid "Buffer (Inport)"
+msgstr "バッファ（入力ポート）"
+
+#: PortConnectionDialogExt.cpp:405 PortConnectionDialogExt.cpp:562
+#: PortConnectionDialogExt.cpp:576 PortConnectionDialog.cpp:405
+#: PortConnectionDialog.cpp:562 PortConnectionDialog.cpp:576
+msgid "Port Connect"
+msgstr "ポート接続"
+
+#: PortConnectionDialogExt.cpp:405 PortConnectionDialogExt.cpp:562
+#: PortConnectionDialogExt.cpp:576 PortConnectionDialog.cpp:405
+#: PortConnectionDialog.cpp:562 PortConnectionDialog.cpp:576
+msgid "Duplicate property name."
+msgstr "重複プロパティ名"
+
+#: RTCItem.cpp:34
+msgid "RTCItem"
+msgstr "RTCアイテム"
+
+#: RTCItem.cpp:51
+msgid "PeriodicExecutionContext"
+msgstr ""
+
+#: RTCItem.cpp:54
+msgid "SynchExtTriggerEC"
+msgstr ""
+
+#: RTCItem.cpp:55
+msgid "ExtTrigExecutionContext"
+msgstr ""
+
+#: RTCItem.cpp:56 ControllerRTCItem.cpp:125
+msgid "SimulationExecutionContext"
+msgstr ""
+
+#: RTCItem.cpp:209 ControllerRTCItem.cpp:639
+msgid "RTC module"
+msgstr "RTCモジュール"
+
+#: RTCItem.cpp:213 ControllerRTCItem.cpp:648
+msgid "Execution context"
+msgstr "実行コンテキスト"
+
+#: RTCItem.cpp:217
+msgid "Activation"
+msgstr "アクティベーション"
+
+#: RTCItem.cpp:347
+msgid "A file of RTC \"{}\" does not exist."
+msgstr "RTC \"{}\" のファイルが存在しません．"
+
+#: RTCItem.cpp:355
+msgid "RTC \"{0}\" has been created from \"{1}\"."
+msgstr "RTC \"{0}\" を \"{1}\" から生成しました．"
+
+#: RTCItem.cpp:383
+msgid ""
+"RTC \"{0}\" cannot be created by the RTC manager.\n"
+" RTC module file: \"{1}\"\n"
+" Init function: {2}\n"
+" option: {3}"
+msgstr ""
+"RTC \"{0}\" をRTCマネージャから生成できません．\n"
+" RTCモジュールファイル: \"{1}\"\n"
+" Init関数: {2}\n"
+" オプション: {3}"
+
+#: RTCItem.cpp:427
+msgid "RT Component process \"{}\" cannot be executed."
+msgstr "RTコンポーネントのプロセス \"{}\" を起動できませんでした．"
+
+#: RTCItem.cpp:429
+msgid "RT Component process \"{}\" has been executed."
+msgstr "RTコンポーネントのプロセス \"{}\" を起動しました．"
+
+#: RTSDiagramView.cpp:905 RTSDiagramExtView.cpp:973
+msgid "Drag and drop has been canceled. Please be operation again."
+msgstr ""
+"ドラッグアンドドロップはキャンセルされました．もう一度操作してください．"
+
+#: RTSDiagramView.cpp:916 RTSDiagramExtView.cpp:984
+msgid "{} is not alive"
+msgstr "{}は生存していません"
+
+#: RTSDiagramView.cpp:1000 RTSDiagramExtView.cpp:1068
 msgid "Update"
-msgstr "状態更新"
+msgstr "更新"
 
-#: RTSDiagramView.cpp:1711
+#: RTSDiagramView.cpp:1066 RTSDiagramExtView.cpp:1134
+msgid "These are already connected."
+msgstr "それらは既に接続されています．"
+
+#: RTSDiagramView.cpp:1573 RTSDiagramExtView.cpp:1626 RTSNameServerView.cpp:784
+msgid "Activate"
+msgstr "アクティベート"
+
+#: RTSDiagramView.cpp:1573 RTSDiagramExtView.cpp:1626 RTSNameServerView.cpp:784
+msgid "Activation of target component FAILED."
+msgstr "対象コンポーネントのアクティベーションができませんでした．"
+
+#: RTSDiagramView.cpp:1582 RTSDiagramExtView.cpp:1635 RTSNameServerView.cpp:793
+msgid "Deactivate"
+msgstr "ディアクティベート"
+
+#: RTSDiagramView.cpp:1582 RTSDiagramExtView.cpp:1635 RTSNameServerView.cpp:793
+msgid "Deactivation of target component FAILED."
+msgstr "対象コンポーネントのディアクティベーションができませんでした．"
+
+#: RTSDiagramView.cpp:1591 RTSDiagramExtView.cpp:1644 RTSNameServerView.cpp:802
+msgid "Reset"
+msgstr "リセット"
+
+#: RTSDiagramView.cpp:1591 RTSDiagramExtView.cpp:1644 RTSNameServerView.cpp:802
+msgid "FAILED to reset target component."
+msgstr "対象コンポーネントをリセットできませんでした．"
+
+#: RTSDiagramView.cpp:1600 RTSDiagramExtView.cpp:1653 RTSNameServerView.cpp:811
+msgid "Exit"
+msgstr "終了"
+
+#: RTSDiagramView.cpp:1600 RTSDiagramExtView.cpp:1653 RTSNameServerView.cpp:811
+msgid "FAILED to exit target component."
+msgstr "対象コンポーネントを終了できませんでした．"
+
+#: RTSDiagramView.cpp:1610 RTSDiagramView.cpp:1619 RTSDiagramExtView.cpp:1663
+#: RTSDiagramExtView.cpp:1672 RTSNameServerView.cpp:821
+#: RTSNameServerView.cpp:830
+msgid "Start"
+msgstr "開始"
+
+#: RTSDiagramView.cpp:1610 RTSDiagramExtView.cpp:1663 RTSNameServerView.cpp:821
+msgid "FAILED to start ExecutionContext."
+msgstr "実行コンテキストを稼働できませんでした．"
+
+#: RTSDiagramView.cpp:1619 RTSDiagramExtView.cpp:1672 RTSNameServerView.cpp:830
+msgid "FAILED to stop ExecutionContext."
+msgstr "実行コンテキストを停止できませんでした．"
+
+#: RTSDiagramView.cpp:1779 RTSDiagramExtView.cpp:1747
+msgid "RTC Diagram"
+msgstr "RTCダイアグラム"
+
+#: RTSystemItem.cpp:488 RTSystemExtItem.cpp:500
+msgid "CORBA {0} ({1}), {2} in RTSComp::connectionCheckSub()"
+msgstr ""
+
+#: RTSystemItem.cpp:553 RTSystemExtItem.cpp:565
+msgid "CORBA {0} ({1}), {2} in RTSComp::getComponentPath()"
+msgstr ""
+
+#: RTSystemItem.cpp:586 RTSystemExtItem.cpp:597
+msgid "RTSystemItem"
+msgstr "RTシステムアイテム"
+
+#: RTSystemItem.cpp:589 RTSystemExtItem.cpp:600
+msgid "RT-System"
+msgstr "RTシステム"
+
+#: RTSystemItem.cpp:1050 RTSystemExtItem.cpp:1086
+msgid "Auto Connection"
+msgstr "自動接続"
+
+#: RTSystemItem.cpp:1051 RTSystemExtItem.cpp:1087
+msgid "Vendor Name"
+msgstr "ベンダ名"
+
+#: RTSystemItem.cpp:1052 RTSystemExtItem.cpp:1088 RTSPropertiesView.cpp:225
+msgid "Version"
+msgstr "バージョン"
+
+#: RTSystemItem.cpp:1053 RTSystemExtItem.cpp:1089
+msgid "State Check"
+msgstr "状態チェック"
+
+#: RTSystemItem.cpp:1055 RTSystemExtItem.cpp:1091
+msgid "Polling Cycle"
+msgstr "ポーリング周期"
+
+#: RTSystemItem.cpp:1057 RTSystemExtItem.cpp:1093
+msgid "CheckAtLoading"
+msgstr "読込時にチェック"
+
+#: RTSystemItem.cpp:1060 RTSystemExtItem.cpp:1096
+msgid "HeartBeat Period"
+msgstr "ハートビート周期:"
+
+#: BodyStateSubscriberRTCItem.cpp:584
+msgid "BodyStateSubscriberRTCItem"
+msgstr "ボディステートサブスクライバRTCアイテム"
+
+#: BodyStateSubscriberRTCItem.cpp:585
+msgid "VisionSensorSubscriberRTCItem"
+msgstr "ビジョンセンササブスクライバRTCアイテム"
+
+#: BodyStateSubscriberRTCItem.cpp:726
+msgid "RTC for \"{}\" cannot be created."
+msgstr "\"{}\" 用のRTCを生成できませんした．"
+
+#: BodyStateSubscriberRTCItem.cpp:770
+msgid "Point cloud port type"
+msgstr "ポイントクラウドポート型"
+
+#: OpenRTMPlugin.cpp:112
+msgid "{} has been registered."
+msgstr "\"{}\" を登録しました．"
+
+#: OpenRTMPlugin.cpp:114
+msgid "Failed to register {}."
+msgstr "{}を登録できませんでした．"
+
+#: OpenRTMPlugin.cpp:214
+msgid "Delete unmanaged RT components"
+msgstr "非管理下RTコンポーネントの削除"
+
+#: OpenRTMPlugin.cpp:219
+msgid "Delete unmanaged RT components on starting a simulation"
+msgstr "非管理下のRTコンポーネントをシミュレーション開始時に削除"
+
+#: OpenRTMPlugin.cpp:227
+msgid "Preferences"
+msgstr "設定画面"
+
+#: OpenRTMPlugin.cpp:314
+msgid "An RT component which is not managed by Choreonoid is being deleted."
+msgstr "Choreonoidの管理下に無いRTコンポーネントを削除しています．"
+
+#: OpenRTMPlugin.cpp:317
+msgid "{} RT components which are not managed by Choreonoid are being deleted."
+msgstr "Choreonoidの管理下に無い{}個のRTコンポーネントを削除しています．"
+
+#: OpenRTMPlugin.cpp:323
+msgid "The unmanaged RT component has been deleted."
+msgstr "非管理下RTコンポーネントを削除しました．"
+
+#: OpenRTMPlugin.cpp:325
+msgid "The unmanaged RT components have been deleted."
+msgstr "非管理下RTコンポーネントを削除しました．"
+
+#: OpenRTMPlugin.cpp:563
+msgid "CORBA {0} ({1}), {2} in cnoid::deleteRTC()."
+msgstr ""
+
+#: RTSConfigurationView.cpp:132
+msgid "Configuration"
+msgstr "コンフィギュレーション"
+
+#: RTSConfigurationView.cpp:154
+msgid "Component Name : "
+msgstr "コンポーネント名 : "
+
+#: RTSConfigurationView.cpp:185
+msgid "Copy"
+msgstr "コピー"
+
+#: RTSConfigurationView.cpp:217
+msgid "Configuration Set : "
+msgstr "コンフィギュレーションセット : "
+
+#: RTSConfigurationView.cpp:279
+msgid "Apply"
+msgstr "適用"
+
+#: RTSConfigurationView.cpp:284 RTSNameServerView.cpp:1040
+msgid "Cancel"
+msgstr "キャンセル"
+
+#: BodyIoRTCItem.cpp:51
+msgid "BodyIoRTCItem"
+msgstr "BodyIoRTCアイテム"
+
+#: BodyIoRTCItem.cpp:208
+msgid ""
+"RTC \"{0}\" of {1} cannot be used as a BodyIoRTC because it is not derived "
+"from it."
+msgstr ""
+"{1}のRTC \"{0}\" はBodyIoRTCを継承したものではないため、BodyIoRTCとしては使用で"
+"きません．"
+
+#: BodyIoRTCItem.cpp:223
+msgid "RTC \"{0}\" of {1} failed to initialize."
+msgstr "{1}のRTC \"{0}\" を初期化できませんでした．"
+
+#: BodyIoRTCItem.cpp:230 ControllerRTCItem.cpp:349
+msgid "BodyIoRTC \"{}\" has been created."
+msgstr "BodyIoRTC \"{}\" を生成しました．"
+
+#: RTSPropertiesView.cpp:34
+msgid "PERIODIC"
+msgstr ""
+
+#: RTSPropertiesView.cpp:34
+msgid "EVENT_DRIVEN"
+msgstr ""
+
+#: RTSPropertiesView.cpp:34
+msgid "OTHER"
+msgstr ""
+
+#: RTSPropertiesView.cpp:35
+msgid "CREATED"
+msgstr ""
+
+#: RTSPropertiesView.cpp:35
+msgid "INACTIVE"
+msgstr ""
+
+#: RTSPropertiesView.cpp:35
+msgid "ACTIVE"
+msgstr ""
+
+#: RTSPropertiesView.cpp:35
+msgid "ERROR"
+msgstr ""
+
+#: RTSPropertiesView.cpp:37
+msgid "push"
+msgstr ""
+
+#: RTSPropertiesView.cpp:37
+msgid "pull"
+msgstr ""
+
+#: RTSPropertiesView.cpp:38
+msgid "corba_cdr"
+msgstr ""
+
+#: RTSPropertiesView.cpp:39
+msgid "flush"
+msgstr ""
+
+#: RTSPropertiesView.cpp:39
+msgid "new"
+msgstr ""
+
+#: RTSPropertiesView.cpp:39
+msgid "periodic"
+msgstr ""
+
+#: RTSPropertiesView.cpp:80
+msgid "RTC Properties"
+msgstr "RTCプロパティ"
+
+#: RTSPropertiesView.cpp:112 RTSNameServerView.cpp:229
+msgid "Object Name"
+msgstr "オブジェクト名"
+
+#: RTSPropertiesView.cpp:112
+msgid "Object Value"
+msgstr "オブジェクト値"
+
+#: RTSPropertiesView.cpp:210
+msgid "Instance Name"
+msgstr "インスタンス名"
+
+#: RTSPropertiesView.cpp:215
+msgid "Type Name"
+msgstr "タイプ名"
+
+#: RTSPropertiesView.cpp:220
+msgid "Description"
+msgstr "説明"
+
+#: RTSPropertiesView.cpp:230
+msgid "Vendor"
+msgstr "ベンダ"
+
+#: RTSPropertiesView.cpp:235
+msgid "Category"
+msgstr "カテゴリ"
+
+#: RTSPropertiesView.cpp:241 RTSPropertiesView.cpp:369
+msgid "Properties"
+msgstr "プロパティ"
+
+#: RTSPropertiesView.cpp:258
+msgid "Owned"
+msgstr ""
+
+#: RTSPropertiesView.cpp:267
+msgid "Participate"
+msgstr ""
+
+#: RTSPropertiesView.cpp:287
+msgid "ID"
+msgstr ""
+
+#: RTSPropertiesView.cpp:292
+msgid "RTC State"
+msgstr "RTC状態"
+
+#: RTSPropertiesView.cpp:299
+msgid "State"
+msgstr "状態"
+
+#: RTSPropertiesView.cpp:300
+msgid "RUNNING"
+msgstr ""
+
+#: RTSPropertiesView.cpp:300
+msgid "UNKNOWN"
+msgstr ""
+
+#: RTSPropertiesView.cpp:304
+msgid "Kind"
+msgstr ""
+
+#: RTSPropertiesView.cpp:309
+msgid "Rate"
+msgstr "レート"
+
+#: RTSPropertiesView.cpp:338 RTSPropertiesView.cpp:415
+msgid "Name"
+msgstr "名前"
+
+#: RTSPropertiesView.cpp:396
+msgid "Connector Profile"
+msgstr "コネクタプロファイル"
+
+#: RTSPropertiesView.cpp:409
+msgid "Connector ID"
+msgstr "コネクタID"
+
+#: RTSPropertiesView.cpp:448
+msgid "Log Output"
+msgstr "ログ出力"
+
+#: RTSPropertiesView.cpp:453
+msgid "Log Level:"
+msgstr "ログレベル:"
+
+#: RTSPropertiesView.cpp:465
 msgid "Setting:"
 msgstr "設定ファイル:"
 
-#: RTSDiagramView.cpp:1829
+#: RTSPropertiesView.cpp:468
+msgid "VendorName:"
+msgstr "ベンダ名:"
+
+#: RTSPropertiesView.cpp:470
+msgid "Version:"
+msgstr "バージョン番号:"
+
+#: RTSPropertiesView.cpp:474
+msgid "Heartbeat Period:"
+msgstr "ハートビート周期:"
+
+#: RTSPropertiesView.cpp:522 RTSPropertiesView.cpp:583
+msgid "OpenRTM Preferences"
+msgstr "OpenRTM設定画面"
+
+#: RTSPropertiesView.cpp:583
 msgid "The specified setting becomes valid after RESTART."
 msgstr "指定した設定は再起動後に有効となります"
 
-#: RTSDiagramView.cpp:1829
-msgid "Kill All Zombies"
-msgstr "ゾンビをクリア"
+#: RTSNameServerView.cpp:130 RTSNameServerView.cpp:942
+msgid "IOR : "
+msgstr ""
 
-#: RTSDiagramView.cpp:1829
+#: RTSNameServerView.cpp:135
+msgid "Detail : "
+msgstr "詳細 : "
+
+#: RTSNameServerView.cpp:170
+msgid "RTC List"
+msgstr "RTCリスト"
+
+#: RTSNameServerView.cpp:202
 msgid "Add Name Server"
 msgstr "ネームサーバを追加"
 
-#: RTSDiagramView.cpp:1829
+#: RTSNameServerView.cpp:209 RTSNameServerView.cpp:211
+#: RTSNameServerView.cpp:288 RTSNameServerView.cpp:289
+#: RTSNameServerView.cpp:300 RTSNameServerView.cpp:301
+msgid " Update "
+msgstr " 更新 "
+
+#: RTSNameServerView.cpp:219
+msgid "Kill All Zombies"
+msgstr "ゾンビをクリア"
+
+#: RTSNameServerView.cpp:295 RTSNameServerView.cpp:296
+msgid "Cancel Updating"
+msgstr "更新キャンセル"
+
+#: RTSNameServerView.cpp:677
+msgid "Show IOR"
+msgstr "IOR表示"
+
+#: RTSNameServerView.cpp:682
+msgid "Delete from View"
+msgstr "ビューから削除"
+
+#: RTSNameServerView.cpp:685
+msgid "Delete from Name Service"
+msgstr "ネームサービスから削除"
+
+#: RTSNameServerView.cpp:712 RTSNameServerView.cpp:923
+msgid "Add Context"
+msgstr "コンテキストを追加"
+
+#: RTSNameServerView.cpp:714 RTSNameServerView.cpp:1000
+msgid "Add Object"
+msgstr "オブジェクトを追加"
+
+#: RTSNameServerView.cpp:747
+msgid "Confirm"
+msgstr "確認"
+
+#: RTSNameServerView.cpp:747
+msgid "Are you sure you want to delete?"
+msgstr "本当に削除しても良いですか？"
+
+#: RTSNameServerView.cpp:859 RTSNameServerView.cpp:936
+msgid "Name : "
+msgstr "名前 : "
+
+#: RTSNameServerView.cpp:862 RTSNameServerView.cpp:939
+msgid "Kind : "
+msgstr ""
+
+#: RTSNameServerView.cpp:923
+msgid "Failed to add context."
+msgstr "コンテキストを追加できませんでした"
+
+#: RTSNameServerView.cpp:1000
+msgid "Failed to add object."
+msgstr "オブジェクトを追加できませんでした"
+
+#: RTSNameServerView.cpp:1024
 msgid "Name server set in OpenRTM"
 msgstr "OpenRTMで設定されているネームサーバ"
 
-#: RTSystemItem.cpp:1020
-msgid "CheckAtLoading"
-msgstr "読込時に状態チェック"
+#: RTSNameServerView.cpp:1036
+msgid "OK"
+msgstr ""
 
+#: RTMImageView.cpp:91
+msgid "RTM-Image"
+msgstr ""
+
+#: ControllerRTCItem.cpp:94
+msgid "ControllerRTCItem"
+msgstr "コントローラRTCアイテム"
+
+#: ControllerRTCItem.cpp:118
+msgid "None"
+msgstr "なし"
+
+#: ControllerRTCItem.cpp:126
+msgid "SimulationPeriodicExecutionContext"
+msgstr ""
+
+#: ControllerRTCItem.cpp:313
+msgid ""
+"The rtc of {} cannot be generated because the project directory is not "
+"determined. Please save the project as a project file."
+msgstr ""
+"{}のRTCはプロジェクトディレクトリが未定のため生成できません．プロジェクファイ"
+"ルの保存を行って下さい．"
+
+#: ControllerRTCItem.cpp:332
+msgid "RTC module file \"{0}\" of {1} does not exist."
+msgstr "{1}のRTCモジュールファイル \"{0}\" が存在しません．"
+
+#: ControllerRTCItem.cpp:382
+msgid "The RTC instance name of {} is not specified."
+msgstr "{}のRTCインスタンス名が指定されていません．"
+
+#: ControllerRTCItem.cpp:398
+msgid ""
+"RTC \"{0}\" of {1} is not created because more than {2} existing instances "
+"have the same base name \"{3}\"."
+msgstr ""
+"{1}のRTC \"{0}\" は同じベース名 \"{3}\" を有する既存インスタンスが{2}個以上あるた"
+"め生成されません．"
+
+#: ControllerRTCItem.cpp:463
+msgid ""
+"RTC \"{0}\" of {1} cannot be created by the RTC manager.\n"
+" RTC module file: \"{2}\"\n"
+" Init function: {3}\n"
+" option: {4}"
+msgstr ""
+"{1}のRTC \"{0}\" をRTCマネージャから生成できません．\n"
+" RTCモジュールファイル: \"{2}\"\n"
+" Init関数: {3}\n"
+" オプション: {4}"
+
+#: ControllerRTCItem.cpp:526
+msgid "RTC instance {0} of {1} cannot be deleted."
+msgstr "{1}のRTCインスタンス \"{0}\" を削除できません．"
 

@@ -12,6 +12,7 @@
 #include <cnoid/LazyCaller>
 #include <cnoid/Archive>
 #include <pulse/pulseaudio.h>
+#include <fmt/format.h>
 #include <map>
 #include <cmath>
 //#include <iostream> // for debug
@@ -20,7 +21,7 @@
 using namespace std;
 using namespace std::placeholders;
 using namespace cnoid;
-using boost::format;
+using fmt::format;
 
 namespace {
 
@@ -624,8 +625,8 @@ void Source::initializePlayback(double time)
         size_t writableSize = pa_stream_writable_size(stream);
         
         if(writableSize <= 0){
-            manager->os << (format(_("PulseAudio stream for %1% cannot be written."))
-                            % audioItem->name()) << endl;
+            manager->os <<
+                format(_("PulseAudio stream for {} cannot be written."), audioItem->name()) << endl;
             disconnectStream();
             
         } else {
@@ -727,8 +728,9 @@ void Source::adjustTime(const char* reason)
     doAdjustTime = true;
     pa_threaded_mainloop_unlock(manager->mainloop);
 
-    manager->os << (format(_("PulseAudioManager: Buffer of %1% %2%. Its playback time is adjusted to %3%."))
-                    % audioItem->name() % reason % time) << endl;
+    manager->os <<
+        format(_("PulseAudioManager: Buffer of {0} {1}. Its playback time is adjusted to {2}."),
+               audioItem->name(), reason, time) << endl;
 }
 
 

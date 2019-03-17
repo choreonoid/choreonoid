@@ -3,12 +3,12 @@
 */
 
 #include "MulticopterPluginHeader.h"
+#include <fmt/format.h>
 
 using namespace std;
 using namespace std::placeholders;
 using namespace cnoid;
 using namespace Multicopter;
-using boost::format;
 
 
 void MulticopterSimulatorItem::initializeClass(ExtensionManager* ext)
@@ -219,7 +219,8 @@ MulticopterSimulatorItem::restore(const Archive& archive)
     FluidEnvironment* fluEnv = simMgr->fluidEnvironment();
     bool ret = fluEnv->load(_airDefinitionFileName);
     if( ret == false ){
-        UtilityImpl::printErrorMessage((format(" Air Definition File( %s )is not valid") % _airDefinitionFileName ).str());
+        UtilityImpl::printErrorMessage(
+            fmt::format(" Air Definition File( {} )is not valid", _airDefinitionFileName));
         _airDefinitionFileNameP=_airDefinitionFileName="";
         return true;
     }

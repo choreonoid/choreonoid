@@ -7,6 +7,7 @@
 #include "MessageView.h"
 #include <cnoid/SceneDrawables>
 #include <cnoid/SceneCameras>
+#include <fmt/format.h>
 #ifdef _WIN32
 #include <windows.h>
 #endif
@@ -14,6 +15,7 @@
 
 using namespace std;
 using namespace cnoid;
+using fmt::format;
 
 namespace cnoid {
 
@@ -177,9 +179,9 @@ bool GLSceneRenderer::initializeGL()
     GLint major, minor;
     glGetIntegerv(GL_MAJOR_VERSION, &major);
     glGetIntegerv(GL_MINOR_VERSION, &minor);
-    os << (boost::format("OpenGL version is %1%.%2%.") % major % minor) << endl;
+    os << format("OpenGL version is {0}.{1}.", major, minor) << endl;
     if(major >= 2){
-        os << (boost::format("GLSL version is %1%.") % glGetString(GL_SHADING_LANGUAGE_VERSION)) << endl;
+        os << format("GLSL version is {0}.", (const char*)glGetString(GL_SHADING_LANGUAGE_VERSION)) << endl;
     }
 #endif
     return true;

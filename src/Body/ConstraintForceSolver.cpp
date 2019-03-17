@@ -19,7 +19,7 @@
 #include <cnoid/EigenUtil>
 #include <cnoid/AISTCollisionDetector>
 #include <cnoid/TimeMeasure>
-#include <boost/format.hpp>
+#include <fmt/format.h>
 #include <boost/random.hpp>
 #include <unordered_map>
 #include <limits>
@@ -384,8 +384,7 @@ public:
             os << "Matrix " << name << ": \n";
             for(int i=0; i < M.rows(); i++){
                 for(int j=0; j < M.cols(); j++){
-                    //os << boost::format(" %6.3f ") % M(i, j);
-                    os << boost::format(" %.50g ") % M(i, j);
+                    os << fmt::format(" {:.50g} ", M(i, j));
                 }
                 os << std::endl;
             }

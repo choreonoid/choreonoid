@@ -12,9 +12,9 @@
 #include <cnoid/ZMPSeq>
 #include <cnoid/Config>
 #include <QMessageBox>
+#include <fmt/format.h>
 #include <boost/tokenizer.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/format.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
 #ifndef _WINDOWS
 #include <boost/iostreams/filter/gzip.hpp>
@@ -42,7 +42,7 @@ using boost::smatch;
 using namespace std;
 using namespace cnoid;
 namespace filesystem = boost::filesystem;
-using boost::format;
+using fmt::format;
 
 namespace {
 
@@ -114,7 +114,7 @@ public:
         ifstream ifs(filename.c_str());
 
         if(!ifs){
-            os << (format("\"%1%\" cannot be opened.") % filename) << endl;
+            os << format(_("\"{}\" cannot be opened."), filename) << endl;
             return false;
         }
 
@@ -153,7 +153,7 @@ public:
                     frame[i] = boost::lexical_cast<double>(*it);
                 }
                 if(i < numElements /* || it != tokens.end() */ ){
-                    os << (format("\"%1%\" contains different size columns.") % filename) << endl;
+                    os << format(_("\"{}\" contains different size columns."), filename) << endl;
                     return false;
                 }
             }
@@ -276,11 +276,12 @@ bool exportHrpsysSeqFileSet(BodyMotionItem* item, const std::string& filename, s
 {
     double frameRate = item->motion()->frameRate();
     if(frameRate != 200.0){
-        static format m1(_("The frame rate of a body motion exported as HRPSYS files should be standard value 200, "
-                           "but the frame rate of \"%1%\" is %2%. The exported data may cause a problem.\n\n"
-                           "Do you continue to export ?"));
-        
-        if(!confirm(str(m1 % item->name() % frameRate))){
+        if(!confirm(
+               format(
+                   _("The frame rate of a body motion exported as HRPSYS files should be standard value 200, "
+                     "but the frame rate of \"{0}\" is {1}. The exported data may cause a problem.\n\n"
+                     "Do you continue to export ?"),
+                   item->name(), frameRate))){
             return false;
         }
     }
@@ -292,17 +293,15 @@ bool exportHrpsysSeqFileSet(BodyMotionItem* item, const std::string& filename, s
         KinematicFaultChecker* checker = KinematicFaultChecker::instance();
         int numFaults = checker->checkFaults(bodyItem, item, os);
         if(numFaults > 0){
-            static string m2(_("A fault has been detected. Please check the report in the MessageView.\n\n"
-                               "Do you continue to export ?"));
-            static format m3(_("%1% faults have been detected. Please check the report in the MessageView.\n\n"
-                               "Do you continue to export ?"));
-            
             bool result;
-            
             if(numFaults == 1){
-                result = confirm(m2);
+                result = confirm(_("A fault has been detected. Please check the report in the MessageView.\n\n"
+                                   "Do you continue to export ?"));
             } else {
-                result = confirm(str(m3 % numFaults));
+                result = confirm(
+                    format(
+                        _("{} faults have been detected. Please check the report in the MessageView.\n\n"
+                          "Do you continue to export ?"), numFaults));
             }
             
             if(!result){

@@ -16,6 +16,7 @@
 #include <cnoid/MessageView>
 #include <cnoid/OptionManager>
 #include <cnoid/Archive>
+#include <fmt/format.h>
 
 #ifdef CNOID_USE_PYBIND11
 #include <pybind11/embed.h>
@@ -26,7 +27,7 @@
 
 using namespace std;
 using namespace cnoid;
-using boost::format;
+using fmt::format;
 namespace filesystem = boost::filesystem;
 
 namespace {
@@ -203,7 +204,7 @@ void PythonPlugin::onSigOptionsParsed(boost::program_options::variables_map& v)
 
 void PythonPlugin::executeScriptFileOnStartup(const string& scriptFile)
 {
-    MessageView::instance()->putln(format(_("Executing python script \"%1%\" ...")) % scriptFile);
+    MessageView::instance()->putln(format(_("Executing python script \"{}\" ..."), scriptFile));
     executor().execFile(scriptFile);
     if(!executor().hasException()){
         MessageView::instance()->putln(_("The script finished."));
@@ -369,8 +370,9 @@ void PythonPlugin::restoreProperties(const Archive& archive)
                     syspath.insert(0, getNativePathString(filesystem::path(newPath)));
 #endif
                     additionalSearchPathList.push_back(newPath);
-                    mv->putln(format(_("PythonPlugin: \"%1%\" has been added to the Python module search path list."))
-                              % newPath);
+                    mv->putln(
+                        format(_("PythonPlugin: \"{}\" has been added to the Python module search path list."),
+                               newPath));
                 }
             }
         }

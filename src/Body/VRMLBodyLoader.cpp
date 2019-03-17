@@ -20,13 +20,13 @@
 #include <cnoid/VRMLToSGConverter>
 #include <cnoid/ValueTree>
 #include <cnoid/NullOut>
-#include <boost/format.hpp>
+#include <fmt/format.h>
 #include <boost/dynamic_bitset.hpp>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using boost::format;
+using fmt::format;
 
 namespace cnoid {
 
@@ -144,7 +144,7 @@ ProtoInfoMap protoInfoMap;
 void throwExceptionOfIllegalField(VRMLProto* proto, const std::string& name, const char* label)
 {
     throw invalid_argument(
-        str(format(_("Proto \"%1%\" must have the \"%2%\" field of %3% type")) % proto->protoName % name % label));
+        format(_("Proto \"{0}\" must have the \"{1}\" field of {2} type"), proto->protoName, name, label));
 }
 
 template <typename TValue>
@@ -188,7 +188,9 @@ template<class ValueType> ValueType getValue(VRMLProtoInstance* node, const char
         BOOST_THROW_EXCEPTION(
             nonexistent_key_error()
             << error_info_key(fieldName)
-            << error_info_message(str(format(_("Node \"%1%\" should have the field \"%2%\"")) % node->proto->protoName % fieldName)));
+            << error_info_message(
+                format(_("Node \"{0}\" should have the field \"{1}\""),
+                       node->proto->protoName, fieldName)));
     }
     return boost::get<ValueType>(p->second);
 }
@@ -655,7 +657,7 @@ void VRMLBodyLoaderImpl::readHumanoidNode(VRMLProtoInstance* humanoidNode)
             if(numValidJointIds < validJointIdSet.size()){
                 for(size_t i=0; i < validJointIdSet.size(); ++i){
                     if(!validJointIdSet[i]){
-                        os() << str(format(_("Warning: Joint ID %1% is not specified.")) % i) << endl;
+                        os() << format(_("Warning: Joint ID {} is not specified."), i) << endl;
                     }
                 }
             }
@@ -768,7 +770,7 @@ Link* VRMLBodyLoaderImpl::createLink(VRMLProtoInstance* jointNode, const Matrix3
             ++numValidJointIds;
             validJointIdSet.set(link->jointId());
         } else {
-            os() << str(format(_("Warning: Joint ID %1% is duplicated.")) % link->jointId()) << endl;
+            os() << format(_("Warning: Joint ID {} is duplicated."), link->jointId()) << endl;
         }
     }
 
@@ -795,10 +797,11 @@ Link* VRMLBodyLoaderImpl::createLink(VRMLProtoInstance* jointNode, const Matrix3
     } else if(jointType == "pseudoContinuousTrack"){
         link->setJointType(Link::PSEUDO_CONTINUOUS_TRACK);
         link->setActuationMode(Link::JOINT_SURFACE_VELOCITY);
-        os() << str(format(_("Warning: A deprecated joint type 'pseudoContinousTrack'is specified for %1%."))
-                    % link->name()) << endl;
+        os() << format(
+            _("Warning: A deprecated joint type 'pseudoContinousTrack'is specified for {}."), link->name())
+             << endl;
     } else {
-        throw invalid_argument(str(format(_("JointType \"%1%\" is not supported.")) % jointType));
+        throw invalid_argument(format(_("JointType \"{}\" is not supported."), jointType));
     }
 
     if(link->jointType() == Link::FREE_JOINT || link->jointType() == Link::FIXED_JOINT){
@@ -887,7 +890,7 @@ void VRMLBodyLoaderImpl::readJointSubNodes(LinkInfo& iLink, MFNode& childNodes, 
             } else {
                 id = p->second.id;
                 if(!acceptableProtoIds.test(id)){
-                    throw invalid_argument(str(format(_("%1% node is not in a correct place.")) % protoName));
+                    throw invalid_argument(format(_("{} node is not in a correct place."), protoName));
                 }
                 if(isVerbose){
                     messageIndent += 2;
@@ -896,7 +899,7 @@ void VRMLBodyLoaderImpl::readJointSubNodes(LinkInfo& iLink, MFNode& childNodes, 
                 case PROTO_JOINT:
                     if(!T.matrix().isApprox(Affine3::MatrixType::Identity())){
                         throw invalid_argument(
-                            str(format(_("Joint node \"%1%\" is not in a correct place.")) % protoInstance->defName));
+                            format(_("Joint node \"{}\" is not in a correct place."), protoInstance->defName));
                     }
                     iLink.link->appendChild(readJointNode(protoInstance, iLink.link->Rs()));
                     break;
@@ -1026,7 +1029,7 @@ void VRMLBodyLoaderImpl::readDeviceNode(LinkInfo& iLink, VRMLProtoInstance* devi
     
     DeviceFactoryMap::iterator p = deviceFactories.find(typeName);
     if(p == deviceFactories.end()){
-        os() << str(format(_("Sensor type %1% is not supported.\n")) % typeName) << endl;
+        os() << format(_("Sensor type {} is not supported.\n"), typeName) << endl;
     } else {
         DeviceFactory& factory = p->second;
         DevicePtr device = factory(deviceNode);
@@ -1223,7 +1226,7 @@ void VRMLBodyLoaderImpl::setExtraJoints()
         for(int j=0; j < 2; ++j){
             if(!joint.link[j]){
                 throw invalid_argument(
-                    str(format(_("Field \"link%1%Name\" of a ExtraJoint node does not specify a valid link name")) % (j+1)));
+                    format(_("Field \"link{}Name\" of a ExtraJoint node does not specify a valid link name"), (j+1)));
             }
         }
 
@@ -1234,7 +1237,7 @@ void VRMLBodyLoaderImpl::setExtraJoints()
         } else if(jointType == "ball"){
             joint.type = ExtraJoint::EJ_BALL;
         } else {
-            throw invalid_argument(str(format(_("JointType \"%1%\" is not supported.")) % jointType));
+            throw invalid_argument(format(_("JointType \"{}\" is not supported."), jointType));
         }
             
         readVRMLfield(f["link1LocalPos"], joint.point[0]);

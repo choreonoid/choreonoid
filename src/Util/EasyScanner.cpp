@@ -10,13 +10,13 @@
 #include <cmath>
 #include <cstring>
 #include <iostream>
-#include <boost/format.hpp>
+#include <fmt/format.h>
 #include <errno.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using boost::format;
+using fmt::format;
 
 
 namespace {
@@ -106,11 +106,11 @@ std::string EasyScanner::Exception::getFullMessage() const
     string m(message);
     
     if(lineNumber > 0){
-        m += str(format(" at line %1%") % lineNumber);
+        m += format(" at line {}", lineNumber);
     }
 	
     if(!filename.empty()){
-        m += str(format(" of %1%") % filename);
+        m += format(" of {}", filename);
     }
     
     return m;
@@ -294,10 +294,10 @@ void EasyScanner::loadFile(const string& filename)
         string message;
         switch(errno){
         case ENOENT:
-            message = str(format(_("\"%1%\" is not found.")) % filename);
+            message = format(_("\"{}\" is not found."), filename);
             break;
         default:
-            message = str(format(_("I/O error in accessing \"%1%\".")) % filename);
+            message = format(_("I/O error in accessing \"{}\"."), filename);
             break;
         }
         throwException(message.c_str());

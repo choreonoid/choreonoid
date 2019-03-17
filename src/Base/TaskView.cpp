@@ -20,11 +20,12 @@
 #include <QApplication>
 #include <set>
 #include <iostream>
+#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using boost::format;
+using fmt::format;
 
 namespace {
 
@@ -484,7 +485,7 @@ void TaskViewImpl::addTask(Task* task)
         setCurrentTask(0, true);
     }
 
-    os << format(_("Task \"%1%\" has been added.")) % task->name() << endl;
+    os << format(_("Task \"{}\" has been added."), task->name()) << endl;
 }
 
 
@@ -505,8 +506,8 @@ bool TaskViewImpl::updateTask(Task* task)
     } else {
         if(isWaiting()){
             mv->putln(MessageView::WARNING,
-                      format(_("Task \"%1%\" cannot be updated now because it is wating for a command to finish."))
-                      % task->name());
+                      format(_("Task \"{}\" cannot be updated now because it is wating for a command to finish."),
+                      task->name()));
         } else {
             TaskInfo& info = tasks[index];
             TaskPtr oldTask = info.task;
@@ -539,7 +540,7 @@ bool TaskViewImpl::updateTask(Task* task)
                     task->restoreState(self, *info.state);
                 }
             }
-            os << format(_("Task \"%1%\" has been updated with the new one.")) % task->name() << endl;
+            os << format(_("Task \"{}\" has been updated with the new one."), task->name()) << endl;
             updated = true;
         }
     }
@@ -1249,8 +1250,8 @@ void TaskViewImpl::goToNextTask()
                     ++currentIndexInSerializedTasks;
                 } else {
                     mv->putln(MessageView::WARNING,
-                              format(_("Next task \"%1%\" is not found."))
-                              % nextTask);
+                              format(_("Next task \"{}\" is not found."),
+                              nextTask));
                 }
             }
             break;

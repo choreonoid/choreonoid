@@ -7,7 +7,7 @@
 #include "ExecutablePath.h"
 #include "FileUtil.h"
 #include "UTF8.h"
-#include <boost/format.hpp>
+#include <fmt/format.h>
 
 #ifdef CNOID_USE_BOOST_REGEX
 #include <boost/regex.hpp>
@@ -22,7 +22,7 @@ using boost::regex_match;
 
 using namespace std;
 using namespace cnoid;
-using boost::format;
+using fmt::format;
 namespace filesystem = boost::filesystem;
 
 namespace cnoid {
@@ -136,7 +136,7 @@ std::string ParametricPathProcessor::parameterize(const std::string& orgPathStri
         } else {
             string varName;
             if(impl->findSubDirectoryOfDirectoryVariable(orgPath, varName, relativePath)){
-                return str(format("${%1%}/%2%") % varName % getGenericPathString(relativePath));
+                return format("${{{0}}}/{1}", varName, getGenericPathString(relativePath));
 
             } else if(findSubDirectory(impl->shareDirPath, orgPath, relativePath)){
                 return string("${SHARE}/") + getGenericPathString(relativePath);
@@ -215,7 +215,7 @@ boost::optional<std::string> ParametricPathProcessorImpl::expand(const std::stri
         } else if(varname == "PROJECT_DIR"){
             if(projectDirString.empty()){
                 errorMessage =
-                    str(format(_("PROJECT_DIR of \"%1%\" cannot be expanded.")) % pathString);
+                    format(_("PROJECT_DIR of \"{}\" cannot be expanded."), pathString);
                 return boost::none;
             }
             expanded.replace(pos, len, projectDirString);
@@ -258,7 +258,7 @@ bool ParametricPathProcessorImpl::replaceDirectoryVariable
         }
     }
 
-    errorMessage = str(format(_("%1% of \"%2%\" cannot be expanded.")) % varname % io_pathString);
+    errorMessage = format(_("{0} of \"{1}\" cannot be expanded."), varname, io_pathString);
     return false;
 }
 

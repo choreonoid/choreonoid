@@ -12,10 +12,9 @@
 //#include "PoseSeqView.h"
 #include "PoseRollView.h"
 #include "FcpFileLoader.h"
-#include <boost/format.hpp>
+#include <fmt/format.h>
 
 using namespace cnoid;
-using boost::format;
 
 namespace {
   
@@ -40,7 +39,7 @@ public:
 
     virtual const char* description() const override {
         static std::string text =
-            str(format("PoseSeq Plugin Version %1%\n") % CNOID_FULL_VERSION_STRING) +
+            fmt::format("PoseSeq Plugin Version {}\n", CNOID_FULL_VERSION_STRING) +
             "\n" +
             "Copyright (c) 2018 Shin'ichiro Nakaoka and Choreonoid Development Team, AIST.\n"
             "\n" +
