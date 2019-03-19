@@ -128,7 +128,8 @@ namespace {
     };
 
     const map<int, ModelID> modelIdMap = {
-        { 0x054C<<16 | 0x09CC, PS4 },
+        { 0x054C<<16 | 0x09CC, PS4 },  // Sony Interactive Entertainment
+        { 0x054C<<16 | 0x05C4, PS4 },  // Sony Computer Entertainment
         { 0x045E<<16 | 0x028E, XBOX_360 },
         { 0x045E<<16 | 0x02FF, XBOX_ONE },
         { 0x046D<<16 | 0xC21D, F310 },
