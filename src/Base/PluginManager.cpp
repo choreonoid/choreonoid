@@ -342,7 +342,6 @@ void PluginManagerImpl::scanPluginFiles(const std::string& pathString, bool isRe
                 if(doSorting){
                     list<string> paths;
                     for(filesystem::directory_iterator it(pluginPath); it != end; ++it){
-                        const filesystem::path& filepath = *it;
                         paths.push_back(getNativePathString(*it));
                     }
                     paths.sort();
@@ -351,8 +350,7 @@ void PluginManagerImpl::scanPluginFiles(const std::string& pathString, bool isRe
                     }
                 } else {
                     for(filesystem::directory_iterator it(pluginPath); it != end; ++it){
-                        const filesystem::path& filepath = *it;
-                        scanPluginFiles(getNativePathString(filepath), true);
+                        scanPluginFiles(getNativePathString(*it), true);
                     }
                 }
             }

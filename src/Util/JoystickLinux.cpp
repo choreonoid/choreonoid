@@ -542,7 +542,7 @@ double Joystick::getPosition(int axis) const
     
     if(impl->extJoystick){
         pos = impl->extJoystick->getPosition(axis);
-    } else if(axis < impl->axes.size()){
+    } else if(axis < (int)impl->axes.size()){
         pos = impl->axes[axis];
     }
 
@@ -556,7 +556,7 @@ bool Joystick::getButtonState(int button) const
     
     if(impl->extJoystick){
         state = impl->extJoystick->getButtonState(button);
-    } else if(button < impl->buttons.size()){
+    } else if(button < (int)impl->buttons.size()){
         state = impl->buttons[button];
     }
 
@@ -566,7 +566,7 @@ bool Joystick::getButtonState(int button) const
 
 bool Joystick::getButtonDown(int button) const
 {
-    if(button >= impl->buttons.size()){
+    if(button >= (int)impl->buttons.size()){
         return false;
     }
     return getButtonState(button) && !impl->prevButtons[button];
@@ -575,7 +575,7 @@ bool Joystick::getButtonDown(int button) const
 
 bool Joystick::getButtonUp(int button) const
 {
-    if(button >= impl->buttons.size()){
+    if(button >= (int)impl->buttons.size()){
         return false;
     }
     return !getButtonState(button) && impl->prevButtons[button];
@@ -597,7 +597,7 @@ bool Joystick::getButtonHold(int button, int duration/*(msec)*/) const
 
 bool Joystick::getButtonHoldOn(int button, int duration/*(msec)*/) const
 {
-    if(button >= impl->buttons.size() || !getButtonState(button)){
+    if(button >= (int)impl->buttons.size() || !getButtonState(button)){
         return false;
     }
     auto dur = chrono::system_clock::now() - impl->buttonDownTime[button];

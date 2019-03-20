@@ -167,7 +167,7 @@ void LightingItemImpl::genarateLightShape()
             Vector3(0, -0.04, -0.06), Vector3(0.04, 0, -0.06),
             Vector3(-0.04, 0, -0.06)
     };
-    for(int i=0; i<d_pos.size(); i++){
+    for(size_t i=0; i < d_pos.size(); i++){
         SgPosTransform* cT = new SgPosTransform;
         cT->setRotation(AngleAxis(radian(90), Vector3(1, 0, 0)));
         cT->setTranslation(d_pos[i]);
@@ -187,7 +187,7 @@ void LightingItemImpl::genarateLightShape()
             AngleAxis(radian(90), Vector3(0, 0, 1)), AngleAxis(radian(90), Vector3(0, 0, 1)),
             AngleAxis(radian(0), Vector3(0, 0, 1)), AngleAxis(radian(0), Vector3(0, 0, 1))
     };
-    for(int i=0; i<p_pos.size(); i++){
+    for(size_t i=0; i < p_pos.size(); i++){
         SgPosTransform* cT = new SgPosTransform;
         cT->setRotation(p_att[i]);
         cT->setTranslation(p_pos[i]);

@@ -230,24 +230,24 @@ void MeshFilterImpl::removeRedundantVertices(SgMesh* mesh)
     }
     
     const SgVertexArrayPtr pOrgVertices = new SgVertexArray(*mesh->vertices());
-    const int numOrgVertices = pOrgVertices->size();
+    const size_t numOrgVertices = pOrgVertices->size();
     SgVertexArray& vertices = *mesh->vertices();
     vertices.clear();
     vector<int> indexMap(numOrgVertices);
     auto& triangleVertices = mesh->triangleVertices();
 
     vector<bool> usedVertexFlags(numOrgVertices, false);
-    for(int i=0; i < triangleVertices.size(); ++i){
+    for(size_t i=0; i < triangleVertices.size(); ++i){
         usedVertexFlags[triangleVertices[i]] = true;
     }
 
-    for(int i=0; i< numOrgVertices; ++i){
+    for(size_t i=0; i < numOrgVertices; ++i){
         if(!usedVertexFlags[i]){
             continue;
         }
         const auto& vertex = pOrgVertices->at(i);
         bool found = false;
-        int index = 0;
+        size_t index = 0;
         while(index < vertices.size()){
             if(vertex.isApprox(vertices[index])){
                 found = true;
@@ -269,7 +269,7 @@ void MeshFilterImpl::removeRedundantVertices(SgMesh* mesh)
     if(mesh->hasNormals() && !mesh->hasNormalIndices()){
         // Set normal indices
         auto& normalIndices = mesh->normalIndices();
-        for(int i=0; i < triangleVertices.size(); ++i){
+        for(size_t i=0; i < triangleVertices.size(); ++i){
             normalIndices.push_back(triangleVertices[i]);
         }
     }
@@ -279,7 +279,7 @@ void MeshFilterImpl::removeRedundantVertices(SgMesh* mesh)
 
     }
 
-    for(int i=0; i < triangleVertices.size(); ++i){
+    for(size_t i=0; i < triangleVertices.size(); ++i){
         triangleVertices[i] = indexMap[triangleVertices[i]];
     }
 }
@@ -404,7 +404,7 @@ void MeshFilterImpl::removeRedundantNormals(SgMesh* mesh)
     }
 
     const SgVertexArrayPtr pOrgNormals = new SgVertexArray(*mesh->normals());
-    const int numOrgNormals = pOrgNormals->size();
+    const size_t numOrgNormals = pOrgNormals->size();
     auto& normalIndices = mesh->normalIndices();
 
     if(normalIndices.empty()){
@@ -423,13 +423,13 @@ void MeshFilterImpl::removeRedundantNormals(SgMesh* mesh)
     normals.clear();
     vector<int> indexMap(numOrgNormals);
 
-    for(int i=0; i< numOrgNormals; ++i){
+    for(size_t i=0; i< numOrgNormals; ++i){
         if(!usedNormalFlags[i]){
             continue;
         }
         const auto& normal = pOrgNormals->at(i);
         bool found = false;
-        int index = 0;
+        size_t index = 0;
         while(index < normals.size()){
             if(normal.isApprox(normals[index])){
                 found = true;
@@ -448,7 +448,7 @@ void MeshFilterImpl::removeRedundantNormals(SgMesh* mesh)
         return;
     }
 
-    for(int i=0; i < normalIndices.size(); ++i){
+    for(size_t i=0; i < normalIndices.size(); ++i){
         normalIndices[i] = indexMap[normalIndices[i]];
     }
 }
@@ -501,7 +501,6 @@ void MeshFilter::setMaxCreaseAngle(float angle)
 void MeshFilterImpl::calculateFaceNormals(SgMesh* mesh, bool ignoreZeroNormals)
 {
     const SgVertexArray& vertices = *mesh->vertices();
-    const int numVertices = vertices.size();
     const int numTriangles = mesh->numTriangles();
     faceNormals.clear();
     faceNormals.reserve(numTriangles);

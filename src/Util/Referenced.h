@@ -204,7 +204,7 @@ private:
 
     template<class Y> friend class ref_ptr;
     template<class Y> friend class weak_ref_ptr;
-    friend class std::hash<ref_ptr<T>>;
+    friend struct std::hash<ref_ptr<T>>;
 };
 
 
@@ -375,7 +375,7 @@ private:
 
     template<class Y> friend class weak_ref_ptr;
     template<class Y> friend class ref_ptr;
-    friend class std::hash<weak_ref_ptr<T>>;
+    friend struct std::hash<weak_ref_ptr<T>>;
 };
 
 template<class T, class U> inline bool operator<(weak_ref_ptr<T> const & a, weak_ref_ptr<U> const & b)
@@ -393,7 +393,7 @@ template<class T> void swap(weak_ref_ptr<T> & a, weak_ref_ptr<T> & b)
 namespace std {
 
 template<class T>
-class hash<cnoid::ref_ptr<T>>
+struct hash<cnoid::ref_ptr<T>>
 {
 public:
     size_t operator()(const cnoid::ref_ptr<T>& p) const
@@ -403,7 +403,7 @@ public:
 };
 
 template<class T>
-class hash<cnoid::weak_ref_ptr<T>>
+struct hash<cnoid::weak_ref_ptr<T>>
 {
 public:
     size_t operator()(const cnoid::weak_ref_ptr<T>& p) const

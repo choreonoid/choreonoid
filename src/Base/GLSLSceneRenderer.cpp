@@ -1330,6 +1330,7 @@ void GLSLSceneRendererImpl::renderShapeMain
                 enableCullFace = false;
                 break;
             case GLSceneRenderer::FORCE_BACK_FACE_CULLING:
+            default:
                 enableCullFace = true;
                 break;
             }

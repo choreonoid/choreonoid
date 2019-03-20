@@ -119,7 +119,7 @@ public:
             }
         }
 
-        if(auto multiSeq = dynamic_cast<AbstractMultiSeq*>(seq)){
+        if(dynamic_cast<AbstractMultiSeq*>(seq)){
             auto& node = (*archive)["numParts"];
             numParts_ = node.toInt();
             if(numParts_ < 1){

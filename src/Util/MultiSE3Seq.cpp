@@ -199,7 +199,6 @@ bool MultiSE3Seq::loadPlainMatrixFormat(const std::string& filename, std::ostrea
     setTimeStep(loader.timeStep());
 
     int f = 0;
-    Part base = part(0);
     for(PlainSeqFileLoader::iterator it = loader.begin(); it != loader.end(); ++it){
         vector<double>& data = *it;
         int i = 0;
@@ -240,7 +239,6 @@ bool MultiSE3Seq::loadPlainRpyFormat(const std::string& filename, std::ostream& 
     setTimeStep(loader.timeStep());
 
     int f = 0;
-    Part base = part(0);
     for(PlainSeqFileLoader::iterator it = loader.begin(); it != loader.end(); ++it){
         vector<double>& data = *it;
         Frame frame = MultiSE3Seq::frame(f++);
