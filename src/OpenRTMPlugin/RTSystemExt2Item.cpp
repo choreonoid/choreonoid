@@ -121,6 +121,7 @@ private:
     cnoid::LazyCaller updateStateLater;
     bool isStatusChecking;
     bool doStatusChecking;
+    std::thread checkThread;
 
     void setStateCheckMethod(int value);
     void copyForStatusChecking();
@@ -1377,8 +1378,9 @@ void RTSystemExt2ItemImpl::checkStatus()
     }
     isStatusChecking = true;
     copyForStatusChecking();
-    std::thread checkThread = std::thread([&](){ statusChecking(); });
-    checkThread.join();
+    checkThread = std::thread([&](){ statusChecking(); });
+    //std::thread checkThread = std::thread([&](){ statusChecking(); });
+    //checkThread.join();
 }
 
 void RTSystemExt2ItemImpl::statusChecking()
@@ -1514,6 +1516,7 @@ void RTSystemExt2ItemImpl::restoreForStatusChecking()
     sigStatusUpdate(modifed_);
 
     isStatusChecking = false;
+    checkThread.detach();
 
 #ifdef CONTINUOUS_CHECK
     if (doStatusChecking) {
