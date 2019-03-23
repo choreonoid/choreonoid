@@ -533,7 +533,7 @@ public:
     RTSCompExt2GItem* parent;
 
     RTSPortExt2GItem(RTSPortExt2* rtsPort, RTSCompExt2GItem* rtc);
-    void create(int rectX, const QPointF& pos, int i, portType type, const int interval);
+    void create(const int posX, const int posY, portType type);
     void checkPortState();
     void setCandidate(bool isCand);
 
@@ -547,22 +547,20 @@ RTSPortExt2GItem::RTSPortExt2GItem(RTSPortExt2* rtsPort, RTSCompExt2GItem* rtc)
 
 }
 
-void RTSPortExt2GItem::create(int rectX, const QPointF& pos, int i, portType type, const int interval)
+void RTSPortExt2GItem::create(const int posX, const int posY, portType type)
 {
-    int r = 7 * i;
-
     switch (type) {
 
         case INPORT:
-            this->pos = QPointF(rectX + 5 + pos.x(), 5 + 7 + 7 + (interval * i) - r + pos.y());
+            this->pos = QPointF(posX + 5, 5 + 7 + 7 + posY);
             polygon = new QGraphicsPolygonItem(
                 QPolygonF(QVector<QPointF>()
-                    << QPointF(rectX + 0 + pos.x(), 0 + 7 + 7 + (interval * i) - r + pos.y())
-                    << QPointF(rectX + 10 + pos.x(), 0 + 7 + 7 + (interval * i) - r + pos.y())
-                    << QPointF(rectX + 10 + pos.x(), 10 + 7 + 7 + (interval * i) - r + pos.y())
-                    << QPointF(rectX + 0 + pos.x(), 10 + 7 + 7 + (interval * i) - r + pos.y())
-                    << QPointF(rectX + 5 + pos.x(), 5 + 7 + 7 + (interval * i) - r + pos.y())
-                    << QPointF(rectX + 0 + pos.x(), 0 + 7 + 7 + (interval * i) - r + pos.y())));
+                    << QPointF(posX +  0, 0 + 7 + 7 + posY)
+                    << QPointF(posX + 10, 0 + 7 + 7 + posY)
+                    << QPointF(posX + 10, 10 + 7 + 7 + posY)
+                    << QPointF(posX +  0, 10 + 7 + 7 + posY)
+                    << QPointF(posX +  5, 5 + 7 + 7 + posY)
+                    << QPointF(posX +  0, 0 + 7 + 7 + posY)));
             polygon->setPen(QPen(QColor("red")));
             checkPortState();
             addToGroup(polygon);
@@ -571,13 +569,13 @@ void RTSPortExt2GItem::create(int rectX, const QPointF& pos, int i, portType typ
         case OUTPORT:
             polygon = new QGraphicsPolygonItem(
                 QPolygonF(QVector<QPointF>()
-                    << QPointF(rectX + 53 + pos.x(), 0 + 7 + 7 + (interval * i) - r + pos.y())
-                    << QPointF(rectX + 60 + pos.x(), 0 + 7 + 7 + (interval * i) - r + pos.y())
-                    << QPointF(rectX + 65 + pos.x(), 5 + 7 + 7 + (interval * i) - r + pos.y())
-                    << QPointF(rectX + 60 + pos.x(), 10 + 7 + 7 + (interval * i) - r + pos.y())
-                    << QPointF(rectX + 53 + pos.x(), 10 + 7 + 7 + (interval * i) - r + pos.y())
-                    << QPointF(rectX + 53 + pos.x(), 0 + 7 + 7 + (interval * i) - r + pos.y())));
-            this->pos = QPointF(rectX + 65 + pos.x(), 5 + 7 + 7 + (interval * i) - r + pos.y());
+                    << QPointF(posX + 53, 0 + 7 + 7 + posY)
+                    << QPointF(posX + 60, 0 + 7 + 7 + posY)
+                    << QPointF(posX + 65, 5 + 7 + 7 + posY)
+                    << QPointF(posX + 60, 10 + 7 + 7 + posY)
+                    << QPointF(posX + 53, 10 + 7 + 7 + posY)
+                    << QPointF(posX + 53, 0 + 7 + 7 + posY)));
+            this->pos = QPointF(posX + 65, 5 + 7 + 7 + posY);
             polygon->setPen(QPen(QColor("red")));
             checkPortState();
             addToGroup(polygon);
@@ -586,13 +584,13 @@ void RTSPortExt2GItem::create(int rectX, const QPointF& pos, int i, portType typ
         case SERVICEPORT:
             polygon = new QGraphicsPolygonItem(
                 QPolygonF(QVector<QPointF>()
-                    << QPointF(rectX + 53 + pos.x(), 0 + 7 + 7 + (interval * i) - r + pos.y())
-                    << QPointF(rectX + 63 + pos.x(), 0 + 7 + 7 + (interval * i) - r + pos.y())
-                    << QPointF(rectX + 63 + pos.x(), 5 + 7 + 7 + (interval * i) - r + pos.y())
-                    << QPointF(rectX + 63 + pos.x(), 10 + 7 + 7 + (interval * i) - r + pos.y())
-                    << QPointF(rectX + 53 + pos.x(), 10 + 7 + 7 + (interval * i) - r + pos.y())
-                    << QPointF(rectX + 53 + pos.x(), 0 + 7 + 7 + (interval * i) - r + pos.y())));
-            this->pos = QPointF(rectX + 63 + pos.x(), 5 + 7 + 7 + (interval * i) - r + pos.y());
+                    << QPointF(posX + 53, 0 + 7 + 7 + posY)
+                    << QPointF(posX + 63, 0 + 7 + 7 + posY)
+                    << QPointF(posX + 63, 5 + 7 + 7 + posY)
+                    << QPointF(posX + 63, 10 + 7 + 7 + posY)
+                    << QPointF(posX + 53, 10 + 7 + 7 + posY)
+                    << QPointF(posX + 53, 0 + 7 + 7 + posY)));
+            this->pos = QPointF(posX + 63, 5 + 7 + 7 + posY);
             polygon->setPen(QPen(QColor("red")));
             checkPortState();
             addToGroup(polygon);
@@ -850,12 +848,13 @@ void RTSCompExt2GItem::create(const QPointF& pos, const int interval)
         RTCCommonUtil::splitPortName(portName);
         text = new QGraphicsTextItem(QString(portName.c_str()));
         int x = rectX + pos.x() - text->boundingRect().width();
-        int y = 25 * i - 7 * i - 3 + pos.y();
+        int y = interval * i - 7 * i - 3 + pos.y();
+
         text->setPos(x, y);
         addToGroup(text);
 
         RTSPortExt2GItemPtr inPortGItem = new RTSPortExt2GItem(inPort, this);
-        inPortGItem->create(rectX, pos, i, RTSPortExt2GItem::INPORT, interval);
+        inPortGItem->create(rectX + pos.x(), y + 3, RTSPortExt2GItem::INPORT);
         addToGroup(inPortGItem);
         inPorts[inPort->name] = inPortGItem;
         impl->rtsPortMap[inPort] = inPortGItem.get();
@@ -869,15 +868,15 @@ void RTSCompExt2GItem::create(const QPointF& pos, const int interval)
         text = new QGraphicsTextItem(QString(portName.c_str()));
         int r = 7 * i;
         int x = rectX + 66 + pos.x();
-        int y = 25 * i - r - 3 + pos.y();
+        int y = interval * i - r - 3 + pos.y();
         text->setPos(x, y);
         addToGroup(text);
 
         RTSPortExt2GItemPtr outPortGItem = new RTSPortExt2GItem(outPort, this);
         if (outPort->isServicePort) {
-            outPortGItem->create(rectX, pos, i, RTSPortExt2GItem::SERVICEPORT, interval);
+            outPortGItem->create(rectX + pos.x(), y + 3, RTSPortExt2GItem::SERVICEPORT);
         } else {
-            outPortGItem->create(rectX, pos, i, RTSPortExt2GItem::OUTPORT, interval);
+            outPortGItem->create(rectX + pos.x(), y + 3, RTSPortExt2GItem::OUTPORT);
         }
         addToGroup(outPortGItem);
         outPorts[outPort->name] = outPortGItem;
