@@ -630,20 +630,11 @@ void ProfileHandlerExt2::copyNVListToProperty(NVList& source, vector<Property>& 
 
 void ProfileHandlerExt2::appendStringValue(std::vector<Property>& target, std::string& name, std::string& value)
 {
-    bool isExist = false;
-    for (Property prop : target) {
-        if (prop.name == name) {
-            prop.value = value;
-            isExist = true;
-            break;
-        }
-    }
-    if (isExist == false) {
-        Property newProp;
-        newProp.name = name;
-        newProp.value = value;
-        target.push_back(newProp);
-    }
+    removePropertyByValue(target, name);
+    Property newProp;
+    newProp.name = name;
+    newProp.value = value;
+    target.push_back(newProp);
 }
 
 void ProfileHandlerExt2::removePropertyByValue(std::vector<Property>& target, const std::string& name)

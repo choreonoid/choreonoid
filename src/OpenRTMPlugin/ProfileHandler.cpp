@@ -543,6 +543,7 @@ void ProfileHandler::saveRtsProfile
 
 void ProfileHandler::buildPosition(const RTSConnection* connect, int offsetX, int offsetY, std::vector<Property>& propList)
 {
+  DDEBUG("ProfileHandler::buildPosition");
     QString position = "{";
     for (int idxPos = 0; idxPos < 6; idxPos++) {
         if (0 < idxPos) position.append(",");
@@ -552,9 +553,11 @@ void ProfileHandler::buildPosition(const RTSConnection* connect, int offsetX, in
     }
     position.append("}");
 
+
     string positionName = "POSITION";
     string value = position.toStdString();
     appendStringValue(propList, positionName, value);
+    DDEBUG_V("ProfileHandler::buildPosition End: %s",value.c_str());
 }
 
 TargetPort ProfileHandler::buildTargetPortInfo(RTSPort* sourcePort)
@@ -610,20 +613,11 @@ void ProfileHandler::copyNVListToProperty(NVList& source, vector<Property>& targ
 
 void ProfileHandler::appendStringValue(std::vector<Property>& target, std::string& name, std::string& value)
 {
-    bool isExist = false;
-    for (Property prop : target) {
-        if (prop.name == name) {
-            prop.value = value;
-            isExist = true;
-            break;
-        }
-    }
-    if (!isExist) {
-        Property newProp;
-        newProp.name = name;
-        newProp.value = value;
-        target.push_back(newProp);
-    }
+    removePropertyByValue(target, name);
+    Property newProp;
+    newProp.name = name;
+    newProp.value = value;
+    target.push_back(newProp);
 }
 
 void ProfileHandler::removePropertyByValue(std::vector<Property>& target, const std::string& name)
