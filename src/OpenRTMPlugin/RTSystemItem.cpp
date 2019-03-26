@@ -342,6 +342,7 @@ void RTSConnection::setPosition(const Vector2 pos[])
     }
     setPos = true;
     srcRTC->rts()->suggestFileUpdate();
+    DDEBUG("suggestFileUpdate RTSConnection::setPosition");
 }
 
 
@@ -357,7 +358,7 @@ void RTSComp::setRtc(RTObject_ptr rtc)
     DDEBUG("RTSComp::setRtc");
     rtc_ = 0;
 
-    rts_->suggestFileUpdate();
+    //rts_->suggestFileUpdate();
 
     setRTObject(rtc);
 
@@ -402,6 +403,7 @@ void RTSComp::setRtc(RTObject_ptr rtc)
         }
     }
 
+    bool isUpdated = rts_->isConsistentWithFile();
     list<RTSConnection*> rtsConnectionList;
     rts_->impl->RTSCompToConnectionList(this, rtsConnectionList, 0);
     for (auto it = rtsConnectionList.begin(); it != rtsConnectionList.end(); ++it) {
@@ -415,6 +417,7 @@ void RTSComp::setRtc(RTObject_ptr rtc)
             rts_->impl->rtsConnections[RTSystemItem::RTSPortPair(sourcePort, targetPort)] = connection;
         }
     }
+    rts_->setConsistentWithFile(isUpdated);
 
     connectionCheck();
     DDEBUG("RTSComp::setRtc End");
@@ -529,6 +532,7 @@ bool RTSComp::connectionCheckSub(RTSPort* rtsPort)
                 rts_->impl->rtsConnections[RTSystemItem::RTSPortPair(rtsPort, targetPort)] = rtsConnection;
                 
                 rts_->suggestFileUpdate();
+                DDEBUG("suggestFileUpdate RTSComp::connectionCheckSub");
                 
                 updated = true;
             }
@@ -573,6 +577,7 @@ void RTSComp::setPos(const QPointF& p)
     if (p != pos_) {
         pos_ = p;
         rts_->suggestFileUpdate();
+        DDEBUG("suggestFileUpdate RTSComp::setPos");
     }
 }
 
@@ -705,6 +710,7 @@ RTSComp* RTSystemItemImpl::addRTSComp(const string& name, const QPointF& pos)
         rtsComps[fullPath] = rtsComp;
 
         self->suggestFileUpdate();
+        DDEBUG("suggestFileUpdate RTSystemItemImpl::addRTSComp");
 
         return rtsComp;
     }
@@ -744,6 +750,7 @@ RTSComp* RTSystemItemImpl::addRTSComp(const NamingContextHelper::ObjectInfo& inf
         rtsComps[fullPath] = rtsComp;
 
         self->suggestFileUpdate();
+        DDEBUG("suggestFileUpdate RTSystemItemImpl::addRTSComp");
 
         return rtsComp.get();
     }
@@ -761,6 +768,7 @@ void RTSystemItemImpl::deleteRTSComp(const string& name)
 {
     if (rtsComps.erase(name) > 0) {
         self->suggestFileUpdate();
+        DDEBUG("suggestFileUpdate RTSystemItemImpl::deleteRTSComp");
     }
 }
 
@@ -898,6 +906,7 @@ RTSConnection* RTSystemItemImpl::addRTSConnection
 
     if (updated) {
         self->suggestFileUpdate();
+        DDEBUG("suggestFileUpdate RTSystemItemImpl::addRTSConnection");
     }
 
     return rtsConnection_;
@@ -1032,6 +1041,7 @@ void RTSystemItemImpl::removeConnection(RTSConnection* connection)
     RTSystemItem::RTSPortPair pair(connection->sourcePort, connection->targetPort);
     if (rtsConnections.erase(pair) > 0) {
         self->suggestFileUpdate();
+        DDEBUG("suggestFileUpdate RTSystemItemImpl::removeConnection");
     }
 }
 
@@ -1115,6 +1125,7 @@ bool RTSystemItem::loadRtsProfile(const string& filename)
 
 bool RTSystemItem::saveRtsProfile(const string& filename)
 {
+    if (isConsistentWithFile()) return true;
     return impl->saveRtsProfile(filename);
 }
 

@@ -375,7 +375,7 @@ void RTSCompExt::setRtc(RTObject_ptr rtc)
     DDEBUG("RTSComp::setRtc");
     rtc_ = 0;
 
-    rts_->suggestFileUpdate();
+    //rts_->suggestFileUpdate();
 
     setRTObject(rtc);
 
@@ -421,6 +421,7 @@ void RTSCompExt::setRtc(RTObject_ptr rtc)
         }
     }
 
+    bool isUpdated = rts_->isConsistentWithFile();
     list<RTSConnectionExt*> rtsConnectionList;
     rts_->impl->RTSCompToConnectionList(this, rtsConnectionList, 0);
     for (auto it = rtsConnectionList.begin(); it != rtsConnectionList.end(); ++it) {
@@ -434,6 +435,7 @@ void RTSCompExt::setRtc(RTObject_ptr rtc)
             rts_->impl->rtsConnections[RTSystemExtItem::RTSPortPair(sourcePort, targetPort)] = connection;
         }
     }
+    rts_->setConsistentWithFile(isUpdated);
 
     connectionCheck();
     DDEBUG("RTSComp::setRtc End");
@@ -1155,6 +1157,7 @@ bool RTSystemExtItem::loadRtsProfile(const string& filename)
 
 bool RTSystemExtItem::saveRtsProfile(const string& filename)
 {
+    if (isConsistentWithFile()) return true;
     return impl->saveRtsProfile(filename);
 }
 

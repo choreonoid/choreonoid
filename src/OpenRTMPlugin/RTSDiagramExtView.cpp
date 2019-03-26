@@ -1611,6 +1611,7 @@ void RTSDiagramExtViewImpl::updateRestoredView()
     DDEBUG("RTSDiagramViewImpl::updateRestoredView");
     //To redraw the connection line
     if (currentRTSItem) {
+        bool isUpdated = currentRTSItem->isConsistentWithFile();
         for (auto it = rtsComps.begin(); it != rtsComps.end(); it++) {
             QPointF pos = it->second->pos();
             pos.setX(pos.x() + 1);
@@ -1618,6 +1619,7 @@ void RTSDiagramExtViewImpl::updateRestoredView()
             pos.setX(pos.x() - 1);
             it->second->setPos(pos);
         }
+        currentRTSItem->setConsistentWithFile(isUpdated);
     }
 }
 
