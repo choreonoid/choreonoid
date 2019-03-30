@@ -41,7 +41,7 @@ void SceneMarker::updateMarker(bool doNotify)
     case AXES_MARKER:
         setAxes();
         break;
-    defautl:
+    default:
         break;
     }
 

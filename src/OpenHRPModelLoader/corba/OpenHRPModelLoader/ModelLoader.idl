@@ -1,0 +1,699 @@
+#ifndef OPENHRP_MODEL_LOADER_IDL_INCLUDED
+#define OPENHRP_MODEL_LOADER_IDL_INCLUDED
+
+/**
+  @if jp
+  ModelLoader サーバ関連インターフェース
+  @endif
+
+  @author Shin'ichiro Nakaoka
+*/
+
+#include <cnoid/corba/OpenHRPModelLoader/OpenHRPCommon.idl>
+
+
+module OpenHRP {
+
+  /**
+     @if jp
+     ShapeInfo へのインデックス。ShapeInfo に対しては transformMatrix に格納された
+     座標変換を適用する。
+     @endif
+  */
+  struct TransformedShapeIndex 
+  {
+    /**
+	@if jp
+	変換行列。4x4同次変換行列の上3行分を Row Major Array で格納したもの。
+	@endif
+    */
+    DblArray12	transformMatrix;
+
+    /**
+       @if jp
+       本構造体が LinkInfo に格納されている場合、LinkInfo の inlinedShapeTransformMatrices へのインデックスを格納する.  
+       形状がモデルファイルにおいて inline ノードとして別ファイルに記述されている場合、  
+       inline ノードを読み込む側における変換のみを集積した行列とする。  
+       モデルローダを利用したモデルエディタにおいてinlineノードを正しく扱うために本情報が必要となっている。  
+       inlineノードが使われていない場合は -1 とする。  
+       @endif
+    */
+    short inlinedShapeTransformMatrixIndex;
+
+    /** 
+	@if jp
+	BodyInfo::shapes における ShapeInfo のインデックス。
+	@endif
+    */
+    short	shapeIndex;
+  };
+
+  typedef sequence<TransformedShapeIndex> TransformedShapeIndexSequence;
+  typedef sequence<TransformedShapeIndexSequence> AllLinkShapeIndexSequence;
+
+
+  /**
+     @if jp
+     センサ情報を格納する構造体。
+     旧IDLでは interface としていたが、新IDLでは struct となることに注意。
+     @endif
+   */
+  struct SensorInfo
+  {
+    
+    /*
+      @if jp
+      センサの種類を表す文字列。
+
+      現在のところ、以下が定義されている。
+
+      "Force"        - 6軸力センサ
+      "RateGyro"     - レートジャイロセンサ
+      "Acceleration" - 加速度センサ
+      "Vision"       - ビジョンセンサ
+      "Range"	     - 距離センサ
+
+      @endif
+    */
+    string         type;
+
+    string         name;        ///< 本センサの識別名  
+    long           id;          ///< センサの種類ごとのセンサID  
+    DblArray3      translation; ///< センサ設置位置(リンクローカル座標)  
+    DblArray4      rotation;    ///< センサ設置姿勢(リンクローカル座標)  
+    FloatSequence  specValues;  ///< 各種仕様値(旧IDLのmaxValuesに相当)  
+    string         specFile;    ///< 仕様記述ファイル名（本改良ではとりあえず空でよい）  
+
+    /// 本リンクに対応する形状情報の変換行列付きインデックス列  
+    TransformedShapeIndexSequence shapeIndices;  
+    DblArray12Sequence inlinedShapeTransformMatrices;
+  };
+
+  typedef sequence<SensorInfo> SensorInfoSequence;
+
+  /**
+     @if jp
+     ハードウェアコンポーネント情報を格納する構造体
+     @endif
+   */
+  struct HwcInfo
+  {
+    string         name;        ///< 本HWCの識別名  
+    long           id;          ///< HWCの種類ごとのセンサID  
+    DblArray3      translation; ///< HWC設置位置(リンクローカル座標)  
+    DblArray4      rotation;    ///< HWC設置姿勢(リンクローカル座標)  
+    string	   url;		///< HWCプロファイルのURL
+
+    /// 本HWCに対応する形状情報の変換行列付きインデックス列  
+    TransformedShapeIndexSequence shapeIndices;  
+    DblArray12Sequence inlinedShapeTransformMatrices;
+  };
+
+  typedef sequence<HwcInfo> HwcInfoSequence;
+
+  /**
+     @if jp
+     ライトの情報を格納する構造体
+     @endif
+  */
+  enum LightType {POINT, DIRECTIONAL, SPOT};
+  struct LightInfo
+  {
+    string     name;            ///< 名称
+    LightType  type;            ///< ライトの種類
+    DblArray12 transformMatrix; ///< ライトの位置・姿勢（同時変換行列の上3行）
+    double     ambientIntensity;// s, p, d
+    DblArray3  attenuation;     // s, p
+    DblArray3  color;           // s, p, d
+    double     intensity;       // s, p, d
+    DblArray3  location;        // s, p
+    boolean    on;              // s, p, d
+    double     radius;          // s, p
+    DblArray3  direction;       // s,    d
+    double     beamWidth;       // s
+    double     cutOffAngle;     // s
+  };
+
+  typedef sequence<LightInfo> LightInfoSequence;
+
+  /**
+     @if jp
+     セグメントの情報を格納する構造体
+     複数個のセグメントノードを持つリンクをGUIから編集するために使用
+     @endif
+   */
+  struct SegmentInfo
+  {
+    string      name;           ///< セグメント名  
+    double	    mass;		    ///< 質量  
+    DblArray3   centerOfMass;	///< 重心位置  
+    DblArray9   inertia;	    ///< 慣性行列  
+    DblArray12	transformMatrix;
+
+    /// TransformedShapeIndexのインデックス列  
+    sequence<short> shapeIndices;
+  };
+
+  typedef sequence<SegmentInfo> SegmentInfoSequence;
+
+  /**
+     @if jp
+     各リンクの情報を格納する構造体。
+     旧IDLでは interface としていたが、新IDLでは struct となることに注意。
+     equivalentInertia は廃止。
+     @endif
+  */
+  struct LinkInfo
+  {
+    string        name;         ///< リンク名
+
+    short         jointId;      ///< 関節識別値
+    string        jointType;    ///< 関節タイプ
+    double        jointValue;   ///< 関節初期値
+    DblArray3     jointAxis;    ///< 関節軸(リンクローカル座標)
+
+    DblSequence   ulimit;       ///< 最大関節値
+    DblSequence   llimit;       ///< 最小関節値
+    DblSequence   uvlimit;      ///< 最大関節速度値
+    DblSequence   lvlimit;      ///< 最小関節速度値
+    DblSequence   climit;       ///< 最大関節電流値 (tlimit = climit x grarRatio x torqueConst)
+
+    DblArray3     translation;  ///< ローカル座標系原点(親リンク相対)
+
+    /**
+       @if jp
+       ローカル座標系姿勢(親リンク相対)
+       回転軸(x, y, z) + 回転角度の並びのサイズ４の配列(VRMLと同じ)
+       @endif
+    */
+    DblArray4     rotation;
+
+    double	  mass;		///< 質量  
+    DblArray3	  centerOfMass;	///< 重心位置  
+    DblArray9	  inertia;	///< 慣性行列  
+
+    double        rotorInertia;  ///< ロータ慣性  
+    double        rotorResistor; ///< ロータ抵抗  
+    double        gearRatio;     ///< ギア比  
+    double        torqueConst;   ///< トルク定数  
+    double        encoderPulse;  ///< エンコーダパルス  
+
+    short	  parentIndex;  ///< 親リンクインデックス  
+
+    ShortSequence childIndices; ///< 子リンクインデックス列  
+
+    /// 本リンクに対応する形状情報の変換行列付きインデックス列  
+    TransformedShapeIndexSequence shapeIndices; 
+    /// 形状データのAABBtreeの階層の深さ＋１
+    short AABBmaxDepth;
+    /// 形状データのAABBtreeのBoundingBoxの最大個数
+    short AABBmaxNum;
+
+    /**
+       @if jp
+       shapeIndices の inlinedShapeTransformMatrixIndex によって指し示される行列リスト  
+       @endif
+    */
+    DblArray12Sequence inlinedShapeTransformMatrices;
+
+    SensorInfoSequence sensors; ///< 本リンクに設置されたセンサの情報  
+    HwcInfoSequence hwcs;
+    SegmentInfoSequence segments;
+    LightInfoSequence lights;
+
+    /**
+       @if jp
+       アクチュエータ・ギア等の仕様記述ファイル名リスト
+       （本改良ではとりあえず空でよい）
+       @endif
+    */
+    StringSequence specFiles;
+
+  };
+
+  typedef sequence<LinkInfo> LinkInfoSequence;
+
+
+  /**
+     @if jp
+     物体形状情報を格納する構造体。
+     @endif
+  */
+  enum ShapePrimitiveType { SP_MESH, SP_BOX, SP_CYLINDER, SP_CONE, SP_SPHERE, SP_PLANE };
+
+  struct ShapeInfo
+  {
+
+    /**
+       @if jp
+       本ShapeがVRMLのinlineノード内に格納されている場合は、
+       inlineされているVRMLファイルへのパスを格納する。
+       inlineではなく直接メインのVRMLファイル内に形状が記述されていた場合は、
+       本フィールドは空とする。
+       @endif
+    */
+    string url;
+
+    /**
+       @if jp
+       オリジナルのVRMLモデルファイルにおけるプリミティブの種類を表す。
+       クライアントは描画においてこの情報を利用することができる。
+       ただし、primitiveType が MESH 以外のときも、プリミティブをメッシュに
+       展開した際の幾何データ(verticesなど)は持っているものとする。
+       @endif
+    */
+    ShapePrimitiveType primitiveType;
+
+    /**
+       @if jp
+       primitiveType が MESH 以外のとき、プリミティブの形状に関わるパラメータを格納する。
+       各プリミティブにおける配列要素とパラメータの対応は以下とする。
+
+       - BOX
+       0?2: x, y, z のサイズ
+
+       - CYLINDER
+       0: radius
+       1: height
+       2: top
+       3: bottom
+       4: side
+       bottom, side, top については値が0のときfalse, それ以外はtrueとする。
+       (CONEに関しても同様。）
+
+       - CONE
+       0: bottomRadius
+       1: height
+       2: bottom
+       3: side
+
+       - SPHERE
+       0: radius
+
+       @endif
+    */
+    FloatSequence primitiveParameters;
+
+    /**
+       @if jp
+       表面メッシュを構成する頂点データ。
+       連続する３要素が頂点位置の３次元ベクトルに対応する。
+       @endif
+    */
+    FloatSequence vertices;
+
+    /**
+       @if jp
+       表面メッシュを構成する三角形における頂点の組み合わせを格納したデータ。
+       各要素はverticesに格納された頂点のインデックスを表し、
+       連続する３要素によってメッシュを構成する三角形を指定する。
+       メッシュ構成面は必ず三角形で表現されるものとする。
+
+       なお、メッシュの表裏を区別する必要がある場合は、
+       連続する３要素が反時計回りとなる面を表とする。
+       @endif
+    */
+    LongSequence triangles;
+
+    /**
+       @if jp
+       本Faceに対応するAppearanceInfoの
+       BodyInfo::appearances におけるインデックス。
+       @endif
+    */
+    long appearanceIndex;
+  };
+
+  typedef sequence<ShapeInfo>     ShapeInfoSequence;
+
+
+
+  /**
+     @if jp
+     表面の見え情報を格納する構造体。
+
+     本構造体の要素は、VRMLのIndexedFaceSetにみられるものと
+     概ね同様である。
+     @endif
+  */
+  struct AppearanceInfo
+  {
+    /**
+       @if jp
+       本Appearanceに対応するMaterialInfoがある場合、
+       BodyInfo::materials におけるインデックス。
+       なければ -1。
+       @endif
+    */
+    long          materialIndex;
+
+    /**
+       @if jp
+       法線データ。連続する３要素をx, y, zとし、一法線ベクトルに対応。
+       この配列のサイズが0の場合、法線はクライアントが必要に応じて
+       生成しなければならない。
+       @endif
+    */
+    FloatSequence normals;
+
+    /**
+       @if jp
+       法線対応付けデータ。
+       normalPerVertex が true なら、ShapeInfo の vertices の並びと対応させる。
+       normalPerVertex が false なら、ShapeInfo における三角形ポリゴンの並びと対応させる。
+       normalsがあってnormalIndicesのサイズが０の場合、normalsの要素を頂点または面に1対1対応させる。
+       @endif
+    */
+    LongSequence  normalIndices;
+
+    boolean       normalPerVertex;
+
+    boolean       solid;
+    float         creaseAngle;
+
+    /**
+       @if jp
+       色データ。連続する３要素をR,G,Bとし一色に対応。各要素の値の範囲は 0 から 1.0。
+       この配列のサイズが0の場合、色はmaterialInfoのものになる。
+       @endif
+    */
+    FloatSequence colors;
+
+    /**
+       @if jp
+       色対応付けデータ。
+       colorPerVertex が true なら、ShapeInfo の vertices の並びと対応させる。
+       colorPerVertex が false なら、ShapeInfo における三角形ポリゴンの並びと対応させる。
+       colorsがあってcolorIndicesのサイズが０の場合、colorsの要素を頂点または面に1対1対応させる。
+       @endif
+    */
+    LongSequence  colorIndices;
+
+    boolean       colorPerVertex;
+
+    /**
+       @if jp
+       テクスチャデータ。
+       BodyInfo::textures におけるインデックス。
+       対応するテクスチャがなければ、-1。
+       @endif
+    */
+    long          textureIndex;
+
+    FloatSequence textureCoordinate;
+    LongSequence  textureCoordIndices;
+    DblArray9	  textransformMatrix;
+  };
+
+  typedef sequence<AppearanceInfo> AppearanceInfoSequence;
+
+
+  /**
+     @if jp
+     表面材質情報を格納する構造体。
+     各要素はVRMLのMaterialノードと同様。
+     全ての変数の値の範囲は 0.0 〜 1.0。
+     @endif
+  */
+  struct MaterialInfo
+  {
+    float         ambientIntensity;
+    FloatArray3   diffuseColor;
+    FloatArray3   emissiveColor;
+    float         shininess; 
+    FloatArray3   specularColor;
+    float         transparency;
+  };
+
+  typedef sequence<MaterialInfo> MaterialInfoSequence;
+
+
+  /**
+     @if jp
+     テクスチャ情報を格納する構造体。
+     各要素はVRMLのPixelTextureノードと同様。
+     @endif
+  */
+  struct TextureInfo
+  {
+    /**
+       @if jp
+       テクスチャの画像イメージ。
+       VRMLのSFImageから、先頭の&lt;width&gt;, &lt;height&gt;, &lt;num components&gt;
+       を除いたものと同様。&lt;width&gt;, &lt;height&gt;, &lt;num components&gt;に対応する
+       値は本構造体の width, height, numComponents で指定。
+
+       元のデータがurl指定の場合は、urlフィールドに画像ファイルの位置が格納される。
+       この場合、モデルローダ側で画像の展開が行われなかった場合は、
+       imageフィールドのサイズは0となっており、
+       クライアントはファイル名からテクスチャを獲得する必要がある。
+       image フィールドのサイズが 0 でなくて、urlのサイズも 0 でない場合は、
+       クライアントは好きな方のやり方でテクスチャ画像を獲得すればよい。
+       @endif
+    */
+    OctetSequence image;
+
+    short         numComponents;
+    short         width;
+    short         height;
+    boolean       repeatS;
+    boolean       repeatT;
+
+    string	      url;
+  };
+
+  typedef sequence<TextureInfo> TextureInfoSequence;
+
+  
+  /**
+     @if jp
+     閉リンク機構のリンクの接続情報を格納する構造体。
+     @endif
+  */
+  struct ExtraJointInfo
+  {	
+	 ///  Extra Joint name
+	 string        name;
+	 /// Possible types are "xyz","xy","z"
+	 ExtraJointType jointType;
+	 /// Constraint axes. Two or three orthogonal axes must be specifiedin the local coordinate of the first link
+     DblArray3		axis;	
+	 /// Name of the link
+     string			link[2];      
+	 /// Connection (joint) position in the local coordinate of the link
+     DblArray3		point[2];      
+  };
+
+  typedef sequence<ExtraJointInfo> ExtraJointInfoSequence;
+
+  /**
+     @if jp
+     形状データ一式を格納するオブジェクト。
+     @endif
+  */
+  interface ShapeSetInfo
+  {
+    /**
+       @if jp
+       表面の形状と見えの情報を格納するShapeInfoのシーケンス。
+       LinkInfoにおいて、Linkに対応する情報が本シーケンスのインデックスとして指定される。
+       @endif
+    */
+    readonly attribute ShapeInfoSequence shapes;
+
+    /**
+       @if jp
+       Appearance情報のシーケンス。
+       ShapeInfoにおいて、本シーケンスのインデックスが指定される。
+       @endif
+    */
+    readonly attribute AppearanceInfoSequence appearances;
+
+    /**
+       @if jp
+       Material情報のシーケンス。
+       AppearanceInfoにおいて、本シーケンスのインデックスが指定される。
+       @endif
+    */
+    readonly attribute MaterialInfoSequence materials;
+
+    /**
+       @if jp
+       Texture情報のシーケンス。
+       AppearanceInfoにおいて、本シーケンスのインデックスが指定される。
+       @endif
+    */
+    readonly attribute TextureInfoSequence textures;
+
+  };
+
+
+  /**
+     @if jp
+     物体モデル情報へのアクセスを提供するCORBAオブジェクトのインタフェース。
+     旧IDLのCharacterInfoに対応。
+     @endif
+  */
+  interface BodyInfo : ShapeSetInfo
+  {
+    /**
+       @if jp
+       モデル名
+       @endif
+    */
+    readonly attribute string name;
+
+    /**
+       @if jp
+       モデルファイルのURL。
+       @endif
+    */
+    readonly attribute string url;
+    
+    /**
+       @if jp
+       Humanoidノードにおけるinfoフィールドに記述されたテキスト。
+       @endif
+    */
+    readonly attribute StringSequence info;
+    
+    /**
+       @if jp
+       リンクの機構情報を全リンクについて格納したデータ。
+
+       本シーケンスにおけるLinkInfoの並びは、
+       linkIndex(モデルファイルにおけるJointNode出現順。jointIdとは異なる。)
+       の順とすること。
+       @endif
+    */
+    readonly attribute LinkInfoSequence links;
+
+    /**
+       @if jp
+       リンクに対応するShapeInfoのインデックス配列を、全てのリンクに関して格納した配列。
+
+       CollisionDetector のように、LinkInfoの詳しい情報は必要ないが、
+       各リンクのShapeInfoは必要という場合にこのデータを利用する。
+
+       なお、CollisionDetectorを新IDLに対応させる際には、本インタフェースのlinksメンバは
+       使わずに済むように改変すること。
+
+       リンクの並びはlinkIndexの順とする。
+       @endif
+    */
+    readonly attribute AllLinkShapeIndexSequence linkShapeIndices;
+
+	/**
+       @if jp
+       閉リンク機構のリンク接続の全情報
+       @endif
+    */
+	readonly attribute ExtraJointInfoSequence extraJoints;
+    
+  };
+
+
+  interface SceneInfo : ShapeSetInfo
+  {
+    /**
+       @if jp
+       形状ファイルのURL。
+       @endif
+    */
+    readonly attribute string url;
+
+    /**
+       @if jp 
+       LinkInfo の shapeIndices と同じ。
+       @endif
+    */
+    readonly attribute TransformedShapeIndexSequence shapeIndices;
+  };
+    
+
+  /**
+     @if jp
+     @brief ModelLoaderインタフェース定義
+   
+     テキスト記述されたモデル情報のファイルを読み込み、
+     データを構造化したBodyInfoオブジェクトとして提供する。
+     @endif
+   */
+  interface ModelLoader : ServerObject
+  {
+
+    /**
+       @if jp
+       モデルローダの処理においてエラーが生じたときに生成される例外。
+       @endif
+     */
+    exception ModelLoaderException
+    {
+      /**
+         @if jp
+         エラーの説明
+         @endif
+      */
+      string  description;
+    };
+
+    
+    /**
+      @if jp
+      BodyInfoオブジェクトを得る。
+
+      本メソッドでは、指定されたファイルが以前に読み込まれていれば、
+      その読み込み内容を再利用することにより、高速に結果を返す。
+      ただし、指定されたファイルがまだ読み込まれていない場合や、
+      以前の読み込みの後にファイルが更新された場合は、
+      load()メソッドと同じ処理となる。
+      
+      @param   url モデルファイルのURL
+      @endif
+    */
+    BodyInfo getBodyInfo(in string url) raises (ModelLoaderException);
+    enum AABBdataType { AABB_DEPTH, AABB_NUM };
+    struct ModelLoadOption
+    {
+        boolean readImage;
+        ShortSequence   AABBdata;
+        AABBdataType    AABBtype;
+    };
+    /**
+      @if jp
+      オプション付きで、getBodyInfoを実行
+      @param   url モデルファイルのURL
+      @param   option
+      @endif  
+    **/
+    BodyInfo getBodyInfoEx(in string url, in ModelLoadOption option ) raises (ModelLoaderException);
+
+    /**
+       @if jp
+       モデルファイルをロードし、BodyInfoオブジェクトを得る。
+       @param url モデルファイルのURL
+       @endif
+    */
+    BodyInfo loadBodyInfo(in string url) raises (ModelLoaderException);
+    BodyInfo loadBodyInfoEx(in string url, in ModelLoadOption option ) raises (ModelLoaderException);
+
+    /**
+       @if jp
+       素のVRMLファイルを読み込み、含まれる形状のデータ一式を SceneInfo として返す。
+       @endif
+    */
+    SceneInfo loadSceneInfo(in string url) raises (ModelLoaderException);
+
+
+    /**
+     * @if jp
+     * 以前に読み込んだファイルの内容（getBody()で利用される）を消去する。
+     * @endif
+     */
+    void clearData();
+
+  };
+
+};
+
+#endif

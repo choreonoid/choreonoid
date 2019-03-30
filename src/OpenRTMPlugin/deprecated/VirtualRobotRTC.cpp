@@ -325,7 +325,7 @@ void VirtualRobotRTC::addConnectedRtcs(RTC::PortService_ptr portRef, RTC::RTCLis
                     MessageView* mv = MessageView::instance();
                     mv->putln(
                         format(_("detected RTC: {0}  Port connection: {1} <--> {2}"),
-                               connectedRtcName, portName, connectedPortProfile->name));
+                               connectedRtcName, portName, string(connectedPortProfile->name)));
 
                     RTC::ExecutionContextList_var execServices = connectedRtcRef->get_owned_contexts();
 

@@ -20,6 +20,7 @@ public:
     std::function<void()> callback1;
     std::function<void(SgMesh* mesh)> callback2;
     SgMesh* currentMesh;
+    SgShape* currentShape;
     Affine3 currentTransform;
     Affine3 currentTransformWithoutScaling;
     bool isCurrentScaled;
@@ -107,12 +108,14 @@ void MeshExtractorImpl::visitShape(SgShape* shape)
     if(mesh && mesh->vertices() && !mesh->vertices()->empty() && !mesh->triangleVertices().empty()){
         meshFound = true;
         currentMesh = mesh;
+        currentShape = shape;
         if(callback1){
             callback1();
         } else {
             callback2(mesh);
         }
         currentMesh = 0;
+        currentShape = 0;
     }
 }
 
@@ -120,6 +123,12 @@ void MeshExtractorImpl::visitShape(SgShape* shape)
 SgMesh* MeshExtractor::currentMesh() const
 {
     return impl->currentMesh;
+}
+
+
+SgShape* MeshExtractor::currentShape() const
+{
+    return impl->currentShape;
 }
 
 
@@ -160,6 +169,7 @@ bool MeshExtractor::extract(SgNode* node, std::function<void(SgMesh* mesh)> call
 bool MeshExtractorImpl::extract(SgNode* node)
 {
     currentMesh = 0;
+    currentShape = 0;
     currentTransform.setIdentity();
     currentTransformWithoutScaling.setIdentity();
     isCurrentScaled = false;

@@ -1015,7 +1015,7 @@ void BodyRTCItem::setupRtcConnections()
                                 mv->putln(
                                     format(_("connect {0}:{1} --> {2}:{3}"),
                                            virtualRobotRTC->getInstanceName(), robotPortName,
-                                           (*it)->get_component_profile()->instance_name, portName));
+                                           string((*it)->get_component_profile()->instance_name), portName));
                                 if(!connected){
                                     mv->putln(_("Connection was successful."));
                                 } else if(connected == -1){
@@ -1058,7 +1058,7 @@ void BodyRTCItem::setupRtcConnections()
                                 mv->putln(
                                     format(_("connect {0}:{1} <-- {2}:{3}"),
                                            virtualRobotRTC->getInstanceName(), robotPortName,
-                                           (*it)->get_component_profile()->instance_name, portName));
+                                           string((*it)->get_component_profile()->instance_name), portName));
                                 if(!connected){
                                     mv->putln(_("Connection was successful."));
                                 } else if(connected == -1){

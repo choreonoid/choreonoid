@@ -25,8 +25,12 @@
 #include <vector>
 #include <string>
 #include <map>
+
 #ifdef USE_XINPUT
 #include <XInput.h>
+#include <tchar.h>
+#define XINPUT_GAMEPAD_GUIDE 0x400
+typedef DWORD(WINAPI *XInputGetStateExFunction)(__in DWORD dwUserIndex, __out XINPUT_STATE* pState);
 #endif
 
 using namespace std;
@@ -124,7 +128,8 @@ namespace {
     };
 
     const map<int, ModelID> modelIdMap = {
-        { 0x054C<<16 | 0x09CC, PS4 },
+        { 0x054C<<16 | 0x09CC, PS4 },  // Sony Interactive Entertainment
+        { 0x054C<<16 | 0x05C4, PS4 },  // Sony Computer Entertainment
         { 0x045E<<16 | 0x028E, XBOX_360 },
         { 0x045E<<16 | 0x02FF, XBOX_ONE },
         { 0x046D<<16 | 0xC21D, F310 },
@@ -139,6 +144,12 @@ namespace {
         { F710, { F710,  F710_Axes,  F710_Buttons } },
         { UNSUPPORTED, { UNSUPPORTED, nullptr,    nullptr } }
     };
+
+
+#ifdef USE_XINPUT
+    static HMODULE xInputDll;
+    static FARPROC xInputFunc;
+#endif
 
 }
 
@@ -168,6 +179,8 @@ public:
     bool readCurrentState_joyGet();
     bool readCurrentState_xinput();
     void setJoystickModel(const int productId);
+    void readLogoButton();
+
 };
 
 }
@@ -281,6 +294,16 @@ void JoystickImpl::setJoystickModel(const int productId)
             }
         }
     }
+
+    xInputDll = NULL;
+    xInputFunc = NULL;
+    TCHAR libpath[MAX_PATH];
+    GetSystemDirectory(libpath, MAX_PATH); 
+    _stprintf_s(libpath, _T("%s\\XInput1_4.dll"), libpath);
+    if ((xInputDll = LoadLibrary(libpath)) != NULL)
+    {
+        xInputFunc = GetProcAddress(xInputDll, (LPCSTR)100); // XInputGetStateEx
+    }
 #endif
 
 }
@@ -343,6 +366,10 @@ bool JoystickImpl::readCurrentState()
         return false;
     }
     
+    if(currentModel.id != PS4 && currentModel.id != UNSUPPORTED){
+        readLogoButton();
+    }
+
     if (currentModel.id == XBOX_ONE) {
         return readCurrentState_xinput();
     }
@@ -484,6 +511,18 @@ bool JoystickImpl::readCurrentState_xinput()
     axes[DIRECTIONAL_PAD_V_AXIS] = state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_DOWN ? 1.0 : state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_UP ? -1.0 : 0.0;
 #endif
     return true;
+}
+
+void JoystickImpl::readLogoButton()
+{
+#ifdef USE_XINPUT
+    if (xInputFunc) {
+        XINPUT_STATE state;
+        if (((XInputGetStateExFunction)(xInputFunc))(id, &state) == ERROR_SUCCESS) {
+            buttons[LOGO_BUTTON] = state.Gamepad.wButtons & XINPUT_GAMEPAD_GUIDE;
+        }
+    }
+#endif
 }
 
 

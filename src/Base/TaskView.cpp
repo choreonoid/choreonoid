@@ -1241,10 +1241,11 @@ void TaskViewImpl::goToNextTask()
     
     setBusyState(false);
 
-    for(int i=currentIndexInSerializedTasks; i < serializedTasks.size(); ++i){
+    int n = serializedTasks.size();
+    for(int i=currentIndexInSerializedTasks; i < n; ++i){
         if(serializedTasks[i] == currentTask->name()){
             int nextIndex = i + 1;
-            if(nextIndex < serializedTasks.size()){
+            if(nextIndex < n){
                 const auto& nextTask = serializedTasks[nextIndex];
                 if(setCurrentTaskByName(nextTask, true, true)){
                     ++currentIndexInSerializedTasks;

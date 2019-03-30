@@ -55,7 +55,7 @@ items:
               data: 
                 isNoDelayMode: true
                 controllerOptions: ""
-                controller: "SubmersibleController.so"
+                controller: "SubmersibleController"
                 baseDirectory: "Controller directory"
                 reloading: true
         - 

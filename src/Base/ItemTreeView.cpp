@@ -874,7 +874,7 @@ bool ItemTreeViewImpl::isItemChecked(Item* item, int id)
     ItvItem* itvItem = getItvItem(item);
     if(itvItem){
         if(id == ItemTreeView::ID_ANY){
-            for(int i=0; i < checkColumns.size(); ++i){
+            for(size_t i=0; i < checkColumns.size(); ++i){
                 if(itvItem->checkState(i + 1) == Qt::Checked){
                     return true;
                 }

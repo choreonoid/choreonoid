@@ -14,6 +14,7 @@ namespace cnoid {
 
 class SgNode;
 class SgMesh;
+class SgShape;
 class MeshExtractorImpl;
 
 class CNOID_EXPORT MeshExtractor
@@ -25,6 +26,7 @@ public:
     SgMesh* integrate(SgNode* node);
 
     SgMesh* currentMesh() const;
+    SgShape* currentShape() const;
     const Affine3& currentTransform() const;
     const Affine3& currentTransformWithoutScaling() const;
     bool isCurrentScaled() const;

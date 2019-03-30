@@ -162,7 +162,7 @@ items:
               data: 
                 isNoDelayMode: true
                 controllerOptions: "0.5, 20"
-                controller: "HandyRockDrillController.so"
+                controller: "HandyRockDrillController"
                 baseDirectory: "Controller directory"
                 reloading: true
         - 
@@ -198,7 +198,7 @@ items:
               data: 
                 isNoDelayMode: true
                 controllerOptions: "0.5, 20"
-                controller: "HandyRockDrillController.so"
+                controller: "HandyRockDrillController"
                 baseDirectory: "Controller directory"
                 reloading: true
 views: 

@@ -47,7 +47,7 @@ items:
               data: 
                 isNoDelayMode: false
                 controllerOptions: ""
-                controller: "AizuSpiderController.so"
+                controller: "AizuSpiderController"
                 baseDirectory: "Controller directory"
                 reloading: true
         - 
