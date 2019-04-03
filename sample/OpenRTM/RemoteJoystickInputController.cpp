@@ -129,9 +129,15 @@ public:
             joystickInputRTC = 0;
         }
         
+#if defined(OPENRTM_VERSION11)
         auto args = str(
             format("JoystickInput?instance_name=%1%&exec_cxt.periodic.type=ChoreonoidExecutionContext")
             % config->controllerName());
+#elif defined(OPENRTM_VERSION12)
+        auto args = str(
+            format("JoystickInput?instance_name=%1%&execution_contexts=SimulationExecutionContext&exec_cxt.periodic.type=ChoreonoidExecutionContext")
+            % config->controllerName());
+#endif
             
         joystickInputRTC = dynamic_cast<JoystickInputRTC*>(cnoid::createManagedRTC(args));
 
