@@ -110,7 +110,32 @@ module OpenHRP {
   };
 
   typedef sequence<HwcInfo> HwcInfoSequence;
-  
+
+  /**
+     @if jp
+     ライトの情報を格納する構造体
+     @endif
+  */
+  enum LightType {POINT, DIRECTIONAL, SPOT};
+  struct LightInfo
+  {
+    string     name;            ///< 名称
+    LightType  type;            ///< ライトの種類
+    DblArray12 transformMatrix; ///< ライトの位置・姿勢（同時変換行列の上3行）
+    double     ambientIntensity;// s, p, d
+    DblArray3  attenuation;     // s, p
+    DblArray3  color;           // s, p, d
+    double     intensity;       // s, p, d
+    DblArray3  location;        // s, p
+    boolean    on;              // s, p, d
+    double     radius;          // s, p
+    DblArray3  direction;       // s,    d
+    double     beamWidth;       // s
+    double     cutOffAngle;     // s
+  };
+
+  typedef sequence<LightInfo> LightInfoSequence;
+
   /**
      @if jp
      セグメントの情報を格納する構造体
@@ -151,6 +176,7 @@ module OpenHRP {
     DblSequence   llimit;       ///< 最小関節値
     DblSequence   uvlimit;      ///< 最大関節速度値
     DblSequence   lvlimit;      ///< 最小関節速度値
+    DblSequence   climit;       ///< 最大関節電流値 (tlimit = climit x grarRatio x torqueConst)
 
     DblArray3     translation;  ///< ローカル座標系原点(親リンク相対)
 
@@ -193,6 +219,7 @@ module OpenHRP {
     SensorInfoSequence sensors; ///< 本リンクに設置されたセンサの情報  
     HwcInfoSequence hwcs;
     SegmentInfoSequence segments;
+    LightInfoSequence lights;
 
     /**
        @if jp
@@ -437,6 +464,27 @@ module OpenHRP {
 
   typedef sequence<TextureInfo> TextureInfoSequence;
 
+  
+  /**
+     @if jp
+     閉リンク機構のリンクの接続情報を格納する構造体。
+     @endif
+  */
+  struct ExtraJointInfo
+  {	
+	 ///  Extra Joint name
+	 string        name;
+	 /// Possible types are "xyz","xy","z"
+	 ExtraJointType jointType;
+	 /// Constraint axes. Two or three orthogonal axes must be specifiedin the local coordinate of the first link
+     DblArray3		axis;	
+	 /// Name of the link
+     string			link[2];      
+	 /// Connection (joint) position in the local coordinate of the link
+     DblArray3		point[2];      
+  };
+
+  typedef sequence<ExtraJointInfo> ExtraJointInfoSequence;
 
   /**
      @if jp
@@ -534,6 +582,13 @@ module OpenHRP {
        @endif
     */
     readonly attribute AllLinkShapeIndexSequence linkShapeIndices;
+
+	/**
+       @if jp
+       閉リンク機構のリンク接続の全情報
+       @endif
+    */
+	readonly attribute ExtraJointInfoSequence extraJoints;
     
   };
 

@@ -15,7 +15,7 @@
 #include <QLabel>
 #include <QDialogButtonBox>
 #include <QPushButton>
-#include <boost/format.hpp>
+#include <fmt/format.h>
 #include <list>
 #include "gettext.h"
 
@@ -804,9 +804,9 @@ static View* restoreView(Archive* archive, const string& moduleName, const strin
                 } else {
                     MessageView::instance()->putln(
                         MessageView::ERROR,
-                        boost::format(
-                            _("A singleton view \"%1%\" of the %2% type cannot be created because its singleton instance has already been created."))
-                        % instanceName % info->className());
+                        fmt::format(
+                            _("A singleton view \"{0}\" of the {1} type cannot be created because its singleton instance has already been created."),
+                        instanceName, info->className()));
                 }
             }
         }
@@ -844,8 +844,8 @@ bool ViewManager::restoreViews(ArchivePtr archive, const std::string& key, ViewM
                     if(!actualModuleName){
                         MessageView::instance()->putln(
                             MessageView::ERROR,
-                            boost::format(_("The \"%1%\" plugin for \"%2%\" is not found. The view cannot be restored."))
-                            % moduleName % className);
+                            fmt::format(_("The \"{0}\" plugin for \"{1}\" is not found. The view cannot be restored."),
+                            moduleName, className));
                         
                     } else {
                         View* view = restoreView(viewArchive, actualModuleName, className, remainingViewsMap);

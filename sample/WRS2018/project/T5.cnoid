@@ -105,7 +105,7 @@ items:
           data: 
             isNoDelayMode: false
             controllerOptions: ""
-            controller: "FireController.so"
+            controller: "FireController"
             baseDirectory: "Controller directory"
             reloading: false
             isOldTargetVariableMode: false
@@ -234,7 +234,7 @@ items:
           data: 
             isNoDelayMode: false
             controllerOptions: ""
-            controller: "HoseNozzleController.so"
+            controller: "HoseNozzleController"
             baseDirectory: "Controller directory"
             reloading: false
             isOldTargetVariableMode: false

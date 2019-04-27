@@ -1,11 +1,10 @@
 #include <cnoid/SimpleController>
 #include <cnoid/SharedJoystick>
 #include <cnoid/EigenUtil>
-#include <boost/format.hpp>
+#include <fmt/format.h>
 
 using namespace std;
 using namespace cnoid;
-using boost::format;
 
 class Jaco2Controller : public SimpleController
 {
@@ -146,7 +145,7 @@ bool Jaco2Controller::initializeJoints(SimpleControllerIO* io, vector<JointSpec>
         string name = prefix + spec.name;
         auto joint = body->link(name);
         if(!joint){
-            io->os() << format("%1% of %2% is not found") % name % body->name() << endl;
+            io->os() << fmt::format("{0} of {1} is not found", name, body->name()) << endl;
             return false;
         } else {
             joint->setActuationMode(mainActuationMode);

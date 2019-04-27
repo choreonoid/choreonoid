@@ -7,7 +7,7 @@
 #include "../OpenRTMUtil.h"
 #include "../LoggerUtil.h"
 #include <cnoid/Config>
-#include <boost/format.hpp>
+#include <fmt/format.h>
 #include <boost/filesystem.hpp>
 #include <iostream>
 
@@ -25,7 +25,7 @@ using namespace std;
 using namespace cnoid;
 namespace program_options = boost::program_options;
 namespace filesystem = boost::filesystem;
-using boost::format;
+using fmt::format;
 
 
 BridgeConf::BridgeConf() :
@@ -357,15 +357,15 @@ void BridgeConf::setupModules() {
     RTC::Manager& rtcManager = RTC::Manager::instance();
     ModuleInfoList::iterator moduleInfo = moduleInfoList.begin();
 #if defined(OPENRTM_VERSION11)
-    format param("%1%?exec_cxt.periodic.type=ChoreonoidExecutionContext&exec_cxt.periodic.rate=1000000");
+    string param("{}?exec_cxt.periodic.type=ChoreonoidExecutionContext&exec_cxt.periodic.rate=1000000");
 #elif defined(OPENRTM_VERSION12)
-    format param("%1%?execution_contexts=ChoreonoidExecutionContext(),OpenHRPExecutionContext()&exec_cxt.periodic.type=ChoreonoidExecutionContext&exec_cxt.periodic.rate=1000000&exec_cxt.sync_activation=NO&exec_cxt.sync_deactivation=NO");
+    string param("{}?execution_contexts=ChoreonoidExecutionContext(),OpenHRPExecutionContext()&exec_cxt.periodic.type=ChoreonoidExecutionContext&exec_cxt.periodic.rate=1000000&exec_cxt.sync_activation=NO&exec_cxt.sync_deactivation=NO");
 #endif
     while(moduleInfo != moduleInfoList.end()){
         if(!moduleInfo->isLoaded){
             rtcManager.load(moduleInfo->fileName.c_str(), moduleInfo->initFuncName.c_str());
             moduleInfo->isLoaded = true;
-            moduleInfo->rtcServant = cnoid::createManagedRTC(str(param % moduleInfo->componentName).c_str());
+            moduleInfo->rtcServant = cnoid::createManagedRTC(format(param, moduleInfo->componentName));
         }
         ++moduleInfo;
     }

@@ -30,3 +30,4 @@ void Slider::onValueChanged(int value)
 {
     sigValueChanged_(value);
 }
+

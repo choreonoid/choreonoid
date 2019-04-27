@@ -22,13 +22,13 @@
 #endif
 
 #include <QBoxLayout>
-#include <boost/format.hpp>
+#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
 using namespace RTC;
-using boost::format;
+using fmt::format;
 
 namespace {
 
@@ -142,10 +142,10 @@ void RTMImageViewImpl::createRTC(const std::string& name)
 {
     deleteRTC();
 
-    auto args = str(
-        format("ImageView?instance_name=%1%&"
-            "exec_cxt.periodic.type=PeriodicExecutionContext&exec_cxt.periodic.rate=30")
-        % self->name());
+    auto args =
+        format("ImageView?instance_name={}&"
+               "exec_cxt.periodic.type=PeriodicExecutionContext&exec_cxt.periodic.rate=30",
+               self->name());
 
     rtc = dynamic_cast<ImageViewRTC*>(cnoid::createManagedRTC(args));
 

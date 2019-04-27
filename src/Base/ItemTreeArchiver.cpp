@@ -12,11 +12,12 @@
 #include <cnoid/YAMLReader>
 #include <cnoid/YAMLWriter>
 #include <set>
+#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using boost::format;
+using fmt::format;
 
 namespace cnoid {
 
@@ -108,7 +109,7 @@ ArchivePtr ItemTreeArchiverImpl::storeIter(Archive& parentArchive, Item* item, b
     
     if(!ItemManager::getClassIdentifier(item, pluginName, className)){
         mv->putln(
-            format(_("\"%1%\" cannot be stored. Its type is not registered.")) % item->name(),
+            format(_("\"{}\" cannot be stored. Its type is not registered."), item->name()),
             MessageView::ERROR);
         isComplete = false;
         return nullptr;
@@ -120,14 +121,14 @@ ArchivePtr ItemTreeArchiverImpl::storeIter(Archive& parentArchive, Item* item, b
     ArchivePtr dataArchive;
 
     if(!item->isSubItem()){
-        mv->putln(format(_("Storing %1% \"%2%\"")) % className % item->name());
+        mv->putln(format(_("Storing {0} \"{1}\""), className, item->name()));
         mv->flush();
 
         dataArchive = new Archive();
         dataArchive->inheritSharedInfoFrom(parentArchive);
 
         if(!item->store(*dataArchive)){
-            mv->putln(format(_("\"%1%\" cannot be stored.")) % item->name(), MessageView::ERROR);
+            mv->putln(format(_("\"{}\" cannot be stored."), item->name()), MessageView::ERROR);
             isComplete = false;
             return nullptr;
         }
@@ -224,7 +225,7 @@ void ItemTreeArchiverImpl::restoreItemIter(Archive& archive, Item* parentItem, I
             if(itemName.empty()){
                 mv->putln(_("Item cannot be restored."), MessageView::ERROR);
             } else {
-                mv->putln(format(_("\"%1%\" cannot be restored.")) % itemName, MessageView::ERROR);
+                mv->putln(format(_("\"{}\" cannot be restored."), itemName), MessageView::ERROR);
             }
         }
     } else {
@@ -259,7 +260,7 @@ ItemPtr ItemTreeArchiverImpl::restoreItem
         item = parentItem->findSubItem(name);
         if(!item){
             mv->putln(
-                format(_("Sub item \"%1%\" is not found. Its children cannot be restored.")) % name,
+                format(_("Sub item \"{}\" is not found. Its children cannot be restored."), name),
                 MessageView::ERROR);
         }
         return item;
@@ -278,14 +279,14 @@ ItemPtr ItemTreeArchiverImpl::restoreItem
     } else {
         io_isOptional = (pOptionalPlugins->find(pluginName) != pOptionalPlugins->end());
         if(!io_isOptional){
-            mv->putln(format(_("%1%Plugin is not loaded.")) % pluginName, MessageView::ERROR);
+            mv->putln(format(_("{}Plugin is not loaded."), pluginName), MessageView::ERROR);
         }
     }
 
     if(!item){
         if(!io_isOptional){
             mv->putln(
-                format(_("%1% of %2%Plugin is not a registered item type.")) % className % pluginName,
+                format(_("{0} of {1}Plugin is not a registered item type."), className, pluginName),
                 MessageView::ERROR);
             ++numArchivedItems;
         }
@@ -300,7 +301,7 @@ ItemPtr ItemTreeArchiverImpl::restoreItem
         item = parentItem;
         --numArchivedItems;
     } else {
-        mv->putln(format(_("Restoring %1% \"%2%\"")) % className % name);
+        mv->putln(format(_("Restoring {0} \"{1}\""), className, name));
         mv->flush();
         
         ValueNodePtr dataNode = archive.find("data");

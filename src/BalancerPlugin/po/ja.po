@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-08-09 14:54+0900\n"
+"POT-Creation-Date: 2019-02-20 13:39+0900\n"
 "PO-Revision-Date: 2011-11-15 23:21+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -17,148 +17,126 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: BalancerPlugin.cpp:62
+#: BalancerPlugin.cpp:65
 msgid "Balance Adjustment"
 msgstr "バランス補正"
 
-#: BalancerPlugin.cpp:66
+#: BalancerPlugin.cpp:69
 msgid "Starting margin"
 msgstr "開始マージン"
 
-#: BalancerPlugin.cpp:67
+#: BalancerPlugin.cpp:70
 msgid "Initial time margin before applying the balancer"
 msgstr "バランス補正適用前の時間マージン"
 
-#: BalancerPlugin.cpp:73 BalancerPlugin.cpp:112 BalancerPlugin.cpp:126
+#: BalancerPlugin.cpp:76 BalancerPlugin.cpp:115 BalancerPlugin.cpp:129
 msgid "[s]"
 msgstr "[s]"
 
-#: BalancerPlugin.cpp:76
+#: BalancerPlugin.cpp:79
 msgid "Iteration"
 msgstr "計算回数"
 
-#: BalancerPlugin.cpp:83
+#: BalancerPlugin.cpp:86
 msgid "Plain-initial"
 msgstr "元軌道を無視"
 
-#: BalancerPlugin.cpp:84
+#: BalancerPlugin.cpp:87
 msgid "Initial balanced trajectory only depends on the desired ZMP"
 msgstr "元の腰軌道を無視して目標ZMPのみから腰軌道を計算"
 
-#: BalancerPlugin.cpp:89
+#: BalancerPlugin.cpp:92
 msgid "Boundary"
 msgstr "境界"
 
-#: BalancerPlugin.cpp:90
+#: BalancerPlugin.cpp:93
 msgid "Boundary condition type"
 msgstr "境界条件タイプ"
 
-#: BalancerPlugin.cpp:98
+#: BalancerPlugin.cpp:101
 msgid "Boundary smoother trajectory type"
 msgstr "境界平滑化軌道タイプ"
 
-#: BalancerPlugin.cpp:106
+#: BalancerPlugin.cpp:109
 msgid "Time length of smooth connection"
 msgstr "平滑接続時間長"
 
-#: BalancerPlugin.cpp:116
+#: BalancerPlugin.cpp:119
 msgid "Boundary CM adjustment"
 msgstr "境界重心軌道補正"
 
-#: BalancerPlugin.cpp:117
+#: BalancerPlugin.cpp:120
 msgid "Adjust the original CM trajectories around the boundaries"
 msgstr "境界周りの重心軌道を補正する"
 
-#: BalancerPlugin.cpp:120
+#: BalancerPlugin.cpp:123
 msgid "Transition time of the adjustment"
 msgstr "補正遷移時間"
 
-#: BalancerPlugin.cpp:130
+#: BalancerPlugin.cpp:133
 msgid "Waist height relaxation"
 msgstr "腰高さの緩和"
 
-#: BalancerPlugin.cpp:132
+#: BalancerPlugin.cpp:135
 msgid "Vertical waist position is lowered when the leg length is not enough."
 msgstr "脚長が十分でないときに腰の垂直位置を下げます。"
 
-#: BalancerPlugin.cpp:137
+#: BalancerPlugin.cpp:140
 msgid "Gravity"
 msgstr "重力加速度"
 
-#: BalancerPlugin.cpp:143
+#: BalancerPlugin.cpp:146
 msgid "[m/s^2]"
 msgstr "[m/s^2]"
 
-#: BalancerPlugin.cpp:146
+#: BalancerPlugin.cpp:149
 msgid "Dynamics time ratio"
 msgstr "動力学時間比"
 
-#: BalancerPlugin.cpp:222
-msgid "Applying the waist balance filter with %1% iterations ... "
-msgstr "バランス補正を計算回数%1%回で適用中…"
+#: BalancerPlugin.cpp:225
+msgid "Applying the waist balance filter with {} iterations ... "
+msgstr "バランス補正を計算回数{}回で適用中…"
 
-#: BalancerPlugin.cpp:234
-msgid "OK ! (%1% [s] consumed.)"
-msgstr "完了 ! (%1%秒消費）"
+#: BalancerPlugin.cpp:237
+msgid "OK ! ({} [s] consumed.)"
+msgstr "完了 ! ({}秒消費）"
 
-#: BalancerPlugin.cpp:239
+#: BalancerPlugin.cpp:242
 msgid "failed."
 msgstr "失敗。"
 
-#: BalancerPlugin.cpp:279
-msgid "Balancer Plugin Version %1%\n"
-msgstr "Balancer プラグイン バージョン %1%\n"
-
-#: BalancerPlugin.cpp:281
-msgid ""
-"This plugin has been developed by Shin'ichiro Nakaoka and Choreonoid "
-"Development Team, AIST.\n"
-"\n"
-"This plugin is distributed in the hope that it will be useful, but WITHOUT "
-"ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or "
-"FITNESS FOR A PARTICULAR PURPOSE.\n"
-"\n"
-"Please note that the licence of this plugin is different from LGPL, which is "
-"the licence of the main part of Choreonoid. Currently this plugin is "
-"distributed only in a binary form.You can freely use this plugin for "
-"creating motions of any robot / character models, but the plugin cannot be "
-"redistributed for commercial purposes.\n"
-"\n"
-"Please contact us if you want to use this plugin beyond the the above "
-"conditions.\n"
-msgstr ""
-
-#: WaistBalancer.cpp:126 WaistBalancer.cpp:134
+#: WaistBalancer.cpp:125 WaistBalancer.cpp:133
 msgid "zero-velocity"
 msgstr "停止（速度０）"
 
-#: WaistBalancer.cpp:128
+#: WaistBalancer.cpp:127
 msgid "position"
 msgstr "位置を保存"
 
-#: WaistBalancer.cpp:151 WaistBalancer.cpp:161
+#: WaistBalancer.cpp:150 WaistBalancer.cpp:160
 msgid "cubic"
 msgstr "3次"
 
-#: WaistBalancer.cpp:153 WaistBalancer.cpp:163
+#: WaistBalancer.cpp:152 WaistBalancer.cpp:162
 msgid "quintic"
 msgstr "4次"
 
-#: WaistBalancer.cpp:155
+#: WaistBalancer.cpp:154
 msgid "off"
 msgstr "オフ"
 
-#: WaistBalancer.cpp:505
-msgid "Warning: The body is floating at %1% (Vertical CM acceleration is %2%)."
-msgstr "警告： %1%[s]にてボディが浮いています（重心垂直加速度は%1%[m/s^2]です）。"
+#: WaistBalancer.cpp:506
+msgid "Warning: The body is floating at {0} (Vertical CM acceleration is {1})."
+msgstr ""
+"警告： {0}[s]にてボディが浮いています（重心垂直加速度は{1}[m/s^2]です）。"
 
-#: WaistBalancer.cpp:696
+#: WaistBalancer.cpp:695
 msgid ""
 "Waist height relaxation cannot be applied because the robot is not a biped "
 "robot."
 msgstr "ロボットが二足歩行型でないため、腰高さの緩和は適用出来ません。"
 
-#: WaistBalancer.cpp:703
+#: WaistBalancer.cpp:702
 msgid ""
 "Waist height relaxation cannot be applied because the knee joints are not "
 "specified."

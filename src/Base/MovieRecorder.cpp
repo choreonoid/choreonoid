@@ -35,6 +35,8 @@
 #include <mutex>
 #include <condition_variable>
 #include <deque>
+#include <fmt/format.h>
+#include <fmt/ostream.h>
 
 #ifdef Q_OS_LINUX
 #include <QX11Info>
@@ -50,7 +52,7 @@ using namespace std;
 using namespace std::placeholders;
 using namespace cnoid;
 namespace filesystem = boost::filesystem;
-using boost::format;
+using fmt::format;
 
 namespace {
 
@@ -217,7 +219,7 @@ public:
     std::thread imageOutputThread;
     std::mutex imageQueueMutex;
     std::condition_variable imageQueueCondition;
-    format filenameFormat;
+   string filenameFormat;
 
     MovieRecorderImpl(ExtensionManager* ext);
     ~MovieRecorderImpl();
@@ -304,7 +306,7 @@ MovieRecorderImpl::MovieRecorderImpl(ExtensionManager* ext)
     directModeTimer.sigTimeout().connect(
         std::bind(&MovieRecorderImpl::onDirectModeTimerTimeout, this));
 
-    startMessage = _("Recording of %1% has been started with the %2% mode.");
+    startMessage = _("Recording of {0} has been started with the {1} mode.");
 
     viewMarker = 0;
     isViewMarkerEnabled = false;
@@ -709,7 +711,7 @@ bool MovieRecorderImpl::setupViewAndFilenameFormat()
     }
 
     filesystem::path directory(dialog->directoryEntry.string());
-    filesystem::path basename(dialog->basenameEntry.string() + "%08u.png");
+    filesystem::path basename(dialog->basenameEntry.string() + "{:08d}.png");
 
     if(directory.empty()){
         showWarningDialog(_("Please set a directory to output image files."));
@@ -718,7 +720,7 @@ bool MovieRecorderImpl::setupViewAndFilenameFormat()
     } else {
         if(filesystem::exists(directory)){
             if(!filesystem::is_directory(directory)){
-                showWarningDialog(fmt(_("%1% is not a directory.")) % directory);
+                showWarningDialog(format(_("{} is not a directory."), directory));
                 return false;
             }
         } else {
@@ -726,7 +728,7 @@ bool MovieRecorderImpl::setupViewAndFilenameFormat()
         }
     }
 
-    filenameFormat = format((directory / basename).string());
+    filenameFormat = (directory / basename).string();
 
     if(dialog->imageSizeCheck.isChecked()){
         int width = dialog->imageWidthSpin.value();
@@ -754,7 +756,7 @@ bool MovieRecorderImpl::doOfflineModeRecording()
     startFlash();
     startImageOutput();
 
-    mv->putln(format(startMessage) % targetView->name() % recordingMode.selectedLabel());
+    mv->putln(format(startMessage, targetView->name(), recordingMode.selectedLabel()));
     
     while(time <= finishTime && doContinue){
 
@@ -794,7 +796,7 @@ void MovieRecorderImpl::setupOnlineModeRecording()
             timeBar->sigPlaybackStarted().connect(
                 std::bind(&MovieRecorderImpl::onPlaybackStarted, this, std::placeholders::_1)));
         
-        mv->putln(format(_("The online mode recording for %1% is ready.")) % targetView->name());
+        mv->putln(format(_("The online mode recording for {} is ready."), targetView->name()));
     }
 }
 
@@ -820,7 +822,7 @@ void MovieRecorderImpl::startOnlineModeRecording()
     isRecording = true;
     startImageOutput();
 
-    mv->putln(format(startMessage) % targetView->name() % recordingMode.selectedLabel());
+    mv->putln(format(startMessage, targetView->name(), recordingMode.selectedLabel()));
 }
 
 
@@ -861,7 +863,7 @@ void MovieRecorderImpl::startDirectModeRecording()
     directModeTimer.setInterval(1000 / dialog->frameRate());
     directModeTimer.start();
 
-    mv->putln(format(startMessage) % targetView->name() % recordingMode.selectedLabel());
+    mv->putln(format(startMessage, targetView->name(), recordingMode.selectedLabel()));
 }
 
 
@@ -987,7 +989,7 @@ void MovieRecorderImpl::outputImages()
         
         bool saved = false;
 
-        string filename = str(filenameFormat % captured->frame);
+        string filename = format(filenameFormat, captured->frame);
         
         if(captured->image.which() == 0){
             QPixmap& pixmap = boost::get<QPixmap>(captured->image);
@@ -998,7 +1000,7 @@ void MovieRecorderImpl::outputImages()
         }
 
         if(!saved){
-            string message = str(fmt(_("Saving an image to \"%1%\" failed.")) % filename);
+            string message = format(_("Saving an image to \"{}\" failed."), filename);
             callLater(std::bind(&MovieRecorderImpl::onImageOutputFailed, this, message));
             {
                 std::lock_guard<std::mutex> lock(imageQueueMutex);
@@ -1062,9 +1064,9 @@ void MovieRecorderImpl::stopRecording(bool isFinished)
         imageOutputThread.join();
 
         if(isFinished){
-            mv->putln(format(_("Recording of %1% has been finished.")) % targetView->name());
+            mv->putln(format(_("Recording of {} has been finished."), targetView->name()));
         } else {
-            mv->putln(format(_("Recording of %1% has been stopped.")) % targetView->name());
+            mv->putln(format(_("Recording of {} has been stopped."), targetView->name()));
         }
     }
     

@@ -23,6 +23,7 @@
 #include <set>
 #include <list>
 #include <iostream>
+#include <fmt/format.h>
 
 #ifdef Q_OS_WIN32
 #include <QtGlobal>
@@ -341,7 +342,6 @@ void PluginManagerImpl::scanPluginFiles(const std::string& pathString, bool isRe
                 if(doSorting){
                     list<string> paths;
                     for(filesystem::directory_iterator it(pluginPath); it != end; ++it){
-                        const filesystem::path& filepath = *it;
                         paths.push_back(getNativePathString(*it));
                     }
                     paths.sort();
@@ -350,8 +350,7 @@ void PluginManagerImpl::scanPluginFiles(const std::string& pathString, bool isRe
                     }
                 } else {
                     for(filesystem::directory_iterator it(pluginPath); it != end; ++it){
-                        const filesystem::path& filepath = *it;
-                        scanPluginFiles(getNativePathString(filepath), true);
+                        scanPluginFiles(getNativePathString(*it), true);
                     }
                 }
             }
@@ -449,8 +448,8 @@ void PluginManagerImpl::loadPlugins()
                                 lacks += info->requisites[j];
                             }
                         }
-                        mv->putln(fmt(_("%1%-plugin cannot be initialized because required plugin(s) %2% are not found."))
-                                  % info->name % lacks);
+                        mv->putln(fmt::format(_("{0}-plugin cannot be initialized because required plugin(s) {1} are not found."),
+                                info->name, lacks));
                     }
                 }
             }
@@ -474,10 +473,10 @@ bool PluginManagerImpl::loadPlugin(int index)
     PluginInfoPtr& info = allPluginInfos[index];
     
     if(info->status == PluginManager::ACTIVE){
-        mv->putln(fmt(_("Plugin file \"%1%\" has already been activated.")) % info->pathString);
+        mv->putln(fmt::format(_("Plugin file \"{}\" has already been activated."), info->pathString));
 
     } else if(info->status == PluginManager::NOT_LOADED){
-        mv->putln(fmt(_("Detecting plugin file \"%1%\"")) % info->pathString);
+        mv->putln(fmt::format(_("Detecting plugin file \"{}\""), info->pathString));
 
         info->dll.setFileName(info->pathString.c_str());
 
@@ -514,10 +513,12 @@ bool PluginManagerImpl::loadPlugin(int index)
                     info->name = plugin->name();
 
                     if(plugin->internalVersion() != CNOID_INTERNAL_VERSION){
-                        mv->putln(MessageView::WARNING,
-                                  fmt(_("The internal version of the %1% plugin is different from the system internal version.\n"
-                                        "The plugin file \"%2%\" should be removed or updated to avoid a problem."))
-                                  % info->name % info->pathString);
+                        mv->putln(
+                            fmt::format(
+                                _("The internal version of the {0} plugin is different from the system internal version.\n"
+                                  "The plugin file \"{1}\" should be removed or updated to avoid a problem."),
+                                info->name, info->pathString),
+                            MessageView::WARNING);
                     }
                         
                     const int numRequisites = plugin->numRequisites();
@@ -545,8 +546,8 @@ bool PluginManagerImpl::loadPlugin(int index)
                         PluginInfoPtr& another = p->second;
                         another->status = PluginManager::CONFLICT;
                         mv->putln(MessageView::ERROR,
-                                  fmt(_("Plugin file \"%1%\" conflicts with \"%2%\"."))
-                                  % info->pathString % another->pathString);
+                                  fmt::format(_("Plugin file \"{0}\" conflicts with \"{1}\"."),
+                                  info->pathString, another->pathString));
                     }
                 }
             }
@@ -569,7 +570,7 @@ bool PluginManagerImpl::activatePlugin(int index)
     PluginInfoPtr& info = allPluginInfos[index];
     
     if(info->status == PluginManager::ACTIVE){
-        mv->putln(fmt(_("Plugin file \"%1%\" has already been activated.")) % info->pathString);
+        mv->putln(fmt::format(_("Plugin file \"{}\" has already been activated."), info->pathString));
 
     } else if(info->status == PluginManager::LOADED){
 
@@ -633,7 +634,7 @@ bool PluginManagerImpl::activatePlugin(int index)
                 // set an about dialog
                 info->aboutMenuItem =
                     info->plugin->menuManager().setPath("/Help").setPath(_("About Plugins"))
-                    .addItem(str(fmt(_("About %1% Plugin")) % info->name).c_str());
+                    .addItem(fmt::format(_("About {} Plugin"), info->name).c_str());
                 info->aboutMenuItem->sigTriggered().connect(
                     std::bind(&PluginManagerImpl::onAboutDialogTriggered, this, info.get()));
                 
@@ -644,7 +645,7 @@ bool PluginManagerImpl::activatePlugin(int index)
                         make_pair(info->plugin->oldName(i), info->name));
                 }
                 
-                mv->putln(fmt(_("%1%-plugin has been activated.")) % info->name);
+                mv->putln(fmt::format(_("{}-plugin has been activated."), info->name));
                 mv->flush();
                 ExtensionManager::notifySystemUpdate();
             }
@@ -705,7 +706,7 @@ void PluginManagerImpl::onAboutDialogTriggered(PluginInfo* info)
 {
     if(!info->aboutDialog){
         info->aboutDialog = new DescriptionDialog();
-        info->aboutDialog->setWindowTitle(str(fmt(_("About %1% Plugin")) % info->name).c_str());
+        info->aboutDialog->setWindowTitle(fmt::format(_("About {} Plugin"), info->name).c_str());
         info->aboutDialog->setDescription(info->plugin->description());
     }
 
@@ -806,7 +807,7 @@ bool PluginManagerImpl::finalizePlugin(PluginInfoPtr info)
 
             if(allDependentsFinalized){
                 if(!info->plugin->finalize()){
-                    mv->putln(boost::format(_("Plugin %1% cannot be finalized.")) % info->name);
+                    mv->putln(fmt::format(_("Plugin {} cannot be finalized."), info->name));
                     mv->flush();
                 } else {
                     bool isUnloadable = info->plugin->isUnloadable();
@@ -845,7 +846,7 @@ void PluginManagerImpl::unloadPluginsActually()
         if(info->dll.unload()){
             info->status = PluginManager::UNLOADED;
             nameToPluginInfoMap.erase(info->name);
-            mv->putln(fmt(_("Plugin dll %1% has been unloaded.")) % info->pathString);
+            mv->putln(fmt::format(_("Plugin dll {} has been unloaded."), info->pathString));
             mv->flush();
             if(info->doReloading){
                 info->status = PluginManager::NOT_LOADED;

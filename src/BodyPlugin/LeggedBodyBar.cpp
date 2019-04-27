@@ -8,7 +8,7 @@
 #include <cnoid/SpinBox>
 #include <cnoid/MessageView>
 #include <cnoid/Archive>
-#include <boost/format.hpp>
+#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace cnoid;
@@ -100,8 +100,9 @@ void LeggedBodyBarImpl::moveCM(BodyItem::PositionType position)
             c[1] = (*p)[1];
         }
         if(!bodyItem->doLegIkToMoveCm(c, true)){
-            static boost::format f(_("The center of mass of %1% cannt be moved to the target position\n"));
-            MessageView::instance()->notify(str(f % bodyItem->name()));
+            MessageView::instance()->notify(
+                fmt::format(_("The center of mass of {} cannt be moved to the target position\n"),
+                            bodyItem->name()));
         }
     }
 }

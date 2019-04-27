@@ -24,6 +24,7 @@
 #include <QSignalMapper>
 #include <QRegExp>
 #include <boost/tokenizer.hpp>
+#include <fmt/format.h>
 #include <set>
 #include <sstream>
 #include "gettext.h"
@@ -31,7 +32,7 @@
 using namespace std;
 using namespace cnoid;
 namespace filesystem = boost::filesystem;
-using boost::format;
+using fmt::format;
 
 namespace cnoid {
 
@@ -827,8 +828,8 @@ bool ItemManagerImpl::load(Item* item, const string& filename, Item* parentItem,
     ClassInfoMap::iterator p = typeIdToClassInfoMap.find(typeId);
     if(p == typeIdToClassInfoMap.end()){
         messageView->putln(
-            (format(_("\"%1%\" cannot be loaded because item type \"%2%\" is not registered."))
-             % pathString % typeId),
+            format(_("\"{0}\" cannot be loaded because item type \"{1}\" is not registered."),
+            pathString, typeId),
             MessageView::ERROR);
         return false;
     }
@@ -866,12 +867,12 @@ bool ItemManagerImpl::load(Item* item, const string& filename, Item* parentItem,
     if(!targetLoader){
         if(formatId.empty()){
             messageView->putln(
-                (format(_("\"%1%\" cannot be loaded because the file format is unknown.")) % pathString),
+                format(_("\"{}\" cannot be loaded because the file format is unknown."), pathString),
                 MessageView::ERROR);
         } else {
             messageView->putln(
-                (format(_("\"%1%\" cannot be loaded because file format \"%2%\" is unknown."))
-                 % pathString % formatId),
+                format(_("\"{0}\" cannot be loaded because file format \"{1}\" is unknown."),
+                pathString, formatId),
                 MessageView::ERROR);
         }
     } else {
@@ -892,7 +893,7 @@ bool ItemManagerImpl::load(LoaderPtr loader, Item* item, const string& filename_
 
         string filename(toActualPathName(filename_));
         
-        messageView->notify(format(_("Loading %1% \"%2%\"")) % loader->caption % filename);
+        messageView->notify(format(_("Loading {0} \"{1}\""), loader->caption, filename));
         messageView->flush();
 
         if(!parentItem){
@@ -931,8 +932,8 @@ void ItemManagerImpl::onLoadSpecificTypeItemActivated(LoaderPtr loader)
     if(classInfo->isSingleton){
         item = classInfo->singletonInstance;
         if(item->parentItem()){
-            showWarningDialog(format(_("The singleton instance of %1% is already loaded."))
-                              % classInfo->className);
+            showWarningDialog(format(_("The singleton instance of {} is already loaded."),
+            classInfo->className));
             return;
         }
     }
@@ -1095,9 +1096,9 @@ bool ItemManagerImpl::save
         tryToSave = true;
         
         if(!doExport){
-            messageView->notify(format(_("Saving %1% to \"%2%\"")) % itemLabel % filename);
+            messageView->notify(format(_("Saving {0} to \"{1}\""), itemLabel, filename));
         } else {
-            messageView->notify(format(_("Exporting %1% into \"%2%\"")) % itemLabel % filename);
+            messageView->notify(format(_("Exporting {0} into \"{1}\""), itemLabel, filename));
         }
         
         Item* parentItem = item->parentItem();
@@ -1124,15 +1125,15 @@ bool ItemManagerImpl::save
         string actualFormatId = targetSaver ? targetSaver->formatId : formatId;
         if(actualFormatId.empty()){
             if(!doExport){
-                messageView->put(format(_("%1% cannot be saved.\n")) % itemLabel);
+                messageView->put(format(_("{} cannot be saved.\n"), itemLabel));
             } else {
-                messageView->put(format(_("%1% cannot be exported.\n")) % itemLabel);
+                messageView->put(format(_("{} cannot be exported.\n"), itemLabel));
             }
         } else {
             if(!doExport){
-                messageView->put(format(_("%1% cannot be saved as the %2% format.\n")) % itemLabel % actualFormatId);
+                messageView->put(format(_("{0} cannot be saved as the {1} format.\n"), itemLabel, actualFormatId));
             } else {
-                messageView->put(format(_("%1% cannot be exported into the %2% format.\n")) % itemLabel % actualFormatId);
+                messageView->put(format(_("{0} cannot be exported into the {1} format.\n"), itemLabel, actualFormatId));
             }
         }
     }

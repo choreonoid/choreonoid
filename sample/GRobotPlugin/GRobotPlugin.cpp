@@ -9,6 +9,7 @@
 #include <cnoid/Config>
 #include <cnoid/Plugin>
 #include <cnoid/ItemManager>
+#include <fmt/format.h>
 #include "gettext.h"
 
 namespace cnoid {
@@ -33,7 +34,7 @@ public:
 
     virtual const char* description() {
         static std::string text =
-            str(fmt(_("GRobot Plugin Version %1%\n")) % CNOID_FULL_VERSION_STRING) +
+            fmt::format(_("GRobot Plugin Version {}\n"), CNOID_FULL_VERSION_STRING) +
             "\n" +
             _("This plugin has been developed by Shin'ichiro Nakaoka and Choreonoid Development Team, AIST, "
               "and is distributed as a part of the Choreonoid package.\n"

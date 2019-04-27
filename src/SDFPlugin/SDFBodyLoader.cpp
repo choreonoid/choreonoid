@@ -21,16 +21,21 @@
 #include <cnoid/PolymorphicFunctionSet>
 #include <sdf/sdf.hh>
 #include <sdf/parser_urdf.hh>
+#include <ignition/math.hh>
 #include <OGRE/OgreRoot.h>
 #include <OGRE/OgreMaterialManager.h>
 #include <boost/function.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
+#include <fmt/format.h>
 #include <map>
+#include "gettext.h"
 
 using namespace std;
 using namespace boost;
 using namespace cnoid;
+
+using ignition::math::Pose3d;
 
 namespace {
 
@@ -69,6 +74,7 @@ public:
 
     bool set(SgNode* node){
         functions.dispatch(node);
+        return true;
     }
 
     void visitGroup(SgGroup* group)
@@ -305,7 +311,7 @@ public:
 
     SDFBodyLoaderImpl();
     ~SDFBodyLoaderImpl();
-    cnoid::Affine3 pose2affine(const sdf::Pose& pose);
+    void pose2affine(const ignition::math::Pose3d& pose, cnoid::Affine3& out );
 
     void readSDF(const std::string& filename, vector<ModelInfoPtr>& modelInfos);
 
@@ -694,22 +700,14 @@ bool SDFBodyLoader::load(BodyItem* item, const std::string& filename)
     return impl->load(item, filename);
 }
 
-cnoid::Affine3 SDFBodyLoaderImpl::pose2affine(const sdf::Pose& pose)
-{
-    cnoid::Affine3 ret = cnoid::Affine3::Identity();
-    cnoid::Vector3 trans;
-    trans(0) = pose.pos.x;
-    trans(1) = pose.pos.y;
-    trans(2) = pose.pos.z;
-    cnoid::Quaternion R;
-    R.x() = pose.rot.x;
-    R.y() = pose.rot.y;
-    R.z() = pose.rot.z;
-    R.w() = pose.rot.w;
-    ret.translation() = trans;
-    ret.linear() = R.matrix();
 
-    return ret;
+void SDFBodyLoaderImpl::pose2affine(const Pose3d& pose, Affine3& out)
+{
+    Vector3 trans(pose.Pos().X(), pose.Pos().Y(), pose.Pos().Z());
+    out.translation() = trans;
+    Quaternion R(pose.Rot().X(), pose.Rot().Y(), pose.Rot().Z(), pose.Rot().W());
+    out.linear() = R.matrix();
+
 }
 
 
@@ -840,7 +838,7 @@ void SDFBodyLoaderImpl::readInclude(sdf::ElementPtr include, vector<ModelInfoPtr
         }else if(element->GetName()=="static"){
             modelInfos.back()->isStatic = element->Get<bool>("static");
         }else if(element->GetName()=="pose"){
-            modelInfos.back()->pose = pose2affine(element->Get<sdf::Pose>("pose"));
+            pose2affine(element->Get<Pose3d>("pose"), modelInfos.back()->pose);
         }
     }
 }
@@ -908,7 +906,7 @@ void SDFBodyLoaderImpl::readLink(sdf::ElementPtr link, std::map<std::string, Lin
     }
 
     if(link->HasElement("pose")){
-        linkdata->pose = pose2affine(link->Get<sdf::Pose>("pose"));
+        pose2affine(link->Get<Pose3d>("pose"), linkdata->pose);
     }
 
     if(link->HasElement("inertial")){
@@ -928,7 +926,7 @@ void SDFBodyLoaderImpl::readLink(sdf::ElementPtr link, std::map<std::string, Lin
         }
 
         if(inertial->HasElement("pose")){
-            linkdata->c = pose2affine(inertial->Get<sdf::Pose>("pose"));
+            pose2affine(inertial->Get<Pose3d>("pose"), linkdata->c);
         }
     }
 
@@ -971,7 +969,7 @@ void SDFBodyLoaderImpl::readJoint(sdf::ElementPtr joint, vector<JointInfoPtr>& j
     }
 
     if(joint->HasElement("pose")){
-        jointdata->pose = pose2affine(joint->Get<sdf::Pose>("pose"));
+        pose2affine(joint->Get<Pose3d>("pose"), jointdata->pose);
     } else {
         jointdata->pose = cnoid::Affine3::Identity();
     }
@@ -980,10 +978,10 @@ void SDFBodyLoaderImpl::readJoint(sdf::ElementPtr joint, vector<JointInfoPtr>& j
     }
     if(joint->HasElement("axis")){
         sdf::ElementPtr axis = joint->GetElement("axis");
-        sdf::Vector3 xyz = axis->Get<sdf::Vector3>("xyz");
-        jointdata->axis[0] = xyz.x;
-        jointdata->axis[1] = xyz.y;
-        jointdata->axis[2] = xyz.z;
+        ignition::math::Vector3d xyz = axis->Get<ignition::math::Vector3d>("xyz");
+        jointdata->axis[0] = xyz.X();
+        jointdata->axis[1] = xyz.Y();
+        jointdata->axis[2] = xyz.Z();
 
         jointdata->useparent = false;
         if(axis->HasElement("use_parent_model_frame")){
@@ -1019,7 +1017,7 @@ void SDFBodyLoaderImpl::readVisual(sdf::ElementPtr visual, vector<VisualInfoPtr>
     VisualInfoPtr visualInfo(new VisualInfo());
 
     if (visual->HasElement("pose")) {
-        visualInfo->pose = pose2affine(visual->Get<sdf::Pose>("pose"));
+        pose2affine(visual->Get<Pose3d>("pose"), visualInfo->pose);
     } else {
         visualInfo->pose = cnoid::Affine3::Identity();
     }
@@ -1050,7 +1048,7 @@ void SDFBodyLoaderImpl::readCollision(sdf::ElementPtr collision, vector<Collisio
     CollisionInfoPtr collisionInfo(new CollisionInfo());
 
     if (collision->HasElement("pose")) {
-        collisionInfo->pose = pose2affine(collision->Get<sdf::Pose>("pose"));
+        pose2affine(collision->Get<Pose3d>("pose"), collisionInfo->pose);
     } else {
         collisionInfo->pose = cnoid::Affine3::Identity();
     }
@@ -1163,8 +1161,8 @@ GeometryInfo* SDFBodyLoaderImpl::readGeometry(sdf::ElementPtr geometry)
                 }
 
                 if(el->HasElement("scale")){
-                    sdf::Vector3 scale = el->Get<sdf::Vector3>("scale");
-                    geometryInfo->scale = (double)scale0 * Vector3(scale.x, scale.y, scale.z);
+                    ignition::math::Vector3d scale = el->Get<ignition::math::Vector3d>("scale");
+                    geometryInfo->scale = (double)scale0 * Vector3(scale.X(), scale.Y(), scale.Z());
                     geometryInfo->haveScale = true;
                 } else {
                     geometryInfo->scale = Vector3(1,1,1);
@@ -1172,15 +1170,15 @@ GeometryInfo* SDFBodyLoaderImpl::readGeometry(sdf::ElementPtr geometry)
 
             } else {
                 MessageView::instance()->putln(
-                    MessageView::WARNING,
-                    boost::format("%1% not found") % el->Get<std::string>("uri")
+                    fmt::format(_("{} not found"), el->Get<std::string>("uri")),
+                    MessageView::WARNING
                     );
             }
 
         } else if(el->GetName() == "box"){
             SgShapePtr shape = new SgShape;
-            sdf::Vector3 size = el->Get<sdf::Vector3>("size");
-            shape->setMesh(meshGenerator.generateBox(Vector3(size.x, size.y, size.z)));
+            ignition::math::Vector3d size = el->Get<ignition::math::Vector3d>("size");
+            shape->setMesh(meshGenerator.generateBox(Vector3(size.X(), size.Y(), size.Z())));
             geometryInfo->sgNode = shape;
         } else if(el->GetName() == "sphere"){
             SgShapePtr shape = new SgShape;
@@ -1214,7 +1212,7 @@ void SDFBodyLoaderImpl::readSensor(sdf::ElementPtr sensor, vector<SensorInfoPtr>
     string type = sensor->Get<std::string>("type");
 
     if(sensor->HasElement("pose"))
-        sensorInfo->pose = pose2affine(sensor->Get<sdf::Pose>("pose"));
+        pose2affine(sensor->Get<Pose3d>("pose"), sensorInfo->pose);
 
     if(sensor->HasElement("update_rate"))
         sensorInfo->update_rate = sensor->Get<double>("update_rate");
@@ -1351,9 +1349,9 @@ bool SDFBodyLoaderImpl::convertAngle(double* angle, double min, double max, cons
         return false;
     } else if (min > max) {
         MessageView::instance()->putln(
-            MessageView::ERROR,
-            boost::format("max_angle must be greater of equal to min_angle [ min=%1% max=%2% ] (%3%)")
-                % min % max % name
+            fmt::format(_("max_angle must be greater of equal to min_angle [ min={0} max={1} ] ({2})"),
+                        min, max, name),
+            MessageView::ERROR
             );
         return false;
     } else if (min != max) {
@@ -1371,18 +1369,18 @@ bool SDFBodyLoaderImpl::convertAngle(double* angle, double min, double max, cons
 
             if (result >= thresh) {
                 MessageView::instance()->putln(
-                    MessageView::ERROR,
-                    boost::format("sensor range too big [ setting=%1% threshold=%2% ] (%3%)")
-                        % result % thresh % name
-                    );
+                    fmt::format(_("sensor range too big [ setting={0} threshold={1} ] ({2})"),
+                                result, thresh, name),
+                    MessageView::ERROR
+                );
                 return false;
             }
         } else {
            MessageView::instance()->putln(
-               MessageView::WARNING,
-               boost::format(
-                   "unable to convert angle, use default value [ min=%1% max=%2% default=%3% ] (%4%)")
-                   % dmin % dmax % defaultValue % name
+               fmt::format(_("unable to convert angle, use default value "
+                             "[ min={0} max={1} default={2} ] ({3})"),
+                           dmin, dmax, defaultValue, name),
+               MessageView::WARNING
                );
         }
     } else {
@@ -1390,10 +1388,10 @@ bool SDFBodyLoaderImpl::convertAngle(double* angle, double min, double max, cons
 
         if (min != 0.0) {
            MessageView::instance()->putln(
-               MessageView::WARNING,
-               boost::format(
-                   "unable to convert angle, use alternate value [ min=%1% max=%2% alternate=%3% ] (%4%)")
-                   % min % max % result % name
+               fmt::format(_("unable to convert angle, use alternate value "
+                             "[ min={0} max={1} alternate={2} ] ({3})"),
+                           min, max, result, name),
+               MessageView::WARNING
                );
         }
     }
@@ -1523,7 +1521,7 @@ bool SDFBodyLoaderImpl::load(Body* body, const std::string& filename)
         return false;
     }
 
-    createBody(body, models[0].get());
+    return createBody(body, models[0].get());
 
 }
 

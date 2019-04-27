@@ -6,7 +6,7 @@
 
 #include "ImageIO.h"
 #include "Exception.h"
-#include <boost/format.hpp>
+#include <fmt/format.h>
 #include <boost/algorithm/string/predicate.hpp>
 #include <png.h>
 
@@ -25,7 +25,7 @@ void throwLoadException(const string& filename, const std::string& description)
 {
     exception_base exception;
     exception << error_info_message(
-        str(format("Image file \"%1%\" cannot be loaded. %2%") % filename % description));
+        fmt::format("Image file \"{0}\" cannot be loaded. {1}", filename, description));
     BOOST_THROW_EXCEPTION(exception);
 }
 
@@ -34,7 +34,7 @@ void throwSaveException(const string& filename, const std::string& description)
 {
     exception_base exception;
     exception << error_info_message(
-        str(format("Image cannot be save to \"%1%\". %2%") % filename % description));
+        fmt::format("Image cannot be save to \"{0}\". {1}", filename, description));
     BOOST_THROW_EXCEPTION(exception);
 }
 

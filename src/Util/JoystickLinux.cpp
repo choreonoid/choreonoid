@@ -5,7 +5,7 @@
 #include "Joystick.h"
 #include "ExtJoystick.h"
 #include <cnoid/Config>
-#include <boost/format.hpp>
+#include <fmt/format.h>
 #include <boost/filesystem.hpp>
 #include <linux/joystick.h>
 #include <sys/ioctl.h>
@@ -30,7 +30,7 @@ using boost::regex_match;
 
 using namespace std;
 using namespace cnoid;
-using boost::format;
+using fmt::format;
 namespace filesystem = boost::filesystem;
 
 namespace {
@@ -251,11 +251,11 @@ bool JoystickImpl::findDevice(const string& device)
     } else {
         closeDevice();
         
-        format filebase("/dev/input/js%1%");
+        string filebase("/dev/input/js{}");
         regex sonyMotionSensors("^Sony.*Motion Sensors$");
         int id = 0;
         while(true){
-            string file = str(filebase % id);
+            string file = format(filebase, id);
             if(!filesystem::exists(filesystem::path(file))){
                 break;
             }
@@ -294,7 +294,7 @@ bool JoystickImpl::openDevice(const string& device)
     fd = open(device.c_str(), O_RDONLY | O_NONBLOCK);
 
     if(fd < 0){
-        errorMessage = str(format("Device \"%1%\": %2%") % device % strerror(errno));
+        errorMessage = format("Device \"{0}\": {1}", device, strerror(errno));
         return false;
     }
     errorMessage.clear();
@@ -542,7 +542,7 @@ double Joystick::getPosition(int axis) const
     
     if(impl->extJoystick){
         pos = impl->extJoystick->getPosition(axis);
-    } else if(axis < impl->axes.size()){
+    } else if(axis < (int)impl->axes.size()){
         pos = impl->axes[axis];
     }
 
@@ -556,7 +556,7 @@ bool Joystick::getButtonState(int button) const
     
     if(impl->extJoystick){
         state = impl->extJoystick->getButtonState(button);
-    } else if(button < impl->buttons.size()){
+    } else if(button < (int)impl->buttons.size()){
         state = impl->buttons[button];
     }
 
@@ -566,7 +566,7 @@ bool Joystick::getButtonState(int button) const
 
 bool Joystick::getButtonDown(int button) const
 {
-    if(button >= impl->buttons.size()){
+    if(button >= (int)impl->buttons.size()){
         return false;
     }
     return getButtonState(button) && !impl->prevButtons[button];
@@ -575,7 +575,7 @@ bool Joystick::getButtonDown(int button) const
 
 bool Joystick::getButtonUp(int button) const
 {
-    if(button >= impl->buttons.size()){
+    if(button >= (int)impl->buttons.size()){
         return false;
     }
     return !getButtonState(button) && impl->prevButtons[button];
@@ -597,7 +597,7 @@ bool Joystick::getButtonHold(int button, int duration/*(msec)*/) const
 
 bool Joystick::getButtonHoldOn(int button, int duration/*(msec)*/) const
 {
-    if(button >= impl->buttons.size() || !getButtonState(button)){
+    if(button >= (int)impl->buttons.size() || !getButtonState(button)){
         return false;
     }
     auto dur = chrono::system_clock::now() - impl->buttonDownTime[button];

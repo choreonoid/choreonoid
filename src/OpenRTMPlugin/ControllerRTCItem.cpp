@@ -13,11 +13,12 @@
 #include <cnoid/ExecutablePath>
 #include <cnoid/FileUtil>
 #include <cnoid/CorbaUtil>
+#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using boost::format;
+using fmt::format;
 namespace filesystem = boost::filesystem;
 
 namespace {
@@ -308,10 +309,11 @@ std::string ControllerRTCItemImpl::getModuleFilename()
             if(!projectDir.empty()){
                 path = filesystem::path(projectDir) / path;
             } else {
-                mv->putln(MessageView::ERROR,
-                          format(_("The rtc of %1% cannot be generated because the project directory "
-                                   "is not determined. Please save the project as a project file."))
-                          % self->name());
+                mv->putln(
+                    format(_("The rtc of {} cannot be generated because the project directory "
+                             "is not determined. Please save the project as a project file."),
+                           self->name()),
+                    MessageView::ERROR);
                 return string();
             }
         }
@@ -326,9 +328,9 @@ std::string ControllerRTCItemImpl::getModuleFilename()
     if(filesystem::exists(path)){
         return path.string();
     } else {
-        mv->putln(MessageView::ERROR,
-                  format(_("RTC module file \"%1%\" of %2% does not exist."))
-                  % path.string() % self->name());
+        mv->putln(
+            format(_("RTC module file \"{0}\" of {1} does not exist."), path.string(), self->name()),
+            MessageView::ERROR);
     }
     
     return string();
@@ -344,7 +346,7 @@ std::string ControllerRTCItem::getDefaultRTCInstanceName() const
 bool ControllerRTCItem::createRTC()
 {
     if(impl->createRTCmain()){
-        impl->mv->putln(fmt(_("BodyIoRTC \"%1%\" has been created.")) % impl->rtcInstanceName);
+        impl->mv->putln(format(_("BodyIoRTC \"{}\" has been created."), impl->rtcInstanceName));
         return true;
     }
     return false;
@@ -376,9 +378,9 @@ bool ControllerRTCItemImpl::createRTCmain(bool isBodyIORTC) {
         instanceBaseName = self->getDefaultRTCInstanceName();
     }
     if(instanceBaseName.empty()){
-        mv->putln(MessageView::ERROR,
-                  format(_("The RTC instance name of %1% is not specified."))
-                  % self->name());
+        mv->putln(
+            format(_("The RTC instance name of {} is not specified."), self->name()),
+            MessageView::ERROR);
         return false;
     }
     rtcInstanceName = instanceBaseName;
@@ -389,13 +391,14 @@ bool ControllerRTCItemImpl::createRTCmain(bool isBodyIORTC) {
         if(manager.getComponent(rtcInstanceName.c_str()) == nullptr){
             break;
         }
-        rtcInstanceName = str(format("%1%(%2%)") % instanceBaseName % index++);
+        rtcInstanceName = format("{0}({1})", instanceBaseName, index++);
     }
     if(index >= maxNumInstances){
-        mv->putln(MessageView::ERROR,
-                  format(_("RTC \"%1%\" of %2% is not created because more than "
-                           "%3% existing instances have the same base name \"%4%\"."))
-                  % moduleName % self->name() % maxNumInstances % instanceBaseName);
+        mv->putln(
+            format(_("RTC \"{0}\" of {1} is not created because more than "
+                     "{2} existing instances have the same base name \"{3}\"."),
+                   moduleName, self->name(), maxNumInstances, instanceBaseName),
+            MessageView::ERROR);
         return false;
     }
 
@@ -405,25 +408,25 @@ bool ControllerRTCItemImpl::createRTCmain(bool isBodyIORTC) {
 
 #if defined(OPENRTM_VERSION11)
         option =
-            str(format("instance_name=%1%&exec_cxt.periodic.type=%2%&exec_cxt.periodic.rate=%3%")
-                % rtcInstanceName % execContextType.selectedSymbol() % periodicRate);
+            format("instance_name={0}&exec_cxt.periodic.type={1}&exec_cxt.periodic.rate={2}",
+                   rtcInstanceName, execContextType.selectedSymbol(), periodicRate);
         DDEBUG("ControllerRTCItemImpl::createRTCmain OPENRTM_VERSION11");
 
 #elif defined(OPENRTM_VERSION12)
         if(isBodyIORTC){
             option =
-                str(format("instance_name=%1%&execution_contexts=SimulationExecutionContext()&"
-                           "exec_cxt.periodic.type=%2%&exec_cxt.periodic.rate=%3%&"
-                           "exec_cxt.sync_activation=NO&exec_cxt.sync_deactivation=NO")
-                    % rtcInstanceName % execContextType.selectedSymbol() % periodicRate);
+                format("instance_name={0}&execution_contexts=SimulationExecutionContext()&"
+                       "exec_cxt.periodic.type={1}&exec_cxt.periodic.rate={2}&"
+                       "exec_cxt.sync_activation=NO&exec_cxt.sync_deactivation=NO",
+                       rtcInstanceName, execContextType.selectedSymbol(), periodicRate);
             DDEBUG_V("ControllerRTCItemImpl::createRTCmain isBodyIORTC=TRUE  %s", option.c_str());
         } else {
             option =
-                str(format("instance_name=%1%&"
-                           "execution_contexts=SimulationExecutionContext(),SimulationPeriodicExecutionContext()&"
-                           "exec_cxt.periodic.type=%2%&exec_cxt.periodic.rate=%3%&"
-                           "exec_cxt.sync_activation=NO&exec_cxt.sync_deactivation=NO")
-                    % rtcInstanceName % execContextType.selectedSymbol() % periodicRate);
+                format("instance_name={0}&"
+                        "execution_contexts=SimulationExecutionContext(),SimulationPeriodicExecutionContext()&"
+                        "exec_cxt.periodic.type={1}&exec_cxt.periodic.rate={2}&"
+                        "exec_cxt.sync_activation=NO&exec_cxt.sync_deactivation=NO",
+                       rtcInstanceName, execContextType.selectedSymbol(), periodicRate);
             DDEBUG_V("ControllerRTCItemImpl::createRTCmain isBodyIORTC=FALSE  %s", option.c_str());
         }
 #endif
@@ -432,23 +435,23 @@ bool ControllerRTCItemImpl::createRTCmain(bool isBodyIORTC) {
 
 #if defined(OPENRTM_VERSION11)
           option =
-              str(format("instance_name=%1%&exec_cxt.periodic.type=%2%")
-                  % rtcInstanceName % execContextType.selectedSymbol());
+              format("instance_name={0}&exec_cxt.periodic.type={1}",
+                     rtcInstanceName, execContextType.selectedSymbol());
           DDEBUG("ControllerRTCItemImpl::createRTCmain OPENRTM_VERSION11");
 
 #elif defined(OPENRTM_VERSION12)
         if(isBodyIORTC){
             option =
-                str(format("instance_name=%1%&execution_contexts=SimulationExecutionContext()&"
-                           "exec_cxt.periodic.type=%2%&exec_cxt.sync_activation=NO&exec_cxt.sync_deactivation=NO")
-                    % rtcInstanceName % execContextType.selectedSymbol());
+                format("instance_name={0}&execution_contexts=SimulationExecutionContext()&"
+                       "exec_cxt.periodic.type={1}&exec_cxt.sync_activation=NO&exec_cxt.sync_deactivation=NO",
+                       rtcInstanceName, execContextType.selectedSymbol());
             DDEBUG_V("ControllerRTCItemImpl::createRTCmain isBodyIORTC=TRUE  %s", option.c_str());
         } else {
             option =
-                str(format("instance_name=%1%&"
-                           "execution_contexts=SimulationExecutionContext(),SimulationPeriodicExecutionContext()&"
-                           "exec_cxt.periodic.type=%2%&exec_cxt.sync_activation=NO&exec_cxt.sync_deactivation=NO")
-                    % rtcInstanceName % execContextType.selectedSymbol());
+                format("instance_name={0}&"
+                       "execution_contexts=SimulationExecutionContext(),SimulationPeriodicExecutionContext()&"
+                       "exec_cxt.periodic.type={1}&exec_cxt.sync_activation=NO&exec_cxt.sync_deactivation=NO",
+                       rtcInstanceName, execContextType.selectedSymbol());
             DDEBUG_V("ControllerRTCItemImpl::createRTCmain isBodyIORTC=FALSE  %s", option.c_str());
         }
 #endif
@@ -456,12 +459,13 @@ bool ControllerRTCItemImpl::createRTCmain(bool isBodyIORTC) {
     rtc = createManagedRTC(moduleName + "?" + option);
 
     if(!rtc){
-        mv->putln(MessageView::ERROR,
-                  format(_("RTC \"%1%\" of %2% cannot be created by the RTC manager.\n"
-                           " RTC module file: \"%3%\"\n"
-                           " Init function: %4%\n"
-                           " option: %5%"))
-                  % moduleName % self->name() % moduleFilename % initFuncName % option);
+        mv->putln(
+            format(_("RTC \"{0}\" of {1} cannot be created by the RTC manager.\n"
+                     " RTC module file: \"{2}\"\n"
+                     " Init function: {3}\n"
+                     " option: {4}"),
+                   moduleName, self->name(), moduleFilename, initFuncName, option),
+            MessageView::ERROR);
         return false;
     }
 
@@ -518,9 +522,10 @@ void ControllerRTCItemImpl::deleteRTC(bool waitToBeDeleted)
             }
         }
         if(!deleted){
-            mv->putln(MessageView::WARNING,
-                      format(_("RTC instance %1% of %2% cannot be deleted."))
-                      % rtcInstanceName % self->name());
+            mv->putln(
+                format(_("RTC instance {0} of {1} cannot be deleted."),
+                       rtcInstanceName, self->name()),
+                MessageView::WARNING);
         }
     }
 }
@@ -623,7 +628,7 @@ void ControllerRTCItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
     FilePathProperty moduleProperty(
         moduleNameProperty,
-        { str(format(_("RT-Component module (*%1%)")) % DLL_SUFFIX) });
+        { format(_("RT-Component module (*{})"), DLL_SUFFIX) });
 
     if(baseDirectoryType.is(RTC_DIRECTORY)){
         moduleProperty.setBaseDirectory(rtcDirectory.string());

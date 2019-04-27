@@ -633,7 +633,7 @@ items:
               data: 
                 isNoDelayMode: false
                 controllerOptions: ""
-                controller: "RockDrillController.so"
+                controller: "RockDrillController"
                 baseDirectory: "Controller directory"
                 reloading: false
                 isOldTargetVariableMode: false
@@ -670,7 +670,7 @@ items:
               data: 
                 isNoDelayMode: false
                 controllerOptions: ""
-                controller: "BoaringTargetController.so"
+                controller: "BoaringTargetController"
                 baseDirectory: "Controller directory"
                 reloading: false
                 isOldTargetVariableMode: false

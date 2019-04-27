@@ -5,6 +5,7 @@ add_subdirectory(AssimpSceneLoader)
 add_subdirectory(Body)
 add_subdirectory(Corba)
 add_subdirectory(OpenRTM)
+add_subdirectory(OpenHRPModelLoader)
 
 if(ENABLE_GUI)
   add_subdirectory(Base)

@@ -25,6 +25,7 @@
 #include <cnoid/EigenUtil>
 #include <cnoid/MessageView>
 #include <cnoid/IdPair>
+#include <fmt/format.h>
 #include <boost/lexical_cast.hpp>
 #include <mutex>
 #include <iomanip>
@@ -33,7 +34,7 @@
 
 using namespace std;
 using namespace cnoid;
-using boost::format;
+using fmt::format;
 
 // for Windows
 #undef min
@@ -366,9 +367,8 @@ SimulationBody* AISTSimulatorItem::createSimulationBody(Body* orgBody)
         auto link = body->link(i);
         if(link->isFreeJoint() && !link->isRoot()){
             MessageView::instance()->putln(
-                format(_("The joint %1% of %2% is a free joint. AISTSimulator does not allow for a free joint except for the root link."))
-                % link->name() % body->name(),
-                MessageView::WARNING);
+                format(_("The joint {0} of {1} is a free joint. AISTSimulator does not allow for a free joint except for the root link."),
+                       link->name(), body->name(), MessageView::WARNING));
             link->setJointType(Link::FIXED_JOINT);
         }
     }
@@ -429,7 +429,8 @@ bool AISTSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBod
     }
 
     if(!highGainDynamicsList.empty()){
-        mvout() << (format(_("%1% uses the ForwardDynamicsCBM module to perform the high-gain control.")) % self->name()) << endl;
+        mvout() << format(_("{} uses the ForwardDynamicsCBM module to perform the high-gain control."),
+                          self->name()) << endl;
     }
 
     cfs.setFriction(staticFriction, dynamicFriction);

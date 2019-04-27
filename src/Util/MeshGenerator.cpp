@@ -1020,7 +1020,7 @@ void MeshGenerator::generateTextureCoordinateForExtrusion(SgMesh* mesh, const Ex
     vector<double> t;
     double slen = 0.0;
     s.push_back(0.0);
-    for(size_t i=1; i < numcross; ++i){
+    for(int i=1; i < numcross; ++i){
         double x = extrusion.crossSection[i][0] - extrusion.crossSection[i-1][0];
         double z = extrusion.crossSection[i][1] - extrusion.crossSection[i-1][1];
         slen += sqrt(x*x + z*z);
@@ -1028,17 +1028,17 @@ void MeshGenerator::generateTextureCoordinateForExtrusion(SgMesh* mesh, const Ex
     }
     double tlen = 0.0;
     t.push_back(0.0);
-    for(size_t i=1; i < numSpine; ++i){
+    for(int i=1; i < numSpine; ++i){
         double x = extrusion.spine[i][0] - extrusion.spine[i-1][0];
         double y = extrusion.spine[i][1] - extrusion.spine[i-1][1];
         double z = extrusion.spine[i][2] - extrusion.spine[i-1][2];
         tlen += sqrt(x*x + y*y + z*z);
         t.push_back(tlen);
     }
-    for(size_t i=0; i < numSpine; ++i){
+    for(int i=0; i < numSpine; ++i){
         Vector2f point;
         point[1] = t[i] / tlen;
-        for(size_t j=0; j < numcross; ++j){
+        for(int j=0; j < numcross; ++j){
             point[0] = s[j] / slen;
             texCoords.push_back(point);
         }

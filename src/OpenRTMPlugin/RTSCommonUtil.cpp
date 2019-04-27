@@ -4,15 +4,13 @@
  * @file
  */
 #include "RTSCommonUtil.h"
-
+#include "LoggerUtil.h"
+#include "gettext.h"
+#include <boost/assert.hpp>
 #include <string>
 #include <QString>
 
-#include "LoggerUtil.h"
-#include "gettext.h"
-
 using namespace std;
-using namespace boost;
 
 namespace cnoid {
 

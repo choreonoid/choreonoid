@@ -6,7 +6,7 @@
 #include "MaterialTable.h"
 #include <cnoid/YAMLReader>
 #include <cnoid/IdPair>
-#include <boost/format.hpp>
+#include <fmt/format.h>
 #include <vector>
 #include <unordered_set>
 #include <unordered_map>
@@ -14,7 +14,7 @@
 
 using namespace std;
 using namespace cnoid;
-using boost::format;
+using fmt::format;
 
 namespace cnoid {
 
@@ -224,12 +224,12 @@ void MaterialTableImpl::loadMaterials(Mapping* topNode, std::ostream& os)
             Mapping* info = materialList[i].toMapping();
             MaterialPtr material = new Material(info);
             if(material->name().empty()){
-                os << (format(_("Nameless material is defined at the %1%th material item.")) % i) << endl;
+                os << format(_("Nameless material is defined at the {}th material item."), i) << endl;
             } else {
                 auto inserted = names.insert(material->name());
                 if(!inserted.second){
-                    os << (format(_("Material name \"%1%\" is duplicated. The defenition is updated with the last item."))
-                           % material->name()) << endl;
+                    os << format(_("Material name \"{}\" is duplicated. The defenition is updated with the last item."),
+                            material->name()) << endl;
                 }
                 addMaterial(material);
             }

@@ -6,11 +6,11 @@
 #include "ShaderPrograms.h"
 #include <cnoid/SceneLights>
 #include <cnoid/EigenUtil>
-#include <boost/format.hpp>
+#include <fmt/format.h>
 
 using namespace std;
 using namespace cnoid;
-using boost::format;
+using fmt::format;
 
 
 ShaderProgram::ShaderProgram()
@@ -131,10 +131,10 @@ void LightingProgram::initialize()
 {
     numLightsLocation = getUniformLocation("numLights");
     lightInfos.resize(maxNumLights());
-    format lightFormat("lights[%1%].");
+    string lightFormat("lights[{}].");
     for(int i=0; i < maxNumLights(); ++i){
         LightInfo& light = lightInfos[i];
-        string prefix = str(lightFormat % i);
+        string prefix = format(lightFormat, i);
         light.positionLocation = getUniformLocation(prefix + "position");
         light.intensityLocation = getUniformLocation(prefix + "intensity");
         light.ambientIntensityLocation = getUniformLocation(prefix + "ambientIntensity");
@@ -290,11 +290,9 @@ void PhongShadowProgram::initializeShadowInfo(int index)
 {
     ShadowInfo& shadow = shadowInfos[index];
 
-    format shadowMatrixFormat("shadowMatrices[%1%]");
-    shadow.shadowMatrixLocation = getUniformLocation(str(format("shadowMatrices[%1%]") % index));
+    shadow.shadowMatrixLocation = getUniformLocation(format("shadowMatrices[{}]", index));
     
-    format shadowFormat("shadows[%1%].");
-    string prefix = str(format("shadows[%1%].") % index);
+    string prefix = format("shadows[{}].", index);
     shadow.lightIndexLocation = getUniformLocation(prefix + "lightIndex");
     shadow.shadowMapLocation = getUniformLocation(prefix + "shadowMap");
 

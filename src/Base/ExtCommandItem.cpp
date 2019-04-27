@@ -10,6 +10,7 @@
 #include <cnoid/Sleep>
 #include <boost/filesystem.hpp>
 #include <functional>
+#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
@@ -110,9 +111,8 @@ bool ExtCommandItem::execute()
 #endif
 
         if(process.waitForStarted()){
-            mv->putln(fmt(_("External command \"%1%\" has been executed by item \"%2%\"."))
-                      % actualCommand % name());
-
+            mv->putln(fmt::format(_("External command \"{0}\" has been executed by item \"{1}\"."),
+                    actualCommand, name()));
             if(waitingTimeAfterStarted_ > 0.0){
                 msleep(waitingTimeAfterStarted_ * 1000.0);
             }
@@ -120,7 +120,7 @@ bool ExtCommandItem::execute()
             result = true;
 
         } else {
-            mv->put(fmt(_("External command \"%1%\" cannot be executed.")) % actualCommand);
+            mv->put(fmt::format(_("External command \"{}\" cannot be executed."), actualCommand));
             if(!boost::filesystem::exists(actualCommand)){
                 mv->putln(_(" The command does not exist."));
             } else {

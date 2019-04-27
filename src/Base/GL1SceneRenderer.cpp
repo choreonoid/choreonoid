@@ -1417,13 +1417,19 @@ void GL1SceneRendererImpl::renderMesh(SgMesh* mesh, bool hasTexture)
     }
 
     bool doCullFace;
-    if(backFaceCullingMode == GLSceneRenderer::ENABLE_BACK_FACE_CULLING){
+    switch(backFaceCullingMode){
+    case GLSceneRenderer::ENABLE_BACK_FACE_CULLING:
         doCullFace = mesh->isSolid();
-    } else if(backFaceCullingMode == GLSceneRenderer::DISABLE_BACK_FACE_CULLING){
+        break;
+    case GLSceneRenderer::DISABLE_BACK_FACE_CULLING:
         doCullFace = false;
-    } else if(backFaceCullingMode == GLSceneRenderer::FORCE_BACK_FACE_CULLING){
+        break;
+    case GLSceneRenderer::FORCE_BACK_FACE_CULLING:
+    default:
         doCullFace = true;
+        break;
     }
+        
     enableCullFace(doCullFace);
     setLightModelTwoSide(!doCullFace);
 

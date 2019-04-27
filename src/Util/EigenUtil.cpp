@@ -1,8 +1,6 @@
 
 #include "EigenUtil.h"
-#include <boost/format.hpp>
-
-using namespace boost;
+#include <fmt/format.h>
 
 namespace cnoid {
 
@@ -89,15 +87,25 @@ Vector3 omegaFromRot(const Matrix3& R)
 
 std::string str(const Vector3& v)
 {
-    return str(format("%1%  %2%  %3%") % v[0] % v[1] % v[2]);
+    return fmt::format("{0} {1} {2}", v[0], v[1], v[2]);
 }
 
 
 std::string str(const Vector3f& v)
 {
-    return str(format("%1%  %2%  %3%") % v[0] % v[1] % v[2]);
+    return fmt::format("{0} {1} {2}", v[0], v[1], v[2]);
 }
 
+
+std::string str(const Vector2& v)
+{
+    return fmt::format("{0} {1}", v[0], v[1]);
+}
+
+std::string str(const AngleAxis& a)
+{
+    return fmt::format("{0} {1}", str(a.axis()), a.angle());
+}
 
 template<class VectorType>
 static bool toVector3_(const std::string& s, VectorType& out_v)

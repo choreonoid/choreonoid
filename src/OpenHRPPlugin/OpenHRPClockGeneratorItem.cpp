@@ -8,6 +8,7 @@
 #include <cnoid/CorbaUtil>
 #include <cnoid/ItemManager>
 #include <cnoid/MessageView>
+#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
@@ -41,8 +42,10 @@ public:
                 nextTickTime += period;
 
             } catch(CORBA::SystemException& ex){
-                mv->putln(fmt(_("OpenHRP ClockGenerator failed to tick an execution context due to exception: %1%."))
-                          % ex._rep_id());
+                mv->putln(
+                    fmt::format(
+                        _("OpenHRP ClockGenerator failed to tick an execution context due to exception: {}."),
+                        ex._rep_id()));
                 return false;
             }
         }

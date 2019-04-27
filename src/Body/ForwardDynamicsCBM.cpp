@@ -17,7 +17,7 @@ static const bool ROOT_ATT_NORMALIZATION_ENABLED = false;
 
 static const bool debugMode = false;
 
-#include <boost/format.hpp>
+#include <fmt/format.h>
 
 template<class TMatrix>
 static void putMatrix(TMatrix& M, char* name)
@@ -28,7 +28,7 @@ static void putMatrix(TMatrix& M, char* name)
         std::cout << "Matrix " << name << ": \n";
         for(size_t i=0; i < M.rows(); i++){
             for(size_t j=0; j < M.cols(); j++){
-                std::cout << boost::format(" %6.3f ") % M(i, j);
+                std::cout << fmt::format(" {:6.3f} ", M(i, j));
             }
             std::cout << std::endl;
         }

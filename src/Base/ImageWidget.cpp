@@ -113,16 +113,17 @@ void ImageWidget::zoom(double scale)
 void ImageWidget::translate(QPoint pos)
 {
     std::lock_guard<std::mutex> lock(mtx);
-    if(pixmap_.isNull())
+    if(pixmap_.isNull()){
         return;
+    }
 
-	QTransform T(transform_.m11(), transform_.m12(),transform_.m21(), transform_.m22(), 0,0);
-	QTransform invT = T.inverted();
-	double x,y;
-	invT.map(pos.x(), pos.y(),&x,&y);
-	transform_.translate(x,y);
+    QTransform T(transform_.m11(), transform_.m12(),transform_.m21(), transform_.m22(), 0,0);
+    QTransform invT = T.inverted();
+    double x,y;
+    invT.map(pos.x(), pos.y(),&x,&y);
+    transform_.translate(x,y);
 
-	update();
+    update();
 }
 
 

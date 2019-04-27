@@ -7,7 +7,7 @@
 #include <iostream>
 #include <yaml.h>
 #include <boost/lexical_cast.hpp>
-#include <boost/format.hpp>
+#include <fmt/format.h>
 #include <boost/filesystem.hpp>
 #include "gettext.h"
 
@@ -81,13 +81,13 @@ std::string ValueNode::Exception::message() const
 {
     if(!message_.empty()){
         if(line_ >= 0){
-            return str(format(_("%1% at line %2%, column %3%.")) % message_ % line_ % column_);
+            return fmt::format(_("{0} at line {1}, column {2}."), message_, line_, column_);
         } else {
-            return str(format("%1%.") % message_);
+            return fmt::format("{}.", message_);
         }
     } else {
         if(line_ >= 0){
-            return str(format(_("Error at line %1%, column %2%.")) % line_ % column_);
+            return fmt::format(_("Error at line {0}, column {1}."), line_, column_);
         } else {
             return string();
         }
@@ -175,7 +175,7 @@ int ValueNode::toInt() const
     if(endptr == nptr){
         ScalarTypeMismatchException ex;
         ex.setPosition(line(), column());
-        ex.setMessage(str(format(_("The value \"%1%\" must be an integer value")) % scalar->stringValue_));
+        ex.setMessage(fmt::format(_("The value \"{}\" must be an integer value"), scalar->stringValue_));
         throw ex;
     }
 
@@ -226,7 +226,7 @@ double ValueNode::toDouble() const
     if(endptr == nptr){
         ScalarTypeMismatchException ex;
         ex.setPosition(line(), column());
-        ex.setMessage(str(format(_("The value \"%1%\" must be a double value")) % scalar->stringValue_));
+        ex.setMessage(fmt::format(_("The value \"{}\" must be a double value"), scalar->stringValue_));
         throw ex;
     }
 
@@ -262,7 +262,7 @@ bool ValueNode::toBool() const
     
     ScalarTypeMismatchException ex;
     ex.setPosition(line(), column());
-    ex.setMessage(str(format(_("The value \"%1%\" must be a boolean value")) % scalar->stringValue_));
+    ex.setMessage(fmt::format(_("The value \"{}\" must be a boolean value"), scalar->stringValue_));
     throw ex;
 }
 
@@ -412,7 +412,7 @@ void ValueNode::throwNotScalrException() const
 {
     NotScalarException ex;
     ex.setPosition(line(), column());
-    ex.setMessage(str(format(_("A %1% value must be a scalar value")) % getTypeName(typeBits)));
+    ex.setMessage(fmt::format(_("A {} value must be a scalar value"), getTypeName(typeBits)));
     throw ex;
 }
 
@@ -609,7 +609,7 @@ void Mapping::throwKeyNotFoundException(const std::string& key) const
     KeyNotFoundException ex;
     ex.setPosition(line(), column());
     ex.setKey(key);
-    ex.setMessage(str(format(_("Key \"%1%\" is not found in the mapping")) % key));
+    ex.setMessage(fmt::format(_("Key \"{}\" is not found in the mapping"), key));
     throw ex;
 }
 

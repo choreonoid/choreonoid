@@ -6,7 +6,7 @@
 #define CNOID_UTIL_FLOATING_NUMBER_STRING_H
 
 #include <string>
-#include <boost/format.hpp>
+#include <fmt/format.h>
 
 #ifdef _MSC_VER
 #define INFINITY (DBL_MAX+DBL_MAX)
@@ -67,7 +67,7 @@ public:
 
     FloatingNumberString& operator=(double rhs){
         v = rhs;
-        s = str(boost::format("%g") % rhs);
+        s = fmt::format("{:g}", rhs);
         return *this;
     }
 

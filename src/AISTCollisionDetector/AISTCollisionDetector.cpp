@@ -98,7 +98,6 @@ bool copyCollisionPairCollisions(ColdetModelPairEx* srcPair, CollisionPair& dest
         }
     }
 
-    bool hasCollisions = false;
     const std::vector<collision_data>& cdata = srcPair->collisions();
     const int n = cdata.size();
 
@@ -106,7 +105,7 @@ bool copyCollisionPairCollisions(ColdetModelPairEx* srcPair, CollisionPair& dest
         collisions.reserve(n);
     }
 
-    for(size_t j=0; j < n; ++j){
+    for(int j=0; j < n; ++j){
         const collision_data& cd = cdata[j];
         for(int k=0; k < cd.num_of_i_points; ++k){
             if(cd.i_point_new[k]){

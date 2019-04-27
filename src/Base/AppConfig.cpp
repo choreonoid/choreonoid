@@ -7,12 +7,12 @@
 #include <cnoid/YAMLReader>
 #include <cnoid/YAMLWriter>
 #include <cnoid/FileUtil>
-#include <boost/format.hpp>
+#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 namespace filesystem = boost::filesystem;
-using boost::format;
+using fmt::format;
 using namespace cnoid;
 
 using boost::filesystem::path;
@@ -83,10 +83,10 @@ bool AppConfig::flush()
             if(!filesystem::is_directory(configDirPath)){
 
                 const char* m =
-                    "\"%1%\" is not a directory.\n"
+                    "\"{}\" is not a directory.\n"
                     "It should be directory to contain the config file.\n"
                     "The configuration cannot be stored into the file system";
-                showWarningDialog(format(_(m)) % configDirPath.string());
+                showWarningDialog(format(_(m),configDirPath.string()));
                 return false;
             }
         } else {
@@ -130,8 +130,8 @@ bool AppConfig::load(const std::string& filename)
             }
         } catch (const ValueNode::Exception& ex){
             ostream& os = MessageView::mainInstance()->cout();
-            os << format("Application config file \"%1%\" cannot be loaded (%2%).")
-                % filename % ex.message() << endl;
+            os << format("Application config file \"{0}\" cannot be loaded ({1}).",
+                    filename, ex.message() ) << endl;
             pyaml->clearDocuments();
             delete pyaml;
             return false;

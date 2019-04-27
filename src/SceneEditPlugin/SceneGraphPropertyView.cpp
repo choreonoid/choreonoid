@@ -21,15 +21,12 @@
 #include <QItemEditorFactory>
 #include <QStandardItemEditorCreator>
 #include <QKeyEvent>
-#include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/variant.hpp>
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
-using boost::format;
 
 namespace {
 
@@ -315,8 +312,8 @@ SceneGraphPropertyViewImpl::SceneGraphPropertyViewImpl(SceneGraphPropertyView* s
     layout->addWidget(tableWidget);
     self->setLayout(layout);
     
-    self->sigActivated().connect(std::bind(&SceneGraphPropertyViewImpl::onActivated, this, true));
-    self->sigDeactivated().connect(std::bind(&SceneGraphPropertyViewImpl::onActivated, this ,false));
+    self->sigActivated().connect([&](){ onActivated(true); });
+    self->sigDeactivated().connect([&](){ onActivated(false); });
 
     currentObject = 0;
 
@@ -378,12 +375,9 @@ void SceneGraphPropertyViewImpl::setProperty(SgTransform* trans)
 
 void SceneGraphPropertyViewImpl::setProperty(SgPosTransform* posTrans)
 {
-    Affine3::TranslationPart t = posTrans->translation();
-    addProperty(_("translation"), new PropertyItem(this, str(Vector3(t.x(), t.y(), t.z()))));
+    addProperty(_("translation"), new PropertyItem(this, str(Vector3(posTrans->translation()))));
     AngleAxis angleAxis(posTrans->rotation());
-    Vector3 axis(angleAxis.axis());
-    string s = str(format("%1%  %2% %3% %4%") % axis[0] % axis[1] % axis[2] % angleAxis.angle() );
-    addProperty(_("rotation"), new PropertyItem(this, s));
+    addProperty(_("rotation"), new PropertyItem(this, str(angleAxis)));
 }
 
 
@@ -396,29 +390,20 @@ void SceneGraphPropertyViewImpl::setProperty(SgScaleTransform* scaleTrans)
 void SceneGraphPropertyViewImpl::setProperty(SgMaterial* material)
 {
     addProperty(_("ambientIntensity"), new PropertyItem(this, Double(material->ambientIntensity(), 1, 0.0, 1.0)));
-    Vector3f diffuseColor = material->diffuseColor();
-    addProperty(_("diffuseColor"), new PropertyItem(this,str(Vector3(diffuseColor.x(), diffuseColor.y(), diffuseColor.z()))));
-    Vector3f emissiveColor = material->emissiveColor();
-    addProperty(_("emissiveColor"), new PropertyItem(this,str(Vector3(emissiveColor.x(), emissiveColor.y(), emissiveColor.z()))));
+    addProperty(_("diffuseColor"), new PropertyItem(this,str(material->diffuseColor())));
+    addProperty(_("emissiveColor"), new PropertyItem(this,str(material->emissiveColor())));
     addProperty(_("shininess"), new PropertyItem(this, Double(material->shininess(), 1, 0.0, 1.0)));
-    Vector3f specularColor = material->specularColor();
-    addProperty(_("specularColor"), new PropertyItem(this,str(Vector3(specularColor.x(), specularColor.y(), specularColor.z()))));
+    addProperty(_("specularColor"), new PropertyItem(this,str(material->specularColor())));
     addProperty(_("transparency"), new PropertyItem(this, Double(material->transparency(), 1, 0.0, 1.0)));
 }
 
 
 void SceneGraphPropertyViewImpl::setProperty(SgTextureTransform* textureTrans)
 {
-    Vector2 center = textureTrans->center();
-    string s = str(format("%1%  %2%") % center[0] % center[1]);
-    addProperty(_("center"), new PropertyItem(this, s));
+    addProperty(_("center"), new PropertyItem(this, str(textureTrans->center())));
     addProperty(_("rotation"), new PropertyItem(this, Double(textureTrans->rotation(), 3)));
-    Vector2 scale = textureTrans->scale();
-    s = str(format("%1%  %2%") % scale[0] % scale[1]);
-    addProperty(_("scale"), new PropertyItem(this, s));
-    Vector2 translation = textureTrans->translation();
-    s = str(format("%1%  %2%") % translation[0] % translation[1]);
-    addProperty(_("translation"), new PropertyItem(this, s));
+    addProperty(_("scale"), new PropertyItem(this, str(textureTrans->scale())));
+    addProperty(_("translation"), new PropertyItem(this, str(textureTrans->translation())));
 }
 
 
@@ -460,7 +445,7 @@ void SceneGraphPropertyViewImpl::setProperty(SgMesh* mesh)
         case SgMesh::BOX : {
             addProperty(_("primitive type"), new PropertyItem(this, string("Box")));
             const Vector3& size = mesh->primitive<SgMesh::Box>().size;
-            addProperty(_("size"), new PropertyItem(this,str(Vector3(size.x(), size.y(), size.z()))));
+            addProperty(_("size"), new PropertyItem(this,str(size)));
             break; }
         case SgMesh::SPHERE : {
             double radius = mesh->primitive<SgMesh::Sphere>().radius;
@@ -539,8 +524,7 @@ void SceneGraphPropertyViewImpl::setProperty(SgPreprocessed* preprocessed)
 void SceneGraphPropertyViewImpl::setProperty(SgLight* light)
 {
     addProperty(_("on/off"), new PropertyItem(this, light->on()? string("ON") : string("OFF") ));
-    Vector3f color = light->color();
-    addProperty(_("color"), new PropertyItem(this,str(Vector3(color.x(), color.y(), color.z()))));
+    addProperty(_("color"), new PropertyItem(this,str(light->color())));
     addProperty(_("intensity"), new PropertyItem(this,Double(light->intensity(), 2, 0.0, 1.0)));
     addProperty(_("ambientIntensity"), new PropertyItem(this,Double(light->ambientIntensity(), 2, 0.0, 1.0)));
 }
@@ -750,7 +734,7 @@ void SceneGraphPropertyViewImpl::onActivated(bool on)
         if(sceneGraphView){
             onItemSelectionChanged(sceneGraphView->selectedObject());
             selectionChangedConnection = sceneGraphView->sigSelectionChanged().connect(
-                std::bind(&SceneGraphPropertyViewImpl::onItemSelectionChanged, this, _1));
+                [&](const SgObject* object){ onItemSelectionChanged(object); });
         }
     } else {
         connectionOfsceneUpdated.disconnect();
@@ -770,7 +754,7 @@ void SceneGraphPropertyViewImpl::onItemSelectionChanged(const SgObject* object)
         if(currentObject)
             connectionOfsceneUpdated =
                 currentObject->sigUpdated().connect(
-                    std::bind(&SceneGraphPropertyViewImpl::onSceneGraphUpdated, this, _1));
+                    [&](const SgUpdate& update){ onSceneGraphUpdated(update); });
         updateProperties();
     }
 }

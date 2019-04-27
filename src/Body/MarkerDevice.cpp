@@ -8,7 +8,8 @@
 #include <cnoid/SceneMarkers>
 #include <cnoid/YAMLBodyLoader>
 #include <cnoid/EigenArchive>
-#include <boost/format.hpp>
+#include <fmt/format.h>
+#include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
@@ -242,7 +243,7 @@ bool MarkerDevice::readDescription(YAMLBodyLoader& loader, Mapping& node)
             setMarkerType(MarkerDevice::AXES_MARKER);
         } else {
             node.throwException(
-                str(boost::format("Unknown marker type '%1%'") % type));
+                fmt::format(_("Unknown marker type '{}'"), type));
         }
     }
 

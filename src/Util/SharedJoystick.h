@@ -14,7 +14,9 @@ namespace cnoid {
 class SharedJoystick : public Referenced
 {
 public:
-    static const Joystick::ButtonID MODE_BUTTON = Joystick::LOGO_BUTTON;
+    //Switch mode with either button
+    static const Joystick::ButtonID MODE_BUTTON1 = Joystick::LOGO_BUTTON;
+    static const Joystick::ButtonID MODE_BUTTON2 = Joystick::SELECT_BUTTON;
 
     SharedJoystick(){
         joystick = &defaultJoystick;
@@ -31,11 +33,15 @@ public:
         int id = numModes_++;
         return id;
     }
-        
+    
+    bool getModeButtonState() {
+        joystick->readCurrentState();
+        return (joystick->getButtonState(MODE_BUTTON1) || joystick->getButtonState(MODE_BUTTON2));
+    }
+
     void updateState(int targetMode){
         if(targetMode == 0){
-            joystick->readCurrentState();
-            bool state = joystick->getButtonState(MODE_BUTTON);
+            bool state = getModeButtonState();
             if(!prevButtonState && state){
                 ++mode_;
                 if(mode_ >= numModes_){

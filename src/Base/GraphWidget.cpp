@@ -14,7 +14,7 @@
 #include <QGridLayout>
 #include <QPainter>
 #include <QFocusEvent>
-#include <boost/format.hpp>
+#include <fmt/format.h>
 #include <boost/dynamic_bitset.hpp>
 #include <cmath>
 #include <deque>
@@ -1148,8 +1148,8 @@ bool GraphWidgetImpl::onScreenMouseMoveEvent(QMouseEvent* event)
     //hRuler.property_position() = x;
     //vRuler.property_position() = y;
 
-    static boost::format f(_("Graph: Position = (%1$.5f, %2$.5f)"));
-    statusLabel.setText(str(f % x % y).c_str());
+    statusLabel.setText(
+        fmt::format(_("Graph: Position = ({0:.5f}, {1:.5f})"), x, y).c_str());
 
     dragPrevScreenX = currentScreenX;
     dragPrevScreenY = currentScreenY;

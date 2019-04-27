@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-01-07 11:54+0900\n"
+"POT-Creation-Date: 2019-02-25 11:36+0900\n"
 "PO-Revision-Date: 2014-01-06 14:28+0900\n"
 "Last-Translator: hattori <hattori@hattori-desktop>\n"
 "Language-Team: Japanese\n"
@@ -17,176 +17,186 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: SceneGraphPropertyView.cpp:260
+#: SceneGraphView.cpp:131
+msgid "Scene Graph"
+msgstr "シーングラフ"
+
+#: SceneGraphPropertyView.cpp:263
 msgid "Scene Graph Property"
 msgstr "シーングラフ　プロパティ"
 
-#: SceneGraphPropertyView.cpp:332
+#: SceneGraphPropertyView.cpp:340
 msgid "name"
 msgstr "名前"
 
-#: SceneGraphPropertyView.cpp:352
+#: SceneGraphPropertyView.cpp:360
 msgid "num of children"
 msgstr "子の個数"
 
-#: SceneGraphPropertyView.cpp:371 SceneGraphPropertyView.cpp:411
+#: SceneGraphPropertyView.cpp:378 SceneGraphPropertyView.cpp:406
 msgid "translation"
 msgstr "位置"
 
-#: SceneGraphPropertyView.cpp:375 SceneGraphPropertyView.cpp:405
+#: SceneGraphPropertyView.cpp:380 SceneGraphPropertyView.cpp:404
 msgid "rotation"
 msgstr "姿勢"
 
-#: SceneGraphPropertyView.cpp:382 SceneGraphPropertyView.cpp:408
+#: SceneGraphPropertyView.cpp:386 SceneGraphPropertyView.cpp:405
 msgid "scale"
 msgstr "スケール"
 
-#: SceneGraphPropertyView.cpp:388 SceneGraphPropertyView.cpp:526
+#: SceneGraphPropertyView.cpp:392 SceneGraphPropertyView.cpp:529
 msgid "ambientIntensity"
 msgstr "反射率"
 
-#: SceneGraphPropertyView.cpp:390
+#: SceneGraphPropertyView.cpp:393
 msgid "diffuseColor"
 msgstr "物体の色"
 
-#: SceneGraphPropertyView.cpp:392
+#: SceneGraphPropertyView.cpp:394
 msgid "emissiveColor"
 msgstr "発光色"
 
-#: SceneGraphPropertyView.cpp:393
+#: SceneGraphPropertyView.cpp:395
 msgid "shininess"
 msgstr "輝き"
 
-#: SceneGraphPropertyView.cpp:395
+#: SceneGraphPropertyView.cpp:396
 msgid "specularColor"
 msgstr "ハイライトの色"
 
-#: SceneGraphPropertyView.cpp:396
+#: SceneGraphPropertyView.cpp:397
 msgid "transparency"
 msgstr "透明度"
 
-#: SceneGraphPropertyView.cpp:404
+#: SceneGraphPropertyView.cpp:403
 msgid "center"
 msgstr "中央の位置"
 
-#: SceneGraphPropertyView.cpp:417
+#: SceneGraphPropertyView.cpp:414
 msgid "width"
 msgstr "幅"
 
-#: SceneGraphPropertyView.cpp:418 SceneGraphPropertyView.cpp:461
-#: SceneGraphPropertyView.cpp:470 SceneGraphPropertyView.cpp:570
+#: SceneGraphPropertyView.cpp:415 SceneGraphPropertyView.cpp:459
+#: SceneGraphPropertyView.cpp:468 SceneGraphPropertyView.cpp:476
+#: SceneGraphPropertyView.cpp:570
 msgid "height"
 msgstr "高さ"
 
-#: SceneGraphPropertyView.cpp:419
+#: SceneGraphPropertyView.cpp:416
 msgid "num of components"
 msgstr "コンポーネント数"
 
-#: SceneGraphPropertyView.cpp:420
+#: SceneGraphPropertyView.cpp:418
 msgid "repeatS"
 msgstr "S方向の繰り返し"
 
-#: SceneGraphPropertyView.cpp:421
+#: SceneGraphPropertyView.cpp:419
 msgid "repeatT"
 msgstr "T方向の繰り返し"
 
-#: SceneGraphPropertyView.cpp:428 SceneGraphPropertyView.cpp:493
+#: SceneGraphPropertyView.cpp:426 SceneGraphPropertyView.cpp:497
 msgid "num of vertices"
 msgstr "頂点の数"
 
-#: SceneGraphPropertyView.cpp:430 SceneGraphPropertyView.cpp:495
+#: SceneGraphPropertyView.cpp:428 SceneGraphPropertyView.cpp:499
 msgid "num of normals"
 msgstr "法線の数"
 
-#: SceneGraphPropertyView.cpp:432 SceneGraphPropertyView.cpp:497
+#: SceneGraphPropertyView.cpp:430 SceneGraphPropertyView.cpp:501
 msgid "num of colors"
 msgstr "色ベクトルの数"
 
-#: SceneGraphPropertyView.cpp:434
+#: SceneGraphPropertyView.cpp:432
 msgid "num of texCoord"
 msgstr "テクスチャ座標の数"
 
-#: SceneGraphPropertyView.cpp:435
+#: SceneGraphPropertyView.cpp:433
 msgid "num of normalIndices"
 msgstr "法線インデックスの数"
 
-#: SceneGraphPropertyView.cpp:436 SceneGraphPropertyView.cpp:510
+#: SceneGraphPropertyView.cpp:434 SceneGraphPropertyView.cpp:514
 msgid "num of colorIndices"
 msgstr "色インデックスの数"
 
-#: SceneGraphPropertyView.cpp:437
+#: SceneGraphPropertyView.cpp:435
 msgid "num of texCoordIndices"
 msgstr "テクスチャ座標インデックスの数"
 
-#: SceneGraphPropertyView.cpp:438
+#: SceneGraphPropertyView.cpp:436
 msgid "is Solid"
 msgstr "剛体"
 
-#: SceneGraphPropertyView.cpp:444
+#: SceneGraphPropertyView.cpp:442
 msgid "num of triangles"
 msgstr "三角形の数"
 
-#: SceneGraphPropertyView.cpp:448 SceneGraphPropertyView.cpp:454
-#: SceneGraphPropertyView.cpp:458 SceneGraphPropertyView.cpp:467
+#: SceneGraphPropertyView.cpp:446 SceneGraphPropertyView.cpp:452
+#: SceneGraphPropertyView.cpp:456 SceneGraphPropertyView.cpp:465
+#: SceneGraphPropertyView.cpp:473
 msgid "primitive type"
 msgstr "基本形状タイプ"
 
-#: SceneGraphPropertyView.cpp:450
+#: SceneGraphPropertyView.cpp:448
 msgid "size"
 msgstr "サイズ"
 
-#: SceneGraphPropertyView.cpp:455 SceneGraphPropertyView.cpp:460
-#: SceneGraphPropertyView.cpp:469
+#: SceneGraphPropertyView.cpp:453 SceneGraphPropertyView.cpp:458
+#: SceneGraphPropertyView.cpp:467 SceneGraphPropertyView.cpp:475
 msgid "radius"
 msgstr "半径"
 
-#: SceneGraphPropertyView.cpp:462 SceneGraphPropertyView.cpp:471
+#: SceneGraphPropertyView.cpp:460 SceneGraphPropertyView.cpp:469
 msgid "bottom"
 msgstr "底の有無"
 
-#: SceneGraphPropertyView.cpp:463 SceneGraphPropertyView.cpp:472
+#: SceneGraphPropertyView.cpp:461 SceneGraphPropertyView.cpp:470
 msgid "side"
 msgstr "側の有無"
 
-#: SceneGraphPropertyView.cpp:464
+#: SceneGraphPropertyView.cpp:462
 msgid "top"
 msgstr "頂の有無"
 
-#: SceneGraphPropertyView.cpp:480
+#: SceneGraphPropertyView.cpp:484
 msgid "num of polygonVertices"
 msgstr "ポリゴン頂点の数"
 
-#: SceneGraphPropertyView.cpp:503
+#: SceneGraphPropertyView.cpp:507
 msgid "point size"
 msgstr "点のサイズ"
 
-#: SceneGraphPropertyView.cpp:509
+#: SceneGraphPropertyView.cpp:513
 msgid "line width"
 msgstr "線のサイズ"
 
-#: SceneGraphPropertyView.cpp:522
+#: SceneGraphPropertyView.cpp:526
 msgid "on/off"
 msgstr "オン/オフ"
 
-#: SceneGraphPropertyView.cpp:524
+#: SceneGraphPropertyView.cpp:527
 msgid "color"
 msgstr "色"
 
-#: SceneGraphPropertyView.cpp:525
+#: SceneGraphPropertyView.cpp:528
 msgid "intensity"
 msgstr "照度"
 
-#: SceneGraphPropertyView.cpp:533 SceneGraphPropertyView.cpp:549
+#: SceneGraphPropertyView.cpp:535 SceneGraphPropertyView.cpp:549
 msgid "direction"
 msgstr "方向"
 
-#: SceneGraphPropertyView.cpp:540
-msgid "location"
-msgstr "位置"
+#: SceneGraphPropertyView.cpp:541
+msgid "constant attenuation"
+msgstr "一定減衰"
 
 #: SceneGraphPropertyView.cpp:542
-msgid "attenuation"
-msgstr "減衰"
+msgid "linear attenuation"
+msgstr "線状減衰"
+
+#: SceneGraphPropertyView.cpp:543
+msgid "quadratic attenuation"
+msgstr "二次減衰"
 
 #: SceneGraphPropertyView.cpp:550
 msgid "beam width"
@@ -208,6 +218,3 @@ msgstr "クリッピング深度　遠距離"
 msgid "field of view"
 msgstr "視野角"
 
-#: SceneGraphView.cpp:129
-msgid "Scene Graph"
-msgstr "シーングラフ"
