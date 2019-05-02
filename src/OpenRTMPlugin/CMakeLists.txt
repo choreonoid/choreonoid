@@ -51,10 +51,10 @@ if(ENABLE_NEW_RT_SYSTEM_ITEM_IMPLEMENTATION)
   #endif()
 
   set(plugin_sources ${plugin_sources}
-    experimental/RTSystemExtItem.cpp
-    experimental/RTSDiagramExtView.cpp
+    experimental/RTSystemItemEx.cpp
+    experimental/RTSDiagramViewEx.cpp
     )
-  set(qt_wrap_cpp_files ${qt_wrap_cpp_files} experimental/RTSDiagramExtView.h)
+  set(qt_wrap_cpp_files ${qt_wrap_cpp_files} experimental/RTSDiagramViewEx.h)
 else()
   set(plugin_sources ${plugin_sources}
     RTSystemItem.cpp

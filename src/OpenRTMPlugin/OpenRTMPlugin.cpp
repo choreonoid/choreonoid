@@ -15,8 +15,8 @@
 #include "RTMImageView.h"
 
 #ifdef ENABLE_NEW_RT_SYSTEM_ITEM_IMPLEMENTATION
-#include "experimental/RTSDiagramExtView.h"
-#include "experimental/RTSystemExtItem.h"
+#include "experimental/RTSDiagramViewEx.h"
+#include "experimental/RTSystemItemEx.h"
 #else
 #include "RTSDiagramView.h"
 #include "RTSystemItem.h"
@@ -248,8 +248,8 @@ public:
         RTSystemExt2Item::initializeClass(this);
         RTSDiagramExt2View::initializeClass(this);
 #else
-        RTSystemExtItem::initializeClass(this);
-        RTSDiagramExtView::initializeClass(this);
+        RTSystemItemEx::initializeClass(this);
+        RTSDiagramViewEx::initializeClass(this);
 #endif
 #else
         RTSystemItem::initializeClass(this);

@@ -1,5 +1,5 @@
-#ifndef CNOID_OPENRTM_PLUGIN_RTS_EXT_ITEM_H
-#define CNOID_OPENRTM_PLUGIN_RTS_EXT_ITEM_H
+#ifndef CNOID_OPENRTM_PLUGIN_RT_SYSTEM_ITEM_EX_H
+#define CNOID_OPENRTM_PLUGIN_RT_SYSTEM_ITEM_EX_H
 
 #include <cnoid/Item>
 #include <cnoid/EigenUtil>
@@ -17,22 +17,22 @@
 namespace cnoid {
 
 class RTSComp;
-class RTSystemExtItem;
-class RTSystemExtItemImpl;
+class RTSystemItemEx;
+class RTSystemItemExImpl;
 
 typedef ref_ptr<RTSPort> RTSPortPtr;
 
 /*!
  * @brief This is the RTSystem item.
  */
-class CNOID_EXPORT RTSystemExtItem : public Item, public RTSystem
+class CNOID_EXPORT RTSystemItemEx : public Item, public RTSystem
 {
 public:
     typedef cnoid::IdPair<RTSPort*> RTSPortPair;
     typedef std::map<RTSPortPair, RTSConnectionPtr> RTSConnectionMap;
-    RTSystemExtItem();
-    RTSystemExtItem(const RTSystemExtItem& org);
-    virtual ~RTSystemExtItem();
+    RTSystemItemEx();
+    RTSystemItemEx(const RTSystemItemEx& org);
+    virtual ~RTSystemItemEx();
     static void initializeClass(ExtensionManager* ext);
 
     RTSComp* addRTSComp(const std::string& name, const QPointF& pos);
@@ -67,12 +67,12 @@ protected:
     virtual bool restore(const Archive& archive) override;
 
 private:
-    RTSystemExtItemImpl* impl;
+    RTSystemItemExImpl* impl;
 
     friend class RTSComp;
 };
 
-typedef ref_ptr<RTSystemExtItem> RTSystemItemExtPtr;
+typedef ref_ptr<RTSystemItemEx> RTSystemItemExPtr;
 }
 
 #endif
