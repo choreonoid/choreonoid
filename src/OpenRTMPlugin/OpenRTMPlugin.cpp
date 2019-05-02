@@ -15,13 +15,8 @@
 #include "RTMImageView.h"
 
 #ifdef ENABLE_NEW_RT_SYSTEM_ITEM_IMPLEMENTATION
-#ifdef ENABLE_BACKGROUND_STATE_DETECTION
-#include "RTSDiagramExt2View.h"
-#include "RTSystemExt2Item.h"
-#else
-#include "RTSDiagramExtView.h"
-#include "RTSystemExtItem.h"
-#endif
+#include "experimental/RTSDiagramExtView.h"
+#include "experimental/RTSystemExtItem.h"
 #else
 #include "RTSDiagramView.h"
 #include "RTSystemItem.h"

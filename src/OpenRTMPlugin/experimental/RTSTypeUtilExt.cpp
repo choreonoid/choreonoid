@@ -8,8 +8,8 @@
 #include <string>
 #include <QString>
 
-#include "LoggerUtil.h"
-#include "gettext.h"
+#include "../LoggerUtil.h"
+#include "../gettext.h"
 
 using namespace std;
 

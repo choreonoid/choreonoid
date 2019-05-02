@@ -1,5 +1,5 @@
 #include "RTSystemExtItem.h"
-#include "RTSCommonUtil.h"
+#include "../RTSCommonUtil.h"
 #include "RTSTypeUtilExt.h"
 #include "ProfileHandlerExt.h"
 #include <cnoid/MessageView>
@@ -10,10 +10,10 @@
 #include <cnoid/Timer>
 #include <cnoid/LazyCaller>
 #include <fmt/format.h>
-#include "LoggerUtil.h"
+#include "../LoggerUtil.h"
 #include <thread>
 
-#include "gettext.h"
+#include "../gettext.h"
 
 //#define CONTINUOUS_CHECK
 
@@ -778,8 +778,9 @@ bool RTSCompExt::getComponentPath(RTC::PortService_ptr source, std::string& out_
         }
         catch (CORBA::SystemException& ex) {
             MessageView::instance()->putln(
-                MessageView::WARNING, format(_("CORBA %1% (%2%), %3% in RTSComp::getComponentPath()"))
-                % ex._name() % ex._rep_id() % ex.NP_minorString());
+                format(_("CORBA {0} ({1}), {2} in RTSComp::getComponentPath()"),
+                       ex._name(), ex._rep_id(), ex.NP_minorString()),
+                MessageView::WARNING);
             return false;
         }
         NVList properties = cprofile->properties;

@@ -1,8 +1,8 @@
 
 #include "RTSystemExtItem.h"
 #include "ProfileHandlerExt.h"
-#include "RTSCommonUtil.h"
-#include "LoggerUtil.h"
+#include "../RTSCommonUtil.h"
+#include "../LoggerUtil.h"
 #include <rtm/idl/RTC.hh>
 #include <QDateTime>
 #include <QString>

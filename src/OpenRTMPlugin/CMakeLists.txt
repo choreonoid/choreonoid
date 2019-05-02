@@ -38,35 +38,29 @@ set(qt_wrap_cpp_files
   RTSConfigurationView.h)
 
 option(ENABLE_NEW_RT_SYSTEM_ITEM_IMPLEMENTATION "Enable the new implementation of RTSystemItem" OFF)
-option(ENABLE_BACKGROUND_STATE_DETECTION "Enable background state detection" OFF)
+#option(ENABLE_BACKGROUND_STATE_DETECTION "Enable background state detection" OFF)
+
 if(ENABLE_NEW_RT_SYSTEM_ITEM_IMPLEMENTATION)
   add_definitions(-DENABLE_NEW_RT_SYSTEM_ITEM_IMPLEMENTATION)
-if(ENABLE_BACKGROUND_STATE_DETECTION)
-  add_definitions(-DENABLE_BACKGROUND_STATE_DETECTION)
+  
+  #if(ENABLE_BACKGROUND_STATE_DETECTION)
+    #add_definitions(-DENABLE_BACKGROUND_STATE_DETECTION)
+  #endif()
+
   set(plugin_sources ${plugin_sources}
-    RTSystemExt2Item.cpp
-    RTSDiagramExt2View.cpp
-    RTSTypeUtilExt2.cpp
-    ProfileHandlerExt2.cpp
-    PortConnectionDialogExt2.cpp
-)
-  set(qt_wrap_cpp_files ${qt_wrap_cpp_files} RTSDiagramExt2View.h)
-else()
-  set(plugin_sources ${plugin_sources}
-    RTSystemExtItem.cpp
-    RTSDiagramExtView.cpp
-    RTSTypeUtilExt.cpp
-    ProfileHandlerExt.cpp
-    PortConnectionDialogExt.cpp
-)
-  set(qt_wrap_cpp_files ${qt_wrap_cpp_files} RTSDiagramExtView.h)
-endif()  
+    experimental/RTSystemExtItem.cpp
+    experimental/RTSDiagramExtView.cpp
+    experimental/RTSTypeUtilExt.cpp
+    experimental/ProfileHandlerExt.cpp
+    experimental/PortConnectionDialogExt.cpp
+    )
+  set(qt_wrap_cpp_files ${qt_wrap_cpp_files} experimental/RTSDiagramExtView.h)
 else()
   set(plugin_sources ${plugin_sources}
     RTSystemItem.cpp
     RTSDiagramView.cpp
     RTSTypeUtil.cpp
-	ProfileHandler.cpp
+    ProfileHandler.cpp
     PortConnectionDialog.cpp)
   set(qt_wrap_cpp_files ${qt_wrap_cpp_files} RTSDiagramView.h)
 endif()  

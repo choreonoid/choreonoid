@@ -1,14 +1,14 @@
 #include "PortConnectionDialogExt.h"
-#include "RTSCommonUtil.h"
+#include "../RTSCommonUtil.h"
 #include "RTSTypeUtilExt.h"
-#include "LoggerUtil.h"
+#include "../LoggerUtil.h"
 #include <cnoid/Buttons>
 #include <QLabel>
 #include <QMessageBox>
 #include <QGroupBox>
 #include <QVBoxLayout>
 #include <QHeaderView>
-#include "gettext.h"
+#include "../gettext.h"
 
 using namespace std;
 using namespace cnoid;

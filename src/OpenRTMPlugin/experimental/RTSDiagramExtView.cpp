@@ -3,12 +3,12 @@
  * @file
  */
 #include "RTSDiagramExtView.h"
-#include "RTSNameServerView.h"
-#include "RTSPropertiesView.h"
-#include "RTSCommonUtil.h"
-#include "OpenRTMUtil.h"
+#include "../RTSNameServerView.h"
+#include "../RTSPropertiesView.h"
+#include "../RTSCommonUtil.h"
+#include "../OpenRTMUtil.h"
 #include "PortConnectionDialogExt.h"
-#include "LoggerUtil.h"
+#include "../LoggerUtil.h"
 #include <cnoid/ViewManager>
 #include <cnoid/MessageView>
 #include <cnoid/MenuManager>
@@ -26,7 +26,7 @@
 #include <QDragEnterEvent>
 #include <QMessageBox>
 #include <fmt/format.h>
-#include "gettext.h"
+#include "../gettext.h"
 
 using namespace cnoid;
 using namespace std;

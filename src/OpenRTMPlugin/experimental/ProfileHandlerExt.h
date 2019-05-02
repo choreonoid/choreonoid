@@ -11,7 +11,7 @@
 #include <rtm/idl/SDOPackage.hh>
 #include <pugixml.hpp>
 
-#include "ProfileHandler.h"
+#include "../ProfileHandler.h"
 
 namespace cnoid {
 

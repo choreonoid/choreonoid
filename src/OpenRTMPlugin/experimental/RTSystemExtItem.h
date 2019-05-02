@@ -11,9 +11,9 @@
 #include <QPoint>
 #include <list>
 #include <string>
-#include "RTCWrapper.h"
+#include "../RTCWrapper.h"
 #include "ProfileHandlerExt.h"
-#include "exportdecl.h"
+#include "../exportdecl.h"
 
 namespace cnoid {
 
