@@ -5,9 +5,10 @@
 #ifndef CNOID_OPENRTM_PLUGIN_RTC_WRAPPER_H
 #define CNOID_OPENRTM_PLUGIN_RTC_WRAPPER_H
 
-#include <memory>
+#include "ProfileHandler.h"
 #include <cnoid/CorbaUtil>
 #include <rtm/idl/RTC.hh>
+#include <memory>
 
 namespace cnoid {
 

@@ -1,11 +1,11 @@
 #include "RTSystemItem.h"
-#include "RTSCommonUtil.h"
 #include "RTSTypeUtil.h"
 #include <cnoid/MessageView>
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
 #include <cnoid/EigenArchive>
 #include <cnoid/AppConfig>
+#include <rtm/CORBA_SeqUtil.h>
 #include <fmt/format.h>
 #include "LoggerUtil.h"
 
@@ -341,24 +341,31 @@ void RTSConnection::setPosition(const Vector2 pos[])
         position[i] = pos[i];
     }
     setPos = true;
-    srcRTC->rts()->suggestFileUpdate();
+    srcRTC->rtsItem()->suggestFileUpdate();
     DDEBUG("suggestFileUpdate RTSConnection::setPosition");
 }
 
 
-RTSComp::RTSComp(const string& name, const std::string& fullPath, RTC::RTObject_ptr rtc, RTSystemItem* rts, const QPointF& pos, const string& host, int port, bool isDefault)
-    : rts_(rts), pos_(pos), name(name), fullPath(fullPath), hostAddress(host), portNo(port), isDefaultNS(isDefault)
+RTSComp::RTSComp
+(const string& name, const std::string& fullPath, RTC::RTObject_ptr rtc, Item* rtsItem, const QPointF& pos,
+ const string& host, int port, bool isDefault)
+    : rtsItem_(rtsItem),
+      pos_(pos),
+      name(name),
+      fullPath(fullPath),
+      hostAddress(host),
+      portNo(port),
+      isDefaultNS(isDefault)
 {
     setRtc(rtc);
 }
-
 
 void RTSComp::setRtc(RTObject_ptr rtc)
 {
     DDEBUG("RTSComp::setRtc");
     rtc_ = 0;
 
-    //rts_->suggestFileUpdate();
+    //rtsItem_->suggestFileUpdate();
 
     setRTObject(rtc);
 
@@ -403,21 +410,22 @@ void RTSComp::setRtc(RTObject_ptr rtc)
         }
     }
 
-    bool isUpdated = rts_->isConsistentWithFile();
+    bool isUpdated = rtsItem_->isConsistentWithFile();
     list<RTSConnection*> rtsConnectionList;
-    rts_->impl->RTSCompToConnectionList(this, rtsConnectionList, 0);
+    auto rtsImpl = static_cast<RTSystemItem*>(rtsItem_)->impl;
+    rtsImpl->RTSCompToConnectionList(this, rtsConnectionList, 0);
     for (auto it = rtsConnectionList.begin(); it != rtsConnectionList.end(); ++it) {
         RTSConnectionPtr connection = (*it);
-        rts_->impl->removeConnection(*it);
+        rtsImpl->removeConnection(*it);
         RTSPort* sourcePort = connection->srcRTC->nameToRTSPort(connection->sourcePortName);
         RTSPort* targetPort = connection->targetRTC->nameToRTSPort(connection->targetPortName);
         if (sourcePort && targetPort) {
             connection->sourcePort = sourcePort;
             connection->targetPort = targetPort;
-            rts_->impl->rtsConnections[RTSystemItem::RTSPortPair(sourcePort, targetPort)] = connection;
+            rtsImpl->rtsConnections[RTSystemItem::RTSPortPair(sourcePort, targetPort)] = connection;
         }
     }
-    rts_->setConsistentWithFile(isUpdated);
+    rtsItem_->setConsistentWithFile(isUpdated);
 
     connectionCheck();
     DDEBUG("RTSComp::setRtc End");
@@ -467,6 +475,8 @@ bool RTSComp::connectionCheckSub(RTSPort* rtsPort)
 
     if (!isObjectAlive(rtsPort->port)) return updated;
 
+    auto rtsImpl = static_cast<RTSystemItem*>(rtsItem_)->impl;
+    
     /**
        The get_port_profile() function should not be used here because
        it takes much time when the port has large data and its owner RTC is in a remote host.
@@ -502,7 +512,7 @@ bool RTSComp::connectionCheckSub(RTSPort* rtsPort)
             if(!getComponentPath(connectedPortRef, rtcPath)){
                 continue;
             }
-            RTSComp* targetRTC = rts_->impl->nameToRTSComp("/" + rtcPath);
+            RTSComp* targetRTC = rtsImpl->nameToRTSComp("/" + rtcPath);
             if(!targetRTC){
                 continue;
             }
@@ -510,8 +520,8 @@ bool RTSComp::connectionCheckSub(RTSPort* rtsPort)
             //DDEBUG("targetRTC Found");
             RTSPort* targetPort = targetRTC->nameToRTSPort(portName);
             if (targetPort) {
-                auto itr = rts_->impl->rtsConnections.find(RTSystemItem::RTSPortPair(rtsPort, targetPort));
-                if (itr != rts_->impl->rtsConnections.end()) {
+                auto itr = rtsImpl->rtsConnections.find(RTSystemItem::RTSPortPair(rtsPort, targetPort));
+                if (itr != rtsImpl->rtsConnections.end()) {
                     continue;
                 }
                 RTSConnectionPtr rtsConnection = new RTSConnection(
@@ -530,9 +540,9 @@ bool RTSComp::connectionCheckSub(RTSPort* rtsPort)
                 rtsConnection->targetRTC = targetRTC;
                 rtsConnection->targetPort = targetRTC->nameToRTSPort(rtsConnection->targetPortName);
                 rtsConnection->isAlive_ = true;
-                rts_->impl->rtsConnections[RTSystemItem::RTSPortPair(rtsPort, targetPort)] = rtsConnection;
+                rtsImpl->rtsConnections[RTSystemItem::RTSPortPair(rtsPort, targetPort)] = rtsConnection;
                 
-                rts_->suggestFileUpdate();
+                rtsItem_->suggestFileUpdate();
                 DDEBUG("suggestFileUpdate RTSComp::connectionCheckSub");
                 
                 updated = true;
@@ -578,7 +588,7 @@ void RTSComp::setPos(const QPointF& p)
 {
     if (p != pos_) {
         pos_ = p;
-        rts_->suggestFileUpdate();
+        rtsItem_->suggestFileUpdate();
         DDEBUG("suggestFileUpdate RTSComp::setPos");
     }
 }

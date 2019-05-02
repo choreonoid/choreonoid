@@ -7,6 +7,9 @@
 #include "RTSConfigurationView.h"
 #include "RTSCommonUtil.h"
 #include "LoggerUtil.h"
+#include <rtm/RTC.h>
+#include <rtm/NVUtil.h>
+#include <rtm/CORBA_SeqUtil.h>
 
 using namespace cnoid;
 using namespace RTC;

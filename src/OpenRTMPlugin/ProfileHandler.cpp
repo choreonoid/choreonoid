@@ -1,9 +1,10 @@
 
-#include "RTSystemItem.h"
+#include "RTSystem.h"
 #include "ProfileHandler.h"
-#include "RTSCommonUtil.h"
 #include "LoggerUtil.h"
 #include <rtm/idl/RTC.hh>
+#include <rtm/CORBA_SeqUtil.h>
+#include <rtm/NVUtil.h>
 #include <QDateTime>
 #include <QString>
 #include <QStringList>
@@ -41,7 +42,7 @@ bool ProfileHandler::getRtsProfileInfo(std::string targetFile, std::string& vend
     return true;
 }
 
-bool ProfileHandler::restoreRtsProfile(std::string targetFile, RTSystemItem* rts)
+bool ProfileHandler::restoreRtsProfile(std::string targetFile, RTSystem* rts)
 {
     DDEBUG("ProfileHandler::restoreRtsProfile");
     RtsProfile profile;
@@ -210,7 +211,7 @@ bool ProfileHandler::restoreRtsProfile(std::string targetFile, RTSystemItem* rts
     return true;
 }
 
-RTSPort* ProfileHandler::getTargetPort(std::string& sourceRtc, std::string& sourcePort, RTSystemItem* rts)
+RTSPort* ProfileHandler::getTargetPort(std::string& sourceRtc, std::string& sourcePort, RTSystem* rts)
 {
     RTSPort* result = 0;
 

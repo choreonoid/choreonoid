@@ -4,7 +4,7 @@
  * @file
  */
 #include "RTSTypeUtil.h"
-
+#include "RTSystem.h"
 #include "LoggerUtil.h"
 
 using namespace std;

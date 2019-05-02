@@ -6,8 +6,10 @@
 #ifndef CNOID_OPENRTM_PLUGIN_RTS_COMMON_UTIL_H_INCLUDED
 #define CNOID_OPENRTM_PLUGIN_RTS_COMMON_UTIL_H_INCLUDED
 
+#include <cnoid/CorbaUtil>
 #include <vector>
-#include "RTSystemItem.h"
+#include <string>
+#include <memory>
 
 using namespace std;
 
@@ -21,6 +23,20 @@ const char* DEFAULT_CONF_FILENAME = "./rtc.conf.choreonoid";
 };
 
 namespace cnoid {
+
+class NamedValue
+{
+public:
+    std::string name_;
+    std::string value_;
+
+    NamedValue(std::string name, std::string value)
+    {
+        name_ = name;
+        value_ = value;
+    };
+};
+typedef std::shared_ptr<NamedValue> NamedValuePtr;
 
 /*!
   * @brief Common processing of RTS.

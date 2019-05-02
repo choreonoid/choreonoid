@@ -9,6 +9,7 @@
 #include <boost/assert.hpp>
 #include <string>
 #include <QString>
+#include <rtm/Manager.h>
 
 using namespace std;
 

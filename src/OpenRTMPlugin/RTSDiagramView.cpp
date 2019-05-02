@@ -3,9 +3,9 @@
  * @file
  */
 #include "RTSDiagramView.h"
+#include "RTSystemItem.h"
 #include "RTSNameServerView.h"
 #include "RTSPropertiesView.h"
-#include "RTSCommonUtil.h"
 #include "OpenRTMUtil.h"
 #include "PortConnectionDialog.h"
 #include "LoggerUtil.h"

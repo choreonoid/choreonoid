@@ -7,7 +7,7 @@
 #define CNOID_OPENRTM_PLUGIN_RTS_TYPE_UTIL_H_INCLUDED
 
 #include <vector>
-#include "RTSystemItem.h"
+#include "ProfileHandler.h"
 #include "RTSCommonUtil.h"
 
 using namespace std;

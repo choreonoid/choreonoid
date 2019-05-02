@@ -1,5 +1,5 @@
 #include "PortConnectionDialog.h"
-#include "RTSCommonUtil.h"
+#include "RTSystem.h"
 #include "RTSTypeUtil.h"
 #include "LoggerUtil.h"
 #include <cnoid/Buttons>

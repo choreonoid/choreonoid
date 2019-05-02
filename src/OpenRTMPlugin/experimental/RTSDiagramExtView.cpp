@@ -3,11 +3,11 @@
  * @file
  */
 #include "RTSDiagramExtView.h"
+#include "RTSystemExtItem.h"
 #include "../RTSNameServerView.h"
 #include "../RTSPropertiesView.h"
-#include "../RTSCommonUtil.h"
 #include "../OpenRTMUtil.h"
-#include "PortConnectionDialogExt.h"
+#include "../PortConnectionDialog.h"
 #include "../LoggerUtil.h"
 #include <cnoid/ViewManager>
 #include <cnoid/MessageView>
@@ -134,7 +134,7 @@ public:
     enum lineType { THREEPARTS_TYPE, FIVEPARTS_TYPE };
     const qreal xxoffset = 5;
 
-    RTSConnectionExtGItem(RTSConnectionExt* rtsConnection, PortInfo source, PortInfo target);
+    RTSConnectionExtGItem(RTSConnection* rtsConnection, PortInfo source, PortInfo target);
     ~RTSConnectionExtGItem();
 
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
@@ -193,7 +193,7 @@ public:
     bool changePortPos(bool isSource, QPointF s);
     lineType getType(qreal sx, qreal tx);
 
-    RTSConnectionExtPtr rtsConnection;
+    RTSConnectionPtr rtsConnection;
 
 private:
     bool _sIsLeft;
@@ -210,7 +210,7 @@ private:
 typedef ref_ptr<RTSConnectionExtGItem> RTSConnectionExtGItemPtr;
 
 RTSConnectionExtGItem::RTSConnectionExtGItem
-(RTSConnectionExt* rtsConnection, PortInfo source, PortInfo target)
+(RTSConnection* rtsConnection, PortInfo source, PortInfo target)
     : rtsConnection(rtsConnection), _sIsLeft(source.isLeft), _tIsLeft(target.isLeft)
 {
     effect = new QGraphicsOpacityEffect;
@@ -528,12 +528,12 @@ class RTSPortExtGItem : public QGraphicsItemGroup, public Referenced
 {
 public:
     enum portType { INPORT, OUTPORT, SERVICEPORT };
-    RTSPortExt* rtsPort;
+    RTSPort* rtsPort;
     QGraphicsPolygonItem* polygon;
     QPointF pos;
     RTSCompExtGItem* parent;
 
-    RTSPortExtGItem(RTSPortExt* rtsPort, RTSCompExtGItem* rtc);
+    RTSPortExtGItem(RTSPort* rtsPort, RTSCompExtGItem* rtc);
     void create(const int posX, const int posY, portType type);
     void checkPortState();
     void setCandidate(bool isCand);
@@ -542,7 +542,7 @@ public:
 
 typedef ref_ptr<RTSPortExtGItem> RTSPortExtGItemPtr;
 
-RTSPortExtGItem::RTSPortExtGItem(RTSPortExt* rtsPort, RTSCompExtGItem* rtc)
+RTSPortExtGItem::RTSPortExtGItem(RTSPort* rtsPort, RTSCompExtGItem* rtc)
     : rtsPort(rtsPort), parent(rtc)
 {
 
@@ -616,7 +616,7 @@ void RTSPortExtGItem::setCandidate(bool isCand)
 class RTSCompExtGItem : public QGraphicsItemGroup, public Referenced
 {
 public:
-    RTSCompExtGItem(RTSCompExt* rtsComp, RTSDiagramExtViewImpl* impl, const QPointF& pos, const int interval);
+    RTSCompExtGItem(RTSComp* rtsComp, RTSDiagramExtViewImpl* impl, const QPointF& pos, const int interval);
     ~RTSCompExtGItem();
     QVariant itemChange(GraphicsItemChange change, const QVariant & value);
     void create(const QPointF& pos, const int interval);
@@ -626,7 +626,7 @@ public:
     int correctTextY(int interval);
 
     RTSDiagramExtViewImpl* impl;
-    RTSCompExt* rtsComp;
+    RTSComp* rtsComp;
     map<string, RTSPortExtGItemPtr> inPorts;
     map<string, RTSPortExtGItemPtr> outPorts;
     QGraphicsRectItem* rect;
@@ -729,7 +729,7 @@ public:
 
     map<string, RTSCompExtGItemPtr> rtsComps;
     map<string, RTSConnectionExtGItemPtr> rtsConnections;
-    map<RTSPortExt*, RTSPortExtGItem*> rtsPortMap;
+    map<RTSPort*, RTSPortExtGItem*> rtsPortMap;
     list<NamingContextHelper::ObjectInfo> nsViewSelections;
     list<RTSCompExtGItem*> selectionRTCs;
     list<RTSConnectionExtGItem*> selectionRTSConnections;
@@ -743,7 +743,7 @@ public:
     ~RTSDiagramExtViewImpl();
     void setNewRTSItemDetector();
     void addRTSComp(NamingContextHelper::ObjectInfo& info, const QPointF& pos);
-    void addRTSComp(RTSCompExt* rtsComp);
+    void addRTSComp(RTSComp* rtsComp);
     void deleteRTSComp(RTSCompExtGItem* rtsComp);
     void deleteRTSConnection(RTSConnectionExtGItem* rtsConnection);
     void deleteSelectedRTSItem();
@@ -760,7 +760,7 @@ public:
     RTSPortExtGItem* findTargetRTSPort(QPointF& pos);
     RTSCompExtGItem* findTargetRTC(RTSPortExtGItem* port);
     RTSConnectionMarkerExtItem* findConnectionMarker(QGraphicsItem* gItem);
-    void createConnectionGItem(RTSConnectionExt* rtsConnection, RTSPortExtGItem* sourcePort, RTSPortExtGItem* targetPort);
+    void createConnectionGItem(RTSConnection* rtsConnection, RTSPortExtGItem* sourcePort, RTSPortExtGItem* targetPort);
     void onRTSCompSelectionChange();
     void onRTSCompPositionChanged(const RTSCompExtGItem*);
     void onActivated(bool on);
@@ -794,7 +794,7 @@ private:
 
 }
 //////////
-RTSCompExtGItem::RTSCompExtGItem(RTSCompExt* rtsComp, RTSDiagramExtViewImpl* impl, const QPointF& pos, const int interval)
+RTSCompExtGItem::RTSCompExtGItem(RTSComp* rtsComp, RTSDiagramExtViewImpl* impl, const QPointF& pos, const int interval)
     : impl(impl), rtsComp(rtsComp)
 {
     DDEBUG("RTSCompGItem::RTSCompGItem");
@@ -843,8 +843,8 @@ void RTSCompExtGItem::create(const QPointF& pos, const int interval)
     setFlags(QGraphicsItem::ItemIsMovable | QGraphicsItem::ItemIsSelectable | QGraphicsItem::ItemSendsScenePositionChanges);
 
     int i = 0;
-    for (vector<RTSPortExtPtr>::iterator it = rtsComp->inPorts.begin(); it != rtsComp->inPorts.end(); it++, i++) {
-        RTSPortExt* inPort = *it;
+    for (vector<RTSPortPtr>::iterator it = rtsComp->inPorts.begin(); it != rtsComp->inPorts.end(); it++, i++) {
+        RTSPort* inPort = *it;
         string portName = string(inPort->name);
         RTCCommonUtil::splitPortName(portName);
         text = new QGraphicsTextItem(QString(portName.c_str()));
@@ -861,8 +861,8 @@ void RTSCompExtGItem::create(const QPointF& pos, const int interval)
     }
 
     i = 0;
-    for (vector<RTSPortExtPtr>::iterator it = rtsComp->outPorts.begin(); it != rtsComp->outPorts.end(); it++, i++) {
-        RTSPortExt* outPort = *it;
+    for (vector<RTSPortPtr>::iterator it = rtsComp->outPorts.begin(); it != rtsComp->outPorts.end(); it++, i++) {
+        RTSPort* outPort = *it;
         string portName = string(outPort->name);
         RTCCommonUtil::splitPortName(portName);
         text = new QGraphicsTextItem(QString(portName.c_str()));
@@ -1137,10 +1137,10 @@ void RTSDiagramExtViewImpl::mouseReleaseEvent(QMouseEvent *event)
             } else {
                 bool isAccepted = false;
                 string name;
-                vector<NamedValueExtPtr> propList;
+                vector<NamedValuePtr> propList;
                 if (sourcePort->rtsPort->isServicePort && targetPort->rtsPort->isServicePort) {
                     DDEBUG("ServicePort Connect");
-                    ServicePortConnectionDialogExt dialog;
+                    ServicePortConnectionDialog dialog;
                     dialog.setDisp(sourcePort->rtsPort, targetPort->rtsPort);
                     dialog.exec();
                     isAccepted = dialog.isAccepted;
@@ -1149,7 +1149,7 @@ void RTSDiagramExtViewImpl::mouseReleaseEvent(QMouseEvent *event)
 
                 } else {
                     DDEBUG("DataPort Connect");
-                    DataPortConnectionDialogExt dialog;
+                    DataPortConnectionDialog dialog;
                     dialog.setDisp(sourcePort->rtsPort, targetPort->rtsPort);
                     dialog.exec();
                     isAccepted = dialog.isAccepted;
@@ -1160,7 +1160,7 @@ void RTSDiagramExtViewImpl::mouseReleaseEvent(QMouseEvent *event)
                 if (isAccepted) {
                     DDEBUG("RTSDiagramViewImpl::mouseReleaseEvent Accepted");
                     string id = "";
-                    RTSConnectionExt* rtsConnection =
+                    RTSConnection* rtsConnection =
                         currentRTSItem->addRTSConnection(
                             id, name, sourcePort->rtsPort, targetPort->rtsPort, propList, 0);
                     if (rtsConnection) {
@@ -1229,7 +1229,7 @@ void RTSDiagramExtViewImpl::onRTSCompSelectionChange()
     if (selectionRTCs.size() == 1 && singleSelectedRTC != selectionRTCs.front()) {
         RTSNameServerView* nsView = RTSNameServerView::instance();
         if (nsView) {
-            RTSCompExt* selected = selectionRTCs.front()->rtsComp;
+            RTSComp* selected = selectionRTCs.front()->rtsComp;
             NamingContextHelper::ObjectInfo nsInfo;
             nsInfo.hostAddress_ = selected->hostAddress;
             nsInfo.portNo_ = selected->portNo;
@@ -1246,7 +1246,7 @@ void RTSDiagramExtViewImpl::onRTSCompSelectionChange()
         }
         RTSPropertiesView* propView = RTSPropertiesView::instance();
         if (propView) {
-            RTSConnectionExt* rtsConnection = selectionRTSConnections.front()->rtsConnection;
+            RTSConnection* rtsConnection = selectionRTSConnections.front()->rtsConnection;
             propView->showConnectionProperties(rtsConnection->sourcePort->port, rtsConnection->id);
         }
     }
@@ -1255,11 +1255,11 @@ void RTSDiagramExtViewImpl::onRTSCompSelectionChange()
 
 void RTSDiagramExtViewImpl::onRTSCompPositionChanged(const RTSCompExtGItem* rtsCompGItem)
 {
-    list<RTSConnectionExt*> rtsConnectionList;
+    list<RTSConnection*> rtsConnectionList;
     currentRTSItem->RTSCompToConnectionList(rtsCompGItem->rtsComp, rtsConnectionList, 1);
 
     for (auto it = rtsConnectionList.begin(); it != rtsConnectionList.end(); it++) {
-        RTSConnectionExt* rtsConnection = *it;
+        RTSConnection* rtsConnection = *it;
         RTSConnectionExtGItem* gItem = rtsConnections.find(rtsConnection->id)->second.get();
         RTSPortExtGItem* sourcePort = rtsPortMap.find(rtsConnection->sourcePort)->second;
         if (!gItem->changePortPos(true, sourcePort->pos)) {
@@ -1273,7 +1273,7 @@ void RTSDiagramExtViewImpl::onRTSCompPositionChanged(const RTSCompExtGItem* rtsC
     rtsConnectionList.clear();
     currentRTSItem->RTSCompToConnectionList(rtsCompGItem->rtsComp, rtsConnectionList, 2);
     for (auto it = rtsConnectionList.begin(); it != rtsConnectionList.end(); it++) {
-        RTSConnectionExt* rtsConnection = *it;
+        RTSConnection* rtsConnection = *it;
         RTSConnectionExtGItem* gItem = rtsConnections.find(rtsConnection->id)->second.get();
         RTSPortExtGItem* targetPort = rtsPortMap.find(rtsConnection->targetPort)->second;
         if (!gItem->changePortPos(false, targetPort->pos)) {
@@ -1401,7 +1401,7 @@ void RTSDiagramExtViewImpl::setNewRTSItemDetector()
 
 void RTSDiagramExtViewImpl::addRTSComp(NamingContextHelper::ObjectInfo& info, const QPointF& pos)
 {
-    RTSCompExt* rtsComp = currentRTSItem->addRTSComp(info, pos);
+    RTSComp* rtsComp = currentRTSItem->addRTSComp(info, pos);
     if (rtsComp) {
         RTSCompExtGItemPtr rtsCompGItem = new RTSCompExtGItem(rtsComp, this, pos, interval_);
         rtsComps[info.getFullPath()] = rtsCompGItem;
@@ -1410,7 +1410,7 @@ void RTSDiagramExtViewImpl::addRTSComp(NamingContextHelper::ObjectInfo& info, co
         RTSystemExtItem::RTSConnectionMap& connections = currentRTSItem->rtsConnections();
         for (RTSystemExtItem::RTSConnectionMap::iterator itr = connections.begin(); itr != connections.end(); itr++) {
             if (rtsConnections.find(itr->second->id) == rtsConnections.end()) {
-                RTSConnectionExt* rtsConnection = itr->second.get();
+                RTSConnection* rtsConnection = itr->second.get();
                 RTSPortExtGItem* source = rtsPortMap.find(rtsConnection->sourcePort)->second;
                 RTSPortExtGItem* target = rtsPortMap.find(rtsConnection->targetPort)->second;
                 createConnectionGItem(rtsConnection, source, target);
@@ -1421,7 +1421,7 @@ void RTSDiagramExtViewImpl::addRTSComp(NamingContextHelper::ObjectInfo& info, co
 }
 
 
-void RTSDiagramExtViewImpl::addRTSComp(RTSCompExt* rtsComp)
+void RTSDiagramExtViewImpl::addRTSComp(RTSComp* rtsComp)
 {
     RTSCompExtGItemPtr rtsCompGItem = new RTSCompExtGItem(rtsComp, this, rtsComp->pos(), interval_);
     rtsComps[rtsComp->fullPath] = rtsCompGItem;
@@ -1431,7 +1431,7 @@ void RTSDiagramExtViewImpl::addRTSComp(RTSCompExt* rtsComp)
 
 void RTSDiagramExtViewImpl::deleteRTSComp(RTSCompExtGItem* rtsCompGItem)
 {
-    list<RTSConnectionExt*> rtsConnectionList;
+    list<RTSConnection*> rtsConnectionList;
     currentRTSItem->RTSCompToConnectionList(rtsCompGItem->rtsComp, rtsConnectionList);
 
     for (auto itr = rtsConnectionList.begin(); itr != rtsConnectionList.end(); itr++) {
@@ -1472,7 +1472,7 @@ void RTSDiagramExtViewImpl::deleteSelectedRTSItem()
 
 
 void RTSDiagramExtViewImpl::createConnectionGItem
-(RTSConnectionExt* rtsConnection, RTSPortExtGItem* sourcePort, RTSPortExtGItem* targetPort)
+(RTSConnection* rtsConnection, RTSPortExtGItem* sourcePort, RTSPortExtGItem* targetPort)
 {
     DDEBUG("RTSDiagramViewImpl::createConnectionGItem");
 
@@ -1543,8 +1543,8 @@ void RTSDiagramExtViewImpl::updateView()
     rtsPortMap.clear();
     if (currentRTSItem) {
         setBackgroundBrush(QBrush(Qt::white));
-        map<string, RTSCompExtPtr>& comps = currentRTSItem->rtsComps();
-        for (map<string, RTSCompExtPtr>::iterator itr = comps.begin(); itr != comps.end(); itr++) {
+        map<string, RTSCompPtr>& comps = currentRTSItem->rtsComps();
+        for (map<string, RTSCompPtr>::iterator itr = comps.begin(); itr != comps.end(); itr++) {
             addRTSComp(itr->second.get());
         }
         RTSystemExtItem::RTSConnectionMap& connections = currentRTSItem->rtsConnections();
@@ -1560,7 +1560,7 @@ void RTSDiagramExtViewImpl::updateView()
             
             if (rtsConnections.find(itr->second->id) == rtsConnections.end()) {
                 DDEBUG("RTSDiagramViewImpl::updateView connection NOT FOUND");
-                RTSConnectionExt* rtsConnection = itr->second.get();
+                RTSConnection* rtsConnection = itr->second.get();
                 if(!rtsConnection) {
                   DDEBUG("rtsConnection is NULL");
                   continue;

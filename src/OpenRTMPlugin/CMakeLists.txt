@@ -21,6 +21,9 @@ set(plugin_sources
   RTSConfigurationView.cpp
   BodyStateSubscriberRTCItem.cpp
   LoggerUtil.cpp
+  RTSTypeUtil.cpp
+  ProfileHandler.cpp
+  PortConnectionDialog.cpp
   deprecated/BodyRTCItem.cpp
   deprecated/VirtualRobotRTC.cpp
   deprecated/VirtualRobotPortHandler.cpp
@@ -50,18 +53,13 @@ if(ENABLE_NEW_RT_SYSTEM_ITEM_IMPLEMENTATION)
   set(plugin_sources ${plugin_sources}
     experimental/RTSystemExtItem.cpp
     experimental/RTSDiagramExtView.cpp
-    experimental/RTSTypeUtilExt.cpp
-    experimental/ProfileHandlerExt.cpp
-    experimental/PortConnectionDialogExt.cpp
     )
   set(qt_wrap_cpp_files ${qt_wrap_cpp_files} experimental/RTSDiagramExtView.h)
 else()
   set(plugin_sources ${plugin_sources}
     RTSystemItem.cpp
     RTSDiagramView.cpp
-    RTSTypeUtil.cpp
-    ProfileHandler.cpp
-    PortConnectionDialog.cpp)
+    )
   set(qt_wrap_cpp_files ${qt_wrap_cpp_files} RTSDiagramView.h)
 endif()  
 
