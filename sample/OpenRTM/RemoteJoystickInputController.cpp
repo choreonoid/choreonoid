@@ -129,12 +129,12 @@ public:
         }
         
 #if defined(OPENRTM_VERSION11)
-        string args =
+        std::string args =
             fmt::format(
                 "JoystickInput?instance_name={}&exec_cxt.periodic.type=ChoreonoidExecutionContext",
                 config->controllerName());
 #elif defined(OPENRTM_VERSION12)
-        string args =
+        std::string args =
             fmt::format(
                 "JoystickInput?instance_name={}&execution_contexts=SimulationExecutionContext&exec_cxt.periodic.type=ChoreonoidExecutionContext",
                 config->controllerName());
