@@ -1060,7 +1060,7 @@ void RTSDiagramViewExImpl::mousePressEvent(QMouseEvent* event)
             menuManager.popupMenu()->popup(event->globalPos());
 
         } else {
-            if (currentRTSItem->stateCheck() == 1) {
+            if (currentRTSItem->stateCheckMode() == RTSystemItemEx::MANUAL_MODE) {
                 menuManager.setNewPopupMenu(this);
                 menuManager.addItem(_("Update"))
                     ->sigTriggered().connect(std::bind(&RTSDiagramViewExImpl::updateStatus, this));

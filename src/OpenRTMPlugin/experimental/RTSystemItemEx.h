@@ -52,7 +52,17 @@ public:
 
     virtual void setVendorName(const std::string& name) override;
     virtual void setVersion(const std::string& version) override;
-    int stateCheck() const;
+
+    enum StateCheckMode {
+        POLLING_MODE,
+        MANUAL_MODE,
+#if defined(OPENRTM_VERSION12)
+        OBSERVER_MODE,
+#endif
+        N_STATE_CHECK_MODES
+    };
+
+    int stateCheckMode() const;
 
     void checkStatus();
     bool isCheckAtLoading();

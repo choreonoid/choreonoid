@@ -14,8 +14,6 @@
 #include <thread>
 #include "../gettext.h"
 
-//#define CONTINUOUS_CHECK
-
 using namespace cnoid;
 using namespace std;
 using namespace std::placeholders;
@@ -41,6 +39,8 @@ struct RTSPortComparator
 class RTSystemItemExImpl
 {
 public:
+    RTSystemItemEx* self;
+
     map<string, RTSCompPtr> rtsComps;
     RTSystemItemEx::RTSConnectionMap rtsConnections;
     bool autoConnection;
@@ -58,22 +58,30 @@ public:
     int heartBeatPeriod;
 #endif
 
-    enum State_Detection
-    {
-        POLLING_CHECK = 0,
-        MANUAL_CHECK,
-#if defined(OPENRTM_VERSION12)
-        OBSERVER_CHECK,
-#endif
-        N_STATE_DETECTION
-    };
-    Selection stateCheck;
+    Selection stateCheckMode;
+
+    enum PollingThreadType { FOREGROUND, BACKGROUND, N_POLLING_THREAD_TYPES };
+    Selection pollingThreadType;
+    
+    Connection locationChangedConnection;
+    int connectionNo;
+
+    Signal<void(bool)> sigStatusUpdate;
+
+    Timer timer;
+    ScopedConnection timeOutConnection;
+
+    // For the background polling
+    cnoid::LazyCaller updateStateLater;
+    bool statusModified;
+    bool isCheckingStatus;
+    bool doStatusChecking;
+    std::thread pollingThread;
 
     RTSystemItemExImpl(RTSystemItemEx* self);
     RTSystemItemExImpl(RTSystemItemEx* self, const RTSystemItemExImpl& org);
     ~RTSystemItemExImpl();
 
-    void initialize();
     void onLocationChanged(std::string host, int port);
     RTSComp* addRTSComp(const string& name, const QPointF& pos);
     RTSComp* addRTSComp(const NamingContextHelper::ObjectInfo& info, const QPointF& pos);
@@ -101,34 +109,19 @@ public:
     void restoreRTSComp(const string& name, const Vector2& pos,
             const vector<pair<string, bool>>& inPorts, const vector<pair<string, bool>>& outPorts);
     string getConnectionNumber();
-    void setStateCheckMethodByString(const string& value);
+    void setStateCheckModeByString(const string& mode);
     void checkStatus();
-    void checkStatusForeground(); // Ext1
-    void checkStatusBackground(); // Ext2
-    void statusChecking(); // Ext2
-
-    Signal<void(bool)> sigStatusUpdate;
+    void checkStatusForeground();
+    void checkStatusBackground();
+    void statusChecking();
 
     void onActivated();
     void changePollingPeriod(int value);
-    void changeStateCheck();
+    void changeStateCheckMode();
 
-private:
-    RTSystemItemEx* self;
-    Connection locationChangedConnection;
-    int connectionNo;
-
-    Timer timer;
-    ScopedConnection timeOutConnection;
-    bool modifed_; // Ext2
-    cnoid::LazyCaller updateStateLater; // Ext2
-    bool isStatusChecking; // Ext2
-    bool doStatusChecking; // Ext2
-    std::thread checkThread; // Ext2
-
-    void setStateCheckMethod(int value);
-    void copyForStatusChecking(); // Ext2
-    void restoreForStatusChecking(); // Ext2
+    void setStateCheckMode(int mode);
+    void copyForStatusChecking();
+    void restoreForStatusChecking();
 };
 
 }
@@ -843,10 +836,45 @@ RTSystemItemEx::RTSystemItemEx()
 
 
 RTSystemItemExImpl::RTSystemItemExImpl(RTSystemItemEx* self)
-    : self(self), pollingCycle(1000), isStatusChecking(false), doStatusChecking(false)
+    : self(self),
+      stateCheckMode(RTSystemItemEx::N_STATE_CHECK_MODES, CNOID_GETTEXT_DOMAIN_NAME),
+      pollingThreadType(N_POLLING_THREAD_TYPES, CNOID_GETTEXT_DOMAIN_NAME)
 {
-    initialize();
+    DDEBUG_V("RTSystemItemImpl::initialize cycle:%d", pollingCycle);
+
     autoConnection = true;
+
+    connectionNo = 0;
+
+    Mapping* config = AppConfig::archive()->openMapping("OpenRTM");
+    vendorName = config->get("defaultVendor", "AIST");
+    version = config->get("defaultVersion", "1.0.0");
+
+    pollingCycle = 1000;
+    
+    stateCheckMode.setSymbol(RTSystemItemEx::POLLING_MODE, N_("Polling"));
+    stateCheckMode.setSymbol(RTSystemItemEx::MANUAL_MODE, N_("Manual"));
+    checkAtLoading = true;
+    
+#if defined(OPENRTM_VERSION12)
+    stateCheckMode.setSymbol(RTSystemItemEx::OBSERVER_MODE, "Observer");
+    heartBeatPeriod = config->get("heartBeatPeriod", 500);
+#endif
+
+    stateCheckMode.select(RTSystemItemEx::POLLING_MODE);
+
+    pollingThreadType.setSymbol(FOREGROUND, N_("Foreground"));
+    pollingThreadType.setSymbol(BACKGROUND, N_("Background"));
+    pollingThreadType.select(BACKGROUND);
+
+    isCheckingStatus = false;
+    doStatusChecking = false;
+
+    timer.setInterval(pollingCycle);
+    timer.setSingleShot(false);
+    timeOutConnection.reset(
+        timer.sigTimeout().connect(
+            std::bind(&RTSystemItemExImpl::checkStatus, this)));
 }
 
 
@@ -858,34 +886,16 @@ RTSystemItemEx::RTSystemItemEx(const RTSystemItemEx& org)
 
 
 RTSystemItemExImpl::RTSystemItemExImpl(RTSystemItemEx* self, const RTSystemItemExImpl& org)
-    : self(self), pollingCycle(1000)
+    : RTSystemItemExImpl(self)
 {
-    initialize();
     autoConnection = org.autoConnection;
+    vendorName = org.vendorName;
+    version = org.version;
+    pollingCycle = org.pollingCycle;
+    stateCheckMode = org.stateCheckMode;
+    pollingThreadType = org.pollingThreadType;
 }
 
-void RTSystemItemExImpl::initialize()
-{
-    DDEBUG_V("RTSystemItemImpl::initialize cycle:%d", pollingCycle);
-    connectionNo = 0;
-
-    Mapping* config = AppConfig::archive()->openMapping("OpenRTM");
-    vendorName = config->get("defaultVendor", "AIST");
-    version = config->get("defaultVersion", "1.0.0");
-    stateCheck.setSymbol(POLLING_CHECK, "Polling");
-    stateCheck.setSymbol(MANUAL_CHECK, "Manual");
-    checkAtLoading = true;
-#if defined(OPENRTM_VERSION12)
-    stateCheck.setSymbol(OBSERVER_CHECK, "Observer");
-    heartBeatPeriod = config->get("heartBeatPeriod", 500);
-#endif
-
-    timer.setInterval(pollingCycle);
-    timer.setSingleShot(false);
-    timeOutConnection.reset(
-        timer.sigTimeout().connect(
-            std::bind(&RTSystemItemExImpl::checkStatus, this)));
-}
 
 RTSystemItemEx::~RTSystemItemEx()
 {
@@ -915,8 +925,8 @@ void RTSystemItemEx::onActivated()
 
 void RTSystemItemExImpl::onActivated()
 {
-    DDEBUG_V("RTSystemItemExImpl::onActivated %d, %d", stateCheck.selectedIndex());
-    if( stateCheck.selectedIndex()==POLLING_CHECK ) {
+    DDEBUG_V("RTSystemItemExImpl::onActivated %d, %d", stateCheckMode.selectedIndex());
+    if(stateCheckMode.is(RTSystemItemEx::POLLING_MODE)){
         DDEBUG("RTSystemItemExImpl::onActivated timer.start");
         timer.start();
     }
@@ -1362,17 +1372,18 @@ void RTSystemItemEx::doPutProperties(PutPropertyFunction& putProperty)
 void RTSystemItemExImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
     DDEBUG("RTSystemItemImpl::doPutProperties");
-    putProperty(_("Auto Connection"), autoConnection, changeProperty(autoConnection));
-    putProperty(_("Vendor Name"), vendorName, changeProperty(vendorName));
+    putProperty(_("Auto connection"), autoConnection, changeProperty(autoConnection));
+    putProperty(_("Vendor name"), vendorName, changeProperty(vendorName));
     putProperty(_("Version"), version, changeProperty(version));
-    putProperty(_("State Check"), stateCheck,
-                [&](int value) { setStateCheckMethod(value); return true; });
-    putProperty(_("Polling Cycle"), pollingCycle,
-                [&](int value) { changePollingPeriod(value); return true; });
-    putProperty(_("CheckAtLoading"), checkAtLoading, changeProperty(checkAtLoading));
+    putProperty(_("State check mode"), stateCheckMode,
+                [&](int mode) { setStateCheckMode(mode); return true; });
+    putProperty(_("Polling cycle"), pollingCycle,
+                [&](int mode) { changePollingPeriod(mode); return true; });
+    putProperty(_("Polling thread"), pollingThreadType, changeProperty(pollingThreadType));
+    putProperty(_("Check at loading"), checkAtLoading, changeProperty(checkAtLoading));
 
 #if defined(OPENRTM_VERSION12)
-    putProperty(_("HeartBeat Period"), heartBeatPeriod, changeProperty(heartBeatPeriod));
+    putProperty(_("Heart-beat period"), heartBeatPeriod, changeProperty(heartBeatPeriod));
 #endif
 }
 
@@ -1389,31 +1400,31 @@ void RTSystemItemExImpl::changePollingPeriod(int value)
     }
 }
 
-void RTSystemItemExImpl::setStateCheckMethod(int value)
+void RTSystemItemExImpl::setStateCheckMode(int mode)
 {
-    DDEBUG_V("RTSystemItemImpl::setStateCheckMethod=%d", value);
-    stateCheck.selectIndex(value);
-    changeStateCheck();
+    DDEBUG_V("RTSystemItemImpl::setStateCheckMode=%d", mode);
+    stateCheckMode.selectIndex(mode);
+    changeStateCheckMode();
 }
 
-void RTSystemItemExImpl::setStateCheckMethodByString(const string& value)
+void RTSystemItemExImpl::setStateCheckModeByString(const string& mode)
 {
-    DDEBUG_V("RTSystemItemImpl::setStateCheckMethodByString=%s", value.c_str());
-    stateCheck.select(value);
-    DDEBUG_V("RTSystemItemImpl::setStateCheckMethodByString=%d", stateCheck.selectedIndex());
-    changeStateCheck();
+    DDEBUG_V("RTSystemItemImpl::setStateCheckModeByString=%s", value.c_str());
+    stateCheckMode.select(mode);
+    DDEBUG_V("RTSystemItemImpl::setStateCheckModeByString=%d", stateCheckMode.selectedIndex());
+    changeStateCheckMode();
 }
 
-void RTSystemItemExImpl::changeStateCheck()
+void RTSystemItemExImpl::changeStateCheckMode()
 {
-    int state = stateCheck.selectedIndex();
-    DDEBUG_V("RTSystemItemImpl::changeStateCheck=%d", state);
+    int state = stateCheckMode.selectedIndex();
+    DDEBUG_V("RTSystemItemImpl::changeStateCheckMode=%d", state);
     switch (state) {
-        case MANUAL_CHECK:
+        case RTSystemItemEx::MANUAL_MODE:
             timer.stop();
             break;
 #if defined(OPENRTM_VERSION12)
-        case OBSERVER_CHECK:
+        case RTSystemItemEx::OBSERVER_MODE:
             break;
 #endif
         default:
@@ -1466,9 +1477,9 @@ void RTSystemItemEx::setVersion(const std::string& version)
     impl->version = version;
 }
 
-int RTSystemItemEx::stateCheck() const
+int RTSystemItemEx::stateCheckMode() const
 {
-    return impl->stateCheck.selectedIndex();
+    return impl->stateCheckMode.selectedIndex();
 }
 
 void RTSystemItemEx::checkStatus()
@@ -1478,8 +1489,11 @@ void RTSystemItemEx::checkStatus()
 
 void RTSystemItemExImpl::checkStatus()
 {
-    //checkStatusForeground();
-    checkStatusBackground();
+    if(pollingThreadType.is(FOREGROUND)){
+        checkStatusForeground();
+    } else {
+        checkStatusBackground();
+    }
 }
 
 void RTSystemItemExImpl::checkStatusForeground()
@@ -1487,6 +1501,11 @@ void RTSystemItemExImpl::checkStatusForeground()
     DDEBUG("RTSystemItemExImpl::checkStatusForeground");
     if( sigStatusUpdate.empty() ) {
         timer.stop();
+    }
+
+    if(isCheckingStatus){
+        // Background polling is not finished
+        return;
     }
 
     bool modified = false;
@@ -1526,28 +1545,26 @@ void RTSystemItemExImpl::checkStatusBackground()
         timer.stop();
     }
     //
-    if (isStatusChecking) {
-        DDEBUG("RTSystemItemExImpl::checkStatusBackground isStatusChecking");
+    if (isCheckingStatus) {
+        DDEBUG("RTSystemItemExImpl::checkStatusBackground isCheckingStatus");
         doStatusChecking = true;
         return;
     }
-    isStatusChecking = true;
+    isCheckingStatus = true;
     copyForStatusChecking();
-    checkThread = std::thread([&](){ statusChecking(); });
-    //std::thread checkThread = std::thread([&](){ statusChecking(); });
-    //checkThread.join();
+    pollingThread = std::thread([&](){ statusChecking(); });
 }
 
 void RTSystemItemExImpl::statusChecking()
 {
-    modifed_ = false;
+    statusModified = false;
 
     DDEBUG("RTSystemItemExImpl::statusChecking start");
     for (auto it = rtsCompsCheck.begin(); it != rtsCompsCheck.end(); it++) {
         if (compIsAliveForChecking(it->second)) {
             if (!it->second->isAlive_) {
               DDEBUG("RTSystemItemExImpl::statusChecking 1");
-              modifed_ = true;
+              statusModified = true;
             }
             RTC_STATUS status;
             if (it->second->isSetRtc_) {
@@ -1558,13 +1575,13 @@ void RTSystemItemExImpl::statusChecking()
             DDEBUG_V("RTC State : %d, %d", it->second->rtc_status_, status);
             if (status != it->second->rtc_status_) {
               DDEBUG("RTSystemItemExImpl::statusChecking 2");
-              modifed_ = true;
+              statusModified = true;
               it->second->rtc_status_ = status;
             }
         } else {
             if (it->second->isAlive_) {
                 DDEBUG("RTSystemItemExImpl::statusChecking 3");
-                modifed_ = true;
+                statusModified = true;
             }
         }
     }
@@ -1577,13 +1594,13 @@ void RTSystemItemExImpl::statusChecking()
             if (!it->second->isAlive_) {
                 it->second->isAlive_ = true;
                 DDEBUG("RTSystemItemExImpl::statusChecking 4");
-                modifed_ = true;
+                statusModified = true;
             }
         } else {
             if (it->second->isAlive_) {
                 it->second->isAlive_ = false;
                 DDEBUG("RTSystemItemExImpl::statusChecking 5");
-                modifed_ = true;
+                statusModified = true;
             }
         }
     }
@@ -1592,7 +1609,7 @@ void RTSystemItemExImpl::statusChecking()
     for (auto it = rtsCompsCheck.begin(); it != rtsCompsCheck.end(); it++) {
         if (it->second->connectionCheckForChecking()) {
               DDEBUG("RTSystemItemExImpl::statusChecking 6");
-            modifed_ = true;
+            statusModified = true;
         }
     }
     //////////
@@ -1668,17 +1685,18 @@ void RTSystemItemExImpl::restoreForStatusChecking()
         rtsConnections[it->first] = it->second;
     }
 
-    sigStatusUpdate(modifed_);
+    sigStatusUpdate(statusModified);
 
-    isStatusChecking = false;
-    checkThread.detach();
+    isCheckingStatus = false;
+    pollingThread.detach();
 
-#ifdef CONTINUOUS_CHECK
-    if (doStatusChecking) {
-        doStatusChecking = false;
-        checkStatus();
+    const bool doContinuousCheck = false;
+    if(doContinuousCheck){
+        if(doStatusChecking){
+            doStatusChecking = false;
+            checkStatus();
+        }
     }
-#endif
 }
 
 bool RTSystemItemEx::isCheckAtLoading()
@@ -1694,7 +1712,8 @@ bool RTSystemItemEx::store(Archive& archive)
 
         archive.write("autoConnection", impl->autoConnection);
         archive.write("pollingCycle", impl->pollingCycle);
-        archive.write("stateCheck", impl->stateCheck.selectedSymbol());
+        archive.write("stateCheckMode", impl->stateCheckMode.selectedSymbol());
+        archive.write("pollingThread", impl->pollingThreadType.selectedSymbol());
         archive.write("checkAtLoading", impl->checkAtLoading);
 
 #if defined(OPENRTM_VERSION12)
@@ -1746,14 +1765,15 @@ bool RTSystemItemEx::restore(const Archive& archive)
         archive.addPostProcess([&]() { impl->restoreRTSystem(archive); });
     }
 
-    string stateCheck;
-    if (archive.read("stateCheck", stateCheck) == false) {
-        archive.read("StateCheck", stateCheck);
+    string symbol;
+    if(archive.read("stateCheckMode", symbol)){
+        DDEBUG_V("StateCheckMode:%s", symbol.c_str());
+        impl->setStateCheckModeByString(symbol);
+        archive.addPostProcess([&]() { impl->changeStateCheckMode(); });
     }
-    if(stateCheck.empty()==false) {
-        DDEBUG_V("StateCheck:%s", stateCheck.c_str());
-        impl->setStateCheckMethodByString(stateCheck);
-        archive.addPostProcess([&]() { impl->changeStateCheck(); });
+
+    if(archive.read("pollingThread", symbol)){
+        impl->pollingThreadType.select(symbol);
     }
 
     return true;

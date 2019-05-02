@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-05-02 14:59+0900\n"
+"POT-Creation-Date: 2019-05-03 01:14+0900\n"
 "PO-Revision-Date: 2012-07-17 00:22+0100\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -142,120 +142,110 @@ msgstr "\"{}\" 用のRTCを生成できませんした．"
 msgid "Point cloud port type"
 msgstr "ポイントクラウドポート型"
 
-#: PortConnectionDialog.cpp:21 RTSConfigurationView.cpp:180
-#: RTSConfigurationView.cpp:243 experimental/PortConnectionDialogExt.cpp:21
+#: PortConnectionDialog.cpp:21 tmp/PortConnectionDialogExt.cpp:21
+#: RTSConfigurationView.cpp:180 RTSConfigurationView.cpp:243
 msgid "Detail"
 msgstr "詳細"
 
 #: PortConnectionDialog.cpp:38 PortConnectionDialog.cpp:446
+#: tmp/PortConnectionDialogExt.cpp:38 tmp/PortConnectionDialogExt.cpp:446
 #: RTSConfigurationView.cpp:190 RTSConfigurationView.cpp:248
-#: experimental/PortConnectionDialogExt.cpp:38
-#: experimental/PortConnectionDialogExt.cpp:446
 msgid "Add"
 msgstr "追加"
 
 #: PortConnectionDialog.cpp:42 PortConnectionDialog.cpp:450
+#: tmp/PortConnectionDialogExt.cpp:42 tmp/PortConnectionDialogExt.cpp:450
 #: RTSConfigurationView.cpp:195 RTSConfigurationView.cpp:254
-#: experimental/PortConnectionDialogExt.cpp:42
-#: experimental/PortConnectionDialogExt.cpp:450
 msgid "Delete"
 msgstr "削除"
 
 #: PortConnectionDialog.cpp:49 RTSNameServerView.cpp:892
-#: RTSNameServerView.cpp:968 RTSPropertiesView.cpp:507
-#: experimental/PortConnectionDialogExt.cpp:49
+#: RTSNameServerView.cpp:968 tmp/PortConnectionDialogExt.cpp:49
+#: RTSPropertiesView.cpp:507
 msgid "&Cancel"
 msgstr ""
 
 #: PortConnectionDialog.cpp:53 RTSNameServerView.cpp:149
 #: RTSNameServerView.cpp:886 RTSNameServerView.cpp:962
-#: RTSPropertiesView.cpp:501 experimental/PortConnectionDialogExt.cpp:53
+#: tmp/PortConnectionDialogExt.cpp:53 RTSPropertiesView.cpp:501
 msgid "&OK"
 msgstr ""
 
 #: PortConnectionDialog.cpp:106 PortConnectionDialog.cpp:424
-#: experimental/PortConnectionDialogExt.cpp:106
-#: experimental/PortConnectionDialogExt.cpp:424
+#: tmp/PortConnectionDialogExt.cpp:106 tmp/PortConnectionDialogExt.cpp:424
 msgid "name : "
 msgstr "名前 : "
 
-#: PortConnectionDialog.cpp:109 experimental/PortConnectionDialogExt.cpp:109
+#: PortConnectionDialog.cpp:109 tmp/PortConnectionDialogExt.cpp:109
 msgid "Data Type : "
 msgstr "データタイプ : "
 
-#: PortConnectionDialog.cpp:113 experimental/PortConnectionDialogExt.cpp:113
+#: PortConnectionDialog.cpp:113 tmp/PortConnectionDialogExt.cpp:113
 msgid "Interface Type : "
 msgstr "インタフェースタイプ : "
 
-#: PortConnectionDialog.cpp:117 experimental/PortConnectionDialogExt.cpp:117
+#: PortConnectionDialog.cpp:117 tmp/PortConnectionDialogExt.cpp:117
 msgid "Dataflow Type : "
 msgstr "データフロータイプ : "
 
-#: PortConnectionDialog.cpp:121 experimental/PortConnectionDialogExt.cpp:121
+#: PortConnectionDialog.cpp:121 tmp/PortConnectionDialogExt.cpp:121
 msgid "Subscription Type : "
 msgstr "サブスクリプションタイプ : "
 
-#: PortConnectionDialog.cpp:127 experimental/PortConnectionDialogExt.cpp:127
+#: PortConnectionDialog.cpp:127 tmp/PortConnectionDialogExt.cpp:127
 msgid "Push Rate(Hz) : "
 msgstr "プッシュレート(Hz) : "
 
-#: PortConnectionDialog.cpp:132 experimental/PortConnectionDialogExt.cpp:132
+#: PortConnectionDialog.cpp:132 tmp/PortConnectionDialogExt.cpp:132
 msgid "Push Policy : "
 msgstr "プッシュポリシー : "
 
-#: PortConnectionDialog.cpp:143 experimental/PortConnectionDialogExt.cpp:143
+#: PortConnectionDialog.cpp:143 tmp/PortConnectionDialogExt.cpp:143
 msgid "Skip Count : "
 msgstr "スキップカウント : "
 
 #: PortConnectionDialog.cpp:168 PortConnectionDialog.cpp:210
-#: experimental/PortConnectionDialogExt.cpp:168
-#: experimental/PortConnectionDialogExt.cpp:210
+#: tmp/PortConnectionDialogExt.cpp:168 tmp/PortConnectionDialogExt.cpp:210
 msgid "Buffer length : "
 msgstr "バッファ長 : "
 
 #: PortConnectionDialog.cpp:173 PortConnectionDialog.cpp:215
-#: experimental/PortConnectionDialogExt.cpp:173
-#: experimental/PortConnectionDialogExt.cpp:215
+#: tmp/PortConnectionDialogExt.cpp:173 tmp/PortConnectionDialogExt.cpp:215
 msgid "Buffer full policy : "
 msgstr "バッファフルポリシー : "
 
 #: PortConnectionDialog.cpp:180 PortConnectionDialog.cpp:222
-#: experimental/PortConnectionDialogExt.cpp:180
-#: experimental/PortConnectionDialogExt.cpp:222
+#: tmp/PortConnectionDialogExt.cpp:180 tmp/PortConnectionDialogExt.cpp:222
 msgid "Buffer write timeout : "
 msgstr "バッファ書込タイムアウト : "
 
 #: PortConnectionDialog.cpp:185 PortConnectionDialog.cpp:227
-#: experimental/PortConnectionDialogExt.cpp:185
-#: experimental/PortConnectionDialogExt.cpp:227
+#: tmp/PortConnectionDialogExt.cpp:185 tmp/PortConnectionDialogExt.cpp:227
 msgid "Buffer empty policy : "
 msgstr "バッファエンプティポリシー : "
 
 #: PortConnectionDialog.cpp:192 PortConnectionDialog.cpp:234
-#: experimental/PortConnectionDialogExt.cpp:192
-#: experimental/PortConnectionDialogExt.cpp:234
+#: tmp/PortConnectionDialogExt.cpp:192 tmp/PortConnectionDialogExt.cpp:234
 msgid "Buffer read timeout : "
 msgstr "バッファ読込タイムアウト : "
 
-#: PortConnectionDialog.cpp:197 experimental/PortConnectionDialogExt.cpp:197
+#: PortConnectionDialog.cpp:197 tmp/PortConnectionDialogExt.cpp:197
 msgid "Buffer (Outport)"
 msgstr "バッファ（出力ポート）"
 
-#: PortConnectionDialog.cpp:239 experimental/PortConnectionDialogExt.cpp:239
+#: PortConnectionDialog.cpp:239 tmp/PortConnectionDialogExt.cpp:239
 msgid "Buffer (Inport)"
 msgstr "バッファ（入力ポート）"
 
 #: PortConnectionDialog.cpp:405 PortConnectionDialog.cpp:562
-#: PortConnectionDialog.cpp:576 experimental/PortConnectionDialogExt.cpp:405
-#: experimental/PortConnectionDialogExt.cpp:562
-#: experimental/PortConnectionDialogExt.cpp:576
+#: PortConnectionDialog.cpp:576 tmp/PortConnectionDialogExt.cpp:405
+#: tmp/PortConnectionDialogExt.cpp:562 tmp/PortConnectionDialogExt.cpp:576
 msgid "Port Connect"
 msgstr "ポート接続"
 
 #: PortConnectionDialog.cpp:405 PortConnectionDialog.cpp:562
-#: PortConnectionDialog.cpp:576 experimental/PortConnectionDialogExt.cpp:405
-#: experimental/PortConnectionDialogExt.cpp:562
-#: experimental/PortConnectionDialogExt.cpp:576
+#: PortConnectionDialog.cpp:576 tmp/PortConnectionDialogExt.cpp:405
+#: tmp/PortConnectionDialogExt.cpp:562 tmp/PortConnectionDialogExt.cpp:576
 msgid "Duplicate property name."
 msgstr "重複プロパティ名"
 
@@ -361,59 +351,61 @@ msgstr "確認"
 msgid "Are you sure you want to delete?"
 msgstr "本当に削除しても良いですか？"
 
-#: RTSNameServerView.cpp:789 RTSDiagramView.cpp:1575
-#: experimental/RTSDiagramExtView.cpp:1603
+#: RTSNameServerView.cpp:789 tmp/RTSDiagramExtView.cpp:1603
+#: RTSDiagramView.cpp:1575 experimental/RTSDiagramViewEx.cpp:1599
 msgid "Activate"
 msgstr "アクティベート"
 
-#: RTSNameServerView.cpp:789 RTSDiagramView.cpp:1575
-#: experimental/RTSDiagramExtView.cpp:1603
+#: RTSNameServerView.cpp:789 tmp/RTSDiagramExtView.cpp:1603
+#: RTSDiagramView.cpp:1575 experimental/RTSDiagramViewEx.cpp:1599
 msgid "Activation of target component FAILED."
 msgstr "対象コンポーネントのアクティベーションができませんでした．"
 
-#: RTSNameServerView.cpp:798 RTSDiagramView.cpp:1584
-#: experimental/RTSDiagramExtView.cpp:1612
+#: RTSNameServerView.cpp:798 tmp/RTSDiagramExtView.cpp:1612
+#: RTSDiagramView.cpp:1584 experimental/RTSDiagramViewEx.cpp:1608
 msgid "Deactivate"
 msgstr "ディアクティベート"
 
-#: RTSNameServerView.cpp:798 RTSDiagramView.cpp:1584
-#: experimental/RTSDiagramExtView.cpp:1612
+#: RTSNameServerView.cpp:798 tmp/RTSDiagramExtView.cpp:1612
+#: RTSDiagramView.cpp:1584 experimental/RTSDiagramViewEx.cpp:1608
 msgid "Deactivation of target component FAILED."
 msgstr "対象コンポーネントのディアクティベーションができませんでした．"
 
-#: RTSNameServerView.cpp:807 RTSDiagramView.cpp:1593
-#: experimental/RTSDiagramExtView.cpp:1621
+#: RTSNameServerView.cpp:807 tmp/RTSDiagramExtView.cpp:1621
+#: RTSDiagramView.cpp:1593 experimental/RTSDiagramViewEx.cpp:1617
 msgid "Reset"
 msgstr "リセット"
 
-#: RTSNameServerView.cpp:807 RTSDiagramView.cpp:1593
-#: experimental/RTSDiagramExtView.cpp:1621
+#: RTSNameServerView.cpp:807 tmp/RTSDiagramExtView.cpp:1621
+#: RTSDiagramView.cpp:1593 experimental/RTSDiagramViewEx.cpp:1617
 msgid "FAILED to reset target component."
 msgstr "対象コンポーネントをリセットできませんでした．"
 
-#: RTSNameServerView.cpp:816 RTSDiagramView.cpp:1602
-#: experimental/RTSDiagramExtView.cpp:1630
+#: RTSNameServerView.cpp:816 tmp/RTSDiagramExtView.cpp:1630
+#: RTSDiagramView.cpp:1602 experimental/RTSDiagramViewEx.cpp:1626
 msgid "Exit"
 msgstr "終了"
 
-#: RTSNameServerView.cpp:816 RTSDiagramView.cpp:1602
-#: experimental/RTSDiagramExtView.cpp:1630
+#: RTSNameServerView.cpp:816 tmp/RTSDiagramExtView.cpp:1630
+#: RTSDiagramView.cpp:1602 experimental/RTSDiagramViewEx.cpp:1626
 msgid "FAILED to exit target component."
 msgstr "対象コンポーネントを終了できませんでした．"
 
-#: RTSNameServerView.cpp:826 RTSNameServerView.cpp:835 RTSDiagramView.cpp:1612
-#: RTSDiagramView.cpp:1621 experimental/RTSDiagramExtView.cpp:1640
-#: experimental/RTSDiagramExtView.cpp:1649
+#: RTSNameServerView.cpp:826 RTSNameServerView.cpp:835
+#: tmp/RTSDiagramExtView.cpp:1640 tmp/RTSDiagramExtView.cpp:1649
+#: RTSDiagramView.cpp:1612 RTSDiagramView.cpp:1621
+#: experimental/RTSDiagramViewEx.cpp:1636
+#: experimental/RTSDiagramViewEx.cpp:1645
 msgid "Start"
 msgstr "開始"
 
-#: RTSNameServerView.cpp:826 RTSDiagramView.cpp:1612
-#: experimental/RTSDiagramExtView.cpp:1640
+#: RTSNameServerView.cpp:826 tmp/RTSDiagramExtView.cpp:1640
+#: RTSDiagramView.cpp:1612 experimental/RTSDiagramViewEx.cpp:1636
 msgid "FAILED to start ExecutionContext."
 msgstr "実行コンテキストを稼働できませんでした．"
 
-#: RTSNameServerView.cpp:835 RTSDiagramView.cpp:1621
-#: experimental/RTSDiagramExtView.cpp:1649
+#: RTSNameServerView.cpp:835 tmp/RTSDiagramExtView.cpp:1649
+#: RTSDiagramView.cpp:1621 experimental/RTSDiagramViewEx.cpp:1645
 msgid "FAILED to stop ExecutionContext."
 msgstr "実行コンテキストを停止できませんでした．"
 
@@ -591,51 +583,77 @@ msgstr "{}を削除できませんでした．"
 msgid "RTM-Image"
 msgstr ""
 
-#: RTSystemItem.cpp:491 experimental/RTSystemExtItem.cpp:602
-#: experimental/RTSystemExtItem.cpp:715
+#: RTSystemItem.cpp:501 experimental/RTSystemItemEx.cpp:605
+#: experimental/RTSystemItemEx.cpp:720
 msgid "CORBA {0} ({1}), {2} in RTSComp::connectionCheckSub()"
 msgstr ""
 
-#: RTSystemItem.cpp:557 experimental/RTSystemExtItem.cpp:781
+#: RTSystemItem.cpp:567 experimental/RTSystemItemEx.cpp:786
 msgid "CORBA {0} ({1}), {2} in RTSComp::getComponentPath()"
 msgstr ""
 
-#: RTSystemItem.cpp:591 experimental/RTSystemExtItem.cpp:813
+#: RTSystemItem.cpp:601 experimental/RTSystemItemEx.cpp:818
 msgid "RTSystemItem"
 msgstr "RTシステムアイテム"
 
-#: RTSystemItem.cpp:594 experimental/RTSystemExtItem.cpp:816
+#: RTSystemItem.cpp:604 experimental/RTSystemItemEx.cpp:821
 msgid "RT-System"
 msgstr "RTシステム"
 
-#: RTSystemItem.cpp:1060 experimental/RTSystemExtItem.cpp:1353
+#: RTSystemItem.cpp:1070
 msgid "Auto Connection"
 msgstr "自動接続"
 
-#: RTSystemItem.cpp:1061 experimental/RTSystemExtItem.cpp:1354
+#: RTSystemItem.cpp:1071
 msgid "Vendor Name"
 msgstr "ベンダ名"
 
-#: RTSystemItem.cpp:1062 RTSPropertiesView.cpp:225
-#: experimental/RTSystemExtItem.cpp:1355
+#: RTSystemItem.cpp:1072 RTSPropertiesView.cpp:225
+#: experimental/RTSystemItemEx.cpp:1377
 msgid "Version"
 msgstr "バージョン"
 
-#: RTSystemItem.cpp:1063 experimental/RTSystemExtItem.cpp:1356
+#: RTSystemItem.cpp:1073
 msgid "State Check"
 msgstr "状態チェック"
 
-#: RTSystemItem.cpp:1065 experimental/RTSystemExtItem.cpp:1358
+#: RTSystemItem.cpp:1075
 msgid "Polling Cycle"
 msgstr "ポーリング周期"
 
-#: RTSystemItem.cpp:1067 experimental/RTSystemExtItem.cpp:1360
+#: RTSystemItem.cpp:1077
 msgid "CheckAtLoading"
 msgstr "読込時にチェック"
 
-#: RTSystemItem.cpp:1070 experimental/RTSystemExtItem.cpp:1363
+#: RTSystemItem.cpp:1080
 msgid "HeartBeat Period"
 msgstr "ハートビート周期:"
+
+#: tmp/RTSDiagramExtView.cpp:974 RTSDiagramView.cpp:902
+#: experimental/RTSDiagramViewEx.cpp:970
+msgid "Drag and drop has been canceled. Please be operation again."
+msgstr ""
+"ドラッグアンドドロップはキャンセルされました．もう一度操作してください．"
+
+#: tmp/RTSDiagramExtView.cpp:985 RTSDiagramView.cpp:913
+#: experimental/RTSDiagramViewEx.cpp:981
+msgid "{} is not alive"
+msgstr "{}は生存していません"
+
+#: tmp/RTSDiagramExtView.cpp:1069 RTSDiagramView.cpp:997
+#: experimental/RTSDiagramViewEx.cpp:1065
+msgid "Update"
+msgstr "更新"
+
+#: tmp/RTSDiagramExtView.cpp:1135 RTSDiagramView.cpp:1063
+#: experimental/RTSDiagramViewEx.cpp:1131
+msgid "These are already connected."
+msgstr "それらは既に接続されています．"
+
+#: tmp/RTSDiagramExtView.cpp:1724 RTSDiagramView.cpp:1779
+#: experimental/RTSDiagramViewEx.cpp:1720
+msgid "RTC Diagram"
+msgstr "RTCダイアグラム"
 
 #: RTSPropertiesView.cpp:34
 msgid "PERIODIC"
@@ -801,27 +819,6 @@ msgstr "OpenRTM設定画面"
 msgid "The specified setting becomes valid after RESTART."
 msgstr "指定した設定は再起動後に有効となります"
 
-#: RTSDiagramView.cpp:902 experimental/RTSDiagramExtView.cpp:974
-msgid "Drag and drop has been canceled. Please be operation again."
-msgstr ""
-"ドラッグアンドドロップはキャンセルされました．もう一度操作してください．"
-
-#: RTSDiagramView.cpp:913 experimental/RTSDiagramExtView.cpp:985
-msgid "{} is not alive"
-msgstr "{}は生存していません"
-
-#: RTSDiagramView.cpp:997 experimental/RTSDiagramExtView.cpp:1069
-msgid "Update"
-msgstr "更新"
-
-#: RTSDiagramView.cpp:1063 experimental/RTSDiagramExtView.cpp:1135
-msgid "These are already connected."
-msgstr "それらは既に接続されています．"
-
-#: RTSDiagramView.cpp:1779 experimental/RTSDiagramExtView.cpp:1724
-msgid "RTC Diagram"
-msgstr "RTCダイアグラム"
-
 #: RTSConfigurationView.cpp:132
 msgid "Configuration"
 msgstr "コンフィギュレーション"
@@ -889,3 +886,48 @@ msgstr "RTコンポーネントのプロセス \"{}\" を起動できません�
 #: RTCItem.cpp:429
 msgid "RT Component process \"{}\" has been executed."
 msgstr "RTコンポーネントのプロセス \"{}\" を起動しました．"
+
+#: experimental/RTSystemItemEx.cpp:855
+msgid "Polling"
+msgstr "ポーリング"
+
+#: experimental/RTSystemItemEx.cpp:856
+msgid "Manual"
+msgstr "マニュアル"
+
+#: experimental/RTSystemItemEx.cpp:866
+msgid "Foreground"
+msgstr "フォアグラウンド"
+
+#: experimental/RTSystemItemEx.cpp:867
+msgid "Background"
+msgstr "バックグラウンド"
+
+#: experimental/RTSystemItemEx.cpp:1375
+msgid "Auto connection"
+msgstr "自動接続"
+
+#: experimental/RTSystemItemEx.cpp:1376
+msgid "Vendor name"
+msgstr "ベンダ名"
+
+#: experimental/RTSystemItemEx.cpp:1378
+msgid "State check mode"
+msgstr "状態チェックモード"
+
+#: experimental/RTSystemItemEx.cpp:1380
+msgid "Polling cycle"
+msgstr "ポーリング周期"
+
+#: experimental/RTSystemItemEx.cpp:1382
+msgid "Polling thread"
+msgstr "ポーリングスレッド"
+
+#: experimental/RTSystemItemEx.cpp:1383
+msgid "Check at loading"
+msgstr "読込時にチェック"
+
+#: experimental/RTSystemItemEx.cpp:1386
+msgid "Heart-beat period"
+msgstr "ハートビート周期"
+
