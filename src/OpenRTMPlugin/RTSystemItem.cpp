@@ -1065,17 +1065,17 @@ void RTSystemItem::doPutProperties(PutPropertyFunction& putProperty)
 void RTSystemItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
     DDEBUG("RTSystemItemImpl::doPutProperties");
-    putProperty(_("Auto Connection"), autoConnection, changeProperty(autoConnection));
-    putProperty(_("Vendor Name"), vendorName, changeProperty(vendorName));
+    putProperty(_("Auto connection"), autoConnection, changeProperty(autoConnection));
+    putProperty(_("Vendor name"), vendorName, changeProperty(vendorName));
     putProperty(_("Version"), version, changeProperty(version));
-    putProperty(_("State Check"), stateCheck,
+    putProperty(_("State check"), stateCheck,
                 [&](int value) { setStateCheckMethod(value); return true; });
-    putProperty(_("Polling Cycle"), pollingCycle,
+    putProperty(_("Polling cycle"), pollingCycle,
                 [&](int value) { changePollingPeriod(value); return true; });
-    putProperty(_("CheckAtLoading"), checkAtLoading, changeProperty(checkAtLoading));
+    putProperty(_("Check at loading"), checkAtLoading, changeProperty(checkAtLoading));
 
 #if defined(OPENRTM_VERSION12)
-    putProperty(_("HeartBeat Period"), heartBeatPeriod, changeProperty(heartBeatPeriod));
+    putProperty(_("Heart-beat period"), heartBeatPeriod, changeProperty(heartBeatPeriod));
 #endif
 }
 
@@ -1221,7 +1221,7 @@ bool RTSystemItem::store(Archive& archive)
 
         archive.write("autoConnection", impl->autoConnection);
         archive.write("pollingCycle", impl->pollingCycle);
-        archive.write("stateCheck", impl->stateCheck.selectedSymbol());
+        archive.write("stateCheckMode", impl->stateCheck.selectedSymbol());
         archive.write("checkAtLoading", impl->checkAtLoading);
 
 #if defined(OPENRTM_VERSION12)
@@ -1238,21 +1238,21 @@ bool RTSystemItem::restore(const Archive& archive)
 {
     DDEBUG("RTSystemItemImpl::restore");
 
-    if (!archive.read("autoConnection", impl->autoConnection)) {
+    if (!archive.read("autoConnection", impl->autoConnection)){
         archive.read("AutoConnection", impl->autoConnection);
     }
-    if( !archive.read("checkAtLoading", impl->checkAtLoading)) {
+    if(!archive.read("checkAtLoading", impl->checkAtLoading)){
         archive.read("CheckAtLoading", impl->checkAtLoading);
     }
     int pollingCycle = 1000;
-    if( archive.read("pollingCycle", pollingCycle)==false) {
+    if(!archive.read("pollingCycle", pollingCycle)){
         archive.read("PollingCycle", pollingCycle);
     }
     impl->changePollingPeriod(pollingCycle);
 
 
 #if defined(OPENRTM_VERSION12)
-    if(!archive.read("HeartBeatPeriod", impl->heartBeatPeriod)) {
+    if(!archive.read("HeartBeatPeriod", impl->heartBeatPeriod)){
         archive.read("heartBeatPeriod", impl->heartBeatPeriod);
     }
 #endif
@@ -1273,10 +1273,12 @@ bool RTSystemItem::restore(const Archive& archive)
     }
 
     string stateCheck;
-    if (!archive.read("stateCheck", stateCheck)) {
-        archive.read("StateCheck", stateCheck);
+    if(!archive.read("stateCheckMode", stateCheck)){
+        if(!archive.read("stateCheck", stateCheck)){
+            archive.read("StateCheck", stateCheck);
+        }
     }
-    if(stateCheck.empty()==false) {
+    if(!stateCheck.empty()) {
         DDEBUG_V("StateCheck:%s", stateCheck.c_str());
         impl->setStateCheckMethodByString(stateCheck);
         archive.addPostProcess([&]() { impl->changeStateCheck(); });

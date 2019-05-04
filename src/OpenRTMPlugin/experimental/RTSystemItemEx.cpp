@@ -1727,22 +1727,22 @@ bool RTSystemItemEx::restore(const Archive& archive)
 {
     DDEBUG("RTSystemItemEx::restore");
 
-    if (archive.read("autoConnection", impl->autoConnection) == false) {
+    if(!archive.read("autoConnection", impl->autoConnection)){
         archive.read("AutoConnection", impl->autoConnection);
     }
 
     int pollingCycle = 1000;
-    if( archive.read("pollingCycle", pollingCycle)==false) {
+    if(!archive.read("pollingCycle", pollingCycle)){
         archive.read("PollingCycle", pollingCycle);
     }
-    if( archive.read("checkAtLoading", impl->checkAtLoading)==false) {
+    if(!archive.read("checkAtLoading", impl->checkAtLoading)){
         archive.read("CheckAtLoading", impl->checkAtLoading);
     }
 
     impl->changePollingPeriod(pollingCycle);
 
 #if defined(OPENRTM_VERSION12)
-    if(archive.read("HeartBeatPeriod", impl->heartBeatPeriod) == false) {
+    if(!archive.read("HeartBeatPeriod", impl->heartBeatPeriod)){
         archive.read("heartBeatPeriod", impl->heartBeatPeriod);
     }
 #endif
@@ -1763,7 +1763,7 @@ bool RTSystemItemEx::restore(const Archive& archive)
     }
 
     string symbol;
-    if(archive.read("stateCheckMode", symbol)){
+    if(archive.read("stateCheckMode", symbol) || archive.read("stateCheck", symbol)){
         DDEBUG_V("StateCheckMode:%s", symbol.c_str());
         impl->setStateCheckModeByString(symbol);
         archive.addPostProcess([&]() { impl->changeStateCheckMode(); });
