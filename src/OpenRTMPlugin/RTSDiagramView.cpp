@@ -31,7 +31,6 @@
 
 using namespace cnoid;
 using namespace std;
-using namespace std::placeholders;
 using namespace RTC;
 
 #define STATE_CHECK_TIME 1000  //msec
@@ -372,7 +371,7 @@ RTSConnectionGItem::RTSConnectionGItem
             marker[2] = new RTSConnectionMarkerItem(line[3]->cx, line[3]->cy, RTSConnectionMarkerItem::HORIZONTAL);
             signalConnections.add(
                 marker[2]->sigPositionChanged.connect(
-                    std::bind(&RTSConnectionGItem::lineMove, this, _1)));
+                    [&](RTSConnectionMarkerItem* marker){ lineMove(marker); }));
             marker[3] = marker[4] = 0;
         } else {
             type = FIVEPARTS_TYPE;
@@ -383,13 +382,13 @@ RTSConnectionGItem::RTSConnectionGItem
             marker[4] = new RTSConnectionMarkerItem(line[4]->cx, line[4]->cy, RTSConnectionMarkerItem::HORIZONTAL);
             signalConnections.add(
                 marker[2]->sigPositionChanged.connect(
-                    std::bind(&RTSConnectionGItem::lineMove, this, _1)));
+                    [&](RTSConnectionMarkerItem* marker){ lineMove(marker); }));
             signalConnections.add(
                 marker[3]->sigPositionChanged.connect(
-                    std::bind(&RTSConnectionGItem::lineMove, this, _1)));
+                    [&](RTSConnectionMarkerItem* marker){ lineMove(marker); }));
             signalConnections.add(
                 marker[4]->sigPositionChanged.connect(
-                    std::bind(&RTSConnectionGItem::lineMove, this, _1)));
+                    [&](RTSConnectionMarkerItem* marker){ lineMove(marker); }));
         }
     } else {
         qreal sx, tx;
@@ -417,7 +416,7 @@ RTSConnectionGItem::RTSConnectionGItem
             marker[2] = new RTSConnectionMarkerItem(line[3]->cx, line[3]->cy, RTSConnectionMarkerItem::HORIZONTAL);
             signalConnections.add(
                 marker[2]->sigPositionChanged.connect(
-                    std::bind(&RTSConnectionGItem::lineMove, this, _1)));
+                    [&](RTSConnectionMarkerItem* marker){ lineMove(marker); }));
             marker[3] = marker[4] = 0;
 
         } else {
@@ -436,13 +435,13 @@ RTSConnectionGItem::RTSConnectionGItem
             marker[4] = new RTSConnectionMarkerItem(line[4]->cx, line[4]->cy, RTSConnectionMarkerItem::HORIZONTAL);
             signalConnections.add(
                 marker[2]->sigPositionChanged.connect(
-                    std::bind(&RTSConnectionGItem::lineMove, this, _1)));
+                    [&](RTSConnectionMarkerItem* marker){ lineMove(marker); }));
             signalConnections.add(
                 marker[3]->sigPositionChanged.connect(
-                    std::bind(&RTSConnectionGItem::lineMove, this, _1)));
+                    [&](RTSConnectionMarkerItem* marker){ lineMove(marker); }));
             signalConnections.add(
                 marker[4]->sigPositionChanged.connect(
-                    std::bind(&RTSConnectionGItem::lineMove, this, _1)));
+                    [&](RTSConnectionMarkerItem* marker){ lineMove(marker); }));
         }
 
         Vector2 pos[6];
@@ -829,19 +828,19 @@ RTSDiagramViewImpl::RTSDiagramViewImpl(RTSDiagramView* self)
         nsViewSelections = nsView->getSelection();
         nsViewSelectionChangedConnection.reset(
             nsView->sigSelectionChanged().connect(
-                std::bind(&RTSDiagramViewImpl::onnsViewItemSelectionChanged, this, _1)));
+                [&](const list<NamingContextHelper::ObjectInfo>& items){
+                    onnsViewItemSelectionChanged(items); }));
     }
 
     timer.setSingleShot(false);
     timeOutConnection.reset(
-        timer.sigTimeout().connect(
-            std::bind(&RTSDiagramViewImpl::onTime, this)));
-    self->sigActivated().connect(std::bind(&RTSDiagramViewImpl::onActivated, this, true));
-    self->sigDeactivated().connect(std::bind(&RTSDiagramViewImpl::onActivated, this, false));
+        timer.sigTimeout().connect([&](){ onTime(); }));
+    self->sigActivated().connect([&](){ onActivated(true); });
+    self->sigDeactivated().connect([&](){ onActivated(false); });
 
     itemTreeViewSelectionChangedConnection.reset(
         ItemTreeView::mainInstance()->sigSelectionChanged().connect(
-            std::bind(&RTSDiagramViewImpl::onItemTreeViewSelectionChanged, this, _1)));
+            [&](const ItemList<>& items){ onItemTreeViewSelectionChanged(items); }));
 
     QPen pen(Qt::DashDotLine);
     pen.setWidth(2);
@@ -963,31 +962,31 @@ void RTSDiagramViewImpl::mousePressEvent(QMouseEvent* event)
                 if (!selectionRTCs.front()->rtsComp->rtc_) return;
                 menuManager.setNewPopupMenu(this);
                 menuManager.addItem("Activate")
-                    ->sigTriggered().connect(std::bind(&RTSDiagramViewImpl::activateComponent, this));
+                    ->sigTriggered().connect([&](){ activateComponent(); });
                 menuManager.addItem("Deactivate")
-                    ->sigTriggered().connect(std::bind(&RTSDiagramViewImpl::deactivateComponent, this));
+                    ->sigTriggered().connect([&](){ deactivateComponent(); });
                 menuManager.addItem("Reset")
-                    ->sigTriggered().connect(std::bind(&RTSDiagramViewImpl::resetComponent, this));
+                    ->sigTriggered().connect([&](){ resetComponent(); });
                 if (!isManagedRTC(selectionRTCs.front()->rtsComp->rtc_)) {
                     menuManager.addItem("Exit")
-                        ->sigTriggered().connect(std::bind(&RTSDiagramViewImpl::finalizeComponent, this));
+                        ->sigTriggered().connect([&](){ finalizeComponent(); });
                 }
                 menuManager.addSeparator();
                 menuManager.addItem("Start")
-                    ->sigTriggered().connect(std::bind(&RTSDiagramViewImpl::startExecutionContext, this));
+                    ->sigTriggered().connect([&](){ startExecutionContext(); });
                 menuManager.addItem("Stop")
-                    ->sigTriggered().connect(std::bind(&RTSDiagramViewImpl::stopExecutionContext, this));
+                    ->sigTriggered().connect([&](){ stopExecutionContext(); });
                 menuManager.addSeparator();
             }
             menuManager.addItem("Remove")
-                ->sigTriggered().connect(std::bind(&RTSDiagramViewImpl::deleteSelectedRTSItem, this));
+                ->sigTriggered().connect([&](){ deleteSelectedRTSItem(); });
 
             menuManager.popupMenu()->popup(event->globalPos());
 
         } else if (!selectionRTSConnections.empty()) {
             menuManager.setNewPopupMenu(this);
             menuManager.addItem("Delete")
-                ->sigTriggered().connect(std::bind(&RTSDiagramViewImpl::deleteSelectedRTSItem, this));
+                ->sigTriggered().connect([&](){ deleteSelectedRTSItem(); });
 
             menuManager.popupMenu()->popup(event->globalPos());
 
@@ -995,7 +994,7 @@ void RTSDiagramViewImpl::mousePressEvent(QMouseEvent* event)
             if (currentRTSItem->stateCheck() == 1) {
                 menuManager.setNewPopupMenu(this);
                 menuManager.addItem(_("Update"))
-                    ->sigTriggered().connect(std::bind(&RTSDiagramViewImpl::onTime, this));
+                    ->sigTriggered().connect([&](){ onTime(); });
 
                 menuManager.popupMenu()->popup(event->globalPos());
             }
@@ -1498,13 +1497,13 @@ void RTSDiagramViewImpl::setCurrentRTSItem(RTSystemItem* item)
             [&]() { onRTSystemItemDetachedFromRoot(); }));
     timerPeriodChangedConnection.reset(
             currentRTSItem->sigTimerPeriodChanged().connect(
-                std::bind(&RTSDiagramViewImpl::timerPeriodUpdate, this, _1)));
+                [&](int value){ timerPeriodUpdate(value); }));
     timerChangedConnection.reset(
             currentRTSItem->sigTimerChanged().connect(
-                std::bind(&RTSDiagramViewImpl::onActivated, this, _1)));
+                [&](bool on){ onActivated(on); }));
     rtsLoadedConnection.reset(
             currentRTSItem->sigUpdated().connect(
-                std::bind(&RTSDiagramViewImpl::onRTSystemLoaded, this)));
+                [&](){ onRTSystemLoaded(); }));
 
     updateView();
 }
@@ -1640,7 +1639,8 @@ RTSCompGItem::RTSCompGItem(RTSComp* rtsComp, RTSDiagramViewImpl* impl, const QPo
 
     create(pos, interval);
     positionChangeConnection = sigPositionChanged.connect(
-        std::bind(&RTSDiagramViewImpl::onRTSCompPositionChanged, impl, _1));
+        [impl](const RTSCompGItem* item){
+            impl->onRTSCompPositionChanged(item); });
 }
 
 

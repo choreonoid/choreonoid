@@ -16,7 +16,6 @@
 
 using namespace cnoid;
 using namespace std;
-using namespace std::placeholders;
 using namespace RTC;
 using fmt::format;
 
@@ -872,9 +871,7 @@ RTSystemItemExImpl::RTSystemItemExImpl(RTSystemItemEx* self)
 
     timer.setInterval(pollingCycle);
     timer.setSingleShot(false);
-    timeOutConnection.reset(
-        timer.sigTimeout().connect(
-            std::bind(&RTSystemItemExImpl::checkStatus, this)));
+    timeOutConnection.reset(timer.sigTimeout().connect([&](){ checkStatus(); }));
 }
 
 

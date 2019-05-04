@@ -8,12 +8,10 @@
 #include <rtm/CORBA_SeqUtil.h>
 #include <fmt/format.h>
 #include "LoggerUtil.h"
-
 #include "gettext.h"
 
 using namespace cnoid;
 using namespace std;
-using namespace std::placeholders;
 using namespace RTC;
 using fmt::format;
 
