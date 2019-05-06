@@ -647,73 +647,75 @@ endif()
 option(ENABLE_CORBA "Enable CORBA related modules / plugins" OFF)
 
 if(ENABLE_CORBA)
-
+  # The OMNIDYNAMIC_XXX variables are used for storing the omniORB information
+  # because the OMNIORB_XXX varialbes collide with the OpenRTM-aist configuration
+  # and the omniDynamic4 library is actually required to build some modules.
   if(UNIX)
-    if(NOT OMNIORB_DIR)
-      pkg_check_modules(OMNIORB omniDynamic4)
-      if(OMNIORB_FOUND)
-	set(OMNIORB_DIR ${OMNIORB_PREFIX})
+    if(NOT OMNIDYNAMIC_DIR)
+      pkg_check_modules(OMNIDYNAMIC omniDynamic4)
+      if(OMNIDYNAMIC_FOUND)
+	set(OMNIDYNAMIC_DIR ${OMNIDYNAMIC_PREFIX})
       endif()
     else()
-      set(OMNIORB_FOUND TRUE)
-      set(OMNIORB_INCLUDE_DIRS ${OMNIORB_DIR}/include)
-      set(OMNIORB_LIBRARY_DIRS ${OMNIORB_DIR}/lib)
+      set(OMNIDYNAMIC_FOUND TRUE)
+      set(OMNIDYNAMIC_INCLUDE_DIRS ${OMNIDYNAMIC_DIR}/include)
+      set(OMNIDYNAMIC_LIBRARY_DIRS ${OMNIDYNAMIC_DIR}/lib)
     endif()
   elseif(MSVC)
-    if(NOT OMNIORB_DIR)
+    if(NOT OMNIDYNAMIC_DIR)
       if(NOT $ENV{OMNI_ROOT} STREQUAL "")
-	set(OMNIORB_DIR $ENV{OMNI_ROOT})
+	set(OMNIDYNAMIC_DIR $ENV{OMNI_ROOT})
       endif()
     endif()
-    if(OMNIORB_DIR)
-      set(OMNIORB_FOUND TRUE)
-      set(OMNIORB_INCLUDE_DIRS ${OMNIORB_DIR}/include)
-      set(OMNIORB_LIBRARY_DIRS ${OMNIORB_DIR}/lib/x86_win32)
-      set(OMNIORB_BINARY_DIR ${OMNIORB_DIR}/bin/x86_win32)
-      set(OMNIORB_CFLAGS -D__WIN32__ -D__x86__ )
+    if(OMNIDYNAMIC_DIR)
+      set(OMNIDYNAMIC_FOUND TRUE)
+      set(OMNIDYNAMIC_INCLUDE_DIRS ${OMNIDYNAMIC_DIR}/include)
+      set(OMNIDYNAMIC_LIBRARY_DIRS ${OMNIDYNAMIC_DIR}/lib/x86_win32)
+      set(OMNIDYNAMIC_BINARY_DIR ${OMNIDYNAMIC_DIR}/bin/x86_win32)
+      set(OMNIDYNAMIC_CFLAGS -D__WIN32__ -D__x86__ )
 
-      file(GLOB libomniorb RELATIVE ${OMNIORB_LIBRARY_DIRS} "${OMNIORB_LIBRARY_DIRS}/omniORB???_rt.lib")
+      file(GLOB libomniorb RELATIVE ${OMNIDYNAMIC_LIBRARY_DIRS} "${OMNIDYNAMIC_LIBRARY_DIRS}/omniORB???_rt.lib")
       get_filename_component(libomniorb ${libomniorb} NAME_WE)
 
-      file(GLOB libomnithread RELATIVE ${OMNIORB_LIBRARY_DIRS} "${OMNIORB_LIBRARY_DIRS}/omnithread??_rt.lib")
+      file(GLOB libomnithread RELATIVE ${OMNIDYNAMIC_LIBRARY_DIRS} "${OMNIDYNAMIC_LIBRARY_DIRS}/omnithread??_rt.lib")
       get_filename_component(libomnithread ${libomnithread} NAME_WE)
 
-      file(GLOB libomnidynamic RELATIVE ${OMNIORB_LIBRARY_DIRS} "${OMNIORB_LIBRARY_DIRS}/omniDynamic???_rt.lib")
+      file(GLOB libomnidynamic RELATIVE ${OMNIDYNAMIC_LIBRARY_DIRS} "${OMNIDYNAMIC_LIBRARY_DIRS}/omniDynamic???_rt.lib")
       get_filename_component(libomnidynamic ${libomnidynamic} NAME_WE)
 
-      set(OMNIORB_LIBRARIES_RELEASE ${libomniorb} ${libomnithread} ${libomnidynamic})
-      foreach(library ${OMNIORB_LIBRARIES_RELEASE})
-	list(APPEND OMNIORB_LIBRARIES optimized ${library} debug ${library}d )
+      set(OMNIDYNAMIC_LIBRARIES_RELEASE ${libomniorb} ${libomnithread} ${libomnidynamic})
+      foreach(library ${OMNIDYNAMIC_LIBRARIES_RELEASE})
+	list(APPEND OMNIDYNAMIC_LIBRARIES optimized ${library} debug ${library}d )
       endforeach()
 
-      file(GLOB libomniorb RELATIVE ${OMNIORB_BINARY_DIR} "${OMNIORB_BINARY_DIR}/omniORB*_rt.dll")
+      file(GLOB libomniorb RELATIVE ${OMNIDYNAMIC_BINARY_DIR} "${OMNIDYNAMIC_BINARY_DIR}/omniORB*_rt.dll")
       get_filename_component(libomniorb ${libomniorb} NAME_WE)
 
-      file(GLOB libomnithread RELATIVE ${OMNIORB_BINARY_DIR} "${OMNIORB_BINARY_DIR}/omnithread*_rt.dll")
+      file(GLOB libomnithread RELATIVE ${OMNIDYNAMIC_BINARY_DIR} "${OMNIDYNAMIC_BINARY_DIR}/omnithread*_rt.dll")
       get_filename_component(libomnithread ${libomnithread} NAME_WE)
 
-      file(GLOB libomnidynamic RELATIVE ${OMNIORB_BINARY_DIR} "${OMNIORB_BINARY_DIR}/omniDynamic*_rt.dll")
+      file(GLOB libomnidynamic RELATIVE ${OMNIDYNAMIC_BINARY_DIR} "${OMNIDYNAMIC_BINARY_DIR}/omniDynamic*_rt.dll")
       get_filename_component(libomnidynamic ${libomnidynamic} NAME_WE)
 
-      set(OMNIORB_DLL_BASES ${libomniorb} ${libomnithread} ${libomnidynamic})
+      set(OMNIDYNAMIC_DLL_BASES ${libomniorb} ${libomnithread} ${libomnidynamic})
 
       if(INSTALL_RUNTIME_DEPENDENCIES)
-	foreach(library ${OMNIORB_DLL_BASES})
-	  install(PROGRAMS "${OMNIORB_BINARY_DIR}/${library}.dll" DESTINATION bin CONFIGURATIONS Release RelWithDebInfo MinSizeRel)
-	  install(PROGRAMS "${OMNIORB_BINARY_DIR}/${library}d.dll" DESTINATION bin CONFIGURATIONS Debug)
+	foreach(library ${OMNIDYNAMIC_DLL_BASES})
+	  install(PROGRAMS "${OMNIDYNAMIC_BINARY_DIR}/${library}.dll" DESTINATION bin CONFIGURATIONS Release RelWithDebInfo MinSizeRel)
+	  install(PROGRAMS "${OMNIDYNAMIC_BINARY_DIR}/${library}d.dll" DESTINATION bin CONFIGURATIONS Debug)
 	endforeach()
       endif()
     endif()
   endif()
   
-  include_directories(${OMNIORB_INCLUDE_DIRS})
-  link_directories(${OMNIORB_LIBRARY_DIRS})
-  add_definitions(${OMNIORB_CFLAGS})
+  include_directories(${OMNIDYNAMIC_INCLUDE_DIRS})
+  link_directories(${OMNIDYNAMIC_LIBRARY_DIRS})
+  add_definitions(${OMNIDYNAMIC_CFLAGS})
   
-  set(OMNIORB_DIR ${OMNIORB_DIR} CACHE PATH "The top directory of omniORB")
-  set(OMNIORB_CFLAGS ${OMNIORB_CFLAGS} CACHE STRING "Compile flags for omniORB")
+  set(OMNIDYNAMIC_DIR ${OMNIDYNAMIC_DIR} CACHE PATH "The top directory of omniORB")
+  set(OMNIDYNAMIC_CFLAGS ${OMNIDYNAMIC_CFLAGS} CACHE STRING "Compile flags for omniORB")
 
-  if(NOT OMNIORB_FOUND)
+  if(NOT OMNIDYNAMIC_FOUND)
     message(FATAL_ERROR "CORBA-related modules require the omniORB library but the library is not found.")
   endif()
 
@@ -754,7 +756,7 @@ if(ENABLE_CORBA)
 	elseif(MSVC)
 	  add_custom_command(
 	    OUTPUT ${corba_binary_dir}/${idl_name}.hh ${corba_binary_dir}/${idl_name}Sk.cpp ${corba_binary_dir}/${idl_name}DynSk.cpp
-	    COMMAND for %%A in \("${OMNIORB_DIR}/bin/x86_win32"\) do %%~sA\\omniidl ${idl_flags} ${corba_src_dir}/${idl_name}.idl
+	    COMMAND for %%A in \("${OMNIDYNAMIC_DIR}/bin/x86_win32"\) do %%~sA\\omniidl ${idl_flags} ${corba_src_dir}/${idl_name}.idl
 	    DEPENDS ${idl_files}
 	    COMMENT "Generating the C++ stubs and skeletons of ${idl_name}.idl"
 	    )
@@ -801,7 +803,7 @@ if(ENABLE_CORBA)
 	  file(TO_NATIVE_PATH ${corba_dir} dest)
 	  add_custom_command(
             OUTPUT ${corba_binary_dir}/${idl_name}.hh ${corba_dir}/${idl_name}.hh ${corba_binary_dir}/${idl_name}Sk.cpp ${corba_binary_dir}/${idl_name}DynSk.cpp
-            COMMAND for %%A in \("${OMNIORB_DIR}/bin/x86_win32"\) do %%~sA\\omniidl ${idl_flags} ${corba_dir}/${idl_name}.idl
+            COMMAND for %%A in \("${OMNIDYNAMIC_DIR}/bin/x86_win32"\) do %%~sA\\omniidl ${idl_flags} ${corba_dir}/${idl_name}.idl
             COMMAND copy ${src} ${dest}
             DEPENDS ${idl_files}
             COMMENT "Generating the C++ stubs and skeletons of ${idl_name}.idl"
@@ -901,32 +903,34 @@ endif(ENABLE_CORBA)
 if(BUILD_OPENRTM_PLUGIN)
   find_package(OpenRTM REQUIRED CONFIG)
 
-  # Remove extra "-I" from the elements of OPENRTM_INCLUDE_DIRS
-  unset(include_dirs)
-  foreach(dir ${OPENRTM_INCLUDE_DIRS})
-    string(REGEX REPLACE "^-I" "" stripped ${dir})
-    list(APPEND include_dirs ${stripped})
-  endforeach()
-  set(OPENRTM_INCLUDE_DIRS ${include_dirs})
-
-  # Remove extra "-L" from the elements of OPENRTM_LIBRARY_DIRS
-  unset(library_dirs)
-  foreach(dir ${OPENRTM_LIBRARY_DIRS})
-    string(REGEX REPLACE "^-L" "" stripped ${dir})
-    list(APPEND library_dirs ${stripped})
-  endforeach()
-  set(OPENRTM_LIBRARY_DIRS ${library_dirs})
-
-  set(IDL_INCLUDE_DIRS ${IDL_INCLUDE_DIRS} ${OPENRTM_INCLUDE_DIRS})
-
   # Check version
-  if(OPENRTM_VERSION STREQUAL "1.1.2")
-    list(APPEND OPENRTM_DEFINITIONS -DOPENRTM_VERSION11)
-  elseif(OPENRTM_VERSION STREQUAL "1.2.0")
+  if(OPENRTM_VERSION VERSION_GREATER_EQUAL "1.2.0")
     list(APPEND OPENRTM_DEFINITIONS -DOPENRTM_VERSION12)
+    list(APPEND OPENRTM_DEFINITIONS -Wno-deprecated)
+
+  elseif(OPENRTM_VERSION VERSION_EQUAL "1.1.2")
+    list(APPEND OPENRTM_DEFINITIONS -DOPENRTM_VERSION11)
+    # Remove extra "-I" from the elements of OPENRTM_INCLUDE_DIRS
+    unset(include_dirs)
+    foreach(dir ${OPENRTM_INCLUDE_DIRS})
+      string(REGEX REPLACE "^-I" "" stripped ${dir})
+      list(APPEND include_dirs ${stripped})
+    endforeach()
+    set(OPENRTM_INCLUDE_DIRS ${include_dirs})
+    # Remove extra "-L" from the elements of OPENRTM_LIBRARY_DIRS
+    unset(library_dirs)
+    foreach(dir ${OPENRTM_LIBRARY_DIRS})
+      string(REGEX REPLACE "^-L" "" stripped ${dir})
+      list(APPEND library_dirs ${stripped})
+    endforeach()
+    set(OPENRTM_LIBRARY_DIRS ${library_dirs})
+
   else()
     message(FATAL_ERROR "OpenRTM version is INVALID.")
   endif()
+
+  set(IDL_INCLUDE_DIRS ${IDL_INCLUDE_DIRS} ${OPENRTM_INCLUDE_DIRS})
+
   option(USE_BUILTIN_CAMERA_IMAGE_IDL "Enable this option when you run hrpsys-base on Choreonoid" OFF)
   if(USE_BUILTIN_CAMERA_IMAGE_IDL)
     list(APPEND OPENRTM_DEFINITIONS -DUSE_BUILTIN_CAMERA_IMAGE_IDL)

@@ -48,13 +48,13 @@ foreach(version ${versions})
   set(target openhrp${version}-online-viewer-test)
   add_cnoid_executable(${target} olv-test.cpp)
   set_target_properties(${target} PROPERTIES COMPILE_DEFINITIONS ${defver})
-  target_link_libraries(${target} CnoidOpenHRP${version} CnoidBody ${OMNIORB_LIBRARIES})
+  target_link_libraries(${target} CnoidOpenHRP${version} CnoidBody ${OMNIDYNAMIC_LIBRARIES})
   
   # Openhrp modelLoader debug program
   #set(target test-model-loader)
   #add_cnoid_executable(${target} test-model-loader.cpp)
   #set_target_properties(${target} PROPERTIES COMPILE_DEFINITIONS ${defver})
-  #target_link_libraries(${target} CnoidBody CnoidOpenHRP${version} ${OMNIORB_LIBRARIES})
+  #target_link_libraries(${target} CnoidBody CnoidOpenHRP${version} ${OMNIDYNAMIC_LIBRARIES})
   
 endforeach()
 

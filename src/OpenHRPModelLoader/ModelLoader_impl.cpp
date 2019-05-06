@@ -78,7 +78,6 @@ POA_OpenHRP::BodyInfo* ModelLoader_impl::loadBodyInfoFromModelFile(const string&
 
 
 BodyInfo_ptr ModelLoader_impl::getBodyInfo(const char* url)
-    throw (CORBA::SystemException, OpenHRP::ModelLoader::ModelLoaderException)
 {
     const string filename = removeURLScheme(string(url));
     UrlToBodyInfoMap::iterator p = urlToBodyInfoMap.find(filename);
@@ -95,7 +94,6 @@ BodyInfo_ptr ModelLoader_impl::getBodyInfo(const char* url)
 
 
 BodyInfo_ptr ModelLoader_impl::getBodyInfoEx(const char* url, const OpenHRP::ModelLoader::ModelLoadOption& option)
-    throw (CORBA::SystemException, OpenHRP::ModelLoader::ModelLoaderException)
 {
     return getBodyInfo(url);
 }
@@ -115,7 +113,6 @@ void ModelLoader_impl::clearData()
 
 
 BodyInfo_ptr ModelLoader_impl::loadBodyInfo(const char* url)
-    throw (CORBA::SystemException, OpenHRP::ModelLoader::ModelLoaderException)
 {
     const string filename = removeURLScheme(string(url));
     POA_OpenHRP::BodyInfo* bodyInfo = loadBodyInfoFromModelFile(filename);
@@ -124,14 +121,12 @@ BodyInfo_ptr ModelLoader_impl::loadBodyInfo(const char* url)
 
 
 BodyInfo_ptr ModelLoader_impl::loadBodyInfoEx(const char* url, const OpenHRP::ModelLoader::ModelLoadOption& option)
-    throw (CORBA::SystemException, OpenHRP::ModelLoader::ModelLoaderException)
 {
     return loadBodyInfo(url);
 }
 
 
 SceneInfo_ptr ModelLoader_impl::loadSceneInfo(const char* url)
-    throw (CORBA::SystemException, OpenHRP::ModelLoader::ModelLoaderException)
 {
     const string filename = removeURLScheme(string(url));
     SceneInfo_impl* sceneInfoImpl = new SceneInfo_impl(poa);
