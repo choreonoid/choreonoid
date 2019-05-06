@@ -15,8 +15,8 @@
 #include "RTMImageView.h"
 
 #ifdef ENABLE_NEW_RT_SYSTEM_ITEM_IMPLEMENTATION
-#include "RTSDiagramExtView.h"
-#include "RTSystemExtItem.h"
+#include "experimental/RTSDiagramViewEx.h"
+#include "experimental/RTSystemItemEx.h"
 #else
 #include "RTSDiagramView.h"
 #include "RTSystemItem.h"
@@ -46,7 +46,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 using fmt::format;
 
@@ -233,7 +232,7 @@ public:
             [&](const Archive& archive) { restore(archive); });
 
         NameServerInfo info = RTCCommonUtil::getManagerAddress();
-        if (info.hostAddress.empty() == false) {
+        if (!info.hostAddress.empty()) {
             NameServerManager::instance()->getNCHelper()->setLocation(info.hostAddress, info.portNo);
             DDEBUG_V("Init ncHelper host:%s, port:%d", info.hostAddress.c_str(), info.portNo);
         }
@@ -244,8 +243,13 @@ public:
         RTMImageView::initializeClass(this);
 
 #ifdef ENABLE_NEW_RT_SYSTEM_ITEM_IMPLEMENTATION
-        RTSystemExtItem::initializeClass(this);
-        RTSDiagramExtView::initializeClass(this);
+#ifdef ENABLE_BACKGROUND_STATE_DETECTION
+        RTSystemExt2Item::initializeClass(this);
+        RTSDiagramExt2View::initializeClass(this);
+#else
+        RTSystemItemEx::initializeClass(this);
+        RTSDiagramViewEx::initializeClass(this);
+#endif
 #else
         RTSystemItem::initializeClass(this);
         RTSDiagramView::initializeClass(this);

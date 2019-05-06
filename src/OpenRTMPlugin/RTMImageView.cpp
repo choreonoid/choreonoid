@@ -56,7 +56,7 @@ public:
     ImageWidget* imageWidget;
     ScopedConnection connection;
     ImageViewRTC* rtc;
-    OpenRTM::ExtTrigExecutionContextService_var execContext;
+    RTC::ExecutionContext_var execContext;
 
     RTMImageViewImpl(RTMImageView* self);
     ~RTMImageViewImpl();
@@ -112,7 +112,7 @@ RTMImageViewImpl::RTMImageViewImpl(RTMImageView* self)
     self->setFocusPolicy(Qt::StrongFocus);
 
     rtc = 0;
-    execContext = OpenRTM::ExtTrigExecutionContextService::_nil();
+    execContext = RTC::ExecutionContext::_nil();
     connection.reset(sigAboutToFinalizeRTM().connect([&]() { deleteRTC(); }));
 }
 
@@ -154,7 +154,7 @@ void RTMImageViewImpl::createRTC(const std::string& name)
         RTC::ExecutionContextList_var eclist = rtc->get_owned_contexts();
         for (CORBA::ULong i = 0; i < eclist->length(); ++i) {
             if (!CORBA::is_nil(eclist[i])) {
-                execContext = OpenRTM::ExtTrigExecutionContextService::_narrow(eclist[i]);
+                execContext = RTC::ExecutionContext::_narrow(eclist[i]);
                 break;
             }
         }
@@ -168,7 +168,7 @@ void RTMImageViewImpl::deleteRTC()
         cnoid::deleteRTC(rtc);
         rtc = 0;
     }
-    execContext = OpenRTM::ExtTrigExecutionContextService::_nil();
+    execContext = RTC::ExecutionContext::_nil();
 }
 
 

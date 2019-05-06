@@ -464,16 +464,8 @@ void RTComponent::activate()
         RTC::ExecutionContextList_var eclist = rtc_->get_owned_contexts();
         for (CORBA::ULong i = 0; i < eclist->length(); ++i) {
             if (!CORBA::is_nil(eclist[i])) {
-                try {
-                    // for 1.2.0
-                    OpenRTM::ExtTrigExecutionContextService_var ec = OpenRTM::ExtTrigExecutionContextService::_narrow(eclist[i]);
-                    if (!CORBA::is_nil(ec)) {
-                        ec->activate_component(rtc_->getObjRef());
-                        break;
-                    }
-                } catch (CORBA::SystemException& ex) {
-                    break;
-                }
+                eclist[i]->activate_component(rtc_->getObjRef());
+                break;
             }
         }
     }

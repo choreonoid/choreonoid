@@ -3,9 +3,9 @@
  * @file
  */
 #include "RTSDiagramView.h"
+#include "RTSystemItem.h"
 #include "RTSNameServerView.h"
 #include "RTSPropertiesView.h"
-#include "RTSCommonUtil.h"
 #include "OpenRTMUtil.h"
 #include "PortConnectionDialog.h"
 #include "LoggerUtil.h"
@@ -31,7 +31,6 @@
 
 using namespace cnoid;
 using namespace std;
-using namespace std::placeholders;
 using namespace RTC;
 
 #define STATE_CHECK_TIME 1000  //msec
@@ -221,7 +220,7 @@ public:
     QPointF pos;
 
     RTSPortGItem(RTSPort* rtsPort);
-    void create(int rectX, const QPointF& pos, int i, portType type, const int interval);
+    void create(const int posX, const int posY, portType type);
     void stateCheck();
     void setCandidate(bool isCand);
 
@@ -372,7 +371,7 @@ RTSConnectionGItem::RTSConnectionGItem
             marker[2] = new RTSConnectionMarkerItem(line[3]->cx, line[3]->cy, RTSConnectionMarkerItem::HORIZONTAL);
             signalConnections.add(
                 marker[2]->sigPositionChanged.connect(
-                    std::bind(&RTSConnectionGItem::lineMove, this, _1)));
+                    [&](RTSConnectionMarkerItem* marker){ lineMove(marker); }));
             marker[3] = marker[4] = 0;
         } else {
             type = FIVEPARTS_TYPE;
@@ -383,13 +382,13 @@ RTSConnectionGItem::RTSConnectionGItem
             marker[4] = new RTSConnectionMarkerItem(line[4]->cx, line[4]->cy, RTSConnectionMarkerItem::HORIZONTAL);
             signalConnections.add(
                 marker[2]->sigPositionChanged.connect(
-                    std::bind(&RTSConnectionGItem::lineMove, this, _1)));
+                    [&](RTSConnectionMarkerItem* marker){ lineMove(marker); }));
             signalConnections.add(
                 marker[3]->sigPositionChanged.connect(
-                    std::bind(&RTSConnectionGItem::lineMove, this, _1)));
+                    [&](RTSConnectionMarkerItem* marker){ lineMove(marker); }));
             signalConnections.add(
                 marker[4]->sigPositionChanged.connect(
-                    std::bind(&RTSConnectionGItem::lineMove, this, _1)));
+                    [&](RTSConnectionMarkerItem* marker){ lineMove(marker); }));
         }
     } else {
         qreal sx, tx;
@@ -417,7 +416,7 @@ RTSConnectionGItem::RTSConnectionGItem
             marker[2] = new RTSConnectionMarkerItem(line[3]->cx, line[3]->cy, RTSConnectionMarkerItem::HORIZONTAL);
             signalConnections.add(
                 marker[2]->sigPositionChanged.connect(
-                    std::bind(&RTSConnectionGItem::lineMove, this, _1)));
+                    [&](RTSConnectionMarkerItem* marker){ lineMove(marker); }));
             marker[3] = marker[4] = 0;
 
         } else {
@@ -436,13 +435,13 @@ RTSConnectionGItem::RTSConnectionGItem
             marker[4] = new RTSConnectionMarkerItem(line[4]->cx, line[4]->cy, RTSConnectionMarkerItem::HORIZONTAL);
             signalConnections.add(
                 marker[2]->sigPositionChanged.connect(
-                    std::bind(&RTSConnectionGItem::lineMove, this, _1)));
+                    [&](RTSConnectionMarkerItem* marker){ lineMove(marker); }));
             signalConnections.add(
                 marker[3]->sigPositionChanged.connect(
-                    std::bind(&RTSConnectionGItem::lineMove, this, _1)));
+                    [&](RTSConnectionMarkerItem* marker){ lineMove(marker); }));
             signalConnections.add(
                 marker[4]->sigPositionChanged.connect(
-                    std::bind(&RTSConnectionGItem::lineMove, this, _1)));
+                    [&](RTSConnectionMarkerItem* marker){ lineMove(marker); }));
         }
 
         Vector2 pos[6];
@@ -663,23 +662,20 @@ RTSPortGItem::RTSPortGItem(RTSPort* rtsPort)
 
 }
 
-
-void RTSPortGItem::create(int rectX, const QPointF& pos, int i, portType type, const int interval)
+void RTSPortGItem::create(const int posX, const int posY, portType type)
 {
-    int r = 7 * i;
-
     switch (type) {
 
         case INPORT:
-            this->pos = QPointF(rectX + 5 + pos.x(), 5 + 7 + 7 + (interval * i) - r + pos.y());
+            this->pos = QPointF(posX + 5, 5 + 7 + 7 + posY);
             polygon = new QGraphicsPolygonItem(
                 QPolygonF(QVector<QPointF>()
-                    << QPointF(rectX + 0 + pos.x(), 0 + 7 + 7 + (interval * i) - r + pos.y())
-                    << QPointF(rectX + 10 + pos.x(), 0 + 7 + 7 + (interval * i) - r + pos.y())
-                    << QPointF(rectX + 10 + pos.x(), 10 + 7 + 7 + (interval * i) - r + pos.y())
-                    << QPointF(rectX + 0 + pos.x(), 10 + 7 + 7 + (interval * i) - r + pos.y())
-                    << QPointF(rectX + 5 + pos.x(), 5 + 7 + 7 + (interval * i) - r + pos.y())
-                    << QPointF(rectX + 0 + pos.x(), 0 + 7 + 7 + (interval * i) - r + pos.y())));
+                    << QPointF(posX +  0, 0 + 7 + 7 + posY)
+                    << QPointF(posX + 10, 0 + 7 + 7 + posY)
+                    << QPointF(posX + 10, 10 + 7 + 7 + posY)
+                    << QPointF(posX +  0, 10 + 7 + 7 + posY)
+                    << QPointF(posX +  5, 5 + 7 + 7 + posY)
+                    << QPointF(posX +  0, 0 + 7 + 7 + posY)));
             polygon->setPen(QPen(QColor("red")));
             stateCheck();
             addToGroup(polygon);
@@ -688,13 +684,13 @@ void RTSPortGItem::create(int rectX, const QPointF& pos, int i, portType type, c
         case OUTPORT:
             polygon = new QGraphicsPolygonItem(
                 QPolygonF(QVector<QPointF>()
-                    << QPointF(rectX + 53 + pos.x(), 0 + 7 + 7 + (interval * i) - r + pos.y())
-                    << QPointF(rectX + 60 + pos.x(), 0 + 7 + 7 + (interval * i) - r + pos.y())
-                    << QPointF(rectX + 65 + pos.x(), 5 + 7 + 7 + (interval * i) - r + pos.y())
-                    << QPointF(rectX + 60 + pos.x(), 10 + 7 + 7 + (interval * i) - r + pos.y())
-                    << QPointF(rectX + 53 + pos.x(), 10 + 7 + 7 + (interval * i) - r + pos.y())
-                    << QPointF(rectX + 53 + pos.x(), 0 + 7 + 7 + (interval * i) - r + pos.y())));
-            this->pos = QPointF(rectX + 65 + pos.x(), 5 + 7 + 7 + (interval * i) - r + pos.y());
+                    << QPointF(posX + 53, 0 + 7 + 7 + posY)
+                    << QPointF(posX + 60, 0 + 7 + 7 + posY)
+                    << QPointF(posX + 65, 5 + 7 + 7 + posY)
+                    << QPointF(posX + 60, 10 + 7 + 7 + posY)
+                    << QPointF(posX + 53, 10 + 7 + 7 + posY)
+                    << QPointF(posX + 53, 0 + 7 + 7 + posY)));
+            this->pos = QPointF(posX + 65, 5 + 7 + 7 + posY);
             polygon->setPen(QPen(QColor("red")));
             stateCheck();
             addToGroup(polygon);
@@ -703,13 +699,13 @@ void RTSPortGItem::create(int rectX, const QPointF& pos, int i, portType type, c
         case SERVICEPORT:
             polygon = new QGraphicsPolygonItem(
                 QPolygonF(QVector<QPointF>()
-                    << QPointF(rectX + 53 + pos.x(), 0 + 7 + 7 + (interval * i) - r + pos.y())
-                    << QPointF(rectX + 63 + pos.x(), 0 + 7 + 7 + (interval * i) - r + pos.y())
-                    << QPointF(rectX + 63 + pos.x(), 5 + 7 + 7 + (interval * i) - r + pos.y())
-                    << QPointF(rectX + 63 + pos.x(), 10 + 7 + 7 + (interval * i) - r + pos.y())
-                    << QPointF(rectX + 53 + pos.x(), 10 + 7 + 7 + (interval * i) - r + pos.y())
-                    << QPointF(rectX + 53 + pos.x(), 0 + 7 + 7 + (interval * i) - r + pos.y())));
-            this->pos = QPointF(rectX + 63 + pos.x(), 5 + 7 + 7 + (interval * i) - r + pos.y());
+                    << QPointF(posX + 53, 0 + 7 + 7 + posY)
+                    << QPointF(posX + 63, 0 + 7 + 7 + posY)
+                    << QPointF(posX + 63, 5 + 7 + 7 + posY)
+                    << QPointF(posX + 63, 10 + 7 + 7 + posY)
+                    << QPointF(posX + 53, 10 + 7 + 7 + posY)
+                    << QPointF(posX + 53, 0 + 7 + 7 + posY)));
+            this->pos = QPointF(posX + 63, 5 + 7 + 7 + posY);
             polygon->setPen(QPen(QColor("red")));
             stateCheck();
             addToGroup(polygon);
@@ -832,19 +828,19 @@ RTSDiagramViewImpl::RTSDiagramViewImpl(RTSDiagramView* self)
         nsViewSelections = nsView->getSelection();
         nsViewSelectionChangedConnection.reset(
             nsView->sigSelectionChanged().connect(
-                std::bind(&RTSDiagramViewImpl::onnsViewItemSelectionChanged, this, _1)));
+                [&](const list<NamingContextHelper::ObjectInfo>& items){
+                    onnsViewItemSelectionChanged(items); }));
     }
 
     timer.setSingleShot(false);
     timeOutConnection.reset(
-        timer.sigTimeout().connect(
-            std::bind(&RTSDiagramViewImpl::onTime, this)));
-    self->sigActivated().connect(std::bind(&RTSDiagramViewImpl::onActivated, this, true));
-    self->sigDeactivated().connect(std::bind(&RTSDiagramViewImpl::onActivated, this, false));
+        timer.sigTimeout().connect([&](){ onTime(); }));
+    self->sigActivated().connect([&](){ onActivated(true); });
+    self->sigDeactivated().connect([&](){ onActivated(false); });
 
     itemTreeViewSelectionChangedConnection.reset(
         ItemTreeView::mainInstance()->sigSelectionChanged().connect(
-            std::bind(&RTSDiagramViewImpl::onItemTreeViewSelectionChanged, this, _1)));
+            [&](const ItemList<>& items){ onItemTreeViewSelectionChanged(items); }));
 
     QPen pen(Qt::DashDotLine);
     pen.setWidth(2);
@@ -966,31 +962,31 @@ void RTSDiagramViewImpl::mousePressEvent(QMouseEvent* event)
                 if (!selectionRTCs.front()->rtsComp->rtc_) return;
                 menuManager.setNewPopupMenu(this);
                 menuManager.addItem("Activate")
-                    ->sigTriggered().connect(std::bind(&RTSDiagramViewImpl::activateComponent, this));
+                    ->sigTriggered().connect([&](){ activateComponent(); });
                 menuManager.addItem("Deactivate")
-                    ->sigTriggered().connect(std::bind(&RTSDiagramViewImpl::deactivateComponent, this));
+                    ->sigTriggered().connect([&](){ deactivateComponent(); });
                 menuManager.addItem("Reset")
-                    ->sigTriggered().connect(std::bind(&RTSDiagramViewImpl::resetComponent, this));
-                if (isManagedRTC(selectionRTCs.front()->rtsComp->rtc_) == false) {
+                    ->sigTriggered().connect([&](){ resetComponent(); });
+                if (!isManagedRTC(selectionRTCs.front()->rtsComp->rtc_)) {
                     menuManager.addItem("Exit")
-                        ->sigTriggered().connect(std::bind(&RTSDiagramViewImpl::finalizeComponent, this));
+                        ->sigTriggered().connect([&](){ finalizeComponent(); });
                 }
                 menuManager.addSeparator();
                 menuManager.addItem("Start")
-                    ->sigTriggered().connect(std::bind(&RTSDiagramViewImpl::startExecutionContext, this));
+                    ->sigTriggered().connect([&](){ startExecutionContext(); });
                 menuManager.addItem("Stop")
-                    ->sigTriggered().connect(std::bind(&RTSDiagramViewImpl::stopExecutionContext, this));
+                    ->sigTriggered().connect([&](){ stopExecutionContext(); });
                 menuManager.addSeparator();
             }
             menuManager.addItem("Remove")
-                ->sigTriggered().connect(std::bind(&RTSDiagramViewImpl::deleteSelectedRTSItem, this));
+                ->sigTriggered().connect([&](){ deleteSelectedRTSItem(); });
 
             menuManager.popupMenu()->popup(event->globalPos());
 
         } else if (!selectionRTSConnections.empty()) {
             menuManager.setNewPopupMenu(this);
             menuManager.addItem("Delete")
-                ->sigTriggered().connect(std::bind(&RTSDiagramViewImpl::deleteSelectedRTSItem, this));
+                ->sigTriggered().connect([&](){ deleteSelectedRTSItem(); });
 
             menuManager.popupMenu()->popup(event->globalPos());
 
@@ -998,7 +994,7 @@ void RTSDiagramViewImpl::mousePressEvent(QMouseEvent* event)
             if (currentRTSItem->stateCheck() == 1) {
                 menuManager.setNewPopupMenu(this);
                 menuManager.addItem(_("Update"))
-                    ->sigTriggered().connect(std::bind(&RTSDiagramViewImpl::onTime, this));
+                    ->sigTriggered().connect([&](){ onTime(); });
 
                 menuManager.popupMenu()->popup(event->globalPos());
             }
@@ -1501,13 +1497,13 @@ void RTSDiagramViewImpl::setCurrentRTSItem(RTSystemItem* item)
             [&]() { onRTSystemItemDetachedFromRoot(); }));
     timerPeriodChangedConnection.reset(
             currentRTSItem->sigTimerPeriodChanged().connect(
-                std::bind(&RTSDiagramViewImpl::timerPeriodUpdate, this, _1)));
+                [&](int value){ timerPeriodUpdate(value); }));
     timerChangedConnection.reset(
             currentRTSItem->sigTimerChanged().connect(
-                std::bind(&RTSDiagramViewImpl::onActivated, this, _1)));
+                [&](bool on){ onActivated(on); }));
     rtsLoadedConnection.reset(
             currentRTSItem->sigUpdated().connect(
-                std::bind(&RTSDiagramViewImpl::onRTSystemLoaded, this)));
+                [&](){ onRTSystemLoaded(); }));
 
     updateView();
 }
@@ -1534,6 +1530,7 @@ void RTSDiagramViewImpl::updateView()
             addRTSComp(itr->second.get());
         }
         RTSystemItem::RTSConnectionMap& connections = currentRTSItem->rtsConnections();
+        DDEBUG_V("con size : %d", currentRTSItem->rtsConnections().size());
         for (RTSystemItem::RTSConnectionMap::iterator itr = connections.begin();
                 itr != connections.end(); itr++) {
             DDEBUG("RTSDiagramViewImpl::updateView find connection");
@@ -1558,18 +1555,22 @@ void RTSDiagramViewImpl::updateRestoredView()
     DDEBUG("RTSDiagramViewImpl::updateRestoredView");
     //To redraw the connection line
     if (currentRTSItem) {
+        bool isUpdated = currentRTSItem->isConsistentWithFile();
         for (auto it = rtsComps.begin(); it != rtsComps.end(); it++) {
             QPointF pos = it->second->pos();
             pos.setX(pos.x() + 1);
             it->second->setPos(pos);
+            pos.setX(pos.x() - 1);
+            it->second->setPos(pos);
         }
+        currentRTSItem->setConsistentWithFile(isUpdated);
     }
 }
 
 void RTSDiagramViewImpl::activateComponent()
 {
     RTSCompGItem* target = selectionRTCs.front();
-    if (target->rtsComp->activateComponent() == false) {
+    if (!target->rtsComp->activateComponent()) {
         QMessageBox::information(this, _("Activate"), _("Activation of target component FAILED."));
     }
 }
@@ -1578,7 +1579,7 @@ void RTSDiagramViewImpl::activateComponent()
 void RTSDiagramViewImpl::deactivateComponent()
 {
     RTSCompGItem* target = selectionRTCs.front();
-    if (target->rtsComp->deactivateComponent() == false) {
+    if (!target->rtsComp->deactivateComponent()) {
         QMessageBox::information(this, _("Deactivate"), _("Deactivation of target component FAILED."));
     }
 }
@@ -1587,7 +1588,7 @@ void RTSDiagramViewImpl::deactivateComponent()
 void RTSDiagramViewImpl::resetComponent()
 {
     RTSCompGItem* target = selectionRTCs.front();
-    if (target->rtsComp->resetComponent() == false) {
+    if (!target->rtsComp->resetComponent()) {
         QMessageBox::information(this, _("Reset"), _("FAILED to reset target component."));
     }
 }
@@ -1606,7 +1607,7 @@ void RTSDiagramViewImpl::finalizeComponent()
 void RTSDiagramViewImpl::startExecutionContext()
 {
     RTSCompGItem* target = selectionRTCs.front();
-    if (target->rtsComp->startExecutionContext() == false) {
+    if (!target->rtsComp->startExecutionContext()) {
         QMessageBox::information(this, _("Start"), _("FAILED to start ExecutionContext."));
     }
 }
@@ -1615,7 +1616,7 @@ void RTSDiagramViewImpl::startExecutionContext()
 void RTSDiagramViewImpl::stopExecutionContext()
 {
     RTSCompGItem* target = selectionRTCs.front();
-    if (target->rtsComp->stopExecutionContext() == false) {
+    if (!target->rtsComp->stopExecutionContext()) {
         QMessageBox::information(this, _("Start"), _("FAILED to stop ExecutionContext."));
     }
 }
@@ -1638,7 +1639,8 @@ RTSCompGItem::RTSCompGItem(RTSComp* rtsComp, RTSDiagramViewImpl* impl, const QPo
 
     create(pos, interval);
     positionChangeConnection = sigPositionChanged.connect(
-        std::bind(&RTSDiagramViewImpl::onRTSCompPositionChanged, impl, _1));
+        [impl](const RTSCompGItem* item){
+            impl->onRTSCompPositionChanged(item); });
 }
 
 
@@ -1675,16 +1677,14 @@ void RTSCompGItem::create(const QPointF& pos, const int interval)
         string portName = string(inPort->name);
         RTCCommonUtil::splitPortName(portName);
         text = new QGraphicsTextItem(QString(portName.c_str()));
-        int r = 7 * i;
         int x = rectX + pos.x() - text->boundingRect().width();
-        int portY = 5 + 7 + 7 + (interval * i) - r + pos.y();
-        int y = portY - interval * 4 / 5;
+        int y = interval * i - 7 * i - 3 + pos.y();
 
         text->setPos(x, y);
         addToGroup(text);
 
         RTSPortGItemPtr inPortGItem = new RTSPortGItem(inPort);
-        inPortGItem->create(rectX, pos, i, RTSPortGItem::INPORT, interval);
+        inPortGItem->create(rectX + pos.x(), y + 3, RTSPortGItem::INPORT);
         addToGroup(inPortGItem);
         inPorts[inPort->name] = inPortGItem;
         impl->rtsPortMap[inPort] = inPortGItem.get();
@@ -1698,16 +1698,16 @@ void RTSCompGItem::create(const QPointF& pos, const int interval)
         text = new QGraphicsTextItem(QString(portName.c_str()));
         int r = 7 * i;
         int x = rectX + 66 + pos.x();
-        int portY = 5 + 7 + 7 + (interval * i) - r + pos.y();
-        int y = portY - interval * 4 / 5;
+        int y = interval * i - r - 3 + pos.y();
+
         text->setPos(x, y);
         addToGroup(text);
 
         RTSPortGItemPtr outPortGItem = new RTSPortGItem(outPort);
         if (outPort->isServicePort) {
-            outPortGItem->create(rectX, pos, i, RTSPortGItem::SERVICEPORT, interval);
+            outPortGItem->create(rectX + pos.x(), y + 3, RTSPortGItem::SERVICEPORT);
         } else {
-            outPortGItem->create(rectX, pos, i, RTSPortGItem::OUTPORT, interval);
+            outPortGItem->create(rectX + pos.x(), y + 3, RTSPortGItem::OUTPORT);
         }
         addToGroup(outPortGItem);
         outPorts[outPort->name] = outPortGItem;

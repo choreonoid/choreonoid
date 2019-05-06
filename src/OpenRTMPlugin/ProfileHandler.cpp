@@ -1,9 +1,10 @@
 
-#include "RTSystemItem.h"
+#include "RTSystem.h"
 #include "ProfileHandler.h"
-#include "RTSCommonUtil.h"
 #include "LoggerUtil.h"
 #include <rtm/idl/RTC.hh>
+#include <rtm/CORBA_SeqUtil.h>
+#include <rtm/NVUtil.h>
 #include <QDateTime>
 #include <QString>
 #include <QStringList>
@@ -31,7 +32,7 @@ struct PropertyValueComparator
 bool ProfileHandler::getRtsProfileInfo(std::string targetFile, std::string& vendorName, std::string& version)
 {
     RtsProfile profile;
-    if (parseProfile(targetFile, profile) == false) return false;
+    if (!parseProfile(targetFile, profile)) return false;
     ///
     QString strId = QString::fromStdString(profile.id);
     QStringList elems = strId.split(":");
@@ -41,11 +42,11 @@ bool ProfileHandler::getRtsProfileInfo(std::string targetFile, std::string& vend
     return true;
 }
 
-bool ProfileHandler::restoreRtsProfile(std::string targetFile, RTSystemItem* rts)
+bool ProfileHandler::restoreRtsProfile(std::string targetFile, RTSystem* rts)
 {
     DDEBUG("ProfileHandler::restoreRtsProfile");
     RtsProfile profile;
-    if (parseProfile(targetFile, profile) == false) return false;
+    if (!parseProfile(targetFile, profile)) return false;
     ///
     QString strId = QString::fromStdString(profile.id);
     QStringList elems = strId.split(":");
@@ -210,7 +211,7 @@ bool ProfileHandler::restoreRtsProfile(std::string targetFile, RTSystemItem* rts
     return true;
 }
 
-RTSPort* ProfileHandler::getTargetPort(std::string& sourceRtc, std::string& sourcePort, RTSystemItem* rts)
+RTSPort* ProfileHandler::getTargetPort(std::string& sourceRtc, std::string& sourcePort, RTSystem* rts)
 {
     RTSPort* result = 0;
 
@@ -543,6 +544,7 @@ void ProfileHandler::saveRtsProfile
 
 void ProfileHandler::buildPosition(const RTSConnection* connect, int offsetX, int offsetY, std::vector<Property>& propList)
 {
+  DDEBUG("ProfileHandler::buildPosition");
     QString position = "{";
     for (int idxPos = 0; idxPos < 6; idxPos++) {
         if (0 < idxPos) position.append(",");
@@ -552,9 +554,11 @@ void ProfileHandler::buildPosition(const RTSConnection* connect, int offsetX, in
     }
     position.append("}");
 
+
     string positionName = "POSITION";
     string value = position.toStdString();
     appendStringValue(propList, positionName, value);
+    DDEBUG_V("ProfileHandler::buildPosition End: %s",value.c_str());
 }
 
 TargetPort ProfileHandler::buildTargetPortInfo(RTSPort* sourcePort)
@@ -610,20 +614,11 @@ void ProfileHandler::copyNVListToProperty(NVList& source, vector<Property>& targ
 
 void ProfileHandler::appendStringValue(std::vector<Property>& target, std::string& name, std::string& value)
 {
-    bool isExist = false;
-    for (Property prop : target) {
-        if (prop.name == name) {
-            prop.value = value;
-            isExist = true;
-            break;
-        }
-    }
-    if (isExist == false) {
-        Property newProp;
-        newProp.name = name;
-        newProp.value = value;
-        target.push_back(newProp);
-    }
+    removePropertyByValue(target, name);
+    Property newProp;
+    newProp.name = name;
+    newProp.value = value;
+    target.push_back(newProp);
 }
 
 void ProfileHandler::removePropertyByValue(std::vector<Property>& target, const std::string& name)

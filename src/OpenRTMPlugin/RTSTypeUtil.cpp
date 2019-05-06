@@ -4,7 +4,7 @@
  * @file
  */
 #include "RTSTypeUtil.h"
-
+#include "RTSystem.h"
 #include "LoggerUtil.h"
 
 using namespace std;
@@ -101,7 +101,7 @@ vector<string> RTSTypeUtil::getAllowList(vector<string>& source, vector<string>&
                 string type2 = target[idx02];
                 match = comparer.match(type1, type2);
                 //DDEBUG_V("type01:%s, type02:%s, match:%s", type1.c_str(), type2.c_str(), match.c_str());
-                if (match.empty() == false) {
+                if (!match.empty()) {
                     resultTmp.push_back(match);
                     break;
                 }
@@ -116,7 +116,7 @@ vector<string> RTSTypeUtil::getAllowList(vector<string>& source, vector<string>&
             for (int idx02 = 0; idx02 < resultTmp.size(); idx02++) {
                 string type2 = resultTmp[idx02];
                 match = comparer.match(type1, type2);
-                if (match.empty() == false) {
+                if (!match.empty()) {
                     break;
                 }
             }

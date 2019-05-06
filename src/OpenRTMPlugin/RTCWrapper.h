@@ -5,9 +5,10 @@
 #ifndef CNOID_OPENRTM_PLUGIN_RTC_WRAPPER_H
 #define CNOID_OPENRTM_PLUGIN_RTC_WRAPPER_H
 
-#include <memory>
+#include "ProfileHandler.h"
 #include <cnoid/CorbaUtil>
 #include <rtm/idl/RTC.hh>
+#include <memory>
 
 namespace cnoid {
 
@@ -20,6 +21,10 @@ class RTCWrapper
 {
 public:
     RTCWrapper() : rtc_(0), ownedExeContList_(0), activeIndex_(0), category_(""), vendor_(""), version_("") {};
+    RTCWrapper(const RTCWrapper* source)
+      : rtc_(source->rtc_), ownedExeContList_(source->ownedExeContList_),
+        activeIndex_(source->activeIndex_),
+        category_(source->category_), vendor_(source->vendor_), version_(source->version_) {};
     ~RTCWrapper() {};
 
     RTC::RTObject_var rtc_;

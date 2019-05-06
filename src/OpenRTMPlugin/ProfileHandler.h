@@ -7,6 +7,7 @@
 #include <memory>
 #include <ostream>
 #include <cnoid/Referenced>
+#include <cnoid/EigenTypes>
 #include <cnoid/IdPair>
 #include <rtm/idl/SDOPackage.hh>
 #include <pugixml.hpp>
@@ -126,7 +127,7 @@ public:
     std::vector<ServicePortConnector> serviceConnList;
 };
 
-class RTSystemItem;
+class RTSystem;
 
 class RTSComp;
 typedef cnoid::ref_ptr<RTSComp> RTSCompPtr;
@@ -143,7 +144,7 @@ public:
     ProfileHandler() {};
     ~ProfileHandler() {};
 
-    static bool restoreRtsProfile(std::string targetFile, RTSystemItem* impl);
+    static bool restoreRtsProfile(std::string targetFile, RTSystem* rts);
     static bool getRtsProfileInfo(std::string targetFile, std::string& vendorName, std::string& version);
 
     static void saveRtsProfile(
@@ -157,7 +158,7 @@ private:
     static TargetPort parseTargetPort(const pugi::xml_node& targetPort);
     static void parseConnectorPosition(const pugi::xml_node& targetCon, PortConnector& profile);
 
-    static RTSPort* getTargetPort(std::string& sourceRtc, std::string& sourcePort, RTSystemItem* impl);
+    static RTSPort* getTargetPort(std::string& sourceRtc, std::string& sourcePort, RTSystem* rts);
     /////
     static bool writeProfile(const std::string& targetFile, RtsProfile& profile, std::ostream& os);
     static void writeComponent(std::vector<Component>& compList, pugi::xml_node& parent);

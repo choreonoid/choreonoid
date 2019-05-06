@@ -21,6 +21,9 @@ set(plugin_sources
   RTSConfigurationView.cpp
   BodyStateSubscriberRTCItem.cpp
   LoggerUtil.cpp
+  RTSTypeUtil.cpp
+  ProfileHandler.cpp
+  PortConnectionDialog.cpp
   deprecated/BodyRTCItem.cpp
   deprecated/VirtualRobotRTC.cpp
   deprecated/VirtualRobotPortHandler.cpp
@@ -38,23 +41,25 @@ set(qt_wrap_cpp_files
   RTSConfigurationView.h)
 
 option(ENABLE_NEW_RT_SYSTEM_ITEM_IMPLEMENTATION "Enable the new implementation of RTSystemItem" OFF)
+#option(ENABLE_BACKGROUND_STATE_DETECTION "Enable background state detection" OFF)
+
 if(ENABLE_NEW_RT_SYSTEM_ITEM_IMPLEMENTATION)
   add_definitions(-DENABLE_NEW_RT_SYSTEM_ITEM_IMPLEMENTATION)
+  
+  #if(ENABLE_BACKGROUND_STATE_DETECTION)
+    #add_definitions(-DENABLE_BACKGROUND_STATE_DETECTION)
+  #endif()
+
   set(plugin_sources ${plugin_sources}
-    RTSystemExtItem.cpp
-    RTSDiagramExtView.cpp
-    RTSTypeUtilExt.cpp
-    ProfileHandlerExt.cpp
-    PortConnectionDialogExt.cpp
-)
-  set(qt_wrap_cpp_files ${qt_wrap_cpp_files} RTSDiagramExtView.h)
+    experimental/RTSystemItemEx.cpp
+    experimental/RTSDiagramViewEx.cpp
+    )
+  set(qt_wrap_cpp_files ${qt_wrap_cpp_files} experimental/RTSDiagramViewEx.h)
 else()
   set(plugin_sources ${plugin_sources}
     RTSystemItem.cpp
     RTSDiagramView.cpp
-    RTSTypeUtil.cpp
-	ProfileHandler.cpp
-    PortConnectionDialog.cpp)
+    )
   set(qt_wrap_cpp_files ${qt_wrap_cpp_files} RTSDiagramView.h)
 endif()  
 

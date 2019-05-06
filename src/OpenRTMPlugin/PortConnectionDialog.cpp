@@ -1,5 +1,5 @@
 #include "PortConnectionDialog.h"
-#include "RTSCommonUtil.h"
+#include "RTSystem.h"
 #include "RTSTypeUtil.h"
 #include "LoggerUtil.h"
 #include <cnoid/Buttons>
@@ -483,7 +483,7 @@ void ServicePortConnectionDialog::registInterfaceMap(RTSPort* port)
     string portName = "unknown";
     //
     string name = port->name;
-    if (name.empty() == false) {
+    if (!name.empty()) {
         vector<string> names = RTCCommonUtil::split(name, '.');
         if (names.size() < 2) {
             if (port->rtsComp != 0) {
