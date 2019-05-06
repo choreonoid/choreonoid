@@ -86,9 +86,9 @@ public:
     RTSComp* addRTSComp(const NamingContextHelper::ObjectInfo& info, const QPointF& pos);
     void deleteRTSComp(const string& name);
     RTSComp* nameToRTSComp(const string& name);
-    bool compIsAlive(RTSComp* rtsComp); // Ext1
+    bool compIsAlive(RTSComp* rtsComp);
     RTSComp* nameToRTSCompForChecking(const string& name); // Ext2
-    bool compIsAliveForChecking(RTSComp* rtsComp); // Ext2
+    bool compIsAliveForChecking(RTSComp* rtsComp);
     RTSConnection* addRTSConnection(
         const string& id, const string& name,
         RTSPort* sourcePort, RTSPort* targetPort, const std::vector<NamedValuePtr>& propList,
@@ -491,7 +491,6 @@ void RTSComp::setRtc(RTObject_ptr rtc)
         return;
     }
 
-    //ComponentProfile_var cprofile = rtc_->get_component_profile(); // enabled in Ext1
     participatingExeContList = rtc_->get_participating_contexts();
     rtc_status_ = getRTCState();
 
@@ -1047,7 +1046,7 @@ void RTSystemItemExImpl::deleteRTSComp(const string& name)
     timeOutConnection.unblock();
 }
 
-// Ext1
+
 bool RTSystemItemExImpl::compIsAlive(RTSComp* rtsComp)
 {
     //DDEBUG("RTSystemItemImpl::compIsAlive");
@@ -1104,7 +1103,7 @@ bool RTSystemItemExImpl::compIsAlive(RTSComp* rtsComp)
     }
 }
 
-// Ext2
+
 bool RTSystemItemExImpl::compIsAliveForChecking(RTSComp* rtsComp)
 {
     DDEBUG("RTSystemItemImpl::compIsAliveForChecking");
