@@ -288,7 +288,9 @@ template <typename T> using remove_all_extents_t = typename array_info<T>::type;
 
 template <typename T> using is_pod_struct = all_of<
     std::is_standard_layout<T>,     // since we're accessing directly in memory we need a standard layout type
-#if !defined(__GNUG__) || defined(__clang__) || __GNUC__ >= 5
+#if !defined(__GNUG__) || defined(_LIBCPP_VERSION) || defined(_GLIBCXX_USE_CXX11_ABI)
+    // _GLIBCXX_USE_CXX11_ABI indicates that we're using libstdc++ from GCC 5 or newer, independent
+    // of the actual compiler (Clang can also use libstdc++, but it always defines __GNUC__ == 4).
     std::is_trivially_copyable<T>,
 #else
     // GCC 4 doesn't implement is_trivially_copyable, so approximate it
@@ -762,8 +764,9 @@ protected:
     static std::vector<ssize_t> c_strides(const std::vector<ssize_t> &shape, ssize_t itemsize) {
         auto ndim = shape.size();
         std::vector<ssize_t> strides(ndim, itemsize);
-        for (size_t i = ndim - 1; i > 0; --i)
-            strides[i - 1] = strides[i] * shape[i];
+        if (ndim > 0)
+            for (size_t i = ndim - 1; i > 0; --i)
+                strides[i - 1] = strides[i] * shape[i];
         return strides;
     }
 
@@ -944,9 +947,9 @@ struct format_descriptor<T, detail::enable_if_t<std::is_enum<T>::value>> {
 template <typename T>
 struct format_descriptor<T, detail::enable_if_t<detail::array_info<T>::is_array>> {
     static std::string format() {
-        using detail::_;
-        PYBIND11_DESCR extents = _("(") + detail::array_info<T>::extents() + _(")");
-        return extents.text() + format_descriptor<detail::remove_all_extents_t<T>>::format();
+        using namespace detail;
+        PYBIND11_DESCR extents = _("(") + array_info<T>::extents() + _(")");
+        return extents.text() + format_descriptor<remove_all_extents_t<T>>::format();
     }
 };
 
@@ -1584,7 +1587,7 @@ Helper vectorize(Return (Class::*f)(Args...)) {
     return Helper(std::mem_fn(f));
 }
 
-// Vectorize a class method (non-const):
+// Vectorize a class method (const):
 template <typename Return, typename Class, typename... Args,
           typename Helper = detail::vectorize_helper<decltype(std::mem_fn(std::declval<Return (Class::*)(Args...) const>())), Return, const Class *, Args...>>
 Helper vectorize(Return (Class::*f)(Args...) const) {

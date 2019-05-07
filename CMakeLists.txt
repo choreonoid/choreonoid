@@ -313,7 +313,7 @@ else()
 endif()
 
 option(USE_PYBIND11 "Use the pybind11 library to make python bindings" ON)
-set(PYBIND11_DIR ${PROJECT_SOURCE_DIR}/thirdparty/pybind11 CACHE PATH "The directory of the pybind11 library")
+set(PYBIND11_DIR ${PROJECT_SOURCE_DIR}/thirdparty/pybind11-2.2.4 CACHE PATH "The directory of the pybind11 library")
 if(USE_PYBIND11)
   set(USE_BOOST_PYTHON OFF)
 else()
