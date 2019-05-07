@@ -21,7 +21,7 @@ void exportLuaQtCoreTypes(sol::table& module)
         "parent", &QObject::parent,
         "setObjectName", [](QObject* self, const char* name) { return self->setObjectName(name); },
         "setParent", &QObject::setParent,
-        "startTimer", &QObject::startTimer,
+        "startTimer", [](QObject* self, std::chrono::milliseconds time){ return self->startTimer(time); },
         "deleteLater", &QObject::deleteLater);
 
     module.new_usertype<QTimer>(
@@ -31,7 +31,7 @@ void exportLuaQtCoreTypes(sol::table& module)
         "interval", &QTimer::interval,
         "isActive", &QTimer::isActive,
         "isSingleShot", &QTimer::isSingleShot,
-        "setInterval", &QTimer::setInterval,
+        "setInterval", [](QTimer* self, int msec){ self->setInterval(msec); },
         "setSingleShot", &QTimer::setSingleShot,
         "timerId", &QTimer::timerId,
         "start", sol::overload(
