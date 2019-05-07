@@ -8,7 +8,7 @@ links:
   -
     type: SubBody
     uri: TankBody.body
-    translation: [ 0, 0, 0.11 ]
+    translation: [ 0, 0, 0.106 ]
     jointType: free
   -
     name: TRACK_L
