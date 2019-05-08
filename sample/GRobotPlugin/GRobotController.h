@@ -2,13 +2,18 @@
   @file
   @author Shin'ichiro Nakaoka
 */
-
-#include <boost/asio/serial_port.hpp>
 #include <string>
 #include <vector>
 #include <thread>
 #include <mutex>
 #include <condition_variable>
+
+#include <boost/asio/serial_port.hpp>
+#if (BOOST_VERSION < 106600)
+namespace boost { namespace asio {
+typedef io_service io_context;
+} }
+#endif
 
 #ifndef WIN32
 #include <signal.h>
