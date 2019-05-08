@@ -1,6 +1,7 @@
 #!/bin/sh
 
 mkdir choreonoid-@CNOID_FULL_VERSION@
-git archive HEAD | tar -x -C choreonoid-@CNOID_FULL_VERSION@
-
-#choreonoid-@CNOID_FULL_VERSION@.zip
+git archive v@CNOID_FULL_VERSION@ | tar -x -C choreonoid-@CNOID_FULL_VERSION@
+rm choreonoid-@CNOID_FULL_VERSION@/.??*
+zip -q choreonoid-@CNOID_FULL_VERSION@.zip -r choreonoid-@CNOID_FULL_VERSION@
+rm -fr choreonoid-@CNOID_FULL_VERSION@
