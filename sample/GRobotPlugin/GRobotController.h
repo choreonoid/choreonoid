@@ -43,7 +43,7 @@ public:
 
 private:
     std::string portDevice_;
-    boost::asio::io_service io;
+    boost::asio::io_context io;
     boost::asio::serial_port port;
     
     std::vector<unsigned char> poseCommand;
