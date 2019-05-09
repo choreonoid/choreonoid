@@ -20,7 +20,7 @@ using fmt::format;
 
 namespace {
 
-typedef std::function<AbstractSeqItem*(AbstractSeqPtr seq)> ExtraSeqItemFactory;
+typedef std::function<AbstractSeqItem*(shared_ptr<AbstractSeq> seq)> ExtraSeqItemFactory;
 typedef map<string, ExtraSeqItemFactory> ExtraSeqItemFactoryMap;
 ExtraSeqItemFactoryMap extraSeqItemFactories;
 
@@ -75,7 +75,7 @@ static bool bodyMotionItemPreFilter(BodyMotionItem* protoItem, Item* parentItem)
         bodyItem = parentItem->findOwnerItem<BodyItem>();
     }
     if(bodyItem){
-        MultiValueSeqPtr jointPosSeq = protoItem->motion()->jointPosSeq();
+        auto jointPosSeq = protoItem->motion()->jointPosSeq();
         int numJoints = bodyItem->body()->numJoints();
         if(numJoints != jointPosSeq->numParts()){
             jointPosSeq->setNumParts(numJoints, true);
@@ -93,7 +93,7 @@ static bool bodyMotionItemPostFilter(BodyMotionItem* protoItem, Item* parentItem
     }
     if(bodyItem){
         BodyPtr body = bodyItem->body();
-        MultiValueSeqPtr qseq = protoItem->jointPosSeq();
+        auto qseq = protoItem->jointPosSeq();
         int n = std::min(body->numJoints(), qseq->numParts());
         for(int i=0; i < n; ++i){
             Link* joint = body->joint(i);
@@ -144,7 +144,7 @@ void BodyMotionItem::initializeClass(ExtensionManager* ext)
 
 
 void BodyMotionItem::addExtraSeqItemFactory
-(const std::string& key, std::function<AbstractSeqItem*(AbstractSeqPtr seq)> factory)
+(const std::string& key, std::function<AbstractSeqItem*(std::shared_ptr<AbstractSeq> seq)> factory)
 {
     extraSeqItemFactories[key] = factory;
 }
@@ -157,7 +157,7 @@ BodyMotionItem::BodyMotionItem()
 }
 
 
-BodyMotionItem::BodyMotionItem(BodyMotionPtr bodyMotion)
+BodyMotionItem::BodyMotionItem(std::shared_ptr<BodyMotion> bodyMotion)
     : bodyMotion_(bodyMotion)
 {
     impl = new BodyMotionItemImpl(this);
@@ -219,7 +219,7 @@ BodyMotionItemImpl::~BodyMotionItemImpl()
 }
 
 
-AbstractSeqPtr BodyMotionItem::abstractSeq()
+std::shared_ptr<AbstractSeq> BodyMotionItem::abstractSeq()
 {
     return bodyMotion_;
 }
@@ -298,13 +298,13 @@ void BodyMotionItemImpl::updateExtraSeqItems()
     BodyMotion::ConstSeqIterator p;
     for(p = bodyMotion.extraSeqBegin(); p != bodyMotion.extraSeqEnd(); ++p){
         const string& key = p->first;
-        const AbstractSeqPtr& newSeq = p->second;
+        auto newSeq = p->second;
         AbstractSeqItemPtr newItem;
         ExtraSeqItemInfoMap::iterator p = extraSeqItemInfoMap.find(key);
         if(p != extraSeqItemInfoMap.end()){
             ExtraSeqItemInfo* info = p->second;
             AbstractSeqItemPtr& prevItem = info->item;
-            if(typeid(prevItem->abstractSeq()) == typeid(newSeq)){
+            if(typeid(prevItem->abstractSeq().get()) == typeid(newSeq.get())){
                 extraSeqItemInfos.push_back(info);
                 newItem = prevItem;
             }

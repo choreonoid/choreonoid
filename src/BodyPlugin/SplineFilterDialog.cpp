@@ -311,7 +311,7 @@ void SplineFilterDialog::onAccepted()
 
     ItemList<MultiValueSeqItem> vItems = items;
     for(int i=0; i < vItems.size(); ++i){
-        MultiValueSeqPtr seq = vItems[i]->seq();
+        auto seq = vItems[i]->seq();
         double ifps = inputFrameRateCheck.isChecked()  ? inputFrameRateSpin.value()  : seq->frameRate();
         double ofps = outputFrameRateCheck.isChecked() ? outputFrameRateSpin.value() : seq->frameRate();
         
@@ -323,7 +323,7 @@ void SplineFilterDialog::onAccepted()
 
     ItemList<MultiVector3SeqItem> v3Items = items;
     for(int i=0; i < v3Items.size(); ++i){
-        MultiVector3SeqPtr seq = v3Items[i]->seq();
+        auto seq = v3Items[i]->seq();
         double ifps = inputFrameRateCheck.isChecked()  ? inputFrameRateSpin.value()  : seq->frameRate();
         double ofps = outputFrameRateCheck.isChecked() ? outputFrameRateSpin.value() : seq->frameRate();
         
@@ -335,7 +335,7 @@ void SplineFilterDialog::onAccepted()
 
     ItemList<MultiSE3SeqItem> sItems = items;
     for(int i=0; i < sItems.size(); ++i){
-        MultiSE3SeqPtr seq = sItems[i]->seq();
+        auto seq = sItems[i]->seq();
         double ifps = inputFrameRateCheck.isChecked()  ? inputFrameRateSpin.value()  : seq->frameRate();
         double ofps = outputFrameRateCheck.isChecked() ? outputFrameRateSpin.value() : seq->frameRate();
         
@@ -347,7 +347,7 @@ void SplineFilterDialog::onAccepted()
 
     ItemList<BodyMotionItem> bItems = items;
     for(int i=0; i < bItems.size(); ++i){
-        BodyMotionPtr motion = bItems[i]->motion();
+        auto motion = bItems[i]->motion();
         double ifps = inputFrameRateCheck.isChecked()  ? inputFrameRateSpin.value()  : motion->frameRate();
         double ofps = outputFrameRateCheck.isChecked() ? outputFrameRateSpin.value() : motion->frameRate();
         
@@ -357,7 +357,7 @@ void SplineFilterDialog::onAccepted()
         applySplineFilter(*motion->jointPosSeq(), ifps, ofps, ratio);
         applySplineFilter(*motion->linkPosSeq(), ifps, ofps, ratio);
 
-        if(ZMPSeqPtr zmpSeq = getZMPSeq(*motion)){
+        if(auto zmpSeq = getZMPSeq(*motion)){
             applySplineFilter(*zmpSeq, ifps, ofps, ratio);
         }
     }

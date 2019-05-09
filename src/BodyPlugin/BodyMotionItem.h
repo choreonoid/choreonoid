@@ -21,17 +21,17 @@ public:
     static void initializeClass(ExtensionManager* ext);
 
     static void addExtraSeqItemFactory(
-        const std::string& key, std::function<AbstractSeqItem*(AbstractSeqPtr seq)> factory);
+        const std::string& key, std::function<AbstractSeqItem*(std::shared_ptr<AbstractSeq> seq)> factory);
 
     BodyMotionItem();
-    BodyMotionItem(BodyMotionPtr bodyMotion);
+    BodyMotionItem(std::shared_ptr<BodyMotion> bodyMotion);
     BodyMotionItem(const BodyMotionItem& org);
     ~BodyMotionItem();
 
-    virtual AbstractSeqPtr abstractSeq() override;
+    virtual std::shared_ptr<AbstractSeq> abstractSeq() override;
 
-    BodyMotionPtr motion() { return bodyMotion_; }
-    ConstBodyMotionPtr motion() const { return bodyMotion_; }
+    std::shared_ptr<BodyMotion> motion() { return bodyMotion_; }
+    std::shared_ptr<const BodyMotion> motion() const { return bodyMotion_; }
 
     MultiValueSeqItem* jointPosSeqItem() {
         return jointPosSeqItem_;
@@ -41,7 +41,7 @@ public:
         return jointPosSeqItem_;
     }
 
-    MultiValueSeqPtr jointPosSeq() {
+    std::shared_ptr<MultiValueSeq> jointPosSeq() {
         return bodyMotion_->jointPosSeq();
     }
 
@@ -53,7 +53,7 @@ public:
         return linkPosSeqItem_;
     }
     
-    MultiSE3SeqPtr linkPosSeq() {
+    std::shared_ptr<MultiSE3Seq> linkPosSeq() {
         return bodyMotion_->linkPosSeq();
     }
 
@@ -73,7 +73,7 @@ protected:
     virtual bool restore(const Archive& archive) override;
 
 private:
-    BodyMotionPtr bodyMotion_;
+    std::shared_ptr<BodyMotion> bodyMotion_;
     MultiValueSeqItemPtr jointPosSeqItem_;
     MultiSE3SeqItemPtr linkPosSeqItem_;
 

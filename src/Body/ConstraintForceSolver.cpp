@@ -173,7 +173,7 @@ public:
            The pointer is null when all the joints are torque mode and
            the forward dynamics is calculated by ABM.
         */
-        ForwardDynamicsCBMPtr forwardDynamicsCBM;
+        shared_ptr<ForwardDynamicsCBM> forwardDynamicsCBM;
     };
 
     std::vector<BodyData> bodiesData;
@@ -406,7 +406,7 @@ public:
         if(CFS_DEBUG_VERBOSE) putVector(M, name);
     }
 
-    CollisionLinkPairListPtr getCollisions();
+    shared_ptr<CollisionLinkPairList> getCollisions();
 
 #ifdef ENABLE_SIMULATION_PROFILING
     double collisionTime;
@@ -2484,18 +2484,18 @@ void ConstraintForceSolver::clearExternalForces()
 }
 
 
-CollisionLinkPairListPtr ConstraintForceSolver::getCollisions()
+shared_ptr<CollisionLinkPairList> ConstraintForceSolver::getCollisions()
 {
     return impl->getCollisions();
 }
 
 
-CollisionLinkPairListPtr CFSImpl::getCollisions()
+shared_ptr<CollisionLinkPairList> CFSImpl::getCollisions()
 {
-    CollisionLinkPairListPtr collisionPairs = std::make_shared<CollisionLinkPairList>();
+    auto collisionPairs = std::make_shared<CollisionLinkPairList>();
     for(size_t i=0; i < constrainedLinkPairs.size(); ++i){
         LinkPair& source = *constrainedLinkPairs[i];
-        CollisionLinkPairPtr dest = std::make_shared<CollisionLinkPair>();
+        auto dest = std::make_shared<CollisionLinkPair>();
         int numConstraintsInPair = source.constraintPoints.size();
 
         for(int j=0; j < numConstraintsInPair; ++j){

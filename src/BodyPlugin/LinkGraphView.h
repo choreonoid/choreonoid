@@ -56,7 +56,7 @@ private:
             connections.disconnect();
         }
         MultiSE3SeqItemPtr item;
-        MultiSE3SeqPtr seq;
+        std::shared_ptr<MultiSE3Seq> seq;
         BodyItemPtr bodyItem;
         ConnectionSet connections;
         std::vector<GraphDataHandlerPtr> handlers;
@@ -73,7 +73,7 @@ private:
     void updateBodyItems();
     void onBodyItemDetachedFromRoot(BodyItemPtr bodyItem);
     void setupGraphWidget();
-    void addPositionTrajectory(std::list<ItemInfo>::iterator itemInfoIter, Link* link, MultiSE3SeqPtr seq);
+    void addPositionTrajectory(std::list<ItemInfo>::iterator itemInfoIter, Link* link, std::shared_ptr<MultiSE3Seq> seq);
     void onDataItemUpdated(std::list<ItemInfo>::iterator itemInfoIter);
 
     void onDataRequest(

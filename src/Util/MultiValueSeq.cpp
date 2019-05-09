@@ -38,7 +38,7 @@ MultiValueSeq::MultiValueSeq(const MultiValueSeq& org)
 }
 
 
-AbstractSeqPtr MultiValueSeq::cloneSeq() const
+std::shared_ptr<AbstractSeq> MultiValueSeq::cloneSeq() const
 {
     return std::make_shared<MultiValueSeq>(*this);
 }

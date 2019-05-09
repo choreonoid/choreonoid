@@ -850,7 +850,7 @@ bool WaistBalancer::applyCmTranslations(BodyMotion& motion, bool putAllLinkPosit
 
     MultiValueSeq& qseq = *motion.jointPosSeq();
     MultiSE3Seq& pseq = *motion.linkPosSeq();
-    ZMPSeqPtr zmpseq = getOrCreateZMPSeq(motion);
+    auto zmpseq = getOrCreateZMPSeq(motion);
     zmpseq->setRootRelative(false);
 
     initBodyKinematics(beginningFrame, totalCmTranslations[beginningFrame]);

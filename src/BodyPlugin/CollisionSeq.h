@@ -17,11 +17,10 @@ class YAMLWriter;
 class CollisionSeqItem;
 
 typedef std::vector<CollisionLinkPairPtr> CollisionLinkPairList;
-typedef std::shared_ptr<CollisionLinkPairList> CollisionLinkPairListPtr;
 
-class CNOID_EXPORT CollisionSeq : public MultiSeq<CollisionLinkPairListPtr>
+class CNOID_EXPORT CollisionSeq : public MultiSeq<std::shared_ptr<CollisionLinkPairList>>
 {
-    typedef MultiSeq<CollisionLinkPairListPtr> BaseSeqType;
+    typedef MultiSeq<std::shared_ptr<CollisionLinkPairList>> BaseSeqType;
 
 public:
     CollisionSeqItem* collisionSeqItem_;
@@ -31,15 +30,13 @@ public:
 
     bool loadStandardYAMLformat(const std::string& filename);
     bool saveAsStandardYAMLformat(const std::string& filename);
-    void writeCollsionData(YAMLWriter& writer, const CollisionLinkPairListPtr ptr);
+    void writeCollsionData(YAMLWriter& writer, std::shared_ptr<const CollisionLinkPairList> ptr);
     void readCollisionData(int nFrames, const Listing& values);
 
 protected:
     virtual bool doReadSeq(const Mapping* archive, std::ostream& os) override;
     virtual bool doWriteSeq(YAMLWriter& writer, std::function<void()> additionalPartCallback) override;
 };
-
-typedef std::shared_ptr<CollisionSeq> CollisionSeqPtr;
 
 }
 

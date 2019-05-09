@@ -24,7 +24,7 @@ class BodyMotionControllerItemImpl
 public:
     BodyMotionControllerItem* self;
     BodyMotionItemPtr motionItem;
-    MultiValueSeqPtr qseqRef;
+    shared_ptr<MultiValueSeq> qseqRef;
     BodyPtr body;
     int currentFrame;
     int numJoints;
@@ -114,7 +114,7 @@ bool BodyMotionControllerItemImpl::initialize(ControllerIO* io)
 
     body = io->body();
 
-    MultiSE3SeqPtr lseq = motionItem->motion()->linkPosSeq();
+    auto lseq = motionItem->motion()->linkPosSeq();
     if(lseq->numParts() > 0 && lseq->numFrames() > 0){
         SE3& p = lseq->at(0, 0);
         Link* rootLink = body->rootLink();

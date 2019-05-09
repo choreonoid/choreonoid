@@ -56,7 +56,7 @@ MultiDeviceStateSeq& MultiDeviceStateSeq::operator=(const MultiDeviceStateSeq& r
 /**
    \todo implement deep copy
 */
-AbstractSeqPtr MultiDeviceStateSeq::cloneSeq() const
+std::shared_ptr<AbstractSeq> MultiDeviceStateSeq::cloneSeq() const
 {
     return std::make_shared<MultiDeviceStateSeq>(*this);
 }
@@ -74,13 +74,13 @@ const std::string& MultiDeviceStateSeq::key()
 }
 
 
-MultiDeviceStateSeqPtr cnoid::getMultiDeviceStateSeq(const BodyMotion& motion)
+std::shared_ptr<MultiDeviceStateSeq> cnoid::getMultiDeviceStateSeq(const BodyMotion& motion)
 {
     return motion.extraSeq<MultiDeviceStateSeq>(contentName);
 }
 
 
-MultiDeviceStateSeqPtr cnoid::getOrCreateMultiDeviceStateSeq(BodyMotion& motion)
+std::shared_ptr<MultiDeviceStateSeq> cnoid::getOrCreateMultiDeviceStateSeq(BodyMotion& motion)
 {
     return motion.getOrCreateExtraSeq<MultiDeviceStateSeq>(contentName);
 }

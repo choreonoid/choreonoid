@@ -156,9 +156,9 @@ void JointGraphView::setupGraphWidget()
 
         if(it->bodyItem){
 
-            MultiValueSeqPtr seq = it->item->seq();
+            auto seq = it->item->seq();
             int numParts = seq->numParts();
-            BodyPtr body = it->bodyItem->body();
+            auto body = it->bodyItem->body();
             const std::vector<int>& selectedLinkIndices = linkSelection->selectedLinkIndices(it->bodyItem);
             
             for(size_t i=0; i < selectedLinkIndices.size(); ++i){
@@ -172,7 +172,8 @@ void JointGraphView::setupGraphWidget()
 }
 
 
-void JointGraphView::addJointTrajectory(std::list<ItemInfo>::iterator itemInfoIter, Link* joint, MultiValueSeqPtr seq)
+void JointGraphView::addJointTrajectory
+(std::list<ItemInfo>::iterator itemInfoIter, Link* joint, std::shared_ptr<MultiValueSeq> seq)
 {
     GraphDataHandlerPtr handler(new GraphDataHandler());
 
@@ -193,7 +194,7 @@ void JointGraphView::addJointTrajectory(std::list<ItemInfo>::iterator itemInfoIt
 
 void JointGraphView::onDataItemUpdated(std::list<ItemInfo>::iterator itemInfoIter)
 {
-    const MultiValueSeqPtr& seq = itemInfoIter->item->seq();
+    auto seq = itemInfoIter->item->seq();
     int newNumFrames = seq->numFrames();
     double newFrameRate = seq->frameRate();
     

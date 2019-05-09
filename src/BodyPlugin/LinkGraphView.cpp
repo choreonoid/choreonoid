@@ -187,7 +187,7 @@ void LinkGraphView::setupGraphWidget()
 
         if(it->bodyItem){
 
-            MultiSE3SeqPtr seq = it->item->seq();
+            auto seq = it->item->seq();
             int numParts = seq->numParts();
             BodyPtr body = it->bodyItem->body();
             const std::vector<int>& selectedLinkIndices = linkSelection->selectedLinkIndices(it->bodyItem);
@@ -204,7 +204,7 @@ void LinkGraphView::setupGraphWidget()
 
 
 void LinkGraphView::addPositionTrajectory
-(std::list<ItemInfo>::iterator itemInfoIter, Link* link, MultiSE3SeqPtr seq)
+(std::list<ItemInfo>::iterator itemInfoIter, Link* link, std::shared_ptr<MultiSE3Seq> seq)
 {
     
     for(int i=0; i < 2; ++i){
@@ -233,7 +233,7 @@ void LinkGraphView::addPositionTrajectory
 
 void LinkGraphView::onDataItemUpdated(std::list<ItemInfo>::iterator itemInfoIter)
 {
-    const MultiSE3SeqPtr& seq = itemInfoIter->item->seq();
+    auto seq = itemInfoIter->item->seq();
     int newNumFrames = seq->numFrames();
     double newFrameRate = seq->frameRate();
     

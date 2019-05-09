@@ -23,9 +23,9 @@ public :
     CollisionSeqItem(const CollisionSeqItem& org);
     ~CollisionSeqItem();
 
-    virtual AbstractMultiSeqPtr abstractMultiSeq();
+    virtual std::shared_ptr<AbstractMultiSeq> abstractMultiSeq();
 
-    const CollisionSeqPtr& collisionSeq() {
+    const std::shared_ptr<CollisionSeq> collisionSeq() {
         return collisionSeq_;
     }
 
@@ -35,7 +35,7 @@ protected:
     virtual bool restore(const Archive& archive);
 
 private:
-    CollisionSeqPtr collisionSeq_;
+    std::shared_ptr<CollisionSeq> collisionSeq_;
     CollisionSeqItemImpl* impl;
 };
 

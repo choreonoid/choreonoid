@@ -152,8 +152,6 @@ private:
     JointPathIkImpl* nuIK; // numerical IK
 };
 
-typedef std::shared_ptr<JointPath> JointPathPtr;
-
 class Body;
 
 /**
@@ -161,7 +159,7 @@ class Body;
    when the body has the analytical one for a given path.
    \todo move back this function to the Body class
 */
-CNOID_EXPORT JointPathPtr getCustomJointPath(Body* body, Link* baseLink, Link* targetLink);
+CNOID_EXPORT std::shared_ptr<JointPath> getCustomJointPath(Body* body, Link* baseLink, Link* targetLink);
 
 }
 

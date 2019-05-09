@@ -21,11 +21,8 @@ class BodyItem;
 typedef ref_ptr<BodyItem> BodyItemPtr;
 class BodyItemImpl;
 class InverseKinematics;
-typedef std::shared_ptr<InverseKinematics> InverseKinematicsPtr;
 class PinDragIK;
-typedef std::shared_ptr<PinDragIK> PinDragIKptr;
 class PenetrationBlocker;
-typedef std::shared_ptr<PenetrationBlocker> PenetrationBlockerPtr;
 class EditableSceneBody;
 
 class CNOID_EXPORT BodyItem : public Item, public SceneProvider
@@ -77,10 +74,10 @@ public:
     bool undoKinematicState();
     bool redoKinematicState();
 
-    PinDragIKptr pinDragIK();
-    InverseKinematicsPtr getCurrentIK(Link* targetLink);
-    InverseKinematicsPtr getDefaultIK(Link* targetLink);
-    PenetrationBlockerPtr createPenetrationBlocker(Link* link, bool excludeSelfCollisions = false);
+    std::shared_ptr<PinDragIK> pinDragIK();
+    std::shared_ptr<InverseKinematics> getCurrentIK(Link* targetLink);
+    std::shared_ptr<InverseKinematics> getDefaultIK(Link* targetLink);
+    std::shared_ptr<PenetrationBlocker> createPenetrationBlocker(Link* link, bool excludeSelfCollisions = false);
 
     SignalProxy<void()> sigModelUpdated();
     void notifyModelUpdate();

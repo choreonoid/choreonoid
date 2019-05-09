@@ -63,7 +63,7 @@ public:
     void solve();
     void clearExternalForces();
 
-    CollisionLinkPairListPtr getCollisions();
+    std::shared_ptr<CollisionLinkPairList> getCollisions();
 
 #ifdef ENABLE_SIMULATION_PROFILING
     double getCollisionTime();

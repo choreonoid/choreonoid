@@ -161,14 +161,12 @@ public:
 
         const size_t numFrames = frames.size();
 
-        BodyMotionPtr motion = item->motion();
+        auto motion = item->motion();
         motion->setDimension(numFrames, numComponents[JOINT_POS], 0);
         motion->setFrameRate(200);
 
-        MultiValueSeqPtr qseq = item->motion()->jointPosSeq();
-        //MultiValueSeqPtr dqseq;
-        //MultiValueSeqPtr useq;
-        ZMPSeqPtr zmpseq = getOrCreateZMPSeq(*item->motion());
+        auto qseq = item->motion()->jointPosSeq();
+        auto zmpseq = getOrCreateZMPSeq(*item->motion());
 
         std::list< std::vector<double> >::iterator p = frames.begin();
         

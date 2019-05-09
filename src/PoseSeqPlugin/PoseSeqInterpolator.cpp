@@ -1344,7 +1344,7 @@ void PSIImpl::calcIkJointPositionsSub(Link* link, Link* baseLink, LinkInfo* base
     if(link != baseLink && validIkLinkFlag[link->index()]){
         LinkInfo* endLinkInfo = getIkLinkInfo(link->index());
         if(baseLinkInfo && endLinkInfo){
-            JointPathPtr jointPath = getCustomJointPath(body, baseLink, link);
+            auto jointPath = getCustomJointPath(body, baseLink, link);
 
             bool doIK = true; // tmp
             

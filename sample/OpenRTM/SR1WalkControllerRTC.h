@@ -36,7 +36,7 @@ protected:
     RTC::OutPort<RTC::TimedDoubleSeq> m_torqueOut;
     
 private:
-    cnoid::MultiValueSeqPtr qseq;
+    std::shared_ptr<cnoid::MultiValueSeq> qseq;
     std::vector<double> q0;
     cnoid::MultiValueSeq::Frame oldFrame;
     int currentFrame;

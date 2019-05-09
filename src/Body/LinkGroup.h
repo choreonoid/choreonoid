@@ -32,8 +32,8 @@ public:
     LinkGroup(private_tag tag);
     virtual ~LinkGroup();
 
-    inline void setName(const std::string& name) { name_ = name; }
-    inline const std::string& name() { return name_; }
+    void setName(const std::string& name) { name_ = name; }
+    const std::string& name() { return name_; }
 
     int numElements() const { return elements.size(); }
     bool isSubGroup(int index) const { return elements[index].which() == 0; }

@@ -96,7 +96,7 @@ public:
     BodyItemInfoMap bodyItemInfoMap;
     MessageView* mv;
     TimeBar* timeBar;
-    CollisionLinkPairListPtr collisions;
+    shared_ptr<CollisionLinkPairList> collisions;
     SceneCollisionPtr sceneCollision;
     string collisionLogName;
     WorldItemPtr worldItem;
@@ -512,12 +512,12 @@ void OpenHRPOnlineViewerItemImpl::updatesub(const WorldState& state)
         needToSelectCollisionLogItem = false;
     }
 
-    const CollisionSeqPtr& colSeq = collisionSeqItem->collisionSeq();
+    auto colSeq = collisionSeqItem->collisionSeq();
     int frame = colSeq->frameOfTime(state.time);
     int lastFrame = std::max(0, std::min(frame, colSeq->numFrames()));
     colSeq->setNumFrames(frame + 1);
 
-    CollisionLinkPairListPtr collisionPairs = std::make_shared<CollisionLinkPairList>();
+    auto collisionPairs = std::make_shared<CollisionLinkPairList>();
     updateCollision(state, collisionPairs.get());
     for(int i=lastFrame; i <= frame; ++i){
         CollisionSeq::Frame collisionPairs0 = colSeq->frame(i);
@@ -573,7 +573,7 @@ void OpenHRPOnlineViewerItemImpl::resetLogItem(BodyItemInfo* info, BodyMotionIte
     info->logItem = newLogItem;
 
     if(newLogItem){
-        BodyMotionPtr motion = newLogItem->motion();
+        auto motion = newLogItem->motion();
         motion->jointPosSeq()->setDimension(0, 0);
         motion->linkPosSeq()->setNumParts(info->bodyItem->body()->numLinks());
         motion->setFrameRate(timeBar->frameRate());
@@ -595,7 +595,7 @@ void OpenHRPOnlineViewerItemImpl::resetCollisionLogItem(CollisionSeqItem* collis
     collisionSeqItem = collisionSeqItem_;
 
     if(collisionSeqItem){
-        CollisionSeqPtr colSeq = collisionSeqItem->collisionSeq();
+        auto colSeq = collisionSeqItem->collisionSeq();
         colSeq->setFrameRate(timeBar->frameRate());
         colSeq->setNumParts(1);
 

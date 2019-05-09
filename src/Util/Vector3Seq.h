@@ -24,7 +24,7 @@ public:
     virtual ~Vector3Seq();
 
     using BaseSeqType::operator=;
-    virtual AbstractSeqPtr cloneSeq() const;
+    virtual std::shared_ptr<AbstractSeq> cloneSeq() const;
         
     bool loadPlainFormat(const std::string& filename, std::ostream& os = nullout());
     bool saveAsPlainFormat(const std::string& filename, std::ostream& os = nullout());
@@ -35,7 +35,6 @@ protected:
     virtual bool doWriteSeq(YAMLWriter& writer, std::function<void()> writeAdditionalPart) override;
 };
 
-typedef std::shared_ptr<Vector3Seq> Vector3SeqPtr;
 }
 
 #endif

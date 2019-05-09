@@ -112,7 +112,7 @@ CollisionSeqItemImpl::~CollisionSeqItemImpl()
 }
 
 
-AbstractMultiSeqPtr CollisionSeqItem::abstractMultiSeq()
+std::shared_ptr<AbstractMultiSeq> CollisionSeqItem::abstractMultiSeq()
 {
     return collisionSeq_;
 }

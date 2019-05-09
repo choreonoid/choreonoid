@@ -172,11 +172,11 @@ public:
     Link* targetLink;
     double orgJointPosition;
         
-    JointPathPtr ikPath;
+    shared_ptr<JointPath> ikPath;
     LinkTraverse fkTraverse;
-    PinDragIKptr pinDragIK;
-    InverseKinematicsPtr ik;
-    PenetrationBlockerPtr penetrationBlocker;
+    shared_ptr<PinDragIK> pinDragIK;
+    shared_ptr<InverseKinematics> ik;
+    shared_ptr<PenetrationBlocker> penetrationBlocker;
     PositionDraggerPtr positionDragger;
 
     bool isEditMode;
@@ -620,7 +620,7 @@ void EditableSceneBodyImpl::toggleBaseLink(EditableSceneLink* sceneLink)
 
 void EditableSceneBodyImpl::togglePin(EditableSceneLink* sceneLink, bool toggleTranslation, bool toggleRotation)
 {
-    PinDragIKptr pin = bodyItem->pinDragIK();
+    auto pin = bodyItem->pinDragIK();
 
     InverseKinematics::AxisSet axes = pin->pinAxes(sceneLink->link());
 
@@ -648,7 +648,7 @@ void EditableSceneBodyImpl::makeLinkAttitudeLevel()
 {
     if(pointedSceneLink){
         Link* targetLink = outlinedLink->link();
-        InverseKinematicsPtr ik = bodyItem->getCurrentIK(targetLink);
+        auto ik = bodyItem->getCurrentIK(targetLink);
         if(ik){
             const Position& T = targetLink->T();
             const double theta = acos(T(2, 2));
@@ -669,7 +669,7 @@ void EditableSceneBodyImpl::makeLinkAttitudeLevel()
 void EditableSceneBodyImpl::updateMarkersAndManipulators()
 {
     Link* baseLink = bodyItem->currentBaseLink();
-    PinDragIKptr pin = bodyItem->pinDragIK();
+    auto pin = bodyItem->pinDragIK();
 
     const int n = self->numSceneLinks();
     for(int i=0; i < n; ++i){

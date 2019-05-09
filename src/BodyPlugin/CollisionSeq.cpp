@@ -150,13 +150,13 @@ void CollisionSeq::readCollisionData(int nFrames, const Listing& values)
 }
 
 
-void CollisionSeq::writeCollsionData(YAMLWriter& writer, const CollisionLinkPairListPtr ptr)
+void CollisionSeq::writeCollsionData(YAMLWriter& writer, std::shared_ptr<const CollisionLinkPairList> ptr)
 {
     writer.startMapping();
     writer.putKey("LinkPairs");
 
     writer.startListing();
-    for(CollisionLinkPairList::iterator it=ptr->begin(); it!=ptr->end(); it++){
+    for(auto it = ptr->begin(); it != ptr->end(); ++it){
         CollisionLinkPairPtr linkPair = *it;
         writer.startMapping();
         writer.putKeyValue("body0",linkPair->body[0]->name());

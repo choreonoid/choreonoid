@@ -113,7 +113,7 @@ public:
 
     LinkPtr currentBaseLink;
     LinkTraverse fkTraverse;
-    PinDragIKptr pinDragIK;
+    shared_ptr<PinDragIK> pinDragIK;
 
     bool isEditable;
     bool isCallingSlotsOnKinematicStateEdited;
@@ -157,9 +157,9 @@ public:
     void onPositionChanged();
     bool undoKinematicState();
     bool redoKinematicState();
-    void getCurrentIK(Link* targetLink, InverseKinematicsPtr& ik);
-    void getDefaultIK(Link* targetLink, InverseKinematicsPtr& ik);
-    void createPenetrationBlocker(Link* link, bool excludeSelfCollisions, PenetrationBlockerPtr& blocker);
+    void getCurrentIK(Link* targetLink, shared_ptr<InverseKinematics>& ik);
+    void getDefaultIK(Link* targetLink, shared_ptr<InverseKinematics>& ik);
+    void createPenetrationBlocker(Link* link, bool excludeSelfCollisions, shared_ptr<PenetrationBlocker>& blocker);
     void setPresetPose(BodyItem::PresetPoseID id);
     bool doLegIkToMoveCm(const Vector3& c, bool onlyProjectionToFloor);
     bool setStance(double width);
@@ -590,7 +590,7 @@ bool BodyItemImpl::redoKinematicState()
 }
         
 
-PinDragIKptr BodyItem::pinDragIK()
+std::shared_ptr<PinDragIK> BodyItem::pinDragIK()
 {
     if(!impl->pinDragIK){
         impl->pinDragIK = std::make_shared<PinDragIK>(impl->body);
@@ -599,15 +599,15 @@ PinDragIKptr BodyItem::pinDragIK()
 }
 
 
-InverseKinematicsPtr BodyItem::getCurrentIK(Link* targetLink)
+std::shared_ptr<InverseKinematics> BodyItem::getCurrentIK(Link* targetLink)
 {
-    InverseKinematicsPtr ik;
+    shared_ptr<InverseKinematics> ik;
     impl->getCurrentIK(targetLink, ik);
     return ik;
 }
 
 
-void BodyItemImpl::getCurrentIK(Link* targetLink, InverseKinematicsPtr& ik)
+void BodyItemImpl::getCurrentIK(Link* targetLink, shared_ptr<InverseKinematics>& ik)
 {
     if(KinematicsBar::instance()->mode() == KinematicsBar::AUTO_MODE){
         getDefaultIK(targetLink, ik);
@@ -630,15 +630,15 @@ void BodyItemImpl::getCurrentIK(Link* targetLink, InverseKinematicsPtr& ik)
 }
 
 
-InverseKinematicsPtr BodyItem::getDefaultIK(Link* targetLink)
+std::shared_ptr<InverseKinematics> BodyItem::getDefaultIK(Link* targetLink)
 {
-    InverseKinematicsPtr ik;
+    shared_ptr<InverseKinematics> ik;
     impl->getDefaultIK(targetLink, ik);
     return ik;
 }
 
 
-void BodyItemImpl::getDefaultIK(Link* targetLink, InverseKinematicsPtr& ik)
+void BodyItemImpl::getDefaultIK(Link* targetLink, shared_ptr<InverseKinematics>& ik)
 {
     const Mapping& setupMap = *body->info()->findMapping("defaultIKsetup");
 
@@ -650,7 +650,7 @@ void BodyItemImpl::getDefaultIK(Link* targetLink, InverseKinematicsPtr& ik)
                 if(setup.size() == 1){
                     ik = getCustomJointPath(body, baseLink, targetLink);
                 } else {
-                    CompositeIKPtr compositeIK(new CompositeIK(body, targetLink));
+                    auto compositeIK = make_shared<CompositeIK>(body, targetLink);
                     ik = compositeIK;
                     for(int i=0; i < setup.size(); ++i){
                         Link* baseLink = body->link(setup[i].toString());
@@ -668,15 +668,15 @@ void BodyItemImpl::getDefaultIK(Link* targetLink, InverseKinematicsPtr& ik)
 }
 
 
-PenetrationBlockerPtr BodyItem::createPenetrationBlocker(Link* link, bool excludeSelfCollisions)
+std::shared_ptr<PenetrationBlocker> BodyItem::createPenetrationBlocker(Link* link, bool excludeSelfCollisions)
 {
-    PenetrationBlockerPtr blocker;
+    shared_ptr<PenetrationBlocker> blocker;
     impl->createPenetrationBlocker(link, excludeSelfCollisions, blocker);
     return blocker;
 }
 
 
-void BodyItemImpl::createPenetrationBlocker(Link* link, bool excludeSelfCollisions, PenetrationBlockerPtr& blocker)
+void BodyItemImpl::createPenetrationBlocker(Link* link, bool excludeSelfCollisions, shared_ptr<PenetrationBlocker>& blocker)
 {
     WorldItem* worldItem = self->findOwnerItem<WorldItem>();
     if(worldItem){

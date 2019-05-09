@@ -556,7 +556,7 @@ void AISTSimulatorItem::finalizeSimulation()
 }
 
 
-CollisionLinkPairListPtr AISTSimulatorItem::getCollisions()
+std::shared_ptr<CollisionLinkPairList> AISTSimulatorItem::getCollisions()
 {
     return impl->world.constraintForceSolver.getCollisions();
 }
