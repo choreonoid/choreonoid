@@ -34,9 +34,10 @@ private:
     virtual ItemList<> extractTargetItems(const ItemList<>& items) const;
     void addGraphDataHandlers(Item* item, int partIndex, std::vector<GraphDataHandlerPtr>& out_handlers);
     void updateGraphDataHandler(Item* item, GraphDataHandlerPtr handler);
-    void onDataRequest(MultiSE3SeqPtr seq, int partIndex, int type, int axis, int frame, int size, double* out_values);
+    void onDataRequest(std::shared_ptr<MultiSE3Seq> seq, int partIndex, int type, int axis, int frame, int size, double* out_values);
     void onDataModified(MultiSE3SeqItem* item, int partIndex, int type, int axis, int frame, int size, double* values);
 };
+
 }
 
 #endif

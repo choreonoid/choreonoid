@@ -30,7 +30,7 @@ namespace filesystem = boost::filesystem;
 
 static bool saveRootLinkAttAsRpyFormat(BodyMotion& motion, const std::string& filename, std::ostream& os)
 {
-    const MultiSE3SeqPtr& linkPosSeq = motion.linkPosSeq();
+    auto linkPosSeq = motion.linkPosSeq();
     const int nFrames = linkPosSeq->numFrames();
         
     if(nFrames > 0 && linkPosSeq->numParts() > 0){
@@ -66,7 +66,7 @@ static bool saveRootLinkAccAsGsensFile(BodyMotion& motion, Body* body, const std
         return false;
     }
 
-    const MultiSE3SeqPtr& linkPosSeq = motion.linkPosSeq();
+    auto linkPosSeq = motion.linkPosSeq();
 
     AccelerationSensor* gsens = 0;
     DeviceList<AccelerationSensor> accelSensors(body->devices());
@@ -153,7 +153,7 @@ bool cnoid::loadHrpsysSeqFileSet(BodyMotion& motion, const std::string& filename
     
     bool loaded = false;
 
-    MultiValueSeqPtr jointPosSeq;
+    shared_ptr<MultiValueSeq> jointPosSeq;
     filesystem::path posFile = filesystem::change_extension(orgpath, ".pos");
     if(filesystem::exists(posFile) && !filesystem::is_directory(posFile)){
         string posFileString = getNativePathString(posFile);
@@ -168,7 +168,7 @@ bool cnoid::loadHrpsysSeqFileSet(BodyMotion& motion, const std::string& filename
         }
     }
 
-    MultiSE3SeqPtr rootLinkAttSeq;
+    shared_ptr<MultiSE3Seq> rootLinkAttSeq;
     filesystem::path hipFile = filesystem::change_extension(orgpath, ".hip");
     if(filesystem::exists(hipFile) && !filesystem::is_directory(hipFile)){
         string hipFileString = getNativePathString(hipFile);
@@ -183,7 +183,7 @@ bool cnoid::loadHrpsysSeqFileSet(BodyMotion& motion, const std::string& filename
         }
     }
 
-    MultiSE3SeqPtr linkPosSeq;
+    shared_ptr<MultiSE3Seq> linkPosSeq;
     filesystem::path waistFile = filesystem::change_extension(orgpath, ".waist");
     if(filesystem::exists(waistFile) && !filesystem::is_directory(waistFile)){
         string waistFileString = getNativePathString(waistFile);
@@ -198,7 +198,7 @@ bool cnoid::loadHrpsysSeqFileSet(BodyMotion& motion, const std::string& filename
         }
     }
 
-    ZMPSeqPtr zmpseq;
+    shared_ptr<ZMPSeq> zmpseq;
     if(jointPosSeq || linkPosSeq){
         filesystem::path zmpFile = filesystem::change_extension(orgpath, ".zmp");
         if(filesystem::exists(zmpFile) && !filesystem::is_directory(zmpFile)){
@@ -270,7 +270,7 @@ bool cnoid::saveHrpsysSeqFileSet(BodyMotion& motion, Body* body, const std::stri
         saveRootLinkAccAsGsensFile(
             motion, body, getNativePathString(filesystem::change_extension(orgpath, ".gsens")), os);
 
-        ZMPSeqPtr zmpseq = getZMPSeq(motion);
+        auto zmpseq = getZMPSeq(motion);
         if(zmpseq){
             // make the coordinate relative to the waist
             Vector3Seq relZMP(zmpseq->numFrames());

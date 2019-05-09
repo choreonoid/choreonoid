@@ -75,7 +75,7 @@ ItemList<> MultiSE3SeqGraphView::extractTargetItems(const ItemList<>& items) con
 void MultiSE3SeqGraphView::addGraphDataHandlers(Item* item, int partIndex, std::vector<GraphDataHandlerPtr>& out_handlers)
 {
     MultiSE3SeqItem* seqItem = static_cast<MultiSE3SeqItem*>(item);
-    MultiSE3SeqPtr seq = seqItem->seq();
+    auto seq = seqItem->seq();
     
     if(partIndex < seq->numParts()){
     
@@ -104,14 +104,14 @@ void MultiSE3SeqGraphView::addGraphDataHandlers(Item* item, int partIndex, std::
 
 void MultiSE3SeqGraphView::updateGraphDataHandler(Item* item, GraphDataHandlerPtr handler)
 {
-    MultiSE3SeqPtr seq = static_cast<MultiSE3SeqItem*>(item)->seq();
+    auto seq = static_cast<MultiSE3SeqItem*>(item)->seq();
     handler->setFrameProperties(seq->numFrames(), seq->frameRate());
     handler->update();
 }
 
 
 void MultiSE3SeqGraphView::onDataRequest
-(MultiSE3SeqPtr seq, int partIndex, int type, int axis, int frame, int size, double* out_values)
+(std::shared_ptr<MultiSE3Seq> seq, int partIndex, int type, int axis, int frame, int size, double* out_values)
 {
     MultiSE3Seq::Part part = seq->part(partIndex);
     if(type == 0){ // xyz

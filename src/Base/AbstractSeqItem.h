@@ -19,7 +19,7 @@ public:
     AbstractSeqItem(const AbstractSeqItem& org);
     virtual ~AbstractSeqItem();
 
-    virtual AbstractSeqPtr abstractSeq() = 0;
+    virtual std::shared_ptr<AbstractSeq> abstractSeq() = 0;
 
 protected:
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
@@ -37,8 +37,8 @@ public:
     AbstractMultiSeqItem(const AbstractMultiSeqItem& org);
     virtual ~AbstractMultiSeqItem();
 
-    virtual AbstractSeqPtr abstractSeq() override;
-    virtual AbstractMultiSeqPtr abstractMultiSeq() = 0;
+    virtual std::shared_ptr<AbstractSeq> abstractSeq() override;
+    virtual std::shared_ptr<AbstractMultiSeq> abstractMultiSeq() = 0;
 
 protected:
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;

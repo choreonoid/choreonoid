@@ -59,7 +59,7 @@ AbstractSeq& ZMPSeq::operator=(const AbstractSeq& rhs)
 }
 
 
-AbstractSeqPtr ZMPSeq::cloneSeq() const
+std::shared_ptr<AbstractSeq> ZMPSeq::cloneSeq() const
 {
     return std::make_shared<ZMPSeq>(*this);
 }
@@ -100,13 +100,13 @@ bool ZMPSeq::doReadSeq(const Mapping* archive, std::ostream& os)
 }
 
 
-ZMPSeqPtr cnoid::getZMPSeq(const BodyMotion& motion)
+std::shared_ptr<ZMPSeq> cnoid::getZMPSeq(const BodyMotion& motion)
 {
     return motion.extraSeq<ZMPSeq>(contentName);
 }
 
 
-ZMPSeqPtr cnoid::getOrCreateZMPSeq(BodyMotion& motion)
+std::shared_ptr<ZMPSeq> cnoid::getOrCreateZMPSeq(BodyMotion& motion)
 {
     return motion.getOrCreateExtraSeq<ZMPSeq>(contentName);
 }

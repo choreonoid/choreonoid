@@ -25,13 +25,13 @@ BodyMotionPoseProvider::BodyMotionPoseProvider()
 }
 
 
-BodyMotionPoseProvider::BodyMotionPoseProvider(Body* body_, BodyMotionPtr motion)
+BodyMotionPoseProvider::BodyMotionPoseProvider(Body* body_, std::shared_ptr<BodyMotion> motion)
 {
     initialize(body_, motion);
 }
 
 
-void BodyMotionPoseProvider::initialize(Body* body__, BodyMotionPtr motion)
+void BodyMotionPoseProvider::initialize(Body* body__, std::shared_ptr<BodyMotion> motion)
 {
     body_ = body__->clone();
     this->motion = motion;
@@ -43,7 +43,7 @@ void BodyMotionPoseProvider::initialize(Body* body__, BodyMotionPtr motion)
     if(legged->isValid()){
         for(int i=0; i < legged->numFeet(); ++i){
             Link* link = legged->footLink(i);
-            JointPathPtr ikPath = getCustomJointPath(body_, body_->rootLink(), link);
+            auto ikPath = getCustomJointPath(body_, body_->rootLink(), link);
             if(ikPath){
                 if(ikPath->hasAnalyticalIK() || ikPath->numJoints() == 6){
                     footLinks.push_back(link);
@@ -65,8 +65,8 @@ bool BodyMotionPoseProvider::updateMotion()
     footLinkPositions->setDimension(numFrames, footLinks.size());
     footLinkPositions->setFrameRate(motion->frameRate());
 
-    MultiValueSeqPtr qseq = motion->jointPosSeq();
-    MultiSE3SeqPtr pseq = motion->linkPosSeq();
+    auto qseq = motion->jointPosSeq();
+    auto pseq = motion->linkPosSeq();
 
     zmpSeq = getZMPSeq(*motion);
 
@@ -145,7 +145,7 @@ bool BodyMotionPoseProvider::seek
         p_waist += waistTranslation;
         for(size_t i=0; i < footLinks.size(); ++i){
             const Affine3& foot = footLinkPositions->at(frame, i);
-            JointPathPtr ikPath = ikPaths[i];
+            auto ikPath = ikPaths[i];
             ikPath->calcInverseKinematics(p_waist, R_waist, foot.translation(), foot.linear());
             for(int j=0; j < ikPath->numJoints(); ++j){
                 Link* joint = ikPath->joint(j);
@@ -192,7 +192,7 @@ bool BodyMotionPoseProvider::getBaseLinkPosition(Position& out_T) const
 }
 
 
-void BodyMotionPoseProvider::getJointPositions(std::vector< boost::optional<double> >& out_q) const
+void BodyMotionPoseProvider::getJointPositions(std::vector<boost::optional<double>>& out_q) const
 {
     int n = body_->numJoints();
     out_q.resize(n);

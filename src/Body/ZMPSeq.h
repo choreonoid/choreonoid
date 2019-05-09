@@ -24,7 +24,7 @@ public:
 
     virtual AbstractSeq& operator=(const AbstractSeq& rhs) override;
     ZMPSeq& operator=(const ZMPSeq& rhs);
-    virtual AbstractSeqPtr cloneSeq() const override;
+    virtual std::shared_ptr<AbstractSeq> cloneSeq() const override;
 
     bool isRootRelative() const { return isRootRelative_; }
     void setRootRelative(bool on);
@@ -37,12 +37,10 @@ private:
     bool isRootRelative_;
 };
 
-typedef std::shared_ptr<ZMPSeq> ZMPSeqPtr;
-        
 class BodyMotion;
 
-CNOID_EXPORT ZMPSeqPtr getZMPSeq(const BodyMotion& motion);
-CNOID_EXPORT ZMPSeqPtr getOrCreateZMPSeq(BodyMotion& motion);
+CNOID_EXPORT std::shared_ptr<ZMPSeq> getZMPSeq(const BodyMotion& motion);
+CNOID_EXPORT std::shared_ptr<ZMPSeq> getOrCreateZMPSeq(BodyMotion& motion);
 CNOID_EXPORT void clearZMPSeq(BodyMotion& motion);
 CNOID_EXPORT bool makeRootRelative(ZMPSeq& zmpseq, BodyMotion& motion, bool on);
 

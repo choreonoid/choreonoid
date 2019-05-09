@@ -154,8 +154,6 @@ private:
     void updateForceSensors();
 };
 
-typedef std::shared_ptr<ForwardDynamicsCBM> ForwardDynamicsCBMPtr;
-	
 }
 
 #endif

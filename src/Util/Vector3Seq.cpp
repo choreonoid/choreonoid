@@ -31,7 +31,7 @@ Vector3Seq::Vector3Seq(const Vector3Seq& org)
 }
 
 
-AbstractSeqPtr Vector3Seq::cloneSeq() const
+std::shared_ptr<AbstractSeq> Vector3Seq::cloneSeq() const
 {
     return std::make_shared<Vector3Seq>(*this);
 }

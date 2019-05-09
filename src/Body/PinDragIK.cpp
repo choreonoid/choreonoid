@@ -107,7 +107,7 @@ public:
     struct PinProperty {
         double weight;
         InverseKinematics::AxisSet axes;
-        JointPathPtr jointPath;
+        std::shared_ptr<JointPath> jointPath;
         Vector3 p;
         Matrix3 R;
         Vector3 prevStep_p;

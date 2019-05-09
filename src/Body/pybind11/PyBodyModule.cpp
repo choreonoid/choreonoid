@@ -45,7 +45,7 @@ PYBIND11_MODULE(Body, m)
         .def("lastActualBodyLoader", &BodyLoader::lastActualBodyLoader)
         ;
 
-    py::class_<JointPath, JointPathPtr>(m, "JointPath")
+    py::class_<JointPath, shared_ptr<JointPath>>(m, "JointPath")
         .def(py::init<>())
         .def_property_readonly("numJoints", &JointPath::numJoints)
         .def("joint", &JointPath::joint)
@@ -69,7 +69,7 @@ PYBIND11_MODULE(Body, m)
 
     m.def("getCustomJointPath", getCustomJointPath);
 
-    py::class_<BodyMotion, BodyMotionPtr> bodyMotion(m, "BodyMotion");
+    py::class_<BodyMotion, shared_ptr<BodyMotion>> bodyMotion(m, "BodyMotion");
     bodyMotion
         .def_property("numJoints", &BodyMotion::numJoints, &BodyMotion::setNumParts)
         .def("setNumJoints", &BodyMotion::setNumParts)
@@ -79,18 +79,18 @@ PYBIND11_MODULE(Body, m)
         .def("getOffsetTimeFrame", &BodyMotion::getOffsetTimeFrame)
         .def_property("numFrames", &BodyMotion::numFrames, &BodyMotion::setNumFrames)
         .def("setNumFrames", &BodyMotion::setNumFrames)
-        .def_property_readonly("jointPosSeq", (MultiValueSeqPtr(BodyMotion::*)())&BodyMotion::jointPosSeq)
-        .def_property_readonly("linkPosSeq", (MultiSE3SeqPtr(BodyMotion::*)())&BodyMotion::linkPosSeq)
-        .def("frame", (BodyMotion::Frame (BodyMotion::*)(int)) &BodyMotion::frame)
+        .def_property_readonly("jointPosSeq", [](BodyMotion& self){ return self.jointPosSeq(); })
+        .def_property_readonly("linkPosSeq", [](BodyMotion& self){ return self.linkPosSeq(); })
+        .def("frame", [](BodyMotion& self, int f){ return self.frame(f); })
 
         // deprecated
         .def("getNumJoints", &BodyMotion::numJoints)
         .def("getNumLinks", &BodyMotion::numLinks)
         .def("getFrameRate",&BodyMotion::getFrameRate)
         .def("getNumFrames", &BodyMotion::numFrames)
-        .def("getJointPosSeq", (MultiValueSeqPtr(BodyMotion::*)())&BodyMotion::jointPosSeq)
-        .def("getLinkPosSeq", (MultiSE3SeqPtr(BodyMotion::*)())&BodyMotion::linkPosSeq)
-        .def("getFrame", (BodyMotion::Frame (BodyMotion::*)(int)) &BodyMotion::frame)
+        .def("getJointPosSeq", [](BodyMotion& self){ return self.jointPosSeq(); })
+        .def("getLinkPosSeq", [](BodyMotion& self){ return self.linkPosSeq(); })
+        .def("getFrame", [](BodyMotion& self, int f){ return self.frame(f); })
         .def("setNumParts", &BodyMotion::setNumJoints)
         .def("getNumParts", &BodyMotion::numJoints)
         ;

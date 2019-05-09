@@ -39,7 +39,7 @@ MultiSE3Seq::MultiSE3Seq(const MultiSE3Seq& org)
 }
 
 
-AbstractSeqPtr MultiSE3Seq::cloneSeq() const
+std::shared_ptr<AbstractSeq> MultiSE3Seq::cloneSeq() const
 {
     return std::make_shared<MultiSE3Seq>(*this);
 }

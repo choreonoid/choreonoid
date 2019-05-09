@@ -30,7 +30,7 @@ class PA10PickupController : public SimpleController
     Link* ioRightHand;
     BodyPtr ikBody;
     Link* ikWrist;
-    JointPathPtr baseToWrist;
+    shared_ptr<JointPath> baseToWrist;
     VectorXd qref, qold, qref_old;
     Interpolator<VectorXd> wristInterpolator;
     Interpolator<VectorXd> jointInterpolator;

@@ -597,7 +597,7 @@ bool CustomJointPath::calcInverseKinematics(const Position& T)
 }
 
 
-JointPathPtr cnoid::getCustomJointPath(Body* body, Link* baseLink, Link* targetLink)
+std::shared_ptr<JointPath> cnoid::getCustomJointPath(Body* body, Link* baseLink, Link* targetLink)
 {
     if(body->customizerInterface() && body->customizerInterface()->initializeAnalyticIk){
         return std::make_shared<CustomJointPath>(body, baseLink, targetLink);

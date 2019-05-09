@@ -20,10 +20,11 @@ public:
     static void initializeClass(ExtensionManager* ext);
             
     ZMPSeqItem();
-    ZMPSeqItem(ZMPSeqPtr seq);
+    ZMPSeqItem(std::shared_ptr<ZMPSeq> seq);
     ZMPSeqItem(const ZMPSeqItem& org);
 
-    const ZMPSeqPtr& zmpseq() { return zmpseq_; }
+    std::shared_ptr<ZMPSeq> zmpseq() { return zmpseq_; }
+    std::shared_ptr<const ZMPSeq> zmpseq() const { return zmpseq_; }
 
     bool makeRootRelative(bool on);
 
@@ -33,7 +34,7 @@ protected:
     virtual void doPutProperties(PutPropertyFunction& putProperty);
 
 private:
-    ZMPSeqPtr zmpseq_;
+    std::shared_ptr<ZMPSeq> zmpseq_;
 };
 
 typedef ref_ptr<ZMPSeqItem> ZMPSeqItemPtr;

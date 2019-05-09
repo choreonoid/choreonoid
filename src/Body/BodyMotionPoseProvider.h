@@ -18,15 +18,14 @@ namespace cnoid {
 class Link;
 
 class JointPath;
-typedef std::shared_ptr<JointPath> JointPathPtr;
 
 class CNOID_EXPORT BodyMotionPoseProvider : public PoseProvider
 {
 public:
     BodyMotionPoseProvider();
-    BodyMotionPoseProvider(Body* body, BodyMotionPtr motion);
+    BodyMotionPoseProvider(Body* body, std::shared_ptr<BodyMotion> motion);
 
-    void initialize(Body* body, BodyMotionPtr motion);
+    void initialize(Body* body, std::shared_ptr<BodyMotion> motion);
 
     bool updateMotion();
 
@@ -37,17 +36,17 @@ public:
     virtual bool seek(double time, int waistLinkIndex, const Vector3& waistTranslation);
     virtual int baseLinkIndex() const;
     virtual bool getBaseLinkPosition(Position& out_T) const;
-    virtual void getJointPositions(std::vector< boost::optional<double> >& out_q) const;
+    virtual void getJointPositions(std::vector<boost::optional<double>>& out_q) const;
     virtual boost::optional<Vector3> ZMP() const;
 
 private:
     BodyPtr body_;
-    BodyMotionPtr motion;
-    ZMPSeqPtr zmpSeq;
+    std::shared_ptr<BodyMotion> motion;
+    std::shared_ptr<ZMPSeq> zmpSeq;
     int minNumJoints;
     std::vector<Link*> footLinks;
-    std::vector<JointPathPtr> ikPaths;
-    MultiSE3MatrixSeqPtr footLinkPositions;
+    std::vector<std::shared_ptr<JointPath>> ikPaths;
+    std::shared_ptr<MultiSE3MatrixSeq> footLinkPositions;
     std::vector<double> qTranslated;
     Vector3 p_waist;
     Matrix3 R_waist;

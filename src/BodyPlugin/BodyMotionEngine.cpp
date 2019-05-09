@@ -46,8 +46,8 @@ public:
     BodyItemPtr bodyItem;
     BodyMotionItemPtr motionItem;
     BodyPtr body;
-    MultiValueSeqPtr qSeq;
-    MultiSE3SeqPtr positions;
+    shared_ptr<MultiValueSeq> qSeq;
+    shared_ptr<MultiSE3Seq> positions;
     bool calcForwardKinematics;
     std::vector<TimeSyncItemEnginePtr> extraSeqEngines;
     ConnectionSet connections;
@@ -58,7 +58,7 @@ public:
         body = bodyItem->body();
         this->motionItem = motionItem;
         
-        const BodyMotionPtr& motion = motionItem->motion();
+        auto motion = motionItem->motion();
         qSeq = motion->jointPosSeq();
         positions = motion->linkPosSeq();
         calcForwardKinematics = !(positions && positions->numParts() > 1);

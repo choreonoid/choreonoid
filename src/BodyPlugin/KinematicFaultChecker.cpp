@@ -348,10 +348,10 @@ int KinematicFaultCheckerImpl::checkFaults
 {
     numFaults = 0;
 
-    BodyPtr body = bodyItem->body();
-    BodyMotionPtr motion = motionItem->motion();
-    MultiValueSeqPtr qseq = motion->jointPosSeq();;
-    MultiSE3SeqPtr pseq = motion->linkPosSeq();
+    auto body = bodyItem->body();
+    auto motion = motionItem->motion();
+    auto qseq = motion->jointPosSeq();;
+    auto pseq = motion->linkPosSeq();
     
     if((!checkPosition && !checkVelocity && !checkCollision) || body->isStaticModel() || !qseq->getNumFrames()){
         return numFaults;

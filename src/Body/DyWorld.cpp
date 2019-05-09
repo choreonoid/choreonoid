@@ -160,7 +160,7 @@ int WorldBase::addBody(DyBody* body)
 }
 
 
-int WorldBase::addBody(DyBody* body, const ForwardDynamicsPtr& forwardDynamics)
+int WorldBase::addBody(DyBody* body, std::shared_ptr<ForwardDynamics> forwardDynamics)
 {
     int index = addBody(body);
     bodyInfoArray[index].forwardDynamics = forwardDynamics;

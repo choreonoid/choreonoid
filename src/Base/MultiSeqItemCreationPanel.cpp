@@ -59,7 +59,7 @@ bool MultiSeqItemCreationPanel::initializePanel(Item* protoItem)
         
     AbstractMultiSeqItem* item = dynamic_cast<AbstractMultiSeqItem*>(protoItem);
     if(item){
-        AbstractMultiSeqPtr seq = item->abstractMultiSeq();
+        auto seq = item->abstractMultiSeq();
         numSeqsSpin->setValue(seq->getNumParts());
         double frameRate = seq->getFrameRate();
         timeLengthSpin->setValue(seq->getNumFrames() / frameRate);
@@ -76,7 +76,7 @@ bool MultiSeqItemCreationPanel::initializeItem(Item* protoItem)
 
     AbstractMultiSeqItem* item = dynamic_cast<AbstractMultiSeqItem*>(protoItem);
     if(item){
-        AbstractMultiSeqPtr seq = item->abstractMultiSeq();
+        auto seq = item->abstractMultiSeq();
         double frameRate = frameRateSpin->value();
         seq->setFrameRate(frameRate);
         seq->setNumParts(numSeqsSpin->value());

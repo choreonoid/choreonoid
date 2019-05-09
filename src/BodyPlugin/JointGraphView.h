@@ -42,7 +42,7 @@ private:
             connections.disconnect();
         }
         MultiValueSeqItemPtr item;
-        MultiValueSeqPtr seq;
+        std::shared_ptr<MultiValueSeq> seq;
         BodyItemPtr bodyItem;
         ConnectionSet connections;
         std::vector<GraphDataHandlerPtr> handlers;
@@ -59,7 +59,7 @@ private:
     void updateBodyItems();
     void onBodyItemDetachedFromRoot(BodyItemPtr bodyItem);
     void setupGraphWidget();
-    void addJointTrajectory(std::list<ItemInfo>::iterator itemInfoIter, Link* joint, MultiValueSeqPtr seq);
+    void addJointTrajectory(std::list<ItemInfo>::iterator itemInfoIter, Link* joint, std::shared_ptr<MultiValueSeq> seq);
     void onDataItemUpdated(std::list<ItemInfo>::iterator itemInfoIter);
     void onDataRequest(std::list<ItemInfo>::iterator itemInfoIter, int jointId, int frame, int size, double* out_values);
     void onDataModified(std::list<ItemInfo>::iterator itemInfoIter, int jointId, int frame, int size, double* values);

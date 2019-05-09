@@ -6,8 +6,6 @@
 #define CNOID_BODY_INVERSE_KINEMATICS_H
 
 #include <cnoid/EigenTypes>
-#include <memory>
-#include "exportdecl.h"
 
 namespace cnoid {
 
@@ -28,8 +26,6 @@ public:
         return calcInverseKinematics(T);
     }
 };
-
-typedef std::shared_ptr<InverseKinematics> InverseKinematicsPtr;
 
 }
 

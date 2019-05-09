@@ -8,6 +8,7 @@
 
 #include "Body.h"
 #include "InverseKinematics.h"
+#include <memory>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -32,7 +33,7 @@ public:
 
     Link* kneePitchJoint(int footIndex) const { return footInfos[footIndex].kneePitchJoint; }
 
-    InverseKinematicsPtr getFootBasedIK(Link* targetLink);
+    std::shared_ptr<InverseKinematics> getFootBasedIK(Link* targetLink);
     
     bool doLegIkToMoveCm(const Vector3& c, bool onlyProjectionToFloor = false);
     bool setStance(double width, Link* baseLink);

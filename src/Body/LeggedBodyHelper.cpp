@@ -87,11 +87,11 @@ bool LeggedBodyHelper::resetBody(Body* body)
 }
 
 
-InverseKinematicsPtr LeggedBodyHelper::getFootBasedIK(Link* targetLink)
+std::shared_ptr<InverseKinematics> LeggedBodyHelper::getFootBasedIK(Link* targetLink)
 {
-    InverseKinematicsPtr ik;
+    shared_ptr<InverseKinematics> ik;
     if(isValid_){
-        CompositeIKPtr composite = std::make_shared<CompositeIK>(body_, targetLink);
+        auto composite = std::make_shared<CompositeIK>(body_, targetLink);
         ik = composite;
         for(size_t i=0; i < footInfos.size(); ++i){
             if(!composite->addBaseLink(footInfos[i].link)){
@@ -129,7 +129,7 @@ bool LeggedBodyHelper::doLegIkToMoveCm(const Vector3& c, bool onlyProjectionToFl
             break;
         }
         size_t numDone = 0;
-        JointPathPtr baseToWaist = getCustomJointPath(body_, baseFoot, waist);
+        auto baseToWaist = getCustomJointPath(body_, baseFoot, waist);
         if(baseToWaist){
             Position T = waist->T();
             T.translation() += e;
@@ -137,7 +137,7 @@ bool LeggedBodyHelper::doLegIkToMoveCm(const Vector3& c, bool onlyProjectionToFl
                 numDone++;
                 for(size_t j=1; j < footInfos.size(); ++j){
                     Link* foot = footInfos[j].link;
-                    JointPathPtr waistToFoot = getCustomJointPath(body_, waist, foot);
+                    auto waistToFoot = getCustomJointPath(body_, waist, foot);
                     if(waistToFoot){
                         bool ikDone;
                         if(waistToFoot->hasAnalyticalIK()){
@@ -193,7 +193,7 @@ bool LeggedBodyHelper::setStance(double width, Link* baseLink)
 
     Link* waist = body_->rootLink();
         
-    JointPathPtr ikPath = getCustomJointPath(body_, foot[0], waist);
+    auto ikPath = getCustomJointPath(body_, foot[0], waist);
 
     if(ikPath){
         Position T = waist->T();

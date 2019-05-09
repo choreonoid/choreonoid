@@ -56,8 +56,6 @@ private:
         virtual ~CreationPanelFilterBase() { }
         virtual bool operator()(Item* protoItem, Item* parentItem) = 0;
     };
-    typedef std::shared_ptr<CreationPanelFilterBase> CreationPanelFilterBasePtr;
-        
 
     class FileFunctionBase
     {
@@ -65,7 +63,6 @@ private:
         virtual ~FileFunctionBase() { }
         virtual bool operator()(Item* item, const std::string& filename, std::ostream& os, Item* parentItem) = 0;
     };
-    typedef std::shared_ptr<FileFunctionBase> FileFunctionBasePtr;
 
     class OverwritingCheckFunctionBase
     {
@@ -73,7 +70,6 @@ private:
         ~OverwritingCheckFunctionBase();
         virtual bool operator()(Item* item) = 0;
     };
-    typedef std::shared_ptr<OverwritingCheckFunctionBase> OverwritingCheckFunctionBasePtr;
         
 public:
     void bindTextDomain(const std::string& domain);
@@ -129,68 +125,74 @@ public:
     }
 
     template <class ItemType>
-        void addCreationPanelPreFilter(const typename CreationPanelFilter<ItemType>::Function& filter) {
-        addCreationPanelFilterSub(typeid(ItemType).name(),
-                                  CreationPanelFilterBasePtr(new CreationPanelFilter<ItemType>(filter)),
-                                  false);
+    void addCreationPanelPreFilter(const typename CreationPanelFilter<ItemType>::Function& filter) {
+        addCreationPanelFilterSub(
+            typeid(ItemType).name(),
+            std::make_shared<CreationPanelFilter<ItemType>>(filter),
+            false);
     }
         
     template <class ItemType>
-        void addCreationPanelPostFilter(const typename CreationPanelFilter<ItemType>::Function& filter){
-        addCreationPanelFilterSub(typeid(ItemType).name(),
-                                  CreationPanelFilterBasePtr(new CreationPanelFilter<ItemType>(filter)),
-                                  true);
+    void addCreationPanelPostFilter(const typename CreationPanelFilter<ItemType>::Function& filter){
+        addCreationPanelFilterSub(
+            typeid(ItemType).name(),
+            std::make_shared<CreationPanelFilter<ItemType>>(filter),
+            true);
     }
     
     template <class ItemType>
-        ItemManager& addLoader(const std::string& caption, const std::string& formatId, const std::string& extensions, 
-                               const typename FileFunction<ItemType>::Function& function, int priority = PRIORITY_DEFAULT) {
+    ItemManager& addLoader(
+        const std::string& caption, const std::string& formatId, const std::string& extensions, 
+        const typename FileFunction<ItemType>::Function& function, int priority = PRIORITY_DEFAULT) {
         addLoaderSub(typeid(ItemType).name(), caption, formatId, [extensions](){ return extensions; },
-                     FileFunctionBasePtr(new FileFunction<ItemType>(function)), priority);
+                     std::make_shared<FileFunction<ItemType>>(function), priority);
         return *this;
     }
 
     template <class ItemType>
-        ItemManager& addLoader(const std::string& caption, const std::string& formatId, std::function<std::string()> getExtensions,
-                               const typename FileFunction<ItemType>::Function& function, int priority = PRIORITY_DEFAULT) {
+    ItemManager& addLoader(
+        const std::string& caption, const std::string& formatId, std::function<std::string()> getExtensions,
+        const typename FileFunction<ItemType>::Function& function, int priority = PRIORITY_DEFAULT) {
         addLoaderSub(typeid(ItemType).name(), caption, formatId, getExtensions,
-                     FileFunctionBasePtr(new FileFunction<ItemType>(function)), priority);
+                     std::make_shared<FileFunction<ItemType>>(function), priority);
         return *this;
     }
     
     template<class ItemType>
-        ItemManager& addSaver(const std::string& caption, const std::string& formatId, const std::string& extensions,
-                              const typename FileFunction<ItemType>::Function& function, int priority = PRIORITY_DEFAULT){
+    ItemManager& addSaver(
+        const std::string& caption, const std::string& formatId, const std::string& extensions,
+        const typename FileFunction<ItemType>::Function& function, int priority = PRIORITY_DEFAULT){
         addSaverSub(typeid(ItemType).name(), caption, formatId, [extensions](){ return extensions; },
-                    FileFunctionBasePtr(new FileFunction<ItemType>(function)), priority);
+                    std::make_shared<FileFunction<ItemType>>(function), priority);
         return *this;
     }
 
     template<class ItemType>
-        ItemManager& addSaver(const std::string& caption, const std::string& formatId, std::function<std::string()> getExtensions,
-                              const typename FileFunction<ItemType>::Function& function, int priority = PRIORITY_DEFAULT){
+    ItemManager& addSaver(
+        const std::string& caption, const std::string& formatId, std::function<std::string()> getExtensions,
+        const typename FileFunction<ItemType>::Function& function, int priority = PRIORITY_DEFAULT){
         addSaverSub(typeid(ItemType).name(), caption, formatId, getExtensions, 
-                    FileFunctionBasePtr(new FileFunction<ItemType>(function)), priority);
+                    std::make_shared<FileFunction<ItemType>>(function), priority);
         return *this;
     }
     
     template<class ItemType>
-        ItemManager& addLoaderAndSaver(const std::string& caption, const std::string& formatId,
-                                       const std::string& extensions,
-                                       const typename FileFunction<ItemType>::Function& loadingFunction,
-                                       const typename FileFunction<ItemType>::Function& savingFunction,
-                                       int priority = PRIORITY_DEFAULT){
+    ItemManager& addLoaderAndSaver(const std::string& caption, const std::string& formatId,
+                                   const std::string& extensions,
+                                   const typename FileFunction<ItemType>::Function& loadingFunction,
+                                   const typename FileFunction<ItemType>::Function& savingFunction,
+                                   int priority = PRIORITY_DEFAULT){
         addLoader<ItemType>(caption, formatId, extensions, loadingFunction, priority);
         addSaver<ItemType>(caption, formatId, extensions, savingFunction, priority);
         return *this;
     }
 
     template<class ItemType>
-        ItemManager& addLoaderAndSaver(const std::string& caption, const std::string& formatId,
-                                       std::function<std::string()> getExtensions,
-                                       const typename FileFunction<ItemType>::Function& loadingFunction,
-                                       const typename FileFunction<ItemType>::Function& savingFunction,
-                                       int priority = PRIORITY_DEFAULT){
+    ItemManager& addLoaderAndSaver(const std::string& caption, const std::string& formatId,
+                                   std::function<std::string()> getExtensions,
+                                   const typename FileFunction<ItemType>::Function& loadingFunction,
+                                   const typename FileFunction<ItemType>::Function& savingFunction,
+                                   int priority = PRIORITY_DEFAULT){
         addLoader<ItemType>(caption, formatId, getExtensions, loadingFunction, priority);
         addSaver<ItemType>(caption, formatId, getExtensions, savingFunction, priority);
         return *this;
@@ -206,11 +208,13 @@ private:
         std::function<Item*()> factory, Item* singletonInstance, const std::string& typeId, const std::string& className);
     void addCreationPanelSub(const std::string& typeId, ItemCreationPanel* panel);
     void addCreationPanelFilterSub(
-        const std::string& typeId, CreationPanelFilterBasePtr filter, bool afterInitializionByPanels);
-    void addLoaderSub(const std::string& typeId, const std::string& caption, const std::string& formatId,
-                      std::function<std::string()> getExtensions, FileFunctionBasePtr function, int priority);
-    void addSaverSub(const std::string& typeId, const std::string& caption, const std::string& formatId,
-                     std::function<std::string()> getExtensions, FileFunctionBasePtr function, int priority);
+        const std::string& typeId, std::shared_ptr<CreationPanelFilterBase> filter, bool afterInitializionByPanels);
+    void addLoaderSub(
+        const std::string& typeId, const std::string& caption, const std::string& formatId,
+        std::function<std::string()> getExtensions, std::shared_ptr<FileFunctionBase> function, int priority);
+    void addSaverSub(
+        const std::string& typeId, const std::string& caption, const std::string& formatId,
+        std::function<std::string()> getExtensions, std::shared_ptr<FileFunctionBase> function, int priority);
 
     static Item* getSingletonInstance(const std::string& typeId);
 

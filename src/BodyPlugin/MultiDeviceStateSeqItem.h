@@ -18,11 +18,11 @@ public:
     static void initializeClass(ExtensionManager* ext);
         
     MultiDeviceStateSeqItem();
-    MultiDeviceStateSeqItem(MultiDeviceStateSeqPtr seq);
+    MultiDeviceStateSeqItem(std::shared_ptr<MultiDeviceStateSeq> seq);
     MultiDeviceStateSeqItem(const MultiDeviceStateSeqItem& org);
     virtual ~MultiDeviceStateSeqItem();
-    virtual AbstractMultiSeqPtr abstractMultiSeq() override;
-    MultiDeviceStateSeqPtr seq() { return seq_; }
+    virtual std::shared_ptr<AbstractMultiSeq> abstractMultiSeq() override;
+    std::shared_ptr<MultiDeviceStateSeq> seq() { return seq_; }
 
 protected:
     virtual Item* doDuplicate() const override;
@@ -30,7 +30,7 @@ protected:
     virtual bool restore(const Archive& archive) override;
 
 private:
-    MultiDeviceStateSeqPtr seq_;
+    std::shared_ptr<MultiDeviceStateSeq> seq_;
 };
 
 typedef ref_ptr<MultiDeviceStateSeqItem> MultiDeviceStateSeqItemPtr;
