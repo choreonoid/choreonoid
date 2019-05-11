@@ -4,6 +4,7 @@
 #define CNOID_MAJOR_VERSION @CNOID_MAJOR_VERSION@
 #define CNOID_MINOR_VERSION @CNOID_MINOR_VERSION@
 #define CNOID_PATCH_VERSION @CNOID_PATCH_VERSION@
+#define CNOID_VERSION @CNOID_VERSION_NUMBER@
 #define CNOID_INTERNAL_VERSION @CNOID_INTERNAL_VERSION@
 
 #define CNOID_VERSION_STRING "@CNOID_VERSION@"
@@ -23,5 +24,12 @@
 #define CNOID_GENERAL_EXPORT __attribute__ ((visibility("default")))
 #endif
 #endif
+
+namespace cnoid {
+
+CNOID_GENERAL_EXPORT unsigned int getVersion();
+CNOID_GENERAL_EXPORT unsigned int getInternalVersion();
+
+}
 
 #endif

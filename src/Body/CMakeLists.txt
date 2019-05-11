@@ -13,6 +13,8 @@ set(sources
   LinkPath.cpp
   JointPath.cpp
   Jacobian.cpp
+  BodyCustomizer.cpp
+  BodyCustomizerInterface.cpp
   Material.cpp
   ContactMaterial.cpp
   MaterialTable.cpp
@@ -44,7 +46,6 @@ set(sources
   BodyMotion.cpp
   BodyMotionPoseProvider.cpp
   BodyState.cpp
-  BodyCustomizerInterface.cpp
   ZMPSeq.cpp
   ForwardDynamics.cpp
   ForwardDynamicsABM.cpp
@@ -66,8 +67,9 @@ set(sources
 
 set(headers
   Body.h
-  VRMLBody.h
+  BodyCustomizer.h
   BodyCustomizerInterface.h
+  VRMLBody.h
   AbstractBodyLoader.h
   VRMLBodyLoader.h
   BodyLoader.h
@@ -138,7 +140,7 @@ endif()
 
 apply_common_setting_for_library(${target} "${headers}")
 
-# Body customizer
+# Old body customizer
 function(add_cnoid_body_customizer)
 
   set(target ${ARGV0})
