@@ -8,6 +8,7 @@
 #include "exportdecl.h"
 
 namespace cnoid {
+
 class BodyHandler;
 }
 
@@ -19,7 +20,7 @@ class BodyHandler;
 #define CNOID_BODY_HANDLER_EXPORT
 #endif
 
-extern "C" CNOID_BODY_HANDLER_EXPORT cnoid::BodyHandler* createBodyHandler(std::ostream& os);
+extern "C" CNOID_BODY_HANDLER_EXPORT cnoid::BodyHandler* createCnoidBodyHandler(std::ostream& os);
 
 namespace cnoid {
 
@@ -32,6 +33,8 @@ class Body;
 class CNOID_EXPORT BodyHandler : public Referenced
 {
 public:
+    static BodyHandler* load(const std::string& filename);
+
     Body* body() { return body_; }
 
     virtual bool initialize(Body* body, std::ostream& os) = 0;
@@ -40,13 +43,15 @@ private:
     Body* body_;
 
     static bool checkVersion(int version, int internalVersion, std::ostream& os);
-    friend BodyHandler* ::createBodyHandler(std::ostream& os);
+    friend BodyHandler* ::createCnoidBodyHandler(std::ostream& os);
 };
+
+typedef ref_ptr<BodyHandler> BodyHandlerPtr;
 
 }
 
 #define CNOID_IMPLEMENT_BODY_HANDLER_FACTORY(HandlerClassName)  \
-    extern "C" CNOID_BODY_HANDLER_EXPORT cnoid::BodyHandler* createBodyHandler(std::ostream& os) \
+    extern "C" CNOID_BODY_HANDLER_EXPORT cnoid::BodyHandler* createCnoidBodyHandler(std::ostream& os) \
     {                                                                   \
         if(BodyHandler::checkVersion(CNOID_VERSION, CNOID_INTERNAL_VERSION, os)){ \
             return new HandlerClassName(); \

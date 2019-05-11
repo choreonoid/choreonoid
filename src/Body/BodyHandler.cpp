@@ -5,9 +5,8 @@
 using namespace std;
 using namespace cnoid;
 
-namespace cnoid {
 
-bool checkVersion(int version, int internalVersion, std::ostream& os)
+bool BodyHandler::checkVersion(int version, int internalVersion, std::ostream& os)
 {
     int version2 = cnoid::getVersion();
 
@@ -31,8 +30,6 @@ bool checkVersion(int version, int internalVersion, std::ostream& os)
     }
 
     return true;
-}
-
 }
 
 
