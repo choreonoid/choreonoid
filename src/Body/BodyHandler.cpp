@@ -1,4 +1,4 @@
-#include "BodyCustomizer.h"
+#include "BodyHandler.h"
 #include <fmt/format.h>
 #include "gettext.h"
 
@@ -36,14 +36,8 @@ bool checkVersion(int version, int internalVersion, std::ostream& os)
 }
 
 
-bool BodyCustomizer::initialize(Body* body, std::ostream& os)
+bool BodyHandler::initialize(Body* body, std::ostream& os)
 {
     body_ = body;
     return true;
-}
-
-
-std::shared_ptr<InverseKinematics> BodyCustomizer::getCustomIk(Link* baseLink, Link* endLink)
-{
-    return nullptr;
 }
