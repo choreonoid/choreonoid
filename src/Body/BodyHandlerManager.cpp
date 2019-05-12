@@ -1,5 +1,6 @@
 #include "BodyHandlerManager.h"
 #include "BodyHandler.h"
+#include "Body.h"
 #include <cnoid/ExecutablePath>
 #include <cnoid/FileUtil>
 #include <fmt/format.h>
@@ -91,6 +92,9 @@ bool BodyHandlerManagerImpl::loadBodyHandler(Body* body, const string& filename)
         auto handler = createHandler(*os);
         if(handler){
             loaded = handler->initialize(body, *os);
+            if(loaded){
+                body->addHandler(handler);
+            }
         }
     }
     

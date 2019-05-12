@@ -5,6 +5,7 @@
 
 #include "YAMLBodyLoader.h"
 #include "BodyLoader.h"
+#include "BodyHandlerManager.h"
 #include "Body.h"
 #include "ForceSensor.h"
 #include "RateGyroSensor.h"
@@ -278,6 +279,8 @@ public:
     bool isVerbose;
     bool isShapeLoadingEnabled;
 
+    BodyHandlerManager bodyHandlerManager;
+
     YAMLBodyLoaderImpl(YAMLBodyLoader* self);
     ~YAMLBodyLoaderImpl();
     void updateCustomNodeFunctions();
@@ -327,7 +330,8 @@ public:
     void addSubBodyLinks(BodyPtr subBody, Mapping* node);
     void readExtraJoints(Mapping* topNode);
     void readExtraJoint(Mapping* node);
-
+    void readBodyHandlers(Mapping* topNode);
+    
     bool isDegreeMode() const {
         return sceneReader.isDegreeMode();
     }
@@ -503,9 +507,9 @@ YAMLBodyLoaderImpl::YAMLBodyLoaderImpl(YAMLBodyLoader* self)
 
     numCustomNodeFunctions = 0;
 
-    body = 0;
+    body = nullptr;
     isSubLoader = false;
-    os_ = &nullout();
+    os_ = &cout;
     isVerbose = false;
     isShapeLoadingEnabled = true;
     defaultDivisionNumber = -1;
@@ -529,6 +533,7 @@ void YAMLBodyLoader::setMessageSink(std::ostream& os)
 {
     impl->os_ = &os;
     impl->sceneReader.setMessageSink(os);
+    impl->bodyHandlerManager.setMessageSink(os);
 }
 
 
@@ -644,12 +649,11 @@ bool YAMLBodyLoaderImpl::load(Body* body, const std::string& filename)
     try {
         MappingPtr data = reader.loadDocument(filename)->toMapping();
         if(data){
-            result = readTopNode(body, data);
-            if(result){
-                if(body->modelName().empty()){
-                    body->setModelName(getBasename(filename));
-                }
+            if(body->modelName().empty()){
+                // This is the default model name
+                body->setModelName(getBasename(filename));
             }
+            result = readTopNode(body, data);
         }
     } catch(const ValueNode::Exception& ex){
         os() << ex.message();
@@ -691,6 +695,8 @@ bool YAMLBodyLoaderImpl::readTopNode(Body* body, Mapping* topNode)
                 topNode->insert(subBody->info());
             }
             body->resetInfo(topNode);
+
+            readBodyHandlers(topNode);
         }
         
     } catch(const ValueNode::Exception& ex){
@@ -895,7 +901,7 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
 
     readExtraJoints(topNode);
 
-    body->installCustomizer();
+    body->installCustomizer(); // deprecated
 
     return true;
 }
@@ -1957,3 +1963,20 @@ void YAMLBodyLoaderImpl::readExtraJoint(Mapping* node)
 
     body->addExtraJoint(joint);
 }
+
+
+void YAMLBodyLoaderImpl::readBodyHandlers(Mapping* topNode)
+{
+    auto node = topNode->extract("bodyHandlers");
+    if(node){
+        if(node->isString()){
+            bodyHandlerManager.loadBodyHandler(body, node->toString());
+        } else if(node->isListing()){
+            for(auto& handlerNode : *node->toListing()){
+                bodyHandlerManager.loadBodyHandler(body, handlerNode->toString());
+            }
+        }
+    }
+}
+             
+
