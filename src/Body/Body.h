@@ -256,8 +256,8 @@ public:
     bool addHandler(BodyHandler* handler);
 
     template<class BodyHandlerType> BodyHandlerType* findHandler(){
-        return static_cast<BodyHandlerType*>(
-            findHandler([](BodyHandler* handler)->bool{ return dynamic_cast<BodyHandlerType>(handler); }));
+        return dynamic_cast<BodyHandlerType*>(
+            findHandler([](BodyHandler* handler)->bool{ return dynamic_cast<BodyHandlerType*>(handler); }));
     }
     
     // The following functions for the body customizer are deprecated

@@ -14,6 +14,8 @@ public:
     virtual std::shared_ptr<InverseKinematics> getInverseKinematics(Link* baseLink, Link* endLink) = 0;
 };
 
+typedef ref_ptr<BodyInverseKinematicsHandler> BodyInverseKinematicsHandlerPtr;
+
 }
 
 #endif
