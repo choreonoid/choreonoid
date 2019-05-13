@@ -109,7 +109,7 @@ JointPath::JointPath(Link* end)
 
 void JointPath::initialize()
 {
-    nuIK = 0;
+    nuIK = nullptr;
     needForwardKinematicsBeforeIK = false;
 }    
 
@@ -127,7 +127,7 @@ bool JointPath::setPath(Link* base, Link* end)
     if(linkPath.setPath(base, end)){
         extractJoints();
     }
-    onJointPathUpdated();
+    doResetWhenJointPathUpdated();
 
     return (!joints.empty());
 }
@@ -137,7 +137,7 @@ bool JointPath::setPath(Link* end)
 {
     linkPath.setPath(end);
     extractJoints();
-    onJointPathUpdated();
+    doResetWhenJointPathUpdated();
 	
     return !joints.empty();
 }
@@ -193,12 +193,19 @@ int JointPath::indexOf(const Link* link) const
 }
 
 
-void JointPath::onJointPathUpdated()
+void JointPath::doResetWhenJointPathUpdated()
 {
     if(nuIK){
         nuIK->errorFunc = nullptr;
         nuIK->jacobianFunc = nullptr;
     }
+    onJointPathUpdated();
+}
+
+
+void JointPath::onJointPathUpdated()
+{
+
 }
 
 
@@ -589,7 +596,7 @@ std::shared_ptr<JointPath> cnoid::getCustomJointPath(Body* body, Link* baseLink,
 {
     auto customJointPathHandler = body->findHandler<CustomJointPathHandler>();
     if(customJointPathHandler){
-        customJointPathHandler->getCustomJointPath(baseLink, targetLink);
+        return customJointPathHandler->getCustomJointPath(baseLink, targetLink);
     }
 
     // deprecated

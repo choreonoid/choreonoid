@@ -331,11 +331,11 @@ bool BodyItemImpl::loadModelFile(const std::string& filename)
 {
     bodyLoader.setMessageSink(mvout(true));
 
-    BodyPtr newBody = bodyLoader.load(filename);
+    BodyPtr newBody = new Body;
+    newBody->setName(self->name());
 
-    if(newBody){
+    if(bodyLoader.load(newBody, filename)){
         body = newBody;
-        body->setName(self->name());
         body->initializePosition();
         body->setCurrentTimeFunction(getCurrentTime);
     }

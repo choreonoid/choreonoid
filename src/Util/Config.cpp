@@ -1,6 +1,6 @@
 #include <cnoid/Config>
 
-using namespace cnoid;
+namespace cnoid {
 
 unsigned int getVersion()
 {
@@ -10,4 +10,6 @@ unsigned int getVersion()
 unsigned int getInternalVersion()
 {
     return CNOID_INTERNAL_VERSION;
+}
+
 }

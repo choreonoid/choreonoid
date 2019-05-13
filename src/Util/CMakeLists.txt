@@ -5,6 +5,7 @@ configure_file(Config.h.in Config.h)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/Config.h DESTINATION ${CNOID_HEADER_SUBDIR}/src/Util/)
 
 set(sources
+  Config.cpp
   Referenced.cpp
   ConnectionSet.cpp
   Selection.cpp

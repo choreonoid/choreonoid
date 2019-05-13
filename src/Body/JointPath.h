@@ -134,7 +134,8 @@ public:
     static double numericalIKdefaultTruncateRatio();
 
 protected:
-		
+
+    //! This function is implemented in a sub class and is called when the joint path is updated.
     virtual void onJointPathUpdated();
 
 private:
@@ -143,6 +144,7 @@ private:
 		
     void initialize();
     void extractJoints();
+    void doResetWhenJointPathUpdated();
     JointPathIkImpl* getOrCreateNumericalIK();
 
     LinkPath linkPath;
