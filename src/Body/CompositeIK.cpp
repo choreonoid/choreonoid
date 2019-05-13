@@ -79,8 +79,8 @@ bool CompositeIK::calcInverseKinematics(const Position& T)
         Link* link = path.endLink();
         Position T_end = link->T();
         solved = path.setBaseLinkGoal(T).calcInverseKinematics(T_end);
+        link->setPosition(T_end);
         if(!solved){
-            link->setPosition(T_end);
             break;
         }
     }
