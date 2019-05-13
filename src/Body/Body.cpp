@@ -132,6 +132,13 @@ void Body::copy(const Body& org)
         extraJoints_.push_back(extraJoint);
     }
 
+    if(!org.impl->handlers.empty()){
+        impl->handlers.reserve(org.impl->handlers.size());
+        for(auto& handler : org.impl->handlers){
+            impl->handlers.push_back(handler->clone());
+        }
+    }
+
     if(org.impl->customizerInterface){
         installCustomizer(org.impl->customizerInterface);
     }
