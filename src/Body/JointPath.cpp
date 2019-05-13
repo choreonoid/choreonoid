@@ -6,7 +6,7 @@
 #include "JointPath.h"
 #include "Jacobian.h"
 #include "Body.h"
-#include "BodyInverseKinematicsHandler.h"
+#include "CustomJointPathHandler.h"
 #include "BodyCustomizerInterface.h"
 #include <cnoid/EigenUtil>
 #include <cnoid/TruncatedSVD>
@@ -517,39 +517,6 @@ std::ostream& operator<<(std::ostream& os, JointPath& path)
 
 namespace {
 
-class JointPathWithIkHandler : public JointPath
-{
-    BodyInverseKinematicsHandlerPtr ikHandler;
-    shared_ptr<InverseKinematics> ik;
-
-public:
-    JointPathWithIkHandler(BodyInverseKinematicsHandler* ikHandler, Link* baseLink, Link* targetLink)
-        : JointPath(baseLink, targetLink),
-          ikHandler(ikHandler)
-    {
-        onJointPathUpdated();
-    }
-    
-    virtual void onJointPathUpdated() override
-    {
-        ik = ikHandler->getInverseKinematics(baseLink(), endLink());
-    }
-    
-    virtual bool hasAnalyticalIK() const override
-    {
-        return ik != nullptr;
-    }
-
-    virtual bool calcInverseKinematics(const Position& T) override
-    {
-        if(isNumericalIkEnabled() || !ik){
-            return JointPath::calcInverseKinematics(T);
-        }
-        return ik->calcInverseKinematics(T);
-    }
-};
-
-
 // deprecated
 class JointPathWithCustomizerIk : public JointPath
 {
@@ -615,14 +582,14 @@ public:
     }
 };
 
-} // namespace
+}
 
 
 std::shared_ptr<JointPath> cnoid::getCustomJointPath(Body* body, Link* baseLink, Link* targetLink)
 {
-    auto ikHandler = body->findHandler<BodyInverseKinematicsHandler>();
-    if(ikHandler){
-        return make_shared<JointPathWithIkHandler>(ikHandler, baseLink, targetLink);
+    auto customJointPathHandler = body->findHandler<CustomJointPathHandler>();
+    if(customJointPathHandler){
+        customJointPathHandler->getCustomJointPath(baseLink, targetLink);
     }
 
     // deprecated

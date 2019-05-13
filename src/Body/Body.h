@@ -253,7 +253,7 @@ public:
     void setCurrentTimeFunction(std::function<double()> func);
     double currentTime() const { return currentTimeFunction(); }
 
-    bool addHandler(BodyHandler* handler);
+    bool addHandler(BodyHandler* handler, bool isTopPriority = false);
 
     template<class BodyHandlerType> BodyHandlerType* findHandler(){
         return dynamic_cast<BodyHandlerType*>(

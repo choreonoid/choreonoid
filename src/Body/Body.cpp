@@ -587,13 +587,14 @@ void Body::setCurrentTimeFunction(std::function<double()> func)
 }
 
 
-bool Body::addHandler(BodyHandler* handler)
+bool Body::addHandler(BodyHandler* handler, bool isTopPriority)
 {
-    if(handler->body() == this){
+    if(isTopPriority){
+        impl->handlers.insert(impl->handlers.begin(), handler);
+    } else {
         impl->handlers.push_back(handler);
-        return true;
     }
-    return false;
+    return true;
 }
 
 

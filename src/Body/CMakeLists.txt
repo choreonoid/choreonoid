@@ -70,7 +70,6 @@ set(headers
   Body.h
   BodyHandler.h
   BodyHandlerManager.h
-  BodyInverseKinematicsHandler.h
   BodyCustomizerInterface.h
   VRMLBody.h
   AbstractBodyLoader.h
