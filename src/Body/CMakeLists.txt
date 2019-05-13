@@ -15,6 +15,7 @@ set(sources
   Jacobian.cpp
   BodyHandler.cpp
   BodyHandlerManager.cpp
+  CustomJointPathHandler.cpp
   BodyCustomizerInterface.cpp
   Material.cpp
   ContactMaterial.cpp
