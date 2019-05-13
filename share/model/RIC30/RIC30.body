@@ -383,3 +383,5 @@ symmetricIkLinks:
 selfCollisionDetection:
   excludeTreeDepth: 3
   excludeLinks: [ ]
+
+bodyHandlers: GRobotHandler
