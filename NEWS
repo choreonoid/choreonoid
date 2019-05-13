@@ -1,6 +1,7 @@
 Changes since 1.7.0:
 
 * Removed the typedefs with suffix 'Ptr' for the smart pointer types using std::shared_ptr
+* Introduced BodyHandler. BodyCustomizer is deprecated.
 
 Choreonoid 1.7.0 released on May 8, 2019
 ========================================
