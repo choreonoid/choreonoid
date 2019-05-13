@@ -91,7 +91,7 @@ JointPath::JointPath()
 
 JointPath::JointPath(Link* base, Link* end)
     : linkPath(base, end), 
-      joints(linkPath.size())
+      joints_(linkPath.size())
 {
     initialize();
     extractJoints();
@@ -100,7 +100,7 @@ JointPath::JointPath(Link* base, Link* end)
 
 JointPath::JointPath(Link* end)
     : linkPath(end), 
-      joints(linkPath.size())
+      joints_(linkPath.size())
 {
     initialize();
     extractJoints();
@@ -129,7 +129,7 @@ bool JointPath::setPath(Link* base, Link* end)
     }
     doResetWhenJointPathUpdated();
 
-    return (!joints.empty());
+    return (!joints_.empty());
 }
 
 
@@ -139,7 +139,7 @@ bool JointPath::setPath(Link* end)
     extractJoints();
     doResetWhenJointPathUpdated();
 	
-    return !joints.empty();
+    return !joints_.empty();
 }
 
 
@@ -149,20 +149,20 @@ void JointPath::extractJoints()
 
     int n = linkPath.size();
     if(n <= 1){
-        joints.clear();
+        joints_.clear();
     } else {
         int i = 0;
         if(linkPath.isDownward(i)){
             i++;
         }
-        joints.resize(n); // reserve size n buffer
-        joints.clear();
+        joints_.resize(n); // reserve size n buffer
+        joints_.clear();
         int m = n - 1;
         while(i < m){
             Link* link = linkPath[i];
             if(link->jointId() >= 0){
                 if(link->isRotationalJoint() || link->isSlideJoint()){
-                    joints.push_back(link);
+                    joints_.push_back(link);
                     if(!linkPath.isDownward(i)){
                         numUpwardJointConnections++;
                     }
@@ -174,7 +174,7 @@ void JointPath::extractJoints()
             Link* link = linkPath[m];
             if(link->jointId() >= 0){
                 if(link->isRotationalJoint() || link->isSlideJoint()){
-                    joints.push_back(link);
+                    joints_.push_back(link);
                 }
             }
         }
@@ -184,8 +184,8 @@ void JointPath::extractJoints()
 
 int JointPath::indexOf(const Link* link) const
 {
-    for(size_t i=0; i < joints.size(); ++i){
-        if(joints[i] == link){
+    for(size_t i=0; i < joints_.size(); ++i){
+        if(joints_[i] == link){
             return i;
         }
     }
@@ -211,7 +211,7 @@ void JointPath::onJointPathUpdated()
 
 void JointPath::calcJacobian(Eigen::MatrixXd& out_J) const
 {
-    const int n = joints.size();
+    const int n = joints_.size();
     out_J.resize(6, n);
 	
     if(n > 0){
@@ -226,7 +226,7 @@ void JointPath::calcJacobian(Eigen::MatrixXd& out_J) const
 		
             for(int i=0; i < n; ++i){
 			
-                Link* link = joints[i];
+                Link* link = joints_[i];
 			
                 switch(link->jointType()){
 				
@@ -346,7 +346,7 @@ bool JointPath::calcInverseKinematics(const Position& T)
     const bool USE_USUAL_INVERSE_SOLUTION_FOR_6x6_NON_BEST_EFFORT_PROBLEM = false;
     const bool USE_SVD_FOR_BEST_EFFORT_IK = false;
 
-    if(joints.empty()){
+    if(joints_.empty()){
         if(linkPath.empty()){
             return false;
         }
@@ -378,7 +378,7 @@ bool JointPath::calcInverseKinematics(const Position& T)
     nuIK->q0.resize(n);
     if(!nuIK->isBestEffortIKmode){
         for(int i=0; i < n; ++i){
-            nuIK->q0[i] = joints[i]->q();
+            nuIK->q0[i] = joints_[i]->q();
         }
     }
 
@@ -414,7 +414,7 @@ bool JointPath::calcInverseKinematics(const Position& T)
         if(prevErrsqr - errorSqr < nuIK->maxIKerrorSqr){
             if(nuIK->isBestEffortIKmode && (errorSqr > prevErrsqr)){
                 for(int j=0; j < n; ++j){
-                    joints[j]->q() = nuIK->q0[j];
+                    joints_[j]->q() = nuIK->q0[j];
                 }
                 calcForwardKinematics();
             }
@@ -438,13 +438,13 @@ bool JointPath::calcInverseKinematics(const Position& T)
 
         if(nuIK->isBestEffortIKmode){
             for(int j=0; j < n; ++j){
-                double& q = joints[j]->q();
+                double& q = joints_[j]->q();
                 nuIK->q0[j] = q;
                 q += nuIK->deltaScale * nuIK->dq(j);
             }
         } else {
             for(int j=0; j < n; ++j){
-                joints[j]->q() += nuIK->deltaScale * nuIK->dq(j);
+                joints_[j]->q() += nuIK->deltaScale * nuIK->dq(j);
             }
         }
 
@@ -453,7 +453,7 @@ bool JointPath::calcInverseKinematics(const Position& T)
 
     if(!completed && !nuIK->isBestEffortIKmode){
         for(int i=0; i < n; ++i){
-            joints[i]->q() = nuIK->q0[i];
+            joints_[i]->q() = nuIK->q0[i];
         }
         calcForwardKinematics();
     }

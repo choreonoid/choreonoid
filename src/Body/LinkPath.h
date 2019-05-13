@@ -21,12 +21,12 @@ public:
     bool setPath(Link* base, Link* end);
     void setPath(Link* end);
 
-    inline Link* baseLink() const {
-        return links.front();
+    Link* baseLink() const {
+        return links_.front();
     }
         
-    inline Link* endLink() const {
-        return links.back();
+    Link* endLink() const {
+        return links_.back();
     }
 
 #ifdef CNOID_BACKWARD_COMPATIBILITY

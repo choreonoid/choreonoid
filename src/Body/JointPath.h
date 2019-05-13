@@ -22,7 +22,6 @@ class JointPathIkImpl;
 class CNOID_EXPORT JointPath : public InverseKinematics
 {
 public:
-		
     JointPath();
     JointPath(Link* base, Link* end);
     JointPath(Link* end);
@@ -37,15 +36,15 @@ public:
     bool find(Link* end) { return setPath(end); }
 
     bool empty() const {
-        return joints.empty();
+        return joints_.empty();
     }
 		
     int numJoints() const {
-        return joints.size();
+        return joints_.size();
     }
 		
     Link* joint(int index) const {
-        return joints[index];
+        return joints_[index];
     }
 
     Link* baseLink() const {
@@ -59,6 +58,9 @@ public:
     bool isJointDownward(int index) const {
         return (index >= numUpwardJointConnections);
     }
+
+    LinkPath::accessor joints() { return LinkPath::accessor(joints_); }
+    LinkPath::const_accessor joints() const { return LinkPath::const_accessor(joints_); }
 
     void calcForwardKinematics(bool calcVelocity = false, bool calcAcceleration = false) const {
         linkPath.calcForwardKinematics(calcVelocity, calcAcceleration);
@@ -148,7 +150,7 @@ private:
     JointPathIkImpl* getOrCreateNumericalIK();
 
     LinkPath linkPath;
-    std::vector<Link*> joints;
+    std::vector<Link*> joints_;
     int numUpwardJointConnections;
     bool needForwardKinematicsBeforeIK;
     JointPathIkImpl* nuIK; // numerical IK

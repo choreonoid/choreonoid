@@ -18,9 +18,9 @@ LinkTraverse::LinkTraverse()
 
 
 LinkTraverse::LinkTraverse(int size)
-    : links(size)
+    : links_(size)
 {
-    links.clear();
+    links_.clear();
 }
 
 
@@ -31,7 +31,7 @@ LinkTraverse::LinkTraverse(Link* root, bool doUpward, bool doDownward)
 
 
 LinkTraverse::LinkTraverse(const LinkTraverse& org)
-    : links(org.links),
+    : links_(org.links_),
       numUpwardConnections(org.numUpwardConnections)
 {
 
@@ -46,21 +46,21 @@ LinkTraverse::~LinkTraverse()
 
 void LinkTraverse::clear()
 {
-    links.clear();
+    links_.clear();
     numUpwardConnections = 0;
 }
 
 void LinkTraverse::find(Link* root, bool doUpward, bool doDownward)
 {
     numUpwardConnections = 0;
-    links.clear();
+    links_.clear();
     traverse(root, doUpward, doDownward, false, 0);
 }
 
 
 void LinkTraverse::traverse(Link* link, bool doUpward, bool doDownward, bool isUpward, Link* prev)
 {
-    links.push_back(link);
+    links_.push_back(link);
     if(isUpward){
         ++numUpwardConnections;
     }
@@ -80,7 +80,7 @@ void LinkTraverse::traverse(Link* link, bool doUpward, bool doDownward, bool isU
 
 void LinkTraverse::append(Link* link, bool isDownward)
 {
-    links.push_back(link);
+    links_.push_back(link);
     if(!isDownward){
         ++numUpwardConnections;
     }
@@ -93,8 +93,8 @@ void LinkTraverse::calcForwardKinematics(bool calcVelocity, bool calcAcceleratio
     int i;
     for(i=1; i <= numUpwardConnections; ++i){
 
-        Link* link = links[i];
-        const Link* child = links[i-1];
+        Link* link = links_[i];
+        const Link* child = links_[i-1];
 
         switch(child->jointType()){
 
@@ -154,10 +154,10 @@ void LinkTraverse::calcForwardKinematics(bool calcVelocity, bool calcAcceleratio
         }
     }
 
-    const int n = links.size();
+    const int n = links_.size();
     for( ; i < n; ++i){
         
-        Link* link = links[i];
+        Link* link = links_[i];
         const Link* parent = link->parent();
 
         switch(link->jointType()){
