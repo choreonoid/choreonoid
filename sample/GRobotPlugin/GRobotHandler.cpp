@@ -38,7 +38,7 @@ public:
 class GRobotJointPath : public CustomJointPathBase
 {
 public:
-    Geometry& geom;
+    const Geometry& geom;
     Vector3 p;
     Vector3 rpy;
     Vector6 q;
@@ -129,25 +129,15 @@ GRobotJointPath::GRobotJointPath(GRobotHandler* handler, Link* baseLink, Link* e
     : geom(handler->geom),
       CustomJointPathBase(baseLink, endLink)
 {
-    bool isCustomInverseKinematics = false;
     bool isReversed;
-
     if(numJoints() == 6){
-
         if(checkLinkPath("WAIST", "L_ANKLE_R", isReversed)){
             setCustomInverseKinematics(
                 [&](const Position& T){ return calcLegInverseKinematics(T,  1.0); }, isReversed);
-            isCustomInverseKinematics = true;
-
         } else if(checkLinkPath("WAIST", "R_ANKLE_R", isReversed)){
             setCustomInverseKinematics(
                 [&](const Position& T){ return calcLegInverseKinematics(T, -1.0); }, isReversed);
-            isCustomInverseKinematics = true;
         }
-    }
-
-    if(!isCustomInverseKinematics){
-        setCustomInverseKinematics(nullptr);
     }
 }
     
