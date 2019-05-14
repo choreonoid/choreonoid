@@ -334,7 +334,8 @@ bool BodyItemImpl::loadModelFile(const std::string& filename)
     BodyPtr newBody = new Body;
     newBody->setName(self->name());
 
-    if(bodyLoader.load(newBody, filename)){
+    bool loaded = bodyLoader.load(newBody, filename);
+    if(loaded){
         body = newBody;
         body->initializePosition();
         body->setCurrentTimeFunction(getCurrentTime);
@@ -342,7 +343,7 @@ bool BodyItemImpl::loadModelFile(const std::string& filename)
 
     initBody(false);
 
-    return (newBody);
+    return loaded;
 }
 
 
