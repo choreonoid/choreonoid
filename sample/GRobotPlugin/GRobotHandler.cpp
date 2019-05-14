@@ -1,6 +1,6 @@
-#include <cnoid/Body>
-#include <cnoid/JointPath>
 #include <cnoid/CustomJointPathHandler>
+#include <cnoid/CustomJointPathBase>
+#include <cnoid/Body>
 #include <cnoid/EigenUtil>
 
 using namespace std;
@@ -9,7 +9,6 @@ using namespace cnoid;
 namespace {
 
 enum ModelType { UNSUPPORTED_MODEL = 0, GR001 = 1, RIC30 = 2 };
-enum IkType { NOCUSTOM_IK = 0, WAIST_TO_RFOOT = 1, WAIST_TO_LFOOT, NUM_IK_TYPES };
 
 struct Geometry {
     double l00;
@@ -36,17 +35,14 @@ public:
     virtual std::shared_ptr<JointPath> getCustomJointPath(Link* baseLink, Link* endLink) override;
 };
 
-class GRobotJointPath : public JointPath
+class GRobotJointPath : public CustomJointPathBase
 {
 public:
-    GRobotHandler* handler;
     Geometry& geom;
-    int ikType;
-    bool isReversed;
     Vector3 p;
-    double sign;
-    Vector6 q;
     Vector3 rpy;
+    Vector6 q;
+    double sign;
     double cy;
     double sy;
     double cp;
@@ -68,10 +64,8 @@ public:
 
     GRobotJointPath(GRobotHandler* handler, Link* baseLink, Link* endLink);
     virtual void onJointPathUpdated() override;
-    virtual bool hasAnalyticalIK() const override;
-    virtual bool calcInverseKinematics(const Position& T) override;
-    bool calcLegInverseKinematics(const Position& T);
-    bool calcEndPositionDifference();
+    bool calcLegInverseKinematics(const Position& T, double sign);
+    bool calcEndPositionDifference(double sign);
 };
 
 }
@@ -133,9 +127,8 @@ std::shared_ptr<JointPath> GRobotHandler::getCustomJointPath(Link* baseLink, Lin
 
 
 GRobotJointPath::GRobotJointPath(GRobotHandler* handler, Link* baseLink, Link* endLink)
-    : handler(handler),
-      geom(handler->geom),
-      JointPath(baseLink, endLink)
+    : geom(handler->geom),
+      CustomJointPathBase(baseLink, endLink)
 {
     onJointPathUpdated();
 }
@@ -143,46 +136,30 @@ GRobotJointPath::GRobotJointPath(GRobotHandler* handler, Link* baseLink, Link* e
 
 void GRobotJointPath::onJointPathUpdated()
 {
-    ikType = NOCUSTOM_IK;
-    if(CustomJointPathHandler::checkPath(*this, "WAIST", "R_ANKLE_R", isReversed)){
-        ikType = WAIST_TO_RFOOT;
-        sign = -1.0;
-    } else if(CustomJointPathHandler::checkPath(*this, "WAIST", "L_ANKLE_R", isReversed)){
-        ikType = WAIST_TO_LFOOT;
-        sign = 1.0;
+    bool isCustomInverseKinematics = false;
+    bool isReversed;
+
+    if(numJoints() == 6){
+
+        if(checkLinkPath("WAIST", "L_ANKLE_R", isReversed)){
+            setCustomInverseKinematics(
+                [&](const Position& T){ return calcLegInverseKinematics(T,  1.0); }, isReversed);
+            isCustomInverseKinematics = true;
+
+        } else if(checkLinkPath("WAIST", "R_ANKLE_R", isReversed)){
+            setCustomInverseKinematics(
+                [&](const Position& T){ return calcLegInverseKinematics(T, -1.0); }, isReversed);
+            isCustomInverseKinematics = true;
+        }
+    }
+
+    if(!isCustomInverseKinematics){
+        setCustomInverseKinematics(nullptr);
     }
 }
     
 
-bool GRobotJointPath::hasAnalyticalIK() const
-{
-    return (ikType != NOCUSTOM_IK);
-}
-
-
-bool GRobotJointPath::calcInverseKinematics(const Position& T)
-{
-    if(isNumericalIkEnabled() || ikType == NOCUSTOM_IK){
-        return JointPath::calcInverseKinematics(T);
-    }
-
-    bool solved = false;
-    if(!isReversed){
-        Position T_relative = baseLink()->T().inverse(Eigen::Isometry) * T;
-        solved = calcLegInverseKinematics(T_relative);
-    } else {
-        Position T_relative = T.inverse(Eigen::Isometry) * baseLink()->T();
-        solved = calcLegInverseKinematics(T_relative);
-    }
-    if(solved){
-        CustomJointPathHandler::applyInverseKinematicsResults(*this, q.data(), isReversed);
-    }
-
-    return solved;
-}
-
-
-bool GRobotJointPath::calcLegInverseKinematics(const Position& T)
+bool GRobotJointPath::calcLegInverseKinematics(const Position& T, double sign)
 {
     rpy = rpyFromRot(T.linear());
     p = T.translation();
@@ -285,7 +262,7 @@ bool GRobotJointPath::calcLegInverseKinematics(const Position& T)
     int i;
     for(i=0; i < 30; ++i){
 
-        if(calcEndPositionDifference()){
+        if(calcEndPositionDifference(sign)){
             solved = true;
             break;
         }
@@ -330,17 +307,22 @@ bool GRobotJointPath::calcLegInverseKinematics(const Position& T)
     }
 
     if(!solved){
-        solved = calcEndPositionDifference();
+        solved = calcEndPositionDifference(sign);
     }
 
-    q[2] += sign * geom.q2q3offset;
-    q[3] -= sign * geom.q2q3offset;    
+    if(solved){
+        q[2] += sign * geom.q2q3offset;
+        q[3] -= sign * geom.q2q3offset;
+
+        copyJointDisplacements(q.data());
+        calcForwardKinematics();
+    }
 
     return solved;
 }
 
 
-bool GRobotJointPath::calcEndPositionDifference()
+bool GRobotJointPath::calcEndPositionDifference(double sign)
 {
     // Direct Kinematics Error Calculation
     double c1 = cos(q[0]);

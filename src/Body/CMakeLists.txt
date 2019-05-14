@@ -15,7 +15,7 @@ set(sources
   Jacobian.cpp
   BodyHandler.cpp
   BodyHandlerManager.cpp
-  CustomJointPathHandler.cpp
+  CustomJointPathBase.cpp
   BodyCustomizerInterface.cpp
   Material.cpp
   ContactMaterial.cpp
@@ -71,6 +71,8 @@ set(headers
   Body.h
   BodyHandler.h
   BodyHandlerManager.h
+  CustomJointPathHandler.h
+  CustomJointPathBase.h
   BodyCustomizerInterface.h
   VRMLBody.h
   AbstractBodyLoader.h
