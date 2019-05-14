@@ -48,10 +48,10 @@ public:
     void setFarClipDistance(double d) { farClipDistance_ = d; }
 
 #ifdef CNOID_BACKWARD_COMPATIBILITY
-    double nearDistance() const { return nearDistance_; }
-    void setNearDistance(double d) { nearDistance_ = d; }
-    double farDistance() const { return farDistance_; }
-    void setFarDistance(double d) { farDistance_ = d; }
+    double nearDistance() const { return nearClipDistance_; }
+    void setNearDistance(double d) { nearClipDistance_ = d; }
+    double farDistance() const { return farClipDistance_; }
+    void setFarDistance(double d) { farClipDistance_ = d; }
 #endif
         
     double fieldOfView() const { return fieldOfView_; }
