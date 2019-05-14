@@ -9,7 +9,6 @@
 
 #include "LinkPath.h"
 #include "InverseKinematics.h"
-#include <cnoid/Referenced>
 #include <cnoid/EigenTypes>
 #include <functional>
 #include <memory>
@@ -26,14 +25,6 @@ public:
     JointPath(Link* base, Link* end);
     JointPath(Link* end);
     virtual ~JointPath();
-
-    bool setPath(Link* base, Link* end);
-    bool setPath(Link* end);
-
-    //! Deprecated. Use "setPath()" instead of this.
-    bool find(Link* base, Link* end) { return setPath(base, end); }
-    //! Deprecated. Use "setPath()" instead of this.
-    bool find(Link* end) { return setPath(end); }
 
     bool empty() const {
         return joints_.empty();
@@ -101,30 +92,12 @@ public:
 
     virtual bool calcInverseKinematics(const Position& T) override;
 
-    /*
-    bool calcNumericalIK() {
-        return JointPath::calcInverseKinematics();
-    }
-    */
-
     int numIterations() const;
-
-    /*
-    JointPath& setGoal(const Vector3& end_p, const Matrix3& end_R) {
-        targetTranslationGoal = end_p;
-        targetRotationGoal = end_R;
-        return *this;
-    }
-    */
-
-    //! deprecated
-    //JointPath& setGoal(const Vector3& base_p, const Matrix3& base_R, const Vector3& end_p, const Matrix3& end_R);
 
     //! deprecated
     bool calcInverseKinematics(const Vector3& p, const Matrix3& R) {
         return InverseKinematics::calcInverseKinematics(p, R);
     }
-    
     //! deprecated
     bool calcInverseKinematics(
         const Vector3& base_p, const Matrix3& base_R, const Vector3& end_p, const Matrix3& end_R);
@@ -134,11 +107,6 @@ public:
     void setNumericalIKtruncateRatio(double r);
     //! deprecated
     static double numericalIKdefaultTruncateRatio();
-
-protected:
-
-    //! This function is implemented in a sub class and is called when the joint path is updated.
-    virtual void onJointPathUpdated();
 
 private:
 
@@ -163,7 +131,7 @@ class Body;
    when the body has the analytical one for a given path.
    \todo move back this function to the Body class
 */
-CNOID_EXPORT std::shared_ptr<JointPath> getCustomJointPath(Body* body, Link* baseLink, Link* targetLink);
+CNOID_EXPORT std::shared_ptr<JointPath> getCustomJointPath(Body* body, Link* baseLink, Link* endLink);
 
 }
 

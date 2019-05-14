@@ -63,7 +63,6 @@ public:
     Vector6 dq;
 
     GRobotJointPath(GRobotHandler* handler, Link* baseLink, Link* endLink);
-    virtual void onJointPathUpdated() override;
     bool calcLegInverseKinematics(const Position& T, double sign);
     bool calcEndPositionDifference(double sign);
 };
@@ -129,12 +128,6 @@ std::shared_ptr<JointPath> GRobotHandler::getCustomJointPath(Link* baseLink, Lin
 GRobotJointPath::GRobotJointPath(GRobotHandler* handler, Link* baseLink, Link* endLink)
     : geom(handler->geom),
       CustomJointPathBase(baseLink, endLink)
-{
-    onJointPathUpdated();
-}
-
-
-void GRobotJointPath::onJointPathUpdated()
 {
     bool isCustomInverseKinematics = false;
     bool isReversed;

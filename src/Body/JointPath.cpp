@@ -122,27 +122,6 @@ JointPath::~JointPath()
 }
 
 
-bool JointPath::setPath(Link* base, Link* end)
-{
-    if(linkPath.setPath(base, end)){
-        extractJoints();
-    }
-    doResetWhenJointPathUpdated();
-
-    return (!joints_.empty());
-}
-
-
-bool JointPath::setPath(Link* end)
-{
-    linkPath.setPath(end);
-    extractJoints();
-    doResetWhenJointPathUpdated();
-	
-    return !joints_.empty();
-}
-
-
 void JointPath::extractJoints()
 {
     numUpwardJointConnections = 0;
@@ -190,22 +169,6 @@ int JointPath::indexOf(const Link* link) const
         }
     }
     return -1;
-}
-
-
-void JointPath::doResetWhenJointPathUpdated()
-{
-    if(nuIK){
-        nuIK->errorFunc = nullptr;
-        nuIK->jacobianFunc = nullptr;
-    }
-    onJointPathUpdated();
-}
-
-
-void JointPath::onJointPathUpdated()
-{
-
 }
 
 
@@ -474,24 +437,6 @@ bool JointPath::hasAnalyticalIK() const
 }
 
 
-/*
-JointPath& JointPath::setGoal
-(const Vector3& base_p, const Matrix3& base_R, const Vector3& end_p, const Matrix3& end_R)
-{
-    targetTranslationGoal = end_p;
-    targetRotationGoal = end_R;
-    
-    Link* baseLink = linkPath.baseLink();
-    baseLink->p() = base_p;
-    baseLink->R() = base_R;
-
-    needForwardKinematicsBeforeIK = true;
-
-    return *this;
-}
-*/
-
-
 bool JointPath::calcInverseKinematics
 (const Vector3& base_p, const Matrix3& base_R, const Vector3& end_p, const Matrix3& end_R)
 {
@@ -532,23 +477,18 @@ class JointPathWithCustomizerIk : public JointPath
     bool isCustomizedIkPathReversed;
     
 public:
-    JointPathWithCustomizerIk(const BodyPtr& body, Link* baseLink, Link* targetLink)
-        : JointPath(baseLink, targetLink),
+    JointPathWithCustomizerIk(const BodyPtr& body, Link* baseLink, Link* endLink)
+        : JointPath(baseLink, endLink),
           body(body)
     {
-        onJointPathUpdated();
-    }
-
-    virtual void onJointPathUpdated() override
-    {
         ikTypeId = body->customizerInterface()->initializeAnalyticIk(
-            body->customizerHandle(), baseLink()->index(), endLink()->index());
+            body->customizerHandle(), baseLink->index(), endLink->index());
         if(ikTypeId){
             isCustomizedIkPathReversed = false;
         } else {
             // try reversed path
             ikTypeId = body->customizerInterface()->initializeAnalyticIk(
-                body->customizerHandle(), endLink()->index(), baseLink()->index());
+                body->customizerHandle(), endLink->index(), baseLink->index());
             if(ikTypeId){
                 isCustomizedIkPathReversed = true;
             }
@@ -592,17 +532,17 @@ public:
 }
 
 
-std::shared_ptr<JointPath> cnoid::getCustomJointPath(Body* body, Link* baseLink, Link* targetLink)
+std::shared_ptr<JointPath> cnoid::getCustomJointPath(Body* body, Link* baseLink, Link* endLink)
 {
     auto customJointPathHandler = body->findHandler<CustomJointPathHandler>();
     if(customJointPathHandler){
-        return customJointPathHandler->getCustomJointPath(baseLink, targetLink);
+        return customJointPathHandler->getCustomJointPath(baseLink, endLink);
     }
 
     // deprecated
     if(body->customizerInterface() && body->customizerInterface()->initializeAnalyticIk){
-        return make_shared<JointPathWithCustomizerIk>(body, baseLink, targetLink);
+        return make_shared<JointPathWithCustomizerIk>(body, baseLink, endLink);
     }
 
-    return make_shared<JointPath>(baseLink, targetLink);
+    return make_shared<JointPath>(baseLink, endLink);
 }
