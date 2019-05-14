@@ -2,6 +2,7 @@
 #define CNOID_BODY_BODY_HANDLER_MANAGER_H
 
 #include <iosfwd>
+#include <string>
 #include "exportdecl.h"
 
 namespace cnoid {
