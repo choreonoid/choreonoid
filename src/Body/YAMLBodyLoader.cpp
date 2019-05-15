@@ -330,7 +330,8 @@ public:
     void addSubBodyLinks(BodyPtr subBody, Mapping* node);
     void readExtraJoints(Mapping* topNode);
     void readExtraJoint(Mapping* node);
-    void readBodyHandlers(Mapping* topNode);
+    void readBodyHandlers(ValueNode* node);
+    void setDegreeModeAttributeToValueTreeNodes(ValueNode* node);
     
     bool isDegreeMode() const {
         return sceneReader.isDegreeMode();
@@ -694,9 +695,17 @@ bool YAMLBodyLoaderImpl::readTopNode(Body* body, Mapping* topNode)
             for(auto& subBody : subBodies){
                 topNode->insert(subBody->info());
             }
+
+            auto bodyHandlers = topNode->extract("bodyHandlers");
+
+            if(isDegreeMode()){
+                setDegreeModeAttributeToValueTreeNodes(topNode);
+            }
             body->resetInfo(topNode);
 
-            readBodyHandlers(topNode);
+            if(bodyHandlers){
+                readBodyHandlers(bodyHandlers);
+            }
         }
         
     } catch(const ValueNode::Exception& ex){
@@ -1030,8 +1039,12 @@ LinkPtr YAMLBodyLoaderImpl::readLinkContents(Mapping* node, LinkPtr link)
                     node->insert(importList[i].toMapping());
                 }
             }
+
         }
-        
+
+        if(isDegreeMode()){
+            setDegreeModeAttributeToValueTreeNodes(node);
+        }
         link->resetInfo(node);
     }
 
@@ -1965,9 +1978,8 @@ void YAMLBodyLoaderImpl::readExtraJoint(Mapping* node)
 }
 
 
-void YAMLBodyLoaderImpl::readBodyHandlers(Mapping* topNode)
+void YAMLBodyLoaderImpl::readBodyHandlers(ValueNode* node)
 {
-    auto node = topNode->extract("bodyHandlers");
     if(node){
         if(node->isString()){
             bodyHandlerManager.loadBodyHandler(body, node->toString());
@@ -1978,5 +1990,32 @@ void YAMLBodyLoaderImpl::readBodyHandlers(Mapping* topNode)
         }
     }
 }
+
+
+void YAMLBodyLoaderImpl::setDegreeModeAttributeToValueTreeNodes(ValueNode* node)
+{
+    if(node->isScalar()){
+        node->setDegreeMode();
+    } else if(node->isMapping()){
+        for(auto& kv : *node->toMapping()){
+            auto child = kv.second;
+            if(child->isScalar()){
+                child->setDegreeMode();
+            } else {
+                setDegreeModeAttributeToValueTreeNodes(child);
+            }
+        }
+    } else if(node->isListing()){
+        for(auto& child : *node->toListing()){
+            if(child->isScalar()){
+                child->setDegreeMode();
+            } else {
+                setDegreeModeAttributeToValueTreeNodes(child);
+            }
+        }
+    }
+}
+
+
              
 

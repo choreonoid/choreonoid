@@ -205,7 +205,7 @@ void BodyInfo_impl::setLinks()
         for(int jointIndex=0; jointIndex < n; jointIndex++){
             int i = body->joint(jointIndex)->index();
             LinkInfo& linkInfo = links_[i];
-            linkInfo.jointValue = radian(pose[jointIndex].toDouble());   //TODO radian?
+            linkInfo.jointValue = pose[jointIndex].toAngle();
         }
     }
 
@@ -443,7 +443,7 @@ void BodyInfo_impl::setHwc(LinkInfo& linkInfo, Link& link)
         }
         if(read(hwc, "rotation", a)){
             setAngleAxis(a, hwcInfo.rotation);
-            hwcInfo.rotation[3] = radian(hwcInfo.rotation[3]);             //TODO radian
+            hwcInfo.rotation[3] = hwcInfo.rotation[3];
         }
         if(hwc.read("url", s)){
             hwcInfo.url = CORBA::string_dup( s.c_str() );;

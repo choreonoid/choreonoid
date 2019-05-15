@@ -43,6 +43,9 @@ ValueNodePtr invalidNode;
 MappingPtr invalidMapping;
 ListingPtr invalidListing;
 
+const double PI = 3.14159265358979323846;
+const double TO_RADIAN = PI / 180.0;
+
 }
 
 ValueNode::Initializer ValueNode::initializer;
@@ -231,6 +234,16 @@ double ValueNode::toDouble() const
     }
 
     return value;
+}
+
+
+double ValueNode::toAngle() const
+{
+    if(isDegreeMode()){
+        return TO_RADIAN * toDouble();
+    } else {
+        return toDouble();
+    }
 }
 
 

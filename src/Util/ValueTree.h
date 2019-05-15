@@ -37,14 +37,9 @@ class CNOID_EXPORT ValueNode : public Referenced
     static Initializer initializer;
         
 public:
-
     virtual ValueNode* clone() const;
 
-#ifndef CNOID_BACKWARD_COMPATIBILITY
-    enum TypeBit { INVALID_NODE = 0, SCALAR = 1, MAPPING = 2, LISTING = 4, INSERT_LF = 8, APPEND_LF = 16 };
-#else 
-    enum TypeBit { INVALID_NODE = 0, SCALAR = 1, MAPPING = 2, LISTING = 4, SEQUENCE = 4, INSERT_LF = 8, APPEND_LF = 16 };
-#endif
+    enum TypeBit { INVALID_NODE = 0, SCALAR = 1, MAPPING = 2, LISTING = 4, INSERT_LF = 8, APPEND_LF = 16, ANGLE_DEGREE = 32 };
 
     bool isValid() const { return typeBits; }
     TypeBit LFType() const { return (TypeBit)(typeBits & (INSERT_LF | APPEND_LF)); }
@@ -52,6 +47,7 @@ public:
 
     int toInt() const;
     double toDouble() const;
+    double toAngle() const;
     bool toBool() const;
 
     bool isScalar() const { return typeBits & SCALAR; }
@@ -70,6 +66,9 @@ public:
         return toString();
     }
 #endif
+
+    bool isDegreeMode() const { return typeBits & ANGLE_DEGREE; }
+    void setDegreeMode() { typeBits |= ANGLE_DEGREE; }
 
     //template<typename T> T to() const { return ""; }
     template<typename T> T to() const;

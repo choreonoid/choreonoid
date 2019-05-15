@@ -724,7 +724,7 @@ void BodyItemImpl::setPresetPose(BodyItem::PresetPoseID id)
         if(pose.isValid()){
             const int n = std::min(pose.size(), body->numJoints());
             while(jointIndex < n){
-                body->joint(jointIndex)->q() = radian(pose[jointIndex].toDouble());
+                body->joint(jointIndex)->q() = pose[jointIndex].toAngle();
                 jointIndex++;
             }
         }
