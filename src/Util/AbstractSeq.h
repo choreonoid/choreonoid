@@ -124,6 +124,11 @@ protected:
     bool writeSeqPartLabels(YAMLWriter& writer);
 };
 
+#ifdef CNOID_BACKWARD_COMPATIBILITY
+typedef std::shared_ptr<AbstractSeq> AbstractSeqPtr;
+typedef std::shared_ptr<AbstractMultiSeq> AbstractMultiSeqPtr;
+#endif
+
 }
 
 #endif

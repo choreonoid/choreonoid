@@ -133,6 +133,10 @@ class Body;
 */
 CNOID_EXPORT std::shared_ptr<JointPath> getCustomJointPath(Body* body, Link* baseLink, Link* endLink);
 
+#ifdef CNOID_BACKWARD_COMPATIBILITY
+typedef std::shared_ptr<JointPath> JointPathPtr;
+#endif
+
 }
 
 #endif

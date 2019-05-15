@@ -172,6 +172,10 @@ CNOID_EXPORT Body& operator<<(Body& body, BodyMotion::Frame frame);
 CNOID_EXPORT Body& operator<<(Body& body, BodyMotion::ConstFrame frame);
 CNOID_EXPORT const Body& operator>>(const Body& body, BodyMotion::Frame frame);
 
+#ifdef CNOID_BACKWARD_COMPATIBILITY
+typedef std::shared_ptr<BodyMotion> BodyMotionPtr;
+#endif
+
 }
 
 #endif

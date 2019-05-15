@@ -41,6 +41,10 @@ protected:
     virtual bool doWriteSeq(YAMLWriter& writer, std::function<void()> additionalPartCallback) override;
 };
 
+#ifdef CNOID_BACKWARD_COMPATIBILITY
+typedef std::shared_ptr<MultiSE3Seq> MultiSE3SeqPtr;
+#endif
+
 }
 
 #endif

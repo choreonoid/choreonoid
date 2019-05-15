@@ -34,6 +34,10 @@ protected:
     virtual Affine3 defaultValue() const override;
 };
 
+#ifdef CNOID_BACKWARD_COMPATIBILITY
+typedef std::shared_ptr<MultiSE3MatrixSeq> MultiSE3MatrixSeqPtr;
+#endif
+
 }
 
 #endif
