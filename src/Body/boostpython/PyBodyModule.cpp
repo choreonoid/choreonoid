@@ -105,10 +105,10 @@ LinkPtr JointPath_endLink(JointPath& self) { return self.endLink(); }
 bool (JointPath::*JointPath_calcInverseKinematics)(const Vector3& , const Matrix3&) = &JointPath::calcInverseKinematics;
 bool (JointPath::*JointPath_calcInverseKinematics2)(const Vector3&, const Matrix3&, const Vector3&, const Matrix3&) = &JointPath::calcInverseKinematics;
 
-MultiValueSeqPtr BodyMotion_get_jointPosSeq(BodyMotion& self) { return self.jointPosSeq(); }
-void BodyMotion_set_jointPosSeq(BodyMotion& self, const MultiValueSeqPtr& jointPosSeq) { self.jointPosSeq() = jointPosSeq; }
-MultiSE3SeqPtr BodyMotion_get_linkPosSeq(BodyMotion& self) { return self.linkPosSeq(); }
-void BodyMotion_set_linkPosSeq(BodyMotion& self, const MultiSE3SeqPtr& linkPosSeq) { self.linkPosSeq() = linkPosSeq; }
+std::shared_ptr<MultiValueSeq> BodyMotion_get_jointPosSeq(BodyMotion& self) { return self.jointPosSeq(); }
+void BodyMotion_set_jointPosSeq(BodyMotion& self, const std::shared_ptr<MultiValueSeq>& jointPosSeq) { self.jointPosSeq() = jointPosSeq; }
+std::shared_ptr<MultiSE3Seq> BodyMotion_get_linkPosSeq(BodyMotion& self) { return self.linkPosSeq(); }
+void BodyMotion_set_linkPosSeq(BodyMotion& self, const std::shared_ptr<MultiSE3Seq>& linkPosSeq) { self.linkPosSeq() = linkPosSeq; }
 
 BodyMotion::Frame (BodyMotion::*BodyMotion_frame)(int) = &BodyMotion::frame;
 
@@ -331,7 +331,7 @@ BOOST_PYTHON_MODULE(Body)
 
     {
         py::scope jointPathScope =
-            py::class_<JointPath, JointPathPtr, boost::noncopyable>("JointPath", py::init<>())
+            py::class_<JointPath, std::shared_ptr<JointPath>, boost::noncopyable>("JointPath", py::init<>())
             .def("numJoints", &JointPath::numJoints)
             .def("getNumJoints", &JointPath::numJoints)
             .def("joint", JointPath_joint)
@@ -355,7 +355,7 @@ BOOST_PYTHON_MODULE(Body)
 
     {
         py::scope bodyMotionScope =
-            py::class_<BodyMotion, BodyMotionPtr, py::bases<AbstractSeq>>("BodyMotion")
+            py::class_<BodyMotion, std::shared_ptr<BodyMotion>, py::bases<AbstractSeq>>("BodyMotion")
             .def("setNumJoints", &BodyMotion::setNumJoints)
             .def("numJoints", &BodyMotion::numJoints)
             .def("getNumJoints", &BodyMotion::numJoints)
@@ -388,7 +388,7 @@ BOOST_PYTHON_MODULE(Body)
             ;
     }
 
-    py::implicitly_convertible<BodyMotionPtr, AbstractSeqPtr>();
+    py::implicitly_convertible<std::shared_ptr<BodyMotion>, std::shared_ptr<AbstractSeq>>();
 
     {
         py::scope deviceScope =

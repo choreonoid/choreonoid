@@ -11,7 +11,7 @@ using namespace cnoid;
 
 namespace {
 
-BodyMotionPtr BodyMotionItem_motion(BodyMotionItem& self) { return self.motion(); }
+std::shared_ptr<BodyMotion> BodyMotionItem_motion(BodyMotionItem& self) { return self.motion(); }
 MultiValueSeqItemPtr BodyMotionItem_jointPosSeqItem(BodyMotionItem& self) { return self.jointPosSeqItem(); }
 MultiSE3SeqItemPtr BodyMotionItem_linkPosSeqItem(BodyMotionItem& self) { return self.linkPosSeqItem(); }
 AbstractSeqItemPtr BodyMotionItem_extraSeqItem(BodyMotionItem& self, int index) { return self.extraSeqItem(index); }

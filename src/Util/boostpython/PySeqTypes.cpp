@@ -56,7 +56,7 @@ void exportPySeqTypes()
         .def("defaultFrameRate", &AbstractSeq::defaultFrameRate)
         .def("getDefaultFrameRate", &AbstractSeq::defaultFrameRate);
 
-    register_ptr_to_python<AbstractSeqPtr>();    
+    register_ptr_to_python<std::shared_ptr<AbstractSeq>>();    
 
     class_<AbstractMultiSeq, bases<AbstractSeq>, boost::noncopyable>("AbstractMultiSeq", no_init)
         .def("copySeqProperties", &AbstractMultiSeq::copySeqProperties)
@@ -68,8 +68,8 @@ void exportPySeqTypes()
         .def("partLabel", &AbstractMultiSeq::partLabel, return_value_policy<copy_const_reference>())
         .def("getPartLabel", &AbstractMultiSeq::partLabel, return_value_policy<copy_const_reference>());
 
-    register_ptr_to_python<AbstractMultiSeqPtr>();
-    implicitly_convertible<AbstractMultiSeqPtr, AbstractSeqPtr>();
+    register_ptr_to_python<std::shared_ptr<AbstractMultiSeq>>();
+    implicitly_convertible<std::shared_ptr<AbstractMultiSeq>, std::shared_ptr<AbstractSeq>>();
 
     const MultiValueSeq::Element& (MultiValueSeq::*MultiValueSeq_at_const)(int, int) const = &MultiValueSeq::at;
     MultiValueSeq::Element& (MultiValueSeq::*MultiValueSeq_at)(int, int) = &MultiValueSeq::at;
@@ -138,8 +138,8 @@ void exportPySeqTypes()
         .def("loadPlainFormat", &MultiValueSeq::loadPlainFormat)
         .def("saveAsPlainFormat", &MultiValueSeq::saveAsPlainFormat);
 
-    register_ptr_to_python<MultiValueSeqPtr>();
-    implicitly_convertible<MultiValueSeqPtr, AbstractMultiSeqPtr>();
+    register_ptr_to_python<std::shared_ptr<MultiValueSeq>>();
+    implicitly_convertible<std::shared_ptr<MultiValueSeq>, std::shared_ptr<AbstractMultiSeq>>();
 }
 
 }
