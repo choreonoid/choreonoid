@@ -87,6 +87,7 @@ foreach(version ${versions})
   
   set(headers
     exportdecl.h
+    OpenHRPInterpreterServiceItem.h
     )
   
   if(MSVC)
