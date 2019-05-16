@@ -31,7 +31,5 @@ if(UNIX)
 endif()
 
 if(ENABLE_PYTHON)
-  if(USE_BOOST_PYTHON)
-    add_subdirectory(boostpython)
-  endif()
+  add_subdirectory(boostpython)
 endif()
