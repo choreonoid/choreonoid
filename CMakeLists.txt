@@ -306,6 +306,8 @@ else()
 endif()
 
 # Python
+set(CNOID_PYTHON_SUBDIR ${CNOID_PLUGIN_SUBDIR}/python)
+
 if(WIN32)
   option(ENABLE_PYTHON "Enable Python" OFF)
 else()
@@ -354,7 +356,6 @@ if(ENABLE_PYTHON)
     find_package(PythonLibs 2 REQUIRED)
   endif()
   include_directories(${PYTHON_INCLUDE_DIRS})
-  set(CNOID_PYTHON_SUBDIR ${CNOID_PLUGIN_SUBDIR}/python)
   set(init_py "${PROJECT_BINARY_DIR}/${CNOID_PYTHON_SUBDIR}/cnoid/__init__.py")
   file(WRITE ${init_py} "")
   install(FILES ${init_py} DESTINATION ${CNOID_PYTHON_SUBDIR}/cnoid
