@@ -24,6 +24,7 @@
 
 #include "RTSCommonUtil.h"
 #include "BodyStateSubscriberRTCItem.h"
+#include "deprecated/VirtualRobotRTC.h"
 #include "deprecated/BodyRTCItem.h"
 #include "deprecated/ChoreonoidExecutionContext.h"
 #include "deprecated/ChoreonoidPeriodicExecutionContext.h"
@@ -41,6 +42,7 @@
 #include <cnoid/AppConfig>
 #include <fmt/format.h>
 #include <rtm/ComponentActionListener.h>
+#include <set>
 
 #include "LoggerUtil.h"
 

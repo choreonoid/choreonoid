@@ -34,6 +34,10 @@ set(plugin_sources
   )
 
 set(plugin_headers
+  RTCItem.h
+  BodyIoRTCItem.h
+  ControllerRTCItem.h
+  deprecated/BodyRTCItem.h
   )
 
 set(qt_wrap_cpp_files
