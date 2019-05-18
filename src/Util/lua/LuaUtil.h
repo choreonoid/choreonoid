@@ -40,6 +40,7 @@ T* native(sol::object obj)
         sol::object cppobj = obj.as<sol::table>()["cppobj"];
         return cppobj.as<T*>();
     }
+    return nullptr;
 }
 
 template<typename T>
@@ -51,6 +52,7 @@ T* native(sol::stack_object obj)
         sol::object cppobj = obj.as<sol::stack_table>()["cppobj"];
         return cppobj.as<T*>();
     }
+    return nullptr;
 }
 
 template<typename T>

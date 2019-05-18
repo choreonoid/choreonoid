@@ -22,7 +22,7 @@ Vector3SeqItem::Vector3SeqItem()
 }
 
 
-Vector3SeqItem::Vector3SeqItem(Vector3SeqPtr seq)
+Vector3SeqItem::Vector3SeqItem(std::shared_ptr<Vector3Seq> seq)
     : seq_(seq)
 {
     setName(seq->seqContentName());
@@ -37,7 +37,7 @@ Vector3SeqItem::Vector3SeqItem(const Vector3SeqItem& org)
 }
 
 
-Vector3SeqItem::Vector3SeqItem(const Vector3SeqItem& org, Vector3SeqPtr cloneSeq)
+Vector3SeqItem::Vector3SeqItem(const Vector3SeqItem& org, std::shared_ptr<Vector3Seq> cloneSeq)
     : AbstractSeqItem(org),
       seq_(cloneSeq)
 {
@@ -52,7 +52,7 @@ Vector3SeqItem::~Vector3SeqItem()
 }
 
 
-AbstractSeqPtr Vector3SeqItem::abstractSeq()
+std::shared_ptr<AbstractSeq> Vector3SeqItem::abstractSeq()
 {
     return seq_;
 }

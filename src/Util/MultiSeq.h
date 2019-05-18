@@ -23,7 +23,6 @@ public:
     typedef Deque2D<ElementType, Allocator> Container;
     
     typedef typename Container::value_type value_type;
-    typedef std::shared_ptr<MultiSeqType> Ptr;
     typedef typename Container::Row Frame;
     typedef typename Container::Column Part;
     typedef value_type Element; ///< \deprecated. Use value_type.
@@ -70,7 +69,7 @@ public:
         }
     }
 
-    virtual AbstractSeqPtr cloneSeq() const override {
+    virtual std::shared_ptr<AbstractSeq> cloneSeq() const override {
         return std::make_shared<MultiSeqType>(*this);
     }
         

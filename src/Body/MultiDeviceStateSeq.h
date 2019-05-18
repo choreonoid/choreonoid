@@ -18,8 +18,6 @@ class CNOID_EXPORT MultiDeviceStateSeq : public MultiSeq<DeviceStatePtr>
     typedef MultiSeq<DeviceStatePtr> BaseSeqType;
             
 public:
-    typedef std::shared_ptr<MultiDeviceStateSeq> Ptr;
-
     static const std::string& key();
 
     MultiDeviceStateSeq();
@@ -29,7 +27,7 @@ public:
 
     using BaseSeqType::operator=;
     MultiDeviceStateSeq& operator=(const MultiDeviceStateSeq& rhs);
-    virtual AbstractSeqPtr cloneSeq() const;
+    virtual std::shared_ptr<AbstractSeq> cloneSeq() const;
 
     void initialize(const DeviceList<>& devices);
 
@@ -45,12 +43,10 @@ private:
     std::vector<std::string> deviceNames;
 };
 
-typedef MultiDeviceStateSeq::Ptr MultiDeviceStateSeqPtr;
-
 class BodyMotion;
 
-CNOID_EXPORT MultiDeviceStateSeqPtr getMultiDeviceStateSeq(const BodyMotion& motion);
-CNOID_EXPORT MultiDeviceStateSeqPtr getOrCreateMultiDeviceStateSeq(BodyMotion& motion);
+CNOID_EXPORT std::shared_ptr<MultiDeviceStateSeq> getMultiDeviceStateSeq(const BodyMotion& motion);
+CNOID_EXPORT std::shared_ptr<MultiDeviceStateSeq> getOrCreateMultiDeviceStateSeq(BodyMotion& motion);
 CNOID_EXPORT void clearMultiDeviceStateSeq(BodyMotion& motion);
 }
 

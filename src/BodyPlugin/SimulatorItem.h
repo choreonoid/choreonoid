@@ -229,7 +229,7 @@ protected:
     */
     virtual void finalizeSimulation();
 
-    virtual CollisionLinkPairListPtr getCollisions()
+    virtual std::shared_ptr<CollisionLinkPairList> getCollisions()
     {
         return std::make_shared<CollisionLinkPairList>();
     }

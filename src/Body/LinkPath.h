@@ -21,13 +21,8 @@ public:
     bool setPath(Link* base, Link* end);
     void setPath(Link* end);
 
-    inline Link* baseLink() const {
-        return links.front();
-    }
-        
-    inline Link* endLink() const {
-        return links.back();
-    }
+    Link* baseLink() const { return links_.front(); }
+    Link* endLink() const { return links_.back(); }
 
 #ifdef CNOID_BACKWARD_COMPATIBILITY
     //! Deprecated. Use "setPath()" instead of this.
@@ -37,7 +32,7 @@ public:
 #endif
 
 private:
-    virtual void find(Link* root, bool doUpward, bool doDownward);
+    virtual void find(Link* root, bool doUpward, bool doDownward) override;
 
     bool findPathSub(Link* link, Link* prev, Link* end, bool isForwardDirection);
     void findPathFromRootSub(Link* link);

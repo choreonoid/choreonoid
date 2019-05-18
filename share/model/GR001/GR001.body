@@ -482,3 +482,5 @@ poseConversionInfo:
       14, 15, -1, 16, -1, -1, -1, -1, -1,
       17, 18, -1, 19, -1, -1, -1, -1, -1 ]
     linkMap: { R_FOOT: R_ANKLE_R, L_FOOT: L_ANKLE_R }
+
+bodyHandlers: GRobotHandler

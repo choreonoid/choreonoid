@@ -9,16 +9,17 @@
 
 #include "PoseSeqInterpolator.h"
 #include "PronunSymbol.h"
-#include <list>
-#include <vector>
-#include <iostream>
-#include <algorithm>
-#include <boost/dynamic_bitset.hpp>
 #include <cnoid/Link>
 #include <cnoid/JointPath>
 #include <cnoid/ValueTree>
 #include <cnoid/EigenUtil>
 #include <cnoid/Array2D>
+#include <boost/dynamic_bitset.hpp>
+#include <list>
+#include <vector>
+#include <iostream>
+#include <algorithm>
+#include <unordered_map>
 
 using namespace std;
 using namespace std::placeholders;
@@ -230,7 +231,24 @@ struct ZmpSample
 };
 
 }
-    
+
+namespace std {
+
+template<class T> struct hash<std::pair<T, T>>
+{
+    void hash_combine(std::size_t& seed, const T& v) const {
+        std::hash<T> hasher;
+        seed ^= hasher(v) + 0x9e3779b9 + (seed<<6) + (seed>>2);
+    }
+    std::size_t operator()(const std::pair<T, T>& v) const {
+        std::size_t seed = 0;
+        hash_combine(seed, v.first);
+        hash_combine(seed, v.second);
+        return seed;
+    }
+};
+
+}
 
 namespace cnoid {
 
@@ -256,6 +274,10 @@ public:
     vector<int> footLinkIndices;
     vector<Vector3> soleCenters;
     vector<LinkInfo*> footLinkInfos;
+
+    typedef pair<Link*, Link*> LinkPair;
+    typedef unordered_map<LinkPair, shared_ptr<JointPath>> JointPathMap;
+    JointPathMap ikJointPathMap;
 
     bool isAutoZmpAdjustmentMode;
     double minZmpTransitionTime;
@@ -795,21 +817,21 @@ void PoseSeqInterpolator::setBody(Body* body)
 
 void PSIImpl::setBody(Body* body0)
 {
+    jointInfos.clear();
+    ikLinkInfos.clear();
+    footLinkIndices.clear();
+    soleCenters.clear();
+    ikJointPathMap.clear();
+    validIkLinkFlag.clear();
+    clearLipSyncShapes();
+        
     if(!body0){
-        body.reset();
+        body = nullptr;
     } else {
         body = body0->clone();
-
         int n = body->numJoints();
-        jointInfos.clear();
         jointInfos.resize(n);
-        ikLinkInfos.clear();
-        footLinkIndices.clear();
-        soleCenters.clear();
         validIkLinkFlag.resize(body->numLinks());
-
-        clearLipSyncShapes();
-
         invalidateCurrentInterpolation();
     }
     needUpdate = true;
@@ -818,7 +840,7 @@ void PSIImpl::setBody(Body* body0)
 
 Body* PoseSeqInterpolator::body() const
 {
-    return impl->body.get();
+    return impl->body;
 }
 
 
@@ -1344,7 +1366,16 @@ void PSIImpl::calcIkJointPositionsSub(Link* link, Link* baseLink, LinkInfo* base
     if(link != baseLink && validIkLinkFlag[link->index()]){
         LinkInfo* endLinkInfo = getIkLinkInfo(link->index());
         if(baseLinkInfo && endLinkInfo){
-            JointPathPtr jointPath = getCustomJointPath(body, baseLink, link);
+
+            shared_ptr<JointPath> jointPath;
+            LinkPair linkPair(baseLink, link);
+            auto iter = ikJointPathMap.find(linkPair);
+            if(iter != ikJointPathMap.end()){
+                jointPath = iter->second;
+            } else {
+                jointPath = getCustomJointPath(body, baseLink, link);
+                ikJointPathMap[linkPair] = jointPath;
+            }
 
             bool doIK = true; // tmp
             

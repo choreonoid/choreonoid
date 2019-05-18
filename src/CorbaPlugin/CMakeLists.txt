@@ -1,4 +1,3 @@
-
 # @author Shin'ichiro Nakaoka
 
 #set(CMAKE_BUILD_TYPE Debug)
@@ -32,5 +31,5 @@ apply_common_setting_for_plugin(${target} "${headers}")
 
 # test program
 # add_cnoid_executable(corba-test test.cpp ${idl_cpp_files})
-# target_link_libraries(corba-test CnoidCorba ${OMNIORB_LIBRARIES})
+# target_link_libraries(corba-test CnoidCorba ${OMNIDYNAMIC_LIBRARIES})
 

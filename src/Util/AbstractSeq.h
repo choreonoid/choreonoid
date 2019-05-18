@@ -18,10 +18,6 @@ namespace cnoid {
 class Mapping;
 class YAMLWriter;
     
-class AbstractSeq;
-typedef std::shared_ptr<AbstractSeq> AbstractSeqPtr;
-
-
 class CNOID_EXPORT AbstractSeq
 {
 protected:
@@ -33,7 +29,7 @@ public:
 
     virtual AbstractSeq& operator=(const AbstractSeq& rhs);
 
-    virtual AbstractSeqPtr cloneSeq() const = 0;
+    virtual std::shared_ptr<AbstractSeq> cloneSeq() const = 0;
 
     void copySeqProperties(const AbstractSeq& source);
 
@@ -110,7 +106,7 @@ public:
     using AbstractSeq::operator=;
     AbstractMultiSeq& operator=(const AbstractMultiSeq& rhs);
 
-    virtual AbstractSeqPtr cloneSeq() const = 0;
+    virtual std::shared_ptr<AbstractSeq> cloneSeq() const = 0;
 
     void copySeqProperties(const AbstractMultiSeq& source);
 
@@ -128,7 +124,10 @@ protected:
     bool writeSeqPartLabels(YAMLWriter& writer);
 };
 
+#ifdef CNOID_BACKWARD_COMPATIBILITY
+typedef std::shared_ptr<AbstractSeq> AbstractSeqPtr;
 typedef std::shared_ptr<AbstractMultiSeq> AbstractMultiSeqPtr;
+#endif
 
 }
 

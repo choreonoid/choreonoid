@@ -63,7 +63,7 @@ BodyMotion& BodyMotion::operator=(const BodyMotion& rhs)
 }
 
 
-AbstractSeqPtr BodyMotion::cloneSeq() const
+std::shared_ptr<AbstractSeq> BodyMotion::cloneSeq() const
 {
     return std::make_shared<BodyMotion>(*this);
 }
@@ -167,7 +167,7 @@ void BodyMotion::setDimension(int numFrames, int numJoints, int numLinks, bool c
 }
 
 
-void BodyMotion::setExtraSeq(const std::string& name, AbstractSeqPtr seq)
+void BodyMotion::setExtraSeq(const std::string& name, std::shared_ptr<AbstractSeq> seq)
 {
     extraSeqs[name] = seq;
     sigExtraSeqsChanged_();
@@ -450,7 +450,7 @@ bool BodyMotion::doWriteSeq(YAMLWriter& writer, std::function<void()> additional
             }
             
             for(ExtraSeqMap::iterator p = extraSeqs.begin(); p != extraSeqs.end(); ++p){
-                AbstractSeqPtr& seq = p->second;
+                auto& seq = p->second;
                 seq->writeSeq(writer);
             }
             

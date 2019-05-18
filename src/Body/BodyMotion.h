@@ -25,7 +25,7 @@ public:
 
     using AbstractSeq::operator=;
     BodyMotion& operator=(const BodyMotion& rhs);
-    virtual AbstractSeqPtr cloneSeq() const;        
+    virtual std::shared_ptr<AbstractSeq> cloneSeq() const;        
 
     void setDimension(int numFrames, int numJoints, int numLinks, bool clearNewArea = false);
     void setNumJoints(int numJoints, bool clearNewElements = false);
@@ -46,19 +46,19 @@ public:
     virtual int getNumFrames() const override;
     virtual void setNumFrames(int n, bool clearNewArea = false) override;
 
-    MultiSE3SeqPtr linkPosSeq() {
+    std::shared_ptr<MultiSE3Seq> linkPosSeq() {
         return linkPosSeq_;
     }
 
-    ConstMultiSE3SeqPtr linkPosSeq() const {
+    std::shared_ptr<const MultiSE3Seq> linkPosSeq() const {
         return linkPosSeq_;
     }
 
-    MultiValueSeqPtr jointPosSeq() {
+    std::shared_ptr<MultiValueSeq> jointPosSeq() {
         return jointPosSeq_;
     }
 
-    ConstMultiValueSeqPtr jointPosSeq() const {
+    std::shared_ptr<const MultiValueSeq> jointPosSeq() const {
         return jointPosSeq_;
     }
 
@@ -99,7 +99,7 @@ public:
     bool save(const std::string& filename, std::ostream& os = nullout());
     bool save(const std::string& filename, double version, std::ostream& os = nullout());
 
-    typedef std::map<std::string, AbstractSeqPtr> ExtraSeqMap;
+    typedef std::map<std::string, std::shared_ptr<AbstractSeq>> ExtraSeqMap;
     typedef ExtraSeqMap::const_iterator ConstSeqIterator;
         
     ConstSeqIterator extraSeqBegin() const { return extraSeqs.begin(); }
@@ -112,11 +112,11 @@ public:
                 std::dynamic_pointer_cast<SeqType>(p->second) : std::shared_ptr<SeqType>());
     }
 
-    void setExtraSeq(const std::string& name, AbstractSeqPtr seq);
+    void setExtraSeq(const std::string& name, std::shared_ptr<AbstractSeq> seq);
 
     template <class SeqType>
         std::shared_ptr<SeqType> getOrCreateExtraSeq(const std::string& name) {
-        AbstractSeqPtr& base = extraSeqs[name];
+        std::shared_ptr<AbstractSeq>& base = extraSeqs[name];
         std::shared_ptr<SeqType> seq;
         if(base){
             seq = std::dynamic_pointer_cast<SeqType>(base);
@@ -159,14 +159,11 @@ protected:
     virtual bool doWriteSeq(YAMLWriter& writer, std::function<void()> additionalPartCallback) override;
         
 private:
-    MultiSE3SeqPtr linkPosSeq_;
-    MultiValueSeqPtr jointPosSeq_;
+    std::shared_ptr<MultiSE3Seq> linkPosSeq_;
+    std::shared_ptr<MultiValueSeq> jointPosSeq_;
     ExtraSeqMap extraSeqs;
     Signal<void()> sigExtraSeqsChanged_;
 };
-
-typedef std::shared_ptr<BodyMotion> BodyMotionPtr;
-typedef std::shared_ptr<const BodyMotion> ConstBodyMotionPtr;
 
 CNOID_EXPORT BodyMotion::Frame operator<<(BodyMotion::Frame frame, const Body& body);
 CNOID_EXPORT BodyMotion::Frame operator>>(BodyMotion::Frame frame, const Body& body);
@@ -174,6 +171,10 @@ CNOID_EXPORT BodyMotion::ConstFrame operator>>(BodyMotion::ConstFrame frame, Bod
 CNOID_EXPORT Body& operator<<(Body& body, BodyMotion::Frame frame);
 CNOID_EXPORT Body& operator<<(Body& body, BodyMotion::ConstFrame frame);
 CNOID_EXPORT const Body& operator>>(const Body& body, BodyMotion::Frame frame);
+
+#ifdef CNOID_BACKWARD_COMPATIBILITY
+typedef std::shared_ptr<BodyMotion> BodyMotionPtr;
+#endif
 
 }
 

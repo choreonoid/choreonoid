@@ -1,7 +1,0 @@
-module OpenHRP
-{
-  interface InterpreterService
-  {
-    string interpret(in string expr);
-  };
-};

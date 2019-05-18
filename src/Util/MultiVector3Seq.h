@@ -20,14 +20,12 @@ class CNOID_EXPORT MultiVector3Seq : public MultiSeq<Vector3, Eigen::aligned_all
     typedef MultiSeq<Vector3, Eigen::aligned_allocator<Vector3>> BaseSeqType;
 
 public:
-    typedef std::shared_ptr<MultiVector3Seq> Ptr;
-
     MultiVector3Seq();
     MultiVector3Seq(int numFrames, int numParts = 1);
     MultiVector3Seq(const MultiVector3Seq& org);
     virtual ~MultiVector3Seq();
     using BaseSeqType::operator=;
-    virtual AbstractSeqPtr cloneSeq() const override;
+    virtual std::shared_ptr<AbstractSeq> cloneSeq() const override;
     void copySeqProperties(const MultiVector3Seq& source);
 
 protected:
@@ -36,7 +34,9 @@ protected:
     virtual bool doWriteSeq(YAMLWriter& writer, std::function<void()> additionalPartCallback) override;
 };
 
-typedef MultiVector3Seq::Ptr MultiVector3SeqPtr;
+#ifdef CNOID_BACKWARD_COMPATIBILITY
+typedef std::shared_ptr<MultiVector3Seq> MultiVector3SeqPtr;
+#endif
 
 }
 

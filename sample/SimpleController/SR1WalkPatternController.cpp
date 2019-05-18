@@ -33,7 +33,7 @@ class SR1WalkPatternController : public cnoid::SimpleController
     Body* ioBody;
     int currentFrameIndex;
     int lastFrameIndex;
-    MultiValueSeqPtr qseq;
+    std::shared_ptr<MultiValueSeq> qseq;
     MultiValueSeq::Frame qref0;
     MultiValueSeq::Frame qref1;
     vector<double> q0;

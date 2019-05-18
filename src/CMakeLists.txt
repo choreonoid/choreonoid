@@ -5,7 +5,6 @@ add_subdirectory(AssimpSceneLoader)
 add_subdirectory(Body)
 add_subdirectory(Corba)
 add_subdirectory(OpenRTM)
-add_subdirectory(OpenHRPModelLoader)
 
 if(ENABLE_GUI)
   add_subdirectory(Base)
@@ -39,9 +38,6 @@ if(ENABLE_GUI)
 
   add_subdirectory(RobotAccessPlugin)
   add_subdirectory(Hrpsys31Plugin)
-
-  add_subdirectory(OpenHRPPlugin)
-  add_subdirectory(GrxUIPlugin)
 
   add_subdirectory(FCLPlugin)
   add_subdirectory(SDFPlugin)

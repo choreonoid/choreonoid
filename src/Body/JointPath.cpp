@@ -6,6 +6,7 @@
 #include "JointPath.h"
 #include "Jacobian.h"
 #include "Body.h"
+#include "CustomJointPathHandler.h"
 #include "BodyCustomizerInterface.h"
 #include <cnoid/EigenUtil>
 #include <cnoid/TruncatedSVD>
@@ -90,7 +91,7 @@ JointPath::JointPath()
 
 JointPath::JointPath(Link* base, Link* end)
     : linkPath(base, end), 
-      joints(linkPath.size())
+      joints_(linkPath.size())
 {
     initialize();
     extractJoints();
@@ -99,7 +100,7 @@ JointPath::JointPath(Link* base, Link* end)
 
 JointPath::JointPath(Link* end)
     : linkPath(end), 
-      joints(linkPath.size())
+      joints_(linkPath.size())
 {
     initialize();
     extractJoints();
@@ -108,7 +109,7 @@ JointPath::JointPath(Link* end)
 
 void JointPath::initialize()
 {
-    nuIK = 0;
+    nuIK = nullptr;
     needForwardKinematicsBeforeIK = false;
 }    
 
@@ -121,47 +122,26 @@ JointPath::~JointPath()
 }
 
 
-bool JointPath::setPath(Link* base, Link* end)
-{
-    if(linkPath.setPath(base, end)){
-        extractJoints();
-    }
-    onJointPathUpdated();
-
-    return (!joints.empty());
-}
-
-
-bool JointPath::setPath(Link* end)
-{
-    linkPath.setPath(end);
-    extractJoints();
-    onJointPathUpdated();
-	
-    return !joints.empty();
-}
-
-
 void JointPath::extractJoints()
 {
     numUpwardJointConnections = 0;
 
     int n = linkPath.size();
     if(n <= 1){
-        joints.clear();
+        joints_.clear();
     } else {
         int i = 0;
         if(linkPath.isDownward(i)){
             i++;
         }
-        joints.resize(n); // reserve size n buffer
-        joints.clear();
+        joints_.resize(n); // reserve size n buffer
+        joints_.clear();
         int m = n - 1;
         while(i < m){
             Link* link = linkPath[i];
             if(link->jointId() >= 0){
                 if(link->isRotationalJoint() || link->isSlideJoint()){
-                    joints.push_back(link);
+                    joints_.push_back(link);
                     if(!linkPath.isDownward(i)){
                         numUpwardJointConnections++;
                     }
@@ -173,7 +153,7 @@ void JointPath::extractJoints()
             Link* link = linkPath[m];
             if(link->jointId() >= 0){
                 if(link->isRotationalJoint() || link->isSlideJoint()){
-                    joints.push_back(link);
+                    joints_.push_back(link);
                 }
             }
         }
@@ -183,8 +163,8 @@ void JointPath::extractJoints()
 
 int JointPath::indexOf(const Link* link) const
 {
-    for(size_t i=0; i < joints.size(); ++i){
-        if(joints[i] == link){
+    for(size_t i=0; i < joints_.size(); ++i){
+        if(joints_[i] == link){
             return i;
         }
     }
@@ -192,18 +172,9 @@ int JointPath::indexOf(const Link* link) const
 }
 
 
-void JointPath::onJointPathUpdated()
-{
-    if(nuIK){
-        nuIK->errorFunc = nullptr;
-        nuIK->jacobianFunc = nullptr;
-    }
-}
-
-
 void JointPath::calcJacobian(Eigen::MatrixXd& out_J) const
 {
-    const int n = joints.size();
+    const int n = joints_.size();
     out_J.resize(6, n);
 	
     if(n > 0){
@@ -218,7 +189,7 @@ void JointPath::calcJacobian(Eigen::MatrixXd& out_J) const
 		
             for(int i=0; i < n; ++i){
 			
-                Link* link = joints[i];
+                Link* link = joints_[i];
 			
                 switch(link->jointType()){
 				
@@ -338,7 +309,7 @@ bool JointPath::calcInverseKinematics(const Position& T)
     const bool USE_USUAL_INVERSE_SOLUTION_FOR_6x6_NON_BEST_EFFORT_PROBLEM = false;
     const bool USE_SVD_FOR_BEST_EFFORT_IK = false;
 
-    if(joints.empty()){
+    if(joints_.empty()){
         if(linkPath.empty()){
             return false;
         }
@@ -370,7 +341,7 @@ bool JointPath::calcInverseKinematics(const Position& T)
     nuIK->q0.resize(n);
     if(!nuIK->isBestEffortIKmode){
         for(int i=0; i < n; ++i){
-            nuIK->q0[i] = joints[i]->q();
+            nuIK->q0[i] = joints_[i]->q();
         }
     }
 
@@ -406,7 +377,7 @@ bool JointPath::calcInverseKinematics(const Position& T)
         if(prevErrsqr - errorSqr < nuIK->maxIKerrorSqr){
             if(nuIK->isBestEffortIKmode && (errorSqr > prevErrsqr)){
                 for(int j=0; j < n; ++j){
-                    joints[j]->q() = nuIK->q0[j];
+                    joints_[j]->q() = nuIK->q0[j];
                 }
                 calcForwardKinematics();
             }
@@ -430,13 +401,13 @@ bool JointPath::calcInverseKinematics(const Position& T)
 
         if(nuIK->isBestEffortIKmode){
             for(int j=0; j < n; ++j){
-                double& q = joints[j]->q();
+                double& q = joints_[j]->q();
                 nuIK->q0[j] = q;
                 q += nuIK->deltaScale * nuIK->dq(j);
             }
         } else {
             for(int j=0; j < n; ++j){
-                joints[j]->q() += nuIK->deltaScale * nuIK->dq(j);
+                joints_[j]->q() += nuIK->deltaScale * nuIK->dq(j);
             }
         }
 
@@ -445,7 +416,7 @@ bool JointPath::calcInverseKinematics(const Position& T)
 
     if(!completed && !nuIK->isBestEffortIKmode){
         for(int i=0; i < n; ++i){
-            joints[i]->q() = nuIK->q0[i];
+            joints_[i]->q() = nuIK->q0[i];
         }
         calcForwardKinematics();
     }
@@ -464,24 +435,6 @@ bool JointPath::hasAnalyticalIK() const
 {
     return false;
 }
-
-
-/*
-JointPath& JointPath::setGoal
-(const Vector3& base_p, const Matrix3& base_R, const Vector3& end_p, const Matrix3& end_R)
-{
-    targetTranslationGoal = end_p;
-    targetRotationGoal = end_R;
-    
-    Link* baseLink = linkPath.baseLink();
-    baseLink->p() = base_p;
-    baseLink->R() = base_R;
-
-    needForwardKinematicsBeforeIK = true;
-
-    return *this;
-}
-*/
 
 
 bool JointPath::calcInverseKinematics
@@ -516,92 +469,80 @@ std::ostream& operator<<(std::ostream& os, JointPath& path)
 
 namespace {
 
-class CustomJointPath : public JointPath
+// deprecated
+class JointPathWithCustomizerIk : public JointPath
 {
     BodyPtr body;
     int ikTypeId;
     bool isCustomizedIkPathReversed;
-    virtual void onJointPathUpdated();
+    
 public:
-    CustomJointPath(const BodyPtr& body, Link* baseLink, Link* targetLink);
-    virtual ~CustomJointPath();
-    virtual bool calcInverseKinematics(const Position& T) override;
-    virtual bool hasAnalyticalIK() const override;
+    JointPathWithCustomizerIk(const BodyPtr& body, Link* baseLink, Link* endLink)
+        : JointPath(baseLink, endLink),
+          body(body)
+    {
+        ikTypeId = body->customizerInterface()->initializeAnalyticIk(
+            body->customizerHandle(), baseLink->index(), endLink->index());
+        if(ikTypeId){
+            isCustomizedIkPathReversed = false;
+        } else {
+            // try reversed path
+            ikTypeId = body->customizerInterface()->initializeAnalyticIk(
+                body->customizerHandle(), endLink->index(), baseLink->index());
+            if(ikTypeId){
+                isCustomizedIkPathReversed = true;
+            }
+        }
+    }
+        
+    virtual bool hasAnalyticalIK() const override
+    {
+        return (ikTypeId != 0);
+    }
+    
+    virtual bool calcInverseKinematics(const Position& T) override
+    {
+        if(isNumericalIkEnabled() || ikTypeId == 0){
+            return JointPath::calcInverseKinematics(T);
+        }
+        
+        const Link* baseLink_ = baseLink();
+        Vector3 p;
+        Matrix3 R;
+        
+        if(!isCustomizedIkPathReversed){
+            p = baseLink_->R().transpose() * (T.translation() - baseLink_->p());
+            R.noalias() = baseLink_->R().transpose() * T.linear();
+        } else {
+            p = T.linear().transpose() * (baseLink_->p() - T.translation());
+            R.noalias() = T.linear().transpose() * baseLink_->R();
+        }
+        
+        bool solved = body->customizerInterface()->
+            calcAnalyticIk(body->customizerHandle(), ikTypeId, p, R);
+
+        if(solved){
+            calcForwardKinematics();
+        }
+        
+        return solved;
+    }
 };
 
 }
 
 
-CustomJointPath::CustomJointPath(const BodyPtr& body, Link* baseLink, Link* targetLink)
-    : JointPath(baseLink, targetLink),
-      body(body)
+std::shared_ptr<JointPath> cnoid::getCustomJointPath(Body* body, Link* baseLink, Link* endLink)
 {
-    onJointPathUpdated();
-}
-
-
-CustomJointPath::~CustomJointPath()
-{
-
-}
-
-
-void CustomJointPath::onJointPathUpdated()
-{
-    ikTypeId = body->customizerInterface()->initializeAnalyticIk(
-        body->customizerHandle(), baseLink()->index(), endLink()->index());
-    if(ikTypeId){
-        isCustomizedIkPathReversed = false;
-    } else {
-        // try reversed path
-        ikTypeId = body->customizerInterface()->initializeAnalyticIk(
-            body->customizerHandle(), endLink()->index(), baseLink()->index());
-        if(ikTypeId){
-            isCustomizedIkPathReversed = true;
-        }
-    }
-}
-
-
-bool CustomJointPath::hasAnalyticalIK() const
-{
-    return (ikTypeId != 0);
-}
-
-
-bool CustomJointPath::calcInverseKinematics(const Position& T)
-{
-    if(isNumericalIkEnabled() || ikTypeId == 0){
-        return JointPath::calcInverseKinematics(T);
-    }
-        
-    const Link* baseLink_ = baseLink();
-    Vector3 p;
-    Matrix3 R;
-    
-    if(!isCustomizedIkPathReversed){
-        p = baseLink_->R().transpose() * (T.translation() - baseLink_->p());
-        R.noalias() = baseLink_->R().transpose() * T.linear();
-    } else {
-        p = T.linear().transpose() * (baseLink_->p() - T.translation());
-        R.noalias() = T.linear().transpose() * baseLink_->R();
+    auto customJointPathHandler = body->findHandler<CustomJointPathHandler>();
+    if(customJointPathHandler){
+        return customJointPathHandler->getCustomJointPath(baseLink, endLink);
     }
 
-    bool solved = body->customizerInterface()->calcAnalyticIk(body->customizerHandle(), ikTypeId, p, R);
-
-    if(solved){
-        calcForwardKinematics();
-    }
-
-    return solved;
-}
-
-
-JointPathPtr cnoid::getCustomJointPath(Body* body, Link* baseLink, Link* targetLink)
-{
+    // deprecated
     if(body->customizerInterface() && body->customizerInterface()->initializeAnalyticIk){
-        return std::make_shared<CustomJointPath>(body, baseLink, targetLink);
-    } else {
-        return std::make_shared<JointPath>(baseLink, targetLink);
+        return make_shared<JointPathWithCustomizerIk>(body, baseLink, endLink);
     }
+
+    return make_shared<JointPath>(baseLink, endLink);
 }

@@ -132,12 +132,12 @@ public:
 
     ItemPtr parentOfResultItems;
     string resultItemPrefix;
-    BodyMotionPtr motion;
-    MultiValueSeqPtr jointPosResults;
-    MultiSE3SeqPtr linkPosResults;
+    shared_ptr<BodyMotion> motion;
+    shared_ptr<MultiValueSeq> jointPosResults;
+    shared_ptr<MultiSE3Seq> linkPosResults;
     MultiSE3SeqItemPtr linkPosResultItem;
     vector<DeviceStatePtr> prevFlushedDeviceStateInDirectMode;
-    MultiDeviceStateSeqPtr deviceStateResults;
+    shared_ptr<MultiDeviceStateSeq> deviceStateResults;
 
     SimulationBodyImpl(SimulationBody* self, Body* body);
     void findControlSrcItems(Item* item, vector<Item*>& io_items, bool doPickCheckedItems = false);
@@ -149,7 +149,7 @@ public:
     void initializeResultData();
     void initializeResultBuffers();
     void initializeResultItems();
-    void setInitialStateOfBodyMotion(const BodyMotionPtr& bodyMotion);
+    void setInitialStateOfBodyMotion(shared_ptr<BodyMotion> bodyMotion);
     void setActive(bool on);
     void bufferResults();
     void flushResults();
@@ -213,8 +213,8 @@ public:
 
     CollisionDetectorPtr collisionDetector;
 
-    CollisionSeqPtr collisionSeq;
-    deque<CollisionLinkPairListPtr> collisionPairsBuf;
+    shared_ptr<CollisionSeq> collisionSeq;
+    deque<shared_ptr<CollisionLinkPairList>> collisionPairsBuf;
 
     Selection recordingMode;
     Selection timeRangeMode;
@@ -782,11 +782,11 @@ void SimulationBodyImpl::initializeResultItems()
 }
 
 
-void SimulationBodyImpl::setInitialStateOfBodyMotion(const BodyMotionPtr& bodyMotion)
+void SimulationBodyImpl::setInitialStateOfBodyMotion(shared_ptr<BodyMotion> bodyMotion)
 {
     bool updated = false;
     
-    MultiSE3SeqPtr lseq = bodyMotion->linkPosSeq();
+    auto lseq = bodyMotion->linkPosSeq();
     if(lseq->numParts() > 0 && lseq->numFrames() > 0){
         SE3& p = lseq->at(0, 0);
         Link* rootLink = body_->rootLink();
@@ -794,7 +794,7 @@ void SimulationBodyImpl::setInitialStateOfBodyMotion(const BodyMotionPtr& bodyMo
         rootLink->R() = p.rotation().toRotationMatrix();
         updated = true;
     }
-    MultiValueSeqPtr jseq = bodyMotion->jointPosSeq();
+    auto jseq = bodyMotion->jointPosSeq();
     if(jseq->numFrames() > 0){
         MultiValueSeq::Frame jframe0 = jseq->frame(0);
         int n = std::min(jframe0.size(), body_->numJoints());
@@ -2025,7 +2025,7 @@ bool SimulatorItemImpl::stepSimulationMain()
 
     self->stepSimulation(activeSimBodies);
 
-    CollisionLinkPairListPtr collisionPairs;
+    shared_ptr<CollisionLinkPairList> collisionPairs;
     if(isRecordingEnabled && recordCollisionData){
         collisionPairs = self->getCollisions();
     }

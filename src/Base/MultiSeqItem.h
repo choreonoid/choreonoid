@@ -22,11 +22,11 @@ public:
         
     MultiSeqItem() : seq_(std::make_shared<MultiSeqType>()) { }
         
-    MultiSeqItem(typename MultiSeqType::Ptr seq) : seq_(seq) { }
+    MultiSeqItem(std::shared_ptr<MultiSeqType> seq) : seq_(seq) { }
 
-    virtual AbstractMultiSeqPtr abstractMultiSeq() { return seq_; }
+    virtual std::shared_ptr<AbstractMultiSeq> abstractMultiSeq() { return seq_; }
 
-    typename MultiSeqType::Ptr seq() { return seq_; }
+    typename std::shared_ptr<MultiSeqType> seq() { return seq_; }
 
     MultiSeqItem(const MultiSeqItem<MultiSeqType>& org)
         : AbstractMultiSeqItem(org),
@@ -38,18 +38,18 @@ protected:
     /**
        For the copy constructor of inherited classes
     */
-    MultiSeqItem(const MultiSeqItem<MultiSeqType>& org, typename MultiSeqType::Ptr newSeq)
+    MultiSeqItem(const MultiSeqItem<MultiSeqType>& org, std::shared_ptr<MultiSeqType> newSeq)
         : AbstractMultiSeqItem(org),
           seq_(newSeq) { }
 
-    void resetSeq(typename MultiSeqType::Ptr seq) { seq_ = seq; }
+    void resetSeq(std::shared_ptr<MultiSeqType> seq) { seq_ = seq; }
         
     virtual Item* doDuplicate() const override {
         return new MultiSeqItem<MultiSeqType>(*this);
     }
 
 private:
-    typename MultiSeqType::Ptr seq_;
+    std::shared_ptr<MultiSeqType> seq_;
 };
 
 }

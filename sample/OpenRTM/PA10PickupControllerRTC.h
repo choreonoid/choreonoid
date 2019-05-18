@@ -45,7 +45,7 @@ private:
     cnoid::Interpolator<cnoid::VectorXd> wristInterpolator;
     cnoid::Interpolator<cnoid::VectorXd> jointInterpolator;
     cnoid::Link* wrist;
-    cnoid::JointPathPtr baseToWrist;
+    std::shared_ptr<cnoid::JointPath> baseToWrist;
     double dq_hand;
     cnoid::VectorXd qref, qold, qref_old;
     double time;

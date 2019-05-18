@@ -7,7 +7,6 @@
 
 #include "Link.h"
 #include <cnoid/CollisionDetector>
-#include <memory>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -33,8 +32,6 @@ public:
 private:
     PenetrationBlockerImpl* impl;
 };
-
-typedef std::shared_ptr<PenetrationBlocker> PenetrationBlockerPtr;
 
 }
 

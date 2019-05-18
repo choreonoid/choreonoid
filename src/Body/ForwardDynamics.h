@@ -63,8 +63,6 @@ protected:
     enum { EULER_METHOD, RUNGEKUTTA_METHOD } integrationMode;
 };
 
-typedef std::shared_ptr<ForwardDynamics> ForwardDynamicsPtr;
-
 }
 
 #endif

@@ -70,7 +70,7 @@ protected:
     virtual bool initializeSimulation(const std::vector<SimulationBody*>& simBodies);
     virtual bool stepSimulation(const std::vector<SimulationBody*>& activeSimBodies);
     virtual void finalizeSimulation();
-    virtual CollisionLinkPairListPtr getCollisions();
+    virtual std::shared_ptr<CollisionLinkPairList> getCollisions();
         
     virtual Item* doDuplicate() const;
     virtual void doPutProperties(PutPropertyFunction& putProperty);

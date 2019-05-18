@@ -1,5 +1,5 @@
-#ifndef CNOID_BODY_EXPORTDECL_H_INCLUDED
-# define CNOID_BODY_EXPORTDECL_H_INCLUDED
+#ifndef CNOID_BODY_EXPORTDECL_H
+# define CNOID_BODY_EXPORTDECL_H
 # if defined _WIN32 || defined __CYGWIN__
 #  define CNOID_BODY_DLLIMPORT __declspec(dllimport)
 #  define CNOID_BODY_DLLEXPORT __declspec(dllexport)

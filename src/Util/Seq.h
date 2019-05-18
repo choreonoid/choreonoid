@@ -19,7 +19,6 @@ template <typename ElementType> class Seq : public AbstractSeq
         
 public:
     typedef ElementType value_type;
-    typedef std::shared_ptr<SeqType> Ptr;
         
     Seq(const char* seqType, int nFrames = 0.0)
         : AbstractSeq(seqType),
@@ -57,7 +56,7 @@ public:
         }
     }
 
-    virtual AbstractSeqPtr cloneSeq() const override {
+    virtual std::shared_ptr<AbstractSeq> cloneSeq() const override {
         return std::make_shared<SeqType>(*this);
     }
         

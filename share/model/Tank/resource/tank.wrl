@@ -2,7 +2,7 @@
 
 DEF Scene Group {
   children [
-    DEF CHASSIS Transform {
+    DEF Transform {
       translation 0 0 0.025
       children [
 	DEF CHASSIS Shape {

@@ -11,6 +11,7 @@
 #include <cnoid/MessageView>
 #include <cnoid/ProjectManager>
 #include <cnoid/CorbaUtil>
+#include <cnoid/Process>
 #include <rtm/RTObject.h>
 #include <fmt/format.h>
 #include "gettext.h"
@@ -24,6 +25,31 @@ namespace filesystem = boost::filesystem;
 
 namespace {
 const bool TRACE_FUNCTIONS = false;
+}
+
+namespace cnoid {
+
+class RTComponentImpl
+{
+public:
+    RTC::RTObject_var rtcRef;
+    RTC::RtcBase* rtc_;
+    boost::filesystem::path modulePath;
+    Process rtcProcess;
+    std::string componentName;
+    MessageView* mv;
+
+    RTComponentImpl(const filesystem::path& modulePath, PropertyMap& prop);
+    void init(const boost::filesystem::path& modulePath, PropertyMap& properties);
+    bool createRTC(PropertyMap& properties);
+    bool isValid() const;
+    void setupModules(string& fileName, string& initFuncName, string& componentName, PropertyMap& properties);
+    void createProcess(string& command, PropertyMap& properties);
+    void deleteRTC();
+    void activate();
+    void onReadyReadServerProcessOutput();
+};
+
 }
 
 
@@ -288,31 +314,39 @@ bool RTCItem::convertAbsolutePath()
 RTComponent::RTComponent(const filesystem::path& modulePath, PropertyMap& prop)
 {
     DDEBUG("RTComponent::RTComponent");
+    impl = new RTComponentImpl(modulePath, prop);
+}
+
+
+RTComponentImpl::RTComponentImpl(const filesystem::path& modulePath, PropertyMap& prop)
+{
     rtc_ = nullptr;
     rtcRef = RTC::RTObject::_nil();
-    if (modulePath.empty()) return;
-    init(modulePath, prop);
+    if(!modulePath.empty()){
+        init(modulePath, prop);
+    }
 }
 
 
 RTComponent::~RTComponent()
 {
     deleteRTC();
+    delete impl;
 }
 
 
-void RTComponent::init(const filesystem::path& modulePath_, PropertyMap& prop)
+void RTComponentImpl::init(const filesystem::path& modulePath_, PropertyMap& prop)
 {
-    DDEBUG("RTComponent::init");
+    DDEBUG("RTComponentImpl::init");
     mv = MessageView::instance();
     modulePath = modulePath_;
     createRTC(prop);
 }
 
 
-bool  RTComponent::createRTC(PropertyMap& prop)
+bool RTComponentImpl::createRTC(PropertyMap& prop)
 {
-    DDEBUG("RTComponent::createRTC");
+    DDEBUG("RTComponentImpl::createRTC");
 
     string moduleNameLeaf = modulePath.leaf().string();
     size_t i = moduleNameLeaf.rfind('.');
@@ -361,9 +395,9 @@ bool  RTComponent::createRTC(PropertyMap& prop)
 }
 
 
-void RTComponent::setupModules(string& fileName, string& initFuncName, string& componentName, PropertyMap& prop)
+void RTComponentImpl::setupModules(string& fileName, string& initFuncName, string& componentName, PropertyMap& prop)
 {
-    DDEBUG("RTComponent::setupModules");
+    DDEBUG("RTComponentImpl::setupModules");
 
     RTC::Manager& rtcManager = RTC::Manager::instance();
 
@@ -389,19 +423,37 @@ void RTComponent::setupModules(string& fileName, string& initFuncName, string& c
 }
 
 
-void RTComponent::onReadyReadServerProcessOutput()
+void RTComponentImpl::onReadyReadServerProcessOutput()
 {
     mv->put(QString(rtcProcess.readAll()));
 }
 
 
+RTC::RtcBase* RTComponent::rtc()
+{
+    return impl->rtc_;
+};
+
+
 bool RTComponent::isValid() const
+{
+    return impl->isValid();
+}
+
+
+bool RTComponentImpl::isValid() const
 {
     return (rtc_ || rtcProcess.state() != QProcess::NotRunning);
 }
 
 
-void RTComponent::createProcess(string& command, PropertyMap& prop)
+const std::string& RTComponent::name() const
+{
+    return impl->componentName;
+}
+
+
+void RTComponentImpl::createProcess(string& command, PropertyMap& prop)
 {
     DDEBUG("RTComponent::createProcess");
 
@@ -428,7 +480,7 @@ void RTComponent::createProcess(string& command, PropertyMap& prop)
     } else {
         mv->putln(format(_("RT Component process \"{}\" has been executed."), command));
         rtcProcess.sigReadyReadStandardOutput().connect(
-          std::bind(&RTComponent::onReadyReadServerProcessOutput, this));
+            [&](){ onReadyReadServerProcessOutput(); });
     }
 }
 
@@ -438,7 +490,12 @@ void RTComponent::deleteRTC()
     if (TRACE_FUNCTIONS) {
         cout << "BodyRTComponent::deleteRTC()" << endl;
     }
+    impl->deleteRTC();
+}
 
+
+void RTComponentImpl::deleteRTC()
+{
     if (rtc_) {
         string rtcName(rtc_->getInstanceName());
         mv->putln(format(_("delete {}"), rtcName));
@@ -459,6 +516,12 @@ void RTComponent::deleteRTC()
 }
 
 void RTComponent::activate()
+{
+    impl->activate();
+}
+
+
+void RTComponentImpl::activate()
 {
     if (rtc_) {
         RTC::ExecutionContextList_var eclist = rtc_->get_owned_contexts();

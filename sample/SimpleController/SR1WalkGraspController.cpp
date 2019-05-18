@@ -40,7 +40,7 @@ class SR1WalkGraspController : public cnoid::SimpleController
     int rarm_wrist_r;
     ForceSensor* rhsensor;
     Interpolator<VectorXd> interpolator;
-    MultiValueSeqPtr qseq;
+    std::shared_ptr<MultiValueSeq> qseq;
     VectorXd qref, qold, qref_old;
     int currentFrame;
     double timeStep;

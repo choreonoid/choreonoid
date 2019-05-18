@@ -18,9 +18,9 @@ using fmt::format;
 
 namespace {
 
-AbstractSeqItem* createZMPSeqItem(AbstractSeqPtr seq)
+AbstractSeqItem* createZMPSeqItem(std::shared_ptr<AbstractSeq> seq)
 {
-    ZMPSeqPtr zmpseq = dynamic_pointer_cast<ZMPSeq>(seq);
+    auto zmpseq = dynamic_pointer_cast<ZMPSeq>(seq);
     if(zmpseq){
         auto item = new ZMPSeqItem(zmpseq);
         item->setName("ZMP");
@@ -32,29 +32,29 @@ AbstractSeqItem* createZMPSeqItem(AbstractSeqPtr seq)
 
 class ZMPSeqEngine : public TimeSyncItemEngine
 {
-    ZMPSeqPtr seq;
+    shared_ptr<ZMPSeq> seq;
     BodyItemPtr bodyItem;
 public:
         
     ZMPSeqEngine(ZMPSeqItem* seqItem, BodyItem* bodyItem)
         : seq(seqItem->zmpseq()), bodyItem(bodyItem)
-        {
-            seqItem->sigUpdated().connect(std::bind(&TimeSyncItemEngine::notifyUpdate, this));
-        }
+    {
+        seqItem->sigUpdated().connect(std::bind(&TimeSyncItemEngine::notifyUpdate, this));
+    }
 
     virtual bool onTimeChanged(double time)
-        {
-            bool isValidTime = false;
-            if(!seq->empty()){
-                const Vector3& zmp = seq->at(seq->clampFrameIndex(seq->frameOfTime(time), isValidTime));
-                if(seq->isRootRelative()){
-                    bodyItem->setZmp(bodyItem->body()->rootLink()->T() * zmp);
-                } else {
-                    bodyItem->setZmp(zmp);
-                }
+    {
+        bool isValidTime = false;
+        if(!seq->empty()){
+            const Vector3& zmp = seq->at(seq->clampFrameIndex(seq->frameOfTime(time), isValidTime));
+            if(seq->isRootRelative()){
+                bodyItem->setZmp(bodyItem->body()->rootLink()->T() * zmp);
+            } else {
+                bodyItem->setZmp(zmp);
             }
-            return isValidTime;
         }
+        return isValidTime;
+    }
 };
 
 
@@ -86,7 +86,7 @@ ZMPSeqItem::ZMPSeqItem()
 }
 
 
-ZMPSeqItem::ZMPSeqItem(ZMPSeqPtr seq)
+ZMPSeqItem::ZMPSeqItem(std::shared_ptr<ZMPSeq> seq)
     : Vector3SeqItem(seq),
       zmpseq_(seq)
 {

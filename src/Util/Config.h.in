@@ -4,6 +4,7 @@
 #define CNOID_MAJOR_VERSION @CNOID_MAJOR_VERSION@
 #define CNOID_MINOR_VERSION @CNOID_MINOR_VERSION@
 #define CNOID_PATCH_VERSION @CNOID_PATCH_VERSION@
+#define CNOID_VERSION @CNOID_VERSION_ID@
 #define CNOID_INTERNAL_VERSION @CNOID_INTERNAL_VERSION@
 
 #define CNOID_VERSION_STRING "@CNOID_VERSION@"
@@ -12,7 +13,6 @@
 #define CNOID_SHARE_SUBDIR "@CNOID_SHARE_SUBDIR@"
 
 #cmakedefine CNOID_USE_PYBIND11
-#cmakedefine CNOID_USE_BOOST_PYTHON
 #cmakedefine CNOID_USE_PYTHON2
 #cmakedefine CNOID_USE_BOOST_REGEX
 
@@ -23,5 +23,12 @@
 #define CNOID_GENERAL_EXPORT __attribute__ ((visibility("default")))
 #endif
 #endif
+
+namespace cnoid {
+
+CNOID_GENERAL_EXPORT unsigned int getVersion();
+CNOID_GENERAL_EXPORT unsigned int getInternalVersion();
+
+}
 
 #endif

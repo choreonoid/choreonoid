@@ -40,11 +40,11 @@ void LinkPath::find(Link* /* root */, bool /* doUpward */, bool /* doDownward */
 
 bool LinkPath::setPath(Link* base, Link* end)
 {
-    links.clear();
+    links_.clear();
     numUpwardConnections = 0;
     bool found = findPathSub(base, 0, end, false);
     if(!found){
-        links.clear();
+        links_.clear();
     }
     return found;
 }
@@ -52,7 +52,7 @@ bool LinkPath::setPath(Link* base, Link* end)
 
 bool LinkPath::findPathSub(Link* link, Link* prev, Link* end, bool isUpward)
 {
-    links.push_back(link);
+    links_.push_back(link);
     if(isUpward){
         ++numUpwardConnections;
     }
@@ -76,7 +76,7 @@ bool LinkPath::findPathSub(Link* link, Link* prev, Link* end, bool isUpward)
         }
     }
 
-    links.pop_back();
+    links_.pop_back();
     if(isUpward){
         --numUpwardConnections;
     }
@@ -88,16 +88,16 @@ bool LinkPath::findPathSub(Link* link, Link* prev, Link* end, bool isUpward)
 /// path from the root link
 void LinkPath::setPath(Link* end)
 {
-    links.clear();
+    links_.clear();
     numUpwardConnections = 0;
     findPathFromRootSub(end);
-    std::reverse(links.begin(), links.end());
+    std::reverse(links_.begin(), links_.end());
 }
 
 
 void LinkPath::findPathFromRootSub(Link* link)
 {
-    links.push_back(link);
+    links_.push_back(link);
     if(link->parent()){
         findPathFromRootSub(link->parent());
     }

@@ -522,7 +522,7 @@ bool BodyMotionGenerationBar::shapeBodyMotionWithSimpleInterpolation
     }
     poseProviderToBodyMotionConverter->setAllLinkPositionOutput(setup->se3Check.isChecked());
         
-    BodyMotionPtr motion = motionItem->motion();
+    auto motion = motionItem->motion();
     motion->setFrameRate(timeBar->frameRate());
 
     bool result = poseProviderToBodyMotionConverter->convert(body, provider, *motion);

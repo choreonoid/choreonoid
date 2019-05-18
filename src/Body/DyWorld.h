@@ -55,7 +55,7 @@ public:
        @param index index of the body
        @return forward dynamics computation method
     */
-    ForwardDynamicsPtr& forwardDynamics(int index) {
+    std::shared_ptr<ForwardDynamics> forwardDynamics(int index) {
         return bodyInfoArray[index].forwardDynamics;
     }
 
@@ -78,7 +78,7 @@ public:
        Use this method instead of addBody(const DyBodyPtr& body) when you want to specify
        a forward dynamics calculater.
     */
-    int addBody(DyBody* body, const ForwardDynamicsPtr& forwardDynamics);
+    int addBody(DyBody* body, std::shared_ptr<ForwardDynamics> forwardDynamics);
         
     /**
        @brief clear bodies in this world
@@ -175,7 +175,7 @@ protected:
 
     struct BodyInfo {
         DyBodyPtr body;
-        ForwardDynamicsPtr forwardDynamics;
+        std::shared_ptr<ForwardDynamics> forwardDynamics;
         bool hasVirtualJointForces;
     };
     std::vector<BodyInfo> bodyInfoArray;

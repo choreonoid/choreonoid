@@ -63,7 +63,7 @@ RTC::OutPortBase& SensorStateOutPortHandler::getOutPort()
 
 void SensorStateOutPortHandler::inputDataFromSimulator(BodyRTCItem* bodyRTC)
 {
-    const BodyPtr& body = bodyRTC->body();
+    auto body = bodyRTC->body();
     switch(dataTypeId) {
     case JOINT_VALUE:
     {
@@ -152,7 +152,7 @@ RTC::OutPortBase& LinkDataOutPortHandler::getOutPort()
 
 void LinkDataOutPortHandler::inputDataFromSimulator(BodyRTCItem* bodyRTC)
 {
-    const BodyPtr& body = bodyRTC->body();
+    auto body = bodyRTC->body();
     size_t n = linkNames.size();
     switch(linkDataType) {
     case JOINT_VALUE:
@@ -310,7 +310,7 @@ RTC::OutPortBase& SensorDataOutPortHandler::getOutPort()
 
 void SensorDataOutPortHandler::inputDataFromSimulator(BodyRTCItem* bodyRTC)
 {
-    const BodyPtr& body = bodyRTC->body();
+    auto body = bodyRTC->body();
     if(!sensorNames.empty()){
         if(Device* sensor = body->findDevice(sensorNames[0])){
             const int dataSize = sensor->stateSize();
@@ -419,7 +419,7 @@ RTC::OutPortBase& LightOnOutPortHandler::getOutPort()
 
 void LightOnOutPortHandler::inputDataFromSimulator(BodyRTCItem* bodyRTC)
 {
-    const BodyPtr& body = bodyRTC->body();
+    auto body = bodyRTC->body();
     value.data.length(lightNames.size());
     size_t i=0;
     for(vector<string>::iterator it = lightNames.begin(); it != lightNames.end(); it++){

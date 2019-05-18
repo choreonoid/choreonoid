@@ -545,9 +545,9 @@ bool PoseSeqItem::redo()
 
 bool PoseSeqItem::updateKeyPosesWithBalancedTrajectories(std::ostream& os)
 {
-    BodyMotionPtr motion = bodyMotionItem()->motion();
-    MultiValueSeqPtr qseq = motion->jointPosSeq();
-    MultiSE3SeqPtr pseq = motion->linkPosSeq();
+    auto motion = bodyMotionItem()->motion();
+    auto qseq = motion->jointPosSeq();
+    auto pseq = motion->linkPosSeq();
 
     double length = seq->endingTime();
     

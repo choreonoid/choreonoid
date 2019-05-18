@@ -72,14 +72,14 @@ void calcCMJacobian(Body* body, Link* base, Eigen::MatrixXd& J)
     const int nj = body->numJoints();
     vector<SubMass> subMasses(body->numLinks());
     Link* rootLink = body->rootLink();
+    std::vector<int> sgn(nj, 1);
         
-    JointPath path;
     if(!base){
         calcSubMass(rootLink, subMasses, false);
         J.resize(3, nj + 6);
 
     } else {
-        path.setPath(rootLink, base);
+        JointPath path(rootLink, base);
         Link* skip = path.joint(0);
         SubMass& sub = subMasses[skip->index()];
         sub.m = rootLink->m();
@@ -107,14 +107,13 @@ void calcCMJacobian(Body* body, Link* base, Eigen::MatrixXd& J)
         }
             
         J.resize(3, nj);
+
+        for(int i=0; i < path.numJoints(); i++){
+            sgn[path.joint(i)->jointId()] = -1;
+        }
     }
         
     // compute Jacobian
-    std::vector<int> sgn(nj, 1);
-    for(int i=0; i < path.numJoints(); i++){
-        sgn[path.joint(i)->jointId()] = -1;
-    }
-    
     for(int i=0; i < nj; i++){
         Link* joint = body->joint(i);
         if(joint->isRotationalJoint()){
@@ -156,19 +155,19 @@ void calcAngularMomentumJacobian(Body* body, Link* base, Eigen::MatrixXd& H)
     const int nj = body->numJoints();
     std::vector<SubMass> subMasses(body->numLinks());
     Link* rootLink = body->rootLink();
+    std::vector<int> sgn(nj, 1);
 
     MatrixXd M;
     calcCMJacobian( body, base, M );
     M.conservativeResize(3, nj);
     M *= body->mass();
 
-    JointPath path;
     if(!base){
         calcSubMass(rootLink, subMasses, true);
         H.resize(3, nj + 6);
 
     } else {
-        path.setPath(rootLink, base);
+        JointPath path(rootLink, base);
         Link* skip = path.joint(0);
         SubMass& sub = subMasses[skip->index()];
         sub.m = rootLink->m();
@@ -192,14 +191,13 @@ void calcAngularMomentumJacobian(Body* body, Link* base, Eigen::MatrixXd& H)
         }
             
         H.resize(3, nj);
+
+        for(int i=0; i < path.numJoints(); i++){
+            sgn[path.joint(i)->jointId()] = -1;
+        }
     }
 
     // compute Jacobian
-    std::vector<int> sgn(nj, 1);
-    for(int i=0; i < path.numJoints(); i++){
-        sgn[path.joint(i)->jointId()] = -1;
-    }
-
     for(int i=0; i < nj; ++i){
         Link* joint = body->joint(i);
         if(joint->isRotationalJoint()){

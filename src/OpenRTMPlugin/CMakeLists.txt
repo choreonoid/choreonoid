@@ -34,6 +34,10 @@ set(plugin_sources
   )
 
 set(plugin_headers
+  RTCItem.h
+  BodyIoRTCItem.h
+  ControllerRTCItem.h
+  deprecated/BodyRTCItem.h
   )
 
 set(qt_wrap_cpp_files
@@ -94,11 +98,7 @@ target_link_libraries(${plugin} CnoidBodyPlugin CnoidCorbaPlugin CnoidBodyIoRTC 
 apply_common_setting_for_plugin(${plugin} "${plugin_headers}")
 
 if(ENABLE_PYTHON)
-  if(USE_PYBIND11)
-    add_subdirectory(pybind11)
-  elseif(USE_BOOST_PYTHON)
-    add_subdirectory(boostpython)
-  endif()
+  add_subdirectory(pybind11)
 endif()
 
 file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}/rtc)

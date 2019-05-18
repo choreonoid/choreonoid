@@ -8,7 +8,7 @@ links:
   -
     type: SubBody
     uri: TankBody.body
-    translation: [ 0, 0, 0.11 ]
+    translation: [ 0, 0, 0.12 ]
     jointType: free
   -
     name: TRACK_L
@@ -42,13 +42,13 @@ links:
         hingeSpookDamping: 0.01
         nodesToWheelsMergeThreshold: -0.01
         nodesToWheelsSplitThreshold: -0.009
-#        enableMerge: false
-#        numNodesPerMergeSegment: 3
-#        contactReduction: 3
-#        enableLockToReachMergeCondition: true
-#        lockToReachMergeConditionCompliance: 0.1
-#        lockToReachMergeConditionSpookDamping: 0.01
-#        #maxAngleMergeCondition: 1.0e-5
+        # enableMerge: false
+        # numNodesPerMergeSegment: 3
+        # contactReduction: 3
+        # enableLockToReachMergeCondition: true
+        # lockToReachMergeConditionCompliance: 0.1
+        # lockToReachMergeConditionSpookDamping: 0.01
+        # maxAngleMergeCondition: 1.0e-5
       -
         type: Visual
         elements:
@@ -242,13 +242,13 @@ links:
         hingeSpookDamping: 0.01
         nodesToWheelsMergeThreshold: -0.01
         nodesToWheelsSplitThreshold: -0.009
-#        enableMerge: false
-#        numNodesPerMergeSegment: 3
-#        contactReduction: 3
-#        enableLockToReachMergeCondition: true
-#        lockToReachMergeConditionCompliance: 0.1
-#        lockToReachMergeConditionSpookDamping: 0.01
-#        #maxAngleMergeCondition: 1.0e-5
+        # enableMerge: false
+        # numNodesPerMergeSegment: 3
+        # contactReduction: 3
+        # enableLockToReachMergeCondition: true
+        # lockToReachMergeConditionCompliance: 0.1
+        # lockToReachMergeConditionSpookDamping: 0.01
+        # maxAngleMergeCondition: 1.0e-5
       -
         type: Visual
         elements:

@@ -46,8 +46,8 @@ ItemList<> MultiValueSeqGraphView::extractTargetItems(const ItemList<>& items) c
 
 void MultiValueSeqGraphView::addGraphDataHandlers(Item* item, int partIndex, std::vector<GraphDataHandlerPtr>& out_handlers)
 {
-    MultiValueSeqItem* seqItem = static_cast<MultiValueSeqItem*>(item);
-    MultiValueSeqPtr seq = seqItem->seq();
+    auto seqItem = static_cast<MultiValueSeqItem*>(item);
+    auto seq = seqItem->seq();
 
     if(partIndex < seq->numParts()){
 
@@ -69,14 +69,14 @@ void MultiValueSeqGraphView::addGraphDataHandlers(Item* item, int partIndex, std
 
 void MultiValueSeqGraphView::updateGraphDataHandler(Item* item, GraphDataHandlerPtr handler)
 {
-    MultiValueSeqPtr seq = static_cast<MultiValueSeqItem*>(item)->seq();
+    auto seq = static_cast<MultiValueSeqItem*>(item)->seq();
     handler->setFrameProperties(seq->numFrames(), seq->frameRate());
     handler->update();
 }
 
 
 void MultiValueSeqGraphView::onDataRequest
-(MultiValueSeqPtr seq, int partIndex, int frame, int size, double* out_values)
+(std::shared_ptr<MultiValueSeq> seq, int partIndex, int frame, int size, double* out_values)
 {
     MultiValueSeq::Part part = seq->part(partIndex);
     for(int i=0; i < size; ++i){

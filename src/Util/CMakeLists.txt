@@ -5,6 +5,7 @@ configure_file(Config.h.in Config.h)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/Config.h DESTINATION ${CNOID_HEADER_SUBDIR}/src/Util/)
 
 set(sources
+  Config.cpp
   Referenced.cpp
   ConnectionSet.cpp
   Selection.cpp
@@ -211,11 +212,7 @@ endif()
 apply_common_setting_for_library(${target} "${headers}")
 
 if(ENABLE_PYTHON)
-  if(USE_PYBIND11)
-    add_subdirectory(pybind11)
-  elseif(USE_BOOST_PYTHON)
-    add_subdirectory(boostpython)
-  endif()
+  add_subdirectory(pybind11)
 endif()
 
 add_subdirectory(lua)

@@ -5,6 +5,7 @@
 # endif()
 
 file(GLOB subdirs "*")
+list(SORT subdirs)
 
 foreach(subdir ${subdirs})
   if(EXISTS ${subdir}/CMakeLists.txt)

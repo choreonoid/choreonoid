@@ -24,6 +24,7 @@
 
 #include "RTSCommonUtil.h"
 #include "BodyStateSubscriberRTCItem.h"
+#include "deprecated/VirtualRobotRTC.h"
 #include "deprecated/BodyRTCItem.h"
 #include "deprecated/ChoreonoidExecutionContext.h"
 #include "deprecated/ChoreonoidPeriodicExecutionContext.h"
@@ -36,10 +37,12 @@
 #include <cnoid/CorbaPlugin>
 #include <cnoid/SimulationBar>
 #include <cnoid/Sleep>
+#include <cnoid/FileUtil>
 #include <QTcpSocket>
 #include <cnoid/AppConfig>
 #include <fmt/format.h>
 #include <rtm/ComponentActionListener.h>
+#include <set>
 
 #include "LoggerUtil.h"
 
@@ -48,6 +51,7 @@
 using namespace std;
 using namespace cnoid;
 using fmt::format;
+namespace filesystem = boost::filesystem;
 
 namespace {
 
@@ -142,9 +146,10 @@ public:
         }
         DDEBUG_V("configFile : %s", configFile.c_str());
 
+        bool isConfFileSpecified = filesystem::exists(configFile);
+
         const char* argv[] = {
             "choreonoid",
-            "-f", configFile.c_str(),
             "-o", "manager.shutdown_on_nortcs: NO",
             "-o", "manager.shutdown_auto: NO",
             "-o", "naming.formats: %n.rtc",
@@ -157,17 +162,21 @@ public:
 #if defined(OPENRTM_VERSION12)
             "-i",
 #endif
+            "-f", configFile.c_str(),
         };
 
 #ifdef Q_OS_WIN32
 #if defined(OPENRTM_VERSION11)
-        int numArgs = 15;
+        int numArgs = 13;
 #elif defined(OPENRTM_VERSION12)
-        int numArgs = 16;
+        int numArgs = 14;
 #endif
 #else
-        int numArgs = 13;
+        int numArgs = 11;
 #endif
+        if(isConfFileSpecified){
+            numArgs += 2;
+        }
 
         mv = MessageView::mainInstance();
 

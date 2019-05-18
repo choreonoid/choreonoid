@@ -19,11 +19,11 @@ public:
             
     Vector3SeqItem();
     Vector3SeqItem(const Vector3SeqItem& org);
-    Vector3SeqItem(Vector3SeqPtr seq);
+    Vector3SeqItem(std::shared_ptr<Vector3Seq> seq);
 
-    virtual AbstractSeqPtr abstractSeq() override;
+    virtual std::shared_ptr<AbstractSeq> abstractSeq() override;
         
-    Vector3SeqPtr seq() { return seq_; }
+    std::shared_ptr<Vector3Seq> seq() { return seq_; }
 
     bool loadPlainFormat(const std::string& filename);
     bool saveAsPlainFormat(const std::string& filename);
@@ -32,13 +32,13 @@ protected:
     /**
        This is for the copy constructor of an inherited class
     */
-    Vector3SeqItem(const Vector3SeqItem& org, Vector3SeqPtr cloneSeq);
+    Vector3SeqItem(const Vector3SeqItem& org, std::shared_ptr<Vector3Seq> cloneSeq);
         
     virtual ~Vector3SeqItem();
 
     virtual Item* doDuplicate() const override;
             
-    Vector3SeqPtr seq_;
+    std::shared_ptr<Vector3Seq> seq_;
 };
 
 typedef ref_ptr<Vector3SeqItem> Vector3SeqItemPtr;

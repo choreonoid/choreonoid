@@ -32,7 +32,7 @@ AbstractSeqItem::~AbstractSeqItem()
 
 void AbstractSeqItem::doPutProperties(PutPropertyFunction& putProperty)
 {
-    AbstractSeqPtr seq = abstractSeq();
+    auto seq = abstractSeq();
 
     putProperty(_("Frame rate"), seq->getFrameRate());
 
@@ -112,7 +112,7 @@ AbstractMultiSeqItem::~AbstractMultiSeqItem()
 }
 
 
-AbstractSeqPtr AbstractMultiSeqItem::abstractSeq()
+std::shared_ptr<AbstractSeq> AbstractMultiSeqItem::abstractSeq()
 {
     return abstractMultiSeq();
 }
@@ -120,7 +120,7 @@ AbstractSeqPtr AbstractMultiSeqItem::abstractSeq()
 
 void AbstractMultiSeqItem::doPutProperties(PutPropertyFunction& putProperty)
 {
-    AbstractMultiSeqPtr seq = abstractMultiSeq();
+    auto seq = abstractMultiSeq();
     AbstractSeqItem::doPutProperties(putProperty);
     putProperty(_("Num parts"), seq->getNumParts());
 }

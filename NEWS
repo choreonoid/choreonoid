@@ -1,22 +1,54 @@
+Changes since 1.7.0:
+
+* Removed the typedefs with suffix 'Ptr' for the smart pointer types using std::shared_ptr
+* Introduced BodyHandler. BodyCustomizer is deprecated.
+* Remove the python plugins and wrappers implemented with boost.python
+* Remove OpenHRPPlugin and OpenHRPModelLoader
+* Remove GrxUIPlugin
+
+Choreonoid 1.7.0 released on May 8, 2019
+========================================
 
 Changes since 1.6.0:
 
-* Supported wide viewing angle range sensors
-* Omnidirectional camera
-* pkg-config
-* texture description in a body files
-* Fix the warec-1 model
-* Improve the sensor visualization
-* Naming rules of the Python wrappers are modified.
- * Functions to get member object xxx are changed to getXxx()
- * Member object xxx can be obtained by using property xxx
-* WRS2018 Tunnel models
-* Multicopter Plugin
-* TrafficControl Plugin
-* Aizu Spider model
-* Aizu Wheel model
-* Complete out-of-source build
-* The target link of BodyTrackingCameraItem can be specified
+* Supported Ubuntu 18.04
+* Supported Visual C++ 2017
+* Added MulticopterPlugin to simulate multicopters
+* Added TrafficControlPlugin to simulate bad communication environment
+* Added SubProjectItem to share project items across multiple projects
+* Added LightingItem to set a light source in the virtual world
+* Improved GLVisionSimulatorItem to support wide viewing angle range sensors and omnidirectional cameras
+* Improved AGXDynamicsPlugin to support additional physical models such as wire-like objects and breakable joints
+* Improved SensorVisualizerItem to support various sensors
+* Improved BodyTrackingCameraItem to specify its target link
+* Improved the joint slider view to support the dial interface for joint displacements
+* Improved OpenRTMPlugin
+ * The standard profile format is used to store / restore RT system configurations
+ * Multiple name servers can be used simultaneously
+ * The target nameserver can dynamically be changed by specifying the default nameserver of OpenRTM
+ * Improved the visualization in the RTS Diagram View 
+ * Introduced the manual mode of the RTC state detection
+ * Added the RTC configuration view
+* Added the OpenHRP model loader implemented using Choreonoid
+* Fix PhysXPlugin to support PhysX 3.4
+* Improved the body file format to specify textures
+* Introduced standard joystick mapping to enable different joystick devices to be used in the same way
+* Added sample robot models and their projects
+ * Aizu Spider
+ * Aizu Wheel
+ * Quadcopter
+* Added the project and model files of the tunnel disaster response and recovery challenge at World Robot Summit 2018
+* Improve the API of SimpleController
+* Introduced fmtlib as a formatting library to replace boost.format
+* Modified the wrapping rules of the pybind11 version python wrappers
+ * Modified the function names to get member object xxx to to getXxx()
+ * Member object xxx can be accessed as property xxx
+* Supported the complete out-of-source build
+* Enabled to build Choreonoid as a ROS package in the Catkin environment
+* Added CMake configuration files for the plugin development
+* Fixed pkg-config files
+* Many other minor feature improvements and bug fixes
+
 
 Choreonoid 1.6.0 released on October 31, 2017
 =============================================
@@ -36,7 +68,7 @@ Changes since 1.5.0:
 * A beta version of SpringheadPlugin to enable the Springhead library to be used as a physics engine for simulation
 * A beta version of RokiPlugin to enable the Roki library to be used as a physics engine for simulation
 * Added sample models and projects
-* Other minor improvements and bug fixes
+* Many other minor feature improvements and bug fixes
 
 
 Choreonoid 1.5.0 released on July 13, 2016
@@ -47,14 +79,14 @@ Changes since 1.4.0:
 * Improved the view / toolbar management system
 * Added GLVisionSimulatorItem, which simulates vision sensors such as cameras, RGBD cameras, and laser range sensors
 * Added A function to interactively apply force to an object being simulated using mouse dragging
-* Improved the stabilty the simulation performed by AISTSimulatorItem
+* Improved the stability the simulation performed by AISTSimulatorItem
 * Added PhysXPlugin, which enables nVidia PhysX to be used as a physics engine in simulation
 * Added WorldLogFileItem, which stores all the log data of a virtual world being simulated online
 * Generalization of collision detectors
 * Added BodyTrackingCameraItem, which provides a camera that automatically tracks a particular object in a virtual world
 * Added SensorVisualizerItem, which visualizes the states of sensors such as force sensors in a scene view
 * Added PointSetItem and MultiPointSetItem, which visualize point cloud data in a scene view
-* Added the Python scripting function, which enables users to controll Choreonoid with a Python script
+* Added the Python scripting function, which enables users to control Choreonoid with a Python script
 * The source code of BalancerPlugin became a part of Choreonoid's main source code with the same license
 * Added samples
 * Supported both Qt4 and Qt5

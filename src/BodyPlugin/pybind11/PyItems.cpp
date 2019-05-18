@@ -31,7 +31,7 @@ void exportItems(py::module m)
     
     py::class_<BodyMotionItem, BodyMotionItemPtr, AbstractSeqItem>(m, "BodyMotionItem")
         .def(py::init<>())
-        .def_property_readonly("motion", (BodyMotionPtr(BodyMotionItem::*)()) &BodyMotionItem::motion)
+        .def_property_readonly("motion", [](BodyMotionItem* item){ return item->motion(); })
         .def_property_readonly("jointPosSeqItem", (MultiValueSeqItem*(BodyMotionItem::*)())&BodyMotionItem::jointPosSeqItem)
         .def_property_readonly("jointPosSeq", &BodyMotionItem::jointPosSeq)
         .def_property_readonly("linkPosSeqItem", (MultiSE3SeqItem*(BodyMotionItem::*)())&BodyMotionItem::linkPosSeqItem)
@@ -42,7 +42,7 @@ void exportItems(py::module m)
         .def("updateExtraSeqItems", &BodyMotionItem::updateExtraSeqItems)
 
         // deprecated
-        .def("getMotion", (BodyMotionPtr(BodyMotionItem::*)()) &BodyMotionItem::motion)
+        .def("getMotion", [](BodyMotionItem* item){ return item->motion(); })
         .def("getJointPosSeqItem", (MultiValueSeqItem*(BodyMotionItem::*)())&BodyMotionItem::jointPosSeqItem)
         .def("getJointPosSeq", &BodyMotionItem::jointPosSeq)
         .def("getLinkPosSeqItem", (MultiSE3SeqItem*(BodyMotionItem::*)())&BodyMotionItem::linkPosSeqItem)

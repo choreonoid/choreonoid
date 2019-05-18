@@ -23,13 +23,13 @@ items:
           data: 
             modelFile: "${SHARE}/model/Tank/Tank.body"
             currentBaseLink: ""
-            rootPosition: [ -2, -0.5, 0.1 ]
+            rootPosition: [ -2, -0.5, 0.106 ]
             rootAttitude: [ 
               1, 0, 0,
               0, 1, 0,
               0, 0, 1 ]
             jointPositions: [ 0, 0 ]
-            initialRootPosition: [ -2, -0.5, 0.1 ]
+            initialRootPosition: [ -2, -0.5, 0.106 ]
             initialRootAttitude: [ 
               1, 0, 0,
               0, 1, 0,

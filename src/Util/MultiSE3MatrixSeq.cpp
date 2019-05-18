@@ -41,7 +41,7 @@ MultiSE3MatrixSeq::~MultiSE3MatrixSeq()
 }
 
 
-AbstractSeqPtr MultiSE3MatrixSeq::cloneSeq() const
+std::shared_ptr<AbstractSeq> MultiSE3MatrixSeq::cloneSeq() const
 {
     return std::make_shared<MultiSE3MatrixSeq>(*this);
 }

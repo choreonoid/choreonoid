@@ -30,7 +30,7 @@ worldItem.addChildItem(laboItem)
 itv.checkItem(laboItem)
 
 tankItem = BodyItem()
-tankItem.load(shareDirectory + "/model/tank/tank.body")
+tankItem.load(shareDirectory + "/model/Tank/Tank.body")
 tank = tankItem.body
 tank.rootLink.setTranslation([-0.8, 2.4, 0.1])
 tank.rootLink.setRotation(rotFromRpy([0, 0, math.radians(-90.0)]))

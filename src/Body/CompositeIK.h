@@ -26,7 +26,7 @@ public:
     Body* body() { return body_; }
     Link* targetLink() { return targetLink_; }
     int numJointPaths() const { return paths.size(); }
-    JointPathPtr jointPath(int index) const { return paths[index]; }
+    std::shared_ptr<JointPath> jointPath(int index) const { return paths[index]; }
     Link* baseLink(int index) const { return paths[index]->endLink(); }
 
     bool hasAnalyticalIK() const { return hasAnalyticalIK_; }
@@ -41,12 +41,10 @@ public:
 private:
     BodyPtr body_;
     Link* targetLink_;
-    std::vector<JointPathPtr> paths;
+    std::vector<std::shared_ptr<JointPath>> paths;
     std::vector<double> q0;
     bool hasAnalyticalIK_;
 };
-
-typedef std::shared_ptr<CompositeIK> CompositeIKPtr;
 
 }
 

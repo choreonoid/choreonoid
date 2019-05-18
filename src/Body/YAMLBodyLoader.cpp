@@ -5,6 +5,7 @@
 
 #include "YAMLBodyLoader.h"
 #include "BodyLoader.h"
+#include "BodyHandlerManager.h"
 #include "Body.h"
 #include "ForceSensor.h"
 #include "RateGyroSensor.h"
@@ -278,6 +279,8 @@ public:
     bool isVerbose;
     bool isShapeLoadingEnabled;
 
+    BodyHandlerManager bodyHandlerManager;
+
     YAMLBodyLoaderImpl(YAMLBodyLoader* self);
     ~YAMLBodyLoaderImpl();
     void updateCustomNodeFunctions();
@@ -327,7 +330,9 @@ public:
     void addSubBodyLinks(BodyPtr subBody, Mapping* node);
     void readExtraJoints(Mapping* topNode);
     void readExtraJoint(Mapping* node);
-
+    void readBodyHandlers(ValueNode* node);
+    void setDegreeModeAttributeToValueTreeNodes(ValueNode* node);
+    
     bool isDegreeMode() const {
         return sceneReader.isDegreeMode();
     }
@@ -503,9 +508,9 @@ YAMLBodyLoaderImpl::YAMLBodyLoaderImpl(YAMLBodyLoader* self)
 
     numCustomNodeFunctions = 0;
 
-    body = 0;
+    body = nullptr;
     isSubLoader = false;
-    os_ = &nullout();
+    os_ = &cout;
     isVerbose = false;
     isShapeLoadingEnabled = true;
     defaultDivisionNumber = -1;
@@ -529,6 +534,7 @@ void YAMLBodyLoader::setMessageSink(std::ostream& os)
 {
     impl->os_ = &os;
     impl->sceneReader.setMessageSink(os);
+    impl->bodyHandlerManager.setMessageSink(os);
 }
 
 
@@ -644,12 +650,11 @@ bool YAMLBodyLoaderImpl::load(Body* body, const std::string& filename)
     try {
         MappingPtr data = reader.loadDocument(filename)->toMapping();
         if(data){
-            result = readTopNode(body, data);
-            if(result){
-                if(body->modelName().empty()){
-                    body->setModelName(getBasename(filename));
-                }
+            if(body->modelName().empty()){
+                // This is the default model name
+                body->setModelName(getBasename(filename));
             }
+            result = readTopNode(body, data);
         }
     } catch(const ValueNode::Exception& ex){
         os() << ex.message();
@@ -690,7 +695,17 @@ bool YAMLBodyLoaderImpl::readTopNode(Body* body, Mapping* topNode)
             for(auto& subBody : subBodies){
                 topNode->insert(subBody->info());
             }
+
+            auto bodyHandlers = topNode->extract("bodyHandlers");
+
+            if(isDegreeMode()){
+                setDegreeModeAttributeToValueTreeNodes(topNode);
+            }
             body->resetInfo(topNode);
+
+            if(bodyHandlers){
+                readBodyHandlers(bodyHandlers);
+            }
         }
         
     } catch(const ValueNode::Exception& ex){
@@ -895,7 +910,7 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
 
     readExtraJoints(topNode);
 
-    body->installCustomizer();
+    body->installCustomizer(); // deprecated
 
     return true;
 }
@@ -1024,8 +1039,12 @@ LinkPtr YAMLBodyLoaderImpl::readLinkContents(Mapping* node, LinkPtr link)
                     node->insert(importList[i].toMapping());
                 }
             }
+
         }
-        
+
+        if(isDegreeMode()){
+            setDegreeModeAttributeToValueTreeNodes(node);
+        }
         link->resetInfo(node);
     }
 
@@ -1957,3 +1976,46 @@ void YAMLBodyLoaderImpl::readExtraJoint(Mapping* node)
 
     body->addExtraJoint(joint);
 }
+
+
+void YAMLBodyLoaderImpl::readBodyHandlers(ValueNode* node)
+{
+    if(node){
+        if(node->isString()){
+            bodyHandlerManager.loadBodyHandler(body, node->toString());
+        } else if(node->isListing()){
+            for(auto& handlerNode : *node->toListing()){
+                bodyHandlerManager.loadBodyHandler(body, handlerNode->toString());
+            }
+        }
+    }
+}
+
+
+void YAMLBodyLoaderImpl::setDegreeModeAttributeToValueTreeNodes(ValueNode* node)
+{
+    if(node->isScalar()){
+        node->setDegreeMode();
+    } else if(node->isMapping()){
+        for(auto& kv : *node->toMapping()){
+            auto child = kv.second;
+            if(child->isScalar()){
+                child->setDegreeMode();
+            } else {
+                setDegreeModeAttributeToValueTreeNodes(child);
+            }
+        }
+    } else if(node->isListing()){
+        for(auto& child : *node->toListing()){
+            if(child->isScalar()){
+                child->setDegreeMode();
+            } else {
+                setDegreeModeAttributeToValueTreeNodes(child);
+            }
+        }
+    }
+}
+
+
+             
+

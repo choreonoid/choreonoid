@@ -2,15 +2,23 @@
 #define CNOID_OPENRTM_PLUGIN_RTC_ITEM_H
 
 #include <cnoid/Item>
-#include <cnoid/Process>
 #include <boost/filesystem.hpp>
-#include <rtm/Manager.h>
+#include <map>
 #include "exportdecl.h"
+
+namespace RTC {
+
+class RTObject_impl;
+typedef RTObject_impl RtcBase;
+
+}
 
 namespace cnoid {
 
 class MessageView;
 typedef std::map<std::string, std::string> PropertyMap;
+
+class RTComponentImpl;
 
 class RTComponent
 {
@@ -18,25 +26,13 @@ public:
     RTComponent(const boost::filesystem::path& modulePath, PropertyMap& properties);
     ~RTComponent();
     void deleteRTC();
-    RTC::RtcBase* rtc() { return rtc_; };
+    RTC::RtcBase* rtc();
     bool isValid() const;
-    const std::string& name() const { return componentName; }
+    const std::string& name() const;
     void activate();
 
 private:
-    RTC::RTObject_var rtcRef;
-    RTC::RtcBase* rtc_;
-    boost::filesystem::path modulePath;
-    Process rtcProcess;
-    std::string componentName;
-    MessageView* mv;
-
-    void init(const std::string& moduleName, PropertyMap& properties);
-    void init(const boost::filesystem::path& modulePath, PropertyMap& properties);
-    bool createRTC(PropertyMap& properties);
-    void setupModules(std::string& fileName, std::string& initFuncName, std::string& componentName, PropertyMap& properties);
-    void createProcess(std::string& command, PropertyMap& properties);
-    void onReadyReadServerProcessOutput();
+    RTComponentImpl* impl;
 };
 
 class CNOID_EXPORT RTCItem : public Item

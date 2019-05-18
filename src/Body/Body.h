@@ -17,6 +17,7 @@ namespace cnoid {
 
 class Body;
 class BodyImpl;
+class BodyHandler;
 class Mapping;
 class SgCloneMap;
 
@@ -249,20 +250,25 @@ public:
 
     void removeCache(const std::string& name);
 
-    BodyCustomizerHandle customizerHandle() const;
-    BodyCustomizerInterface* customizerInterface() const;
-
-    bool installCustomizer();
-    bool installCustomizer(BodyCustomizerInterface* customizerInterface);
-
-    bool hasVirtualJointForces() const;
-    void setVirtualJointForces(double timeStep = 0.0);
-
-    static void addCustomizerDirectory(const std::string& path);
-    static BodyInterface* bodyInterface();
-
     void setCurrentTimeFunction(std::function<double()> func);
     double currentTime() const { return currentTimeFunction(); }
+
+    bool addHandler(BodyHandler* handler, bool isTopPriority = false);
+
+    template<class BodyHandlerType> BodyHandlerType* findHandler(){
+        return dynamic_cast<BodyHandlerType*>(
+            findHandler([](BodyHandler* handler)->bool{ return dynamic_cast<BodyHandlerType*>(handler); }));
+    }
+    
+    // The following functions for the body customizer are deprecated
+    BodyCustomizerHandle customizerHandle() const;
+    BodyCustomizerInterface* customizerInterface() const;
+    bool installCustomizer();
+    bool installCustomizer(BodyCustomizerInterface* customizerInterface);
+    bool hasVirtualJointForces() const;
+    void setVirtualJointForces(double timeStep = 0.0);
+    static void addCustomizerDirectory(const std::string& path);
+    static BodyInterface* bodyInterface();
 
 protected:
     void copy(const Body& org);
@@ -285,7 +291,8 @@ private:
     Referenced* findCacheSub(const std::string& name);
     const Referenced* findCacheSub(const std::string& name) const;
     void insertCache(const std::string& name, Referenced* cache);
-    void setVirtualJointForcesSub();
+    BodyHandler* findHandler(std::function<bool(BodyHandler*)> isTargetHandlerType);
+    void setVirtualJointForcesSub(); // deprecated
 };
 
 }

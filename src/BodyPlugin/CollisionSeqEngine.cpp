@@ -20,7 +20,7 @@ class CollisionSeqEngineImpl
 public:
     WorldItemPtr worldItem;
     CollisionSeqItemPtr collisionSeqItem;
-    CollisionSeqPtr colSeq;
+    shared_ptr<CollisionSeq> colSeq;
     CollisionSeqEngineImpl(CollisionSeqEngine* self, WorldItem* worldItem, CollisionSeqItem* collisionSeqItem){
         this->worldItem = worldItem;
         this->collisionSeqItem = collisionSeqItem;

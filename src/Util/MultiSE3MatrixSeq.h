@@ -21,9 +21,6 @@ class CNOID_EXPORT MultiSE3MatrixSeq : public MultiSeq<Affine3, Eigen::aligned_a
     typedef MultiSeq<Affine3, Eigen::aligned_allocator<Affine3>> BaseSeqType;
 
 public:
-    typedef std::shared_ptr<MultiSE3MatrixSeq> Ptr;
-    typedef std::shared_ptr<const MultiSE3MatrixSeq> ConstPtr;
-
     MultiSE3MatrixSeq();
     MultiSE3MatrixSeq(int numFrames, int numParts = 1);
     MultiSE3MatrixSeq(const MultiSE3MatrixSeq& org);
@@ -31,14 +28,15 @@ public:
 
     using BaseSeqType::operator=;
 
-    virtual AbstractSeqPtr cloneSeq() const override;
+    virtual std::shared_ptr<AbstractSeq> cloneSeq() const override;
         
 protected:
     virtual Affine3 defaultValue() const override;
 };
 
-typedef MultiSE3MatrixSeq::Ptr MultiSE3MatrixSeqPtr;
-typedef MultiSE3MatrixSeq::ConstPtr ConstMultiSE3MatrixSeqPtr;
+#ifdef CNOID_BACKWARD_COMPATIBILITY
+typedef std::shared_ptr<MultiSE3MatrixSeq> MultiSE3MatrixSeqPtr;
+#endif
 
 }
 
