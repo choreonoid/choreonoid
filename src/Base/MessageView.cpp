@@ -568,20 +568,8 @@ void MessageView::flush()
 void MessageViewImpl::flush()
 {
     if(QThread::currentThreadId() == mainThreadId){
-
         ++flushingRef;
-
-        const int maxTime = 10;
-        
-#if defined(Q_OS_WIN32) || defined(Q_OS_MAC)
-        QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents, maxTime);
-        //QCoreApplication::processEvents();
-#else
-        //QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
-        //while(QCoreApplication::hasPendingEvents()){
-        QCoreApplication::processEvents(QEventLoop::AllEvents, maxTime);
-        //}
-#endif
+        QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents|QEventLoop::ExcludeSocketNotifiers, 1.0);
         --flushingRef;
         if(flushingRef == 0){
             sigFlushFinished_();
