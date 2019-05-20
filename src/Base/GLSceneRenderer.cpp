@@ -189,10 +189,11 @@ bool GLSceneRenderer::initializeGL()
     GLint major, minor;
     glGetIntegerv(GL_MAJOR_VERSION, &major);
     glGetIntegerv(GL_MINOR_VERSION, &minor);
-    impl->os() << format("OpenGL version is {0}.{1}.\n", major, minor);
+    impl->os() << format("OpenGL version is {0}.{1}.", major, minor);
     if(major >= 2){
-        impl->os() << format("GLSL version is {0}.", (const char*)glGetString(GL_SHADING_LANGUAGE_VERSION)) << endl;
+        impl->os() << format(" (GLSL version is {0}.)", (const char*)glGetString(GL_SHADING_LANGUAGE_VERSION));
     }
+    impl->os() << endl;
 #endif
     return true;
 }
