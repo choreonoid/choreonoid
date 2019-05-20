@@ -6,7 +6,7 @@
 #define CNOID_BASE_VIEW_H
 
 #include <cnoid/Signal>
-#include <QWidget>
+#include <cnoid/Widget>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -25,7 +25,7 @@ public:
     virtual const std::string& className() const = 0;
 };
 
-class CNOID_EXPORT View : public QWidget
+class CNOID_EXPORT View : public Widget
 {
 public:
     View();

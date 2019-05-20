@@ -40,6 +40,7 @@ set(sources
   Process.cpp
   Action.cpp
   ActionGroup.cpp
+  Widget.cpp
   SpinBox.cpp
   FloatingNumberBox.cpp
   ScrollBar.cpp
@@ -129,6 +130,7 @@ set(headers
   Process.h
   Action.h
   ActionGroup.h
+  Widget.h
   SpinBox.h
   FloatingNumberBox.h
   ScrollBar.h
@@ -227,6 +229,7 @@ set(qtheaders
   Process.h
   Action.h
   ActionGroup.h
+  Widget.h
   SpinBox.h
   FloatingNumberBox.h
   ScrollBar.h
