@@ -20,7 +20,7 @@ public:
     GLSceneRenderer(SgGroup* root);
     virtual ~GLSceneRenderer();
 
-    virtual void setOutputStream(std::ostream& os) = 0;
+    virtual void setOutputStream(std::ostream& os);
 
     virtual SgGroup* sceneRoot() override;
     virtual SgGroup* scene() override;

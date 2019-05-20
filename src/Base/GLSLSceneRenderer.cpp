@@ -570,6 +570,7 @@ SceneRenderer::NodeFunctionSet* GLSLSceneRenderer::renderingFunctions()
 
 void GLSLSceneRenderer::setOutputStream(std::ostream& os)
 {
+    GLSceneRenderer::setOutputStream(os);
     impl->os_ = &os;
 }
 

@@ -8,6 +8,7 @@
 #include <cnoid/SceneDrawables>
 #include <cnoid/SceneCameras>
 #include <fmt/format.h>
+#include <iostream>
 #ifdef _WIN32
 #include <windows.h>
 #endif
@@ -32,6 +33,8 @@ public:
     Vector3f backgroundColor;
     Vector3f defaultColor;
     GLSceneRenderer::PolygonMode polygonMode;
+    ostream* os_;
+    ostream& os(){ return *os_; };
 
     GLSceneRendererImpl(GLSceneRenderer* self, SgGroup* sceneRoot);
     ~GLSceneRendererImpl();
@@ -68,6 +71,8 @@ GLSceneRendererImpl::GLSceneRendererImpl(GLSceneRenderer* self, SgGroup* sceneRo
     backgroundColor << 0.1f, 0.1f, 0.3f; // dark blue
     defaultColor << 1.0f, 1.0f, 1.0f;
     polygonMode = GLSceneRenderer::FILL_MODE;
+
+    os_ = &std::cout;
 }
 
 
@@ -80,6 +85,12 @@ GLSceneRenderer::~GLSceneRenderer()
 GLSceneRendererImpl::~GLSceneRendererImpl()
 {
 
+}
+
+
+void GLSceneRenderer::setOutputStream(std::ostream& os)
+{
+    impl->os_ = &os;
 }
 
 
@@ -175,13 +186,12 @@ double GLSceneRenderer::aspectRatio() const
 bool GLSceneRenderer::initializeGL()
 {
 #ifndef _WIN32
-    ostream& os = mvout();
     GLint major, minor;
     glGetIntegerv(GL_MAJOR_VERSION, &major);
     glGetIntegerv(GL_MINOR_VERSION, &minor);
-    os << format("OpenGL version is {0}.{1}.", major, minor) << endl;
+    impl->os() << format("OpenGL version is {0}.{1}.\n", major, minor);
     if(major >= 2){
-        os << format("GLSL version is {0}.", (const char*)glGetString(GL_SHADING_LANGUAGE_VERSION)) << endl;
+        impl->os() << format("GLSL version is {0}.", (const char*)glGetString(GL_SHADING_LANGUAGE_VERSION)) << endl;
     }
 #endif
     return true;
