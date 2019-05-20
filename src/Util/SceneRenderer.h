@@ -19,7 +19,10 @@ class CNOID_EXPORT SceneRenderer
 public:
     SceneRenderer();
     virtual ~SceneRenderer();
-    
+
+    void setName(const std::string& name);
+    const std::string& name() const;
+
     static void addExtension(std::function<void(SceneRenderer* renderer)> func);
     virtual void applyExtensions();
     virtual bool applyNewExtensions();

@@ -482,6 +482,8 @@ SceneWidgetImpl::SceneWidgetImpl(QGLFormat& format, bool useGLSL, SceneWidget* s
     renderer->sigCamerasChanged().connect([&](){ onCamerasChanged(); });
     renderer->sigCurrentCameraChanged().connect([&](){ onCurrentCameraChanged(); });
 
+    self->sigObjectNameChanged().connect([this](string name){ renderer->setName(name); });
+
     sceneRoot->sigUpdated().connect([this](const SgUpdate& update){ onSceneGraphUpdated(update); });
 
     scene = renderer->scene();

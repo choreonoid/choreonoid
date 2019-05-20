@@ -110,6 +110,9 @@ SceneViewImpl::SceneViewImpl(SceneView* self)
     
     sceneWidget = new SceneWidget;
     scene = sceneWidget->scene();
+    sceneWidget->setObjectName(self->windowTitle());
+    self->sigWindowTitleChanged().connect(
+        [this](string title){ sceneWidget->setObjectName(title.c_str()); });
 
     QVBoxLayout* vbox = new QVBoxLayout;
     vbox->addWidget(sceneWidget);
@@ -160,7 +163,7 @@ SceneViewImpl::~SceneViewImpl()
         finalizeClass();
     }
 }
-    
+
 
 void SceneView::onActivated()
 {

@@ -88,6 +88,7 @@ class SceneRendererImpl
 {
 public:
     SceneRenderer* self;
+    string name;
     bool isRendering;
     bool doPreprocessedNodeTreeExtraction;
     Signal<void()> sigRenderingRequest;
@@ -215,6 +216,18 @@ SceneRenderer::~SceneRenderer()
     std::lock_guard<std::mutex> guard(extensionMutex);
     renderers.erase(this);
     delete impl;
+}
+
+
+void SceneRenderer::setName(const std::string& name)
+{
+    impl->name = name;
+}
+
+
+const std::string& SceneRenderer::name() const
+{
+    return impl->name;
 }
 
 
