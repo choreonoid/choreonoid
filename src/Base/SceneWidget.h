@@ -88,7 +88,6 @@ public:
     void setCoordinateAxes(bool on);
     void setShowFPS(bool on);
     void setNewDisplayListDoubleRenderingEnabled(bool on);
-    void setUseBufferForPicking(bool on);
        
     void setBackgroundColor(const Vector3& color);
     Vector3 backgroundColor();

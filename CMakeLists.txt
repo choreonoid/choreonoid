@@ -531,11 +531,7 @@ macro(setup_qt5)
   endif()
 endmacro()
 
-# qt
 if(ENABLE_GUI)
-  if(MSVC)
-    cmake_policy(SET CMP0020 OLD)
-  endif()
   setup_qt5()
 endif()
 

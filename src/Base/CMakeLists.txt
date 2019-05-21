@@ -253,12 +253,8 @@ set(qtheaders
   TextEdit.h
   )
 
-
 QT5_ADD_RESOURCES(RC_SRCS Base.qrc)
-
-# ADD_DEFINITIONS(-DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED)
 QT5_WRAP_CPP(qtsources ${qtheaders})
-# QT5_WRAP_CPP(qtsources ${qtheaders} OPTIONS "-DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED")
 
 set(sources ${sources} ${qtsources})
 
