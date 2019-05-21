@@ -460,28 +460,6 @@ if(MSVC AND INSTALL_SDK_WITH_EXTLIBS)
 endif()
 
 ###############
-#  Setup Qt4  #
-###############
-macro(setup_qt4)
-  find_package(Qt4 4.7.0 REQUIRED)
-  set(QT_USE_QTOPENGL TRUE)
-  set(QT_USE_QTNETWORK TRUE)
-  include(${QT_USE_FILE})
-  add_definitions(-DQT_NO_KEYWORDS)
-  set(QT5 FALSE)
-
-  if(MSVC)
-    install_external_libraries(${QT_BINARY_DIR} ${QT_LIBRARY_DIR} ${QT_LIBRARIES})
-    if(INSTALL_SDK_WITH_EXTLIBS)
-      foreach(dir
-          ${QT_QTCORE_INCLUDE_DIR} ${QT_QTGUI_INCLUDE_DIR} ${QT_QTOPENGL_INCLUDE_DIR} ${QT_QTNETWORK_INCLUDE_DIR})
-        install(DIRECTORY ${dir} DESTINATION ${CNOID_HEADER_SUBDIR})
-      endforeach()
-    endif()
-  endif()
-endmacro()
-
-###############
 #  Setup Qt5  #
 ###############
 macro(setup_qt5)
@@ -516,7 +494,6 @@ macro(setup_qt5)
       ${Qt5Core_LIBRARIES} ${Qt5Widgets_LIBRARIES} ${Qt5OpenGL_LIBRARIES} ${Qt5Network_LIBRARIES}
       ${Qt5X11Extras_LIBRARIES})
   endif()
-  set(QT5 TRUE)
 
   add_definitions(-DQT_NO_KEYWORDS -DQT_NO_OPENGL_ES_2)
   set(CMAKE_AUTOMOC OFF)
@@ -554,52 +531,12 @@ macro(setup_qt5)
   endif()
 endmacro()
 
-function(QTX_ADD_RESOURCES out_files)
-  set(in_files ${ARGN})
-  if(NOT QT5)
-    QT4_ADD_RESOURCES(out ${in_files})
-  else()
-    QT5_ADD_RESOURCES(out ${in_files})
-  endif()
-  set(${out_files} ${out} PARENT_SCOPE)
-endfunction()
-
-function(QTX_WRAP_CPP out_files)
-  set(in_files ${ARGN})
-  if(NOT QT5)
-    QT4_WRAP_CPP(out ${in_files} OPTIONS "-DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED")
-  else()
-    QT5_WRAP_CPP(out ${in_files} OPTIONS "-DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED")
-  endif()
-  set(${out_files} ${out} PARENT_SCOPE)  
-endfunction()
-
 # qt
 if(ENABLE_GUI)
-  set(DEFAULT_USE_QT5 TRUE)
   if(MSVC)
-    if(MSVC_VERSION LESS 1700)
-      set(DEFAULT_USE_QT5 FALSE)
-    endif()
     cmake_policy(SET CMP0020 OLD)
-  else()
-    find_package(Qt4 4.7.0 QUIET)
-    if(Qt4_FOUND)
-      find_package(Qt5Core 5.5.0 QUIET)
-      if(NOT Qt5Core_FOUND)
-	set(DEFAULT_USE_QT5 FALSE)
-      endif()
-    endif()
   endif()
-
-  option(USE_QT5 "Use Qt5" ${DEFAULT_USE_QT5})
-
-  if(USE_QT5)
-    setup_qt5()
-  else()
-    setup_qt4()
-  endif()
-
+  setup_qt5()
 endif()
 
 # Assimp

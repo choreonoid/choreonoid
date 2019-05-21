@@ -291,11 +291,7 @@ SceneGraphPropertyViewImpl::SceneGraphPropertyViewImpl(SceneGraphPropertyView* s
     tableWidget->horizontalHeader()->setStretchLastSection(true);
 
     tableWidget->verticalHeader()->hide();
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-    tableWidget->verticalHeader()->setResizeMode(QHeaderView::ResizeToContents);
-#else
     tableWidget->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
-#endif
 
     QStyledItemDelegate* delegate = new CustomizedItemDelegate(tableWidget);
     QItemEditorFactory* factory = new QItemEditorFactory;

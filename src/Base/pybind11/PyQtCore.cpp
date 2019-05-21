@@ -23,12 +23,7 @@ PYBIND11_MODULE(QtCore, m)
         .def_property("parent", &QObject::parent, &QObject::setParent, py::return_value_policy::reference)
         .def("setParent", &QObject::setParent)
         .def("deleteLater", &QObject::deleteLater)
-        
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-        .def("startTimer", &QObject::startTimer)
-#else
         .def("startTimer", (int (QObject::*)(int, Qt::TimerType)) &QObject::startTimer)
-#endif
 
         // deprecated
         .def("getObjectName", &QObject::objectName)
@@ -45,11 +40,8 @@ PYBIND11_MODULE(QtCore, m)
         .def("start", (void (QTimer::*)()) &QTimer::start)
         .def("start", (void (QTimer::*)(int)) &QTimer::start)
         .def("stop", &QTimer::stop)
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-        .def_static("singleShot", &QTimer::singleShot)
-#else
         .def_static("singleShot", (void(*)(int, const QObject*, const char*)) &QTimer::singleShot)
-#endif
+
         // deprecated
         .def("getInterval", &QTimer::interval)
         .def("getTimerId", &QTimer::timerId)

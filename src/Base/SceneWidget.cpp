@@ -135,7 +135,6 @@ public:
     PushButton fpsTestButton;
     SpinBox fpsTestIterationSpin;
     CheckBox newDisplayListDoubleRenderingCheck;
-    CheckBox bufferForPickingCheck;
     CheckBox collisionVisualizationButtonsCheck;
     CheckBox upsideDownCheck;
 
@@ -193,7 +192,6 @@ public:
     SgGroupPtr systemGroup;
     SgGroup* scene;
     GLSceneRenderer* renderer;
-    QGLPixelBuffer* pixelBufferForPicking;
     LazyCaller extractPreprocessedNodesLater;
     SgUpdate modified;
     SgUpdate added;
@@ -324,7 +322,6 @@ public:
     void onEntityRemoved(SgNode* node);
 
     void onNewDisplayListDoubleRenderingToggled(bool on);
-    void onBufferForPickingToggled(bool on);
 
     void onUpsideDownToggled(bool on);
         
@@ -488,8 +485,6 @@ SceneWidgetImpl::SceneWidgetImpl(QGLFormat& format, bool useGLSL, SceneWidget* s
 
     scene = renderer->scene();
 
-    pixelBufferForPicking = 0;
-
     extractPreprocessedNodesLater.setFunction([&](){ renderer->extractPreprocessedNodes(); });
 
     modified.setAction(SgUpdate::MODIFIED);
@@ -596,11 +591,6 @@ SceneWidget::~SceneWidget()
 
 SceneWidgetImpl::~SceneWidgetImpl()
 {
-    if(pixelBufferForPicking){
-        pixelBufferForPicking->makeCurrent();
-        delete pixelBufferForPicking;
-    }
-    
     delete renderer;
     
     delete indicatorLabel;
@@ -957,18 +947,6 @@ void SceneWidgetImpl::onNewDisplayListDoubleRenderingToggled(bool on)
 }
 
 
-void SceneWidgetImpl::onBufferForPickingToggled(bool on)
-{
-    if(!on){
-        if(pixelBufferForPicking){
-            pixelBufferForPicking->makeCurrent();
-            delete pixelBufferForPicking;
-            pixelBufferForPicking = 0;
-        }
-    }
-}
-
-
 void SceneWidgetImpl::onUpsideDownToggled(bool on)
 {
     renderer->setUpsideDown(on);
@@ -1000,53 +978,14 @@ void SceneWidgetImpl::updateLatestEvent(QMouseEvent* event)
 
 bool SceneWidgetImpl::updateLatestEventPath()
 {
-    /**
-       \note
-       QGLPixelBuffer is obsolete in Qt5, and the picking using it fails in some platforms.
-       Confirm that using QGLPixelBuffer for picking is not necessary and remove the code
-       on QGLPixelBuffer.
-    */
-    bool usePixelBufferForPicking = false;
-
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-    usePixelBufferForPicking =
-                 dynamic_cast<GL1SceneRenderer*>(renderer) && config->bufferForPickingCheck.isChecked();
-#endif
-
-    if(pixelBufferForPicking){
-        if(!usePixelBufferForPicking || pixelBufferForPicking->size() != size()){
-            pixelBufferForPicking->makeCurrent();
-            delete pixelBufferForPicking;
-            pixelBufferForPicking = 0;
-        }
-    }
-
-    if(usePixelBufferForPicking && !pixelBufferForPicking){
-        if(QGLPixelBuffer::hasOpenGLPbuffers()){
-            QGLFormat f = format();
-            f.setDoubleBuffer(false);
-            pixelBufferForPicking = new QGLPixelBuffer(size(), f, this);
-            pixelBufferForPicking->makeCurrent();
-            glEnable(GL_DEPTH_TEST);
-        }
-    }
-
-    if(pixelBufferForPicking && !SHOW_IMAGE_FOR_PICKING){
-        pixelBufferForPicking->makeCurrent();
-    } else {
-        QGLWidget::makeCurrent();
-    }
+    QGLWidget::makeCurrent();
 
     bool picked = renderer->pick(latestEvent.x(), latestEvent.y());
 
-    if(pixelBufferForPicking && !SHOW_IMAGE_FOR_PICKING){
-        pixelBufferForPicking->doneCurrent();
-    } else {
-        if(SHOW_IMAGE_FOR_PICKING){
-            swapBuffers();
-        }
-        doneCurrent();
+    if(SHOW_IMAGE_FOR_PICKING){
+        swapBuffers();
     }
+    doneCurrent();
 
     latestEvent.nodePath_.clear();
     pointedEditablePath.clear();
@@ -2391,12 +2330,6 @@ void SceneWidget::setNewDisplayListDoubleRenderingEnabled(bool on)
 }
 
 
-void SceneWidget::setUseBufferForPicking(bool on)
-{
-    impl->config->bufferForPickingCheck.setChecked(on);
-}
-
-
 void SceneWidget::setBackgroundColor(const Vector3& color)
 {
     impl->renderer->setBackgroundColor(color.cast<float>());
@@ -3188,14 +3121,6 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     vbox->addLayout(hbox);
 
     hbox = new QHBoxLayout();
-    bufferForPickingCheck.setText(_("Use an OpenGL pixel buffer for picking"));
-    bufferForPickingCheck.setChecked(true);
-    bufferForPickingCheck.sigToggled().connect([=](bool on){ impl->onBufferForPickingToggled(on); });
-    hbox->addWidget(&bufferForPickingCheck);
-    hbox->addStretch();
-    vbox->addLayout(hbox);
-
-    hbox = new QHBoxLayout();
     collisionVisualizationButtonsCheck.setText(_("Show collision visualization button set"));
     collisionVisualizationButtonsCheck.setChecked(false);
     collisionVisualizationButtonsCheck.sigToggled().connect(
@@ -3285,7 +3210,6 @@ void ConfigDialog::storeState(Archive& archive)
     archive.write("fpsTestIteration", fpsTestIterationSpin.value());
     archive.write("showFPS", fpsCheck.isChecked());
     archive.write("enableNewDisplayListDoubleRendering", newDisplayListDoubleRenderingCheck.isChecked());
-    archive.write("useBufferForPicking", bufferForPickingCheck.isChecked());
     archive.write("upsideDown", upsideDownCheck.isChecked());
 }
 
@@ -3344,6 +3268,5 @@ void ConfigDialog::restoreState(const Archive& archive)
     fpsTestIterationSpin.setValue(archive.get("fpsTestIteration", fpsTestIterationSpin.value()));
     fpsCheck.setChecked(archive.get("showFPS", fpsCheck.isChecked()));
     newDisplayListDoubleRenderingCheck.setChecked(archive.get("enableNewDisplayListDoubleRendering", newDisplayListDoubleRenderingCheck.isChecked()));
-    bufferForPickingCheck.setChecked(archive.get("useBufferForPicking", bufferForPickingCheck.isChecked()));
     upsideDownCheck.setChecked(archive.get("upsideDown", upsideDownCheck.isChecked()));
 }

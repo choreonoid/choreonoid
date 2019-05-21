@@ -136,14 +136,6 @@ AppImpl::AppImpl(App* self, int& argc, char**& argv)
 {
     descriptionDialog = 0;
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-#if defined(__APPLE__) && defined(__MACH__)
-    if(!getenv("QT_GRAPHICSSYSTEM")){
-        QApplication::setGraphicsSystem("raster"); // to obtain better rendering performance
-    }
-#endif
-#endif
-
     QCoreApplication::setAttribute(Qt::AA_X11InitThreads);
 
     doQuit = false;
@@ -168,11 +160,7 @@ void AppImpl::initialize( const char* appName, const char* vendorName, const QIc
 
     setlocale(LC_ALL, ""); // for gettext
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-    QTextCodec::setCodecForCStrings(QTextCodec::codecForLocale());
-#else
     QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
-#endif
     qapplication->setApplicationName(appName);
     qapplication->setOrganizationName(vendorName);
     qapplication->setWindowIcon(icon);
@@ -183,7 +171,8 @@ void AppImpl::initialize( const char* appName, const char* vendorName, const QIc
         AppConfig::archive()->openMapping("pathVariables"));
 
     ext = new ExtensionManager("Base", false);
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0) && CNOID_ENABLE_GETTEXT
+
+#if CNOID_ENABLE_GETTEXT
     setCnoidUtilTextDomainCodeset();
 #endif
 

@@ -65,11 +65,7 @@ class LinkTreeWidgetEx : public LinkTreeWidget
 {
 public:
     LinkTreeWidgetEx(QWidget* parent) : LinkTreeWidget(parent) {
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-        header()->setResizeMode(nameColumn(), QHeaderView::ResizeToContents);
-#else
         header()->setSectionResizeMode(nameColumn(), QHeaderView::ResizeToContents);
-#endif
     }
     virtual QSize sizeHint() const {
         QSize size = QTreeWidget::sizeHint();

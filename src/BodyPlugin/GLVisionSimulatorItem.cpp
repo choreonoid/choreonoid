@@ -24,6 +24,9 @@
 #include <cnoid/EigenUtil>
 #include <QThread>
 #include <QApplication>
+#include <QOpenGLContext>
+#include <QOffscreenSurface>
+#include <QOpenGLFramebufferObject>
 #include <fmt/format.h>
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string.hpp>
@@ -31,24 +34,9 @@
 #include <condition_variable>
 #include <queue>
 #include <iostream>
+#include "gettext.h"
 
 static const bool DEBUG_MESSAGE = false;
-
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-#define USE_QT5_OPENGL 1
-#else
-#define USE_QT5_OPENGL 0
-#endif
-
-#if USE_QT5_OPENGL
-#include <QOpenGLContext>
-#include <QOffscreenSurface>
-#include <QOpenGLFramebufferObject>
-#else
-#include <QGLPixelBuffer>
-#endif
-
-#include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
@@ -172,13 +160,9 @@ public:
     bool hasUpdatedData;
     double depthError;
     
-#if USE_QT5_OPENGL
     QOpenGLContext* glContext;
     QOffscreenSurface* offscreenSurface;
     QOpenGLFramebufferObject* frameBuffer;
-#else
-    QGLPixelBuffer* renderingBuffer;
-#endif
 
     GLSceneRenderer* renderer;
     int numYawSamples;
@@ -500,14 +484,6 @@ bool GLVisionSimulatorItem::initializeSimulation(SimulatorItem* simulatorItem)
 
 bool GLVisionSimulatorItemImpl::initializeSimulation(SimulatorItem* simulatorItem)
 {
-#if !USE_QT5_OPENGL
-    if(!QGLPixelBuffer::hasOpenGLPbuffers()){
-        os << format(_("The vision sensor simulation by {} cannot be performed because the OpenGL pbuffer is not available."),
-                     self->name()) << endl;
-        return false;
-    }
-#endif
-
     this->simulatorItem = simulatorItem;
     worldTimeStep = simulatorItem->worldTimeStep();
     currentTime = 0;
@@ -844,14 +820,9 @@ SensorScreenRenderer::SensorScreenRenderer(GLVisionSimulatorItemImpl* simImpl, D
     rangeCameraForRendering = dynamic_cast<RangeCamera*>(screenDevice);
     rangeSensorForRendering = dynamic_cast<RangeSensor*>(screenDevice);
 
-#if USE_QT5_OPENGL
     glContext = 0;
     offscreenSurface = 0;
     frameBuffer = 0;
-#else
-    renderingBuffer = 0;
-#endif
-
     renderer = 0;
     screenId = FRONT_SCREEN;
 }
@@ -968,7 +939,6 @@ SgCamera* SensorScreenRenderer::initializeCamera(int bodyIndex)
 
 void SensorScreenRenderer::initializeGL(SgCamera* sceneCamera)
 {
-#if USE_QT5_OPENGL
     glContext = new QOpenGLContext;
     QSurfaceFormat format;
     format.setSwapBehavior(QSurfaceFormat::SingleBuffer);
@@ -984,16 +954,6 @@ void SensorScreenRenderer::initializeGL(SgCamera* sceneCamera)
     glContext->makeCurrent(offscreenSurface);
     frameBuffer = new QOpenGLFramebufferObject(pixelWidth, pixelHeight, QOpenGLFramebufferObject::CombinedDepthStencil);
     frameBuffer->bind();
-#else
-    QGLFormat format;
-    format.setDoubleBuffer(false);
-    if(simImpl->useGLSL){
-        format.setProfile(QGLFormat::CoreProfile);
-        format.setVersion(3, 3);
-    }
-    renderingBuffer = new QGLPixelBuffer(pixelWidth, pixelHeight, format);
-    renderingBuffer->makeCurrent();
-#endif
 
     if(!renderer){
         if(simImpl->useGLSL){
@@ -1082,9 +1042,7 @@ void SensorScreenRenderer::startRenderingThread()
 
 void SensorScreenRenderer::moveRenderingBufferToThread(QThread& thread)
 {
-#if USE_QT5_OPENGL
     glContext->moveToThread(&thread);
-#endif
 }
 
 
@@ -1098,30 +1056,20 @@ void SensorRenderer::moveRenderingBufferToMainThread()
 
 void SensorScreenRenderer::moveRenderingBufferToMainThread()
 {
-#if USE_QT5_OPENGL
     QThread* mainThread = QApplication::instance()->thread();
     glContext->moveToThread(mainThread);
-#endif
 }
 
 
 void SensorScreenRenderer::makeGLContextCurrent()
 {
-#if USE_QT5_OPENGL
     glContext->makeCurrent(offscreenSurface);
-#else
-    renderingBuffer->makeCurrent();
-#endif
 }
 
 
 void SensorScreenRenderer::doneGLContextCurrent()
 {
-#if USE_QT5_OPENGL
     glContext->doneCurrent();
-#else
-    renderingBuffer->doneCurrent();
-#endif
 }
 
 
@@ -1841,7 +1789,6 @@ void SensorScene::terminate()
 
 SensorScreenRenderer::~SensorScreenRenderer()
 {
-#if USE_QT5_OPENGL
     if(glContext){
         makeGLContextCurrent();
         frameBuffer->release();
@@ -1849,12 +1796,6 @@ SensorScreenRenderer::~SensorScreenRenderer()
         delete glContext;
         delete offscreenSurface;
     }
-#else
-    if(renderingBuffer){
-        makeGLContextCurrent();
-        delete renderingBuffer;
-    }
-#endif
     if(renderer){
         delete renderer;
     }

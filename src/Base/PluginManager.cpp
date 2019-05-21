@@ -50,11 +50,6 @@ static const char* DEBUG_SUFFIX = "";
 # endif
 #endif
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-typedef void* QFunctionPointer;
-#endif
-
-
 namespace {
 PluginManager* instance_ = 0;
 }

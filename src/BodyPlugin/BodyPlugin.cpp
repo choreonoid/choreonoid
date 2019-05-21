@@ -60,7 +60,7 @@ public:
     virtual bool initialize()
     {
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0) && CNOID_ENABLE_GETTEXT
+#if CNOID_ENABLE_GETTEXT
         setCnoidBodyTextDomainCodeset();
 #endif
 

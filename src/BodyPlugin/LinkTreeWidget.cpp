@@ -274,20 +274,12 @@ void LinkTreeWidgetImpl::initialize()
     self->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
 
     nameColumn = self->addColumn(_("Link"));
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-    header->setResizeMode(nameColumn, QHeaderView::Stretch);
-#else
     header->setSectionResizeMode(nameColumn, QHeaderView::Stretch);
-#endif
     self->setColumnDataFunction(nameColumn, &nameData);
 
     jointIdColumn = self->addColumn(_("ID"));
     self->setColumnDataFunction(jointIdColumn, &jointIdData);
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-    header->setResizeMode(jointIdColumn, QHeaderView::ResizeToContents);
-#else
     header->setSectionResizeMode(jointIdColumn, QHeaderView::ResizeToContents);
-#endif
     
     headerItem->setTextAlignment(jointIdColumn, Qt::AlignHCenter);
     self->moveVisualColumnIndex(jointIdColumn, 0);
@@ -381,11 +373,7 @@ int LinkTreeWidget::addColumn()
     impl->columnInfos.push_back(LinkTreeWidgetImpl::ColumnInfo());
     setColumnCount(impl->columnInfos.size());
     impl->headerItem->setText(column, QString());
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-    header()->setResizeMode(column, QHeaderView::ResizeToContents);
-#else
     header()->setSectionResizeMode(column, QHeaderView::ResizeToContents);
-#endif
     return column;
 }
 
@@ -394,42 +382,26 @@ int LinkTreeWidget::addColumn(const QString& headerText)
 {
     int column = addColumn();
     impl->headerItem->setText(column, headerText);
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-    header()->setResizeMode(column, QHeaderView::ResizeToContents);
-#else
     header()->setSectionResizeMode(column, QHeaderView::ResizeToContents);
-#endif
     return column;
 }
 
 
 void LinkTreeWidget::setColumnStretchResizeMode(int column)
 {
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-    header()->setResizeMode(column, QHeaderView::Stretch);
-#else
     header()->setSectionResizeMode(column, QHeaderView::Stretch);
-#endif
 }
 
 
 void LinkTreeWidget::setColumnInteractiveResizeMode(int column)
 {
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-    header()->setResizeMode(column, QHeaderView::Interactive);
-#else
     header()->setSectionResizeMode(column, QHeaderView::Interactive);
-#endif
 }
 
 
 void LinkTreeWidget::setColumnResizeToContentsMode(int column)
 {
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-    header()->setResizeMode(column, QHeaderView::ResizeToContents);
-#else
     header()->setSectionResizeMode(column, QHeaderView::ResizeToContents);
-#endif
 }
 
                     

@@ -675,13 +675,8 @@ ItemPropertyViewImpl::ItemPropertyViewImpl(ItemPropertyView* self)
     QHeaderView* vh = tableWidget->verticalHeader();
     hh->hide();
     vh->hide();
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-    hh->setResizeMode(QHeaderView::Interactive);
-    vh->setResizeMode(QHeaderView::ResizeToContents);    
-#else
     hh->setSectionResizeMode(QHeaderView::Interactive);
     vh->setSectionResizeMode(QHeaderView::ResizeToContents);
-#endif
     hh->setStretchLastSection(true);
 
     QStyledItemDelegate* delegate = new CustomizedItemDelegate(tableWidget);

@@ -122,11 +122,7 @@ GraphViewBaseImpl::GraphViewBaseImpl(GraphViewBase* self)
     QHeaderView* header = treeWidget.header();
     header->setMinimumSectionSize(0);
     header->setStretchLastSection(false);
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-    header->setResizeMode(0, QHeaderView::ResizeToContents);
-#else
     header->setSectionResizeMode(0, QHeaderView::ResizeToContents);
-#endif
     treeWidget.setSelectionMode(QAbstractItemView::ExtendedSelection);
     treeWidget.setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     treeWidget.setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);

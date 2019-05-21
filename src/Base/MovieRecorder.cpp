@@ -886,13 +886,8 @@ void MovieRecorderImpl::captureViewImage(bool waitForPrevOutput)
             drawMouseCursorImage(painter);
         }
     } else {
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-        captured->image = QPixmap::grabWidget(targetView);
-#else
         captured->image = targetView->grab();
-#endif
         QPixmap& pixmap = boost::get<QPixmap>(captured->image);
-
         captureSceneWidgets(targetView, pixmap);
 
         if(dialog->mouseCursorCheck.isChecked()){

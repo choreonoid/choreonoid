@@ -31,6 +31,7 @@
 #include <cnoid/SceneGraph>
 #include <QThread>
 #include <QMutex>
+#include <QElapsedTimer>
 #include <thread>
 #include <mutex>
 #include <condition_variable>
@@ -43,12 +44,6 @@
 #include <cnoid/SceneWidget>
 #endif
 
-#if QT_VERSION >= 0x040700
-#include <QElapsedTimer>
-#else
-#include <QTime>
-typedef QTime QElapsedTimer;
-#endif
 #include "gettext.h"
 
 using namespace std;

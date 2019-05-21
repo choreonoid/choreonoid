@@ -528,18 +528,7 @@ SettingDialog::SettingDialog()
     chkLog->setChecked(appVars->get("outputLog", false));
 
     QString level = QString::fromStdString(appVars->get("logLevel", "INFO"));
-
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
     cmbLogLevel->setCurrentText(level);
-#else
-    for (int i = 0; i < cmbLogLevel->count(); ++i) {
-        if (cmbLogLevel->itemText(i) == level) {
-            cmbLogLevel->setCurrentIndex(i);
-            break;
-        }
-    }
-#endif
-
     cmbLogLevel->setEnabled(chkLog->isChecked());
 }
 

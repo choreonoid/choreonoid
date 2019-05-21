@@ -1,4 +1,3 @@
-
 # @author Shin'ichiro Nakaoka
 
 #set(CMAKE_BUILD_TYPE Debug)
@@ -254,8 +253,13 @@ set(qtheaders
   TextEdit.h
   )
 
-QTX_ADD_RESOURCES(RC_SRCS Base.qrc)
-QTX_WRAP_CPP(qtsources ${qtheaders})
+
+QT5_ADD_RESOURCES(RC_SRCS Base.qrc)
+
+# ADD_DEFINITIONS(-DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED)
+QT5_WRAP_CPP(qtsources ${qtheaders})
+# QT5_WRAP_CPP(qtsources ${qtheaders} OPTIONS "-DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED")
+
 set(sources ${sources} ${qtsources})
 
 make_gettext_mofiles(${target} mofiles)

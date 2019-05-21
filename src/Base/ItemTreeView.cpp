@@ -315,11 +315,7 @@ ItemTreeViewImpl::ItemTreeViewImpl(ItemTreeView* self, RootItem* rootItem)
     
     setColumnCount(1);
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-    header()->setResizeMode(0, QHeaderView::Stretch);
-#else
     header()->setSectionResizeMode(0, QHeaderView::Stretch);
-#endif
     header()->setMinimumSectionSize(0);
 
     // default check column
@@ -428,11 +424,7 @@ int ItemTreeViewImpl::addCheckColumn()
 
     checkColumns[id] = new CheckColumn;
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-    header()->setResizeMode(id + 1, QHeaderView::ResizeToContents);
-#else
     header()->setSectionResizeMode(id + 1, QHeaderView::ResizeToContents);
-#endif
 
     initializeCheckState(invisibleRootItem(), id + 1);
     

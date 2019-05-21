@@ -48,11 +48,7 @@ TreeWidget::TreeWidget(QWidget* parent)
 
 void TreeWidget::setHeaderSectionResizeMode(int column, QHeaderView::ResizeMode mode)
 {
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-    header()->setResizeMode(column, mode);
-#else
     header()->setSectionResizeMode(column, mode);
-#endif
 }
     
 

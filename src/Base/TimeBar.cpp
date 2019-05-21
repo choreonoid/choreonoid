@@ -19,14 +19,7 @@
 #include <cmath>
 #include <limits>
 #include <iostream>
-
-#if QT_VERSION >= 0x040700
 #include <QElapsedTimer>
-#else
-#include <QTime>
-typedef QTime QElapsedTimer;
-#endif
-
 #include "gettext.h"
 
 using namespace std;
@@ -671,11 +664,7 @@ void TimeBarImpl::startPlayback()
             } else {
                 interval = myNearByInt(1000.0 / playbackFrameRate);
             }
-#if QT_VERSION >= 0x050000
             timerId = startTimer(interval, Qt::PreciseTimer);
-#else
-            timerId = startTimer(interval);
-#endif
             elapsedTimer.start();
         }
     }

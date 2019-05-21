@@ -11,15 +11,8 @@
 #include "TimeBar.h"
 #include <QResizeEvent>
 #include <QWindowStateChangeEvent>
-
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-#include <QGuiApplication>
-#include <QScreen>
-#else
 #include <QApplication>
 #include <QDesktopWidget>
-#endif
-
 #include <iostream>
 #include "gettext.h"
 
@@ -33,16 +26,6 @@ const bool TRACE_FUNCTIONS = false;
 
 MainWindow* mainWindow = 0;
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-QSize getAvailableScreenSize() {
-    return QGuiApplication::primaryScreen()->availableSize();
-}
-#ifdef Q_OS_WIN32
-QSize getScreenSize() {
-    return QGuiApplication::primaryScreen()->size();
-}
-#endif
-#else
 QSize getAvailableScreenSize() {
     return QApplication::desktop()->availableGeometry().size();
 }
@@ -50,7 +33,6 @@ QSize getAvailableScreenSize() {
 QSize getScreenSize() {
     return QApplication::desktop()->screenGeometry().size();
 }
-#endif
 #endif
     
 }
@@ -435,9 +417,6 @@ void MainWindowImpl::onFullScreenToggled(bool on)
         if(self->isFullScreen()){
             if(isMaximizedJustBeforeFullScreen){
                 isGoingToMaximized = true;
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-                self->showNormal();
-#endif
                 self->showMaximized();
                 isGoingToMaximized = false;
             } else {

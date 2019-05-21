@@ -162,14 +162,8 @@ SceneGraphViewImpl::SceneGraphViewImpl(SceneGraphView* self, SgNode* sceneRoot)
     
     setColumnCount(2);
     header()->setStretchLastSection(false);
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-    header()->setResizeMode(0, QHeaderView::Stretch);
-    header()->setResizeMode(1, QHeaderView::ResizeToContents);
-    header()->setMinimumSectionSize(0);
-#else
     header()->setSectionResizeMode(0, QHeaderView::Stretch);
     header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
-#endif
     header()->swapSections(0, 1);
     setWordWrap(true);
     setFrameShape(QFrame::NoFrame);
