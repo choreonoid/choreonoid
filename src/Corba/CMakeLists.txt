@@ -29,7 +29,3 @@ target_link_libraries(${target} ${OMNIDYNAMIC_LIBRARIES})
 if(UNIX)
   configure_file(reset-omninames.sh ${PROJECT_BINARY_DIR}/bin/reset-omninames.sh COPYONLY)
 endif()
-
-if(ENABLE_PYTHON)
-  add_subdirectory(boostpython)
-endif()
