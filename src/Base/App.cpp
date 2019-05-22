@@ -58,7 +58,8 @@
 #include <QGLFormat>
 #include <QTextStream>
 #include <QFile>
-
+#include <QStyleFactory>
+#include <iostream>
 #include <csignal>
 
 #ifdef Q_OS_WIN32
@@ -243,6 +244,7 @@ void AppImpl::initialize( const char* appName, const char* vendorName, const QIc
 
     OptionManager& om = ext->optionManager();
     om.addOption("quit", "quit the application just after it is invoked");
+    om.addOption("list-qt-styles", "list all the available qt styles");
     om.sigOptionsParsed().connect(
         [&](boost::program_options::variables_map& v){ onSigOptionsParsed(v); });
 
@@ -372,6 +374,9 @@ SignalProxy<void()> cnoid::sigAboutToQuit()
 void AppImpl::onSigOptionsParsed(boost::program_options::variables_map& v)
 {
     if(v.count("quit")){
+        doQuit = true;
+    } else if(v.count("list-qt-styles")){
+        std::cout << QStyleFactory::keys().join(" ").toStdString() << std::endl;
         doQuit = true;
     }
 }
