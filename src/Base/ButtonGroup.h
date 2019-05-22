@@ -18,15 +18,18 @@ class CNOID_EXPORT ButtonGroup : public QButtonGroup
 public:
     ButtonGroup(QObject* parent = 0);
 
-    SignalProxy<void(int id)> sigButtonClicked() {
-        return sigButtonClicked_;
-    }
+    SignalProxy<void(int id)> sigButtonClicked();
+    SignalProxy<void(int id, bool checked)> sigButtonToggled();
 
 private Q_SLOTS:
     void onButtonClicked(int id);
+    void onButtonToggled(int id, bool checked);
 
 private:
     Signal<void(int id)> sigButtonClicked_;
+    Signal<void(int id, bool checked)> sigButtonToggled_;
+    bool sigButtonClickedConnected;
+    bool sigButtonToggledConnected;
 };
 
 }
