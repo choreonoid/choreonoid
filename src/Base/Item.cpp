@@ -475,6 +475,12 @@ Item* Item::findSubItem(const std::string& path) const
 }
 
 
+Item* Item::rootItem()
+{
+    return RootItem::instance();
+}
+
+
 RootItem* Item::findRootItem() const
 {
     Item* current = const_cast<Item*>(this);

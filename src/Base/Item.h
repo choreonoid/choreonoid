@@ -26,21 +26,6 @@ class ExtensionManager;
 
 class CNOID_EXPORT Item : public Referenced
 {
-    template<class ItemType>
-    class ItemCallback
-    {
-        std::function<bool(ItemType* item)> function;
-        
-    public:
-        ItemCallback(std::function<bool(ItemType* item)> f) : function(f) { }
-        bool operator()(Item* item) {
-            if(ItemType* casted = dynamic_cast<ItemType*>(item)){
-                return function(casted);
-            }
-            return false;
-        }
-    };
-
 protected:
     Item();
     Item(const Item& item);
@@ -77,6 +62,7 @@ public:
     bool isTemporal() const;
     void setTemporal(bool on = true);
 
+    static Item* rootItem();
     RootItem* findRootItem() const;
     bool isConnectedToRoot() const;
 
@@ -85,7 +71,7 @@ public:
     */
     Item* findItem(const std::string& path) const;
     template<class ItemType>
-        ItemType* findItem(const std::string& path) const {
+    ItemType* findItem(const std::string& path) const {
         return dynamic_cast<ItemType*>(findItem(path));
     }
 
@@ -138,7 +124,13 @@ public:
 
     template<class ItemType>
     bool traverse(std::function<bool(ItemType* item)> function){
-        return Item::traverse(ItemCallback<ItemType>(function));
+        return Item::traverse(
+            [&function](Item* item){
+                if(auto* casted = dynamic_cast<ItemType*>(item)){
+                    return function(casted);
+                }
+                return false;
+            });
     }
 
     Item* duplicate() const;

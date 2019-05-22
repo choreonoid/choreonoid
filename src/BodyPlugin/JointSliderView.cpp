@@ -26,10 +26,12 @@ using namespace std;
 using namespace cnoid;
 
 namespace {
+
 class SliderUnit;
 
 // slider resolution
 const double resolution = 1000000.0;
+
 }
 
 namespace cnoid {
@@ -104,8 +106,8 @@ public:
     DoubleSpinBox spin;
     QLabel lowerLimitLabel;
     Slider slider;
-    Dial dial;
     QLabel upperLimitLabel;
+    Dial dial;
     double unitConversionRatio;
 
     SliderUnit(JointSliderViewImpl* viewImpl, int index)
@@ -116,9 +118,9 @@ public:
           spin(&viewImpl->sliderGridBase),
           lowerLimitLabel(&viewImpl->sliderGridBase),
           slider(Qt::Horizontal, &viewImpl->sliderGridBase),
-          dial(&viewImpl->sliderGridBase),
-          upperLimitLabel(&viewImpl->sliderGridBase) {
-
+          upperLimitLabel(&viewImpl->sliderGridBase),
+          dial(&viewImpl->sliderGridBase)
+    {
         idLabel.setAlignment(Qt::AlignRight | Qt::AlignVCenter);
         nameLabel.setAlignment(Qt::AlignCenter);
         nameLabel.setTextInteractionFlags(Qt::TextSelectableByMouse);
@@ -133,6 +135,7 @@ public:
         slider.installEventFilter(viewImpl);
         slider.sigValueChanged().connect([&](double v){ onSliderValueChanged(v); });
 
+        //dial.setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
         dial.setSingleStep(0.1 * resolution);
         dial.setProperty("JointDialIndex", index);
         dial.installEventFilter(viewImpl);
@@ -302,10 +305,11 @@ public:
         grid.removeWidget(&spin);
         grid.removeWidget(&lowerLimitLabel);
         grid.removeWidget(&slider);
-        grid.removeWidget(&dial);
         grid.removeWidget(&upperLimitLabel);
+        grid.removeWidget(&dial);
     }
 };
+
 }
 
 
@@ -356,7 +360,7 @@ JointSliderViewImpl::JointSliderViewImpl(JointSliderView* self) :
     hbox->addWidget(&nameToggle);
     
     putSpinEntryCheck.setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
-    putSpinEntryCheck.setText(_("Entry"));
+    putSpinEntryCheck.setText(_("Numerical"));
     putSpinEntryCheck.setToolTip(_("Show spin entries for numerical input"));
     putSpinEntryCheck.setChecked(true);
     putSpinEntryCheck.sigToggled().connect([&](bool){ updateSliderGrid(); });
@@ -415,10 +419,7 @@ JointSliderViewImpl::JointSliderViewImpl(JointSliderView* self) :
     vbox->addLayout(hbox);
 
     sliderGrid.setSpacing(0);
-    QVBoxLayout* gridVBox = new QVBoxLayout();
-    gridVBox->addLayout(&sliderGrid);
-    gridVBox->addStretch();
-    sliderGridBase.setLayout(gridVBox);
+    sliderGridBase.setLayout(&sliderGrid);
     scrollArea.setFrameShape(QFrame::NoFrame);
     scrollArea.setWidgetResizable(true);
     scrollArea.setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -509,7 +510,6 @@ void JointSliderViewImpl::updateSliderGrid()
 
             unit->initialize(body->joint(activeJointIds[i]));
             
-
             if(!isLabelAtLeft){
                 sliderGrid.addWidget(&unit->nameLabel, row, col, 1, nUnitColumns);
                 sliderGrid.addWidget(&unit->idLabel, row + 1, col);
