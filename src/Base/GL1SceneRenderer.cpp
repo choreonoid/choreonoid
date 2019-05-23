@@ -252,6 +252,7 @@ public:
     bool isNewDisplayListDoubleRenderingEnabled;
     bool isNewDisplayListCreated;
     bool isPicking;
+    bool isRenderingOutline;
 
     GLdouble pickX;
     GLdouble pickY;
@@ -396,6 +397,7 @@ void GL1SceneRendererImpl::initialize()
     isNewDisplayListDoubleRenderingEnabled = false;
     isNewDisplayListCreated = false;
     isPicking = false;
+    isRenderingOutline = false;
     pickedPoint.setZero();
 
     stateFlag.resize(NUM_STATE_FLAGS, false);
@@ -956,7 +958,7 @@ void GL1SceneRendererImpl::renderSwitch(SgSwitch* node)
 
 void GL1SceneRendererImpl::renderInvariantGroup(SgInvariantGroup* group)
 {
-    if(!USE_DISPLAY_LISTS || isCompiling){
+    if(!USE_DISPLAY_LISTS || isCompiling || isRenderingOutline){
         renderGroup(group);
 
     } else {
@@ -1485,14 +1487,22 @@ void GL1SceneRendererImpl::writeVertexBuffers(SgMesh* mesh, ShapeResource* resou
     SgIndexArray& orgTriangleVertices = mesh->triangleVertices();
     const size_t numTriangles = mesh->numTriangles();
     const size_t totalNumVertices = orgTriangleVertices.size();
-    const bool doLighting = !isPicking && defaultLighting;
-    const bool hasNormals = mesh->hasNormals() && doLighting;
-    const bool hasColors = mesh->hasColors() && doLighting;
+
+    bool doLighting = !isPicking && defaultLighting;
+
+    if(isRenderingOutline){
+        doLighting = false;
+        hasTexture = false;
+    }
+    
+    bool hasNormals = mesh->hasNormals() && doLighting;
+    bool hasColors = mesh->hasColors() && doLighting;
     SgVertexArray* vertices = 0;
     SgNormalArray* normals = 0;
     SgIndexArray* triangleVertices = 0;
     ColorArray* colors = 0;
     SgTexCoordArray* texCoords = 0;
+
 
     vertices = &buf->vertices;
     vertices->clear();
@@ -1809,12 +1819,17 @@ void GL1SceneRendererImpl::renderOutlineGroup(SgOutlineGroup* outline)
     glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
     glPushAttrib(GL_POLYGON_BIT);
-    glLineWidth(outline->lineWidth()*2+1);
+    glLineWidth(outline->lineWidth()*2+2);
     glPolygonMode(GL_FRONT, GL_LINE);
     setColor(outline->color());
     enableColorMaterial(true);
 
+    bool wasRenderingOutlineGroup = isRenderingOutline;
+    isRenderingOutline = true;
+    
     renderChildNodes(outline);
+
+    isRenderingOutline = wasRenderingOutlineGroup;
 
     enableColorMaterial(false);
     setLineWidth(lineWidth);
