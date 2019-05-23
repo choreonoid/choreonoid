@@ -222,7 +222,7 @@ public:
         }
     }
 
-    bool connected() {
+    bool connected() const {
         return slot && slot->connected();
     }
 
@@ -249,22 +249,26 @@ public:
 };
 
 
-class ScopedConnection : private Connection
+class ScopedConnection
 {
+    Connection connection_;
+    
 public:
     ScopedConnection() { }
-    ScopedConnection(const Connection& org) : Connection(org) { }
-    ~ScopedConnection() { Connection::disconnect(); }
-    void reset(const Connection& c) { Connection::disconnect(); Connection::operator=(c); }
-    void disconnect() { Connection::disconnect(); }
-    bool connected() { return Connection::connected(); }
-    void block() { Connection::block(); }
-    void unblock() { Connection::unblock(); }
-    ScopedConnection& changeOrder(Order order) { Connection::changeOrder(order); return *this; }
-
-private:
-    ScopedConnection(const ScopedConnection& org);
-    ScopedConnection& operator=(const ScopedConnection& rhs);
+    ScopedConnection(const ScopedConnection& org) = delete;
+    ScopedConnection(const Connection& org) { connection_ = org; }
+    ~ScopedConnection() { connection_.disconnect(); }
+    void reset() { connection_.disconnect(); }
+    void reset(const Connection& c) { connection_.disconnect(); connection_ = c; }
+    ScopedConnection& operator=(const ScopedConnection& rhs) = delete;
+    ScopedConnection& operator=(const Connection& rhs) { reset(rhs); return *this; }
+    void disconnect() { connection_.disconnect(); }
+    bool connected() const { return connection_.connected(); }
+    void block() { connection_.block(); }
+    void unblock() { connection_.unblock(); }
+    ScopedConnection& changeOrder(Connection::Order order) { connection_.changeOrder(order); return *this; }
+    Connection& connection(){ return connection_; }
+    const Connection& connection() const { return connection_; }
 };
 
 

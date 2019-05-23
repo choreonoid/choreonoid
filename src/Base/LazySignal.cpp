@@ -30,8 +30,8 @@ void LazySignalBase::request()
 
 bool LazySignalBase::doEmit()
 {
-    for(size_t i=0; i < connectionsToBlock.size(); ++i){
-        connectionsToBlock[i].block();
+    for(auto& connection : connectionsToBlock){
+        connection.block();
     }
 
     if(emitFunction){
@@ -40,8 +40,8 @@ bool LazySignalBase::doEmit()
         defaultEmitFunction();
     }
     
-    for(size_t i=0; i < connectionsToBlock.size(); ++i){
-        connectionsToBlock[i].unblock();
+    for(auto& connection : connectionsToBlock){
+        connection.unblock();
     }
     connectionsToBlock.clear();
     
