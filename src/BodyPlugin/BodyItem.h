@@ -91,11 +91,15 @@ public:
 
     void notifyKinematicStateChange(
         bool requestFK = false, bool requestVelFK = false, bool requestAccFK = false);
-            
     void notifyKinematicStateChange(
         Connection& connectionToBlock,
         bool requestFK = false, bool requestVelFK = false, bool requestAccFK = false);
-
+    void notifyKinematicStateChangeLater(
+        bool requestFK = false, bool requestVelFK = false, bool requestAccFK = false);
+    void notifyKinematicStateChangeLater(
+        Connection& connectionToBlock,
+        bool requestFK = false, bool requestVelFK = false, bool requestAccFK = false);
+    
     SignalProxy<void()> sigKinematicStateEdited();
 
     void enableCollisionDetection(bool on);

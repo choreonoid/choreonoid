@@ -589,7 +589,7 @@ void Hrpsys31ItemImpl::onReadRequest()
     }
         
     if(jointStateChanged){
-        bodyItem->notifyKinematicStateChange(true);
+        bodyItem->notifyKinematicStateChangeLater(true);
     }
     if(robotStateChanged){
         robotState->notifyStateChange();

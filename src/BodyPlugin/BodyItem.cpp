@@ -146,6 +146,7 @@ public:
     void initBody(bool calledFromCopyConstructor);
     bool loadModelFile(const std::string& filename);
     void setCurrentBaseLink(Link* link);
+    void notifyKinematicStateChange(bool requestFK, bool requestVelFK, bool requestAccFK, bool isDirect);
     void emitSigKinematicStateChanged();
     void emitSigKinematicStateEdited();
     bool enableCollisionDetection(bool on);
@@ -879,28 +880,24 @@ void BodyItem::editZmp(const Vector3& zmp)
 }
 
 
-void BodyItem::notifyKinematicStateChange(bool requestFK, bool requestVelFK, bool requestAccFK)
+void BodyItemImpl::notifyKinematicStateChange(bool requestFK, bool requestVelFK, bool requestAccFK, bool isDirect)
 {
-    if(!impl->isCallingSlotsOnKinematicStateEdited){
-        impl->isCurrentKinematicStateInHistory = false;
+    if(!isCallingSlotsOnKinematicStateEdited){
+        isCurrentKinematicStateInHistory = false;
     }
 
     if(requestFK){
-        impl->isFkRequested |= requestFK;
-        impl->isVelFkRequested |= requestVelFK;
-        impl->isAccFkRequested |= requestAccFK;
+        isFkRequested |= requestFK;
+        isVelFkRequested |= requestVelFK;
+        isAccFkRequested |= requestAccFK;
     }
-    impl->updateFlags.reset();
+    updateFlags.reset();
 
-    impl->sigKinematicStateChanged.request();
-}
-
-
-void BodyItem::notifyKinematicStateChange
-(Connection& connectionToBlock, bool requestFK, bool requestVelFK, bool requestAccFK)
-{
-    impl->sigKinematicStateChanged.requestBlocking(connectionToBlock);
-    notifyKinematicStateChange(requestFK, requestVelFK, requestAccFK);
+    if(isDirect){
+        sigKinematicStateChanged.emit();
+    } else {
+        sigKinematicStateChanged.request();
+    }
 }
 
 
@@ -917,6 +914,34 @@ void BodyItemImpl::emitSigKinematicStateChanged()
         appendKinematicStateToHistory();
         needToAppendKinematicStateToHistory = false;
     }
+}
+
+
+void BodyItem::notifyKinematicStateChange(bool requestFK, bool requestVelFK, bool requestAccFK)
+{
+    impl->notifyKinematicStateChange(requestFK, requestVelFK,requestAccFK, true);
+}
+
+
+void BodyItem::notifyKinematicStateChange
+(Connection& connectionToBlock, bool requestFK, bool requestVelFK, bool requestAccFK)
+{
+    impl->sigKinematicStateChanged.requestBlocking(connectionToBlock);
+    impl->notifyKinematicStateChange(requestFK, requestVelFK, requestAccFK, true);
+}
+
+
+void BodyItem::notifyKinematicStateChangeLater(bool requestFK, bool requestVelFK, bool requestAccFK)
+{
+    impl->notifyKinematicStateChange(requestFK, requestVelFK,requestAccFK, false);
+}
+
+
+void BodyItem::notifyKinematicStateChangeLater
+(Connection& connectionToBlock, bool requestFK, bool requestVelFK, bool requestAccFK)
+{
+    impl->sigKinematicStateChanged.requestBlocking(connectionToBlock);
+    impl->notifyKinematicStateChange(requestFK, requestVelFK, requestAccFK, false);
 }
 
 

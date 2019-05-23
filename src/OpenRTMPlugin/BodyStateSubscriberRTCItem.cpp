@@ -251,7 +251,7 @@ void KinematicStateInput::updateKinematicState()
             body->joint(i)->q() = qtmp[i];
         }
     }
-    bodyItem->notifyKinematicStateChange(true);
+    bodyItem->notifyKinematicStateChangeLater(true);
 }
     
         

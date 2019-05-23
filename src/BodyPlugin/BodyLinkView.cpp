@@ -927,9 +927,11 @@ void BodyLinkViewImpl::doInverseKinematics(Vector3 p, Matrix3 R)
                 }
             }
         }
+
+        bool doNotifyKinematicStateChange = false;
+        
         if(ik->calcInverseKinematics(p, R)){
-            currentBodyItem->notifyKinematicStateChange(true);
-            currentBodyItem->acceptKinematicStateEdit();
+            doNotifyKinematicStateChange = true;
 
             if(currentLink->isRoot()){
                 Position Tinv = currentLink->T().inverse();
@@ -942,10 +944,14 @@ void BodyLinkViewImpl::doInverseKinematics(Vector3 p, Matrix3 R)
                         Position T = currentLink->T() * Trel * Tinv * rootLink->T();
                         normalizeRotation(T);
                         rootLink->T() = T;
-                        bodyItem->notifyKinematicStateChange(true);
+                        doNotifyKinematicStateChange = true;
                     }
                 }
             }
+        }
+        if(doNotifyKinematicStateChange){
+            currentBodyItem->notifyKinematicStateChange(true);
+            currentBodyItem->acceptKinematicStateEdit();
         }
     }
 }
