@@ -29,8 +29,11 @@ namespace {
 
 class SliderUnit;
 
-// slider resolution
-const double resolution = 1000000.0;
+/**
+   Slider resolution.
+   This value should not be increased more because QDial won't work correctly in that case.
+*/
+const double resolution = 100000.0;
 
 }
 
@@ -673,9 +676,7 @@ void JointSliderViewImpl::onJointSliderChanged(int sliderIndex)
     Link* joint = currentBodyItem->body()->joint(jointId);
     joint->q() = jointSliders[sliderIndex]->value();
     
-    connectionOfKinematicStateChanged.block();
-    currentBodyItem->notifyKinematicStateChange(true);
-    connectionOfKinematicStateChanged.unblock();
+    currentBodyItem->notifyKinematicStateChange(connectionOfKinematicStateChanged, true);
 }
 
 

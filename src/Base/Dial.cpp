@@ -6,26 +6,31 @@
 
 using namespace cnoid;
 
+
 Dial::Dial(QWidget* parent)
     : QDial(parent)
 {
-    initialize();
+    increasingValue = 0.0;
+    preValue = 0;
+    isSigValueChangedConnected = false;
 }
 
 
-void Dial::initialize()
+SignalProxy<void(double)> Dial::sigValueChanged()
 {
-    connect(this, SIGNAL(valueChanged(int)), this, SLOT(onValueChanged(int)));
-    pre_Value = 0;
-    increasing_Value = 0;
-}
-
-
-double Dial::value(){
-    if(wrapping()){
-        return increasing_Value;
+    if(!isSigValueChangedConnected){
+        connect(this, SIGNAL(valueChanged(int)), this, SLOT(onValueChanged(int)));
+        isSigValueChangedConnected = true;
     }
+    return sigValueChanged_;
+}
+        
 
+double Dial::value()
+{
+    if(wrapping()){
+        return increasingValue;
+    }
     return QDial::value();
 }
 
@@ -33,7 +38,7 @@ double Dial::value(){
 void Dial::setValue(double value)
 {
     if(wrapping()){
-        increasing_Value = value;
+        increasingValue = value;
 
         double dial_range = (double)maximum() - (double)minimum();
         int syo = value / dial_range;
@@ -43,26 +48,26 @@ void Dial::setValue(double value)
     }
 
     QDial::setValue(value);
-    pre_Value = value;
+    preValue = value;
 }
 
 
 void Dial::onValueChanged(int value)
 {
     if(wrapping()){
-        double diff = (double)value - (double)pre_Value;
+        double diff = (double)value - (double)preValue;
         double dial_range = (double)maximum() - (double)minimum();
         if( diff > dial_range/2.0 ){
-            increasing_Value -= (dial_range - diff);
+            increasingValue -= (dial_range - diff);
         }else if( diff < -dial_range/2.0 ){
-            increasing_Value += (dial_range + diff);
+            increasingValue += (dial_range + diff);
         }else{
-            increasing_Value += diff;
+            increasingValue += diff;
         }
-        sigValueChanged_(increasing_Value);
+        sigValueChanged_(increasingValue);
     }else{
         sigValueChanged_(value);
     }
 
-    pre_Value = value;
+    preValue = value;
 }
