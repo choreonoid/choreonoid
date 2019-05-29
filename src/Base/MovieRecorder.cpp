@@ -30,6 +30,7 @@
 #include <QDialogButtonBox>
 #include <QFileDialog>
 #include <QProgressDialog>
+#include <QCoreApplication>
 #include <boost/filesystem.hpp>
 #include <thread>
 #include <mutex>
@@ -762,7 +763,7 @@ bool MovieRecorderImpl::doOfflineModeRecording()
 
         doContinue = timeBar->setTime(time);
 
-        MessageView::instance()->flush();
+        QCoreApplication::processEvents();
 
         if(requestStopRecording){
             break;
