@@ -1,0 +1,343 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: UR10
+
+links:
+  -
+    name: Base
+    jointType: fixed
+    mass: 4.0
+    centerOfMass: [ 0, 0, 0 ]
+    inertia: [
+      0.0061063308908, 0,               0,
+      0,               0.0061063308908, 0,
+      0,               0,               0.01125 ]
+    elements:
+      -
+        type: Visual
+        elements: { Resource: { uri: "UR10/base.dae" } }
+      - 
+        type: Collision
+        elements:
+          -
+            type: Shape
+            translation: [ 0, 0, 0.019 ]
+            rotation: [ 1, 0, 0, 90 ]
+            geometry: { type: Cylinder, radius: 0.0757, height: 0.038 }
+          -
+            type: Shape
+            translation: [ 0, 0, 0.005 ]
+            geometry: { type: Box, size: [ 0.133, 0.133, 0.01 ] }
+          - &BASE_SHAPE1
+            type: Shape
+            translation: [ 0.0535, 0.0535, 0.005 ]
+            rotation: [ 1, 0, 0, 90 ]
+            geometry: { type: Cylinder, radius: 0.0188, height: 0.01 }
+          - 
+            <<: *BASE_SHAPE1
+            translation: [ -0.0535, 0.0535, 0.005 ]
+          - 
+            <<: *BASE_SHAPE1
+            translation: [ 0.0535, -0.0535, 0.005 ]
+          - 
+            <<: *BASE_SHAPE1
+            translation: [ -0.0535, -0.0535, 0.005 ]
+          -
+            type: Shape
+            translation: [ 0, -0.0735, 0.019 ]
+            geometry: { type: Box, size: [ 0.045, 0.005, 0.038 ] }
+          -
+            type: Shape
+            translation: [ 0, -0.082, 0.019 ]
+            geometry: { type: Box, size: [ 0.022, 0.02, 0.022 ] }
+  -
+    name: Shoulder
+    parent: Base
+    jointType: revolute
+    jointAxis: [ 0, 0, 1 ]
+    jointId: 0
+    translation: [ 0, 0, 0.1273 ]
+    rotation: [ 0, 0, 1, 0 ]
+    jointRange: [ -360, 360 ]
+    jointVelocityRange: [ -120, 120 ]
+    mass: 7.778
+    centerOfMass: [ 0, 0, 0 ]
+    inertia: [
+      0.0314743125769, 0,               0,
+      0,               0.0314743125769, 0,
+      0,               0,               0.021875625 ]
+    rotorInertia: 0.2
+    elements:
+      - 
+        type: Visual 
+        elements: { Resource: { uri: "UR10/shoulder.dae" } }
+      - 
+        type: Collision
+        elements: &SHOULDER_SHAPE
+          - 
+            type: Shape
+            translation: [ 0, 0, -0.015 ]
+            rotation: [ 1, 0, 0, 90 ]
+            geometry: { type: Cylinder, radius: 0.0757, height: 0.148 }
+          -
+            type: Shape
+            translation: [ 0, 0.001, 0.067 ]
+            rotation: [ 1, 0, 0, 95 ]
+            geometry: { type: Cylinder, radius: 0.075, height: 0.03 }
+          -
+            type: Shape
+            translation: [ 0, 0.046, 0.001 ]
+            geometry: { type: Cylinder, radius: 0.0757, height: 0.08 }
+  -
+    name: Upper_arm
+    parent: Shoulder
+    jointType: revolute
+    jointAxis: [ 0, 1, 0 ]
+    jointId: 1
+    translation: [ 0.0, 0.220941, 0.0 ]
+    rotation: [ 0, 1, 0, 90 ]
+    jointRange: [ -360, 360 ]
+    jointVelocityRange: [ -120, 120 ]
+    mass: 12.93
+    centerOfMass: [ 0, 0, 0.306 ]
+    inertia: [
+      0.421753803798, 0,              0,
+      0,              0.421753803798, 0,
+      0,              0,              0.036365625 ]
+    rotorInertia: 0.2
+    elements:
+      -
+        type: Visual
+        elements: { Resource: { uri: "UR10/upperarm.dae" } }
+      -
+        type: Collision
+        elements: 
+          -
+            type: Transform
+            translation: [ 0, -0.046, 0.001 ]
+            rotation: [ [ 0, 0, 1, 180], [ 1, 0, 0, 90 ]] 
+            elements: *SHOULDER_SHAPE
+          -
+            type: Transform
+            translation: [ 0, -0.045, 0.319 ]
+            elements:
+              -
+                type: Shape
+                translation: [ 0, 0, -0.228 ]
+                rotation: [ 1, 0, 0, 90 ]
+                geometry: { type: Cylinder, radius: 0.0757, height: 0.008 }
+              -
+                type: Shape
+                translation: [ 0, 0, -0.21 ]
+                rotation: [ 1, 0, 0, 90 ]
+                geometry: { type: Cone, radius: 0.07, height: 0.03 }
+              -
+                type: Shape
+                rotation: [ 1, 0, 0, 90 ]
+                geometry: { type: Cylinder, radius: 0.0545, height: 0.46 }
+              -
+                type: Shape
+                translation: [ 0, 0, 0.187 ]
+                rotation: [ 1, 0, 0, -90 ]
+                geometry: { type: Cone, radius: 0.0578, height: 0.07 }
+              -
+                type: Shape
+                translation: [ 0, 0, 0.2255 ]
+                rotation: [ 1, 0, 0, 90 ]
+                geometry: { type: Cylinder, radius: 0.0578, height: 0.007 }
+          - &UPPER_SHAPE1
+            type: Transform
+            translation: [ 0.0006, -0.045, 0.613 ]
+            elements: 
+              -
+                type: Shape
+                translation: [ 0, 0, -0.035 ]
+                rotation: [ 1, 0, 0, 90 ]
+                geometry: { type: Cylinder, radius: 0.0585, height: 0.07 }
+              - 
+                type: Shape
+                translation: [ 0, -0.0047, 0 ]
+                geometry: { type: Cylinder, radius: 0.0585, height: 0.11 }
+              -
+                type: Shape
+                translation: [ 0, 0.052, -0.003 ]
+                rotation: [ 1, 0, 0, 7.5 ]
+                geometry: { type: Cylinder, radius: 0.057, height: 0.02 }
+  -
+    name: Forearm
+    parent: Upper_arm
+    jointType: revolute
+    jointAxis: [ 0, 1, 0 ]
+    jointId: 2
+    translation: [ 0.0, -0.1719, 0.612 ]
+    rotation: [ 0, 1, 0, 0 ]
+    jointRange: [ -360, 360 ]
+    jointVelocityRange: [ -180, 180 ]
+    mass: 3.87
+    centerOfMass: [ 0, 0, 0.28615 ]
+    inertia: [
+      0.111069694097, 0,              0,
+      0,              0.111069694097, 0,
+      0,              0,              0.010884375 ]
+    rotorInertia: 0.1
+    elements:
+      -
+        type: Visual
+        elements: { Resource: { uri: "UR10/forearm.dae" } }
+      -
+        type: Collision
+        elements:
+          -
+            type: Shape
+            translation: [ 0.0006, 0.0623, 0.001 ]
+            geometry: { type: Cylinder, radius: 0.0582, height: 0.01 }
+          -
+            <<: *UPPER_SHAPE1
+            rotation: [ 1, 0, 0, 180 ] 
+            translation: [ 0, -0.0006, 0.002 ]
+          -
+            type: Transform
+            translation: [ 0, -0.0008, 0.29 ]
+            elements:
+              -
+                type: Shape
+                translation: [ 0, 0, -0.216 ]
+                rotation: [ 1, 0, 0, 90 ]
+                geometry: { type: Cylinder, radius: 0.056, height: 0.005 }
+              -
+                type: Shape
+                translation: [ 0, 0, -0.2084 ]
+                rotation: [ 1, 0, 0, 90 ]
+                geometry: { type: Cone, radius: 0.054, height: 0.01 }
+              -
+                type: Shape
+                rotation: [ 1, 0, 0, 90 ]
+                geometry: { type: Cylinder, radius: 0.0433, height: 0.44 }
+              -
+                type: Transform
+                translation: [ 0, 0, 0.2195 ]
+                elements:
+                  Shape:
+                    translation: [ 0, 0, -0.03 ]
+                    rotation: [ 1, 0, 0, -90 ]
+                    geometry: { type: Cone, radius: 0.0455, height: 0.06 }
+              -
+                type: Shape
+                translation: [ 0, 0, 0.2245 ]
+                rotation: [ 1, 0, 0, 90 ]
+                geometry: { type: Cylinder, radius: 0.0455, height: 0.01 }
+          -
+            type: Transform
+            translation: [ 0, 0, 0.5733 ]
+            elements: &ARM_JOINT_SHAPE
+              -
+                type: Shape
+                translation: [ 0, -0.0008, -0.029 ]
+                rotation: [ 1, 0, 0, 90 ]
+                geometry: { type: Cylinder, radius: 0.0455, height: 0.05 }
+              -
+                type: Shape
+                translation: [ 0, 0.0108, 0 ]
+                geometry: { type: Cylinder, radius: 0.0455, height: 0.1 }
+              -
+                type: Shape
+                translation: [ 0, -0.044, -0.001 ]
+                rotation: [ 1, 0, 0, -5 ]
+                geometry: { type: Cylinder, radius: 0.0445, height: 0.02 } 
+  -
+    name: Wrist_1
+    parent: Forearm
+    jointType: revolute
+    jointAxis: [ 0, 1, 0 ]
+    jointId: 3
+    translation: [ 0.0, 0.0, 0.5723 ]
+    rotation: [ 0, 1, 0, 90 ]
+    jointRange: [ -360, 360 ]
+    jointVelocityRange: [ -180, 180 ]
+    mass: 1.96
+    centerOfMass: [ 0, 0, 0.0 ]
+    inertia: [
+      0.0051082479567, 0,               0,
+      0,               0.0051082479567, 0,
+      0,               0,               0.0055125 ]
+    rotorInertia: 0.05
+    elements:
+      -
+        type: Visual
+        elements: { Resource: { uri: "UR10/wrist1.dae" } }
+      -
+        type: Collision
+        elements: 
+          -
+            type: Transform
+            translation: [ 0, 0.1149, 0.0011 ]
+            rotation: [ [ 1, 0, 0, 90], [ 0, 1, 0, 180 ] ]
+            elements: *ARM_JOINT_SHAPE
+  -
+    name: Wrist_2
+    parent: Wrist_1
+    jointType: revolute
+    jointAxis: [ 0, 0, 1 ]
+    jointId: 4
+    translation: [ 0.0, 0.1149, 0.0 ]
+    rotation: [ 0, 1, 0, 0 ]
+    jointRange: [ -360, 360 ]
+    jointVelocityRange: [ -180, 180 ]
+    mass: 1.96
+    centerOfMass: [ 0, 0, 0.0 ]
+    inertia: [
+      0.0051082479567, 0,               0,
+      0,               0.0051082479567, 0,
+      0,               0,               0.0055125 ]
+    rotorInertia: 0.05
+    elements:
+      -
+        type: Visual
+        elements: { Resource: { uri: "UR10/wrist2.dae" } }
+      -
+        type: Collision
+        elements:
+          -
+            type: Transform
+            translation: [ 0.0, 0.0007, 0.116 ]
+            elements: *ARM_JOINT_SHAPE
+  -
+    name: Wrist_3  
+    parent: Wrist_2
+    jointType: revolute
+    jointAxis: [ 0, 1, 0 ]
+    jointId: 5
+    translation: [ 0.0, 0.0, 0.1157 ]
+    rotation: [ 0, 1, 0, 0 ]
+    jointRange: [ -360, 360 ]
+    jointVelocityRange: [ -180, 180 ]
+    mass: 0.202
+    centerOfMass: [ 0, 0, 0.0 ]
+    inertia: [
+      0.000526462289415, 0,                 0,
+      0,                 0.000526465589415, 0,
+      0,                 0,                 0.000568125 ]
+    rotorInertia: 0.05
+    elements:
+      -
+        type: Visual
+        elements: { Resource: { uri: "UR10/wrist3.dae" } }
+      -
+        type: Collision
+        elements:
+          -
+            type: Shape
+            translation: [ 0.0001, 0.07, 0.001 ]
+            geometry: { type: Cylinder, radius: 0.0453, height: 0.017 }
+          -
+            type: Shape
+            translation: [ 0, 0.082, 0 ]
+            geometry: { type: Cylinder, radius: 0.043, height: 0.007 }
+          -
+            type: Shape
+            translation: [ 0, 0.08859, 0.001 ]
+            geometry: { type: Cylinder, radius: 0.0315, height: 0.007 }
+
+    
+    
