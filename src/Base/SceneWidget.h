@@ -37,12 +37,15 @@ public:
 
     SceneRenderer* renderer();
 
+    void draw();
+
     SignalProxy<void()> sigStateChanged() const;
 
     void setEditMode(bool on);
     bool isEditMode() const;
 
     const SceneWidgetEvent& latestEvent() const;
+    Vector3 lastClickedPoint() const;
 
     enum ViewpointControlMode { THIRD_PERSON_MODE, FIRST_PERSON_MODE  };
     void setViewpointControlMode(ViewpointControlMode mode);

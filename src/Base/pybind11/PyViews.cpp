@@ -75,8 +75,11 @@ void exportPyViews(py::module m)
         ;
 
     py::class_<SceneWidget, QWidget>(m, "SceneWidget")
+        .def("draw", &SceneWidget::draw)
         .def_property_readonly("sigStateChanged", &SceneWidget::sigStateChanged)
         .def("setEditMode", &SceneWidget::setEditMode)
+        .def_property_readonly("lastClickedPoint", &SceneWidget::lastClickedPoint)
+        .def_property_readonly("builtinCameraTransform", &SceneWidget::builtinCameraTransform)
         .def_property("collisionLinesVisible", &SceneWidget::collisionLinesVisible, &SceneWidget::setCollisionLinesVisible)
         .def("setCollisionLinesVisible", &SceneWidget::setCollisionLinesVisible)
         .def("setHeadLightIntensity", &SceneWidget::setHeadLightIntensity)

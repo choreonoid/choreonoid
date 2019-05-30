@@ -182,6 +182,8 @@ namespace cnoid {
 
 class SceneWidgetImpl : public QGLWidget
 {
+    friend class SceneWidget;
+    
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -616,6 +618,16 @@ SceneRenderer* SceneWidget::renderer()
 }
 
 
+/**
+   Draw the scene immediately.
+   \note This function is only used to force rendering when testing rendering performance, etc.
+*/
+void SceneWidget::draw()
+{
+    impl->glDraw();
+}
+
+
 QWidget* SceneWidget::indicator()
 {
     return impl->indicatorLabel;
@@ -789,11 +801,10 @@ void SceneWidgetImpl::doFPSTest()
         for(double theta=1.0; theta <= 360.0; theta += 1.0){
             double a = 3.14159265 * theta / 180.0;
             builtinCameraTransform->setTransform(
-                normalizedCameraTransform(
-                    Translation3(p) *
-                    AngleAxis(a, Vector3::UnitZ()) *
-                    Translation3(-p) *
-                    C));
+                Translation3(p) *
+                AngleAxis(a, Vector3::UnitZ()) *
+                Translation3(-p) *
+                C);
             glDraw();
         }
     }
@@ -879,6 +890,12 @@ void SceneWidgetImpl::toggleEditMode()
 const SceneWidgetEvent& SceneWidget::latestEvent() const
 {
     return impl->latestEvent;
+}
+
+
+Vector3 SceneWidget::lastClickedPoint() const
+{
+    return impl->lastClickedPoint;
 }
 
 
