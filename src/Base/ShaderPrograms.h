@@ -33,7 +33,7 @@ class CNOID_EXPORT NolightingProgram : public ShaderProgram
     GLint MVPLocation;
     
 public:
-    virtual void initialize();
+    virtual void initialize() override;
     void setProjectionMatrix(const Matrix4f& PVM);
 };
 
@@ -85,7 +85,7 @@ protected:
     GLint isFogEnabledLocation;
 
 public:
-    virtual void initialize();
+    virtual void initialize() override;
     int maxNumLights() const { return maxNumLights_; }
     void setNumLights(int n);
     virtual bool renderLight(int index, const SgLight* light, const Affine3& T, const Affine3& viewMatrix, bool shadowCasting);
@@ -162,6 +162,7 @@ class ShadowMapProgram;
 
 class PhongShadowProgram : public MaterialProgram
 {
+    GLuint defaultFBO_;
     bool useUniformBlockToPassTransformationMatrices;
     GLSLUniformBlockBuffer transformBlockBuffer;
     GLint modelViewMatrixIndex;
@@ -209,6 +210,9 @@ public:
     virtual void initializeFrameRendering() override;
     virtual bool renderLight(int index, const SgLight* light, const Affine3& T, const Affine3& viewMatrix, bool shadowCasting) override;
 
+    void setDefaultFramebufferObject(GLuint id) { defaultFBO_ = id; }
+    GLuint defaultFramebufferObject() const { return defaultFBO_; }
+    
     void setTransformMatrices(const Affine3& viewMatrix, const Affine3& modelMatrix, const Matrix4& PV);
 
     void activateShadowMapGenerationPass(int shadowIndex);

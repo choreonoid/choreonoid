@@ -530,9 +530,7 @@ SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self, bool useGLSL)
     focusedEditable = 0;
 
     latestEvent.sceneWidget_ = self;
-
     lastClickedPoint.setZero();
-
     eventFilter = 0;
     
     indicatorLabel = new QLabel();
@@ -1055,6 +1053,7 @@ bool SceneWidgetImpl::updateLatestEventPath()
     bool picked = renderer->pick(latestEvent.x(), latestEvent.y());
 
     if(SHOW_IMAGE_FOR_PICKING){
+        // This does not work
         auto cxt = context();
         cxt->swapBuffers(cxt->surface());
     }

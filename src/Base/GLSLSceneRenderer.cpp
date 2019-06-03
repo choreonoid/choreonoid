@@ -326,6 +326,7 @@ public:
     ~GLSLSceneRendererImpl();
     void initialize();
     void onExtensionAdded(std::function<void(GLSLSceneRenderer* renderer)> func);
+    void updateDefaultFramebufferObject();
     bool initializeGL();
     void doRender();
     bool doPick(int x, int y);
@@ -417,9 +418,9 @@ void GLSLSceneRendererImpl::initialize()
     viewportHeight = 1;
     needToChangeBufferSizeForPicking = true;
 
-    currentProgram = 0;
-    currentLightingProgram = 0;
-    currentNolightingProgram = 0;
+    currentProgram = nullptr;
+    currentLightingProgram = nullptr;
+    currentNolightingProgram = nullptr;
     materialProgram = &phongShadowProgram;
 
     isActuallyRendering = false;
@@ -575,6 +576,13 @@ void GLSLSceneRenderer::setOutputStream(std::ostream& os)
 }
 
 
+void GLSLSceneRendererImpl::updateDefaultFramebufferObject()
+{
+    glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, reinterpret_cast<GLint*>(&defaultFBO));
+    phongShadowProgram.setDefaultFramebufferObject(defaultFBO);
+}
+
+
 bool GLSLSceneRenderer::initializeGL()
 {
     GLSceneRenderer::initializeGL();
@@ -588,7 +596,7 @@ bool GLSLSceneRendererImpl::initializeGL()
         return false;
     }
 
-    glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, reinterpret_cast<GLint*>(&defaultFBO));
+    updateDefaultFramebufferObject();
 
     try {
         solidColorProgram.initialize();
@@ -649,6 +657,8 @@ void GLSLSceneRenderer::doRender()
 
 void GLSLSceneRendererImpl::doRender()
 {
+    updateDefaultFramebufferObject();
+    
     if(self->applyNewExtensions()){
         renderingFunctions.updateDispatchTable();
     }

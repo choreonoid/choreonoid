@@ -278,7 +278,8 @@ void PhongShadowProgram::initialize()
         initializeShadowInfo(i);
     }
     glActiveTexture(GL_TEXTURE0);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    defaultFBO_ = 0;
 
     isShadowAntiAliasingEnabledLocation = getUniformLocation("isShadowAntiAliasingEnabled");
 
@@ -488,6 +489,6 @@ void ShadowMapProgram::initializeFrameRendering()
 
 void ShadowMapProgram::deactivate()
 {
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, mainProgram->defaultFramebufferObject());
     glCullFace(GL_BACK);
 }
