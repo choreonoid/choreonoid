@@ -7,6 +7,7 @@
 #include "MessageView.h"
 #include <cnoid/SceneDrawables>
 #include <cnoid/SceneCameras>
+#include <cnoid/NullOut>
 #include <fmt/format.h>
 #include <iostream>
 #ifdef _WIN32
@@ -72,7 +73,7 @@ GLSceneRendererImpl::GLSceneRendererImpl(GLSceneRenderer* self, SgGroup* sceneRo
     defaultColor << 1.0f, 1.0f, 1.0f;
     polygonMode = GLSceneRenderer::FILL_MODE;
 
-    os_ = &std::cout;
+    os_ = &nullout();
 }
 
 

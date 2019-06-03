@@ -12,6 +12,7 @@
 
 namespace cnoid {
 
+class ExtensionManager;
 class SceneWidgetImpl;
 class SceneRenderer;
 class Archive;
@@ -25,6 +26,7 @@ class InteractiveCameraTransform;
 class CNOID_EXPORT SceneWidget : public Widget
 {
 public:
+    static void initializeClass(ExtensionManager* ext);
     static SignalProxy<void(SceneWidget*)> sigSceneWidgetCreated();
 
     SceneWidget();

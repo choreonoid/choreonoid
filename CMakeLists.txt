@@ -484,14 +484,14 @@ macro(setup_qt5)
     file(GLOB qt_cmake_dirs "c:/Qt/5.??.?/msvc20??_??/lib/cmake" "d:/Qt/5.??.?/msvc20??_??/lib/cmake")
     set(version 5.10)
     find_package(Qt5Core ${version} HINTS ${qt_cmake_dirs})
+    find_package(Qt5Gui ${version} HINTS ${qt_cmake_dirs})
     find_package(Qt5Widgets ${version} HINTS ${qt_cmake_dirs})
-    find_package(Qt5OpenGL ${version} HINTS ${qt_cmake_dirs})
     find_package(Qt5Network ${version} HINTS ${qt_cmake_dirs})
-    set(QT_LIBRARIES Qt5::Core Qt5::Widgets Qt5::OpenGL Qt5::Network)
+    set(QT_LIBRARIES Qt5::Core Qt5::Gui Qt5::Widgets Qt5::Network)
   elseif(UNIX)
-    find_package(Qt5 COMPONENTS Core Widgets OpenGL Network X11Extras)
+    find_package(Qt5 COMPONENTS Core Gui Widgets Network X11Extras)
     set(QT_LIBRARIES
-      ${Qt5Core_LIBRARIES} ${Qt5Widgets_LIBRARIES} ${Qt5OpenGL_LIBRARIES} ${Qt5Network_LIBRARIES}
+      ${Qt5Core_LIBRARIES} ${Qt5Gui_LIBRARIES} ${Qt5Widgets_LIBRARIES} ${Qt5Network_LIBRARIES}
       ${Qt5X11Extras_LIBRARIES})
   endif()
 
@@ -502,7 +502,6 @@ macro(setup_qt5)
     list(APPEND QT_INST_LIBRARIES 
       optimized Qt5Core debug Qt5Cored
       optimized Qt5Gui debug Qt5Guid
-      optimized Qt5OpenGL debug Qt5OpenGLd
       optimized Qt5Network debug Qt5Networkd
       optimized Qt5Widgets debug Qt5Widgetsd
       optimized libEGL debug libEGLd
@@ -523,8 +522,7 @@ macro(setup_qt5)
 
     if(INSTALL_SDK_WITH_EXTLIBS)
       foreach(dir
-	  ${Qt5Core_INCLUDE_DIRS} ${Qt5Gui_INCLUDE_DIRS} ${Qt5Widgets_INCLUDE_DIRS}
-	  ${Qt5OpenGL_INCLUDE_DIRS} ${Qt5Network_INCLUDE_DIRS})
+	  ${Qt5Core_INCLUDE_DIRS} ${Qt5Gui_INCLUDE_DIRS} ${Qt5Widgets_INCLUDE_DIRS} ${Qt5Network_INCLUDE_DIRS})
         install(DIRECTORY ${dir} DESTINATION ${CNOID_HEADER_SUBDIR})
       endforeach()
     endif()

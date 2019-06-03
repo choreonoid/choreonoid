@@ -22,14 +22,16 @@
 #include "MenuManager.h"
 #include "Timer.h"
 #include "LazyCaller.h"
+#include "AppConfig.h"
 #include <cnoid/Selection>
 #include <cnoid/EigenArchive>
 #include <cnoid/SceneCameras>
 #include <cnoid/SceneLights>
 #include <cnoid/CoordinateAxesOverlay>
 #include <cnoid/ConnectionSet>
-#include <QGLWidget>
-#include <QGLPixelBuffer>
+#include <QOpenGLWidget>
+#include <QOpenGLContext>
+#include <QSurfaceFormat>
 #include <QLabel>
 #include <QKeyEvent>
 #include <QMouseEvent>
@@ -38,6 +40,7 @@
 #include <QColorDialog>
 #include <QElapsedTimer>
 #include <QMessageBox>
+#include <QCoreApplication>
 #include <fmt/format.h>
 #include <set>
 #include <iostream>
@@ -59,6 +62,8 @@ const bool SHOW_IMAGE_FOR_PICKING = false;
 const int NUM_SHADOWS = 2;
 
 enum { FLOOR_GRID = 0, XZ_GRID = 1, YZ_GRID = 2 };
+
+Signal<void()> sigVSyncModeChanged;
 
 class EditableExtractor : public PolymorphicFunctionSet<SgNode>
 {
@@ -180,7 +185,7 @@ Signal<void(SceneWidget*)> sigSceneWidgetCreated;
 
 namespace cnoid {
 
-class SceneWidgetImpl : public QGLWidget
+class SceneWidgetImpl : public QOpenGLWidget
 {
     friend class SceneWidget;
     
@@ -261,6 +266,8 @@ public:
     int fpsCounter;
     Timer fpsRenderingTimer;
     bool fpsRendered;
+    bool isDoingFPSTest;
+    bool isFPSTestCanceled;
 
     ConfigDialog* config;
     QLabel* indicatorLabel;
@@ -275,8 +282,12 @@ public:
     int profiling_mode;
 #endif
 
-    SceneWidgetImpl(QGLFormat& format, bool useGLSL, SceneWidget* self);
+    static void onOpenGLVSyncToggled(bool on);
+
+    SceneWidgetImpl(SceneWidget* self, bool useGLSL);
     ~SceneWidgetImpl();
+
+    void onVSyncModeChanged();
 
     virtual void initializeGL();
     virtual void resizeGL(int width, int height);
@@ -288,6 +299,7 @@ public:
     void onSceneGraphUpdated(const SgUpdate& update);
 
     void showFPS(bool on);
+    void onFPSTestButtonClicked();
     void doFPSTest();
     void onFPSUpdateRequest();
     void onFPSRenderingRequest();
@@ -382,6 +394,29 @@ public:
 }
 
 
+void SceneWidget::initializeClass(ExtensionManager* ext)
+{
+    // OpenGL vsync setting
+    Mapping* glConfig = AppConfig::archive()->openMapping("OpenGL");
+    bool isVSyncEnabled = (glConfig->get("vsync", 0) > 0);
+    auto vsyncItem = ext->menuManager().setPath("/Options/OpenGL").addCheckItem(_("Vertical Sync"));
+    vsyncItem->setChecked(isVSyncEnabled);
+    vsyncItem->sigToggled().connect([&](bool on){ SceneWidgetImpl::onOpenGLVSyncToggled(on); });
+    SceneWidgetImpl::onOpenGLVSyncToggled(isVSyncEnabled);
+}
+
+
+void SceneWidgetImpl::onOpenGLVSyncToggled(bool on)
+{
+    Mapping* glConfig = AppConfig::archive()->openMapping("OpenGL");
+    glConfig->write("vsync", (on ? 1 : 0));
+    auto format = QSurfaceFormat::defaultFormat();
+    format.setSwapInterval(on ? 1 : 0);
+    QSurfaceFormat::setDefaultFormat(format);
+    sigVSyncModeChanged();
+}
+
+
 SceneWidgetRoot::SceneWidgetRoot(SceneWidget* sceneWidget)
     : sceneWidget_(sceneWidget)
 {
@@ -429,15 +464,7 @@ void SceneWidget::forEachInstance(SgNode* node, std::function<void(SceneWidget* 
 SceneWidget::SceneWidget()
 {
     bool useGLSL = (getenv("CNOID_USE_GLSL") != 0);
-
-    QGLFormat format;
-    if(useGLSL){
-        format.setVersion(3, 3);
-        //format.setVersion(4, 4);
-        format.setProfile(QGLFormat::CoreProfile);
-    }
-    
-    impl = new SceneWidgetImpl(format, useGLSL, this);
+    impl = new SceneWidgetImpl(this, useGLSL);
 
     QVBoxLayout* vbox = new QVBoxLayout();
     vbox->setContentsMargins(0, 0, 0, 0);
@@ -448,8 +475,8 @@ SceneWidget::SceneWidget()
 }
 
 
-SceneWidgetImpl::SceneWidgetImpl(QGLFormat& format, bool useGLSL, SceneWidget* self)
-    : QGLWidget(format, self),
+SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self, bool useGLSL)
+    : QOpenGLWidget(self),
       self(self),
       os(MessageView::mainInstance()->cout()),
       sceneRoot(new SceneWidgetRoot(self)),
@@ -457,17 +484,7 @@ SceneWidgetImpl::SceneWidgetImpl(QGLFormat& format, bool useGLSL, SceneWidget* s
       emitSigStateChangedLater(std::ref(sigStateChanged)),
       updateGridsLater([this](){ updateGrids(); })
 {
-    if(false){ // test
-        cout << "swapInterval = " << QGLWidget::format().swapInterval() << endl;
-        QGLFormat glfmt = QGLWidget::format();
-        glfmt.setSwapInterval(0);
-        QGLWidget::setFormat(glfmt);
-        cout << "swapInterval = " << QGLWidget::format().swapInterval() << endl;
-    }
-    
     setFocusPolicy(Qt::WheelFocus);
-
-    setAutoBufferSwap(true);
 
     if(useGLSL){
         renderer = new GLSLSceneRenderer(sceneRoot);
@@ -577,6 +594,9 @@ SceneWidgetImpl::SceneWidgetImpl(QGLFormat& format, bool useGLSL, SceneWidget* s
         fpsRenderingTimer.setSingleShot(true);
         fpsRenderingTimer.sigTimeout().connect([&](){ onFPSRenderingRequest(); });
     }
+    isDoingFPSTest = false;
+
+    sigVSyncModeChanged.connect([&](){ onVSyncModeChanged(); });
 
 #ifdef ENABLE_SIMULATION_PROFILING
     profiling_mode = 1;
@@ -597,6 +617,18 @@ SceneWidgetImpl::~SceneWidgetImpl()
     
     delete indicatorLabel;
     delete config;
+}
+
+
+void SceneWidgetImpl::onVSyncModeChanged()
+{
+    /**
+       We want to change the swap interval value when the vsync configuration is changed.
+       However, resetting the format is not valied for the QOpenGLWidget instance that
+       has been initialized.
+       To change the swap interval, the QOpenGLWiget instance must probably be recreated.
+    */
+    //setFormat(QSurfaceFormat::defaultFormat());
 }
 
 
@@ -624,7 +656,8 @@ SceneRenderer* SceneWidget::renderer()
 */
 void SceneWidget::draw()
 {
-    impl->glDraw();
+    impl->repaint();
+    QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents|QEventLoop::ExcludeSocketNotifiers);
 }
 
 
@@ -643,11 +676,6 @@ void SceneWidgetImpl::initializeGL()
     if(!renderer->initializeGL()){
         os << "OpenGL initialization failed." << endl;
         // This view shoulbe be disabled when the glew initialization is failed.
-    } else {
-#ifdef _WIN32
-        // Qt5 does not seem to support setting the swap interval for QGLWidget.
-        renderer->setSwapInterval(QGLFormat::defaultFormat().swapInterval());
-#endif
     }
 }
 
@@ -748,8 +776,10 @@ void SceneWidgetImpl::paintGL()
 
 void SceneWidgetImpl::renderFPS()
 {
+    /*
     renderer->setColor(Vector3f(1.0f, 1.0f, 1.0f));
     renderText(20, 20, QString("FPS: %1").arg(fps));
+    */
     fpsRendered = true;
     ++fpsCounter;
 }
@@ -788,14 +818,32 @@ void SceneWidgetImpl::showFPS(bool on)
 }
 
 
+void SceneWidgetImpl::onFPSTestButtonClicked()
+{
+    if(!isDoingFPSTest){
+        auto& button = config->fpsTestButton;
+        auto label = button.text();
+        button.setText(_("Cancel"));
+        doFPSTest();
+        button.setText(label);
+    } else {
+        isFPSTestCanceled = true;
+    }
+}
+        
+
 void SceneWidgetImpl::doFPSTest()
 {
+    isDoingFPSTest = true;
+    isFPSTestCanceled = false;
+    
     const Vector3 p = lastClickedPoint;
     const Affine3 C = builtinCameraTransform->T();
 
     QElapsedTimer timer;
     timer.start();
 
+    int numFrames = 0;
     const int n = config->fpsTestIterationSpin.value();
     for(int i=0; i < n; ++i){
         for(double theta=1.0; theta <= 360.0; theta += 1.0){
@@ -805,19 +853,26 @@ void SceneWidgetImpl::doFPSTest()
                 AngleAxis(a, Vector3::UnitZ()) *
                 Translation3(-p) *
                 C);
-            glDraw();
+            repaint();
+            QCoreApplication::processEvents();
+            ++numFrames;
+            if(isFPSTestCanceled){
+                break;
+            }
         }
     }
 
     double time = timer.elapsed() / 1000.0;
-    const int numFrames = n * 360;
     fps = numFrames / time;
     fpsCounter = 0;
+
+    builtinCameraTransform->setTransform(C);
+    update();
 
     QMessageBox::information(config, _("FPS Test Result"),
                              QString(_("FPS: %1 frames / %2 [s] = %3")).arg(numFrames).arg(time).arg(fps));
 
-    update();
+    isDoingFPSTest = false;
 }
 
 
@@ -995,12 +1050,13 @@ void SceneWidgetImpl::updateLatestEvent(QMouseEvent* event)
 
 bool SceneWidgetImpl::updateLatestEventPath()
 {
-    QGLWidget::makeCurrent();
+    makeCurrent();
 
     bool picked = renderer->pick(latestEvent.x(), latestEvent.y());
 
     if(SHOW_IMAGE_FOR_PICKING){
-        swapBuffers();
+        auto cxt = context();
+        cxt->swapBuffers(cxt->surface());
     }
     doneCurrent();
 
@@ -2421,13 +2477,13 @@ bool SceneWidget::saveImage(const std::string& filename)
 
 bool SceneWidgetImpl::saveImage(const std::string& filename)
 {
-    return grabFrameBuffer().save(filename.c_str());
+    return grabFramebuffer().save(filename.c_str());
 }
 
 
 QImage SceneWidget::getImage()
 {
-    return impl->grabFrameBuffer();
+    return impl->grabFramebuffer();
 }
 
 
@@ -3121,7 +3177,7 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     hbox->addWidget(&fpsCheck);
 
     fpsTestButton.setText(_("Test"));
-    fpsTestButton.sigClicked().connect([=](){ impl->doFPSTest(); });
+    fpsTestButton.sigClicked().connect([=](){ impl->onFPSTestButtonClicked(); });
     hbox->addWidget(&fpsTestButton);
     fpsTestIterationSpin.setRange(1, 99);
     fpsTestIterationSpin.setValue(1);
