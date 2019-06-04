@@ -16,6 +16,8 @@ using namespace cnoid;
 
 namespace {
 
+static const bool ENABLE_COMPACTION = true;
+
 struct Registration {
     Registration(){
         SceneLoader::registerLoader(
@@ -24,9 +26,8 @@ struct Registration {
     }
 } registration;
 
-}
 
-static void readVector3(string text, SgVectorArray<Vector3f>* array)
+Vector3f readVector3(string text)
 {
     trim(text);
     Vector3f value;
@@ -35,10 +36,111 @@ static void readVector3(string text, SgVectorArray<Vector3f>* array)
     while(iter != split_iterator<string::iterator>()){
         value[i++] = boost::lexical_cast<float>(*iter++);
         if(i == 3){
-            array->push_back(value);
             break;
         }
     }
+    return value;
+}
+
+class CompactMeshArranger
+{
+public:
+    SgMeshPtr mesh;
+    SgVertexArray& vertices;
+    SgNormalArray& normals;
+    SgIndexArray& triangleVertices;
+    SgIndexArray& normalIndices;
+
+    CompactMeshArranger();
+    void addVertex(const Vector3f& vertex);
+    void addNormal(const Vector3f& normal);
+    SgShape* finalize();
+};
+
+}
+
+
+CompactMeshArranger::CompactMeshArranger()
+    : mesh(new SgMesh),
+      vertices(*mesh->getOrCreateVertices()),
+      normals(*mesh->getOrCreateNormals()),
+      triangleVertices(mesh->triangleVertices()),
+      normalIndices(mesh->normalIndices())
+{
+
+}
+
+
+void CompactMeshArranger::addVertex(const Vector3f& vertex)
+{
+    static const int SearchLength = 27;
+
+    bool found = false;
+    int index = vertices.size() - 1;
+
+    if(ENABLE_COMPACTION){
+        int minIndex = std::max(0, index - (SearchLength - 1));
+        while(index >= minIndex){
+            if(vertex.isApprox(vertices[index])){
+                found = true;
+                break;
+            }
+            --index;
+        }
+    }
+
+    if(found){
+        triangleVertices.push_back(index);
+    } else {
+        triangleVertices.push_back(vertices.size());
+        vertices.push_back(vertex);
+    }
+}
+
+
+void CompactMeshArranger::addNormal(const Vector3f& normal)
+{
+    static const int SearchLength = 12;
+
+    bool found = false;
+    int index = normals.size() - 1;
+
+    if(ENABLE_COMPACTION){
+        int minIndex = std::max(0, index - (SearchLength - 1));
+        while(index >= minIndex){
+            if(normal.isApprox(normals[index])){
+                found = true;
+                break;
+            }
+            --index;
+        }
+    }
+
+    if(!found){
+        index = normals.size();
+        normals.push_back(normal);
+    }        
+    normalIndices.push_back(index);
+    normalIndices.push_back(index);
+    normalIndices.push_back(index);
+}
+
+
+SgShape* CompactMeshArranger::finalize()
+{
+    if(vertices.empty()){
+        return nullptr;
+    }
+
+    auto shape = new SgShape;
+    shape->setMesh(mesh);
+    vertices.shrink_to_fit();
+    normals.shrink_to_fit();
+    triangleVertices.shrink_to_fit();
+    normalIndices.shrink_to_fit();
+    mesh->updateBoundingBox();
+
+    return shape;
 }
 
 
@@ -66,8 +168,7 @@ SgNode* STLSceneLoader::load(const std::string& filename)
     unsigned int fileSize = ifs.tellg();
     ifs.seekg(0, fstream::beg);
 
-    SgVertexArrayPtr vertices = new SgVertexArray;
-    SgNormalArrayPtr normals = new SgNormalArray;
+    CompactMeshArranger arranger;
 
     bool isBinary = false;
     unsigned int numFaces = 0;
@@ -82,22 +183,19 @@ SgNode* STLSceneLoader::load(const std::string& filename)
     }
 
     if(isBinary){
-        for(size_t i = 0; i < numFaces; i++){
-            Vector3f value;
-            for(size_t j = 0; j < 3; j++){
-                float v;
-                ifs.read((char *)&v, 4);
-                value[j] = v;
+        for(size_t i = 0; i < numFaces; ++i){
+            Vector3f normal;
+            for(size_t j = 0; j < 3; ++j){
+                ifs.read((char*)&normal[j], 4);
             }
-            normals->push_back(value);
-            for(size_t k = 0; k < 3; k++){
-                Vector3f value;
-                for(size_t j = 0; j < 3; j++){
-                    float v;
-                    ifs.read((char *)&v, 4);
-                    value[j] = v;
+            arranger.addNormal(normal);
+
+            for(size_t j = 0; j < 3; ++j){
+                Vector3f vertex;
+                for(size_t k = 0; k < 3; ++k){
+                    ifs.read((char*)&vertex[k], 4);
                 }
-                vertices->push_back(value);
+                arranger.addVertex(vertex);
             }
             uint16_t attrib;
             ifs.read((char *)&attrib, 2);
@@ -109,39 +207,17 @@ SgNode* STLSceneLoader::load(const std::string& filename)
         while(!ifs.eof() && getline(ifs, line)){
             trim(line);
             if(boost::istarts_with(line, "vertex")){
-                readVector3(line.substr(6), vertices);
+                arranger.addVertex(readVector3(line.substr(6)));
             } else if(boost::istarts_with(line, "facet normal")){
-                readVector3(line.substr(12), normals);
+                arranger.addNormal(readVector3(line.substr(12)));
             }
         }
     }
+
+    auto shape = arranger.finalize();
     
-    SgShape* shape = 0;
-    
-    if(vertices->empty()){
+    if(!shape){
         os() << "Empty vertices." << endl;
-            
-    } else {
-        shape = new SgShape;
-        SgMesh* mesh = shape->getOrCreateMesh();
-        mesh->setVertices(vertices);
-        const int numTriangles = vertices->size() / 3;
-        mesh->reserveNumTriangles(numTriangles);
-        for(int i = 0; i < numTriangles; ++i){
-            const int j = i * 3;
-            mesh->addTriangle(j, j + 1, j + 2);
-        }
-        if(!normals->empty()){
-            mesh->setNormals(normals);
-            SgIndexArray& indices = mesh->normalIndices();
-            indices.reserve(normals->size() * 3);
-            for(size_t i = 0; i < normals->size(); ++i) {
-                indices.push_back(i);
-                indices.push_back(i);
-                indices.push_back(i);
-            }
-        }
-        mesh->updateBoundingBox();
     }
     
     return shape; 
