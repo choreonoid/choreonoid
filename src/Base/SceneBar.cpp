@@ -428,6 +428,7 @@ class SceneCounter : public PolymorphicFunctionSet<SgNode>
 {
 public:
     int numVertices;
+    int numNormals;
     int numTriangles;
 
     SceneCounter() {
@@ -445,6 +446,9 @@ public:
                     if(mesh->hasVertices()){
                         numVertices += mesh->vertices()->size();
                     }
+                    if(mesh->hasNormals()){
+                        numNormals += mesh->normals()->size();
+                    }
                     numTriangles += mesh->numTriangles();
                 }
             });
@@ -461,6 +465,7 @@ public:
     
     void count(SgNode* node) {
         numVertices = 0;
+        numNormals = 0;
         numTriangles = 0;
         dispatch(node);
     }
@@ -473,6 +478,7 @@ void putSceneStatistics()
     
     int numSceneItems = 0;
     int totalNumVertics = 0;
+    int totalNumNormals = 0;
     int totalNumTriangles = 0;
     SceneCounter counter;
 
@@ -486,8 +492,10 @@ void putSceneStatistics()
                 os << format(_(" Scene \"{}\":"), item->name()) << endl;
                 counter.count(scene);
                 os << format(_("  Vertices: {}\n"), counter.numVertices);
+                os << format(_("  Normals: {}\n"), counter.numNormals);
                 os << format(_("  Triangles: {}"), counter.numTriangles) << endl;
                 totalNumVertics += counter.numVertices;
+                totalNumNormals += counter.numNormals;
                 totalNumTriangles += counter.numTriangles;
                 ++numSceneItems;
             }
@@ -499,6 +507,7 @@ void putSceneStatistics()
     } else {
         os << format(_("The total number of {} scene items:\n"), numSceneItems);
         os << format(_(" Vertices: {}\n"), totalNumVertics);
+        os << format(_(" Normals: {}\n"), totalNumNormals);
         os << format(_(" Triangles: {}"), totalNumTriangles) << endl;
     }
 }
