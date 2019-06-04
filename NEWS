@@ -6,6 +6,7 @@ Changes since 1.7.0:
 * Remove OpenHRPPlugin and OpenHRPModelLoader
 * Remove GrxUIPlugin
 * Stop supporting Qt4
+* Replace QGLWidget with QOpenGLWidget in the implementation of SceneWidget
 
 Choreonoid 1.7.0 released on May 8, 2019
 ========================================
