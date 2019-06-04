@@ -24,34 +24,33 @@ namespace filesystem = boost::filesystem;
 
 namespace {
 
-typedef std::function<AbstractBodyLoaderPtr()> LoaderFactory;
-typedef map<string, LoaderFactory> LoaderFactoryMap;
-LoaderFactoryMap loaderFactoryMap;
-std::mutex loaderFactoryMapMutex;
+map<string, string> unifiedExtensionMap;
+typedef function<AbstractBodyLoaderPtr()> LoaderFactory;
+map<string, LoaderFactory> loaderFactoryMap;
+mutex loaderMapMutex;
 
 class SceneLoaderAdapter : public AbstractBodyLoader
 {
-    AbstractSceneLoader* loader;
+    SceneLoader loader;
     ostream* os;
 
 public:
-    SceneLoaderAdapter(AbstractSceneLoader* loader) : loader(loader) {
+    SceneLoaderAdapter(){
         os = &nullout();
     }
-    ~SceneLoaderAdapter() { delete loader; }
 
-    virtual void setMessageSink(std::ostream& os_)
-    {
+    virtual void setMessageSink(std::ostream& os_) override {
         os = &os_;
     }
 
-    virtual bool load(Body* body, const std::string& filename) {
+    virtual bool load(Body* body, const std::string& filename) override {
 
         body->clearDevices();
         body->clearExtraJoints();
 
-        loader->setMessageSink(*os);
-        SgNode* scene = loader->load(filename);
+        loader.setMessageSink(*os);
+        bool isSupported;
+        SgNode* scene = loader.load(filename, isSupported);
         if(scene){
             Link* link = body->createLink();
             link->setName("Root");
@@ -61,28 +60,28 @@ public:
             body->setRootLink(link);
             body->setModelName(filesystem::path(filename).stem().string());
         }
+        if(!isSupported){
+            (*os) <<
+                fmt::format(_("The file format of \"{}\" is not supported by the body loader.\n"),
+                            filesystem::path(filename).filename().string());
+        }
 
-        return (scene != 0);
+        return (scene != nullptr);
     }
 };
 
 struct FactoryRegistration
 {
     FactoryRegistration(){
-        BodyLoader::registerLoader(
-            "body", [](){ return std::make_shared<YAMLBodyLoader>(); });
-        BodyLoader::registerLoader(
-            "yaml", [](){ return std::make_shared<YAMLBodyLoader>(); });
-        BodyLoader::registerLoader(
-            "yml", [](){ return std::make_shared<YAMLBodyLoader>(); });
-        BodyLoader::registerLoader(
-            "wrl", [](){ return std::make_shared<VRMLBodyLoader>(); });
-        BodyLoader::registerLoader(
-            "scen", [](){ return std::make_shared<SceneLoaderAdapter>(new YAMLSceneLoader); });
-        BodyLoader::registerLoader(
-            "stl", [](){ return std::make_shared<SceneLoaderAdapter>(new STLSceneLoader); });
-        BodyLoader::registerLoader(
-            "dae", [](){ return std::make_shared<SceneLoaderAdapter>(new SceneLoader); });
+        lock_guard<mutex> lock(loaderMapMutex);
+
+        unifiedExtensionMap["body"] = "yaml";
+        unifiedExtensionMap["yaml"] = "yaml";
+        unifiedExtensionMap["yml"] = "yaml";
+        unifiedExtensionMap["wrl"] = "wrl";
+
+        loaderFactoryMap["yaml"] = [](){ return make_shared<YAMLBodyLoader>(); };
+        loaderFactoryMap["wrl"] = [](){ return make_shared<VRMLBodyLoader>(); };
     }
 } factoryRegistration;
     
@@ -90,7 +89,8 @@ struct FactoryRegistration
 
 bool BodyLoader::registerLoader(const std::string& extension, std::function<AbstractBodyLoaderPtr()> factory)
 {
-    std::lock_guard<std::mutex> lock(loaderFactoryMapMutex);
+    lock_guard<mutex> lock(loaderMapMutex);
+    unifiedExtensionMap[extension] = extension;
     loaderFactoryMap[extension] = factory;
     return  true;
 }
@@ -103,14 +103,13 @@ class BodyLoaderImpl
 public:
     ostream* os;
     AbstractBodyLoaderPtr actualLoader;
+    map<string, AbstractBodyLoaderPtr> loaderMap;
+    AbstractBodyLoaderPtr generalLoader;
     bool isVerbose;
     bool isShapeLoadingEnabled;
     int defaultDivisionNumber;
     double defaultCreaseAngle;
 
-    typedef map<string, AbstractBodyLoaderPtr> BodyLoaderMap;
-    BodyLoaderMap bodyLoaderMap;
-        
     BodyLoaderImpl();
     ~BodyLoaderImpl();
     bool load(Body* body, const std::string& filename);
@@ -199,39 +198,42 @@ Body* BodyLoader::load(const std::string& filename)
 
 bool BodyLoaderImpl::load(Body* body, const std::string& filename)
 {
-    bool result = false;
-
     filesystem::path path(filename);
     string ext = getExtension(path);
+    actualLoader = nullptr;
 
-    try {
-        auto p = bodyLoaderMap.find(ext);
-        if(p != bodyLoaderMap.end()){
-            actualLoader = p->second;
-        } else {
-            std::lock_guard<std::mutex> lock(loaderFactoryMapMutex);
-            auto q = loaderFactoryMap.find(ext);
-            if(q != loaderFactoryMap.end()){
-                LoaderFactory factory = q->second;
-                actualLoader = factory();
-                bodyLoaderMap[ext] = actualLoader;
+    {
+        std::lock_guard<std::mutex> lock(loaderMapMutex);
+        auto p = unifiedExtensionMap.find(ext);
+        if(p != unifiedExtensionMap.end()){
+            auto& uext = p->second;
+            auto q = loaderMap.find(uext);
+            if(q != loaderMap.end()){
+                actualLoader = q->second;
+            } else {
+                actualLoader = loaderFactoryMap[uext]();
+                loaderMap[uext] = actualLoader;
             }
         }
-
-        if(!actualLoader){
-            (*os) <<
-                fmt::format(_("The file format of \"{}\" is not supported by the body loader.\n"),
-                            path.filename().string());
-        } else {
-            actualLoader->setMessageSink(*os);
-            actualLoader->setVerbose(isVerbose);
-            actualLoader->setShapeLoadingEnabled(isShapeLoadingEnabled);
-            actualLoader->setDefaultDivisionNumber(defaultDivisionNumber);
-            actualLoader->setDefaultCreaseAngle(defaultCreaseAngle);
-
-            result = actualLoader->load(body, filename);
+    }
+    
+    if(!actualLoader){
+        if(!generalLoader){
+            generalLoader = make_shared<SceneLoaderAdapter>();
         }
-        
+        actualLoader = generalLoader;
+    }
+    
+    actualLoader->setMessageSink(*os);
+    actualLoader->setVerbose(isVerbose);
+    actualLoader->setShapeLoadingEnabled(isShapeLoadingEnabled);
+    actualLoader->setDefaultDivisionNumber(defaultDivisionNumber);
+    actualLoader->setDefaultCreaseAngle(defaultCreaseAngle);
+
+    bool result = false;
+    try {
+        result = actualLoader->load(body, filename);
+
     } catch(const ValueNode::Exception& ex){
         (*os) << ex.message();
     } catch(const nonexistent_key_error& error){
