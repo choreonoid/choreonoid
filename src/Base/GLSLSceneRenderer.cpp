@@ -25,6 +25,7 @@ namespace {
 
 const bool USE_FBO_FOR_PICKING = true;
 const bool SHOW_IMAGE_FOR_PICKING = false;
+const bool USE_GL_INT_2_10_10_10_REV_FOR_NORMALS = true;
 
 const float MinLineWidthForPicking = 5.0f;
 
@@ -362,7 +363,10 @@ public:
     bool renderTexture(SgTexture* texture);
     bool loadTextureImage(TextureResource* resource, const Image& image);
     void writeMeshVertices(SgMesh* mesh, VertexResource* resource);
-    void writeMeshNormals(SgMesh* mesh, GLuint buffer, SgNormalArray& normals);
+    template<class NormalArrayWrapper>
+    bool writeMeshNormalsSub(SgMesh* mesh, NormalArrayWrapper& normals, SgVertexArray& vertices, VertexResource* resource);
+    void writeMeshNormalsPacked(SgMesh* mesh, GLuint buffer, SgVertexArray& vertices, VertexResource* resource);
+    void writeMeshNormalsFloat(SgMesh* mesh, GLuint buffer, SgVertexArray& vertices, VertexResource* resource);
     void writeMeshTexCoords(SgMesh* mesh, GLuint buffer);
     void writeMeshColors(SgMesh* mesh, GLuint buffer);
     void renderPlot(SgPlot* plot, GLenum primitiveMode, std::function<SgVertexArrayPtr()> getVertices);
@@ -1573,19 +1577,10 @@ void GLSLSceneRendererImpl::writeMeshVertices(SgMesh* mesh, VertexResource* reso
     glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vector3f), vertices.data(), GL_STATIC_DRAW);
     glEnableVertexAttribArray(0);
 
-    SgNormalArray normals;
-    writeMeshNormals(mesh, resource->newBuffer(), normals);
-    if(isNormalVisualizationEnabled){
-        auto lines = new SgLineSet;
-        auto lineVertices = lines->getOrCreateVertices();
-        for(size_t i=0; i < vertices.size(); ++i){
-            const Vector3f& v = vertices[i];
-            lineVertices->push_back(v);
-            lineVertices->push_back(v + normals[i] * normalVisualizationLength);
-            lines->addLine(i*2, i*2+1);
-        }
-        lines->setMaterial(normalVisualizationMaterial);
-        resource->normalVisualization = lines;
+    if(USE_GL_INT_2_10_10_10_REV_FOR_NORMALS){
+        writeMeshNormalsPacked(mesh, resource->newBuffer(), vertices, resource);
+    } else {
+        writeMeshNormalsFloat(mesh, resource->newBuffer(), vertices, resource);
     }
 
     if(mesh->hasTexCoords()){
@@ -1597,34 +1592,19 @@ void GLSLSceneRendererImpl::writeMeshVertices(SgMesh* mesh, VertexResource* reso
     }
 }
 
-
-void GLSLSceneRendererImpl::writeMeshNormals(SgMesh* mesh, GLuint buffer, SgNormalArray& normals)
+template<class NormalArrayWrapper>
+bool GLSLSceneRendererImpl::writeMeshNormalsSub
+(SgMesh* mesh, NormalArrayWrapper& normals, SgVertexArray& vertices, VertexResource* resource)
 {
+    bool ready = false;
+    
     auto& triangleVertices = mesh->triangleVertices();
     const int totalNumVertices = triangleVertices.size();
-    normals.reserve(totalNumVertices);
     const int numTriangles = mesh->numTriangles();
+    
+    normals.array.reserve(totalNumVertices);
 
-    if(defaultSmoothShading && mesh->normals()){
-        const auto& orgNormals = *mesh->normals();
-        const auto& normalIndices = mesh->normalIndices();
-        int faceVertexIndex = 0;
-        if(normalIndices.empty()){
-            for(int i=0; i < numTriangles; ++i){
-                for(int j=0; j < 3; ++j){
-                    const int orgVertexIndex = triangleVertices[faceVertexIndex++];
-                    normals.push_back(orgNormals[orgVertexIndex]);
-                }
-            }
-        } else {
-            for(int i=0; i < numTriangles; ++i){
-                for(int j=0; j < 3; ++j){
-                    const int normalIndex = normalIndices[faceVertexIndex++];
-                    normals.push_back(orgNormals[normalIndex]);
-                }
-            }
-        }
-    } else {
+    if(!defaultSmoothShading){
         // flat shading
         const auto& orgVertices = *mesh->vertices();
         for(int i=0; i < numTriangles; ++i){
@@ -1633,18 +1613,110 @@ void GLSLSceneRendererImpl::writeMeshNormals(SgMesh* mesh, GLuint buffer, SgNorm
             const Vector3f e2 = orgVertices[triangle[2]] - orgVertices[triangle[0]];
             const Vector3f normal = e1.cross(e2).normalized();
             for(int j=0; j < 3; ++j){
-                normals.push_back(normal);
+                normals.append(normal);
             }
         }
+        ready = true;
+
+    } else if(mesh->normals()){
+        const auto& orgNormals = *mesh->normals();
+        const auto& normalIndices = mesh->normalIndices();
+        int faceVertexIndex = 0;
+        if(normalIndices.empty()){
+            for(int i=0; i < numTriangles; ++i){
+                for(int j=0; j < 3; ++j){
+                    const int orgVertexIndex = triangleVertices[faceVertexIndex++];
+                    normals.append(orgNormals[orgVertexIndex]);
+                }
+            }
+        } else {
+            for(int i=0; i < numTriangles; ++i){
+                for(int j=0; j < 3; ++j){
+                    const int normalIndex = normalIndices[faceVertexIndex++];
+                    normals.append(orgNormals[normalIndex]);
+                }
+            }
+        }
+        ready = true;
     }
 
-    {
-        LockVertexArrayAPI lock;
-        glBindBuffer(GL_ARRAY_BUFFER, buffer);
-        glVertexAttribPointer((GLuint)1, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
+    if(isNormalVisualizationEnabled){
+        auto lines = new SgLineSet;
+        auto lineVertices = lines->getOrCreateVertices();
+        for(size_t i=0; i < vertices.size(); ++i){
+            const Vector3f& v = vertices[i];
+            lineVertices->push_back(v);
+            lineVertices->push_back(v + normals.get(i) * normalVisualizationLength);
+            lines->addLine(i*2, i*2+1);
+        }
+        lines->setMaterial(normalVisualizationMaterial);
+        resource->normalVisualization = lines;
     }
-    glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(Vector3f), normals.data(), GL_STATIC_DRAW);
-    glEnableVertexAttribArray(1);
+
+    return ready;
+}    
+    
+
+void GLSLSceneRendererImpl::writeMeshNormalsPacked
+(SgMesh* mesh, GLuint buffer, SgVertexArray& vertices, VertexResource* resource)
+{
+    struct NormalArrayWrapper {
+        vector<uint32_t> array;
+        void append(const Vector3f& v){
+            const uint32_t xs = v.x() < 0.0f;
+            const uint32_t ys = v.y() < 0.0f;
+            const uint32_t zs = v.z() < 0.0f;
+            array.push_back(
+                uint32_t(
+                    zs << 29 | ((uint32_t)(v.z() * 511 + (zs << 9)) & 511) << 20 |
+                    ys << 19 | ((uint32_t)(v.y() * 511 + (ys << 9)) & 511) << 10 |
+                    xs << 9  | ((uint32_t)(v.x() * 511 + (xs << 9)) & 511)));
+        }
+        Vector3f get(int index){
+            auto packed = array[index];
+            Vector3f v;
+            for(int i=0; i < 3; ++i){
+                if(packed & 512){ // minus
+                    v[i] = (static_cast<int>(packed & 511) - 512) / 512.0f;
+                } else { // plus
+                    v[i] = (packed & 511) / 511.0f;
+                }
+                packed >>= 10;
+            }
+            return v;
+        }
+    } normals;
+            
+    if(writeMeshNormalsSub(mesh, normals, vertices, resource)){
+        {
+            LockVertexArrayAPI lock;
+            glBindBuffer(GL_ARRAY_BUFFER, buffer);
+            glVertexAttribPointer((GLuint)1, 4, GL_INT_2_10_10_10_REV, GL_TRUE, 0, ((GLubyte*)NULL + (0)));
+        }
+        glBufferData(GL_ARRAY_BUFFER, normals.array.size() * sizeof(uint32_t), normals.array.data(), GL_STATIC_DRAW);
+        glEnableVertexAttribArray(1);
+    }
+}
+
+
+void GLSLSceneRendererImpl::writeMeshNormalsFloat
+(SgMesh* mesh, GLuint buffer, SgVertexArray& vertices, VertexResource* resource)
+{
+    struct NormalArrayWrapper {
+        SgNormalArray array;
+        void append(const Vector3f& v){ array.push_back(v); }
+        Vector3f get(int index){ return array[index]; }
+    } normals;
+            
+    if(writeMeshNormalsSub(mesh, normals, vertices, resource)){
+        {
+            LockVertexArrayAPI lock;
+            glBindBuffer(GL_ARRAY_BUFFER, buffer);
+            glVertexAttribPointer((GLuint)1, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
+        }
+        glBufferData(GL_ARRAY_BUFFER, normals.array.size() * sizeof(Vector3f), normals.array.data(), GL_STATIC_DRAW);
+        glEnableVertexAttribArray(1);
+    }
 }
 
 
