@@ -221,7 +221,7 @@ public:
     ShaderProgram* currentProgram;
     LightingProgram* currentLightingProgram;
     NolightingProgram* currentNolightingProgram;
-    
+
     SolidColorProgram solidColorProgram;
     MinimumLightingProgram minimumLightingProgram;
     PhongShadowLightingProgram phongShadowLightingProgram;
@@ -651,7 +651,10 @@ void GLSLSceneRendererImpl::doRender()
     self->extractPreprocessedNodes();
     beginRendering();
 
-    if(FORCE_USE_OF_MINIMUM_LIGHTING_PROGRAM){
+    if(!defaultLighting){
+        pushProgram(solidColorProgram, false);
+        
+    } else if(FORCE_USE_OF_MINIMUM_LIGHTING_PROGRAM){
         pushProgram(minimumLightingProgram, true);
 
     } else {
