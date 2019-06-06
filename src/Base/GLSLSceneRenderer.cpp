@@ -27,6 +27,7 @@ namespace {
 const bool USE_FBO_FOR_PICKING = true;
 const bool SHOW_IMAGE_FOR_PICKING = false;
 const bool USE_GL_INT_2_10_10_10_REV_FOR_NORMALS = true;
+const bool FORCE_USE_OF_MINIMUM_LIGHTING_PROGRAM = false;
 
 const float MinLineWidthForPicking = 5.0f;
 
@@ -222,6 +223,7 @@ public:
     NolightingProgram* currentNolightingProgram;
     
     SolidColorProgram solidColorProgram;
+    MinimumLightingProgram minimumLightingProgram;
     PhongShadowLightingProgram phongShadowLightingProgram;
 
     struct ProgramInfo {
@@ -434,8 +436,6 @@ void GLSLSceneRendererImpl::initialize()
 
     hasValidTextureTransform = false;
 
-    prevFog = 0;
-
     isNormalVisualizationEnabled = false;
     normalVisualizationLength = 0.0f;
     normalVisualizationMaterial = new SgMaterial;
@@ -584,6 +584,7 @@ bool GLSLSceneRendererImpl::initializeGL()
 
     try {
         solidColorProgram.initialize();
+        minimumLightingProgram.initialize();
         phongShadowLightingProgram.initialize();
     }
     catch(std::runtime_error& error){
@@ -650,39 +651,44 @@ void GLSLSceneRendererImpl::doRender()
     self->extractPreprocessedNodes();
     beginRendering();
 
-    auto& program = phongShadowLightingProgram;
-    
-    if(shadowLightIndices.empty()){
-        program.setNumShadows(0);
-        
+    if(FORCE_USE_OF_MINIMUM_LIGHTING_PROGRAM){
+        pushProgram(minimumLightingProgram, true);
+
     } else {
-        Array4i vp = self->viewport();
-        int w, h;
-        program.getShadowMapSize(w, h);
-        self->setViewport(0, 0, w, h);
-        pushProgram(program.shadowMapProgram(), false);
-        isRenderingShadowMap = true;
-        isActuallyRendering = false;
+        auto& program = phongShadowLightingProgram;
+
+        if(shadowLightIndices.empty()){
+            program.setNumShadows(0);
+        } else {
+            Array4i vp = self->viewport();
+            int w, h;
+            program.getShadowMapSize(w, h);
+            self->setViewport(0, 0, w, h);
+            pushProgram(program.shadowMapProgram(), false);
+            isRenderingShadowMap = true;
+            isActuallyRendering = false;
         
-        int shadowMapIndex = 0;
-        set<int>::iterator iter = shadowLightIndices.begin();
-        while(iter != shadowLightIndices.end() && shadowMapIndex < program.maxNumShadows()){
-            program.activateShadowMapGenerationPass(shadowMapIndex);
-            int shadowLightIndex = *iter;
-            if(renderShadowMap(shadowLightIndex)){
-                ++shadowMapIndex;
+            int shadowMapIndex = 0;
+            set<int>::iterator iter = shadowLightIndices.begin();
+            while(iter != shadowLightIndices.end() && shadowMapIndex < program.maxNumShadows()){
+                program.activateShadowMapGenerationPass(shadowMapIndex);
+                int shadowLightIndex = *iter;
+                if(renderShadowMap(shadowLightIndex)){
+                    ++shadowMapIndex;
+                }
+                ++iter;
             }
-            ++iter;
-        }
-        program.setNumShadows(shadowMapIndex);
+            program.setNumShadows(shadowMapIndex);
         
-        popProgram();
-        isRenderingShadowMap = false;
-        self->setViewport(vp[0], vp[1], vp[2], vp[3]);
+            popProgram();
+            isRenderingShadowMap = false;
+            self->setViewport(vp[0], vp[1], vp[2], vp[3]);
+        }
+    
+        program.activateMainRenderingPass();
+        pushProgram(program, true);
     }
     
-    program.activateMainRenderingPass();
-    pushProgram(program, true);
     isActuallyRendering = true;
     const Vector3f& c = self->backgroundColor();
     glClearColor(c[0], c[1], c[2], 1.0f);
@@ -980,7 +986,7 @@ void GLSLSceneRenderer::renderFog(LightingProgram* program)
 
 void GLSLSceneRendererImpl::renderFog(LightingProgram* program)
 {
-    SgFog* fog = 0;
+    SgFog* fog = nullptr;
     if(self->isFogEnabled()){
         int n = self->numFogs();
         if(n > 0){
@@ -1061,9 +1067,9 @@ void GLSLSceneRendererImpl::pushProgram(ShaderProgram& program, bool isLightingP
         currentProgram = &program;
         if(isLightingProgram){
             currentLightingProgram = static_cast<LightingProgram*>(currentProgram);
-            currentNolightingProgram = 0;
+            currentNolightingProgram = nullptr;
         } else {
-            currentLightingProgram = 0;
+            currentLightingProgram = nullptr;
             currentNolightingProgram = static_cast<NolightingProgram*>(currentProgram);
         }
         program.activate();

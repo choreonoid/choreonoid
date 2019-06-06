@@ -108,6 +108,7 @@ public:
 
     virtual void initialize() override;
     virtual void activate() override;
+    virtual void initializeFrameRendering() override;
     virtual void setTransform(const Affine3& view, const Affine3& model, const Matrix4& PV) override;
     virtual int maxNumLights() const override;
     virtual bool setLight(

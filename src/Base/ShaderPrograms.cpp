@@ -41,20 +41,25 @@ class MinimumLightingProgramImpl
 {
 public:
     GLint MVPLocation;
+    GLint normalMatrixLocation;
 
     static const int maxNumLights = 2;
     GLint numLightsLocation;
     
     struct LightInfo {
-        GLint positionLocation;
+        GLint directionLocation;
         GLint intensityLocation;
         GLint ambientIntensityLocation;
     };
     vector<LightInfo> lightInfos;
     
     GLint diffuseColorLocation;
+    GLint ambientColorLocation;
     Vector3f diffuseColor;
-    bool isDiffuseColorValid;
+    Vector3f ambientColor;
+    bool isColorApplied;
+
+    void initialize(GLSLProgram& glsl);    
 };
 
 
@@ -356,8 +361,33 @@ MinimumLightingProgram::~MinimumLightingProgram()
 
 void MinimumLightingProgram::initialize()
 {
-    impl->MVPLocation = glslProgram().getUniformLocation("MVP");
-    impl->isDiffuseColorValid = false;
+    impl->initialize(glslProgram());
+}
+
+
+void MinimumLightingProgramImpl::initialize(GLSLProgram& glsl)
+{
+    glsl.loadVertexShader(":/Base/shader/minlighting.vert");
+    glsl.loadFragmentShader(":/Base/shader/minlighting.frag");
+    glsl.link();
+    glsl.use();
+
+    MVPLocation = glsl.getUniformLocation("MVP");
+    normalMatrixLocation = glsl.getUniformLocation("normalMatrix");
+
+    numLightsLocation = glsl.getUniformLocation("numLights");
+    lightInfos.resize(maxNumLights);
+    string lightFormat("lights[{}].");
+    for(int i=0; i < maxNumLights; ++i){
+        auto& light = lightInfos[i];
+        string prefix = format(lightFormat, i);
+        light.directionLocation = glsl.getUniformLocation(prefix + "direction");
+        light.intensityLocation = glsl.getUniformLocation(prefix + "intensity");
+        light.ambientIntensityLocation = glsl.getUniformLocation(prefix + "ambientIntensity");
+    }
+
+    diffuseColorLocation = glsl.getUniformLocation("diffuseColor");
+    ambientColorLocation = glsl.getUniformLocation("ambientColor");
 }
 
 
@@ -365,15 +395,23 @@ void MinimumLightingProgram::activate()
 {
     LightingProgram::activate();
 
-    impl->isDiffuseColorValid = false;
-    impl->diffuseColor << 0.0f, 0.0f, 0.0f, 0.0f;
+    impl->isColorApplied = false;
 }
     
 
+void MinimumLightingProgram::initializeFrameRendering()
+{
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
+
 void MinimumLightingProgram::setTransform(const Affine3& view, const Affine3& model, const Matrix4& PV)
 {
+    const Affine3f VM = (view * model).cast<float>();
+    const Matrix3f N = VM.linear();
     const Matrix4f PVM = (PV * model.matrix()).cast<float>();
     glUniformMatrix4fv(impl->MVPLocation, 1, GL_FALSE, PVM.data());
+    glUniformMatrix3fv(impl->normalMatrixLocation, 1, GL_FALSE, N.data());
 }
 
 
@@ -396,10 +434,8 @@ bool MinimumLightingProgram::setLight
         return false;
     }
     
-    Vector3 d = view.linear() * T.linear() * -dirLight->direction();
-    Vector4f pos(d.x(), d.y(), d.z(), 0.0f);
-    glUniform4fv(info.positionLocation, 1, pos.data());
-        
+    Vector3f direction = (view.linear() * T.linear() * -dirLight->direction()).cast<float>();
+    glUniform3fv(info.directionLocation, 1, direction.data());
     Vector3f intensity(light->intensity() * light->color());
     glUniform3fv(info.intensityLocation, 1, intensity.data());
     Vector3f ambientIntensity(light->ambientIntensity() * light->color());
@@ -417,12 +453,17 @@ void MinimumLightingProgram::setNumLights(int n)
 
 void MinimumLightingProgram::setMaterial(const SgMaterial* material)
 {
-    const auto& color = material->diffuseColor();
-    if(!impl->isDiffuseColorValid || impl->diffuseColor != color){
-        glUniform3fv(impl->diffuseColorLocation, 1, color.data());
-        impl->diffuseColor = color;
-        impl->isDiffuseColorValid = true;
+    const auto& dcolor = material->diffuseColor();
+    if(!impl->isColorApplied || impl->diffuseColor != dcolor){
+        glUniform3fv(impl->diffuseColorLocation, 1, dcolor.data());
+        impl->diffuseColor = dcolor;
     }
+    Vector3f acolor = material->ambientIntensity() * dcolor;
+    if(!impl->isColorApplied || impl->ambientColor != acolor){
+        glUniform3fv(impl->ambientColorLocation, 1, acolor.data());
+        impl->ambientColor = acolor;
+    }
+    impl->isColorApplied = true;
 }
 
 
@@ -606,7 +647,7 @@ void MaterialLightingProgramImpl::setMaterial(const SgMaterial* material)
         stateFlag[DIFFUSE_COLOR] = true;
     }
 
-    Vector3f acolor = material->ambientIntensity() * material->diffuseColor();
+    Vector3f acolor = material->ambientIntensity() * dcolor;
     if(!stateFlag[AMBIENT_COLOR] || ambientColor != acolor){
         glUniform3fv(ambientColorLocation, 1, acolor.data());
         ambientColor = acolor;
