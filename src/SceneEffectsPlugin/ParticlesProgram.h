@@ -51,7 +51,8 @@ private:
 class ParticlesProgram : public BasicLightingProgram, public ParticlesProgramBase
 {
 public:
-    ParticlesProgram(GLSLSceneRenderer* renderer);
+    ParticlesProgram(
+        GLSLSceneRenderer* renderer, const char* vertexShader, const char* fragmentShader);
 
 protected:
     virtual ShaderProgram* shaderProgram() { return this; }
@@ -61,7 +62,8 @@ protected:
 class LuminousParticlesProgram : public ShaderProgram, public ParticlesProgramBase
 {
 public:
-    LuminousParticlesProgram(GLSLSceneRenderer* renderer);
+    LuminousParticlesProgram(
+        GLSLSceneRenderer* renderer, const char* vertexShader, const char* fragmentShader);
 
 protected:
     virtual ShaderProgram* shaderProgram() { return this; }

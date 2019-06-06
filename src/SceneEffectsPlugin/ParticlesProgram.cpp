@@ -134,15 +134,19 @@ void ParticlesProgramBase::render
 }
 
 
-ParticlesProgram::ParticlesProgram(GLSLSceneRenderer* renderer)
-    : ParticlesProgramBase(renderer)
+ParticlesProgram::ParticlesProgram
+(GLSLSceneRenderer* renderer, const char* vertexShader, const char* fragmentShader)
+    : BasicLightingProgram(vertexShader, fragmentShader),
+      ParticlesProgramBase(renderer)
 {
 
 }
 
 
-LuminousParticlesProgram::LuminousParticlesProgram(GLSLSceneRenderer* renderer)
-    : ParticlesProgramBase(renderer)
+LuminousParticlesProgram::LuminousParticlesProgram
+(GLSLSceneRenderer* renderer, const char* vertexShader, const char* fragmentShader)
+    : ShaderProgram(vertexShader, fragmentShader),
+      ParticlesProgramBase(renderer)
 {
 
 }

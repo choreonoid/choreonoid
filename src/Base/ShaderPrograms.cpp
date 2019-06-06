@@ -19,6 +19,14 @@ using fmt::format;
 
 namespace cnoid {
 
+class ShaderProgramImpl
+{
+public:
+    string vertexShader;
+    string fragmentShader;
+};
+   
+
 class NolightingProgramImpl
 {
 public:
@@ -131,7 +139,6 @@ public:
     GLint isVertexColorEnabledLocation;
     bool isVertexColorEnabled;
 
-    void initialize(MaterialLightingProgram* self);
     void initialize(GLSLProgram& glsl);
     void setMaterial(const SgMaterial* material);
 };
@@ -180,28 +187,34 @@ public:
     Matrix4 shadowBias;
 
     PhongShadowLightingProgramImpl(PhongShadowLightingProgram* self);
-    void initialize(PhongShadowLightingProgram* self);    
+    void initialize(GLSLProgram& glsl);
     void initializeShadowInfo(GLSLProgram& glsl, int index);
 };
 
 }
 
 
-ShaderProgram::ShaderProgram()
+ShaderProgram::ShaderProgram(const char* vertexShader, const char* fragmentShader)
 {
     glslProgram_ = new GLSLProgram;
+    impl = new ShaderProgramImpl;
+    impl->vertexShader = vertexShader;
+    impl->fragmentShader = fragmentShader;
 }
 
 
 ShaderProgram::~ShaderProgram()
 {
     delete glslProgram_;
+    delete impl;
 }
 
 
 void ShaderProgram::initialize()
 {
-
+    glslProgram_->loadVertexShader(impl->vertexShader.c_str());
+    glslProgram_->loadFragmentShader(impl->fragmentShader.c_str());
+    glslProgram_->link();
 }
 
 
@@ -235,7 +248,8 @@ void ShaderProgram::setMaterial(const SgMaterial* material)
 }
 
 
-NolightingProgram::NolightingProgram()
+NolightingProgram::NolightingProgram(const char* vertexShader, const char* fragmentShader)
+    : ShaderProgram(vertexShader, fragmentShader)
 {
     impl = new NolightingProgramImpl;
 }
@@ -249,6 +263,8 @@ NolightingProgram::~NolightingProgram()
 
 void NolightingProgram::initialize()
 {
+    ShaderProgram::initialize();
+    
     impl->MVPLocation = glslProgram().getUniformLocation("MVP");
 }
 
@@ -261,6 +277,7 @@ void NolightingProgram::setTransform(const Affine3& view, const Affine3& model, 
 
 
 SolidColorProgram::SolidColorProgram()
+    : NolightingProgram(":/Base/shader/nolighting.vert", ":/Base/shader/solidcolor.frag")
 {
     impl = new SolidColorProgramImpl;
     impl->color.setZero();
@@ -276,15 +293,9 @@ SolidColorProgram::~SolidColorProgram()
 
 void SolidColorProgram::initialize()
 {
-    auto& glsl = glslProgram();
-    
-    glsl.loadVertexShader(":/Base/shader/nolighting.vert");
-    glsl.loadFragmentShader(":/Base/shader/solidcolor.frag");
-    glsl.link();
-    glsl.use();
-
     NolightingProgram::initialize();
 
+    auto& glsl = glslProgram();
     impl->pointSizeLocation = glsl.getUniformLocation("pointSize");
     impl->colorLocation = glsl.getUniformLocation("color");
     glUniform3fv(impl->colorLocation, 1, impl->color.data());
@@ -341,6 +352,13 @@ void SolidColorProgram::setPointSize(float s)
 }
 
 
+LightingProgram::LightingProgram(const char* vertexShader, const char* fragmentShader)
+    : ShaderProgram(vertexShader, fragmentShader)
+{
+
+}
+
+
 void LightingProgram::setFog(const SgFog* fog)
 {
 
@@ -348,6 +366,7 @@ void LightingProgram::setFog(const SgFog* fog)
 
 
 MinimumLightingProgram::MinimumLightingProgram()
+    : LightingProgram(":/Base/shader/minlighting.vert", ":/Base/shader/minlighting.frag")
 {
     impl = new MinimumLightingProgramImpl;
 }
@@ -361,17 +380,14 @@ MinimumLightingProgram::~MinimumLightingProgram()
 
 void MinimumLightingProgram::initialize()
 {
+    LightingProgram::initialize();
+
     impl->initialize(glslProgram());
 }
 
 
 void MinimumLightingProgramImpl::initialize(GLSLProgram& glsl)
 {
-    glsl.loadVertexShader(":/Base/shader/minlighting.vert");
-    glsl.loadFragmentShader(":/Base/shader/minlighting.frag");
-    glsl.link();
-    glsl.use();
-
     MVPLocation = glsl.getUniformLocation("MVP");
     normalMatrixLocation = glsl.getUniformLocation("normalMatrix");
 
@@ -467,7 +483,8 @@ void MinimumLightingProgram::setMaterial(const SgMaterial* material)
 }
 
 
-BasicLightingProgram::BasicLightingProgram()
+BasicLightingProgram::BasicLightingProgram(const char* vertexShader, const char* fragmentShader)
+    : LightingProgram(vertexShader, fragmentShader)
 {
     impl = new BasicLightingProgramImpl;
 }
@@ -481,6 +498,7 @@ BasicLightingProgram::~BasicLightingProgram()
     
 void BasicLightingProgram::initialize()
 {
+    LightingProgram::initialize();
     impl->initialize(glslProgram());
 }
 
@@ -576,7 +594,8 @@ void BasicLightingProgram::setFog(const SgFog* fog)
 }
 
 
-MaterialLightingProgram::MaterialLightingProgram()
+MaterialLightingProgram::MaterialLightingProgram(const char* vertexShader, const char* fragmentShader)
+    : BasicLightingProgram(vertexShader, fragmentShader)
 {
     impl = new MaterialLightingProgramImpl;
 }
@@ -590,17 +609,14 @@ MaterialLightingProgram::~MaterialLightingProgram()
 
 void MaterialLightingProgram::initialize()
 {
-    impl->initialize(this);
+    BasicLightingProgram::initialize();
+    impl->initialize(glslProgram());
 }
 
 
-void MaterialLightingProgramImpl::initialize(MaterialLightingProgram* self)
+void MaterialLightingProgramImpl::initialize(GLSLProgram& glsl)
 {
-    self->BasicLightingProgram::initialize();
-
     stateFlag.resize(NUM_STATE_FLAGS, false);
-
-    auto& glsl = self->glslProgram();
 
     diffuseColorLocation = glsl.getUniformLocation("diffuseColor");
     ambientColorLocation = glsl.getUniformLocation("ambientColor");
@@ -703,6 +719,7 @@ void MaterialLightingProgram::setVertexColorEnabled(bool on)
 
 
 PhongShadowLightingProgram::PhongShadowLightingProgram()
+    : MaterialLightingProgram(":/Base/shader/phongshadow.vert", ":/Base/shader/phongshadow.frag")
 {
     impl = new PhongShadowLightingProgramImpl(this);
 }
@@ -749,21 +766,13 @@ GLuint PhongShadowLightingProgram::defaultFramebufferObject() const
 
 void PhongShadowLightingProgram::initialize()
 {
-    impl->initialize(this);
+    MaterialLightingProgram::initialize();
+    impl->initialize(glslProgram());
 }
 
 
-void PhongShadowLightingProgramImpl::initialize(PhongShadowLightingProgram* self)
+void PhongShadowLightingProgramImpl::initialize(GLSLProgram& glsl)
 {
-    auto& glsl = self->glslProgram();
-    
-    glsl.loadVertexShader(":/Base/shader/phongshadow.vert");
-    glsl.loadFragmentShader(":/Base/shader/phongshadow.frag");
-    glsl.link();
-    glsl.use();
-
-    self->MaterialLightingProgram::initialize();
-
     useUniformBlockToPassTransformationMatrices = transformBlockBuffer.initialize(glsl, "TransformBlock");
 
     if(useUniformBlockToPassTransformationMatrices){
@@ -981,7 +990,8 @@ bool PhongShadowLightingProgram::isShadowAntiAliasingEnabled() const
 
 
 ShadowMapProgram::ShadowMapProgram(PhongShadowLightingProgram* phongShadowProgram)
-    : mainProgram(phongShadowProgram)
+    : NolightingProgram(":/Base/shader/nolighting.vert", ":/Base/shader/depth.frag"),
+      mainProgram(phongShadowProgram)
 {
 
 }
@@ -989,12 +999,6 @@ ShadowMapProgram::ShadowMapProgram(PhongShadowLightingProgram* phongShadowProgra
 
 void ShadowMapProgram::initialize()
 {
-    auto& glsl = glslProgram();
-    glsl.loadVertexShader(":/Base/shader/nolighting.vert");
-    glsl.loadFragmentShader(":/Base/shader/shadowmap.frag");
-    glsl.link();
-    glsl.use();
-    
     NolightingProgram::initialize();
 }
 

@@ -77,7 +77,10 @@ ParticleSystem* SceneFountain::getParticleSystem()
 
 
 FountainProgram::FountainProgram(GLSLSceneRenderer* renderer)
-    : ParticlesProgram(renderer),
+    : ParticlesProgram(
+        renderer,
+        ":/SceneEffectsPlugin/shader/Fountain.vert",
+        ":/SceneEffectsPlugin/shader/Particles.frag"),
       initVelBuffer(buffers[0]),
       offsetTimeBuffer(buffers[1])
 {
@@ -87,16 +90,11 @@ FountainProgram::FountainProgram(GLSLSceneRenderer* renderer)
 
 bool FountainProgram::initializeRendering(SceneParticles* particles)
 {
-    auto& glsl = glslProgram();
-    
-    glsl.loadVertexShader(":/SceneEffectsPlugin/shader/Fountain.vert");
-    glsl.loadFragmentShader(":/SceneEffectsPlugin/shader/Particles.frag");
-    glsl.link();
-    
     if(!ParticlesProgramBase::initializeRendering(particles)){
         return false;
     }
 
+    auto& glsl = glslProgram();
     lifeTimeLocation = glsl.getUniformLocation("lifeTime");
     accelLocation = glsl.getUniformLocation("accel");
 

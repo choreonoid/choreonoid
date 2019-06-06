@@ -73,7 +73,10 @@ ParticleSystem* SceneSmoke::getParticleSystem()
 
 
 SmokeProgram::SmokeProgram(GLSLSceneRenderer* renderer)
-    : ParticlesProgram(renderer)
+    : ParticlesProgram(
+        renderer,
+        ":/SceneEffectsPlugin/shader/Smoke.vert",
+        ":/SceneEffectsPlugin/shader/Particles.frag")
 {
 
 }
@@ -81,16 +84,11 @@ SmokeProgram::SmokeProgram(GLSLSceneRenderer* renderer)
 
 bool SmokeProgram::initializeRendering(SceneParticles* particles)
 {
-    auto& glsl = glslProgram();
-    
-    glsl.loadVertexShader(":/SceneEffectsPlugin/shader/Smoke.vert");
-    glsl.loadFragmentShader(":/SceneEffectsPlugin/shader/Particles.frag");
-    glsl.link();
-    
     if(!ParticlesProgramBase::initializeRendering(particles)){
         return false;
     }
 
+    auto& glsl = glslProgram();
     lifeTimeLocation = glsl.getUniformLocation("lifeTime");
     accelLocation = glsl.getUniformLocation("accel");
 

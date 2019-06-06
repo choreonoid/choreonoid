@@ -17,12 +17,10 @@ class SgLight;
 class SgMaterial;
 class SgFog;
 
+class ShaderProgramImpl;
+
 class CNOID_EXPORT ShaderProgram
 {
-    GLSLProgram* glslProgram_;
-    
-protected:
-    ShaderProgram();
     ShaderProgram(const ShaderProgram&) = delete;
 
 public:
@@ -34,6 +32,13 @@ public:
     virtual void deactivate();
     virtual void setTransform(const Affine3& view, const Affine3& model, const Matrix4& PV);
     virtual void setMaterial(const SgMaterial* material);
+
+protected:
+    ShaderProgram(const char* vertexShader, const char* fragmentShader);
+
+private:
+    GLSLProgram* glslProgram_;
+    ShaderProgramImpl* impl;
 };
 
 
@@ -41,14 +46,16 @@ class NolightingProgramImpl;
 
 class CNOID_EXPORT NolightingProgram : public ShaderProgram
 {
-protected:
-    NolightingProgram();
+    NolightingProgram() = delete;
     NolightingProgram(const NolightingProgram&) = delete;
-    ~NolightingProgram();
-    
+
 public:
+    ~NolightingProgram();
     virtual void initialize() override;
     virtual void setTransform(const Affine3& view, const Affine3& model, const Matrix4& PV) override;
+
+protected:
+    NolightingProgram(const char* vertexShader, const char* fragmentShader);
 
 private:
     NolightingProgramImpl* impl;
@@ -60,7 +67,7 @@ class SolidColorProgramImpl;
 class CNOID_EXPORT SolidColorProgram : public NolightingProgram
 {
     SolidColorProgram(const SolidColorProgram&) = delete;
-    
+
 public:
     SolidColorProgram();
     ~SolidColorProgram();
@@ -83,16 +90,18 @@ private:
 
 class CNOID_EXPORT LightingProgram : public ShaderProgram
 {
-protected:
     LightingProgram() = default;
     LightingProgram(const LightingProgram&) = delete;
-    
+
 public:
     virtual int maxNumLights() const = 0;
     virtual bool setLight(
         int index, const SgLight* light, const Affine3& T, const Affine3& view, bool shadowCasting) = 0;
     virtual void setNumLights(int n) = 0;
     virtual void setFog(const SgFog* fog);
+
+protected:
+    LightingProgram(const char* vertexShader, const char* fragmentShader);
 };
 
 
@@ -101,7 +110,7 @@ class MinimumLightingProgramImpl;
 class CNOID_EXPORT MinimumLightingProgram : public LightingProgram
 {
     MinimumLightingProgram(const MinimumLightingProgram&) = delete;
-    
+
 public:
     MinimumLightingProgram();
     ~MinimumLightingProgram();
@@ -125,11 +134,8 @@ class BasicLightingProgramImpl;
 
 class CNOID_EXPORT BasicLightingProgram : public LightingProgram
 {
-protected:
-    BasicLightingProgram();
     BasicLightingProgram(const BasicLightingProgram&) = delete;
-    ~BasicLightingProgram();
-    
+
 public:
     virtual void initialize() override;
     virtual int maxNumLights() const override;
@@ -138,6 +144,10 @@ public:
     virtual void setNumLights(int n) override;
     virtual void setFog(const SgFog* fog) override;
 
+protected:
+    BasicLightingProgram(const char* vertexShader, const char* fragmentShader);
+    ~BasicLightingProgram();
+    
 private:
     BasicLightingProgramImpl* impl;
 };
@@ -147,9 +157,10 @@ class MaterialLightingProgramImpl;
 
 class CNOID_EXPORT MaterialLightingProgram : public BasicLightingProgram
 {
-protected:
-    MaterialLightingProgram();
     MaterialLightingProgram(const MaterialLightingProgram&) = delete;
+
+protected:
+    MaterialLightingProgram(const char* vertexShader, const char* fragmentShader);
     ~MaterialLightingProgram();
     
 public:
@@ -207,8 +218,6 @@ private:
 
 class ShadowMapProgram : public NolightingProgram
 {
-    PhongShadowLightingProgram* mainProgram;
-
     ShadowMapProgram(const ShadowMapProgram&) = delete;
     
 public:
@@ -217,6 +226,9 @@ public:
     virtual void activate() override;
     virtual void initializeFrameRendering() override;
     virtual void deactivate() override;
+
+private:
+    PhongShadowLightingProgram* mainProgram;
 };
 
 }

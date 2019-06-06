@@ -114,7 +114,10 @@ SgObject* SceneSnow::clone(SgCloneMap& cloneMap) const
 
 
 RainSnowProgram::RainSnowProgram(GLSLSceneRenderer* renderer)
-    : ParticlesProgram(renderer)
+    : ParticlesProgram(
+        renderer,
+        ":/SceneEffectsPlugin/shader/RainSnow.vert",
+        ":/SceneEffectsPlugin/shader/Particles.frag")
 {
 
 }
@@ -122,11 +125,6 @@ RainSnowProgram::RainSnowProgram(GLSLSceneRenderer* renderer)
 
 bool RainSnowProgram::initializeRendering(SceneParticles* particles)
 {
-    auto& glsl = glslProgram();
-    glsl.loadVertexShader(":/SceneEffectsPlugin/shader/RainSnow.vert");
-    glsl.loadFragmentShader(":/SceneEffectsPlugin/shader/Particles.frag");
-    glsl.link();
-    
     if(!ParticlesProgramBase::initializeRendering(particles)){
         return false;
     }
@@ -180,6 +178,7 @@ bool RainSnowProgram::initializeRendering(SceneParticles* particles)
     glEnableVertexAttribArray(1);
     glBindVertexArray(0);
 
+    auto& glsl = glslProgram();
     velocityLocation = glsl.getUniformLocation("velocity");
     lifeTimeLocation = glsl.getUniformLocation("lifeTime");
 

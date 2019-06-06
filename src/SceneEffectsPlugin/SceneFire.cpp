@@ -76,7 +76,10 @@ ParticleSystem* SceneFire::getParticleSystem()
 
 
 FireProgram::FireProgram(GLSLSceneRenderer* renderer)
-    : LuminousParticlesProgram(renderer),
+    : LuminousParticlesProgram(
+        renderer,
+        ":/SceneEffectsPlugin/shader/Fire.vert",
+        ":/SceneEffectsPlugin/shader/LuminousParticles.frag"),
       initVelBuffer(buffers[0]),
       offsetTimeBuffer(buffers[1])
 {
@@ -86,15 +89,11 @@ FireProgram::FireProgram(GLSLSceneRenderer* renderer)
 
 bool FireProgram::initializeRendering(SceneParticles* particles)
 {
-    auto& glsl = glslProgram();
-    glsl.loadVertexShader(":/SceneEffectsPlugin/shader/Fire.vert");
-    glsl.loadFragmentShader(":/SceneEffectsPlugin/shader/LuminousParticles.frag");
-    glsl.link();
-    
     if(!ParticlesProgramBase::initializeRendering(particles)){
         return false;
     }
 
+    auto& glsl = glslProgram();
     lifeTimeLocation = glsl.getUniformLocation("lifeTime");
     accelLocation = glsl.getUniformLocation("accel");
 
