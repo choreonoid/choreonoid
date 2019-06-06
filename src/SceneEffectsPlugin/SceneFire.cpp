@@ -7,6 +7,7 @@
 #include "SceneFire.h"
 #include "ParticlesProgram.h"
 #include <cnoid/EigenUtil>
+#include <cnoid/GLSLProgram>
 
 using namespace std;
 using namespace cnoid;
@@ -85,16 +86,17 @@ FireProgram::FireProgram(GLSLSceneRenderer* renderer)
 
 bool FireProgram::initializeRendering(SceneParticles* particles)
 {
-    loadVertexShader(":/SceneEffectsPlugin/shader/Fire.vert");
-    loadFragmentShader(":/SceneEffectsPlugin/shader/LuminousParticles.frag");
-    link();
+    auto& glsl = glslProgram();
+    glsl.loadVertexShader(":/SceneEffectsPlugin/shader/Fire.vert");
+    glsl.loadFragmentShader(":/SceneEffectsPlugin/shader/LuminousParticles.frag");
+    glsl.link();
     
     if(!ParticlesProgramBase::initializeRendering(particles)){
         return false;
     }
 
-    lifeTimeLocation = getUniformLocation("lifeTime");
-    accelLocation = getUniformLocation("accel");
+    lifeTimeLocation = glsl.getUniformLocation("lifeTime");
+    accelLocation = glsl.getUniformLocation("accel");
 
     glGenBuffers(2, buffers);
     glGenVertexArrays(1, &vertexArray);

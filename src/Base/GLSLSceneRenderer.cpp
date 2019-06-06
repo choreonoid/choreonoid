@@ -17,6 +17,7 @@
 #include <unordered_map>
 #include <mutex>
 #include <iostream>
+#include <stdexcept>
 
 using namespace std;
 using namespace cnoid;
@@ -218,11 +219,10 @@ public:
 
     ShaderProgram* currentProgram;
     LightingProgram* currentLightingProgram;
-    MaterialProgram* materialProgram;
     NolightingProgram* currentNolightingProgram;
     
     SolidColorProgram solidColorProgram;
-    PhongShadowProgram phongShadowProgram;
+    PhongShadowLightingProgram phongShadowLightingProgram;
 
     struct ProgramInfo {
         ShaderProgram* program;
@@ -246,16 +246,11 @@ public:
     std::set<int> shadowLightIndices;
 
     bool defaultLighting;
-    Vector3f diffuseColor;
-    Vector3f ambientColor;
-    Vector3f specularColor;
-    Vector3f emissionColor;
-    float shininess;
-    float alpha;
 
     SgMaterialPtr defaultMaterial;
     GLfloat defaultPointSize;
     GLfloat defaultLineWidth;
+    
     GLResourceMap resourceMaps[2];
     GLResourceMap* currentResourceMap;
     GLResourceMap* nextResourceMap;
@@ -280,19 +275,11 @@ public:
 
     // OpenGL states
     enum StateFlag {
-        COLOR_MATERIAL,
-        DIFFUSE_COLOR,
-        AMBIENT_COLOR,
-        EMISSION_COLOR,
-        SPECULAR_COLOR,
-        SHININESS,
-        ALPHA,
         CULL_FACE,
         POINT_SIZE,
         LINE_WIDTH,
         NUM_STATE_FLAGS
     };
-
     vector<bool> stateFlag;
 
     int backFaceCullingMode;
@@ -371,12 +358,6 @@ public:
     void writeMeshColors(SgMesh* mesh, GLuint buffer);
     void renderPlot(SgPlot* plot, GLenum primitiveMode, std::function<SgVertexArrayPtr()> getVertices);
     void clearGLState();
-    void setDiffuseColor(const Vector3f& color);
-    void setAmbientColor(const Vector3f& color);
-    void setEmissionColor(const Vector3f& color);
-    void setSpecularColor(const Vector3f& color);
-    void setShininess(float shininess);
-    void setAlpha(float a);
     void setPointSize(float size);
     void setLineWidth(float width);
     void getCurrentCameraTransform(Affine3& T);
@@ -425,7 +406,6 @@ void GLSLSceneRendererImpl::initialize()
     currentProgram = nullptr;
     currentLightingProgram = nullptr;
     currentNolightingProgram = nullptr;
-    materialProgram = &phongShadowProgram;
 
     isActuallyRendering = false;
     isPicking = false;
@@ -583,7 +563,7 @@ void GLSLSceneRenderer::setOutputStream(std::ostream& os)
 void GLSLSceneRendererImpl::updateDefaultFramebufferObject()
 {
     glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, reinterpret_cast<GLint*>(&defaultFBO));
-    phongShadowProgram.setDefaultFramebufferObject(defaultFBO);
+    phongShadowLightingProgram.setDefaultFramebufferObject(defaultFBO);
 }
 
 
@@ -604,11 +584,11 @@ bool GLSLSceneRendererImpl::initializeGL()
 
     try {
         solidColorProgram.initialize();
-        phongShadowProgram.initialize();
+        phongShadowLightingProgram.initialize();
     }
-    catch(GLSLProgram::Exception& ex){
-        os() << ex.what() << endl;
-        cout << ex.what() << endl;
+    catch(std::runtime_error& error){
+        os() << error.what() << endl;
+        cout << error.what() << endl;
         return false;
     }
 
@@ -670,14 +650,16 @@ void GLSLSceneRendererImpl::doRender()
     self->extractPreprocessedNodes();
     beginRendering();
 
-    PhongShadowProgram& program = phongShadowProgram;
+    auto& program = phongShadowLightingProgram;
     
     if(shadowLightIndices.empty()){
         program.setNumShadows(0);
         
     } else {
         Array4i vp = self->viewport();
-        self->setViewport(0, 0, program.shadowMapWidth(), program.shadowMapHeight());
+        int w, h;
+        program.getShadowMapSize(w, h);
+        self->setViewport(0, 0, w, h);
         pushProgram(program.shadowMapProgram(), false);
         isRenderingShadowMap = true;
         isActuallyRendering = false;
@@ -859,10 +841,10 @@ bool GLSLSceneRendererImpl::renderShadowMap(int lightIndex)
     Affine3 T;
     self->getLightInfo(lightIndex, light, T);
     if(light && light->on()){
-        SgCamera* shadowMapCamera = phongShadowProgram.getShadowMapCamera(light, T);
+        SgCamera* shadowMapCamera = phongShadowLightingProgram.getShadowMapCamera(light, T);
         if(shadowMapCamera){
             renderCamera(shadowMapCamera, T);
-            phongShadowProgram.setShadowMapViewProjection(PV);
+            phongShadowLightingProgram.setShadowMapViewProjection(PV);
             renderSceneGraphNodes();
             glFlush();
             glFinish();
@@ -970,7 +952,7 @@ void GLSLSceneRendererImpl::renderLights(LightingProgram* program)
         self->getLightInfo(i, light, T);
         if(light->on()){
             bool isCastingShadow = (shadowLightIndices.find(i) != shadowLightIndices.end());
-            if(program->renderLight(lightIndex, light, T, viewMatrix, isCastingShadow)){
+            if(program->setLight(lightIndex, light, T, viewMatrix, isCastingShadow)){
                 ++lightIndex;
             }
         }
@@ -979,7 +961,7 @@ void GLSLSceneRendererImpl::renderLights(LightingProgram* program)
     if(lightIndex < program->maxNumLights()){
         SgLight* headLight = self->headLight();
         if(headLight->on()){
-            if(program->renderLight(
+            if(program->setLight(
                    lightIndex, headLight, self->currentCameraPosition(), viewMatrix, false)){
                 ++lightIndex;
             }
@@ -1022,13 +1004,7 @@ void GLSLSceneRendererImpl::renderFog(LightingProgram* program)
     }
 
     if(isCurrentFogUpdated){
-        if(!fog){
-            currentLightingProgram->setFogEnabled(false);
-        } else {
-            currentLightingProgram->setFogEnabled(true);
-            currentLightingProgram->setFogColor(fog->color());
-            currentLightingProgram->setFogRange(0.0f, fog->visibilityRange());
-        }
+        program->setFog(fog);
     }
     isCurrentFogUpdated = false;
     prevFog = fog;
@@ -1269,12 +1245,7 @@ VertexResource* GLSLSceneRendererImpl::getOrCreateVertexResource(SgObject* obj)
 
 void GLSLSceneRendererImpl::drawVertexResource(VertexResource* resource, GLenum primitiveMode, const Affine3& position)
 {
-    if(currentLightingProgram == &phongShadowProgram){
-        phongShadowProgram.setTransformMatrices(viewMatrix, position, PV);
-    } else if(currentNolightingProgram){
-        const Matrix4f PVM = (PV * position.matrix()).cast<float>();
-        currentNolightingProgram->setProjectionMatrix(PVM);
-    }
+    currentProgram->setTransform(viewMatrix, position, PV);
     glBindVertexArray(resource->vao);
     glDrawArrays(primitiveMode, 0, resource->numVertices);
 }
@@ -1321,15 +1292,15 @@ void GLSLSceneRendererImpl::renderShapeMain
         setPickColor(pickId);
     } else {
         renderMaterial(shape->material());
-        if(currentLightingProgram == &phongShadowProgram){
+        if(currentLightingProgram == &phongShadowLightingProgram){
             bool hasTexture;
             if(shape->texture() && mesh->hasTexCoords()){
                 hasTexture = renderTexture(shape->texture());
             } else {
                 hasTexture = false;
             }
-            phongShadowProgram.setTextureEnabled(hasTexture);
-            phongShadowProgram.setVertexColorEnabled(mesh->hasColors());
+            phongShadowLightingProgram.setTextureEnabled(hasTexture);
+            phongShadowLightingProgram.setVertexColorEnabled(mesh->hasColors());
         }
     }
 
@@ -1406,21 +1377,7 @@ void GLSLSceneRendererImpl::renderTransparentObjects()
 
 void GLSLSceneRendererImpl::renderMaterial(const SgMaterial* material)
 {
-    if(!material){
-        material = defaultMaterial;
-    }
-
-    if(currentLightingProgram == materialProgram){
-        setDiffuseColor(material->diffuseColor());
-        setAmbientColor(material->ambientIntensity() * material->diffuseColor());
-        setEmissionColor(material->emissiveColor());
-        setSpecularColor(material->specularColor());
-        setShininess((127.0f * material->shininess()) + 1.0f);
-        setAlpha(1.0 - material->transparency());
-
-    } else if(currentNolightingProgram){
-        currentProgram->setColor(material->diffuseColor() + material->emissiveColor());
-    }
+    currentProgram->setMaterial(material ? material : defaultMaterial);
 }
 
 
@@ -1835,12 +1792,12 @@ void GLSLSceneRendererImpl::renderPlot
     bool hasColors = plot->hasColors();
     
     if(isPicking){
-        currentProgram->enableColorArray(false);
+        solidColorProgram.enableColorArray(false);
     } else {
         if(!hasColors){
             renderMaterial(plot->material());
         }
-        currentProgram->enableColorArray(hasColors);
+        solidColorProgram.enableColorArray(hasColors);
     }
     
     VertexResource* resource = getOrCreateVertexResource(plot);
@@ -2012,14 +1969,6 @@ void GLSLSceneRendererImpl::renderOutlineGroupMain(SgOutlineGroup* outline, cons
 void GLSLSceneRendererImpl::clearGLState()
 {
     std::fill(stateFlag.begin(), stateFlag.end(), false);
-    
-    diffuseColor << 0.0f, 0.0f, 0.0f, 0.0f;
-    ambientColor << 0.0f, 0.0f, 0.0f, 0.0f;
-    emissionColor << 0.0f, 0.0f, 0.0f, 0.0f;
-    specularColor << 0.0f, 0.0f, 0.0f, 0.0f;
-    shininess = 0.0f;
-    alpha = 1.0f;
-
     pointSize = defaultPointSize;    
     lineWidth = defaultLineWidth;
 }
@@ -2027,103 +1976,7 @@ void GLSLSceneRendererImpl::clearGLState()
 
 void GLSLSceneRenderer::setColor(const Vector3f& color)
 {
-    impl->currentProgram->setColor(color);
-}
-
-
-void GLSLSceneRendererImpl::setDiffuseColor(const Vector3f& color)
-{
-    if(!stateFlag[DIFFUSE_COLOR] || diffuseColor != color){
-        materialProgram->setDiffuseColor(color);
-        diffuseColor = color;
-        stateFlag[DIFFUSE_COLOR] = true;
-    }
-}
-
-
-void GLSLSceneRenderer::setDiffuseColor(const Vector3f& color)
-{
-    impl->setDiffuseColor(color);
-}
-
-
-void GLSLSceneRendererImpl::setAmbientColor(const Vector3f& color)
-{
-    if(!stateFlag[AMBIENT_COLOR] || ambientColor != color){
-        materialProgram->setAmbientColor(color);
-        ambientColor = color;
-        stateFlag[AMBIENT_COLOR] = true;
-    }
-}
-
-
-void GLSLSceneRenderer::setAmbientColor(const Vector3f& color)
-{
-    impl->setAmbientColor(color);
-}
-
-
-void GLSLSceneRendererImpl::setEmissionColor(const Vector3f& color)
-{
-    if(!stateFlag[EMISSION_COLOR] || emissionColor != color){
-        materialProgram->setEmissionColor(color);
-        emissionColor = color;
-        stateFlag[EMISSION_COLOR] = true;
-    }
-}
-
-
-void GLSLSceneRenderer::setEmissionColor(const Vector3f& color)
-{
-    impl->setEmissionColor(color);
-}
-
-
-void GLSLSceneRendererImpl::setSpecularColor(const Vector3f& color)
-{
-    if(!stateFlag[SPECULAR_COLOR] || specularColor != color){
-        materialProgram->setSpecularColor(color);
-        specularColor = color;
-        stateFlag[SPECULAR_COLOR] = true;
-    }
-}
-
-
-void GLSLSceneRenderer::setSpecularColor(const Vector3f& color)
-{
-    impl->setSpecularColor(color);
-}
-
-
-void GLSLSceneRendererImpl::setShininess(float s)
-{
-    if(!stateFlag[SHININESS] || shininess != s){
-        materialProgram->setShininess(s);
-        shininess = s;
-        stateFlag[SHININESS] = true;
-    }
-}
-
-
-void GLSLSceneRenderer::setShininess(float s)
-{
-    impl->setShininess(s);
-}
-
-
-void GLSLSceneRendererImpl::setAlpha(float a)
-{
-    if(!stateFlag[ALPHA] || alpha != a){
-        materialProgram->setAlpha(a);
-        alpha = a;
-        stateFlag[ALPHA] = true;
-    }
-}
-
-
-void GLSLSceneRenderer::setAlpha(float a)
-{
-    impl->setAlpha(a);
+    impl->solidColorProgram.setColor(color);
 }
 
 
@@ -2145,7 +1998,7 @@ void GLSLSceneRenderer::enableShadowOfLight(int index, bool on)
 
 void GLSLSceneRenderer::enableShadowAntiAliasing(bool on)
 {
-    impl->phongShadowProgram.setShadowAntiAliasingEnabled(on);
+    impl->phongShadowLightingProgram.setShadowAntiAliasingEnabled(on);
 }
 
 

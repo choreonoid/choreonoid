@@ -845,7 +845,7 @@ void SceneWidgetImpl::doFPSTest()
     const int n = config->fpsTestIterationSpin.value();
     for(int i=0; i < n; ++i){
         for(double theta=1.0; theta <= 360.0; theta += 1.0){
-            double a = 3.14159265 * theta / 180.0;
+            double a = radian(theta);
             builtinCameraTransform->setTransform(
                 Translation3(p) *
                 AngleAxis(a, Vector3::UnitZ()) *

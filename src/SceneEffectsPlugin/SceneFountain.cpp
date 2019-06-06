@@ -7,6 +7,7 @@
 #include "SceneFountain.h"
 #include "ParticlesProgram.h"
 #include <cnoid/EigenUtil>
+#include <cnoid/GLSLProgram>
 
 using namespace std;
 using namespace cnoid;
@@ -86,16 +87,18 @@ FountainProgram::FountainProgram(GLSLSceneRenderer* renderer)
 
 bool FountainProgram::initializeRendering(SceneParticles* particles)
 {
-    loadVertexShader(":/SceneEffectsPlugin/shader/Fountain.vert");
-    loadFragmentShader(":/SceneEffectsPlugin/shader/Particles.frag");
-    link();
+    auto& glsl = glslProgram();
+    
+    glsl.loadVertexShader(":/SceneEffectsPlugin/shader/Fountain.vert");
+    glsl.loadFragmentShader(":/SceneEffectsPlugin/shader/Particles.frag");
+    glsl.link();
     
     if(!ParticlesProgramBase::initializeRendering(particles)){
         return false;
     }
 
-    lifeTimeLocation = getUniformLocation("lifeTime");
-    accelLocation = getUniformLocation("accel");
+    lifeTimeLocation = glsl.getUniformLocation("lifeTime");
+    accelLocation = glsl.getUniformLocation("accel");
 
     glGenBuffers(2, buffers);
     glGenVertexArrays(1, &vertexArray);

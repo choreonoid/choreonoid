@@ -7,6 +7,7 @@
 #include "SceneRainSnow.h"
 #include "ParticlesProgram.h"
 #include <cnoid/EigenUtil>
+#include <cnoid/GLSLProgram>
 
 using namespace std;
 using namespace cnoid;
@@ -121,9 +122,10 @@ RainSnowProgram::RainSnowProgram(GLSLSceneRenderer* renderer)
 
 bool RainSnowProgram::initializeRendering(SceneParticles* particles)
 {
-    loadVertexShader(":/SceneEffectsPlugin/shader/RainSnow.vert");
-    loadFragmentShader(":/SceneEffectsPlugin/shader/Particles.frag");
-    link();
+    auto& glsl = glslProgram();
+    glsl.loadVertexShader(":/SceneEffectsPlugin/shader/RainSnow.vert");
+    glsl.loadFragmentShader(":/SceneEffectsPlugin/shader/Particles.frag");
+    glsl.link();
     
     if(!ParticlesProgramBase::initializeRendering(particles)){
         return false;
@@ -178,8 +180,8 @@ bool RainSnowProgram::initializeRendering(SceneParticles* particles)
     glEnableVertexAttribArray(1);
     glBindVertexArray(0);
 
-    velocityLocation = getUniformLocation("velocity");
-    lifeTimeLocation = getUniformLocation("lifeTime");
+    velocityLocation = glsl.getUniformLocation("velocity");
+    lifeTimeLocation = glsl.getUniformLocation("lifeTime");
 
     return true;
 }

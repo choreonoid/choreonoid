@@ -4,24 +4,193 @@
 */
 
 #include "ShaderPrograms.h"
+#include "GLSLProgram.h"
+#include <cnoid/SceneDrawables>
+#include <cnoid/SceneCameras>
 #include <cnoid/SceneLights>
+#include <cnoid/SceneEffects>
 #include <cnoid/EigenUtil>
 #include <fmt/format.h>
+#include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
 using fmt::format;
 
+namespace cnoid {
+
+class NolightingProgramImpl
+{
+public:
+    GLint MVPLocation;
+};
+
+
+class SolidColorProgramImpl
+{
+public:
+    Vector3f color;
+    GLint pointSizeLocation;
+    GLint colorLocation;
+    GLint colorPerVertexLocation;
+    bool isColorChangable;
+};
+    
+
+class MinimumLightingProgramImpl
+{
+public:
+    GLint MVPLocation;
+
+    static const int maxNumLights = 2;
+    GLint numLightsLocation;
+    
+    struct LightInfo {
+        GLint positionLocation;
+        GLint intensityLocation;
+        GLint ambientIntensityLocation;
+    };
+    vector<LightInfo> lightInfos;
+    
+    GLint diffuseColorLocation;
+    Vector3f diffuseColor;
+    bool isDiffuseColorValid;
+};
+
+
+class BasicLightingProgramImpl
+{
+public:
+    static const int maxNumLights = 10;
+
+    GLint numLightsLocation;
+    
+    struct LightInfo {
+        GLint positionLocation;
+        GLint intensityLocation;
+        GLint ambientIntensityLocation;
+        GLint constantAttenuationLocation;
+        GLint linearAttenuationLocation;
+        GLint quadraticAttenuationLocation;
+        GLint cutoffAngleLocation;
+        GLint beamWidthLocation;
+        GLint cutoffExponentLocation;
+        GLint directionLocation;
+    };
+    vector<LightInfo> lightInfos;
+    
+    GLint maxFogDistLocation;
+    GLint minFogDistLocation;
+    GLint fogColorLocation;
+    GLint isFogEnabledLocation;
+
+    void initialize(GLSLProgram& glsl);    
+};
+
+
+class MaterialLightingProgramImpl
+{
+public:
+    static const int maxNumLights = 10;
+
+    enum StateFlag {
+        COLOR_MATERIAL,
+        DIFFUSE_COLOR,
+        AMBIENT_COLOR,
+        EMISSION_COLOR,
+        SPECULAR_COLOR,
+        SHININESS,
+        ALPHA,
+        NUM_STATE_FLAGS
+    };
+    vector<bool> stateFlag;
+
+    Vector3f diffuseColor;
+    Vector3f ambientColor;
+    Vector3f specularColor;
+    Vector3f emissionColor;
+    float shininess;
+    float alpha;
+
+    GLint diffuseColorLocation;
+    GLint ambientColorLocation;
+    GLint specularColorLocation;
+    GLint emissionColorLocation;
+    GLint shininessLocation;
+    GLint alphaLocation;
+
+    GLint isTextureEnabledLocation;
+    GLint tex1Location;
+    bool isTextureEnabled;
+
+    GLint isVertexColorEnabledLocation;
+    bool isVertexColorEnabled;
+
+    void initialize(MaterialLightingProgram* self);
+    void initialize(GLSLProgram& glsl);
+    void setMaterial(const SgMaterial* material);
+};
+
+
+class PhongShadowLightingProgramImpl
+{
+public:
+    GLuint defaultFBO;
+    bool useUniformBlockToPassTransformationMatrices;
+    GLSLUniformBlockBuffer transformBlockBuffer;
+    GLint modelViewMatrixIndex;
+    GLint normalMatrixIndex;
+    GLint MVPIndex;
+
+    GLint modelViewMatrixLocation;
+    GLint normalMatrixLocation;
+    GLint MVPLocation;
+
+    bool isShadowAntiAliasingEnabled;
+    int numShadows;
+    int shadowMapWidth;
+    int shadowMapHeight;
+    SgPerspectiveCameraPtr persShadowCamera;  
+    SgOrthographicCameraPtr orthoShadowCamera;
+    ShadowMapProgram shadowMapProgram;
+    
+    GLint isShadowEnabledLocation;
+    GLint numShadowsLocation;
+    GLint isShadowAntiAliasingEnabledLocation;
+
+    static const int maxNumShadows = 2;
+    int currentShadowIndex;
+
+    struct ShadowInfo {
+        int lightIndex;
+        GLint shadowMatrixLocation;
+        GLint lightIndexLocation;
+        GLint shadowMapLocation;
+        GLuint depthTexture;
+        GLuint frameBuffer;
+        Matrix4 BPV;
+    };
+    std::vector<ShadowInfo> shadowInfos;
+
+    Matrix4 shadowBias;
+
+    PhongShadowLightingProgramImpl(PhongShadowLightingProgram* self);
+    void initialize(PhongShadowLightingProgram* self);    
+    void initializeShadowInfo(GLSLProgram& glsl, int index);
+};
+
+}
+
 
 ShaderProgram::ShaderProgram()
 {
-
+    glslProgram_ = new GLSLProgram;
 }
 
 
 ShaderProgram::~ShaderProgram()
 {
-
+    delete glslProgram_;
 }
 
 
@@ -33,7 +202,7 @@ void ShaderProgram::initialize()
 
 void ShaderProgram::activate()
 {
-    use();
+    glslProgram_->use();
 }
 
 
@@ -49,73 +218,95 @@ void ShaderProgram::initializeFrameRendering()
 }
 
 
-void ShaderProgram::setColor(const Vector3f& color)
+void ShaderProgram::setTransform(const Affine3& view, const Affine3& model, const Matrix4& PV)
 {
 
 }
 
 
-void ShaderProgram::enableColorArray(bool on)
+void ShaderProgram::setMaterial(const SgMaterial* material)
 {
 
+}
+
+
+NolightingProgram::NolightingProgram()
+{
+    impl = new NolightingProgramImpl;
+}
+
+
+NolightingProgram::~NolightingProgram()
+{
+    delete impl;
 }
 
 
 void NolightingProgram::initialize()
 {
-    MVPLocation = getUniformLocation("MVP");
+    impl->MVPLocation = glslProgram().getUniformLocation("MVP");
 }
 
 
-void NolightingProgram::setProjectionMatrix(const Matrix4f& PVM)
+void NolightingProgram::setTransform(const Affine3& view, const Affine3& model, const Matrix4& PV)
 {
-    glUniformMatrix4fv(MVPLocation, 1, GL_FALSE, PVM.data());
+    const Matrix4f PVM = (PV * model.matrix()).cast<float>();
+    glUniformMatrix4fv(impl->MVPLocation, 1, GL_FALSE, PVM.data());
 }
 
 
 SolidColorProgram::SolidColorProgram()
 {
-    color_.setZero();
-    isColorChangable_ = true;
+    impl = new SolidColorProgramImpl;
+    impl->color.setZero();
+    impl->isColorChangable = true;
+}
+
+
+SolidColorProgram::~SolidColorProgram()
+{
+    delete impl;
 }
 
 
 void SolidColorProgram::initialize()
 {
-    loadVertexShader(":/Base/shader/nolighting.vert");
-    loadFragmentShader(":/Base/shader/solidcolor.frag");
-    link();
-    use();
+    auto& glsl = glslProgram();
+    
+    glsl.loadVertexShader(":/Base/shader/nolighting.vert");
+    glsl.loadFragmentShader(":/Base/shader/solidcolor.frag");
+    glsl.link();
+    glsl.use();
 
     NolightingProgram::initialize();
 
-    pointSizeLocation = getUniformLocation("pointSize");
-    colorLocation = getUniformLocation("color");
-    glUniform3fv(colorLocation, 1, color_.data());
-    colorPerVertexLocation = getUniformLocation("colorPerVertex");
+    impl->pointSizeLocation = glsl.getUniformLocation("pointSize");
+    impl->colorLocation = glsl.getUniformLocation("color");
+    glUniform3fv(impl->colorLocation, 1, impl->color.data());
+    impl->colorPerVertexLocation = glsl.getUniformLocation("colorPerVertex");
 }
 
 
 void SolidColorProgram::initializeFrameRendering()
 {
-    glUniform1i(colorPerVertexLocation, false);
+    glUniform1i(impl->colorPerVertexLocation, false);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 
-void SolidColorProgram::setPointSize(float s)
+void SolidColorProgram::setMaterial(const SgMaterial* material)
 {
-    glUniform1f(pointSizeLocation, s);
+    setColor(material->diffuseColor() + material->emissiveColor());
 }
 
 
 void SolidColorProgram::setColor(const Vector3f& color)
 {
-    if(isColorChangable_){
-        if(color != color_){
-            glUniform3fv(colorLocation, 1, color.data());
-            glUniform1i(colorPerVertexLocation, false);
-            color_ = color;
+    if(impl->isColorChangable){
+        if(color != impl->color){
+            glUniform3fv(impl->colorLocation, 1, color.data());
+            glUniform1i(impl->colorPerVertexLocation, false);
+            impl->color = color;
         }
     }
 }
@@ -123,55 +314,187 @@ void SolidColorProgram::setColor(const Vector3f& color)
 
 void SolidColorProgram::enableColorArray(bool on)
 {
-    glUniform1i(colorPerVertexLocation, on);
+    glUniform1i(impl->colorPerVertexLocation, on);
+}
+
+
+void SolidColorProgram::setColorChangable(bool on)
+{
+    impl->isColorChangable = on;
+}
+
+
+bool SolidColorProgram::isColorChangable() const
+{
+    return impl->isColorChangable;
+}
+
+
+void SolidColorProgram::setPointSize(float s)
+{
+    glUniform1f(impl->pointSizeLocation, s);
+}
+
+
+void LightingProgram::setFog(const SgFog* fog)
+{
+
+}
+
+
+MinimumLightingProgram::MinimumLightingProgram()
+{
+    impl = new MinimumLightingProgramImpl;
+}
+
+
+MinimumLightingProgram::~MinimumLightingProgram()
+{
+    delete impl;
 }
     
 
-void LightingProgram::initialize()
+void MinimumLightingProgram::initialize()
 {
-    numLightsLocation = getUniformLocation("numLights");
-    lightInfos.resize(maxNumLights());
+    impl->MVPLocation = glslProgram().getUniformLocation("MVP");
+    impl->isDiffuseColorValid = false;
+}
+
+
+void MinimumLightingProgram::activate()
+{
+    LightingProgram::activate();
+
+    impl->isDiffuseColorValid = false;
+    impl->diffuseColor << 0.0f, 0.0f, 0.0f, 0.0f;
+}
+    
+
+void MinimumLightingProgram::setTransform(const Affine3& view, const Affine3& model, const Matrix4& PV)
+{
+    const Matrix4f PVM = (PV * model.matrix()).cast<float>();
+    glUniformMatrix4fv(impl->MVPLocation, 1, GL_FALSE, PVM.data());
+}
+
+
+int MinimumLightingProgram::maxNumLights() const
+{
+    return impl->maxNumLights;
+}
+
+
+bool MinimumLightingProgram::setLight
+(int index, const SgLight* light, const Affine3& T, const Affine3& view, bool shadowCasting)
+{
+    if(index >= impl->maxNumLights){
+        return false;
+    }
+    auto& info = impl->lightInfos[index];
+
+    auto dirLight = dynamic_cast<const SgDirectionalLight*>(light);
+    if(!dirLight){
+        return false;
+    }
+    
+    Vector3 d = view.linear() * T.linear() * -dirLight->direction();
+    Vector4f pos(d.x(), d.y(), d.z(), 0.0f);
+    glUniform4fv(info.positionLocation, 1, pos.data());
+        
+    Vector3f intensity(light->intensity() * light->color());
+    glUniform3fv(info.intensityLocation, 1, intensity.data());
+    Vector3f ambientIntensity(light->ambientIntensity() * light->color());
+    glUniform3fv(info.ambientIntensityLocation, 1, ambientIntensity.data());
+
+    return true;
+}
+
+
+void MinimumLightingProgram::setNumLights(int n)
+{
+    glUniform1i(impl->numLightsLocation, n);
+}
+
+
+void MinimumLightingProgram::setMaterial(const SgMaterial* material)
+{
+    const auto& color = material->diffuseColor();
+    if(!impl->isDiffuseColorValid || impl->diffuseColor != color){
+        glUniform3fv(impl->diffuseColorLocation, 1, color.data());
+        impl->diffuseColor = color;
+        impl->isDiffuseColorValid = true;
+    }
+}
+
+
+BasicLightingProgram::BasicLightingProgram()
+{
+    impl = new BasicLightingProgramImpl;
+}
+
+
+BasicLightingProgram::~BasicLightingProgram()
+{
+    delete impl;
+}
+
+    
+void BasicLightingProgram::initialize()
+{
+    impl->initialize(glslProgram());
+}
+
+
+void BasicLightingProgramImpl::initialize(GLSLProgram& glsl)
+{    
+    numLightsLocation = glsl.getUniformLocation("numLights");
+    lightInfos.resize(maxNumLights);
     string lightFormat("lights[{}].");
-    for(int i=0; i < maxNumLights(); ++i){
-        LightInfo& light = lightInfos[i];
+    for(int i=0; i < maxNumLights; ++i){
+        auto& light = lightInfos[i];
         string prefix = format(lightFormat, i);
-        light.positionLocation = getUniformLocation(prefix + "position");
-        light.intensityLocation = getUniformLocation(prefix + "intensity");
-        light.ambientIntensityLocation = getUniformLocation(prefix + "ambientIntensity");
-        light.constantAttenuationLocation = getUniformLocation(prefix + "constantAttenuation");
-        light.linearAttenuationLocation = getUniformLocation(prefix + "linearAttenuation");
-        light.quadraticAttenuationLocation = getUniformLocation(prefix + "quadraticAttenuation");
-        light.cutoffAngleLocation = getUniformLocation(prefix + "cutoffAngle");
-        light.beamWidthLocation = getUniformLocation(prefix + "beamWidth");
-        light.cutoffExponentLocation = getUniformLocation(prefix + "cutoffExponent");
-        light.directionLocation = getUniformLocation(prefix + "direction");
+        light.positionLocation = glsl.getUniformLocation(prefix + "position");
+        light.intensityLocation = glsl.getUniformLocation(prefix + "intensity");
+        light.ambientIntensityLocation = glsl.getUniformLocation(prefix + "ambientIntensity");
+        light.constantAttenuationLocation = glsl.getUniformLocation(prefix + "constantAttenuation");
+        light.linearAttenuationLocation = glsl.getUniformLocation(prefix + "linearAttenuation");
+        light.quadraticAttenuationLocation = glsl.getUniformLocation(prefix + "quadraticAttenuation");
+        light.cutoffAngleLocation = glsl.getUniformLocation(prefix + "cutoffAngle");
+        light.beamWidthLocation = glsl.getUniformLocation(prefix + "beamWidth");
+        light.cutoffExponentLocation = glsl.getUniformLocation(prefix + "cutoffExponent");
+        light.directionLocation = glsl.getUniformLocation(prefix + "direction");
     }
 
-    maxFogDistLocation = getUniformLocation("maxFogDist");
-    minFogDistLocation = getUniformLocation("minFogDist");
-    fogColorLocation = getUniformLocation("fogColor");
-    isFogEnabledLocation = getUniformLocation("isFogEnabled");
-}    
-    
-
-
-void LightingProgram::setNumLights(int n)
-{
-    glUniform1i(numLightsLocation, n);
+    maxFogDistLocation = glsl.getUniformLocation("maxFogDist");
+    minFogDistLocation = glsl.getUniformLocation("minFogDist");
+    fogColorLocation = glsl.getUniformLocation("fogColor");
+    isFogEnabledLocation = glsl.getUniformLocation("isFogEnabled");
 }
 
 
-bool LightingProgram::renderLight(int index, const SgLight* light, const Affine3& T, const Affine3& viewMatrix, bool shadowCasting)
+void BasicLightingProgram::setNumLights(int n)
 {
-    LightInfo& info = lightInfos[index];
+    glUniform1i(impl->numLightsLocation, n);
+}
+
+
+int BasicLightingProgram::maxNumLights() const
+{
+    return impl->maxNumLights;
+}
+
+
+bool BasicLightingProgram::setLight
+(int index, const SgLight* light, const Affine3& T, const Affine3& view, bool shadowCasting)
+{
+    auto& info = impl->lightInfos[index];
 
     if(const SgDirectionalLight* dirLight = dynamic_cast<const SgDirectionalLight*>(light)){
-        Vector3 d = viewMatrix.linear() * T.linear() * -dirLight->direction();
+        Vector3 d = view.linear() * T.linear() * -dirLight->direction();
         Vector4f pos(d.x(), d.y(), d.z(), 0.0f);
         glUniform4fv(info.positionLocation, 1, pos.data());
 
     } else if(const SgPointLight* pointLight = dynamic_cast<const SgPointLight*>(light)){
-        Vector3 p(viewMatrix * T.translation());
+        Vector3 p(view * T.translation());
         Vector4f pos(p.x(), p.y(), p.z(), 1.0f);
         glUniform4fv(info.positionLocation, 1, pos.data());
         glUniform1f(info.constantAttenuationLocation, pointLight->constantAttenuation());
@@ -179,7 +502,7 @@ bool LightingProgram::renderLight(int index, const SgLight* light, const Affine3
         glUniform1f(info.quadraticAttenuationLocation, pointLight->quadraticAttenuation());
         
         if(const SgSpotLight* spotLight = dynamic_cast<const SgSpotLight*>(pointLight)){
-            Vector3 d = viewMatrix.linear() * T.linear() * spotLight->direction();
+            Vector3 d = view.linear() * T.linear() * spotLight->direction();
             Vector3f direction(d.cast<float>());
             glUniform3fv(info.directionLocation, 1, direction.data());
             glUniform1f(info.cutoffAngleLocation, spotLight->cutOffAngle());
@@ -199,38 +522,161 @@ bool LightingProgram::renderLight(int index, const SgLight* light, const Affine3
 }
 
 
-void MaterialProgram::initialize()
+void BasicLightingProgram::setFog(const SgFog* fog)
 {
-    LightingProgram::initialize();
-    
-    diffuseColorLocation = getUniformLocation("diffuseColor");
-    ambientColorLocation = getUniformLocation("ambientColor");
-    specularColorLocation = getUniformLocation("specularColor");
-    emissionColorLocation = getUniformLocation("emissionColor");
-    shininessLocation = getUniformLocation("shininess");
-    alphaLocation = getUniformLocation("alpha");
-
-    isTextureEnabledLocation = getUniformLocation("isTextureEnabled");
-    tex1Location = getUniformLocation("tex1");
-    glUniform1i(tex1Location, 0);
-    isTextureEnabled_ = false;
-    glUniform1i(isTextureEnabledLocation, isTextureEnabled_);
-
-    isVertexColorEnabledLocation = getUniformLocation("isVertexColorEnabled");
-    isVertexColorEnabled_ = false;
-    glUniform1i(isVertexColorEnabledLocation, isVertexColorEnabled_);
+    if(!fog){
+        glUniform1i(impl->isFogEnabledLocation, false);
+    } else {
+        glUniform1i(impl->isFogEnabledLocation, true);
+        glUniform3fv(impl->fogColorLocation, 1, fog->color().data());
+        glUniform1f(impl->minFogDistLocation, 0.0f);
+        glUniform1f(impl->maxFogDistLocation, fog->visibilityRange());
+    }
 }
 
 
-PhongShadowProgram::PhongShadowProgram()
+MaterialLightingProgram::MaterialLightingProgram()
 {
-    defaultFBO_ = 0;
-    numShadows_ = 0;
-    isShadowAntiAliasingEnabled_ = false;
-    shadowMapWidth_ = 2048;
-    shadowMapHeight_ = 2048;
-    persShadowCamera = new SgPerspectiveCamera();
-    orthoShadowCamera = new SgOrthographicCamera();
+    impl = new MaterialLightingProgramImpl;
+}
+
+
+MaterialLightingProgram::~MaterialLightingProgram()
+{
+    delete impl;
+}
+
+
+void MaterialLightingProgram::initialize()
+{
+    impl->initialize(this);
+}
+
+
+void MaterialLightingProgramImpl::initialize(MaterialLightingProgram* self)
+{
+    self->BasicLightingProgram::initialize();
+
+    stateFlag.resize(NUM_STATE_FLAGS, false);
+
+    auto& glsl = self->glslProgram();
+
+    diffuseColorLocation = glsl.getUniformLocation("diffuseColor");
+    ambientColorLocation = glsl.getUniformLocation("ambientColor");
+    specularColorLocation = glsl.getUniformLocation("specularColor");
+    emissionColorLocation = glsl.getUniformLocation("emissionColor");
+    shininessLocation = glsl.getUniformLocation("shininess");
+    alphaLocation = glsl.getUniformLocation("alpha");
+
+    isTextureEnabledLocation = glsl.getUniformLocation("isTextureEnabled");
+    tex1Location = glsl.getUniformLocation("tex1");
+    glUniform1i(tex1Location, 0);
+    isTextureEnabled = false;
+    glUniform1i(isTextureEnabledLocation, isTextureEnabled);
+
+    isVertexColorEnabledLocation = glsl.getUniformLocation("isVertexColorEnabled");
+    isVertexColorEnabled = false;
+    glUniform1i(isVertexColorEnabledLocation, isVertexColorEnabled);
+}
+    
+
+void MaterialLightingProgram::activate()
+{
+    BasicLightingProgram::activate();
+    std::fill(impl->stateFlag.begin(), impl->stateFlag.end(), false);
+}
+
+
+void MaterialLightingProgram::setMaterial(const SgMaterial* material)
+{
+    if(material){
+        impl->setMaterial(material);
+    } else {
+        std::fill(impl->stateFlag.begin(), impl->stateFlag.end(), false);
+    }
+}
+
+
+void MaterialLightingProgramImpl::setMaterial(const SgMaterial* material)
+{
+    const auto& dcolor = material->diffuseColor();
+    if(!stateFlag[DIFFUSE_COLOR] || diffuseColor != dcolor){
+        glUniform3fv(diffuseColorLocation, 1, dcolor.data());
+        diffuseColor = dcolor;
+        stateFlag[DIFFUSE_COLOR] = true;
+    }
+
+    Vector3f acolor = material->ambientIntensity() * material->diffuseColor();
+    if(!stateFlag[AMBIENT_COLOR] || ambientColor != acolor){
+        glUniform3fv(ambientColorLocation, 1, acolor.data());
+        ambientColor = acolor;
+        stateFlag[AMBIENT_COLOR] = true;
+    }
+
+    const auto& ecolor = material->emissiveColor();
+    if(!stateFlag[EMISSION_COLOR] || emissionColor != ecolor){
+        glUniform3fv(emissionColorLocation, 1, ecolor.data());
+        emissionColor = ecolor;
+        stateFlag[EMISSION_COLOR] = true;
+    }
+
+    const auto& scolor = material->specularColor();
+    if(!stateFlag[SPECULAR_COLOR] || specularColor != scolor){
+        glUniform3fv(specularColorLocation, 1, scolor.data());
+        specularColor = scolor;
+        stateFlag[SPECULAR_COLOR] = true;
+    }
+
+    float s = 127.0f * material->shininess() + 1.0f;
+    if(!stateFlag[SHININESS] || shininess != s){
+        glUniform1f(shininessLocation, s);
+        shininess = s;
+        stateFlag[SHININESS] = true;
+    }
+
+    float a = 1.0 - material->transparency();
+    if(!stateFlag[ALPHA] || alpha != a){
+        glUniform1f(alphaLocation, a);
+        alpha = a;
+        stateFlag[ALPHA] = true;
+    }
+}
+
+
+void MaterialLightingProgram::setTextureEnabled(bool on)
+{
+    if(on != impl->isTextureEnabled){
+        glUniform1i(impl->isTextureEnabledLocation, on);
+        impl->isTextureEnabled = on;
+    }
+}
+
+
+void MaterialLightingProgram::setVertexColorEnabled(bool on)
+{
+    if(on != impl->isVertexColorEnabled){
+        glUniform1i(impl->isVertexColorEnabledLocation, on);
+        impl->isVertexColorEnabled = on;
+    }
+}
+
+
+PhongShadowLightingProgram::PhongShadowLightingProgram()
+{
+    impl = new PhongShadowLightingProgramImpl(this);
+}
+
+
+PhongShadowLightingProgramImpl::PhongShadowLightingProgramImpl(PhongShadowLightingProgram* self)
+    : shadowMapProgram(self)
+{
+    defaultFBO = 0;
+    numShadows = 0;
+    isShadowAntiAliasingEnabled = false;
+    shadowMapWidth = 2048;
+    shadowMapHeight = 2048;
+    persShadowCamera = new SgPerspectiveCamera;
+    orthoShadowCamera = new SgOrthographicCamera;
     orthoShadowCamera->setHeight(15.0);
     currentShadowIndex = 0;
 
@@ -239,69 +685,87 @@ PhongShadowProgram::PhongShadowProgram()
         0.0, 0.5, 0.0, 0.5,
         0.0, 0.0, 0.5, 0.5,
         0.0, 0.0, 0.0, 1.0;
-
-    shadowMapProgram_ = new ShadowMapProgram(this);
 }
 
 
-PhongShadowProgram::~PhongShadowProgram()
+PhongShadowLightingProgram::~PhongShadowLightingProgram()
 {
-    delete shadowMapProgram_;
+    delete impl;
 }
 
 
-void PhongShadowProgram::initialize()
+void PhongShadowLightingProgram::setDefaultFramebufferObject(GLuint id)
 {
-    loadVertexShader(":/Base/shader/phongshadow.vert");
-    loadFragmentShader(":/Base/shader/phongshadow.frag");
-    link();
-    use();
+    impl->defaultFBO = id;
+}
 
-    MaterialProgram::initialize();
 
-    useUniformBlockToPassTransformationMatrices = transformBlockBuffer.initialize(*this, "TransformBlock");
+GLuint PhongShadowLightingProgram::defaultFramebufferObject() const
+{
+    return impl->defaultFBO;
+}
+
+
+void PhongShadowLightingProgram::initialize()
+{
+    impl->initialize(this);
+}
+
+
+void PhongShadowLightingProgramImpl::initialize(PhongShadowLightingProgram* self)
+{
+    auto& glsl = self->glslProgram();
+    
+    glsl.loadVertexShader(":/Base/shader/phongshadow.vert");
+    glsl.loadFragmentShader(":/Base/shader/phongshadow.frag");
+    glsl.link();
+    glsl.use();
+
+    self->MaterialLightingProgram::initialize();
+
+    useUniformBlockToPassTransformationMatrices = transformBlockBuffer.initialize(glsl, "TransformBlock");
 
     if(useUniformBlockToPassTransformationMatrices){
         modelViewMatrixIndex = transformBlockBuffer.checkUniformMatrix("modelViewMatrix");
         normalMatrixIndex = transformBlockBuffer.checkUniformMatrix("normalMatrix");
         MVPIndex = transformBlockBuffer.checkUniformMatrix("MVP");
-        transformBlockBuffer.bind(*this, 1);
+        transformBlockBuffer.bind(glsl, 1);
         transformBlockBuffer.bindBufferBase(1);
     } else {
-        modelViewMatrixLocation = getUniformLocation("modelViewMatrix");
-        normalMatrixLocation = getUniformLocation("normalMatrix");
-        MVPLocation = getUniformLocation("MVP");
+        modelViewMatrixLocation = glsl.getUniformLocation("modelViewMatrix");
+        normalMatrixLocation = glsl.getUniformLocation("normalMatrix");
+        MVPLocation = glsl.getUniformLocation("MVP");
     }
     
-    numShadowsLocation = getUniformLocation("numShadows");
-    shadowInfos.resize(maxNumShadows_);
-    for(int i=0; i < maxNumShadows_; ++i){
-        initializeShadowInfo(i);
+    numShadowsLocation = glsl.getUniformLocation("numShadows");
+    shadowInfos.resize(maxNumShadows);
+    for(int i=0; i < maxNumShadows; ++i){
+        initializeShadowInfo(glsl, i);
     }
     glActiveTexture(GL_TEXTURE0);
-    glBindFramebuffer(GL_FRAMEBUFFER, defaultFBO_);
+    glBindFramebuffer(GL_FRAMEBUFFER, defaultFBO);
 
-    isShadowAntiAliasingEnabledLocation = getUniformLocation("isShadowAntiAliasingEnabled");
+    isShadowAntiAliasingEnabledLocation = glsl.getUniformLocation("isShadowAntiAliasingEnabled");
 
-    shadowMapProgram_->initialize();
+    shadowMapProgram.initialize();
 }
 
 
-void PhongShadowProgram::initializeShadowInfo(int index)
+void PhongShadowLightingProgramImpl::initializeShadowInfo(GLSLProgram& glsl, int index)
 {
     ShadowInfo& shadow = shadowInfos[index];
 
-    shadow.shadowMatrixLocation = getUniformLocation(format("shadowMatrices[{}]", index));
+    shadow.shadowMatrixLocation = glsl.getUniformLocation(format("shadowMatrices[{}]", index));
     
     string prefix = format("shadows[{}].", index);
-    shadow.lightIndexLocation = getUniformLocation(prefix + "lightIndex");
-    shadow.shadowMapLocation = getUniformLocation(prefix + "shadowMap");
+    shadow.lightIndexLocation = glsl.getUniformLocation(prefix + "lightIndex");
+    shadow.shadowMapLocation = glsl.getUniformLocation(prefix + "shadowMap");
 
     static const GLfloat border[] = { 1.0f, 0.0f, 0.0f, 0.0f };
     glGenTextures(1, &shadow.depthTexture);
     glActiveTexture(GL_TEXTURE1 + index);
     glBindTexture(GL_TEXTURE_2D, shadow.depthTexture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, shadowMapWidth_, shadowMapHeight_,
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, shadowMapWidth, shadowMapHeight,
                  0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -320,52 +784,77 @@ void PhongShadowProgram::initializeShadowInfo(int index)
     
     GLenum result = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     if(result != GL_FRAMEBUFFER_COMPLETE) {
-        throw Exception("Framebuffer is not complete.\n");
+        throw std::runtime_error(_("Framebuffer is not complete.\n"));
     }
 }
 
 
-void PhongShadowProgram::activateShadowMapGenerationPass(int shadowIndex)
+void PhongShadowLightingProgram::activateShadowMapGenerationPass(int shadowIndex)
 {
-    if(shadowIndex >= maxNumShadows_){
-        currentShadowIndex = maxNumShadows_ - 1;
+    if(shadowIndex >= impl->maxNumShadows){
+        impl->currentShadowIndex = impl->maxNumShadows - 1;
     } else {
-        currentShadowIndex = shadowIndex;
+        impl->currentShadowIndex = shadowIndex;
     }
 }
 
 
-void PhongShadowProgram::activateMainRenderingPass()
+void PhongShadowLightingProgram::activateMainRenderingPass()
 {
-    currentShadowIndex = 0;
+    impl->currentShadowIndex = 0;
 }
 
 
-void PhongShadowProgram::activate()
+void PhongShadowLightingProgram::activate()
 {
-    LightingProgram::activate();
+    MaterialLightingProgram::activate();
     
     glDisable(GL_CULL_FACE);
 }
 
 
-void PhongShadowProgram::initializeFrameRendering()
+void PhongShadowLightingProgram::initializeFrameRendering()
 {
-    glUniform1i(numShadowsLocation, numShadows_);
-    if(numShadows_ > 0){
-        glUniform1i(isShadowAntiAliasingEnabledLocation, isShadowAntiAliasingEnabled_);
+    glUniform1i(impl->numShadowsLocation, impl->numShadows);
+    if(impl->numShadows > 0){
+        glUniform1i(impl->isShadowAntiAliasingEnabledLocation, impl->isShadowAntiAliasingEnabled);
     }
 
-    if(useUniformBlockToPassTransformationMatrices){
-        transformBlockBuffer.bind(*this, 1);
-        transformBlockBuffer.bindBufferBase(1);
+    if(impl->useUniformBlockToPassTransformationMatrices){
+        impl->transformBlockBuffer.bind(glslProgram(), 1);
+        impl->transformBlockBuffer.bindBufferBase(1);
     }
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
     
-SgCamera* PhongShadowProgram::getShadowMapCamera(SgLight* light, Affine3& io_T)
+int PhongShadowLightingProgram::maxNumShadows() const
+{
+    return impl->maxNumShadows;
+}
+
+
+void PhongShadowLightingProgram::setNumShadows(int n)
+{
+    impl->numShadows = n;
+}
+
+
+ShadowMapProgram& PhongShadowLightingProgram::shadowMapProgram()
+{
+    return impl->shadowMapProgram;
+}
+
+
+void PhongShadowLightingProgram::getShadowMapSize(int& width, int& height) const
+{
+    width = impl->shadowMapWidth;
+    height = impl->shadowMapHeight;
+}
+
+
+SgCamera* PhongShadowLightingProgram::getShadowMapCamera(SgLight* light, Affine3& io_T)
 {
     SgCamera* camera = 0;
     bool hasDirection = false;
@@ -373,12 +862,12 @@ SgCamera* PhongShadowProgram::getShadowMapCamera(SgLight* light, Affine3& io_T)
     if(SgDirectionalLight* directional = dynamic_cast<SgDirectionalLight*>(light)){
         direction = directional->direction();
         hasDirection = true;
-        camera = orthoShadowCamera;
+        camera = impl->orthoShadowCamera;
     } else if(SgSpotLight* spot = dynamic_cast<SgSpotLight*>(light)){
         direction = spot->direction();
         hasDirection = true;
-        persShadowCamera->setFieldOfView(spot->cutOffAngle() * 2.0);
-        camera = persShadowCamera;
+        impl->persShadowCamera->setFieldOfView(spot->cutOffAngle() * 2.0);
+        camera = impl->persShadowCamera;
     }
     if(hasDirection){
         Quaternion rot;
@@ -390,16 +879,17 @@ SgCamera* PhongShadowProgram::getShadowMapCamera(SgLight* light, Affine3& io_T)
 }
 
 
-bool PhongShadowProgram::renderLight(int index, const SgLight* light, const Affine3& T, const Affine3& viewMatrix, bool shadowCasting)
+bool PhongShadowLightingProgram::setLight
+(int index, const SgLight* light, const Affine3& T, const Affine3& view, bool shadowCasting)
 {
-    bool result = LightingProgram::renderLight(index, light, T, viewMatrix, shadowCasting);
+    bool result = MaterialLightingProgram::setLight(index, light, T, view, shadowCasting);
 
     if(result && shadowCasting){
-        if(currentShadowIndex < numShadows_){
-            ShadowInfo& shadow = shadowInfos[currentShadowIndex];
-            glUniform1i(shadow.shadowMapLocation, currentShadowIndex + 1);
+        if(impl->currentShadowIndex < impl->numShadows){
+            auto& shadow = impl->shadowInfos[impl->currentShadowIndex];
+            glUniform1i(shadow.shadowMapLocation, impl->currentShadowIndex + 1);
             glUniform1i(shadow.lightIndexLocation, index);
-            ++currentShadowIndex;
+            ++impl->currentShadowIndex;
         }
     }
 
@@ -407,43 +897,49 @@ bool PhongShadowProgram::renderLight(int index, const SgLight* light, const Affi
 }
 
 
-void PhongShadowProgram::setNumShadows(int n)
+void PhongShadowLightingProgram::setShadowMapViewProjection(const Matrix4& PV)
 {
-    numShadows_ = n;
+    impl->shadowInfos[impl->currentShadowIndex].BPV = impl->shadowBias * PV;
 }
 
 
-void PhongShadowProgram::setShadowMapViewProjection(const Matrix4& PV)
+void PhongShadowLightingProgram::setTransform(const Affine3& view, const Affine3& model, const Matrix4& PV)
 {
-    shadowInfos[currentShadowIndex].BPV = shadowBias * PV;
-}
-
-
-void PhongShadowProgram::setTransformMatrices(const Affine3& viewMatrix, const Affine3& modelMatrix, const Matrix4& PV)
-{
-    const Affine3f VM = (viewMatrix * modelMatrix).cast<float>();
+    const Affine3f VM = (view * model).cast<float>();
     const Matrix3f N = VM.linear();
-    const Matrix4f PVM = (PV * modelMatrix.matrix()).cast<float>();
+    const Matrix4f PVM = (PV * model.matrix()).cast<float>();
 
-    if(useUniformBlockToPassTransformationMatrices){
-       transformBlockBuffer.write(modelViewMatrixIndex, VM);
-       transformBlockBuffer.write(normalMatrixIndex, N);
-       transformBlockBuffer.write(MVPIndex, PVM);
-       transformBlockBuffer.flush();
+    if(impl->useUniformBlockToPassTransformationMatrices){
+        impl->transformBlockBuffer.write(impl->modelViewMatrixIndex, VM);
+        impl->transformBlockBuffer.write(impl->normalMatrixIndex, N);
+        impl->transformBlockBuffer.write(impl->MVPIndex, PVM);
+        impl->transformBlockBuffer.flush();
     } else {
-        glUniformMatrix4fv(modelViewMatrixLocation, 1, GL_FALSE, VM.data());
-        glUniformMatrix3fv(normalMatrixLocation, 1, GL_FALSE, N.data());
-        glUniformMatrix4fv(MVPLocation, 1, GL_FALSE, PVM.data());
-        for(int i=0; i < numShadows_; ++i){
-            ShadowInfo& shadow = shadowInfos[i];
-            const Matrix4f BPVM = (shadow.BPV * modelMatrix.matrix()).cast<float>();
+        glUniformMatrix4fv(impl->modelViewMatrixLocation, 1, GL_FALSE, VM.data());
+        glUniformMatrix3fv(impl->normalMatrixLocation, 1, GL_FALSE, N.data());
+        glUniformMatrix4fv(impl->MVPLocation, 1, GL_FALSE, PVM.data());
+        for(int i=0; i < impl->numShadows; ++i){
+            auto& shadow = impl->shadowInfos[i];
+            const Matrix4f BPVM = (shadow.BPV * model.matrix()).cast<float>();
             glUniformMatrix4fv(shadow.shadowMatrixLocation, 1, GL_FALSE, BPVM.data());
         }
     }
 }
 
 
-ShadowMapProgram::ShadowMapProgram(PhongShadowProgram* phongShadowProgram)
+void PhongShadowLightingProgram::setShadowAntiAliasingEnabled(bool on)
+{
+    impl->isShadowAntiAliasingEnabled = on;
+}
+
+
+bool PhongShadowLightingProgram::isShadowAntiAliasingEnabled() const
+{
+    return impl->isShadowAntiAliasingEnabled;
+}
+
+
+ShadowMapProgram::ShadowMapProgram(PhongShadowLightingProgram* phongShadowProgram)
     : mainProgram(phongShadowProgram)
 {
 
@@ -452,10 +948,11 @@ ShadowMapProgram::ShadowMapProgram(PhongShadowProgram* phongShadowProgram)
 
 void ShadowMapProgram::initialize()
 {
-    loadVertexShader(":/Base/shader/nolighting.vert");
-    loadFragmentShader(":/Base/shader/shadowmap.frag");
-    link();
-    use();
+    auto& glsl = glslProgram();
+    glsl.loadVertexShader(":/Base/shader/nolighting.vert");
+    glsl.loadFragmentShader(":/Base/shader/shadowmap.frag");
+    glsl.link();
+    glsl.use();
     
     NolightingProgram::initialize();
 }
@@ -472,10 +969,11 @@ void ShadowMapProgram::activate()
 
 void ShadowMapProgram::initializeFrameRendering()
 {
-    PhongShadowProgram::ShadowInfo& shadow = mainProgram->shadowInfos[mainProgram->currentShadowIndex];
+    auto& mainImpl = mainProgram->impl;
+    auto& shadow = mainImpl->shadowInfos[mainImpl->currentShadowIndex];
     glBindFramebuffer(GL_FRAMEBUFFER, shadow.frameBuffer);
         
-    if(mainProgram->isShadowAntiAliasingEnabled_){
+    if(mainImpl->isShadowAntiAliasingEnabled){
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     } else {
@@ -489,6 +987,6 @@ void ShadowMapProgram::initializeFrameRendering()
 
 void ShadowMapProgram::deactivate()
 {
-    glBindFramebuffer(GL_FRAMEBUFFER, mainProgram->defaultFramebufferObject());
+    glBindFramebuffer(GL_FRAMEBUFFER, mainProgram->impl->defaultFBO);
     glCullFace(GL_BACK);
 }

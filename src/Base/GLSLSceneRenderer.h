@@ -67,22 +67,12 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
     virtual void enableTexture(bool on) override;
     virtual void setDefaultPointSize(double size) override;
     virtual void setDefaultLineWidth(double width) override;
-
     virtual void showNormalVectors(double length) override;
-
     virtual void requestToClearResources() override;
     virtual void enableUnusedResourceCheck(bool on) override;
-
     virtual void setColor(const Vector3f& color) override;
-
     virtual void setUpsideDown(bool on) override;
 
-    void setDiffuseColor(const Vector3f& color);
-    void setAmbientColor(const Vector3f& color);
-    void setEmissionColor(const Vector3f& color);
-    void setSpecularColor(const Vector3f& color);
-    void setShininess(float shininess);
-    void setAlpha(float a);
     void setPointSize(float size);
     void setLineWidth(float width);
 

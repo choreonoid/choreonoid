@@ -6,12 +6,11 @@
 #define CNOID_PHENOMENON_PLUGIN_PARTICLES_PROGRAM_H
 
 #include "SceneParticles.h"
-#include <cnoid/GLSLSceneRenderer>
 #include <cnoid/ShaderPrograms>
-#include <memory>
-#include <cstdlib>
 
 namespace cnoid {
+
+class GLSLSceneRenderer;
 
 class ParticlesProgramBase
 {
@@ -49,7 +48,7 @@ private:
 };
 
     
-class ParticlesProgram : public LightingProgram, public ParticlesProgramBase
+class ParticlesProgram : public BasicLightingProgram, public ParticlesProgramBase
 {
 public:
     ParticlesProgram(GLSLSceneRenderer* renderer);

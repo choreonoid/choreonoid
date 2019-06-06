@@ -7,6 +7,7 @@
 #include "SceneSmoke.h"
 #include "ParticlesProgram.h"
 #include <cnoid/EigenUtil>
+#include <cnoid/GLSLProgram>
 
 using namespace std;
 using namespace cnoid;
@@ -80,16 +81,18 @@ SmokeProgram::SmokeProgram(GLSLSceneRenderer* renderer)
 
 bool SmokeProgram::initializeRendering(SceneParticles* particles)
 {
-    loadVertexShader(":/SceneEffectsPlugin/shader/Smoke.vert");
-    loadFragmentShader(":/SceneEffectsPlugin/shader/Particles.frag");
-    link();
+    auto& glsl = glslProgram();
+    
+    glsl.loadVertexShader(":/SceneEffectsPlugin/shader/Smoke.vert");
+    glsl.loadFragmentShader(":/SceneEffectsPlugin/shader/Particles.frag");
+    glsl.link();
     
     if(!ParticlesProgramBase::initializeRendering(particles)){
         return false;
     }
 
-    lifeTimeLocation = getUniformLocation("lifeTime");
-    accelLocation = getUniformLocation("accel");
+    lifeTimeLocation = glsl.getUniformLocation("lifeTime");
+    accelLocation = glsl.getUniformLocation("accel");
 
     glGenBuffers(1, &initVelBuffer);
     glGenBuffers(1, &offsetTimeBuffer);
