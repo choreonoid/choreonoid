@@ -187,6 +187,7 @@ public:
 
     int numSystemLights;
     int prevNumLights;
+    int lightingMode;
     bool defaultLighting;
     bool isHeadLightLightingFromBackEnabled;
 
@@ -381,6 +382,7 @@ void GL1SceneRendererImpl::initialize()
 
     prevFog = 0;
 
+    lightingMode = GLSceneRenderer::FULL_LIGHTING;
     defaultLighting = true;
     defaultSmoothShading = true;
     defaultMaterial = new SgMaterial;
@@ -1906,12 +1908,6 @@ void GL1SceneRendererImpl::enableColorMaterial(bool on)
 }
 
 
-void GL1SceneRenderer::enableColorMaterial(bool on)
-{
-    impl->enableColorMaterial(on);
-}
-
-
 void GL1SceneRendererImpl::setDiffuseColor(const Vector4f& color)
 {
     if(!stateFlag[DIFFUSE_COLOR] || diffuseColor != color){
@@ -1919,12 +1915,6 @@ void GL1SceneRendererImpl::setDiffuseColor(const Vector4f& color)
         diffuseColor = color;
         stateFlag.set(DIFFUSE_COLOR);
     }
-}
-
-
-void GL1SceneRenderer::setDiffuseColor(const Vector4f& color)
-{
-    impl->setDiffuseColor(color);
 }
 
 
@@ -1938,12 +1928,6 @@ void GL1SceneRendererImpl::setAmbientColor(const Vector4f& color)
 }
 
 
-void GL1SceneRenderer::setAmbientColor(const Vector4f& color)
-{
-    impl->setAmbientColor(color);
-}
-
-
 void GL1SceneRendererImpl::setEmissionColor(const Vector4f& color)
 {
     if(!stateFlag[EMISSION_COLOR] || emissionColor != color){
@@ -1951,12 +1935,6 @@ void GL1SceneRendererImpl::setEmissionColor(const Vector4f& color)
         emissionColor = color;
         stateFlag.set(EMISSION_COLOR);
     }
-}
-
-
-void GL1SceneRenderer::setEmissionColor(const Vector4f& color)
-{
-    impl->setEmissionColor(color);
 }
 
 
@@ -1970,12 +1948,6 @@ void GL1SceneRendererImpl::setSpecularColor(const Vector4f& color)
 }
 
 
-void GL1SceneRenderer::setSpecularColor(const Vector4f& color)
-{
-    impl->setSpecularColor(color);
-}
-
-
 void GL1SceneRendererImpl::setShininess(float s)
 {
     if(!stateFlag[SHININESS] || shininess != s){
@@ -1983,12 +1955,6 @@ void GL1SceneRendererImpl::setShininess(float s)
         shininess = s;
         stateFlag.set(SHININESS);
     }
-}
-
-
-void GL1SceneRenderer::setShininess(float s)
-{
-    impl->setShininess(s);
 }
 
 
@@ -2021,12 +1987,6 @@ void GL1SceneRendererImpl::setFrontCCW(bool on)
 }
 
 
-void GL1SceneRenderer::setFrontCCW(bool on)
-{
-    impl->setFrontCCW(on);
-}
-
-
 /**
    Lighting should not be enabled in rendering code
    which may be rendered with displaylists.
@@ -2048,12 +2008,6 @@ void GL1SceneRendererImpl::enableLighting(bool on)
 }
 
 
-void GL1SceneRenderer::enableLighting(bool on)
-{
-    impl->enableLighting(on);
-}
-
-
 void GL1SceneRendererImpl::setLightModelTwoSide(bool on)
 {
     if(!stateFlag[LIGHT_MODEL_TWO_SIDE] || isLightModelTwoSide != on){
@@ -2061,12 +2015,6 @@ void GL1SceneRendererImpl::setLightModelTwoSide(bool on)
         isLightModelTwoSide = on;
         stateFlag.set(LIGHT_MODEL_TWO_SIDE);
     }
-}
-
-
-void GL1SceneRenderer::setLightModelTwoSide(bool on)
-{
-    impl->setLightModelTwoSide(on);
 }
 
 
@@ -2096,12 +2044,6 @@ void GL1SceneRendererImpl::enableBlend(bool on)
 }
 
 
-void GL1SceneRenderer::enableBlend(bool on)
-{
-    impl->enableBlend(on);
-}
-
-
 void GL1SceneRendererImpl::enableDepthMask(bool on)
 {
     if(!stateFlag[DEPTH_MASK] || isDepthMaskEnabled != on){
@@ -2109,12 +2051,6 @@ void GL1SceneRendererImpl::enableDepthMask(bool on)
         isDepthMaskEnabled = on;
         stateFlag.set(DEPTH_MASK);
     }
-}
-
-
-void GL1SceneRenderer::enableDepthMask(bool on)
-{
-    impl->enableDepthMask(on);
 }
 
 
@@ -2132,12 +2068,6 @@ void GL1SceneRendererImpl::setPointSize(float size)
 }
 
 
-void GL1SceneRenderer::setPointSize(float size)
-{
-    impl->setPointSize(size);
-}
-
-
 void GL1SceneRendererImpl::setLineWidth(float width)
 {
     if(!stateFlag[LINE_WIDTH] || lineWidth != width){
@@ -2152,16 +2082,15 @@ void GL1SceneRendererImpl::setLineWidth(float width)
 }
 
 
-void GL1SceneRenderer::setLineWidth(float width)
+void GL1SceneRenderer::setLightingMode(int mode)
 {
-    impl->setLineWidth(width);
-}
-
-
-void GL1SceneRenderer::setDefaultLighting(bool on)
-{
-    if(on != impl->defaultLighting){
-        impl->defaultLighting = on;
+    if(mode != impl->lightingMode){
+        impl->lightingMode = mode;
+        if(mode == FULL_LIGHTING || mode == MINIMUM_LIGHTING){
+            impl->defaultLighting = true;
+        } else {
+            impl->defaultLighting = false;
+        }
         requestToClearResources();
     }
 }

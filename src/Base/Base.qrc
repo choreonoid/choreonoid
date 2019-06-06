@@ -30,7 +30,7 @@
   <file>icons/adjustSize.png</file>
   
   <file>shader/nolighting.vert</file>
-  <file>shader/depth.frag</file>
+  <file>shader/nolighting.frag</file>
   <file>shader/solidcolor.frag</file>
   <file>shader/minlighting.vert</file>
   <file>shader/minlighting.frag</file>

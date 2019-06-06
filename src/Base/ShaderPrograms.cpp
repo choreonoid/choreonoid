@@ -248,6 +248,13 @@ void ShaderProgram::setMaterial(const SgMaterial* material)
 }
 
 
+NolightingProgram::NolightingProgram()
+    : NolightingProgram(":/Base/shader/nolighting.vert", ":/Base/shader/nolighting.frag")
+{
+
+}
+      
+
 NolightingProgram::NolightingProgram(const char* vertexShader, const char* fragmentShader)
     : ShaderProgram(vertexShader, fragmentShader)
 {
@@ -266,6 +273,12 @@ void NolightingProgram::initialize()
     ShaderProgram::initialize();
     
     impl->MVPLocation = glslProgram().getUniformLocation("MVP");
+}
+
+
+void NolightingProgram::initializeFrameRendering()
+{
+    glClear(GL_DEPTH_BUFFER_BIT);
 }
 
 
@@ -990,8 +1003,7 @@ bool PhongShadowLightingProgram::isShadowAntiAliasingEnabled() const
 
 
 ShadowMapProgram::ShadowMapProgram(PhongShadowLightingProgram* phongShadowProgram)
-    : NolightingProgram(":/Base/shader/nolighting.vert", ":/Base/shader/depth.frag"),
-      mainProgram(phongShadowProgram)
+    : mainProgram(phongShadowProgram)
 {
 
 }

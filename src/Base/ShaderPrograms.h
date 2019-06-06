@@ -46,12 +46,13 @@ class NolightingProgramImpl;
 
 class CNOID_EXPORT NolightingProgram : public ShaderProgram
 {
-    NolightingProgram() = delete;
     NolightingProgram(const NolightingProgram&) = delete;
 
 public:
+    NolightingProgram();
     ~NolightingProgram();
     virtual void initialize() override;
+    virtual void initializeFrameRendering() override;
     virtual void setTransform(const Affine3& view, const Affine3& model, const Matrix4& PV) override;
 
 protected:

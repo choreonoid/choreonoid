@@ -27,7 +27,6 @@ namespace {
 const bool USE_FBO_FOR_PICKING = true;
 const bool SHOW_IMAGE_FOR_PICKING = false;
 const bool USE_GL_INT_2_10_10_10_REV_FOR_NORMALS = true;
-const bool FORCE_USE_OF_MINIMUM_LIGHTING_PROGRAM = false;
 
 const float MinLineWidthForPicking = 5.0f;
 
@@ -222,6 +221,7 @@ public:
     LightingProgram* currentLightingProgram;
     NolightingProgram* currentNolightingProgram;
 
+    NolightingProgram nolightingProgram;
     SolidColorProgram solidColorProgram;
     MinimumLightingProgram minimumLightingProgram;
     PhongShadowLightingProgram phongShadowLightingProgram;
@@ -247,8 +247,7 @@ public:
 
     std::set<int> shadowLightIndices;
 
-    bool defaultLighting;
-
+    int lightingMode;
     SgMaterialPtr defaultMaterial;
     GLfloat defaultPointSize;
     GLfloat defaultLineWidth;
@@ -427,7 +426,7 @@ void GLSLSceneRendererImpl::initialize()
     viewMatrix.setIdentity();
     projectionMatrix.setIdentity();
 
-    defaultLighting = true;
+    lightingMode = GLSceneRenderer::FULL_LIGHTING;
     defaultSmoothShading = true;
     defaultMaterial = new SgMaterial;
     defaultMaterial->setDiffuseColor(Vector3f(0.8, 0.8, 0.8));
@@ -583,6 +582,7 @@ bool GLSLSceneRendererImpl::initializeGL()
     updateDefaultFramebufferObject();
 
     try {
+        nolightingProgram.initialize();
         solidColorProgram.initialize();
         minimumLightingProgram.initialize();
         phongShadowLightingProgram.initialize();
@@ -651,13 +651,16 @@ void GLSLSceneRendererImpl::doRender()
     self->extractPreprocessedNodes();
     beginRendering();
 
-    if(!defaultLighting){
+    if(lightingMode == GLSceneRenderer::NO_LIGHTING){
+        pushProgram(nolightingProgram, false);
+        
+    } else if(lightingMode == GLSceneRenderer::SOLID_COLOR_LIGHTING){
         pushProgram(solidColorProgram, false);
         
-    } else if(FORCE_USE_OF_MINIMUM_LIGHTING_PROGRAM){
+    } else if(lightingMode == GLSceneRenderer::MINIMUM_LIGHTING){
         pushProgram(minimumLightingProgram, true);
 
-    } else {
+    } else { // FULL_LIGHTING
         auto& program = phongShadowLightingProgram;
 
         if(shadowLightIndices.empty()){
@@ -2022,12 +2025,6 @@ void GLSLSceneRendererImpl::setPointSize(float size)
 }
 
 
-void GLSLSceneRenderer::setPointSize(float size)
-{
-    impl->setPointSize(size);
-}
-
-
 void GLSLSceneRendererImpl::setLineWidth(float width)
 {
     if(!stateFlag[LINE_WIDTH] || lineWidth != width){
@@ -2042,17 +2039,9 @@ void GLSLSceneRendererImpl::setLineWidth(float width)
 }
 
 
-void GLSLSceneRenderer::setLineWidth(float width)
+void GLSLSceneRenderer::setLightingMode(int mode)
 {
-    impl->setLineWidth(width);
-}
-
-
-void GLSLSceneRenderer::setDefaultLighting(bool on)
-{
-    if(on != impl->defaultLighting){
-        impl->defaultLighting = on;
-    }
+    impl->lightingMode = mode;
 }
 
 

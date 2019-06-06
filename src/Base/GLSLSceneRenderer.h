@@ -57,7 +57,7 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
     virtual const SgNodePath& pickedNodePath() const override;
     virtual bool isPicking() const override;
 
-    virtual void setDefaultLighting(bool on) override;
+    virtual void setLightingMode(int mode) override;
     void setHeadLightLightingFromBackEnabled(bool on);
     virtual void clearShadows() override;
     virtual void enableShadowOfLight(int index, bool on) override;
@@ -72,10 +72,6 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
     virtual void enableUnusedResourceCheck(bool on) override;
     virtual void setColor(const Vector3f& color) override;
     virtual void setUpsideDown(bool on) override;
-
-    void setPointSize(float size);
-    void setLineWidth(float width);
-
     virtual void setBackFaceCullingMode(int mode) override;
     virtual int backFaceCullingMode() const override;
 

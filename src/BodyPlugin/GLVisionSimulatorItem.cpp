@@ -970,7 +970,7 @@ void SensorScreenRenderer::initializeGL(SgCamera* sceneCamera)
     renderer->setCurrentCamera(sceneCamera);
 
     if(rangeSensorForRendering){
-        renderer->setDefaultLighting(false);
+        renderer->setLightingMode(GLSceneRenderer::NO_LIGHTING);
     } else {
         if(screenId != FRONT_SCREEN){
             SgDirectionalLight* headLight = dynamic_cast<SgDirectionalLight*>(renderer->headLight());
