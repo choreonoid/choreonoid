@@ -236,6 +236,7 @@ public:
     bool isActuallyRendering;
     bool isPicking;
     bool isRenderingShadowMap;
+    bool isMinimumLightingProgramActivatedInThisFrame;
     
     Affine3Array modelMatrixStack; // stack of the model matrices
     Affine3 viewMatrix;
@@ -343,6 +344,7 @@ public:
     void renderOverlay(SgOverlay* overlay);
     void renderOutlineGroup(SgOutlineGroup* outline);
     void renderOutlineGroupMain(SgOutlineGroup* outline, const Affine3& T);
+    void renderSimplifiedRenderingGroup(SgSimplifiedRenderingGroup* group);
     void flushNolightingTransformMatrices();
     VertexResource* getOrCreateVertexResource(SgObject* obj);
     void drawVertexResource(VertexResource* resource, GLenum primitiveMode, const Affine3& position);
@@ -465,6 +467,8 @@ void GLSLSceneRendererImpl::initialize()
         [&](SgOverlay* node){ renderOverlay(node); });
     renderingFunctions.setFunction<SgOutlineGroup>(
         [&](SgOutlineGroup* node){ renderOutlineGroup(node); });
+    renderingFunctions.setFunction<SgSimplifiedRenderingGroup>(
+        [&](SgSimplifiedRenderingGroup* node){ renderSimplifiedRenderingGroup(node); });
 
     self->applyExtensions();
     renderingFunctions.updateDispatchTable();
@@ -651,8 +655,11 @@ void GLSLSceneRendererImpl::doRender()
     self->extractPreprocessedNodes();
     beginRendering();
 
+    isMinimumLightingProgramActivatedInThisFrame = false;
+    
     if(lightingMode == GLSceneRenderer::NO_LIGHTING){
         pushProgram(nolightingProgram, false);
+        isMinimumLightingProgramActivatedInThisFrame = true;
         
     } else if(lightingMode == GLSceneRenderer::SOLID_COLOR_LIGHTING){
         pushProgram(solidColorProgram, false);
@@ -1975,6 +1982,28 @@ void GLSLSceneRendererImpl::renderOutlineGroupMain(SgOutlineGroup* outline, cons
     popProgram();
 
     modelMatrixStack.pop_back();
+}
+
+
+void GLSLSceneRendererImpl::renderSimplifiedRenderingGroup(SgSimplifiedRenderingGroup* group)
+{
+    if(isRenderingShadowMap){
+        return;
+    }
+    
+    if(!isPicking){
+        pushProgram(minimumLightingProgram, true);
+        if(!isMinimumLightingProgramActivatedInThisFrame){
+            renderLights(&minimumLightingProgram);
+            isMinimumLightingProgramActivatedInThisFrame = true;
+        }
+    }
+
+    renderChildNodes(group);
+
+    if(!isPicking){
+        popProgram();
+    }
 }
 
 

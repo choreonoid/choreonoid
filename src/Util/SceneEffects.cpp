@@ -53,12 +53,20 @@ SgOutlineGroup::SgOutlineGroup()
 }
 
 
+SgSimplifiedRenderingGroup::SgSimplifiedRenderingGroup()
+    : SgGroup(findPolymorphicId<SgSimplifiedRenderingGroup>())
+{
+
+}
+
+
 namespace {
 
 struct NodeTypeRegistration {
     NodeTypeRegistration() {
         SgNode::registerType<SgFog, SgPreprocessed>();
         SgNode::registerType<SgOutlineGroup, SgGroup>();
+        SgNode::registerType<SgSimplifiedRenderingGroup, SgGroup>();
     }
 } registration;
 
