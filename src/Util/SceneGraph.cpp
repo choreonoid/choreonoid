@@ -93,7 +93,7 @@ int SgObject::numChildObjects() const
 
 SgObject* SgObject::childObject(int /* index */)
 {
-    return 0;
+    return nullptr;
 }
 
 

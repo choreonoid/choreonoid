@@ -251,16 +251,21 @@ public:
     void copyChildrenTo(SgGroup* group, bool doNotify = false);
     void moveChildrenTo(SgGroup* group, bool doNotify = false);
 
-    template<class NodeType> NodeType* findNodeOfType() {
+    template<class NodeType> NodeType* findNodeOfType(int depth = -1) {
         for(int i=0; i < numChildren(); ++i){
             if(NodeType* node = dynamic_cast<NodeType*>(child(i))) return node;
         }
-        for(int i=0; i < numChildren(); ++i){
-            if(child(i)->isGroup()){
-                if(NodeType* node = static_cast<SgGroup*>(child(i))->findNodeOfType<NodeType>()) return node;
+        if(depth < 0 || --depth > 0){
+            for(int i=0; i < numChildren(); ++i){
+                auto child_ = child(i);
+                if(child_->isGroup()){
+                    if(NodeType* node = static_cast<SgGroup*>(child_)->findNodeOfType<NodeType>(depth)){
+                        return node;
+                    }
+                }
             }
         }
-        return 0;
+        return nullptr;
     }
 
 protected:

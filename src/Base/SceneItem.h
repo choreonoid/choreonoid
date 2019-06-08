@@ -27,6 +27,9 @@ public:
     SgPosTransform* topNode() { return topNode_; }
     const SgPosTransform* topNode() const { return topNode_; }
 
+    void setSimplifiedRenderingEnabled(bool on);
+    bool isSimplifiedRenderingEnabled() const { return isSimplifiedRenderingEnabled_; }
+
 protected:
     virtual Item* doDuplicate() const;
     virtual bool store(Archive& archive);
@@ -35,6 +38,7 @@ protected:
 
 private:
     SgPosTransformPtr topNode_;
+    bool isSimplifiedRenderingEnabled_;
 
     bool onTranslationChanged(const std::string& value);
     bool onRotationChanged(const std::string& value);
