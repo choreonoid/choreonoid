@@ -235,8 +235,11 @@ protected:
 public:
     virtual int numChildObjects() const;
     virtual SgObject* childObject(int index);
-    virtual const BoundingBox& boundingBox() const;
+
+    const BoundingBox& boundingBox() const { return bbox; }
     virtual void updateBoundingBox();
+    void setBoundingBox(const BoundingBox& bb){ bbox = bb; };
+    void setBoundingBox(const BoundingBoxf& bb){ bbox = bb; };
 
     bool hasVertices() const { return (vertices_ && !vertices_->empty()); }
     SgVertexArray* vertices() { return vertices_; }
@@ -280,7 +283,7 @@ public:
     bool isSolid() const { return isSolid_; }
     void setSolid(bool on) { isSolid_ = on; }
 
-  protected:
+protected:
     BoundingBox bbox;
     
 private:
@@ -489,6 +492,7 @@ public:
 
     virtual int numChildObjects() const;
     virtual SgObject* childObject(int index);
+
     virtual const BoundingBox& boundingBox() const;
     void updateBoundingBox();
 

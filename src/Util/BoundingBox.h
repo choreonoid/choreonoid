@@ -64,6 +64,7 @@ public:
     const Vector3f& min() const { return min_; }
     const Vector3f& max() const { return max_; }
     Vector3f center() const;
+    Vector3f size() const;
     float boundingSphereRadius() const;
         
     void expandBy(const BoundingBoxf& bbox);

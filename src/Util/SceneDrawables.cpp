@@ -315,12 +315,6 @@ SgObject* SgMeshBase::childObject(int index)
 }
 
 
-const BoundingBox& SgMeshBase::boundingBox() const
-{
-    return bbox;
-}
-
-
 void SgMeshBase::updateBoundingBox()
 {
     if(!vertices_){
