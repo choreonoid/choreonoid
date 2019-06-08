@@ -50,6 +50,7 @@ public:
     SgNormalArray& normals;
     SgIndexArray& triangleVertices;
     SgIndexArray& normalIndices;
+    BoundingBoxf bbox;
 
     CompactMeshArranger();
     void addVertex(const Vector3f& vertex);
@@ -94,6 +95,7 @@ void CompactMeshArranger::addVertex(const Vector3f& vertex)
     } else {
         triangleVertices.push_back(vertices.size());
         vertices.push_back(vertex);
+        bbox.expandBy(vertex);
     }
 }
 
@@ -138,7 +140,7 @@ SgShape* CompactMeshArranger::finalize()
     normals.shrink_to_fit();
     triangleVertices.shrink_to_fit();
     normalIndices.shrink_to_fit();
-    mesh->updateBoundingBox();
+    mesh->setBoundingBox(bbox);
 
     return shape;
 }
