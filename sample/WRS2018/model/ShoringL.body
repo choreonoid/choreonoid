@@ -28,7 +28,7 @@ links:
             translation: [ -0.85, -0.551, 1.0 ]
             elements: &BOX1
               Shape: { geometry: { type: Box, size: [ 0.1, 0.1, 1.8 ] } }
-#左足
+# Left
           -
             name: BOX2
             type: Transform
@@ -97,7 +97,7 @@ links:
             type: Transform
             translation: [ -0.85, 0.549, 1.0 ]
             elements: *BOX1
-#右足
+# Right
           -
             name: BOX14
             type: Transform
@@ -157,7 +157,7 @@ links:
             translation: [ -0.75, 0.6085, 0.8985 ]
             elements: *BOX7
           -
-#後足
+# Back
             name: BOX25
             type: Transform
             translation: [ 0.95, -0.001, 0.05 ]
