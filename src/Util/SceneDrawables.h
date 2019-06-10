@@ -144,7 +144,7 @@ private:
 typedef ref_ptr<SgTexture> SgTexturePtr;
 
 
-template<class T, class Alloc = std::allocator<T> > class SgVectorArray : public SgObject
+template<class T, class Alloc = std::allocator<T>> class SgVectorArray : public SgObject
 {
     typedef std::vector<T> Container;
         
@@ -219,7 +219,7 @@ typedef ref_ptr<SgNormalArray> SgNormalArrayPtr;
 typedef SgVectorArray<Vector3f> SgColorArray;
 typedef ref_ptr<SgColorArray> SgColorArrayPtr;
 
-typedef SgVectorArray<Vector2f, Eigen::aligned_allocator<Vector2f> > SgTexCoordArray;
+typedef SgVectorArray<Vector2f, Eigen::aligned_allocator<Vector2f>> SgTexCoordArray;
 typedef ref_ptr<SgTexCoordArray> SgTexCoordArrayPtr;
 
 typedef std::vector<int> SgIndexArray;

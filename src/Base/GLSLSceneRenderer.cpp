@@ -27,6 +27,8 @@ namespace {
 const bool USE_FBO_FOR_PICKING = true;
 const bool SHOW_IMAGE_FOR_PICKING = false;
 const bool USE_GL_INT_2_10_10_10_REV_FOR_NORMALS = true;
+const bool USE_GL_SHORT_FOR_VERTICES = false;
+const bool USE_GL_UNSIGNED_SHORT_FOR_TEXTURE_COORDINATES = false;
 
 const float MinLineWidthForPicking = 5.0f;
 
@@ -65,6 +67,8 @@ typedef ref_ptr<GLResource> GLResourcePtr;
 class VertexResource : public GLResource
 {
 public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    
     static const int MAX_NUM_BUFFERS = 4;
     GLuint vao;
     GLuint vbos[MAX_NUM_BUFFERS];
@@ -73,7 +77,9 @@ public:
     SgObjectPtr sceneObject;
     ScopedConnection connection;
     SgLineSetPtr normalVisualization;
-
+    Matrix4* pLocalTransform;
+    Matrix4 localTransform;
+    
     VertexResource(const VertexResource&) = delete;
     VertexResource& operator=(const VertexResource&) = delete;
 
@@ -86,6 +92,7 @@ public:
 
         clearHandles();
         glGenVertexArrays(1, &vao);
+        pLocalTransform = nullptr;
     }
 
     void clearHandles(){
@@ -354,9 +361,13 @@ public:
     bool loadTextureImage(TextureResource* resource, const Image& image);
     void writeMeshVertices(SgMesh* mesh, VertexResource* resource);
     template<class NormalArrayWrapper>
-    bool writeMeshNormalsSub(SgMesh* mesh, NormalArrayWrapper& normals, SgVertexArray& vertices, VertexResource* resource);
-    void writeMeshNormalsPacked(SgMesh* mesh, GLuint buffer, SgVertexArray& vertices, VertexResource* resource);
-    void writeMeshNormalsFloat(SgMesh* mesh, GLuint buffer, SgVertexArray& vertices, VertexResource* resource);
+    bool writeMeshNormalsSub(SgMesh* mesh, NormalArrayWrapper& normals, VertexResource* resource);
+    void writeMeshNormalsPacked(SgMesh* mesh, GLuint buffer, VertexResource* resource);
+    void writeMeshNormalsFloat(SgMesh* mesh, GLuint buffer, VertexResource* resource);
+    template<class TexCoordArrayWrapper>
+    void writeMeshTexCoordsSub(SgMesh* mesh, TexCoordArrayWrapper& texCoords);
+    void writeMeshTexCoordsUnsignedShort(SgMesh* mesh, GLuint buffer);
+    void writeMeshTexCoordsFloat(SgMesh* mesh, GLuint buffer);
     void writeMeshTexCoords(SgMesh* mesh, GLuint buffer);
     void writeMeshColors(SgMesh* mesh, GLuint buffer);
     void renderPlot(SgPlot* plot, GLenum primitiveMode, std::function<SgVertexArrayPtr()> getVertices);
@@ -1264,7 +1275,7 @@ VertexResource* GLSLSceneRendererImpl::getOrCreateVertexResource(SgObject* obj)
 
 void GLSLSceneRendererImpl::drawVertexResource(VertexResource* resource, GLenum primitiveMode, const Affine3& position)
 {
-    currentProgram->setTransform(viewMatrix, position, PV);
+    currentProgram->setTransform(PV, viewMatrix, position, resource->pLocalTransform);
     glBindVertexArray(resource->vao);
     glDrawArrays(primitiveMode, 0, resource->numVertices);
 }
@@ -1526,41 +1537,93 @@ void GLSLSceneRenderer::onImageUpdated(SgImage* image)
 
 void GLSLSceneRendererImpl::writeMeshVertices(SgMesh* mesh, VertexResource* resource)
 {
+    const auto& orgVertices = *mesh->vertices();
     auto& triangleVertices = mesh->triangleVertices();
     const int totalNumVertices = triangleVertices.size();
-    
-    const auto& orgVertices = *mesh->vertices();
-    SgVertexArray vertices;
-    vertices.reserve(totalNumVertices);
+    const int numTriangles = mesh->numTriangles();
     resource->numVertices = totalNumVertices;
 
-    const int numTriangles = mesh->numTriangles();
     int faceVertexIndex = 0;
-    
-    for(int i=0; i < numTriangles; ++i){
-        for(int j=0; j < 3; ++j){
-            const int orgVertexIndex = triangleVertices[faceVertexIndex++];
-            vertices.push_back(orgVertices[orgVertexIndex]);
+
+    if(USE_GL_SHORT_FOR_VERTICES){
+        
+        typedef Eigen::Matrix<GLshort,3,1> Vector3s;
+        
+        /**
+           GLShort type is used for storing vertex positions.
+           Each value's range is [ -32768, 32767 ], which corresponds to normalized range [ -1, 1 ]
+           that covers all the vertex positions.
+           In the vertex shader, [ -1, 1 ] value is converted to the original position
+        */
+        vector<Vector3s> normalizedVertices;
+        
+        normalizedVertices.reserve(totalNumVertices);
+        BoundingBox bbox = mesh->boundingBox();
+        const Vector3 c = bbox.center();
+        const Vector3 hs =  0.5 * bbox.size();
+
+        resource->localTransform <<
+            hs.x(), 0.0,    0.0,    c.x(),
+            0.0,    hs.y(), 0.0,    c.y(),
+            0.0,    0.0,    hs.z(), c.z(),
+            0.0,    0.0,    0.0,    1.0;
+        resource->pLocalTransform = &resource->localTransform;
+
+        const Vector3f cf = c.cast<float>();
+        const Vector3f r(32767.0 / hs.x(), 32767.0 / hs.y(), 32767.0 / hs.z());
+        
+        for(int i=0; i < numTriangles; ++i){
+            for(int j=0; j < 3; ++j){
+                const int orgVertexIndex = triangleVertices[faceVertexIndex++];
+                auto v = orgVertices[orgVertexIndex];
+                normalizedVertices.push_back(
+                    Vector3s(
+                        r.x() * (v.x() - cf.x()),
+                        r.y() * (v.y() - cf.y()),
+                        r.z() * (v.z() - cf.z())));
+            }
         }
-    }
+        {
+            LockVertexArrayAPI lock;
+            glBindVertexArray(resource->vao);
+            glBindBuffer(GL_ARRAY_BUFFER, resource->newBuffer());
+            glVertexAttribPointer((GLuint)0, 3, GL_SHORT, GL_TRUE, 0, ((GLubyte*)NULL + (0)));
+        }
+        auto size = normalizedVertices.size() * sizeof(Vector3s);
+        glBufferData(GL_ARRAY_BUFFER, size, normalizedVertices.data(), GL_STATIC_DRAW);
 
-    {
-        LockVertexArrayAPI lock;
-        glBindVertexArray(resource->vao);
-        glBindBuffer(GL_ARRAY_BUFFER, resource->newBuffer());
-        glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
-    }
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vector3f), vertices.data(), GL_STATIC_DRAW);
-    glEnableVertexAttribArray(0);
-
-    if(USE_GL_INT_2_10_10_10_REV_FOR_NORMALS){
-        writeMeshNormalsPacked(mesh, resource->newBuffer(), vertices, resource);
     } else {
-        writeMeshNormalsFloat(mesh, resource->newBuffer(), vertices, resource);
+        SgVertexArray vertices;
+        vertices.reserve(totalNumVertices);
+        for(int i=0; i < numTriangles; ++i){
+            for(int j=0; j < 3; ++j){
+                const int orgVertexIndex = triangleVertices[faceVertexIndex++];
+                vertices.push_back(orgVertices[orgVertexIndex]);
+            }
+        }
+        {
+            LockVertexArrayAPI lock;
+            glBindVertexArray(resource->vao);
+            glBindBuffer(GL_ARRAY_BUFFER, resource->newBuffer());
+            glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
+        }
+        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vector3f), vertices.data(), GL_STATIC_DRAW);
+    }
+
+    glEnableVertexAttribArray(0);
+    
+    if(USE_GL_INT_2_10_10_10_REV_FOR_NORMALS){
+        writeMeshNormalsPacked(mesh, resource->newBuffer(), resource);
+    } else {
+        writeMeshNormalsFloat(mesh, resource->newBuffer(), resource);
     }
 
     if(mesh->hasTexCoords()){
-        writeMeshTexCoords(mesh, resource->newBuffer());
+        if(USE_GL_UNSIGNED_SHORT_FOR_TEXTURE_COORDINATES){
+            writeMeshTexCoordsUnsignedShort(mesh, resource->newBuffer());
+        } else {
+            writeMeshTexCoordsFloat(mesh, resource->newBuffer());
+        }
     }
     
     if(mesh->hasColors()){
@@ -1570,7 +1633,7 @@ void GLSLSceneRendererImpl::writeMeshVertices(SgMesh* mesh, VertexResource* reso
 
 template<class NormalArrayWrapper>
 bool GLSLSceneRendererImpl::writeMeshNormalsSub
-(SgMesh* mesh, NormalArrayWrapper& normals, SgVertexArray& vertices, VertexResource* resource)
+(SgMesh* mesh, NormalArrayWrapper& normals, VertexResource* resource)
 {
     bool ready = false;
     
@@ -1619,11 +1682,17 @@ bool GLSLSceneRendererImpl::writeMeshNormalsSub
     if(isNormalVisualizationEnabled){
         auto lines = new SgLineSet;
         auto lineVertices = lines->getOrCreateVertices();
-        for(size_t i=0; i < vertices.size(); ++i){
-            const Vector3f& v = vertices[i];
-            lineVertices->push_back(v);
-            lineVertices->push_back(v + normals.get(i) * normalVisualizationLength);
-            lines->addLine(i*2, i*2+1);
+        const auto& orgVertices = *mesh->vertices();
+        int vertexIndex = 0;
+        for(int i=0; i < numTriangles; ++i){
+            for(int j=0; j < 3; ++j){
+                const int orgVertexIndex = triangleVertices[vertexIndex];
+                auto& v = orgVertices[orgVertexIndex];
+                lineVertices->push_back(v);
+                lineVertices->push_back(v + normals.get(vertexIndex) * normalVisualizationLength);
+                lines->addLine(vertexIndex * 2, vertexIndex * 2 + 1);
+                ++vertexIndex;
+            }
         }
         lines->setMaterial(normalVisualizationMaterial);
         resource->normalVisualization = lines;
@@ -1633,8 +1702,7 @@ bool GLSLSceneRendererImpl::writeMeshNormalsSub
 }    
     
 
-void GLSLSceneRendererImpl::writeMeshNormalsPacked
-(SgMesh* mesh, GLuint buffer, SgVertexArray& vertices, VertexResource* resource)
+void GLSLSceneRendererImpl::writeMeshNormalsPacked(SgMesh* mesh, GLuint buffer, VertexResource* resource)
 {
     struct NormalArrayWrapper {
         vector<uint32_t> array;
@@ -1663,7 +1731,7 @@ void GLSLSceneRendererImpl::writeMeshNormalsPacked
         }
     } normals;
             
-    if(writeMeshNormalsSub(mesh, normals, vertices, resource)){
+    if(writeMeshNormalsSub(mesh, normals, resource)){
         {
             LockVertexArrayAPI lock;
             glBindBuffer(GL_ARRAY_BUFFER, buffer);
@@ -1675,8 +1743,7 @@ void GLSLSceneRendererImpl::writeMeshNormalsPacked
 }
 
 
-void GLSLSceneRendererImpl::writeMeshNormalsFloat
-(SgMesh* mesh, GLuint buffer, SgVertexArray& vertices, VertexResource* resource)
+void GLSLSceneRendererImpl::writeMeshNormalsFloat(SgMesh* mesh, GLuint buffer, VertexResource* resource)
 {
     struct NormalArrayWrapper {
         SgNormalArray array;
@@ -1684,7 +1751,7 @@ void GLSLSceneRendererImpl::writeMeshNormalsFloat
         Vector3f get(int index){ return array[index]; }
     } normals;
             
-    if(writeMeshNormalsSub(mesh, normals, vertices, resource)){
+    if(writeMeshNormalsSub(mesh, normals, resource)){
         {
             LockVertexArrayAPI lock;
             glBindBuffer(GL_ARRAY_BUFFER, buffer);
@@ -1696,14 +1763,14 @@ void GLSLSceneRendererImpl::writeMeshNormalsFloat
 }
 
 
-void GLSLSceneRendererImpl::writeMeshTexCoords(SgMesh* mesh, GLuint buffer)
+template<class TexCoordArrayWrapper>
+void GLSLSceneRendererImpl::writeMeshTexCoordsSub(SgMesh* mesh, TexCoordArrayWrapper& texCoords)
 {
     auto& triangleVertices = mesh->triangleVertices();
     const int totalNumVertices = triangleVertices.size();
     SgTexCoordArrayPtr pOrgTexCoords;
     const auto& texCoordIndices = mesh->texCoordIndices();
-    SgTexCoordArray texCoords;
-    texCoords.reserve(totalNumVertices);
+    
     if(!hasValidTextureTransform){
         pOrgTexCoords = mesh->texCoords();
     } else {
@@ -1715,6 +1782,7 @@ void GLSLSceneRendererImpl::writeMeshTexCoords(SgMesh* mesh, GLuint buffer)
         }
     }
 
+    texCoords.array.reserve(totalNumVertices);
     const int numTriangles = mesh->numTriangles();
     int faceVertexIndex = 0;
     
@@ -1722,24 +1790,70 @@ void GLSLSceneRendererImpl::writeMeshTexCoords(SgMesh* mesh, GLuint buffer)
         for(int i=0; i < numTriangles; ++i){
             for(int j=0; j < 3; ++j){
                 const int orgVertexIndex = triangleVertices[faceVertexIndex++];
-                texCoords.push_back((*pOrgTexCoords)[orgVertexIndex]);
+                texCoords.append((*pOrgTexCoords)[orgVertexIndex]);
             }
         }
     } else {
         for(int i=0; i < numTriangles; ++i){
             for(int j=0; j < 3; ++j){
                 const int texCoordIndex = texCoordIndices[faceVertexIndex++];
-                texCoords.push_back((*pOrgTexCoords)[texCoordIndex]);
+                texCoords.append((*pOrgTexCoords)[texCoordIndex]);
             }
         }
     }
+}
+
+
+void GLSLSceneRendererImpl::writeMeshTexCoordsUnsignedShort(SgMesh* mesh, GLuint buffer)
+{
+    typedef Eigen::Matrix<GLushort,2,1> Vector2us;
+    
+    struct TexCoordArrayWrapper {
+        vector<Vector2us> array;
+        float repeat(float v){
+            if(v < 0.0f){
+                return v - floor(v);
+            } else if(v > 1.0f){
+                return v - floor(v);
+            }
+            return v;
+        }
+        void append(const Vector2f& uv){
+            array.push_back(Vector2us(65535.0f * repeat(uv[0]), 65535.0f * repeat(uv[1])));
+        }
+    } texCoords;
+
+    writeMeshTexCoordsSub(mesh, texCoords);
+
+    {
+        LockVertexArrayAPI lock;
+        glBindBuffer(GL_ARRAY_BUFFER, buffer);
+        glVertexAttribPointer((GLuint)2, 2, GL_UNSIGNED_SHORT, GL_TRUE, 0, ((GLubyte*)NULL + (0)));
+    }
+    auto size = texCoords.array.size() * sizeof(Vector2us);
+    glBufferData(GL_ARRAY_BUFFER, size, texCoords.array.data(), GL_STATIC_DRAW);
+    glEnableVertexAttribArray(2);
+}
+
+
+void GLSLSceneRendererImpl::writeMeshTexCoordsFloat(SgMesh* mesh, GLuint buffer)
+{
+    struct TexCoordArrayWrapper {
+        SgTexCoordArray array;
+        void append(const Vector2f& uv){
+            array.push_back(uv);
+        }
+    } texCoords;
+
+    writeMeshTexCoordsSub(mesh, texCoords);
 
     {
         LockVertexArrayAPI lock;
         glBindBuffer(GL_ARRAY_BUFFER, buffer);
         glVertexAttribPointer((GLuint)2, 2, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
     }
-    glBufferData(GL_ARRAY_BUFFER, texCoords.size() * sizeof(Vector2f), texCoords.data(), GL_STATIC_DRAW);
+    auto size = texCoords.array.size() * sizeof(Vector2f);
+    glBufferData(GL_ARRAY_BUFFER, size, texCoords.array.data(), GL_STATIC_DRAW);
     glEnableVertexAttribArray(2);
 }
 
@@ -1750,8 +1864,11 @@ void GLSLSceneRendererImpl::writeMeshColors(SgMesh* mesh, GLuint buffer)
     const int totalNumVertices = triangleVertices.size();
     const auto& orgColors = *mesh->colors();
     const auto& colorIndices = mesh->colorIndices();
-    SgColorArray colors;
+
+    typedef Eigen::Array<GLubyte,3,1> Color;
+    vector<Color> colors;
     colors.reserve(totalNumVertices);
+    
     const int numTriangles = mesh->numTriangles();
     int faceVertexIndex = 0;
 
@@ -1759,14 +1876,16 @@ void GLSLSceneRendererImpl::writeMeshColors(SgMesh* mesh, GLuint buffer)
         for(int i=0; i < numTriangles; ++i){
             for(int j=0; j < 3; ++j){
                 const int orgVertexIndex = triangleVertices[faceVertexIndex++];
-                colors.push_back(orgColors[orgVertexIndex]);
+                Vector3f c = 255.0f * orgColors[orgVertexIndex];
+                colors.push_back(Color(c[0], c[1], c[2]));
             }
         }
     } else {
         for(int i=0; i < numTriangles; ++i){
             for(int j=0; j < 3; ++j){
                 const int colorIndex = colorIndices[faceVertexIndex++];
-                colors.push_back(orgColors[colorIndex]);
+                Vector3f c = 255.0f * orgColors[colorIndex];
+                colors.push_back(Color(c[0], c[1], c[2]));
             }
         }
     }
@@ -1774,9 +1893,9 @@ void GLSLSceneRendererImpl::writeMeshColors(SgMesh* mesh, GLuint buffer)
     {
         LockVertexArrayAPI lock;
         glBindBuffer(GL_ARRAY_BUFFER, buffer);
-        glVertexAttribPointer((GLuint)3, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
+        glVertexAttribPointer((GLuint)3, 3, GL_UNSIGNED_BYTE, GL_TRUE, 0, ((GLubyte*)NULL + (0)));
     }
-    glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(Vector3f), colors.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(Color), colors.data(), GL_STATIC_DRAW);
     glEnableVertexAttribArray(3);
 }
     
@@ -1835,31 +1954,41 @@ void GLSLSceneRendererImpl::renderPlot
         glEnableVertexAttribArray(0);
 
         if(hasColors){
-            SgColorArrayPtr colors;
+            typedef Eigen::Array<GLubyte,3,1> Color;
+            vector<Color> colors;
+            colors.reserve(n);
             const SgColorArray& orgColors = *plot->colors();
             const SgIndexArray& colorIndices = plot->colorIndices();
+            size_t i = 0;
             if(plot->colorIndices().empty()){
-                if(orgColors.size() >= n){
-                    colors = plot->colors();
-                } else {
-                    colors = new SgColorArray(n);
-                    std::copy(orgColors.begin(), orgColors.end(), colors->begin());
-                    std::fill(colors->begin() + orgColors.size(), colors->end(), orgColors.back());
+                const size_t m = std::min(n, orgColors.size());
+                while(i < m){
+                    Vector3f c = 255.0f * orgColors[i];
+                    colors.push_back(Color(c[0], c[1], c[2]));
+                    ++i;
                 }
             } else {
-                const int m = colorIndices.size();
-                colors = new SgColorArray(m);
-                for(int i=0; i < m; ++i){
-                    (*colors)[i] = orgColors[colorIndices[i]];
+                const size_t m = std::min(n, colorIndices.size());
+                size_t i = 0;
+                while(i < m){
+                    Vector3f c = 255.0f * orgColors[colorIndices[i]];
+                    colors.push_back(Color(c[0], c[1], c[2]));
+                    ++i;
                 }
             }
-
+            if(i < n){
+                const auto& c = colors.back();
+                while(i < n){
+                    colors.push_back(c);
+                    ++i;
+                }
+            }
             {
                 LockVertexArrayAPI lock;
                 glBindBuffer(GL_ARRAY_BUFFER, resource->newBuffer());
-                glVertexAttribPointer((GLuint)1, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL +(0)));
+                glVertexAttribPointer((GLuint)1, 3, GL_UNSIGNED_BYTE, GL_TRUE, 0, ((GLubyte*)NULL +(0)));
             }
-            glBufferData(GL_ARRAY_BUFFER, n * sizeof(Vector3f), colors->data(), GL_STATIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, n * sizeof(Color), colors.data(), GL_STATIC_DRAW);
             glEnableVertexAttribArray(1);
         }
     }        

@@ -30,7 +30,15 @@ public:
     virtual void activate();
     virtual void initializeFrameRendering();
     virtual void deactivate();
-    virtual void setTransform(const Affine3& view, const Affine3& model, const Matrix4& PV);
+
+    /**
+       @param PV Product of the project matrix and view matrix
+       @param V The transform corresponding to the view matrix
+       @param M The transform corresponding to the model matrix
+       @param L The transform corresponding to the local vertex transform matrix
+       @note L is used when the vertex positions are expressed as normalized ([-1.0, 1.0]) integer value
+    */
+    virtual void setTransform(const Matrix4& PV, const Affine3& V, const Affine3& M, const Matrix4* L = nullptr);
     virtual void setMaterial(const SgMaterial* material);
 
 protected:
@@ -53,7 +61,7 @@ public:
     ~NolightingProgram();
     virtual void initialize() override;
     virtual void initializeFrameRendering() override;
-    virtual void setTransform(const Affine3& view, const Affine3& model, const Matrix4& PV) override;
+    virtual void setTransform(const Matrix4& PV, const Affine3& V, const Affine3& M, const Matrix4* L) override;
 
 protected:
     NolightingProgram(const char* vertexShader, const char* fragmentShader);
@@ -119,7 +127,7 @@ public:
     virtual void initialize() override;
     virtual void activate() override;
     virtual void initializeFrameRendering() override;
-    virtual void setTransform(const Affine3& view, const Affine3& model, const Matrix4& PV) override;
+    virtual void setTransform(const Matrix4& PV, const Affine3& V, const Affine3& M, const Matrix4* L) override;
     virtual int maxNumLights() const override;
     virtual bool setLight(
         int index, const SgLight* light, const Affine3& T, const Affine3& view, bool shadowCasting) override;
@@ -196,7 +204,7 @@ public:
     virtual void initializeFrameRendering() override;
     virtual bool setLight(
         int index, const SgLight* light, const Affine3& T, const Affine3& view, bool shadowCasting) override;
-    virtual void setTransform(const Affine3& view, const Affine3& model, const Matrix4& PV) override;
+    virtual void setTransform(const Matrix4& PV, const Affine3& V, const Affine3& M, const Matrix4* L) override;
 
     void activateShadowMapGenerationPass(int shadowIndex);
     void activateMainRenderingPass();

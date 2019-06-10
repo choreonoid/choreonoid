@@ -236,11 +236,10 @@ void ShaderProgram::initializeFrameRendering()
 }
 
 
-void ShaderProgram::setTransform(const Affine3& view, const Affine3& model, const Matrix4& PV)
+void ShaderProgram::setTransform(const Matrix4& PV, const Affine3& V, const Affine3& M, const Matrix4* L)
 {
 
 }
-
 
 void ShaderProgram::setMaterial(const SgMaterial* material)
 {
@@ -282,9 +281,14 @@ void NolightingProgram::initializeFrameRendering()
 }
 
 
-void NolightingProgram::setTransform(const Affine3& view, const Affine3& model, const Matrix4& PV)
+void NolightingProgram::setTransform(const Matrix4& PV, const Affine3& V, const Affine3& M, const Matrix4* L)
 {
-    const Matrix4f PVM = (PV * model.matrix()).cast<float>();
+    Matrix4f PVM;
+    if(L){
+        PVM = (PV * M.matrix() * (*L)).cast<float>();
+    } else {
+        PVM = (PV * M.matrix()).cast<float>();
+    }
     glUniformMatrix4fv(impl->MVPLocation, 1, GL_FALSE, PVM.data());
 }
 
@@ -434,12 +438,18 @@ void MinimumLightingProgram::initializeFrameRendering()
 }
 
 
-void MinimumLightingProgram::setTransform(const Affine3& view, const Affine3& model, const Matrix4& PV)
+void MinimumLightingProgram::setTransform
+(const Matrix4& PV, const Affine3& V, const Affine3& M, const Matrix4* L)
 {
-    const Affine3f VM = (view * model).cast<float>();
-    const Matrix3f N = VM.linear();
-    const Matrix4f PVM = (PV * model.matrix()).cast<float>();
+    Matrix4f PVM;
+    if(L){
+        PVM.noalias() = (PV * M.matrix() * (*L)).cast<float>();
+    } else {
+        PVM.noalias() = (PV * M.matrix()).cast<float>();
+    }
     glUniformMatrix4fv(impl->MVPLocation, 1, GL_FALSE, PVM.data());
+    
+    const Matrix3f N = (V.linear() * M.linear()).cast<float>();
     glUniformMatrix3fv(impl->normalMatrixLocation, 1, GL_FALSE, N.data());
 }
 
@@ -966,11 +976,18 @@ void PhongShadowLightingProgram::setShadowMapViewProjection(const Matrix4& PV)
 }
 
 
-void PhongShadowLightingProgram::setTransform(const Affine3& view, const Affine3& model, const Matrix4& PV)
+void PhongShadowLightingProgram::setTransform
+(const Matrix4& PV, const Affine3& V, const Affine3& M, const Matrix4* L)
 {
-    const Affine3f VM = (view * model).cast<float>();
+    const Affine3f VM = (V * M).cast<float>();
     const Matrix3f N = VM.linear();
-    const Matrix4f PVM = (PV * model.matrix()).cast<float>();
+
+    Matrix4f PVM;
+    if(L){
+        PVM.noalias() = (PV * M.matrix() * (*L)).cast<float>();
+    } else {
+        PVM.noalias() = (PV * M.matrix()).cast<float>();
+    }
 
     if(impl->useUniformBlockToPassTransformationMatrices){
         impl->transformBlockBuffer.write(impl->modelViewMatrixIndex, VM);
@@ -983,7 +1000,7 @@ void PhongShadowLightingProgram::setTransform(const Affine3& view, const Affine3
         glUniformMatrix4fv(impl->MVPLocation, 1, GL_FALSE, PVM.data());
         for(int i=0; i < impl->numShadows; ++i){
             auto& shadow = impl->shadowInfos[i];
-            const Matrix4f BPVM = (shadow.BPV * model.matrix()).cast<float>();
+            const Matrix4f BPVM = (shadow.BPV * M.matrix()).cast<float>();
             glUniformMatrix4fv(shadow.shadowMatrixLocation, 1, GL_FALSE, BPVM.data());
         }
     }
