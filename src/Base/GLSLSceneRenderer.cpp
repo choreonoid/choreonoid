@@ -270,8 +270,6 @@ public:
     bool isResourceClearRequested;
 
     vector<char> scaledImageBuf;
-    Eigen::Affine2f textureTransform;
-    bool hasValidTextureTransform;
 
     bool isCurrentFogUpdated;
     SgFogPtr prevFog;
@@ -345,7 +343,7 @@ public:
     void renderSwitch(SgSwitch* node);
     void renderUnpickableGroup(SgUnpickableGroup* group);
     void renderShape(SgShape* shape);
-    void renderShapeMain(SgShape* shape, VertexResource* resource, const Affine3& position, unsigned int pickId);
+    void renderShapeMain(SgShape* shape, const Affine3& position, unsigned int pickId);
     void renderPointSet(SgPointSet* pointSet);        
     void renderLineSet(SgLineSet* lineSet);        
     void renderOverlay(SgOverlay* overlay);
@@ -359,16 +357,15 @@ public:
     void renderMaterial(const SgMaterial* material);
     bool renderTexture(SgTexture* texture);
     bool loadTextureImage(TextureResource* resource, const Image& image);
-    void writeMeshVertices(SgMesh* mesh, VertexResource* resource);
+    void writeMeshVertices(SgMesh* mesh, VertexResource* resource, SgTexture* texResource);
     template<class NormalArrayWrapper>
     bool writeMeshNormalsSub(SgMesh* mesh, NormalArrayWrapper& normals, VertexResource* resource);
     void writeMeshNormalsPacked(SgMesh* mesh, GLuint buffer, VertexResource* resource);
     void writeMeshNormalsFloat(SgMesh* mesh, GLuint buffer, VertexResource* resource);
     template<class TexCoordArrayWrapper>
-    void writeMeshTexCoordsSub(SgMesh* mesh, TexCoordArrayWrapper& texCoords);
-    void writeMeshTexCoordsUnsignedShort(SgMesh* mesh, GLuint buffer);
-    void writeMeshTexCoordsFloat(SgMesh* mesh, GLuint buffer);
-    void writeMeshTexCoords(SgMesh* mesh, GLuint buffer);
+    void writeMeshTexCoordsSub(SgMesh* mesh, TexCoordArrayWrapper& texCoords, SgTexture* texture);
+    void writeMeshTexCoordsUnsignedShort(SgMesh* mesh, GLuint buffer, SgTexture* texture);
+    void writeMeshTexCoordsFloat(SgMesh* mesh, GLuint buffer, SgTexture* texture);
     void writeMeshColors(SgMesh* mesh, GLuint buffer);
     void renderPlot(SgPlot* plot, GLenum primitiveMode, std::function<SgVertexArrayPtr()> getVertices);
     void clearGLState();
@@ -445,8 +442,6 @@ void GLSLSceneRendererImpl::initialize()
     defaultMaterial->setDiffuseColor(Vector3f(0.8, 0.8, 0.8));
     defaultPointSize = 1.0f;
     defaultLineWidth = 1.0f;
-
-    hasValidTextureTransform = false;
 
     isNormalVisualizationEnabled = false;
     normalVisualizationLength = 0.0f;
@@ -1285,53 +1280,46 @@ void GLSLSceneRendererImpl::renderShape(SgShape* shape)
 {
     SgMesh* mesh = shape->mesh();
     if(mesh && mesh->hasVertices()){
-
-        VertexResource* resource = getOrCreateVertexResource(mesh);
-        if(!resource->isValid()){
-            writeMeshVertices(mesh, resource);
-        }
-        
         SgMaterial* material = shape->material();
         if(material && material->transparency() > 0.0){
             if(!isRenderingShadowMap){
                 const Affine3& position = modelMatrixStack.back();
-                unsigned int pickId = pushPickId(shape, false);
+                auto pickId = pushPickId(shape, false);
                 transparentRenderingFunctions.push_back(
-                    [this, shape, resource, position, pickId](){
-                        renderShapeMain(shape, resource, position, pickId); });
+                    [this, shape, position, pickId](){
+                        renderShapeMain(shape, position, pickId); });
                 popPickId();
             }
         } else {
-            int pickId = pushPickId(shape, false);
-            renderShapeMain(shape, resource, modelMatrixStack.back(), pickId);
+            auto pickId = pushPickId(shape, false);
+            renderShapeMain(shape, modelMatrixStack.back(), pickId);
             popPickId();
-        }
-
-        if(isNormalVisualizationEnabled && isActuallyRendering && resource->normalVisualization){
-            renderLineSet(resource->normalVisualization);
         }
     }
 }
 
 
-void GLSLSceneRendererImpl::renderShapeMain
-(SgShape* shape, VertexResource* resource, const Affine3& position, unsigned int pickId)
+void GLSLSceneRendererImpl::renderShapeMain(SgShape* shape, const Affine3& position, unsigned int pickId)
 {
     SgMesh* mesh = shape->mesh();
+    bool isTextureValid = false;
+    
     if(isPicking){
         setPickColor(pickId);
     } else {
         renderMaterial(shape->material());
         if(currentLightingProgram == &phongShadowLightingProgram){
-            bool hasTexture;
             if(shape->texture() && mesh->hasTexCoords()){
-                hasTexture = renderTexture(shape->texture());
-            } else {
-                hasTexture = false;
+                isTextureValid = renderTexture(shape->texture());
             }
-            phongShadowLightingProgram.setTextureEnabled(hasTexture);
+            phongShadowLightingProgram.setTextureEnabled(isTextureValid);
             phongShadowLightingProgram.setVertexColorEnabled(mesh->hasColors());
         }
+    }
+
+    VertexResource* resource = getOrCreateVertexResource(mesh);
+    if(!resource->isValid()){
+        writeMeshVertices(mesh, resource, isTextureValid ? shape->texture() : nullptr);
     }
 
     if(!isRenderingShadowMap){
@@ -1374,6 +1362,10 @@ void GLSLSceneRendererImpl::renderShapeMain
     }
     
     drawVertexResource(resource, GL_TRIANGLES, position);
+
+    if(isNormalVisualizationEnabled && isActuallyRendering && resource->normalVisualization){
+        renderLineSet(resource->normalVisualization);
+    }
 }
 
 
@@ -1422,22 +1414,23 @@ bool GLSLSceneRendererImpl::renderTexture(SgTexture* texture)
     TextureResource* resource;
     if(p != currentResourceMap->end()){
         resource = static_cast<TextureResource*>(p->second.get());
+        if(resource->isLoaded){
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, resource->textureId);
+            glBindSampler(0, resource->samplerId);
+            if(resource->isImageUpdateNeeded){
+                loadTextureImage(resource, sgImage->constImage());
+            }
+        }
     } else {
         resource = new TextureResource;
         currentResourceMap->insert(GLResourceMap::value_type(sgImage, resource));
-    }
 
-    glActiveTexture(GL_TEXTURE0);
-    if(resource->isLoaded){
-        glBindTexture(GL_TEXTURE_2D, resource->textureId);
-        glBindSampler(0, resource->samplerId);
-        if(resource->isImageUpdateNeeded){
-            loadTextureImage(resource, sgImage->constImage());
-        }
-    } else {
         GLuint samplerId;
+        glActiveTexture(GL_TEXTURE0);
         glGenTextures(1, &resource->textureId);
         glBindTexture(GL_TEXTURE_2D, resource->textureId);
+
         if(loadTextureImage(resource, sgImage->constImage())){
             glGenSamplers(1, &samplerId);
             glBindSampler(0, samplerId);
@@ -1448,23 +1441,9 @@ bool GLSLSceneRendererImpl::renderTexture(SgTexture* texture)
             resource->samplerId = samplerId;
         }
     }
-    
+
     if(isCheckingUnusedResources){
         nextResourceMap->insert(GLResourceMap::value_type(sgImage, resource)); 
-    }
-
-    auto tt = texture->textureTransform();
-    if(!tt){
-        hasValidTextureTransform = false;
-    } else {
-        Eigen::Rotation2Df R(tt->rotation());
-        const auto& c = tt->center();
-        Eigen::Translation<float, 2> C(c.x(), c.y());
-        const auto& t = tt->translation();
-        Eigen::Translation<float, 2> T(t.x(), t.y());
-        const auto s = tt->scale().cast<float>();
-        textureTransform = Eigen::Affine2f(C.inverse() * Eigen::Scaling(s.x(), s.y()) * R * C * T);
-        hasValidTextureTransform = true;
     }
 
     return resource->isLoaded;
@@ -1535,7 +1514,7 @@ void GLSLSceneRenderer::onImageUpdated(SgImage* image)
 }
 
 
-void GLSLSceneRendererImpl::writeMeshVertices(SgMesh* mesh, VertexResource* resource)
+void GLSLSceneRendererImpl::writeMeshVertices(SgMesh* mesh, VertexResource* resource, SgTexture* texture)
 {
     const auto& orgVertices = *mesh->vertices();
     auto& triangleVertices = mesh->triangleVertices();
@@ -1618,11 +1597,11 @@ void GLSLSceneRendererImpl::writeMeshVertices(SgMesh* mesh, VertexResource* reso
         writeMeshNormalsFloat(mesh, resource->newBuffer(), resource);
     }
 
-    if(mesh->hasTexCoords()){
+    if(texture){
         if(USE_GL_UNSIGNED_SHORT_FOR_TEXTURE_COORDINATES){
-            writeMeshTexCoordsUnsignedShort(mesh, resource->newBuffer());
+            writeMeshTexCoordsUnsignedShort(mesh, resource->newBuffer(), texture);
         } else {
-            writeMeshTexCoordsFloat(mesh, resource->newBuffer());
+            writeMeshTexCoordsFloat(mesh, resource->newBuffer(), texture);
         }
     }
     
@@ -1764,21 +1743,31 @@ void GLSLSceneRendererImpl::writeMeshNormalsFloat(SgMesh* mesh, GLuint buffer, V
 
 
 template<class TexCoordArrayWrapper>
-void GLSLSceneRendererImpl::writeMeshTexCoordsSub(SgMesh* mesh, TexCoordArrayWrapper& texCoords)
+void GLSLSceneRendererImpl::writeMeshTexCoordsSub
+(SgMesh* mesh, TexCoordArrayWrapper& texCoords, SgTexture* texture)
 {
     auto& triangleVertices = mesh->triangleVertices();
     const int totalNumVertices = triangleVertices.size();
     SgTexCoordArrayPtr pOrgTexCoords;
     const auto& texCoordIndices = mesh->texCoordIndices();
-    
-    if(!hasValidTextureTransform){
+
+    auto tt = texture->textureTransform();
+    if(!tt){
         pOrgTexCoords = mesh->texCoords();
     } else {
+        Eigen::Rotation2Df R(tt->rotation());
+        const auto& c = tt->center();
+        Eigen::Translation<float, 2> C(c.x(), c.y());
+        const auto& t = tt->translation();
+        Eigen::Translation<float, 2> T(t.x(), t.y());
+        const auto s = tt->scale().cast<float>();
+        Eigen::Affine2f M = C.inverse() * Eigen::Scaling(s.x(), s.y()) * R * C * T;
+
         const auto& orgTexCoords = *mesh->texCoords();
         const size_t n = orgTexCoords.size();
         pOrgTexCoords = new SgTexCoordArray(n);
         for(size_t i=0; i < n; ++i){
-            (*pOrgTexCoords)[i] = textureTransform * orgTexCoords[i];
+            (*pOrgTexCoords)[i] = M * orgTexCoords[i];
         }
     }
 
@@ -1804,7 +1793,7 @@ void GLSLSceneRendererImpl::writeMeshTexCoordsSub(SgMesh* mesh, TexCoordArrayWra
 }
 
 
-void GLSLSceneRendererImpl::writeMeshTexCoordsUnsignedShort(SgMesh* mesh, GLuint buffer)
+void GLSLSceneRendererImpl::writeMeshTexCoordsUnsignedShort(SgMesh* mesh, GLuint buffer, SgTexture* texture)
 {
     typedef Eigen::Matrix<GLushort,2,1> Vector2us;
     
@@ -1823,7 +1812,7 @@ void GLSLSceneRendererImpl::writeMeshTexCoordsUnsignedShort(SgMesh* mesh, GLuint
         }
     } texCoords;
 
-    writeMeshTexCoordsSub(mesh, texCoords);
+    writeMeshTexCoordsSub(mesh, texCoords, texture);
 
     {
         LockVertexArrayAPI lock;
@@ -1836,7 +1825,7 @@ void GLSLSceneRendererImpl::writeMeshTexCoordsUnsignedShort(SgMesh* mesh, GLuint
 }
 
 
-void GLSLSceneRendererImpl::writeMeshTexCoordsFloat(SgMesh* mesh, GLuint buffer)
+void GLSLSceneRendererImpl::writeMeshTexCoordsFloat(SgMesh* mesh, GLuint buffer, SgTexture* texture)
 {
     struct TexCoordArrayWrapper {
         SgTexCoordArray array;
@@ -1845,7 +1834,7 @@ void GLSLSceneRendererImpl::writeMeshTexCoordsFloat(SgMesh* mesh, GLuint buffer)
         }
     } texCoords;
 
-    writeMeshTexCoordsSub(mesh, texCoords);
+    writeMeshTexCoordsSub(mesh, texCoords, texture);
 
     {
         LockVertexArrayAPI lock;
