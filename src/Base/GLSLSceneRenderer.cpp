@@ -13,7 +13,6 @@
 #include <cnoid/NullOut>
 #include <Eigen/StdVector>
 #include <GL/glu.h>
-#include <boost/optional.hpp>
 #include <unordered_map>
 #include <mutex>
 #include <iostream>
@@ -359,15 +358,15 @@ public:
     bool renderTexture(SgTexture* texture);
     bool loadTextureImage(TextureResource* resource, const Image& image);
     void writeMeshVertices(SgMesh* mesh, VertexResource* resource, SgTexture* texResource);
-    template<class NormalArrayWrapper>
-    bool writeMeshNormalsSub(SgMesh* mesh, NormalArrayWrapper& normals, VertexResource* resource);
-    void writeMeshNormalsPacked(SgMesh* mesh, GLuint buffer, VertexResource* resource);
+    template<typename value_type, GLenum gltype, GLint glsize, GLboolean normalized, class NormalArrayWrapper>
+    bool writeMeshNormalsSub(SgMesh* mesh, GLuint buffer, VertexResource* resource, NormalArrayWrapper& normals);
     void writeMeshNormalsFloat(SgMesh* mesh, GLuint buffer, VertexResource* resource);
+    void writeMeshNormalsPacked(SgMesh* mesh, GLuint buffer, VertexResource* resource);
     template<typename value_type, GLenum gltype, GLboolean normalized, class TexCoordArrayWrapper>
     void writeMeshTexCoordsSub(SgMesh* mesh, GLuint buffer, SgTexture* texture, TexCoordArrayWrapper& texCoords);
+    void writeMeshTexCoordsFloat(SgMesh* mesh, GLuint buffer, SgTexture* texture);
     void writeMeshTexCoordsHalfFloat(SgMesh* mesh, GLuint buffer, SgTexture* texture);
     void writeMeshTexCoordsUnsignedShort(SgMesh* mesh, GLuint buffer, SgTexture* texture);
-    void writeMeshTexCoordsFloat(SgMesh* mesh, GLuint buffer, SgTexture* texture);
     void writeMeshColors(SgMesh* mesh, GLuint buffer);
     void renderPlot(SgPlot* plot, GLenum primitiveMode, std::function<SgVertexArrayPtr()> getVertices);
     void clearGLState();
@@ -1614,9 +1613,9 @@ void GLSLSceneRendererImpl::writeMeshVertices(SgMesh* mesh, VertexResource* reso
     }
 }
 
-template<class NormalArrayWrapper>
+template<typename value_type, GLenum gltype, GLint glsize, GLboolean normalized, class NormalArrayWrapper>
 bool GLSLSceneRendererImpl::writeMeshNormalsSub
-(SgMesh* mesh, NormalArrayWrapper& normals, VertexResource* resource)
+(SgMesh* mesh, GLuint buffer, VertexResource* resource, NormalArrayWrapper& normals)
 {
     bool ready = false;
     
@@ -1661,6 +1660,17 @@ bool GLSLSceneRendererImpl::writeMeshNormalsSub
         }
         ready = true;
     }
+
+    if(ready){
+        {
+            LockVertexArrayAPI lock;
+            glBindBuffer(GL_ARRAY_BUFFER, buffer);
+            glVertexAttribPointer((GLuint)1, glsize, gltype, normalized, 0, ((GLubyte*)NULL + (0)));
+        }
+        glBufferData(GL_ARRAY_BUFFER, normals.array.size() * sizeof(value_type), normals.array.data(), GL_STATIC_DRAW);
+        glEnableVertexAttribArray(1);
+    }
+    
     
     if(isNormalVisualizationEnabled){
         auto lines = new SgLineSet;
@@ -1684,6 +1694,18 @@ bool GLSLSceneRendererImpl::writeMeshNormalsSub
     return ready;
 }    
     
+
+void GLSLSceneRendererImpl::writeMeshNormalsFloat(SgMesh* mesh, GLuint buffer, VertexResource* resource)
+{
+    struct NormalArrayWrapper {
+        SgNormalArray array;
+        void append(const Vector3f& v){ array.push_back(v); }
+        Vector3f get(int index){ return array[index]; }
+    } normals;
+            
+    writeMeshNormalsSub<Vector3f, GL_FLOAT, 3, GL_FALSE>(mesh, buffer, resource, normals);
+}
+
 
 void GLSLSceneRendererImpl::writeMeshNormalsPacked(SgMesh* mesh, GLuint buffer, VertexResource* resource)
 {
@@ -1714,35 +1736,7 @@ void GLSLSceneRendererImpl::writeMeshNormalsPacked(SgMesh* mesh, GLuint buffer, 
         }
     } normals;
             
-    if(writeMeshNormalsSub(mesh, normals, resource)){
-        {
-            LockVertexArrayAPI lock;
-            glBindBuffer(GL_ARRAY_BUFFER, buffer);
-            glVertexAttribPointer((GLuint)1, 4, GL_INT_2_10_10_10_REV, GL_TRUE, 0, ((GLubyte*)NULL + (0)));
-        }
-        glBufferData(GL_ARRAY_BUFFER, normals.array.size() * sizeof(uint32_t), normals.array.data(), GL_STATIC_DRAW);
-        glEnableVertexAttribArray(1);
-    }
-}
-
-
-void GLSLSceneRendererImpl::writeMeshNormalsFloat(SgMesh* mesh, GLuint buffer, VertexResource* resource)
-{
-    struct NormalArrayWrapper {
-        SgNormalArray array;
-        void append(const Vector3f& v){ array.push_back(v); }
-        Vector3f get(int index){ return array[index]; }
-    } normals;
-            
-    if(writeMeshNormalsSub(mesh, normals, resource)){
-        {
-            LockVertexArrayAPI lock;
-            glBindBuffer(GL_ARRAY_BUFFER, buffer);
-            glVertexAttribPointer((GLuint)1, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
-        }
-        glBufferData(GL_ARRAY_BUFFER, normals.array.size() * sizeof(Vector3f), normals.array.data(), GL_STATIC_DRAW);
-        glEnableVertexAttribArray(1);
-    }
+    writeMeshNormalsSub<uint32_t, GL_INT_2_10_10_10_REV, 4, GL_TRUE>(mesh, buffer, resource, normals);
 }
 
 
@@ -1805,6 +1799,19 @@ void GLSLSceneRendererImpl::writeMeshTexCoordsSub
 }
 
 
+void GLSLSceneRendererImpl::writeMeshTexCoordsFloat(SgMesh* mesh, GLuint buffer, SgTexture* texture)
+{
+    struct TexCoordArrayWrapper {
+        SgTexCoordArray array;
+        void append(const Vector2f& uv){
+            array.push_back(uv);
+        }
+    } texCoords;
+
+    writeMeshTexCoordsSub<Vector2f, GL_FLOAT, GL_FALSE>(mesh, buffer, texture, texCoords);
+}
+
+
 void GLSLSceneRendererImpl::writeMeshTexCoordsHalfFloat(SgMesh* mesh, GLuint buffer, SgTexture* texture)
 {
     typedef Eigen::Matrix<GLhalf,2,1> Vector2h;
@@ -1855,19 +1862,6 @@ void GLSLSceneRendererImpl::writeMeshTexCoordsUnsignedShort(SgMesh* mesh, GLuint
     } texCoords;
 
     writeMeshTexCoordsSub<Vector2us, GL_UNSIGNED_SHORT, GL_TRUE>(mesh, buffer, texture, texCoords);
-}
-
-
-void GLSLSceneRendererImpl::writeMeshTexCoordsFloat(SgMesh* mesh, GLuint buffer, SgTexture* texture)
-{
-    struct TexCoordArrayWrapper {
-        SgTexCoordArray array;
-        void append(const Vector2f& uv){
-            array.push_back(uv);
-        }
-    } texCoords;
-
-    writeMeshTexCoordsSub<Vector2f, GL_FLOAT, GL_FALSE>(mesh, buffer, texture, texCoords);
 }
 
 
