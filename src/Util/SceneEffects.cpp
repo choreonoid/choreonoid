@@ -53,8 +53,8 @@ SgOutlineGroup::SgOutlineGroup()
 }
 
 
-SgSimplifiedRenderingGroup::SgSimplifiedRenderingGroup()
-    : SgGroup(findPolymorphicId<SgSimplifiedRenderingGroup>())
+SgLightweightRenderingGroup::SgLightweightRenderingGroup()
+    : SgGroup(findPolymorphicId<SgLightweightRenderingGroup>())
 {
 
 }
@@ -66,7 +66,7 @@ struct NodeTypeRegistration {
     NodeTypeRegistration() {
         SgNode::registerType<SgFog, SgPreprocessed>();
         SgNode::registerType<SgOutlineGroup, SgGroup>();
-        SgNode::registerType<SgSimplifiedRenderingGroup, SgGroup>();
+        SgNode::registerType<SgLightweightRenderingGroup, SgGroup>();
     }
 } registration;
 

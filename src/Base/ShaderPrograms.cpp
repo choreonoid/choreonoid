@@ -247,6 +247,12 @@ void ShaderProgram::setMaterial(const SgMaterial* material)
 }
 
 
+void ShaderProgram::setVertexColorEnabled(bool on)
+{
+
+}
+
+
 NolightingProgram::NolightingProgram()
     : NolightingProgram(":/Base/shader/nolighting.vert", ":/Base/shader/nolighting.frag")
 {

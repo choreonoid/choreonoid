@@ -32,7 +32,7 @@ bool loadScene(SceneItem* item, const std::string& filename, std::ostream& os)
         auto topNode = item->topNode();
         topNode->clearChildren();
         topNode->addChild(group);
-        item->setSimplifiedRenderingEnabled(item->isSimplifiedRenderingEnabled());
+        item->setLightweightRenderingEnabled(item->isLightweightRenderingEnabled());
         return true;
     }
     return false;
@@ -76,7 +76,7 @@ void SceneItem::initializeClass(ExtensionManager* ext)
 SceneItem::SceneItem()
 {
     topNode_ = new SgPosTransform;
-    isSimplifiedRenderingEnabled_ = false;
+    isLightweightRenderingEnabled_ = false;
 }
 
 
@@ -85,7 +85,7 @@ SceneItem::SceneItem(const SceneItem& org)
 {
     // shallow copy
     topNode_ = new SgPosTransform(*org.topNode());
-    isSimplifiedRenderingEnabled_ = org.isSimplifiedRenderingEnabled_;
+    isLightweightRenderingEnabled_ = org.isLightweightRenderingEnabled_;
 }
 
 
@@ -113,22 +113,22 @@ Item* SceneItem::doDuplicate() const
     return new SceneItem(*this);
 }
 
-void SceneItem::setSimplifiedRenderingEnabled(bool on)
+void SceneItem::setLightweightRenderingEnabled(bool on)
 {
     if(on){
-        if(!topNode_->findNodeOfType<SgSimplifiedRenderingGroup>(1)){
-            auto simplified = new SgSimplifiedRenderingGroup;
-            topNode_->moveChildrenTo(simplified);
-            topNode_->addChild(simplified, true);
+        if(!topNode_->findNodeOfType<SgLightweightRenderingGroup>(1)){
+            auto lightweight = new SgLightweightRenderingGroup;
+            topNode_->moveChildrenTo(lightweight);
+            topNode_->addChild(lightweight, true);
         }
     } else {
-        auto simplified = topNode_->findNodeOfType<SgSimplifiedRenderingGroup>(1);
-        if(simplified){
-            topNode_->removeChild(simplified);
-            simplified->moveChildrenTo(topNode_, true);
+        auto lightweight = topNode_->findNodeOfType<SgLightweightRenderingGroup>(1);
+        if(lightweight){
+            topNode_->removeChild(lightweight);
+            lightweight->moveChildrenTo(topNode_, true);
         }
     }
-    isSimplifiedRenderingEnabled_ = on;
+    isLightweightRenderingEnabled_ = on;
 }       
 
 
@@ -160,8 +160,8 @@ void SceneItem::doPutProperties(PutPropertyFunction& putProperty)
                     return false;
                 });
     
-    putProperty("Simplified rendering", isSimplifiedRenderingEnabled_,
-                [&](bool on){ setSimplifiedRenderingEnabled(on); return true; });
+    putProperty("Lightweight rendering", isLightweightRenderingEnabled_,
+                [&](bool on){ setLightweightRenderingEnabled(on); return true; });
 }
 
 
@@ -172,7 +172,7 @@ bool SceneItem::store(Archive& archive)
         archive.write("format", fileFormat());
         write(archive, "translation", topNode_->translation());
         write(archive, "rotation", AngleAxis(topNode_->rotation()));
-        archive.write("simplifiedRendering", isSimplifiedRenderingEnabled_);
+        archive.write("lightweightRendering", isLightweightRenderingEnabled_);
     }
     return true;
 }
@@ -191,7 +191,7 @@ bool SceneItem::restore(const Archive& archive)
             topNode_->setRotation(rot);
         }
 
-        archive.read("simplifiedRendering", isSimplifiedRenderingEnabled_);
+        archive.read("lightweightRendering", isLightweightRenderingEnabled_);
         
         if(load(filename, archive.currentParentItem(), formatId)){
             return true;

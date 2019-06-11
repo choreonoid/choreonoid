@@ -64,6 +64,7 @@ const int NUM_SHADOWS = 2;
 enum { FLOOR_GRID = 0, XZ_GRID = 1, YZ_GRID = 2 };
 
 Signal<void()> sigVSyncModeChanged;
+Signal<void(bool on)> sigLowMemoryConsumptionModeChanged;
 
 class EditableExtractor : public PolymorphicFunctionSet<SgNode>
 {
@@ -286,12 +287,14 @@ public:
     int profiling_mode;
 #endif
 
-    static void onOpenGLVSyncToggled(bool on);
+    static void onOpenGLVSyncToggled(bool on, bool doConfigOutput);
+    static void onLowMemoryConsumptionModeChanged(bool on, bool doConfigOutput);
 
     SceneWidgetImpl(SceneWidget* self, bool useGLSL);
     ~SceneWidgetImpl();
 
     void onVSyncModeChanged();
+    void onLowMemoryConsumptionModeChanged(bool on);
 
     virtual void initializeGL();
     virtual void resizeGL(int width, int height);
@@ -401,22 +404,44 @@ void SceneWidget::initializeClass(ExtensionManager* ext)
 {
     // OpenGL vsync setting
     Mapping* glConfig = AppConfig::archive()->openMapping("OpenGL");
+    auto& mm = ext->menuManager();
+
     bool isVSyncEnabled = (glConfig->get("vsync", 0) > 0);
-    auto vsyncItem = ext->menuManager().setPath("/Options/OpenGL").addCheckItem(_("Vertical Sync"));
+    auto vsyncItem = mm.setPath("/Options/OpenGL").addCheckItem(_("Vertical sync"));
     vsyncItem->setChecked(isVSyncEnabled);
-    vsyncItem->sigToggled().connect([&](bool on){ SceneWidgetImpl::onOpenGLVSyncToggled(on); });
-    SceneWidgetImpl::onOpenGLVSyncToggled(isVSyncEnabled);
+    vsyncItem->sigToggled().connect([&](bool on){ SceneWidgetImpl::onOpenGLVSyncToggled(on, true); });
+    SceneWidgetImpl::onOpenGLVSyncToggled(isVSyncEnabled, false);
+
+    bool isLowMemoryConsumptionMode = glConfig->get("lowMemoryConsumption", false);
+    auto memoryItem = mm.addCheckItem(_("Low GPU memory consumption mode"));
+    memoryItem->setChecked(isLowMemoryConsumptionMode);
+    memoryItem->sigToggled().connect([&](bool on){ SceneWidgetImpl::onLowMemoryConsumptionModeChanged(on, true); });
+    SceneWidgetImpl::onLowMemoryConsumptionModeChanged(isVSyncEnabled, false);
 }
 
 
-void SceneWidgetImpl::onOpenGLVSyncToggled(bool on)
+void SceneWidgetImpl::onOpenGLVSyncToggled(bool on, bool doConfigOutput)
 {
-    Mapping* glConfig = AppConfig::archive()->openMapping("OpenGL");
-    glConfig->write("vsync", (on ? 1 : 0));
     auto format = QSurfaceFormat::defaultFormat();
     format.setSwapInterval(on ? 1 : 0);
     QSurfaceFormat::setDefaultFormat(format);
     sigVSyncModeChanged();
+
+    if(doConfigOutput){
+        Mapping* glConfig = AppConfig::archive()->openMapping("OpenGL");
+        glConfig->write("vsync", (on ? 1 : 0));
+    }
+}
+
+
+void SceneWidgetImpl::onLowMemoryConsumptionModeChanged(bool on, bool doConfigOutput)
+{
+    sigLowMemoryConsumptionModeChanged(on);
+
+    if(doConfigOutput){
+        Mapping* glConfig = AppConfig::archive()->openMapping("OpenGL");
+        glConfig->write("lowMemoryConsumption", on);
+    }
 }
 
 
@@ -598,6 +623,8 @@ SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self, bool useGLSL)
     isDoingFPSTest = false;
 
     sigVSyncModeChanged.connect([&](){ onVSyncModeChanged(); });
+    sigLowMemoryConsumptionModeChanged.connect(
+        [&](bool on){ onLowMemoryConsumptionModeChanged(on); });
 
 #ifdef ENABLE_SIMULATION_PROFILING
     profiling_mode = 1;
@@ -630,6 +657,15 @@ void SceneWidgetImpl::onVSyncModeChanged()
        To change the swap interval, the QOpenGLWiget instance must probably be recreated.
     */
     //setFormat(QSurfaceFormat::defaultFormat());
+}
+
+
+void SceneWidgetImpl::onLowMemoryConsumptionModeChanged(bool on)
+{
+    if(auto glslRenderer = dynamic_cast<GLSLSceneRenderer*>(renderer)){
+        glslRenderer->setLowMemoryConsumptionMode(on);
+        update();
+    }
 }
 
 

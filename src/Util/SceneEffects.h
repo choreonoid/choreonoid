@@ -57,12 +57,12 @@ private:
 typedef ref_ptr<SgOutlineGroup> SgOutlineGroupPtr;
 
 
-class CNOID_EXPORT SgSimplifiedRenderingGroup : public SgGroup
+class CNOID_EXPORT SgLightweightRenderingGroup : public SgGroup
 {
 public:
-    SgSimplifiedRenderingGroup();
+    SgLightweightRenderingGroup();
 };
-typedef ref_ptr<SgSimplifiedRenderingGroup> SgSimplifiedRenderingGroupPtr;
+typedef ref_ptr<SgLightweightRenderingGroup> SgLightweightRenderingGroupPtr;
 
 }
 

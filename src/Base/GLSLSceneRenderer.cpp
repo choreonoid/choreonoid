@@ -26,9 +26,6 @@ namespace {
 const bool USE_FBO_FOR_PICKING = true;
 const bool SHOW_IMAGE_FOR_PICKING = false;
 const bool USE_GL_INT_2_10_10_10_REV_FOR_NORMALS = true;
-const bool USE_GL_SHORT_FOR_VERTICES = false;
-const bool USE_GL_HALF_FLOAT_FOR_TEXTURE_COORDINATES = false;
-const bool USE_GL_UNSIGNED_SHORT_FOR_TEXTURE_COORDINATES = false;
 
 const float MinLineWidthForPicking = 5.0f;
 
@@ -243,7 +240,9 @@ public:
     bool isActuallyRendering;
     bool isPicking;
     bool isRenderingShadowMap;
-    bool isMinimumLightingProgramActivatedInThisFrame;
+    bool isLightweightRenderingBeingProcessed;
+    bool isLowMemoryConsumptionMode;
+    bool isLowMemoryConsumptionRenderingBeingProcessed;
     
     Affine3Array modelMatrixStack; // stack of the model matrices
     Affine3 viewMatrix;
@@ -272,6 +271,7 @@ public:
     vector<char> scaledImageBuf;
 
     bool isTextureEnabled;
+    bool isTextureBeingRendered;
     bool isCurrentFogUpdated;
     SgFogPtr prevFog;
     ScopedConnection currentFogConnection;
@@ -350,7 +350,7 @@ public:
     void renderOverlay(SgOverlay* overlay);
     void renderOutlineGroup(SgOutlineGroup* outline);
     void renderOutlineGroupMain(SgOutlineGroup* outline, const Affine3& T);
-    void renderSimplifiedRenderingGroup(SgSimplifiedRenderingGroup* group);
+    void renderLightweightRenderingGroup(SgLightweightRenderingGroup* group);
     void flushNolightingTransformMatrices();
     VertexResource* getOrCreateVertexResource(SgObject* obj);
     void drawVertexResource(VertexResource* resource, GLenum primitiveMode, const Affine3& position);
@@ -358,17 +358,23 @@ public:
     void renderMaterial(const SgMaterial* material);
     bool renderTexture(SgTexture* texture);
     bool loadTextureImage(TextureResource* resource, const Image& image);
+    void makeVertexBufferObjects(SgShape* shape, VertexResource* resource);
     void writeMeshVertices(SgMesh* mesh, VertexResource* resource, SgTexture* texResource);
+    template<typename value_type, GLenum gltype, GLboolean normalized, class VertexArrayWrapper>
+    void writeMeshVerticesSub(SgMesh* mesh, VertexResource* resource, VertexArrayWrapper& normals);
+    void writeMeshVerticesFloat(SgMesh* mesh, VertexResource* resource);
+    void writeMeshVerticesNormalizedShort(SgMesh* mesh, VertexResource* resource);
     template<typename value_type, GLenum gltype, GLint glsize, GLboolean normalized, class NormalArrayWrapper>
-    bool writeMeshNormalsSub(SgMesh* mesh, GLuint buffer, VertexResource* resource, NormalArrayWrapper& normals);
-    void writeMeshNormalsFloat(SgMesh* mesh, GLuint buffer, VertexResource* resource);
-    void writeMeshNormalsPacked(SgMesh* mesh, GLuint buffer, VertexResource* resource);
+    bool writeMeshNormalsSub(SgMesh* mesh, VertexResource* resource, NormalArrayWrapper& normals);
+    void writeMeshNormalsFloat(SgMesh* mesh, VertexResource* resource);
+    void writeMeshNormalsPacked(SgMesh* mesh, VertexResource* resource);
     template<typename value_type, GLenum gltype, GLboolean normalized, class TexCoordArrayWrapper>
-    void writeMeshTexCoordsSub(SgMesh* mesh, GLuint buffer, SgTexture* texture, TexCoordArrayWrapper& texCoords);
-    void writeMeshTexCoordsFloat(SgMesh* mesh, GLuint buffer, SgTexture* texture);
-    void writeMeshTexCoordsHalfFloat(SgMesh* mesh, GLuint buffer, SgTexture* texture);
-    void writeMeshTexCoordsUnsignedShort(SgMesh* mesh, GLuint buffer, SgTexture* texture);
-    void writeMeshColors(SgMesh* mesh, GLuint buffer);
+    void writeMeshTexCoordsSub(
+        SgMesh* mesh, SgTexture* texture, VertexResource* resource, TexCoordArrayWrapper& texCoords);
+    void writeMeshTexCoordsFloat(SgMesh* mesh, SgTexture* texture, VertexResource* resource);
+    void writeMeshTexCoordsHalfFloat(SgMesh* mesh, SgTexture* texture, VertexResource* resource);
+    void writeMeshTexCoordsUnsignedShort(SgMesh* mesh, SgTexture* texture, VertexResource* resource);
+    void writeMeshColors(SgMesh* mesh, VertexResource* resource);
     void renderPlot(SgPlot* plot, GLenum primitiveMode, std::function<SgVertexArrayPtr()> getVertices);
     void clearGLState();
     void setPointSize(float size);
@@ -425,6 +431,8 @@ void GLSLSceneRendererImpl::initialize()
     isRenderingShadowMap = false;
     pickedPoint.setZero();
 
+    isLowMemoryConsumptionMode = false;
+
     doUnusedResourceCheck = true;
     currentResourceMapIndex = 0;
     hasValidNextResourceMap = false;
@@ -476,8 +484,8 @@ void GLSLSceneRendererImpl::initialize()
         [&](SgOverlay* node){ renderOverlay(node); });
     renderingFunctions.setFunction<SgOutlineGroup>(
         [&](SgOutlineGroup* node){ renderOutlineGroup(node); });
-    renderingFunctions.setFunction<SgSimplifiedRenderingGroup>(
-        [&](SgSimplifiedRenderingGroup* node){ renderSimplifiedRenderingGroup(node); });
+    renderingFunctions.setFunction<SgLightweightRenderingGroup>(
+        [&](SgLightweightRenderingGroup* node){ renderLightweightRenderingGroup(node); });
 
     self->applyExtensions();
     renderingFunctions.updateDispatchTable();
@@ -664,17 +672,20 @@ void GLSLSceneRendererImpl::doRender()
     self->extractPreprocessedNodes();
     beginRendering();
 
-    isMinimumLightingProgramActivatedInThisFrame = false;
+    isLightweightRenderingBeingProcessed = false;
+    isLowMemoryConsumptionRenderingBeingProcessed = isLowMemoryConsumptionMode;
+    isTextureBeingRendered = false;
     
     if(lightingMode == GLSceneRenderer::NO_LIGHTING){
         pushProgram(nolightingProgram, false);
-        isMinimumLightingProgramActivatedInThisFrame = true;
         
     } else if(lightingMode == GLSceneRenderer::SOLID_COLOR_LIGHTING){
         pushProgram(solidColorProgram, false);
         
     } else if(lightingMode == GLSceneRenderer::MINIMUM_LIGHTING){
         pushProgram(minimumLightingProgram, true);
+        isLightweightRenderingBeingProcessed = true;
+        isLowMemoryConsumptionRenderingBeingProcessed = true;
 
     } else { // FULL_LIGHTING
         auto& program = phongShadowLightingProgram;
@@ -709,6 +720,8 @@ void GLSLSceneRendererImpl::doRender()
     
         program.activateMainRenderingPass();
         pushProgram(program, true);
+
+        isTextureBeingRendered = isTextureEnabled;
     }
     
     isActuallyRendering = true;
@@ -1304,25 +1317,28 @@ void GLSLSceneRendererImpl::renderShape(SgShape* shape)
 
 void GLSLSceneRendererImpl::renderShapeMain(SgShape* shape, const Affine3& position, unsigned int pickId)
 {
-    SgMesh* mesh = shape->mesh();
-    bool isTextureValid = false;
+    auto mesh = shape->mesh();
     
+    VertexResource* resource = getOrCreateVertexResource(mesh);
+    if(!resource->isValid()){
+        makeVertexBufferObjects(shape, resource);
+    }
+
     if(isPicking){
         setPickColor(pickId);
     } else {
+        currentProgram->setVertexColorEnabled(mesh->hasColors());
         renderMaterial(shape->material());
-        if(currentLightingProgram == &phongShadowLightingProgram){
-            if(isTextureEnabled && shape->texture() && mesh->hasTexCoords()){
-                isTextureValid = renderTexture(shape->texture());
+
+        if(currentProgram == &phongShadowLightingProgram){
+            bool isTextureValid = false;
+            if(isTextureBeingRendered){
+                if(auto texture = shape->texture()){
+                    isTextureValid = renderTexture(texture);
+                }
             }
             phongShadowLightingProgram.setTextureEnabled(isTextureValid);
-            phongShadowLightingProgram.setVertexColorEnabled(mesh->hasColors());
         }
-    }
-
-    VertexResource* resource = getOrCreateVertexResource(mesh);
-    if(!resource->isValid()){
-        writeMeshVertices(mesh, resource, isTextureValid ? shape->texture() : nullptr);
     }
 
     if(!isRenderingShadowMap){
@@ -1517,7 +1533,40 @@ void GLSLSceneRenderer::onImageUpdated(SgImage* image)
 }
 
 
-void GLSLSceneRendererImpl::writeMeshVertices(SgMesh* mesh, VertexResource* resource, SgTexture* texture)
+void GLSLSceneRendererImpl::makeVertexBufferObjects(SgShape* shape, VertexResource* resource)
+{
+    auto mesh = shape->mesh();
+
+    if(isLowMemoryConsumptionRenderingBeingProcessed){
+        writeMeshVerticesNormalizedShort(mesh, resource);
+    } else {
+        writeMeshVerticesFloat(mesh, resource);
+    }
+    
+    if(USE_GL_INT_2_10_10_10_REV_FOR_NORMALS || isLowMemoryConsumptionRenderingBeingProcessed){
+        writeMeshNormalsPacked(mesh, resource);
+    } else {
+        writeMeshNormalsFloat(mesh, resource);
+    }
+
+    auto texture = shape->texture();
+    if(texture && mesh->hasTexCoords() && isTextureBeingRendered){
+        if(isLowMemoryConsumptionRenderingBeingProcessed){
+            writeMeshTexCoordsHalfFloat(mesh, texture, resource);
+        } else {
+            writeMeshTexCoordsFloat(mesh, texture, resource);
+        }
+    }
+    
+    if(mesh->hasColors()){
+        writeMeshColors(mesh, resource);
+    }
+}
+
+
+template<typename value_type, GLenum gltype, GLboolean normalized, class VertexArrayWrapper>
+void GLSLSceneRendererImpl::writeMeshVerticesSub
+(SgMesh* mesh, VertexResource* resource, VertexArrayWrapper& vertices)
 {
     const auto& orgVertices = *mesh->vertices();
     auto& triangleVertices = mesh->triangleVertices();
@@ -1526,100 +1575,86 @@ void GLSLSceneRendererImpl::writeMeshVertices(SgMesh* mesh, VertexResource* reso
     resource->numVertices = totalNumVertices;
 
     int faceVertexIndex = 0;
-
-    if(USE_GL_SHORT_FOR_VERTICES){
-        
-        typedef Eigen::Matrix<GLshort,3,1> Vector3s;
-        
-        /**
-           GLShort type is used for storing vertex positions.
-           Each value's range is [ -32768, 32767 ], which corresponds to normalized range [ -1, 1 ]
-           that covers all the vertex positions.
-           In the vertex shader, [ -1, 1 ] value is converted to the original position
-        */
-        vector<Vector3s> normalizedVertices;
-        
-        normalizedVertices.reserve(totalNumVertices);
-        BoundingBox bbox = mesh->boundingBox();
-        const Vector3 c = bbox.center();
-        const Vector3 hs =  0.5 * bbox.size();
-
-        resource->localTransform <<
-            hs.x(), 0.0,    0.0,    c.x(),
-            0.0,    hs.y(), 0.0,    c.y(),
-            0.0,    0.0,    hs.z(), c.z(),
-            0.0,    0.0,    0.0,    1.0;
-        resource->pLocalTransform = &resource->localTransform;
-
-        const Vector3f cf = c.cast<float>();
-        const Vector3f r(32767.0 / hs.x(), 32767.0 / hs.y(), 32767.0 / hs.z());
-        
-        for(int i=0; i < numTriangles; ++i){
-            for(int j=0; j < 3; ++j){
-                const int orgVertexIndex = triangleVertices[faceVertexIndex++];
-                auto v = orgVertices[orgVertexIndex];
-                normalizedVertices.push_back(
-                    Vector3s(
-                        r.x() * (v.x() - cf.x()),
-                        r.y() * (v.y() - cf.y()),
-                        r.z() * (v.z() - cf.z())));
-            }
+    
+    vertices.array.reserve(totalNumVertices);
+    
+    for(int i=0; i < numTriangles; ++i){
+        for(int j=0; j < 3; ++j){
+            const int orgVertexIndex = triangleVertices[faceVertexIndex++];
+            vertices.append(orgVertices[orgVertexIndex]);
         }
-        {
-            LockVertexArrayAPI lock;
-            glBindVertexArray(resource->vao);
-            glBindBuffer(GL_ARRAY_BUFFER, resource->newBuffer());
-            glVertexAttribPointer((GLuint)0, 3, GL_SHORT, GL_TRUE, 0, ((GLubyte*)NULL + (0)));
-        }
-        auto size = normalizedVertices.size() * sizeof(Vector3s);
-        glBufferData(GL_ARRAY_BUFFER, size, normalizedVertices.data(), GL_STATIC_DRAW);
-
-    } else {
-        SgVertexArray vertices;
-        vertices.reserve(totalNumVertices);
-        for(int i=0; i < numTriangles; ++i){
-            for(int j=0; j < 3; ++j){
-                const int orgVertexIndex = triangleVertices[faceVertexIndex++];
-                vertices.push_back(orgVertices[orgVertexIndex]);
-            }
-        }
-        {
-            LockVertexArrayAPI lock;
-            glBindVertexArray(resource->vao);
-            glBindBuffer(GL_ARRAY_BUFFER, resource->newBuffer());
-            glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
-        }
-        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vector3f), vertices.data(), GL_STATIC_DRAW);
     }
 
+    {
+        LockVertexArrayAPI lock;
+        glBindVertexArray(resource->vao);
+        glBindBuffer(GL_ARRAY_BUFFER, resource->newBuffer());
+        glVertexAttribPointer((GLuint)0, 3, gltype, normalized, 0, ((GLubyte*)NULL + (0)));
+    }
+    auto size = vertices.array.size() * sizeof(value_type);
+    glBufferData(GL_ARRAY_BUFFER, size, vertices.array.data(), GL_STATIC_DRAW);
     glEnableVertexAttribArray(0);
-    
-    if(USE_GL_INT_2_10_10_10_REV_FOR_NORMALS){
-        writeMeshNormalsPacked(mesh, resource->newBuffer(), resource);
-    } else {
-        writeMeshNormalsFloat(mesh, resource->newBuffer(), resource);
-    }
-
-    if(texture){
-        if(USE_GL_UNSIGNED_SHORT_FOR_TEXTURE_COORDINATES &&
-           (!texture->textureTransform() && !texture->repeatS() && !texture->repeatT())){
-            writeMeshTexCoordsUnsignedShort(mesh, resource->newBuffer(), texture);
-            
-        } else if(USE_GL_HALF_FLOAT_FOR_TEXTURE_COORDINATES) {
-            writeMeshTexCoordsHalfFloat(mesh, resource->newBuffer(), texture);
-        } else {
-            writeMeshTexCoordsFloat(mesh, resource->newBuffer(), texture);
-        }
-    }
-    
-    if(mesh->hasColors()){
-        writeMeshColors(mesh, resource->newBuffer());
-    }
 }
+
+
+void GLSLSceneRendererImpl::writeMeshVerticesFloat(SgMesh* mesh, VertexResource* resource)
+{
+    struct VertexArrayWrapper {
+        SgVertexArray array;
+        void append(const Vector3f& v){ array.push_back(v); }
+    } vertices;
+
+    writeMeshVerticesSub<Vector3f, GL_FLOAT, GL_FALSE>(mesh, resource, vertices);
+}
+
+
+void GLSLSceneRendererImpl::writeMeshVerticesNormalizedShort(SgMesh* mesh, VertexResource* resource)
+{
+    /**
+       GLshort type is used for storing vertex positions.
+       Each value's range is [ -32768, 32767 ], which corresponds to normalized range [ -1, 1 ]
+       that covers all the vertex positions.
+       In the vertex shader, [ -1, 1 ] value is converted to the original position
+    */
+    typedef Eigen::Matrix<GLshort,3,1> Vector3s;
+
+    struct VertexArrayWrapper {
+        vector<Vector3s> array;
+        Vector3f r;
+        Vector3f c;
+        VertexArrayWrapper(const Vector3f& ratio, const Vector3f& center)
+            : r(ratio), c(center)
+        {  }
+        void append(const Vector3f& v){
+            array.push_back(
+                Vector3s(
+                    r.x() * (v.x() - c.x()),
+                    r.y() * (v.y() - c.y()),
+                    r.z() * (v.z() - c.z())));
+        }
+    };
+            
+    BoundingBox bbox = mesh->boundingBox();
+    const Vector3 c = bbox.center();
+    const Vector3 hs =  0.5 * bbox.size();
+
+    resource->localTransform <<
+        hs.x(), 0.0,    0.0,    c.x(),
+        0.0,    hs.y(), 0.0,    c.y(),
+        0.0,    0.0,    hs.z(), c.z(),
+        0.0,    0.0,    0.0,    1.0;
+    resource->pLocalTransform = &resource->localTransform;
+
+    Vector3f ratio(32767.0 / hs.x(), 32767.0 / hs.y(), 32767.0 / hs.z());
+    VertexArrayWrapper vertices(ratio, c.cast<float>());
+
+    writeMeshVerticesSub<Vector3s, GL_SHORT, GL_TRUE>(mesh, resource, vertices);
+}
+
 
 template<typename value_type, GLenum gltype, GLint glsize, GLboolean normalized, class NormalArrayWrapper>
 bool GLSLSceneRendererImpl::writeMeshNormalsSub
-(SgMesh* mesh, GLuint buffer, VertexResource* resource, NormalArrayWrapper& normals)
+(SgMesh* mesh, VertexResource* resource, NormalArrayWrapper& normals)
 {
     bool ready = false;
     
@@ -1668,7 +1703,7 @@ bool GLSLSceneRendererImpl::writeMeshNormalsSub
     if(ready){
         {
             LockVertexArrayAPI lock;
-            glBindBuffer(GL_ARRAY_BUFFER, buffer);
+            glBindBuffer(GL_ARRAY_BUFFER, resource->newBuffer());
             glVertexAttribPointer((GLuint)1, glsize, gltype, normalized, 0, ((GLubyte*)NULL + (0)));
         }
         glBufferData(GL_ARRAY_BUFFER, normals.array.size() * sizeof(value_type), normals.array.data(), GL_STATIC_DRAW);
@@ -1699,7 +1734,7 @@ bool GLSLSceneRendererImpl::writeMeshNormalsSub
 }    
     
 
-void GLSLSceneRendererImpl::writeMeshNormalsFloat(SgMesh* mesh, GLuint buffer, VertexResource* resource)
+void GLSLSceneRendererImpl::writeMeshNormalsFloat(SgMesh* mesh, VertexResource* resource)
 {
     struct NormalArrayWrapper {
         SgNormalArray array;
@@ -1707,11 +1742,11 @@ void GLSLSceneRendererImpl::writeMeshNormalsFloat(SgMesh* mesh, GLuint buffer, V
         Vector3f get(int index){ return array[index]; }
     } normals;
             
-    writeMeshNormalsSub<Vector3f, GL_FLOAT, 3, GL_FALSE>(mesh, buffer, resource, normals);
+    writeMeshNormalsSub<Vector3f, GL_FLOAT, 3, GL_FALSE>(mesh, resource, normals);
 }
 
 
-void GLSLSceneRendererImpl::writeMeshNormalsPacked(SgMesh* mesh, GLuint buffer, VertexResource* resource)
+void GLSLSceneRendererImpl::writeMeshNormalsPacked(SgMesh* mesh, VertexResource* resource)
 {
     struct NormalArrayWrapper {
         vector<uint32_t> array;
@@ -1740,13 +1775,13 @@ void GLSLSceneRendererImpl::writeMeshNormalsPacked(SgMesh* mesh, GLuint buffer, 
         }
     } normals;
             
-    writeMeshNormalsSub<uint32_t, GL_INT_2_10_10_10_REV, 4, GL_TRUE>(mesh, buffer, resource, normals);
+    writeMeshNormalsSub<uint32_t, GL_INT_2_10_10_10_REV, 4, GL_TRUE>(mesh, resource, normals);
 }
 
 
 template<typename value_type, GLenum gltype, GLboolean normalized, class TexCoordArrayWrapper>
 void GLSLSceneRendererImpl::writeMeshTexCoordsSub
-(SgMesh* mesh, GLuint buffer, SgTexture* texture, TexCoordArrayWrapper& texCoords)
+(SgMesh* mesh, SgTexture* texture, VertexResource* resource, TexCoordArrayWrapper& texCoords)
 {
     auto& triangleVertices = mesh->triangleVertices();
     const int totalNumVertices = triangleVertices.size();
@@ -1794,7 +1829,7 @@ void GLSLSceneRendererImpl::writeMeshTexCoordsSub
     }
     {
         LockVertexArrayAPI lock;
-        glBindBuffer(GL_ARRAY_BUFFER, buffer);
+        glBindBuffer(GL_ARRAY_BUFFER, resource->newBuffer());
         glVertexAttribPointer((GLuint)2, 2, gltype, normalized, 0, 0);
     }
     auto size = texCoords.array.size() * sizeof(value_type);
@@ -1803,7 +1838,8 @@ void GLSLSceneRendererImpl::writeMeshTexCoordsSub
 }
 
 
-void GLSLSceneRendererImpl::writeMeshTexCoordsFloat(SgMesh* mesh, GLuint buffer, SgTexture* texture)
+void GLSLSceneRendererImpl::writeMeshTexCoordsFloat
+(SgMesh* mesh, SgTexture* texture, VertexResource* resource)
 {
     struct TexCoordArrayWrapper {
         SgTexCoordArray array;
@@ -1812,11 +1848,12 @@ void GLSLSceneRendererImpl::writeMeshTexCoordsFloat(SgMesh* mesh, GLuint buffer,
         }
     } texCoords;
 
-    writeMeshTexCoordsSub<Vector2f, GL_FLOAT, GL_FALSE>(mesh, buffer, texture, texCoords);
+    writeMeshTexCoordsSub<Vector2f, GL_FLOAT, GL_FALSE>(mesh, texture, resource, texCoords);
 }
 
 
-void GLSLSceneRendererImpl::writeMeshTexCoordsHalfFloat(SgMesh* mesh, GLuint buffer, SgTexture* texture)
+void GLSLSceneRendererImpl::writeMeshTexCoordsHalfFloat
+(SgMesh* mesh, SgTexture* texture, VertexResource* resource)
 {
     typedef Eigen::Matrix<GLhalf,2,1> Vector2h;
 
@@ -1842,11 +1879,19 @@ void GLSLSceneRendererImpl::writeMeshTexCoordsHalfFloat(SgMesh* mesh, GLuint buf
         }
     } texCoords;
 
-    writeMeshTexCoordsSub<Vector2h, GL_HALF_FLOAT, GL_FALSE>(mesh, buffer, texture, texCoords);
+    writeMeshTexCoordsSub<Vector2h, GL_HALF_FLOAT, GL_FALSE>(mesh, texture, resource, texCoords);
 }
 
 
-void GLSLSceneRendererImpl::writeMeshTexCoordsUnsignedShort(SgMesh* mesh, GLuint buffer, SgTexture* texture)
+/**
+   This is an experimental implementaion.
+   When normalized unsigned short values are used for texture coordinates,
+   the coordinate must be within [ 0, 1.0 ]. However, data with out-of-range
+   values is common, and such data cannot be rendererd correctly with this implementation.
+   As an alternative of lightweight implementation, writeMeshTexCoordsHalfFloat is available.
+*/
+void GLSLSceneRendererImpl::writeMeshTexCoordsUnsignedShort
+(SgMesh* mesh, SgTexture* texture, VertexResource* resource)
 {
     typedef Eigen::Matrix<GLushort,2,1> Vector2us;
     
@@ -1865,11 +1910,11 @@ void GLSLSceneRendererImpl::writeMeshTexCoordsUnsignedShort(SgMesh* mesh, GLuint
         }
     } texCoords;
 
-    writeMeshTexCoordsSub<Vector2us, GL_UNSIGNED_SHORT, GL_TRUE>(mesh, buffer, texture, texCoords);
+    writeMeshTexCoordsSub<Vector2us, GL_UNSIGNED_SHORT, GL_TRUE>(mesh, texture, resource, texCoords);
 }
 
 
-void GLSLSceneRendererImpl::writeMeshColors(SgMesh* mesh, GLuint buffer)
+void GLSLSceneRendererImpl::writeMeshColors(SgMesh* mesh, VertexResource* resource)
 {
     auto& triangleVertices = mesh->triangleVertices();
     const int totalNumVertices = triangleVertices.size();
@@ -1903,7 +1948,7 @@ void GLSLSceneRendererImpl::writeMeshColors(SgMesh* mesh, GLuint buffer)
 
     {
         LockVertexArrayAPI lock;
-        glBindBuffer(GL_ARRAY_BUFFER, buffer);
+        glBindBuffer(GL_ARRAY_BUFFER, resource->newBuffer());
         glVertexAttribPointer((GLuint)3, 3, GL_UNSIGNED_BYTE, GL_TRUE, 0, ((GLubyte*)NULL + (0)));
     }
     glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(Color), colors.data(), GL_STATIC_DRAW);
@@ -2125,25 +2170,36 @@ void GLSLSceneRendererImpl::renderOutlineGroupMain(SgOutlineGroup* outline, cons
 }
 
 
-void GLSLSceneRendererImpl::renderSimplifiedRenderingGroup(SgSimplifiedRenderingGroup* group)
+void GLSLSceneRendererImpl::renderLightweightRenderingGroup(SgLightweightRenderingGroup* group)
 {
     if(isRenderingShadowMap){
         return;
     }
-    
+
+    bool wasLightweightRenderingBeingProcessed = isLightweightRenderingBeingProcessed;
+    bool wasLowMemoryConsumptionRenderingBeingProcessed = isLowMemoryConsumptionRenderingBeingProcessed;
+    bool wasTextureBeingRendered = isTextureBeingRendered;
+
     if(!isPicking){
         pushProgram(minimumLightingProgram, true);
-        if(!isMinimumLightingProgramActivatedInThisFrame){
+        if(!isLightweightRenderingBeingProcessed){
             renderLights(&minimumLightingProgram);
-            isMinimumLightingProgramActivatedInThisFrame = true;
         }
     }
 
+    isLightweightRenderingBeingProcessed = true;
+    isLowMemoryConsumptionRenderingBeingProcessed = true;
+    isTextureBeingRendered = false;
+    
     renderChildNodes(group);
 
     if(!isPicking){
         popProgram();
     }
+
+    isLightweightRenderingBeingProcessed = wasLightweightRenderingBeingProcessed;
+    isLowMemoryConsumptionRenderingBeingProcessed = wasLowMemoryConsumptionRenderingBeingProcessed;
+    isTextureBeingRendered = wasTextureBeingRendered;
 }
 
 
@@ -2210,7 +2266,10 @@ void GLSLSceneRendererImpl::setLineWidth(float width)
 
 void GLSLSceneRenderer::setLightingMode(int mode)
 {
-    impl->lightingMode = mode;
+    if(mode != impl->lightingMode){
+        impl->lightingMode = mode;
+        requestToClearResources();
+    }
 }
 
 
@@ -2231,7 +2290,10 @@ SgMaterial* GLSLSceneRenderer::defaultMaterial()
 
 void GLSLSceneRenderer::enableTexture(bool on)
 {
-    impl->isTextureEnabled = on;
+    if(on != impl->isTextureEnabled){
+        impl->isTextureEnabled = on;
+        requestToClearResources();
+    }
 }
 
 
@@ -2286,4 +2348,13 @@ void GLSLSceneRenderer::setBackFaceCullingMode(int mode)
 int GLSLSceneRenderer::backFaceCullingMode() const
 {
     return impl->backFaceCullingMode;
+}
+
+
+void GLSLSceneRenderer::setLowMemoryConsumptionMode(bool on)
+{
+    if(impl->isLowMemoryConsumptionMode != on){
+        impl->isLowMemoryConsumptionMode = on;
+        requestToClearResources();
+    }
 }

@@ -75,6 +75,8 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
     virtual void setBackFaceCullingMode(int mode) override;
     virtual int backFaceCullingMode() const override;
 
+    void setLowMemoryConsumptionMode(bool on);
+
   protected:
     virtual void doRender() override;
     virtual bool doPick(int x, int y) override;

@@ -39,6 +39,8 @@ public:
        @note L is used when the vertex positions are expressed as normalized ([-1.0, 1.0]) integer value
     */
     virtual void setTransform(const Matrix4& PV, const Affine3& V, const Affine3& M, const Matrix4* L = nullptr);
+
+    virtual void setVertexColorEnabled(bool on);
     virtual void setMaterial(const SgMaterial* material);
 
 protected:
@@ -176,8 +178,8 @@ public:
     virtual void initialize() override;
     virtual void activate() override;
     virtual void setMaterial(const SgMaterial* material) override;
+    virtual void setVertexColorEnabled(bool on) override;
     void setTextureEnabled(bool on);
-    void setVertexColorEnabled(bool on);
 
 private:
     MaterialLightingProgramImpl* impl;
