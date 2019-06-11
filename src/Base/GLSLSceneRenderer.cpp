@@ -1599,10 +1599,12 @@ void GLSLSceneRendererImpl::writeMeshVertices(SgMesh* mesh, VertexResource* reso
     }
 
     if(texture){
-        if(USE_GL_HALF_FLOAT_FOR_TEXTURE_COORDINATES){
-            writeMeshTexCoordsHalfFloat(mesh, resource->newBuffer(), texture);
-        } else if(USE_GL_UNSIGNED_SHORT_FOR_TEXTURE_COORDINATES){
+        if(USE_GL_UNSIGNED_SHORT_FOR_TEXTURE_COORDINATES &&
+           (!texture->textureTransform() && !texture->repeatS() && !texture->repeatT())){
             writeMeshTexCoordsUnsignedShort(mesh, resource->newBuffer(), texture);
+            
+        } else if(USE_GL_HALF_FLOAT_FOR_TEXTURE_COORDINATES) {
+            writeMeshTexCoordsHalfFloat(mesh, resource->newBuffer(), texture);
         } else {
             writeMeshTexCoordsFloat(mesh, resource->newBuffer(), texture);
         }
@@ -1759,7 +1761,7 @@ void GLSLSceneRendererImpl::writeMeshTexCoordsSub
         const auto& t = tt->translation();
         Eigen::Translation<float, 2> T(t.x(), t.y());
         const auto s = tt->scale().cast<float>();
-        Eigen::Affine2f M = C.inverse() * Eigen::Scaling(s.x(), s.y()) * R * C * T;
+        Eigen::Affine2f M = T * C * R * Eigen::Scaling(s.x(), s.y()) * C.inverse();
 
         const auto& orgTexCoords = *mesh->texCoords();
         const size_t n = orgTexCoords.size();
@@ -1848,16 +1850,16 @@ void GLSLSceneRendererImpl::writeMeshTexCoordsUnsignedShort(SgMesh* mesh, GLuint
     
     struct TexCoordArrayWrapper {
         vector<Vector2us> array;
-        float repeat(float v){
-            if(v < 0.0f){
-                return v - floor(v);
-            } else if(v > 1.0f){
-                return v - floor(v);
+        float clamp(float v){
+            if(v > 1.0f){
+                return 1.0f;
+            } else if(v < 0.0f){
+                return 0.0f;
             }
             return v;
         }
         void append(const Vector2f& uv){
-            array.push_back(Vector2us(65535.0f * repeat(uv[0]), 65535.0f * repeat(uv[1])));
+            array.push_back(Vector2us(65535.0f * clamp(uv[0]), 65535.0f * clamp(uv[1])));
         }
     } texCoords;
 
