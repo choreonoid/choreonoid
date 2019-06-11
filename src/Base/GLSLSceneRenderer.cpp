@@ -28,6 +28,7 @@ const bool USE_FBO_FOR_PICKING = true;
 const bool SHOW_IMAGE_FOR_PICKING = false;
 const bool USE_GL_INT_2_10_10_10_REV_FOR_NORMALS = true;
 const bool USE_GL_SHORT_FOR_VERTICES = false;
+const bool USE_GL_HALF_FLOAT_FOR_TEXTURE_COORDINATES = false;
 const bool USE_GL_UNSIGNED_SHORT_FOR_TEXTURE_COORDINATES = false;
 
 const float MinLineWidthForPicking = 5.0f;
@@ -362,8 +363,9 @@ public:
     bool writeMeshNormalsSub(SgMesh* mesh, NormalArrayWrapper& normals, VertexResource* resource);
     void writeMeshNormalsPacked(SgMesh* mesh, GLuint buffer, VertexResource* resource);
     void writeMeshNormalsFloat(SgMesh* mesh, GLuint buffer, VertexResource* resource);
-    template<class TexCoordArrayWrapper>
-    void writeMeshTexCoordsSub(SgMesh* mesh, TexCoordArrayWrapper& texCoords, SgTexture* texture);
+    template<typename value_type, GLenum gltype, GLboolean normalized, class TexCoordArrayWrapper>
+    void writeMeshTexCoordsSub(SgMesh* mesh, GLuint buffer, SgTexture* texture, TexCoordArrayWrapper& texCoords);
+    void writeMeshTexCoordsHalfFloat(SgMesh* mesh, GLuint buffer, SgTexture* texture);
     void writeMeshTexCoordsUnsignedShort(SgMesh* mesh, GLuint buffer, SgTexture* texture);
     void writeMeshTexCoordsFloat(SgMesh* mesh, GLuint buffer, SgTexture* texture);
     void writeMeshColors(SgMesh* mesh, GLuint buffer);
@@ -1598,7 +1600,9 @@ void GLSLSceneRendererImpl::writeMeshVertices(SgMesh* mesh, VertexResource* reso
     }
 
     if(texture){
-        if(USE_GL_UNSIGNED_SHORT_FOR_TEXTURE_COORDINATES){
+        if(USE_GL_HALF_FLOAT_FOR_TEXTURE_COORDINATES){
+            writeMeshTexCoordsHalfFloat(mesh, resource->newBuffer(), texture);
+        } else if(USE_GL_UNSIGNED_SHORT_FOR_TEXTURE_COORDINATES){
             writeMeshTexCoordsUnsignedShort(mesh, resource->newBuffer(), texture);
         } else {
             writeMeshTexCoordsFloat(mesh, resource->newBuffer(), texture);
@@ -1657,7 +1661,7 @@ bool GLSLSceneRendererImpl::writeMeshNormalsSub
         }
         ready = true;
     }
-
+    
     if(isNormalVisualizationEnabled){
         auto lines = new SgLineSet;
         auto lineVertices = lines->getOrCreateVertices();
@@ -1742,9 +1746,9 @@ void GLSLSceneRendererImpl::writeMeshNormalsFloat(SgMesh* mesh, GLuint buffer, V
 }
 
 
-template<class TexCoordArrayWrapper>
+template<typename value_type, GLenum gltype, GLboolean normalized, class TexCoordArrayWrapper>
 void GLSLSceneRendererImpl::writeMeshTexCoordsSub
-(SgMesh* mesh, TexCoordArrayWrapper& texCoords, SgTexture* texture)
+(SgMesh* mesh, GLuint buffer, SgTexture* texture, TexCoordArrayWrapper& texCoords)
 {
     auto& triangleVertices = mesh->triangleVertices();
     const int totalNumVertices = triangleVertices.size();
@@ -1790,6 +1794,44 @@ void GLSLSceneRendererImpl::writeMeshTexCoordsSub
             }
         }
     }
+    {
+        LockVertexArrayAPI lock;
+        glBindBuffer(GL_ARRAY_BUFFER, buffer);
+        glVertexAttribPointer((GLuint)2, 2, gltype, normalized, 0, 0);
+    }
+    auto size = texCoords.array.size() * sizeof(value_type);
+    glBufferData(GL_ARRAY_BUFFER, size, texCoords.array.data(), GL_STATIC_DRAW);
+    glEnableVertexAttribArray(2);
+}
+
+
+void GLSLSceneRendererImpl::writeMeshTexCoordsHalfFloat(SgMesh* mesh, GLuint buffer, SgTexture* texture)
+{
+    typedef Eigen::Matrix<GLhalf,2,1> Vector2h;
+
+    struct TexCoordArrayWrapper {
+        vector<Vector2h> array;
+        /**
+           Qt provides 16-bit floating point support since version 5.11,
+           and the qFloatToFloat16 function can be used by including the <QFloat16> header.
+           It may be better to use it the corresponding Qt version is available.
+        */
+        GLhalf toHalf(const float& value){
+            uint32_t x = *((uint32_t*)&value);
+            uint32_t e = x & 0x7f800000;
+            if(e == 0 || e < 0x38800000){
+                return 0;
+            } else if(e >0x47000000){
+                return 0x7bff;
+            }
+            return ((x >> 16) & 0x8000) | ((x & 0x7fffffff) >> 13) - 0x1c000;
+        }
+        void append(const Vector2f& uv){
+            array.push_back(Vector2h(toHalf(uv[0]), toHalf(uv[1])));
+        }
+    } texCoords;
+
+    writeMeshTexCoordsSub<Vector2h, GL_HALF_FLOAT, GL_FALSE>(mesh, buffer, texture, texCoords);
 }
 
 
@@ -1812,16 +1854,7 @@ void GLSLSceneRendererImpl::writeMeshTexCoordsUnsignedShort(SgMesh* mesh, GLuint
         }
     } texCoords;
 
-    writeMeshTexCoordsSub(mesh, texCoords, texture);
-
-    {
-        LockVertexArrayAPI lock;
-        glBindBuffer(GL_ARRAY_BUFFER, buffer);
-        glVertexAttribPointer((GLuint)2, 2, GL_UNSIGNED_SHORT, GL_TRUE, 0, ((GLubyte*)NULL + (0)));
-    }
-    auto size = texCoords.array.size() * sizeof(Vector2us);
-    glBufferData(GL_ARRAY_BUFFER, size, texCoords.array.data(), GL_STATIC_DRAW);
-    glEnableVertexAttribArray(2);
+    writeMeshTexCoordsSub<Vector2us, GL_UNSIGNED_SHORT, GL_TRUE>(mesh, buffer, texture, texCoords);
 }
 
 
@@ -1834,16 +1867,7 @@ void GLSLSceneRendererImpl::writeMeshTexCoordsFloat(SgMesh* mesh, GLuint buffer,
         }
     } texCoords;
 
-    writeMeshTexCoordsSub(mesh, texCoords, texture);
-
-    {
-        LockVertexArrayAPI lock;
-        glBindBuffer(GL_ARRAY_BUFFER, buffer);
-        glVertexAttribPointer((GLuint)2, 2, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
-    }
-    auto size = texCoords.array.size() * sizeof(Vector2f);
-    glBufferData(GL_ARRAY_BUFFER, size, texCoords.array.data(), GL_STATIC_DRAW);
-    glEnableVertexAttribArray(2);
+    writeMeshTexCoordsSub<Vector2f, GL_FLOAT, GL_FALSE>(mesh, buffer, texture, texCoords);
 }
 
 
