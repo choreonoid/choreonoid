@@ -271,6 +271,7 @@ public:
 
     vector<char> scaledImageBuf;
 
+    bool isTextureEnabled;
     bool isCurrentFogUpdated;
     SgFogPtr prevFog;
     ScopedConnection currentFogConnection;
@@ -443,6 +444,7 @@ void GLSLSceneRendererImpl::initialize()
     defaultMaterial->setDiffuseColor(Vector3f(0.8, 0.8, 0.8));
     defaultPointSize = 1.0f;
     defaultLineWidth = 1.0f;
+    isTextureEnabled = true;
 
     isNormalVisualizationEnabled = false;
     normalVisualizationLength = 0.0f;
@@ -1310,7 +1312,7 @@ void GLSLSceneRendererImpl::renderShapeMain(SgShape* shape, const Affine3& posit
     } else {
         renderMaterial(shape->material());
         if(currentLightingProgram == &phongShadowLightingProgram){
-            if(shape->texture() && mesh->hasTexCoords()){
+            if(isTextureEnabled && shape->texture() && mesh->hasTexCoords()){
                 isTextureValid = renderTexture(shape->texture());
             }
             phongShadowLightingProgram.setTextureEnabled(isTextureValid);
@@ -2229,11 +2231,7 @@ SgMaterial* GLSLSceneRenderer::defaultMaterial()
 
 void GLSLSceneRenderer::enableTexture(bool on)
 {
-    /*
-    if(on != impl->isTextureEnabled){
-        impl->isTextureEnabled = on;
-    }
-    */
+    impl->isTextureEnabled = on;
 }
 
 
