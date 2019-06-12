@@ -2180,10 +2180,15 @@ void GLSLSceneRendererImpl::renderLightweightRenderingGroup(SgLightweightRenderi
     bool wasLowMemoryConsumptionRenderingBeingProcessed = isLowMemoryConsumptionRenderingBeingProcessed;
     bool wasTextureBeingRendered = isTextureBeingRendered;
 
+    bool pushed = false;
+    
     if(!isPicking){
-        pushProgram(minimumLightingProgram, true);
-        if(!isLightweightRenderingBeingProcessed){
-            renderLights(&minimumLightingProgram);
+        if(currentProgram == &phongShadowLightingProgram){
+            pushProgram(minimumLightingProgram, true);
+            pushed = true;
+            if(!isLightweightRenderingBeingProcessed){
+                renderLights(&minimumLightingProgram);
+            }
         }
     }
 
@@ -2193,7 +2198,7 @@ void GLSLSceneRendererImpl::renderLightweightRenderingGroup(SgLightweightRenderi
     
     renderChildNodes(group);
 
-    if(!isPicking){
+    if(pushed){
         popProgram();
     }
 
