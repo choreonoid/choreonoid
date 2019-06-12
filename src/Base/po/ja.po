@@ -319,15 +319,15 @@ msgstr "ライティングモード"
 
 #: SceneWidget.cpp:2985
 msgid "Full"
-msgstr ""
+msgstr "完全"
 
 #: SceneWidget.cpp:2991
 msgid "Minimum"
-msgstr ""
+msgstr "最小限"
 
 #: SceneWidget.cpp:2996
 msgid "Solid"
-msgstr ""
+msgstr "ソリッド"
 
 #: SceneWidget.cpp:3011
 msgid "Smooth shading"
