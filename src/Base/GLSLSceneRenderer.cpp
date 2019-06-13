@@ -1738,7 +1738,7 @@ void GLSLSceneRendererImpl::writeMeshNormalsFloat(SgMesh* mesh, VertexResource* 
 {
     struct NormalArrayWrapper {
         SgNormalArray array;
-        void append(const Vector3f& v){ array.push_back(v); }
+        void append(const Vector3f& n){ array.push_back(n); }
         Vector3f get(int index){ return array[index]; }
     } normals;
             
@@ -1750,22 +1750,22 @@ void GLSLSceneRendererImpl::writeMeshNormalsPacked(SgMesh* mesh, VertexResource*
 {
     struct NormalArrayWrapper {
         vector<uint32_t> array;
-        void append(const Vector3f& v){
-            const uint32_t xs = v.x() < 0.0f;
-            const uint32_t ys = v.y() < 0.0f;
-            const uint32_t zs = v.z() < 0.0f;
+        void append(const Vector3f& n){
+            const uint32_t xs = n.x() < 0.0f;
+            const uint32_t ys = n.y() < 0.0f;
+            const uint32_t zs = n.z() < 0.0f;
             array.push_back(
                 uint32_t(
-                    zs << 29 | ((uint32_t)(v.z() * 511 + (zs << 9)) & 511) << 20 |
-                    ys << 19 | ((uint32_t)(v.y() * 511 + (ys << 9)) & 511) << 10 |
-                    xs << 9  | ((uint32_t)(v.x() * 511 + (xs << 9)) & 511)));
+                    zs << 29 | ((uint32_t)(n.z() * 511 + (zs << 9)) & 511) << 20 |
+                    ys << 19 | ((uint32_t)(n.y() * 511 + (ys << 9)) & 511) << 10 |
+                    xs << 9  | ((uint32_t)(n.x() * 511 + (xs << 9)) & 511)));
         }
         Vector3f get(int index){
             auto packed = array[index];
             Vector3f v;
             for(int i=0; i < 3; ++i){
                 if(packed & 512){ // minus
-                    v[i] = (static_cast<int>(packed & 511) - 512) / 512.0f;
+                    v[i] = (static_cast<int>(packed & 511) - 512) / 511.0f;
                 } else { // plus
                     v[i] = (packed & 511) / 511.0f;
                 }
