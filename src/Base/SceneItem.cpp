@@ -160,7 +160,7 @@ void SceneItem::doPutProperties(PutPropertyFunction& putProperty)
                     return false;
                 });
     
-    putProperty("Lightweight rendering", isLightweightRenderingEnabled_,
+    putProperty(_("Lightweight rendering"), isLightweightRenderingEnabled_,
                 [&](bool on){ setLightweightRenderingEnabled(on); return true; });
 }
 

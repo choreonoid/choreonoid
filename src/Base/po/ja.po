@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-06-11 19:22+0900\n"
+"POT-Creation-Date: 2019-06-12 01:00+0900\n"
 "PO-Revision-Date: 2011-11-12 11:42+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -314,21 +314,20 @@ msgid "Lighting"
 msgstr "ライティング"
 
 #: SceneWidget.cpp:2983
-#, fuzzy
 msgid "Lighting mode"
-msgstr "ライティング"
+msgstr "ライティングモード"
 
 #: SceneWidget.cpp:2985
 msgid "Full"
-msgstr ""
+msgstr "完全"
 
 #: SceneWidget.cpp:2991
 msgid "Minimum"
-msgstr ""
+msgstr "最小限"
 
 #: SceneWidget.cpp:2996
 msgid "Solid"
-msgstr ""
+msgstr "ソリッド"
 
 #: SceneWidget.cpp:3011
 msgid "Smooth shading"
@@ -1791,8 +1790,7 @@ msgstr ""
 msgid "SceneItem"
 msgstr "シーンアイテム"
 
-#~ msgid "Do lighiting"
-#~ msgstr "ライティングする"
+#: SceneItem.cpp:163
+msgid "Lightweight rendering"
+msgstr "軽量レンダリング"
 
-#~ msgid "Use an OpenGL pixel buffer for picking"
-#~ msgstr "ピッキングにOpenGLピクセルバッファを使う"
