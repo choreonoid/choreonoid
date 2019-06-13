@@ -25,7 +25,15 @@ namespace {
 
 const bool USE_FBO_FOR_PICKING = true;
 const bool SHOW_IMAGE_FOR_PICKING = false;
-const bool USE_GL_INT_2_10_10_10_REV_FOR_NORMALS = true;
+
+/**
+   This option is disabled because it results in wrong normals when
+   the code is compiled by VC++2017 with the AVX2 option.
+   VC++2015 and GCC do not cause such a problem.
+*/
+const bool USE_GL_INT_2_10_10_10_REV_FOR_NORMALS = false;
+
+const bool USE_GL_SHORT_FOR_NORMALS = true;
 
 const float MinLineWidthForPicking = 5.0f;
 
@@ -367,6 +375,7 @@ public:
     template<typename value_type, GLenum gltype, GLint glsize, GLboolean normalized, class NormalArrayWrapper>
     bool writeMeshNormalsSub(SgMesh* mesh, VertexResource* resource, NormalArrayWrapper& normals);
     void writeMeshNormalsFloat(SgMesh* mesh, VertexResource* resource);
+    void writeMeshNormalsShort(SgMesh* mesh, VertexResource* resource);
     void writeMeshNormalsPacked(SgMesh* mesh, VertexResource* resource);
     template<typename value_type, GLenum gltype, GLboolean normalized, class TexCoordArrayWrapper>
     void writeMeshTexCoordsSub(
@@ -1543,11 +1552,13 @@ void GLSLSceneRendererImpl::makeVertexBufferObjects(SgShape* shape, VertexResour
         writeMeshVerticesFloat(mesh, resource);
     }
     
-    if(USE_GL_INT_2_10_10_10_REV_FOR_NORMALS || isLowMemoryConsumptionRenderingBeingProcessed){
+    if(USE_GL_INT_2_10_10_10_REV_FOR_NORMALS && isLowMemoryConsumptionRenderingBeingProcessed){
         writeMeshNormalsPacked(mesh, resource);
+    } else if(USE_GL_SHORT_FOR_NORMALS){
+        writeMeshNormalsShort(mesh, resource);
     } else {
         writeMeshNormalsFloat(mesh, resource);
-    }
+    }        
 
     auto texture = shape->texture();
     if(texture && mesh->hasTexCoords() && isTextureBeingRendered){
@@ -1743,6 +1754,24 @@ void GLSLSceneRendererImpl::writeMeshNormalsFloat(SgMesh* mesh, VertexResource* 
     } normals;
             
     writeMeshNormalsSub<Vector3f, GL_FLOAT, 3, GL_FALSE>(mesh, resource, normals);
+}
+
+
+void GLSLSceneRendererImpl::writeMeshNormalsShort(SgMesh* mesh, VertexResource* resource)
+{
+    typedef Eigen::Matrix<GLshort,3,1> Vector3s;
+
+    struct NormalArrayWrapper {
+        vector<Vector3s> array;
+        void append(const Vector3f& n){
+            array.push_back((32767.0f * n).cast<GLshort>());
+        }
+        Vector3f get(int index){
+            return array[index].cast<float>() / 32767.0f;
+        }
+    } normals;
+            
+    writeMeshNormalsSub<Vector3s, GL_SHORT, 3, GL_TRUE>(mesh, resource, normals);
 }
 
 
