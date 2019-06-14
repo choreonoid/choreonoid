@@ -1336,8 +1336,10 @@ void GLSLSceneRendererImpl::renderShapeMain(SgShape* shape, const Affine3& posit
     if(isPicking){
         setPickColor(pickId);
     } else {
-        currentProgram->setVertexColorEnabled(mesh->hasColors());
         renderMaterial(shape->material());
+        if(mesh->hasColors()){
+            currentProgram->setVertexColorEnabled(true);
+        }
 
         if(currentProgram == &phongShadowLightingProgram){
             bool isTextureValid = false;
@@ -2015,12 +2017,13 @@ void GLSLSceneRendererImpl::renderPlot
     bool hasColors = plot->hasColors();
     
     if(isPicking){
-        solidColorProgram.enableColorArray(false);
+        solidColorProgram.setVertexColorEnabled(false);
     } else {
         if(!hasColors){
             renderMaterial(plot->material());
+        } else {
+            solidColorProgram.setVertexColorEnabled(true);
         }
-        solidColorProgram.enableColorArray(hasColors);
     }
     
     VertexResource* resource = getOrCreateVertexResource(plot);

@@ -40,8 +40,8 @@ public:
     */
     virtual void setTransform(const Matrix4& PV, const Affine3& V, const Affine3& M, const Matrix4* L = nullptr);
 
-    virtual void setVertexColorEnabled(bool on);
     virtual void setMaterial(const SgMaterial* material);
+    virtual void setVertexColorEnabled(bool on);
 
 protected:
     ShaderProgram(const char* vertexShader, const char* fragmentShader);
@@ -85,11 +85,10 @@ public:
 
     virtual void initialize() override;
     virtual void initializeFrameRendering() override;
-
     virtual void setMaterial(const SgMaterial* material) override;
+    virtual void setVertexColorEnabled(bool on) override;
     
     void setColor(const Vector3f& color);
-    void enableColorArray(bool on);
     void setColorChangable(bool on);
     bool isColorChangable() const;
     void setPointSize(float s);

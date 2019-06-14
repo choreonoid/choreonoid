@@ -42,6 +42,7 @@ public:
     GLint colorLocation;
     GLint colorPerVertexLocation;
     bool isColorChangable;
+    bool isVertexColorEnabled;
 };
     
 
@@ -305,6 +306,7 @@ SolidColorProgram::SolidColorProgram()
     impl = new SolidColorProgramImpl;
     impl->color.setZero();
     impl->isColorChangable = true;
+    impl->isVertexColorEnabled = false;
 }
 
 
@@ -328,7 +330,8 @@ void SolidColorProgram::initialize()
 
 void SolidColorProgram::initializeFrameRendering()
 {
-    glUniform1i(impl->colorPerVertexLocation, false);
+    glUniform3fv(impl->colorLocation, 1, impl->color.data());
+    glUniform1i(impl->colorPerVertexLocation, impl->isVertexColorEnabled);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
@@ -344,16 +347,10 @@ void SolidColorProgram::setColor(const Vector3f& color)
     if(impl->isColorChangable){
         if(color != impl->color){
             glUniform3fv(impl->colorLocation, 1, color.data());
-            glUniform1i(impl->colorPerVertexLocation, false);
             impl->color = color;
         }
     }
-}
-
-
-void SolidColorProgram::enableColorArray(bool on)
-{
-    glUniform1i(impl->colorPerVertexLocation, on);
+    setVertexColorEnabled(false);
 }
 
 
@@ -366,6 +363,15 @@ void SolidColorProgram::setColorChangable(bool on)
 bool SolidColorProgram::isColorChangable() const
 {
     return impl->isColorChangable;
+}
+
+
+void SolidColorProgram::setVertexColorEnabled(bool on)
+{
+    if(on != impl->isVertexColorEnabled){
+        glUniform1i(impl->colorPerVertexLocation, on);
+        impl->isVertexColorEnabled = on;
+    }
 }
 
 
@@ -677,6 +683,7 @@ void MaterialLightingProgram::setMaterial(const SgMaterial* material)
 {
     if(material){
         impl->setMaterial(material);
+        setVertexColorEnabled(false);
     } else {
         std::fill(impl->stateFlag.begin(), impl->stateFlag.end(), false);
     }
@@ -729,20 +736,20 @@ void MaterialLightingProgramImpl::setMaterial(const SgMaterial* material)
 }
 
 
-void MaterialLightingProgram::setTextureEnabled(bool on)
-{
-    if(on != impl->isTextureEnabled){
-        glUniform1i(impl->isTextureEnabledLocation, on);
-        impl->isTextureEnabled = on;
-    }
-}
-
-
 void MaterialLightingProgram::setVertexColorEnabled(bool on)
 {
     if(on != impl->isVertexColorEnabled){
         glUniform1i(impl->isVertexColorEnabledLocation, on);
         impl->isVertexColorEnabled = on;
+    }
+}
+
+
+void MaterialLightingProgram::setTextureEnabled(bool on)
+{
+    if(on != impl->isTextureEnabled){
+        glUniform1i(impl->isTextureEnabledLocation, on);
+        impl->isTextureEnabled = on;
     }
 }
 
