@@ -64,6 +64,8 @@ const int NUM_SHADOWS = 2;
 enum { FLOOR_GRID = 0, XZ_GRID = 1, YZ_GRID = 2 };
 
 Signal<void()> sigVSyncModeChanged;
+
+bool isLowMemoryConsumptionMode;
 Signal<void(bool on)> sigLowMemoryConsumptionModeChanged;
 
 class EditableExtractor : public PolymorphicFunctionSet<SgNode>
@@ -412,7 +414,7 @@ void SceneWidget::initializeClass(ExtensionManager* ext)
     vsyncItem->sigToggled().connect([&](bool on){ SceneWidgetImpl::onOpenGLVSyncToggled(on, true); });
     SceneWidgetImpl::onOpenGLVSyncToggled(isVSyncEnabled, false);
 
-    bool isLowMemoryConsumptionMode = glConfig->get("lowMemoryConsumption", false);
+    isLowMemoryConsumptionMode = glConfig->get("lowMemoryConsumption", false);
     auto memoryItem = mm.addCheckItem(_("Low GPU memory consumption mode"));
     memoryItem->setChecked(isLowMemoryConsumptionMode);
     memoryItem->sigToggled().connect([&](bool on){ SceneWidgetImpl::onLowMemoryConsumptionModeChanged(on, true); });
@@ -515,7 +517,9 @@ SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self, bool useGLSL)
     setFocusPolicy(Qt::WheelFocus);
 
     if(useGLSL){
-        renderer = new GLSLSceneRenderer(sceneRoot);
+        auto r = new GLSLSceneRenderer(sceneRoot);
+        r->setLowMemoryConsumptionMode(isLowMemoryConsumptionMode);
+        renderer = r;
     } else {
         renderer = new GL1SceneRenderer(sceneRoot);
     }

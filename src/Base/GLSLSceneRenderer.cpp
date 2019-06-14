@@ -1647,7 +1647,10 @@ void GLSLSceneRendererImpl::writeMeshVerticesNormalizedShort(SgMesh* mesh, Verte
         }
     };
             
-    BoundingBox bbox = mesh->boundingBox();
+    auto& bbox = mesh->boundingBox();
+    if(!bbox){
+        mesh->updateBoundingBox();
+    }
     const Vector3 c = bbox.center();
     const Vector3 hs =  0.5 * bbox.size();
 
