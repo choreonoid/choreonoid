@@ -2077,10 +2077,10 @@ void GLSLSceneRendererImpl::renderPlot
             {
                 LockVertexArrayAPI lock;
                 glBindBuffer(GL_ARRAY_BUFFER, resource->newBuffer());
-                glVertexAttribPointer((GLuint)1, 3, GL_UNSIGNED_BYTE, GL_TRUE, 0, ((GLubyte*)NULL +(0)));
+                glVertexAttribPointer((GLuint)3, 3, GL_UNSIGNED_BYTE, GL_TRUE, 0, ((GLubyte*)NULL +(0)));
             }
             glBufferData(GL_ARRAY_BUFFER, n * sizeof(Color), colors.data(), GL_STATIC_DRAW);
-            glEnableVertexAttribArray(1);
+            glEnableVertexAttribArray(3);
         }
     }        
 
