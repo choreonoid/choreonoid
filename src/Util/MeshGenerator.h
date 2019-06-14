@@ -19,6 +19,7 @@ class CNOID_EXPORT MeshGenerator
 {
 public:
     MeshGenerator();
+
     MeshGenerator(const MeshGenerator& org);
     ~MeshGenerator();
 
@@ -26,8 +27,13 @@ public:
     int divisionNumber() const;
     static int defaultDivisionNumber();
 
+    void setNormalGenerationEnabled(bool on);
+    // \deprecated
     void enableNormalGeneration(bool on);
     bool isNormalGenerationEnabled() const;
+
+    void setBoundingBoxUpdateEnabled(bool on);
+    bool isBoundingBoxUpdateEnabled() const;
 
     SgMesh* generateBox(Vector3 size, bool enableTextureCoordinate=false);
     SgMesh* generateSphere(double radius, bool enableTextureCoordinate=false);
@@ -89,6 +95,7 @@ public:
 private:
     int divisionNumber_;
     bool isNormalGenerationEnabled_;
+    bool isBoundingBoxUpdateEnabled_;
     MeshFilter* meshFilter;
 
     void generateNormals(SgMesh* mesh, double creaseAngle);

@@ -21,6 +21,7 @@ const int defaultDivisionNumber = 20;
 MeshGenerator::MeshGenerator()
 {
     isNormalGenerationEnabled_ = true;
+    isBoundingBoxUpdateEnabled_ = true;
     meshFilter = nullptr;
     divisionNumber_ = ::defaultDivisionNumber;
 }
@@ -56,6 +57,12 @@ int MeshGenerator::defaultDivisionNumber()
 }
 
 
+void MeshGenerator::setNormalGenerationEnabled(bool on)
+{
+    isNormalGenerationEnabled_ = on;
+}
+
+
 void MeshGenerator::enableNormalGeneration(bool on)
 {
     isNormalGenerationEnabled_ = on;
@@ -76,6 +83,18 @@ void MeshGenerator::generateNormals(SgMesh* mesh, double creaseAngle)
         }
         meshFilter->generateNormals(mesh, creaseAngle);
     }
+}
+
+
+void MeshGenerator::setBoundingBoxUpdateEnabled(bool on)
+{
+    isBoundingBoxUpdateEnabled_ = on;
+}
+
+
+bool MeshGenerator::isBoundingBoxUpdateEnabled() const
+{
+    return isBoundingBoxUpdateEnabled_;
 }
 
 
@@ -118,7 +137,10 @@ SgMesh* MeshGenerator::generateBox(Vector3 size, bool enableTextureCoordinate)
     mesh->addTriangle(4,7,6);
 
     mesh->setPrimitive(SgMesh::Box(size));
-    mesh->updateBoundingBox();
+
+    if(isBoundingBoxUpdateEnabled_){
+        mesh->updateBoundingBox();
+    }
 
     generateNormals(mesh, 0.0);
 
@@ -183,7 +205,10 @@ SgMesh* MeshGenerator::generateSphere(double radius, bool enableTextureCoordinat
     }
 
     mesh->setPrimitive(SgMesh::Sphere(radius));
-    mesh->updateBoundingBox();
+
+    if(isBoundingBoxUpdateEnabled_){
+        mesh->updateBoundingBox();
+    }
 
     //! \todo set normals directly without using the following function
     generateNormals(mesh, PI);
@@ -244,7 +269,10 @@ SgMesh* MeshGenerator::generateCylinder(double radius, double height, bool botto
     }
 
     mesh->setPrimitive(SgMesh::Cylinder(radius, height));
-    mesh->updateBoundingBox();
+
+    if(isBoundingBoxUpdateEnabled_){
+        mesh->updateBoundingBox();
+    }
 
     generateNormals(mesh, PI / 2.0);
     
@@ -292,7 +320,10 @@ SgMesh* MeshGenerator::generateCone(double radius, double height, bool bottom, b
     }
 
     mesh->setPrimitive(SgMesh::Cone(radius, height));
-    mesh->updateBoundingBox();
+
+    if(isBoundingBoxUpdateEnabled_){
+        mesh->updateBoundingBox();
+    }
 
     generateNormals(mesh, PI / 2.0);
 
@@ -369,7 +400,10 @@ SgMesh* MeshGenerator::generateCapsule(double radius, double height)
     }
 
     mesh->setPrimitive(SgMesh::Capsule(radius, height));
-    mesh->updateBoundingBox();
+
+    if(isBoundingBoxUpdateEnabled_){
+        mesh->updateBoundingBox();
+    }
 
     generateNormals(mesh, PI / 2.0);
 
@@ -412,7 +446,9 @@ SgMesh* MeshGenerator::generateDisc(double radius, double innerRadius)
         }
     }
 
-    mesh->updateBoundingBox();
+    if(isBoundingBoxUpdateEnabled_){
+        mesh->updateBoundingBox();
+    }
 
     return mesh;
 }
@@ -420,14 +456,14 @@ SgMesh* MeshGenerator::generateDisc(double radius, double innerRadius)
 
 SgMesh* MeshGenerator::generateArrow(double cylinderRadius, double cylinderHeight, double coneRadius, double coneHeight)
 {
-    SgShapePtr cone = new SgShape;
+    auto cone = new SgShape;
     //setDivisionNumber(20);
     cone->setMesh(generateCone(coneRadius, coneHeight));
     SgPosTransform* conePos = new SgPosTransform;
     conePos->setTranslation(Vector3(0.0, cylinderHeight / 2.0 + coneHeight / 2.0, 0.0));
     conePos->addChild(cone);
 
-    SgShapePtr cylinder = new SgShape;
+    auto cylinder = new SgShape;
     //setDivisionNumber(12);
     cylinder->setMesh(generateCylinder(cylinderRadius, cylinderHeight, true, false));
         
@@ -435,7 +471,14 @@ SgMesh* MeshGenerator::generateArrow(double cylinderRadius, double cylinderHeigh
     SgGroupPtr group = new SgGroup;
     group->addChild(conePos);
     group->addChild(cylinder);
-    return meshExtractor.integrate(group);
+
+    auto arrow = meshExtractor.integrate(group);
+
+    if(isBoundingBoxUpdateEnabled_){
+        arrow->updateBoundingBox();
+    }
+    
+    return arrow;
 }
 
 
@@ -472,7 +515,9 @@ SgMesh* MeshGenerator::generateTorus(double radius, double crossSectionRadius)
         }
     }
 
-    mesh->updateBoundingBox();
+    if(isBoundingBoxUpdateEnabled_){
+        mesh->updateBoundingBox();
+    }
 
     generateNormals(mesh, PI);
 
@@ -661,7 +706,9 @@ SgMesh* MeshGenerator::generateExtrusion(const Extrusion& extrusion, bool enable
         }
     }
 
-    mesh->updateBoundingBox();
+    if(isBoundingBoxUpdateEnabled_){
+        mesh->updateBoundingBox();
+    }
 
     generateNormals(mesh, extrusion.creaseAngle);
 
@@ -748,7 +795,9 @@ SgMesh* MeshGenerator::generateElevationGrid(const ElevationGrid& grid, bool ena
         generateTextureCoordinateForElevationGrid(mesh, grid);
     }
 
-    mesh->updateBoundingBox();
+    if(isBoundingBoxUpdateEnabled_){
+        mesh->updateBoundingBox();
+    }
 
     return mesh;
 }
