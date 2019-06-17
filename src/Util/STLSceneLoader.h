@@ -6,14 +6,18 @@
 
 namespace cnoid {
 
+class STLSceneLoaderImpl;
+
 class CNOID_EXPORT STLSceneLoader : public AbstractSceneLoader
 {
-    std::ostream* os_;
-    std::ostream& os() { return *os_; }
 public:
     STLSceneLoader();
+    ~STLSceneLoader();
     virtual void setMessageSink(std::ostream& os);
     virtual SgNode* load(const std::string& filename) override;
+
+private:
+    STLSceneLoaderImpl* impl;
 };
 
 }
