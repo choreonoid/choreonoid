@@ -418,7 +418,7 @@ void BinaryMeshLoader::addNormal(const Vector3f& normal)
 {
     MeshLoader::addNormal(
         normal,
-        [&](int index){
+        [this](int index){
             (*normalIndices)[normalIndicesIndex++] = index;
             (*normalIndices)[normalIndicesIndex++] = index;
             (*normalIndices)[normalIndicesIndex++] = index;
@@ -430,7 +430,7 @@ void BinaryMeshLoader::addVertex(const Vector3f& vertex)
 {
     MeshLoader::addVertex(
         vertex,
-        [&](int index){
+        [this](int index){
             (*triangleVertices)[triangleVerticesIndex++] = index;
         });
 }
@@ -439,7 +439,7 @@ void BinaryMeshLoader::addVertex(const Vector3f& vertex)
 void BinaryMeshLoader::load(const string& filename, size_t triangleOffset, size_t numTriangles)
 {
     loaderThread = thread(
-        [this,filename,triangleOffset,numTriangles](){
+        [this, filename, triangleOffset, numTriangles](){
             ifstream ifs(filename.c_str(), std::ios::in | std::ios::binary);
             load(ifs, triangleOffset, numTriangles);
         });
@@ -450,24 +450,26 @@ void BinaryMeshLoader::load(ifstream& ifs, size_t triangleOffset, size_t numTria
 {
     ifs.seekg(STL_BINARY_HEADER_SIZE + triangleOffset * 50);
 
-    initializeArrays(triangleOffset, numTriangles);
+    /**
+       Buffer size can be specified by the following code.
+       It is currently disabled becasue it does not especially obtain a better result
+       on Ubuntu 18.04 and GCC 8.3.0.
+    */
+    /*
+    vector<char> buf(20 * 1024 * 1024);
+    ifs.rdbuf()->pubsetbuf(&buf.front(), buf.size());
+    */
     
-    for(size_t i = 0; i < numTriangles; ++i){
-        Vector3f normal;
-        for(size_t j = 0; j < 3; ++j){
-            ifs.read((char*)&normal[j], 4);
-        }
-        addNormal(normal);
+    initializeArrays(triangleOffset, numTriangles);
 
-        for(size_t j = 0; j < 3; ++j){
-            Vector3f vertex;
-            for(size_t k = 0; k < 3; ++k){
-                ifs.read((char*)&vertex[k], 4);
-            }
-            addVertex(vertex);
-        }
-        uint16_t attrib;
-        ifs.read((char *)&attrib, 2);
+    size_t datasize = sizeof(float) * 3 * 4 + 2;
+    char data[datasize];
+    for(size_t i = 0; i < numTriangles; ++i){
+        ifs.read(data, datasize);
+        addNormal(Vector3f(reinterpret_cast<float*>(data)));
+        addVertex(Vector3f(reinterpret_cast<float*>(&data[12])));
+        addVertex(Vector3f(reinterpret_cast<float*>(&data[24])));
+        addVertex(Vector3f(reinterpret_cast<float*>(&data[36])));
     }
 }
 
@@ -483,7 +485,7 @@ void AsciiMeshLoader::addNormal(const Vector3f& normal)
 {
     MeshLoader::addNormal(
         normal,
-        [&](int index){
+        [this](int index){
             normalIndices->push_back(index);
             normalIndices->push_back(index);
             normalIndices->push_back(index);
@@ -495,7 +497,7 @@ void AsciiMeshLoader::addVertex(const Vector3f& vertex)
 {
     MeshLoader::addVertex(
         vertex,
-        [&](int index){
+        [this](int index){
             triangleVertices->push_back(index);
         });
 }
