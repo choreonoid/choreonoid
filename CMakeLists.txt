@@ -214,6 +214,7 @@ endif()
 find_package(Threads)
 
 if(ENABLE_GUI)
+  cmake_policy(SET CMP0072 OLD)
   find_package(OpenGL)
   include_directories(${OPENGL_INCLUDE_DIR})
 endif()
