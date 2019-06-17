@@ -1310,7 +1310,7 @@ void GLSLSceneRendererImpl::renderShape(SgShape* shape)
             if(!isRenderingShadowMap){
                 const Affine3& position = modelMatrixStack.back();
                 auto pickId = pushPickId(shape, false);
-                transparentRenderingFunctions.push_back(
+                transparentRenderingFunctions.emplace_back(
                     [this, shape, position, pickId](){
                         renderShapeMain(shape, position, pickId); });
                 popPickId();
@@ -1639,11 +1639,10 @@ void GLSLSceneRendererImpl::writeMeshVerticesNormalizedShort(SgMesh* mesh, Verte
             : r(ratio), c(center)
         {  }
         void append(const Vector3f& v){
-            array.push_back(
-                Vector3s(
-                    r.x() * (v.x() - c.x()),
-                    r.y() * (v.y() - c.y()),
-                    r.z() * (v.z() - c.z())));
+            array.emplace_back(
+                r.x() * (v.x() - c.x()),
+                r.y() * (v.y() - c.y()),
+                r.z() * (v.z() - c.z()));
         }
     };
             
@@ -1909,7 +1908,7 @@ void GLSLSceneRendererImpl::writeMeshTexCoordsHalfFloat
             return ((x >> 16) & 0x8000) | ((x & 0x7fffffff) >> 13) - 0x1c000;
         }
         void append(const Vector2f& uv){
-            array.push_back(Vector2h(toHalf(uv[0]), toHalf(uv[1])));
+            array.emplace_back(toHalf(uv[0]), toHalf(uv[1]));
         }
     } texCoords;
 
@@ -1940,7 +1939,7 @@ void GLSLSceneRendererImpl::writeMeshTexCoordsUnsignedShort
             return v;
         }
         void append(const Vector2f& uv){
-            array.push_back(Vector2us(65535.0f * clamp(uv[0]), 65535.0f * clamp(uv[1])));
+            array.emplace_back(65535.0f * clamp(uv[0]), 65535.0f * clamp(uv[1]));
         }
     } texCoords;
 
@@ -1967,7 +1966,7 @@ void GLSLSceneRendererImpl::writeMeshColors(SgMesh* mesh, VertexResource* resour
             for(int j=0; j < 3; ++j){
                 const int orgVertexIndex = triangleVertices[faceVertexIndex++];
                 Vector3f c = 255.0f * orgColors[orgVertexIndex];
-                colors.push_back(Color(c[0], c[1], c[2]));
+                colors.emplace_back(c[0], c[1], c[2]);
             }
         }
     } else {
@@ -1975,7 +1974,7 @@ void GLSLSceneRendererImpl::writeMeshColors(SgMesh* mesh, VertexResource* resour
             for(int j=0; j < 3; ++j){
                 const int colorIndex = colorIndices[faceVertexIndex++];
                 Vector3f c = 255.0f * orgColors[colorIndex];
-                colors.push_back(Color(c[0], c[1], c[2]));
+                colors.emplace_back(c[0], c[1], c[2]);
             }
         }
     }
@@ -2055,7 +2054,7 @@ void GLSLSceneRendererImpl::renderPlot
                 const size_t m = std::min(n, orgColors.size());
                 while(i < m){
                     Vector3f c = 255.0f * orgColors[i];
-                    colors.push_back(Color(c[0], c[1], c[2]));
+                    colors.emplace_back(c[0], c[1], c[2]);
                     ++i;
                 }
             } else {
@@ -2063,7 +2062,7 @@ void GLSLSceneRendererImpl::renderPlot
                 size_t i = 0;
                 while(i < m){
                     Vector3f c = 255.0f * orgColors[colorIndices[i]];
-                    colors.push_back(Color(c[0], c[1], c[2]));
+                    colors.emplace_back(c[0], c[1], c[2]);
                     ++i;
                 }
             }
@@ -2160,7 +2159,7 @@ void GLSLSceneRendererImpl::renderOutlineGroup(SgOutlineGroup* outline)
         renderGroup(outline);
     } else {
         const Affine3& T = modelMatrixStack.back();
-        postRenderingFunctions.push_back(
+        postRenderingFunctions.emplace_back(
             [this, outline, T](){ renderOutlineGroupMain(outline, T); });
     }
 }
