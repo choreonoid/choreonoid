@@ -19,8 +19,10 @@ using namespace cnoid;
 namespace {
 
 const bool ENABLE_DEBUG = false;
-
 const bool ENABLE_COMPACTION = true;
+const int VertexSearchLength = 27;
+const int NormalSearchLength = 15;
+const bool DO_MERGE = true;
 
 typedef ifstream::pos_type pos_type;
 
@@ -53,6 +55,7 @@ class MeshLoader
 {
 public:
     SgMeshPtr sharedMesh;
+    size_t triangleOffset;
     size_t numTriangles;
     SgVertexArrayPtr vertices;
     SgIndexArray* triangleVertices;
@@ -63,10 +66,16 @@ public:
     BoundingBoxf bbox;
     thread loaderThread;
 
-    // For the mesh integration
+    // For merge
     int vertexArrayOffset;
+    int numActualVertices;
+    int numMergedVertices;
+    vector<int> mergedVertexIndexMap;
+
     int normalArrayOffset;
-    size_t indexArrayOffset;
+    int numActualNormals;
+    int numMergedNormals;
+    vector<int> mergedNormalIndexMap;
 
     MeshLoader(size_t numTriangles);
     MeshLoader(const MeshLoader& org);
@@ -77,8 +86,22 @@ public:
     template<typename AddIndexFunction>
     void addVertex(const Vector3f& vertex, AddIndexFunction addIndex);
     void join();
+
     void initializeIntegration(size_t totalNumVertices, size_t totalNumNormals);
     void integrate(MeshLoader& loader);
+
+    int findElement(
+        const Vector3f& element, const SgVectorArray<Vector3f>& prevElements, int searchLength);
+    void findRedundantElementsBetweenLoaders(
+        SgVectorArray<Vector3f>& elements, SgVectorArray<Vector3f>& prevElements,
+        vector<int>& mergedElementIndexMap, int& numMergedElements, int searchLength);
+    void initializeMerge(MeshLoader* prevLoader);
+    void mergeElements(
+        SgVectorArray<Vector3f>& elements, SgVectorArray<Vector3f>& orgElements, int elementArrayOffset,
+        SgIndexArray& elementIndices, vector<int>& mergedIndexMap, int numMergedElements, int searchLength);
+    void mergeTo(MeshLoader& mainLoader);
+    void mergeConcurrentlyTo(MeshLoader& mainLoader);
+    
     SgMeshPtr completeMesh(bool doShrin);
 };
 
@@ -115,6 +138,8 @@ public:
     STLSceneLoaderImpl();
     SgNode* load(const string& filename);
     SgMeshPtr loadBinaryFormat(const string& filename, ifstream& ifs, size_t numTriangles);
+    void integrateMeshes(BinaryMeshLoader& mainLoader, vector<BinaryMeshLoader>& loaders);
+    void mergeMeshes(BinaryMeshLoader& mainLoader, vector<BinaryMeshLoader>& loaders);
     SgMeshPtr loadAsciiFormat(const string& filename);
 };
 
@@ -125,6 +150,8 @@ MeshLoader::MeshLoader(size_t numTriangles)
     : sharedMesh(new SgMesh),
       numTriangles(numTriangles)
 {
+    triangleOffset = 0;
+
     triangleVertices = &sharedMesh->triangleVertices();
     normalIndices = &sharedMesh->normalIndices();
     
@@ -136,6 +163,7 @@ MeshLoader::MeshLoader(size_t numTriangles)
 MeshLoader::MeshLoader(const MeshLoader& org)
     : sharedMesh(org.sharedMesh)
 {
+    triangleOffset = 0;
     numTriangles = 0;
     triangleVertices = nullptr;
     normalIndices = nullptr;
@@ -153,6 +181,7 @@ void MeshLoader::initializeArrays()
 
 void MeshLoader::initializeArrays(size_t triangleOffset, size_t numTriangles)
 {
+    this->triangleOffset = triangleOffset;
     this->numTriangles = numTriangles;
     
     vertices = new SgVertexArray;
@@ -172,13 +201,11 @@ void MeshLoader::initializeArrays(size_t triangleOffset, size_t numTriangles)
 template<typename AddIndexFunction>
 void MeshLoader::addNormal(const Vector3f& normal, AddIndexFunction addIndex)
 {
-    static const int SearchLength = 12;
-
     bool found = false;
     int index = normals->size() - 1;
 
     if(ENABLE_COMPACTION){
-        int minIndex = std::max(0, index - (SearchLength - 1));
+        int minIndex = std::max(0, index - (NormalSearchLength - 1));
         while(index >= minIndex){
             if(normal.isApprox((*normals)[index])){
                 found = true;
@@ -199,13 +226,11 @@ void MeshLoader::addNormal(const Vector3f& normal, AddIndexFunction addIndex)
 template<typename AddIndexFunction>
 void MeshLoader::addVertex(const Vector3f& vertex, AddIndexFunction addIndex)
 {
-    static const int SearchLength = 27;
-
     bool found = false;
     int index = vertices->size() - 1;
 
     if(ENABLE_COMPACTION){
-        int minIndex = std::max(0, index - (SearchLength - 1));
+        int minIndex = std::max(0, index - (VertexSearchLength - 1));
         while(index >= minIndex){
             if(vertex.isApprox((*vertices)[index])){
                 found = true;
@@ -240,7 +265,6 @@ void MeshLoader::initializeIntegration(size_t totalNumVertices, size_t totalNumN
        
     vertexArrayOffset = 0;
     normalArrayOffset = 0;
-    indexArrayOffset = 0;
 }
 
 
@@ -252,9 +276,9 @@ void MeshLoader::integrate(MeshLoader& loader)
     std::copy(loader.normals->begin(), loader.normals->end(),
               normals->begin() + normalArrayOffset);
 
-    const size_t indexArrayEnd = indexArrayOffset + loader.numTriangles * 3;
-    
     if(vertexArrayOffset > 0 || normalArrayOffset > 0){
+        auto indexArrayOffset = loader.triangleOffset * 3;
+        const size_t indexArrayEnd = indexArrayOffset + loader.numTriangles * 3;
         for(size_t i = indexArrayOffset; i < indexArrayEnd; ++i){
             (*triangleVertices)[i] += vertexArrayOffset;
             (*normalIndices)[i] += normalArrayOffset;
@@ -263,11 +287,132 @@ void MeshLoader::integrate(MeshLoader& loader)
             
     vertexArrayOffset += loader.vertices->size();
     normalArrayOffset += loader.normals->size();
-    indexArrayOffset = indexArrayEnd;
 
     bbox.expandBy(loader.bbox);
 }
 
+
+int MeshLoader::findElement
+(const Vector3f& element, const SgVectorArray<Vector3f>& prevElements, int searchLength)
+{
+    bool found = false;
+    int index = prevElements.size() - 1;
+    int minIndex = std::max(0, index - (searchLength - 1));
+    while(index >= minIndex){
+        if(element.isApprox(prevElements[index])){
+            found = true;
+            break;
+        }
+        --index;
+    }
+    return found ? (index - prevElements.size()) : 0;
+}
+
+
+void MeshLoader::findRedundantElementsBetweenLoaders
+(SgVectorArray<Vector3f>& elements, SgVectorArray<Vector3f>& prevElements,
+ vector<int>& mergedElementIndexMap, int& numMergedElements, int searchLength)
+{
+    mergedElementIndexMap.clear();
+    int index = 0;
+    while(searchLength > 0){
+        const auto& element = elements[index];
+        int foundIndex = findElement(element, prevElements, searchLength);
+        if(foundIndex < 0){
+            mergedElementIndexMap.push_back(foundIndex);
+            ++numMergedElements;
+        } else {
+            mergedElementIndexMap.push_back(index - numMergedElements);
+            --searchLength;
+        }
+        ++index;
+    }
+}
+
+
+void MeshLoader::initializeMerge(MeshLoader* prevLoader)
+{
+    vertexArrayOffset = 0;
+    numActualVertices = vertices->size();
+    numMergedVertices = 0;
+ 
+    normalArrayOffset = 0;
+    numActualNormals = normals->size();
+    numMergedNormals = 0;
+
+    if(prevLoader){
+        if(ENABLE_COMPACTION){
+            findRedundantElementsBetweenLoaders(
+                *vertices, *prevLoader->vertices,
+                mergedVertexIndexMap, numMergedVertices, VertexSearchLength);
+
+            numActualVertices -= numMergedVertices;
+
+            findRedundantElementsBetweenLoaders(
+                *normals, *prevLoader->normals,
+                mergedNormalIndexMap, numMergedNormals, NormalSearchLength);
+
+            numActualNormals -= numMergedNormals;
+        }
+        vertexArrayOffset = prevLoader->vertexArrayOffset + prevLoader->numActualVertices;
+        normalArrayOffset = prevLoader->normalArrayOffset + prevLoader->numActualNormals;
+    }
+}
+
+
+void MeshLoader::mergeElements
+(SgVectorArray<Vector3f>& elements, SgVectorArray<Vector3f>& orgElements, int elementArrayOffset,
+ SgIndexArray& elementIndices, vector<int>& mergedIndexMap, int numMergedElements, int searchLength)
+{
+    auto newElementIter = elements.begin() + elementArrayOffset;
+
+    for(size_t i=0; i < mergedIndexMap.size(); ++i){
+        auto mappedIndex = mergedIndexMap[i];
+        if(mappedIndex >= 0){
+            *newElementIter++ = orgElements[i];
+        }
+        mergedIndexMap[i] += elementArrayOffset; // Conver to the global index
+    }
+        
+    std::copy(orgElements.begin() + mergedIndexMap.size(), orgElements.end(), newElementIter);
+
+    const int indexArrayOffset = triangleOffset * 3;
+    const int end = indexArrayOffset + numTriangles * 3;
+    const int unmappedElementIndexOffset = elementArrayOffset - numMergedElements;
+
+    int pos = indexArrayOffset;
+    while(pos < end){
+        auto& index = elementIndices[pos++];
+        if(index < mergedIndexMap.size()){
+            index = mergedIndexMap[index];
+        } else if(index > searchLength){
+            break;
+        } else {
+            index += unmappedElementIndexOffset;
+        }
+    }
+    while(pos < end){
+        elementIndices[pos++] += unmappedElementIndexOffset;
+    }
+}
+
+
+void MeshLoader::mergeTo(MeshLoader& mainLoader)
+{
+    mergeElements(*mainLoader.vertices, *vertices, vertexArrayOffset,
+                  *triangleVertices, mergedVertexIndexMap, numMergedVertices, VertexSearchLength);
+
+    mergeElements(*mainLoader.normals, *normals, normalArrayOffset,
+                  *normalIndices, mergedNormalIndexMap, numMergedNormals, NormalSearchLength);
+}
+    
+
+
+void MeshLoader::mergeConcurrentlyTo(MeshLoader& mainLoader)
+{
+    loaderThread = thread([this, &mainLoader](){ mergeTo(mainLoader); });
+}
+ 
 
 SgMeshPtr MeshLoader::completeMesh(bool doShrink)
 {
@@ -396,10 +541,26 @@ SgMeshPtr STLSceneLoaderImpl::loadBinaryFormat(const string& filename, ifstream&
     }
     loaders[index].load(ifs, triangleOffset, numTriangles - triangleOffset);
 
+    for(auto& loader : loaders){
+        loader.join();
+    }    
+
+    if(!DO_MERGE){
+        integrateMeshes(mainLoader, loaders);
+    } else {
+        mergeMeshes(mainLoader, loaders);
+    }
+
+    return mainLoader.completeMesh(false);
+}
+
+
+void STLSceneLoaderImpl::integrateMeshes
+(BinaryMeshLoader& mainLoader, vector<BinaryMeshLoader>& loaders)
+{
     size_t totalNumVertices = 0;
     size_t totalNumNormals = 0;
     for(auto& loader : loaders){
-        loader.join();
         totalNumVertices += loader.vertices->size();
         totalNumNormals += loader.normals->size();
     }
@@ -409,8 +570,34 @@ SgMeshPtr STLSceneLoaderImpl::loadBinaryFormat(const string& filename, ifstream&
     for(auto& loader : loaders){
         mainLoader.integrate(loader);
     }
+}
 
-    return mainLoader.completeMesh(false);
+
+void STLSceneLoaderImpl::mergeMeshes
+(BinaryMeshLoader& mainLoader, vector<BinaryMeshLoader>& loaders)
+{
+    size_t totalNumVertices = 0;
+    size_t totalNumNormals = 0;
+    BinaryMeshLoader* prevLoader = nullptr;
+    for(auto& loader : loaders){
+        loader.initializeMerge(prevLoader);
+        totalNumVertices += loader.numActualVertices;
+        totalNumNormals += loader.numActualNormals;
+        mainLoader.bbox.expandBy(loader.bbox);
+        prevLoader = &loader;
+    }
+
+    mainLoader.vertices = new SgVertexArray(totalNumVertices);
+    mainLoader.normals = new SgNormalArray(totalNumNormals);
+
+    for(int i=0; i < loaders.size() - 1; ++i){
+        loaders[i].mergeConcurrentlyTo(mainLoader);
+    }
+    loaders.back().mergeTo(mainLoader);
+            
+    for(auto& loader : loaders){
+        loader.join();
+    }
 }
 
 
