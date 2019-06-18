@@ -7,7 +7,6 @@
 #include <fmt/format.h>
 #include <fstream>
 #include <thread>
-#include <iostream>
 #include "gettext.h"
 
 using namespace std;
@@ -17,7 +16,6 @@ using namespace cnoid;
 
 namespace {
 
-const bool ENABLE_DEBUG = false;
 const bool ENABLE_COMPACTION = true;
 const int VertexSearchLength = 27;
 const int NormalSearchLength = 15;
@@ -451,30 +449,30 @@ SgNode* STLSceneLoaderImpl::load(const string& filename)
     }
 
     if(!mesh){
-        os() << "Empty vertices." << endl;
+        return nullptr;
     }
 
     auto shape = new SgShape;
     shape->setMesh(mesh);
-    
     return shape; 
 }
 
 
 SgMeshPtr STLSceneLoaderImpl::loadBinaryFormat(const string& filename, ifstream& ifs, size_t numTriangles)
 {
+    if(numTriangles == 0){
+        os() << format(_("No triangles in \"{1}\"."), filename) << endl;
+        return nullptr;
+    }
+    if(numTriangles > (1 << 31) / 3){
+        os() << format(_("Unable to load \"{1}\". Its file size is too large."), filename) << endl;
+        return nullptr;
+    }
+    
     BinaryMeshLoader mainLoader(numTriangles);
 
     auto maxNumThreads = std::max((unsigned)1, std::min(thread::hardware_concurrency(), (unsigned)6));
-    if(ENABLE_DEBUG){
-        cout << "maxNumThreads: " << maxNumThreads << endl;
-    }
-    
     size_t numThreads = std::min(size_t(maxNumThreads), std::max(size_t(1), numTriangles / NumTrianglesPerThread));
-
-    if(ENABLE_DEBUG){
-        cout << "numThreads: " << numThreads << endl;
-    }
 
     if(numThreads == 1){
         mainLoader.load(ifs, 0, numTriangles);
