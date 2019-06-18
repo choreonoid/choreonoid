@@ -1,4 +1,3 @@
-
 #include "STLSceneLoader.h"
 #include "SceneDrawables.h"
 #include "SceneLoader.h"
@@ -22,7 +21,6 @@ const bool ENABLE_DEBUG = false;
 const bool ENABLE_COMPACTION = true;
 const int VertexSearchLength = 27;
 const int NormalSearchLength = 15;
-const bool DO_MERGE = true;
 
 typedef ifstream::pos_type pos_type;
 
@@ -66,7 +64,7 @@ public:
     BoundingBoxf bbox;
     thread loaderThread;
 
-    // For merge
+    // For the mesh integration
     int vertexArrayOffset;
     int numActualVertices;
     int numMergedVertices;
@@ -86,21 +84,17 @@ public:
     template<typename AddIndexFunction>
     void addVertex(const Vector3f& vertex, AddIndexFunction addIndex);
     void join();
-
-    void initializeIntegration(size_t totalNumVertices, size_t totalNumNormals);
-    void integrate(MeshLoader& loader);
-
     int findElement(
         const Vector3f& element, const SgVectorArray<Vector3f>& prevElements, int searchLength);
     void findRedundantElementsBetweenLoaders(
         SgVectorArray<Vector3f>& elements, SgVectorArray<Vector3f>& prevElements,
         vector<int>& mergedElementIndexMap, int& numMergedElements, int searchLength);
-    void initializeMerge(MeshLoader* prevLoader);
-    void mergeElements(
+    void initializeIntegration(MeshLoader* prevLoader);
+    void integrateElements(
         SgVectorArray<Vector3f>& elements, SgVectorArray<Vector3f>& orgElements, int elementArrayOffset,
         SgIndexArray& elementIndices, vector<int>& mergedIndexMap, int numMergedElements, int searchLength);
-    void mergeTo(MeshLoader& mainLoader);
-    void mergeConcurrentlyTo(MeshLoader& mainLoader);
+    void integrateTo(MeshLoader& mainLoader);
+    void integrateConcurrentlyTo(MeshLoader& mainLoader);
     
     SgMeshPtr completeMesh(bool doShrin);
 };
@@ -138,8 +132,6 @@ public:
     STLSceneLoaderImpl();
     SgNode* load(const string& filename);
     SgMeshPtr loadBinaryFormat(const string& filename, ifstream& ifs, size_t numTriangles);
-    void integrateMeshes(BinaryMeshLoader& mainLoader, vector<BinaryMeshLoader>& loaders);
-    void mergeMeshes(BinaryMeshLoader& mainLoader, vector<BinaryMeshLoader>& loaders);
     SgMeshPtr loadAsciiFormat(const string& filename);
 };
 
@@ -258,40 +250,6 @@ void MeshLoader::join()
 }
 
 
-void MeshLoader::initializeIntegration(size_t totalNumVertices, size_t totalNumNormals)
-{
-    vertices = new SgVertexArray(totalNumVertices);
-    normals = new SgNormalArray(totalNumNormals);
-       
-    vertexArrayOffset = 0;
-    normalArrayOffset = 0;
-}
-
-
-void MeshLoader::integrate(MeshLoader& loader)
-{
-    std::copy(loader.vertices->begin(), loader.vertices->end(),
-              vertices->begin() + vertexArrayOffset);
-
-    std::copy(loader.normals->begin(), loader.normals->end(),
-              normals->begin() + normalArrayOffset);
-
-    if(vertexArrayOffset > 0 || normalArrayOffset > 0){
-        auto indexArrayOffset = loader.triangleOffset * 3;
-        const size_t indexArrayEnd = indexArrayOffset + loader.numTriangles * 3;
-        for(size_t i = indexArrayOffset; i < indexArrayEnd; ++i){
-            (*triangleVertices)[i] += vertexArrayOffset;
-            (*normalIndices)[i] += normalArrayOffset;
-        }
-    }
-            
-    vertexArrayOffset += loader.vertices->size();
-    normalArrayOffset += loader.normals->size();
-
-    bbox.expandBy(loader.bbox);
-}
-
-
 int MeshLoader::findElement
 (const Vector3f& element, const SgVectorArray<Vector3f>& prevElements, int searchLength)
 {
@@ -330,7 +288,7 @@ void MeshLoader::findRedundantElementsBetweenLoaders
 }
 
 
-void MeshLoader::initializeMerge(MeshLoader* prevLoader)
+void MeshLoader::initializeIntegration(MeshLoader* prevLoader)
 {
     vertexArrayOffset = 0;
     numActualVertices = vertices->size();
@@ -360,7 +318,7 @@ void MeshLoader::initializeMerge(MeshLoader* prevLoader)
 }
 
 
-void MeshLoader::mergeElements
+void MeshLoader::integrateElements
 (SgVectorArray<Vector3f>& elements, SgVectorArray<Vector3f>& orgElements, int elementArrayOffset,
  SgIndexArray& elementIndices, vector<int>& mergedIndexMap, int numMergedElements, int searchLength)
 {
@@ -397,20 +355,21 @@ void MeshLoader::mergeElements
 }
 
 
-void MeshLoader::mergeTo(MeshLoader& mainLoader)
+void MeshLoader::integrateTo(MeshLoader& mainLoader)
 {
-    mergeElements(*mainLoader.vertices, *vertices, vertexArrayOffset,
-                  *triangleVertices, mergedVertexIndexMap, numMergedVertices, VertexSearchLength);
+    integrateElements(
+        *mainLoader.vertices, *vertices, vertexArrayOffset,
+        *triangleVertices, mergedVertexIndexMap, numMergedVertices, VertexSearchLength);
 
-    mergeElements(*mainLoader.normals, *normals, normalArrayOffset,
-                  *normalIndices, mergedNormalIndexMap, numMergedNormals, NormalSearchLength);
+    integrateElements(
+        *mainLoader.normals, *normals, normalArrayOffset,
+        *normalIndices, mergedNormalIndexMap, numMergedNormals, NormalSearchLength);
 }
-    
 
 
-void MeshLoader::mergeConcurrentlyTo(MeshLoader& mainLoader)
+void MeshLoader::integrateConcurrentlyTo(MeshLoader& mainLoader)
 {
-    loaderThread = thread([this, &mainLoader](){ mergeTo(mainLoader); });
+    loaderThread = thread([this, &mainLoader](){ integrateTo(mainLoader); });
 }
  
 
@@ -545,42 +504,11 @@ SgMeshPtr STLSceneLoaderImpl::loadBinaryFormat(const string& filename, ifstream&
         loader.join();
     }    
 
-    if(!DO_MERGE){
-        integrateMeshes(mainLoader, loaders);
-    } else {
-        mergeMeshes(mainLoader, loaders);
-    }
-
-    return mainLoader.completeMesh(false);
-}
-
-
-void STLSceneLoaderImpl::integrateMeshes
-(BinaryMeshLoader& mainLoader, vector<BinaryMeshLoader>& loaders)
-{
-    size_t totalNumVertices = 0;
-    size_t totalNumNormals = 0;
-    for(auto& loader : loaders){
-        totalNumVertices += loader.vertices->size();
-        totalNumNormals += loader.normals->size();
-    }
-
-    mainLoader.initializeIntegration(totalNumVertices, totalNumNormals);
-
-    for(auto& loader : loaders){
-        mainLoader.integrate(loader);
-    }
-}
-
-
-void STLSceneLoaderImpl::mergeMeshes
-(BinaryMeshLoader& mainLoader, vector<BinaryMeshLoader>& loaders)
-{
     size_t totalNumVertices = 0;
     size_t totalNumNormals = 0;
     BinaryMeshLoader* prevLoader = nullptr;
     for(auto& loader : loaders){
-        loader.initializeMerge(prevLoader);
+        loader.initializeIntegration(prevLoader);
         totalNumVertices += loader.numActualVertices;
         totalNumNormals += loader.numActualNormals;
         mainLoader.bbox.expandBy(loader.bbox);
@@ -591,13 +519,15 @@ void STLSceneLoaderImpl::mergeMeshes
     mainLoader.normals = new SgNormalArray(totalNumNormals);
 
     for(int i=0; i < loaders.size() - 1; ++i){
-        loaders[i].mergeConcurrentlyTo(mainLoader);
+        loaders[i].integrateConcurrentlyTo(mainLoader);
     }
-    loaders.back().mergeTo(mainLoader);
+    loaders.back().integrateTo(mainLoader);
             
     for(auto& loader : loaders){
         loader.join();
     }
+
+    return mainLoader.completeMesh(false);
 }
 
 
