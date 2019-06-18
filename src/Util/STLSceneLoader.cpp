@@ -21,6 +21,7 @@ const bool ENABLE_DEBUG = false;
 const bool ENABLE_COMPACTION = true;
 const int VertexSearchLength = 27;
 const int NormalSearchLength = 15;
+const size_t NumTrianglesPerThread = 100000;
 
 typedef ifstream::pos_type pos_type;
 
@@ -463,8 +464,6 @@ SgNode* STLSceneLoaderImpl::load(const string& filename)
 SgMeshPtr STLSceneLoaderImpl::loadBinaryFormat(const string& filename, ifstream& ifs, size_t numTriangles)
 {
     BinaryMeshLoader mainLoader(numTriangles);
-
-    const size_t NumTrianglesPerThread = 250000;
 
     auto maxNumThreads = std::max((unsigned)1, std::min(thread::hardware_concurrency(), (unsigned)6));
     if(ENABLE_DEBUG){
