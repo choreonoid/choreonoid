@@ -177,10 +177,10 @@ void MeshLoader::initializeArrays(size_t triangleOffset, size_t numTriangles)
     this->numTriangles = numTriangles;
     
     vertices = new SgVertexArray;
-    vertices->reserve(numTriangles * 3 / 3);
+    vertices->reserve(ENABLE_COMPACTION ? (numTriangles * 3 * 0.4) : (numTriangles * 3));
 
     normals = new SgNormalArray;
-    normals->reserve(numTriangles / 5);
+    normals->reserve(ENABLE_COMPACTION ? (numTriangles * 0.25) : numTriangles);
     
     triangleVertices = &sharedMesh->triangleVertices();
     triangleVerticesIndex = triangleOffset * 3;
@@ -337,22 +337,16 @@ void MeshLoader::integrateElements
     const int indexArrayOffset = triangleOffset * 3;
     const int end = indexArrayOffset + numTriangles * 3;
     const int unmappedElementIndexOffset = elementArrayOffset - numMergedElements;
-
     int pos = indexArrayOffset;
     while(pos < end){
         auto& index = elementIndices[pos++];
         if(index < mergedIndexMap.size()){
             index = mergedIndexMap[index];
-        } else if(index > searchLength){
-            break;
         } else {
             index += unmappedElementIndexOffset;
         }
     }
-    while(pos < end){
-        elementIndices[pos++] += unmappedElementIndexOffset;
-    }
-}
+ }
 
 
 void MeshLoader::integrateTo(MeshLoader& mainLoader)
