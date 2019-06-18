@@ -189,6 +189,7 @@ public:
     void resize(size_type s, const T& v) { values.resize(s, v); }
     bool empty() const { return values.empty(); }
     void reserve(size_type s) { values.reserve(s); }
+    size_type capacity() const { return values.capacity(); }
     T& operator[](size_type i) { return values[i]; }
     const T& operator[](size_type i) const { return values[i]; }
     T& at(size_type i) { return values[i]; }
