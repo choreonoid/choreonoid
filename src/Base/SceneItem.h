@@ -27,6 +27,9 @@ public:
     SgPosTransform* topNode() { return topNode_; }
     const SgPosTransform* topNode() const { return topNode_; }
 
+    void setTranslation(const Vector3f& translation);
+    void setRotation(const AngleAxisf& rotation);
+
     void setLightweightRenderingEnabled(bool on);
     bool isLightweightRenderingEnabled() const { return isLightweightRenderingEnabled_; }
 

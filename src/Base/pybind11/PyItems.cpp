@@ -240,6 +240,10 @@ void exportPyItems(py::module m)
     py::class_<SceneItem, SceneItemPtr, Item>(m, "SceneItem", py::multiple_inheritance())
         .def(py::init<>())
         .def_property_readonly("topNode", (SgPosTransform*(SceneItem::*)()) &SceneItem::topNode)
+        .def("setTranslation", &SceneItem::setTranslation)
+        .def("setRotation", &SceneItem::setRotation)
+        .def("setLightweightRenderingEnabled", &SceneItem::setLightweightRenderingEnabled)
+        .def("isLightweightRenderingEnabled", &SceneItem::isLightweightRenderingEnabled)
 
         // deprecated
         .def("getTopNode", (SgPosTransform*(SceneItem::*)()) &SceneItem::topNode)

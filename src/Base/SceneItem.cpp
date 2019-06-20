@@ -95,6 +95,12 @@ SceneItem::~SceneItem()
 }
 
 
+Item* SceneItem::doDuplicate() const
+{
+    return new SceneItem(*this);
+}
+
+
 void SceneItem::setName(const std::string& name)
 {
     topNode_->setName(name);
@@ -108,10 +114,19 @@ SgNode* SceneItem::getScene()
 }
 
 
-Item* SceneItem::doDuplicate() const
+void SceneItem::setTranslation(const Vector3f& translation)
 {
-    return new SceneItem(*this);
+    topNode_->setTranslation(translation);
+    topNode_->notifyUpdate();
 }
+
+
+void SceneItem::setRotation(const AngleAxisf& rotation)
+{
+    topNode_->setRotation(rotation);
+    topNode_->notifyUpdate();
+}
+
 
 void SceneItem::setLightweightRenderingEnabled(bool on)
 {
