@@ -2,11 +2,14 @@
 #include "SceneDrawables.h"
 #include "SceneLoader.h"
 #include "NullOut.h"
+#include "FileUtil.h"
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
 #include <fmt/format.h>
 #include <fstream>
 #include <thread>
+#include <stdexcept>
+#include <cstdlib>
 #include "gettext.h"
 
 using namespace std;
@@ -56,10 +59,8 @@ public:
     size_t numTriangles;
     SgVertexArrayPtr vertices;
     SgIndexArray* triangleVertices;
-    size_t triangleVerticesIndex;
     SgNormalArrayPtr normals;
     SgIndexArray* normalIndices;
-    size_t normalIndicesIndex;
     BoundingBoxf bbox;
     thread loaderThread;
 
@@ -77,7 +78,6 @@ public:
     MeshLoader(size_t numTriangles);
     MeshLoader(const MeshLoader& org);
     void initializeArrays();
-    void initializeArrays(size_t triangleOffset, size_t numTriangles);
     template<typename AddIndexFunction>
     void addNormal(const Vector3f& normal, AddIndexFunction addIndex);
     template<typename AddIndexFunction>
@@ -101,8 +101,12 @@ public:
 class BinaryMeshLoader : public MeshLoader
 {
 public:
+    size_t triangleVerticesIndex;
+    size_t normalIndicesIndex;
+    
     BinaryMeshLoader(size_t numTriangles) : MeshLoader(numTriangles) { }
     BinaryMeshLoader(const BinaryMeshLoader& org) : MeshLoader(org) { }
+    void initializeArrays(size_t triangleOffset, size_t numTriangles);
     void addNormal(const Vector3f& normal);
     void addVertex(const Vector3f& vertex);
     void load(const string& filename, size_t triangleOffset, size_t numTriangles);
@@ -165,29 +169,8 @@ void MeshLoader::initializeArrays()
 {
     vertices = new SgVertexArray;
     normals = new SgNormalArray;
-    triangleVertices = &sharedMesh->triangleVertices();
-    normalIndices = &sharedMesh->normalIndices();
 }
     
-
-void MeshLoader::initializeArrays(size_t triangleOffset, size_t numTriangles)
-{
-    this->triangleOffset = triangleOffset;
-    this->numTriangles = numTriangles;
-    
-    vertices = new SgVertexArray;
-    vertices->reserve(ENABLE_COMPACTION ? (numTriangles * 3 * 0.4) : (numTriangles * 3));
-
-    normals = new SgNormalArray;
-    normals->reserve(ENABLE_COMPACTION ? (numTriangles * 0.25) : numTriangles);
-    
-    triangleVertices = &sharedMesh->triangleVertices();
-    triangleVerticesIndex = triangleOffset * 3;
-
-    normalIndices = &sharedMesh->normalIndices();
-    normalIndicesIndex = triangleOffset * 3;
-}
-
 
 template<typename AddIndexFunction>
 void MeshLoader::addNormal(const Vector3f& normal, AddIndexFunction addIndex)
@@ -522,6 +505,23 @@ SgMeshPtr STLSceneLoaderImpl::loadBinaryFormat(const string& filename, ifstream&
 }
 
 
+void BinaryMeshLoader::initializeArrays(size_t triangleOffset, size_t numTriangles)
+{
+    MeshLoader::initializeArrays();
+    
+    this->triangleOffset = triangleOffset;
+    this->numTriangles = numTriangles;
+    
+    vertices->reserve(ENABLE_COMPACTION ? (numTriangles * 3 * 0.4) : (numTriangles * 3));
+    triangleVertices = &sharedMesh->triangleVertices();
+    triangleVerticesIndex = triangleOffset * 3;
+
+    normals->reserve(ENABLE_COMPACTION ? (numTriangles * 0.25) : numTriangles);
+    normalIndices = &sharedMesh->normalIndices();
+    normalIndicesIndex = triangleOffset * 3;
+}
+
+
 void BinaryMeshLoader::addNormal(const Vector3f& normal)
 {
     MeshLoader::addNormal(
@@ -585,7 +585,15 @@ void BinaryMeshLoader::load(ifstream& ifs, size_t triangleOffset, size_t numTria
 SgMeshPtr STLSceneLoaderImpl::loadAsciiFormat(const string& filename)
 {
     AsciiMeshLoader loader;
-    return loader.load(filename);
+
+    SgMeshPtr mesh;
+    try {
+        mesh = loader.load(filename);
+    }
+    catch(const std::exception& ex){
+        os() << ex.what() << endl;
+    }
+    return mesh;
 }
 
 
@@ -611,20 +619,198 @@ void AsciiMeshLoader::addVertex(const Vector3f& vertex)
 }
 
 
+class Scanner
+{
+public:
+    ifstream ifs;
+    static const size_t bufsize = 256;
+    char buf[bufsize];
+    char* pos;
+    int lineNumber;
+    string filename;
+    
+    Scanner(const string& filename);
+    bool getline();
+    void skipSpaces();
+    bool checkString(const char* str);
+    void checkStringEx(const char* str);
+    bool readString(string& out_string);
+    void readFloatEx(float& out_value);
+    void checkLFEx();
+    bool checkEOF();
+    void throwEx(const string& error);
+};
+
+
+Scanner::Scanner(const string& filename)
+    : ifs(filename, std::ios::in),
+      filename(filename)
+{
+    lineNumber = 0;
+    buf[0] = '\0';
+    pos = buf;
+    if(!getline()){
+        throwEx("No data");
+    }
+}
+
+
+bool Scanner::getline()
+{
+    pos = buf;
+    if(ifs.getline(buf, bufsize)){
+        ++lineNumber;
+        return true;
+    }
+    if(!ifs.eof()){
+        if(ifs.gcount() > 0){
+            throwEx("Too long line");
+        } else {
+            throwEx("I/O error");
+        }
+    }
+    buf[0] = '\0';
+    return !ifs.eof();
+}
+        
+
+void Scanner::skipSpaces()
+{
+    while(*pos == ' ' && *pos != '\0'){
+        ++pos;
+    }
+}
+
+
+bool Scanner::checkString(const char* str)
+{
+    skipSpaces();
+
+    char* pos0 = pos;
+    while(*str != '\0'){
+        if(*str++ != *pos++){
+            pos = pos0;
+            return false;
+        }
+    }
+    return true;
+}
+
+
+void Scanner::checkStringEx(const char* str)
+{
+    const char* org = str;
+    if(!checkString(str)){
+        throwEx(format("\"{}\" is expected", org));
+    }
+}
+
+
+bool Scanner::readString(string& out_string)
+{
+    skipSpaces();
+    
+    char* pos0 = pos;
+    while(*pos != '\r' && *pos != '\0'){
+        ++pos;
+    }
+    out_string.assign(pos0, pos - pos0);
+
+    return !out_string.empty();
+}    
+    
+
+void Scanner::readFloatEx(float& out_value)
+{
+    skipSpaces();
+    
+    char* tail;
+    out_value = strtof(pos, &tail);
+    if(tail != pos){
+        pos = tail;
+    } else {
+        throwEx("Invalid value");
+    }
+}
+
+
+void Scanner::checkLFEx()
+{
+    skipSpaces();
+
+    if(*pos == '\r' || *pos == '\0'){
+        getline();
+    } else {
+        throwEx("Invalid value");
+    }
+}
+
+
+bool Scanner::checkEOF()
+{
+    if(ifs.eof()){
+        return true;
+    }
+    do{
+        skipSpaces();
+    } while((*pos == '\r' || *pos == '\0') && getline());
+
+    return ifs.eof();
+}
+
+
+void Scanner::throwEx(const string& error)
+{
+    boost::filesystem::path path(filename);
+    throw std::runtime_error(
+        format(_("{0} at line {1} of \"{2}\"."),
+               error, lineNumber, path.filename().string()));
+}
+
+
 SgMeshPtr AsciiMeshLoader::load(const string& filename)
 {
     initializeArrays();
-    
-    ifstream ifs(filename.c_str(), std::ios::in);
-    string line;
-    while(!ifs.eof() && getline(ifs, line)){
-        trim(line);
-        if(boost::istarts_with(line, "vertex")){
-            addVertex(readVector3(line.substr(6)));
-        } else if(boost::istarts_with(line, "facet normal")){
-            addNormal(readVector3(line.substr(12)));
-        }
+
+    Scanner scanner(filename);
+
+    scanner.checkStringEx("solid");
+    string name;
+    if(scanner.readString(name)){
+        sharedMesh->setName(name);
     }
+    scanner.checkLFEx();
+
+    do {
+        scanner.checkStringEx("facet normal");
+        Vector3f v;
+        scanner.readFloatEx(v.x());
+        scanner.readFloatEx(v.y());
+        scanner.readFloatEx(v.z());
+        addNormal(v);
+        scanner.checkLFEx();
+
+        scanner.checkStringEx("outer loop");
+        scanner.checkLFEx();
+        for(int i=0; i < 3; ++i){
+            scanner.checkStringEx("vertex");
+            scanner.readFloatEx(v.x());
+            scanner.readFloatEx(v.y());
+            scanner.readFloatEx(v.z());
+            addVertex(v);
+            scanner.checkLFEx();
+        }
+        scanner.checkStringEx("endloop");
+        scanner.checkLFEx();
+
+        scanner.checkStringEx("endfacet");
+        scanner.checkLFEx();
+
+        if(scanner.checkEOF()){
+            scanner.throwEx("\"endsolid\" is not found");
+        }
+
+    } while(!scanner.checkString("endsolid"));
 
     return completeMesh(true);
 }
