@@ -1,31 +1,33 @@
+/*!
+  @author Shin'ichiro Nakaoka
+*/
+
 #include "STLSceneLoader.h"
 #include "SceneDrawables.h"
 #include "SceneLoader.h"
 #include "NullOut.h"
 #include "FileUtil.h"
-#include <boost/algorithm/string.hpp>
-#include <boost/lexical_cast.hpp>
 #include <fmt/format.h>
 #include <fstream>
 #include <thread>
 #include <stdexcept>
 #include <cstdlib>
+//#include <iostream>
 #include "gettext.h"
 
 using namespace std;
-using namespace boost::algorithm;
-using fmt::format;
 using namespace cnoid;
+using fmt::format;
 
 namespace {
+
+typedef ifstream::pos_type pos_type;
 
 const bool ENABLE_COMPACTION = true;
 const int VertexSearchLength = 27;
 const int NormalSearchLength = 15;
 const size_t NumTrianglesPerThread = 100000;
-
-typedef ifstream::pos_type pos_type;
-
+const pos_type AsciiSizePerThread = 1024 * 1024;
 const size_t STL_BINARY_HEADER_SIZE = 84;
 
 struct Registration {
@@ -36,20 +38,184 @@ struct Registration {
     }
 } registration;
 
-Vector3f readVector3(string text)
+
+class Scanner
 {
-    trim(text);
-    Vector3f value;
-    int i = 0;
-    split_iterator<string::iterator> iter = make_split_iterator(text, token_finder(is_space(), token_compress_on));
-    while(iter != split_iterator<string::iterator>()){
-        value[i++] = boost::lexical_cast<float>(*iter++);
-        if(i == 3){
-            break;
+public:
+    ifstream ifs;
+    static const size_t bufsize = 256;
+    char buf[bufsize];
+    char* pos;
+    size_t lineNumber;
+    string filename;
+    
+    void open(const string& filename)
+    {
+        ifs.open(filename, std::ios::in);
+        this->filename = filename;
+        clear();
+    }
+
+    void clear()
+    {
+        lineNumber = 0;
+        buf[0] = '\0';
+        pos = buf;
+    }        
+
+    bool getLine()
+    {
+        pos = buf;
+        if(ifs.getline(buf, bufsize)){
+            ++lineNumber;
+            return true;
+        }
+        if(!ifs.eof()){
+            if(ifs.gcount() > 0){
+                throwEx("Too long line");
+            } else {
+                throwEx("I/O error");
+            }
+        }
+        buf[0] = '\0';
+        return !ifs.eof();
+    }
+        
+    void skipSpaces()
+    {
+        while(*pos == ' ' && *pos != '\0'){
+            ++pos;
         }
     }
-    return value;
-}
+
+    bool checkLF()
+    {
+        skipSpaces();
+        if(*pos == '\r' || *pos == '\0'){
+            getLine();
+            return true;
+        }
+        return false;
+    }
+
+    void checkLFEx()
+    {
+        if(!checkLF()){
+            throwEx("Invalid value");
+        }
+    }
+
+    bool checkEOF()
+    {
+        while(true){
+            skipSpaces();
+            if(*pos == '\r' || *pos == '\0'){
+                if(!getLine()){
+                    return true;
+                }
+            } else {
+                break;
+            }
+        }
+        return false;
+    }
+
+    bool checkString(const char* str)
+    {
+        skipSpaces();
+        char* pos0 = pos;
+        while(*str != '\0'){
+            if(*str++ != *pos++){
+                pos = pos0;
+                return false;
+            }
+        }
+        return true;
+    }
+
+    void checkStringEx(const char* str)
+    {
+        const char* org = str;
+        if(!checkString(str)){
+            throwEx(format("\"{}\" is expected", org));
+        }
+    }
+
+    bool seekToString(pos_type initialSeekPos, const char* str, size_t maxLength, pos_type& out_seekPos)
+    {
+        ifs.seekg(initialSeekPos);
+        getLine();
+        
+        pos_type currentLinePos = initialSeekPos;
+        pos_type nextLinePos = initialSeekPos;
+        const char* str0 = str;
+        char* found = nullptr;
+        while(true){
+            while(*pos != '\0'){
+                ++pos;
+            }
+            if(!getLine()){
+                break;
+            }
+            currentLinePos = nextLinePos;
+            nextLinePos = ifs.tellg();
+            if(currentLinePos - initialSeekPos > maxLength){
+                break;
+            }
+            skipSpaces();
+
+            if(*pos == *str){
+                ++pos;
+                ++str;
+                while(true){
+                    if(*str == '\0'){
+                        out_seekPos = currentLinePos;
+                        ifs.seekg(out_seekPos);
+                        clear();
+                        return true; // found
+                    }
+                    if(*pos++ != *str++){
+                        str = str0;
+                        break;
+                    }
+                }
+            }
+        }
+        out_seekPos = initialSeekPos;
+        return false;
+    }
+            
+    bool readString(string& out_string)
+    {
+        skipSpaces();
+        char* pos0 = pos;
+        while(*pos != '\r' && *pos != '\0'){
+            ++pos;
+        }
+        out_string.assign(pos0, pos - pos0);
+        return !out_string.empty();
+    }
+    
+    void readFloatEx(float& out_value)
+    {
+        skipSpaces();
+        char* tail;
+        out_value = strtof(pos, &tail);
+        if(tail != pos){
+            pos = tail;
+        } else {
+            throwEx("Invalid value");
+        }
+    }
+
+    void throwEx(const string& error)
+    {
+        boost::filesystem::path path(filename);
+        throw std::runtime_error(
+            format(_("{0} at line {1} of \"{2}\"."),
+                   error, lineNumber, path.filename().string()));
+    }
+};
 
 class MeshLoader
 {
@@ -75,9 +241,10 @@ public:
     int numMergedNormals;
     vector<int> mergedNormalIndexMap;
 
+    string errorMessage;
+
     MeshLoader(size_t numTriangles);
-    MeshLoader(const MeshLoader& org);
-    void initializeArrays();
+    MeshLoader(const MeshLoader& mainLoader);
     template<typename AddIndexFunction>
     void addNormal(const Vector3f& normal, AddIndexFunction addIndex);
     template<typename AddIndexFunction>
@@ -88,12 +255,13 @@ public:
     void findRedundantElementsBetweenLoaders(
         SgVectorArray<Vector3f>& elements, SgVectorArray<Vector3f>& prevElements,
         vector<int>& mergedElementIndexMap, int& numMergedElements, int searchLength);
-    void initializeIntegration(MeshLoader* prevLoader);
+    virtual void initializeIntegration(MeshLoader* prevLoader);
     void integrateElements(
-        SgVectorArray<Vector3f>& elements, SgVectorArray<Vector3f>& orgElements, int elementArrayOffset,
-        SgIndexArray& elementIndices, vector<int>& mergedIndexMap, int numMergedElements, int searchLength);
-    void integrateTo(MeshLoader& mainLoader);
-    void integrateConcurrentlyTo(MeshLoader& mainLoader);
+        SgVectorArray<Vector3f>& elements, SgVectorArray<Vector3f>& subElements, int elementArrayOffset,
+        SgIndexArray& elementIndices, SgIndexArray* subElementIndices,
+        vector<int>& mergedIndexMap, int numMergedElements);
+    void integrate();
+    void integrateConcurrently();
     
     SgMeshPtr completeMesh(bool doShrin);
 };
@@ -105,22 +273,45 @@ public:
     size_t normalIndicesIndex;
     
     BinaryMeshLoader(size_t numTriangles) : MeshLoader(numTriangles) { }
-    BinaryMeshLoader(const BinaryMeshLoader& org) : MeshLoader(org) { }
+    BinaryMeshLoader(const BinaryMeshLoader& mainLoader) : MeshLoader(mainLoader) { }
     void initializeArrays(size_t triangleOffset, size_t numTriangles);
     void addNormal(const Vector3f& normal);
     void addVertex(const Vector3f& vertex);
-    void load(const string& filename, size_t triangleOffset, size_t numTriangles);
     void load(ifstream& ifs, size_t triangleOffset, size_t numTriangles);
+    void loadConcurrently(const string& filename, size_t triangleOffset, size_t numTriangles);
 };
 
 class AsciiMeshLoader : public MeshLoader
 {
 public:
-    AsciiMeshLoader() : MeshLoader(0) { }
+    Scanner scanner;
+    pos_type seekOffset;
+    pos_type seekEnd;
+    SgIndexArray subTriangleVertices;
+    SgIndexArray subNormalIndices;
+    string filename;
+    bool isSuccessfullyLoaded;
+    
+    AsciiMeshLoader(const string& filename, bool doOpen);
+    AsciiMeshLoader(const AsciiMeshLoader& mainLoader);
     void addNormal(const Vector3f& normal);
     void addVertex(const Vector3f& vertex);
-    SgMeshPtr load(const string& filename);
+    bool seekToTriangleBorderPosition(pos_type position);
+    bool load();
+    void loadConcurrently();
+    void loadTriangles();
+    virtual void initializeIntegration(MeshLoader* prevLoader) override;
 };
+
+template<class MeshLoaderType>
+vector<MeshLoader*> getMeshLoaderPointers(vector<MeshLoaderType>& loaders)
+{
+    vector<MeshLoader*> converted(loaders.size());
+    for(size_t i=0; i < loaders.size(); ++i){
+        converted[i] = &loaders[i];
+    }
+    return converted;
+}
 
 }
 
@@ -129,13 +320,19 @@ namespace cnoid {
 class STLSceneLoaderImpl
 {
 public:
+    size_t maxNumThreads;
     ostream* os_;
     ostream& os() { return *os_; }
 
     STLSceneLoaderImpl();
     SgNode* load(const string& filename);
     SgMeshPtr loadBinaryFormat(const string& filename, ifstream& ifs, size_t numTriangles);
-    SgMeshPtr loadAsciiFormat(const string& filename);
+    SgMeshPtr loadBinaryFormatConcurrently(
+        const string& filename, ifstream& ifs, size_t numTriangles, size_t numThreads, BinaryMeshLoader& mainLoader);
+    SgMeshPtr loadAsciiFormat(const string& filename, pos_type fileSize);
+    SgMeshPtr loadAsciiFormatConcurrently(
+        const string& filename, AsciiMeshLoader& mainLoader, pos_type fileSize, size_t numThreads);
+    SgMeshPtr integrateSubLoaderMeshes(MeshLoader& mainLoader, vector<MeshLoader*> loaders);
 };
 
 }
@@ -147,6 +344,9 @@ MeshLoader::MeshLoader(size_t numTriangles)
 {
     triangleOffset = 0;
 
+    vertices = sharedMesh->getOrCreateVertices();
+    normals = sharedMesh->getOrCreateNormals();
+
     triangleVertices = &sharedMesh->triangleVertices();
     normalIndices = &sharedMesh->normalIndices();
     
@@ -155,22 +355,17 @@ MeshLoader::MeshLoader(size_t numTriangles)
 }
 
 
-MeshLoader::MeshLoader(const MeshLoader& org)
-    : sharedMesh(org.sharedMesh)
+MeshLoader::MeshLoader(const MeshLoader& mainLoader)
+    : sharedMesh(mainLoader.sharedMesh)
 {
     triangleOffset = 0;
     numTriangles = 0;
+    vertices = new SgVertexArray;
     triangleVertices = nullptr;
+    normals = new SgNormalArray;
     normalIndices = nullptr;
 }
 
-
-void MeshLoader::initializeArrays()
-{
-    vertices = new SgVertexArray;
-    normals = new SgNormalArray;
-}
-    
 
 template<typename AddIndexFunction>
 void MeshLoader::addNormal(const Vector3f& normal, AddIndexFunction addIndex)
@@ -301,51 +496,74 @@ void MeshLoader::initializeIntegration(MeshLoader* prevLoader)
 
 
 void MeshLoader::integrateElements
-(SgVectorArray<Vector3f>& elements, SgVectorArray<Vector3f>& orgElements, int elementArrayOffset,
- SgIndexArray& elementIndices, vector<int>& mergedIndexMap, int numMergedElements, int searchLength)
+(SgVectorArray<Vector3f>& elements, SgVectorArray<Vector3f>& subElements, int elementArrayOffset,
+ SgIndexArray& elementIndices, SgIndexArray* subElementIndices,
+ vector<int>& mergedIndexMap, int numMergedElements)
 {
     auto newElementIter = elements.begin() + elementArrayOffset;
 
     for(size_t i=0; i < mergedIndexMap.size(); ++i){
         auto mappedIndex = mergedIndexMap[i];
         if(mappedIndex >= 0){
-            *newElementIter++ = orgElements[i];
+            *newElementIter++ = subElements[i];
         }
         mergedIndexMap[i] += elementArrayOffset; // Conver to the global index
     }
         
-    std::copy(orgElements.begin() + mergedIndexMap.size(), orgElements.end(), newElementIter);
+    std::copy(subElements.begin() + mergedIndexMap.size(), subElements.end(), newElementIter);
 
-    const int indexArrayOffset = triangleOffset * 3;
-    const int end = indexArrayOffset + numTriangles * 3;
+    int pos = triangleOffset * 3;
     const int unmappedElementIndexOffset = elementArrayOffset - numMergedElements;
-    int pos = indexArrayOffset;
-    while(pos < end){
-        auto& index = elementIndices[pos++];
-        if(index < mergedIndexMap.size()){
-            index = mergedIndexMap[index];
-        } else {
-            index += unmappedElementIndexOffset;
+
+    if(subElementIndices){
+        for(auto& index : *subElementIndices){
+            if(index < mergedIndexMap.size()){
+                elementIndices[pos++] = mergedIndexMap[index];
+            } else {
+                elementIndices[pos++] = index + unmappedElementIndexOffset;
+            }
+        }
+    } else {
+        const int end = pos + numTriangles * 3;
+        while(pos < end){
+            auto& index = elementIndices[pos++];
+            if(index < mergedIndexMap.size()){
+                index = mergedIndexMap[index];
+            } else {
+                index += unmappedElementIndexOffset;
+            }
         }
     }
  }
 
 
-void MeshLoader::integrateTo(MeshLoader& mainLoader)
+void MeshLoader::integrate()
 {
+    SgIndexArray* subTriangleVertices = nullptr;
+    if(triangleVertices != &sharedMesh->triangleVertices()){
+        subTriangleVertices = triangleVertices;
+    }
+    
     integrateElements(
-        *mainLoader.vertices, *vertices, vertexArrayOffset,
-        *triangleVertices, mergedVertexIndexMap, numMergedVertices, VertexSearchLength);
+        *sharedMesh->vertices(), *vertices, vertexArrayOffset,
+        sharedMesh->triangleVertices(), subTriangleVertices,
+        mergedVertexIndexMap, numMergedVertices);
+
+    SgIndexArray* subNormalIndices = nullptr;
+    if(normalIndices != &sharedMesh->normalIndices()){
+        subNormalIndices = normalIndices;
+    }
 
     integrateElements(
-        *mainLoader.normals, *normals, normalArrayOffset,
-        *normalIndices, mergedNormalIndexMap, numMergedNormals, NormalSearchLength);
+        *sharedMesh->normals(), *normals, normalArrayOffset,
+        sharedMesh->normalIndices(), subNormalIndices,
+        mergedNormalIndexMap, numMergedNormals);
 }
 
 
-void MeshLoader::integrateConcurrentlyTo(MeshLoader& mainLoader)
+void MeshLoader::integrateConcurrently()
 {
-    loaderThread = thread([this, &mainLoader](){ integrateTo(mainLoader); });
+    loaderThread = thread([this](){ integrate(); });
 }
  
 
@@ -355,8 +573,6 @@ SgMeshPtr MeshLoader::completeMesh(bool doShrink)
         return nullptr;
     }
 
-    sharedMesh->setVertices(vertices);
-    sharedMesh->setNormals(normals);
     sharedMesh->setBoundingBox(bbox);
 
     if(doShrink){
@@ -378,6 +594,8 @@ STLSceneLoader::STLSceneLoader()
 
 STLSceneLoaderImpl::STLSceneLoaderImpl()
 {
+    maxNumThreads = std::max((unsigned)1, std::min(thread::hardware_concurrency(), (unsigned)6));
+    
     os_ = &nullout();
 }
 
@@ -428,7 +646,7 @@ SgNode* STLSceneLoaderImpl::load(const string& filename)
     if(isBinary){
         mesh = loadBinaryFormat(filename, ifs, numTriangles);
     } else {
-        mesh = loadAsciiFormat(filename);
+        mesh = loadAsciiFormat(filename, fileSize);
     }
 
     if(!mesh){
@@ -454,21 +672,27 @@ SgMeshPtr STLSceneLoaderImpl::loadBinaryFormat(const string& filename, ifstream&
     
     BinaryMeshLoader mainLoader(numTriangles);
 
-    auto maxNumThreads = std::max((unsigned)1, std::min(thread::hardware_concurrency(), (unsigned)6));
-    size_t numThreads = std::min(size_t(maxNumThreads), std::max(size_t(1), numTriangles / NumTrianglesPerThread));
+    size_t numThreads = std::min(maxNumThreads, std::max(size_t(1), numTriangles / NumTrianglesPerThread));
 
     if(numThreads == 1){
         mainLoader.load(ifs, 0, numTriangles);
         return mainLoader.completeMesh(true);
+    } else {
+        return loadBinaryFormatConcurrently(filename, ifs, numTriangles, numThreads, mainLoader);
     }
+}
 
+
+SgMeshPtr STLSceneLoaderImpl::loadBinaryFormatConcurrently
+(const string& filename, ifstream& ifs, size_t numTriangles, size_t numThreads, BinaryMeshLoader& mainLoader)
+{
     vector<BinaryMeshLoader> loaders(numThreads, mainLoader);
     
     int index = 0;
     size_t triangleOffset = 0;
     size_t numTrianglesPerThread = numTriangles / numThreads;
     while(index < numThreads - 1){
-        loaders[index].load(filename, triangleOffset, numTrianglesPerThread);
+        loaders[index].loadConcurrently(filename, triangleOffset, numTrianglesPerThread);
         ++index;
         triangleOffset += numTrianglesPerThread;
     }
@@ -476,39 +700,14 @@ SgMeshPtr STLSceneLoaderImpl::loadBinaryFormat(const string& filename, ifstream&
 
     for(auto& loader : loaders){
         loader.join();
-    }    
-
-    size_t totalNumVertices = 0;
-    size_t totalNumNormals = 0;
-    BinaryMeshLoader* prevLoader = nullptr;
-    for(auto& loader : loaders){
-        loader.initializeIntegration(prevLoader);
-        totalNumVertices += loader.numActualVertices;
-        totalNumNormals += loader.numActualNormals;
-        mainLoader.bbox.expandBy(loader.bbox);
-        prevLoader = &loader;
     }
 
-    mainLoader.vertices = new SgVertexArray(totalNumVertices);
-    mainLoader.normals = new SgNormalArray(totalNumNormals);
-
-    for(int i=0; i < loaders.size() - 1; ++i){
-        loaders[i].integrateConcurrentlyTo(mainLoader);
-    }
-    loaders.back().integrateTo(mainLoader);
-            
-    for(auto& loader : loaders){
-        loader.join();
-    }
-
-    return mainLoader.completeMesh(false);
+    return integrateSubLoaderMeshes(mainLoader, getMeshLoaderPointers(loaders));
 }
 
 
 void BinaryMeshLoader::initializeArrays(size_t triangleOffset, size_t numTriangles)
 {
-    MeshLoader::initializeArrays();
-    
     this->triangleOffset = triangleOffset;
     this->numTriangles = numTriangles;
     
@@ -544,16 +743,6 @@ void BinaryMeshLoader::addVertex(const Vector3f& vertex)
 }
 
 
-void BinaryMeshLoader::load(const string& filename, size_t triangleOffset, size_t numTriangles)
-{
-    loaderThread = thread(
-        [this, filename, triangleOffset, numTriangles](){
-            ifstream ifs(filename.c_str(), std::ios::in | std::ios::binary);
-            load(ifs, triangleOffset, numTriangles);
-        });
-}
-
-
 void BinaryMeshLoader::load(ifstream& ifs, size_t triangleOffset, size_t numTriangles)
 {
     ifs.seekg(STL_BINARY_HEADER_SIZE + triangleOffset * 50);
@@ -582,18 +771,104 @@ void BinaryMeshLoader::load(ifstream& ifs, size_t triangleOffset, size_t numTria
 }
 
 
-SgMeshPtr STLSceneLoaderImpl::loadAsciiFormat(const string& filename)
+void BinaryMeshLoader::loadConcurrently(const string& filename, size_t triangleOffset, size_t numTriangles)
 {
-    AsciiMeshLoader loader;
+    loaderThread = thread(
+        [this, filename, triangleOffset, numTriangles](){
+            ifstream ifs(filename.c_str(), std::ios::in | std::ios::binary);
+            load(ifs, triangleOffset, numTriangles);
+        });
+}
+
+
+SgMeshPtr STLSceneLoaderImpl::loadAsciiFormat(const string& filename, pos_type fileSize)
+{
+    size_t numThreads = std::min(maxNumThreads, std::max(size_t(1), size_t(fileSize / AsciiSizePerThread)));
+    //cout << "numThreads: " << numThreads << endl;
 
     SgMeshPtr mesh;
-    try {
-        mesh = loader.load(filename);
+    
+    bool doOpen = (numThreads == 1);
+    AsciiMeshLoader mainLoader(filename, doOpen);
+    
+    if(numThreads == 1){
+        if(mainLoader.load()){
+            mesh = mainLoader.completeMesh(true);
+        }
+    } else {
+        mesh =loadAsciiFormatConcurrently(filename, mainLoader, fileSize, numThreads);
     }
-    catch(const std::exception& ex){
-        os() << ex.what() << endl;
+    
+    return mesh;
+}
+
+
+SgMeshPtr STLSceneLoaderImpl::loadAsciiFormatConcurrently
+(const string& filename, AsciiMeshLoader& mainLoader, pos_type fileSize, size_t numThreads)
+{
+    vector<AsciiMeshLoader> loaders(numThreads, mainLoader);
+
+    pos_type fragmentSize = fileSize / numThreads;
+
+    AsciiMeshLoader* prevLoader = &loaders.front();
+    for(size_t i=1; i < loaders.size(); ++i){
+        auto& loader = loaders[i];
+        if(loader.seekToTriangleBorderPosition(i * fragmentSize)){
+            prevLoader->seekEnd = loader.seekOffset;
+            prevLoader->loadConcurrently();
+            prevLoader = &loader;
+        }
+    }
+        
+    auto& lastLoader = loaders.back();
+    lastLoader.seekEnd = fileSize;
+    lastLoader.load();
+
+    bool loaded = true;
+    for(auto& loader : loaders){
+        loader.join();
+        if(!loader.isSuccessfullyLoaded){
+            os() << loader.errorMessage << endl;
+            loaded = false;
+        }
+    }
+
+    SgMeshPtr mesh;
+    if(loaded){
+        mesh = integrateSubLoaderMeshes(mainLoader, getMeshLoaderPointers(loaders));
     }
     return mesh;
+}
+
+
+AsciiMeshLoader::AsciiMeshLoader(const string& filename, bool doOpen)
+    : MeshLoader(0),
+      filename(filename)
+{
+    if(doOpen){
+        scanner.open(filename);
+    }
+    seekOffset = 0;
+    seekEnd = 0;
+}
+
+
+AsciiMeshLoader::AsciiMeshLoader(const AsciiMeshLoader& mainLoader)
+    : MeshLoader(mainLoader),
+      filename(mainLoader.filename)
+{
+    triangleVertices = &subTriangleVertices;
+    normalIndices = &subNormalIndices;
+    
+    scanner.open(filename);
+    seekOffset = 0;
+    seekEnd = 0;
+}
+
+
+bool AsciiMeshLoader::seekToTriangleBorderPosition(pos_type position)
+{
+    return scanner.seekToString(position, "facet normal", 1024, seekOffset);
 }
 
 
@@ -619,169 +894,42 @@ void AsciiMeshLoader::addVertex(const Vector3f& vertex)
 }
 
 
-class Scanner
+bool AsciiMeshLoader::load()
 {
-public:
-    ifstream ifs;
-    static const size_t bufsize = 256;
-    char buf[bufsize];
-    char* pos;
-    int lineNumber;
-    string filename;
-    
-    Scanner(const string& filename);
-    bool getline();
-    void skipSpaces();
-    bool checkString(const char* str);
-    void checkStringEx(const char* str);
-    bool readString(string& out_string);
-    void readFloatEx(float& out_value);
-    void checkLFEx();
-    bool checkEOF();
-    void throwEx(const string& error);
-};
-
-
-Scanner::Scanner(const string& filename)
-    : ifs(filename, std::ios::in),
-      filename(filename)
-{
-    lineNumber = 0;
-    buf[0] = '\0';
-    pos = buf;
-    if(!getline()){
-        throwEx("No data");
+    try {
+        loadTriangles();
+        isSuccessfullyLoaded = true;
     }
+    catch(const std::exception& ex){
+        errorMessage = ex.what();
+        isSuccessfullyLoaded = false;
+    }
+    return isSuccessfullyLoaded;
 }
 
 
-bool Scanner::getline()
+void AsciiMeshLoader::loadConcurrently()
 {
-    pos = buf;
-    if(ifs.getline(buf, bufsize)){
-        ++lineNumber;
-        return true;
+    loaderThread = thread([this](){ load(); });
+}
+
+
+void AsciiMeshLoader::loadTriangles()
+{
+    if(!scanner.getLine()){
+        scanner.throwEx("No data");
     }
-    if(!ifs.eof()){
-        if(ifs.gcount() > 0){
-            throwEx("Too long line");
-        } else {
-            throwEx("I/O error");
+    
+    if(seekOffset == 0){
+        scanner.checkStringEx("solid");
+        string name;
+        if(scanner.readString(name)){
+            sharedMesh->setName(name);
         }
+        scanner.checkLFEx();
     }
-    buf[0] = '\0';
-    return !ifs.eof();
-}
-        
 
-void Scanner::skipSpaces()
-{
-    while(*pos == ' ' && *pos != '\0'){
-        ++pos;
-    }
-}
-
-
-bool Scanner::checkString(const char* str)
-{
-    skipSpaces();
-
-    char* pos0 = pos;
-    while(*str != '\0'){
-        if(*str++ != *pos++){
-            pos = pos0;
-            return false;
-        }
-    }
-    return true;
-}
-
-
-void Scanner::checkStringEx(const char* str)
-{
-    const char* org = str;
-    if(!checkString(str)){
-        throwEx(format("\"{}\" is expected", org));
-    }
-}
-
-
-bool Scanner::readString(string& out_string)
-{
-    skipSpaces();
-    
-    char* pos0 = pos;
-    while(*pos != '\r' && *pos != '\0'){
-        ++pos;
-    }
-    out_string.assign(pos0, pos - pos0);
-
-    return !out_string.empty();
-}    
-    
-
-void Scanner::readFloatEx(float& out_value)
-{
-    skipSpaces();
-    
-    char* tail;
-    out_value = strtof(pos, &tail);
-    if(tail != pos){
-        pos = tail;
-    } else {
-        throwEx("Invalid value");
-    }
-}
-
-
-void Scanner::checkLFEx()
-{
-    skipSpaces();
-
-    if(*pos == '\r' || *pos == '\0'){
-        getline();
-    } else {
-        throwEx("Invalid value");
-    }
-}
-
-
-bool Scanner::checkEOF()
-{
-    if(ifs.eof()){
-        return true;
-    }
-    do{
-        skipSpaces();
-    } while((*pos == '\r' || *pos == '\0') && getline());
-
-    return ifs.eof();
-}
-
-
-void Scanner::throwEx(const string& error)
-{
-    boost::filesystem::path path(filename);
-    throw std::runtime_error(
-        format(_("{0} at line {1} of \"{2}\"."),
-               error, lineNumber, path.filename().string()));
-}
-
-
-SgMeshPtr AsciiMeshLoader::load(const string& filename)
-{
-    initializeArrays();
-
-    Scanner scanner(filename);
-
-    scanner.checkStringEx("solid");
-    string name;
-    if(scanner.readString(name)){
-        sharedMesh->setName(name);
-    }
-    scanner.checkLFEx();
-
-    do {
+    while(true) {
         scanner.checkStringEx("facet normal");
         Vector3f v;
         scanner.readFloatEx(v.x());
@@ -803,14 +951,73 @@ SgMeshPtr AsciiMeshLoader::load(const string& filename)
         scanner.checkStringEx("endloop");
         scanner.checkLFEx();
 
+        // \todo make getLine() be explicitly called
+        auto seekPos = scanner.ifs.tellg();
+
         scanner.checkStringEx("endfacet");
         scanner.checkLFEx();
 
+        if(seekEnd > 0 && seekPos >= seekEnd){
+            break;
+        }
+        if(scanner.checkString("endsolid")){
+            break;
+        }
         if(scanner.checkEOF()){
             scanner.throwEx("\"endsolid\" is not found");
         }
+    }
+}
 
-    } while(!scanner.checkString("endsolid"));
 
-    return completeMesh(true);
+void AsciiMeshLoader::initializeIntegration(MeshLoader* prevLoader)
+{
+    MeshLoader::initializeIntegration(prevLoader);
+
+    numTriangles = triangleVertices->size() / 3;
+    
+    if(prevLoader){
+        triangleOffset = prevLoader->triangleOffset + prevLoader->numTriangles;
+    }
+}
+
+
+SgMeshPtr STLSceneLoaderImpl::integrateSubLoaderMeshes
+(MeshLoader& mainLoader, vector<MeshLoader*> loaders)
+{
+    size_t totalNumVertices = 0;
+    size_t totalNumNormals = 0;
+    size_t totalNumTriangles = 0;
+    MeshLoader* prevLoader = nullptr;
+    for(auto loader : loaders){
+        loader->initializeIntegration(prevLoader);
+        totalNumVertices += loader->numActualVertices;
+        totalNumNormals += loader->numActualNormals;
+        //! \todo 
+        totalNumTriangles += loader->triangleVertices->size() / 3;
+        mainLoader.bbox.expandBy(loader->bbox);
+        prevLoader = loader;
+    }
+
+    auto mesh = mainLoader.sharedMesh;
+    mesh->vertices()->resize(totalNumVertices);
+    mesh->normals()->resize(totalNumNormals);
+
+    if(mesh->numTriangles() == 0){
+        mesh->setNumTriangles(totalNumTriangles);
+    }
+    if(!mesh->hasNormalIndices()){
+        mesh->normalIndices().resize(totalNumTriangles * 3);
+    }
+
+    for(int i=0; i < loaders.size() - 1; ++i){
+        loaders[i]->integrateConcurrently();
+    }
+    loaders.back()->integrate();
+            
+    for(auto loader : loaders){
+        loader->join();
+    }
+
+    return mainLoader.completeMesh(false);
 }

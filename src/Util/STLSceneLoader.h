@@ -1,3 +1,7 @@
+/*!
+  @author Shin'ichiro Nakaoka
+*/
+
 #ifndef CNOID_UTIL_STL_SCENE_LOADER_H
 #define CNOID_UTIL_STL_SCENE_LOADER_H
 
