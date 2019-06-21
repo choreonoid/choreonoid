@@ -7,6 +7,7 @@
 #include "SceneLoader.h"
 #include "NullOut.h"
 #include "FileUtil.h"
+#include "strtofloat.h"
 #include <fmt/format.h>
 #include <fstream>
 #include <thread>
@@ -36,7 +37,6 @@ struct Registration {
             []() -> shared_ptr<AbstractSceneLoader> { return make_shared<STLSceneLoader>(); });
     }
 } registration;
-
 
 class Scanner
 {
@@ -194,7 +194,7 @@ public:
     {
         skipSpaces();
         char* tail;
-        out_value = strtof(pos, &tail);
+        out_value = cnoid::strtof(pos, &tail);
         if(tail != pos){
             pos = tail;
         } else {
@@ -757,10 +757,10 @@ void BinaryMeshLoader::load(ifstream& ifs, size_t triangleOffset, size_t numTria
     /**
        Buffer size can be specified by the following code.
        It is currently disabled becasue it does not especially obtain a better result
-       on Ubuntu 18.04 and GCC 8.3.0.
+       on both Ubuntu 18.04 + GCC 8.3.0 and Visual C++ 2017.
     */
     /*
-    vector<char> buf(20 * 1024 * 1024);
+    vector<char> buf(1 * 1024 * 1024);
     ifs.rdbuf()->pubsetbuf(&buf.front(), buf.size());
     */
     

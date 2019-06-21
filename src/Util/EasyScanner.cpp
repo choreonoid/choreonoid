@@ -4,6 +4,7 @@
 */
 
 #include "EasyScanner.h"
+#include "strtofloat.h"
 #include <cstdio>
 #include <cctype>
 #include <cstdlib>
@@ -17,88 +18,6 @@
 using namespace std;
 using namespace cnoid;
 using fmt::format;
-
-
-namespace {
-// Replacement for 'strtod()' function in Visual C++
-// This is neccessary because the implementation of VC++6.0 uses 'strlen()' in the function,
-// so that it becomes too slow for a string buffer which has long length.
-#ifdef _MSC_VER
-template<typename T> T mystrtofloat(const char* nptr, char** endptr)    
-{
-    const char* org = nptr;
-    bool valid = false;
-    T value = 0.0;
-    T sign = +1.0;
-
-    if(*nptr == '+'){
-        nptr++;
-    } else if(*nptr == '-'){
-        sign = -1.0;
-        nptr++;
-    }
-    if(isdigit((unsigned char)*nptr)){
-        valid = true;
-        do {
-            value = value * 10.0 + (*nptr - '0');
-            nptr++;
-        } while(isdigit((unsigned char)*nptr));
-    }
-    if(*nptr == '.'){
-        //valid = false; // allow values which end with '.'. For example, "0."
-        nptr++;
-        if(isdigit((unsigned char)*nptr)){
-            T small = 0.1;
-            valid = true;
-            do {
-                value += small * (*nptr - '0');
-                small *= 0.1;
-                nptr++;
-            } while(isdigit((unsigned char)*nptr));
-        }
-    }
-    if(valid && (*nptr == 'e' || *nptr == 'E')){
-        nptr++;
-        valid = false;
-        T psign = +1.0;
-        if(*nptr == '+'){
-            nptr++;
-        } else if(*nptr == '-'){
-            psign = -1.0;
-            nptr++;
-        }
-        if(isdigit((unsigned char)*nptr)){
-            valid = true;
-            T p = 0.0;
-            do {
-                p = p * 10.0 + (*nptr - '0');
-                nptr++;
-            } while(isdigit((unsigned char)*nptr));
-            value *= pow(10.0, (double)(psign * p));
-        }
-    }
-    if(valid){
-        *endptr = (char*)nptr;
-    } else {
-        *endptr = (char*)org;
-    }
-    return sign * value;
-}
-inline float mystrtof(const char* nptr, char** endptr) {
-    return mystrtofloat<float>(nptr, endptr);
-}
-inline double mystrtod(const char* nptr, char** endptr) {
-    return mystrtofloat<double>(nptr, endptr);
-}
-#else
-inline float mystrtof(const char* nptr, char** endptr) {
-    return strtof(nptr, endptr);
-}
-inline double mystrtod(const char* nptr, char** endptr) {
-    return strtod(nptr, endptr);
-}
-#endif
-}
 
 
 std::string EasyScanner::Exception::getFullMessage() const
@@ -407,7 +326,7 @@ int EasyScanner::readToken()
             text = tail;
             return T_INTEGER;
         }
-        doubleValue = mystrtod(text, &tail);
+        doubleValue = cnoid::strtod(text, &tail);
         if(tail != text){
             text = tail;
             return T_DOUBLE;
@@ -499,7 +418,7 @@ bool EasyScanner::readFloat()
 
     if(checkLF()) return false;
 
-    floatValue = mystrtof(text, &tail);
+    floatValue = cnoid::strtof(text, &tail);
 
     if(tail != text){
         text = tail;
@@ -516,7 +435,7 @@ bool EasyScanner::readDouble()
 
     if(checkLF()) return false;
 
-    doubleValue = mystrtod(text, &tail);
+    doubleValue = cnoid::strtod(text, &tail);
 
     if(tail != text){
         text = tail;
