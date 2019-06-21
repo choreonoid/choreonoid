@@ -926,7 +926,7 @@ void AsciiMeshLoader::loadTriangles()
         scanner.throwEx("No data");
     }
     
-    if(seekOffset == 0){
+    if(seekOffset == pos_type(0)){
         scanner.checkStringEx("solid");
         string name;
         if(scanner.readString(name)){
