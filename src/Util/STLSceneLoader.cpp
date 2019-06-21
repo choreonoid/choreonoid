@@ -12,7 +12,6 @@
 #include <thread>
 #include <stdexcept>
 #include <cstdlib>
-//#include <iostream>
 #include "gettext.h"
 
 using namespace std;
@@ -80,7 +79,7 @@ public:
         buf[0] = '\0';
         return !ifs.eof();
     }
-        
+
     void skipSpaces()
     {
         while(*pos == ' ' && *pos != '\0'){
@@ -91,8 +90,10 @@ public:
     bool checkLF()
     {
         skipSpaces();
-        if(*pos == '\r' || *pos == '\0'){
-            getLine();
+        if(*pos == '\0'){
+            return true;
+        } else if(*pos == '\r'){
+            ++pos;
             return true;
         }
         return false;
@@ -107,15 +108,8 @@ public:
 
     bool checkEOF()
     {
-        while(true){
-            skipSpaces();
-            if(*pos == '\r' || *pos == '\0'){
-                if(!getLine()){
-                    return true;
-                }
-            } else {
-                break;
-            }
+        if(checkLF()){
+            return ifs.eof();
         }
         return false;
     }
@@ -147,7 +141,7 @@ public:
         getLine();
         
         pos_type currentLinePos = initialSeekPos;
-        pos_type nextLinePos = initialSeekPos;
+        pos_type nextLinePos = ifs.tellg();
         const char* str0 = str;
         char* found = nullptr;
         while(true){
@@ -594,7 +588,20 @@ STLSceneLoader::STLSceneLoader()
 
 STLSceneLoaderImpl::STLSceneLoaderImpl()
 {
-    maxNumThreads = std::max((unsigned)1, std::min(thread::hardware_concurrency(), (unsigned)6));
+    /**
+       It seems fine to specify the number of *physical* CPU cores to this variable.
+       If you specify the number of *logical* cores including hyper-threading cores,
+       the resulting performance will be worse than the case of less number of threads.
+       Hence it is better to specify the number of physical cores here, but there seems
+       to be no portable way to know it. As a temporal solution, the following
+       expression is used to determine the number.
+    */
+    size_t numLogicalCores = thread::hardware_concurrency();
+    if(numLogicalCores == 1){
+        maxNumThreads = 1;
+    } else {
+        maxNumThreads = std::max(size_t(2), std::min(numLogicalCores / 2, size_t(8)));
+    }
     
     os_ = &nullout();
 }
@@ -784,7 +791,6 @@ void BinaryMeshLoader::loadConcurrently(const string& filename, size_t triangleO
 SgMeshPtr STLSceneLoaderImpl::loadAsciiFormat(const string& filename, pos_type fileSize)
 {
     size_t numThreads = std::min(maxNumThreads, std::max(size_t(1), size_t(fileSize / AsciiSizePerThread)));
-    //cout << "numThreads: " << numThreads << endl;
 
     SgMeshPtr mesh;
     
@@ -927,6 +933,7 @@ void AsciiMeshLoader::loadTriangles()
             sharedMesh->setName(name);
         }
         scanner.checkLFEx();
+        scanner.getLine();
     }
 
     while(true) {
@@ -937,9 +944,11 @@ void AsciiMeshLoader::loadTriangles()
         scanner.readFloatEx(v.z());
         addNormal(v);
         scanner.checkLFEx();
+        scanner.getLine();
 
         scanner.checkStringEx("outer loop");
         scanner.checkLFEx();
+        scanner.getLine();
         for(int i=0; i < 3; ++i){
             scanner.checkStringEx("vertex");
             scanner.readFloatEx(v.x());
@@ -947,19 +956,20 @@ void AsciiMeshLoader::loadTriangles()
             scanner.readFloatEx(v.z());
             addVertex(v);
             scanner.checkLFEx();
+            scanner.getLine();
         }
         scanner.checkStringEx("endloop");
         scanner.checkLFEx();
-
-        // \todo make getLine() be explicitly called
-        auto seekPos = scanner.ifs.tellg();
+        scanner.getLine();
 
         scanner.checkStringEx("endfacet");
         scanner.checkLFEx();
 
-        if(seekEnd > 0 && seekPos >= seekEnd){
+        if(seekEnd > 0 && scanner.ifs.tellg() >= seekEnd){
             break;
         }
+        scanner.getLine();
+        
         if(scanner.checkString("endsolid")){
             break;
         }
@@ -993,8 +1003,7 @@ SgMeshPtr STLSceneLoaderImpl::integrateSubLoaderMeshes
         loader->initializeIntegration(prevLoader);
         totalNumVertices += loader->numActualVertices;
         totalNumNormals += loader->numActualNormals;
-        //! \todo 
-        totalNumTriangles += loader->triangleVertices->size() / 3;
+        totalNumTriangles += loader->numTriangles;
         mainLoader.bbox.expandBy(loader->bbox);
         prevLoader = loader;
     }
@@ -1003,6 +1012,7 @@ SgMeshPtr STLSceneLoaderImpl::integrateSubLoaderMeshes
     mesh->vertices()->resize(totalNumVertices);
     mesh->normals()->resize(totalNumNormals);
 
+    // In the case of the ASCII format
     if(mesh->numTriangles() == 0){
         mesh->setNumTriangles(totalNumTriangles);
     }
