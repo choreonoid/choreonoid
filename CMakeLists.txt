@@ -213,12 +213,14 @@ endif()
 
 find_package(Threads)
 
+# OpenGL
 if(ENABLE_GUI)
-  cmake_policy(SET CMP0072 OLD)
+  if(POLICY CMP0072)
+    cmake_policy(SET CMP0072 OLD)
+  endif()
   find_package(OpenGL)
   include_directories(${OPENGL_INCLUDE_DIR})
 endif()
-
 
 option(ENABLE_INSTALL_RPATH "Enable RPATH setting for installed binary files" ON)
 
