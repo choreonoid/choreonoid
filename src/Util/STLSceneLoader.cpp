@@ -766,7 +766,7 @@ void BinaryMeshLoader::load(ifstream& ifs, size_t triangleOffset, size_t numTria
     
     initializeArrays(triangleOffset, numTriangles);
 
-    size_t datasize = sizeof(float) * 3 * 4 + 2;
+    const size_t datasize = sizeof(float) * 3 * 4 + 2;
     char data[datasize];
     for(size_t i = 0; i < numTriangles; ++i){
         ifs.read(data, datasize);
