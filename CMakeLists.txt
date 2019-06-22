@@ -372,7 +372,7 @@ endif()
 
 # boost
 set(Boost_USE_STATIC_LIBS OFF)
-set(Boost_ADDITIONAL_VERSIONS "1.56" "1.57" "1.58" "1.59" "1.60" "1.61" "1.62" "1.63" "1.64" "1.65" "1.66" "1.67")
+set(Boost_ADDITIONAL_VERSIONS "1.56" "1.57" "1.58" "1.59" "1.60" "1.61" "1.62" "1.63" "1.64" "1.65" "1.66" "1.67" "1.68")
 
 set(boost_packages system filesystem program_options iostreams)
 

@@ -10,7 +10,9 @@
 
 void cnoid::setCnoidUtilTextDomainCodeset()
 {
+#ifdef CNOID_ENABLE_GETTEXT
     bind_textdomain_codeset(CNOID_GETTEXT_DOMAIN_NAME, "utf-8");
+#endif
 }
 
 
