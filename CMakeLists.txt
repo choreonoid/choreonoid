@@ -170,7 +170,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} ${EXTRA_CXX_FLAGS_RELEAS
 
 if(MSVC)
 
-  set(ext_compiler_options "/Ob2 /Ox /Oi /Ot /Oy /GT /GS- /fp:fast")
+  set(ext_compiler_options "/Ob2 /O2 /Oi /Ot /Oy /GT /GS- /fp:fast")
   if(CMAKE_CL_64)
     set(MSVC_ENABLE_SSE OFF CACHE BOOL "Enable SSE instructions on VC++." FORCE)
   else()
