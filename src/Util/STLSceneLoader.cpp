@@ -13,6 +13,7 @@
 #include <thread>
 #include <stdexcept>
 #include <cstdlib>
+#include <iostream>
 #include "gettext.h"
 
 using namespace std;
@@ -34,7 +35,22 @@ struct Registration {
     Registration(){
         SceneLoader::registerLoader(
             "stl",
-            []() -> shared_ptr<AbstractSceneLoader> { return make_shared<STLSceneLoader>(); });
+            []() -> shared_ptr<AbstractSceneLoader> {
+                cout << "STLSceneLoader:" << endl;
+#ifdef NDEBUG
+                cout << "NDEBUG is defined" << endl;
+#else
+                cout << "NDEBUG is not defined" << endl;
+#endif
+
+#ifdef EIGEN_NO_DEBUG
+                cout << "EIGEN_NO_DEBUG is defined" << endl;
+#else
+                cout << "EIGEN_NO_DEBUG is not defined" << endl;
+#endif
+                cout << "Eigen::SimdInstructionSetsInUse(): " << Eigen::SimdInstructionSetsInUse() << endl;
+
+                return make_shared<STLSceneLoader>(); });
     }
 } registration;
 
