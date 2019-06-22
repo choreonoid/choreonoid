@@ -60,7 +60,7 @@ public:
     virtual bool initialize()
     {
 
-#if CNOID_ENABLE_GETTEXT
+#ifdef CNOID_ENABLE_GETTEXT
         setCnoidBodyTextDomainCodeset();
 #endif
 

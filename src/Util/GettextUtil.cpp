@@ -13,7 +13,7 @@ namespace filesystem = boost::filesystem;
 namespace cnoid {
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
-# if CNOID_ENABLE_GETTEXT
+# ifdef CNOID_ENABLE_GETTEXT
 const char* getText(const char* domainname, const char* msgid)
 {
     return dgettext(domainname, msgid);
@@ -28,7 +28,7 @@ const char* getText(const char* domainname, const char* msgid)
 
 void bindGettextDomain(const char* domainname)
 {
-#if CNOID_ENABLE_GETTEXT
+#ifdef CNOID_ENABLE_GETTEXT
     filesystem::path localePath = filesystem::path(executableTopDirectory()) / "share" / "locale";
     if(filesystem::is_directory(localePath)){
         bindtextdomain(domainname, getPathString(localePath).c_str());

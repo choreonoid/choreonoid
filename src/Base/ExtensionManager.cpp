@@ -186,7 +186,7 @@ void ExtensionManagerImpl::setVersion(const std::string& version, bool isPlugin)
     }
     bindGettextDomain(textDomain.c_str());
 
-#if CNOID_ENABLE_GETTEXT
+#ifdef CNOID_ENABLE_GETTEXT
     bind_textdomain_codeset(textDomain.c_str(), "utf-8");
 #endif
 }

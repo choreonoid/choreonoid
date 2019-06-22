@@ -183,7 +183,7 @@ void AppImpl::initialize( const char* appName, const char* vendorName, const QIc
 
     ext = new ExtensionManager("Base", false);
 
-#if CNOID_ENABLE_GETTEXT
+#ifdef CNOID_ENABLE_GETTEXT
     setCnoidUtilTextDomainCodeset();
 #endif
 
