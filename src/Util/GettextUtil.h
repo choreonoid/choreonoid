@@ -12,8 +12,6 @@
 
 #include <boost/format.hpp>
 
-#define CNOID_ENABLE_GETTEXT 1
-
 #if CNOID_ENABLE_GETTEXT
 # include <libintl.h>
 

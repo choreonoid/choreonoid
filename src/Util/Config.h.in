@@ -15,6 +15,7 @@
 #cmakedefine CNOID_USE_PYBIND11
 #cmakedefine CNOID_USE_PYTHON2
 #cmakedefine CNOID_USE_BOOST_REGEX
+#cmakedefine CNOID_ENABLE_GETTEXT
 
 #if defined _WIN32 || defined __CYGWIN__
 #define CNOID_GENERAL_EXPORT __declspec(dllexport)
