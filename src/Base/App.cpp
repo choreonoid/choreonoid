@@ -53,6 +53,8 @@
 #include <cnoid/ValueTree>
 #include <cnoid/CnoidUtil>
 #include <cnoid/ParametricPathProcessor>
+#include <fmt/format.h>
+#include <Eigen/Core>
 #include <QApplication>
 #include <QTextCodec>
 #include <QSurfaceFormat>
@@ -103,6 +105,7 @@ class AppImpl : public AppImplBase
     char**& argv;
     ExtensionManager* ext;
     MainWindow* mainWindow;
+    MessageView* messageView;
     string appName;
     string vendorName;
     DescriptionDialog* descriptionDialog;
@@ -135,21 +138,6 @@ AppImpl::AppImpl(App* self, int& argc, char**& argv)
       argc(argc),
       argv(argv)
 {
-    cout << "AppImpl:" << endl;
-#ifdef NDEBUG
-    cout << "NDEBUG is defined" << endl;
-#else
-    cout << "NDEBUG is not defined" << endl;
-#endif
-
-#ifdef EIGEN_NO_DEBUG
-    cout << "EIGEN_NO_DEBUG is defined" << endl;
-#else
-    cout << "EIGEN_NO_DEBUG is not defined" << endl;
-#endif
-
-    cout << "Eigen::SimdInstructionSetsInUse(): " << Eigen::SimdInstructionSetsInUse() << endl;
-    
     descriptionDialog = 0;
 
     QCoreApplication::setAttribute(Qt::AA_X11InitThreads);
@@ -207,6 +195,7 @@ void AppImpl::initialize( const char* appName, const char* vendorName, const QIc
     ViewManager::initializeClass(ext);
     
     MessageView::initializeClass(ext);
+    messageView = MessageView::instance();
     RootItem::initializeClass(ext);
     ProjectManager::initializeClass(ext);
 
@@ -251,6 +240,10 @@ void AppImpl::initialize( const char* appName, const char* vendorName, const QIc
     ext->menuManager().setPath("/Help").addItem(_("About Choreonoid"))
         ->sigTriggered().connect([&](){ showInformationDialog(); });
 
+    messageView->putln(
+        fmt::format(_("The Eigen library's SIMD intruction sets in use: {}"),
+                    Eigen::SimdInstructionSetsInUse()));
+
     PluginManager::initialize(ext);
     PluginManager::instance()->doStartupLoading(pluginPathList);
 
@@ -288,7 +281,7 @@ void AppImpl::initialize( const char* appName, const char* vendorName, const QIc
     /**
        This is now executed in GLVisionSimulatorItem::initializeSimulation
        
-       if(QWidget* textEdit = MessageView::instance()->findChild<QWidget*>("TextEdit")){
+       if(QWidget* textEdit = messageView->findChild<QWidget*>("TextEdit")){
        textEdit->setFocus();
        textEdit->clearFocus();
        }
@@ -333,7 +326,7 @@ int AppImpl::exec()
     int result = 0;
     
     if(doQuit){
-        MessageView::instance()->flush();
+        messageView->flush();
     } else {
         result = qapplication->exec();
     }

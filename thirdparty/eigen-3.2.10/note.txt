@@ -1,0 +1,11 @@
+The current latest version of the Eigen libary is 3.3.x, but version 3.2.x is
+bundlded with Choreonoid because it performs better with Visual C++ compiler.
+The details of it is described in the following discussion of stackoverflow:
+
+https://stackoverflow.com/questions/44300581/eigen-library-eigenvalue-computation-performance-gcc-vs-visual-studio-2015
+
+The bundled version is used to build Choreonoid when VC++ is used unless the
+Eigen directory is explicitly specified in the EIGEN_DIR variable of CMake.
+On other environments including Ubuntu Linux, the Eigen library installed
+in the system is used unless the EIGEN_DIR is explicitly specified.
+
