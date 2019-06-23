@@ -107,9 +107,64 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
 link_directories(${PROJECT_BINARY_DIR}/lib)
 link_directories(${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR})
 
+if(NOT CMAKE_BUILD_TYPE)
+  set(
+    CMAKE_BUILD_TYPE Release CACHE STRING
+    "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel."
+    FORCE)
+endif()
+
+if(UNIX)
+  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -finline-functions")
+  option(ENABLE_GCC_FVISIBILITY_HIDDEN "Use the -fvisibility=hidden option when the sources are compiled" ON)
+  option(ENABLE_NATIVE_ARCHITECTURE "Use the -march=native option to enable instruction set supported by the native processor architecture" ON)
+  if(ENABLE_NATIVE_ARCHITECTURE)
+    set(ext_compiler_options "-march=native")
+  endif()
+endif()
+
+if(MSVC)
+  set(ext_compiler_options "/O2 /Ob2 /Oi /Gy /GS- /fp:fast")
+
+  if(${MSVC_VERSION} GREATER_EQUAL 1915)
+    add_definitions(-D_ENABLE_EXTENDED_ALIGNED_STORAGE)
+  endif()
+
+  if(CMAKE_CL_64)
+    option(MSVC_ENABLE_AVX "Enable AVX instructions on VC++." OFF)
+    option(MSVC_ENABLE_AVX2 "Enable AVX2 instructions on VC++." OFF)
+    if(MSVC_ENABLE_AVX2)
+      set(ext_compiler_options "${ext_compiler_options} /arch:AVX2")
+    elseif(MSVC_ENABLE_AVX)
+      set(ext_compiler_options "${ext_compiler_options} /arch:AVX")
+    endif()
+  else()
+    option(MSVC_ENABLE_SSE "Enable SSE instructions" ON)
+    if(MSVC_ENABLE_SSE)
+      set(ext_compiler_options "${ext_compiler_options} /arch:SSE /arch:SSE2 /fp:fast")
+      set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /arch:SSE2 /arch:SSE2")
+      set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /arch:SSE2 /arch:SSE2")
+    endif()
+  endif()
+
+  set(ext_linker_options "")
+  option(MSVC_ENABLE_GLOBAL_OPTIMIZATION "Global optimization with compiler option /GL and linker option /LTCG" OFF)
+  if(MSVC_ENABLE_GLOBAL_OPTIMIZATION)
+    set(ext_compiler_options "${ext_compiler_options} /GL")
+    set(ext_linker_options "${ext_linker_options} /LTCG")
+  endif()
+endif()
+
+set(ADDITIONAL_CXX_FLAGS_RELEASE ${ADDITIONAL_CXX_FLAGS_RELEASE} CACHE STRING "Additional c++ compiler optimization flags")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} ${ADDITIONAL_CXX_FLAGS_RELEASE} ${ext_compiler_options}")
+set(CMAKE_STATIC_LINKER_FLAGS_RELEASE "${CMAKE_STATIC_LINKER_FLAGS_RELEASE} ${ext_linker_options}")
+set(CMAKE_MODULE_LINKER_FLAGS_RELEASE "${CMAKE_MODULE_LINKER_FLAGS_RELEASE} ${ext_linker_options}")
+set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} ${ext_linker_options}")
+set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} ${ext_linker_options}")
+
 function(install_external_libraries dll_dir lib_dir)
 
-  set(libraries ${ARGV})
+set(libraries ${ARGV})
 
   list(REMOVE_AT libraries 0 1)
   if(INSTALL_RUNTIME_DEPENDENCIES AND MSVC)
@@ -150,66 +205,6 @@ function(install_external_libraries dll_dir lib_dir)
   endif()
 
 endfunction()
-
-
-if(NOT CMAKE_BUILD_TYPE)
-  set(
-    CMAKE_BUILD_TYPE Release CACHE STRING
-    "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel."
-    FORCE)
-endif()
-
-if(UNIX)
-  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -finline-functions")
-  option(ENABLE_GCC_FVISIBILITY_HIDDEN "Use the -fvisibility=hidden option when the sources are compiled" ON)
-endif()
-
-set(ADDITIONAL_CXX_FLAGS_RELEASE ${ADDITIONAL_CXX_FLAGS_RELEASE} CACHE STRING "Additional c++ compiler optimization flags")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} ${EXTRA_CXX_FLAGS_RELEASE} ${ADDITIONAL_CXX_FLAGS_RELEASE}")
-
-
-if(MSVC)
-  set(ext_compiler_options "/O2 /Ob2 /Oi /Gy /GS- /fp:fast")
-  if(CMAKE_CL_64)
-    set(MSVC_ENABLE_SSE OFF CACHE BOOL "Enable SSE instructions on VC++." FORCE)
-  else()
-    option(MSVC_ENABLE_SSE "Enable SSE instructions on VC++." ON)
-  endif()
-  if(MSVC_ENABLE_SSE)
-    set(ext_compiler_options "${ext_compiler_options} /arch:SSE /arch:SSE2 /fp:fast")
-  endif()
-  option(MSVC_ENABLE_AVX "Enable AVX instructions on VC++." OFF)
-  if(MSVC_ENABLE_AVX)
-    set(ext_compiler_options "${ext_compiler_options} /arch:AVX")
-  endif()
-  option(MSVC_ENABLE_AVX2 "Enable AVX2 instructions on VC++." OFF)
-  if(MSVC_ENABLE_AVX2)
-    set(ext_compiler_options "${ext_compiler_options} /arch:AVX2")
-  endif()
-  set(ext_linker_options "")
-
-  option(MSVC_ENABLE_GLOBAL_OPTIMIZATION "Global optimization with compiler option /GL and linker option /LTCG" OFF)
-  if(MSVC_ENABLE_GLOBAL_OPTIMIZATION)
-    set(ext_compiler_options "${ext_compiler_options} /GL")
-    set(ext_linker_options "${ext_linker_options} /LTCG")
-  endif()
-
-  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} ${ext_compiler_options}")
-  set(CMAKE_STATIC_LINKER_FLAGS_RELEASE "${CMAKE_STATIC_LINKER_FLAGS_RELEASE} ${ext_linker_options}")
-  set(CMAKE_MODULE_LINKER_FLAGS_RELEASE "${CMAKE_MODULE_LINKER_FLAGS_RELEASE} ${ext_linker_options}")
-  set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} ${ext_linker_options}")
-  set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} ${ext_linker_options}")
-
-  if(MSVC_ENABLE_SSE)
-    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /arch:SSE2 /arch:SSE2")
-
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /arch:SSE2 /arch:SSE2")
-  endif()
-
-  if(${MSVC_VERSION} GREATER_EQUAL 1915)
-    add_definitions(-D_ENABLE_EXTENDED_ALIGNED_STORAGE)
-  endif()
-endif()
 
 find_package(Threads)
 
