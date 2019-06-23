@@ -241,7 +241,8 @@ void AppImpl::initialize( const char* appName, const char* vendorName, const QIc
         ->sigTriggered().connect([&](){ showInformationDialog(); });
 
     messageView->putln(
-        fmt::format(_("The Eigen library's SIMD intruction sets in use: {}"),
+        fmt::format(_("The Eigen library version {0}.{1}.{2} is used (SIMD intruction sets in use: {3})."),
+                    EIGEN_WORLD_VERSION, EIGEN_MAJOR_VERSION, EIGEN_MINOR_VERSION,
                     Eigen::SimdInstructionSetsInUse()));
 
     PluginManager::initialize(ext);
