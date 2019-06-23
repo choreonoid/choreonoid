@@ -4,7 +4,18 @@
 
 namespace cnoid {
 
-#ifdef _MSC_VER
+#ifndef _MSC_VER
+
+#include <cstdlib>
+inline float strtof(const char* nptr, char** endptr){
+    return std::strtof(nptr, endptr);
+}
+inline double strtod(const char* nptr, char** endptr){
+    return std::strtod(nptr, endptr);
+}
+
+#else
+
 template<typename T> T strtofloat(const char* nptr, char** endptr)    
 {
     const char* org = nptr;
@@ -70,13 +81,6 @@ inline float strtof(const char* nptr, char** endptr) {
 }
 inline double strtod(const char* nptr, char** endptr) {
     return strtofloat<double>(nptr, endptr);
-}
-#else
-inline float strtof(const char* nptr, char** endptr) {
-    return strtof(nptr, endptr);
-}
-inline double strtod(const char* nptr, char** endptr) {
-    return strtod(nptr, endptr);
 }
 #endif
 
