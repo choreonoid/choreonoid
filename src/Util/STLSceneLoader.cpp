@@ -607,25 +607,7 @@ STLSceneLoader::STLSceneLoader()
 
 STLSceneLoaderImpl::STLSceneLoaderImpl()
 {
-    size_t numLogicalCores = std::max((unsigned)1, thread::hardware_concurrency());
-    
-#ifdef _WIN32
-    maxNumThreads = numLogicalCores;
-#else
-    /**
-       For Linux, it seems fine to specify the number of *physical* CPU cores to this
-       variable. If you specify the number of *logical* cores including hyper-threading
-       cores, the resulting performance will be worse than the case of less number of
-       threads. Hence it is better to specify the number of physical cores here, but
-       there seems to be no portable way to know it. As a temporal solution, the following
-       expression is used to determine the number.
-    */
-    if(numLogicalCores == 1){
-        maxNumThreads = 1;
-    } else {
-        maxNumThreads = std::max(size_t(2), std::min(numLogicalCores / 2, size_t(8)));
-    }
-#endif
+    maxNumThreads = std::max((unsigned)1, thread::hardware_concurrency());
 
     os_ = &nullout();
 }
