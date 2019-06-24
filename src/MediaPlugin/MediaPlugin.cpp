@@ -4,7 +4,7 @@
 */
 
 #include "MediaItem.h"
-#ifdef WIN32
+#ifdef _WIN32
 #include "DSMediaView.h"
 #else
 #include "GSMediaView.h"
@@ -43,7 +43,7 @@ public:
         {
             MediaItem::initialize(this);
 
-#ifdef WIN32
+#ifdef _WIN32
             DSMediaView::initialize(this);
 #else
             GSMediaView::initializeClass(this);
@@ -58,7 +58,7 @@ public:
         
     virtual bool finalize()
         {
-#ifdef WIN32
+#ifdef _WIN32
             DSMediaView::finalize();
 #endif
             return true;

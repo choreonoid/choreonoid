@@ -10,7 +10,7 @@
 #include <iosfwd>
 #include <functional>
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <memory>
 #endif
 

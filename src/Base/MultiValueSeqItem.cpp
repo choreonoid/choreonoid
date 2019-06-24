@@ -47,6 +47,6 @@ template<> void MultiSeqItem<MultiValueSeq>::initializeClass(ExtensionManager* e
         ItemManager::PRIORITY_CONVERSION);
 }
 
-#ifdef WIN32
+#ifdef _WIN32
 template class MultiSeqItem<MultiValueSeq>;
 #endif

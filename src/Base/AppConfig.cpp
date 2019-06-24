@@ -35,7 +35,7 @@ bool AppConfig::initialize(const std::string& application_, const std::string& o
     application = application_;
     organization = organization_;
 
-#ifdef WIN32
+#ifdef _WIN32
     const char* appdata = getenv("APPDATA");
     if(appdata){
         configDirPath = filesystem::path(appdata) / organization_;

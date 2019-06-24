@@ -8,7 +8,7 @@
 #include <cmath>
 #include <iostream>
 
-#ifndef WIN32
+#ifndef _WIN32
 #include <sys/time.h>
 #endif
 
@@ -19,7 +19,7 @@ namespace {
 
 const bool MEASURE_TIMER_INTERVALS = true;
 
-#ifdef WIN32
+#ifdef _WIN32
 const char* defaultPortDevice = "COM0";
 #else
 const char* defaultPortDevice = "/dev/ttyUSB0";
@@ -93,7 +93,7 @@ void GRobotController::init()
     memcpy(&poseCommand[0], PoseCommand, sizeof(PoseCommand));
     mode = ON_DEMAND_POSE_SENDING;
 
-#ifndef WIN32
+#ifndef _WIN32
     sem_init(&semTimer, 0, 0);
 #endif
 }
@@ -111,7 +111,7 @@ GRobotController::~GRobotController()
     
     closeSerialPort();
 
-#ifndef WIN32
+#ifndef _WIN32
     sem_destroy(&semTimer);
 #endif
 }
@@ -258,7 +258,7 @@ void GRobotController::setJointAngleCommand(int jointId, double q, double ttime)
 }
 
 
-#if WIN32
+#if _WIN32
 
 void GRobotController::initializeTimer()
 {
@@ -437,7 +437,7 @@ void GRobotController::doOnDemandPoseSending()
 }
 
 
-#ifdef WIN32
+#ifdef _WIN32
 void GRobotController::doContinuousPoseSending()
 {
     if(isTimerActive){
@@ -470,7 +470,7 @@ void GRobotController::doContinuousPoseSending()
 
 bool GRobotController::onMotionFrameSendingRequest()
 {
-#ifdef WIN32
+#ifdef _WIN32
     LARGE_INTEGER pc1;
     if(MEASURE_TIMER_INTERVALS){
         QueryPerformanceCounter(&pc1);
@@ -508,7 +508,7 @@ bool GRobotController::onMotionFrameSendingRequest()
     }
 
     if(MEASURE_TIMER_INTERVALS){
-#ifdef WIN32
+#ifdef _WIN32
         cout << "time: " << (double)(pc1.QuadPart - pc0.QuadPart) / pcfreq.QuadPart << endl;
 #else
         cout << "time: " << ((tv1.tv_sec - tv0.tv_sec) + (tv1.tv_usec - tv0.tv_usec) / 1000000.0) << endl;

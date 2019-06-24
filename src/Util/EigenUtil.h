@@ -8,7 +8,7 @@
 #include "EigenTypes.h"
 #include <memory>
 
-#if defined(WIN32) && !defined(BOOST_NO_CXX11_ALLOCATOR)
+#if defined(_WIN32) && !defined(BOOST_NO_CXX11_ALLOCATOR)
 #include <boost/version.hpp>
 #if (BOOST_VERSION >= 105900)
 #define BOOST_NO_CXX11_ALLOCATOR

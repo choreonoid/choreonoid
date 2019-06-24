@@ -2,7 +2,7 @@
 #ifndef CNOID_UTIL_SLEEP_H
 #define CNOID_UTIL_SLEEP_H
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 
 namespace cnoid {

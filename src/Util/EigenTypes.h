@@ -7,7 +7,6 @@
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
-//#include <Eigen/AlignedVector3>
 
 namespace cnoid {
 
