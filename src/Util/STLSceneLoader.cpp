@@ -222,6 +222,15 @@ public:
     SgIndexArray* triangleVertices;
     SgNormalArrayPtr normals;
     SgIndexArray* normalIndices;
+
+    /**
+       The following two variables are only used in BinaryMeshLoader.
+       Defining them here instead of BinaryMeshLoader can improve the loading speed.
+       It seems that this is because the cache hit ratio is improved.
+    */
+    size_t triangleVerticesIndex;
+    size_t normalIndicesIndex;
+    
     BoundingBoxf bbox;
     thread loaderThread;
 
@@ -264,9 +273,6 @@ public:
 class BinaryMeshLoader : public MeshLoader
 {
 public:
-    size_t triangleVerticesIndex;
-    size_t normalIndicesIndex;
-    
     BinaryMeshLoader(size_t numTriangles) : MeshLoader(numTriangles) { }
     BinaryMeshLoader(const BinaryMeshLoader& mainLoader) : MeshLoader(mainLoader) { }
     void initializeArrays(size_t triangleOffset, size_t numTriangles);
