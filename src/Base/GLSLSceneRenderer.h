@@ -36,9 +36,10 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
 
     virtual const Affine3& currentModelTransform() const override;
     virtual const Matrix4& projectionMatrix() const override;
+    const Affine3& viewTransform() const;
+    const Matrix4& viewProjectionMatrix() const;
     Matrix4 modelViewMatrix() const;
     Matrix4 modelViewProjectionMatrix() const;
-    const Matrix4& viewProjectionMatrix() const;
 
     void pushShaderProgram(ShaderProgram& program, bool isLightingProgram);
     void popShaderProgram();
@@ -46,7 +47,9 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
     void renderLights(LightingProgram* program);
     void renderFog(LightingProgram* program);
 
-    void dispatchToTransparentPhase(std::function<void()> renderingFunction);
+    void dispatchToTransparentPhase(
+        Referenced* object, int id,
+        std::function<void(Referenced* object, const Affine3& position, int id)> renderingFunction);
 
     virtual bool initializeGL() override;
     virtual void flush() override;

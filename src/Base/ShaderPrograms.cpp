@@ -148,6 +148,8 @@ public:
 class PhongShadowLightingProgramImpl
 {
 public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
     GLuint defaultFBO;
     bool useUniformBlockToPassTransformationMatrices;
     GLSLUniformBlockBuffer transformBlockBuffer;
@@ -175,6 +177,7 @@ public:
     int currentShadowIndex;
 
     struct ShadowInfo {
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         int lightIndex;
         GLint shadowMatrixLocation;
         GLint lightIndexLocation;
@@ -183,7 +186,7 @@ public:
         GLuint frameBuffer;
         Matrix4 BPV;
     };
-    std::vector<ShadowInfo> shadowInfos;
+    std::vector<ShadowInfo, Eigen::aligned_allocator<ShadowInfo>> shadowInfos;
 
     Matrix4 shadowBias;
 

@@ -7,7 +7,6 @@
 #define CNOID_UTIL_MESH_GENERATOR_H
 
 #include "EigenTypes.h"
-#include <Eigen/StdVector>
 #include "SceneDrawables.h"
 #include "exportdecl.h"
 
@@ -19,7 +18,6 @@ class CNOID_EXPORT MeshGenerator
 {
 public:
     MeshGenerator();
-
     MeshGenerator(const MeshGenerator& org);
     ~MeshGenerator();
 
@@ -46,9 +44,9 @@ public:
     SgMesh* generateArrow(double cylinderRadius, double cylinderHeight, double coneRadius, double coneHeight);
     SgMesh* generateTorus(double radius, double crossSectionRadius);
 
-    typedef std::vector<Vector2, Eigen::aligned_allocator<Vector2> > Vector2Array;
-    typedef std::vector<Vector3, Eigen::aligned_allocator<Vector3> > Vector3Array;
-    typedef std::vector<AngleAxis, Eigen::aligned_allocator<AngleAxis> > AngleAxisArray;
+    typedef std::vector<Vector2, Eigen::aligned_allocator<Vector2>> Vector2Array;
+    typedef std::vector<Vector3, Eigen::aligned_allocator<Vector3>> Vector3Array;
+    typedef std::vector<AngleAxis, Eigen::aligned_allocator<AngleAxis>> AngleAxisArray;
         
     struct Extrusion
     {

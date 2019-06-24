@@ -9,7 +9,6 @@
 #include "SceneLights.h"
 #include "SceneEffects.h"
 #include "PolymorphicFunctionSet.h"
-#include <Eigen/StdVector>
 #include <boost/variant.hpp>
 #include <set>
 #include <unordered_map>
@@ -112,7 +111,7 @@ public:
         PreproNode* node;
     };
 
-    typedef vector<CameraInfo, Eigen::aligned_allocator<CameraInfo> > CameraInfoArray;
+    typedef vector<CameraInfo, Eigen::aligned_allocator<CameraInfo>> CameraInfoArray;
     CameraInfoArray cameras1;
     CameraInfoArray cameras2;
     CameraInfoArray* cameras;
@@ -135,7 +134,7 @@ public:
         SgLight* light;
         Affine3 M;
     };
-    vector<LightInfo, Eigen::aligned_allocator<LightInfo> > lights;
+    vector<LightInfo, Eigen::aligned_allocator<LightInfo>> lights;
 
     SgLightPtr headLight;
     std::set<SgLightPtr> defaultLights;

@@ -21,7 +21,6 @@
 #include <cnoid/Exception>
 #include <cnoid/YAMLReader>
 #include <cnoid/NullOut>
-#include <Eigen/StdVector>
 #include <fmt/format.h>
 #include <boost/optional.hpp>
 #include <unordered_map>

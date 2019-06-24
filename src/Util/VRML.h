@@ -9,7 +9,6 @@
 #include "Referenced.h"
 #include <Eigen/Core>
 #include <Eigen/Geometry>
-#include <Eigen/StdVector>
 #include <boost/variant.hpp>
 #include <string>
 #include <bitset>
@@ -47,11 +46,11 @@ typedef struct {
 
 typedef std::vector<SFInt32> MFInt32;
 typedef std::vector<SFFloat> MFFloat;
-typedef std::vector<SFVec2f, Eigen::aligned_allocator<SFVec2f> > MFVec2f;
+typedef std::vector<SFVec2f, Eigen::aligned_allocator<SFVec2f>> MFVec2f;
 typedef std::vector<SFVec2s> MFVec2s; // single-precision type used for texture coordinates
 typedef std::vector<SFVec3f> MFVec3f;
 typedef std::vector<SFVec3s> MFVec3s; // single-precision type used for vertices and normals
-typedef std::vector<SFRotation> MFRotation;
+typedef std::vector<SFRotation, Eigen::aligned_allocator<SFRotation>> MFRotation;
 typedef std::vector<SFTime> MFTime;
 typedef std::vector<SFColor> MFColor;
 typedef std::vector<SFString> MFString;

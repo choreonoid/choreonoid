@@ -54,7 +54,8 @@ bool ParticlesProgramBase::initializeRendering(SceneParticles* particles)
 }
 
 
-void ParticlesProgramBase::requestRendering(SceneParticles* particles, std::function<void()> renderingFunction)
+void ParticlesProgramBase::requestRendering
+(SceneParticles* particles, const std::function<void()>& renderingFunction)
 {
     if(renderer_->isPicking()){
         return;
@@ -85,14 +86,15 @@ void ParticlesProgramBase::requestRendering(SceneParticles* particles, std::func
         }
     }
 
-    Matrix3f R = renderer_->currentModelTransform().linear().cast<float>();
-    const Matrix4f MV = renderer_->modelViewMatrix().cast<float>();
-    renderer_->dispatchToTransparentPhase([=](){ render(particles, R, MV, renderingFunction); });
+    renderer_->dispatchToTransparentPhase(
+        particles, 0,
+        [this, renderingFunction](Referenced* object, const Affine3& position, int /* id */){
+            render(static_cast<SceneParticles*>(object), position, renderingFunction); });
 }
 
 
 void ParticlesProgramBase::render
-(SceneParticles* particles, const Matrix3f& R, const Matrix4f& MV, const std::function<void()>& renderingFunction)
+(SceneParticles* particles, const Affine3& position, const std::function<void()>& renderingFunction)
 {
     ShaderProgram* program = shaderProgram();
     
@@ -104,6 +106,7 @@ void ParticlesProgramBase::render
         renderer_->renderFog(lightingProgram);
     }
 
+    const Matrix4f MV = (renderer_->viewTransform() * position).cast<float>().matrix();
     glUniformMatrix4fv(modelViewMatrixLocation, 1, GL_FALSE, MV.data());
     const Matrix4f P = renderer_->projectionMatrix().cast<float>();
     glUniformMatrix4fv(projectionMatrixLocation, 1, GL_FALSE, P.data());
@@ -127,7 +130,7 @@ void ParticlesProgramBase::render
     
     glUniform1i(particleTexLocation, 0);
 
-    globalAttitude_ = R;
+    globalAttitude_ = position.linear().cast<float>();
     renderingFunction();
 
     renderer_->popShaderProgram();

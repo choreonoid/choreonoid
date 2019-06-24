@@ -42,6 +42,8 @@ namespace cnoid {
 class BodyMarkerItemImpl
 {
 public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    
     BodyMarkerItem* self;
     BodyItem* bodyItem;
     Link* targetLink;

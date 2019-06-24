@@ -10,7 +10,6 @@
 #include <cnoid/SceneEffects>
 #include <cnoid/EigenUtil>
 #include <cnoid/NullOut>
-#include <Eigen/StdVector>
 #include <boost/dynamic_bitset.hpp>
 #include <unordered_map>
 #include <iostream>
@@ -34,7 +33,7 @@ const bool SHOW_IMAGE_FOR_PICKING = false;
 
 const float MinLineWidthForPicking = 5.0f;
 
-typedef vector<Affine3, Eigen::aligned_allocator<Affine3> > Affine3Array;
+typedef vector<Affine3, Eigen::aligned_allocator<Affine3>> Affine3Array;
 
 struct SgObjectPtrHash {
     std::hash<SgObject*> hash;
@@ -155,7 +154,7 @@ public:
 
     Affine3Array Vstack; // stack of the model/view matrices
 
-    typedef vector<Vector4f, Eigen::aligned_allocator<Vector4f> > ColorArray;
+    typedef vector<Vector4f, Eigen::aligned_allocator<Vector4f>> ColorArray;
         
     struct Buf {
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
