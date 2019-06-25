@@ -51,7 +51,8 @@ public:
     
     void open(const string& filename)
     {
-        ifs.open(filename, std::ios::in);
+        // The binary mode is faster on Windows
+        ifs.open(filename, std::ios::in | std::ios::binary);
         this->filename = filename;
         clear();
     }
@@ -66,10 +67,28 @@ public:
     bool getLine()
     {
         pos = buf;
-        if(ifs.getline(buf, bufsize)){
+        bool result;
+#ifndef _WIN32
+        result = ifs.getline(buf, bufsize);
+#else
+        // The following code is faster on Windows
+        result = false;
+        if(ifs.get(buf, bufsize, '\n')){
+            ifs.ignore();
+            result = true;
+        } else if(!ifs.eof() && ifs.fail()){
+            ifs.clear();
+            if(ifs.peek() == '\n'){
+                ifs.ignore();
+                result = true;
+            }
+        }
+#endif
+        if(result){
             ++lineNumber;
             return true;
         }
+
         if(!ifs.eof()){
             if(ifs.gcount() > 0){
                 throwEx("Too long line");
@@ -83,7 +102,7 @@ public:
 
     void skipSpaces()
     {
-        while(*pos == ' ' && *pos != '\0'){
+        while(*pos == ' '){
             ++pos;
         }
     }
@@ -253,7 +272,7 @@ public:
     void addNormal(const Vector3f& normal, AddIndexFunction addIndex);
     template<typename AddIndexFunction>
     void addVertex(const Vector3f& vertex, AddIndexFunction addIndex);
-    void join();
+    bool join();
     int findElement(
         const Vector3f& element, const SgVectorArray<Vector3f>& prevElements, int searchLength);
     void findRedundantElementsBetweenLoaders(
@@ -440,11 +459,13 @@ void MeshLoader::addVertex(const Vector3f& vertex, AddIndexFunction addIndex)
 }
 
 
-void MeshLoader::join()
+bool MeshLoader::join()
 {
     if(loaderThread.joinable()){
         loaderThread.join();
+        return true;
     }
+    return false;
 }
 
 
@@ -827,34 +848,44 @@ SgMeshPtr STLSceneLoaderImpl::loadAsciiFormatConcurrently
 (const string& filename, AsciiMeshLoader& mainLoader, pos_type fileSize, size_t numThreads)
 {
     vector<AsciiMeshLoader> loaders(numThreads, mainLoader);
-
     pos_type fragmentSize = fileSize / numThreads;
-
-    AsciiMeshLoader* prevLoader = &loaders.front();
-    for(size_t i=1; i < loaders.size(); ++i){
-        auto& loader = loaders[i];
-        if(loader.seekToTriangleBorderPosition(i * fragmentSize)){
-            prevLoader->seekEnd = loader.seekOffset;
-            prevLoader->loadConcurrently();
-            prevLoader = &loader;
+    bool ready = true;
+    
+    try {
+        AsciiMeshLoader* prevLoader = &loaders.front();
+        for(size_t i=1; i < loaders.size(); ++i){
+            auto& loader = loaders[i];
+            if(loader.seekToTriangleBorderPosition(i * fragmentSize)){
+                prevLoader->seekEnd = loader.seekOffset;
+                prevLoader->loadConcurrently();
+                prevLoader = &loader;
+            }
         }
     }
-        
-    auto& lastLoader = loaders.back();
-    lastLoader.seekEnd = fileSize;
-    lastLoader.load();
+    catch(const std::exception& ex){
+        os() << ex.what() << endl;
+        ready = false;
+    }
 
-    bool loaded = true;
+    if(ready){
+        auto& lastLoader = loaders.back();
+        lastLoader.seekEnd = fileSize;
+        lastLoader.load();
+    }
+
     for(auto& loader : loaders){
-        loader.join();
-        if(!loader.isSuccessfullyLoaded){
-            os() << loader.errorMessage << endl;
-            loaded = false;
+        if(loader.join()){
+            if(!loader.isSuccessfullyLoaded){
+                if(!loader.errorMessage.empty()){
+                    os() << loader.errorMessage << endl;
+                }
+                ready = false;
+            }
         }
     }
 
     SgMeshPtr mesh;
-    if(loaded){
+    if(ready){
         mesh = integrateSubLoaderMeshes(mainLoader, getMeshLoaderPointers(loaders));
     }
     return mesh;
