@@ -67,12 +67,14 @@ public:
     bool getLine()
     {
         pos = buf;
-        bool result;
+        bool result = false;
+
 #ifndef _WIN32
-        result = ifs.getline(buf, bufsize);
+        if(ifs.getline(buf, bufsize)){
+            result = true;
+        }
 #else
         // The following code is faster on Windows
-        result = false;
         if(ifs.get(buf, bufsize, '\n')){
             ifs.ignore();
             result = true;
