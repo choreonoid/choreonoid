@@ -12,6 +12,7 @@
 #include <boost/variant.hpp>
 #include <string>
 #include <bitset>
+#include <vector>
 #include <map>
 #include "exportdecl.h"
 
