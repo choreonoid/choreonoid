@@ -640,6 +640,17 @@ STLSceneLoaderImpl::STLSceneLoaderImpl()
 {
     maxNumThreads = std::max((unsigned)1, thread::hardware_concurrency());
 
+#ifndef _WIN32
+    /**
+       The number of threads is limited to 4 at maximum because just increasing
+       the number of threds accessing the same file will slow down overall file
+       reading speed for the binary format on Linux.
+    */
+    if(maxNumThreads > 4){
+        maxNumThreads = 4;
+    }
+#endif
+
     os_ = &nullout();
 }
 
@@ -717,15 +728,6 @@ SgMeshPtr STLSceneLoaderImpl::loadBinaryFormat(const string& filename, ifstream&
     BinaryMeshLoader mainLoader(numTriangles);
 
     size_t numThreads = std::min(maxNumThreads, std::max(size_t(1), numTriangles / NumTrianglesPerThread));
-
-    /**
-       The number of threads is limited to 4 at maximum because just increasing
-       the number of threds accessing the same file will slow down overall file
-       reading speed for the binary format.
-    */
-    if(numThreads > 4){
-        numThreads = 4;
-    }
 
     if(numThreads == 1){
         mainLoader.load(ifs, 0, numTriangles);
