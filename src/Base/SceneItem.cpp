@@ -139,8 +139,8 @@ void SceneItem::setLightweightRenderingEnabled(bool on)
     } else {
         auto lightweight = topNode_->findNodeOfType<SgLightweightRenderingGroup>(1);
         if(lightweight){
-            topNode_->removeChild(lightweight);
-            lightweight->moveChildrenTo(topNode_, true);
+            lightweight->moveChildrenTo(topNode_);
+            topNode_->removeChild(lightweight, true);
         }
     }
     isLightweightRenderingEnabled_ = on;

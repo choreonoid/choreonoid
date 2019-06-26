@@ -676,6 +676,16 @@ void GLSLSceneRenderer::requestToClearResources()
 }
 
 
+void GLSLSceneRenderer::onSceneGraphUpdated(const SgUpdate& update)
+{
+    if(SgLightweightRenderingGroup* group = dynamic_cast<SgLightweightRenderingGroup*>(update.path().front())){
+        requestToClearResources();
+    }
+    
+    GLSceneRenderer::onSceneGraphUpdated(update);
+}
+    
+
 void GLSLSceneRenderer::doRender()
 {
     impl->doRender();
@@ -1745,7 +1755,6 @@ bool GLSLSceneRendererImpl::writeMeshNormalsSub
         glBufferData(GL_ARRAY_BUFFER, normals.array.size() * sizeof(value_type), normals.array.data(), GL_STATIC_DRAW);
         glEnableVertexAttribArray(1);
     }
-    
     
     if(isNormalVisualizationEnabled){
         auto lines = new SgLineSet;
