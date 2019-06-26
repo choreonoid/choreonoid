@@ -638,7 +638,12 @@ STLSceneLoader::STLSceneLoader()
 
 STLSceneLoaderImpl::STLSceneLoaderImpl()
 {
-    maxNumThreads = std::max((unsigned)1, thread::hardware_concurrency());
+    /**
+       The number of threads is limited to 4 at maximum because just increasing
+       the number of threds accessing the same file will be slow down overall
+       file reading speed.
+    */
+    maxNumThreads = std::max((unsigned)1, std::min(thread::hardware_concurrency(), (unsigned)4));
 
     os_ = &nullout();
 }
