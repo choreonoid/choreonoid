@@ -246,7 +246,7 @@ public:
     SgVertexArray* vertices() { return vertices_; }
     const SgVertexArray* vertices() const { return vertices_; }
     SgVertexArray* setVertices(SgVertexArray* vertices);
-    SgVertexArray* getOrCreateVertices();
+    SgVertexArray* getOrCreateVertices(size_t size = 0);
         
     bool hasNormals() const { return (normals_ && !normals_->empty()); }
     SgNormalArray* normals() { return normals_; }
@@ -503,7 +503,7 @@ public:
     SgVertexArray* vertices() { return vertices_; }
     const SgVertexArray* vertices() const { return vertices_; }
     SgVertexArray* setVertices(SgVertexArray* vertices);
-    SgVertexArray* getOrCreateVertices();
+    SgVertexArray* getOrCreateVertices(size_t size = 0);
         
     SgMaterial* material() { return material_; }
     const SgMaterial* material() const { return material_; }
