@@ -19,9 +19,10 @@ public:
     InteractiveCameraTransform(const InteractiveCameraTransform& org);
     InteractiveCameraTransform(const InteractiveCameraTransform& org, SgCloneMap& cloneMap);
 
-    virtual SgObject* clone(SgCloneMap& cloneMap) const;
+    virtual SgObject* clone(SgCloneMap& cloneMap) const override;
 
-    virtual void onPositionUpdatedInteractively();
+protected:
+    InteractiveCameraTransform(int polymorhicId);
 };
 
 typedef ref_ptr<InteractiveCameraTransform> InteractiveCameraTransformPtr;

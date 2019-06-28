@@ -77,6 +77,7 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
     virtual void setUpsideDown(bool on) override;
     virtual void setBackFaceCullingMode(int mode) override;
     virtual int backFaceCullingMode() const override;
+    virtual void setBoundingBoxRenderingForLightweightRenderingGroupEnabled(bool on) override;
 
     void setLowMemoryConsumptionMode(bool on);
 

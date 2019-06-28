@@ -6,13 +6,23 @@
 
 using namespace cnoid;
 
+
+InteractiveCameraTransform::InteractiveCameraTransform(int polymorhicId)
+    : SgPosTransform(polymorhicId)
+{
+    
+}
+
+
 InteractiveCameraTransform::InteractiveCameraTransform()
+    : InteractiveCameraTransform(findPolymorphicId<InteractiveCameraTransform>())
 {
     
 }
 
 
 InteractiveCameraTransform::InteractiveCameraTransform(const InteractiveCameraTransform& org)
+    : SgPosTransform(org)
 {
 
 }
@@ -31,7 +41,12 @@ SgObject* InteractiveCameraTransform::clone(SgCloneMap& cloneMap) const
 }
 
 
-void InteractiveCameraTransform::onPositionUpdatedInteractively()
-{
+namespace {
+
+struct NodeTypeRegistration {
+    NodeTypeRegistration() {
+        SgNode::registerType<InteractiveCameraTransform, SgPosTransform>();
+    }
+} registration;
 
 }

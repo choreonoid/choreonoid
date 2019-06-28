@@ -142,6 +142,7 @@ public:
     Connection pointRenderingModeCheckConnection;
     CheckBox normalVisualizationCheck;
     DoubleSpinBox normalLengthSpin;
+    CheckBox boundingBoxRenderingForLightweightRenderingGroupCheck;
     CheckBox coordinateAxesCheck;
     CheckBox fpsCheck;
     PushButton fpsTestButton;
@@ -211,13 +212,15 @@ public:
     SgUpdate added;
     SgUpdate removed;
 
+    InteractiveCameraTransformPtr interactiveCameraTransform;
     InteractiveCameraTransformPtr builtinCameraTransform;
     SgPerspectiveCameraPtr builtinPersCamera;
     SgOrthographicCameraPtr builtinOrthoCamera;
     int numBuiltinCameras;
     bool isBuiltinCameraCurrent;
-
-    InteractiveCameraTransformPtr interactiveCameraTransform;
+    bool isBoundingBoxRenderingForLightweightRenderingGroupEnabled;
+    bool isCameraPositionInteractivelyChanged;
+    Timer timerToRenderNormallyAfterInteractiveCameraPositionChange;
 
     SgDirectionalLightPtr worldLight;
 
@@ -378,6 +381,7 @@ public:
     void startViewZoom();
     void dragViewZoom();
     void zoomView(double ratio);
+    void notifyCameraPositionInteractivelyChanged();
 
     void rotateBuiltinCameraView(double dPitch, double dYaw);
     void translateBuiltinCameraView(const Vector3& dp_local);
@@ -591,6 +595,11 @@ SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self, bool useGLSL)
     isBuiltinCameraCurrent = true;
     numBuiltinCameras = 2;
     systemGroup->addChild(builtinCameraTransform);
+    isBoundingBoxRenderingForLightweightRenderingGroupEnabled = false;
+    isCameraPositionInteractivelyChanged = false;
+    timerToRenderNormallyAfterInteractiveCameraPositionChange.setSingleShot(true);
+    timerToRenderNormallyAfterInteractiveCameraPositionChange.sigTimeout().connect(
+        [&](){ update(); });
 
     config = new ConfigDialog(this, useGLSL);
     config->updateBuiltinCameraConfig();
@@ -774,6 +783,21 @@ void SceneWidgetImpl::paintGL()
     if(TRACE_FUNCTIONS){
         static int counter = 0;
         os << "SceneWidgetImpl::paintGL() " << counter++ << endl;
+    }
+
+    bool isBoundingBoxRenderingForLightweightRenderingGroupActive = false;
+    if(isBoundingBoxRenderingForLightweightRenderingGroupEnabled){
+        isBoundingBoxRenderingForLightweightRenderingGroupActive = isCameraPositionInteractivelyChanged;
+    }
+    isCameraPositionInteractivelyChanged = false;
+    
+    renderer->setBoundingBoxRenderingForLightweightRenderingGroupEnabled(
+        isBoundingBoxRenderingForLightweightRenderingGroupActive);
+
+    if(isBoundingBoxRenderingForLightweightRenderingGroupActive){
+        timerToRenderNormallyAfterInteractiveCameraPositionChange.start(250);
+    } else if(timerToRenderNormallyAfterInteractiveCameraPositionChange.isActive()){
+        timerToRenderNormallyAfterInteractiveCameraPositionChange.stop();
     }
 
     renderer->render();
@@ -1048,7 +1072,6 @@ void SceneWidgetImpl::viewAll()
     }
 
     interactiveCameraTransform->notifyUpdate(modified);
-    interactiveCameraTransform->onPositionUpdatedInteractively();
 }
 
 
@@ -1723,8 +1746,7 @@ void SceneWidgetImpl::dragViewRotation()
         T.linear() = S;
     }
     
-    interactiveCameraTransform->notifyUpdate(modified);
-    interactiveCameraTransform->onPositionUpdatedInteractively();
+    notifyCameraPositionInteractivelyChanged();
 }
 
 
@@ -1792,8 +1814,7 @@ void SceneWidgetImpl::dragViewTranslation()
             Translation3(-dx * SgCamera::right(orgCameraPosition)) *
             orgCameraPosition));
     
-    interactiveCameraTransform->notifyUpdate(modified);
-    interactiveCameraTransform->onPositionUpdatedInteractively();
+    notifyCameraPositionInteractivelyChanged();
 }
 
 
@@ -1842,13 +1863,13 @@ void SceneWidgetImpl::dragViewZoom()
             const double l0 = (lastClickedPoint - C.translation()).dot(v);
             interactiveCameraTransform->setTranslation(C.translation() + v * (l0 * (-ratio + 1.0)));
         }
-        interactiveCameraTransform->notifyUpdate(modified);
-        interactiveCameraTransform->onPositionUpdatedInteractively();
 
     } else if(SgOrthographicCamera* ortho = dynamic_cast<SgOrthographicCamera*>(camera)){
         ortho->setHeight(orgOrthoCameraHeight * ratio);
         ortho->notifyUpdate(modified);
     }
+
+    notifyCameraPositionInteractivelyChanged();
 }
 
 
@@ -1877,15 +1898,22 @@ void SceneWidgetImpl::zoomView(double ratio)
             const double dz = ratio * (lastClickedPoint - C.translation()).dot(v);
             interactiveCameraTransform->translation() -= dz * v;
         }
-        interactiveCameraTransform->notifyUpdate(modified);
-        interactiveCameraTransform->onPositionUpdatedInteractively();
 
     } else if(SgOrthographicCamera* ortho = dynamic_cast<SgOrthographicCamera*>(camera)){
         ortho->setHeight(ortho->height() * expf(ratio));
         ortho->notifyUpdate(modified);
     }
+
+    notifyCameraPositionInteractivelyChanged();
 }
 
+
+void SceneWidgetImpl::notifyCameraPositionInteractivelyChanged()
+{
+    isCameraPositionInteractivelyChanged = true;
+    interactiveCameraTransform->notifyUpdate(modified);
+}
+    
 
 void SceneWidget::startBuiltinCameraViewChange(const Vector3& center)
 {
@@ -2089,19 +2117,19 @@ void SceneWidgetImpl::updateCurrentCamera()
         
 SgPosTransform* SceneWidget::builtinCameraTransform()
 {
-    return impl->builtinCameraTransform.get();
+    return impl->builtinCameraTransform;
 }
 
 
 SgPerspectiveCamera* SceneWidget::builtinPerspectiveCamera() const
 {
-    return impl->builtinPersCamera.get();
+    return impl->builtinPersCamera;
 }
 
 
 SgOrthographicCamera* SceneWidget::builtinOrthographicCamera() const
 {
-    return impl->builtinOrthoCamera.get();
+    return impl->builtinOrthoCamera;
 }
 
 
@@ -3218,6 +3246,11 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     normalLengthSpin.setValue(0.01);
     normalLengthSpin.sigValueChanged().connect([=](double){ impl->onNormalVisualizationChanged(); });
     hbox->addWidget(&normalLengthSpin);
+
+    boundingBoxRenderingForLightweightRenderingGroupCheck.setText(_("Lightweight view change"));
+    boundingBoxRenderingForLightweightRenderingGroupCheck.sigToggled().connect(
+        [=](bool on){ impl->isBoundingBoxRenderingForLightweightRenderingGroupEnabled = on; });
+    hbox->addWidget(&boundingBoxRenderingForLightweightRenderingGroupCheck);
     hbox->addStretch();
     vbox->addLayout(hbox);
     
@@ -3342,6 +3375,7 @@ void ConfigDialog::storeState(Archive& archive)
     archive.write("pointSize", pointSizeSpin.value());
     archive.write("normalVisualization", normalVisualizationCheck.isChecked());
     archive.write("normalLength", normalLengthSpin.value());
+    archive.write("lightweightViewChange", boundingBoxRenderingForLightweightRenderingGroupCheck.isChecked());
     archive.write("coordinateAxes", coordinateAxesCheck.isChecked());
     archive.write("fpsTestIteration", fpsTestIterationSpin.value());
     archive.write("showFPS", fpsCheck.isChecked());
@@ -3405,6 +3439,9 @@ void ConfigDialog::restoreState(const Archive& archive)
     normalVisualizationCheck.setChecked(archive.get("normalVisualization", normalVisualizationCheck.isChecked()));
     normalLengthSpin.setValue(archive.get("normalLength", normalLengthSpin.value()));
     coordinateAxesCheck.setChecked(archive.get("coordinateAxes", coordinateAxesCheck.isChecked()));
+    boundingBoxRenderingForLightweightRenderingGroupCheck.setChecked(
+        archive.get("lightweightViewChange", boundingBoxRenderingForLightweightRenderingGroupCheck.isChecked()));
+
     fpsTestIterationSpin.setValue(archive.get("fpsTestIteration", fpsTestIterationSpin.value()));
     fpsCheck.setChecked(archive.get("showFPS", fpsCheck.isChecked()));
     newDisplayListDoubleRenderingCheck.setChecked(archive.get("enableNewDisplayListDoubleRendering", newDisplayListDoubleRenderingCheck.isChecked()));
