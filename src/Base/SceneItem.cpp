@@ -48,7 +48,7 @@ void SceneItem::initializeClass(ExtensionManager* ext)
         ext->itemManager().registerClass<SceneItem>(N_("SceneItem"));
 
         ext->itemManager().addLoader<SceneItem>(
-            "Scene", "AVAILABLE-SCENE-FILE", SceneLoader::availableFileExtensions,
+            _("Scene"), "AVAILABLE-SCENE-FILE", SceneLoader::availableFileExtensions,
             [&](SceneItem* item, const std::string& filename, std::ostream& os, Item* parentItem){
                 return ::loadScene(item, filename, os);
             },
