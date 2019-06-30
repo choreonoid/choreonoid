@@ -342,10 +342,12 @@ SgVertexArray* SgMeshBase::setVertices(SgVertexArray* vertices)
 }
 
 
-SgVertexArray* SgMeshBase::getOrCreateVertices()
+SgVertexArray* SgMeshBase::getOrCreateVertices(size_t size)
 {
     if(!vertices_){
-        setVertices(new SgVertexArray);
+        setVertices(new SgVertexArray(size));
+    } else if(size > 0){
+        vertices_->resize(size);
     }
     return vertices_;
 }
@@ -818,10 +820,12 @@ SgVertexArray* SgPlot::setVertices(SgVertexArray* vertices)
 }
 
 
-SgVertexArray* SgPlot::getOrCreateVertices()
+SgVertexArray* SgPlot::getOrCreateVertices(size_t size)
 {
     if(!vertices_){
-        setVertices(new SgVertexArray);
+        setVertices(new SgVertexArray(size));
+    } else if(size > 0){
+        vertices_->resize(size);
     }
     return vertices_;
 }

@@ -94,6 +94,8 @@ public:
     virtual void setBackFaceCullingMode(int mode) = 0;
     virtual int backFaceCullingMode() const = 0;
 
+    virtual void setBoundingBoxRenderingForLightweightRenderingGroupEnabled(bool on);
+
 protected:
     virtual void onSceneGraphUpdated(const SgUpdate& update) override;
     virtual void onImageUpdated(SgImage* image) = 0;

@@ -80,9 +80,10 @@ public:
     int numBuffers;
     SgObjectPtr sceneObject;
     ScopedConnection connection;
-    SgLineSetPtr normalVisualization;
     Matrix4* pLocalTransform;
     Matrix4 localTransform;
+    SgLineSetPtr boundingBoxLines;
+    SgLineSetPtr normalVisualization;
     
     VertexResource(const VertexResource&) = delete;
     VertexResource& operator=(const VertexResource&) = delete;
@@ -250,6 +251,8 @@ public:
     bool isLightweightRenderingBeingProcessed;
     bool isLowMemoryConsumptionMode;
     bool isLowMemoryConsumptionRenderingBeingProcessed;
+    bool isBoundingBoxRenderingMode;
+    bool isBoundingBoxRenderingForLightweightRenderingGroupEnabled;
     
     Affine3Array modelMatrixStack; // stack of the model matrices
     Affine3 viewTransform;
@@ -363,8 +366,12 @@ public:
     void renderTransform(SgTransform* transform);
     void renderSwitch(SgSwitch* node);
     void renderUnpickableGroup(SgUnpickableGroup* group);
+    VertexResource* getOrCreateVertexResource(SgObject* obj);
+    void drawVertexResource(VertexResource* resource, GLenum primitiveMode, const Affine3& position);
+    void drawBoundingBox(VertexResource* resource, const BoundingBox& bbox);
     void renderShape(SgShape* shape);
     void renderShapeMain(SgShape* shape, const Affine3& position, int pickId);
+    void applyCullingMode(SgMesh* mesh);
     void renderPointSet(SgPointSet* pointSet);        
     void renderLineSet(SgLineSet* lineSet);        
     void renderOverlay(SgOverlay* overlay);
@@ -372,8 +379,6 @@ public:
     void renderOutlineGroupMain(SgOutlineGroup* outline, const Affine3& T);
     void renderLightweightRenderingGroup(SgLightweightRenderingGroup* group);
     void flushNolightingTransformMatrices();
-    VertexResource* getOrCreateVertexResource(SgObject* obj);
-    void drawVertexResource(VertexResource* resource, GLenum primitiveMode, const Affine3& position);
     void renderTransparentObjects();
     void renderMaterial(const SgMaterial* material);
     bool renderTexture(SgTexture* texture);
@@ -450,9 +455,9 @@ void GLSLSceneRendererImpl::initialize()
     isActuallyRendering = false;
     isPicking = false;
     isRenderingShadowMap = false;
-    pickedPoint.setZero();
-
     isLowMemoryConsumptionMode = false;
+    isBoundingBoxRenderingMode = false;
+    isBoundingBoxRenderingForLightweightRenderingGroupEnabled = false;
 
     doUnusedResourceCheck = true;
     currentResourceMapIndex = 0;
@@ -483,6 +488,9 @@ void GLSLSceneRendererImpl::initialize()
     isUpsideDownEnabled = false;
 
     stateFlag.resize(NUM_STATE_FLAGS, false);
+
+    pickedPoint.setZero();
+
     clearGLState();
 
     os_ = &nullout();
@@ -1329,6 +1337,41 @@ void GLSLSceneRendererImpl::drawVertexResource(VertexResource* resource, GLenum 
 }
 
 
+void GLSLSceneRendererImpl::drawBoundingBox(VertexResource* resource, const BoundingBox& bbox)
+{
+    if(!resource->boundingBoxLines){
+        auto lines = new SgLineSet;
+        auto& v = *lines->getOrCreateVertices(8);
+        const Vector3f min = bbox.min().cast<float>();
+        const Vector3f max = bbox.max().cast<float>();
+        v[0] << min.x(), min.y(), min.z();
+        v[1] << min.x(), min.y(), max.z();
+        v[2] << min.x(), max.y(), min.z();
+        v[3] << min.x(), max.y(), max.z();
+        v[4] << max.x(), min.y(), min.z();
+        v[5] << max.x(), min.y(), max.z();
+        v[6] << max.x(), max.y(), min.z();
+        v[7] << max.x(), max.y(), max.z();
+        lines->addLine(0, 1);
+        lines->addLine(0, 2);
+        lines->addLine(0, 4);
+        lines->addLine(1, 3);
+        lines->addLine(1, 5);
+        lines->addLine(2, 3);
+        lines->addLine(2, 6);
+        lines->addLine(3, 7);
+        lines->addLine(4, 5);
+        lines->addLine(4, 6);
+        lines->addLine(5, 7);
+        lines->addLine(6, 7);
+        lines->getOrCreateMaterial()->setDiffuseColor(Vector3f(1.0f, 1.0f, 1.0f));
+        resource->boundingBoxLines = lines;
+    }
+
+    renderLineSet(resource->boundingBoxLines);
+}
+        
+        
 void GLSLSceneRendererImpl::renderShape(SgShape* shape)
 {
     SgMesh* mesh = shape->mesh();
@@ -1357,11 +1400,6 @@ void GLSLSceneRendererImpl::renderShapeMain(SgShape* shape, const Affine3& posit
 {
     auto mesh = shape->mesh();
     
-    VertexResource* resource = getOrCreateVertexResource(mesh);
-    if(!resource->isValid()){
-        makeVertexBufferObjects(shape, resource);
-    }
-
     if(isPicking){
         setPickColor(pickId);
     } else {
@@ -1381,49 +1419,61 @@ void GLSLSceneRendererImpl::renderShapeMain(SgShape* shape, const Affine3& posit
         }
     }
 
-    if(!isRenderingShadowMap){
+    VertexResource* resource = getOrCreateVertexResource(mesh);
+    if(!resource->isValid()){
+        makeVertexBufferObjects(shape, resource);
+    }
+    if(isBoundingBoxRenderingMode){
+        drawBoundingBox(resource, mesh->boundingBox());
+    } else {
+        if(!isRenderingShadowMap){
+            applyCullingMode(mesh);
+        }
+        drawVertexResource(resource, GL_TRIANGLES, position);
 
-        if(!stateFlag[CULL_FACE]){
-            bool enableCullFace;
-            switch(backFaceCullingMode){
-            case GLSceneRenderer::ENABLE_BACK_FACE_CULLING:
-                enableCullFace = mesh->isSolid();
-                break;
-            case GLSceneRenderer::DISABLE_BACK_FACE_CULLING:
-                enableCullFace = false;
-                break;
-            case GLSceneRenderer::FORCE_BACK_FACE_CULLING:
-            default:
-                enableCullFace = true;
-                break;
-            }
-            if(enableCullFace){
-                glEnable(GL_CULL_FACE);
-            } else {
-                glDisable(GL_CULL_FACE);
-            }
-            isCullFaceEnabled = enableCullFace;
-            stateFlag[CULL_FACE] = true;
-
-        } else if(backFaceCullingMode == GLSceneRenderer::ENABLE_BACK_FACE_CULLING){
-            if(mesh->isSolid()){
-                if(!isCullFaceEnabled){
-                    glEnable(GL_CULL_FACE);
-                    isCullFaceEnabled = true;
-                }
-            } else {
-                if(isCullFaceEnabled){
-                    glDisable(GL_CULL_FACE);
-                    isCullFaceEnabled = false;
-                }
-            }
+        if(isNormalVisualizationEnabled && isActuallyRendering && resource->normalVisualization){
+            renderLineSet(resource->normalVisualization);
         }
     }
-    
-    drawVertexResource(resource, GL_TRIANGLES, position);
+}
 
-    if(isNormalVisualizationEnabled && isActuallyRendering && resource->normalVisualization){
-        renderLineSet(resource->normalVisualization);
+
+void GLSLSceneRendererImpl::applyCullingMode(SgMesh* mesh)
+{
+    if(!stateFlag[CULL_FACE]){
+        bool enableCullFace;
+        switch(backFaceCullingMode){
+        case GLSceneRenderer::ENABLE_BACK_FACE_CULLING:
+            enableCullFace = mesh->isSolid();
+            break;
+        case GLSceneRenderer::DISABLE_BACK_FACE_CULLING:
+            enableCullFace = false;
+            break;
+        case GLSceneRenderer::FORCE_BACK_FACE_CULLING:
+        default:
+            enableCullFace = true;
+            break;
+        }
+        if(enableCullFace){
+            glEnable(GL_CULL_FACE);
+        } else {
+            glDisable(GL_CULL_FACE);
+        }
+        isCullFaceEnabled = enableCullFace;
+        stateFlag[CULL_FACE] = true;
+        
+    } else if(backFaceCullingMode == GLSceneRenderer::ENABLE_BACK_FACE_CULLING){
+        if(mesh->isSolid()){
+            if(!isCullFaceEnabled){
+                glEnable(GL_CULL_FACE);
+                isCullFaceEnabled = true;
+            }
+        } else {
+            if(isCullFaceEnabled){
+                glDisable(GL_CULL_FACE);
+                isCullFaceEnabled = false;
+            }
+        }
     }
 }
 
@@ -2243,6 +2293,7 @@ void GLSLSceneRendererImpl::renderLightweightRenderingGroup(SgLightweightRenderi
     bool wasLightweightRenderingBeingProcessed = isLightweightRenderingBeingProcessed;
     bool wasLowMemoryConsumptionRenderingBeingProcessed = isLowMemoryConsumptionRenderingBeingProcessed;
     bool wasTextureBeingRendered = isTextureBeingRendered;
+    bool wasBoundingBoxRenderingMode = isBoundingBoxRenderingMode;
 
     bool pushed = false;
     
@@ -2259,7 +2310,10 @@ void GLSLSceneRendererImpl::renderLightweightRenderingGroup(SgLightweightRenderi
     isLightweightRenderingBeingProcessed = true;
     isLowMemoryConsumptionRenderingBeingProcessed = true;
     isTextureBeingRendered = false;
-    
+    if(isBoundingBoxRenderingForLightweightRenderingGroupEnabled){
+        isBoundingBoxRenderingMode = true;
+    }
+
     renderChildNodes(group);
 
     if(pushed){
@@ -2269,6 +2323,7 @@ void GLSLSceneRendererImpl::renderLightweightRenderingGroup(SgLightweightRenderi
     isLightweightRenderingBeingProcessed = wasLightweightRenderingBeingProcessed;
     isLowMemoryConsumptionRenderingBeingProcessed = wasLowMemoryConsumptionRenderingBeingProcessed;
     isTextureBeingRendered = wasTextureBeingRendered;
+    isBoundingBoxRenderingMode = wasBoundingBoxRenderingMode;
 }
 
 
@@ -2417,6 +2472,12 @@ void GLSLSceneRenderer::setBackFaceCullingMode(int mode)
 int GLSLSceneRenderer::backFaceCullingMode() const
 {
     return impl->backFaceCullingMode;
+}
+
+
+void GLSLSceneRenderer::setBoundingBoxRenderingForLightweightRenderingGroupEnabled(bool on)
+{
+    impl->isBoundingBoxRenderingForLightweightRenderingGroupEnabled = on;
 }
 
 
