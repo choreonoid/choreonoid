@@ -25,14 +25,7 @@ namespace {
 const bool USE_FBO_FOR_PICKING = true;
 const bool SHOW_IMAGE_FOR_PICKING = false;
 
-/**
-   This option is disabled because it results in wrong normals when
-   the code is compiled by VC++2017 with the AVX2 option.
-   VC++2015 and GCC do not cause such a problem.
-*/
-const bool USE_GL_INT_2_10_10_10_REV_FOR_NORMALS = false;
-
-const bool USE_GL_SHORT_FOR_NORMALS = true;
+const bool USE_GL_FLOAT_FOR_NORMALS = false;
 
 const float MinLineWidthForPicking = 5.0f;
 
@@ -393,6 +386,7 @@ public:
     bool writeMeshNormalsSub(SgMesh* mesh, VertexResource* resource, NormalArrayWrapper& normals);
     void writeMeshNormalsFloat(SgMesh* mesh, VertexResource* resource);
     void writeMeshNormalsShort(SgMesh* mesh, VertexResource* resource);
+    void writeMeshNormalsByte(SgMesh* mesh, VertexResource* resource);
     void writeMeshNormalsPacked(SgMesh* mesh, VertexResource* resource);
     template<typename value_type, GLenum gltype, GLboolean normalized, class TexCoordArrayWrapper>
     void writeMeshTexCoordsSub(
@@ -1634,14 +1628,15 @@ void GLSLSceneRendererImpl::makeVertexBufferObjects(SgShape* shape, VertexResour
     } else {
         writeMeshVerticesFloat(mesh, resource);
     }
-    
-    if(USE_GL_INT_2_10_10_10_REV_FOR_NORMALS && isLowMemoryConsumptionRenderingBeingProcessed){
-        writeMeshNormalsPacked(mesh, resource);
-    } else if(USE_GL_SHORT_FOR_NORMALS){
-        writeMeshNormalsShort(mesh, resource);
-    } else {
+
+    if(isLowMemoryConsumptionRenderingBeingProcessed){
+        writeMeshNormalsByte(mesh, resource);
+        //writeMeshNormalsPacked(mesh, resource);
+    } else if(USE_GL_FLOAT_FOR_NORMALS){
         writeMeshNormalsFloat(mesh, resource);
-    }        
+    } else {
+        writeMeshNormalsShort(mesh, resource);
+    } 
 
     auto texture = shape->texture();
     if(texture && mesh->hasTexCoords() && isTextureBeingRendered){
@@ -1859,6 +1854,29 @@ void GLSLSceneRendererImpl::writeMeshNormalsShort(SgMesh* mesh, VertexResource* 
 }
 
 
+void GLSLSceneRendererImpl::writeMeshNormalsByte(SgMesh* mesh, VertexResource* resource)
+{
+    typedef Eigen::Matrix<GLbyte,3,1> Vector3b;
+
+    struct NormalArrayWrapper {
+        vector<Vector3b> array;
+        void append(const Vector3f& n){
+            array.push_back((127.0f * n).cast<GLbyte>());
+        }
+        Vector3f get(int index){
+            return array[index].cast<float>() / 127.0f;
+        }
+    } normals;
+            
+    writeMeshNormalsSub<Vector3b, GL_BYTE, 3, GL_TRUE>(mesh, resource, normals);
+}
+
+
+/**
+   The following data type implementation results in wrong normals when
+   the code is compiled by VC++2017 with the AVX2 option.
+   VC++2015 and GCC do not cause such a problem.
+*/
 void GLSLSceneRendererImpl::writeMeshNormalsPacked(SgMesh* mesh, VertexResource* resource)
 {
     struct NormalArrayWrapper {
