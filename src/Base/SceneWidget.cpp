@@ -142,7 +142,7 @@ public:
     Connection pointRenderingModeCheckConnection;
     CheckBox normalVisualizationCheck;
     DoubleSpinBox normalLengthSpin;
-    CheckBox boundingBoxRenderingForLightweightRenderingGroupCheck;
+    CheckBox lightweightViewChangeCheck;
     CheckBox coordinateAxesCheck;
     CheckBox fpsCheck;
     PushButton fpsTestButton;
@@ -218,7 +218,7 @@ public:
     SgOrthographicCameraPtr builtinOrthoCamera;
     int numBuiltinCameras;
     bool isBuiltinCameraCurrent;
-    bool isBoundingBoxRenderingForLightweightRenderingGroupEnabled;
+    bool isLightweightViewChangeEnabled;
     bool isCameraPositionInteractivelyChanged;
     Timer timerToRenderNormallyAfterInteractiveCameraPositionChange;
 
@@ -233,6 +233,12 @@ public:
     bool isFirstPersonMode() const { return (viewpointControlMode.which() != SceneWidget::THIRD_PERSON_MODE); }
         
     enum DragMode { NO_DRAGGING, EDITING, VIEW_ROTATION, VIEW_TRANSLATION, VIEW_ZOOM } dragMode;
+
+    bool isDraggingView() const {
+        return (dragMode == VIEW_ROTATION ||
+                dragMode == VIEW_TRANSLATION ||
+                dragMode == VIEW_ZOOM);
+    }
 
     set<SceneWidgetEditable*> editableEntities;
 
@@ -305,6 +311,8 @@ public:
     virtual void resizeGL(int width, int height);
     virtual void paintGL();
 
+    void tryToResumeNormalRendering();
+
     void updateGrids();
     SgLineSet* createGrid(int index);
 
@@ -353,7 +361,7 @@ public:
     void updateLatestEvent(QKeyEvent* event);
     void updateLatestEvent(int x, int y, int modifiers);
     void updateLatestEvent(QMouseEvent* event);
-    bool updateLatestEventPath();
+    void updateLatestEventPath(bool forceFullPicking = false);
     void updateLastClickedPoint();
         
     SceneWidgetEditable* applyFunction(
@@ -595,11 +603,11 @@ SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self, bool useGLSL)
     isBuiltinCameraCurrent = true;
     numBuiltinCameras = 2;
     systemGroup->addChild(builtinCameraTransform);
-    isBoundingBoxRenderingForLightweightRenderingGroupEnabled = false;
+    isLightweightViewChangeEnabled = false;
     isCameraPositionInteractivelyChanged = false;
     timerToRenderNormallyAfterInteractiveCameraPositionChange.setSingleShot(true);
     timerToRenderNormallyAfterInteractiveCameraPositionChange.sigTimeout().connect(
-        [&](){ update(); });
+        [&](){ tryToResumeNormalRendering(); });
 
     config = new ConfigDialog(this, useGLSL);
     config->updateBuiltinCameraConfig();
@@ -785,17 +793,18 @@ void SceneWidgetImpl::paintGL()
         os << "SceneWidgetImpl::paintGL() " << counter++ << endl;
     }
 
-    bool isBoundingBoxRenderingForLightweightRenderingGroupActive = false;
-    if(isBoundingBoxRenderingForLightweightRenderingGroupEnabled){
-        isBoundingBoxRenderingForLightweightRenderingGroupActive = isCameraPositionInteractivelyChanged;
+    bool isLightweightViewChangeActive = false;
+    if(isLightweightViewChangeEnabled){
+        isLightweightViewChangeActive = isCameraPositionInteractivelyChanged;
     }
     isCameraPositionInteractivelyChanged = false;
     
     renderer->setBoundingBoxRenderingForLightweightRenderingGroupEnabled(
-        isBoundingBoxRenderingForLightweightRenderingGroupActive);
+        isLightweightViewChangeActive);
 
-    if(isBoundingBoxRenderingForLightweightRenderingGroupActive){
-        timerToRenderNormallyAfterInteractiveCameraPositionChange.start(250);
+    if(isLightweightViewChangeActive){
+        timerToRenderNormallyAfterInteractiveCameraPositionChange.start(
+            isDraggingView() ? 0 : 400);
     } else if(timerToRenderNormallyAfterInteractiveCameraPositionChange.isActive()){
         timerToRenderNormallyAfterInteractiveCameraPositionChange.stop();
     }
@@ -836,6 +845,16 @@ void SceneWidgetImpl::paintGL()
     }
 #endif
 
+}
+
+
+void SceneWidgetImpl::tryToResumeNormalRendering()
+{
+    if(isDraggingView()){
+        timerToRenderNormallyAfterInteractiveCameraPositionChange.start(0);
+    } else {
+        update();
+    }
 }
 
 
@@ -1112,8 +1131,12 @@ void SceneWidgetImpl::updateLatestEvent(QMouseEvent* event)
 }
 
 
-bool SceneWidgetImpl::updateLatestEventPath()
+void SceneWidgetImpl::updateLatestEventPath(bool forceFullPicking)
 {
+    if(!forceFullPicking && isLightweightViewChangeEnabled){
+        return;
+    }
+    
     makeCurrent();
 
     bool picked = renderer->pick(latestEvent.x(), latestEvent.y());
@@ -1140,8 +1163,6 @@ bool SceneWidgetImpl::updateLatestEventPath()
             }
         }
     }
-
-    return picked;
 }
 
 
@@ -1525,7 +1546,7 @@ void SceneWidgetImpl::updatePointerPosition()
         os << "SceneWidgetImpl::updatePointerPosition()" << endl;
     }
 
-    updateLatestEventPath();
+    updateLatestEventPath(true);
     
     if(!isEditMode){
         static string f1(_("Global Position: ({0:.3f} {1:.3f} {2:.3f})"));
@@ -3247,10 +3268,10 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     normalLengthSpin.sigValueChanged().connect([=](double){ impl->onNormalVisualizationChanged(); });
     hbox->addWidget(&normalLengthSpin);
 
-    boundingBoxRenderingForLightweightRenderingGroupCheck.setText(_("Lightweight view change"));
-    boundingBoxRenderingForLightweightRenderingGroupCheck.sigToggled().connect(
-        [=](bool on){ impl->isBoundingBoxRenderingForLightweightRenderingGroupEnabled = on; });
-    hbox->addWidget(&boundingBoxRenderingForLightweightRenderingGroupCheck);
+    lightweightViewChangeCheck.setText(_("Lightweight view change"));
+    lightweightViewChangeCheck.sigToggled().connect(
+        [=](bool on){ impl->isLightweightViewChangeEnabled = on; });
+    hbox->addWidget(&lightweightViewChangeCheck);
     hbox->addStretch();
     vbox->addLayout(hbox);
     
@@ -3375,7 +3396,7 @@ void ConfigDialog::storeState(Archive& archive)
     archive.write("pointSize", pointSizeSpin.value());
     archive.write("normalVisualization", normalVisualizationCheck.isChecked());
     archive.write("normalLength", normalLengthSpin.value());
-    archive.write("lightweightViewChange", boundingBoxRenderingForLightweightRenderingGroupCheck.isChecked());
+    archive.write("lightweightViewChange", lightweightViewChangeCheck.isChecked());
     archive.write("coordinateAxes", coordinateAxesCheck.isChecked());
     archive.write("fpsTestIteration", fpsTestIterationSpin.value());
     archive.write("showFPS", fpsCheck.isChecked());
@@ -3439,11 +3460,11 @@ void ConfigDialog::restoreState(const Archive& archive)
     normalVisualizationCheck.setChecked(archive.get("normalVisualization", normalVisualizationCheck.isChecked()));
     normalLengthSpin.setValue(archive.get("normalLength", normalLengthSpin.value()));
     coordinateAxesCheck.setChecked(archive.get("coordinateAxes", coordinateAxesCheck.isChecked()));
-    boundingBoxRenderingForLightweightRenderingGroupCheck.setChecked(
-        archive.get("lightweightViewChange", boundingBoxRenderingForLightweightRenderingGroupCheck.isChecked()));
+    lightweightViewChangeCheck.setChecked(archive.get("lightweightViewChange", lightweightViewChangeCheck.isChecked()));
 
     fpsTestIterationSpin.setValue(archive.get("fpsTestIteration", fpsTestIterationSpin.value()));
     fpsCheck.setChecked(archive.get("showFPS", fpsCheck.isChecked()));
-    newDisplayListDoubleRenderingCheck.setChecked(archive.get("enableNewDisplayListDoubleRendering", newDisplayListDoubleRenderingCheck.isChecked()));
+    newDisplayListDoubleRenderingCheck.setChecked(
+        archive.get("enableNewDisplayListDoubleRendering", newDisplayListDoubleRenderingCheck.isChecked()));
     upsideDownCheck.setChecked(archive.get("upsideDown", upsideDownCheck.isChecked()));
 }
