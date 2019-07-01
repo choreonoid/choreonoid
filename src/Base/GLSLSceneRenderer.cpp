@@ -201,6 +201,23 @@ struct SgObjectPtrHash {
 
 typedef std::unordered_map<SgObjectPtr, GLResourcePtr, SgObjectPtrHash> GLResourceMap;
 
+class ScopedShaderProgramActivator
+{
+    GLSLSceneRendererImpl* renderer;
+    ShaderProgram* prevProgram;
+    NolightingProgram* prevNolightingProgram;
+    LightingProgram* prevLightingProgram;
+    MaterialLightingProgram* prevMaterialLightingProgram;
+    bool changed;
+    
+public:
+    ScopedShaderProgramActivator(ShaderProgram& program, GLSLSceneRendererImpl* renderer);
+    ScopedShaderProgramActivator(ScopedShaderProgramActivator&&) = default;  
+    ScopedShaderProgramActivator(const ScopedShaderProgramActivator&) = delete;
+    ScopedShaderProgramActivator& operator=(const ScopedShaderProgramActivator&) = delete;
+    ~ScopedShaderProgramActivator();
+};
+
 }
 
 namespace cnoid {
@@ -233,13 +250,7 @@ public:
     PhongLightingProgram phongLightingProgram;
     PhongShadowLightingProgram phongShadowLightingProgram;
 
-    struct ProgramInfo {
-        ShaderProgram* program;
-        NolightingProgram* nolightingProgram;
-        LightingProgram* lightingProgram;
-        MaterialLightingProgram* materialLightingProgram;
-    };
-    vector<ProgramInfo> programStack;
+    vector<ScopedShaderProgramActivator> programStack;
 
     bool isActuallyRendering;
     bool isPicking;
@@ -446,9 +457,10 @@ void GLSLSceneRendererImpl::initialize()
     needToChangeBufferSizeForPicking = true;
 
     currentProgram = nullptr;
-    currentLightingProgram = nullptr;
     currentNolightingProgram = nullptr;
-
+    currentLightingProgram = nullptr;
+    currentMaterialLightingProgram = nullptr;
+    
     isActuallyRendering = false;
     isPicking = false;
     isRenderingShadowMap = false;
@@ -690,7 +702,74 @@ void GLSLSceneRenderer::onSceneGraphUpdated(const SgUpdate& update)
     
     GLSceneRenderer::onSceneGraphUpdated(update);
 }
+
+
+ScopedShaderProgramActivator::ScopedShaderProgramActivator
+(ShaderProgram& program, GLSLSceneRendererImpl* renderer)
+    : renderer(renderer)
+{
+    if(&program == renderer->currentProgram){
+        changed = false;
+    } else {
+        if(renderer->currentProgram){
+            renderer->currentProgram->deactivate();
+        }
+
+        prevProgram = renderer->currentProgram;
+        prevNolightingProgram = renderer->currentNolightingProgram;
+        prevLightingProgram = renderer->currentLightingProgram;
+        prevMaterialLightingProgram = renderer->currentMaterialLightingProgram;
     
+        renderer->currentProgram = &program;
+        renderer->currentNolightingProgram = dynamic_cast<NolightingProgram*>(&program);
+        renderer->currentLightingProgram = dynamic_cast<LightingProgram*>(&program);
+        renderer->currentMaterialLightingProgram = dynamic_cast<MaterialLightingProgram*>(&program);
+
+        program.activate();
+        renderer->clearGLState();
+        changed = true;
+    }
+}
+
+
+ScopedShaderProgramActivator::~ScopedShaderProgramActivator()
+{
+    if(changed){
+        renderer->currentProgram->deactivate();
+        if(prevProgram){
+            prevProgram->activate();
+            renderer->clearGLState();
+        }
+        renderer->currentProgram = prevProgram;
+        renderer->currentNolightingProgram = prevNolightingProgram;
+        renderer->currentLightingProgram = prevLightingProgram;
+        renderer->currentMaterialLightingProgram = prevMaterialLightingProgram;
+    }
+}
+
+
+void GLSLSceneRendererImpl::pushProgram(ShaderProgram& program)
+{
+    programStack.emplace_back(program, this);
+}
+
+void GLSLSceneRenderer::pushShaderProgram(ShaderProgram& program)
+{
+    impl->pushProgram(program);
+}
+
+
+void GLSLSceneRendererImpl::popProgram()
+{
+    programStack.pop_back();
+}
+
+
+void GLSLSceneRenderer::popShaderProgram()
+{
+    impl->popProgram();
+}
+
 
 void GLSLSceneRenderer::doRender()
 {
@@ -1001,7 +1080,6 @@ void GLSLSceneRendererImpl::endRendering()
 void GLSLSceneRendererImpl::renderSceneGraphNodes()
 {
     currentProgram->initializeFrameRendering();
-    clearGLState();
 
     if(currentLightingProgram){
         renderLights(currentLightingProgram);
@@ -1130,62 +1208,6 @@ Matrix4 GLSLSceneRenderer::modelViewProjectionMatrix() const
 bool GLSLSceneRenderer::isPicking() const
 {
     return impl->isPicking;
-}
-
-
-void GLSLSceneRendererImpl::pushProgram(ShaderProgram& program)
-{
-    ProgramInfo info;
-    info.program = currentProgram;
-    info.lightingProgram = currentLightingProgram;
-    info.nolightingProgram = currentNolightingProgram;
-    info.materialLightingProgram = currentMaterialLightingProgram;
-    
-    if(&program != currentProgram){
-        if(currentProgram){
-            currentProgram->deactivate();
-        }
-        currentProgram = &program;
-        currentNolightingProgram = dynamic_cast<NolightingProgram*>(currentProgram);
-        currentLightingProgram = dynamic_cast<LightingProgram*>(currentProgram);
-        currentMaterialLightingProgram = dynamic_cast<MaterialLightingProgram*>(currentProgram);
-        
-        program.activate();
-
-        clearGLState();
-    }
-    programStack.push_back(info);
-}
-
-
-void GLSLSceneRenderer::pushShaderProgram(ShaderProgram& program)
-{
-    impl->pushProgram(program);
-}
-
-
-void GLSLSceneRendererImpl::popProgram()
-{
-    ProgramInfo& info = programStack.back();
-    if(info.program != currentProgram){
-        if(currentProgram){
-            currentProgram->deactivate();
-        }
-        currentProgram = info.program;
-        currentLightingProgram = info.lightingProgram;
-        currentNolightingProgram = info.nolightingProgram;
-        if(currentProgram){
-            currentProgram->activate();
-            clearGLState();
-        }
-    }
-    programStack.pop_back();
-}
-
-
-void GLSLSceneRenderer::popShaderProgram()
-{
-    impl->popProgram();
 }
 
 
@@ -2097,7 +2119,7 @@ void GLSLSceneRendererImpl::renderPointSet(SgPointSet* pointSet)
         return;
     }
 
-    pushProgram(solidColorProgram);
+    ScopedShaderProgramActivator programActivator(solidColorProgram, this);
 
     const double s = pointSet->pointSize();
     if(s > 0.0){
@@ -2108,8 +2130,6 @@ void GLSLSceneRendererImpl::renderPointSet(SgPointSet* pointSet)
     
     renderPlot(pointSet, GL_POINTS,
                [pointSet]() -> SgVertexArrayPtr { return pointSet->vertices(); });
-
-    popProgram();
 }
 
 
@@ -2216,7 +2236,7 @@ void GLSLSceneRendererImpl::renderLineSet(SgLineSet* lineSet)
         return;
     }
 
-    pushProgram(solidColorProgram);
+    ScopedShaderProgramActivator programActivator(solidColorProgram, this);
     
     const double w = lineSet->lineWidth();
     if(w > 0.0){
@@ -2227,8 +2247,6 @@ void GLSLSceneRendererImpl::renderLineSet(SgLineSet* lineSet)
 
     renderPlot(lineSet, GL_LINES,
                [lineSet](){ return getLineSetVertices(lineSet); });
-
-    popProgram();
 }
 
 
@@ -2238,7 +2256,8 @@ void GLSLSceneRendererImpl::renderOverlay(SgOverlay* overlay)
         return;
     }
 
-    pushProgram(solidColorProgram);
+    ScopedShaderProgramActivator programActivator(solidColorProgram, this);
+    
     modelMatrixStack.push_back(Affine3::Identity());
 
     const Matrix4 PV0 = PV;
@@ -2251,7 +2270,6 @@ void GLSLSceneRendererImpl::renderOverlay(SgOverlay* overlay)
 
     PV = PV0;
     modelMatrixStack.pop_back();
-    popProgram();
 }
 
 
@@ -2288,7 +2306,8 @@ void GLSLSceneRendererImpl::renderOutlineGroupMain(SgOutlineGroup* outline, cons
     glGetIntegerv(GL_POLYGON_MODE, &polygonMode);
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-    pushProgram(solidColorProgram);
+    ScopedShaderProgramActivator programActivator(solidColorProgram, this);
+    
     solidColorProgram.setColor(outline->color());
     solidColorProgram.setColorChangable(false);
     glDisable(GL_DEPTH_TEST);
@@ -2300,7 +2319,6 @@ void GLSLSceneRendererImpl::renderOutlineGroupMain(SgOutlineGroup* outline, cons
     glPolygonMode(GL_FRONT_AND_BACK, polygonMode);
     glDisable(GL_STENCIL_TEST);
     solidColorProgram.setColorChangable(true);
-    popProgram();
 
     modelMatrixStack.pop_back();
 }
@@ -2317,15 +2335,10 @@ void GLSLSceneRendererImpl::renderLightweightRenderingGroup(SgLightweightRenderi
     bool wasTextureBeingRendered = isTextureBeingRendered;
     bool wasBoundingBoxRenderingMode = isBoundingBoxRenderingMode;
 
-    bool pushed = false;
-    
     if(!isPicking){
-        if(currentProgram != &minimumLightingProgram){
-            pushProgram(minimumLightingProgram);
-            pushed = true;
-            if(!isLightweightRenderingBeingProcessed){
-                renderLights(&minimumLightingProgram);
-            }
+        pushProgram(minimumLightingProgram);
+        if(!isLightweightRenderingBeingProcessed){
+            renderLights(&minimumLightingProgram);
         }
     }
 
@@ -2338,7 +2351,7 @@ void GLSLSceneRendererImpl::renderLightweightRenderingGroup(SgLightweightRenderi
 
     renderChildNodes(group);
 
-    if(pushed){
+    if(!isPicking){
         popProgram();
     }
 
