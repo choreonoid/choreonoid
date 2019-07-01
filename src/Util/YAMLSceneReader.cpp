@@ -89,6 +89,7 @@ public:
     bool on;
     
     MeshGenerator meshGenerator;
+    int defaultDivisionNumber;
     PolygonMeshTriangulator polygonMeshTriangulator;
     MeshFilter meshFilter;
     SgMaterialPtr defaultMaterial;
@@ -120,6 +121,7 @@ public:
     SgNode* readTransformParameters(Mapping& info, SgNode* scene);
     SgNode* readShape(Mapping& info);
     SgMesh* readGeometry(Mapping& info);
+    void readDivisionNumber(Mapping& info);
     SgMesh* readBox(Mapping& info);
     SgMesh* readSphere(Mapping& info);
     SgMesh* readCylinder(Mapping& info);
@@ -197,6 +199,7 @@ YAMLSceneReaderImpl::YAMLSceneReaderImpl(YAMLSceneReader* self)
         nodeFunctionMap["Resource"] = &YAMLSceneReaderImpl::readResource;
     }
     os_ = &nullout();
+    defaultDivisionNumber = meshGenerator.defaultDivisionNumber();
     isUriSchemeRegexReady = false;
     imageIO.setUpsideDown(true);
 }
@@ -223,14 +226,14 @@ void YAMLSceneReader::setMessageSink(std::ostream& os)
 
 void YAMLSceneReader::setDefaultDivisionNumber(int n)
 {
-    impl->meshGenerator.setDivisionNumber(n);
+    impl->defaultDivisionNumber = n;
     impl->sceneLoader.setDefaultDivisionNumber(n);
 }
 
 
 int YAMLSceneReader::defaultDivisionNumber() const
 {
-    return impl->meshGenerator.divisionNumber();
+    return impl->defaultDivisionNumber;
 }
 
 
@@ -654,6 +657,12 @@ SgMesh* YAMLSceneReaderImpl::readGeometry(Mapping& info)
 }
 
 
+void YAMLSceneReaderImpl::readDivisionNumber(Mapping& info)
+{
+    meshGenerator.setDivisionNumber(info.get("divisionNumber", defaultDivisionNumber));
+}
+    
+
 SgMesh* YAMLSceneReaderImpl::readBox(Mapping& info)
 {
     Vector3 size;
@@ -666,16 +675,20 @@ SgMesh* YAMLSceneReaderImpl::readBox(Mapping& info)
 
 SgMesh* YAMLSceneReaderImpl::readSphere(Mapping& info)
 {
+    readDivisionNumber(info);
     return meshGenerator.generateSphere(info.get("radius", 1.0), generateTexCoord);
 }
 
 
 SgMesh* YAMLSceneReaderImpl::readCylinder(Mapping& info)
 {
+    readDivisionNumber(info);
+    
     double radius = info.get("radius", 1.0);
     double height = info.get("height", 1.0);
     bool bottom = info.get("bottom", true);
     bool top = info.get("top", true);
+    
     return meshGenerator.generateCylinder(radius, height, bottom, top, true, generateTexCoord);
 
 }
@@ -683,6 +696,8 @@ SgMesh* YAMLSceneReaderImpl::readCylinder(Mapping& info)
 
 SgMesh* YAMLSceneReaderImpl::readCone(Mapping& info)
 {
+    readDivisionNumber(info);
+    
     double radius = info.get("radius", 1.0);
     double height = info.get("height", 1.0);
     bool bottom = info.get("bottom", true);
@@ -692,6 +707,8 @@ SgMesh* YAMLSceneReaderImpl::readCone(Mapping& info)
 
 SgMesh* YAMLSceneReaderImpl::readCapsule(Mapping& info)
 {
+    readDivisionNumber(info);
+    
     double radius = info.get("radius", 1.0);
     double height = info.get("height", 1.0);
     return meshGenerator.generateCapsule(radius, height);
