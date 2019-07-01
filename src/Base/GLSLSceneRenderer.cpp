@@ -212,7 +212,7 @@ class ScopedShaderProgramActivator
     
 public:
     ScopedShaderProgramActivator(ShaderProgram& program, GLSLSceneRendererImpl* renderer);
-    ScopedShaderProgramActivator(ScopedShaderProgramActivator&&) = default;  
+    ScopedShaderProgramActivator(ScopedShaderProgramActivator&&) noexcept;
     ScopedShaderProgramActivator(const ScopedShaderProgramActivator&) = delete;
     ScopedShaderProgramActivator& operator=(const ScopedShaderProgramActivator&) = delete;
     ~ScopedShaderProgramActivator();
@@ -460,7 +460,7 @@ void GLSLSceneRendererImpl::initialize()
     currentNolightingProgram = nullptr;
     currentLightingProgram = nullptr;
     currentMaterialLightingProgram = nullptr;
-    
+
     isActuallyRendering = false;
     isPicking = false;
     isRenderingShadowMap = false;
@@ -729,6 +729,18 @@ ScopedShaderProgramActivator::ScopedShaderProgramActivator
         renderer->clearGLState();
         changed = true;
     }
+}
+
+
+ScopedShaderProgramActivator::ScopedShaderProgramActivator(ScopedShaderProgramActivator&& r) noexcept
+{
+    renderer = r.renderer;
+    prevProgram = r.prevProgram;
+    prevNolightingProgram = r.prevNolightingProgram;
+    prevLightingProgram = r.prevLightingProgram;
+    prevMaterialLightingProgram = r.prevMaterialLightingProgram;
+    changed = r.changed;
+    r.changed = false;
 }
 
 
@@ -2335,11 +2347,13 @@ void GLSLSceneRendererImpl::renderLightweightRenderingGroup(SgLightweightRenderi
     bool wasTextureBeingRendered = isTextureBeingRendered;
     bool wasBoundingBoxRenderingMode = isBoundingBoxRenderingMode;
 
-    if(!isPicking){
+    bool pushed = false;
+    if(currentLightingProgram){
         pushProgram(minimumLightingProgram);
         if(!isLightweightRenderingBeingProcessed){
             renderLights(&minimumLightingProgram);
         }
+        pushed = true;
     }
 
     isLightweightRenderingBeingProcessed = true;
@@ -2351,7 +2365,7 @@ void GLSLSceneRendererImpl::renderLightweightRenderingGroup(SgLightweightRenderi
 
     renderChildNodes(group);
 
-    if(!isPicking){
+    if(pushed){
         popProgram();
     }
 
