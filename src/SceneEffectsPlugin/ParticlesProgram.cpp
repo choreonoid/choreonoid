@@ -98,7 +98,7 @@ void ParticlesProgramBase::render
 {
     ShaderProgram* program = shaderProgram();
     
-    renderer_->pushShaderProgram(*program, false);
+    renderer_->pushShaderProgram(*program);
 
     auto lightingProgram = dynamic_cast<BasicLightingProgram*>(program);
     if(lightingProgram){

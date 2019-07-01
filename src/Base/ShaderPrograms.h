@@ -186,10 +186,34 @@ private:
 };
 
 
+class PhongLightingProgramImpl;
+
+class PhongLightingProgram : public MaterialLightingProgram
+{
+    PhongLightingProgram(const PhongLightingProgram&) = delete;
+
+public:
+    PhongLightingProgram();
+    PhongLightingProgram(const char* vertexShader, const char* fragmentShader);
+    ~PhongLightingProgram();
+
+    void setDefaultFramebufferObject(GLuint id);
+    GLuint defaultFramebufferObject() const;
+
+    virtual void initialize() override;
+    virtual void activate() override;
+    virtual void initializeFrameRendering() override;
+    virtual void setTransform(const Matrix4& PV, const Affine3& V, const Affine3& M, const Matrix4* L) override;
+
+private:
+    PhongLightingProgramImpl* impl;
+};
+
+
 class PhongShadowLightingProgramImpl;
 class ShadowMapProgram;
 
-class PhongShadowLightingProgram : public MaterialLightingProgram
+class PhongShadowLightingProgram : public PhongLightingProgram
 {
     PhongShadowLightingProgram(const PhongShadowLightingProgram&) = delete;
 
@@ -201,7 +225,6 @@ public:
     GLuint defaultFramebufferObject() const;
 
     virtual void initialize() override;
-    virtual void activate() override;
     virtual void initializeFrameRendering() override;
     virtual bool setLight(
         int index, const SgLight* light, const Affine3& T, const Affine3& view, bool shadowCasting) override;

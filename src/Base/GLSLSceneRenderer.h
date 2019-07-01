@@ -41,7 +41,7 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
     Matrix4 modelViewMatrix() const;
     Matrix4 modelViewProjectionMatrix() const;
 
-    void pushShaderProgram(ShaderProgram& program, bool isLightingProgram);
+    void pushShaderProgram(ShaderProgram& program);
     void popShaderProgram();
 
     void renderLights(LightingProgram* program);

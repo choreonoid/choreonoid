@@ -223,18 +223,21 @@ public:
     bool needToChangeBufferSizeForPicking;
 
     ShaderProgram* currentProgram;
-    LightingProgram* currentLightingProgram;
     NolightingProgram* currentNolightingProgram;
+    LightingProgram* currentLightingProgram;
+    MaterialLightingProgram* currentMaterialLightingProgram;
 
     NolightingProgram nolightingProgram;
     SolidColorProgram solidColorProgram;
     MinimumLightingProgram minimumLightingProgram;
+    PhongLightingProgram phongLightingProgram;
     PhongShadowLightingProgram phongShadowLightingProgram;
 
     struct ProgramInfo {
         ShaderProgram* program;
-        LightingProgram* lightingProgram;
         NolightingProgram* nolightingProgram;
+        LightingProgram* lightingProgram;
+        MaterialLightingProgram* materialLightingProgram;
     };
     vector<ProgramInfo> programStack;
 
@@ -350,7 +353,7 @@ public:
     void renderFog(LightingProgram* program);
     void endRendering();
     void renderSceneGraphNodes();
-    void pushProgram(ShaderProgram& program, bool isLightingProgram);
+    void pushProgram(ShaderProgram& program);
     void popProgram();
     inline void setPickColor(int id);
     inline int pushPickId(SgNode* node, bool doSetColor = true);
@@ -629,6 +632,7 @@ bool GLSLSceneRendererImpl::initializeGL()
         nolightingProgram.initialize();
         solidColorProgram.initialize();
         minimumLightingProgram.initialize();
+        phongLightingProgram.initialize();
         phongShadowLightingProgram.initialize();
     }
     catch(std::runtime_error& error){
@@ -710,27 +714,31 @@ void GLSLSceneRendererImpl::doRender()
     isTextureBeingRendered = false;
     
     if(lightingMode == GLSceneRenderer::NO_LIGHTING){
-        pushProgram(nolightingProgram, false);
+        pushProgram(nolightingProgram);
         
     } else if(lightingMode == GLSceneRenderer::SOLID_COLOR_LIGHTING){
-        pushProgram(solidColorProgram, false);
+        pushProgram(solidColorProgram);
         
     } else if(lightingMode == GLSceneRenderer::MINIMUM_LIGHTING){
-        pushProgram(minimumLightingProgram, true);
+        pushProgram(minimumLightingProgram);
         isLightweightRenderingBeingProcessed = true;
         isLowMemoryConsumptionRenderingBeingProcessed = true;
 
-    } else { // FULL_LIGHTING
-        auto& program = phongShadowLightingProgram;
+    } else {
+        isTextureBeingRendered = isTextureEnabled;
 
         if(shadowLightIndices.empty()){
-            program.setNumShadows(0);
+            // FULL_LIGHTING without shadows
+            pushProgram(phongLightingProgram);
+            
         } else {
+            // FULL_LIGHTING with shadows
+            auto& program = phongShadowLightingProgram;
             Array4i vp = self->viewport();
             int w, h;
             program.getShadowMapSize(w, h);
             self->setViewport(0, 0, w, h);
-            pushProgram(program.shadowMapProgram(), false);
+            pushProgram(program.shadowMapProgram());
             isRenderingShadowMap = true;
             isActuallyRendering = false;
         
@@ -749,12 +757,10 @@ void GLSLSceneRendererImpl::doRender()
             popProgram();
             isRenderingShadowMap = false;
             self->setViewport(vp[0], vp[1], vp[2], vp[3]);
-        }
     
-        program.activateMainRenderingPass();
-        pushProgram(program, true);
-
-        isTextureBeingRendered = isTextureEnabled;
+            program.activateMainRenderingPass();
+            pushProgram(program);
+        }
     }
     
     isActuallyRendering = true;
@@ -836,7 +842,7 @@ bool GLSLSceneRendererImpl::doPick(int x, int y)
     isPicking = true;
     isActuallyRendering = false;
     beginRendering();
-    pushProgram(solidColorProgram, false);
+    pushProgram(solidColorProgram);
     currentNodePath.clear();
     pickingNodePathList.clear();
 
@@ -1127,25 +1133,23 @@ bool GLSLSceneRenderer::isPicking() const
 }
 
 
-void GLSLSceneRendererImpl::pushProgram(ShaderProgram& program, bool isLightingProgram)
+void GLSLSceneRendererImpl::pushProgram(ShaderProgram& program)
 {
     ProgramInfo info;
     info.program = currentProgram;
     info.lightingProgram = currentLightingProgram;
     info.nolightingProgram = currentNolightingProgram;
+    info.materialLightingProgram = currentMaterialLightingProgram;
     
     if(&program != currentProgram){
         if(currentProgram){
             currentProgram->deactivate();
         }
         currentProgram = &program;
-        if(isLightingProgram){
-            currentLightingProgram = static_cast<LightingProgram*>(currentProgram);
-            currentNolightingProgram = nullptr;
-        } else {
-            currentLightingProgram = nullptr;
-            currentNolightingProgram = static_cast<NolightingProgram*>(currentProgram);
-        }
+        currentNolightingProgram = dynamic_cast<NolightingProgram*>(currentProgram);
+        currentLightingProgram = dynamic_cast<LightingProgram*>(currentProgram);
+        currentMaterialLightingProgram = dynamic_cast<MaterialLightingProgram*>(currentProgram);
+        
         program.activate();
 
         clearGLState();
@@ -1154,9 +1158,9 @@ void GLSLSceneRendererImpl::pushProgram(ShaderProgram& program, bool isLightingP
 }
 
 
-void GLSLSceneRenderer::pushShaderProgram(ShaderProgram& program, bool isLightingProgram)
+void GLSLSceneRenderer::pushShaderProgram(ShaderProgram& program)
 {
-    impl->pushProgram(program, isLightingProgram);
+    impl->pushProgram(program);
 }
 
 
@@ -1402,14 +1406,14 @@ void GLSLSceneRendererImpl::renderShapeMain(SgShape* shape, const Affine3& posit
             currentProgram->setVertexColorEnabled(true);
         }
 
-        if(currentProgram == &phongShadowLightingProgram){
+        if(currentMaterialLightingProgram){
             bool isTextureValid = false;
             if(isTextureBeingRendered){
                 if(auto texture = shape->texture()){
                     isTextureValid = renderTexture(texture);
                 }
             }
-            phongShadowLightingProgram.setTextureEnabled(isTextureValid);
+            currentMaterialLightingProgram->setTextureEnabled(isTextureValid);
         }
     }
 
@@ -2093,7 +2097,7 @@ void GLSLSceneRendererImpl::renderPointSet(SgPointSet* pointSet)
         return;
     }
 
-    pushProgram(solidColorProgram, false);
+    pushProgram(solidColorProgram);
 
     const double s = pointSet->pointSize();
     if(s > 0.0){
@@ -2212,7 +2216,7 @@ void GLSLSceneRendererImpl::renderLineSet(SgLineSet* lineSet)
         return;
     }
 
-    pushProgram(solidColorProgram, false);
+    pushProgram(solidColorProgram);
     
     const double w = lineSet->lineWidth();
     if(w > 0.0){
@@ -2234,7 +2238,7 @@ void GLSLSceneRendererImpl::renderOverlay(SgOverlay* overlay)
         return;
     }
 
-    pushProgram(solidColorProgram, false);
+    pushProgram(solidColorProgram);
     modelMatrixStack.push_back(Affine3::Identity());
 
     const Matrix4 PV0 = PV;
@@ -2284,7 +2288,7 @@ void GLSLSceneRendererImpl::renderOutlineGroupMain(SgOutlineGroup* outline, cons
     glGetIntegerv(GL_POLYGON_MODE, &polygonMode);
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-    pushProgram(solidColorProgram, false);
+    pushProgram(solidColorProgram);
     solidColorProgram.setColor(outline->color());
     solidColorProgram.setColorChangable(false);
     glDisable(GL_DEPTH_TEST);
@@ -2316,8 +2320,8 @@ void GLSLSceneRendererImpl::renderLightweightRenderingGroup(SgLightweightRenderi
     bool pushed = false;
     
     if(!isPicking){
-        if(currentProgram == &phongShadowLightingProgram){
-            pushProgram(minimumLightingProgram, true);
+        if(currentProgram != &minimumLightingProgram){
+            pushProgram(minimumLightingProgram);
             pushed = true;
             if(!isLightweightRenderingBeingProcessed){
                 renderLights(&minimumLightingProgram);

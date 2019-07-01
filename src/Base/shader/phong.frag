@@ -1,12 +1,9 @@
 #version 330
 
-#define MAX_NUM_SHADOWS 2
-
 in vec3 position;
 in vec3 normal; // interpolated normal
 in vec2 texCoord;
 in vec3 colorV;
-in vec4 shadowCoords[MAX_NUM_SHADOWS];
 
 /*
 uniform MaterialBlock {
@@ -47,18 +44,7 @@ vec3 reflectionElements[10];
 
 uniform bool isTextureEnabled;
 uniform sampler2D tex1;
-
 uniform bool isVertexColorEnabled;
-
-uniform int numShadows;
-
-struct ShadowInfo {
-    int lightIndex;
-    sampler2DShadow shadowMap;
-};
-uniform ShadowInfo shadows[3];
-uniform bool isShadowAntiAliasingEnabled;
-
 uniform vec3 fogColor;
 uniform float maxFogDist;
 uniform float minFogDist;
@@ -149,29 +135,7 @@ void main()
             color += lights[i].ambientIntensity * ambientColor;
         }
     }
-
-    /**
-       \note In a particular environment, using 'textureProj' or 'textureProjOffset"
-       makes lighting abnormal even though the function is not actually called.
-       This happens with Ubuntu Linux 19.04 with Intel UHD Graphics 630, which are
-       installed on Thinkpad P52. The shader programs phong.vert and phong.frag are
-       provided as implementations without shadow processing to avoid the defect.
-    */
-    for(int i=0; i < numShadows; ++i){
-        float shadow;
-        if(isShadowAntiAliasingEnabled){
-            vec4 shadowCoord = shadowCoords[i];
-            shadow  = textureProjOffset(shadows[i].shadowMap, shadowCoord, ivec2(-1, -1));
-            shadow += textureProjOffset(shadows[i].shadowMap, shadowCoord, ivec2(-1,  1));
-            shadow += textureProjOffset(shadows[i].shadowMap, shadowCoord, ivec2( 1,  1));
-            shadow += textureProjOffset(shadows[i].shadowMap, shadowCoord, ivec2( 1, -1));
-            shadow *= 0.25;
-        } else {
-            shadow = textureProj(shadows[i].shadowMap, shadowCoords[i]);
-        }
-        reflectionElements[shadows[i].lightIndex] *= shadow;
-    }
-
+        
     for(int i=0; i < numLights; ++i){
         color += reflectionElements[i];
     }

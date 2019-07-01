@@ -1,7 +1,5 @@
 #version 330
 
-#define MAX_NUM_SHADOWS 2
-
 layout (location = 0) in vec4 vertexPosition;
 layout (location = 1) in vec3 vertexNormal;
 layout (location = 2) in vec2 vertexTexCoord;
@@ -11,8 +9,6 @@ out vec3 position;
 out vec3 normal;
 out vec2 texCoord;
 out vec3 colorV;
-out vec4 shadowCoords[MAX_NUM_SHADOWS];
-
 
 /*
   Uniform blocks make rendering slow in the Ubuntu platforms with Intel GPUs.
@@ -32,8 +28,6 @@ layout(std140) uniform TransformBlock {
 uniform mat4 modelViewMatrix;
 uniform mat4 MVP;
 uniform mat3 normalMatrix;
-uniform int numShadows;
-uniform mat4 shadowMatrices[MAX_NUM_SHADOWS];
 
 void main()
 {
@@ -42,10 +36,6 @@ void main()
 
     texCoord = vertexTexCoord;
     colorV = vertexColor;
-    
-    for(int i=0; i < numShadows; ++i){
-        shadowCoords[i] = shadowMatrices[i] * vertexPosition;
-    }
     
     gl_Position = MVP * vertexPosition;
 }
