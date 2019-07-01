@@ -341,9 +341,16 @@ void SolidColorProgram::initialize()
 
 void SolidColorProgram::initializeFrameRendering()
 {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
+
+void SolidColorProgram::activate()
+{
+    ShaderProgram::activate();
+    
     glUniform3fv(impl->colorLocation, 1, impl->color.data());
     glUniform1i(impl->colorPerVertexLocation, impl->isVertexColorEnabled);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 
@@ -396,6 +403,12 @@ LightingProgram::LightingProgram(const char* vertexShader, const char* fragmentS
     : ShaderProgram(vertexShader, fragmentShader)
 {
 
+}
+
+
+void LightingProgram::initializeFrameRendering()
+{
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 
@@ -454,12 +467,6 @@ void MinimumLightingProgram::activate()
     impl->isColorApplied = false;
 }
     
-
-void MinimumLightingProgram::initializeFrameRendering()
-{
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-}
-
 
 void MinimumLightingProgram::setTransform
 (const Matrix4& PV, const Affine3& V, const Affine3& M, const Matrix4* L)
@@ -812,25 +819,25 @@ void PhongLightingProgramImpl::initialize(GLSLProgram& glsl)
 }
 
 
+void PhongLightingProgram::initializeFrameRendering()
+{
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
+    
 void PhongLightingProgram::activate()
 {
     MaterialLightingProgram::activate();
     
-    glDisable(GL_CULL_FACE);
-}
-
-
-void PhongLightingProgram::initializeFrameRendering()
-{
     if(impl->useUniformBlockToPassTransformationMatrices){
         impl->transformBlockBuffer.bind(glslProgram(), 1);
         impl->transformBlockBuffer.bindBufferBase(1);
     }
 
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glDisable(GL_CULL_FACE);
 }
 
-    
+
 void PhongLightingProgram::setTransform
 (const Matrix4& PV, const Affine3& V, const Affine3& M, const Matrix4* L)
 {
@@ -1102,15 +1109,6 @@ void ShadowMapProgram::initialize()
 }
 
 
-void ShadowMapProgram::activate()
-{
-    NolightingProgram::activate();
-    
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_FRONT);
-}
-    
-
 void ShadowMapProgram::initializeFrameRendering()
 {
     auto& mainImpl = mainProgram->impl;
@@ -1128,6 +1126,15 @@ void ShadowMapProgram::initializeFrameRendering()
     glClear(GL_DEPTH_BUFFER_BIT);
 }
 
+
+void ShadowMapProgram::activate()
+{
+    NolightingProgram::activate();
+    
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_FRONT);
+}
+    
 
 void ShadowMapProgram::deactivate()
 {
