@@ -204,12 +204,9 @@ public:
     PhongLightingProgram(const char* vertexShader, const char* fragmentShader);
     ~PhongLightingProgram();
 
-    void setDefaultFramebufferObject(GLuint id);
-    GLuint defaultFramebufferObject() const;
-
     virtual void initialize() override;
-    virtual void activate() override;
     virtual void initializeFrameRendering() override;
+    virtual void activate() override;
     virtual void setTransform(const Matrix4& PV, const Affine3& V, const Affine3& M, const Matrix4* L) override;
 
 private:
@@ -233,6 +230,7 @@ public:
 
     virtual void initialize() override;
     virtual void initializeFrameRendering() override;
+    virtual void activate() override;
     virtual bool setLight(
         int index, const SgLight* light, const Affine3& T, const Affine3& view, bool shadowCasting) override;
     virtual void setTransform(const Matrix4& PV, const Affine3& V, const Affine3& M, const Matrix4* L) override;
@@ -263,8 +261,8 @@ class ShadowMapProgram : public NolightingProgram
 public:
     ShadowMapProgram(PhongShadowLightingProgram* mainProgram);
     virtual void initialize() override;
-    virtual void activate() override;
     virtual void initializeFrameRendering() override;
+    virtual void activate() override;
     virtual void deactivate() override;
 
 private:

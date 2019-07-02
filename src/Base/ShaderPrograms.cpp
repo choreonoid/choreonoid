@@ -814,8 +814,6 @@ void PhongLightingProgramImpl::initialize(GLSLProgram& glsl)
         normalMatrixLocation = glsl.getUniformLocation("normalMatrix");
         MVPLocation = glsl.getUniformLocation("MVP");
     }
-    
-    glActiveTexture(GL_TEXTURE0);
 }
 
 
@@ -833,8 +831,6 @@ void PhongLightingProgram::activate()
         impl->transformBlockBuffer.bind(glslProgram(), 1);
         impl->transformBlockBuffer.bindBufferBase(1);
     }
-
-    glDisable(GL_CULL_FACE);
 }
 
 
@@ -924,6 +920,7 @@ void PhongShadowLightingProgramImpl::initialize(GLSLProgram& glsl)
     for(int i=0; i < maxNumShadows; ++i){
         initializeShadowInfo(glsl, i);
     }
+    glActiveTexture(GL_TEXTURE0);
     glBindFramebuffer(GL_FRAMEBUFFER, defaultFBO);
 
     isShadowAntiAliasingEnabledLocation = glsl.getUniformLocation("isShadowAntiAliasingEnabled");
@@ -994,6 +991,14 @@ void PhongShadowLightingProgram::initializeFrameRendering()
     }
 
     PhongLightingProgram::initializeFrameRendering();
+}
+
+
+void PhongShadowLightingProgram::activate()
+{
+    PhongLightingProgram::activate();
+
+    glDisable(GL_CULL_FACE);
 }
 
     
