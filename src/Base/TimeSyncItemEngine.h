@@ -8,6 +8,7 @@
 
 #include <cnoid/Referenced>
 #include <functional>
+#include <string>
 #include "exportdecl.h"
 
 namespace cnoid {

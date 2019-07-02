@@ -10,6 +10,7 @@
 #include <cnoid/Signal>
 #include <functional>
 #include <vector>
+#include <string>
 #include "exportdecl.h"
 
 namespace cnoid {

@@ -7,6 +7,7 @@
 #define CNOID_UTIL_EXT_JOYSTICK_H
 
 #include "Signal.h"
+#include <string>
 #include "exportdecl.h"
 
 namespace cnoid {

@@ -90,7 +90,7 @@ option(INSTALL_SDK "Installing SDK files such as header files" ${DEFAULT_INSTALL
 option(INSTALL_SDK_WITH_EXTLIBS "The SDK installation includes the external libraries" OFF)
 
 if(MSVC AND CMAKE_CL_64)
-   add_definitions(-D_WIN64)
+  add_definitions(-D_WIN64)
 endif()
 
 # The following option is not necessary.
@@ -349,6 +349,10 @@ if(ENABLE_PYTHON)
   file(WRITE ${init_py} "")
   install(FILES ${init_py} DESTINATION ${CNOID_PYTHON_SUBDIR}/cnoid
     CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
+
+  if(MSVC)
+    add_definitions(-DHAVE_SNPRINTF)
+  endif()
 endif()
 
 # Lua
@@ -389,12 +393,6 @@ if(MSVC)
 else()
   find_package(Boost 1.54.0 REQUIRED COMPONENTS ${boost_packages})
 endif()
-
-#if(NOT Boost_FOUND)
-#  set(BOOST_ROOT ${BOOST_ROOT} CACHE PATH "set the directory of the boost root")
-#  set(BOOST_LIBRARYDIR ${BOOST_LIBRARYDIR} CACHE PATH "set the directory of the boost library")
-#  message(FATAL_ERROR "Boost cannot be found. Please specify the boost top directory to BOOST_ROOT.")
-#endif()
 
 include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
@@ -455,40 +453,22 @@ if(MSVC AND INSTALL_SDK_WITH_EXTLIBS)
   endforeach()
 endif()
 
-###############
-#  Setup Qt5  #
-###############
-macro(setup_qt5)
-  if(MSVC)
-    set(PROGRAMFILES "ProgramFiles(X86)")
-    if(CMAKE_CL_64)
-      if(MSVC_VERSION EQUAL 1700)    #VS2012
-        set(CMAKE_LIBRARY_PATH "$ENV{PROGRAMFILES}/Windows\ Kits/8.0/Lib/win8/um/x64")
-      elseif(MSVC_VERSION EQUAL 1800)    #VS2013
-        set(CMAKE_LIBRARY_PATH "$ENV{PROGRAMFILES}/Windows\ Kits/8.1/Lib/win8/um/x64")
-      endif()
-    else()
-      if(MSVC_VERSION EQUAL 1700) 
-        set(CMAKE_LIBRARY_PATH "$ENV{PROGRAMFILES}/Windows\ Kits/8.0/Lib/win8/um/x86")
-      elseif(MSVC_VERSION EQUAL 1800)
-        set(CMAKE_LIBRARY_PATH "$ENV{PROGRAMFILES}/Windows\ Kits/8.1/Lib/win8/um/x86")
-      endif()
-    endif()
-  endif()
-
-  if(MSVC)
-    file(GLOB qt_cmake_dirs "c:/Qt/5.??.?/msvc20??_??/lib/cmake" "d:/Qt/5.??.?/msvc20??_??/lib/cmake")
-    set(version 5.10)
-    find_package(Qt5Core ${version} HINTS ${qt_cmake_dirs})
-    find_package(Qt5Gui ${version} HINTS ${qt_cmake_dirs})
-    find_package(Qt5Widgets ${version} HINTS ${qt_cmake_dirs})
-    find_package(Qt5Network ${version} HINTS ${qt_cmake_dirs})
-    set(QT_LIBRARIES Qt5::Core Qt5::Gui Qt5::Widgets Qt5::Network)
-  elseif(UNIX)
+if(ENABLE_GUI)
+  if(UNIX)
     find_package(Qt5 COMPONENTS Core Gui Widgets Network X11Extras)
     set(QT_LIBRARIES
-      ${Qt5Core_LIBRARIES} ${Qt5Gui_LIBRARIES} ${Qt5Widgets_LIBRARIES} ${Qt5Network_LIBRARIES}
+      ${Qt5Core_LIBRARIES}
+      ${Qt5Gui_LIBRARIES}
+      ${Qt5Widgets_LIBRARIES}
+      ${Qt5Network_LIBRARIES}
       ${Qt5X11Extras_LIBRARIES})
+
+  elseif(MSVC)
+    file(GLOB qt_cmake_dirs "c:/Qt/5.??.?/msvc20??_??/lib/cmake" "d:/Qt/5.??.?/msvc20??_??/lib/cmake")
+    list(SORT qt_cmake_dirs)
+    list(REVERSE qt_cmake_dirs)
+    find_package(Qt5 COMPONENTS Core Gui Widgets Network HINTS ${qt_cmake_dirs})
+    set(QT_LIBRARIES Qt5::Core Qt5::Gui Qt5::Widgets Qt5::Network)
   endif()
 
   add_definitions(-DQT_NO_KEYWORDS -DQT_NO_OPENGL_ES_2)
@@ -523,10 +503,6 @@ macro(setup_qt5)
       endforeach()
     endif()
   endif()
-endmacro()
-
-if(ENABLE_GUI)
-  setup_qt5()
 endif()
 
 # Assimp
