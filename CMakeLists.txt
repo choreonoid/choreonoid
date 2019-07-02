@@ -211,17 +211,6 @@ set(libraries ${ARGV})
 
 endfunction()
 
-find_package(Threads)
-
-# OpenGL
-if(ENABLE_GUI)
-  if(POLICY CMP0072)
-    cmake_policy(SET CMP0072 OLD)
-  endif()
-  find_package(OpenGL)
-  include_directories(${OPENGL_INCLUDE_DIR})
-endif()
-
 option(ENABLE_INSTALL_RPATH "Enable RPATH setting for installed binary files" ON)
 
 if(ENABLE_INSTALL_RPATH)
@@ -306,6 +295,17 @@ if(CNOID_ENABLE_GETTEXT)
   endif()
 else()
   set(GETTEXT_LIBRARIES "")
+endif()
+
+find_package(Threads)
+
+# OpenGL
+if(ENABLE_GUI)
+  if(POLICY CMP0072)
+    cmake_policy(SET CMP0072 OLD)
+  endif()
+  find_package(OpenGL)
+  include_directories(${OPENGL_INCLUDE_DIR})
 endif()
 
 # Python
@@ -454,23 +454,20 @@ if(MSVC AND INSTALL_SDK_WITH_EXTLIBS)
 endif()
 
 if(ENABLE_GUI)
+  # Qt5
+  set(qt5_components Core Gui Widgets Network)
   if(UNIX)
-    find_package(Qt5 COMPONENTS Core Gui Widgets Network X11Extras)
-    set(QT_LIBRARIES
-      ${Qt5Core_LIBRARIES}
-      ${Qt5Gui_LIBRARIES}
-      ${Qt5Widgets_LIBRARIES}
-      ${Qt5Network_LIBRARIES}
-      ${Qt5X11Extras_LIBRARIES})
-
+    list(APPEND qt5_components X11Extras)
   elseif(MSVC)
     file(GLOB qt_cmake_dirs "c:/Qt/5.??.?/msvc20??_??/lib/cmake" "d:/Qt/5.??.?/msvc20??_??/lib/cmake")
     list(SORT qt_cmake_dirs)
     list(REVERSE qt_cmake_dirs)
-    find_package(Qt5 COMPONENTS Core Gui Widgets Network HINTS ${qt_cmake_dirs})
-    set(QT_LIBRARIES Qt5::Core Qt5::Gui Qt5::Widgets Qt5::Network)
   endif()
-
+  find_package(Qt5 COMPONENTS ${qt5_components} HINTS ${qt_cmake_dirs})
+  foreach(component ${qt5_components})
+    list(APPEND libs "Qt5::${component}")
+  endforeach()
+  set(QT_LIBRARIES ${libs})
   add_definitions(-DQT_NO_KEYWORDS -DQT_NO_OPENGL_ES_2)
   set(CMAKE_AUTOMOC OFF)
 

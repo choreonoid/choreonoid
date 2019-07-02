@@ -7,13 +7,16 @@ Changes since 1.7.0:
 * Remove GrxUIPlugin
 * Stop supporting Qt4
 * Replace QGLWidget with QOpenGLWidget in the implementation of SceneWidget
-* Fix a bug in rendering textures
-* Lightweight rendering mode is available
-* Low GPU memory consumption mode is available
+* Improve the rendering engine (GLSLSceneRenderer)
+  * Fix a bug in rendering textures
+  * Lightweight rendering mode is available
+  * Low GPU memory consumption mode is available
 * Improve the STL file loader
 * Add the Universal Robots UR robot models
 * Fix the WRS2018 tunnel models
 * The Eigen library contained in the thirdparty directory is used by default on Windows
+* Support Visual C++ 2019
+* Support Ubuntu 19.04
 
 Choreonoid 1.7.0 released on May 8, 2019
 ========================================
