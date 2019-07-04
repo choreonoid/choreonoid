@@ -17,7 +17,6 @@
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = cnoid::stdx::filesystem;
 
 namespace {
 
@@ -864,7 +863,7 @@ void Mapping::write(const std::string &key, double value)
 
 void Mapping::writePath(const std::string &key, const std::string& value)
 {
-    write(key, filesystem::path(value).string(), DOUBLE_QUOTED);
+    write(key, stdx::filesystem::path(value).string(), DOUBLE_QUOTED);
 }
 
 

@@ -18,7 +18,6 @@
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = stdx::filesystem;
 
 namespace {
 
@@ -513,7 +512,7 @@ void VRMLParserImpl::load(const string& filename, bool doClearAncestorPathsList)
     protoMap.clear();
     defNodeMap.clear();
     
-    filesystem::path path(filesystem::lexically_normal(filename));
+    stdx::filesystem::path path(stdx::filesystem::lexically_normal(filename));
     string pathString(path.string());
     if(doClearAncestorPathsList){
         ancestorPathsList.clear();
@@ -839,10 +838,10 @@ string VRMLParserImpl::getRealPath(string url)
     if(!isFileProtocol(url)){
         return url;
     } else {
-        filesystem::path path(filesystem::lexically_normal(removeURLScheme(url)));
+        stdx::filesystem::path path(stdx::filesystem::lexically_normal(removeURLScheme(url)));
         if(!checkAbsolute(path)){
-            filesystem::path parentPath(scanner->filename);
-            path = filesystem::lexically_normal(parentPath.parent_path() / path);
+            stdx::filesystem::path parentPath(scanner->filename);
+            path = stdx::filesystem::lexically_normal(parentPath.parent_path() / path);
         }
         return getAbsolutePathString(path);
     }
@@ -2717,15 +2716,15 @@ void VRMLParserImpl::setSymbols()
 void VRMLParserImpl::convertUrl(MFString& urls)
 {
     for(MFString::iterator it=urls.begin(); it!=urls.end(); it++){
-        filesystem::path path;
+        stdx::filesystem::path path;
         string chkFile("");
         if(isFileProtocol(*it)){
-            path = filesystem::lexically_normal(removeURLScheme(*it));
+            path = stdx::filesystem::lexically_normal(removeURLScheme(*it));
 
             // Relative path check & translate to absolute path 
             if(!exists(path)){
-                filesystem::path parentPath(scanner->filename);
-                path = filesystem::lexically_normal(parentPath.parent_path() / path);
+                stdx::filesystem::path parentPath(scanner->filename);
+                path = stdx::filesystem::lexically_normal(parentPath.parent_path() / path);
             }
             chkFile = getAbsolutePathString(path);
         } else {

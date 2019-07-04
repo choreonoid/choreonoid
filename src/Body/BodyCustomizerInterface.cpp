@@ -17,16 +17,17 @@
 #include <iostream>
 #include <boost/tokenizer.hpp>
 #include <fmt/format.h>
+
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
 namespace filesystem = cnoid::stdx::filesystem;
 using fmt::format;
-
-#ifdef _WIN32
-# include <windows.h>
-#endif
 
 namespace {
 

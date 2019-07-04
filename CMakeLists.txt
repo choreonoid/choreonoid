@@ -1,4 +1,8 @@
-cmake_minimum_required(VERSION 3.5.0) # Ubuntu 16.04
+if(MSVC)
+  cmake_minimum_required(VERSION 3.10.0) # CMAKE_CXX_STANDARD 17 is supported for MSVC
+else()
+  cmake_minimum_required(VERSION 3.5.0) # Ubuntu 16.04
+endif()
 
 cmake_policy(SET CMP0003 NEW)
 cmake_policy(SET CMP0057 NEW)
@@ -6,6 +10,7 @@ set(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS true)
 
 include(FindPkgConfig)
 include(CheckIncludeFiles)
+include(CheckCXXCompilerFlag)
 
 project(Choreonoid)
 
@@ -31,19 +36,16 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 if(UNIX)
-  include(CheckCXXCompilerFlag OPTIONAL RESULT_VARIABLE included)
-  if(included)
-    if(NOT CMAKE_VERSION VERSION_LESS 3.8.0) # CMake 3.8 or later is required to enable C++17
-      check_cxx_compiler_flag("-std=c++17" has_cpp17)
-      if(has_cpp17)
-	set(CMAKE_CXX_STANDARD 17)
-      endif()
+  if(NOT CMAKE_VERSION VERSION_LESS 3.8.0) # CMake 3.8 or later is required to enable C++17
+    check_cxx_compiler_flag("-std=c++17" has_cpp17)
+    if(has_cpp17)
+      set(CMAKE_CXX_STANDARD 17)
     endif()
-    if(NOT has_cpp17)
-      check_cxx_compiler_flag("-std=c++14" has_cpp14)
-      if(has_cpp14)
-	set(CMAKE_CXX_STANDARD 14)
-      endif()
+  endif()
+  if(NOT has_cpp17)
+    check_cxx_compiler_flag("-std=c++14" has_cpp14)
+    if(has_cpp14)
+      set(CMAKE_CXX_STANDARD 14)
     endif()
   endif()
   if(CMAKE_VERSION VERSION_LESS "3.1.0")
@@ -54,6 +56,21 @@ if(UNIX)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --no-gnu-unique")
   endif()
   add_definitions("-pthread")
+
+elseif(MSVC)
+  check_cxx_compiler_flag("/std:c++17" has_cpp17)
+  if(has_cpp17)
+    message(STATUS "/std:c++17 is available")
+    set(CMAKE_CXX_STANDARD 17)
+  endif()
+  if(NOT has_cpp17)
+    check_cxx_compiler_flag("/std:c++14" has_cpp14)
+    if(has_cpp14)
+      message(STATUS "/std:c++14 is available")
+      set(CMAKE_CXX_STANDARD 14)
+    endif()
+  endif()
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zc:__cplusplus")
 endif()
 
 if(WIN32)

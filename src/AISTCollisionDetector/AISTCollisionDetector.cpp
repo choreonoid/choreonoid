@@ -9,6 +9,7 @@
 #include <cnoid/SceneDrawables>
 #include <cnoid/MeshExtractor>
 #include <cnoid/ThreadPool>
+#include <algorithm>
 #include <random>
 #include <set>
 
@@ -145,9 +146,10 @@ public:
 
     // for multithread version
     int numThreads;
-    std::unique_ptr<ThreadPool> threadPool;
+    unique_ptr<ThreadPool> threadPool;
     vector<int> shuffledPairIndices;
     vector<vector<CollisionPair>> collisionPairArrays;
+    mt19937 randomEngine;
     
     void extractCollisionsOfAssignedPairs(
         int pairIndexBegin, int pairIndexEnd, vector<CollisionPair>& collisionPairs);    
@@ -168,6 +170,11 @@ AISTCollisionDetectorImpl::AISTCollisionDetectorImpl()
     maxNumThreads = 0;
     numThreads = 0;
     meshExtractor = new MeshExtractor;
+
+    if(ENABLE_SHUFFLE){
+        random_device seed;
+        randomEngine.seed(seed());
+    }
 }
 
 
@@ -399,7 +406,7 @@ void AISTCollisionDetectorImpl::detectCollisions(std::function<void(const Collis
 void AISTCollisionDetectorImpl::detectCollisionsInParallel(std::function<void(const CollisionPair&)> callback)
 {
     if(ENABLE_SHUFFLE){
-        std::random_shuffle(shuffledPairIndices.begin(), shuffledPairIndices.end());
+        std::shuffle(shuffledPairIndices.begin(), shuffledPairIndices.end(), randomEngine);
     }
 
     const int numPairs = modelPairs.size();

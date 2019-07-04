@@ -24,7 +24,6 @@
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = cnoid::stdx::filesystem;
 
 namespace {
 
@@ -154,7 +153,7 @@ PoseSeqItemPtr loadFaceControllerPoseSeq(const string& filename)
     os << "Loading " << filename << "..." << endl;
 
     PoseSeqItemPtr item = new PoseSeqItem();
-    filesystem::path fpath(filename);
+    stdx::filesystem::path fpath(filename);
     item->setName(fpath.stem().string());
     PoseSeqPtr seq = item->poseSeq();
 

@@ -5,13 +5,15 @@
 
 #include <chrono>
 
-#if __GNUC__ < 8
+#if (defined(__GNUC__) && (__GNUC__ < 8)) || defined(_MSC_VER)
 #include <experimental/filesystem>
 namespace std::experimental::filesystem {
 inline path lexically_normal(const path& p){
-    // lexically_normal or any other normalization functions are not implemented in GCC 8
+    // lexically_normal or any other normalization functions are not
+    // implemented in the experimental filesystem implementation
     return p; 
 }
+
 #else
 #include <filesystem>
 namespace std::filesystem {
@@ -21,7 +23,8 @@ inline path lexically_normal(const path& p){
 #endif
 
 inline std::time_t last_write_time_to_time_t(const path& p){
-    return std::chrono::system_clock::to_time_t(last_write_time(p));
+    return std::chrono::duration_cast<std::chrono::system_clock::duration>(
+        last_write_time(p).time_since_epoch()).count();
 }
 
 } // namespace

@@ -17,7 +17,6 @@
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = cnoid::stdx::filesystem;
 using fmt::format;
 
 namespace cnoid {
@@ -139,8 +138,8 @@ void MessageLogItemImpl::openFile()
     if(fileMode.selectedIndex()==MessageLogItem::APPEND){
         ofs.open(filename, ios::app);
     }else{
-        filesystem::path path(filename);
-        if(filesystem::exists(path)){
+        stdx::filesystem::path path(filename);
+        if(stdx::filesystem::exists(path)){
             bool ok = showConfirmDialog(
                 _("Confirm"),
                 format(_(" \"{}\" already exists.\n Do you want to replace it? " ), filename));
@@ -201,7 +200,7 @@ void MessageLogItemImpl::setFileName(const string& filename_)
         return;
 
     filename = filename_;
-    filesystem::path path(filename);
+    stdx::filesystem::path path(filename);
     string ext = path.extension().string();
     if(ext != ".log"){
         filename += ".log";
