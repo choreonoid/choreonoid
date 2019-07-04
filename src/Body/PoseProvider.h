@@ -1,15 +1,15 @@
 /**
    @file
-   @author Shin'ichiro NAKAOKA
+   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODY_POSE_PROVIDER_H_INCLUDED
-#define CNOID_BODY_POSE_PROVIDER_H_INCLUDED
+#ifndef CNOID_BODY_POSE_PROVIDER_H
+#define CNOID_BODY_POSE_PROVIDER_H
 
 #include "Body.h"
-#include <vector>
-#include <boost/optional.hpp>
 #include <cnoid/EigenTypes>
+#include <cnoid/stdx/optional>
+#include <vector>
 
 namespace cnoid {
 
@@ -24,8 +24,8 @@ public:
     virtual bool seek(double time, int waistLinkIndex, const Vector3& waistTranslation) = 0;
     virtual int baseLinkIndex() const = 0;
     virtual bool getBaseLinkPosition(Position& out_T) const = 0;
-    virtual void getJointPositions(std::vector< boost::optional<double> >& out_q) const = 0;
-    virtual boost::optional<Vector3> ZMP() const = 0;
+    virtual void getJointPositions(std::vector<stdx::optional<double>>& out_q) const = 0;
+    virtual stdx::optional<Vector3> ZMP() const = 0;
 
 #ifdef CNOID_BACKWARD_COMPATIBILITY
     bool getBaseLinkPosition(Vector3& out_p, Matrix3& out_R) const {

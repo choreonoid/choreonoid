@@ -7,7 +7,6 @@
 
 #include "Signal.h"
 #include <vector>
-#include <boost/variant.hpp>
 #include "exportdecl.h"
 
 namespace cnoid {

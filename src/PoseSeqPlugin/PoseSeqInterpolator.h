@@ -73,10 +73,10 @@ public:
     int baseLinkIndex() const;
     virtual bool getBaseLinkPosition(Position& out_T) const;
 
-    boost::optional<double> jointPosition(int jointId) const;
-    boost::optional<Vector3> ZMP() const;
+    stdx::optional<double> jointPosition(int jointId) const;
+    stdx::optional<Vector3> ZMP() const;
 
-    virtual void getJointPositions(std::vector< boost::optional<double> >& out_q) const;
+    virtual void getJointPositions(std::vector<stdx::optional<double>>& out_q) const;
 
 private:
 

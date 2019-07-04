@@ -2,7 +2,7 @@
 #define CNOID_OPENRTM_PLUGIN_RTC_ITEM_H
 
 #include <cnoid/Item>
-#include <boost/filesystem.hpp>
+#include <cnoid/stdx/filesystem>
 #include <map>
 #include "exportdecl.h"
 
@@ -23,7 +23,7 @@ class RTComponentImpl;
 class RTComponent
 {
 public:
-    RTComponent(const boost::filesystem::path& modulePath, PropertyMap& properties);
+    RTComponent(const stdx::filesystem::path& modulePath, PropertyMap& properties);
     ~RTComponent();
     void deleteRTC();
     RTC::RtcBase* rtc();
@@ -87,8 +87,8 @@ private:
     PropertyMap properties;
     Selection baseDirectoryType;
     int oldBaseDirectoryType;
-    boost::filesystem::path rtcDirectory;
-    boost::filesystem::path modulePath;
+    stdx::filesystem::path rtcDirectory;
+    stdx::filesystem::path modulePath;
     bool isActivationEnabled_;
 
     void deleteRTCInstance();

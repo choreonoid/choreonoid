@@ -192,7 +192,7 @@ bool BodyMotionPoseProvider::getBaseLinkPosition(Position& out_T) const
 }
 
 
-void BodyMotionPoseProvider::getJointPositions(std::vector<boost::optional<double>>& out_q) const
+void BodyMotionPoseProvider::getJointPositions(std::vector<stdx::optional<double>>& out_q) const
 {
     int n = body_->numJoints();
     out_q.resize(n);
@@ -202,7 +202,7 @@ void BodyMotionPoseProvider::getJointPositions(std::vector<boost::optional<doubl
 }
 
 
-boost::optional<Vector3> BodyMotionPoseProvider::ZMP() const
+stdx::optional<Vector3> BodyMotionPoseProvider::ZMP() const
 {
     return ZMP_;
 }

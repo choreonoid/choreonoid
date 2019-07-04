@@ -7,14 +7,12 @@
 #include <cnoid/MeshExtractor>
 #include <cnoid/SceneDrawables>
 #include <cnoid/EigenUtil>
-#include <boost/bind.hpp>
-#include <boost/optional.hpp>
+#include <cnoid/stdx/optional>
 #include <Springhead.h>
 #include <Physics/PHContactPoint.h>
 #include <Physics/PHConstraintEngine.h>
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 #include "SpringheadConvert.h"
@@ -166,16 +164,16 @@ int SpringheadCollisionDetectorImpl::addGeometry(SgNode* geometry)
 
     if(geometry){
         GeometryExPtr model = std::make_shared<GeometryEx>();
-		model->phSolid = phScene->CreateSolid();
+        model->phSolid = phScene->CreateSolid();
 
-        if( meshExtractor->extract(geometry, std::bind(&SpringheadCollisionDetectorImpl::addMesh, this, model.get())) ){
-			phSolidMap.insert( make_pair(model->phSolid, index) );
-			for(int i = 0; i < model->cdShapes.size(); i++){
-				cdShapeMap.insert( make_pair(model->cdShapes[i], index) );
-			}
-			models.push_back(model);
-			isValid = true;
-		}
+        if(meshExtractor->extract(geometry, [&](){ addMesh(model); })){
+            phSolidMap.insert( make_pair(model->phSolid, index) );
+            for(int i = 0; i < model->cdShapes.size(); i++){
+                cdShapeMap.insert( make_pair(model->cdShapes[i], index) );
+            }
+            models.push_back(model);
+            isValid = true;
+        }
     }
 
     if(!isValid){
@@ -198,7 +196,7 @@ void SpringheadCollisionDetectorImpl::addMesh(GeometryEx* model)
     if(mesh->primitiveType() != SgMesh::MESH){
         bool doAddPrimitive = false;
         Vector3 scale;
-        optional<Vector3> translation;
+        stdx::optional<Vector3> translation;
         if(!meshExtractor->isCurrentScaled()){
             scale.setOnes();
             doAddPrimitive = true;

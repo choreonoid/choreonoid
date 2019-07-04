@@ -22,7 +22,7 @@ public:
     virtual CollisionDetector* clone() const override;
     virtual void clearGeometries() override;
     virtual int numGeometries() const override;
-    virtual boost::optional<GeometryHandle> addGeometry(SgNode* geometry) override;
+    virtual stdx::optional<GeometryHandle> addGeometry(SgNode* geometry) override;
     virtual void setCustomObject(GeometryHandle geometry, Referenced* object) override;
     virtual void setGeometryStatic(GeometryHandle geometry, bool isStatic = true) override;
     virtual void setNonInterfarenceGeometyrPair(GeometryHandle geometry1, GeometryHandle geometry2) override;

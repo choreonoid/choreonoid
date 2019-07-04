@@ -6,6 +6,7 @@
 #include <fmt/format.h>
 
 using namespace std;
+using namespace std::placeholders;
 using namespace cnoid;
 using namespace Multicopter;
 using fmt::format;
@@ -14,10 +15,10 @@ void
 UtilityImpl::printMessage(const std::string& msg, bool sync)
 {
     if( sync == true ){
-        callSynchronously(boost::bind(&UtilityImpl::printMessageImpl, msg));
+        callSynchronously(std::bind(&UtilityImpl::printMessageImpl, msg));
     }
     else{
-        callLater(boost::bind(&UtilityImpl::printMessageImpl, msg));
+        callLater(std::bind(&UtilityImpl::printMessageImpl, msg));
     }
 }
 
@@ -25,11 +26,11 @@ void
 UtilityImpl::printErrorMessage(const std::string& msg, bool sync)
 {
     if( sync == true ){
-        callSynchronously(boost::bind(&UtilityImpl::printErrorMessageImpl, msg));
+        callSynchronously(std::bind(&UtilityImpl::printErrorMessageImpl, msg));
 
     }
     else{
-        callLater(boost::bind(&UtilityImpl::printErrorMessageImpl, msg));
+        callLater(std::bind(&UtilityImpl::printErrorMessageImpl, msg));
     }
 }
 
@@ -38,10 +39,10 @@ void
 UtilityImpl::printWarningMessage(const std::string& msg,  bool sync)
 {
     if( sync == true ){
-        callSynchronously(boost::bind(&UtilityImpl::printWarningMessageImpl, msg));
+        callSynchronously(std::bind(&UtilityImpl::printWarningMessageImpl, msg));
     }
     else{
-        callLater(boost::bind(&UtilityImpl::printWarningMessageImpl, msg));
+        callLater(std::bind(&UtilityImpl::printWarningMessageImpl, msg));
     }
 }
 

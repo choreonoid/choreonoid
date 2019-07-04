@@ -1,0 +1,27 @@
+#ifndef CNOID_STDX_FILESYSTEM_HEADER
+#define CNOID_STDX_FILESYSTEM_HEADER
+
+#if __cplusplus > 201402L
+#include <filesystem>
+#include <chrono>
+namespace std::filesystem {
+inline std::time_t last_write_time_to_time_t(const path& p){
+    return std::chrono::system_clock::to_time_t(last_write_time(p));
+}
+}
+namespace cnoid::stdx {
+namespace filesystem = std::filesystem;
+}
+#else
+#include <boost/filesystem.hpp>
+namespace boost { namespace filesystem {
+inline std::time_t last_write_time_to_time_t(const path& p){
+    return last_write_time(p);
+}
+} }
+namespace cnoid { namespace stdx {
+namespace filesystem = boost::filesystem;
+} }
+#endif
+
+#endif

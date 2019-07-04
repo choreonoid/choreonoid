@@ -178,6 +178,9 @@ if(UNIX)
     m
     )
 
+  if(CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_STANDARD GREATER_EQUAL 17)
+    set(libraries ${libraries} stdc++fs)
+  endif()
   if(CNOID_USE_BOOST_REGEX)
     set(libraries ${libraries} ${Boost_REGEX_LIBRARY})
   endif()

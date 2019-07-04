@@ -33,7 +33,7 @@
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = boost::filesystem;
+namespace filesystem = cnoid::stdx::filesystem;
 
 
 #ifdef Q_OS_WIN32

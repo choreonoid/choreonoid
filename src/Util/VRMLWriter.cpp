@@ -4,12 +4,12 @@
 */
 
 #include "VRMLWriter.h"
-#include <boost/filesystem.hpp>
+#include <cnoid/stdx/filesystem>
 #include <iostream>
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = boost::filesystem;
+namespace filesystem = stdx::filesystem;
 
 namespace {
 

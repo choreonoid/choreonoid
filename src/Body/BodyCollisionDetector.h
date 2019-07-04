@@ -27,7 +27,7 @@ public:
     void clearBodies();
 
     void enableGeometryHandleMap(bool on);
-    boost::optional<CollisionDetector::GeometryHandle> findGeometryHandle(Link* link);
+    stdx::optional<CollisionDetector::GeometryHandle> findGeometryHandle(Link* link);
 
     void addBody(Body* body, bool isSelfCollisionDetectionEnabled);
     void addBody(Body* body, bool isSelfCollisionDetectionEnabled,

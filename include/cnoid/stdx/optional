@@ -1,0 +1,18 @@
+#ifndef CNOID_STDX_OPTIONAL_HEADER
+#define CNOID_STDX_OPTIONAL_HEADER
+
+#if __cplusplus > 201402L
+#include <optional>
+namespace cnoid::stdx {
+using std::optional;
+using std::nullopt;
+}
+#else
+#include <boost/optional.hpp>
+namespace cnoid { namespace stdx {
+using boost::optional;
+static constexpr auto& nullopt = boost::none;
+} }
+#endif
+
+#endif

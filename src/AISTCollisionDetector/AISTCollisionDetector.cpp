@@ -41,7 +41,7 @@ class ColdetModelEx : public ColdetModel
 public:
     ReferencedPtr object;
     bool isStatic;
-    boost::optional<Position> localPosition;
+    stdx::optional<Position> localPosition;
     ColdetModelExPtr sibling;
     
     ColdetModelEx() : isStatic(false) { }
@@ -137,7 +137,7 @@ public:
         
     AISTCollisionDetectorImpl();
     ~AISTCollisionDetectorImpl();
-    boost::optional<GeometryHandle> addGeometry(SgNode* geometry);
+    stdx::optional<GeometryHandle> addGeometry(SgNode* geometry);
     void addMesh(ColdetModelEx* model);
     bool makeReady();
     void detectCollisions(std::function<void(const CollisionPair&)> callback);
@@ -216,13 +216,13 @@ int AISTCollisionDetector::numGeometries() const
 }
 
 
-boost::optional<GeometryHandle> AISTCollisionDetector::addGeometry(SgNode* geometry)
+stdx::optional<GeometryHandle> AISTCollisionDetector::addGeometry(SgNode* geometry)
 {
     return impl->addGeometry(geometry);
 }
 
 
-boost::optional<GeometryHandle> AISTCollisionDetectorImpl::addGeometry(SgNode* geometry)
+stdx::optional<GeometryHandle> AISTCollisionDetectorImpl::addGeometry(SgNode* geometry)
 {
     if(geometry){
         ColdetModelExPtr model = new ColdetModelEx;
@@ -235,7 +235,7 @@ boost::optional<GeometryHandle> AISTCollisionDetectorImpl::addGeometry(SgNode* g
             }
         }
     }
-    return boost::none;
+    return stdx::nullopt;
 }
 
 

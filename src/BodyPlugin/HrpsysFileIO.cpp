@@ -11,6 +11,7 @@
 #include <cnoid/BodyMotionUtil>
 #include <cnoid/ZMPSeq>
 #include <cnoid/Config>
+#include <cnoid/stdx/filesystem>
 #include <QMessageBox>
 #include <fmt/format.h>
 #include <boost/tokenizer.hpp>
@@ -20,7 +21,6 @@
 #include <boost/iostreams/filter/gzip.hpp>
 #include <boost/iostreams/filter/bzip2.hpp>
 #endif
-#include <boost/filesystem.hpp>
 #include <fstream>
 #include <list>
 #include <vector>
@@ -41,7 +41,7 @@ using boost::smatch;
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = boost::filesystem;
+namespace filesystem = cnoid::stdx::filesystem;
 using fmt::format;
 
 namespace {
@@ -104,7 +104,7 @@ public:
         boost::iostreams::filtering_istream is;
 
 #ifndef _WINDOWS
-        string ext = filesystem::extension(filesystem::path(filename));
+        string ext = filesystem::path(filename).extension().string();
         if(ext == ".gz"){
             is.push(boost::iostreams::gzip_decompressor());
         } else if(ext == ".bz2"){

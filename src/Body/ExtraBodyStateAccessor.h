@@ -10,7 +10,7 @@
 #include <cnoid/Array2D>
 #include <cnoid/EigenTypes>
 #include <cnoid/Signal>
-#include <boost/variant.hpp>
+#include <cnoid/stdx/variant>
 #include <string>
 #include "exportdecl.h"
 
@@ -46,24 +46,23 @@ public:
            Vector2 cannot be contained in variant because it is an Eigen type which must be aligned
            but the variant type does not seem to ahieve that for its elements
         */
-        boost::variant<bool, int, double, Angle, std::string, Vector3f, VectorX, None> value;
+        stdx::variant<bool, int, double, Angle, std::string, Vector3f, VectorX, None> value;
         int attr;
     public:
         Value() : attr(0) { }
         Value& operator=(const Value& rhs) { value = rhs.value; attr = rhs.attr; return *this; }
         template<typename T> Value& operator=(const T& rhs) { value = rhs; return *this; }
-        bool getBool() const { return boost::get<bool>(value); }
-        int getInt() const { return boost::get<int>(value); }
-        double getDouble() const { return boost::get<double>(value); }
-        double getAngle() const { return boost::get<Angle>(value).value(); }
+        bool getBool() const { return stdx::get<bool>(value); }
+        int getInt() const { return stdx::get<int>(value); }
+        double getDouble() const { return stdx::get<double>(value); }
+        double getAngle() const { return stdx::get<Angle>(value).value(); }
         void setAngle(double rad) { value = Angle(rad); }
-        const std::string& getString() const { return boost::get<std::string>(value); }
-        const Vector3f& getVector3f() const { return boost::get<Vector3f>(value); }
-        Vector3 getVector3() const { return boost::get<Vector3f>(value).cast<Vector3::Scalar>(); }
-        const VectorX& getVectorX() const { return boost::get<VectorX>(value); }
+        const std::string& getString() const { return stdx::get<std::string>(value); }
+        const Vector3f& getVector3f() const { return stdx::get<Vector3f>(value); }
+        Vector3 getVector3() const { return stdx::get<Vector3f>(value).cast<Vector3::Scalar>(); }
+        const VectorX& getVectorX() const { return stdx::get<VectorX>(value); }
             
-        int which() const { return value.which(); }
-        bool empty() const { return value.empty(); }
+        int which() const { return stdx::get_variant_index(value); }
         void setAttribute(int attribute) { attr = attribute; }
         int attribute() const { return attr; }
     };

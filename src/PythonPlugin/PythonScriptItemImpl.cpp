@@ -13,7 +13,7 @@ using namespace std;
 namespace stdph = std::placeholders;
 using namespace cnoid;
 using fmt::format;
-namespace filesystem = boost::filesystem;
+namespace filesystem = cnoid::stdx::filesystem;
 
 
 PythonScriptItemImpl::PythonScriptItemImpl(ScriptItem* scriptItem)

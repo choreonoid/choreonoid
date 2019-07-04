@@ -10,8 +10,6 @@
 #include <cnoid/Config>
 #include "exportdecl.h"
 
-#include <boost/format.hpp>
-
 #ifdef CNOID_ENABLE_GETTEXT
 # include <libintl.h>
 
@@ -36,20 +34,6 @@ inline const char* dgettext(const char* domainname, const char* msgid){
 #define N_(string) string
 
 namespace cnoid {
-
-//! \deprecated
-inline boost::format fmt(const char* f_string) {
-    boost::format f(f_string);
-    f.exceptions(boost::io::no_error_bits);
-    return f;
-}
-
-//! \deprecated
-inline boost::format fmt(const std::string& f_string) {
-    boost::format f(f_string);
-    f.exceptions(boost::io::no_error_bits);
-    return f;
-}
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
 CNOID_EXPORT const char* getText(const char* domainname, const char* msgid);

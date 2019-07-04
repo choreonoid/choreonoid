@@ -8,9 +8,9 @@
 #include <cnoid/IdPair>
 #include <cnoid/MeshExtractor>
 #include <cnoid/SceneDrawables>
+#include <cnoid/stdx/optional>
 #include <fcl/narrowphase/collision.h>
 #include <fcl/geometry/bvh/BVH_model.h>
-#include <boost/optional.hpp>
 #include <memory>
 
 using namespace std;
@@ -221,7 +221,7 @@ void FCLCollisionDetectorImpl::addMesh(CollisionObjectEx* model)
         if(mesh->primitiveType() != SgMesh::MESH){
             bool doAddPrimitive = false;
             Vector3 scale;
-            boost::optional<Vector3> translation;
+            stdx::optional<Vector3> translation;
             if(!meshExtractor->isCurrentScaled()){
                 scale.setOnes();
                 doAddPrimitive = true;

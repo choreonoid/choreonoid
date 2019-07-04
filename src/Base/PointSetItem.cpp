@@ -371,12 +371,12 @@ SignalProxy<void()> PointSetItem::sigAttentionPointsChanged()
 }
 
 
-boost::optional<Vector3> PointSetItem::attentionPoint() const
+stdx::optional<Vector3> PointSetItem::attentionPoint() const
 {
     if(numAttentionPoints() == 1){
         return attentionPoint(0);
     }
-    return boost::none;
+    return stdx::nullopt;
 }
 
 

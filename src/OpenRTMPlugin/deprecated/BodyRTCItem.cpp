@@ -24,7 +24,6 @@
 #endif
 #include <rtm/CorbaNaming.h>
 #include <fmt/format.h>
-#include <boost/filesystem.hpp>
 #include "../LoggerUtil.h"
 #include "../gettext.h"
 
@@ -32,7 +31,7 @@ using namespace std;
 using namespace cnoid;
 using namespace RTC;
 using fmt::format;
-namespace filesystem = boost::filesystem;
+namespace filesystem = cnoid::stdx::filesystem;
 
 namespace {
 
@@ -96,7 +95,7 @@ public:
     std::string confFileName;
     std::string instanceName;
     Selection baseDirectoryType;
-    boost::filesystem::path rtcDirectory;
+    filesystem::path rtcDirectory;
     MessageView* mv;
 
 #ifdef ENABLE_SIMULATION_PROFILING

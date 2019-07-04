@@ -226,7 +226,7 @@ public:
 
     void throwEx(const string& error)
     {
-        boost::filesystem::path path(filename);
+        stdx::filesystem::path path(filename);
         throw std::runtime_error(
             format(_("{0} at line {1} of \"{2}\"."),
                    error, lineNumber, path.filename().string()));

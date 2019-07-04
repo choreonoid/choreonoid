@@ -110,7 +110,7 @@ public:
     typedef std::map<Link*, Link*> LinkMap;
     LinkMap orgLinkToInternalLinkMap;
 
-    boost::optional<int> forcedBodyPositionFunctionId;
+    stdx::optional<int> forcedBodyPositionFunctionId;
     std::mutex forcedBodyPositionMutex;
     DyBody* forcedPositionBody;
     Position forcedBodyPosition;
@@ -610,7 +610,7 @@ void AISTSimulatorItem::clearForcedPositions()
 {
     if(impl->forcedBodyPositionFunctionId){
         removePostDynamicsFunction(*impl->forcedBodyPositionFunctionId);
-        impl->forcedBodyPositionFunctionId = boost::none;
+        impl->forcedBodyPositionFunctionId = stdx::nullopt;
     }
 }
     

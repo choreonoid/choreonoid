@@ -8,9 +8,9 @@
 #include <cnoid/FileUtil>
 #include "exportdecl.h"
 
-namespace filesystem = boost::filesystem;
-
 namespace cnoid {
+
+namespace filesystem = stdx::filesystem;
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
 # ifdef CNOID_ENABLE_GETTEXT

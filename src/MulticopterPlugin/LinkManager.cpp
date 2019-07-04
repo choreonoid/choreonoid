@@ -375,7 +375,7 @@ LinkManager::onBodyItemCreate(const cnoid::BodyItem* bodyItem)
 
 
     cnoid::Connection con;
-    con = const_cast<BodyItem*>(bodyItem)->sigKinematicStateChanged().connect(boost::bind(&LinkManager::onBodyKinemaStateChanged, this, body));
+    con = const_cast<BodyItem*>(bodyItem)->sigKinematicStateChanged().connect(std::bind(&LinkManager::onBodyKinemaStateChanged, this, body));
     _bodyKinemaStateChangedConMap[body] = con;
 
     for(auto& ev : _bodyCreateEvMap){

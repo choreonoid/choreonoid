@@ -6,7 +6,6 @@
 #include <cnoid/Config>
 #include <cnoid/FireDevice>
 #include <cnoid/GeneralSliderView>
-#include <boost/optional.hpp>
 #include <mutex>
 
 namespace cnoid {

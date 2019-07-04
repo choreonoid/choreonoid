@@ -103,7 +103,7 @@ SgMesh* cnoid::createSurfaceMesh(SgPointSet* pointSet)
 }
 
 
-boost::optional<double> cnoid::alignPointCloud
+stdx::optional<double> cnoid::alignPointCloud
 (SgPointSet* target, SgPointSet* source, Affine3& io_T, double maxCorrespondenceDistance, int maxIterations, double epsilon)
 {
     typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;    

@@ -7,10 +7,8 @@
 #include <cnoid/ItemManager>
 #include <cnoid/BodyLoader>
 #include <cnoid/BodyItem>
+#include <memory>
 #include <iostream>
-#include <boost/make_shared.hpp>
-#include <boost/bind.hpp>
-#include <boost/filesystem.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>
 #include <sdf/sdf.hh>
@@ -50,7 +48,9 @@ public:
         BodyLoader::registerLoader("sdf", sdfBodyLoaderFactory);
         BodyLoader::registerLoader("urdf", sdfBodyLoaderFactory);
         itemManager().addLoader<BodyItem>(
-            "Gazebo Model File", "GAZEBO-MODEL", "sdf;urdf", boost::bind(loadBodyItem, _1, _2));
+            "Gazebo Model File", "GAZEBO-MODEL", "sdf;urdf",
+            [](SceneItem* item, const std::string& filename, std::ostream&, Item*){
+                return loadBodyItem(item, filename); });
 
         addModelSearchPath("GAZEBO_MODEL_PATH");
         addModelSearchPath("ROS_PACKAGE_PATH");

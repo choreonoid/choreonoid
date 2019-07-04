@@ -157,7 +157,7 @@ SgNode* SceneLoader::load(const std::string& filename, bool& out_isSupportedForm
 
 SgNode* SceneLoaderImpl::load(const std::string& filename, bool* out_isSupportedFormat)
 {
-    boost::filesystem::path filepath(filename);
+    stdx::filesystem::path filepath(filename);
 
     string ext = getExtension(filepath);
     if(ext.empty()){

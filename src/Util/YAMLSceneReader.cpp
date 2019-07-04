@@ -34,7 +34,7 @@ using boost::regex_match;
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = boost::filesystem;
+namespace filesystem = cnoid::stdx::filesystem;
 using fmt::format;
 
 namespace {
@@ -998,8 +998,7 @@ void YAMLSceneReaderImpl::readTexture(SgShape* shape, Mapping& info)
                     image = new SgImage;
                     filesystem::path filepath(url);
                     if(!checkAbsolute(filepath)){
-                        filepath = baseDirectory / filepath;
-                        filepath.normalize();
+                        filepath = filesystem::weakly_canonical(baseDirectory / filepath);
                     }
                     imageIO.load(image->image(), getAbsolutePathString(filepath));
                     imagePathToSgImageMap[url] = image;
@@ -1276,8 +1275,7 @@ ResourceInfo* YAMLSceneReaderImpl::getOrCreateResourceInfo(Mapping& resourceNode
     if(!hasScheme){
         filepath = uri;
         if(!checkAbsolute(filepath)){
-            filepath = baseDirectory / filepath;
-            filepath.normalize();
+            filepath = filesystem::weakly_canonical(baseDirectory / filepath);
         }
     }
     
@@ -1289,7 +1287,7 @@ ResourceInfo* YAMLSceneReaderImpl::getOrCreateResourceInfo(Mapping& resourceNode
     ResourceInfoPtr info = new ResourceInfo;
 
     string filename = filesystem::absolute(filepath).string();
-    string ext = filesystem::extension(filepath);
+    string ext = filepath.extension().string();
     std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 
     if(ext == ".yaml" || ext == ".yml"){

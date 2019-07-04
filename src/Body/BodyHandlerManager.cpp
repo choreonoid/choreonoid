@@ -14,7 +14,7 @@
 using namespace std;
 using namespace cnoid;
 using namespace fmt;
-namespace filesystem = boost::filesystem;
+namespace filesystem = cnoid::stdx::filesystem;
 
 namespace {
 

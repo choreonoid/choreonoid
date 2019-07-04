@@ -10,14 +10,15 @@
 #include <cnoid/FileUtil>
 #include <cnoid/Exception>
 #include <cnoid/NullOut>
+#include <cnoid/stdx/optional>
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
-#include <boost/optional.hpp>
 #include <map>
 
 using namespace std;
 using namespace cnoid;
+namespace filesystem = cnoid::stdx::filesystem;
 
 namespace cnoid {
 
@@ -28,10 +29,10 @@ public:
     ostream& os() { return *os_; }
     Assimp::Importer importer;
     const aiScene* scene;
-    boost::filesystem::path directoryPath;
+    filesystem::path directoryPath;
     ImageIO imageIO;
 
-    boost::optional<Affine3f> T_local;
+    stdx::optional<Affine3f> T_local;
     
     typedef map<unsigned int, SgNodePtr> AiIndexToSgShapeMap;
     AiIndexToSgShapeMap aiIndexToSgShapeMap;
@@ -134,10 +135,10 @@ SgNode* AssimpSceneLoaderImpl::load(const std::string& filename)
         return 0;
     }
 
-    boost::filesystem::path path(filename);
+    filesystem::path path(filename);
     directoryPath = path.remove_filename();
 
-    T_local = boost::none;
+    T_local = stdx::nullopt;
 
     SgNode* node = convertAiNode(scene->mRootNode);
 
@@ -159,7 +160,7 @@ SgGroup* AssimpSceneLoaderImpl::convertAiNode(aiNode* node)
         S[1][0], S[1][1], S[1][2],
         S[2][0], S[2][1], S[2][2];
 
-    boost::optional<Affine3f> prev_T_local = T_local;
+    stdx::optional<Affine3f> prev_T_local = T_local;
     
     double d = T.linear().determinant();
     if(T_local || d < 0){ // include coordinate reflection
@@ -459,10 +460,9 @@ SgTexture* AssimpSceneLoaderImpl::convertAiTexture(unsigned int index)
     if(srcMaterial->GetTextureCount(aiTextureType_DIFFUSE) > 0){
         aiString path;
         if(srcMaterial->GetTexture(aiTextureType_DIFFUSE, 0, &path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS){
-            boost::filesystem::path filepath(path.data);
+            filesystem::path filepath(path.data);
             if(!checkAbsolute(filepath)){
-                filepath = directoryPath / filepath;
-                filepath.normalize();
+                filepath = filesystem::weakly_canonical(directoryPath / filepath);
             }
             string textureFile = getAbsolutePathString(filepath);
 

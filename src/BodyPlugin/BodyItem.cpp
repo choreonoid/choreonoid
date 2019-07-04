@@ -164,7 +164,7 @@ public:
     void setPresetPose(BodyItem::PresetPoseID id);
     bool doLegIkToMoveCm(const Vector3& c, bool onlyProjectionToFloor);
     bool setStance(double width);
-    void getParticularPosition(BodyItem::PositionType position, boost::optional<Vector3>& pos);
+    void getParticularPosition(BodyItem::PositionType position, stdx::optional<Vector3>& pos);
     void doAssign(Item* srcItem);
     bool onEditableChanged(bool on);
     void doPutProperties(PutPropertyFunction& putProperty);
@@ -184,7 +184,9 @@ void BodyItem::initializeClass(ExtensionManager* ext)
         ItemManager& im = ext->itemManager();
         im.registerClass<BodyItem>(N_("BodyItem"));
         im.addLoader<BodyItem>(
-            _("Body"), "OpenHRP-VRML-MODEL", "body;scen;wrl;yaml;yml;dae;stl", std::bind(loadBodyItem, _1, _2));
+            _("Body"), "OpenHRP-VRML-MODEL", "body;scen;wrl;yaml;yml;dae;stl",
+            [](BodyItem* item, const std::string& filename, std::ostream&, Item*){
+                return loadBodyItem(item, filename); });
 
         OptionManager& om = ext->optionManager();
         om.addOption("hrpmodel", boost::program_options::value< vector<string> >(), "load an OpenHRP model file");
@@ -826,15 +828,15 @@ bool BodyItemImpl::setStance(double width)
 }
                 
 
-boost::optional<Vector3> BodyItem::getParticularPosition(PositionType position)
+stdx::optional<Vector3> BodyItem::getParticularPosition(PositionType position)
 {
-    boost::optional<Vector3> pos;
+    stdx::optional<Vector3> pos;
     impl->getParticularPosition(position, pos);
     return pos;
 }
 
 
-void BodyItemImpl::getParticularPosition(BodyItem::PositionType position, boost::optional<Vector3>& pos)
+void BodyItemImpl::getParticularPosition(BodyItem::PositionType position, stdx::optional<Vector3>& pos)
 {
     if(position == BodyItem::ZERO_MOMENT_POINT){
         pos = zmp;

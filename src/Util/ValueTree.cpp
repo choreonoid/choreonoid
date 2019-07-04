@@ -6,9 +6,9 @@
 #include <stack>
 #include <iostream>
 #include <yaml.h>
-#include <boost/lexical_cast.hpp>
+#include <cnoid/stdx/filesystem>
 #include <fmt/format.h>
-#include <boost/filesystem.hpp>
+#include <boost/lexical_cast.hpp>
 #include "gettext.h"
 
 #ifdef _WIN32
@@ -16,8 +16,8 @@
 #endif
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
+namespace filesystem = cnoid::stdx::filesystem;
 
 namespace {
 
@@ -352,7 +352,7 @@ ScalarNode::ScalarNode(const char* text, size_t length, StringStyle stringStyle)
 
 
 ScalarNode::ScalarNode(int value)
-    : stringValue_(lexical_cast<string>(value))
+    : stringValue_(boost::lexical_cast<string>(value))
 {
     typeBits = SCALAR;
     line_ = -1;

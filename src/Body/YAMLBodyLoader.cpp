@@ -22,7 +22,6 @@
 #include <cnoid/YAMLReader>
 #include <cnoid/NullOut>
 #include <fmt/format.h>
-#include <boost/optional.hpp>
 #include <unordered_map>
 #include <mutex>
 #include <cstdlib>
@@ -31,7 +30,7 @@
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = boost::filesystem;
+namespace filesystem = cnoid::stdx::filesystem;
 using fmt::format;
 
 namespace {

@@ -41,7 +41,7 @@ public:
         
             const int numJoints = body->numJoints();
             for(int i=0; i < numJoints; ++i){
-                boost::optional<double> q = interpolator->jointPosition(i);
+                auto q = interpolator->jointPosition(i);
                 if(q){
                     body->joint(i)->q() = (*q);
                 }
@@ -56,7 +56,7 @@ public:
                 fkTraverse.calcForwardKinematics();
             }
             
-            boost::optional<Vector3> zmp = interpolator->ZMP();
+            auto zmp = interpolator->ZMP();
             if(zmp){
                 bodyItem->setZmp(*zmp);
             }

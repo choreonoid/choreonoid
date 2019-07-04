@@ -13,7 +13,6 @@
 #include <cnoid/CheckBox>
 #include <cnoid/ComboBox>
 #include <cnoid/LineEdit>
- //#include <boost/shared_ptr.hpp>
 
 namespace cnoid {
 class   RTSPropertiesViewImpl;

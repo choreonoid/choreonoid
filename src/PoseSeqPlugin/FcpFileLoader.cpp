@@ -12,10 +12,10 @@
 #include <cnoid/MessageView>
 #include <cnoid/ItemTreeView>
 #include <cnoid/MenuManager>
+#include <cnoid/stdx/filesystem>
 #include <QFileDialog>
 #include <boost/tokenizer.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/filesystem.hpp>
 #include <map>
 #include <vector>
 #include <fstream>
@@ -23,8 +23,8 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
+namespace filesystem = cnoid::stdx::filesystem;
 
 namespace {
 
@@ -41,7 +41,7 @@ struct Part
     vector<int> jointIds;
     map<string, FcPose> poses;
 };
-typedef boost::shared_ptr<Part> PartPtr;
+typedef shared_ptr<Part> PartPtr;
     
 vector<PartPtr> parts;
 
@@ -62,8 +62,8 @@ bool loadFaceControllerPoseSet(const string& filename)
 
     int nLines = 0;
     try {
-        typedef tokenizer< char_separator<char> > tokenizer;
-        char_separator<char> sep(" \t\r\n");
+        typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
+        boost::char_separator<char> sep(" \t\r\n");
         string line;
         while(getline(ifs, line)){
             ++nLines;
@@ -74,13 +74,13 @@ bool loadFaceControllerPoseSet(const string& filename)
             }
             
             tokenizer tokens(line, sep);
-            tokenizer::iterator it = tokens.begin();
+            auto it = tokens.begin();
             if(it != tokens.end()){
                 if(*it == "*"){
                     ++it;
                     PartPtr part(new Part());
                     while(it != tokens.end()){
-                        part->jointIds.push_back(lexical_cast<int>(*it++));
+                        part->jointIds.push_back(boost::lexical_cast<int>(*it++));
                     }
                     if(!part->jointIds.empty()){
                         os << "pose registration of the joint set ";
@@ -105,7 +105,7 @@ bool loadFaceControllerPoseSet(const string& filename)
                     FcPose pose;
                     if(it != tokens.end()){
                         while(true){
-                            double value = lexical_cast<double>(*it++);
+                            double value = boost::lexical_cast<double>(*it++);
                             if(it == tokens.end()){
                                 pose.transitionTime = value;
                                 break;
@@ -132,7 +132,7 @@ bool loadFaceControllerPoseSet(const string& filename)
             cout << endl;
         }
     }
-    catch(const bad_lexical_cast& ex){
+    catch(const boost::bad_lexical_cast& ex){
         os << ex.what() << " at line " << nLines << endl;
         parts.clear();
     }
@@ -155,15 +155,15 @@ PoseSeqItemPtr loadFaceControllerPoseSeq(const string& filename)
 
     PoseSeqItemPtr item = new PoseSeqItem();
     filesystem::path fpath(filename);
-    item->setName(basename(fpath));
+    item->setName(fpath.stem().string());
     PoseSeqPtr seq = item->poseSeq();
 
     int nLines = 0;
         
     try {
             
-        typedef tokenizer< char_separator<char> > tokenizer;
-        char_separator<char> sep(" ,\t\r\n", "", boost::keep_empty_tokens);
+        typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
+        boost::char_separator<char> sep(" ,\t\r\n", "", boost::keep_empty_tokens);
             
         int nPoses = 0;
         string line;
@@ -175,11 +175,11 @@ PoseSeqItemPtr loadFaceControllerPoseSeq(const string& filename)
             }
             tokenizer tokens(line, sep);
                 
-            tokenizer::iterator it = tokens.begin();
+            auto it = tokens.begin();
             if(it != tokens.end()){
                 if(*it != "#"){
                     PoseSeq::iterator poseIter = seq->begin();
-                    double time = lexical_cast<double>(*it++);
+                    double time = boost::lexical_cast<double>(*it++);
                     int numParts = parts.size();
                     bool poseAdded = false;
                     for(int i=0; it != tokens.end(); ++i, ++it){
@@ -215,7 +215,7 @@ PoseSeqItemPtr loadFaceControllerPoseSeq(const string& filename)
         }
         os << "A pose sequence with " << nPoses << " poses has been loaded." << endl;
     }
-    catch(const bad_lexical_cast& ex){
+    catch(const boost::bad_lexical_cast& ex){
         os << "FaceController : " << ex.what() << endl;
         os << " at line " << nLines << "." << endl;
         item = 0;

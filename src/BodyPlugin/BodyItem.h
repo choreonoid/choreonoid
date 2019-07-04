@@ -10,8 +10,8 @@
 #include <cnoid/Body>
 #include <cnoid/CollisionLinkPair>
 #include <cnoid/SceneProvider>
+#include <cnoid/stdx/optional>
 #include <boost/dynamic_bitset.hpp>
-#include <boost/optional.hpp>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -130,7 +130,7 @@ public:
 
     enum PositionType { CM_PROJECTION, HOME_COP, RIGHT_HOME_COP, LEFT_HOME_COP, ZERO_MOMENT_POINT };
             
-    boost::optional<Vector3> getParticularPosition(PositionType posType);
+    stdx::optional<Vector3> getParticularPosition(PositionType posType);
 
     bool setStance(double width);
             

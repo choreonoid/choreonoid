@@ -10,10 +10,7 @@
 #include <cnoid/YAMLWriter>
 #include <fstream>
 
-#include <iostream>
-
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 PoseRef::PoseRef(PoseSeq* owner, PoseUnitPtr poseUnit, double time)

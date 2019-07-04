@@ -22,7 +22,6 @@
 #include <cnoid/ExecutablePath>
 #include <QFileDialog>
 #include <QCoreApplication>
-#include <boost/filesystem.hpp>
 #include <string>
 #include <vector>
 #include <fmt/format.h>
@@ -30,7 +29,7 @@
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = boost::filesystem;
+namespace filesystem = cnoid::stdx::filesystem;
 using fmt::format;
 
 namespace {
@@ -618,7 +617,7 @@ void ProjectManagerImpl::openDialogToSaveProject()
         AppConfig::archive()->writePath("currentFileDialogDirectory", dialog.directory().absolutePath().toStdString());        
         filesystem::path path(dialog.selectedFiles().front().toStdString());
         string filename = getNativePathString(path);
-        string ext = filesystem::extension(path);
+        string ext = path.extension().string();
         if(ext != ".cnoid"){
             filename += ".cnoid";
         }

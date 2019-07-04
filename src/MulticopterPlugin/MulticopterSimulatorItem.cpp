@@ -69,9 +69,9 @@ MulticopterSimulatorItem::initializeSimulation(SimulatorItem* simulatorItem)
     evMgr->onSimulationStartEnd(true, _curSimItem->currentTime(), _curSimItem, this);
     
     if( simMgr->isInitialized() == true ){
-        _preFuncId = simulatorItem->addPreDynamicsFunction(boost::bind(&MulticopterSimulatorItem::onPreDynamicFunction, this));
-        _midFuncId = simulatorItem->addMidDynamicsFunction(boost::bind(&MulticopterSimulatorItem::onMidDynamicFunction, this));
-        _postFuncId = simulatorItem->addPostDynamicsFunction(boost::bind(&MulticopterSimulatorItem::onPostDynamicFunction, this));
+        _preFuncId = simulatorItem->addPreDynamicsFunction(std::bind(&MulticopterSimulatorItem::onPreDynamicFunction, this));
+        _midFuncId = simulatorItem->addMidDynamicsFunction(std::bind(&MulticopterSimulatorItem::onMidDynamicFunction, this));
+        _postFuncId = simulatorItem->addPostDynamicsFunction(std::bind(&MulticopterSimulatorItem::onPostDynamicFunction, this));
     }
 
     return true;

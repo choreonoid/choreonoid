@@ -23,7 +23,7 @@ using boost::regex_match;
 using namespace std;
 using namespace cnoid;
 using fmt::format;
-namespace filesystem = boost::filesystem;
+namespace filesystem = stdx::filesystem;
 
 namespace cnoid {
 
@@ -49,7 +49,7 @@ public:
     bool findSubDirectoryOfDirectoryVariable(
         const filesystem::path& path, std::string& out_varName, filesystem::path& out_relativePath);
     bool replaceDirectoryVariable(string& io_pathString, const string& varname, int pos, int len);
-    boost::optional<std::string> expand(const std::string& pathString);
+    stdx::optional<std::string> expand(const std::string& pathString);
 };
 
 }
@@ -124,7 +124,7 @@ std::string ParametricPathProcessor::parameterize(const std::string& orgPathStri
     filesystem::path orgPath(orgPathString);
 
     // In the case where the path is originally relative one
-    if(!orgPath.is_complete()){
+    if(!orgPath.is_absolute()){
         return getGenericPathString(orgPath);
 
     } else {
@@ -184,13 +184,13 @@ bool ParametricPathProcessorImpl::findSubDirectoryOfDirectoryVariable
 }
 
 
-boost::optional<std::string> ParametricPathProcessor::expand(const std::string& pathString)
+stdx::optional<std::string> ParametricPathProcessor::expand(const std::string& pathString)
 {
     return impl->expand(pathString);
 }
 
 
-boost::optional<std::string> ParametricPathProcessorImpl::expand(const std::string& pathString)
+stdx::optional<std::string> ParametricPathProcessorImpl::expand(const std::string& pathString)
 {
     if(!isVariableRegexAssinged){
         variableRegex = "^\\$\\{(\\w+)\\}";
@@ -216,12 +216,12 @@ boost::optional<std::string> ParametricPathProcessorImpl::expand(const std::stri
             if(projectDirString.empty()){
                 errorMessage =
                     format(_("PROJECT_DIR of \"{}\" cannot be expanded."), pathString);
-                return boost::none;
+                return stdx::nullopt;
             }
             expanded.replace(pos, len, projectDirString);
         } else {
             if(!replaceDirectoryVariable(expanded, varname, pos, len)){
-                return boost::none;
+                return stdx::nullopt;
             }
         }
         path = expanded;

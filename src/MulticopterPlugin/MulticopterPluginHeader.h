@@ -8,7 +8,6 @@
 
 #include <QtCore/QtCore>
 
-#include <boost/bind.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include <boost/lexical_cast.hpp>

@@ -25,13 +25,14 @@
 #include <QRegExp>
 #include <boost/tokenizer.hpp>
 #include <fmt/format.h>
+#include <chrono>
 #include <set>
 #include <sstream>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = boost::filesystem;
+namespace filesystem = cnoid::stdx::filesystem;
 using fmt::format;
 
 namespace cnoid {
@@ -814,7 +815,7 @@ bool ItemManagerImpl::load(Item* item, const string& filename, Item* parentItem,
     }
         
     ParametricPathProcessor* pathProcessor = ParametricPathProcessor::instance();
-    boost::optional<string> expanded = pathProcessor->expand(filename);
+    auto expanded = pathProcessor->expand(filename);
     if(!expanded){
         messageView->putln(pathProcessor->errorMessage());
         return false;
@@ -848,7 +849,7 @@ bool ItemManagerImpl::load(Item* item, const string& filename, Item* parentItem,
             }
         }
     } else {
-        string dotextension = filesystem::extension(filepath);
+        string dotextension = filepath.extension().string();
         if(dotextension.size() >= 2){
             string extension = dotextension.substr(1); // remove dot
             for(list<LoaderPtr>::iterator p = loaders.begin(); p != loaders.end(); ++p){
@@ -908,7 +909,7 @@ bool ItemManagerImpl::load(LoaderPtr loader, Item* item, const string& filename_
             messageView->put(MessageView::HIGHLIGHT, _(" -> failed.\n"));
         } else {
             if(item->name().empty()){
-                item->setName(filesystem::basename(filesystem::path(filename)));
+                item->setName(filesystem::path(filename).stem().string());
             }
             item->updateFileInformation(filename, loader->formatId);
             messageView->put(_(" -> ok!\n"));
@@ -1218,7 +1219,7 @@ ItemManagerImpl::SaverPtr ItemManagerImpl::getSaverAndFilenameFromSaveDialog
                     if(!extensions.empty()){
                         bool hasExtension = false;
                         auto exts = separateExtensions(extensions);
-                        string dotextension = filesystem::extension(filesystem::path(io_filename));
+                        string dotextension = filesystem::path(io_filename).extension().string();
                         if(!dotextension.empty()){
                             string extension = dotextension.substr(1); // remove the first dot
                             if(std::find(exts.begin(), exts.end(), extension) != exts.end()){
@@ -1253,7 +1254,7 @@ ItemManagerImpl::SaverPtr ItemManagerImpl::determineSaver
             }
         }
     } else {
-        string dotextension = filesystem::extension(filesystem::path(filename));
+        string dotextension = filesystem::path(filename).extension().string();
         if(!dotextension.empty()){
             string extension = dotextension.substr(1);
             for(list<SaverPtr>::iterator p = savers.begin(); p != savers.end(); ++p){
@@ -1302,7 +1303,7 @@ bool ItemManagerImpl::overwrite(Item* item, bool forceOverwrite, const string& f
         if(!filename.empty()){
             filesystem::path fpath(filename);
             if(!filesystem::exists(fpath) ||
-               filesystem::last_write_time(fpath) > item->fileModificationTime()){
+               filesystem::last_write_time_to_time_t(fpath) > item->fileModificationTime()){
                 needToOverwrite = true;
                 filename.clear();
             }

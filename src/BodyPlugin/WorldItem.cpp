@@ -15,12 +15,13 @@
 #include <cnoid/SceneCollision>
 #include <cnoid/MaterialTable>
 #include <cnoid/ExecutablePath>
+#include <cnoid/stdx/filesystem>
 #include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = boost::filesystem;
+namespace filesystem = cnoid::stdx::filesystem;
 using fmt::format;
 
 namespace {
@@ -455,7 +456,7 @@ MaterialTable* WorldItemImpl::getOrLoadMaterialTable(bool checkFileUpdate)
     if(!materialTable){
         materialTable = new MaterialTable;
         if(materialTable->load(materialTableFile, os)){
-            materialTableTimestamp = filesystem::last_write_time(materialTableFile);
+            materialTableTimestamp = filesystem::last_write_time_to_time_t(materialTableFile);
         } else {
             failedToLoad = true;
         }
@@ -464,7 +465,7 @@ MaterialTable* WorldItemImpl::getOrLoadMaterialTable(bool checkFileUpdate)
         if(!materialTableFile.empty()){
             filesystem::path fpath(materialTableFile);
             if(filesystem::exists(fpath)){
-                std::time_t newTimestamp = filesystem::last_write_time(materialTableFile);
+                auto newTimestamp = filesystem::last_write_time_to_time_t(materialTableFile);
                 if(newTimestamp > materialTableTimestamp){
                     MaterialTablePtr newMaterialTable = new MaterialTable;
                     if(newMaterialTable->load(materialTableFile, os)){

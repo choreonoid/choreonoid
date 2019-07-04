@@ -13,6 +13,7 @@
 using namespace std;
 using namespace cnoid;
 
+
 PoseProviderToBodyMotionConverter::PoseProviderToBodyMotionConverter()
 {
     setFullTimeRange();
@@ -20,7 +21,6 @@ PoseProviderToBodyMotionConverter::PoseProviderToBodyMotionConverter()
 }
 
     
-
 void PoseProviderToBodyMotionConverter::setTimeRange(double lower, double upper)
 {
     lowerTime = std::max(0.0, lower);
@@ -74,7 +74,7 @@ bool PoseProviderToBodyMotionConverter::convert(Body* body, PoseProvider* provid
     Vector3 p0 = rootLink->p();
     Matrix3 R0 = rootLink->R();
 
-    std::vector< boost::optional<double> > jointPositions(numJoints);
+    std::vector<stdx::optional<double>> jointPositions(numJoints);
 
     for(int frame = beginningFrame; frame <= endingFrame; ++frame){
 
@@ -96,7 +96,7 @@ bool PoseProviderToBodyMotionConverter::convert(Body* body, PoseProvider* provid
         MultiValueSeq::Frame qs = qseq.frame(frame);
         provider->getJointPositions(jointPositions);
         for(int i=0; i < numJoints; ++i){
-            const boost::optional<double>& q = jointPositions[i];
+            const auto& q = jointPositions[i];
             qs[i] = q ? *q : 0.0;
             body->joint(i)->q() = qs[i];
         }
@@ -111,7 +111,7 @@ bool PoseProviderToBodyMotionConverter::convert(Body* body, PoseProvider* provid
             p.set(link->p(), link->R());
         }
 
-        boost::optional<Vector3> zmp = provider->ZMP();
+        auto zmp = provider->ZMP();
         if(zmp){
             zmpseq[frame] = *zmp;
             isZmpValid = true;

@@ -9,15 +9,15 @@
 #include <cnoid/MessageView>
 #include <cnoid/ExecutablePath>
 #include <cnoid/Archive>
-#include <boost/filesystem.hpp>
+#include <cnoid/stdx/filesystem>
 #include <fstream>
 #include <regex>
 #include <fmt/format.h>
 #include "gettext.h"
 
-using namespace cnoid;
 using namespace std;
-namespace filesystem = boost::filesystem;
+using namespace cnoid;
+namespace filesystem = cnoid::stdx::filesystem;
 using fmt::format;
 
 namespace cnoid {
@@ -202,7 +202,7 @@ void MessageLogItemImpl::setFileName(const string& filename_)
 
     filename = filename_;
     filesystem::path path(filename);
-    string ext = filesystem::extension(path);
+    string ext = path.extension().string();
     if(ext != ".log"){
         filename += ".log";
     }

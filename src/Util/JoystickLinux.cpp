@@ -5,8 +5,8 @@
 #include "Joystick.h"
 #include "ExtJoystick.h"
 #include <cnoid/Config>
+#include <cnoid/stdx/filesystem>
 #include <fmt/format.h>
-#include <boost/filesystem.hpp>
 #include <linux/joystick.h>
 #include <sys/ioctl.h>
 #include <string>
@@ -31,7 +31,7 @@ using boost::regex_match;
 using namespace std;
 using namespace cnoid;
 using fmt::format;
-namespace filesystem = boost::filesystem;
+namespace filesystem = stdx::filesystem;
 
 namespace {
 
