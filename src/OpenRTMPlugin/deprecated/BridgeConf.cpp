@@ -328,7 +328,7 @@ void BridgeConf::addModuleInfo(const std::string& value)
     } else {
         ModuleInfo info;
         info.fileName = parameters[0];
-        info.componentName = filesystem::path(info.fileName).stem();
+        info.componentName = filesystem::path(info.fileName).stem().string();
         if(parameters.size() == 1){
             info.initFuncName = info.componentName + "Init";
         } else {

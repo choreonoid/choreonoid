@@ -998,7 +998,7 @@ void YAMLSceneReaderImpl::readTexture(SgShape* shape, Mapping& info)
                     image = new SgImage;
                     filesystem::path filepath(url);
                     if(!checkAbsolute(filepath)){
-                        filepath = filesystem::weakly_canonical(baseDirectory / filepath);
+                        filepath = filesystem::lexically_normal(baseDirectory / filepath);
                     }
                     imageIO.load(image->image(), getAbsolutePathString(filepath));
                     imagePathToSgImageMap[url] = image;
@@ -1275,7 +1275,7 @@ ResourceInfo* YAMLSceneReaderImpl::getOrCreateResourceInfo(Mapping& resourceNode
     if(!hasScheme){
         filepath = uri;
         if(!checkAbsolute(filepath)){
-            filepath = filesystem::weakly_canonical(baseDirectory / filepath);
+            filepath = filesystem::lexically_normal(baseDirectory / filepath);
         }
     }
     

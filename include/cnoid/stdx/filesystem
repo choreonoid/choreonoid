@@ -8,6 +8,9 @@ namespace std::filesystem {
 inline std::time_t last_write_time_to_time_t(const path& p){
     return std::chrono::system_clock::to_time_t(last_write_time(p));
 }
+inline path lexically_normal(const path& p){
+    return p.lexically_normal();
+}
 }
 namespace cnoid::stdx {
 namespace filesystem = std::filesystem;
@@ -17,6 +20,14 @@ namespace filesystem = std::filesystem;
 namespace boost { namespace filesystem {
 inline std::time_t last_write_time_to_time_t(const path& p){
     return last_write_time(p);
+}
+inline path lexically_normal(const path& p){
+#if BOOST_VERSION < 106000
+    path n(p);
+    return n.normalize();
+#else
+    return p.lexically_normal();
+#endif
 }
 } }
 namespace cnoid { namespace stdx {

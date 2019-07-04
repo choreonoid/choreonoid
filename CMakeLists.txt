@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1.0) # Qt5 requies this version or later
+cmake_minimum_required(VERSION 3.5.0) # Ubuntu 16.04
 
 cmake_policy(SET CMP0003 NEW)
 cmake_policy(SET CMP0057 NEW)
@@ -36,7 +36,7 @@ if(UNIX)
     # For Ubuntu 16.04, alghouth the c++17 option is available,
     # CMake gets an error when 17 is set to CMAKE_CXX_STANDARD.
     # Therefore c++17 is currently disabled.
-    if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.8.0)
+    if(NOT CMAKE_VERSION VERSION_LESS 3.8.0)
       check_cxx_compiler_flag("-std=c++17" has_cpp17)
       if(has_cpp17)
 	set(CMAKE_CXX_STANDARD 17)

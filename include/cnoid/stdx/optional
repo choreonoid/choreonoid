@@ -11,7 +11,9 @@ using std::nullopt;
 #include <boost/optional.hpp>
 namespace cnoid { namespace stdx {
 using boost::optional;
-static constexpr auto& nullopt = boost::none;
+namespace {
+  const boost::none_t& nullopt = boost::detail::optional_detail::none_instance<boost::none_t>::instance; 
+}
 } }
 #endif
 

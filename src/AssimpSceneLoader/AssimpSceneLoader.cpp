@@ -462,7 +462,7 @@ SgTexture* AssimpSceneLoaderImpl::convertAiTexture(unsigned int index)
         if(srcMaterial->GetTexture(aiTextureType_DIFFUSE, 0, &path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS){
             filesystem::path filepath(path.data);
             if(!checkAbsolute(filepath)){
-                filepath = filesystem::weakly_canonical(directoryPath / filepath);
+                filepath = filesystem::lexically_normal(directoryPath / filepath);
             }
             string textureFile = getAbsolutePathString(filepath);
 
