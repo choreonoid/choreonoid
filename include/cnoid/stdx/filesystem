@@ -2,20 +2,40 @@
 #define CNOID_STDX_FILESYSTEM_HEADER
 
 #if __cplusplus > 201402L
-#include <filesystem>
+
 #include <chrono>
-namespace std::filesystem {
-inline std::time_t last_write_time_to_time_t(const path& p){
-    return std::chrono::system_clock::to_time_t(last_write_time(p));
+
+#if __GNUC__ < 8
+#include <experimental/filesystem>
+namespace std::experimental::filesystem {
+inline path lexically_normal(const path& p){
+    // lexically_normal or any other normalization functions are not implemented in GCC 8
+    return p; 
 }
+#else
+#include <filesystem>
+namespace std::filesystem {
 inline path lexically_normal(const path& p){
     return p.lexically_normal();
 }
+#endif
+
+inline std::time_t last_write_time_to_time_t(const path& p){
+    return std::chrono::system_clock::to_time_t(last_write_time(p));
 }
+
+} // namespace
+
 namespace cnoid::stdx {
-namespace filesystem = std::filesystem;
-}
+#if __GNUC__ < 8
+namespace filesystem = std::experimental::filesystem;
 #else
+namespace filesystem = std::filesystem;
+#endif
+}
+
+#else
+
 #include <boost/filesystem.hpp>
 namespace boost { namespace filesystem {
 inline std::time_t last_write_time_to_time_t(const path& p){

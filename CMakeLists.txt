@@ -33,10 +33,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 if(UNIX)
   include(CheckCXXCompilerFlag OPTIONAL RESULT_VARIABLE included)
   if(included)
-    # For Ubuntu 16.04, alghouth the c++17 option is available,
-    # CMake gets an error when 17 is set to CMAKE_CXX_STANDARD.
-    # Therefore c++17 is currently disabled.
-    if(NOT CMAKE_VERSION VERSION_LESS 3.8.0)
+    if(NOT CMAKE_VERSION VERSION_LESS 3.8.0) # CMake 3.8 or later is required to enable C++17
       check_cxx_compiler_flag("-std=c++17" has_cpp17)
       if(has_cpp17)
 	set(CMAKE_CXX_STANDARD 17)

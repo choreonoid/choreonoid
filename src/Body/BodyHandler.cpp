@@ -1,5 +1,6 @@
 #include "BodyHandler.h"
 #include <fmt/format.h>
+#include <ostream>
 #include "gettext.h"
 
 using namespace std;

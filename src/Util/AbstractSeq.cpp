@@ -6,6 +6,7 @@
 #include "AbstractSeq.h"
 #include "YAMLWriter.h"
 #include <fmt/format.h>
+#include <ostream>
 #include "gettext.h"
 
 using namespace std;
