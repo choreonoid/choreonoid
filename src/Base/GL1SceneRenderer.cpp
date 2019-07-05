@@ -10,7 +10,7 @@
 #include <cnoid/SceneEffects>
 #include <cnoid/EigenUtil>
 #include <cnoid/NullOut>
-#include <boost/dynamic_bitset.hpp>
+#include <bitset>
 #include <unordered_map>
 #include <iostream>
 
@@ -224,7 +224,7 @@ public:
         NUM_STATE_FLAGS
     };
 
-    boost::dynamic_bitset<> stateFlag;
+    bitset<NUM_STATE_FLAGS> stateFlag;
         
     Vector3f currentColor;
     Vector4f diffuseColor;
@@ -401,7 +401,6 @@ void GL1SceneRendererImpl::initialize()
     isRenderingOutline = false;
     pickedPoint.setZero();
 
-    stateFlag.resize(NUM_STATE_FLAGS, false);
     clearGLState();
 
     os_ = &nullout();

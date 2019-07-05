@@ -7,7 +7,6 @@
 
 #include "BodyItem.h"
 #include <cnoid/View>
-#include <boost/dynamic_bitset.hpp>
 #include <vector>
 #include "exportdecl.h"
 
@@ -29,15 +28,15 @@ public:
     SignalProxy<void()> sigSelectionChanged();
     int selectedLinkIndex() const;
     const std::vector<int>& selectedLinkIndices();
-    const boost::dynamic_bitset<>& linkSelection();
+    const std::vector<bool>& linkSelection();
             
     SignalProxy<void()> sigSelectionChanged(BodyItem* bodyItem);
     const std::vector<int>& selectedLinkIndices(BodyItem* bodyItem);
-    const boost::dynamic_bitset<>& linkSelection(BodyItem* bodyItem);
+    const std::vector<bool>& linkSelection(BodyItem* bodyItem);
 
 #ifdef CNOID_BACKWARD_COMPATIBILITY
     const std::vector<int>& getSelectedLinkIndices(BodyItem* bodyItem);
-    const boost::dynamic_bitset<>& getLinkSelection(BodyItem* bodyItem);
+    const std::vector<bool>& getLinkSelection(BodyItem* bodyItem);
 #endif
 
     bool makeSingleSelection(BodyItem* bodyItem, int linkIndex);

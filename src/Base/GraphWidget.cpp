@@ -15,7 +15,6 @@
 #include <QPainter>
 #include <QFocusEvent>
 #include <fmt/format.h>
-#include <boost/dynamic_bitset.hpp>
 #include <cmath>
 #include <deque>
 #include <limits>
@@ -84,7 +83,7 @@ public:
     EditHistoryList editHistories;
     int currentHistory;
 
-    boost::dynamic_bitset<> controlPointMask;
+    vector<bool> controlPointMask;
     bool isControlPointUpdateNeeded;
 
     GraphDataHandler::DataRequestCallback dataRequestCallback;
@@ -1798,7 +1797,7 @@ void GraphWidgetImpl::drawTrajectory
                 if(frame < 0){
                     frame = 0;
                 }
-                boost::dynamic_bitset<>& mask = data->controlPointMask;
+                const auto& mask = data->controlPointMask;
                 while(frame < frame_end){
                     if(mask[frame]){
                         double px = screenOffsetX + (frame - frame_begin) * xratio;

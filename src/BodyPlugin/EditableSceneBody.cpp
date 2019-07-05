@@ -152,7 +152,7 @@ public:
 
     ConnectionSet connections;
     Connection connectionToSigCollisionsUpdated;
-    boost::dynamic_bitset<> collisionLinkBitSet;
+    vector<bool> collisionLinkBitSet;
     ScopedConnection connectionToSigLinkSelectionChanged;
 
     enum PointedType { PT_NONE, PT_SCENE_LINK, PT_ZMP };
@@ -509,7 +509,7 @@ EditableSceneBodyImpl::~EditableSceneBodyImpl()
 }
 
 
-void EditableSceneBody::setLinkVisibilities(const boost::dynamic_bitset<>& visibilities)
+void EditableSceneBody::setLinkVisibilities(const std::vector<bool>& visibilities)
 {
     int i;
     const int m = numSceneLinks();
@@ -536,8 +536,7 @@ void EditableSceneBodyImpl::onLinkVisibilityCheckToggled()
         onLinkSelectionChanged();
     } else {
         connectionToSigLinkSelectionChanged.disconnect();
-        boost::dynamic_bitset<> visibilities;
-        visibilities.resize(self->numSceneLinks(), true);
+        vector<bool> visibilities(self->numSceneLinks(), true);
         self->setLinkVisibilities(visibilities);
     }
 }

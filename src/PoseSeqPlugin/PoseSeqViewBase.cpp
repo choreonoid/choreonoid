@@ -499,8 +499,8 @@ void PoseSeqViewBase::initializeLinkTreeIkLinkColumn()
 {
     const Mapping& info = *body->info();
 
-    possibleIkLinkFlag.resize(body->numLinks());
-    possibleIkLinkFlag.reset();
+    possibleIkLinkFlag.clear();
+    possibleIkLinkFlag.resize(body->numLinks(), false);
 
     if(body->numLinks() > 0){
         const Listing& possibleIkLinks = *info.findListing("possibleIkInterpolationLinks");
@@ -1041,7 +1041,7 @@ void PoseSeqViewBase::selectPosesJustHavingSelectedLinks()
         return;
     }
     
-    const boost::dynamic_bitset<>& linkSelection = linkTreeWidget->linkSelection();
+    const auto& linkSelection = linkTreeWidget->linkSelection();
 
     selectedPoseIters.clear();
     for(PoseSeq::iterator p = seq->begin(); p != seq->end(); ++p){
@@ -1604,7 +1604,7 @@ void PoseSeqViewBase::setCurrentBodyStateToSelectedPoses(bool onlySelected)
 
 bool PoseSeqViewBase::setCurrentBodyStateToPose(PosePtr& pose, bool onlySelected)
 {
-    const boost::dynamic_bitset<>& linkSelection =
+    const auto& linkSelection =
         LinkSelectionView::mainInstance()->linkSelection(currentBodyItem);
             
     bool updated = false;

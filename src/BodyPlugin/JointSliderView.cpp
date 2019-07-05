@@ -473,7 +473,7 @@ void JointSliderViewImpl::updateSliderGrid()
         int numJoints = body->numJoints();
         
         if(!showAllToggle.isChecked()){
-            const boost::dynamic_bitset<>& linkSelection =
+            const auto& linkSelection =
                 LinkSelectionView::mainInstance()->linkSelection(currentBodyItem);
             activeJointIds.clear();
             for(int i=0; i < numJoints; ++i){

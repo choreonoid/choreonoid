@@ -1596,12 +1596,12 @@ void TaskViewImpl::applyMenuItem(int index, bool on)
 }
                 
 
-boost::dynamic_bitset<> TaskView::menuItemCheckStates() const
+std::vector<bool> TaskView::menuItemCheckStates() const
 {
-    boost::dynamic_bitset<> states;
+    std::vector<bool> states;
     impl->updateMenuItems(false);
     int n = impl->menuItems.size();
-    states.resize(n);
+    states.resize(n, false);
     for(int i=0; i < n; ++i){
         Action* action = impl->menuItems[i].action;
         if(action){
@@ -1618,7 +1618,7 @@ SignalProxy<void()> TaskView::sigMenuRequest()
 }
 
 
-void TaskView::showMenu(boost::dynamic_bitset<> checkStates)
+void TaskView::showMenu(std::vector<bool> checkStates)
 {
     impl->updateMenuItems(true);
 

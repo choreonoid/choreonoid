@@ -11,7 +11,6 @@
 #include <cnoid/CollisionLinkPair>
 #include <cnoid/SceneProvider>
 #include <cnoid/stdx/optional>
-#include <boost/dynamic_bitset.hpp>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -112,8 +111,8 @@ public:
 
     std::vector<CollisionLinkPairPtr>& collisions() { return collisions_; }
     const std::vector<CollisionLinkPairPtr>& collisions() const { return collisions_; }
-    boost::dynamic_bitset<>& collisionLinkBitSet() { return collisionLinkBitSet_; }
-    const boost::dynamic_bitset<>& collisionLinkBitSet() const { return collisionLinkBitSet_; }
+    std::vector<bool>& collisionLinkBitSet() { return collisionLinkBitSet_; }
+    const std::vector<bool>& collisionLinkBitSet() const { return collisionLinkBitSet_; }
     std::vector<CollisionLinkPairPtr>& collisionsOfLink(int linkIndex) { return collisionsOfLink_[linkIndex]; }
     const std::vector<CollisionLinkPairPtr>& collisionsOfLink(int linkIndex) const { return collisionsOfLink_[linkIndex]; }
     SignalProxy<void()> sigCollisionsUpdated() { return sigCollisionsUpdated_; }
@@ -151,8 +150,8 @@ private:
     friend class PyBodyPlugin;
     BodyItemImpl* impl;
     std::vector<CollisionLinkPairPtr> collisions_;
-    boost::dynamic_bitset<> collisionLinkBitSet_;
-    std::vector< std::vector<CollisionLinkPairPtr> > collisionsOfLink_;
+    std::vector<bool> collisionLinkBitSet_;
+    std::vector<std::vector<CollisionLinkPairPtr>> collisionsOfLink_;
     Signal<void()> sigCollisionsUpdated_;
 };
 

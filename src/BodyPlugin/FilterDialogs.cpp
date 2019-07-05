@@ -123,7 +123,7 @@ void VelocityLimitFilterDialog::on_response(int id)
 
                 // \todo The following code has not completely been implemented.
                 if(onlySelectedCheck.get_active()){
-                    dynamic_bitset<> linkSelection = LinkSelectionView::mainInstance()->getLinkSelection(bodyItem);
+                    auto linkSelection = LinkSelectionView::mainInstance()->getLinkSelection(bodyItem);
                     BodyPtr body = bodyItem->body();
                     double r = percentSpin.get_value() / 100.0;
                     int n = body->numJoints();

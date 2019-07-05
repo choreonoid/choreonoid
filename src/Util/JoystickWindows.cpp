@@ -19,7 +19,6 @@
 
 #include "Joystick.h"
 #include "ExtJoystick.h"
-#include <boost/dynamic_bitset.hpp>
 #include <windows.h>
 #include <mmsystem.h>
 #include <vector>
@@ -166,7 +165,7 @@ public:
     int numAvailableAxes;
     int numAvailableButtons;
     vector<double> axes;
-    boost::dynamic_bitset<> axisEnabled;
+    vector<bool> axisEnabled;
     vector<bool> buttons;
     string errorMessage;
     bool hasPOV;

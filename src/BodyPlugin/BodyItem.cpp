@@ -1022,13 +1022,13 @@ bool BodyItem::isSelfCollisionDetectionEnabled() const
 void BodyItem::clearCollisions()
 {
     collisions_.clear();
-    
+
     for(size_t i=0; i < collisionLinkBitSet_.size(); ++i){
         if(collisionLinkBitSet_[i]){
             collisionsOfLink_[i].clear();
+            collisionLinkBitSet_[i] = false;
         }
     }
-    collisionLinkBitSet_.reset();
 }
 
 

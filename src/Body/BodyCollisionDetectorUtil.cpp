@@ -5,16 +5,16 @@
 
 #include "BodyCollisionDetectorUtil.h"
 #include <cnoid/ValueTree>
-#include <boost/dynamic_bitset.hpp>
+#include <vector>
 
 using namespace std;
 using namespace cnoid;
 
 namespace {
 
-void setStaticFlags(Link* link, boost::dynamic_bitset<>& staticFlags)
+void setStaticFlags(Link* link, vector<bool>& staticFlags)
 {
-    staticFlags.set(link->index());
+    staticFlags[link->index()] = true;
     for(Link* child = link->child(); child; child = child->sibling()){
         if(child->isFixedJoint()){
             setStaticFlags(child, staticFlags);
@@ -34,8 +34,8 @@ int cnoid::addBodyToCollisionDetector(Body& body, CollisionDetector& detector, b
     const int idTop = detector.numGeometries();
     const int numLinks = body.numLinks();
     int excludeTreeDepth = 1;
-    boost::dynamic_bitset<> exclusions(numLinks);
-    boost::dynamic_bitset<> staticFlags(numLinks);
+    vector<bool> exclusions(numLinks, false);
+    vector<bool> staticFlags(numLinks, false);
     vector<vector<int>> excludeLinkGroups;
     
     const Mapping& cdInfo = *body.info()->findMapping("collisionDetection");

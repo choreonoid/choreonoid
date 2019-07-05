@@ -9,7 +9,6 @@
 #include <fmt/format.h>
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace cnoid {

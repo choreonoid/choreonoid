@@ -9,7 +9,6 @@
 #include <cnoid/Signal>
 #include <cnoid/ComboBox>
 #include <cnoid/TreeWidget>
-#include <boost/dynamic_bitset.hpp>
 #include <vector>
 #include "exportdecl.h"
 
@@ -109,7 +108,7 @@ class CNOID_EXPORT LinkTreeWidget : public TreeWidget
     SignalProxy<void()> sigSelectionChanged();
     int selectedLinkIndex() const;
     const std::vector<int>& selectedLinkIndices();
-    const boost::dynamic_bitset<>& linkSelection();
+    const std::vector<bool>& linkSelection();
 
     /// This signal is available after calling 'enableCache(true)'.
     SignalProxy<void()> sigSelectionChanged(BodyItem* bodyItem);
@@ -118,7 +117,7 @@ class CNOID_EXPORT LinkTreeWidget : public TreeWidget
     /// This function is available after calling 'enableCache(true)'.
     const std::vector<int>& selectedLinkIndices(BodyItem* bodyItem);
     /// This function is available after calling 'enableCache(true)'.
-    const boost::dynamic_bitset<>& linkSelection(BodyItem* bodyItem);
+    const std::vector<bool>& linkSelection(BodyItem* bodyItem);
 
     MenuManager& popupMenuManager();
 

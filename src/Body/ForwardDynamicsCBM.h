@@ -7,7 +7,6 @@
 #define CNOID_BODY_FORWARD_DYNAMICS_CBM_H
 
 #include "ForwardDynamics.h"
-#include <boost/dynamic_bitset.hpp>
 #include "exportdecl.h"
 
 namespace cnoid

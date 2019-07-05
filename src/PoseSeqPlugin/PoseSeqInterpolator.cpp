@@ -14,7 +14,6 @@
 #include <cnoid/ValueTree>
 #include <cnoid/EigenUtil>
 #include <cnoid/Array2D>
-#include <boost/dynamic_bitset.hpp>
 #include <list>
 #include <vector>
 #include <iostream>
@@ -327,7 +326,7 @@ public:
     double currentTime;
     double timeScaleRatio;
     LinkInfoMap::iterator currentBaseLinkInfoIter;
-    boost::dynamic_bitset<> validIkLinkFlag;
+    vector<bool> validIkLinkFlag;
     Vector3 waistTranslation;
 
     Signal<void()> sigUpdated;
@@ -830,7 +829,7 @@ void PSIImpl::setBody(Body* body0)
         body = body0->clone();
         int n = body->numJoints();
         jointInfos.resize(n);
-        validIkLinkFlag.resize(body->numLinks());
+        validIkLinkFlag.resize(body->numLinks(), false);
         invalidateCurrentInterpolation();
     }
     needUpdate = true;
@@ -1135,7 +1134,9 @@ bool PSIImpl::interpolate(double time, int waistLinkIndex, const Vector3& waistT
     }
 
     currentTime = time;
-    validIkLinkFlag.reset();
+    const auto validIkLinkFlagSize = validIkLinkFlag.size();
+    validIkLinkFlag.clear();
+    validIkLinkFlag.resize(validIkLinkFlagSize, false);
     
     currentBaseLinkInfoIter = ikLinkInfos.end();
     double baseLinkTime = -std::numeric_limits<double>::max();

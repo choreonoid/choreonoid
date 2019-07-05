@@ -416,7 +416,7 @@ void WorldItemImpl::extractCollisions(const CollisionPair& collisionPair)
         Link* link = linkInfo->link;
         collisionLinkPair->link[i] = link;
         bodyItem->collisionsOfLink(link->index()).push_back(collisionLinkPair);
-        bodyItem->collisionLinkBitSet().set(link->index());
+        bodyItem->collisionLinkBitSet()[link->index()] = true;
     }
     collisions->push_back(collisionLinkPair);
 }

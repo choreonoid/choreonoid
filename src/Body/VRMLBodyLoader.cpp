@@ -21,7 +21,6 @@
 #include <cnoid/ValueTree>
 #include <cnoid/NullOut>
 #include <fmt/format.h>
-#include <boost/dynamic_bitset.hpp>
 #include "gettext.h"
 
 using namespace std;
@@ -67,8 +66,8 @@ public:
     VRMLParser vrmlParser;
     Body* body;
     VRMLProtoInstancePtr rootJointNode;
-    std::vector<VRMLProtoInstancePtr> extraJointNodes;
-    boost::dynamic_bitset<> validJointIdSet;
+    vector<VRMLProtoInstancePtr> extraJointNodes;
+    vector<bool> validJointIdSet;
     size_t numValidJointIds;
     VRMLToSGConverter sgConverter;
     int divisionNumber;
@@ -769,11 +768,11 @@ Link* VRMLBodyLoaderImpl::createLink(VRMLProtoInstance* jointNode, const Matrix3
     link->setJointId(stdx::get<SFInt32>(jf["jointId"]));
     if(link->jointId() >= 0){
         if(link->jointId() >= static_cast<int>(validJointIdSet.size())){
-            validJointIdSet.resize(link->jointId() + 1);
+            validJointIdSet.resize(link->jointId() + 1, false);
         }
         if(!validJointIdSet[link->jointId()]){
             ++numValidJointIds;
-            validJointIdSet.set(link->jointId());
+            validJointIdSet[link->jointId()] = true;
         } else {
             os() << format(_("Warning: Joint ID {} is duplicated."), link->jointId()) << endl;
         }

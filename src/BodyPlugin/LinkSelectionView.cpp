@@ -109,7 +109,7 @@ const std::vector<int>& LinkSelectionView::selectedLinkIndices()
 }
 
 
-const boost::dynamic_bitset<>& LinkSelectionView::linkSelection()
+const std::vector<bool>& LinkSelectionView::linkSelection()
 {
     return impl->linkTreeWidget.linkSelection();
 }
@@ -127,26 +127,10 @@ const std::vector<int>& LinkSelectionView::selectedLinkIndices(BodyItem* bodyIte
 }
 
 
-const boost::dynamic_bitset<>& LinkSelectionView::linkSelection(BodyItem* bodyItem)
+const std::vector<bool>& LinkSelectionView::linkSelection(BodyItem* bodyItem)
 {
     return impl->linkTreeWidget.linkSelection(bodyItem);
 }
-
-
-#ifdef CNOID_BACKWARD_COMPATIBILITY
-
-const std::vector<int>& LinkSelectionView::getSelectedLinkIndices(BodyItem* bodyItem)
-{
-    return impl->linkTreeWidget.selectedLinkIndices(bodyItem);
-}
-
-
-const boost::dynamic_bitset<>& LinkSelectionView::getLinkSelection(BodyItem* bodyItem)
-{
-    return impl->linkTreeWidget.linkSelection(bodyItem);
-}
-
-#endif
 
 
 bool LinkSelectionView::makeSingleSelection(BodyItem* bodyItem, int linkIndex)
