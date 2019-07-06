@@ -25,18 +25,8 @@
 #include <list>
 #include <vector>
 #include <map>
-
-#ifdef CNOID_USE_BOOST_REGEX
-#include <boost/regex.hpp>
-using boost::regex;
-using boost::regex_match;
-using boost::smatch;
-#else
 #include <regex>
-#endif
-
 #include <iostream>
-
 #include "gettext.h"
 
 using namespace std;

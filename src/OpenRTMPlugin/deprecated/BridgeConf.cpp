@@ -9,17 +9,8 @@
 #include <cnoid/Config>
 #include <cnoid/stdx/filesystem>
 #include <fmt/format.h>
-#include <iostream>
-
-#ifdef CNOID_USE_BOOST_REGEX
-#include <boost/regex.hpp>
-using boost::regex;
-using boost::match_results;
-using boost::regex_search;
-namespace regex_constants = boost::regex_constants;
-#else
 #include <regex>
-#endif
+#include <iostream>
 
 using namespace std;
 using namespace cnoid;

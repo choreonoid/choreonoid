@@ -8,16 +8,7 @@
 #include "FileUtil.h"
 #include "UTF8.h"
 #include <fmt/format.h>
-
-#ifdef CNOID_USE_BOOST_REGEX
-#include <boost/regex.hpp>
-using boost::regex;
-using boost::smatch;
-using boost::regex_match;
-#else
 #include <regex>
-#endif
-
 #include "gettext.h"
 
 using namespace std;

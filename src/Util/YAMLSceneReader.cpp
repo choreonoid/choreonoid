@@ -20,16 +20,7 @@
 #include <unordered_map>
 #include <fmt/format.h>
 #include <mutex>
-
-#ifdef CNOID_USE_BOOST_REGEX
-#include <boost/regex.hpp>
-using boost::regex;
-using boost::smatch;
-using boost::regex_match;
-#else
 #include <regex>
-#endif
-
 #include "gettext.h"
 
 using namespace std;

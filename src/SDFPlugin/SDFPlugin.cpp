@@ -10,7 +10,6 @@
 #include <memory>
 #include <iostream>
 #include <boost/algorithm/string.hpp>
-#include <boost/foreach.hpp>
 #include <sdf/sdf.hh>
 #include "SDFBodyLoader.h"
 #include <OGRE/OgreRoot.h>
@@ -76,7 +75,7 @@ public:
         if (envname != NULL && (p = getenv(envname)) != NULL) {
             if (envname != "HOME") {
                 boost::split(paths, p, boost::is_any_of(":"));
-                BOOST_FOREACH(path, paths) {
+                for(auto& path : paths){
                     if (path != "") {
                         sdf::addURIPath("model://", path);
                     }
