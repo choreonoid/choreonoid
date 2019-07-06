@@ -36,7 +36,7 @@ set(CNOID_PLUGIN_SUBDIR lib/${CNOID_SUBDIR})
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_EXTENSIONS OFF)
 if(NOT CMAKE_VERSION VERSION_LESS 3.8.0) # CMake 3.8 or later is required to enable C++17
-  option(ENABLE_CXX_STANDARD_17 "Enable C++ 17 when it is available to the compiler" ON)
+  option(ENABLE_CXX_STANDARD_17 "Enable C++ 17 when it is available to the compiler" OFF)
 endif()
 if(NOT ENABLE_CXX_STANDARD_17)
   unset(has_cpp17 CACHE)
