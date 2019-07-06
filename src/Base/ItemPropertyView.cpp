@@ -28,6 +28,7 @@
 #include <QKeyEvent>
 #include <QApplication>
 #include <QFileDialog>
+#include <cmath>
 #include <iostream>
 #include "gettext.h"
 
