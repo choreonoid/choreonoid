@@ -3,10 +3,8 @@
 */
 
 #include "VRMLBody.h"
-#include <boost/assign/std/vector.hpp>
 
 using namespace cnoid;
-using namespace boost::assign;
 
 VRMLHumanoid::VRMLHumanoid()
 {
@@ -30,7 +28,7 @@ VRMLSegment::VRMLSegment() : VRMLGroup()
 {
     mass = 0.0;
     centerOfMass << 0.0, 0.0, 0.0;
-    momentsOfInertia += 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
+    momentsOfInertia.resize(9, 0.0);
 }
 
 

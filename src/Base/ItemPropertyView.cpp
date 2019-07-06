@@ -28,7 +28,6 @@
 #include <QKeyEvent>
 #include <QApplication>
 #include <QFileDialog>
-#include <boost/lexical_cast.hpp>
 #include <iostream>
 #include "gettext.h"
 
@@ -589,42 +588,37 @@ void PropertyItem::setData(int role, const QVariant& qvalue)
 
     if(role == Qt::EditRole){
 
-        try {
-            switch(qvalue.type()){
+        switch(qvalue.type()){
                 
-            case QVariant::Bool:
-                accepted = stdx::get<std::function<bool(bool)>>(func)(qvalue.toBool());
-                break;
-                
-            case QVariant::String:
-                accepted = stdx::get<std::function<bool(const string&)>>(func)(qvalue.toString().toStdString());
-                break;
-                
-            case QVariant::Int:
-                accepted = stdx::get<std::function<bool(int)>>(func)(qvalue.toInt());
-                break;
-                
-            case QVariant::Double:
-                accepted = stdx::get<std::function<bool(double)>>(func)(qvalue.toDouble());
-                break;
-                
-            case QVariant::StringList:
-            {
-                const QStringList& slist = qvalue.toStringList();
-                if(!slist.empty()){
-                    accepted = stdx::get<std::function<bool(int)>>(func)(slist[0].toInt());
-                }
-            }
+        case QVariant::Bool:
+            accepted = stdx::get<std::function<bool(bool)>>(func)(qvalue.toBool());
             break;
-            
-            default:
-                break;
+                
+        case QVariant::String:
+            accepted = stdx::get<std::function<bool(const string&)>>(func)(qvalue.toString().toStdString());
+            break;
+                
+        case QVariant::Int:
+            accepted = stdx::get<std::function<bool(int)>>(func)(qvalue.toInt());
+            break;
+                
+        case QVariant::Double:
+            accepted = stdx::get<std::function<bool(double)>>(func)(qvalue.toDouble());
+            break;
+                
+        case QVariant::StringList:
+        {
+            const QStringList& slist = qvalue.toStringList();
+            if(!slist.empty()){
+                accepted = stdx::get<std::function<bool(int)>>(func)(slist[0].toInt());
             }
-            
-        } catch(const boost::bad_lexical_cast& ex) {
-            
         }
-        
+        break;
+            
+        default:
+            break;
+        }
+            
         if(accepted){
             if(!itemPropertyViewImpl->updateRequestedDuringPropertyEditing){
                 itemPropertyViewImpl->currentItem->notifyUpdate();

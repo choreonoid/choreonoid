@@ -15,7 +15,6 @@
 #include <QMessageBox>
 #include <fmt/format.h>
 #include <boost/tokenizer.hpp>
-#include <boost/lexical_cast.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
 #ifndef _WINDOWS
 #include <boost/iostreams/filter/gzip.hpp>
@@ -140,7 +139,7 @@ public:
                 vector<double>& frame = frames.back();
                 size_t i;
                 for(i=0; (i < numElements) && (it != tokens.end()); ++i, ++it){
-                    frame[i] = boost::lexical_cast<double>(*it);
+                    frame[i] = std::stod(*it);
                 }
                 if(i < numElements /* || it != tokens.end() */ ){
                     os << format(_("\"{}\" contains different size columns."), filename) << endl;
@@ -220,7 +219,7 @@ public:
                     
                     const string& indexString = match.str(3);
                     if(!indexString.empty()){
-                        element.index = boost::lexical_cast<int>(indexString);
+                        element.index = std::stoi(indexString);
                     }
                     
                     if(element.type == WAIST){

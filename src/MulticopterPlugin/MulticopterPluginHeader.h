@@ -10,7 +10,6 @@
 
 #include <boost/tokenizer.hpp>
 #include <boost/property_tree/ini_parser.hpp>
-#include <boost/lexical_cast.hpp>
 
 #include <cnoid/LazyCaller>
 #include <cnoid/MeshExtractor>

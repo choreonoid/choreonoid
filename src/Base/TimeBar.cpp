@@ -15,7 +15,6 @@
 #include "CheckBox.h"
 #include "Dialog.h"
 #include <QDialogButtonBox>
-#include <boost/lexical_cast.hpp>
 #include <cmath>
 #include <limits>
 #include <iostream>

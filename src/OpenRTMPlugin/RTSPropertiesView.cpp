@@ -13,7 +13,6 @@
 #include <cnoid/AppConfig>
 #include <cnoid/Buttons>
 #include <QVBoxLayout>
-#include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
 #include <rtm/idl/RTC.hh>
 #include <rtm/NVUtil.h>
@@ -286,7 +285,7 @@ void RTSPropertiesViewImpl::showExecutionContext(RTC::RTObject_ptr rtc, Executio
 
         QTreeWidgetItem* ownedPropChild = new QTreeWidgetItem;
         ownedPropChild->setText(0, _("ID"));
-        ownedPropChild->setText(1, QString((boost::lexical_cast<string>(e)).c_str()));
+        ownedPropChild->setText(1, QString::number(e));
         ownedProp->addChild(ownedPropChild);
 
         ownedPropChild = new QTreeWidgetItem;
@@ -308,7 +307,7 @@ void RTSPropertiesViewImpl::showExecutionContext(RTC::RTObject_ptr rtc, Executio
 
         ownedPropChild = new QTreeWidgetItem;
         ownedPropChild->setText(0, _("Rate"));
-        ownedPropChild->setText(1, QString((boost::lexical_cast<string>(context->get_rate())).c_str()));
+        ownedPropChild->setText(1, QString::number(context->get_rate()));
         ownedProp->addChild(ownedPropChild);
 
     }

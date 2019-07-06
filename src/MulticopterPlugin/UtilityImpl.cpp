@@ -412,7 +412,7 @@ UtilityImpl::toIntegerArray(const string& str, vector<int>& ary)
     retAry.reserve(tmpAry.size());
     try{
         for(auto& tmp : tmpAry){
-            retAry.push_back(boost::lexical_cast<int>(tmp));
+            retAry.push_back(std::stoi(tmp));
         }
     }
     catch(...){
@@ -437,7 +437,7 @@ UtilityImpl::toFloatArray(const string& str, vector<double>& ary)
 
     try{
         for(auto& token : tokens){
-            tmpAry.push_back(boost::lexical_cast<double>(token.data()));
+            tmpAry.push_back(std::stod(token.data()));
         }
     }
     catch(...){

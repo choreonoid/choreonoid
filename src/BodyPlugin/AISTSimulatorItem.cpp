@@ -26,7 +26,6 @@
 #include <cnoid/MessageView>
 #include <cnoid/IdPair>
 #include <fmt/format.h>
-#include <boost/lexical_cast.hpp>
 #include <mutex>
 #include <iomanip>
 #include <fstream>
@@ -397,7 +396,7 @@ bool AISTSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBod
 {
     if(ENABLE_DEBUG_OUTPUT){
         static int ntest = 0;
-        os.open((string("test-log-") + boost::lexical_cast<string>(ntest++) + ".log").c_str());
+        os.open((string("test-log-") + std::to_string(ntest++) + ".log").c_str());
         os << setprecision(30);
     }
 

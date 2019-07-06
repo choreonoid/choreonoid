@@ -22,7 +22,6 @@
 #include <QItemEditorFactory>
 #include <QStandardItemEditorCreator>
 #include <QKeyEvent>
-#include <boost/lexical_cast.hpp>
 #include "gettext.h"
 
 using namespace std;
@@ -228,30 +227,25 @@ void PropertyItem::setData(int role, const QVariant& qvalue)
 {
     bool accepted = false;
     if(role == Qt::EditRole){
-        try {
-            switch(qvalue.type()){
+        switch(qvalue.type()){
                 
-            case QVariant::Bool:
-                accepted = stdx::get<std::function<bool(bool)>>(func)(qvalue.toBool());
-                break;
+        case QVariant::Bool:
+            accepted = stdx::get<std::function<bool(bool)>>(func)(qvalue.toBool());
+            break;
                 
-            case QVariant::String:
-                accepted = stdx::get<std::function<bool(const string&)>>(func)(qvalue.toString().toStdString());
-                break;
+        case QVariant::String:
+            accepted = stdx::get<std::function<bool(const string&)>>(func)(qvalue.toString().toStdString());
+            break;
                 
-            case QVariant::Int:
-                accepted = stdx::get<std::function<bool(int)>>(func)(qvalue.toInt());
-                break;
+        case QVariant::Int:
+            accepted = stdx::get<std::function<bool(int)>>(func)(qvalue.toInt());
+            break;
                 
-            case QVariant::Double:
-                accepted = stdx::get<std::function<bool(double)>>(func)(qvalue.toDouble());
-                break;
-            default:
-                break;
-            }
-            
-        } catch(const boost::bad_lexical_cast& ex) {
-            
+        case QVariant::Double:
+            accepted = stdx::get<std::function<bool(double)>>(func)(qvalue.toDouble());
+            break;
+        default:
+            break;
         }
     }
 }

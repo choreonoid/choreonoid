@@ -6,7 +6,6 @@
 #include "PlainSeqFileLoader.h"
 #include <fstream>
 #include <boost/tokenizer.hpp>
-#include <boost/lexical_cast.hpp>
 #include <fmt/format.h>
 #include "gettext.h"
 
@@ -41,7 +40,7 @@ bool PlainSeqFileLoader::load(const std::string& filename, std::ostream& os)
         v.clear();
         Tokenizer tokens(line, sep);
         for(Tokenizer::iterator it = tokens.begin(); it != tokens.end(); ++it){
-            v.push_back(lexical_cast<double>(*it));
+            v.push_back(std::stod(*it));
         }
     
         if(nColumns == 0){
