@@ -344,7 +344,6 @@ endif()
 
 set(CNOID_PYTHON_SUBDIR ${CNOID_PLUGIN_SUBDIR}/python)
 set(PYBIND11_DIR ${PYBIND11_DIR} CACHE PATH "The directory of the pybind11 library")
-set(CNOID_USE_PYBIND11 ON)
 
 option(USE_PYTHON3 "Use Python version 3 instead of version 2" ON)
 

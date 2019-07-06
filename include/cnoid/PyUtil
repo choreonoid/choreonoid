@@ -1,8 +1,1 @@
-#include <cnoid/Config>
-#ifdef CNOID_USE_PYBIND11
 #include "src/Util/pybind11/PyUtil.h"
-#else
-#include "src/Util/boostpython/PyUtil.h"
-#endif
-
-
