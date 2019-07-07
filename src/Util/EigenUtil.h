@@ -7,14 +7,6 @@
 
 #include "EigenTypes.h"
 #include <memory>
-
-#if defined(_WIN32) && !defined(BOOST_NO_CXX11_ALLOCATOR)
-#include <boost/version.hpp>
-#if (BOOST_VERSION >= 105900)
-#define BOOST_NO_CXX11_ALLOCATOR
-#endif
-#endif
-
 #include "exportdecl.h"
 
 namespace cnoid {

@@ -2,13 +2,6 @@
   @file
   @author Shin'ichiro Nakaoka
 */
-#ifdef _WIN32
-#include <boost/version.hpp>
-#if (BOOST_VERSION >= 105900) 
-#define BOOST_NO_CXX11_ALLOCATOR
-#endif
-#endif
-
 #include "AISTSimulatorItem.h"
 #include "WorldItem.h"
 #include "BodyItem.h"
