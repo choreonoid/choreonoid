@@ -185,6 +185,7 @@ SgNode* SceneLoaderImpl::load(const std::string& filename, bool* out_isSupported
             loader->setDefaultCreaseAngle(defaultCreaseAngle);
         }
         node = loader->load(filename);
+        os().flush();
     }
 
     return node;
