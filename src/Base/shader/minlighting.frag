@@ -24,9 +24,9 @@ void main()
         LightInfo light = lights[i];
         vec3 n;
         if(gl_FrontFacing){
-            n = normal;
+            n = normalize(normal);
         } else {
-            n = -normal;
+            n = -normalize(normal);
         }
         color += light.intensity * diffuseColor * max(dot(light.direction, n), 0.0);
         color += light.ambientIntensity * ambientColor;
