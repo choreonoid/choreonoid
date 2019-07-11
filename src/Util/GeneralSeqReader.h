@@ -33,7 +33,7 @@ class GeneralSeqReader
     bool hasFrameTime_;
     int numParts_;
 
-    std::function<bool(const std::string& type)> checkSeqType;
+    std::function<bool(GeneralSeqReader& reader, const std::string& type)> customSeqTypeChecker;
 
 public:
     GeneralSeqReader(std::ostream& os)
@@ -44,10 +44,6 @@ public:
         formatVersion_ = 2.0;
         hasFrameTime_ = false;
         numParts_ = 0;
-
-        checkSeqType = [&](const std::string& type){
-            return (type == seq_->seqType());
-        };
     }
 
     std::ostream& os() { return os_; }
@@ -57,8 +53,12 @@ public:
     bool hasFrameTime() const { return hasFrameTime_; }
     int numParts() const { return numParts_; }
 
-    void setFuncToCheckSeqType(std::function<bool(const std::string& type)> func){
-        checkSeqType = func;
+    bool checkSeqType(const std::string& type) const {
+        return (type == seq_->seqType());
+    };
+
+    void setCustomSeqTypeChecker(std::function<bool(GeneralSeqReader& reader, const std::string& type)> func){
+        customSeqTypeChecker = func;
     }
     
 private:
@@ -85,7 +85,13 @@ public:
 
         auto& typeNode = (*archive)["type"];
         auto type = typeNode.toString();
-        if(!checkSeqType(type)){
+        bool isTypeMatched;
+        if(customSeqTypeChecker){
+            isTypeMatched = customSeqTypeChecker(*this, type);
+        } else {
+            isTypeMatched = checkSeqType(type);
+        }
+        if(!isTypeMatched){
             typeNode.throwException(mismatched_seq_type_message(type, seq));
         }
         
