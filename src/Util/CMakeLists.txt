@@ -18,6 +18,7 @@ set(sources
   UTF8.cpp
   EasyScanner.cpp
   NullOut.cpp
+  StringUtil.cpp
   FileUtil.cpp
   ExecutablePath.cpp
   ParametricPathProcessor.cpp
@@ -102,6 +103,7 @@ set(headers
   TimeMeasure.h
   Sleep.h
   Vector3Seq.h
+  StringUtil.h
   FileUtil.h
   ExecutablePath.h
   ParametricPathProcessor.h

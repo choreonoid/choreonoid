@@ -17,7 +17,6 @@
 #include <QLibrary>
 #include <QRegExp>
 #include <QFileDialog>
-#include <boost/tokenizer.hpp>
 #include <vector>
 #include <map>
 #include <set>
@@ -296,12 +295,21 @@ void PluginManager::scanPluginFilesInPathList(const std::string& pathList)
 
 void PluginManagerImpl::scanPluginFilesInDefaultPath(const std::string& pathList)
 {
-    boost::char_separator<char> sep(PATH_DELIMITER);
-    boost::tokenizer< boost::char_separator<char> > paths(pathList, sep);
-    boost::tokenizer< boost::char_separator<char> >::iterator p;
-    for(p = paths.begin(); p != paths.end(); ++p){
-        const string& path = *p;
-        scanPluginFiles(path, false);
+    string path;
+    string::size_type pos = 0;
+    const auto size = pathList.size();
+    while(pos < size){
+        auto found = pathList.find(PATH_DELIMITER, pos);
+        if(found != string::npos){
+            path.assign(pathList, pos, (found - pos));
+            pos = found + 1;
+        } else {
+            path.assign(pathList, pos, (size - pos));
+            pos = size;
+        }
+        if(!path.empty()){
+            scanPluginFiles(path, false);
+        }
     }
 }
 

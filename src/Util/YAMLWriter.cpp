@@ -4,7 +4,6 @@
 
 #include "YAMLWriter.h"
 #include "NullOut.h"
-#include <boost/tokenizer.hpp>
 #include <iostream>
 #include <algorithm>
 #include <stack>
@@ -33,8 +32,8 @@ public:
     std::ostream* messageSink_;
 
     int indentWidth;
-    bool isCurrentNewLine;
     int numDocuments;
+    bool isCurrentNewLine;
     bool isKeyOrderPreservationMode;
     bool doInsertLineFeed;
 
@@ -45,6 +44,8 @@ public:
     State* current;
 
     MappingPtr info;
+
+    string linebuf;
 
     YAMLWriterImpl(const std::string filename);
     YAMLWriterImpl(std::ostream& os);
@@ -374,9 +375,6 @@ void YAMLWriterImpl::putBlockStyleString(const std::string& value, bool isLitera
     }
     
     if(startValuePut()){
-        static boost::char_separator<char> sep("\r", "\n");
-        typedef boost::tokenizer<boost::char_separator<char>> Tokenizer;
-        Tokenizer tokens(value, sep);
 
         if(isLiteral){
             os << "|\n";
@@ -386,24 +384,35 @@ void YAMLWriterImpl::putBlockStyleString(const std::string& value, bool isLitera
         const int level = std::max(static_cast<int>(states.size() - 1), 0);
         string indentString(level * indentWidth, ' ');
         os << indentString;
-        bool afterLF = false;
-        auto it = tokens.begin();
-        while(it != tokens.end()){
-            if(afterLF){
-                os << indentString;
-                afterLF = false;
-            }
-            if(*it == "\n"){
-                if(++it == tokens.end()){
-                    break;
+
+        const auto size = value.size();
+        string::size_type pos = 0;
+        int lineNumber = 0;
+        while(true){
+            auto found = value.find_first_of("\r\n", pos);
+            if(found != string::npos){
+                linebuf.assign(value, pos, (found - pos));
+                pos = found + 1;
+                if(pos < size && value[pos] == '\n'){
+                    ++pos;
                 }
-                os << "\n";
-                afterLF = true;
             } else {
-                os << *it++;
+                linebuf.assign(value, pos, (size - pos));
+                pos = size;
             }
+            
+            if(lineNumber > 0){
+                os << "\n";
+                os << indentString;
+            }
+            os << linebuf;
+
+            if(pos == size){
+                break;
+            }
+            ++lineNumber;
         }
-        
+
         endValuePut();
     }
 }

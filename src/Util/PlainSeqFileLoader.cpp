@@ -4,13 +4,12 @@
 */
 
 #include "PlainSeqFileLoader.h"
-#include <fstream>
-#include <boost/tokenizer.hpp>
 #include <fmt/format.h>
+#include <fstream>
+#include <regex>
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 
@@ -25,22 +24,20 @@ bool PlainSeqFileLoader::load(const std::string& filename, std::ostream& os)
   
     size_t nColumns = 0;
     size_t nLines = 0;
-  
-    typedef char_separator<char> Separator;
-    typedef tokenizer<Separator> Tokenizer;
-    Separator sep(" \t\r\n");
-  
     seq.clear();
-  
     string line;
+    regex separator("\\s+");
+    sregex_token_iterator end;
+    
     while(getline(is, line)){
         nLines++;
         seq.push_back(vector<double>(nColumns));
         vector<double>& v = seq.back();
         v.clear();
-        Tokenizer tokens(line, sep);
-        for(Tokenizer::iterator it = tokens.begin(); it != tokens.end(); ++it){
-            v.push_back(std::stod(*it));
+
+        sregex_token_iterator iter(line.begin(), line.end(), separator, -1);
+        while(iter != end){
+            v.push_back(std::stod(*iter++));
         }
     
         if(nColumns == 0){

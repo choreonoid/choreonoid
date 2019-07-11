@@ -4,10 +4,6 @@
    \author Shin'ichiro Nakaoka
 */
 
-#ifdef _WIN64
-#define NOT_USE_BOOST_ATOMIC
-#endif
-
 #include "BodyCustomizerInterface.h"
 #include "Body.h"
 #include <cnoid/FileUtil>
@@ -15,7 +11,6 @@
 #include <set>
 #include <cstdlib>
 #include <iostream>
-#include <boost/tokenizer.hpp>
 #include <fmt/format.h>
 
 #ifdef _WIN32
@@ -166,13 +161,23 @@ static int loadBodyCustomizers(BodyInterface* bodyInterface, std::ostream& os)
         pluginLoadingFunctionsCalled = true;
 
         char* pathListEnv = getenv("CNOID_CUSTOMIZER_PATH");
-
         if(pathListEnv){
-            boost::char_separator<char> sep(PATH_DELIMITER);
             string pathList(pathListEnv);
-            boost::tokenizer<boost::char_separator<char>> paths(pathList, sep);
-            for(auto p = paths.begin(); p != paths.end(); ++p){
-                numLoaded = ::loadBodyCustomizers(bodyInterface, *p, os);
+            const auto size = pathList.size();
+            string::size_type pos = 0;
+            string path;
+            while(pos < size){
+                auto found = pathList.find(PATH_DELIMITER, pos);
+                if(found != string::npos){
+                    path.assign(pathList, pos, (found - pos));
+                    pos = found + 1;
+                } else {
+                    path.assign(pathList, pos, (size - pos));
+                    pos = size;
+                }
+                if(!path.empty()){
+                    customizerDirectories.insert(path);
+                }
             }
         }
 

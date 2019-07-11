@@ -14,7 +14,6 @@
 #include <cnoid/stdx/filesystem>
 #include <QMessageBox>
 #include <fmt/format.h>
-#include <boost/tokenizer.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
 #ifndef _WINDOWS
 #include <boost/iostreams/filter/gzip.hpp>
@@ -46,9 +45,6 @@ public:
            FORCE, TORQUE, ACC, OMEGA,
            ZMP, WAIST, RPY,
            NUM_DATA_TYPES };
-    
-    typedef boost::char_separator<char> Separator;
-    typedef boost::tokenizer<Separator> Tokenizer;
     
     struct Element {
         Element(){
@@ -101,30 +97,26 @@ public:
         }
 #endif
         ifstream ifs(filename.c_str());
-
         if(!ifs){
             os << format(_("\"{}\" cannot be opened."), filename) << endl;
             return false;
         }
-
         is.push(ifs);
         
         elements.clear();
         frames.clear();
-        Separator sep(" \t\r\n", "%");
         string line;
-        
+
+        regex header("(^\\s*%)(.*$)");
+        smatch match; 
         while(getline(is, line)){
-            Tokenizer tokens(line, sep);
-            Tokenizer::iterator it = tokens.begin();
-            if(it != tokens.end()){
-                if(*it == "%"){
-                    readHeader(++it, tokens.end());
+            if(regex_match(line, match, header)){
+                if(match.size() == 3){
+                    readHeader(match[2].str());
+                    break;
                 }
-                break;
             }
         }
-
         if(elements.empty()){
             return false;
         }
@@ -132,13 +124,14 @@ public:
         const size_t numElements = elements.size();
 
         while(getline(is, line)){
-            Tokenizer tokens(line, sep);
-            Tokenizer::iterator it = tokens.begin();
-            if(it != tokens.end()){
+            regex ws("\\s+");
+            sregex_token_iterator it(line.begin(), line.end(), ws, -1);
+            sregex_token_iterator end;
+            if(it != end){
                 frames.push_back(vector<double>(numElements));
                 vector<double>& frame = frames.back();
                 size_t i;
-                for(i=0; (i < numElements) && (it != tokens.end()); ++i, ++it){
+                for(i=0; (i < numElements) && (it != end); ++i, ++it){
                     frame[i] = std::stod(*it);
                 }
                 if(i < numElements /* || it != tokens.end() */ ){
@@ -178,21 +171,25 @@ public:
         return true;
     }
 
-    void readHeader(Tokenizer::iterator it, Tokenizer::iterator end)
+    void readHeader(const string& line)
     {
-        smatch match;
-
         for(int i=0; i < NUM_DATA_TYPES; ++i){
             numComponents[i] = 0;
         }
 
+        regex ws("\\s+");
+        sregex_token_iterator it(line.begin(), line.end(), ws, -1);
+        sregex_token_iterator end;
+          
+        smatch match;
         int waistIndex = 0;
+        string elementString;
         
         while(it != end){
 
             Element element;
-
-            if(regex_match(*it, match, labelPattern)){
+            elementString = it->str();
+            if(regex_match(elementString, match, labelPattern)){
 
                 map<string,int>::iterator p = labelToTypeMap.find(match.str(1));
 

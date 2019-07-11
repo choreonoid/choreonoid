@@ -3,46 +3,33 @@
 */
 
 #include "ItemPath.h"
-#include "Item.h"
-#include "RootItem.h"
 
 using namespace std;
 using namespace cnoid;
 
 
-ItemPath::ItemPath(const std::string& path) :
-    path(path)
+ItemPath::ItemPath(const std::string& pathstr)
 {
-    Tokenizer pathElements(path, Separator("\\", "/", ""));
+    isAbsolute_ = false;
 
-    pathBegin = pathElements.begin();
-    pathEnd = pathElements.end();
-
-    if(pathBegin != pathEnd && (*pathBegin).empty()){
-        pathBegin++;
+    if(pathstr.empty()){
+        return;
+    }
+    
+    auto size = pathstr.size();
+    string::size_type pos = 0;
+    if(pathstr[pos] == '/'){
         isAbsolute_ = true;
-    } else {
-        isAbsolute_ = false;
+        ++pos;
     }
-  
-    pathLeaf = pathBegin;
-
-    for(iterator it = pathBegin; it != pathEnd; ++it){
-        pathLeaf = it;
-    }
-}
-
-
-std::string ItemPath::folder()
-{
-    std::string path;
-    iterator it = pathBegin;
-    while(true){
-        path.append(*it++);
-        if(it == pathLeaf){
-            break;
+    while(pos < size){
+        auto found = pathstr.find('/', pos);
+        if(found != string::npos){
+            path.emplace_back(pathstr, pos, found - pos);
+            pos = found + 1;
+        } else {
+            path.emplace_back(pathstr, pos, size - pos);
+            pos = size;
         }
-        path.append("/");
     }
-    return path;
 }

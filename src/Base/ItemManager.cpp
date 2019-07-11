@@ -23,7 +23,6 @@
 #include <QFileDialog>
 #include <QSignalMapper>
 #include <QRegExp>
-#include <boost/tokenizer.hpp>
 #include <fmt/format.h>
 #include <chrono>
 #include <set>

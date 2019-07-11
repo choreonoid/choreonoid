@@ -3,7 +3,7 @@
 */
 
 #include "ControllerIO.h"
-#include <boost/tokenizer.hpp>
+#include <regex>
 #include <iostream>
 
 using namespace std;
@@ -37,21 +37,11 @@ std::string ControllerIO::getIntegratedOptionString(const std::string& opt1, con
 
 std::vector<std::string> ControllerIO::options() const
 {
-    typedef boost::escaped_list_separator<char> separator;
-    separator sep('\\', ' ');
-
     std::string s = optionString();
-    boost::tokenizer<separator> tok(s, sep);
-
-    std::vector<std::string> options;
-    for(boost::tokenizer<separator>::iterator p = tok.begin(); p != tok.end(); ++p){
-        const string& token = *p;
-        if(!token.empty()){
-            options.push_back(token);
-        }
-    }
-
-    return options;
+    regex ws("\\s+");
+    sregex_token_iterator iter(s.begin(), s.end(), ws, -1);
+    sregex_token_iterator end;
+    return std::vector<std::string>(iter, end);
 }
 
 
