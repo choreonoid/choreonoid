@@ -375,11 +375,13 @@ if(ENABLE_PYTHON)
   file(WRITE ${init_py} "")
   install(FILES ${init_py} DESTINATION ${CNOID_PYTHON_SUBDIR}/cnoid
     CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
-
   if(MSVC)
     add_definitions(-DHAVE_SNPRINTF)
   endif()
 endif()
+
+# This variable is kept for backward compatibility
+set(USE_PYBIND11 ${ENABLE_PYTHON})
 
 # Lua
 if(UNIX)
