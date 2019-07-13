@@ -356,10 +356,12 @@ endif()
 
 if(ENABLE_PYTHON)
   if(PYBIND11_DIR)
-    include_directories(${PYBIND11_DIR}/include)
+    set(PYBIND11_INCLUDE_DIRS ${PYBIND11_DIR}/include)
   else()
-    include_directories(${PROJECT_SOURCE_DIR}/thirdparty/pybind11-2.2.4/include)
+    set(PYBIND11_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/thirdparty/pybind11-2.2.4/include)
   endif()
+  include_directories(${PYBIND11_INCLUDE_DIRS})
+
   # The following cache variables must be cleared to update the python version
   unset(PYTHON_INCLUDE_DIR CACHE)
   unset(PYTHON_LIBRARY CACHE)
