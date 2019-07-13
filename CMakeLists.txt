@@ -196,7 +196,7 @@ set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} ${linker_o
 
 function(install_external_libraries dll_dir lib_dir)
 
-set(libraries ${ARGV})
+  set(libraries ${ARGV})
 
   list(REMOVE_AT libraries 0 1)
   if(INSTALL_RUNTIME_DEPENDENCIES AND MSVC)
@@ -342,11 +342,7 @@ else()
   option(ENABLE_PYTHON "Enable Python" ON)
 endif()
 
-set(CNOID_PYTHON_SUBDIR ${CNOID_PLUGIN_SUBDIR}/python)
-set(PYBIND11_DIR ${PYBIND11_DIR} CACHE PATH "The directory of the pybind11 library")
-
 option(USE_PYTHON3 "Use Python version 3 instead of version 2" ON)
-
 # for Config.h
 if(USE_PYTHON3)
   set(CNOID_USE_PYTHON2 OFF)
@@ -354,11 +350,21 @@ else()
   set(CNOID_USE_PYTHON2 ON)
 endif()
 
+set(CNOID_PYTHON_SUBDIR ${CNOID_PLUGIN_SUBDIR}/python)
+set(PYBIND11_DIR ${PYBIND11_DIR} CACHE PATH "The directory of the pybind11 library")
+
 if(ENABLE_PYTHON)
   if(PYBIND11_DIR)
     set(PYBIND11_INCLUDE_DIRS ${PYBIND11_DIR}/include)
+    if(INSTALL_SDK_WITH_EXTLIBS)
+      install(DIRECTORY ${PYBIND11_DIR}/include/pybind11 DESTINATION ${CNOID_HEADER_SUBDIR})
+    endif()
   else()
+    # Use the bundled pybind11 in the thirdparty directory
     set(PYBIND11_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/thirdparty/pybind11-2.2.4/include)
+    if(INSTALL_SDK)
+      install(DIRECTORY thirdparty/pybind11-2.2.4/include/pybind11 DESTINATION ${CNOID_HEADER_SUBDIR})
+    endif()
   endif()
   include_directories(${PYBIND11_INCLUDE_DIRS})
 

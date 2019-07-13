@@ -11,7 +11,10 @@ set(include_dirs
   )
 
 if(ENABLE_PYTHON)
-  list(APPEND include_dirs ${PYBIND11_INCLUDE_DIRS} ${PYTHON_INCLUDE_PATH})
+  list(APPEND include_dirs ${PYTHON_INCLUDE_PATH})
+  if(PYBIND11_DIR AND NOT INSTALL_SDK_WITH_EXTLIBS)
+    list(APPEND include_dirs ${PYBIND11_INCLUDE_DIRS})
+  endif()
 endif()
 
 list(REMOVE_DUPLICATES include_dirs)
