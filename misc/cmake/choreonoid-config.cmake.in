@@ -5,6 +5,7 @@
 # CHOREONOID_VERSION_MINOR    - The minor version of Choreonoid
 # CHOREONOID_VERSION_PATCH    - The patch version of Choreonoid
 # CHOREONOID_ROOT_DIR         - The base directory of Choreonoid
+# CHOREONOID_CXX_STANDARD     - The c++ standard version used to build Choreonoid (11, 14, or 17)
 # CHOREONOID_DEFINITIONS      - Definitions needed to build with Choreonoid
 # CHOREONOID_INCLUDE_DIRS     - List of directories of Choreonoid and it's dependencies
 # CHOREONOID_LIBRARY_DIRS     - List of directories of Choreonoid and it's dependencies
@@ -17,6 +18,7 @@ set(CHOREONOID_VERSION_MAJOR "@CNOID_MAJOR_VERSION@")
 set(CHOREONOID_VERSION_MINOR "@CNOID_MINOR_VERSION@")
 set(CHOREONOID_VERSION_PATCH "@CNOID_PATCH_VERSION@")
 
+set(CHOREONOID_CXX_STANDARD @CMAKE_CXX_STANDARD@)
 set(CHOREONOID_DEFINITIONS @definitions@)
 set(CHOREONOID_INCLUDE_DIRS @include_dirs@)
 set(CHOREONOID_LIBRARY_DIRS @library_dirs@)
@@ -88,13 +90,11 @@ if(CHOREONOID_ENABLE_PYTHON AND CHOREONOID_USE_PYBIND11)
     if(MSVC)
       set_target_properties(${target} PROPERTIES SUFFIX .pyd)
     else()
-      if(ENABLE_GCC_FVISIBILITY_HIDDEN)
-	get_target_property(compile_flags ${target} COMPILE_FLAGS)
-	if(compile_flags)
-	  set_target_properties(${target} PROPERTIES COMPILE_FLAGS "${compile_flags} -fvisibility=hidden")
-	else()
-	  set_target_properties(${target} PROPERTIES COMPILE_FLAGS "-fvisibility=hidden")
-	endif()
+      get_target_property(compile_flags ${target} COMPILE_FLAGS)
+      if(compile_flags)
+	set_target_properties(${target} PROPERTIES COMPILE_FLAGS "${compile_flags} -fvisibility=hidden")
+      else()
+	set_target_properties(${target} PROPERTIES COMPILE_FLAGS "-fvisibility=hidden")
       endif()
       if(NOT ${CMAKE_BUILD_TYPE} MATCHES Debug)
 	if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
