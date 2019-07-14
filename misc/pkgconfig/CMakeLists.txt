@@ -1,6 +1,6 @@
 set(pkgconfig_dir ${PROJECT_BINARY_DIR}/lib/pkgconfig)
 
-if(EIGEN_FOUND)
+if(EIGEN3_FOUND)
   set(PKGCONFIG_EIGEN_REQUIREMENT "eigen3 >= 3.2.7")
 else()
   unset(PKGCONFIG_EIGEN_REQUIREMENT)
