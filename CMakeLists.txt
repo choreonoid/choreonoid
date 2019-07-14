@@ -526,20 +526,20 @@ if(ENABLE_GUI)
     install_external_libraries(${_qt5Core_install_prefix}/bin ${_qt5Core_install_prefix}/lib ${QT_INST_LIBRARIES})
     install(DIRECTORY ${_qt5Core_install_prefix}/plugins/platforms DESTINATION bin FILES_MATCHING PATTERN "qwindows*.dll")
     install(DIRECTORY ${_qt5Core_install_prefix}/plugins/imageformats DESTINATION bin FILES_MATCHING PATTERN "*.dll")
+  endif()
 
-    if(INSTALL_SDK_WITH_EXTLIBS)
-      foreach(dir
-	  ${Qt5Core_INCLUDE_DIRS} ${Qt5Gui_INCLUDE_DIRS} ${Qt5Widgets_INCLUDE_DIRS} ${Qt5Network_INCLUDE_DIRS})
-        install(DIRECTORY ${dir} DESTINATION ${CNOID_HEADER_SUBDIR})
-      endforeach()
-    else()
-      list(APPEND CNOID_SDK_INCLUDE_DIRS
-	${Qt5Core_INCLUDE_DIRS}
-	${Qt5Gui_INCLUDE_DIRS}
-	${Qt5Widgets_INCLUDE_DIRS}
-	${Qt5OpenGL_INCLUDE_DIRS}
-	${Qt5Network_INCLUDE_DIRS})
-    endif()
+  if(INSTALL_SDK_WITH_EXTLIBS)
+    foreach(dir
+	${Qt5Core_INCLUDE_DIRS} ${Qt5Gui_INCLUDE_DIRS} ${Qt5Widgets_INCLUDE_DIRS} ${Qt5Network_INCLUDE_DIRS})
+      install(DIRECTORY ${dir} DESTINATION ${CNOID_HEADER_SUBDIR})
+    endforeach()
+  else()
+    list(APPEND CNOID_SDK_INCLUDE_DIRS
+      ${Qt5Core_INCLUDE_DIRS}
+      ${Qt5Gui_INCLUDE_DIRS}
+      ${Qt5Widgets_INCLUDE_DIRS}
+      ${Qt5OpenGL_INCLUDE_DIRS}
+      ${Qt5Network_INCLUDE_DIRS})
   endif()
 endif()
 
