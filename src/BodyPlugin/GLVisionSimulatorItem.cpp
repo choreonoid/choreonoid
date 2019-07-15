@@ -90,7 +90,10 @@ bool updateNames(const string& nameListString, string& out_newNameListString, ve
     sregex_token_iterator end;
     out_names.clear();
     while(iter != end){
-        out_names.push_back(trimmed(*iter++));
+        auto name = trimmed(*iter++);
+        if(!name.empty()){
+            out_names.push_back(name);
+        }
     }
     out_newNameListString = nameListString;
     return true;
