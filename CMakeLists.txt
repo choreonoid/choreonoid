@@ -436,23 +436,19 @@ endif()
 
 # boost
 set(Boost_USE_STATIC_LIBS OFF)
-set(Boost_ADDITIONAL_VERSIONS "1.56" "1.57" "1.58" "1.59" "1.60" "1.61" "1.62" "1.63" "1.64" "1.65" "1.66" "1.67" "1.68")
-
+set(Boost_ADDITIONAL_VERSIONS "1.62" "1.63" "1.64" "1.65" "1.66" "1.67" "1.68" "1.69" "1.70")
 set(boost_packages system program_options iostreams)
-
 if(NOT has_cpp17)
   set(boost_packages ${boost_packages} filesystem)
 endif()
-
 if(MSVC)
-  find_package(Boost 1.54.0 REQUIRED COMPONENTS ${boost_packages} OPTIONAL_COMPONENTS bzip2 zlib)
+  find_package(Boost 1.58.0 REQUIRED COMPONENTS ${boost_packages} OPTIONAL_COMPONENTS bzip2 zlib)
 else()
-  find_package(Boost 1.54.0 REQUIRED COMPONENTS ${boost_packages})
+  find_package(Boost 1.58.0 REQUIRED COMPONENTS ${boost_packages})
 endif()
 
 include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
-
 set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS $<$<CONFIG:Release>:BOOST_DISABLE_ASSERTS>)
 
 if(MSVC)
@@ -904,7 +900,6 @@ endif()
 set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS $<$<CONFIG:Debug>:CNOID_DEBUG>)
 
 if(UNIX)
-  
   option(PUT_EXTRA_WARNINGS "Put extra warnings in compile" OFF)
   if(PUT_EXTRA_WARNINGS)
     set(extra_warning_options "-Wunused -Woverloaded-virtual -Wsign-compare")
@@ -922,10 +917,6 @@ if(UNIX)
       set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--unresolved-symbols=ignore-in-shared-libs -Wl,--warn-unresolved-symbols")
     endif()
   endif()
-
-  # The RTTI such as dynamic_cast cannot work well with this option in the older GCC like that of Ubuntu 10.04.
-  # So currently this option should be only enabled for modules which may cause symbol conficts
-  #set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-Bsymbolic") 
 
 elseif(MSVC)
   set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS _CRT_SECURE_NO_WARNINGS)
@@ -1379,79 +1370,40 @@ include(InstallRequiredSystemLibraries)
 
 # InstallRequiredSystemLibraries does not properly support MSVS 14 yet, so do it manually.  (CMake3.5)
 if(INSTALL_RUNTIME_DEPENDENCIES)
-unset(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_DEBUG)
-unset(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_RELEASE)
-if(DEFINED MSVC_VERSION AND NOT MSVC_VERSION LESS 1900)
+  unset(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_DEBUG)
+  unset(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_RELEASE)
+  if(DEFINED MSVC_VERSION AND NOT MSVC_VERSION LESS 1900)
     # Internal: Architecture-appropriate library directory names.
     if("${CMAKE_VS_PLATFORM_NAME}" STREQUAL "ARM")
-        set(_winsdk_arch8 arm) # what the WDK for Win8+ calls this architecture
+      set(_winsdk_arch8 arm) # what the WDK for Win8+ calls this architecture
     else()
-        if(CMAKE_SIZEOF_VOID_P MATCHES "8")
-            set(_winsdk_arch8 x64) # what the WDK for Win8+ calls this architecture
-        else()
-            set(_winsdk_arch8 x86) # what the WDK for Win8+ calls this architecture
-        endif()
+      if(CMAKE_SIZEOF_VOID_P MATCHES "8")
+        set(_winsdk_arch8 x64) # what the WDK for Win8+ calls this architecture
+      else()
+        set(_winsdk_arch8 x86) # what the WDK for Win8+ calls this architecture
+      endif()
     endif()
 
     # The CRT is distributed with MSVS.
     get_filename_component(MSVS_DIR
-        "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\VisualStudio\\14.0;ShellFolder]" ABSOLUTE)
+      "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\VisualStudio\\14.0;ShellFolder]" ABSOLUTE)
 
     # As of MSVC 19 the CRT depends on the 'univeral' CRT (which is part of Windows development kit 10 and above).
     get_filename_component(WINDOWS_KIT_DIR
-        "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows Kits\\Installed Roots;KitsRoot10]" ABSOLUTE)
-
+      "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows Kits\\Installed Roots;KitsRoot10]" ABSOLUTE)
+    
     file(GLOB CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_DEBUG
-        "${MSVS_DIR}/VC/redist/debug_nonredist/${_winsdk_arch8}/Microsoft.VC140.DebugCRT/*.dll"
-        "${WINDOWS_KIT_DIR}/Redist/ucrt/DLLs/${_winsdk_arch8}/api-ms-win-*.dll"
-        "${WINDOWS_KIT_DIR}/bin/${_winsdk_arch8}/ucrt/*.dll"
-    )
+      "${MSVS_DIR}/VC/redist/debug_nonredist/${_winsdk_arch8}/Microsoft.VC140.DebugCRT/*.dll"
+      "${WINDOWS_KIT_DIR}/Redist/ucrt/DLLs/${_winsdk_arch8}/api-ms-win-*.dll"
+      "${WINDOWS_KIT_DIR}/bin/${_winsdk_arch8}/ucrt/*.dll"
+      )
     file(GLOB CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_RELEASE
-        "${MSVS_DIR}/VC/redist/${_winsdk_arch8}/Microsoft.VC140.CRT/*.dll"
-        "${WINDOWS_KIT_DIR}/Redist/ucrt/DLLs/${_winsdk_arch8}/*.dll"
-    )
+      "${MSVS_DIR}/VC/redist/${_winsdk_arch8}/Microsoft.VC140.CRT/*.dll"
+      "${WINDOWS_KIT_DIR}/Redist/ucrt/DLLs/${_winsdk_arch8}/*.dll"
+      )
 
     install(PROGRAMS ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_RELEASE} DESTINATION bin )
-endif()
-endif()
-
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Choreonoid")
-set(CPACK_PACKAGE_VENDOR "Shin'ichiro Nakaoka, AIST")
-#set(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/ReadMe.txt")
-set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
-set(CPACK_PACKAGE_VERSION_MAJOR ${CNOID_MAJOR_VERSION})
-set(CPACK_PACKAGE_VERSION_MINOR ${CNOID_MINOR_VERSION})
-set(CPACK_PACKAGE_VERSION_PATCH ${CNOID_PATCH_VERSION})
-set(CPACK_PACKAGE_INSTALL_DIRECTORY "Choreonoid ${CNOID_VERSION}")
-set(CPACK_PACKAGE_INSTALL_REGISTORY_KEY "Choreonoid ${CNOID_VERSION}")
-
-set(CPACK_GENERATOR NSIS)
-if(WIN32)
-  set(CPACK_GENERATOR NSIS)
-  set(CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}\\\\src\\\\Choreonoid\\\\icon\\\\choreonoid.ico")
-  set(CPACK_NSIS_INSTALLED_ICON_NAME "bin\\\\choreonoid.exe")
-  set(CPACK_NSIS_DISPLAY_NAME "Choreonoid ${CNOID_VERSION}")
-  set(CPACK_NSIS_CONTACT "choreonoid@m.aist.go.jp")
-  set(CPACK_NSIS_MODIFY_PATH ON)
-  set(CPACK_PACKAGE_EXECUTABLES "choreonoid;Choreonoid")
-  set(CPACK_CREATE_DESKTOP_LINKS choreonoid)
-  set(CPACK_NSIS_URL_INFO_ABOUT "http://choreonoid.org")
-  
-  set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "!include \\\"FileAssociation.nsh\\\"\n\\\${registerExtension} \\\"\$INSTDIR\\\\bin\\\\choreonoid.exe\\\" \\\".cnoid\\\" \\\"ChoreonoidProject\\\" \nSystem::Call 'shell32.dll::SHChangeNotify(i, i, i, i) v (0x08000000, 0, 0, 0)'")
-  set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "\\\${unregisterExtension} \\\".cnoid\\\" \\\"ChoreonoidProject\\\" \nSystem::Call 'shell32.dll::SHChangeNotify(i, i, i, i) v (0x08000000, 0, 0, 0)'")
-
-elseif(UNIX)
-  set(CPACK_GENERATOR DEB)
-  set(CPACK_PACKAGE_FILE_NAME "choreonoid_${CNOID_FULL_VERSION}_i386")
-  set(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6, libgcc1, libstdc++6, libpng12-0, libjpeg62, libyaml-0-2, zlib1g, libboost-filesystem1.42.0, libboost-date-time1.42.0, libboost-program-options1.42.0, libboost-system1.42.0, libqtcore4, libqtgui4, libqt4-test, libqt4-opengl")
-  if(INSTALL_SDK)
-    set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libstdc++-dev, libboost-dev, libboost-program-options-dev, libboost-python-dev, libqt4-dev, libqt4-opengl-dev")
   endif()
-  set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Shin'ichiro Nakaoka")
 endif()
-
-#set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY 1)
-
-include(CPack)
 
 add_subdirectory(misc)
