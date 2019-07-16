@@ -15,7 +15,6 @@ void trim(std::string& s)
     }).base(), s.end());
 }
 
-
 std::string trimmed(const std::string& s)
 {
     auto left  = std::find_if_not(s.begin(), s.end(), [](int c){ return std::isspace(c); });
@@ -24,4 +23,3 @@ std::string trimmed(const std::string& s)
 }
 
 }
-
