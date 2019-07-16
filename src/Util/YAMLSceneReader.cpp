@@ -687,8 +687,11 @@ SgMesh* YAMLSceneReaderImpl::readCylinder(Mapping& info)
 SgMesh* YAMLSceneReaderImpl::readCone(Mapping& info)
 {
     readDivisionNumber(info);
-    
-    double radius = info.get("radius", 1.0);
+
+    double radius = 1.0;
+    if(!info.read("radius", radius)){
+        info.read("bottomRadius", radius); // for the compatibility with VRML97
+    }
     double height = info.get("height", 1.0);
     bool bottom = info.get("bottom", true);
     return meshGenerator.generateCone(radius, height, bottom, true, generateTexCoord);
