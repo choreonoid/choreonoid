@@ -107,6 +107,7 @@ set(headers
   Sleep.h
   Vector3Seq.h
   StringUtil.h
+  Tokenizer.h
   FileUtil.h
   ExecutablePath.h
   ParametricPathProcessor.h
