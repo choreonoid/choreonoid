@@ -38,9 +38,7 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
-
 using fmt::format;
 
 namespace {
@@ -49,9 +47,6 @@ const bool TRACE_FUNCTIONS = false;
 
 BodyLoader bodyLoader;
 BodyState kinematicStateCopy;
-
-/// \todo move this to hrpUtil ?
-inline double radian(double deg) { return (3.14159265358979 * deg / 180.0); }
 
 bool loadBodyItem(BodyItem* item, const std::string& filename)
 {
@@ -108,8 +103,8 @@ public:
     enum { UF_POSITIONS, UF_VELOCITIES, UF_ACCELERATIONS, UF_CM, UF_ZMP, NUM_UPUDATE_FLAGS };
     std::bitset<NUM_UPUDATE_FLAGS> updateFlags;
 
-    LazySignal< Signal<void()> > sigKinematicStateChanged;
-    LazySignal< Signal<void()> > sigKinematicStateEdited;
+    LazySignal<Signal<void()>> sigKinematicStateChanged;
+    LazySignal<Signal<void()>> sigKinematicStateEdited;
 
     LinkPtr currentBaseLink;
     LinkTraverse fkTraverse;
@@ -140,6 +135,8 @@ public:
 
     BodyItemImpl(BodyItem* self);
     BodyItemImpl(BodyItem* self, const BodyItemImpl& org);
+    BodyItemImpl(BodyItem* self, Body* body);
+    
     ~BodyItemImpl();
         
     void init(bool calledFromCopyConstructor);
@@ -206,11 +203,8 @@ BodyItem::BodyItem()
     
 
 BodyItemImpl::BodyItemImpl(BodyItem* self)
-    : self(self),
-      sigKinematicStateChanged(std::bind(&BodyItemImpl::emitSigKinematicStateChanged, this)),
-      sigKinematicStateEdited(std::bind(&BodyItemImpl::emitSigKinematicStateEdited, this))
+    : BodyItemImpl(self, new Body)
 {
-    body = new Body();
     isEditable = true;
     isCollisionDetectionEnabled = true;
     isSelfCollisionDetectionEnabled = false;
@@ -226,11 +220,7 @@ BodyItem::BodyItem(const BodyItem& org)
 
 
 BodyItemImpl::BodyItemImpl(BodyItem* self, const BodyItemImpl& org)
-    : self(self),
-      body(org.body->clone()),
-      sigKinematicStateChanged(std::bind(&BodyItemImpl::emitSigKinematicStateChanged, this)),
-      sigKinematicStateEdited(std::bind(&BodyItemImpl::emitSigKinematicStateEdited, this)),
-      initialState(org.initialState)
+    : BodyItemImpl(self, org.body->clone())
 {
     if(org.currentBaseLink){
         setCurrentBaseLink(body->link(org.currentBaseLink->index()));
@@ -240,6 +230,18 @@ BodyItemImpl::BodyItemImpl(BodyItem* self, const BodyItemImpl& org)
     isOriginalModelStatic = org.isOriginalModelStatic;
     isCollisionDetectionEnabled = org.isCollisionDetectionEnabled;
     isSelfCollisionDetectionEnabled = org.isSelfCollisionDetectionEnabled;
+
+    initialState = org.initialState;
+}
+
+
+BodyItemImpl::BodyItemImpl(BodyItem* self, Body* body)
+    : self(self),
+      body(body),
+      sigKinematicStateChanged([&](){ emitSigKinematicStateChanged(); }),
+      sigKinematicStateEdited([&](){ emitSigKinematicStateEdited(); })
+{
+
 }
 
 
@@ -1161,12 +1163,13 @@ void BodyItemImpl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("Base link"), currentBaseLink ? currentBaseLink->name() : "none");
     putProperty.decimals(3)(_("Mass"), body->mass());
     putProperty(_("Static model"), body->isStaticModel(),
-                (std::bind(&BodyItemImpl::onStaticModelPropertyChanged, this, _1)));
+                [&](bool on){ return onStaticModelPropertyChanged(on); });
     putProperty(_("Collision detection"), isCollisionDetectionEnabled,
-                (std::bind(&BodyItemImpl::enableCollisionDetection, this, _1)));
+                [&](bool on){ return enableCollisionDetection(on); });
     putProperty(_("Self-collision detection"), isSelfCollisionDetectionEnabled,
-                (std::bind(&BodyItemImpl::enableSelfCollisionDetection, this, _1)));
-    putProperty(_("Editable"), isEditable, std::bind(&BodyItemImpl::onEditableChanged, this, _1));
+                [&](bool on){ return enableSelfCollisionDetection(on); });
+    putProperty(_("Editable"), isEditable,
+                [&](bool on){ return onEditableChanged(on); });
 }
 
 
