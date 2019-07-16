@@ -164,7 +164,7 @@ static int loadBodyCustomizers(BodyInterface* bodyInterface, std::ostream& os)
         char* pathListEnv = getenv("CNOID_CUSTOMIZER_PATH");
         if(pathListEnv){
             string pathList = pathListEnv;
-            for(auto& path : Tokenizer(pathList, CharSeparator(PATH_DELIMITER))){
+            for(auto& path : Tokenizer<CharSeparator<char>>(pathList, CharSeparator<char>(PATH_DELIMITER))){
                 numLoaded = ::loadBodyCustomizers(bodyInterface, path, os);
             }
         }

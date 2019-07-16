@@ -13,7 +13,7 @@ ItemPath::ItemPath(const std::string& pathstr)
     if(pathstr.empty()){
         return;
     }
-    Tokenizer tokens(pathstr, EscapedListSeparator<char>("\\", "/", ""));
+    Tokenizer<EscapedListSeparator<char>> tokens(pathstr, EscapedListSeparator<char>("\\", "/", ""));
     auto iter = tokens.begin();
     if(iter != tokens.end() && iter->empty()){
         ++iter;

@@ -220,7 +220,7 @@ UtilityImpl::splitStringArray(const string& line, std::vector<string>& retAry)
     const string RF = "\r";
     retAry.clear();
     retAry.reserve(10);
-    Tokenizer tokens(line, EscapedListSeparator<char>('\\', ',','\"'));
+    Tokenizer<EscapedListSeparator<char>> tokens(line, EscapedListSeparator<char>('\\', ',','\"'));
     for(auto it=begin(tokens) ; it!=end(tokens) ; ++it){
         if( (*it).empty() == false ){
             if( *it != RF ){
@@ -392,7 +392,7 @@ UtilityImpl::toIntegerArray(const string& str, vector<int>& ary)
 {
     ary.clear();
 
-    Tokenizer tokens(str, CharSeparator<char>(","));
+    Tokenizer<CharSeparator<char>> tokens(str, CharSeparator<char>(","));
 
     vector<string> tmpAry;
     tmpAry.reserve(10);
@@ -426,7 +426,7 @@ UtilityImpl::toFloatArray(const string& str, vector<double>& ary)
 {
     ary.clear();
 
-    Tokenizer tokens(str, CharSeparator<char>(","));
+    Tokenizer<CharSeparator<char>> tokens(str, CharSeparator<char>(","));
 
     vector<double> tmpAry;
     tmpAry.reserve(10);

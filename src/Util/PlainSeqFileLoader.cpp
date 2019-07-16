@@ -26,7 +26,7 @@ bool PlainSeqFileLoader::load(const std::string& filename, std::ostream& os)
     size_t nLines = 0;
     seq.clear();
     string line;
-    Tokenizer tokens(CharSeparator<char>(" \t\r\n"));
+    Tokenizer<CharSeparator<char>> tokens(CharSeparator<char>(" \t\r\n"));
     
     while(getline(is, line)){
         nLines++;

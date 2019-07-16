@@ -124,7 +124,7 @@ public:
 
         const size_t numElements = elements.size();
 
-        Tokenizer tokens(CharSeparator<char>(" \t\r\n"));
+        Tokenizer<CharSeparator<char>> tokens(CharSeparator<char>(" \t\r\n"));
 
         while(getline(is, line)){
             tokens.assign(line);
@@ -181,7 +181,7 @@ public:
 
         smatch match;
         int waistIndex = 0;
-        Tokenizer tokens(line, CharSeparator(" \t\r\n"));
+        Tokenizer<CharSeparator<char>> tokens(line, CharSeparator<char>(" \t\r\n"));
 
         for(auto it = tokens.begin(); it != tokens.end(); ++it){
             Element element;

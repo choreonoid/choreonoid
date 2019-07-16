@@ -177,7 +177,7 @@ FluidEnvironment::~FluidEnvironment()
 void
 FluidEnvironment::string2Vector3i(const std::string& line, Eigen::Vector3i& ret)
 {    
-    Tokenizer tokens(line, CharSeparator<char>(","));
+    Tokenizer<CharSeparator<char>> tokens(line, CharSeparator<char>(","));
     
     vector<int> intAry;
     intAry.reserve(3);

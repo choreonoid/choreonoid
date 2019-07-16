@@ -86,7 +86,7 @@ string getNameListString(const vector<string>& names)
 bool updateNames(const string& nameListString, string& out_newNameListString, vector<string>& out_names)
 {
     out_names.clear();
-    for(auto& token : Tokenizer(nameListString, CharSeparator(","))){
+    for(auto& token : Tokenizer<CharSeparator<char>>(nameListString, CharSeparator<char>(","))){
         auto name = trimmed(token);
         if(!name.empty()){
             out_names.push_back(name);

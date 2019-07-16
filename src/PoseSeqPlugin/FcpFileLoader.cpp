@@ -72,7 +72,7 @@ bool loadFaceControllerPoseSet(const string& filename)
                 line = line.substr(0, line.length()-1);
             }
             
-            Tokenizer tokens(line, sep);
+            Tokenizer<CharSeparator<char>> tokens(line, sep);
             auto it = tokens.begin();
             if(it != tokens.end()){
                 if(*it == "*"){
@@ -170,7 +170,7 @@ PoseSeqItemPtr loadFaceControllerPoseSeq(const string& filename)
             if(!line.empty() && line[line.length()-1] == '\r'){
                 line = line.substr(0, line.length()-1);
             }
-            Tokenizer tokens(line, sep);
+            Tokenizer<CharSeparator<char>> tokens(line, sep);
                 
             auto it = tokens.begin();
             if(it != tokens.end()){

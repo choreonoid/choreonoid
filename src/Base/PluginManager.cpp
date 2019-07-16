@@ -296,7 +296,7 @@ void PluginManager::scanPluginFilesInPathList(const std::string& pathList)
 
 void PluginManagerImpl::scanPluginFilesInDefaultPath(const std::string& pathList)
 {
-    for(auto& path : Tokenizer(pathList, CharSeparator(PATH_DELIMITER))){
+    for(auto& path : Tokenizer<CharSeparator<char>>(pathList, CharSeparator<char>(PATH_DELIMITER))){
         scanPluginFiles(path, false);
     }
 }

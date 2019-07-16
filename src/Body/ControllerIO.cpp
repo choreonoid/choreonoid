@@ -39,7 +39,7 @@ std::vector<std::string> ControllerIO::options() const
 {
     std::vector<std::string> options;
     auto s = optionString();
-    for(auto& token : Tokenizer(s, EscapedListSeparator<char>('\\', ' '))){
+    for(auto& token : Tokenizer<EscapedListSeparator<char>>(s, EscapedListSeparator<char>('\\', ' '))){
         if(!token.empty()){
             options.push_back(token);
         }
