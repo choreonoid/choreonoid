@@ -23,13 +23,13 @@
 #include <cnoid/SceneLights>
 #include <cnoid/EigenUtil>
 #include <cnoid/StringUtil>
+#include <cnoid/Tokenizer>
 #include <QThread>
 #include <QApplication>
 #include <QOpenGLContext>
 #include <QOffscreenSurface>
 #include <QOpenGLFramebufferObject>
 #include <fmt/format.h>
-#include <regex>
 #include <mutex>
 #include <condition_variable>
 #include <queue>
@@ -85,12 +85,9 @@ string getNameListString(const vector<string>& names)
 
 bool updateNames(const string& nameListString, string& out_newNameListString, vector<string>& out_names)
 {
-    regex sep(",");
-    sregex_token_iterator iter(nameListString.begin(), nameListString.end(), sep, -1);
-    sregex_token_iterator end;
     out_names.clear();
-    while(iter != end){
-        auto name = trimmed(*iter++);
+    for(auto& token : Tokenizer(nameListString, CharSeparator(","))){
+        auto name = trimmed(token);
         if(!name.empty()){
             out_names.push_back(name);
         }

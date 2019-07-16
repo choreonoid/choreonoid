@@ -13,6 +13,7 @@
 #include "MainWindow.h"
 #include <cnoid/ExecutablePath>
 #include <cnoid/FileUtil>
+#include <cnoid/Tokenizer>
 #include <cnoid/Config>
 #include <QLibrary>
 #include <QRegExp>
@@ -295,21 +296,8 @@ void PluginManager::scanPluginFilesInPathList(const std::string& pathList)
 
 void PluginManagerImpl::scanPluginFilesInDefaultPath(const std::string& pathList)
 {
-    string path;
-    string::size_type pos = 0;
-    const auto size = pathList.size();
-    while(pos < size){
-        auto found = pathList.find(PATH_DELIMITER, pos);
-        if(found != string::npos){
-            path.assign(pathList, pos, (found - pos));
-            pos = found + 1;
-        } else {
-            path.assign(pathList, pos, (size - pos));
-            pos = size;
-        }
-        if(!path.empty()){
-            scanPluginFiles(path, false);
-        }
+    for(auto& path : Tokenizer(pathList, CharSeparator(PATH_DELIMITER))){
+        scanPluginFiles(path, false);
     }
 }
 

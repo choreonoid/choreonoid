@@ -4,9 +4,9 @@
 */
 
 #include "PlainSeqFileLoader.h"
+#include <cnoid/Tokenizer>
 #include <fmt/format.h>
 #include <fstream>
-#include <regex>
 #include "gettext.h"
 
 using namespace std;
@@ -26,8 +26,7 @@ bool PlainSeqFileLoader::load(const std::string& filename, std::ostream& os)
     size_t nLines = 0;
     seq.clear();
     string line;
-    regex separator("\\s+");
-    sregex_token_iterator end;
+    Tokenizer tokens(CharSeparator<char>(" \t\r\n"));
     
     while(getline(is, line)){
         nLines++;
@@ -35,11 +34,11 @@ bool PlainSeqFileLoader::load(const std::string& filename, std::ostream& os)
         vector<double>& v = seq.back();
         v.clear();
 
-        sregex_token_iterator iter(line.begin(), line.end(), separator, -1);
-        while(iter != end){
-            v.push_back(std::stod(*iter++));
+        tokens.assign(line);
+        for(auto& token : tokens){
+            v.push_back(std::stod(token));
         }
-    
+
         if(nColumns == 0){
             nColumns = v.size();
         } else if(v.size() != nColumns){

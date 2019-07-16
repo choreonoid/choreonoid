@@ -7,6 +7,7 @@
 #include "BodyCustomizerInterface.h"
 #include "Body.h"
 #include <cnoid/FileUtil>
+#include <cnoid/Tokenizer>
 #include <map>
 #include <set>
 #include <cstdlib>
@@ -159,25 +160,12 @@ static int loadBodyCustomizers(BodyInterface* bodyInterface, std::ostream& os)
     if(!pluginLoadingFunctionsCalled){
 
         pluginLoadingFunctionsCalled = true;
-
+        
         char* pathListEnv = getenv("CNOID_CUSTOMIZER_PATH");
         if(pathListEnv){
-            string pathList(pathListEnv);
-            const auto size = pathList.size();
-            string::size_type pos = 0;
-            string path;
-            while(pos < size){
-                auto found = pathList.find(PATH_DELIMITER, pos);
-                if(found != string::npos){
-                    path.assign(pathList, pos, (found - pos));
-                    pos = found + 1;
-                } else {
-                    path.assign(pathList, pos, (size - pos));
-                    pos = size;
-                }
-                if(!path.empty()){
-                    customizerDirectories.insert(path);
-                }
+            string pathList = pathListEnv;
+            for(auto& path : Tokenizer(pathList, CharSeparator(PATH_DELIMITER))){
+                numLoaded = ::loadBodyCustomizers(bodyInterface, path, os);
             }
         }
 

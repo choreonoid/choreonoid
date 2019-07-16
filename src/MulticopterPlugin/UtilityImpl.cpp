@@ -219,9 +219,8 @@ UtilityImpl::splitStringArray(const string& line, std::vector<string>& retAry)
 {
     const string RF = "\r";
     retAry.clear();
-	retAry.reserve(10);
-    boost::escaped_list_separator<char> escSep('\\', ',','\"');
-    boost::tokenizer<boost::escaped_list_separator<char>> tokens(line, escSep);
+    retAry.reserve(10);
+    Tokenizer tokens(line, EscapedListSeparator<char>('\\', ',','\"'));
     for(auto it=begin(tokens) ; it!=end(tokens) ; ++it){
         if( (*it).empty() == false ){
             if( *it != RF ){
@@ -234,7 +233,6 @@ UtilityImpl::splitStringArray(const string& line, std::vector<string>& retAry)
 void
 UtilityImpl::removeSelfNodeFromParent(SgNode* self)
 {
-
     vector<SgObject*> parents;
     for(SgObject::const_parentIter it = self->parentBegin() ; it != self->parentEnd() ; ++it){
         parents.push_back(*it);
@@ -394,8 +392,7 @@ UtilityImpl::toIntegerArray(const string& str, vector<int>& ary)
 {
     ary.clear();
 
-    boost::char_separator<char> sep(",", "");
-    boost::tokenizer<boost::char_separator<char>> tokens(str, sep);
+    Tokenizer tokens(str, CharSeparator<char>(","));
 
     vector<string> tmpAry;
     tmpAry.reserve(10);
@@ -429,8 +426,7 @@ UtilityImpl::toFloatArray(const string& str, vector<double>& ary)
 {
     ary.clear();
 
-    boost::char_separator<char> sep(",", "");
-    boost::tokenizer<boost::char_separator<char>> tokens(str, sep);
+    Tokenizer tokens(str, CharSeparator<char>(","));
 
     vector<double> tmpAry;
     tmpAry.reserve(10);

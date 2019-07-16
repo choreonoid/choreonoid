@@ -8,7 +8,6 @@
 
 #include <QtCore/QtCore>
 
-#include <boost/tokenizer.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 
 #include <cnoid/LazyCaller>
@@ -27,6 +26,7 @@
 #include <cnoid/AISTCollisionDetector>
 #include <cnoid/YAMLBodyLoader>
 #include <cnoid/EigenArchive>
+#include <cnoid/Tokenizer>
 
 #include "gettext.h"
 #include "exportdecl.h"

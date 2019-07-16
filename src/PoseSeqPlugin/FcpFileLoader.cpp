@@ -12,9 +12,9 @@
 #include <cnoid/MessageView>
 #include <cnoid/ItemTreeView>
 #include <cnoid/MenuManager>
+#include <cnoid/Tokenizer>
 #include <cnoid/stdx/filesystem>
 #include <QFileDialog>
-#include <boost/tokenizer.hpp>
 #include <map>
 #include <vector>
 #include <stdexcept>
@@ -61,8 +61,8 @@ bool loadFaceControllerPoseSet(const string& filename)
 
     int nLines = 0;
     try {
-        typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
-        boost::char_separator<char> sep(" \t\r\n");
+        CharSeparator<char> sep(" \t\r\n", 0, DROP_EMPTY_TOKENS);
+        
         string line;
         while(getline(ifs, line)){
             ++nLines;
@@ -72,7 +72,7 @@ bool loadFaceControllerPoseSet(const string& filename)
                 line = line.substr(0, line.length()-1);
             }
             
-            tokenizer tokens(line, sep);
+            Tokenizer tokens(line, sep);
             auto it = tokens.begin();
             if(it != tokens.end()){
                 if(*it == "*"){
@@ -160,9 +160,7 @@ PoseSeqItemPtr loadFaceControllerPoseSeq(const string& filename)
     int nLines = 0;
         
     try {
-            
-        typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
-        boost::char_separator<char> sep(" ,\t\r\n", "", boost::keep_empty_tokens);
+        CharSeparator<char> sep(" ,\t\r\n", 0, KEEP_EMPTY_TOKENS);
             
         int nPoses = 0;
         string line;
@@ -172,7 +170,7 @@ PoseSeqItemPtr loadFaceControllerPoseSeq(const string& filename)
             if(!line.empty() && line[line.length()-1] == '\r'){
                 line = line.substr(0, line.length()-1);
             }
-            tokenizer tokens(line, sep);
+            Tokenizer tokens(line, sep);
                 
             auto it = tokens.begin();
             if(it != tokens.end()){

@@ -3,7 +3,7 @@
 */
 
 #include "ControllerIO.h"
-#include <regex>
+#include <cnoid/Tokenizer>
 #include <iostream>
 
 using namespace std;
@@ -37,11 +37,14 @@ std::string ControllerIO::getIntegratedOptionString(const std::string& opt1, con
 
 std::vector<std::string> ControllerIO::options() const
 {
-    std::string s = optionString();
-    regex ws("\\s+");
-    sregex_token_iterator iter(s.begin(), s.end(), ws, -1);
-    sregex_token_iterator end;
-    return std::vector<std::string>(iter, end);
+    std::vector<std::string> options;
+    auto s = optionString();
+    for(auto& token : Tokenizer(s, EscapedListSeparator<char>('\\', ' '))){
+        if(!token.empty()){
+            options.push_back(token);
+        }
+    }
+    return options;
 }
 
 

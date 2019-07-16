@@ -11,6 +11,7 @@
 #include <cnoid/BodyMotionUtil>
 #include <cnoid/ZMPSeq>
 #include <cnoid/Config>
+#include <cnoid/Tokenizer>
 #include <cnoid/stdx/filesystem>
 #include <QMessageBox>
 #include <fmt/format.h>
@@ -123,15 +124,16 @@ public:
 
         const size_t numElements = elements.size();
 
+        Tokenizer tokens(CharSeparator<char>(" \t\r\n"));
+
         while(getline(is, line)){
-            regex ws("\\s+");
-            sregex_token_iterator it(line.begin(), line.end(), ws, -1);
-            sregex_token_iterator end;
-            if(it != end){
+            tokens.assign(line);
+            auto it = tokens.begin();
+            if(it != tokens.end()){
                 frames.push_back(vector<double>(numElements));
                 vector<double>& frame = frames.back();
                 size_t i;
-                for(i=0; (i < numElements) && (it != end); ++i, ++it){
+                for(i=0; (i < numElements) && (it != tokens.end()); ++i, ++it){
                     frame[i] = std::stod(*it);
                 }
                 if(i < numElements /* || it != tokens.end() */ ){
@@ -150,7 +152,7 @@ public:
         auto qseq = item->motion()->jointPosSeq();
         auto zmpseq = getOrCreateZMPSeq(*item->motion());
 
-        std::list< std::vector<double> >::iterator p = frames.begin();
+        std::list<std::vector<double>>::iterator p = frames.begin();
         
         for(size_t i=0; i < numFrames; ++i){
             vector<double>& frame = *p++;
@@ -177,26 +179,16 @@ public:
             numComponents[i] = 0;
         }
 
-        regex ws("\\s+");
-        sregex_token_iterator it(line.begin(), line.end(), ws, -1);
-        sregex_token_iterator end;
-          
         smatch match;
         int waistIndex = 0;
-        string elementString;
-        
-        while(it != end){
+        Tokenizer tokens(line, CharSeparator(" \t\r\n"));
 
+        for(auto it = tokens.begin(); it != tokens.end(); ++it){
             Element element;
-            elementString = it->str();
-            if(regex_match(elementString, match, labelPattern)){
-
+            if(regex_match(*it, match, labelPattern)){
                 map<string,int>::iterator p = labelToTypeMap.find(match.str(1));
-
                 if(p != labelToTypeMap.end()){
-
                     element.type = p->second;
-
                     const string& axisString = match.str(2);
                     if(!axisString.empty()){
                         if(element.type != WAIST || waistIndex < 3){
@@ -213,12 +205,10 @@ public:
                             }
                         }
                     }
-                    
                     const string& indexString = match.str(3);
                     if(!indexString.empty()){
                         element.index = std::stoi(indexString);
                     }
-                    
                     if(element.type == WAIST){
                         waistIndex++;
                     }
@@ -226,7 +216,6 @@ public:
             }
             elements.push_back(element);
             numComponents[element.type] += 1;
-            ++it;
         }
     }
 };

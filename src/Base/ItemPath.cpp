@@ -3,33 +3,26 @@
 */
 
 #include "ItemPath.h"
+#include <cnoid/Tokenizer>
 
 using namespace std;
 using namespace cnoid;
 
-
 ItemPath::ItemPath(const std::string& pathstr)
 {
-    isAbsolute_ = false;
-
     if(pathstr.empty()){
         return;
     }
-    
-    auto size = pathstr.size();
-    string::size_type pos = 0;
-    if(pathstr[pos] == '/'){
+    Tokenizer tokens(pathstr, EscapedListSeparator<char>("\\", "/", ""));
+    auto iter = tokens.begin();
+    if(iter != tokens.end() && iter->empty()){
+        ++iter;
         isAbsolute_ = true;
-        ++pos;
+    } else {
+        isAbsolute_ = false;
     }
-    while(pos < size){
-        auto found = pathstr.find('/', pos);
-        if(found != string::npos){
-            path.emplace_back(pathstr, pos, found - pos);
-            pos = found + 1;
-        } else {
-            path.emplace_back(pathstr, pos, size - pos);
-            pos = size;
-        }
+    while(iter != tokens.end()){
+        path.push_back(*iter);
+        ++iter;
     }
 }
