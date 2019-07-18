@@ -35,6 +35,7 @@ set(sources
   LinkTreeWidget.cpp
   LinkSelectionView.cpp
   LinkPropertyView.cpp
+  LinkPositionView.cpp
   BodyLinkView.cpp
   JointSliderView.cpp
   JointStateView.cpp

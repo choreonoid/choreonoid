@@ -2,8 +2,8 @@
   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODYPLUGIN_BODY_LINK_VIEW_H_INCLUDED
-#define CNOID_BODYPLUGIN_BODY_LINK_VIEW_H_INCLUDED
+#ifndef CNOID_BODYPLUGIN_BODY_LINK_VIEW_H
+#define CNOID_BODYPLUGIN_BODY_LINK_VIEW_H
 
 #include <cnoid/View>
 
@@ -25,9 +25,10 @@ public:
 private:
     BodyLinkViewImpl* impl;
 
-    virtual bool storeState(Archive& archive);
-    virtual bool restoreState(const Archive& archive);
+    virtual bool storeState(Archive& archive) override;
+    virtual bool restoreState(const Archive& archive) override;
 };
+
 }
 
 #endif

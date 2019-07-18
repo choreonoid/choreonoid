@@ -290,7 +290,7 @@ void BodyLinkViewImpl::setupWidgets()
     }
 
     grid = new QGridLayout();
-    static const char* rpyLabelChar[] = {"R", "P", "Y"};
+    static const char* rpyLabelChar[] = {"RX", "RY", "RZ"};
     vbox->addLayout(grid);
 
     for(int i=0; i < 3; ++i){
