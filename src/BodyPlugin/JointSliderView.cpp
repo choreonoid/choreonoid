@@ -335,55 +335,55 @@ JointSliderViewImpl::JointSliderViewImpl(JointSliderView* self) :
     self->setDefaultLayoutArea(View::CENTER);
     self->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
 
-    QVBoxLayout* vbox = new QVBoxLayout();
+    QVBoxLayout* vbox = new QVBoxLayout;
     vbox->setSpacing(0);
 
-    QHBoxLayout* hbox = new QHBoxLayout();
+    QHBoxLayout* hbox = new QHBoxLayout;
     hbox->setSpacing(0);
 
-    showAllToggle.setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
+    showAllToggle.setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
     showAllToggle.setText(_("All"));
     showAllToggle.setToolTip(_("Show all the joints including unselected ones"));
     showAllToggle.setChecked(true);
     showAllToggle.sigToggled().connect([&](bool){ updateSliderGrid(); });
     hbox->addWidget(&showAllToggle);
 
-    jointIdToggle.setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
+    jointIdToggle.setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
     jointIdToggle.setText(_("ID"));
     jointIdToggle.setToolTip(_("Show joint IDs"));
     jointIdToggle.setChecked(false);
     jointIdToggle.sigToggled().connect([&](bool){ updateSliderGrid(); });
     hbox->addWidget(&jointIdToggle);
 
-    nameToggle.setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
+    nameToggle.setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
     nameToggle.setText(_("Name"));
     nameToggle.setToolTip(_("Show joint names"));
     nameToggle.setChecked(true);
     nameToggle.sigToggled().connect([&](bool){ updateSliderGrid(); });
     hbox->addWidget(&nameToggle);
     
-    putSpinEntryCheck.setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
+    putSpinEntryCheck.setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
     putSpinEntryCheck.setText(_("Numerical"));
     putSpinEntryCheck.setToolTip(_("Show spin entries for numerical input"));
     putSpinEntryCheck.setChecked(true);
     putSpinEntryCheck.sigToggled().connect([&](bool){ updateSliderGrid(); });
     hbox->addWidget(&putSpinEntryCheck);
 
-    putSliderCheck.setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
+    putSliderCheck.setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
     putSliderCheck.setText(_("Slider"));
     putSliderCheck.setToolTip(_("Show sliders for chaning joint positions"));
     putSliderCheck.setChecked(true);
     putSliderCheck.sigToggled().connect([&](bool){ updateSliderGrid(); });
     hbox->addWidget(&putSliderCheck);
     
-    putDialCheck.setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
+    putDialCheck.setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
     putDialCheck.setText(_("Dial"));
     putDialCheck.setToolTip(_("Show dials for chaning joint positions"));
     putDialCheck.setChecked(true);
     putDialCheck.sigToggled().connect([&](bool){ updateSliderGrid(); });
     hbox->addWidget(&putDialCheck);
 
-    labelOnLeftToggle.setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
+    labelOnLeftToggle.setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
     labelOnLeftToggle.setText(_("IL"));
     labelOnLeftToggle.setToolTip(_("Put all the components for each joint in-line"));
     labelOnLeftToggle.setChecked(true);
@@ -391,10 +391,10 @@ JointSliderViewImpl::JointSliderViewImpl(JointSliderView* self) :
     hbox->addWidget(&labelOnLeftToggle);
 
     hbox->addSpacing(4);
-    hbox->addWidget(new VSeparator());
+    hbox->addWidget(new VSeparator);
     hbox->addSpacing(4);
     
-    numColumnsSpin.setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
+    numColumnsSpin.setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
     numColumnsSpin.setToolTip(_("The number of columns"));
     numColumnsSpin.setRange(1, 9);
     numColumnsSpin.setValue(1);
@@ -402,18 +402,18 @@ JointSliderViewImpl::JointSliderViewImpl(JointSliderView* self) :
     hbox->addWidget(&numColumnsSpin);
 
     hbox->addSpacing(4);
-    hbox->addWidget(new VSeparator());
+    hbox->addWidget(new VSeparator);
     hbox->addSpacing(4);
 
     unitRadioGroup.addButton(&degreeRadio);
-    degreeRadio.setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
+    degreeRadio.setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
     degreeRadio.setText(_("Deg."));
     degreeRadio.setChecked(true);
     degreeRadio.sigToggled().connect([&](bool){ onUnitChanged(); });
     hbox->addWidget(&degreeRadio);
 
     unitRadioGroup.addButton(&radianRadio);
-    radianRadio.setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
+    radianRadio.setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
     radianRadio.setText(_("Rad."));
     radianRadio.sigToggled().connect([&](bool){ onUnitChanged(); });
     hbox->addWidget(&radianRadio);
@@ -421,8 +421,12 @@ JointSliderViewImpl::JointSliderViewImpl(JointSliderView* self) :
     hbox->addStretch();
     vbox->addLayout(hbox);
 
+    auto sliderVBox = new QVBoxLayout;
+    sliderGridBase.setLayout(sliderVBox);
     sliderGrid.setSpacing(0);
-    sliderGridBase.setLayout(&sliderGrid);
+    sliderVBox->addLayout(&sliderGrid);
+    sliderVBox->addStretch();
+    
     scrollArea.setFrameShape(QFrame::NoFrame);
     scrollArea.setWidgetResizable(true);
     scrollArea.setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
