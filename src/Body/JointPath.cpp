@@ -536,7 +536,10 @@ std::shared_ptr<JointPath> cnoid::getCustomJointPath(Body* body, Link* baseLink,
 {
     auto customJointPathHandler = body->findHandler<CustomJointPathHandler>();
     if(customJointPathHandler){
-        return customJointPathHandler->getCustomJointPath(baseLink, endLink);
+        auto customPath = customJointPathHandler->getCustomJointPath(baseLink, endLink);
+        if(customPath){
+            return customPath;
+        }
     }
 
     // deprecated

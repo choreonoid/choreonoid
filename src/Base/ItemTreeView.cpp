@@ -836,7 +836,13 @@ bool ItemTreeViewImpl::selectItem(Item* item, bool select)
     ItvItem* itvItem = getItvItem(item);
     if(itvItem){
         QModelIndex index = indexFromItem(itvItem);
-        selectionModel()->select(index, (select ? QItemSelectionModel::Select : QItemSelectionModel::Deselect));
+        QItemSelectionModel::SelectionFlags flags;
+        if(select){
+            flags = QItemSelectionModel::Select;
+        } else {
+            flags = QItemSelectionModel::Deselect | QItemSelectionModel::Current;
+        }
+        selectionModel()->select(index, flags);
         return select;
     }
     return false;

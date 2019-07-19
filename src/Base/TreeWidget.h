@@ -16,7 +16,7 @@ class CNOID_EXPORT TreeWidget : public QTreeWidget
 {
     Q_OBJECT
 
-        public:
+public:
     TreeWidget(QWidget* parent = 0);
     virtual ~TreeWidget();
 

@@ -69,6 +69,7 @@ public:
 
     // for undo, redo operations
     void beginKinematicStateEdit();
+    void cancelKinematicStateEdit();
     void acceptKinematicStateEdit();
     bool undoKinematicState();
     bool redoKinematicState();

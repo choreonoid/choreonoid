@@ -492,6 +492,20 @@ void BodyItem::beginKinematicStateEdit()
 }
 
 
+void BodyItem::cancelKinematicStateEdit()
+{
+    if(TRACE_FUNCTIONS){
+        cout << "BodyItem::cancelKinematicStateEdit()" << endl;
+    }
+
+    if(impl->isCurrentKinematicStateInHistory){
+        if(impl->currentHistoryIndex > 0){
+            restoreKinematicState(*impl->kinematicStateHistory[--impl->currentHistoryIndex]);
+        }
+    }
+}
+        
+
 void BodyItem::acceptKinematicStateEdit()
 {
     if(TRACE_FUNCTIONS){

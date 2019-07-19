@@ -3,6 +3,8 @@
 */
 
 #include "LinkPositionView.h"
+#include "BodyBar.h"
+#include "LinkSelectionView.h"
 #include <cnoid/Body>
 #include <cnoid/BodyItem>
 #include <cnoid/Link>
@@ -28,6 +30,7 @@
 
 using namespace std;
 using namespace cnoid;
+using fmt::format;
 
 namespace cnoid {
 
@@ -36,9 +39,12 @@ class LinkPositionViewImpl
 public:
     LinkPositionView* self;
             
-    BodyItemPtr currentBodyItem;
+    BodyItemPtr targetBodyItem;
+    Link* targetLink;
     shared_ptr<JointPath> jointPath;
     shared_ptr<JointPathConfigurationHandler> jointPathConfigurationHandler;
+
+    LinkSelectionView* linkSelectionView;
 
     ToolButton menuButton;
     MenuManager menuManager;
@@ -61,9 +67,11 @@ public:
     ComboBox userCoordCombo;
     ComboBox toolCoordCombo;
     ComboBox configurationCombo;
+    CheckBox forceConfigurationCheck;
+    vector<QWidget*> configurationWidgets;
 
-    ScopedConnection rootItemConnection;
-    ScopedConnection kinematicStateChangeConnection;
+    ScopedConnection bodyBarConnection;
+    ScopedConnectionSet bodyItemConnections;
     ScopedConnectionSet userInputConnections;
 
     LinkPositionViewImpl(LinkPositionView* self);
@@ -72,15 +80,17 @@ public:
     void onMenuButtonClicked();
     void setRpySpinsVisible(bool on);
     void setQuaternionSpinsVisible(bool on);
-    void updateCurrentBodyItem();
+    void setBodyItem(BodyItem* bodyItem);
+    void updateTarget();
+    void updatePanel();
+    Link* findUniqueEndLink(Body* body) const;
+    void updateRotationMatrixPanel(const Matrix3& R);
+    void updateConfigurationPanel();
     void onPositionInput();
     void onPositionInputRpy();
     void onPositionInputQuaternion();
     void onConfigurationInput(int index);
     void doInverseKinematics(const Position& T_input);
-    void updatePanel();
-    void updateRotationMatrixPanel(const Matrix3& R);
-    void updateConfigurationPanel();
 };
 
 }
@@ -105,6 +115,8 @@ LinkPositionViewImpl::LinkPositionViewImpl(LinkPositionView* self)
     self->setDefaultLayoutArea(View::CENTER);
     createPanel();
     self->setEnabled(false);
+
+    linkSelectionView = LinkSelectionView::instance();
 }
 
 
@@ -252,13 +264,21 @@ void LinkPositionViewImpl::createPanel()
     grid->addWidget(new QLabel(_("Base")), 0, 0, Qt::AlignLeft);
     userCoordCombo.addItem(_("World"));
     grid->addWidget(&userCoordCombo, 0, 1);
+    grid->addWidget(new QPushButton(_("Edit")), 0, 2);
 
     grid->addWidget(new QLabel(_("Local")), 1, 0, Qt::AlignLeft);
     toolCoordCombo.addItem(_("Link Origin"));
     grid->addWidget(&toolCoordCombo, 1, 1);
-    
-    grid->addWidget(new QLabel(_("Config")), 2, 0, Qt::AlignLeft);
+    grid->addWidget(new QPushButton(_("Edit")), 1, 2);
+
+    auto label = new QLabel(_("Config"));
+    grid->addWidget(label, 2, 0, Qt::AlignLeft);
+    configurationWidgets.push_back(label);
     grid->addWidget(&configurationCombo, 2, 1);
+    configurationWidgets.push_back(&configurationCombo);
+    forceConfigurationCheck.setText(_("Forced"));
+    grid->addWidget(&forceConfigurationCheck, 2, 2);
+    configurationWidgets.push_back(&forceConfigurationCheck);
     userInputConnections.add(
         configurationCombo.sigActivated().connect(
             [this](int index){ onConfigurationInput(index); }));
@@ -291,19 +311,21 @@ void LinkPositionViewImpl::createPanel()
 
 void LinkPositionView::onActivated()
 {
-    impl->rootItemConnection =
-        RootItem::instance()->sigTreeChanged().connect(
-            [&](){ impl->updateCurrentBodyItem(); });
+    auto bb = BodyBar::instance();
 
-    impl->updateCurrentBodyItem();
+    impl->bodyBarConnection = 
+        bb->sigCurrentBodyItemChanged().connect(
+            [&](BodyItem* bodyItem){ impl->setBodyItem(bodyItem); });
+
+    impl->setBodyItem(bb->currentBodyItem());
 }
 
 
 void LinkPositionView::onDeactivated()
 {
-    impl->rootItemConnection.disconnect();
-    impl->kinematicStateChangeConnection.disconnect();
-    impl->currentBodyItem.reset();
+    impl->bodyBarConnection.disconnect();
+    impl->bodyItemConnections.disconnect();
+    impl->targetBodyItem.reset();
     impl->jointPath.reset();
     impl->jointPathConfigurationHandler.reset();
 }
@@ -331,37 +353,181 @@ void LinkPositionViewImpl::setQuaternionSpinsVisible(bool on)
 }
 
 
-void LinkPositionViewImpl::updateCurrentBodyItem()
+void LinkPositionViewImpl::setBodyItem(BodyItem* bodyItem)
 {
-    BodyItem* newBodyItem = nullptr;
+    if(bodyItem != targetBodyItem){
+
+        bodyItemConnections.disconnect();
     
-    RootItem::instance()->traverse<BodyItem>(
-        [&](BodyItem* bodyItem){
-            auto body = bodyItem->body();
-            jointPath = getCustomJointPath(body, body->link("BASE"), body->link("J6"));
-            if(jointPath){
-                newBodyItem = bodyItem;
-                jointPathConfigurationHandler = dynamic_pointer_cast<JointPathConfigurationHandler>(jointPath);
-                return true;
-            }
-            return false;
-        });
-            
-    if(newBodyItem != currentBodyItem){
-        currentBodyItem = newBodyItem;
-        if(currentBodyItem){
-            targetLabel.setText(
-                fmt::format("{0} / {1}", currentBodyItem->name(), "link").c_str());
-            kinematicStateChangeConnection =
-                currentBodyItem->sigKinematicStateChanged().connect(
-                    [&](){ updatePanel(); });
-        } else {
-            targetLabel.setText("------");
-            jointPath.reset();
-            jointPathConfigurationHandler.reset();
-            kinematicStateChangeConnection.disconnect();
+        if(bodyItem){
+            bodyItemConnections.add(
+                bodyItem->sigNameChanged().connect(
+                    [&](const std::string&){ updateTarget(); }));
+
+            bodyItemConnections.add(
+                linkSelectionView->sigSelectionChanged(bodyItem).connect(
+                    [&](){ updateTarget(); updatePanel(); }));
+
+            bodyItemConnections.add(
+                bodyItem->sigKinematicStateChanged().connect(
+                    [&](){ updatePanel(); }));
         }
+        
+        targetBodyItem = bodyItem;
+        updateTarget();
         updatePanel();
+    }
+}
+
+
+void LinkPositionViewImpl::updateTarget()
+{
+    targetLink = nullptr;
+    jointPath = nullptr;
+    jointPathConfigurationHandler = nullptr;
+    
+    if(!targetBodyItem){
+        targetLabel.setText("------");
+
+    } else {
+        auto body = targetBodyItem->body();
+        
+        auto selectedLinkIndex = linkSelectionView->selectedLinkIndex(targetBodyItem);
+        if(selectedLinkIndex >= 0){
+            targetLink = body->link(selectedLinkIndex);
+        } else {
+            targetLink = findUniqueEndLink(body);
+            if(!targetLink){
+                targetLink = body->rootLink();
+            }
+        }
+        auto baseLink = targetBodyItem->currentBaseLink();
+        if(!baseLink){
+            baseLink = body->rootLink();
+        }
+        
+        targetLabel.setText(format("{0} / {1}", body->name(), targetLink->name()).c_str());
+
+        jointPath = getCustomJointPath(body, baseLink, targetLink);
+        if(jointPath){
+            jointPathConfigurationHandler = dynamic_pointer_cast<JointPathConfigurationHandler>(jointPath);
+        } else {
+            jointPath = make_shared<JointPath>(baseLink, targetLink);
+        }
+    }
+
+    self->setEnabled(jointPath != nullptr);
+    resultLabel.setText("");
+
+    configurationCombo.clear();
+    for(auto& widget : configurationWidgets){
+        widget->setEnabled(jointPathConfigurationHandler != nullptr);
+    }
+    
+    if(jointPathConfigurationHandler){
+        int n = jointPathConfigurationHandler->getNumConfigurations();
+        for(int i=0; i < n; ++i){
+            configurationCombo.addItem(
+                jointPathConfigurationHandler->getConfigurationName(i).c_str());
+        }
+        configurationCombo.setCurrentIndex(
+            jointPathConfigurationHandler->getCurrentConfiguration());
+    }
+}
+
+
+Link* LinkPositionViewImpl::findUniqueEndLink(Body* body) const
+{
+    Link* endLink = nullptr;
+    Link* link = body->rootLink();
+    while(true){
+        if(!link->child()){
+            endLink = link;
+            break;
+        }
+        if(link->child()->sibling()){
+            break;
+        }
+        link = link->child();
+    }
+    return endLink;
+}
+
+
+void LinkPositionViewImpl::updatePanel()
+{
+    if(!jointPath){
+        self->setEnabled(false);
+        resultLabel.setText("");
+
+    } else {
+        self->setEnabled(true);
+        
+        userInputConnections.block();
+
+        auto endLink = jointPath->endLink();
+
+        Vector3 p = endLink->p();
+        for(int i=0; i < 3; ++i){
+            auto& spin = xyzSpin[i];
+            if(!spin.hasFocus()){
+                spin.setValue(p[i]);
+            }
+        }
+        Matrix3 R = endLink->attitude();
+        if(rpyCheck->isChecked()){
+            Vector3 rpy = rpyFromRot(R);
+            for(int i=0; i < 3; ++i){
+                auto& spin = rpySpin[i];
+                if(!spin.hasFocus()){
+                    spin.setValue(degree(rpy[i]));
+                }
+            }
+        }
+        if(quaternionCheck->isChecked()){
+            if(!quatSpin[0].hasFocus() &&
+               !quatSpin[1].hasFocus() &&
+               !quatSpin[2].hasFocus() &&
+               !quatSpin[3].hasFocus()){
+                Eigen::Quaterniond quat(R);
+                quatSpin[0].setValue(quat.x());
+                quatSpin[1].setValue(quat.y());
+                quatSpin[2].setValue(quat.z());
+                quatSpin[3].setValue(quat.w());
+            }
+        }
+        if(rotationMatrixCheck->isChecked()){
+            updateRotationMatrixPanel(R);
+        }
+
+        updateConfigurationPanel();
+
+        userInputConnections.unblock();
+
+        resultLabel.setText(_("Consistent with display"));
+        resultLabel.setStyleSheet("");
+    }
+}
+
+
+void LinkPositionViewImpl::updateRotationMatrixPanel(const Matrix3& R)
+{
+    for(int i=0; i < 3; ++i){
+        for(int j=0; j < 3; ++j){
+            rotationMatrixElementLabel[i][j].setText(
+                format("{: .6f}", R(i, j)).c_str());
+        }
+    }
+}
+
+
+void LinkPositionViewImpl::updateConfigurationPanel()
+{
+    if(jointPathConfigurationHandler){
+        auto index = jointPathConfigurationHandler->getCurrentConfiguration();
+        userInputConnections.block();
+        configurationCombo.setCurrentIndex(index);
+        userInputConnections.unblock();
     }
 }
 
@@ -435,96 +601,28 @@ void LinkPositionViewImpl::doInverseKinematics(const Position& T_input)
         T.translation() = T_input.translation();
         T.linear() = jointPath->endLink()->calcRfromAttitude(T_input.linear());
         
-        currentBodyItem->beginKinematicStateEdit();
-        if(jointPath->calcInverseKinematics(T)){
-            currentBodyItem->notifyKinematicStateChange(
-                kinematicStateChangeConnection.connection(), true);
-            currentBodyItem->acceptKinematicStateEdit();
+        targetBodyItem->beginKinematicStateEdit();
+        bool solved = jointPath->calcInverseKinematics(T);
+
+        if(solved){
+            if(jointPathConfigurationHandler && forceConfigurationCheck.isChecked()){
+                int conf = jointPathConfigurationHandler->getCurrentConfiguration();
+                if(conf != configurationCombo.currentIndex()){
+                    solved = false;
+                }
+            }
+        }
+        if(solved){       
+            targetBodyItem->notifyKinematicStateChange(true);
+            targetBodyItem->acceptKinematicStateEdit();
             resultLabel.setText(_("Solved"));
             resultLabel.setStyleSheet("");
         } else {
+            targetBodyItem->cancelKinematicStateEdit();
             resultLabel.setText(_("Not Solved"));
             resultLabel.setStyleSheet("font-weight: bold; color: red");
         }
         updateConfigurationPanel();
-    }
-}
-
-
-void LinkPositionViewImpl::updatePanel()
-{
-    if(!jointPath){
-        self->setEnabled(false);
-        resultLabel.setText("");
-
-    } else {
-        self->setEnabled(true);
-        
-        userInputConnections.block();
-
-        auto endLink = jointPath->endLink();
-
-        Vector3 p = endLink->p();
-        for(int i=0; i < 3; ++i){
-            auto& spin = xyzSpin[i];
-            if(!spin.hasFocus()){
-                spin.setValue(p[i]);
-            }
-        }
-        Matrix3 R = endLink->attitude();
-        if(rpyCheck->isChecked()){
-            Vector3 rpy = rpyFromRot(R);
-            for(int i=0; i < 3; ++i){
-                auto& spin = rpySpin[i];
-                if(!spin.hasFocus()){
-                    spin.setValue(degree(rpy[i]));
-                }
-            }
-        }
-        if(quaternionCheck->isChecked()){
-            if(!quatSpin[0].hasFocus() &&
-               !quatSpin[1].hasFocus() &&
-               !quatSpin[2].hasFocus() &&
-               !quatSpin[3].hasFocus()){
-                Eigen::Quaterniond quat(R);
-                quatSpin[0].setValue(quat.x());
-                quatSpin[1].setValue(quat.y());
-                quatSpin[2].setValue(quat.z());
-                quatSpin[3].setValue(quat.w());
-            }
-        }
-        if(rotationMatrixCheck->isChecked()){
-            updateRotationMatrixPanel(R);
-        }
-
-        updateConfigurationPanel();
-
-        userInputConnections.unblock();
-
-        resultLabel.setText(_("Model display position"));
-        resultLabel.setStyleSheet("");
-    }
-}
-
-
-void LinkPositionViewImpl::updateRotationMatrixPanel(const Matrix3& R)
-{
-    for(int i=0; i < 3; ++i){
-        for(int j=0; j < 3; ++j){
-            rotationMatrixElementLabel[i][j].setText(
-                fmt::format("{: .6f}", R(i, j)).c_str());
-        }
-    }
-}
-
-
-void LinkPositionViewImpl::updateConfigurationPanel()
-{
-    if(jointPathConfigurationHandler){
-        auto index = jointPathConfigurationHandler->getCurrentConfiguration();
-        userInputConnections.block();
-        configurationCombo.setCurrentIndex(index);
-        userInputConnections.unblock();
     }
 }
 
@@ -539,5 +637,3 @@ bool LinkPositionView::restoreState(const Archive& archive)
 {
     return true;
 }
-
-    

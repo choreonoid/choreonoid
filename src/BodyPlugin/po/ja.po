@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-07-18 17:01+0900\n"
+"POT-Creation-Date: 2019-07-19 16:56+0900\n"
 "PO-Revision-Date: 2011-11-12 14:46+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Language =\n"
@@ -482,7 +482,7 @@ msgstr ""
 msgid "Center of mass"
 msgstr "重心"
 
-#: LinkPropertyView.cpp:158 BodyItem.cpp:1164
+#: LinkPropertyView.cpp:158 BodyItem.cpp:1178
 msgid "Mass"
 msgstr "質量"
 
@@ -602,65 +602,73 @@ msgstr "アンチエイリアシング"
 msgid "The function to read CollisionSeq is not implemented."
 msgstr "CollisionSeqを読み込む機能は実装されていません．"
 
-#: LinkPositionView.cpp:81
+#: LinkPositionView.cpp:101
 msgid "Link Position"
 msgstr "リンク位置"
 
-#: LinkPositionView.cpp:131
+#: LinkPositionView.cpp:153
 msgid "Option"
 msgstr "オプション"
 
-#: LinkPositionView.cpp:141
+#: LinkPositionView.cpp:163
 msgid "Fetch"
 msgstr "取込"
 
-#: LinkPositionView.cpp:144 FilterDialogs.cpp:108 FilterDialogs.cpp:212
+#: LinkPositionView.cpp:166 FilterDialogs.cpp:108 FilterDialogs.cpp:212
 msgid "Apply"
 msgstr "適用"
 
-#: LinkPositionView.cpp:190
+#: LinkPositionView.cpp:263
 msgid "Base"
 msgstr "ベース"
 
-#: LinkPositionView.cpp:191
+#: LinkPositionView.cpp:264
 msgid "World"
 msgstr "ワールド"
 
-#: LinkPositionView.cpp:194
+#: LinkPositionView.cpp:266 LinkPositionView.cpp:271
+msgid "Edit"
+msgstr "編集"
+
+#: LinkPositionView.cpp:268
 msgid "Local"
 msgstr "ローカル"
 
-#: LinkPositionView.cpp:195
+#: LinkPositionView.cpp:269
 msgid "Link Origin"
 msgstr "リンク原点"
 
-#: LinkPositionView.cpp:198
+#: LinkPositionView.cpp:273
 msgid "Config"
 msgstr "コンフィグ"
 
-#: LinkPositionView.cpp:209
+#: LinkPositionView.cpp:278
+msgid "Forced"
+msgstr "強制"
+
+#: LinkPositionView.cpp:290
 msgid "Roll-pitch-yaw"
 msgstr "ロールピッチヨー"
 
-#: LinkPositionView.cpp:218
+#: LinkPositionView.cpp:295
 msgid "Quoternion"
 msgstr "クオタニオン"
 
-#: LinkPositionView.cpp:221
+#: LinkPositionView.cpp:301
 msgid "Rotation matrix"
 msgstr "回転行列"
 
-#: LinkPositionView.cpp:318
+#: LinkPositionView.cpp:480
+msgid "Consistent with display"
+msgstr "表示と一致"
+
+#: LinkPositionView.cpp:591
 msgid "Solved"
 msgstr "解有り"
 
-#: LinkPositionView.cpp:321
+#: LinkPositionView.cpp:595
 msgid "Not Solved"
 msgstr "解無し"
-
-#: LinkPositionView.cpp:362
-msgid "Model display position"
-msgstr "モデル表示位置"
 
 #: LinkGraphView.cpp:22
 msgid "Link Trajectories"
@@ -1144,51 +1152,51 @@ msgstr "ボディアイテム"
 msgid "Body"
 msgstr "ボディ"
 
-#: BodyItem.cpp:1158
+#: BodyItem.cpp:1172
 msgid "Model name"
 msgstr "モデル名"
 
-#: BodyItem.cpp:1159
+#: BodyItem.cpp:1173
 msgid "Num links"
 msgstr "リンク数"
 
-#: BodyItem.cpp:1160
+#: BodyItem.cpp:1174
 msgid "Num joints"
 msgstr "関節数"
 
-#: BodyItem.cpp:1161
+#: BodyItem.cpp:1175
 msgid "Num devices"
 msgstr "デバイス数"
 
-#: BodyItem.cpp:1162
+#: BodyItem.cpp:1176
 msgid "Root link"
 msgstr "ルートリンク"
 
-#: BodyItem.cpp:1163
+#: BodyItem.cpp:1177
 msgid "Base link"
 msgstr "ベースリンク"
 
-#: BodyItem.cpp:1165
+#: BodyItem.cpp:1179
 msgid "Static model"
 msgstr "静的モデル"
 
-#: BodyItem.cpp:1167 WorldItem.cpp:501
+#: BodyItem.cpp:1181 WorldItem.cpp:501
 msgid "Collision detection"
 msgstr "干渉検出"
 
-#: BodyItem.cpp:1169
+#: BodyItem.cpp:1183
 msgid "Self-collision detection"
 msgstr "自己干渉検出"
 
-#: BodyItem.cpp:1171
+#: BodyItem.cpp:1185
 msgid "Editable"
 msgstr "編集可能"
 
-#: BodyItem.cpp:1253
+#: BodyItem.cpp:1267
 msgid "Mismatched size of the stored joint positions for {}"
 msgstr "{}に対して読み込まれる関節位置情報のサイズが一致しません"
 
-#: BodyItem.cpp:1278
+#: BodyItem.cpp:1292
 msgid "Mismatched size of the stored initial joint positions for {}"
 msgstr "{}に対して読み込まれる初期関節位置情報のサイズが一致しません"
 
@@ -1595,6 +1603,9 @@ msgstr "遠クリッピング距離"
 #: BodyTrackingCameraItem.cpp:263
 msgid "field Of View"
 msgstr "視野角"
+
+#~ msgid "Model display position"
+#~ msgstr "モデル表示位置"
 
 #~ msgid "Configuration"
 #~ msgstr "コンフィギュレーション"

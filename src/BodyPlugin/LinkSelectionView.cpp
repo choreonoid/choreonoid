@@ -39,9 +39,15 @@ void LinkSelectionView::initializeClass(ExtensionManager* ext)
 }
 
 
-LinkSelectionView* LinkSelectionView::mainInstance()
+LinkSelectionView* LinkSelectionView::instance()
 {
     return mainLinkSelectionView;
+}
+
+
+LinkSelectionView* LinkSelectionView::mainInstance()
+{
+    return instance();
 }
 
 
@@ -103,13 +109,13 @@ int LinkSelectionView::selectedLinkIndex() const
 }
 
 
-const std::vector<int>& LinkSelectionView::selectedLinkIndices()
+const std::vector<int>& LinkSelectionView::selectedLinkIndices() const
 {
     return impl->linkTreeWidget.selectedLinkIndices();
 }
 
 
-const std::vector<bool>& LinkSelectionView::linkSelection()
+const std::vector<bool>& LinkSelectionView::linkSelection() const
 {
     return impl->linkTreeWidget.linkSelection();
 }
@@ -121,13 +127,19 @@ SignalProxy<void()> LinkSelectionView::sigSelectionChanged(BodyItem* bodyItem)
 }
 
 
-const std::vector<int>& LinkSelectionView::selectedLinkIndices(BodyItem* bodyItem)
+int LinkSelectionView::selectedLinkIndex(BodyItem* bodyItem) const
+{
+    return impl->linkTreeWidget.selectedLinkIndex(bodyItem);
+}
+
+
+const std::vector<int>& LinkSelectionView::selectedLinkIndices(BodyItem* bodyItem) const
 {
     return impl->linkTreeWidget.selectedLinkIndices(bodyItem);
 }
 
 
-const std::vector<bool>& LinkSelectionView::linkSelection(BodyItem* bodyItem)
+const std::vector<bool>& LinkSelectionView::linkSelection(BodyItem* bodyItem) const
 {
     return impl->linkTreeWidget.linkSelection(bodyItem);
 }
