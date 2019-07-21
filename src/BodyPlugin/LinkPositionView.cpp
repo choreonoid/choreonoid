@@ -26,11 +26,28 @@
 #include <QGridLayout>
 #include <QGroupBox>
 #include <fmt/format.h>
+#include <bitset>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
 using fmt::format;
+
+namespace {
+
+enum InputElement {
+    TX, TY, TZ,
+    RX, RY, RZ,
+    QX, QY, QZ, QW,
+    NUM_INPUT_ELEMENTS
+};
+
+typedef std::bitset<NUM_INPUT_ELEMENTS> InputElementSet;
+
+const char* normalStyle = "font-weight: normal";
+const char* errorStyle = "font-weight: bold; color: red";
+
+}
 
 namespace cnoid {
 
@@ -61,13 +78,15 @@ public:
     QWidget rotationMatrixPanel;
     QLabel rotationMatrixElementLabel[3][3];
 
+    vector<QWidget*> inputElementWidgets;
+        
     enum AttitudeType { ROLL_PITCH_YAW, QUATERNION };
     AttitudeType lastInputAttitudeType;
 
     ComboBox userCoordCombo;
     ComboBox toolCoordCombo;
     ComboBox configurationCombo;
-    CheckBox forceConfigurationCheck;
+    CheckBox configurationFixCheck;
     vector<QWidget*> configurationWidgets;
 
     ScopedConnection bodyBarConnection;
@@ -77,6 +96,7 @@ public:
     LinkPositionViewImpl(LinkPositionView* self);
     ~LinkPositionViewImpl();
     void createPanel();
+    void resetInputWidgetStyles();
     void onMenuButtonClicked();
     void setRpySpinsVisible(bool on);
     void setQuaternionSpinsVisible(bool on);
@@ -86,11 +106,11 @@ public:
     Link* findUniqueEndLink(Body* body) const;
     void updateRotationMatrixPanel(const Matrix3& R);
     void updateConfigurationPanel();
-    void onPositionInput();
-    void onPositionInputRpy();
-    void onPositionInputQuaternion();
+    void onPositionInput(InputElementSet inputElements);
+    void onPositionInputRpy(InputElementSet inputElements);
+    void onPositionInputQuaternion(InputElementSet inputElements);
     void onConfigurationInput(int index);
-    void doInverseKinematics(const Position& T_input);
+    void findSolution(const Position& T_input, InputElementSet inputElements);
 };
 
 }
@@ -165,7 +185,9 @@ void LinkPositionViewImpl::createPanel()
     actualButton->sigClicked().connect([&](){ updatePanel(); });
     hbox->addWidget(actualButton);
     auto applyButton = new PushButton(_("Apply"));
-    applyButton->sigClicked().connect([&](){ onPositionInput(); });
+    InputElementSet s;
+    s.set();
+    applyButton->sigClicked().connect([this, s](){ onPositionInput(s); });
     hbox->addWidget(applyButton);
     mainvbox->addLayout(hbox);
 
@@ -179,10 +201,12 @@ void LinkPositionViewImpl::createPanel()
         xyzSpin[i].setDecimals(4);
         xyzSpin[i].setRange(-99.9999, 99.9999);
         xyzSpin[i].setSingleStep(0.0001);
-        
+
+        InputElementSet s;
+        s.set(TX + i);
         userInputConnections.add(
             xyzSpin[i].sigValueChanged().connect(
-                [&](double){ onPositionInput(); }));
+                [this, s](double){ onPositionInput(s); }));
 
         grid->addWidget(new QLabel(xyzLabels[i]), 0, i * 2, Qt::AlignRight);
         grid->addWidget(&xyzSpin[i], 0, i * 2 + 1);
@@ -193,9 +217,10 @@ void LinkPositionViewImpl::createPanel()
         rpySpin[i].setRange(-360.0, 360.0);
         rpySpin[i].setSingleStep(0.1);
 
+        s.set(RX + 1);
         userInputConnections.add(
             rpySpin[i].sigValueChanged().connect(
-                [&](double){ onPositionInputRpy(); }));
+                [this, s](double){ onPositionInputRpy(s); }));
 
         auto label = new QLabel(rpyLabelChar[i]);
         grid->addWidget(label, 1, i * 2, Qt::AlignRight);
@@ -217,9 +242,11 @@ void LinkPositionViewImpl::createPanel()
         quatSpin[i].setRange(-1.0000, 1.0000);
         quatSpin[i].setSingleStep(0.0001);
 
+        InputElementSet s;
+        s.set(QX + i);
         userInputConnections.add(
             quatSpin[i].sigValueChanged().connect(
-                [&](double){ onPositionInputQuaternion(); }));
+                [this, s](double){ onPositionInputQuaternion(s); }));
         
         auto label = new QLabel(quatLabelChar[i]);
         grid->addWidget(label, 0, i * 2, Qt::AlignRight);
@@ -231,6 +258,12 @@ void LinkPositionViewImpl::createPanel()
         grid->setColumnStretch(i * 2 + 1, 10);
     }
     mainvbox->addLayout(grid);
+
+    inputElementWidgets = {
+        &xyzSpin[0], &xyzSpin[1], &xyzSpin[2],
+        &rpySpin[0], &rpySpin[1], &rpySpin[2],
+        &quatSpin[0], &quatSpin[1], &quatSpin[2], &quatSpin[3]
+    };
 
     hbox = new QHBoxLayout;
     rotationMatrixPanel.setLayout(hbox);
@@ -276,12 +309,15 @@ void LinkPositionViewImpl::createPanel()
     configurationWidgets.push_back(label);
     grid->addWidget(&configurationCombo, 2, 1);
     configurationWidgets.push_back(&configurationCombo);
-    forceConfigurationCheck.setText(_("Forced"));
-    grid->addWidget(&forceConfigurationCheck, 2, 2);
-    configurationWidgets.push_back(&forceConfigurationCheck);
+    configurationFixCheck.setText(_("Fix"));
+    grid->addWidget(&configurationFixCheck, 2, 2);
+    configurationWidgets.push_back(&configurationFixCheck);
     userInputConnections.add(
         configurationCombo.sigActivated().connect(
             [this](int index){ onConfigurationInput(index); }));
+    userInputConnections.add(
+        configurationFixCheck.sigToggled().connect(
+            [this](bool){ onConfigurationInput(configurationCombo.currentIndex()); }));
 
     mainvbox->addLayout(grid);
     mainvbox->addStretch();
@@ -331,6 +367,14 @@ void LinkPositionView::onDeactivated()
 }
 
 
+void LinkPositionViewImpl::resetInputWidgetStyles()
+{
+    for(auto& widget : inputElementWidgets){
+        widget->setStyleSheet(normalStyle);
+    }
+}
+    
+
 void LinkPositionViewImpl::onMenuButtonClicked()
 {
     menuManager.popupMenu()->popup(menuButton.mapToGlobal(QPoint(0,0)));
@@ -357,6 +401,7 @@ void LinkPositionViewImpl::setBodyItem(BodyItem* bodyItem)
 {
     if(bodyItem != targetBodyItem){
 
+        resetInputWidgetStyles();
         bodyItemConnections.disconnect();
     
         if(bodyItem){
@@ -500,12 +545,14 @@ void LinkPositionViewImpl::updatePanel()
             updateRotationMatrixPanel(R);
         }
 
+        resetInputWidgetStyles();
+
         updateConfigurationPanel();
 
         userInputConnections.unblock();
 
-        resultLabel.setText(_("Consistent with display"));
-        resultLabel.setStyleSheet("");
+        resultLabel.setText(_("Actual State"));
+        resultLabel.setStyleSheet(normalStyle);
     }
 }
 
@@ -523,8 +570,11 @@ void LinkPositionViewImpl::updateRotationMatrixPanel(const Matrix3& R)
 
 void LinkPositionViewImpl::updateConfigurationPanel()
 {
+    configurationCombo.setStyleSheet("font-weight: normal");
+    
     if(jointPathConfigurationHandler){
         auto index = jointPathConfigurationHandler->getCurrentConfiguration();
+        jointPathConfigurationHandler->setPreferredConfiguration(index);
         userInputConnections.block();
         configurationCombo.setCurrentIndex(index);
         userInputConnections.unblock();
@@ -532,21 +582,21 @@ void LinkPositionViewImpl::updateConfigurationPanel()
 }
 
 
-void LinkPositionViewImpl::onPositionInput()
+void LinkPositionViewImpl::onPositionInput(InputElementSet inputElements)
 {
     if(lastInputAttitudeType == ROLL_PITCH_YAW && rpyCheck->isChecked()){
-        onPositionInputRpy();
+        onPositionInputRpy(inputElements);
     } else if(lastInputAttitudeType == QUATERNION && quaternionCheck->isChecked()){
-        onPositionInputQuaternion();
+        onPositionInputQuaternion(inputElements);
     } else if(quaternionCheck->isChecked()){
-        onPositionInputQuaternion();
+        onPositionInputQuaternion(inputElements);
     } else {
-        onPositionInputRpy();
+        onPositionInputRpy(inputElements);
     }
 }
 
 
-void LinkPositionViewImpl::onPositionInputRpy()
+void LinkPositionViewImpl::onPositionInputRpy(InputElementSet inputElements)
 {
     Position T;
     Vector3 rpy;
@@ -557,13 +607,13 @@ void LinkPositionViewImpl::onPositionInputRpy()
     }
     T.linear() = rotFromRpy(rpy);
     
-    doInverseKinematics(T);
+    findSolution(T, inputElements);
 
     lastInputAttitudeType = ROLL_PITCH_YAW;
 }
 
 
-void LinkPositionViewImpl::onPositionInputQuaternion()
+void LinkPositionViewImpl::onPositionInputQuaternion(InputElementSet inputElements)
 {
     Position T;
 
@@ -578,7 +628,7 @@ void LinkPositionViewImpl::onPositionInputQuaternion()
     if(quat.norm() > 1.0e-6){
         quat.normalize();
         T.linear() = quat.toRotationMatrix();
-        doInverseKinematics(T);
+        findSolution(T, inputElements);
     }
 
     lastInputAttitudeType = QUATERNION;
@@ -590,11 +640,11 @@ void LinkPositionViewImpl::onConfigurationInput(int index)
     if(jointPathConfigurationHandler){
         jointPathConfigurationHandler->setPreferredConfiguration(index);
     }
-    onPositionInput();
+    onPositionInput(InputElementSet(0));
 }
 
 
-void LinkPositionViewImpl::doInverseKinematics(const Position& T_input)
+void LinkPositionViewImpl::findSolution(const Position& T_input, InputElementSet inputElements)
 {
     if(jointPath){
         Position T;
@@ -604,10 +654,18 @@ void LinkPositionViewImpl::doInverseKinematics(const Position& T_input)
         targetBodyItem->beginKinematicStateEdit();
         bool solved = jointPath->calcInverseKinematics(T);
 
-        if(solved){
-            if(jointPathConfigurationHandler && forceConfigurationCheck.isChecked()){
+        if(!solved){
+            for(size_t i=0; i < inputElementWidgets.size(); ++i){
+                if(inputElements[i]){
+                    inputElementWidgets[i]->setStyleSheet(errorStyle);
+                }
+            }
+        } else {
+            if(jointPathConfigurationHandler && configurationFixCheck.isChecked()){
                 int conf = jointPathConfigurationHandler->getCurrentConfiguration();
-                if(conf != configurationCombo.currentIndex()){
+                int current = configurationCombo.currentIndex();
+                if(conf != current){
+                    configurationCombo.setStyleSheet(errorStyle);
                     solved = false;
                 }
             }
@@ -616,13 +674,13 @@ void LinkPositionViewImpl::doInverseKinematics(const Position& T_input)
             targetBodyItem->notifyKinematicStateChange(true);
             targetBodyItem->acceptKinematicStateEdit();
             resultLabel.setText(_("Solved"));
-            resultLabel.setStyleSheet("");
+            resultLabel.setStyleSheet(normalStyle);
+            configurationCombo.setStyleSheet("font-weight: normal");
         } else {
             targetBodyItem->cancelKinematicStateEdit();
             resultLabel.setText(_("Not Solved"));
             resultLabel.setStyleSheet("font-weight: bold; color: red");
         }
-        updateConfigurationPanel();
     }
 }
 
