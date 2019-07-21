@@ -136,23 +136,13 @@ public:
     BodyItemImpl(BodyItem* self);
     BodyItemImpl(BodyItem* self, const BodyItemImpl& org);
     BodyItemImpl(BodyItem* self, Body* body);
-    
     ~BodyItemImpl();
-        
     void init(bool calledFromCopyConstructor);
     void initBody(bool calledFromCopyConstructor);
     bool loadModelFile(const std::string& filename);
+    void setBody(Body* body);
     void setCurrentBaseLink(Link* link);
-    void notifyKinematicStateChange(bool requestFK, bool requestVelFK, bool requestAccFK, bool isDirect);
-    void emitSigKinematicStateChanged();
-    void emitSigKinematicStateEdited();
-    bool enableCollisionDetection(bool on);
-    bool enableSelfCollisionDetection(bool on);
-    void updateCollisionDetectorLater();
     void appendKinematicStateToHistory();
-    bool onStaticModelPropertyChanged(bool on);
-    void createSceneBody();
-    void onPositionChanged();
     bool undoKinematicState();
     bool redoKinematicState();
     void getCurrentIK(Link* targetLink, shared_ptr<InverseKinematics>& ik);
@@ -162,12 +152,19 @@ public:
     bool doLegIkToMoveCm(const Vector3& c, bool onlyProjectionToFloor);
     bool setStance(double width);
     void getParticularPosition(BodyItem::PositionType position, stdx::optional<Vector3>& pos);
+    void notifyKinematicStateChange(bool requestFK, bool requestVelFK, bool requestAccFK, bool isDirect);
+    void emitSigKinematicStateChanged();
+    void emitSigKinematicStateEdited();
+    bool enableCollisionDetection(bool on);
+    bool enableSelfCollisionDetection(bool on);
+    void updateCollisionDetectorLater();
     void doAssign(Item* srcItem);
+    bool onStaticModelPropertyChanged(bool on);
+    void createSceneBody();
     bool onEditableChanged(bool on);
     void doPutProperties(PutPropertyFunction& putProperty);
     bool store(Archive& archive);
     bool restore(const Archive& archive);
-    void setBody(Body* body);
 };
 
 }
@@ -245,6 +242,18 @@ BodyItemImpl::BodyItemImpl(BodyItem* self, Body* body)
 }
 
 
+BodyItem::~BodyItem()
+{
+    delete impl;
+}
+
+
+BodyItemImpl::~BodyItemImpl()
+{
+
+}
+
+
 void BodyItemImpl::init(bool calledFromCopyConstructor)
 {
     self->setAttribute(Item::LOAD_ONLY);
@@ -278,18 +287,6 @@ void BodyItemImpl::initBody(bool calledFromCopyConstructor)
         zmp.setZero();
         self->storeInitialState();
     }
-}
-
-
-BodyItem::~BodyItem()
-{
-    delete impl;
-}
-
-
-BodyItemImpl::~BodyItemImpl()
-{
-
 }
 
 
@@ -492,32 +489,6 @@ void BodyItem::beginKinematicStateEdit()
 }
 
 
-void BodyItem::cancelKinematicStateEdit()
-{
-    if(TRACE_FUNCTIONS){
-        cout << "BodyItem::cancelKinematicStateEdit()" << endl;
-    }
-
-    if(impl->isCurrentKinematicStateInHistory){
-        if(impl->currentHistoryIndex > 0){
-            restoreKinematicState(*impl->kinematicStateHistory[--impl->currentHistoryIndex]);
-        }
-    }
-}
-        
-
-void BodyItem::acceptKinematicStateEdit()
-{
-    if(TRACE_FUNCTIONS){
-        cout << "BodyItem::acceptKinematicStateEdit()" << endl;
-    }
-
-    //appendKinematicStateToHistory();
-    impl->needToAppendKinematicStateToHistory = true;
-    impl->sigKinematicStateEdited.request();
-}
-
-
 void BodyItemImpl::appendKinematicStateToHistory()
 {
     if(TRACE_FUNCTIONS){
@@ -542,6 +513,35 @@ void BodyItemImpl::appendKinematicStateToHistory()
     }
 
     isCurrentKinematicStateInHistory = true;
+}
+
+
+void BodyItem::cancelKinematicStateEdit()
+{
+    if(TRACE_FUNCTIONS){
+        cout << "BodyItem::cancelKinematicStateEdit()" << endl;
+    }
+
+    if(impl->isCurrentKinematicStateInHistory){
+        restoreKinematicState(*impl->kinematicStateHistory[impl->currentHistoryIndex]);
+        impl->kinematicStateHistory.pop_back();
+        if(impl->currentHistoryIndex > 0){
+            --impl->currentHistoryIndex;
+        }
+        impl->isCurrentKinematicStateInHistory = false;
+    }
+}
+        
+
+void BodyItem::acceptKinematicStateEdit()
+{
+    if(TRACE_FUNCTIONS){
+        cout << "BodyItem::acceptKinematicStateEdit()" << endl;
+    }
+
+    //appendKinematicStateToHistory();
+    impl->needToAppendKinematicStateToHistory = true;
+    impl->sigKinematicStateEdited.request();
 }
 
 

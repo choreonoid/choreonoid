@@ -671,7 +671,7 @@ void LinkPositionViewImpl::findSolution(const Position& T_input, InputElementSet
             }
         }
         if(solved){       
-            targetBodyItem->notifyKinematicStateChange(true);
+            targetBodyItem->notifyKinematicStateChange();
             targetBodyItem->acceptKinematicStateEdit();
             resultLabel.setText(_("Solved"));
             resultLabel.setStyleSheet(normalStyle);
