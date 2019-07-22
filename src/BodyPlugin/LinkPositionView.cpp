@@ -66,6 +66,7 @@ public:
     ToolButton menuButton;
     MenuManager menuManager;
     QLabel targetLabel;
+    QLabel configurationLabel;
     QLabel resultLabel;
     DoubleSpinBox xyzSpin[3];
     Action* rpyCheck;
@@ -86,7 +87,7 @@ public:
     ComboBox userCoordCombo;
     ComboBox toolCoordCombo;
     ComboBox configurationCombo;
-    CheckBox configurationFixCheck;
+    CheckBox requireConfigurationCheck;
     vector<QWidget*> configurationWidgets;
 
     ScopedConnection bodyBarConnection;
@@ -166,9 +167,15 @@ void LinkPositionViewImpl::createPanel()
     topvbox->addLayout(mainvbox);
 
     auto hbox = new QHBoxLayout;
+    hbox->addStretch(2);
     targetLabel.setStyleSheet("font-weight: bold");
-    targetLabel.setAlignment(Qt::AlignCenter);
-    hbox->addWidget(&targetLabel, 1);
+    targetLabel.setAlignment(Qt::AlignLeft);
+    hbox->addWidget(&targetLabel);
+    hbox->addStretch(1);
+    configurationLabel.setAlignment(Qt::AlignLeft);
+    hbox->addWidget(&configurationLabel);
+    configurationWidgets.push_back(&configurationLabel);
+    hbox->addStretch(10);
     
     menuButton.setText("*");
     menuButton.setToolTip(_("Option"));
@@ -309,14 +316,15 @@ void LinkPositionViewImpl::createPanel()
     configurationWidgets.push_back(label);
     grid->addWidget(&configurationCombo, 2, 1);
     configurationWidgets.push_back(&configurationCombo);
-    configurationFixCheck.setText(_("Fix"));
-    grid->addWidget(&configurationFixCheck, 2, 2);
-    configurationWidgets.push_back(&configurationFixCheck);
     userInputConnections.add(
         configurationCombo.sigActivated().connect(
             [this](int index){ onConfigurationInput(index); }));
+
+    requireConfigurationCheck.setText(_("Require"));
+    grid->addWidget(&requireConfigurationCheck, 2, 2);
+    configurationWidgets.push_back(&requireConfigurationCheck);
     userInputConnections.add(
-        configurationFixCheck.sigToggled().connect(
+        requireConfigurationCheck.sigToggled().connect(
             [this](bool){ onConfigurationInput(configurationCombo.currentIndex()); }));
 
     mainvbox->addLayout(grid);
@@ -475,8 +483,12 @@ void LinkPositionViewImpl::updateTarget()
             configurationCombo.addItem(
                 jointPathConfigurationHandler->getConfigurationName(i).c_str());
         }
-        configurationCombo.setCurrentIndex(
-            jointPathConfigurationHandler->getCurrentConfiguration());
+        if(jointPathConfigurationHandler->checkConfiguration(0)){
+            configurationCombo.setCurrentIndex(0);
+        } else {
+            configurationCombo.setCurrentIndex(
+                jointPathConfigurationHandler->getCurrentConfiguration());
+        }
     }
 }
 
@@ -570,14 +582,23 @@ void LinkPositionViewImpl::updateRotationMatrixPanel(const Matrix3& R)
 
 void LinkPositionViewImpl::updateConfigurationPanel()
 {
-    configurationCombo.setStyleSheet("font-weight: normal");
-    
-    if(jointPathConfigurationHandler){
-        auto index = jointPathConfigurationHandler->getCurrentConfiguration();
-        jointPathConfigurationHandler->setPreferredConfiguration(index);
-        userInputConnections.block();
-        configurationCombo.setCurrentIndex(index);
-        userInputConnections.unblock();
+    if(!jointPathConfigurationHandler){
+        configurationLabel.setText("");
+    } else {
+        int actual = jointPathConfigurationHandler->getCurrentConfiguration();
+
+        const bool HIGHLIGHT_UNSATISFIED_CONFIGURATION = false;
+        if(HIGHLIGHT_UNSATISFIED_CONFIGURATION){
+            int preferred = configurationCombo.currentIndex();
+            if(actual == preferred){
+                configurationCombo.setStyleSheet("font-weight: normal");
+            } else {
+                configurationCombo.setStyleSheet(errorStyle);
+            }
+        } else {
+            configurationCombo.setStyleSheet("font-weight: normal");
+        }
+        configurationLabel.setText(QString("( %1 )").arg(configurationCombo.itemText(actual)));
     }
 }
 
@@ -647,10 +668,10 @@ void LinkPositionViewImpl::onConfigurationInput(int index)
 void LinkPositionViewImpl::findSolution(const Position& T_input, InputElementSet inputElements)
 {
     if(jointPath){
+
         Position T;
         T.translation() = T_input.translation();
         T.linear() = jointPath->endLink()->calcRfromAttitude(T_input.linear());
-        
         targetBodyItem->beginKinematicStateEdit();
         bool solved = jointPath->calcInverseKinematics(T);
 
@@ -661,21 +682,20 @@ void LinkPositionViewImpl::findSolution(const Position& T_input, InputElementSet
                 }
             }
         } else {
-            if(jointPathConfigurationHandler && configurationFixCheck.isChecked()){
-                int conf = jointPathConfigurationHandler->getCurrentConfiguration();
-                int current = configurationCombo.currentIndex();
-                if(conf != current){
+            if(jointPathConfigurationHandler && requireConfigurationCheck.isChecked()){
+                int preferred = configurationCombo.currentIndex();
+                if(!jointPathConfigurationHandler->checkConfiguration(preferred)){
                     configurationCombo.setStyleSheet(errorStyle);
                     solved = false;
                 }
             }
         }
+
         if(solved){       
             targetBodyItem->notifyKinematicStateChange();
             targetBodyItem->acceptKinematicStateEdit();
             resultLabel.setText(_("Solved"));
             resultLabel.setStyleSheet(normalStyle);
-            configurationCombo.setStyleSheet("font-weight: normal");
         } else {
             targetBodyItem->cancelKinematicStateEdit();
             resultLabel.setText(_("Not Solved"));
