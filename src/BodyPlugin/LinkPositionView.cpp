@@ -585,19 +585,14 @@ void LinkPositionViewImpl::updateConfigurationPanel()
     if(!jointPathConfigurationHandler){
         configurationLabel.setText("");
     } else {
-        int actual = jointPathConfigurationHandler->getCurrentConfiguration();
-
-        const bool HIGHLIGHT_UNSATISFIED_CONFIGURATION = false;
-        if(HIGHLIGHT_UNSATISFIED_CONFIGURATION){
-            int preferred = configurationCombo.currentIndex();
-            if(actual == preferred){
-                configurationCombo.setStyleSheet("font-weight: normal");
-            } else {
-                configurationCombo.setStyleSheet(errorStyle);
-            }
+        int preferred = configurationCombo.currentIndex();
+        if(requireConfigurationCheck.isChecked() &&
+           !jointPathConfigurationHandler->checkConfiguration(preferred)){
+            configurationCombo.setStyleSheet(errorStyle);
         } else {
             configurationCombo.setStyleSheet("font-weight: normal");
         }
+        int actual = jointPathConfigurationHandler->getCurrentConfiguration();
         configurationLabel.setText(QString("( %1 )").arg(configurationCombo.itemText(actual)));
     }
 }
