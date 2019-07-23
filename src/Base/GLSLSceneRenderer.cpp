@@ -23,7 +23,7 @@ using namespace cnoid;
 namespace {
 
 const bool USE_FBO_FOR_PICKING = true;
-const bool SHOW_IMAGE_FOR_PICKING = false;
+const bool SAVE_IMAGE_FOR_PICKING = false;
 
 const bool USE_GL_FLOAT_FOR_NORMALS = false;
 
@@ -925,7 +925,7 @@ bool GLSLSceneRendererImpl::doPick(int x, int y)
         }
     }
     
-    if(!SHOW_IMAGE_FOR_PICKING){
+    if(!SAVE_IMAGE_FOR_PICKING){
         glScissor(x, y, 1, 1);
         glEnable(GL_SCISSOR_TEST);
     }
@@ -948,20 +948,28 @@ bool GLSLSceneRendererImpl::doPick(int x, int y)
 
     endRendering();
 
-    if(!USE_FBO_FOR_PICKING){
+    if(USE_FBO_FOR_PICKING){
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, fboForPicking);
+        glReadBuffer(GL_COLOR_ATTACHMENT0);
+    } else {
         if(isMultiSampleEnabled){
             glEnable(GL_MULTISAMPLE);
         }
-        glBindFramebuffer(GL_READ_FRAMEBUFFER, fboForPicking);
-        glReadBuffer(GL_COLOR_ATTACHMENT0);
     }
-    
+
     GLfloat color[4];
     glReadPixels(x, y, 1, 1, GL_RGBA, GL_FLOAT, color);
-    if(SHOW_IMAGE_FOR_PICKING){
+    if(SAVE_IMAGE_FOR_PICKING){
         color[2] = 0.0f;
     }
     int id = (int)(color[0] * 255) + ((int)(color[1] * 255) << 8) + ((int)(color[2] * 255) << 16) - 1;
+
+    if(SAVE_IMAGE_FOR_PICKING){
+        Image image;
+        image.setSize(viewportWidth, viewportHeight, 4);
+        glReadPixels(0, 0, viewportWidth, viewportHeight, GL_RGBA, GL_UNSIGNED_BYTE, image.pixels());
+        image.save("picking.png");
+    }
 
     pickedNodePath.clear();
 
@@ -1241,7 +1249,7 @@ inline void GLSLSceneRendererImpl::setPickColor(int id)
     color[0] = (id & 0xff) / 255.0;
     color[1] = ((id >> 8) & 0xff) / 255.0;
     color[2] = ((id >> 16) & 0xff) / 255.0;
-    if(SHOW_IMAGE_FOR_PICKING){
+    if(SAVE_IMAGE_FOR_PICKING){
         color[2] = 1.0f;
     }
     solidColorProgram.setColor(color);
