@@ -968,6 +968,7 @@ bool GLSLSceneRendererImpl::doPick(int x, int y)
         Image image;
         image.setSize(viewportWidth, viewportHeight, 4);
         glReadPixels(0, 0, viewportWidth, viewportHeight, GL_RGBA, GL_UNSIGNED_BYTE, image.pixels());
+        image.applyVerticalFlip();
         image.save("picking.png");
     }
 
