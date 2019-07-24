@@ -24,10 +24,8 @@ namespace {
 
 const bool USE_FBO_FOR_PICKING = true;
 const bool SAVE_IMAGE_FOR_PICKING = false;
-
-const bool USE_GL_FLOAT_FOR_NORMALS = false;
-
 const float MinLineWidthForPicking = 5.0f;
+const bool USE_GL_FLOAT_FOR_NORMALS = false;
 
 typedef vector<Affine3, Eigen::aligned_allocator<Affine3>> Affine3Array;
 
@@ -235,9 +233,8 @@ public:
     GLuint fboForPicking;
     GLuint colorBufferForPicking;
     GLuint depthBufferForPicking;
-    int viewportWidth;
-    int viewportHeight;
-    bool needToChangeBufferSizeForPicking;
+    int pickingBufferWidth;
+    int pickingBufferHeight;
 
     ShaderProgram* currentProgram;
     NolightingProgram* currentNolightingProgram;
@@ -452,9 +449,8 @@ void GLSLSceneRendererImpl::initialize()
     fboForPicking = 0;
     colorBufferForPicking = 0;
     depthBufferForPicking = 0;
-    viewportWidth = 1;
-    viewportHeight = 1;
-    needToChangeBufferSizeForPicking = true;
+    pickingBufferWidth = 0;
+    pickingBufferHeight = 0;
 
     currentProgram = nullptr;
     currentNolightingProgram = nullptr;
@@ -679,15 +675,6 @@ void GLSLSceneRenderer::flush()
 }
 
 
-void GLSLSceneRenderer::setViewport(int x, int y, int width, int height)
-{
-    GLSceneRenderer::setViewport(x, y, width, height);
-    impl->viewportWidth = width;
-    impl->viewportHeight = height;
-    impl->needToChangeBufferSizeForPicking = true;
-}
-
-
 void GLSLSceneRenderer::requestToClearResources()
 {
     impl->isResourceClearRequested = true;
@@ -885,21 +872,23 @@ bool GLSLSceneRenderer::doPick(int x, int y)
 
 bool GLSLSceneRendererImpl::doPick(int x, int y)
 {
+    int vx, vy, width, height;
+    self->getViewport(vx, vy, width, height);
+
     if(USE_FBO_FOR_PICKING){
         if(!fboForPicking){
             glGenFramebuffers(1, &fboForPicking);
-            needToChangeBufferSizeForPicking = true;
         }
         glBindFramebuffer(GL_FRAMEBUFFER, fboForPicking);
 
-        if(needToChangeBufferSizeForPicking){
+        if(width != pickingBufferWidth || height != pickingBufferHeight){
             // color buffer
             if(colorBufferForPicking){
                 glDeleteRenderbuffers(1, &colorBufferForPicking);
             }
             glGenRenderbuffers(1, &colorBufferForPicking);
             glBindRenderbuffer(GL_RENDERBUFFER, colorBufferForPicking);
-            glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA, viewportWidth, viewportHeight);
+            glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA, width, height);
             glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, colorBufferForPicking);
             
             // depth buffer
@@ -908,10 +897,11 @@ bool GLSLSceneRendererImpl::doPick(int x, int y)
             }
             glGenRenderbuffers(1, &depthBufferForPicking);
             glBindRenderbuffer(GL_RENDERBUFFER, depthBufferForPicking);
-            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, viewportWidth, viewportHeight);
+            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
             glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthBufferForPicking);
-            
-            needToChangeBufferSizeForPicking = false;
+
+            pickingBufferWidth = width;
+            pickingBufferHeight = height;
         }
     }
     
@@ -944,7 +934,9 @@ bool GLSLSceneRendererImpl::doPick(int x, int y)
     popProgram();
     isPicking = false;
 
-    glDisable(GL_SCISSOR_TEST);
+    if(!SAVE_IMAGE_FOR_PICKING){
+        glDisable(GL_SCISSOR_TEST);
+    }
 
     endRendering();
 
@@ -966,8 +958,8 @@ bool GLSLSceneRendererImpl::doPick(int x, int y)
 
     if(SAVE_IMAGE_FOR_PICKING){
         Image image;
-        image.setSize(viewportWidth, viewportHeight, 4);
-        glReadPixels(0, 0, viewportWidth, viewportHeight, GL_RGBA, GL_UNSIGNED_BYTE, image.pixels());
+        image.setSize(width, height, 4);
+        glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, image.pixels());
         image.applyVerticalFlip();
         image.save("picking.png");
     }
@@ -2283,8 +2275,9 @@ void GLSLSceneRendererImpl::renderOverlay(SgOverlay* overlay)
 
     const Matrix4 PV0 = PV;
     SgOverlay::ViewVolume v;
-    const Array4i vp = self->viewport();
-    overlay->calcViewVolume(vp[2], vp[3], v);
+    int x, y, width, height;
+    self->getViewport(x, y, width, height);
+    overlay->calcViewVolume(width, height, v);
     self->getOrthographicProjectionMatrix(v.left, v.right, v.bottom, v.top, v.zNear, v.zFar, PV);
             
     renderGroup(overlay);

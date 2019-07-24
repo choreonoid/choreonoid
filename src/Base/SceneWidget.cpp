@@ -226,7 +226,8 @@ public:
 
     Signal<void()> sigStateChanged;
     LazyCaller emitSigStateChangedLater;
-    
+
+    bool needToUpdatedViewportInformation;
     bool isEditMode;
 
     Selection viewpointControlMode;
@@ -561,6 +562,7 @@ SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self, bool useGLSL)
     setAutoFillBackground(false);
     setMouseTracking(true);
 
+    needToUpdatedViewportInformation = true;
     isEditMode = false;
     viewpointControlMode.resize(2);
     viewpointControlMode.setSymbol(SceneWidget::THIRD_PERSON_MODE, "thirdPerson");
@@ -743,8 +745,7 @@ void SceneWidgetImpl::resizeGL(int width, int height)
     if(TRACE_FUNCTIONS){
         os << "SceneWidgetImpl::resizeGL()" << endl;
     }
-
-    renderer->setViewport(0, 0, width, height);
+    needToUpdatedViewportInformation = true;
 }
 
 
@@ -791,6 +792,13 @@ void SceneWidgetImpl::paintGL()
     if(TRACE_FUNCTIONS){
         static int counter = 0;
         os << "SceneWidgetImpl::paintGL() " << counter++ << endl;
+    }
+
+    if(needToUpdatedViewportInformation){
+        int viewport[4];
+        glGetIntegerv(GL_VIEWPORT, viewport);
+        renderer->updateViewportInformation(viewport[0], viewport[1], viewport[2], viewport[3]);
+        needToUpdatedViewportInformation = false;
     }
 
     bool isLightweightViewChangeActive = false;
@@ -1133,13 +1141,15 @@ void SceneWidgetImpl::updateLatestEvent(QMouseEvent* event)
 
 void SceneWidgetImpl::updateLatestEventPath(bool forceFullPicking)
 {
-    if(!forceFullPicking && isLightweightViewChangeEnabled){
+    if(needToUpdatedViewportInformation ||
+       (!forceFullPicking && isLightweightViewChangeEnabled)){
         return;
     }
     
     makeCurrent();
 
-    bool picked = renderer->pick(latestEvent.x(), latestEvent.y());
+    const int r = devicePixelRatio();
+    bool picked = renderer->pick(r * latestEvent.x(), r * latestEvent.y());
 
     if(SHOW_IMAGE_FOR_PICKING){
         // This does not work
@@ -1621,26 +1631,8 @@ void SceneWidgetImpl::wheelEvent(QWheelEvent* event)
 
 bool SceneWidget::unproject(double x, double y, double z, Vector3& out_projected) const
 {
-    const Array4i& vp = impl->renderer->viewport();
-
-    Vector4 p;
-    p[0] = 2.0 * (x - vp[0]) / vp[2] - 1.0;
-    p[1] = 2.0 * (y - vp[1]) / vp[3] - 1.0;
-    p[2] = 2.0 * z - 1.0;
-    p[3] = 1.0;
-
-    const Matrix4 V = impl->renderer->currentCameraPosition().inverse().matrix();
-    const Vector4 projected = (impl->renderer->projectionMatrix() * V).inverse() * p;
-
-    if(projected[3] == 0.0){
-        return false;
-    }
-
-    out_projected.x() = projected.x() / projected[3];
-    out_projected.y() = projected.y() / projected[3];
-    out_projected.z() = projected.z() / projected[3];
-
-    return true;
+    const int r = devicePixelRatio();
+    return impl->renderer->unproject(r * x, r * y, z, out_projected);
 }
 
 

@@ -66,10 +66,6 @@ public:
     int numFogs() const;
     SgFog* fog(int index) const;
 
-    virtual void setViewport(int x, int y, int width, int height) = 0;
-    virtual Array4i viewport() const = 0;
-    virtual double aspectRatio() const = 0; // width / height;
-
     virtual const Affine3& currentModelTransform() const = 0;
     virtual const Matrix4& projectionMatrix() const = 0;
 

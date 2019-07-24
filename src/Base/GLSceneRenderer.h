@@ -32,10 +32,11 @@ public:
     bool setSwapInterval(int interval);
     int getSwapInterval() const;
 
-    virtual void setViewport(int x, int y, int width, int height) override;
-    virtual Array4i viewport() const override;
+    void setViewport(int x, int y, int width, int height);
+    void updateViewportInformation(int x, int y, int width, int height);
+    Array4i viewport() const;
     void getViewport(int& out_x, int& out_y, int& out_width, int& out_height) const;
-    virtual double aspectRatio() const override; // width / height;
+    double aspectRatio() const; // width / height;
 
     void getPerspectiveProjectionMatrix(
         double fovy, double aspect, double zNear, double zFar, Matrix4& out_matrix);
