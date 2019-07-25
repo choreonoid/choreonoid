@@ -79,6 +79,9 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
 
     void setLowMemoryConsumptionMode(bool on);
 
+    virtual void setPickingBufferImageOutputEnabled(bool on) override;
+    virtual bool getPickingBufferImage(Image& out_image) override;
+
   protected:
     virtual void onSceneGraphUpdated(const SgUpdate& update) override;
     virtual void doRender() override;

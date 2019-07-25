@@ -41,6 +41,7 @@
 #include <QElapsedTimer>
 #include <QMessageBox>
 #include <QCoreApplication>
+#include <QGridLayout>
 #include <fmt/format.h>
 #include <set>
 #include <iostream>
@@ -57,7 +58,6 @@ using namespace cnoid;
 namespace {
 
 const bool TRACE_FUNCTIONS = false;
-const bool SHOW_IMAGE_FOR_PICKING = false;
 
 const int NUM_SHADOWS = 2;
 
@@ -133,7 +133,7 @@ public:
     DoubleSpinBox gridSpanSpin[3];
     DoubleSpinBox gridIntervalSpin[3];
     PushButton backgroundColorButton;
-    PushButton gridColorButton[3];
+    CheckBox coordinateAxesCheck;
     CheckBox textureCheck;
     PushButton defaultColorButton;
     DoubleSpinBox pointSizeSpin;
@@ -143,7 +143,6 @@ public:
     CheckBox normalVisualizationCheck;
     DoubleSpinBox normalLengthSpin;
     CheckBox lightweightViewChangeCheck;
-    CheckBox coordinateAxesCheck;
     CheckBox fpsCheck;
     PushButton fpsTestButton;
     SpinBox fpsTestIterationSpin;
@@ -159,6 +158,34 @@ public:
     void restoreState(const Archive& archive);
 };
 
+
+class ImageWindow : public QWidget
+{
+    QLabel label;
+    QPixmap pixmap;
+public:
+    ImageWindow(int width, int height)
+        : QWidget(nullptr),
+          pixmap(width, height)
+    {
+        setWindowTitle(_("OpengGL image buffer for picking"));
+        auto box = new QHBoxLayout;
+        box->setContentsMargins(0, 0, 0, 0);
+        pixmap.setDevicePixelRatio(devicePixelRatio());
+        label.setPixmap(pixmap);
+        box->addWidget(&label);
+        setLayout(box);
+    }
+    void setImage(const Image& image){
+        if(image.numComponents() == 4){
+            pixmap.convertFromImage(
+                QImage(image.pixels(), image.width(), image.height(), QImage::Format_RGBA8888));
+            pixmap.setDevicePixelRatio(devicePixelRatio());
+            label.setPixmap(pixmap);
+        }
+    }
+};
+            
 
 /**
    \note Z axis should always be the upper vertical direciton.
@@ -295,6 +322,8 @@ public:
     Signal<void(bool isFocused)> sigWidgetFocusChanged;
     Signal<void()> sigAboutToBeDestroyed;
 
+    ImageWindow* pickingBufferImageWindow;
+
 #ifdef ENABLE_SIMULATION_PROFILING
     int profiling_mode;
 #endif
@@ -355,8 +384,8 @@ public:
     void onEntityAdded(SgNode* node);
     void onEntityRemoved(SgNode* node);
 
+    void showPickingBufferImageWindow();
     void onNewDisplayListDoubleRenderingToggled(bool on);
-
     void onUpsideDownToggled(bool on);
         
     void updateLatestEvent(QKeyEvent* event);
@@ -509,7 +538,7 @@ SceneWidget::SceneWidget()
     bool useGLSL = (getenv("CNOID_USE_GLSL") != 0);
     impl = new SceneWidgetImpl(this, useGLSL);
 
-    QVBoxLayout* vbox = new QVBoxLayout();
+    QVBoxLayout* vbox = new QVBoxLayout;
     vbox->setContentsMargins(0, 0, 0, 0);
     vbox->addWidget(impl);
     setLayout(vbox);
@@ -579,25 +608,25 @@ SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self, bool useGLSL)
     lastClickedPoint.setZero();
     eventFilter = 0;
     
-    indicatorLabel = new QLabel();
+    indicatorLabel = new QLabel;
     indicatorLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
     indicatorLabel->setAlignment(Qt::AlignLeft);
     QFont font = indicatorLabel->font();
     font.setFixedPitch(true);
     indicatorLabel->setFont(font);
 
-    builtinCameraTransform = new InteractiveCameraTransform();
+    builtinCameraTransform = new InteractiveCameraTransform;
     builtinCameraTransform->setTransform(
         SgCamera::positionLookingAt(
             Vector3(4.0, 2.0, 1.5), Vector3(0.0, 0.0, 1.0), Vector3::UnitZ()));
     interactiveCameraTransform = builtinCameraTransform;
 
-    builtinPersCamera = new SgPerspectiveCamera();
+    builtinPersCamera = new SgPerspectiveCamera;
     builtinPersCamera->setName("Perspective");
     builtinPersCamera->setFieldOfView(radian(40.0));
     builtinCameraTransform->addChild(builtinPersCamera);
 
-    builtinOrthoCamera = new SgOrthographicCamera();
+    builtinOrthoCamera = new SgOrthographicCamera;
     builtinOrthoCamera->setName("Orthographic");
     builtinOrthoCamera->setHeight(20.0f);
     builtinCameraTransform->addChild(builtinOrthoCamera);
@@ -614,7 +643,7 @@ SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self, bool useGLSL)
     config = new ConfigDialog(this, useGLSL);
     config->updateBuiltinCameraConfig();
 
-    worldLight = new SgDirectionalLight();
+    worldLight = new SgDirectionalLight;
     worldLight->setName("WorldLight");
     worldLight->setDirection(Vector3(0.0, 0.0, -1.0));
     SgPosTransform* worldLightTransform = new SgPosTransform;
@@ -649,6 +678,8 @@ SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self, bool useGLSL)
     sigLowMemoryConsumptionModeChanged.connect(
         [&](bool on){ onLowMemoryConsumptionModeChanged(on); });
 
+    pickingBufferImageWindow = nullptr;
+
 #ifdef ENABLE_SIMULATION_PROFILING
     profiling_mode = 1;
 #endif
@@ -665,9 +696,12 @@ SceneWidget::~SceneWidget()
 SceneWidgetImpl::~SceneWidgetImpl()
 {
     delete renderer;
-    
     delete indicatorLabel;
     delete config;
+
+    if(pickingBufferImageWindow){
+        delete pickingBufferImageWindow;
+    }
 }
 
 
@@ -1102,6 +1136,20 @@ void SceneWidgetImpl::viewAll()
 }
 
 
+void SceneWidgetImpl::showPickingBufferImageWindow()
+{
+    auto glslRenderer = dynamic_cast<GLSLSceneRenderer*>(renderer);
+    if(glslRenderer){
+        if(!pickingBufferImageWindow){
+            auto vp = renderer->viewport();
+            pickingBufferImageWindow = new ImageWindow(vp[2], vp[3]);
+            //pickingBufferImageWindow->setGeometry(0, 0, 100, 100);
+        }
+        pickingBufferImageWindow->show();
+    }
+}
+
+
 void SceneWidgetImpl::onNewDisplayListDoubleRenderingToggled(bool on)
 {
     if(GL1SceneRenderer* gl1Renderer = dynamic_cast<GL1SceneRenderer*>(renderer)){
@@ -1146,16 +1194,21 @@ void SceneWidgetImpl::updateLatestEventPath(bool forceFullPicking)
         return;
     }
     
+    bool isPickingBufferVisualizationEnabled = pickingBufferImageWindow && pickingBufferImageWindow->isVisible();
+    renderer->setPickingBufferImageOutputEnabled(isPickingBufferVisualizationEnabled);
+
     makeCurrent();
 
     const int r = devicePixelRatio();
     bool picked = renderer->pick(r * latestEvent.x(), r * latestEvent.y());
 
-    if(SHOW_IMAGE_FOR_PICKING){
-        // This does not work
-        auto cxt = context();
-        cxt->swapBuffers(cxt->surface());
+    if(isPickingBufferVisualizationEnabled){
+        Image image;
+        if(renderer->getPickingBufferImage(image)){
+            pickingBufferImageWindow->setImage(image);
+        }
     }
+
     doneCurrent();
 
     latestEvent.nodePath_.clear();
@@ -2603,7 +2656,7 @@ bool SceneWidgetImpl::storeState(Archive& archive)
 
     config->storeState(archive);
 
-    ListingPtr cameraListing = new Listing();
+    ListingPtr cameraListing = new Listing;
     set<SgPosTransform*> storedTransforms;
     int numCameras = renderer->numCameras();
     for(int i=0; i < numCameras; ++i){
@@ -2654,7 +2707,7 @@ void SceneWidgetImpl::writeCameraPath(Mapping& archive, const std::string& key, 
 
 Mapping* SceneWidgetImpl::storeCameraState(int cameraIndex, bool isInteractiveCamera, SgPosTransform* cameraTransform)
 {
-    Mapping* state = new Mapping();
+    Mapping* state = new Mapping;
     writeCameraPath(*state, "camera", cameraIndex);
 
     if(cameraIndex == renderer->currentCameraIndex()){
@@ -2987,8 +3040,8 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
 
     auto renderer = sceneWidgetImpl->renderer;
 
-    QVBoxLayout* topVBox = new QVBoxLayout();
-    vbox = new QVBoxLayout();
+    QVBoxLayout* topVBox = new QVBoxLayout;
+    vbox = new QVBoxLayout;
     QHBoxLayout* hbox;
 
     builtinCameraConnections.add(
@@ -2996,7 +3049,7 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
             [&](const SgUpdate&){ updateBuiltinCameraConfig(); }));
     
     vbox->addLayout(new HSeparatorBox(new QLabel(_("Default Camera"))));
-    hbox = new QHBoxLayout();
+    hbox = new QHBoxLayout;
     hbox->addWidget(new QLabel(_("Field of view")));
     fieldOfViewSpin.setRange(1, 179);
     fieldOfViewSpin.sigValueChanged().connect(
@@ -3024,7 +3077,7 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     updateDefaultLightsLater.setFunction([=](){ impl->updateDefaultLights(); });
     
     vbox->addLayout(new HSeparatorBox(new QLabel(_("Lighting"))));
-    hbox = new QHBoxLayout();
+    hbox = new QHBoxLayout;
     hbox->addWidget(new QLabel(_("Lighting mode")));
 
     fullLightingRadio.setText(_("Full"));
@@ -3060,8 +3113,8 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     hbox->addStretch();
     vbox->addLayout(hbox);
 
-    hbox = new QHBoxLayout();
-    hbox->addWidget(new QLabel(_("Back face culling mode: ")));
+    hbox = new QHBoxLayout;
+    hbox->addWidget(new QLabel(_("Back face culling: ")));
     cullingMode.setSymbol(GLSceneRenderer::ENABLE_BACK_FACE_CULLING, "enabled");
     cullingMode.setSymbol(GLSceneRenderer::DISABLE_BACK_FACE_CULLING, "disabled");
     cullingMode.setSymbol(GLSceneRenderer::FORCE_BACK_FACE_CULLING, "forced");
@@ -3084,58 +3137,57 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
         });
     hbox->addStretch();
     vbox->addLayout(hbox);
+
+    auto grid = new QGridLayout;
     
-    hbox = new QHBoxLayout();
     headLightCheck.setText(_("Head light"));
     headLightCheck.setChecked(true);
     headLightCheck.sigToggled().connect([&](bool){ updateDefaultLightsLater(); });
-    hbox->addWidget(&headLightCheck);
+    grid->addWidget(&headLightCheck, 0, 0);
 
-    hbox->addWidget(new QLabel(_("Intensity")));
+    grid->addWidget(new QLabel(_("Intensity")), 0, 1);
     headLightIntensitySpin.setDecimals(2);
     headLightIntensitySpin.setSingleStep(0.01);    
     headLightIntensitySpin.setRange(0.0, 2.0);
     headLightIntensitySpin.setValue(0.75);
     headLightIntensitySpin.sigValueChanged().connect([&](bool){ updateDefaultLightsLater(); });
-    hbox->addWidget(&headLightIntensitySpin);
+    grid->addWidget(&headLightIntensitySpin, 0, 2);
 
     headLightFromBackCheck.setText(_("Back lighting"));
     headLightFromBackCheck.sigToggled().connect([&](bool){ updateDefaultLightsLater(); });
-    hbox->addWidget(&headLightFromBackCheck);
-    hbox->addStretch();
-    vbox->addLayout(hbox);
+    grid->addWidget(&headLightFromBackCheck, 0, 3, 1, 2);
 
-    hbox = new QHBoxLayout();
     worldLightCheck.setText(_("World light"));
     worldLightCheck.setChecked(true);
     worldLightCheck.sigToggled().connect([&](bool){ updateDefaultLightsLater(); });
-    hbox->addWidget(&worldLightCheck);
+    grid->addWidget(&worldLightCheck, 1, 0);
 
-    hbox->addWidget(new QLabel(_("Intensity")));
+    grid->addWidget(new QLabel(_("Intensity")), 1, 1);
     worldLightIntensitySpin.setDecimals(2);
     worldLightIntensitySpin.setSingleStep(0.01);    
     worldLightIntensitySpin.setRange(0.0, 2.0);
     worldLightIntensitySpin.setValue(0.5);
     worldLightIntensitySpin.sigValueChanged().connect([&](double){ updateDefaultLightsLater(); });
-    hbox->addWidget(&worldLightIntensitySpin);
+    grid->addWidget(&worldLightIntensitySpin, 1, 2);
 
-    hbox->addWidget(new QLabel(_("Ambient")));
+    grid->addWidget(new QLabel(_("Ambient")), 1, 3);
     worldLightAmbientSpin.setDecimals(2);
     worldLightAmbientSpin.setSingleStep(0.01);    
     worldLightAmbientSpin.setRange(0.0, 1.0);
     worldLightAmbientSpin.setValue(0.3);
     worldLightAmbientSpin.sigValueChanged().connect([&](double){ updateDefaultLightsLater(); });
-    hbox->addWidget(&worldLightAmbientSpin);
+    grid->addWidget(&worldLightAmbientSpin, 1, 4);
 
-    hbox->addSpacing(8);
+    grid->setColumnStretch(5, 1);
     additionalLightsCheck.setText(_("Additional lights"));
     additionalLightsCheck.setChecked(true);
     additionalLightsCheck.sigToggled().connect([&](bool){ updateDefaultLightsLater(); });
-    hbox->addWidget(&additionalLightsCheck);
-    hbox->addStretch();
-    vbox->addLayout(hbox);
+    grid->addWidget(&additionalLightsCheck, 1, 6);
 
-    hbox = new QHBoxLayout();
+    grid->setColumnStretch(7, 10);
+    vbox->addLayout(grid);
+
+    hbox = new QHBoxLayout;
     for(int i=0; i < NUM_SHADOWS; ++i){
         Shadow& shadow = shadows[i];
         shadow.check.setText(QString(_("Shadow %1")).arg(i+1));
@@ -3156,7 +3208,7 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     hbox->addStretch();
     vbox->addLayout(hbox);
 
-    hbox = new QHBoxLayout();
+    hbox = new QHBoxLayout;
     fogCheck.setText(_("Fog"));
     fogCheck.setChecked(true);
     fogCheck.sigToggled().connect([&](bool){ updateDefaultLightsLater(); });
@@ -3169,56 +3221,66 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     hbox->addStretch();
     vbox->addLayout(hbox);
     
-    
     vbox->addLayout(new HSeparatorBox(new QLabel(_("Background"))));
-    hbox = new QHBoxLayout();
+
+    grid = new QGridLayout;
     backgroundColorButton.setText(_("Background color"));
     backgroundColorButton.sigClicked().connect([=](){ impl->showBackgroundColorDialog(); });
-    hbox->addWidget(&backgroundColorButton);
-    hbox->addStretch();
-    vbox->addLayout(hbox);
-
-    for(int i=0; i < 3; ++i){
-    	hbox = new QHBoxLayout();
-    	gridCheck[i].setChecked(false);
-    	gridCheck[i].sigToggled().connect([=](bool){ impl->updateGridsLater(); });
-    	hbox->addWidget(&gridCheck[i]);
+    grid->addWidget(&backgroundColorButton, 0, 0);
     
-    	hbox->addWidget(new QLabel(_("Span")));
-    	gridSpanSpin[i].setAlignment(Qt::AlignCenter);
-    	gridSpanSpin[i].setDecimals(1);
-    	gridSpanSpin[i].setRange(0.0, 99.9);
-        gridSpanSpin[i].setSingleStep(0.1);
-        gridSpanSpin[i].setValue(10.0);
-        gridSpanSpin[i].sigValueChanged().connect([=](double){ impl->updateGridsLater(); });
-        hbox->addWidget(&gridSpanSpin[i]);
-        hbox->addSpacing(8);
-        
-        hbox->addWidget(new QLabel(_("Interval")));
-        gridIntervalSpin[i].setAlignment(Qt::AlignCenter);
-        gridIntervalSpin[i].setDecimals(2);
-        gridIntervalSpin[i].setRange(0.01, 9.99);
-        gridIntervalSpin[i].setSingleStep(0.01);
-        gridIntervalSpin[i].setValue(0.5);
-        gridIntervalSpin[i].sigValueChanged().connect([=](double){ impl->updateGridsLater(); });
-        hbox->addWidget(&gridIntervalSpin[i]);
-        
-        gridColorButton[i].setText(_("Color"));
-        gridColorButton[i].sigClicked().connect([=](){ impl->showGridColorDialog(i); });
-        hbox->addWidget(&gridColorButton[i]);
-        hbox->addStretch();
-        vbox->addLayout(hbox);
-    }
-    gridCheck[FLOOR_GRID].setText(_("Show the floor grid"));
-    gridCheck[XZ_GRID].setText(_("Show the xz plane grid"));
-    gridCheck[YZ_GRID].setText(_("Show the yz plane grid"));
-    gridCheck[FLOOR_GRID].blockSignals(true);
+    coordinateAxesCheck.setText(_("Coordinate axes"));
+    coordinateAxesCheck.setChecked(true);
+    coordinateAxesCheck.sigToggled().connect(
+        [=](bool on){ impl->activateSystemNode(impl->coordinateAxesOverlay, on); });
+    grid->addWidget(&coordinateAxesCheck, 2, 0);
+
+    grid->addWidget(new VSeparator, 0, 2, 3, 1);
+    grid->setColumnStretch(1, 1);
+    grid->setColumnStretch(3, 1);
+
+    gridCheck[FLOOR_GRID].setText(_("XY Grid"));
     gridCheck[FLOOR_GRID].setChecked(true);
-    gridCheck[FLOOR_GRID].blockSignals(false);
+    gridCheck[XZ_GRID].setText(_("XZ Grid"));
+    gridCheck[YZ_GRID].setText(_("YZ Grid"));
+    
+    for(int i=0; i < 3; ++i){
+        auto& check = gridCheck[i];
+        check.setChecked(false);
+    	check.sigToggled().connect([=](bool){ impl->updateGridsLater(); });
+        grid->addWidget(&check, i, 4);
 
-    vbox->addWidget(new HSeparator());
+        grid->addWidget(new QLabel(_("Span")), i, 5);
+        auto& spanSpin = gridSpanSpin[i];
+        spanSpin.setAlignment(Qt::AlignCenter);
+    	spanSpin.setDecimals(1);
+    	spanSpin.setRange(0.0, 99.9);
+        spanSpin.setSingleStep(0.1);
+        spanSpin.setValue(10.0);
+        spanSpin.sigValueChanged().connect([=](double){ impl->updateGridsLater(); });
+        grid->addWidget(&spanSpin, i, 6);
+        
+        grid->addWidget(new QLabel(_("Interval")), i, 7);
+        auto& intervalSpin = gridIntervalSpin[i];
+        intervalSpin.setAlignment(Qt::AlignCenter);
+        intervalSpin.setDecimals(2);
+        intervalSpin.setRange(0.01, 9.99);
+        intervalSpin.setSingleStep(0.01);
+        intervalSpin.setValue(0.5);
+        intervalSpin.sigValueChanged().connect([=](double){ impl->updateGridsLater(); });
+        grid->addWidget(&intervalSpin, i, 8);
 
-    hbox = new QHBoxLayout();
+        auto button = new PushButton;
+        button->setText(_("Color"));
+        button->sigClicked().connect([=](){ impl->showGridColorDialog(i); });
+        grid->addWidget(button, i, 9);
+    }
+
+    grid->setColumnStretch(10, 10);
+    vbox->addLayout(grid);
+
+    vbox->addWidget(new HSeparator);
+    
+    hbox = new QHBoxLayout;
     defaultColorButton.setText(_("Default color"));
     defaultColorButton.sigClicked().connect([=](){ impl->showDefaultColorDialog(); });
     hbox->addWidget(&defaultColorButton);
@@ -3241,7 +3303,7 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     hbox->addStretch();
     vbox->addLayout(hbox);
     
-    hbox = new QHBoxLayout();
+    hbox = new QHBoxLayout;
     pointRenderingModeCheck.setText(_("Do point rendering in the wireframe mode"));
     pointRenderingModeCheckConnection =
         pointRenderingModeCheck.sigToggled().connect([=](bool on){ impl->onPointRenderingModeToggled(on); });
@@ -3249,7 +3311,7 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     hbox->addStretch();
     vbox->addLayout(hbox);
     
-    hbox = new QHBoxLayout();
+    hbox = new QHBoxLayout;
     normalVisualizationCheck.setText(_("Normal Visualization"));
     normalVisualizationCheck.sigToggled().connect([=](bool){ impl->onNormalVisualizationChanged(); });
     hbox->addWidget(&normalVisualizationCheck);
@@ -3267,15 +3329,11 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     hbox->addStretch();
     vbox->addLayout(hbox);
     
-    vbox->addWidget(new HSeparator());
+    vbox->addWidget(new HSeparator);
 
-    hbox = new QHBoxLayout();
-    coordinateAxesCheck.setText(_("Coordinate axes"));
-    coordinateAxesCheck.setChecked(true);
-    coordinateAxesCheck.sigToggled().connect(
-        [=](bool on){ impl->activateSystemNode(impl->coordinateAxesOverlay, on); });
-    hbox->addWidget(&coordinateAxesCheck);
-    
+    hbox = new QHBoxLayout;
+
+    /*
     fpsCheck.setText(_("Show FPS"));
     fpsCheck.setEnabled(!useGLSL);
     fpsCheck.setChecked(false);
@@ -3283,25 +3341,31 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
         fpsCheck.sigToggled().connect([=](bool on){ impl->showFPS(on); });
     }
     hbox->addWidget(&fpsCheck);
+    */
 
-    fpsTestButton.setText(_("Test"));
+    fpsTestButton.setText(_("FPS Test"));
     fpsTestButton.sigClicked().connect([=](){ impl->onFPSTestButtonClicked(); });
     hbox->addWidget(&fpsTestButton);
     fpsTestIterationSpin.setRange(1, 99);
     fpsTestIterationSpin.setValue(1);
     hbox->addWidget(&fpsTestIterationSpin);
+
+    auto pickingBufferButton = new PushButton(_("Show the picking buffer image (for debug)"));
+    pickingBufferButton->sigClicked().connect([=](){ impl->showPickingBufferImageWindow(); });
+    hbox->addWidget(pickingBufferButton);
+    
     hbox->addStretch();
     vbox->addLayout(hbox);
 
-    hbox = new QHBoxLayout();
-    newDisplayListDoubleRenderingCheck.setText(_("Do double rendering when a new display list is created."));
+    hbox = new QHBoxLayout;
+    newDisplayListDoubleRenderingCheck.setText(_("Do double rendering when a new display list is created (fixed shader)."));
     newDisplayListDoubleRenderingCheck.sigToggled().connect(
         [=](bool on){ impl->onNewDisplayListDoubleRenderingToggled(on); });
     hbox->addWidget(&newDisplayListDoubleRenderingCheck);
     hbox->addStretch();
     vbox->addLayout(hbox);
 
-    hbox = new QHBoxLayout();
+    hbox = new QHBoxLayout;
     collisionVisualizationButtonsCheck.setText(_("Show collision visualization button set"));
     collisionVisualizationButtonsCheck.setChecked(false);
     collisionVisualizationButtonsCheck.sigToggled().connect(
@@ -3320,7 +3384,7 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     vbox->addLayout(hbox);
 
     topVBox->addLayout(vbox);
-    topVBox->addWidget(new HSeparator());
+    topVBox->addWidget(new HSeparator);
 
     QPushButton* okButton = new QPushButton(_("&Ok"));
     okButton->setDefault(true);

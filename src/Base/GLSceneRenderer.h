@@ -12,6 +12,7 @@
 namespace cnoid {
 
 class GLSceneRendererImpl;
+class Image;
     
 class CNOID_EXPORT GLSceneRenderer : public SceneRenderer
 {
@@ -96,6 +97,9 @@ public:
     virtual int backFaceCullingMode() const = 0;
 
     virtual void setBoundingBoxRenderingForLightweightRenderingGroupEnabled(bool on);
+
+    virtual void setPickingBufferImageOutputEnabled(bool on);
+    virtual bool getPickingBufferImage(Image& out_image);
 
 protected:
     virtual void onSceneGraphUpdated(const SgUpdate& update) override;

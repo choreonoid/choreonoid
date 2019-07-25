@@ -341,3 +341,15 @@ bool GLSceneRenderer::unproject(double x, double y, double z, Vector3& out_proje
 
     return true;
 }
+
+
+void GLSceneRenderer::setPickingBufferImageOutputEnabled(bool)
+{
+
+}
+    
+
+bool GLSceneRenderer::getPickingBufferImage(Image&)
+{
+    return false;
+}
