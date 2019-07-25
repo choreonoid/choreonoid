@@ -22,8 +22,6 @@ using namespace cnoid;
 
 namespace {
 
-const bool USE_FBO_FOR_PICKING = true;
-const bool SAVE_IMAGE_FOR_PICKING = false;
 const float MinLineWidthForPicking = 5.0f;
 const bool USE_GL_FLOAT_FOR_NORMALS = false;
 
@@ -251,6 +249,7 @@ public:
 
     bool isActuallyRendering;
     bool isPicking;
+    bool isPickingBufferImageOutputEnabled;
     bool isRenderingShadowMap;
     bool isLightweightRenderingBeingProcessed;
     bool isLowMemoryConsumptionMode;
@@ -459,6 +458,7 @@ void GLSLSceneRendererImpl::initialize()
 
     isActuallyRendering = false;
     isPicking = false;
+    isPickingBufferImageOutputEnabled = false;
     isRenderingShadowMap = false;
     isLowMemoryConsumptionMode = false;
     isBoundingBoxRenderingMode = false;
@@ -875,47 +875,37 @@ bool GLSLSceneRendererImpl::doPick(int x, int y)
     int vx, vy, width, height;
     self->getViewport(vx, vy, width, height);
 
-    if(USE_FBO_FOR_PICKING){
-        if(!fboForPicking){
-            glGenFramebuffers(1, &fboForPicking);
-        }
-        glBindFramebuffer(GL_FRAMEBUFFER, fboForPicking);
+    if(!fboForPicking){
+        glGenFramebuffers(1, &fboForPicking);
+    }
+    glBindFramebuffer(GL_FRAMEBUFFER, fboForPicking);
 
-        if(width != pickingBufferWidth || height != pickingBufferHeight){
-            // color buffer
-            if(colorBufferForPicking){
-                glDeleteRenderbuffers(1, &colorBufferForPicking);
-            }
-            glGenRenderbuffers(1, &colorBufferForPicking);
-            glBindRenderbuffer(GL_RENDERBUFFER, colorBufferForPicking);
-            glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA, width, height);
-            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, colorBufferForPicking);
+    if(width != pickingBufferWidth || height != pickingBufferHeight){
+        // color buffer
+        if(colorBufferForPicking){
+            glDeleteRenderbuffers(1, &colorBufferForPicking);
+        }
+        glGenRenderbuffers(1, &colorBufferForPicking);
+        glBindRenderbuffer(GL_RENDERBUFFER, colorBufferForPicking);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA, width, height);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, colorBufferForPicking);
             
-            // depth buffer
-            if(depthBufferForPicking){
-                glDeleteRenderbuffers(1, &depthBufferForPicking);
-            }
-            glGenRenderbuffers(1, &depthBufferForPicking);
-            glBindRenderbuffer(GL_RENDERBUFFER, depthBufferForPicking);
-            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
-            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthBufferForPicking);
-
-            pickingBufferWidth = width;
-            pickingBufferHeight = height;
+        // depth buffer
+        if(depthBufferForPicking){
+            glDeleteRenderbuffers(1, &depthBufferForPicking);
         }
+        glGenRenderbuffers(1, &depthBufferForPicking);
+        glBindRenderbuffer(GL_RENDERBUFFER, depthBufferForPicking);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthBufferForPicking);
+
+        pickingBufferWidth = width;
+        pickingBufferHeight = height;
     }
     
     self->extractPreprocessedNodes();
 
-    GLboolean isMultiSampleEnabled;
-    if(!USE_FBO_FOR_PICKING){
-        isMultiSampleEnabled = glIsEnabled(GL_MULTISAMPLE);
-        if(isMultiSampleEnabled){
-            glDisable(GL_MULTISAMPLE);
-        }
-    }
-    
-    if(!SAVE_IMAGE_FOR_PICKING){
+    if(!isPickingBufferImageOutputEnabled){
         glScissor(x, y, 1, 1);
         glEnable(GL_SCISSOR_TEST);
     }
@@ -934,35 +924,21 @@ bool GLSLSceneRendererImpl::doPick(int x, int y)
     popProgram();
     isPicking = false;
 
-    if(!SAVE_IMAGE_FOR_PICKING){
+    if(!isPickingBufferImageOutputEnabled){
         glDisable(GL_SCISSOR_TEST);
     }
 
     endRendering();
 
-    if(USE_FBO_FOR_PICKING){
-        glBindFramebuffer(GL_READ_FRAMEBUFFER, fboForPicking);
-        glReadBuffer(GL_COLOR_ATTACHMENT0);
-    } else {
-        if(isMultiSampleEnabled){
-            glEnable(GL_MULTISAMPLE);
-        }
-    }
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, fboForPicking);
+    glReadBuffer(GL_COLOR_ATTACHMENT0);
 
     GLfloat color[4];
     glReadPixels(x, y, 1, 1, GL_RGBA, GL_FLOAT, color);
-    if(SAVE_IMAGE_FOR_PICKING){
+    if(isPickingBufferImageOutputEnabled){
         color[2] = 0.0f;
     }
     int id = (int)(color[0] * 255) + ((int)(color[1] * 255) << 8) + ((int)(color[2] * 255) << 16) - 1;
-
-    if(SAVE_IMAGE_FOR_PICKING){
-        Image image;
-        image.setSize(width, height, 4);
-        glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, image.pixels());
-        image.applyVerticalFlip();
-        image.save("picking.png");
-    }
 
     pickedNodePath.clear();
 
@@ -975,12 +951,37 @@ bool GLSLSceneRendererImpl::doPick(int x, int y)
         }
     }
 
-    if(USE_FBO_FOR_PICKING){
-        glBindFramebuffer(GL_FRAMEBUFFER, defaultFBO);
-        glBindFramebuffer(GL_READ_FRAMEBUFFER, defaultFBO);
-    }
+    glBindFramebuffer(GL_FRAMEBUFFER, defaultFBO);
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, defaultFBO);
 
     return !pickedNodePath.empty();
+}
+
+
+void GLSLSceneRenderer::setPickingBufferImageOutputEnabled(bool on)
+{
+    impl->isPickingBufferImageOutputEnabled = on;
+}
+
+
+bool GLSLSceneRenderer::getPickingBufferImage(Image& out_image)
+{
+    if(!impl->isPickingBufferImageOutputEnabled){
+        return false;
+    }
+    
+    glBindFramebuffer(GL_FRAMEBUFFER, impl->fboForPicking);
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, impl->fboForPicking);
+    glReadBuffer(GL_COLOR_ATTACHMENT0);
+    int w = impl->pickingBufferWidth;
+    int h = impl->pickingBufferHeight;
+    out_image.setSize(w, h, 4);
+    glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, out_image.pixels());
+    out_image.applyVerticalFlip();
+    glBindFramebuffer(GL_FRAMEBUFFER, impl->defaultFBO);
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, impl->defaultFBO);
+
+    return true;
 }
 
 
@@ -1242,7 +1243,7 @@ inline void GLSLSceneRendererImpl::setPickColor(int id)
     color[0] = (id & 0xff) / 255.0;
     color[1] = ((id >> 8) & 0xff) / 255.0;
     color[2] = ((id >> 16) & 0xff) / 255.0;
-    if(SAVE_IMAGE_FOR_PICKING){
+    if(isPickingBufferImageOutputEnabled){
         color[2] = 1.0f;
     }
     solidColorProgram.setColor(color);
