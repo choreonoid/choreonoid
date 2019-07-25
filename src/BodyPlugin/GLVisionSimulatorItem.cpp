@@ -322,7 +322,7 @@ GLVisionSimulatorItemImpl::GLVisionSimulatorItemImpl(GLVisionSimulatorItem* self
       os(MessageView::instance()->cout()),
       threadMode(GLVisionSimulatorItem::N_THREAD_MODES, CNOID_GETTEXT_DOMAIN_NAME)
 {
-    simulatorItem = 0;
+    simulatorItem = nullptr;
     maxFrameRate = 1000.0;
     maxLatency = 1.0;
     rangeSensorPrecisionRatio = 2.0;
@@ -357,7 +357,7 @@ GLVisionSimulatorItemImpl::GLVisionSimulatorItemImpl(GLVisionSimulatorItem* self
       bodyNames(org.bodyNames),
       sensorNames(org.sensorNames)
 {
-    simulatorItem = 0;
+    simulatorItem = nullptr;
 
     useGLSL = org.useGLSL;
     isVisionDataRecordingEnabled = org.isVisionDataRecordingEnabled;
@@ -815,10 +815,10 @@ SensorScreenRenderer::SensorScreenRenderer(GLVisionSimulatorItemImpl* simImpl, D
     rangeCameraForRendering = dynamic_cast<RangeCamera*>(screenDevice);
     rangeSensorForRendering = dynamic_cast<RangeSensor*>(screenDevice);
 
-    glContext = 0;
-    offscreenSurface = 0;
-    frameBuffer = 0;
-    renderer = 0;
+    glContext = nullptr;
+    offscreenSurface = nullptr;
+    frameBuffer = nullptr;
+    renderer = nullptr;
     screenId = FRONT_SCREEN;
 }
 
@@ -1514,12 +1514,12 @@ bool SensorScreenRenderer::getCameraImage(Image& image)
 bool SensorScreenRenderer::getRangeCameraData(Image& image, vector<Vector3f>& points)
 {
 #ifndef _WIN32
-    unsigned char* colorBuf = 0;
+    unsigned char* colorBuf = nullptr;
 #else
     vector<unsigned char> colorBuf;
 #endif
 
-    unsigned char* pixels = 0;
+    unsigned char* pixels = nullptr;
 
     const bool extractColors = (cameraForRendering->imageType() == Camera::COLOR_IMAGE);
     if(extractColors){
@@ -1556,7 +1556,7 @@ bool SensorScreenRenderer::getRangeCameraData(Image& image, vector<Vector3f>& po
     n[3] = 1.0f;
     points.clear();
     points.reserve(pixelWidth * pixelHeight);
-    unsigned char* colorSrc = 0;
+    unsigned char* colorSrc = nullptr;
 
     isDense = true;
     
