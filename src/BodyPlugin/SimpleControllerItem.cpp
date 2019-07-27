@@ -853,6 +853,8 @@ void SimpleControllerItemImpl::output()
             break;
         case Link::LINK_POSITION:
             simLink->T() = ioLink->T();
+            simLink->v() = ioLink->v();
+            simLink->w() = ioLink->w();
             break;
         default:
             break;
