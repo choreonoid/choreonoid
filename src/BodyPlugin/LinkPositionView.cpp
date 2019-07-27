@@ -120,7 +120,7 @@ public:
 void LinkPositionView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<LinkPositionView>(
-        "LinkPositionView", N_("Link Position"), ViewManager::SINGLE_DEFAULT);
+        "LinkPositionView", N_("Link Position"), ViewManager::SINGLE_OPTIONAL);
 }
 
 
