@@ -3173,7 +3173,7 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     worldLightAmbientSpin.setDecimals(2);
     worldLightAmbientSpin.setSingleStep(0.01);    
     worldLightAmbientSpin.setRange(0.0, 1.0);
-    worldLightAmbientSpin.setValue(0.3);
+    worldLightAmbientSpin.setValue(0.25);
     worldLightAmbientSpin.sigValueChanged().connect([&](double){ updateDefaultLightsLater(); });
     grid->addWidget(&worldLightAmbientSpin, 1, 4);
 
@@ -3244,7 +3244,6 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     
     for(int i=0; i < 3; ++i){
         auto& check = gridCheck[i];
-        check.setChecked(false);
     	check.sigToggled().connect([=](bool){ impl->updateGridsLater(); });
         grid->addWidget(&check, i, 4);
 

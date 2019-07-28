@@ -480,7 +480,6 @@ void GLSLSceneRendererImpl::initialize()
     lightingMode = GLSceneRenderer::FULL_LIGHTING;
     defaultSmoothShading = true;
     defaultMaterial = new SgMaterial;
-    defaultMaterial->setDiffuseColor(Vector3f(0.8, 0.8, 0.8));
     defaultPointSize = 1.0f;
     defaultLineWidth = 1.0f;
     isTextureEnabled = true;
