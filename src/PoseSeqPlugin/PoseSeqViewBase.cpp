@@ -28,24 +28,12 @@ using namespace cnoid;
 using fmt::format;
 
 namespace {
+
 const bool TRACE_FUNCTIONS = false;
 
 inline double degree(double rad) { return (180.0 * rad / 3.14159265358979); }
 inline double radian(double deg) { return (3.14159265358979 * deg / 180.0); }
 
-inline double myNearByInt(double x)
-{
-#ifdef Q_OS_WIN32
-    double u = ceil(x);
-    double l = floor(x);
-    if(fabs(u - x) < fabs(x - l)){
-        return u;
-    } else {
-        return l;
-    }
-#else
-    return nearbyint(x);
-#endif
 }
 
 class ColumnCheckBox : public CheckBox
@@ -60,7 +48,6 @@ public:
     std::function<void(Qt::CheckState)> slotOnClicked;        
 };
 
-
 class LinkTreeWidgetEx : public LinkTreeWidget
 {
 public:
@@ -74,8 +61,6 @@ public:
         return size;
     }
 };
-
-}
 
 namespace cnoid {
 
@@ -1552,7 +1537,7 @@ PoseSeq::iterator PoseSeqViewBase::insertPoseUnit(PoseUnitPtr poseUnit)
 double PoseSeqViewBase::quantizedTime(double time)
 {
     double r = timeBar->frameRate();
-    double frame = myNearByInt(r * time);
+    double frame = nearbyint(r * time);
     return frame / r;
 }
 

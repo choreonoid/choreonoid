@@ -33,21 +33,6 @@ const double DEFAULT_FRAME_RATE = 1000.0;
 // The following value shoud be same as the display refresh rate to make the animation smooth
 const double DEFAULT_PLAYBACK_FRAMERATE = 60.0;
     
-inline double myNearByInt(double x)
-{
-#ifdef Q_OS_WIN32
-    double u = ceil(x);
-    double l = floor(x);
-    if(fabs(u - x) < fabs(x - l)){
-        return u;
-    } else {
-        return l;
-    }
-#else
-    return nearbyint(x);
-#endif
-}
-
 class ConfigDialog : public Dialog
 {
 public:
@@ -412,7 +397,7 @@ bool TimeBarImpl::setTime(double time, bool calledFromPlaybackLoop, QWidget* cal
     if(isFillLevelActive && calledFromPlaybackLoop){
         newTime = floor(time * self->frameRate_) / self->frameRate_;
     } else {
-        newTime = myNearByInt(time * self->frameRate_) / self->frameRate_;
+        newTime = nearbyint(time * self->frameRate_) / self->frameRate_;
     }
     */
     const double newTime = floor(time * self->frameRate_) / self->frameRate_;
@@ -436,7 +421,7 @@ bool TimeBarImpl::setTime(double time, bool calledFromPlaybackLoop, QWidget* cal
         maxTimeSpin->blockSignals(true);
         timeSpin->setRange(minTime, maxTime);
         const double r = pow(10.0, decimals);
-        timeSlider->setRange((int)myNearByInt(minTime * r), (int)myNearByInt(maxTime * r));
+        timeSlider->setRange((int)nearbyint(minTime * r), (int)nearbyint(maxTime * r));
         maxTimeSpin->setValue(maxTime);
         maxTimeSpin->blockSignals(false);
         timeSlider->blockSignals(false);
@@ -452,7 +437,7 @@ bool TimeBarImpl::setTime(double time, bool calledFromPlaybackLoop, QWidget* cal
     }
     if(callerWidget != timeSlider){
         timeSlider->blockSignals(true);
-        timeSlider->setValue((int)myNearByInt(self->time_ * pow(10.0, decimals)));
+        timeSlider->setValue((int)nearbyint(self->time_ * pow(10.0, decimals)));
         timeSlider->blockSignals(false);
     }
 
@@ -543,7 +528,7 @@ void TimeBarImpl::updateTimeProperties(bool forceUpdate)
     if(forceUpdate ||
        (minTime != timeSpin->minimum() || maxTime != timeSpin->maximum())){
         timeSpin->setRange(minTime, maxTime);
-        timeSlider->setRange((int)myNearByInt(minTime * r), (int)myNearByInt(maxTime * r));
+        timeSlider->setRange((int)nearbyint(minTime * r), (int)nearbyint(maxTime * r));
     }
 
     timeSpin->setDecimals(decimals);
@@ -661,7 +646,7 @@ void TimeBarImpl::startPlayback()
             if(config.idleLoopDrivenCheck.isChecked()){
                 interval = 0;
             } else {
-                interval = myNearByInt(1000.0 / playbackFrameRate);
+                interval = nearbyint(1000.0 / playbackFrameRate);
             }
             timerId = startTimer(interval, Qt::PreciseTimer);
             elapsedTimer.start();

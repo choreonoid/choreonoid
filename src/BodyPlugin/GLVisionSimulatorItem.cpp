@@ -54,21 +54,6 @@ enum ScreenId {
     BACK_SCREEN = FisheyeLensConverter::BACK_SCREEN
 };
 
-double myNearByInt(double x)
-{
-#ifdef Q_OS_WIN32
-    double u = ceil(x);
-    double l = floor(x);
-    if(fabs(u - x) < fabs(x - l)){
-        return u;
-    } else {
-        return l;
-    }
-#else
-    return nearbyint(x);
-#endif
-}
-
 string getNameListString(const vector<string>& names)
 {
     string nameList;
@@ -1667,7 +1652,7 @@ bool SensorScreenRenderer::getRangeSensorData(vector<double>& rangeData)
                 py = 0;
             } else {
                 const double r = (tan(pitchAngle)/cos(yawAngle) + maxTanPitchAngle) / (maxTanPitchAngle * 2.0);
-                py = myNearByInt(r * (fh - 1.0));
+                py = nearbyint(r * (fh - 1.0));
             }
             const int srcpos = py * pixelWidth;
 
@@ -1676,7 +1661,7 @@ bool SensorScreenRenderer::getRangeSensorData(vector<double>& rangeData)
                 px = 0;
             } else {
                 const double r = (maxTanYawAngle - tan(yawAngle)) / (maxTanYawAngle * 2.0);
-                px = myNearByInt(r * (fw - 1.0));
+                px = nearbyint(r * (fw - 1.0));
             }
             //! \todo add the option to do the interpolation between the adjacent two pixel depths
             const float depth = depthBuf[srcpos + px];
