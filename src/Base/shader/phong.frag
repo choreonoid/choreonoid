@@ -40,8 +40,6 @@ struct LightInfo {
 
 uniform LightInfo lights[10];
 
-vec3 reflectionElements[10];
-
 uniform bool isTextureEnabled;
 uniform sampler2D tex1;
 uniform bool isVertexColorEnabled;
@@ -118,7 +116,7 @@ void main()
         alpha2 = alpha * texColor4.a;
         color = emissionColor * texColor;
         for(int i=0; i < numLights; ++i){
-            reflectionElements[i] = calcDiffuseAndSpecularElements(lights[i], texColor);
+            color += calcDiffuseAndSpecularElements(lights[i], texColor);
             color += lights[i].ambientIntensity * ambientColor * texColor;
         }
     } else {
@@ -131,13 +129,9 @@ void main()
         alpha2 = alpha;
         color = emissionColor;
         for(int i=0; i < numLights; ++i){
-            reflectionElements[i] = calcDiffuseAndSpecularElements(lights[i], baseColor);
+            color += calcDiffuseAndSpecularElements(lights[i], baseColor);
             color += lights[i].ambientIntensity * ambientColor;
         }
-    }
-        
-    for(int i=0; i < numLights; ++i){
-        color += reflectionElements[i];
     }
 
     if(isFogEnabled){
