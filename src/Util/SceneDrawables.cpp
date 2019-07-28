@@ -26,8 +26,8 @@ struct NodeTypeRegistration {
 
 SgMaterial::SgMaterial()
 {
-    ambientIntensity_ = 0.2f;
-    diffuseColor_ << 0.8f, 0.8f, 0.8f;
+    ambientIntensity_ = 1.0f;
+    diffuseColor_ << 1.0f, 1.0f, 1.0f;
     emissiveColor_.setZero();
     specularColor_.setZero();
     shininess_ = 0.2f;

@@ -101,7 +101,6 @@ AssimpSceneLoaderImpl* AssimpSceneLoader::getOrCreateImpl()
 }
 
 
-
 AssimpSceneLoaderImpl::AssimpSceneLoaderImpl()
 {
 #ifdef AI_CONFIG_IMPORT_COLLADA_IGNORE_UP_DIRECTION
@@ -434,7 +433,7 @@ SgMaterial* AssimpSceneLoaderImpl::convertAiMaterial(unsigned int index)
         return p->second;
     }
 
-    SgMaterial* material = new SgMaterial();
+    SgMaterial* material = new SgMaterial;
     aiMaterial* srcMaterial = scene->mMaterials[index];
 
     aiString name;
@@ -460,9 +459,10 @@ SgMaterial* AssimpSceneLoaderImpl::convertAiMaterial(unsigned int index)
         material->setShininess(s / 128.0f);
     }
     if(AI_SUCCESS == srcMaterial->Get(AI_MATKEY_COLOR_AMBIENT, color)){
-        float c = diffuse ==0 ? 0 : (color.r + color.g + color.b) / diffuse;
-        if(c>1)
-            c=1;
+        float c = (diffuse == 0.0f ? 0.0f : (color.r + color.g + color.b) / diffuse);
+        if(c > 1.0f){
+            c = 1.0f;
+        }
         material->setAmbientIntensity(c);
     }
 

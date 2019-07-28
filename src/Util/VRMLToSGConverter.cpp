@@ -395,18 +395,15 @@ SgNode* VRMLToSGConverterImpl::convertShapeNode(VRMLShape* vshape)
             converted = shape;
             shape->setMesh(mesh);
 
-            VRMLMaterial* vm;
             if(vshape->appearance && vshape->appearance->material){
-                vm = vshape->appearance->material.get();
-            } else {
-                vm = defaultMaterial.get();
-            }
-            VRMLMaterialToSgMaterialMap::iterator p = vrmlMaterialToSgMaterialMap.find(vm);
-            if(p != vrmlMaterialToSgMaterialMap.end()){
-                shape->setMaterial(p->second);
-            } else {
-                shape->setMaterial(createMaterial(vm));
-                vrmlMaterialToSgMaterialMap[vm] = shape->material();
+                auto vm = vshape->appearance->material;
+                VRMLMaterialToSgMaterialMap::iterator p = vrmlMaterialToSgMaterialMap.find(vm);
+                if(p != vrmlMaterialToSgMaterialMap.end()){
+                    shape->setMaterial(p->second);
+                } else {
+                    shape->setMaterial(createMaterial(vm));
+                    vrmlMaterialToSgMaterialMap[vm] = shape->material();
+                }
             }
 
             if(vshape->appearance && vshape->appearance->texture){

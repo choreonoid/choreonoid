@@ -123,7 +123,6 @@ public:
     SgMesh* readResourceAsGeometry(Mapping& info);
     void readAppearance(SgShape* shape, Mapping& info);
     void readMaterial(SgShape* shape, Mapping& info);
-    void setDefaultMaterial(SgShape* shape);
     void readTexture(SgShape* shape, Mapping& info);
     void readTextureTransform(SgTexture* texture, Mapping& info);
     void readLightCommon(Mapping& info, SgLight* light);
@@ -594,8 +593,6 @@ SgNode* YAMLSceneReaderImpl::readShape(Mapping& info)
         Mapping& appearance = *info.findMapping("appearance");
         if(appearance.isValid()){
             readAppearance(shape, appearance);
-        } else {
-            setDefaultMaterial(shape);
         }
 
         if(shape->texture()){
@@ -930,8 +927,6 @@ void YAMLSceneReaderImpl::readAppearance(SgShape* shape, Mapping& info)
     Mapping& material = *info.findMapping("material");
     if(material.isValid()){
         readMaterial(shape, material);
-    } else {
-        setDefaultMaterial(shape);
     }
 
     Mapping& texture = *info.findMapping("texture");
@@ -950,30 +945,27 @@ void YAMLSceneReaderImpl::readMaterial(SgShape* shape, Mapping& info)
 {
     SgMaterialPtr material = new SgMaterial;
 
-    material->setAmbientIntensity(info.get("ambientIntensity", 0.2));
+    double value;
+    if(info.read("ambientIntensity", value)){
+        material->setAmbientIntensity(value);
+    }
     if(read(info, "diffuseColor", color)){
         material->setDiffuseColor(color);
-    } else {
-        material->setDiffuseColor(Vector3f(0.8f, 0.8f, 0.8f));
     }
-    if(read(info, "emissiveColor", color)) material->setEmissiveColor(color);
-    material->setShininess(info.get("shininess", 0.2));
-    if(read(info, "specularColor", color)) material->setSpecularColor(color);
-    if(info.read("transparency", value)) material->setTransparency(value);
+    if(read(info, "emissiveColor", color)){
+        material->setEmissiveColor(color);
+    }
+    if(info.read("shininess", value)){
+        material->setShininess(value);
+    }
+    if(read(info, "specularColor", color)){
+        material->setSpecularColor(color);
+    }
+    if(info.read("transparency", value)){
+        material->setTransparency(value);
+    }
 
     shape->setMaterial(material);
-}
-
-
-void YAMLSceneReaderImpl::setDefaultMaterial(SgShape* shape)
-{
-    if(!defaultMaterial){
-        defaultMaterial = new SgMaterial;
-        defaultMaterial->setDiffuseColor(Vector3f(0.8f, 0.8f, 0.8f));
-        defaultMaterial->setAmbientIntensity(0.2f);
-        defaultMaterial->setShininess(0.2f);
-    }
-    shape->setMaterial(defaultMaterial);
 }
 
 
