@@ -1009,10 +1009,7 @@ void GL1SceneRendererImpl::renderInvariantGroup(SgInvariantGroup* group)
             resource->listID = glGenLists(1);
             if(resource->listID){
                 renderDisplayListSubTree(group, resource, resource->listID);
-
-                if(stateFlag[LIGHTING] || stateFlag[CURRENT_COLOR]){
-                    resource->useIDforPicking = true;
-                }
+                resource->useIDforPicking = true;
                 isNewDisplayListCreated = true;
             }
         }
