@@ -29,6 +29,7 @@ namespace {
 
 const bool USE_DISPLAY_LISTS = true;
 const bool USE_VBO = false;
+const bool USE_RIGHT_BOTTOM_PIXEL_FOR_PICKING = true;
 const bool SHOW_IMAGE_FOR_PICKING = false;
 
 const float MinLineWidthForPicking = 5.0f;
@@ -848,8 +849,21 @@ bool GL1SceneRendererImpl::doPick(int x, int y)
     glDisable(GL_DITHER);
     glDisable(GL_FOG);
 
+    int vx, vy, vw, vh;
+    int px, py;
+
+    if(USE_RIGHT_BOTTOM_PIXEL_FOR_PICKING){
+        self->getViewport(vx, vy, vw, vh);
+        glViewport(vw - x - 1, -y, vw, vh);
+        px = vw - 1;
+        py = 0;
+    } else {
+        px = x;
+        py = y;
+    }
+        
     if(!SHOW_IMAGE_FOR_PICKING){
-        glScissor(x, y, 1, 1);
+        glScissor(px, py, 1, 1);
         glEnable(GL_SCISSOR_TEST);
     }
     
@@ -860,7 +874,7 @@ bool GL1SceneRendererImpl::doPick(int x, int y)
     glPopAttrib();
 
     GLfloat color[4];
-    glReadPixels(x, y, 1, 1, GL_RGBA, GL_FLOAT, color);
+    glReadPixels(px, py, 1, 1, GL_RGBA, GL_FLOAT, color);
     if(SHOW_IMAGE_FOR_PICKING){
         color[2] = 0.0f;
     }
@@ -870,11 +884,15 @@ bool GL1SceneRendererImpl::doPick(int x, int y)
 
     if(0 < id && id < pickingNodePathList.size()){
         GLfloat depth;
-        glReadPixels(x, y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
+        glReadPixels(px, py, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
         Vector3 projected;
         if(self->unproject(x, y, depth, pickedPoint)){
             pickedNodePath = *pickingNodePathList[id];
         }
+    }
+
+    if(USE_RIGHT_BOTTOM_PIXEL_FOR_PICKING){
+        glViewport(vx, vy, vw, vh);
     }
 
     return !pickedNodePath.empty();
