@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-07-22 20:53+0900\n"
+"POT-Creation-Date: 2019-07-29 14:59+0900\n"
 "PO-Revision-Date: 2011-11-12 14:46+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Language =\n"
@@ -518,83 +518,83 @@ msgstr "関節速度下限"
 msgid "Joint inertia"
 msgstr "関節慣性"
 
-#: GLVisionSimulatorItem.cpp:308
+#: GLVisionSimulatorItem.cpp:293
 msgid "GLVisionSimulatorItem"
 msgstr "GLビジョンシミュレータアイテム"
 
-#: GLVisionSimulatorItem.cpp:338
+#: GLVisionSimulatorItem.cpp:323
 msgid "Single"
 msgstr "単一"
 
-#: GLVisionSimulatorItem.cpp:339
+#: GLVisionSimulatorItem.cpp:324
 msgid "Sensor"
 msgstr "センサ"
 
-#: GLVisionSimulatorItem.cpp:340
+#: GLVisionSimulatorItem.cpp:325
 msgid "Screen"
 msgstr "スクリーン"
 
-#: GLVisionSimulatorItem.cpp:536
+#: GLVisionSimulatorItem.cpp:521
 msgid "{0} detected vision sensor \"{1}\" of {2} as a target."
 msgstr "{0}は{2}の \"{1}\" を対象視覚センサとして検出しました．"
 
-#: GLVisionSimulatorItem.cpp:546
+#: GLVisionSimulatorItem.cpp:531
 msgid "{} has no target sensors"
 msgstr "{}は対象センサを有していません"
 
-#: GLVisionSimulatorItem.cpp:571
+#: GLVisionSimulatorItem.cpp:556
 msgid "{0}: Target sensor \"{1}\" cannot be initialized."
 msgstr "{0}: 対象センサ \"{1}\" の初期化に失敗しました．"
 
-#: GLVisionSimulatorItem.cpp:1809
+#: GLVisionSimulatorItem.cpp:1794
 msgid "Target bodies"
 msgstr "対象ボディ"
 
-#: GLVisionSimulatorItem.cpp:1811
+#: GLVisionSimulatorItem.cpp:1796
 msgid "Target sensors"
 msgstr "対象センサ"
 
-#: GLVisionSimulatorItem.cpp:1813
+#: GLVisionSimulatorItem.cpp:1798
 msgid "Max frame rate"
 msgstr "最大フレームレート"
 
-#: GLVisionSimulatorItem.cpp:1814
+#: GLVisionSimulatorItem.cpp:1799
 msgid "Max latency [s]"
 msgstr "最大レイテンシ[秒]"
 
-#: GLVisionSimulatorItem.cpp:1815
+#: GLVisionSimulatorItem.cpp:1800
 msgid "Record vision data"
 msgstr "ビジョンデータの記録"
 
-#: GLVisionSimulatorItem.cpp:1816
+#: GLVisionSimulatorItem.cpp:1801
 msgid "Thread mode"
 msgstr "スレッドモード"
 
-#: GLVisionSimulatorItem.cpp:1817
+#: GLVisionSimulatorItem.cpp:1802
 msgid "Best effort"
 msgstr "ベストエフォート"
 
-#: GLVisionSimulatorItem.cpp:1818
+#: GLVisionSimulatorItem.cpp:1803
 msgid "All scene objects"
 msgstr "全てのシーンオブジェクト"
 
-#: GLVisionSimulatorItem.cpp:1819
+#: GLVisionSimulatorItem.cpp:1804
 msgid "Precision ratio of range sensors"
 msgstr "レンジセンサ精度係数"
 
-#: GLVisionSimulatorItem.cpp:1821
+#: GLVisionSimulatorItem.cpp:1806
 msgid "Depth error"
 msgstr "深度エラー"
 
-#: GLVisionSimulatorItem.cpp:1822
+#: GLVisionSimulatorItem.cpp:1807
 msgid "Head light"
 msgstr "ヘッドライト"
 
-#: GLVisionSimulatorItem.cpp:1823
+#: GLVisionSimulatorItem.cpp:1808
 msgid "Additional lights"
 msgstr "追加のライト"
 
-#: GLVisionSimulatorItem.cpp:1824
+#: GLVisionSimulatorItem.cpp:1809
 msgid "Anti-aliasing"
 msgstr "アンチエイリアシング"
 
@@ -602,75 +602,83 @@ msgstr "アンチエイリアシング"
 msgid "The function to read CollisionSeq is not implemented."
 msgstr "CollisionSeqを読み込む機能は実装されていません．"
 
-#: LinkPositionView.cpp:126
+#: LinkPositionView.cpp:129
 msgid "Link Position"
 msgstr "リンク位置"
 
-#: LinkPositionView.cpp:184
+#: LinkPositionView.cpp:187
 msgid "Option"
 msgstr "オプション"
 
-#: LinkPositionView.cpp:194
+#: LinkPositionView.cpp:197
 msgid "Fetch"
 msgstr "取込"
 
-#: LinkPositionView.cpp:197 FilterDialogs.cpp:108 FilterDialogs.cpp:212
+#: LinkPositionView.cpp:200 FilterDialogs.cpp:108 FilterDialogs.cpp:212
 msgid "Apply"
 msgstr "適用"
 
-#: LinkPositionView.cpp:307
-msgid "Base"
-msgstr "ベース"
+#: LinkPositionView.cpp:208
+msgid "Coordinate:"
+msgstr "座標:"
 
-#: LinkPositionView.cpp:308
+#: LinkPositionView.cpp:209 LinkPositionView.cpp:329
 msgid "World"
 msgstr "ワールド"
 
-#: LinkPositionView.cpp:310 LinkPositionView.cpp:315
+#: LinkPositionView.cpp:213 LinkPositionView.cpp:328
+msgid "Base"
+msgstr "ベース"
+
+#: LinkPositionView.cpp:216
+msgid "Parent"
+msgstr "親"
+
+#: LinkPositionView.cpp:219
+msgid "Object"
+msgstr "オブジェクト"
+
+#: LinkPositionView.cpp:331 LinkPositionView.cpp:336
 msgid "Edit"
 msgstr "編集"
 
-#: LinkPositionView.cpp:312
-msgid "Local"
-msgstr "ローカル"
+#: LinkPositionView.cpp:333
+msgid "Target"
+msgstr "対象"
 
-#: LinkPositionView.cpp:313
+#: LinkPositionView.cpp:334
 msgid "Link Origin"
 msgstr "リンク原点"
 
-#: LinkPositionView.cpp:317
+#: LinkPositionView.cpp:338
 msgid "Config"
 msgstr "コンフィグ"
 
-#: LinkPositionView.cpp:326
-msgid "Prefer"
-msgstr "推奨"
-
-#: LinkPositionView.cpp:327
+#: LinkPositionView.cpp:347
 msgid "Require"
 msgstr "必須"
 
-#: LinkPositionView.cpp:347
+#: LinkPositionView.cpp:359
 msgid "Roll-pitch-yaw"
 msgstr "ロールピッチヨー"
 
-#: LinkPositionView.cpp:352
+#: LinkPositionView.cpp:364
 msgid "Quoternion"
 msgstr "クオタニオン"
 
-#: LinkPositionView.cpp:358
+#: LinkPositionView.cpp:370
 msgid "Rotation matrix"
 msgstr "回転行列"
 
-#: LinkPositionView.cpp:574
+#: LinkPositionView.cpp:590
 msgid "Actual State"
 msgstr "実状態"
 
-#: LinkPositionView.cpp:708
+#: LinkPositionView.cpp:716
 msgid "Solved"
 msgstr "解有り"
 
-#: LinkPositionView.cpp:712
+#: LinkPositionView.cpp:720
 msgid "Not Solved"
 msgstr "解無し"
 
@@ -1067,23 +1075,23 @@ msgstr "{}のinitializeメソッドが失敗しました．"
 msgid "{} failed to start"
 msgstr "{}を稼働できませんでした"
 
-#: SimpleControllerItem.cpp:918
+#: SimpleControllerItem.cpp:920
 msgid "Simple Controller Module (*.{})"
 msgstr "シンプルコントローラモジュール (*.{})"
 
-#: SimpleControllerItem.cpp:926
+#: SimpleControllerItem.cpp:928
 msgid "Controller module"
 msgstr "コントローラモジュール"
 
-#: SimpleControllerItem.cpp:928
+#: SimpleControllerItem.cpp:930
 msgid "Base directory"
 msgstr "ベースディレクトリ"
 
-#: SimpleControllerItem.cpp:930
+#: SimpleControllerItem.cpp:932
 msgid "Reloading"
 msgstr "再読込"
 
-#: SimpleControllerItem.cpp:932
+#: SimpleControllerItem.cpp:934
 msgid "Old target value variable mode"
 msgstr "旧指令値変数モード"
 
