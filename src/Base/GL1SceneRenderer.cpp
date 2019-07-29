@@ -1260,7 +1260,10 @@ bool GL1SceneRendererImpl::renderTexture(SgTexture* texture, bool withMaterial)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, texture->repeatS() ? GL_REPEAT : GL_CLAMP);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, texture->repeatT() ? GL_REPEAT : GL_CLAMP);
 
+    // Set the base color white to output the texture color with the GL_MODULE mode
+    setDiffuseColor(Vector4f(1.0f, 1.0f, 1.0f, 1.0f)); 
     //glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE); // default
+    
     //glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, withMaterial ? GL_MODULATE : GL_REPLACE);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
